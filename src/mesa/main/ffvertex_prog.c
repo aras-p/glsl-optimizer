@@ -53,7 +53,9 @@ struct state_key {
    unsigned light_color_material:1;
    unsigned light_color_material_mask:12;
    unsigned light_material_mask:12;
+   unsigned material_shininess_is_zero:1;
 
+   unsigned need_eye_coords:1;
    unsigned normalize:1;
    unsigned rescale_normals:1;
    unsigned fog_source_is_depth:1;
@@ -154,6 +156,26 @@ tnl_get_per_vertex_fog(GLcontext *ctx)
 #endif
 }
 
+static GLboolean check_active_shininess( GLcontext *ctx,
+                                         const struct state_key *key,
+                                         GLuint side )
+{
+   GLuint bit = 1 << (MAT_ATTRIB_FRONT_SHININESS + side);
+
+   if (key->light_color_material_mask & bit)
+      return GL_TRUE;
+
+   if (key->light_material_mask & bit)
+      return GL_TRUE;
+
+   if (ctx->Light.Material.Attrib[MAT_ATTRIB_FRONT_SHININESS + side][0] != 0.0F)
+      return GL_TRUE;
+
+   return GL_FALSE;
+}
+     
+
+
 
 static struct state_key *make_state_key( GLcontext *ctx )
 {
@@ -166,6 +188,8 @@ static struct state_key *make_state_key( GLcontext *ctx )
    /* This now relies on texenvprogram.c being active:
     */
    assert(fp);
+
+   key->need_eye_coords = ctx->_NeedEyeCoords;
 
    key->fragprog_inputs_read = fp->Base.InputsRead;
 
@@ -210,6 +234,17 @@ static struct state_key *make_state_key( GLcontext *ctx )
 		light->QuadraticAttenuation != 0.0)
 	       key->unit[i].light_attenuated = 1;
 	 }
+      }
+
+      if (check_active_shininess(ctx, key, 0)) {
+         key->material_shininess_is_zero = 0;
+      }
+      else if (key->light_twoside &&
+               check_active_shininess(ctx, key, 1)) {
+         key->material_shininess_is_zero = 0;
+      }
+      else {
+         key->material_shininess_is_zero = 1;
       }
    }
 
@@ -270,7 +305,7 @@ static struct state_key *make_state_key( GLcontext *ctx )
  * generated program with line/function references for each
  * instruction back into this file:
  */
-#define DISASSEM (MESA_VERBOSE&VERBOSE_DISASSEM)
+#define DISASSEM 1
 
 /* Should be tunable by the driver - do we want to do matrix
  * multiplications with DP4's or with MUL/MAD's?  SSE works better
@@ -309,8 +344,9 @@ struct tnl_program {
    GLuint temp_reserved;
    
    struct ureg eye_position;
+   struct ureg eye_position_z;
    struct ureg eye_position_normalized;
-   struct ureg eye_normal;
+   struct ureg transformed_normal;
    struct ureg identity;
 
    GLuint materials;
@@ -653,9 +689,9 @@ static void emit_normalize_vec3( struct tnl_program *p,
 				 struct ureg src )
 {
    struct ureg tmp = get_temp(p);
-   emit_op2(p, OPCODE_DP3, tmp, 0, src, src);
-   emit_op1(p, OPCODE_RSQ, tmp, 0, tmp);
-   emit_op2(p, OPCODE_MUL, dest, 0, src, tmp);
+   emit_op2(p, OPCODE_DP3, tmp, WRITEMASK_X, src, src);
+   emit_op1(p, OPCODE_RSQ, tmp, WRITEMASK_X, tmp);
+   emit_op2(p, OPCODE_MUL, dest, 0, src, swizzle1(tmp, X));
    release_temp(p, tmp);
 }
 
@@ -693,6 +729,28 @@ static struct ureg get_eye_position( struct tnl_program *p )
 }
 
 
+static struct ureg get_eye_position_z( struct tnl_program *p )
+{
+   if (!is_undef(p->eye_position)) 
+      return swizzle1(p->eye_position, Z);
+
+   if (is_undef(p->eye_position_z)) {
+      struct ureg pos = register_input( p, VERT_ATTRIB_POS ); 
+      struct ureg modelview[4];
+
+      p->eye_position_z = reserve_temp(p);
+
+      register_matrix_param5( p, STATE_MODELVIEW_MATRIX, 0, 0, 3,
+                              0, modelview );
+
+      emit_op2(p, OPCODE_DP4, p->eye_position_z, 0, pos, modelview[2]);
+   }
+   
+   return p->eye_position_z;
+}
+   
+
+
 static struct ureg get_eye_position_normalized( struct tnl_program *p )
 {
    if (is_undef(p->eye_position_normalized)) {
@@ -705,36 +763,52 @@ static struct ureg get_eye_position_normalized( struct tnl_program *p )
 }
 
 
-static struct ureg get_eye_normal( struct tnl_program *p )
+static struct ureg get_transformed_normal( struct tnl_program *p )
 {
-   if (is_undef(p->eye_normal)) {
+   if (is_undef(p->transformed_normal) &&
+       !p->state->need_eye_coords &&
+       !p->state->normalize &&
+       !(p->state->need_eye_coords == p->state->rescale_normals))
+   {
+      p->transformed_normal = register_input(p, VERT_ATTRIB_NORMAL );
+   }
+   else if (is_undef(p->transformed_normal)) 
+   {
       struct ureg normal = register_input(p, VERT_ATTRIB_NORMAL );
       struct ureg mvinv[3];
+      struct ureg transformed_normal = reserve_temp(p);
 
-      register_matrix_param5( p, STATE_MODELVIEW_MATRIX, 0, 0, 2,
-			      STATE_MATRIX_INVTRANS, mvinv );
+      if (p->state->need_eye_coords) {
+         register_matrix_param5( p, STATE_MODELVIEW_MATRIX, 0, 0, 2,
+                                 STATE_MATRIX_INVTRANS, mvinv );
 
-      p->eye_normal = reserve_temp(p);
-
-      /* Transform to eye space:
-       */
-      emit_matrix_transform_vec3( p, p->eye_normal, mvinv, normal );
+         /* Transform to eye space:
+          */
+         emit_matrix_transform_vec3( p, transformed_normal, mvinv, normal );
+         normal = transformed_normal;
+      }
 
       /* Normalize/Rescale:
        */
       if (p->state->normalize) {
-	 emit_normalize_vec3( p, p->eye_normal, p->eye_normal );
+	 emit_normalize_vec3( p, transformed_normal, normal );
+         normal = transformed_normal;
       }
-      else if (p->state->rescale_normals) {
+      else if (p->state->need_eye_coords == p->state->rescale_normals) {
+         /* This is already adjusted for eye/non-eye rendering:
+          */
 	 struct ureg rescale = register_param2(p, STATE_INTERNAL,
-					       STATE_NORMAL_SCALE);
+                                               STATE_NORMAL_SCALE);
 
-	 emit_op2( p, OPCODE_MUL, p->eye_normal, 0, p->eye_normal,
-		   swizzle1(rescale, X));
+	 emit_op2( p, OPCODE_MUL, transformed_normal, 0, normal, rescale );
+         normal = transformed_normal;
       }
+      
+      assert(normal.file == PROGRAM_TEMPORARY);
+      p->transformed_normal = normal;
    }
 
-   return p->eye_normal;
+   return p->transformed_normal;
 }
 
 
@@ -856,7 +930,7 @@ static struct ureg calculate_light_attenuation( struct tnl_program *p,
     */
    if (!p->state->unit[i].light_spotcutoff_is_180) {
       struct ureg spot_dir_norm = register_param3(p, STATE_INTERNAL,
-						  STATE_SPOT_DIR_NORMALIZED, i);
+						  STATE_LIGHT_SPOT_DIR_NORMALIZED, i);
       struct ureg spot = get_temp(p);
       struct ureg slt = get_temp(p);
 
@@ -895,7 +969,26 @@ static struct ureg calculate_light_attenuation( struct tnl_program *p,
 }
 						
 
+static void emit_degenerate_lit( struct tnl_program *p,
+                                 struct ureg lit,
+                                 struct ureg dots )
+{
+   struct ureg id = get_identity_param(p);
+   
+   /* Note that result.x & result.w will not be examined.  Note also that
+    * dots.xyzw == dots.xxxx.
+    */
 
+   /* result[1] = MAX2(in, 0)
+    */
+   emit_op2(p, OPCODE_MAX, lit, 0, id, dots); 
+
+   /* result[2] = (in > 0 ? 1 : 0)
+    */
+   emit_op2(p, OPCODE_SLT, lit, WRITEMASK_Z, 
+            lit,                /* 0 */
+            dots); /* in[0] */
+}
 
 
 /* Need to add some addtional parameters to allow lighting in object
@@ -907,7 +1000,7 @@ static void build_lighting( struct tnl_program *p )
    const GLboolean twoside = p->state->light_twoside;
    const GLboolean separate = p->state->separate_specular;
    GLuint nr_lights = 0, count = 0;
-   struct ureg normal = get_eye_normal(p);
+   struct ureg normal = get_transformed_normal(p);
    struct ureg lit = get_temp(p);
    struct ureg dots = get_temp(p);
    struct ureg _col0 = undef, _col1 = undef;
@@ -921,9 +1014,11 @@ static void build_lighting( struct tnl_program *p )
    set_material_flags(p);
 
    {
-      struct ureg shininess = get_material(p, 0, STATE_SHININESS);
-      emit_op1(p, OPCODE_MOV, dots,  WRITEMASK_W, swizzle1(shininess,X));
-      release_temp(p, shininess);
+      if (!p->state->material_shininess_is_zero) {
+         struct ureg shininess = get_material(p, 0, STATE_SHININESS);
+         emit_op1(p, OPCODE_MOV, dots,  WRITEMASK_W, swizzle1(shininess,X));
+         release_temp(p, shininess);
+      }
 
       _col0 = make_temp(p, get_scenecolor(p, 0));
       if (separate)
@@ -934,10 +1029,12 @@ static void build_lighting( struct tnl_program *p )
    }
 
    if (twoside) {
-      struct ureg shininess = get_material(p, 1, STATE_SHININESS);
-      emit_op1(p, OPCODE_MOV, dots, WRITEMASK_Z, 
-	       negate(swizzle1(shininess,X)));
-      release_temp(p, shininess);
+      if (!p->state->material_shininess_is_zero) {
+         struct ureg shininess = get_material(p, 1, STATE_SHININESS);
+         emit_op1(p, OPCODE_MOV, dots, WRITEMASK_Z, 
+                  negate(swizzle1(shininess,X)));
+         release_temp(p, shininess);
+      }
 
       _bfc0 = make_temp(p, get_scenecolor(p, 1));
       if (separate)
@@ -984,25 +1081,28 @@ static void build_lighting( struct tnl_program *p )
 	    /* Can used precomputed constants in this case.
 	     * Attenuation never applies to infinite lights.
 	     */
-	    VPpli = register_param3(p, STATE_LIGHT, i, 
-				    STATE_POSITION_NORMALIZED); 
-            if (p->state->light_local_viewer) {
-                struct ureg eye_hat = get_eye_position_normalized(p);
-                half = get_temp(p);
-                emit_op2(p, OPCODE_SUB, half, 0, VPpli, eye_hat);
-                emit_normalize_vec3(p, half, half);
-            } else {
-                half = register_param3(p, STATE_LIGHT, i, STATE_HALF_VECTOR);
+	    VPpli = register_param3(p, STATE_INTERNAL, 
+				    STATE_LIGHT_POSITION_NORMALIZED, i); 
+            
+            if (!p->state->material_shininess_is_zero) {
+               if (p->state->light_local_viewer) {
+                  struct ureg eye_hat = get_eye_position_normalized(p);
+                  half = get_temp(p);
+                  emit_op2(p, OPCODE_SUB, half, 0, VPpli, eye_hat);
+                  emit_normalize_vec3(p, half, half);
+               } else {
+                  half = register_param3(p, STATE_INTERNAL, 
+                                         STATE_LIGHT_HALF_VECTOR, i);
+               }
             }
 	 } 
 	 else {
-	    struct ureg Ppli = register_param3(p, STATE_LIGHT, i, 
-					       STATE_POSITION); 
+	    struct ureg Ppli = register_param3(p, STATE_INTERNAL, 
+					       STATE_LIGHT_POSITION, i); 
 	    struct ureg V = get_eye_position(p);
 	    struct ureg dist = get_temp(p);
 
 	    VPpli = get_temp(p); 
-	    half = get_temp(p);
  
 	    /* Calculate VPpli vector
 	     */
@@ -1024,24 +1124,33 @@ static void build_lighting( struct tnl_program *p )
 
 	    /* Calculate viewer direction, or use infinite viewer:
 	     */
-	    if (p->state->light_local_viewer) {
-	       struct ureg eye_hat = get_eye_position_normalized(p);
-	       emit_op2(p, OPCODE_SUB, half, 0, VPpli, eye_hat);
-	    }
-	    else {
-	       struct ureg z_dir = swizzle(get_identity_param(p),X,Y,W,Z); 
-	       emit_op2(p, OPCODE_ADD, half, 0, VPpli, z_dir);
-	    }
+            if (!p->state->material_shininess_is_zero) {
+               half = get_temp(p);
 
-	    emit_normalize_vec3(p, half, half);
+               if (p->state->light_local_viewer) {
+                  struct ureg eye_hat = get_eye_position_normalized(p);
+                  emit_op2(p, OPCODE_SUB, half, 0, VPpli, eye_hat);
+               }
+               else {
+                  struct ureg z_dir = swizzle(get_identity_param(p),X,Y,W,Z); 
+                  emit_op2(p, OPCODE_ADD, half, 0, VPpli, z_dir);
+               }
+
+               emit_normalize_vec3(p, half, half);
+            }
 
 	    release_temp(p, dist);
 	 }
 
 	 /* Calculate dot products:
 	  */
-	 emit_op2(p, OPCODE_DP3, dots, WRITEMASK_X, normal, VPpli);
-	 emit_op2(p, OPCODE_DP3, dots, WRITEMASK_Y, normal, half);
+         if (p->state->material_shininess_is_zero) {
+            emit_op2(p, OPCODE_DP3, dots, 0, normal, VPpli);
+         }
+         else {
+            emit_op2(p, OPCODE_DP3, dots, WRITEMASK_X, normal, VPpli);
+            emit_op2(p, OPCODE_DP3, dots, WRITEMASK_Y, normal, half);
+         }
 
 	 /* Front face lighting:
 	  */
@@ -1052,11 +1161,6 @@ static void build_lighting( struct tnl_program *p )
 	    struct ureg res0, res1;
 	    GLuint mask0, mask1;
 
-	    emit_op1(p, OPCODE_LIT, lit, 0, dots);
-   
-	    if (!is_undef(att)) 
-	       emit_op2(p, OPCODE_MUL, lit, 0, lit, att);
-   
 	    
 	    if (count == nr_lights) {
 	       if (separate) {
@@ -1078,7 +1182,21 @@ static void build_lighting( struct tnl_program *p )
 	       res1 = _col1;
 	    }
 
-	    emit_op3(p, OPCODE_MAD, _col0, 0, swizzle1(lit,X), ambient, _col0);
+
+	    if (!is_undef(att)) {
+               emit_op1(p, OPCODE_LIT, lit, 0, dots);
+               emit_op2(p, OPCODE_MUL, lit, 0, lit, att);
+               emit_op3(p, OPCODE_MAD, _col0, 0, swizzle1(lit,X), ambient, _col0);
+            } 
+            else if (!p->state->material_shininess_is_zero) {
+               emit_op1(p, OPCODE_LIT, lit, 0, dots);
+               emit_op2(p, OPCODE_ADD, _col0, 0, ambient, _col0);
+            } 
+            else {
+               emit_degenerate_lit(p, lit, dots);
+               emit_op2(p, OPCODE_ADD, _col0, 0, ambient, _col0);
+            }
+
 	    emit_op3(p, OPCODE_MAD, res0, mask0, swizzle1(lit,Y), diffuse, _col0);
 	    emit_op3(p, OPCODE_MAD, res1, mask1, swizzle1(lit,Z), specular, _col1);
       
@@ -1096,11 +1214,6 @@ static void build_lighting( struct tnl_program *p )
 	    struct ureg res0, res1;
 	    GLuint mask0, mask1;
 	       
-	    emit_op1(p, OPCODE_LIT, lit, 0, negate(swizzle(dots,X,Y,W,Z)));
-
-	    if (!is_undef(att)) 
-	       emit_op2(p, OPCODE_MUL, lit, 0, lit, att);
-
 	    if (count == nr_lights) {
 	       if (separate) {
 		  mask0 = WRITEMASK_XYZ;
@@ -1121,7 +1234,23 @@ static void build_lighting( struct tnl_program *p )
 	       mask1 = 0;
 	    }
 
-	    emit_op3(p, OPCODE_MAD, _bfc0, 0, swizzle1(lit,X), ambient, _bfc0);
+            dots = negate(swizzle(dots,X,Y,W,Z));
+
+	    if (!is_undef(att)) {
+               emit_op1(p, OPCODE_LIT, lit, 0, dots);
+	       emit_op2(p, OPCODE_MUL, lit, 0, lit, att);
+               emit_op3(p, OPCODE_MAD, _bfc0, 0, swizzle1(lit,X), ambient, _bfc0);
+            }
+            else if (!p->state->material_shininess_is_zero) {
+               emit_op1(p, OPCODE_LIT, lit, 0, dots);
+               emit_op2(p, OPCODE_ADD, _col0, 0, ambient, _col0);
+            } 
+            else {
+               emit_degenerate_lit(p, lit, dots);
+               emit_op2(p, OPCODE_ADD, _col0, 0, ambient, _col0);
+            }
+
+	    emit_op2(p, OPCODE_ADD, _bfc0, 0, ambient, _bfc0);
 	    emit_op3(p, OPCODE_MAD, res0, mask0, swizzle1(lit,Y), diffuse, _bfc0);
 	    emit_op3(p, OPCODE_MAD, res1, mask1, swizzle1(lit,Z), specular, _bfc1);
 
@@ -1146,7 +1275,7 @@ static void build_fog( struct tnl_program *p )
    struct ureg input;
 
    if (p->state->fog_source_is_depth) {
-      input = swizzle1(get_eye_position(p), Z);
+      input = get_eye_position_z(p);
    }
    else {
       input = swizzle1(register_input(p, VERT_ATTRIB_FOG), X);
@@ -1201,7 +1330,7 @@ static void build_reflect_texgen( struct tnl_program *p,
 				  struct ureg dest,
 				  GLuint writemask )
 {
-   struct ureg normal = get_eye_normal(p);
+   struct ureg normal = get_transformed_normal(p);
    struct ureg eye_hat = get_eye_position_normalized(p);
    struct ureg tmp = get_temp(p);
 
@@ -1219,7 +1348,7 @@ static void build_sphere_texgen( struct tnl_program *p,
 				 struct ureg dest,
 				 GLuint writemask )
 {
-   struct ureg normal = get_eye_normal(p);
+   struct ureg normal = get_transformed_normal(p);
    struct ureg eye_hat = get_eye_position_normalized(p);
    struct ureg tmp = get_temp(p);
    struct ureg half = register_scalar_const(p, .5);
@@ -1338,7 +1467,7 @@ static void build_texture_transform( struct tnl_program *p )
 	    }
 
 	    if (normal_mask) {
-	       struct ureg normal = get_eye_normal(p);
+	       struct ureg normal = get_transformed_normal(p);
 	       emit_op1(p, OPCODE_MOV, out_texgen, normal_mask, normal );
 	    }
 
@@ -1376,7 +1505,7 @@ static void build_texture_transform( struct tnl_program *p )
 
 static void build_pointsize( struct tnl_program *p )
 {
-   struct ureg eye = get_eye_position(p);
+   struct ureg eye = get_eye_position_z(p);
    struct ureg state_size = register_param1(p, STATE_POINT_SIZE);
    struct ureg state_attenuation = register_param1(p, STATE_POINT_ATTENUATION);
    struct ureg out = register_output(p, VERT_RESULT_PSIZ);
@@ -1474,8 +1603,9 @@ create_new_program( const struct state_key *key,
    p.state = key;
    p.program = program;
    p.eye_position = undef;
+   p.eye_position_z = undef;
    p.eye_position_normalized = undef;
-   p.eye_normal = undef;
+   p.transformed_normal = undef;
    p.identity = undef;
    p.temp_in_use = 0;
    

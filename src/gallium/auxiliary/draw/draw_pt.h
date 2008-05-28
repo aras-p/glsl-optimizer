@@ -92,6 +92,10 @@ struct draw_pt_middle_end {
                 const ushort *draw_elts,
                 unsigned draw_count );
 
+   void (*run_linear)(struct draw_pt_middle_end *,
+                      unsigned start,
+                      unsigned count);
+
    void (*finish)( struct draw_pt_middle_end * );
    void (*destroy)( struct draw_pt_middle_end * );
 };
@@ -117,6 +121,7 @@ const void *draw_pt_elt_ptr( struct draw_context *draw,
 struct draw_pt_front_end *draw_pt_vcache( struct draw_context *draw );
 struct draw_pt_front_end *draw_pt_varray(struct draw_context *draw);
 
+
 /* Middle-ends:
  *
  * Currently one general-purpose case which can do all possibilities,
@@ -128,6 +133,7 @@ struct draw_pt_front_end *draw_pt_varray(struct draw_context *draw);
  * vertex_elements.
  */
 struct draw_pt_middle_end *draw_pt_fetch_emit( struct draw_context *draw );
+struct draw_pt_middle_end *draw_pt_middle_fse( struct draw_context *draw );
 struct draw_pt_middle_end *draw_pt_fetch_pipeline_or_emit(struct draw_context *draw);
 
 
@@ -152,6 +158,13 @@ void draw_pt_emit( struct pt_emit *emit,
 		   const ushort *elts,
 		   unsigned count );
 
+void draw_pt_emit_linear( struct pt_emit *emit,
+                          const float (*vertex_data)[4],
+                          unsigned vertex_count,
+                          unsigned stride,
+                          unsigned start,
+                          unsigned count );
+
 void draw_pt_emit_destroy( struct pt_emit *emit );
 
 struct pt_emit *draw_pt_emit_create( struct draw_context *draw );
@@ -169,6 +182,11 @@ void draw_pt_fetch_run( struct pt_fetch *fetch,
 			const unsigned *elts,
 			unsigned count,
 			char *verts );
+
+void draw_pt_fetch_run_linear( struct pt_fetch *fetch,
+                               unsigned start,
+                               unsigned count,
+                               char *verts );
 
 void draw_pt_fetch_destroy( struct pt_fetch *fetch );
 
@@ -192,6 +210,13 @@ void draw_pt_post_vs_prepare( struct pt_post_vs *pvs,
 struct pt_post_vs *draw_pt_post_vs_create( struct draw_context *draw );
 
 void draw_pt_post_vs_destroy( struct pt_post_vs *pvs );
+
+
+/*******************************************************************************
+ * Utils: 
+ */
+void draw_pt_split_prim(unsigned prim, unsigned *first, unsigned *incr);
+unsigned draw_pt_reduced_prim(unsigned prim);
 
 
 #endif

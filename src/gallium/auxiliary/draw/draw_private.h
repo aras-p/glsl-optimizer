@@ -124,6 +124,7 @@ struct draw_context
    struct {
       struct {
          struct draw_pt_middle_end *fetch_emit;
+         struct draw_pt_middle_end *fetch_shade_emit;
          struct draw_pt_middle_end *general;
       } middle;
 
@@ -154,6 +155,7 @@ struct draw_context
          const void *constants;
       } user;
 
+      boolean test_fse;
    } pt;
 
    struct {
@@ -167,13 +169,26 @@ struct draw_context
    /* pipe state that we need: */
    const struct pipe_rasterizer_state *rasterizer;
    struct pipe_viewport_state viewport;
-
-   struct draw_vertex_shader *vertex_shader;
-
    boolean identity_viewport;
 
-   uint num_vs_outputs;  /**< convenience, from vertex_shader */
+   struct {
+      struct draw_vertex_shader *vertex_shader;
+      uint num_vs_outputs;  /**< convenience, from vertex_shader */
 
+
+      /** TGSI program interpreter runtime state */
+      struct tgsi_exec_machine machine;
+
+      /* This (and the tgsi_exec_machine struct) probably need to be moved somewhere private.
+       */
+      struct gallivm_cpu_engine *engine;   
+
+
+      struct translate *fetch;
+      struct translate_cache *fetch_cache;
+      struct translate *emit;
+      struct translate_cache *emit_cache;
+   } vs;
 
    /* Clip derived state:
     */
@@ -190,16 +205,15 @@ struct draw_context
 
    unsigned reduced_prim;
 
-   /** TGSI program interpreter runtime state */
-   struct tgsi_exec_machine machine;
-
-   /* This (and the tgsi_exec_machine struct) probably need to be moved somewhere private.
-    */
-   struct gallivm_cpu_engine *engine;   
    void *driver_private;
 };
 
 
+/*******************************************************************************
+ * Vertex shader code:
+ */
+boolean draw_vs_init( struct draw_context *draw );
+void draw_vs_destroy( struct draw_context *draw );
 
 
 
@@ -246,6 +260,12 @@ void draw_pipeline_run( struct draw_context *draw,
                         unsigned stride,
                         const ushort *elts,
                         unsigned count );
+
+void draw_pipeline_run_linear( struct draw_context *draw,
+                               unsigned prim,
+                               struct vertex_header *vertices,
+                               unsigned count,
+                               unsigned stride );
 
 
 

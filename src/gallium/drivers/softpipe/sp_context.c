@@ -88,7 +88,8 @@ static void softpipe_destroy( struct pipe_context *pipe )
    struct pipe_winsys *ws = pipe->winsys;
    uint i;
 
-   draw_destroy( softpipe->draw );
+   if (softpipe->draw)
+      draw_destroy( softpipe->draw );
 
    softpipe->quad.polygon_stipple->destroy( softpipe->quad.polygon_stipple );
    softpipe->quad.earlyz->destroy( softpipe->quad.earlyz );
@@ -216,17 +217,23 @@ softpipe_create( struct pipe_screen *screen,
     * Create drawing context and plug our rendering stage into it.
     */
    softpipe->draw = draw_create();
-   assert(softpipe->draw);
+   if (!softpipe->draw) 
+      goto fail;
+
    softpipe->setup = sp_draw_render_stage(softpipe);
+   if (!softpipe->setup)
+      goto fail;
 
    if (GETENV( "SP_NO_RAST" ) != NULL)
       softpipe->no_rast = TRUE;
 
-   if (GETENV( "SP_VBUF" ) != NULL) {
-      sp_init_vbuf(softpipe);
+   if (GETENV( "SP_NO_VBUF" ) != NULL) {
+      /* Deprecated path -- vbuf is the intended interface to the draw module:
+       */
+      draw_set_rasterize_stage(softpipe->draw, softpipe->setup);
    }
    else {
-      draw_set_rasterize_stage(softpipe->draw, softpipe->setup);
+      sp_init_vbuf(softpipe);
    }
 
    /* plug in AA line/point stages */
@@ -241,4 +248,8 @@ softpipe_create( struct pipe_screen *screen,
    sp_init_surface_functions(softpipe);
 
    return &softpipe->pipe;
+
+ fail:
+   softpipe_destroy(&softpipe->pipe);
+   return NULL;
 }

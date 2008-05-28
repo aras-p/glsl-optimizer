@@ -64,7 +64,7 @@ draw_pt_arrays(struct draw_context *draw,
       opt |= PT_PIPELINE;
    }
 
-   if (!draw->bypass_clipping) {
+   if (!draw->bypass_clipping && !draw->pt.test_fse) {
       opt |= PT_CLIPTEST;
    }
 
@@ -72,16 +72,18 @@ draw_pt_arrays(struct draw_context *draw,
       opt |= PT_SHADE;
    }
 
-   if (opt)
-      middle = draw->pt.middle.general;
-   else
+
+   if (opt == 0) 
       middle = draw->pt.middle.fetch_emit;
+   else if (opt == PT_SHADE && draw->pt.test_fse)
+      middle = draw->pt.middle.fetch_shade_emit;
+   else
+      middle = draw->pt.middle.general;
 
 
    /* Pick the right frontend
     */
-   if (draw->pt.user.elts ||
-       count >= 256) {
+   if (draw->pt.user.elts || (opt & PT_PIPELINE)) {
       frontend = draw->pt.front.vcache;
    } else {
       frontend = draw->pt.front.varray;
@@ -102,6 +104,8 @@ draw_pt_arrays(struct draw_context *draw,
 
 boolean draw_pt_init( struct draw_context *draw )
 {
+   draw->pt.test_fse = GETENV("DRAW_FSE") != NULL;
+
    draw->pt.front.vcache = draw_pt_vcache( draw );
    if (!draw->pt.front.vcache)
       return FALSE;
@@ -113,6 +117,13 @@ boolean draw_pt_init( struct draw_context *draw )
    draw->pt.middle.fetch_emit = draw_pt_fetch_emit( draw );
    if (!draw->pt.middle.fetch_emit)
       return FALSE;
+
+   if (draw->pt.test_fse) {
+      draw->pt.middle.fetch_shade_emit = draw_pt_middle_fse( draw );
+      if (!draw->pt.middle.fetch_shade_emit)
+         return FALSE;
+   }
+
 
    draw->pt.middle.general = draw_pt_fetch_pipeline_or_emit( draw );
    if (!draw->pt.middle.general)
@@ -134,6 +145,11 @@ void draw_pt_destroy( struct draw_context *draw )
       draw->pt.middle.fetch_emit = NULL;
    }
 
+   if (draw->pt.middle.fetch_shade_emit) {
+      draw->pt.middle.fetch_shade_emit->destroy( draw->pt.middle.fetch_shade_emit );
+      draw->pt.middle.fetch_shade_emit = NULL;
+   }
+
    if (draw->pt.front.vcache) {
       draw->pt.front.vcache->destroy( draw->pt.front.vcache );
       draw->pt.front.vcache = NULL;
@@ -147,19 +163,6 @@ void draw_pt_destroy( struct draw_context *draw )
 
 
 
-static unsigned reduced_prim[PIPE_PRIM_POLYGON + 1] = {
-   PIPE_PRIM_POINTS,
-   PIPE_PRIM_LINES,
-   PIPE_PRIM_LINES,
-   PIPE_PRIM_LINES,
-   PIPE_PRIM_TRIANGLES,
-   PIPE_PRIM_TRIANGLES,
-   PIPE_PRIM_TRIANGLES,
-   PIPE_PRIM_TRIANGLES,
-   PIPE_PRIM_TRIANGLES,
-   PIPE_PRIM_TRIANGLES
-};
-
 
 /**
  * Draw vertex arrays
@@ -172,9 +175,10 @@ void
 draw_arrays(struct draw_context *draw, unsigned prim,
             unsigned start, unsigned count)
 {
-   if (reduced_prim[prim] != draw->reduced_prim) {
+   unsigned reduced_prim = draw_pt_reduced_prim(prim);
+   if (reduced_prim != draw->reduced_prim) {
       draw_do_flush( draw, DRAW_FLUSH_STATE_CHANGE );
-      draw->reduced_prim = reduced_prim[prim];
+      draw->reduced_prim = reduced_prim;
    }
 
    /* drawing done here: */

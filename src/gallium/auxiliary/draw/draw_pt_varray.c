@@ -43,6 +43,8 @@ struct varray_frontend {
    unsigned draw_count;
    unsigned fetch_count;
 
+   unsigned fetch_start;
+
    struct draw_pt_middle_end *middle;
 
    unsigned input_prim;
@@ -56,6 +58,11 @@ static void varray_flush(struct varray_frontend *varray)
       debug_printf("FLUSH fc = %d, dc = %d\n",
                    varray->fetch_count,
                    varray->draw_count);
+      debug_printf("\telt0 = %d, eltx = %d, draw0 = %d, drawx = %d\n",
+                   varray->fetch_elts[0],
+                   varray->fetch_elts[varray->fetch_count-1],
+                   varray->draw_elts[0],
+                   varray->draw_elts[varray->draw_count-1]);
 #endif
       varray->middle->run(varray->middle,
                           varray->fetch_elts,
@@ -68,20 +75,43 @@ static void varray_flush(struct varray_frontend *varray)
    varray->draw_count = 0;
 }
 
-#if 0
-static void varray_check_flush(struct varray_frontend *varray)
+static void varray_flush_linear(struct varray_frontend *varray,
+                                unsigned start, unsigned count)
 {
-   if (varray->draw_count + 6 >= DRAW_MAX/* ||
-       varray->fetch_count + 4 >= FETCH_MAX*/) {
-      varray_flush(varray);
+   if (count) {
+#if 0
+      debug_printf("FLUSH LINEAR start = %d, count = %d\n",
+                   start,
+                   count);
+#endif
+      assert(varray->middle->run_linear);
+      varray->middle->run_linear(varray->middle, start, count);
    }
 }
+
+static INLINE void fetch_init(struct varray_frontend *varray,
+                              unsigned count)
+{
+   unsigned idx;
+#if 0
+      debug_printf("FETCH INIT c = %d, fs = %d\n",
+                   count,
+                   varray->fetch_start);
 #endif
+   for (idx = 0; idx < count; ++idx) {
+      varray->fetch_elts[idx] = varray->fetch_start + idx;
+   }
+   varray->fetch_start += idx;
+   varray->fetch_count = idx;
+}
+
+
+
 
 static INLINE void add_draw_el(struct varray_frontend *varray,
-                               int idx, ushort flags)
+                               int idx)
 {
-   varray->draw_elts[varray->draw_count++] = idx | flags;
+   varray->draw_elts[varray->draw_count++] = idx;
 }
 
 
@@ -90,106 +120,52 @@ static INLINE void varray_triangle( struct varray_frontend *varray,
                                     unsigned i1,
                                     unsigned i2 )
 {
-   add_draw_el(varray, i0, 0);
-   add_draw_el(varray, i1, 0);
-   add_draw_el(varray, i2, 0);
-}
-
-static INLINE void varray_triangle_flags( struct varray_frontend *varray,
-                                          ushort flags,
-                                          unsigned i0,
-                                          unsigned i1,
-                                          unsigned i2 )
-{
-   add_draw_el(varray, i0, flags);
-   add_draw_el(varray, i1, 0);
-   add_draw_el(varray, i2, 0);
+   add_draw_el(varray, i0);
+   add_draw_el(varray, i1);
+   add_draw_el(varray, i2);
 }
 
 static INLINE void varray_line( struct varray_frontend *varray,
                                 unsigned i0,
                                 unsigned i1 )
 {
-   add_draw_el(varray, i0, 0);
-   add_draw_el(varray, i1, 0);
-}
-
-
-static INLINE void varray_line_flags( struct varray_frontend *varray,
-                                      ushort flags,
-                                      unsigned i0,
-                                      unsigned i1 )
-{
-   add_draw_el(varray, i0, flags);
-   add_draw_el(varray, i1, 0);
+   add_draw_el(varray, i0);
+   add_draw_el(varray, i1);
 }
 
 
 static INLINE void varray_point( struct varray_frontend *varray,
                                  unsigned i0 )
 {
-   add_draw_el(varray, i0, 0);
+   add_draw_el(varray, i0);
 }
 
-static INLINE void varray_quad( struct varray_frontend *varray,
-                                unsigned i0,
-                                unsigned i1,
-                                unsigned i2,
-                                unsigned i3 )
-{
-   varray_triangle( varray, i0, i1, i3 );
-   varray_triangle( varray, i1, i2, i3 );
-}
 
-static INLINE void varray_ef_quad( struct varray_frontend *varray,
-                                   unsigned i0,
-                                   unsigned i1,
-                                   unsigned i2,
-                                   unsigned i3 )
-{
-   const unsigned omitEdge1 = DRAW_PIPE_EDGE_FLAG_0 | DRAW_PIPE_EDGE_FLAG_2;
-   const unsigned omitEdge2 = DRAW_PIPE_EDGE_FLAG_0 | DRAW_PIPE_EDGE_FLAG_1;
-
-   varray_triangle_flags( varray,
-                          DRAW_PIPE_RESET_STIPPLE | omitEdge1,
-                          i0, i1, i3 );
-
-   varray_triangle_flags( varray,
-                          omitEdge2,
-                          i1, i2, i3 );
-}
-
-/* At least for now, we're back to using a template include file for
- * this.  The two paths aren't too different though - it may be
- * possible to reunify them.
- */
-#define TRIANGLE(vc,flags,i0,i1,i2) varray_triangle_flags(vc,flags,i0,i1,i2)
-#define QUAD(vc,i0,i1,i2,i3)        varray_ef_quad(vc,i0,i1,i2,i3)
-#define LINE(vc,flags,i0,i1)        varray_line_flags(vc,flags,i0,i1)
-#define POINT(vc,i0)                varray_point(vc,i0)
-#define FUNC varray_run_extras
-#include "draw_pt_varray_tmp.h"
-
-#define TRIANGLE(vc,flags,i0,i1,i2) varray_triangle(vc,i0,i1,i2)
-#define QUAD(vc,i0,i1,i2,i3)        varray_quad(vc,i0,i1,i2,i3)
-#define LINE(vc,flags,i0,i1)        varray_line(vc,i0,i1)
+#if 0
+#define TRIANGLE(flags,i0,i1,i2)       varray_triangle(varray,i0,i1,i2)
+#define LINE(flags,i0,i1)              varray_line(varray,i0,i1)
+#define POINT(i0)                      varray_point(varray,i0)
+#define FUNC varray_decompose
+#include "draw_pt_decompose.h"
+#else
+#define TRIANGLE(vc,i0,i1,i2)       varray_triangle(vc,i0,i1,i2)
+#define LINE(vc,i0,i1)              varray_line(vc,i0,i1)
 #define POINT(vc,i0)                varray_point(vc,i0)
 #define FUNC varray_run
-#include "draw_pt_varray_tmp.h"
+#include "draw_pt_varray_tmp_linear.h"
+#endif
 
-
-
-static unsigned reduced_prim[PIPE_PRIM_POLYGON + 1] = {
+static unsigned decompose_prim[PIPE_PRIM_POLYGON + 1] = {
    PIPE_PRIM_POINTS,
    PIPE_PRIM_LINES,
-   PIPE_PRIM_LINES,
-   PIPE_PRIM_LINES,
+   PIPE_PRIM_LINES,             /* decomposed LINELOOP */
+   PIPE_PRIM_LINE_STRIP,
    PIPE_PRIM_TRIANGLES,
-   PIPE_PRIM_TRIANGLES,
-   PIPE_PRIM_TRIANGLES,
-   PIPE_PRIM_TRIANGLES,
-   PIPE_PRIM_TRIANGLES,
-   PIPE_PRIM_TRIANGLES
+   PIPE_PRIM_TRIANGLE_STRIP,
+   PIPE_PRIM_TRIANGLES,         /* decomposed TRI_FAN */
+   PIPE_PRIM_QUADS,
+   PIPE_PRIM_QUAD_STRIP,
+   PIPE_PRIM_TRIANGLES          /* decomposed POLYGON */
 };
 
 
@@ -201,17 +177,10 @@ static void varray_prepare(struct draw_pt_front_end *frontend,
 {
    struct varray_frontend *varray = (struct varray_frontend *)frontend;
 
-   if (opt & PT_PIPELINE)
-   {
-      varray->base.run = varray_run_extras;
-   } 
-   else 
-   {
-      varray->base.run = varray_run;
-   }
+   varray->base.run = varray_run;
 
    varray->input_prim = prim;
-   varray->output_prim = reduced_prim[prim];
+   varray->output_prim = decompose_prim[prim];
 
    varray->middle = middle;
    middle->prepare(middle, varray->output_prim, opt);

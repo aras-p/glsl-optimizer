@@ -653,7 +653,7 @@ aaline_first_line(struct draw_stage *stage, struct prim_header *header)
    }
 
    /* update vertex attrib info */
-   aaline->tex_slot = draw->num_vs_outputs;
+   aaline->tex_slot = draw->vs.num_vs_outputs;
    assert(aaline->tex_slot > 0); /* output[0] is vertex pos */
 
    /* advertise the extra post-transformed vertex attribute */

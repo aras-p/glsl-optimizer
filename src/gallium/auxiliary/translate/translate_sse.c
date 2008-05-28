@@ -45,21 +45,15 @@
 #define W    3
 
 
-#ifdef WIN32
-#define RTASM __cdecl
-#else
-#define RTASM
-#endif
-
-typedef void (RTASM *run_func)( struct translate *translate,
-                                unsigned start,
-                                unsigned count,
-                                void *output_buffer );
-
-typedef void (RTASM *run_elts_func)( struct translate *translate,
-                                     const unsigned *elts,
+typedef void (PIPE_CDECL *run_func)( struct translate *translate,
+                                     unsigned start,
                                      unsigned count,
                                      void *output_buffer );
+
+typedef void (PIPE_CDECL *run_elts_func)( struct translate *translate,
+                                          const unsigned *elts,
+                                          unsigned count,
+                                          void *output_buffer );
 
 
 
@@ -472,13 +466,7 @@ static boolean build_vertex_emit( struct translate_sse *p,
    x86_lea(p->func, vertexECX, x86_make_disp(vertexECX, p->translate.key.output_stride));
 
    /* Incr index
-    */   /* Emit code for each of the attributes.  Currently routes
-    * everything through SSE registers, even when it might be more
-    * efficient to stick with regular old x86.  No optimization or
-    * other tricks - enough new ground to cover here just getting
-    * things working.
-    */
-
+    */ 
    if (linear) {
       x86_inc(p->func, idxEBX);
    } 

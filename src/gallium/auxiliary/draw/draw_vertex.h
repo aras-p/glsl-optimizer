@@ -109,4 +109,25 @@ extern void draw_compute_vertex_size(struct vertex_info *vinfo);
 void draw_dump_emitted_vertex(const struct vertex_info *vinfo, 
                               const uint8_t *data);
 
+
+static INLINE unsigned draw_translate_vinfo_format(unsigned format )
+{
+   switch (format) {
+   case EMIT_1F:
+   case EMIT_1F_PSIZE:
+      return PIPE_FORMAT_R32_FLOAT;
+   case EMIT_2F:
+      return PIPE_FORMAT_R32G32_FLOAT;
+   case EMIT_3F:
+      return PIPE_FORMAT_R32G32B32_FLOAT;
+   case EMIT_4F:
+      return PIPE_FORMAT_R32G32B32A32_FLOAT;
+   case EMIT_4UB:
+      return PIPE_FORMAT_R8G8B8A8_UNORM;
+   default:
+      return PIPE_FORMAT_NONE;
+   }
+}
+
+
 #endif /* DRAW_VERTEX_H */

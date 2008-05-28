@@ -103,6 +103,17 @@ typedef unsigned int       uintptr_t;
 #endif
 
 
+/* This should match linux gcc cdecl semantics everywhere, so that we
+ * just codegen one calling convention on all platforms.
+ */
+#ifdef WIN32
+#define PIPE_CDECL __cdecl
+#else
+#define PIPE_CDECL
+#endif
+
+
+
 #if defined __GNUC__
 #define ALIGN16_DECL(TYPE, NAME, SIZE)  TYPE NAME##___aligned[SIZE] __attribute__(( aligned( 16 ) ))
 #define ALIGN16_ASSIGN(NAME) NAME##___aligned
@@ -115,12 +126,16 @@ typedef unsigned int       uintptr_t;
 
 
 
-/** For calling code-gen'd functions */
+/** 
+ * For calling code-gen'd functions, phase out in favor of
+ * PIPE_CDECL, above, which really means cdecl on all platforms, not
+ * like the below...
+ */
 #if !defined(XSTDCALL) 
 #if defined(WIN32)
-#define XSTDCALL __stdcall
+#define XSTDCALL __stdcall      /* phase this out */
 #else
-#define XSTDCALL
+#define XSTDCALL                /* XXX: NOTE! not STDCALL! */
 #endif
 #endif
 

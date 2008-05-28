@@ -116,7 +116,7 @@ dup_vert( struct draw_stage *stage,
 {   
    struct vertex_header *tmp = stage->tmp[idx];
    const uint vsize = sizeof(struct vertex_header)
-      + stage->draw->num_vs_outputs * 4 * sizeof(float);
+      + stage->draw->vs.num_vs_outputs * 4 * sizeof(float);
    memcpy(tmp, vert, vsize);
    tmp->vertex_id = UNDEFINED_VERTEX_ID;
    return tmp;
