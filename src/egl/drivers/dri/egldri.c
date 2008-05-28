@@ -114,6 +114,10 @@ _eglMain(_EGLDisplay *dpy, const char *args)
       _eglLog(_EGL_WARNING, "%s DRM devices not found.", path);
       return EGL_FALSE;
    }
+
+   /* loop over dir entries looking for cardX where "X" is in the
+    * dpy->DriverName ":X" string.
+    */
    while ((dirent = readdir(dir))) {
 
       if (strncmp(&dirent->d_name[0], "card", 4) != 0)
