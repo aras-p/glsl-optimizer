@@ -24,17 +24,18 @@ struct _egl_extensions
  */
 struct _egl_driver
 {
-   EGLBoolean Initialized; /* set by driver after initialized */
+   EGLBoolean Initialized; /**< set by driver after initialized */
 
-   void *LibHandle; /* dlopen handle */
+   void *LibHandle; /**< dlopen handle */
 
    _EGLDisplay *Display;
 
-   int ABIversion;
-   int APImajor, APIminor; /* returned through eglInitialize */
+   int APImajor, APIminor; /**< as returned by eglInitialize() */
+   char Version[10];       /**< initialized from APImajor/minor */
+
    const char *ClientAPIs;
 
-   _EGLAPI API;
+   _EGLAPI API;  /**< EGL API dispatch table */
 
    _EGLExtensions Extensions;
 };

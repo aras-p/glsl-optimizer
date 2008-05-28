@@ -64,6 +64,7 @@ EGLBoolean EGLAPIENTRY
 eglInitialize(EGLDisplay dpy, EGLint *major, EGLint *minor)
 {
    if (dpy) {
+      EGLBoolean retVal;
       _EGLDisplay *dpyPriv = _eglLookupDisplay(dpy);
       if (!dpyPriv) {
          return EGL_FALSE;
@@ -75,8 +76,14 @@ eglInitialize(EGLDisplay dpy, EGLint *major, EGLint *minor)
          return EGL_FALSE;
       }
       /* Initialize the particular driver now */
-      return dpyPriv->Driver->API.Initialize(dpyPriv->Driver, dpy,
-                                             major, minor);
+      retVal = dpyPriv->Driver->API.Initialize(dpyPriv->Driver, dpy,
+                                               major, minor);
+
+      dpyPriv->Driver->APImajor = *major;
+      dpyPriv->Driver->APIminor = *minor;
+      sprintf(dpyPriv->Driver->Version, "%d.%d", *major, *minor);
+
+      return retVal;
    }
    return EGL_FALSE;
 }

@@ -38,8 +38,6 @@
 
 #define _EGL_MAX_EXTENSIONS_LEN 1000
 
-#define _EGL_VERSION_STRING "1.4"
-
 #define _EGL_VENDOR_STRING "Mesa Project"
 
 

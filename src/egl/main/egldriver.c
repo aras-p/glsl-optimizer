@@ -306,7 +306,7 @@ _eglQueryString(_EGLDriver *drv, EGLDisplay dpy, EGLint name)
    case EGL_VENDOR:
       return _EGL_VENDOR_STRING;
    case EGL_VERSION:
-      return _EGL_VERSION_STRING;
+      return drv->Version;
    case EGL_EXTENSIONS:
       _eglUpdateExtensionsString(drv);
       return drv->Extensions.String;
