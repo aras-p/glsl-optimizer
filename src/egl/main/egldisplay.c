@@ -35,7 +35,7 @@ _eglNewDisplay(NativeDisplayType nativeDisplay)
       dpy->Xdpy = (Display *) nativeDisplay;
 #endif
 
-      dpy->DriverName = _eglstrdup(_eglChooseDriver(dpy));
+      dpy->DriverName = _eglChooseDriver(dpy);
       if (!dpy->DriverName) {
          free(dpy);
          return NULL;

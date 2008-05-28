@@ -28,6 +28,44 @@
 #endif
 
 const char *DefaultDriverName = ":0";
+const char *SysFS = "/sys/class";
+
+
+
+
+/**
+ * Given a card number, use sysfs to determine the DRI driver name.
+ */
+static const char *
+_eglChooseDRMDriver(int card)
+{
+#if 0
+   return _eglstrdup("libEGLdri");
+#else
+   char path[2000], driverName[2000];
+   FILE *f;
+   int length;
+
+   snprintf(path, sizeof(path), "%s/drm/card%d/dri_library_name", SysFS, card);
+
+   f = fopen(path, "r");
+   if (!f)
+      return NULL;
+
+   fgets(driverName, sizeof(driverName), f);
+   fclose(f);
+
+   if ((length = strlen(driverName)) > 1) {
+      /* remove the trailing newline from sysfs */
+      driverName[length - 1] = '\0';
+      strncat(driverName, "_dri", sizeof(driverName));
+      return _eglstrdup(driverName);
+   }
+   else {
+      return NULL;
+   }   
+#endif
+}
 
 
 /**
@@ -41,7 +79,9 @@ const char *DefaultDriverName = ":0";
  * Else if the first character is '!' we interpret it as specific driver name
  * (i.e. "!r200" or "!i830".
  *
- * The caller should make a copy of the returned string.
+ * Whatever follows ':' is copied and put into dpy->DriverArgs.
+ *
+ * The caller may free() the returned string.
  */
 const char *
 _eglChooseDriver(_EGLDisplay *dpy)
@@ -62,20 +102,26 @@ _eglChooseDriver(_EGLDisplay *dpy)
          dpy->DriverArgs = _eglstrdup(args + 1);
    }
 
-
+   /* determine driver name now */
    if (displayString && displayString[0] == ':' &&
        (displayString[1] >= '0' && displayString[1] <= '9') &&
        !displayString[2]) {
-      /* XXX probe hardware here to determine which driver to open */
-      driverName = "libEGLdri";
+      int card = atoi(displayString + 1);
+      driverName = _eglChooseDRMDriver(card);
    }
    else if (displayString && displayString[0] == '!') {
-      /* use specified driver name */
-      driverName = displayString + 1;
+      /* use user-specified driver name */
+      driverName = _eglstrdup(displayString + 1);
+      /* truncate driverName at ':' if present */
+      {
+         char *args = strchr(driverName, ':');
+         if (args) {
+            *args = 0;
+         }
+      }
    }
    else {
       /* NativeDisplay is not a string! */
-
 #if defined(_EGL_PLATFORM_X)
       driverName = _xeglChooseDriver(dpy);
 #elif defined(_EGL_PLATFORM_WINDOWS)
