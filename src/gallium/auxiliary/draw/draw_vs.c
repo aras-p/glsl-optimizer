@@ -41,6 +41,22 @@
 
 
 
+
+void draw_vs_set_constants( struct draw_context *draw,
+                            const float (*constants)[4] )
+{
+   draw_vs_aos_machine_constants( draw->vs.aos_machine, constants );
+}
+
+
+void draw_vs_set_viewport( struct draw_context *draw,
+                           const struct pipe_viewport_state *viewport )
+{
+   draw_vs_aos_machine_viewport( draw->vs.aos_machine, viewport );
+}
+
+
+
 struct draw_vertex_shader *
 draw_create_vertex_shader(struct draw_context *draw,
                           const struct pipe_shader_state *shader)
@@ -83,6 +99,13 @@ void
 draw_delete_vertex_shader(struct draw_context *draw,
                           struct draw_vertex_shader *dvs)
 {
+   unsigned i;
+
+   for (i = 0; i < dvs->nr_varients; i++) 
+      dvs->varient[i]->destroy( dvs->varient[i] );
+
+   dvs->nr_varients = 0;
+
    dvs->delete( dvs );
 }
 
@@ -110,6 +133,10 @@ draw_vs_init( struct draw_context *draw )
    draw->vs.fetch_cache = translate_cache_create();
    if (!draw->vs.fetch_cache) 
       return FALSE;
+
+   draw->vs.aos_machine = draw_vs_aos_machine();
+   if (!draw->vs.aos_machine)
+      return FALSE;
       
    return TRUE;
 }
@@ -128,6 +155,9 @@ draw_vs_destroy( struct draw_context *draw )
 
    if (draw->vs.emit_cache)
       translate_cache_destroy(draw->vs.emit_cache);
+
+   if (draw->vs.aos_machine)
+      draw_vs_aos_machine_destroy(draw->vs.aos_machine);
 
    tgsi_exec_machine_free_data(&draw->vs.machine);
 
@@ -153,10 +183,17 @@ draw_vs_lookup_varient( struct draw_vertex_shader *vs,
    if (varient == NULL)
       return NULL;
 
-   /* Add it to our list: 
+   /* Add it to our list, could be smarter: 
     */
-   assert(vs->nr_varients < Elements(vs->varient));
-   vs->varient[vs->nr_varients++] = varient;
+   if (vs->nr_varients < Elements(vs->varient)) {
+      vs->varient[vs->nr_varients++] = varient;
+   }
+   else {
+      vs->last_varient++;
+      vs->last_varient %= Elements(vs->varient);
+      vs->varient[vs->last_varient]->destroy(vs->varient[vs->last_varient]);
+      vs->varient[vs->last_varient] = varient;
+   }
 
    /* Done 
     */

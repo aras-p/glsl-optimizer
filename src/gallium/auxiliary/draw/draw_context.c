@@ -174,6 +174,8 @@ void draw_set_viewport_state( struct draw_context *draw,
                               viewport->translate[1] == 0.0f &&
                               viewport->translate[2] == 0.0f &&
                               viewport->translate[3] == 0.0f);
+
+   draw_vs_set_viewport( draw, viewport );
 }
 
 
@@ -218,6 +220,7 @@ draw_set_mapped_constant_buffer(struct draw_context *draw,
                                 const void *buffer)
 {
    draw->pt.user.constants = buffer;
+   draw_vs_set_constants( draw, (const float (*)[4])buffer );
 }
 
 

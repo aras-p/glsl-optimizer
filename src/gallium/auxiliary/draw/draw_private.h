@@ -183,6 +183,10 @@ struct draw_context
        */
       struct gallivm_cpu_engine *engine;   
 
+      /* Here's another one:
+       */
+      struct aos_machine *aos_machine; 
+
 
       struct translate *fetch;
       struct translate_cache *fetch_cache;
@@ -215,6 +219,11 @@ struct draw_context
 boolean draw_vs_init( struct draw_context *draw );
 void draw_vs_destroy( struct draw_context *draw );
 
+void draw_vs_set_viewport( struct draw_context *, 
+                           const struct pipe_viewport_state * );
+
+void draw_vs_set_constants( struct draw_context *,
+                            const float (*constants)[4] );
 
 
 

@@ -189,12 +189,6 @@ static void fse_prepare( struct draw_pt_middle_end *middle,
                               draw->pt.vertex_buffer[buf].pitch );
    }
 
-   fse->active->set_constants( fse->active,
-                               (const float (*)[4])draw->pt.user.constants );
-
-   fse->active->set_viewport( fse->active,
-                              &draw->viewport );
-
    //return TRUE;
 }
 

@@ -60,10 +60,16 @@ struct x86_function;
 #define FPU_RND_NEAREST 2
 
 struct aos_machine;
-typedef void (PIPE_CDECL *lit_func)( struct aos_machine *,
+typedef void PIPE_CDECL (*lit_func)( struct aos_machine *,
                                     float *result,
                                     const float *in,
                                     unsigned count );
+
+PIPE_CDECL void aos_do_lit( struct aos_machine *machine,
+                            float *result,
+                            const float *in,
+                            unsigned count );
+
 struct shine_tab {
    float exponent;
    float values[258];
@@ -207,16 +213,25 @@ struct x86_reg aos_get_x86( struct aos_compilation *cp,
                             unsigned value );
 
 
+typedef void (PIPE_CDECL *vaos_run_elts_func)( struct aos_machine *,
+                                               const unsigned *elts,
+                                               unsigned count,
+                                               void *output_buffer);
+
+typedef void (PIPE_CDECL *vaos_run_linear_func)( struct aos_machine *,
+                                                unsigned start,
+                                                unsigned count,
+                                                void *output_buffer);
+
+
 struct draw_vs_varient_aos_sse {
    struct draw_vs_varient base;
    struct draw_context *draw;
 
    struct aos_attrib *attrib;
 
-   struct aos_machine *machine; /* XXX: temporarily unshared */
-
-   vsv_run_linear_func gen_run_linear;
-   vsv_run_elts_func gen_run_elts;
+   vaos_run_linear_func gen_run_linear;
+   vaos_run_elts_func gen_run_elts;
 
 
    struct x86_function func[2];

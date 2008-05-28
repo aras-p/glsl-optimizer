@@ -70,16 +70,6 @@ struct draw_vs_varient_key {
 
 struct draw_vs_varient;
 
-typedef void (PIPE_CDECL *vsv_run_elts_func)( struct draw_vs_varient *,
-                                              const unsigned *elts,
-                                              unsigned count,
-                                              void *output_buffer);
-
-typedef void (PIPE_CDECL *vsv_run_linear_func)( struct draw_vs_varient *,
-                                                unsigned start,
-                                                unsigned count,
-                                                void *output_buffer);
-
 
 struct draw_vs_varient {
    struct draw_vs_varient_key key;
@@ -90,12 +80,6 @@ struct draw_vs_varient {
                       unsigned i,
                       const void *ptr,
                       unsigned stride );
-
-   void (*set_constants)( struct draw_vs_varient *,
-                          const float (*constants)[4] );
-
-   void (*set_viewport)( struct draw_vs_varient *,
-                         const struct pipe_viewport_state * );
 
    void (PIPE_CDECL *run_linear)( struct draw_vs_varient *shader,
                                   unsigned start,
@@ -131,6 +115,7 @@ struct draw_vertex_shader {
     */
    struct draw_vs_varient *varient[16];
    unsigned nr_varients;
+   unsigned last_varient;
    struct draw_vs_varient *(*create_varient)( struct draw_vertex_shader *shader,
                                               const struct draw_vs_varient_key *key );
 
@@ -217,7 +202,14 @@ static INLINE int draw_vs_varient_key_compare( const struct draw_vs_varient_key 
 }
 
 
+struct aos_machine *draw_vs_aos_machine( void );
+void draw_vs_aos_machine_destroy( struct aos_machine *machine );
 
+void draw_vs_aos_machine_constants( struct aos_machine *machine,
+                                    const float (*constants)[4] );
+
+void draw_vs_aos_machine_viewport( struct aos_machine *machine,
+                                   const struct pipe_viewport_state *viewport );
 
 
 #define MAX_TGSI_VERTICES 4
