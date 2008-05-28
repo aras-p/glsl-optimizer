@@ -44,7 +44,7 @@ OBJECTS = $(SOURCES:.c=.o)
 
 
 # Undefined for now
-#LOCAL_CFLAGS = -D_EGL_PLATFORM_X=1
+LOCAL_CFLAGS = -D_EGL_PLATFORM_X=1
 
 
 .c.o:
