@@ -673,20 +673,17 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
    case PCI_CHIP_RC410_5A61:
    case PCI_CHIP_RC410_5A62:
       screen->chip_family = CHIP_FAMILY_RS400;
-      fprintf(stderr, "Warning, xpress200 detected.\n");
       break;
 
    case PCI_CHIP_RS690_791E:
    case PCI_CHIP_RS690_791F:
       screen->chip_family = CHIP_FAMILY_RS690;
-      fprintf(stderr, "Warning, RS690 detected, 3D support is incomplete.\n");
       break;
    case PCI_CHIP_RS740_796C:
    case PCI_CHIP_RS740_796D:
    case PCI_CHIP_RS740_796E:
    case PCI_CHIP_RS740_796F:
       screen->chip_family = CHIP_FAMILY_RS740;
-      fprintf(stderr, "Warning, RS740 detected, 3D support is incomplete.\n");
       break;
 
    case PCI_CHIP_R520_7100:
@@ -705,7 +702,6 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
    case PCI_CHIP_R520_710F:
       screen->chip_family = CHIP_FAMILY_R520;
       screen->chip_flags = RADEON_CHIPSET_TCL;
-      fprintf(stderr, "Warning, R520 detected, 3D HAHAHAHAHA!!.\n");
       break;
 
    case PCI_CHIP_RV515_7140:
@@ -748,7 +744,6 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
    case PCI_CHIP_RV515_7211:
       screen->chip_family = CHIP_FAMILY_RV515;
       screen->chip_flags = RADEON_CHIPSET_TCL;
-      fprintf(stderr, "Warning, RV515 detected, 3D HAHAHAHAHA!!.\n");
       break;
 
    case PCI_CHIP_RV530_71C0:
@@ -769,7 +764,6 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
    case PCI_CHIP_RV530_71DE:
       screen->chip_family = CHIP_FAMILY_RV530;
       screen->chip_flags = RADEON_CHIPSET_TCL;
-      fprintf(stderr, "Warning, RV530 detected, 3D HAHAHAHAHA!!.\n");
       break;
 
    case PCI_CHIP_R580_7240:
@@ -789,7 +783,6 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
    case PCI_CHIP_R580_7284:
       screen->chip_family = CHIP_FAMILY_R580;
       screen->chip_flags = RADEON_CHIPSET_TCL;
-      fprintf(stderr, "Warning, R580 detected, 3D HAHAHAHAHA!!.\n");
       break;
 
    case PCI_CHIP_RV570_7280:
@@ -806,7 +799,6 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
    case PCI_CHIP_RV560_7297:
       screen->chip_family = CHIP_FAMILY_RV560;
       screen->chip_flags = RADEON_CHIPSET_TCL;
-      fprintf(stderr, "Warning, RV560 detected, 3D HAHAHAHAHA!!.\n");
       break;
 
    default:
@@ -817,6 +809,11 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
    if ((screen->chip_family == CHIP_FAMILY_R350 || screen->chip_family == CHIP_FAMILY_R300) &&
        sPriv->ddx_version.minor < 2) {
       fprintf(stderr, "xf86-video-ati-6.6.2 or newer needed for Radeon 9500/9700/9800 cards.\n");
+      return NULL;
+   }
+
+   if ((sPriv->drm_version.minor < 29) && (screen->chip_family >= CHIP_FAMILY_RV515)) {
+      fprintf(stderr, "R500 support requires a newer drm.\n");
       return NULL;
    }
 
