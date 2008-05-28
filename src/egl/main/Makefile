@@ -18,7 +18,7 @@ HEADERS = \
 	eglmode.h \
 	eglscreen.h \
 	eglsurface.h \
-	eglx.h
+#	eglx.h
 
 SOURCES = \
 	eglapi.c \
@@ -33,12 +33,13 @@ SOURCES = \
 	eglmode.c \
 	eglscreen.c \
 	eglsurface.c \
-	eglx.c
+#	eglx.c
 
 OBJECTS = $(SOURCES:.c=.o)
 
 
-LOCAL_CFLAGS = -D_EGL_PLATFORM_X=1
+# Undefined for now
+#LOCAL_CFLAGS = -D_EGL_PLATFORM_X=1
 
 
 .c.o:

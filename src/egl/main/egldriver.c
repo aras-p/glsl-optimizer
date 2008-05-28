@@ -16,8 +16,14 @@
 #include "eglmode.h"
 #include "eglscreen.h"
 #include "eglsurface.h"
-#include "eglx.h"
 
+#if defined(_EGL_PLATFORM_X)
+#include "eglx.h"
+#elif defined(_EGL_PLATFORM_WINDOWS)
+/* XXX to do */
+#elif defined(_EGL_PLATFORM_WINCE)
+/* XXX to do */
+#endif
 
 const char *DefaultDriverName = "demodriver";
 
