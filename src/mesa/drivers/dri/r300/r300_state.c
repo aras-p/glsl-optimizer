@@ -60,7 +60,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r300_state.h"
 #include "r300_reg.h"
 #include "r300_emit.h"
-#include "r300_fragprog.h"
 #include "r300_tex.h"
 
 #include "drirenderbuffer.h"
@@ -1369,7 +1368,6 @@ static void r300SetupFragmentShaderTextures(GLcontext *ctx, int *tmu_mappings)
 
 static void r500SetupFragmentShaderTextures(GLcontext *ctx, int *tmu_mappings)
 {
-	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	int i;
 	struct r500_fragment_program *fp = (struct r500_fragment_program *)
 	    (char *)ctx->FragmentProgram._Current;
@@ -1898,9 +1896,6 @@ static inline void r300SetupVertexProgramFragment(r300ContextPtr r300, int dest,
 static void r300VapCntl(r300ContextPtr rmesa, GLuint input_count, GLuint output_count, GLuint temp_count)
 {
     int vtx_mem_size;
-    int cmd_reserved = 0;
-    int cmd_written = 0;
-    drm_radeon_cmd_header_t *cmd = NULL;
     int pvs_num_slots;
     int pvs_num_cntrls;
 

@@ -30,8 +30,8 @@
  *   Ben Skeggs <darktama@iinet.net.au>
  *   Jerome Glisse <j.glisse@gmail.com>
  */
-#ifndef __R300_FRAGPROG_H_
-#define __R300_FRAGPROG_H_
+#ifndef __R500_FRAGPROG_H_
+#define __R500_FRAGPROG_H_
 
 #include "glheader.h"
 #include "macros.h"
@@ -40,12 +40,6 @@
 #include "shader/prog_instruction.h"
 
 #include "r300_context.h"
-
-typedef struct r300_fragment_program_swizzle {
-	GLuint length;
-	GLuint src[4];
-	GLuint inst[8];
-} r300_fragment_program_swizzle_t;
 
 /* supported hw opcodes */
 #define PFS_OP_MAD 0
@@ -74,25 +68,6 @@ typedef struct r300_fragment_program_swizzle {
 #define SRC_MASK		(63 << 0)
 #define SRC_STRIDE		6
 
-#define NOP_INST0 (						 \
-		(R300_FPI0_OUTC_MAD) |				 \
-		(R300_FPI0_ARGC_ZERO << R300_FPI0_ARG0C_SHIFT) | \
-		(R300_FPI0_ARGC_ZERO << R300_FPI0_ARG1C_SHIFT) | \
-		(R300_FPI0_ARGC_ZERO << R300_FPI0_ARG2C_SHIFT))
-#define NOP_INST1 (					     \
-		((0 | SRC_CONST) << R300_FPI1_SRC0C_SHIFT) | \
-		((0 | SRC_CONST) << R300_FPI1_SRC1C_SHIFT) | \
-		((0 | SRC_CONST) << R300_FPI1_SRC2C_SHIFT))
-#define NOP_INST2 ( \
-		(R300_FPI2_OUTA_MAD) |				 \
-		(R300_FPI2_ARGA_ZERO << R300_FPI2_ARG0A_SHIFT) | \
-		(R300_FPI2_ARGA_ZERO << R300_FPI2_ARG1A_SHIFT) | \
-		(R300_FPI2_ARGA_ZERO << R300_FPI2_ARG2A_SHIFT))
-#define NOP_INST3 (					     \
-		((0 | SRC_CONST) << R300_FPI3_SRC0A_SHIFT) | \
-		((0 | SRC_CONST) << R300_FPI3_SRC1A_SHIFT) | \
-		((0 | SRC_CONST) << R300_FPI3_SRC2A_SHIFT))
-
 #define DRI_CONF_FP_OPTIMIZATION_SPEED   0
 #define DRI_CONF_FP_OPTIMIZATION_QUALITY 1
 
@@ -100,8 +75,5 @@ struct r500_fragment_program;
 
 extern void r500TranslateFragmentShader(r300ContextPtr r300,
 					struct r500_fragment_program *fp);
-
-extern void r300TranslateFragmentShader(r300ContextPtr r300,
-					struct r300_fragment_program *fp);
 
 #endif

@@ -1495,7 +1495,7 @@ static char *toswiz(int swiz_val) {
 
 static char *toop(int op_val)
 {
-  char *str;
+  char *str = NULL;
   switch (op_val) {
   case 0: str = "MAD"; break;
   case 1: str = "DP3"; break;
@@ -1578,7 +1578,6 @@ static char *to_texop(int val)
 
 static void dump_program(struct r500_fragment_program *fp)
 {
-  int pc = 0;
   int n;
   uint32_t inst;
   uint32_t inst0;

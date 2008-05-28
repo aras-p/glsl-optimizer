@@ -74,6 +74,7 @@ typedef struct r300_context *r300ContextPtr;
 
 #include "r300_vertprog.h"
 #include "r300_fragprog.h"
+#include "r500_fragprog.h"
 
 /**
  * This function takes a float and packs it into a uint32_t
