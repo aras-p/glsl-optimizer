@@ -534,7 +534,7 @@ static void translate_sse_release( struct translate *translate )
    FREE(p);
 }
 
-static void translate_sse_run_elts( struct translate *translate,
+static void PIPE_CDECL translate_sse_run_elts( struct translate *translate,
 			      const unsigned *elts,
 			      unsigned count,
 			      void *output_buffer )
@@ -547,7 +547,7 @@ static void translate_sse_run_elts( struct translate *translate,
 		    output_buffer );
 }
 
-static void translate_sse_run( struct translate *translate,
+static void PIPE_CDECL translate_sse_run( struct translate *translate,
 			 unsigned start,
 			 unsigned count,
 			 void *output_buffer )
