@@ -649,15 +649,8 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
       screen->chip_flags = RADEON_CHIPSET_TCL;
       break;
 
-      /* RV410 SE chips have half the pipes of regular RV410
-       * Need to get num pipes form the GB_PIPE_SELECT register
-       */
    case PCI_CHIP_RV410_5E4C:
    case PCI_CHIP_RV410_5E4F:
-      screen->chip_family = CHIP_FAMILY_RV380;
-      screen->chip_flags = RADEON_CHIPSET_TCL;
-      break;
-
    case PCI_CHIP_RV410_564A:
    case PCI_CHIP_RV410_564B:
    case PCI_CHIP_RV410_564F:
@@ -852,6 +845,36 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
        }
    } else {
        screen->fbLocation = (temp & 0xffff) << 16;
+   }
+
+   if (screen->chip_family >= CHIP_FAMILY_RV515) {
+       ret = radeonGetParam( sPriv->fd, RADEON_PARAM_NUM_GB_PIPES,
+			     &temp);
+       if (ret) {
+	   fprintf(stderr, "Unable to get num_pipes, need newer drm\n");
+	   switch (screen->chip_family) {
+	   case CHIP_FAMILY_R300:
+	   case CHIP_FAMILY_R350:
+	       screen->num_gb_pipes = 2;
+	       break;
+	   case CHIP_FAMILY_R420:
+	   case CHIP_FAMILY_R520:
+	   case CHIP_FAMILY_R580:
+	   case CHIP_FAMILY_RV560:
+	   case CHIP_FAMILY_RV570:
+	       screen->num_gb_pipes = 4;
+	       break;
+	   case CHIP_FAMILY_RV350:
+	   case CHIP_FAMILY_RV515:
+	   case CHIP_FAMILY_RV530:
+	   case CHIP_FAMILY_RV410:
+	   default:
+	       screen->num_gb_pipes = 1;
+	       break;
+	   }
+       } else {
+	   screen->num_gb_pipes = temp;
+       }
    }
 
    if ( sPriv->drm_version.minor >= 10 ) {

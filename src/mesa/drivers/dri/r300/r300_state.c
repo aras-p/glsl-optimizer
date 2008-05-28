@@ -2201,36 +2201,25 @@ static void r300ResetHwState(r300ContextPtr r300)
 	r300->hw.gb_misc.cmd[R300_GB_MISC_MSPOS_0] = 0x66666666;
 	r300->hw.gb_misc.cmd[R300_GB_MISC_MSPOS_1] = 0x06666666;
 
-	/* num pipes needs to be read back from the GB_PIPE_SELECT register
-	 * on r4xx/r5xx/rs4xx/rs6xx
-	 * should move this to the drm
-	 */
 	r300->hw.gb_misc.cmd[R300_GB_MISC_TILE_CONFIG] =
 	    R300_GB_TILE_ENABLE | R300_GB_TILE_SIZE_16 /*| R300_GB_SUBPIXEL_1_16*/;
-	switch (r300->radeon.radeonScreen->chip_family) {
-	case CHIP_FAMILY_R300:
-	case CHIP_FAMILY_R350:
-		r300->hw.gb_misc.cmd[R300_GB_MISC_TILE_CONFIG] |=
-		    R300_GB_TILE_PIPE_COUNT_R300;
-		break;
-	case CHIP_FAMILY_RV350:
-	case CHIP_FAMILY_RV515:
-	case CHIP_FAMILY_RV530:
-	case CHIP_FAMILY_RV410:
+	switch (r300->radeon.radeonScreen->num_gb_pipes) {
+	case 1:
+	default:
 		r300->hw.gb_misc.cmd[R300_GB_MISC_TILE_CONFIG] |=
 		    R300_GB_TILE_PIPE_COUNT_RV300;
 		break;
-	case CHIP_FAMILY_R420:
-	case CHIP_FAMILY_R520:
-	case CHIP_FAMILY_R580:
-	case CHIP_FAMILY_RV560:
-	case CHIP_FAMILY_RV570:
+	case 2:
+		r300->hw.gb_misc.cmd[R300_GB_MISC_TILE_CONFIG] |=
+		    R300_GB_TILE_PIPE_COUNT_R300;
+		break;
+	case 3:
+		r300->hw.gb_misc.cmd[R300_GB_MISC_TILE_CONFIG] |=
+		    R300_GB_TILE_PIPE_COUNT_R420_3P;
+		break;
+	case 4:
 		r300->hw.gb_misc.cmd[R300_GB_MISC_TILE_CONFIG] |=
 		    R300_GB_TILE_PIPE_COUNT_R420;
-		break;
-	default:
-		r300->hw.gb_misc.cmd[R300_GB_MISC_TILE_CONFIG] |=
-		    R300_GB_TILE_DISABLE; /* TODO: This disables tiling totally. I guess it happened accidentially. */
 		break;
 	}
 
