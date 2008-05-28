@@ -152,9 +152,9 @@ demoCreateContext(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config, EGLContext 
 
    /* generate handle and insert into hash table */
    _eglSaveContext(&c->Base);
-   assert(c->Base.Handle);
+   assert(_eglGetContextHandle(&c->Base));
 
-   return c->Base.Handle;
+   return _eglGetContextHandle(&c->Base);
 }
 
 
