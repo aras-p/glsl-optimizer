@@ -82,7 +82,6 @@ _EGLDriver *
 _eglMain(_EGLDisplay *dpy, const char *args)
 {
 #if 1
-   const char *displayString = (const char *) dpy->NativeDisplay;
    const int card = atoi(args);
    _EGLDriver *driver = NULL;
    char driverName[1000];
@@ -95,7 +94,7 @@ _eglMain(_EGLDisplay *dpy, const char *args)
 
    _eglLog(_EGL_DEBUG, "Driver name: %s\n", driverName);
 
-   driver = _eglOpenDriver(dpy, driverName);
+   driver = _eglOpenDriver(dpy, driverName, args);
 
    return driver;
 
