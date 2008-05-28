@@ -479,11 +479,12 @@ drm_show_screen_surface_mesa(_EGLDriver *drv, EGLDisplay dpy,
 		DRM_BO_FLAG_NO_EVICT,
 		DRM_BO_HINT_DONT_FENCE, &scrn->buffer);
 
-	prettyColors(drm_drv->device->drmFD, scrn->buffer.handle, pitch);
 	if (ret) {
 		printf("failed to create framebuffer (ret %d)\n", ret);
 		return EGL_FALSE;
 	}
+
+	prettyColors(drm_drv->device->drmFD, scrn->buffer.handle, pitch);
 
 	ret = drmModeAddFB(drm_drv->device->drmFD, mode->Width, mode->Height,
 			32, 32, pitch,
