@@ -3,6 +3,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
 #include "egldisplay.h"
 #include "eglscreen.h"
 #include "eglsurface.h"
