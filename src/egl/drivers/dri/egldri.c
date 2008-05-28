@@ -1,5 +1,6 @@
 /**
- * Generic EGL driver for DRI.
+ * Generic EGL driver for DRI.  This is basically an "adaptor" driver
+ * that allows libEGL to load/use regular DRI drivers.
  *
  * This file contains all the code needed to interface DRI-based drivers
  * with libEGL.
@@ -37,6 +38,41 @@ const char *sysfs = "/sys/class";
 static const int empty_attribute_list[1] = { None };
 
 
+
+/**
+ * Given a card number, return the name of the DRI driver to use.
+ * This generally means reading the contents of
+ * /sys/class/drm/cardX/dri_library_name, where X is the card number
+ */
+static EGLBoolean
+driver_name_from_card_number(int card, char *driverName, int maxDriverName)
+{
+   char path[2000];
+   FILE *f;
+   int length;
+
+   snprintf(path, sizeof(path), "%s/drm/card%d/dri_library_name", sysfs, card);
+
+   f = fopen(path, "r");
+   if (!f)
+      return EGL_FALSE;
+
+   fgets(driverName, maxDriverName, f);
+   fclose(f);
+
+   if ((length = strlen(driverName)) > 1) {
+      /* remove the trailing newline from sysfs */
+      driverName[length - 1] = '\0';
+      strncat(driverName, "_dri", maxDriverName);
+      return EGL_TRUE;
+   }
+   else {
+      return EGL_FALSE;
+   }   
+}
+
+
+
 /**
  * The bootstrap function.
  * Return a new driDriver object and plug in API functions.
@@ -45,6 +81,26 @@ static const int empty_attribute_list[1] = { None };
 _EGLDriver *
 _eglMain(_EGLDisplay *dpy)
 {
+#if 1
+   const char *displayString = (const char *) dpy->NativeDisplay;
+   const int card = atoi(displayString + 1);
+   _EGLDriver *driver = NULL;
+   char driverName[1000];
+
+   if (!driver_name_from_card_number(card, driverName, sizeof(driverName))) {
+      _eglLog(_EGL_WARNING,
+              "Unable to determine driver name for card %d\n", card);
+      return NULL;
+   }
+
+   _eglLog(_EGL_DEBUG, "Driver name: %s\n", driverName);
+
+   driver = _eglOpenDriver(dpy, driverName);
+
+   return driver;
+
+#else
+
    int length;
    char path[NAME_MAX];
    struct dirent *dirent;
@@ -63,11 +119,11 @@ _eglMain(_EGLDisplay *dpy)
 
       if (strncmp(&dirent->d_name[0], "card", 4) != 0)
          continue;
-      if (strcmp(&dirent->d_name[4], &dpy->DriverName[1]) != 0)
+      if (strcmp(&dirent->d_name[4], &driverName[1]) != 0)
          continue;
 
       snprintf(path, sizeof(path), "%s/drm/card%s/dri_library_name",
-               sysfs, &dpy->DriverName[1]);
+               sysfs, &driverName[1]);
       _eglLog(_EGL_INFO, "Opening %s", path);
 #if 1
       file = fopen(path, "r");
@@ -91,6 +147,7 @@ _eglMain(_EGLDisplay *dpy)
    closedir(dir);
 
    return driver;
+#endif
 }
 
 
@@ -1087,6 +1144,7 @@ _eglDRIInitialize(_EGLDriver *drv, EGLDisplay dpy,
 {
    _EGLDisplay *disp = _eglLookupDisplay(dpy);
    driDisplay *display;
+   const char *driverName = (const char *) disp->NativeDisplay;
 
    assert(disp);
 
@@ -1101,7 +1159,7 @@ _eglDRIInitialize(_EGLDriver *drv, EGLDisplay dpy,
    *major = 1;
    *minor = 0;
 
-   sscanf(&disp->DriverName[1], "%d", &display->minor);
+   sscanf(driverName + 1, "%d", &display->minor);
 
    drv->Initialized = EGL_TRUE;
    return EGL_TRUE;
