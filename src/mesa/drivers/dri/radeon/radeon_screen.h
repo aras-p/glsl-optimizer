@@ -105,6 +105,8 @@ typedef struct {
    driOptionCache optionCache;
 
    const __DRIextension *extensions[8];
+
+   int num_gb_pipes;
 } radeonScreenRec, *radeonScreenPtr;
 
 #define IS_R100_CLASS(screen) \

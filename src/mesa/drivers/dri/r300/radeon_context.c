@@ -135,6 +135,7 @@ GLboolean radeonInitContext(radeonContextPtr radeon,
 	/* Fill in additional standard functions. */
 	radeonInitDriverFuncs(functions);
 
+	radeon->radeonScreen = screen;
 	/* Allocate and initialize the Mesa context */
 	if (sharedContextPrivate)
 		shareCtx = ((radeonContextPtr)sharedContextPrivate)->glCtx;
@@ -158,7 +159,6 @@ GLboolean radeonInitContext(radeonContextPtr radeon,
 	radeon->dri.fd = sPriv->fd;
 	radeon->dri.drmMinor = sPriv->drm_version.minor;
 
-	radeon->radeonScreen = screen;
 	radeon->sarea = (drm_radeon_sarea_t *) ((GLubyte *) sPriv->pSAREA +
 					       screen->sarea_priv_offset);
 

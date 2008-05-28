@@ -118,7 +118,7 @@ static void r300ClearBuffer(r300ContextPtr r300, int flags, int buffer)
 	}
 
 	R300_STATECHANGE(r300, zs);
-	reg_start(R300_RB3D_ZSTENCIL_CNTL_0, 2);
+	reg_start(R300_ZB_CNTL, 2);
 
 	{
 		uint32_t t1, t2;
@@ -127,32 +127,32 @@ static void r300ClearBuffer(r300ContextPtr r300, int flags, int buffer)
 		t2 = 0x0;
 
 		if (flags & CLEARBUFFER_DEPTH) {
-			t1 |= R300_RB3D_Z_WRITE_ONLY;
+			t1 |= R300_Z_ENABLE | R300_Z_WRITE_ENABLE;
 			t2 |=
-			    (R300_ZS_ALWAYS << R300_RB3D_ZS1_DEPTH_FUNC_SHIFT);
-		} else {
-			t1 |= R300_RB3D_Z_DISABLED_1;	// disable
+			    (R300_ZS_ALWAYS << R300_Z_FUNC_SHIFT);
+		} else { //XXX
+			t1 |= R300_STENCIL_FRONT_BACK;	// disable
 		}
 
 		if (flags & CLEARBUFFER_STENCIL) {
-			t1 |= R300_RB3D_STENCIL_ENABLE;
+			t1 |= R300_STENCIL_ENABLE;
 			t2 |=
 			    (R300_ZS_ALWAYS <<
-			     R300_RB3D_ZS1_FRONT_FUNC_SHIFT) |
+			     R300_S_FRONT_FUNC_SHIFT) |
 			    (R300_ZS_REPLACE <<
-			     R300_RB3D_ZS1_FRONT_FAIL_OP_SHIFT) |
+			     R300_S_FRONT_SFAIL_OP_SHIFT) |
 			    (R300_ZS_REPLACE <<
-			     R300_RB3D_ZS1_FRONT_ZPASS_OP_SHIFT) |
+			     R300_S_FRONT_ZPASS_OP_SHIFT) |
 			    (R300_ZS_REPLACE <<
-			     R300_RB3D_ZS1_FRONT_ZFAIL_OP_SHIFT) |
+			     R300_S_FRONT_ZFAIL_OP_SHIFT) |
 			    (R300_ZS_ALWAYS <<
-			     R300_RB3D_ZS1_BACK_FUNC_SHIFT) |
+			     R300_S_BACK_FUNC_SHIFT) |
 			    (R300_ZS_REPLACE <<
-			     R300_RB3D_ZS1_BACK_FAIL_OP_SHIFT) |
+			     R300_S_BACK_SFAIL_OP_SHIFT) |
 			    (R300_ZS_REPLACE <<
-			     R300_RB3D_ZS1_BACK_ZPASS_OP_SHIFT) |
+			     R300_S_BACK_ZPASS_OP_SHIFT) |
 			    (R300_ZS_REPLACE <<
-			     R300_RB3D_ZS1_BACK_ZFAIL_OP_SHIFT);
+			     R300_S_BACK_ZFAIL_OP_SHIFT);
 		}
 
 		e32(t1);
@@ -186,9 +186,15 @@ static void r300EmitClearState(GLcontext * ctx)
 	int cmd_written = 0;
 	drm_radeon_cmd_header_t *cmd = NULL;
 	int has_tcl = 1;
+	int is_r500 = 0;
+	GLuint vap_cntl;
 
 	if (!(r300->radeon.radeonScreen->chip_flags & RADEON_CHIPSET_TCL))
 		has_tcl = 0;
+
+        if (r300->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV515)
+                is_r500 = 1;
+
 
 	/* FIXME: the values written to R300_VAP_INPUT_ROUTE_0_0 and
 	 * R300_VAP_INPUT_ROUTE_0_1 are in fact known, however, the values are
@@ -199,25 +205,38 @@ static void r300EmitClearState(GLcontext * ctx)
 	 * these registers, as well as the actual values used for rendering.
 	 */
 	R300_STATECHANGE(r300, vir[0]);
-	reg_start(R300_VAP_INPUT_ROUTE_0_0, 0);
+	reg_start(R300_VAP_PROG_STREAM_CNTL_0, 0);
 	if (!has_tcl)
-		e32(0x22030003);
+	    e32(((((0 << R300_DST_VEC_LOC_SHIFT) | R300_DATA_TYPE_FLOAT_4) << R300_DATA_TYPE_0_SHIFT) |
+		 ((R300_LAST_VEC | (2 << R300_DST_VEC_LOC_SHIFT) | R300_DATA_TYPE_FLOAT_4) << R300_DATA_TYPE_1_SHIFT)));
 	else
-		e32(0x21030003);
+	    e32(((((0 << R300_DST_VEC_LOC_SHIFT) | R300_DATA_TYPE_FLOAT_4) << R300_DATA_TYPE_0_SHIFT) |
+		 ((R300_LAST_VEC | (1 << R300_DST_VEC_LOC_SHIFT) | R300_DATA_TYPE_FLOAT_4) << R300_DATA_TYPE_1_SHIFT)));
 
 	/* disable fog */
 	R300_STATECHANGE(r300, fogs);
-	reg_start(FG_FOG_BLEND, 0);
+	reg_start(R300_FG_FOG_BLEND, 0);
 	e32(0x0);
 
 	R300_STATECHANGE(r300, vir[1]);
-	reg_start(R300_VAP_INPUT_ROUTE_1_0, 0);
-	e32(0xF688F688);
+	reg_start(R300_VAP_PROG_STREAM_CNTL_EXT_0, 0);
+	e32(((((R300_SWIZZLE_SELECT_X << R300_SWIZZLE_SELECT_X_SHIFT) |
+	       (R300_SWIZZLE_SELECT_Y << R300_SWIZZLE_SELECT_Y_SHIFT) |
+	       (R300_SWIZZLE_SELECT_Z << R300_SWIZZLE_SELECT_Z_SHIFT) |
+	       (R300_SWIZZLE_SELECT_W << R300_SWIZZLE_SELECT_W_SHIFT) |
+	       ((R300_WRITE_ENA_X | R300_WRITE_ENA_Y | R300_WRITE_ENA_Z | R300_WRITE_ENA_W) << R300_WRITE_ENA_SHIFT))
+	      << R300_SWIZZLE0_SHIFT) |
+	     (((R300_SWIZZLE_SELECT_X << R300_SWIZZLE_SELECT_X_SHIFT) |
+	       (R300_SWIZZLE_SELECT_Y << R300_SWIZZLE_SELECT_Y_SHIFT) |
+	       (R300_SWIZZLE_SELECT_Z << R300_SWIZZLE_SELECT_Z_SHIFT) |
+	       (R300_SWIZZLE_SELECT_W << R300_SWIZZLE_SELECT_W_SHIFT) |
+	       ((R300_WRITE_ENA_X | R300_WRITE_ENA_Y | R300_WRITE_ENA_Z | R300_WRITE_ENA_W) << R300_WRITE_ENA_SHIFT))
+	      << R300_SWIZZLE1_SHIFT)));
 
 	/* R300_VAP_INPUT_CNTL_0, R300_VAP_INPUT_CNTL_1 */
 	R300_STATECHANGE(r300, vic);
-	reg_start(R300_VAP_INPUT_CNTL_0, 1);
-	e32(R300_INPUT_CNTL_0_COLOR);
+	reg_start(R300_VAP_VTX_STATE_CNTL, 1);
+	e32((R300_SEL_USER_COLOR_0 << R300_COLOR_0_ASSEMBLY_SHIFT));
 	e32(R300_INPUT_CNTL_POS | R300_INPUT_CNTL_COLOR | R300_INPUT_CNTL_TC0);
 
 	R300_STATECHANGE(r300, vte);
@@ -229,7 +248,7 @@ static void r300EmitClearState(GLcontext * ctx)
 	    R300_VPORT_Z_OFFSET_ENA);
 	e32(0x8);
 
-	reg_start(R300_VAP_PSC_SGN_NORM_CNTL, SGN_NORM_ZERO);
+	reg_start(R300_VAP_PSC_SGN_NORM_CNTL, 0);
 	e32(0xaaaaaaaa);
 
 	R300_STATECHANGE(r300, vof);
@@ -252,7 +271,7 @@ static void r300EmitClearState(GLcontext * ctx)
 	efloat(0.0);
 
 	R300_STATECHANGE(r300, at);
-	reg_start(FG_ALPHA_FUNC, 0);
+	reg_start(R300_FG_ALPHA_FUNC, 0);
 	e32(0x0);
 
 	R300_STATECHANGE(r300, bld);
@@ -263,7 +282,7 @@ static void r300EmitClearState(GLcontext * ctx)
 	if (has_tcl) {
 	    R300_STATECHANGE(r300, vap_clip_cntl);
 	    reg_start(R300_VAP_CLIP_CNTL, 0);
-	    e32(R300_221C_CLEAR);
+	    e32(R300_PS_UCP_MODE_CLIP_AS_TRIFAN | R300_CLIP_DISABLE);
         }
 
 	R300_STATECHANGE(r300, ps);
@@ -271,67 +290,169 @@ static void r300EmitClearState(GLcontext * ctx)
 	e32(((dPriv->w * 6) << R300_POINTSIZE_X_SHIFT) |
 	    ((dPriv->h * 6) << R300_POINTSIZE_Y_SHIFT));
 
-	R300_STATECHANGE(r300, ri);
-	reg_start(R300_RS_IP_0, 8);
-	for (i = 0; i < 8; ++i) {
-		e32(R300_RS_SEL_T(1) | R300_RS_SEL_R(2) | R300_RS_SEL_Q(3));
+	if (!is_r500) {
+		R300_STATECHANGE(r300, ri);
+		reg_start(R300_RS_IP_0, 7);
+		for (i = 0; i < 8; ++i) {
+			e32(R300_RS_SEL_T(1) | R300_RS_SEL_R(2) | R300_RS_SEL_Q(3));
+		}
+
+		R300_STATECHANGE(r300, rc);
+		/* The second constant is needed to get glxgears display anything .. */
+		reg_start(R300_RS_COUNT, 1);
+		e32((1 << R300_IC_COUNT_SHIFT) | R300_HIRES_EN);
+		e32(0x0);
+
+		R300_STATECHANGE(r300, rr);
+		reg_start(R300_RS_INST_0, 0);
+		e32(R300_RS_INST_COL_CN_WRITE);
+	} else {
+	  
+		R300_STATECHANGE(r300, ri);
+		reg_start(R500_RS_IP_0, 7);
+		for (i = 0; i < 8; ++i) {
+			e32((R500_RS_IP_PTR_K0 << R500_RS_IP_TEX_PTR_S_SHIFT) |
+			    (R500_RS_IP_PTR_K0 << R500_RS_IP_TEX_PTR_T_SHIFT) |
+			    (R500_RS_IP_PTR_K0 << R500_RS_IP_TEX_PTR_R_SHIFT) |
+			    (R500_RS_IP_PTR_K1 << R500_RS_IP_TEX_PTR_Q_SHIFT));
+		}
+
+		R300_STATECHANGE(r300, rc);
+		/* The second constant is needed to get glxgears display anything .. */
+		reg_start(R300_RS_COUNT, 1);
+		e32((1 << R300_IC_COUNT_SHIFT) | R300_HIRES_EN);
+		e32(0x0);
+
+		R300_STATECHANGE(r300, rr);
+		reg_start(R500_RS_INST_0, 0);
+		e32(R500_RS_INST_COL_CN_WRITE);
+
 	}
 
-	R300_STATECHANGE(r300, rc);
-	/* The second constant is needed to get glxgears display anything .. */
-	reg_start(R300_RS_COUNT, 1);
-	e32((1 << R300_IC_COUNT_SHIFT) | R300_HIRES_EN);
-	e32(0x0);
+	if (!is_r500) {
+		R300_STATECHANGE(r300, fp);
+		reg_start(R300_US_CONFIG, 2);
+		e32(0x0);
+		e32(0x0);
+		e32(0x0);
+		reg_start(R300_US_CODE_ADDR_0, 3);
+		e32(0x0);
+		e32(0x0);
+		e32(0x0);
+		e32(R300_RGBA_OUT);
 
-	R300_STATECHANGE(r300, rr);
-	reg_start(R300_RS_INST_0, 0);
-	e32(R300_RS_INST_COL_CN_WRITE);
+		R300_STATECHANGE(r300, fpi[0]);
+		R300_STATECHANGE(r300, fpi[1]);
+		R300_STATECHANGE(r300, fpi[2]);
+		R300_STATECHANGE(r300, fpi[3]);
 
-	R300_STATECHANGE(r300, fp);
-	reg_start(R300_PFS_CNTL_0, 2);
-	e32(0x0);
-	e32(0x0);
-	e32(0x0);
-	reg_start(R300_PFS_NODE_0, 3);
-	e32(0x0);
-	e32(0x0);
-	e32(0x0);
-	e32(R300_PFS_NODE_OUTPUT_COLOR);
+		reg_start(R300_US_ALU_RGB_INST_0, 0);
+		e32(FP_INSTRC(MAD, FP_ARGC(SRC0C_XYZ), FP_ARGC(ONE), FP_ARGC(ZERO)));
 
-	R300_STATECHANGE(r300, fpi[0]);
-	R300_STATECHANGE(r300, fpi[1]);
-	R300_STATECHANGE(r300, fpi[2]);
-	R300_STATECHANGE(r300, fpi[3]);
+		reg_start(R300_US_ALU_RGB_ADDR_0, 0);
+		e32(FP_SELC(0, NO, XYZ, FP_TMP(0), 0, 0));
 
-	reg_start(R300_PFS_INSTR0_0, 0);
-	e32(FP_INSTRC(MAD, FP_ARGC(SRC0C_XYZ), FP_ARGC(ONE), FP_ARGC(ZERO)));
+		reg_start(R300_US_ALU_ALPHA_INST_0, 0);
+		e32(FP_INSTRA(MAD, FP_ARGA(SRC0A), FP_ARGA(ONE), FP_ARGA(ZERO)));
 
-	reg_start(R300_PFS_INSTR1_0, 0);
-	e32(FP_SELC(0, NO, XYZ, FP_TMP(0), 0, 0));
+		reg_start(R300_US_ALU_ALPHA_ADDR_0, 0);
+		e32(FP_SELA(0, NO, W, FP_TMP(0), 0, 0));
+	} else {
+ 		R300_STATECHANGE(r300, fp);
+ 		reg_start(R500_US_CONFIG, 1);
+ 		e32(R500_ZERO_TIMES_ANYTHING_EQUALS_ZERO);
+ 		e32(0x0);
+ 		reg_start(R500_US_CODE_ADDR, 2);
+ 		e32(R500_US_CODE_START_ADDR(0) | R500_US_CODE_END_ADDR(1));
+ 		e32(R500_US_CODE_RANGE_ADDR(0) | R500_US_CODE_RANGE_SIZE(1));
+ 		e32(R500_US_CODE_OFFSET_ADDR(0));
 
-	reg_start(R300_PFS_INSTR2_0, 0);
-	e32(FP_INSTRA(MAD, FP_ARGA(SRC0A), FP_ARGA(ONE), FP_ARGA(ZERO)));
+		R300_STATECHANGE(r300, r500fp);
+		r500fp_start_fragment(0, 6);
 
-	reg_start(R300_PFS_INSTR3_0, 0);
-	e32(FP_SELA(0, NO, W, FP_TMP(0), 0, 0));
+		e32(R500_INST_TYPE_OUT |
+		    R500_INST_TEX_SEM_WAIT |
+		    R500_INST_LAST |
+		    R500_INST_RGB_OMASK_R |
+		    R500_INST_RGB_OMASK_G |
+		    R500_INST_RGB_OMASK_B |
+		    R500_INST_ALPHA_OMASK |
+		    R500_INST_RGB_CLAMP |
+		    R500_INST_ALPHA_CLAMP);
+
+		e32(R500_RGB_ADDR0(0) |
+		    R500_RGB_ADDR1(0) |
+		    R500_RGB_ADDR1_CONST |
+		    R500_RGB_ADDR2(0) |
+		    R500_RGB_ADDR2_CONST);
+
+		e32(R500_ALPHA_ADDR0(0) |
+		    R500_ALPHA_ADDR1(0) |
+		    R500_ALPHA_ADDR1_CONST |
+		    R500_ALPHA_ADDR2(0) |
+		    R500_ALPHA_ADDR2_CONST);
+
+		e32(R500_ALU_RGB_SEL_A_SRC0 |
+		    R500_ALU_RGB_R_SWIZ_A_R |
+		    R500_ALU_RGB_G_SWIZ_A_G |
+		    R500_ALU_RGB_B_SWIZ_A_B |
+		    R500_ALU_RGB_SEL_B_SRC0 |
+		    R500_ALU_RGB_R_SWIZ_B_R |
+		    R500_ALU_RGB_B_SWIZ_B_G |
+		    R500_ALU_RGB_G_SWIZ_B_B);
+
+		e32(R500_ALPHA_OP_CMP |
+		    R500_ALPHA_SWIZ_A_A |
+		    R500_ALPHA_SWIZ_B_A);
+
+		e32(R500_ALU_RGBA_OP_CMP |
+		    R500_ALU_RGBA_R_SWIZ_0 |
+		    R500_ALU_RGBA_G_SWIZ_0 |
+		    R500_ALU_RGBA_B_SWIZ_0 |
+		    R500_ALU_RGBA_A_SWIZ_0);
+	}
+
+	reg_start(R300_VAP_PVS_STATE_FLUSH_REG, 0);
+	e32(0x00000000);
+	if (has_tcl) {
+	    vap_cntl = ((10 << R300_PVS_NUM_SLOTS_SHIFT) |
+			(5 << R300_PVS_NUM_CNTLRS_SHIFT) |
+			(12 << R300_VF_MAX_VTX_NUM_SHIFT));
+	    if (r300->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV515)
+		vap_cntl |= R500_TCL_STATE_OPTIMIZATION;
+	} else
+	    vap_cntl = ((10 << R300_PVS_NUM_SLOTS_SHIFT) |
+			(5 << R300_PVS_NUM_CNTLRS_SHIFT) |
+			(5 << R300_VF_MAX_VTX_NUM_SHIFT));
+
+	if (r300->radeon.radeonScreen->chip_family == CHIP_FAMILY_RV515)
+	    vap_cntl |= (2 << R300_PVS_NUM_FPUS_SHIFT);
+	else if ((r300->radeon.radeonScreen->chip_family == CHIP_FAMILY_RV530) ||
+		 (r300->radeon.radeonScreen->chip_family == CHIP_FAMILY_RV560))
+	    vap_cntl |= (5 << R300_PVS_NUM_FPUS_SHIFT);
+	else if (r300->radeon.radeonScreen->chip_family == CHIP_FAMILY_R420)
+	    vap_cntl |= (6 << R300_PVS_NUM_FPUS_SHIFT);
+	else if ((r300->radeon.radeonScreen->chip_family == CHIP_FAMILY_R520) ||
+		 (r300->radeon.radeonScreen->chip_family == CHIP_FAMILY_R580) ||
+		 (r300->radeon.radeonScreen->chip_family == CHIP_FAMILY_RV570))
+	    vap_cntl |= (8 << R300_PVS_NUM_FPUS_SHIFT);
+	else
+	    vap_cntl |= (4 << R300_PVS_NUM_FPUS_SHIFT);
+
+	R300_STATECHANGE(rmesa, vap_cntl);
+	reg_start(R300_VAP_CNTL, 0);
+	e32(vap_cntl);
 
 	if (has_tcl) {
-		R300_STATECHANGE(rmesa, vap_cntl);
-		reg_start(R300_VAP_CNTL, 0);
-
-		e32((10 << R300_VAP_CNTL__PVS_NUM_SLOTS__SHIFT) |
-		    (6 << R300_VAP_CNTL__PVS_NUM_CNTRLS__SHIFT) |
-		    (4 << R300_VAP_CNTL__PVS_NUM_FPUS__SHIFT) |
-		    (12 << R300_VAP_CNTL__VF_MAX_VTX_NUM__SHIFT));
-
 		R300_STATECHANGE(r300, pvs);
-		reg_start(R300_VAP_PVS_CNTL_1, 2);
+		reg_start(R300_VAP_PVS_CODE_CNTL_0, 2);
 
-		e32((0 << R300_PVS_CNTL_1_PROGRAM_START_SHIFT) |
-		    (0 << R300_PVS_CNTL_1_POS_END_SHIFT) |
-		    (1 << R300_PVS_CNTL_1_PROGRAM_END_SHIFT));
-		e32(0x0);
-		e32(1 << R300_PVS_CNTL_3_PROGRAM_UNKNOWN_SHIFT);
+		e32((0 << R300_PVS_FIRST_INST_SHIFT) |
+		    (0 << R300_PVS_XYZW_VALID_INST_SHIFT) |
+		    (1 << R300_PVS_LAST_INST_SHIFT));
+		e32((0 << R300_PVS_CONST_BASE_OFFSET_SHIFT) |
+		    (0 << R300_PVS_MAX_CONST_ADDR_SHIFT));
+		e32(1 << R300_PVS_LAST_VTX_SRC_INST_SHIFT);
 
 		R300_STATECHANGE(r300, vpi);
 		vsf_start_fragment(0x0, 8);

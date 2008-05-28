@@ -74,6 +74,7 @@ typedef struct r300_context *r300ContextPtr;
 
 #include "r300_vertprog.h"
 #include "r300_fragprog.h"
+#include "r500_fragprog.h"
 
 /**
  * This function takes a float and packs it into a uint32_t
@@ -330,6 +331,8 @@ struct r300_state_atom {
 #define R300_RI_INTERP_7	8
 #define R300_RI_CMDSIZE		9
 
+#define R500_RI_CMDSIZE	       17
+
 #define R300_RR_CMD_0		0	/* rr is variable size (at least 1) */
 #define R300_RR_INST_0		1
 #define R300_RR_INST_1		2
@@ -352,6 +355,17 @@ struct r300_state_atom {
 #define R300_FP_NODE3		8
 #define R300_FP_CMDSIZE		9
 
+#define R500_FP_CMD_0           0
+#define R500_FP_CNTL            1
+#define R500_FP_PIXSIZE         2
+#define R500_FP_CMD_1           3
+#define R500_FP_CODE_ADDR       4
+#define R500_FP_CODE_RANGE      5
+#define R500_FP_CODE_OFFSET     6
+#define R500_FP_CMD_2           7
+#define R500_FP_FC_CNTL         8
+#define R500_FP_CMDSIZE         9
+
 #define R300_FPT_CMD_0		0
 #define R300_FPT_INSTR_0	1
 #define R300_FPT_CMDSIZE	65
@@ -359,10 +373,14 @@ struct r300_state_atom {
 #define R300_FPI_CMD_0		0
 #define R300_FPI_INSTR_0	1
 #define R300_FPI_CMDSIZE	65
+/* R500 has space for 512 instructions - 6 dwords per instruction */
+#define R500_FPI_CMDSIZE	(512*6+1)
 
 #define R300_FPP_CMD_0		0
 #define R300_FPP_PARAM_0	1
 #define R300_FPP_CMDSIZE	(32*4+1)
+/* R500 has spcae for 256 constants - 4 dwords per constant */
+#define R500_FPP_CMDSIZE	(256*4+1)
 
 #define R300_FOGS_CMD_0		0
 #define R300_FOGS_STATE		1
@@ -410,6 +428,12 @@ struct r300_state_atom {
 #define R300_ZB_PITCH		2
 #define R300_ZB_CMDSIZE		3
 
+#define R300_VAP_CNTL_FLUSH     0
+#define R300_VAP_CNTL_FLUSH_1   1
+#define R300_VAP_CNTL_CMD       2
+#define R300_VAP_CNTL_INSTR     3
+#define R300_VAP_CNTL_SIZE      4
+
 #define R300_VPI_CMD_0		0
 #define R300_VPI_INSTR_0	1
 #define R300_VPI_CMDSIZE	1025	/* 256 16 byte instructions */
@@ -451,6 +475,7 @@ struct r300_hw_state {
 
 	struct r300_state_atom vpt;	/* viewport (1D98) */
 	struct r300_state_atom vap_cntl;
+        struct r300_state_atom vap_index_offset; /* 0x208c r5xx only */
 	struct r300_state_atom vof;	/* VAP output format register 0x2090 */
 	struct r300_state_atom vte;	/* (20B0) */
 	struct r300_state_atom vap_vf_max_vtx_indx;	/* Maximum Vertex Indx Clamp (2134) */
@@ -473,7 +498,7 @@ struct r300_hw_state {
 	struct r300_state_atom shade;
 	struct r300_state_atom polygon_mode;
 	struct r300_state_atom fogp;	/* fog parameters (4294) */
-	struct r300_state_atom unk429C;	/* (429C) */
+	struct r300_state_atom ga_soft_reset;	/* (429C) */
 	struct r300_state_atom zbias_cntl;
 	struct r300_state_atom zbs;	/* zbias (42A4) */
 	struct r300_state_atom occlusion_cntl;
@@ -487,6 +512,8 @@ struct r300_hw_state {
 	struct r300_state_atom fp;	/* fragment program cntl + nodes (4600) */
 	struct r300_state_atom fpt;	/* texi - (4620) */
 	struct r300_state_atom us_out_fmt;	/* (46A4) */
+	struct r300_state_atom r500fp;	/* r500 fp instructions */
+	struct r300_state_atom r500fp_const;	/* r500 fp constants */
 	struct r300_state_atom fpi[4];	/* fp instructions (46C0/47C0/48C0/49C0) */
 	struct r300_state_atom fogs;	/* fog state (4BC0) */
 	struct r300_state_atom fogc;	/* fog color (4BC8) */
@@ -754,6 +781,44 @@ struct r300_fragment_program {
 	int alu_end;
 	int tex_offset;
 	int tex_end;
+
+	/* Hardware constants.
+	 * Contains a pointer to the value. The destination of the pointer
+	 * is supposed to be updated when GL state changes.
+	 * Typically, this is either a pointer into
+	 * gl_program_parameter_list::ParameterValues, or a pointer to a
+	 * global constant (e.g. for sin/cos-approximation)
+	 */
+	const GLfloat *constant[PFS_NUM_CONST_REGS];
+	int const_nr;
+
+	int max_temp_idx;
+
+	GLuint optimization;
+};
+
+struct r500_fragment_program {
+	struct gl_fragment_program mesa_program;
+
+	GLcontext *ctx;
+	GLboolean translated;
+	GLboolean error;
+	struct r300_pfs_compile_state *cs;
+
+	struct {
+		GLuint inst0;
+		GLuint inst1;
+		GLuint inst2;
+		GLuint inst3;
+		GLuint inst4;
+		GLuint inst5;
+	} inst[512];
+	/* TODO: This is magic! */
+
+	int temp_reg_offset;
+
+	int inst_offset;
+	int inst_end;
 
 	/* Hardware constants.
 	 * Contains a pointer to the value. The destination of the pointer

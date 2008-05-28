@@ -649,13 +649,8 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
       screen->chip_flags = RADEON_CHIPSET_TCL;
       break;
 
-   /* RV410 SE chips have half the pipes of regular RV410 */
    case PCI_CHIP_RV410_5E4C:
    case PCI_CHIP_RV410_5E4F:
-      screen->chip_family = CHIP_FAMILY_RV380;
-      screen->chip_flags = RADEON_CHIPSET_TCL;
-      break;
-
    case PCI_CHIP_RV410_564A:
    case PCI_CHIP_RV410_564B:
    case PCI_CHIP_RV410_564F:
@@ -678,13 +673,132 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
    case PCI_CHIP_RC410_5A61:
    case PCI_CHIP_RC410_5A62:
       screen->chip_family = CHIP_FAMILY_RS400;
-      fprintf(stderr, "Warning, xpress200 detected.\n");
       break;
 
    case PCI_CHIP_RS690_791E:
    case PCI_CHIP_RS690_791F:
       screen->chip_family = CHIP_FAMILY_RS690;
-      fprintf(stderr, "Warning, RS690 detected, 3D support is incomplete.\n");
+      break;
+   case PCI_CHIP_RS740_796C:
+   case PCI_CHIP_RS740_796D:
+   case PCI_CHIP_RS740_796E:
+   case PCI_CHIP_RS740_796F:
+      screen->chip_family = CHIP_FAMILY_RS740;
+      break;
+
+   case PCI_CHIP_R520_7100:
+   case PCI_CHIP_R520_7101:
+   case PCI_CHIP_R520_7102:
+   case PCI_CHIP_R520_7103:
+   case PCI_CHIP_R520_7104:
+   case PCI_CHIP_R520_7105:
+   case PCI_CHIP_R520_7106:
+   case PCI_CHIP_R520_7108:
+   case PCI_CHIP_R520_7109:
+   case PCI_CHIP_R520_710A:
+   case PCI_CHIP_R520_710B:
+   case PCI_CHIP_R520_710C:
+   case PCI_CHIP_R520_710E:
+   case PCI_CHIP_R520_710F:
+      screen->chip_family = CHIP_FAMILY_R520;
+      screen->chip_flags = RADEON_CHIPSET_TCL;
+      break;
+
+   case PCI_CHIP_RV515_7140:
+   case PCI_CHIP_RV515_7141:
+   case PCI_CHIP_RV515_7142:
+   case PCI_CHIP_RV515_7143:
+   case PCI_CHIP_RV515_7144:
+   case PCI_CHIP_RV515_7145:
+   case PCI_CHIP_RV515_7146:
+   case PCI_CHIP_RV515_7147:
+   case PCI_CHIP_RV515_7149:
+   case PCI_CHIP_RV515_714A:
+   case PCI_CHIP_RV515_714B:
+   case PCI_CHIP_RV515_714C:
+   case PCI_CHIP_RV515_714D:
+   case PCI_CHIP_RV515_714E:
+   case PCI_CHIP_RV515_714F:
+   case PCI_CHIP_RV515_7151:
+   case PCI_CHIP_RV515_7152:
+   case PCI_CHIP_RV515_7153:
+   case PCI_CHIP_RV515_715E:
+   case PCI_CHIP_RV515_715F:
+   case PCI_CHIP_RV515_7180:
+   case PCI_CHIP_RV515_7181:
+   case PCI_CHIP_RV515_7183:
+   case PCI_CHIP_RV515_7186:
+   case PCI_CHIP_RV515_7187:
+   case PCI_CHIP_RV515_7188:
+   case PCI_CHIP_RV515_718A:
+   case PCI_CHIP_RV515_718B:
+   case PCI_CHIP_RV515_718C:
+   case PCI_CHIP_RV515_718D:
+   case PCI_CHIP_RV515_718F:
+   case PCI_CHIP_RV515_7193:
+   case PCI_CHIP_RV515_7196:
+   case PCI_CHIP_RV515_719B:
+   case PCI_CHIP_RV515_719F:
+   case PCI_CHIP_RV515_7200:
+   case PCI_CHIP_RV515_7210:
+   case PCI_CHIP_RV515_7211:
+      screen->chip_family = CHIP_FAMILY_RV515;
+      screen->chip_flags = RADEON_CHIPSET_TCL;
+      break;
+
+   case PCI_CHIP_RV530_71C0:
+   case PCI_CHIP_RV530_71C1:
+   case PCI_CHIP_RV530_71C2:
+   case PCI_CHIP_RV530_71C3:
+   case PCI_CHIP_RV530_71C4:
+   case PCI_CHIP_RV530_71C5:
+   case PCI_CHIP_RV530_71C6:
+   case PCI_CHIP_RV530_71C7:
+   case PCI_CHIP_RV530_71CD:
+   case PCI_CHIP_RV530_71CE:
+   case PCI_CHIP_RV530_71D2:
+   case PCI_CHIP_RV530_71D4:
+   case PCI_CHIP_RV530_71D5:
+   case PCI_CHIP_RV530_71D6:
+   case PCI_CHIP_RV530_71DA:
+   case PCI_CHIP_RV530_71DE:
+      screen->chip_family = CHIP_FAMILY_RV530;
+      screen->chip_flags = RADEON_CHIPSET_TCL;
+      break;
+
+   case PCI_CHIP_R580_7240:
+   case PCI_CHIP_R580_7243:
+   case PCI_CHIP_R580_7244:
+   case PCI_CHIP_R580_7245:
+   case PCI_CHIP_R580_7246:
+   case PCI_CHIP_R580_7247:
+   case PCI_CHIP_R580_7248:
+   case PCI_CHIP_R580_7249:
+   case PCI_CHIP_R580_724A:
+   case PCI_CHIP_R580_724B:
+   case PCI_CHIP_R580_724C:
+   case PCI_CHIP_R580_724D:
+   case PCI_CHIP_R580_724E:
+   case PCI_CHIP_R580_724F:
+   case PCI_CHIP_R580_7284:
+      screen->chip_family = CHIP_FAMILY_R580;
+      screen->chip_flags = RADEON_CHIPSET_TCL;
+      break;
+
+   case PCI_CHIP_RV570_7280:
+   case PCI_CHIP_RV560_7281:
+   case PCI_CHIP_RV560_7283:
+   case PCI_CHIP_RV560_7287:
+   case PCI_CHIP_RV570_7288:
+   case PCI_CHIP_RV570_7289:
+   case PCI_CHIP_RV570_728B:
+   case PCI_CHIP_RV570_728C:
+   case PCI_CHIP_RV560_7290:
+   case PCI_CHIP_RV560_7291:
+   case PCI_CHIP_RV560_7293:
+   case PCI_CHIP_RV560_7297:
+      screen->chip_family = CHIP_FAMILY_RV560;
+      screen->chip_flags = RADEON_CHIPSET_TCL;
       break;
 
    default:
@@ -695,6 +809,11 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
    if ((screen->chip_family == CHIP_FAMILY_R350 || screen->chip_family == CHIP_FAMILY_R300) &&
        sPriv->ddx_version.minor < 2) {
       fprintf(stderr, "xf86-video-ati-6.6.2 or newer needed for Radeon 9500/9700/9800 cards.\n");
+      return NULL;
+   }
+
+   if ((sPriv->drm_version.minor < 29) && (screen->chip_family >= CHIP_FAMILY_RV515)) {
+      fprintf(stderr, "R500 support requires a newer drm.\n");
       return NULL;
    }
 
@@ -723,6 +842,36 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
        }
    } else {
        screen->fbLocation = (temp & 0xffff) << 16;
+   }
+
+   if (screen->chip_family >= CHIP_FAMILY_RV515) {
+       ret = radeonGetParam( sPriv->fd, RADEON_PARAM_NUM_GB_PIPES,
+			     &temp);
+       if (ret) {
+	   fprintf(stderr, "Unable to get num_pipes, need newer drm\n");
+	   switch (screen->chip_family) {
+	   case CHIP_FAMILY_R300:
+	   case CHIP_FAMILY_R350:
+	       screen->num_gb_pipes = 2;
+	       break;
+	   case CHIP_FAMILY_R420:
+	   case CHIP_FAMILY_R520:
+	   case CHIP_FAMILY_R580:
+	   case CHIP_FAMILY_RV560:
+	   case CHIP_FAMILY_RV570:
+	       screen->num_gb_pipes = 4;
+	       break;
+	   case CHIP_FAMILY_RV350:
+	   case CHIP_FAMILY_RV515:
+	   case CHIP_FAMILY_RV530:
+	   case CHIP_FAMILY_RV410:
+	   default:
+	       screen->num_gb_pipes = 1;
+	       break;
+	   }
+       } else {
+	   screen->num_gb_pipes = temp;
+       }
    }
 
    if ( sPriv->drm_version.minor >= 10 ) {
