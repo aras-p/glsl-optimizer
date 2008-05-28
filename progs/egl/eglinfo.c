@@ -150,6 +150,9 @@ main(int argc, char *argv[])
    printf("EGL API version: %d.%d\n", maj, min);
    printf("EGL vendor string: %s\n", eglQueryString(d, EGL_VENDOR));
    printf("EGL version string: %s\n", eglQueryString(d, EGL_VERSION));
+#ifdef EGL_VERSION_1_2
+   printf("EGL client APIs: %s\n", eglQueryString(d, EGL_CLIENT_APIS));
+#endif
    printf("EGL extensions string:\n");
    printf("    %s\n", eglQueryString(d, EGL_EXTENSIONS));
    printf("\n");
