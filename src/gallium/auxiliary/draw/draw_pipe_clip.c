@@ -112,7 +112,7 @@ static void interp( const struct clipper *clip,
 		    const struct vertex_header *out, 
 		    const struct vertex_header *in )
 {
-   const unsigned nr_attrs = clip->stage.draw->num_vs_outputs;
+   const unsigned nr_attrs = clip->stage.draw->vs.num_vs_outputs;
    unsigned j;
 
    /* Vertex header.
@@ -180,7 +180,7 @@ static void emit_poly( struct draw_stage *stage,
         header.flags |= edge_last;
 
       if (0) {
-         const struct draw_vertex_shader *vs = stage->draw->vertex_shader;
+         const struct draw_vertex_shader *vs = stage->draw->vs.vertex_shader;
          uint j, k;
          debug_printf("Clipped tri:\n");
          for (j = 0; j < 3; j++) {
@@ -425,7 +425,7 @@ clip_init_state( struct draw_stage *stage )
    clipper->flat = stage->draw->rasterizer->flatshade ? TRUE : FALSE;
 
    if (clipper->flat) {
-      const struct draw_vertex_shader *vs = stage->draw->vertex_shader;
+      const struct draw_vertex_shader *vs = stage->draw->vs.vertex_shader;
       uint i;
 
       clipper->num_color_attribs = 0;

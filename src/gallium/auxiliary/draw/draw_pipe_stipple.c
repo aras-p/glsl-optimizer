@@ -71,7 +71,7 @@ screen_interp( struct draw_context *draw,
                const struct vertex_header *v1 )
 {
    uint attr;
-   for (attr = 0; attr < draw->num_vs_outputs; attr++) {
+   for (attr = 0; attr < draw->vs.num_vs_outputs; attr++) {
       const float *val0 = v0->data[attr];
       const float *val1 = v1->data[attr];
       float *newv = dst->data[attr];

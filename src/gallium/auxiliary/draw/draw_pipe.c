@@ -212,6 +212,71 @@ void draw_pipeline_run( struct draw_context *draw,
    draw->pipeline.vertex_count = 0;
 }
 
+#define QUAD(i0,i1,i2,i3)                                        \
+   do_triangle( draw,                                            \
+                ( DRAW_PIPE_RESET_STIPPLE |                      \
+                  DRAW_PIPE_EDGE_FLAG_0 |                        \
+                  DRAW_PIPE_EDGE_FLAG_2 ),                       \
+                 verts + stride * ((i0) & ~DRAW_PIPE_FLAG_MASK), \
+                 verts + stride * (i1),                          \
+                verts + stride * (i3));                          \
+      do_triangle( draw,                                         \
+                   ( DRAW_PIPE_EDGE_FLAG_0 |                     \
+                     DRAW_PIPE_EDGE_FLAG_1 ),                    \
+                 verts + stride * ((i1) & ~DRAW_PIPE_FLAG_MASK), \
+                 verts + stride * (i2),                          \
+                 verts + stride * (i3))
+
+#define TRIANGLE(flags,i0,i1,i2)                                 \
+   do_triangle( draw,                                            \
+                flags,  /* flags */                              \
+                 verts + stride * ((i0) & ~DRAW_PIPE_FLAG_MASK), \
+                 verts + stride * (i1),                          \
+                 verts + stride * (i2))
+
+#define LINE(flags,i0,i1)                                   \
+   do_line( draw,                                           \
+            flags,                                          \
+            verts + stride * ((i0) & ~DRAW_PIPE_FLAG_MASK), \
+            verts + stride * (i+1))
+
+#define POINT(i0)                               \
+   do_point( draw,                              \
+             verts + stride * i0 )
+
+#define FUNC pipe_run_linear
+#define ARGS                                    \
+    struct draw_context *draw,                  \
+    unsigned prim,                              \
+    struct vertex_header *vertices,             \
+    unsigned stride
+
+#define LOCAL_VARS                                           \
+   char *verts = (char *)vertices;                           \
+   boolean flatfirst = (draw->rasterizer->flatshade &&       \
+                        draw->rasterizer->flatshade_first);  \
+   unsigned i, flags
+
+#define FLUSH
+
+#include "draw_pt_decompose.h"
+
+void draw_pipeline_run_linear( struct draw_context *draw,
+                               unsigned prim,
+                               struct vertex_header *vertices,
+                               unsigned count,
+                               unsigned stride )
+{
+   char *verts = (char *)vertices;
+   draw->pipeline.verts = verts;
+   draw->pipeline.vertex_stride = stride;
+   draw->pipeline.vertex_count = count;
+
+   pipe_run_linear(draw, prim, vertices, stride, count);
+
+   draw->pipeline.verts = NULL;
+   draw->pipeline.vertex_count = 0;
+}
 
 
 void draw_pipeline_flush( struct draw_context *draw, 

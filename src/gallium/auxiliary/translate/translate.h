@@ -71,15 +71,15 @@ struct translate {
 		       const void *ptr,
 		       unsigned stride );
 
-   void (*run_elts)( struct translate *,
-		     const unsigned *elts,
-		     unsigned count,
-		     void *output_buffer);
+   void (PIPE_CDECL *run_elts)( struct translate *,
+                                const unsigned *elts,
+                                unsigned count,
+                                void *output_buffer);
 
-   void (*run)( struct translate *,
-		unsigned start,
-		unsigned count,
-		void *output_buffer);
+   void (PIPE_CDECL *run)( struct translate *,
+                           unsigned start,
+                           unsigned count,
+                           void *output_buffer);
 };
 
 

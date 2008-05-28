@@ -40,6 +40,9 @@ struct pt_emit {
    struct translate *translate;
 
    struct translate_cache *cache;
+   unsigned prim;
+
+   const struct vertex_info *vinfo;
 };
 
 void draw_pt_emit_prepare( struct pt_emit *emit,
@@ -51,8 +54,18 @@ void draw_pt_emit_prepare( struct pt_emit *emit,
    struct translate_key hw_key;
    unsigned i;
    boolean ok;
+   
+   /* XXX: need to flush to get prim_vbuf.c to release its allocation?? 
+    */
+   draw_do_flush( draw, DRAW_FLUSH_BACKEND );
 
-   ok = draw->render->set_primitive(draw->render, prim);
+
+   /* XXX: may need to defensively reset this later on as clipping can
+    * clobber this state in the render backend.
+    */
+   emit->prim = prim;
+
+   ok = draw->render->set_primitive(draw->render, emit->prim);
    if (!ok) {
       assert(0);
       return;
@@ -60,7 +73,7 @@ void draw_pt_emit_prepare( struct pt_emit *emit,
 
    /* Must do this after set_primitive() above:
     */
-   vinfo = draw->render->get_vertex_info(draw->render);
+   emit->vinfo = vinfo = draw->render->get_vertex_info(draw->render);
 
 
    /* Translate from pipeline vertices to hw vertices.
@@ -100,6 +113,7 @@ void draw_pt_emit_prepare( struct pt_emit *emit,
       case EMIT_4UB:
 	 output_format = PIPE_FORMAT_B8G8R8A8_UNORM;
 	 emit_sz = 4 * sizeof(ubyte);
+         break;
       default:
 	 assert(0);
 	 output_format = PIPE_FORMAT_NONE;
@@ -144,6 +158,14 @@ void draw_pt_emit( struct pt_emit *emit,
     */
    draw_do_flush( draw, DRAW_FLUSH_BACKEND );
 
+   /* XXX: and work out some way to coordinate the render primitive
+    * between vbuf.c and here...
+    */
+   if (!draw->render->set_primitive(draw->render, emit->prim)) {
+      assert(0);
+      return;
+   }
+
    hw_verts = render->allocate_vertices(render,
 					(ushort)translate->key.output_stride,
 					(ushort)vertex_count);
@@ -177,6 +199,72 @@ void draw_pt_emit( struct pt_emit *emit,
 			    vertex_count);
 }
 
+
+void draw_pt_emit_linear(struct pt_emit *emit,
+                         const float (*vertex_data)[4],
+                         unsigned vertex_count,
+                         unsigned stride,
+                         unsigned start,
+                         unsigned count)
+{
+   struct draw_context *draw = emit->draw;
+   struct translate *translate = emit->translate;
+   struct vbuf_render *render = draw->render;
+   void *hw_verts;
+
+#if 0
+   debug_printf("Linear emit\n");
+#endif
+   /* XXX: need to flush to get prim_vbuf.c to release its allocation?? 
+    */
+   draw_do_flush( draw, DRAW_FLUSH_BACKEND );
+
+   /* XXX: and work out some way to coordinate the render primitive
+    * between vbuf.c and here...
+    */
+   if (!draw->render->set_primitive(draw->render, emit->prim)) {
+      assert(0);
+      return;
+   }
+
+   hw_verts = render->allocate_vertices(render,
+					(ushort)translate->key.output_stride,
+					(ushort)count);
+   if (!hw_verts) {
+      assert(0);
+      return;
+   }
+
+   translate->set_buffer(translate, 0,
+			 vertex_data, stride);
+
+   translate->set_buffer(translate, 1,
+			 &draw->rasterizer->point_size,
+			 0);
+
+   translate->run(translate,
+                  0,
+                  vertex_count,
+                  hw_verts);
+
+   if (0) {
+      unsigned i;
+      for (i = 0; i < vertex_count; i++) {
+         debug_printf("\n\n%s vertex %d:\n", __FUNCTION__, i);
+         draw_dump_emitted_vertex( emit->vinfo, 
+                                   (const uint8_t *)hw_verts + 
+                                   translate->key.output_stride * i );
+      }
+   }
+
+
+   render->draw_arrays(render, start, count);
+
+   render->release_vertices(render,
+			    hw_verts,
+			    translate->key.output_stride,
+			    vertex_count);
+}
 
 struct pt_emit *draw_pt_emit_create( struct draw_context *draw )
 {

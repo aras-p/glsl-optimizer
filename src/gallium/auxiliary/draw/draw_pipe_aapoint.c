@@ -681,7 +681,7 @@ aapoint_first_point(struct draw_stage *stage, struct prim_header *header)
    bind_aapoint_fragment_shader(aapoint);
 
    /* update vertex attrib info */
-   aapoint->tex_slot = draw->num_vs_outputs;
+   aapoint->tex_slot = draw->vs.num_vs_outputs;
    assert(aapoint->tex_slot > 0); /* output[0] is vertex pos */
 
    draw->extra_vp_outputs.semantic_name = TGSI_SEMANTIC_GENERIC;
@@ -692,7 +692,7 @@ aapoint_first_point(struct draw_stage *stage, struct prim_header *header)
    aapoint->psize_slot = -1;
    if (draw->rasterizer->point_size_per_vertex) {
       /* find PSIZ vertex output */
-      const struct draw_vertex_shader *vs = draw->vertex_shader;
+      const struct draw_vertex_shader *vs = draw->vs.vertex_shader;
       uint i;
       for (i = 0; i < vs->info.num_outputs; i++) {
          if (vs->info.output_semantic_name[i] == TGSI_SEMANTIC_PSIZE) {

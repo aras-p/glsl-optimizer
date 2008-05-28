@@ -56,17 +56,14 @@ struct draw_context *draw_create( void )
 
    draw->reduced_prim = ~0; /* != any of PIPE_PRIM_x */
 
-   tgsi_exec_machine_init(&draw->machine);
-
-   /* FIXME: give this machine thing a proper constructor:
-    */
-   draw->machine.Inputs = align_malloc(PIPE_MAX_ATTRIBS * sizeof(struct tgsi_exec_vector), 16);
-   draw->machine.Outputs = align_malloc(PIPE_MAX_ATTRIBS * sizeof(struct tgsi_exec_vector), 16);
 
    if (!draw_pipeline_init( draw ))
       goto fail;
 
    if (!draw_pt_init( draw ))
+      goto fail;
+
+   if (!draw_vs_init( draw ))
       goto fail;
 
    return draw;
@@ -83,13 +80,6 @@ void draw_destroy( struct draw_context *draw )
       return;
 
 
-   if (draw->machine.Inputs)
-      align_free(draw->machine.Inputs);
-
-   if (draw->machine.Outputs)
-      align_free(draw->machine.Outputs);
-
-   tgsi_exec_machine_free_data(&draw->machine);
 
    /* Not so fast -- we're just borrowing this at the moment.
     * 
@@ -99,6 +89,7 @@ void draw_destroy( struct draw_context *draw )
 
    draw_pipeline_destroy( draw );
    draw_pt_destroy( draw );
+   draw_vs_destroy( draw );
 
    FREE( draw );
 }
@@ -295,7 +286,7 @@ int
 draw_find_vs_output(struct draw_context *draw,
                     uint semantic_name, uint semantic_index)
 {
-   const struct draw_vertex_shader *vs = draw->vertex_shader;
+   const struct draw_vertex_shader *vs = draw->vs.vertex_shader;
    uint i;
    for (i = 0; i < vs->info.num_outputs; i++) {
       if (vs->info.output_semantic_name[i] == semantic_name &&
@@ -320,7 +311,7 @@ draw_find_vs_output(struct draw_context *draw,
 uint
 draw_num_vs_outputs(struct draw_context *draw)
 {
-   uint count = draw->vertex_shader->info.num_outputs;
+   uint count = draw->vs.vertex_shader->info.num_outputs;
    if (draw->extra_vp_outputs.slot > 0)
       count++;
    return count;

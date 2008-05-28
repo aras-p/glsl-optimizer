@@ -159,7 +159,7 @@ static void flatshade_line_1( struct draw_stage *stage,
 static void flatshade_init_state( struct draw_stage *stage )
 {
    struct flat_stage *flat = flat_stage(stage);
-   const struct draw_vertex_shader *vs = stage->draw->vertex_shader;
+   const struct draw_vertex_shader *vs = stage->draw->vs.vertex_shader;
    uint i;
 
    /* Find which vertex shader outputs are colors, make a list */

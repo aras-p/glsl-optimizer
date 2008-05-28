@@ -1209,18 +1209,6 @@ _mesa_update_state_locked( GLcontext *ctx )
                     | _NEW_STENCIL | _DD_NEW_SEPARATE_SPECULAR))
       update_tricaps( ctx, new_state );
 
-   if (ctx->FragmentProgram._MaintainTexEnvProgram) {
-      prog_flags |= (_NEW_TEXTURE | _NEW_FOG | _DD_NEW_SEPARATE_SPECULAR);
-   }
-   if (ctx->VertexProgram._MaintainTnlProgram) {
-      prog_flags |= (_NEW_TEXTURE | _NEW_TEXTURE_MATRIX |
-                     _NEW_TRANSFORM | _NEW_POINT |
-                     _NEW_FOG | _NEW_LIGHT);
-   }
-   if (new_state & prog_flags)
-      update_program( ctx );
-
-
    /* ctx->_NeedEyeCoords is now up to date.
     *
     * If the truth value of this variable has changed, update for the
@@ -1232,6 +1220,20 @@ _mesa_update_state_locked( GLcontext *ctx )
     */
    if (new_state & _MESA_NEW_NEED_EYE_COORDS) 
       _mesa_update_tnl_spaces( ctx, new_state );
+
+   if (ctx->FragmentProgram._MaintainTexEnvProgram) {
+      prog_flags |= (_NEW_TEXTURE | _NEW_FOG | _DD_NEW_SEPARATE_SPECULAR);
+   }
+   if (ctx->VertexProgram._MaintainTnlProgram) {
+      prog_flags |= (_NEW_TEXTURE | _NEW_TEXTURE_MATRIX |
+                     _NEW_TRANSFORM | _NEW_POINT |
+                     _NEW_FOG | _NEW_LIGHT |
+                     _MESA_NEW_NEED_EYE_COORDS);
+   }
+   if (new_state & prog_flags)
+      update_program( ctx );
+
+
 
    /*
     * Give the driver a chance to act upon the new_state flags.
