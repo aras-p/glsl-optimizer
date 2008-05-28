@@ -771,8 +771,10 @@ static void driDestroyScreen(__DRIscreen *psp)
 	    (*psp->DriverAPI.DestroyScreen)(psp);
 
 	if (psp->dri2.enabled) {
+#ifdef TTM_API
 	    drmBOUnmap(psp->fd, &psp->dri2.sareaBO);
 	    drmBOUnreference(psp->fd, &psp->dri2.sareaBO);
+#endif
 	} else {
 	   (void)drmUnmap((drmAddress)psp->pSAREA, SAREA_MAX);
 	   (void)drmUnmap((drmAddress)psp->pFB, psp->fbSize);
@@ -904,6 +906,7 @@ dri2CreateNewScreen(int scrn, int fd, unsigned int sarea_handle,
 		    const __DRIextension **extensions,
 		    const __DRIconfig ***driver_configs, void *data)
 {
+#ifdef TTM_API
     static const __DRIextension *emptyExtensionList[] = { NULL };
     __DRIscreen *psp;
     unsigned int *p;
@@ -971,6 +974,9 @@ dri2CreateNewScreen(int scrn, int fd, unsigned int sarea_handle,
     psp->DriverAPI = driDriverAPI;
 
     return psp;
+#else
+    return NULL;
+#endif
 }
 
 static const __DRIextension **driGetExtensions(__DRIscreen *psp)

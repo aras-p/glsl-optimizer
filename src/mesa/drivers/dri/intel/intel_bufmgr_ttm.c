@@ -50,6 +50,7 @@
 #include "i915_drm.h"
 
 #include "intel_bufmgr_ttm.h"
+#ifdef TTM_API
 
 #define DBG(...) do {					\
    if (bufmgr_ttm->bufmgr.debug)			\
@@ -1099,4 +1100,23 @@ intel_bufmgr_ttm_init(int fd, unsigned int fence_type,
 
     return &bufmgr_ttm->bufmgr;
 }
+#else
+dri_bufmgr *
+intel_bufmgr_ttm_init(int fd, unsigned int fence_type,
+		      unsigned int fence_type_flush, int batch_size)
+{
+    return NULL;
+}
 
+dri_bo *
+intel_ttm_bo_create_from_handle(dri_bufmgr *bufmgr, const char *name,
+			      unsigned int handle)
+{
+    return NULL;
+}
+
+void
+intel_ttm_enable_bo_reuse(dri_bufmgr *bufmgr)
+{
+}
+#endif

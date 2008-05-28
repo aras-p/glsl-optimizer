@@ -147,6 +147,7 @@ intel_batch_ioctl(struct intel_context *intel,
    }
 }
 
+#ifdef TTM_API
 void
 intel_exec_ioctl(struct intel_context *intel,
 		 GLuint used,
@@ -211,3 +212,12 @@ intel_exec_ioctl(struct intel_context *intel,
    }
    *fence = fo;
 }
+#else
+void
+intel_exec_ioctl(struct intel_context *intel,
+		 GLuint used,
+		 GLboolean ignore_cliprects, GLboolean allow_unlock,
+		 void *start, GLuint count, dri_fence **fence)
+{
+}
+#endif

@@ -219,4 +219,42 @@ void dri_post_process_relocs(dri_bo *batch_buf);
 void dri_post_submit(dri_bo *batch_buf, dri_fence **last_fence);
 int dri_bufmgr_check_aperture_space(dri_bo *bo);
 
+#ifndef TTM_API
+/* reuse some TTM API */
+
+#define DRM_BO_MEM_LOCAL 0
+#define DRM_BO_MEM_TT 1
+#define DRM_BO_MEM_VRAM 2
+#define DRM_BO_MEM_PRIV0 3
+#define DRM_BO_MEM_PRIV1 4
+#define DRM_BO_MEM_PRIV2 5
+#define DRM_BO_MEM_PRIV3 6
+#define DRM_BO_MEM_PRIV4 7
+
+#define DRM_BO_FLAG_READ        (1ULL << 0)
+#define DRM_BO_FLAG_WRITE       (1ULL << 1)
+#define DRM_BO_FLAG_EXE         (1ULL << 2)
+#define DRM_BO_MASK_ACCESS	(DRM_BO_FLAG_READ | DRM_BO_FLAG_WRITE | DRM_BO_FLAG_EXE)
+#define DRM_BO_FLAG_NO_EVICT    (1ULL << 4)
+
+#define DRM_BO_FLAG_MAPPABLE    (1ULL << 5)
+#define DRM_BO_FLAG_SHAREABLE   (1ULL << 6)
+
+#define DRM_BO_FLAG_CACHED      (1ULL << 7)
+
+#define DRM_BO_FLAG_NO_MOVE     (1ULL << 8)
+#define DRM_BO_FLAG_CACHED_MAPPED    (1ULL << 19)
+#define DRM_BO_FLAG_FORCE_CACHING  (1ULL << 13)
+#define DRM_BO_FLAG_FORCE_MAPPABLE (1ULL << 14)
+#define DRM_BO_FLAG_TILE           (1ULL << 15)
+
+#define DRM_BO_FLAG_MEM_LOCAL  (1ULL << 24)
+#define DRM_BO_FLAG_MEM_TT     (1ULL << 25)
+#define DRM_BO_FLAG_MEM_VRAM   (1ULL << 26)
+
+#define DRM_BO_MASK_MEM         0x00000000FF000000ULL
+
+#define DRM_FENCE_TYPE_EXE                 0x00000001
+#endif
+
 #endif

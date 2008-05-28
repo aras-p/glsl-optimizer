@@ -478,6 +478,19 @@ AC_ARG_ENABLE([driglx-direct],
         [enable direct rendering in GLX for DRI @<:@default=enabled@:>@])],
     [driglx_direct="$enableval"],
     [driglx_direct="yes"])
+dnl ttm support
+AC_ARG_ENABLE([ttm-api],
+    [AS_HELP_STRING([--enable-ttm-api],
+	[enable TTM API users])],
+    [ttmapi="$enableval"],
+    [ttmapi="no"])
+
+if test "x$ttmapi" = "xyes"; then
+    save_CFLAGS=$CFLAGS
+    CFLAGS=$LIBDRM_CFLAGS
+    AC_CHECK_HEADERS([xf86mm.h],[],[AC_MSG_ERROR([xf86mm.h required for TTM.])],[#include "stdint.h"\n#include "drm.h"])
+    CFLAGS=$save_CFLAGS
+fi
 
 dnl Which drivers to build - default is chosen by platform
 AC_ARG_WITH([dri-drivers],
@@ -514,6 +527,10 @@ if test "$mesa_driver" = dri; then
     # Use TLS in GLX?
     if test "x$GLX_USE_TLS" = xyes; then
         DEFINES="$DEFINES -DGLX_USE_TLS -DPTHREADS"
+    fi
+
+    if test "x$ttmapi" = xyes; then
+        DEFINES="$DEFINES -DTTM_API"
     fi
 
     if test "x$USING_EGL" = x1; then
@@ -934,6 +951,7 @@ if test "$mesa_driver" = dri; then
     dri_dirs=`echo $DRI_DIRS | $SED 's/^ *//;s/  */ /;s/ *$//'`
     echo "        DRI drivers:     $dri_dirs"
     echo "        DRI driver dir:  $DRI_DRIVER_INSTALL_DIR"
+    echo "        TTM API support: $ttmapi"
 fi
 
 dnl Libraries

@@ -53,7 +53,6 @@
 #include <drm.h>
 #include <drm_sarea.h>
 #include <xf86drm.h>
-#include <xf86mm.h>
 #include "GL/internal/glcore.h"
 #include "GL/internal/dri_interface.h"
 #include "GL/internal/dri_sarea.h"
@@ -524,7 +523,9 @@ struct __DRIscreenRec {
 	/* Flag to indicate that this is a DRI2 screen.  Many of the above
 	 * fields will not be valid or initializaed in that case. */
 	int enabled;
+#ifdef TTM_API
 	drmBO sareaBO;
+#endif
 	void *sarea;
 	__DRIEventBuffer *buffer;
 	__DRILock *lock;
