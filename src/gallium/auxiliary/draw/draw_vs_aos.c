@@ -1189,7 +1189,7 @@ static boolean emit_FRC( struct aos_compilation *cp, const struct tgsi_full_inst
    return TRUE;
 }
 
-static PIPE_CDECL void do_lit( struct aos_machine *machine,
+static void PIPE_CDECL do_lit( struct aos_machine *machine,
                                float *result,
                                const float *in,
                                unsigned count )
@@ -1223,7 +1223,7 @@ static PIPE_CDECL void do_lit( struct aos_machine *machine,
 }
 
 
-static PIPE_CDECL void do_lit_lut( struct aos_machine *machine,
+static void PIPE_CDECL do_lit_lut( struct aos_machine *machine,
                                    float *result,
                                    const float *in,
                                    unsigned count )
@@ -2119,10 +2119,10 @@ static void vaos_destroy( struct draw_vs_varient *varient )
    FREE(vaos);
 }
 
-static void vaos_run_elts( struct draw_vs_varient *varient,
-                           const unsigned *elts,
-                           unsigned count,
-                           void *output_buffer )
+static void PIPE_CDECL vaos_run_elts( struct draw_vs_varient *varient,
+                                      const unsigned *elts,
+                                      unsigned count,
+                                      void *output_buffer )
 {
    struct draw_vs_varient_aos_sse *vaos = (struct draw_vs_varient_aos_sse *)varient;
 
@@ -2133,10 +2133,10 @@ static void vaos_run_elts( struct draw_vs_varient *varient,
                        output_buffer );
 }
 
-static void vaos_run_linear( struct draw_vs_varient *varient,
-                             unsigned start,
-                             unsigned count,
-                             void *output_buffer )
+static void PIPE_CDECL vaos_run_linear( struct draw_vs_varient *varient,
+                                        unsigned start,
+                                        unsigned count,
+                                        void *output_buffer )
 {
    struct draw_vs_varient_aos_sse *vaos = (struct draw_vs_varient_aos_sse *)varient;
 
