@@ -10,6 +10,7 @@ HEADERS = \
 	eglconfig.h \
 	eglconfigutil.h \
 	eglcontext.h \
+	egldefines.h \
 	egldisplay.h \
 	egldriver.h \
 	eglglobals.h \
