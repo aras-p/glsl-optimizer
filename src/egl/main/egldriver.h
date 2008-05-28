@@ -4,9 +4,7 @@
 
 #include "egltypedefs.h"
 #include "eglapi.h"
-
-/* should probably use a dynamic-length string, but this will do */
-#define MAX_EXTENSIONS_LEN 1000
+#include "egldefines.h"
 
 
 /**
@@ -17,7 +15,7 @@ struct _egl_extensions
    EGLBoolean MESA_screen_surface;
    EGLBoolean MESA_copy_context;
 
-   char String[MAX_EXTENSIONS_LEN];
+   char String[_EGL_MAX_EXTENSIONS_LEN];
 };
 
 

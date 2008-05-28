@@ -10,6 +10,7 @@
 #include <string.h>
 #include "eglconfig.h"
 #include "eglcontext.h"
+#include "egldefines.h"
 #include "egldisplay.h"
 #include "egldriver.h"
 #include "eglglobals.h"
@@ -26,6 +27,7 @@
 #elif defined(_EGL_PLATFORM_WINCE)
 /* XXX to do */
 #endif
+
 
 const char *DefaultDriverName = ":0";
 const char *SysFS = "/sys/class";
@@ -290,7 +292,7 @@ _eglUpdateExtensionsString(_EGLDriver *drv)
       strcat(drv->Extensions.String, "EGL_MESA_screen_surface ");
    if (drv->Extensions.MESA_copy_context)
       strcat(drv->Extensions.String, "EGL_MESA_copy_context ");
-   assert(strlen(drv->Extensions.String) < MAX_EXTENSIONS_LEN);
+   assert(strlen(drv->Extensions.String) < _EGL_MAX_EXTENSIONS_LEN);
 }
 
 
@@ -302,9 +304,9 @@ _eglQueryString(_EGLDriver *drv, EGLDisplay dpy, EGLint name)
    (void) dpy;
    switch (name) {
    case EGL_VENDOR:
-      return "Mesa Project";
+      return _EGL_VENDOR_STRING;
    case EGL_VERSION:
-      return "1.0";
+      return _EGL_VERSION_STRING;
    case EGL_EXTENSIONS:
       _eglUpdateExtensionsString(drv);
       return drv->Extensions.String;
