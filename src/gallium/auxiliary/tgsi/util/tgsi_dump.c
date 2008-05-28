@@ -754,7 +754,7 @@ tgsi_dump_instruction(
    }
 
    for( i = 0; i < inst->Instruction.NumDstRegs; i++ ) {
-      struct tgsi_full_dst_register *dst = &inst->FullDstRegisters[i];
+      const struct tgsi_full_dst_register *dst = &inst->FullDstRegisters[i];
 
       if( !first_reg ) {
          CHR( ',' );
@@ -812,7 +812,7 @@ tgsi_dump_instruction(
    }
 
    for( i = 0; i < inst->Instruction.NumSrcRegs; i++ ) {
-      struct tgsi_full_src_register *src = &inst->FullSrcRegisters[i];
+      const struct tgsi_full_src_register *src = &inst->FullSrcRegisters[i];
 
       if( !first_reg ) {
          CHR( ',' );
