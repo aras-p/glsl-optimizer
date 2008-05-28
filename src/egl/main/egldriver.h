@@ -28,8 +28,6 @@ struct _egl_driver
 
    void *LibHandle; /**< dlopen handle */
 
-   _EGLDisplay *Display;
-
    int APImajor, APIminor; /**< as returned by eglInitialize() */
    char Version[10];       /**< initialized from APImajor/minor */
 

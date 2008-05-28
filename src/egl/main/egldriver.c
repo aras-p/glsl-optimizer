@@ -185,7 +185,6 @@ _eglOpenDriver(_EGLDisplay *dpy, const char *driverName, const char *args)
    else
       dlclose(lib);
 
-   drv->Display = dpy;
    return drv;
 }
 
