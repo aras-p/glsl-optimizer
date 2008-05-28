@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdint.h>
 
 #include "eglconfig.h"
 #include "eglcontext.h"
@@ -13,7 +14,6 @@
 #include "eglscreen.h"
 #include "eglsurface.h"
 
-#include "glapi.h"
 #include "intel_egl.h"
 
 #include "xf86drm.h"
@@ -283,9 +283,9 @@ drm_create_context(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config, EGLContext
 
 	/* generate handle and insert into hash table */
 	_eglSaveContext(&c->base);
-	assert(c->base.Handle);
+	assert(_eglGetContextHandle(&c->base));
 
-	return c->base.Handle;
+	return _eglGetContextHandle(&c->base);
 err_gl:
 	free(context);
 err_c:
