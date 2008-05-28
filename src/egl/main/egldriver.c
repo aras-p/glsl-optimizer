@@ -4,10 +4,10 @@
 
 
 #include <assert.h>
+#include <string.h>
 #include <dlfcn.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include "eglconfig.h"
 #include "eglcontext.h"
 #include "egldefines.h"
@@ -15,6 +15,7 @@
 #include "egldriver.h"
 #include "eglglobals.h"
 #include "egllog.h"
+#include "eglmisc.h"
 #include "eglmode.h"
 #include "eglscreen.h"
 #include "eglstring.h"
@@ -276,75 +277,4 @@ _eglInitDriverFallbacks(_EGLDriver *drv)
 #ifdef EGL_VERSION_1_2
    drv->API.CreatePbufferFromClientBuffer = _eglCreatePbufferFromClientBuffer;
 #endif /* EGL_VERSION_1_2 */
-}
-
-
-/**
- * Examine the individual extension enable/disable flags and recompute
- * the driver's Extensions string.
- */
-static void
-_eglUpdateExtensionsString(_EGLDriver *drv)
-{
-   drv->Extensions.String[0] = 0;
-
-   if (drv->Extensions.MESA_screen_surface)
-      strcat(drv->Extensions.String, "EGL_MESA_screen_surface ");
-   if (drv->Extensions.MESA_copy_context)
-      strcat(drv->Extensions.String, "EGL_MESA_copy_context ");
-   assert(strlen(drv->Extensions.String) < _EGL_MAX_EXTENSIONS_LEN);
-}
-
-
-
-const char *
-_eglQueryString(_EGLDriver *drv, EGLDisplay dpy, EGLint name)
-{
-   (void) drv;
-   (void) dpy;
-   switch (name) {
-   case EGL_VENDOR:
-      return _EGL_VENDOR_STRING;
-   case EGL_VERSION:
-      return drv->Version;
-   case EGL_EXTENSIONS:
-      _eglUpdateExtensionsString(drv);
-      return drv->Extensions.String;
-#ifdef EGL_VERSION_1_2
-   case EGL_CLIENT_APIS:
-      /* XXX need to initialize somewhere */
-      return drv->ClientAPIs;
-#endif
-   default:
-      _eglError(EGL_BAD_PARAMETER, "eglQueryString");
-      return NULL;
-   }
-}
-
-
-EGLBoolean
-_eglWaitGL(_EGLDriver *drv, EGLDisplay dpy)
-{
-   /* just a placeholder */
-   (void) drv;
-   (void) dpy;
-   return EGL_TRUE;
-}
-
-
-EGLBoolean
-_eglWaitNative(_EGLDriver *drv, EGLDisplay dpy, EGLint engine)
-{
-   /* just a placeholder */
-   (void) drv;
-   (void) dpy;
-   switch (engine) {
-   case EGL_CORE_NATIVE_ENGINE:
-      break;
-   default:
-      _eglError(EGL_BAD_PARAMETER, "eglWaitNative(engine)");
-      return EGL_FALSE;
-   }
-
-   return EGL_TRUE;
 }

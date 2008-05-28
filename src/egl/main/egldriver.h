@@ -64,17 +64,4 @@ extern void
 _eglInitDriverFallbacks(_EGLDriver *drv);
 
 
-extern const char *
-_eglQueryString(_EGLDriver *drv, EGLDisplay dpy, EGLint name);
-
-
-extern EGLBoolean
-_eglWaitGL(_EGLDriver *drv, EGLDisplay dpy);
-
-
-extern EGLBoolean
-_eglWaitNative(_EGLDriver *drv, EGLDisplay dpy, EGLint engine);
-
-
-
 #endif /* EGLDRIVER_INCLUDED */

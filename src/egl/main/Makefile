@@ -16,6 +16,7 @@ HEADERS = \
 	eglglobals.h \
 	egllog.h \
 	eglhash.h \
+	eglmisc.h \
 	eglmode.h \
 	eglscreen.h \
 	eglstring.h \
@@ -32,6 +33,7 @@ SOURCES = \
 	eglglobals.c \
 	egllog.c \
 	eglhash.c \
+	eglmisc.c \
 	eglmode.c \
 	eglscreen.c \
 	eglstring.c \
