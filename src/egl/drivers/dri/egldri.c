@@ -79,11 +79,11 @@ driver_name_from_card_number(int card, char *driverName, int maxDriverName)
  * This function, in turn, loads a specific DRI driver (ex: r200_dri.so).
  */
 _EGLDriver *
-_eglMain(_EGLDisplay *dpy)
+_eglMain(_EGLDisplay *dpy, const char *args)
 {
 #if 1
    const char *displayString = (const char *) dpy->NativeDisplay;
-   const int card = atoi(displayString + 1);
+   const int card = atoi(args);
    _EGLDriver *driver = NULL;
    char driverName[1000];
 

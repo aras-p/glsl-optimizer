@@ -30,7 +30,7 @@ typedef struct _egl_thread_info _EGLThreadInfo;
 
 typedef void (*_EGLProc)();
 
-typedef _EGLDriver *(*_EGLMain_t)(_EGLDisplay *dpy);
+typedef _EGLDriver *(*_EGLMain_t)(_EGLDisplay *dpy, const char *args);
 
 
 #endif /* EGLTYPEDEFS_INCLUDED */

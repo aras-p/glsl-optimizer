@@ -14,6 +14,7 @@ struct _egl_display
    EGLDisplay Handle;
 
    const char *DriverName;
+   const char *DriverArgs;
    _EGLDriver *Driver;
 
    EGLint NumScreens;

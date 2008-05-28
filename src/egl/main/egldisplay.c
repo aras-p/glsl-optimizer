@@ -11,25 +11,14 @@
 #include "egldriver.h"
 #include "eglglobals.h"
 #include "eglhash.h"
-
-
-static char *
-my_strdup(const char *s)
-{
-   if (s) {
-      int l = strlen(s);
-      char *s2 = malloc(l + 1);
-      if (s2)
-         strcpy(s2, s);
-      return s2;
-   }
-   return NULL;
-}
+#include "eglstring.h"
 
 
 /**
  * Allocate a new _EGLDisplay object for the given nativeDisplay handle.
  * We'll also try to determine the device driver name at this time.
+ *
+ * Note that nativeDisplay may be an X Display ptr, or a string.
  */
 _EGLDisplay *
 _eglNewDisplay(NativeDisplayType nativeDisplay)
@@ -46,7 +35,7 @@ _eglNewDisplay(NativeDisplayType nativeDisplay)
       dpy->Xdpy = (Display *) nativeDisplay;
 #endif
 
-      dpy->DriverName = my_strdup(_eglChooseDriver(dpy));
+      dpy->DriverName = _eglstrdup(_eglChooseDriver(dpy));
       if (!dpy->DriverName) {
          free(dpy);
          return NULL;

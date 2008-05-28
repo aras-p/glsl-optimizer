@@ -6,6 +6,7 @@
 #include <assert.h>
 #include <dlfcn.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include "eglconfig.h"
 #include "eglcontext.h"
@@ -15,6 +16,7 @@
 #include "egllog.h"
 #include "eglmode.h"
 #include "eglscreen.h"
+#include "eglstring.h"
 #include "eglsurface.h"
 
 #if defined(_EGL_PLATFORM_X)
@@ -25,7 +27,7 @@
 /* XXX to do */
 #endif
 
-const char *DefaultDriverName = "demodriver";
+const char *DefaultDriverName = ":0";
 
 
 /**
@@ -44,23 +46,36 @@ const char *DefaultDriverName = "demodriver";
 const char *
 _eglChooseDriver(_EGLDisplay *dpy)
 {
-   const char *name = (const char *) dpy->NativeDisplay;
+   const char *displayString = (const char *) dpy->NativeDisplay;
    const char *driverName = NULL;
 
-   if (!dpy->NativeDisplay) {
+   if (!displayString) {
       /* choose a default */
-      driverName = DefaultDriverName;
+      displayString = DefaultDriverName;
    }
-   else if (name && name[0] == ':' &&
-            (name[1] >= '0' && name[1] <= '9') && !name[2]) {
+
+   /* extract default DriverArgs = whatever follows ':' */
+   if (displayString[0] == '!' ||
+       displayString[0] == ':') {
+      const char *args = strchr(displayString, ':');
+      if (args)
+         dpy->DriverArgs = _eglstrdup(args + 1);
+   }
+
+
+   if (displayString && displayString[0] == ':' &&
+       (displayString[1] >= '0' && displayString[1] <= '9') &&
+       !displayString[2]) {
       /* XXX probe hardware here to determine which driver to open */
       driverName = "libEGLdri";
    }
-   else if (name && name[0] == '!') {
+   else if (displayString && displayString[0] == '!') {
       /* use specified driver name */
-      driverName = name + 1;
+      driverName = displayString + 1;
    }
    else {
+      /* NativeDisplay is not a string! */
+
 #if defined(_EGL_PLATFORM_X)
       driverName = _xeglChooseDriver(dpy);
 #elif defined(_EGL_PLATFORM_WINDOWS)
@@ -83,7 +98,7 @@ _eglChooseDriver(_EGLDisplay *dpy)
  * \return  new _EGLDriver object.
  */
 _EGLDriver *
-_eglOpenDriver(_EGLDisplay *dpy, const char *driverName)
+_eglOpenDriver(_EGLDisplay *dpy, const char *driverName, const char *args)
 {
    _EGLDriver *drv;
    _EGLMain_t mainFunc;
@@ -110,7 +125,7 @@ _eglOpenDriver(_EGLDisplay *dpy, const char *driverName)
       return NULL;
    }
 
-   drv = mainFunc(dpy);
+   drv = mainFunc(dpy, args);
    if (!drv) {
       dlclose(lib);
       return NULL;

@@ -68,7 +68,9 @@ eglInitialize(EGLDisplay dpy, EGLint *major, EGLint *minor)
       if (!dpyPriv) {
          return EGL_FALSE;
       }
-      dpyPriv->Driver = _eglOpenDriver(dpyPriv, dpyPriv->DriverName);
+      dpyPriv->Driver = _eglOpenDriver(dpyPriv,
+                                       dpyPriv->DriverName,
+                                       dpyPriv->DriverArgs);
       if (!dpyPriv->Driver) {
          return EGL_FALSE;
       }
