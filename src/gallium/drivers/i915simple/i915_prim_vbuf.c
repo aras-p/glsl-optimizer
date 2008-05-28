@@ -322,24 +322,24 @@ draw_generate_indices( struct vbuf_render *render,
    switch(type) {
    case 0:
       for (i = 0; i + 1 < nr_indices; i += 2) {
-	 OUT_BATCH( (indices[i] & 0x0FFF) | ((indices[i+1] & 0x0FFF) << 16) );
+	 OUT_BATCH( indices[i] | indices[i+1] << 16 );
       }
       if (i < nr_indices) {
-	 OUT_BATCH( indices[i] & 0x0FFF );
+	 OUT_BATCH( indices[i] );
       }
       break;
    case PIPE_PRIM_QUADS:
       for (i = 0; i + 3 < nr_indices; i += 4) {
-	 OUT_BATCH( (indices[i+0] & 0x0FFF) | (indices[i+1] & 0x0FFF) << 16 );
-	 OUT_BATCH( (indices[i+3] & 0x0FFF) | (indices[i+1] & 0x0FFF) << 16 );
-	 OUT_BATCH( (indices[i+2] & 0x0FFF) | (indices[i+3] & 0x0FFF) << 16 );
+	 OUT_BATCH( indices[i+0] | indices[i+1] << 16 );
+	 OUT_BATCH( indices[i+3] | indices[i+1] << 16 );
+	 OUT_BATCH( indices[i+2] | indices[i+3] << 16 );
       }
       break;
    case PIPE_PRIM_QUAD_STRIP:
       for (i = 0; i + 3 < nr_indices; i += 2) {
-	 OUT_BATCH( (indices[i+0] & 0x0FFF) | (indices[i+1] & 0x0FFF) << 16 );
-	 OUT_BATCH( (indices[i+3] & 0x0FFF) | (indices[i+2] & 0x0FFF) << 16 );
-	 OUT_BATCH( (indices[i+0] & 0x0FFF) | (indices[i+3] & 0x0FFF) << 16 );
+	 OUT_BATCH( indices[i+0] | indices[i+1] << 16 );
+	 OUT_BATCH( indices[i+3] | indices[i+2] << 16 );
+	 OUT_BATCH( indices[i+0] | indices[i+3] << 16 );
       }
       break;
    default:
