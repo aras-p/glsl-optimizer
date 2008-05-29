@@ -50,10 +50,12 @@ static void i915_destroy( struct pipe_context *pipe )
 
 
 static boolean
-i915_draw_elements( struct pipe_context *pipe,
-                    struct pipe_buffer *indexBuffer,
-                    unsigned indexSize,
-                    unsigned prim, unsigned start, unsigned count)
+i915_draw_range_elements(struct pipe_context *pipe,
+			     struct pipe_buffer *indexBuffer,
+			     unsigned indexSize,
+			     unsigned min_index,
+			     unsigned max_index,
+			     unsigned prim, unsigned start, unsigned count)
 {
    struct i915_context *i915 = i915_context( pipe );
    struct draw_context *draw = i915->draw;
@@ -77,7 +79,10 @@ i915_draw_elements( struct pipe_context *pipe,
       void *mapped_indexes
          = pipe->winsys->buffer_map(pipe->winsys, indexBuffer,
                                     PIPE_BUFFER_USAGE_CPU_READ);
-      draw_set_mapped_element_buffer(draw, indexSize, mapped_indexes);
+      draw_set_mapped_element_buffer_range(draw, indexSize,
+					   min_index,
+					   max_index,
+					   mapped_indexes);
    }
    else {
       /* no index/element buffer */
@@ -102,12 +107,23 @@ i915_draw_elements( struct pipe_context *pipe,
    }
    if (indexBuffer) {
       pipe->winsys->buffer_unmap(pipe->winsys, indexBuffer);
-      draw_set_mapped_element_buffer(draw, 0, NULL);
+      draw_set_mapped_element_buffer_range(draw, 0, start, start + count - 1, NULL);
    }
 
    return TRUE;
 }
 
+static boolean
+i915_draw_elements( struct pipe_context *pipe,
+                    struct pipe_buffer *indexBuffer,
+                    unsigned indexSize,
+                    unsigned prim, unsigned start, unsigned count)
+{
+   return i915_draw_range_elements( pipe, indexBuffer,
+					indexSize,
+					0, 0xffffffff,
+					prim, start, count );
+}
 
 static boolean i915_draw_arrays( struct pipe_context *pipe,
 				 unsigned prim, unsigned start, unsigned count)
@@ -138,6 +154,7 @@ struct pipe_context *i915_create_context( struct pipe_screen *screen,
 
    i915->pipe.draw_arrays = i915_draw_arrays;
    i915->pipe.draw_elements = i915_draw_elements;
+   i915->pipe.draw_range_elements = i915_draw_range_elements;
 
    /*
     * Create drawing context and plug our rendering stage into it.
