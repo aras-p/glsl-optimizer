@@ -97,6 +97,10 @@ nouveau_pushbuf_init(struct nouveau_channel *chan)
 	nouveau_pushbuf_space(chan, 0);
 	chan->pushbuf = &nvchan->pb.base;
 
+	nvchan->pb.buffers = calloc(NOUVEAU_PUSHBUF_MAX_BUFFERS,
+				    sizeof(struct nouveau_pushbuf_bo));
+	nvchan->pb.relocs = calloc(NOUVEAU_PUSHBUF_MAX_RELOCS,
+				   sizeof(struct nouveau_pushbuf_reloc));
 	return 0;
 }
 
@@ -131,8 +135,7 @@ nouveau_pushbuf_flush(struct nouveau_channel *chan, unsigned min)
 {
 	struct nouveau_channel_priv *nvchan = nouveau_channel(chan);
 	struct nouveau_pushbuf_priv *nvpb = &nvchan->pb;
-	struct nouveau_pushbuf_bo *pbbo;
-	int ret;
+	int ret, i;
 
 	if (nvpb->base.remaining == nvpb->size)
 		return 0;
@@ -150,38 +153,47 @@ nouveau_pushbuf_flush(struct nouveau_channel *chan, unsigned min)
 
 	/* Validate buffers + apply relocations */
 	nvchan->user_charge = 0;
-	while ((pbbo = ptr_to_pbbo(nvpb->buffers))) {
-		struct nouveau_pushbuf_reloc *r;
-		struct nouveau_bo *bo = &ptr_to_bo(pbbo->handle)->base;
+	for (i = 0; i < nvpb->nr_relocs; i++) {
+		struct nouveau_pushbuf_reloc *r = &nvpb->relocs[i];
+		struct nouveau_pushbuf_bo *pbbo = r->pbbo;
+		struct nouveau_bo *bo = pbbo->bo;
 
-		ret = nouveau_bo_validate(chan, bo, pbbo->flags);
-		assert (ret == 0);
-
-		if (bo->offset == nouveau_bo(bo)->offset &&
-		    bo->flags == nouveau_bo(bo)->flags) {
-
-			while ((r = ptr_to_pbrel(pbbo->relocs))) {
-				pbbo->relocs = r->next;
-				free(r);
-			}
-
-			nouveau_bo_del(&bo);
-			nvpb->buffers = pbbo->next;
-			free(pbbo);
+		/* Validated, mem matches presumed, no relocation necessary */
+		if (pbbo->handled & 2) {
+			if (!(pbbo->handled & 1))
+				assert(0);
 			continue;
 		}
-		bo->offset = nouveau_bo(bo)->offset;
-		bo->flags = nouveau_bo(bo)->flags;
 
-		while ((r = ptr_to_pbrel(pbbo->relocs))) {
-			*r->ptr = nouveau_pushbuf_calc_reloc(bo, r);
-			pbbo->relocs = r->next;
-			free(r);
+		/* Not yet validated, do it now */
+		if (!(pbbo->handled & 1)) {
+			ret = nouveau_bo_validate(chan, bo, pbbo->flags);
+			if (ret) {
+				assert(0);
+				return ret;
+			}
+			pbbo->handled |= 1;
+
+			if (bo->offset == nouveau_bo(bo)->offset &&
+			    bo->flags == nouveau_bo(bo)->flags) {
+				pbbo->handled |= 2;
+				continue;
+			}
+			bo->offset = nouveau_bo(bo)->offset;
+			bo->flags = nouveau_bo(bo)->flags;
 		}
 
-		nouveau_bo_del(&bo);
-		nvpb->buffers = pbbo->next;
-		free(pbbo);
+		/* Apply the relocation */
+		*r->ptr = nouveau_pushbuf_calc_reloc(bo, r);
+	}
+	nvpb->nr_relocs = 0;
+
+	/* Dereference all buffers on validate list */
+	for (i = 0; i < nvpb->nr_buffers; i++) {
+		struct nouveau_pushbuf_bo *pbbo = &nvpb->buffers[i];
+
+		nouveau_bo(pbbo->bo)->pending = NULL;
+		nouveau_bo_del(&pbbo->bo);
 	}
 	nvpb->nr_buffers = 0;
 
@@ -206,25 +218,21 @@ static struct nouveau_pushbuf_bo *
 nouveau_pushbuf_emit_buffer(struct nouveau_channel *chan, struct nouveau_bo *bo)
 {
 	struct nouveau_pushbuf_priv *nvpb = nouveau_pushbuf(chan->pushbuf);
-	struct nouveau_pushbuf_bo *pbbo = ptr_to_pbbo(nvpb->buffers);
-	struct nouveau_bo *ref = NULL;
+	struct nouveau_bo_priv *nvbo = nouveau_bo(bo);
+	struct nouveau_pushbuf_bo *pbbo;
 
-	while (pbbo) {
-		if (pbbo->handle == bo->handle)
-			return pbbo;
-		pbbo = ptr_to_pbbo(pbbo->next);
-	}
+	if (nvbo->pending)
+		return nvbo->pending;
 
-	pbbo = malloc(sizeof(struct nouveau_pushbuf_bo));
-	pbbo->next = nvpb->buffers;
-	nvpb->buffers = pbbo_to_ptr(pbbo);
-	nvpb->nr_buffers++;
+	if (nvpb->nr_buffers >= NOUVEAU_PUSHBUF_MAX_BUFFERS)
+		return NULL;
+	pbbo = nvpb->buffers + nvpb->nr_buffers++;
+	nvbo->pending = pbbo;
 
-	nouveau_bo_ref(bo->device, bo->handle, &ref);
-	pbbo->handle = bo_to_ptr(ref);
+	nouveau_bo_ref(bo->device, bo->handle, &pbbo->bo);
+	pbbo->channel = chan;
 	pbbo->flags = NOUVEAU_BO_VRAM | NOUVEAU_BO_GART;
-	pbbo->relocs = 0;
-	pbbo->nr_relocs = 0;
+	pbbo->handled = 0;
 	return pbbo;
 }
 
@@ -233,24 +241,21 @@ nouveau_pushbuf_emit_reloc(struct nouveau_channel *chan, void *ptr,
 			   struct nouveau_bo *bo, uint32_t data, uint32_t flags,
 			   uint32_t vor, uint32_t tor)
 {
+	struct nouveau_pushbuf_priv *nvpb = nouveau_pushbuf(chan->pushbuf);
 	struct nouveau_pushbuf_bo *pbbo;
 	struct nouveau_pushbuf_reloc *r;
 
-	if (!chan)
-		return -EINVAL;
+	if (nvpb->nr_relocs >= NOUVEAU_PUSHBUF_MAX_RELOCS)
+		return -ENOMEM;
 
 	pbbo = nouveau_pushbuf_emit_buffer(chan, bo);
 	if (!pbbo)
-		return -EFAULT;
-
-	r = malloc(sizeof(struct nouveau_pushbuf_reloc));
-	r->next = pbbo->relocs;
-	pbbo->relocs = pbrel_to_ptr(r);
-	pbbo->nr_relocs++;
-
+		return -ENOMEM;
 	pbbo->flags |= (flags & NOUVEAU_BO_RDWR);
 	pbbo->flags &= (flags | NOUVEAU_BO_RDWR);
 
+	r = nvpb->relocs + nvpb->nr_relocs++;
+	r->pbbo = pbbo;
 	r->ptr = ptr;
 	r->flags = flags;
 	r->data = data;

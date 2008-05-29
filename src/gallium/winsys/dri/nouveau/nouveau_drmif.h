@@ -107,7 +107,7 @@ extern void
 nouveau_fence_flush(struct nouveau_channel *);
 
 struct nouveau_pushbuf_reloc {
-	uint64_t next;
+	struct nouveau_pushbuf_bo *pbbo;
 	uint32_t *ptr;
 	uint32_t flags;
 	uint32_t data;
@@ -116,13 +116,14 @@ struct nouveau_pushbuf_reloc {
 };
 
 struct nouveau_pushbuf_bo {
-	uint64_t next;
-	uint64_t handle;
-	uint64_t flags;
-	uint64_t relocs;
-	int nr_relocs;
+	struct nouveau_channel *channel;
+	struct nouveau_bo *bo;
+	unsigned flags;
+	unsigned handled;
 };
 
+#define NOUVEAU_PUSHBUF_MAX_BUFFERS 1024
+#define NOUVEAU_PUSHBUF_MAX_RELOCS 1024
 struct nouveau_pushbuf_priv {
 	struct nouveau_pushbuf base;
 
@@ -132,8 +133,10 @@ struct nouveau_pushbuf_priv {
 	unsigned start;
 	unsigned size;
 
-	uint64_t buffers;
-	int nr_buffers;
+	struct nouveau_pushbuf_bo *buffers;
+	unsigned nr_buffers;
+	struct nouveau_pushbuf_reloc *relocs;
+	unsigned nr_relocs;
 };
 #define nouveau_pushbuf(n) ((struct nouveau_pushbuf_priv *)(n))
 
@@ -242,6 +245,7 @@ nouveau_notifier_wait_status(struct nouveau_notifier *, int id, int status,
 struct nouveau_bo_priv {
 	struct nouveau_bo base;
 
+	struct nouveau_pushbuf_bo *pending;
 	struct nouveau_fence *fence;
 	struct nouveau_fence *wr_fence;
 
