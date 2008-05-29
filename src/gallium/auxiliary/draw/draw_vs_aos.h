@@ -160,6 +160,7 @@ struct aos_compilation {
    struct x86_reg machine_EDX;
    struct x86_reg count_ESI;    /* decrements to zero */
    struct x86_reg temp_EBP;
+   struct x86_reg stack_ESP;
 };
 
 struct x86_reg aos_get_xmm_reg( struct aos_compilation *cp );

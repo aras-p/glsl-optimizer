@@ -1372,11 +1372,20 @@ static boolean emit_MAD( struct aos_compilation *cp, const struct tgsi_full_inst
    return TRUE;
 }
 
+/* A wrapper for powf().
+ * Makes sure it is cdecl and operates on floats.
+ */
+static float PIPE_CDECL _powerf( float x, float y )
+{
+   return powf( x, y );
+}
+
 /* Really not sufficient -- need to check for conditions that could
  * generate inf/nan values, which will slow things down hugely.
  */
 static boolean emit_POW( struct aos_compilation *cp, const struct tgsi_full_instruction *op ) 
 {
+#if 0
    x87_fld_src(cp, &op->FullSrcRegisters[1], 0);  /* a1.x */
    x87_fld_src(cp, &op->FullSrcRegisters[0], 0);	/* a0.x a1.x */
    x87_fyl2x(cp->func);	                                /* a1*log2(a0) */
@@ -1384,6 +1393,42 @@ static boolean emit_POW( struct aos_compilation *cp, const struct tgsi_full_inst
    x87_emit_ex2( cp );		/* 2^(a1*log2(a0)) */
 
    x87_fstp_dest4(cp, &op->FullDstRegisters[0]);
+#else
+   uint i;
+
+   /* For absolute correctness, need to spill/invalidate all XMM regs
+    * too.  
+    */
+   for (i = 0; i < 8; i++) {
+      if (cp->xmm[i].dirty) 
+         spill(cp, i);
+      aos_release_xmm_reg(cp, i);
+   }
+
+   /* Push caller-save (ie scratch) regs.  
+    */
+   x86_cdecl_caller_push_regs( cp->func );
+
+   x86_lea( cp->func, cp->stack_ESP, x86_make_disp(cp->stack_ESP, -8) );
+
+   x87_fld_src( cp, &op->FullSrcRegisters[1], 0 );
+   x87_fstp( cp->func, x86_make_disp( cp->stack_ESP, 4 ) );
+   x87_fld_src( cp, &op->FullSrcRegisters[0], 0 );
+   x87_fstp( cp->func, x86_make_disp( cp->stack_ESP, 0 ) );
+
+   x86_mov_reg_imm( cp->func, cp->tmp_EAX, (unsigned long) _powerf );
+   x86_call( cp->func, cp->tmp_EAX );
+
+   x86_lea( cp->func, cp->stack_ESP, x86_make_disp(cp->stack_ESP, 8) );
+
+   x86_cdecl_caller_pop_regs( cp->func );
+
+   /* Note retval on x87 stack:
+    */
+   cp->func->x87_stack++;
+
+   x87_fstp_dest4( cp, &op->FullDstRegisters[0] );
+#endif
    return TRUE;
 }
 
@@ -1781,6 +1826,7 @@ static boolean build_vertex_program( struct draw_vs_varient_aos_sse *varient,
    cp.machine_EDX   = x86_make_reg(file_REG32, reg_DX);
    cp.count_ESI     = x86_make_reg(file_REG32, reg_SI);
    cp.temp_EBP     = x86_make_reg(file_REG32, reg_BP);
+   cp.stack_ESP = x86_make_reg( file_REG32, reg_SP );
 
    x86_init_func(cp.func);
 
