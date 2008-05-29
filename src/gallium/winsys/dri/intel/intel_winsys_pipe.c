@@ -190,40 +190,16 @@ intel_flush_frontbuffer( struct pipe_winsys *winsys,
    intelDisplaySurface(dPriv, surf, NULL);
 }
 
-
+/*
+ * Deprecated surface functions
+ */
 static struct pipe_surface *
 intel_i915_surface_alloc(struct pipe_winsys *winsys)
 {
-   struct pipe_surface *surf = CALLOC_STRUCT(pipe_surface);
-   if (surf) {
-      surf->refcount = 1;
-      surf->winsys = winsys;
-   }
-   return surf;
+   assert("intel_i915_surface_alloc is deprecated" & 0);
+   return NULL;
 }
 
-
-/**
- * Round n up to next multiple.
- */
-static INLINE unsigned
-round_up(unsigned n, unsigned multiple)
-{
-   return (n + multiple - 1) & ~(multiple - 1);
-}
-
-static unsigned
-power_of_two(unsigned x)
-{
-   int value = 1;
-   while (value <= x)
-      value = value << 1;
-   return value;
-}
-
-/**
- * Copied from xm_winsys.c
- */
 static int
 intel_i915_surface_alloc_storage(struct pipe_winsys *winsys,
                                  struct pipe_surface *surf,
@@ -232,21 +208,14 @@ intel_i915_surface_alloc_storage(struct pipe_winsys *winsys,
                                  unsigned flags,
                                  unsigned tex_usage)
 {
+   assert("intel_i915_surface_alloc_storage is deprecated" & 0);
    return -1;
 }
-
 
 static void
 intel_i915_surface_release(struct pipe_winsys *winsys, struct pipe_surface **s)
 {
-   struct pipe_surface *surf = *s;
-   surf->refcount--;
-   if (surf->refcount == 0) {
-      if (surf->buffer)
-	 pipe_buffer_reference(winsys, &surf->buffer, NULL);
-      free(surf);
-   }
-   *s = NULL;
+   assert("intel_i915_surface_release is deprecated" & 0);
 }
 
 

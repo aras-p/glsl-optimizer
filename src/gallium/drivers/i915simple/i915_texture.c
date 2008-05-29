@@ -619,7 +619,7 @@ i915_get_tex_surface(struct pipe_screen *screen,
       assert(zslice == 0);
    }
 
-   ps = ws->surface_alloc(ws);
+   ps = CALLOC_STRUCT(pipe_surface);//ws->surface_alloc(ws);
    if (ps) {
       assert(ps->refcount);
       assert(ps->winsys);
