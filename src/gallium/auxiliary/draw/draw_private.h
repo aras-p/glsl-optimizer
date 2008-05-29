@@ -157,7 +157,8 @@ struct draw_context
          const void *constants;
       } user;
 
-      boolean test_fse;
+      boolean test_fse;         /* enable FSE even though its not correct (eg for softpipe) */
+      boolean no_fse;           /* disable FSE even when it is correct */
    } pt;
 
    struct {
