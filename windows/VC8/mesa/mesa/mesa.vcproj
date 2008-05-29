@@ -530,6 +530,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\..\src\mesa\shader\prog_uniform.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\..\src\mesa\shader\program.c"
 				>
 			</File>
@@ -1364,6 +1368,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\shader\prog_statevars.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\shader\prog_uniform.h"
 				>
 			</File>
 			<File
