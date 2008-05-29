@@ -12,6 +12,8 @@
 #include "eglx.h"
 
 
+static const char *DefaultXDriver = "softpipe_egl";
+
 
 /**
  * Given an X Display ptr (at dpy->Xdpy) try to determine the appropriate
@@ -21,14 +23,24 @@ const char *
 _xeglChooseDriver(_EGLDisplay *dpy)
 {
 #ifdef _EGL_PLATFORM_X
-   _XPrivDisplay xdpy = (_XPrivDisplay) dpy->Xdpy;
+   _XPrivDisplay xdpy;
 
    assert(dpy);
+
+   if (!dpy->Xdpy) {
+      dpy->Xdpy = XOpenDisplay(NULL);
+      if (!dpy->Xdpy) {
+         /* can't open X display -> can't use X-based driver */
+         return NULL;
+      }
+   }
+   xdpy = (_XPrivDisplay) dpy->Xdpy;
+
    assert(dpy->Xdpy);
 
    printf("%s\n", xdpy->display_name);
 
-   return "foo"; /* XXX todo */
+   return DefaultXDriver; /* XXX temporary */
 #else
    return NULL;
 #endif
