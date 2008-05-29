@@ -588,7 +588,7 @@ drm_swap_buffers(_EGLDriver *drv, EGLDisplay dpy, EGLSurface draw)
  * plug in API functions.
  */
 _EGLDriver *
-_eglMain(_EGLDisplay *dpy)
+_eglMain(_EGLDisplay *dpy, const char *args)
 {
 	struct drm_driver *drm;
 
