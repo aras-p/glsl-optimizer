@@ -256,13 +256,19 @@ static void vcache_check_run( struct draw_pt_front_end *frontend,
    unsigned min_index = draw->pt.user.min_index;
    unsigned max_index = draw->pt.user.max_index;
    unsigned index_size = draw->pt.user.eltSize;
-   unsigned fetch_count = MAX2(max_index, max_index + 1 - min_index);
+   unsigned fetch_count = max_index + 1 - min_index;
    const ushort *transformed_elts;
    ushort *storage = NULL;
 
-   if (fetch_count >= FETCH_MAX ||
-       fetch_count > draw_count) 
+
+   if (0) debug_printf("fetch_count %d draw_count %d\n", fetch_count, draw_count);
+      
+   if (max_index == 0xffffffff ||
+       fetch_count >= FETCH_MAX ||
+       fetch_count > draw_count) {
+      debug_printf("fail\n");
       goto fail;
+   }
       
 
    if (min_index == 0 &&
