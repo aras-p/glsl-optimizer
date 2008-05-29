@@ -31,8 +31,6 @@
 
 #include <stdlib.h>
 #include <xf86drm.h>
-//#include "dri_bufpool.h"
-//#include "dri_bufmgr.h"
 
 #include "intel_context.h"
 #include "intel_winsys.h"
@@ -45,8 +43,6 @@
 #include "pipe/p_util.h"
 #include "pipe/p_inlines.h"
 
-
-
 struct intel_pipe_winsys {
    struct pipe_winsys winsys;
    struct _DriBufferPool *regionPool;
@@ -54,7 +50,6 @@ struct intel_pipe_winsys {
    struct _DriBufferPool *vertexPool;
    struct _DriFreeSlabManager *fMan; /** shared between all pipes */
 };
-
 
 
 /* Turn a pipe winsys into an intel/pipe winsys:
@@ -66,8 +61,12 @@ intel_pipe_winsys( struct pipe_winsys *winsys )
 }
 
 
-/* Most callbacks map direcly onto dri_bufmgr operations:
+/*
+ * Buffer functions.
+ *
+ * Most callbacks map direcly onto dri_bufmgr operations:
  */
+
 static void *intel_buffer_map(struct pipe_winsys *winsys, 
 			      struct pipe_buffer *buf,
 			      unsigned flags )
@@ -89,7 +88,6 @@ static void intel_buffer_unmap(struct pipe_winsys *winsys,
    driBOUnmap( dri_bo(buf) );
 }
 
-
 static void
 intel_buffer_destroy(struct pipe_winsys *winsys,
 		     struct pipe_buffer *buf)
@@ -98,11 +96,6 @@ intel_buffer_destroy(struct pipe_winsys *winsys,
    FREE(buf);
 }
 
-
-/* Pipe has no concept of pools.  We choose the tex/region pool
- * for all buffers.
- * Grabs the hardware lock!
- */
 static struct pipe_buffer *
 intel_buffer_create(struct pipe_winsys *winsys, 
                     unsigned alignment, 
@@ -175,24 +168,12 @@ intel_user_buffer_create(struct pipe_winsys *winsys, void *ptr, unsigned bytes)
 }
 
 
-/* The state tracker (should!) keep track of whether the fake
- * frontbuffer has been touched by any rendering since the last time
- * we copied its contents to the real frontbuffer.  Our task is easy:
- */
-static void
-intel_flush_frontbuffer( struct pipe_winsys *winsys,
-                         struct pipe_surface *surf,
-                         void *context_private)
-{
-   struct intel_context *intel = (struct intel_context *) context_private;
-   __DRIdrawablePrivate *dPriv = intel->driDrawable;
-
-   intelDisplaySurface(dPriv, surf, NULL);
-}
-
 /*
- * Deprecated surface functions
+ * Surface functions.
+ *
+ * Deprecated!
  */
+
 static struct pipe_surface *
 intel_i915_surface_alloc(struct pipe_winsys *winsys)
 {
@@ -218,13 +199,9 @@ intel_i915_surface_release(struct pipe_winsys *winsys, struct pipe_surface **s)
    assert("intel_i915_surface_release is deprecated" & 0);
 }
 
-
-
-static const char *
-intel_get_name( struct pipe_winsys *winsys )
-{
-   return "Intel/DRI/ttm";
-}
+/*
+ * Fence functions
+ */
 
 static void
 intel_fence_reference( struct pipe_winsys *sws,
@@ -252,6 +229,33 @@ intel_fence_finish( struct pipe_winsys *sws,
                     unsigned flag )
 {
    return driFenceFinish((struct _DriFenceObject *)fence, flag, 0);
+}
+
+
+/*
+ * Mixed functions
+ */
+
+static const char *
+intel_get_name( struct pipe_winsys *winsys )
+{
+   return "Intel/DRI/ttm";
+}
+
+/*
+ * The state tracker (should!) keep track of whether the fake
+ * frontbuffer has been touched by any rendering since the last time
+ * we copied its contents to the real frontbuffer.  Our task is easy:
+ */
+static void
+intel_flush_frontbuffer( struct pipe_winsys *winsys,
+                         struct pipe_surface *surf,
+                         void *context_private)
+{
+   struct intel_context *intel = (struct intel_context *) context_private;
+   __DRIdrawablePrivate *dPriv = intel->driDrawable;
+
+   intelDisplaySurface(dPriv, surf, NULL);
 }
 
 struct pipe_winsys *
@@ -300,7 +304,6 @@ intel_create_pipe_winsys( int fd, struct _DriFreeSlabManager *fMan )
    return &iws->winsys;
 }
 
-
 void
 intel_destroy_pipe_winsys( struct pipe_winsys *winsys )
 {
@@ -313,4 +316,3 @@ intel_destroy_pipe_winsys( struct pipe_winsys *winsys )
    }
    free(iws);
 }
-
