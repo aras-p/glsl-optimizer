@@ -153,7 +153,9 @@ const char *
 debug_get_option(const char *name, const char *dfault)
 {
    const char *result;
-#ifdef PIPE_SUBSYSTEM_WINDOWS_DISPLAY
+#if defined(PIPE_SUBSYSTEM_WINDOWS_DISPLAY)
+   /* EngMapFile creates the file if it does not exists, so it must either be
+    * disabled on release versions (or put in a less conspicuous place). */
 #ifdef DEBUG
    ULONG_PTR iFile = 0;
    const void *pMap = NULL;
@@ -161,9 +163,6 @@ debug_get_option(const char *name, const char *dfault)
    static char output[1024];
    
    result = dfault;
-   /* XXX: this creates the file if it does not exists, so it must either be
-    * disabled on release versions, or put in a less conspicuous place.
-    */
    pMap = EngMapFile(L"\\??\\c:\\gallium.cfg", 0, &iFile);
    if(pMap) {
       sol = (const char *)pMap;
@@ -187,13 +186,15 @@ debug_get_option(const char *name, const char *dfault)
 #else
    result = dfault;
 #endif
+#elif defined(PIPE_SUBSYSTEM_WINDOWS_CE)
+   /* TODO: implement */
+   result = dfault;
 #else
-   
    result = getenv(name);
    if(!result)
       result = dfault;
 #endif
-      
+
    debug_printf("%s: %s = %s\n", __FUNCTION__, name, result ? result : "(null)");
    
    return result;
