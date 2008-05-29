@@ -260,8 +260,6 @@ static void vcache_check_run( struct draw_pt_front_end *frontend,
    const ushort *transformed_elts;
    ushort *storage = NULL;
 
-   printf("fetch_count %x\n", fetch_count);
-      
    if (fetch_count >= FETCH_MAX ||
        fetch_count > draw_count) 
       goto fail;
