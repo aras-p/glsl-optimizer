@@ -679,10 +679,24 @@ void
 viaDestroyContext(__DRIcontextPrivate *driContextPriv)
 {
     GET_CURRENT_CONTEXT(ctx);
-    struct via_context *vmesa = 
+    struct via_context *vmesa =
        (struct via_context *)driContextPriv->driverPrivate;
     struct via_context *current = ctx ? VIA_CONTEXT(ctx) : NULL;
+
     assert(vmesa); /* should never be null */
+
+    if (vmesa->driDrawable) {
+       viaWaitIdle(vmesa, GL_FALSE);
+
+       if (vmesa->doPageFlip) {
+	  LOCK_HARDWARE(vmesa);
+	  if (vmesa->pfCurrentOffset != 0) {
+	     fprintf(stderr, "%s - reset pf\n", __FUNCTION__);
+	     viaResetPageFlippingLocked(vmesa);
+	  }
+	  UNLOCK_HARDWARE(vmesa);
+       }
+    }
 
     /* check if we're deleting the currently bound context */
     if (vmesa == current) {
@@ -690,35 +704,23 @@ viaDestroyContext(__DRIcontextPrivate *driContextPriv)
       _mesa_make_current(NULL, NULL, NULL);
     }
 
-    if (vmesa) {
-        viaWaitIdle(vmesa, GL_FALSE);
-	if (vmesa->doPageFlip) {
-	   LOCK_HARDWARE(vmesa);
-	   if (vmesa->pfCurrentOffset != 0) {
-	      fprintf(stderr, "%s - reset pf\n", __FUNCTION__);
-	      viaResetPageFlippingLocked(vmesa);
-	   }
-	   UNLOCK_HARDWARE(vmesa);
-	}
-	
-	_swsetup_DestroyContext(vmesa->glCtx);
-        _tnl_DestroyContext(vmesa->glCtx);
-        _vbo_DestroyContext(vmesa->glCtx);
-        _swrast_DestroyContext(vmesa->glCtx);
-        /* free the Mesa context */
-	_mesa_destroy_context(vmesa->glCtx);
-	/* release our data */
-	FreeBuffer(vmesa);
+    _swsetup_DestroyContext(vmesa->glCtx);
+    _tnl_DestroyContext(vmesa->glCtx);
+    _vbo_DestroyContext(vmesa->glCtx);
+    _swrast_DestroyContext(vmesa->glCtx);
+    /* free the Mesa context */
+    _mesa_destroy_context(vmesa->glCtx);
+    /* release our data */
+    FreeBuffer(vmesa);
 
-	assert (is_empty_list(&vmesa->tex_image_list[VIA_MEM_AGP]));
-	assert (is_empty_list(&vmesa->tex_image_list[VIA_MEM_VIDEO]));
-	assert (is_empty_list(&vmesa->tex_image_list[VIA_MEM_SYSTEM]));
-	assert (is_empty_list(&vmesa->freed_tex_buffers));
+    assert (is_empty_list(&vmesa->tex_image_list[VIA_MEM_AGP]));
+    assert (is_empty_list(&vmesa->tex_image_list[VIA_MEM_VIDEO]));
+    assert (is_empty_list(&vmesa->tex_image_list[VIA_MEM_SYSTEM]));
+    assert (is_empty_list(&vmesa->freed_tex_buffers));
 
-	driDestroyOptionCache(&vmesa->optionCache);
+    driDestroyOptionCache(&vmesa->optionCache);
 
-	FREE(vmesa);
-    }
+    FREE(vmesa);
 }
 
 
