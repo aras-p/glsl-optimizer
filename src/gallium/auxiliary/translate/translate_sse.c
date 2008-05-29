@@ -309,7 +309,7 @@ static void get_src_ptr( struct translate_sse *p,
 static void emit_swizzle( struct translate_sse *p,
 			  struct x86_reg dest,
 			  struct x86_reg src,
-			  unsigned shuffle )
+			  unsigned char shuffle )
 {
    sse_shufps(p->func, dest, src, shuffle);
 }

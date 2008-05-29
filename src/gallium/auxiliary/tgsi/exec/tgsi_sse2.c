@@ -198,7 +198,7 @@ get_coef(
 static void
 emit_retw(
    struct x86_function  *func,
-   unsigned             size )
+   unsigned short        size )
 {
    x86_retw( func, size );
 }

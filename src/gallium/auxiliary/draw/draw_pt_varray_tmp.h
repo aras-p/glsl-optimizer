@@ -10,7 +10,8 @@ static void FUNC(struct draw_pt_front_end *frontend,
 
    boolean flatfirst = (draw->rasterizer->flatshade &&
                         draw->rasterizer->flatshade_first);
-   unsigned i, j, flags;
+   unsigned i, j;
+   ushort flags;
    unsigned first, incr;
 
    varray->fetch_start = start;
@@ -200,9 +201,9 @@ static void FUNC(struct draw_pt_front_end *frontend,
       /* These bitflags look a little odd because we submit the
        * vertices as (1,2,0) to satisfy flatshade requirements.
        */
-      const unsigned edge_first  = DRAW_PIPE_EDGE_FLAG_2;
-      const unsigned edge_middle = DRAW_PIPE_EDGE_FLAG_0;
-      const unsigned edge_last   = DRAW_PIPE_EDGE_FLAG_1;
+      const ushort edge_first  = DRAW_PIPE_EDGE_FLAG_2;
+      const ushort edge_middle = DRAW_PIPE_EDGE_FLAG_0;
+      const ushort edge_last   = DRAW_PIPE_EDGE_FLAG_1;
 
       flags = DRAW_PIPE_RESET_STIPPLE | edge_first | edge_middle;
       for (j = 0; j + first <= count; j += i) {

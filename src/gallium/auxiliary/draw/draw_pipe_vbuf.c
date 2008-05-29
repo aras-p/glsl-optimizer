@@ -145,7 +145,7 @@ emit_vertex( struct vbuf_stage *vbuf,
       vertex->vertex_id = vbuf->nr_vertices++;
    }
 
-   return vertex->vertex_id;
+   return (ushort)vertex->vertex_id;
 }
 
 
