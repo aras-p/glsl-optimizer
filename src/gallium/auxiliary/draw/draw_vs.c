@@ -49,10 +49,10 @@ void draw_vs_set_constants( struct draw_context *draw,
    if (((unsigned)constants) & 0xf) {
       if (size > draw->vs.const_storage_size) {
          if (draw->vs.aligned_constant_storage)
-            align_free(draw->vs.aligned_constant_storage);
+            align_free((void *)draw->vs.aligned_constant_storage);
          draw->vs.aligned_constant_storage = align_malloc( size, 16 );
       }
-      memcpy( draw->vs.aligned_constant_storage,
+      memcpy( (void*)draw->vs.aligned_constant_storage,
               constants, 
               size );
       constants = draw->vs.aligned_constant_storage;
@@ -174,7 +174,7 @@ draw_vs_destroy( struct draw_context *draw )
       draw_vs_aos_machine_destroy(draw->vs.aos_machine);
 
    if (draw->vs.aligned_constant_storage)
-      align_free(draw->vs.aligned_constant_storage);
+      align_free((void*)draw->vs.aligned_constant_storage);
 
    tgsi_exec_machine_free_data(&draw->vs.machine);
 

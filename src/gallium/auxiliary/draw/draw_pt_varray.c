@@ -109,9 +109,9 @@ static INLINE void fetch_init(struct varray_frontend *varray,
 
 
 static INLINE void add_draw_el(struct varray_frontend *varray,
-                               int idx)
+                               unsigned idx)
 {
-   varray->draw_elts[varray->draw_count++] = idx;
+   varray->draw_elts[varray->draw_count++] = (ushort)idx;
 }
 
 

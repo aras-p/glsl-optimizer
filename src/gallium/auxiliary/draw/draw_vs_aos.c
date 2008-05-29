@@ -492,7 +492,7 @@ static struct x86_reg fetch_src( struct aos_compilation *cp,
                                             src->SrcRegister.File, 
                                             src->SrcRegister.Index);
    unsigned i;
-   unsigned swz = 0;
+   ubyte swz = 0;
    unsigned negs = 0;
    unsigned abs = 0;
 
@@ -704,7 +704,7 @@ static void store_dest( struct aos_compilation *cp,
 static void inject_scalar( struct aos_compilation *cp,
                            struct x86_reg dst,
                            struct x86_reg result,
-                           unsigned swizzle )
+                           ubyte swizzle )
 {
    sse_shufps(cp->func, dst, dst, swizzle);
    sse_movss(cp->func, dst, result);

@@ -255,7 +255,8 @@ void draw_pipeline_run( struct draw_context *draw,
    char *verts = (char *)vertices;                           \
    boolean flatfirst = (draw->rasterizer->flatshade &&       \
                         draw->rasterizer->flatshade_first);  \
-   unsigned i, flags
+   unsigned i;                                               \
+   ushort flags
 
 #define FLUSH
 

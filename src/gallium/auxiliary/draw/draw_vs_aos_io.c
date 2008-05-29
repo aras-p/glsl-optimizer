@@ -118,7 +118,7 @@ static void get_src_ptr( struct aos_compilation *cp,
 static void emit_swizzle( struct aos_compilation *cp,
 			  struct x86_reg dest,
 			  struct x86_reg src,
-			  unsigned shuffle )
+			  ubyte shuffle )
 {
    sse_shufps(cp->func, dest, src, shuffle);
 }
