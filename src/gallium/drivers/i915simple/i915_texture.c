@@ -104,48 +104,49 @@ i915_miptree_set_image_offset(struct i915_texture *tex,
    */
 }
 
-#if 0
-/* Hack it up to use the old winsys->surface_alloc_storage()
- * method for now:
+static unsigned
+power_of_two(unsigned x)
+{
+   int value = 1;
+   while (value <= x)
+      value = value << 1;
+   return value;
+}
+
+static unsigned
+round_up(unsigned n, unsigned multiple)
+{
+   return (n + multiple - 1) & ~(multiple - 1);
+}
+
+/**
+ * Special case to deal with display targets.
  */
 static boolean
 i915_displaytarget_layout(struct pipe_screen *screen,
                           struct i915_texture *tex)
 {
-   struct pipe_winsys *ws = screen->winsys;
-   struct pipe_surface surf;
-   unsigned flags = (PIPE_BUFFER_USAGE_CPU_READ |
-                     PIPE_BUFFER_USAGE_CPU_WRITE |
-                     PIPE_BUFFER_USAGE_GPU_READ |
-                     PIPE_BUFFER_USAGE_GPU_WRITE);
+   struct pipe_texture *pt = &tex->base;
 
+   if (pt->last_level > 1 || pt->cpp != 4)
+      return 0;
 
-   memset(&surf, 0, sizeof(surf));
-
-   ws->surface_alloc_storage( ws, 
-                              &surf,
-                              tex->base.width[0], 
-                              tex->base.height[0],
-                              tex->base.format,
-                              flags,
-                              tex->base.tex_usage);
-      
-   /* Now extract the goodies: 
-    */
    i915_miptree_set_level_info( tex, 0, 1, 0, 0,
                                 tex->base.width[0],
                                 tex->base.height[0],
                                 1 );
    i915_miptree_set_image_offset( tex, 0, 0, 0, 0 );
 
-   tex->buffer = surf.buffer;
-   tex->pitch = surf.pitch;
-   tex->total_height = 0;
-
-
-   return tex->buffer != NULL;
-}
+#if 0
+   tex->pitch = MAX2(512, power_of_two(tex->base.width[0] * pt->cpp)) / pt->cpp;
+   tex->total_height = round_up(tex->base.height[0], 8);
+#else
+   tex->pitch = round_up(tex->base.width[0], 64 / pt->cpp);
+   tex->total_height = tex->base.height[0];
 #endif
+
+   return 1;
+}
 
 static void
 i945_miptree_layout_2d( struct i915_texture *tex )
@@ -529,14 +530,17 @@ i915_texture_create(struct pipe_screen *screen,
    struct pipe_winsys *ws = screen->winsys;
    struct i915_texture *tex = CALLOC_STRUCT(i915_texture);
 
-   if (!tex) 
+   if (!tex)
       return NULL;
 
    tex->base = *templat;
    tex->base.refcount = 1;
    tex->base.screen = screen;
 
-   if (i915screen->is_i945) {
+   if (tex->base.tex_usage & PIPE_TEXTURE_USAGE_DISPLAY_TARGET) {
+      if (!i915_displaytarget_layout(screen, tex))
+	 goto fail;
+   } else if (i915screen->is_i945) {
       if (!i945_miptree_layout(tex))
 	 goto fail;
    } else {
