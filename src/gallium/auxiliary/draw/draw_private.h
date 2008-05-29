@@ -190,6 +190,12 @@ struct draw_context
       struct aos_machine *aos_machine; 
 
 
+      const float (*aligned_constants)[4];
+
+      const float (*aligned_constant_storage)[4];
+      unsigned const_storage_size;
+
+
       struct translate *fetch;
       struct translate_cache *fetch_cache;
       struct translate *emit;
@@ -225,7 +231,8 @@ void draw_vs_set_viewport( struct draw_context *,
                            const struct pipe_viewport_state * );
 
 void draw_vs_set_constants( struct draw_context *,
-                            const float (*constants)[4] );
+                            const float (*constants)[4],
+                            unsigned size );
 
 
 

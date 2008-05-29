@@ -217,10 +217,11 @@ draw_set_mapped_vertex_buffer(struct draw_context *draw,
 
 void
 draw_set_mapped_constant_buffer(struct draw_context *draw,
-                                const void *buffer)
+                                const void *buffer, 
+                                unsigned size )
 {
    draw->pt.user.constants = buffer;
-   draw_vs_set_constants( draw, (const float (*)[4])buffer );
+   draw_vs_set_constants( draw, (const float (*)[4])buffer, size );
 }
 
 

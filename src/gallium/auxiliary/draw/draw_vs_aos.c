@@ -1957,7 +1957,7 @@ static void PIPE_CDECL vaos_run_elts( struct draw_vs_varient *varient,
    struct aos_machine *machine = vaos->draw->vs.aos_machine;
 
    machine->internal[IMM_PSIZE][0] = vaos->draw->rasterizer->point_size;
-   machine->constants = (const float (*)[4])vaos->draw->pt.user.constants;
+   machine->constants = vaos->draw->vs.aligned_constants;
    machine->immediates = vaos->base.vs->immediates;
    machine->attrib = vaos->attrib;
 
@@ -1976,7 +1976,7 @@ static void PIPE_CDECL vaos_run_linear( struct draw_vs_varient *varient,
    struct aos_machine *machine = vaos->draw->vs.aos_machine;
 
    machine->internal[IMM_PSIZE][0] = vaos->draw->rasterizer->point_size;
-   machine->constants = (const float (*)[4])vaos->draw->pt.user.constants;
+   machine->constants = vaos->draw->vs.aligned_constants;
    machine->immediates = vaos->base.vs->immediates;
    machine->attrib = vaos->attrib;
 
