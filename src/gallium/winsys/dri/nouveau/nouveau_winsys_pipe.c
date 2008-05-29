@@ -42,7 +42,8 @@ nouveau_surface_alloc(struct pipe_winsys *ws)
 static int
 nouveau_surface_alloc_storage(struct pipe_winsys *ws, struct pipe_surface *surf,
 			      unsigned width, unsigned height,
-			      enum pipe_format format, unsigned flags)
+			      enum pipe_format format, unsigned flags,
+			      unsigned tex_usage)
 {
 	unsigned pitch = ((width * pf_get_size(format)) + 63) & ~63;
 
