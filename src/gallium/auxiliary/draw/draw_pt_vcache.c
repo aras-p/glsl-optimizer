@@ -266,7 +266,7 @@ static void vcache_check_run( struct draw_pt_front_end *frontend,
    if (max_index == 0xffffffff ||
        fetch_count >= FETCH_MAX ||
        fetch_count > draw_count) {
-      debug_printf("fail\n");
+      if (0) debug_printf("fail\n");
       goto fail;
    }
       
