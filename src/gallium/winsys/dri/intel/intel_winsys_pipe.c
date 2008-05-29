@@ -220,7 +220,7 @@ power_of_two(unsigned x)
       value = value << 1;
    return value;
 }
-   /*pipe_buffer_reference(winsys, &i915_render->vbo, NULL);*/
+
 /**
  * Copied from xm_winsys.c
  */
