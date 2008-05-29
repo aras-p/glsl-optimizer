@@ -81,7 +81,8 @@ eglInitialize(EGLDisplay dpy, EGLint *major, EGLint *minor)
 
       dpyPriv->Driver->APImajor = *major;
       dpyPriv->Driver->APIminor = *minor;
-      sprintf(dpyPriv->Driver->Version, "%d.%d", *major, *minor);
+      snprintf(dpyPriv->Driver->Version, sizeof(dpyPriv->Driver->Version),
+               "%d.%d (%s)", *major, *minor, dpyPriv->Driver->Name);
 
       return retVal;
    }

@@ -28,8 +28,10 @@ struct _egl_driver
 
    void *LibHandle; /**< dlopen handle */
 
+   const char *Name;  /**< name of this driver */
+
    int APImajor, APIminor; /**< as returned by eglInitialize() */
-   char Version[10];       /**< initialized from APImajor/minor */
+   char Version[1000];       /**< initialized from APImajor/minor, Name */
 
    const char *ClientAPIs;
 
