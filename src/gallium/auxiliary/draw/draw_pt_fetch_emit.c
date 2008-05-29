@@ -311,6 +311,53 @@ static void fetch_emit_run_linear( struct draw_pt_middle_end *middle,
 }
 
 
+static void fetch_emit_run_linear_elts( struct draw_pt_middle_end *middle,
+                                        unsigned start,
+                                        unsigned count,
+                                        const ushort *draw_elts,
+                                        unsigned draw_count )
+{
+   struct fetch_emit_middle_end *feme = (struct fetch_emit_middle_end *)middle;
+   struct draw_context *draw = feme->draw;
+   void *hw_verts;
+
+   /* XXX: need to flush to get prim_vbuf.c to release its allocation??
+    */
+   draw_do_flush( draw, DRAW_FLUSH_BACKEND );
+
+   hw_verts = draw->render->allocate_vertices( draw->render,
+                                               (ushort)feme->translate->key.output_stride,
+                                               (ushort)count );
+   if (!hw_verts) {
+      assert(0);
+      return;
+   }
+
+   /* Single routine to fetch vertices and emit HW verts.
+    */
+   feme->translate->run( feme->translate,
+                         start,
+                         count,
+                         hw_verts );
+
+   /* XXX: Draw arrays path to avoid re-emitting index list again and
+    * again.
+    */
+   draw->render->draw( draw->render, 
+                       draw_elts, 
+                       draw_count );
+
+   /* Done -- that was easy, wasn't it:
+    */
+   draw->render->release_vertices( draw->render,
+                                   hw_verts,
+                                   feme->translate->key.output_stride,
+                                   count );
+
+}
+
+
+
 
 static void fetch_emit_finish( struct draw_pt_middle_end *middle )
 {
@@ -343,6 +390,7 @@ struct draw_pt_middle_end *draw_pt_fetch_emit( struct draw_context *draw )
    fetch_emit->base.prepare    = fetch_emit_prepare;
    fetch_emit->base.run        = fetch_emit_run;
    fetch_emit->base.run_linear = fetch_emit_run_linear;
+   fetch_emit->base.run_linear_elts = fetch_emit_run_linear_elts;
    fetch_emit->base.finish     = fetch_emit_finish;
    fetch_emit->base.destroy    = fetch_emit_destroy;
 

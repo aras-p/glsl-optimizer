@@ -348,13 +348,29 @@ void draw_set_edgeflags( struct draw_context *draw,
  * \param elements  the element buffer ptr
  */
 void
-draw_set_mapped_element_buffer( struct draw_context *draw,
-                                unsigned eltSize, void *elements )
+draw_set_mapped_element_buffer_range( struct draw_context *draw,
+                                      unsigned eltSize,
+                                      unsigned min_index,
+                                      unsigned max_index,
+                                      void *elements )
 {
    draw->pt.user.elts = elements;
    draw->pt.user.eltSize = eltSize;
+   draw->pt.user.min_index = min_index;
+   draw->pt.user.max_index = max_index;
 }
 
+
+void
+draw_set_mapped_element_buffer( struct draw_context *draw,
+                                unsigned eltSize,
+                                void *elements )
+{
+   draw->pt.user.elts = elements;
+   draw->pt.user.eltSize = eltSize;
+   draw->pt.user.min_index = 0;
+   draw->pt.user.max_index = 0xffffffff;
+}
 
  
 /* Revamp me please:

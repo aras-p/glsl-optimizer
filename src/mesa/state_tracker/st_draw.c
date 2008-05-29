@@ -365,14 +365,33 @@ st_draw_vbo(GLcontext *ctx,
       }
 
       /* draw */
-      for (i = 0; i < nr_prims; i++) {
+      if (nr_prims == 1 && pipe->draw_range_elements != NULL) {
+         i = 0;
+
+         /* XXX: exercise temporary path to pass min/max directly
+          * through to driver & draw module.  These interfaces still
+          * need a bit of work...
+          */
          setup_edgeflags(ctx, prims[i].mode,
                          prims[i].start + indexOffset, prims[i].count,
                          arrays[VERT_ATTRIB_EDGEFLAG]);
 
-         pipe->draw_elements(pipe, indexBuf, indexSize,
-                             prims[i].mode,
-                             prims[i].start + indexOffset, prims[i].count);
+         pipe->draw_range_elements(pipe, indexBuf, indexSize,
+                                   min_index,
+                                   max_index,
+                                   prims[i].mode,
+                                   prims[i].start + indexOffset, prims[i].count);
+      }
+      else {
+         for (i = 0; i < nr_prims; i++) {
+            setup_edgeflags(ctx, prims[i].mode,
+                            prims[i].start + indexOffset, prims[i].count,
+                            arrays[VERT_ATTRIB_EDGEFLAG]);
+            
+            pipe->draw_elements(pipe, indexBuf, indexSize,
+                                prims[i].mode,
+                                prims[i].start + indexOffset, prims[i].count);
+         }
       }
 
       pipe_reference_buffer(pipe, &indexBuf, NULL);

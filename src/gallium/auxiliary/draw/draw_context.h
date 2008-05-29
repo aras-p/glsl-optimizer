@@ -118,8 +118,16 @@ void draw_set_vertex_elements(struct draw_context *draw,
 			      unsigned count,
                               const struct pipe_vertex_element *elements);
 
+void
+draw_set_mapped_element_buffer_range( struct draw_context *draw,
+                                      unsigned eltSize,
+                                      unsigned min_index,
+                                      unsigned max_index,
+                                      void *elements );
+
 void draw_set_mapped_element_buffer( struct draw_context *draw,
-                                     unsigned eltSize, void *elements );
+                                     unsigned eltSize, 
+                                     void *elements );
 
 void draw_set_mapped_vertex_buffer(struct draw_context *draw,
                                    unsigned attr, const void *buffer);

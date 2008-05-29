@@ -179,6 +179,7 @@ softpipe_create( struct pipe_screen *screen,
 
    softpipe->pipe.draw_arrays = softpipe_draw_arrays;
    softpipe->pipe.draw_elements = softpipe_draw_elements;
+   softpipe->pipe.draw_range_elements = softpipe_draw_range_elements;
    softpipe->pipe.set_edgeflags = softpipe_set_edgeflags;
 
 

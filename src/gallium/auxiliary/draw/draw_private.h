@@ -147,6 +147,8 @@ struct draw_context
          const void *elts;
          /** bytes per index (0, 1, 2 or 4) */
          unsigned eltSize;
+         unsigned min_index;
+         unsigned max_index;
          
          /** vertex arrays */
          const void *vbuffer[PIPE_MAX_ATTRIBS];

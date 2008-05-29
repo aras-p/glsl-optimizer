@@ -171,6 +171,13 @@ boolean softpipe_draw_elements(struct pipe_context *pipe,
 			       struct pipe_buffer *indexBuffer,
 			       unsigned indexSize,
 			       unsigned mode, unsigned start, unsigned count);
+boolean
+softpipe_draw_range_elements(struct pipe_context *pipe,
+                             struct pipe_buffer *indexBuffer,
+                             unsigned indexSize,
+                             unsigned min_index,
+                             unsigned max_index,
+                             unsigned mode, unsigned start, unsigned count);
 
 void
 softpipe_set_edgeflags(struct pipe_context *pipe, const unsigned *edgeflags);

@@ -108,11 +108,14 @@ softpipe_draw_arrays(struct pipe_context *pipe, unsigned mode,
  *
  * XXX should the element buffer be specified/bound with a separate function?
  */
+
 boolean
-softpipe_draw_elements(struct pipe_context *pipe,
-                       struct pipe_buffer *indexBuffer,
-                       unsigned indexSize,
-                       unsigned mode, unsigned start, unsigned count)
+softpipe_draw_range_elements(struct pipe_context *pipe,
+                             struct pipe_buffer *indexBuffer,
+                             unsigned indexSize,
+                             unsigned min_index,
+                             unsigned max_index,
+                             unsigned mode, unsigned start, unsigned count)
 {
    struct softpipe_context *sp = softpipe_context(pipe);
    struct draw_context *draw = sp->draw;
@@ -141,11 +144,14 @@ softpipe_draw_elements(struct pipe_context *pipe,
       void *mapped_indexes
          = pipe->winsys->buffer_map(pipe->winsys, indexBuffer,
                                     PIPE_BUFFER_USAGE_CPU_READ);
-      draw_set_mapped_element_buffer(draw, indexSize, mapped_indexes);
+      draw_set_mapped_element_buffer_range(draw, indexSize,
+                                           min_index,
+                                           max_index,
+                                           mapped_indexes);
    }
    else {
       /* no index/element buffer */
-      draw_set_mapped_element_buffer(draw, 0, NULL);
+      draw_set_mapped_element_buffer_range(draw, 0, start, start + count - 1, NULL);
    }
 
 
@@ -170,6 +176,19 @@ softpipe_draw_elements(struct pipe_context *pipe,
 
    return TRUE;
 }
+
+boolean
+softpipe_draw_elements(struct pipe_context *pipe,
+                       struct pipe_buffer *indexBuffer,
+                       unsigned indexSize,
+                       unsigned mode, unsigned start, unsigned count)
+{
+   return softpipe_draw_range_elements( pipe, indexBuffer,
+                                        indexSize,
+                                        0, 0xffffffff,
+                                        mode, start, count );
+}
+
 
 
 void
