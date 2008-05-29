@@ -510,9 +510,9 @@ static void driCopySubBuffer(__DRIdrawable *dPriv,
     dPriv->driScreenPriv->DriverAPI.CopySubBuffer(dPriv, x, y, w, h);
 
     rect.x1 = x;
-    rect.y1 = y;
+    rect.y1 = dPriv->h - y - h;
     rect.x2 = x + w;
-    rect.y2 = y + w;
+    rect.y2 = rect.y1 + h;
     driReportDamage(dPriv, &rect, 1);
 }
 
