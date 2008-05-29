@@ -1963,7 +1963,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 /* Fog: Alpha function */
 #define R300_FG_ALPHA_FUNC                            0x4bd4
-#       define R300_FG_ALPHA_FUNC_VAL_MASK               0x0000000f
+#       define R300_FG_ALPHA_FUNC_VAL_MASK               0x000000ff
 #       define R300_FG_ALPHA_FUNC_NEVER                     (0 << 8)
 #       define R300_FG_ALPHA_FUNC_LESS                      (1 << 8)
 #       define R300_FG_ALPHA_FUNC_EQUAL                     (2 << 8)
