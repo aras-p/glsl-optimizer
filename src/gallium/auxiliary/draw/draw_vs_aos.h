@@ -60,12 +60,12 @@ struct x86_function;
 #define FPU_RND_NEAREST 2
 
 struct aos_machine;
-typedef void PIPE_CDECL (*lit_func)( struct aos_machine *,
+typedef void (PIPE_CDECL *lit_func)( struct aos_machine *,
                                     float *result,
                                     const float *in,
                                     unsigned count );
 
-PIPE_CDECL void aos_do_lit( struct aos_machine *machine,
+void PIPE_CDECL aos_do_lit( struct aos_machine *machine,
                             float *result,
                             const float *in,
                             unsigned count );

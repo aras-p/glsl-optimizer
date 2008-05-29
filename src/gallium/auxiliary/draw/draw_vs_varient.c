@@ -118,10 +118,10 @@ static void do_viewport( struct draw_vs_varient_generic *vsvg,
 }
                          
 
-static void vsvg_run_elts( struct draw_vs_varient *varient,
-                           const unsigned *elts,
-                           unsigned count,
-                           void *output_buffer)
+static void PIPE_CDECL vsvg_run_elts( struct draw_vs_varient *varient,
+                                      const unsigned *elts,
+                                      unsigned count,
+                                      void *output_buffer)
 {
    struct draw_vs_varient_generic *vsvg = (struct draw_vs_varient_generic *)varient;
 			
@@ -174,10 +174,10 @@ static void vsvg_run_elts( struct draw_vs_varient *varient,
 }
 
 
-static void vsvg_run_linear( struct draw_vs_varient *varient,
-                                   unsigned start,
-                                   unsigned count,
-                                   void *output_buffer )
+static void PIPE_CDECL vsvg_run_linear( struct draw_vs_varient *varient,
+                                        unsigned start,
+                                        unsigned count,
+                                        void *output_buffer )
 {
    struct draw_vs_varient_generic *vsvg = (struct draw_vs_varient_generic *)varient;
 	

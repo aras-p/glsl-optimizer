@@ -57,7 +57,7 @@
 #define X87_CW_INFINITY               (1<<12)
 
 
-PIPE_CDECL void aos_do_lit( struct aos_machine *machine,
+void PIPE_CDECL aos_do_lit( struct aos_machine *machine,
                             float *result,
                             const float *in,
                             unsigned count )
@@ -91,7 +91,7 @@ PIPE_CDECL void aos_do_lit( struct aos_machine *machine,
 }
 
 
-static PIPE_CDECL void do_lit_lut( struct aos_machine *machine,
+static void PIPE_CDECL do_lit_lut( struct aos_machine *machine,
                                    float *result,
                                    const float *in,
                                    unsigned count )
