@@ -104,7 +104,7 @@ i915_miptree_set_image_offset(struct i915_texture *tex,
    */
 }
 
-
+#if 0
 /* Hack it up to use the old winsys->surface_alloc_storage()
  * method for now:
  */
@@ -145,10 +145,7 @@ i915_displaytarget_layout(struct pipe_screen *screen,
 
    return tex->buffer != NULL;
 }
-
-
-
-
+#endif
 
 static void
 i945_miptree_layout_2d( struct i915_texture *tex )
@@ -539,32 +536,25 @@ i915_texture_create(struct pipe_screen *screen,
    tex->base.refcount = 1;
    tex->base.screen = screen;
 
-   if (tex->base.tex_usage & PIPE_TEXTURE_USAGE_DISPLAY_TARGET) {
-      if (!i915_displaytarget_layout(screen, tex))
-         goto fail;
+   if (i915screen->is_i945) {
+      if (!i945_miptree_layout(tex))
+	 goto fail;
+   } else {
+      if (!i915_miptree_layout(tex))
+	 goto fail;
    }
-   else {
-      if (i915screen->is_i945) {
-         if (!i945_miptree_layout(tex))
-            goto fail;
-      }
-      else {
-         if (!i915_miptree_layout(tex))
-            goto fail;
-      }
-      
-      tex->buffer = ws->buffer_create(ws, 64,
-                                      PIPE_BUFFER_USAGE_PIXEL,
-                                      tex->pitch * tex->base.cpp *
-                                      tex->total_height);
 
-      if (!tex->buffer) 
-         goto fail;
-   }
+   tex->buffer = ws->buffer_create(ws, 64,
+				   PIPE_BUFFER_USAGE_PIXEL,
+				   tex->pitch * tex->base.cpp *
+				   tex->total_height);
+
+   if (!tex->buffer)
+      goto fail;
 
    return &tex->base;
 
- fail:
+fail:
    FREE(tex);
    return NULL;
 }
