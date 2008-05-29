@@ -71,6 +71,9 @@ typedef __int32            intptr_t;
 typedef unsigned __int32   uintptr_t;
 #endif
 
+#define INT64_C(__val) __val##i64
+#define UINT64_C(__val) __val##ui64
+
 #ifndef __cplusplus
 #define false   0
 #define true    1
@@ -80,6 +83,9 @@ typedef int     _Bool;
 #endif /* !__cplusplus */
 
 #else
+#ifndef __STDC_LIMIT_MACROS
+#define __STDC_LIMIT_MACROS 1
+#endif
 #include <stdint.h>
 #include <stdbool.h>
 #endif
