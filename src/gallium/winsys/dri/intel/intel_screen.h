@@ -80,6 +80,7 @@ struct intel_screen
    struct _DriFenceMgr *mgr;
    struct _DriFreeSlabManager *fMan;
    unsigned batch_id;
+   unsigned max_batch_size;
 
    struct pipe_winsys *winsys;
 };
