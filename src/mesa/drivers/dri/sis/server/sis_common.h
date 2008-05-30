@@ -1,4 +1,3 @@
-/* *  */
 /*
  * Common header definitions for SiS 2D/3D/DRM suite
  *
