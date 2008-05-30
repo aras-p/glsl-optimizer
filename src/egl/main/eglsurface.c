@@ -175,7 +175,7 @@ _eglInitSurface(_EGLDriver *drv, EGLDisplay dpy,
       }
    }
 
-   if (width <= 0 || height <= 0) {
+   if (width < 0 || height < 0) {
       _eglError(EGL_BAD_ATTRIBUTE, func);
       return EGL_FALSE;
    }
