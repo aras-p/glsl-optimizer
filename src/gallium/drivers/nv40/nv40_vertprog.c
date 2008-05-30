@@ -843,6 +843,12 @@ nv40_vertprog_translate(struct nv40_context *nv40,
 	vp->translated = TRUE;
 out_err:
 	tgsi_parse_free(&parse);
+	if (vpc->r_temp)
+		FREE(vpc->r_temp); 
+	if (vpc->r_address)
+		FREE(vpc->r_address); 
+	if (vpc->imm)	
+		FREE(vpc->imm); 
 	FREE(vpc);
 }
 

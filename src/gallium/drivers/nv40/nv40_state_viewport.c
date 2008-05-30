@@ -3,8 +3,8 @@
 static boolean
 nv40_state_viewport_validate(struct nv40_context *nv40)
 {
-	struct nouveau_stateobj *so = so_new(11, 0);
 	struct pipe_viewport_state *vpt = &nv40->viewport;
+	struct nouveau_stateobj *so;
 	unsigned bypass;
 
 	if (nv40->render_mode == HW && !nv40->rasterizer->pipe.bypass_clipping)
@@ -18,6 +18,7 @@ nv40_state_viewport_validate(struct nv40_context *nv40)
 		return FALSE;
 	nv40->state.viewport_bypass = bypass;
 
+	so = so_new(11, 0);
 	if (!bypass) {
 		so_method(so, nv40->screen->curie,
 			  NV40TCL_VIEWPORT_TRANSLATE_X, 8);
