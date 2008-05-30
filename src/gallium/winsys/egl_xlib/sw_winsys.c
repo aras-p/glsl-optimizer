@@ -70,6 +70,15 @@ sw_pipe_buffer(struct pipe_buffer *b)
 }
 
 
+/**
+ * Round n up to next multiple.
+ */
+static INLINE unsigned
+round_up(unsigned n, unsigned multiple)
+{
+   return (n + multiple - 1) & ~(multiple - 1);
+}
+
 
 static const char *
 get_name(struct pipe_winsys *pws)
@@ -168,6 +177,34 @@ surface_alloc(struct pipe_winsys *ws)
 }
 
 
+static int
+surface_alloc_storage(struct pipe_winsys *winsys,
+                      struct pipe_surface *surf,
+                      unsigned width, unsigned height,
+                      enum pipe_format format, 
+                      unsigned flags,
+                      unsigned tex_usage)
+{
+   const unsigned alignment = 64;
+
+   surf->width = width;
+   surf->height = height;
+   surf->format = format;
+   surf->cpp = pf_get_size(format);
+   surf->pitch = round_up(width, alignment / surf->cpp);
+   surf->usage = flags;
+
+   assert(!surf->buffer);
+   surf->buffer = winsys->buffer_create(winsys, alignment,
+                                        PIPE_BUFFER_USAGE_PIXEL,
+                                        surf->pitch * surf->cpp * height);
+   if(!surf->buffer)
+      return -1;
+   
+   return 0;
+}
+
+
 static void
 surface_release(struct pipe_winsys *winsys, struct pipe_surface **s)
 {
@@ -229,7 +266,7 @@ create_sw_winsys(void)
    ws->Base.buffer_destroy = buffer_destroy;
 
    ws->Base.surface_alloc = surface_alloc;
-   ws->Base.surface_alloc_storage = NULL; /* unused */
+   ws->Base.surface_alloc_storage = surface_alloc_storage;
    ws->Base.surface_release = surface_release;
 
    ws->Base.fence_reference = fence_reference;
