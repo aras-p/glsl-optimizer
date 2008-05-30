@@ -35,6 +35,10 @@
 #include "draw/draw_private.h"
 #include "draw/draw_pt.h"
 
+static unsigned trim( unsigned count, unsigned first, unsigned incr )
+{
+   return count - (count - first) % incr; 
+}
 
 
 
@@ -53,6 +57,17 @@ draw_pt_arrays(struct draw_context *draw,
    struct draw_pt_front_end *frontend = NULL;
    struct draw_pt_middle_end *middle = NULL;
    unsigned opt = 0;
+
+   /* Sanitize primitive length:
+    */
+   {
+      unsigned first, incr;
+      draw_pt_split_prim(prim, &first, &incr);
+      count = trim(count, first, incr); 
+      if (count < first)
+         return TRUE;
+   }
+
 
    if (!draw->render) {
       opt |= PT_PIPELINE;
