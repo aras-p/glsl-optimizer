@@ -13,7 +13,8 @@ PROGRAMS = \
 	demo2 \
 	demo3 \
 	eglinfo \
-	eglgears
+	eglgears \
+	xeglgears
 
 
 .c.o:
@@ -57,6 +58,13 @@ eglgears: eglgears.o $(TOP)/$(LIB_DIR)/libEGL.so
 
 eglgears.o: eglgears.c $(HEADERS)
 	$(CC) -c $(CFLAGS) -I$(TOP)/include eglgears.c
+
+
+xeglgears: xeglgears.o $(TOP)/$(LIB_DIR)/libEGL.so
+	$(CC) $(CFLAGS) xeglgears.o -L$(TOP)/$(LIB_DIR) -lEGL $(LIBDRM_LIB) $(APP_LIB_DEPS) -o $@
+
+xeglgears.o: xeglgears.c $(HEADERS)
+	$(CC) -c $(CFLAGS) -I$(TOP)/include xeglgears.c
 
 
 clean:
