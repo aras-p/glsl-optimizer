@@ -219,6 +219,8 @@ check_and_update_buffer_size(struct xlib_egl_surface *surface)
    uint width, height;
    get_drawable_size(surface->Dpy, surface->Win, &width, &height);
    st_resize_framebuffer(surface->Framebuffer, width, height);
+   surface->Base.Width = width;
+   surface->Base.Height = height;
 }
 
 
@@ -468,6 +470,8 @@ xlib_eglSwapBuffers(_EGLDriver *drv, EGLDisplay dpy, EGLSurface draw)
       st_notify_swapbuffers(xsurf->Framebuffer);
 
       display_surface(pws, psurf, xsurf);
+
+      check_and_update_buffer_size(xsurf);
    }
 
    return EGL_TRUE;
