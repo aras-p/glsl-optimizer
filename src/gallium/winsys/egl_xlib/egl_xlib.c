@@ -176,6 +176,28 @@ xlib_eglTerminate(_EGLDriver *drv, EGLDisplay dpy)
 }
 
 
+static void
+get_drawable_visual_info(Display *dpy, Drawable d, XVisualInfo *visInfo)
+{
+   XWindowAttributes attr;
+   XVisualInfo visTemp, *vis;
+   int num_visuals;
+
+   XGetWindowAttributes(dpy, d, &attr);
+
+   visTemp.screen = DefaultScreen(dpy);
+   visTemp.visualid = attr.visual->visualid;
+   vis = XGetVisualInfo(dpy,
+                        (VisualScreenMask | VisualIDMask),
+                        &visTemp, &num_visuals);
+   if (vis)
+      *visInfo = *vis;
+
+   XFree(vis);
+}
+
+
+
 /** Get size of given window */
 static Status
 get_drawable_size(Display *dpy, Drawable d, uint *width, uint *height)
@@ -189,6 +211,16 @@ get_drawable_size(Display *dpy, Drawable d, uint *width, uint *height)
    *height = h;
    return stat;
 }
+
+
+static void
+check_and_update_buffer_size(struct xlib_egl_surface *surface)
+{
+   uint width, height;
+   get_drawable_size(surface->Dpy, surface->Win, &width, &height);
+   st_resize_framebuffer(surface->Framebuffer, width, height);
+}
+
 
 
 static void
@@ -222,6 +254,8 @@ display_surface(struct pipe_winsys *pws,
    
    XPutImage(xsurf->Dpy, xsurf->Win, xsurf->Gc,
              ximage, 0, 0, 0, 0, psurf->width, psurf->height);
+
+   XSync(xsurf->Dpy, 0);
 
    ximage->data = NULL;
    XDestroyImage(ximage);
@@ -303,13 +337,21 @@ xlib_eglDestroyContext(_EGLDriver *drv, EGLDisplay dpy, EGLContext ctx)
  * Called via eglMakeCurrent(), drv->API.MakeCurrent().
  */
 static EGLBoolean
-xlib_eglMakeCurrent(_EGLDriver *drv, EGLDisplay dpy, EGLSurface d,
-                    EGLSurface r, EGLContext context)
+xlib_eglMakeCurrent(_EGLDriver *drv, EGLDisplay dpy,
+                    EGLSurface draw, EGLSurface read, EGLContext ctx)
 {
-   if (!_eglMakeCurrent(drv, dpy, d, r, context))
+   struct xlib_egl_context *context = lookup_context(ctx);
+   struct xlib_egl_surface *draw_surf = lookup_surface(draw);
+   struct xlib_egl_surface *read_surf = lookup_surface(read);
+
+   if (!_eglMakeCurrent(drv, dpy, draw, read, context))
       return EGL_FALSE;
 
-   /* XXX anything todo? */
+   st_make_current((context ? context->Context : NULL),
+                   (draw_surf ? draw_surf->Framebuffer : NULL),
+                   (read_surf ? read_surf->Framebuffer : NULL));
+
+   check_and_update_buffer_size(draw_surf);
 
    return EGL_TRUE;
 }
@@ -336,7 +378,7 @@ static enum pipe_format
 choose_depth_format(const __GLcontextModes *visual)
 {
    if (visual->depthBits > 0)
-      return PIPE_FORMAT_Z24S8_UNORM;
+      return PIPE_FORMAT_S8Z24_UNORM;
    else
       return PIPE_FORMAT_NONE;
 }
@@ -346,7 +388,7 @@ static enum pipe_format
 choose_stencil_format(const __GLcontextModes *visual)
 {
    if (visual->stencilBits > 0)
-      return PIPE_FORMAT_Z24S8_UNORM;
+      return PIPE_FORMAT_S8Z24_UNORM;
    else
       return PIPE_FORMAT_NONE;
 }
@@ -378,6 +420,8 @@ xlib_eglCreateWindowSurface(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
       return EGL_NO_SURFACE;
    }
 
+   _eglSaveSurface(&surf->Base);
+
    /*
     * Now init the Xlib and gallium stuff
     */
@@ -389,6 +433,10 @@ xlib_eglCreateWindowSurface(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
 
    _eglConfigToContextModesRec(conf, &visual);
    get_drawable_size(surf->Dpy, surf->Win, &width, &height);
+   get_drawable_visual_info(surf->Dpy, surf->Win, &surf->VisInfo);
+
+   surf->Base.Width = width;
+   surf->Base.Height = height;
 
    /* Create GL statetracker framebuffer */
    surf->Framebuffer = st_create_framebuffer(&visual,
@@ -397,7 +445,10 @@ xlib_eglCreateWindowSurface(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
                                              choose_stencil_format(&visual),
                                              width, height,
                                              (void *) surf);
-   return surf;
+
+   st_resize_framebuffer(surf->Framebuffer, width, height);
+
+   return _eglGetSurfaceHandle(&surf->Base);
 }
 
 
@@ -413,6 +464,8 @@ xlib_eglSwapBuffers(_EGLDriver *drv, EGLDisplay dpy, EGLSurface draw)
       struct pipe_winsys *pws = xsurf->winsys;
       struct pipe_surface *psurf =
          st_get_framebuffer_surface(xsurf->Framebuffer, ST_SURFACE_BACK_LEFT);
+
+      st_notify_swapbuffers(xsurf->Framebuffer);
 
       display_surface(pws, psurf, xsurf);
    }
