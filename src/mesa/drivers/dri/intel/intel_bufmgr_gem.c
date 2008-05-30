@@ -65,6 +65,7 @@ struct intel_validate_entry {
 
 struct dri_gem_bo_bucket_entry {
    uint32_t gem_handle;
+   uint32_t last_offset;
    struct dri_gem_bo_bucket_entry *next;
 };
 
@@ -306,6 +307,7 @@ dri_gem_bo_alloc(dri_bufmgr *bufmgr, const char *name,
 	    bucket->num_entries--;
 
 	    bo_gem->gem_handle = entry->gem_handle;
+	    bo_gem->bo.offset = entry->last_offset;
 	    free(entry);
 	}
     }
@@ -324,7 +326,6 @@ dri_gem_bo_alloc(dri_bufmgr *bufmgr, const char *name,
 	}
     }
 
-    bo_gem->bo.offset = 0;
     bo_gem->bo.virtual = NULL;
     bo_gem->bo.bufmgr = bufmgr;
     bo_gem->name = name;
@@ -436,6 +437,7 @@ dri_gem_bo_unreference(dri_bo *bo)
 
 	    entry = calloc(1, sizeof(*entry));
 	    entry->gem_handle = bo_gem->gem_handle;
+	    entry->last_offset = bo->offset;
 
 	    entry->next = NULL;
 	    *bucket->tail = entry;
