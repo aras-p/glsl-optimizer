@@ -302,6 +302,12 @@ xlib_eglCreateContext(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
       return EGL_NO_CONTEXT;
    }
 
+   if (ctx->Base.ClientAPI != EGL_OPENGL_API) {
+      _eglError(EGL_BAD_MATCH, "eglCreateContext(only OpenGL API supported)");
+      free(ctx);
+      return EGL_NO_CONTEXT;
+   }
+
    /* create a softpipe context */
    ctx->pipe = softpipe_create(xdrv->screen, xdrv->winsys, NULL);
 
@@ -309,6 +315,7 @@ xlib_eglCreateContext(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
    _eglConfigToContextModesRec(conf, &visual);
    ctx->Context = st_create_context(ctx->pipe, &visual, share_ctx);
 
+   _eglSaveContext(&ctx->Base);
 
    return _eglGetContextHandle(&ctx->Base);
 }
@@ -525,8 +532,8 @@ _eglMain(_EGLDisplay *dpy, const char *args)
    xdrv->Base.API.MakeCurrent = xlib_eglMakeCurrent;
    xdrv->Base.API.SwapBuffers = xlib_eglSwapBuffers;
 
+   xdrv->Base.ClientAPIsMask = EGL_OPENGL_BIT /*| EGL_OPENGL_ES_BIT*/;
 
-   xdrv->Base.ClientAPIs = "OpenGL"; /* "OpenGL_ES" */
    xdrv->Base.Name = "Xlib/softpipe";
 
    /* create one winsys and use it for all contexts/surfaces */
@@ -534,7 +541,6 @@ _eglMain(_EGLDisplay *dpy, const char *args)
    xdrv->winsys->flush_frontbuffer = flush_frontbuffer;
 
    xdrv->screen = softpipe_create_screen(xdrv->winsys);
-
 
    return &xdrv->Base;
 }
