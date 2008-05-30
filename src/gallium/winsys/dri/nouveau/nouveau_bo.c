@@ -256,6 +256,9 @@ nouveau_bo_del(struct nouveau_bo **bo)
 	if (--nvbo->refcount)
 		return;
 
+	if (nvbo->pending)
+		nouveau_pushbuf_flush(nvbo->pending->channel, 0);
+
 	if (nvbo->fence)
 		nouveau_fence_signal_cb(nvbo->fence, nouveau_bo_del_cb, nvbo);
 	else
@@ -269,6 +272,11 @@ nouveau_bo_map(struct nouveau_bo *bo, uint32_t flags)
 
 	if (!nvbo)
 		return -EINVAL;
+
+	if (nvbo->pending &&
+	    (nvbo->pending->flags & NOUVEAU_BO_WR || flags & NOUVEAU_BO_WR)) {
+		nouveau_pushbuf_flush(nvbo->pending->channel, 0);
+	}
 
 	if (flags & NOUVEAU_BO_WR)
 		nouveau_fence_wait(&nvbo->fence);
