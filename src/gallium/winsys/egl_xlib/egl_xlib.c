@@ -176,6 +176,17 @@ xlib_eglTerminate(_EGLDriver *drv, EGLDisplay dpy)
 }
 
 
+static _EGLProc
+xlib_eglGetProcAddress(const char *procname)
+{
+   /* XXX for each supported API, evaluate GetProcAddress(name) */
+   /*
+   return _glapi_get_proc_address(procname);
+   */
+   return NULL;
+}
+
+
 static void
 get_drawable_visual_info(Display *dpy, Drawable d, XVisualInfo *visInfo)
 {
@@ -525,6 +536,7 @@ _eglMain(_EGLDisplay *dpy, const char *args)
    _eglInitDriverFallbacks(&xdrv->Base);
    xdrv->Base.API.Initialize = xlib_eglInitialize;
    xdrv->Base.API.Terminate = xlib_eglTerminate;
+   xdrv->Base.API.GetProcAddress = xlib_eglGetProcAddress;
    xdrv->Base.API.CreateContext = xlib_eglCreateContext;
    xdrv->Base.API.DestroyContext = xlib_eglDestroyContext;
    xdrv->Base.API.CreateWindowSurface = xlib_eglCreateWindowSurface;
