@@ -409,6 +409,8 @@ make_x_window(Display *x_dpy, EGLDisplay egl_dpy,
                               None, (char **)NULL, 0, &sizehints);
    }
 
+   eglBindAPI(EGL_OPENGL_API);
+
    ctx = eglCreateContext(egl_dpy, config, EGL_NO_CONTEXT, NULL );
    if (!ctx) {
       printf("Error: glXCreateContext failed\n");
