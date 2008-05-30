@@ -37,6 +37,7 @@ C_SOURCES = \
 	draw_vs_varient.c \
 	draw_vs_aos.c \
 	draw_vs_aos_io.c \
+	draw_vs_aos_machine.c \
 	draw_vs_exec.c \
 	draw_vs_llvm.c \
 	draw_vs_sse.c 

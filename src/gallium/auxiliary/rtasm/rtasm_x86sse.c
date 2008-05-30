@@ -330,7 +330,7 @@ struct x86_reg x86_make_disp( struct x86_reg reg,
    else
       reg.disp += disp;
 
-   if (reg.disp == 0)
+   if (reg.disp == 0 && reg.idx != reg_BP)
       reg.mod = mod_INDIRECT;
    else if (reg.disp <= 127 && reg.disp >= -128)
       reg.mod = mod_DISP8;

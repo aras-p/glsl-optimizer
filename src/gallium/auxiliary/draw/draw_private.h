@@ -147,6 +147,8 @@ struct draw_context
          const void *elts;
          /** bytes per index (0, 1, 2 or 4) */
          unsigned eltSize;
+         unsigned min_index;
+         unsigned max_index;
          
          /** vertex arrays */
          const void *vbuffer[PIPE_MAX_ATTRIBS];
@@ -155,7 +157,8 @@ struct draw_context
          const void *constants;
       } user;
 
-      boolean test_fse;
+      boolean test_fse;         /* enable FSE even though its not correct (eg for softpipe) */
+      boolean no_fse;           /* disable FSE even when it is correct */
    } pt;
 
    struct {
@@ -182,6 +185,16 @@ struct draw_context
       /* This (and the tgsi_exec_machine struct) probably need to be moved somewhere private.
        */
       struct gallivm_cpu_engine *engine;   
+
+      /* Here's another one:
+       */
+      struct aos_machine *aos_machine; 
+
+
+      const float (*aligned_constants)[4];
+
+      const float (*aligned_constant_storage)[4];
+      unsigned const_storage_size;
 
 
       struct translate *fetch;
@@ -215,6 +228,12 @@ struct draw_context
 boolean draw_vs_init( struct draw_context *draw );
 void draw_vs_destroy( struct draw_context *draw );
 
+void draw_vs_set_viewport( struct draw_context *, 
+                           const struct pipe_viewport_state * );
+
+void draw_vs_set_constants( struct draw_context *,
+                            const float (*constants)[4],
+                            unsigned size );
 
 
 

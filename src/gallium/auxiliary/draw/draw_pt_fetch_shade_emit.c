@@ -189,12 +189,6 @@ static void fse_prepare( struct draw_pt_middle_end *middle,
                               draw->pt.vertex_buffer[buf].pitch );
    }
 
-   fse->active->set_constants( fse->active,
-                               (const float (*)[4])draw->pt.user.constants );
-
-   fse->active->set_viewport( fse->active,
-                              &draw->viewport );
-
    //return TRUE;
 }
 
@@ -316,6 +310,54 @@ fse_run(struct draw_pt_middle_end *middle,
 }
 
 
+
+static void fse_run_linear_elts( struct draw_pt_middle_end *middle, 
+                                 unsigned start, 
+                                 unsigned count,
+                                 const ushort *draw_elts,
+                                 unsigned draw_count )
+{
+   struct fetch_shade_emit *fse = (struct fetch_shade_emit *)middle;
+   struct draw_context *draw = fse->draw;
+   unsigned alloc_count = align(count, 4);
+   char *hw_verts;
+
+   /* XXX: need to flush to get prim_vbuf.c to release its allocation??
+    */
+   draw_do_flush( draw, DRAW_FLUSH_BACKEND );
+
+   hw_verts = draw->render->allocate_vertices( draw->render,
+                                               (ushort)fse->key.output_stride,
+                                               (ushort)alloc_count );
+
+   if (!hw_verts) {
+      assert(0);
+      return;
+   }
+
+   /* Single routine to fetch vertices, run shader and emit HW verts.
+    * Clipping is done elsewhere -- either by the API or on hardware,
+    * or for some other reason not required...
+    */
+   fse->active->run_linear( fse->active, 
+                            start, count,
+                            hw_verts );
+
+
+   draw->render->draw( draw->render, 
+                       draw_elts, 
+                       draw_count );
+   
+
+
+   draw->render->release_vertices( draw->render, 
+				   hw_verts, 
+				   fse->key.output_stride, 
+				   count );
+}
+
+
+
 static void fse_finish( struct draw_pt_middle_end *middle )
 {
 }
@@ -336,6 +378,7 @@ struct draw_pt_middle_end *draw_pt_middle_fse( struct draw_context *draw )
    fse->base.prepare = fse_prepare;
    fse->base.run = fse_run;
    fse->base.run_linear = fse_run_linear;
+   fse->base.run_linear_elts = fse_run_linear_elts;
    fse->base.finish = fse_finish;
    fse->base.destroy = fse_destroy;
    fse->draw = draw;

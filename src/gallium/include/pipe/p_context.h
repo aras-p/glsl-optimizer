@@ -76,6 +76,20 @@ struct pipe_context {
 			     struct pipe_buffer *indexBuffer,
 			     unsigned indexSize,
 			     unsigned mode, unsigned start, unsigned count);
+
+   /* XXX: this is (probably) a temporary entrypoint, as the range
+    * information should be available from the vertex_buffer state.
+    * Using this to quickly evaluate a specialized path in the draw
+    * module.
+    */
+   boolean (*draw_range_elements)( struct pipe_context *pipe,
+                                   struct pipe_buffer *indexBuffer,
+                                   unsigned indexSize,
+                                   unsigned minIndex,
+                                   unsigned maxIndex,
+                                   unsigned mode, 
+                                   unsigned start, 
+                                   unsigned count);
    /*@}*/
 
 

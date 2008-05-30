@@ -30,13 +30,14 @@
  * Implementation of malloc-based buffers to store data that can't be processed
  * by the hardware. 
  * 
- * \author José Fonseca <jrfonseca@tungstengraphics.com>
+ * \author Jose Fonseca <jrfonseca@tungstengraphics.com>
  */
 
 
 #include "pipe/p_debug.h"
 #include "pipe/p_util.h"
 #include "pb_buffer.h"
+#include "pb_bufmgr.h"
 
 
 struct malloc_buffer 
@@ -124,4 +125,34 @@ pb_malloc_buffer_create(size_t size,
    }
 
    return &buf->base;
+}
+
+
+static struct pb_buffer *
+pb_malloc_buffer_create_buffer(struct pb_manager *mgr, 
+                               size_t size,
+                               const struct pb_desc *desc) 
+{
+   return pb_malloc_buffer_create(size, desc);
+}
+
+
+static void
+pb_malloc_bufmgr_destroy(struct pb_manager *mgr) 
+{
+   /* No-op */
+}
+
+
+static struct pb_manager 
+pb_malloc_bufmgr = {
+   pb_malloc_buffer_create_buffer,
+   pb_malloc_bufmgr_destroy
+};
+
+
+struct pb_manager *
+pb_malloc_bufmgr_create(void) 
+{
+  return &pb_malloc_bufmgr;
 }

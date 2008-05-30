@@ -44,8 +44,6 @@
 struct draw_vs_varient_generic {
    struct draw_vs_varient base;
 
-   struct pipe_viewport_state viewport;
-
    struct draw_vertex_shader *shader;
    struct draw_context *draw;
    
@@ -57,20 +55,10 @@ struct draw_vs_varient_generic {
     */
    struct translate *fetch;
    struct translate *emit;
-
-   const float (*constants)[4];
 };
 
 
 
-
-static void vsvg_set_constants( struct draw_vs_varient *varient,
-                                const float (*constants)[4] )
-{
-   struct draw_vs_varient_generic *vsvg = (struct draw_vs_varient_generic *)varient;
-
-   vsvg->constants = constants;
-}
 
 
 static void vsvg_set_input( struct draw_vs_varient *varient,
@@ -94,8 +82,8 @@ static void do_rhw_viewport( struct draw_vs_varient_generic *vsvg,
                              void *output_buffer )
 {
    char *ptr = (char *)output_buffer;
-   const float *scale = vsvg->viewport.scale;
-   const float *trans = vsvg->viewport.translate;
+   const float *scale = vsvg->base.vs->draw->viewport.scale;
+   const float *trans = vsvg->base.vs->draw->viewport.translate;
    unsigned stride = vsvg->base.key.output_stride;
    unsigned j;
 
@@ -115,8 +103,8 @@ static void do_viewport( struct draw_vs_varient_generic *vsvg,
                              void *output_buffer )
 {
    char *ptr = (char *)output_buffer;
-   const float *scale = vsvg->viewport.scale;
-   const float *trans = vsvg->viewport.translate;
+   const float *scale = vsvg->base.vs->draw->viewport.scale;
+   const float *trans = vsvg->base.vs->draw->viewport.translate;
    unsigned stride = vsvg->base.key.output_stride;
    unsigned j;
 
@@ -130,10 +118,10 @@ static void do_viewport( struct draw_vs_varient_generic *vsvg,
 }
                          
 
-static void vsvg_run_elts( struct draw_vs_varient *varient,
-                           const unsigned *elts,
-                           unsigned count,
-                           void *output_buffer)
+static void PIPE_CDECL vsvg_run_elts( struct draw_vs_varient *varient,
+                                      const unsigned *elts,
+                                      unsigned count,
+                                      void *output_buffer)
 {
    struct draw_vs_varient_generic *vsvg = (struct draw_vs_varient_generic *)varient;
 			
@@ -150,7 +138,7 @@ static void vsvg_run_elts( struct draw_vs_varient *varient,
       vsvg->base.vs->run_linear( vsvg->base.vs, 
                                  output_buffer,
                                  output_buffer,
-                                 vsvg->constants,
+                                 (const float (*)[4])vsvg->base.vs->draw->pt.user.constants,
                                  count,
                                  vsvg->base.key.output_stride, 
                                  vsvg->base.key.output_stride);
@@ -186,10 +174,10 @@ static void vsvg_run_elts( struct draw_vs_varient *varient,
 }
 
 
-static void vsvg_run_linear( struct draw_vs_varient *varient,
-                                   unsigned start,
-                                   unsigned count,
-                                   void *output_buffer )
+static void PIPE_CDECL vsvg_run_linear( struct draw_vs_varient *varient,
+                                        unsigned start,
+                                        unsigned count,
+                                        void *output_buffer )
 {
    struct draw_vs_varient_generic *vsvg = (struct draw_vs_varient_generic *)varient;
 	
@@ -206,7 +194,7 @@ static void vsvg_run_linear( struct draw_vs_varient *varient,
       vsvg->base.vs->run_linear( vsvg->base.vs, 
                                  output_buffer,
                                  output_buffer,
-                                 vsvg->constants,
+                                 (const float (*)[4])vsvg->base.vs->draw->pt.user.constants,
                                  count,
                                  vsvg->base.key.output_stride, 
                                  vsvg->base.key.output_stride);
@@ -245,13 +233,6 @@ static void vsvg_run_linear( struct draw_vs_varient *varient,
 
 
 
-static void vsvg_set_viewport( struct draw_vs_varient *varient,
-                               const struct pipe_viewport_state *viewport )
-{
-   struct draw_vs_varient_generic *vsvg = (struct draw_vs_varient_generic *)varient;
-
-   vsvg->viewport = *viewport;
-}
 
 static void vsvg_destroy( struct draw_vs_varient *varient )
 {
@@ -272,8 +253,6 @@ struct draw_vs_varient *draw_vs_varient_generic( struct draw_vertex_shader *vs,
    vsvg->base.key = *key;
    vsvg->base.vs = vs;
    vsvg->base.set_input     = vsvg_set_input;
-   vsvg->base.set_constants = vsvg_set_constants;
-   vsvg->base.set_viewport  = vsvg_set_viewport;
    vsvg->base.run_elts      = vsvg_run_elts;
    vsvg->base.run_linear    = vsvg_run_linear;
    vsvg->base.destroy       = vsvg_destroy;

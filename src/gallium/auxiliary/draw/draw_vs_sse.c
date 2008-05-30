@@ -70,8 +70,6 @@ struct draw_sse_vertex_shader {
    codegen_function func;
    
    struct tgsi_exec_machine *machine;
-
-   float immediates[TGSI_EXEC_NUM_IMMEDIATES][4];
 };
 
 
@@ -109,7 +107,7 @@ vs_sse_run_linear( struct draw_vertex_shader *base,
 		   machine->Outputs,
 		   (float (*)[4])constants,
 		   machine->Temps,
-		   shader->immediates,
+		   (float (*)[4])shader->base.immediates,
                    input,
                    base->info.num_inputs,
                    input_stride,
@@ -131,6 +129,8 @@ vs_sse_delete( struct draw_vertex_shader *base )
    struct draw_sse_vertex_shader *shader = (struct draw_sse_vertex_shader *)base;
    
    x86_release_func( &shader->sse2_program );
+
+   align_free(shader->base.immediates);
 
    FREE( (void*) shader->base.state.tokens );
    FREE( shader );
@@ -163,12 +163,18 @@ draw_create_vs_sse(struct draw_context *draw,
    vs->base.prepare = vs_sse_prepare;
    vs->base.run_linear = vs_sse_run_linear;
    vs->base.delete = vs_sse_delete;
+   
+   vs->base.immediates = align_malloc(TGSI_EXEC_NUM_IMMEDIATES * 4 *
+                                      sizeof(float), 16);
+
    vs->machine = &draw->vs.machine;
    
    x86_init_func( &vs->sse2_program );
 
    if (!tgsi_emit_sse2( (struct tgsi_token *) vs->base.state.tokens,
-			&vs->sse2_program, vs->immediates, TRUE )) 
+			&vs->sse2_program, 
+                        (float (*)[4])vs->base.immediates, 
+                        TRUE )) 
       goto fail;
       
    vs->func = (codegen_function) x86_get_func( &vs->sse2_program );

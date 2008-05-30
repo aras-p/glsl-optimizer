@@ -310,7 +310,7 @@ static void get_src_ptr( struct translate_sse *p,
 static void emit_swizzle( struct translate_sse *p,
 			  struct x86_reg dest,
 			  struct x86_reg src,
-			  unsigned shuffle )
+			  unsigned char shuffle )
 {
    sse_shufps(p->func, dest, src, shuffle);
 }
@@ -535,7 +535,7 @@ static void translate_sse_release( struct translate *translate )
    FREE(p);
 }
 
-static void translate_sse_run_elts( struct translate *translate,
+static void PIPE_CDECL translate_sse_run_elts( struct translate *translate,
 			      const unsigned *elts,
 			      unsigned count,
 			      void *output_buffer )
@@ -548,7 +548,7 @@ static void translate_sse_run_elts( struct translate *translate,
 		    output_buffer );
 }
 
-static void translate_sse_run( struct translate *translate,
+static void PIPE_CDECL translate_sse_run( struct translate *translate,
 			 unsigned start,
 			 unsigned count,
 			 void *output_buffer )

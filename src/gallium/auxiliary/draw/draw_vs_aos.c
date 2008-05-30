@@ -66,6 +66,37 @@ static INLINE boolean eq( struct x86_reg a,
 	   a.disp == b.disp);
 }
       
+struct x86_reg aos_get_x86( struct aos_compilation *cp,
+                            unsigned value )
+{
+   if (cp->ebp != value) {
+      unsigned offset;
+
+      switch (value) {
+      case X86_IMMEDIATES:
+         offset = Offset(struct aos_machine, immediates);
+         break;
+      case X86_CONSTANTS:
+         offset = Offset(struct aos_machine, constants);
+         break;
+      case X86_ATTRIBS:
+         offset = Offset(struct aos_machine, attrib);
+         break;
+      default:
+         assert(0);
+         offset = 0;
+      }
+
+      x86_mov(cp->func, cp->temp_EBP, 
+              x86_make_disp(cp->machine_EDX, offset));
+      /* x86_deref(x86_make_disp(cp->machine_EDX, offset))); */
+
+      cp->ebp = value;
+   }
+
+   return cp->temp_EBP;
+}
+
 
 static struct x86_reg get_reg_ptr(struct aos_compilation *cp,
                                   unsigned file,
@@ -83,14 +114,14 @@ static struct x86_reg get_reg_ptr(struct aos_compilation *cp,
    case TGSI_FILE_TEMPORARY:
       return x86_make_disp(ptr, Offset(struct aos_machine, temp[idx]));
 
-   case TGSI_FILE_IMMEDIATE:
-      return x86_make_disp(ptr, Offset(struct aos_machine, immediate[idx]));
-
-   case TGSI_FILE_CONSTANT:       
-      return x86_make_disp(ptr, Offset(struct aos_machine, constant[idx]));
-
    case AOS_FILE_INTERNAL:
       return x86_make_disp(ptr, Offset(struct aos_machine, internal[idx]));
+
+   case TGSI_FILE_IMMEDIATE: 
+      return x86_make_disp(aos_get_x86(cp, X86_IMMEDIATES), idx * 4 * sizeof(float));
+
+   case TGSI_FILE_CONSTANT: 
+      return x86_make_disp(aos_get_x86(cp, X86_CONSTANTS), idx * 4 * sizeof(float));
 
    default:
       ERROR(cp, "unknown reg file");
@@ -118,70 +149,7 @@ static struct x86_reg get_reg_ptr(struct aos_compilation *cp,
 #define X87_CW_ROUND_MASK             (3<<10)
 #define X87_CW_INFINITY               (1<<12)
 
-static void do_populate_lut( struct shine_tab *tab,
-                             float unclamped_exponent )
-{
-   const float epsilon = 1.0F / 256.0F;    
-   float exponent = CLAMP(unclamped_exponent, -(128.0F - epsilon), (128.0F - epsilon));
-   unsigned i;
 
-   tab->exponent = unclamped_exponent; /* for later comparison */
-   
-   tab->values[0] = 0;
-   if (exponent == 0) {
-      for (i = 1; i < 258; i++) {
-         tab->values[i] = 1.0;
-      }      
-   }
-   else {
-      for (i = 1; i < 258; i++) {
-         tab->values[i] = powf((float)i * epsilon, exponent);
-      }
-   }
-}
-
-static void init_internals( struct aos_machine *machine )
-{
-   unsigned i;
-   float inv = 1.0f/255.0f;
-   float f255 = 255.0f;
-
-   ASSIGN_4V(machine->internal[IMM_SWZ],       1.0f,  -1.0f,  0.0f, 1.0f);
-   *(unsigned *)&machine->internal[IMM_SWZ][3] = 0xffffffff;
-
-   ASSIGN_4V(machine->internal[IMM_ONES],      1.0f,  1.0f,  1.0f,  1.0f);
-   ASSIGN_4V(machine->internal[IMM_NEGS],     -1.0f, -1.0f, -1.0f, -1.0f);
-   ASSIGN_4V(machine->internal[IMM_IDENTITY],  0.0f,  0.0f,  0.0f,  1.0f);
-   ASSIGN_4V(machine->internal[IMM_INV_255],   inv,   inv,   inv,   inv);
-   ASSIGN_4V(machine->internal[IMM_255],       f255,  f255,  f255,  f255);
-   ASSIGN_4V(machine->internal[IMM_RSQ],       -.5f,  1.5f,  0.0f,  0.0f);
-
-
-   machine->fpu_rnd_nearest = (X87_CW_EXCEPTION_INV_OP |
-                               X87_CW_EXCEPTION_DENORM_OP |
-                               X87_CW_EXCEPTION_ZERO_DIVIDE |
-                               X87_CW_EXCEPTION_OVERFLOW |
-                               X87_CW_EXCEPTION_UNDERFLOW |
-                               X87_CW_EXCEPTION_PRECISION |
-                               (1<<6) |
-                               X87_CW_ROUND_NEAREST |
-                               X87_CW_PRECISION_DOUBLE_EXT);
-
-   assert(machine->fpu_rnd_nearest == 0x37f);
-                               
-   machine->fpu_rnd_neg_inf = (X87_CW_EXCEPTION_INV_OP |
-                               X87_CW_EXCEPTION_DENORM_OP |
-                               X87_CW_EXCEPTION_ZERO_DIVIDE |
-                               X87_CW_EXCEPTION_OVERFLOW |
-                               X87_CW_EXCEPTION_UNDERFLOW |
-                               X87_CW_EXCEPTION_PRECISION |
-                               (1<<6) |
-                               X87_CW_ROUND_DOWN |
-                               X87_CW_PRECISION_DOUBLE_EXT);
-
-   for (i = 0; i < MAX_SHINE_TAB; i++)
-      do_populate_lut( &machine->shine_tab[i], 1.0f );
-}
 
 
 static void spill( struct aos_compilation *cp, unsigned idx )
@@ -1189,136 +1157,6 @@ static boolean emit_FRC( struct aos_compilation *cp, const struct tgsi_full_inst
    return TRUE;
 }
 
-static PIPE_CDECL void do_lit( struct aos_machine *machine,
-                               float *result,
-                               const float *in,
-                               unsigned count )
-{
-   if (in[0] > 0) 
-   {
-      if (in[1] <= 0.0) 
-      {
-         result[0] = 1.0F;
-         result[1] = in[0];
-         result[2] = 1.0;
-         result[3] = 1.0F;
-      }
-      else
-      {
-         const float epsilon = 1.0F / 256.0F;    
-         float exponent = CLAMP(in[3], -(128.0F - epsilon), (128.0F - epsilon));
-         result[0] = 1.0F;
-         result[1] = in[0];
-         result[2] = powf(in[1], exponent);
-         result[3] = 1.0;
-      }
-   }
-   else 
-   {
-      result[0] = 1.0F;
-      result[1] = 0.0;
-      result[2] = 0.0;
-      result[3] = 1.0F;
-   }
-}
-
-
-static PIPE_CDECL void do_lit_lut( struct aos_machine *machine,
-                                   float *result,
-                                   const float *in,
-                                   unsigned count )
-{
-   if (in[0] > 0) 
-   {
-      if (in[1] <= 0.0) 
-      {
-         result[0] = 1.0F;
-         result[1] = in[0];
-         result[2] = 1.0;
-         result[3] = 1.0F;
-         return;
-      }
-      
-      if (machine->lit_info[count].shine_tab->exponent != in[3]) {
-         machine->lit_info[count].func = do_lit;
-         goto no_luck;
-      }
-
-      if (in[1] <= 1.0)
-      {
-         const float *tab = machine->lit_info[count].shine_tab->values;
-         float f = in[1] * 256;
-         int k = (int)f;
-         float frac = f - (float)k;
-         
-         result[0] = 1.0F;
-         result[1] = in[0];
-         result[2] = tab[k] + frac*(tab[k+1]-tab[k]);
-         result[3] = 1.0;
-         return;
-      }
-      
-   no_luck:
-      {
-         const float epsilon = 1.0F / 256.0F;    
-         float exponent = CLAMP(in[3], -(128.0F - epsilon), (128.0F - epsilon));
-         result[0] = 1.0F;
-         result[1] = in[0];
-         result[2] = powf(in[1], exponent);
-         result[3] = 1.0;
-      }
-   }
-   else 
-   {
-      result[0] = 1.0F;
-      result[1] = 0.0;
-      result[2] = 0.0;
-      result[3] = 1.0F;
-   }
-}
-
-
-
-static void PIPE_CDECL populate_lut( struct aos_machine *machine,
-                                     float *result,
-                                     const float *in,
-                                     unsigned count )
-{
-   unsigned i, tab;
-
-   /* Search for an existing table for this value.  Note that without
-    * static analysis we don't really know if in[3] will be constant,
-    * but it usually is...
-    */
-   for (tab = 0; tab < 4; tab++) {
-      if (machine->shine_tab[tab].exponent == in[3]) {
-         goto found;
-      }
-   }
-
-   for (tab = 0, i = 1; i < 4; i++) {
-      if (machine->shine_tab[i].last_used < machine->shine_tab[tab].last_used)
-         tab = i;
-   }
-
-   if (machine->shine_tab[tab].last_used == machine->now) {
-      /* No unused tables (this is not a ffvertex program...).  Just
-       * call pow each time:
-       */
-      machine->lit_info[count].func = do_lit;
-      machine->lit_info[count].func( machine, result, in, count );
-      return;
-   }
-   else {
-      do_populate_lut( &machine->shine_tab[tab], in[3] );
-   }
-
- found:
-   machine->shine_tab[tab].last_used = machine->now;
-   machine->lit_info[count].shine_tab = &machine->shine_tab[tab];
-   machine->lit_info[count].func = do_lit_lut;
-   machine->lit_info[count].func( machine, result, in, count );
-}
 
 
 
@@ -1382,7 +1220,7 @@ static boolean emit_LIT( struct aos_compilation *cp, const struct tgsi_full_inst
                                              Offset(struct lit_info, func)));
    }
    else {
-      x86_mov_reg_imm( cp->func, ecx, (int)do_lit );
+      x86_mov_reg_imm( cp->func, ecx, (int)aos_do_lit );
    }
 
    x86_call( cp->func, ecx );
@@ -1403,7 +1241,7 @@ static boolean emit_LIT( struct aos_compilation *cp, const struct tgsi_full_inst
    return TRUE;
 }
 
-   
+#if 0   
 static boolean emit_inline_LIT( struct aos_compilation *cp, const struct tgsi_full_instruction *op )
 {
    struct x86_reg dst = get_dst_ptr(cp, &op->FullDstRegisters[0]); 
@@ -1464,6 +1302,7 @@ static boolean emit_inline_LIT( struct aos_compilation *cp, const struct tgsi_fu
 
    return TRUE;
 }
+#endif
 
 
 
@@ -1533,11 +1372,20 @@ static boolean emit_MAD( struct aos_compilation *cp, const struct tgsi_full_inst
    return TRUE;
 }
 
+/* A wrapper for powf().
+ * Makes sure it is cdecl and operates on floats.
+ */
+static float PIPE_CDECL _powerf( float x, float y )
+{
+   return powf( x, y );
+}
+
 /* Really not sufficient -- need to check for conditions that could
  * generate inf/nan values, which will slow things down hugely.
  */
 static boolean emit_POW( struct aos_compilation *cp, const struct tgsi_full_instruction *op ) 
 {
+#if 0
    x87_fld_src(cp, &op->FullSrcRegisters[1], 0);  /* a1.x */
    x87_fld_src(cp, &op->FullSrcRegisters[0], 0);	/* a0.x a1.x */
    x87_fyl2x(cp->func);	                                /* a1*log2(a0) */
@@ -1545,6 +1393,42 @@ static boolean emit_POW( struct aos_compilation *cp, const struct tgsi_full_inst
    x87_emit_ex2( cp );		/* 2^(a1*log2(a0)) */
 
    x87_fstp_dest4(cp, &op->FullDstRegisters[0]);
+#else
+   uint i;
+
+   /* For absolute correctness, need to spill/invalidate all XMM regs
+    * too.  
+    */
+   for (i = 0; i < 8; i++) {
+      if (cp->xmm[i].dirty) 
+         spill(cp, i);
+      aos_release_xmm_reg(cp, i);
+   }
+
+   /* Push caller-save (ie scratch) regs.  
+    */
+   x86_cdecl_caller_push_regs( cp->func );
+
+   x86_lea( cp->func, cp->stack_ESP, x86_make_disp(cp->stack_ESP, -8) );
+
+   x87_fld_src( cp, &op->FullSrcRegisters[1], 0 );
+   x87_fstp( cp->func, x86_make_disp( cp->stack_ESP, 4 ) );
+   x87_fld_src( cp, &op->FullSrcRegisters[0], 0 );
+   x87_fstp( cp->func, x86_make_disp( cp->stack_ESP, 0 ) );
+
+   x86_mov_reg_imm( cp->func, cp->tmp_EAX, (unsigned long) _powerf );
+   x86_call( cp->func, cp->tmp_EAX );
+
+   x86_lea( cp->func, cp->stack_ESP, x86_make_disp(cp->stack_ESP, 8) );
+
+   x86_cdecl_caller_pop_regs( cp->func );
+
+   /* Note retval on x87 stack:
+    */
+   cp->func->x87_stack++;
+
+   x87_fstp_dest4( cp, &op->FullDstRegisters[0] );
+#endif
    return TRUE;
 }
 
@@ -1865,6 +1749,7 @@ static boolean emit_rhw_viewport( struct aos_compilation *cp )
 }
 
 
+#if 0
 static boolean note_immediate( struct aos_compilation *cp,
                                struct tgsi_full_immediate *imm )
 {
@@ -1877,6 +1762,7 @@ static boolean note_immediate( struct aos_compilation *cp,
 
    return TRUE;
 }
+#endif
 
 
 
@@ -1912,7 +1798,7 @@ static void find_last_write_outputs( struct aos_compilation *cp )
 }
 
 
-#define ARG_VARIENT    1
+#define ARG_MACHINE    1
 #define ARG_START_ELTS 2
 #define ARG_COUNT      3
 #define ARG_OUTBUF     4
@@ -1939,6 +1825,8 @@ static boolean build_vertex_program( struct draw_vs_varient_aos_sse *varient,
    cp.outbuf_ECX    = x86_make_reg(file_REG32, reg_CX);
    cp.machine_EDX   = x86_make_reg(file_REG32, reg_DX);
    cp.count_ESI     = x86_make_reg(file_REG32, reg_SI);
+   cp.temp_EBP     = x86_make_reg(file_REG32, reg_BP);
+   cp.stack_ESP = x86_make_reg( file_REG32, reg_SP );
 
    x86_init_func(cp.func);
 
@@ -1946,11 +1834,12 @@ static boolean build_vertex_program( struct draw_vs_varient_aos_sse *varient,
 
    x86_push(cp.func, cp.idx_EBX);
    x86_push(cp.func, cp.count_ESI);
+   x86_push(cp.func, cp.temp_EBP);
 
 
    /* Load arguments into regs:
     */
-   x86_mov(cp.func, cp.machine_EDX, x86_fn_arg(cp.func, ARG_VARIENT));
+   x86_mov(cp.func, cp.machine_EDX, x86_fn_arg(cp.func, ARG_MACHINE));
    x86_mov(cp.func, cp.idx_EBX, x86_fn_arg(cp.func, ARG_START_ELTS));
    x86_mov(cp.func, cp.count_ESI, x86_fn_arg(cp.func, ARG_COUNT));
    x86_mov(cp.func, cp.outbuf_ECX, x86_fn_arg(cp.func, ARG_OUTBUF));
@@ -1962,11 +1851,6 @@ static boolean build_vertex_program( struct draw_vs_varient_aos_sse *varient,
    x86_cmp(cp.func, cp.count_ESI, cp.tmp_EAX);
    fixup = x86_jcc_forward(cp.func, cc_E);
 
-   /* Dig out the machine pointer from inside the varient arg 
-    */
-   x86_mov(cp.func, cp.machine_EDX, 
-           x86_make_disp(cp.machine_EDX,
-                         Offset( struct draw_vs_varient_aos_sse, machine )));
 
    save_fpu_state( &cp );
    set_fpu_round_nearest( &cp );
@@ -1988,8 +1872,10 @@ static boolean build_vertex_program( struct draw_vs_varient_aos_sse *varient,
 
          switch (parse.FullToken.Token.Type) {
          case TGSI_TOKEN_TYPE_IMMEDIATE:
+#if 0
             if (!note_immediate( &cp, &parse.FullToken.FullImmediate ))
                goto fail;
+#endif
             break;
 
          case TGSI_TOKEN_TYPE_INSTRUCTION:
@@ -2072,6 +1958,7 @@ static boolean build_vertex_program( struct draw_vs_varient_aos_sse *varient,
    if (cp.func->need_emms)
       mmx_emms(cp.func);
 
+   x86_pop(cp.func, cp.temp_EBP);
    x86_pop(cp.func, cp.count_ESI);
    x86_pop(cp.func, cp.idx_EBX);
 
@@ -2098,93 +1985,65 @@ static void vaos_set_buffer( struct draw_vs_varient *varient,
 
    for (i = 0; i < vaos->base.key.nr_inputs; i++) {
       if (vaos->base.key.element[i].in.buffer == buf) {
-         vaos->machine->attrib[i].input_ptr = ((char *)ptr +
-                                               vaos->base.key.element[i].in.offset);
-         vaos->machine->attrib[i].input_stride = stride;
+         vaos->attrib[i].input_ptr = ((char *)ptr +
+                                      vaos->base.key.element[i].in.offset);
+         vaos->attrib[i].input_stride = stride;
       }
    }
 }
 
 
-static void vaos_destroy( struct draw_vs_varient *varient )
+
+static void PIPE_CDECL vaos_run_elts( struct draw_vs_varient *varient,
+                                      const unsigned *elts,
+                                      unsigned count,
+                                      void *output_buffer )
 {
    struct draw_vs_varient_aos_sse *vaos = (struct draw_vs_varient_aos_sse *)varient;
+   struct aos_machine *machine = vaos->draw->vs.aos_machine;
 
-   if (vaos->machine)
-      align_free( vaos->machine );
+   machine->internal[IMM_PSIZE][0] = vaos->draw->rasterizer->point_size;
+   machine->constants = vaos->draw->vs.aligned_constants;
+   machine->immediates = vaos->base.vs->immediates;
+   machine->attrib = vaos->attrib;
 
-   x86_release_func( &vaos->func[0] );
-   x86_release_func( &vaos->func[1] );
-
-   FREE(vaos);
-}
-
-static void vaos_run_elts( struct draw_vs_varient *varient,
-                           const unsigned *elts,
-                           unsigned count,
-                           void *output_buffer )
-{
-   struct draw_vs_varient_aos_sse *vaos = (struct draw_vs_varient_aos_sse *)varient;
-
-   vaos->machine->internal[IMM_PSIZE][0] = vaos->draw->rasterizer->point_size;
-   vaos->gen_run_elts( varient,
+   vaos->gen_run_elts( machine,
                        elts,
                        count,
                        output_buffer );
 }
 
-static void vaos_run_linear( struct draw_vs_varient *varient,
-                             unsigned start,
-                             unsigned count,
-                             void *output_buffer )
+static void PIPE_CDECL vaos_run_linear( struct draw_vs_varient *varient,
+                                        unsigned start,
+                                        unsigned count,
+                                        void *output_buffer )
 {
    struct draw_vs_varient_aos_sse *vaos = (struct draw_vs_varient_aos_sse *)varient;
+   struct aos_machine *machine = vaos->draw->vs.aos_machine;
 
-   vaos->machine->internal[IMM_PSIZE][0] = vaos->draw->rasterizer->point_size;
-   vaos->gen_run_linear( varient,
+   machine->internal[IMM_PSIZE][0] = vaos->draw->rasterizer->point_size;
+   machine->constants = vaos->draw->vs.aligned_constants;
+   machine->immediates = vaos->base.vs->immediates;
+   machine->attrib = vaos->attrib;
+
+   vaos->gen_run_linear( machine,
                          start,
                          count,
                          output_buffer );
 }
 
 
-static void vaos_set_constants( struct draw_vs_varient *varient,
-                                const float (*constants)[4] )
+
+static void vaos_destroy( struct draw_vs_varient *varient )
 {
    struct draw_vs_varient_aos_sse *vaos = (struct draw_vs_varient_aos_sse *)varient;
 
-   memcpy(vaos->machine->constant,
-          constants,
-          (vaos->base.vs->info.file_max[TGSI_FILE_CONSTANT] + 1) * 4 * sizeof(float));
+   FREE( vaos->attrib );
 
-#if 0
-   unsigned i;
-   for (i =0; i < vaos->base.vs->info.file_max[TGSI_FILE_CONSTANT] + 1; i++)
-      debug_printf("state %d: %f %f %f %f\n",
-                   i, 
-                   constants[i][0],
-                   constants[i][1],
-                   constants[i][2],
-                   constants[i][3]);
-#endif
+   x86_release_func( &vaos->func[0] );
+   x86_release_func( &vaos->func[1] );
 
-   {
-      unsigned i;
-      for (i = 0; i < MAX_LIT_INFO; i++) {
-         vaos->machine->lit_info[i].func = populate_lut;
-         vaos->machine->now++;
-      }
-   }
-}
-
-
-static void vaos_set_viewport( struct draw_vs_varient *varient,
-                               const struct pipe_viewport_state *viewport )
-{
-   struct draw_vs_varient_aos_sse *vaos = (struct draw_vs_varient_aos_sse *)varient;
-
-   memcpy(vaos->machine->scale, viewport->scale, 4 * sizeof(float));
-   memcpy(vaos->machine->translate, viewport->translate, 4 * sizeof(float));
+   FREE(vaos);
 }
 
 
@@ -2200,19 +2059,15 @@ static struct draw_vs_varient *varient_aos_sse( struct draw_vertex_shader *vs,
    vaos->base.key = *key;
    vaos->base.vs = vs;
    vaos->base.set_input = vaos_set_buffer;
-   vaos->base.set_constants = vaos_set_constants;
-   vaos->base.set_viewport = vaos_set_viewport;
    vaos->base.destroy = vaos_destroy;
    vaos->base.run_linear = vaos_run_linear;
    vaos->base.run_elts = vaos_run_elts;
 
    vaos->draw = vs->draw;
-   vaos->machine = align_malloc( sizeof(struct aos_machine), 16 );
-   if (!vaos->machine)
+
+   vaos->attrib = MALLOC( key->nr_inputs * sizeof(vaos->attrib[0]) );
+   if (!vaos->attrib)
       goto fail;
-   
-   memset(vaos->machine, 0, sizeof(struct aos_machine));
-   init_internals(vaos->machine);
 
    tgsi_dump(vs->state.tokens, 0);
 
@@ -2222,19 +2077,19 @@ static struct draw_vs_varient *varient_aos_sse( struct draw_vertex_shader *vs,
    if (!build_vertex_program( vaos, FALSE ))
       goto fail;
 
-   vaos->gen_run_linear = (vsv_run_linear_func)x86_get_func(&vaos->func[0]);
+   vaos->gen_run_linear = (vaos_run_linear_func)x86_get_func(&vaos->func[0]);
    if (!vaos->gen_run_linear)
       goto fail;
 
-   vaos->gen_run_elts = (vsv_run_elts_func)x86_get_func(&vaos->func[1]);
+   vaos->gen_run_elts = (vaos_run_elts_func)x86_get_func(&vaos->func[1]);
    if (!vaos->gen_run_elts)
       goto fail;
 
    return &vaos->base;
 
  fail:
-   if (vaos->machine)
-      align_free( vaos->machine );
+   if (vaos && vaos->attrib)
+      FREE(vaos->attrib);
 
    if (vaos)
       x86_release_func( &vaos->func[0] );

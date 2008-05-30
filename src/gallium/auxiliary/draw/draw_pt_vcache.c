@@ -36,8 +36,8 @@
 #include "draw/draw_pt.h"
 
 
-#define CACHE_MAX 32
-#define FETCH_MAX 128
+#define CACHE_MAX 1024
+#define FETCH_MAX 4096
 #define DRAW_MAX (16*1024)
 
 struct vcache_frontend {
@@ -201,7 +201,128 @@ static void vcache_ef_quad( struct vcache_frontend *vcache,
 #define FUNC vcache_run
 #include "draw_pt_vcache_tmp.h"
 
+static void translate_uint_elts( const unsigned *src,
+                                 unsigned count,
+                                 int delta,
+                                 ushort *dest )
+{
+   unsigned i;
 
+   for (i = 0; i < count; i++) 
+      dest[i] = (ushort)(src[i] + delta);
+}
+
+static void translate_ushort_elts( const ushort *src,
+                                   unsigned count,
+                                   int delta,
+                                   ushort *dest )
+{
+   unsigned i;
+
+   for (i = 0; i < count; i++) 
+      dest[i] = (ushort)(src[i] + delta);
+}
+
+static void translate_ubyte_elts( const ubyte *src,
+                                  unsigned count,
+                                  int delta,
+                                  ushort *dest )
+{
+   unsigned i;
+
+   for (i = 0; i < count; i++) 
+      dest[i] = (ushort)(src[i] + delta);
+}
+
+#if 0
+static enum pipe_format format_from_get_elt( pt_elt_func get_elt )
+{
+   switch (draw->pt.user.eltSize) {
+   case 1: return PIPE_FORMAT_R8_UNORM;
+   case 2: return PIPE_FORMAT_R16_UNORM;
+   case 4: return PIPE_FORMAT_R32_UNORM;
+   default: return PIPE_FORMAT_NONE;
+   }
+}
+#endif
+
+static void vcache_check_run( struct draw_pt_front_end *frontend, 
+                              pt_elt_func get_elt,
+                              const void *elts,
+                              unsigned draw_count )
+{
+   struct vcache_frontend *vcache = (struct vcache_frontend *)frontend; 
+   struct draw_context *draw = vcache->draw;
+   unsigned min_index = draw->pt.user.min_index;
+   unsigned max_index = draw->pt.user.max_index;
+   unsigned index_size = draw->pt.user.eltSize;
+   unsigned fetch_count = max_index + 1 - min_index;
+   const ushort *transformed_elts;
+   ushort *storage = NULL;
+
+
+   if (0) debug_printf("fetch_count %d draw_count %d\n", fetch_count, draw_count);
+      
+   if (max_index == 0xffffffff ||
+       fetch_count >= FETCH_MAX ||
+       fetch_count > draw_count) {
+      if (0) debug_printf("fail\n");
+      goto fail;
+   }
+      
+
+   if (min_index == 0 &&
+       index_size == 2) 
+   {
+      transformed_elts = (const ushort *)elts;
+   }
+   else 
+   {
+      storage = MALLOC( draw_count * sizeof(ushort) );
+      if (!storage)
+         goto fail;
+      
+      switch(index_size) {
+      case 1:
+         translate_ubyte_elts( (const ubyte *)elts,
+                               draw_count,
+                               0 - (int)min_index,
+                               storage );
+         break;
+
+      case 2:
+         translate_ushort_elts( (const ushort *)elts,
+                                draw_count,
+                                0 - (int)min_index,
+                                storage );
+         break;
+
+      case 4:
+         translate_uint_elts( (const uint *)elts,
+                              draw_count,
+                              0 - (int)min_index,
+                              storage );
+         break;
+
+      default:
+         assert(0);
+         return;
+      }
+      transformed_elts = storage;
+   }
+
+   vcache->middle->run_linear_elts( vcache->middle,
+                                    min_index, /* start */
+                                    fetch_count,
+                                    transformed_elts,
+                                    draw_count );
+
+   FREE(storage);
+   return;
+
+ fail:
+   vcache_run( frontend, get_elt, elts, draw_count );
+}
 
 
 
@@ -219,7 +340,7 @@ static void vcache_prepare( struct draw_pt_front_end *frontend,
    }
    else 
    {
-      vcache->base.run = vcache_run;
+      vcache->base.run = vcache_check_run;
    }
 
    vcache->input_prim = prim;

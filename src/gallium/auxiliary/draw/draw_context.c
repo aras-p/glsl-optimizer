@@ -174,6 +174,8 @@ void draw_set_viewport_state( struct draw_context *draw,
                               viewport->translate[1] == 0.0f &&
                               viewport->translate[2] == 0.0f &&
                               viewport->translate[3] == 0.0f);
+
+   draw_vs_set_viewport( draw, viewport );
 }
 
 
@@ -215,9 +217,11 @@ draw_set_mapped_vertex_buffer(struct draw_context *draw,
 
 void
 draw_set_mapped_constant_buffer(struct draw_context *draw,
-                                const void *buffer)
+                                const void *buffer, 
+                                unsigned size )
 {
    draw->pt.user.constants = buffer;
+   draw_vs_set_constants( draw, (const float (*)[4])buffer, size );
 }
 
 
@@ -345,13 +349,29 @@ void draw_set_edgeflags( struct draw_context *draw,
  * \param elements  the element buffer ptr
  */
 void
-draw_set_mapped_element_buffer( struct draw_context *draw,
-                                unsigned eltSize, void *elements )
+draw_set_mapped_element_buffer_range( struct draw_context *draw,
+                                      unsigned eltSize,
+                                      unsigned min_index,
+                                      unsigned max_index,
+                                      void *elements )
 {
    draw->pt.user.elts = elements;
    draw->pt.user.eltSize = eltSize;
+   draw->pt.user.min_index = min_index;
+   draw->pt.user.max_index = max_index;
 }
 
+
+void
+draw_set_mapped_element_buffer( struct draw_context *draw,
+                                unsigned eltSize,
+                                void *elements )
+{
+   draw->pt.user.elts = elements;
+   draw->pt.user.eltSize = eltSize;
+   draw->pt.user.min_index = 0;
+   draw->pt.user.max_index = 0xffffffff;
+}
 
  
 /* Revamp me please:

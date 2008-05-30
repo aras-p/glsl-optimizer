@@ -91,25 +91,25 @@ static void emit_load_R8G8B8A8_UNORM( struct aos_compilation *cp,
 
 
 
-static void get_src_ptr( struct x86_function *func,
+static void get_src_ptr( struct aos_compilation *cp,
                          struct x86_reg src,
-                         struct x86_reg machine,
                          struct x86_reg elt,
                          unsigned a )
 {
-   struct x86_reg input_ptr = 
-      x86_make_disp(machine, 
-		    Offset(struct aos_machine, attrib[a].input_ptr));
+   struct x86_reg attrib = x86_make_disp(aos_get_x86( cp, X86_ATTRIBS ), 
+                                         a * sizeof(struct aos_attrib));
 
-   struct x86_reg input_stride = 
-      x86_make_disp(machine, 
-		    Offset(struct aos_machine, attrib[a].input_stride));
+   struct x86_reg input_ptr = x86_make_disp(attrib, 
+                                            Offset(struct aos_attrib, input_ptr));
+
+   struct x86_reg input_stride = x86_make_disp(attrib, 
+                                               Offset(struct aos_attrib, input_stride));
 
    /* Calculate pointer to current attrib:
     */
-   x86_mov(func, src, input_stride);
-   x86_imul(func, src, elt);
-   x86_add(func, src, input_ptr);
+   x86_mov(cp->func, src, input_stride);
+   x86_imul(cp->func, src, elt);
+   x86_add(cp->func, src, input_ptr);
 }
 
 
@@ -134,9 +134,8 @@ static boolean load_input( struct aos_compilation *cp,
 
    /* Figure out source pointer address:
     */
-   get_src_ptr(cp->func, 
+   get_src_ptr(cp, 
                src, 
-               cp->machine_EDX, 
                linear ? cp->idx_EBX : x86_deref(cp->idx_EBX),
                idx);
 

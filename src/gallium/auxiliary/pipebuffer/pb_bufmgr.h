@@ -79,6 +79,15 @@ struct pb_manager
 };
 
 
+/**
+ * Malloc buffer provider.
+ * 
+ * Simple wrapper around pb_malloc_buffer_create for convenience.
+ */
+struct pb_manager *
+pb_malloc_bufmgr_create(void);
+
+
 /** 
  * Static buffer pool sub-allocator.
  * 

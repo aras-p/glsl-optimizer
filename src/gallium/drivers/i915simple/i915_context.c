@@ -86,7 +86,9 @@ i915_draw_elements( struct pipe_context *pipe,
 
 
    draw_set_mapped_constant_buffer(draw,
-                                i915->current.constants[PIPE_SHADER_VERTEX]);
+                                   i915->current.constants[PIPE_SHADER_VERTEX],
+                                   ( i915->current.num_user_constants[PIPE_SHADER_VERTEX] * 
+                                     4 * sizeof(float) ));
 
    /* draw! */
    draw_arrays(i915->draw, prim, start, count);
