@@ -128,7 +128,7 @@ i915_displaytarget_layout(struct pipe_screen *screen,
 {
    struct pipe_texture *pt = &tex->base;
 
-   if (pt->last_level > 1 || pt->cpp != 4)
+   if (pt->last_level > 0 || pt->cpp != 4)
       return 0;
 
    i915_miptree_set_level_info( tex, 0, 1, 0, 0,
@@ -177,7 +177,7 @@ i945_miptree_layout_2d( struct i915_texture *tex )
    /* Pitch must be a whole number of dwords, even though we
     * express it in texels.
     */
-   tex->pitch = align_int(tex->pitch * pt->cpp, 4) / pt->cpp;
+   tex->pitch = align_int(tex->pitch * pt->cpp, 64) / pt->cpp;
    tex->total_height = 0;
 
    for (level = 0; level <= pt->last_level; level++) {
@@ -537,10 +537,7 @@ i915_texture_create(struct pipe_screen *screen,
    tex->base.refcount = 1;
    tex->base.screen = screen;
 
-   if (tex->base.tex_usage & PIPE_TEXTURE_USAGE_DISPLAY_TARGET) {
-      if (!i915_displaytarget_layout(screen, tex))
-	 goto fail;
-   } else if (i915screen->is_i945) {
+   if (i915screen->is_i945) {
       if (!i945_miptree_layout(tex))
 	 goto fail;
    } else {
