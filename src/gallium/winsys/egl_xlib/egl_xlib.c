@@ -455,6 +455,28 @@ xlib_eglCreateWindowSurface(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
 
 
 static EGLBoolean
+xlib_eglDestroySurface(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surface)
+{
+   struct xlib_egl_surface *surf = lookup_surface(surface);
+   if (surf) {
+      _eglHashRemove(_eglGlobal.Surfaces, (EGLuint) surface);
+      if (surf->Base.IsBound) {
+         surf->Base.DeletePending = EGL_TRUE;
+      }
+      else {
+         st_unreference_framebuffer(&surf->Framebuffer);
+         free(surf);
+      }
+      return EGL_TRUE;
+   }
+   else {
+      _eglError(EGL_BAD_SURFACE, "eglDestroySurface");
+      return EGL_FALSE;
+   }
+}
+
+
+static EGLBoolean
 xlib_eglSwapBuffers(_EGLDriver *drv, EGLDisplay dpy, EGLSurface draw)
 {
    /* error checking step: */
@@ -499,6 +521,7 @@ _eglMain(_EGLDisplay *dpy, const char *args)
    xdrv->Base.API.CreateContext = xlib_eglCreateContext;
    xdrv->Base.API.DestroyContext = xlib_eglDestroyContext;
    xdrv->Base.API.CreateWindowSurface = xlib_eglCreateWindowSurface;
+   xdrv->Base.API.DestroySurface = xlib_eglDestroySurface;
    xdrv->Base.API.MakeCurrent = xlib_eglMakeCurrent;
    xdrv->Base.API.SwapBuffers = xlib_eglSwapBuffers;
 
