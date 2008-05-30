@@ -35,6 +35,7 @@
 #include "intel_batchbuffer.h"
 
 #include "state_tracker/st_public.h"
+#include "state_tracker/st_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_context.h"
 
@@ -217,6 +218,8 @@ intelCreateContext(const __GLcontextModes * visual,
    pipe->priv = intel;
 
    intel->st = st_create_context(pipe, visual, st_share);
+
+   driInitExtensions( intel->st->ctx, card_extensions, GL_TRUE );
 
    return GL_TRUE;
 }
