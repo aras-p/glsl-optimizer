@@ -230,7 +230,7 @@ sp_depth_test_quad(struct quad_stage *qs, struct quad_header *quad)
             int x = quad->x0 % TILE_SIZE + (j & 1);
             int y = quad->y0 % TILE_SIZE + (j >> 1);
             uint z24s8 = tile->data.depth32[y][x];
-            z24s8 = (z24s8 & 0xff) | (bzzzz[j] << 24);
+            z24s8 = (z24s8 & 0xff) | (bzzzz[j] << 8);
             tile->data.depth32[y][x] = z24s8;
          }
          break;
