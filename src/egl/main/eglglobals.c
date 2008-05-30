@@ -19,8 +19,7 @@ _eglInitGlobals(void)
       _eglGlobal.FreeScreenHandle = 1;
       _eglGlobal.Initialized = EGL_TRUE;
 
-      _eglGlobal.OpenGLESAPISupported = EGL_TRUE;
-      _eglGlobal.OpenVGAPISupported = EGL_FALSE;
+      _eglGlobal.ClientAPIsMask = 0x0;
 
       /* XXX temporary */
       _eglGlobal.ThreadInfo = _eglNewThreadInfo();

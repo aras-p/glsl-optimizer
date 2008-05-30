@@ -20,6 +20,12 @@ _eglInitContext(_EGLDriver *drv, EGLDisplay dpy, _EGLContext *ctx,
    _EGLConfig *conf;
    _EGLDisplay *display = _eglLookupDisplay(dpy);
    EGLint i;
+   const EGLenum api = eglQueryAPI();
+
+   if (api == EGL_NONE) {
+      _eglError(EGL_BAD_MATCH, "eglCreateContext(no client API)");
+      return EGL_FALSE;
+   }
 
    conf = _eglLookupConfig(drv, dpy, config);
    if (!conf) {
@@ -30,7 +36,8 @@ _eglInitContext(_EGLDriver *drv, EGLDisplay dpy, _EGLContext *ctx,
    for (i = 0; attrib_list && attrib_list[i] != EGL_NONE; i++) {
       switch (attrib_list[i]) {
       case EGL_CONTEXT_CLIENT_VERSION:
-         /* xxx todo */
+         i++;
+         ctx->ClientVersion = attrib_list[i];
          break;
       default:
          _eglError(EGL_BAD_ATTRIBUTE, "_eglInitContext");
@@ -43,6 +50,7 @@ _eglInitContext(_EGLDriver *drv, EGLDisplay dpy, _EGLContext *ctx,
    ctx->Config = conf;
    ctx->DrawSurface = EGL_NO_SURFACE;
    ctx->ReadSurface = EGL_NO_SURFACE;
+   ctx->ClientAPI = api;
 
    return EGL_TRUE;
 }

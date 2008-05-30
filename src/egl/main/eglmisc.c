@@ -54,6 +54,27 @@ _eglUpdateExtensionsString(_EGLDriver *drv)
 }
 
 
+static void
+_eglUpdateAPIsString(_EGLDriver *drv)
+{
+   _eglGlobal.ClientAPIs[0] = 0;
+
+   if (_eglGlobal.ClientAPIsMask & EGL_OPENGL_BIT)
+      strcat(_eglGlobal.ClientAPIs, "OpenGL ");
+
+   if (_eglGlobal.ClientAPIsMask & EGL_OPENGL_ES_BIT)
+      strcat(_eglGlobal.ClientAPIs, "OpenGL_ES ");
+
+   if (_eglGlobal.ClientAPIsMask & EGL_OPENGL_ES2_BIT)
+      strcat(_eglGlobal.ClientAPIs, "OpenGL_ES2 ");
+
+   if (_eglGlobal.ClientAPIsMask & EGL_OPENVG_BIT)
+      strcat(_eglGlobal.ClientAPIs, "OpenVG ");
+
+   assert(strlen(_eglGlobal.ClientAPIs) < sizeof(_eglGlobal.ClientAPIs));
+}
+
+
 
 const char *
 _eglQueryString(_EGLDriver *drv, EGLDisplay dpy, EGLint name)
@@ -70,8 +91,8 @@ _eglQueryString(_EGLDriver *drv, EGLDisplay dpy, EGLint name)
       return drv->Extensions.String;
 #ifdef EGL_VERSION_1_2
    case EGL_CLIENT_APIS:
-      /* XXX need to initialize somewhere */
-      return drv->ClientAPIs;
+      _eglUpdateAPIsString(drv);
+      return _eglGlobal.ClientAPIs;
 #endif
    default:
       _eglError(EGL_BAD_PARAMETER, "eglQueryString");

@@ -33,7 +33,8 @@ struct _egl_driver
    int APImajor, APIminor; /**< as returned by eglInitialize() */
    char Version[1000];       /**< initialized from APImajor/minor, Name */
 
-   const char *ClientAPIs;
+   /** Bitmask of supported APIs (EGL_xx_BIT) set by the driver during init */
+   EGLint ClientAPIsMask;
 
    _EGLAPI API;  /**< EGL API dispatch table */
 

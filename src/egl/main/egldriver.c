@@ -97,12 +97,12 @@ _eglChooseDriver(_EGLDisplay *dpy)
    if (driverName)
       return _eglstrdup(driverName);
 
-
+#if 0
    if (!displayString) {
       /* choose a default */
       displayString = DefaultDriverName;
    }
-
+#endif
    /* extract default DriverArgs = whatever follows ':' */
    if (displayString &&
        (displayString[0] == '!' ||
@@ -191,6 +191,9 @@ _eglOpenDriver(_EGLDisplay *dpy, const char *driverName, const char *args)
       drv->LibHandle = lib;
    else
       dlclose(lib);
+
+   /* update the global notion of supported APIs */
+   _eglGlobal.ClientAPIsMask |= drv->ClientAPIsMask;
 
    return drv;
 }

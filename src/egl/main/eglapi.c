@@ -517,6 +517,18 @@ eglQueryModeStringMESA(EGLDisplay dpy, EGLModeMESA mode)
 
 #ifdef EGL_VERSION_1_2
 
+
+/**
+ * Specify the client API to use for subsequent calls including:
+ *  eglCreateContext()
+ *  eglGetCurrentContext()
+ *  eglGetCurrentDisplay()
+ *  eglGetCurrentSurface()
+ *  eglMakeCurrent(when the ctx parameter is EGL NO CONTEXT)
+ *  eglWaitClient()
+ *  eglWaitNative()
+ * See section 3.7 "Rendering Context" in the EGL specification for details.
+ */
 EGLBoolean
 eglBindAPI(EGLenum api)
 {
@@ -525,7 +537,7 @@ eglBindAPI(EGLenum api)
    switch (api) {
 #ifdef EGL_VERSION_1_4
    case EGL_OPENGL_API:
-      if (_eglGlobal.OpenGLAPISupported) {
+      if (_eglGlobal.ClientAPIsMask & EGL_OPENGL_BIT) {
          t->CurrentAPI = api;
          return EGL_TRUE;
       }
@@ -533,14 +545,14 @@ eglBindAPI(EGLenum api)
       return EGL_FALSE;
 #endif
    case EGL_OPENGL_ES_API:
-      if (_eglGlobal.OpenGLESAPISupported) {
+      if (_eglGlobal.ClientAPIsMask & (EGL_OPENGL_ES_BIT | EGL_OPENGL_ES2_BIT)) {
          t->CurrentAPI = api;
          return EGL_TRUE;
       }
       _eglError(EGL_BAD_PARAMETER, "eglBindAPI");
       return EGL_FALSE;
    case EGL_OPENVG_API:
-      if (_eglGlobal.OpenVGAPISupported) {
+      if (_eglGlobal.ClientAPIsMask & EGL_OPENVG_BIT) {
          t->CurrentAPI = api;
          return EGL_TRUE;
       }
@@ -553,6 +565,18 @@ eglBindAPI(EGLenum api)
 }
 
 
+/**
+ * Return the last value set with eglBindAPI().
+ */
+EGLenum
+eglQueryAPI(void)
+{
+   /* returns one of EGL_OPENGL_API, EGL_OPENGL_ES_API or EGL_OPENVG_API */
+   _EGLThreadInfo *t = _eglGetCurrentThread();
+   return t->CurrentAPI;
+}
+
+
 EGLSurface
 eglCreatePbufferFromClientBuffer(EGLDisplay dpy, EGLenum buftype,
                                  EGLClientBuffer buffer, EGLConfig config,
@@ -561,15 +585,6 @@ eglCreatePbufferFromClientBuffer(EGLDisplay dpy, EGLenum buftype,
    _EGLDriver *drv = _eglLookupDriver(dpy);
    return drv->API.CreatePbufferFromClientBuffer(drv, dpy, buftype, buffer,
                                                  config, attrib_list);
-}
-
-
-EGLenum
-eglQueryAPI(void)
-{
-   /* returns one of EGL_OPENGL_API, EGL_OPENGL_ES_API or EGL_OPENVG_API */
-   _EGLThreadInfo *t = _eglGetCurrentThread();
-   return t->CurrentAPI;
 }
 
 

@@ -28,10 +28,10 @@ struct _egl_global
 
    EGLScreenMESA FreeScreenHandle;
 
-   /* XXX these may be temporary */
-   EGLBoolean OpenGLAPISupported;
-   EGLBoolean OpenGLESAPISupported;
-   EGLBoolean OpenVGAPISupported;
+   /* bitmaks of supported APIs (supported by _some_ driver) */
+   EGLint ClientAPIsMask;
+
+   char ClientAPIs[1000];   /**< updated by eglQueryString */
 
    /* XXX temporary - should be thread-specific data (TSD) */
    _EGLThreadInfo *ThreadInfo;
