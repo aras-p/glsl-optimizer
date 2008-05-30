@@ -92,14 +92,21 @@ _eglChooseDriver(_EGLDisplay *dpy)
    const char *displayString = (const char *) dpy->NativeDisplay;
    const char *driverName = NULL;
 
+   /* First, if the EGL_DRIVER env var is set, use that */
+   driverName = getenv("EGL_DRIVER");
+   if (driverName)
+      return _eglstrdup(driverName);
+
+
    if (!displayString) {
       /* choose a default */
       displayString = DefaultDriverName;
    }
 
    /* extract default DriverArgs = whatever follows ':' */
-   if (displayString[0] == '!' ||
-       displayString[0] == ':') {
+   if (displayString &&
+       (displayString[0] == '!' ||
+        displayString[0] == ':')) {
       const char *args = strchr(displayString, ':');
       if (args)
          dpy->DriverArgs = _eglstrdup(args + 1);
