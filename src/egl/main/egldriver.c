@@ -30,8 +30,8 @@
 #endif
 
 
-const char *DefaultDriverName = ":0";
-const char *SysFS = "/sys/class";
+static const char *DefaultDriverName = ":0";
+static const char *SysFS = "/sys/class";
 
 
 
@@ -72,6 +72,9 @@ _eglChooseDRMDriver(int card)
 
 
 /**
+ * XXX this function is totally subject change!!!
+ *
+ *
  * Determine/return the name of the driver to use for the given _EGLDisplay.
  *
  * Try to be clever and determine if nativeDisplay is an Xlib Display
@@ -91,6 +94,8 @@ _eglChooseDriver(_EGLDisplay *dpy)
 {
    const char *displayString = (const char *) dpy->NativeDisplay;
    const char *driverName = NULL;
+
+   (void) DefaultDriverName;
 
    /* First, if the EGL_DRIVER env var is set, use that */
    driverName = getenv("EGL_DRIVER");
@@ -139,6 +144,8 @@ _eglChooseDriver(_EGLDisplay *dpy)
       driverName = _weglChooseDriver(dpy);
 #elif defined(_EGL_PLATFORM_WINCE)
       /* XXX to do */
+#else
+      driverName = DefaultDriverName;
 #endif
    }
 
@@ -195,6 +202,8 @@ _eglOpenDriver(_EGLDisplay *dpy, const char *driverName, const char *args)
    /* update the global notion of supported APIs */
    _eglGlobal.ClientAPIsMask |= drv->ClientAPIsMask;
 
+   _eglSaveDriver(drv);
+
    return drv;
 }
 
@@ -214,6 +223,16 @@ _eglCloseDriver(_EGLDriver *drv, EGLDisplay dpy)
    b = drv->API.Terminate(drv, dpy);
    dlclose(handle);
    return b;
+}
+
+
+/**
+ * Save the given driver pointer in the list of all known drivers.
+ */
+void
+_eglSaveDriver(_EGLDriver *drv)
+{
+   _eglGlobal.Drivers[ _eglGlobal.NumDrivers++ ] = drv;
 }
 
 

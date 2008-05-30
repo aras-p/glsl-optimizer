@@ -385,12 +385,15 @@ void (* EGLAPIENTRY eglGetProcAddress(const char *procname))()
          return (genericFunc) egl_functions[i].function;
       }
    }
-#if 0
-   /* XXX enable this code someday */
-   return (genericFunc) _glapi_get_proc_address(procname);
-#else
+
+   /* now loop over drivers to query their procs */
+   for (i = 0; i < _eglGlobal.NumDrivers; i++) {
+      _EGLProc p = _eglGlobal.Drivers[i]->API.GetProcAddress(procname);
+      if (p)
+         return p;
+   }
+
    return NULL;
-#endif
 }
 
 

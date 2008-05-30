@@ -35,6 +35,9 @@ struct _egl_global
 
    /* XXX temporary - should be thread-specific data (TSD) */
    _EGLThreadInfo *ThreadInfo;
+
+   EGLint NumDrivers;
+   _EGLDriver *Drivers[10];
 };
 
 
