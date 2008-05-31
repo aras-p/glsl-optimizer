@@ -33,26 +33,44 @@
  */
 
 
-#include "util/u_time.h"
+#include "pipe/p_config.h"
 
 #if defined(PIPE_OS_LINUX)
 #include <sys/time.h>
 #elif defined(PIPE_SUBSYSTEM_WINDOWS_DISPLAY)
 #include <windows.h>
 #include <winddi.h>
-#elif defined(PIPE_SUBSYSTEM_WINDOWS_USER)
+#elif defined(PIPE_SUBSYSTEM_WINDOWS_MINIPORT)
+#include <windows.h>
+extern VOID KeQuerySystemTime(PLARGE_INTEGER);
+#elif defined(PIPE_SUBSYSTEM_WINDOWS_CE)
 #include <windows.h>
 #else
 #error Unsupported OS
 #endif
 
+#include "util/u_time.h"
 
-#if defined(PIPE_OS_WINDOWS)
-static LONGLONG frequency = 0;
-#if !defined(PIPE_SUBSYSTEM_WINDOWS_DISPLAY)
-#define EngQueryPerformanceFrequency(p) QueryPerformanceFrequency((LARGE_INTEGER*)(p))
-#define EngQueryPerformanceCounter(p) QueryPerformanceCounter((LARGE_INTEGER*)(p))
+
+#if defined(PIPE_SUBSYSTEM_WINDOWS_DISPLAY) || defined(PIPE_SUBSYSTEM_WINDOWS_CE)
+
+static int64_t frequency = 0;
+
+static INLINE void 
+util_time_get_frequency(void)
+{
+   if(!frequency) {
+#if defined(PIPE_SUBSYSTEM_WINDOWS_DISPLAY)
+      LONGLONG temp;
+      EngQueryPerformanceFrequency(&temp);
+      frequency = temp;
+#elif defined(PIPE_SUBSYSTEM_WINDOWS_CE)
+      LARGE_INTEGER temp;
+      QueryPerformanceFrequency(&temp);
+      frequency = temp.QuadPart;
 #endif
+   }
+}
 #endif
 
 
@@ -61,8 +79,20 @@ util_time_get(struct util_time *t)
 {
 #if defined(PIPE_OS_LINUX)
    gettimeofday(&t->tv, NULL);
-#elif defined(PIPE_OS_WINDOWS)
-   EngQueryPerformanceCounter(&t->counter);
+#elif defined(PIPE_SUBSYSTEM_WINDOWS_DISPLAY)
+   LONGLONG temp;
+   EngQueryPerformanceCounter(&temp);
+   t->counter = temp;
+#elif defined(PIPE_SUBSYSTEM_WINDOWS_MINIPORT)
+   /* Updated every 10 miliseconds, measured in units of 100 nanoseconds.
+    * http://msdn.microsoft.com/en-us/library/ms801642.aspx */
+   LARGE_INTEGER temp;
+   KeQuerySystemTime(&temp);
+   t->counter = temp.QuadPart;
+#elif defined(PIPE_SUBSYSTEM_WINDOWS_CE)
+   LARGE_INTEGER temp;
+   QueryPerformanceCounter(&temp);
+   t->counter = temp.QuadPart;
 #endif
 }
 
@@ -75,10 +105,17 @@ util_time_add(const struct util_time *t1,
 #if defined(PIPE_OS_LINUX)
    t2->tv.tv_sec = t1->tv.tv_sec + usecs / 1000000;
    t2->tv.tv_usec = t1->tv.tv_usec + usecs % 1000000;
-#elif defined(PIPE_OS_WINDOWS)
-   if(!frequency)
-      EngQueryPerformanceFrequency(&frequency);
-   t2->counter = t1->counter + (usecs * frequency + 999999LL)/1000000LL;
+#elif defined(PIPE_SUBSYSTEM_WINDOWS_DISPLAY) || defined(PIPE_SUBSYSTEM_WINDOWS_CE)
+   util_time_get_frequency();
+   t2->counter = t1->counter + (usecs * frequency + INT64_C(999999))/INT64_C(1000000);
+#elif defined(PIPE_SUBSYSTEM_WINDOWS_MINIPORT)
+   /* 1 tick = 100 nano seconds. */
+   t2->counter = t1->counter + usecs * 10;
+#elif 
+   LARGE_INTEGER temp;
+   LONGLONG freq;
+   freq = temp.QuadPart;
+   t2->counter = t1->counter + (usecs * freq)/1000000L;
 #endif
 }
 
@@ -90,10 +127,11 @@ util_time_diff(const struct util_time *t1,
 #if defined(PIPE_OS_LINUX)
    return (t2->tv.tv_usec - t1->tv.tv_usec) + 
           (t2->tv.tv_sec - t1->tv.tv_sec)*1000000;
-#elif defined(PIPE_OS_WINDOWS)
-   if(!frequency)
-      EngQueryPerformanceFrequency(&frequency);
-   return (t2->counter - t1->counter)*1000000LL/frequency;
+#elif defined(PIPE_SUBSYSTEM_WINDOWS_DISPLAY) || defined(PIPE_SUBSYSTEM_WINDOWS_CE)
+   util_time_get_frequency();
+   return (t2->counter - t1->counter)*INT64_C(1000000)/frequency;
+#elif defined(PIPE_SUBSYSTEM_WINDOWS_MINIPORT)
+   return (t2->counter - t1->counter)/10;
 #endif
 }
 
@@ -142,7 +180,7 @@ util_time_timeout(const struct util_time *start,
 }
 
 
-#if defined(PIPE_OS_WINDOWS)
+#if defined(PIPE_SUBSYSYEM_WINDOWS_DISPLAY)
 void util_time_sleep(unsigned usecs)
 {
    LONGLONG start, curr, end;
