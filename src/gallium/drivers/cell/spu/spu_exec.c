@@ -830,13 +830,11 @@ exec_declaration(struct spu_exec_machine *mach,
          unsigned first, last, mask;
          interpolation_func interp;
 
-         assert( decl->Declaration.Declare == TGSI_DECLARE_RANGE );
-
-         first = decl->u.DeclarationRange.First;
-         last = decl->u.DeclarationRange.Last;
+         first = decl->DeclarationRange.First;
+         last = decl->DeclarationRange.Last;
          mask = decl->Declaration.UsageMask;
 
-         switch( decl->Interpolation.Interpolate ) {
+         switch( decl->Declaration.Interpolate ) {
          case TGSI_INTERPOLATE_CONSTANT:
             interp = constant_interpolation;
             break;
