@@ -550,18 +550,16 @@ make_input_decl(
 
    decl = tgsi_default_full_declaration();
    decl.Declaration.File = TGSI_FILE_INPUT;
-   decl.Declaration.Declare = TGSI_DECLARE_RANGE;
    decl.Declaration.UsageMask = usage_mask;
    decl.Declaration.Semantic = semantic_info;
-   decl.u.DeclarationRange.First = index;
-   decl.u.DeclarationRange.Last = index;
+   decl.DeclarationRange.First = index;
+   decl.DeclarationRange.Last = index;
    if (semantic_info) {
       decl.Semantic.SemanticName = semantic_name;
       decl.Semantic.SemanticIndex = semantic_index;
    }
    if (interpolate_info) {
-      decl.Declaration.Interpolate = 1;
-      decl.Interpolation.Interpolate = interpolate;
+      decl.Declaration.Interpolate = interpolate;
    }
 
    return decl;
@@ -583,11 +581,10 @@ make_output_decl(
 
    decl = tgsi_default_full_declaration();
    decl.Declaration.File = TGSI_FILE_OUTPUT;
-   decl.Declaration.Declare = TGSI_DECLARE_RANGE;
    decl.Declaration.UsageMask = usage_mask;
    decl.Declaration.Semantic = 1;
-   decl.u.DeclarationRange.First = index;
-   decl.u.DeclarationRange.Last = index;
+   decl.DeclarationRange.First = index;
+   decl.DeclarationRange.Last = index;
    decl.Semantic.SemanticName = semantic_name;
    decl.Semantic.SemanticIndex = semantic_index;
 
@@ -603,9 +600,8 @@ make_temp_decl(
    struct tgsi_full_declaration decl;
    decl = tgsi_default_full_declaration();
    decl.Declaration.File = TGSI_FILE_TEMPORARY;
-   decl.Declaration.Declare = TGSI_DECLARE_RANGE;
-   decl.u.DeclarationRange.First = start_index;
-   decl.u.DeclarationRange.Last = end_index;
+   decl.DeclarationRange.First = start_index;
+   decl.DeclarationRange.Last = end_index;
    return decl;
 }
 
@@ -616,9 +612,8 @@ make_sampler_decl(GLuint index)
    struct tgsi_full_declaration decl;
    decl = tgsi_default_full_declaration();
    decl.Declaration.File = TGSI_FILE_SAMPLER;
-   decl.Declaration.Declare = TGSI_DECLARE_RANGE;
-   decl.u.DeclarationRange.First = index;
-   decl.u.DeclarationRange.Last = index;
+   decl.DeclarationRange.First = index;
+   decl.DeclarationRange.Last = index;
    return decl;
 }
 
@@ -629,9 +624,8 @@ make_constant_decl(GLuint first, GLuint last)
    struct tgsi_full_declaration decl;
    decl = tgsi_default_full_declaration();
    decl.Declaration.File = TGSI_FILE_CONSTANT;
-   decl.Declaration.Declare = TGSI_DECLARE_RANGE;
-   decl.u.DeclarationRange.First = first;
-   decl.u.DeclarationRange.Last = last;
+   decl.DeclarationRange.First = first;
+   decl.DeclarationRange.Last = last;
    return decl;
 }
 
