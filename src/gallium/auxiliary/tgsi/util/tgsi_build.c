@@ -90,9 +90,8 @@ tgsi_default_declaration( void )
    declaration.Type = TGSI_TOKEN_TYPE_DECLARATION;
    declaration.Size = 1;
    declaration.File = TGSI_FILE_NULL;
-   declaration.Declare = TGSI_DECLARE_RANGE;
    declaration.UsageMask = TGSI_WRITEMASK_XYZW;
-   declaration.Interpolate = 0;
+   declaration.Interpolate = TGSI_INTERPOLATE_CONSTANT;
    declaration.Semantic = 0;
    declaration.Padding = 0;
    declaration.Extended = 0;
@@ -103,7 +102,6 @@ tgsi_default_declaration( void )
 struct tgsi_declaration
 tgsi_build_declaration(
    unsigned file,
-   unsigned declare,
    unsigned usage_mask,
    unsigned interpolate,
    unsigned semantic,
@@ -112,11 +110,10 @@ tgsi_build_declaration(
    struct tgsi_declaration declaration;
 
    assert( file <= TGSI_FILE_IMMEDIATE );
-   assert( declare <= TGSI_DECLARE_MASK );
+   assert( interpolate <= TGSI_INTERPOLATE_PERSPECTIVE );
 
    declaration = tgsi_default_declaration();
    declaration.File = file;
-   declaration.Declare = declare;
    declaration.UsageMask = usage_mask;
    declaration.Interpolate = interpolate;
    declaration.Semantic = semantic;
@@ -144,7 +141,7 @@ tgsi_default_full_declaration( void )
    struct tgsi_full_declaration  full_declaration;
 
    full_declaration.Declaration  = tgsi_default_declaration();
-   full_declaration.Interpolation = tgsi_default_declaration_interpolation();
+   full_declaration.DeclarationRange = tgsi_default_declaration_range();
    full_declaration.Semantic = tgsi_default_declaration_semantic();
 
    return full_declaration;
@@ -159,6 +156,7 @@ tgsi_build_full_declaration(
 {
    unsigned size = 0;
    struct tgsi_declaration *declaration;
+   struct tgsi_declaration_range *dr;
 
    if( maxsize <= size )
      return 0;
@@ -167,63 +165,21 @@ tgsi_build_full_declaration(
 
    *declaration = tgsi_build_declaration(
       full_decl->Declaration.File,
-      full_decl->Declaration.Declare,
       full_decl->Declaration.UsageMask,
       full_decl->Declaration.Interpolate,
       full_decl->Declaration.Semantic,
       header );
 
-   switch( full_decl->Declaration.Declare )  {
-   case TGSI_DECLARE_RANGE:
-   {
-      struct tgsi_declaration_range *dr;
+   if (maxsize <= size)
+      return 0;
+   dr = (struct tgsi_declaration_range *) &tokens[size];
+   size++;
 
-      if( maxsize <= size )
-         return 0;
-      dr = (struct tgsi_declaration_range *) &tokens[size];
-      size++;
-
-      *dr = tgsi_build_declaration_range(
-         full_decl->u.DeclarationRange.First,
-         full_decl->u.DeclarationRange.Last,
-         declaration,
-         header );
-      break;
-    }
-
-   case TGSI_DECLARE_MASK:
-   {
-      struct tgsi_declaration_mask *dm;
-
-      if( maxsize <= size )
-         return 0;
-      dm = (struct tgsi_declaration_mask  *) &tokens[size];
-      size++;
-
-      *dm = tgsi_build_declaration_mask(
-         full_decl->u.DeclarationMask.Mask,
-         declaration,
-         header );
-      break;
-   }
-
-   default:
-      assert( 0 );
-   }
-
-   if( full_decl->Declaration.Interpolate ) {
-      struct tgsi_declaration_interpolation *di;
-
-      if( maxsize <= size )
-         return  0;
-      di = (struct tgsi_declaration_interpolation *) &tokens[size];
-      size++;
-
-      *di = tgsi_build_declaration_interpolation(
-         full_decl->Interpolation.Interpolate,
-         declaration,
-         header );
-   }
+   *dr = tgsi_build_declaration_range(
+      full_decl->DeclarationRange.First,
+      full_decl->DeclarationRange.Last,
+      declaration,
+      header );
 
    if( full_decl->Declaration.Semantic ) {
       struct tgsi_declaration_semantic *ds;
@@ -244,6 +200,17 @@ tgsi_build_full_declaration(
 }
 
 struct tgsi_declaration_range
+tgsi_default_declaration_range( void )
+{
+   struct tgsi_declaration_range dr;
+
+   dr.First = 0;
+   dr.Last = 0;
+
+   return dr;
+}
+
+struct tgsi_declaration_range
 tgsi_build_declaration_range(
    unsigned first,
    unsigned last,
@@ -255,56 +222,13 @@ tgsi_build_declaration_range(
    assert( last >= first );
    assert( last <= 0xFFFF );
 
+   declaration_range = tgsi_default_declaration_range();
    declaration_range.First = first;
    declaration_range.Last = last;
 
    declaration_grow( declaration, header );
 
    return declaration_range;
-}
-
-struct tgsi_declaration_mask
-tgsi_build_declaration_mask(
-   unsigned mask,
-   struct tgsi_declaration *declaration,
-   struct tgsi_header *header )
-{
-   struct tgsi_declaration_mask  declaration_mask;
-
-   declaration_mask.Mask = mask;
-
-   declaration_grow( declaration, header );
-
-   return declaration_mask;
-}
-
-struct tgsi_declaration_interpolation
-tgsi_default_declaration_interpolation( void )
-{
-   struct tgsi_declaration_interpolation di;
-
-   di.Interpolate = TGSI_INTERPOLATE_CONSTANT;
-   di.Padding = 0;
-
-   return di;
-}
-
-struct tgsi_declaration_interpolation
-tgsi_build_declaration_interpolation(
-   unsigned interpolate,
-   struct tgsi_declaration *declaration,
-   struct tgsi_header *header )
-{
-   struct tgsi_declaration_interpolation di;
-
-   assert( interpolate <= TGSI_INTERPOLATE_PERSPECTIVE );
-
-   di = tgsi_default_declaration_interpolation();
-   di.Interpolate = interpolate;
-
-   declaration_grow( declaration, header );
-
-   return di;
 }
 
 struct tgsi_declaration_semantic

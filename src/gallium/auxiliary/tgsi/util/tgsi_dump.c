@@ -546,19 +546,13 @@ tgsi_dump_declaration(
    TXT( "\nDCL " );
    ENM( decl->Declaration.File, TGSI_FILES_SHORT );
 
-   switch( decl->Declaration.Declare ) {
-   case TGSI_DECLARE_RANGE:
-      CHR( '[' );
-      UID( decl->u.DeclarationRange.First );
-      if( decl->u.DeclarationRange.First != decl->u.DeclarationRange.Last ) {
-         TXT( ".." );
-         UID( decl->u.DeclarationRange.Last );
-      }
-      CHR( ']' );
-      break;
-   default:
-      assert( 0 );
+   CHR( '[' );
+   UID( decl->DeclarationRange.First );
+   if (decl->DeclarationRange.First != decl->DeclarationRange.Last) {
+      TXT( ".." );
+      UID( decl->DeclarationRange.Last );
    }
+   CHR( ']' );
 
    if( decl->Declaration.UsageMask != TGSI_WRITEMASK_XYZW ) {
       CHR( '.' );
@@ -586,10 +580,8 @@ tgsi_dump_declaration(
       }
    }
 
-   if (decl->Declaration.Interpolate) {
-      TXT( ", " );
-      ENM( decl->Interpolation.Interpolate, TGSI_INTERPOLATES_SHORT );
-   }
+   TXT( ", " );
+   ENM( decl->Declaration.Interpolate, TGSI_INTERPOLATES_SHORT );
 }
 
 static void
@@ -601,8 +593,6 @@ dump_declaration_verbose(
 {
    TXT( "\nFile       : " );
    ENM( decl->Declaration.File, TGSI_FILES );
-   TXT( "\nDeclare    : " );
-   ENM( decl->Declaration.Declare, TGSI_DECLARES );
    if( deflt || fd->Declaration.UsageMask != decl->Declaration.UsageMask ) {
       TXT( "\nUsageMask  : " );
       if( decl->Declaration.UsageMask & TGSI_WRITEMASK_X ) {
@@ -620,7 +610,7 @@ dump_declaration_verbose(
    }
    if( deflt || fd->Declaration.Interpolate != decl->Declaration.Interpolate ) {
       TXT( "\nInterpolate: " );
-      UID( decl->Declaration.Interpolate );
+      ENM( decl->Declaration.Interpolate, TGSI_INTERPOLATES );
    }
    if( deflt || fd->Declaration.Semantic != decl->Declaration.Semantic ) {
       TXT( "\nSemantic   : " );
@@ -632,32 +622,10 @@ dump_declaration_verbose(
    }
 
    EOL();
-   switch( decl->Declaration.Declare ) {
-   case TGSI_DECLARE_RANGE:
-      TXT( "\nFirst: " );
-      UID( decl->u.DeclarationRange.First );
-      TXT( "\nLast : " );
-      UID( decl->u.DeclarationRange.Last );
-      break;
-
-   case TGSI_DECLARE_MASK:
-      TXT( "\nMask: " );
-      UIX( decl->u.DeclarationMask.Mask );
-      break;
-
-   default:
-      assert( 0 );
-   }
-
-   if( decl->Declaration.Interpolate ) {
-      EOL();
-      TXT( "\nInterpolate: " );
-      ENM( decl->Interpolation.Interpolate, TGSI_INTERPOLATES );
-      if( ignored ) {
-         TXT( "\nPadding    : " );
-         UIX( decl->Interpolation.Padding );
-      }
-   }
+   TXT( "\nFirst: " );
+   UID( decl->DeclarationRange.First );
+   TXT( "\nLast : " );
+   UID( decl->DeclarationRange.Last );
 
    if( decl->Declaration.Semantic ) {
       EOL();

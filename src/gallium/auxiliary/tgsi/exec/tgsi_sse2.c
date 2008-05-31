@@ -1923,16 +1923,14 @@ emit_declaration(
       unsigned first, last, mask;
       unsigned i, j;
 
-      assert( decl->Declaration.Declare == TGSI_DECLARE_RANGE );
-
-      first = decl->u.DeclarationRange.First;
-      last = decl->u.DeclarationRange.Last;
+      first = decl->DeclarationRange.First;
+      last = decl->DeclarationRange.Last;
       mask = decl->Declaration.UsageMask;
 
       for( i = first; i <= last; i++ ) {
          for( j = 0; j < NUM_CHANNELS; j++ ) {
             if( mask & (1 << j) ) {
-               switch( decl->Interpolation.Interpolate ) {
+               switch( decl->Declaration.Interpolate ) {
                case TGSI_INTERPOLATE_CONSTANT:
                   emit_coef_a0( func, 0, i, j );
                   emit_inputs( func, 0, i, j );
