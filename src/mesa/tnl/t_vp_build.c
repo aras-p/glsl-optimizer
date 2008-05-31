@@ -1511,7 +1511,8 @@ static void cache_item( GLcontext *ctx,
    struct tnl_cache_item *c = CALLOC_STRUCT(tnl_cache_item);
    c->hash = hash;
    c->key = key;
-   _mesa_reference_vertprog(ctx, &c->prog, prog);
+
+   c->prog = prog;
 
    if (++cache->n_items > cache->size * 1.5)
       rehash(cache);
@@ -1569,9 +1570,8 @@ void _tnl_UpdateFixedFunctionProgram( GLcontext *ctx )
 	    ctx->Driver.ProgramStringNotify( ctx, GL_VERTEX_PROGRAM_ARB, 
                                              &newProg->Base );
 
+         /* Our ownership of newProg is transferred to the cache */
 	 cache_item(ctx, tnl->vp_cache, hash, key, newProg);
-
-         _mesa_reference_vertprog(ctx, &ctx->VertexProgram._TnlProgram, newProg);
       }
       else {
 	 FREE(key);
