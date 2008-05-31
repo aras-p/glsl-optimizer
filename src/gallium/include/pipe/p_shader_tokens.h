@@ -55,9 +55,6 @@ enum tgsi_file_type {
 };
 
 
-#define TGSI_DECLARE_RANGE    0
-#define TGSI_DECLARE_MASK     1
-
 #define TGSI_WRITEMASK_NONE     0x00
 #define TGSI_WRITEMASK_X        0x01
 #define TGSI_WRITEMASK_Y        0x02
@@ -75,16 +72,19 @@ enum tgsi_file_type {
 #define TGSI_WRITEMASK_YZW      0x0E
 #define TGSI_WRITEMASK_XYZW     0x0F
 
+#define TGSI_INTERPOLATE_CONSTANT      0
+#define TGSI_INTERPOLATE_LINEAR        1
+#define TGSI_INTERPOLATE_PERSPECTIVE   2
+
 struct tgsi_declaration
 {
    unsigned Type        : 4;  /* TGSI_TOKEN_TYPE_DECLARATION */
    unsigned Size        : 8;  /* UINT */
    unsigned File        : 4;  /* one of TGSI_FILE_x */
-   unsigned Declare     : 4;  /* one of TGSI_DECLARE_x */
    unsigned UsageMask   : 4;  /* bitmask of TGSI_WRITEMASK_x flags */
-   unsigned Interpolate : 1;  /* BOOL, any interpolation info? */
+   unsigned Interpolate : 4;  /* TGSI_INTERPOLATE_ */
    unsigned Semantic    : 1;  /* BOOL, any semantic info? */
-   unsigned Padding     : 5;
+   unsigned Padding     : 6;
    unsigned Extended    : 1;  /* BOOL */
 };
 
@@ -92,21 +92,6 @@ struct tgsi_declaration_range
 {
    unsigned First   : 16; /* UINT */
    unsigned Last    : 16; /* UINT */
-};
-
-struct tgsi_declaration_mask
-{
-   unsigned Mask : 32; /* UINT */
-};
-
-#define TGSI_INTERPOLATE_CONSTANT      0
-#define TGSI_INTERPOLATE_LINEAR        1
-#define TGSI_INTERPOLATE_PERSPECTIVE   2
-
-struct tgsi_declaration_interpolation
-{
-   unsigned Interpolate   : 4;  /* TGSI_INTERPOLATE_ */
-   unsigned Padding       : 28;
 };
 
 #define TGSI_SEMANTIC_POSITION 0
