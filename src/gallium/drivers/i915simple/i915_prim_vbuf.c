@@ -38,6 +38,7 @@
  */
 
 
+#include "draw/draw_context.h"
 #include "draw/draw_vbuf.h"
 #include "pipe/p_debug.h"
 #include "pipe/p_util.h"
