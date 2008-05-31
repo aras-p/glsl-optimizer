@@ -114,7 +114,7 @@ store_pixelmap(GLcontext *ctx, GLenum map, GLsizei mapsize,
       /* special case */
       ctx->PixelMaps.StoS.Size = mapsize;
       for (i = 0; i < mapsize; i++) {
-         ctx->PixelMaps.StoS.Map[i] = IROUND(values[i]);
+         ctx->PixelMaps.StoS.Map[i] = (GLfloat)IROUND(values[i]);
       }
       break;
    case GL_PIXEL_MAP_I_TO_I:

@@ -1129,7 +1129,7 @@ compute_light_positions( GLcontext *ctx )
       }
       else {
          /* positional light w/ homogeneous coordinate, divide by W */
-         GLfloat wInv = 1.0 / light->_Position[3];
+         GLfloat wInv = (GLfloat)1.0 / light->_Position[3];
          light->_Position[0] *= wInv;
          light->_Position[1] *= wInv;
          light->_Position[2] *= wInv;
