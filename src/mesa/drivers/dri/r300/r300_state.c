@@ -479,6 +479,7 @@ static void r300SetAlphaState(GLcontext * ctx)
 
 	if (really_enabled) {
 		pp_misc |= R300_FG_ALPHA_FUNC_ENABLE;
+		pp_misc |= R500_FG_ALPHA_FUNC_8BIT;
 		pp_misc |= (refByte & R300_FG_ALPHA_FUNC_VAL_MASK);
 	} else {
 		pp_misc = 0x0;
