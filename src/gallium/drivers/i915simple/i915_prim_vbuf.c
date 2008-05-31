@@ -142,7 +142,7 @@ i915_vbuf_render_allocate_vertices( struct vbuf_render *render,
    i915->vbo_offset = i915_render->vbo_offset;
    i915->dirty |= I915_NEW_VBO;
 
-   return i915_render->vbo_ptr + i915->vbo_offset;
+   return (unsigned char *)i915_render->vbo_ptr + i915->vbo_offset;
 }
 
 
