@@ -1204,7 +1204,7 @@ static void cache_item( GLcontext *ctx,
    c->key = _mesa_malloc(sizeof(*key));
    memcpy(c->key, key, sizeof(*key));
 
-   _mesa_reference_fragprog(ctx, &c->data, prog);
+   c->data = prog;
 
    if (cache->n_items > cache->size * 1.5) {
       if (cache->size < 1000)
@@ -1271,6 +1271,7 @@ _mesa_UpdateTexEnvProgram( GLcontext *ctx )
 
          create_new_program(ctx, &key, newProg);
 
+         /* Our ownership of newProg is transferred to the cache */
          cache_item(ctx, &ctx->Texture.env_fp_cache, hash, &key, newProg);
       }
 
