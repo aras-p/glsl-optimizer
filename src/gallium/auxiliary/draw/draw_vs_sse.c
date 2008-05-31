@@ -185,7 +185,7 @@ draw_create_vs_sse(struct draw_context *draw,
    return &vs->base;
 
 fail:
-   fprintf(stderr, "tgsi_emit_sse2() failed, falling back to interpreter\n");
+   debug_error("tgsi_emit_sse2() failed, falling back to interpreter\n");
 
    x86_release_func( &vs->sse2_program );
    
