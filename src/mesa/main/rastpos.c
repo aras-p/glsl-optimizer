@@ -63,7 +63,7 @@ rasterpos(GLfloat x, GLfloat y, GLfloat z, GLfloat w)
 void GLAPIENTRY
 _mesa_RasterPos2d(GLdouble x, GLdouble y)
 {
-   rasterpos(x, y, 0.0F, 1.0F);
+   rasterpos((GLfloat)x, (GLfloat)y, (GLfloat)0.0, (GLfloat)1.0);
 }
 
 void GLAPIENTRY

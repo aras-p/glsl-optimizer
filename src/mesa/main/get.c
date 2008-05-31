@@ -2124,7 +2124,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          params[0] = (GLfloat)(ctx->DrawBuffer->Visual.depthBits);
          break;
       case GL_DEPTH_CLEAR_VALUE:
-         params[0] = ctx->Depth.Clear;
+         params[0] = (GLfloat)ctx->Depth.Clear;
          break;
       case GL_DEPTH_FUNC:
          params[0] = ENUM_TO_FLOAT(ctx->Depth.Func);
@@ -2914,7 +2914,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          GLuint i, n = _mesa_get_compressed_formats(ctx, formats, GL_FALSE);
          ASSERT(n <= 100);
          for (i = 0; i < n; i++)
-            params[i] = ENUM_TO_INT(formats[i]);
+            params[i] = (GLfloat)(ENUM_TO_INT(formats[i]));
          }
          break;
       case GL_ARRAY_ELEMENT_LOCK_FIRST_EXT:

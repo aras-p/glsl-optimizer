@@ -360,18 +360,18 @@ setup_bitmap_vertex_data(struct st_context *st,
 {
    struct pipe_context *pipe = st->pipe;
    const struct gl_framebuffer *fb = st->ctx->DrawBuffer;
-   const GLfloat fb_width = fb->Width;
-   const GLfloat fb_height = fb->Height;
-   const GLfloat x0 = x;
-   const GLfloat x1 = x + width;
-   const GLfloat y0 = y;
-   const GLfloat y1 = y + height;
-   const GLfloat sLeft = 0.0F, sRight = 1.0F;
-   const GLfloat tTop = 0.0, tBot = 1.0 - tTop;
-   const GLfloat clip_x0 = x0 / fb_width * 2.0 - 1.0;
-   const GLfloat clip_y0 = y0 / fb_height * 2.0 - 1.0;
-   const GLfloat clip_x1 = x1 / fb_width * 2.0 - 1.0;
-   const GLfloat clip_y1 = y1 / fb_height * 2.0 - 1.0;
+   const GLfloat fb_width = (GLfloat)fb->Width;
+   const GLfloat fb_height = (GLfloat)fb->Height;
+   const GLfloat x0 = (GLfloat)x;
+   const GLfloat x1 = (GLfloat)(x + width);
+   const GLfloat y0 = (GLfloat)y;
+   const GLfloat y1 = (GLfloat)(y + height);
+   const GLfloat sLeft = (GLfloat)0.0, sRight = (GLfloat)1.0;
+   const GLfloat tTop = (GLfloat)0.0, tBot = (GLfloat)1.0 - tTop;
+   const GLfloat clip_x0 = (GLfloat)(x0 / fb_width * 2.0 - 1.0);
+   const GLfloat clip_y0 = (GLfloat)(y0 / fb_height * 2.0 - 1.0);
+   const GLfloat clip_x1 = (GLfloat)(x1 / fb_width * 2.0 - 1.0);
+   const GLfloat clip_y1 = (GLfloat)(y1 / fb_height * 2.0 - 1.0);
    GLuint i;
    void *buf;
 
@@ -444,8 +444,8 @@ draw_bitmap_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
     * it up into chunks.
     */
    maxSize = 1 << (pipe->screen->get_param(pipe->screen, PIPE_CAP_MAX_TEXTURE_2D_LEVELS) - 1);
-   assert(width <= maxSize);
-   assert(height <= maxSize);
+   assert(width <= (GLsizei)maxSize);
+   assert(height <= (GLsizei)maxSize);
 
    cso_save_rasterizer(cso);
    cso_save_samplers(cso);
@@ -488,15 +488,15 @@ draw_bitmap_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
    {
       const struct gl_framebuffer *fb = st->ctx->DrawBuffer;
       const GLboolean invert = (st_fb_orientation(fb) == Y_0_TOP);
-      const float width = fb->Width;
-      const float height = fb->Height;
+      const GLfloat width = (GLfloat)fb->Width;
+      const GLfloat height = (GLfloat)fb->Height;
       struct pipe_viewport_state vp;
       vp.scale[0] =  0.5 * width;
-      vp.scale[1] = height * (invert ? -0.5 : 0.5);
+      vp.scale[1] = (GLfloat)(height * (invert ? -0.5 : 0.5));
       vp.scale[2] = 1.0;
       vp.scale[3] = 1.0;
-      vp.translate[0] = 0.5 * width;
-      vp.translate[1] = 0.5 * height;
+      vp.translate[0] = (GLfloat)(0.5 * width);
+      vp.translate[1] = (GLfloat)(0.5 * height);
       vp.translate[2] = 0.0;
       vp.translate[3] = 0.0;
       cso_set_viewport(cso, &vp);

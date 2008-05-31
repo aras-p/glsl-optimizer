@@ -382,7 +382,7 @@ _mesa_GetQueryObjectivARB(GLuint id, GLenum pname, GLint *params)
             *params = 0x7fffffff;
          }
          else {
-            *params = q->Result;
+            *params = (GLint)q->Result;
          }
          break;
       case GL_QUERY_RESULT_AVAILABLE_ARB:
@@ -422,7 +422,7 @@ _mesa_GetQueryObjectuivARB(GLuint id, GLenum pname, GLuint *params)
             *params = 0xffffffff;
          }
          else {
-            *params = q->Result;
+            *params = (GLuint)q->Result;
          }
          break;
       case GL_QUERY_RESULT_AVAILABLE_ARB:

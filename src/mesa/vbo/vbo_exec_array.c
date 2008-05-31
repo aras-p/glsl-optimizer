@@ -41,7 +41,7 @@ static void get_minmax_index( GLuint count, GLuint type,
 			      GLuint *min_index,
 			      GLuint *max_index)
 {
-   GLint i;
+   GLuint i;
 
    switch(type) {
    case GL_UNSIGNED_INT: {

@@ -904,14 +904,14 @@ emit_texenv(struct texenv_fragment_program *p, GLuint unit)
     */
    if (alpha_shift || rgb_shift) {
       if (rgb_shift == alpha_shift) {
-	 shift = register_scalar_const(p, 1<<rgb_shift);
+	 shift = register_scalar_const(p, (GLfloat)(1<<rgb_shift));
       }
       else {
 	 shift = register_const4f(p, 
-				  1<<rgb_shift,
-				  1<<rgb_shift,
-				  1<<rgb_shift,
-				  1<<alpha_shift);
+				  (GLfloat)(1<<rgb_shift),
+				  (GLfloat)(1<<rgb_shift),
+				  (GLfloat)(1<<rgb_shift),
+				  (GLfloat)(1<<alpha_shift));
       }
       return emit_arith( p, OPCODE_MUL, dest, WRITEMASK_XYZW, 
 			 saturate, out, shift, undef );

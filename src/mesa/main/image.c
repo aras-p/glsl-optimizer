@@ -1169,7 +1169,7 @@ _mesa_apply_stencil_transfer_ops(const GLcontext *ctx, GLuint n,
       GLuint mask = ctx->PixelMaps.StoS.Size - 1;
       GLuint i;
       for (i = 0; i < n; i++) {
-         stencil[i] = ctx->PixelMaps.StoS.Map[ stencil[i] & mask ];
+         stencil[i] = (GLstencil)ctx->PixelMaps.StoS.Map[ stencil[i] & mask ];
       }
    }
 }
@@ -3680,7 +3680,7 @@ _mesa_unpack_stencil_span( const GLcontext *ctx, GLuint n,
          const GLuint mask = ctx->PixelMaps.StoS.Size - 1;
          GLuint i;
          for (i = 0; i < n; i++) {
-            indexes[i] = ctx->PixelMaps.StoS.Map[ indexes[i] & mask ];
+            indexes[i] = (GLuint)ctx->PixelMaps.StoS.Map[ indexes[i] & mask ];
          }
       }
 
@@ -4035,7 +4035,7 @@ _mesa_unpack_depth_span( const GLcontext *ctx, GLuint n,
    if (needClamp) {
       GLuint i;
       for (i = 0; i < n; i++) {
-         depthValues[i] = CLAMP(depthValues[i], 0.0, 1.0);
+         depthValues[i] = (GLfloat)CLAMP(depthValues[i], 0.0, 1.0);
       }
    }
 

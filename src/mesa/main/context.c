@@ -1532,7 +1532,7 @@ _mesa_make_current( GLcontext *newCtx, GLframebuffer *drawBuffer,
           * if the DRIdrawable changes, and everything relies on them.
           * This is a bit messy (same as needed in _mesa_BindFramebufferEXT)
 	  */
-            int i;
+            unsigned int i;
             GLenum buffers[MAX_DRAW_BUFFERS];
 
             _mesa_reference_framebuffer(&newCtx->DrawBuffer, drawBuffer);

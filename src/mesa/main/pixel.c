@@ -304,7 +304,7 @@ store_pixelmap(GLcontext *ctx, GLenum map, GLsizei mapsize,
       /* special case */
       ctx->PixelMaps.StoS.Size = mapsize;
       for (i = 0; i < mapsize; i++) {
-         ctx->PixelMaps.StoS.Map[i] = IROUND(values[i]);
+         ctx->PixelMaps.StoS.Map[i] = (GLfloat)IROUND(values[i]);
       }
       break;
    case GL_PIXEL_MAP_I_TO_I:
@@ -1142,7 +1142,7 @@ _mesa_lookup_rgba_ubyte(const struct gl_color_table *table,
                         GLuint n, GLubyte rgba[][4])
 {
    const GLubyte *lut = table->TableUB;
-   const GLfloat scale = (GLfloat) (table->Size - 1) / 255.0;
+   const GLfloat scale = (GLfloat) (table->Size - 1) / (GLfloat)255.0;
    GLuint i;
 
    if (!table->TableUB || table->Size == 0)

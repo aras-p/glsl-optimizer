@@ -377,7 +377,7 @@ _mesa_Bitmap( GLsizei width, GLsizei height,
 
    if (ctx->RenderMode == GL_RENDER) {
       /* Truncate, to satisfy conformance tests (matches SGI's OpenGL). */
-      const GLfloat epsilon = 0.0001;
+      const GLfloat epsilon = (const GLfloat)0.0001;
       GLint x = IFLOOR(ctx->Current.RasterPos[0] + epsilon - xorig);
       GLint y = IFLOOR(ctx->Current.RasterPos[1] + epsilon - yorig);
 

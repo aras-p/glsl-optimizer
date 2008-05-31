@@ -49,7 +49,7 @@ update_viewport( struct st_context *st )
     */
    if (st_fb_orientation(ctx->DrawBuffer) == Y_0_TOP) {
       yScale = -1;
-      yBias = ctx->DrawBuffer->Height ;
+      yBias = (GLfloat)ctx->DrawBuffer->Height;
    }
    else {
       yScale = 1.0;
@@ -59,12 +59,12 @@ update_viewport( struct st_context *st )
    /* _NEW_VIEWPORT 
     */
    {
-      GLfloat x = ctx->Viewport.X;
-      GLfloat y = ctx->Viewport.Y;
+      GLfloat x = (GLfloat)ctx->Viewport.X;
+      GLfloat y = (GLfloat)ctx->Viewport.Y;
       GLfloat z = ctx->Viewport.Near;
-      GLfloat half_width = ctx->Viewport.Width / 2.0;
-      GLfloat half_height = ctx->Viewport.Height / 2.0;
-      GLfloat half_depth = (ctx->Viewport.Far - ctx->Viewport.Near) / 2.0;
+      GLfloat half_width = (GLfloat)ctx->Viewport.Width / 2.0;
+      GLfloat half_height = (GLfloat)ctx->Viewport.Height / 2.0;
+      GLfloat half_depth = (GLfloat)(ctx->Viewport.Far - ctx->Viewport.Near) / 2.0;
       
       st->state.viewport.scale[0] = half_width;
       st->state.viewport.scale[1] = half_height * yScale;

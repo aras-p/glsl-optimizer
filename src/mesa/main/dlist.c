@@ -5069,7 +5069,7 @@ save_Indexfv(const GLfloat * v)
 static void GLAPIENTRY
 save_EdgeFlag(GLboolean x)
 {
-   save_Attr1fNV(VERT_ATTRIB_EDGEFLAG, x ? 1.0 : 0.0);
+   save_Attr1fNV(VERT_ATTRIB_EDGEFLAG, x ? (GLfloat)1.0 : (GLfloat)0.0);
 }
 
 static void GLAPIENTRY
