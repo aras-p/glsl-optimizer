@@ -30,14 +30,15 @@ import common
 # Configuration options
 
 if common.default_platform in ('linux', 'freebsd', 'darwin'):
-	default_statetrackers = 'mesa'
+	default_statetrackers = 'all'
 	default_drivers = 'softpipe,failover,i915simple,i965simple'
 	default_winsys = 'xlib'
 elif common.default_platform in ('winddk',):
-	default_statetrackers = 'none'
+	default_statetrackers = 'all'
 	default_drivers = 'softpipe,i915simple'
 	default_winsys = 'none'
 else:
+	default_statetrackers = 'all'
 	default_drivers = 'all'
 	default_winsys = 'all'
 
