@@ -988,10 +988,8 @@ post_vs_emit( struct brw_vs_compile *c, struct brw_instruction *end_inst )
 static void process_declaration(const struct tgsi_full_declaration *decl,
                                 struct brw_prog_info *info)
 {
-   int first = decl->u.DeclarationRange.First;
-   int last = decl->u.DeclarationRange.Last;
-
-   assert (decl->Declaration.Declare != TGSI_DECLARE_MASK);
+   int first = decl->DeclarationRange.First;
+   int last = decl->DeclarationRange.Last;
    
    switch(decl->Declaration.File) {
    case TGSI_FILE_CONSTANT: 

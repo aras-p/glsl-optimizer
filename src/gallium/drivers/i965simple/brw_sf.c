@@ -169,9 +169,9 @@ static void upload_sf_prog( struct brw_context *brw )
       case TGSI_TOKEN_TYPE_DECLARATION:
 	 if (parse.FullToken.FullDeclaration.Declaration.File == TGSI_FILE_INPUT) 
 	 {
-	    int first = parse.FullToken.FullDeclaration.u.DeclarationRange.First;
-	    int last = parse.FullToken.FullDeclaration.u.DeclarationRange.Last;
-	    int interp_mode = parse.FullToken.FullDeclaration.Interpolation.Interpolate;
+	    int first = parse.FullToken.FullDeclaration.DeclarationRange.First;
+	    int last = parse.FullToken.FullDeclaration.DeclarationRange.Last;
+	    int interp_mode = parse.FullToken.FullDeclaration.Declaration.Interpolate;
 	    //int semantic = parse.FullToken.FullDeclaration.Semantic.SemanticName;
 	    //int semantic_index = parse.FullToken.FullDeclaration.Semantic.SemanticIndex;
 
@@ -291,8 +291,8 @@ static void update_sf_linkage( struct brw_context *brw )
       case TGSI_TOKEN_TYPE_DECLARATION:
 	 if (parse.FullToken.FullDeclaration.Declaration.File == TGSI_FILE_INPUT) 
 	 {
-	    int first = parse.FullToken.FullDeclaration.u.DeclarationRange.First;
-	    int last = parse.FullToken.FullDeclaration.u.DeclarationRange.Last;
+	    int first = parse.FullToken.FullDeclaration.DeclarationRange.First;
+	    int last = parse.FullToken.FullDeclaration.DeclarationRange.Last;
 
 	    for (i = first; i < last; i++) {
 	       vp_semantic[i].semantic = 
