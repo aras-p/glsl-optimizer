@@ -104,6 +104,7 @@ i915_miptree_set_image_offset(struct i915_texture *tex,
    */
 }
 
+#if 0
 static unsigned
 power_of_two(unsigned x)
 {
@@ -112,6 +113,7 @@ power_of_two(unsigned x)
       value = value << 1;
    return value;
 }
+#endif
 
 static unsigned
 round_up(unsigned n, unsigned multiple)
