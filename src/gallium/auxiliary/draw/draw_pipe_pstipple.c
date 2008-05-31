@@ -132,20 +132,20 @@ pstip_transform_decl(struct tgsi_transform_context *ctx,
 
    if (decl->Declaration.File == TGSI_FILE_SAMPLER) {
       uint i;
-      for (i = decl->u.DeclarationRange.First;
-           i <= decl->u.DeclarationRange.Last; i++) {
+      for (i = decl->DeclarationRange.First;
+           i <= decl->DeclarationRange.Last; i++) {
          pctx->samplersUsed |= 1 << i;
       }
    }
    else if (decl->Declaration.File == TGSI_FILE_INPUT) {
-      pctx->maxInput = MAX2(pctx->maxInput, (int) decl->u.DeclarationRange.Last);
+      pctx->maxInput = MAX2(pctx->maxInput, (int) decl->DeclarationRange.Last);
       if (decl->Semantic.SemanticName == TGSI_SEMANTIC_POSITION)
-         pctx->wincoordInput = (int) decl->u.DeclarationRange.First;
+         pctx->wincoordInput = (int) decl->DeclarationRange.First;
    }
    else if (decl->Declaration.File == TGSI_FILE_TEMPORARY) {
       uint i;
-      for (i = decl->u.DeclarationRange.First;
-           i <= decl->u.DeclarationRange.Last; i++) {
+      for (i = decl->DeclarationRange.First;
+           i <= decl->DeclarationRange.Last; i++) {
          pctx->tempsUsed |= (1 << i);
       }
    }
@@ -223,28 +223,27 @@ pstip_transform_inst(struct tgsi_transform_context *ctx,
          /* declare new position input reg */
          decl = tgsi_default_full_declaration();
          decl.Declaration.File = TGSI_FILE_INPUT;
+         decl.Declaration.Interpolate = TGSI_INTERPOLATE_LINEAR; /* XXX? */
          decl.Declaration.Semantic = 1;
          decl.Semantic.SemanticName = TGSI_SEMANTIC_POSITION;
          decl.Semantic.SemanticIndex = 0;
-         decl.Declaration.Interpolate = 1;
-         decl.Interpolation.Interpolate = TGSI_INTERPOLATE_LINEAR; /* XXX? */
-         decl.u.DeclarationRange.First = 
-            decl.u.DeclarationRange.Last = wincoordInput;
+         decl.DeclarationRange.First = 
+            decl.DeclarationRange.Last = wincoordInput;
          ctx->emit_declaration(ctx, &decl);
       }
 
       /* declare new sampler */
       decl = tgsi_default_full_declaration();
       decl.Declaration.File = TGSI_FILE_SAMPLER;
-      decl.u.DeclarationRange.First = 
-      decl.u.DeclarationRange.Last = pctx->freeSampler;
+      decl.DeclarationRange.First = 
+      decl.DeclarationRange.Last = pctx->freeSampler;
       ctx->emit_declaration(ctx, &decl);
 
       /* declare new temp regs */
       decl = tgsi_default_full_declaration();
       decl.Declaration.File = TGSI_FILE_TEMPORARY;
-      decl.u.DeclarationRange.First = 
-      decl.u.DeclarationRange.Last = pctx->texTemp;
+      decl.DeclarationRange.First = 
+      decl.DeclarationRange.Last = pctx->texTemp;
       ctx->emit_declaration(ctx, &decl);
 
       /* emit immediate = {1/32, 1/32, 1, 1}

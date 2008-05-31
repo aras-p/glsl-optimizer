@@ -131,11 +131,11 @@ aa_transform_decl(struct tgsi_transform_context *ctx,
    if (decl->Declaration.File == TGSI_FILE_OUTPUT &&
        decl->Semantic.SemanticName == TGSI_SEMANTIC_COLOR &&
        decl->Semantic.SemanticIndex == 0) {
-      aactx->colorOutput = decl->u.DeclarationRange.First;
+      aactx->colorOutput = decl->DeclarationRange.First;
    }
    else if (decl->Declaration.File == TGSI_FILE_INPUT) {
-      if ((int) decl->u.DeclarationRange.Last > aactx->maxInput)
-         aactx->maxInput = decl->u.DeclarationRange.Last;
+      if ((int) decl->DeclarationRange.Last > aactx->maxInput)
+         aactx->maxInput = decl->DeclarationRange.Last;
       if (decl->Semantic.SemanticName == TGSI_SEMANTIC_GENERIC &&
            (int) decl->Semantic.SemanticIndex > aactx->maxGeneric) {
          aactx->maxGeneric = decl->Semantic.SemanticIndex;
@@ -143,8 +143,8 @@ aa_transform_decl(struct tgsi_transform_context *ctx,
    }
    else if (decl->Declaration.File == TGSI_FILE_TEMPORARY) {
       uint i;
-      for (i = decl->u.DeclarationRange.First;
-           i <= decl->u.DeclarationRange.Last; i++) {
+      for (i = decl->DeclarationRange.First;
+           i <= decl->DeclarationRange.Last; i++) {
          aactx->tempsUsed |= (1 << i);
       }
    }
@@ -193,27 +193,26 @@ aa_transform_inst(struct tgsi_transform_context *ctx,
       /* declare new generic input/texcoord */
       decl = tgsi_default_full_declaration();
       decl.Declaration.File = TGSI_FILE_INPUT;
+      /* XXX this could be linear... */
+      decl.Declaration.Interpolate = TGSI_INTERPOLATE_PERSPECTIVE;
       decl.Declaration.Semantic = 1;
       decl.Semantic.SemanticName = TGSI_SEMANTIC_GENERIC;
       decl.Semantic.SemanticIndex = aactx->maxGeneric + 1;
-      decl.Declaration.Interpolate = 1;
-      /* XXX this could be linear... */
-      decl.Interpolation.Interpolate = TGSI_INTERPOLATE_PERSPECTIVE;
-      decl.u.DeclarationRange.First = 
-      decl.u.DeclarationRange.Last = texInput;
+      decl.DeclarationRange.First = 
+      decl.DeclarationRange.Last = texInput;
       ctx->emit_declaration(ctx, &decl);
 
       /* declare new temp regs */
       decl = tgsi_default_full_declaration();
       decl.Declaration.File = TGSI_FILE_TEMPORARY;
-      decl.u.DeclarationRange.First = 
-      decl.u.DeclarationRange.Last = tmp0;
+      decl.DeclarationRange.First = 
+      decl.DeclarationRange.Last = tmp0;
       ctx->emit_declaration(ctx, &decl);
 
       decl = tgsi_default_full_declaration();
       decl.Declaration.File = TGSI_FILE_TEMPORARY;
-      decl.u.DeclarationRange.First = 
-      decl.u.DeclarationRange.Last = aactx->colorTemp;
+      decl.DeclarationRange.First = 
+      decl.DeclarationRange.Last = aactx->colorTemp;
       ctx->emit_declaration(ctx, &decl);
 
       aactx->firstInstruction = FALSE;
