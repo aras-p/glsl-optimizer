@@ -130,7 +130,7 @@ vs_sse_delete( struct draw_vertex_shader *base )
    
    x86_release_func( &shader->sse2_program );
 
-   align_free(shader->base.immediates);
+   align_free( (void *) shader->base.immediates );
 
    FREE( (void*) shader->base.state.tokens );
    FREE( shader );
