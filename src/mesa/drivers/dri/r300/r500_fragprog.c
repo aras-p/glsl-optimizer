@@ -1578,10 +1578,23 @@ static char *to_texop(int val)
 
 static void dump_program(struct r500_fragment_program *fp)
 {
+
+  fprintf(stderr, "R500 Fragment Program:\n--------\n");
+
   int n;
   uint32_t inst;
   uint32_t inst0;
   char *str = NULL;
+
+  if (fp->const_nr) {
+    fprintf(stderr, "--------\nConstants:\n");
+    for (n = 0; n < fp->const_nr; n++) {
+      fprintf(stderr, "Constant %d: %f %f\n\t %f %f\n", n,
+        fp->constant[n][0], fp->constant[n][1], fp->constant[n][2],
+        fp->constant[n][3]);
+    }
+    fprintf(stderr, "--------\n");
+  }
 
   for (n = 0; n < fp->inst_end+1; n++) {
     inst0 = inst = fp->inst[n].inst0;
