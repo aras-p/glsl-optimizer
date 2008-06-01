@@ -480,15 +480,18 @@ static void emit_mad(struct r500_fragment_program *fp, int counter, struct prog_
 	}
 }
 
-static void emit_sop(struct r500_fragment_program *fp, int counter, struct prog_instruction *fpi, int opcode, GLuint src, GLuint dest) {
+static void emit_sop(struct r500_fragment_program *fp, int counter, struct prog_instruction *fpi, int opcode, GLuint src, GLuint swiz, GLuint dest) {
 	emit_alu(fp, counter, fpi);
 	fp->inst[counter].inst1 = R500_RGB_ADDR0(src);
 	fp->inst[counter].inst2 = R500_ALPHA_ADDR0(src);
 	fp->inst[counter].inst4 |= R500_ALPHA_ADDRD(dest)
-		| R500_ALPHA_SEL_A_SRC0 | MAKE_SWIZ_ALPHA_A(make_sop_swizzle(fpi->SrcReg[0]));
+		| R500_ALPHA_SEL_A_SRC0 | MAKE_SWIZ_ALPHA_A(swiz);
 	fp->inst[counter].inst5 = R500_ALU_RGBA_OP_SOP
 		| R500_ALU_RGBA_ADDRD(dest);
 	switch (opcode) {
+		case OPCODE_COS:
+			fp->inst[counter].inst4 |= R500_ALPHA_OP_COS;
+			break;
 		case OPCODE_EX2:
 			fp->inst[counter].inst4 |= R500_ALPHA_OP_EX2;
 			break;
@@ -500,6 +503,9 @@ static void emit_sop(struct r500_fragment_program *fp, int counter, struct prog_
 			break;
 		case OPCODE_RSQ:
 			fp->inst[counter].inst4 |= R500_ALPHA_OP_RSQ;
+			break;
+		case OPCODE_SIN:
+			fp->inst[counter].inst4 |= R500_ALPHA_OP_SIN;
 			break;
 		default:
 			ERROR("Bad opcode in emit_sop: %d\n", opcode);
@@ -595,15 +601,7 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 				fp->inst[counter].inst5 = R500_ALU_RGBA_OP_FRC
 					| R500_ALU_RGBA_ADDRD(get_temp(fp, 1));
 				counter++;
-				emit_alu(fp, counter, fpi);
-				fp->inst[counter].inst1 = R500_RGB_ADDR0(get_temp(fp, 1));
-				fp->inst[counter].inst2 = R500_ALPHA_ADDR0(get_temp(fp, 1));
-				fp->inst[counter].inst3 = R500_ALU_RGB_SEL_A_SRC0;
-				fp->inst[counter].inst4 |= R500_ALPHA_OP_COS
-					| R500_ALPHA_ADDRD(dest)
-					| R500_ALPHA_SEL_A_SRC0 | MAKE_SWIZ_ALPHA_A(make_sop_swizzle(fpi->SrcReg[0]));
-				fp->inst[counter].inst5 = R500_ALU_RGBA_OP_SOP
-					| R500_ALU_RGBA_ADDRD(dest);
+				emit_sop(fp, counter, fpi, OPCODE_COS, get_temp(fp, 1), make_sop_swizzle(fpi->SrcReg[0]), dest);
 				break;
 			case OPCODE_DP3:
 				src[0] = make_src(fp, fpi->SrcReg[0]);
@@ -690,7 +688,7 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 				break;
 			case OPCODE_EX2:
 				src[0] = make_src(fp, fpi->SrcReg[0]);
-				emit_sop(fp, counter, fpi, OPCODE_EX2, src[0], dest);
+				emit_sop(fp, counter, fpi, OPCODE_EX2, src[0], make_sop_swizzle(fpi->SrcReg[0]), dest);
 				break;
 			case OPCODE_FRC:
 				src[0] = make_src(fp, fpi->SrcReg[0]);
@@ -707,7 +705,7 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 				break;
 			case OPCODE_LG2:
 				src[0] = make_src(fp, fpi->SrcReg[0]);
-				emit_sop(fp, counter, fpi, OPCODE_LG2, src[0], dest);
+				emit_sop(fp, counter, fpi, OPCODE_LG2, src[0], make_sop_swizzle(fpi->SrcReg[0]), dest);
 				break;
 			case OPCODE_LIT:
 				/* To be honest, I have no idea how I came up with the following.
@@ -940,11 +938,11 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 				break;
 			case OPCODE_RCP:
 				src[0] = make_src(fp, fpi->SrcReg[0]);
-				emit_sop(fp, counter, fpi, OPCODE_RCP, src[0], dest);
+				emit_sop(fp, counter, fpi, OPCODE_RCP, src[0], make_sop_swizzle(fpi->SrcReg[0]), dest);
 				break;
 			case OPCODE_RSQ:
 				src[0] = make_src(fp, fpi->SrcReg[0]);
-				emit_sop(fp, counter, fpi, OPCODE_RSQ, src[0], dest);
+				emit_sop(fp, counter, fpi, OPCODE_RSQ, src[0], make_sop_swizzle(fpi->SrcReg[0]), dest);
 				break;
 			case OPCODE_SCS:
 				src[0] = make_src(fp, fpi->SrcReg[0]);
@@ -1082,15 +1080,7 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 				fp->inst[counter].inst5 = R500_ALU_RGBA_OP_FRC
 					| R500_ALU_RGBA_ADDRD(get_temp(fp, 1));
 				counter++;
-				emit_alu(fp, counter, fpi);
-				fp->inst[counter].inst1 = R500_RGB_ADDR0(get_temp(fp, 1));
-				fp->inst[counter].inst2 = R500_ALPHA_ADDR0(get_temp(fp, 1));
-				fp->inst[counter].inst3 = R500_ALU_RGB_SEL_A_SRC0;
-				fp->inst[counter].inst4 |= R500_ALPHA_OP_SIN
-					| R500_ALPHA_ADDRD(dest)
-					| R500_ALPHA_SEL_A_SRC0 | MAKE_SWIZ_ALPHA_A(make_sop_swizzle(fpi->SrcReg[0]));
-				fp->inst[counter].inst5 = R500_ALU_RGBA_OP_SOP
-					| R500_ALU_RGBA_ADDRD(dest);
+				emit_sop(fp, counter, fpi, OPCODE_SIN, get_temp(fp, 1), make_sop_swizzle(fpi->SrcReg[0]), dest);
 				break;
 			case OPCODE_SLT:
 				src[0] = make_src(fp, fpi->SrcReg[0]);
