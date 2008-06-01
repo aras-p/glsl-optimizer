@@ -203,8 +203,19 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 		return NULL;
 	}
 
+	/* Static constant buffer */
+	screen->constbuf = ws->buffer_create(ws, 0, 0, 256 * 4 * 4);
+	if (nvws->res_init(&screen->vp_data_heap, 0, 256)) {
+		NOUVEAU_ERR("Error initialising constant buffer\n");
+		nv50_screen_destroy(&screen->pipe);
+		return NULL;
+	}
+
 	/* Static tesla init */
-	so = so_new(128, 0);
+	so = so_new(256, 20);
+
+	so_method(so, screen->tesla, 0x1558, 1);
+	so_data  (so, 1);
 	so_method(so, screen->tesla, NV50TCL_DMA_NOTIFY, 1);
 	so_data  (so, screen->sync->handle);
 	so_method(so, screen->tesla, NV50TCL_DMA_IN_MEMORY0(0),
@@ -215,6 +226,61 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 		  NV50TCL_DMA_IN_MEMORY1__SIZE);
 	for (i = 0; i < NV50TCL_DMA_IN_MEMORY1__SIZE; i++)
 		so_data(so, nvws->channel->vram->handle);
+	so_method(so, screen->tesla, 0x121c, 1);
+	so_data  (so, 1);
+
+	so_method(so, screen->tesla, 0x13bc, 1);
+	so_data  (so, 0x54);
+	so_method(so, screen->tesla, 0x13ac, 1);
+	so_data  (so, 1);
+	so_method(so, screen->tesla, 0x16bc, 2);
+	so_data  (so, 0x03020100);
+	so_data  (so, 0x07060504);
+	so_method(so, screen->tesla, 0x1988, 2);
+	so_data  (so, 0x08040404);
+	so_data  (so, 0x00000004);
+	so_method(so, screen->tesla, 0x16ac, 2);
+	so_data  (so, 8);
+	so_data  (so, 4);
+	so_method(so, screen->tesla, 0x16b8, 1);
+	so_data  (so, 8);
+
+	so_method(so, screen->tesla, 0x1280, 3);
+	so_reloc (so, screen->constbuf, 0, NOUVEAU_BO_VRAM |
+		  NOUVEAU_BO_RD | NOUVEAU_BO_HIGH, 0, 0);
+	so_reloc (so, screen->constbuf, 0, NOUVEAU_BO_VRAM |
+		  NOUVEAU_BO_RD | NOUVEAU_BO_LOW, 0, 0);
+	so_data  (so, 0x00001000);
+	so_method(so, screen->tesla, 0x1280, 3);
+	so_reloc (so, screen->constbuf, 0, NOUVEAU_BO_VRAM |
+		  NOUVEAU_BO_RD | NOUVEAU_BO_HIGH, 0, 0);
+	so_reloc (so, screen->constbuf, 0, NOUVEAU_BO_VRAM |
+		  NOUVEAU_BO_RD | NOUVEAU_BO_LOW, 0, 0);
+	so_data  (so, 0x00014000);
+	so_method(so, screen->tesla, 0x1280, 3);
+	so_reloc (so, screen->constbuf, 0, NOUVEAU_BO_VRAM |
+		  NOUVEAU_BO_RD | NOUVEAU_BO_HIGH, 0, 0);
+	so_reloc (so, screen->constbuf, 0, NOUVEAU_BO_VRAM |
+		  NOUVEAU_BO_RD | NOUVEAU_BO_LOW, 0, 0);
+	so_data  (so, 0x00024000);
+	so_method(so, screen->tesla, 0x1280, 3);
+	so_reloc (so, screen->constbuf, 0, NOUVEAU_BO_VRAM |
+		  NOUVEAU_BO_RD | NOUVEAU_BO_HIGH, 0, 0);
+	so_reloc (so, screen->constbuf, 0, NOUVEAU_BO_VRAM |
+		  NOUVEAU_BO_RD | NOUVEAU_BO_LOW, 0, 0);
+	so_data  (so, 0x00034000);
+	so_method(so, screen->tesla, 0x1280, 3);
+	so_reloc (so, screen->constbuf, 0, NOUVEAU_BO_VRAM |
+		  NOUVEAU_BO_RD | NOUVEAU_BO_HIGH, 0, 0);
+	so_reloc (so, screen->constbuf, 0, NOUVEAU_BO_VRAM |
+		  NOUVEAU_BO_RD | NOUVEAU_BO_LOW, 0, 0);
+	so_data  (so, 0x00040100);
+
+	for (i = 0; i < 16; i++) {
+		so_method(so, screen->tesla, 0x1080 + (i * 8), 2);
+		so_data  (so, 0x000000ff);
+		so_data  (so, 0xffffffff);
+	}
 
 	so_emit(nvws, so);
 	so_ref(NULL, &so);

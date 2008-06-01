@@ -12,6 +12,9 @@ struct nv50_screen {
 
 	struct nouveau_grobj *tesla;
 	struct nouveau_notifier *sync;
+
+	struct pipe_buffer *constbuf;
+	struct nouveau_resource *vp_data_heap;
 };
 
 static INLINE struct nv50_screen *

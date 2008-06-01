@@ -9,6 +9,7 @@
 
 #include "nouveau/nouveau_winsys.h"
 #include "nouveau/nouveau_gldefs.h"
+#include "nouveau/nouveau_stateobj.h"
 
 #define NOUVEAU_PUSH_CONTEXT(ctx)                                              \
 	struct nv50_screen *ctx = nv50->screen
@@ -30,6 +31,9 @@
 #define NV50_NEW_VIEWPORT	(1 << 5)
 #define NV50_NEW_RASTERIZER	(1 << 6)
 #define NV50_NEW_FRAMEBUFFER	(1 << 7)
+#define NV50_NEW_VERTPROG	(1 << 8)
+#define NV50_NEW_FRAGPROG	(1 << 9)
+#define NV50_NEW_ARRAYS		(1 << 10)
 
 struct nv50_blend_stateobj {
 	struct pipe_blend_state pipe;
@@ -63,6 +67,13 @@ struct nv50_context {
 	struct pipe_scissor_state scissor;
 	struct pipe_viewport_state viewport;
 	struct pipe_framebuffer_state framebuffer;
+	struct nv50_program *vertprog;
+	struct nv50_program *fragprog;
+	struct pipe_buffer *constbuf[PIPE_SHADER_TYPES];
+	struct pipe_vertex_buffer vtxbuf[PIPE_MAX_ATTRIBS];
+	unsigned vtxbuf_nr;
+	struct pipe_vertex_element vtxelt[PIPE_MAX_ATTRIBS];
+	unsigned vtxelt_nr;
 };
 
 static INLINE struct nv50_context *
@@ -88,11 +99,18 @@ extern boolean nv50_draw_elements(struct pipe_context *pipe,
 				  unsigned indexSize,
 				  unsigned mode, unsigned start,
 				  unsigned count);
+extern void nv50_vbo_validate(struct nv50_context *nv50);
 
 /* nv50_clear.c */
 extern void nv50_clear(struct pipe_context *pipe, struct pipe_surface *ps,
 		       unsigned clearValue);
 
+/* nv50_program.c */
+extern void nv50_vertprog_validate(struct nv50_context *nv50);
+extern void nv50_fragprog_validate(struct nv50_context *nv50);
+extern void nv50_program_destroy(struct nv50_context *nv50, struct nv50_program *p);
+
+/* nv50_state_validate.c */
 extern boolean nv50_state_validate(struct nv50_context *nv50);
 
 #endif

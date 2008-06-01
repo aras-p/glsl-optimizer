@@ -15,8 +15,8 @@ nv50_state_validate_fb(struct nv50_context *nv50)
 			h = fb->cbufs[i]->height;
 			gw = 1;
 		} else {
-			assert(w != fb->cbufs[i]->width);
-			assert(h != fb->cbufs[i]->height);
+			assert(w == fb->cbufs[i]->width);
+			assert(h == fb->cbufs[i]->height);
 		}
 
 		so_method(so, tesla, NV50TCL_RT_HORIZ(i), 2);
@@ -46,6 +46,9 @@ nv50_state_validate_fb(struct nv50_context *nv50)
 		}
 		so_data(so, 0x00000040);
 		so_data(so, 0x00000000);
+
+		so_method(so, tesla, 0x1224, 1);
+		so_data  (so, 1);
 	}
 
 	if (fb->zsbuf) {
@@ -54,11 +57,11 @@ nv50_state_validate_fb(struct nv50_context *nv50)
 			h = fb->zsbuf->height;
 			gw = 1;
 		} else {
-			assert(w != fb->zsbuf->width);
-			assert(h != fb->zsbuf->height);
+			assert(w == fb->zsbuf->width);
+			assert(h == fb->zsbuf->height);
 		}
 
-		so_method(so, tesla, NV50TCL_RT_ADDRESS_HIGH(i), 5);
+		so_method(so, tesla, NV50TCL_ZETA_ADDRESS_HIGH, 5);
 		so_reloc (so, fb->zsbuf->buffer, fb->zsbuf->offset,
 			  NOUVEAU_BO_VRAM | NOUVEAU_BO_HIGH, 0, 0);
 		so_reloc (so, fb->zsbuf->buffer, fb->zsbuf->offset,
@@ -83,9 +86,12 @@ nv50_state_validate_fb(struct nv50_context *nv50)
 	so_method(so, tesla, NV50TCL_VIEWPORT_HORIZ, 2);
 	so_data  (so, w << 16);
 	so_data  (so, h << 16);
-	so_method(so, tesla, 0xff0, 2);
+	so_method(so, tesla, 0xff4, 2);
 	so_data  (so, w << 16);
 	so_data  (so, h << 16);
+	so_method(so, tesla, 0xdf8, 2);
+	so_data  (so, 0);
+	so_data  (so, h);
 
 	so_emit(nv50->screen->nvws, so);
 	so_ref(NULL, &so);
@@ -107,6 +113,12 @@ nv50_state_validate(struct nv50_context *nv50)
 
 	if (nv50->dirty & NV50_NEW_ZSA)
 		so_emit(nvws, nv50->zsa->so);
+
+	if (nv50->dirty & NV50_NEW_VERTPROG)
+		nv50_vertprog_validate(nv50);
+
+	if (nv50->dirty & NV50_NEW_FRAGPROG)
+		nv50_fragprog_validate(nv50);
 
 	if (nv50->dirty & NV50_NEW_RASTERIZER)
 		so_emit(nvws, nv50->rasterizer->so);
@@ -150,11 +162,14 @@ nv50_state_validate(struct nv50_context *nv50)
 		so_data  (so, fui(nv50->viewport.translate[2]));
 		so_method(so, tesla, NV50TCL_VIEWPORT_UNK1(0), 3);
 		so_data  (so, fui(nv50->viewport.scale[0]));
-		so_data  (so, fui(nv50->viewport.scale[1]));
+		so_data  (so, fui(-nv50->viewport.scale[1]));
 		so_data  (so, fui(nv50->viewport.scale[2]));
 		so_emit(nvws, so);
 		so_ref(NULL, &so);
 	}
+
+	if (nv50->dirty & NV50_NEW_ARRAYS)
+		nv50_vbo_validate(nv50);
 
 	nv50->dirty = 0;
 	return TRUE;

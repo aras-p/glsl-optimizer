@@ -248,8 +248,8 @@ nv50_depth_stencil_alpha_state_create(struct pipe_context *pipe,
 	struct nouveau_stateobj *so = so_new(64, 0);
 
 	so_method(so, tesla, NV50TCL_DEPTH_WRITE_ENABLE, 1);
-	so_data  (so, cso->depth.writemask ? 1 : 0);
-	if (cso->depth.enabled) {
+	so_data  (so, 0); //cso->depth.writemask ? 1 : 0);
+	if (0 && cso->depth.enabled) {
 		so_method(so, tesla, NV50TCL_DEPTH_TEST_ENABLE, 1);
 		so_data  (so, 1);
 		so_method(so, tesla, NV50TCL_DEPTH_TEST_FUNC, 1);
@@ -328,34 +328,58 @@ static void *
 nv50_vp_state_create(struct pipe_context *pipe,
 		     const struct pipe_shader_state *cso)
 {
-	return NULL;
+	struct nv50_program *p = CALLOC_STRUCT(nv50_program);
+
+	p->pipe = *cso;
+	tgsi_scan_shader(p->pipe.tokens, &p->info);
+	return (void *)p;
 }
 
 static void
 nv50_vp_state_bind(struct pipe_context *pipe, void *hwcso)
 {
+	struct nv50_context *nv50 = nv50_context(pipe);
+
+	nv50->vertprog = hwcso;
+	nv50->dirty |= NV50_NEW_VERTPROG;
 }
 
 static void
 nv50_vp_state_delete(struct pipe_context *pipe, void *hwcso)
 {
+	struct nv50_context *nv50 = nv50_context(pipe);
+
+	nv50_program_destroy(nv50, hwcso);
+	FREE(hwcso);
 }
 
 static void *
 nv50_fp_state_create(struct pipe_context *pipe,
 		     const struct pipe_shader_state *cso)
 {
-	return NULL;
+	struct nv50_program *p = CALLOC_STRUCT(nv50_program);
+
+	p->pipe = *cso;
+	tgsi_scan_shader(p->pipe.tokens, &p->info);
+	return (void *)p;
 }
 
 static void
 nv50_fp_state_bind(struct pipe_context *pipe, void *hwcso)
 {
+	struct nv50_context *nv50 = nv50_context(pipe);
+
+	nv50->fragprog = hwcso;
+	nv50->dirty |= NV50_NEW_FRAGPROG;
 }
 
 static void
 nv50_fp_state_delete(struct pipe_context *pipe, void *hwcso)
 {
+	struct nv50_context *nv50 = nv50_context(pipe);
+
+	nv50_program_destroy(nv50, hwcso);
+	FREE(hwcso);
 }
 
 static void
@@ -378,6 +402,16 @@ static void
 nv50_set_constant_buffer(struct pipe_context *pipe, uint shader, uint index,
 			 const struct pipe_constant_buffer *buf )
 {
+	struct nv50_context *nv50 = nv50_context(pipe);
+
+	if (shader == PIPE_SHADER_VERTEX) {
+		nv50->constbuf[PIPE_SHADER_VERTEX] = buf->buffer;
+		nv50->dirty |= NV50_NEW_VERTPROG;
+	} else
+	if (shader == PIPE_SHADER_FRAGMENT) {
+		nv50->constbuf[PIPE_SHADER_FRAGMENT] = buf->buffer;
+		nv50->dirty |= NV50_NEW_FRAGPROG;
+	}
 }
 
 static void
@@ -424,12 +458,24 @@ static void
 nv50_set_vertex_buffers(struct pipe_context *pipe, unsigned count,
 			const struct pipe_vertex_buffer *vb)
 {
+	struct nv50_context *nv50 = nv50_context(pipe);
+
+	memcpy(nv50->vtxbuf, vb, sizeof(*vb) * count);
+	nv50->vtxbuf_nr = count;
+
+	nv50->dirty |= NV50_NEW_ARRAYS;
 }
 
 static void
 nv50_set_vertex_elements(struct pipe_context *pipe, unsigned count,
 			 const struct pipe_vertex_element *ve)
 {
+	struct nv50_context *nv50 = nv50_context(pipe);
+
+	memcpy(nv50->vtxelt, ve, sizeof(*ve) * count);
+	nv50->vtxelt_nr = count;
+
+	nv50->dirty |= NV50_NEW_ARRAYS;
 }
 
 void
