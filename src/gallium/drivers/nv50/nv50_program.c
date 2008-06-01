@@ -135,10 +135,18 @@ emit(struct nv50_pc *pc, unsigned op, struct nv50_reg *dst,
      struct nv50_reg *src0, struct nv50_reg *src1, struct nv50_reg *src2)
 {
 	struct nv50_program *p = pc->p;
-	struct nv50_reg *tmp = NULL, *tmp2 = NULL;
+	struct nv50_reg *tmp0 = NULL, *tmp = NULL, *tmp2 = NULL;
 	unsigned inst[2] = { 0, 0 };
 
 	/* Grr.. Fun restrictions on where attribs can be sourced from.. */
+	if (src0 && (src0->type == P_CONST || src0->type == P_IMMD) &&
+	    (op == 0xc || op == 0xe)) {
+		tmp = src1;
+		src1 = src0;
+		src0 = tmp;
+		tmp = NULL;
+	}
+
 	if (src1 && src1->type == P_ATTR) {
 		tmp = alloc_temp(pc, dst);
 		emit(pc, 1, tmp, src1, NULL, NULL);
@@ -243,6 +251,7 @@ emit(struct nv50_pc *pc, unsigned op, struct nv50_reg *dst,
 		}
 	}
 
+	if (tmp0) free_temp(pc, tmp0);
 	if (tmp) free_temp(pc, tmp);
 	if (tmp2) free_temp(pc, tmp2);
 
