@@ -20,7 +20,6 @@ struct nv50_program {
 
 	struct pipe_buffer *buffer;
 
-	unsigned param_nr;
 	float *immd;
 	unsigned immd_nr;
 

@@ -23,6 +23,14 @@
 #define NOUVEAU_MSG(fmt, args...) \
 	fprintf(stderr, "nouveau: "fmt, ##args);
 
+/* Constant buffer assignment */
+#define NV50_CB_PMISC		0
+#define NV50_CB_PVP		1
+#define NV50_CB_PFP		2
+#define NV50_CB_PGP		3
+#define NV50_CB_TIC		4
+#define NV50_CB_TSC		5
+
 #define NV50_NEW_BLEND		(1 << 0)
 #define NV50_NEW_ZSA		(1 << 1)
 #define NV50_NEW_BLEND_COLOUR	(1 << 2)
@@ -32,8 +40,10 @@
 #define NV50_NEW_RASTERIZER	(1 << 6)
 #define NV50_NEW_FRAMEBUFFER	(1 << 7)
 #define NV50_NEW_VERTPROG	(1 << 8)
-#define NV50_NEW_FRAGPROG	(1 << 9)
-#define NV50_NEW_ARRAYS		(1 << 10)
+#define NV50_NEW_VERTPROG_CB	(1 << 9)
+#define NV50_NEW_FRAGPROG	(1 << 10)
+#define NV50_NEW_FRAGPROG_CB	(1 << 11)
+#define NV50_NEW_ARRAYS		(1 << 12)
 
 struct nv50_blend_stateobj {
 	struct pipe_blend_state pipe;

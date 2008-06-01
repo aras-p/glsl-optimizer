@@ -168,6 +168,35 @@ nv50_state_validate(struct nv50_context *nv50)
 		so_ref(NULL, &so);
 	}
 
+	if (nv50->dirty & NV50_NEW_VERTPROG_CB) {
+		so = so_new(4, 2);
+		so_method(so, tesla, 0x1280, 3);
+		so_reloc (so, nv50->constbuf[PIPE_SHADER_VERTEX], 0,
+			  NOUVEAU_BO_HIGH | NOUVEAU_BO_RD | NOUVEAU_BO_VRAM,
+			  0, 0);
+		so_reloc (so, nv50->constbuf[PIPE_SHADER_VERTEX], 0,
+			  NOUVEAU_BO_LOW | NOUVEAU_BO_RD | NOUVEAU_BO_VRAM,
+			  0, 0);
+		so_data  (so, (NV50_CB_PVP << 16) | 0x1000);
+		so_emit(nvws, so);
+		so_ref(NULL, &so);
+	}
+
+	if (nv50->dirty & NV50_NEW_FRAGPROG_CB) {
+		so = so_new(4, 2);
+		so_method(so, tesla, 0x1280, 3);
+		so_reloc (so, nv50->constbuf[PIPE_SHADER_FRAGMENT], 0,
+			  NOUVEAU_BO_HIGH | NOUVEAU_BO_RD | NOUVEAU_BO_VRAM,
+			  0, 0);
+		so_reloc (so, nv50->constbuf[PIPE_SHADER_FRAGMENT], 0,
+			  NOUVEAU_BO_LOW | NOUVEAU_BO_RD | NOUVEAU_BO_VRAM,
+			  0, 0);
+		so_data  (so, (NV50_CB_PFP << 16) | 0x1000);
+		so_emit(nvws, so);
+		so_ref(NULL, &so);
+	}
+
+
 	if (nv50->dirty & NV50_NEW_ARRAYS)
 		nv50_vbo_validate(nv50);
 

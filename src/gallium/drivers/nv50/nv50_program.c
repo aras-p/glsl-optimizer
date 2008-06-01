@@ -179,6 +179,10 @@ emit(struct nv50_pc *pc, unsigned op, struct nv50_reg *dst,
 
 		if (src1) {
 			if (src1->type == P_CONST || src1->type == P_IMMD) {
+				if (src1->type == P_IMMD)
+					inst[1] |= (NV50_CB_PMISC << 22);
+				else
+					inst[1] |= (NV50_CB_PVP << 22);
 				inst[0] |= 0x00800000; /* src1 is const */
 				/*XXX: does src1 come from "src2" now? */
 				alloc_reg(pc, src1);
@@ -196,6 +200,10 @@ emit(struct nv50_pc *pc, unsigned op, struct nv50_reg *dst,
 
 		if (src2) {
 			if (src2->type == P_CONST || src2->type == P_IMMD) {
+				if (src2->type == P_IMMD)
+					inst[1] |= (NV50_CB_PMISC << 22);
+				else
+					inst[1] |= (NV50_CB_PVP << 22);
 				inst[0] |= 0x01000000; /* src2 is const */
 				inst[1] |= (src2->hw << 14);
 			} else {
@@ -526,7 +534,7 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 	}
 
 	if (pc->immd_nr) {
-		int rid = pc->param_nr * 4;
+		int rid = 0;
 
 		pc->immd = calloc(pc->immd_nr * 4, sizeof(struct nv50_reg));
 		if (!pc->immd)
@@ -581,7 +589,6 @@ nv50_program_tx(struct nv50_program *p)
 		}
 	}
 
-	p->param_nr = pc->param_nr * 4;
 	p->immd_nr = pc->immd_nr * 4;
 	p->immd = pc->immd_buf;
 
@@ -654,23 +661,9 @@ nv50_vertprog_validate(struct nv50_context *nv50)
 	memcpy(map, p->insns, p->insns_nr * 4);
 	ws->buffer_unmap(ws, p->buffer);
 
-	if (p->param_nr) {
-		float *cb;
-
-		cb = ws->buffer_map(ws, nv50->constbuf[PIPE_SHADER_VERTEX],
-				    PIPE_BUFFER_USAGE_CPU_READ);
-		for (i = 0; i < p->param_nr; i++) {
-			BEGIN_RING(tesla, 0x0f00, 2);
-			OUT_RING  (i << 8);
-			OUT_RING  (fui(cb[i]));
-		}
-		ws->buffer_unmap(ws, nv50->constbuf[PIPE_SHADER_VERTEX]);
-	}
-
-
 	for (i = 0; i < p->immd_nr; i++) {
 		BEGIN_RING(tesla, 0x0f00, 2);
-		OUT_RING  ((p->param_nr + i) << 8);
+		OUT_RING  ((NV50_CB_PMISC << 16) | (i << 8));
 		OUT_RING  (fui(p->immd[i]));
 	}
 

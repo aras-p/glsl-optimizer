@@ -15,6 +15,9 @@ struct nv50_screen {
 
 	struct pipe_buffer *constbuf;
 	struct nouveau_resource *vp_data_heap;
+
+	struct pipe_buffer *tic;
+	struct pipe_buffer *tsc;
 };
 
 static INLINE struct nv50_screen *
