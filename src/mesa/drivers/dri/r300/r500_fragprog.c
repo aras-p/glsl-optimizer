@@ -101,6 +101,7 @@
 
 /* Writemasks */
 #define R500_WRITEMASK_G 0x2
+#define R500_WRITEMASK_B 0x4
 #define R500_WRITEMASK_RGB 0x7
 #define R500_WRITEMASK_A 0x8
 #define R500_WRITEMASK_AR 0x9
@@ -349,6 +350,14 @@ static void emit_tex(struct r500_fragment_program *fp,
 }
 
 static void emit_alu(struct r500_fragment_program *fp, int counter, struct prog_instruction *fpi) {
+	/* Ideally, we shouldn't have to explicitly clear memory here! */
+	fp->inst[counter].inst0 = 0x0;
+	fp->inst[counter].inst1 = 0x0;
+	fp->inst[counter].inst2 = 0x0;
+	fp->inst[counter].inst3 = 0x0;
+	fp->inst[counter].inst4 = 0x0;
+	fp->inst[counter].inst5 = 0x0;
+
 	if (fpi->DstReg.File == PROGRAM_OUTPUT) {
 		fp->inst[counter].inst0 = R500_INST_TYPE_OUT;
 
@@ -364,12 +373,6 @@ static void emit_alu(struct r500_fragment_program *fp, int counter, struct prog_
 	}
 
 	fp->inst[counter].inst0 |= R500_INST_TEX_SEM_WAIT;
-
-	/* Ideally, we shouldn't have to explicitly clear memory here! */
-	fp->inst[counter].inst1 = 0x0;
-	fp->inst[counter].inst2 = 0x0;
-	fp->inst[counter].inst3 = 0x0;
-	fp->inst[counter].inst5 = 0x0;
 }
 
 static void emit_mov(struct r500_fragment_program *fp, int counter, struct prog_instruction *fpi, GLuint src_reg, GLuint swizzle, GLuint dest) {
@@ -473,6 +476,33 @@ static void emit_mad(struct r500_fragment_program *fp, int counter, struct prog_
 			break;
 		default:
 			ERROR("Bad src index in emit_mad: %d\n", three);
+			break;
+	}
+}
+
+static void emit_sop(struct r500_fragment_program *fp, int counter, struct prog_instruction *fpi, int opcode, GLuint src, GLuint dest) {
+	emit_alu(fp, counter, fpi);
+	fp->inst[counter].inst1 = R500_RGB_ADDR0(src);
+	fp->inst[counter].inst2 = R500_ALPHA_ADDR0(src);
+	fp->inst[counter].inst4 |= R500_ALPHA_ADDRD(dest)
+		| R500_ALPHA_SEL_A_SRC0 | MAKE_SWIZ_ALPHA_A(make_sop_swizzle(fpi->SrcReg[0]));
+	fp->inst[counter].inst5 = R500_ALU_RGBA_OP_SOP
+		| R500_ALU_RGBA_ADDRD(dest);
+	switch (opcode) {
+		case OPCODE_EX2:
+			fp->inst[counter].inst4 |= R500_ALPHA_OP_EX2;
+			break;
+		case OPCODE_LG2:
+			fp->inst[counter].inst4 |= R500_ALPHA_OP_LN2;
+			break;
+		case OPCODE_RCP:
+			fp->inst[counter].inst4 |= R500_ALPHA_OP_RCP;
+			break;
+		case OPCODE_RSQ:
+			fp->inst[counter].inst4 |= R500_ALPHA_OP_RSQ;
+			break;
+		default:
+			ERROR("Bad opcode in emit_sop: %d\n", opcode);
 			break;
 	}
 }
@@ -660,16 +690,7 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 				break;
 			case OPCODE_EX2:
 				src[0] = make_src(fp, fpi->SrcReg[0]);
-				emit_alu(fp, counter, fpi);
-				fp->inst[counter].inst1 = R500_RGB_ADDR0(src[0]);
-				fp->inst[counter].inst2 = R500_ALPHA_ADDR0(src[0]);
-				fp->inst[counter].inst3 = R500_ALU_RGB_SEL_A_SRC0
-					| MAKE_SWIZ_RGB_A(make_rgb_swizzle(fpi->SrcReg[0]));
-				fp->inst[counter].inst4 |= R500_ALPHA_OP_EX2
-					| R500_ALPHA_ADDRD(dest)
-					| R500_ALPHA_SEL_A_SRC0 | MAKE_SWIZ_ALPHA_A(make_sop_swizzle(fpi->SrcReg[0]));
-				fp->inst[counter].inst5 = R500_ALU_RGBA_OP_SOP
-					| R500_ALU_RGBA_ADDRD(dest);
+				emit_sop(fp, counter, fpi, OPCODE_EX2, src[0], dest);
 				break;
 			case OPCODE_FRC:
 				src[0] = make_src(fp, fpi->SrcReg[0]);
@@ -686,16 +707,7 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 				break;
 			case OPCODE_LG2:
 				src[0] = make_src(fp, fpi->SrcReg[0]);
-				emit_alu(fp, counter, fpi);
-				fp->inst[counter].inst1 = R500_RGB_ADDR0(src[0]);
-				fp->inst[counter].inst2 = R500_ALPHA_ADDR0(src[0]);
-				fp->inst[counter].inst3 = R500_ALU_RGB_SEL_A_SRC0
-					| MAKE_SWIZ_RGB_A(make_rgb_swizzle(fpi->SrcReg[0]));
-				fp->inst[counter].inst4 |= R500_ALPHA_OP_LN2
-					| R500_ALPHA_ADDRD(dest)
-					| R500_ALPHA_SEL_A_SRC0 | MAKE_SWIZ_ALPHA_A(make_sop_swizzle(fpi->SrcReg[0]));
-				fp->inst[counter].inst5 = R500_ALU_RGBA_OP_SOP
-					| R500_ALU_RGBA_ADDRD(dest);
+				emit_sop(fp, counter, fpi, OPCODE_LG2, src[0], dest);
 				break;
 			case OPCODE_LIT:
 				/* To be honest, I have no idea how I came up with the following.
@@ -723,11 +735,11 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 				fp->inst[counter].inst0 = R500_INST_TYPE_ALU | (R500_WRITEMASK_AB << 11);
 				fp->inst[counter].inst1 = R500_RGB_ADDR0(get_temp(fp, 0)) | R500_RGB_ADDR1(src[1]);
 				fp->inst[counter].inst2 = R500_ALPHA_ADDR0(get_temp(fp, 0));
-				/* Select [z, z, z, y] */
-				temp_swiz = 2 | (2 << 3) | (2 << 6);
+				/* Select [w, w, w, y] */
+				temp_swiz = 3 | (3 << 3) | (3 << 6);
 				fp->inst[counter].inst3 = R500_ALU_RGB_SEL_A_SRC0
 					| MAKE_SWIZ_RGB_A(temp_swiz)
-					| R500_ALU_RGB_SEL_B_SRC0
+					| R500_ALU_RGB_SEL_B_SRC1
 					| MAKE_SWIZ_RGB_B(R500_SWIZ_RGB_RGB);
 				fp->inst[counter].inst4 = R500_ALPHA_OP_LN2
 					| R500_ALPHA_ADDRD(get_temp(fp, 0))
@@ -928,29 +940,11 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 				break;
 			case OPCODE_RCP:
 				src[0] = make_src(fp, fpi->SrcReg[0]);
-				emit_alu(fp, counter, fpi);
-				fp->inst[counter].inst1 = R500_RGB_ADDR0(src[0]);
-				fp->inst[counter].inst2 = R500_ALPHA_ADDR0(src[0]);
-				fp->inst[counter].inst3 = R500_ALU_RGB_SEL_A_SRC0
-					| MAKE_SWIZ_RGB_A(make_rgb_swizzle(fpi->SrcReg[0]));
-				fp->inst[counter].inst4 |= R500_ALPHA_OP_RCP
-					| R500_ALPHA_ADDRD(dest)
-					| R500_ALPHA_SEL_A_SRC0 | MAKE_SWIZ_ALPHA_A(make_sop_swizzle(fpi->SrcReg[0]));
-				fp->inst[counter].inst5 = R500_ALU_RGBA_OP_SOP
-					| R500_ALU_RGBA_ADDRD(dest);
+				emit_sop(fp, counter, fpi, OPCODE_RCP, src[0], dest);
 				break;
 			case OPCODE_RSQ:
 				src[0] = make_src(fp, fpi->SrcReg[0]);
-				emit_alu(fp, counter, fpi);
-				fp->inst[counter].inst1 = R500_RGB_ADDR0(src[0]);
-				fp->inst[counter].inst2 = R500_ALPHA_ADDR0(src[0]);
-				fp->inst[counter].inst3 = R500_ALU_RGB_SEL_A_SRC0
-					| MAKE_SWIZ_RGB_A(make_rgb_swizzle(fpi->SrcReg[0]));
-				fp->inst[counter].inst4 |= R500_ALPHA_OP_RSQ
-					| R500_ALPHA_ADDRD(dest)
-					| R500_ALPHA_SEL_A_SRC0 | MAKE_SWIZ_ALPHA_A(make_sop_swizzle(fpi->SrcReg[0]));
-				fp->inst[counter].inst5 = R500_ALU_RGBA_OP_SOP
-					| R500_ALU_RGBA_ADDRD(dest);
+				emit_sop(fp, counter, fpi, OPCODE_RSQ, src[0], dest);
 				break;
 			case OPCODE_SCS:
 				src[0] = make_src(fp, fpi->SrcReg[0]);
