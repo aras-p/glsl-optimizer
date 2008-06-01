@@ -833,6 +833,8 @@ struct r500_fragment_program {
 
 	int max_temp_idx;
 
+	GLboolean writes_depth;
+
 	GLuint optimization;
 };
 

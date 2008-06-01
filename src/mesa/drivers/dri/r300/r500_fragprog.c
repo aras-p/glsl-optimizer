@@ -365,7 +365,9 @@ static void emit_alu(struct r500_fragment_program *fp, int counter, struct prog_
 			fp->inst[counter].inst0 |= (fpi->DstReg.WriteMask << 15);
 
 		if (fpi->DstReg.Index == FRAG_RESULT_DEPR)
-			fp->inst[counter].inst4 = R500_ALPHA_W_OMASK;
+			fp->inst[counter].inst4 |= R500_ALPHA_W_OMASK;
+			/* Notify the state emission! */
+			fp->writes_depth = GL_TRUE;
 	} else {
 		fp->inst[counter].inst0 = R500_INST_TYPE_ALU
 			/* pixel_mask */
@@ -1251,6 +1253,8 @@ static void init_program(r300ContextPtr r300, struct r500_fragment_program *fp)
 	fp->max_temp_idx = 1;
 	/* Temp register offset. */
 	fp->temp_reg_offset = 0;
+	/* Whether or not we perform any depth writing. */
+	fp->writes_depth = GL_FALSE;
 
 	_mesa_memset(cs, 0, sizeof(*fp->cs));
 	for (i = 0; i < PFS_MAX_ALU_INST; i++) {

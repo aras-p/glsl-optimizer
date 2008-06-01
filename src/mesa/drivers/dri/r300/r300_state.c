@@ -411,7 +411,10 @@ static GLboolean current_fragment_program_writes_depth(GLcontext* ctx)
 			(char *)ctx->FragmentProgram._Current;
 		return (fp && fp->WritesDepth);
 	} else {
-		return GL_FALSE; /* TODO: Verify depth writing works on R5xx */
+		struct r500_fragment_program* fp =
+			(struct r500_fragment_program*)(char*)
+			ctx->FragmentProgram._Current;
+		return (fp && fp->writes_depth);
 	}
 }
 
