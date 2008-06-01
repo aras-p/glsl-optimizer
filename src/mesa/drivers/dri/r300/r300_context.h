@@ -794,6 +794,7 @@ struct r300_fragment_program {
 
 	int max_temp_idx;
 
+	GLboolean WritesDepth;
 	GLuint optimization;
 };
 
@@ -869,7 +870,7 @@ struct r300_state {
  */
 struct r300_swtcl_info {
    GLuint RenderIndex;
-   
+
    /**
     * Size of a hardware vertex.  This is calculated when \c ::vertex_attrs is
     * installed in the Mesa state vector.

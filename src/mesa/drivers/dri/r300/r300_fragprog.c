@@ -862,6 +862,7 @@ static int t_hw_dst(struct r300_fragment_program *fp,
 			    R300_RGBA_OUT;
 			break;
 		case FRAG_RESULT_DEPR:
+			fp->WritesDepth = GL_TRUE;
 			fp->node[fp->cur_node].flags |=
 			    R300_W_OUT;
 			break;
@@ -2105,6 +2106,7 @@ static void init_program(r300ContextPtr r300, struct r300_fragment_program *fp)
 	fp->translated = GL_FALSE;
 	fp->error = GL_FALSE;
 	fp->cs = cs = &(R300_CONTEXT(fp->ctx)->state.pfs_compile);
+	fp->WritesDepth = GL_FALSE;
 	fp->tex.length = 0;
 	fp->cur_node = 0;
 	fp->first_node_has_tex = 0;

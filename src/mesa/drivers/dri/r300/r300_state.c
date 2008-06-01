@@ -402,42 +402,37 @@ static void r300SetPolygonOffsetState(GLcontext * ctx, GLboolean state)
 	}
 }
 
-static void r300SetEarlyZState(GLcontext * ctx)
+static GLboolean current_fragment_program_writes_depth(GLcontext* ctx)
 {
-	/* updates register R300_RB3D_EARLY_Z (0x4F14)
-	   if depth test is not enabled it should be R300_EARLY_Z_DISABLE
-	   if depth is enabled and alpha not it should be R300_EARLY_Z_ENABLE
-	   if depth and alpha is enabled it should be R300_EARLY_Z_DISABLE
-	 */
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 
-	R300_STATECHANGE(r300, zstencil_format);
-	switch (ctx->Visual.depthBits) {
-	case 16:
-		r300->hw.zstencil_format.cmd[1] = R300_DEPTHFORMAT_16BIT_INT_Z;
-		break;
-	case 24:
-		r300->hw.zstencil_format.cmd[1] = R300_DEPTHFORMAT_24BIT_INT_Z_8BIT_STENCIL;
-		break;
-	default:
-		fprintf(stderr, "Error: Unsupported depth %d... exiting\n", ctx->Visual.depthBits);
-		_mesa_exit(-1);
+	if (r300->radeon.radeonScreen->chip_family < CHIP_FAMILY_RV515) {
+		struct r300_fragment_program *fp = (struct r300_fragment_program *)
+			(char *)ctx->FragmentProgram._Current;
+		return (fp && fp->WritesDepth);
+	} else {
+		return GL_FALSE; /* TODO: Verify depth writing works on R5xx */
 	}
+}
+
+static void r300SetEarlyZState(GLcontext * ctx)
+{
+	r300ContextPtr r300 = R300_CONTEXT(ctx);
+	GLuint topZ = R300_ZTOP_ENABLE;
 
 	if (ctx->Color.AlphaEnabled && ctx->Color.AlphaFunc != GL_ALWAYS)
-		/* disable early Z */
-		r300->hw.zstencil_format.cmd[2] = R300_ZTOP_DISABLE;
-	else {
-		if (ctx->Depth.Test && ctx->Depth.Func != GL_NEVER)
-			/* enable early Z */
-			r300->hw.zstencil_format.cmd[2] = R300_ZTOP_ENABLE;
-		else
-			/* disable early Z */
-			r300->hw.zstencil_format.cmd[2] = R300_ZTOP_DISABLE;
-	}
+		topZ = R300_ZTOP_DISABLE;
+	if (current_fragment_program_writes_depth(ctx))
+		topZ = R300_ZTOP_DISABLE;
 
-	r300->hw.zstencil_format.cmd[3] = 0x00000003;
-	r300->hw.zstencil_format.cmd[4] = 0x00000000;
+	if (topZ != r300->hw.zstencil_format.cmd[2]) {
+		/* Note: This completely reemits the stencil format.
+		 * I have not tested whether this is strictly necessary,
+		 * or if emitting a write to ZB_ZTOP is enough.
+		 */
+		R300_STATECHANGE(r300, zstencil_format);
+		r300->hw.zstencil_format.cmd[2] = topZ;
+	}
 }
 
 static void r300SetAlphaState(GLcontext * ctx)
@@ -2346,6 +2341,23 @@ static void r300ResetHwState(r300ContextPtr r300)
 
 	r300->hw.zb_depthclearvalue.cmd[1] = 0;
 
+	switch (ctx->Visual.depthBits) {
+	case 16:
+		r300->hw.zstencil_format.cmd[1] = R300_DEPTHFORMAT_16BIT_INT_Z;
+		break;
+	case 24:
+		r300->hw.zstencil_format.cmd[1] = R300_DEPTHFORMAT_24BIT_INT_Z_8BIT_STENCIL;
+		break;
+	default:
+		fprintf(stderr, "Error: Unsupported depth %d... exiting\n", ctx->Visual.depthBits);
+		_mesa_exit(-1);
+	}
+
+	r300->hw.zstencil_format.cmd[2] = R300_ZTOP_DISABLE;
+	r300->hw.zstencil_format.cmd[3] = 0x00000003;
+	r300->hw.zstencil_format.cmd[4] = 0x00000000;
+	r300SetEarlyZState(ctx);
+
 	r300->hw.unk4F30.cmd[1] = 0;
 	r300->hw.unk4F30.cmd[2] = 0;
 
@@ -2559,6 +2571,15 @@ void r300UpdateShaderStates(r300ContextPtr rmesa)
 	ctx = rmesa->radeon.glCtx;
 
 	r300UpdateTextureState(ctx);
+	r300SetEarlyZState(ctx);
+
+	GLuint fgdepthsrc = R300_FG_DEPTH_SRC_SCAN;
+	if (current_fragment_program_writes_depth(ctx))
+		fgdepthsrc = R300_FG_DEPTH_SRC_SHADER;
+	if (fgdepthsrc != rmesa->hw.fg_depth_src.cmd[1]) {
+		R300_STATECHANGE(rmesa, fg_depth_src);
+		rmesa->hw.fg_depth_src.cmd[1] = fgdepthsrc;
+	}
 
 	if (rmesa->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV515)
 		r500SetupPixelShader(rmesa);
