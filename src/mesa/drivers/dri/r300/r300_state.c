@@ -1337,13 +1337,13 @@ static void r300SetupFragmentShaderTextures(GLcontext *ctx, int *tmu_mappings)
 		int unit;
 		int opcode;
 		unsigned long val;
-			
+
 		unit = fp->tex.inst[i] >> R300_TEX_ID_SHIFT;
 		unit &= 15;
-			
+
 		val = fp->tex.inst[i];
 		val &= ~R300_TEX_ID_MASK;
-			
+
 		opcode =
 			(val & R300_TEX_INST_MASK) >> R300_TEX_INST_SHIFT;
 		if (opcode == R300_TEX_OP_KIL) {
@@ -1361,10 +1361,9 @@ static void r300SetupFragmentShaderTextures(GLcontext *ctx, int *tmu_mappings)
 			}
 		}
 	}
-	
+
 	r300->hw.fpt.cmd[R300_FPT_CMD_0] =
 		cmdpacket0(R300_US_TEX_INST_0, fp->tex.length);
-	
 }
 
 static void r500SetupFragmentShaderTextures(GLcontext *ctx, int *tmu_mappings)
@@ -1384,7 +1383,7 @@ static void r500SetupFragmentShaderTextures(GLcontext *ctx, int *tmu_mappings)
 			unit = (val >> 16) & 0xf;
 
 			val &= ~(0xf << 16);
-			
+
 			opcode = val & (0x7 << 22);
 			if (opcode == R500_TEX_INST_TEXKILL) {
 				new_unit = 0;
@@ -1515,10 +1514,17 @@ static void r300SetupTextures(GLcontext * ctx)
 	if (!fp)		/* should only happenen once, just after context is created */
 		return;
 
-
-        if (r300->radeon.radeonScreen->chip_family < CHIP_FAMILY_RV515)
+	if (r300->radeon.radeonScreen->chip_family < CHIP_FAMILY_RV515) {
+		if (fp->mesa_program.UsesKill && last_hw_tmu < 0) {
+			// The KILL operation requires the first texture unit
+			// to be enabled.
+			r300->hw.txe.cmd[R300_TXE_ENABLE] |= 1;
+			r300->hw.tex.filter.cmd[R300_TEX_VALUE_0] = 0;
+			r300->hw.tex.filter.cmd[R300_TEX_CMD_0] =
+				cmdpacket0(R300_TX_FILTER0_0, 1);
+		}
 		r300SetupFragmentShaderTextures(ctx, tmu_mappings);
-	else 
+	} else
 		r500SetupFragmentShaderTextures(ctx, tmu_mappings);
 
 	if (RADEON_DEBUG & DEBUG_STATE)
@@ -1623,7 +1629,7 @@ static void r300SetupRSUnit(GLcontext * ctx)
 		};
 
 		r300->hw.ri.cmd[R300_RI_INTERP_0 + i] |= swiz;
- 
+
 		r300->hw.rr.cmd[R300_RR_INST_0 + fp_reg] = 0;
 		if (InputsRead & (FRAG_BIT_TEX0 << i)) {
 
@@ -1756,15 +1762,15 @@ static void r500SetupRSUnit(GLcontext * ctx)
 
 		/* with TCL we always seem to route 4 components */
 		if (InputsRead & (FRAG_BIT_TEX0 << i)) {
-		  
+
 		  if (hw_tcl_on)
 		    count = 4;
 		  else
 		    count = VB->AttribPtr[_TNL_ATTRIB_TEX(i)]->size;
-		  
+
 		  /* always have on texcoord */
 		  swiz |= in_texcoords++ << R500_RS_IP_TEX_PTR_S_SHIFT;
-		  if (count >= 2) 
+		  if (count >= 2)
 		    swiz |= in_texcoords++ << R500_RS_IP_TEX_PTR_T_SHIFT;
 		  else
 		    swiz |= R500_RS_IP_PTR_K0 << R500_RS_IP_TEX_PTR_T_SHIFT;
@@ -1774,11 +1780,11 @@ static void r500SetupRSUnit(GLcontext * ctx)
 		  else
 		    swiz |= R500_RS_IP_PTR_K0 << R500_RS_IP_TEX_PTR_R_SHIFT;
 
-		  if (count == 4) 
+		  if (count == 4)
 		    swiz |= in_texcoords++ << R500_RS_IP_TEX_PTR_Q_SHIFT;
 		  else
 		    swiz |= R500_RS_IP_PTR_K1 << R500_RS_IP_TEX_PTR_Q_SHIFT;
-		  
+
 		} else
 		   swiz = (R500_RS_IP_PTR_K0 << R500_RS_IP_TEX_PTR_S_SHIFT) |
 		          (R500_RS_IP_PTR_K0 << R500_RS_IP_TEX_PTR_T_SHIFT) |
@@ -1920,7 +1926,7 @@ static void r300VapCntl(r300ContextPtr rmesa, GLuint input_count,
 
     R300_STATECHANGE(rmesa, vap_cntl);
     if (rmesa->radeon.radeonScreen->chip_flags & RADEON_CHIPSET_TCL) {
-	rmesa->hw.vap_cntl.cmd[R300_VAP_CNTL_INSTR] = 
+	rmesa->hw.vap_cntl.cmd[R300_VAP_CNTL_INSTR] =
 	    (pvs_num_slots << R300_PVS_NUM_SLOTS_SHIFT) |
 	    (pvs_num_cntrls << R300_PVS_NUM_CNTLRS_SHIFT) |
 	    (12 << R300_VF_MAX_VTX_NUM_SHIFT);
@@ -2640,11 +2646,11 @@ void r300UpdateClipPlanes( GLcontext *ctx )
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	GLuint p;
-	
+
 	for (p = 0; p < ctx->Const.MaxClipPlanes; p++) {
 		if (ctx->Transform.ClipPlanesEnabled & (1 << p)) {
 			GLint *ip = (GLint *)ctx->Transform._ClipUserPlane[p];
-			
+
 			R300_STATECHANGE( rmesa, vpucp[p] );
 			rmesa->hw.vpucp[p].cmd[R300_VPUCP_X] = ip[0];
 			rmesa->hw.vpucp[p].cmd[R300_VPUCP_Y] = ip[1];

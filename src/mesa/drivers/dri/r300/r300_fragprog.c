@@ -903,49 +903,59 @@ static void emit_tex(struct r300_fragment_program *fp,
 	int hwsrc, hwdest;
 	GLuint tempreg = 0;
 
+	/**
+	 * Hardware uses [0..1]x[0..1] range for rectangle textures
+	 * instead of [0..Width]x[0..Height].
+	 * Add a scaling instruction.
+	 *
+	 * \todo Refactor this once we have proper rewriting/optimization
+	 * support for programs.
+	 */
+	if (opcode != R300_TEX_OP_KIL && fpi->TexSrcTarget == TEXTURE_RECT_INDEX) {
+		gl_state_index tokens[STATE_LENGTH] = {
+			STATE_INTERNAL, STATE_R300_TEXRECT_FACTOR, 0, 0,
+			0
+		};
+		int factor_index;
+		GLuint factorreg;
+
+		tokens[2] = unit;
+		factor_index =
+			_mesa_add_state_reference(fp->mesa_program.Base.
+						Parameters, tokens);
+		factorreg =
+			emit_const4fv(fp,
+				fp->mesa_program.Base.Parameters->
+				ParameterValues[factor_index]);
+		tempreg = keep(get_temp_reg(fp));
+
+		emit_arith(fp, PFS_OP_MAD, tempreg, WRITEMASK_XYZW,
+			coord, factorreg, pfs_zero, 0);
+
+		coord = tempreg;
+	}
+
+	/* Texture operations do not support swizzles etc. in hardware,
+	 * so emit an additional arithmetic operation if necessary.
+	 */
+	if (REG_GET_VSWZ(coord) != SWIZZLE_XYZ ||
+	    REG_GET_SSWZ(coord) != SWIZZLE_W ||
+	    coord & (REG_NEGV_MASK | REG_NEGS_MASK | REG_ABS_MASK)) {
+		assert(tempreg == 0);
+		tempreg = keep(get_temp_reg(fp));
+		emit_arith(fp, PFS_OP_MAD, tempreg, WRITEMASK_XYZW,
+			coord, pfs_one, pfs_zero, 0);
+		coord = tempreg;
+	}
+
+	/* Ensure correct node indirection */
 	uin = cs->used_in_node;
 	din = cs->dest_in_node;
 
 	/* Resolve source/dest to hardware registers */
+	hwsrc = t_hw_src(fp, coord, GL_TRUE);
+
 	if (opcode != R300_TEX_OP_KIL) {
-		if (fpi->TexSrcTarget == TEXTURE_RECT_INDEX) {
-			/**
-			 * Hardware uses [0..1]x[0..1] range for rectangle textures
-			 * instead of [0..Width]x[0..Height].
-			 * Add a scaling instruction.
-			 *
-			 * \todo Refactor this once we have proper rewriting/optimization
-			 * support for programs.
-			 */
-			gl_state_index tokens[STATE_LENGTH] = {
-				STATE_INTERNAL, STATE_R300_TEXRECT_FACTOR, 0, 0,
-				0
-			};
-			int factor_index;
-			GLuint factorreg;
-
-			tokens[2] = unit;
-			factor_index =
-			    _mesa_add_state_reference(fp->mesa_program.Base.
-						      Parameters, tokens);
-			factorreg =
-			    emit_const4fv(fp,
-					  fp->mesa_program.Base.Parameters->
-					  ParameterValues[factor_index]);
-			tempreg = keep(get_temp_reg(fp));
-
-			emit_arith(fp, PFS_OP_MAD, tempreg, WRITEMASK_XYZW,
-				   coord, factorreg, pfs_zero, 0);
-
-			/* Ensure correct node indirection */
-			uin = cs->used_in_node;
-			din = cs->dest_in_node;
-
-			hwsrc = t_hw_src(fp, tempreg, GL_TRUE);
-		} else {
-			hwsrc = t_hw_src(fp, coord, GL_TRUE);
-		}
-
 		dest = t_dst(fp, fpi->DstReg);
 
 		/* r300 doesn't seem to be able to do TEX->output reg */
@@ -972,7 +982,6 @@ static void emit_tex(struct r300_fragment_program *fp,
 	} else {
 		hwdest = 0;
 		unit = 0;
-		hwsrc = t_hw_src(fp, coord, GL_TRUE);
 	}
 
 	/* Indirection if source has been written in this node, or if the
