@@ -364,10 +364,11 @@ static void emit_alu(struct r500_fragment_program *fp, int counter, struct prog_
 		if (fpi->DstReg.Index == FRAG_RESULT_COLR)
 			fp->inst[counter].inst0 |= (fpi->DstReg.WriteMask << 15);
 
-		if (fpi->DstReg.Index == FRAG_RESULT_DEPR)
+		if (fpi->DstReg.Index == FRAG_RESULT_DEPR) {
 			fp->inst[counter].inst4 |= R500_ALPHA_W_OMASK;
 			/* Notify the state emission! */
 			fp->writes_depth = GL_TRUE;
+		}
 	} else {
 		fp->inst[counter].inst0 = R500_INST_TYPE_ALU
 			/* pixel_mask */
