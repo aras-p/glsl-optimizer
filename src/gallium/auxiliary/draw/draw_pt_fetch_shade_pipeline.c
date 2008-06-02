@@ -51,7 +51,8 @@ struct fetch_pipeline_middle_end {
 
 static void fetch_pipeline_prepare( struct draw_pt_middle_end *middle,
                                     unsigned prim,
-				    unsigned opt )
+				    unsigned opt,
+                                    unsigned *max_vertices )
 {
    struct fetch_pipeline_middle_end *fpme = (struct fetch_pipeline_middle_end *)middle;
    struct draw_context *draw = fpme->draw;
@@ -86,14 +87,21 @@ static void fetch_pipeline_prepare( struct draw_pt_middle_end *middle,
 			    (boolean)draw->rasterizer->gl_rasterization_rules );
 			    
 
-   if (!(opt & PT_PIPELINE)) 
+   if (!(opt & PT_PIPELINE)) {
       draw_pt_emit_prepare( fpme->emit, 
-			    prim );
+			    prim,
+                            max_vertices );
+
+      *max_vertices = MAX2( *max_vertices,
+                            DRAW_PIPE_MAX_VERTICES );
+   }
+   else {
+      *max_vertices = DRAW_PIPE_MAX_VERTICES; 
+   }
 
    /* No need to prepare the shader.
     */
    vs->prepare(vs, draw);
-
 }
 
 

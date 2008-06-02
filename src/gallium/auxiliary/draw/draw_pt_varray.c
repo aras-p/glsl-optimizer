@@ -45,6 +45,9 @@ struct varray_frontend {
 
    unsigned fetch_start;
 
+   unsigned driver_fetch_max;
+   unsigned fetch_max;
+
    struct draw_pt_middle_end *middle;
 
    unsigned input_prim;
@@ -183,7 +186,7 @@ static void varray_prepare(struct draw_pt_front_end *frontend,
    varray->output_prim = decompose_prim[prim];
 
    varray->middle = middle;
-   middle->prepare(middle, varray->output_prim, opt);
+   middle->prepare(middle, varray->output_prim, opt, &varray->fetch_max );
 }
 
 

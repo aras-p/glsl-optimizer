@@ -265,6 +265,7 @@ void draw_pipeline_destroy( struct draw_context *draw );
  * These flags expected at first vertex of lines & triangles when
  * unfilled and/or line stipple modes are operational.
  */
+#define DRAW_PIPE_MAX_VERTICES  (0x1<<12)
 #define DRAW_PIPE_EDGE_FLAG_0   (0x1<<12)
 #define DRAW_PIPE_EDGE_FLAG_1   (0x2<<12)
 #define DRAW_PIPE_EDGE_FLAG_2   (0x4<<12)

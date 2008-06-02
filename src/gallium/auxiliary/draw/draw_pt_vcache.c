@@ -36,8 +36,8 @@
 #include "draw/draw_pt.h"
 
 
-#define CACHE_MAX 1024
-#define FETCH_MAX 4096
+#define CACHE_MAX 256
+#define FETCH_MAX 256
 #define DRAW_MAX (16*1024)
 
 struct vcache_frontend {
@@ -52,6 +52,7 @@ struct vcache_frontend {
 
    unsigned draw_count;
    unsigned fetch_count;
+   unsigned fetch_max;
    
    struct draw_pt_middle_end *middle;
 
@@ -296,10 +297,12 @@ static void vcache_check_run( struct draw_pt_front_end *frontend,
    ushort *storage = NULL;
 
 
-   if (0) debug_printf("fetch_count %d draw_count %d\n", fetch_count, draw_count);
+   if (0) debug_printf("fetch_count %d fetch_max %d draw_count %d\n", fetch_count, 
+                       vcache->fetch_max,
+                       draw_count);
       
    if (max_index == 0xffffffff ||
-       fetch_count >= FETCH_MAX ||
+       fetch_count >= vcache->fetch_max ||
        fetch_count > draw_count) {
       if (0) debug_printf("fail\n");
       goto fail;
@@ -409,7 +412,7 @@ static void vcache_prepare( struct draw_pt_front_end *frontend,
    vcache->output_prim = draw_pt_reduced_prim(prim);
 
    vcache->middle = middle;
-   middle->prepare( middle, vcache->output_prim, opt );
+   middle->prepare( middle, vcache->output_prim, opt, &vcache->fetch_max );
 }
 
 

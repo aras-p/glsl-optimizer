@@ -84,7 +84,8 @@ struct draw_pt_front_end {
 struct draw_pt_middle_end {
    void (*prepare)( struct draw_pt_middle_end *,
                     unsigned prim,
-		    unsigned opt );
+		    unsigned opt,
+                    unsigned *max_vertices );
 
    void (*run)( struct draw_pt_middle_end *,
                 const unsigned *fetch_elts,
@@ -104,6 +105,8 @@ struct draw_pt_middle_end {
                             unsigned fetch_count,
                             const ushort *draw_elts,
                             unsigned draw_count );
+
+   int (*get_max_vertex_count)( struct draw_pt_middle_end * );
 
    void (*finish)( struct draw_pt_middle_end * );
    void (*destroy)( struct draw_pt_middle_end * );
@@ -158,7 +161,8 @@ boolean draw_pt_get_edgeflag( struct draw_context *draw,
 struct pt_emit;
 
 void draw_pt_emit_prepare( struct pt_emit *emit,
-			   unsigned prim );
+			   unsigned prim,
+                           unsigned *max_vertices );
 
 void draw_pt_emit( struct pt_emit *emit,
 		   const float (*vertex_data)[4],

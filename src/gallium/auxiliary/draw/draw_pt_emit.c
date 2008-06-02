@@ -46,7 +46,8 @@ struct pt_emit {
 };
 
 void draw_pt_emit_prepare( struct pt_emit *emit,
-			   unsigned prim )
+			   unsigned prim,
+                           unsigned *max_vertices )
 {
    struct draw_context *draw = emit->draw;
    const struct vertex_info *vinfo;
@@ -139,6 +140,9 @@ void draw_pt_emit_prepare( struct pt_emit *emit,
       translate_key_sanitize(&hw_key);
       emit->translate = translate_cache_find(emit->cache, &hw_key);
    }
+
+   *max_vertices = (draw->render->max_vertex_buffer_bytes / 
+                    (vinfo->size * 4));
 }
 
 

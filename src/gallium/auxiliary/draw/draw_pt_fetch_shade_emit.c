@@ -70,7 +70,8 @@ struct fetch_shade_emit {
 			       
 static void fse_prepare( struct draw_pt_middle_end *middle,
                          unsigned prim, 
-                         unsigned opt )
+                         unsigned opt,
+                         unsigned *max_vertices )
 {
    struct fetch_shade_emit *fse = (struct fetch_shade_emit *)middle;
    struct draw_context *draw = fse->draw;
@@ -189,6 +190,11 @@ static void fse_prepare( struct draw_pt_middle_end *middle,
                               draw->pt.vertex_buffer[buf].pitch );
    }
 
+   *max_vertices = (draw->render->max_vertex_buffer_bytes / 
+                    (vinfo->size * 4));
+
+   
+
    //return TRUE;
 }
 
@@ -204,7 +210,6 @@ static void fse_run_linear( struct draw_pt_middle_end *middle,
 {
    struct fetch_shade_emit *fse = (struct fetch_shade_emit *)middle;
    struct draw_context *draw = fse->draw;
-   unsigned alloc_count = align(count, 4);
    char *hw_verts;
 
    /* XXX: need to flush to get prim_vbuf.c to release its allocation??
@@ -213,7 +218,7 @@ static void fse_run_linear( struct draw_pt_middle_end *middle,
 
    hw_verts = draw->render->allocate_vertices( draw->render,
                                                (ushort)fse->key.output_stride,
-                                               (ushort)alloc_count );
+                                               (ushort)count );
 
    if (!hw_verts) {
       assert(0);
@@ -264,7 +269,6 @@ fse_run(struct draw_pt_middle_end *middle,
 {
    struct fetch_shade_emit *fse = (struct fetch_shade_emit *)middle;
    struct draw_context *draw = fse->draw;
-   unsigned alloc_count = align(fetch_count, 4);
    void *hw_verts;
    
    /* XXX: need to flush to get prim_vbuf.c to release its allocation?? 
@@ -273,7 +277,7 @@ fse_run(struct draw_pt_middle_end *middle,
 
    hw_verts = draw->render->allocate_vertices( draw->render,
                                                (ushort)fse->key.output_stride,
-                                               (ushort)alloc_count );
+                                               (ushort)fetch_count );
    if (!hw_verts) {
       assert(0);
       return;
@@ -319,7 +323,6 @@ static void fse_run_linear_elts( struct draw_pt_middle_end *middle,
 {
    struct fetch_shade_emit *fse = (struct fetch_shade_emit *)middle;
    struct draw_context *draw = fse->draw;
-   unsigned alloc_count = align(count, 4);
    char *hw_verts;
 
    /* XXX: need to flush to get prim_vbuf.c to release its allocation??
@@ -328,7 +331,7 @@ static void fse_run_linear_elts( struct draw_pt_middle_end *middle,
 
    hw_verts = draw->render->allocate_vertices( draw->render,
                                                (ushort)fse->key.output_stride,
-                                               (ushort)alloc_count );
+                                               (ushort)count );
 
    if (!hw_verts) {
       assert(0);

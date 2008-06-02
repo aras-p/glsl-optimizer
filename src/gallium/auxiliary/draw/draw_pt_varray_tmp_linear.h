@@ -40,7 +40,7 @@ static void FUNC(struct draw_pt_front_end *frontend,
    case PIPE_PRIM_QUAD_STRIP:
       for (j = 0; j < count;) {
          unsigned remaining = count - j;
-         unsigned nr = trim( MIN2(FETCH_MAX, remaining), first, incr );
+         unsigned nr = trim( MIN2(varray->fetch_max, remaining), first, incr );
          varray_flush_linear(varray, start + j, nr);
          j += nr;
          if (nr != remaining) 
@@ -50,8 +50,9 @@ static void FUNC(struct draw_pt_front_end *frontend,
 
    case PIPE_PRIM_LINE_LOOP:
       if (count >= 2) {
+         unsigned fetch_max = MIN2(FETCH_MAX, varray->fetch_max);
          for (j = 0; j + first <= count; j += i) {
-            unsigned end = MIN2(FETCH_MAX, count - j);
+            unsigned end = MIN2(fetch_max, count - j);
             end -= (end % incr);
             for (i = 1; i < end; i++) {
                LINE(varray, i - 1, i);
@@ -66,9 +67,10 @@ static void FUNC(struct draw_pt_front_end *frontend,
 
 
    case PIPE_PRIM_POLYGON:
-   case PIPE_PRIM_TRIANGLE_FAN:
+   case PIPE_PRIM_TRIANGLE_FAN: {
+      unsigned fetch_max = MIN2(FETCH_MAX, varray->fetch_max);
       for (j = 0; j + first <= count; j += i) {
-         unsigned end = MIN2(FETCH_MAX, count - j);
+         unsigned end = MIN2(fetch_max, count - j);
          end -= (end % incr);
          for (i = 2; i < end; i++) {
             TRIANGLE(varray, 0, i - 1, i);
@@ -78,6 +80,7 @@ static void FUNC(struct draw_pt_front_end *frontend,
          varray_flush(varray);
       }
       break;
+   }
 
    default:
       assert(0);

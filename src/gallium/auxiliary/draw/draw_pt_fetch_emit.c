@@ -90,7 +90,8 @@ struct fetch_emit_middle_end {
 
 static void fetch_emit_prepare( struct draw_pt_middle_end *middle,
                                 unsigned prim,
-				unsigned opt )
+				unsigned opt,
+                                unsigned *max_vertices )
 {
    struct fetch_emit_middle_end *feme = (struct fetch_emit_middle_end *)middle;
    struct draw_context *draw = feme->draw;
@@ -196,6 +197,9 @@ static void fetch_emit_prepare( struct draw_pt_middle_end *middle,
                                    draw->pt.vertex_buffer[i].buffer_offset),
                                   draw->pt.vertex_buffer[i].pitch );
    }
+
+   *max_vertices = (draw->render->max_vertex_buffer_bytes / 
+                    (vinfo->size * 4));
 }
 
 

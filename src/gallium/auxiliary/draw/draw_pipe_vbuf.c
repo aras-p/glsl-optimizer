@@ -387,6 +387,12 @@ vbuf_alloc_vertices( struct vbuf_stage *vbuf )
    
    /* Allocate a new vertex buffer */
    vbuf->max_vertices = vbuf->render->max_vertex_buffer_bytes / vbuf->vertex_size;
+
+   /* Must always succeed -- driver gives us a
+    * 'max_vertex_buffer_bytes' which it guarantees it can allocate,
+    * and it will flush itself if necessary to do so.  If this does
+    * fail, we are basically without usable hardware.
+    */
    vbuf->vertices = (uint *) vbuf->render->allocate_vertices(vbuf->render,
 							     (ushort) vbuf->vertex_size,
 							     (ushort) vbuf->max_vertices);
