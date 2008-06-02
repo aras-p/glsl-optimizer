@@ -962,8 +962,35 @@ static boolean emit_COS( struct aos_compilation *cp, const struct tgsi_full_inst
    return TRUE;
 }
 
+#if 1
+
+/* The x87 version.
+ */
+static boolean emit_DP3( struct aos_compilation *cp, const struct tgsi_full_instruction *op ) 
+{
+   struct x86_reg st1 = x86_make_reg( file_x87, 1 );
+
+   x87_fld_src( cp, &op->FullSrcRegisters[0], 0 );
+   x87_fld_src( cp, &op->FullSrcRegisters[1], 0 );
+   x87_fmulp( cp->func, st1 );
+   x87_fld_src( cp, &op->FullSrcRegisters[0], 1 );
+   x87_fld_src( cp, &op->FullSrcRegisters[1], 1 );
+   x87_fmulp( cp->func, st1 );
+   x87_faddp( cp->func, st1 );
+   x87_fld_src( cp, &op->FullSrcRegisters[0], 2 );
+   x87_fld_src( cp, &op->FullSrcRegisters[1], 2 );
+   x87_fmulp( cp->func, st1 );
+   x87_faddp( cp->func, st1 );
+
+   x87_fstp_dest4( cp, &op->FullDstRegisters[0] );
+
+   return TRUE;
+}
+
+#else
 
 /* The dotproduct instructions don't really do that well in sse:
+ * XXX: produces wrong results -- disabled.
  */
 static boolean emit_DP3( struct aos_compilation *cp, const struct tgsi_full_instruction *op )
 {
@@ -985,7 +1012,7 @@ static boolean emit_DP3( struct aos_compilation *cp, const struct tgsi_full_inst
    return TRUE;
 }
 
-
+#endif
 
 static boolean emit_DP4( struct aos_compilation *cp, const struct tgsi_full_instruction *op )
 {
