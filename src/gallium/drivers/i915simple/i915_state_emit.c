@@ -377,6 +377,7 @@ i915_emit_hardware_state(struct i915_context *i915 )
    {
       uint w, h;
       boolean k = framebuffer_size(&i915->framebuffer, &w, &h);
+      (void)k;
       assert(k);
 
       OUT_BATCH(_3DSTATE_DRAW_RECT_CMD);

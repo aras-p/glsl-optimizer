@@ -253,7 +253,6 @@ draw_arrays_fallback( struct vbuf_render *render,
 {
    struct i915_vbuf_render *i915_render = i915_vbuf_render(render);
    struct i915_context *i915 = i915_render->i915;
-   struct pipe_winsys *winsys = i915->pipe.winsys;
    unsigned nr_indices;
 
    if (i915->dirty)
@@ -372,7 +371,6 @@ i915_vbuf_render_draw( struct vbuf_render *render,
 {
    struct i915_vbuf_render *i915_render = i915_vbuf_render(render);
    struct i915_context *i915 = i915_render->i915;
-   struct pipe_winsys *winsys = i915->pipe.winsys;
    unsigned save_nr_indices;
 
    save_nr_indices = nr_indices;
@@ -424,7 +422,6 @@ i915_vbuf_render_release_vertices( struct vbuf_render *render,
 {
    struct i915_vbuf_render *i915_render = i915_vbuf_render(render);
    struct i915_context *i915 = i915_render->i915;
-   struct pipe_winsys *winsys = i915->pipe.winsys;
    size_t size = (size_t)vertex_size * (size_t)vertices_used;
 
    assert(i915->vbo);
@@ -502,6 +499,7 @@ struct draw_stage *i915_draw_vbuf_stage( struct i915_context *i915 )
       render->destroy(render);
       return NULL;
    }
+   /** TODO JB: this shouldn't be here */
    draw_set_render(i915->draw, render);
 
    return stage;
