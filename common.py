@@ -210,9 +210,11 @@ def generate(env):
 			'TEST_EXPORTS' ,
 		]
 	if platform == 'windows':
-		cppdefines += ['PIPE_SUBSYSTEM_USER']
+		cppdefines += ['PIPE_SUBSYSTEM_WINDOWS_USER']
 	if platform == 'winddk':
-		cppdefines += ['PIPE_SUBSYSTEM_KERNEL']
+		cppdefines += ['PIPE_SUBSYSTEM_WINDOWS_DISPLAY']
+	if platform == 'wince':
+		cppdefines += ['PIPE_SUBSYSTEM_WINDOWS_CE']
 	env.Append(CPPDEFINES = cppdefines)
 
 	# C compiler options
