@@ -201,38 +201,73 @@ static void vcache_ef_quad( struct vcache_frontend *vcache,
 #define FUNC vcache_run
 #include "draw_pt_vcache_tmp.h"
 
+static void rebase_uint_elts( const unsigned *src,
+                              unsigned count,
+                              int delta,
+                              ushort *dest )
+{
+   unsigned i;
+
+   for (i = 0; i < count; i++) 
+      dest[i] = (ushort)(src[i] + delta);
+}
+
+static void rebase_ushort_elts( const ushort *src,
+                                unsigned count,
+                                int delta,
+                                ushort *dest )
+{
+   unsigned i;
+
+   for (i = 0; i < count; i++) 
+      dest[i] = (ushort)(src[i] + delta);
+}
+
+static void rebase_ubyte_elts( const ubyte *src,
+                               unsigned count,
+                               int delta,
+                               ushort *dest )
+{
+   unsigned i;
+
+   for (i = 0; i < count; i++) 
+      dest[i] = (ushort)(src[i] + delta);
+}
+
+
+
 static void translate_uint_elts( const unsigned *src,
                                  unsigned count,
-                                 int delta,
                                  ushort *dest )
 {
    unsigned i;
 
    for (i = 0; i < count; i++) 
-      dest[i] = (ushort)(src[i] + delta);
+      dest[i] = (ushort)(src[i]);
 }
 
 static void translate_ushort_elts( const ushort *src,
                                    unsigned count,
-                                   int delta,
                                    ushort *dest )
 {
    unsigned i;
 
    for (i = 0; i < count; i++) 
-      dest[i] = (ushort)(src[i] + delta);
+      dest[i] = (ushort)(src[i]);
 }
 
 static void translate_ubyte_elts( const ubyte *src,
                                   unsigned count,
-                                  int delta,
                                   ushort *dest )
 {
    unsigned i;
 
    for (i = 0; i < count; i++) 
-      dest[i] = (ushort)(src[i] + delta);
+      dest[i] = (ushort)(src[i]);
 }
+
+
+
 
 #if 0
 static enum pipe_format format_from_get_elt( pt_elt_func get_elt )
@@ -282,31 +317,58 @@ static void vcache_check_run( struct draw_pt_front_end *frontend,
       if (!storage)
          goto fail;
       
-      switch(index_size) {
-      case 1:
-         translate_ubyte_elts( (const ubyte *)elts,
-                               draw_count,
-                               0 - (int)min_index,
-                               storage );
-         break;
+      if (min_index == 0) {
+         switch(index_size) {
+         case 1:
+            translate_ubyte_elts( (const ubyte *)elts,
+                                  draw_count,
+                                  storage );
+            break;
 
-      case 2:
-         translate_ushort_elts( (const ushort *)elts,
-                                draw_count,
-                                0 - (int)min_index,
-                                storage );
-         break;
+         case 2:
+            translate_ushort_elts( (const ushort *)elts,
+                                   draw_count,
+                                   storage );
+            break;
 
-      case 4:
-         translate_uint_elts( (const uint *)elts,
-                              draw_count,
-                              0 - (int)min_index,
-                              storage );
-         break;
+         case 4:
+            translate_uint_elts( (const uint *)elts,
+                                 draw_count,
+                                 storage );
+            break;
 
-      default:
-         assert(0);
-         return;
+         default:
+            assert(0);
+            return;
+         }
+      }
+      else {
+         switch(index_size) {
+         case 1:
+            rebase_ubyte_elts( (const ubyte *)elts,
+                                  draw_count,
+                                  0 - (int)min_index,
+                                  storage );
+            break;
+
+         case 2:
+            rebase_ushort_elts( (const ushort *)elts,
+                                   draw_count,
+                                   0 - (int)min_index,
+                                   storage );
+            break;
+
+         case 4:
+            rebase_uint_elts( (const uint *)elts,
+                                 draw_count,
+                                 0 - (int)min_index,
+                                 storage );
+            break;
+
+         default:
+            assert(0);
+            return;
+         }
       }
       transformed_elts = storage;
    }
