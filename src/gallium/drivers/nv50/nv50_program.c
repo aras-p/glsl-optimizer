@@ -383,6 +383,18 @@ nv50_program_tx_insn(struct nv50_pc *pc, const union tgsi_full_token *tok)
 		}
 		free_temp(pc, tmp);
 		break;
+	case TGSI_OPCODE_DPH:
+		tmp = alloc_temp(pc, NULL);
+		emit(pc, OP_MUL, tmp, src[0][0], src[1][0], NULL);
+		emit(pc, OP_MAD, tmp, src[0][1], src[1][1], tmp);
+		emit(pc, OP_MAD, tmp, src[0][2], src[1][2], tmp);
+		emit(pc, OP_ADD, tmp, src[1][3], tmp, NULL);
+		for (c = 0; c < 4; c++) {
+			if (mask & (1 << c))
+				emit(pc, OP_MOV, dst[c], tmp, none, none);
+		}
+		free_temp(pc, tmp);
+		break;
 	case TGSI_OPCODE_MAD:
 		for (c = 0; c < 4; c++) {
 			if (mask & (1 << c))
