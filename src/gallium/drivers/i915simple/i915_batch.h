@@ -100,8 +100,6 @@ i915_batchbuffer_flush( struct i915_batchbuffer *batch,
    batch->winsys->batch_flush( batch->winsys, fence );
 }
 
-#define BATCH_LOCALS
-
 #define BEGIN_BATCH( dwords, relocs ) \
    (i915_batchbuffer_check( i915->batch, dwords, relocs ))
 
@@ -110,8 +108,6 @@ i915_batchbuffer_flush( struct i915_batchbuffer *batch,
 
 #define OUT_RELOC( buf, flags, delta ) \
    i915_batchbuffer_reloc( i915->batch, buf, flags, delta )
-
-#define ADVANCE_BATCH()
 
 #define FLUSH_BATCH(fence) do { 			\
    if (0) i915_dump_batchbuffer( i915 );		\
