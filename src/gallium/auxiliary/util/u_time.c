@@ -43,7 +43,7 @@
 #elif defined(PIPE_SUBSYSTEM_WINDOWS_MINIPORT)
 #include <windows.h>
 extern VOID KeQuerySystemTime(PLARGE_INTEGER);
-#elif defined(PIPE_SUBSYSTEM_WINDOWS_CE)
+#elif defined(PIPE_SUBSYSTEM_WINDOWS_USER) || defined(PIPE_SUBSYSTEM_WINDOWS_CE)
 #include <windows.h>
 #else
 #error Unsupported OS
@@ -52,7 +52,7 @@ extern VOID KeQuerySystemTime(PLARGE_INTEGER);
 #include "util/u_time.h"
 
 
-#if defined(PIPE_SUBSYSTEM_WINDOWS_DISPLAY) || defined(PIPE_SUBSYSTEM_WINDOWS_CE)
+#if defined(PIPE_SUBSYSTEM_WINDOWS_DISPLAY) || defined(PIPE_SUBSYSTEM_WINDOWS_USER) || defined(PIPE_SUBSYSTEM_WINDOWS_CE)
 
 static int64_t frequency = 0;
 
@@ -64,7 +64,7 @@ util_time_get_frequency(void)
       LONGLONG temp;
       EngQueryPerformanceFrequency(&temp);
       frequency = temp;
-#elif defined(PIPE_SUBSYSTEM_WINDOWS_CE)
+#elif defined(PIPE_SUBSYSTEM_WINDOWS_USER) || defined(PIPE_SUBSYSTEM_WINDOWS_CE)
       LARGE_INTEGER temp;
       QueryPerformanceFrequency(&temp);
       frequency = temp.QuadPart;
@@ -89,7 +89,7 @@ util_time_get(struct util_time *t)
    LARGE_INTEGER temp;
    KeQuerySystemTime(&temp);
    t->counter = temp.QuadPart;
-#elif defined(PIPE_SUBSYSTEM_WINDOWS_CE)
+#elif defined(PIPE_SUBSYSTEM_WINDOWS_USER) || defined(PIPE_SUBSYSTEM_WINDOWS_CE)
    LARGE_INTEGER temp;
    QueryPerformanceCounter(&temp);
    t->counter = temp.QuadPart;
@@ -105,7 +105,7 @@ util_time_add(const struct util_time *t1,
 #if defined(PIPE_OS_LINUX)
    t2->tv.tv_sec = t1->tv.tv_sec + usecs / 1000000;
    t2->tv.tv_usec = t1->tv.tv_usec + usecs % 1000000;
-#elif defined(PIPE_SUBSYSTEM_WINDOWS_DISPLAY) || defined(PIPE_SUBSYSTEM_WINDOWS_CE)
+#elif defined(PIPE_SUBSYSTEM_WINDOWS_DISPLAY) || defined(PIPE_SUBSYSTEM_WINDOWS_USER) || defined(PIPE_SUBSYSTEM_WINDOWS_CE)
    util_time_get_frequency();
    t2->counter = t1->counter + (usecs * frequency + INT64_C(999999))/INT64_C(1000000);
 #elif defined(PIPE_SUBSYSTEM_WINDOWS_MINIPORT)
@@ -127,7 +127,7 @@ util_time_diff(const struct util_time *t1,
 #if defined(PIPE_OS_LINUX)
    return (t2->tv.tv_usec - t1->tv.tv_usec) + 
           (t2->tv.tv_sec - t1->tv.tv_sec)*1000000;
-#elif defined(PIPE_SUBSYSTEM_WINDOWS_DISPLAY) || defined(PIPE_SUBSYSTEM_WINDOWS_CE)
+#elif defined(PIPE_SUBSYSTEM_WINDOWS_DISPLAY) || defined(PIPE_SUBSYSTEM_WINDOWS_USER) || defined(PIPE_SUBSYSTEM_WINDOWS_CE)
    util_time_get_frequency();
    return (t2->counter - t1->counter)*INT64_C(1000000)/frequency;
 #elif defined(PIPE_SUBSYSTEM_WINDOWS_MINIPORT)
