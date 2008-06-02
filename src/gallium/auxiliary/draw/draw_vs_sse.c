@@ -50,7 +50,7 @@
 
 #define SSE_MAX_VERTICES 4
 
-typedef void (XSTDCALL *codegen_function) (
+typedef void (PIPE_CDECL *codegen_function) (
    const struct tgsi_exec_vector *input, /* 1 */
    struct tgsi_exec_vector *output, /* 2 */
    float (*constant)[4],        /* 3 */

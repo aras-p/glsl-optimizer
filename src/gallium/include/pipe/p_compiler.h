@@ -128,7 +128,7 @@ typedef unsigned char boolean;
 /* This should match linux gcc cdecl semantics everywhere, so that we
  * just codegen one calling convention on all platforms.
  */
-#ifdef WIN32
+#ifdef _MSC_VER
 #define PIPE_CDECL __cdecl
 #else
 #define PIPE_CDECL
@@ -146,20 +146,6 @@ typedef unsigned char boolean;
 #define ALIGN16_ATTRIB
 #endif
 
-
-
-/** 
- * For calling code-gen'd functions, phase out in favor of
- * PIPE_CDECL, above, which really means cdecl on all platforms, not
- * like the below...
- */
-#if !defined(XSTDCALL) 
-#if defined(WIN32)
-#define XSTDCALL __stdcall      /* phase this out */
-#else
-#define XSTDCALL                /* XXX: NOTE! not STDCALL! */
-#endif
-#endif
 
 
 #endif /* P_COMPILER_H */

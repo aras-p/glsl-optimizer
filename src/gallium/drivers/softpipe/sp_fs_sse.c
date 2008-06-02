@@ -46,7 +46,7 @@
 
 /* Surely this should be defined somewhere in a tgsi header:
  */
-typedef void (XSTDCALL *codegen_function)(
+typedef void (PIPE_CDECL *codegen_function)(
    const struct tgsi_exec_vector *input,
    struct tgsi_exec_vector *output,
    const float (*constant)[4],
