@@ -11,9 +11,11 @@
 #include "nv50_state.h"
 
 #define OP_MOV 0x001
+#define OP_INTERP 0x008
 #define OP_RCP 0x009
 #define OP_ADD 0x00b
 #define OP_MUL 0x00c
+#define OP_MAD 0x00e
 #define NV50_SU_MAX_TEMP 64
 
 struct nv50_reg {
@@ -27,6 +29,7 @@ struct nv50_reg {
 	int index;
 
 	int hw;
+	int neg;
 };
 
 struct nv50_pc {
@@ -140,7 +143,7 @@ emit(struct nv50_pc *pc, unsigned op, struct nv50_reg *dst,
 
 	/* Grr.. Fun restrictions on where attribs can be sourced from.. */
 	if (src0 && (src0->type == P_CONST || src0->type == P_IMMD) &&
-	    (op == 0xc || op == 0xe)) {
+	    (op == OP_MUL || op == OP_MAD)) {
 		tmp = src1;
 		src1 = src0;
 		src0 = tmp;
@@ -149,12 +152,14 @@ emit(struct nv50_pc *pc, unsigned op, struct nv50_reg *dst,
 
 	if (src1 && src1->type == P_ATTR) {
 		tmp = alloc_temp(pc, dst);
+		tmp->neg = src1->neg; src1->neg = 0;
 		emit(pc, 1, tmp, src1, NULL, NULL);
 		src1 = tmp;
 	}
 
 	if (src2 && src2->type == P_ATTR) {
 		tmp2 = alloc_temp(pc, dst);
+		tmp2->neg = src2->neg; src2->neg = 0;
 		emit(pc, 1, tmp2, src2, NULL, NULL);
 		src2 = tmp2;
 	}
@@ -197,7 +202,7 @@ emit(struct nv50_pc *pc, unsigned op, struct nv50_reg *dst,
 				inst[0] |= (src1->hw << 16);
 			} else {
 				alloc_reg(pc, src1);
-				if (op == 0xc || op == 0xe)
+				if (op == OP_MUL || op == OP_MAD)
 					inst[0] |= (src1->hw << 16);
 				else
 					inst[1] |= (src1->hw << 14);
@@ -216,7 +221,7 @@ emit(struct nv50_pc *pc, unsigned op, struct nv50_reg *dst,
 				inst[1] |= (src2->hw << 14);
 			} else {
 				alloc_reg(pc, src2);
-				if (inst[0] & 0x00800000 || op ==0xe)
+				if (inst[0] & 0x00800000 || op == OP_MAD)
 					inst[1] |= (src2->hw << 14);
 				else
 					inst[0] |= (src2->hw << 16);
@@ -224,14 +229,24 @@ emit(struct nv50_pc *pc, unsigned op, struct nv50_reg *dst,
 		}
 
 		/*XXX: FIXME */
-		if (op == 0xb || op == 0xc || op == 0x9 || op == 0xe) {
+		switch (op) {
+		case OP_ADD:
+		case OP_MUL:
+		case OP_RCP:
+		case OP_MAD:
 			/* 0x04000000 negates arg0 */
 			/* 0x08000000 negates arg1 */
 			/*XXX: true for !0xb also ? */
+			if (src0 && src0->neg)
+				inst[1] |= 0x04000000;
+			if (src1 && src1->neg)
+				inst[1] |= 0x08000000;
 			inst[1] |= 0x00000780;
-		} else {
+			break;
+		default:
 			/* 0x04000000 == arg0 32 bit, otherwise 16 bit */
 			inst[1] |= 0x04000780;
+			break;
 		}
 	} else {
 		inst[0] |= ((op & 0xf) << 28);
@@ -340,59 +355,69 @@ nv50_program_tx_insn(struct nv50_pc *pc, const union tgsi_full_token *tok)
 	case TGSI_OPCODE_ADD:
 		for (c = 0; c < 4; c++) {
 			if (mask & (1 << c)) {
-				emit(pc, 0x0b, dst[c],
+				emit(pc, OP_ADD, dst[c],
 				     src[0][c], src[1][c], none);
 			}
 		}
 		break;
 	case TGSI_OPCODE_DP3:
 		tmp = alloc_temp(pc, NULL);
-		emit(pc, 0x0c, tmp, src[0][0], src[1][0], NULL);
-		emit(pc, 0x0e, tmp, src[0][1], src[1][1], tmp);
-		emit(pc, 0x0e, tmp, src[0][2], src[1][2], tmp);
+		emit(pc, OP_MUL, tmp, src[0][0], src[1][0], NULL);
+		emit(pc, OP_MAD, tmp, src[0][1], src[1][1], tmp);
+		emit(pc, OP_MAD, tmp, src[0][2], src[1][2], tmp);
 		for (c = 0; c < 4; c++) {
 			if (mask & (1 << c))
-				emit(pc, 0x01, dst[c], tmp, none, none);
+				emit(pc, OP_MOV, dst[c], tmp, none, none);
 		}
 		free_temp(pc, tmp);
 		break;
 	case TGSI_OPCODE_DP4:
 		tmp = alloc_temp(pc, NULL);
-		emit(pc, 0x0c, tmp, src[0][0], src[1][0], NULL);
-		emit(pc, 0x0e, tmp, src[0][1], src[1][1], tmp);
-		emit(pc, 0x0e, tmp, src[0][2], src[1][2], tmp);
-		emit(pc, 0x0e, tmp, src[0][3], src[1][3], tmp);
+		emit(pc, OP_MUL, tmp, src[0][0], src[1][0], NULL);
+		emit(pc, OP_MAD, tmp, src[0][1], src[1][1], tmp);
+		emit(pc, OP_MAD, tmp, src[0][2], src[1][2], tmp);
+		emit(pc, OP_MAD, tmp, src[0][3], src[1][3], tmp);
 		for (c = 0; c < 4; c++) {
 			if (mask & (1 << c))
-				emit(pc, 0x01, dst[c], tmp, none, none);
+				emit(pc, OP_MOV, dst[c], tmp, none, none);
 		}
 		free_temp(pc, tmp);
 		break;
 	case TGSI_OPCODE_MAD:
 		for (c = 0; c < 4; c++) {
 			if (mask & (1 << c))
-				emit(pc, 0x0e, dst[c],
+				emit(pc, OP_MAD, dst[c],
 				     src[0][c], src[1][c], src[2][c]);
 		}
 		break;
 	case TGSI_OPCODE_MOV:
 		for (c = 0; c < 4; c++) {
 			if (mask & (1 << c))
-				emit(pc, 0x01, dst[c], src[0][c], none, none);
+				emit(pc, OP_MOV, dst[c], src[0][c], none, none);
 		}
 		break;
 	case TGSI_OPCODE_MUL:
 		for (c = 0; c < 4; c++) {
 			if (mask & (1 << c))
-				emit(pc, 0x0c, dst[c],
+				emit(pc, OP_MUL, dst[c],
 				     src[0][c], src[1][c], none);
 		}
 		break;
 	case TGSI_OPCODE_RCP:
 		for (c = 0; c < 4; c++) {
 			if (mask & (1 << c))
-				emit(pc, 0x09, dst[c],
+				emit(pc, OP_RCP, dst[c],
 				     src[0][c], none, none);
+		}
+		break;
+	case TGSI_OPCODE_SUB:
+		for (c = 0; c < 4; c++) {
+			if (mask & (1 << c)) {
+				src[1][c]->neg = 1;
+				emit(pc, OP_ADD, dst[c],
+				     src[0][c], src[1][c], none);
+				src[1][c]->neg = 0;
+			}
 		}
 		break;
 	case TGSI_OPCODE_END:
