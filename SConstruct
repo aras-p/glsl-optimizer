@@ -36,7 +36,7 @@ if common.default_platform in ('linux', 'freebsd', 'darwin'):
 elif common.default_platform in ('winddk',):
 	default_statetrackers = 'all'
 	default_drivers = 'softpipe,i915simple'
-	default_winsys = 'none'
+	default_winsys = 'all'
 else:
 	default_statetrackers = 'all'
 	default_drivers = 'all'
@@ -49,7 +49,7 @@ opts.Add(ListOption('statetrackers', 'state_trackers to build', default_statetra
 opts.Add(ListOption('drivers', 'pipe drivers to build', default_drivers,
                      ['softpipe', 'failover', 'i915simple', 'i965simple', 'cell']))
 opts.Add(ListOption('winsys', 'winsys drivers to build', default_winsys,
-                     ['xlib', 'intel'])) 
+                     ['xlib', 'intel', 'gdi'])) 
 
 env = Environment(
 	options = opts, 

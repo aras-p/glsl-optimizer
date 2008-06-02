@@ -3,30 +3,32 @@
 
 Import('*')
 
-env = env.Clone()
+if env['platform'] == 'linux' and 'mesa' in env['statetrackers'] and not env['dri']:
 
-env.Append(CPPPATH = [
-	'#/src/mesa',
-	'#/src/mesa/main',
-])
+	env = env.Clone()
 
-sources = [
-	'glxapi.c',
-	'fakeglx.c',
-	'xfonts.c',
-	'xm_api.c',
-	'xm_winsys.c',
-	'xm_winsys_aub.c',
-	'brw_aub.c',
-]
-	
-drivers = [
-	softpipe,
-]
+	env.Append(CPPPATH = [
+		'#/src/mesa',
+		'#/src/mesa/main',
+	])
 
-# TODO: write a wrapper function http://www.scons.org/wiki/WrapperFunctions
-env.SharedLibrary(
-	target ='GL',
-	source = sources,
-	LIBS = glapi + mesa + drivers + auxiliaries + env['LIBS'],
-)
+	sources = [
+		'glxapi.c',
+		'fakeglx.c',
+		'xfonts.c',
+		'xm_api.c',
+		'xm_winsys.c',
+		'xm_winsys_aub.c',
+		'brw_aub.c',
+	]
+		
+	drivers = [
+		softpipe,
+	]
+
+	# TODO: write a wrapper function http://www.scons.org/wiki/WrapperFunctions
+	env.SharedLibrary(
+		target ='GL',
+		source = sources,
+		LIBS = glapi + mesa + drivers + auxiliaries + env['LIBS'],
+	)
