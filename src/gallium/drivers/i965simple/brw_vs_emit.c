@@ -1135,8 +1135,8 @@ static void process_instruction(struct brw_vs_compile *c,
       emit_min(p, dst, args[0], args[1]);
       break;
    case TGSI_OPCODE_MOV:
-#if 0
    case TGSI_OPCODE_SWZ:
+#if 0
       /* The args[0] value can't be used here as it won't have
        * correctly encoded the full swizzle:
        */
