@@ -410,8 +410,9 @@ extern void pipe_copy_rect(ubyte * dst, unsigned cpp, unsigned dst_pitch,
 
 
 
-#if defined(_MSC_VER) && !defined(__cplusplus)
-
+#if defined(_MSC_VER) 
+#if _MSC_VER < 1400 && !defined(__cplusplus)
+ 
 static INLINE float cosf( float f ) 
 {
    return (float) cos( (double) f );
@@ -452,7 +453,14 @@ static INLINE float logf( float f )
    return (float) log( (double) f );
 }
 
+#else
+/* Work-around an extra semi-colon in VS 2005 logf definition */
+#ifdef logf
+#undef logf
+#define logf(x) ((float)log((double)(x)))
+#endif /* logf */
 #endif
+#endif /* _MSC_VER */
 
 
 #ifdef __cplusplus
