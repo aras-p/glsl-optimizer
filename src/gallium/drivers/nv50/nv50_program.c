@@ -10,13 +10,8 @@
 #include "nv50_context.h"
 #include "nv50_state.h"
 
-#define OP_MOV 0x001
-#define OP_INTERP 0x008
-#define OP_RCP 0x009
-#define OP_ADD 0x00b
-#define OP_MUL 0x00c
-#define OP_MAD 0x00e
 #define NV50_SU_MAX_TEMP 64
+#define TX_FRAGPROG 0
 
 struct nv50_reg {
 	enum {
@@ -106,181 +101,6 @@ free_temp(struct nv50_pc *pc, struct nv50_reg *r)
 	}
 }
 
-#if 0
-static struct nv50_reg *
-constant(struct nv50_pc *pc, int pipe, int c, float v)
-{
-	struct nv50_reg *r = CALLOC_STRUCT(nv50_reg);
-	struct nv50_program *p = pc->p;
-	struct nv50_program_data *pd;
-	int idx;
-
-	if (pipe >= 0) {
-		for (idx = 0; idx < p->nr_consts; idx++) {
-			if (p->consts[idx].index == pipe)
-				return nv40_sr(NV40SR_CONST, idx);
-		}
-	}
-
-	idx = p->nr_consts++;
-	p->consts = realloc(p->consts, sizeof(*pd) * p->nr_consts);
-	pd = &p->consts[idx];
-
-	pd->index = pipe;
-	pd->component = c;
-	pd->value = v;
-	return nv40_sr(NV40SR_CONST, idx);
-}
-#endif
-
-static void
-emit(struct nv50_pc *pc, unsigned op, struct nv50_reg *dst,
-     struct nv50_reg *src0, struct nv50_reg *src1, struct nv50_reg *src2)
-{
-	struct nv50_program *p = pc->p;
-	struct nv50_reg *tmp0 = NULL, *tmp = NULL, *tmp2 = NULL;
-	unsigned inst[2] = { 0, 0 };
-
-	/* Grr.. Fun restrictions on where attribs can be sourced from.. */
-	if (src0 && (src0->type == P_CONST || src0->type == P_IMMD) &&
-	    (op == OP_MUL || op == OP_MAD)) {
-		tmp = src1;
-		src1 = src0;
-		src0 = tmp;
-		tmp = NULL;
-	}
-
-	if (src1 && src1->type == P_ATTR) {
-		tmp = alloc_temp(pc, dst);
-		tmp->neg = src1->neg; src1->neg = 0;
-		emit(pc, 1, tmp, src1, NULL, NULL);
-		src1 = tmp;
-	}
-
-	if (src2 && src2->type == P_ATTR) {
-		tmp2 = alloc_temp(pc, dst);
-		tmp2->neg = src2->neg; src2->neg = 0;
-		emit(pc, 1, tmp2, src2, NULL, NULL);
-		src2 = tmp2;
-	}
-
-	/* Get this out of the way first.  What type of opcode do we
-	 * want/need to build?
-	 */
-	if ((op & 0x3f0) || dst->type == P_RESULT ||
-	    (src0 && src0->type == P_ATTR) || src1 || src2)
-		inst[0] |= 0x00000001;
-
-	if (inst[0] & 0x00000001) {
-		inst[0] |= ((op & 0xf) << 28);
-		inst[1] |= ((op >> 4) << 26);
-
-		alloc_reg(pc, dst);
-		if (dst->type == P_RESULT)
-			inst[1] |= 0x00000008;
-		inst[0] |= (dst->hw << 2);
-
-		if (src0) {
-			if (src0->type == P_ATTR)
-				inst[1] |= 0x00200000;
-			else
-			if (src0->type == P_CONST || src0->type == P_IMMD)
-				assert(0);
-			alloc_reg(pc, src0);
-			inst[0] |= (src0->hw << 9);
-		}
-
-		if (src1) {
-			if (src1->type == P_CONST || src1->type == P_IMMD) {
-				if (src1->type == P_IMMD)
-					inst[1] |= (NV50_CB_PMISC << 22);
-				else
-					inst[1] |= (NV50_CB_PVP << 22);
-				inst[0] |= 0x00800000; /* src1 is const */
-				/*XXX: does src1 come from "src2" now? */
-				alloc_reg(pc, src1);
-				inst[0] |= (src1->hw << 16);
-			} else {
-				alloc_reg(pc, src1);
-				if (op == OP_MUL || op == OP_MAD)
-					inst[0] |= (src1->hw << 16);
-				else
-					inst[1] |= (src1->hw << 14);
-			}
-		} else {
-			inst[1] |= 0x0003c000; /*XXX FIXME */
-		}
-
-		if (src2) {
-			if (src2->type == P_CONST || src2->type == P_IMMD) {
-				if (src2->type == P_IMMD)
-					inst[1] |= (NV50_CB_PMISC << 22);
-				else
-					inst[1] |= (NV50_CB_PVP << 22);
-				inst[0] |= 0x01000000; /* src2 is const */
-				inst[1] |= (src2->hw << 14);
-			} else {
-				alloc_reg(pc, src2);
-				if (inst[0] & 0x00800000 || op == OP_MAD)
-					inst[1] |= (src2->hw << 14);
-				else
-					inst[0] |= (src2->hw << 16);
-			}
-		}
-
-		/*XXX: FIXME */
-		switch (op) {
-		case OP_ADD:
-		case OP_MUL:
-		case OP_RCP:
-		case OP_MAD:
-			/* 0x04000000 negates arg0 */
-			/* 0x08000000 negates arg1 */
-			/*XXX: true for !0xb also ? */
-			if (src0 && src0->neg)
-				inst[1] |= 0x04000000;
-			if (src1 && src1->neg)
-				inst[1] |= 0x08000000;
-			inst[1] |= 0x00000780;
-			break;
-		default:
-			/* 0x04000000 == arg0 32 bit, otherwise 16 bit */
-			inst[1] |= 0x04000780;
-			break;
-		}
-	} else {
-		inst[0] |= ((op & 0xf) << 28);
-
-		alloc_reg(pc, dst);
-		inst[0] |= (dst->hw << 2);
-
-		if (src0) {
-			alloc_reg(pc, src0);
-			inst[0] |= (src0->hw << 9);
-		}
-
-		/*XXX: NFI if this even works - probably not.. */
-		if (src1) {
-			alloc_reg(pc, src1);
-			inst[0] |= (src1->hw << 16);
-		}
-	}
-
-	if (tmp0) free_temp(pc, tmp0);
-	if (tmp) free_temp(pc, tmp);
-	if (tmp2) free_temp(pc, tmp2);
-
-	if (inst[0] & 1) {
-		p->insns_nr += 2;
-		p->insns = realloc(p->insns, sizeof(unsigned) * p->insns_nr);
-		memcpy(p->insns + (p->insns_nr - 2), inst, sizeof(unsigned)*2);
-	} else {
-		p->insns_nr += 1;
-		p->insns = realloc(p->insns, sizeof(unsigned) * p->insns_nr);
-		memcpy(p->insns + (p->insns_nr - 1), inst, sizeof(unsigned));
-	}
-}
-
 static struct nv50_reg *
 tgsi_dst(struct nv50_pc *pc, int c, const struct tgsi_full_dst_register *dst)
 {
@@ -327,11 +147,147 @@ tgsi_src(struct nv50_pc *pc, int c, const struct tgsi_full_src_register *src)
 	return NULL;
 }
 
+static void
+emit(struct nv50_pc *pc, unsigned *inst)
+{
+	struct nv50_program *p = pc->p;
+
+       if (inst[0] & 1) {
+               p->insns_nr += 2;
+               p->insns = realloc(p->insns, sizeof(unsigned) * p->insns_nr);
+               memcpy(p->insns + (p->insns_nr - 2), inst, sizeof(unsigned)*2);
+       } else {
+               p->insns_nr += 1;
+               p->insns = realloc(p->insns, sizeof(unsigned) * p->insns_nr);
+               memcpy(p->insns + (p->insns_nr - 1), inst, sizeof(unsigned));
+       }
+}
+
+static INLINE void set_long(struct nv50_pc *, unsigned *);
+
+static boolean
+is_long(unsigned *inst)
+{
+	if (inst[0] & 1)
+		return TRUE;
+	return FALSE;
+}
+
+static boolean
+is_immd(unsigned *inst)
+{
+	if (is_long(inst) && (inst[1] & 3) == 3)
+		return TRUE;
+	return FALSE;
+}
+
+static INLINE void
+set_pred(struct nv50_pc *pc, unsigned pred, unsigned idx, unsigned *inst)
+{
+	set_long(pc, inst);
+	inst[1] &= ~((0x1f << 7) | (0x3 << 12));
+	inst[1] |= (pred << 7) | (idx << 12);
+}
+
+static INLINE void
+set_pred_wr(struct nv50_pc *pc, unsigned on, unsigned idx, unsigned *inst)
+{
+	set_long(pc, inst);
+	inst[1] &= ~((0x3 << 4) | (1 << 6));
+	inst[1] |= (idx << 4) | (on << 6);
+}
+
+static INLINE void
+set_long(struct nv50_pc *pc, unsigned *inst)
+{
+	if (is_long(inst))
+		return;
+
+	inst[0] |= 1;
+	set_pred(pc, 0xf, 0, inst);
+	set_pred_wr(pc, 0, 0, inst);
+}
+
+static INLINE void
+set_dst(struct nv50_pc *pc, struct nv50_reg *dst, unsigned *inst)
+{
+	if (dst->type == P_RESULT) {
+		set_long(pc, inst);
+		inst[1] |= 0x00000008;
+	}
+
+	alloc_reg(pc, dst);
+	inst[0] |= (dst->hw << 2);
+}
+
+static INLINE void
+set_immd(struct nv50_pc *pc, struct nv50_reg *imm, unsigned *inst)
+{
+	unsigned val = fui(pc->immd_buf[imm->hw]); /* XXX */
+
+	set_long(pc, inst);
+	/*XXX: can't be predicated - bits overlap.. catch cases where both
+	 *     are required and avoid them. */
+	set_pred(pc, 0, 0, inst);
+	set_pred_wr(pc, 0, 0, inst);
+
+	inst[1] |= 0x00000002 | 0x00000001;
+	inst[0] |= (val & 0x3f) << 16;
+	inst[1] |= (val >> 6) << 2;
+}
+
+static void
+emit_mov(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src)
+{
+	unsigned inst[2] = { 0, 0 };
+	int i;
+
+	inst[0] |= 0x10000000;
+
+	set_dst(pc, dst, inst);
+
+	if (dst->type != P_RESULT && src->type == P_IMMD) {
+		set_immd(pc, src, inst);
+		/*XXX: 32-bit, but steals part of "half" reg space - need to
+		 *     catch and handle this case if/when we do half-regs
+		 */
+		inst[0] |= 0x00008000;
+	} else
+	if (src->type == P_IMMD || src->type == P_CONST) {
+		set_long(pc, inst);
+		if (src->type == P_IMMD)
+			inst[1] |= (NV50_CB_PMISC << 22);
+		else
+			inst[1] |= (NV50_CB_PVP << 22);
+		inst[0] |= (src->hw << 9);
+		inst[1] |= 0x20000000; /* src0 const? */
+	} else {
+		if (src->type == P_ATTR) {
+			set_long(pc, inst);
+			inst[1] |= 0x00200000;
+		}
+
+		alloc_reg(pc, src);
+		inst[0] |= (src->hw << 9);
+	}
+
+	/* We really should support "half" instructions here at some point,
+	 * but I don't feel confident enough about them yet.
+	 */
+	set_long(pc, inst);
+	if (is_long(inst) && !is_immd(inst)) {
+		inst[1] |= 0x04000000; /* 32-bit */
+		inst[1] |= 0x0003c000; /* "subsubop" 0xf == mov */
+	}
+
+	emit(pc, inst);
+}
+
 static boolean
 nv50_program_tx_insn(struct nv50_pc *pc, const union tgsi_full_token *tok)
 {
 	const struct tgsi_full_instruction *inst = &tok->FullInstruction;
-	struct nv50_reg *dst[4], *src[3][4], *none = NULL, *tmp;
+	struct nv50_reg *dst[4], *src[3][4];
 	unsigned mask;
 	int i, c;
 
@@ -352,85 +308,9 @@ nv50_program_tx_insn(struct nv50_pc *pc, const union tgsi_full_token *tok)
 	}
 
 	switch (inst->Instruction.Opcode) {
-	case TGSI_OPCODE_ADD:
-		for (c = 0; c < 4; c++) {
-			if (mask & (1 << c)) {
-				emit(pc, OP_ADD, dst[c],
-				     src[0][c], src[1][c], none);
-			}
-		}
-		break;
-	case TGSI_OPCODE_DP3:
-		tmp = alloc_temp(pc, NULL);
-		emit(pc, OP_MUL, tmp, src[0][0], src[1][0], NULL);
-		emit(pc, OP_MAD, tmp, src[0][1], src[1][1], tmp);
-		emit(pc, OP_MAD, tmp, src[0][2], src[1][2], tmp);
-		for (c = 0; c < 4; c++) {
-			if (mask & (1 << c))
-				emit(pc, OP_MOV, dst[c], tmp, none, none);
-		}
-		free_temp(pc, tmp);
-		break;
-	case TGSI_OPCODE_DP4:
-		tmp = alloc_temp(pc, NULL);
-		emit(pc, OP_MUL, tmp, src[0][0], src[1][0], NULL);
-		emit(pc, OP_MAD, tmp, src[0][1], src[1][1], tmp);
-		emit(pc, OP_MAD, tmp, src[0][2], src[1][2], tmp);
-		emit(pc, OP_MAD, tmp, src[0][3], src[1][3], tmp);
-		for (c = 0; c < 4; c++) {
-			if (mask & (1 << c))
-				emit(pc, OP_MOV, dst[c], tmp, none, none);
-		}
-		free_temp(pc, tmp);
-		break;
-	case TGSI_OPCODE_DPH:
-		tmp = alloc_temp(pc, NULL);
-		emit(pc, OP_MUL, tmp, src[0][0], src[1][0], NULL);
-		emit(pc, OP_MAD, tmp, src[0][1], src[1][1], tmp);
-		emit(pc, OP_MAD, tmp, src[0][2], src[1][2], tmp);
-		emit(pc, OP_ADD, tmp, src[1][3], tmp, NULL);
-		for (c = 0; c < 4; c++) {
-			if (mask & (1 << c))
-				emit(pc, OP_MOV, dst[c], tmp, none, none);
-		}
-		free_temp(pc, tmp);
-		break;
-	case TGSI_OPCODE_MAD:
-		for (c = 0; c < 4; c++) {
-			if (mask & (1 << c))
-				emit(pc, OP_MAD, dst[c],
-				     src[0][c], src[1][c], src[2][c]);
-		}
-		break;
 	case TGSI_OPCODE_MOV:
-		for (c = 0; c < 4; c++) {
-			if (mask & (1 << c))
-				emit(pc, OP_MOV, dst[c], src[0][c], none, none);
-		}
-		break;
-	case TGSI_OPCODE_MUL:
-		for (c = 0; c < 4; c++) {
-			if (mask & (1 << c))
-				emit(pc, OP_MUL, dst[c],
-				     src[0][c], src[1][c], none);
-		}
-		break;
-	case TGSI_OPCODE_RCP:
-		for (c = 0; c < 4; c++) {
-			if (mask & (1 << c))
-				emit(pc, OP_RCP, dst[c],
-				     src[0][c], none, none);
-		}
-		break;
-	case TGSI_OPCODE_SUB:
-		for (c = 0; c < 4; c++) {
-			if (mask & (1 << c)) {
-				src[1][c]->neg = 1;
-				emit(pc, OP_ADD, dst[c],
-				     src[0][c], src[1][c], none);
-				src[1][c]->neg = 0;
-			}
-		}
+		for (c = 0; c < 4; c++)
+			emit_mov(pc, dst[c], src[0][c]);
 		break;
 	case TGSI_OPCODE_END:
 		break;
@@ -648,6 +528,7 @@ out_cleanup:
 static void
 nv50_program_validate(struct nv50_context *nv50, struct nv50_program *p)
 {
+#if TX_FRAGPROG == 0
 	struct tgsi_parse_context pc;
 
 	tgsi_parse_init(&pc, p->pipe.tokens);
@@ -665,6 +546,7 @@ nv50_program_validate(struct nv50_context *nv50, struct nv50_program *p)
 		p->insns[7] = 0x00020781;
 	} else
 	if (pc.FullHeader.Processor.Processor == TGSI_PROCESSOR_VERTEX) {
+#endif
 		int i;
 
 		if (nv50_program_tx(p) == FALSE)
@@ -673,6 +555,7 @@ nv50_program_validate(struct nv50_context *nv50, struct nv50_program *p)
 
 		for (i = 0; i < p->insns_nr; i++)
 			NOUVEAU_ERR("%d 0x%08x\n", i, p->insns[i]);
+#if TX_FRAGPROG == 0
 	} else {
 		NOUVEAU_ERR("invalid TGSI processor\n");
 		tgsi_parse_free(&pc);
@@ -680,6 +563,7 @@ nv50_program_validate(struct nv50_context *nv50, struct nv50_program *p)
 	}
 
 	tgsi_parse_free(&pc);
+#endif
 
 	p->translated = TRUE;
 }
@@ -758,11 +642,8 @@ nv50_fragprog_validate(struct nv50_context *nv50)
 			assert(0);
 	}
 
-	if (!p->buffer)
-		p->buffer = ws->buffer_create(ws, 0x100, 0, p->insns_nr * 4);
-	map = ws->buffer_map(ws, p->buffer, PIPE_BUFFER_USAGE_CPU_WRITE);
-	memcpy(map, p->insns, p->insns_nr * 4);
-	ws->buffer_unmap(ws, p->buffer);
+	nv50_program_validate_data(nv50, p);
+	nv50_program_validate_code(nv50, p);
 
 	so = so_new(3, 2);
 	so_method(so, tesla, NV50TCL_FP_ADDRESS_HIGH, 2);
