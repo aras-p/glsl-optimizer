@@ -253,10 +253,13 @@ def generate(env):
 				'/Gh', # enable _penter hook function
 				'/GH', # enable _pexit hook function
 			]
+		cflags += [
+			'/W3', # warning level
+			#'/Wp64', # enable 64 bit porting warnings
+		]
 		if platform == 'windows':
 			cflags += [
 				# TODO
-				#'/Wp64', # enable 64 bit porting warnings
 			]
 		if platform == 'winddk':
 			cflags += [
@@ -264,7 +267,6 @@ def generate(env):
 				'/Zp8', # 8bytes struct member alignment
 				'/Gy', # separate functions for linker
 				'/Gm-', # disable minimal rebuild
-				'/W3', # warning level
 				'/WX', # treat warnings as errors
 				'/Gz', # __stdcall Calling convention
 				'/GX-', # disable C++ EH
@@ -283,7 +285,7 @@ def generate(env):
 				'/GF', # enable read-only string pooling
 			]
 		# Put debugging information in a separate .pdb file for each object file as
-		# descrived in the scons manpage
+		# described in the scons manpage
 		env['CCPDBFLAGS'] = '/Zi /Fd${TARGET}.pdb'
 	env.Append(CFLAGS = cflags)
 	env.Append(CXXFLAGS = cflags)
