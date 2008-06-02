@@ -628,6 +628,14 @@ tgsi_build_full_instruction(
             tgsi_default_src_register_ext_swz() ) ) {
          struct tgsi_src_register_ext_swz *src_register_ext_swz;
 
+         /* Use of the extended swizzle requires the simple swizzle to be identity.
+          */
+         assert( reg->SrcRegister.SwizzleX == TGSI_SWIZZLE_X );
+         assert( reg->SrcRegister.SwizzleY == TGSI_SWIZZLE_Y );
+         assert( reg->SrcRegister.SwizzleZ == TGSI_SWIZZLE_Z );
+         assert( reg->SrcRegister.SwizzleW == TGSI_SWIZZLE_W );
+         assert( reg->SrcRegister.Negate == FALSE );
+
          if( maxsize <= size )
             return 0;
          src_register_ext_swz =
