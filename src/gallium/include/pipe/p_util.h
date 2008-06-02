@@ -449,7 +449,7 @@ static INLINE float fabsf( float f )
 
 static INLINE float logf( float f ) 
 {
-   return (float) cos( (double) f );
+   return (float) log( (double) f );
 }
 
 #endif
