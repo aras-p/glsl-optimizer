@@ -676,7 +676,7 @@ i915_translate_instruction(struct i915_fp_compile *p,
       break;
 
    case TGSI_OPCODE_MOV:
-      /* aka TGSI_OPCODE_SWZ */
+   case TGSI_OPCODE_SWZ:
       emit_simple_arith(p, inst, A0_MOV, 1);
       break;
 
