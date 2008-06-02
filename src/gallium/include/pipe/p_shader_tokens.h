@@ -232,7 +232,7 @@ struct tgsi_immediate_float32
 /*
  * GL_ARB_vertex_program
  */
-#define TGSI_OPCODE_SWZ                 TGSI_OPCODE_MOV
+#define TGSI_OPCODE_SWZ                 118
 #define TGSI_OPCODE_XPD                 TGSI_OPCODE_CROSSPRODUCT
 
 /*
@@ -388,7 +388,7 @@ struct tgsi_immediate_float32
 #define TGSI_OPCODE_KIL                 116  /* unpredicated kill */
 #define TGSI_OPCODE_END                 117  /* aka HALT */
 
-#define TGSI_OPCODE_LAST                118
+#define TGSI_OPCODE_LAST                119
 
 #define TGSI_SAT_NONE            0  /* do not saturate */
 #define TGSI_SAT_ZERO_ONE        1  /* clamp to [0,1] */
@@ -621,6 +621,10 @@ struct tgsi_src_register_ext
  *
  * NegateX, NegateY, NegateZ and NegateW negate individual components of the
  * source register.
+ *
+ * NOTE: To simplify matter, if this token is present, the corresponding Swizzle
+ *       and Negate fields in tgsi_src_register should be set to X,Y,Z,W
+ *       and FALSE, respectively.
  */
 
 struct tgsi_src_register_ext_swz
