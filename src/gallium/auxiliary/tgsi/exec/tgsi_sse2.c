@@ -1190,7 +1190,7 @@ emit_instruction(
       break;
 
    case TGSI_OPCODE_MOV:
-   /* TGSI_OPCODE_SWZ */
+   case TGSI_OPCODE_SWZ:
       FOR_EACH_DST0_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH( func, *inst, 0, 0, chan_index );
          STORE( func, *inst, 0, 0, chan_index );

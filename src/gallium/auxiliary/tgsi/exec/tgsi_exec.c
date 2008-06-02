@@ -1477,7 +1477,7 @@ exec_instruction(
       break;
 
    case TGSI_OPCODE_MOV:
-   /* TGSI_OPCODE_SWZ */
+   case TGSI_OPCODE_SWZ:
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH( &r[0], 0, chan_index );
          STORE( &r[0], 0, chan_index );
