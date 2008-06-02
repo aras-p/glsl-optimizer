@@ -65,8 +65,10 @@ intel_batchbuffer_reset(struct intel_batchbuffer *batch)
    driBOUnrefUserList(batch->list);
    driBOResetList(batch->list);
 
-   batch->size = batch->intel->intelScreen->max_batch_size;
-   driBOData(batch->buffer, batch->size, NULL, NULL, 0);
+   /* base.size is the size available to the i915simple driver */
+   batch->base.size = batch->intel->intelScreen->max_batch_size - BATCH_RESERVED;
+   batch->base.actual_size = batch->intel->intelScreen->max_batch_size;
+   driBOData(batch->buffer, batch->base.actual_size, NULL, NULL, 0);
 
    /*
     * Add the batchbuffer to the validate list.
@@ -105,9 +107,9 @@ intel_batchbuffer_reset(struct intel_batchbuffer *batch)
    batch->reloc[2] = 0; /* Only a single relocation list. */
    batch->reloc[3] = 0; /* Only a single relocation list. */
 
-   batch->map = driBOMap(batch->buffer, DRM_BO_FLAG_WRITE, 0);
+   batch->base.map = driBOMap(batch->buffer, DRM_BO_FLAG_WRITE, 0);
    batch->poolOffset = driBOPoolOffset(batch->buffer);
-   batch->ptr = batch->map;
+   batch->base.ptr = batch->base.map;
    batch->dirty_state = ~0;
    batch->nr_relocs = 0;
    batch->flags = 0;
@@ -142,9 +144,9 @@ intel_batchbuffer_free(struct intel_batchbuffer *batch)
 		     DRM_FENCE_TYPE_EXE, GL_FALSE);
       driFenceUnReference(&batch->last_fence);
    }
-   if (batch->map) {
+   if (batch->base.map) {
       driBOUnmap(batch->buffer);
-      batch->map = NULL;
+      batch->base.map = NULL;
    }
    driBOUnReference(batch->buffer);
    driBOFreeList(batch->list);
@@ -191,7 +193,7 @@ intel_offset_relocation(struct intel_batchbuffer *batch,
     reloc = batch->reloc + 
 	(I915_RELOC_HEADER + batch->nr_relocs * I915_RELOC0_STRIDE);
 
-    reloc[0] = ((uint8_t *)batch->ptr - batch->drmBOVirtual);
+    reloc[0] = ((uint8_t *)batch->base.ptr - batch->drmBOVirtual);
     intel_batchbuffer_emit_dword(batch, req->presumed_offset + pre_add);
     reloc[1] = pre_add;
     reloc[2] = itemLoc;
@@ -382,7 +384,7 @@ struct _DriFenceObject *
 intel_batchbuffer_flush(struct intel_batchbuffer *batch)
 {
    struct intel_context *intel = batch->intel;
-   GLuint used = batch->ptr - batch->map;
+   GLuint used = batch->base.ptr - batch->base.map;
    GLboolean was_locked = intel->locked;
    struct _DriFenceObject *fence;
 
@@ -396,32 +398,32 @@ intel_batchbuffer_flush(struct intel_batchbuffer *batch)
     */
 #if 0 /* ZZZ JB: what should we do here? */
    if (used & 4) {
-      ((int *) batch->ptr)[0] = intel->vtbl.flush_cmd();
-      ((int *) batch->ptr)[1] = 0;
-      ((int *) batch->ptr)[2] = MI_BATCH_BUFFER_END;
+      ((int *) batch->base.ptr)[0] = intel->vtbl.flush_cmd();
+      ((int *) batch->base.ptr)[1] = 0;
+      ((int *) batch->base.ptr)[2] = MI_BATCH_BUFFER_END;
       used += 12;
    }
    else {
-      ((int *) batch->ptr)[0] = intel->vtbl.flush_cmd();
-      ((int *) batch->ptr)[1] = MI_BATCH_BUFFER_END;
+      ((int *) batch->base.ptr)[0] = intel->vtbl.flush_cmd();
+      ((int *) batch->base.ptr)[1] = MI_BATCH_BUFFER_END;
       used += 8;
    }
 #else
    if (used & 4) {
-      ((int *) batch->ptr)[0] = ((0<<29)|(4<<23)); // MI_FLUSH;
-      ((int *) batch->ptr)[1] = 0;
-      ((int *) batch->ptr)[2] = (0xA<<23); // MI_BATCH_BUFFER_END;
+      ((int *) batch->base.ptr)[0] = ((0<<29)|(4<<23)); // MI_FLUSH;
+      ((int *) batch->base.ptr)[1] = 0;
+      ((int *) batch->base.ptr)[2] = (0xA<<23); // MI_BATCH_BUFFER_END;
       used += 12;
    }
    else {
-      ((int *) batch->ptr)[0] = ((0<<29)|(4<<23)); // MI_FLUSH;
-      ((int *) batch->ptr)[1] = (0xA<<23); // MI_BATCH_BUFFER_END;
+      ((int *) batch->base.ptr)[0] = ((0<<29)|(4<<23)); // MI_FLUSH;
+      ((int *) batch->base.ptr)[1] = (0xA<<23); // MI_BATCH_BUFFER_END;
       used += 8;
    }
 #endif
    driBOUnmap(batch->buffer);
-   batch->ptr = NULL;
-   batch->map = NULL;
+   batch->base.ptr = NULL;
+   batch->base.map = NULL;
 
    /* TODO: Just pass the relocation list and dma buffer up to the
     * kernel.
@@ -455,6 +457,6 @@ intel_batchbuffer_data(struct intel_batchbuffer *batch,
 {
    assert((bytes & 3) == 0);
    intel_batchbuffer_require_space(batch, bytes, flags);
-   memcpy(batch->ptr, data, bytes);
-   batch->ptr += bytes;
+   memcpy(batch->base.ptr, data, bytes);
+   batch->base.ptr += bytes;
 }

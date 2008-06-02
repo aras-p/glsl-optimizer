@@ -3,6 +3,7 @@
 
 #include "mtypes.h"
 #include "ws_dri_bufmgr.h"
+#include "i915simple/i915_batch.h"
 
 struct intel_context;
 
@@ -17,7 +18,8 @@ struct intel_context;
 
 struct intel_batchbuffer
 {
-   struct bufmgr *bm;
+   struct i915_batchbuffer base;
+
    struct intel_context *intel;
 
    struct _DriBufferObject *buffer;
@@ -26,14 +28,10 @@ struct intel_batchbuffer
 
    struct _DriBufferList *list;
    GLuint list_count;
-   GLubyte *map;
-   GLubyte *ptr;
 
    uint32_t *reloc;
    GLuint reloc_size;
    GLuint nr_relocs;
-
-   GLuint size;
 
    GLuint dirty_state;
    GLuint id;
@@ -83,7 +81,7 @@ intel_offset_relocation(struct intel_batchbuffer *batch,
 static INLINE GLuint
 intel_batchbuffer_space(struct intel_batchbuffer *batch)
 {
-   return (batch->size - BATCH_RESERVED) - (batch->ptr - batch->map);
+   return (batch->base.size - BATCH_RESERVED) - (batch->base.ptr - batch->base.map);
 }
 
 
@@ -92,8 +90,8 @@ intel_batchbuffer_emit_dword(struct intel_batchbuffer *batch, GLuint dword)
 {
    assert(batch->map);
    assert(intel_batchbuffer_space(batch) >= 4);
-   *(GLuint *) (batch->ptr) = dword;
-   batch->ptr += 4;
+   *(GLuint *) (batch->base.ptr) = dword;
+   batch->base.ptr += 4;
 }
 
 static INLINE void
@@ -114,20 +112,25 @@ intel_batchbuffer_require_space(struct intel_batchbuffer *batch,
 
 /* Here are the crusty old macros, to be removed:
  */
+#undef BATCH_LOCALS
 #define BATCH_LOCALS
 
+#undef BEGIN_BATCH
 #define BEGIN_BATCH(n, flags) do {				\
    assert(!intel->prim.flush);					\
    intel_batchbuffer_require_space(intel->batch, (n)*4, flags);	\
 } while (0)
 
+#undef OUT_BATCH
 #define OUT_BATCH(d)  intel_batchbuffer_emit_dword(intel->batch, d)
 
+#undef OUT_RELOC
 #define OUT_RELOC(buf,flags,mask,delta) do { 				\
    assert((delta) >= 0);							\
    intel_offset_relocation(intel->batch, delta, buf, flags, mask); \
 } while (0)
 
+#undef ADVANCE_BATCH
 #define ADVANCE_BATCH() do { } while(0)
 
 

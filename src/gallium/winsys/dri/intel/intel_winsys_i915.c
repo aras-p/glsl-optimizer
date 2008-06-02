@@ -63,28 +63,11 @@ intel_i915_winsys( struct i915_winsys *sws )
 /* Simple batchbuffer interface:
  */
 
-static unsigned *intel_i915_batch_start( struct i915_winsys *sws,
-					 unsigned dwords,
-					 unsigned relocs )
+static struct i915_batchbuffer*
+intel_i915_batch_get( struct i915_winsys *sws )
 {
    struct intel_context *intel = intel_i915_winsys(sws)->intel;
-
-   /* XXX: check relocs. 
-    */
-   if (intel_batchbuffer_space( intel->batch ) >= dwords * 4) {
-      /* XXX: Hmm, the driver can't really do much with this pointer: 
-       */
-      return (unsigned *)intel->batch->ptr;	
-   }
-   else 
-      return NULL;
-}
-
-static void intel_i915_batch_dword( struct i915_winsys *sws,
-				    unsigned dword )
-{
-   struct intel_context *intel = intel_i915_winsys(sws)->intel;
-   intel_batchbuffer_emit_dword( intel->batch, dword );
+   return &intel->batch->base;
 }
 
 static void intel_i915_batch_reloc( struct i915_winsys *sws,
@@ -106,21 +89,12 @@ static void intel_i915_batch_reloc( struct i915_winsys *sws,
       mask |= DRM_BO_FLAG_READ;
    }
 
-#if 0 /* JB old */
-   intel_batchbuffer_emit_reloc( intel->batch,
-				 dri_bo( buf ),
-				 flags, mask,
-				 delta );
-#else /* new */
    intel_offset_relocation( intel->batch,
 			    delta,
 			    dri_bo( buf ),
 			    flags,
 			    mask );
-#endif
 }
-
-
 
 static void intel_i915_batch_flush( struct i915_winsys *sws,
                                     struct pipe_fence_handle **fence )
@@ -166,8 +140,7 @@ intel_create_i915simple( struct intel_context *intel,
    /* Fill in this struct with callbacks that i915simple will need to
     * communicate with the window system, buffer manager, etc. 
     */
-   iws->winsys.batch_start = intel_i915_batch_start;
-   iws->winsys.batch_dword = intel_i915_batch_dword;
+   iws->winsys.batch_get = intel_i915_batch_get;
    iws->winsys.batch_reloc = intel_i915_batch_reloc;
    iws->winsys.batch_flush = intel_i915_batch_flush;
    iws->pws = winsys;

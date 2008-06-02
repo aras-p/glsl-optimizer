@@ -40,6 +40,7 @@ struct i915_batchbuffer
    unsigned char *ptr;
 
    size_t size;
+   size_t actual_size;
 
    size_t relocs;
    size_t max_relocs;
@@ -50,39 +51,25 @@ i915_batchbuffer_check( struct i915_batchbuffer *batch,
 			size_t dwords,
 			size_t relocs )
 {
-#if 0 /* To be used */
    /** TODO JB: Check relocs */
    return dwords * 4 <= batch->size - (batch->ptr - batch->map);
-#else
-   if (batch->winsys->batch_start( batch->winsys, dwords, relocs ))
-      return 1;
-   return 0;
-#endif
 }
 
 static INLINE size_t
 i915_batchbuffer_space( struct i915_batchbuffer *batch )
 {
-#if 0 /* To be used */
    return batch->size - (batch->ptr - batch->map);
-#else
-   return 0;
-#endif
 }
 
 static INLINE void
 i915_batchbuffer_dword( struct i915_batchbuffer *batch,
 			unsigned dword )
 {
-#if 0 /* To be used */
    if (i915_batchbuffer_space(batch) < 4)
       return;
 
    *(unsigned *)batch->ptr = dword;
    batch->ptr += 4;
-#else
-   batch->winsys->batch_dword( batch->winsys, dword );
-#endif
 }
 
 static INLINE void
@@ -90,14 +77,11 @@ i915_batchbuffer_write( struct i915_batchbuffer *batch,
 			void *data,
 			size_t size )
 {
-#if 0 /* To be used */
    if (i915_batchbuffer_space(batch) < size)
       return;
 
    memcpy(data, batch->ptr, size);
    batch->ptr += size;
-#else
-#endif
 }
 
 static INLINE void
@@ -135,4 +119,4 @@ i915_batchbuffer_flush( struct i915_batchbuffer *batch,
    i915->hardware_dirty = ~0;				\
 } while (0)
 
-#endif 
+#endif
