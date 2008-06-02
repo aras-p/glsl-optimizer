@@ -861,7 +861,7 @@ void
 i915_dump_batchbuffer( struct i915_context *i915 )
 {
    struct debug_stream stream;
-   unsigned *start = i915->batch_start;
+   unsigned *start = 0;/*i915->batch_start;*/
    unsigned *end = i915->winsys->batch_start( i915->winsys, 0, 0 );
    unsigned long bytes = (unsigned long) (end - start) * 4;
    boolean done = FALSE;

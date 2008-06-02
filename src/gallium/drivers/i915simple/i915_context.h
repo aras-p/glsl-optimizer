@@ -209,6 +209,8 @@ struct i915_texture {
    struct pipe_buffer *buffer;
 };
 
+struct i915_batchbuffer;
+
 struct i915_context
 {
    struct pipe_context pipe;
@@ -241,7 +243,7 @@ struct i915_context
    unsigned num_vertex_elements;
    unsigned num_vertex_buffers;
 
-   unsigned *batch_start;
+   struct i915_batchbuffer *batch;
 
    /** Vertex buffer */
    struct pipe_buffer *vbo;

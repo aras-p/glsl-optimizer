@@ -181,7 +181,8 @@ struct pipe_context *i915_create_context( struct pipe_screen *screen,
 
    /* Batch stream debugging is a bit hacked up at the moment:
     */
-   i915->batch_start = NULL;
+   i915->batch = CALLOC_STRUCT(i915_batchbuffer);
+   i915->batch->winsys = i915_winsys;
 
    return &i915->pipe;
 }
