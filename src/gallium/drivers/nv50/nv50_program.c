@@ -684,16 +684,37 @@ nv50_program_validate(struct nv50_context *nv50, struct nv50_program *p)
 	p->translated = TRUE;
 }
 
+static void
+nv50_program_validate_data(struct nv50_context *nv50, struct nv50_program *p)
+{
+	int i;
+
+	for (i = 0; i < p->immd_nr; i++) {
+		BEGIN_RING(tesla, 0x0f00, 2);
+		OUT_RING  ((NV50_CB_PMISC << 16) | (i << 8));
+		OUT_RING  (fui(p->immd[i]));
+	}
+}
+
+static void
+nv50_program_validate_code(struct nv50_context *nv50, struct nv50_program *p)
+{
+	struct pipe_winsys *ws = nv50->pipe.winsys;
+	void *map;
+
+	if (!p->buffer)
+		p->buffer = ws->buffer_create(ws, 0x100, 0, p->insns_nr * 4);
+	map = ws->buffer_map(ws, p->buffer, PIPE_BUFFER_USAGE_CPU_WRITE);
+	memcpy(map, p->insns, p->insns_nr * 4);
+	ws->buffer_unmap(ws, p->buffer);
+}
+
 void
 nv50_vertprog_validate(struct nv50_context *nv50)
 {
-	struct pipe_winsys *ws = nv50->pipe.winsys;
-	struct nouveau_winsys *nvws = nv50->screen->nvws;
 	struct nouveau_grobj *tesla = nv50->screen->tesla;
 	struct nv50_program *p = nv50->vertprog;
 	struct nouveau_stateobj *so;
-	void *map;
-	int i;
 
 	if (!p->translated) {
 		nv50_program_validate(nv50, p);
@@ -701,17 +722,8 @@ nv50_vertprog_validate(struct nv50_context *nv50)
 			assert(0);
 	}
 
-	if (!p->buffer)
-		p->buffer = ws->buffer_create(ws, 0x100, 0, p->insns_nr * 4);
-	map = ws->buffer_map(ws, p->buffer, PIPE_BUFFER_USAGE_CPU_WRITE);
-	memcpy(map, p->insns, p->insns_nr * 4);
-	ws->buffer_unmap(ws, p->buffer);
-
-	for (i = 0; i < p->immd_nr; i++) {
-		BEGIN_RING(tesla, 0x0f00, 2);
-		OUT_RING  ((NV50_CB_PMISC << 16) | (i << 8));
-		OUT_RING  (fui(p->immd[i]));
-	}
+	nv50_program_validate_data(nv50, p);
+	nv50_program_validate_code(nv50, p);
 
 	so = so_new(11, 2);
 	so_method(so, tesla, NV50TCL_VP_ADDRESS_HIGH, 2);
