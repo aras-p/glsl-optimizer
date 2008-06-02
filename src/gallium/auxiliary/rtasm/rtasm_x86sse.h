@@ -191,7 +191,7 @@ void sse_divss( struct x86_function *p, struct x86_reg dst, struct x86_reg src )
 void sse_andnps( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 void sse_andps( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 void sse_cmpps( struct x86_function *p, struct x86_reg dst, struct x86_reg src,
-                unsigned char cc );
+                enum sse_cc cc );
 void sse_maxps( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 void sse_maxss( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 void sse_minps( struct x86_function *p, struct x86_reg dst, struct x86_reg src );

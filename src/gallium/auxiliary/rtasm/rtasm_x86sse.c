@@ -888,7 +888,7 @@ void sse_unpcklps( struct x86_function *p, struct x86_reg dst, struct x86_reg sr
 void sse_cmpps( struct x86_function *p,
 		struct x86_reg dst,
 		struct x86_reg src,
-		unsigned char cc) 
+		enum sse_cc cc) 
 {
    DUMP_RRI( dst, src, cc );
    emit_2ub(p, X86_TWOB, 0xC2);
