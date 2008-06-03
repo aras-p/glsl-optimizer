@@ -15,6 +15,10 @@ struct nv50_program {
 	struct tgsi_shader_info info;
 	boolean translated;
 
+	enum {
+		NV50_PROG_VERTEX,
+		NV50_PROG_FRAGMENT
+	} type;
 	unsigned *insns;
 	unsigned insns_nr;
 
@@ -25,9 +29,9 @@ struct nv50_program {
 
 	struct nouveau_resource *data;
 
-	union {
+	struct {
+		unsigned high_temp;
 		struct {
-			unsigned high_temp;
 			unsigned attr[2];
 		} vp;
 	} cfg;

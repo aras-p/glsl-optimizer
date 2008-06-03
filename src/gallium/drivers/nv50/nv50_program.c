@@ -11,7 +11,7 @@
 #include "nv50_state.h"
 
 #define NV50_SU_MAX_TEMP 64
-#define TX_FRAGPROG 0
+#define TX_FRAGPROG 1
 
 struct nv50_reg {
 	enum {
@@ -52,15 +52,23 @@ alloc_reg(struct nv50_pc *pc, struct nv50_reg *reg)
 {
 	int i;
 
-	if (reg->type != P_TEMP || reg->hw >= 0)
+	if (reg->type != P_TEMP)
 		return;
+
+	if (reg->hw >= 0) {
+		/*XXX: do this here too to catch FP temp-as-attr usage..
+		 *     not clean, but works */
+		if (pc->p->cfg.high_temp < (reg->hw + 1))
+			pc->p->cfg.high_temp = reg->hw + 1;
+		return;
+	}
 
 	for (i = 0; i < NV50_SU_MAX_TEMP; i++) {
 		if (!(pc->r_temp[i])) {
 			pc->r_temp[i] = reg;
 			reg->hw = i;
-			if (pc->p->cfg.vp.high_temp < (i + 1))
-				pc->p->cfg.vp.high_temp = i + 1;
+			if (pc->p->cfg.high_temp < (i + 1))
+				pc->p->cfg.high_temp = i + 1;
 			return;
 		}
 	}
@@ -237,6 +245,24 @@ set_immd(struct nv50_pc *pc, struct nv50_reg *imm, unsigned *inst)
 }
 
 static void
+emit_interp(struct nv50_pc *pc, struct nv50_reg *dst,
+	    struct nv50_reg *src, struct nv50_reg *iv, boolean noperspective)
+{
+	unsigned inst[2] = { 0, 0 };
+
+	inst[0] |= 0x80000000;
+	set_dst(pc, dst, inst);
+	alloc_reg(pc, iv);
+	inst[0] |= (iv->hw << 9);
+	alloc_reg(pc, src);
+	inst[0] |= (src->hw << 16);
+	if (noperspective)
+		inst[0] |= (1 << 25);
+
+	emit(pc, inst);
+}
+
+static void
 emit_mov(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src)
 {
 	unsigned inst[2] = { 0, 0 };
@@ -409,20 +435,57 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 
 	NOUVEAU_ERR("%d attrib regs\n", pc->attr_nr);
 	if (pc->attr_nr) {
+		struct nv50_reg *iv = NULL, *tmp = NULL;
 		int aid = 0;
 
 		pc->attr = calloc(pc->attr_nr * 4, sizeof(struct nv50_reg));
 		if (!pc->attr)
 			goto out_err;
 
-		for (i = 0; i < pc->attr_nr; i++) {
-			for (c = 0; c < 4; c++) {
-				pc->p->cfg.vp.attr[aid/32] |= (1 << (aid % 32));
-				pc->attr[i*4+c].type = P_ATTR;
-				pc->attr[i*4+c].hw = aid++;
-				pc->attr[i*4+c].index = i;
-			}
+		if (pc->p->type == NV50_PROG_FRAGMENT) {
+			iv = alloc_temp(pc, NULL);
+			aid++;
 		}
+
+		for (i = 0; i < pc->attr_nr; i++) {
+			struct nv50_reg *a = &pc->attr[i*4];
+
+			for (c = 0; c < 4; c++) {
+				if (pc->p->type == NV50_PROG_FRAGMENT) {
+					struct nv50_reg *at =
+						alloc_temp(pc, NULL);
+					pc->attr[i*4+c].type = at->type;
+					pc->attr[i*4+c].hw = at->hw;
+					pc->attr[i*4+c].index = at->index;
+				} else {
+					pc->p->cfg.vp.attr[aid/32] |=
+						(1 << (aid % 32));
+					pc->attr[i*4+c].type = P_ATTR;
+					pc->attr[i*4+c].hw = aid++;
+					pc->attr[i*4+c].index = i;
+				}
+			}
+
+			if (pc->p->type != NV50_PROG_FRAGMENT)
+				continue;
+
+			emit_interp(pc, iv, iv, iv, FALSE);
+			tmp = alloc_temp(pc, NULL);
+			{
+				unsigned inst[2] = { 0, 0 };
+				inst[0]  = 0x90000000;
+				inst[0] |= (tmp->hw << 2);
+				emit(pc, inst);
+			}
+			emit_interp(pc, &a[0], &a[0], tmp, TRUE);
+			emit_interp(pc, &a[1], &a[1], tmp, TRUE);
+			emit_interp(pc, &a[2], &a[2], tmp, TRUE);
+			emit_interp(pc, &a[3], &a[3], tmp, TRUE);
+			free_temp(pc, tmp);
+		}
+
+		if (iv)
+			free_temp(pc, iv);
 	}
 
 	NOUVEAU_ERR("%d result regs\n", pc->result_nr);
@@ -435,7 +498,10 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 
 		for (i = 0; i < pc->result_nr; i++) {
 			for (c = 0; c < 4; c++) {
-				pc->result[i*4+c].type = P_RESULT;
+				if (pc->p->type == NV50_PROG_FRAGMENT)
+					pc->result[i*4+c].type = P_TEMP;
+				else
+					pc->result[i*4+c].type = P_RESULT;
 				pc->result[i*4+c].hw = rid++;
 				pc->result[i*4+c].index = i;
 			}
@@ -492,7 +558,7 @@ nv50_program_tx(struct nv50_program *p)
 	if (!pc)
 		return FALSE;
 	pc->p = p;
-	pc->p->cfg.vp.high_temp = 4;
+	pc->p->cfg.high_temp = 4;
 
 	ret = nv50_program_tx_prep(pc);
 	if (ret == FALSE)
@@ -551,6 +617,8 @@ nv50_program_validate(struct nv50_context *nv50, struct nv50_program *p)
 
 		if (nv50_program_tx(p) == FALSE)
 			assert(0);
+		/* *not* sufficient, it's fine if last inst is long and
+		 * NOT immd - otherwise it's fucked fucked fucked */
 		p->insns[p->insns_nr - 1] |= 0x00000001;
 
 		for (i = 0; i < p->insns_nr; i++)
@@ -620,7 +688,7 @@ nv50_vertprog_validate(struct nv50_context *nv50)
 	so_data  (so, p->cfg.vp.attr[1]);
 	so_method(so, tesla, 0x16ac, 2);
 	so_data  (so, 8);
-	so_data  (so, p->cfg.vp.high_temp);
+	so_data  (so, p->cfg.high_temp);
 	so_method(so, tesla, 0x140c, 1);
 	so_data  (so, 0); /* program start offset */
 	so_emit(nv50->screen->nvws, so);
@@ -645,12 +713,16 @@ nv50_fragprog_validate(struct nv50_context *nv50)
 	nv50_program_validate_data(nv50, p);
 	nv50_program_validate_code(nv50, p);
 
-	so = so_new(3, 2);
+	so = so_new(7, 2);
 	so_method(so, tesla, NV50TCL_FP_ADDRESS_HIGH, 2);
 	so_reloc (so, p->buffer, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD |
 		  NOUVEAU_BO_HIGH, 0, 0);
 	so_reloc (so, p->buffer, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD |
 		  NOUVEAU_BO_LOW, 0, 0);
+	so_method(so, tesla, 0x198c, 1);
+	so_data  (so, p->cfg.high_temp);
+	so_method(so, tesla, 0x1414, 1);
+	so_data  (so, 0); /* program start offset */
 	so_emit(nv50->screen->nvws, so);
 	so_ref(NULL, &so);
 }
