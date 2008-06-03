@@ -31,6 +31,7 @@
 #include "i915_blit.h"
 #include "i915_reg.h"
 #include "i915_batch.h"
+#include "i915_debug.h"
 
 #define FILE_DEBUG_FLAG DEBUG_BLIT
 

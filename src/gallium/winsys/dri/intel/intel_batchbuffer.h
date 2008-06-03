@@ -88,7 +88,7 @@ intel_batchbuffer_space(struct intel_batchbuffer *batch)
 static INLINE void
 intel_batchbuffer_emit_dword(struct intel_batchbuffer *batch, GLuint dword)
 {
-   assert(batch->map);
+   assert(batch->base.map);
    assert(intel_batchbuffer_space(batch) >= 4);
    *(GLuint *) (batch->base.ptr) = dword;
    batch->base.ptr += 4;
@@ -100,7 +100,7 @@ intel_batchbuffer_require_space(struct intel_batchbuffer *batch,
 {
    struct _DriFenceObject *fence;
 
-   assert(sz < batch->size - 8);
+   assert(sz < batch->base.size - 8);
    if (intel_batchbuffer_space(batch) < sz ||
        (batch->flags != 0 && flags != 0 && batch->flags != flags)) {
       fence = intel_batchbuffer_flush(batch);
