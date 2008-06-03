@@ -536,7 +536,6 @@ static struct x86_reg fetch_src( struct aos_compilation *cp,
          emit_pshufd(cp, dst, arg0, swz);
       else
          sse_movaps(cp->func, dst, arg0);
-      arg0 = dst;
 
       if (negs && negs != 0xf) {
          struct x86_reg imm_swz = aos_get_internal_xmm(cp, IMM_SWZ);
@@ -568,12 +567,14 @@ static struct x86_reg fetch_src( struct aos_compilation *cp,
          struct x86_reg neg = aos_get_internal(cp, IMM_NEGS);
          struct x86_reg tmp = aos_get_xmm_reg(cp);
 
-         sse_movaps(cp->func, tmp, arg0);
+         sse_movaps(cp->func, tmp, dst);
          sse_mulps(cp->func, tmp, neg);
          sse_maxps(cp->func, dst, tmp);
 
          aos_release_xmm_reg(cp, tmp.idx);
       }
+
+      return dst;
    }
       
    return arg0;
