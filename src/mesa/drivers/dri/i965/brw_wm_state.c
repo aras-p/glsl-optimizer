@@ -199,28 +199,28 @@ wm_unit_create_from_key(struct brw_context *brw, struct brw_wm_unit_key *key,
 			 NULL, NULL);
 
    /* Emit WM program relocation */
-   dri_emit_reloc(bo,
-		  DRM_GEM_DOMAIN_I915_INSTRUCTION, 0,
-		  wm.thread0.grf_reg_count << 1,
-		  offsetof(struct brw_wm_unit_state, thread0),
-		  brw->wm.prog_bo);
+   intel_bo_emit_reloc(bo,
+		       DRM_GEM_DOMAIN_I915_INSTRUCTION, 0,
+		       wm.thread0.grf_reg_count << 1,
+		       offsetof(struct brw_wm_unit_state, thread0),
+		       brw->wm.prog_bo);
 
    /* Emit scratch space relocation */
    if (key->total_scratch != 0) {
-      dri_emit_reloc(bo,
-		     0, 0,
-		     wm.thread2.per_thread_scratch_space,
-		     offsetof(struct brw_wm_unit_state, thread2),
-		     brw->wm.scratch_buffer);
+      intel_bo_emit_reloc(bo,
+			  0, 0,
+			  wm.thread2.per_thread_scratch_space,
+			  offsetof(struct brw_wm_unit_state, thread2),
+			  brw->wm.scratch_buffer);
    }
 
    /* Emit sampler state relocation */
    if (key->sampler_count != 0) {
-      dri_emit_reloc(bo,
-		     DRM_GEM_DOMAIN_I915_INSTRUCTION, 0,
-		     wm.wm4.stats_enable | (wm.wm4.sampler_count << 2),
-		     offsetof(struct brw_wm_unit_state, wm4),
-		     brw->wm.sampler_bo);
+      intel_bo_emit_reloc(bo,
+			  DRM_GEM_DOMAIN_I915_INSTRUCTION, 0,
+			  wm.wm4.stats_enable | (wm.wm4.sampler_count << 2),
+			  offsetof(struct brw_wm_unit_state, wm4),
+			  brw->wm.sampler_bo);
    }
 
    return bo;
@@ -251,7 +251,7 @@ static int upload_wm_unit( struct brw_context *brw )
 	 brw->wm.scratch_buffer = dri_bo_alloc(intel->bufmgr,
 					       "wm scratch",
 					       total,
-					       4096, DRM_BO_FLAG_MEM_TT);
+					       4096);
       }
    }
 

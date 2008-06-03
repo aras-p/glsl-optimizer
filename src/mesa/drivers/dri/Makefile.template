@@ -11,10 +11,6 @@ COMMON_SOURCES = \
         ../common/xmlconfig.c \
         ../common/drirenderbuffer.c 
 
-COMMON_BM_SOURCES = \
-	../common/dri_bufmgr.c
-
-
 ifeq ($(WINDOW_SYSTEM),dri)
 WINOBJ=
 WINLIB=

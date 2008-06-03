@@ -35,6 +35,7 @@
 #include "mm.h"
 #include "texmem.h"
 #include "dri_bufmgr.h"
+#include "intel_bufmgr.h"
 
 #include "intel_screen.h"
 #include "intel_tex_obj.h"

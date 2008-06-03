@@ -59,8 +59,7 @@
 #include "intel_buffer_objects.h"
 #include "intel_fbo.h"
 #include "intel_decode.h"
-#include "intel_bufmgr_fake.h"
-#include "intel_bufmgr_gem.h"
+#include "intel_bufmgr.h"
 
 #include "drirenderbuffer.h"
 #include "vblank.h"
@@ -474,7 +473,7 @@ intel_init_bufmgr(struct intel_context *intel)
       case DRI_CONF_BO_REUSE_DISABLED:
 	 break;
       case DRI_CONF_BO_REUSE_ALL:
-	 intel_gem_enable_bo_reuse(intel->bufmgr);
+	 intel_bufmgr_gem_enable_reuse(intel->bufmgr);
 	 break;
       }
    }
@@ -493,12 +492,12 @@ intel_init_bufmgr(struct intel_context *intel)
 	 return GL_FALSE;
       }
 
-      intel->bufmgr = dri_bufmgr_fake_init(intelScreen->tex.offset,
-					   intelScreen->tex.map,
-					   intelScreen->tex.size,
-					   intel_fence_emit,
-					   intel_fence_wait,
-					   intel);
+      intel->bufmgr = intel_bufmgr_fake_init(intelScreen->tex.offset,
+					     intelScreen->tex.map,
+					     intelScreen->tex.size,
+					     intel_fence_emit,
+					     intel_fence_wait,
+					     intel);
    }
 
    /* XXX bufmgr should be per-screen, not per-context */
@@ -873,7 +872,7 @@ intelContendedLock(struct intel_context *intel, GLuint flags)
     */
    if (!intel->ttm && sarea->texAge != intel->hHWContext) {
       sarea->texAge = intel->hHWContext;
-      dri_bufmgr_fake_contended_lock_take(intel->bufmgr);
+      intel_bufmgr_fake_contended_lock_take(intel->bufmgr);
       if (INTEL_DEBUG & DEBUG_BATCH)
 	 intel_decode_context_reset();
       if (INTEL_DEBUG & DEBUG_BUFMGR)

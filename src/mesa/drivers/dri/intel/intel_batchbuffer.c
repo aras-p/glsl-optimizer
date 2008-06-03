@@ -29,6 +29,7 @@
 #include "intel_ioctl.h"
 #include "intel_decode.h"
 #include "intel_reg.h"
+#include "intel_bufmgr.h"
 
 /* Relocations in kernel space:
  *    - pass dma buffer seperately
@@ -82,8 +83,7 @@ intel_batchbuffer_reset(struct intel_batchbuffer *batch)
       batch->buffer = malloc (intel->maxBatchSize);
 
    batch->buf = dri_bo_alloc(intel->bufmgr, "batchbuffer",
-			     intel->maxBatchSize, 4096,
-			     DRM_BO_FLAG_MEM_LOCAL | DRM_BO_FLAG_CACHED | DRM_BO_FLAG_CACHED_MAPPED);
+			     intel->maxBatchSize, 4096);
    if (batch->buffer)
       batch->map = batch->buffer;
    else {
@@ -290,8 +290,8 @@ intel_batchbuffer_emit_reloc(struct intel_batchbuffer *batch,
    if (batch->ptr - batch->map > batch->buf->size)
     _mesa_printf ("bad relocation ptr %p map %p offset %d size %d\n",
 		  batch->ptr, batch->map, batch->ptr - batch->map, batch->buf->size);
-   ret = dri_emit_reloc(batch->buf, read_domains, write_domain,
-			delta, batch->ptr - batch->map, buffer);
+   ret = intel_bo_emit_reloc(batch->buf, read_domains, write_domain,
+			     delta, batch->ptr - batch->map, buffer);
 
    /*
     * Using the old buffer offset, write in what the right data would be, in case

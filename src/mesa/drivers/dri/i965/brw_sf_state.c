@@ -253,18 +253,18 @@ sf_unit_create_from_key(struct brw_context *brw, struct brw_sf_unit_key *key,
 			 NULL, NULL);
 
    /* Emit SF program relocation */
-   dri_emit_reloc(bo,
-		  DRM_GEM_DOMAIN_I915_INSTRUCTION, 0,
-		  sf.thread0.grf_reg_count << 1,
-		  offsetof(struct brw_sf_unit_state, thread0),
-		  brw->sf.prog_bo);
+   intel_bo_emit_reloc(bo,
+		       DRM_GEM_DOMAIN_I915_INSTRUCTION, 0,
+		       sf.thread0.grf_reg_count << 1,
+		       offsetof(struct brw_sf_unit_state, thread0),
+		       brw->sf.prog_bo);
 
    /* Emit SF viewport relocation */
-   dri_emit_reloc(bo,
-		  DRM_GEM_DOMAIN_I915_INSTRUCTION, 0,
-		  sf.sf5.front_winding | (sf.sf5.viewport_transform << 1),
-		  offsetof(struct brw_sf_unit_state, sf5),
-		  brw->sf.vp_bo);
+   intel_bo_emit_reloc(bo,
+		       DRM_GEM_DOMAIN_I915_INSTRUCTION, 0,
+		       sf.sf5.front_winding | (sf.sf5.viewport_transform << 1),
+		       offsetof(struct brw_sf_unit_state, sf5),
+		       brw->sf.vp_bo);
 
    return bo;
 }

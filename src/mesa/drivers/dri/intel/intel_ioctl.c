@@ -45,7 +45,7 @@
 #include "drm.h"
 #include "i915_drm.h"
 
-#include "intel_bufmgr_gem.h"
+#include "intel_bufmgr.h"
 
 #define FILE_DEBUG_FLAG DEBUG_IOCTL
 

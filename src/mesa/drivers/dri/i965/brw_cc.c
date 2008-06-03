@@ -256,12 +256,12 @@ cc_unit_create_from_key(struct brw_context *brw, struct brw_cc_unit_key *key)
 			 NULL, NULL);
 
    /* Emit CC viewport relocation */
-   dri_emit_reloc(bo,
-		  DRM_GEM_DOMAIN_I915_INSTRUCTION,
-		  0,
-		  0,
-		  offsetof(struct brw_cc_unit_state, cc4),
-		  brw->cc.vp_bo);
+   intel_bo_emit_reloc(bo,
+		       DRM_GEM_DOMAIN_I915_INSTRUCTION,
+		       0,
+		       0,
+		       offsetof(struct brw_cc_unit_state, cc4),
+		       brw->cc.vp_bo);
 
    return bo;
 }

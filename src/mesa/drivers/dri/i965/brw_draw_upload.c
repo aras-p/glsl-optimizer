@@ -247,10 +247,7 @@ static void wrap_buffers( struct brw_context *brw,
    if (brw->vb.upload.bo != NULL)
       dri_bo_unreference(brw->vb.upload.bo);
    brw->vb.upload.bo = dri_bo_alloc(brw->intel.bufmgr, "temporary VBO",
-				    size, 1,
-				    DRM_BO_FLAG_MEM_LOCAL |
-				    DRM_BO_FLAG_CACHED |
-				    DRM_BO_FLAG_CACHED_MAPPED);
+				    size, 1);
 
    /* Set the internal VBO\ to no-backing-store.  We only use them as a
     * temporary within a brw_try_draw_prims while the lock is held.

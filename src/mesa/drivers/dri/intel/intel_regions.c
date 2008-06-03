@@ -44,7 +44,7 @@
 #include "intel_blit.h"
 #include "intel_buffer_objects.h"
 #include "dri_bufmgr.h"
-#include "intel_bufmgr_gem.h"
+#include "intel_bufmgr.h"
 #include "intel_batchbuffer.h"
 
 #define FILE_DEBUG_FLAG DEBUG_REGION
@@ -106,10 +106,7 @@ intel_region_alloc(struct intel_context *intel,
    dri_bo *buffer;
 
    buffer = dri_bo_alloc(intel->bufmgr, "region",
-			 pitch * cpp * height, 64,
-			 DRM_BO_FLAG_MEM_LOCAL |
-			 DRM_BO_FLAG_CACHED |
-			 DRM_BO_FLAG_CACHED_MAPPED);
+			 pitch * cpp * height, 64);
 
    return intel_region_alloc_internal(intel, cpp, pitch, height, 0, buffer);
 }
@@ -121,7 +118,7 @@ intel_region_alloc_for_handle(struct intel_context *intel,
 {
    dri_bo *buffer;
 
-   buffer = intel_gem_bo_create_from_handle(intel->bufmgr, "region", handle);
+   buffer = intel_bo_gem_create_from_name(intel->bufmgr, "region", handle);
 
    return intel_region_alloc_internal(intel,
 				      cpp, pitch, height, tiled, buffer);
@@ -355,10 +352,7 @@ intel_region_release_pbo(struct intel_context *intel,
 
    region->buffer = dri_bo_alloc(intel->bufmgr, "region",
 				 region->pitch * region->cpp * region->height,
-				 64,
-				 DRM_BO_FLAG_MEM_LOCAL |
-				 DRM_BO_FLAG_CACHED |
-				 DRM_BO_FLAG_CACHED_MAPPED);
+				 64);
 }
 
 /* Break the COW tie to the pbo.  Both the pbo and the region end up
@@ -440,17 +434,16 @@ intel_recreate_static(struct intel_context *intel,
 
    if (intel->ttm) {
       assert(region_desc->bo_handle != -1);
-      region->buffer = intel_gem_bo_create_from_handle(intel->bufmgr,
-						       name,
-						       region_desc->bo_handle);
+      region->buffer = intel_bo_gem_create_from_name(intel->bufmgr,
+						     name,
+						     region_desc->bo_handle);
    } else {
-      region->buffer = dri_bo_alloc_static(intel->bufmgr,
-					   name,
-					   region_desc->offset,
-					   intelScreen->pitch *
-					   intelScreen->height,
-					   region_desc->map,
-					   DRM_BO_FLAG_MEM_TT);
+      region->buffer = intel_bo_fake_alloc_static(intel->bufmgr,
+						  name,
+						  region_desc->offset,
+						  intelScreen->pitch *
+						  intelScreen->height,
+						  region_desc->map);
    }
 
    assert(region->buffer != NULL);

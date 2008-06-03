@@ -306,10 +306,7 @@ static int prepare_constant_buffer(struct brw_context *brw)
 	  * They're generally around 64b.
 	  */
 	 brw->curbe.curbe_bo = dri_bo_alloc(brw->intel.bufmgr, "CURBE",
-					    4096, 1 << 6,
-					    DRM_BO_FLAG_MEM_LOCAL |
-					    DRM_BO_FLAG_CACHED |
-					    DRM_BO_FLAG_CACHED_MAPPED);
+					    4096, 1 << 6);
 	 brw->curbe.curbe_next_offset = 0;
       }
 
