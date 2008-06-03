@@ -11,7 +11,6 @@
 #include "nv50_state.h"
 
 #define NV50_SU_MAX_TEMP 64
-#define TX_FRAGPROG 1
 
 struct nv50_reg {
 	enum {
@@ -594,44 +593,16 @@ out_cleanup:
 static void
 nv50_program_validate(struct nv50_context *nv50, struct nv50_program *p)
 {
-#if TX_FRAGPROG == 0
-	struct tgsi_parse_context pc;
+	int i;
 
-	tgsi_parse_init(&pc, p->pipe.tokens);
+	if (nv50_program_tx(p) == FALSE)
+		assert(0);
+	/* *not* sufficient, it's fine if last inst is long and
+	 * NOT immd - otherwise it's fucked fucked fucked */
+	p->insns[p->insns_nr - 1] |= 0x00000001;
 
-	if (pc.FullHeader.Processor.Processor == TGSI_PROCESSOR_FRAGMENT) {
-		p->insns_nr = 8;
-		p->insns = malloc(p->insns_nr * sizeof(unsigned));
-		p->insns[0] = 0x80000000;
-		p->insns[1] = 0x9000000c;
-		p->insns[2] = 0x82010600;
-		p->insns[3] = 0x82020604;
-		p->insns[4] = 0x80030609;
-		p->insns[5] = 0x00020780;
-		p->insns[6] = 0x8004060d;
-		p->insns[7] = 0x00020781;
-	} else
-	if (pc.FullHeader.Processor.Processor == TGSI_PROCESSOR_VERTEX) {
-#endif
-		int i;
-
-		if (nv50_program_tx(p) == FALSE)
-			assert(0);
-		/* *not* sufficient, it's fine if last inst is long and
-		 * NOT immd - otherwise it's fucked fucked fucked */
-		p->insns[p->insns_nr - 1] |= 0x00000001;
-
-		for (i = 0; i < p->insns_nr; i++)
-			NOUVEAU_ERR("%d 0x%08x\n", i, p->insns[i]);
-#if TX_FRAGPROG == 0
-	} else {
-		NOUVEAU_ERR("invalid TGSI processor\n");
-		tgsi_parse_free(&pc);
-		return;
-	}
-
-	tgsi_parse_free(&pc);
-#endif
+	for (i = 0; i < p->insns_nr; i++)
+		NOUVEAU_ERR("%d 0x%08x\n", i, p->insns[i]);
 
 	p->translated = TRUE;
 }
