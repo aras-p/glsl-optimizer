@@ -226,6 +226,10 @@ def generate(env):
 			cflags += ['-O3', '-g3']
 		if env['profile']:
 			cflags += ['-pg']
+		if env['machine'] == 'x86' and default_machine == 'x86_64':
+			cflags += ['-m32']
+		if env['machine'] == 'x86_64' and default_machine == 'x86':
+			cflags += ['-m64']
 		cflags += [
 			'-Wall', 
 			'-Wmissing-prototypes',
@@ -293,10 +297,16 @@ def generate(env):
 	env.Append(CXXFLAGS = cflags)
 
 	# Linker options
+	linkflags = []
+	if gcc:
+		if env['machine'] == 'x86' and default_machine == 'x86_64':
+			linkflags += ['-m32']
+		if env['machine'] == 'x86_64' and default_machine == 'x86':
+			linkflags += ['-m64']
 	if platform == 'winddk':
 		# See also:
 		# - http://msdn2.microsoft.com/en-us/library/y0zzbyt4.aspx
-		env.Append(LINKFLAGS = [
+		linkflags += [
 			'/merge:_PAGE=PAGE',
 			'/merge:_TEXT=.text',
 			'/section:INIT,d',
@@ -322,7 +332,8 @@ def generate(env):
 			'/base:0x10000',
 			
 			'/entry:DrvEnableDriver',
-		])
+		]
+	env.Append(LINKFLAGS = linkflags)
 
 
 	createConvenienceLibBuilder(env)
