@@ -96,11 +96,25 @@ _eglGetCurrentDisplay(void)
 }
 
 
+/**
+ * Free all the data hanging of an _EGLDisplay object, but not
+ * the object itself.
+ */
 void
 _eglCleanupDisplay(_EGLDisplay *disp)
 {
-   /* XXX incomplete */
+   EGLint i;
+
+   for (i = 0; i < disp->NumConfigs; i++) {
+      free(disp->Configs[i]);
+   }
    free(disp->Configs);
+   disp->Configs = NULL;
+
+   /* XXX incomplete */
+
    free((void *) disp->DriverName);
-   /* driver deletes _EGLDisplay */
+   disp->DriverName = NULL;
+
+   /* driver deletes the _EGLDisplay object */
 }

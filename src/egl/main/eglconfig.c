@@ -78,8 +78,8 @@ _eglLookupConfig(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config)
    EGLint i;
    _EGLDisplay *disp = _eglLookupDisplay(dpy);
    for (i = 0; i < disp->NumConfigs; i++) {
-      if (disp->Configs[i].Handle == config) {
-          return disp->Configs + i;
+      if (disp->Configs[i]->Handle == config) {
+          return disp->Configs[i];
       }
    }
    return NULL;
@@ -88,23 +88,24 @@ _eglLookupConfig(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config)
 
 /**
  * Add the given _EGLConfig to the given display.
+ * Note that we just save the ptr to the config (we don't copy the config).
  */
 _EGLConfig *
-_eglAddConfig(_EGLDisplay *display, const _EGLConfig *config)
+_eglAddConfig(_EGLDisplay *display, _EGLConfig *config)
 {
-   _EGLConfig *newConfigs;
+   _EGLConfig **newConfigs;
    EGLint n;
 
    n = display->NumConfigs;
 
-   newConfigs = (_EGLConfig *) realloc(display->Configs,
-                                       (n + 1) * sizeof(_EGLConfig));
+   /* realloc array of ptrs */
+   newConfigs = (_EGLConfig **) realloc(display->Configs,
+                                        (n + 1) * sizeof(_EGLConfig *));
    if (newConfigs) {
       display->Configs = newConfigs;
-      display->Configs[n] = *config; /* copy struct */
-      display->Configs[n].Handle = (EGLConfig) n;
+      display->Configs[n] = config;
       display->NumConfigs++;
-      return display->Configs + n;
+      return config;
    }
    else {
       return NULL;
@@ -330,8 +331,8 @@ _eglChooseConfig(_EGLDriver *drv, EGLDisplay dpy, const EGLint *attrib_list,
 
    /* make array of pointers to qualifying configs */
    for (i = count = 0; i < disp->NumConfigs && count < config_size; i++) {
-      if (_eglConfigQualifies(disp->Configs + i, &criteria)) {
-         configList[count++] = disp->Configs + i;
+      if (_eglConfigQualifies(disp->Configs[i], &criteria)) {
+         configList[count++] = disp->Configs[i];
       }
    }
 
@@ -389,7 +390,7 @@ _eglGetConfigs(_EGLDriver *drv, EGLDisplay dpy, EGLConfig *configs,
       EGLint i;
       *num_config = MIN2(disp->NumConfigs, config_size);
       for (i = 0; i < *num_config; i++) {
-         configs[i] = disp->Configs[i].Handle;
+         configs[i] = disp->Configs[i]->Handle;
       }
    }
    else {

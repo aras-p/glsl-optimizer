@@ -34,7 +34,7 @@ _eglLookupConfig(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config);
 
 
 extern _EGLConfig *
-_eglAddConfig(_EGLDisplay *display, const _EGLConfig *config);
+_eglAddConfig(_EGLDisplay *display, _EGLConfig *config);
 
 
 extern EGLBoolean

@@ -21,7 +21,7 @@ struct _egl_display
    _EGLScreen **Screens;  /* array [NumScreens] */
 
    EGLint NumConfigs;
-   _EGLConfig *Configs;  /* array [NumConfigs] */
+   _EGLConfig **Configs;  /* array [NumConfigs] of ptr to _EGLConfig */
 
 #ifdef _EGL_PLATFORM_X
    Display *Xdpy;
