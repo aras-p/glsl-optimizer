@@ -124,6 +124,8 @@ static void PIPE_CDECL vsvg_run_elts( struct draw_vs_varient *varient,
                                       void *output_buffer)
 {
    struct draw_vs_varient_generic *vsvg = (struct draw_vs_varient_generic *)varient;
+
+   if (0) debug_printf("%s %d \n", __FUNCTION__,  count);
 			
    /* Want to do this in small batches for cache locality?
     */
@@ -181,7 +183,7 @@ static void PIPE_CDECL vsvg_run_linear( struct draw_vs_varient *varient,
 {
    struct draw_vs_varient_generic *vsvg = (struct draw_vs_varient_generic *)varient;
 	
-   //debug_printf("%s %d %d\n", __FUNCTION__, start, count);
+   if (0) debug_printf("%s %d %d\n", __FUNCTION__, start, count);
    
 				
    vsvg->fetch->run( vsvg->fetch, 
@@ -257,6 +259,7 @@ struct draw_vs_varient *draw_vs_varient_generic( struct draw_vertex_shader *vs,
    vsvg->base.run_linear    = vsvg_run_linear;
    vsvg->base.destroy       = vsvg_destroy;
 
+   vsvg->draw = vs->draw;
 
 
    /* Build free-standing fetch and emit functions:
