@@ -239,7 +239,7 @@ gear(GLfloat inner_radius, GLfloat outer_radius, GLfloat width,
 
 
 static void
-do_draw(void)
+draw(void)
 {
    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -269,8 +269,9 @@ do_draw(void)
    glPopMatrix();
 }
 
+
 static void
-draw(void)
+draw_gears(void)
 {
    if (stereo) {
       /* First left eye.  */
@@ -284,7 +285,7 @@ draw(void)
 
       glPushMatrix();
       glTranslated(+0.5 * eyesep, 0.0, 0.0);
-      do_draw();
+      draw();
       glPopMatrix();
 
       /* Then right eye.  */
@@ -298,10 +299,48 @@ draw(void)
 
       glPushMatrix();
       glTranslated(-0.5 * eyesep, 0.0, 0.0);
-      do_draw();
+      draw();
       glPopMatrix();
-   } else
-      do_draw();
+   }
+   else {
+      draw();
+   }
+}
+
+
+/** Draw single frame, do SwapBuffers, compute FPS */
+static void
+draw_frame(Display *dpy, Window win)
+{
+   static int frames = 0;
+   static double tRot0 = -1.0, tRate0 = -1.0;
+   double dt, t = current_time();
+
+   if (tRot0 < 0.0)
+      tRot0 = t;
+   dt = t - tRot0;
+   tRot0 = t;
+
+   /* advance rotation for next frame */
+   angle += 70.0 * dt;  /* 70 degrees per second */
+   if (angle > 3600.0)
+      angle -= 3600.0;
+
+   draw_gears();
+   glXSwapBuffers(dpy, win);
+
+   frames++;
+   
+   if (tRate0 < 0.0)
+      tRate0 = t;
+   if (t - tRate0 >= 5.0) {
+      GLfloat seconds = t - tRate0;
+      GLfloat fps = frames / seconds;
+      printf("%d frames in %3.1f seconds = %6.3f FPS\n", frames, seconds,
+             fps);
+      tRate0 = t;
+      frames = 0;
+   }
 }
 
 
@@ -319,7 +358,8 @@ reshape(int width, int height)
 
       left = -5.0 * ((w - 0.5 * eyesep) / fix_point);
       right = 5.0 * ((w + 0.5 * eyesep) / fix_point);
-   } else {
+   }
+   else {
       GLfloat h = (GLfloat) height / (GLfloat) width;
 
       glMatrixMode(GL_PROJECTION);
@@ -463,6 +503,51 @@ make_window( Display *dpy, const char *name,
 }
 
 
+/**
+ * Handle one X event.
+ * \return 1 if time to exit, 0 otherwise
+ */
+static int
+handle_event(Display *dpy, Window win, XEvent *event)
+{
+   switch (event->type) {
+   case Expose:
+      /* we'll redraw below */
+      break;
+   case ConfigureNotify:
+      reshape(event->xconfigure.width, event->xconfigure.height);
+      break;
+   case KeyPress:
+      {
+         char buffer[10];
+         int r, code;
+         code = XLookupKeysym(&event->xkey, 0);
+         if (code == XK_Left) {
+            view_roty += 5.0;
+         }
+         else if (code == XK_Right) {
+            view_roty -= 5.0;
+         }
+         else if (code == XK_Up) {
+            view_rotx += 5.0;
+         }
+         else if (code == XK_Down) {
+            view_rotx -= 5.0;
+         }
+         else {
+            r = XLookupString(&event->xkey, buffer, sizeof(buffer),
+                              NULL, NULL);
+            if (buffer[0] == 27) {
+               /* escape */
+               return 1;
+            }
+         }
+      }
+   }
+   return 0;
+}
+
+
 static void
 event_loop(Display *dpy, Window win)
 {
@@ -470,72 +555,11 @@ event_loop(Display *dpy, Window win)
       while (XPending(dpy) > 0) {
          XEvent event;
          XNextEvent(dpy, &event);
-         switch (event.type) {
-	 case Expose:
-            /* we'll redraw below */
-	    break;
-	 case ConfigureNotify:
-	    reshape(event.xconfigure.width, event.xconfigure.height);
-	    break;
-         case KeyPress:
-            {
-               char buffer[10];
-               int r, code;
-               code = XLookupKeysym(&event.xkey, 0);
-               if (code == XK_Left) {
-                  view_roty += 5.0;
-               }
-               else if (code == XK_Right) {
-                  view_roty -= 5.0;
-               }
-               else if (code == XK_Up) {
-                  view_rotx += 5.0;
-               }
-               else if (code == XK_Down) {
-                  view_rotx -= 5.0;
-               }
-               else {
-                  r = XLookupString(&event.xkey, buffer, sizeof(buffer),
-                                    NULL, NULL);
-                  if (buffer[0] == 27) {
-                     /* escape */
-                     return;
-                  }
-               }
-            }
-         }
+         if (handle_event(dpy, win, &event))
+            return;
       }
 
-      {
-         static int frames = 0;
-         static double tRot0 = -1.0, tRate0 = -1.0;
-         double dt, t = current_time();
-         if (tRot0 < 0.0)
-            tRot0 = t;
-         dt = t - tRot0;
-         tRot0 = t;
-
-         /* advance rotation for next frame */
-         angle += 70.0 * dt;  /* 70 degrees per second */
-         if (angle > 3600.0)
-             angle -= 3600.0;
-
-         draw();
-         glXSwapBuffers(dpy, win);
-
-         frames++;
-
-         if (tRate0 < 0.0)
-            tRate0 = t;
-         if (t - tRate0 >= 5.0) {
-            GLfloat seconds = t - tRate0;
-            GLfloat fps = frames / seconds;
-            printf("%d frames in %3.1f seconds = %6.3f FPS\n", frames, seconds,
-                   fps);
-            tRate0 = t;
-            frames = 0;
-         }
-      }
+      draw_frame(dpy, win);
    }
 }
 
