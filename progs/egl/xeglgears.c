@@ -357,7 +357,7 @@ make_x_window(Display *x_dpy, EGLDisplay egl_dpy,
    int num_visuals;
    EGLContext ctx;
    EGLConfig config;
-   EGLint num_configs;
+   EGLint num_configs, vid;
 
    scrnum = DefaultScreen( x_dpy );
    root = RootWindow( x_dpy, scrnum );
@@ -373,12 +373,14 @@ make_x_window(Display *x_dpy, EGLDisplay egl_dpy,
       exit(1);
    }
 
-   /* choose X window visual similar to EGL config */
-   visTemplate.screen = DefaultScreen(x_dpy);
-   visTemplate.depth = 32; /* 24? */
-   visInfo = XGetVisualInfo(x_dpy,
-                            (VisualDepthMask | VisualScreenMask),
-                            &visTemplate, &num_visuals);
+   if (!eglGetConfigAttrib(egl_dpy, config, EGL_NATIVE_VISUAL_ID, &vid)) {
+      printf("Error: eglGetConfigAttrib() failed\n");
+      exit(1);
+   }
+
+   /* The X window visual must match the EGL config */
+   visTemplate.visualid = vid;
+   visInfo = XGetVisualInfo(x_dpy, VisualIDMask, &visTemplate, &num_visuals);
    if (!visInfo) {
       printf("Error: couldn't get X visual\n");
       exit(1);
