@@ -14,6 +14,7 @@ PROGRAMS = \
 	demo3 \
 	eglinfo \
 	eglgears \
+	peglgears \
 	xeglgears
 
 
@@ -59,6 +60,11 @@ eglgears: eglgears.o $(TOP)/$(LIB_DIR)/libEGL.so
 eglgears.o: eglgears.c $(HEADERS)
 	$(CC) -c $(CFLAGS) -I$(TOP)/include eglgears.c
 
+peglgears: peglgears.o $(TOP)/$(LIB_DIR)/libEGL.so
+	$(CC) $(CFLAGS) peglgears.o -L$(TOP)/$(LIB_DIR) -lEGL $(LIBDRM_LIB) $(APP_LIB_DEPS) -o $@
+
+peglgears.o: peglgears.c $(HEADERS)
+	$(CC) -c $(CFLAGS) -I$(TOP)/include peglgears.c
 
 xeglgears: xeglgears.o $(TOP)/$(LIB_DIR)/libEGL.so
 	$(CC) $(CFLAGS) xeglgears.o -L$(TOP)/$(LIB_DIR) -lEGL $(LIBDRM_LIB) $(APP_LIB_DEPS) -o $@
@@ -73,7 +79,7 @@ clean:
 	rm -f $(PROGRAMS)
 
 run:
-	LD_LIBRARY_PATH=$(TOP)/lib ./eglgears
+	LD_LIBRARY_PATH=$(TOP)/lib ./peglgears
 
 debug:
-	LD_LIBRARY_PATH=$(TOP)/lib gdb ./eglgears
+	LD_LIBRARY_PATH=$(TOP)/lib gdb ./peglgears
