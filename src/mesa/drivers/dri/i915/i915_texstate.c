@@ -65,7 +65,12 @@ translate_texture_format(GLuint mesa_format, GLenum DepthMode)
    case MESA_FORMAT_RGBA_FXT1:
       return (MAPSURF_COMPRESSED | MT_COMPRESS_FXT1);
    case MESA_FORMAT_Z16:
-      return (MAPSURF_16BIT | (DepthMode==GL_ALPHA?MT_16BIT_A16:MT_16BIT_L16));
+      if (DepthMode == GL_ALPHA)
+          return (MAPSURF_16BIT | MT_16BIT_A16);
+      else if (DepthMode == GL_INTENSITY)
+          return (MAPSURF_16BIT | MT_16BIT_I16);
+      else
+          return (MAPSURF_16BIT | MT_16BIT_L16);
    case MESA_FORMAT_RGBA_DXT1:
    case MESA_FORMAT_RGB_DXT1:
       return (MAPSURF_COMPRESSED | MT_COMPRESS_DXT1);
