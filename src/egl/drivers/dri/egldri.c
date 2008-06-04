@@ -82,7 +82,7 @@ _EGLDriver *
 _eglMain(_EGLDisplay *dpy, const char *args)
 {
 #if 1
-   const int card = atoi(args);
+   const int card = args ? atoi(args) : 0;
    _EGLDriver *driver = NULL;
    char driverName[1000];
 
@@ -1086,8 +1086,10 @@ _eglDRICreateDisplay(driDisplay *dpy, __DRIframebuffer *framebuffer)
                             api_ver,
                             & interface_methods,
                             NULL);
-   if (!dpy->driScreen.private)
+   if (!dpy->driScreen.private) {
+      _eglLog(_EGL_WARNING, "egldri.c: DRI create new screen failed");
       return EGL_FALSE;
+   }
 
    DRM_UNLOCK( dpy->drmFD, dpy->pSAREA, dpy->serverContext );
 
