@@ -115,32 +115,66 @@ lookup_context(EGLContext surf)
 }
 
 
-/**
- * XXX temporary
- * Need to query X server's GLX visuals.
- */
-static void
-init_configs(_EGLDriver *drv, EGLDisplay dpy)
+static unsigned int
+bitcount(unsigned int n)
 {
-   _EGLDisplay *disp = _eglLookupDisplay(dpy);
-   int i;
-
-   for (i = 0; i < 2; i++) {
-      _EGLConfig config;
-      int id = i + 1;
-      _eglInitConfig(&config, id);
-      SET_CONFIG_ATTRIB(&config, EGL_RED_SIZE, 8);
-      SET_CONFIG_ATTRIB(&config, EGL_GREEN_SIZE, 8);
-      SET_CONFIG_ATTRIB(&config, EGL_BLUE_SIZE, 8);
-      SET_CONFIG_ATTRIB(&config, EGL_ALPHA_SIZE, 8);
-      if (i > 0) {
-         SET_CONFIG_ATTRIB(&config, EGL_DEPTH_SIZE, 24);
-         SET_CONFIG_ATTRIB(&config, EGL_STENCIL_SIZE, 8);
-      }
-      _eglAddConfig(disp, &config);
+   unsigned int bits;
+   for (bits = 0; n > 0; n = n >> 1) {
+      bits += (n & 1);
    }
+   return bits;
 }
 
+
+/**
+ * Create the EGLConfigs.  (one per X visual)
+ */
+static void
+create_configs(_EGLDriver *drv, EGLDisplay dpy)
+{
+   _EGLDisplay *disp = _eglLookupDisplay(dpy);
+   XVisualInfo *visInfo, visTemplate;
+   int num_visuals, i;
+
+   /* get list of all X visuals, create an EGL config for each */
+   visTemplate.screen = DefaultScreen(disp->Xdpy);
+   visInfo = XGetVisualInfo(disp->Xdpy, VisualScreenMask,
+                            &visTemplate, &num_visuals);
+   if (!visInfo) {
+      printf("egl_xlib.c: couldn't get any X visuals\n");
+      abort();
+   }
+
+   for (i = 0; i < num_visuals; i++) {
+      _EGLConfig *config = calloc(1, sizeof(_EGLConfig));
+      int id = i + 1;
+      int rbits = bitcount(visInfo[i].red_mask);
+      int gbits = bitcount(visInfo[i].green_mask);
+      int bbits = bitcount(visInfo[i].blue_mask);
+      int abits = bbits == 8 ? 8 : 0;
+      int zbits = 24;
+      int sbits = 8;
+      int visid = visInfo[i].visualid;
+#if defined(__cplusplus) || defined(c_plusplus)
+      int vistype = visInfo[i].c_class;
+#else
+      int vistype = visInfo[i].class;
+#endif
+
+      _eglInitConfig(config, id);
+      SET_CONFIG_ATTRIB(config, EGL_BUFFER_SIZE, rbits + gbits + bbits + abits);
+      SET_CONFIG_ATTRIB(config, EGL_RED_SIZE, rbits);
+      SET_CONFIG_ATTRIB(config, EGL_GREEN_SIZE, gbits);
+      SET_CONFIG_ATTRIB(config, EGL_BLUE_SIZE, bbits);
+      SET_CONFIG_ATTRIB(config, EGL_ALPHA_SIZE, abits);
+      SET_CONFIG_ATTRIB(config, EGL_DEPTH_SIZE, zbits);
+      SET_CONFIG_ATTRIB(config, EGL_STENCIL_SIZE, sbits);
+      SET_CONFIG_ATTRIB(config, EGL_NATIVE_VISUAL_ID, visid);
+      SET_CONFIG_ATTRIB(config, EGL_NATIVE_VISUAL_TYPE, vistype);
+
+      _eglAddConfig(disp, config);
+   }
+}
 
 
 /**
@@ -150,10 +184,7 @@ static EGLBoolean
 xlib_eglInitialize(_EGLDriver *drv, EGLDisplay dpy,
                    EGLint *minor, EGLint *major)
 {
-   /* visual configs */
-
-   init_configs(drv, dpy);
-
+   create_configs(drv, dpy);
 
    drv->Initialized = EGL_TRUE;
 
