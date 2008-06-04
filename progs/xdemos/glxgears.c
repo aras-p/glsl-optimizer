@@ -88,6 +88,11 @@ current_time(void)
 #endif
 
 
+/** Event handler results: */
+#define NOP 0
+#define EXIT 1
+#define DRAW 2
+
 static GLfloat view_rotx = 20.0, view_roty = 30.0, view_rotz = 0.0;
 static GLint gear1, gear2, gear3;
 static GLfloat angle = 0.0;
@@ -322,10 +327,12 @@ draw_frame(Display *dpy, Window win)
    dt = t - tRot0;
    tRot0 = t;
 
-   /* advance rotation for next frame */
-   angle += 70.0 * dt;  /* 70 degrees per second */
-   if (angle > 3600.0)
-      angle -= 3600.0;
+   if (animate) {
+      /* advance rotation for next frame */
+      angle += 70.0 * dt;  /* 70 degrees per second */
+      if (angle > 3600.0)
+         angle -= 3600.0;
+   }
 
    draw_gears();
    glXSwapBuffers(dpy, win);
@@ -471,6 +478,7 @@ make_window( Display *dpy, const char *name,
    attr.border_pixel = 0;
    attr.colormap = XCreateColormap( dpy, root, visinfo->visual, AllocNone);
    attr.event_mask = StructureNotifyMask | ExposureMask | KeyPressMask;
+   /* XXX this is a bad way to get a borderless window! */
    attr.override_redirect = fullscreen;
    mask = CWBackPixel | CWBorderPixel | CWColormap | CWEventMask | CWOverrideRedirect;
 
@@ -506,15 +514,14 @@ make_window( Display *dpy, const char *name,
 
 /**
  * Handle one X event.
- * \return 1 if time to exit, 0 otherwise
+ * \return NOP, EXIT or DRAW
  */
 static int
 handle_event(Display *dpy, Window win, XEvent *event)
 {
    switch (event->type) {
    case Expose:
-      /* we'll redraw below */
-      break;
+      return DRAW;
    case ConfigureNotify:
       reshape(event->xconfigure.width, event->xconfigure.height);
       break;
@@ -540,15 +547,16 @@ handle_event(Display *dpy, Window win, XEvent *event)
                               NULL, NULL);
             if (buffer[0] == 27) {
                /* escape */
-               return 1;
+               return EXIT;
             }
             else if (buffer[0] == 'a' || buffer[0] == 'A') {
                animate = !animate;
             }
          }
+         return DRAW;
       }
    }
-   return 0;
+   return NOP;
 }
 
 
@@ -556,11 +564,15 @@ static void
 event_loop(Display *dpy, Window win)
 {
    while (1) {
+      int op;
       while (!animate || XPending(dpy) > 0) {
          XEvent event;
          XNextEvent(dpy, &event);
-         if (handle_event(dpy, win, &event))
+         op = handle_event(dpy, win, &event);
+         if (op == EXIT)
             return;
+         else if (op == DRAW)
+            break;
       }
 
       draw_frame(dpy, win);
