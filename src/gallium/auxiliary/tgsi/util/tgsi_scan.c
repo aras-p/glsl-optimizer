@@ -141,3 +141,86 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
 
    tgsi_parse_free (&parse);
 }
+
+
+
+/**
+ * Check if the given shader is a "passthrough" shader consisting of only
+ * MOV instructions of the form:  MOV OUT[n], IN[n]
+ *  
+ */
+boolean
+tgsi_is_passthrough_shader(const struct tgsi_token *tokens)
+{
+   struct tgsi_parse_context parse;
+
+   /**
+    ** Setup to begin parsing input shader
+    **/
+   if (tgsi_parse_init(&parse, tokens) != TGSI_PARSE_OK) {
+      debug_printf("tgsi_parse_init() failed in tgsi_is_passthrough_shader()!\n");
+      return FALSE;
+   }
+
+   /**
+    ** Loop over incoming program tokens/instructions
+    */
+   while (!tgsi_parse_end_of_tokens(&parse)) {
+
+      tgsi_parse_token(&parse);
+
+      switch (parse.FullToken.Token.Type) {
+      case TGSI_TOKEN_TYPE_INSTRUCTION:
+         {
+            struct tgsi_full_instruction *fullinst =
+               &parse.FullToken.FullInstruction;
+            const struct tgsi_full_src_register *src =
+               &fullinst->FullSrcRegisters[0];
+            const struct tgsi_full_dst_register *dst =
+               &fullinst->FullDstRegisters[0];
+
+            /* Do a whole bunch of checks for a simple move */
+            if (fullinst->Instruction.Opcode != TGSI_OPCODE_MOV ||
+                src->SrcRegister.File != TGSI_FILE_INPUT ||
+                dst->DstRegister.File != TGSI_FILE_OUTPUT ||
+                src->SrcRegister.Index != dst->DstRegister.Index ||
+
+                src->SrcRegister.Negate ||
+                src->SrcRegisterExtMod.Negate ||
+                src->SrcRegisterExtMod.Absolute ||
+                src->SrcRegisterExtMod.Scale2X ||
+                src->SrcRegisterExtMod.Bias ||
+                src->SrcRegisterExtMod.Complement ||
+
+                src->SrcRegister.SwizzleX != TGSI_SWIZZLE_X ||
+                src->SrcRegister.SwizzleY != TGSI_SWIZZLE_Y ||
+                src->SrcRegister.SwizzleZ != TGSI_SWIZZLE_Z ||
+                src->SrcRegister.SwizzleW != TGSI_SWIZZLE_W ||
+
+                src->SrcRegisterExtSwz.ExtSwizzleX != TGSI_EXTSWIZZLE_X ||
+                src->SrcRegisterExtSwz.ExtSwizzleY != TGSI_EXTSWIZZLE_Y ||
+                src->SrcRegisterExtSwz.ExtSwizzleZ != TGSI_EXTSWIZZLE_Z ||
+                src->SrcRegisterExtSwz.ExtSwizzleW != TGSI_EXTSWIZZLE_W ||
+
+                dst->DstRegister.WriteMask != TGSI_WRITEMASK_XYZW)
+            {
+               tgsi_parse_free(&parse);
+               return FALSE;
+            }
+         }
+         break;
+
+      case TGSI_TOKEN_TYPE_DECLARATION:
+         /* fall-through */
+      case TGSI_TOKEN_TYPE_IMMEDIATE:
+         /* fall-through */
+      default:
+         ; /* no-op */
+      }
+   }
+
+   tgsi_parse_free(&parse);
+
+   /* if we get here, it's a pass-through shader */
+   return TRUE;
+}
