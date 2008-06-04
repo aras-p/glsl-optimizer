@@ -8,7 +8,6 @@ if env['platform'] != 'winddk':
 
 	env = env.Clone()
 	
-	# Includes
 	env.Append(CPPPATH = [
 		'#/src/mesa',
 		'#/src/mesa/main',
@@ -18,21 +17,12 @@ if env['platform'] != 'winddk':
 		env.Append(CFLAGS = [
 			'-std=c99',
 		])
+
+	#
+	# Source files
+	#
 	
-	# x86 assembly
-	if x86 and gcc:
-		env.Append(CPPDEFINES = [
-			'USE_X86_ASM', 
-			'USE_MMX_ASM',
-			'USE_3DNOW_ASM',
-			'USE_SSE_ASM',
-		])
-	
-	
-	#######################################################################
-	# Core sources
-	
-	MAIN_SOURCES = [
+	main_sources = [
 		'main/api_arrayelt.c',
 		'main/api_loopback.c',
 		'main/api_noop.c',
@@ -98,13 +88,7 @@ if env['platform'] != 'winddk':
 		'main/vtxfmt.c',
 	]
 	
-	GLAPI_SOURCES = [
-		'main/dispatch.c',
-		'glapi/glapi.c',
-		'glapi/glthread.c',
-	]
-	
-	MATH_SOURCES = [
+	math_sources = [
 		'math/m_debug_clip.c',
 		'math/m_debug_norm.c',
 		'math/m_debug_xform.c',
@@ -115,7 +99,7 @@ if env['platform'] != 'winddk':
 		'math/m_xform.c',
 	]
 	
-	VBO_SOURCES = [
+	vbo_sources = [
 		'vbo/vbo_context.c',
 		'vbo/vbo_exec.c',
 		'vbo/vbo_exec_api.c',
@@ -132,13 +116,13 @@ if env['platform'] != 'winddk':
 		'vbo/vbo_save_loopback.c',
 	]
 	
-	VF_SOURCES = [
+	vf_sources = [
 		'vf/vf.c',
 		'vf/vf_generic.c',
 		'vf/vf_sse.c',
 	]
 	
-	STATETRACKER_SOURCES = [
+	statetracker_sources = [
 		'state_tracker/st_atom.c',
 		'state_tracker/st_atom_blend.c',
 		'state_tracker/st_atom_clip.c',
@@ -180,7 +164,7 @@ if env['platform'] != 'winddk':
 		'state_tracker/st_texture.c',
 	]
 	
-	SHADER_SOURCES = [
+	shader_sources = [
 		'shader/arbprogparse.c',
 		'shader/arbprogram.c',
 		'shader/atifragshader.c',
@@ -201,7 +185,7 @@ if env['platform'] != 'winddk':
 		'shader/shader_api.c',
 	]
 	
-	SLANG_SOURCES = [
+	slang_sources = [
 		'shader/slang/slang_builtin.c',
 		'shader/slang/slang_codegen.c',
 		'shader/slang/slang_compile.c',
@@ -225,88 +209,117 @@ if env['platform'] != 'winddk':
 		'shader/slang/slang_utility.c',
 	]
 	
+	mesa_sources = (
+		main_sources +
+		math_sources +
+		vbo_sources +
+		vf_sources +
+		statetracker_sources +
+		shader_sources +
+		slang_sources
+	)
+
+	glapi_sources = [
+		'main/dispatch.c',
+		'glapi/glapi.c',
+		'glapi/glthread.c',
+	]
 	
-	#######################################################################
+	#
 	# Assembly sources
-	
-	ASM_C_SOURCES = [
-		'x86/common_x86.c',
-		'x86/x86.c',
-		'x86/3dnow.c',
-		'x86/sse.c',
-		'sparc/sparc.c',
-		'ppc/common_ppc.c',
-		'x86-64/x86-64.c',
-	]
-	
-	X86_SOURCES = [
-		'x86/common_x86_asm.S',
-		'x86/x86_xform2.S',
-		'x86/x86_xform3.S',
-		'x86/x86_xform4.S',
-		'x86/x86_cliptest.S',
-		'x86/mmx_blend.S',
-		'x86/3dnow_xform1.S',
-		'x86/3dnow_xform2.S',
-		'x86/3dnow_xform3.S',
-		'x86/3dnow_xform4.S',
-		'x86/3dnow_normal.S',
-		'x86/sse_xform1.S',
-		'x86/sse_xform2.S',
-		'x86/sse_xform3.S',
-		'x86/sse_xform4.S',
-		'x86/sse_normal.S',
-		'x86/read_rgba_span_x86.S',
-	]
-	
-	X86_API = [
-		'x86/glapi_x86.S',
-	]
-	
-	X86_64_SOURCES = [
-		'x86-64/xform4.S',
-	]
-	
-	X86_64_API = [
-		'x86-64/glapi_x86-64.S',
-	]
-	
-	SPARC_SOURCES = [
-		'sparc/clip.S',
-		'sparc/norm.S',
-		'sparc/xform.S',
-	]
-	
-	SPARC_API = [
-		'sparc/glapi_sparc.S',
-	]
-	
-	if x86 and gcc:
-		ASM_SOURCES = ASM_C_SOURCES + X86_SOURCES 
-		API_SOURCES = X86_API
+	#
+	if gcc and env['machine'] == 'x86':
+		env.Append(CPPDEFINES = [
+			'USE_X86_ASM', 
+			'USE_MMX_ASM',
+			'USE_3DNOW_ASM',
+			'USE_SSE_ASM',
+		])
+		mesa_sources += [
+			'x86/common_x86.c',
+			'x86/x86.c',
+			'x86/3dnow.c',
+			'x86/sse.c',
+			'x86/common_x86_asm.S',
+			'x86/x86_xform2.S',
+			'x86/x86_xform3.S',
+			'x86/x86_xform4.S',
+			'x86/x86_cliptest.S',
+			'x86/mmx_blend.S',
+			'x86/3dnow_xform1.S',
+			'x86/3dnow_xform2.S',
+			'x86/3dnow_xform3.S',
+			'x86/3dnow_xform4.S',
+			'x86/3dnow_normal.S',
+			'x86/sse_xform1.S',
+			'x86/sse_xform2.S',
+			'x86/sse_xform3.S',
+			'x86/sse_xform4.S',
+			'x86/sse_normal.S',
+			'x86/read_rgba_span_x86.S',
+		]
+		glapi_sources += [
+			'x86/glapi_x86.S',
+		]
+	elif gcc and env['machine'] == 'x86_64':
+		env.Append(CPPDEFINES = [
+			'USE_X86_64_ASM', 
+		])
+		mesa_sources += [
+			'x86-64/x86-64.c',
+			'x86-64/xform4.S',
+		]
+		glapi_sources += [
+			'x86-64/glapi_x86-64.S'
+		]
+	elif gcc and env['machine'] == 'ppc':
+		mesa_sources += [
+			'ppc/common_ppc.c',
+		]
+		glapi_sources += [
+		]
+	elif gcc and env['machine'] == 'sparc':
+		mesa_sources += [
+			'sparc/sparc.c',
+			'sparc/clip.S',
+			'sparc/norm.S',
+			'sparc/xform.S',
+		]
+		glapi_sources += [
+			'sparc/glapi_sparc.S'
+		]
 	else:
-		ASM_SOURCES = []
-		API_SOURCES = []
+		pass
 	
-	SOLO_SOURCES = \
-		MAIN_SOURCES + \
-		MATH_SOURCES + \
-		VBO_SOURCES + \
-		VF_SOURCES + \
-		STATETRACKER_SOURCES + \
-		SHADER_SOURCES + \
-		ASM_SOURCES + \
-		SLANG_SOURCES
+	# Generate matypes.h
+	if gcc and env['machine'] in ('x86', 'x86_64'):
+		# See http://www.scons.org/wiki/UsingCodeGenerators
+		gen_matypes = env.Program(
+			target = 'gen_matypes',
+			source = 'x86/gen_matypes.c',
+		)
+		matypes = env.Command(
+			'matypes.h',
+			gen_matypes,
+			gen_matypes[0].abspath + ' > $TARGET',
+		)
+		# Add the dir containing the generated header (somewhere inside  the
+		# build dir) to the include path  
+		env.Append(CPPPATH = [matypes[0].dir])
 	
+	#
+	# Libraries
+	# 
+
 	mesa = env.ConvenienceLibrary(
 		target = 'mesa',
-		source = SOLO_SOURCES,
+		source = mesa_sources,
 	)
 	Export('mesa')
 	
 	if not dri:
 		glapi = env.ConvenienceLibrary(
 			target = 'glapi',
-			source = GLAPI_SOURCES + API_SOURCES,
+			source = glapi_sources,
 		)
 		Export('glapi')
