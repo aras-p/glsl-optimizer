@@ -548,8 +548,7 @@ usage(void)
    printf("  -stereo                 run in stereo mode\n");
    printf("  -fullscreen             run in fullscreen mode\n");
    printf("  -info                   display OpenGL renderer info\n");
-   printf("  -winwidth <width>       window width (default: 300)\n");
-   printf("  -winheight <height>     window height (default: 300)\n");
+   printf("  -geometry WxH+X+Y       window geometry\n");
 }
  
 
