@@ -15,7 +15,8 @@ PROGRAMS = \
 	eglinfo \
 	eglgears \
 	peglgears \
-	xeglgears
+	xeglgears \
+	xegl_tri
 
 
 .c.o:
@@ -71,6 +72,13 @@ xeglgears: xeglgears.o $(TOP)/$(LIB_DIR)/libEGL.so
 
 xeglgears.o: xeglgears.c $(HEADERS)
 	$(CC) -c $(CFLAGS) -I$(TOP)/include xeglgears.c
+
+
+xegl_tri: xegl_tri.o $(TOP)/$(LIB_DIR)/libEGL.so
+	$(CC) $(CFLAGS) xegl_tri.o -L$(TOP)/$(LIB_DIR) -lEGL $(LIBDRM_LIB) $(APP_LIB_DEPS) -o $@
+
+xegl_tri.o: xegl_tri.c $(HEADERS)
+	$(CC) -c $(CFLAGS) -I$(TOP)/include xegl_tri.c
 
 
 clean:
