@@ -29,8 +29,11 @@
 #ifndef DRI_DEBUG_H
 #define DRI_DEBUG_H
 
+#include <GL/gl.h>
+#include <GL/internal/dri_interface.h>
 #include "context.h"
-#include "dri_util.h"
+
+typedef struct __DRIutilversionRec2    __DRIutilversion2;
 
 struct dri_debug_control {
     const char * string;
@@ -84,6 +87,17 @@ struct dri_extension {
     const struct dri_extension_function * functions;
 };
 
+/**
+ * Used to store a version which includes a major range instead of a single
+ * major version number.
+ */
+struct __DRIutilversionRec2 {
+    int    major_min;    /** min allowed Major version number. */
+    int    major_max;    /** max allowed Major version number. */
+    int    minor;        /**< Minor version number. */
+    int    patch;        /**< Patch-level. */
+};
+
 extern unsigned driParseDebugString( const char * debug,
     const struct dri_debug_control * control );
 
@@ -106,11 +120,13 @@ extern GLboolean driCheckDriDdxDrmVersions3(const char * driver_name,
     const __DRIversion * ddxActual, const __DRIutilversion2 * ddxExpected,
     const __DRIversion * drmActual, const __DRIversion * drmExpected);
 
-extern GLint driIntersectArea( drm_clip_rect_t rect1, drm_clip_rect_t rect2 );
-
 extern GLboolean driClipRectToFramebuffer( const GLframebuffer *buffer,
 					   GLint *x, GLint *y,
 					   GLsizei *width, GLsizei *height );
+
+struct __DRIconfigRec {
+    __GLcontextModes modes;
+};
 
 extern __DRIconfig **
 driCreateConfigs(GLenum fb_format, GLenum fb_type,
@@ -119,5 +135,12 @@ driCreateConfigs(GLenum fb_format, GLenum fb_type,
 		 const GLenum * db_modes, unsigned num_db_modes);
 
 const __DRIconfig **driConcatConfigs(__DRIconfig **a, __DRIconfig **b);
+
+int
+driGetConfigAttrib(const __DRIconfig *config,
+		   unsigned int attrib, unsigned int *value);
+int
+driIndexConfigAttrib(const __DRIconfig *config, int index,
+		     unsigned int *attrib, unsigned int *value);
 
 #endif /* DRI_DEBUG_H */

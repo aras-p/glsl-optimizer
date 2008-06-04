@@ -253,7 +253,8 @@ _mesa_fetch_state(GLcontext *ctx, const gl_state_index state[],
       value[0] = ctx->Fog.Density;
       value[1] = ctx->Fog.Start;
       value[2] = ctx->Fog.End;
-      value[3] = 1.0F / (ctx->Fog.End - ctx->Fog.Start);
+      value[3] = (ctx->Fog.End == ctx->Fog.Start)
+         ? 1.0 : 1.0F / (ctx->Fog.End - ctx->Fog.Start);
       return;
    case STATE_CLIPPLANE:
       {
@@ -278,6 +279,7 @@ _mesa_fetch_state(GLcontext *ctx, const gl_state_index state[],
    case STATE_MVP_MATRIX:
    case STATE_TEXTURE_MATRIX:
    case STATE_PROGRAM_MATRIX:
+   case STATE_COLOR_MATRIX:
       {
          /* state[0] = modelview, projection, texture, etc. */
          /* state[1] = which texture matrix or program matrix */
@@ -310,6 +312,9 @@ _mesa_fetch_state(GLcontext *ctx, const gl_state_index state[],
          }
          else if (mat == STATE_PROGRAM_MATRIX) {
             matrix = ctx->ProgramMatrixStack[index].Top;
+         }
+         else if (mat == STATE_COLOR_MATRIX) {
+            matrix = ctx->ColorMatrixStack.Top;
          }
          else {
             _mesa_problem(ctx, "Bad matrix name in _mesa_fetch_state()");
@@ -420,8 +425,9 @@ _mesa_fetch_state(GLcontext *ctx, const gl_state_index state[],
           * exp: 2^-(density/ln(2) * fogcoord)
           * exp2: 2^-((density/(ln(2)^2) * fogcoord)^2)
           */
-         value[0] = -1.0F / (ctx->Fog.End - ctx->Fog.Start);
-         value[1] = ctx->Fog.End / (ctx->Fog.End - ctx->Fog.Start);
+         value[0] = (ctx->Fog.End == ctx->Fog.Start)
+            ? 1.0 : -1.0F / (ctx->Fog.End - ctx->Fog.Start);
+         value[1] = ctx->Fog.End * -value[0];
          value[2] = ctx->Fog.Density * ONE_DIV_LN2;
          value[3] = ctx->Fog.Density * ONE_DIV_SQRT_LN2;
          return;
@@ -434,6 +440,24 @@ _mesa_fetch_state(GLcontext *ctx, const gl_state_index state[],
          value[3] = ctx->Light.Light[ln]._CosCutoff;
          return;
       }
+      case STATE_PT_SCALE:
+         value[0] = ctx->Pixel.RedScale;
+         value[1] = ctx->Pixel.GreenScale;
+         value[2] = ctx->Pixel.BlueScale;
+         value[3] = ctx->Pixel.AlphaScale;
+         break;
+      case STATE_PT_BIAS:
+         value[0] = ctx->Pixel.RedBias;
+         value[1] = ctx->Pixel.GreenBias;
+         value[2] = ctx->Pixel.BlueBias;
+         value[3] = ctx->Pixel.AlphaBias;
+         break;
+      case STATE_PCM_SCALE:
+         COPY_4V(value, ctx->Pixel.PostColorMatrixScale);
+         break;
+      case STATE_PCM_BIAS:
+         COPY_4V(value, ctx->Pixel.PostColorMatrixBias);
+         break;
       default:
          /* unknown state indexes are silently ignored
           *  should be handled by the driver.
@@ -492,6 +516,8 @@ _mesa_program_state_flags(const gl_state_index state[STATE_LENGTH])
       return _NEW_TEXTURE_MATRIX;
    case STATE_PROGRAM_MATRIX:
       return _NEW_TRACK_MATRIX;
+   case STATE_COLOR_MATRIX:
+      return _NEW_COLOR_MATRIX;
 
    case STATE_DEPTH_RANGE:
       return _NEW_VIEWPORT;
@@ -585,6 +611,9 @@ append_token(char *dst, gl_state_index k)
    case STATE_PROGRAM_MATRIX:
       append(dst, "matrix.program");
       break;
+   case STATE_COLOR_MATRIX:
+      append(dst, "matrix.color");
+      break;
    case STATE_MATRIX_INVERSE:
       append(dst, ".inverse");
       break;
@@ -670,6 +699,18 @@ append_token(char *dst, gl_state_index k)
    case STATE_POSITION_NORMALIZED:
       append(dst, "(internal)");
       break;
+   case STATE_PT_SCALE:
+      append(dst, "PTscale");
+      break;
+   case STATE_PT_BIAS:
+      append(dst, "PTbias");
+      break;
+   case STATE_PCM_SCALE:
+      append(dst, "PCMscale");
+      break;
+   case STATE_PCM_BIAS:
+      append(dst, "PCMbias");
+      break;
    default:
       ;
    }
@@ -748,6 +789,7 @@ _mesa_program_state_string(const gl_state_index state[STATE_LENGTH])
    case STATE_MVP_MATRIX:
    case STATE_TEXTURE_MATRIX:
    case STATE_PROGRAM_MATRIX:
+   case STATE_COLOR_MATRIX:
       {
          /* state[0] = modelview, projection, texture, etc. */
          /* state[1] = which texture matrix or program matrix */
@@ -815,10 +857,12 @@ _mesa_load_state_parameters(GLcontext *ctx,
    if (!paramList)
       return;
 
+   /*assert(ctx->Driver.NeedFlush == 0);*/
+
    for (i = 0; i < paramList->NumParameters; i++) {
       if (paramList->Parameters[i].Type == PROGRAM_STATE_VAR) {
          _mesa_fetch_state(ctx, 
-			   paramList->Parameters[i].StateIndexes,
+			   (gl_state_index *) paramList->Parameters[i].StateIndexes,
                            paramList->ParameterValues[i]);
       }
    }

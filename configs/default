@@ -11,6 +11,7 @@ CONFIG_NAME = default
 MESA_MAJOR=7
 MESA_MINOR=1
 MESA_TINY=0
+MESA_VERSION = $(MESA_MAJOR).$(MESA_MINOR).$(MESA_TINY)
 
 # external projects.  This should be useless now that we use libdrm.
 DRM_SOURCE_PATH=$(TOP)/../drm
@@ -81,10 +82,9 @@ GLW_LIB_DEPS = -L$(TOP)/$(LIB_DIR) -l$(GL_LIB) $(EXTRA_LIB_PATH) -lXt -lX11
 APP_LIB_DEPS = -lm
 
 
-
 # Installation directories (for make install)
 INSTALL_DIR = /usr/local
-DRI_DRIVER_INSTALL_DIR = /usr/X11R6/lib/modules/dri
+DRI_DRIVER_INSTALL_DIR = $(INSTALL_DIR)/$(LIB_DIR)/dri
 
 # Where libGL will look for DRI hardware drivers
 DRI_DRIVER_SEARCH_DIR = $(DRI_DRIVER_INSTALL_DIR)

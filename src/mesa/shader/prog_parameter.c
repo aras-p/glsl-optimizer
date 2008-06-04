@@ -282,6 +282,8 @@ _mesa_add_uniform(struct gl_program_parameter_list *paramList,
  * Add a sampler to the parameter list.
  * \param name  uniform's name
  * \param datatype  GL_SAMPLER_2D, GL_SAMPLER_2D_RECT_ARB, etc.
+ * \param index  the sampler number (as seen in TEX instructions)
+ * \return  sampler index (starting at zero) or -1 if error
  */
 GLint
 _mesa_add_sampler(struct gl_program_parameter_list *paramList,
@@ -292,13 +294,20 @@ _mesa_add_sampler(struct gl_program_parameter_list *paramList,
       ASSERT(paramList->Parameters[i].Size == 1);
       ASSERT(paramList->Parameters[i].DataType == datatype);
       /* already in list */
-      return i;
+      return (GLint) paramList->ParameterValues[i][0];
    }
    else {
       const GLint size = 1; /* a sampler is basically a texture unit number */
-      i = _mesa_add_parameter(paramList, PROGRAM_SAMPLER, name,
-                              size, datatype, NULL, NULL);
-      return i;
+      GLfloat value;
+      GLint numSamplers = 0;
+      for (i = 0; i < paramList->NumParameters; i++) {
+         if (paramList->Parameters[i].Type == PROGRAM_SAMPLER)
+            numSamplers++;
+      }
+      value = (GLfloat) numSamplers;
+      (void) _mesa_add_parameter(paramList, PROGRAM_SAMPLER, name,
+                                 size, datatype, &value, NULL);
+      return numSamplers;
    }
 }
 
@@ -599,8 +608,43 @@ _mesa_clone_parameter_list(const struct gl_program_parameter_list *list)
       }
    }
 
+   clone->StateFlags = list->StateFlags;
+
    return clone;
 }
+
+
+/**
+ * Return a new parameter list which is listA + listB.
+ */
+struct gl_program_parameter_list *
+_mesa_combine_parameter_lists(const struct gl_program_parameter_list *listA,
+                              const struct gl_program_parameter_list *listB)
+{
+   struct gl_program_parameter_list *list;
+
+   if (listA) {
+      list = _mesa_clone_parameter_list(listA);
+      if (list && listB) {
+         GLuint i;
+         for (i = 0; i < listB->NumParameters; i++) {
+            struct gl_program_parameter *param = listB->Parameters + i;
+            _mesa_add_parameter(list, param->Type, param->Name, param->Size,
+                                param->DataType,
+                                listB->ParameterValues[i],
+                                param->StateIndexes);
+         }
+      }
+   }
+   else if (listB) {
+      list = _mesa_clone_parameter_list(listB);
+   }
+   else {
+      list = NULL;
+   }
+   return list;
+}
+
 
 
 /**

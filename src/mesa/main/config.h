@@ -188,6 +188,7 @@
 #define MAX_PROGRAM_ADDRESS_REGS 2
 #define MAX_UNIFORMS 128
 #define MAX_VARYING 8
+#define MAX_SAMPLERS 8
 /*@}*/
 
 /** For GL_NV_vertex_program */

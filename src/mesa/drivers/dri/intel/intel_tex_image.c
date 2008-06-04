@@ -522,9 +522,7 @@ intelTexImage(GLcontext * ctx,
 
    /* GL_SGIS_generate_mipmap */
    if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
-      intel_generate_mipmap(ctx, target,
-                            &ctx->Texture.Unit[ctx->Texture.CurrentUnit],
-                            texObj);
+      intel_generate_mipmap(ctx, target, texObj);
    }
 
    _mesa_unmap_teximage_pbo(ctx, unpack);

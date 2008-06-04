@@ -60,6 +60,6 @@ eglgears.o: eglgears.c $(HEADERS)
 
 
 clean:
-	rm -f *.o *~
-	rm -f *.so
-	rm -f $(PROGRAMS)
+	-rm -f *.o *~
+	-rm -f *.so
+	-rm -f $(PROGRAMS)

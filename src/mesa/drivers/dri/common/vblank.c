@@ -260,8 +260,8 @@ static int do_wait( drmVBlank * vbl, GLuint * vbl_seq, int fd )
       if ( first_time ) {
 	 fprintf(stderr, 
 		 "%s: drmWaitVBlank returned %d, IRQs don't seem to be"
-		 " working correctly.\nTry running with LIBGL_THROTTLE_REFRESH"
-		 " and LIBL_SYNC_REFRESH unset.\n", __FUNCTION__, ret);
+		 " working correctly.\nTry adjusting the vblank_mode"
+		 " configuration parameter.\n", __FUNCTION__, ret);
 	 first_time = GL_FALSE;
       }
 

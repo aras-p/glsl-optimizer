@@ -119,7 +119,7 @@ clean:
 	-rm -f *.lo
 	-rm -f *.la
 	-rm -rf .libs
-	-rm -rf depend depend.bak
+	-rm -f depend depend.bak
 
 
 depend: $(SOURCES)

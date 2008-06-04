@@ -245,6 +245,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\..\include\GL\wmesa.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\..\src\mesa\drivers\windows\gdi\wmesadef.h"
 				>
 			</File>

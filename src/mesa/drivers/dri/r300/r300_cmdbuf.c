@@ -164,7 +164,7 @@ static inline void r300EmitAtoms(r300ContextPtr r300, GLboolean dirty)
 	r300->cmdbuf.count_used++;
 
 	/* Emit cache flush */
-	*dest = cmdpacket0(R300_TX_CNTL, 1);
+	*dest = cmdpacket0(R300_TX_INVALTAGS, 1);
 	dest++;
 	r300->cmdbuf.count_used++;
 
@@ -242,6 +242,7 @@ void r300EmitState(r300ContextPtr r300)
 
 #define packet0_count(ptr) (((drm_r300_cmd_header_t*)(ptr))->packet0.count)
 #define vpu_count(ptr) (((drm_r300_cmd_header_t*)(ptr))->vpu.count)
+#define r500fp_count(ptr) (((drm_r300_cmd_header_t*)(ptr))->r500fp.count)
 
 static int check_always(r300ContextPtr r300, struct r300_state_atom *atom)
 {
@@ -259,6 +260,20 @@ static int check_vpu(r300ContextPtr r300, struct r300_state_atom *atom)
 {
 	int cnt;
 	cnt = vpu_count(atom->cmd);
+	return cnt ? (cnt * 4) + 1 : 0;
+}
+
+static int check_r500fp(r300ContextPtr r300, struct r300_state_atom *atom)
+{
+	int cnt;
+	cnt = r500fp_count(atom->cmd);
+	return cnt ? (cnt * 6) + 1 : 0;
+}
+
+static int check_r500fp_const(r300ContextPtr r300, struct r300_state_atom *atom)
+{
+	int cnt;
+	cnt = r500fp_count(atom->cmd);
 	return cnt ? (cnt * 4) + 1 : 0;
 }
 
@@ -281,9 +296,14 @@ void r300InitCmdBuf(r300ContextPtr r300)
 {
 	int size, mtu;
 	int has_tcl = 1;
+	int is_r500 = 0;
+	int i;
 
 	if (!(r300->radeon.radeonScreen->chip_flags & RADEON_CHIPSET_TCL))
 		has_tcl = 0;
+
+	if (r300->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV515)
+		is_r500 = 1;
 
 	r300->hw.max_state_size = 2 + 2;	/* reserve extra space for WAIT_IDLE and tex cache flush */
 
@@ -299,8 +319,15 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	/* Initialize state atoms */
 	ALLOC_STATE(vpt, always, R300_VPT_CMDSIZE, 0);
 	r300->hw.vpt.cmd[R300_VPT_CMD_0] = cmdpacket0(R300_SE_VPORT_XSCALE, 6);
-	ALLOC_STATE(vap_cntl, always, 2, 0);
-	r300->hw.vap_cntl.cmd[0] = cmdpacket0(R300_VAP_CNTL, 1);
+	ALLOC_STATE(vap_cntl, always, R300_VAP_CNTL_SIZE, 0);
+	r300->hw.vap_cntl.cmd[R300_VAP_CNTL_FLUSH] = cmdpacket0(R300_VAP_PVS_STATE_FLUSH_REG, 1);
+	r300->hw.vap_cntl.cmd[R300_VAP_CNTL_FLUSH_1] = 0;
+	r300->hw.vap_cntl.cmd[R300_VAP_CNTL_CMD] = cmdpacket0(R300_VAP_CNTL, 1);
+	if (is_r500) {
+	    ALLOC_STATE(vap_index_offset, always, 2, 0);
+	    r300->hw.vap_index_offset.cmd[0] = cmdpacket0(R500_VAP_INDEX_OFFSET, 1);
+	    r300->hw.vap_index_offset.cmd[1] = 0;
+	}
 	ALLOC_STATE(vte, always, 3, 0);
 	r300->hw.vte.cmd[0] = cmdpacket0(R300_SE_VTE_CNTL, 2);
 	ALLOC_STATE(vap_vf_max_vtx_indx, always, 3, 0);
@@ -309,12 +336,12 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	r300->hw.vap_cntl_status.cmd[0] = cmdpacket0(R300_VAP_CNTL_STATUS, 1);
 	ALLOC_STATE(vir[0], variable, R300_VIR_CMDSIZE, 0);
 	r300->hw.vir[0].cmd[R300_VIR_CMD_0] =
-	    cmdpacket0(R300_VAP_INPUT_ROUTE_0_0, 1);
+	    cmdpacket0(R300_VAP_PROG_STREAM_CNTL_0, 1);
 	ALLOC_STATE(vir[1], variable, R300_VIR_CMDSIZE, 1);
 	r300->hw.vir[1].cmd[R300_VIR_CMD_0] =
-	    cmdpacket0(R300_VAP_INPUT_ROUTE_1_0, 1);
+	    cmdpacket0(R300_VAP_PROG_STREAM_CNTL_EXT_0, 1);
 	ALLOC_STATE(vic, always, R300_VIC_CMDSIZE, 0);
-	r300->hw.vic.cmd[R300_VIC_CMD_0] = cmdpacket0(R300_VAP_INPUT_CNTL_0, 2);
+	r300->hw.vic.cmd[R300_VIC_CMD_0] = cmdpacket0(R300_VAP_VTX_STATE_CNTL, 2);
 	ALLOC_STATE(vap_psc_sgn_norm_cntl, always, 2, 0);
 	r300->hw.vap_psc_sgn_norm_cntl.cmd[0] = cmdpacket0(R300_VAP_PSC_SGN_NORM_CNTL, SGN_NORM_ZERO_CLAMP_MINUS_ONE);
 
@@ -322,7 +349,7 @@ void r300InitCmdBuf(r300ContextPtr r300)
 		ALLOC_STATE(vap_clip_cntl, always, 2, 0);
 		r300->hw.vap_clip_cntl.cmd[0] = cmdpacket0(R300_VAP_CLIP_CNTL, 1);
 		ALLOC_STATE(vap_clip, always, 5, 0);
-		r300->hw.vap_clip.cmd[0] = cmdpacket0(R300_VAP_CLIP_X_0, 4);
+		r300->hw.vap_clip.cmd[0] = cmdpacket0(R300_VAP_GB_VERT_CLIP_ADJ, 4);
 		ALLOC_STATE(vap_pvs_vtx_timeout_reg, always, 2, 0);
 		r300->hw.vap_pvs_vtx_timeout_reg.cmd[0] = cmdpacket0(VAP_PVS_VTX_TIMEOUT_REG, 1);
 	}
@@ -334,7 +361,7 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	if (has_tcl) {
 		ALLOC_STATE(pvs, always, R300_PVS_CMDSIZE, 0);
 		r300->hw.pvs.cmd[R300_PVS_CMD_0] =
-		    cmdpacket0(R300_VAP_PVS_CNTL_1, 3);
+		    cmdpacket0(R300_VAP_PVS_CODE_CNTL_0, 3);
 	}
 
 	ALLOC_STATE(gb_enable, always, 2, 0);
@@ -344,69 +371,99 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	ALLOC_STATE(txe, always, R300_TXE_CMDSIZE, 0);
 	r300->hw.txe.cmd[R300_TXE_CMD_0] = cmdpacket0(R300_TX_ENABLE, 1);
 	ALLOC_STATE(ga_point_s0, always, 5, 0);
-	r300->hw.ga_point_s0.cmd[0] = cmdpacket0(GA_POINT_S0, 4);
+	r300->hw.ga_point_s0.cmd[0] = cmdpacket0(R300_GA_POINT_S0, 4);
 	ALLOC_STATE(ga_triangle_stipple, always, 2, 0);
-	r300->hw.ga_triangle_stipple.cmd[0] = cmdpacket0(GA_TRIANGLE_STIPPLE, 1);
+	r300->hw.ga_triangle_stipple.cmd[0] = cmdpacket0(R300_GA_TRIANGLE_STIPPLE, 1);
 	ALLOC_STATE(ps, always, R300_PS_CMDSIZE, 0);
 	r300->hw.ps.cmd[0] = cmdpacket0(R300_GA_POINT_SIZE, 1);
 	ALLOC_STATE(ga_point_minmax, always, 4, 0);
 	r300->hw.ga_point_minmax.cmd[0] = cmdpacket0(R300_GA_POINT_MINMAX, 3);
 	ALLOC_STATE(lcntl, always, 2, 0);
-	r300->hw.lcntl.cmd[0] = cmdpacket0(GA_LINE_CNTL, 1);
+	r300->hw.lcntl.cmd[0] = cmdpacket0(R300_GA_LINE_CNTL, 1);
 	ALLOC_STATE(ga_line_stipple, always, 4, 0);
 	r300->hw.ga_line_stipple.cmd[0] = cmdpacket0(R300_GA_LINE_STIPPLE_VALUE, 3);
 	ALLOC_STATE(shade, always, 5, 0);
-	r300->hw.shade.cmd[0] = cmdpacket0(GA_ENHANCE, 4);
+	r300->hw.shade.cmd[0] = cmdpacket0(R300_GA_ENHANCE, 4);
 	ALLOC_STATE(polygon_mode, always, 4, 0);
-	r300->hw.polygon_mode.cmd[0] = cmdpacket0(GA_POLY_MODE, 3);
+	r300->hw.polygon_mode.cmd[0] = cmdpacket0(R300_GA_POLY_MODE, 3);
 	ALLOC_STATE(fogp, always, 3, 0);
-	r300->hw.fogp.cmd[0] = cmdpacket0(R300_RE_FOG_SCALE, 2);
+	r300->hw.fogp.cmd[0] = cmdpacket0(R300_GA_FOG_SCALE, 2);
 	ALLOC_STATE(zbias_cntl, always, 2, 0);
-	r300->hw.zbias_cntl.cmd[0] = cmdpacket0(R300_RE_ZBIAS_CNTL, 1);
+	r300->hw.zbias_cntl.cmd[0] = cmdpacket0(R300_SU_TEX_WRAP, 1);
 	ALLOC_STATE(zbs, always, R300_ZBS_CMDSIZE, 0);
 	r300->hw.zbs.cmd[R300_ZBS_CMD_0] =
-	    cmdpacket0(R300_RE_ZBIAS_T_FACTOR, 4);
+	    cmdpacket0(R300_SU_POLY_OFFSET_FRONT_SCALE, 4);
 	ALLOC_STATE(occlusion_cntl, always, 2, 0);
-	r300->hw.occlusion_cntl.cmd[0] = cmdpacket0(R300_RE_OCCLUSION_CNTL, 1);
+	r300->hw.occlusion_cntl.cmd[0] = cmdpacket0(R300_SU_POLY_OFFSET_ENABLE, 1);
 	ALLOC_STATE(cul, always, R300_CUL_CMDSIZE, 0);
-	r300->hw.cul.cmd[R300_CUL_CMD_0] = cmdpacket0(R300_RE_CULL_CNTL, 1);
+	r300->hw.cul.cmd[R300_CUL_CMD_0] = cmdpacket0(R300_SU_CULL_MODE, 1);
 	ALLOC_STATE(su_depth_scale, always, 3, 0);
 	r300->hw.su_depth_scale.cmd[0] = cmdpacket0(R300_SU_DEPTH_SCALE, 2);
 	ALLOC_STATE(rc, always, R300_RC_CMDSIZE, 0);
 	r300->hw.rc.cmd[R300_RC_CMD_0] = cmdpacket0(R300_RS_COUNT, 2);
-	ALLOC_STATE(ri, always, R300_RI_CMDSIZE, 0);
-	r300->hw.ri.cmd[R300_RI_CMD_0] = cmdpacket0(R300_RS_IP_0, 8);
-	ALLOC_STATE(rr, variable, R300_RR_CMDSIZE, 0);
-	r300->hw.rr.cmd[R300_RR_CMD_0] = cmdpacket0(R300_RS_INST_0, 1);
+	if (is_r500) {
+		ALLOC_STATE(ri, always, R500_RI_CMDSIZE, 0);
+		r300->hw.ri.cmd[R300_RI_CMD_0] = cmdpacket0(R500_RS_IP_0, 16);
+		for (i = 0; i < 8; i++) {
+			r300->hw.ri.cmd[R300_RI_CMD_0 + i +1] = 
+			  (R500_RS_IP_PTR_K0 << R500_RS_IP_TEX_PTR_S_SHIFT) |
+                          (R500_RS_IP_PTR_K0 << R500_RS_IP_TEX_PTR_T_SHIFT) |
+                          (R500_RS_IP_PTR_K0 << R500_RS_IP_TEX_PTR_R_SHIFT) |
+                          (R500_RS_IP_PTR_K1 << R500_RS_IP_TEX_PTR_Q_SHIFT);
+		}
+		ALLOC_STATE(rr, variable, R300_RR_CMDSIZE, 0);
+		r300->hw.rr.cmd[R300_RR_CMD_0] = cmdpacket0(R500_RS_INST_0, 1);
+	} else {
+		ALLOC_STATE(ri, always, R300_RI_CMDSIZE, 0);
+		r300->hw.ri.cmd[R300_RI_CMD_0] = cmdpacket0(R300_RS_IP_0, 8);
+		ALLOC_STATE(rr, variable, R300_RR_CMDSIZE, 0);
+		r300->hw.rr.cmd[R300_RR_CMD_0] = cmdpacket0(R300_RS_INST_0, 1);
+	}
 	ALLOC_STATE(sc_hyperz, always, 3, 0);
 	r300->hw.sc_hyperz.cmd[0] = cmdpacket0(R300_SC_HYPERZ, 2);
 	ALLOC_STATE(sc_screendoor, always, 2, 0);
 	r300->hw.sc_screendoor.cmd[0] = cmdpacket0(R300_SC_SCREENDOOR, 1);
-	ALLOC_STATE(fp, always, R300_FP_CMDSIZE, 0);
-	r300->hw.fp.cmd[R300_FP_CMD_0] = cmdpacket0(R300_PFS_CNTL_0, 3);
-	r300->hw.fp.cmd[R300_FP_CMD_1] = cmdpacket0(R300_PFS_NODE_0, 4);
-	ALLOC_STATE(fpt, variable, R300_FPT_CMDSIZE, 0);
-	r300->hw.fpt.cmd[R300_FPT_CMD_0] = cmdpacket0(R300_PFS_TEXI_0, 0);
 	ALLOC_STATE(us_out_fmt, always, 6, 0);
-	r300->hw.us_out_fmt.cmd[0] = cmdpacket0(R500_US_OUT_FMT, 5);
-	ALLOC_STATE(fpi[0], variable, R300_FPI_CMDSIZE, 0);
-	r300->hw.fpi[0].cmd[R300_FPI_CMD_0] = cmdpacket0(R300_PFS_INSTR0_0, 1);
-	ALLOC_STATE(fpi[1], variable, R300_FPI_CMDSIZE, 1);
-	r300->hw.fpi[1].cmd[R300_FPI_CMD_0] = cmdpacket0(R300_PFS_INSTR1_0, 1);
-	ALLOC_STATE(fpi[2], variable, R300_FPI_CMDSIZE, 2);
-	r300->hw.fpi[2].cmd[R300_FPI_CMD_0] = cmdpacket0(R300_PFS_INSTR2_0, 1);
-	ALLOC_STATE(fpi[3], variable, R300_FPI_CMDSIZE, 3);
-	r300->hw.fpi[3].cmd[R300_FPI_CMD_0] = cmdpacket0(R300_PFS_INSTR3_0, 1);
+	r300->hw.us_out_fmt.cmd[0] = cmdpacket0(R300_US_OUT_FMT, 5);
+
+	if (is_r500) {
+		ALLOC_STATE(fp, always, R500_FP_CMDSIZE, 0);
+		r300->hw.fp.cmd[R500_FP_CMD_0] = cmdpacket0(R500_US_CONFIG, 2);
+		r300->hw.fp.cmd[R500_FP_CNTL] = R500_ZERO_TIMES_ANYTHING_EQUALS_ZERO;
+		r300->hw.fp.cmd[R500_FP_CMD_1] = cmdpacket0(R500_US_CODE_ADDR, 3);
+		r300->hw.fp.cmd[R500_FP_CMD_2] = cmdpacket0(R500_US_FC_CTRL, 1);
+		r300->hw.fp.cmd[R500_FP_FC_CNTL] = 0; /* FIXME when we add flow control */
+
+		ALLOC_STATE(r500fp, r500fp, R500_FPI_CMDSIZE, 0);
+		r300->hw.r500fp.cmd[R300_FPI_CMD_0] = cmdr500fp(0, 0, 0, 0);
+		ALLOC_STATE(r500fp_const, r500fp_const, R500_FPP_CMDSIZE, 0);
+		r300->hw.r500fp_const.cmd[R300_FPI_CMD_0] = cmdr500fp(0, 0, 1, 0);
+	} else {
+		ALLOC_STATE(fp, always, R300_FP_CMDSIZE, 0);
+		r300->hw.fp.cmd[R300_FP_CMD_0] = cmdpacket0(R300_US_CONFIG, 3);
+		r300->hw.fp.cmd[R300_FP_CMD_1] = cmdpacket0(R300_US_CODE_ADDR_0, 4);
+		ALLOC_STATE(fpt, variable, R300_FPT_CMDSIZE, 0);
+		r300->hw.fpt.cmd[R300_FPT_CMD_0] = cmdpacket0(R300_US_TEX_INST_0, 0);
+
+		ALLOC_STATE(fpi[0], variable, R300_FPI_CMDSIZE, 0);
+		r300->hw.fpi[0].cmd[R300_FPI_CMD_0] = cmdpacket0(R300_US_ALU_RGB_INST_0, 1);
+		ALLOC_STATE(fpi[1], variable, R300_FPI_CMDSIZE, 1);
+		r300->hw.fpi[1].cmd[R300_FPI_CMD_0] = cmdpacket0(R300_US_ALU_RGB_ADDR_0, 1);
+		ALLOC_STATE(fpi[2], variable, R300_FPI_CMDSIZE, 2);
+		r300->hw.fpi[2].cmd[R300_FPI_CMD_0] = cmdpacket0(R300_US_ALU_ALPHA_INST_0, 1);
+		ALLOC_STATE(fpi[3], variable, R300_FPI_CMDSIZE, 3);
+		r300->hw.fpi[3].cmd[R300_FPI_CMD_0] = cmdpacket0(R300_US_ALU_ALPHA_ADDR_0, 1);
+		ALLOC_STATE(fpp, variable, R300_FPP_CMDSIZE, 0);
+		r300->hw.fpp.cmd[R300_FPP_CMD_0] = cmdpacket0(R300_PFS_PARAM_0_X, 0);
+	}
 	ALLOC_STATE(fogs, always, R300_FOGS_CMDSIZE, 0);
-	r300->hw.fogs.cmd[R300_FOGS_CMD_0] = cmdpacket0(FG_FOG_BLEND, 1);
+	r300->hw.fogs.cmd[R300_FOGS_CMD_0] = cmdpacket0(R300_FG_FOG_BLEND, 1);
 	ALLOC_STATE(fogc, always, R300_FOGC_CMDSIZE, 0);
-	r300->hw.fogc.cmd[R300_FOGC_CMD_0] = cmdpacket0(FG_FOG_COLOR_R, 3);
+	r300->hw.fogc.cmd[R300_FOGC_CMD_0] = cmdpacket0(R300_FG_FOG_COLOR_R, 3);
 	ALLOC_STATE(at, always, R300_AT_CMDSIZE, 0);
-	r300->hw.at.cmd[R300_AT_CMD_0] = cmdpacket0(FG_ALPHA_FUNC, 2);
+	r300->hw.at.cmd[R300_AT_CMD_0] = cmdpacket0(R300_FG_ALPHA_FUNC, 2);
 	ALLOC_STATE(fg_depth_src, always, 2, 0);
 	r300->hw.fg_depth_src.cmd[0] = cmdpacket0(R300_FG_DEPTH_SRC, 1);
-	ALLOC_STATE(fpp, variable, R300_FPP_CMDSIZE, 0);
-	r300->hw.fpp.cmd[R300_FPP_CMD_0] = cmdpacket0(R300_PFS_PARAM_0_X, 0);
 	ALLOC_STATE(rb3d_cctl, always, 2, 0);
 	r300->hw.rb3d_cctl.cmd[0] = cmdpacket0(R300_RB3D_CCTL, 1);
 	ALLOC_STATE(bld, always, R300_BLD_CMDSIZE, 0);
@@ -421,45 +478,61 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	ALLOC_STATE(rb3d_dither_ctl, always, 10, 0);
 	r300->hw.rb3d_dither_ctl.cmd[0] = cmdpacket0(R300_RB3D_DITHER_CTL, 9);
 	ALLOC_STATE(rb3d_aaresolve_ctl, always, 2, 0);
-	r300->hw.rb3d_aaresolve_ctl.cmd[0] = cmdpacket0(RB3D_AARESOLVE_CTL, 1);
+	r300->hw.rb3d_aaresolve_ctl.cmd[0] = cmdpacket0(R300_RB3D_AARESOLVE_CTL, 1);
 	ALLOC_STATE(rb3d_discard_src_pixel_lte_threshold, always, 3, 0);
-	r300->hw.rb3d_discard_src_pixel_lte_threshold.cmd[0] = cmdpacket0(RB3D_DISCARD_SRC_PIXEL_LTE_THRESHOLD, 2);
+	r300->hw.rb3d_discard_src_pixel_lte_threshold.cmd[0] = cmdpacket0(R500_RB3D_DISCARD_SRC_PIXEL_LTE_THRESHOLD, 2);
 	ALLOC_STATE(zs, always, R300_ZS_CMDSIZE, 0);
 	r300->hw.zs.cmd[R300_ZS_CMD_0] =
-	    cmdpacket0(R300_RB3D_ZSTENCIL_CNTL_0, 3);
+	    cmdpacket0(R300_ZB_CNTL, 3);
 	ALLOC_STATE(zstencil_format, always, 5, 0);
 	r300->hw.zstencil_format.cmd[0] =
-	    cmdpacket0(ZB_FORMAT, 4);
+	    cmdpacket0(R300_ZB_FORMAT, 4);
 	ALLOC_STATE(zb, always, R300_ZB_CMDSIZE, 0);
-	r300->hw.zb.cmd[R300_ZB_CMD_0] = cmdpacket0(ZB_DEPTHOFFSET, 2);
+	r300->hw.zb.cmd[R300_ZB_CMD_0] = cmdpacket0(R300_ZB_DEPTHOFFSET, 2);
 	ALLOC_STATE(zb_depthclearvalue, always, 2, 0);
-	r300->hw.zb_depthclearvalue.cmd[0] = cmdpacket0(ZB_DEPTHCLEARVALUE, 1);
+	r300->hw.zb_depthclearvalue.cmd[0] = cmdpacket0(R300_ZB_DEPTHCLEARVALUE, 1);
 	ALLOC_STATE(unk4F30, always, 3, 0);
 	r300->hw.unk4F30.cmd[0] = cmdpacket0(0x4F30, 2);
 	ALLOC_STATE(zb_hiz_offset, always, 2, 0);
-	r300->hw.zb_hiz_offset.cmd[0] = cmdpacket0(ZB_HIZ_OFFSET, 1);
+	r300->hw.zb_hiz_offset.cmd[0] = cmdpacket0(R300_ZB_HIZ_OFFSET, 1);
 	ALLOC_STATE(zb_hiz_pitch, always, 2, 0);
-	r300->hw.zb_hiz_pitch.cmd[0] = cmdpacket0(ZB_HIZ_PITCH, 1);
+	r300->hw.zb_hiz_pitch.cmd[0] = cmdpacket0(R300_ZB_HIZ_PITCH, 1);
 
 	/* VPU only on TCL */
 	if (has_tcl) {
    	        int i;
 		ALLOC_STATE(vpi, vpu, R300_VPI_CMDSIZE, 0);
 		r300->hw.vpi.cmd[R300_VPI_CMD_0] =
-		    cmdvpu(R300_PVS_UPLOAD_PROGRAM, 0);
+		    cmdvpu(R300_PVS_CODE_START, 0);
 
-		ALLOC_STATE(vpp, vpu, R300_VPP_CMDSIZE, 0);
-		r300->hw.vpp.cmd[R300_VPP_CMD_0] =
-		    cmdvpu(R300_PVS_UPLOAD_PARAMETERS, 0);
+		if (is_r500) {
+		    ALLOC_STATE(vpp, vpu, R300_VPP_CMDSIZE, 0);
+		    r300->hw.vpp.cmd[R300_VPP_CMD_0] =
+			cmdvpu(R500_PVS_CONST_START, 0);
 
-		ALLOC_STATE(vps, vpu, R300_VPS_CMDSIZE, 0);
-		r300->hw.vps.cmd[R300_VPS_CMD_0] =
-		    cmdvpu(R300_PVS_UPLOAD_POINTSIZE, 1);
+		    ALLOC_STATE(vps, vpu, R300_VPS_CMDSIZE, 0);
+		    r300->hw.vps.cmd[R300_VPS_CMD_0] =
+			cmdvpu(R500_POINT_VPORT_SCALE_OFFSET, 1);
 
-		for (i = 0; i < 6; i++) {
-		  ALLOC_STATE(vpucp[i], vpu, R300_VPUCP_CMDSIZE, 0);
-		  r300->hw.vpucp[i].cmd[R300_VPUCP_CMD_0] =
- 		    cmdvpu(R300_PVS_UPLOAD_CLIP_PLANE0+i, 1);
+			for (i = 0; i < 6; i++) {
+				ALLOC_STATE(vpucp[i], vpu, R300_VPUCP_CMDSIZE, 0);
+				r300->hw.vpucp[i].cmd[R300_VPUCP_CMD_0] =
+					cmdvpu(R500_PVS_UCP_START + i, 1);
+			}
+		} else {
+		    ALLOC_STATE(vpp, vpu, R300_VPP_CMDSIZE, 0);
+		    r300->hw.vpp.cmd[R300_VPP_CMD_0] =
+			cmdvpu(R300_PVS_CONST_START, 0);
+
+		    ALLOC_STATE(vps, vpu, R300_VPS_CMDSIZE, 0);
+		    r300->hw.vps.cmd[R300_VPS_CMD_0] =
+			cmdvpu(R300_POINT_VPORT_SCALE_OFFSET, 1);
+
+			for (i = 0; i < 6; i++) {
+				ALLOC_STATE(vpucp[i], vpu, R300_VPUCP_CMDSIZE, 0);
+				r300->hw.vpucp[i].cmd[R300_VPUCP_CMD_0] =
+					cmdvpu(R300_PVS_UCP_START + i, 1);
+			}
 		}
 	}
 

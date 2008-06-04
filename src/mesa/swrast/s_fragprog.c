@@ -33,18 +33,19 @@
 
 
 /**
- * Fetch a texel.
+ * Fetch a texel with given lod.
+ * Called via machine->FetchTexelLod()
  */
 static void
-fetch_texel( GLcontext *ctx, const GLfloat texcoord[4], GLfloat lambda,
-             GLuint unit, GLfloat color[4] )
+fetch_texel_lod( GLcontext *ctx, const GLfloat texcoord[4], GLfloat lambda,
+                 GLuint unit, GLfloat color[4] )
 {
    GLchan rgba[4];
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    const struct gl_texture_object *texObj = ctx->Texture.Unit[unit]._Current;
 
    lambda = CLAMP(lambda, texObj->MinLod, texObj->MaxLod);
- 
+
    /* XXX use a float-valued TextureSample routine here!!! */
    swrast->TextureSample[unit](ctx, texObj, 1, (const GLfloat (*)[4]) texcoord,
                                &lambda, &rgba);
@@ -58,6 +59,7 @@ fetch_texel( GLcontext *ctx, const GLfloat texcoord[4], GLfloat lambda,
 /**
  * Fetch a texel with the given partial derivatives to compute a level
  * of detail in the mipmap.
+ * Called via machine->FetchTexelDeriv()
  */
 static void
 fetch_texel_deriv( GLcontext *ctx, const GLfloat texcoord[4],
@@ -117,6 +119,8 @@ init_machine(GLcontext *ctx, struct gl_program_machine *machine,
    machine->DerivY = (GLfloat (*)[4]) span->attrStepY;
    machine->NumDeriv = FRAG_ATTRIB_MAX;
 
+   machine->Samplers = program->Base.SamplerUnits;
+
    /* if running a GLSL program (not ARB_fragment_program) */
    if (ctx->Shader.CurrentProgram) {
       /* Store front/back facing value in register FOGC.Y */
@@ -134,7 +138,7 @@ init_machine(GLcontext *ctx, struct gl_program_machine *machine,
    /* init call stack */
    machine->StackDepth = 0;
 
-   machine->FetchTexelLod = fetch_texel;
+   machine->FetchTexelLod = fetch_texel_lod;
    machine->FetchTexelDeriv = fetch_texel_deriv;
 }
 

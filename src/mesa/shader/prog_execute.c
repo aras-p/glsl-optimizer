@@ -310,6 +310,8 @@ fetch_texel(GLcontext *ctx,
             const GLfloat texcoord[4], GLfloat lodBias,
             GLfloat color[4])
 {
+   const GLuint unit = machine->Samplers[inst->TexSrcUnit];
+
    /* Note: we only have the right derivatives for fragment input attribs.
     */
    if (machine->NumDeriv > 0 &&
@@ -320,12 +322,10 @@ fetch_texel(GLcontext *ctx,
       machine->FetchTexelDeriv(ctx, texcoord,
                                machine->DerivX[attr],
                                machine->DerivY[attr],
-                               lodBias,
-                               inst->TexSrcUnit, color);
+                               lodBias, unit, color);
    }
    else {
-      machine->FetchTexelLod(ctx, texcoord, lodBias,
-                             inst->TexSrcUnit, color);
+      machine->FetchTexelLod(ctx, texcoord, lodBias, unit, color);
    }
 }
 
@@ -1522,9 +1522,7 @@ _mesa_execute_program(GLcontext * ctx,
       default:
          _mesa_problem(ctx, "Bad opcode %d in _mesa_execute_program",
                        inst->Opcode);
-		       assert(0);
          return GL_TRUE;        /* return value doesn't matter */
-
       }
 
       numExec++;

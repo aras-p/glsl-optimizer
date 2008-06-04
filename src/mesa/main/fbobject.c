@@ -1544,7 +1544,7 @@ _mesa_GenerateMipmapEXT(GLenum target)
 
    /* XXX this might not handle cube maps correctly */
    _mesa_lock_texture(ctx, texObj);
-   _mesa_generate_mipmap(ctx, target, texUnit, texObj);
+   ctx->Driver.GenerateMipmap(ctx, target, texObj);
    _mesa_unlock_texture(ctx, texObj);
 }
 

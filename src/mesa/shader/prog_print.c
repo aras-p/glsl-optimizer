@@ -320,7 +320,7 @@ _mesa_swizzle_string(GLuint swizzle, GLuint negateBase, GLboolean extended)
    if (!extended)
       s[i++] = '.';
 
-   if (negateBase & 0x1)
+   if (negateBase & NEGATE_X)
       s[i++] = '-';
    s[i++] = swz[GET_SWZ(swizzle, 0)];
 
@@ -328,7 +328,7 @@ _mesa_swizzle_string(GLuint swizzle, GLuint negateBase, GLboolean extended)
       s[i++] = ',';
    }
 
-   if (negateBase & 0x2)
+   if (negateBase & NEGATE_Y)
       s[i++] = '-';
    s[i++] = swz[GET_SWZ(swizzle, 1)];
 
@@ -336,7 +336,7 @@ _mesa_swizzle_string(GLuint swizzle, GLuint negateBase, GLboolean extended)
       s[i++] = ',';
    }
 
-   if (negateBase & 0x4)
+   if (negateBase & NEGATE_Z)
       s[i++] = '-';
    s[i++] = swz[GET_SWZ(swizzle, 2)];
 
@@ -344,7 +344,7 @@ _mesa_swizzle_string(GLuint swizzle, GLuint negateBase, GLboolean extended)
       s[i++] = ',';
    }
 
-   if (negateBase & 0x8)
+   if (negateBase & NEGATE_W)
       s[i++] = '-';
    s[i++] = swz[GET_SWZ(swizzle, 3)];
 
@@ -541,7 +541,7 @@ _mesa_print_instruction_opt(const struct prog_instruction *inst, GLint indent,
          _mesa_printf("_SAT");
       _mesa_printf(" ");
       print_dst_reg(&inst->DstReg, mode, prog);
-      _mesa_printf("%s[%d], %s",
+      _mesa_printf(", %s[%d], %s",
                    file_string((enum register_file) inst->SrcReg[0].File,
                                mode),
                    inst->SrcReg[0].Index,
@@ -551,6 +551,7 @@ _mesa_print_instruction_opt(const struct prog_instruction *inst, GLint indent,
       break;
    case OPCODE_TEX:
    case OPCODE_TXP:
+   case OPCODE_TXL:
    case OPCODE_TXB:
       _mesa_printf("%s", _mesa_opcode_string(inst->Opcode));
       if (inst->SaturateMode == SATURATE_ZERO_ONE)
@@ -571,6 +572,23 @@ _mesa_print_instruction_opt(const struct prog_instruction *inst, GLint indent,
       }
       print_comment(inst);
       break;
+
+   case OPCODE_KIL:
+      _mesa_printf("%s", _mesa_opcode_string(inst->Opcode));
+      _mesa_printf(" ");
+      print_src_reg(&inst->SrcReg[0], mode, prog);
+      print_comment(inst);
+      break;
+   case OPCODE_KIL_NV:
+      _mesa_printf("%s", _mesa_opcode_string(inst->Opcode));
+      _mesa_printf(" ");
+      _mesa_printf("%s.%s",
+                   _mesa_condcode_string(inst->DstReg.CondMask),
+                   _mesa_swizzle_string(inst->DstReg.CondSwizzle,
+                                        GL_FALSE, GL_FALSE));
+      print_comment(inst);
+      break;
+
    case OPCODE_ARL:
       _mesa_printf("ARL addr.x, ");
       print_src_reg(&inst->SrcReg[0], mode, prog);
@@ -735,6 +753,8 @@ _mesa_print_program_opt(const struct gl_program *prog,
 void
 _mesa_print_program_parameters(GLcontext *ctx, const struct gl_program *prog)
 {
+   GLuint i;
+
    _mesa_printf("InputsRead: 0x%x\n", prog->InputsRead);
    _mesa_printf("OutputsWritten: 0x%x\n", prog->OutputsWritten);
    _mesa_printf("NumInstructions=%d\n", prog->NumInstructions);
@@ -742,9 +762,14 @@ _mesa_print_program_parameters(GLcontext *ctx, const struct gl_program *prog)
    _mesa_printf("NumParameters=%d\n", prog->NumParameters);
    _mesa_printf("NumAttributes=%d\n", prog->NumAttributes);
    _mesa_printf("NumAddressRegs=%d\n", prog->NumAddressRegs);
-	
+   _mesa_printf("Samplers=[ ");
+   for (i = 0; i < MAX_SAMPLERS; i++) {
+      _mesa_printf("%d ", prog->SamplerUnits[i]);
+   }
+   _mesa_printf("]\n");
+
    _mesa_load_state_parameters(ctx, prog->Parameters);
-			
+
 #if 0
    _mesa_printf("Local Params:\n");
    for (i = 0; i < MAX_PROGRAM_LOCAL_PARAMS; i++){
@@ -761,6 +786,9 @@ _mesa_print_parameter_list(const struct gl_program_parameter_list *list)
 {
    const gl_prog_print_mode mode = PROG_PRINT_DEBUG;
    GLuint i;
+
+   if (!list)
+      return;
 
    _mesa_printf("param list %p\n", (void *) list);
    for (i = 0; i < list->NumParameters; i++){

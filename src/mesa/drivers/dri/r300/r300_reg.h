@@ -67,9 +67,15 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 /*
  * Vertex Array Processing (VAP) Control
- * Stolen from r200 code from Christoph Brill (It's a guess!)
  */
 #define R300_VAP_CNTL	0x2080
+#       define R300_PVS_NUM_SLOTS_SHIFT                 0
+#       define R300_PVS_NUM_CNTLRS_SHIFT                4
+#       define R300_PVS_NUM_FPUS_SHIFT                  8
+#       define R300_VF_MAX_VTX_NUM_SHIFT                18
+#       define R300_GL_CLIP_SPACE_DEF                   (0 << 22)
+#       define R300_DX_CLIP_SPACE_DEF                   (1 << 22)
+#       define R500_TCL_STATE_OPTIMIZATION              (1 << 23)
 
 /* This register is written directly and also starts data section
  * in many 3d CP_PACKET3's
@@ -106,6 +112,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 	/* number of vertices */
 #	define	R300_VAP_VF_CNTL__NUM_VERTICES__SHIFT           16
 
+#define R500_VAP_INDEX_OFFSET		    0x208c
+
 #define R300_VAP_OUTPUT_VTX_FMT_0           0x2090
 #       define R300_VAP_OUTPUT_VTX_FMT_0__POS_PRESENT     (1<<0)
 #       define R300_VAP_OUTPUT_VTX_FMT_0__COLOR_0_PRESENT (1<<1)
@@ -125,24 +133,23 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #       define R300_VAP_OUTPUT_VTX_FMT_1__TEX_5_COMP_CNT_SHIFT 15
 #       define R300_VAP_OUTPUT_VTX_FMT_1__TEX_6_COMP_CNT_SHIFT 18
 #       define R300_VAP_OUTPUT_VTX_FMT_1__TEX_7_COMP_CNT_SHIFT 21
-#	define R300_VAP_OUTPUT_VTX_FMT_1__NOT_PRESENT  (1<<0)
-#	define R300_VAP_OUTPUT_VTX_FMT_1__1_COMPONENT  (1<<1)
-#	define R300_VAP_OUTPUT_VTX_FMT_1__2_COMPONENTS (1<<2)
-#	define R300_VAP_OUTPUT_VTX_FMT_1__3_COMPONENTS (1<<3)
-#	define R300_VAP_OUTPUT_VTX_FMT_1__4_COMPONENTS (1<<4)
+#	define R300_VAP_OUTPUT_VTX_FMT_1__NOT_PRESENT  0
+#	define R300_VAP_OUTPUT_VTX_FMT_1__1_COMPONENT  1
+#	define R300_VAP_OUTPUT_VTX_FMT_1__2_COMPONENTS 2
+#	define R300_VAP_OUTPUT_VTX_FMT_1__3_COMPONENTS 3
+#	define R300_VAP_OUTPUT_VTX_FMT_1__4_COMPONENTS 4
 
 #define R300_SE_VTE_CNTL                  0x20b0
-#	define     R300_VPORT_X_SCALE_ENA                0x00000001
-#	define     R300_VPORT_X_OFFSET_ENA               0x00000002
-#	define     R300_VPORT_Y_SCALE_ENA                0x00000004
-#	define     R300_VPORT_Y_OFFSET_ENA               0x00000008
-#	define     R300_VPORT_Z_SCALE_ENA                0x00000010
-#	define     R300_VPORT_Z_OFFSET_ENA               0x00000020
-#	define     R300_VTX_XY_FMT                       0x00000100
-#	define     R300_VTX_Z_FMT                        0x00000200
-#	define     R300_VTX_W0_FMT                       0x00000400
-#	define     R300_VTX_W0_NORMALIZE                 0x00000800
-#	define     R300_VTX_ST_DENORMALIZED              0x00001000
+#	define     R300_VPORT_X_SCALE_ENA                (1 << 0)
+#	define     R300_VPORT_X_OFFSET_ENA               (1 << 1)
+#	define     R300_VPORT_Y_SCALE_ENA                (1 << 2)
+#	define     R300_VPORT_Y_OFFSET_ENA               (1 << 3)
+#	define     R300_VPORT_Z_SCALE_ENA                (1 << 4)
+#	define     R300_VPORT_Z_OFFSET_ENA               (1 << 5)
+#	define     R300_VTX_XY_FMT                       (1 << 8)
+#	define     R300_VTX_Z_FMT                        (1 << 9)
+#	define     R300_VTX_W0_FMT                       (1 << 10)
+#	define     R300_SERIAL_PROC_ENA                  (1 << 11)
 
 /* BEGIN: Vertex data assembly - lots of uncertainties */
 
@@ -211,27 +218,31 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  * Always set COMPONENTS_4 in immediate mode.
  */
 
-#define R300_VAP_INPUT_ROUTE_0_0            0x2150
-#       define R300_INPUT_ROUTE_COMPONENTS_1     (0 << 0)
-#       define R300_INPUT_ROUTE_COMPONENTS_2     (1 << 0)
-#       define R300_INPUT_ROUTE_COMPONENTS_3     (2 << 0)
-#       define R300_INPUT_ROUTE_COMPONENTS_4     (3 << 0)
-#       define R300_INPUT_ROUTE_COMPONENTS_RGBA  (4 << 0) /* GUESS */
-#       define R300_VAP_INPUT_ROUTE_IDX_SHIFT    8
-#       define R300_VAP_INPUT_ROUTE_IDX_MASK     (31 << 8) /* GUESS */
-#       define R300_VAP_INPUT_ROUTE_END          (1 << 13)
-#       define R300_INPUT_ROUTE_IMMEDIATE_MODE   (0 << 14) /* GUESS */
-#       define R300_INPUT_ROUTE_FLOAT            (1 << 14) /* GUESS */
-#       define R300_INPUT_ROUTE_UNSIGNED_BYTE    (2 << 14) /* GUESS */
-#       define R300_INPUT_ROUTE_FLOAT_COLOR      (3 << 14) /* GUESS */
-#define R300_VAP_INPUT_ROUTE_0_1            0x2154
-#define R300_VAP_INPUT_ROUTE_0_2            0x2158
-#define R300_VAP_INPUT_ROUTE_0_3            0x215C
-#define R300_VAP_INPUT_ROUTE_0_4            0x2160
-#define R300_VAP_INPUT_ROUTE_0_5            0x2164
-#define R300_VAP_INPUT_ROUTE_0_6            0x2168
-#define R300_VAP_INPUT_ROUTE_0_7            0x216C
-
+#define R300_VAP_PROG_STREAM_CNTL_0                     0x2150
+#       define R300_DATA_TYPE_0_SHIFT                   0
+#       define R300_DATA_TYPE_FLOAT_1                   0
+#       define R300_DATA_TYPE_FLOAT_2                   1
+#       define R300_DATA_TYPE_FLOAT_3                   2
+#       define R300_DATA_TYPE_FLOAT_4                   3
+#       define R300_DATA_TYPE_BYTE                      4
+#       define R300_DATA_TYPE_D3DCOLOR                  5
+#       define R300_DATA_TYPE_SHORT_2                   6
+#       define R300_DATA_TYPE_SHORT_4                   7
+#       define R300_DATA_TYPE_VECTOR_3_TTT              8
+#       define R300_DATA_TYPE_VECTOR_3_EET              9
+#       define R300_SKIP_DWORDS_SHIFT                   4
+#       define R300_DST_VEC_LOC_SHIFT                   8
+#       define R300_LAST_VEC                            (1 << 13)
+#       define R300_SIGNED                              (1 << 14)
+#       define R300_NORMALIZE                           (1 << 15)
+#       define R300_DATA_TYPE_1_SHIFT                   16
+#define R300_VAP_PROG_STREAM_CNTL_1                     0x2154
+#define R300_VAP_PROG_STREAM_CNTL_2                     0x2158
+#define R300_VAP_PROG_STREAM_CNTL_3                     0x215C
+#define R300_VAP_PROG_STREAM_CNTL_4                     0x2160
+#define R300_VAP_PROG_STREAM_CNTL_5                     0x2164
+#define R300_VAP_PROG_STREAM_CNTL_6                     0x2168
+#define R300_VAP_PROG_STREAM_CNTL_7                     0x216C
 /* gap */
 
 /* Notes:
@@ -239,9 +250,26 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  *    if vertex program uses only position, fglrx will set normal, too
  *  - INPUT_CNTL_0_COLOR and INPUT_CNTL_COLOR bits are always equal.
  */
-#define R300_VAP_INPUT_CNTL_0               0x2180
-#       define R300_INPUT_CNTL_0_COLOR           0x00000001
-#define R300_VAP_INPUT_CNTL_1               0x2184
+#define R300_VAP_VTX_STATE_CNTL               0x2180
+#       define R300_COLOR_0_ASSEMBLY_SHIFT    0
+#       define R300_SEL_COLOR                 0
+#       define R300_SEL_USER_COLOR_0          1
+#       define R300_SEL_USER_COLOR_1          2
+#       define R300_COLOR_1_ASSEMBLY_SHIFT    2
+#       define R300_COLOR_2_ASSEMBLY_SHIFT    4
+#       define R300_COLOR_3_ASSEMBLY_SHIFT    6
+#       define R300_COLOR_4_ASSEMBLY_SHIFT    8
+#       define R300_COLOR_5_ASSEMBLY_SHIFT    10
+#       define R300_COLOR_6_ASSEMBLY_SHIFT    12
+#       define R300_COLOR_7_ASSEMBLY_SHIFT    14
+#       define R300_UPDATE_USER_COLOR_0_ENA   (1 << 16)
+
+/*
+ * Each bit in this field applies to the corresponding vector in the VSM
+ * memory (i.e. Bit 0 applies to VECTOR_0 (POSITION), etc.). If the bit
+ * is set, then the corresponding 4-Dword Vector is output into the Vertex Stream.
+ */
+#define R300_VAP_VSM_VTX_ASSM               0x2184
 #       define R300_INPUT_CNTL_POS               0x00000001
 #       define R300_INPUT_CNTL_NORMAL            0x00000002
 #       define R300_INPUT_CNTL_COLOR             0x00000004
@@ -269,26 +297,40 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  * mode, the swizzling pattern is e.g. used to set zw components in texture
  * coordinates with only tweo components.
  */
-#define R300_VAP_INPUT_ROUTE_1_0            0x21E0
+#define R300_VAP_PROG_STREAM_CNTL_EXT_0                 0x21e0
+#       define R300_SWIZZLE0_SHIFT                      0
+#       define R300_SWIZZLE_SELECT_X_SHIFT              0
+#       define R300_SWIZZLE_SELECT_Y_SHIFT              3
+#       define R300_SWIZZLE_SELECT_Z_SHIFT              6
+#       define R300_SWIZZLE_SELECT_W_SHIFT              9
+
+#       define R300_SWIZZLE_SELECT_X                    0
+#       define R300_SWIZZLE_SELECT_Y                    1
+#       define R300_SWIZZLE_SELECT_Z                    2
+#       define R300_SWIZZLE_SELECT_W                    3
+#       define R300_SWIZZLE_SELECT_FP_ZERO              4
+#       define R300_SWIZZLE_SELECT_FP_ONE               5
+/* alternate forms for r300_emit.c */
 #       define R300_INPUT_ROUTE_SELECT_X    0
 #       define R300_INPUT_ROUTE_SELECT_Y    1
 #       define R300_INPUT_ROUTE_SELECT_Z    2
 #       define R300_INPUT_ROUTE_SELECT_W    3
 #       define R300_INPUT_ROUTE_SELECT_ZERO 4
 #       define R300_INPUT_ROUTE_SELECT_ONE  5
-#       define R300_INPUT_ROUTE_SELECT_MASK 7
-#       define R300_INPUT_ROUTE_X_SHIFT     0
-#       define R300_INPUT_ROUTE_Y_SHIFT     3
-#       define R300_INPUT_ROUTE_Z_SHIFT     6
-#       define R300_INPUT_ROUTE_W_SHIFT     9
-#       define R300_INPUT_ROUTE_ENABLE      (15 << 12)
-#define R300_VAP_INPUT_ROUTE_1_1            0x21E4
-#define R300_VAP_INPUT_ROUTE_1_2            0x21E8
-#define R300_VAP_INPUT_ROUTE_1_3            0x21EC
-#define R300_VAP_INPUT_ROUTE_1_4            0x21F0
-#define R300_VAP_INPUT_ROUTE_1_5            0x21F4
-#define R300_VAP_INPUT_ROUTE_1_6            0x21F8
-#define R300_VAP_INPUT_ROUTE_1_7            0x21FC
+
+#       define R300_WRITE_ENA_SHIFT                     12
+#       define R300_WRITE_ENA_X                         1
+#       define R300_WRITE_ENA_Y                         2
+#       define R300_WRITE_ENA_Z                         4
+#       define R300_WRITE_ENA_W                         8
+#       define R300_SWIZZLE1_SHIFT                      16
+#define R300_VAP_PROG_STREAM_CNTL_EXT_1                 0x21e4
+#define R300_VAP_PROG_STREAM_CNTL_EXT_2                 0x21e8
+#define R300_VAP_PROG_STREAM_CNTL_EXT_3                 0x21ec
+#define R300_VAP_PROG_STREAM_CNTL_EXT_4                 0x21f0
+#define R300_VAP_PROG_STREAM_CNTL_EXT_5                 0x21f4
+#define R300_VAP_PROG_STREAM_CNTL_EXT_6                 0x21f8
+#define R300_VAP_PROG_STREAM_CNTL_EXT_7                 0x21fc
 
 /* END: Vertex data assembly */
 
@@ -320,25 +362,20 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  * Multiple vertex programs and parameter sets can be loaded at once,
  * which could explain the size discrepancy.
  */
-#define R300_VAP_PVS_UPLOAD_ADDRESS         0x2200
-#       define R300_PVS_UPLOAD_PROGRAM           0x00000000
-/* gap */
-#       define R300_PVS_UPLOAD_PARAMETERS        0x00000200
-/* gap */
-#       define R300_PVS_UPLOAD_CLIP_PLANE0       0x00000400
-#       define R300_PVS_UPLOAD_CLIP_PLANE1       0x00000401
-#       define R300_PVS_UPLOAD_CLIP_PLANE2       0x00000402
-#       define R300_PVS_UPLOAD_CLIP_PLANE3       0x00000403
-#       define R300_PVS_UPLOAD_CLIP_PLANE4       0x00000404
-#       define R300_PVS_UPLOAD_CLIP_PLANE5       0x00000405
-#       define R300_PVS_UPLOAD_POINTSIZE         0x00000406
-
-#       define R500_PVS_UPLOAD_CLIP_PLANE0       0x00000600
-#       define R500_PVS_UPLOAD_CLIP_PLANE1       0x00000601
-#       define R500_PVS_UPLOAD_CLIP_PLANE2       0x00000602
-#       define R500_PVS_UPLOAD_CLIP_PLANE3       0x00000603
-#       define R500_PVS_UPLOAD_CLIP_PLANE4       0x00000604
-#       define R500_PVS_UPLOAD_CLIP_PLANE5       0x00000605
+#define R300_VAP_PVS_VECTOR_INDX_REG         0x2200
+#       define R300_PVS_CODE_START           0
+#       define R300_MAX_PVS_CODE_LINES       256
+#       define R500_MAX_PVS_CODE_LINES       1024
+#       define R300_PVS_CONST_START          512
+#       define R500_PVS_CONST_START          1024
+#       define R300_MAX_PVS_CONST_VECS       256
+#       define R500_MAX_PVS_CONST_VECS       1024
+#       define R300_PVS_UCP_START            1024
+#       define R500_PVS_UCP_START            1536
+#       define R300_POINT_VPORT_SCALE_OFFSET 1030
+#       define R500_POINT_VPORT_SCALE_OFFSET 1542
+#       define R300_POINT_GEN_TEX_OFFSET     1031
+#       define R500_POINT_GEN_TEX_OFFSET     1543
 
 /*
  * These are obsolete defines form r300_context.h, but they might give some
@@ -373,9 +410,21 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  * See bug #9871. http://bugs.freedesktop.org/attachment.cgi?id=10672&action=view
  */
 #define R300_VAP_CLIP_CNTL                       0x221C
-#       define R300_221C_NORMAL                  0x00000000
-#       define R300_221C_CLEAR                   0x0001C000
-#define R300_VAP_UCP_ENABLE_0 (1 << 0)
+#       define R300_VAP_UCP_ENABLE_0             (1 << 0)
+#       define R300_VAP_UCP_ENABLE_1             (1 << 1)
+#       define R300_VAP_UCP_ENABLE_2             (1 << 2)
+#       define R300_VAP_UCP_ENABLE_3             (1 << 3)
+#       define R300_VAP_UCP_ENABLE_4             (1 << 4)
+#       define R300_VAP_UCP_ENABLE_5             (1 << 5)
+#       define R300_PS_UCP_MODE_DIST_COP         (0 << 14)
+#       define R300_PS_UCP_MODE_RADIUS_COP       (1 << 14)
+#       define R300_PS_UCP_MODE_RADIUS_COP_CLIP  (2 << 14)
+#       define R300_PS_UCP_MODE_CLIP_AS_TRIFAN   (3 << 14)
+#       define R300_CLIP_DISABLE                 (1 << 16)
+#       define R300_UCP_CULL_ONLY_ENABLE         (1 << 17)
+#       define R300_BOUNDARY_EDGE_FLAG_ENABLE    (1 << 18)
+#       define R500_COLOR2_IS_TEXTURE            (1 << 20)
+#       define R500_COLOR3_IS_TEXTURE            (1 << 21)
 
 /* These seem to be per-pixel and per-vertex X and Y clipping planes. The first
  * plane is per-pixel and the second plane is per-vertex.
@@ -384,10 +433,10 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  * These registers are called X_QUAD0_1_FL to X_QUAD0_4_FL by glxtest.
  */
-#define R300_VAP_CLIP_X_0                   0x2220
-#define R300_VAP_CLIP_X_1                   0x2224
-#define R300_VAP_CLIP_Y_0                   0x2228
-#define R300_VAP_CLIP_Y_1                   0x222c
+#define R300_VAP_GB_VERT_CLIP_ADJ                   0x2220
+#define R300_VAP_GB_VERT_DISC_ADJ                   0x2224
+#define R300_VAP_GB_HORZ_CLIP_ADJ                   0x2228
+#define R300_VAP_GB_HORZ_DISC_ADJ                   0x222c
 
 /* gap */
 
@@ -396,7 +445,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  * Therefore, I suspect writing zero to 0x2284 synchronizes the engine and
  * avoids bugs caused by still running shaders reading bad data from memory.
  */
-#define R300_VAP_PVS_WAITIDLE               0x2284 /* GUESS */
+#define R300_VAP_PVS_STATE_FLUSH_REG        0x2284
 
 /* This register is used to define the number of core clocks to wait for a
  * vertex to be received by the VAP input controller (while the primitive
@@ -426,17 +475,17 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  * is sometimes accepted other instruction that have no relationship with
  * position calculations.
  */
-#define R300_VAP_PVS_CNTL_1                 0x22D0
-#       define R300_PVS_CNTL_1_PROGRAM_START_SHIFT   0
-#       define R300_PVS_CNTL_1_POS_END_SHIFT         10
-#       define R300_PVS_CNTL_1_PROGRAM_END_SHIFT     20
+#define R300_VAP_PVS_CODE_CNTL_0            0x22D0
+#       define R300_PVS_FIRST_INST_SHIFT         0
+#       define R300_PVS_XYZW_VALID_INST_SHIFT    10
+#       define R300_PVS_LAST_INST_SHIFT          20
 /* Addresses are relative the the vertex program parameters area. */
-#define R300_VAP_PVS_CNTL_2                 0x22D4
-#       define R300_PVS_CNTL_2_PARAM_OFFSET_SHIFT 0
-#       define R300_PVS_CNTL_2_PARAM_COUNT_SHIFT  16
-#define R300_VAP_PVS_CNTL_3	           0x22D8
-#       define R300_PVS_CNTL_3_PROGRAM_UNKNOWN_SHIFT 10
-#       define R300_PVS_CNTL_3_PROGRAM_UNKNOWN2_SHIFT 0
+#define R300_VAP_PVS_CONST_CNTL             0x22D4
+#       define R300_PVS_CONST_BASE_OFFSET_SHIFT  0
+#       define R300_PVS_MAX_CONST_ADDR_SHIFT     16
+#define R300_VAP_PVS_CODE_CNTL_1	    0x22D8
+#       define R300_PVS_LAST_VTX_SRC_INST_SHIFT  0
+#define R300_VAP_PVS_FLOW_CNTL_OPC          0x22DC
 
 /* The entire range from 0x2300 to 0x2AC inclusive seems to be used for
  * immediate vertices
@@ -673,23 +722,16 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define R500_RS_IP_13					0x40A8
 #define R500_RS_IP_14					0x40AC
 #define R500_RS_IP_15					0x40B0
+#define R500_RS_IP_PTR_K0                               62
+#define R500_RS_IP_PTR_K1                               63
 #define R500_RS_IP_TEX_PTR_S_SHIFT 			0
 #define R500_RS_IP_TEX_PTR_T_SHIFT 			6
 #define R500_RS_IP_TEX_PTR_R_SHIFT 			12
 #define R500_RS_IP_TEX_PTR_Q_SHIFT 			18
 #define R500_RS_IP_COL_PTR_SHIFT 			24
 #define R500_RS_IP_COL_FMT_SHIFT 			27
-#define R500_RS_IP_COL_FMT_RGBA 			(0 << 27)
-#define R500_RS_IP_COL_FMT_RGB0 			(1 << 27)
-#define R500_RS_IP_COL_FMT_RGB1 			(2 << 27)
-/* gap */
-#define R500_RS_IP_COL_FMT_000A 			(4 << 27)
-#define R500_RS_IP_COL_FMT_0000 			(5 << 27)
-#define R500_RS_IP_COL_FMT_0001 			(6 << 27)
-/* gap */
-#define R500_RS_IP_COL_FMT_111A 			(8 << 27)
-#define R500_RS_IP_COL_FMT_1110 			(9 << 27)
-#define R500_RS_IP_COL_FMT_1111 			(10 << 27)
+#	define R500_RS_COL_PTR(x)		        (x << 24)
+#       define R500_RS_COL_FMT(x)                       (x << 27)
 /* gap */
 #define R500_RS_IP_OFFSET_DIS 				(0 << 31)
 #define R500_RS_IP_OFFSET_EN 				(1 << 31)
@@ -697,7 +739,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 /* gap */
 
 /* Zero to flush caches. */
-#define R300_TX_CNTL                        0x4100
+#define R300_TX_INVALTAGS                   0x4100
 #define R300_TX_FLUSH                       0x0
 
 /* The upper enable bits are guessed, based on fglrx reported limits. */
@@ -728,25 +770,25 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #	define R500_TX_DIRECTION_VERITCAL	 (1<<27)
 
 /* S Texture Coordinate of Vertex 0 for Point texture stuffing (LLC) */
-#define GA_POINT_S0                              0x4200
+#define R300_GA_POINT_S0                              0x4200
 
 /* T Texture Coordinate of Vertex 0 for Point texture stuffing (LLC) */
-#define GA_POINT_T0                              0x4204
+#define R300_GA_POINT_T0                              0x4204
 
 /* S Texture Coordinate of Vertex 2 for Point texture stuffing (URC) */
-#define GA_POINT_S1                              0x4208
+#define R300_GA_POINT_S1                              0x4208
 
 /* T Texture Coordinate of Vertex 2 for Point texture stuffing (URC) */
-#define GA_POINT_T1                              0x420c
+#define R300_GA_POINT_T1                              0x420c
 
 /* Specifies amount to shift integer position of vertex (screen space) before
  * converting to float for triangle stipple.
  */
-#define GA_TRIANGLE_STIPPLE            0x4214
-#	define GA_TRIANGLE_STIPPLE_X_SHIFT_SHIFT 0
-#	define GA_TRIANGLE_STIPPLE_X_SHIFT_MASK  0x0000000f
-#	define GA_TRIANGLE_STIPPLE_Y_SHIFT_SHIFT 16
-#	define GA_TRIANGLE_STIPPLE_Y_SHIFT_MASK  0x000f0000
+#define R300_GA_TRIANGLE_STIPPLE            0x4214
+#	define R300_GA_TRIANGLE_STIPPLE_X_SHIFT_SHIFT 0
+#	define R300_GA_TRIANGLE_STIPPLE_X_SHIFT_MASK  0x0000000f
+#	define R300_GA_TRIANGLE_STIPPLE_Y_SHIFT_SHIFT 16
+#	define R300_GA_TRIANGLE_STIPPLE_Y_SHIFT_MASK  0x000f0000
 
 /* The pointsize is given in multiples of 6. The pointsize can be enormous:
  * Clear() renders a single point that fills the entire framebuffer.
@@ -761,16 +803,16 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #       define R300_POINTSIZE_MAX             (R300_POINTSIZE_Y_MASK / 6)
 
 /* Blue fill color */
-#define GA_FILL_R                                0x4220
+#define R500_GA_FILL_R                                0x4220
 
 /* Blue fill color */
-#define GA_FILL_G                                0x4224
+#define R500_GA_FILL_G                                0x4224
 
 /* Blue fill color */
-#define GA_FILL_B                                0x4228
+#define R500_GA_FILL_B                                0x4228
 
 /* Alpha fill color */
-#define GA_FILL_A                                0x422c
+#define R500_GA_FILL_A                                0x422c
 
 
 /* Specifies maximum and minimum point & sprite sizes for per vertex size
@@ -791,159 +833,159 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  * VE: vertical or horizontal
  * HO & VE: no classification
  */
-#define GA_LINE_CNTL                             0x4234
-#       define GA_LINE_CNTL_WIDTH_SHIFT       0
-#       define GA_LINE_CNTL_WIDTH_MASK        0x0000ffff
-#	define GA_LINE_CNTL_END_TYPE_HOR      (0 << 16)
-#	define GA_LINE_CNTL_END_TYPE_VER      (1 << 16)
-#	define GA_LINE_CNTL_END_TYPE_SQR      (2 << 16) /* horizontal or vertical depending upon slope */
-#	define GA_LINE_CNTL_END_TYPE_COMP     (3 << 16) /* Computed (perpendicular to slope) */
-#	define GA_LINE_CNTL_SORT_NO           (0 << 18)
-#	define GA_LINE_CNTL_SORT_MINX_MINY    (1 << 18)
+#define R300_GA_LINE_CNTL                             0x4234
+#       define R300_GA_LINE_CNTL_WIDTH_SHIFT       0
+#       define R300_GA_LINE_CNTL_WIDTH_MASK        0x0000ffff
+#	define R300_GA_LINE_CNTL_END_TYPE_HOR      (0 << 16)
+#	define R300_GA_LINE_CNTL_END_TYPE_VER      (1 << 16)
+#	define R300_GA_LINE_CNTL_END_TYPE_SQR      (2 << 16) /* horizontal or vertical depending upon slope */
+#	define R300_GA_LINE_CNTL_END_TYPE_COMP     (3 << 16) /* Computed (perpendicular to slope) */
+#	define R500_GA_LINE_CNTL_SORT_NO           (0 << 18)
+#	define R500_GA_LINE_CNTL_SORT_MINX_MINY    (1 << 18)
 /** TODO: looks wrong */
-#       define R300_LINESIZE_MAX              (GA_LINE_CNTL_WIDTH_MASK / 6)
+#       define R300_LINESIZE_MAX              (R300_GA_LINE_CNTL_WIDTH_MASK / 6)
 /** TODO: looks wrong */
 #       define R300_LINE_CNT_HO               (1 << 16)
 /** TODO: looks wrong */
 #       define R300_LINE_CNT_VE               (1 << 17)
 
 /* Line Stipple configuration information. */
-#define GA_LINE_STIPPLE_CONFIG                   0x4238
-#	define GA_LINE_STIPPLE_CONFIG_LINE_RESET_NO     (0 << 0)
-#	define GA_LINE_STIPPLE_CONFIG_LINE_RESET_LINE   (1 << 0)
-#	define GA_LINE_STIPPLE_CONFIG_LINE_RESET_PACKET (2 << 0)
-#	define GA_LINE_STIPPLE_CONFIG_STIPPLE_SCALE_SHIFT 2
-#	define GA_LINE_STIPPLE_CONFIG_STIPPLE_SCALE_MASK  0xfffffffc
+#define R300_GA_LINE_STIPPLE_CONFIG                   0x4238
+#	define R300_GA_LINE_STIPPLE_CONFIG_LINE_RESET_NO     (0 << 0)
+#	define R300_GA_LINE_STIPPLE_CONFIG_LINE_RESET_LINE   (1 << 0)
+#	define R300_GA_LINE_STIPPLE_CONFIG_LINE_RESET_PACKET (2 << 0)
+#	define R300_GA_LINE_STIPPLE_CONFIG_STIPPLE_SCALE_SHIFT 2
+#	define R300_GA_LINE_STIPPLE_CONFIG_STIPPLE_SCALE_MASK  0xfffffffc
 
 /* Used to load US instructions and constants */
 #define R500_GA_US_VECTOR_INDEX               0x4250
-#	define GA_US_VECTOR_INDEX_SHIFT       0
-#	define GA_US_VECTOR_INDEX_MASK        0x000000ff
-#	define GA_US_VECTOR_INDEX_TYPE_INSTR  (0 << 16)
-#	define GA_US_VECTOR_INDEX_TYPE_CONST  (1 << 16)
-#	define GA_US_VECTOR_INDEX_CLAMP_NO    (0 << 17)
-#	define GA_US_VECTOR_INDEX_CLAMP_CONST (1 << 17)
+#	define R500_GA_US_VECTOR_INDEX_SHIFT       0
+#	define R500_GA_US_VECTOR_INDEX_MASK        0x000000ff
+#	define R500_GA_US_VECTOR_INDEX_TYPE_INSTR  (0 << 16)
+#	define R500_GA_US_VECTOR_INDEX_TYPE_CONST  (1 << 16)
+#	define R500_GA_US_VECTOR_INDEX_CLAMP_NO    (0 << 17)
+#	define R500_GA_US_VECTOR_INDEX_CLAMP_CONST (1 << 17)
 
 /* Data register for loading US instructions and constants */
 #define R500_GA_US_VECTOR_DATA                0x4254
 
 /* Specifies color properties and mappings of textures. */
-#define GA_COLOR_CONTROL_PS3                     0x4258
-#	define TEX0_SHADING_PS3_SOLID       (0 << 0)
-#	define TEX0_SHADING_PS3_FLAT        (1 << 0)
-#	define TEX0_SHADING_PS3_GOURAUD     (2 << 0)
-#	define TEX1_SHADING_PS3_SOLID       (0 << 2)
-#	define TEX1_SHADING_PS3_FLAT        (1 << 2)
-#	define TEX1_SHADING_PS3_GOURAUD     (2 << 2)
-#	define TEX2_SHADING_PS3_SOLID       (0 << 4)
-#	define TEX2_SHADING_PS3_FLAT        (1 << 4)
-#	define TEX2_SHADING_PS3_GOURAUD     (2 << 4)
-#	define TEX3_SHADING_PS3_SOLID       (0 << 6)
-#	define TEX3_SHADING_PS3_FLAT        (1 << 6)
-#	define TEX3_SHADING_PS3_GOURAUD     (2 << 6)
-#	define TEX4_SHADING_PS3_SOLID       (0 << 8)
-#	define TEX4_SHADING_PS3_FLAT        (1 << 8)
-#	define TEX4_SHADING_PS3_GOURAUD     (2 << 8)
-#	define TEX5_SHADING_PS3_SOLID       (0 << 10)
-#	define TEX5_SHADING_PS3_FLAT        (1 << 10)
-#	define TEX5_SHADING_PS3_GOURAUD     (2 << 10)
-#	define TEX6_SHADING_PS3_SOLID       (0 << 12)
-#	define TEX6_SHADING_PS3_FLAT        (1 << 12)
-#	define TEX6_SHADING_PS3_GOURAUD     (2 << 12)
-#	define TEX7_SHADING_PS3_SOLID       (0 << 14)
-#	define TEX7_SHADING_PS3_FLAT        (1 << 14)
-#	define TEX7_SHADING_PS3_GOURAUD     (2 << 14)
-#	define TEX8_SHADING_PS3_SOLID       (0 << 16)
-#	define TEX8_SHADING_PS3_FLAT        (1 << 16)
-#	define TEX8_SHADING_PS3_GOURAUD     (2 << 16)
-#	define TEX9_SHADING_PS3_SOLID       (0 << 18)
-#	define TEX9_SHADING_PS3_FLAT        (1 << 18)
-#	define TEX9_SHADING_PS3_GOURAUD     (2 << 18)
-#	define TEX10_SHADING_PS3_SOLID      (0 << 20)
-#	define TEX10_SHADING_PS3_FLAT       (1 << 20)
-#	define TEX10_SHADING_PS3_GOURAUD    (2 << 20)
-#	define COLOR0_TEX_OVERRIDE_NO       (0 << 22)
-#	define COLOR0_TEX_OVERRIDE_TEX_0    (1 << 22)
-#	define COLOR0_TEX_OVERRIDE_TEX_1    (2 << 22)
-#	define COLOR0_TEX_OVERRIDE_TEX_2    (3 << 22)
-#	define COLOR0_TEX_OVERRIDE_TEX_3    (4 << 22)
-#	define COLOR0_TEX_OVERRIDE_TEX_4    (5 << 22)
-#	define COLOR0_TEX_OVERRIDE_TEX_5    (6 << 22)
-#	define COLOR0_TEX_OVERRIDE_TEX_6    (7 << 22)
-#	define COLOR0_TEX_OVERRIDE_TEX_7    (8 << 22)
-#	define COLOR0_TEX_OVERRIDE_TEX_8_C2 (9 << 22)
-#	define COLOR0_TEX_OVERRIDE_TEX_9_C3 (10 << 22)
-#	define COLOR1_TEX_OVERRIDE_NO       (0 << 26)
-#	define COLOR1_TEX_OVERRIDE_TEX_0    (1 << 26)
-#	define COLOR1_TEX_OVERRIDE_TEX_1    (2 << 26)
-#	define COLOR1_TEX_OVERRIDE_TEX_2    (3 << 26)
-#	define COLOR1_TEX_OVERRIDE_TEX_3    (4 << 26)
-#	define COLOR1_TEX_OVERRIDE_TEX_4    (5 << 26)
-#	define COLOR1_TEX_OVERRIDE_TEX_5    (6 << 26)
-#	define COLOR1_TEX_OVERRIDE_TEX_6    (7 << 26)
-#	define COLOR1_TEX_OVERRIDE_TEX_7    (8 << 26)
-#	define COLOR1_TEX_OVERRIDE_TEX_8_C2 (9 << 26)
-#	define COLOR1_TEX_OVERRIDE_TEX_9_C3 (10 << 26)
+#define R500_GA_COLOR_CONTROL_PS3                     0x4258
+#	define R500_TEX0_SHADING_PS3_SOLID       (0 << 0)
+#	define R500_TEX0_SHADING_PS3_FLAT        (1 << 0)
+#	define R500_TEX0_SHADING_PS3_GOURAUD     (2 << 0)
+#	define R500_TEX1_SHADING_PS3_SOLID       (0 << 2)
+#	define R500_TEX1_SHADING_PS3_FLAT        (1 << 2)
+#	define R500_TEX1_SHADING_PS3_GOURAUD     (2 << 2)
+#	define R500_TEX2_SHADING_PS3_SOLID       (0 << 4)
+#	define R500_TEX2_SHADING_PS3_FLAT        (1 << 4)
+#	define R500_TEX2_SHADING_PS3_GOURAUD     (2 << 4)
+#	define R500_TEX3_SHADING_PS3_SOLID       (0 << 6)
+#	define R500_TEX3_SHADING_PS3_FLAT        (1 << 6)
+#	define R500_TEX3_SHADING_PS3_GOURAUD     (2 << 6)
+#	define R500_TEX4_SHADING_PS3_SOLID       (0 << 8)
+#	define R500_TEX4_SHADING_PS3_FLAT        (1 << 8)
+#	define R500_TEX4_SHADING_PS3_GOURAUD     (2 << 8)
+#	define R500_TEX5_SHADING_PS3_SOLID       (0 << 10)
+#	define R500_TEX5_SHADING_PS3_FLAT        (1 << 10)
+#	define R500_TEX5_SHADING_PS3_GOURAUD     (2 << 10)
+#	define R500_TEX6_SHADING_PS3_SOLID       (0 << 12)
+#	define R500_TEX6_SHADING_PS3_FLAT        (1 << 12)
+#	define R500_TEX6_SHADING_PS3_GOURAUD     (2 << 12)
+#	define R500_TEX7_SHADING_PS3_SOLID       (0 << 14)
+#	define R500_TEX7_SHADING_PS3_FLAT        (1 << 14)
+#	define R500_TEX7_SHADING_PS3_GOURAUD     (2 << 14)
+#	define R500_TEX8_SHADING_PS3_SOLID       (0 << 16)
+#	define R500_TEX8_SHADING_PS3_FLAT        (1 << 16)
+#	define R500_TEX8_SHADING_PS3_GOURAUD     (2 << 16)
+#	define R500_TEX9_SHADING_PS3_SOLID       (0 << 18)
+#	define R500_TEX9_SHADING_PS3_FLAT        (1 << 18)
+#	define R500_TEX9_SHADING_PS3_GOURAUD     (2 << 18)
+#	define R500_TEX10_SHADING_PS3_SOLID      (0 << 20)
+#	define R500_TEX10_SHADING_PS3_FLAT       (1 << 20)
+#	define R500_TEX10_SHADING_PS3_GOURAUD    (2 << 20)
+#	define R500_COLOR0_TEX_OVERRIDE_NO       (0 << 22)
+#	define R500_COLOR0_TEX_OVERRIDE_TEX_0    (1 << 22)
+#	define R500_COLOR0_TEX_OVERRIDE_TEX_1    (2 << 22)
+#	define R500_COLOR0_TEX_OVERRIDE_TEX_2    (3 << 22)
+#	define R500_COLOR0_TEX_OVERRIDE_TEX_3    (4 << 22)
+#	define R500_COLOR0_TEX_OVERRIDE_TEX_4    (5 << 22)
+#	define R500_COLOR0_TEX_OVERRIDE_TEX_5    (6 << 22)
+#	define R500_COLOR0_TEX_OVERRIDE_TEX_6    (7 << 22)
+#	define R500_COLOR0_TEX_OVERRIDE_TEX_7    (8 << 22)
+#	define R500_COLOR0_TEX_OVERRIDE_TEX_8_C2 (9 << 22)
+#	define R500_COLOR0_TEX_OVERRIDE_TEX_9_C3 (10 << 22)
+#	define R500_COLOR1_TEX_OVERRIDE_NO       (0 << 26)
+#	define R500_COLOR1_TEX_OVERRIDE_TEX_0    (1 << 26)
+#	define R500_COLOR1_TEX_OVERRIDE_TEX_1    (2 << 26)
+#	define R500_COLOR1_TEX_OVERRIDE_TEX_2    (3 << 26)
+#	define R500_COLOR1_TEX_OVERRIDE_TEX_3    (4 << 26)
+#	define R500_COLOR1_TEX_OVERRIDE_TEX_4    (5 << 26)
+#	define R500_COLOR1_TEX_OVERRIDE_TEX_5    (6 << 26)
+#	define R500_COLOR1_TEX_OVERRIDE_TEX_6    (7 << 26)
+#	define R500_COLOR1_TEX_OVERRIDE_TEX_7    (8 << 26)
+#	define R500_COLOR1_TEX_OVERRIDE_TEX_8_C2 (9 << 26)
+#	define R500_COLOR1_TEX_OVERRIDE_TEX_9_C3 (10 << 26)
 
 /* Returns idle status of various G3D block, captured when GA_IDLE written or
  * when hard or soft reset asserted.
  */
-#define GA_IDLE                                  0x425c
-#	define GA_IDLE_PIPE3_Z_IDLE  (0 << 0)
-#	define GA_IDLE_PIPE2_Z_IDLE  (0 << 1)
-#	define GA_IDLE_PIPE3_CD_IDLE (0 << 2)
-#	define GA_IDLE_PIPE2_CD_IDLE (0 << 3)
-#	define GA_IDLE_PIPE3_FG_IDLE (0 << 4)
-#	define GA_IDLE_PIPE2_FG_IDLE (0 << 5)
-#	define GA_IDLE_PIPE3_US_IDLE (0 << 6)
-#	define GA_IDLE_PIPE2_US_IDLE (0 << 7)
-#	define GA_IDLE_PIPE3_SC_IDLE (0 << 8)
-#	define GA_IDLE_PIPE2_SC_IDLE (0 << 9)
-#	define GA_IDLE_PIPE3_RS_IDLE (0 << 10)
-#	define GA_IDLE_PIPE2_RS_IDLE (0 << 11)
-#	define GA_IDLE_PIPE1_Z_IDLE  (0 << 12)
-#	define GA_IDLE_PIPE0_Z_IDLE  (0 << 13)
-#	define GA_IDLE_PIPE1_CD_IDLE (0 << 14)
-#	define GA_IDLE_PIPE0_CD_IDLE (0 << 15)
-#	define GA_IDLE_PIPE1_FG_IDLE (0 << 16)
-#	define GA_IDLE_PIPE0_FG_IDLE (0 << 17)
-#	define GA_IDLE_PIPE1_US_IDLE (0 << 18)
-#	define GA_IDLE_PIPE0_US_IDLE (0 << 19)
-#	define GA_IDLE_PIPE1_SC_IDLE (0 << 20)
-#	define GA_IDLE_PIPE0_SC_IDLE (0 << 21)
-#	define GA_IDLE_PIPE1_RS_IDLE (0 << 22)
-#	define GA_IDLE_PIPE0_RS_IDLE (0 << 23)
-#	define GA_IDLE_SU_IDLE       (0 << 24)
-#	define GA_IDLE_GA_IDLE       (0 << 25)
-#	define GA_IDLE_GA_UNIT2_IDLE (0 << 26)
+#define R500_GA_IDLE                                  0x425c
+#	define R500_GA_IDLE_PIPE3_Z_IDLE  (0 << 0)
+#	define R500_GA_IDLE_PIPE2_Z_IDLE  (0 << 1)
+#	define R500_GA_IDLE_PIPE3_CD_IDLE (0 << 2)
+#	define R500_GA_IDLE_PIPE2_CD_IDLE (0 << 3)
+#	define R500_GA_IDLE_PIPE3_FG_IDLE (0 << 4)
+#	define R500_GA_IDLE_PIPE2_FG_IDLE (0 << 5)
+#	define R500_GA_IDLE_PIPE3_US_IDLE (0 << 6)
+#	define R500_GA_IDLE_PIPE2_US_IDLE (0 << 7)
+#	define R500_GA_IDLE_PIPE3_SC_IDLE (0 << 8)
+#	define R500_GA_IDLE_PIPE2_SC_IDLE (0 << 9)
+#	define R500_GA_IDLE_PIPE3_RS_IDLE (0 << 10)
+#	define R500_GA_IDLE_PIPE2_RS_IDLE (0 << 11)
+#	define R500_GA_IDLE_PIPE1_Z_IDLE  (0 << 12)
+#	define R500_GA_IDLE_PIPE0_Z_IDLE  (0 << 13)
+#	define R500_GA_IDLE_PIPE1_CD_IDLE (0 << 14)
+#	define R500_GA_IDLE_PIPE0_CD_IDLE (0 << 15)
+#	define R500_GA_IDLE_PIPE1_FG_IDLE (0 << 16)
+#	define R500_GA_IDLE_PIPE0_FG_IDLE (0 << 17)
+#	define R500_GA_IDLE_PIPE1_US_IDLE (0 << 18)
+#	define R500_GA_IDLE_PIPE0_US_IDLE (0 << 19)
+#	define R500_GA_IDLE_PIPE1_SC_IDLE (0 << 20)
+#	define R500_GA_IDLE_PIPE0_SC_IDLE (0 << 21)
+#	define R500_GA_IDLE_PIPE1_RS_IDLE (0 << 22)
+#	define R500_GA_IDLE_PIPE0_RS_IDLE (0 << 23)
+#	define R500_GA_IDLE_SU_IDLE       (0 << 24)
+#	define R500_GA_IDLE_GA_IDLE       (0 << 25)
+#	define R500_GA_IDLE_GA_UNIT2_IDLE (0 << 26)
 
 /* Current value of stipple accumulator. */
 #define R300_GA_LINE_STIPPLE_VALUE            0x4260
 
 /* S Texture Coordinate Value for Vertex 0 of Line (stuff textures -- i.e. AA) */
-#define GA_LINE_S0                               0x4264
+#define R300_GA_LINE_S0                               0x4264
 /* S Texture Coordinate Value for Vertex 1 of Lines (V2 of parallelogram -- stuff textures -- i.e. AA) */
-#define GA_LINE_S1                               0x4268
+#define R300_GA_LINE_S1                               0x4268
 
 /* GA Input fifo high water marks */
-#define GA_FIFO_CNTL                             0x4270
-#	define GA_FIFO_CNTL_VERTEX_FIFO_MASK   0x00000007
-#	define GA_FIFO_CNTL_VERTEX_FIFO_SHIFT  0
-#	define GA_FIFO_CNTL_VERTEX_INDEX_MASK  0x00000038
-#	define GA_FIFO_CNTL_VERTEX_INDEX_SHIFT 3
-#	define GA_FIFO_CNTL_VERTEX_REG_MASK    0x00003fc0
-#	define GA_FIFO_CNTL_VERTEX_REG_SHIFT   6
+#define R500_GA_FIFO_CNTL                             0x4270
+#	define R500_GA_FIFO_CNTL_VERTEX_FIFO_MASK   0x00000007
+#	define R500_GA_FIFO_CNTL_VERTEX_FIFO_SHIFT  0
+#	define R500_GA_FIFO_CNTL_VERTEX_INDEX_MASK  0x00000038
+#	define R500_GA_FIFO_CNTL_VERTEX_INDEX_SHIFT 3
+#	define R500_GA_FIFO_CNTL_VERTEX_REG_MASK    0x00003fc0
+#	define R500_GA_FIFO_CNTL_VERTEX_REG_SHIFT   6
 
-/* Something shade related */
-#define GA_ENHANCE                               0x4274
-#	define GA_ENHANCE_DEADLOCK_CNTL_NO_EFFECT   (0 << 0)
-#	define GA_ENHANCE_DEADLOCK_CNTL_PREVENT_TCL (1 << 0) /* Prevents TCL interface from deadlocking on GA side. */
-#	define GA_ENHANCE_FASTSYNC_CNTL_NO_EFFECT   (0 << 1)
-#	define GA_ENHANCE_FASTSYNC_CNTL_ENABLE      (1 << 1) /* Enables high-performance register/primitive switching. */
-#	define GA_ENHANCE_REG_READWRITE_NO_EFFECT   (0 << 2) /* R520+ only */
-#	define GA_ENHANCE_REG_READWRITE_ENABLE      (1 << 2) /* R520+ only, Enables GA support of simultaneous register reads and writes. */
-#	define GA_ENHANCE_REG_NOSTALL_NO_EFFECT     (0 << 3)
-#	define GA_ENHANCE_REG_NOSTALL_ENABLE        (1 << 3) /* Enables GA support of no-stall reads for register read back. */
+/* GA enhance/tweaks */
+#define R300_GA_ENHANCE                               0x4274
+#	define R300_GA_ENHANCE_DEADLOCK_CNTL_NO_EFFECT   (0 << 0)
+#	define R300_GA_ENHANCE_DEADLOCK_CNTL_PREVENT_TCL (1 << 0) /* Prevents TCL interface from deadlocking on GA side. */
+#	define R300_GA_ENHANCE_FASTSYNC_CNTL_NO_EFFECT   (0 << 1)
+#	define R300_GA_ENHANCE_FASTSYNC_CNTL_ENABLE      (1 << 1) /* Enables high-performance register/primitive switching. */
+#	define R500_GA_ENHANCE_REG_READWRITE_NO_EFFECT   (0 << 2) /* R520+ only */
+#	define R500_GA_ENHANCE_REG_READWRITE_ENABLE      (1 << 2) /* R520+ only, Enables GA support of simultaneous register reads and writes. */
+#	define R500_GA_ENHANCE_REG_NOSTALL_NO_EFFECT     (0 << 3)
+#	define R500_GA_ENHANCE_REG_NOSTALL_ENABLE        (1 << 3) /* Enables GA support of no-stall reads for register read back. */
 
 #define R300_GA_COLOR_CONTROL                   0x4278
 #	define R300_GA_COLOR_CONTROL_RGB0_SHADING_SOLID      (0 << 0)
@@ -1006,46 +1048,48 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 /* Polygon Mode
  * Dangerous
  */
-#define GA_POLY_MODE                             0x4288
-#	define GA_POLY_MODE_DISABLE           (0 << 0)
-#	define GA_POLY_MODE_DUAL              (1 << 0) /* send 2 sets of 3 polys with specified poly type */
+#define R300_GA_POLY_MODE                             0x4288
+#	define R300_GA_POLY_MODE_DISABLE           (0 << 0)
+#	define R300_GA_POLY_MODE_DUAL              (1 << 0) /* send 2 sets of 3 polys with specified poly type */
 /* reserved */
-#	define GA_POLY_MODE_FRONT_PTYPE_POINT (0 << 4)
-#	define GA_POLY_MODE_FRONT_PTYPE_LINE  (1 << 4)
-#	define GA_POLY_MODE_FRONT_PTYPE_TRI   (2 << 4)
+#	define R300_GA_POLY_MODE_FRONT_PTYPE_POINT (0 << 4)
+#	define R300_GA_POLY_MODE_FRONT_PTYPE_LINE  (1 << 4)
+#	define R300_GA_POLY_MODE_FRONT_PTYPE_TRI   (2 << 4)
 /* reserved */
-#	define GA_POLY_MODE_BACK_PTYPE_POINT  (0 << 7)
-#	define GA_POLY_MODE_BACK_PTYPE_LINE   (1 << 7)
-#	define GA_POLY_MODE_BACK_PTYPE_TRI    (2 << 7)
+#	define R300_GA_POLY_MODE_BACK_PTYPE_POINT  (0 << 7)
+#	define R300_GA_POLY_MODE_BACK_PTYPE_LINE   (1 << 7)
+#	define R300_GA_POLY_MODE_BACK_PTYPE_TRI    (2 << 7)
 /* reserved */
 
 /* Specifies the rouding mode for geometry & color SPFP to FP conversions. */
-#define GA_ROUND_MODE                            0x428c
-#	define GA_ROUND_MODE_GEOMETRY_ROUND_TRUNC   (0 << 0)
-#	define GA_ROUND_MODE_GEOMETRY_ROUND_NEAREST (1 << 0)
-#	define GA_ROUND_MODE_COLOR_ROUND_TRUNC      (0 << 2)
-#	define GA_ROUND_MODE_COLOR_ROUND_NEAREST    (1 << 2)
-#	define GA_ROUND_MODE_RGB_CLAMP_RGB          (0 << 4)
-#	define GA_ROUND_MODE_RGB_CLAMP_FP20         (1 << 4)
-#	define GA_ROUND_MODE_ALPHA_CLAMP_RGB        (0 << 5)
-#	define GA_ROUND_MODE_ALPHA_CLAMP_FP20       (1 << 5)
-#	define GA_ROUND_MODE_GEOMETRY_MASK_SHIFT    6
-#	define GA_ROUND_MODE_GEOMETRY_MASK_MASK     0x000003c0
+#define R300_GA_ROUND_MODE                            0x428c
+#	define R300_GA_ROUND_MODE_GEOMETRY_ROUND_TRUNC   (0 << 0)
+#	define R300_GA_ROUND_MODE_GEOMETRY_ROUND_NEAREST (1 << 0)
+#	define R300_GA_ROUND_MODE_COLOR_ROUND_TRUNC      (0 << 2)
+#	define R300_GA_ROUND_MODE_COLOR_ROUND_NEAREST    (1 << 2)
+#	define R300_GA_ROUND_MODE_RGB_CLAMP_RGB          (0 << 4)
+#	define R300_GA_ROUND_MODE_RGB_CLAMP_FP20         (1 << 4)
+#	define R300_GA_ROUND_MODE_ALPHA_CLAMP_RGB        (0 << 5)
+#	define R300_GA_ROUND_MODE_ALPHA_CLAMP_FP20       (1 << 5)
+#	define R500_GA_ROUND_MODE_GEOMETRY_MASK_SHIFT    6
+#	define R500_GA_ROUND_MODE_GEOMETRY_MASK_MASK     0x000003c0
 
 /* Specifies x & y offsets for vertex data after conversion to FP.
  * Offsets are in S15 format (subpixels -- 1/12 or 1/16, even in 8b
  * subprecision).
  */
-#define GA_OFFSET                                0x4290
-#	define GA_OFFSET_X_OFFSET_SHIFT 0
-#	define GA_OFFSET_X_OFFSET_MASK  0x0000ffff
-#	define GA_OFFSET_Y_OFFSET_SHIFT 16
-#	define GA_OFFSET_Y_OFFSET_MASK  0xffff0000
+#define R300_GA_OFFSET                                0x4290
+#	define R300_GA_OFFSET_X_OFFSET_SHIFT 0
+#	define R300_GA_OFFSET_X_OFFSET_MASK  0x0000ffff
+#	define R300_GA_OFFSET_Y_OFFSET_SHIFT 16
+#	define R300_GA_OFFSET_Y_OFFSET_MASK  0xffff0000
 
 /* Specifies the scale to apply to fog. */
-#define R300_RE_FOG_SCALE                     0x4294
+#define R300_GA_FOG_SCALE                     0x4294
 /* Specifies the offset to apply to fog. */
-#define R300_RE_FOG_START                     0x4298
+#define R300_GA_FOG_OFFSET                    0x4298
+/* Specifies number of cycles to assert reset, and also causes RB3D soft reset to assert. */
+#define R300_GA_SOFT_RESET                    0x429c
 
 /* Not sure why there are duplicate of factor and constant values.
  * My best guess so far is that there are seperate zbiases for test and write.
@@ -1053,11 +1097,11 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  * Some of the tests indicate that fgl has a fallback implementation of zbias
  * via pixel shaders.
  */
-#define R300_RE_ZBIAS_CNTL                    0x42A0 /* GUESS */
-#define R300_RE_ZBIAS_T_FACTOR                0x42A4
-#define R300_RE_ZBIAS_T_CONSTANT              0x42A8
-#define R300_RE_ZBIAS_W_FACTOR                0x42AC
-#define R300_RE_ZBIAS_W_CONSTANT              0x42B0
+#define R300_SU_TEX_WRAP                      0x42A0
+#define R300_SU_POLY_OFFSET_FRONT_SCALE       0x42A4
+#define R300_SU_POLY_OFFSET_FRONT_OFFSET      0x42A8
+#define R300_SU_POLY_OFFSET_BACK_SCALE        0x42AC
+#define R300_SU_POLY_OFFSET_BACK_OFFSET       0x42B0
 
 /* This register needs to be set to (1<<1) for RV350 to correctly
  * perform depth test (see --vb-triangles in r300_demo)
@@ -1068,10 +1112,12 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  *  One to enable depth test and one for depth write.
  * Yet this doesnt explain why depth writes work ...
  */
-#define R300_RE_OCCLUSION_CNTL		    0x42B4
-#	define R300_OCCLUSION_ON		(1<<1)
+#define R300_SU_POLY_OFFSET_ENABLE	       0x42B4
+#	define R300_FRONT_ENABLE	       (1 << 0)
+#	define R300_BACK_ENABLE 	       (1 << 1)
+#	define R300_PARA_ENABLE 	       (1 << 2)
 
-#define R300_RE_CULL_CNTL                   0x42B8
+#define R300_SU_CULL_MODE                      0x42B8
 #       define R300_CULL_FRONT                   (1 << 0)
 #       define R300_CULL_BACK                    (1 << 1)
 #       define R300_FRONT_FACE_CCW               (0 << 2)
@@ -1130,8 +1176,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #	define R300_RS_COL_PTR(x)		        (x << 6)
 #	define R300_RS_COL_FMT(x)		        (x << 9)
 #	define R300_RS_COL_FMT_RGBA		        0
-#	define R300_RS_COL_FMT_RGB0		        2
-#	define R300_RS_COL_FMT_RGB1		        3
+#	define R300_RS_COL_FMT_RGB0		        1
+#	define R300_RS_COL_FMT_RGB1		        2
 #	define R300_RS_COL_FMT_000A		        4
 #	define R300_RS_COL_FMT_0000		        5
 #	define R300_RS_COL_FMT_0001		        6
@@ -1220,6 +1266,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #	define R300_SC_HYPERZ_HZ_Z0MAX_NO (0 << 6)
 #	define R300_SC_HYPERZ_HZ_Z0MAX    (1 << 6)
 
+#define R300_SC_EDGERULE                 0x43a8
 
 /* BEGIN: Scissors and cliprects */
 
@@ -1237,21 +1284,21 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  * For some reason, the top-left corner of the framebuffer is at (1440, 1440)
  * for the purpose of clipping and scissors.
  */
-#define R300_RE_CLIPRECT_TL_0               0x43B0
-#define R300_RE_CLIPRECT_BR_0               0x43B4
-#define R300_RE_CLIPRECT_TL_1               0x43B8
-#define R300_RE_CLIPRECT_BR_1               0x43BC
-#define R300_RE_CLIPRECT_TL_2               0x43C0
-#define R300_RE_CLIPRECT_BR_2               0x43C4
-#define R300_RE_CLIPRECT_TL_3               0x43C8
-#define R300_RE_CLIPRECT_BR_3               0x43CC
+#define R300_SC_CLIPRECT_TL_0               0x43B0
+#define R300_SC_CLIPRECT_BR_0               0x43B4
+#define R300_SC_CLIPRECT_TL_1               0x43B8
+#define R300_SC_CLIPRECT_BR_1               0x43BC
+#define R300_SC_CLIPRECT_TL_2               0x43C0
+#define R300_SC_CLIPRECT_BR_2               0x43C4
+#define R300_SC_CLIPRECT_TL_3               0x43C8
+#define R300_SC_CLIPRECT_BR_3               0x43CC
 #       define R300_CLIPRECT_OFFSET              1440
 #       define R300_CLIPRECT_MASK                0x1FFF
 #       define R300_CLIPRECT_X_SHIFT             0
 #       define R300_CLIPRECT_X_MASK              (0x1FFF << 0)
 #       define R300_CLIPRECT_Y_SHIFT             13
 #       define R300_CLIPRECT_Y_MASK              (0x1FFF << 13)
-#define R300_RE_CLIPRECT_CNTL               0x43D0
+#define R300_SC_CLIP_RULE                   0x43D0
 #       define R300_CLIP_OUT                     (1 << 0)
 #       define R300_CLIP_0                       (1 << 1)
 #       define R300_CLIP_1                       (1 << 2)
@@ -1271,8 +1318,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 /* gap */
 
-#define R300_RE_SCISSORS_TL                 0x43E0
-#define R300_RE_SCISSORS_BR                 0x43E4
+#define R300_SC_SCISSORS_TL                 0x43E0
+#define R300_SC_SCISSORS_BR                 0x43E4
 #       define R300_SCISSORS_OFFSET              1440
 #       define R300_SCISSORS_X_SHIFT             0
 #       define R300_SCISSORS_X_MASK              (0x1FFF << 0)
@@ -1556,23 +1603,23 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  * offsets into the respective instruction streams, while *_END points to the
  * last instruction relative to this offset.
  */
-#define R300_PFS_CNTL_0                     0x4600
+#define R300_US_CONFIG                      0x4600
 #       define R300_PFS_CNTL_LAST_NODES_SHIFT    0
 #       define R300_PFS_CNTL_LAST_NODES_MASK     (3 << 0)
 #       define R300_PFS_CNTL_FIRST_NODE_HAS_TEX  (1 << 3)
-#define R300_PFS_CNTL_1                     0x4604
+#define R300_US_PIXSIZE                     0x4604
 /* There is an unshifted value here which has so far always been equal to the
  * index of the highest used temporary register.
  */
-#define R300_PFS_CNTL_2                     0x4608
+#define R300_US_CODE_OFFSET                 0x4608
 #       define R300_PFS_CNTL_ALU_OFFSET_SHIFT    0
 #       define R300_PFS_CNTL_ALU_OFFSET_MASK     (63 << 0)
 #       define R300_PFS_CNTL_ALU_END_SHIFT       6
 #       define R300_PFS_CNTL_ALU_END_MASK        (63 << 6)
-#       define R300_PFS_CNTL_TEX_OFFSET_SHIFT    12
-#       define R300_PFS_CNTL_TEX_OFFSET_MASK     (31 << 12) /* GUESS */
+#       define R300_PFS_CNTL_TEX_OFFSET_SHIFT    13
+#       define R300_PFS_CNTL_TEX_OFFSET_MASK     (31 << 13)
 #       define R300_PFS_CNTL_TEX_END_SHIFT       18
-#       define R300_PFS_CNTL_TEX_END_MASK        (31 << 18) /* GUESS */
+#       define R300_PFS_CNTL_TEX_END_MASK        (31 << 18)
 
 /* gap */
 
@@ -1583,70 +1630,65 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  * Offsets are relative to the master offset from PFS_CNTL_2.
  */
-#define R300_PFS_NODE_0                     0x4610
-#define R300_PFS_NODE_1                     0x4614
-#define R300_PFS_NODE_2                     0x4618
-#define R300_PFS_NODE_3                     0x461C
-#       define R300_PFS_NODE_ALU_OFFSET_SHIFT    0
-#       define R300_PFS_NODE_ALU_OFFSET_MASK     (63 << 0)
-#       define R300_PFS_NODE_ALU_END_SHIFT       6
-#       define R300_PFS_NODE_ALU_END_MASK        (63 << 6)
-#       define R300_PFS_NODE_TEX_OFFSET_SHIFT    12
-#       define R300_PFS_NODE_TEX_OFFSET_MASK     (31 << 12)
-#       define R300_PFS_NODE_TEX_END_SHIFT       17
-#       define R300_PFS_NODE_TEX_END_MASK        (31 << 17)
-#		define R300_PFS_NODE_OUTPUT_COLOR        (1 << 22)
-#		define R300_PFS_NODE_OUTPUT_DEPTH        (1 << 23)
+#define R300_US_CODE_ADDR_0                 0x4610
+#define R300_US_CODE_ADDR_1                 0x4614
+#define R300_US_CODE_ADDR_2                 0x4618
+#define R300_US_CODE_ADDR_3                 0x461C
+#       define R300_ALU_START_SHIFT         0
+#       define R300_ALU_START_MASK          (63 << 0)
+#       define R300_ALU_SIZE_SHIFT          6
+#       define R300_ALU_SIZE_MASK           (63 << 6)
+#       define R300_TEX_START_SHIFT         12
+#       define R300_TEX_START_MASK          (31 << 12)
+#       define R300_TEX_SIZE_SHIFT          17
+#       define R300_TEX_SIZE_MASK           (31 << 17)
+#	define R300_RGBA_OUT                (1 << 22)
+#	define R300_W_OUT                   (1 << 23)
 
 /* TEX
  * As far as I can tell, texture instructions cannot write into output
  * registers directly. A subsequent ALU instruction is always necessary,
  * even if it's just MAD o0, r0, 1, 0
  */
-#define R300_PFS_TEXI_0                     0x4620
-#	define R300_FPITX_SRC_SHIFT              0
-#	define R300_FPITX_SRC_MASK               (31 << 0)
-	/* GUESS */
-#	define R300_FPITX_SRC_CONST              (1 << 5)
-#	define R300_FPITX_DST_SHIFT              6
-#	define R300_FPITX_DST_MASK               (31 << 6)
-#	define R300_FPITX_IMAGE_SHIFT            11
-	/* GUESS based on layout and native limits */
-#       define R300_FPITX_IMAGE_MASK             (15 << 11)
-/* Unsure if these are opcodes, or some kind of bitfield, but this is how
- * they were set when I checked
- */
-#	define R300_FPITX_OPCODE_SHIFT		15
-#		define R300_FPITX_OP_TEX	1
-#		define R300_FPITX_OP_KIL	2
-#		define R300_FPITX_OP_TXP	3
-#		define R300_FPITX_OP_TXB	4
-#	define R300_FPITX_OPCODE_MASK           (7 << 15)
+#define R300_US_TEX_INST_0                  0x4620
+#	define R300_SRC_ADDR_SHIFT          0
+#	define R300_SRC_ADDR_MASK           (31 << 0)
+#	define R300_DST_ADDR_SHIFT          6
+#	define R300_DST_ADDR_MASK           (31 << 6)
+#	define R300_TEX_ID_SHIFT            11
+#       define R300_TEX_ID_MASK             (15 << 11)
+#	define R300_TEX_INST_SHIFT		15
+#		define R300_TEX_OP_NOP	        0
+#		define R300_TEX_OP_LD	        1
+#		define R300_TEX_OP_KIL	        2
+#		define R300_TEX_OP_TXP	        3
+#		define R300_TEX_OP_TXB	        4
+#	define R300_TEX_INST_MASK               (7 << 15)
 
 /* Output format from the unfied shader */
-#define R500_US_OUT_FMT                     0x46A4
-#	define R500_US_OUT_FMT_C4_8         (0 << 0)
-#	define R500_US_OUT_FMT_C4_10        (1 << 0)
-#	define R500_US_OUT_FMT_C4_10_GAMMA  (2 << 0)
-#	define R500_US_OUT_FMT_C_16         (3 << 0)
-#	define R500_US_OUT_FMT_C2_16        (4 << 0)
-#	define R500_US_OUT_FMT_C4_16        (5 << 0)
-#	define R500_US_OUT_FMT_C_16_MPEG    (6 << 0)
-#	define R500_US_OUT_FMT_C2_16_MPEG   (7 << 0)
-#	define R500_US_OUT_FMT_C2_4         (8 << 0)
-#	define R500_US_OUT_FMT_C_3_3_2      (9 << 0)
-#	define R500_US_OUT_FMT_C_6_5_6      (10 << 0)
-#	define R500_US_OUT_FMT_C_11_11_10   (11 << 0)
-#	define R500_US_OUT_FMT_C_10_11_11   (12 << 0)
-#	define R500_US_OUT_FMT_C_2_10_10_10 (13 << 0)
+#define R300_US_OUT_FMT                     0x46A4
+#	define R300_US_OUT_FMT_C4_8         (0 << 0)
+#	define R300_US_OUT_FMT_C4_10        (1 << 0)
+#	define R300_US_OUT_FMT_C4_10_GAMMA  (2 << 0)
+#	define R300_US_OUT_FMT_C_16         (3 << 0)
+#	define R300_US_OUT_FMT_C2_16        (4 << 0)
+#	define R300_US_OUT_FMT_C4_16        (5 << 0)
+#	define R300_US_OUT_FMT_C_16_MPEG    (6 << 0)
+#	define R300_US_OUT_FMT_C2_16_MPEG   (7 << 0)
+#	define R300_US_OUT_FMT_C2_4         (8 << 0)
+#	define R300_US_OUT_FMT_C_3_3_2      (9 << 0)
+#	define R300_US_OUT_FMT_C_6_5_6      (10 << 0)
+#	define R300_US_OUT_FMT_C_11_11_10   (11 << 0)
+#	define R300_US_OUT_FMT_C_10_11_11   (12 << 0)
+#	define R300_US_OUT_FMT_C_2_10_10_10 (13 << 0)
 /* reserved */
-#	define R500_US_OUT_FMT_UNUSED       (15 << 0)
-#	define R500_US_OUT_FMT_C_16_FP      (16 << 0)
-#	define R500_US_OUT_FMT_C2_16_FP     (17 << 0)
-#	define R500_US_OUT_FMT_C4_16_FP     (18 << 0)
-#	define R500_US_OUT_FMT_C_32_FP      (19 << 0)
-#	define R500_US_OUT_FMT_C2_32_FP     (20 << 0)
-#	define R500_US_OUT_FMT_C4_32_FP     (20 << 0)
+#	define R300_US_OUT_FMT_UNUSED       (15 << 0)
+#	define R300_US_OUT_FMT_C_16_FP      (16 << 0)
+#	define R300_US_OUT_FMT_C2_16_FP     (17 << 0)
+#	define R300_US_OUT_FMT_C4_16_FP     (18 << 0)
+#	define R300_US_OUT_FMT_C_32_FP      (19 << 0)
+#	define R300_US_OUT_FMT_C2_32_FP     (20 << 0)
+#	define R300_US_OUT_FMT_C4_32_FP     (20 << 0)
 
 /* ALU
  * The ALU instructions register blocks are enumerated according to the order
@@ -1712,204 +1754,247 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  *  - Set FPI0/FPI2_SPECIAL_LRP
  * Arbitrary LRP (including support for swizzling) requires vanilla MAD+MAD
  */
-#define R300_PFS_INSTR1_0                   0x46C0
-#       define R300_FPI1_SRC0C_SHIFT             0
-#       define R300_FPI1_SRC0C_MASK              (31 << 0)
-#       define R300_FPI1_SRC0C_CONST             (1 << 5)
-#       define R300_FPI1_SRC1C_SHIFT             6
-#       define R300_FPI1_SRC1C_MASK              (31 << 6)
-#       define R300_FPI1_SRC1C_CONST             (1 << 11)
-#       define R300_FPI1_SRC2C_SHIFT             12
-#       define R300_FPI1_SRC2C_MASK              (31 << 12)
-#       define R300_FPI1_SRC2C_CONST             (1 << 17)
-#       define R300_FPI1_SRC_MASK                0x0003ffff
-#       define R300_FPI1_DSTC_SHIFT              18
-#       define R300_FPI1_DSTC_MASK               (31 << 18)
-#		define R300_FPI1_DSTC_REG_MASK_SHIFT     23
-#       define R300_FPI1_DSTC_REG_X              (1 << 23)
-#       define R300_FPI1_DSTC_REG_Y              (1 << 24)
-#       define R300_FPI1_DSTC_REG_Z              (1 << 25)
-#		define R300_FPI1_DSTC_OUTPUT_MASK_SHIFT  26
-#       define R300_FPI1_DSTC_OUTPUT_X           (1 << 26)
-#       define R300_FPI1_DSTC_OUTPUT_Y           (1 << 27)
-#       define R300_FPI1_DSTC_OUTPUT_Z           (1 << 28)
+#define R300_US_ALU_RGB_ADDR_0                   0x46C0
+#       define R300_ALU_SRC0C_SHIFT             0
+#       define R300_ALU_SRC0C_MASK              (31 << 0)
+#       define R300_ALU_SRC0C_CONST             (1 << 5)
+#       define R300_ALU_SRC1C_SHIFT             6
+#       define R300_ALU_SRC1C_MASK              (31 << 6)
+#       define R300_ALU_SRC1C_CONST             (1 << 11)
+#       define R300_ALU_SRC2C_SHIFT             12
+#       define R300_ALU_SRC2C_MASK              (31 << 12)
+#       define R300_ALU_SRC2C_CONST             (1 << 17)
+#       define R300_ALU_SRC_MASK                0x0003ffff
+#       define R300_ALU_DSTC_SHIFT              18
+#       define R300_ALU_DSTC_MASK               (31 << 18)
+#		define R300_ALU_DSTC_REG_MASK_SHIFT     23
+#       define R300_ALU_DSTC_REG_X              (1 << 23)
+#       define R300_ALU_DSTC_REG_Y              (1 << 24)
+#       define R300_ALU_DSTC_REG_Z              (1 << 25)
+#		define R300_ALU_DSTC_OUTPUT_MASK_SHIFT  26
+#       define R300_ALU_DSTC_OUTPUT_X           (1 << 26)
+#       define R300_ALU_DSTC_OUTPUT_Y           (1 << 27)
+#       define R300_ALU_DSTC_OUTPUT_Z           (1 << 28)
 
-#define R300_PFS_INSTR3_0                   0x47C0
-#       define R300_FPI3_SRC0A_SHIFT             0
-#       define R300_FPI3_SRC0A_MASK              (31 << 0)
-#       define R300_FPI3_SRC0A_CONST             (1 << 5)
-#       define R300_FPI3_SRC1A_SHIFT             6
-#       define R300_FPI3_SRC1A_MASK              (31 << 6)
-#       define R300_FPI3_SRC1A_CONST             (1 << 11)
-#       define R300_FPI3_SRC2A_SHIFT             12
-#       define R300_FPI3_SRC2A_MASK              (31 << 12)
-#       define R300_FPI3_SRC2A_CONST             (1 << 17)
-#       define R300_FPI3_SRC_MASK                0x0003ffff
-#       define R300_FPI3_DSTA_SHIFT              18
-#       define R300_FPI3_DSTA_MASK               (31 << 18)
-#       define R300_FPI3_DSTA_REG                (1 << 23)
-#       define R300_FPI3_DSTA_OUTPUT             (1 << 24)
-#		define R300_FPI3_DSTA_DEPTH              (1 << 27)
+#define R300_US_ALU_ALPHA_ADDR_0                 0x47C0
+#       define R300_ALU_SRC0A_SHIFT             0
+#       define R300_ALU_SRC0A_MASK              (31 << 0)
+#       define R300_ALU_SRC0A_CONST             (1 << 5)
+#       define R300_ALU_SRC1A_SHIFT             6
+#       define R300_ALU_SRC1A_MASK              (31 << 6)
+#       define R300_ALU_SRC1A_CONST             (1 << 11)
+#       define R300_ALU_SRC2A_SHIFT             12
+#       define R300_ALU_SRC2A_MASK              (31 << 12)
+#       define R300_ALU_SRC2A_CONST             (1 << 17)
+#       define R300_ALU_SRC_MASK                0x0003ffff
+#       define R300_ALU_DSTA_SHIFT              18
+#       define R300_ALU_DSTA_MASK               (31 << 18)
+#       define R300_ALU_DSTA_REG                (1 << 23)
+#       define R300_ALU_DSTA_OUTPUT             (1 << 24)
+#		define R300_ALU_DSTA_DEPTH              (1 << 27)
 
-#define R300_PFS_INSTR0_0                   0x48C0
-#       define R300_FPI0_ARGC_SRC0C_XYZ          0
-#       define R300_FPI0_ARGC_SRC0C_XXX          1
-#       define R300_FPI0_ARGC_SRC0C_YYY          2
-#       define R300_FPI0_ARGC_SRC0C_ZZZ          3
-#       define R300_FPI0_ARGC_SRC1C_XYZ          4
-#       define R300_FPI0_ARGC_SRC1C_XXX          5
-#       define R300_FPI0_ARGC_SRC1C_YYY          6
-#       define R300_FPI0_ARGC_SRC1C_ZZZ          7
-#       define R300_FPI0_ARGC_SRC2C_XYZ          8
-#       define R300_FPI0_ARGC_SRC2C_XXX          9
-#       define R300_FPI0_ARGC_SRC2C_YYY          10
-#       define R300_FPI0_ARGC_SRC2C_ZZZ          11
-#       define R300_FPI0_ARGC_SRC0A              12
-#       define R300_FPI0_ARGC_SRC1A              13
-#       define R300_FPI0_ARGC_SRC2A              14
-#       define R300_FPI0_ARGC_SRC1C_LRP          15
-#       define R300_FPI0_ARGC_ZERO               20
-#       define R300_FPI0_ARGC_ONE                21
-	/* GUESS */
-#       define R300_FPI0_ARGC_HALF               22
-#       define R300_FPI0_ARGC_SRC0C_YZX          23
-#       define R300_FPI0_ARGC_SRC1C_YZX          24
-#       define R300_FPI0_ARGC_SRC2C_YZX          25
-#       define R300_FPI0_ARGC_SRC0C_ZXY          26
-#       define R300_FPI0_ARGC_SRC1C_ZXY          27
-#       define R300_FPI0_ARGC_SRC2C_ZXY          28
-#       define R300_FPI0_ARGC_SRC0CA_WZY         29
-#       define R300_FPI0_ARGC_SRC1CA_WZY         30
-#       define R300_FPI0_ARGC_SRC2CA_WZY         31
+#define R300_US_ALU_RGB_INST_0                   0x48C0
+#       define R300_ALU_ARGC_SRC0C_XYZ          0
+#       define R300_ALU_ARGC_SRC0C_XXX          1
+#       define R300_ALU_ARGC_SRC0C_YYY          2
+#       define R300_ALU_ARGC_SRC0C_ZZZ          3
+#       define R300_ALU_ARGC_SRC1C_XYZ          4
+#       define R300_ALU_ARGC_SRC1C_XXX          5
+#       define R300_ALU_ARGC_SRC1C_YYY          6
+#       define R300_ALU_ARGC_SRC1C_ZZZ          7
+#       define R300_ALU_ARGC_SRC2C_XYZ          8
+#       define R300_ALU_ARGC_SRC2C_XXX          9
+#       define R300_ALU_ARGC_SRC2C_YYY          10
+#       define R300_ALU_ARGC_SRC2C_ZZZ          11
+#       define R300_ALU_ARGC_SRC0A              12
+#       define R300_ALU_ARGC_SRC1A              13
+#       define R300_ALU_ARGC_SRC2A              14
+#       define R300_ALU_ARGC_SRCP_XYZ           15
+#       define R300_ALU_ARGC_SRCP_XXX           16
+#       define R300_ALU_ARGC_SRCP_YYY           17
+#       define R300_ALU_ARGC_SRCP_ZZZ           18
+#       define R300_ALU_ARGC_SRCP_WWW           19
+#       define R300_ALU_ARGC_ZERO               20
+#       define R300_ALU_ARGC_ONE                21
+#       define R300_ALU_ARGC_HALF               22
+#       define R300_ALU_ARGC_SRC0C_YZX          23
+#       define R300_ALU_ARGC_SRC1C_YZX          24
+#       define R300_ALU_ARGC_SRC2C_YZX          25
+#       define R300_ALU_ARGC_SRC0C_ZXY          26
+#       define R300_ALU_ARGC_SRC1C_ZXY          27
+#       define R300_ALU_ARGC_SRC2C_ZXY          28
+#       define R300_ALU_ARGC_SRC0CA_WZY         29
+#       define R300_ALU_ARGC_SRC1CA_WZY         30
+#       define R300_ALU_ARGC_SRC2CA_WZY         31
 
-#       define R300_FPI0_ARG0C_SHIFT             0
-#       define R300_FPI0_ARG0C_MASK              (31 << 0)
-#       define R300_FPI0_ARG0C_NEG               (1 << 5)
-#       define R300_FPI0_ARG0C_ABS               (1 << 6)
-#       define R300_FPI0_ARG1C_SHIFT             7
-#       define R300_FPI0_ARG1C_MASK              (31 << 7)
-#       define R300_FPI0_ARG1C_NEG               (1 << 12)
-#       define R300_FPI0_ARG1C_ABS               (1 << 13)
-#       define R300_FPI0_ARG2C_SHIFT             14
-#       define R300_FPI0_ARG2C_MASK              (31 << 14)
-#       define R300_FPI0_ARG2C_NEG               (1 << 19)
-#       define R300_FPI0_ARG2C_ABS               (1 << 20)
-#       define R300_FPI0_SPECIAL_LRP             (1 << 21)
-#       define R300_FPI0_OUTC_MAD                (0 << 23)
-#       define R300_FPI0_OUTC_DP3                (1 << 23)
-#       define R300_FPI0_OUTC_DP4                (2 << 23)
-#       define R300_FPI0_OUTC_MIN                (4 << 23)
-#       define R300_FPI0_OUTC_MAX                (5 << 23)
-#       define R300_FPI0_OUTC_CMPH               (7 << 23)
-#       define R300_FPI0_OUTC_CMP                (8 << 23)
-#       define R300_FPI0_OUTC_FRC                (9 << 23)
-#       define R300_FPI0_OUTC_REPL_ALPHA         (10 << 23)
-#       define R300_FPI0_OUTC_SAT                (1 << 30)
-#       define R300_FPI0_INSERT_NOP              (1 << 31)
+#       define R300_ALU_ARG0C_SHIFT             0
+#       define R300_ALU_ARG0C_MASK              (31 << 0)
+#       define R300_ALU_ARG0C_NOP               (0 << 5)
+#       define R300_ALU_ARG0C_NEG               (1 << 5)
+#       define R300_ALU_ARG0C_ABS               (2 << 5)
+#       define R300_ALU_ARG0C_NAB               (3 << 5)
+#       define R300_ALU_ARG1C_SHIFT             7
+#       define R300_ALU_ARG1C_MASK              (31 << 7)
+#       define R300_ALU_ARG1C_NOP               (0 << 12)
+#       define R300_ALU_ARG1C_NEG               (1 << 12)
+#       define R300_ALU_ARG1C_ABS               (2 << 12)
+#       define R300_ALU_ARG1C_NAB               (3 << 12)
+#       define R300_ALU_ARG2C_SHIFT             14
+#       define R300_ALU_ARG2C_MASK              (31 << 14)
+#       define R300_ALU_ARG2C_NOP               (0 << 19)
+#       define R300_ALU_ARG2C_NEG               (1 << 19)
+#       define R300_ALU_ARG2C_ABS               (2 << 19)
+#       define R300_ALU_ARG2C_NAB               (3 << 19)
+#       define R300_ALU_SRCP_1_MINUS_2_SRC0     (0 << 21)
+#       define R300_ALU_SRCP_SRC1_MINUS_SRC0    (1 << 21)
+#       define R300_ALU_SRCP_SRC1_PLUS_SRC0     (2 << 21)
+#       define R300_ALU_SRCP_1_MINUS_SRC0       (3 << 21)
 
-#define R300_PFS_INSTR2_0                   0x49C0
-#       define R300_FPI2_ARGA_SRC0C_X            0
-#       define R300_FPI2_ARGA_SRC0C_Y            1
-#       define R300_FPI2_ARGA_SRC0C_Z            2
-#       define R300_FPI2_ARGA_SRC1C_X            3
-#       define R300_FPI2_ARGA_SRC1C_Y            4
-#       define R300_FPI2_ARGA_SRC1C_Z            5
-#       define R300_FPI2_ARGA_SRC2C_X            6
-#       define R300_FPI2_ARGA_SRC2C_Y            7
-#       define R300_FPI2_ARGA_SRC2C_Z            8
-#       define R300_FPI2_ARGA_SRC0A              9
-#       define R300_FPI2_ARGA_SRC1A              10
-#       define R300_FPI2_ARGA_SRC2A              11
-#       define R300_FPI2_ARGA_SRC1A_LRP          15
-#       define R300_FPI2_ARGA_ZERO               16
-#       define R300_FPI2_ARGA_ONE                17
-	/* GUESS */
-#       define R300_FPI2_ARGA_HALF               18
-#       define R300_FPI2_ARG0A_SHIFT             0
-#       define R300_FPI2_ARG0A_MASK              (31 << 0)
-#       define R300_FPI2_ARG0A_NEG               (1 << 5)
-	/* GUESS */
-#	define R300_FPI2_ARG0A_ABS		 (1 << 6)
-#       define R300_FPI2_ARG1A_SHIFT             7
-#       define R300_FPI2_ARG1A_MASK              (31 << 7)
-#       define R300_FPI2_ARG1A_NEG               (1 << 12)
-	/* GUESS */
-#	define R300_FPI2_ARG1A_ABS		 (1 << 13)
-#       define R300_FPI2_ARG2A_SHIFT             14
-#       define R300_FPI2_ARG2A_MASK              (31 << 14)
-#       define R300_FPI2_ARG2A_NEG               (1 << 19)
-	/* GUESS */
-#	define R300_FPI2_ARG2A_ABS		 (1 << 20)
-#       define R300_FPI2_SPECIAL_LRP             (1 << 21)
-#       define R300_FPI2_OUTA_MAD                (0 << 23)
-#       define R300_FPI2_OUTA_DP4                (1 << 23)
-#       define R300_FPI2_OUTA_MIN                (2 << 23)
-#       define R300_FPI2_OUTA_MAX                (3 << 23)
-#       define R300_FPI2_OUTA_CMP                (6 << 23)
-#       define R300_FPI2_OUTA_FRC                (7 << 23)
-#       define R300_FPI2_OUTA_EX2                (8 << 23)
-#       define R300_FPI2_OUTA_LG2                (9 << 23)
-#       define R300_FPI2_OUTA_RCP                (10 << 23)
-#       define R300_FPI2_OUTA_RSQ                (11 << 23)
-#       define R300_FPI2_OUTA_SAT                (1 << 30)
-#       define R300_FPI2_UNKNOWN_31              (1 << 31)
+#       define R300_ALU_OUTC_MAD                (0 << 23)
+#       define R300_ALU_OUTC_DP3                (1 << 23)
+#       define R300_ALU_OUTC_DP4                (2 << 23)
+#       define R300_ALU_OUTC_D2A                (3 << 23)
+#       define R300_ALU_OUTC_MIN                (4 << 23)
+#       define R300_ALU_OUTC_MAX                (5 << 23)
+#       define R300_ALU_OUTC_CMPH               (7 << 23)
+#       define R300_ALU_OUTC_CMP                (8 << 23)
+#       define R300_ALU_OUTC_FRC                (9 << 23)
+#       define R300_ALU_OUTC_REPL_ALPHA         (10 << 23)
+
+#       define R300_ALU_OUTC_MOD_NOP            (0 << 27)
+#       define R300_ALU_OUTC_MOD_MUL2           (1 << 27)
+#       define R300_ALU_OUTC_MOD_MUL4           (2 << 27)
+#       define R300_ALU_OUTC_MOD_MUL8           (3 << 27)
+#       define R300_ALU_OUTC_MOD_DIV2           (4 << 27)
+#       define R300_ALU_OUTC_MOD_DIV4           (5 << 27)
+#       define R300_ALU_OUTC_MOD_DIV8           (6 << 27)
+
+#       define R300_ALU_OUTC_CLAMP              (1 << 30)
+#       define R300_ALU_INSERT_NOP              (1 << 31)
+
+#define R300_US_ALU_ALPHA_INST_0                 0x49C0
+#       define R300_ALU_ARGA_SRC0C_X            0
+#       define R300_ALU_ARGA_SRC0C_Y            1
+#       define R300_ALU_ARGA_SRC0C_Z            2
+#       define R300_ALU_ARGA_SRC1C_X            3
+#       define R300_ALU_ARGA_SRC1C_Y            4
+#       define R300_ALU_ARGA_SRC1C_Z            5
+#       define R300_ALU_ARGA_SRC2C_X            6
+#       define R300_ALU_ARGA_SRC2C_Y            7
+#       define R300_ALU_ARGA_SRC2C_Z            8
+#       define R300_ALU_ARGA_SRC0A              9
+#       define R300_ALU_ARGA_SRC1A              10
+#       define R300_ALU_ARGA_SRC2A              11
+#       define R300_ALU_ARGA_SRCP_X             12
+#       define R300_ALU_ARGA_SRCP_Y             13
+#       define R300_ALU_ARGA_SRCP_Z             14
+#       define R300_ALU_ARGA_SRCP_W             15
+
+#       define R300_ALU_ARGA_ZERO               16
+#       define R300_ALU_ARGA_ONE                17
+#       define R300_ALU_ARGA_HALF               18
+#       define R300_ALU_ARG0A_SHIFT             0
+#       define R300_ALU_ARG0A_MASK              (31 << 0)
+#       define R300_ALU_ARG0A_NOP               (0 << 5)
+#       define R300_ALU_ARG0A_NEG               (1 << 5)
+#	define R300_ALU_ARG0A_ABS		 (2 << 5)
+#	define R300_ALU_ARG0A_NAB		 (3 << 5)
+#       define R300_ALU_ARG1A_SHIFT             7
+#       define R300_ALU_ARG1A_MASK              (31 << 7)
+#       define R300_ALU_ARG1A_NOP               (0 << 12)
+#       define R300_ALU_ARG1A_NEG               (1 << 12)
+#	define R300_ALU_ARG1A_ABS		 (2 << 12)
+#	define R300_ALU_ARG1A_NAB		 (3 << 12)
+#       define R300_ALU_ARG2A_SHIFT             14
+#       define R300_ALU_ARG2A_MASK              (31 << 14)
+#       define R300_ALU_ARG2A_NOP               (0 << 19)
+#       define R300_ALU_ARG2A_NEG               (1 << 19)
+#	define R300_ALU_ARG2A_ABS		 (2 << 19)
+#	define R300_ALU_ARG2A_NAB		 (3 << 19)
+#       define R300_ALU_SRCP_1_MINUS_2_SRC0     (0 << 21)
+#       define R300_ALU_SRCP_SRC1_MINUS_SRC0    (1 << 21)
+#       define R300_ALU_SRCP_SRC1_PLUS_SRC0     (2 << 21)
+#       define R300_ALU_SRCP_1_MINUS_SRC0       (3 << 21)
+
+#       define R300_ALU_OUTA_MAD                (0 << 23)
+#       define R300_ALU_OUTA_DP4                (1 << 23)
+#       define R300_ALU_OUTA_MIN                (2 << 23)
+#       define R300_ALU_OUTA_MAX                (3 << 23)
+#       define R300_ALU_OUTA_CND                (5 << 23)
+#       define R300_ALU_OUTA_CMP                (6 << 23)
+#       define R300_ALU_OUTA_FRC                (7 << 23)
+#       define R300_ALU_OUTA_EX2                (8 << 23)
+#       define R300_ALU_OUTA_LG2                (9 << 23)
+#       define R300_ALU_OUTA_RCP                (10 << 23)
+#       define R300_ALU_OUTA_RSQ                (11 << 23)
+
+#       define R300_ALU_OUTA_MOD_NOP            (0 << 27)
+#       define R300_ALU_OUTA_MOD_MUL2           (1 << 27)
+#       define R300_ALU_OUTA_MOD_MUL4           (2 << 27)
+#       define R300_ALU_OUTA_MOD_MUL8           (3 << 27)
+#       define R300_ALU_OUTA_MOD_DIV2           (4 << 27)
+#       define R300_ALU_OUTA_MOD_DIV4           (5 << 27)
+#       define R300_ALU_OUTA_MOD_DIV8           (6 << 27)
+
+#       define R300_ALU_OUTA_CLAMP              (1 << 30)
 /* END: Fragment program instruction set */
 
 /* Fog: Fog Blending Enable */
-#define FG_FOG_BLEND                             0x4bc0
-#       define FG_FOG_BLEND_DISABLE              (0 << 0)
-#       define FG_FOG_BLEND_ENABLE               (1 << 0)
-#	define FG_FOG_BLEND_FN_LINEAR            (0 << 1)
-#	define FG_FOG_BLEND_FN_EXP               (1 << 1)
-#	define FG_FOG_BLEND_FN_EXP2              (2 << 1)
-#	define FG_FOG_BLEND_FN_CONSTANT          (3 << 1)
-#	define FG_FOG_BLEND_FN_MASK              0x00000006
+#define R300_FG_FOG_BLEND                             0x4bc0
+#       define R300_FG_FOG_BLEND_DISABLE              (0 << 0)
+#       define R300_FG_FOG_BLEND_ENABLE               (1 << 0)
+#	define R300_FG_FOG_BLEND_FN_LINEAR            (0 << 1)
+#	define R300_FG_FOG_BLEND_FN_EXP               (1 << 1)
+#	define R300_FG_FOG_BLEND_FN_EXP2              (2 << 1)
+#	define R300_FG_FOG_BLEND_FN_CONSTANT          (3 << 1)
+#	define R300_FG_FOG_BLEND_FN_MASK              (3 << 1)
 
 /* Fog: Red Component of Fog Color */
-#define FG_FOG_COLOR_R                           0x4bc8
+#define R300_FG_FOG_COLOR_R                           0x4bc8
 /* Fog: Green Component of Fog Color */
-#define FG_FOG_COLOR_G                           0x4bcc
+#define R300_FG_FOG_COLOR_G                           0x4bcc
 /* Fog: Blue Component of Fog Color */
-#define FG_FOG_COLOR_B                           0x4bd0
-#	define FG_FOG_COLOR_MASK 0x000001ff
+#define R300_FG_FOG_COLOR_B                           0x4bd0
+#	define R300_FG_FOG_COLOR_MASK 0x000003ff
 
 /* Fog: Constant Factor for Fog Blending */
-#define FG_FOG_FACTOR                            0x4bc4
-#	define FG_FOG_FACTOR_MASK 0x000001ff
+#define R300_FG_FOG_FACTOR                            0x4bc4
+#	define FG_FOG_FACTOR_MASK 0x000003ff
 
 /* Fog: Alpha function */
-#define FG_ALPHA_FUNC                            0x4bd4
-#       define R300_REF_ALPHA_MASK               0x000000ff
-#       define FG_ALPHA_FUNC_NEVER                     (0 << 8)
-#       define FG_ALPHA_FUNC_LESS                      (1 << 8)
-#       define FG_ALPHA_FUNC_EQUAL                     (2 << 8)
-#       define FG_ALPHA_FUNC_LE                        (3 << 8)
-#       define FG_ALPHA_FUNC_GREATER                   (4 << 8)
-#       define FG_ALPHA_FUNC_NOTEQUAL                  (5 << 8)
-#       define FG_ALPHA_FUNC_GE                        (6 << 8)
-#       define FG_ALPHA_FUNC_ALWAYS                    (7 << 8)
-#       define R300_ALPHA_TEST_OP_MASK                 (7 << 8)
-#       define FG_ALPHA_FUNC_DISABLE                   (0 << 11)
-#       define FG_ALPHA_FUNC_ENABLE                    (1 << 11)
-#       define FG_ALPHA_FUNC_10BIT                     (0 << 12)
-#       define FG_ALPHA_FUNC_8BIT                      (1 << 12)
-/* gap in AMD spec */
-#       define FG_ALPHA_FUNC_MASK_DISABLE              (0 << 16)
-#       define FG_ALPHA_FUNC_MASK_ENABLE               (1 << 16)
-#       define FG_ALPHA_FUNC_CFG_2_OF_4                (0 << 17)
-#       define FG_ALPHA_FUNC_CFG_3_OF_6                (1 << 17)
-/* gap in AMD spec */
-#       define FG_ALPHA_FUNC_DITH_DISABLE              (0 << 20)
-#       define FG_ALPHA_FUNC_DITH_ENABLE               (1 << 20)
-/* gap in AMD spec */
-#       define FG_ALPHA_FUNC_OFFSET_DISABLE            (0 << 24) /* Not supported in R520. Default R300 and RV350 behaviour. */
-#       define FG_ALPHA_FUNC_OFFSET_ENABLE             (1 << 24) /* Not supported in R520 */
-#       define FG_ALPHA_FUNC_DISC_ZERO_MASK_DISABLE    (0 << 25)
-#       define FG_ALPHA_FUNC_DISC_ZERO_MASK_ENABLE     (1 << 25)
-/* gap in AMD spec */
-#       define FG_ALPHA_FUNC_FP16_DISABLE              (0 << 28)
-#       define FG_ALPHA_FUNC_FP16_ENABLE               (1 << 28)
-/* gap in AMD spec */
+#define R300_FG_ALPHA_FUNC                            0x4bd4
+#       define R300_FG_ALPHA_FUNC_VAL_MASK               0x000000ff
+#       define R300_FG_ALPHA_FUNC_NEVER                     (0 << 8)
+#       define R300_FG_ALPHA_FUNC_LESS                      (1 << 8)
+#       define R300_FG_ALPHA_FUNC_EQUAL                     (2 << 8)
+#       define R300_FG_ALPHA_FUNC_LE                        (3 << 8)
+#       define R300_FG_ALPHA_FUNC_GREATER                   (4 << 8)
+#       define R300_FG_ALPHA_FUNC_NOTEQUAL                  (5 << 8)
+#       define R300_FG_ALPHA_FUNC_GE                        (6 << 8)
+#       define R300_FG_ALPHA_FUNC_ALWAYS                    (7 << 8)
+#       define R300_ALPHA_TEST_OP_MASK                      (7 << 8)
+#       define R300_FG_ALPHA_FUNC_DISABLE                   (0 << 11)
+#       define R300_FG_ALPHA_FUNC_ENABLE                    (1 << 11)
+
+#       define R500_FG_ALPHA_FUNC_10BIT                     (0 << 12)
+#       define R500_FG_ALPHA_FUNC_8BIT                      (1 << 12)
+
+#       define R300_FG_ALPHA_FUNC_MASK_DISABLE              (0 << 16)
+#       define R300_FG_ALPHA_FUNC_MASK_ENABLE               (1 << 16)
+#       define R300_FG_ALPHA_FUNC_CFG_2_OF_4                (0 << 17)
+#       define R300_FG_ALPHA_FUNC_CFG_3_OF_6                (1 << 17)
+
+#       define R300_FG_ALPHA_FUNC_DITH_DISABLE              (0 << 20)
+#       define R300_FG_ALPHA_FUNC_DITH_ENABLE               (1 << 20)
+
+#       define R500_FG_ALPHA_FUNC_OFFSET_DISABLE            (0 << 24)
+#       define R500_FG_ALPHA_FUNC_OFFSET_ENABLE             (1 << 24) /* Not supported in R520 */
+#       define R500_FG_ALPHA_FUNC_DISC_ZERO_MASK_DISABLE    (0 << 25)
+#       define R500_FG_ALPHA_FUNC_DISC_ZERO_MASK_ENABLE     (1 << 25)
+
+#       define R500_FG_ALPHA_FUNC_FP16_DISABLE              (0 << 28)
+#       define R500_FG_ALPHA_FUNC_FP16_ENABLE               (1 << 28)
+
 
 /* Fog: Where does the depth come from? */
 #define R300_FG_DEPTH_SRC                  0x4bd8
@@ -1917,8 +2002,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #	define R300_FG_DEPTH_SRC_SHADER (1 << 0)
 
 /* Fog: Alpha Compare Value */
-#define FG_ALPHA_VALUE                0x4be0
-#	define FG_ALPHA_VALUE_MASK 0x0000ffff
+#define R500_FG_ALPHA_VALUE                0x4be0
+#	define R500_FG_ALPHA_VALUE_MASK 0x0000ffff
 
 /* gap */
 
@@ -1927,7 +2012,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define R300_PFS_PARAM_0_Y                  0x4C04
 #define R300_PFS_PARAM_0_Z                  0x4C08
 #define R300_PFS_PARAM_0_W                  0x4C0C
-/* GUESS: PARAM_31 is last, based on native limits reported by fglrx */
+/* last consts */
 #define R300_PFS_PARAM_31_X                 0x4DF0
 #define R300_PFS_PARAM_31_Y                 0x4DF4
 #define R300_PFS_PARAM_31_Z                 0x4DF8
@@ -1935,14 +2020,12 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 /* Unpipelined. */
 #define R300_RB3D_CCTL                      0x4e00
-/* gap in AMD docs */
 #	define R300_RB3D_CCTL_NUM_MULTIWRITES_1_BUFFER                (0 << 5)
 #	define R300_RB3D_CCTL_NUM_MULTIWRITES_2_BUFFERS               (1 << 5)
 #	define R300_RB3D_CCTL_NUM_MULTIWRITES_3_BUFFERS               (2 << 5)
 #	define R300_RB3D_CCTL_NUM_MULTIWRITES_4_BUFFERS               (3 << 5)
 #	define R300_RB3D_CCTL_CLRCMP_FLIPE_DISABLE                    (0 << 7)
 #	define R300_RB3D_CCTL_CLRCMP_FLIPE_ENABLE                     (1 << 7)
-/* gap in AMD docs */
 #	define R300_RB3D_CCTL_AA_COMPRESSION_DISABLE                  (0 << 9)
 #	define R300_RB3D_CCTL_AA_COMPRESSION_ENABLE                   (1 << 9)
 #	define R300_RB3D_CCTL_CMASK_DISABLE                           (0 << 10)
@@ -1967,9 +2050,17 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define R300_RB3D_CBLEND                    0x4E04
 #define R300_RB3D_ABLEND                    0x4E08
 /* the following only appear in CBLEND */
-#       define R300_BLEND_ENABLE                     (1 << 0)
-#       define R300_BLEND_UNKNOWN                    (3 << 1)
-#       define R300_BLEND_NO_SEPARATE                (1 << 3)
+#       define R300_ALPHA_BLEND_ENABLE         (1 << 0)
+#       define R300_SEPARATE_ALPHA_ENABLE      (1 << 1)
+#       define R300_READ_ENABLE                (1 << 2)
+#       define R300_DISCARD_SRC_PIXELS_DIS     (0 << 3)
+#       define R300_DISCARD_SRC_PIXELS_SRC_ALPHA_0     (1 << 3)
+#       define R300_DISCARD_SRC_PIXELS_SRC_COLOR_0     (2 << 3)
+#       define R300_DISCARD_SRC_PIXELS_SRC_ALPHA_COLOR_0     (3 << 3)
+#       define R300_DISCARD_SRC_PIXELS_SRC_ALPHA_1     (4 << 3)
+#       define R300_DISCARD_SRC_PIXELS_SRC_COLOR_1     (5 << 3)
+#       define R300_DISCARD_SRC_PIXELS_SRC_ALPHA_COLOR_1     (6 << 3)
+
 /* the following are shared between CBLEND and ABLEND */
 #       define R300_FCN_MASK                         (3  << 12)
 #       define R300_COMB_FCN_ADD_CLAMP               (0  << 12)
@@ -2044,7 +2135,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 /* Color Buffer Address Offset of multibuffer 0. Unpipelined. */
 #define R300_RB3D_COLOROFFSET0              0x4E28
-#       define R300_COLOROFFSET_MASK             0xFFFFFFF0 /* GUESS */
+#       define R300_COLOROFFSET_MASK             0xFFFFFFE0
 /* Color Buffer Address Offset of multibuffer 1. Unpipelined. */
 #define R300_RB3D_COLOROFFSET1              0x4E2C
 /* Color Buffer Address Offset of multibuffer 2. Unpipelined. */
@@ -2061,7 +2152,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  * Bit 18: Extremely weird tile like, but some pixels duplicated?
  */
 #define R300_RB3D_COLORPITCH0               0x4E38
-#       define R300_COLORPITCH_MASK              0x00001FF8 /* GUESS, should be 13:1 */
+#       define R300_COLORPITCH_MASK              0x00003FFE
 #       define R300_COLOR_TILE_DISABLE            (0 << 16)
 #       define R300_COLOR_TILE_ENABLE             (1 << 16)
 #       define R300_COLOR_MICROTILE_DISABLE       (0 << 17)
@@ -2071,12 +2162,12 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #       define R300_COLOR_ENDIAN_WORD_SWAP        (1 << 19)
 #       define R300_COLOR_ENDIAN_DWORD_SWAP       (2 << 19)
 #       define R300_COLOR_ENDIAN_HALF_DWORD_SWAP  (3 << 19)
-#	define R300_COLOR_FORMAT_ARGB10101010     (0 << 21)
-#	define R300_COLOR_FORMAT_UV1010           (1 << 21)
-#	define R300_COLOR_FORMAT_CI8              (2 << 21) /* 2D only */
+#	define R500_COLOR_FORMAT_ARGB10101010     (0 << 21)
+#	define R500_COLOR_FORMAT_UV1010           (1 << 21)
+#	define R500_COLOR_FORMAT_CI8              (2 << 21) /* 2D only */
 #	define R300_COLOR_FORMAT_ARGB1555         (3 << 21)
 #       define R300_COLOR_FORMAT_RGB565           (4 << 21)
-#       define R300_COLOR_FORMAT_ARGB2101010      (5 << 21)
+#       define R500_COLOR_FORMAT_ARGB2101010      (5 << 21)
 #       define R300_COLOR_FORMAT_ARGB8888         (6 << 21)
 #       define R300_COLOR_FORMAT_ARGB32323232     (7 << 21)
 /* reserved */
@@ -2085,7 +2176,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #       define R300_COLOR_FORMAT_VYUY             (11 << 21)
 #       define R300_COLOR_FORMAT_YVYU             (12 << 21)
 #       define R300_COLOR_FORMAT_UV88             (13 << 21)
-#       define R300_COLOR_FORMAT_I10              (14 << 21)
+#       define R500_COLOR_FORMAT_I10              (14 << 21)
 #       define R300_COLOR_FORMAT_ARGB4444         (15 << 21)
 #define R300_RB3D_COLORPITCH1               0x4E3C
 #define R300_RB3D_COLORPITCH2               0x4E40
@@ -2104,16 +2195,16 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  * Set to 0A before 3D operations, set to 02 afterwards.
  */
 #define R300_RB3D_DSTCACHE_CTLSTAT               0x4e4c
-#	define RB3D_DSTCACHE_CTLSTAT_DC_FLUSH_NO_EFFECT         (0 << 0)
-#	define RB3D_DSTCACHE_CTLSTAT_DC_FLUSH_NO_EFFECT_1       (1 << 0)
-#	define RB3D_DSTCACHE_CTLSTAT_DC_FLUSH_FLUSH_DIRTY_3D    (2 << 0)
-#	define RB3D_DSTCACHE_CTLSTAT_DC_FLUSH_FLUSH_DIRTY_3D_1  (3 << 0)
-#	define RB3D_DSTCACHE_CTLSTAT_DC_FREE_NO_EFFECT          (0 << 2)
-#	define RB3D_DSTCACHE_CTLSTAT_DC_FREE_NO_EFFECT_1        (1 << 2)
-#	define RB3D_DSTCACHE_CTLSTAT_DC_FREE_FREE_3D_TAGS       (2 << 2)
-#	define RB3D_DSTCACHE_CTLSTAT_DC_FREE_FREE_3D_TAGS_1     (3 << 2)
-#	define RB3D_DSTCACHE_CTLSTAT_DC_FINISH_NO_SIGNAL        (0 << 4)
-#	define RB3D_DSTCACHE_CTLSTAT_DC_FINISH_SIGNAL           (1 << 4)
+#	define R300_RB3D_DSTCACHE_CTLSTAT_DC_FLUSH_NO_EFFECT         (0 << 0)
+#	define R300_RB3D_DSTCACHE_CTLSTAT_DC_FLUSH_NO_EFFECT_1       (1 << 0)
+#	define R300_RB3D_DSTCACHE_CTLSTAT_DC_FLUSH_FLUSH_DIRTY_3D    (2 << 0)
+#	define R300_RB3D_DSTCACHE_CTLSTAT_DC_FLUSH_FLUSH_DIRTY_3D_1  (3 << 0)
+#	define R300_RB3D_DSTCACHE_CTLSTAT_DC_FREE_NO_EFFECT          (0 << 2)
+#	define R300_RB3D_DSTCACHE_CTLSTAT_DC_FREE_NO_EFFECT_1        (1 << 2)
+#	define R300_RB3D_DSTCACHE_CTLSTAT_DC_FREE_FREE_3D_TAGS       (2 << 2)
+#	define R300_RB3D_DSTCACHE_CTLSTAT_DC_FREE_FREE_3D_TAGS_1     (3 << 2)
+#	define R300_RB3D_DSTCACHE_CTLSTAT_DC_FINISH_NO_SIGNAL        (0 << 4)
+#	define R300_RB3D_DSTCACHE_CTLSTAT_DC_FINISH_SIGNAL           (1 << 4)
 
 #define R300_RB3D_DITHER_CTL 0x4E50
 #	define R300_RB3D_DITHER_CTL_DITHER_MODE_TRUNCATE         (0 << 0)
@@ -2128,87 +2219,81 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 /* Resolve buffer destination address. The cache must be empty before changing
  * this register if the cb is in resolve mode. Unpipelined
  */
-#define RB3D_AARESOLVE_OFFSET        0x4e80
-#	define RB3D_AARESOLVE_OFFSET_SHIFT 5
-#	define RB3D_AARESOLVE_OFFSET_MASK 0xffffffe0 /* At least according to the calculations of Christoph Brill */
+#define R300_RB3D_AARESOLVE_OFFSET        0x4e80
+#	define R300_RB3D_AARESOLVE_OFFSET_SHIFT 5
+#	define R300_RB3D_AARESOLVE_OFFSET_MASK 0xffffffe0 /* At least according to the calculations of Christoph Brill */
 
 /* Resolve Buffer Pitch and Tiling Control. The cache must be empty before
  * changing this register if the cb is in resolve mode. Unpipelined
  */
-#define RB3D_AARESOLVE_PITCH         0x4e84
-#	define RB3D_AARESOLVE_PITCH_SHIFT 1
-#	define RB3D_AARESOLVE_PITCH_MASK  0x00003ffe /* At least according to the calculations of Christoph Brill */
+#define R300_RB3D_AARESOLVE_PITCH         0x4e84
+#	define R300_RB3D_AARESOLVE_PITCH_SHIFT 1
+#	define R300_RB3D_AARESOLVE_PITCH_MASK  0x00003ffe /* At least according to the calculations of Christoph Brill */
 
 /* Resolve Buffer Control. Unpipelined */
-#define RB3D_AARESOLVE_CTL           0x4e88
-#	define RB3D_AARESOLVE_CTL_AARESOLVE_MODE_NORMAL   (0 << 0)
-#	define RB3D_AARESOLVE_CTL_AARESOLVE_MODE_RESOLVE  (1 << 0)
-#	define RB3D_AARESOLVE_CTL_AARESOLVE_GAMMA_10      (0 << 1)
-#	define RB3D_AARESOLVE_CTL_AARESOLVE_GAMMA_22      (1 << 1)
-#	define RB3D_AARESOLVE_CTL_AARESOLVE_ALPHA_SAMPLE0 (0 << 2)
-#	define RB3D_AARESOLVE_CTL_AARESOLVE_ALPHA_AVERAGE (1 << 2)
+#define R300_RB3D_AARESOLVE_CTL           0x4e88
+#	define R300_RB3D_AARESOLVE_CTL_AARESOLVE_MODE_NORMAL   (0 << 0)
+#	define R300_RB3D_AARESOLVE_CTL_AARESOLVE_MODE_RESOLVE  (1 << 0)
+#	define R300_RB3D_AARESOLVE_CTL_AARESOLVE_GAMMA_10      (0 << 1)
+#	define R300_RB3D_AARESOLVE_CTL_AARESOLVE_GAMMA_22      (1 << 1)
+#	define R300_RB3D_AARESOLVE_CTL_AARESOLVE_ALPHA_SAMPLE0 (0 << 2)
+#	define R300_RB3D_AARESOLVE_CTL_AARESOLVE_ALPHA_AVERAGE (1 << 2)
   
 
 /* Discard src pixels less than or equal to threshold. */
-#define RB3D_DISCARD_SRC_PIXEL_LTE_THRESHOLD 0x4ea0
+#define R500_RB3D_DISCARD_SRC_PIXEL_LTE_THRESHOLD 0x4ea0
 /* Discard src pixels greater than or equal to threshold. */
-#define RB3D_DISCARD_SRC_PIXEL_GTE_THRESHOLD 0x4ea4
-#	define RB3D_DISCARD_SRC_PIXEL_THRESHOLD_BLUE_SHIFT 0
-#	define RB3D_DISCARD_SRC_PIXEL_THRESHOLD_BLUE_MASK 0x000000ff
-#	define RB3D_DISCARD_SRC_PIXEL_THRESHOLD_GREEN_SHIFT 8
-#	define RB3D_DISCARD_SRC_PIXEL_THRESHOLD_GREEN_MASK 0x0000ff00
-#	define RB3D_DISCARD_SRC_PIXEL_THRESHOLD_RED_SHIFT 16
-#	define RB3D_DISCARD_SRC_PIXEL_THRESHOLD_RED_MASK 0x00ff0000
-#	define RB3D_DISCARD_SRC_PIXEL_THRESHOLD_ALPHA_SHIFT 24
-#	define RB3D_DISCARD_SRC_PIXEL_THRESHOLD_ALPHA_MASK 0xff000000
+#define R500_RB3D_DISCARD_SRC_PIXEL_GTE_THRESHOLD 0x4ea4
+#	define R500_RB3D_DISCARD_SRC_PIXEL_THRESHOLD_BLUE_SHIFT 0
+#	define R500_RB3D_DISCARD_SRC_PIXEL_THRESHOLD_BLUE_MASK 0x000000ff
+#	define R500_RB3D_DISCARD_SRC_PIXEL_THRESHOLD_GREEN_SHIFT 8
+#	define R500_RB3D_DISCARD_SRC_PIXEL_THRESHOLD_GREEN_MASK 0x0000ff00
+#	define R500_RB3D_DISCARD_SRC_PIXEL_THRESHOLD_RED_SHIFT 16
+#	define R500_RB3D_DISCARD_SRC_PIXEL_THRESHOLD_RED_MASK 0x00ff0000
+#	define R500_RB3D_DISCARD_SRC_PIXEL_THRESHOLD_ALPHA_SHIFT 24
+#	define R500_RB3D_DISCARD_SRC_PIXEL_THRESHOLD_ALPHA_MASK 0xff000000
 
 /* 3D ROP Control. Stalls the 2d/3d datapath until it is idle. */
-#define RB3D_ROPCNTL                             0x4e18
+#define R300_RB3D_ROPCNTL                             0x4e18
 /* TODO: fill in content here */
 
 /* Color Compare Flip. Stalls the 2d/3d datapath until it is idle. */
-#define RB3D_CLRCMP_FLIPE                        0x4e1c
+#define R300_RB3D_CLRCMP_FLIPE                        0x4e1c
 
 /* Sets the fifo sizes */
-#define RB3D_FIFO_SIZE                           0x4ef4
-#	define RB3D_FIFO_SIZE_OP_FIFO_SIZE_FULL   (0 << 0)
-#	define RB3D_FIFO_SIZE_OP_FIFO_SIZE_HALF   (1 << 0)
-#	define RB3D_FIFO_SIZE_OP_FIFO_SIZE_QUATER (2 << 0)
-#	define RB3D_FIFO_SIZE_OP_FIFO_SIZE_EIGTHS (3 << 0)
-/* gap in AMD spec */
+#define R500_RB3D_FIFO_SIZE                           0x4ef4
+#	define R500_RB3D_FIFO_SIZE_OP_FIFO_SIZE_FULL   (0 << 0)
+#	define R500_RB3D_FIFO_SIZE_OP_FIFO_SIZE_HALF   (1 << 0)
+#	define R500_RB3D_FIFO_SIZE_OP_FIFO_SIZE_QUATER (2 << 0)
+#	define R500_RB3D_FIFO_SIZE_OP_FIFO_SIZE_EIGTHS (3 << 0)
 
 /* Constant color used by the blender. Pipelined through the blender. */
-#define RB3D_CONSTANT_COLOR_AR                   0x4ef8
-#	define RB3D_CONSTANT_COLOR_AR_RED_MASK    0x0000ffff
-#	define RB3D_CONSTANT_COLOR_AR_RED_SHIFT   0
-#	define RB3D_CONSTANT_COLOR_AR_ALPHA_MASK  0xffff0000
-#	define RB3D_CONSTANT_COLOR_AR_ALPHA_SHIFT 16
+#define R500_RB3D_CONSTANT_COLOR_AR                   0x4ef8
+#	define R500_RB3D_CONSTANT_COLOR_AR_RED_MASK    0x0000ffff
+#	define R500_RB3D_CONSTANT_COLOR_AR_RED_SHIFT   0
+#	define R500_RB3D_CONSTANT_COLOR_AR_ALPHA_MASK  0xffff0000
+#	define R500_RB3D_CONSTANT_COLOR_AR_ALPHA_SHIFT 16
 
 /* Constant color used by the blender. Pipelined through the blender. */
-#define RB3D_CONSTANT_COLOR_GB                   0x4efc
-#	define RB3D_CONSTANT_COLOR_AR_BLUE_MASK   0x0000ffff
-#	define RB3D_CONSTANT_COLOR_AR_BLUE_SHIFT  0
-#	define RB3D_CONSTANT_COLOR_AR_GREEN_MASK  0xffff0000
-#	define RB3D_CONSTANT_COLOR_AR_GREEN_SHIFT 16
+#define R500_RB3D_CONSTANT_COLOR_GB                   0x4efc
+#	define R500_RB3D_CONSTANT_COLOR_AR_BLUE_MASK   0x0000ffff
+#	define R500_RB3D_CONSTANT_COLOR_AR_BLUE_SHIFT  0
+#	define R500_RB3D_CONSTANT_COLOR_AR_GREEN_MASK  0xffff0000
+#	define R500_RB3D_CONSTANT_COLOR_AR_GREEN_SHIFT 16
 
 /* gap */
 /* There seems to be no "write only" setting, so use Z-test = ALWAYS
  * for this.
  * Bit (1<<8) is the "test" bit. so plain write is 6  - vd
  */
-#define R300_RB3D_ZSTENCIL_CNTL_0                   0x4F00
-#       define R300_RB3D_Z_DISABLED_1            0x00000010
-#       define R300_RB3D_Z_DISABLED_2            0x00000014
-#       define R300_RB3D_Z_TEST                  0x00000012
-#       define R300_RB3D_Z_TEST_AND_WRITE        0x00000016
-#       define R300_RB3D_Z_WRITE_ONLY        	 0x00000006
+#define R300_ZB_CNTL                             0x4F00
+#	define R300_STENCIL_ENABLE		 (1 << 0)
+#	define R300_Z_ENABLE		         (1 << 1)
+#	define R300_Z_WRITE_ENABLE		 (1 << 2)
+#	define R300_Z_SIGNED_COMPARE		 (1 << 3)
+#	define R300_STENCIL_FRONT_BACK		 (1 << 4)
 
-#       define R300_RB3D_Z_TEST                  0x00000012
-#       define R300_RB3D_Z_TEST_AND_WRITE        0x00000016
-#       define R300_RB3D_Z_WRITE_ONLY        	 0x00000006
-#	define R300_RB3D_STENCIL_ENABLE		 0x00000001
-
-#define R300_RB3D_ZSTENCIL_CNTL_1                   0x4f04
+#define R300_ZB_ZSTENCILCNTL                   0x4f04
 	/* functions */
 #	define R300_ZS_NEVER			0
 #	define R300_ZS_LESS			1
@@ -2228,51 +2313,49 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #	define R300_ZS_INVERT			5
 #	define R300_ZS_INCR_WRAP		6
 #	define R300_ZS_DECR_WRAP		7
+#	define R300_Z_FUNC_SHIFT		0
 	/* front and back refer to operations done for front
 	   and back faces, i.e. separate stencil function support */
-#	define R300_RB3D_ZS1_DEPTH_FUNC_SHIFT		0
-#	define R300_RB3D_ZS1_FRONT_FUNC_SHIFT		3
-#	define R300_RB3D_ZS1_FRONT_FAIL_OP_SHIFT	6
-#	define R300_RB3D_ZS1_FRONT_ZPASS_OP_SHIFT	9
-#	define R300_RB3D_ZS1_FRONT_ZFAIL_OP_SHIFT      12
-#	define R300_RB3D_ZS1_BACK_FUNC_SHIFT           15
-#	define R300_RB3D_ZS1_BACK_FAIL_OP_SHIFT        18
-#	define R300_RB3D_ZS1_BACK_ZPASS_OP_SHIFT       21
-#	define R300_RB3D_ZS1_BACK_ZFAIL_OP_SHIFT       24
+#	define R300_S_FRONT_FUNC_SHIFT	        3
+#	define R300_S_FRONT_SFAIL_OP_SHIFT	6
+#	define R300_S_FRONT_ZPASS_OP_SHIFT	9
+#	define R300_S_FRONT_ZFAIL_OP_SHIFT      12
+#	define R300_S_BACK_FUNC_SHIFT           15
+#	define R300_S_BACK_SFAIL_OP_SHIFT       18
+#	define R300_S_BACK_ZPASS_OP_SHIFT       21
+#	define R300_S_BACK_ZFAIL_OP_SHIFT       24
 
-#define ZB_STENCILREFMASK                        0x4f08
-#	define ZB_STENCILREFMASK_STENCILREF_SHIFT       0
-#	define ZB_STENCILREFMASK_STENCIL_MASK           0xff
-#	define ZB_STENCILREFMASK_STENCILREF_MASK        0x000000ff
-#	define ZB_STENCILREFMASK_STENCILMASK_SHIFT      8
-#	define ZB_STENCILREFMASK_STENCILMASK_MASK       0x0000ff00
-#	define ZB_STENCILREFMASK_STENCILWRITEMASK_SHIFT	16
-#	define ZB_STENCILREFMASK_STENCILWRITEMASK_MASK  0xffff0000
+#define R300_ZB_STENCILREFMASK                        0x4f08
+#	define R300_STENCILREF_SHIFT       0
+#	define R300_STENCILREF_MASK        0x000000ff
+#	define R300_STENCILMASK_SHIFT      8
+#	define R300_STENCILMASK_MASK       0x0000ff00
+#	define R300_STENCILWRITEMASK_SHIFT 16
+#	define R300_STENCILWRITEMASK_MASK  0x00ff0000
 
 /* gap */
 
-#define ZB_FORMAT                                   0x4f10
-#	define ZB_FORMAR_DEPTHFORMAT_16BIT_INT_Z   (0 << 0)
-#	define ZB_FORMAR_DEPTHFORMAT_16BIT_13E3    (1 << 0)
-#	define ZB_FORMAR_DEPTHFORMAT_24BIT_INT_Z   (2 << 0)
+#define R300_ZB_FORMAT                             0x4f10
+#	define R300_DEPTHFORMAT_16BIT_INT_Z   (0 << 0)
+#	define R300_DEPTHFORMAT_16BIT_13E3    (1 << 0)
+#	define R300_DEPTHFORMAT_24BIT_INT_Z_8BIT_STENCIL   (2 << 0)
 /* reserved up to (15 << 0) */
-#	define ZB_FORMAR_INVERT_13E3_LEADING_ONES  (0 << 4)
-#	define ZB_FORMAR_INVERT_13E3_LEADING_ZEROS (1 << 4)
-#	define ZB_FORMAR_PEQ8_UNUSED               (1 << 5)
+#	define R300_INVERT_13E3_LEADING_ONES  (0 << 4)
+#	define R300_INVERT_13E3_LEADING_ZEROS (1 << 4)
 
-#define R300_RB3D_EARLY_Z                           0x4F14
-#	define R300_EARLY_Z_DISABLE              (0 << 0)
-#	define R300_EARLY_Z_ENABLE               (1 << 0)
+#define R300_ZB_ZTOP                             0x4F14
+#	define R300_ZTOP_DISABLE                 (0 << 0)
+#	define R300_ZTOP_ENABLE                  (1 << 0)
 
 /* gap */
 
-#define ZB_ZCACHE_CTLSTAT            0x4f18
-#       define ZB_ZCACHE_CTLSTAT_ZC_FLUSH_NO_EFFECT      (0 << 0)
-#       define ZB_ZCACHE_CTLSTAT_ZC_FLUSH_FLUSH_AND_FREE (1 << 0)
-#       define ZB_ZCACHE_CTLSTAT_ZC_FREE_NO_EFFECT       (0 << 1)
-#       define ZB_ZCACHE_CTLSTAT_ZC_FREE_FREE            (1 << 1)
-#       define ZB_ZCACHE_CTLSTAT_ZC_BUSY_IDLE            (0 << 31)
-#       define ZB_ZCACHE_CTLSTAT_ZC_BUSY_BUSY            (1 << 31)
+#define R300_ZB_ZCACHE_CTLSTAT            0x4f18
+#       define R300_ZB_ZCACHE_CTLSTAT_ZC_FLUSH_NO_EFFECT      (0 << 0)
+#       define R300_ZB_ZCACHE_CTLSTAT_ZC_FLUSH_FLUSH_AND_FREE (1 << 0)
+#       define R300_ZB_ZCACHE_CTLSTAT_ZC_FREE_NO_EFFECT       (0 << 1)
+#       define R300_ZB_ZCACHE_CTLSTAT_ZC_FREE_FREE            (1 << 1)
+#       define R300_ZB_ZCACHE_CTLSTAT_ZC_BUSY_IDLE            (0 << 31)
+#       define R300_ZB_ZCACHE_CTLSTAT_ZC_BUSY_BUSY            (1 << 31)
 
 #define R300_ZB_BW_CNTL                     0x4f1c
 #	define R300_HIZ_DISABLE                              (0 << 0)
@@ -2289,31 +2372,32 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #	define R300_ZB_CB_CLEAR_CACHE_LINEAR                 (1 << 5)
 #	define R300_FORCE_COMPRESSED_STENCIL_VALUE_DISABLE   (0 << 6)
 #	define R300_FORCE_COMPRESSED_STENCIL_VALUE_ENABLE    (1 << 6)
-#	define R300_ZEQUAL_OPTIMIZE_ENABLE                   (0 << 7)
-#	define R300_ZEQUAL_OPTIMIZE_DISABLE                  (1 << 7)
-#	define R300_SEQUAL_OPTIMIZE_ENABLE                   (0 << 8)
-#	define R300_SEQUAL_OPTIMIZE_DISABLE                  (1 << 8)
-/* gap in AMD docs */
-#	define R300_BMASK_ENABLE                             (0 << 10)
-#	define R300_BMASK_DISABLE                            (1 << 10)
-#	define R300_HIZ_EQUAL_REJECT_DISABLE                 (0 << 11)
-#	define R300_HIZ_EQUAL_REJECT_ENABLE                  (1 << 11)
-#	define R300_HIZ_FP_EXP_BITS_DISABLE                  (0 << 12)
-#	define R300_HIZ_FP_EXP_BITS_1                        (1 << 12)
-#	define R300_HIZ_FP_EXP_BITS_2                        (2 << 12)
-#	define R300_HIZ_FP_EXP_BITS_3                        (3 << 12)
-#	define R300_HIZ_FP_EXP_BITS_4                        (4 << 12)
-#	define R300_HIZ_FP_EXP_BITS_5                        (5 << 12)
-#	define R300_HIZ_FP_INVERT_LEADING_ONES               (0 << 15)
-#	define R300_HIZ_FP_INVERT_LEADING_ZEROS              (1 << 15)
-#	define R300_TILE_OVERWRITE_RECOMPRESSION_ENABLE      (0 << 16)
-#	define R300_TILE_OVERWRITE_RECOMPRESSION_DISABLE     (1 << 16)
-#	define R300_CONTIGUOUS_6XAA_SAMPLES_ENABLE           (0 << 17)
-#	define R300_CONTIGUOUS_6XAA_SAMPLES_DISABLE          (1 << 17)
-#	define R300_PEQ_PACKING_DISABLE                      (0 << 18)
-#	define R300_PEQ_PACKING_ENABLE                       (1 << 18)
-#	define R300_COVERED_PTR_MASKING_DISABLE              (0 << 18)
-#	define R300_COVERED_PTR_MASKING_ENABLE               (1 << 18)
+
+#	define R500_ZEQUAL_OPTIMIZE_ENABLE                   (0 << 7)
+#	define R500_ZEQUAL_OPTIMIZE_DISABLE                  (1 << 7)
+#	define R500_SEQUAL_OPTIMIZE_ENABLE                   (0 << 8)
+#	define R500_SEQUAL_OPTIMIZE_DISABLE                  (1 << 8)
+
+#	define R500_BMASK_ENABLE                             (0 << 10)
+#	define R500_BMASK_DISABLE                            (1 << 10)
+#	define R500_HIZ_EQUAL_REJECT_DISABLE                 (0 << 11)
+#	define R500_HIZ_EQUAL_REJECT_ENABLE                  (1 << 11)
+#	define R500_HIZ_FP_EXP_BITS_DISABLE                  (0 << 12)
+#	define R500_HIZ_FP_EXP_BITS_1                        (1 << 12)
+#	define R500_HIZ_FP_EXP_BITS_2                        (2 << 12)
+#	define R500_HIZ_FP_EXP_BITS_3                        (3 << 12)
+#	define R500_HIZ_FP_EXP_BITS_4                        (4 << 12)
+#	define R500_HIZ_FP_EXP_BITS_5                        (5 << 12)
+#	define R500_HIZ_FP_INVERT_LEADING_ONES               (0 << 15)
+#	define R500_HIZ_FP_INVERT_LEADING_ZEROS              (1 << 15)
+#	define R500_TILE_OVERWRITE_RECOMPRESSION_ENABLE      (0 << 16)
+#	define R500_TILE_OVERWRITE_RECOMPRESSION_DISABLE     (1 << 16)
+#	define R500_CONTIGUOUS_6XAA_SAMPLES_ENABLE           (0 << 17)
+#	define R500_CONTIGUOUS_6XAA_SAMPLES_DISABLE          (1 << 17)
+#	define R500_PEQ_PACKING_DISABLE                      (0 << 18)
+#	define R500_PEQ_PACKING_ENABLE                       (1 << 18)
+#	define R500_COVERED_PTR_MASKING_DISABLE              (0 << 18)
+#	define R500_COVERED_PTR_MASKING_ENABLE               (1 << 18)
 
 
 /* gap */
@@ -2321,67 +2405,68 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 /* Z Buffer Address Offset.
  * Bits 31 to 5 are used for aligned Z buffer address offset for macro tiles.
  */
-#define ZB_DEPTHOFFSET               0x4f20
+#define R300_ZB_DEPTHOFFSET               0x4f20
 
 /* Z Buffer Pitch and Endian Control */
-#define ZB_DEPTHPITCH                0x4f24
-#       define R300_DEPTHPITCH_MASK              0x00001FF8 /* TODO: should be (13:2) */
-#       define ZB_DEPTHPITCH_DEPTHMACROTILE_DISABLE      (0 << 16)
-#       define ZB_DEPTHPITCH_DEPTHMACROTILE_ENABLE       (1 << 16)
-#       define ZB_DEPTHPITCH_DEPTHMICROTILE_LINEAR       (0 << 17)
-#       define ZB_DEPTHPITCH_DEPTHMICROTILE_TILED        (1 << 17)
-#       define ZB_DEPTHPITCH_DEPTHMICROTILE_TILED_SQUARE (2 << 17)
-#       define ZB_DEPTHPITCH_DEPTHENDIAN_NO_SWAP         (0 << 18)
-#       define ZB_DEPTHPITCH_DEPTHENDIAN_WORD_SWAP       (1 << 18)
-#       define ZB_DEPTHPITCH_DEPTHENDIAN_DWORD_SWAP      (2 << 18)
-#       define ZB_DEPTHPITCH_DEPTHENDIAN_HALF_DWORD_SWAP (3 << 18)
+#define R300_ZB_DEPTHPITCH                0x4f24
+#       define R300_DEPTHPITCH_MASK              0x00003FFC
+#       define R300_DEPTHMACROTILE_DISABLE      (0 << 16)
+#       define R300_DEPTHMACROTILE_ENABLE       (1 << 16)
+#       define R300_DEPTHMICROTILE_LINEAR       (0 << 17)
+#       define R300_DEPTHMICROTILE_TILED        (1 << 17)
+#       define R300_DEPTHMICROTILE_TILED_SQUARE (2 << 17)
+#       define R300_DEPTHENDIAN_NO_SWAP         (0 << 18)
+#       define R300_DEPTHENDIAN_WORD_SWAP       (1 << 18)
+#       define R300_DEPTHENDIAN_DWORD_SWAP      (2 << 18)
+#       define R300_DEPTHENDIAN_HALF_DWORD_SWAP (3 << 18)
 
 /* Z Buffer Clear Value */
-#define ZB_DEPTHCLEARVALUE                  0x4f28
+#define R300_ZB_DEPTHCLEARVALUE                  0x4f28
 
 /* Hierarchical Z Memory Offset */
-#define ZB_HIZ_OFFSET                       0x4f44
-
-/* Hierarchical Z Read Index */
-#define ZB_HIZ_RDINDEX                      0x4f48
-
-/* Hierarchical Z Data */
-#define ZB_HIZ_DWORD                        0x4f4c
+#define R300_ZB_HIZ_OFFSET                       0x4f44
 
 /* Hierarchical Z Write Index */
-#define ZB_HIZ_WRINDEX                      0x4f50
+#define R300_ZB_HIZ_WRINDEX                      0x4f48
+
+/* Hierarchical Z Data */
+#define R300_ZB_HIZ_DWORD                        0x4f4c
+
+/* Hierarchical Z Read Index */
+#define R300_ZB_HIZ_RDINDEX                      0x4f50
 
 /* Hierarchical Z Pitch */
-#define ZB_HIZ_PITCH                        0x4f54
+#define R300_ZB_HIZ_PITCH                        0x4f54
 
 /* Z Buffer Z Pass Counter Data */
-#define ZB_ZPASS_DATA                       0x4f58
+#define R300_ZB_ZPASS_DATA                       0x4f58
 
 /* Z Buffer Z Pass Counter Address */
-#define ZB_ZPASS_ADDR                       0x4f5c
+#define R300_ZB_ZPASS_ADDR                       0x4f5c
 
 /* Depth buffer X and Y coordinate offset */
-#define ZB_DEPTHXY_OFFSET                   0x4f60
-#	define ZB_DEPTHX_OFFSET_SHIFT  1
-#	define ZB_DEPTHX_OFFSET_MASK   0x000007FE
-#	define ZB_DEPTHY_OFFSET_SHIFT  17
-#	define ZB_DEPTHY_OFFSET_MASK   0x07FE0000
+#define R300_ZB_DEPTHXY_OFFSET                   0x4f60
+#	define R300_DEPTHX_OFFSET_SHIFT  1
+#	define R300_DEPTHX_OFFSET_MASK   0x000007FE
+#	define R300_DEPTHY_OFFSET_SHIFT  17
+#	define R300_DEPTHY_OFFSET_MASK   0x07FE0000
 
 /* Sets the fifo sizes */
-#define ZB_FIFO_SIZE                        0x4fd0
-#	define ZB_FIFO_SIZE_OP_FIFO_SIZE_FULL   (0 << 0)
-#	define ZB_FIFO_SIZE_OP_FIFO_SIZE_HALF   (1 << 0)
-#	define ZB_FIFO_SIZE_OP_FIFO_SIZE_QUATER (2 << 0)
-#	define ZB_FIFO_SIZE_OP_FIFO_SIZE_EIGTHS (4 << 0)
+#define R500_ZB_FIFO_SIZE                        0x4fd0
+#	define R500_OP_FIFO_SIZE_FULL   (0 << 0)
+#	define R500_OP_FIFO_SIZE_HALF   (1 << 0)
+#	define R500_OP_FIFO_SIZE_QUATER (2 << 0)
+#	define R500_OP_FIFO_SIZE_EIGTHS (4 << 0)
 
 /* Stencil Reference Value and Mask for backfacing quads */
-#define ZB_STENCILREFMASK_BF                0x4fd4
-#	define ZB_STENCILREFMASK_BF_STENCILREF_SHIFT       0
-#	define ZB_STENCILREFMASK_BF_STENCILREF_MASK        0x000000ff
-#	define ZB_STENCILREFMASK_BF_STENCILMASK_SHIFT      8
-#	define ZB_STENCILREFMASK_BF_STENCILMASK_MASK       0x0000ff00
-#	define ZB_STENCILREFMASK_BF_STENCILWRITEMASK_SHIFT 16
-#	define ZB_STENCILREFMASK_BF_STENCILWRITEMASK_MASK  0xffff0000
+/* R300_ZB_STENCILREFMASK handles front face */
+#define R500_ZB_STENCILREFMASK_BF                0x4fd4
+#	define R500_STENCILREF_SHIFT       0
+#	define R500_STENCILREF_MASK        0x000000ff
+#	define R500_STENCILMASK_SHIFT      8
+#	define R500_STENCILMASK_MASK       0x0000ff00
+#	define R500_STENCILWRITEMASK_SHIFT 16
+#	define R500_STENCILWRITEMASK_MASK  0x00ff0000
 
 /**
  * \defgroup R3XX_R5XX_PROGRAMMABLE_VERTEX_SHADER_DESCRIPTION R3XX-R5XX PROGRAMMABLE VERTEX SHADER DESCRIPTION
@@ -2597,6 +2682,479 @@ enum {
 #define R300_PRIM_COLOR_ORDER_RGBA              (1 << 6)
 #define R300_PRIM_NUM_VERTICES_SHIFT            16
 #define R300_PRIM_NUM_VERTICES_MASK             0xffff
+
+
+
+/*
+ * The R500 unified shader (US) registers come in banks of 512 each, one
+ * for each instruction slot in the shader.  You can't touch them directly.
+ * R500_US_VECTOR_INDEX() sets the base instruction to modify; successive
+ * writes to R500_GA_US_VECTOR_DATA autoincrement the index after the
+ * instruction is fully specified.
+ */
+#define R500_US_ALU_ALPHA_INST_0			0xa800
+#   define R500_ALPHA_OP_MAD				0
+#   define R500_ALPHA_OP_DP				1
+#   define R500_ALPHA_OP_MIN				2
+#   define R500_ALPHA_OP_MAX				3
+/* #define R500_ALPHA_OP_RESERVED			4 */
+#   define R500_ALPHA_OP_CND				5
+#   define R500_ALPHA_OP_CMP				6
+#   define R500_ALPHA_OP_FRC				7
+#   define R500_ALPHA_OP_EX2				8
+#   define R500_ALPHA_OP_LN2				9
+#   define R500_ALPHA_OP_RCP				10
+#   define R500_ALPHA_OP_RSQ				11
+#   define R500_ALPHA_OP_SIN				12
+#   define R500_ALPHA_OP_COS				13
+#   define R500_ALPHA_OP_MDH				14
+#   define R500_ALPHA_OP_MDV				15
+#   define R500_ALPHA_ADDRD(x)				(x << 4)
+#   define R500_ALPHA_ADDRD_REL				(1 << 11)
+#   define R500_ALPHA_SEL_A_SRC0			(0 << 12)
+#   define R500_ALPHA_SEL_A_SRC1			(1 << 12)
+#   define R500_ALPHA_SEL_A_SRC2			(2 << 12)
+#   define R500_ALPHA_SEL_A_SRCP			(3 << 12)
+#   define R500_ALPHA_SWIZ_A_R				(0 << 14)
+#   define R500_ALPHA_SWIZ_A_G				(1 << 14)
+#   define R500_ALPHA_SWIZ_A_B				(2 << 14)
+#   define R500_ALPHA_SWIZ_A_A				(3 << 14)
+#   define R500_ALPHA_SWIZ_A_0				(4 << 14)
+#   define R500_ALPHA_SWIZ_A_HALF			(5 << 14)
+#   define R500_ALPHA_SWIZ_A_1				(6 << 14)
+/* #define R500_ALPHA_SWIZ_A_UNUSED			(7 << 14) */
+#   define R500_ALPHA_MOD_A_NOP				(0 << 17)
+#   define R500_ALPHA_MOD_A_NEG				(1 << 17)
+#   define R500_ALPHA_MOD_A_ABS				(2 << 17)
+#   define R500_ALPHA_MOD_A_NAB				(3 << 17)
+#   define R500_ALPHA_SEL_B_SRC0			(0 << 19)
+#   define R500_ALPHA_SEL_B_SRC1			(1 << 19)
+#   define R500_ALPHA_SEL_B_SRC2			(2 << 19)
+#   define R500_ALPHA_SEL_B_SRCP			(3 << 19)
+#   define R500_ALPHA_SWIZ_B_R				(0 << 21)
+#   define R500_ALPHA_SWIZ_B_G				(1 << 21)
+#   define R500_ALPHA_SWIZ_B_B				(2 << 21)
+#   define R500_ALPHA_SWIZ_B_A				(3 << 21)
+#   define R500_ALPHA_SWIZ_B_0				(4 << 21)
+#   define R500_ALPHA_SWIZ_B_HALF			(5 << 21)
+#   define R500_ALPHA_SWIZ_B_1				(6 << 21)
+/* #define R500_ALPHA_SWIZ_B_UNUSED			(7 << 21) */
+#   define R500_ALPHA_MOD_B_NOP				(0 << 24)
+#   define R500_ALPHA_MOD_B_NEG				(1 << 24)
+#   define R500_ALPHA_MOD_B_ABS				(2 << 24)
+#   define R500_ALPHA_MOD_B_NAB				(3 << 24)
+#   define R500_ALPHA_OMOD_IDENTITY			(0 << 26)
+#   define R500_ALPHA_OMOD_MUL_2			(1 << 26)
+#   define R500_ALPHA_OMOD_MUL_4			(2 << 26)
+#   define R500_ALPHA_OMOD_MUL_8			(3 << 26)
+#   define R500_ALPHA_OMOD_DIV_2			(4 << 26)
+#   define R500_ALPHA_OMOD_DIV_4			(5 << 26)
+#   define R500_ALPHA_OMOD_DIV_8			(6 << 26)
+#   define R500_ALPHA_OMOD_DISABLE			(7 << 26)
+#   define R500_ALPHA_TARGET(x)				(x << 29)
+#   define R500_ALPHA_W_OMASK				(1 << 31)
+#define R500_US_ALU_ALPHA_ADDR_0			0x9800
+#   define R500_ALPHA_ADDR0(x)				(x << 0)
+#   define R500_ALPHA_ADDR0_CONST			(1 << 8)
+#   define R500_ALPHA_ADDR0_REL				(1 << 9)
+#   define R500_ALPHA_ADDR1(x)				(x << 10)
+#   define R500_ALPHA_ADDR1_CONST			(1 << 18)
+#   define R500_ALPHA_ADDR1_REL				(1 << 19)
+#   define R500_ALPHA_ADDR2(x)				(x << 20)
+#   define R500_ALPHA_ADDR2_CONST			(1 << 28)
+#   define R500_ALPHA_ADDR2_REL				(1 << 29)
+#   define R500_ALPHA_SRCP_OP_1_MINUS_2A0		(0 << 30)
+#   define R500_ALPHA_SRCP_OP_A1_MINUS_A0		(1 << 30)
+#   define R500_ALPHA_SRCP_OP_A1_PLUS_A0		(2 << 30)
+#   define R500_ALPHA_SRCP_OP_1_MINUS_A0		(3 << 30)
+#define R500_US_ALU_RGBA_INST_0				0xb000
+#   define R500_ALU_RGBA_OP_MAD				(0 << 0)
+#   define R500_ALU_RGBA_OP_DP3				(1 << 0)
+#   define R500_ALU_RGBA_OP_DP4				(2 << 0)
+#   define R500_ALU_RGBA_OP_D2A				(3 << 0)
+#   define R500_ALU_RGBA_OP_MIN				(4 << 0)
+#   define R500_ALU_RGBA_OP_MAX				(5 << 0)
+/* #define R500_ALU_RGBA_OP_RESERVED			(6 << 0) */
+#   define R500_ALU_RGBA_OP_CND				(7 << 0)
+#   define R500_ALU_RGBA_OP_CMP				(8 << 0)
+#   define R500_ALU_RGBA_OP_FRC				(9 << 0)
+#   define R500_ALU_RGBA_OP_SOP				(10 << 0)
+#   define R500_ALU_RGBA_OP_MDH				(11 << 0)
+#   define R500_ALU_RGBA_OP_MDV				(12 << 0)
+#   define R500_ALU_RGBA_ADDRD(x)			(x << 4)
+#   define R500_ALU_RGBA_ADDRD_REL			(1 << 11)
+#   define R500_ALU_RGBA_SEL_C_SRC0			(0 << 12)
+#   define R500_ALU_RGBA_SEL_C_SRC1			(1 << 12)
+#   define R500_ALU_RGBA_SEL_C_SRC2			(2 << 12)
+#   define R500_ALU_RGBA_SEL_C_SRCP			(3 << 12)
+#   define R500_ALU_RGBA_R_SWIZ_R			(0 << 14)
+#   define R500_ALU_RGBA_R_SWIZ_G			(1 << 14)
+#   define R500_ALU_RGBA_R_SWIZ_B			(2 << 14)
+#   define R500_ALU_RGBA_R_SWIZ_A			(3 << 14)
+#   define R500_ALU_RGBA_R_SWIZ_0			(4 << 14)
+#   define R500_ALU_RGBA_R_SWIZ_HALF			(5 << 14)
+#   define R500_ALU_RGBA_R_SWIZ_1			(6 << 14)
+/* #define R500_ALU_RGBA_R_SWIZ_UNUSED			(7 << 14) */
+#   define R500_ALU_RGBA_G_SWIZ_R			(0 << 17)
+#   define R500_ALU_RGBA_G_SWIZ_G			(1 << 17)
+#   define R500_ALU_RGBA_G_SWIZ_B			(2 << 17)
+#   define R500_ALU_RGBA_G_SWIZ_A			(3 << 17)
+#   define R500_ALU_RGBA_G_SWIZ_0			(4 << 17)
+#   define R500_ALU_RGBA_G_SWIZ_HALF			(5 << 17)
+#   define R500_ALU_RGBA_G_SWIZ_1			(6 << 17)
+/* #define R500_ALU_RGBA_G_SWIZ_UNUSED			(7 << 17) */
+#   define R500_ALU_RGBA_B_SWIZ_R			(0 << 20)
+#   define R500_ALU_RGBA_B_SWIZ_G			(1 << 20)
+#   define R500_ALU_RGBA_B_SWIZ_B			(2 << 20)
+#   define R500_ALU_RGBA_B_SWIZ_A			(3 << 20)
+#   define R500_ALU_RGBA_B_SWIZ_0			(4 << 20)
+#   define R500_ALU_RGBA_B_SWIZ_HALF			(5 << 20)
+#   define R500_ALU_RGBA_B_SWIZ_1			(6 << 20)
+/* #define R500_ALU_RGBA_B_SWIZ_UNUSED			(7 << 20) */
+#   define R500_ALU_RGBA_MOD_C_NOP			(0 << 23)
+#   define R500_ALU_RGBA_MOD_C_NEG			(1 << 23)
+#   define R500_ALU_RGBA_MOD_C_ABS			(2 << 23)
+#   define R500_ALU_RGBA_MOD_C_NAB			(3 << 23)
+#   define R500_ALU_RGBA_ALPHA_SEL_C_SRC0		(0 << 25)
+#   define R500_ALU_RGBA_ALPHA_SEL_C_SRC1		(1 << 25)
+#   define R500_ALU_RGBA_ALPHA_SEL_C_SRC2		(2 << 25)
+#   define R500_ALU_RGBA_ALPHA_SEL_C_SRCP		(3 << 25)
+#   define R500_ALU_RGBA_A_SWIZ_R			(0 << 27)
+#   define R500_ALU_RGBA_A_SWIZ_G			(1 << 27)
+#   define R500_ALU_RGBA_A_SWIZ_B			(2 << 27)
+#   define R500_ALU_RGBA_A_SWIZ_A			(3 << 27)
+#   define R500_ALU_RGBA_A_SWIZ_0			(4 << 27)
+#   define R500_ALU_RGBA_A_SWIZ_HALF			(5 << 27)
+#   define R500_ALU_RGBA_A_SWIZ_1			(6 << 27)
+/* #define R500_ALU_RGBA_A_SWIZ_UNUSED			(7 << 27) */
+#   define R500_ALU_RGBA_ALPHA_MOD_C_NOP		(0 << 30)
+#   define R500_ALU_RGBA_ALPHA_MOD_C_NEG		(1 << 30)
+#   define R500_ALU_RGBA_ALPHA_MOD_C_ABS		(2 << 30)
+#   define R500_ALU_RGBA_ALPHA_MOD_C_NAB		(3 << 30)
+#define R500_US_ALU_RGB_INST_0				0xa000
+#   define R500_ALU_RGB_SEL_A_SRC0			(0 << 0)
+#   define R500_ALU_RGB_SEL_A_SRC1			(1 << 0)
+#   define R500_ALU_RGB_SEL_A_SRC2			(2 << 0)
+#   define R500_ALU_RGB_SEL_A_SRCP			(3 << 0)
+#   define R500_ALU_RGB_R_SWIZ_A_R			(0 << 2)
+#   define R500_ALU_RGB_R_SWIZ_A_G			(1 << 2)
+#   define R500_ALU_RGB_R_SWIZ_A_B			(2 << 2)
+#   define R500_ALU_RGB_R_SWIZ_A_A			(3 << 2)
+#   define R500_ALU_RGB_R_SWIZ_A_0			(4 << 2)
+#   define R500_ALU_RGB_R_SWIZ_A_HALF			(5 << 2)
+#   define R500_ALU_RGB_R_SWIZ_A_1			(6 << 2)
+/* #define R500_ALU_RGB_R_SWIZ_A_UNUSED			(7 << 2) */
+#   define R500_ALU_RGB_G_SWIZ_A_R			(0 << 5)
+#   define R500_ALU_RGB_G_SWIZ_A_G			(1 << 5)
+#   define R500_ALU_RGB_G_SWIZ_A_B			(2 << 5)
+#   define R500_ALU_RGB_G_SWIZ_A_A			(3 << 5)
+#   define R500_ALU_RGB_G_SWIZ_A_0			(4 << 5)
+#   define R500_ALU_RGB_G_SWIZ_A_HALF			(5 << 5)
+#   define R500_ALU_RGB_G_SWIZ_A_1			(6 << 5)
+/* #define R500_ALU_RGB_G_SWIZ_A_UNUSED			(7 << 5) */
+#   define R500_ALU_RGB_B_SWIZ_A_R			(0 << 8)
+#   define R500_ALU_RGB_B_SWIZ_A_G			(1 << 8)
+#   define R500_ALU_RGB_B_SWIZ_A_B			(2 << 8)
+#   define R500_ALU_RGB_B_SWIZ_A_A			(3 << 8)
+#   define R500_ALU_RGB_B_SWIZ_A_0			(4 << 8)
+#   define R500_ALU_RGB_B_SWIZ_A_HALF			(5 << 8)
+#   define R500_ALU_RGB_B_SWIZ_A_1			(6 << 8)
+/* #define R500_ALU_RGB_B_SWIZ_A_UNUSED			(7 << 8) */
+#   define R500_ALU_RGB_MOD_A_NOP			(0 << 11)
+#   define R500_ALU_RGB_MOD_A_NEG			(1 << 11)
+#   define R500_ALU_RGB_MOD_A_ABS			(2 << 11)
+#   define R500_ALU_RGB_MOD_A_NAB			(3 << 11)
+#   define R500_ALU_RGB_SEL_B_SRC0			(0 << 13)
+#   define R500_ALU_RGB_SEL_B_SRC1			(1 << 13)
+#   define R500_ALU_RGB_SEL_B_SRC2			(2 << 13)
+#   define R500_ALU_RGB_SEL_B_SRCP			(3 << 13)
+#   define R500_ALU_RGB_R_SWIZ_B_R			(0 << 15)
+#   define R500_ALU_RGB_R_SWIZ_B_G			(1 << 15)
+#   define R500_ALU_RGB_R_SWIZ_B_B			(2 << 15)
+#   define R500_ALU_RGB_R_SWIZ_B_A			(3 << 15)
+#   define R500_ALU_RGB_R_SWIZ_B_0			(4 << 15)
+#   define R500_ALU_RGB_R_SWIZ_B_HALF			(5 << 15)
+#   define R500_ALU_RGB_R_SWIZ_B_1			(6 << 15)
+/* #define R500_ALU_RGB_R_SWIZ_B_UNUSED			(7 << 15) */
+#   define R500_ALU_RGB_G_SWIZ_B_R			(0 << 18)
+#   define R500_ALU_RGB_G_SWIZ_B_G			(1 << 18)
+#   define R500_ALU_RGB_G_SWIZ_B_B			(2 << 18)
+#   define R500_ALU_RGB_G_SWIZ_B_A			(3 << 18)
+#   define R500_ALU_RGB_G_SWIZ_B_0			(4 << 18)
+#   define R500_ALU_RGB_G_SWIZ_B_HALF			(5 << 18)
+#   define R500_ALU_RGB_G_SWIZ_B_1			(6 << 18)
+/* #define R500_ALU_RGB_G_SWIZ_B_UNUSED			(7 << 18) */
+#   define R500_ALU_RGB_B_SWIZ_B_R			(0 << 21)
+#   define R500_ALU_RGB_B_SWIZ_B_G			(1 << 21)
+#   define R500_ALU_RGB_B_SWIZ_B_B			(2 << 21)
+#   define R500_ALU_RGB_B_SWIZ_B_A			(3 << 21)
+#   define R500_ALU_RGB_B_SWIZ_B_0			(4 << 21)
+#   define R500_ALU_RGB_B_SWIZ_B_HALF			(5 << 21)
+#   define R500_ALU_RGB_B_SWIZ_B_1			(6 << 21)
+/* #define R500_ALU_RGB_B_SWIZ_B_UNUSED			(7 << 21) */
+#   define R500_ALU_RGB_MOD_B_NOP			(0 << 24)
+#   define R500_ALU_RGB_MOD_B_NEG			(1 << 24)
+#   define R500_ALU_RGB_MOD_B_ABS			(2 << 24)
+#   define R500_ALU_RGB_MOD_B_NAB			(3 << 24)
+#   define R500_ALU_RGB_OMOD_IDENTITY			(0 << 26)
+#   define R500_ALU_RGB_OMOD_MUL_2			(1 << 26)
+#   define R500_ALU_RGB_OMOD_MUL_4			(2 << 26)
+#   define R500_ALU_RGB_OMOD_MUL_8			(3 << 26)
+#   define R500_ALU_RGB_OMOD_DIV_2			(4 << 26)
+#   define R500_ALU_RGB_OMOD_DIV_4			(5 << 26)
+#   define R500_ALU_RGB_OMOD_DIV_8			(6 << 26)
+#   define R500_ALU_RGB_OMOD_DISABLE			(7 << 26)
+#   define R500_ALU_RGB_TARGET(x)			(x << 29)
+#   define R500_ALU_RGB_WMASK				(1 << 31)
+#define R500_US_ALU_RGB_ADDR_0				0x9000
+#   define R500_RGB_ADDR0(x)				(x << 0)
+#   define R500_RGB_ADDR0_CONST				(1 << 8)
+#   define R500_RGB_ADDR0_REL				(1 << 9)
+#   define R500_RGB_ADDR1(x)				(x << 10)
+#   define R500_RGB_ADDR1_CONST				(1 << 18)
+#   define R500_RGB_ADDR1_REL				(1 << 19)
+#   define R500_RGB_ADDR2(x)				(x << 20)
+#   define R500_RGB_ADDR2_CONST				(1 << 28)
+#   define R500_RGB_ADDR2_REL				(1 << 29)
+#   define R500_RGB_SRCP_OP_1_MINUS_2RGB0		(0 << 30)
+#   define R500_RGB_SRCP_OP_RGB1_MINUS_RGB0		(1 << 30)
+#   define R500_RGB_SRCP_OP_RGB1_PLUS_RGB0		(2 << 30)
+#   define R500_RGB_SRCP_OP_1_MINUS_RGB0		(3 << 30)
+#define R500_US_CMN_INST_0				0xb800
+#   define R500_INST_TYPE_ALU				(0 << 0)
+#   define R500_INST_TYPE_OUT				(1 << 0)
+#   define R500_INST_TYPE_FC				(2 << 0)
+#   define R500_INST_TYPE_TEX				(3 << 0)
+#   define R500_INST_TEX_SEM_WAIT			(1 << 2)
+#   define R500_INST_RGB_PRED_SEL_NONE			(0 << 3)
+#   define R500_INST_RGB_PRED_SEL_RGBA			(1 << 3)
+#   define R500_INST_RGB_PRED_SEL_RRRR			(2 << 3)
+#   define R500_INST_RGB_PRED_SEL_GGGG			(3 << 3)
+#   define R500_INST_RGB_PRED_SEL_BBBB			(4 << 3)
+#   define R500_INST_RGB_PRED_SEL_AAAA			(5 << 3)
+#   define R500_INST_RGB_PRED_INV			(1 << 6)
+#   define R500_INST_WRITE_INACTIVE			(1 << 7)
+#   define R500_INST_LAST				(1 << 8)
+#   define R500_INST_NOP				(1 << 9)
+#   define R500_INST_ALU_WAIT				(1 << 10)
+#   define R500_INST_RGB_WMASK_R			(1 << 11)
+#   define R500_INST_RGB_WMASK_G			(1 << 12)
+#   define R500_INST_RGB_WMASK_B			(1 << 13)
+#   define R500_INST_ALPHA_WMASK			(1 << 14)
+#   define R500_INST_RGB_OMASK_R			(1 << 15)
+#   define R500_INST_RGB_OMASK_G			(1 << 16)
+#   define R500_INST_RGB_OMASK_B			(1 << 17)
+#   define R500_INST_ALPHA_OMASK			(1 << 18)
+#   define R500_INST_RGB_CLAMP				(1 << 19)
+#   define R500_INST_ALPHA_CLAMP			(1 << 20)
+#   define R500_INST_ALU_RESULT_SEL			(1 << 21)
+#   define R500_INST_ALPHA_PRED_INV			(1 << 22)
+#   define R500_INST_ALU_RESULT_OP_EQ			(0 << 23)
+#   define R500_INST_ALU_RESULT_OP_LT			(1 << 23)
+#   define R500_INST_ALU_RESULT_OP_GE			(2 << 23)
+#   define R500_INST_ALU_RESULT_OP_NE			(3 << 23)
+#   define R500_INST_ALPHA_PRED_SEL_NONE		(0 << 25)
+#   define R500_INST_ALPHA_PRED_SEL_RGBA		(1 << 25)
+#   define R500_INST_ALPHA_PRED_SEL_RRRR		(2 << 25)
+#   define R500_INST_ALPHA_PRED_SEL_GGGG		(3 << 25)
+#   define R500_INST_ALPHA_PRED_SEL_BBBB		(4 << 25)
+#   define R500_INST_ALPHA_PRED_SEL_AAAA		(5 << 25)
+/* XXX next four are kind of guessed */
+#   define R500_INST_STAT_WE_R				(1 << 28)
+#   define R500_INST_STAT_WE_G				(1 << 29)
+#   define R500_INST_STAT_WE_B				(1 << 30)
+#   define R500_INST_STAT_WE_A				(1 << 31)
+
+/* note that these are 8 bit lengths, despite the offsets, at least for R500 */
+#define R500_US_CODE_ADDR				0x4630
+#   define R500_US_CODE_START_ADDR(x)			(x << 0)
+#   define R500_US_CODE_END_ADDR(x)			(x << 16)
+#define R500_US_CODE_OFFSET				0x4638
+#   define R500_US_CODE_OFFSET_ADDR(x)			(x << 0)
+#define R500_US_CODE_RANGE				0x4634
+#   define R500_US_CODE_RANGE_ADDR(x)			(x << 0)
+#   define R500_US_CODE_RANGE_SIZE(x)			(x << 16)
+#define R500_US_CONFIG					0x4600
+#   define R500_ZERO_TIMES_ANYTHING_EQUALS_ZERO		(1 << 1)
+#define R500_US_FC_ADDR_0				0xa000
+#   define R500_FC_BOOL_ADDR(x)				(x << 0)
+#   define R500_FC_INT_ADDR(x)				(x << 8)
+#   define R500_FC_JUMP_ADDR(x)				(x << 16)
+#   define R500_FC_JUMP_GLOBAL				(1 << 31)
+#define R500_US_FC_BOOL_CONST				0x4620
+#   define R500_FC_KBOOL(x)				(x)
+#define R500_US_FC_CTRL					0x4624
+#   define R500_FC_TEST_EN				(1 << 30)
+#   define R500_FC_FULL_FC_EN				(1 << 31)
+#define R500_US_FC_INST_0				0x9800
+#   define R500_FC_OP_JUMP				(0 << 0)
+#   define R500_FC_OP_LOOP				(1 << 0)
+#   define R500_FC_OP_ENDLOOP				(2 << 0)
+#   define R500_FC_OP_REP				(3 << 0)
+#   define R500_FC_OP_ENDREP				(4 << 0)
+#   define R500_FC_OP_BREAKLOOP				(5 << 0)
+#   define R500_FC_OP_BREAKREP				(6 << 0)
+#   define R500_FC_OP_CONTINUE				(7 << 0)
+#   define R500_FC_B_ELSE				(1 << 4)
+#   define R500_FC_JUMP_ANY				(1 << 5)
+#   define R500_FC_A_OP_NONE				(0 << 6)
+#   define R500_FC_A_OP_POP				(1 << 6)
+#   define R500_FC_A_OP_PUSH				(2 << 6)
+#   define R500_FC_JUMP_FUNC(x)				(x << 8)
+#   define R500_FC_B_POP_CNT(x)				(x << 16)
+#   define R500_FC_B_OP0_NONE				(0 << 24)
+#   define R500_FC_B_OP0_DECR				(1 << 24)
+#   define R500_FC_B_OP0_INCR				(2 << 24)
+#   define R500_FC_B_OP1_DECR				(0 << 26)
+#   define R500_FC_B_OP1_NONE				(1 << 26)
+#   define R500_FC_B_OP1_INCR				(2 << 26)
+#   define R500_FC_IGNORE_UNCOVERED			(1 << 28)
+#define R500_US_FC_INT_CONST_0				0x4c00
+#   define R500_FC_INT_CONST_KR(x)			(x << 0)
+#   define R500_FC_INT_CONST_KG(x)			(x << 8)
+#   define R500_FC_INT_CONST_KB(x)			(x << 16)
+/* _0 through _15 */
+#define R500_US_FORMAT0_0				0x4640
+#   define R500_FORMAT_TXWIDTH(x)			(x << 0)
+#   define R500_FORMAT_TXHEIGHT(x)			(x << 11)
+#   define R500_FORMAT_TXDEPTH(x)			(x << 22)
+/* _0 through _3 */
+#define R500_US_OUT_FMT_0				0x46a4
+#   define R500_OUT_FMT_C4_8				(0 << 0)
+#   define R500_OUT_FMT_C4_10				(1 << 0)
+#   define R500_OUT_FMT_C4_10_GAMMA			(2 << 0)
+#   define R500_OUT_FMT_C_16				(3 << 0)
+#   define R500_OUT_FMT_C2_16				(4 << 0)
+#   define R500_OUT_FMT_C4_16				(5 << 0)
+#   define R500_OUT_FMT_C_16_MPEG			(6 << 0)
+#   define R500_OUT_FMT_C2_16_MPEG			(7 << 0)
+#   define R500_OUT_FMT_C2_4				(8 << 0)
+#   define R500_OUT_FMT_C_3_3_2				(9 << 0)
+#   define R500_OUT_FMT_C_6_5_6				(10 << 0)
+#   define R500_OUT_FMT_C_11_11_10			(11 << 0)
+#   define R500_OUT_FMT_C_10_11_11			(12 << 0)
+#   define R500_OUT_FMT_C_2_10_10_10			(13 << 0)
+/* #define R500_OUT_FMT_RESERVED			(14 << 0) */
+#   define R500_OUT_FMT_UNUSED				(15 << 0)
+#   define R500_OUT_FMT_C_16_FP				(16 << 0)
+#   define R500_OUT_FMT_C2_16_FP			(17 << 0)
+#   define R500_OUT_FMT_C4_16_FP			(18 << 0)
+#   define R500_OUT_FMT_C_32_FP				(19 << 0)
+#   define R500_OUT_FMT_C2_32_FP			(20 << 0)
+#   define R500_OUT_FMT_C4_32_FP			(21 << 0)
+#   define R500_C0_SEL_A				(0 << 8)
+#   define R500_C0_SEL_R				(1 << 8)
+#   define R500_C0_SEL_G				(2 << 8)
+#   define R500_C0_SEL_B				(3 << 8)
+#   define R500_C1_SEL_A				(0 << 10)
+#   define R500_C1_SEL_R				(1 << 10)
+#   define R500_C1_SEL_G				(2 << 10)
+#   define R500_C1_SEL_B				(3 << 10)
+#   define R500_C2_SEL_A				(0 << 12)
+#   define R500_C2_SEL_R				(1 << 12)
+#   define R500_C2_SEL_G				(2 << 12)
+#   define R500_C2_SEL_B				(3 << 12)
+#   define R500_C3_SEL_A				(0 << 14)
+#   define R500_C3_SEL_R				(1 << 14)
+#   define R500_C3_SEL_G				(2 << 14)
+#   define R500_C3_SEL_B				(3 << 14)
+#   define R500_OUT_SIGN(x)				(x << 16)
+#   define R500_ROUND_ADJ				(1 << 20)
+#define R500_US_PIXSIZE					0x4604
+#   define R500_PIX_SIZE(x)				(x)
+#define R500_US_TEX_ADDR_0				0x9800
+#   define R500_TEX_SRC_ADDR(x)				(x << 0)
+#   define R500_TEX_SRC_ADDR_REL			(1 << 7)
+#   define R500_TEX_SRC_S_SWIZ_R			(0 << 8)
+#   define R500_TEX_SRC_S_SWIZ_G			(1 << 8)
+#   define R500_TEX_SRC_S_SWIZ_B			(2 << 8)
+#   define R500_TEX_SRC_S_SWIZ_A			(3 << 8)
+#   define R500_TEX_SRC_T_SWIZ_R			(0 << 10)
+#   define R500_TEX_SRC_T_SWIZ_G			(1 << 10)
+#   define R500_TEX_SRC_T_SWIZ_B			(2 << 10)
+#   define R500_TEX_SRC_T_SWIZ_A			(3 << 10)
+#   define R500_TEX_SRC_R_SWIZ_R			(0 << 12)
+#   define R500_TEX_SRC_R_SWIZ_G			(1 << 12)
+#   define R500_TEX_SRC_R_SWIZ_B			(2 << 12)
+#   define R500_TEX_SRC_R_SWIZ_A			(3 << 12)
+#   define R500_TEX_SRC_Q_SWIZ_R			(0 << 14)
+#   define R500_TEX_SRC_Q_SWIZ_G			(1 << 14)
+#   define R500_TEX_SRC_Q_SWIZ_B			(2 << 14)
+#   define R500_TEX_SRC_Q_SWIZ_A			(3 << 14)
+#   define R500_TEX_DST_ADDR(x)				(x << 16)
+#   define R500_TEX_DST_ADDR_REL			(1 << 23)
+#   define R500_TEX_DST_R_SWIZ_R			(0 << 24)
+#   define R500_TEX_DST_R_SWIZ_G			(1 << 24)
+#   define R500_TEX_DST_R_SWIZ_B			(2 << 24)
+#   define R500_TEX_DST_R_SWIZ_A			(3 << 24)
+#   define R500_TEX_DST_G_SWIZ_R			(0 << 26)
+#   define R500_TEX_DST_G_SWIZ_G			(1 << 26)
+#   define R500_TEX_DST_G_SWIZ_B			(2 << 26)
+#   define R500_TEX_DST_G_SWIZ_A			(3 << 26)
+#   define R500_TEX_DST_B_SWIZ_R			(0 << 28)
+#   define R500_TEX_DST_B_SWIZ_G			(1 << 28)
+#   define R500_TEX_DST_B_SWIZ_B			(2 << 28)
+#   define R500_TEX_DST_B_SWIZ_A			(3 << 28)
+#   define R500_TEX_DST_A_SWIZ_R			(0 << 30)
+#   define R500_TEX_DST_A_SWIZ_G			(1 << 30)
+#   define R500_TEX_DST_A_SWIZ_B			(2 << 30)
+#   define R500_TEX_DST_A_SWIZ_A			(3 << 30)
+#define R500_US_TEX_ADDR_DXDY_0				0xa000
+#   define R500_DX_ADDR(x)				(x << 0)
+#   define R500_DX_ADDR_REL				(1 << 7)
+#   define R500_DX_S_SWIZ_R				(0 << 8)
+#   define R500_DX_S_SWIZ_G				(1 << 8)
+#   define R500_DX_S_SWIZ_B				(2 << 8)
+#   define R500_DX_S_SWIZ_A				(3 << 8)
+#   define R500_DX_T_SWIZ_R				(0 << 10)
+#   define R500_DX_T_SWIZ_G				(1 << 10)
+#   define R500_DX_T_SWIZ_B				(2 << 10)
+#   define R500_DX_T_SWIZ_A				(3 << 10)
+#   define R500_DX_R_SWIZ_R				(0 << 12)
+#   define R500_DX_R_SWIZ_G				(1 << 12)
+#   define R500_DX_R_SWIZ_B				(2 << 12)
+#   define R500_DX_R_SWIZ_A				(3 << 12)
+#   define R500_DX_Q_SWIZ_R				(0 << 14)
+#   define R500_DX_Q_SWIZ_G				(1 << 14)
+#   define R500_DX_Q_SWIZ_B				(2 << 14)
+#   define R500_DX_Q_SWIZ_A				(3 << 14)
+#   define R500_DY_ADDR(x)				(x << 16)
+#   define R500_DY_ADDR_REL				(1 << 17)
+#   define R500_DY_S_SWIZ_R				(0 << 24)
+#   define R500_DY_S_SWIZ_G				(1 << 24)
+#   define R500_DY_S_SWIZ_B				(2 << 24)
+#   define R500_DY_S_SWIZ_A				(3 << 24)
+#   define R500_DY_T_SWIZ_R				(0 << 26)
+#   define R500_DY_T_SWIZ_G				(1 << 26)
+#   define R500_DY_T_SWIZ_B				(2 << 26)
+#   define R500_DY_T_SWIZ_A				(3 << 26)
+#   define R500_DY_R_SWIZ_R				(0 << 28)
+#   define R500_DY_R_SWIZ_G				(1 << 28)
+#   define R500_DY_R_SWIZ_B				(2 << 28)
+#   define R500_DY_R_SWIZ_A				(3 << 28)
+#   define R500_DY_Q_SWIZ_R				(0 << 30)
+#   define R500_DY_Q_SWIZ_G				(1 << 30)
+#   define R500_DY_Q_SWIZ_B				(2 << 30)
+#   define R500_DY_Q_SWIZ_A				(3 << 30)
+#define R500_US_TEX_INST_0				0x9000
+#   define R500_TEX_ID(x)				(x << 16)
+#   define R500_TEX_INST_NOP				(0 << 22)
+#   define R500_TEX_INST_LD				(1 << 22)
+#   define R500_TEX_INST_TEXKILL			(2 << 22)
+#   define R500_TEX_INST_PROJ				(3 << 22)
+#   define R500_TEX_INST_LODBIAS			(4 << 22)
+#   define R500_TEX_INST_LOD				(5 << 22)
+#   define R500_TEX_INST_DXDY				(6 << 22)
+#   define R500_TEX_SEM_ACQUIRE				(1 << 25)
+#   define R500_TEX_IGNORE_UNCOVERED			(1 << 26)
+#   define R500_TEX_UNSCALED				(1 << 27)
+#define R300_US_W_FMT					0x46b4
+#   define R300_W_FMT_W0				(0 << 0)
+#   define R300_W_FMT_W24				(1 << 0)
+#   define R300_W_FMT_W24FP				(2 << 0)
+#   define R300_W_SRC_US				(0 << 2)
+#   define R300_W_SRC_RAS				(1 << 2)
+
 
 /* Draw a primitive from vertex data in arrays loaded via 3D_LOAD_VBPNTR.
  * Two parameter dwords:

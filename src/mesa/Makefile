@@ -24,16 +24,29 @@ GL_TINY = 0$(MESA_MAJOR)0$(MESA_MINOR)0$(MESA_TINY)
 
 
 # Figure out what to make here
-default:
+default: depend
 	@for driver in $(DRIVER_DIRS) ; do \
 	  case "$$driver" in \
-	    x11)      $(MAKE) stand-alone ;; \
-	    dri)      $(MAKE) linux-solo ;; \
-	    osmesa)   $(MAKE) osmesa-only ;; \
-	    beos)     $(MAKE) beos ;; \
-	    directfb) $(MAKE) directfb ;; \
-	    fbdev)    $(MAKE) fbdev ;; \
+	    x11)      $(MAKE) stand-alone || exit 1 ;; \
+	    dri)      $(MAKE) linux-solo || exit 1 ;; \
+	    osmesa)   $(MAKE) osmesa-only || exit 1 ;; \
+	    beos)     $(MAKE) beos || exit 1 ;; \
+	    directfb) $(MAKE) directfb || exit 1 ;; \
+	    fbdev)    $(MAKE) fbdev || exit 1 ;; \
 	    *) echo "$$driver is invalid in DRIVER_DIRS" >&2; exit 1;; \
+	  esac ; \
+	done
+
+install: default
+	@for driver in $(DRIVER_DIRS) ; do \
+	  case "$$driver" in \
+	    osmesa) if [ "$(DRIVER_DIRS)" = osmesa ]; then \
+	              $(MAKE) install-headers install-osmesa || exit 1 ; \
+	            else \
+	              $(MAKE) install-osmesa || exit 1 ; \
+	            fi ;; \
+	    dri)    $(MAKE) install-libgl install-dri || exit 1 ;; \
+	    *)      $(MAKE) install-libgl || exit 1 ;; \
 	  esac ; \
 	done
 
@@ -42,7 +55,7 @@ default:
 # BeOS driver target
 
 beos: depend subdirs libmesa.a
-	cd drivers/beos; $(MAKE)
+	cd drivers/beos && $(MAKE)
 
 
 ######################################################################
@@ -56,7 +69,7 @@ libmesa.a: $(SOLO_OBJECTS)
 	fi
 
 linux-solo: depend subdirs libmesa.a
-	cd drivers/dri ; $(MAKE)
+	cd drivers/dri && $(MAKE)
 
 
 #####################################################################
@@ -69,7 +82,7 @@ libgl-core: $(CORE_OBJECTS)
 		$(GL_LIB_DEPS)
 
 directfb: depend subdirs libgl-core
-	cd drivers/directfb ; $(MAKE)
+	cd drivers/directfb && $(MAKE)
 
 
 #####################################################################
@@ -145,11 +158,11 @@ depend: $(ALL_SOURCES)
 
 subdirs:
 	@ if echo "$(ASM_FLAGS)" | grep -q USE_X86_ASM ; then \
-		(cd x86 ; $(MAKE)) ; \
+		(cd x86 && $(MAKE)) || exit 1 ; \
 	fi
 	@ if echo "$(ASM_FLAGS)" | grep -q USE_X86_64_ASM ; then \
-		(cd x86 ; $(MAKE)) ; \
-		(cd x86-64 ; $(MAKE)) ; \
+		(cd x86 && $(MAKE)) || exit 1 ; \
+		(cd x86-64 && $(MAKE)) || exit 1 ; \
 	fi
 
 pcedit = sed \
@@ -160,31 +173,25 @@ pcedit = sed \
 gl.pc: gl.pc.in
 	$(pcedit) $< > $@
 
-install-libgl: gl.pc
+install-headers:
 	$(INSTALL) -d $(DESTDIR)$(INSTALL_DIR)/include/GL
+	$(INSTALL) -m 644 $(TOP)/include/GL/*.h \
+		$(DESTDIR)$(INSTALL_DIR)/include/GL
+
+install-libgl: default gl.pc install-headers
 	$(INSTALL) -d $(DESTDIR)$(INSTALL_DIR)/$(LIB_DIR)
 	$(INSTALL) -d $(DESTDIR)$(INSTALL_DIR)/$(LIB_DIR)/pkgconfig
-	$(INSTALL) -m 644 $(TOP)/include/GL/*.h $(DESTDIR)$(INSTALL_DIR)/include/GL
-	@if [ -e $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME) ]; then \
-		$(INSTALL) $(TOP)/$(LIB_DIR)/libGL* \
-			$(DESTDIR)$(INSTALL_DIR)/$(LIB_DIR); \
-	fi
+	$(INSTALL) $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME)* \
+		$(DESTDIR)$(INSTALL_DIR)/$(LIB_DIR)
 	$(INSTALL) -m 644 gl.pc $(DESTDIR)$(INSTALL_DIR)/$(LIB_DIR)/pkgconfig
 
-install-osmesa:
-	@if [ -e $(TOP)/$(LIB_DIR)/$(OSMESA_LIB_NAME) ]; then \
-		$(INSTALL) $(TOP)/$(LIB_DIR)/libOSMesa* \
-			$(DESTDIR)$(INSTALL_DIR)/$(LIB_DIR); \
-	fi
+install-osmesa: default
+	$(INSTALL) -d $(DESTDIR)$(INSTALL_DIR)/$(LIB_DIR)
+	$(INSTALL) $(TOP)/$(LIB_DIR)/$(OSMESA_LIB_NAME)* \
+		$(DESTDIR)$(INSTALL_DIR)/$(LIB_DIR)
 
-install-drivers:
-	@for target in $(DRIVER_DIRS); do \
-	  case "$$target" in \
-	    dri) cd drivers/dri ; $(MAKE) install ;; \
-	  esac; \
-	done
-
-install: default install-libgl install-osmesa install-drivers
+install-dri:
+	cd drivers/dri && $(MAKE) install
 
 ## NOT INSTALLED YET:
 ## $(INSTALL) -d $(DESTDIR)$(INSTALL_DIR)/include/GLES
@@ -200,9 +207,10 @@ clean:
 	-rm -f */*/*.o
 	-rm -f depend depend.bak libmesa.a
 	-rm -f drivers/*/*.o
-	(cd drivers/dri && $(MAKE) clean)
-	(cd x86 && $(MAKE) clean)
-	(cd x86-64 && $(MAKE) clean)
+	-@cd drivers/dri && $(MAKE) clean
+	-@cd drivers/xorg && $(MAKE) clean
+	-@cd x86 && $(MAKE) clean
+	-@cd x86-64 && $(MAKE) clean
 
 
 -include depend

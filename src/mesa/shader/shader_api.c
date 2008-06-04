@@ -43,6 +43,7 @@
 #include "prog_parameter.h"
 #include "prog_print.h"
 #include "prog_statevars.h"
+#include "prog_uniform.h"
 #include "shader/shader_api.h"
 #include "shader/slang/slang_compile.h"
 #include "shader/slang/slang_link.h"
@@ -52,7 +53,7 @@
 /**
  * Allocate a new gl_shader_program object, initialize it.
  */
-struct gl_shader_program *
+static struct gl_shader_program *
 _mesa_new_shader_program(GLcontext *ctx, GLuint name)
 {
    struct gl_shader_program *shProg;
@@ -74,26 +75,11 @@ void
 _mesa_clear_shader_program_data(GLcontext *ctx,
                                 struct gl_shader_program *shProg)
 {
-   if (shProg->VertexProgram) {
-      if (shProg->VertexProgram->Base.Parameters == shProg->Uniforms) {
-         /* to prevent a double-free in the next call */
-         shProg->VertexProgram->Base.Parameters = NULL;
-      }
-      ctx->Driver.DeleteProgram(ctx, &shProg->VertexProgram->Base);
-      shProg->VertexProgram = NULL;
-   }
-
-   if (shProg->FragmentProgram) {
-      if (shProg->FragmentProgram->Base.Parameters == shProg->Uniforms) {
-         /* to prevent a double-free in the next call */
-         shProg->FragmentProgram->Base.Parameters = NULL;
-      }
-      ctx->Driver.DeleteProgram(ctx, &shProg->FragmentProgram->Base);
-      shProg->FragmentProgram = NULL;
-   }
+   _mesa_reference_vertprog(ctx, &shProg->VertexProgram, NULL);
+   _mesa_reference_fragprog(ctx, &shProg->FragmentProgram, NULL);
 
    if (shProg->Uniforms) {
-      _mesa_free_parameter_list(shProg->Uniforms);
+      _mesa_free_uniform_list(shProg->Uniforms);
       shProg->Uniforms = NULL;
    }
 
@@ -177,8 +163,10 @@ _mesa_reference_shader_program(GLcontext *ctx,
 
       ASSERT(old->RefCount > 0);
       old->RefCount--;
-      /*printf("SHPROG DECR %p (%d) to %d\n",
-        (void*) old, old->Name, old->RefCount);*/
+#if 0
+      printf("ShaderProgram %p ID=%u  RefCount-- to %d\n",
+             (void *) old, old->Name, old->RefCount);
+#endif
       deleteFlag = (old->RefCount == 0);
 
       if (deleteFlag) {
@@ -192,8 +180,10 @@ _mesa_reference_shader_program(GLcontext *ctx,
 
    if (shProg) {
       shProg->RefCount++;
-      /*printf("SHPROG INCR %p (%d) to %d\n",
-        (void*) shProg, shProg->Name, shProg->RefCount);*/
+#if 0
+      printf("ShaderProgram %p ID=%u  RefCount++ to %d\n",
+             (void *) shProg, shProg->Name, shProg->RefCount);
+#endif
       *ptr = shProg;
    }
 }
@@ -248,10 +238,8 @@ _mesa_free_shader(GLcontext *ctx, struct gl_shader *sh)
       _mesa_free((void *) sh->Source);
    if (sh->InfoLog)
       _mesa_free(sh->InfoLog);
-   for (i = 0; i < sh->NumPrograms; i++) {
-      assert(sh->Programs[i]);
-      ctx->Driver.DeleteProgram(ctx, sh->Programs[i]);
-   }
+   for (i = 0; i < sh->NumPrograms; i++)
+      _mesa_reference_program(ctx, &sh->Programs[i], NULL);
    if (sh->Programs)
       _mesa_free(sh->Programs);
    _mesa_free(sh);
@@ -373,57 +361,9 @@ copy_string(GLchar *dst, GLsizei maxLength, GLsizei *length, const GLchar *src)
 
 
 /**
- * Return size (in floats) of the given GLSL type.
- * See also _slang_sizeof_type_specifier().
- */
-static GLint
-sizeof_glsl_type(GLenum type)
-{
-   switch (type) {
-   case GL_BOOL:
-   case GL_FLOAT:
-   case GL_INT:
-      return 1;
-   case GL_BOOL_VEC2:
-   case GL_FLOAT_VEC2:
-   case GL_INT_VEC2:
-      return 2;
-   case GL_BOOL_VEC3:
-   case GL_FLOAT_VEC3:
-   case GL_INT_VEC3:
-      return 3;
-   case GL_BOOL_VEC4:
-   case GL_FLOAT_VEC4:
-   case GL_INT_VEC4:
-      return 4;
-   case GL_FLOAT_MAT2:
-      return 8;  /* 2 rows of 4, actually */
-   case GL_FLOAT_MAT3:
-      return 12;  /* 3 rows of 4, actually */
-   case GL_FLOAT_MAT4:
-      return 16;
-   case GL_FLOAT_MAT2x3:
-      return 8;   /* 2 rows of 4, actually */
-   case GL_FLOAT_MAT2x4:
-      return 8;
-   case GL_FLOAT_MAT3x2:
-      return 12;  /* 3 rows of 4, actually */
-   case GL_FLOAT_MAT3x4:
-      return 12;
-   case GL_FLOAT_MAT4x2:
-      return 16;  /* 4 rows of 4, actually */
-   case GL_FLOAT_MAT4x3:
-      return 16;  /* 4 rows of 4, actually */
-   default:
-      return 0; /* error */
-   }
-}
-
-
-/**
  * Called via ctx->Driver.AttachShader()
  */
-void
+static void
 _mesa_attach_shader(GLcontext *ctx, GLuint program, GLuint shader)
 {
    struct gl_shader_program *shProg
@@ -464,7 +404,38 @@ _mesa_attach_shader(GLcontext *ctx, GLuint program, GLuint shader)
 }
 
 
-void
+static GLint
+_mesa_get_attrib_location(GLcontext *ctx, GLuint program,
+                          const GLchar *name)
+{
+   struct gl_shader_program *shProg
+      = _mesa_lookup_shader_program(ctx, program);
+
+   if (!shProg) {
+      _mesa_error(ctx, GL_INVALID_VALUE, "glGetAttribLocation");
+      return -1;
+   }
+
+   if (!shProg->LinkStatus) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glGetAttribLocation(program not linked)");
+      return -1;
+   }
+
+   if (!name)
+      return -1;
+
+   if (shProg->Attributes) {
+      GLint i = _mesa_lookup_parameter_index(shProg->Attributes, -1, name);
+      if (i >= 0) {
+         return shProg->Attributes->Parameters[i].StateIndexes[0];
+      }
+   }
+   return -1;
+}
+
+
+static void
 _mesa_bind_attrib_location(GLcontext *ctx, GLuint program, GLuint index,
                            const GLchar *name)
 {
@@ -510,7 +481,7 @@ _mesa_bind_attrib_location(GLcontext *ctx, GLuint program, GLuint index,
 }
 
 
-GLuint
+static GLuint
 _mesa_create_shader(GLcontext *ctx, GLenum type)
 {
    struct gl_shader *sh;
@@ -534,7 +505,7 @@ _mesa_create_shader(GLcontext *ctx, GLenum type)
 }
 
 
-GLuint 
+static GLuint 
 _mesa_create_program(GLcontext *ctx)
 {
    GLuint name;
@@ -555,7 +526,7 @@ _mesa_create_program(GLcontext *ctx)
  * Named w/ "2" to indicate OpenGL 2.x vs GL_ARB_fragment_programs's
  * DeleteProgramARB.
  */
-void
+static void
 _mesa_delete_program2(GLcontext *ctx, GLuint name)
 {
    /*
@@ -581,7 +552,7 @@ _mesa_delete_program2(GLcontext *ctx, GLuint name)
 }
 
 
-void
+static void
 _mesa_delete_shader(GLcontext *ctx, GLuint shader)
 {
    struct gl_shader *sh = _mesa_lookup_shader(ctx, shader);
@@ -596,7 +567,7 @@ _mesa_delete_shader(GLcontext *ctx, GLuint shader)
 }
 
 
-void
+static void
 _mesa_detach_shader(GLcontext *ctx, GLuint program, GLuint shader)
 {
    struct gl_shader_program *shProg
@@ -658,7 +629,7 @@ _mesa_detach_shader(GLcontext *ctx, GLuint program, GLuint shader)
 }
 
 
-void
+static void
 _mesa_get_active_attrib(GLcontext *ctx, GLuint program, GLuint index,
                         GLsizei maxLength, GLsizei *length, GLint *size,
                         GLenum *type, GLchar *nameOut)
@@ -684,64 +655,64 @@ _mesa_get_active_attrib(GLcontext *ctx, GLuint program, GLuint index,
                shProg->Attributes->Parameters[index].Name);
    sz = shProg->Attributes->Parameters[index].Size;
    if (size)
-      *size = 1;   /* attributes may not be arrays */
-   if (type && sz > 0 && sz <= 4)  /* XXX this is a temporary hack */
-      *type = vec_types[sz - 1];
+      *size = sz;
+   if (type)
+      *type = vec_types[sz]; /* XXX this is a temporary hack */
 }
 
 
 /**
  * Called via ctx->Driver.GetActiveUniform().
  */
-void
+static void
 _mesa_get_active_uniform(GLcontext *ctx, GLuint program, GLuint index,
                          GLsizei maxLength, GLsizei *length, GLint *size,
                          GLenum *type, GLchar *nameOut)
 {
-   struct gl_shader_program *shProg
+   const struct gl_shader_program *shProg
       = _mesa_lookup_shader_program(ctx, program);
-   GLuint ind, j;
+   const struct gl_program *prog;
+   GLint progPos;
 
    if (!shProg) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glGetActiveUniform");
       return;
    }
 
-   if (!shProg->Uniforms || index >= shProg->Uniforms->NumParameters) {
+   if (!shProg->Uniforms || index >= shProg->Uniforms->NumUniforms) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glGetActiveUniform(index)");
       return;
    }
 
-   ind = 0;
-   for (j = 0; j < shProg->Uniforms->NumParameters; j++) {
-      if (shProg->Uniforms->Parameters[j].Type == PROGRAM_UNIFORM ||
-          shProg->Uniforms->Parameters[j].Type == PROGRAM_SAMPLER) {
-         if (ind == index) {
-            GLuint uSize = shProg->Uniforms->Parameters[j].Size;
-            GLenum uType = shProg->Uniforms->Parameters[j].DataType;
-            /* found it */
-            copy_string(nameOut, maxLength, length,
-                        shProg->Uniforms->Parameters[j].Name);
-            if (size) {
-               /* convert from floats to 'type' (eg: sizeof(mat4x4)=1) */
-               *size = uSize / sizeof_glsl_type(uType);
-            }
-            if (type)
-               *type = uType;
-            return;
-         }
-         ind++;
+   progPos = shProg->Uniforms->Uniforms[index].VertPos;
+   if (progPos >= 0) {
+      prog = &shProg->VertexProgram->Base;
+   }
+   else {
+      progPos = shProg->Uniforms->Uniforms[index].FragPos;
+      if (progPos >= 0) {
+         prog = &shProg->FragmentProgram->Base;
       }
    }
 
-   _mesa_error(ctx, GL_INVALID_VALUE, "glGetActiveUniform(index)");
+   if (!prog || progPos < 0)
+      return; /* should never happen */
+
+   if (nameOut)
+      copy_string(nameOut, maxLength, length,
+                  prog->Parameters->Parameters[progPos].Name);
+   if (size)
+      *size = prog->Parameters->Parameters[progPos].Size;
+
+   if (type)
+      *type = prog->Parameters->Parameters[progPos].DataType;
 }
 
 
 /**
  * Called via ctx->Driver.GetAttachedShaders().
  */
-void
+static void
 _mesa_get_attached_shaders(GLcontext *ctx, GLuint program, GLsizei maxCount,
                            GLsizei *count, GLuint *obj)
 {
@@ -761,38 +732,7 @@ _mesa_get_attached_shaders(GLcontext *ctx, GLuint program, GLsizei maxCount,
 }
 
 
-GLint
-_mesa_get_attrib_location(GLcontext *ctx, GLuint program,
-                          const GLchar *name)
-{
-   struct gl_shader_program *shProg
-      = _mesa_lookup_shader_program(ctx, program);
-
-   if (!shProg) {
-      _mesa_error(ctx, GL_INVALID_VALUE, "glGetAttribLocation");
-      return -1;
-   }
-
-   if (!shProg->LinkStatus) {
-      _mesa_error(ctx, GL_INVALID_OPERATION,
-                  "glGetAttribLocation(program not linked)");
-      return -1;
-   }
-
-   if (!name)
-      return -1;
-
-   if (shProg->Attributes) {
-      GLint i = _mesa_lookup_parameter_index(shProg->Attributes, -1, name);
-      if (i >= 0) {
-         return shProg->Attributes->Parameters[i].StateIndexes[0];
-      }
-   }
-   return -1;
-}
-
-
-GLuint
+static GLuint
 _mesa_get_handle(GLcontext *ctx, GLenum pname)
 {
 #if 0
@@ -816,7 +756,7 @@ _mesa_get_handle(GLcontext *ctx, GLenum pname)
 }
 
 
-void
+static void
 _mesa_get_programiv(GLcontext *ctx, GLuint program,
                     GLenum pname, GLint *params)
 {
@@ -852,14 +792,10 @@ _mesa_get_programiv(GLcontext *ctx, GLuint program,
                                              PROGRAM_INPUT) + 1;
       break;
    case GL_ACTIVE_UNIFORMS:
-      *params
-         = _mesa_num_parameters_of_type(shProg->Uniforms, PROGRAM_UNIFORM)
-         + _mesa_num_parameters_of_type(shProg->Uniforms, PROGRAM_SAMPLER);
+      *params = shProg->Uniforms ? shProg->Uniforms->NumUniforms : 0;
       break;
    case GL_ACTIVE_UNIFORM_MAX_LENGTH:
-      *params = MAX2(
-             _mesa_longest_parameter_name(shProg->Uniforms, PROGRAM_UNIFORM),
-             _mesa_longest_parameter_name(shProg->Uniforms, PROGRAM_SAMPLER));
+      *params = _mesa_longest_uniform_name(shProg->Uniforms);
       if (*params > 0)
          (*params)++;  /* add one for terminating zero */
       break;
@@ -870,7 +806,7 @@ _mesa_get_programiv(GLcontext *ctx, GLuint program,
 }
 
 
-void
+static void
 _mesa_get_shaderiv(GLcontext *ctx, GLuint name, GLenum pname, GLint *params)
 {
    struct gl_shader *shader = _mesa_lookup_shader(ctx, name);
@@ -903,7 +839,7 @@ _mesa_get_shaderiv(GLcontext *ctx, GLuint name, GLenum pname, GLint *params)
 }
 
 
-void
+static void
 _mesa_get_program_info_log(GLcontext *ctx, GLuint program, GLsizei bufSize,
                            GLsizei *length, GLchar *infoLog)
 {
@@ -917,7 +853,7 @@ _mesa_get_program_info_log(GLcontext *ctx, GLuint program, GLsizei bufSize,
 }
 
 
-void
+static void
 _mesa_get_shader_info_log(GLcontext *ctx, GLuint shader, GLsizei bufSize,
                           GLsizei *length, GLchar *infoLog)
 {
@@ -933,7 +869,7 @@ _mesa_get_shader_info_log(GLcontext *ctx, GLuint shader, GLsizei bufSize,
 /**
  * Called via ctx->Driver.GetShaderSource().
  */
-void
+static void
 _mesa_get_shader_source(GLcontext *ctx, GLuint shader, GLsizei maxLength,
                         GLsizei *length, GLchar *sourceOut)
 {
@@ -949,49 +885,34 @@ _mesa_get_shader_source(GLcontext *ctx, GLuint shader, GLsizei maxLength,
 /**
  * Called via ctx->Driver.GetUniformfv().
  */
-void
+static void
 _mesa_get_uniformfv(GLcontext *ctx, GLuint program, GLint location,
                     GLfloat *params)
 {
    struct gl_shader_program *shProg
       = _mesa_lookup_shader_program(ctx, program);
    if (shProg) {
-      GLint i;
-      if (location >= 0 && location < shProg->Uniforms->NumParameters) {
-         GLuint uSize;
-         GLenum uType;
-         GLint rows = 0;
-         uType = shProg->Uniforms->Parameters[location].DataType;
-         uSize = sizeof_glsl_type(uType);
-         /* Matrix types need special handling, because they span several
-          * parameters, and may also not be fully packed.
-          */
-         switch (shProg->Uniforms->Parameters[location].DataType) {
-            case GL_FLOAT_MAT2:
-            case GL_FLOAT_MAT3x2:
-            case GL_FLOAT_MAT4x2:
-               rows = 2;
-               break;
-            case GL_FLOAT_MAT2x3:
-            case GL_FLOAT_MAT3:
-            case GL_FLOAT_MAT4x3:
-               rows = 3;
-               break;
-            case GL_FLOAT_MAT2x4:
-            case GL_FLOAT_MAT3x4:
-            case GL_FLOAT_MAT4:
-               rows = 4;
+      if (location < shProg->Uniforms->NumUniforms) {
+         GLint progPos, i;
+         const struct gl_program *prog = NULL;
+
+         progPos = shProg->Uniforms->Uniforms[location].VertPos;
+         if (progPos >= 0) {
+            prog = &shProg->VertexProgram->Base;
          }
-         if (rows != 0) {
-            GLint r, c;
-            for (c = 0, i = 0; c * 4 < uSize; c++)
-               for (r = 0; r < rows; r++, i++)
-                  params[i] = shProg->Uniforms->ParameterValues[location + c][r];
-         }
-         else
-            for (i = 0; i < uSize; i++) {
-               params[i] = shProg->Uniforms->ParameterValues[location][i];
+         else {
+            progPos = shProg->Uniforms->Uniforms[location].FragPos;
+            if (progPos >= 0) {
+               prog = &shProg->FragmentProgram->Base;
             }
+         }
+
+         ASSERT(prog);
+         if (prog) {
+            for (i = 0; i < prog->Parameters->Parameters[progPos].Size; i++) {
+               params[i] = prog->Parameters->ParameterValues[progPos][i];
+            }
+         }
       }
       else {
          _mesa_error(ctx, GL_INVALID_VALUE, "glGetUniformfv(location)");
@@ -1006,32 +927,19 @@ _mesa_get_uniformfv(GLcontext *ctx, GLuint program, GLint location,
 /**
  * Called via ctx->Driver.GetUniformLocation().
  */
-GLint
+static GLint
 _mesa_get_uniform_location(GLcontext *ctx, GLuint program, const GLchar *name)
 {
    struct gl_shader_program *shProg
       = _mesa_lookup_shader_program(ctx, program);
-   if (shProg) {
-      GLuint loc;
-      for (loc = 0; loc < shProg->Uniforms->NumParameters; loc++) {
-         const struct gl_program_parameter *u
-            = shProg->Uniforms->Parameters + loc;
-         /* XXX this is a temporary simplification / short-cut.
-          * We need to handle things like "e.c[0].b" as seen in the
-          * GLSL orange book, page 189.
-          */
-         if ((u->Type == PROGRAM_UNIFORM ||
-              u->Type == PROGRAM_SAMPLER) && !strcmp(u->Name, name)) {
-            return loc;
-         }
-      }
-   }
-   return -1;
+   if (!shProg)
+      return -1;
 
+   return _mesa_lookup_uniform(shProg->Uniforms, name);
 }
 
 
-GLboolean
+static GLboolean
 _mesa_is_program(GLcontext *ctx, GLuint name)
 {
    struct gl_shader_program *shProg = _mesa_lookup_shader_program(ctx, name);
@@ -1039,7 +947,7 @@ _mesa_is_program(GLcontext *ctx, GLuint name)
 }
 
 
-GLboolean
+static GLboolean
 _mesa_is_shader(GLcontext *ctx, GLuint name)
 {
    struct gl_shader *shader = _mesa_lookup_shader(ctx, name);
@@ -1051,7 +959,7 @@ _mesa_is_shader(GLcontext *ctx, GLuint name)
 /**
  * Called via ctx->Driver.ShaderSource()
  */
-void
+static void
 _mesa_shader_source(GLcontext *ctx, GLuint shader, const GLchar *source)
 {
    struct gl_shader *sh = _mesa_lookup_shader(ctx, shader);
@@ -1072,7 +980,7 @@ _mesa_shader_source(GLcontext *ctx, GLuint shader, const GLchar *source)
 /**
  * Called via ctx->Driver.CompileShader()
  */
-void
+static void
 _mesa_compile_shader(GLcontext *ctx, GLuint shaderObj)
 {
    struct gl_shader *sh = _mesa_lookup_shader(ctx, shaderObj);
@@ -1089,7 +997,7 @@ _mesa_compile_shader(GLcontext *ctx, GLuint shaderObj)
 /**
  * Called via ctx->Driver.LinkProgram()
  */
-void
+static void
 _mesa_link_program(GLcontext *ctx, GLuint program)
 {
    struct gl_shader_program *shProg;
@@ -1099,6 +1007,8 @@ _mesa_link_program(GLcontext *ctx, GLuint program)
       _mesa_error(ctx, GL_INVALID_VALUE, "glLinkProgram(program)");
       return;
    }
+
+   FLUSH_VERTICES(ctx, _NEW_PROGRAM);
 
    _slang_link(ctx, program, shProg);
 }
@@ -1136,17 +1046,109 @@ _mesa_use_program(GLcontext *ctx, GLuint program)
 }
 
 
+
+/**
+ * Update the vertex and fragment program's TexturesUsed arrays.
+ */
+static void
+update_textures_used(struct gl_program *prog)
+{
+   GLuint s;
+
+   memset(prog->TexturesUsed, 0, sizeof(prog->TexturesUsed));
+
+   for (s = 0; s < MAX_SAMPLERS; s++) {
+      if (prog->SamplersUsed & (1 << s)) {
+         GLuint u = prog->SamplerUnits[s];
+         GLuint t = prog->SamplerTargets[s];
+         assert(u < MAX_TEXTURE_IMAGE_UNITS);
+         prog->TexturesUsed[u] |= (1 << t);
+      }
+   }
+}
+
+
+/**
+ * Set the value of a program's uniform variable.
+ * \param program  the program whose uniform to update
+ * \param location  the location/index of the uniform
+ * \param type  the datatype of the uniform
+ * \param count  the number of uniforms to set
+ * \param elems  number of elements per uniform
+ * \param values  the new values
+ */
+static void
+set_program_uniform(GLcontext *ctx, struct gl_program *program, GLint location,
+                    GLenum type, GLint count, GLint elems, const void *values)
+{
+   if (program->Parameters->Parameters[location].Type == PROGRAM_SAMPLER) {
+      /* This controls which texture unit which is used by a sampler */
+      GLuint texUnit, sampler;
+
+      /* data type for setting samplers must be int */
+      if (type != GL_INT || count != 1) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "glUniform(only glUniform1i can be used "
+                     "to set sampler uniforms)");
+         return;
+      }
+
+      sampler = (GLuint) program->Parameters->ParameterValues[location][0];
+      texUnit = ((GLuint *) values)[0];
+
+      /* check that the sampler (tex unit index) is legal */
+      if (texUnit >= ctx->Const.MaxTextureImageUnits) {
+         _mesa_error(ctx, GL_INVALID_VALUE,
+                     "glUniform1(invalid sampler/tex unit index)");
+         return;
+      }
+
+      /* This maps a sampler to a texture unit: */
+      program->SamplerUnits[sampler] = texUnit;
+      update_textures_used(program);
+
+      FLUSH_VERTICES(ctx, _NEW_TEXTURE);
+   }
+   else {
+      /* ordinary uniform variable */
+      GLint k, i;
+
+      if (count * elems > program->Parameters->Parameters[location].Size) {
+         _mesa_error(ctx, GL_INVALID_OPERATION, "glUniform(count too large)");
+         return;
+      }
+
+      for (k = 0; k < count; k++) {
+         GLfloat *uniformVal = program->Parameters->ParameterValues[location + k];
+         if (type == GL_INT ||
+             type == GL_INT_VEC2 ||
+             type == GL_INT_VEC3 ||
+             type == GL_INT_VEC4) {
+            const GLint *iValues = ((const GLint *) values) + k * elems;
+            for (i = 0; i < elems; i++) {
+               uniformVal[i] = (GLfloat) iValues[i];
+            }
+         }
+         else {
+            const GLfloat *fValues = ((const GLfloat *) values) + k * elems;
+            for (i = 0; i < elems; i++) {
+               uniformVal[i] = fValues[i];
+            }
+         }
+      }
+   }
+}
+
+
 /**
  * Called via ctx->Driver.Uniform().
  */
-void
+static void
 _mesa_uniform(GLcontext *ctx, GLint location, GLsizei count,
               const GLvoid *values, GLenum type)
 {
    struct gl_shader_program *shProg = ctx->Shader.CurrentProgram;
-   GLint elems, i, k;
-   GLenum uType;
-   GLsizei maxCount;
+   GLint elems;
 
    if (!shProg || !shProg->LinkStatus) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glUniform(program not linked)");
@@ -1156,35 +1158,9 @@ _mesa_uniform(GLcontext *ctx, GLint location, GLsizei count,
    if (location == -1)
       return;   /* The standard specifies this as a no-op */
 
-   /* The spec says this is GL_INVALID_OPERATION, although it seems like it
-    * ought to be GL_INVALID_VALUE
-    */
-   if (location < 0 || location >= (GLint) shProg->Uniforms->NumParameters) {
-      _mesa_error(ctx, GL_INVALID_OPERATION, "glUniform(location)");
+   if (location < 0 || location >= (GLint) shProg->Uniforms->NumUniforms) {
+      _mesa_error(ctx, GL_INVALID_VALUE, "glUniform(location)");
       return;
-   }
-
-   FLUSH_VERTICES(ctx, _NEW_PROGRAM);
-
-   uType = shProg->Uniforms->Parameters[location].DataType;
-   /*
-    * If we're setting a sampler, we must use glUniformi1()!
-    */
-   if (shProg->Uniforms->Parameters[location].Type == PROGRAM_SAMPLER) {
-      GLint unit;
-      if (type != GL_INT || count != 1) {
-         _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "glUniform(only glUniform1i can be used "
-                     "to set sampler uniforms)");
-         return;
-      }
-      /* check that the sampler (tex unit index) is legal */
-      unit = ((GLint *) values)[0];
-      if (unit >= ctx->Const.MaxTextureImageUnits) {
-         _mesa_error(ctx, GL_INVALID_VALUE,
-                     "glUniform1(invalid sampler/tex unit index)");
-         return;
-      }
    }
 
    if (count < 0) {
@@ -1214,69 +1190,56 @@ _mesa_uniform(GLcontext *ctx, GLint location, GLsizei count,
       return;
    }
 
-   /* OpenGL requires types to match exactly, except that one can convert
-    * float or int array to boolean array.
-    */
-   switch (uType)
-   {
-      case GL_BOOL:
-      case GL_BOOL_VEC2:
-      case GL_BOOL_VEC3:
-      case GL_BOOL_VEC4:
-         if (elems != sizeof_glsl_type(uType)) {
-            _mesa_error(ctx, GL_INVALID_OPERATION, "glUniform(count mismatch)");
-         }
-         break;
-      case PROGRAM_SAMPLER:
-         break;
-      default:
-         if (shProg->Uniforms->Parameters[location].Type != PROGRAM_SAMPLER 
-             && uType != type) {
-            _mesa_error(ctx, GL_INVALID_OPERATION, "glUniform(type mismatch)");
-         }
-         break;
-   }
+   FLUSH_VERTICES(ctx, _NEW_PROGRAM);
 
-   /* XXX if this is a base type, then count must equal 1. However, we
-    * don't have enough information from the compiler to distinguish a
-    * base type from a 1-element array of that type. The standard allows
-    * count to overrun an array, in which case the overflow is ignored.
+   /* A uniform var may be used by both a vertex shader and a fragment
+    * shader.  We may need to update one or both shader's uniform here:
     */
-   maxCount = shProg->Uniforms->Parameters[location].Size / elems;
-   if (count > maxCount) count = maxCount;
-
-   for (k = 0; k < count; k++) {
-      GLfloat *uniformVal = shProg->Uniforms->ParameterValues[location + k];
-      if (type == GL_INT ||
-          type == GL_INT_VEC2 ||
-          type == GL_INT_VEC3 ||
-          type == GL_INT_VEC4) {
-         const GLint *iValues = ((const GLint *) values) + k * elems;
-         for (i = 0; i < elems; i++) {
-            uniformVal[i] = (GLfloat) iValues[i];
-         }
-      }
-      else {
-         const GLfloat *fValues = ((const GLfloat *) values) + k * elems;
-         for (i = 0; i < elems; i++) {
-            uniformVal[i] = fValues[i];
-         }
-      }
-      if (uType == GL_BOOL ||
-          uType == GL_BOOL_VEC2 ||
-          uType == GL_BOOL_VEC3 ||
-          uType == GL_BOOL_VEC4) {
-          for (i = 0; i < elems; i++)
-              uniformVal[i] = uniformVal[i] ? 1.0f : 0.0f;
+   if (shProg->VertexProgram) {
+      GLint loc = shProg->Uniforms->Uniforms[location].VertPos;
+      if (loc >= 0) {
+         set_program_uniform(ctx, &shProg->VertexProgram->Base,
+                             loc, type, count, elems, values);
       }
    }
 
-   if (shProg->Uniforms->Parameters[location].Type == PROGRAM_SAMPLER) {
-      if (shProg->VertexProgram)
-         _slang_resolve_samplers(shProg, &shProg->VertexProgram->Base);
-      if (shProg->FragmentProgram)
-         _slang_resolve_samplers(shProg, &shProg->FragmentProgram->Base);
-      FLUSH_VERTICES(ctx, _NEW_TEXTURE);
+   if (shProg->FragmentProgram) {
+      GLint loc = shProg->Uniforms->Uniforms[location].FragPos;
+      if (loc >= 0) {
+         set_program_uniform(ctx, &shProg->FragmentProgram->Base,
+                             loc, type, count, elems, values);
+      }
+   }
+}
+
+
+static void
+set_program_uniform_matrix(GLcontext *ctx, struct gl_program *program,
+                           GLuint location, GLuint rows, GLuint cols,
+                           GLboolean transpose, const GLfloat *values)
+{
+   /*
+    * Note: the _columns_ of a matrix are stored in program registers, not
+    * the rows.
+    */
+   /* XXXX need to test 3x3 and 2x2 matrices... */
+   if (transpose) {
+      GLuint row, col;
+      for (col = 0; col < cols; col++) {
+         GLfloat *v = program->Parameters->ParameterValues[location + col];
+         for (row = 0; row < rows; row++) {
+            v[row] = values[row * cols + col];
+         }
+      }
+   }
+   else {
+      GLuint row, col;
+      for (col = 0; col < cols; col++) {
+         GLfloat *v = program->Parameters->ParameterValues[location + col];
+         for (row = 0; row < rows; row++) {
+            v[row] = values[col * rows + row];
+         }
+      }
    }
 }
 
@@ -1284,72 +1247,52 @@ _mesa_uniform(GLcontext *ctx, GLint location, GLsizei count,
 /**
  * Called by ctx->Driver.UniformMatrix().
  */
-void
+static void
 _mesa_uniform_matrix(GLcontext *ctx, GLint cols, GLint rows,
                      GLenum matrixType, GLint location, GLsizei count,
                      GLboolean transpose, const GLfloat *values)
 {
-   GLsizei maxCount, i;
    struct gl_shader_program *shProg = ctx->Shader.CurrentProgram;
+
    if (!shProg || !shProg->LinkStatus) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
          "glUniformMatrix(program not linked)");
       return;
    }
+
    if (location == -1)
       return;   /* The standard specifies this as a no-op */
-   /* The spec says this is GL_INVALID_OPERATION, although it seems like it
-    * ought to be GL_INVALID_VALUE
-    */
-   if (location < 0 || location >= (GLint) shProg->Uniforms->NumParameters) {
-      _mesa_error(ctx, GL_INVALID_OPERATION, "glUniformMatrix(location)");
+
+   if (location < 0 || location >= shProg->Uniforms->NumUniforms) {
+      _mesa_error(ctx, GL_INVALID_VALUE, "glUniformMatrix(location)");
       return;
    }
    if (values == NULL) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glUniformMatrix");
       return;
    }
-   if (count < 0) {
-      _mesa_error(ctx, GL_INVALID_VALUE, "glUniformMatrix(count < 0)");
-      return;
-   }
 
    FLUSH_VERTICES(ctx, _NEW_PROGRAM);
 
-   /*
-    * Note: the _columns_ of a matrix are stored in program registers, not
-    * the rows.
-    */
-   /* XXXX need to test 3x3 and 2x2 matrices... */
-   maxCount = shProg->Uniforms->Parameters[location].Size / (4 * cols);
-   if (count > maxCount)
-      count = maxCount;
-   for (i = 0; i < count; i++) {
-      if (transpose) {
-         GLuint row, col;
-         for (col = 0; col < cols; col++) {
-            GLfloat *v = shProg->Uniforms->ParameterValues[location + col];
-            for (row = 0; row < rows; row++) {
-               v[row] = values[row * cols + col];
-            }
-         }
+   if (shProg->VertexProgram) {
+      GLint loc = shProg->Uniforms->Uniforms[location].VertPos;
+      if (loc >= 0) {
+         set_program_uniform_matrix(ctx, &shProg->VertexProgram->Base,
+                                    loc, rows, cols, transpose, values);
       }
-      else {
-         GLuint row, col;
-         for (col = 0; col < cols; col++) {
-            GLfloat *v = shProg->Uniforms->ParameterValues[location + col];
-            for (row = 0; row < rows; row++) {
-               v[row] = values[col * rows + row];
-            }
-         }
+   }
+
+   if (shProg->FragmentProgram) {
+      GLint loc = shProg->Uniforms->Uniforms[location].FragPos;
+      if (loc >= 0) {
+         set_program_uniform_matrix(ctx, &shProg->FragmentProgram->Base,
+                                    loc, rows, cols, transpose, values);
       }
-      location += cols;
-      values += rows * cols;
    }
 }
 
 
-void
+static void
 _mesa_validate_program(GLcontext *ctx, GLuint program)
 {
    struct gl_shader_program *shProg;
@@ -1374,4 +1317,41 @@ _mesa_validate_program(GLcontext *ctx, GLuint program)
      processing exceeds the combined limit on the total number of texture
      image units allowed.
    */
+}
+
+
+/**
+ * Plug in Mesa's GLSL functions into the device driver function table.
+ */
+void
+_mesa_init_glsl_driver_functions(struct dd_function_table *driver)
+{
+   driver->AttachShader = _mesa_attach_shader;
+   driver->BindAttribLocation = _mesa_bind_attrib_location;
+   driver->CompileShader = _mesa_compile_shader;
+   driver->CreateProgram = _mesa_create_program;
+   driver->CreateShader = _mesa_create_shader;
+   driver->DeleteProgram2 = _mesa_delete_program2;
+   driver->DeleteShader = _mesa_delete_shader;
+   driver->DetachShader = _mesa_detach_shader;
+   driver->GetActiveAttrib = _mesa_get_active_attrib;
+   driver->GetActiveUniform = _mesa_get_active_uniform;
+   driver->GetAttachedShaders = _mesa_get_attached_shaders;
+   driver->GetAttribLocation = _mesa_get_attrib_location;
+   driver->GetHandle = _mesa_get_handle;
+   driver->GetProgramiv = _mesa_get_programiv;
+   driver->GetProgramInfoLog = _mesa_get_program_info_log;
+   driver->GetShaderiv = _mesa_get_shaderiv;
+   driver->GetShaderInfoLog = _mesa_get_shader_info_log;
+   driver->GetShaderSource = _mesa_get_shader_source;
+   driver->GetUniformfv = _mesa_get_uniformfv;
+   driver->GetUniformLocation = _mesa_get_uniform_location;
+   driver->IsProgram = _mesa_is_program;
+   driver->IsShader = _mesa_is_shader;
+   driver->LinkProgram = _mesa_link_program;
+   driver->ShaderSource = _mesa_shader_source;
+   driver->Uniform = _mesa_uniform;
+   driver->UniformMatrix = _mesa_uniform_matrix;
+   driver->UseProgram = _mesa_use_program;
+   driver->ValidateProgram = _mesa_validate_program;
 }

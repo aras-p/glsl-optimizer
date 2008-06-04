@@ -47,8 +47,8 @@ $(TOP)/$(LIB_DIR)/libEGLdri.so: $(OBJECTS)
 
 
 clean:
-	rm -f *.o
-	rm -f *.so
+	-rm -f *.o
+	-rm -f *.so
 
 depend: $(SOURCES) $(HEADERS)
 	@ echo "running $(MKDEP)"

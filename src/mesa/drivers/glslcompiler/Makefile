@@ -41,4 +41,4 @@ glslcompiler.o: glslcompiler.c
 
 
 clean:
-	rm -f *.o *~ $(PROGRAM)
+	-rm -f *.o *~ $(PROGRAM)

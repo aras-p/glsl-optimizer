@@ -1090,7 +1090,7 @@ slang_inline_function_call(slang_assemble_ctx * A, slang_function *fun,
    slang_operation_copy(inlined, fun->body);
 
    /*** XXX review this */
-   assert(inlined->type = SLANG_OPER_BLOCK_NO_NEW_SCOPE);
+   assert(inlined->type == SLANG_OPER_BLOCK_NO_NEW_SCOPE);
    inlined->type = SLANG_OPER_BLOCK_NEW_SCOPE;
 
 #if 0
@@ -2836,14 +2836,13 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
    const GLint texIndex = sampler_to_texture_index(var->type.specifier.type);
 
    if (texIndex != -1) {
-      /* Texture sampler:
+      /* This is a texture sampler variable...
        * store->File = PROGRAM_SAMPLER
-       * store->Index = sampler uniform location
+       * store->Index = sampler number (0..7, typically)
        * store->Size = texture type index (1D, 2D, 3D, cube, etc)
        */
-      GLint samplerUniform
-         = _mesa_add_sampler(prog->Parameters, varName, datatype);
-      store = _slang_new_ir_storage(PROGRAM_SAMPLER, samplerUniform, texIndex);
+      GLint sampNum = _mesa_add_sampler(prog->Parameters, varName, datatype);
+      store = _slang_new_ir_storage(PROGRAM_SAMPLER, sampNum, texIndex);
       if (dbg) printf("SAMPLER ");
    }
    else if (var->type.qualifier == SLANG_QUAL_UNIFORM) {

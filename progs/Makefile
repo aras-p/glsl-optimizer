@@ -25,7 +25,7 @@ subdirs:
 install:
 
 clean:
-	@for dir in $(SUBDIRS) tests ; do \
+	-@for dir in $(SUBDIRS) tests ; do \
 		if [ -d $$dir ] ; then \
 			(cd $$dir && $(MAKE) clean) ; \
 		fi \

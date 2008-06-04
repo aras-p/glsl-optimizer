@@ -48,7 +48,6 @@ LIBDRM_LIB = `pkg-config --libs libdrm`
 DRI_LIB_DEPS  = $(EXTRA_LIB_PATH) -lm -lpthread -lexpat -ldl $(LIBDRM_LIB)
 GL_LIB_DEPS   = $(EXTRA_LIB_PATH) -lX11 -lXext -lXxf86vm -lXdamage -lXfixes \
 		-lm -lpthread -ldl $(LIBDRM_LIB)
-GLCORE_LIB_DEPS = -lm -lpthread -ldl
 
 
 # This is now 0 by default since it seems to confuse the hell out of people

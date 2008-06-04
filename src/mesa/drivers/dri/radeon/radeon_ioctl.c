@@ -919,15 +919,17 @@ void radeonCopyBuffer( __DRIdrawablePrivate *dPriv,
 	      if (rect->y2 < b->y2)
 		  b->y2 = rect->y2;
 
-	      if (b->x1 < b->x2 && b->y1 < b->y2)
-		  b++;
+	      if (b->x1 >= b->x2 || b->y1 >= b->y2)
+		  continue;
 	  }
-	  else
-	      b++;
 
+	  b++;
 	  n++;
       }
       rmesa->sarea->nbox = n;
+
+      if (!n)
+	 continue;
 
       ret = drmCommandNone( rmesa->dri.fd, DRM_RADEON_SWAP );
 

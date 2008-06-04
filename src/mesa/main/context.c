@@ -149,8 +149,6 @@ int MESA_DEBUG_FLAGS = 0;
 /* ubyte -> float conversion */
 GLfloat _mesa_ubyte_to_float_color_tab[256];
 
-static void
-free_shared_state( GLcontext *ctx, struct gl_shared_state *ss );
 
 
 /**
@@ -420,12 +418,14 @@ alloc_shared_state( GLcontext *ctx )
 #endif
 
 #if FEATURE_ARB_vertex_program
-   ss->DefaultVertexProgram = ctx->Driver.NewProgram(ctx, GL_VERTEX_PROGRAM_ARB, 0);
+   ss->DefaultVertexProgram = (struct gl_vertex_program *)
+      ctx->Driver.NewProgram(ctx, GL_VERTEX_PROGRAM_ARB, 0);
    if (!ss->DefaultVertexProgram)
       goto cleanup;
 #endif
 #if FEATURE_ARB_fragment_program
-   ss->DefaultFragmentProgram = ctx->Driver.NewProgram(ctx, GL_FRAGMENT_PROGRAM_ARB, 0);
+   ss->DefaultFragmentProgram = (struct gl_fragment_program *)
+      ctx->Driver.NewProgram(ctx, GL_FRAGMENT_PROGRAM_ARB, 0);
    if (!ss->DefaultFragmentProgram)
       goto cleanup;
 #endif
@@ -502,12 +502,10 @@ cleanup:
       _mesa_DeleteHashTable(ss->Programs);
 #endif
 #if FEATURE_ARB_vertex_program
-   if (ss->DefaultVertexProgram)
-      ctx->Driver.DeleteProgram(ctx, ss->DefaultVertexProgram);
+   _mesa_reference_vertprog(ctx, &ss->DefaultVertexProgram, NULL);
 #endif
 #if FEATURE_ARB_fragment_program
-   if (ss->DefaultFragmentProgram)
-      ctx->Driver.DeleteProgram(ctx, ss->DefaultFragmentProgram);
+   _mesa_reference_fragprog(ctx, &ss->DefaultFragmentProgram, NULL);
 #endif
 #if FEATURE_ATI_fragment_shader
    if (ss->DefaultFragmentShader)
@@ -584,6 +582,8 @@ delete_program_cb(GLuint id, void *data, void *userData)
 {
    struct gl_program *prog = (struct gl_program *) data;
    GLcontext *ctx = (GLcontext *) userData;
+   ASSERT(prog->RefCount == 1); /* should only be referenced by hash table */
+   prog->RefCount = 0;  /* now going away */
    ctx->Driver.DeleteProgram(ctx, prog);
 }
 
@@ -709,15 +709,21 @@ free_shared_state( GLcontext *ctx, struct gl_shared_state *ss )
    _mesa_HashDeleteAll(ss->DisplayList, delete_displaylist_cb, ctx);
    _mesa_DeleteHashTable(ss->DisplayList);
 
+#if FEATURE_ARB_shader_objects
+   _mesa_HashWalk(ss->ShaderObjects, free_shader_program_data_cb, ctx);
+   _mesa_HashDeleteAll(ss->ShaderObjects, delete_shader_cb, ctx);
+   _mesa_DeleteHashTable(ss->ShaderObjects);
+#endif
+
 #if defined(FEATURE_NV_vertex_program) || defined(FEATURE_NV_fragment_program)
    _mesa_HashDeleteAll(ss->Programs, delete_program_cb, ctx);
    _mesa_DeleteHashTable(ss->Programs);
 #endif
 #if FEATURE_ARB_vertex_program
-   ctx->Driver.DeleteProgram(ctx, ss->DefaultVertexProgram);
+   _mesa_reference_vertprog(ctx, &ss->DefaultVertexProgram, NULL);
 #endif
 #if FEATURE_ARB_fragment_program
-   ctx->Driver.DeleteProgram(ctx, ss->DefaultFragmentProgram);
+   _mesa_reference_fragprog(ctx, &ss->DefaultFragmentProgram, NULL);
 #endif
 
 #if FEATURE_ATI_fragment_shader
@@ -733,12 +739,6 @@ free_shared_state( GLcontext *ctx, struct gl_shared_state *ss )
 
    _mesa_HashDeleteAll(ss->ArrayObjects, delete_arrayobj_cb, ctx);
    _mesa_DeleteHashTable(ss->ArrayObjects);
-
-#if FEATURE_ARB_shader_objects
-   _mesa_HashWalk(ss->ShaderObjects, free_shader_program_data_cb, ctx);
-   _mesa_HashDeleteAll(ss->ShaderObjects, delete_shader_cb, ctx);
-   _mesa_DeleteHashTable(ss->ShaderObjects);
-#endif
 
 #if FEATURE_EXT_framebuffer_object
    _mesa_HashDeleteAll(ss->FrameBuffers, delete_framebuffer_cb, ctx);
@@ -1250,6 +1250,14 @@ _mesa_free_context_data( GLcontext *ctx )
    _mesa_unreference_framebuffer(&ctx->WinSysReadBuffer);
    _mesa_unreference_framebuffer(&ctx->DrawBuffer);
    _mesa_unreference_framebuffer(&ctx->ReadBuffer);
+
+   _mesa_reference_vertprog(ctx, &ctx->VertexProgram.Current, NULL);
+   _mesa_reference_vertprog(ctx, &ctx->VertexProgram._Current, NULL);
+   _mesa_reference_vertprog(ctx, &ctx->VertexProgram._TnlProgram, NULL);
+
+   _mesa_reference_fragprog(ctx, &ctx->FragmentProgram.Current, NULL);
+   _mesa_reference_fragprog(ctx, &ctx->FragmentProgram._Current, NULL);
+   _mesa_reference_fragprog(ctx, &ctx->FragmentProgram._TexEnvProgram, NULL);
 
    _mesa_free_attrib_data(ctx);
    _mesa_free_lighting_data( ctx );

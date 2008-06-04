@@ -59,9 +59,9 @@ _mesa_init_program(GLcontext *ctx)
    ctx->VertexProgram.Enabled = GL_FALSE;
    ctx->VertexProgram.PointSizeEnabled = GL_FALSE;
    ctx->VertexProgram.TwoSideEnabled = GL_FALSE;
-   ctx->VertexProgram.Current = (struct gl_vertex_program *) ctx->Shared->DefaultVertexProgram;
+   _mesa_reference_vertprog(ctx, &ctx->VertexProgram.Current,
+                            ctx->Shared->DefaultVertexProgram);
    assert(ctx->VertexProgram.Current);
-   ctx->VertexProgram.Current->Base.RefCount++;
    for (i = 0; i < MAX_NV_VERTEX_PROGRAM_PARAMS / 4; i++) {
       ctx->VertexProgram.TrackMatrix[i] = GL_NONE;
       ctx->VertexProgram.TrackMatrixTransform[i] = GL_IDENTITY_NV;
@@ -70,9 +70,9 @@ _mesa_init_program(GLcontext *ctx)
 
 #if FEATURE_NV_fragment_program || FEATURE_ARB_fragment_program
    ctx->FragmentProgram.Enabled = GL_FALSE;
-   ctx->FragmentProgram.Current = (struct gl_fragment_program *) ctx->Shared->DefaultFragmentProgram;
+   _mesa_reference_fragprog(ctx, &ctx->FragmentProgram.Current,
+                            ctx->Shared->DefaultFragmentProgram);
    assert(ctx->FragmentProgram.Current);
-   ctx->FragmentProgram.Current->Base.RefCount++;
 #endif
 
    /* XXX probably move this stuff */
@@ -92,18 +92,10 @@ void
 _mesa_free_program_data(GLcontext *ctx)
 {
 #if FEATURE_NV_vertex_program || FEATURE_ARB_vertex_program
-   if (ctx->VertexProgram.Current) {
-      ctx->VertexProgram.Current->Base.RefCount--;
-      if (ctx->VertexProgram.Current->Base.RefCount <= 0)
-         ctx->Driver.DeleteProgram(ctx, &(ctx->VertexProgram.Current->Base));
-   }
+   _mesa_reference_vertprog(ctx, &ctx->VertexProgram.Current, NULL);
 #endif
 #if FEATURE_NV_fragment_program || FEATURE_ARB_fragment_program
-   if (ctx->FragmentProgram.Current) {
-      ctx->FragmentProgram.Current->Base.RefCount--;
-      if (ctx->FragmentProgram.Current->Base.RefCount <= 0)
-         ctx->Driver.DeleteProgram(ctx, &(ctx->FragmentProgram.Current->Base));
-   }
+   _mesa_reference_fragprog(ctx, &ctx->FragmentProgram.Current, NULL);
 #endif
    /* XXX probably move this stuff */
 #if FEATURE_ATI_fragment_shader
@@ -127,25 +119,17 @@ void
 _mesa_update_default_objects_program(GLcontext *ctx)
 {
 #if FEATURE_NV_vertex_program || FEATURE_ARB_vertex_program
-   if (ctx->VertexProgram.Current) {
-      ctx->VertexProgram.Current->Base.RefCount--;
-      if (ctx->VertexProgram.Current->Base.RefCount <= 0)
-         ctx->Driver.DeleteProgram(ctx, &(ctx->VertexProgram.Current->Base));
-   }
-   ctx->VertexProgram.Current = (struct gl_vertex_program *) ctx->Shared->DefaultVertexProgram;
+   _mesa_reference_vertprog(ctx, &ctx->VertexProgram.Current,
+                            (struct gl_vertex_program *)
+                            ctx->Shared->DefaultVertexProgram);
    assert(ctx->VertexProgram.Current);
-   ctx->VertexProgram.Current->Base.RefCount++;
 #endif
 
 #if FEATURE_NV_fragment_program || FEATURE_ARB_fragment_program
-   if (ctx->FragmentProgram.Current) {
-      ctx->FragmentProgram.Current->Base.RefCount--;
-      if (ctx->FragmentProgram.Current->Base.RefCount <= 0)
-         ctx->Driver.DeleteProgram(ctx, &(ctx->FragmentProgram.Current->Base));
-   }
-   ctx->FragmentProgram.Current = (struct gl_fragment_program *) ctx->Shared->DefaultFragmentProgram;
+   _mesa_reference_fragprog(ctx, &ctx->FragmentProgram.Current,
+                            (struct gl_fragment_program *)
+                            ctx->Shared->DefaultFragmentProgram);
    assert(ctx->FragmentProgram.Current);
-   ctx->FragmentProgram.Current->Base.RefCount++;
 #endif
 
    /* XXX probably move this stuff */
@@ -230,11 +214,17 @@ _mesa_init_program_struct( GLcontext *ctx, struct gl_program *prog,
 {
    (void) ctx;
    if (prog) {
+      GLuint i;
+      _mesa_bzero(prog, sizeof(*prog));
       prog->Id = id;
       prog->Target = target;
       prog->Resident = GL_TRUE;
       prog->RefCount = 1;
       prog->Format = GL_PROGRAM_FORMAT_ASCII_ARB;
+
+      /* default mapping from samplers to texture units */
+      for (i = 0; i < MAX_SAMPLERS; i++)
+         prog->SamplerUnits[i] = i;
    }
 
    return prog;
@@ -284,19 +274,23 @@ _mesa_init_vertex_program( GLcontext *ctx, struct gl_vertex_program *prog,
 struct gl_program *
 _mesa_new_program(GLcontext *ctx, GLenum target, GLuint id)
 {
+   struct gl_program *prog;
    switch (target) {
    case GL_VERTEX_PROGRAM_ARB: /* == GL_VERTEX_PROGRAM_NV */
-      return _mesa_init_vertex_program(ctx, CALLOC_STRUCT(gl_vertex_program),
+      prog = _mesa_init_vertex_program(ctx, CALLOC_STRUCT(gl_vertex_program),
                                        target, id );
+      break;
    case GL_FRAGMENT_PROGRAM_NV:
    case GL_FRAGMENT_PROGRAM_ARB:
-      return _mesa_init_fragment_program(ctx,
+      prog =_mesa_init_fragment_program(ctx,
                                          CALLOC_STRUCT(gl_fragment_program),
                                          target, id );
+      break;
    default:
       _mesa_problem(ctx, "bad target in _mesa_new_program");
-      return NULL;
+      prog = NULL;
    }
+   return prog;
 }
 
 
@@ -311,6 +305,7 @@ _mesa_delete_program(GLcontext *ctx, struct gl_program *prog)
 {
    (void) ctx;
    ASSERT(prog);
+   ASSERT(prog->RefCount==0);
 
    if (prog == &_mesa_DummyProgram)
       return;
@@ -318,16 +313,7 @@ _mesa_delete_program(GLcontext *ctx, struct gl_program *prog)
    if (prog->String)
       _mesa_free(prog->String);
 
-   if (prog->Instructions) {
-      GLuint i;
-      for (i = 0; i < prog->NumInstructions; i++) {
-         if (prog->Instructions[i].Data)
-            _mesa_free(prog->Instructions[i].Data);
-         if (prog->Instructions[i].Comment)
-            _mesa_free((char *) prog->Instructions[i].Comment);
-      }
-      _mesa_free(prog->Instructions);
-   }
+   _mesa_free_instructions(prog->Instructions, prog->NumInstructions);
 
    if (prog->Parameters) {
       _mesa_free_parameter_list(prog->Parameters);
@@ -366,6 +352,63 @@ _mesa_lookup_program(GLcontext *ctx, GLuint id)
 
 
 /**
+ * Reference counting for vertex/fragment programs
+ */
+void
+_mesa_reference_program(GLcontext *ctx,
+                        struct gl_program **ptr,
+                        struct gl_program *prog)
+{
+   assert(ptr);
+   if (*ptr && prog) {
+      /* sanity check */
+      ASSERT((*ptr)->Target == prog->Target);
+   }
+   if (*ptr == prog) {
+      return;  /* no change */
+   }
+   if (*ptr) {
+      GLboolean deleteFlag;
+
+      /*_glthread_LOCK_MUTEX((*ptr)->Mutex);*/
+#if 0
+      printf("Program %p ID=%u Target=%s  Refcount-- to %d\n",
+             *ptr, (*ptr)->Id,
+             ((*ptr)->Target == GL_VERTEX_PROGRAM_ARB ? "VP" : "FP"),
+             (*ptr)->RefCount - 1);
+#endif
+      ASSERT((*ptr)->RefCount > 0);
+      (*ptr)->RefCount--;
+
+      deleteFlag = ((*ptr)->RefCount == 0);
+      /*_glthread_UNLOCK_MUTEX((*ptr)->Mutex);*/
+      
+      if (deleteFlag) {
+         ASSERT(ctx);
+         ctx->Driver.DeleteProgram(ctx, *ptr);
+      }
+
+      *ptr = NULL;
+   }
+
+   assert(!*ptr);
+   if (prog) {
+      /*_glthread_LOCK_MUTEX(prog->Mutex);*/
+      prog->RefCount++;
+#if 0
+      printf("Program %p ID=%u Target=%s  Refcount++ to %d\n",
+             prog, prog->Id,
+             (prog->Target == GL_VERTEX_PROGRAM_ARB ? "VP" : "FP"),
+             prog->RefCount);
+#endif
+      /*_glthread_UNLOCK_MUTEX(prog->Mutex);*/
+   }
+
+   *ptr = prog;
+}
+
+
+/**
  * Return a copy of a program.
  * XXX Problem here if the program object is actually OO-derivation
  * made by a device driver.
@@ -380,18 +423,20 @@ _mesa_clone_program(GLcontext *ctx, const struct gl_program *prog)
       return NULL;
 
    assert(clone->Target == prog->Target);
+   assert(clone->RefCount == 1);
+
    clone->String = (GLubyte *) _mesa_strdup((char *) prog->String);
-   clone->RefCount = 1;
    clone->Format = prog->Format;
    clone->Instructions = _mesa_alloc_instructions(prog->NumInstructions);
    if (!clone->Instructions) {
-      ctx->Driver.DeleteProgram(ctx, clone);
+      _mesa_reference_program(ctx, &clone, NULL);
       return NULL;
    }
    _mesa_copy_instructions(clone->Instructions, prog->Instructions,
                            prog->NumInstructions);
    clone->InputsRead = prog->InputsRead;
    clone->OutputsWritten = prog->OutputsWritten;
+   clone->SamplersUsed = prog->SamplersUsed;
    memcpy(clone->TexturesUsed, prog->TexturesUsed, sizeof(prog->TexturesUsed));
 
    if (prog->Parameters)
@@ -442,6 +487,236 @@ _mesa_clone_program(GLcontext *ctx, const struct gl_program *prog)
    }
 
    return clone;
+}
+
+
+/**
+ * Insert 'count' NOP instructions at 'start' in the given program.
+ * Adjust branch targets accordingly.
+ */
+GLboolean
+_mesa_insert_instructions(struct gl_program *prog, GLuint start, GLuint count)
+{
+   const GLuint origLen = prog->NumInstructions;
+   const GLuint newLen = origLen + count;
+   struct prog_instruction *newInst;
+   GLuint i;
+
+   /* adjust branches */
+   for (i = 0; i < prog->NumInstructions; i++) {
+      struct prog_instruction *inst = prog->Instructions + i;
+      if (inst->BranchTarget > 0) {
+         if (inst->BranchTarget >= start) {
+            inst->BranchTarget += count;
+         }
+      }
+   }
+
+   /* Alloc storage for new instructions */
+   newInst = _mesa_alloc_instructions(newLen);
+   if (!newInst) {
+      return GL_FALSE;
+   }
+
+   /* Copy 'start' instructions into new instruction buffer */
+   _mesa_copy_instructions(newInst, prog->Instructions, start);
+
+   /* init the new instructions */
+   _mesa_init_instructions(newInst + start, count);
+
+   /* Copy the remaining/tail instructions to new inst buffer */
+   _mesa_copy_instructions(newInst + start + count,
+                           prog->Instructions + start,
+                           origLen - start);
+
+   /* free old instructions */
+   _mesa_free_instructions(prog->Instructions, origLen);
+
+   /* install new instructions */
+   prog->Instructions = newInst;
+   prog->NumInstructions = newLen;
+
+   return GL_TRUE;
+}
+
+
+/**
+ * Search instructions for registers that match (oldFile, oldIndex),
+ * replacing them with (newFile, newIndex).
+ */
+static void
+replace_registers(struct prog_instruction *inst, GLuint numInst,
+                  GLuint oldFile, GLuint oldIndex,
+                  GLuint newFile, GLuint newIndex)
+{
+   GLuint i, j;
+   for (i = 0; i < numInst; i++) {
+      /* src regs */
+      for (j = 0; j < _mesa_num_inst_src_regs(inst->Opcode); j++) {
+         if (inst[i].SrcReg[j].File == oldFile &&
+             inst[i].SrcReg[j].Index == oldIndex) {
+            inst[i].SrcReg[j].File = newFile;
+            inst[i].SrcReg[j].Index = newIndex;
+         }
+      }
+      /* dst reg */
+      if (inst[i].DstReg.File == oldFile && inst[i].DstReg.Index == oldIndex) {
+         inst[i].DstReg.File = newFile;
+         inst[i].DstReg.Index = newIndex;
+      }
+   }
+}
+
+
+/**
+ * Search instructions for references to program parameters.  When found,
+ * increment the parameter index by 'offset'.
+ * Used when combining programs.
+ */
+static void
+adjust_param_indexes(struct prog_instruction *inst, GLuint numInst,
+                     GLuint offset)
+{
+   GLuint i, j;
+   for (i = 0; i < numInst; i++) {
+      for (j = 0; j < _mesa_num_inst_src_regs(inst->Opcode); j++) {
+         GLuint f = inst[i].SrcReg[j].File;
+         if (f == PROGRAM_CONSTANT ||
+             f == PROGRAM_UNIFORM ||
+             f == PROGRAM_STATE_VAR) {
+            inst[i].SrcReg[j].Index += offset;
+         }
+      }
+   }
+}
+
+
+/**
+ * Combine two programs into one.  Fix instructions so the outputs of
+ * the first program go to the inputs of the second program.
+ */
+struct gl_program *
+_mesa_combine_programs(GLcontext *ctx,
+                       const struct gl_program *progA,
+                       const struct gl_program *progB)
+{
+   struct prog_instruction *newInst;
+   struct gl_program *newProg;
+   const GLuint lenA = progA->NumInstructions - 1; /* omit END instr */
+   const GLuint lenB = progB->NumInstructions;
+   const GLuint numParamsA = _mesa_num_parameters(progA->Parameters);
+   const GLuint newLength = lenA + lenB;
+   GLbitfield inputsB;
+   GLuint i;
+
+   ASSERT(progA->Target == progB->Target);
+
+   newInst = _mesa_alloc_instructions(newLength);
+   if (!newInst)
+      return GL_FALSE;
+
+   _mesa_copy_instructions(newInst, progA->Instructions, lenA);
+   _mesa_copy_instructions(newInst + lenA, progB->Instructions, lenB);
+
+   /* adjust branch / instruction addresses for B's instructions */
+   for (i = 0; i < lenB; i++) {
+      newInst[lenA + i].BranchTarget += lenA;
+   }
+
+   newProg = ctx->Driver.NewProgram(ctx, progA->Target, 0);
+   newProg->Instructions = newInst;
+   newProg->NumInstructions = newLength;
+
+   if (newProg->Target == GL_FRAGMENT_PROGRAM_ARB) {
+      struct gl_fragment_program *fprogA, *fprogB, *newFprog;
+      fprogA = (struct gl_fragment_program *) progA;
+      fprogB = (struct gl_fragment_program *) progB;
+      newFprog = (struct gl_fragment_program *) newProg;
+
+      newFprog->UsesKill = fprogA->UsesKill || fprogB->UsesKill;
+
+      /* Connect color outputs of fprogA to color inputs of fprogB, via a
+       * new temporary register.
+       */
+      if ((progA->OutputsWritten & (1 << FRAG_RESULT_COLR)) &&
+          (progB->InputsRead & (1 << FRAG_ATTRIB_COL0))) {
+         GLint tempReg = _mesa_find_free_register(newProg, PROGRAM_TEMPORARY);
+         if (tempReg < 0) {
+            _mesa_problem(ctx, "No free temp regs found in "
+                          "_mesa_combine_programs(), using 31");
+            tempReg = 31;
+         }
+         /* replace writes to result.color[0] with tempReg */
+         replace_registers(newInst, lenA,
+                           PROGRAM_OUTPUT, FRAG_RESULT_COLR,
+                           PROGRAM_TEMPORARY, tempReg);
+         /* replace reads from input.color[0] with tempReg */
+         replace_registers(newInst + lenA, lenB,
+                           PROGRAM_INPUT, FRAG_ATTRIB_COL0,
+                           PROGRAM_TEMPORARY, tempReg);
+      }
+
+      inputsB = progB->InputsRead;
+      if (progA->OutputsWritten & (1 << FRAG_RESULT_COLR)) {
+         inputsB &= ~(1 << FRAG_ATTRIB_COL0);
+      }
+      newProg->InputsRead = progA->InputsRead | inputsB;
+      newProg->OutputsWritten = progB->OutputsWritten;
+      newProg->SamplersUsed = progA->SamplersUsed | progB->SamplersUsed;
+   }
+   else {
+      /* vertex program */
+      assert(0);      /* XXX todo */
+   }
+
+   /*
+    * Merge parameters (uniforms, constants, etc)
+    */
+   newProg->Parameters = _mesa_combine_parameter_lists(progA->Parameters,
+                                                       progB->Parameters);
+
+   adjust_param_indexes(newInst + lenA, lenB, numParamsA);
+
+
+   return newProg;
+}
+
+
+
+
+/**
+ * Scan the given program to find a free register of the given type.
+ * \param regFile - PROGRAM_INPUT, PROGRAM_OUTPUT or PROGRAM_TEMPORARY
+ */
+GLint
+_mesa_find_free_register(const struct gl_program *prog, GLuint regFile)
+{
+   GLboolean used[MAX_PROGRAM_TEMPS];
+   GLuint i, k;
+
+   assert(regFile == PROGRAM_INPUT ||
+          regFile == PROGRAM_OUTPUT ||
+          regFile == PROGRAM_TEMPORARY);
+
+   _mesa_memset(used, 0, sizeof(used));
+
+   for (i = 0; i < prog->NumInstructions; i++) {
+      const struct prog_instruction *inst = prog->Instructions + i;
+      const GLuint n = _mesa_num_inst_src_regs(inst->Opcode);
+
+      for (k = 0; k < n; k++) {
+         if (inst->SrcReg[k].File == regFile) {
+            used[inst->SrcReg[k].Index] = GL_TRUE;
+         }
+      }
+   }
+
+   for (i = 0; i < MAX_PROGRAM_TEMPS; i++) {
+      if (!used[i])
+         return i;
+   }
+
+   return -1;
 }
 
 
@@ -513,9 +788,9 @@ _mesa_BindProgram(GLenum target, GLuint id)
       /* Bind a default program */
       newProg = NULL;
       if (target == GL_VERTEX_PROGRAM_ARB) /* == GL_VERTEX_PROGRAM_NV */
-         newProg = ctx->Shared->DefaultVertexProgram;
+         newProg = &ctx->Shared->DefaultVertexProgram->Base;
       else
-         newProg = ctx->Shared->DefaultFragmentProgram;
+         newProg = &ctx->Shared->DefaultFragmentProgram->Base;
    }
    else {
       /* Bind a user program */
@@ -543,26 +818,16 @@ _mesa_BindProgram(GLenum target, GLuint id)
       return;
    }
 
-   /* unbind/delete oldProg */
-   if (curProg->Id != 0) {
-      /* decrement refcount on previously bound fragment program */
-      curProg->RefCount--;
-      /* and delete if refcount goes below one */
-      if (curProg->RefCount <= 0) {
-         /* the program ID was already removed from the hash table */
-         ctx->Driver.DeleteProgram(ctx, curProg);
-      }
-   }
-
    /* bind newProg */
    if (target == GL_VERTEX_PROGRAM_ARB) { /* == GL_VERTEX_PROGRAM_NV */
-      ctx->VertexProgram.Current = (struct gl_vertex_program *) newProg;
+      _mesa_reference_vertprog(ctx, &ctx->VertexProgram.Current,
+                               (struct gl_vertex_program *) newProg);
    }
    else if (target == GL_FRAGMENT_PROGRAM_NV ||
             target == GL_FRAGMENT_PROGRAM_ARB) {
-      ctx->FragmentProgram.Current = (struct gl_fragment_program *) newProg;
+      _mesa_reference_fragprog(ctx, &ctx->FragmentProgram.Current,
+                               (struct gl_fragment_program *) newProg);
    }
-   newProg->RefCount++;
 
    /* Never null pointers */
    ASSERT(ctx->VertexProgram.Current);
@@ -620,10 +885,7 @@ _mesa_DeletePrograms(GLsizei n, const GLuint *ids)
             }
             /* The ID is immediately available for re-use now */
             _mesa_HashRemove(ctx->Shared->Programs, ids[i]);
-            prog->RefCount--;
-            if (prog->RefCount <= 0) {
-               ctx->Driver.DeleteProgram(ctx, prog);
-            }
+            _mesa_reference_program(ctx, &prog, NULL);
          }
       }
    }

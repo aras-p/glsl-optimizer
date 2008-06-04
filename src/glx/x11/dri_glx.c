@@ -84,7 +84,7 @@ struct __GLXDRIconfigPrivateRec {
 
 #ifndef DEFAULT_DRIVER_DIR
 /* this is normally defined in Mesa/configs/default with DRI_DRIVER_SEARCH_PATH */
-#define DEFAULT_DRIVER_DIR "/usr/X11R6/lib/modules/dri"
+#define DEFAULT_DRIVER_DIR "/usr/local/lib/dri"
 #endif
 
 static void InfoMessageF(const char *f, ...)

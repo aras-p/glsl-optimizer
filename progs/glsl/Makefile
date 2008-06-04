@@ -15,6 +15,7 @@ PROGS = \
 	bump \
 	deriv \
 	mandelbrot \
+	multitex \
 	noise \
 	points \
 	texdemo1 \
@@ -100,6 +101,13 @@ mandelbrot.o: mandelbrot.c extfuncs.h shaderutil.h
 
 mandelbrot: mandelbrot.o shaderutil.o
 	$(CC) -I$(INCDIR) $(CFLAGS) $(LDFLAGS) mandelbrot.o shaderutil.o $(LIBS) -o $@
+
+
+multitex.o: multitex.c extfuncs.h readtex.h shaderutil.h
+	$(CC) -c -I$(INCDIR) $(CFLAGS) multitex.c
+
+multitex: multitex.o readtex.o shaderutil.o
+	$(CC) -I$(INCDIR) $(CFLAGS) $(LDFLAGS) multitex.o readtex.o shaderutil.o $(LIBS) -o $@
 
 
 noise.o: noise.c extfuncs.h shaderutil.h

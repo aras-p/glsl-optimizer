@@ -820,9 +820,7 @@ static void viaTexImage(GLcontext *ctx,
 
    /* GL_SGIS_generate_mipmap */
    if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
-      _mesa_generate_mipmap(ctx, target,
-                            &ctx->Texture.Unit[ctx->Texture.CurrentUnit],
-                            texObj);
+      _mesa_generate_mipmap(ctx, target, texObj);
    }
 
    _mesa_unmap_teximage_pbo(ctx, packing);

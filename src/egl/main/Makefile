@@ -52,8 +52,8 @@ $(TOP)/$(LIB_DIR)/libEGL.so: $(OBJECTS)
 
 
 clean:
-	rm -f *.o *.so*
-	rm -f core.*
+	-rm -f *.o *.so*
+	-rm -f core.*
 
 
 depend: $(SOURCES) $(HEADERS)

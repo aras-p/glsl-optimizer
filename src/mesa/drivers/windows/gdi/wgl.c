@@ -581,6 +581,13 @@ WINGDIAPI BOOL GLAPIENTRY wglUseFontBitmapsA(HDC hdc, DWORD first,
     return success;
 }
 
+WINGDIAPI BOOL GLAPIENTRY wglShareLists(HGLRC hglrc1,
+					HGLRC hglrc2)
+{
+    WMesaShareLists((WMesaContext)hglrc1, (WMesaContext)hglrc2);
+    return(TRUE);
+}
+
 
 
 /* NOT IMPLEMENTED YET */
@@ -598,13 +605,6 @@ WINGDIAPI HGLRC GLAPIENTRY wglCreateLayerContext(HDC hdc,
     (void) hdc; (void) iLayerPlane;
     SetLastError(0);
     return(NULL);
-}
-
-WINGDIAPI BOOL GLAPIENTRY wglShareLists(HGLRC hglrc1,
-					HGLRC hglrc2)
-{
-    WMesaShareLists(hglrc1, hglrc2);
-    return(TRUE);
 }
 
 

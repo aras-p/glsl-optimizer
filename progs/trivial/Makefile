@@ -102,9 +102,9 @@ UTIL_FILES = readtex.h readtex.c
 default: $(UTIL_FILES) $(PROGS)
 
 clean:
-	rm -f $(PROGS)
-	rm -f *.o
-	rm -f getproclist.h
+	-rm -f $(PROGS)
+	-rm -f *.o
+	-rm -f getproclist.h
 
 
 # auto code generation

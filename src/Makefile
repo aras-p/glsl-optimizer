@@ -33,7 +33,7 @@ $(TOP)/$(LIB_DIR):
 
 
 clean:
-	@for dir in $(SUBDIRS) ; do \
+	-@for dir in $(SUBDIRS) ; do \
 		if [ -d $$dir ] ; then \
 			(cd $$dir && $(MAKE) clean) ; \
 		fi \

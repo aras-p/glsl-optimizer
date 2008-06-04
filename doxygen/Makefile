@@ -29,5 +29,5 @@ subset: $(SUBSET:.doxy=.tag)
 	$(foreach FILE,$(SUBSET),doxygen $(FILE);)
 
 clean:
-	rm -rf $(FULL:.doxy=) $(SUBSET:.doxy=)
-	rm -rf *.tag
+	-rm -rf $(FULL:.doxy=) $(SUBSET:.doxy=)
+	-rm -rf *.tag

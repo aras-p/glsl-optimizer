@@ -1464,20 +1464,21 @@ create_new_program( const struct state_key *key,
    build_tnl_program( &p );
 }
 
-static void *search_cache( struct tnl_cache *cache,
-			   GLuint hash,
-			   const void *key,
-			   GLuint keysize)
+
+static struct gl_vertex_program *
+search_cache(struct tnl_cache *cache, GLuint hash,
+             const void *key, GLuint keysize)
 {
    struct tnl_cache_item *c;
 
    for (c = cache->items[hash % cache->size]; c; c = c->next) {
       if (c->hash == hash && _mesa_memcmp(c->key, key, keysize) == 0)
-	 return c->data;
+	 return c->prog;
    }
 
    return NULL;
 }
+
 
 static void rehash( struct tnl_cache *cache )
 {
@@ -1501,15 +1502,17 @@ static void rehash( struct tnl_cache *cache )
    cache->size = size;
 }
 
-static void cache_item( struct tnl_cache *cache,
+static void cache_item( GLcontext *ctx,
+                        struct tnl_cache *cache,
 			GLuint hash,
 			void *key,
-			void *data )
+			struct gl_vertex_program *prog )
 {
-   struct tnl_cache_item *c = (struct tnl_cache_item*) _mesa_malloc(sizeof(*c));
+   struct tnl_cache_item *c = CALLOC_STRUCT(tnl_cache_item);
    c->hash = hash;
    c->key = key;
-   c->data = data;
+
+   c->prog = prog;
 
    if (++cache->n_items > cache->size * 1.5)
       rehash(cache);
@@ -1540,6 +1543,8 @@ void _tnl_UpdateFixedFunctionProgram( GLcontext *ctx )
 
    if (!ctx->VertexProgram._Current ||
        ctx->VertexProgram._Current == ctx->VertexProgram._TnlProgram) {
+      struct gl_vertex_program *newProg;
+
       /* Grab all the relevent state and put it in a single structure:
        */
       key = make_state_key(ctx);
@@ -1547,33 +1552,33 @@ void _tnl_UpdateFixedFunctionProgram( GLcontext *ctx )
 
       /* Look for an already-prepared program for this state:
        */
-      ctx->VertexProgram._TnlProgram = (struct gl_vertex_program *)
-	 search_cache( tnl->vp_cache, hash, key, sizeof(*key) );
+      newProg = search_cache( tnl->vp_cache, hash, key, sizeof(*key));
    
       /* OK, we'll have to build a new one:
        */
-      if (!ctx->VertexProgram._TnlProgram) {
+      if (!newProg) {
+
 	 if (0)
 	    _mesa_printf("Build new TNL program\n");
 	 
-	 ctx->VertexProgram._TnlProgram = (struct gl_vertex_program *)
+	 newProg = (struct gl_vertex_program *)
 	    ctx->Driver.NewProgram(ctx, GL_VERTEX_PROGRAM_ARB, 0); 
 
-	 create_new_program( key, ctx->VertexProgram._TnlProgram, 
-			     ctx->Const.VertexProgram.MaxTemps );
+	 create_new_program( key, newProg, ctx->Const.VertexProgram.MaxTemps );
 
 	 if (ctx->Driver.ProgramStringNotify)
 	    ctx->Driver.ProgramStringNotify( ctx, GL_VERTEX_PROGRAM_ARB, 
-                                       &ctx->VertexProgram._TnlProgram->Base );
+                                             &newProg->Base );
 
-	 cache_item(tnl->vp_cache, hash, key, ctx->VertexProgram._TnlProgram );
+         /* Our ownership of newProg is transferred to the cache */
+	 cache_item(ctx, tnl->vp_cache, hash, key, newProg);
       }
       else {
 	 FREE(key);
-	 if (0) 
-	    _mesa_printf("Found existing TNL program for key %x\n", hash);
       }
-      ctx->VertexProgram._Current = ctx->VertexProgram._TnlProgram;
+
+      _mesa_reference_vertprog(ctx, &ctx->VertexProgram._TnlProgram, newProg);
+      _mesa_reference_vertprog(ctx, &ctx->VertexProgram._Current, newProg);
    }
 
    /* Tell the driver about the change.  Could define a new target for
@@ -1606,7 +1611,7 @@ void _tnl_ProgramCacheDestroy( GLcontext *ctx )
       for (c = tnl->vp_cache->items[i]; c; c = next) {
 	 next = c->next;
 	 FREE(c->key);
-	 FREE(c->data);
+	 _mesa_reference_vertprog(ctx, &c->prog, NULL);
 	 FREE(c);
       }
 

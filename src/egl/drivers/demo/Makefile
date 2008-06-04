@@ -27,5 +27,5 @@ $(TOP)/$(LIB_DIR)/demodriver.so: $(OBJECTS)
 
 
 clean:
-	rm -f *.o
-	rm -f *.so
+	-rm -f *.o
+	-rm -f *.so

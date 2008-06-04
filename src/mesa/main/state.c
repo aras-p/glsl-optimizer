@@ -978,49 +978,59 @@ update_program(GLcontext *ctx)
     *   3. Programs derived from fixed-function state.
     */
 
-   ctx->FragmentProgram._Current = NULL;
+   _mesa_reference_fragprog(ctx, &ctx->FragmentProgram._Current, NULL);
 
    if (shProg && shProg->LinkStatus) {
       /* Use shader programs */
       /* XXX this isn't quite right, since we may have either a vertex
        * _or_ fragment shader (not always both).
        */
-      ctx->VertexProgram._Current = shProg->VertexProgram;
-      ctx->FragmentProgram._Current = shProg->FragmentProgram;
+      _mesa_reference_vertprog(ctx, &ctx->VertexProgram._Current,
+                               shProg->VertexProgram);
+      _mesa_reference_fragprog(ctx, &ctx->FragmentProgram._Current,
+                               shProg->FragmentProgram);
    }
    else {
       if (ctx->VertexProgram._Enabled) {
          /* use user-defined vertex program */
-         ctx->VertexProgram._Current = ctx->VertexProgram.Current;
+         _mesa_reference_vertprog(ctx, &ctx->VertexProgram._Current,
+                                  ctx->VertexProgram.Current);
       }
       else if (ctx->VertexProgram._MaintainTnlProgram) {
          /* Use vertex program generated from fixed-function state.
           * The _Current pointer will get set in
           * _tnl_UpdateFixedFunctionProgram() later if appropriate.
           */
-         ctx->VertexProgram._Current = NULL;
+         _mesa_reference_vertprog(ctx, &ctx->VertexProgram._Current, NULL);
       }
       else {
          /* no vertex program */
-         ctx->VertexProgram._Current = NULL;
+         _mesa_reference_vertprog(ctx, &ctx->VertexProgram._Current, NULL);
       }
 
       if (ctx->FragmentProgram._Enabled) {
          /* use user-defined vertex program */
-         ctx->FragmentProgram._Current = ctx->FragmentProgram.Current;
+         _mesa_reference_fragprog(ctx, &ctx->FragmentProgram._Current,
+                                  ctx->FragmentProgram.Current);
       }
       else if (ctx->FragmentProgram._MaintainTexEnvProgram) {
          /* Use fragment program generated from fixed-function state.
           * The _Current pointer will get set in _mesa_UpdateTexEnvProgram()
           * later if appropriate.
           */
-         ctx->FragmentProgram._Current = NULL;
+         _mesa_reference_fragprog(ctx, &ctx->FragmentProgram._Current, NULL);
       }
       else {
          /* no fragment program */
-         ctx->FragmentProgram._Current = NULL;
+         _mesa_reference_fragprog(ctx, &ctx->FragmentProgram._Current, NULL);
       }
    }
+
+   if (ctx->VertexProgram._Current)
+      assert(ctx->VertexProgram._Current->Base.Parameters);
+   if (ctx->FragmentProgram._Current)
+      assert(ctx->FragmentProgram._Current->Base.Parameters);
+
 
    ctx->FragmentProgram._Active = ctx->FragmentProgram._Enabled;
    if (ctx->FragmentProgram._MaintainTexEnvProgram &&

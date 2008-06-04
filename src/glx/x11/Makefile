@@ -85,12 +85,12 @@ tags:
 	etags `find . -name \*.[ch]` `find $(TOP)/include`
 
 install: $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME)
-	make -C $(TOP)/src/mesa install-libgl
+	$(MAKE) -C $(TOP)/src/mesa install-libgl
 
 # Remove .o and backup files
 clean:
 	-rm -f $(TOP)/$(LIB_DIR)/libGL.so*
 	-rm -f *.o *~
-	-rm -f depend
+	-rm -f depend depend.bak
 
 -include depend

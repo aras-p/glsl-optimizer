@@ -24,6 +24,7 @@
  * This program tests GLX thread safety.
  * Command line options:
  *  -p                       Open a display connection for each thread
+ *  -l                       Enable application-side locking
  *  -n <num threads>         Number of threads to create (default is 2)
  *  -display <display name>  Specify X display (default is :0.0)
  *
@@ -405,6 +406,19 @@ clean_up(void)
 }
 
 
+static void
+usage(void)
+{
+   printf("glthreads: test of GL thread safety (any key = exit)\n");
+   printf("Usage:\n");
+   printf("  glthreads [options]\n");
+   printf("Options:\n");
+   printf("   -display DISPLAYNAME  Specify display string\n");
+   printf("   -n NUMTHREADS  Number of threads to create\n");
+   printf("   -p  Use a separate display connection for each thread\n");
+   printf("   -l  Use application-side locking\n");
+}
+
 
 int
 main(int argc, char *argv[])
@@ -416,9 +430,7 @@ main(int argc, char *argv[])
    Status threadStat;
 
    if (argc == 1) {
-      printf("glthreads: test of GL thread safety (any key = exit)\n");
-      printf("Usage:\n");
-      printf("  glthreads [-display dpyName] [-n numthreads]\n");
+      usage();
    }
    else {
       int i;
@@ -442,13 +454,14 @@ main(int argc, char *argv[])
             i++;
          }
          else {
-            fprintf(stderr, "glthreads: unexpected flag: %s\n", argv[i]);
+            usage();
+            exit(1);
          }
       }
    }
    
    if (Locking)
-      printf("glthreads: Using explict locks around Xlib calls.\n");
+      printf("glthreads: Using explicit locks around Xlib calls.\n");
    else
       printf("glthreads: No explict locking.\n");
 

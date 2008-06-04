@@ -53,7 +53,6 @@
 #include <drm.h>
 #include <drm_sarea.h>
 #include <xf86drm.h>
-#include <xf86mm.h>
 #include "GL/internal/glcore.h"
 #include "GL/internal/dri_interface.h"
 #include "GL/internal/dri_sarea.h"
@@ -61,7 +60,6 @@
 #define GLX_BAD_CONTEXT                    5
 
 typedef struct __DRIswapInfoRec        __DRIswapInfo;
-typedef struct __DRIutilversionRec2    __DRIutilversion2;
 
 /* Typedefs to avoid rewriting the world. */
 typedef struct __DRIscreenRec	__DRIscreenPrivate;
@@ -525,7 +523,9 @@ struct __DRIscreenRec {
 	/* Flag to indicate that this is a DRI2 screen.  Many of the above
 	 * fields will not be valid or initializaed in that case. */
 	int enabled;
+#ifdef TTM_API
 	drmBO sareaBO;
+#endif
 	void *sarea;
 	__DRIEventBuffer *buffer;
 	__DRILock *lock;
@@ -535,22 +535,6 @@ struct __DRIscreenRec {
     /* The lock actually in use, old sarea or DRI2 */
     drmLock *lock;
 };
-
-struct __DRIconfigRec {
-    __GLcontextModes modes;
-};
-
-/**
- * Used to store a version which includes a major range instead of a single
- * major version number.
- */
-struct __DRIutilversionRec2 {
-    int    major_min;    /** min allowed Major version number. */
-    int    major_max;    /** max allowed Major version number. */
-    int    minor;        /**< Minor version number. */
-    int    patch;        /**< Patch-level. */
-};
-
 
 extern void
 __driUtilMessage(const char *f, ...);
@@ -565,5 +549,8 @@ __driParseEvents(__DRIcontext *psp, __DRIdrawable *pdp);
 extern float
 driCalculateSwapUsage( __DRIdrawable *dPriv,
 		       int64_t last_swap_ust, int64_t current_ust );
+
+extern GLint
+driIntersectArea( drm_clip_rect_t rect1, drm_clip_rect_t rect2 );
 
 #endif /* _DRI_UTIL_H_ */

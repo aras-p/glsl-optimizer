@@ -79,7 +79,7 @@ new_subroutine(slang_emit_info *emitInfo, GLuint *id)
       _mesa_realloc(emitInfo->Subroutines,
                     n * sizeof(struct gl_program),
                     (n + 1) * sizeof(struct gl_program));
-   emitInfo->Subroutines[n] = _mesa_new_program(ctx, emitInfo->prog->Target, 0);
+   emitInfo->Subroutines[n] = ctx->Driver.NewProgram(ctx, emitInfo->prog->Target, 0);
    emitInfo->Subroutines[n]->Parameters = emitInfo->prog->Parameters;
    emitInfo->NumSubroutines++;
    *id = n;
@@ -922,11 +922,15 @@ emit_tex(slang_emit_info *emitInfo, slang_ir_node *n)
    assert(n->Children[0]->Store->Size >= TEXTURE_1D_INDEX);
    assert(n->Children[0]->Store->Size <= TEXTURE_RECT_INDEX);
 
-   inst->Sampler = n->Children[0]->Store->Index; /* i.e. uniform's index */
    inst->TexSrcTarget = n->Children[0]->Store->Size;
+#if 0
    inst->TexSrcUnit = 27; /* Dummy value; the TexSrcUnit will be computed at
                            * link time, using the sampler uniform's value.
                            */
+   inst->Sampler = n->Children[0]->Store->Index; /* i.e. uniform's index */
+#else
+   inst->TexSrcUnit = n->Children[0]->Store->Index; /* i.e. uniform's index */
+#endif
    return inst;
 }
 
@@ -1793,7 +1797,7 @@ _slang_resolve_subroutines(slang_emit_info *emitInfo)
                               sub->NumInstructions);
       /* delete subroutine code */
       sub->Parameters = NULL; /* prevent double-free */
-      _mesa_delete_program(ctx, sub);
+      _mesa_reference_program(ctx, &emitInfo->Subroutines[i], NULL);
    }
 
    /* free subroutine list */

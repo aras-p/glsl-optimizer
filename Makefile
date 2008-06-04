@@ -14,27 +14,25 @@ default: $(TOP)/configs/current
 
 
 doxygen:
-	(cd doxygen ; make) ; \
+	cd doxygen && $(MAKE)
 
 clean:
-	@for dir in $(SUBDIRS) ; do \
+	-@touch $(TOP)/configs/current
+	-@for dir in $(SUBDIRS) ; do \
 		if [ -d $$dir ] ; then \
 			(cd $$dir && $(MAKE) clean) ; \
 		fi \
 	done
+	-@test -s $(TOP)/configs/current || rm -f $(TOP)/configs/current
 
 
-realclean:
-	touch $(TOP)/configs/current
-	$(MAKE) clean
+realclean: clean
 	-rm -rf lib*
 	-rm -f $(TOP)/configs/current
 	-rm -f $(TOP)/configs/autoconf
 	-rm -rf autom4te.cache
-	-rm -f `find . -name \*.o`
-	-rm -f `find . -name \*.a`
-	-rm -f `find . -name \*.so`
-	-rm -f `find . -name depend`
+	-find . '(' -name '*.o' -o -name '*.a' -o -name '*.so' -o \
+	  -name depend -o -name depend.bak ')' -exec rm -f '{}' ';'
 
 
 
@@ -50,21 +48,20 @@ install:
 linux-directfb-install:
 	cd src/mesa/drivers/directfb && $(MAKE) install
 
-# Xserver GLcore module
-glcore:
-	cd src/mesa/drivers/xorg ; $(MAKE)
-
-glcore-install:
-	cd src/mesa/drivers/xorg ; $(MAKE) install
+.PHONY: default doxygen clean realclean install linux-directfb-install
 
 # If there's no current configuration file
 $(TOP)/configs/current:
 	@echo
 	@echo
 	@echo "Please choose a configuration from the following list:"
-	@ls -1 $(TOP)/configs | grep -v "current\|default\|CVS"
+	@ls -1 $(TOP)/configs | grep -v "current\|default\|CVS\|autoconf.*"
 	@echo
 	@echo "Then type 'make <config>' (ex: 'make linux-x86')"
+	@echo
+	@echo "Or, run './configure' then 'make'"
+	@echo "See './configure --help' for details"
+	@echo
 	@echo "(ignore the following error message)"
 	@exit 1
 
@@ -177,15 +174,16 @@ ultrix-gcc:
 
 # Rules for making release tarballs
 
-DIRECTORY = Mesa-7.1pre
-LIB_NAME = MesaLib-7.1pre
-DEMO_NAME = MesaDemos-7.1pre
-GLUT_NAME = MesaGLUT-7.1pre
+DIRECTORY = Mesa-7.1-rc1
+LIB_NAME = MesaLib-7.1-rc1
+DEMO_NAME = MesaDemos-7.1-rc1
+GLUT_NAME = MesaGLUT-7.1-rc1
 
 MAIN_FILES = \
 	$(DIRECTORY)/Makefile*						\
 	$(DIRECTORY)/configure						\
 	$(DIRECTORY)/configure.ac					\
+	$(DIRECTORY)/acinclude.m4					\
 	$(DIRECTORY)/aclocal.m4						\
 	$(DIRECTORY)/descrip.mms					\
 	$(DIRECTORY)/mms-config.					\
@@ -450,9 +448,9 @@ ACLOCAL = aclocal
 ACLOCAL_FLAGS =
 AUTOCONF = autoconf
 AC_FLAGS =
-aclocal.m4: configure.ac
+aclocal.m4: configure.ac acinclude.m4
 	$(ACLOCAL) $(ACLOCAL_FLAGS)
-configure: configure.ac aclocal.m4
+configure: configure.ac aclocal.m4 acinclude.m4
 	$(AUTOCONF) $(AC_FLAGS)
 
 rm_depend:
@@ -531,3 +529,6 @@ md5:
 	@-md5sum $(GLUT_NAME).tar.gz
 	@-md5sum $(GLUT_NAME).tar.bz2
 	@-md5sum $(GLUT_NAME).zip
+
+.PHONY: tarballs rm_depend lib_gz demo_gz glut_gz lib_bz2 demo_bz2 \
+	glut_bz2 lib_zip demo_zip glut_zip md5

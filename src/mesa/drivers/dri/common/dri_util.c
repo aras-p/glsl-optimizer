@@ -31,6 +31,7 @@
 
 #include "dri_util.h"
 #include "drm_sarea.h"
+#include "utils.h"
 
 #ifndef GLX_OML_sync_control
 typedef GLboolean ( * PFNGLXGETMSCRATEOMLPROC) (__DRIdrawable *drawable, int32_t *numerator, int32_t *denominator);
@@ -66,6 +67,18 @@ __driUtilMessage(const char *f, ...)
     }
 }
 
+GLint
+driIntersectArea( drm_clip_rect_t rect1, drm_clip_rect_t rect2 )
+{
+   if (rect2.x1 > rect1.x1) rect1.x1 = rect2.x1;
+   if (rect2.x2 < rect1.x2) rect1.x2 = rect2.x2;
+   if (rect2.y1 > rect1.y1) rect1.y1 = rect2.y1;
+   if (rect2.y2 < rect1.y2) rect1.y2 = rect2.y2;
+
+   if (rect1.x1 > rect1.x2 || rect1.y1 > rect1.y2) return 0;
+
+   return (rect1.x2 - rect1.x1) * (rect1.y2 - rect1.y1);
+}
 
 /*****************************************************************/
 /** \name Context (un)binding functions                          */
@@ -497,9 +510,9 @@ static void driCopySubBuffer(__DRIdrawable *dPriv,
     dPriv->driScreenPriv->DriverAPI.CopySubBuffer(dPriv, x, y, w, h);
 
     rect.x1 = x;
-    rect.y1 = y;
+    rect.y1 = dPriv->h - y - h;
     rect.x2 = x + w;
-    rect.y2 = y + w;
+    rect.y2 = rect.y1 + h;
     driReportDamage(dPriv, &rect, 1);
 }
 
@@ -758,8 +771,10 @@ static void driDestroyScreen(__DRIscreen *psp)
 	    (*psp->DriverAPI.DestroyScreen)(psp);
 
 	if (psp->dri2.enabled) {
+#ifdef TTM_API
 	    drmBOUnmap(psp->fd, &psp->dri2.sareaBO);
 	    drmBOUnreference(psp->fd, &psp->dri2.sareaBO);
+#endif
 	} else {
 	   (void)drmUnmap((drmAddress)psp->pSAREA, SAREA_MAX);
 	   (void)drmUnmap((drmAddress)psp->pFB, psp->fbSize);
@@ -891,6 +906,7 @@ dri2CreateNewScreen(int scrn, int fd, unsigned int sarea_handle,
 		    const __DRIextension **extensions,
 		    const __DRIconfig ***driver_configs, void *data)
 {
+#ifdef TTM_API
     static const __DRIextension *emptyExtensionList[] = { NULL };
     __DRIscreen *psp;
     unsigned int *p;
@@ -958,122 +974,14 @@ dri2CreateNewScreen(int scrn, int fd, unsigned int sarea_handle,
     psp->DriverAPI = driDriverAPI;
 
     return psp;
+#else
+    return NULL;
+#endif
 }
 
 static const __DRIextension **driGetExtensions(__DRIscreen *psp)
 {
     return psp->extensions;
-}
-
-#define __ATTRIB(attrib, field) \
-    { attrib, offsetof(__GLcontextModes, field) }
-
-static const struct { unsigned int attrib, offset; } attribMap[] = {
-    __ATTRIB(__DRI_ATTRIB_BUFFER_SIZE,			rgbBits),
-    __ATTRIB(__DRI_ATTRIB_LEVEL,			level),
-    __ATTRIB(__DRI_ATTRIB_RED_SIZE,			redBits),
-    __ATTRIB(__DRI_ATTRIB_GREEN_SIZE,			greenBits),
-    __ATTRIB(__DRI_ATTRIB_BLUE_SIZE,			blueBits),
-    __ATTRIB(__DRI_ATTRIB_ALPHA_SIZE,			alphaBits),
-    __ATTRIB(__DRI_ATTRIB_DEPTH_SIZE,			depthBits),
-    __ATTRIB(__DRI_ATTRIB_STENCIL_SIZE,			stencilBits),
-    __ATTRIB(__DRI_ATTRIB_ACCUM_RED_SIZE,		accumRedBits),
-    __ATTRIB(__DRI_ATTRIB_ACCUM_GREEN_SIZE,		accumGreenBits),
-    __ATTRIB(__DRI_ATTRIB_ACCUM_BLUE_SIZE,		accumBlueBits),
-    __ATTRIB(__DRI_ATTRIB_ACCUM_ALPHA_SIZE,		accumAlphaBits),
-    __ATTRIB(__DRI_ATTRIB_SAMPLE_BUFFERS,		sampleBuffers),
-    __ATTRIB(__DRI_ATTRIB_SAMPLES,			samples),
-    __ATTRIB(__DRI_ATTRIB_DOUBLE_BUFFER,		doubleBufferMode),
-    __ATTRIB(__DRI_ATTRIB_STEREO,			stereoMode),
-    __ATTRIB(__DRI_ATTRIB_AUX_BUFFERS,			numAuxBuffers),
-    __ATTRIB(__DRI_ATTRIB_TRANSPARENT_TYPE,		transparentPixel),
-    __ATTRIB(__DRI_ATTRIB_TRANSPARENT_INDEX_VALUE,	transparentPixel),
-    __ATTRIB(__DRI_ATTRIB_TRANSPARENT_RED_VALUE,	transparentRed),
-    __ATTRIB(__DRI_ATTRIB_TRANSPARENT_GREEN_VALUE,	transparentGreen),
-    __ATTRIB(__DRI_ATTRIB_TRANSPARENT_BLUE_VALUE,	transparentBlue),
-    __ATTRIB(__DRI_ATTRIB_TRANSPARENT_ALPHA_VALUE,	transparentAlpha),
-    __ATTRIB(__DRI_ATTRIB_FLOAT_MODE,			floatMode),
-    __ATTRIB(__DRI_ATTRIB_RED_MASK,			redMask),
-    __ATTRIB(__DRI_ATTRIB_GREEN_MASK,			greenMask),
-    __ATTRIB(__DRI_ATTRIB_BLUE_MASK,			blueMask),
-    __ATTRIB(__DRI_ATTRIB_ALPHA_MASK,			alphaMask),
-    __ATTRIB(__DRI_ATTRIB_MAX_PBUFFER_WIDTH,		maxPbufferWidth),
-    __ATTRIB(__DRI_ATTRIB_MAX_PBUFFER_HEIGHT,		maxPbufferHeight),
-    __ATTRIB(__DRI_ATTRIB_MAX_PBUFFER_PIXELS,		maxPbufferPixels),
-    __ATTRIB(__DRI_ATTRIB_OPTIMAL_PBUFFER_WIDTH,	optimalPbufferWidth),
-    __ATTRIB(__DRI_ATTRIB_OPTIMAL_PBUFFER_HEIGHT,	optimalPbufferHeight),
-    __ATTRIB(__DRI_ATTRIB_SWAP_METHOD,			swapMethod),
-    __ATTRIB(__DRI_ATTRIB_BIND_TO_TEXTURE_RGB,		bindToTextureRgb),
-    __ATTRIB(__DRI_ATTRIB_BIND_TO_TEXTURE_RGBA,		bindToTextureRgba),
-    __ATTRIB(__DRI_ATTRIB_BIND_TO_MIPMAP_TEXTURE,	bindToMipmapTexture),
-    __ATTRIB(__DRI_ATTRIB_BIND_TO_TEXTURE_TARGETS,	bindToTextureTargets),
-    __ATTRIB(__DRI_ATTRIB_YINVERTED,			yInverted),
-
-    /* The struct field doesn't matter here, these are handled by the
-     * switch in driGetConfigAttribIndex.  We need them in the array
-     * so the iterator includes them though.*/
-    __ATTRIB(__DRI_ATTRIB_RENDER_TYPE,			level),
-    __ATTRIB(__DRI_ATTRIB_CONFIG_CAVEAT,		level),
-    __ATTRIB(__DRI_ATTRIB_SWAP_METHOD,			level)
-};
-
-#define ARRAY_SIZE(a) (sizeof (a) / sizeof ((a)[0]))
-
-static int
-driGetConfigAttribIndex(const __DRIconfig *config,
-			unsigned int index, unsigned int *value)
-{
-    switch (attribMap[index].attrib) {
-    case __DRI_ATTRIB_RENDER_TYPE:
-	if (config->modes.rgbMode)
-	    *value = __DRI_ATTRIB_RGBA_BIT;
-	else
-	    *value = __DRI_ATTRIB_COLOR_INDEX_BIT;
-	break;
-    case __DRI_ATTRIB_CONFIG_CAVEAT:
-	if (config->modes.visualRating == GLX_NON_CONFORMANT_CONFIG)
-	    *value = __DRI_ATTRIB_NON_CONFORMANT_CONFIG;
-	else if (config->modes.visualRating == GLX_SLOW_CONFIG)
-	    *value = __DRI_ATTRIB_SLOW_BIT;
-	else
-	    *value = 0;
-	break;
-    case __DRI_ATTRIB_SWAP_METHOD:
-	break;
-
-    default:
-	*value = *(unsigned int *)
-	    ((char *) &config->modes + attribMap[index].offset);
-	
-	break;
-    }
-
-    return GL_TRUE;
-}
-
-static int
-driGetConfigAttrib(const __DRIconfig *config,
-		   unsigned int attrib, unsigned int *value)
-{
-    int i;
-
-    for (i = 0; i < ARRAY_SIZE(attribMap); i++)
-	if (attribMap[i].attrib == attrib)
-	    return driGetConfigAttribIndex(config, i, value);
-
-    return GL_FALSE;
-}
-
-static int
-driIndexConfigAttrib(const __DRIconfig *config, int index,
-		     unsigned int *attrib, unsigned int *value)
-{
-    if (index >= 0 && index < ARRAY_SIZE(attribMap)) {
-	*attrib = attribMap[index].attrib;
-	return driGetConfigAttribIndex(config, index, value);
-    }
-
-    return GL_FALSE;
 }
 
 const __DRIlegacyExtension driLegacyExtension = {
