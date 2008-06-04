@@ -2,7 +2,10 @@
  * Exercise EGL API functions
  */
 
-#include <GLES/egl.h>
+#define EGL_EGLEXT_PROTOTYPES
+
+#include <EGL/egl.h>
+#include <EGL/eglext.h>
 #include <GL/gl.h>
 #include <assert.h>
 #include <stdio.h>

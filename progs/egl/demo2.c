@@ -9,8 +9,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include <GLES/egl.h>
-#include <GLES/eglext.h>
+#include <EGL/egl.h>
+#include <EGL/eglext.h>
 #include <GLES/gl.h>
 
 /*#define FRONTBUFFER*/

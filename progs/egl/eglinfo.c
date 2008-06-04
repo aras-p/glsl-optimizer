@@ -25,7 +25,7 @@
  */
 
 
-#include <GLES/egl.h>
+#include <EGL/egl.h>
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>

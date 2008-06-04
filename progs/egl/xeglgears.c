@@ -40,7 +40,7 @@
 #include <X11/Xutil.h>
 #include <X11/keysym.h>
 #include <GL/gl.h>
-#include <GLES/egl.h>
+#include <EGL/egl.h>
 
 
 #define BENCHMARK

@@ -35,8 +35,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <GL/gl.h>
-#include <GLES/egl.h>
-#include <GLES/eglext.h>
+#include <EGL/egl.h>
+#include <EGL/eglext.h>
 
 #define MAX_CONFIGS 10
 #define MAX_MODES 100
