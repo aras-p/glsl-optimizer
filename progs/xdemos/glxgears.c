@@ -94,6 +94,7 @@ static GLfloat angle = 0.0;
 
 static GLboolean fullscreen = GL_FALSE;	/* Create a single fullscreen window */
 static GLboolean stereo = GL_FALSE;	/* Enable stereo.  */
+static GLboolean animate = GL_TRUE;	/* Animation */
 static GLfloat eyesep = 5.0;		/* Eye separation. */
 static GLfloat fix_point = 40.0;	/* Fixation point distance.  */
 static GLfloat left, right, asp;	/* Stereo frustum params.  */
@@ -541,6 +542,9 @@ handle_event(Display *dpy, Window win, XEvent *event)
                /* escape */
                return 1;
             }
+            else if (buffer[0] == 'a' || buffer[0] == 'A') {
+               animate = !animate;
+            }
          }
       }
    }
@@ -552,7 +556,7 @@ static void
 event_loop(Display *dpy, Window win)
 {
    while (1) {
-      while (XPending(dpy) > 0) {
+      while (!animate || XPending(dpy) > 0) {
          XEvent event;
          XNextEvent(dpy, &event);
          if (handle_event(dpy, win, &event))
