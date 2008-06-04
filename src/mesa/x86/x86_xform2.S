@@ -29,6 +29,7 @@
  * in there will break the build on some platforms.
  */
 
+#include "assyntax.h"
 #include "matypes.h"
 #include "xform_args.h"
 
