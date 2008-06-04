@@ -44,6 +44,9 @@ struct nv50_pc {
 	struct nv50_reg *immd;
 	float *immd_buf;
 	int immd_nr;
+
+	struct nv50_reg *temp_temp[4];
+	unsigned temp_temp_nr;
 };
 
 static void
@@ -109,6 +112,26 @@ free_temp(struct nv50_pc *pc, struct nv50_reg *r)
 }
 
 static struct nv50_reg *
+temp_temp(struct nv50_pc *pc)
+{
+	if (pc->temp_temp_nr >= 4)
+		assert(0);
+
+	pc->temp_temp[pc->temp_temp_nr] = alloc_temp(pc, NULL);
+	return pc->temp_temp[pc->temp_temp_nr++];
+}
+
+static void
+kill_temp_temp(struct nv50_pc *pc)
+{
+	int i;
+	
+	for (i = 0; i < pc->temp_temp_nr; i++)
+		free_temp(pc, pc->temp_temp[i]);
+	pc->temp_temp_nr = 0;
+}
+
+static struct nv50_reg *
 tgsi_dst(struct nv50_pc *pc, int c, const struct tgsi_full_dst_register *dst)
 {
 	switch (dst->DstRegister.File) {
@@ -168,6 +191,8 @@ emit(struct nv50_pc *pc, unsigned *inst)
                p->insns = realloc(p->insns, sizeof(unsigned) * p->insns_nr);
                memcpy(p->insns + (p->insns_nr - 1), inst, sizeof(unsigned));
        }
+
+       kill_temp_temp(pc);
 }
 
 static INLINE void set_long(struct nv50_pc *, unsigned *);
@@ -262,10 +287,23 @@ emit_interp(struct nv50_pc *pc, struct nv50_reg *dst,
 }
 
 static void
+set_cseg(struct nv50_pc *pc, struct nv50_reg *src, unsigned *inst)
+{
+	set_long(pc, inst);
+	if (src->type == P_IMMD) {
+		inst[1] |= (NV50_CB_PMISC << 22);
+	} else {
+		if (pc->p->type == NV50_PROG_VERTEX)
+			inst[1] |= (NV50_CB_PVP << 22);
+		else
+			inst[1] |= (NV50_CB_PFP << 22);
+	}
+}
+
+static void
 emit_mov(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src)
 {
 	unsigned inst[2] = { 0, 0 };
-	int i;
 
 	inst[0] |= 0x10000000;
 
@@ -280,10 +318,7 @@ emit_mov(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src)
 	} else
 	if (src->type == P_IMMD || src->type == P_CONST) {
 		set_long(pc, inst);
-		if (src->type == P_IMMD)
-			inst[1] |= (NV50_CB_PMISC << 22);
-		else
-			inst[1] |= (NV50_CB_PVP << 22);
+		set_cseg(pc, src, inst);
 		inst[0] |= (src->hw << 9);
 		inst[1] |= 0x20000000; /* src0 const? */
 	} else {
@@ -309,10 +344,176 @@ emit_mov(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src)
 }
 
 static boolean
+check_swap_src_0_1(struct nv50_pc *pc,
+		   struct nv50_reg **s0, struct nv50_reg **s1)
+{
+	struct nv50_reg *src0 = *s0, *src1 = *s1;
+
+	if (src0->type == P_CONST) {
+		if (src1->type != P_CONST) {
+			*s0 = src1;
+			*s1 = src0;
+			return TRUE;
+		}
+	} else
+	if (src1->type == P_ATTR) {
+		if (src0->type != P_ATTR) {
+			*s0 = src1;
+			*s1 = src0;
+			return TRUE;
+		}
+	}
+
+	return FALSE;
+}
+
+static void
+set_src_0(struct nv50_pc *pc, struct nv50_reg *src, unsigned *inst)
+{
+	if (src->type == P_ATTR) {
+		set_long(pc, inst);
+		inst[1] |= 0x00200000;
+	} else
+	if (src->type == P_CONST || src->type == P_IMMD) {
+		struct nv50_reg *temp = temp_temp(pc);
+
+		emit_mov(pc, temp, src);
+		src = temp;
+	}
+
+	alloc_reg(pc, src);
+	inst[0] |= (src->hw << 9);
+}
+
+static void
+set_src_1(struct nv50_pc *pc, struct nv50_reg *src, unsigned *inst)
+{
+	if (src->type == P_ATTR) {
+		struct nv50_reg *temp = temp_temp(pc);
+
+		emit_mov(pc, temp, src);
+		src = temp;
+	} else
+	if (src->type == P_CONST || src->type == P_IMMD) {
+		set_cseg(pc, src, inst);
+		inst[0] |= 0x00800000;
+	}
+
+	alloc_reg(pc, src);
+	inst[0] |= (src->hw << 16);
+}
+
+static void
+set_src_2(struct nv50_pc *pc, struct nv50_reg *src, unsigned *inst)
+{
+	set_long(pc, inst);
+
+	if (src->type == P_ATTR) {
+		struct nv50_reg *temp = temp_temp(pc);
+
+		emit_mov(pc, temp, src);
+		src = temp;
+	} else
+	if (src->type == P_CONST || src->type == P_IMMD) {
+		set_cseg(pc, src, inst);
+		inst[0] |= 0x01000000;
+	}
+
+	alloc_reg(pc, src);
+	inst[1] |= (src->hw << 14);
+}
+
+static void
+emit_mul(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src0,
+	 struct nv50_reg *src1)
+{
+	unsigned inst[2] = { 0, 0 };
+
+	inst[0] |= 0xc0000000;
+
+	check_swap_src_0_1(pc, &src0, &src1);
+	set_dst(pc, dst, inst);
+	set_src_0(pc, src0, inst);
+	set_src_1(pc, src1, inst);
+
+	emit(pc, inst);
+}
+
+static void
+emit_add(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src0,
+	 struct nv50_reg *src1)
+{
+	unsigned inst[2] = { 0, 0 };
+
+	inst[0] |= 0xb0000000;
+
+	check_swap_src_0_1(pc, &src0, &src1);
+	set_dst(pc, dst, inst);
+	set_src_0(pc, src0, inst);
+	set_src_2(pc, src1, inst);
+
+	emit(pc, inst);
+}
+
+static void
+emit_sub(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src0,
+	 struct nv50_reg *src1)
+{
+	unsigned inst[2] = { 0, 0 };
+
+	inst[0] |= 0xb0000000;
+
+	set_long(pc, inst);
+	if (check_swap_src_0_1(pc, &src0, &src1))
+		inst[1] |= 0x04000000;
+	else
+		inst[1] |= 0x08000000;
+
+	set_dst(pc, dst, inst);
+	set_src_0(pc, src0, inst);
+	set_src_2(pc, src1, inst);
+
+	emit(pc, inst);
+}
+
+static void
+emit_mad(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src0,
+	 struct nv50_reg *src1, struct nv50_reg *src2)
+{
+	unsigned inst[2] = { 0, 0 };
+
+	inst[0] |= 0xe0000000;
+
+	check_swap_src_0_1(pc, &src0, &src1);
+	set_dst(pc, dst, inst);
+	set_src_0(pc, src0, inst);
+	set_src_1(pc, src1, inst);
+	set_src_2(pc, src2, inst);
+
+	emit(pc, inst);
+}
+
+static void
+emit_flop(struct nv50_pc *pc, unsigned sub,
+	  struct nv50_reg *dst, struct nv50_reg *src)
+{
+	unsigned inst[2] = { 0, 0 };
+
+	set_long(pc, inst);
+	inst[0] |= 0x90000000;
+	inst[1] |= (sub << 29);
+
+	set_dst(pc, dst, inst);
+	set_src_0(pc, src, inst);
+
+	emit(pc, inst);
+}
+
+static boolean
 nv50_program_tx_insn(struct nv50_pc *pc, const union tgsi_full_token *tok)
 {
 	const struct tgsi_full_instruction *inst = &tok->FullInstruction;
-	struct nv50_reg *dst[4], *src[3][4];
+	struct nv50_reg *dst[4], *src[3][4], *temp;
 	unsigned mask;
 	int i, c;
 
@@ -333,9 +534,68 @@ nv50_program_tx_insn(struct nv50_pc *pc, const union tgsi_full_token *tok)
 	}
 
 	switch (inst->Instruction.Opcode) {
+	case TGSI_OPCODE_ADD:
+		for (c = 0; c < 4; c++)
+			emit_add(pc, dst[c], src[0][c], src[1][c]);
+		break;
+	case TGSI_OPCODE_COS:
+		for (c = 0; c < 4; c++)
+			emit_flop(pc, 5, dst[c], src[0][c]);
+		break;
+	case TGSI_OPCODE_DP3:
+		temp = alloc_temp(pc, NULL);
+		emit_mul(pc, temp, src[0][0], src[1][0]);
+		emit_mad(pc, temp, src[0][1], src[1][1], temp);
+		emit_mad(pc, temp, src[0][2], src[1][2], temp);
+		for (c = 0; c < 4; c++)
+			emit_mov(pc, dst[c], temp);
+		free_temp(pc, temp);
+		break;
+	case TGSI_OPCODE_DP4:
+		temp = alloc_temp(pc, NULL);
+		emit_mul(pc, temp, src[0][0], src[1][0]);
+		emit_mad(pc, temp, src[0][1], src[1][1], temp);
+		emit_mad(pc, temp, src[0][2], src[1][2], temp);
+		emit_mad(pc, temp, src[0][3], src[1][3], temp);
+		for (c = 0; c < 4; c++)
+			emit_mov(pc, dst[c], temp);
+		free_temp(pc, temp);
+		break;
+	case TGSI_OPCODE_EX2:
+		for (c = 0; c < 4; c++)
+			emit_flop(pc, 6, dst[c], src[0][c]);
+		break;
+	case TGSI_OPCODE_LG2:
+		for (c = 0; c < 4; c++)
+			emit_flop(pc, 3, dst[c], src[0][c]);
+		break;
+	case TGSI_OPCODE_MAD:
+		for (c = 0; c < 4; c++)
+			emit_mad(pc, dst[c], src[0][c], src[1][c], src[2][c]);
+		break;
 	case TGSI_OPCODE_MOV:
 		for (c = 0; c < 4; c++)
 			emit_mov(pc, dst[c], src[0][c]);
+		break;
+	case TGSI_OPCODE_MUL:
+		for (c = 0; c < 4; c++)
+			emit_mul(pc, dst[c], src[0][c], src[1][c]);
+		break;
+	case TGSI_OPCODE_RCP:
+		for (c = 0; c < 4; c++)
+			emit_flop(pc, 0, dst[c], src[0][c]);
+		break;
+	case TGSI_OPCODE_RSQ:
+		for (c = 0; c < 4; c++)
+			emit_flop(pc, 2, dst[c], src[0][c]);
+		break;
+	case TGSI_OPCODE_SIN:
+		for (c = 0; c < 4; c++)
+			emit_flop(pc, 4, dst[c], src[0][c]);
+		break;
+	case TGSI_OPCODE_SUB:
+		for (c = 0; c < 4; c++)
+			emit_sub(pc, dst[c], src[0][c], src[1][c]);
 		break;
 	case TGSI_OPCODE_END:
 		break;
@@ -601,8 +861,13 @@ nv50_program_validate(struct nv50_context *nv50, struct nv50_program *p)
 	 * NOT immd - otherwise it's fucked fucked fucked */
 	p->insns[p->insns_nr - 1] |= 0x00000001;
 
+	if (p->type == NV50_PROG_VERTEX) {
 	for (i = 0; i < p->insns_nr; i++)
-		NOUVEAU_ERR("%d 0x%08x\n", i, p->insns[i]);
+		NOUVEAU_ERR("VP0x%08x\n", p->insns[i]);
+	} else {
+	for (i = 0; i < p->insns_nr; i++)
+		NOUVEAU_ERR("FP0x%08x\n", p->insns[i]);
+	}
 
 	p->translated = TRUE;
 }
