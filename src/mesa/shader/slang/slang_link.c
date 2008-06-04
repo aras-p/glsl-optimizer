@@ -262,6 +262,9 @@ _slang_resolve_attributes(struct gl_shader_program *shProg,
                   return GL_FALSE;
                }
                _mesa_add_attribute(shProg->Attributes, name, size, attr);
+
+	       /* set the attribute as used */
+	       usedAttributes |= 1<<attr;
             }
 
             inst->SrcReg[j].Index = VERT_ATTRIB_GENERIC0 + attr;
