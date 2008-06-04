@@ -32,6 +32,7 @@
   */
 
 #ifdef USE_SSE_ASM
+#include "assyntax.h"
 #include "matypes.h"
 #include "norm_args.h"
 
