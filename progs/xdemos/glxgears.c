@@ -88,12 +88,18 @@ current_time(void)
 #endif
 
 
+/** Event handler results: */
+#define NOP 0
+#define EXIT 1
+#define DRAW 2
+
 static GLfloat view_rotx = 20.0, view_roty = 30.0, view_rotz = 0.0;
 static GLint gear1, gear2, gear3;
 static GLfloat angle = 0.0;
 
 static GLboolean fullscreen = GL_FALSE;	/* Create a single fullscreen window */
 static GLboolean stereo = GL_FALSE;	/* Enable stereo.  */
+static GLboolean animate = GL_TRUE;	/* Animation */
 static GLfloat eyesep = 5.0;		/* Eye separation. */
 static GLfloat fix_point = 40.0;	/* Fixation point distance.  */
 static GLfloat left, right, asp;	/* Stereo frustum params.  */
@@ -239,7 +245,7 @@ gear(GLfloat inner_radius, GLfloat outer_radius, GLfloat width,
 
 
 static void
-do_draw(void)
+draw(void)
 {
    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -269,8 +275,9 @@ do_draw(void)
    glPopMatrix();
 }
 
+
 static void
-draw(void)
+draw_gears(void)
 {
    if (stereo) {
       /* First left eye.  */
@@ -284,7 +291,7 @@ draw(void)
 
       glPushMatrix();
       glTranslated(+0.5 * eyesep, 0.0, 0.0);
-      do_draw();
+      draw();
       glPopMatrix();
 
       /* Then right eye.  */
@@ -298,10 +305,50 @@ draw(void)
 
       glPushMatrix();
       glTranslated(-0.5 * eyesep, 0.0, 0.0);
-      do_draw();
+      draw();
       glPopMatrix();
-   } else
-      do_draw();
+   }
+   else {
+      draw();
+   }
+}
+
+
+/** Draw single frame, do SwapBuffers, compute FPS */
+static void
+draw_frame(Display *dpy, Window win)
+{
+   static int frames = 0;
+   static double tRot0 = -1.0, tRate0 = -1.0;
+   double dt, t = current_time();
+
+   if (tRot0 < 0.0)
+      tRot0 = t;
+   dt = t - tRot0;
+   tRot0 = t;
+
+   if (animate) {
+      /* advance rotation for next frame */
+      angle += 70.0 * dt;  /* 70 degrees per second */
+      if (angle > 3600.0)
+         angle -= 3600.0;
+   }
+
+   draw_gears();
+   glXSwapBuffers(dpy, win);
+
+   frames++;
+   
+   if (tRate0 < 0.0)
+      tRate0 = t;
+   if (t - tRate0 >= 5.0) {
+      GLfloat seconds = t - tRate0;
+      GLfloat fps = frames / seconds;
+      printf("%d frames in %3.1f seconds = %6.3f FPS\n", frames, seconds,
+             fps);
+      tRate0 = t;
+      frames = 0;
+   }
 }
 
 
@@ -319,7 +366,8 @@ reshape(int width, int height)
 
       left = -5.0 * ((w - 0.5 * eyesep) / fix_point);
       right = 5.0 * ((w + 0.5 * eyesep) / fix_point);
-   } else {
+   }
+   else {
       GLfloat h = (GLfloat) height / (GLfloat) width;
 
       glMatrixMode(GL_PROJECTION);
@@ -430,10 +478,11 @@ make_window( Display *dpy, const char *name,
    attr.border_pixel = 0;
    attr.colormap = XCreateColormap( dpy, root, visinfo->visual, AllocNone);
    attr.event_mask = StructureNotifyMask | ExposureMask | KeyPressMask;
+   /* XXX this is a bad way to get a borderless window! */
    attr.override_redirect = fullscreen;
    mask = CWBackPixel | CWBorderPixel | CWColormap | CWEventMask | CWOverrideRedirect;
 
-   win = XCreateWindow( dpy, root, 0, 0, width, height,
+   win = XCreateWindow( dpy, root, x, y, width, height,
 		        0, visinfo->depth, InputOutput,
 		        visinfo->visual, mask, &attr );
 
@@ -463,79 +512,70 @@ make_window( Display *dpy, const char *name,
 }
 
 
+/**
+ * Handle one X event.
+ * \return NOP, EXIT or DRAW
+ */
+static int
+handle_event(Display *dpy, Window win, XEvent *event)
+{
+   switch (event->type) {
+   case Expose:
+      return DRAW;
+   case ConfigureNotify:
+      reshape(event->xconfigure.width, event->xconfigure.height);
+      break;
+   case KeyPress:
+      {
+         char buffer[10];
+         int r, code;
+         code = XLookupKeysym(&event->xkey, 0);
+         if (code == XK_Left) {
+            view_roty += 5.0;
+         }
+         else if (code == XK_Right) {
+            view_roty -= 5.0;
+         }
+         else if (code == XK_Up) {
+            view_rotx += 5.0;
+         }
+         else if (code == XK_Down) {
+            view_rotx -= 5.0;
+         }
+         else {
+            r = XLookupString(&event->xkey, buffer, sizeof(buffer),
+                              NULL, NULL);
+            if (buffer[0] == 27) {
+               /* escape */
+               return EXIT;
+            }
+            else if (buffer[0] == 'a' || buffer[0] == 'A') {
+               animate = !animate;
+            }
+         }
+         return DRAW;
+      }
+   }
+   return NOP;
+}
+
+
 static void
 event_loop(Display *dpy, Window win)
 {
    while (1) {
-      while (XPending(dpy) > 0) {
+      int op;
+      while (!animate || XPending(dpy) > 0) {
          XEvent event;
          XNextEvent(dpy, &event);
-         switch (event.type) {
-	 case Expose:
-            /* we'll redraw below */
-	    break;
-	 case ConfigureNotify:
-	    reshape(event.xconfigure.width, event.xconfigure.height);
-	    break;
-         case KeyPress:
-            {
-               char buffer[10];
-               int r, code;
-               code = XLookupKeysym(&event.xkey, 0);
-               if (code == XK_Left) {
-                  view_roty += 5.0;
-               }
-               else if (code == XK_Right) {
-                  view_roty -= 5.0;
-               }
-               else if (code == XK_Up) {
-                  view_rotx += 5.0;
-               }
-               else if (code == XK_Down) {
-                  view_rotx -= 5.0;
-               }
-               else {
-                  r = XLookupString(&event.xkey, buffer, sizeof(buffer),
-                                    NULL, NULL);
-                  if (buffer[0] == 27) {
-                     /* escape */
-                     return;
-                  }
-               }
-            }
-         }
+         op = handle_event(dpy, win, &event);
+         if (op == EXIT)
+            return;
+         else if (op == DRAW)
+            break;
       }
 
-      {
-         static int frames = 0;
-         static double tRot0 = -1.0, tRate0 = -1.0;
-         double dt, t = current_time();
-         if (tRot0 < 0.0)
-            tRot0 = t;
-         dt = t - tRot0;
-         tRot0 = t;
-
-         /* advance rotation for next frame */
-         angle += 70.0 * dt;  /* 70 degrees per second */
-         if (angle > 3600.0)
-             angle -= 3600.0;
-
-         draw();
-         glXSwapBuffers(dpy, win);
-
-         frames++;
-
-         if (tRate0 < 0.0)
-            tRate0 = t;
-         if (t - tRate0 >= 5.0) {
-            GLfloat seconds = t - tRate0;
-            GLfloat fps = frames / seconds;
-            printf("%d frames in %3.1f seconds = %6.3f FPS\n", frames, seconds,
-                   fps);
-            tRate0 = t;
-            frames = 0;
-         }
-      }
+      draw_frame(dpy, win);
    }
 }
 
@@ -548,13 +588,15 @@ usage(void)
    printf("  -stereo                 run in stereo mode\n");
    printf("  -fullscreen             run in fullscreen mode\n");
    printf("  -info                   display OpenGL renderer info\n");
+   printf("  -geometry WxH+X+Y       window geometry\n");
 }
  
 
 int
 main(int argc, char *argv[])
 {
-   const int winWidth = 300, winHeight = 300;
+   unsigned int winWidth = 300, winHeight = 300;
+   int x = 0, y = 0;
    Display *dpy;
    Window win;
    GLXContext ctx;
@@ -576,6 +618,10 @@ main(int argc, char *argv[])
       else if (strcmp(argv[i], "-fullscreen") == 0) {
          fullscreen = GL_TRUE;
       }
+      else if (i < argc-1 && strcmp(argv[i], "-geometry") == 0) {
+         XParseGeometry(argv[i+1], &x, &y, &winWidth, &winHeight);
+         i++;
+      }
       else {
          usage();
          return -1;
@@ -589,7 +635,7 @@ main(int argc, char *argv[])
       return -1;
    }
 
-   make_window(dpy, "glxgears", 0, 0, winWidth, winHeight, &win, &ctx);
+   make_window(dpy, "glxgears", x, y, winWidth, winHeight, &win, &ctx);
    XMapWindow(dpy, win);
    glXMakeCurrent(dpy, win, ctx);
 
