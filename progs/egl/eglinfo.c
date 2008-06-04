@@ -48,8 +48,8 @@ PrintConfigs(EGLDisplay d)
    eglGetConfigs(d, configs, MAX_CONFIGS, &numConfigs);
 
    printf("Configurations:\n");
-   printf("     bf lv d st colorbuffer dp st   supported\n");
-   printf("  id sz  l b ro  r  g  b  a th cl   surfaces  \n");
+   printf("     bf lv d st colorbuffer dp st  vis   supported\n");
+   printf("  id sz  l b ro  r  g  b  a th cl   id   surfaces  \n");
    printf("---------------------------------------------------\n");
    for (i = 0; i < numConfigs; i++) {
       EGLint id, size, level;
@@ -57,6 +57,7 @@ PrintConfigs(EGLDisplay d)
       EGLint depth, stencil;
       EGLint surfaces;
       EGLint doubleBuf = 1, stereo = 0;
+      EGLint vid;
       char surfString[100] = "";
 
       eglGetConfigAttrib(d, configs[i], EGL_CONFIG_ID, &id);
@@ -69,6 +70,7 @@ PrintConfigs(EGLDisplay d)
       eglGetConfigAttrib(d, configs[i], EGL_ALPHA_SIZE, &alpha);
       eglGetConfigAttrib(d, configs[i], EGL_DEPTH_SIZE, &depth);
       eglGetConfigAttrib(d, configs[i], EGL_STENCIL_SIZE, &stencil);
+      eglGetConfigAttrib(d, configs[i], EGL_NATIVE_VISUAL_ID, &vid);
       eglGetConfigAttrib(d, configs[i], EGL_SURFACE_TYPE, &surfaces);
 
       if (surfaces & EGL_WINDOW_BIT)
@@ -84,12 +86,12 @@ PrintConfigs(EGLDisplay d)
       if (strlen(surfString) > 0)
          surfString[strlen(surfString) - 1] = 0;
 
-      printf("0x%02x %2d %2d %c  %c %2d %2d %2d %2d %2d %2d   %-12s\n",
+      printf("0x%02x %2d %2d %c  %c %2d %2d %2d %2d %2d %2d 0x%02x   %-12s\n",
              id, size, level,
              doubleBuf ? 'y' : '.',
              stereo ? 'y' : '.',
              red, green, blue, alpha,
-             depth, stencil, surfString);
+             depth, stencil, vid, surfString);
    }
 }
 
@@ -139,8 +141,7 @@ int
 main(int argc, char *argv[])
 {
    int maj, min;
-   /*EGLDisplay d = eglGetDisplay(EGL_DEFAULT_DISPLAY);*/
-   EGLDisplay d = eglGetDisplay("!EGL_i915");
+   EGLDisplay d = eglGetDisplay(EGL_DEFAULT_DISPLAY);
 
    if (!eglInitialize(d, &maj, &min)) {
       printf("eglinfo: eglInitialize failed\n");
@@ -155,11 +156,8 @@ main(int argc, char *argv[])
 #endif
    printf("EGL extensions string:\n");
    printf("    %s\n", eglQueryString(d, EGL_EXTENSIONS));
-   printf("\n");
 
    PrintConfigs(d);
-
-   printf("\n");
 
    PrintModes(d);
 
