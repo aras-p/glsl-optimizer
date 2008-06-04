@@ -45,7 +45,7 @@ struct nv50_pc {
 	float *immd_buf;
 	int immd_nr;
 
-	struct nv50_reg *temp_temp[4];
+	struct nv50_reg *temp_temp[8];
 	unsigned temp_temp_nr;
 };
 
@@ -114,7 +114,7 @@ free_temp(struct nv50_pc *pc, struct nv50_reg *r)
 static struct nv50_reg *
 temp_temp(struct nv50_pc *pc)
 {
-	if (pc->temp_temp_nr >= 4)
+	if (pc->temp_temp_nr >= 8)
 		assert(0);
 
 	pc->temp_temp[pc->temp_temp_nr] = alloc_temp(pc, NULL);
@@ -191,8 +191,6 @@ emit(struct nv50_pc *pc, unsigned *inst)
                p->insns = realloc(p->insns, sizeof(unsigned) * p->insns_nr);
                memcpy(p->insns + (p->insns_nr - 1), inst, sizeof(unsigned));
        }
-
-       kill_temp_temp(pc);
 }
 
 static INLINE void set_long(struct nv50_pc *, unsigned *);
@@ -440,8 +438,8 @@ emit_mul(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src0,
 }
 
 static void
-emit_add(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src0,
-	 struct nv50_reg *src1)
+emit_add(struct nv50_pc *pc, struct nv50_reg *dst,
+	 struct nv50_reg *src0, struct nv50_reg *src1)
 {
 	unsigned inst[2] = { 0, 0 };
 
@@ -450,7 +448,28 @@ emit_add(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src0,
 	check_swap_src_0_1(pc, &src0, &src1);
 	set_dst(pc, dst, inst);
 	set_src_0(pc, src0, inst);
-	set_src_2(pc, src1, inst);
+	if (is_long(inst))
+		set_src_2(pc, src1, inst);
+	else
+		set_src_1(pc, src1, inst);
+
+	emit(pc, inst);
+}
+
+static void
+emit_minmax(struct nv50_pc *pc, unsigned sub, struct nv50_reg *dst,
+	    struct nv50_reg *src0, struct nv50_reg *src1)
+{
+	unsigned inst[2] = { 0, 0 };
+
+	set_long(pc, inst);
+	inst[0] |= 0xb0000000;
+	inst[1] |= (sub << 29);
+
+	check_swap_src_0_1(pc, &src0, &src1);
+	set_dst(pc, dst, inst);
+	set_src_0(pc, src0, inst);
+	set_src_1(pc, src1, inst);
 
 	emit(pc, inst);
 }
@@ -499,9 +518,11 @@ emit_flop(struct nv50_pc *pc, unsigned sub,
 {
 	unsigned inst[2] = { 0, 0 };
 
-	set_long(pc, inst);
 	inst[0] |= 0x90000000;
-	inst[1] |= (sub << 29);
+	if (sub) {
+		set_long(pc, inst);
+		inst[1] |= (sub << 29);
+	}
 
 	set_dst(pc, dst, inst);
 	set_src_0(pc, src, inst);
@@ -573,6 +594,14 @@ nv50_program_tx_insn(struct nv50_pc *pc, const union tgsi_full_token *tok)
 		for (c = 0; c < 4; c++)
 			emit_mad(pc, dst[c], src[0][c], src[1][c], src[2][c]);
 		break;
+	case TGSI_OPCODE_MAX:
+		for (c = 0; c < 4; c++)
+			emit_minmax(pc, 4, dst[c], src[0][c], src[1][c]);
+		break;
+	case TGSI_OPCODE_MIN:
+		for (c = 0; c < 4; c++)
+			emit_minmax(pc, 5, dst[c], src[0][c], src[1][c]);
+		break;
 	case TGSI_OPCODE_MOV:
 		for (c = 0; c < 4; c++)
 			emit_mov(pc, dst[c], src[0][c]);
@@ -604,6 +633,7 @@ nv50_program_tx_insn(struct nv50_pc *pc, const union tgsi_full_token *tok)
 		return FALSE;
 	}
 
+	kill_temp_temp(pc);
 	return TRUE;
 }
 
