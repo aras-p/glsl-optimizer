@@ -3,8 +3,8 @@
 
 #define EGL_EGLEXT_PROTOTYPES
 
-#include <GLES/egl.h>
-#include <GLES/eglext.h>
+#include <EGL/egl.h>
+#include <EGL/eglext.h>
 
 
 typedef struct _egl_api _EGLAPI;
