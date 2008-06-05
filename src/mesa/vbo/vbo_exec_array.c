@@ -30,6 +30,7 @@
 #include "main/state.h"
 #include "main/api_validate.h"
 #include "main/api_noop.h"
+#include "main/varray.h"
 #include "glapi/dispatch.h"
 
 #include "vbo_context.h"
@@ -399,4 +400,30 @@ void vbo_exec_array_init( struct vbo_exec_context *exec )
 void vbo_exec_array_destroy( struct vbo_exec_context *exec )
 {
    /* nothing to do */
+}
+
+
+/* This API entrypoint is not ordinarily used */
+void GLAPIENTRY
+_mesa_DrawArrays(GLenum mode, GLint first, GLsizei count)
+{
+   vbo_exec_DrawArrays(mode, first, count);
+}
+
+
+/* This API entrypoint is not ordinarily used */
+void GLAPIENTRY
+_mesa_DrawElements(GLenum mode, GLsizei count, GLenum type,
+                   const GLvoid *indices)
+{
+   vbo_exec_DrawElements(mode, count, type, indices);
+}
+
+
+/* This API entrypoint is not ordinarily used */
+void GLAPIENTRY
+_mesa_DrawRangeElements(GLenum mode, GLuint start, GLuint end, GLsizei count,
+                        GLenum type, const GLvoid *indices)
+{
+   vbo_exec_DrawRangeElements(mode, start, end, count, type, indices);
 }
