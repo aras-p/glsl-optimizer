@@ -23,11 +23,8 @@ GL_TINY = 0$(MESA_MAJOR)0$(MESA_MINOR)0$(MESA_TINY)
 	$(CC) -c $(INCLUDE_DIRS) $(CFLAGS) $< -o $@
 
 
-default: depend subdirs libmesa.a
+default: depend subdirs libmesa.a libglapi.a
 
-ifneq ($(DRIVER_DIRS),dri)
-default: libglapi.a
-endif
 
 
 ######################################################################
@@ -108,8 +105,21 @@ depend: $(ALL_SOURCES)
 
 
 subdirs:
-	@ (cd x86 ; $(MAKE))
-	@ (cd x86-64 ; $(MAKE))
+	@ if echo "$(ASM_FLAGS)" | grep -q USE_X86_ASM ; then \
+		(cd x86 && $(MAKE)) || exit 1 ; \
+	fi
+	@ if echo "$(ASM_FLAGS)" | grep -q USE_X86_64_ASM ; then \
+		(cd x86 && $(MAKE)) || exit 1 ; \
+		(cd x86-64 && $(MAKE)) || exit 1 ; \
+	fi
+
+pcedit = sed \
+	-e 's,@INSTALL_DIR@,$(INSTALL_DIR),' \
+	-e 's,@LIB_DIR@,$(LIB_DIR),' \
+	-e 's,@VERSION@,$(MESA_MAJOR).$(MESA_MINOR).$(MESA_TINY),'
+
+gl.pc: gl.pc.in
+	$(pcedit) $< > $@
 
 install: default
 	$(INSTALL) -d $(INSTALL_DIR)/include/GL
