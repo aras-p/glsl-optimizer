@@ -595,11 +595,22 @@ nv50_program_tx_insn(struct nv50_pc *pc, const union tgsi_full_token *tok)
 		free_temp(pc, temp);
 		break;
 	case TGSI_OPCODE_EX2:
+		temp = alloc_temp(pc, NULL);
 		for (c = 0; c < 4; c++) {
 			if (!(mask & (1 << c)))
 				continue;
-			emit_flop(pc, 6, dst[c], src[0][c]);
+			{
+				unsigned inst[2] = { 0, 0 };
+				inst[0] |= 0xb0000000;
+				set_dst(pc, temp, inst);
+				set_src_0(pc, src[0][c], inst);
+				set_long(pc, inst);
+				inst[1] |= (6 << 29) | 0x00004000;
+				emit(pc, inst);
+			}
+			emit_flop(pc, 6, dst[c], temp);
 		}
+		free_temp(pc, temp);
 		break;
 	case TGSI_OPCODE_LG2:
 		for (c = 0; c < 4; c++) {
