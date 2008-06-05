@@ -38,6 +38,7 @@ libmesa.a: $(SOLO_OBJECTS)
 		mimeset -f "$@" ; \
 	fi
 
+# Make archive of gl* API dispatcher functions (when not building DRI/GLX)
 libglapi.a: $(GLAPI_OBJECTS)
 	@ $(TOP)/bin/mklib -o glapi -static $(GLAPI_OBJECTS)
 
