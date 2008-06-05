@@ -52,6 +52,7 @@ opts.Add(ListOption('winsys', 'winsys drivers to build', default_winsys,
                      ['xlib', 'intel', 'gdi'])) 
 
 env = Environment(
+	MSVS_VERSION = '7.1',
 	options = opts, 
 	ENV = os.environ)
 Help(opts.GenerateHelpText(env))

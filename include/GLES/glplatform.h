@@ -45,9 +45,7 @@ extern "C" {
  * Definition of GL_API and GL_APIENTRY
  *-----------------------------------------------------------------------*/
 
-#if defined(AEE_SIMULATOR)
 #define __GL_EXPORTS
-#endif
 
 #ifdef _WIN32
 #   ifdef __GL_EXPORTS

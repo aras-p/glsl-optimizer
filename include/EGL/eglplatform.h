@@ -6,8 +6,10 @@
 #define __eglplatform_h_
 
 /* Windows calling convention boilerplate */
-#if defined(_WIN32) && !defined(APIENTRY) && !defined(__CYGWIN__) && !defined(__SCITECH_SNAP__)
-#define WIN32_LEAN_AND_MEAN 1
+#if (defined(WIN32) || defined(_WIN32_WCE))
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN		// Exclude rarely-used stuff from Windows headers
+#endif
 #include <windows.h>
 #endif
 
@@ -47,12 +49,26 @@
 	etc.
  */
 
+
+#if (defined(WIN32) || defined(_WIN32_WCE))
+
+/** BEGIN Added for Windows **/
+typedef long	int32_t;
+typedef HDC		NativeDisplayType;
+typedef HWND	NativeWindowType;
+typedef HBITMAP NativePixmapType;
+/** END Added for Windows **/
+
+#elif defined(__gnu_linux__)
+
 /** BEGIN Added for X (Mesa) **/
 #include <X11/Xlib.h>
 typedef Display *NativeDisplayType;
 typedef Window NativeWindowType;
 typedef Pixmap NativePixmapType;
 /** END Added for X (Mesa) **/
+
+#endif
 
 /* EGL 1.2 types, renamed for consistency in EGL 1.3 */
 typedef NativeDisplayType EGLNativeDisplayType;
