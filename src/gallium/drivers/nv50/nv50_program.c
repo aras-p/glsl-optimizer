@@ -12,6 +12,25 @@
 
 #define NV50_SU_MAX_TEMP 64
 
+/* ABS
+ * ARL
+ * DST - const(1.0)
+ * FLR
+ * FRC
+ * LIT
+ * POW
+ * SGE - cvt
+ * SLT - cvt
+ * SWZ
+ *
+ * MSB - Like MAD, but MUL+SUB
+ * 	- Fuck it off, introduce a way to negate args for ops that
+ * 	  support it.
+ *
+ * Need ability to specifiy driver IMMD values, like nv40 constant()
+ *
+ * Look into inlining IMMD for ops other than MOV
+ */
 struct nv50_reg {
 	enum {
 		P_TEMP,
@@ -513,6 +532,25 @@ emit_mad(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src0,
 }
 
 static void
+emit_msb(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src0,
+	 struct nv50_reg *src1, struct nv50_reg *src2)
+{
+	unsigned inst[2] = { 0, 0 };
+
+	inst[0] |= 0xe0000000;
+	set_long(pc, inst);
+	inst[1] |= 0x08000000; /* src0 * src1 - src2 */
+
+	check_swap_src_0_1(pc, &src0, &src1);
+	set_dst(pc, dst, inst);
+	set_src_0(pc, src0, inst);
+	set_src_1(pc, src1, inst);
+	set_src_2(pc, src2, inst);
+
+	emit(pc, inst);
+}
+
+static void
 emit_flop(struct nv50_pc *pc, unsigned sub,
 	  struct nv50_reg *dst, struct nv50_reg *src)
 {
@@ -587,6 +625,19 @@ nv50_program_tx_insn(struct nv50_pc *pc, const union tgsi_full_token *tok)
 		emit_mad(pc, temp, src[0][1], src[1][1], temp);
 		emit_mad(pc, temp, src[0][2], src[1][2], temp);
 		emit_mad(pc, temp, src[0][3], src[1][3], temp);
+		for (c = 0; c < 4; c++) {
+			if (!(mask & (1 << c)))
+				continue;
+			emit_mov(pc, dst[c], temp);
+		}
+		free_temp(pc, temp);
+		break;
+	case TGSI_OPCODE_DPH:
+		temp = alloc_temp(pc, NULL);
+		emit_mul(pc, temp, src[0][0], src[1][0]);
+		emit_mad(pc, temp, src[0][1], src[1][1], temp);
+		emit_mad(pc, temp, src[0][2], src[1][2], temp);
+		emit_add(pc, temp, src[1][3], temp);
 		for (c = 0; c < 4; c++) {
 			if (!(mask & (1 << c)))
 				continue;
@@ -681,6 +732,16 @@ nv50_program_tx_insn(struct nv50_pc *pc, const union tgsi_full_token *tok)
 				continue;
 			emit_sub(pc, dst[c], src[0][c], src[1][c]);
 		}
+		break;
+	case TGSI_OPCODE_XPD:
+		temp = alloc_temp(pc, NULL);
+		emit_mul(pc, temp, src[0][2], src[1][1]);
+		emit_msb(pc, dst[0], src[0][1], src[1][2], temp);
+		emit_mul(pc, temp, src[0][0], src[1][2]);
+		emit_msb(pc, dst[1], src[0][2], src[1][0], temp);
+		emit_mul(pc, temp, src[0][1], src[1][0]);
+		emit_msb(pc, dst[2], src[0][0], src[1][1], temp);
+		free_temp(pc, temp);
 		break;
 	case TGSI_OPCODE_END:
 		break;
