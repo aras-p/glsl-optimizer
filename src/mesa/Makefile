@@ -27,12 +27,12 @@ GL_TINY = 0$(MESA_MAJOR)0$(MESA_MINOR)0$(MESA_TINY)
 default: depend
 	@for driver in $(DRIVER_DIRS) ; do \
 	  case "$$driver" in \
-	    x11)      $(MAKE) stand-alone || exit 1 ;; \
-	    dri)      $(MAKE) linux-solo || exit 1 ;; \
-	    osmesa)   $(MAKE) osmesa-only || exit 1 ;; \
-	    beos)     $(MAKE) beos || exit 1 ;; \
-	    directfb) $(MAKE) directfb || exit 1 ;; \
-	    fbdev)    $(MAKE) fbdev || exit 1 ;; \
+	    x11)      $(MAKE) xlib-driver || exit 1 ;; \
+	    dri)      $(MAKE) dri-drivers || exit 1 ;; \
+	    osmesa)   $(MAKE) osmesa-driver || exit 1 ;; \
+	    beos)     $(MAKE) beos-driver || exit 1 ;; \
+	    directfb) $(MAKE) directfb-driver || exit 1 ;; \
+	    fbdev)    $(MAKE) fbdev-driver || exit 1 ;; \
 	    *) echo "$$driver is invalid in DRIVER_DIRS" >&2; exit 1;; \
 	  esac ; \
 	done
@@ -52,16 +52,9 @@ install: default
 
 
 ######################################################################
-# BeOS driver target
+# Helper libraries used by many drivers:
 
-beos: depend subdirs libmesa.a
-	cd drivers/beos && $(MAKE)
-
-
-######################################################################
-# Linux DRI drivers
-
-# Make archive of core object files
+# Make archive of core mesa object files
 libmesa.a: $(SOLO_OBJECTS)
 	@ $(TOP)/bin/mklib -o mesa -static $(SOLO_OBJECTS);
 	@if [ "${CONFIG_NAME}" = "beos" ] ; then \
@@ -73,27 +66,38 @@ libglapi.a: $(GLAPI_OBJECTS)
 	@ $(TOP)/bin/mklib -o glapi -static $(GLAPI_OBJECTS)
 
 
-linux-solo: depend subdirs libmesa.a
+
+######################################################################
+# BeOS driver target
+
+beos-driver: depend subdirs libmesa.a
+	cd drivers/beos && $(MAKE)
+
+
+######################################################################
+# DRI drivers
+
+dri-drivers: depend subdirs libmesa.a
 	cd drivers/dri && $(MAKE)
 
 
 #####################################################################
-# Stand-alone Mesa libGL, no built-in drivers (DirectFB)
+# DirectFB driver (libGL.so)
 
-libgl-core: $(CORE_OBJECTS)
+directfb-libgl: $(CORE_OBJECTS)
 	@ $(TOP)/bin/mklib -o $(GL_LIB) -linker '$(CC)' -ldflags '$(LDFLAGS)' \
 		-major $(MESA_MAJOR) -minor $(MESA_MINOR) -patch $(MESA_TINY) \
 		-install $(TOP)/$(LIB_DIR) $(MKLIB_OPTIONS) $(CORE_OBJECTS) \
 		$(GL_LIB_DEPS)
 
-directfb: depend subdirs libgl-core
+directfb-driver: depend subdirs directfb-libgl
 	cd drivers/directfb && $(MAKE)
 
 
 #####################################################################
-# fbdev Mesa driver (libGL.so)
+# fbdev driver (libGL.so)
 
-fbdev: $(CORE_OBJECTS) $(FBDEV_DRIVER_OBJECTS) $(COMMON_DRIVER_OBJECTS)
+fbdev-driver: $(CORE_OBJECTS) $(FBDEV_DRIVER_OBJECTS) $(COMMON_DRIVER_OBJECTS)
 	@ $(TOP)/bin/mklib -o $(GL_LIB) -linker '$(CC)' -ldflags '$(LDFLAGS)' \
 		-major $(MESA_MAJOR) -minor $(MESA_MINOR) -patch $(MESA_TINY) \
 		-install $(TOP)/$(LIB_DIR) $(MKLIB_OPTIONS) \
@@ -102,31 +106,19 @@ fbdev: $(CORE_OBJECTS) $(FBDEV_DRIVER_OBJECTS) $(COMMON_DRIVER_OBJECTS)
 
 
 ######################################################################
-# Stand-alone Mesa libGL
-STAND_ALONE_DRIVER_SOURCES = \
-	$(COMMON_DRIVER_SOURCES) \
-	$(X11_DRIVER_SOURCES)
+# Xlib driver (libGL.so)
 
-STAND_ALONE_DRIVER_OBJECTS = $(STAND_ALONE_DRIVER_SOURCES:.c=.o)
-
-STAND_ALONE_OBJECTS = \
-	$(CORE_OBJECTS) \
-	$(STAND_ALONE_DRIVER_OBJECTS)
+xlib-driver: depend subdirs libmesa.a libglapi.a
+	cd drivers/x11 && $(MAKE)
 
 
-stand-alone: depend subdirs libmesa.a \
-	$(TOP)/$(LIB_DIR)/$(GL_LIB_NAME)
+######################################################################
+# osmesa driver (libOSMesa.so)
 
-osmesa-only: depend subdirs libmesa.a libglapi.a
+osmesa-driver: depend subdirs libmesa.a libglapi.a
 	cd drivers/osmesa && $(MAKE)
 
 
-# Make the GL library
-$(TOP)/$(LIB_DIR)/$(GL_LIB_NAME): $(STAND_ALONE_OBJECTS)
-	@ $(TOP)/bin/mklib -o $(GL_LIB) -linker '$(CC)' -ldflags '$(LDFLAGS)' \
-		-major $(GL_MAJOR) -minor $(GL_MINOR) -patch $(GL_TINY) \
-		-install $(TOP)/$(LIB_DIR) \
-		$(MKLIB_OPTIONS) $(GL_LIB_DEPS) $(STAND_ALONE_OBJECTS)
 
 
 ######################################################################
