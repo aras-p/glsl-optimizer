@@ -457,8 +457,8 @@ _mesa_init_exec_table(struct _glapi_table *exec)
 
    /* 54. GL_EXT_point_parameters */
 #if _HAVE_FULL_GL
-   SET_PointParameterfEXT(exec, _mesa_PointParameterfEXT);
-   SET_PointParameterfvEXT(exec, _mesa_PointParameterfvEXT);
+   SET_PointParameterfEXT(exec, _mesa_PointParameterf);
+   SET_PointParameterfvEXT(exec, _mesa_PointParameterfv);
 #endif
 
    /* 97. GL_EXT_compiled_vertex_array */
@@ -571,8 +571,8 @@ _mesa_init_exec_table(struct _glapi_table *exec)
 
    /* 262. GL_NV_point_sprite */
 #if _HAVE_FULL_GL
-   SET_PointParameteriNV(exec, _mesa_PointParameteriNV);
-   SET_PointParameterivNV(exec, _mesa_PointParameterivNV);
+   SET_PointParameteriNV(exec, _mesa_PointParameteri);
+   SET_PointParameterivNV(exec, _mesa_PointParameteriv);
 #endif
 
    /* 268. GL_EXT_stencil_two_side */
