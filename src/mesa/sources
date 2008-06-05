@@ -241,33 +241,6 @@ SPARC_API =			\
 COMMON_DRIVER_SOURCES =			\
 	drivers/common/driverfuncs.c
 
-X11_DRIVER_SOURCES =		\
-	drivers/x11/glxapi.c	\
-	drivers/x11/fakeglx.c	\
-	drivers/x11/xfonts.c	\
-	drivers/x11/xm_api.c	\
-	drivers/x11/xm_buffer.c	\
-	drivers/x11/xm_dd.c	\
-	drivers/x11/xm_glide.c	\
-	drivers/x11/xm_line.c	\
-	drivers/x11/xm_span.c	\
-	drivers/x11/xm_tri.c
-
-OSMESA_DRIVER_SOURCES = \
-	drivers/osmesa/osmesa.c
-
-GLIDE_DRIVER_SOURCES =			\
-	drivers/glide/fxapi.c		\
-	drivers/glide/fxdd.c		\
-	drivers/glide/fxddspan.c	\
-	drivers/glide/fxddtex.c		\
-	drivers/glide/fxsetup.c		\
-	drivers/glide/fxtexman.c	\
-	drivers/glide/fxtris.c		\
-	drivers/glide/fxvb.c		\
-	drivers/glide/fxglidew.c	\
-	drivers/glide/fxg.c
-
 SVGA_DRIVER_SOURCES =			\
 	drivers/svga/svgamesa.c		\
 	drivers/svga/svgamesa8.c	\
@@ -287,9 +260,7 @@ ALL_SOURCES = \
 	$(SOLO_SOURCES)		\
 	$(ASM_SOURCES)		\
 	$(COMMON_DRIVER_SOURCES)\
-	$(X11_DRIVER_SOURCES)	\
-	$(FBDEV_DRIVER_SOURCES) \
-	$(OSMESA_DRIVER_SOURCES)
+	$(FBDEV_DRIVER_SOURCES)
 
 SOLO_SOURCES = \
 	$(MAIN_SOURCES)		\
@@ -318,8 +289,6 @@ GLAPI_OBJECTS = \
 	$(ASM_API:.S=.o)
 
 CORE_OBJECTS = $(SOLO_OBJECTS) $(GLAPI_OBJECTS)
-
-OSMESA_DRIVER_OBJECTS = $(OSMESA_DRIVER_SOURCES:.c=.o)
 
 COMMON_DRIVER_OBJECTS = $(COMMON_DRIVER_SOURCES:.c=.o)
 
