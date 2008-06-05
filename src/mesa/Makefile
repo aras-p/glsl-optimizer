@@ -81,6 +81,20 @@ dri-drivers: depend subdirs libmesa.a
 	cd drivers/dri && $(MAKE)
 
 
+######################################################################
+# Xlib driver (libGL.so)
+
+xlib-driver: depend subdirs libmesa.a libglapi.a
+	cd drivers/x11 && $(MAKE)
+
+
+######################################################################
+# osmesa driver (libOSMesa.so)
+
+osmesa-driver: depend subdirs libmesa.a libglapi.a
+	cd drivers/osmesa && $(MAKE)
+
+
 #####################################################################
 # DirectFB driver (libGL.so)
 
@@ -103,21 +117,6 @@ fbdev-driver: $(CORE_OBJECTS) $(FBDEV_DRIVER_OBJECTS) $(COMMON_DRIVER_OBJECTS)
 		-install $(TOP)/$(LIB_DIR) $(MKLIB_OPTIONS) \
 		$(CORE_OBJECTS) $(FBDEV_DRIVER_OBJECTS) \
 		$(COMMON_DRIVER_OBJECTS) $(GL_LIB_DEPS)
-
-
-######################################################################
-# Xlib driver (libGL.so)
-
-xlib-driver: depend subdirs libmesa.a libglapi.a
-	cd drivers/x11 && $(MAKE)
-
-
-######################################################################
-# osmesa driver (libOSMesa.so)
-
-osmesa-driver: depend subdirs libmesa.a libglapi.a
-	cd drivers/osmesa && $(MAKE)
-
 
 
 
@@ -184,6 +183,8 @@ clean:
 	-rm -f drivers/*/*.o
 	-@cd drivers/dri && $(MAKE) clean
 	-@cd drivers/xorg && $(MAKE) clean
+	-@cd drivers/x11 && $(MAKE) clean
+	-@cd drivers/osmesa && $(MAKE) clean
 	-@cd x86 && $(MAKE) clean
 	-@cd x86-64 && $(MAKE) clean
 
