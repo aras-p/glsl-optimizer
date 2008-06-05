@@ -15,6 +15,15 @@ GL_MINOR = 5
 GL_TINY = 0$(MESA_MAJOR)0$(MESA_MINOR)0$(MESA_TINY)
 
 
+HEADERS = \
+	glxapi.h \
+	glxheader.h \
+	realglx.h \
+	xfonts.h \
+	xmesaP.h \
+	xm_glide.h \
+	xm_image.h
+
 SOURCES = \
 	fakeglx.c \
 	glxapi.c \
@@ -55,5 +64,18 @@ $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME): $(OBJECTS) $(CORE_MESA)
 		$(MKLIB_OPTIONS) $(GL_LIB_DEPS) $(OBJECTS)
 
 
+
 clean:
 	-rm -f *.o *~
+	-rm -f depend depend.bak
+
+
+
+depend: $(SOURCES) $(HEADERS)
+	@ echo "running $(MKDEP)"
+	@ touch depend
+	@$(MKDEP) $(MKDEP_OPTIONS) $(DEFINES) $(INCLUDE_DIRS) $(SOURCES) $(HEADERS) \
+		> /dev/null 2>/dev/null
+
+
+-include depend
