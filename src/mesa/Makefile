@@ -41,7 +41,7 @@ libglapi.a: $(GLAPI_OBJECTS)
 
 
 ######################################################################
-# Stand-alone Mesa libGL and libOSMesa
+# Stand-alone Mesa libGL
 STAND_ALONE_DRIVER_SOURCES = \
 	$(COMMON_DRIVER_SOURCES) \
 	$(X11_DRIVER_SOURCES)
@@ -52,17 +52,12 @@ STAND_ALONE_OBJECTS = \
 	$(CORE_OBJECTS) \
 	$(STAND_ALONE_DRIVER_OBJECTS)
 
-# For libOSMesa16 or libOSMesa32 we link _all_ the objects into the library,
-# not just the osmesa.o object (i.e. we don't have a libGL).
-OSMESA16_OBJECTS = \
-	$(CORE_OBJECTS) \
-	$(COMMON_DRIVER_OBJECTS) \
-	$(OSMESA_DRIVER_OBJECTS)
 
+stand-alone: depend subdirs $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME)
 
-stand-alone: depend subdirs $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME) $(TOP)/$(LIB_DIR)/$(OSMESA_LIB_NAME)
+osmesa-only: depend subdirs libmesa.a libglapi.a
+	cd drivers/osmesa && $(MAKE)
 
-osmesa-only: depend subdirs $(TOP)/$(LIB_DIR)/$(OSMESA_LIB_NAME)
 
 # Make the GL library
 $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME): $(STAND_ALONE_OBJECTS) $(PIPE_LIB) $(CELL_LIB) $(CELL_LIB_SPU)
@@ -72,25 +67,6 @@ $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME): $(STAND_ALONE_OBJECTS) $(PIPE_LIB) $(CELL_LIB)
 		-install $(TOP)/$(LIB_DIR) \
 		$(MKLIB_OPTIONS) $(STAND_ALONE_OBJECTS) \
 		$(PIPE_LIB) $(CELL_LIB) $(CELL_LIB_SPU) $(GL_LIB_DEPS)
-
-# Make the OSMesa library
-$(TOP)/$(LIB_DIR)/$(OSMESA_LIB_NAME): $(OSMESA_DRIVER_OBJECTS) \
-		$(OSMESA16_OBJECTS) $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME)
-	@ if [ "${DRIVER_DIRS}" = "osmesa" ] ; then \
-		$(TOP)/bin/mklib -o $(OSMESA_LIB) \
-			-linker "$(CC)" \
-			-major $(MESA_MAJOR) \
-			-minor $(MESA_MINOR) -patch $(MESA_TINY) \
-			-install $(TOP)/$(LIB_DIR) $(MKLIB_OPTIONS) \
-			$(OSMESA_LIB_DEPS) $(OSMESA16_OBJECTS) ; \
-	else \
-		$(TOP)/bin/mklib -o $(OSMESA_LIB) \
-			-linker "$(CC)" \
-			-major $(MESA_MAJOR) \
-			-minor $(MESA_MINOR) -patch $(GL_TINY) \
-			-install $(TOP)/$(LIB_DIR) $(MKLIB_OPTIONS) \
-			$(OSMESA_LIB_DEPS) $(OSMESA_DRIVER_OBJECTS) ; \
-	fi
 
 
 ######################################################################
