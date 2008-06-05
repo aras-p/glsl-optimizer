@@ -96,6 +96,13 @@ osmesa-driver: depend subdirs libmesa.a libglapi.a
 
 
 #####################################################################
+# fbdev driver (libGL.so)
+
+fbdev-driver: depend subdirs libmesa.a libglapi.a
+	cd drivers/fbdev && $(MAKE)
+
+
+#####################################################################
 # DirectFB driver (libGL.so)
 
 directfb-libgl: $(CORE_OBJECTS)
@@ -106,18 +113,6 @@ directfb-libgl: $(CORE_OBJECTS)
 
 directfb-driver: depend subdirs directfb-libgl
 	cd drivers/directfb && $(MAKE)
-
-
-#####################################################################
-# fbdev driver (libGL.so)
-
-fbdev-driver: $(CORE_OBJECTS) $(FBDEV_DRIVER_OBJECTS) $(COMMON_DRIVER_OBJECTS)
-	@ $(TOP)/bin/mklib -o $(GL_LIB) -linker '$(CC)' -ldflags '$(LDFLAGS)' \
-		-major $(MESA_MAJOR) -minor $(MESA_MINOR) -patch $(MESA_TINY) \
-		-install $(TOP)/$(LIB_DIR) $(MKLIB_OPTIONS) \
-		$(CORE_OBJECTS) $(FBDEV_DRIVER_OBJECTS) \
-		$(COMMON_DRIVER_OBJECTS) $(GL_LIB_DEPS)
-
 
 
 ######################################################################
