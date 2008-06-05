@@ -68,6 +68,11 @@ libmesa.a: $(SOLO_OBJECTS)
 		mimeset -f "$@" ; \
 	fi
 
+# Make archive of gl* API dispatcher functions only
+libglapi.a: $(GLAPI_OBJECTS)
+	@ $(TOP)/bin/mklib -o glapi -static $(GLAPI_OBJECTS)
+
+
 linux-solo: depend subdirs libmesa.a
 	cd drivers/dri && $(MAKE)
 
@@ -97,7 +102,7 @@ fbdev: $(CORE_OBJECTS) $(FBDEV_DRIVER_OBJECTS) $(COMMON_DRIVER_OBJECTS)
 
 
 ######################################################################
-# Stand-alone Mesa libGL and libOSMesa
+# Stand-alone Mesa libGL
 STAND_ALONE_DRIVER_SOURCES = \
 	$(COMMON_DRIVER_SOURCES) \
 	$(X11_DRIVER_SOURCES)
@@ -108,19 +113,13 @@ STAND_ALONE_OBJECTS = \
 	$(CORE_OBJECTS) \
 	$(STAND_ALONE_DRIVER_OBJECTS)
 
-# For libOSMesa16 or libOSMesa32 we link _all_ the objects into the library,
-# not just the osmesa.o object (i.e. we don't have a libGL).
-OSMESA16_OBJECTS = \
-	$(CORE_OBJECTS) \
-	$(COMMON_DRIVER_OBJECTS) \
-	$(OSMESA_DRIVER_OBJECTS)
-
 
 stand-alone: depend subdirs libmesa.a \
 	$(TOP)/$(LIB_DIR)/$(GL_LIB_NAME)
 
-osmesa-only: depend subdirs \
-	$(TOP)/$(LIB_DIR)/$(OSMESA_LIB_NAME)
+osmesa-only: depend subdirs libmesa.a libglapi.a
+	cd drivers/osmesa && $(MAKE)
+
 
 # Make the GL library
 $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME): $(STAND_ALONE_OBJECTS)
@@ -128,22 +127,6 @@ $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME): $(STAND_ALONE_OBJECTS)
 		-major $(GL_MAJOR) -minor $(GL_MINOR) -patch $(GL_TINY) \
 		-install $(TOP)/$(LIB_DIR) \
 		$(MKLIB_OPTIONS) $(GL_LIB_DEPS) $(STAND_ALONE_OBJECTS)
-
-# Make the OSMesa library
-$(TOP)/$(LIB_DIR)/$(OSMESA_LIB_NAME): $(OSMESA_DRIVER_OBJECTS) $(OSMESA16_OBJECTS)
-	@ if [ "${DRIVER_DIRS}" = "osmesa" ] ; then \
-		$(TOP)/bin/mklib -o $(OSMESA_LIB) -linker '$(CC)' \
-			-ldflags '$(LDFLAGS)' -major $(MESA_MAJOR) \
-			-minor $(MESA_MINOR) -patch $(MESA_TINY) \
-			-install $(TOP)/$(LIB_DIR) $(MKLIB_OPTIONS) \
-			$(OSMESA_LIB_DEPS) $(OSMESA16_OBJECTS) ; \
-	else \
-		$(TOP)/bin/mklib -o $(OSMESA_LIB) -linker '$(CC)' \
-			-ldflags '$(LDFLAGS)' -major $(MESA_MAJOR) \
-			-minor $(MESA_MINOR) -patch $(GL_TINY) \
-			-install $(TOP)/$(LIB_DIR) $(MKLIB_OPTIONS) \
-			$(OSMESA_LIB_DEPS) $(OSMESA_DRIVER_OBJECTS) ; \
-	fi
 
 
 ######################################################################
@@ -205,7 +188,7 @@ tags:
 clean:
 	-rm -f */*.o
 	-rm -f */*/*.o
-	-rm -f depend depend.bak libmesa.a
+	-rm -f depend depend.bak libmesa.a libglapi.a
 	-rm -f drivers/*/*.o
 	-@cd drivers/dri && $(MAKE) clean
 	-@cd drivers/xorg && $(MAKE) clean
