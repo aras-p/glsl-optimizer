@@ -556,20 +556,29 @@ nv50_program_tx_insn(struct nv50_pc *pc, const union tgsi_full_token *tok)
 
 	switch (inst->Instruction.Opcode) {
 	case TGSI_OPCODE_ADD:
-		for (c = 0; c < 4; c++)
+		for (c = 0; c < 4; c++) {
+			if (!(mask & (1 << c)))
+				continue;
 			emit_add(pc, dst[c], src[0][c], src[1][c]);
+		}
 		break;
 	case TGSI_OPCODE_COS:
-		for (c = 0; c < 4; c++)
+		for (c = 0; c < 4; c++) {
+			if (!(mask & (1 << c)))
+				continue;
 			emit_flop(pc, 5, dst[c], src[0][c]);
+		}
 		break;
 	case TGSI_OPCODE_DP3:
 		temp = alloc_temp(pc, NULL);
 		emit_mul(pc, temp, src[0][0], src[1][0]);
 		emit_mad(pc, temp, src[0][1], src[1][1], temp);
 		emit_mad(pc, temp, src[0][2], src[1][2], temp);
-		for (c = 0; c < 4; c++)
+		for (c = 0; c < 4; c++) {
+			if (!(mask & (1 << c)))
+				continue;
 			emit_mov(pc, dst[c], temp);
+		}
 		free_temp(pc, temp);
 		break;
 	case TGSI_OPCODE_DP4:
@@ -578,53 +587,89 @@ nv50_program_tx_insn(struct nv50_pc *pc, const union tgsi_full_token *tok)
 		emit_mad(pc, temp, src[0][1], src[1][1], temp);
 		emit_mad(pc, temp, src[0][2], src[1][2], temp);
 		emit_mad(pc, temp, src[0][3], src[1][3], temp);
-		for (c = 0; c < 4; c++)
+		for (c = 0; c < 4; c++) {
+			if (!(mask & (1 << c)))
+				continue;
 			emit_mov(pc, dst[c], temp);
+		}
 		free_temp(pc, temp);
 		break;
 	case TGSI_OPCODE_EX2:
-		for (c = 0; c < 4; c++)
+		for (c = 0; c < 4; c++) {
+			if (!(mask & (1 << c)))
+				continue;
 			emit_flop(pc, 6, dst[c], src[0][c]);
+		}
 		break;
 	case TGSI_OPCODE_LG2:
-		for (c = 0; c < 4; c++)
+		for (c = 0; c < 4; c++) {
+			if (!(mask & (1 << c)))
+				continue;
 			emit_flop(pc, 3, dst[c], src[0][c]);
+		}
 		break;
 	case TGSI_OPCODE_MAD:
-		for (c = 0; c < 4; c++)
+		for (c = 0; c < 4; c++) {
+			if (!(mask & (1 << c)))
+				continue;
 			emit_mad(pc, dst[c], src[0][c], src[1][c], src[2][c]);
+		}
 		break;
 	case TGSI_OPCODE_MAX:
-		for (c = 0; c < 4; c++)
+		for (c = 0; c < 4; c++) {
+			if (!(mask & (1 << c)))
+				continue;
 			emit_minmax(pc, 4, dst[c], src[0][c], src[1][c]);
+		}
 		break;
 	case TGSI_OPCODE_MIN:
-		for (c = 0; c < 4; c++)
+		for (c = 0; c < 4; c++) {
+			if (!(mask & (1 << c)))
+				continue;
 			emit_minmax(pc, 5, dst[c], src[0][c], src[1][c]);
+		}
 		break;
 	case TGSI_OPCODE_MOV:
-		for (c = 0; c < 4; c++)
+		for (c = 0; c < 4; c++) {
+			if (!(mask & (1 << c)))
+				continue;
 			emit_mov(pc, dst[c], src[0][c]);
+		}
 		break;
 	case TGSI_OPCODE_MUL:
-		for (c = 0; c < 4; c++)
+		for (c = 0; c < 4; c++) {
+			if (!(mask & (1 << c)))
+				continue;
 			emit_mul(pc, dst[c], src[0][c], src[1][c]);
+		}
 		break;
 	case TGSI_OPCODE_RCP:
-		for (c = 0; c < 4; c++)
+		for (c = 0; c < 4; c++) {
+			if (!(mask & (1 << c)))
+				continue;
 			emit_flop(pc, 0, dst[c], src[0][c]);
+		}
 		break;
 	case TGSI_OPCODE_RSQ:
-		for (c = 0; c < 4; c++)
+		for (c = 0; c < 4; c++) {
+			if (!(mask & (1 << c)))
+				continue;
 			emit_flop(pc, 2, dst[c], src[0][c]);
+		}
 		break;
 	case TGSI_OPCODE_SIN:
-		for (c = 0; c < 4; c++)
+		for (c = 0; c < 4; c++) {
+			if (!(mask & (1 << c)))
+				continue;
 			emit_flop(pc, 4, dst[c], src[0][c]);
+		}
 		break;
 	case TGSI_OPCODE_SUB:
-		for (c = 0; c < 4; c++)
+		for (c = 0; c < 4; c++) {
+			if (!(mask & (1 << c)))
+				continue;
 			emit_sub(pc, dst[c], src[0][c], src[1][c]);
+		}
 		break;
 	case TGSI_OPCODE_END:
 		break;
