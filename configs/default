@@ -60,7 +60,7 @@ GLW_SOURCES = GLwDrawA.c
 
 # Directories to build
 LIB_DIR = lib
-SRC_DIRS = gallium mesa gallium/winsys glu glut/glx glw
+SRC_DIRS = gallium mesa egl gallium/winsys glu glut/glx glw
 GLU_DIRS = sgi
 DRIVER_DIRS = 
 # Which subdirs under $(TOP)/progs/ to enter:
@@ -72,7 +72,7 @@ GALLIUM_AUXILIARY_DIRS = draw cso_cache pipebuffer tgsi sct translate rtasm util
 GALLIUM_AUXILIARIES = $(foreach DIR,$(GALLIUM_AUXILIARY_DIRS),$(TOP)/src/gallium/auxiliary/$(DIR)/lib$(DIR).a)
 GALLIUM_DRIVER_DIRS = softpipe i915simple i965simple failover
 GALLIUM_DRIVERS = $(foreach DIR,$(GALLIUM_DRIVER_DIRS),$(TOP)/src/gallium/drivers/$(DIR)/lib$(DIR).a)
-GALLIUM_WINSYS_DIRS = xlib
+GALLIUM_WINSYS_DIRS = xlib egl_xlib
 
 
 # Library/program dependencies
