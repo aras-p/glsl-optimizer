@@ -28,45 +28,67 @@ default: depend subdirs libmesa.a libglapi.a
 
 
 ######################################################################
-# Make archive of core object files
+# Helper libraries used by many drivers:
+
+# Make archive of core mesa object files
 libmesa.a: $(SOLO_OBJECTS)
 	@ $(TOP)/bin/mklib -o mesa -static $(SOLO_OBJECTS);
 	@if [ "${CONFIG_NAME}" = "beos" ] ; then \
 		mimeset -f "$@" ; \
 	fi
 
-# Make archive of gl* API dispatcher functions (when not building DRI/GLX)
+# Make archive of gl* API dispatcher functions only
 libglapi.a: $(GLAPI_OBJECTS)
 	@ $(TOP)/bin/mklib -o glapi -static $(GLAPI_OBJECTS)
 
 
+
 ######################################################################
-# Stand-alone Mesa libGL
-STAND_ALONE_DRIVER_SOURCES = \
-	$(COMMON_DRIVER_SOURCES) \
-	$(X11_DRIVER_SOURCES)
+# BeOS driver target
 
-STAND_ALONE_DRIVER_OBJECTS = $(STAND_ALONE_DRIVER_SOURCES:.c=.o)
-
-STAND_ALONE_OBJECTS = \
-	$(CORE_OBJECTS) \
-	$(STAND_ALONE_DRIVER_OBJECTS)
+beos-driver: depend subdirs libmesa.a
+	cd drivers/beos && $(MAKE)
 
 
-stand-alone: depend subdirs $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME)
+######################################################################
+# DRI drivers
 
-osmesa-only: depend subdirs libmesa.a libglapi.a
+dri-drivers: depend subdirs libmesa.a
+	cd drivers/dri && $(MAKE)
+
+
+######################################################################
+# Xlib driver (libGL.so)
+
+xlib-driver: depend subdirs libmesa.a libglapi.a
+	cd drivers/x11 && $(MAKE)
+
+
+######################################################################
+# osmesa driver (libOSMesa.so)
+
+osmesa-driver: depend subdirs libmesa.a libglapi.a
 	cd drivers/osmesa && $(MAKE)
 
 
-# Make the GL library
-$(TOP)/$(LIB_DIR)/$(GL_LIB_NAME): $(STAND_ALONE_OBJECTS) $(PIPE_LIB) $(CELL_LIB) $(CELL_LIB_SPU)
-	@ $(TOP)/bin/mklib -o $(GL_LIB) \
-		-linker "$(CC)" \
-		-major $(GL_MAJOR) -minor $(GL_MINOR) -patch $(GL_TINY) \
-		-install $(TOP)/$(LIB_DIR) \
-		$(MKLIB_OPTIONS) $(STAND_ALONE_OBJECTS) \
-		$(PIPE_LIB) $(CELL_LIB) $(CELL_LIB_SPU) $(GL_LIB_DEPS)
+#####################################################################
+# fbdev driver (libGL.so)
+
+fbdev-driver: depend subdirs libmesa.a libglapi.a
+	cd drivers/fbdev && $(MAKE)
+
+
+#####################################################################
+# DirectFB driver (libGL.so)
+
+directfb-libgl: $(CORE_OBJECTS)
+	@ $(TOP)/bin/mklib -o $(GL_LIB) -linker '$(CC)' -ldflags '$(LDFLAGS)' \
+		-major $(MESA_MAJOR) -minor $(MESA_MINOR) -patch $(MESA_TINY) \
+		-install $(TOP)/$(LIB_DIR) $(MKLIB_OPTIONS) $(CORE_OBJECTS) \
+		$(GL_LIB_DEPS)
+
+directfb-driver: depend subdirs directfb-libgl
+	cd drivers/directfb && $(MAKE)
 
 
 ######################################################################
