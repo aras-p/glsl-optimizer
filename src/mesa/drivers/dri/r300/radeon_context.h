@@ -53,16 +53,6 @@ struct radeon_context;
 typedef struct radeon_context radeonContextRec;
 typedef struct radeon_context *radeonContextPtr;
 
-#define TEX_0   0x1
-#define TEX_1   0x2
-#define TEX_2	0x4
-#define TEX_3	0x8
-#define TEX_4	0x10
-#define TEX_5	0x20
-#define TEX_6	0x40
-#define TEX_7	0x80
-#define TEX_ALL 0xff
-
 /* Rasterizing fallbacks */
 /* See correponding strings in r200_swtcl.c */
 #define RADEON_FALLBACK_TEXTURE		0x0001

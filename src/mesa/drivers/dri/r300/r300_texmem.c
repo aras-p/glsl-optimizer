@@ -534,10 +534,6 @@ int r300UploadTexImages(r300ContextPtr rmesa, r300TexObjPtr t, GLuint face)
 			/* hope it's safe to add that here... */
 			t->offset |= t->tile_bits;
 		}
-
-		/* Mark this texobj as dirty on all units:
-		 */
-		t->dirty_state = TEX_ALL;
 	}
 
 	/* Let the world know we've used this memory recently.

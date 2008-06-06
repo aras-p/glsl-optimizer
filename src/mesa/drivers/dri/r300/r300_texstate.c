@@ -428,10 +428,6 @@ static void r300SetTexImages(r300ContextPtr rmesa,
 	    if (tObj->Image[0][t->base.firstLevel]->Height > 2048)
 		t->pitch_reg |= R500_TXHEIGHT_BIT11;
 	}
-
-	t->dirty_state = TEX_ALL;
-
-	/* FYI: r300UploadTexImages( rmesa, t ) used to be called here */
 }
 
 /* ================================================================
@@ -568,7 +564,6 @@ static GLboolean r300UpdateTexture(GLcontext * ctx, int unit)
 
 		rmesa->state.texture.unit[unit].texobj = t;
 		t->base.bound |= (1 << unit);
-		t->dirty_state |= 1 << unit;
 		driUpdateTextureLRU((driTextureObject *) t);	/* XXX: should be locked! */
 	}
 

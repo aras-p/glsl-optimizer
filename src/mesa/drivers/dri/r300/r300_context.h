@@ -179,13 +179,6 @@ struct r300_tex_obj {
 	GLuint bufAddr;		/* Offset to start of locally
 				   shared texture block */
 
-	GLuint dirty_state;	/* Flags (1 per texunit) for
-				   whether or not this texobj
-				   has dirty hardware state
-				   (pp_*) that needs to be
-				   brought into the
-				   texunit. */
-
 	drm_radeon_tex_image_t image[6][RADEON_MAX_TEXTURE_LEVELS];
 	/* Six, for the cube faces */
 

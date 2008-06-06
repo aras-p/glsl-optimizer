@@ -1077,7 +1077,7 @@ static void r300TexParameter(GLcontext * ctx, GLenum target,
 		break;
 
 	case GL_DEPTH_TEXTURE_MODE:
-		if (texObj->Image[0][texObj->BaseLevel]->TexFormat->BaseFormat 
+		if (texObj->Image[0][texObj->BaseLevel]->TexFormat->BaseFormat
 		    == GL_DEPTH_COMPONENT) {
 			r300SetDepthTexMode(texObj);
 			break;
@@ -1092,10 +1092,6 @@ static void r300TexParameter(GLcontext * ctx, GLenum target,
 	default:
 		return;
 	}
-
-	/* Mark this texobj as dirty (one bit per tex unit)
-	 */
-	t->dirty_state = TEX_ALL;
 }
 
 static void r300BindTexture(GLcontext * ctx, GLenum target,
