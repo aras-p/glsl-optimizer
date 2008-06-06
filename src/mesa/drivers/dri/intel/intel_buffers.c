@@ -848,6 +848,8 @@ intelSwapBuffers(__DRIdrawablePrivate * dPriv)
 
 	 intel_fb->swap_ust = ust;
       }
+      drmCommandNone(intel->driFd, DRM_I915_GEM_THROTTLE);
+
    }
    else {
       /* XXX this shouldn't be an error but we can't handle it for now */
