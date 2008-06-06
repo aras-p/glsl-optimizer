@@ -1,5 +1,9 @@
 # src/gallium/winsys/xlib/Makefile
 
+# This makefile produces a "stand-alone" libGL.so which is based on
+# Xlib (no DRI HW acceleration)
+
+
 TOP = ../../../..
 include $(TOP)/configs/current
 
