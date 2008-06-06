@@ -1,52 +1,16 @@
-/**************************************************************************
- * 
- * Copyright 2006 Tungsten Graphics, Inc., Cedar Park, Texas.
- * All Rights Reserved.
- * 
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the
- * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
- * distribute, sub license, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject to
- * the following conditions:
- * 
- * The above copyright notice and this permission notice (including the
- * next paragraph) shall be included in all copies or substantial portions
- * of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
- * IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
- * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
- * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
- * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
- **************************************************************************/
 
-#include "intel_batchbuffer.h"
-#include "intel_context.h"
+#include "intel_be_batchbuffer.h"
+#include "intel_be_context.h"
+#include "intel_be_device.h"
 #include <errno.h>
 
-#if 0
-static void
-intel_dump_batchbuffer(GLuint offset, GLuint * ptr, GLuint count)
-{
-   int i;
-   fprintf(stderr, "\n\n\nSTART BATCH (%d dwords):\n", count / 4);
-   for (i = 0; i < count / 4; i += 4)
-      fprintf(stderr, "0x%x:\t0x%08x 0x%08x 0x%08x 0x%08x\n",
-              offset + i * 4, ptr[i], ptr[i + 1], ptr[i + 2], ptr[i + 3]);
-   fprintf(stderr, "END BATCH\n\n\n");
-}
-#endif
+#include "xf86drm.h"
 
-static void 
-intel_realloc_relocs(struct intel_batchbuffer *batch, int num_relocs)
+static void
+intel_realloc_relocs(struct intel_be_batchbuffer *batch, int num_relocs)
 {
     unsigned long size = num_relocs * I915_RELOC0_STRIDE + I915_RELOC_HEADER;
-    
+
     size *= sizeof(uint32_t);
     batch->reloc = realloc(batch->reloc, size);
     batch->reloc_size = num_relocs;
@@ -54,20 +18,20 @@ intel_realloc_relocs(struct intel_batchbuffer *batch, int num_relocs)
 
 
 void
-intel_batchbuffer_reset(struct intel_batchbuffer *batch)
+intel_be_batchbuffer_reset(struct intel_be_batchbuffer *batch)
 {
    /*
     * Get a new, free batchbuffer.
     */
     drmBO *bo;
     struct drm_bo_info_req *req;
-    
+
    driBOUnrefUserList(batch->list);
    driBOResetList(batch->list);
 
    /* base.size is the size available to the i915simple driver */
-   batch->base.size = batch->intel->intelScreen->max_batch_size - BATCH_RESERVED;
-   batch->base.actual_size = batch->intel->intelScreen->max_batch_size;
+   batch->base.size = batch->device->max_batch_size - BATCH_RESERVED;
+   batch->base.actual_size = batch->device->max_batch_size;
    driBOData(batch->buffer, batch->base.actual_size, NULL, NULL, 0);
 
    /*
@@ -98,9 +62,9 @@ intel_batchbuffer_reset(struct intel_batchbuffer *batch)
     */
 
    if (batch->reloc_size > INTEL_MAX_RELOCS ||
-       batch->reloc == NULL) 
+       batch->reloc == NULL)
      intel_realloc_relocs(batch, INTEL_DEFAULT_RELOCS);
-   
+
    assert(batch->reloc != NULL);
    batch->reloc[0] = 0; /* No relocs yet. */
    batch->reloc[1] = 1; /* Reloc type 1 */
@@ -119,29 +83,30 @@ intel_batchbuffer_reset(struct intel_batchbuffer *batch)
 /*======================================================================
  * Public functions
  */
-struct intel_batchbuffer *
-intel_batchbuffer_alloc(struct intel_context *intel)
+struct intel_be_batchbuffer *
+intel_be_batchbuffer_alloc(struct intel_be_context *intel)
 {
-   struct intel_batchbuffer *batch = calloc(sizeof(*batch), 1);
+   struct intel_be_batchbuffer *batch = calloc(sizeof(*batch), 1);
 
    batch->intel = intel;
+   batch->device = intel->device;
 
-   driGenBuffers(intel->intelScreen->batchPool, "batchbuffer", 1,
+   driGenBuffers(intel->device->batchPool, "batchbuffer", 1,
                  &batch->buffer, 4096,
                  DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_EXE, 0);
    batch->last_fence = NULL;
    batch->list = driBOCreateList(20);
    batch->reloc = NULL;
-   intel_batchbuffer_reset(batch);
+   intel_be_batchbuffer_reset(batch);
    return batch;
 }
 
 void
-intel_batchbuffer_free(struct intel_batchbuffer *batch)
+intel_be_batchbuffer_free(struct intel_be_batchbuffer *batch)
 {
    if (batch->last_fence) {
       driFenceFinish(batch->last_fence,
-		     DRM_FENCE_TYPE_EXE, GL_FALSE);
+		     DRM_FENCE_TYPE_EXE, FALSE);
       driFenceUnReference(&batch->last_fence);
    }
    if (batch->base.map) {
@@ -157,7 +122,7 @@ intel_batchbuffer_free(struct intel_batchbuffer *batch)
 }
 
 void
-intel_offset_relocation(struct intel_batchbuffer *batch,
+intel_be_offset_relocation(struct intel_be_batchbuffer *batch,
 			unsigned pre_add,
 			struct _DriBufferObject *driBO,
 			uint64_t val_flags,
@@ -167,7 +132,7 @@ intel_offset_relocation(struct intel_batchbuffer *batch,
     struct _drmBONode *node;
     uint32_t *reloc;
     struct drm_bo_info_req *req;
-    
+
     driBOAddListItem(batch->list, driBO, val_flags, val_mask,
 		     &itemLoc, &node);
     req = &node->bo_arg.d.req.bo_req;
@@ -184,17 +149,17 @@ intel_offset_relocation(struct intel_batchbuffer *batch,
 	driReadUnlockKernelBO();
 	req->hint = DRM_BO_HINT_PRESUMED_OFFSET;
     }
-    
+
     pre_add += driBOPoolOffset(driBO);
 
     if (batch->nr_relocs == batch->reloc_size)
 	intel_realloc_relocs(batch, batch->reloc_size * 2);
 
-    reloc = batch->reloc + 
+    reloc = batch->reloc +
 	(I915_RELOC_HEADER + batch->nr_relocs * I915_RELOC0_STRIDE);
 
     reloc[0] = ((uint8_t *)batch->base.ptr - batch->drmBOVirtual);
-    intel_batchbuffer_emit_dword(batch, req->presumed_offset + pre_add);
+    i915_batchbuffer_dword(&batch->base, req->presumed_offset + pre_add);
     reloc[1] = pre_add;
     reloc[2] = itemLoc;
     reloc[3] = batch->dest_location;
@@ -216,14 +181,14 @@ i915_drm_copy_reply(const struct drm_bo_info_rep * rep, drmBO * buf)
     buf->pageAlignment = rep->page_alignment;
 }
 
-static int 
-i915_execbuf(struct intel_batchbuffer *batch,
-	     GLuint used,
-	     GLboolean ignore_cliprects,
+static int
+i915_execbuf(struct intel_be_batchbuffer *batch,
+	     unsigned int used,
+	     boolean ignore_cliprects,
 	     drmBOList *list,
 	     struct drm_i915_execbuffer *ea)
 {
-   struct intel_context *intel = batch->intel;
+// struct intel_be_context *intel = batch->intel;
    drmBONode *node;
    drmMMListHead *l;
    struct drm_i915_op_arg *arg, *first;
@@ -237,16 +202,16 @@ i915_execbuf(struct intel_batchbuffer *batch,
    first = NULL;
    for (l = list->list.next; l != &list->list; l = l->next) {
       node = DRMLISTENTRY(drmBONode, l, head);
-      
+
       arg = &node->bo_arg;
       req = &arg->d.req;
-      
+
       if (!first)
 	 first = arg;
-      
+
       if (prevNext)
 	 *prevNext = (unsigned long)arg;
-      
+
       prevNext = &arg->next;
       req->bo_req.handle = node->buf->handle;
       req->op = drm_bo_validate;
@@ -279,7 +244,7 @@ i915_execbuf(struct intel_batchbuffer *batch,
 
    //return -EFAULT;
    do {
-      ret = drmCommandWriteRead(intel->driFd, DRM_I915_EXECBUFFER, ea,
+      ret = drmCommandWriteRead(batch->device->fd, DRM_I915_EXECBUFFER, ea,
 				sizeof(*ea));
    } while (ret == -EAGAIN);
 
@@ -306,11 +271,11 @@ i915_execbuf(struct intel_batchbuffer *batch,
 /* TODO: Push this whole function into bufmgr.
  */
 static struct _DriFenceObject *
-do_flush_locked(struct intel_batchbuffer *batch,
-                GLuint used,
-                GLboolean ignore_cliprects, GLboolean allow_unlock)
+do_flush_locked(struct intel_be_batchbuffer *batch,
+                unsigned int used,
+                boolean ignore_cliprects, boolean allow_unlock)
 {
-   struct intel_context *intel = batch->intel;
+   struct intel_be_context *intel = batch->intel;
    struct _DriFenceObject *fo;
    drmFence fence;
    drmBOList *boList;
@@ -358,7 +323,7 @@ do_flush_locked(struct intel_batchbuffer *batch,
    fence.flags = ea.fence_arg.flags;
    fence.signaled = ea.fence_arg.signaled;
 
-   fo = driBOFenceUserList(batch->intel->intelScreen->mgr, batch->list,
+   fo = driBOFenceUserList(batch->device->fenceMgr, batch->list,
 			   "SuperFence", &fence);
 
    if (driFenceType(fo) & DRM_I915_FENCE_TYPE_RW) {
@@ -369,7 +334,7 @@ do_flush_locked(struct intel_batchbuffer *batch,
 	*/
        batch->last_fence = fo;
        driFenceReference(fo);
-   } 
+   }
  out:
 #if 0 /* ZZZ JB: fix this */
    intel->vtbl.lost_hardware(intel);
@@ -381,11 +346,11 @@ do_flush_locked(struct intel_batchbuffer *batch,
 
 
 struct _DriFenceObject *
-intel_batchbuffer_flush(struct intel_batchbuffer *batch)
+intel_be_batchbuffer_flush(struct intel_be_batchbuffer *batch)
 {
-   struct intel_context *intel = batch->intel;
-   GLuint used = batch->base.ptr - batch->base.map;
-   GLboolean was_locked = intel->locked;
+   struct intel_be_context *intel = batch->intel;
+   unsigned int used = batch->base.ptr - batch->base.map;
+   boolean was_locked = batch->intel->hardware_locked(intel);
    struct _DriFenceObject *fence;
 
    if (used == 0) {
@@ -429,34 +394,36 @@ intel_batchbuffer_flush(struct intel_batchbuffer *batch)
     * kernel.
     */
    if (!was_locked)
-      LOCK_HARDWARE(intel);
+      intel->hardware_lock(intel);
 
    fence = do_flush_locked(batch, used, !(batch->flags & INTEL_BATCH_CLIPRECTS),
-			   GL_FALSE);
+			   FALSE);
 
    if (!was_locked)
-      UNLOCK_HARDWARE(intel);
+      intel->hardware_unlock(intel);
 
    /* Reset the buffer:
     */
-   intel_batchbuffer_reset(batch);
+   intel_be_batchbuffer_reset(batch);
    return fence;
 }
 
 void
-intel_batchbuffer_finish(struct intel_batchbuffer *batch)
+intel_be_batchbuffer_finish(struct intel_be_batchbuffer *batch)
 {
-   struct _DriFenceObject *fence = intel_batchbuffer_flush(batch);
-   driFenceFinish(fence, driFenceType(fence), GL_FALSE);
+   struct _DriFenceObject *fence = intel_be_batchbuffer_flush(batch);
+   driFenceFinish(fence, driFenceType(fence), FALSE);
    driFenceUnReference(&fence);
 }
 
+#if 0
 void
-intel_batchbuffer_data(struct intel_batchbuffer *batch,
-                       const void *data, GLuint bytes, GLuint flags)
+intel_be_batchbuffer_data(struct intel_be_batchbuffer *batch,
+                       const void *data, unsigned int bytes, unsigned int flags)
 {
    assert((bytes & 3) == 0);
    intel_batchbuffer_require_space(batch, bytes, flags);
    memcpy(batch->base.ptr, data, bytes);
    batch->base.ptr += bytes;
 }
+#endif

@@ -1,8 +1,8 @@
-TOP = ../..
+TOP = ../../../..
 include $(TOP)/configs/current
 
 
-SUBDIRS = auxiliary drivers winsys/common
+SUBDIRS = $(GALLIUM_WINSYS_COMMON_DIRS)
 
 
 default: subdirs
@@ -18,8 +18,3 @@ subdirs:
 
 clean:
 	rm -f `find . -name \*.[oa]`
-	rm -f `find . -name depend`
-
-
-# Dummy install target
-install:

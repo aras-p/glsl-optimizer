@@ -1,8 +1,8 @@
 /**************************************************************************
- * 
+ *
  * Copyright 2006 Tungsten Graphics, Inc., Bismarck, ND., USA
  * All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -10,20 +10,20 @@
  * distribute, sub license, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL
  * THE COPYRIGHT HOLDERS, AUTHORS AND/OR ITS SUPPLIERS BE LIABLE FOR ANY CLAIM,
- * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR 
- * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE 
+ * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+ * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
  * USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  * The above copyright notice and this permission notice (including the
  * next paragraph) shall be included in all copies or substantial portions
  * of the Software.
- * 
- * 
+ *
+ *
  **************************************************************************/
 /*
  * Authors: Thomas Hellström <thomas-at-tungstengraphics-dot-com>
@@ -117,7 +117,7 @@ pool_map(struct _DriBufferPool *pool, void *private, unsigned flags,
 {
    drmBO *buf = (drmBO *) private;
    int ret;
-   
+
    driReadLockKernelBO();
    ret = drmBOMap(pool->fd, buf, flags, hint, virtual);
    driReadUnlockKernelBO();
@@ -133,7 +133,7 @@ pool_unmap(struct _DriBufferPool *pool, void *private)
    driReadLockKernelBO();
    ret = drmBOUnmap(pool->fd, buf);
    driReadUnlockKernelBO();
-   
+
    return ret;
 }
 
@@ -144,7 +144,7 @@ pool_offset(struct _DriBufferPool *pool, void *private)
    unsigned long offset;
 
    driReadLockKernelBO();
-   assert(buf->flags & DRM_BO_FLAG_NO_MOVE);   
+   assert(buf->flags & DRM_BO_FLAG_NO_MOVE);
    offset = buf->offset;
    driReadUnlockKernelBO();
 
@@ -202,7 +202,7 @@ pool_kernel(struct _DriBufferPool *pool, void *private)
 }
 
 static int
-pool_waitIdle(struct _DriBufferPool *pool, void *private, _glthread_Mutex *mutex, 
+pool_waitIdle(struct _DriBufferPool *pool, void *private, _glthread_Mutex *mutex,
 	      int lazy)
 {
    drmBO *buf = (drmBO *) private;
@@ -215,7 +215,7 @@ pool_waitIdle(struct _DriBufferPool *pool, void *private, _glthread_Mutex *mutex
    return ret;
 }
 
-   
+
 static void
 pool_takedown(struct _DriBufferPool *pool)
 {
@@ -223,7 +223,7 @@ pool_takedown(struct _DriBufferPool *pool)
 }
 
 /*static int
-pool_setStatus(struct _DriBufferPool *pool, void *private, 
+pool_setStatus(struct _DriBufferPool *pool, void *private,
 	       uint64_t flag_diff, uint64_t old_flags)
 {
    drmBO *buf = (drmBO *) private;

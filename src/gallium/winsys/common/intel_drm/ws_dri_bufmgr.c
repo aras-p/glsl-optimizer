@@ -1,8 +1,8 @@
 /**************************************************************************
- * 
+ *
  * Copyright 2006 Tungsten Graphics, Inc., Bismarck, ND., USA
  * All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -10,20 +10,20 @@
  * distribute, sub license, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL
  * THE COPYRIGHT HOLDERS, AUTHORS AND/OR ITS SUPPLIERS BE LIABLE FOR ANY CLAIM,
- * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR 
- * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE 
+ * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+ * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
  * USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  * The above copyright notice and this permission notice (including the
  * next paragraph) shall be included in all copies or substantial portions
  * of the Software.
- * 
- * 
+ *
+ *
  **************************************************************************/
 /*
  * Authors: Thomas Hellström <thomas-at-tungstengraphics-dot-com>
@@ -32,20 +32,22 @@
 
 #include <xf86drm.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include "glthread.h"
 #include "errno.h"
 #include "ws_dri_bufmgr.h"
 #include "string.h"
-#include "imports.h"
+#include "pipe/p_debug.h"
 #include "ws_dri_bufpool.h"
 #include "ws_dri_fencemgr.h"
+
 
 /*
  * This lock is here to protect drmBO structs changing underneath us during a
  * validate list call, since validatelist cannot take individiual locks for
  * each drmBO. Validatelist takes this lock in write mode. Any access to an
  * individual drmBO should take this lock in read mode, since in that case, the
- * driBufferObject mutex will protect the access. Locking order is 
+ * driBufferObject mutex will protect the access. Locking order is
  * driBufferObject mutex - > this rw lock.
  */
 
@@ -84,7 +86,7 @@ static void *drmBOListNext(drmBOList *list, void *iterator)
     return ret;
 }
 
-static drmBONode *drmAddListItem(drmBOList *list, drmBO *item, 
+static drmBONode *drmAddListItem(drmBOList *list, drmBO *item,
 				 uint64_t arg0,
 				 uint64_t arg1)
 {
@@ -110,8 +112,8 @@ static drmBONode *drmAddListItem(drmBOList *list, drmBO *item,
     list->numOnList++;
     return node;
 }
-  
-static int drmAddValidateItem(drmBOList *list, drmBO *buf, uint64_t flags, 
+
+static int drmAddValidateItem(drmBOList *list, drmBO *buf, uint64_t flags,
 			      uint64_t mask, int *newItem)
 {
     drmBONode *node, *cur;
@@ -243,11 +245,11 @@ void driWriteLockKernelBO(void)
     while(kernelReaders != 0)
 	_glthread_COND_WAIT(bmCond, bmMutex);
 }
-    
+
 void driWriteUnlockKernelBO(void)
 {
     _glthread_UNLOCK_MUTEX(bmMutex);
-}    
+}
 
 void driReadLockKernelBO(void)
 {
@@ -268,7 +270,7 @@ void driReadUnlockKernelBO(void)
 
 
 /*
- * TODO: Introduce fence pools in the same way as 
+ * TODO: Introduce fence pools in the same way as
  * buffer object pools.
  */
 
@@ -298,11 +300,11 @@ typedef struct _DriBufferList {
 void
 bmError(int val, const char *file, const char *function, int line)
 {
-   _mesa_printf("Fatal video memory manager error \"%s\".\n"
-                "Check kernel logs or set the LIBGL_DEBUG\n"
-                "environment variable to \"verbose\" for more info.\n"
-                "Detected in file %s, line %d, function %s.\n",
-                strerror(-val), file, line, function);
+   printf("Fatal video memory manager error \"%s\".\n"
+          "Check kernel logs or set the LIBGL_DEBUG\n"
+          "environment variable to \"verbose\" for more info.\n"
+          "Detected in file %s, line %d, function %s.\n",
+          strerror(-val), file, line, function);
 #ifndef NDEBUG
    abort();
 #else
@@ -353,7 +355,7 @@ driBOMap(struct _DriBufferObject *buf, unsigned flags, unsigned hint)
 
    _glthread_LOCK_MUTEX(buf->mutex);
    assert(buf->private != NULL);
-   retval = buf->pool->map(buf->pool, buf->private, flags, hint, 
+   retval = buf->pool->map(buf->pool, buf->private, flags, hint,
 			   &buf->mutex, &virtual);
    _glthread_UNLOCK_MUTEX(buf->mutex);
 
@@ -398,7 +400,7 @@ driBOPoolOffset(struct _DriBufferObject *buf)
    return ret;
 }
 
-uint64_t 
+uint64_t
 driBOFlags(struct _DriBufferObject *buf)
 {
    uint64_t ret;
@@ -448,7 +450,7 @@ driBOUnReference(struct _DriBufferObject *buf)
       else
 	 num_buffers--;
       free(buf);
-   } else 
+   } else
      _glthread_UNLOCK_MUTEX(buf->mutex);
 
 }
@@ -456,8 +458,8 @@ driBOUnReference(struct _DriBufferObject *buf)
 
 int
 driBOData(struct _DriBufferObject *buf,
-          unsigned size, const void *data, 
-	  DriBufferPool *newPool, 
+          unsigned size, const void *data,
+	  DriBufferPool *newPool,
 	  uint64_t flags)
 {
    void *virtual = NULL;
@@ -478,8 +480,7 @@ driBOData(struct _DriBufferObject *buf,
        newPool = pool;
 
    if (!pool->create) {
-      _mesa_error(NULL, GL_INVALID_OPERATION,
-                  "driBOData called on invalid buffer\n");
+      assert((size_t)"driBOData called on invalid buffer\n" & 0);
       BM_CKFATAL(-EINVAL);
    }
 
@@ -492,9 +493,7 @@ driBOData(struct _DriBufferObject *buf,
    if (newBuffer) {
 
        if (buf->createdByReference) {
-	  _mesa_error(NULL, GL_INVALID_OPERATION,
-		     "driBOData requiring resizing called on "
-		     "shared buffer.\n");
+	  assert((size_t)"driBOData requiring resizing called on shared buffer.\n" & 0);
 	  BM_CKFATAL(-EINVAL);
        }
 
@@ -531,7 +530,7 @@ driBOData(struct _DriBufferObject *buf,
 			  DRM_BO_FLAG_WRITE, 0, &buf->mutex, &virtual);
    } else {
        uint64_t flag_diff = flags ^ buf->flags;
-       
+
        /*
 	* We might need to change buffer flags.
 	*/
@@ -558,7 +557,7 @@ driBOData(struct _DriBufferObject *buf,
 
  out:
    _glthread_UNLOCK_MUTEX(buf->mutex);
-   
+
    return retval;
 }
 
@@ -605,23 +604,20 @@ driBOSetReferenced(struct _DriBufferObject *buf,
 {
    _glthread_LOCK_MUTEX(buf->mutex);
    if (buf->private != NULL) {
-      _mesa_error(NULL, GL_INVALID_OPERATION,
-                  "Invalid buffer for setReferenced\n");
+      assert((size_t)"Invalid buffer for setReferenced\n" & 0);
       BM_CKFATAL(-EINVAL);
-   
+
    }
    if (buf->pool->reference == NULL) {
-      _mesa_error(NULL, GL_INVALID_OPERATION,
-                  "Invalid buffer pool for setReferenced\n");
+      assert((size_t)"Invalid buffer pool for setReferenced\n" & 0);
       BM_CKFATAL(-EINVAL);
    }
    buf->private = buf->pool->reference(buf->pool, handle);
    if (!buf->private) {
-      _mesa_error(NULL, GL_OUT_OF_MEMORY,
-                  "Invalid buffer pool for setStatic\n");
+      assert((size_t)"Invalid buffer pool for setStatic\n" & 0);
       BM_CKFATAL(-ENOMEM);
    }
-   buf->createdByReference = GL_TRUE;
+   buf->createdByReference = TRUE;
    buf->flags = buf->pool->kernel(buf->pool, buf->private)->flags;
    _glthread_UNLOCK_MUTEX(buf->mutex);
 }
@@ -769,7 +765,7 @@ driAddListItem(drmBOList * list, drmBO * item,
 
 static int
 driAddValidateItem(drmBOList * list, drmBO * buf, uint64_t flags,
-		   uint64_t mask, int *itemLoc, 
+		   uint64_t mask, int *itemLoc,
 		   struct _drmBONode **pnode)
 {
     drmBONode *node, *cur;
@@ -817,18 +813,18 @@ driAddValidateItem(drmBOList * list, drmBO * buf, uint64_t flags,
 
 void
 driBOAddListItem(struct _DriBufferList * list, struct _DriBufferObject *buf,
-                 uint64_t flags, uint64_t mask, int *itemLoc, 
+                 uint64_t flags, uint64_t mask, int *itemLoc,
 		 struct _drmBONode **node)
 {
    int newItem;
-   
+
    _glthread_LOCK_MUTEX(buf->mutex);
    BM_CKFATAL(driAddValidateItem(&list->drmBuffers,
 				 buf->pool->kernel(buf->pool, buf->private),
                                  flags, mask, itemLoc, node));
    BM_CKFATAL(drmAddValidateItem(&list->driBuffers, (drmBO *) buf,
 				 flags, mask, &newItem));
-   if (newItem) 
+   if (newItem)
      buf->refCount++;
 
    _glthread_UNLOCK_MUTEX(buf->mutex);
@@ -897,7 +893,7 @@ driBOFenceUserList(struct _DriFenceMgr *mgr,
    driBOResetList(list);
    return fence;
 }
-   
+
 void
 driBOValidateUserList(struct _DriBufferList * list)
 {
@@ -928,7 +924,7 @@ driPoolTakeDown(struct _DriBufferPool *pool)
 
 }
 
-unsigned long 
+unsigned long
 driBOSize(struct _DriBufferObject *buf)
 {
   unsigned long size;
@@ -950,4 +946,4 @@ drmBOList *driBOGetDRIBuffers(struct _DriBufferList *list)
 {
     return &list->driBuffers;
 }
-    
+

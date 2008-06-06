@@ -88,9 +88,9 @@ typedef struct {
 	/** Last context that used the buffer manager. */
 	int texAge;
         int pf_enabled;		/* is pageflipping allowed? */
-        int pf_active;               
+        int pf_active;
         int pf_current_page;	/* which buffer is being displayed? */
-        int perf_boxes;	        /* performance boxes to be displayed */   
+        int perf_boxes;	        /* performance boxes to be displayed */
 	int width, height;      /* screen size in pixels */
 
 	drm_handle_t front_handle;
@@ -173,7 +173,7 @@ typedef struct {
 	int num_cliprects;	/* mulitpass with multiple cliprects? */
         drm_clip_rect_t *cliprects; /* pointer to userspace cliprects */
 } drmI830CmdBuffer;
- 
+
 typedef struct {
 	int *irq_seq;
 } drmI830IrqEmit;
@@ -188,7 +188,7 @@ typedef struct {
 } drmI830GetParam;
 
 #define I830_PARAM_IRQ_ACTIVE     1
-#define I830_PARAM_ALLOW_BATCHBUFFER   2 
+#define I830_PARAM_ALLOW_BATCHBUFFER   2
 
 typedef struct {
 	int param;

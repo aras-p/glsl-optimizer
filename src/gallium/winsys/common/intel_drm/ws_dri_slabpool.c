@@ -636,7 +636,7 @@ pool_destroy(struct _DriBufferPool *driPool, void *private)
 }
 
 static int
-pool_waitIdle(struct _DriBufferPool *driPool, void *private, 
+pool_waitIdle(struct _DriBufferPool *driPool, void *private,
 	      _glthread_Mutex *mutex, int lazy)
 {
    struct _DriSlabBuffer *buf = (struct _DriSlabBuffer *) private;
@@ -688,7 +688,7 @@ pool_unmap(struct _DriBufferPool *pool, void *private)
    struct _DriSlabBuffer *buf = (struct _DriSlabBuffer *) private;
 
    --buf->mapCount;
-   if (buf->mapCount == 0 && buf->isSlabBuffer) 
+   if (buf->mapCount == 0 && buf->isSlabBuffer)
        _glthread_COND_BROADCAST(buf->event);
 
    return 0;
@@ -774,14 +774,14 @@ pool_kernel(struct _DriBufferPool *pool, void *private)
 }
 
 static int
-pool_validate(struct _DriBufferPool *pool, void *private, 
+pool_validate(struct _DriBufferPool *pool, void *private,
 	      _glthread_Mutex *mutex)
 {
    struct _DriSlabBuffer *buf = (struct _DriSlabBuffer *) private;
 
-   if (!buf->isSlabBuffer) 
+   if (!buf->isSlabBuffer)
        return 0;
-   
+
    while(buf->mapCount != 0)
        _glthread_COND_WAIT(buf->event, *mutex);
 

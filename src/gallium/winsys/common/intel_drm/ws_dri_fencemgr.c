@@ -261,7 +261,7 @@ driFenceReference(struct _DriFenceObject *fence)
 void
 driFenceUnReference(struct _DriFenceObject **pFence)
 {
-    struct _DriFenceMgr *mgr; 
+    struct _DriFenceMgr *mgr;
 
     if (*pFence == NULL)
 	return;
