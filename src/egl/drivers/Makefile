@@ -1,8 +1,10 @@
 # src/egl/drivers/Makefile
 
 TOP = ../../..
+include $(TOP)/configs/current
 
-SUBDIRS = demo dri
+
+SUBDIRS = demo dri xdri
 
 
 default: conditional_subdirs
@@ -10,19 +12,17 @@ default: conditional_subdirs
 
 # depending on $DRIVER_DIRS...
 conditional_subdirs:
-	@echo "DRIVER_DIRS = " $(DRIVER_DIRS)
-	@case "$$DRIVER_DIRS" in \
-	    dri)    $(MAKE) dri_subdir || exit 1 ;; \
-	    *)      ;; \
-	esac;
+	@if [ "${DRIVER_DIRS}" = "dri" ] ; then \
+		$(MAKE) dri_subdirs ; \
+	fi
 
 
-dri_subdir:
-	(cd dri ; $(MAKE)) || exit 1 ; \
-
+dri_subdirs:
+	@ (cd dri ; $(MAKE)) || exit 1
+	@ (cd xdri ; $(MAKE)) || exit 1
 
 demo_subdir:
-	(cd demo ; $(MAKE)) || exit 1 ; \
+	@ (cd demo ; $(MAKE)) || exit 1
 
 
 
