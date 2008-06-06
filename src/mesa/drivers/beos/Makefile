@@ -169,8 +169,10 @@ OBJECTS := $(DRIVER_OBJECTS:.cpp=.o)
 
 default: depend $(TOP)/$(LIB_DIR) $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME)
 
+# XXX FIXME: mesa.a might be libmesa.a now
 $(MESA_MODULES):
 	cd $(TOP)/src/mesa && $(MAKE) mesa.a ;
+	mimeset -f "$@"
 
 $(GLU_MODULES):
 	cd $(GLU_DIR) && $(MAKE) $(subst $(GLU_DIR)/,,$(GLU_MODULES)) ;

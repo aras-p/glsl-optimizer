@@ -51,9 +51,6 @@ install: default
 # Make archive of core mesa object files
 libmesa.a: $(SOLO_OBJECTS)
 	@ $(TOP)/bin/mklib -o mesa -static $(SOLO_OBJECTS);
-	@if [ "${CONFIG_NAME}" = "beos" ] ; then \
-		mimeset -f "$@" ; \
-	fi
 
 # Make archive of gl* API dispatcher functions only
 libglapi.a: $(GLAPI_OBJECTS)
