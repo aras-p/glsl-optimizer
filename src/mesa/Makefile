@@ -19,9 +19,9 @@ include sources
 
 
 
-# Default: build dependencies, then mesa subdirs, then convenience
+# Default: build dependencies, then asm_subdirs, then convenience
 # libs (.a) and finally the device drivers:
-default: depend subdirs libmesa.a libglapi.a driver_subdirs
+default: depend asm_subdirs libmesa.a libglapi.a driver_subdirs
 
 
 
@@ -45,7 +45,7 @@ driver_subdirs:
 
 ######################################################################
 # Assembly subdirs
-subdirs:
+asm_subdirs:
 	@ if echo "$(ASM_FLAGS)" | grep -q USE_X86_ASM ; then \
 		(cd x86 && $(MAKE)) || exit 1 ; \
 	fi
