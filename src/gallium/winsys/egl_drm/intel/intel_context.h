@@ -1,8 +1,8 @@
 /**************************************************************************
- * 
+ *
  * Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -10,11 +10,11 @@
  * distribute, sub license, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice (including the
  * next paragraph) shall be included in all copies or substantial portions
  * of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
@@ -22,61 +22,37 @@
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
+ *
  **************************************************************************/
 
 #ifndef INTEL_CONTEXT_H
 #define INTEL_CONTEXT_H
 
-#include <stdint.h>
-#include "drm.h"
-
 #include "pipe/p_debug.h"
-
-#include "intel_screen.h"
-#include "i915_drm.h"
+#include "intel_drm/intel_be_context.h"
 
 
-struct pipe_context;
-struct intel_context;
-struct _DriBufferObject;
 struct st_context;
 struct egl_drm_device;
 struct egl_drm_context;
 struct egl_drm_frontbuffer;
 
 
-#define INTEL_MAX_FIXUP 64
-
 /**
  * Intel rendering context, contains a state tracker and intel-specific info.
  */
 struct intel_context
 {
-   struct st_context *st;
+	struct intel_be_context base;
 
-   struct _DriFenceObject *last_swap_fence;
-   struct _DriFenceObject *first_swap_fence;
+	struct st_context *st;
 
-   struct intel_batchbuffer *batch;
+	struct intel_screen *intel_screen;
 
-#if 0
-   boolean locked;
-   char *prevLockFile;
-   int prevLockLine;
-#endif
-
-	/* pick this up from the screen instead
-   int drmFd;
-	*/
-
-   struct intel_screen *intel_screen;
-
-   uint lastStamp;
-   /* new egl stuff */
-   struct egl_drm_device *egl_device;
-   struct egl_drm_context *egl_context;
-   struct egl_drm_drawable *egl_drawable;
+	/* new egl stuff */
+	struct egl_drm_device *egl_device;
+	struct egl_drm_context *egl_context;
+	struct egl_drm_drawable *egl_drawable;
 };
 
 
@@ -86,12 +62,12 @@ struct intel_context
  */
 struct intel_framebuffer
 {
-   struct st_framebuffer *stfb;
+	struct st_framebuffer *stfb;
 
-   /* other fields TBD */
-   int other;
-   struct _DriBufferObject *front_buffer;
-   struct egl_drm_frontbuffer *front;
+	/* other fields TBD */
+	int other;
+	struct _DriBufferObject *front_buffer;
+	struct egl_drm_frontbuffer *front;
 };
 
 
@@ -123,9 +99,8 @@ extern int __intel_debug;
 } while(0)
 
 #else
-#define DBG(flag, ...) 
+#define DBG(flag, ...)
 #endif
-
 
 
 #define PCI_CHIP_845_G			0x2562
@@ -140,23 +115,5 @@ extern int __intel_debug;
 #define PCI_CHIP_G33_G			0x29C2
 #define PCI_CHIP_Q35_G			0x29B2
 #define PCI_CHIP_Q33_G			0x29D2
-
-
-#if 0
-/** Cast wrapper */
-static INLINE struct intel_context *
-intel_context(__DRIcontextPrivate *driContextPriv)
-{
-   return (struct intel_context *) driContextPriv->driverPrivate;
-}
-
-
-/** Cast wrapper */
-static INLINE struct intel_framebuffer *
-intel_framebuffer(__DRIdrawablePrivate * driDrawPriv)
-{
-   return (struct intel_framebuffer *) driDrawPriv->driverPrivate;
-}
-#endif
 
 #endif

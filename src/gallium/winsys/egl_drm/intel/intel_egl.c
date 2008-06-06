@@ -21,9 +21,6 @@
 
 #include "intel_context.h"
 
-#include "ws_dri_bufmgr.h"
-
-#include "intel_winsys.h"
 #include "state_tracker/st_public.h"
 
 struct egl_drm_device* egl_drm_create_device(int drmFD);
@@ -434,10 +431,12 @@ prettyColors(int fd, unsigned int handle, size_t pitch)
 {
 	drmBO bo;
 	unsigned int *ptr;
+	void *p;
 	int i;
 
 	drmBOReference(fd, handle, &bo);
-	drmBOMap(fd, &bo, DRM_BO_FLAG_READ | DRM_BO_FLAG_WRITE, 0, (void**)&ptr);
+	drmBOMap(fd, &bo, DRM_BO_FLAG_READ | DRM_BO_FLAG_WRITE, 0, &p);
+	ptr = (unsigned int*)p;
 
 	for (i = 0; i < (bo.size / 4); i++)
 		ptr[i] = 0xFFFFFFFF;
@@ -460,16 +459,12 @@ drm_show_screen_surface_mesa(_EGLDriver *drv, EGLDisplay dpy,
 	struct drm_driver *drm_drv = (struct drm_driver *)drv;
 	struct drm_surface *surf = lookup_drm_surface(surface);
 	struct drm_screen *scrn = lookup_drm_screen(dpy, screen);
-	//struct intel_framebuffer *intel_fb = NULL;
-	//struct pipe_surface *front_surf = NULL;
 	_EGLMode *mode = _eglLookupMode(dpy, m);
 	size_t pitch = 2048 * 4;
 	size_t size = mode->Height * pitch;
 	int ret;
 
 	/* TODO if allready shown take down */
-
-	printf("setting mode to %i x %i\n", mode->Width, mode->Height);
 
 	ret = drmBOCreate(drm_drv->device->drmFD, size, 0, 0,
 		DRM_BO_FLAG_READ |
@@ -554,6 +549,7 @@ drm_make_current(_EGLDriver *drv, EGLDisplay dpy, EGLSurface draw, EGLSurface re
 	struct drm_context *ctx = lookup_drm_context(context);
 	EGLBoolean b;
 
+	printf("drm_make_current\n");
 	b = _eglMakeCurrent(drv, dpy, draw, read, context);
 	if (!b)
 		return EGL_FALSE;
@@ -563,6 +559,7 @@ drm_make_current(_EGLDriver *drv, EGLDisplay dpy, EGLSurface draw, EGLSurface re
 	(void) readSurf;
 	(void) ctx;
 
+	printf("enter intel_make_current\n");
 	intel_make_current(ctx->context, drawSurf->drawable, readSurf->drawable);
 	return EGL_TRUE;
 }
@@ -612,6 +609,8 @@ _eglMain(_EGLDisplay *dpy, const char *args)
 	drm->base.API.CreateScreenSurfaceMESA = drm_create_screen_surface_mesa;
 	drm->base.API.ShowScreenSurfaceMESA = drm_show_screen_surface_mesa;
 	drm->base.API.SwapBuffers = drm_swap_buffers;
+
+	drm->base.ClientAPIsMask = EGL_OPENGL_BIT /*| EGL_OPENGL_ES_BIT*/;
 
 	/* enable supported extensions */
 	drm->base.Extensions.MESA_screen_surface = EGL_TRUE;
