@@ -349,7 +349,7 @@ static void r300UploadSubImage(r300ContextPtr rmesa, r300TexObjPtr t,
 	imageWidth = texImage->Width;
 	imageHeight = texImage->Height;
 
-	offset = t->bufAddr + t->base.totalSize / 6 * face;
+	offset = t->bufAddr;
 
 	if (RADEON_DEBUG & (DEBUG_TEXTURE | DEBUG_IOCTL)) {
 		GLint imageX = 0;
