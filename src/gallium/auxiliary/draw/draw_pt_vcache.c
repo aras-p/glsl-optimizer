@@ -58,10 +58,21 @@ struct vcache_frontend {
 
    unsigned input_prim;
    unsigned output_prim;
+
+   unsigned middle_prim;
+   unsigned opt;
 };
 
 static void vcache_flush( struct vcache_frontend *vcache )
 {
+   if (vcache->middle_prim != vcache->output_prim) {
+      vcache->middle_prim = vcache->output_prim;
+      vcache->middle->prepare( vcache->middle, 
+                               vcache->middle_prim, 
+                               vcache->opt, 
+                               &vcache->fetch_max );
+   }
+
    if (vcache->draw_count) {
       vcache->middle->run( vcache->middle,
                            vcache->fetch_elts,
@@ -308,6 +319,14 @@ static void vcache_check_run( struct draw_pt_front_end *frontend,
       goto fail;
    }
       
+   if (vcache->middle_prim != vcache->input_prim) {
+      vcache->middle_prim = vcache->input_prim;
+      vcache->middle->prepare( vcache->middle, 
+                               vcache->middle_prim, 
+                               vcache->opt, 
+                               &vcache->fetch_max );
+   }
+
 
    if (min_index == 0 &&
        index_size == 2) 
@@ -412,7 +431,13 @@ static void vcache_prepare( struct draw_pt_front_end *frontend,
    vcache->output_prim = draw_pt_reduced_prim(prim);
 
    vcache->middle = middle;
-   middle->prepare( middle, vcache->output_prim, opt, &vcache->fetch_max );
+   vcache->opt = opt;
+
+   /* Have to run prepare here, but try and guess a good prim for
+    * doing so:
+    */
+   vcache->middle_prim = (opt & PT_PIPELINE) ? vcache->output_prim : vcache->input_prim;
+   middle->prepare( middle, vcache->middle_prim, opt, &vcache->fetch_max );
 }
 
 
