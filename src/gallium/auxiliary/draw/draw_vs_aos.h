@@ -31,6 +31,9 @@
 #ifndef DRAW_VS_AOS_H
 #define DRAW_VS_AOS_H
 
+#include "pipe/p_config.h"
+
+#ifdef PIPE_ARCH_X86
 
 struct tgsi_token;
 struct x86_function;
@@ -239,6 +242,7 @@ struct draw_vs_varient_aos_sse {
 };
 
 
+#endif
 
 #endif 
 
