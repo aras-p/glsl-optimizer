@@ -52,7 +52,6 @@ opts.Add(ListOption('winsys', 'winsys drivers to build', default_winsys,
                      ['xlib', 'intel', 'gdi'])) 
 
 env = Environment(
-	MSVS_VERSION = '7.1',
 	options = opts,
 	tools = ['gallium'],
 	toolpath = ['scons'],	
