@@ -6,11 +6,6 @@ include $(TOP)/configs/current
 include sources
 
 
-GL_MAJOR = 1
-GL_MINOR = 5
-GL_TINY = 0$(MESA_MAJOR)0$(MESA_MINOR)0$(MESA_TINY)
-
-
 .SUFFIXES : .cpp
 
 .c.o:
@@ -23,7 +18,10 @@ GL_TINY = 0$(MESA_MAJOR)0$(MESA_MINOR)0$(MESA_TINY)
 	$(CC) -c $(INCLUDE_DIRS) $(CFLAGS) $< -o $@
 
 
-default: depend subdirs libmesa.a libglapi.a
+
+# Default: build dependencies, then asm_subdirs, then convenience
+# libs (.a) and finally the device drivers:
+default: depend asm_subdirs libmesa.a libglapi.a driver_subdirs
 
 
 
@@ -32,77 +30,22 @@ default: depend subdirs libmesa.a libglapi.a
 
 # Make archive of core mesa object files
 libmesa.a: $(SOLO_OBJECTS)
-	@ $(TOP)/bin/mklib -o mesa -static $(SOLO_OBJECTS);
-	@if [ "${CONFIG_NAME}" = "beos" ] ; then \
-		mimeset -f "$@" ; \
-	fi
+	@ $(TOP)/bin/mklib -o mesa -static $(SOLO_OBJECTS)
 
 # Make archive of gl* API dispatcher functions only
 libglapi.a: $(GLAPI_OBJECTS)
 	@ $(TOP)/bin/mklib -o glapi -static $(GLAPI_OBJECTS)
 
 
-
 ######################################################################
-# BeOS driver target
-
-beos-driver: depend subdirs libmesa.a
-	cd drivers/beos && $(MAKE)
+# Device drivers
+driver_subdirs:
+	(cd drivers && $(MAKE))
 
 
 ######################################################################
-# DRI drivers
-
-dri-drivers: depend subdirs libmesa.a
-	cd drivers/dri && $(MAKE)
-
-
-######################################################################
-# Xlib driver (libGL.so)
-
-xlib-driver: depend subdirs libmesa.a libglapi.a
-	cd drivers/x11 && $(MAKE)
-
-
-######################################################################
-# osmesa driver (libOSMesa.so)
-
-osmesa-driver: depend subdirs libmesa.a libglapi.a
-	cd drivers/osmesa && $(MAKE)
-
-
-#####################################################################
-# fbdev driver (libGL.so)
-
-fbdev-driver: depend subdirs libmesa.a libglapi.a
-	cd drivers/fbdev && $(MAKE)
-
-
-#####################################################################
-# DirectFB driver (libGL.so)
-
-directfb-libgl: $(CORE_OBJECTS)
-	@ $(TOP)/bin/mklib -o $(GL_LIB) -linker '$(CC)' -ldflags '$(LDFLAGS)' \
-		-major $(MESA_MAJOR) -minor $(MESA_MINOR) -patch $(MESA_TINY) \
-		-install $(TOP)/$(LIB_DIR) $(MKLIB_OPTIONS) $(CORE_OBJECTS) \
-		$(GL_LIB_DEPS)
-
-directfb-driver: depend subdirs directfb-libgl
-	cd drivers/directfb && $(MAKE)
-
-
-######################################################################
-# Generic stuff
-
-depend: $(ALL_SOURCES)
-	@ echo "running $(MKDEP)"
-	@ rm -f depend  # workaround oops on gutsy?!?
-	@ touch depend
-	@ $(MKDEP) $(MKDEP_OPTIONS) $(DEFINES) $(INCLUDE_DIRS) $(ALL_SOURCES) \
-		> /dev/null 2>/dev/null
-
-
-subdirs:
+# Assembly subdirs
+asm_subdirs:
 	@ if echo "$(ASM_FLAGS)" | grep -q USE_X86_ASM ; then \
 		(cd x86 && $(MAKE)) || exit 1 ; \
 	fi
@@ -110,6 +53,40 @@ subdirs:
 		(cd x86 && $(MAKE)) || exit 1 ; \
 		(cd x86-64 && $(MAKE)) || exit 1 ; \
 	fi
+
+
+######################################################################
+# Dependency generation
+
+depend: $(ALL_SOURCES)
+	@ echo "running $(MKDEP)"
+	@ touch depend
+	@$(MKDEP) $(MKDEP_OPTIONS) $(DEFINES) $(INCLUDE_DIRS) $(ALL_SOURCES) \
+		> /dev/null 2>/dev/null
+
+
+######################################################################
+# Installation rules
+
+# this isn't fleshed out yet but is probably the way to go in the future
+new_install:
+	(cd drivers && $(MAKE) install)
+
+
+# XXX replace this with new_install above someday
+install: default
+	@for driver in $(DRIVER_DIRS) ; do \
+	  case "$$driver" in \
+	    osmesa) if [ "$(DRIVER_DIRS)" = osmesa ]; then \
+	              $(MAKE) install-headers install-osmesa || exit 1 ; \
+	            else \
+	              $(MAKE) install-osmesa || exit 1 ; \
+	            fi ;; \
+	    dri)    $(MAKE) install-libgl install-dri || exit 1 ;; \
+	    *)      $(MAKE) install-libgl || exit 1 ;; \
+	  esac ; \
+	done
+
 
 pcedit = sed \
 	-e 's,@INSTALL_DIR@,$(INSTALL_DIR),' \
@@ -119,33 +96,44 @@ pcedit = sed \
 gl.pc: gl.pc.in
 	$(pcedit) $< > $@
 
-install: default
-	$(INSTALL) -d $(INSTALL_DIR)/include/GL
-	$(INSTALL) -d $(INSTALL_DIR)/$(LIB_DIR)
-	$(INSTALL) -m 644 $(TOP)/include/GL/*.h $(INSTALL_DIR)/include/GL
-	@if [ -e $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME) ]; then \
-		$(INSTALL) $(TOP)/$(LIB_DIR)/libGL* $(INSTALL_DIR)/$(LIB_DIR); \
-	fi
-	@if [ -e $(TOP)/$(LIB_DIR)/$(OSMESA_LIB_NAME) ]; then \
-		$(INSTALL) $(TOP)/$(LIB_DIR)/libOSMesa* $(INSTALL_DIR)/$(LIB_DIR); \
-	fi
+install-headers:
+	$(INSTALL) -d $(DESTDIR)$(INSTALL_DIR)/include/GL
+	$(INSTALL) -m 644 $(TOP)/include/GL/*.h \
+		$(DESTDIR)$(INSTALL_DIR)/include/GL
 
-## NOT INSTALLED YET:
-## $(INSTALL) -d $(INSTALL_DIR)/include/GLES
-## $(INSTALL) -m 644 include/GLES/*.h $(INSTALL_DIR)/include/GLES
+install-libgl: default gl.pc install-headers
+	$(INSTALL) -d $(DESTDIR)$(INSTALL_DIR)/$(LIB_DIR)
+	$(INSTALL) -d $(DESTDIR)$(INSTALL_DIR)/$(LIB_DIR)/pkgconfig
+	$(INSTALL) $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME)* \
+		$(DESTDIR)$(INSTALL_DIR)/$(LIB_DIR)
+	$(INSTALL) -m 644 gl.pc $(DESTDIR)$(INSTALL_DIR)/$(LIB_DIR)/pkgconfig
+
+install-osmesa: default
+	$(INSTALL) -d $(DESTDIR)$(INSTALL_DIR)/$(LIB_DIR)
+	$(INSTALL) $(TOP)/$(LIB_DIR)/$(OSMESA_LIB_NAME)* \
+		$(DESTDIR)$(INSTALL_DIR)/$(LIB_DIR)
+
+install-dri:
+	cd drivers/dri && $(MAKE) install
+
 
 
 # Emacs tags
 tags:
 	etags `find . -name \*.[ch]` $(TOP)/include/GL/*.h
 
+
 clean:
 	-rm -f */*.o
 	-rm -f */*/*.o
 	-rm -f depend depend.bak libmesa.a libglapi.a
 	-rm -f drivers/*/*.o
-	(cd x86 && $(MAKE) clean)
-	(cd x86-64 && $(MAKE) clean)
+	-@cd drivers/dri && $(MAKE) clean
+	-@cd drivers/xorg && $(MAKE) clean
+	-@cd drivers/x11 && $(MAKE) clean
+	-@cd drivers/osmesa && $(MAKE) clean
+	-@cd x86 && $(MAKE) clean
+	-@cd x86-64 && $(MAKE) clean
 
 
-include depend
+-include depend
