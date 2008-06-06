@@ -30,9 +30,6 @@
 #ifndef EGLAPIENTRYP
 #define EGLAPIENTRYP EGLAPIENTRY *
 #endif
-#ifndef EGLAPI
-#define EGLAPI extern
-#endif
 
 /* The types NativeDisplayType, NativeWindowType, and NativePixmapType
  * are aliases of window-system-dependent types, such as X Display * or
@@ -53,6 +50,9 @@
 #if (defined(WIN32) || defined(_WIN32_WCE))
 
 /** BEGIN Added for Windows **/
+#ifndef EGLAPI
+#define EGLAPI __declspec(dllexport)
+#endif
 typedef long	int32_t;
 typedef HDC		NativeDisplayType;
 typedef HWND	NativeWindowType;
@@ -62,6 +62,10 @@ typedef HBITMAP NativePixmapType;
 #elif defined(__gnu_linux__)
 
 /** BEGIN Added for X (Mesa) **/
+#ifndef EGLAPI
+#define EGLAPI extern
+#endif
+
 #include <X11/Xlib.h>
 typedef Display *NativeDisplayType;
 typedef Window NativeWindowType;
