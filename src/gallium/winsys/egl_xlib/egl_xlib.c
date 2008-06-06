@@ -573,6 +573,10 @@ _eglMain(_EGLDisplay *dpy, const char *args)
    if (!xdrv)
       return NULL;
 
+   if (!dpy->Xdpy) {
+      dpy->Xdpy = XOpenDisplay(NULL);
+   }
+
    _eglInitDriverFallbacks(&xdrv->Base);
    xdrv->Base.API.Initialize = xlib_eglInitialize;
    xdrv->Base.API.Terminate = xlib_eglTerminate;
