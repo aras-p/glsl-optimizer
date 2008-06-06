@@ -39,7 +39,7 @@ static const char *SysFS = "/sys/class";
 /**
  * Given a card number, use sysfs to determine the DRI driver name.
  */
-static const char *
+const char *
 _eglChooseDRMDriver(int card)
 {
 #if 0
@@ -214,7 +214,7 @@ _eglCloseDriver(_EGLDriver *drv, EGLDisplay dpy)
    void *handle = drv->LibHandle;
    EGLBoolean b;
 
-   _eglLog(_EGL_INFO, "Closing driver");
+   _eglLog(_EGL_DEBUG, "Closing %s", drv->Name);
 
    /*
     * XXX check for currently bound context/surfaces and delete them?

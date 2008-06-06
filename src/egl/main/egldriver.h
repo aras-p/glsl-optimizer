@@ -46,6 +46,9 @@ extern _EGLDriver *_eglMain(_EGLDisplay *dpy, const char *args);
 
 
 extern const char *
+_eglChooseDRMDriver(int card);
+
+extern const char *
 _eglChooseDriver(_EGLDisplay *dpy);
 
 
