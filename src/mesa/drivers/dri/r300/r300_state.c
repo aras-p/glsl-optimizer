@@ -1284,7 +1284,7 @@ static unsigned long gen_fixed_filter(unsigned long f)
 		return f;
 
 	mag = f & R300_TX_MAG_FILTER_MASK;
-	min = f & R300_TX_MIN_FILTER_MASK;
+	min = f & (R300_TX_MIN_FILTER_MASK|R300_TX_MIN_FILTER_MIP_MASK);
 
 	/* TODO: Check for anisto filters too */
 	if ((mag != R300_TX_MAG_FILTER_NEAREST)

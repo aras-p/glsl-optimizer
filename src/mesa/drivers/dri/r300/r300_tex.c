@@ -185,53 +185,38 @@ static void r300SetTexMaxAnisotropy(r300TexObjPtr t, GLfloat max)
  * \param minf Texture minification mode
  * \param magf Texture magnification mode
  */
-
 static void r300SetTexFilter(r300TexObjPtr t, GLenum minf, GLenum magf)
 {
-	GLuint anisotropy = (t->filter & R300_TX_MAX_ANISO_MASK);
+	t->filter &= ~(R300_TX_MIN_FILTER_MASK | R300_TX_MIN_FILTER_MIP_MASK | R300_TX_MAG_FILTER_MASK);
 
-	t->filter &= ~(R300_TX_MIN_FILTER_MASK | R300_TX_MAG_FILTER_MASK);
+	switch (minf) {
+	case GL_NEAREST:
+		t->filter |= R300_TX_MIN_FILTER_NEAREST;
+		break;
+	case GL_LINEAR:
+		t->filter |= R300_TX_MIN_FILTER_LINEAR;
+		break;
+	case GL_NEAREST_MIPMAP_NEAREST:
+		t->filter |= R300_TX_MIN_FILTER_NEAREST|R300_TX_MIN_FILTER_MIP_NEAREST;
+		break;
+	case GL_NEAREST_MIPMAP_LINEAR:
+		t->filter |= R300_TX_MIN_FILTER_NEAREST|R300_TX_MIN_FILTER_MIP_LINEAR;
+		break;
+	case GL_LINEAR_MIPMAP_NEAREST:
+		t->filter |= R300_TX_MIN_FILTER_LINEAR|R300_TX_MIN_FILTER_MIP_NEAREST;
+		break;
+	case GL_LINEAR_MIPMAP_LINEAR:
+		t->filter |= R300_TX_MIN_FILTER_LINEAR|R300_TX_MIN_FILTER_MIP_LINEAR;
+		break;
+	}
 
-	if (anisotropy == R300_TX_MAX_ANISO_1_TO_1) {
-		switch (minf) {
-		case GL_NEAREST:
-			t->filter |= R300_TX_MIN_FILTER_NEAREST;
-			break;
-		case GL_LINEAR:
-			t->filter |= R300_TX_MIN_FILTER_LINEAR;
-			break;
-		case GL_NEAREST_MIPMAP_NEAREST:
-			t->filter |= R300_TX_MIN_FILTER_NEAREST_MIP_NEAREST;
-			break;
-		case GL_NEAREST_MIPMAP_LINEAR:
-			t->filter |= R300_TX_MIN_FILTER_NEAREST_MIP_LINEAR;
-			break;
-		case GL_LINEAR_MIPMAP_NEAREST:
-			t->filter |= R300_TX_MIN_FILTER_LINEAR_MIP_NEAREST;
-			break;
-		case GL_LINEAR_MIPMAP_LINEAR:
-			t->filter |= R300_TX_MIN_FILTER_LINEAR_MIP_LINEAR;
-			break;
-		}
-	} else {
-		switch (minf) {
-		case GL_NEAREST:
-			t->filter |= R300_TX_MIN_FILTER_ANISO_NEAREST;
-			break;
-		case GL_LINEAR:
-			t->filter |= R300_TX_MIN_FILTER_ANISO_LINEAR;
-			break;
-		case GL_NEAREST_MIPMAP_NEAREST:
-		case GL_LINEAR_MIPMAP_NEAREST:
-			t->filter |=
-			    R300_TX_MIN_FILTER_ANISO_NEAREST_MIP_NEAREST;
-			break;
-		case GL_NEAREST_MIPMAP_LINEAR:
-		case GL_LINEAR_MIPMAP_LINEAR:
-			t->filter |=
-			    R300_TX_MIN_FILTER_ANISO_NEAREST_MIP_LINEAR;
-			break;
-		}
+	/* Note that EXT_texture_filter_anisotropic is extremely vague about
+	 * how anisotropic filtering interacts with the "normal" filter modes.
+	 * When anisotropic filtering is enabled, we zero the filter setting
+	 * inside a mip level.
+	 */
+	if (t->filter & R300_TX_MAX_ANISO_MASK) {
+		t->filter &= ~R300_TX_MIN_FILTER_MASK;
 	}
 
 	/* Note we don't have 3D mipmaps so only use the mag filter setting
