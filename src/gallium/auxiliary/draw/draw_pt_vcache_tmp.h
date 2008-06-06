@@ -13,6 +13,8 @@ static void FUNC( struct draw_pt_front_end *frontend,
    unsigned i;
    ushort flags;
 
+   if (0) debug_printf("%s %d\n", __FUNCTION__, count);
+
 
    switch (vcache->input_prim) {
    case PIPE_PRIM_POINTS:

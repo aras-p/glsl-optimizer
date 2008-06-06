@@ -55,6 +55,8 @@ struct draw_vs_varient_generic {
     */
    struct translate *fetch;
    struct translate *emit;
+
+   unsigned temp_vertex_stride;
 };
 
 
@@ -84,7 +86,7 @@ static void do_rhw_viewport( struct draw_vs_varient_generic *vsvg,
    char *ptr = (char *)output_buffer;
    const float *scale = vsvg->base.vs->draw->viewport.scale;
    const float *trans = vsvg->base.vs->draw->viewport.translate;
-   unsigned stride = vsvg->base.key.output_stride;
+   unsigned stride = vsvg->temp_vertex_stride;
    unsigned j;
 
    for (j = 0; j < count; j++, ptr += stride) {
@@ -99,13 +101,13 @@ static void do_rhw_viewport( struct draw_vs_varient_generic *vsvg,
 }
 
 static void do_viewport( struct draw_vs_varient_generic *vsvg,
-                             unsigned count,
-                             void *output_buffer )
+                         unsigned count,
+                         void *output_buffer )
 {
    char *ptr = (char *)output_buffer;
    const float *scale = vsvg->base.vs->draw->viewport.scale;
    const float *trans = vsvg->base.vs->draw->viewport.translate;
-   unsigned stride = vsvg->base.key.output_stride;
+   unsigned stride = vsvg->temp_vertex_stride;
    unsigned j;
 
    for (j = 0; j < count; j++, ptr += stride) {
@@ -124,7 +126,9 @@ static void PIPE_CDECL vsvg_run_elts( struct draw_vs_varient *varient,
                                       void *output_buffer)
 {
    struct draw_vs_varient_generic *vsvg = (struct draw_vs_varient_generic *)varient;
-
+   unsigned temp_vertex_stride = vsvg->temp_vertex_stride;
+   void *temp_buffer = MALLOC( align(count,4) * temp_vertex_stride );
+   
    if (0) debug_printf("%s %d \n", __FUNCTION__,  count);
 			
    /* Want to do this in small batches for cache locality?
@@ -135,44 +139,45 @@ static void PIPE_CDECL vsvg_run_elts( struct draw_vs_varient *varient,
                           count,
                           output_buffer );
 
-   //if (!vsvg->base.vs->is_passthrough) 
-   {
-      vsvg->base.vs->run_linear( vsvg->base.vs, 
-                                 output_buffer,
-                                 output_buffer,
-                                 (const float (*)[4])vsvg->base.vs->draw->pt.user.constants,
-                                 count,
-                                 vsvg->base.key.output_stride, 
-                                 vsvg->base.key.output_stride);
+   vsvg->base.vs->run_linear( vsvg->base.vs, 
+                              temp_buffer,
+                              temp_buffer,
+                              (const float (*)[4])vsvg->base.vs->draw->pt.user.constants,
+                              count,
+                              temp_vertex_stride, 
+                              temp_vertex_stride);
 
 
-      if (vsvg->base.key.clip) {
-         /* not really handling clipping, just do the rhw so we can
-          * see the results...
-          */
-         do_rhw_viewport( vsvg,
-                          count,
-                          output_buffer );
-      }
-      else if (vsvg->base.key.viewport) {
-         do_viewport( vsvg,
-                      count,
-                      output_buffer );
-      }
-
-
-      //if (!vsvg->already_in_emit_format)
-
-      vsvg->emit->set_buffer( vsvg->emit,
-                              0, 
-                              output_buffer,
-                              vsvg->base.key.output_stride );
-
-
-      vsvg->emit->run( vsvg->emit,
-                       0, count,
-                       output_buffer );
+   if (vsvg->base.key.clip) {
+      /* not really handling clipping, just do the rhw so we can
+       * see the results...
+       */
+      do_rhw_viewport( vsvg,
+                       count,
+                       temp_buffer );
    }
+   else if (vsvg->base.key.viewport) {
+      do_viewport( vsvg,
+                   count,
+                   temp_buffer );
+   }
+
+
+   vsvg->emit->set_buffer( vsvg->emit,
+                           0, 
+                           temp_buffer,
+                           temp_vertex_stride );
+
+   vsvg->emit->set_buffer( vsvg->emit, 
+                           1,
+                           &vsvg->draw->rasterizer->point_size,
+                           0);
+
+   vsvg->emit->run( vsvg->emit,
+                    0, count,
+                    output_buffer );
+
+   FREE(temp_buffer);
 }
 
 
@@ -182,54 +187,55 @@ static void PIPE_CDECL vsvg_run_linear( struct draw_vs_varient *varient,
                                         void *output_buffer )
 {
    struct draw_vs_varient_generic *vsvg = (struct draw_vs_varient_generic *)varient;
+   unsigned temp_vertex_stride = vsvg->temp_vertex_stride;
+   void *temp_buffer = MALLOC( align(count,4) * temp_vertex_stride );
 	
-   if (0) debug_printf("%s %d %d\n", __FUNCTION__, start, count);
-   
-				
+   if (0) debug_printf("%s %d %d (sz %d, %d)\n", __FUNCTION__, start, count,
+                       vsvg->base.key.output_stride,
+                       temp_vertex_stride);
+
    vsvg->fetch->run( vsvg->fetch, 
                      start,
                      count,
-                     output_buffer );
+                     temp_buffer );
 
-   //if (!vsvg->base.vs->is_passthrough) 
-   {
-      vsvg->base.vs->run_linear( vsvg->base.vs, 
-                                 output_buffer,
-                                 output_buffer,
-                                 (const float (*)[4])vsvg->base.vs->draw->pt.user.constants,
-                                 count,
-                                 vsvg->base.key.output_stride, 
-                                 vsvg->base.key.output_stride);
+   vsvg->base.vs->run_linear( vsvg->base.vs, 
+                              temp_buffer,
+                              temp_buffer,
+                              (const float (*)[4])vsvg->base.vs->draw->pt.user.constants,
+                              count,
+                              temp_vertex_stride, 
+                              temp_vertex_stride);
 
-      if (vsvg->base.key.clip) {
-         /* not really handling clipping, just do the rhw so we can
-          * see the results...
-          */
-         do_rhw_viewport( vsvg,
-                          count,
-                          output_buffer );
-      }
-      else if (vsvg->base.key.viewport) {
-         do_viewport( vsvg,
-                      count,
-                      output_buffer );
-      }
-
-      //if (!vsvg->already_in_emit_format)
-      vsvg->emit->set_buffer( vsvg->emit,
-                              0, 
-                              output_buffer,
-                              vsvg->base.key.output_stride );
-
-      vsvg->emit->set_buffer( vsvg->emit, 
-                              1,
-                              &vsvg->draw->rasterizer->point_size,
-                              0);
-
-      vsvg->emit->run( vsvg->emit,
-                       0, count,
-                       output_buffer );
+   if (vsvg->base.key.clip) {
+      /* not really handling clipping, just do the rhw so we can
+       * see the results...
+       */
+      do_rhw_viewport( vsvg,
+                       count,
+                       temp_buffer );
    }
+   else if (vsvg->base.key.viewport) {
+      do_viewport( vsvg,
+                   count,
+                   temp_buffer );
+   }
+
+   vsvg->emit->set_buffer( vsvg->emit,
+                           0, 
+                           temp_buffer,
+                           temp_vertex_stride );
+   
+   vsvg->emit->set_buffer( vsvg->emit, 
+                           1,
+                           &vsvg->draw->rasterizer->point_size,
+                           0);
+   
+   vsvg->emit->run( vsvg->emit,
+                    0, count,
+                    output_buffer );
+
+   FREE(temp_buffer);
 }
 
 
@@ -261,18 +267,20 @@ struct draw_vs_varient *draw_vs_varient_generic( struct draw_vertex_shader *vs,
 
    vsvg->draw = vs->draw;
 
+   vsvg->temp_vertex_stride = MAX2(key->nr_inputs,
+                                   vsvg->base.vs->info.num_outputs) * 4 * sizeof(float);
 
    /* Build free-standing fetch and emit functions:
     */
    fetch.nr_elements = key->nr_inputs;
-   fetch.output_stride = 0;
+   fetch.output_stride = vsvg->temp_vertex_stride;
    for (i = 0; i < key->nr_inputs; i++) {
       fetch.element[i].input_format = key->element[i].in.format;
       fetch.element[i].input_buffer = key->element[i].in.buffer;
       fetch.element[i].input_offset = key->element[i].in.offset;
       fetch.element[i].output_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
-      fetch.element[i].output_offset = fetch.output_stride;
-      fetch.output_stride += 4 * sizeof(float);
+      fetch.element[i].output_offset = i * 4 * sizeof(float);
+      assert(fetch.element[i].output_offset < fetch.output_stride);
    }
 
 
@@ -286,6 +294,7 @@ struct draw_vs_varient *draw_vs_varient_generic( struct draw_vertex_shader *vs,
          emit.element[i].input_offset = key->element[i].out.vs_output * 4 * sizeof(float);
          emit.element[i].output_format = draw_translate_vinfo_format(key->element[i].out.format);
          emit.element[i].output_offset = key->element[i].out.offset;
+         assert(emit.element[i].input_offset < fetch.output_stride);
       }
       else {
          emit.element[i].input_format = PIPE_FORMAT_R32_FLOAT;

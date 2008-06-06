@@ -193,6 +193,13 @@ static void fse_prepare( struct draw_pt_middle_end *middle,
    *max_vertices = (draw->render->max_vertex_buffer_bytes / 
                     (vinfo->size * 4));
 
+   /* Probably need to do this somewhere (or fix exec shader not to
+    * need it):
+    */
+   if (1) {
+      struct draw_vertex_shader *vs = draw->vs.vertex_shader;
+      vs->prepare(vs, draw);
+   }
    
 
    //return TRUE;
