@@ -24,26 +24,6 @@ include sources
 default: depend subdirs libmesa.a libglapi.a driver_subdirs
 
 
-# this doesn't work yet but is probably the way to go in the future
-new_install:
-	(cd drivers && $(MAKE) install)
-
-
-# XXX replace this with new_install above someday
-install: default
-	@for driver in $(DRIVER_DIRS) ; do \
-	  case "$$driver" in \
-	    osmesa) if [ "$(DRIVER_DIRS)" = osmesa ]; then \
-	              $(MAKE) install-headers install-osmesa || exit 1 ; \
-	            else \
-	              $(MAKE) install-osmesa || exit 1 ; \
-	            fi ;; \
-	    dri)    $(MAKE) install-libgl install-dri || exit 1 ;; \
-	    *)      $(MAKE) install-libgl || exit 1 ;; \
-	  esac ; \
-	done
-
-
 
 ######################################################################
 # Helper libraries used by many drivers:
@@ -87,6 +67,26 @@ depend: $(ALL_SOURCES)
 
 ######################################################################
 # Installation rules
+
+# this isn't fleshed out yet but is probably the way to go in the future
+new_install:
+	(cd drivers && $(MAKE) install)
+
+
+# XXX replace this with new_install above someday
+install: default
+	@for driver in $(DRIVER_DIRS) ; do \
+	  case "$$driver" in \
+	    osmesa) if [ "$(DRIVER_DIRS)" = osmesa ]; then \
+	              $(MAKE) install-headers install-osmesa || exit 1 ; \
+	            else \
+	              $(MAKE) install-osmesa || exit 1 ; \
+	            fi ;; \
+	    dri)    $(MAKE) install-libgl install-dri || exit 1 ;; \
+	    *)      $(MAKE) install-libgl || exit 1 ;; \
+	  esac ; \
+	done
+
 
 pcedit = sed \
 	-e 's,@INSTALL_DIR@,$(INSTALL_DIR),' \
