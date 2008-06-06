@@ -53,8 +53,12 @@ opts.Add(ListOption('winsys', 'winsys drivers to build', default_winsys,
 
 env = Environment(
 	MSVS_VERSION = '7.1',
-	options = opts, 
-	ENV = os.environ)
+	options = opts,
+	tools = ['gallium'],
+	toolpath = ['scons'],	
+	ENV = os.environ,
+)
+
 Help(opts.GenerateHelpText(env))
 
 # replicate options values in local variables
@@ -82,25 +86,6 @@ Export([
 
 #######################################################################
 # Environment setup
-#
-# TODO: put the compiler specific settings in separate files
-# TODO: auto-detect as much as possible
-
-if platform == 'winddk':
-	env.Tool('winddk', ['scons'])
-	
-	env.Append(CPPPATH = [
-		env['SDK_INC_PATH'],
-		env['DDK_INC_PATH'],
-		env['WDM_INC_PATH'],
-		env['CRT_INC_PATH'],
-	])
-
-if platform == 'wince':
-	env.Tool('evc', ['scons'])
-
-common.generate(env)
-
 
 # Includes
 env.Append(CPPPATH = [
@@ -109,13 +94,6 @@ env.Append(CPPPATH = [
 	'#/src/gallium/auxiliary',
 	'#/src/gallium/drivers',
 ])
-
-
-# x86 assembly
-if x86:
-	if gcc:	
-		env.Append(CFLAGS = '-m32')
-		env.Append(CXXFLAGS = '-m32')
 
 
 # Posix
@@ -182,6 +160,6 @@ Export('env')
 
 SConscript(
 	'src/SConscript',
-	build_dir = common.make_build_dir(env),
+	build_dir = env['build'],
 	duplicate = 0 # http://www.scons.org/doc/0.97/HTML/scons-user/x2261.html
 )
