@@ -7,7 +7,7 @@ TOP = ../../../..
 include $(TOP)/configs/current
 
 
-LIBNAME = softpipe_egl.so
+DRIVER_NAME = softpipe_egl.so
 
 
 INCLUDE_DIRS = \
@@ -36,29 +36,27 @@ LIBS = \
 LOCAL_CFLAGS = -D_EGL_PLATFORM_X=1
 
 
-.SUFFIXES : .cpp
-
 .c.o:
 	$(CC) -c $(INCLUDE_DIRS) $(CFLAGS) $(LOCAL_CFLAGS) $< -o $@
 
-.cpp.o:
-	$(CXX) -c $(INCLUDE_DIRS) $(CXXFLAGS) $(LOCAL_CFLAGS) $< -o $@
+
+.PHONY: library
 
 
+default: depend library Makefile
 
-default: $(TOP)/$(LIB_DIR)/$(LIBNAME)
+
+library: $(TOP)/$(LIB_DIR)/$(DRIVER_NAME)
 
 
 # Make the softpipe_egl.so library
-$(TOP)/$(LIB_DIR)/$(LIBNAME): $(WINSYS_OBJECTS) $(LIBS)
-	$(TOP)/bin/mklib -o $(LIBNAME) \
+$(TOP)/$(LIB_DIR)/$(DRIVER_NAME): $(WINSYS_OBJECTS) $(LIBS)
+	$(TOP)/bin/mklib -o $(DRIVER_NAME) \
 		-linker "$(CC)" \
 		-noprefix \
 		-install $(TOP)/$(LIB_DIR) \
 		$(MKLIB_OPTIONS) $(WINSYS_OBJECTS) \
 		--start-group $(LIBS) --end-group
-
-# $(GL_LIB_DEPS)
 
 
 depend: $(ALL_SOURCES)
@@ -72,7 +70,7 @@ depend: $(ALL_SOURCES)
 install: default
 	$(INSTALL) -d $(INSTALL_DIR)/$(LIB_DIR)
 	@if [ -e $(TOP)/$(LIB_DIR) ]; then \
-		$(INSTALL) $(TOP)/$(LIB_DIR)/$(LIBNAME) $(INSTALL_DIR)/$(LIB_DIR); \
+		$(INSTALL) $(TOP)/$(LIB_DIR)/$(DRIVER_NAME) $(INSTALL_DIR)/$(LIB_DIR); \
 	fi
 
 
