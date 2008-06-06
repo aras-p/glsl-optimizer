@@ -6,11 +6,6 @@ include $(TOP)/configs/current
 include sources
 
 
-GL_MAJOR = 1
-GL_MINOR = 5
-GL_TINY = 0$(MESA_MAJOR)0$(MESA_MINOR)0$(MESA_TINY)
-
-
 .SUFFIXES : .cpp
 
 .c.o:
@@ -37,6 +32,7 @@ default: depend
 	  esac ; \
 	done
 
+# XXX replace this with new_install above someday
 install: default
 	@for driver in $(DRIVER_DIRS) ; do \
 	  case "$$driver" in \
@@ -49,6 +45,21 @@ install: default
 	    *)      $(MAKE) install-libgl || exit 1 ;; \
 	  esac ; \
 	done
+
+
+
+# default: build dependencies, then mesa subdirs, then convenience
+# libs (.a) and finally the device drivers:
+new_default: depend subdirs libmesa.a libglapi.a driver_subdirs
+
+
+driver_subdirs:
+	(cd drivers && $(MAKE))
+
+
+# this doesn't work yet but is probably the way to go in the future
+new_install:
+	(cd drivers && $(MAKE) install)
 
 
 ######################################################################
@@ -64,7 +75,6 @@ libmesa.a: $(SOLO_OBJECTS)
 # Make archive of gl* API dispatcher functions only
 libglapi.a: $(GLAPI_OBJECTS)
 	@ $(TOP)/bin/mklib -o glapi -static $(GLAPI_OBJECTS)
-
 
 
 ######################################################################
@@ -110,15 +120,7 @@ directfb-driver: depend subdirs directfb-libgl
 
 
 ######################################################################
-# Generic stuff
-
-depend: $(ALL_SOURCES)
-	@ echo "running $(MKDEP)"
-	@ touch depend
-	@$(MKDEP) $(MKDEP_OPTIONS) $(DEFINES) $(INCLUDE_DIRS) $(ALL_SOURCES) \
-		> /dev/null 2>/dev/null
-
-
+# Assembly subdirs
 subdirs:
 	@ if echo "$(ASM_FLAGS)" | grep -q USE_X86_ASM ; then \
 		(cd x86 && $(MAKE)) || exit 1 ; \
@@ -127,6 +129,20 @@ subdirs:
 		(cd x86 && $(MAKE)) || exit 1 ; \
 		(cd x86-64 && $(MAKE)) || exit 1 ; \
 	fi
+
+
+######################################################################
+# Dependency generation
+
+depend: $(ALL_SOURCES)
+	@ echo "running $(MKDEP)"
+	@ touch depend
+	@$(MKDEP) $(MKDEP_OPTIONS) $(DEFINES) $(INCLUDE_DIRS) $(ALL_SOURCES) \
+		> /dev/null 2>/dev/null
+
+
+######################################################################
+# Installation rules
 
 pcedit = sed \
 	-e 's,@INSTALL_DIR@,$(INSTALL_DIR),' \
@@ -156,14 +172,12 @@ install-osmesa: default
 install-dri:
 	cd drivers/dri && $(MAKE) install
 
-## NOT INSTALLED YET:
-## $(INSTALL) -d $(DESTDIR)$(INSTALL_DIR)/include/GLES
-## $(INSTALL) -m 644 include/GLES/*.h $(DESTDIR)$(INSTALL_DIR)/include/GLES
 
 
 # Emacs tags
 tags:
 	etags `find . -name \*.[ch]` $(TOP)/include/GL/*.h
+
 
 clean:
 	-rm -f */*.o
