@@ -568,6 +568,21 @@ emit_flop(struct nv50_pc *pc, unsigned sub,
 	emit(pc, inst);
 }
 
+static void
+emit_preex2(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src)
+{
+	unsigned inst[2] = { 0, 0 };
+
+	inst[0] |= 0xb0000000;
+
+	set_dst(pc, dst, inst);
+	set_src_0(pc, src, inst);
+	set_long(pc, inst);
+	inst[1] |= (6 << 29) | 0x00004000;
+
+	emit(pc, inst);
+}
+
 static boolean
 nv50_program_tx_insn(struct nv50_pc *pc, const union tgsi_full_token *tok)
 {
@@ -650,15 +665,7 @@ nv50_program_tx_insn(struct nv50_pc *pc, const union tgsi_full_token *tok)
 		for (c = 0; c < 4; c++) {
 			if (!(mask & (1 << c)))
 				continue;
-			{
-				unsigned inst[2] = { 0, 0 };
-				inst[0] |= 0xb0000000;
-				set_dst(pc, temp, inst);
-				set_src_0(pc, src[0][c], inst);
-				set_long(pc, inst);
-				inst[1] |= (6 << 29) | 0x00004000;
-				emit(pc, inst);
-			}
+			emit_preex2(pc, temp, src[0][c]);
 			emit_flop(pc, 6, dst[c], temp);
 		}
 		free_temp(pc, temp);
@@ -1081,11 +1088,9 @@ nv50_vertprog_validate(struct nv50_context *nv50)
 void
 nv50_fragprog_validate(struct nv50_context *nv50)
 {
-	struct pipe_winsys *ws = nv50->pipe.winsys;
 	struct nouveau_grobj *tesla = nv50->screen->tesla;
 	struct nv50_program *p = nv50->fragprog;
 	struct nouveau_stateobj *so;
-	void *map;
 
 	if (!p->translated) {
 		nv50_program_validate(nv50, p);
