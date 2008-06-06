@@ -18,19 +18,16 @@ include sources
 	$(CC) -c $(INCLUDE_DIRS) $(CFLAGS) $< -o $@
 
 
-# Figure out what to make here
-default: depend
-	@for driver in $(DRIVER_DIRS) ; do \
-	  case "$$driver" in \
-	    x11)      $(MAKE) xlib-driver || exit 1 ;; \
-	    dri)      $(MAKE) dri-drivers || exit 1 ;; \
-	    osmesa)   $(MAKE) osmesa-driver || exit 1 ;; \
-	    beos)     $(MAKE) beos-driver || exit 1 ;; \
-	    directfb) $(MAKE) directfb-driver || exit 1 ;; \
-	    fbdev)    $(MAKE) fbdev-driver || exit 1 ;; \
-	    *) echo "$$driver is invalid in DRIVER_DIRS" >&2; exit 1;; \
-	  esac ; \
-	done
+
+# Default: build dependencies, then mesa subdirs, then convenience
+# libs (.a) and finally the device drivers:
+default: depend subdirs libmesa.a libglapi.a driver_subdirs
+
+
+# this doesn't work yet but is probably the way to go in the future
+new_install:
+	(cd drivers && $(MAKE) install)
+
 
 # XXX replace this with new_install above someday
 install: default
@@ -46,20 +43,6 @@ install: default
 	  esac ; \
 	done
 
-
-
-# default: build dependencies, then mesa subdirs, then convenience
-# libs (.a) and finally the device drivers:
-new_default: depend subdirs libmesa.a libglapi.a driver_subdirs
-
-
-driver_subdirs:
-	(cd drivers && $(MAKE))
-
-
-# this doesn't work yet but is probably the way to go in the future
-new_install:
-	(cd drivers && $(MAKE) install)
 
 
 ######################################################################
@@ -78,45 +61,9 @@ libglapi.a: $(GLAPI_OBJECTS)
 
 
 ######################################################################
-# BeOS driver target
-
-beos-driver: depend subdirs libmesa.a
-	cd drivers/beos && $(MAKE)
-
-
-######################################################################
-# DRI drivers
-
-dri-drivers: depend subdirs libmesa.a
-	cd drivers/dri && $(MAKE)
-
-
-######################################################################
-# Xlib driver (libGL.so)
-
-xlib-driver: depend subdirs libmesa.a libglapi.a
-	cd drivers/x11 && $(MAKE)
-
-
-######################################################################
-# osmesa driver (libOSMesa.so)
-
-osmesa-driver: depend subdirs libmesa.a libglapi.a
-	cd drivers/osmesa && $(MAKE)
-
-
-#####################################################################
-# fbdev driver (libGL.so)
-
-fbdev-driver: depend subdirs libmesa.a libglapi.a
-	cd drivers/fbdev && $(MAKE)
-
-
-#####################################################################
-# DirectFB driver (libGL.so)
-
-directfb-driver: depend subdirs directfb-libgl
-	cd drivers/directfb && $(MAKE)
+# Device drivers
+driver_subdirs:
+	(cd drivers && $(MAKE))
 
 
 ######################################################################
