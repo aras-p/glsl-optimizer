@@ -12,8 +12,7 @@
 
 #define NV50_SU_MAX_TEMP 64
 
-/* ABS
- * ARL
+/* ARL
  * DST - const(1.0)
  * LIT
  * POW
@@ -670,6 +669,21 @@ nv50_program_tx_insn(struct nv50_pc *pc, const union tgsi_full_token *tok)
 	}
 
 	switch (inst->Instruction.Opcode) {
+	case TGSI_OPCODE_ABS:
+		for (c = 0; c < 4; c++) {
+			unsigned inst[2] = { 0, 0 };
+
+			set_long(pc, inst);
+			inst[0] = 0xa0000000; /* cvt */
+			inst[1] |= (6 << 29); /* cvt */
+			inst[1] |= 0x04000000; /* 32 bit */
+			inst[1] |= (1 << 14); /* src .f32 */
+			inst[1] |= ((1 << 6) << 14); /* .abs */
+			set_dst(pc, dst[c], inst);
+			set_src_0(pc, src[0][c], inst);
+			emit(pc, inst);
+		}
+		break;
 	case TGSI_OPCODE_ADD:
 		for (c = 0; c < 4; c++) {
 			if (!(mask & (1 << c)))
