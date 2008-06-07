@@ -137,7 +137,7 @@ static void PIPE_CDECL vsvg_run_elts( struct draw_vs_varient *varient,
    vsvg->fetch->run_elts( vsvg->fetch, 
                           elts,
                           count,
-                          output_buffer );
+                          temp_buffer );
 
    vsvg->base.vs->run_linear( vsvg->base.vs, 
                               temp_buffer,
