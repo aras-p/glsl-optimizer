@@ -184,10 +184,19 @@ static void r300SetTexMaxAnisotropy(r300TexObjPtr t, GLfloat max)
  * \param t Texture whose filter modes are to be set
  * \param minf Texture minification mode
  * \param magf Texture magnification mode
+ * \param anisotropy Maximum anisotropy level
  */
-static void r300SetTexFilter(r300TexObjPtr t, GLenum minf, GLenum magf)
+static void r300SetTexFilter(r300TexObjPtr t, GLenum minf, GLenum magf, GLfloat anisotropy)
 {
 	t->filter &= ~(R300_TX_MIN_FILTER_MASK | R300_TX_MIN_FILTER_MIP_MASK | R300_TX_MAG_FILTER_MASK);
+
+	if (anisotropy > 1.0) {
+		t->filter |= R300_TX_MAG_FILTER_ANISO
+			| R300_TX_MIN_FILTER_ANISO
+			| R300_TX_MIN_FILTER_MIP_ANISO;
+		r300SetTexMaxAnisotropy(t, anisotropy);
+		return;
+	}
 
 	switch (minf) {
 	case GL_NEAREST:
@@ -216,7 +225,7 @@ static void r300SetTexFilter(r300TexObjPtr t, GLenum minf, GLenum magf)
 	 * inside a mip level.
 	 */
 	if (t->filter & R300_TX_MAX_ANISO_MASK) {
-		t->filter &= ~R300_TX_MIN_FILTER_MASK;
+		/* t->filter &= ~R300_TX_MIN_FILTER_MASK; */
 	}
 
 	/* Note we don't have 3D mipmaps so only use the mag filter setting
@@ -263,8 +272,7 @@ static r300TexObjPtr r300AllocTexObj(struct gl_texture_object *texObj)
 		make_empty_list(&t->base);
 
 		r300SetTexWrap(t, texObj->WrapS, texObj->WrapT, texObj->WrapR);
-		r300SetTexMaxAnisotropy(t, texObj->MaxAnisotropy);
-		r300SetTexFilter(t, texObj->MinFilter, texObj->MagFilter);
+		r300SetTexFilter(t, texObj->MinFilter, texObj->MagFilter, texObj->MaxAnisotropy);
 		r300SetTexBorderColor(t, texObj->_BorderChan);
 	}
 
@@ -1035,8 +1043,7 @@ static void r300TexParameter(GLcontext * ctx, GLenum target,
 	case GL_TEXTURE_MIN_FILTER:
 	case GL_TEXTURE_MAG_FILTER:
 	case GL_TEXTURE_MAX_ANISOTROPY_EXT:
-		r300SetTexMaxAnisotropy(t, texObj->MaxAnisotropy);
-		r300SetTexFilter(t, texObj->MinFilter, texObj->MagFilter);
+		r300SetTexFilter(t, texObj->MinFilter, texObj->MagFilter, texObj->MaxAnisotropy);
 		break;
 
 	case GL_TEXTURE_WRAP_S:
