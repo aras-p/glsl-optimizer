@@ -13,7 +13,6 @@
 #define NV50_SU_MAX_TEMP 64
 
 /* ARL
- * LIT - other buggery
  *
  * MSB - Like MAD, but MUL+SUB
  * 	- Fuck it off, introduce a way to negate args for ops that
@@ -22,6 +21,8 @@
  * Look into inlining IMMD for ops other than MOV (make it general?)
  * 	- Maybe even relax restrictions a bit, can't do P_RESULT + P_IMMD,
  * 	  but can emit to P_TEMP first - then MOV later. NVIDIA does this
+ *
+ * Hmmm.. what happens if we have src1+src2 both consts.. ouch !
  *
  * Verify half-insns work where expected - and force disable them where they
  * don't work - MUL has it forcibly disabled atm as it fixes POW..
@@ -164,7 +165,7 @@ alloc_immd(struct nv50_pc *pc, float f)
 	struct nv50_reg *r = CALLOC_STRUCT(nv50_reg);
 	unsigned hw;
 
-	hw = ctor_immd(pc, f, 0, 0, 0);
+	hw = ctor_immd(pc, f, 0, 0, 0) * 4;
 	r->type = P_IMMD;
 	r->hw = hw;
 	r->index = -1;
@@ -657,6 +658,34 @@ emit_abs(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src)
 	emit(pc, inst);
 }
 
+static void
+emit_lit(struct nv50_pc *pc, struct nv50_reg **dst, struct nv50_reg **src)
+{
+	struct nv50_reg *one = alloc_immd(pc, 1.0);
+	struct nv50_reg *zero = alloc_immd(pc, 0.0);
+	struct nv50_reg *neg128 = alloc_immd(pc, -127.999999);
+	struct nv50_reg *pos128 = alloc_immd(pc,  127.999999);
+	struct nv50_reg *tmp[4];
+
+	emit_mov(pc, dst[0], one);
+	emit_mov(pc, dst[3], one);
+
+	tmp[0] = temp_temp(pc);
+	emit_minmax(pc, 4, dst[1], src[0], zero);
+	set_pred_wr(pc, 1, 0, &pc->p->insns[pc->p->insns_nr - 2]);
+
+	tmp[1] = temp_temp(pc);
+	emit_minmax(pc, 4, tmp[1], src[1], zero);
+
+	tmp[3] = temp_temp(pc);
+	emit_minmax(pc, 4, tmp[3], src[3], neg128);
+	emit_minmax(pc, 5, tmp[3], tmp[3], pos128);
+
+	emit_pow(pc, dst[2], tmp[1], tmp[3]);
+	emit_mov(pc, dst[2], zero);
+	set_pred(pc, 3, 0, &pc->p->insns[pc->p->insns_nr - 2]);
+}
+
 static struct nv50_reg *
 tgsi_dst(struct nv50_pc *pc, int c, const struct tgsi_full_dst_register *dst)
 {
@@ -860,6 +889,9 @@ nv50_program_tx_insn(struct nv50_pc *pc, const union tgsi_full_token *tok)
 			emit_sub(pc, dst[c], src[0][c], temp);
 		}
 		free_temp(pc, temp);
+		break;
+	case TGSI_OPCODE_LIT:
+		emit_lit(pc, &dst[0], &src[0][0]);
 		break;
 	case TGSI_OPCODE_LG2:
 		for (c = 0; c < 4; c++) {

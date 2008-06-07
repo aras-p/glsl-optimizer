@@ -35,7 +35,6 @@ nv50_draw_arrays(struct pipe_context *pipe, unsigned mode, unsigned start,
 	struct nv50_context *nv50 = nv50_context(pipe);
 
 	nv50_state_validate(nv50);
-	NOUVEAU_ERR("unimplemented\n");
 
 	BEGIN_RING(tesla, 0x142c, 1);
 	OUT_RING  (0);
