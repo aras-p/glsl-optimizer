@@ -15,7 +15,6 @@
 /* ARL
  * LIT - other buggery
  * POW
- * SWZ - negation ARGH
  * SAT
  *
  * MSB - Like MAD, but MUL+SUB
@@ -189,32 +188,55 @@ tgsi_dst(struct nv50_pc *pc, int c, const struct tgsi_full_dst_register *dst)
 }
 
 static struct nv50_reg *
-tgsi_src(struct nv50_pc *pc, int c, const struct tgsi_full_src_register *src)
+tgsi_src(struct nv50_pc *pc, int chan, const struct tgsi_full_src_register *src)
 {
-	/* Handle swizzling */
+	struct nv50_reg *r = NULL;
+	unsigned c;
+
+	c = tgsi_util_get_full_src_register_extswizzle(src, chan);
 	switch (c) {
-	case 0: c = src->SrcRegister.SwizzleX; break;
-	case 1: c = src->SrcRegister.SwizzleY; break;
-	case 2: c = src->SrcRegister.SwizzleZ; break;
-	case 3: c = src->SrcRegister.SwizzleW; break;
+	case TGSI_EXTSWIZZLE_X:
+	case TGSI_EXTSWIZZLE_Y:
+	case TGSI_EXTSWIZZLE_Z:
+	case TGSI_EXTSWIZZLE_W:
+		switch (src->SrcRegister.File) {
+		case TGSI_FILE_INPUT:
+			r = &pc->attr[src->SrcRegister.Index * 4 + c];
+			break;
+		case TGSI_FILE_TEMPORARY:
+			r = &pc->temp[src->SrcRegister.Index * 4 + c];
+			break;
+		case TGSI_FILE_CONSTANT:
+			r = &pc->param[src->SrcRegister.Index * 4 + c];
+			break;
+		case TGSI_FILE_IMMEDIATE:
+			r = &pc->immd[src->SrcRegister.Index * 4 + c];
+			break;
+		default:
+			assert(0);
+			break;
+		}
+		break;
+	case TGSI_EXTSWIZZLE_ZERO:
+		r = alloc_immd(pc, 0.0);
+		break;
+	case TGSI_EXTSWIZZLE_ONE:
+		r = alloc_immd(pc, 1.0);
+		break;
 	default:
 		assert(0);
-	}
-
-	switch (src->SrcRegister.File) {
-	case TGSI_FILE_INPUT:
-		return &pc->attr[src->SrcRegister.Index * 4 + c];
-	case TGSI_FILE_TEMPORARY:
-		return &pc->temp[src->SrcRegister.Index * 4 + c];
-	case TGSI_FILE_CONSTANT:
-		return &pc->param[src->SrcRegister.Index * 4 + c];
-	case TGSI_FILE_IMMEDIATE:
-		return &pc->immd[src->SrcRegister.Index * 4 + c];
-	default:
 		break;
 	}
 
-	return NULL;
+	switch (tgsi_util_get_full_src_register_sign_mode(src, chan)) {
+	case TGSI_UTIL_SIGN_KEEP:
+		break;
+	default:
+		assert(0);
+		break;
+	}
+
+	return r;
 }
 
 static void
