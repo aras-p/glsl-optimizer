@@ -15,7 +15,6 @@
 /* ARL
  * LIT - other buggery
  * POW
- * SAT
  *
  * MSB - Like MAD, but MUL+SUB
  * 	- Fuck it off, introduce a way to negate args for ops that
@@ -679,8 +678,8 @@ emit_flr(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src)
 {
 	unsigned inst[2] = { 0, 0 };
 
-	set_long(pc, inst);
 	inst[0] = 0xa0000000; /* cvt */
+	set_long(pc, inst);
 	inst[1] |= (6 << 29); /* cvt */
 	inst[1] |= 0x08000000; /* integer mode */
 	inst[1] |= 0x04000000; /* 32 bit */
@@ -696,13 +695,14 @@ static boolean
 nv50_program_tx_insn(struct nv50_pc *pc, const union tgsi_full_token *tok)
 {
 	const struct tgsi_full_instruction *inst = &tok->FullInstruction;
-	struct nv50_reg *dst[4], *src[3][4], *temp;
-	unsigned mask;
+	struct nv50_reg *rdst[4], *dst[4], *src[3][4], *temp;
+	unsigned mask, sat;
 	int i, c;
 
 	NOUVEAU_ERR("insn %p\n", tok);
 
 	mask = inst->FullDstRegisters[0].DstRegister.WriteMask;
+	sat = inst->Instruction.Saturate == TGSI_SAT_ZERO_ONE;
 
 	for (c = 0; c < 4; c++) {
 		if (mask & (1 << c))
@@ -716,13 +716,20 @@ nv50_program_tx_insn(struct nv50_pc *pc, const union tgsi_full_token *tok)
 			src[i][c] = tgsi_src(pc, c, &inst->FullSrcRegisters[i]);
 	}
 
+	if (sat) {
+		for (c = 0; c < 4; c++) {
+			rdst[c] = dst[c];
+			dst[c] = temp_temp(pc);
+		}
+	}
+
 	switch (inst->Instruction.Opcode) {
 	case TGSI_OPCODE_ABS:
 		for (c = 0; c < 4; c++) {
 			unsigned inst[2] = { 0, 0 };
 
-			set_long(pc, inst);
 			inst[0] = 0xa0000000; /* cvt */
+			set_long(pc, inst);
 			inst[1] |= (6 << 29); /* cvt */
 			inst[1] |= 0x04000000; /* 32 bit */
 			inst[1] |= (1 << 14); /* src .f32 */
@@ -920,6 +927,25 @@ nv50_program_tx_insn(struct nv50_pc *pc, const union tgsi_full_token *tok)
 	default:
 		NOUVEAU_ERR("invalid opcode %d\n", inst->Instruction.Opcode);
 		return FALSE;
+	}
+
+	if (sat) {
+		for (c = 0; c < 4; c++) {
+			unsigned inst[2] = { 0, 0 };
+
+			if (!(mask & (1 << c)))
+				continue;
+
+			inst[0] = 0xa0000000; /* cvt */
+			set_long(pc, inst);
+			inst[1] |= (6 << 29); /* cvt */
+			inst[1] |= 0x04000000; /* 32 bit */
+			inst[1] |= (1 << 14); /* src .f32 */
+			inst[1] |= ((1 << 5) << 14); /* .sat */
+			set_dst(pc, rdst[c], inst);
+			set_src_0(pc, dst[c], inst);
+			emit(pc, inst);
+		}
 	}
 
 	kill_temp_temp(pc);
