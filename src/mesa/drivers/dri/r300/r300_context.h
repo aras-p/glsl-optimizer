@@ -574,9 +574,7 @@ struct r300_depthbuffer_state {
 };
 
 struct r300_stencilbuffer_state {
-	GLuint clear;
 	GLboolean hw_stencil;
-
 };
 
 /* Vertex shader state */
