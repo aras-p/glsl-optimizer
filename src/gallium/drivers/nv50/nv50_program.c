@@ -15,8 +15,6 @@
 /* ABS
  * ARL
  * DST - const(1.0)
- * FLR
- * FRC
  * LIT
  * POW
  * SWZ
@@ -629,6 +627,24 @@ emit_set(struct nv50_pc *pc, unsigned c_op, struct nv50_reg *dst,
 		free_temp(pc, dst);
 }
 
+static void
+emit_flr(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src)
+{
+	unsigned inst[2] = { 0, 0 };
+
+	set_long(pc, inst);
+	inst[0] = 0xa0000000; /* cvt */
+	inst[1] |= (6 << 29); /* cvt */
+	inst[1] |= 0x08000000; /* integer mode */
+	inst[1] |= 0x04000000; /* 32 bit */
+	inst[1] |= ((0x1 << 3)) << 14; /* .rn */
+	inst[1] |= (1 << 14); /* src .f32 */
+	set_dst(pc, dst, inst);
+	set_src_0(pc, src, inst);
+
+	emit(pc, inst);
+}
+
 static boolean
 nv50_program_tx_insn(struct nv50_pc *pc, const union tgsi_full_token *tok)
 {
@@ -713,6 +729,23 @@ nv50_program_tx_insn(struct nv50_pc *pc, const union tgsi_full_token *tok)
 				continue;
 			emit_preex2(pc, temp, src[0][c]);
 			emit_flop(pc, 6, dst[c], temp);
+		}
+		free_temp(pc, temp);
+		break;
+	case TGSI_OPCODE_FLR:
+		for (c = 0; c < 4; c++) {
+			if (!(mask & (1 << c)))
+				continue;
+			emit_flr(pc, dst[c], src[0][c]);
+		}
+		break;
+	case TGSI_OPCODE_FRC:
+		temp = alloc_temp(pc, NULL);
+		for (c = 0; c < 4; c++) {
+			if (!(mask & (1 << c)))
+				continue;
+			emit_flr(pc, temp, src[0][c]);
+			emit_sub(pc, dst[c], src[0][c], temp);
 		}
 		free_temp(pc, temp);
 		break;
