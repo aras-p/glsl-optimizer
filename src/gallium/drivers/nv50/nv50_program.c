@@ -151,9 +151,9 @@ ctor_immd(struct nv50_pc *pc, float x, float y, float z, float w)
 	pc->immd_buf = realloc(pc->immd_buf, (pc->immd_nr + 1) * 4 * 
 					     sizeof(float));
 	pc->immd_buf[(pc->immd_nr * 4) + 0] = x;
-	pc->immd_buf[(pc->immd_nr * 4) + 1] = x;
-	pc->immd_buf[(pc->immd_nr * 4) + 2] = x;
-	pc->immd_buf[(pc->immd_nr * 4) + 3] = x;
+	pc->immd_buf[(pc->immd_nr * 4) + 1] = y;
+	pc->immd_buf[(pc->immd_nr * 4) + 2] = z;
+	pc->immd_buf[(pc->immd_nr * 4) + 3] = w;
 	
 	return pc->immd_nr++;
 }
