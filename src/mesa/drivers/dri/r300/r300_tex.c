@@ -191,13 +191,15 @@ static void r300SetTexFilter(r300TexObjPtr t, GLenum minf, GLenum magf, GLfloat 
 	/* Note that EXT_texture_filter_anisotropic is extremely vague about
 	 * how anisotropic filtering interacts with the "normal" filter modes.
 	 * When anisotropic filtering is enabled, we override min and mag
-	 * filter settings.
+	 * filter settings completely. This includes driconf's settings.
 	 */
-	if (anisotropy >= 2.0 && (minf != GL_NEAREST && minf != GL_LINEAR)) {
+	if (anisotropy >= 2.0) {
 		t->filter |= R300_TX_MAG_FILTER_ANISO
 			| R300_TX_MIN_FILTER_ANISO
 			| R300_TX_MIN_FILTER_MIP_LINEAR
 			| aniso_filter(anisotropy);
+		if (RADEON_DEBUG & DEBUG_TEXTURE)
+			fprintf(stderr, "Using maximum anisotropy of %f\n", anisotropy);
 		return;
 	}
 
