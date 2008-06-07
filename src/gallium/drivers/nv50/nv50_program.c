@@ -14,15 +14,17 @@
 
 /* ARL
  * LIT - other buggery
- * POW
  *
  * MSB - Like MAD, but MUL+SUB
  * 	- Fuck it off, introduce a way to negate args for ops that
  * 	  support it.
  *
- * Look into inlining IMMD for ops other than MOV
+ * Look into inlining IMMD for ops other than MOV (make it general?)
  * 	- Maybe even relax restrictions a bit, can't do P_RESULT + P_IMMD,
  * 	  but can emit to P_TEMP first - then MOV later. NVIDIA does this
+ *
+ * Verify half-insns work where expected - and force disable them where they
+ * don't work - MUL has it forcibly disabled atm as it fixes POW..
  */
 struct nv50_reg {
 	enum {
@@ -489,6 +491,7 @@ emit_mul(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src0,
 	unsigned inst[2] = { 0, 0 };
 
 	inst[0] |= 0xc0000000;
+	set_long(pc, inst);
 
 	check_swap_src_0_1(pc, &src0, &src1);
 	set_dst(pc, dst, inst);
@@ -869,6 +872,19 @@ nv50_program_tx_insn(struct nv50_pc *pc, const union tgsi_full_token *tok)
 				continue;
 			emit_mul(pc, dst[c], src[0][c], src[1][c]);
 		}
+		break;
+	case TGSI_OPCODE_POW:
+		temp = alloc_temp(pc, NULL);
+		emit_flop(pc, 3, temp, src[0][0]);
+		emit_mul(pc, temp, temp, src[1][0]);
+		emit_preex2(pc, temp, temp);
+		emit_flop(pc, 6, temp, temp);
+		for (c = 0; c < 4; c++) {
+			if (!(mask & (1 << c)))
+				continue;
+			emit_mov(pc, dst[c], temp);
+		}
+		free_temp(pc, temp);
 		break;
 	case TGSI_OPCODE_RCP:
 		for (c = 0; c < 4; c++) {
