@@ -1395,7 +1395,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #	define R300_CHROMA_KEY_BLEND           2
 #	define R300_MC_ROUND_NORMAL            (0<<2)
 #	define R300_MC_ROUND_MPEG4             (1<<2)
-#	define R300_LOD_BIAS_MASK	    0x1fff
+#	define R300_LOD_BIAS_SHIFT             3
+#	define R300_LOD_BIAS_MASK	       0x1ff8
 #	define R300_EDGE_ANISO_EDGE_DIAG       (0<<13)
 #	define R300_EDGE_ANISO_EDGE_ONLY       (1<<13)
 #	define R300_MC_COORD_TRUNCATE_DISABLE  (0<<14)
