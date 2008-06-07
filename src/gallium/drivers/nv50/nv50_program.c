@@ -171,75 +171,6 @@ alloc_immd(struct nv50_pc *pc, float f)
 	return r;
 }
 
-static struct nv50_reg *
-tgsi_dst(struct nv50_pc *pc, int c, const struct tgsi_full_dst_register *dst)
-{
-	switch (dst->DstRegister.File) {
-	case TGSI_FILE_TEMPORARY:
-		return &pc->temp[dst->DstRegister.Index * 4 + c];
-	case TGSI_FILE_OUTPUT:
-		return &pc->result[dst->DstRegister.Index * 4 + c];
-	case TGSI_FILE_NULL:
-		return NULL;
-	default:
-		break;
-	}
-
-	return NULL;
-}
-
-static struct nv50_reg *
-tgsi_src(struct nv50_pc *pc, int chan, const struct tgsi_full_src_register *src)
-{
-	struct nv50_reg *r = NULL;
-	unsigned c;
-
-	c = tgsi_util_get_full_src_register_extswizzle(src, chan);
-	switch (c) {
-	case TGSI_EXTSWIZZLE_X:
-	case TGSI_EXTSWIZZLE_Y:
-	case TGSI_EXTSWIZZLE_Z:
-	case TGSI_EXTSWIZZLE_W:
-		switch (src->SrcRegister.File) {
-		case TGSI_FILE_INPUT:
-			r = &pc->attr[src->SrcRegister.Index * 4 + c];
-			break;
-		case TGSI_FILE_TEMPORARY:
-			r = &pc->temp[src->SrcRegister.Index * 4 + c];
-			break;
-		case TGSI_FILE_CONSTANT:
-			r = &pc->param[src->SrcRegister.Index * 4 + c];
-			break;
-		case TGSI_FILE_IMMEDIATE:
-			r = &pc->immd[src->SrcRegister.Index * 4 + c];
-			break;
-		default:
-			assert(0);
-			break;
-		}
-		break;
-	case TGSI_EXTSWIZZLE_ZERO:
-		r = alloc_immd(pc, 0.0);
-		break;
-	case TGSI_EXTSWIZZLE_ONE:
-		r = alloc_immd(pc, 1.0);
-		break;
-	default:
-		assert(0);
-		break;
-	}
-
-	switch (tgsi_util_get_full_src_register_sign_mode(src, chan)) {
-	case TGSI_UTIL_SIGN_KEEP:
-		break;
-	default:
-		assert(0);
-		break;
-	}
-
-	return r;
-}
-
 static void
 emit(struct nv50_pc *pc, unsigned *inst)
 {
@@ -709,6 +640,98 @@ emit_pow(struct nv50_pc *pc, struct nv50_reg *dst,
 	free_temp(pc, temp);
 }
 
+static void
+emit_abs(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src)
+{
+	unsigned inst[2] = { 0, 0 };
+
+	inst[0] = 0xa0000000; /* cvt */
+	set_long(pc, inst);
+	inst[1] |= (6 << 29); /* cvt */
+	inst[1] |= 0x04000000; /* 32 bit */
+	inst[1] |= (1 << 14); /* src .f32 */
+	inst[1] |= ((1 << 6) << 14); /* .abs */
+	set_dst(pc, dst, inst);
+	set_src_0(pc, src, inst);
+
+	emit(pc, inst);
+}
+
+static struct nv50_reg *
+tgsi_dst(struct nv50_pc *pc, int c, const struct tgsi_full_dst_register *dst)
+{
+	switch (dst->DstRegister.File) {
+	case TGSI_FILE_TEMPORARY:
+		return &pc->temp[dst->DstRegister.Index * 4 + c];
+	case TGSI_FILE_OUTPUT:
+		return &pc->result[dst->DstRegister.Index * 4 + c];
+	case TGSI_FILE_NULL:
+		return NULL;
+	default:
+		break;
+	}
+
+	return NULL;
+}
+
+static struct nv50_reg *
+tgsi_src(struct nv50_pc *pc, int chan, const struct tgsi_full_src_register *src)
+{
+	struct nv50_reg *r = NULL;
+	struct nv50_reg *temp;
+	unsigned c;
+
+	c = tgsi_util_get_full_src_register_extswizzle(src, chan);
+	switch (c) {
+	case TGSI_EXTSWIZZLE_X:
+	case TGSI_EXTSWIZZLE_Y:
+	case TGSI_EXTSWIZZLE_Z:
+	case TGSI_EXTSWIZZLE_W:
+		switch (src->SrcRegister.File) {
+		case TGSI_FILE_INPUT:
+			r = &pc->attr[src->SrcRegister.Index * 4 + c];
+			break;
+		case TGSI_FILE_TEMPORARY:
+			r = &pc->temp[src->SrcRegister.Index * 4 + c];
+			break;
+		case TGSI_FILE_CONSTANT:
+			r = &pc->param[src->SrcRegister.Index * 4 + c];
+			break;
+		case TGSI_FILE_IMMEDIATE:
+			r = &pc->immd[src->SrcRegister.Index * 4 + c];
+			break;
+		default:
+			assert(0);
+			break;
+		}
+		break;
+	case TGSI_EXTSWIZZLE_ZERO:
+		r = alloc_immd(pc, 0.0);
+		break;
+	case TGSI_EXTSWIZZLE_ONE:
+		r = alloc_immd(pc, 1.0);
+		break;
+	default:
+		assert(0);
+		break;
+	}
+
+	switch (tgsi_util_get_full_src_register_sign_mode(src, chan)) {
+	case TGSI_UTIL_SIGN_KEEP:
+		break;
+	case TGSI_UTIL_SIGN_CLEAR:
+		temp = temp_temp(pc);
+		emit_abs(pc, temp, r);
+		r = temp;
+		break;
+	default:
+		assert(0);
+		break;
+	}
+
+	return r;
+}
+
 static boolean
 nv50_program_tx_insn(struct nv50_pc *pc, const union tgsi_full_token *tok)
 {
@@ -744,17 +767,9 @@ nv50_program_tx_insn(struct nv50_pc *pc, const union tgsi_full_token *tok)
 	switch (inst->Instruction.Opcode) {
 	case TGSI_OPCODE_ABS:
 		for (c = 0; c < 4; c++) {
-			unsigned inst[2] = { 0, 0 };
-
-			inst[0] = 0xa0000000; /* cvt */
-			set_long(pc, inst);
-			inst[1] |= (6 << 29); /* cvt */
-			inst[1] |= 0x04000000; /* 32 bit */
-			inst[1] |= (1 << 14); /* src .f32 */
-			inst[1] |= ((1 << 6) << 14); /* .abs */
-			set_dst(pc, dst[c], inst);
-			set_src_0(pc, src[0][c], inst);
-			emit(pc, inst);
+			if (!(mask & (1 << c)))
+				continue;
+			emit_abs(pc, dst[c], src[0][c]);
 		}
 		break;
 	case TGSI_OPCODE_ADD:
