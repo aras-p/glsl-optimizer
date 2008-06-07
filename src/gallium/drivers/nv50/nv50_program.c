@@ -19,8 +19,6 @@
  * FRC
  * LIT
  * POW
- * SGE - cvt
- * SLT - cvt
  * SWZ
  *
  * MSB - Like MAD, but MUL+SUB
@@ -201,15 +199,15 @@ emit(struct nv50_pc *pc, unsigned *inst)
 {
 	struct nv50_program *p = pc->p;
 
-       if (inst[0] & 1) {
-               p->insns_nr += 2;
-               p->insns = realloc(p->insns, sizeof(unsigned) * p->insns_nr);
-               memcpy(p->insns + (p->insns_nr - 2), inst, sizeof(unsigned)*2);
-       } else {
-               p->insns_nr += 1;
-               p->insns = realloc(p->insns, sizeof(unsigned) * p->insns_nr);
-               memcpy(p->insns + (p->insns_nr - 1), inst, sizeof(unsigned));
-       }
+	if (inst[0] & 1) {
+		p->insns_nr += 2;
+		p->insns = realloc(p->insns, sizeof(unsigned) * p->insns_nr);
+		memcpy(p->insns + (p->insns_nr - 2), inst, sizeof(unsigned)*2);
+	} else {
+		p->insns_nr += 1;
+		p->insns = realloc(p->insns, sizeof(unsigned) * p->insns_nr);
+		memcpy(p->insns + (p->insns_nr - 1), inst, sizeof(unsigned));
+	}
 }
 
 static INLINE void set_long(struct nv50_pc *, unsigned *);
@@ -582,6 +580,54 @@ emit_preex2(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src)
 
 	emit(pc, inst);
 }
+/*XXX: inaccurate results.. why? */
+#define ALLOW_SET_SWAP 0
+
+static void
+emit_set(struct nv50_pc *pc, unsigned c_op, struct nv50_reg *dst,
+	 struct nv50_reg *src0, struct nv50_reg *src1)
+{
+	unsigned inst[2] = { 0, 0 };
+#if ALLOW_SET_SWAP
+	unsigned inv_cop[8] = { 0, 6, 2, 4, 3, 5, 1, 7 };
+#endif
+	struct nv50_reg *rdst;
+
+#if ALLOW_SET_SWAP
+	assert(c_op <= 7);
+	if (check_swap_src_0_1(pc, &src0, &src1))
+		c_op = inv_cop[c_op];
+#endif
+
+	rdst = dst;
+	if (dst->type != P_TEMP)
+		dst = alloc_temp(pc, NULL);
+
+	/* set.u32 */
+	set_long(pc, inst);
+	inst[0] |= 0xb0000000;
+	inst[1] |= (3 << 29);
+	inst[1] |= (c_op << 14);
+	/*XXX: breaks things, .u32 by default?
+	 *     decuda will disasm as .u16 and use .lo/.hi regs, but this
+	 *     doesn't seem to match what the hw actually does.
+	inst[1] |= 0x04000000; << breaks things.. .u32 by default?
+	 */
+	set_dst(pc, dst, inst);
+	set_src_0(pc, src0, inst);
+	set_src_1(pc, src1, inst);
+	emit(pc, inst);
+
+	/* cvt.f32.u32 */
+	inst[0] = 0xa0000001;
+	inst[1] = 0x64014780;
+	set_dst(pc, rdst, inst);
+	set_src_0(pc, dst, inst);
+	emit(pc, inst);
+
+	if (dst != rdst)
+		free_temp(pc, dst);
+}
 
 static boolean
 nv50_program_tx_insn(struct nv50_pc *pc, const union tgsi_full_token *tok)
@@ -726,11 +772,25 @@ nv50_program_tx_insn(struct nv50_pc *pc, const union tgsi_full_token *tok)
 			emit_flop(pc, 2, dst[c], src[0][c]);
 		}
 		break;
+	case TGSI_OPCODE_SGE:
+		for (c = 0; c < 4; c++) {
+			if (!(mask & (1 << c)))
+				continue;
+			emit_set(pc, 6, dst[c], src[0][c], src[1][c]);
+		}
+		break;
 	case TGSI_OPCODE_SIN:
 		for (c = 0; c < 4; c++) {
 			if (!(mask & (1 << c)))
 				continue;
 			emit_flop(pc, 4, dst[c], src[0][c]);
+		}
+		break;
+	case TGSI_OPCODE_SLT:
+		for (c = 0; c < 4; c++) {
+			if (!(mask & (1 << c)))
+				continue;
+			emit_set(pc, 1, dst[c], src[0][c], src[1][c]);
 		}
 		break;
 	case TGSI_OPCODE_SUB:
