@@ -1441,8 +1441,7 @@ static void r300SetupTextures(GLcontext * ctx)
 			r300->hw.tex.filter.cmd[R300_TEX_VALUE_0 +
 						hw_tmu] =
 			    gen_fixed_filter(t->filter) | (hw_tmu << 28);
-			/* Currently disabled! */
-			r300->hw.tex.filter_1.cmd[R300_TEX_VALUE_0 + hw_tmu] = 0x0;	//0x20501f80;
+			r300->hw.tex.filter_1.cmd[R300_TEX_VALUE_0 + hw_tmu] = t->filter_1;
 			r300->hw.tex.size.cmd[R300_TEX_VALUE_0 + hw_tmu] =
 			    t->size;
 			r300->hw.tex.format.cmd[R300_TEX_VALUE_0 +
