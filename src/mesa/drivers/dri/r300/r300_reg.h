@@ -1380,14 +1380,13 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #	define R300_TX_MIN_FILTER_MIP_NONE       (0 << 13)
 #	define R300_TX_MIN_FILTER_MIP_NEAREST    (1 << 13)
 #	define R300_TX_MIN_FILTER_MIP_LINEAR     (2 << 13)
-#	define R300_TX_MIN_FILTER_MIP_ANISO      (3 << 13)
 #	define R300_TX_MIN_FILTER_MIP_MASK       (3 << 13)
-#	define R300_TX_MAX_ANISO_1_TO_1  (0 << 21)
-#	define R300_TX_MAX_ANISO_2_TO_1  (2 << 21)
-#	define R300_TX_MAX_ANISO_4_TO_1  (4 << 21)
-#	define R300_TX_MAX_ANISO_8_TO_1  (6 << 21)
-#	define R300_TX_MAX_ANISO_16_TO_1 (8 << 21)
-#	define R300_TX_MAX_ANISO_MASK    (14 << 21)
+#	define R300_TX_MAX_ANISO_1_TO_1          (0 << 21)
+#	define R300_TX_MAX_ANISO_2_TO_1          (1 << 21)
+#	define R300_TX_MAX_ANISO_4_TO_1          (2 << 21)
+#	define R300_TX_MAX_ANISO_8_TO_1          (3 << 21)
+#	define R300_TX_MAX_ANISO_16_TO_1         (4 << 21)
+#	define R300_TX_MAX_ANISO_MASK            (7 << 21)
 
 #define R300_TX_FILTER1_0                      0x4440
 #	define R300_CHROMA_KEY_MODE_DISABLE    0

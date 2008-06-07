@@ -160,21 +160,18 @@ static void r300SetTexWrap(r300TexObjPtr t, GLenum swrap, GLenum twrap,
 	t->filter |= hw_qwrap << R300_TX_WRAP_Q_SHIFT;
 }
 
-static void r300SetTexMaxAnisotropy(r300TexObjPtr t, GLfloat max)
+static GLuint aniso_filter(GLfloat anisotropy)
 {
-
-	t->filter &= ~R300_TX_MAX_ANISO_MASK;
-
-	if (max <= 1.0) {
-		t->filter |= R300_TX_MAX_ANISO_1_TO_1;
-	} else if (max <= 2.0) {
-		t->filter |= R300_TX_MAX_ANISO_2_TO_1;
-	} else if (max <= 4.0) {
-		t->filter |= R300_TX_MAX_ANISO_4_TO_1;
-	} else if (max <= 8.0) {
-		t->filter |= R300_TX_MAX_ANISO_8_TO_1;
+	if (anisotropy >= 16.0) {
+		return R300_TX_MAX_ANISO_16_TO_1;
+	} else if (anisotropy >= 8.0) {
+		return R300_TX_MAX_ANISO_8_TO_1;
+	} else if (anisotropy >= 4.0) {
+		return R300_TX_MAX_ANISO_4_TO_1;
+	} else if (anisotropy >= 2.0) {
+		return R300_TX_MAX_ANISO_2_TO_1;
 	} else {
-		t->filter |= R300_TX_MAX_ANISO_16_TO_1;
+		return R300_TX_MAX_ANISO_1_TO_1;
 	}
 }
 
@@ -188,13 +185,19 @@ static void r300SetTexMaxAnisotropy(r300TexObjPtr t, GLfloat max)
  */
 static void r300SetTexFilter(r300TexObjPtr t, GLenum minf, GLenum magf, GLfloat anisotropy)
 {
-	t->filter &= ~(R300_TX_MIN_FILTER_MASK | R300_TX_MIN_FILTER_MIP_MASK | R300_TX_MAG_FILTER_MASK);
+	t->filter &= ~(R300_TX_MIN_FILTER_MASK | R300_TX_MIN_FILTER_MIP_MASK | R300_TX_MAG_FILTER_MASK | R300_TX_MAX_ANISO_MASK);
+	t->filter_1 &= ~R300_EDGE_ANISO_EDGE_ONLY;
 
-	if (anisotropy > 1.0) {
+	/* Note that EXT_texture_filter_anisotropic is extremely vague about
+	 * how anisotropic filtering interacts with the "normal" filter modes.
+	 * When anisotropic filtering is enabled, we override min and mag
+	 * filter settings.
+	 */
+	if (anisotropy >= 2.0 && (minf != GL_NEAREST && minf != GL_LINEAR)) {
 		t->filter |= R300_TX_MAG_FILTER_ANISO
 			| R300_TX_MIN_FILTER_ANISO
-			| R300_TX_MIN_FILTER_MIP_ANISO;
-		r300SetTexMaxAnisotropy(t, anisotropy);
+			| R300_TX_MIN_FILTER_MIP_LINEAR
+			| aniso_filter(anisotropy);
 		return;
 	}
 
@@ -217,15 +220,6 @@ static void r300SetTexFilter(r300TexObjPtr t, GLenum minf, GLenum magf, GLfloat 
 	case GL_LINEAR_MIPMAP_LINEAR:
 		t->filter |= R300_TX_MIN_FILTER_LINEAR|R300_TX_MIN_FILTER_MIP_LINEAR;
 		break;
-	}
-
-	/* Note that EXT_texture_filter_anisotropic is extremely vague about
-	 * how anisotropic filtering interacts with the "normal" filter modes.
-	 * When anisotropic filtering is enabled, we zero the filter setting
-	 * inside a mip level.
-	 */
-	if (t->filter & R300_TX_MAX_ANISO_MASK) {
-		/* t->filter &= ~R300_TX_MIN_FILTER_MASK; */
 	}
 
 	/* Note we don't have 3D mipmaps so only use the mag filter setting
