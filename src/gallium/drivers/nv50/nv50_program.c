@@ -13,18 +13,18 @@
 #define NV50_SU_MAX_TEMP 64
 
 /* ARL
- * DST - const(1.0)
- * LIT
+ * LIT - other buggery
  * POW
- * SWZ
+ * SWZ - negation ARGH
+ * SAT
  *
  * MSB - Like MAD, but MUL+SUB
  * 	- Fuck it off, introduce a way to negate args for ops that
  * 	  support it.
  *
- * Need ability to specifiy driver IMMD values, like nv40 constant()
- *
  * Look into inlining IMMD for ops other than MOV
+ * 	- Maybe even relax restrictions a bit, can't do P_RESULT + P_IMMD,
+ * 	  but can emit to P_TEMP first - then MOV later. NVIDIA does this
  */
 struct nv50_reg {
 	enum {
@@ -143,6 +143,32 @@ kill_temp_temp(struct nv50_pc *pc)
 	for (i = 0; i < pc->temp_temp_nr; i++)
 		free_temp(pc, pc->temp_temp[i]);
 	pc->temp_temp_nr = 0;
+}
+
+static int
+ctor_immd(struct nv50_pc *pc, float x, float y, float z, float w)
+{
+	pc->immd_buf = realloc(pc->immd_buf, (pc->immd_nr + 1) * 4 * 
+					     sizeof(float));
+	pc->immd_buf[(pc->immd_nr * 4) + 0] = x;
+	pc->immd_buf[(pc->immd_nr * 4) + 1] = x;
+	pc->immd_buf[(pc->immd_nr * 4) + 2] = x;
+	pc->immd_buf[(pc->immd_nr * 4) + 3] = x;
+	
+	return pc->immd_nr++;
+}
+
+static struct nv50_reg *
+alloc_immd(struct nv50_pc *pc, float f)
+{
+	struct nv50_reg *r = CALLOC_STRUCT(nv50_reg);
+	unsigned hw;
+
+	hw = ctor_immd(pc, f, 0, 0, 0);
+	r->type = P_IMMD;
+	r->hw = hw;
+	r->index = -1;
+	return r;
 }
 
 static struct nv50_reg *
@@ -736,6 +762,16 @@ nv50_program_tx_insn(struct nv50_pc *pc, const union tgsi_full_token *tok)
 		}
 		free_temp(pc, temp);
 		break;
+	case TGSI_OPCODE_DST:
+	{
+		struct nv50_reg *one = alloc_immd(pc, 1.0);
+		emit_mov(pc, dst[0], one);
+		emit_mul(pc, dst[1], src[0][1], src[1][1]);
+		emit_mov(pc, dst[2], src[0][2]);
+		emit_mov(pc, dst[3], src[1][3]);
+		FREE(one);
+	}
+		break;
 	case TGSI_OPCODE_EX2:
 		temp = alloc_temp(pc, NULL);
 		for (c = 0; c < 4; c++) {
@@ -886,17 +922,10 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 			const struct tgsi_full_immediate *imm =
 				&p.FullToken.FullImmediate;
 
-			pc->immd_nr++;
-			pc->immd_buf = realloc(pc->immd_buf, 4 * pc->immd_nr *
-							     sizeof(float));
-			pc->immd_buf[4 * (pc->immd_nr - 1) + 0] =
-				imm->u.ImmediateFloat32[0].Float;
-			pc->immd_buf[4 * (pc->immd_nr - 1) + 1] =
-				imm->u.ImmediateFloat32[1].Float;
-			pc->immd_buf[4 * (pc->immd_nr - 1) + 2] =
-				imm->u.ImmediateFloat32[2].Float;
-			pc->immd_buf[4 * (pc->immd_nr - 1) + 3] =
-				imm->u.ImmediateFloat32[3].Float;
+			ctor_immd(pc, imm->u.ImmediateFloat32[0].Float,
+				      imm->u.ImmediateFloat32[1].Float,
+				      imm->u.ImmediateFloat32[2].Float,
+				      imm->u.ImmediateFloat32[3].Float);
 		}
 			break;
 		case TGSI_TOKEN_TYPE_DECLARATION:
