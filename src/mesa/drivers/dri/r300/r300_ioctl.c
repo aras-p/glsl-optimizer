@@ -147,7 +147,8 @@ static void r300ClearBuffer(r300ContextPtr r300, int flags, int buffer)
 
 		e32(t1);
 		e32(t2);
-		e32(R300_STENCILWRITEMASK_MASK | r300->state.stencil.clear);
+		e32(((ctx->Stencil.WriteMask[0] & R300_STENCILREF_MASK) << R300_STENCILWRITEMASK_SHIFT) |
+		    (r300->state.stencil.clear & R300_STENCILREF_MASK));
 	}
 
 	cmd2 = (drm_r300_cmd_header_t *) r300AllocCmdBuf(r300, 9, __FUNCTION__);
