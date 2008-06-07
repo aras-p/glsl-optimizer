@@ -627,6 +627,7 @@ emit_preex2(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src)
 
 	emit(pc, inst);
 }
+
 /*XXX: inaccurate results.. why? */
 #define ALLOW_SET_SWAP 0
 
@@ -692,6 +693,20 @@ emit_flr(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src)
 	set_src_0(pc, src, inst);
 
 	emit(pc, inst);
+}
+
+static void
+emit_pow(struct nv50_pc *pc, struct nv50_reg *dst,
+	 struct nv50_reg *v, struct nv50_reg *e)
+{
+	struct nv50_reg *temp = alloc_temp(pc, NULL);
+
+	emit_flop(pc, 3, temp, v);
+	emit_mul(pc, temp, temp, e);
+	emit_preex2(pc, temp, temp);
+	emit_flop(pc, 6, dst, temp);
+
+	free_temp(pc, temp);
 }
 
 static boolean
@@ -875,10 +890,7 @@ nv50_program_tx_insn(struct nv50_pc *pc, const union tgsi_full_token *tok)
 		break;
 	case TGSI_OPCODE_POW:
 		temp = alloc_temp(pc, NULL);
-		emit_flop(pc, 3, temp, src[0][0]);
-		emit_mul(pc, temp, temp, src[1][0]);
-		emit_preex2(pc, temp, temp);
-		emit_flop(pc, 6, temp, temp);
+		emit_pow(pc, temp, src[0][0], src[1][0]);
 		for (c = 0; c < 4; c++) {
 			if (!(mask & (1 << c)))
 				continue;
