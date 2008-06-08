@@ -282,6 +282,30 @@ static void radeonSpanRenderStart(GLcontext * ctx)
 #endif
 	LOCK_HARDWARE(rmesa);
 	radeonWaitForIdleLocked(rmesa);
+
+	/* Read the first pixel in the frame buffer.  This should
+	 * be a noop, right?  In fact without this conform fails as reading
+	 * from the framebuffer sometimes produces old results -- the
+	 * on-card read cache gets mixed up and doesn't notice that the
+	 * framebuffer has been updated.
+	 *
+	 * Note that we should probably be reading some otherwise unused
+	 * region of VRAM, otherwise we might get incorrect results when
+	 * reading pixels from the top left of the screen.
+	 *
+	 * I found this problem on an R420 with glean's texCube test.
+	 * Note that the R200 span code also *writes* the first pixel in the
+	 * framebuffer, but I've found this to be unnecessary.
+	 *  -- Nicolai Hähnle, June 2008
+	 */
+	{
+		int p;
+		driRenderbuffer *drb =
+			(driRenderbuffer *) ctx->WinSysDrawBuffer->_ColorDrawBuffers[0];
+		volatile int *buf =
+			(volatile int *)(rmesa->dri.screen->pFB + drb->offset);
+		p = *buf;
+	}
 }
 
 static void radeonSpanRenderFinish(GLcontext * ctx)
