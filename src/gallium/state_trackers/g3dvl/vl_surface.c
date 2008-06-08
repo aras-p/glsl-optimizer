@@ -269,8 +269,6 @@ int vlRenderIMacroBlock
 	pipe->set_framebuffer_state(pipe, &surface->context->states.mc.render_target);
 	pipe->set_sampler_textures(pipe, 3, surface->context->states.mc.textures);
 	pipe->bind_sampler_states(pipe, 3, (void**)surface->context->states.mc.samplers);
-	pipe->set_vertex_buffers(pipe, 4, surface->context->states.mc.vertex_bufs);
-	pipe->set_vertex_elements(pipe, 4, surface->context->states.mc.vertex_buf_elems);
 	pipe->bind_vs_state(pipe, surface->context->states.mc.i_vs);
 	pipe->bind_fs_state(pipe, surface->context->states.mc.i_fs);
 	
@@ -354,8 +352,6 @@ int vlRenderPMacroBlock
 	surface->context->states.mc.textures[3] = ref_surface->texture;
 	pipe->set_sampler_textures(pipe, 4, surface->context->states.mc.textures);
 	pipe->bind_sampler_states(pipe, 4, (void**)surface->context->states.mc.samplers);
-	pipe->set_vertex_buffers(pipe, 5, surface->context->states.mc.vertex_bufs);
-	pipe->set_vertex_elements(pipe, 5, surface->context->states.mc.vertex_buf_elems);
 	pipe->bind_vs_state(pipe, surface->context->states.mc.p_vs);
 	pipe->bind_fs_state(pipe, surface->context->states.mc.p_fs);
 	
@@ -445,8 +441,6 @@ int vlRenderBMacroBlock
 	surface->context->states.mc.textures[4] = future_surface->texture;
 	pipe->set_sampler_textures(pipe, 5, surface->context->states.mc.textures);
 	pipe->bind_sampler_states(pipe, 5, (void**)surface->context->states.mc.samplers);
-	pipe->set_vertex_buffers(pipe, 6, surface->context->states.mc.vertex_bufs);
-	pipe->set_vertex_elements(pipe, 6, surface->context->states.mc.vertex_buf_elems);
 	pipe->bind_vs_state(pipe, surface->context->states.mc.b_vs);
 	pipe->bind_fs_state(pipe, surface->context->states.mc.b_fs);
 	

@@ -36,8 +36,8 @@ struct VL_CONTEXT
 			struct pipe_texture			*textures[5];
 			struct pipe_shader_state		*i_vs, *p_vs, *b_vs;
 			struct pipe_shader_state		*i_fs, *p_fs, *b_fs;
-			struct pipe_vertex_buffer 		vertex_bufs[6];
-			struct pipe_vertex_element		vertex_buf_elems[6];
+			struct pipe_vertex_buffer 		vertex_bufs[3];
+			struct pipe_vertex_element		vertex_buf_elems[3];
 			struct pipe_constant_buffer		vs_const_buf, fs_const_buf;
 		} mc;
 		

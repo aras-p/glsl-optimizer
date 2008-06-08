@@ -8,7 +8,6 @@ extern const struct VL_TEXCOORD2F vl_luma_texcoords[24];
 extern const struct VL_TEXCOORD2F *vl_chroma_420_texcoords;
 extern const struct VL_TEXCOORD2F *vl_chroma_422_texcoords;
 extern const struct VL_TEXCOORD2F *vl_chroma_444_texcoords;
-extern const struct VL_TEXCOORD2F *vl_ref_surface_texcoords;
 
 extern const struct VL_VERTEX2F vl_surface_vertex_positions[4];
 extern const struct VL_TEXCOORD2F *vl_surface_texcoords;

@@ -32,15 +32,14 @@ static int vlDestroyIDCT(struct VL_CONTEXT *context)
 static int vlCreateVertexShaderIMC(struct VL_CONTEXT *context)
 {
 	const unsigned int		max_tokens = 50;
-	const unsigned int		num_attribs = 4;
-	const unsigned int		semantic_names[4] =
+	const unsigned int		num_attribs = 3;
+	const unsigned int		semantic_names[3] =
 					{
 						TGSI_SEMANTIC_POSITION,
 						TGSI_SEMANTIC_GENERIC,
 						TGSI_SEMANTIC_GENERIC,
-						TGSI_SEMANTIC_GENERIC
 					};
-	const unsigned int		semantic_indexes[4] = {0, 1, 2, 3};
+	const unsigned int		semantic_indexes[3] = {0, 1, 2};
 	const unsigned int		proc_type = TGSI_PROCESSOR_VERTEX;
 	
 	struct pipe_context		*pipe;
@@ -173,7 +172,6 @@ static int vlCreateVertexShaderIMC(struct VL_CONTEXT *context)
 	/*
 	mov o1, i1		; Move texcoords to output
 	mov o2, i2
-	mov o3, i3
 	*/
 	for (i = 1; i < num_attribs; ++i)
 	{
@@ -251,7 +249,7 @@ static int vlCreateFragmentShaderIMC(struct VL_CONTEXT *context)
 	ti = 3;
 
 	/* Declare inputs (texcoords) */
-	for (i = 0; i < 3; ++i)
+	for (i = 0; i < 2; ++i)
 	{
 		decl = tgsi_default_full_declaration();
 		decl.Declaration.File = TGSI_FILE_INPUT;
@@ -306,7 +304,7 @@ static int vlCreateFragmentShaderIMC(struct VL_CONTEXT *context)
 	/*
 	tex2d o0.x, i0, s0		; Read texel from luma texture into .x channel
 	tex2d o0.y, i1, s1		; Read texel from chroma Cb texture into .y channel
-	tex2d o0.z, i2, s2		; Read texel from chroma Cr texture into .z channel
+	tex2d o0.z, i1, s2		; Read texel from chroma Cr texture into .z channel
 	*/
 	for (i = 0; i < 3; ++i)
 	{
@@ -319,7 +317,7 @@ static int vlCreateFragmentShaderIMC(struct VL_CONTEXT *context)
 		inst.Instruction.NumSrcRegs = 2;
 		inst.InstructionExtTexture.Texture = TGSI_TEXTURE_2D;
 		inst.FullSrcRegisters[0].SrcRegister.File = TGSI_FILE_INPUT;
-		inst.FullSrcRegisters[0].SrcRegister.Index = i;
+		inst.FullSrcRegisters[0].SrcRegister.Index = i > 0 ? 1 : 0;
 		inst.FullSrcRegisters[1].SrcRegister.File = TGSI_FILE_SAMPLER;
 		inst.FullSrcRegisters[1].SrcRegister.Index = i;
 		ti += tgsi_build_full_instruction
@@ -354,16 +352,23 @@ static int vlCreateFragmentShaderIMC(struct VL_CONTEXT *context)
 static int vlCreateVertexShaderPMC(struct VL_CONTEXT *context)
 {
 	const unsigned int		max_tokens = 100;
-	const unsigned int		num_attribs = 5;
-	const unsigned int		semantic_names[5] =
+	const unsigned int		num_input_attribs = 3;
+	const unsigned int		num_output_attribs = 4;
+	const unsigned int		input_semantic_names[3] =
+					{
+						TGSI_SEMANTIC_POSITION,
+						TGSI_SEMANTIC_GENERIC,
+						TGSI_SEMANTIC_GENERIC
+					};
+	const unsigned int		output_semantic_names[4] =
 					{
 						TGSI_SEMANTIC_POSITION,
 						TGSI_SEMANTIC_GENERIC,
 						TGSI_SEMANTIC_GENERIC,
-						TGSI_SEMANTIC_GENERIC,
 						TGSI_SEMANTIC_GENERIC
 					};
-	const unsigned int		semantic_indexes[5] = {0, 1, 2, 3, 4};
+	const unsigned int		input_semantic_indexes[3] = {0, 1, 2};
+	const unsigned int		output_semantic_indexes[4] = {0, 1, 2, 3};
 	const unsigned int		proc_type = TGSI_PROCESSOR_VERTEX;
 	
 	struct pipe_context		*pipe;
@@ -398,14 +403,14 @@ static int vlCreateVertexShaderPMC(struct VL_CONTEXT *context)
 	ti = 3;
 
 	/* Declare inputs (pos, texcoords) */
-	for (i = 0; i < num_attribs; i++)
+	for (i = 0; i < num_input_attribs; i++)
 	{
 		decl = tgsi_default_full_declaration();
 		decl.Declaration.File = TGSI_FILE_INPUT;
 
 		decl.Declaration.Semantic = 1;
-		decl.Semantic.SemanticName = semantic_names[i];
-		decl.Semantic.SemanticIndex = semantic_indexes[i];
+		decl.Semantic.SemanticName = input_semantic_names[i];
+		decl.Semantic.SemanticIndex = input_semantic_indexes[i];
 
 		decl.u.DeclarationRange.First = i;
 		decl.u.DeclarationRange.Last = i;
@@ -438,13 +443,13 @@ static int vlCreateVertexShaderPMC(struct VL_CONTEXT *context)
 	);
 
 	/* Declare outputs (pos, texcoords) */
-	for (i = 0; i < num_attribs; i++)
+	for (i = 0; i < num_output_attribs; i++)
 	{
 		decl = tgsi_default_full_declaration();
 		decl.Declaration.File = TGSI_FILE_OUTPUT;
 		decl.Declaration.Semantic = 1;
-		decl.Semantic.SemanticName = semantic_names[i];
-		decl.Semantic.SemanticIndex = semantic_indexes[i];
+		decl.Semantic.SemanticName = output_semantic_names[i];
+		decl.Semantic.SemanticIndex = output_semantic_indexes[i];
 		decl.u.DeclarationRange.First = i;
 		decl.u.DeclarationRange.Last = i;
 		ti += tgsi_build_full_declaration
@@ -497,9 +502,8 @@ static int vlCreateVertexShaderPMC(struct VL_CONTEXT *context)
 	/*
 	mov o1, i1		; Move luma & chroma texcoords to output
 	mov o2, i2
-	mov o3, i3
 	*/
-	for (i = 1; i < num_attribs - 1; ++i)
+	for (i = 1; i < num_output_attribs - 1; ++i)
 	{
 		inst = tgsi_default_full_instruction();
 		inst.Instruction.Opcode = TGSI_OPCODE_MOV;
@@ -517,32 +521,13 @@ static int vlCreateVertexShaderPMC(struct VL_CONTEXT *context)
 			max_tokens - ti
 		);
 	}
-	
-	/* mul t0, i4, c0	; Scale normalized coords to window coords */
-	inst = tgsi_default_full_instruction();
-	inst.Instruction.Opcode = TGSI_OPCODE_MUL;
-	inst.Instruction.NumDstRegs = 1;
-	inst.FullDstRegisters[0].DstRegister.File = TGSI_FILE_TEMPORARY;
-	inst.FullDstRegisters[0].DstRegister.Index = 0;
-	inst.Instruction.NumSrcRegs = 2;
-	inst.FullSrcRegisters[0].SrcRegister.File = TGSI_FILE_INPUT;
-	inst.FullSrcRegisters[0].SrcRegister.Index = 4;
-	inst.FullSrcRegisters[1].SrcRegister.File = TGSI_FILE_CONSTANT;
-	inst.FullSrcRegisters[1].SrcRegister.Index = 0;
-	ti += tgsi_build_full_instruction
-	(
-		&inst,
-		&tokens[ti],
-		header,
-		max_tokens - ti
-	);
 
-	/* add o4, t0, c2	; Translate texcoords into position */
+	/* add o3, t0, c2	; Translate texcoords into position */
 	inst = tgsi_default_full_instruction();
 	inst.Instruction.Opcode = TGSI_OPCODE_ADD;
 	inst.Instruction.NumDstRegs = 1;
 	inst.FullDstRegisters[0].DstRegister.File = TGSI_FILE_OUTPUT;
-	inst.FullDstRegisters[0].DstRegister.Index = 4;
+	inst.FullDstRegisters[0].DstRegister.Index = 3;
 	inst.Instruction.NumSrcRegs = 2;
 	inst.FullSrcRegisters[0].SrcRegister.File = TGSI_FILE_TEMPORARY;
 	inst.FullSrcRegisters[0].SrcRegister.Index = 0;
@@ -613,7 +598,7 @@ static int vlCreateFragmentShaderPMC(struct VL_CONTEXT *context)
 	ti = 3;
 
 	/* Declare inputs (texcoords) */
-	for (i = 0; i < 4; ++i)
+	for (i = 0; i < 3; ++i)
 	{
 		decl = tgsi_default_full_declaration();
 		decl.Declaration.File = TGSI_FILE_INPUT;
@@ -688,7 +673,7 @@ static int vlCreateFragmentShaderPMC(struct VL_CONTEXT *context)
 	mov t1.x, t0.w		; Move high part from .w channel to .x
 	tex2d t0.yw, i1, s1	; Read texel from chroma Cb texture into .y and .w channels
 	mov t1.y, t0.w		; Move high part from .w channel to .y
-	tex2d t0.zw, i2, s2	; Read texel from chroma Cr texture into .z and .w channels
+	tex2d t0.zw, i1, s2	; Read texel from chroma Cr texture into .z and .w channels
 	mov t1.z, t0.w		; Move high part from .w channel to .z
 	*/
 	for (i = 0; i < 3; ++i)
@@ -702,7 +687,7 @@ static int vlCreateFragmentShaderPMC(struct VL_CONTEXT *context)
 		inst.Instruction.NumSrcRegs = 2;
 		inst.InstructionExtTexture.Texture = TGSI_TEXTURE_2D;
 		inst.FullSrcRegisters[0].SrcRegister.File = TGSI_FILE_INPUT;
-		inst.FullSrcRegisters[0].SrcRegister.Index = i;
+		inst.FullSrcRegisters[0].SrcRegister.Index = i > 0 ? 1 : 0;
 		inst.FullSrcRegisters[1].SrcRegister.File = TGSI_FILE_SAMPLER;
 		inst.FullSrcRegisters[1].SrcRegister.Index = i;
 		ti += tgsi_build_full_instruction
@@ -792,7 +777,7 @@ static int vlCreateFragmentShaderPMC(struct VL_CONTEXT *context)
 		max_tokens - ti
 	);
 	
-	/* tex2d t1, i3, s3	; Read texel from ref macroblock */
+	/* tex2d t1, i2, s3	; Read texel from ref macroblock */
 	inst = tgsi_default_full_instruction();
 	inst.Instruction.Opcode = TGSI_OPCODE_TEX;
 	inst.Instruction.NumDstRegs = 1;
@@ -801,7 +786,7 @@ static int vlCreateFragmentShaderPMC(struct VL_CONTEXT *context)
 	inst.Instruction.NumSrcRegs = 2;
 	inst.InstructionExtTexture.Texture = TGSI_TEXTURE_2D;
 	inst.FullSrcRegisters[0].SrcRegister.File = TGSI_FILE_INPUT;
-	inst.FullSrcRegisters[0].SrcRegister.Index = 3;
+	inst.FullSrcRegisters[0].SrcRegister.Index = 2;
 	inst.FullSrcRegisters[1].SrcRegister.File = TGSI_FILE_SAMPLER;
 	inst.FullSrcRegisters[1].SrcRegister.Index = 3;
 	ti += tgsi_build_full_instruction
@@ -854,17 +839,24 @@ static int vlCreateFragmentShaderPMC(struct VL_CONTEXT *context)
 static int vlCreateVertexShaderBMC(struct VL_CONTEXT *context)
 {
 	const unsigned int		max_tokens = 100;
-	const unsigned int		num_attribs = 6;
-	const unsigned int		semantic_names[6] =
+	const unsigned int		num_input_attribs = 3;
+	const unsigned int		num_output_attribs = 5;
+	const unsigned int		input_semantic_names[3] =
+					{
+						TGSI_SEMANTIC_POSITION,
+						TGSI_SEMANTIC_GENERIC,
+						TGSI_SEMANTIC_GENERIC
+					};
+	const unsigned int		output_semantic_names[5] =
 					{
 						TGSI_SEMANTIC_POSITION,
 						TGSI_SEMANTIC_GENERIC,
 						TGSI_SEMANTIC_GENERIC,
 						TGSI_SEMANTIC_GENERIC,
-						TGSI_SEMANTIC_GENERIC,
 						TGSI_SEMANTIC_GENERIC
 					};
-	const unsigned int		semantic_indexes[6] = {0, 1, 2, 3, 4, 5};
+	const unsigned int		input_semantic_indexes[3] = {0, 1, 2};
+	const unsigned int		output_semantic_indexes[5] = {0, 1, 2, 3, 4};
 	const unsigned int		proc_type = TGSI_PROCESSOR_VERTEX;
 	
 	struct pipe_context		*pipe;
@@ -899,14 +891,14 @@ static int vlCreateVertexShaderBMC(struct VL_CONTEXT *context)
 	ti = 3;
 
 	/* Declare inputs (pos, texcoords) */
-	for (i = 0; i < num_attribs; i++)
+	for (i = 0; i < num_input_attribs; i++)
 	{
 		decl = tgsi_default_full_declaration();
 		decl.Declaration.File = TGSI_FILE_INPUT;
 
 		decl.Declaration.Semantic = 1;
-		decl.Semantic.SemanticName = semantic_names[i];
-		decl.Semantic.SemanticIndex = semantic_indexes[i];
+		decl.Semantic.SemanticName = input_semantic_names[i];
+		decl.Semantic.SemanticIndex = input_semantic_indexes[i];
 
 		decl.u.DeclarationRange.First = i;
 		decl.u.DeclarationRange.Last = i;
@@ -940,13 +932,13 @@ static int vlCreateVertexShaderBMC(struct VL_CONTEXT *context)
 	);
 
 	/* Declare outputs (pos, texcoords) */
-	for (i = 0; i < num_attribs; i++)
+	for (i = 0; i < num_output_attribs; i++)
 	{
 		decl = tgsi_default_full_declaration();
 		decl.Declaration.File = TGSI_FILE_OUTPUT;
 		decl.Declaration.Semantic = 1;
-		decl.Semantic.SemanticName = semantic_names[i];
-		decl.Semantic.SemanticIndex = semantic_indexes[i];
+		decl.Semantic.SemanticName = output_semantic_names[i];
+		decl.Semantic.SemanticIndex = output_semantic_indexes[i];
 		decl.u.DeclarationRange.First = i;
 		decl.u.DeclarationRange.Last = i;
 		ti += tgsi_build_full_declaration
@@ -999,9 +991,8 @@ static int vlCreateVertexShaderBMC(struct VL_CONTEXT *context)
 	/*
 	mov o1, i1		; Move luma & chroma texcoords to output
 	mov o2, i2
-	mov o3, i3
 	*/
-	for (i = 1; i < num_attribs - 1; ++i)
+	for (i = 1; i < num_output_attribs - 2; ++i)
 	{
 		inst = tgsi_default_full_instruction();
 		inst.Instruction.Opcode = TGSI_OPCODE_MOV;
@@ -1020,38 +1011,18 @@ static int vlCreateVertexShaderBMC(struct VL_CONTEXT *context)
 		);
 	}
 	
-	/* mul t0, i4, c0	; Scale normalized coords to window coords
-	   add o4, t0, c2	; Translate texcoords into position
-	   mul t1, i5, c0	; Repeat for the future surface
-	   add o5, t1, c3 */
+	/* add o3, t0, c2	; Translate past surface texcoords into position
+	   add o4, t0, c3	; Repeat for future surface texcoords */
 	for (i = 0; i < 2; ++i)
 	{
-		inst = tgsi_default_full_instruction();
-		inst.Instruction.Opcode = TGSI_OPCODE_MUL;
-		inst.Instruction.NumDstRegs = 1;
-		inst.FullDstRegisters[0].DstRegister.File = TGSI_FILE_TEMPORARY;
-		inst.FullDstRegisters[0].DstRegister.Index = i;
-		inst.Instruction.NumSrcRegs = 2;
-		inst.FullSrcRegisters[0].SrcRegister.File = TGSI_FILE_INPUT;
-		inst.FullSrcRegisters[0].SrcRegister.Index = i + 4;
-		inst.FullSrcRegisters[1].SrcRegister.File = TGSI_FILE_CONSTANT;
-		inst.FullSrcRegisters[1].SrcRegister.Index = 0;
-		ti += tgsi_build_full_instruction
-		(
-			&inst,
-			&tokens[ti],
-			header,
-			max_tokens - ti
-		);
-
 		inst = tgsi_default_full_instruction();
 		inst.Instruction.Opcode = TGSI_OPCODE_ADD;
 		inst.Instruction.NumDstRegs = 1;
 		inst.FullDstRegisters[0].DstRegister.File = TGSI_FILE_OUTPUT;
-		inst.FullDstRegisters[0].DstRegister.Index = i + 4;
+		inst.FullDstRegisters[0].DstRegister.Index = i + 3;
 		inst.Instruction.NumSrcRegs = 2;
 		inst.FullSrcRegisters[0].SrcRegister.File = TGSI_FILE_TEMPORARY;
-		inst.FullSrcRegisters[0].SrcRegister.Index = i;
+		inst.FullSrcRegisters[0].SrcRegister.Index = 0;
 		inst.FullSrcRegisters[1].SrcRegister.File = TGSI_FILE_CONSTANT;
 		inst.FullSrcRegisters[1].SrcRegister.Index = i + 2;
 		ti += tgsi_build_full_instruction
@@ -1120,7 +1091,7 @@ static int vlCreateFragmentShaderBMC(struct VL_CONTEXT *context)
 	ti = 3;
 
 	/* Declare inputs (texcoords) */
-	for (i = 0; i < 5; ++i)
+	for (i = 0; i < 4; ++i)
 	{
 		decl = tgsi_default_full_declaration();
 		decl.Declaration.File = TGSI_FILE_INPUT;
@@ -1195,7 +1166,7 @@ static int vlCreateFragmentShaderBMC(struct VL_CONTEXT *context)
 	mov t1.x, t0.w		; Move high part from .w channel to .x
 	tex2d t0.yw, i1, s1	; Read texel from chroma Cb texture into .y and .w channels
 	mov t1.y, t0.w		; Move high part from .w channel to .y
-	tex2d t0.zw, i2, s2	; Read texel from chroma Cr texture into .z and .w channels
+	tex2d t0.zw, i1, s2	; Read texel from chroma Cr texture into .z and .w channels
 	mov t1.z, t0.w		; Move high part from .w channel to .z
 	*/
 	for (i = 0; i < 3; ++i)
@@ -1209,7 +1180,7 @@ static int vlCreateFragmentShaderBMC(struct VL_CONTEXT *context)
 		inst.Instruction.NumSrcRegs = 2;
 		inst.InstructionExtTexture.Texture = TGSI_TEXTURE_2D;
 		inst.FullSrcRegisters[0].SrcRegister.File = TGSI_FILE_INPUT;
-		inst.FullSrcRegisters[0].SrcRegister.Index = i;
+		inst.FullSrcRegisters[0].SrcRegister.Index = i > 0 ? 1 : 0;
 		inst.FullSrcRegisters[1].SrcRegister.File = TGSI_FILE_SAMPLER;
 		inst.FullSrcRegisters[1].SrcRegister.Index = i;
 		ti += tgsi_build_full_instruction
@@ -1299,8 +1270,8 @@ static int vlCreateFragmentShaderBMC(struct VL_CONTEXT *context)
 		max_tokens - ti
 	);
 	
-	/* tex2d t1, i3, s3	; Read texel from past macroblock
-	   tex2d t2, i4, s4	; Read texel from future macroblock */
+	/* tex2d t1, i2, s3	; Read texel from past macroblock
+	   tex2d t2, i3, s4	; Read texel from future macroblock */
 	for (i = 0; i < 2; ++i)
 	{
 		inst = tgsi_default_full_instruction();
@@ -1311,7 +1282,7 @@ static int vlCreateFragmentShaderBMC(struct VL_CONTEXT *context)
 		inst.Instruction.NumSrcRegs = 2;
 		inst.InstructionExtTexture.Texture = TGSI_TEXTURE_2D;
 		inst.FullSrcRegisters[0].SrcRegister.File = TGSI_FILE_INPUT;
-		inst.FullSrcRegisters[0].SrcRegister.Index = i + 3;
+		inst.FullSrcRegisters[0].SrcRegister.Index = i + 2;
 		inst.FullSrcRegisters[1].SrcRegister.File = TGSI_FILE_SAMPLER;
 		inst.FullSrcRegisters[1].SrcRegister.Index = i + 3;
 		ti += tgsi_build_full_instruction
@@ -1409,7 +1380,7 @@ int vlCreateDataBufsMC(struct VL_CONTEXT *context)
 	
 	/* Create our texcoord buffers and texcoord buffer elements */
 	/* TODO: Should be able to use 1 texcoord buf for chroma textures, 1 buf for ref surfaces */
-	for (i = 1; i < 6; ++i)
+	for (i = 1; i < 3; ++i)
 	{
 		context->states.mc.vertex_bufs[i].pitch = sizeof(struct VL_TEXCOORD2F);
 		context->states.mc.vertex_bufs[i].max_index = 23;
@@ -1448,26 +1419,8 @@ int vlCreateDataBufsMC(struct VL_CONTEXT *context)
 		vl_chroma_420_texcoords,
 		sizeof(struct VL_TEXCOORD2F) * 24
 	);
-	memcpy
-	(
-		pipe->winsys->buffer_map(pipe->winsys, context->states.mc.vertex_bufs[3].buffer, PIPE_BUFFER_USAGE_CPU_WRITE),
-		vl_chroma_420_texcoords,
-		sizeof(struct VL_TEXCOORD2F) * 24
-	);
-	memcpy
-	(
-		pipe->winsys->buffer_map(pipe->winsys, context->states.mc.vertex_bufs[4].buffer, PIPE_BUFFER_USAGE_CPU_WRITE),
-		vl_ref_surface_texcoords,
-		sizeof(struct VL_TEXCOORD2F) * 24
-	);
-	memcpy
-	(
-		pipe->winsys->buffer_map(pipe->winsys, context->states.mc.vertex_bufs[5].buffer, PIPE_BUFFER_USAGE_CPU_WRITE),
-		vl_ref_surface_texcoords,
-		sizeof(struct VL_TEXCOORD2F) * 24
-	);
 	
-	for (i = 0; i < 6; ++i)
+	for (i = 0; i < 3; ++i)
 		pipe->winsys->buffer_unmap(pipe->winsys, context->states.mc.vertex_bufs[i].buffer);
 	
 	/* Create our constant buffer */
@@ -1599,12 +1552,10 @@ static int vlDestroyMC(struct VL_CONTEXT *context)
 	assert(context);
 	
 	for (i = 0; i < 5; ++i)
-	{
 		context->pipe->delete_sampler_state(context->pipe, context->states.mc.samplers[i]);
-		context->pipe->winsys->buffer_destroy(context->pipe->winsys, context->states.mc.vertex_bufs[i].buffer);
-	}
 	
-	context->pipe->winsys->buffer_destroy(context->pipe->winsys, context->states.mc.vertex_bufs[5].buffer);
+	for (i = 0; i < 3; ++i)
+		context->pipe->winsys->buffer_destroy(context->pipe->winsys, context->states.mc.vertex_bufs[i].buffer);
 	
 	/* Textures 3 & 4 are not created directly, no need to release them here */
 	for (i = 0; i < 3; ++i)
@@ -2262,7 +2213,9 @@ int vlBeginRender(struct VL_CONTEXT *context)
 	pipe = context->pipe;
 	
 	/* Frame buffer set in vlRender*Macroblock() */
-	/* Shaders, samplers, textures, VBs, VB elements set in vlRender*Macroblock() */
+	/* Shaders, samplers, textures set in vlRender*Macroblock() */
+	pipe->set_vertex_buffers(pipe, 3, context->states.mc.vertex_bufs);
+	pipe->set_vertex_elements(pipe, 3, context->states.mc.vertex_buf_elems);
 	pipe->set_viewport_state(pipe, &context->states.mc.viewport);
 	pipe->set_constant_buffer(pipe, PIPE_SHADER_VERTEX, 0, &context->states.mc.vs_const_buf);
 	pipe->set_constant_buffer(pipe, PIPE_SHADER_FRAGMENT, 0, &context->states.mc.fs_const_buf);

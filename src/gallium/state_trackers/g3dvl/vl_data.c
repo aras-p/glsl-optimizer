@@ -62,14 +62,6 @@ const struct VL_TEXCOORD2F *vl_chroma_422_texcoords = (const struct VL_TEXCOORD2
 const struct VL_TEXCOORD2F *vl_chroma_444_texcoords = vl_luma_texcoords;
 
 /*
- * Represents texcoords for the above for rendering a predicted macroblock.
- * Straight forward 0,0->1,1 mapping so we can reuse MB pos vectors.
- * Texcoords need to be translated to cover source macroblock on the
- * past/future surface.
- */
- const struct VL_TEXCOORD2F *vl_ref_surface_texcoords = (const struct VL_TEXCOORD2F*)vl_mb_vertex_positions;
-
-/*
  * Represents 2 triangles in a strip in normalized coords.
  * Used to render the surface onto the frame buffer.
  */
