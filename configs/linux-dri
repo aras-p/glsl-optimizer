@@ -61,7 +61,7 @@ endif
 
 
 
-DRIVER_DIRS = dri
+DRIVER_DIRS =
 WINDOW_SYSTEM = dri
 GALLIUM_WINSYS_DIRS = dri egl_xlib
 GALLIUM_WINSYS_COMMON_DIRS = intel_drm
