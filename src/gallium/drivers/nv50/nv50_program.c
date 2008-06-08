@@ -12,7 +12,7 @@
 
 #define NV50_SU_MAX_TEMP 64
 
-/* ARL
+/* ARL - gallium craps itself on progs/vp/arl.txt
  *
  * MSB - Like MAD, but MUL+SUB
  * 	- Fuck it off, introduce a way to negate args for ops that
@@ -856,10 +856,14 @@ nv50_program_tx_insn(struct nv50_pc *pc, const union tgsi_full_token *tok)
 	case TGSI_OPCODE_DST:
 	{
 		struct nv50_reg *one = alloc_immd(pc, 1.0);
-		emit_mov(pc, dst[0], one);
-		emit_mul(pc, dst[1], src[0][1], src[1][1]);
-		emit_mov(pc, dst[2], src[0][2]);
-		emit_mov(pc, dst[3], src[1][3]);
+		if (mask & (1 << 0))
+			emit_mov(pc, dst[0], one);
+		if (mask & (1 << 1))
+			emit_mul(pc, dst[1], src[0][1], src[1][1]);
+		if (mask & (1 << 2))
+			emit_mov(pc, dst[2], src[0][2]);
+		if (mask & (1 << 3))
+			emit_mov(pc, dst[3], src[1][3]);
 		FREE(one);
 	}
 		break;
@@ -891,6 +895,7 @@ nv50_program_tx_insn(struct nv50_pc *pc, const union tgsi_full_token *tok)
 		free_temp(pc, temp);
 		break;
 	case TGSI_OPCODE_LIT:
+		/*XXX: writemask */
 		emit_lit(pc, &dst[0], &src[0][0]);
 		break;
 	case TGSI_OPCODE_LG2:
@@ -989,12 +994,18 @@ nv50_program_tx_insn(struct nv50_pc *pc, const union tgsi_full_token *tok)
 		break;
 	case TGSI_OPCODE_XPD:
 		temp = alloc_temp(pc, NULL);
-		emit_mul(pc, temp, src[0][2], src[1][1]);
-		emit_msb(pc, dst[0], src[0][1], src[1][2], temp);
-		emit_mul(pc, temp, src[0][0], src[1][2]);
-		emit_msb(pc, dst[1], src[0][2], src[1][0], temp);
-		emit_mul(pc, temp, src[0][1], src[1][0]);
-		emit_msb(pc, dst[2], src[0][0], src[1][1], temp);
+		if (mask & (1 << 0)) {
+			emit_mul(pc, temp, src[0][2], src[1][1]);
+			emit_msb(pc, dst[0], src[0][1], src[1][2], temp);
+		}
+		if (mask & (1 << 1)) {
+			emit_mul(pc, temp, src[0][0], src[1][2]);
+			emit_msb(pc, dst[1], src[0][2], src[1][0], temp);
+		}
+		if (mask & (1 << 2)) {
+			emit_mul(pc, temp, src[0][1], src[1][0]);
+			emit_msb(pc, dst[2], src[0][0], src[1][1], temp);
+		}
 		free_temp(pc, temp);
 		break;
 	case TGSI_OPCODE_END:
