@@ -18,7 +18,6 @@ GL_TINY = 0$(MESA_MAJOR)0$(MESA_MINOR)0$(MESA_TINY)
 HEADERS = \
 	glxapi.h \
 	glxheader.h \
-	realglx.h \
 	xfonts.h \
 	xmesaP.h \
 	xm_glide.h \
@@ -27,7 +26,6 @@ HEADERS = \
 SOURCES = \
 	fakeglx.c \
 	glxapi.c \
-	realglx.c \
 	xfonts.c \
 	xm_api.c \
 	xm_buffer.c \
