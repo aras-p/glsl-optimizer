@@ -22,8 +22,6 @@
  * 	- Maybe even relax restrictions a bit, can't do P_RESULT + P_IMMD,
  * 	  but can emit to P_TEMP first - then MOV later. NVIDIA does this
  *
- * Hmmm.. what happens if we have src1+src2 both consts.. ouch !
- *
  * Verify half-insns work where expected - and force disable them where they
  * don't work - MUL has it forcibly disabled atm as it fixes POW..
  *
@@ -391,8 +389,16 @@ set_src_1(struct nv50_pc *pc, struct nv50_reg *src, unsigned *inst)
 		src = temp;
 	} else
 	if (src->type == P_CONST || src->type == P_IMMD) {
-		set_cseg(pc, src, inst);
-		inst[0] |= 0x00800000;
+		assert(!(inst[0] & 0x00800000));
+		if (inst[0] & 0x01000000) {
+			struct nv50_reg *temp = temp_temp(pc);
+
+			emit_mov(pc, temp, src);
+			src = temp;
+		} else {
+			set_cseg(pc, src, inst);
+			inst[0] |= 0x00800000;
+		}
 	}
 
 	alloc_reg(pc, src);
@@ -411,8 +417,16 @@ set_src_2(struct nv50_pc *pc, struct nv50_reg *src, unsigned *inst)
 		src = temp;
 	} else
 	if (src->type == P_CONST || src->type == P_IMMD) {
-		set_cseg(pc, src, inst);
-		inst[0] |= 0x01000000;
+		assert(!(inst[0] & 0x01000000));
+		if (inst[0] & 0x00800000) {
+			struct nv50_reg *temp = temp_temp(pc);
+
+			emit_mov(pc, temp, src);
+			src = temp;
+		} else {
+			set_cseg(pc, src, inst);
+			inst[0] |= 0x01000000;
+		}
 	}
 
 	alloc_reg(pc, src);
