@@ -26,6 +26,9 @@
  *
  * Verify half-insns work where expected - and force disable them where they
  * don't work - MUL has it forcibly disabled atm as it fixes POW..
+ *
+ * FUCK! watch dst==src vectors, can overwrite components that are needed.
+ * 	ie. SUB R0, R0.yzxw, R0
  */
 struct nv50_reg {
 	enum {
