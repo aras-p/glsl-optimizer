@@ -2066,7 +2066,9 @@ static struct draw_vs_varient *varient_aos_sse( struct draw_vertex_shader *vs,
    if (!vaos->attrib)
       goto fail;
 
+#if 0
    tgsi_dump(vs->state.tokens, 0);
+#endif
 
    if (!build_vertex_program( vaos, TRUE ))
       goto fail;
