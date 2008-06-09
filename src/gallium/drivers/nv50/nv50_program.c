@@ -1176,12 +1176,7 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 
 			emit_interp(pc, iv, iv, iv, FALSE);
 			tmp = alloc_temp(pc, NULL);
-			{
-				unsigned inst[2] = { 0, 0 };
-				inst[0]  = 0x90000000;
-				inst[0] |= (tmp->hw << 2);
-				emit(pc, inst);
-			}
+			emit_flop(pc, 0, tmp, iv);
 			emit_interp(pc, &a[0], &a[0], tmp, TRUE);
 			emit_interp(pc, &a[1], &a[1], tmp, TRUE);
 			emit_interp(pc, &a[2], &a[2], tmp, TRUE);
