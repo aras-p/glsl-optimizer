@@ -2,6 +2,7 @@
 MESA_MAIN_SOURCES = \
 accum.c \
 api_arrayelt.c \
+api_exec.c \
 api_loopback.c \
 api_noop.c \
 api_validate.c \
@@ -72,6 +73,7 @@ MESA_MAIN_HEADERS = \
 accum.h \
 api_arrayelt.h \
 api_eval.h \
+api_exec.h \
 api_loopback.h \
 api_noop.h \
 api_validate.h \
