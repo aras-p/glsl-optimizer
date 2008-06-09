@@ -49,6 +49,7 @@ MAIN_SOURCES = \
 	main/queryobj.c \
 	main/rastpos.c \
 	main/rbadaptors.c \
+	main/readpix.c \
 	main/renderbuffer.c \
 	main/shaders.c \
 	main/state.c \
