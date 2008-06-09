@@ -36,10 +36,10 @@ default: directfb-libgl directfbgl_mesa
 
 
 # XXX this used to be in src/mesa/Makefile and is probably broken now
-directfb-libgl: $(CORE_OBJECTS)
+directfb-libgl: $(LIBS)
 	@ $(TOP)/bin/mklib -o $(GL_LIB) -linker '$(CC)' -ldflags '$(LDFLAGS)' \
 		-major $(MESA_MAJOR) -minor $(MESA_MINOR) -patch $(MESA_TINY) \
-		-install $(TOP)/$(LIB_DIR) $(MKLIB_OPTIONS) $(CORE_OBJECTS) \
+		-install $(TOP)/$(LIB_DIR) $(MKLIB_OPTIONS) $(LIBS) \
 		$(GL_LIB_DEPS)
 
 
