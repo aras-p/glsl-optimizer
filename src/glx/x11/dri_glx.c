@@ -255,6 +255,8 @@ static const __DRIextension *loader_extensions[] = {
     NULL
 };
 
+#ifndef GLX_USE_APPLEGL
+
 /**
  * Perform the required libGL-side initialization and call the client-side
  * driver's \c __driCreateNewScreen function.
@@ -267,17 +269,12 @@ static const __DRIextension *loader_extensions[] = {
  *               \c __driCreateNewScreen function.
  * \returns A pointer to the \c __DRIscreenPrivate structure returned by
  *          the client-side driver on success, or \c NULL on failure.
- * 
- * \todo This function needs to be modified to remove context-modes from the
- *       list stored in the \c __GLXscreenConfigsRec to match the list
- *       returned by the client-side driver.
  */
 static void *
 CallCreateNewScreen(Display *dpy, int scrn, __GLXscreenConfigs *psc,
 		    __GLXDRIdisplayPrivate * driDpy)
 {
     void *psp = NULL;
-#ifndef GLX_USE_APPLEGL
     drm_handle_t hSAREA;
     drmAddress pSAREA = MAP_FAILED;
     char *BusID;
@@ -287,174 +284,161 @@ CallCreateNewScreen(Display *dpy, int scrn, __GLXscreenConfigs *psc,
     __DRIframebuffer  framebuffer;
     int   fd = -1;
     int   status;
-    const char * err_msg;
-    const char * err_extra;
+
+    drm_magic_t magic;
+    drmVersionPtr version;
+    int newlyopened;
+    char *driverName;
+    drm_handle_t  hFB;
+    int        junk;
     const __DRIconfig **driver_configs;
 
+    /* DRI protocol version. */
     dri_version.major = driDpy->driMajor;
     dri_version.minor = driDpy->driMinor;
     dri_version.patch = driDpy->driPatch;
 
-    err_msg = "XF86DRIOpenConnection";
-    err_extra = NULL;
-
     framebuffer.base = MAP_FAILED;
     framebuffer.dev_priv = NULL;
 
-    if (XF86DRIOpenConnection(dpy, scrn, &hSAREA, &BusID)) {
-        int newlyopened;
-	fd = drmOpenOnce(NULL,BusID, &newlyopened);
-	Xfree(BusID); /* No longer needed */
-
-	err_msg = "open DRM";
-	err_extra = strerror( -fd );
-
-	if (fd >= 0) {
-	    drm_magic_t magic;
-
-	    err_msg = "drmGetMagic";
-	    err_extra = NULL;
-
-	    if (!drmGetMagic(fd, &magic)) {
-		drmVersionPtr version = drmGetVersion(fd);
-		if (version) {
-		    drm_version.major = version->version_major;
-		    drm_version.minor = version->version_minor;
-		    drm_version.patch = version->version_patchlevel;
-		    drmFreeVersion(version);
-		}
-		else {
-		    drm_version.major = -1;
-		    drm_version.minor = -1;
-		    drm_version.patch = -1;
-		}
-
-		err_msg = "XF86DRIAuthConnection";
-		if (!newlyopened || XF86DRIAuthConnection(dpy, scrn, magic)) {
-		    char *driverName;
-
-		    /*
-		     * Get device name (like "tdfx") and the ddx version
-		     * numbers.  We'll check the version in each DRI driver's
-		     * "createNewScreen" function.
-		     */
-		    err_msg = "XF86DRIGetClientDriverName";
-		    if (XF86DRIGetClientDriverName(dpy, scrn,
-						   &ddx_version.major,
-						   &ddx_version.minor,
-						   &ddx_version.patch,
-						   &driverName)) {
-			drm_handle_t  hFB;
-			int        junk;
-
-			/* No longer needed. */
-			Xfree( driverName );
-
-
-			/*
-			 * Get device-specific info.  pDevPriv will point to a struct
-			 * (such as DRIRADEONRec in xfree86/driver/ati/radeon_dri.h)
-			 * that has information about the screen size, depth, pitch,
-			 * ancilliary buffers, DRM mmap handles, etc.
-			 */
-			err_msg = "XF86DRIGetDeviceInfo";
-			if (XF86DRIGetDeviceInfo(dpy, scrn,
-						 &hFB,
-						 &junk,
-						 &framebuffer.size,
-						 &framebuffer.stride,
-						 &framebuffer.dev_priv_size,
-						 &framebuffer.dev_priv)) {
-			    framebuffer.width = DisplayWidth(dpy, scrn);
-			    framebuffer.height = DisplayHeight(dpy, scrn);
-
-			    /*
-			     * Map the framebuffer region.
-			     */
-			    status = drmMap(fd, hFB, framebuffer.size, 
-					    (drmAddressPtr)&framebuffer.base);
-
-			    err_msg = "drmMap of framebuffer";
-			    err_extra = strerror( -status );
-
-			    if ( status == 0 ) {
-				/*
-				 * Map the SAREA region.  Further mmap regions
-				 * may be setup in each DRI driver's
-				 * "createNewScreen" function.
-				 */
-				status = drmMap(fd, hSAREA, SAREA_MAX, 
-						&pSAREA);
-
-				err_msg = "drmMap of sarea";
-				err_extra = strerror( -status );
-
-				if ( status == 0 ) {
-				    err_msg = "InitDriver";
-				    err_extra = NULL;
-				    psp = (*psc->legacy->createNewScreen)(scrn,
-							     & ddx_version,
-							     & dri_version,
-							     & drm_version,
-							     & framebuffer,
-							     pSAREA,
-							     fd,
-							     loader_extensions,
-							     & driver_configs,
-							     psc);
-
-				    if (psp) {
-					psc->configs =
-					    driConvertConfigs(psc->core,
-							      psc->configs,
-							      driver_configs);
-					psc->visuals =
-					    driConvertConfigs(psc->core,
-							      psc->visuals,
-							      driver_configs);
-				    }
-				}
-			    }
-			}
-		    }
-		}
-	    }
-	}
+    if (!XF86DRIOpenConnection(dpy, scrn, &hSAREA, &BusID)) {
+	fprintf(stderr, "libGL error: XF86DRIOpenConnection failed\n");
+	goto handle_error;
     }
 
-    if ( psp == NULL ) {
-	if ( pSAREA != MAP_FAILED ) {
-	    (void)drmUnmap(pSAREA, SAREA_MAX);
-	}
+    fd = drmOpenOnce(NULL, BusID, &newlyopened);
 
-	if ( framebuffer.base != MAP_FAILED ) {
-	    (void)drmUnmap((drmAddress)framebuffer.base, framebuffer.size);
-	}
+    Xfree(BusID); /* No longer needed */
 
-	if ( framebuffer.dev_priv != NULL ) {
-	    Xfree(framebuffer.dev_priv);
-	}
-
-	if ( fd >= 0 ) {
-	    (void)drmCloseOnce(fd);
-	}
-
-	(void)XF86DRICloseConnection(dpy, scrn);
-
-	if ( err_extra != NULL ) {
-	    fprintf(stderr, "libGL error: %s failed (%s)\n", err_msg,
-		    err_extra);
-	}
-	else {
-	    fprintf(stderr, "libGL error: %s failed\n", err_msg );
-	}
-
-        fprintf(stderr, "libGL error: reverting to (slow) indirect rendering\n");
+    if (fd < 0) {
+	fprintf(stderr, "libGL error: drmOpenOnce failed (%s)\n",
+		strerror(-fd));
+	goto handle_error;
     }
-#endif /* !GLX_USE_APPLEGL */
+
+    if (drmGetMagic(fd, &magic)) {
+	fprintf(stderr, "libGL error: drmGetMagic failed\n");
+	goto handle_error;
+    }
+
+    version = drmGetVersion(fd);
+    if (version) {
+	drm_version.major = version->version_major;
+	drm_version.minor = version->version_minor;
+	drm_version.patch = version->version_patchlevel;
+	drmFreeVersion(version);
+    }
+    else {
+	drm_version.major = -1;
+	drm_version.minor = -1;
+	drm_version.patch = -1;
+    }
+
+    if (newlyopened && !XF86DRIAuthConnection(dpy, scrn, magic)) {
+	fprintf(stderr, "libGL error: XF86DRIAuthConnection failed\n");
+	goto handle_error;
+    }
+
+    /* Get device name (like "tdfx") and the ddx version numbers.
+     * We'll check the version in each DRI driver's "createNewScreen"
+     * function. */
+    if (!XF86DRIGetClientDriverName(dpy, scrn,
+				    &ddx_version.major,
+				    &ddx_version.minor,
+				    &ddx_version.patch,
+				    &driverName)) {
+	fprintf(stderr, "libGL error: XF86DRIGetClientDriverName failed\n");
+	goto handle_error;
+    }
+
+    Xfree(driverName); /* No longer needed. */
+
+    /*
+     * Get device-specific info.  pDevPriv will point to a struct
+     * (such as DRIRADEONRec in xfree86/driver/ati/radeon_dri.h) that
+     * has information about the screen size, depth, pitch, ancilliary
+     * buffers, DRM mmap handles, etc.
+     */
+    if (!XF86DRIGetDeviceInfo(dpy, scrn, &hFB, &junk,
+			      &framebuffer.size, &framebuffer.stride,
+			      &framebuffer.dev_priv_size, &framebuffer.dev_priv)) {
+	fprintf(stderr, "libGL error: XF86DRIGetDeviceInfo failed");
+	goto handle_error;
+    }
+
+    framebuffer.width = DisplayWidth(dpy, scrn);
+    framebuffer.height = DisplayHeight(dpy, scrn);
+
+    /* Map the framebuffer region. */
+    status = drmMap(fd, hFB, framebuffer.size, 
+		    (drmAddressPtr)&framebuffer.base);
+    if (status != 0) {
+	fprintf(stderr, "libGL error: drmMap of framebuffer failed (%s)",
+		strerror(-status));
+	goto handle_error;
+    }
+
+    /* Map the SAREA region.  Further mmap regions may be setup in
+     * each DRI driver's "createNewScreen" function.
+     */
+    status = drmMap(fd, hSAREA, SAREA_MAX, &pSAREA);
+    if (status != 0) {
+	fprintf(stderr, "libGL error: drmMap of SAREA failed (%s)",
+		strerror(-status));
+	goto handle_error;
+    }
+
+    psp = (*psc->legacy->createNewScreen)(scrn,
+					  &ddx_version,
+					  &dri_version,
+					  &drm_version,
+					  &framebuffer,
+					  pSAREA,
+					  fd,
+					  loader_extensions,
+					  &driver_configs,
+					  psc);
+
+    if (psp == NULL) {
+	fprintf(stderr, "libGL error: Calling driver entry point failed");
+	goto handle_error;
+    }
+
+    psc->configs = driConvertConfigs(psc->core, psc->configs, driver_configs);
+    psc->visuals = driConvertConfigs(psc->core, psc->visuals, driver_configs);
 
     return psp;
+
+ handle_error:
+    if (pSAREA != MAP_FAILED)
+	drmUnmap(pSAREA, SAREA_MAX);
+
+    if (framebuffer.base != MAP_FAILED)
+	drmUnmap((drmAddress)framebuffer.base, framebuffer.size);
+
+    if (framebuffer.dev_priv != NULL)
+	Xfree(framebuffer.dev_priv);
+
+    if (fd >= 0)
+	drmCloseOnce(fd);
+
+    XF86DRICloseConnection(dpy, scrn);
+
+    fprintf(stderr, "libGL error: reverting to (slow) indirect rendering\n");
+
+    return NULL;
 }
+
+#else /* !GLX_USE_APPLEGL */
+
+static void *
+CallCreateNewScreen(Display *dpy, int scrn, __GLXscreenConfigs *psc,
+		    __GLXDRIdisplayPrivate * driDpy)
+{
+    return NULL;
+}
+
+#endif /* !GLX_USE_APPLEGL */
 
 static void driDestroyContext(__GLXDRIcontext *context,
 			      __GLXscreenConfigs *psc, Display *dpy)
