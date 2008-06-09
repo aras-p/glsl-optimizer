@@ -1,8 +1,3 @@
-/**
- * \file buffers.h
- * Frame buffer management functions declarations.
- */
-
 /*
  * Mesa 3-D graphics library
  * Version:  7.1
@@ -28,29 +23,44 @@
  */
 
 
-
-#ifndef BUFFERS_H
-#define BUFFERS_H
-
-
-#include "mtypes.h"
+#include "main/glheader.h"
+#include "main/context.h"
+#include "main/macros.h"
+#include "main/multisample.h"
 
 
-extern void GLAPIENTRY
-_mesa_DrawBuffer( GLenum mode );
+/**
+ * Called via glSampleCoverageARB
+ */
+void GLAPIENTRY
+_mesa_SampleCoverageARB(GLclampf value, GLboolean invert)
+{
+   GET_CURRENT_CONTEXT(ctx);
 
-extern void GLAPIENTRY
-_mesa_DrawBuffersARB(GLsizei n, const GLenum *buffers);
+   if (!ctx->Extensions.ARB_multisample) {
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glSampleCoverageARB");
+      return;
+   }
 
-extern void
-_mesa_drawbuffers(GLcontext *ctx, GLuint n, const GLenum *buffers,
-                  const GLbitfield *destMask);
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH( ctx );
 
-extern void
-_mesa_readbuffer(GLcontext *ctx, GLenum buffer, GLint bufferIndex);
-
-extern void GLAPIENTRY
-_mesa_ReadBuffer( GLenum mode );
+   ctx->Multisample.SampleCoverageValue = (GLfloat) CLAMP(value, 0.0, 1.0);
+   ctx->Multisample.SampleCoverageInvert = invert;
+   ctx->NewState |= _NEW_MULTISAMPLE;
+}
 
 
-#endif
+/**
+ * Initialize the context's multisample state.
+ * \param ctx  the GL context.
+ */
+void
+_mesa_init_multisample(GLcontext *ctx)
+{
+   ctx->Multisample.Enabled = GL_TRUE;
+   ctx->Multisample.SampleAlphaToCoverage = GL_FALSE;
+   ctx->Multisample.SampleAlphaToOne = GL_FALSE;
+   ctx->Multisample.SampleCoverage = GL_FALSE;
+   ctx->Multisample.SampleCoverageValue = 1.0;
+   ctx->Multisample.SampleCoverageInvert = GL_FALSE;
+}

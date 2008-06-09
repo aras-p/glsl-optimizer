@@ -44,6 +44,7 @@ MAIN_SOURCES = \
 	main/matrix.c \
 	main/mipmap.c \
 	main/mm.c \
+	main/multisample.c \
 	main/pixel.c \
 	main/pixelstore.c \
 	main/points.c \

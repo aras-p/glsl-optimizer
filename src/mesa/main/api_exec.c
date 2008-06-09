@@ -71,6 +71,7 @@
 #include "lines.h"
 #include "macros.h"
 #include "matrix.h"
+#include "multisample.h"
 #include "pixel.h"
 #include "pixelstore.h"
 #include "points.h"
