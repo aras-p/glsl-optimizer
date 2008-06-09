@@ -43,6 +43,7 @@ MAIN_SOURCES = \
 	main/mipmap.c \
 	main/mm.c \
 	main/pixel.c \
+	main/pixelstore.c \
 	main/points.c \
 	main/polygon.c \
 	main/queryobj.c \

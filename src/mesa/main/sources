@@ -42,6 +42,7 @@ mipmap.c \
 mm.c \
 occlude.c \
 pixel.c \
+pixelstore.c \
 points.c \
 polygon.c \
 rastpos.c \
@@ -115,6 +116,7 @@ mm.h \
 mtypes.h \
 occlude.h \
 pixel.h \
+pixelstore.h \
 points.h \
 polygon.h \
 rastpos.h \
