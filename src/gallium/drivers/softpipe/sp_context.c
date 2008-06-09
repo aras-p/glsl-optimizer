@@ -225,10 +225,10 @@ softpipe_create( struct pipe_screen *screen,
    if (!softpipe->setup)
       goto fail;
 
-   if (GETENV( "SP_NO_RAST" ) != NULL)
+   if (debug_get_bool_option( "SP_NO_RAST", FALSE ))
       softpipe->no_rast = TRUE;
 
-   if (GETENV( "SP_NO_VBUF" ) != NULL) {
+   if (debug_get_bool_option( "SP_NO_VBUF", FALSE )) {
       /* Deprecated path -- vbuf is the intended interface to the draw module:
        */
       draw_set_rasterize_stage(softpipe->draw, softpipe->setup);
