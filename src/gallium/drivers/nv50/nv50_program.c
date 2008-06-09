@@ -85,7 +85,7 @@ struct nv50_pc {
 	float *immd_buf;
 	int immd_nr;
 
-	struct nv50_reg *temp_temp[8];
+	struct nv50_reg *temp_temp[16];
 	unsigned temp_temp_nr;
 };
 
@@ -154,7 +154,7 @@ free_temp(struct nv50_pc *pc, struct nv50_reg *r)
 static struct nv50_reg *
 temp_temp(struct nv50_pc *pc)
 {
-	if (pc->temp_temp_nr >= 8)
+	if (pc->temp_temp_nr >= 16)
 		assert(0);
 
 	pc->temp_temp[pc->temp_temp_nr] = alloc_temp(pc, NULL);
@@ -964,6 +964,18 @@ nv50_program_tx_insn(struct nv50_pc *pc, const union tgsi_full_token *tok)
 			if (!(mask & (1 << c)))
 				continue;
 			emit_flop(pc, 3, dst[c], src[0][c]);
+		}
+		break;
+	case TGSI_OPCODE_LRP:
+		for (c = 0; c < 4; c++) {
+			if (!(mask & (1 << c)))
+				continue;
+			/*XXX: we can do better than this */
+			temp = alloc_temp(pc, NULL);
+			emit_neg(pc, temp, src[0][c]);
+			emit_mad(pc, temp, temp, src[2][c], src[2][c]);
+			emit_mad(pc, dst[c], src[0][c], src[1][c], temp);
+			free_temp(pc, temp);
 		}
 		break;
 	case TGSI_OPCODE_MAD:
