@@ -43,6 +43,7 @@
 #include "matrix.h"
 #include "points.h"
 #include "polygon.h"
+#include "scissor.h"
 #include "simple_list.h"
 #include "stencil.h"
 #include "texobj.h"

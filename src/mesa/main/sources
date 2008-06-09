@@ -50,6 +50,7 @@ readpix.c \
 rastpos.c \
 rbadaptors.c \
 renderbuffer.c \
+scissor.c \
 state.c \
 stencil.c \
 texcompress.c \
@@ -127,6 +128,7 @@ rbadaptors.h \
 readpix.h \
 renderbuffer.h \
 simple_list.h \
+scissor.h \
 state.h \
 stencil.h \
 texcompress.h \

@@ -700,79 +700,6 @@ _mesa_SampleCoverageARB(GLclampf value, GLboolean invert)
 
 
 /**
- * Define the scissor box.
- *
- * \param x, y coordinates of the scissor box lower-left corner.
- * \param width width of the scissor box.
- * \param height height of the scissor box.
- *
- * \sa glScissor().
- *
- * Verifies the parameters and updates __GLcontextRec::Scissor. On a
- * change flushes the vertices and notifies the driver via
- * the dd_function_table::Scissor callback.
- */
-void
-_mesa_set_scissor(GLcontext *ctx, 
-                  GLint x, GLint y, GLsizei width, GLsizei height)
-{
-   if (x == ctx->Scissor.X &&
-       y == ctx->Scissor.Y &&
-       width == ctx->Scissor.Width &&
-       height == ctx->Scissor.Height)
-      return;
-
-   FLUSH_VERTICES(ctx, _NEW_SCISSOR);
-   ctx->Scissor.X = x;
-   ctx->Scissor.Y = y;
-   ctx->Scissor.Width = width;
-   ctx->Scissor.Height = height;
-
-   if (ctx->Driver.Scissor)
-      ctx->Driver.Scissor( ctx, x, y, width, height );
-}
-
-
-void GLAPIENTRY
-_mesa_Scissor( GLint x, GLint y, GLsizei width, GLsizei height )
-{
-   GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
-
-   if (width < 0 || height < 0) {
-      _mesa_error( ctx, GL_INVALID_VALUE, "glScissor" );
-      return;
-   }
-
-   if (MESA_VERBOSE & VERBOSE_API)
-      _mesa_debug(ctx, "glScissor %d %d %d %d\n", x, y, width, height);
-
-   _mesa_set_scissor(ctx, x, y, width, height);
-}
-
-
-
-/**********************************************************************/
-/** \name Initialization */
-/*@{*/
-
-/**
- * Initialize the context's scissor state.
- * \param ctx  the GL context.
- */
-void
-_mesa_init_scissor(GLcontext *ctx)
-{
-   /* Scissor group */
-   ctx->Scissor.Enabled = GL_FALSE;
-   ctx->Scissor.X = 0;
-   ctx->Scissor.Y = 0;
-   ctx->Scissor.Width = 0;
-   ctx->Scissor.Height = 0;
-}
-
-
-/**
  * Initialize the context's multisample state.
  * \param ctx  the GL context.
  */
@@ -786,5 +713,3 @@ _mesa_init_multisample(GLcontext *ctx)
    ctx->Multisample.SampleCoverageValue = 1.0;
    ctx->Multisample.SampleCoverageInvert = GL_FALSE;
 }
-
-/*@}*/

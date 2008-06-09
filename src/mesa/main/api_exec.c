@@ -79,6 +79,7 @@
 #endif
 #include "rastpos.h"
 #include "readpix.h"
+#include "scissor.h"
 #include "state.h"
 #include "stencil.h"
 #include "teximage.h"

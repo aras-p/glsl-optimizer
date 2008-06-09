@@ -1,13 +1,8 @@
-/**
- * \file buffers.h
- * Frame buffer management functions declarations.
- */
-
 /*
  * Mesa 3-D graphics library
- * Version:  6.5
+ * Version:  7.1
  *
- * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -28,49 +23,24 @@
  */
 
 
-
-#ifndef BUFFERS_H
-#define BUFFERS_H
-
-
-#include "mtypes.h"
+#ifndef SCISSOR_H
+#define SCISSOR_H
 
 
-extern void GLAPIENTRY
-_mesa_ClearIndex( GLfloat c );
+#include "main/mtypes.h"
+
 
 extern void GLAPIENTRY
-_mesa_ClearColor( GLclampf red, GLclampf green,
-                  GLclampf blue, GLclampf alpha );
+_mesa_Scissor( GLint x, GLint y, GLsizei width, GLsizei height );
 
-extern void GLAPIENTRY
-_mesa_Clear( GLbitfield mask );
-
-extern void GLAPIENTRY
-_mesa_DrawBuffer( GLenum mode );
-
-extern void GLAPIENTRY
-_mesa_DrawBuffersARB(GLsizei n, const GLenum *buffers);
 
 extern void
-_mesa_drawbuffers(GLcontext *ctx, GLuint n, const GLenum *buffers,
-                  const GLbitfield *destMask);
+_mesa_set_scissor(GLcontext *ctx, 
+                  GLint x, GLint y, GLsizei width, GLsizei height);
 
-extern GLboolean
-_mesa_readbuffer_update_fields(GLcontext *ctx, GLenum buffer);
-
-extern void GLAPIENTRY
-_mesa_ReadBuffer( GLenum mode );
-
-extern void GLAPIENTRY
-_mesa_ResizeBuffersMESA( void );
-
-extern void GLAPIENTRY
-_mesa_SampleCoverageARB(GLclampf value, GLboolean invert);
 
 extern void 
-_mesa_init_multisample(GLcontext *ctx);
+_mesa_init_scissor(GLcontext *ctx);
 
-extern void _mesa_resizebuffers( GLcontext *ctx );
 
 #endif

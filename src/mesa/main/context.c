@@ -111,6 +111,7 @@
 #include "polygon.h"
 #include "queryobj.h"
 #include "rastpos.h"
+#include "scissor.h"
 #include "simple_list.h"
 #include "state.h"
 #include "stencil.h"
