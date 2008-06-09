@@ -727,6 +727,22 @@ emit_lit(struct nv50_pc *pc, struct nv50_reg **dst, struct nv50_reg **src)
 	set_pred(pc, 3, 0, &pc->p->insns[pc->p->insns_nr - 2]);
 }
 
+static void
+emit_neg(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src)
+{
+	unsigned inst[2] = { 0, 0 };
+
+	set_long(pc, inst);
+	inst[0] |= 0xa0000000; /* delta */
+	inst[1] |= (7 << 29); /* delta */
+	inst[1] |= 0x04000000; /* negate arg0? probably not */
+	inst[1] |= (1 << 14); /* src .f32 */
+	set_dst(pc, dst, inst);
+	set_src_0(pc, src, inst);
+
+	emit(pc, inst);
+}
+
 static struct nv50_reg *
 tgsi_dst(struct nv50_pc *pc, int c, const struct tgsi_full_dst_register *dst)
 {
@@ -792,6 +808,17 @@ tgsi_src(struct nv50_pc *pc, int chan, const struct tgsi_full_src_register *src)
 	case TGSI_UTIL_SIGN_CLEAR:
 		temp = temp_temp(pc);
 		emit_abs(pc, temp, r);
+		r = temp;
+		break;
+	case TGSI_UTIL_SIGN_TOGGLE:
+		temp = temp_temp(pc);
+		emit_neg(pc, temp, r);
+		r = temp;
+		break;
+	case TGSI_UTIL_SIGN_SET:
+		temp = temp_temp(pc);
+		emit_abs(pc, temp, r);
+		emit_neg(pc, temp, r);
 		r = temp;
 		break;
 	default:
