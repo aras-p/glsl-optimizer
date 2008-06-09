@@ -45,6 +45,7 @@ pixel.c \
 pixelstore.c \
 points.c \
 polygon.c \
+readpix.c \
 rastpos.c \
 rbadaptors.c \
 renderbuffer.c \
@@ -121,6 +122,7 @@ points.h \
 polygon.h \
 rastpos.h \
 rbadaptors.h \
+readpix.h \
 renderbuffer.h \
 simple_list.h \
 state.h \
