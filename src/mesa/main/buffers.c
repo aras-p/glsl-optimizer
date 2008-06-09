@@ -456,83 +456,6 @@ _mesa_ReadBuffer(GLenum buffer)
 }
 
 
-#if _HAVE_FULL_GL
-
-/**
- * XXX THIS IS OBSOLETE - drivers should take care of detecting window
- * size changes and act accordingly, likely calling _mesa_resize_framebuffer().
- *
- * GL_MESA_resize_buffers extension.
- *
- * When this function is called, we'll ask the window system how large
- * the current window is.  If it's a new size, we'll call the driver's
- * ResizeBuffers function.  The driver will then resize its color buffers
- * as needed, and maybe call the swrast's routine for reallocating
- * swrast-managed depth/stencil/accum/etc buffers.
- * \note This function should only be called through the GL API, not
- * from device drivers (as was done in the past).
- */
-
-void _mesa_resizebuffers( GLcontext *ctx )
-{
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH( ctx );
-
-   if (MESA_VERBOSE & VERBOSE_API)
-      _mesa_debug(ctx, "glResizeBuffersMESA\n");
-
-   if (!ctx->Driver.GetBufferSize) {
-      return;
-   }
-
-   if (ctx->WinSysDrawBuffer) {
-      GLuint newWidth, newHeight;
-      GLframebuffer *buffer = ctx->WinSysDrawBuffer;
-
-      assert(buffer->Name == 0);
-
-      /* ask device driver for size of output buffer */
-      ctx->Driver.GetBufferSize( buffer, &newWidth, &newHeight );
-
-      /* see if size of device driver's color buffer (window) has changed */
-      if (buffer->Width != newWidth || buffer->Height != newHeight) {
-         if (ctx->Driver.ResizeBuffers)
-            ctx->Driver.ResizeBuffers(ctx, buffer, newWidth, newHeight );
-      }
-   }
-
-   if (ctx->WinSysReadBuffer
-       && ctx->WinSysReadBuffer != ctx->WinSysDrawBuffer) {
-      GLuint newWidth, newHeight;
-      GLframebuffer *buffer = ctx->WinSysReadBuffer;
-
-      assert(buffer->Name == 0);
-
-      /* ask device driver for size of read buffer */
-      ctx->Driver.GetBufferSize( buffer, &newWidth, &newHeight );
-
-      /* see if size of device driver's color buffer (window) has changed */
-      if (buffer->Width != newWidth || buffer->Height != newHeight) {
-         if (ctx->Driver.ResizeBuffers)
-            ctx->Driver.ResizeBuffers(ctx, buffer, newWidth, newHeight );
-      }
-   }
-
-   ctx->NewState |= _NEW_BUFFERS;  /* to update scissor / window bounds */
-}
-
-
-/*
- * XXX THIS IS OBSOLETE
- */
-void GLAPIENTRY
-_mesa_ResizeBuffersMESA( void )
-{
-   GET_CURRENT_CONTEXT(ctx);
-
-   if (ctx->Extensions.MESA_resize_buffers)
-      _mesa_resizebuffers( ctx );
-}
-
 
 /*
  * XXX move somewhere else someday?
@@ -552,8 +475,6 @@ _mesa_SampleCoverageARB(GLclampf value, GLboolean invert)
    ctx->Multisample.SampleCoverageInvert = invert;
    ctx->NewState |= _NEW_MULTISAMPLE;
 }
-
-#endif /* _HAVE_FULL_GL */
 
 
 
