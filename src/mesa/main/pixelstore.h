@@ -43,4 +43,8 @@ extern void GLAPIENTRY
 _mesa_PixelStoref( GLenum pname, GLfloat param );
 
 
+extern void
+_mesa_init_pixelstore( GLcontext *ctx );
+
+
 #endif

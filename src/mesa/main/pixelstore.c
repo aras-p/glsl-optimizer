@@ -224,3 +224,40 @@ _mesa_PixelStoref( GLenum pname, GLfloat param )
 {
    _mesa_PixelStorei( pname, (GLint) param );
 }
+
+
+
+/**
+ * Initialize the context's pixel store state.
+ */
+void
+_mesa_init_pixelstore( GLcontext *ctx )
+{
+   /* Pixel transfer */
+   ctx->Pack.Alignment = 4;
+   ctx->Pack.RowLength = 0;
+   ctx->Pack.ImageHeight = 0;
+   ctx->Pack.SkipPixels = 0;
+   ctx->Pack.SkipRows = 0;
+   ctx->Pack.SkipImages = 0;
+   ctx->Pack.SwapBytes = GL_FALSE;
+   ctx->Pack.LsbFirst = GL_FALSE;
+   ctx->Pack.ClientStorage = GL_FALSE;
+   ctx->Pack.Invert = GL_FALSE;
+#if FEATURE_EXT_pixel_buffer_object
+   ctx->Pack.BufferObj = ctx->Array.NullBufferObj;
+#endif
+   ctx->Unpack.Alignment = 4;
+   ctx->Unpack.RowLength = 0;
+   ctx->Unpack.ImageHeight = 0;
+   ctx->Unpack.SkipPixels = 0;
+   ctx->Unpack.SkipRows = 0;
+   ctx->Unpack.SkipImages = 0;
+   ctx->Unpack.SwapBytes = GL_FALSE;
+   ctx->Unpack.LsbFirst = GL_FALSE;
+   ctx->Unpack.ClientStorage = GL_FALSE;
+   ctx->Unpack.Invert = GL_FALSE;
+#if FEATURE_EXT_pixel_buffer_object
+   ctx->Unpack.BufferObj = ctx->Array.NullBufferObj;
+#endif
+}
