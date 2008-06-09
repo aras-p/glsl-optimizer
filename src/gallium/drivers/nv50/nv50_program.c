@@ -1369,7 +1369,7 @@ nv50_program_validate_data(struct nv50_context *nv50, struct nv50_program *p)
 
 	for (i = 0; i < p->immd_nr; i++) {
 		BEGIN_RING(tesla, 0x0f00, 2);
-		OUT_RING  ((NV50_CB_PMISC << 16) | (i << 8));
+		OUT_RING  ((NV50_CB_PMISC << 0) | (i << 8));
 		OUT_RING  (fui(p->immd[i]));
 	}
 }
