@@ -12,6 +12,7 @@ MAIN_SOURCES = \
 	main/blend.c \
 	main/bufferobj.c \
 	main/buffers.c \
+	main/clear.c \
 	main/clip.c \
 	main/colortab.c \
 	main/context.c \

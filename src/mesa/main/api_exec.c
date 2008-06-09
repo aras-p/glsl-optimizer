@@ -46,6 +46,7 @@
 #endif
 #include "arrayobj.h"
 #include "buffers.h"
+#include "clear.h"
 #include "clip.h"
 #include "colortab.h"
 #include "context.h"

@@ -1,13 +1,8 @@
-/**
- * \file buffers.h
- * Frame buffer management functions declarations.
- */
-
 /*
  * Mesa 3-D graphics library
- * Version:  6.5
+ * Version:  7.1
  *
- * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -28,39 +23,22 @@
  */
 
 
-
-#ifndef BUFFERS_H
-#define BUFFERS_H
-
-
-#include "mtypes.h"
+#ifndef CLEAR_H
+#define CLEAR_H
 
 
-extern void GLAPIENTRY
-_mesa_DrawBuffer( GLenum mode );
+#include "main/mtypes.h"
+
 
 extern void GLAPIENTRY
-_mesa_DrawBuffersARB(GLsizei n, const GLenum *buffers);
-
-extern void
-_mesa_drawbuffers(GLcontext *ctx, GLuint n, const GLenum *buffers,
-                  const GLbitfield *destMask);
-
-extern GLboolean
-_mesa_readbuffer_update_fields(GLcontext *ctx, GLenum buffer);
+_mesa_ClearIndex( GLfloat c );
 
 extern void GLAPIENTRY
-_mesa_ReadBuffer( GLenum mode );
+_mesa_ClearColor( GLclampf red, GLclampf green,
+                  GLclampf blue, GLclampf alpha );
 
 extern void GLAPIENTRY
-_mesa_ResizeBuffersMESA( void );
+_mesa_Clear( GLbitfield mask );
 
-extern void GLAPIENTRY
-_mesa_SampleCoverageARB(GLclampf value, GLboolean invert);
-
-extern void 
-_mesa_init_multisample(GLcontext *ctx);
-
-extern void _mesa_resizebuffers( GLcontext *ctx );
 
 #endif
