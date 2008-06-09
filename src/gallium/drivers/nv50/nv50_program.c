@@ -28,10 +28,29 @@
  * FUCK! watch dst==src vectors, can overwrite components that are needed.
  * 	ie. SUB R0, R0.yzxw, R0
  *
+ * MOV dst, -src
+ * 	"delta" tmp, -src (0xa0000204,0xe4004780 - delta r0, -r0)
+ * 	mov dst, tmp
+ *
  * Things to check with renouveau:
- * 	SGE/SLT with needed src0/1 swap
  * 	FP attr/result assignment - how?
- * 	FP/VP constbuf usage
+ * 		attrib
+ * 			- 0x16bc maps vp output onto fp hpos
+ * 			- 0x16c0 maps vp output onto fp col0
+ * 		result
+ * 			- colr always 0-3
+ * 			- depr always 4
+ * 0x16bc->0x16e8 --> some binding between vp/fp regs
+ * 0x16b8 --> VP output count
+ *
+ * 0x1298 --> "MOV rcol.x, fcol.y" "MOV depr, fcol.y" = 0x00000005
+ * 	      "MOV rcol.x, fcol.y" = 0x00000004
+ * 0x19a8 --> as above but 0x00000100 and 0x00000000
+ * 	- 0x00100000 used when KIL used
+ * 0x196c --> as above but 0x00000011 and 0x00000000
+ *
+ * 0x1988 --> 0xXXNNNNNN
+ * 	- XX == FP high something
  */
 struct nv50_reg {
 	enum {
