@@ -75,7 +75,6 @@ vsnprintf.c
 MESA_MAIN_HEADERS = \
 accum.h \
 api_arrayelt.h \
-api_eval.h \
 api_exec.h \
 api_loopback.h \
 api_noop.h \
