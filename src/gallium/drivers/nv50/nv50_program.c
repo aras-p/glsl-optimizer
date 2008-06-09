@@ -602,6 +602,21 @@ emit_preex2(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src)
 }
 
 static void
+emit_precossin(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src)
+{
+	unsigned inst[2] = { 0, 0 };
+
+	inst[0] |= 0xb0000000;
+
+	set_dst(pc, dst, inst);
+	set_src_0(pc, src, inst);
+	set_long(pc, inst);
+	inst[1] |= (6 << 29);
+
+	emit(pc, inst);
+}
+
+static void
 emit_set(struct nv50_pc *pc, unsigned c_op, struct nv50_reg *dst,
 	 struct nv50_reg *src0, struct nv50_reg *src1)
 {
@@ -693,7 +708,8 @@ emit_abs(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src)
 }
 
 static void
-emit_lit(struct nv50_pc *pc, struct nv50_reg **dst, struct nv50_reg **src)
+emit_lit(struct nv50_pc *pc, struct nv50_reg **dst, unsigned mask,
+	 struct nv50_reg **src)
 {
 	struct nv50_reg *one = alloc_immd(pc, 1.0);
 	struct nv50_reg *zero = alloc_immd(pc, 0.0);
@@ -701,23 +717,34 @@ emit_lit(struct nv50_pc *pc, struct nv50_reg **dst, struct nv50_reg **src)
 	struct nv50_reg *pos128 = alloc_immd(pc,  127.999999);
 	struct nv50_reg *tmp[4];
 
-	emit_mov(pc, dst[0], one);
-	emit_mov(pc, dst[3], one);
+	if (mask & (1 << 0))
+		emit_mov(pc, dst[0], one);
 
-	tmp[0] = temp_temp(pc);
-	emit_minmax(pc, 4, dst[1], src[0], zero);
-	set_pred_wr(pc, 1, 0, &pc->p->insns[pc->p->insns_nr - 2]);
+	if (mask & (1 << 3))
+		emit_mov(pc, dst[3], one);
 
-	tmp[1] = temp_temp(pc);
-	emit_minmax(pc, 4, tmp[1], src[1], zero);
+	if (mask & (3 << 1)) {
+		if (mask & (1 << 1))
+			tmp[0] = dst[1];
+		else
+			tmp[0] = temp_temp(pc);
+		emit_minmax(pc, 4, tmp[0], src[0], zero);
+	}
 
-	tmp[3] = temp_temp(pc);
-	emit_minmax(pc, 4, tmp[3], src[3], neg128);
-	emit_minmax(pc, 5, tmp[3], tmp[3], pos128);
+	if (mask & (1 << 2)) {
+		set_pred_wr(pc, 1, 0, &pc->p->insns[pc->p->insns_nr - 2]);
 
-	emit_pow(pc, dst[2], tmp[1], tmp[3]);
-	emit_mov(pc, dst[2], zero);
-	set_pred(pc, 3, 0, &pc->p->insns[pc->p->insns_nr - 2]);
+		tmp[1] = temp_temp(pc);
+		emit_minmax(pc, 4, tmp[1], src[1], zero);
+
+		tmp[3] = temp_temp(pc);
+		emit_minmax(pc, 4, tmp[3], src[3], neg128);
+		emit_minmax(pc, 5, tmp[3], tmp[3], pos128);
+
+		emit_pow(pc, dst[2], tmp[1], tmp[3]);
+		emit_mov(pc, dst[2], zero);
+		set_pred(pc, 3, 0, &pc->p->insns[pc->p->insns_nr - 2]);
+	}
 }
 
 static void
@@ -870,10 +897,13 @@ nv50_program_tx_insn(struct nv50_pc *pc, const union tgsi_full_token *tok)
 		}
 		break;
 	case TGSI_OPCODE_COS:
+		temp = alloc_temp(pc, NULL);
+		emit_precossin(pc, temp, src[0][0]);
+		emit_flop(pc, 5, temp, temp);
 		for (c = 0; c < 4; c++) {
 			if (!(mask & (1 << c)))
 				continue;
-			emit_flop(pc, 5, dst[c], src[0][c]);
+			emit_mov(pc, dst[c], temp);
 		}
 		break;
 	case TGSI_OPCODE_DP3:
@@ -930,11 +960,12 @@ nv50_program_tx_insn(struct nv50_pc *pc, const union tgsi_full_token *tok)
 		break;
 	case TGSI_OPCODE_EX2:
 		temp = alloc_temp(pc, NULL);
+		emit_preex2(pc, temp, src[0][0]);
+		emit_flop(pc, 6, temp, temp);
 		for (c = 0; c < 4; c++) {
 			if (!(mask & (1 << c)))
 				continue;
-			emit_preex2(pc, temp, src[0][c]);
-			emit_flop(pc, 6, dst[c], temp);
+			emit_mov(pc, dst[c], temp);
 		}
 		free_temp(pc, temp);
 		break;
@@ -956,14 +987,15 @@ nv50_program_tx_insn(struct nv50_pc *pc, const union tgsi_full_token *tok)
 		free_temp(pc, temp);
 		break;
 	case TGSI_OPCODE_LIT:
-		/*XXX: writemask */
-		emit_lit(pc, &dst[0], &src[0][0]);
+		emit_lit(pc, &dst[0], mask, &src[0][0]);
 		break;
 	case TGSI_OPCODE_LG2:
+		temp = alloc_temp(pc, NULL);
+		emit_flop(pc, 3, temp, src[0][0]);
 		for (c = 0; c < 4; c++) {
 			if (!(mask & (1 << c)))
 				continue;
-			emit_flop(pc, 3, dst[c], src[0][c]);
+			emit_mov(pc, dst[c], temp);
 		}
 		break;
 	case TGSI_OPCODE_LRP:
@@ -1027,15 +1059,23 @@ nv50_program_tx_insn(struct nv50_pc *pc, const union tgsi_full_token *tok)
 		for (c = 0; c < 4; c++) {
 			if (!(mask & (1 << c)))
 				continue;
-			emit_flop(pc, 0, dst[c], src[0][c]);
+			emit_flop(pc, 0, dst[c], src[0][0]);
 		}
 		break;
 	case TGSI_OPCODE_RSQ:
 		for (c = 0; c < 4; c++) {
 			if (!(mask & (1 << c)))
 				continue;
-			emit_flop(pc, 2, dst[c], src[0][c]);
+			emit_flop(pc, 2, dst[c], src[0][0]);
 		}
+		break;
+	case TGSI_OPCODE_SCS:
+		temp = alloc_temp(pc, NULL);
+		emit_precossin(pc, temp, src[0][0]);
+		if (mask & (1 << 0))
+			emit_flop(pc, 5, dst[0], temp);
+		if (mask & (1 << 1))
+			emit_flop(pc, 4, dst[1], temp);
 		break;
 	case TGSI_OPCODE_SGE:
 		for (c = 0; c < 4; c++) {
@@ -1045,10 +1085,13 @@ nv50_program_tx_insn(struct nv50_pc *pc, const union tgsi_full_token *tok)
 		}
 		break;
 	case TGSI_OPCODE_SIN:
+		temp = alloc_temp(pc, NULL);
+		emit_precossin(pc, temp, src[0][0]);
+		emit_flop(pc, 4, temp, temp);
 		for (c = 0; c < 4; c++) {
 			if (!(mask & (1 << c)))
 				continue;
-			emit_flop(pc, 4, dst[c], src[0][c]);
+			emit_mov(pc, dst[c], temp);
 		}
 		break;
 	case TGSI_OPCODE_SLT:
