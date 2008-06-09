@@ -32,6 +32,7 @@
 #include "main/framebuffer.h"
 #include "main/matrix.h"
 #include "main/renderbuffer.h"
+#include "main/scissor.h"
 #include "st_public.h"
 #include "st_context.h"
 #include "st_cb_fbo.h"

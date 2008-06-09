@@ -30,6 +30,7 @@
 #include "main/extensions.h"
 #include "main/matrix.h"
 #include "main/buffers.h"
+#include "main/scissor.h"
 #include "vbo/vbo.h"
 #include "shader/shader_api.h"
 #include "st_public.h"
