@@ -602,6 +602,8 @@ dri2CreateNewDrawable(__DRIscreen *screen, const __DRIconfig *config,
     __DRIdrawable *pdraw;
 
     pdraw = driCreateNewDrawable(screen, config, 0, 0, NULL, data);
+    if (!pdraw)
+    	return NULL;
 
     pdraw->dri2.drawable_id = drawable_id;
     pdraw->dri2.tail = head;
