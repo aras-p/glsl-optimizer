@@ -39,28 +39,6 @@ nouveau_surface_alloc(struct pipe_winsys *ws)
 	return surf;
 }
 
-static int
-nouveau_surface_alloc_storage(struct pipe_winsys *ws, struct pipe_surface *surf,
-			      unsigned width, unsigned height,
-			      enum pipe_format format, unsigned flags,
-			      unsigned tex_usage)
-{
-	unsigned pitch = ((width * pf_get_size(format)) + 63) & ~63;
-
-	surf->format = format;
-	surf->width = width;
-	surf->height = height;
-	surf->cpp = pf_get_size(format);
-	surf->pitch = pitch / surf->cpp;
-
-	surf->buffer = ws->buffer_create(ws, 256, PIPE_BUFFER_USAGE_PIXEL,
-					 pitch * height);
-	if (!surf->buffer)
-		return 1;
-
-	return 0;
-}
-
 static void
 nouveau_surface_release(struct pipe_winsys *ws, struct pipe_surface **s)
 {
@@ -226,7 +204,6 @@ nouveau_create_pipe_winsys(struct nouveau_context *nv)
 	pws->flush_frontbuffer = nouveau_flush_frontbuffer;
 
 	pws->surface_alloc = nouveau_surface_alloc;
-	pws->surface_alloc_storage = nouveau_surface_alloc_storage;
 	pws->surface_release = nouveau_surface_release;
 
 	pws->buffer_create = nouveau_pipe_bo_create;

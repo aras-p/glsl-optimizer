@@ -99,7 +99,7 @@ nouveau_context_create(const __GLcontextModes *glVis,
 	struct st_context *st_share = NULL;
 	struct nouveau_channel_context *nvc = NULL;
 	struct nouveau_device *dev = nv_screen->device;
-	int i, ret;
+	int i;
 
 	if (sharedContextPrivate) {
 		st_share = ((struct nouveau_context *)sharedContextPrivate)->st;
