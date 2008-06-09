@@ -11,6 +11,7 @@ attrib.c \
 blend.c \
 bufferobj.c \
 buffers.c \
+clear.c \
 clip.c \
 colortab.c \
 context.c \
@@ -84,6 +85,7 @@ bitset.h \
 blend.h \
 bufferobj.h \
 buffers.h \
+clear.h \
 clip.h \
 colormac.h \
 colortab.h \
