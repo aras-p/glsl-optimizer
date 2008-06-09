@@ -1,13 +1,13 @@
 # src/gallium/winsys/egl_xlib/Makefile
 
-# Build softpipe/xlib/EGL driver library/object: "softpipe_egl.so"
+# Build softpipe/xlib/EGL driver library/object: "egl_softpipe.so"
 
 
 TOP = ../../../..
 include $(TOP)/configs/current
 
 
-DRIVER_NAME = softpipe_egl.so
+DRIVER_NAME = egl_softpipe.so
 
 
 INCLUDE_DIRS = \
@@ -49,7 +49,7 @@ default: depend library Makefile
 library: $(TOP)/$(LIB_DIR)/$(DRIVER_NAME)
 
 
-# Make the softpipe_egl.so library
+# Make the egl_softpipe.so library
 $(TOP)/$(LIB_DIR)/$(DRIVER_NAME): $(WINSYS_OBJECTS) $(LIBS)
 	$(TOP)/bin/mklib -o $(DRIVER_NAME) \
 		-linker "$(CC)" \

@@ -45,7 +45,7 @@
 
 
 static const char *DefaultDRIDriver = "egl_xdri";
-static const char *DefaultSoftDriver = "softpipe_egl";
+static const char *DefaultSoftDriver = "egl_softpipe";
 
 
 /**
