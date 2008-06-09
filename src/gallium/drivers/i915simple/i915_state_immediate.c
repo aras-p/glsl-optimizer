@@ -156,8 +156,12 @@ const struct i915_tracked_state i915_upload_S5 = {
  */
 static void upload_S6( struct i915_context *i915 )
 {
-   unsigned LIS6 = (S6_COLOR_WRITE_ENABLE |
-		  (2 << S6_TRISTRIP_PV_SHIFT));
+   unsigned LIS6 = (2 << S6_TRISTRIP_PV_SHIFT);
+
+   /* I915_NEW_FRAMEBUFFER
+    */
+   if (i915->framebuffer.cbufs[0])
+      LIS6 |= S6_COLOR_WRITE_ENABLE;
 
    /* I915_NEW_BLEND
     */
@@ -174,7 +178,7 @@ static void upload_S6( struct i915_context *i915 )
 }
 
 const struct i915_tracked_state i915_upload_S6 = {
-   I915_NEW_BLEND | I915_NEW_DEPTH_STENCIL,
+   I915_NEW_BLEND | I915_NEW_DEPTH_STENCIL | I915_NEW_FRAMEBUFFER,
    upload_S6
 };
 
