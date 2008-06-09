@@ -129,12 +129,12 @@ softpipe_create( struct pipe_screen *screen,
    uint i;
 
 #ifdef PIPE_ARCH_X86
-   softpipe->use_sse = GETENV( "GALLIUM_NOSSE" ) == NULL;
+   softpipe->use_sse = !debug_get_bool_option( "GALLIUM_NOSSE", FALSE );
 #else
    softpipe->use_sse = FALSE;
 #endif
 
-   softpipe->dump_fs = GETENV( "GALLIUM_DUMP_FS" ) != NULL;
+   softpipe->dump_fs = debug_get_bool_option( "GALLIUM_DUMP_FS", FALSE );
 
    softpipe->pipe.winsys = pipe_winsys;
    softpipe->pipe.screen = screen;

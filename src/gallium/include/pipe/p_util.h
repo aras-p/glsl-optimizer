@@ -140,8 +140,6 @@ REALLOC( void *old_ptr, unsigned old_size, unsigned new_size )
 
 #define CALLOC_STRUCT(T)   (struct T *) CALLOC(1, sizeof(struct T))
 
-#define GETENV( X ) debug_get_option( X, NULL )
-
 
 /**
  * Return memory on given byte alignment

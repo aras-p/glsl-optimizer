@@ -161,7 +161,7 @@ struct pipe_context *i915_create_context( struct pipe_screen *screen,
     */
    i915->draw = draw_create();
    assert(i915->draw);
-   if (!GETENV("I915_NO_VBUF")) {
+   if (!debug_get_bool_option("I915_NO_VBUF", FALSE)) {
       draw_set_rasterize_stage(i915->draw, i915_draw_vbuf_stage(i915));
    }
    else {

@@ -119,8 +119,8 @@ draw_pt_arrays(struct draw_context *draw,
 
 boolean draw_pt_init( struct draw_context *draw )
 {
-   draw->pt.test_fse = GETENV("DRAW_FSE") != NULL;
-   draw->pt.no_fse = GETENV("DRAW_NO_FSE") != NULL;
+   draw->pt.test_fse = debug_get_bool_option("DRAW_FSE", FALSE);
+   draw->pt.no_fse = debug_get_bool_option("DRAW_NO_FSE", FALSE);
 
    draw->pt.front.vcache = draw_pt_vcache( draw );
    if (!draw->pt.front.vcache)
