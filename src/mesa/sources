@@ -241,28 +241,11 @@ SPARC_API =			\
 COMMON_DRIVER_SOURCES =			\
 	drivers/common/driverfuncs.c
 
-SVGA_DRIVER_SOURCES =			\
-	drivers/svga/svgamesa.c		\
-	drivers/svga/svgamesa8.c	\
-	drivers/svga/svgamesa15.c	\
-	drivers/svga/svgamesa16.c	\
-	drivers/svga/svgamesa24.c	\
-	drivers/svga/svgamesa32.c
-
-FBDEV_DRIVER_SOURCES =			\
-	drivers/fbdev/glfbdev.c
 
 
 ### All the core C sources
 
-ALL_SOURCES = \
-	$(GLAPI_SOURCES)	\
-	$(SOLO_SOURCES)		\
-	$(ASM_SOURCES)		\
-	$(COMMON_DRIVER_SOURCES)\
-	$(FBDEV_DRIVER_SOURCES)
-
-SOLO_SOURCES = \
+MESA_SOURCES = \
 	$(MAIN_SOURCES)		\
 	$(MATH_SOURCES)		\
 	$(VBO_SOURCES)		\
@@ -273,26 +256,26 @@ SOLO_SOURCES = \
 	$(ASM_C_SOURCES)	\
 	$(SLANG_SOURCES)
 
-CORE_SOURCES = \
+ALL_SOURCES = \
+	$(MESA_SOURCES)		\
 	$(GLAPI_SOURCES)	\
-	$(SOLO_SOURCES)
+	$(ASM_SOURCES)		\
+	$(COMMON_DRIVER_SOURCES)
+
 
 
 ### Object files
 
-SOLO_OBJECTS = \
-	$(SOLO_SOURCES:.c=.o) \
+MESA_OBJECTS = \
+	$(MESA_SOURCES:.c=.o) \
 	$(ASM_SOURCES:.S=.o)
 
 GLAPI_OBJECTS = \
 	$(GLAPI_SOURCES:.c=.o) \
 	$(ASM_API:.S=.o)
 
-CORE_OBJECTS = $(SOLO_OBJECTS) $(GLAPI_OBJECTS)
 
 COMMON_DRIVER_OBJECTS = $(COMMON_DRIVER_SOURCES:.c=.o)
-
-FBDEV_DRIVER_OBJECTS = $(FBDEV_DRIVER_SOURCES:.c=.o)
 
 
 
