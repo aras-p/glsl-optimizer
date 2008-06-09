@@ -52,6 +52,7 @@
 #include "eval.h"
 #include "extensions.h"
 #include "feedback.h"
+#include "framebuffer.h"
 #include "get.h"
 #include "glapi/glapi.h"
 #include "hash.h"

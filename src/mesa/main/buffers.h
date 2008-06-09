@@ -53,14 +53,10 @@ extern void GLAPIENTRY
 _mesa_ReadBuffer( GLenum mode );
 
 extern void GLAPIENTRY
-_mesa_ResizeBuffersMESA( void );
-
-extern void GLAPIENTRY
 _mesa_SampleCoverageARB(GLclampf value, GLboolean invert);
 
 extern void 
 _mesa_init_multisample(GLcontext *ctx);
 
-extern void _mesa_resizebuffers( GLcontext *ctx );
 
 #endif
