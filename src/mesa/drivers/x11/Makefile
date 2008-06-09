@@ -59,7 +59,7 @@ $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME): $(OBJECTS) $(CORE_MESA)
 		-linker '$(CC)' -ldflags '$(LDFLAGS)' \
 		-major $(GL_MAJOR) -minor $(GL_MINOR) -patch $(GL_TINY) \
 		-install $(TOP)/$(LIB_DIR) \
-		$(MKLIB_OPTIONS) $(GL_LIB_DEPS) $(OBJECTS)
+		$(MKLIB_OPTIONS) $(GL_LIB_DEPS) $(OBJECTS) $(CORE_MESA)
 
 
 
