@@ -72,6 +72,7 @@
 #include "macros.h"
 #include "matrix.h"
 #include "pixel.h"
+#include "pixelstore.h"
 #include "points.h"
 #include "polygon.h"
 #if FEATURE_ARB_occlusion_query || FEATURE_EXT_timer_query
