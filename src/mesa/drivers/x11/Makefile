@@ -18,7 +18,6 @@ GL_TINY = 0$(MESA_MAJOR)0$(MESA_MINOR)0$(MESA_TINY)
 HEADERS = \
 	glxapi.h \
 	glxheader.h \
-	realglx.h \
 	xfonts.h \
 	xmesaP.h \
 	xm_glide.h \
@@ -27,7 +26,6 @@ HEADERS = \
 SOURCES = \
 	fakeglx.c \
 	glxapi.c \
-	realglx.c \
 	xfonts.c \
 	xm_api.c \
 	xm_buffer.c \
@@ -61,7 +59,7 @@ $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME): $(OBJECTS) $(CORE_MESA)
 		-linker '$(CC)' -ldflags '$(LDFLAGS)' \
 		-major $(GL_MAJOR) -minor $(GL_MINOR) -patch $(GL_TINY) \
 		-install $(TOP)/$(LIB_DIR) \
-		$(MKLIB_OPTIONS) $(GL_LIB_DEPS) $(OBJECTS)
+		$(MKLIB_OPTIONS) $(GL_LIB_DEPS) $(OBJECTS) $(CORE_MESA)
 
 
 
