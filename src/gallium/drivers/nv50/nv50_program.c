@@ -601,24 +601,17 @@ emit_preex2(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src)
 	emit(pc, inst);
 }
 
-/*XXX: inaccurate results.. why? */
-#define ALLOW_SET_SWAP 0
-
 static void
 emit_set(struct nv50_pc *pc, unsigned c_op, struct nv50_reg *dst,
 	 struct nv50_reg *src0, struct nv50_reg *src1)
 {
 	unsigned inst[2] = { 0, 0 };
-#if ALLOW_SET_SWAP
-	unsigned inv_cop[8] = { 0, 6, 2, 4, 3, 5, 1, 7 };
-#endif
+	unsigned inv_cop[8] = { 0, 4, 2, 6, 1, 5, 3, 7 };
 	struct nv50_reg *rdst;
 
-#if ALLOW_SET_SWAP
 	assert(c_op <= 7);
 	if (check_swap_src_0_1(pc, &src0, &src1))
 		c_op = inv_cop[c_op];
-#endif
 
 	rdst = dst;
 	if (dst->type != P_TEMP)
