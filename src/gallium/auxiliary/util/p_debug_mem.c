@@ -75,6 +75,12 @@ struct debug_memory_header
    unsigned magic;
 };
 
+struct debug_memory_footer
+{
+   unsigned magic;
+};
+
+
 static struct list_head list = { &list, &list };
 
 static unsigned long last_no = 0;
@@ -98,14 +104,24 @@ data_from_header(struct debug_memory_header *hdr)
       return NULL;
 }
 
+static INLINE struct debug_memory_footer *
+footer_from_header(struct debug_memory_header *hdr)
+{
+   if(hdr)
+      return (struct debug_memory_footer *)((char *)hdr + sizeof(struct debug_memory_header) + hdr->size);
+   else
+      return NULL;
+}
+
 
 void *
 debug_malloc(const char *file, unsigned line, const char *function,
              size_t size) 
 {
    struct debug_memory_header *hdr;
+   struct debug_memory_footer *ftr;
    
-   hdr = real_malloc(sizeof(*hdr) + size);
+   hdr = real_malloc(sizeof(*hdr) + size + sizeof(*ftr));
    if(!hdr)
       return NULL;
  
@@ -116,6 +132,9 @@ debug_malloc(const char *file, unsigned line, const char *function,
    hdr->size = size;
    hdr->magic = DEBUG_MEMORY_MAGIC;
 
+   ftr = footer_from_header(hdr);
+   ftr->magic = DEBUG_MEMORY_MAGIC;
+   
    LIST_ADDTAIL(&hdr->head, &list);
    
    return data_from_header(hdr);
@@ -126,6 +145,7 @@ debug_free(const char *file, unsigned line, const char *function,
            void *ptr) 
 {
    struct debug_memory_header *hdr;
+   struct debug_memory_footer *ftr;
    
    if(!ptr)
       return;
@@ -139,8 +159,17 @@ debug_free(const char *file, unsigned line, const char *function,
       return;
    }
 
+   ftr = footer_from_header(hdr);
+   if(ftr->magic != DEBUG_MEMORY_MAGIC) {
+      debug_printf("%s:%u:%s: buffer overflow %p\n",
+                   hdr->file, hdr->line, hdr->function,
+                   ptr);
+      debug_assert(0);
+   }
+
    LIST_DEL(&hdr->head);
    hdr->magic = 0;
+   ftr->magic = 0;
    
    real_free(hdr);
 }
@@ -160,6 +189,7 @@ debug_realloc(const char *file, unsigned line, const char *function,
               void *old_ptr, size_t old_size, size_t new_size )
 {
    struct debug_memory_header *old_hdr, *new_hdr;
+   struct debug_memory_footer *old_ftr, *new_ftr;
    void *new_ptr;
    
    if(!old_ptr)
@@ -179,8 +209,16 @@ debug_realloc(const char *file, unsigned line, const char *function,
       return NULL;
    }
    
+   old_ftr = footer_from_header(old_hdr);
+   if(old_ftr->magic != DEBUG_MEMORY_MAGIC) {
+      debug_printf("%s:%u:%s: buffer overflow %p\n",
+                   old_hdr->file, old_hdr->line, old_hdr->function,
+                   old_ptr);
+      debug_assert(0);
+   }
+
    /* alloc new */
-   new_hdr = real_malloc(sizeof(*new_hdr) + new_size);
+   new_hdr = real_malloc(sizeof(*new_hdr) + new_size + sizeof(*new_ftr));
    if(!new_hdr)
       return NULL;
    new_hdr->no = old_hdr->no;
@@ -189,14 +227,19 @@ debug_realloc(const char *file, unsigned line, const char *function,
    new_hdr->function = old_hdr->function;
    new_hdr->size = new_size;
    new_hdr->magic = DEBUG_MEMORY_MAGIC;
-   LIST_REPLACE(&old_hdr->head, &new_hdr->head);
    
+   new_ftr = footer_from_header(new_hdr);
+   new_ftr->magic = DEBUG_MEMORY_MAGIC;
+   
+   LIST_REPLACE(&old_hdr->head, &new_hdr->head);
+
    /* copy data */
    new_ptr = data_from_header(new_hdr);
    memcpy( new_ptr, old_ptr, old_size < new_size ? old_size : new_size );
 
    /* free old */
    old_hdr->magic = 0;
+   old_ftr->magic = 0;
    real_free(old_hdr);
 
    return new_ptr;
