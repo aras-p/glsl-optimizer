@@ -151,7 +151,7 @@ VBO_SOURCES = \
 	vbo/vbo_save_draw.c \
 	vbo/vbo_save_loopback.c 
 
-VF_SOURCES = \
+__VF_SOURCES = \
 	vf/vf.c \
 	vf/vf_generic.c \
 	vf/vf_sse.c
@@ -303,7 +303,6 @@ SOLO_SOURCES = \
 	$(MAIN_SOURCES)		\
 	$(MATH_SOURCES)		\
 	$(VBO_SOURCES)		\
-	$(VF_SOURCES)		\
 	$(STATETRACKER_SOURCES)	\
 	$(TNL_SOURCES)		\
 	$(SHADER_SOURCES)	\
