@@ -24,7 +24,7 @@ CORE_MESA = $(TOP)/src/mesa/libmesa.a $(TOP)/src/mesa/libglapi.a
 default: $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME)
 
 
-$(TOP)/$(LIB_DIR)/$(GL_LIB_NAME): $(CORE_OBJECTS) $(OBJECTS)
+$(TOP)/$(LIB_DIR)/$(GL_LIB_NAME): $(CORE_MESA) $(OBJECTS)
 	@ $(TOP)/bin/mklib -o $(GL_LIB) \
 		-linker '$(CC)' -ldflags '$(LDFLAGS)' \
 		-major $(MESA_MAJOR) -minor $(MESA_MINOR) -patch $(MESA_TINY) \
