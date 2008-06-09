@@ -42,6 +42,7 @@ lines.c \
 matrix.c \
 mipmap.c \
 mm.c \
+multisample.c \
 occlude.c \
 pixel.c \
 pixelstore.c \
@@ -120,6 +121,7 @@ matrix.h \
 mipmap.h \
 mm.h \
 mtypes.h \
+multisample.h \
 occlude.h \
 pixel.h \
 pixelstore.h \
