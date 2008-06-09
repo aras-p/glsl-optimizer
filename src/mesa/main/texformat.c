@@ -1229,17 +1229,10 @@ const struct gl_texture_format _mesa_texformat_s8_z24 = {
    NULL,				/* FetchTexel1D */
    NULL,				/* FetchTexel2D */
    NULL,				/* FetchTexel3D */
-#if 0
    fetch_texel_1d_f_s8_z24,		/* FetchTexel1Df */
    fetch_texel_2d_f_s8_z24,		/* FetchTexel2Df */
    fetch_texel_3d_f_s8_z24,		/* FetchTexel3Df */
    store_texel_s8_z24			/* StoreTexel */
-#else
-   fetch_texel_1d_f_z24_s8,		/* FetchTexel1Df */
-   fetch_texel_2d_f_z24_s8,		/* FetchTexel2Df */
-   fetch_texel_3d_f_z24_s8,		/* FetchTexel3Df */
-   store_texel_z24_s8			/* StoreTexel */
-#endif
 };
 
 const struct gl_texture_format _mesa_texformat_z16 = {
@@ -1671,6 +1664,11 @@ _mesa_format_to_type_and_comps(const struct gl_texture_format *format,
       return;
 
    case MESA_FORMAT_Z24_S8:
+      *datatype = GL_UNSIGNED_INT;
+      *comps = 1; /* XXX OK? */
+      return;
+
+   case MESA_FORMAT_S8_Z24:
       *datatype = GL_UNSIGNED_INT;
       *comps = 1; /* XXX OK? */
       return;
