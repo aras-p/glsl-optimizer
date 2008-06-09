@@ -288,16 +288,6 @@ SPARC_API =			\
 __COMMON_DRIVER_SOURCES =			\
 	drivers/common/driverfuncs.c
 
-SVGA_DRIVER_SOURCES =			\
-	drivers/svga/svgamesa.c		\
-	drivers/svga/svgamesa8.c	\
-	drivers/svga/svgamesa15.c	\
-	drivers/svga/svgamesa16.c	\
-	drivers/svga/svgamesa24.c	\
-	drivers/svga/svgamesa32.c
-
-FBDEV_DRIVER_SOURCES =			\
-	drivers/fbdev/glfbdev.c
 
 
 ### All the core C sources
@@ -306,8 +296,8 @@ ALL_SOURCES = \
 	$(GLAPI_SOURCES)	\
 	$(SOLO_SOURCES)		\
 	$(MESA_ASM_SOURCES)	\
-	$(COMMON_DRIVER_SOURCES)\
-	$(FBDEV_DRIVER_SOURCES)
+	$(COMMON_DRIVER_SOURCES)
+
 
 SOLO_SOURCES = \
 	$(MAIN_SOURCES)		\
@@ -345,8 +335,6 @@ GLAPI_OBJECTS = \
 CORE_OBJECTS = $(SOLO_OBJECTS) $(GLAPI_OBJECTS)
 
 COMMON_DRIVER_OBJECTS = $(COMMON_DRIVER_SOURCES:.c=.o)
-
-FBDEV_DRIVER_OBJECTS = $(FBDEV_DRIVER_SOURCES:.c=.o)
 
 
 
