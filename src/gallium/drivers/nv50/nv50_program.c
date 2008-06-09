@@ -28,7 +28,10 @@
  * FUCK! watch dst==src vectors, can overwrite components that are needed.
  * 	ie. SUB R0, R0.yzxw, R0
  *
- * NV50_PROG* -> PIPE_SHADER*
+ * Things to check with renouveau:
+ * 	SGE/SLT with needed src0/1 swap
+ * 	FP attr/result assignment - how?
+ * 	FP/VP constbuf usage
  */
 struct nv50_reg {
 	enum {
@@ -289,7 +292,7 @@ set_cseg(struct nv50_pc *pc, struct nv50_reg *src, unsigned *inst)
 	if (src->type == P_IMMD) {
 		inst[1] |= (NV50_CB_PMISC << 22);
 	} else {
-		if (pc->p->type == NV50_PROG_VERTEX)
+		if (pc->p->type == PIPE_SHADER_VERTEX)
 			inst[1] |= (NV50_CB_PVP << 22);
 		else
 			inst[1] |= (NV50_CB_PFP << 22);
@@ -1144,7 +1147,7 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 		if (!pc->attr)
 			goto out_err;
 
-		if (pc->p->type == NV50_PROG_FRAGMENT) {
+		if (pc->p->type == PIPE_SHADER_FRAGMENT) {
 			iv = alloc_temp(pc, NULL);
 			aid++;
 		}
@@ -1153,7 +1156,7 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 			struct nv50_reg *a = &pc->attr[i*4];
 
 			for (c = 0; c < 4; c++) {
-				if (pc->p->type == NV50_PROG_FRAGMENT) {
+				if (pc->p->type == PIPE_SHADER_FRAGMENT) {
 					struct nv50_reg *at =
 						alloc_temp(pc, NULL);
 					pc->attr[i*4+c].type = at->type;
@@ -1168,7 +1171,7 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 				}
 			}
 
-			if (pc->p->type != NV50_PROG_FRAGMENT)
+			if (pc->p->type != PIPE_SHADER_FRAGMENT)
 				continue;
 
 			emit_interp(pc, iv, iv, iv, FALSE);
@@ -1200,7 +1203,7 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 
 		for (i = 0; i < pc->result_nr; i++) {
 			for (c = 0; c < 4; c++) {
-				if (pc->p->type == NV50_PROG_FRAGMENT) {
+				if (pc->p->type == PIPE_SHADER_FRAGMENT) {
 					pc->result[i*4+c].type = P_TEMP;
 					pc->result[i*4+c].hw = -1;
 				} else {
@@ -1285,7 +1288,7 @@ nv50_program_tx(struct nv50_program *p)
 		}
 	}
 
-	if (p->type == NV50_PROG_FRAGMENT) {
+	if (p->type == PIPE_SHADER_FRAGMENT) {
 		struct nv50_reg out;
 
 		out.type = P_TEMP;
@@ -1314,7 +1317,7 @@ nv50_program_validate(struct nv50_context *nv50, struct nv50_program *p)
 	 * NOT immd - otherwise it's fucked fucked fucked */
 	p->insns[p->insns_nr - 1] |= 0x00000001;
 
-	if (p->type == NV50_PROG_VERTEX) {
+	if (p->type == PIPE_SHADER_VERTEX) {
 	for (i = 0; i < p->insns_nr; i++)
 		NOUVEAU_ERR("VP0x%08x\n", p->insns[i]);
 	} else {

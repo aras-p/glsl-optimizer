@@ -331,7 +331,7 @@ nv50_vp_state_create(struct pipe_context *pipe,
 	struct nv50_program *p = CALLOC_STRUCT(nv50_program);
 
 	p->pipe = *cso;
-	p->type = NV50_PROG_VERTEX;
+	p->type = PIPE_SHADER_VERTEX;
 	tgsi_scan_shader(p->pipe.tokens, &p->info);
 	return (void *)p;
 }
@@ -361,7 +361,7 @@ nv50_fp_state_create(struct pipe_context *pipe,
 	struct nv50_program *p = CALLOC_STRUCT(nv50_program);
 
 	p->pipe = *cso;
-	p->type = NV50_PROG_FRAGMENT;
+	p->type = PIPE_SHADER_FRAGMENT;
 	tgsi_scan_shader(p->pipe.tokens, &p->info);
 	return (void *)p;
 }

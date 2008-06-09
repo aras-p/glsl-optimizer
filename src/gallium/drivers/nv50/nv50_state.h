@@ -15,10 +15,7 @@ struct nv50_program {
 	struct tgsi_shader_info info;
 	boolean translated;
 
-	enum {
-		NV50_PROG_VERTEX,
-		NV50_PROG_FRAGMENT
-	} type;
+	unsigned type;
 	unsigned *insns;
 	unsigned insns_nr;
 
