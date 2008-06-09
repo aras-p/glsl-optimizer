@@ -27,6 +27,8 @@
  *
  * FUCK! watch dst==src vectors, can overwrite components that are needed.
  * 	ie. SUB R0, R0.yzxw, R0
+ *
+ * NV50_PROG* -> PIPE_SHADER*
  */
 struct nv50_reg {
 	enum {
@@ -1198,11 +1200,13 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 
 		for (i = 0; i < pc->result_nr; i++) {
 			for (c = 0; c < 4; c++) {
-				if (pc->p->type == NV50_PROG_FRAGMENT)
+				if (pc->p->type == NV50_PROG_FRAGMENT) {
 					pc->result[i*4+c].type = P_TEMP;
-				else
+					pc->result[i*4+c].hw = -1;
+				} else {
 					pc->result[i*4+c].type = P_RESULT;
-				pc->result[i*4+c].hw = rid++;
+					pc->result[i*4+c].hw = rid++;
+				}
 				pc->result[i*4+c].index = i;
 			}
 		}
@@ -1279,6 +1283,14 @@ nv50_program_tx(struct nv50_program *p)
 		default:
 			break;
 		}
+	}
+
+	if (p->type == NV50_PROG_FRAGMENT) {
+		struct nv50_reg out;
+
+		out.type = P_TEMP;
+		for (out.hw = 0; out.hw < pc->result_nr * 4; out.hw++)
+			emit_mov(pc, &out, &pc->result[out.hw]);
 	}
 
 	p->immd_nr = pc->immd_nr * 4;
