@@ -52,6 +52,7 @@ MAIN_SOURCES = \
 	main/rbadaptors.c \
 	main/readpix.c \
 	main/renderbuffer.c \
+	main/scissor.c \
 	main/shaders.c \
 	main/state.c \
 	main/stencil.c \
