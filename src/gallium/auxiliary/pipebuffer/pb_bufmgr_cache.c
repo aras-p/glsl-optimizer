@@ -207,8 +207,11 @@ pb_cache_is_buffer_compat(struct pb_cache_buffer *buf,
                           size_t size,
                           const struct pb_desc *desc)
 {
-   /* TODO: be more lenient with size */
-   if(buf->base.base.size != size)
+   if(buf->base.base.size < size)
+      return FALSE;
+
+   /* be lenient with size */
+   if(buf->base.base.size >= 2*size)
       return FALSE;
    
    if(!pb_check_alignment(desc->alignment, buf->base.base.alignment))
