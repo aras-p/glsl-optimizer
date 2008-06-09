@@ -105,6 +105,7 @@
 #include "macros.h"
 #include "matrix.h"
 #include "pixel.h"
+#include "pixelstore.h"
 #include "points.h"
 #include "polygon.h"
 #include "queryobj.h"
@@ -969,6 +970,7 @@ init_attrib_groups(GLcontext *ctx)
    _mesa_init_matrix( ctx );
    _mesa_init_multisample( ctx );
    _mesa_init_pixel( ctx );
+   _mesa_init_pixelstore( ctx );
    _mesa_init_point( ctx );
    _mesa_init_polygon( ctx );
    _mesa_init_program( ctx );

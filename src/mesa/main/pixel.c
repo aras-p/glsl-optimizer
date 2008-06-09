@@ -1321,34 +1321,6 @@ _mesa_init_pixel( GLcontext *ctx )
    ASSIGN_4V(ctx->Pixel.TextureColorTableScale, 1.0, 1.0, 1.0, 1.0);
    ASSIGN_4V(ctx->Pixel.TextureColorTableBias, 0.0, 0.0, 0.0, 0.0);
 
-   /* Pixel transfer */
-   ctx->Pack.Alignment = 4;
-   ctx->Pack.RowLength = 0;
-   ctx->Pack.ImageHeight = 0;
-   ctx->Pack.SkipPixels = 0;
-   ctx->Pack.SkipRows = 0;
-   ctx->Pack.SkipImages = 0;
-   ctx->Pack.SwapBytes = GL_FALSE;
-   ctx->Pack.LsbFirst = GL_FALSE;
-   ctx->Pack.ClientStorage = GL_FALSE;
-   ctx->Pack.Invert = GL_FALSE;
-#if FEATURE_EXT_pixel_buffer_object
-   ctx->Pack.BufferObj = ctx->Array.NullBufferObj;
-#endif
-   ctx->Unpack.Alignment = 4;
-   ctx->Unpack.RowLength = 0;
-   ctx->Unpack.ImageHeight = 0;
-   ctx->Unpack.SkipPixels = 0;
-   ctx->Unpack.SkipRows = 0;
-   ctx->Unpack.SkipImages = 0;
-   ctx->Unpack.SwapBytes = GL_FALSE;
-   ctx->Unpack.LsbFirst = GL_FALSE;
-   ctx->Unpack.ClientStorage = GL_FALSE;
-   ctx->Unpack.Invert = GL_FALSE;
-#if FEATURE_EXT_pixel_buffer_object
-   ctx->Unpack.BufferObj = ctx->Array.NullBufferObj;
-#endif
-
    /*
     * _mesa_unpack_image() returns image data in this format.  When we
     * execute image commands (glDrawPixels(), glTexImage(), etc) from
