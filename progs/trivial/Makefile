@@ -48,6 +48,8 @@ SOURCES = \
 	point-wide-smooth.c \
 	point.c \
 	poly-flat.c \
+	poly-flat-clip.c \
+	poly-flat-unfilled-clip.c \
 	poly-unfilled.c \
 	poly.c \
 	quad-clip-all-vertices.c \

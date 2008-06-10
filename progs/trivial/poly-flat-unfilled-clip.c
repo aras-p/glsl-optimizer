@@ -71,6 +71,10 @@ static void Draw(void)
 {
    glClear(GL_COLOR_BUFFER_BIT); 
    glShadeModel(GL_FLAT);
+
+   glPolygonMode(GL_FRONT, GL_LINE);
+   glPolygonMode(GL_BACK, GL_LINE);
+   glLineWidth(4.0);
    
 
    glBegin(GL_POLYGON);
