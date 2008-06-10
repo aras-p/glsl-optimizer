@@ -183,6 +183,9 @@ create_configs(_EGLDisplay *disp)
          SET_CONFIG_ATTRIB(&config->Base, EGL_STENCIL_SIZE, m->stencilBits);
          SET_CONFIG_ATTRIB(&config->Base, EGL_NATIVE_VISUAL_ID, m->visualID);
          SET_CONFIG_ATTRIB(&config->Base, EGL_NATIVE_VISUAL_TYPE, m->visualType);
+         /* XXX only window rendering allowed ATM */
+         SET_CONFIG_ATTRIB(&config->Base, EGL_SURFACE_TYPE, EGL_WINDOW_BIT);
+
          /* XXX possibly other things to init... */
 
          /* Ptr from EGL config to GLcontextMode.  Used in CreateContext(). */
