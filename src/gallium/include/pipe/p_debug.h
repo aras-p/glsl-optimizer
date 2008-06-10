@@ -289,7 +289,7 @@ boolean
 debug_get_bool_option(const char *name, boolean dfault);
 
 long
-debug_get_unsigned_option(const char *name, long dfault);
+debug_get_num_option(const char *name, long dfault);
 
 unsigned long
 debug_get_flags_option(const char *name, 

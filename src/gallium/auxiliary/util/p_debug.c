@@ -230,8 +230,34 @@ debug_get_bool_option(const char *name, boolean dfault)
 long
 debug_get_num_option(const char *name, long dfault)
 {
-   /* FIXME */
-   return dfault;
+   long result;
+   const char *str;
+   
+   str = debug_get_option(name, NULL);
+   if(!str)
+      result = dfault;
+   else {
+      long sign;
+      char c;
+      c = *str++;
+      if(c == '-') {
+	 sign = -1;
+	 c = *str++;
+      } 
+      else {
+	 sign = 1;
+      }
+      result = 0;
+      while('0' <= c && c <= '9') {
+	 result = result*10 + (c - '0');
+	 c = *str++;
+      }
+      result *= sign;
+   }
+   
+   debug_printf("%s: %s = %li\n", __FUNCTION__, name, result);
+
+   return result;
 }
 
 
