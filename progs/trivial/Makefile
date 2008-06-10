@@ -105,6 +105,7 @@ SOURCES = \
 	tri-z.c \
 	tri.c \
 	tristrip-clip.c \
+	tristrip-flat.c \
 	tristrip.c \
 	vbo-drawarrays.c \
 	vbo-drawelements.c \
