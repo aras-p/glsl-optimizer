@@ -164,6 +164,33 @@ DestroyPbuffer( Display * dpy, GLXDrawable drawable )
 }
 
 
+#ifdef GLX_DIRECT_RENDERING
+extern __GLXDRIdrawable *
+GetGLXDRIDrawable(Display *dpy, GLXDrawable drawable, int * const scrn_num);
+
+static GLenum
+determineTextureTarget(const int *attribs, int numAttribs)
+{
+    GLenum target = 0;
+    int i;
+
+    for (i = 0; i < numAttribs; i++) {
+	if (attribs[2 * i] == GLX_TEXTURE_TARGET_EXT) {
+	    switch (attribs[2 * i + 1]) {
+	    case GLX_TEXTURE_2D_EXT:
+		target = GL_TEXTURE_2D;
+		break;
+	    case GLX_TEXTURE_RECTANGLE_EXT:
+		target = GL_TEXTURE_RECTANGLE_ARB;
+		break;
+	    }
+	}
+    }
+ 
+    return target;
+}
+#endif
+
 /**
  * Get a drawable's attribute.
  *
@@ -261,6 +288,16 @@ GetDrawableAttribute( Display *dpy, GLXDrawable drawable,
 	       }
 	   }
 
+#ifdef GLX_DIRECT_RENDERING
+	   {
+		__GLXDRIdrawable *pdraw = GetGLXDRIDrawable(dpy, drawable, NULL);
+
+		if (pdraw != NULL && !pdraw->textureTarget)
+		    pdraw->textureTarget = determineTextureTarget((const int *)data,
+								  num_attributes);
+	   }
+#endif
+
 	   Xfree( data );
        }
    }
@@ -270,7 +307,6 @@ GetDrawableAttribute( Display *dpy, GLXDrawable drawable,
 
    return 0;
 }
-
 
 /**
  * Create a non-pbuffer GLX drawable.
@@ -306,7 +342,7 @@ CreateDrawable( Display *dpy, const __GLcontextModes * fbconfig,
    req->glxCode = glxCode;
    req->screen = (CARD32) fbconfig->screen;
    req->fbconfig = fbconfig->fbconfigID;
-   req->window = (GLXPbuffer) drawable;
+   req->window = (CARD32) drawable;
    req->glxwindow = (GLXWindow) XAllocID(dpy);
    req->numAttribs = (CARD32) i;
 
@@ -315,6 +351,34 @@ CreateDrawable( Display *dpy, const __GLcontextModes * fbconfig,
    UnlockDisplay(dpy);
    SyncHandle();
    
+#ifdef GLX_DIRECT_RENDERING
+   do {
+       /* FIXME: Maybe delay __DRIdrawable creation until the drawable
+	* is actually bound to a context... */
+
+       __GLXdisplayPrivate * const priv = __glXInitialize(dpy);
+       __GLXDRIdrawable *pdraw;
+       __GLXscreenConfigs *psc;
+
+       psc = &priv->screenConfigs[fbconfig->screen];
+       if (psc->driScreen == NULL)
+	   break;
+       pdraw = psc->driScreen->createDrawable(psc, drawable,
+					      req->glxwindow, fbconfig);
+       if (pdraw == NULL) {
+	   fprintf(stderr, "failed to create drawable\n");
+	   break;
+       }
+	   
+       if (__glxHashInsert(psc->drawHash, req->glxwindow, pdraw)) {
+	   (*pdraw->destroyDrawable)(pdraw);
+	   return None; /* FIXME: Check what we're supposed to do here... */
+       }
+
+       pdraw->textureTarget = determineTextureTarget(attrib_list, i);
+   } while (0);
+#endif
+
    return (GLXDrawable)req->glxwindow;
 }
 
@@ -349,6 +413,20 @@ DestroyDrawable( Display * dpy, GLXDrawable drawable, CARD32 glxCode )
 
    UnlockDisplay(dpy);
    SyncHandle();
+
+#ifdef GLX_DIRECT_RENDERING
+   {
+       int screen;
+       __GLXdisplayPrivate * const priv = __glXInitialize(dpy);
+       __GLXDRIdrawable *pdraw = GetGLXDRIDrawable(dpy, drawable, &screen);
+       __GLXscreenConfigs *psc = &priv->screenConfigs[screen];
+
+       if (pdraw != NULL) {
+	   (*pdraw->destroyDrawable)(pdraw);
+	   __glxHashDelete(psc->drawHash, drawable);
+       }
+   }
+#endif
 
    return;
 }
@@ -460,8 +538,24 @@ glXCreateGLXPbufferSGIX(Display *dpy, GLXFBConfigSGIX config,
 PUBLIC GLXPbuffer
 glXCreatePbuffer(Display *dpy, GLXFBConfig config, const int *attrib_list)
 {
+   int i, width, height;
+
+   width = 0;
+   height = 0;
+
+   for (i = 0; attrib_list[i * 2]; i++) {
+      switch (attrib_list[i * 2]) {
+      case GLX_PBUFFER_WIDTH:
+	 width = attrib_list[i * 2 + 1];
+	 break;
+      case GLX_PBUFFER_HEIGHT:
+	 height = attrib_list[i * 2 + 1];
+	 break;
+      }
+   }
+
    return (GLXPbuffer) CreatePbuffer( dpy, (__GLcontextModes *) config,
-				      0, 0,
+				      width, height,
 				      attrib_list, GL_TRUE );
 }
 

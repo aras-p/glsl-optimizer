@@ -44,8 +44,10 @@ extern int _gl_get_context_mode_data( const __GLcontextModes *mode,
 extern __GLcontextModes * _gl_context_modes_create( unsigned count,
     size_t minimum_size );
 extern void _gl_context_modes_destroy( __GLcontextModes * modes );
-extern  __GLcontextModes * _gl_context_modes_find_visual(
-    __GLcontextModes * modes, int vid );
+extern  __GLcontextModes *
+    _gl_context_modes_find_visual(__GLcontextModes *modes, int vid);
+extern __GLcontextModes *
+    _gl_context_modes_find_fbconfig(__GLcontextModes *modes, int fbid);
 extern GLboolean _gl_context_modes_are_same( const __GLcontextModes * a,
     const __GLcontextModes * b );
 

@@ -34,6 +34,16 @@
 #include "vblank.h"
 #include "xmlpool.h"
 
+static unsigned int msc_to_vblank(__DRIdrawablePrivate * dPriv, int64_t msc)
+{
+   return (unsigned int)(msc - dPriv->msc_base + dPriv->vblank_base);
+}
+
+static int64_t vblank_to_msc(__DRIdrawablePrivate * dPriv, unsigned int vblank)
+{
+   return (int64_t)(vblank - dPriv->vblank_base + dPriv->msc_base);
+}
+
 
 /****************************************************************************/
 /**
@@ -41,7 +51,7 @@
  *
  * Stores the 64-bit count of vertical refreshes since some (arbitrary)
  * point in time in \c count.  Unless the value wraps around, which it
- * may, it will never decrease.
+ * may, it will never decrease for a given drawable.
  *
  * \warning This function is called from \c glXGetVideoSyncSGI, which expects
  * a \c count of type \c unsigned (32-bit), and \c glXGetSyncValuesOML, which 
@@ -49,11 +59,14 @@
  * currently always returns a \c sequence of type \c unsigned.
  *
  * \param priv   Pointer to the DRI screen private struct.
+ * \param dPriv  Pointer to the DRI drawable private struct
  * \param count  Storage to hold MSC counter.
  * \return       Zero is returned on success.  A negative errno value
  *               is returned on failure.
  */
-int driGetMSC32( __DRIscreenPrivate * priv, int64_t * count )
+int driDrawableGetMSC32( __DRIscreenPrivate * priv,
+			 __DRIdrawablePrivate * dPriv,
+			 int64_t * count)
 {
    drmVBlank vbl;
    int ret;
@@ -62,13 +75,20 @@ int driGetMSC32( __DRIscreenPrivate * priv, int64_t * count )
 
    vbl.request.type = DRM_VBLANK_RELATIVE;
    vbl.request.sequence = 0;
+   if ( dPriv && dPriv->vblFlags & VBLANK_FLAG_SECONDARY )
+      vbl.request.type |= DRM_VBLANK_SECONDARY;
 
    ret = drmWaitVBlank( priv->fd, &vbl );
-   *count = (int64_t)vbl.reply.sequence;
+
+   if (dPriv) {
+      *count = vblank_to_msc(dPriv, vbl.reply.sequence);
+   } else {
+      /* Old driver (no knowledge of drawable MSC callback) */
+      *count = vbl.reply.sequence;
+   }
 
    return ret;
 }
-
 
 /****************************************************************************/
 /**
@@ -122,7 +142,9 @@ int driWaitForMSC32( __DRIdrawablePrivate *priv,
           */
          vbl.request.type = dont_wait ? DRM_VBLANK_RELATIVE :
                                         DRM_VBLANK_ABSOLUTE;
-         vbl.request.sequence = next;
+         vbl.request.sequence = next ? msc_to_vblank(priv, next) : 0;
+	 if ( priv->vblFlags & VBLANK_FLAG_SECONDARY )
+	    vbl.request.type |= DRM_VBLANK_SECONDARY;
 
 	 if ( drmWaitVBlank( priv->driScreenPriv->fd, &vbl ) != 0 ) {
 	    /* FIXME: This doesn't seem like the right thing to return here.
@@ -130,8 +152,10 @@ int driWaitForMSC32( __DRIdrawablePrivate *priv,
 	    return GLX_BAD_CONTEXT;
 	 }
 
+	 *msc = vblank_to_msc(priv, vbl.reply.sequence);
+
          dont_wait = 0;
-         if (target_msc != 0 && vbl.reply.sequence == target)
+         if (target_msc != 0 && *msc == target)
             break;
 
          /* Assuming the wait-done test fails, the next refresh to wait for
@@ -141,9 +165,9 @@ int driWaitForMSC32( __DRIdrawablePrivate *priv,
           * If this refresh has already happened, we add divisor to obtain 
           * the next refresh after the current one that will satisfy it.
           */
-         r = (vbl.reply.sequence % (unsigned int)divisor);
-         next = (vbl.reply.sequence - r + (unsigned int)remainder);
-         if (next <= vbl.reply.sequence) next += (unsigned int)divisor;
+         r = (*msc % (unsigned int)divisor);
+         next = (*msc - r + (unsigned int)remainder);
+         if (next <= *msc) next += (unsigned int)divisor;
 
       } while ( r != (unsigned int)remainder );
    }
@@ -153,7 +177,10 @@ int driWaitForMSC32( __DRIdrawablePrivate *priv,
        */
 
       vbl.request.type = DRM_VBLANK_ABSOLUTE;
-      vbl.request.sequence = target_msc;
+      vbl.request.sequence = target_msc ? msc_to_vblank(priv, target_msc) : 0;
+
+      if ( priv->vblFlags & VBLANK_FLAG_SECONDARY )
+	 vbl.request.type |= DRM_VBLANK_SECONDARY;
 
       if ( drmWaitVBlank( priv->driScreenPriv->fd, &vbl ) != 0 ) {
 	 /* FIXME: This doesn't seem like the right thing to return here.
@@ -162,8 +189,8 @@ int driWaitForMSC32( __DRIdrawablePrivate *priv,
       }
    }
 
-   *msc  = (target_msc & 0xffffffff00000000LL);
-   *msc |= vbl.reply.sequence;
+   *msc = vblank_to_msc(priv, vbl.reply.sequence);
+
    if ( *msc < target_msc ) {
       *msc += 0x0000000100000000LL;
    }
@@ -232,8 +259,8 @@ static int do_wait( drmVBlank * vbl, GLuint * vbl_seq, int fd )
       if ( first_time ) {
 	 fprintf(stderr, 
 		 "%s: drmWaitVBlank returned %d, IRQs don't seem to be"
-		 " working correctly.\nTry running with LIBGL_THROTTLE_REFRESH"
-		 " and LIBL_SYNC_REFRESH unset.\n", __FUNCTION__, ret);
+		 " working correctly.\nTry adjusting the vblank_mode"
+		 " configuration parameter.\n", __FUNCTION__, ret);
 	 first_time = GL_FALSE;
       }
 
@@ -247,40 +274,13 @@ static int do_wait( drmVBlank * vbl, GLuint * vbl_seq, int fd )
 
 /****************************************************************************/
 /**
- * Sets the default swap interval when the drawable is first bound to a
- * direct rendering context.
+ * Returns the default swap interval of the given drawable.
  */
 
-void driDrawableInitVBlank( __DRIdrawablePrivate *priv, GLuint flags,
-			    GLuint *vbl_seq )
+static unsigned
+driGetDefaultVBlankInterval( const  __DRIdrawablePrivate *priv )
 {
-   if ( priv->pdraw->swap_interval == (unsigned)-1 ) {
-      /* Get current vertical blank sequence */
-      drmVBlank vbl = { .request={ .type = DRM_VBLANK_RELATIVE, .sequence = 0 } };
-      do_wait( &vbl, vbl_seq, priv->driScreenPriv->fd );
-
-      priv->pdraw->swap_interval = (flags & (VBLANK_FLAG_THROTTLE |
-					     VBLANK_FLAG_SYNC)) != 0 ? 1 : 0;
-   }
-}
-
-
-/****************************************************************************/
-/**
- * Returns the current swap interval of the given drawable.
- */
-
-unsigned
-driGetVBlankInterval( const  __DRIdrawablePrivate *priv, GLuint flags )
-{
-   if ( (flags & VBLANK_FLAG_INTERVAL) != 0 ) {
-      /* this must have been initialized when the drawable was first bound
-       * to a direct rendering context. */
-      assert ( priv->pdraw->swap_interval != (unsigned)-1 );
-
-      return priv->pdraw->swap_interval;
-   }
-   else if ( (flags & (VBLANK_FLAG_THROTTLE | VBLANK_FLAG_SYNC)) != 0 ) {
+   if ( (priv->vblFlags & (VBLANK_FLAG_THROTTLE | VBLANK_FLAG_SYNC)) != 0 ) {
       return 1;
    }
    else {
@@ -291,22 +291,66 @@ driGetVBlankInterval( const  __DRIdrawablePrivate *priv, GLuint flags )
 
 /****************************************************************************/
 /**
+ * Sets the default swap interval when the drawable is first bound to a
+ * direct rendering context.
+ */
+
+void driDrawableInitVBlank( __DRIdrawablePrivate *priv )
+{
+   if ( priv->swap_interval == (unsigned)-1 &&
+	!( priv->vblFlags & VBLANK_FLAG_NO_IRQ ) ) {
+      /* Get current vertical blank sequence */
+      drmVBlank vbl;
+ 
+      vbl.request.type = DRM_VBLANK_RELATIVE;
+      if ( priv->vblFlags & VBLANK_FLAG_SECONDARY )
+ 	 vbl.request.type |= DRM_VBLANK_SECONDARY;
+      vbl.request.sequence = 0;
+      do_wait( &vbl, &priv->vblSeq, priv->driScreenPriv->fd );
+      priv->vblank_base = priv->vblSeq;
+
+      priv->swap_interval = driGetDefaultVBlankInterval( priv );
+   }
+}
+
+
+/****************************************************************************/
+/**
+ * Returns the current swap interval of the given drawable.
+ */
+
+unsigned
+driGetVBlankInterval( const  __DRIdrawablePrivate *priv )
+{
+   if ( (priv->vblFlags & VBLANK_FLAG_INTERVAL) != 0 ) {
+      /* this must have been initialized when the drawable was first bound
+       * to a direct rendering context. */
+      assert ( priv->swap_interval != (unsigned)-1 );
+
+      return priv->swap_interval;
+   }
+   else 
+      return driGetDefaultVBlankInterval( priv );
+}
+
+
+/****************************************************************************/
+/**
  * Returns the current vertical blank sequence number of the given drawable.
  */
 
 void
-driGetCurrentVBlank( const  __DRIdrawablePrivate *priv, GLuint flags,
-		     GLuint *vbl_seq )
+driGetCurrentVBlank( __DRIdrawablePrivate *priv )
 {
    drmVBlank vbl;
 
    vbl.request.type = DRM_VBLANK_RELATIVE;
-   if ( flags & VBLANK_FLAG_SECONDARY ) {
+   if ( priv->vblFlags & VBLANK_FLAG_SECONDARY ) {
       vbl.request.type |= DRM_VBLANK_SECONDARY;
    }
    vbl.request.sequence = 0;
 
-   (void) do_wait( &vbl, vbl_seq, priv->driScreenPriv->fd );
+   (void) do_wait( &vbl, &priv->vblSeq, priv->driScreenPriv->fd );
 }
 
 
@@ -314,19 +358,15 @@ driGetCurrentVBlank( const  __DRIdrawablePrivate *priv, GLuint flags,
 /**
  * Waits for the vertical blank for use with glXSwapBuffers.
  * 
- * \param vbl_seq  Vertical blank sequence number (MSC) after the last buffer
- *                 swap.  Updated after this wait.
- * \param flags    \c VBLANK_FLAG bits that control how long to wait.
  * \param missed_deadline  Set to \c GL_TRUE if the MSC after waiting is later
- *                 than the "target" based on \c flags.  The idea is that if
- *                 \c missed_deadline is set, then the application is not 
- *                 achieving its desired framerate.
+ *                 than the "target" based on \c priv->vblFlags.  The idea is
+ *                 that if \c missed_deadline is set, then the application is
+ *                 not achieving its desired framerate.
  * \return         Zero on success, -1 on error.
  */
 
 int
-driWaitForVBlank( const  __DRIdrawablePrivate *priv, GLuint * vbl_seq,
-		  GLuint flags, GLboolean * missed_deadline )
+driWaitForVBlank( __DRIdrawablePrivate *priv, GLboolean * missed_deadline )
 {
    drmVBlank vbl;
    unsigned   original_seq;
@@ -335,10 +375,10 @@ driWaitForVBlank( const  __DRIdrawablePrivate *priv, GLuint * vbl_seq,
    unsigned   diff;
 
    *missed_deadline = GL_FALSE;
-   if ( (flags & (VBLANK_FLAG_INTERVAL |
-		  VBLANK_FLAG_THROTTLE |
-		  VBLANK_FLAG_SYNC)) == 0 ||
-	(flags & VBLANK_FLAG_NO_IRQ) != 0 ) {
+   if ( (priv->vblFlags & (VBLANK_FLAG_INTERVAL |
+			   VBLANK_FLAG_THROTTLE |
+			   VBLANK_FLAG_SYNC)) == 0 ||
+	(priv->vblFlags & VBLANK_FLAG_NO_IRQ) != 0 ) {
       return 0;
    }
 
@@ -349,44 +389,45 @@ driWaitForVBlank( const  __DRIdrawablePrivate *priv, GLuint * vbl_seq,
     *
     * VBLANK_FLAG_INTERVAL and VBLANK_FLAG_THROTTLE mean to wait for at
     * least one vertical blank since the last wait.  Since do_wait modifies
-    * vbl_seq, we have to save the original value of vbl_seq for the
+    * priv->vblSeq, we have to save the original value of priv->vblSeq for the
     * VBLANK_FLAG_INTERVAL / VBLANK_FLAG_THROTTLE calculation later.
     */
 
-   original_seq = *vbl_seq;
-   interval = driGetVBlankInterval(priv, flags);
+   original_seq = priv->vblSeq;
+   interval = driGetVBlankInterval(priv);
    deadline = original_seq + interval;
 
    vbl.request.type = DRM_VBLANK_RELATIVE;
-   if ( flags & VBLANK_FLAG_SECONDARY ) {
+   if ( priv->vblFlags & VBLANK_FLAG_SECONDARY ) {
       vbl.request.type |= DRM_VBLANK_SECONDARY;
    }
-   vbl.request.sequence = ((flags & VBLANK_FLAG_SYNC) != 0) ? 1 : 0;
+   vbl.request.sequence = ((priv->vblFlags & VBLANK_FLAG_SYNC) != 0) ? 1 : 0;
 
-   if ( do_wait( & vbl, vbl_seq, priv->driScreenPriv->fd ) != 0 ) {
+   if ( do_wait( & vbl, &priv->vblSeq, priv->driScreenPriv->fd ) != 0 ) {
       return -1;
    }
 
-   diff = *vbl_seq - deadline;
+   diff = priv->vblSeq - deadline;
 
    /* No need to wait again if we've already reached the target */
    if (diff <= (1 << 23)) {
-      *missed_deadline = (flags & VBLANK_FLAG_SYNC) ? (diff > 0) : GL_TRUE;
+      *missed_deadline = (priv->vblFlags & VBLANK_FLAG_SYNC) ? (diff > 0) :
+			 GL_TRUE;
       return 0;
    }
 
    /* Wait until the target vertical blank. */
    vbl.request.type = DRM_VBLANK_ABSOLUTE;
-   if ( flags & VBLANK_FLAG_SECONDARY ) {
+   if ( priv->vblFlags & VBLANK_FLAG_SECONDARY ) {
       vbl.request.type |= DRM_VBLANK_SECONDARY;
    }
    vbl.request.sequence = deadline;
 
-   if ( do_wait( & vbl, vbl_seq, priv->driScreenPriv->fd ) != 0 ) {
+   if ( do_wait( & vbl, &priv->vblSeq, priv->driScreenPriv->fd ) != 0 ) {
       return -1;
    }
 
-   diff = *vbl_seq - deadline;
+   diff = priv->vblSeq - deadline;
    *missed_deadline = diff > 0 && diff <= (1 << 23);
 
    return 0;

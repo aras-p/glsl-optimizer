@@ -209,8 +209,6 @@ driUpdateFramebufferSize(GLcontext *ctx, const __DRIdrawablePrivate *dPriv)
    struct gl_framebuffer *fb = (struct gl_framebuffer *) dPriv->driverPrivate;
    if (fb && (dPriv->w != fb->Width || dPriv->h != fb->Height)) {
       ctx->Driver.ResizeBuffers(ctx, fb, dPriv->w, dPriv->h);
-      /* if the driver needs the hw lock for ResizeBuffers, the drawable
-         might have changed again by now */
       assert(fb->Width == dPriv->w);
       assert(fb->Height == dPriv->h);
    }

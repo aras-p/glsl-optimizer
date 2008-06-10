@@ -517,7 +517,9 @@ extern HIDDEN void __indirect_glGetProgramivARB(GLenum target, GLenum pname, GLi
 extern HIDDEN void __indirect_glGetVertexAttribdvARB(GLuint index, GLenum pname, GLdouble * params);
 extern HIDDEN void __indirect_glGetVertexAttribfvARB(GLuint index, GLenum pname, GLfloat * params);
 extern HIDDEN void __indirect_glGetVertexAttribivARB(GLuint index, GLenum pname, GLint * params);
+extern HIDDEN void __indirect_glProgramEnvParameter4dARB(GLenum target, GLuint index, GLdouble x, GLdouble y, GLdouble z, GLdouble w);
 extern HIDDEN void __indirect_glProgramEnvParameter4dvARB(GLenum target, GLuint index, const GLdouble * params);
+extern HIDDEN void __indirect_glProgramEnvParameter4fARB(GLenum target, GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w);
 extern HIDDEN void __indirect_glProgramEnvParameter4fvARB(GLenum target, GLuint index, const GLfloat * params);
 extern HIDDEN void __indirect_glProgramLocalParameter4dARB(GLenum target, GLuint index, GLdouble x, GLdouble y, GLdouble z, GLdouble w);
 extern HIDDEN void __indirect_glProgramLocalParameter4dvARB(GLenum target, GLuint index, const GLdouble * params);

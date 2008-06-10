@@ -356,28 +356,15 @@ __glXProcessServerString( const struct extension_info * ext,
    }
 }
 
-
-/**
- * Enable a named GLX extension on a given screen.
- * Drivers should not call this function directly.  They should instead use
- * \c glXGetProcAddress to obtain a pointer to the function.
- *
- * \param psc   Pointer to GLX per-screen record.
- * \param name  Name of the extension to enable.
- *
- * \sa glXGetProcAddress
- *
- * \since Internal API version 20030813.
- */
 void
-__glXScrEnableExtension( __GLXscreenConfigs *psc, const char * name )
+__glXEnableDirectExtension(__GLXscreenConfigs *psc, const char *name)
 {
-   __glXExtensionsCtr();
-   __glXExtensionsCtrScreen(psc);
-   set_glx_extension( known_glx_extensions, name, strlen( name ), GL_TRUE,
-		      psc->direct_support );
-}
+    __glXExtensionsCtr();
+    __glXExtensionsCtrScreen(psc);
 
+    set_glx_extension(known_glx_extensions,
+		      name, strlen(name), GL_TRUE, psc->direct_support);
+}
 
 /**
  * Initialize global extension support tables.

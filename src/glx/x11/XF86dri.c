@@ -374,10 +374,9 @@ PUBLIC Bool XF86DRICreateContext(dpy, screen, visual, context, hHWContext)
 					   context, hHWContext );
 }
 
-PUBLIC GLboolean XF86DRIDestroyContext( __DRInativeDisplay * ndpy, int screen, 
-    __DRIid context )
+PUBLIC GLboolean XF86DRIDestroyContext(Display *dpy, int screen, 
+    XID context )
 {
-    Display * const dpy = (Display *) ndpy;
     XExtDisplayInfo *info = find_display (dpy);
     xXF86DRIDestroyContextReq *req;
 
@@ -396,10 +395,9 @@ PUBLIC GLboolean XF86DRIDestroyContext( __DRInativeDisplay * ndpy, int screen,
     return True;
 }
 
-PUBLIC GLboolean XF86DRICreateDrawable( __DRInativeDisplay * ndpy, int screen, 
-    __DRIid drawable, drm_drawable_t * hHWDrawable )
+PUBLIC GLboolean XF86DRICreateDrawable(Display *dpy, int screen, 
+    XID drawable, drm_drawable_t * hHWDrawable )
 {
-    Display * const dpy = (Display *) ndpy;
     XExtDisplayInfo *info = find_display (dpy);
     xXF86DRICreateDrawableReply rep;
     xXF86DRICreateDrawableReq *req;
@@ -426,15 +424,35 @@ PUBLIC GLboolean XF86DRICreateDrawable( __DRInativeDisplay * ndpy, int screen,
     return True;
 }
 
-PUBLIC GLboolean XF86DRIDestroyDrawable( __DRInativeDisplay * ndpy, int screen,
-    __DRIid drawable )
+static int noopErrorHandler(Display *dpy, XErrorEvent *xerr)
 {
-    Display * const dpy = (Display *) ndpy;
+    return 0;
+}
+
+PUBLIC GLboolean XF86DRIDestroyDrawable(Display *dpy, int screen,
+    XID drawable )
+{
     XExtDisplayInfo *info = find_display (dpy);
     xXF86DRIDestroyDrawableReq *req;
+    int (*oldXErrorHandler)(Display *, XErrorEvent *);
 
     TRACE("DestroyDrawable...");
     XF86DRICheckExtension (dpy, info, False);
+
+    /* This is called from the DRI driver, which used call it like this
+     *
+     *   if (windowExists(drawable))
+     *     destroyDrawable(drawable);
+     *
+     * which is a textbook race condition - the window may disappear
+     * from the server between checking for its existance and
+     * destroying it.  Instead we change the semantics of
+     * __DRIinterfaceMethodsRec::destroyDrawable() to succeed even if
+     * the windows is gone, by wrapping the destroy call in an error
+     * handler. */
+
+    XSync(dpy, GL_FALSE);
+    oldXErrorHandler = XSetErrorHandler(noopErrorHandler);
 
     LockDisplay(dpy);
     GetReq(XF86DRIDestroyDrawable, req);
@@ -444,6 +462,9 @@ PUBLIC GLboolean XF86DRIDestroyDrawable( __DRInativeDisplay * ndpy, int screen,
     req->drawable = drawable;
     UnlockDisplay(dpy);
     SyncHandle();
+
+    XSetErrorHandler(oldXErrorHandler);
+
     TRACE("DestroyDrawable... return True");
     return True;
 }

@@ -67,7 +67,6 @@ int __intel_debug = 0;
 #define need_GL_NV_vertex_program
 #include "extension_helper.h"
 
-
 /**
  * Extension strings exported by the intel driver.
  *
@@ -75,7 +74,7 @@ int __intel_debug = 0;
  * It appears that ARB_texture_env_crossbar has "disappeared" compared to the
  * old i830-specific driver.
  */
-const struct dri_extension card_extensions[] = {
+static const struct dri_extension card_extensions[] = {
    {"GL_ARB_multisample", GL_ARB_multisample_functions},
    {"GL_ARB_multitexture", NULL},
    {"GL_ARB_point_parameters", GL_ARB_point_parameters_functions},
@@ -86,22 +85,27 @@ const struct dri_extension card_extensions[] = {
    {"GL_ARB_texture_env_combine", NULL},
    {"GL_ARB_texture_env_dot3", NULL},
    {"GL_ARB_texture_mirrored_repeat", NULL},
+   {"GL_ARB_texture_non_power_of_two",   NULL },
    {"GL_ARB_texture_rectangle", NULL},
+   {"GL_NV_texture_rectangle", NULL},
+   {"GL_EXT_texture_rectangle", NULL},
+   {"GL_ARB_point_parameters", NULL}, 
    {"GL_ARB_vertex_buffer_object", GL_ARB_vertex_buffer_object_functions},
-   {"GL_ARB_pixel_buffer_object", NULL},
    {"GL_ARB_vertex_program", GL_ARB_vertex_program_functions},
    {"GL_ARB_window_pos", GL_ARB_window_pos_functions},
    {"GL_EXT_blend_color", GL_EXT_blend_color_functions},
-   {"GL_EXT_blend_equation_separate", GL_EXT_blend_equation_separate_functions},
+   {"GL_EXT_blend_equation_separate",
+    GL_EXT_blend_equation_separate_functions},
    {"GL_EXT_blend_func_separate", GL_EXT_blend_func_separate_functions},
    {"GL_EXT_blend_minmax", GL_EXT_blend_minmax_functions},
+   {"GL_EXT_blend_logic_op", NULL},
    {"GL_EXT_blend_subtract", NULL},
    {"GL_EXT_cull_vertex", GL_EXT_cull_vertex_functions},
    {"GL_EXT_fog_coord", GL_EXT_fog_coord_functions},
-   {"GL_EXT_framebuffer_object", GL_EXT_framebuffer_object_functions},
    {"GL_EXT_multi_draw_arrays", GL_EXT_multi_draw_arrays_functions},
+#if 1                           /* XXX FBO temporary? */
    {"GL_EXT_packed_depth_stencil", NULL},
-   {"GL_EXT_pixel_buffer_object", NULL},
+#endif
    {"GL_EXT_secondary_color", GL_EXT_secondary_color_functions},
    {"GL_EXT_stencil_wrap", NULL},
    {"GL_EXT_texture_edge_clamp", NULL},
@@ -116,10 +120,67 @@ const struct dri_extension card_extensions[] = {
    {"GL_NV_blend_square", NULL},
    {"GL_NV_vertex_program", GL_NV_vertex_program_functions},
    {"GL_NV_vertex_program1_1", NULL},
-   {"GL_SGIS_generate_mipmap", NULL },
+   { "GL_SGIS_generate_mipmap", NULL },
    {NULL, NULL}
 };
 
+#if 0
+static const struct dri_extension brw_extensions[] = {
+   { "GL_ARB_shading_language_100",       GL_VERSION_2_0_functions},
+   { "GL_ARB_shading_language_120",       GL_VERSION_2_1_functions},
+   { "GL_ARB_shader_objects",             GL_ARB_shader_objects_functions},
+   { "GL_ARB_vertex_shader",              GL_ARB_vertex_shader_functions},
+   { "GL_ARB_point_sprite", 		  NULL},
+   { "GL_ARB_fragment_shader",            NULL },
+   { "GL_ARB_draw_buffers",               NULL },
+   { "GL_ARB_depth_texture",              NULL },
+   { "GL_ARB_fragment_program",           NULL },
+   { "GL_ARB_shadow",                     NULL },
+   { "GL_EXT_shadow_funcs",               NULL },
+   /* ARB extn won't work if not enabled */
+   { "GL_SGIX_depth_texture",             NULL },
+   { "GL_ARB_texture_env_crossbar",       NULL },
+   { "GL_EXT_texture_sRGB",		  NULL},
+   { NULL,                                NULL }
+};
+
+static const struct dri_extension arb_oc_extensions[] = {
+   {"GL_ARB_occlusion_query",            GL_ARB_occlusion_query_functions},
+   {NULL, NULL}
+};
+
+static const struct dri_extension ttm_extensions[] = {
+   {"GL_EXT_framebuffer_object", GL_EXT_framebuffer_object_functions},
+   {"GL_ARB_pixel_buffer_object", NULL},
+   {NULL, NULL}
+};
+#endif
+
+/**
+ * Initializes potential list of extensions if ctx == NULL, or actually enables
+ * extensions for a context.
+ */
+void intelInitExtensions(GLcontext *ctx, GLboolean enable_imaging)
+{
+   /* Disable imaging extension until convolution is working in teximage paths.
+    */
+   enable_imaging = GL_FALSE;
+
+   driInitExtensions(ctx, card_extensions, enable_imaging);
+
+#if 0
+   if (intel == NULL || intel->ttm)
+      driInitExtensions(ctx, ttm_extensions, GL_FALSE);
+
+   if (intel == NULL || 
+       (IS_965(intel->intelScreen->deviceID) && 
+	intel->intelScreen->drmMinor >= 8))
+      driInitExtensions(ctx, arb_oc_extensions, GL_FALSE);
+
+   if (intel == NULL || IS_965(intel->intelScreen->deviceID))
+      driInitExtensions(ctx, brw_extensions, GL_FALSE);
+#endif
+}
 
 
 #ifdef DEBUG
@@ -204,10 +265,10 @@ intelCreateContext(const __GLcontextModes * visual,
    /*
     * memory pools
     */
-   DRM_LIGHT_LOCK(sPriv->fd, &sPriv->pSAREA->lock, driContextPriv->hHWContext);
+   DRM_LIGHT_LOCK(sPriv->fd, &sPriv->lock, driContextPriv->hHWContext);
    // ZZZ JB should be per screen and not be done per context
    havePools = intelCreatePools(sPriv);
-   DRM_UNLOCK(sPriv->fd, &sPriv->pSAREA->lock, driContextPriv->hHWContext);
+   DRM_UNLOCK(sPriv->fd, &sPriv->lock, driContextPriv->hHWContext);
    if (!havePools)
       return GL_FALSE;
 
@@ -215,7 +276,7 @@ intelCreateContext(const __GLcontextModes * visual,
    /* Dri stuff */
    intel->hHWContext = driContextPriv->hHWContext;
    intel->driFd = sPriv->fd;
-   intel->driHwLock = (drmLock *) & sPriv->pSAREA->lock;
+   intel->driHwLock = (drmLock *) & sPriv->lock;
 
    fthrottle_mode = driQueryOptioni(&intel->optionCache, "fthrottle_mode");
    intel->iw.irq_seq = -1;
@@ -265,7 +326,7 @@ intelCreateContext(const __GLcontextModes * visual,
 
    intel->st = st_create_context(pipe, visual, st_share);
 
-   driInitExtensions( intel->st->ctx, card_extensions, GL_TRUE );
+   intelInitExtensions( intel->st->ctx, GL_TRUE );
 
    return GL_TRUE;
 }
