@@ -54,6 +54,58 @@ _eglUpdateExtensionsString(_EGLDriver *drv)
 }
 
 
+#if 0 /* prototype code */
+
+#include <dlfcn.h>
+
+static EGLint
+_eglFindAPIs_by_sym(void)
+{
+   EGLint mask = 0x0;
+   
+   if (dlsym(NULL, "glBegin"))
+      mask |= EGL_OPENGL_BIT;
+   if (dlsym(NULL, "glGetFixedv"))
+      mask |= EGL_OPENGL_ES_BIT;
+   if (dlsym(NULL, "vgSetf"))
+      mask |= EGL_OPENVG_BIT;
+
+   return mask;
+}
+
+static EGLint
+_eglFindAPIs_by_lib(void)
+{
+   EGLint mask = 0x0;
+   int flag = RTLD_NOW;
+   void *h;
+
+   if ((h = dlopen("libGLESv1_CM.so", flag))) {
+      dlclose(h);
+      mask |= EGL_OPENGL_ES_BIT;
+   }
+
+   if ((h = dlopen("libGLESv2.so", flag))) {
+      dlclose(h);
+      mask |= EGL_OPENGL_ES2_BIT;
+   }
+
+   if ((h = dlopen("libGL.so", flag))) {
+      dlclose(h);
+      mask |= EGL_OPENGL_BIT;
+   }
+
+   if ((h = dlopen("libOpenVG.so", flag))) {
+      dlclose(h);
+      mask |= EGL_OPENVG_BIT;
+   }
+
+   return mask;
+}
+
+#endif
+
+
 static void
 _eglUpdateAPIsString(_EGLDriver *drv)
 {
