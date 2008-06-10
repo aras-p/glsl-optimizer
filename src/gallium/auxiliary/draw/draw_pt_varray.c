@@ -31,7 +31,7 @@
 #include "draw/draw_pt.h"
 
 #define FETCH_MAX 256
-#define DRAW_MAX (16*FETCH_MAX)
+#define DRAW_MAX (FETCH_MAX+8)
 
 struct varray_frontend {
    struct draw_pt_front_end base;
@@ -39,11 +39,6 @@ struct varray_frontend {
 
    ushort draw_elts[DRAW_MAX];
    unsigned fetch_elts[FETCH_MAX];
-
-   unsigned draw_count;
-   unsigned fetch_count;
-
-   unsigned fetch_start;
 
    unsigned driver_fetch_max;
    unsigned fetch_max;
@@ -54,121 +49,86 @@ struct varray_frontend {
    unsigned output_prim;
 };
 
-static void varray_flush(struct varray_frontend *varray)
-{
-   if (varray->draw_count) {
-#if 0
-      debug_printf("FLUSH fc = %d, dc = %d\n",
-                   varray->fetch_count,
-                   varray->draw_count);
-      debug_printf("\telt0 = %d, eltx = %d, draw0 = %d, drawx = %d\n",
-                   varray->fetch_elts[0],
-                   varray->fetch_elts[varray->fetch_count-1],
-                   varray->draw_elts[0],
-                   varray->draw_elts[varray->draw_count-1]);
-#endif
-      varray->middle->run(varray->middle,
-                          varray->fetch_elts,
-                          varray->fetch_count,
-                          varray->draw_elts,
-                          varray->draw_count);
-   }
-
-   varray->fetch_count = 0;
-   varray->draw_count = 0;
-}
 
 static void varray_flush_linear(struct varray_frontend *varray,
                                 unsigned start, unsigned count)
 {
    if (count) {
-#if 0
-      debug_printf("FLUSH LINEAR start = %d, count = %d\n",
-                   start,
-                   count);
-#endif
       assert(varray->middle->run_linear);
       varray->middle->run_linear(varray->middle, start, count);
    }
 }
 
-static INLINE void fetch_init(struct varray_frontend *varray,
-                              unsigned count)
+static void varray_line_loop_segment(struct varray_frontend *varray,
+                                     unsigned start,
+                                     unsigned segment_start,
+                                     unsigned segment_count,
+                                     boolean end )
 {
-   unsigned idx;
-#if 0
-      debug_printf("FETCH INIT c = %d, fs = %d\n",
-                   count,
-                   varray->fetch_start);
-#endif
-   for (idx = 0; idx < count; ++idx) {
-      varray->fetch_elts[idx] = varray->fetch_start + idx;
+   assert(segment_count+1 < varray->fetch_max);
+   if (segment_count >= 1) {
+      unsigned nr = 0, i;
+
+      for (i = 0; i < segment_count; i++) 
+         varray->fetch_elts[nr++] = start + segment_start + i;
+
+      if (end) 
+         varray->fetch_elts[nr++] = start;
+
+      assert(nr < FETCH_MAX);
+
+      varray->middle->run(varray->middle, 
+                          varray->fetch_elts,
+                          nr,
+                          varray->draw_elts, /* ie. linear */
+                          nr);
    }
-   varray->fetch_start += idx;
-   varray->fetch_count = idx;
 }
 
 
 
-
-static INLINE void add_draw_el(struct varray_frontend *varray,
-                               unsigned idx)
+static void varray_fan_segment(struct varray_frontend *varray,
+                               unsigned start, 
+                               unsigned segment_start,
+                               unsigned segment_count )
 {
-   varray->draw_elts[varray->draw_count++] = (ushort)idx;
+   assert(segment_count+1 < varray->fetch_max);
+   if (segment_count >= 2) {
+      unsigned nr = 0, i;
+
+      if (segment_start != 0)
+         varray->fetch_elts[nr++] = start;
+
+      for (i = 0 ; i < segment_count; i++) 
+         varray->fetch_elts[nr++] = start + segment_start + i;
+
+      assert(nr < FETCH_MAX);
+
+      varray->middle->run(varray->middle, 
+                          varray->fetch_elts,
+                          nr,
+                          varray->draw_elts, /* ie. linear */
+                          nr);
+   }
 }
 
 
-static INLINE void varray_triangle( struct varray_frontend *varray,
-                                    unsigned i0,
-                                    unsigned i1,
-                                    unsigned i2 )
-{
-   add_draw_el(varray, i0);
-   add_draw_el(varray, i1);
-   add_draw_el(varray, i2);
-}
-
-static INLINE void varray_line( struct varray_frontend *varray,
-                                unsigned i0,
-                                unsigned i1 )
-{
-   add_draw_el(varray, i0);
-   add_draw_el(varray, i1);
-}
 
 
-static INLINE void varray_point( struct varray_frontend *varray,
-                                 unsigned i0 )
-{
-   add_draw_el(varray, i0);
-}
-
-
-#if 0
-#define TRIANGLE(flags,i0,i1,i2)       varray_triangle(varray,i0,i1,i2)
-#define LINE(flags,i0,i1)              varray_line(varray,i0,i1)
-#define POINT(i0)                      varray_point(varray,i0)
-#define FUNC varray_decompose
-#include "draw_pt_decompose.h"
-#else
-#define TRIANGLE(vc,i0,i1,i2)       varray_triangle(vc,i0,i1,i2)
-#define LINE(vc,i0,i1)              varray_line(vc,i0,i1)
-#define POINT(vc,i0)                varray_point(vc,i0)
 #define FUNC varray_run
 #include "draw_pt_varray_tmp_linear.h"
-#endif
 
 static unsigned decompose_prim[PIPE_PRIM_POLYGON + 1] = {
    PIPE_PRIM_POINTS,
    PIPE_PRIM_LINES,
-   PIPE_PRIM_LINES,             /* decomposed LINELOOP */
+   PIPE_PRIM_LINE_STRIP,        /* decomposed LINELOOP */
    PIPE_PRIM_LINE_STRIP,
    PIPE_PRIM_TRIANGLES,
    PIPE_PRIM_TRIANGLE_STRIP,
-   PIPE_PRIM_TRIANGLES,         /* decomposed TRI_FAN */
+   PIPE_PRIM_TRIANGLE_FAN, 
    PIPE_PRIM_QUADS,
    PIPE_PRIM_QUAD_STRIP,
-   PIPE_PRIM_TRIANGLES          /* decomposed POLYGON */
+   PIPE_PRIM_POLYGON
 };
 
 
@@ -186,7 +146,8 @@ static void varray_prepare(struct draw_pt_front_end *frontend,
    varray->output_prim = decompose_prim[prim];
 
    varray->middle = middle;
-   middle->prepare(middle, varray->output_prim, opt, &varray->fetch_max );
+   middle->prepare(middle, varray->output_prim, opt, &varray->driver_fetch_max );
+   varray->fetch_max = MIN2(FETCH_MAX, varray->driver_fetch_max);
 }
 
 
@@ -207,6 +168,7 @@ static void varray_destroy(struct draw_pt_front_end *frontend)
 
 struct draw_pt_front_end *draw_pt_varray(struct draw_context *draw)
 {
+   unsigned i;
    struct varray_frontend *varray = CALLOC_STRUCT(varray_frontend);
    if (varray == NULL)
       return NULL;
@@ -216,6 +178,10 @@ struct draw_pt_front_end *draw_pt_varray(struct draw_context *draw)
    varray->base.finish  = varray_finish;
    varray->base.destroy = varray_destroy;
    varray->draw = draw;
+
+   for (i = 0; i < DRAW_MAX; i++) {
+      varray->draw_elts[i] = i;
+   }
 
    return &varray->base;
 }
