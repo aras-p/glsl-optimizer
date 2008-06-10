@@ -1449,21 +1449,27 @@ _mesa_choose_tex_format( GLcontext *ctx, GLint internalFormat,
          case GL_COMPRESSED_INTENSITY_ARB:
             return &_mesa_texformat_intensity;
          case GL_COMPRESSED_RGB_ARB:
+#if FEATURE_texture_fxt1
             if (ctx->Extensions.TDFX_texture_compression_FXT1)
                return &_mesa_texformat_rgb_fxt1;
-            else if (ctx->Extensions.EXT_texture_compression_s3tc ||
-                     ctx->Extensions.S3_s3tc)
+#endif
+#if FEATURE_texture_s3tc
+            if (ctx->Extensions.EXT_texture_compression_s3tc ||
+                ctx->Extensions.S3_s3tc)
                return &_mesa_texformat_rgb_dxt1;
-            else
-               return &_mesa_texformat_rgb;
+#endif
+            return &_mesa_texformat_rgb;
          case GL_COMPRESSED_RGBA_ARB:
+#if FEATURE_texture_fxt1
             if (ctx->Extensions.TDFX_texture_compression_FXT1)
                return &_mesa_texformat_rgba_fxt1;
-            else if (ctx->Extensions.EXT_texture_compression_s3tc ||
-                     ctx->Extensions.S3_s3tc)
+#endif
+#if FEATURE_texture_s3tc
+            if (ctx->Extensions.EXT_texture_compression_s3tc ||
+                ctx->Extensions.S3_s3tc)
                return &_mesa_texformat_rgba_dxt3; /* Not rgba_dxt1, see spec */
-            else
-               return &_mesa_texformat_rgba;
+#endif
+            return &_mesa_texformat_rgba;
          default:
             ; /* fallthrough */
       }
@@ -1478,6 +1484,7 @@ _mesa_choose_tex_format( GLcontext *ctx, GLint internalFormat,
       }
    }
 
+#if FEATURE_texture_fxt1
    if (ctx->Extensions.TDFX_texture_compression_FXT1) {
       switch (internalFormat) {
          case GL_COMPRESSED_RGB_FXT1_3DFX:
@@ -1488,7 +1495,9 @@ _mesa_choose_tex_format( GLcontext *ctx, GLint internalFormat,
             ; /* fallthrough */
       }
    }
+#endif
 
+#if FEATURE_texture_s3tc
    if (ctx->Extensions.EXT_texture_compression_s3tc) {
       switch (internalFormat) {
          case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
@@ -1516,6 +1525,7 @@ _mesa_choose_tex_format( GLcontext *ctx, GLint internalFormat,
             ; /* fallthrough */
       }
    }
+#endif
 
    if (ctx->Extensions.ARB_texture_float) {
       switch (internalFormat) {

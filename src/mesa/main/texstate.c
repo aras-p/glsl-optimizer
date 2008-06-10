@@ -30,7 +30,9 @@
 
 #include "glheader.h"
 #include "colormac.h"
+#if FEATURE_colortable
 #include "colortab.h"
+#endif
 #include "context.h"
 #include "enums.h"
 #include "macros.h"
@@ -3213,7 +3215,9 @@ _mesa_init_texture(GLcontext *ctx)
    for (i=0; i<MAX_TEXTURE_UNITS; i++)
       init_texture_unit( ctx, i );
    ctx->Texture.SharedPalette = GL_FALSE;
+#if FEATURE_colortable
    _mesa_init_colortable(&ctx->Texture.Palette);
+#endif
 
    /* Allocate proxy textures */
    if (!alloc_proxy_textures( ctx ))
@@ -3229,8 +3233,6 @@ _mesa_init_texture(GLcontext *ctx)
 void
 _mesa_free_texture_data(GLcontext *ctx)
 {
-   GLuint i;
-
    /* Free proxy texture objects */
    (ctx->Driver.DeleteTexture)(ctx,  ctx->Texture.Proxy1D );
    (ctx->Driver.DeleteTexture)(ctx,  ctx->Texture.Proxy2D );
@@ -3240,6 +3242,11 @@ _mesa_free_texture_data(GLcontext *ctx)
    (ctx->Driver.DeleteTexture)(ctx,  ctx->Texture.Proxy1DArray );
    (ctx->Driver.DeleteTexture)(ctx,  ctx->Texture.Proxy2DArray );
 
-   for (i = 0; i < MAX_TEXTURE_IMAGE_UNITS; i++)
-      _mesa_free_colortable_data( &ctx->Texture.Unit[i].ColorTable );
+#if FEATURE_colortable
+   {
+      GLuint i;
+      for (i = 0; i < MAX_TEXTURE_IMAGE_UNITS; i++)
+         _mesa_free_colortable_data( &ctx->Texture.Unit[i].ColorTable );
+   }
+#endif
 }

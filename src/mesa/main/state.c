@@ -40,7 +40,9 @@
 #include "framebuffer.h"
 #include "light.h"
 #include "matrix.h"
+#if FEATURE_pixel_transfer
 #include "pixel.h"
+#endif
 #include "shader/program.h"
 #include "state.h"
 #include "stencil.h"
@@ -412,8 +414,10 @@ _mesa_update_state_locked( GLcontext *ctx )
    if (new_state & _NEW_STENCIL)
       _mesa_update_stencil( ctx );
 
+#if FEATURE_pixel_transfer
    if (new_state & _IMAGE_NEW_TRANSFER_STATE)
       _mesa_update_pixel( ctx, new_state );
+#endif
 
    if (new_state & (_NEW_ARRAY | _NEW_PROGRAM))
       update_arrays( ctx );

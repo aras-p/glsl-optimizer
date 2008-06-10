@@ -34,7 +34,9 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/context.h"
 #include "main/macros.h"
 #include "main/vtxfmt.h"
+#if FEATURE_dlist
 #include "main/dlist.h"
+#endif
 #include "main/state.h"
 #include "main/light.h"
 #include "main/api_arrayelt.h"
@@ -569,8 +571,10 @@ static void vbo_exec_vtxfmt_init( struct vbo_exec_context *exec )
 
    vfmt->ArrayElement = _ae_loopback_array_elt;	        /* generic helper */
    vfmt->Begin = vbo_exec_Begin;
+#if FEATURE_dlist
    vfmt->CallList = _mesa_CallList;
    vfmt->CallLists = _mesa_CallLists;
+#endif
    vfmt->End = vbo_exec_End;
    vfmt->EvalCoord1f = vbo_exec_EvalCoord1f;
    vfmt->EvalCoord1fv = vbo_exec_EvalCoord1fv;
