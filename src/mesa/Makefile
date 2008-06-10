@@ -19,9 +19,17 @@ include sources
 
 
 
+# XXX work-around glapi.c build failure for DRI builds:
+ifeq ($(WINDOW_SYSTEM), dri)
+GLAPI_LIB = 
+else
+GLAPI_LIB = libglapi.a
+endif
+
+
 # Default: build dependencies, then asm_subdirs, then convenience
 # libs (.a) and finally the device drivers:
-default: depend asm_subdirs libmesa.a libglapi.a driver_subdirs
+default: depend asm_subdirs libmesa.a $(GLAPI_LIB) driver_subdirs
 
 
 
@@ -33,13 +41,13 @@ libmesa.a: $(MESA_OBJECTS) asm_subdirs
 	@ $(TOP)/bin/mklib -o mesa -static $(MESA_OBJECTS)
 
 # Make archive of gl* API dispatcher functions only
-libglapi.a: $(GLAPI_OBJECTS) asm_subdirs
+$(GLAPI_LIB): $(GLAPI_OBJECTS) asm_subdirs
 	@ $(TOP)/bin/mklib -o glapi -static $(GLAPI_OBJECTS)
 
 
 ######################################################################
 # Device drivers
-driver_subdirs: libmesa.a libglapi.a
+driver_subdirs: libmesa.a $(GLAPI_LIB)
 	(cd drivers && $(MAKE))
 
 
@@ -126,7 +134,7 @@ tags:
 clean:
 	-rm -f */*.o
 	-rm -f */*/*.o
-	-rm -f depend depend.bak libmesa.a libglapi.a
+	-rm -f depend depend.bak libmesa.a $(GLAPI_LIB)
 	-rm -f drivers/*/*.o
 	-@cd drivers/dri && $(MAKE) clean
 	-@cd drivers/xorg && $(MAKE) clean
