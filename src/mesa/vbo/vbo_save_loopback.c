@@ -25,9 +25,6 @@
  * 
  **************************************************************************/
 
-#include "swrast_setup/swrast_setup.h"
-#include "swrast/swrast.h"
-#include "tnl/tnl.h"
 #include "main/context.h"
 #include "main/glheader.h"
 #include "main/enums.h"
