@@ -211,7 +211,7 @@ _mesa_RasterPos4sv(const GLshort *v)
 /***           GL_ARB_window_pos / GL_MESA_window_pos               ***/
 /**********************************************************************/
 
-#if FEATURE_windowpos
+#if FEATURE_drawpix
 /**
  * All glWindowPosMESA and glWindowPosARB commands call this function to
  * update the current raster position.
