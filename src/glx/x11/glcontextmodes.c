@@ -118,7 +118,7 @@ _gl_convert_to_x_visual_type( int visualType )
  * of the fields in \c config are copied to \c mode.  Additional fields in
  * \c mode that can be derrived from the fields of \c config (i.e.,
  * \c haveDepthBuffer) are also filled in.  The remaining fields in \c mode
- * that cannot be derrived are set to default values.
+ * that cannot be derived are set to default values.
  * 
  * \param mode   Destination GL context mode.
  * \param config Source GLX visual config.
@@ -184,6 +184,9 @@ _gl_copy_visual_to_context_mode( __GLcontextModes * mode,
     mode->transparentBlue  = config->transparentBlue;
     mode->transparentAlpha = config->transparentAlpha;
     mode->transparentIndex = config->transparentIndex;
+    mode->samples = config->multiSampleSize;
+    mode->sampleBuffers = config->nMultiSampleBuffers;
+    /* mode->visualSelectGroup = config->visualSelectGroup; ? */
 
     mode->swapMethod = GLX_SWAP_UNDEFINED_OML;
 
