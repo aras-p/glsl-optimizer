@@ -206,7 +206,7 @@ arb_output_attrib_string(GLint index, GLenum progType)
  */
 static const char *
 reg_string(enum register_file f, GLint index, gl_prog_print_mode mode,
-           const struct gl_program *prog)
+           GLint relAddr, const struct gl_program *prog)
 {
    static char str[100];
 
@@ -214,7 +214,10 @@ reg_string(enum register_file f, GLint index, gl_prog_print_mode mode,
 
    switch (mode) {
    case PROG_PRINT_DEBUG:
-      sprintf(str, "%s[%d]", file_string(f, mode), index);
+      if (relAddr)
+         sprintf(str, "%s[ADDR%s%d]", file_string(f, mode), (index > 0) ? "+" : "", index);
+      else
+         sprintf(str, "%s[%d]", file_string(f, mode), index);
       break;
 
    case PROG_PRINT_ARB:
@@ -401,7 +404,7 @@ print_dst_reg(const struct prog_dst_register *dstReg, gl_prog_print_mode mode,
 {
    _mesa_printf("%s%s",
                 reg_string((enum register_file) dstReg->File,
-                           dstReg->Index, mode, prog),
+                           dstReg->Index, mode, GL_FALSE, prog),
                 writemask_string(dstReg->WriteMask));
 
    if (dstReg->CondMask != COND_TR) {
@@ -424,9 +427,9 @@ print_src_reg(const struct prog_src_register *srcReg, gl_prog_print_mode mode,
 {
    _mesa_printf("%s%s",
                 reg_string((enum register_file) srcReg->File,
-                           srcReg->Index, mode, prog),
+                           srcReg->Index, mode, srcReg->RelAddr, prog),
                 _mesa_swizzle_string(srcReg->Swizzle,
-                               srcReg->NegateBase, GL_FALSE));
+                                     srcReg->NegateBase, GL_FALSE));
 #if 0
    _mesa_printf("%s[%d]%s",
                 file_string((enum register_file) srcReg->File, mode),
@@ -590,7 +593,9 @@ _mesa_print_instruction_opt(const struct prog_instruction *inst, GLint indent,
       break;
 
    case OPCODE_ARL:
-      _mesa_printf("ARL addr.x, ");
+      _mesa_printf("ARL ");
+      print_dst_reg(&inst->DstReg, mode, prog);
+      _mesa_printf(", ");
       print_src_reg(&inst->SrcReg[0], mode, prog);
       print_comment(inst);
       break;

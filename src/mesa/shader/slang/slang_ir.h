@@ -146,6 +146,7 @@ struct _slang_ir_storage
    GLint Size;  /**< number of floats */
    GLuint Swizzle;
    GLint RefCount; /**< Used during IR tree delete */
+   GLboolean RelAddr;
 };
 
 typedef struct _slang_ir_storage slang_ir_storage;

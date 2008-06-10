@@ -68,8 +68,8 @@ map_register_file(
    case PROGRAM_STATE_VAR:
    case PROGRAM_NAMED_PARAM:
    case PROGRAM_UNIFORM:
-      if (immediateMapping[index] != ~0) 
-	 return TGSI_FILE_IMMEDIATE;
+      if (immediateMapping && immediateMapping[index] != ~0)
+         return TGSI_FILE_IMMEDIATE;
       else
 	 return TGSI_FILE_CONSTANT;
    case PROGRAM_CONSTANT:

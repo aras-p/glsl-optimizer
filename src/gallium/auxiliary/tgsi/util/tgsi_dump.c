@@ -803,7 +803,14 @@ tgsi_dump_instruction(
       ENM( src->SrcRegister.File, TGSI_FILES_SHORT );
 
       CHR( '[' );
-      SID( src->SrcRegister.Index );
+      if (src->SrcRegister.Indirect) {
+         TXT( "addr" );
+         if (src->SrcRegister.Index > 0)
+            CHR( '+' );
+         SID( src->SrcRegister.Index );
+      }
+      else
+         SID( src->SrcRegister.Index );
       CHR( ']' );
 
       if (src->SrcRegister.SwizzleX != TGSI_SWIZZLE_X ||

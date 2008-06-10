@@ -3880,7 +3880,7 @@ _mesa_parse_arb_fragment_program(GLcontext* ctx, GLenum target,
    }
 
 #if DEBUG_FP
-   _mesa_printf("____________Fragment program %u ________\n", program->Base.ID);
+   _mesa_printf("____________Fragment program %u ________\n", program->Base.Id);
    _mesa_print_program(&program->Base);
 #endif
 }
