@@ -106,6 +106,11 @@ SOURCES = \
 	tri-z-eq.c \
 	tri-z.c \
 	tri.c \
+	trifan-flat.c \
+	trifan-flat-clip.c \
+	trifan-flat-unfilled-clip.c \
+	trifan-unfilled.c \
+	trifan.c \
 	tristrip-clip.c \
 	tristrip-flat.c \
 	tristrip.c \
