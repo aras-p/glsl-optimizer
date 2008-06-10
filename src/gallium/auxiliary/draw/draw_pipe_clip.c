@@ -171,7 +171,7 @@ static void emit_poly( struct draw_stage *stage,
    header.flags = DRAW_PIPE_RESET_STIPPLE | edge_first | edge_middle;
    header.pad = 0;
 
-   for (i = 2; i < n; i++, header.flags = 0) {
+   for (i = 2; i < n; i++, header.flags = edge_middle) {
       header.v[0] = inlist[i-1];
       header.v[1] = inlist[i];
       header.v[2] = inlist[0];	/* keep in v[2] for flatshading */
