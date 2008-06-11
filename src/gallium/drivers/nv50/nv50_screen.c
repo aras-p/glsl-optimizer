@@ -225,15 +225,6 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 	so_data  (so, 0x54);
 	so_method(so, screen->tesla, 0x13ac, 1);
 	so_data  (so, 1);
-	so_method(so, screen->tesla, 0x16bc, 2);
-	so_data  (so, 0x03020100);
-	so_data  (so, 0x07060504);
-	so_method(so, screen->tesla, 0x1988, 2);
-	so_data  (so, 0x08040404);
-	so_data  (so, 0x00000004);
-	so_method(so, screen->tesla, 0x16ac, 2);
-	so_data  (so, 8);
-	so_data  (so, 4);
 	so_method(so, screen->tesla, 0x16b8, 1);
 	so_data  (so, 8);
 

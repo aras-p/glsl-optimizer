@@ -1492,14 +1492,26 @@ nv50_fragprog_validate(struct nv50_context *nv50)
 	nv50_program_validate_data(nv50, p);
 	nv50_program_validate_code(nv50, p);
 
-	so = so_new(7, 2);
+	so = so_new(64, 2);
 	so_method(so, tesla, NV50TCL_FP_ADDRESS_HIGH, 2);
 	so_reloc (so, p->buffer, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD |
 		  NOUVEAU_BO_HIGH, 0, 0);
 	so_reloc (so, p->buffer, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD |
 		  NOUVEAU_BO_LOW, 0, 0);
-	so_method(so, tesla, 0x198c, 1);
+	so_method(so, tesla, 0x1904, 4);
+	so_data  (so, 0x01040404); /* p: 0x01000404 */
+	so_data  (so, 0x00000004);
+	so_data  (so, 0x00000000);
+	so_data  (so, 0x00000000);
+	so_method(so, tesla, 0x16bc, 2);
+	so_data  (so, 0x03020100);
+	so_data  (so, 0x07060504);
+	so_method(so, tesla, 0x1988, 2);
+	so_data  (so, 0x08040404); /* p: 0x0f000401 */
 	so_data  (so, p->cfg.high_temp);
+	so_method(so, tesla, 0x16ac, 2);
+	so_data  (so, 0x00000008); /* p: 0x00000004 */
+	so_data  (so, 0x00000004);
 	so_method(so, tesla, 0x1414, 1);
 	so_data  (so, 0); /* program start offset */
 	so_emit(nv50->screen->nvws, so);
