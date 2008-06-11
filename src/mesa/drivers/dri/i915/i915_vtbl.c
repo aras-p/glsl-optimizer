@@ -377,14 +377,14 @@ i915_emit_state(struct intel_context *intel)
       OUT_BATCH(state->Buffer[I915_DESTREG_CBUFADDR0]);
       OUT_BATCH(state->Buffer[I915_DESTREG_CBUFADDR1]);
       OUT_RELOC(state->draw_region->buffer,
-		DRM_GEM_DOMAIN_I915_RENDER, DRM_GEM_DOMAIN_I915_RENDER,
+		I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
                 state->draw_region->draw_offset);
 
       if (state->depth_region) {
          OUT_BATCH(state->Buffer[I915_DESTREG_DBUFADDR0]);
          OUT_BATCH(state->Buffer[I915_DESTREG_DBUFADDR1]);
          OUT_RELOC(state->depth_region->buffer,
-		   DRM_GEM_DOMAIN_I915_RENDER, DRM_GEM_DOMAIN_I915_RENDER,
+		   I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
                    state->depth_region->draw_offset);
       }
 
@@ -427,7 +427,7 @@ i915_emit_state(struct intel_context *intel)
 
             if (state->tex_buffer[i]) {
                OUT_RELOC(state->tex_buffer[i],
-			 DRM_GEM_DOMAIN_I915_SAMPLER, 0,
+			 I915_GEM_DOMAIN_SAMPLER, 0,
                          state->tex_offset[i]);
             }
             else if (state == &i915->meta) {

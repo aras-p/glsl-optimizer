@@ -200,7 +200,7 @@ wm_unit_create_from_key(struct brw_context *brw, struct brw_wm_unit_key *key,
 
    /* Emit WM program relocation */
    intel_bo_emit_reloc(bo,
-		       DRM_GEM_DOMAIN_I915_INSTRUCTION, 0,
+		       I915_GEM_DOMAIN_INSTRUCTION, 0,
 		       wm.thread0.grf_reg_count << 1,
 		       offsetof(struct brw_wm_unit_state, thread0),
 		       brw->wm.prog_bo);
@@ -217,7 +217,7 @@ wm_unit_create_from_key(struct brw_context *brw, struct brw_wm_unit_key *key,
    /* Emit sampler state relocation */
    if (key->sampler_count != 0) {
       intel_bo_emit_reloc(bo,
-			  DRM_GEM_DOMAIN_I915_INSTRUCTION, 0,
+			  I915_GEM_DOMAIN_INSTRUCTION, 0,
 			  wm.wm4.stats_enable | (wm.wm4.sampler_count << 2),
 			  offsetof(struct brw_wm_unit_state, wm4),
 			  brw->wm.sampler_bo);

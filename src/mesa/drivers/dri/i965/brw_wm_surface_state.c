@@ -204,7 +204,7 @@ brw_create_texture_surface( struct brw_context *brw,
 
    /* Emit relocation to surface contents */
    intel_bo_emit_reloc(bo,
-		       DRM_GEM_DOMAIN_I915_SAMPLER, 0,
+		       I915_GEM_DOMAIN_SAMPLER, 0,
 		       0,
 		       offsetof(struct brw_surface_state, ss1),
 		       key->bo);
@@ -342,9 +342,9 @@ brw_update_region_surface(struct brw_context *brw, struct intel_region *region,
 	  * a more restrictive relocation to emit.
 	  */
 	 intel_bo_emit_reloc(brw->wm.surf_bo[unit],
-			     DRM_GEM_DOMAIN_I915_RENDER |
-			     DRM_GEM_DOMAIN_I915_SAMPLER,
-			     DRM_GEM_DOMAIN_I915_RENDER,
+			     I915_GEM_DOMAIN_RENDER |
+			     I915_GEM_DOMAIN_SAMPLER,
+			     I915_GEM_DOMAIN_RENDER,
 			     0,
 			     offsetof(struct brw_surface_state, ss1),
 			     region_bo);
@@ -392,7 +392,7 @@ brw_wm_get_binding_table(struct brw_context *brw)
       for (i = 0; i < BRW_WM_MAX_SURF; i++) {
 	 if (brw->wm.surf_bo[i] != NULL) {
 	    intel_bo_emit_reloc(bind_bo,
-				DRM_GEM_DOMAIN_I915_INSTRUCTION, 0,
+				I915_GEM_DOMAIN_INSTRUCTION, 0,
 				0,
 				i * sizeof(GLuint),
 				brw->wm.surf_bo[i]);

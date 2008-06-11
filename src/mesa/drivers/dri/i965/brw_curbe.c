@@ -351,7 +351,7 @@ static void emit_constant_buffer(struct brw_context *brw)
    } else {
       OUT_BATCH((CMD_CONST_BUFFER << 16) | (1 << 8) | (2 - 2));
       OUT_RELOC(brw->curbe.curbe_bo,
-		DRM_GEM_DOMAIN_I915_INSTRUCTION, 0,
+		I915_GEM_DOMAIN_INSTRUCTION, 0,
 		(sz - 1) + brw->curbe.curbe_offset);
    }
    ADVANCE_BATCH();

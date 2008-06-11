@@ -467,7 +467,7 @@ void brw_emit_vertices( struct brw_context *brw,
 		BRW_VB0_ACCESS_VERTEXDATA |
 		(input->stride << BRW_VB0_PITCH_SHIFT));
       OUT_RELOC(input->bo,
-		DRM_GEM_DOMAIN_I915_VERTEX, 0,
+		I915_GEM_DOMAIN_VERTEX, 0,
 		input->offset);
       OUT_BATCH(max_index);
       OUT_BATCH(0); /* Instance data step rate */
@@ -589,10 +589,10 @@ void brw_emit_indices(struct brw_context *brw,
       BEGIN_BATCH(4, IGNORE_CLIPRECTS);
       OUT_BATCH( ib.header.dword );
       OUT_RELOC( bo,
-		 DRM_GEM_DOMAIN_I915_VERTEX, 0,
+		 I915_GEM_DOMAIN_VERTEX, 0,
 		 offset);
       OUT_RELOC( bo,
-		 DRM_GEM_DOMAIN_I915_VERTEX, 0,
+		 I915_GEM_DOMAIN_VERTEX, 0,
 		 offset + ib_size);
       OUT_BATCH( 0 );
       ADVANCE_BATCH();
