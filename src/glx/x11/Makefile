@@ -50,6 +50,7 @@ INCLUDES = -I. \
 	-I$(TOP)/include \
 	-I$(TOP)/include/GL/internal \
 	-I$(TOP)/src/mesa \
+	-I$(TOP)/src/mesa/glapi \
 	-I$(TOP)/src/mesa/main \
 	$(LIBDRM_CFLAGS) \
 	$(DRI2PROTO_CFLAGS) \

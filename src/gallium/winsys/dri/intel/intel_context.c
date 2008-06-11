@@ -28,6 +28,8 @@
 
 #include "i830_dri.h"
 
+#include "state_tracker/st_public.h"
+#include "state_tracker/st_context.h"
 #include "intel_screen.h"
 #include "intel_context.h"
 #include "intel_swapbuffers.h"
@@ -36,8 +38,6 @@
 
 #include "i915simple/i915_screen.h"
 
-#include "state_tracker/st_public.h"
-#include "state_tracker/st_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_context.h"
 
@@ -160,8 +160,9 @@ static const struct dri_extension ttm_extensions[] = {
  * Initializes potential list of extensions if ctx == NULL, or actually enables
  * extensions for a context.
  */
-void intelInitExtensions(GLcontext *ctx, GLboolean enable_imaging)
+void intelInitExtensions(struct st_context *st, GLboolean enable_imaging)
 {
+   GLcontext *ctx = st ? st->ctx : NULL;
    /* Disable imaging extension until convolution is working in teximage paths.
     */
    enable_imaging = GL_FALSE;
@@ -326,7 +327,7 @@ intelCreateContext(const __GLcontextModes * visual,
 
    intel->st = st_create_context(pipe, visual, st_share);
 
-   intelInitExtensions( intel->st->ctx, GL_TRUE );
+   intelInitExtensions( intel->st, GL_TRUE );
 
    return GL_TRUE;
 }

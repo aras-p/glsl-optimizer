@@ -78,7 +78,8 @@ intelDisplaySurface(__DRIdrawablePrivate *dPriv,
     * current context (which is what intelScreenContext should return) might
     * not get a contended lock and thus cliprects not updated (tests/manywin)
     */
-   if (intel_context(dPriv->driContextPriv) != intel)
+   if (!intel->driScreen->dri2.enabled &&
+        intel_context(dPriv->driContextPriv) != intel)
       DRI_VALIDATE_DRAWABLE_INFO(intel->driScreen, dPriv);
 
 

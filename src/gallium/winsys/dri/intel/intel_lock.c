@@ -50,6 +50,9 @@ intelContendedLock(struct intel_context *intel, uint flags)
 
    DBG(LOCK, "%s - got contended lock\n", __progname);
 
+   if (sPriv->dri2.enabled)
+      return;
+
    /* If the window moved, may need to set a new cliprect now.
     *
     * NOTE: This releases and regains the hw lock, so all state
@@ -58,8 +61,8 @@ intelContendedLock(struct intel_context *intel, uint flags)
    if (dPriv)
       DRI_VALIDATE_DRAWABLE_INFO(sPriv, dPriv);
 
-   if (sarea->width != intelScreen->front.width ||
-       sarea->height != intelScreen->front.height) {
+   if (sarea && (sarea->width != intelScreen->front.width ||
+       		 sarea->height != intelScreen->front.height)) {
 
       intelUpdateScreenRotation(sPriv, sarea);
    }

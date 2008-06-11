@@ -110,47 +110,10 @@ intelHandleDrawableConfig(__DRIdrawablePrivate *dPriv,
 			  __DRIcontextPrivate *pcp,
 			  __DRIDrawableConfigEvent *event)
 {
-   struct intel_framebuffer *intel_fb = dPriv->driverPrivate;
-   struct intel_region *region = NULL;
-   struct intel_renderbuffer *rb, *depth_rb, *stencil_rb;
-   struct intel_context *intel = pcp->driverPrivate;
-   struct intel_screen *intelScreen = intel_screen(dPriv->driScreenPriv);
-   int cpp, pitch;
-
-#if 0
-   cpp = intelScreen->front.cpp;
-   pitch = ((cpp * dPriv->w + 63) & ~63) / cpp;
-
-   back_surf = st_get_framebuffer_surface(intel_fb->stfb,
-                                          ST_SURFACE_BACK_LEFT);
-   rb = intel_fb->color_rb[1];
-   if (rb) {
-      region = intel_region_alloc(intel, cpp, pitch, dPriv->h);
-      intel_renderbuffer_set_region(rb, region);
-   }
-
-   rb = intel_fb->color_rb[2];
-   if (rb) {
-      region = intel_region_alloc(intel, cpp, pitch, dPriv->h);
-      intel_renderbuffer_set_region(rb, region);
-   }
-
-   depth_rb = intel_get_renderbuffer(&intel_fb->Base, BUFFER_DEPTH);
-   stencil_rb = intel_get_renderbuffer(&intel_fb->Base, BUFFER_STENCIL);
-   if (depth_rb || stencil_rb)
-      region = intel_region_alloc(intel, cpp, pitch, dPriv->h);
-   if (depth_rb)
-      intel_renderbuffer_set_region(depth_rb, region);
-   if (stencil_rb)
-      intel_renderbuffer_set_region(stencil_rb, region);
-
-   /* FIXME: Tell the X server about the regions we just allocated and
-    * attached. */
-#endif
-
+   (void) dPriv;
+   (void) pcp;
+   (void) event;
 }
-
-#define BUFFER_FLAG_TILED 0x0100
 
 static void
 intelHandleBufferAttach(__DRIdrawablePrivate *dPriv,
@@ -158,68 +121,29 @@ intelHandleBufferAttach(__DRIdrawablePrivate *dPriv,
 			__DRIBufferAttachEvent *ba)
 {
    struct intel_screen *intelScreen = intel_screen(dPriv->driScreenPriv);
-   struct intel_framebuffer *intel_fb = dPriv->driverPrivate;
-   struct intel_renderbuffer *rb;
-   struct intel_region *region;
-   struct intel_context *intel = pcp->driverPrivate;
-   struct pipe_surface *surf;
-   GLuint tiled;
 
    switch (ba->buffer.attachment) {
    case DRI_DRAWABLE_BUFFER_FRONT_LEFT:
-   #if 0
-   intelScreen->front.width = ba->width;
-   intelScreen->front.height = ba->height;
-   intelScreen->front.offset = sarea->front_offset;
-   #endif
-   intelScreen->front.pitch = ba->buffer.pitch * ba->buffer.cpp;
-   #if 0
-   intelScreen->front.size = sarea->front_size;
-   #endif
+      intelScreen->front.width = dPriv->w;
+      intelScreen->front.height = dPriv->h;
+      intelScreen->front.cpp = ba->buffer.cpp;
+      intelScreen->front.pitch = ba->buffer.pitch;
       driGenBuffers(intelScreen->base.staticPool, "front", 1, &intelScreen->front.buffer, 0, 0, 0);
       driBOSetReferenced(intelScreen->front.buffer, ba->buffer.handle);
-	
       break;
 
-#if 0
    case DRI_DRAWABLE_BUFFER_BACK_LEFT:
-      rb = intel_fb->color_rb[0];
+   case DRI_DRAWABLE_BUFFER_DEPTH:
+   case DRI_DRAWABLE_BUFFER_STENCIL:
+   case DRI_DRAWABLE_BUFFER_ACCUM:
+      /* anything ?? */
       break;
 
-   case DRI_DRAWABLE_BUFFER_DEPTH:
-     rb = intel_get_renderbuffer(&intel_fb->Base, BUFFER_DEPTH);
-     break;
-
-   case DRI_DRAWABLE_BUFFER_STENCIL:
-     rb = intel_get_renderbuffer(&intel_fb->Base, BUFFER_STENCIL);
-     break;
-#endif
-
-   case DRI_DRAWABLE_BUFFER_ACCUM:
    default:
-      fprintf(stderr, "unhandled buffer attach event, attacment type %d\n",
+      fprintf(stderr, "unhandled buffer attach event, attachment type %d\n",
 	      ba->buffer.attachment);
       return;
    }
-
-#if 0
-   /* FIXME: Add this so we can filter out when the X server sends us
-    * attachment events for the buffers we just allocated.  Need to
-    * get the BO handle for a render buffer. */
-   if (intel_renderbuffer_get_region_handle(rb) == ba->buffer.handle)
-      return;
-#endif
-
-#if 0
-   tiled = (ba->buffer.flags & BUFFER_FLAG_TILED) > 0;
-
-   region = intel_region_alloc_for_handle(intel, ba->buffer.cpp,
-					  ba->buffer.pitch / ba->buffer.cpp,
-					  dPriv->h, tiled,
-					  ba->buffer.handle);
-
-   intel_renderbuffer_set_region(rb, region);
-#endif
 }
 
 static const __DRItexOffsetExtension intelTexOffsetExtension = {
