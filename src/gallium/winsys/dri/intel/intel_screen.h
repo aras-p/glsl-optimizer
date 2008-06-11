@@ -117,6 +117,6 @@ intelCreateContext(const __GLcontextModes * visual,
                    void *sharedContextPrivate);
 
 extern void
-intelInitExtensions(struct st_context *st, GLboolean enable_imaging);
+intelInitExtensions(struct intel_context *intel, GLboolean enable_imaging);
 
 #endif

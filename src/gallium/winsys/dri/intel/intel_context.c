@@ -141,17 +141,13 @@ static const struct dri_extension brw_extensions[] = {
    { "GL_SGIX_depth_texture",             NULL },
    { "GL_ARB_texture_env_crossbar",       NULL },
    { "GL_EXT_texture_sRGB",		  NULL},
+   { "GL_EXT_framebuffer_object",         GL_EXT_framebuffer_object_functions},
+   { "GL_ARB_pixel_buffer_object",	  NULL},
    { NULL,                                NULL }
 };
 
 static const struct dri_extension arb_oc_extensions[] = {
    {"GL_ARB_occlusion_query",            GL_ARB_occlusion_query_functions},
-   {NULL, NULL}
-};
-
-static const struct dri_extension ttm_extensions[] = {
-   {"GL_EXT_framebuffer_object", GL_EXT_framebuffer_object_functions},
-   {"GL_ARB_pixel_buffer_object", NULL},
    {NULL, NULL}
 };
 #endif
@@ -160,9 +156,9 @@ static const struct dri_extension ttm_extensions[] = {
  * Initializes potential list of extensions if ctx == NULL, or actually enables
  * extensions for a context.
  */
-void intelInitExtensions(struct st_context *st, GLboolean enable_imaging)
+void intelInitExtensions(struct intel_context *intel, GLboolean enable_imaging)
 {
-   GLcontext *ctx = st ? st->ctx : NULL;
+   GLcontext *ctx = intel ? intel->st->ctx : NULL;
    /* Disable imaging extension until convolution is working in teximage paths.
     */
    enable_imaging = GL_FALSE;
@@ -170,9 +166,6 @@ void intelInitExtensions(struct st_context *st, GLboolean enable_imaging)
    driInitExtensions(ctx, card_extensions, enable_imaging);
 
 #if 0
-   if (intel == NULL || intel->ttm)
-      driInitExtensions(ctx, ttm_extensions, GL_FALSE);
-
    if (intel == NULL || 
        (IS_965(intel->intelScreen->deviceID) && 
 	intel->intelScreen->drmMinor >= 8))
@@ -327,7 +320,7 @@ intelCreateContext(const __GLcontextModes * visual,
 
    intel->st = st_create_context(pipe, visual, st_share);
 
-   intelInitExtensions( intel->st, GL_TRUE );
+   intelInitExtensions( intel, GL_TRUE );
 
    return GL_TRUE;
 }
