@@ -339,6 +339,8 @@ intelInitDriver(__DRIscreenPrivate * sPriv)
 
    intelScreen->deviceID = gDRIPriv->deviceID;
 
+   intelScreen->front.cpp = gDRIPriv->cpp;
+   intelScreen->drmMinor = sPriv->drm_version.minor;
    intelUpdateScreenRotation(sPriv, intelScreen->sarea);
 
    if (0)
