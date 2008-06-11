@@ -255,20 +255,28 @@ util_pack_color(const float rgba[4], enum pipe_format format, void *dest)
 static INLINE uint
 util_pack_z(enum pipe_format format, double z)
 {
+   if (z == 0.0)
+      return 0;
+
    switch (format) {
    case PIPE_FORMAT_Z16_UNORM:
+      if (z == 1.0)
+         return 0xffff;
       return (uint) (z * 0xffff);
    case PIPE_FORMAT_Z32_UNORM:
       /* special-case to avoid overflow */
       if (z == 1.0)
          return 0xffffffff;
-      else
-         return (uint) (z * 0xffffffff);
+      return (uint) (z * 0xffffffff);
    case PIPE_FORMAT_S8Z24_UNORM:
    case PIPE_FORMAT_X8Z24_UNORM:
+      if (z == 1.0)
+         return 0xffffff;
       return (uint) (z * 0xffffff);
    case PIPE_FORMAT_Z24S8_UNORM:
    case PIPE_FORMAT_Z24X8_UNORM:
+      if (z == 1.0)
+         return 0xffffff00;
       return ((uint) (z * 0xffffff)) << 8;
    default:
       debug_print_format("gallium: unhandled format in util_pack_z()", format);
