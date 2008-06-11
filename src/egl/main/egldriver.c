@@ -5,7 +5,6 @@
 
 #include <assert.h>
 #include <string.h>
-#include <dlfcn.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include "eglconfig.h"
@@ -22,6 +21,7 @@
 #include "eglsurface.h"
 
 #if defined(_EGL_PLATFORM_X)
+#include <dlfcn.h>
 #include "eglx.h"
 #elif defined(_EGL_PLATFORM_WINDOWS)
 /* XXX to do */
@@ -165,39 +165,70 @@ _eglOpenDriver(_EGLDisplay *dpy, const char *driverName, const char *args)
 {
    _EGLDriver *drv;
    _EGLMain_t mainFunc;
+#if defined(_EGL_PLATFORM_WINDOWS)
+   HMODULE lib;
+#elif defined(_EGL_PLATFORM_X)
    void *lib;
+#endif
    char driverFilename[1000];
 
    assert(driverName);
 
+#if defined(_EGL_PLATFORM_WINDOWS)
+   /* XXX untested */
+   sprintf(driverFilename, "%s.dll", driverName);
+   _eglLog(_EGL_DEBUG, "dlopen(%s)", driverFilename);
+   lib = LoadLibrary(driverFilename);
+#elif defined(_EGL_PLATFORM_X)
    /* XXX also prepend a directory path??? */
    sprintf(driverFilename, "%s.so", driverName);
-
    _eglLog(_EGL_DEBUG, "dlopen(%s)", driverFilename);
    lib = dlopen(driverFilename, RTLD_NOW);
+#endif
+
    if (!lib) {
       _eglLog(_EGL_WARNING, "Could not open %s (%s)",
               driverFilename, dlerror());
       return NULL;
    }
 
+#if defined(_EGL_PLATFORM_WINDOWS)
+   mainFunc = (_EGLMain_t) GetProcAddress(lib, "_eglMain");
+#elif defined(_EGL_PLATFORM_X)
    mainFunc = (_EGLMain_t) dlsym(lib, "_eglMain");
+#endif
+
    if (!mainFunc) {
       _eglLog(_EGL_WARNING, "_eglMain not found in %s", driverFilename);
+#if defined(_EGL_PLATFORM_WINDOWS)
+      FreeLibrary(lib);
+#elif defined(_EGL_PLATFORM_X)
       dlclose(lib);
+#endif
       return NULL;
    }
 
    drv = mainFunc(dpy, args);
    if (!drv) {
+#if defined(_EGL_PLATFORM_WINDOWS)
+      FreeLibrary(lib);
+#elif defined(_EGL_PLATFORM_X)
       dlclose(lib);
+#endif
       return NULL;
    }
+
    /* with a recurvise open you want the inner most handle */
-   if (!drv->LibHandle)
+   if (!drv->LibHandle) {
       drv->LibHandle = lib;
-   else
+   }
+   else {
+#if defined(_EGL_PLATFORM_WINDOWS)
+      FreeLibrary(lib);
+#elif defined(_EGL_PLATFORM_X)
       dlclose(lib);
+#endif
+   }
 
    /* update the global notion of supported APIs */
    _eglGlobal.ClientAPIsMask |= drv->ClientAPIsMask;
@@ -221,7 +252,13 @@ _eglCloseDriver(_EGLDriver *drv, EGLDisplay dpy)
     */
 
    b = drv->API.Terminate(drv, dpy);
+
+#if defined(_EGL_PLATFORM_WINDOWS)
+   FreeLibrary(handle);
+#elif defined(_EGL_PLATFORM_X)
    dlclose(handle);
+#endif
+
    return b;
 }
 
