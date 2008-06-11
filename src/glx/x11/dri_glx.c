@@ -34,47 +34,260 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #ifdef GLX_DIRECT_RENDERING
 
-#include <X11/Xlib.h>
-#include <X11/extensions/Xfixes.h>
-#include <X11/extensions/Xdamage.h>
+#include <unistd.h>
+#include <X11/Xlibint.h>
+#include <X11/extensions/Xext.h>
+#include <X11/extensions/extutil.h>
 #include "glheader.h"
 #include "glxclient.h"
-#include "glcontextmodes.h"
 #include "xf86dri.h"
 #include "sarea.h"
+#include <stdio.h>
 #include <dlfcn.h>
+#include "dri_glx.h"
 #include <sys/types.h>
-#include <sys/mman.h>
-#include "xf86drm.h"
-#include "dri_common.h"
+#include <stdarg.h>
 
-typedef struct __GLXDRIdisplayPrivateRec __GLXDRIdisplayPrivate;
-typedef struct __GLXDRIcontextPrivateRec __GLXDRIcontextPrivate;
+#ifndef RTLD_NOW
+#define RTLD_NOW 0
+#endif
+#ifndef RTLD_GLOBAL
+#define RTLD_GLOBAL 0
+#endif
 
-struct __GLXDRIdisplayPrivateRec {
-    __GLXDRIdisplay base;
 
-    /*
-    ** XFree86-DRI version information
-    */
-    int driMajor;
-    int driMinor;
-    int driPatch;
-};
+#ifndef DEFAULT_DRIVER_DIR
+/* this is normally defined in Mesa/configs/default with DRI_DRIVER_SEARCH_PATH */
+#define DEFAULT_DRIVER_DIR "/usr/X11R6/lib/modules/dri"
+#endif
 
-struct __GLXDRIcontextPrivateRec {
-    __GLXDRIcontext base;
-    __DRIcontext *driContext;
-    XID hwContextID;
-    __GLXscreenConfigs *psc;
-};
+static __DRIdriver *Drivers = NULL;
+
+
+/*
+ * printf wrappers
+ */
+
+static void InfoMessageF(const char *f, ...)
+{
+    va_list args;
+    const char *env;
+
+    if ((env = getenv("LIBGL_DEBUG")) && strstr(env, "verbose")) {
+	fprintf(stderr, "libGL: ");
+	va_start(args, f);
+	vfprintf(stderr, f, args);
+	va_end(args);
+    }
+}
+
+/**
+ * Print error to stderr, unless LIBGL_DEBUG=="quiet".
+ */
+static void ErrorMessageF(const char *f, ...)
+{
+    va_list args;
+    const char *env;
+
+    if ((env = getenv("LIBGL_DEBUG")) && !strstr(env, "quiet")) {
+	fprintf(stderr, "libGL error: ");
+	va_start(args, f);
+	vfprintf(stderr, f, args);
+	va_end(args);
+    }
+}
+
+
+/**
+ * Extract the ith directory path out of a colon-separated list of paths.  No
+ * more than \c dirLen characters, including the terminating \c NUL, will be
+ * written to \c dir.
+ *
+ * \param index  Index of path to extract (starting at zero)
+ * \param paths  The colon-separated list of paths
+ * \param dirLen Maximum length of result to store in \c dir
+ * \param dir    Buffer to hold the extracted directory path
+ *
+ * \returns
+ * The number of characters that would have been written to \c dir had there
+ * been enough room.  This does not include the terminating \c NUL.  When
+ * extraction fails, zero will be returned.
+ * 
+ * \todo
+ * It seems like this function could be rewritten to use \c strchr.
+ */
+static size_t
+ExtractDir(int index, const char *paths, int dirLen, char *dir)
+{
+   int i, len;
+   const char *start, *end;
+
+   /* find ith colon */
+   start = paths;
+   i = 0;
+   while (i < index) {
+      if (*start == ':') {
+         i++;
+         start++;
+      }
+      else if (*start == 0) {
+         /* end of string and couldn't find ith colon */
+         dir[0] = 0;
+         return 0;
+      }
+      else {
+         start++;
+      }
+   }
+
+   while (*start == ':')
+      start++;
+
+   /* find next colon, or end of string */
+   end = start + 1;
+   while (*end != ':' && *end != 0) {
+      end++;
+   }
+
+   /* copy string between <start> and <end> into result string */
+   len = end - start;
+   if (len > dirLen - 1)
+      len = dirLen - 1;
+   strncpy(dir, start, len);
+   dir[len] = 0;
+
+   return( end - start );
+}
+
+
+/**
+ * Versioned name of the expected \c __driCreateNewScreen function.
+ * 
+ * The version of the last incompatible loader/driver inteface change is
+ * appended to the name of the \c __driCreateNewScreen function.  This
+ * prevents loaders from trying to load drivers that are too old.
+ * 
+ * \todo
+ * Create a macro or something so that this is automatically updated.
+ */
+static const char createNewScreenName[] = "__driCreateNewScreen_20050727";
+
+
+/**
+ * Try to \c dlopen the named driver.
+ *
+ * This function adds the "_dri.so" suffix to the driver name and searches the
+ * directories specified by the \c LIBGL_DRIVERS_PATH environment variable in
+ * order to find the driver.
+ *
+ * \param driverName - a name like "tdfx", "i810", "mga", etc.
+ *
+ * \returns
+ * A handle from \c dlopen, or \c NULL if driver file not found.
+ */
+static __DRIdriver *OpenDriver(const char *driverName)
+{
+   void *glhandle = NULL;
+   char *libPaths = NULL;
+   char libDir[1000];
+   int i;
+   __DRIdriver *driver;
+
+   /* First, search Drivers list to see if we've already opened this driver */
+   for (driver = Drivers; driver; driver = driver->next) {
+      if (strcmp(driver->name, driverName) == 0) {
+         /* found it */
+         return driver;
+      }
+   }
+
+   /* Attempt to make sure libGL symbols will be visible to the driver */
+   glhandle = dlopen("libGL.so.1", RTLD_NOW | RTLD_GLOBAL);
+
+   if (geteuid() == getuid()) {
+      /* don't allow setuid apps to use LIBGL_DRIVERS_PATH */
+      libPaths = getenv("LIBGL_DRIVERS_PATH");
+      if (!libPaths)
+         libPaths = getenv("LIBGL_DRIVERS_DIR"); /* deprecated */
+   }
+   if (!libPaths)
+      libPaths = DEFAULT_DRIVER_DIR;
+
+   for ( i = 0 ; ExtractDir(i, libPaths, 1000, libDir) != 0 ; i++ ) {
+      char realDriverName[200];
+      void *handle = NULL;
+
+      
+      /* If TLS support is enabled, try to open the TLS version of the driver
+       * binary first.  If that fails, try the non-TLS version.
+       */
+#ifdef GLX_USE_TLS
+      snprintf(realDriverName, 200, "%s/tls/%s_dri.so", libDir, driverName);
+      InfoMessageF("OpenDriver: trying %s\n", realDriverName);
+      handle = dlopen(realDriverName, RTLD_NOW | RTLD_GLOBAL);
+#endif
+
+      if ( handle == NULL ) {
+	 snprintf(realDriverName, 200, "%s/%s_dri.so", libDir, driverName);
+	 InfoMessageF("OpenDriver: trying %s\n", realDriverName);
+	 handle = dlopen(realDriverName, RTLD_NOW | RTLD_GLOBAL);
+      }
+
+      if ( handle != NULL ) {
+         /* allocate __DRIdriver struct */
+         driver = (__DRIdriver *) Xmalloc(sizeof(__DRIdriver));
+         if (!driver)
+            break; /* out of memory! */
+         /* init the struct */
+         driver->name = __glXstrdup(driverName);
+         if (!driver->name) {
+            Xfree(driver);
+            driver = NULL;
+            break; /* out of memory! */
+         }
+
+         driver->createNewScreenFunc = (PFNCREATENEWSCREENFUNC)
+            dlsym(handle, createNewScreenName);
+
+         if ( driver->createNewScreenFunc == NULL ) {
+            /* If the driver doesn't have this symbol then something's
+             * really, really wrong.
+             */
+            ErrorMessageF("%s not defined in %s_dri.so!\n"
+			  "Your driver may be too old for this libGL.\n",
+			  createNewScreenName, driverName);
+            Xfree(driver);
+            driver = NULL;
+            dlclose(handle);
+            continue;
+         }
+         driver->handle = handle;
+         /* put at head of linked list */
+         driver->next = Drivers;
+         Drivers = driver;
+         break;
+      }
+      else {
+	 ErrorMessageF("dlopen %s failed (%s)\n", realDriverName, dlerror());
+      }
+   }
+
+   if (!driver)
+      ErrorMessageF("unable to load driver: %s_dri.so\n", driverName);
+
+   if (glhandle)
+      dlclose(glhandle);
+
+   return driver;
+}
+
 
 /*
  * Given a display pointer and screen number, determine the name of
  * the DRI driver for the screen. (I.e. "r128", "tdfx", etc).
  * Return True for success, False for failure.
  */
-static Bool driGetDriverName(Display *dpy, int scrNum, char **driverName)
+static Bool GetDriverName(Display *dpy, int scrNum, char **driverName)
 {
    int directCapable;
    Bool b;
@@ -104,6 +317,25 @@ static Bool driGetDriverName(Display *dpy, int scrNum, char **driverName)
    return True;
 }
 
+
+/*
+ * Given a display pointer and screen number, return a __DRIdriver handle.
+ * Return NULL if anything goes wrong.
+ */
+__DRIdriver *driGetDriver(Display *dpy, int scrNum)
+{
+   char *driverName;
+   if (GetDriverName(dpy, scrNum, &driverName)) {
+      __DRIdriver *ret;
+      ret = OpenDriver(driverName);
+      if (driverName)
+     	 Xfree(driverName);
+      return ret;
+   }
+   return NULL;
+}
+
+
 /*
  * Exported function for querying the DRI driver for a given screen.
  *
@@ -113,7 +345,7 @@ static Bool driGetDriverName(Display *dpy, int scrNum, char **driverName)
 PUBLIC const char *glXGetScreenDriver (Display *dpy, int scrNum) {
    static char ret[32];
    char *driverName;
-   if (driGetDriverName(dpy, scrNum, &driverName)) {
+   if (GetDriverName(dpy, scrNum, &driverName)) {
       int len;
       if (!driverName)
 	 return NULL;
@@ -127,6 +359,7 @@ PUBLIC const char *glXGetScreenDriver (Display *dpy, int scrNum) {
    return NULL;
 }
 
+
 /*
  * Exported function for obtaining a driver's option list (UTF-8 encoded XML).
  *
@@ -138,532 +371,71 @@ PUBLIC const char *glXGetScreenDriver (Display *dpy, int scrNum) {
  *
  * Note: The driver remains opened after this function returns.
  */
-PUBLIC const char *glXGetDriverConfig (const char *driverName)
-{
-   void *handle = driOpenDriver (driverName);
-   if (handle)
-      return dlsym (handle, "__driConfigOptions");
+PUBLIC const char *glXGetDriverConfig (const char *driverName) {
+   __DRIdriver *driver = OpenDriver (driverName);
+   if (driver)
+      return dlsym (driver->handle, "__driConfigOptions");
    else
       return NULL;
 }
 
-#ifdef XDAMAGE_1_1_INTERFACE
-
-static GLboolean has_damage_post(Display *dpy)
-{
-    static GLboolean inited = GL_FALSE;
-    static GLboolean has_damage;
-
-    if (!inited) {
-	int major, minor;
-
-	if (XDamageQueryVersion(dpy, &major, &minor) &&
-	    major == 1 && minor >= 1)
-	{
-	    has_damage = GL_TRUE;
-	} else {
-	    has_damage = GL_FALSE;
-	}
-	inited = GL_TRUE;
-    }
-
-    return has_damage;
-}
-
-static void __glXReportDamage(__DRIdrawable *driDraw,
-			      int x, int y,
-			      drm_clip_rect_t *rects, int num_rects,
-			      GLboolean front_buffer,
-			      void *loaderPrivate)
-{
-    XRectangle *xrects;
-    XserverRegion region;
-    int i;
-    int x_off, y_off;
-    __GLXDRIdrawable *glxDraw = loaderPrivate;
-    __GLXscreenConfigs *psc = glxDraw->psc;
-    Display *dpy = psc->dpy;
-    Drawable drawable;
-
-    if (!has_damage_post(dpy))
-	return;
-
-    if (front_buffer) {
-	x_off = x;
-	y_off = y;
-	drawable = RootWindow(dpy, psc->scr);
-    } else{
-	x_off = 0;
-	y_off = 0;
-	drawable = glxDraw->xDrawable;
-    }
-
-    xrects = malloc(sizeof(XRectangle) * num_rects);
-    if (xrects == NULL)
-	return;
-
-    for (i = 0; i < num_rects; i++) {
-	xrects[i].x = rects[i].x1 + x_off;
-	xrects[i].y = rects[i].y1 + y_off;
-	xrects[i].width = rects[i].x2 - rects[i].x1;
-	xrects[i].height = rects[i].y2 - rects[i].y1;
-    }
-    region = XFixesCreateRegion(dpy, xrects, num_rects);
-    free(xrects);
-    XDamageAdd(dpy, drawable, region);
-    XFixesDestroyRegion(dpy, region);
-}
-
-static const __DRIdamageExtension damageExtension = {
-    { __DRI_DAMAGE, __DRI_DAMAGE_VERSION },
-    __glXReportDamage,
-};
-
-#endif
-
-static GLboolean
-__glXDRIGetDrawableInfo(__DRIdrawable *drawable,
-			unsigned int *index, unsigned int *stamp, 
-			int *X, int *Y, int *W, int *H,
-			int *numClipRects, drm_clip_rect_t ** pClipRects,
-			int *backX, int *backY,
-			int *numBackClipRects, drm_clip_rect_t **pBackClipRects,
-			void *loaderPrivate)
-{
-    __GLXDRIdrawable *glxDraw = loaderPrivate;
-    __GLXscreenConfigs *psc = glxDraw->psc;
-    Display *dpy = psc->dpy;
-
-    return XF86DRIGetDrawableInfo(dpy, psc->scr, glxDraw->drawable,
-				  index, stamp, X, Y, W, H,
-				  numClipRects, pClipRects,
-				  backX, backY,
-				  numBackClipRects, pBackClipRects);
-}
-
-static const __DRIgetDrawableInfoExtension getDrawableInfoExtension = {
-    { __DRI_GET_DRAWABLE_INFO, __DRI_GET_DRAWABLE_INFO_VERSION },
-    __glXDRIGetDrawableInfo
-};
-
-static const __DRIextension *loader_extensions[] = {
-    &systemTimeExtension.base,
-    &getDrawableInfoExtension.base,
-#ifdef XDAMAGE_1_1_INTERFACE
-    &damageExtension.base,
-#endif
-    NULL
-};
-
-#ifndef GLX_USE_APPLEGL
-
-/**
- * Perform the required libGL-side initialization and call the client-side
- * driver's \c __driCreateNewScreen function.
- * 
- * \param dpy    Display pointer.
- * \param scrn   Screen number on the display.
- * \param psc    DRI screen information.
- * \param driDpy DRI display information.
- * \param createNewScreen  Pointer to the client-side driver's
- *               \c __driCreateNewScreen function.
- * \returns A pointer to the \c __DRIscreenPrivate structure returned by
- *          the client-side driver on success, or \c NULL on failure.
- */
-static void *
-CallCreateNewScreen(Display *dpy, int scrn, __GLXscreenConfigs *psc,
-		    __GLXDRIdisplayPrivate * driDpy)
-{
-    void *psp = NULL;
-    drm_handle_t hSAREA;
-    drmAddress pSAREA = MAP_FAILED;
-    char *BusID;
-    __DRIversion   ddx_version;
-    __DRIversion   dri_version;
-    __DRIversion   drm_version;
-    __DRIframebuffer  framebuffer;
-    int   fd = -1;
-    int   status;
-
-    drm_magic_t magic;
-    drmVersionPtr version;
-    int newlyopened;
-    char *driverName;
-    drm_handle_t  hFB;
-    int        junk;
-    const __DRIconfig **driver_configs;
-
-    /* DRI protocol version. */
-    dri_version.major = driDpy->driMajor;
-    dri_version.minor = driDpy->driMinor;
-    dri_version.patch = driDpy->driPatch;
-
-    framebuffer.base = MAP_FAILED;
-    framebuffer.dev_priv = NULL;
-
-    if (!XF86DRIOpenConnection(dpy, scrn, &hSAREA, &BusID)) {
-	fprintf(stderr, "libGL error: XF86DRIOpenConnection failed\n");
-	goto handle_error;
-    }
-
-    fd = drmOpenOnce(NULL, BusID, &newlyopened);
-
-    Xfree(BusID); /* No longer needed */
-
-    if (fd < 0) {
-	fprintf(stderr, "libGL error: drmOpenOnce failed (%s)\n",
-		strerror(-fd));
-	goto handle_error;
-    }
-
-    if (drmGetMagic(fd, &magic)) {
-	fprintf(stderr, "libGL error: drmGetMagic failed\n");
-	goto handle_error;
-    }
-
-    version = drmGetVersion(fd);
-    if (version) {
-	drm_version.major = version->version_major;
-	drm_version.minor = version->version_minor;
-	drm_version.patch = version->version_patchlevel;
-	drmFreeVersion(version);
-    }
-    else {
-	drm_version.major = -1;
-	drm_version.minor = -1;
-	drm_version.patch = -1;
-    }
-
-    if (newlyopened && !XF86DRIAuthConnection(dpy, scrn, magic)) {
-	fprintf(stderr, "libGL error: XF86DRIAuthConnection failed\n");
-	goto handle_error;
-    }
-
-    /* Get device name (like "tdfx") and the ddx version numbers.
-     * We'll check the version in each DRI driver's "createNewScreen"
-     * function. */
-    if (!XF86DRIGetClientDriverName(dpy, scrn,
-				    &ddx_version.major,
-				    &ddx_version.minor,
-				    &ddx_version.patch,
-				    &driverName)) {
-	fprintf(stderr, "libGL error: XF86DRIGetClientDriverName failed\n");
-	goto handle_error;
-    }
-
-    Xfree(driverName); /* No longer needed. */
-
-    /*
-     * Get device-specific info.  pDevPriv will point to a struct
-     * (such as DRIRADEONRec in xfree86/driver/ati/radeon_dri.h) that
-     * has information about the screen size, depth, pitch, ancilliary
-     * buffers, DRM mmap handles, etc.
-     */
-    if (!XF86DRIGetDeviceInfo(dpy, scrn, &hFB, &junk,
-			      &framebuffer.size, &framebuffer.stride,
-			      &framebuffer.dev_priv_size, &framebuffer.dev_priv)) {
-	fprintf(stderr, "libGL error: XF86DRIGetDeviceInfo failed");
-	goto handle_error;
-    }
-
-    framebuffer.width = DisplayWidth(dpy, scrn);
-    framebuffer.height = DisplayHeight(dpy, scrn);
-
-    /* Map the framebuffer region. */
-    status = drmMap(fd, hFB, framebuffer.size, 
-		    (drmAddressPtr)&framebuffer.base);
-    if (status != 0) {
-	fprintf(stderr, "libGL error: drmMap of framebuffer failed (%s)",
-		strerror(-status));
-	goto handle_error;
-    }
-
-    /* Map the SAREA region.  Further mmap regions may be setup in
-     * each DRI driver's "createNewScreen" function.
-     */
-    status = drmMap(fd, hSAREA, SAREA_MAX, &pSAREA);
-    if (status != 0) {
-	fprintf(stderr, "libGL error: drmMap of SAREA failed (%s)",
-		strerror(-status));
-	goto handle_error;
-    }
-
-    psp = (*psc->legacy->createNewScreen)(scrn,
-					  &ddx_version,
-					  &dri_version,
-					  &drm_version,
-					  &framebuffer,
-					  pSAREA,
-					  fd,
-					  loader_extensions,
-					  &driver_configs,
-					  psc);
-
-    if (psp == NULL) {
-	fprintf(stderr, "libGL error: Calling driver entry point failed");
-	goto handle_error;
-    }
-
-    psc->configs = driConvertConfigs(psc->core, psc->configs, driver_configs);
-    psc->visuals = driConvertConfigs(psc->core, psc->visuals, driver_configs);
-
-    return psp;
-
- handle_error:
-    if (pSAREA != MAP_FAILED)
-	drmUnmap(pSAREA, SAREA_MAX);
-
-    if (framebuffer.base != MAP_FAILED)
-	drmUnmap((drmAddress)framebuffer.base, framebuffer.size);
-
-    if (framebuffer.dev_priv != NULL)
-	Xfree(framebuffer.dev_priv);
-
-    if (fd >= 0)
-	drmCloseOnce(fd);
-
-    XF86DRICloseConnection(dpy, scrn);
-
-    fprintf(stderr, "libGL error: reverting to (slow) indirect rendering\n");
-
-    return NULL;
-}
-
-#else /* !GLX_USE_APPLEGL */
-
-static void *
-CallCreateNewScreen(Display *dpy, int scrn, __GLXscreenConfigs *psc,
-		    __GLXDRIdisplayPrivate * driDpy)
-{
-    return NULL;
-}
-
-#endif /* !GLX_USE_APPLEGL */
-
-static void driDestroyContext(__GLXDRIcontext *context,
-			      __GLXscreenConfigs *psc, Display *dpy)
-{
-    __GLXDRIcontextPrivate *pcp = (__GLXDRIcontextPrivate *) context;
-			
-    (*psc->core->destroyContext)(pcp->driContext);
-
-    XF86DRIDestroyContext(psc->dpy, psc->scr, pcp->hwContextID);
-}
-
-static Bool driBindContext(__GLXDRIcontext *context,
-			   __GLXDRIdrawable *draw, __GLXDRIdrawable *read)
-{
-    __GLXDRIcontextPrivate *pcp = (__GLXDRIcontextPrivate *) context;
-    const __DRIcoreExtension *core = pcp->psc->core;
-
-    return (*core->bindContext)(pcp->driContext,
-				draw->driDrawable,
-				read->driDrawable);
-}
-
-static void driUnbindContext(__GLXDRIcontext *context)
-{
-    __GLXDRIcontextPrivate *pcp = (__GLXDRIcontextPrivate *) context;
-    const __DRIcoreExtension *core = pcp->psc->core;
-
-    (*core->unbindContext)(pcp->driContext);
-}
-
-static __GLXDRIcontext *driCreateContext(__GLXscreenConfigs *psc,
-					 const __GLcontextModes *mode,
-					 GLXContext gc,
-					 GLXContext shareList, int renderType)
-{
-    __GLXDRIcontextPrivate *pcp, *pcp_shared;
-    drm_context_t hwContext;
-    __DRIcontext *shared = NULL;
-    __GLXDRIconfigPrivate *config = (__GLXDRIconfigPrivate *) mode;
-
-    if (!psc || !psc->driScreen)
-	return NULL;
-
-    if (shareList) {
-	pcp_shared = (__GLXDRIcontextPrivate *) shareList->driContext;
-	shared = pcp_shared->driContext;
-    }
-
-    pcp = Xmalloc(sizeof *pcp);
-    if (pcp == NULL)
-	return NULL;
-
-    pcp->psc = psc;
-    if (!XF86DRICreateContextWithConfig(psc->dpy, psc->scr,
-					mode->visualID,
-					&pcp->hwContextID, &hwContext)) {
-	Xfree(pcp);
-	return NULL;
-    }
-
-    pcp->driContext =
-        (*psc->legacy->createNewContext)(psc->__driScreen,
-					 config->driConfig,
-					 renderType,
-					 shared,
-					 hwContext,
-					 pcp);
-    if (pcp->driContext == NULL) {
-	XF86DRIDestroyContext(psc->dpy, psc->scr, pcp->hwContextID);
-	Xfree(pcp);
-	return NULL;
-    }
-
-    pcp->base.destroyContext = driDestroyContext;
-    pcp->base.bindContext = driBindContext;
-    pcp->base.unbindContext = driUnbindContext;
-
-    return &pcp->base;
-}
-
-static void driDestroyDrawable(__GLXDRIdrawable *pdraw)
-{
-    __GLXscreenConfigs *psc = pdraw->psc;
-
-    (*psc->core->destroyDrawable)(pdraw->driDrawable);
-    XF86DRIDestroyDrawable(psc->dpy, psc->scr, pdraw->drawable);
-    Xfree(pdraw);
-}
-
-static __GLXDRIdrawable *driCreateDrawable(__GLXscreenConfigs *psc,
-					   XID xDrawable,
-					   GLXDrawable drawable,
-					   const __GLcontextModes *modes)
-{
-    __GLXDRIdrawable *pdraw;
-    drm_drawable_t hwDrawable;
-    void *empty_attribute_list = NULL;
-    __GLXDRIconfigPrivate *config = (__GLXDRIconfigPrivate *) modes;
-
-    /* Old dri can't handle GLX 1.3+ drawable constructors. */
-    if (xDrawable != drawable)
-	return NULL;
-
-    pdraw = Xmalloc(sizeof(*pdraw));
-    if (!pdraw)
-	return NULL;
-
-    pdraw->drawable = drawable;
-    pdraw->psc = psc;
-
-    if (!XF86DRICreateDrawable(psc->dpy, psc->scr, drawable, &hwDrawable))
-	return NULL;
-
-    /* Create a new drawable */
-    pdraw->driDrawable =
-	(*psc->legacy->createNewDrawable)(psc->__driScreen,
-					  config->driConfig,
-					  hwDrawable,
-					  GLX_WINDOW_BIT,
-					  empty_attribute_list,
-					  pdraw);
-
-    if (!pdraw->driDrawable) {
-	XF86DRIDestroyDrawable(psc->dpy, psc->scr, drawable);
-	Xfree(pdraw);
-	return NULL;
-    }
-
-    pdraw->destroyDrawable = driDestroyDrawable;
-
-    return pdraw;
-}
-
-static void driDestroyScreen(__GLXscreenConfigs *psc)
-{
-    /* Free the direct rendering per screen data */
-    if (psc->__driScreen)
-	(*psc->core->destroyScreen)(psc->__driScreen);
-    psc->__driScreen = NULL;
-    if (psc->driver)
-	dlclose(psc->driver);
-}
-
-static __GLXDRIscreen *driCreateScreen(__GLXscreenConfigs *psc, int screen,
-				       __GLXdisplayPrivate *priv)
-{
-    __GLXDRIdisplayPrivate *pdp;
-    __GLXDRIscreen *psp;
-    const __DRIextension **extensions;
-    char *driverName;
-    int i;
-
-    psp = Xmalloc(sizeof *psp);
-    if (psp == NULL)
-	return NULL;
-
-    /* Initialize per screen dynamic client GLX extensions */
-    psc->ext_list_first_time = GL_TRUE;
-
-    if (!driGetDriverName(priv->dpy, screen, &driverName)) {
-	Xfree(psp);
-	return NULL;
-    }
-
-    psc->driver = driOpenDriver(driverName);
-    Xfree(driverName);
-    if (psc->driver == NULL) {
-	Xfree(psp);
-	return NULL;
-    }
-
-    extensions = dlsym(psc->driver, __DRI_DRIVER_EXTENSIONS);
-    if (extensions == NULL) {
- 	ErrorMessageF("driver exports no extensions (%s)\n", dlerror());
-	Xfree(psp);
-	return NULL;
-    }
-
-    for (i = 0; extensions[i]; i++) {
-	if (strcmp(extensions[i]->name, __DRI_CORE) == 0)
-	    psc->core = (__DRIcoreExtension *) extensions[i];
-	if (strcmp(extensions[i]->name, __DRI_LEGACY) == 0)
-	    psc->legacy = (__DRIlegacyExtension *) extensions[i];
-    }
-
-    if (psc->core == NULL || psc->legacy == NULL) {
-	Xfree(psp);
-	return NULL;
-    }
-  
-    pdp = (__GLXDRIdisplayPrivate *) priv->driDisplay;
-    psc->__driScreen =
- 	CallCreateNewScreen(psc->dpy, screen, psc, pdp);
-    if (psc->__driScreen == NULL) {
- 	dlclose(psc->driver);
- 	Xfree(psp);
- 	return NULL;
-    }
-
-    driBindExtensions(psc);
-
-    psp->destroyScreen = driDestroyScreen;
-    psp->createContext = driCreateContext;
-    psp->createDrawable = driCreateDrawable;
-
-    return psp;
-}
 
 /* Called from __glXFreeDisplayPrivate.
  */
-static void driDestroyDisplay(__GLXDRIdisplay *dpy)
+static void driDestroyDisplay(Display *dpy, void *private)
 {
-    Xfree(dpy);
+    __DRIdisplayPrivate *pdpyp = (__DRIdisplayPrivate *)private;
+
+    if (pdpyp) {
+        const int numScreens = ScreenCount(dpy);
+        int i;
+        for (i = 0; i < numScreens; i++) {
+	   if (pdpyp->libraryHandles[i]) {
+	      __DRIdriver *driver, *prev;
+
+	      /* Remove driver from Drivers list */
+	      for (prev = NULL, driver = Drivers; driver;
+		   prev = driver, driver = driver->next) {
+		 if (driver->handle == pdpyp->libraryHandles[i]) {
+		    if (prev)
+		       prev->next = driver->next;
+		    else
+		       Drivers = driver->next;
+
+		    Xfree(driver->name);
+		    Xfree(driver);
+		    break;
+		 }
+	      }
+
+	      dlclose(pdpyp->libraryHandles[i]);
+	   }
+        }
+        Xfree(pdpyp->libraryHandles);
+	Xfree(pdpyp);
+    }
 }
+
 
 /*
  * Allocate, initialize and return a __DRIdisplayPrivate object.
  * This is called from __glXInitialize() when we are given a new
  * display pointer.
  */
-_X_HIDDEN __GLXDRIdisplay *driCreateDisplay(Display *dpy)
+void *driCreateDisplay(Display *dpy, __DRIdisplay *pdisp)
 {
-    __GLXDRIdisplayPrivate *pdpyp;
+    const int numScreens = ScreenCount(dpy);
+    __DRIdisplayPrivate *pdpyp;
     int eventBase, errorBase;
     int major, minor, patch;
+    int scrn;
+
+    /* Initialize these fields to NULL in case we fail.
+     * If we don't do this we may later get segfaults trying to free random
+     * addresses when the display is closed.
+     */
+    pdisp->private = NULL;
+    pdisp->destroyDisplay = NULL;
 
     if (!XF86DRIQueryExtension(dpy, &eventBase, &errorBase)) {
 	return NULL;
@@ -673,7 +445,7 @@ _X_HIDDEN __GLXDRIdisplay *driCreateDisplay(Display *dpy)
 	return NULL;
     }
 
-    pdpyp = Xmalloc(sizeof *pdpyp);
+    pdpyp = (__DRIdisplayPrivate *)Xmalloc(sizeof(__DRIdisplayPrivate));
     if (!pdpyp) {
 	return NULL;
     }
@@ -682,10 +454,41 @@ _X_HIDDEN __GLXDRIdisplay *driCreateDisplay(Display *dpy)
     pdpyp->driMinor = minor;
     pdpyp->driPatch = patch;
 
-    pdpyp->base.destroyDisplay = driDestroyDisplay;
-    pdpyp->base.createScreen = driCreateScreen;
+    pdisp->destroyDisplay = driDestroyDisplay;
 
-    return &pdpyp->base;
+    /* allocate array of pointers to createNewScreen funcs */
+    pdisp->createNewScreen = (PFNCREATENEWSCREENFUNC *)
+      Xmalloc(numScreens * sizeof(void *));
+    if (!pdisp->createNewScreen) {
+       Xfree(pdpyp);
+       return NULL;
+    }
+
+    /* allocate array of library handles */
+    pdpyp->libraryHandles = (void **) Xmalloc(numScreens * sizeof(void*));
+    if (!pdpyp->libraryHandles) {
+       Xfree(pdisp->createNewScreen);
+       Xfree(pdpyp);
+       return NULL;
+    }
+
+    /* dynamically discover DRI drivers for all screens, saving each
+     * driver's "__driCreateScreen" function pointer.  That's the bootstrap
+     * entrypoint for all DRI drivers.
+     */
+    for (scrn = 0; scrn < numScreens; scrn++) {
+        __DRIdriver *driver = driGetDriver(dpy, scrn);
+        if (driver) {
+           pdisp->createNewScreen[scrn] = driver->createNewScreenFunc;
+           pdpyp->libraryHandles[scrn] = driver->handle;
+        }
+        else {
+           pdisp->createNewScreen[scrn] = NULL;
+           pdpyp->libraryHandles[scrn] = NULL;
+        }
+    }
+
+    return (void *)pdpyp;
 }
 
 #endif /* GLX_DIRECT_RENDERING */

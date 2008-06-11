@@ -336,8 +336,7 @@ _gl_get_context_mode_data(const __GLcontextModes *mode, int attribute,
 	*value_return = mode->bindToTextureRgba;
 	return 0;
       case GLX_BIND_TO_MIPMAP_TEXTURE_EXT:
-	*value_return = mode->bindToMipmapTexture == GL_TRUE ? GL_TRUE :
-	    GL_FALSE;
+	*value_return = mode->bindToMipmapTexture;
 	return 0;
       case GLX_BIND_TO_TEXTURE_TARGETS_EXT:
 	*value_return = mode->bindToTextureTargets;
@@ -418,7 +417,7 @@ _gl_context_modes_create( unsigned count, size_t minimum_size )
       (*next)->bindToTextureRgb = GLX_DONT_CARE;
       (*next)->bindToTextureRgba = GLX_DONT_CARE;
       (*next)->bindToMipmapTexture = GLX_DONT_CARE;
-      (*next)->bindToTextureTargets = GLX_DONT_CARE;
+      (*next)->bindToTextureTargets = 0;
       (*next)->yInverted = GLX_DONT_CARE;
 
       next = & ((*next)->next);
@@ -457,28 +456,19 @@ _gl_context_modes_destroy( __GLcontextModes * modes )
  */
 
 __GLcontextModes *
-_gl_context_modes_find_visual(__GLcontextModes *modes, int vid)
+_gl_context_modes_find_visual( __GLcontextModes * modes, int vid )
 {
-    __GLcontextModes *m;
+    while ( modes != NULL ) {
+	if ( modes->visualID == vid ) {
+	    break;
+	}
 
-    for (m = modes; m != NULL; m = m->next)
-	if (m->visualID == vid)
-	    return m;
+	modes = modes->next;
+    }
 
-    return NULL;
+    return modes;
 }
 
-__GLcontextModes *
-_gl_context_modes_find_fbconfig(__GLcontextModes *modes, int fbid)
-{
-    __GLcontextModes *m;
-
-    for (m = modes; m != NULL; m = m->next)
-	if (m->fbconfigID == fbid)
-	    return m;
-
-    return NULL;
-}
 
 /**
  * Determine if two context-modes are the same.  This is intended to be used

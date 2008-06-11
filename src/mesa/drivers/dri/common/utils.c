@@ -419,6 +419,21 @@ driCheckDriDdxDrmVersions2(const char * driver_name,
 				drmActual, drmExpected);
 }
 
+
+
+GLint
+driIntersectArea( drm_clip_rect_t rect1, drm_clip_rect_t rect2 )
+{
+   if (rect2.x1 > rect1.x1) rect1.x1 = rect2.x1;
+   if (rect2.x2 < rect1.x2) rect1.x2 = rect2.x2;
+   if (rect2.y1 > rect1.y1) rect1.y1 = rect2.y1;
+   if (rect2.y2 < rect1.y2) rect1.y2 = rect2.y2;
+
+   if (rect1.x1 > rect1.x2 || rect1.y1 > rect1.y2) return 0;
+
+   return (rect1.x2 - rect1.x1) * (rect1.y2 - rect1.y1);
+}
+
 GLboolean driClipRectToFramebuffer( const GLframebuffer *buffer,
 				    GLint *x, GLint *y,
 				    GLsizei *width, GLsizei *height )
@@ -451,6 +466,8 @@ GLboolean driClipRectToFramebuffer( const GLframebuffer *buffer,
 
    return GL_TRUE;
 }
+
+
 
 /**
  * Creates a set of \c __GLcontextModes that a driver will expose.
@@ -519,99 +536,86 @@ GLboolean driClipRectToFramebuffer( const GLframebuffer *buffer,
  * \c GL_UNSIGNED_3BYTE_8_8_8, \c GL_4FLOAT_32_32_32_32, 
  * \c GL_4HALF_16_16_16_16, etc.  We can cross that bridge when we come to it.
  */
-__DRIconfig **
-driCreateConfigs(GLenum fb_format, GLenum fb_type,
-		 const u_int8_t * depth_bits, const u_int8_t * stencil_bits,
-		 unsigned num_depth_stencil_bits,
-		 const GLenum * db_modes, unsigned num_db_modes)
+GLboolean
+driFillInModes( __GLcontextModes ** ptr_to_modes,
+		GLenum fb_format, GLenum fb_type,
+		const u_int8_t * depth_bits, const u_int8_t * stencil_bits,
+		unsigned num_depth_stencil_bits,
+		const GLenum * db_modes, unsigned num_db_modes,
+		int visType )
 {
-   static const u_int8_t bits_table[4][4] = {
+   static const u_int8_t bits_table[3][4] = {
      /* R  G  B  A */
-      { 3, 3, 2, 0 }, /* Any GL_UNSIGNED_BYTE_3_3_2 */
       { 5, 6, 5, 0 }, /* Any GL_UNSIGNED_SHORT_5_6_5 */
       { 8, 8, 8, 0 }, /* Any RGB with any GL_UNSIGNED_INT_8_8_8_8 */
       { 8, 8, 8, 8 }  /* Any RGBA with any GL_UNSIGNED_INT_8_8_8_8 */
    };
 
-   static const u_int32_t masks_table_rgb[6][4] = {
-      { 0x000000E0, 0x0000001C, 0x00000003, 0x00000000 }, /* 3_3_2       */
-      { 0x00000007, 0x00000038, 0x000000C0, 0x00000000 }, /* 2_3_3_REV   */
+   /* The following arrays are all indexed by the fb_type masked with 0x07.
+    * Given the four supported fb_type values, this results in valid array
+    * indices of 3, 4, 5, and 7.
+    */
+   static const u_int32_t masks_table_rgb[8][4] = {
+      { 0x00000000, 0x00000000, 0x00000000, 0x00000000 },
+      { 0x00000000, 0x00000000, 0x00000000, 0x00000000 },
+      { 0x00000000, 0x00000000, 0x00000000, 0x00000000 },
       { 0x0000F800, 0x000007E0, 0x0000001F, 0x00000000 }, /* 5_6_5       */
       { 0x0000001F, 0x000007E0, 0x0000F800, 0x00000000 }, /* 5_6_5_REV   */
       { 0xFF000000, 0x00FF0000, 0x0000FF00, 0x00000000 }, /* 8_8_8_8     */
+      { 0x00000000, 0x00000000, 0x00000000, 0x00000000 },
       { 0x000000FF, 0x0000FF00, 0x00FF0000, 0x00000000 }  /* 8_8_8_8_REV */
    };
 
-   static const u_int32_t masks_table_rgba[6][4] = {
-      { 0x000000E0, 0x0000001C, 0x00000003, 0x00000000 }, /* 3_3_2       */
-      { 0x00000007, 0x00000038, 0x000000C0, 0x00000000 }, /* 2_3_3_REV   */
+   static const u_int32_t masks_table_rgba[8][4] = {
+      { 0x00000000, 0x00000000, 0x00000000, 0x00000000 },
+      { 0x00000000, 0x00000000, 0x00000000, 0x00000000 },
+      { 0x00000000, 0x00000000, 0x00000000, 0x00000000 },
       { 0x0000F800, 0x000007E0, 0x0000001F, 0x00000000 }, /* 5_6_5       */
       { 0x0000001F, 0x000007E0, 0x0000F800, 0x00000000 }, /* 5_6_5_REV   */
       { 0xFF000000, 0x00FF0000, 0x0000FF00, 0x000000FF }, /* 8_8_8_8     */
+      { 0x00000000, 0x00000000, 0x00000000, 0x00000000 },
       { 0x000000FF, 0x0000FF00, 0x00FF0000, 0xFF000000 }, /* 8_8_8_8_REV */
    };
 
-   static const u_int32_t masks_table_bgr[6][4] = {
-      { 0x00000007, 0x00000038, 0x000000C0, 0x00000000 }, /* 3_3_2       */
-      { 0x000000E0, 0x0000001C, 0x00000003, 0x00000000 }, /* 2_3_3_REV   */
+   static const u_int32_t masks_table_bgr[8][4] = {
+      { 0x00000000, 0x00000000, 0x00000000, 0x00000000 },
+      { 0x00000000, 0x00000000, 0x00000000, 0x00000000 },
+      { 0x00000000, 0x00000000, 0x00000000, 0x00000000 },
       { 0x0000001F, 0x000007E0, 0x0000F800, 0x00000000 }, /* 5_6_5       */
       { 0x0000F800, 0x000007E0, 0x0000001F, 0x00000000 }, /* 5_6_5_REV   */
       { 0x0000FF00, 0x00FF0000, 0xFF000000, 0x00000000 }, /* 8_8_8_8     */
+      { 0x00000000, 0x00000000, 0x00000000, 0x00000000 },
       { 0x00FF0000, 0x0000FF00, 0x000000FF, 0x00000000 }, /* 8_8_8_8_REV */
    };
 
-   static const u_int32_t masks_table_bgra[6][4] = {
-      { 0x00000007, 0x00000038, 0x000000C0, 0x00000000 }, /* 3_3_2       */
-      { 0x000000E0, 0x0000001C, 0x00000003, 0x00000000 }, /* 2_3_3_REV   */
+   static const u_int32_t masks_table_bgra[8][4] = {
+      { 0x00000000, 0x00000000, 0x00000000, 0x00000000 },
+      { 0x00000000, 0x00000000, 0x00000000, 0x00000000 },
+      { 0x00000000, 0x00000000, 0x00000000, 0x00000000 },
       { 0x0000001F, 0x000007E0, 0x0000F800, 0x00000000 }, /* 5_6_5       */
       { 0x0000F800, 0x000007E0, 0x0000001F, 0x00000000 }, /* 5_6_5_REV   */
       { 0x0000FF00, 0x00FF0000, 0xFF000000, 0x000000FF }, /* 8_8_8_8     */
+      { 0x00000000, 0x00000000, 0x00000000, 0x00000000 },
       { 0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000 }, /* 8_8_8_8_REV */
    };
 
-   static const u_int8_t bytes_per_pixel[6] = {
-      1, /* 3_3_2       */
-      1, /* 2_3_3_REV   */
-      2, /* 5_6_5       */
-      2, /* 5_6_5_REV   */
-      4, /* 8_8_8_8     */
-      4  /* 8_8_8_8_REV */
+   static const u_int8_t bytes_per_pixel[8] = {
+      0, 0, 0, 2, 2, 4, 0, 4
    };
 
    const u_int8_t  * bits;
    const u_int32_t * masks;
-   int index;
-   __DRIconfig **configs, **c;
-   __GLcontextModes *modes;
+   const int index = fb_type & 0x07;
+   __GLcontextModes * modes = *ptr_to_modes;
    unsigned i;
    unsigned j;
    unsigned k;
-   unsigned num_modes;
-   unsigned num_accum_bits = 2;
 
-   switch ( fb_type ) {
-      case GL_UNSIGNED_BYTE_3_3_2:
-	 index = 0;
-	 break;
-      case GL_UNSIGNED_BYTE_2_3_3_REV:
-	 index = 1;
-	 break;
-      case GL_UNSIGNED_SHORT_5_6_5:
-	 index = 2;
-	 break;
-      case GL_UNSIGNED_SHORT_5_6_5_REV:
-	 index = 3;
-	 break;
-      case GL_UNSIGNED_INT_8_8_8_8:
-	 index = 4;
-	 break;
-      case GL_UNSIGNED_INT_8_8_8_8_REV:
-	 index = 5;
-	 break;
-      default:
-	 fprintf( stderr, "[%s:%u] Unknown framebuffer type 0x%04x.\n",
-               __FUNCTION__, __LINE__, fb_type );
-	 return NULL;
+
+   if ( bytes_per_pixel[ index ] == 0 ) {
+      fprintf( stderr, "[%s:%u] Framebuffer type 0x%04x has 0 bytes per pixel.\n",
+	       __FUNCTION__, __LINE__, fb_type );
+      return GL_FALSE;
    }
 
 
@@ -623,55 +627,40 @@ driCreateConfigs(GLenum fb_format, GLenum fb_type,
 
    switch ( fb_format ) {
       case GL_RGB:
+         bits = (bytes_per_pixel[ index ] == 2)
+	     ? bits_table[0] : bits_table[1];
          masks = masks_table_rgb[ index ];
          break;
 
       case GL_RGBA:
+         bits = (bytes_per_pixel[ index ] == 2)
+	     ? bits_table[0] : bits_table[2];
          masks = masks_table_rgba[ index ];
          break;
 
       case GL_BGR:
+         bits = (bytes_per_pixel[ index ] == 2)
+	     ? bits_table[0] : bits_table[1];
          masks = masks_table_bgr[ index ];
          break;
 
       case GL_BGRA:
+         bits = (bytes_per_pixel[ index ] == 2)
+	     ? bits_table[0] : bits_table[2];
          masks = masks_table_bgra[ index ];
          break;
 
       default:
-         fprintf( stderr, "[%s:%u] Unknown framebuffer format 0x%04x.\n",
-               __FUNCTION__, __LINE__, fb_format );
-         return NULL;
+         fprintf( stderr, "[%s:%u] Framebuffer format 0x%04x is not GL_RGB, GL_RGBA, GL_BGR, or GL_BGRA.\n",
+	       __FUNCTION__, __LINE__, fb_format );
+         return GL_FALSE;
    }
 
-   switch ( bytes_per_pixel[ index ] ) {
-      case 1:
-	 bits = bits_table[0];
-	 break;
-      case 2:
-	 bits = bits_table[1];
-	 break;
-      default:
-	 bits = ((fb_format == GL_RGB) || (fb_format == GL_BGR))
-	    ? bits_table[2]
-	    : bits_table[3];
-	 break;
-   }
 
-   num_modes = num_depth_stencil_bits * num_db_modes * num_accum_bits;
-   configs = _mesa_calloc((num_modes + 1) * sizeof *configs);
-   if (configs == NULL)
-       return NULL;
-
-    c = configs;
     for ( k = 0 ; k < num_depth_stencil_bits ; k++ ) {
 	for ( i = 0 ; i < num_db_modes ; i++ ) {
-	    for ( j = 0 ; j < num_accum_bits ; j++ ) {
-		*c = _mesa_malloc (sizeof **c);
-		modes = &(*c)->modes;
-		c++;
+	    for ( j = 0 ; j < 2 ; j++ ) {
 
-		memset(modes, 0, sizeof *modes);
 		modes->redBits   = bits[0];
 		modes->greenBits = bits[1];
 		modes->blueBits  = bits[2];
@@ -692,13 +681,7 @@ driCreateConfigs(GLenum fb_format, GLenum fb_type,
 		modes->stencilBits = stencil_bits[k];
 		modes->depthBits = depth_bits[k];
 
-		modes->transparentPixel = GLX_NONE;
-		modes->transparentRed = GLX_DONT_CARE;
-		modes->transparentGreen = GLX_DONT_CARE;
-		modes->transparentBlue = GLX_DONT_CARE;
-		modes->transparentAlpha = GLX_DONT_CARE;
-		modes->transparentIndex = GLX_DONT_CARE;
-		modes->visualType = GLX_DONT_CARE;
+		modes->visualType = visType;
 		modes->renderType = GLX_RGBA_BIT;
 		modes->drawableType = GLX_WINDOW_BIT;
 		modes->rgbMode = GL_TRUE;
@@ -718,155 +701,11 @@ driCreateConfigs(GLenum fb_format, GLenum fb_type,
 		modes->haveDepthBuffer = (modes->depthBits > 0);
 		modes->haveStencilBuffer = (modes->stencilBits > 0);
 
-		modes->bindToTextureRgb = GL_TRUE;
-		modes->bindToTextureRgba = GL_TRUE;
-		modes->bindToMipmapTexture = GL_FALSE;
-		modes->bindToTextureTargets = modes->rgbMode ?
-		    __DRI_ATTRIB_TEXTURE_1D_BIT |
-		    __DRI_ATTRIB_TEXTURE_2D_BIT |
-		    __DRI_ATTRIB_TEXTURE_RECTANGLE_BIT :
-		    0;
+		modes = modes->next;
 	    }
 	}
     }
-    *c = NULL;
 
-    return configs;
-}
-
-const __DRIconfig **driConcatConfigs(__DRIconfig **a, __DRIconfig **b)
-{
-    const __DRIconfig **all;
-    int i, j, index;
-
-    i = 0;
-    while (a[i] != NULL)
-	i++;
-    j = 0;
-    while (b[j] != NULL)
-	j++;
-   
-    all = _mesa_malloc((i + j + 1) * sizeof *all);
-    index = 0;
-    for (i = 0; a[i] != NULL; i++)
-	all[index++] = a[i];
-    for (j = 0; b[j] != NULL; j++)
-	all[index++] = b[j];
-    all[index++] = NULL;
-
-    _mesa_free(a);
-    _mesa_free(b);
-
-    return all;
-}
-
-#define __ATTRIB(attrib, field) \
-    { attrib, offsetof(__GLcontextModes, field) }
-
-static const struct { unsigned int attrib, offset; } attribMap[] = {
-    __ATTRIB(__DRI_ATTRIB_BUFFER_SIZE,			rgbBits),
-    __ATTRIB(__DRI_ATTRIB_LEVEL,			level),
-    __ATTRIB(__DRI_ATTRIB_RED_SIZE,			redBits),
-    __ATTRIB(__DRI_ATTRIB_GREEN_SIZE,			greenBits),
-    __ATTRIB(__DRI_ATTRIB_BLUE_SIZE,			blueBits),
-    __ATTRIB(__DRI_ATTRIB_ALPHA_SIZE,			alphaBits),
-    __ATTRIB(__DRI_ATTRIB_DEPTH_SIZE,			depthBits),
-    __ATTRIB(__DRI_ATTRIB_STENCIL_SIZE,			stencilBits),
-    __ATTRIB(__DRI_ATTRIB_ACCUM_RED_SIZE,		accumRedBits),
-    __ATTRIB(__DRI_ATTRIB_ACCUM_GREEN_SIZE,		accumGreenBits),
-    __ATTRIB(__DRI_ATTRIB_ACCUM_BLUE_SIZE,		accumBlueBits),
-    __ATTRIB(__DRI_ATTRIB_ACCUM_ALPHA_SIZE,		accumAlphaBits),
-    __ATTRIB(__DRI_ATTRIB_SAMPLE_BUFFERS,		sampleBuffers),
-    __ATTRIB(__DRI_ATTRIB_SAMPLES,			samples),
-    __ATTRIB(__DRI_ATTRIB_DOUBLE_BUFFER,		doubleBufferMode),
-    __ATTRIB(__DRI_ATTRIB_STEREO,			stereoMode),
-    __ATTRIB(__DRI_ATTRIB_AUX_BUFFERS,			numAuxBuffers),
-    __ATTRIB(__DRI_ATTRIB_TRANSPARENT_TYPE,		transparentPixel),
-    __ATTRIB(__DRI_ATTRIB_TRANSPARENT_INDEX_VALUE,	transparentPixel),
-    __ATTRIB(__DRI_ATTRIB_TRANSPARENT_RED_VALUE,	transparentRed),
-    __ATTRIB(__DRI_ATTRIB_TRANSPARENT_GREEN_VALUE,	transparentGreen),
-    __ATTRIB(__DRI_ATTRIB_TRANSPARENT_BLUE_VALUE,	transparentBlue),
-    __ATTRIB(__DRI_ATTRIB_TRANSPARENT_ALPHA_VALUE,	transparentAlpha),
-    __ATTRIB(__DRI_ATTRIB_FLOAT_MODE,			floatMode),
-    __ATTRIB(__DRI_ATTRIB_RED_MASK,			redMask),
-    __ATTRIB(__DRI_ATTRIB_GREEN_MASK,			greenMask),
-    __ATTRIB(__DRI_ATTRIB_BLUE_MASK,			blueMask),
-    __ATTRIB(__DRI_ATTRIB_ALPHA_MASK,			alphaMask),
-    __ATTRIB(__DRI_ATTRIB_MAX_PBUFFER_WIDTH,		maxPbufferWidth),
-    __ATTRIB(__DRI_ATTRIB_MAX_PBUFFER_HEIGHT,		maxPbufferHeight),
-    __ATTRIB(__DRI_ATTRIB_MAX_PBUFFER_PIXELS,		maxPbufferPixels),
-    __ATTRIB(__DRI_ATTRIB_OPTIMAL_PBUFFER_WIDTH,	optimalPbufferWidth),
-    __ATTRIB(__DRI_ATTRIB_OPTIMAL_PBUFFER_HEIGHT,	optimalPbufferHeight),
-    __ATTRIB(__DRI_ATTRIB_SWAP_METHOD,			swapMethod),
-    __ATTRIB(__DRI_ATTRIB_BIND_TO_TEXTURE_RGB,		bindToTextureRgb),
-    __ATTRIB(__DRI_ATTRIB_BIND_TO_TEXTURE_RGBA,		bindToTextureRgba),
-    __ATTRIB(__DRI_ATTRIB_BIND_TO_MIPMAP_TEXTURE,	bindToMipmapTexture),
-    __ATTRIB(__DRI_ATTRIB_BIND_TO_TEXTURE_TARGETS,	bindToTextureTargets),
-    __ATTRIB(__DRI_ATTRIB_YINVERTED,			yInverted),
-
-    /* The struct field doesn't matter here, these are handled by the
-     * switch in driGetConfigAttribIndex.  We need them in the array
-     * so the iterator includes them though.*/
-    __ATTRIB(__DRI_ATTRIB_RENDER_TYPE,			level),
-    __ATTRIB(__DRI_ATTRIB_CONFIG_CAVEAT,		level),
-    __ATTRIB(__DRI_ATTRIB_SWAP_METHOD,			level)
-};
-
-#define ARRAY_SIZE(a) (sizeof (a) / sizeof ((a)[0]))
-
-static int
-driGetConfigAttribIndex(const __DRIconfig *config,
-			unsigned int index, unsigned int *value)
-{
-    switch (attribMap[index].attrib) {
-    case __DRI_ATTRIB_RENDER_TYPE:
-	if (config->modes.rgbMode)
-	    *value = __DRI_ATTRIB_RGBA_BIT;
-	else
-	    *value = __DRI_ATTRIB_COLOR_INDEX_BIT;
-	break;
-    case __DRI_ATTRIB_CONFIG_CAVEAT:
-	if (config->modes.visualRating == GLX_NON_CONFORMANT_CONFIG)
-	    *value = __DRI_ATTRIB_NON_CONFORMANT_CONFIG;
-	else if (config->modes.visualRating == GLX_SLOW_CONFIG)
-	    *value = __DRI_ATTRIB_SLOW_BIT;
-	else
-	    *value = 0;
-	break;
-    case __DRI_ATTRIB_SWAP_METHOD:
-	break;
-
-    default:
-	*value = *(unsigned int *)
-	    ((char *) &config->modes + attribMap[index].offset);
-	
-	break;
-    }
-
+    *ptr_to_modes = modes;
     return GL_TRUE;
-}
-
-int
-driGetConfigAttrib(const __DRIconfig *config,
-		   unsigned int attrib, unsigned int *value)
-{
-    int i;
-
-    for (i = 0; i < ARRAY_SIZE(attribMap); i++)
-	if (attribMap[i].attrib == attrib)
-	    return driGetConfigAttribIndex(config, i, value);
-
-    return GL_FALSE;
-}
-
-int
-driIndexConfigAttrib(const __DRIconfig *config, int index,
-		     unsigned int *attrib, unsigned int *value)
-{
-    if (index >= 0 && index < ARRAY_SIZE(attribMap)) {
-	*attrib = attribMap[index].attrib;
-	return driGetConfigAttribIndex(config, index, value);
-    }
-
-    return GL_FALSE;
 }

@@ -58,7 +58,7 @@
 #include "GL/glxproto.h"
 #include "GL/internal/glcore.h"
 #include "glapitable.h"
-#include "glxhash.h"
+#include "glxextensions.h"
 #if defined( USE_XTHREADS )
 # include <X11/Xthreads.h>
 #elif defined( PTHREADS )
@@ -70,18 +70,13 @@
 
 #define __GLX_MAX_TEXTURE_UNITS 32
 
-typedef struct __GLXscreenConfigsRec __GLXscreenConfigs;
 typedef struct __GLXcontextRec __GLXcontext;
-typedef struct __GLXdrawableRec __GLXdrawable;
 typedef struct __GLXdisplayPrivateRec __GLXdisplayPrivate;
 typedef struct _glapi_table __GLapi;
 
 /************************************************************************/
 
 #ifdef GLX_DIRECT_RENDERING
-
-#define containerOf(ptr, type, member)			\
-    (type *)( (char *)ptr - offsetof(type,member) )
 
 #include <GL/internal/dri_interface.h>
 
@@ -90,64 +85,43 @@ typedef struct _glapi_table __GLapi;
  * Display dependent methods.  This structure is initialized during the
  * \c driCreateDisplay call.
  */
-typedef struct __GLXDRIdisplayRec __GLXDRIdisplay;
-typedef struct __GLXDRIscreenRec __GLXDRIscreen;
-typedef struct __GLXDRIdrawableRec __GLXDRIdrawable;
-typedef struct __GLXDRIcontextRec __GLXDRIcontext;
-
-#include "glxextensions.h"
-
-struct __GLXDRIdisplayRec {
+struct __DRIdisplayRec {
     /**
      * Method to destroy the private DRI display data.
      */
-    void (*destroyDisplay)(__GLXDRIdisplay *display);
+    void (*destroyDisplay)(Display *dpy, void *displayPrivate);
 
-    __GLXDRIscreen *(*createScreen)(__GLXscreenConfigs *psc, int screen,
-				    __GLXdisplayPrivate *priv);
+    /**
+     * Opaque pointer to private per display direct rendering data.
+     * \c NULL if direct rendering is not supported on this display.
+     */
+    struct __DRIdisplayPrivateRec *private;
+
+    /**
+     * Array of pointers to methods to create and initialize the private DRI
+     * screen data.
+     */
+    PFNCREATENEWSCREENFUNC * createNewScreen;
 };
 
-struct __GLXDRIscreenRec {
 
-    void (*destroyScreen)(__GLXscreenConfigs *psc);
-
-    __GLXDRIcontext *(*createContext)(__GLXscreenConfigs *psc,
-				      const __GLcontextModes *mode,
-				      GLXContext gc,
-				      GLXContext shareList, int renderType);
-	
-    __GLXDRIdrawable *(*createDrawable)(__GLXscreenConfigs *psc,
-					XID drawable,
-					GLXDrawable glxDrawable,
-					const __GLcontextModes *modes);
-};
-
-struct __GLXDRIcontextRec {
-    void (*destroyContext)(__GLXDRIcontext *context, __GLXscreenConfigs *psc,
-			   Display *dpy);
-    Bool (*bindContext)(__GLXDRIcontext *context,
-			__GLXDRIdrawable *pdraw,
-			__GLXDRIdrawable *pread);
-    
-    void (*unbindContext)(__GLXDRIcontext *context);
-};
-
-struct __GLXDRIdrawableRec {
-    void (*destroyDrawable)(__GLXDRIdrawable *drawable);
-
-    XID xDrawable;
-    XID drawable;
-    __GLXscreenConfigs *psc;
-    __DRIdrawable *driDrawable;
-    GLenum textureTarget;
+/*
+** We keep a linked list of these structures, one per DRI device driver.
+*/
+struct __DRIdriverRec {
+   const char *name;
+   void *handle;
+   PFNCREATENEWSCREENFUNC createNewScreenFunc;
+   struct __DRIdriverRec *next;
 };
 
 /*
 ** Function to create and DRI display data and initialize the display
 ** dependent methods.
 */
-extern __GLXDRIdisplay *driCreateDisplay(Display *dpy);
-extern __GLXDRIdisplay *dri2CreateDisplay(Display *dpy);
+extern void *driCreateDisplay(Display *dpy, __DRIdisplay *pdisp);
+
+extern  __DRIdriver *driGetDriver(Display *dpy, int scrNum);
 
 extern void DRI_glXUseXFont( Font font, int first, int count, int listbase );
 
@@ -158,6 +132,8 @@ extern void DRI_glXUseXFont( Font font, int first, int count, int listbase );
 extern const char *glXGetScreenDriver (Display *dpy, int scrNum);
 
 extern const char *glXGetDriverConfig (const char *driverName);
+
+extern Bool __glXWindowExists(Display *dpy, GLXDrawable draw);
 
 #endif
 
@@ -250,10 +226,18 @@ struct __GLXcontextRec {
     XID share_xid;
 
     /**
+     * Visual id.
+     * 
+     * \deprecated
+     * This filed has been largely been replaced by the \c mode field, but
+     * the work is not quite done.
+     */
+    VisualID vid;
+
+    /**
      * Screen number.
      */
     GLint screen;
-    __GLXscreenConfigs *psc;
 
     /**
      * \c GL_TRUE if the context was created with ImportContext, which
@@ -359,15 +343,24 @@ struct __GLXcontextRec {
      */
     GLint majorOpcode;
 
-    /**
-     * Pointer to the mode used to create this context.
-     */
-    const __GLcontextModes * mode;
-
 #ifdef GLX_DIRECT_RENDERING
-    __GLXDRIcontext *driContext;
-    __DRIcontext *__driContext;
+    /**
+     * Per context direct rendering interface functions and data.
+     */
+    __DRIcontext driContext;
 #endif
+    
+    /**
+     * \c GLXFBConfigID used to create this context.  May be \c None.  This
+     * field has been replaced by the \c mode field.
+     *
+     * \since Internal API version 20030317.
+     *
+     * \deprecated
+     * This filed has been largely been replaced by the \c mode field, but
+     * the work is not quite done.
+     */
+    GLXFBConfigID  fbconfigID;
 
     /**
      * The current read-drawable for this context.  Will be None if this
@@ -445,7 +438,7 @@ extern void __glFreeAttributeState(__GLXcontext *);
  * One of these records exists per screen of the display.  It contains
  * a pointer to the config data for that screen (if the screen supports GL).
  */
-struct __GLXscreenConfigsRec {
+typedef struct __GLXscreenConfigsRec {
     /**
      * GLX extension string reported by the X-server.
      */
@@ -461,46 +454,13 @@ struct __GLXscreenConfigsRec {
     /**
      * Per screen direct rendering interface functions and data.
      */
-    __DRIscreen *__driScreen;
-    const __DRIcoreExtension *core;
-    const __DRIlegacyExtension *legacy;
-    __glxHashTable *drawHash;
-    Display *dpy;
-    int scr, fd;
-    void *driver;
-
-    __GLXDRIscreen *driScreen;
-
-#ifdef __DRI_COPY_SUB_BUFFER
-    const __DRIcopySubBufferExtension *copySubBuffer;
-#endif
-
-#ifdef __DRI_SWAP_CONTROL
-    const __DRIswapControlExtension *swapControl;
-#endif
-
-#ifdef __DRI_ALLOCATE
-    const __DRIallocateExtension *allocate;
-#endif
-
-#ifdef __DRI_FRAME_TRACKING
-    const __DRIframeTrackingExtension *frameTracking;
-#endif
-
-#ifdef __DRI_MEDIA_STREAM_COUNTER
-    const __DRImediaStreamCounterExtension *msc;
-#endif
-
-#ifdef __DRI_TEX_BUFFER
-    const __DRItexBufferExtension *texBuffer;
-#endif
-
+    __DRIscreen driScreen;
 #endif
 
     /**
-     * Linked list of glx visuals and  fbconfigs for this screen.
+     * Linked list of configurations for this screen.
      */
-    __GLcontextModes *visuals, *configs;
+    __GLcontextModes *configs;
 
     /**
      * Per-screen dynamic GLX extension tracking.  The \c direct_support
@@ -514,7 +474,7 @@ struct __GLXscreenConfigsRec {
     GLboolean ext_list_first_time;
     /*@}*/
 
-};
+} __GLXscreenConfigs;
 
 /**
  * Per display private data.  One of these records exists for each display
@@ -563,11 +523,11 @@ struct __GLXdisplayPrivateRec {
     /**
      * Per display direct rendering interface functions and data.
      */
-    __GLXDRIdisplay *driDisplay;
-    __GLXDRIdisplay *dri2Display;
+    __DRIdisplay driDisplay;
 #endif
 };
 
+void __glXFreeContext(__GLXcontext*);
 
 extern GLubyte *__glXFlushRenderBuffer(__GLXcontext*, GLubyte*);
 
@@ -610,10 +570,6 @@ extern __GLXcontext *__glXcurrentContext;
 #define __glXSetCurrentContext(gc)	__glXcurrentContext = gc
 
 #endif /* defined( USE_XTHREADS ) || defined( PTHREADS ) */
-
-extern void __glXSetCurrentContextNull(void);
-
-extern void __glXFreeContext(__GLXcontext*);
 
 
 /*
@@ -724,16 +680,13 @@ extern char *__glXstrdup(const char *str);
 extern const char __glXGLClientVersion[];
 extern const char __glXGLClientExtensions[];
 
+/* Determine the internal API version */
+extern int __glXGetInternalVersion(void);
+
 /* Get the unadjusted system time */
 extern int __glXGetUST( int64_t * ust );
 
-extern GLboolean __glXGetMscRateOML(Display * dpy, GLXDrawable drawable,
-				    int32_t * numerator, int32_t * denominator);
-
-#ifdef GLX_DIRECT_RENDERING
-GLboolean
-__driGetMscRateOML(__DRIdrawable *draw,
-		   int32_t *numerator, int32_t *denominator, void *private);
-#endif
+extern Bool __glXGetMscRateOML(Display * dpy, GLXDrawable drawable,
+    int32_t * numerator, int32_t * denominator);
 
 #endif /* !__GLX_client_h__ */

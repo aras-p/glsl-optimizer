@@ -60,114 +60,7 @@ static PFNGLXCREATECONTEXTMODES create_context_modes = NULL;
 
 extern const struct dri_extension card_extensions[];
 
-static GLboolean
-intel_get_param(__DRIscreenPrivate *psp, int param, int *value)
-{
-   int ret;
-   struct drm_i915_getparam gp;
 
-   gp.param = param;
-   gp.value = value;
-
-   ret = drmCommandWriteRead(psp->fd, DRM_I915_GETPARAM, &gp, sizeof(gp));
-   if (ret) {
-      fprintf(stderr, "drm_i915_getparam: %d\n", ret);
-      return GL_FALSE;
-   }
-
-   return GL_TRUE;
-}
-
-static void
-intelSetTexOffset(__DRIcontext *pDRICtx, int texname,
-		  unsigned long long offset, int depth, uint pitch)
-{
-   abort();
-#if 0
-   struct intel_context *intel = (struct intel_context*)
-      ((__DRIcontextPrivate*)pDRICtx->private)->driverPrivate;
-   struct gl_texture_object *tObj = _mesa_lookup_texture(&intel->ctx, texname);
-   struct st_texture_object *stObj = st_texture_object(tObj);
-
-   if (!stObj)
-      return;
-
-   if (stObj->pt)
-      st->pipe->texture_release(intel->st->pipe, &stObj->pt);
-
-   stObj->imageOverride = GL_TRUE;
-   stObj->depthOverride = depth;
-   stObj->pitchOverride = pitch;
-
-   if (offset)
-      stObj->textureOffset = offset;
-#endif
-}
-
-
-static void
-intelHandleDrawableConfig(__DRIdrawablePrivate *dPriv,
-			  __DRIcontextPrivate *pcp,
-			  __DRIDrawableConfigEvent *event)
-{
-   (void) dPriv;
-   (void) pcp;
-   (void) event;
-}
-
-static void
-intelHandleBufferAttach(__DRIdrawablePrivate *dPriv,
-			__DRIcontextPrivate *pcp,
-			__DRIBufferAttachEvent *ba)
-{
-   struct intel_screen *intelScreen = intel_screen(dPriv->driScreenPriv);
-
-   switch (ba->buffer.attachment) {
-   case DRI_DRAWABLE_BUFFER_FRONT_LEFT:
-      intelScreen->front.width = dPriv->w;
-      intelScreen->front.height = dPriv->h;
-      intelScreen->front.cpp = ba->buffer.cpp;
-      intelScreen->front.pitch = ba->buffer.pitch;
-      driGenBuffers(intelScreen->base.staticPool, "front", 1, &intelScreen->front.buffer, 0, 0, 0);
-      driBOSetReferenced(intelScreen->front.buffer, ba->buffer.handle);
-      break;
-
-   case DRI_DRAWABLE_BUFFER_BACK_LEFT:
-   case DRI_DRAWABLE_BUFFER_DEPTH:
-   case DRI_DRAWABLE_BUFFER_STENCIL:
-   case DRI_DRAWABLE_BUFFER_ACCUM:
-      /* anything ?? */
-      break;
-
-   default:
-      fprintf(stderr, "unhandled buffer attach event, attachment type %d\n",
-	      ba->buffer.attachment);
-      return;
-   }
-}
-
-static const __DRItexOffsetExtension intelTexOffsetExtension = {
-   { __DRI_TEX_OFFSET },
-   intelSetTexOffset,
-};
-
-#if 0
-static const __DRItexBufferExtension intelTexBufferExtension = {
-    { __DRI_TEX_BUFFER, __DRI_TEX_BUFFER_VERSION },
-   intelSetTexBuffer,
-};
-#endif
-
-static const __DRIextension *intelScreenExtensions[] = {
-    &driReadDrawableExtension,
-    &driCopySubBufferExtension.base,
-    &driSwapControlExtension.base,
-    &driFrameTrackingExtension.base,
-    &driMediaStreamCounterExtension.base,
-    &intelTexOffsetExtension.base,
-//    &intelTexBufferExtension.base,
-    NULL
-};
 
 
 static void
@@ -284,8 +177,7 @@ intelCreatePools(__DRIscreenPrivate * sPriv)
 
    intelScreen->havePools = GL_TRUE;
 
-   if (intelScreen->sarea)
-	intelUpdateScreenRotation(sPriv, intelScreen->sarea);
+   intelUpdateScreenRotation(sPriv, intelScreen->sarea);
 
    return GL_TRUE;
 }
@@ -318,6 +210,11 @@ intelInitDriver(__DRIscreenPrivate * sPriv)
    struct intel_screen *intelScreen;
    I830DRIPtr gDRIPriv = (I830DRIPtr) sPriv->pDevPriv;
 
+   PFNGLXSCRENABLEEXTENSIONPROC glx_enable_extension =
+      (PFNGLXSCRENABLEEXTENSIONPROC) (*dri_interface->
+                                      getProcAddress("glxEnableExtension"));
+   void *const psc = sPriv->psc->screenConfigs;
+
    if (sPriv->devPrivSize != sizeof(I830DRIRec)) {
       fprintf(stderr,
               "\nERROR!  sizeof(I830DRIRec) does not match passed size from device driver\n");
@@ -334,19 +231,28 @@ intelInitDriver(__DRIscreenPrivate * sPriv)
                       __driConfigOptions, __driNConfigOptions);
 
    sPriv->private = (void *) intelScreen;
+
    intelScreen->sarea = (drmI830Sarea *) (((GLubyte *) sPriv->pSAREA) +
-                                            gDRIPriv->sarea_priv_offset);
-
+					  gDRIPriv->sarea_priv_offset);
    intelScreen->deviceID = gDRIPriv->deviceID;
-
    intelScreen->front.cpp = gDRIPriv->cpp;
-   intelScreen->drmMinor = sPriv->drm_version.minor;
+   intelScreen->drmMinor = sPriv->drmMinor;
+
+   assert(gDRIPriv->bitsPerPixel == 16 ||
+	  gDRIPriv->bitsPerPixel == 32);
+
    intelUpdateScreenRotation(sPriv, intelScreen->sarea);
 
    if (0)
       intelPrintDRIInfo(intelScreen, sPriv, gDRIPriv);
 
-   sPriv->extensions = intelScreenExtensions;
+   if (glx_enable_extension != NULL) {
+      (*glx_enable_extension) (psc, "GLX_SGI_swap_control");
+      (*glx_enable_extension) (psc, "GLX_SGI_video_sync");
+      (*glx_enable_extension) (psc, "GLX_MESA_swap_control");
+      (*glx_enable_extension) (psc, "GLX_MESA_swap_frame_usage");
+      (*glx_enable_extension) (psc, "GLX_SGI_make_current_read");
+   }
 
    intel_be_init_device(&intelScreen->base, sPriv->fd);
    intelScreen->base.base.flush_frontbuffer = intel_flush_frontbuffer;
@@ -445,19 +351,65 @@ intelGetSwapInfo(__DRIdrawablePrivate * dPriv, __DRIswapInfo * sInfo)
    return 0;
 }
 
-static __DRIconfig **
-intelFillInModes(__DRIscreenPrivate *psp,
-		 unsigned pixel_bits, unsigned depth_bits,
-                 unsigned stencil_bits, GLboolean have_back_buffer)
+
+static void
+intelSetTexOffset(__DRIcontext *pDRICtx, int texname,
+		  unsigned long long offset, int depth, uint pitch)
 {
-   __DRIconfig **configs;
+   abort();
+#if 0
+   struct intel_context *intel = (struct intel_context*)
+      ((__DRIcontextPrivate*)pDRICtx->private)->driverPrivate;
+   struct gl_texture_object *tObj = _mesa_lookup_texture(&intel->ctx, texname);
+   struct st_texture_object *stObj = st_texture_object(tObj);
+
+   if (!stObj)
+      return;
+
+   if (stObj->pt)
+      st->pipe->texture_release(intel->st->pipe, &stObj->pt);
+
+   stObj->imageOverride = GL_TRUE;
+   stObj->depthOverride = depth;
+   stObj->pitchOverride = pitch;
+
+   if (offset)
+      stObj->textureOffset = offset;
+#endif
+}
+
+
+static const struct __DriverAPIRec intelAPI = {
+   .InitDriver = intelInitDriver,
+   .DestroyScreen = intelDestroyScreen,
+   .CreateContext = intelCreateContext,
+   .DestroyContext = intelDestroyContext,
+   .CreateBuffer = intelCreateBuffer,
+   .DestroyBuffer = intelDestroyBuffer,
+   .SwapBuffers = intelSwapBuffers,
+   .MakeCurrent = intelMakeCurrent,
+   .UnbindContext = intelUnbindContext,
+   .GetSwapInfo = intelGetSwapInfo,
+   .GetMSC = driGetMSC32,
+   .WaitForMSC = driWaitForMSC32,
+   .WaitForSBC = NULL,
+   .SwapBuffersMSC = NULL,
+   .CopySubBuffer = intelCopySubBuffer,
+   .setTexOffset = intelSetTexOffset,
+};
+
+
+static __GLcontextModes *
+intelFillInModes(unsigned pixel_bits, unsigned depth_bits,
+                 unsigned stencil_bits, boolean have_back_buffer)
+{
+   __GLcontextModes *modes;
    __GLcontextModes *m;
    unsigned num_modes;
    unsigned depth_buffer_factor;
    unsigned back_buffer_factor;
    GLenum fb_format;
    GLenum fb_type;
-   int i;
 
    /* GLX_SWAP_COPY_OML is only supported because the Intel driver doesn't
     * support pageflipping at all.
@@ -499,143 +451,100 @@ intelFillInModes(__DRIscreenPrivate *psp,
       fb_type = GL_UNSIGNED_INT_8_8_8_8_REV;
    }
 
-   configs = driCreateConfigs(fb_format, fb_type,
-			      depth_bits_array, stencil_bits_array,
-			      depth_buffer_factor, back_buffer_modes,
-			      back_buffer_factor);
-   if (configs == NULL) {
-    fprintf(stderr, "[%s:%u] Error creating FBConfig!\n", __func__,
+   modes =
+      (*dri_interface->createContextModes) (num_modes,
+                                            sizeof(__GLcontextModes));
+   m = modes;
+   if (!driFillInModes(&m, fb_format, fb_type,
+                       depth_bits_array, stencil_bits_array,
+                       depth_buffer_factor, back_buffer_modes,
+                       back_buffer_factor, GLX_TRUE_COLOR)) {
+      fprintf(stderr, "[%s:%u] Error creating FBConfig!\n", __func__,
+              __LINE__);
+      return NULL;
+   }
+   if (!driFillInModes(&m, fb_format, fb_type,
+                       depth_bits_array, stencil_bits_array,
+                       depth_buffer_factor, back_buffer_modes,
+                       back_buffer_factor, GLX_DIRECT_COLOR)) {
+      fprintf(stderr, "[%s:%u] Error creating FBConfig!\n", __func__,
               __LINE__);
       return NULL;
    }
 
    /* Mark the visual as slow if there are "fake" stencil bits.
     */
-   for (i = 0; configs[i]; i++) {
-      m = &configs[i]->modes;
+   for (m = modes; m != NULL; m = m->next) {
       if ((m->stencilBits != 0) && (m->stencilBits != stencil_bits)) {
          m->visualRating = GLX_SLOW_CONFIG;
       }
    }
 
-   return configs;
+   return modes;
 }
 
+
 /**
- * This is the driver specific part of the createNewScreen entry point.
- * 
- * \todo maybe fold this into intelInitDriver
+ * This is the bootstrap function for the driver.  libGL supplies all of the
+ * requisite information about the system, and the driver initializes itself.
+ * This routine also fills in the linked list pointed to by \c driver_modes
+ * with the \c __GLcontextModes that the driver can support for windows or
+ * pbuffers.
  *
- * \return the __GLcontextModes supported by this driver
+ * \return A pointer to a \c __DRIscreenPrivate on success, or \c NULL on
+ *         failure.
  */
-static const __DRIconfig **intelInitScreen(__DRIscreenPrivate *psp)
+PUBLIC void *
+__driCreateNewScreen_20050727(__DRInativeDisplay * dpy, int scrn,
+                              __DRIscreen * psc,
+                              const __GLcontextModes * modes,
+                              const __DRIversion * ddx_version,
+                              const __DRIversion * dri_version,
+                              const __DRIversion * drm_version,
+                              const __DRIframebuffer * frame_buffer,
+                              drmAddress pSAREA, int fd,
+                              int internal_api_version,
+                              const __DRIinterfaceMethods * interface,
+                              __GLcontextModes ** driver_modes)
 {
-#ifdef I915
-   static const __DRIversion ddx_expected = { 1, 5, 0 };
-#else
-   static const __DRIversion ddx_expected = { 1, 6, 0 };
-#endif
+   __DRIscreenPrivate *psp;
+   static const __DRIversion ddx_expected = { 1, 7, 0 };
    static const __DRIversion dri_expected = { 4, 0, 0 };
-   static const __DRIversion drm_expected = { 1, 5, 0 };
-   I830DRIPtr dri_priv = (I830DRIPtr) psp->pDevPriv;
+   static const __DRIversion drm_expected = { 1, 7, 0 };
+
+   dri_interface = interface;
 
    if (!driCheckDriDdxDrmVersions2("i915",
-                                   &psp->dri_version, &dri_expected,
-                                   &psp->ddx_version, &ddx_expected,
-                                   &psp->drm_version, &drm_expected)) {
+                                   dri_version, &dri_expected,
+                                   ddx_version, &ddx_expected,
+                                   drm_version, &drm_expected)) {
       return NULL;
    }
 
-   /* Calling driInitExtensions here, with a NULL context pointer,
-    * does not actually enable the extensions.  It just makes sure
-    * that all the dispatch offsets for all the extensions that
-    * *might* be enables are known.  This is needed because the
-    * dispatch offsets need to be known when _mesa_context_create is
-    * called, but we can't enable the extensions until we have a
-    * context pointer.
-    *
-    * Hello chicken.  Hello egg.  How are you two today?
-    */
-   intelInitExtensions(NULL, GL_TRUE);
-	   
-   if (!intelInitDriver(psp))
-       return NULL;
+   psp = __driUtilCreateNewScreen(dpy, scrn, psc, NULL,
+                                  ddx_version, dri_version, drm_version,
+                                  frame_buffer, pSAREA, fd,
+                                  internal_api_version, &intelAPI);
 
-   psp->extensions = intelScreenExtensions;
+   if (psp != NULL) {
+      I830DRIPtr dri_priv = (I830DRIPtr) psp->pDevPriv;
+      *driver_modes = intelFillInModes(dri_priv->cpp * 8,
+                                       (dri_priv->cpp == 2) ? 16 : 24,
+                                       (dri_priv->cpp == 2) ? 0 : 8, 1);
 
-   return (const __DRIconfig **)
-       intelFillInModes(psp, dri_priv->cpp * 8,
-			(dri_priv->cpp == 2) ? 16 : 24,
-			(dri_priv->cpp == 2) ? 0  : 8, 1);
-}
-
-/**
- * This is the driver specific part of the createNewScreen entry point.
- * 
- * \return the __GLcontextModes supported by this driver
- */
-static const
-__DRIconfig **intelInitScreen2(__DRIscreenPrivate *psp)
-{
-   struct intel_screen *intelScreen;
-
-   /* Calling driInitExtensions here, with a NULL context pointer,
-    * does not actually enable the extensions.  It just makes sure
-    * that all the dispatch offsets for all the extensions that
-    * *might* be enables are known.  This is needed because the
-    * dispatch offsets need to be known when _mesa_context_create is
-    * called, but we can't enable the extensions until we have a
-    * context pointer.
-    *
-    * Hello chicken.  Hello egg.  How are you two today?
-    */
-   intelInitExtensions(NULL, GL_TRUE);
-
-   /* Allocate the private area */
-   intelScreen = CALLOC_STRUCT(intel_screen);
-   if (!intelScreen) {
-      fprintf(stderr, "\nERROR!  Allocating private area failed\n");
-      return GL_FALSE;
+      /* Calling driInitExtensions here, with a NULL context pointer,
+       * does not actually enable the extensions.  It just makes sure
+       * that all the dispatch offsets for all the extensions that
+       * *might* be enables are known.  This is needed because the
+       * dispatch offsets need to be known when _mesa_context_create
+       * is called, but we can't enable the extensions until we have a
+       * context pointer.
+       *
+       * Hello chicken.  Hello egg.  How are you two today?
+       */
+      driInitExtensions(NULL, card_extensions, GL_FALSE);
    }
-   /* parse information in __driConfigOptions */
-   driParseOptionInfo(&intelScreen->optionCache,
-                      __driConfigOptions, __driNConfigOptions);
 
-   psp->private = (void *) intelScreen;
-
-   intelScreen->drmMinor = psp->drm_version.minor;
-
-   /* Determine chipset ID? */
-   if (!intel_get_param(psp, I915_PARAM_CHIPSET_ID,
-			&intelScreen->deviceID))
-      return GL_FALSE;
-
-   psp->extensions = intelScreenExtensions;
-
-   intel_be_init_device(&intelScreen->base, psp->fd);
-   intelScreen->base.base.flush_frontbuffer = intel_flush_frontbuffer;
-   intelScreen->base.base.get_name = intel_get_name;
-
-   return driConcatConfigs(intelFillInModes(psp, 16, 16, 0, 1),
-			   intelFillInModes(psp, 32, 24, 8, 1));
+   return (void *) psp;
 }
 
-const struct __DriverAPIRec driDriverAPI = {
-   .InitScreen		 = intelInitScreen,
-   .DestroyScreen	 = intelDestroyScreen,
-   .CreateContext	 = intelCreateContext,
-   .DestroyContext	 = intelDestroyContext,
-   .CreateBuffer	 = intelCreateBuffer,
-   .DestroyBuffer	 = intelDestroyBuffer,
-   .SwapBuffers		 = intelSwapBuffers,
-   .MakeCurrent		 = intelMakeCurrent,
-   .UnbindContext	 = intelUnbindContext,
-   .GetSwapInfo		 = intelGetSwapInfo,
-   .GetDrawableMSC	 = driDrawableGetMSC32,
-   .WaitForMSC		 = driWaitForMSC32,
-   .CopySubBuffer	 = intelCopySubBuffer,
-
-   .InitScreen2		 = intelInitScreen2,
-   .HandleDrawableConfig = intelHandleDrawableConfig,
-   .HandleBufferAttach	 = intelHandleBufferAttach,
-};

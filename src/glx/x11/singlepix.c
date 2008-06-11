@@ -117,7 +117,7 @@ void NAME(_gloffset_GetSeparableFilter)(GLenum target, GLenum format, GLenum typ
 {
     __GLXcontext * const gc = __glXGetCurrentContext();
 
-    if (gc->driContext) {
+    if (gc->isDirect) {
 	CALL_GetSeparableFilter(GET_DISPATCH(),
 				(target, format, type, row, column, span));
 	return;

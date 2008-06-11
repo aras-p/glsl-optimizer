@@ -32,7 +32,7 @@
 #include "i830_common.h"
 #include "xmlconfig.h"
 #include "intel_drm/ws_dri_bufpool.h"
-#include "state_tracker/st_context.h"
+
 #include "pipe/p_compiler.h"
 
 #include "intel_drm/intel_be_device.h"
@@ -116,7 +116,5 @@ intelCreateContext(const __GLcontextModes * visual,
                    __DRIcontextPrivate * driContextPriv,
                    void *sharedContextPrivate);
 
-extern void
-intelInitExtensions(struct intel_context *intel, GLboolean enable_imaging);
 
 #endif

@@ -1,24 +1,3 @@
-/**
- * \file dri_util.h
- * DRI utility functions definitions.
- *
- * This module acts as glue between GLX and the actual hardware driver.  A DRI
- * driver doesn't really \e have to use any of this - it's optional.  But, some
- * useful stuff is done here that otherwise would have to be duplicated in most
- * drivers.
- * 
- * Basically, these utility functions take care of some of the dirty details of
- * screen initialization, context creation, context binding, DRM setup, etc.
- *
- * These functions are compiled into each DRI driver so libGL.so knows nothing
- * about them.
- *
- * \sa dri_util.c.
- * 
- * \author Kevin E. Martin <kevin@precisioninsight.com>
- * \author Brian Paul <brian@precisioninsight.com>
- */
-
 /*
  * Copyright 1998-1999 Precision Insight, Inc., Cedar Park, Texas.
  * All Rights Reserved.
@@ -44,37 +23,46 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+/**
+ * \file dri_util.h
+ * DRI utility functions definitions.
+ *
+ * This module acts as glue between GLX and the actual hardware driver.  A DRI
+ * driver doesn't really \e have to use any of this - it's optional.  But, some
+ * useful stuff is done here that otherwise would have to be duplicated in most
+ * drivers.
+ * 
+ * Basically, these utility functions take care of some of the dirty details of
+ * screen initialization, context creation, context binding, DRM setup, etc.
+ *
+ * These functions are compiled into each DRI driver so libGL.so knows nothing
+ * about them.
+ *
+ * \sa dri_util.c.
+ * 
+ * \author Kevin E. Martin <kevin@precisioninsight.com>
+ * \author Brian Paul <brian@precisioninsight.com>
+ */
 
 #ifndef _DRI_UTIL_H_
 #define _DRI_UTIL_H_
 
 #include <GL/gl.h>
-#include <drm.h>
-#include <drm_sarea.h>
-#include <xf86drm.h>
+#include "drm.h"
+#include "drm_sarea.h"
+#include "xf86drm.h"
 #include "GL/internal/glcore.h"
 #include "GL/internal/dri_interface.h"
-#include "GL/internal/dri_sarea.h"
 
 #define GLX_BAD_CONTEXT                    5
 
+typedef struct __DRIdisplayPrivateRec  __DRIdisplayPrivate;
+typedef struct __DRIscreenPrivateRec   __DRIscreenPrivate;
+typedef struct __DRIcontextPrivateRec  __DRIcontextPrivate;
+typedef struct __DRIdrawablePrivateRec __DRIdrawablePrivate;
 typedef struct __DRIswapInfoRec        __DRIswapInfo;
+typedef struct __DRIutilversionRec2    __DRIutilversion2;
 
-/* Typedefs to avoid rewriting the world. */
-typedef struct __DRIscreenRec	__DRIscreenPrivate;
-typedef struct __DRIdrawableRec	__DRIdrawablePrivate;
-typedef struct __DRIcontextRec	__DRIcontextPrivate;
-
-/**
- * Extensions.
- */
-extern const __DRIlegacyExtension driLegacyExtension;
-extern const __DRIcoreExtension driCoreExtension;
-extern const __DRIextension driReadDrawableExtension;
-extern const __DRIcopySubBufferExtension driCopySubBufferExtension;
-extern const __DRIswapControlExtension driSwapControlExtension;
-extern const __DRIframeTrackingExtension driFrameTrackingExtension;
-extern const __DRImediaStreamCounterExtension driMediaStreamCounterExtension;
 
 /**
  * Used by DRI_VALIDATE_DRAWABLE_INFO
@@ -90,7 +78,7 @@ extern const __DRImediaStreamCounterExtension driMediaStreamCounterExtension;
 /**
  * Utility macro to validate the drawable information.
  *
- * See __DRIdrawable::pStamp and __DRIdrawable::lastStamp.
+ * See __DRIdrawablePrivate::pStamp and __DRIdrawablePrivate::lastStamp.
  */
 #define DRI_VALIDATE_DRAWABLE_INFO(psp, pdp)                            \
 do {                                                                    \
@@ -119,102 +107,93 @@ do {                                                                    \
  * this structure.
  */
 struct __DriverAPIRec {
-    const __DRIconfig **(*InitScreen) (__DRIscreen * priv);
-
+    /** 
+     * Driver initialization callback
+     */
+    GLboolean (*InitDriver)(__DRIscreenPrivate *driScrnPriv);
+    
     /**
      * Screen destruction callback
      */
-    void (*DestroyScreen)(__DRIscreen *driScrnPriv);
+    void (*DestroyScreen)(__DRIscreenPrivate *driScrnPriv);
 
     /**
      * Context creation callback
      */	    	    
     GLboolean (*CreateContext)(const __GLcontextModes *glVis,
-                               __DRIcontext *driContextPriv,
+                               __DRIcontextPrivate *driContextPriv,
                                void *sharedContextPrivate);
 
     /**
      * Context destruction callback
      */
-    void (*DestroyContext)(__DRIcontext *driContextPriv);
+    void (*DestroyContext)(__DRIcontextPrivate *driContextPriv);
 
     /**
      * Buffer (drawable) creation callback
      */
-    GLboolean (*CreateBuffer)(__DRIscreen *driScrnPriv,
-                              __DRIdrawable *driDrawPriv,
+    GLboolean (*CreateBuffer)(__DRIscreenPrivate *driScrnPriv,
+                              __DRIdrawablePrivate *driDrawPriv,
                               const __GLcontextModes *glVis,
                               GLboolean pixmapBuffer);
     
     /**
      * Buffer (drawable) destruction callback
      */
-    void (*DestroyBuffer)(__DRIdrawable *driDrawPriv);
+    void (*DestroyBuffer)(__DRIdrawablePrivate *driDrawPriv);
 
     /**
      * Buffer swapping callback 
      */
-    void (*SwapBuffers)(__DRIdrawable *driDrawPriv);
+    void (*SwapBuffers)(__DRIdrawablePrivate *driDrawPriv);
 
     /**
      * Context activation callback
      */
-    GLboolean (*MakeCurrent)(__DRIcontext *driContextPriv,
-                             __DRIdrawable *driDrawPriv,
-                             __DRIdrawable *driReadPriv);
+    GLboolean (*MakeCurrent)(__DRIcontextPrivate *driContextPriv,
+                             __DRIdrawablePrivate *driDrawPriv,
+                             __DRIdrawablePrivate *driReadPriv);
 
     /**
      * Context unbinding callback
      */
-    GLboolean (*UnbindContext)(__DRIcontext *driContextPriv);
+    GLboolean (*UnbindContext)(__DRIcontextPrivate *driContextPriv);
   
     /**
      * Retrieves statistics about buffer swap operations.  Required if
      * GLX_OML_sync_control or GLX_MESA_swap_frame_usage is supported.
      */
-    int (*GetSwapInfo)( __DRIdrawable *dPriv, __DRIswapInfo * sInfo );
+    int (*GetSwapInfo)( __DRIdrawablePrivate *dPriv, __DRIswapInfo * sInfo );
 
+
+    /**
+     * Required if GLX_SGI_video_sync or GLX_OML_sync_control is
+     * supported.
+     */
+    int (*GetMSC)( __DRIscreenPrivate * priv, int64_t * count );
 
     /**
      * These are required if GLX_OML_sync_control is supported.
      */
     /*@{*/
-    int (*WaitForMSC)( __DRIdrawable *priv, int64_t target_msc, 
+    int (*WaitForMSC)( __DRIdrawablePrivate *priv, int64_t target_msc, 
 		       int64_t divisor, int64_t remainder,
 		       int64_t * msc );
-    int (*WaitForSBC)( __DRIdrawable *priv, int64_t target_sbc,
+    int (*WaitForSBC)( __DRIdrawablePrivate *priv, int64_t target_sbc,
 		       int64_t * msc, int64_t * sbc );
 
-    int64_t (*SwapBuffersMSC)( __DRIdrawable *priv, int64_t target_msc,
+    int64_t (*SwapBuffersMSC)( __DRIdrawablePrivate *priv, int64_t target_msc,
 			       int64_t divisor, int64_t remainder );
     /*@}*/
-    void (*CopySubBuffer)(__DRIdrawable *driDrawPriv,
+    void (*CopySubBuffer)(__DRIdrawablePrivate *driDrawPriv,
 			  int x, int y, int w, int h);
 
     /**
-     * New version of GetMSC so we can pass drawable data to the low
-     * level DRM driver (e.g. pipe info).  Required if
-     * GLX_SGI_video_sync or GLX_OML_sync_control is supported.
+     * See corresponding field in \c __DRIscreenRec.
      */
-    int (*GetDrawableMSC) ( __DRIscreen * priv,
-			    __DRIdrawable *drawablePrivate,
-			    int64_t *count);
-
-
-
-    /* DRI2 Entry points */
-    const __DRIconfig **(*InitScreen2) (__DRIscreen * priv);
-    void (*HandleDrawableConfig)(__DRIdrawable *dPriv,
-				__DRIcontext *pcp,
-				__DRIDrawableConfigEvent *event);
-
-    void (*HandleBufferAttach)(__DRIdrawable *dPriv,
-			       __DRIcontext *pcp,
-			       __DRIBufferAttachEvent *ba);
-
+    void (*setTexOffset)(__DRIcontext *pDRICtx, GLint texname,
+			 unsigned long long offset, GLint depth, GLuint pitch);
 };
-
-extern const struct __DriverAPIRec driDriverAPI;
 
 
 struct __DRIswapInfoRec {
@@ -251,7 +230,7 @@ struct __DRIswapInfoRec {
 /**
  * Per-drawable private DRI driver information.
  */
-struct __DRIdrawableRec {
+struct __DRIdrawablePrivateRec {
     /**
      * Kernel drawable handle
      */
@@ -265,10 +244,10 @@ struct __DRIdrawableRec {
     void *driverPrivate;
 
     /**
-     * Private data from the loader.  We just hold on to it and pass
-     * it back when calling into loader provided functions.
+     * X's drawable ID associated with this private drawable.
      */
-    void *loaderPrivate;
+    __DRIid draw;
+    __DRIdrawable *pdraw;
 
     /**
      * Reference count for number of context's currently bound to this
@@ -293,7 +272,7 @@ struct __DRIdrawableRec {
     /**
      * Last value of the stamp.
      *
-     * If this differs from the value stored at __DRIdrawable::pStamp,
+     * If this differs from the value stored at __DRIdrawablePrivate::pStamp,
      * then the drawable information has been modified by the X server, and the
      * drawable information (below) should be retrieved from the X server.
      */
@@ -327,56 +306,41 @@ struct __DRIdrawableRec {
     /*@}*/
 
     /**
-     * \name Vertical blank tracking information
-     * Used for waiting on vertical blank events.
-     */
-    /*@{*/
-    unsigned int vblSeq;
-    unsigned int vblFlags;
-    /*@}*/
-
-    /**
-     * \name Monotonic MSC tracking
-     *
-     * Low level driver is responsible for updating msc_base and
-     * vblSeq values so that higher level code can calculate
-     * a new msc value or msc target for a WaitMSC call.  The new value
-     * will be:
-     *   msc = msc_base + get_vblank_count() - vblank_base;
-     *
-     * And for waiting on a value, core code will use:
-     *   actual_target = target_msc - msc_base + vblank_base;
-     */
-    /*@{*/
-    int64_t vblank_base;
-    int64_t msc_base;
-    /*@}*/
-
-    /**
      * Pointer to context to which this drawable is currently bound.
      */
-    __DRIcontext *driContextPriv;
+    __DRIcontextPrivate *driContextPriv;
 
     /**
      * Pointer to screen on which this drawable was created.
      */
-    __DRIscreen *driScreenPriv;
+    __DRIscreenPrivate *driScreenPriv;
 
     /**
-     * Controls swap interval as used by GLX_SGI_swap_control and
-     * GLX_MESA_swap_control.
+     * \name Display and screen information.
+     * 
+     * Basically just need these for when the locking code needs to call
+     * \c __driUtilUpdateDrawableInfo.
      */
-    unsigned int swap_interval;
-    struct {
-	unsigned int tail;
-	unsigned int drawable_id;
-    } dri2;
+    /*@{*/
+    __DRInativeDisplay *display;
+    int screen;
+    /*@}*/
+
+    /**
+     * Called via glXSwapBuffers().
+     */
+    void (*swapBuffers)( __DRIdrawablePrivate *dPriv );
 };
 
 /**
  * Per-context private driver information.
  */
-struct __DRIcontextRec {
+struct __DRIcontextPrivateRec {
+    /**
+     * Kernel context handle used to access the device lock.
+     */
+    __DRIid contextID;
+
     /**
      * Kernel context handle used to access the device lock.
      */
@@ -388,30 +352,35 @@ struct __DRIcontextRec {
     void *driverPrivate;
 
     /**
-     * Pointer back to the \c __DRIcontext that contains this structure.
+     * This context's display pointer.
      */
-    __DRIcontext *pctx;
+    __DRInativeDisplay *display;
 
     /**
      * Pointer to drawable currently bound to this context for drawing.
      */
-    __DRIdrawable *driDrawablePriv;
+    __DRIdrawablePrivate *driDrawablePriv;
 
     /**
      * Pointer to drawable currently bound to this context for reading.
      */
-    __DRIdrawable *driReadablePriv;
+    __DRIdrawablePrivate *driReadablePriv;
 
     /**
      * Pointer to screen on which this context was created.
      */
-    __DRIscreen *driScreenPriv;
+    __DRIscreenPrivate *driScreenPriv;
 };
 
 /**
  * Per-screen private driver information.
  */
-struct __DRIscreenRec {
+struct __DRIscreenPrivateRec {
+    /**
+     * Display for this screen
+     */
+    __DRInativeDisplay *display;
+
     /**
      * Current screen's number
      */
@@ -422,21 +391,38 @@ struct __DRIscreenRec {
      */
     struct __DriverAPIRec DriverAPI;
 
-    const __DRIextension **extensions;
     /**
+     * \name DDX version
      * DDX / 2D driver version information.
+     * \todo Replace these fields with a \c __DRIversionRec.
      */
-    __DRIversion ddx_version;
+    /*@{*/
+    int ddxMajor;
+    int ddxMinor;
+    int ddxPatch;
+    /*@}*/
 
     /**
+     * \name DRI version
      * DRI X extension version information.
+     * \todo Replace these fields with a \c __DRIversionRec.
      */
-    __DRIversion dri_version;
+    /*@{*/
+    int driMajor;
+    int driMinor;
+    int driPatch;
+    /*@}*/
 
     /**
+     * \name DRM version
      * DRM (kernel module) version information.
+     * \todo Replace these fields with a \c __DRIversionRec.
      */
-    __DRIversion drm_version;
+    /*@{*/
+    int drmMajor;
+    int drmMinor;
+    int drmPatch;
+    /*@}*/
 
     /**
      * ID used when the client sets the drawable lock.
@@ -499,7 +485,12 @@ struct __DRIscreenRec {
      * context is created when the first "real" context is created on this
      * screen.
      */
-    __DRIcontext dummyContextPriv;
+    __DRIcontextPrivate dummyContextPriv;
+
+    /**
+     * Hash table to hold the drawable information for this screen.
+     */
+    void *drawHash;
 
     /**
      * Device-dependent private information (not stored in the SAREA).
@@ -509,45 +500,65 @@ struct __DRIscreenRec {
     void *private;
 
     /**
+     * GLX visuals / FBConfigs for this screen.  These are stored as a
+     * linked list.
+     * 
+     * \note
+     * This field is \b only used in conjunction with the old interfaces.  If
+     * the new interfaces are used, this field will be set to \c NULL and will
+     * not be dereferenced.
+     */
+    __GLcontextModes *modes;
+
+    /**
      * Pointer back to the \c __DRIscreen that contains this structure.
      */
+
     __DRIscreen *psc;
-
-    /* Extensions provided by the loader. */
-    const __DRIgetDrawableInfoExtension *getDrawableInfo;
-    const __DRIsystemTimeExtension *systemTime;
-    const __DRIdamageExtension *damage;
-
-    struct {
-	/* Flag to indicate that this is a DRI2 screen.  Many of the above
-	 * fields will not be valid or initializaed in that case. */
-	int enabled;
-	drmBO sareaBO;
-	void *sarea;
-	__DRIEventBuffer *buffer;
-	__DRILock *lock;
-	__DRIloaderExtension *loader;
-    } dri2;
-
-    /* The lock actually in use, old sarea or DRI2 */
-    drmLock *lock;
 };
+
+
+/**
+ * Used to store a version which includes a major range instead of a single
+ * major version number.
+ */
+struct __DRIutilversionRec2 {
+    int    major_min;    /** min allowed Major version number. */
+    int    major_max;    /** max allowed Major version number. */
+    int    minor;        /**< Minor version number. */
+    int    patch;        /**< Patch-level. */
+};
+
 
 extern void
 __driUtilMessage(const char *f, ...);
 
 
 extern void
-__driUtilUpdateDrawableInfo(__DRIdrawable *pdp);
+__driUtilUpdateDrawableInfo(__DRIdrawablePrivate *pdp);
 
+
+extern __DRIscreenPrivate * __driUtilCreateNewScreen( __DRInativeDisplay *dpy,
+    int scrn, __DRIscreen *psc, __GLcontextModes * modes,
+    const __DRIversion * ddx_version, const __DRIversion * dri_version,
+    const __DRIversion * drm_version, const __DRIframebuffer * frame_buffer,
+    drm_sarea_t *pSAREA, int fd, int internal_api_version,
+    const struct __DriverAPIRec *driverAPI );
+
+/* Test the version of the internal GLX API.  Returns a value like strcmp. */
 extern int
-__driParseEvents(__DRIcontext *psp, __DRIdrawable *pdp);
+driCompareGLXAPIVersion( GLint required_version );
 
 extern float
-driCalculateSwapUsage( __DRIdrawable *dPriv,
+driCalculateSwapUsage( __DRIdrawablePrivate *dPriv,
 		       int64_t last_swap_ust, int64_t current_ust );
 
-extern GLint
-driIntersectArea( drm_clip_rect_t rect1, drm_clip_rect_t rect2 );
+/**
+ * Pointer to the \c __DRIinterfaceMethods passed to the driver by the loader.
+ * 
+ * This pointer is set in the driver's \c __driCreateNewScreen function and
+ * is defined in dri_util.c.
+ */
+extern const __DRIinterfaceMethods * dri_interface;
 
 #endif /* _DRI_UTIL_H_ */
