@@ -62,14 +62,15 @@ static INLINE struct offset_stage *offset_stage( struct draw_stage *stage )
 static void do_offset_tri( struct draw_stage *stage,
 			   struct prim_header *header )
 {
+   const unsigned pos = stage->draw->vs.position_output;
    struct offset_stage *offset = offset_stage(stage);   
    float inv_det = 1.0f / header->det;
 
    /* Window coords:
     */
-   float *v0 = header->v[0]->data[0];
-   float *v1 = header->v[1]->data[0];
-   float *v2 = header->v[2]->data[0];
+   float *v0 = header->v[0]->data[pos];
+   float *v1 = header->v[1]->data[pos];
+   float *v2 = header->v[2]->data[pos];
 
    /* edge vectors e = v0 - v2, f = v1 - v2 */
    float ex = v0[0] - v2[0];

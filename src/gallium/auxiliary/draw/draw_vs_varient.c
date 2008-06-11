@@ -89,6 +89,8 @@ static void do_rhw_viewport( struct draw_vs_varient_generic *vsvg,
    unsigned stride = vsvg->temp_vertex_stride;
    unsigned j;
 
+   ptr += vsvg->base.vs->position_output * 4 * sizeof(float);
+
    for (j = 0; j < count; j++, ptr += stride) {
       float *data = (float *)ptr;
       float w = 1.0f / data[3];
@@ -109,6 +111,8 @@ static void do_viewport( struct draw_vs_varient_generic *vsvg,
    const float *trans = vsvg->base.vs->draw->viewport.translate;
    unsigned stride = vsvg->temp_vertex_stride;
    unsigned j;
+
+   ptr += vsvg->base.vs->position_output * 4 * sizeof(float);
 
    for (j = 0; j < count; j++, ptr += stride) {
       float *data = (float *)ptr;

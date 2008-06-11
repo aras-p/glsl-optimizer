@@ -106,6 +106,7 @@ struct draw_vertex_shader {
    struct pipe_shader_state   state;
 
    struct tgsi_shader_info info;
+   unsigned position_output;
 
    /* Extracted from shader:
     */

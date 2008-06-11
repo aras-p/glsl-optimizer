@@ -96,6 +96,7 @@ static void widepoint_point( struct draw_stage *stage,
                              struct prim_header *header )
 {
    const struct widepoint_stage *wide = widepoint_stage(stage);
+   const unsigned pos = stage->draw->vs.position_output;
    const boolean sprite = (boolean) stage->draw->rasterizer->point_sprite;
    float half_size;
    float left_adj, right_adj, bot_adj, top_adj;
@@ -108,10 +109,10 @@ static void widepoint_point( struct draw_stage *stage,
    struct vertex_header *v2 = dup_vert(stage, header->v[0], 2);
    struct vertex_header *v3 = dup_vert(stage, header->v[0], 3);
 
-   float *pos0 = v0->data[0];
-   float *pos1 = v1->data[0];
-   float *pos2 = v2->data[0];
-   float *pos3 = v3->data[0];
+   float *pos0 = v0->data[pos];
+   float *pos1 = v1->data[pos];
+   float *pos2 = v2->data[pos];
+   float *pos3 = v3->data[pos];
 
    /* point size is either per-vertex or fixed size */
    if (wide->psize_slot >= 0) {

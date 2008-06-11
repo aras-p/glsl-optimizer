@@ -85,6 +85,7 @@ struct aapoint_stage
 
    /** this is the vertex attrib slot for the new texcoords */
    uint tex_slot;
+   uint pos_slot;
 
    /*
     * Currently bound state
@@ -570,6 +571,7 @@ aapoint_point(struct draw_stage *stage, struct prim_header *header)
    struct prim_header tri;
    struct vertex_header *v[4];
    uint texPos = aapoint->tex_slot;
+   uint pos_slot = aapoint->pos_slot;
    float radius, *pos, *tex;
    uint i;
    float k;
@@ -619,19 +621,19 @@ aapoint_point(struct draw_stage *stage, struct prim_header *header)
    }
 
    /* new verts */
-   pos = v[0]->data[0];
+   pos = v[0]->data[pos_slot];
    pos[0] -= radius;
    pos[1] -= radius;
 
-   pos = v[1]->data[0];
+   pos = v[1]->data[pos_slot];
    pos[0] += radius;
    pos[1] -= radius;
 
-   pos = v[2]->data[0];
+   pos = v[2]->data[pos_slot];
    pos[0] += radius;
    pos[1] += radius;
 
-   pos = v[3]->data[0];
+   pos = v[3]->data[pos_slot];
    pos[0] -= radius;
    pos[1] += radius;
 
@@ -682,6 +684,8 @@ aapoint_first_point(struct draw_stage *stage, struct prim_header *header)
    /* update vertex attrib info */
    aapoint->tex_slot = draw->vs.num_vs_outputs;
    assert(aapoint->tex_slot > 0); /* output[0] is vertex pos */
+
+   aapoint->pos_slot = draw->vs.position_output;
 
    draw->extra_vp_outputs.semantic_name = TGSI_SEMANTIC_GENERIC;
    draw->extra_vp_outputs.semantic_index = aapoint->fs->generic_attrib;

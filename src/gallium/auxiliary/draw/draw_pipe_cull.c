@@ -55,10 +55,12 @@ static INLINE struct cull_stage *cull_stage( struct draw_stage *stage )
 static void cull_tri( struct draw_stage *stage,
 		      struct prim_header *header )
 {
+   const unsigned pos = stage->draw->vs.position_output;
+
    /* Window coords: */
-   const float *v0 = header->v[0]->data[0];
-   const float *v1 = header->v[1]->data[0];
-   const float *v2 = header->v[2]->data[0];
+   const float *v0 = header->v[0]->data[pos];
+   const float *v1 = header->v[1]->data[pos];
+   const float *v2 = header->v[2]->data[pos];
 
    /* edge vectors e = v0 - v2, f = v1 - v2 */
    const float ex = v0[0] - v2[0];

@@ -119,8 +119,9 @@ stipple_line(struct draw_stage *stage, struct prim_header *header)
    struct stipple_stage *stipple = stipple_stage(stage);
    struct vertex_header *v0 = header->v[0];
    struct vertex_header *v1 = header->v[1];
-   const float *pos0 = v0->data[0];
-   const float *pos1 = v1->data[0];
+   const unsigned pos = stage->draw->vs.position_output;
+   const float *pos0 = v0->data[pos];
+   const float *pos1 = v1->data[pos];
    float start = 0;
    int state = 0;
 
