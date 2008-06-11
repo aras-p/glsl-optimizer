@@ -242,6 +242,7 @@ enum pipe_format {
    PIPE_FORMAT_A8_UNORM              = _PIPE_FORMAT_RGBAZS_8 ( _PIPE_FORMAT_000R, 0, 0, 0, 1, PIPE_FORMAT_TYPE_UNORM ), /**< ubyte alpha */
    PIPE_FORMAT_I8_UNORM              = _PIPE_FORMAT_RGBAZS_8 ( _PIPE_FORMAT_RRRR, 1, 1, 1, 1, PIPE_FORMAT_TYPE_UNORM ), /**< ubyte intensity */
    PIPE_FORMAT_A8L8_UNORM            = _PIPE_FORMAT_RGBAZS_8 ( _PIPE_FORMAT_RRRG, 1, 1, 1, 1, PIPE_FORMAT_TYPE_UNORM ), /**< ubyte alpha, luminance */
+   PIPE_FORMAT_L16_UNORM             = _PIPE_FORMAT_RGBAZS_8 ( _PIPE_FORMAT_RRR1, 2, 2, 2, 0, PIPE_FORMAT_TYPE_UNORM ), /**< ushort luminance */
    PIPE_FORMAT_YCBCR                 = _PIPE_FORMAT_YCBCR( 0 ),
    PIPE_FORMAT_YCBCR_REV             = _PIPE_FORMAT_YCBCR( 1 ),
    PIPE_FORMAT_Z16_UNORM             = _PIPE_FORMAT_RGBAZS_8 ( _PIPE_FORMAT_Z000, 2, 0, 0, 0, PIPE_FORMAT_TYPE_UNORM ),
