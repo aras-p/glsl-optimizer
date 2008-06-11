@@ -24,8 +24,8 @@
 	fprintf(stderr, "nouveau: "fmt, ##args);
 
 /* Constant buffer assignment */
-#define NV50_CB_PMISC		1
-#define NV50_CB_PVP		0
+#define NV50_CB_PMISC		0
+#define NV50_CB_PVP		1
 #define NV50_CB_PFP		2
 #define NV50_CB_PGP		3
 #define NV50_CB_TIC		4
