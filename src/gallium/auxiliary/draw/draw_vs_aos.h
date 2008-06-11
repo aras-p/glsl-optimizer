@@ -202,9 +202,8 @@ struct x86_reg aos_get_internal_xmm( struct aos_compilation *cp,
 
 #define ERROR(cp, msg)                                                  \
 do {                                                                    \
-   debug_printf("%s: x86 translation failed: %s\n", __FUNCTION__, msg); \
+   if (0) debug_printf("%s: x86 translation failed: %s\n", __FUNCTION__, msg); \
    cp->error = 1;                                                       \
-   assert(0);                                                           \
 } while (0)
 
 
