@@ -118,6 +118,7 @@ SOURCES = \
 	vbo-drawelements.c \
 	vbo-drawrange.c \
 	vp-array.c \
+	vp-array-int.c \
 	vp-clip.c \
 	vp-line-clip.c \
 	vp-tri.c \
