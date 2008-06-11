@@ -120,7 +120,7 @@ pb_malloc_buffer_create(size_t size,
 
    buf->data = align_malloc(size, desc->alignment < sizeof(void*) ? sizeof(void*) : desc->alignment);
    if(!buf->data) {
-      align_free(buf);
+      FREE(buf);
       return NULL;
    }
 
