@@ -8,7 +8,6 @@
 #include "tgsi/util/tgsi_util.h"
 
 #include "nv50_context.h"
-#include "nv50_state.h"
 
 #define NV50_SU_MAX_TEMP 64
 

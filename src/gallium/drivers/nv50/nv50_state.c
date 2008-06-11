@@ -3,7 +3,6 @@
 #include "pipe/p_util.h"
 
 #include "nv50_context.h"
-#include "nv50_state.h"
 
 #include "nouveau/nouveau_stateobj.h"
 

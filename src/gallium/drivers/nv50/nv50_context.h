@@ -15,8 +15,8 @@
 	struct nv50_screen *ctx = nv50->screen
 #include "nouveau/nouveau_push.h"
 
-#include "nv50_state.h"
 #include "nv50_screen.h"
+#include "nv50_program.h"
 
 #define NOUVEAU_ERR(fmt, args...) \
 	fprintf(stderr, "%s:%d -  "fmt, __func__, __LINE__, ##args);
