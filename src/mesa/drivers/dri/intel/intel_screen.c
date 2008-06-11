@@ -59,7 +59,7 @@ PUBLIC const char __driConfigOptions[] =
       /* Options correspond to DRI_CONF_BO_REUSE_DISABLED,
        * DRI_CONF_BO_REUSE_ALL
        */
-      DRI_CONF_OPT_BEGIN_V(bo_reuse, enum, 0, "0:1")
+      DRI_CONF_OPT_BEGIN_V(bo_reuse, enum, 1, "0:1")
 	 DRI_CONF_DESC_BEGIN(en, "Buffer object reuse")
 	    DRI_CONF_ENUM(0, "Disable buffer object reuse")
 	    DRI_CONF_ENUM(1, "Enable reuse of all sizes of buffer objects")
