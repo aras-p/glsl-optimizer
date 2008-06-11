@@ -2108,7 +2108,6 @@ struct draw_vs_varient *draw_vs_varient_aos_sse( struct draw_vertex_shader *vs,
    struct draw_vs_varient *varient = varient_aos_sse( vs, key );
 
    if (varient == NULL) {
-      assert(0);
       varient = draw_vs_varient_generic( vs, key );
    }
 
