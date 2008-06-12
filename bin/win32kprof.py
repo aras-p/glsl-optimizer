@@ -139,7 +139,8 @@ class Profile:
 				continue
 			if type != 'f':
 				continue
-			addr = int(addr, 16)
+			section, offset = section_offset.split(':')
+			addr = int(offset, 16)
 			name = demangle(name)
 			if last_addr == addr:
 				# TODO: handle collapsed functions
