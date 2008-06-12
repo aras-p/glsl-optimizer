@@ -277,8 +277,8 @@ __driUtilUpdateDrawableInfo(__DRIdrawablePrivate *pdp)
        pdp->pStamp = &(psp->pSAREA->drawableTable[pdp->index].stamp);
 
     DRM_SPINLOCK(&psp->pSAREA->drawable_lock, psp->drawLockID);
-
 }
+
 
 int
 __driParseEvents(__DRIcontextPrivate *pcp, __DRIdrawablePrivate *pdp)
@@ -471,13 +471,13 @@ static int driDrawableGetMSC( __DRIscreen *sPriv, __DRIdrawable *dPriv,
     return sPriv->DriverAPI.GetDrawableMSC(sPriv, dPriv, msc);
 }
 
+
 static int driWaitForMSC(__DRIdrawable *dPriv, int64_t target_msc,
 			 int64_t divisor, int64_t remainder,
 			 int64_t * msc, int64_t * sbc)
 {
     __DRIswapInfo  sInfo;
     int  status;
-
 
     status = dPriv->driScreenPriv->DriverAPI.WaitForMSC( dPriv, target_msc,
                                                          divisor, remainder,
@@ -496,11 +496,13 @@ static int driWaitForMSC(__DRIdrawable *dPriv, int64_t target_msc,
     return status;
 }
 
+
 const __DRImediaStreamCounterExtension driMediaStreamCounterExtension = {
     { __DRI_MEDIA_STREAM_COUNTER, __DRI_MEDIA_STREAM_COUNTER_VERSION },
     driWaitForMSC,
     driDrawableGetMSC,
 };
+
 
 static void driCopySubBuffer(__DRIdrawable *dPriv,
 			      int x, int y, int w, int h)
@@ -595,6 +597,7 @@ driCreateNewDrawable(__DRIscreen *psp, const __DRIconfig *config,
     return pdp;
 }
 
+
 static __DRIdrawable *
 dri2CreateNewDrawable(__DRIscreen *screen, const __DRIconfig *config,
 		      unsigned int drawable_id, unsigned int head, void *data)
@@ -644,8 +647,6 @@ driDestroyDrawable(__DRIdrawable *pdp)
 /**
  * Destroy the per-context private information.
  * 
- * \param contextPrivate opaque pointer to the per-drawable private info.
- *
  * \internal
  * This function calls __DriverAPIRec::DestroyContext on \p contextPrivate, calls
  * drmDestroyContext(), and finally frees \p contextPrivate.
@@ -663,13 +664,9 @@ driDestroyContext(__DRIcontext *pcp)
 /**
  * Create the per-drawable private driver information.
  * 
- * \param dpy           The display handle.
- * \param modes         Mode used to create the new context.
  * \param render_type   Type of rendering target.  \c GLX_RGBA is the only
  *                      type likely to ever be supported for direct-rendering.
- * \param shared        The shared context dependent methods or \c NULL if
- *                      non-existent.
- * \param pctx          DRI context to receive the context dependent methods.
+ * \param shared        Context with which to share textures, etc. or NULL
  *
  * \returns An opaque pointer to the per-context private information on
  *          success, or \c NULL on failure.
@@ -718,6 +715,7 @@ driCreateNewContext(__DRIscreen *psp, const __DRIconfig *config,
     return pcp;
 }
 
+
 static __DRIcontext *
 dri2CreateNewContext(__DRIscreen *screen, const __DRIconfig *config,
 		      __DRIcontext *shared, void *data)
@@ -736,6 +734,7 @@ dri2CreateNewContext(__DRIscreen *screen, const __DRIconfig *config,
     return driCreateNewContext(screen, config, 0, shared, hwContext, data);
 }
 
+
 static int
 driCopyContext(__DRIcontext *dest, __DRIcontext *src, unsigned long mask)
 {
@@ -753,10 +752,6 @@ driCopyContext(__DRIcontext *dest, __DRIcontext *src, unsigned long mask)
 /**
  * Destroy the per-screen private information.
  * 
- * \param dpy the display handle.
- * \param scrn the screen number.
- * \param screenPrivate opaque pointer to the per-screen private information.
- *
  * \internal
  * This function calls __DriverAPIRec::DestroyScreen on \p screenPrivate, calls
  * drmClose(), and finally frees \p screenPrivate.
@@ -811,15 +806,10 @@ setupLoaderExtensions(__DRIscreen *psp,
  * This routine also fills in the linked list pointed to by \c driver_modes
  * with the \c __GLcontextModes that the driver can support for windows or
  * pbuffers.
+ *
+ * For legacy DRI.
  * 
  * \param scrn  Index of the screen
- * \param psc   DRI screen data (not driver private)
- * \param modes Linked list of known display modes.  This list is, at a
- *              minimum, a list of modes based on the current display mode.
- *              These roughly match the set of available X11 visuals, but it
- *              need not be limited to X11!  The calling libGL should create
- *              a list that will inform the driver of the current display
- *              mode (i.e., color buffer depth, depth buffer depth, etc.).
  * \param ddx_version Version of the 2D DDX.  This may not be meaningful for
  *                    all drivers.
  * \param dri_version Version of the "server-side" DRI.
@@ -828,9 +818,9 @@ setupLoaderExtensions(__DRIscreen *psp,
  *                     framebuffer.
  * \param pSAREA       Pointer the the SAREA.
  * \param fd           Device handle for the DRM.
- * \param internal_api_version  Version of the internal interface between the
- *                              driver and libGL.
- * \param driverAPI Driver API functions used by other routines in dri_util.c.
+ * \param extensions   ??
+ * \param driver_modes  Returns modes suppoted by the driver
+ * \param loaderPrivate  ??
  * 
  * \note There is no need to check the minimum API version in this
  * function.  Since the name of this function is versioned, it is
@@ -903,6 +893,9 @@ driCreateNewScreen(int scrn,
 }
 
 
+/**
+ * DRI2
+ */
 static __DRIscreen *
 dri2CreateNewScreen(int scrn, int fd, unsigned int sarea_handle,
 		    const __DRIextension **extensions,
@@ -986,6 +979,7 @@ static const __DRIextension **driGetExtensions(__DRIscreen *psp)
     return psp->extensions;
 }
 
+/** Legacy DRI interface */
 const __DRIlegacyExtension driLegacyExtension = {
     { __DRI_LEGACY, __DRI_LEGACY_VERSION },
     driCreateNewScreen,
@@ -993,6 +987,7 @@ const __DRIlegacyExtension driLegacyExtension = {
     driCreateNewContext
 };
 
+/** DRI2 interface */
 const __DRIcoreExtension driCoreExtension = {
     { __DRI_CORE, __DRI_CORE_VERSION },
     dri2CreateNewScreen,
