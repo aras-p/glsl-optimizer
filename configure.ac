@@ -648,7 +648,7 @@ if test "$mesa_driver" = dri; then
         sparc*)
             # Build only the drivers for cards that exist on sparc`
             if test "x$DRI_DIRS" = x; then
-                DRI_DIRS="mach64 r128 r200 r300 radeon ffb"
+                DRI_DIRS="mach64 r128 r200 r300 radeon ffb swrast"
             fi
             ;;
         esac
