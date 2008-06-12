@@ -26,7 +26,9 @@
  **************************************************************************/
 
 #include "main/imports.h"
+#if FEATURE_convolution
 #include "main/convolve.h"
+#endif
 #include "main/enums.h"
 #include "main/image.h"
 #include "main/macros.h"
@@ -517,10 +519,12 @@ st_TexImage(GLcontext * ctx,
    stImage->face = _mesa_tex_target_to_face(target);
    stImage->level = level;
 
+#if FEATURE_convolution
    if (ctx->_ImageTransferState & IMAGE_CONVOLUTION_BIT) {
       _mesa_adjust_image_for_convolution(ctx, dims, &postConvWidth,
                                          &postConvHeight);
    }
+#endif
 
    /* choose the texture format */
    texImage->TexFormat = st_ChooseTextureFormat(ctx, internalFormat,
