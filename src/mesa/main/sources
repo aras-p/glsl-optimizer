@@ -58,6 +58,7 @@ stencil.c \
 texcompress.c \
 texcompress_fxt1.c \
 texcompress_s3tc.c \
+texenv.c \
 texenvprogram.c \
 texformat.c \
 texgen.c \
@@ -136,6 +137,7 @@ scissor.h \
 state.h \
 stencil.h \
 texcompress.h \
+texenv.h \
 texenvprogram.h \
 texformat.h \
 texformat_tmp.h \
