@@ -367,20 +367,22 @@ _mesa_count_texture_instructions(struct gl_program *prog)
 
 
 /**
- * Scan/rewrite program to remove reads of varying (output) registers.
+ * Scan/rewrite program to remove reads of custom (output) registers.
+ * The passed type has to be either PROGRAM_VARYING or PROGRAM_OUTPUT.
  * In GLSL vertex shaders, varying vars can be read and written.
  * Normally, vertex varying vars are implemented as output registers.
  * On some hardware, trying to read an output register causes trouble.
  * So, rewrite the program to use a temporary register in this case.
  */
 void
-_mesa_remove_varying_reads(struct gl_program *prog)
+_mesa_remove_output_reads(struct gl_program *prog, enum register_file type)
 {
    GLuint i;
    GLint outputMap[VERT_RESULT_MAX];
    GLuint numVaryingReads = 0;
 
    assert(prog->Target == GL_VERTEX_PROGRAM_ARB);
+   assert(type == PROGRAM_UNIFORM || type == PROGRAM_OUTPUT);
 
    for (i = 0; i < VERT_RESULT_MAX; i++)
       outputMap[i] = -1;
@@ -391,7 +393,7 @@ _mesa_remove_varying_reads(struct gl_program *prog)
       const GLuint numSrc = _mesa_num_inst_src_regs(inst->Opcode);
       GLuint j;
       for (j = 0; j < numSrc; j++) {
-         if (inst->SrcReg[j].File == PROGRAM_VARYING) {
+         if (inst->SrcReg[j].File == type) {
             /* replace the read with a temp reg */
             const GLuint var = inst->SrcReg[j].Index;
             if (outputMap[var] == -1) {
@@ -414,7 +416,7 @@ _mesa_remove_varying_reads(struct gl_program *prog)
       const GLuint numSrc = _mesa_num_inst_src_regs(inst->Opcode);
       GLuint j;
       for (j = 0; j < numSrc; j++) {
-         if (inst->DstReg.File == PROGRAM_VARYING &&
+         if (inst->DstReg.File == type &&
              outputMap[inst->DstReg.Index] >= 0) {
             /* change inst to write to the temp reg, instead of the varying */
             inst->DstReg.File = PROGRAM_TEMPORARY;
@@ -447,7 +449,7 @@ _mesa_remove_varying_reads(struct gl_program *prog)
          if (outputMap[var] >= 0) {
             /* MOV VAR[var], TEMP[tmp]; */
             inst->Opcode = OPCODE_MOV;
-            inst->DstReg.File = PROGRAM_VARYING;
+            inst->DstReg.File = type;
             inst->DstReg.Index = var;
             inst->SrcReg[0].File = PROGRAM_TEMPORARY;
             inst->SrcReg[0].Index = outputMap[var];
