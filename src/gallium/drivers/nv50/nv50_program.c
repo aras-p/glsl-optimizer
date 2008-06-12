@@ -146,8 +146,10 @@ static void
 free_temp(struct nv50_pc *pc, struct nv50_reg *r)
 {
 	if (r->index == -1) {
-		FREE(pc->r_temp[r->hw]);
-		pc->r_temp[r->hw] = NULL;
+		unsigned hw = r->hw;
+
+		FREE(pc->r_temp[hw]);
+		pc->r_temp[hw] = NULL;
 	}
 }
 
