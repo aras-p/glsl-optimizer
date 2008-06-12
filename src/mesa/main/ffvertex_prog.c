@@ -969,25 +969,29 @@ static struct ureg calculate_light_attenuation( struct tnl_program *p,
 }
 						
 
+/**
+ * Compute:
+ *   lit.y = MAX(0, dots.x)
+ *   lit.z = SLT(0, dots.x)
+ */
 static void emit_degenerate_lit( struct tnl_program *p,
                                  struct ureg lit,
                                  struct ureg dots )
 {
-   struct ureg id = get_identity_param(p);
-   
-   /* 1, 0, 0, 1 
-    */
-   emit_op1(p, OPCODE_MOV, lit, 0, swizzle(id, Z, X, X, Z)); 
+   struct ureg id = get_identity_param(p);  /* id = {0,0,0,1} */
 
-   /* 1, MAX2(in[0], 0), 0, 1
+   /* Note that lit.x & lit.w will not be examined.  Note also that
+    * dots.xyzw == dots.xxxx.
     */
-   emit_op2(p, OPCODE_MAX, lit, WRITEMASK_Y, lit, swizzle1(dots, X)); 
 
-   /* 1, MAX2(in[0], 0), (in[0] > 0 ? 1 : 0), 1
+   /* MAX lit, id, dots;
     */
-   emit_op2(p, OPCODE_SLT, lit, WRITEMASK_Z, 
-            lit,                /* 0 */
-            swizzle1(dots, X)); /* in[0] */
+   emit_op2(p, OPCODE_MAX, lit, WRITEMASK_XYZW, id, dots); 
+
+   /* result[2] = (in > 0 ? 1 : 0)
+    * SLT lit.z, id.z, dots;   # lit.z = (0 < dots.z) ? 1 : 0
+    */
+   emit_op2(p, OPCODE_SLT, lit, WRITEMASK_Z, swizzle1(id,Z), dots);
 }
 
 
@@ -1006,6 +1010,14 @@ static void build_lighting( struct tnl_program *p )
    struct ureg _col0 = undef, _col1 = undef;
    struct ureg _bfc0 = undef, _bfc1 = undef;
    GLuint i;
+
+   /*
+    * NOTE:
+    * dot.x = dot(normal, VPpli)
+    * dot.y = dot(normal, halfAngle)
+    * dot.z = back.shininess
+    * dot.w = front.shininess
+    */
 
    for (i = 0; i < MAX_LIGHTS; i++) 
       if (p->state->unit[i].light_enabled)
@@ -1144,10 +1156,13 @@ static void build_lighting( struct tnl_program *p )
 
 	 /* Calculate dot products:
 	  */
-	 emit_op2(p, OPCODE_DP3, dots, WRITEMASK_X, normal, VPpli);
-
-         if (!p->state->material_shininess_is_zero)
+         if (p->state->material_shininess_is_zero) {
+            emit_op2(p, OPCODE_DP3, dots, 0, normal, VPpli);
+         }
+         else {
+            emit_op2(p, OPCODE_DP3, dots, WRITEMASK_X, normal, VPpli);
             emit_op2(p, OPCODE_DP3, dots, WRITEMASK_Y, normal, half);
+         }
 
 	 /* Front face lighting:
 	  */
@@ -1181,15 +1196,18 @@ static void build_lighting( struct tnl_program *p )
 
 
 	    if (!is_undef(att)) {
+               /* light is attenuated by distance */
                emit_op1(p, OPCODE_LIT, lit, 0, dots);
                emit_op2(p, OPCODE_MUL, lit, 0, lit, att);
                emit_op3(p, OPCODE_MAD, _col0, 0, swizzle1(lit,X), ambient, _col0);
             } 
             else if (!p->state->material_shininess_is_zero) {
+               /* there's a non-zero specular term */
                emit_op1(p, OPCODE_LIT, lit, 0, dots);
                emit_op2(p, OPCODE_ADD, _col0, 0, ambient, _col0);
             } 
             else {
+               /* no attenutation, no specular */
                emit_degenerate_lit(p, lit, dots);
                emit_op2(p, OPCODE_ADD, _col0, 0, ambient, _col0);
             }
