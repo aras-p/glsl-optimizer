@@ -206,7 +206,7 @@ arb_output_attrib_string(GLint index, GLenum progType)
  */
 static const char *
 reg_string(enum register_file f, GLint index, gl_prog_print_mode mode,
-           GLint relAddr, const struct gl_program *prog)
+           GLboolean relAddr, const struct gl_program *prog)
 {
    static char str[100];
 
