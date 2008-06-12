@@ -82,8 +82,14 @@ nv50_vbo_validate(struct nv50_context *nv50)
 			&nv50->vtxbuf[ve->vertex_buffer_index];
 
 		switch (ve->src_format) {
+		case PIPE_FORMAT_R32G32B32A32_FLOAT:
+			so_data(vtxfmt, 0x7e080000 | i);
+			break;
 		case PIPE_FORMAT_R32G32B32_FLOAT:
 			so_data(vtxfmt, 0x7e100000 | i);
+			break;
+		case PIPE_FORMAT_R8G8B8A8_UNORM:
+			so_data(vtxfmt, 0x24500000 | i);
 			break;
 		default:
 		{
