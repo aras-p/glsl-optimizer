@@ -49,12 +49,6 @@ _mesa_print_texunit_state( GLcontext *ctx, GLuint unit );
 /*@{*/
 
 extern void GLAPIENTRY
-_mesa_GetTexEnvfv( GLenum target, GLenum pname, GLfloat *params );
-
-extern void GLAPIENTRY
-_mesa_GetTexEnviv( GLenum target, GLenum pname, GLint *params );
-
-extern void GLAPIENTRY
 _mesa_GetTexLevelParameterfv( GLenum target, GLint level,
                               GLenum pname, GLfloat *params );
 
@@ -68,18 +62,6 @@ _mesa_GetTexParameterfv( GLenum target, GLenum pname, GLfloat *params );
 extern void GLAPIENTRY
 _mesa_GetTexParameteriv( GLenum target, GLenum pname, GLint *params );
 
-
-extern void GLAPIENTRY
-_mesa_TexEnvf( GLenum target, GLenum pname, GLfloat param );
-
-extern void GLAPIENTRY
-_mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param );
-
-extern void GLAPIENTRY
-_mesa_TexEnvi( GLenum target, GLenum pname, GLint param );
-
-extern void GLAPIENTRY
-_mesa_TexEnviv( GLenum target, GLenum pname, const GLint *param );
 
 
 extern void GLAPIENTRY
