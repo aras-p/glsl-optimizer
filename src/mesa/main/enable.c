@@ -904,6 +904,7 @@ _mesa_set_enable(GLcontext *ctx, GLenum cap, GLboolean state)
          break;
 
       /* GL_MESA_program_debug */
+#if FEATURE_MESA_program_debug
       case GL_FRAGMENT_PROGRAM_CALLBACK_MESA:
          CHECK_EXTENSION(MESA_program_debug, cap);
          ctx->FragmentProgram.CallbackEnabled = state;
@@ -912,6 +913,7 @@ _mesa_set_enable(GLcontext *ctx, GLenum cap, GLboolean state)
          CHECK_EXTENSION(MESA_program_debug, cap);
          ctx->VertexProgram.CallbackEnabled = state;
          break;
+#endif
 
 #if FEATURE_ATI_fragment_shader
       case GL_FRAGMENT_SHADER_ATI:
@@ -1349,12 +1351,15 @@ _mesa_IsEnabled( GLenum cap )
          return ctx->Depth.BoundsTest;
 
       /* GL_MESA_program_debug */
+#if FEATURE_MESA_program_debug
       case GL_FRAGMENT_PROGRAM_CALLBACK_MESA:
          CHECK_EXTENSION(MESA_program_debug);
          return ctx->FragmentProgram.CallbackEnabled;
       case GL_VERTEX_PROGRAM_CALLBACK_MESA:
          CHECK_EXTENSION(MESA_program_debug);
          return ctx->VertexProgram.CallbackEnabled;
+#endif
+
 #if FEATURE_ATI_fragment_shader
       case GL_FRAGMENT_SHADER_ATI:
 	 CHECK_EXTENSION(ATI_fragment_shader);

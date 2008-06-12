@@ -144,9 +144,7 @@
 #include "vtxfmt.h"
 #include "glapi/glthread.h"
 #include "glapi/glapioffsets.h"
-#if FEATURE_NV_vertex_program || FEATURE_NV_fragment_program
 #include "shader/program.h"
-#endif
 #include "shader/shader_api.h"
 #include "shader/atifragshader.h"
 #if _HAVE_FULL_GL
@@ -622,6 +620,7 @@ delete_program_cb(GLuint id, void *data, void *userData)
    ctx->Driver.DeleteProgram(ctx, prog);
 }
 
+#if FEATURE_ATI_fragment_shader
 /**
  * Callback for deleting an ATI fragment shader object.
  * Called by _mesa_HashDeleteAll().
@@ -633,6 +632,7 @@ delete_fragshader_cb(GLuint id, void *data, void *userData)
    GLcontext *ctx = (GLcontext *) userData;
    _mesa_delete_ati_fragment_shader(ctx, shader);
 }
+#endif
 
 /**
  * Callback for deleting a buffer object.  Called by _mesa_HashDeleteAll().
