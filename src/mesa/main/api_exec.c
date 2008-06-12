@@ -112,6 +112,7 @@
 #include "texgen.h"
 #endif
 #include "texobj.h"
+#include "texparam.h"
 #include "texstate.h"
 #include "mtypes.h"
 #include "varray.h"

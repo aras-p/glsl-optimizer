@@ -51,6 +51,7 @@
 #include "texenv.h"
 #include "texgen.h"
 #include "texobj.h"
+#include "texparam.h"
 #include "texstate.h"
 #include "varray.h"
 #include "mtypes.h"
