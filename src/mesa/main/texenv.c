@@ -37,8 +37,6 @@
 #include "math/m_xform.h"
 
 
-#define ENUM_TO_FLOAT(X) ((GLfloat)(GLint)(X))
-
 
 void GLAPIENTRY
 _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
