@@ -67,19 +67,30 @@ static INLINE boolean eq( struct x86_reg a,
 }
       
 struct x86_reg aos_get_x86( struct aos_compilation *cp,
+                            unsigned which_reg, /* quick hack */
                             unsigned value )
 {
-   if (cp->ebp != value) {
+   struct x86_reg reg;
+
+   if (which_reg == 0)
+      reg = cp->temp_EBP;
+   else
+      reg = cp->tmp_EAX;
+
+   if (cp->x86_reg[which_reg] != value) {
       unsigned offset;
 
       switch (value) {
       case X86_IMMEDIATES:
+         assert(which_reg == 0);
          offset = Offset(struct aos_machine, immediates);
          break;
       case X86_CONSTANTS:
+         assert(which_reg == 1);
          offset = Offset(struct aos_machine, constants);
          break;
       case X86_ATTRIBS:
+         assert(which_reg == 0);
          offset = Offset(struct aos_machine, attrib);
          break;
       default:
@@ -87,14 +98,14 @@ struct x86_reg aos_get_x86( struct aos_compilation *cp,
          offset = 0;
       }
 
-      x86_mov(cp->func, cp->temp_EBP, 
-              x86_make_disp(cp->machine_EDX, offset));
-      /* x86_deref(x86_make_disp(cp->machine_EDX, offset))); */
 
-      cp->ebp = value;
+      x86_mov(cp->func, reg, 
+              x86_make_disp(cp->machine_EDX, offset));
+
+      cp->x86_reg[which_reg] = value;
    }
 
-   return cp->temp_EBP;
+   return reg;
 }
 
 
@@ -118,10 +129,10 @@ static struct x86_reg get_reg_ptr(struct aos_compilation *cp,
       return x86_make_disp(ptr, Offset(struct aos_machine, internal[idx]));
 
    case TGSI_FILE_IMMEDIATE: 
-      return x86_make_disp(aos_get_x86(cp, X86_IMMEDIATES), idx * 4 * sizeof(float));
+      return x86_make_disp(aos_get_x86(cp, 0, X86_IMMEDIATES), idx * 4 * sizeof(float));
 
    case TGSI_FILE_CONSTANT: 
-      return x86_make_disp(aos_get_x86(cp, X86_CONSTANTS), idx * 4 * sizeof(float));
+      return x86_make_disp(aos_get_x86(cp, 1, X86_CONSTANTS), idx * 4 * sizeof(float));
 
    default:
       ERROR(cp, "unknown reg file");
@@ -1413,6 +1424,7 @@ static boolean emit_POW( struct aos_compilation *cp, const struct tgsi_full_inst
    x87_fld_src( cp, &op->FullSrcRegisters[0], 0 );
    x87_fstp( cp->func, x86_make_disp( cp->stack_ESP, 0 ) );
 
+   /* tmp_EAX has been pushed & will be restored below */
    x86_mov_reg_imm( cp->func, cp->tmp_EAX, (unsigned long) _powerf );
    x86_call( cp->func, cp->tmp_EAX );
 

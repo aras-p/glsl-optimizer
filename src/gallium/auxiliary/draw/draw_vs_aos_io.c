@@ -96,7 +96,7 @@ static void get_src_ptr( struct aos_compilation *cp,
                          struct x86_reg elt,
                          unsigned a )
 {
-   struct x86_reg attrib = x86_make_disp(aos_get_x86( cp, X86_ATTRIBS ), 
+   struct x86_reg attrib = x86_make_disp(aos_get_x86( cp, 0, X86_ATTRIBS ), 
                                          a * sizeof(struct aos_attrib));
 
    struct x86_reg input_ptr = x86_make_disp(attrib, 

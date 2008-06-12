@@ -145,7 +145,7 @@ struct aos_compilation {
       unsigned last_used;
    } xmm[8];
 
-   unsigned ebp;                /* one of X86_* */
+   unsigned x86_reg[2];                /* one of X86_* */
 
    boolean input_fetched[PIPE_MAX_ATTRIBS];
    unsigned output_last_write[PIPE_MAX_ATTRIBS];
@@ -213,6 +213,7 @@ do {                                                                    \
 #define X86_ATTRIBS    3
 
 struct x86_reg aos_get_x86( struct aos_compilation *cp,
+                            unsigned which_reg,
                             unsigned value );
 
 
