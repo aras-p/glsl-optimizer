@@ -22,6 +22,9 @@
  * 	- Maybe even relax restrictions a bit, can't do P_RESULT + P_IMMD,
  * 	  but can emit to P_TEMP first - then MOV later. NVIDIA does this
  *
+ * In ops such as ADD it's possible to construct a bad opcode in the !is_long()
+ * case, if the emit_src() causes the inst to suddenly become long.
+ *
  * Verify half-insns work where expected - and force disable them where they
  * don't work - MUL has it forcibly disabled atm as it fixes POW..
  *
