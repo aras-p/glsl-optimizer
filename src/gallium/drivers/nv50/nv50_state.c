@@ -29,12 +29,12 @@ nv50_blend_state_create(struct pipe_context *pipe,
 			so_data(so, 1);
 		so_method(so, tesla, NV50TCL_BLEND_EQUATION_RGB, 5);
 		so_data  (so, nvgl_blend_eqn(cso->rgb_func));
-		so_data  (so, nvgl_blend_func(cso->rgb_src_factor));
-		so_data  (so, nvgl_blend_func(cso->rgb_dst_factor));
+		so_data  (so, 0x4000 | nvgl_blend_func(cso->rgb_src_factor));
+		so_data  (so, 0x4000 | nvgl_blend_func(cso->rgb_dst_factor));
 		so_data  (so, nvgl_blend_eqn(cso->alpha_func));
-		so_data  (so, nvgl_blend_func(cso->alpha_src_factor));
+		so_data  (so, 0x4000 | nvgl_blend_func(cso->alpha_src_factor));
 		so_method(so, tesla, NV50TCL_BLEND_FUNC_DST_ALPHA, 1);
-		so_data  (so, nvgl_blend_func(cso->alpha_dst_factor));
+		so_data  (so, 0x4000 | nvgl_blend_func(cso->alpha_dst_factor));
 	}
 
 	if (cso->logicop_enable == 0 ) {
