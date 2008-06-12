@@ -382,7 +382,7 @@ _mesa_remove_output_reads(struct gl_program *prog, enum register_file type)
    GLuint numVaryingReads = 0;
 
    assert(prog->Target == GL_VERTEX_PROGRAM_ARB);
-   assert(type == PROGRAM_UNIFORM || type == PROGRAM_OUTPUT);
+   assert(type == PROGRAM_VARYING || type == PROGRAM_OUTPUT);
 
    for (i = 0; i < VERT_RESULT_MAX; i++)
       outputMap[i] = -1;
