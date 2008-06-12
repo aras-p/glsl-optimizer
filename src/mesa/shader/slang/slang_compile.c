@@ -2212,7 +2212,8 @@ _slang_compile(GLcontext *ctx, struct gl_shader *shader)
       printf("Pre-remove output reads:\n");
       _mesa_print_program(shader->Programs[0]);
 #endif
-      _mesa_remove_varying_reads(shader->Programs[0]);
+      _mesa_remove_output_reads(shader->Programs[0], PROGRAM_VARYING);
+      _mesa_remove_output_reads(shader->Programs[0], PROGRAM_OUTPUT);
 #if 0
       printf("Post-remove output reads:\n");
       _mesa_print_program(shader->Programs[0]);

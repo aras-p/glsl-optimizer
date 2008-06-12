@@ -40,6 +40,6 @@ extern void
 _mesa_count_texture_instructions(struct gl_program *prog);
 
 extern void
-_mesa_remove_varying_reads(struct gl_program *prog);
+_mesa_remove_output_reads(struct gl_program *prog, enum register_file type);
 
 #endif /* PROGRAMOPT_H */
