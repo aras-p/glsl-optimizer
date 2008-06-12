@@ -182,6 +182,9 @@ nv50_vbo_validate(struct nv50_context *nv50)
 		case PIPE_FORMAT_R32G32B32_FLOAT:
 			so_data(vtxfmt, 0x7e100000 | i);
 			break;
+		case PIPE_FORMAT_R32G32_FLOAT:
+			so_data(vtxfmt, 0x7e200000 | i);
+			break;
 		case PIPE_FORMAT_R8G8B8A8_UNORM:
 			so_data(vtxfmt, 0x24500000 | i);
 			break;
