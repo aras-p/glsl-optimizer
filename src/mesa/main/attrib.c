@@ -48,6 +48,7 @@
 #include "scissor.h"
 #include "simple_list.h"
 #include "stencil.h"
+#include "texgen.h"
 #include "texobj.h"
 #include "texstate.h"
 #include "mtypes.h"

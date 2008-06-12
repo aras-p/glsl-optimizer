@@ -60,6 +60,7 @@ texcompress_fxt1.c \
 texcompress_s3tc.c \
 texenvprogram.c \
 texformat.c \
+texgen.c \
 teximage.c \
 texobj.c \
 texrender.c \
@@ -138,6 +139,7 @@ texcompress.h \
 texenvprogram.h \
 texformat.h \
 texformat_tmp.h \
+texgen.h \
 teximage.h \
 texobj.h \
 texrender.h \
