@@ -196,168 +196,175 @@ alloc_immd(struct nv50_pc *pc, float f)
 	return r;
 }
 
+static struct nv50_program_exec *
+exec(struct nv50_pc *pc)
+{
+	struct nv50_program_exec *e = CALLOC_STRUCT(nv50_program_exec);
+
+	return e;
+}
+
 static void
-emit(struct nv50_pc *pc, unsigned *inst)
+emit(struct nv50_pc *pc, struct nv50_program_exec *e)
 {
 	struct nv50_program *p = pc->p;
 
-	if (inst[0] & 1) {
-		p->insns_nr += 2;
-		p->insns = realloc(p->insns, sizeof(unsigned) * p->insns_nr);
-		memcpy(p->insns + (p->insns_nr - 2), inst, sizeof(unsigned)*2);
-	} else {
-		p->insns_nr += 1;
-		p->insns = realloc(p->insns, sizeof(unsigned) * p->insns_nr);
-		memcpy(p->insns + (p->insns_nr - 1), inst, sizeof(unsigned));
-	}
+	if (p->exec_tail)
+		p->exec_tail->next = e;
+	if (!p->exec_head)
+		p->exec_head = e;
+	p->exec_tail = e;
+	p->exec_size += (e->inst[0] & 1) ? 2 : 1;
 }
 
-static INLINE void set_long(struct nv50_pc *, unsigned *);
+static INLINE void set_long(struct nv50_pc *, struct nv50_program_exec *);
 
 static boolean
-is_long(unsigned *inst)
+is_long(struct nv50_program_exec *e)
 {
-	if (inst[0] & 1)
+	if (e->inst[0] & 1)
 		return TRUE;
 	return FALSE;
 }
 
 static boolean
-is_immd(unsigned *inst)
+is_immd(struct nv50_program_exec *e)
 {
-	if (is_long(inst) && (inst[1] & 3) == 3)
+	if (is_long(e) && (e->inst[1] & 3) == 3)
 		return TRUE;
 	return FALSE;
 }
 
 static INLINE void
-set_pred(struct nv50_pc *pc, unsigned pred, unsigned idx, unsigned *inst)
+set_pred(struct nv50_pc *pc, unsigned pred, unsigned idx,
+	 struct nv50_program_exec *e)
 {
-	set_long(pc, inst);
-	inst[1] &= ~((0x1f << 7) | (0x3 << 12));
-	inst[1] |= (pred << 7) | (idx << 12);
+	set_long(pc, e);
+	e->inst[1] &= ~((0x1f << 7) | (0x3 << 12));
+	e->inst[1] |= (pred << 7) | (idx << 12);
 }
 
 static INLINE void
-set_pred_wr(struct nv50_pc *pc, unsigned on, unsigned idx, unsigned *inst)
+set_pred_wr(struct nv50_pc *pc, unsigned on, unsigned idx,
+	    struct nv50_program_exec *e)
 {
-	set_long(pc, inst);
-	inst[1] &= ~((0x3 << 4) | (1 << 6));
-	inst[1] |= (idx << 4) | (on << 6);
+	set_long(pc, e);
+	e->inst[1] &= ~((0x3 << 4) | (1 << 6));
+	e->inst[1] |= (idx << 4) | (on << 6);
 }
 
 static INLINE void
-set_long(struct nv50_pc *pc, unsigned *inst)
+set_long(struct nv50_pc *pc, struct nv50_program_exec *e)
 {
-	if (is_long(inst))
+	if (is_long(e))
 		return;
 
-	inst[0] |= 1;
-	set_pred(pc, 0xf, 0, inst);
-	set_pred_wr(pc, 0, 0, inst);
+	e->inst[0] |= 1;
+	set_pred(pc, 0xf, 0, e);
+	set_pred_wr(pc, 0, 0, e);
 }
 
 static INLINE void
-set_dst(struct nv50_pc *pc, struct nv50_reg *dst, unsigned *inst)
+set_dst(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_program_exec *e)
 {
 	if (dst->type == P_RESULT) {
-		set_long(pc, inst);
-		inst[1] |= 0x00000008;
+		set_long(pc, e);
+		e->inst[1] |= 0x00000008;
 	}
 
 	alloc_reg(pc, dst);
-	inst[0] |= (dst->hw << 2);
+	e->inst[0] |= (dst->hw << 2);
 }
 
 static INLINE void
-set_immd(struct nv50_pc *pc, struct nv50_reg *imm, unsigned *inst)
+set_immd(struct nv50_pc *pc, struct nv50_reg *imm, struct nv50_program_exec *e)
 {
 	unsigned val = fui(pc->immd_buf[imm->hw]); /* XXX */
 
-	set_long(pc, inst);
+	set_long(pc, e);
 	/*XXX: can't be predicated - bits overlap.. catch cases where both
 	 *     are required and avoid them. */
-	set_pred(pc, 0, 0, inst);
-	set_pred_wr(pc, 0, 0, inst);
+	set_pred(pc, 0, 0, e);
+	set_pred_wr(pc, 0, 0, e);
 
-	inst[1] |= 0x00000002 | 0x00000001;
-	inst[0] |= (val & 0x3f) << 16;
-	inst[1] |= (val >> 6) << 2;
+	e->inst[1] |= 0x00000002 | 0x00000001;
+	e->inst[0] |= (val & 0x3f) << 16;
+	e->inst[1] |= (val >> 6) << 2;
 }
 
 static void
 emit_interp(struct nv50_pc *pc, struct nv50_reg *dst,
 	    struct nv50_reg *src, struct nv50_reg *iv, boolean noperspective)
 {
-	unsigned inst[2] = { 0, 0 };
+	struct nv50_program_exec *e = exec(pc);
 
-	inst[0] |= 0x80000000;
-	set_dst(pc, dst, inst);
+	e->inst[0] |= 0x80000000;
+	set_dst(pc, dst, e);
 	alloc_reg(pc, iv);
-	inst[0] |= (iv->hw << 9);
+	e->inst[0] |= (iv->hw << 9);
 	alloc_reg(pc, src);
-	inst[0] |= (src->hw << 16);
+	e->inst[0] |= (src->hw << 16);
 	if (noperspective)
-		inst[0] |= (1 << 25);
+		e->inst[0] |= (1 << 25);
 
-	emit(pc, inst);
+	emit(pc, e);
 }
 
 static void
-set_cseg(struct nv50_pc *pc, struct nv50_reg *src, unsigned *inst)
+set_cseg(struct nv50_pc *pc, struct nv50_reg *src, struct nv50_program_exec *e)
 {
-	set_long(pc, inst);
+	set_long(pc, e);
 	if (src->type == P_IMMD) {
-		inst[1] |= (NV50_CB_PMISC << 22);
+		e->inst[1] |= (NV50_CB_PMISC << 22);
 	} else {
 		if (pc->p->type == PIPE_SHADER_VERTEX)
-			inst[1] |= (NV50_CB_PVP << 22);
+			e->inst[1] |= (NV50_CB_PVP << 22);
 		else
-			inst[1] |= (NV50_CB_PFP << 22);
+			e->inst[1] |= (NV50_CB_PFP << 22);
 	}
 }
 
 static void
 emit_mov(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src)
 {
-	unsigned inst[2] = { 0, 0 };
+	struct nv50_program_exec *e = exec(pc);
 
-	inst[0] |= 0x10000000;
+	e->inst[0] |= 0x10000000;
 
-	set_dst(pc, dst, inst);
+	set_dst(pc, dst, e);
 
 	if (dst->type != P_RESULT && src->type == P_IMMD) {
-		set_immd(pc, src, inst);
+		set_immd(pc, src, e);
 		/*XXX: 32-bit, but steals part of "half" reg space - need to
 		 *     catch and handle this case if/when we do half-regs
 		 */
-		inst[0] |= 0x00008000;
+		e->inst[0] |= 0x00008000;
 	} else
 	if (src->type == P_IMMD || src->type == P_CONST) {
-		set_long(pc, inst);
-		set_cseg(pc, src, inst);
-		inst[0] |= (src->hw << 9);
-		inst[1] |= 0x20000000; /* src0 const? */
+		set_long(pc, e);
+		set_cseg(pc, src, e);
+		e->inst[0] |= (src->hw << 9);
+		e->inst[1] |= 0x20000000; /* src0 const? */
 	} else {
 		if (src->type == P_ATTR) {
-			set_long(pc, inst);
-			inst[1] |= 0x00200000;
+			set_long(pc, e);
+			e->inst[1] |= 0x00200000;
 		}
 
 		alloc_reg(pc, src);
-		inst[0] |= (src->hw << 9);
+		e->inst[0] |= (src->hw << 9);
 	}
 
 	/* We really should support "half" instructions here at some point,
 	 * but I don't feel confident enough about them yet.
 	 */
-	set_long(pc, inst);
-	if (is_long(inst) && !is_immd(inst)) {
-		inst[1] |= 0x04000000; /* 32-bit */
-		inst[1] |= 0x0003c000; /* "subsubop" 0xf == mov */
+	set_long(pc, e);
+	if (is_long(e) && !is_immd(e)) {
+		e->inst[1] |= 0x04000000; /* 32-bit */
+		e->inst[1] |= 0x0003c000; /* "subsubop" 0xf == mov */
 	}
 
-	emit(pc, inst);
+	emit(pc, e);
 }
 
 static boolean
@@ -385,11 +392,11 @@ check_swap_src_0_1(struct nv50_pc *pc,
 }
 
 static void
-set_src_0(struct nv50_pc *pc, struct nv50_reg *src, unsigned *inst)
+set_src_0(struct nv50_pc *pc, struct nv50_reg *src, struct nv50_program_exec *e)
 {
 	if (src->type == P_ATTR) {
-		set_long(pc, inst);
-		inst[1] |= 0x00200000;
+		set_long(pc, e);
+		e->inst[1] |= 0x00200000;
 	} else
 	if (src->type == P_CONST || src->type == P_IMMD) {
 		struct nv50_reg *temp = temp_temp(pc);
@@ -399,11 +406,11 @@ set_src_0(struct nv50_pc *pc, struct nv50_reg *src, unsigned *inst)
 	}
 
 	alloc_reg(pc, src);
-	inst[0] |= (src->hw << 9);
+	e->inst[0] |= (src->hw << 9);
 }
 
 static void
-set_src_1(struct nv50_pc *pc, struct nv50_reg *src, unsigned *inst)
+set_src_1(struct nv50_pc *pc, struct nv50_reg *src, struct nv50_program_exec *e)
 {
 	if (src->type == P_ATTR) {
 		struct nv50_reg *temp = temp_temp(pc);
@@ -412,26 +419,26 @@ set_src_1(struct nv50_pc *pc, struct nv50_reg *src, unsigned *inst)
 		src = temp;
 	} else
 	if (src->type == P_CONST || src->type == P_IMMD) {
-		assert(!(inst[0] & 0x00800000));
-		if (inst[0] & 0x01000000) {
+		assert(!(e->inst[0] & 0x00800000));
+		if (e->inst[0] & 0x01000000) {
 			struct nv50_reg *temp = temp_temp(pc);
 
 			emit_mov(pc, temp, src);
 			src = temp;
 		} else {
-			set_cseg(pc, src, inst);
-			inst[0] |= 0x00800000;
+			set_cseg(pc, src, e);
+			e->inst[0] |= 0x00800000;
 		}
 	}
 
 	alloc_reg(pc, src);
-	inst[0] |= (src->hw << 16);
+	e->inst[0] |= (src->hw << 16);
 }
 
 static void
-set_src_2(struct nv50_pc *pc, struct nv50_reg *src, unsigned *inst)
+set_src_2(struct nv50_pc *pc, struct nv50_reg *src, struct nv50_program_exec *e)
 {
-	set_long(pc, inst);
+	set_long(pc, e);
 
 	if (src->type == P_ATTR) {
 		struct nv50_reg *temp = temp_temp(pc);
@@ -440,186 +447,186 @@ set_src_2(struct nv50_pc *pc, struct nv50_reg *src, unsigned *inst)
 		src = temp;
 	} else
 	if (src->type == P_CONST || src->type == P_IMMD) {
-		assert(!(inst[0] & 0x01000000));
-		if (inst[0] & 0x00800000) {
+		assert(!(e->inst[0] & 0x01000000));
+		if (e->inst[0] & 0x00800000) {
 			struct nv50_reg *temp = temp_temp(pc);
 
 			emit_mov(pc, temp, src);
 			src = temp;
 		} else {
-			set_cseg(pc, src, inst);
-			inst[0] |= 0x01000000;
+			set_cseg(pc, src, e);
+			e->inst[0] |= 0x01000000;
 		}
 	}
 
 	alloc_reg(pc, src);
-	inst[1] |= (src->hw << 14);
+	e->inst[1] |= (src->hw << 14);
 }
 
 static void
 emit_mul(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src0,
 	 struct nv50_reg *src1)
 {
-	unsigned inst[2] = { 0, 0 };
+	struct nv50_program_exec *e = exec(pc);
 
-	inst[0] |= 0xc0000000;
-	set_long(pc, inst);
+	e->inst[0] |= 0xc0000000;
+	set_long(pc, e);
 
 	check_swap_src_0_1(pc, &src0, &src1);
-	set_dst(pc, dst, inst);
-	set_src_0(pc, src0, inst);
-	set_src_1(pc, src1, inst);
+	set_dst(pc, dst, e);
+	set_src_0(pc, src0, e);
+	set_src_1(pc, src1, e);
 
-	emit(pc, inst);
+	emit(pc, e);
 }
 
 static void
 emit_add(struct nv50_pc *pc, struct nv50_reg *dst,
 	 struct nv50_reg *src0, struct nv50_reg *src1)
 {
-	unsigned inst[2] = { 0, 0 };
+	struct nv50_program_exec *e = exec(pc);
 
-	inst[0] |= 0xb0000000;
+	e->inst[0] |= 0xb0000000;
 
 	check_swap_src_0_1(pc, &src0, &src1);
-	set_dst(pc, dst, inst);
-	set_src_0(pc, src0, inst);
-	if (is_long(inst))
-		set_src_2(pc, src1, inst);
+	set_dst(pc, dst, e);
+	set_src_0(pc, src0, e);
+	if (is_long(e))
+		set_src_2(pc, src1, e);
 	else
-		set_src_1(pc, src1, inst);
+		set_src_1(pc, src1, e);
 
-	emit(pc, inst);
+	emit(pc, e);
 }
 
 static void
 emit_minmax(struct nv50_pc *pc, unsigned sub, struct nv50_reg *dst,
 	    struct nv50_reg *src0, struct nv50_reg *src1)
 {
-	unsigned inst[2] = { 0, 0 };
+	struct nv50_program_exec *e = exec(pc);
 
-	set_long(pc, inst);
-	inst[0] |= 0xb0000000;
-	inst[1] |= (sub << 29);
+	set_long(pc, e);
+	e->inst[0] |= 0xb0000000;
+	e->inst[1] |= (sub << 29);
 
 	check_swap_src_0_1(pc, &src0, &src1);
-	set_dst(pc, dst, inst);
-	set_src_0(pc, src0, inst);
-	set_src_1(pc, src1, inst);
+	set_dst(pc, dst, e);
+	set_src_0(pc, src0, e);
+	set_src_1(pc, src1, e);
 
-	emit(pc, inst);
+	emit(pc, e);
 }
 
 static void
 emit_sub(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src0,
 	 struct nv50_reg *src1)
 {
-	unsigned inst[2] = { 0, 0 };
+	struct nv50_program_exec *e = exec(pc);
 
-	inst[0] |= 0xb0000000;
+	e->inst[0] |= 0xb0000000;
 
-	set_long(pc, inst);
+	set_long(pc, e);
 	if (check_swap_src_0_1(pc, &src0, &src1))
-		inst[1] |= 0x04000000;
+		e->inst[1] |= 0x04000000;
 	else
-		inst[1] |= 0x08000000;
+		e->inst[1] |= 0x08000000;
 
-	set_dst(pc, dst, inst);
-	set_src_0(pc, src0, inst);
-	set_src_2(pc, src1, inst);
+	set_dst(pc, dst, e);
+	set_src_0(pc, src0, e);
+	set_src_2(pc, src1, e);
 
-	emit(pc, inst);
+	emit(pc, e);
 }
 
 static void
 emit_mad(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src0,
 	 struct nv50_reg *src1, struct nv50_reg *src2)
 {
-	unsigned inst[2] = { 0, 0 };
+	struct nv50_program_exec *e = exec(pc);
 
-	inst[0] |= 0xe0000000;
+	e->inst[0] |= 0xe0000000;
 
 	check_swap_src_0_1(pc, &src0, &src1);
-	set_dst(pc, dst, inst);
-	set_src_0(pc, src0, inst);
-	set_src_1(pc, src1, inst);
-	set_src_2(pc, src2, inst);
+	set_dst(pc, dst, e);
+	set_src_0(pc, src0, e);
+	set_src_1(pc, src1, e);
+	set_src_2(pc, src2, e);
 
-	emit(pc, inst);
+	emit(pc, e);
 }
 
 static void
 emit_msb(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src0,
 	 struct nv50_reg *src1, struct nv50_reg *src2)
 {
-	unsigned inst[2] = { 0, 0 };
+	struct nv50_program_exec *e = exec(pc);
 
-	inst[0] |= 0xe0000000;
-	set_long(pc, inst);
-	inst[1] |= 0x08000000; /* src0 * src1 - src2 */
+	e->inst[0] |= 0xe0000000;
+	set_long(pc, e);
+	e->inst[1] |= 0x08000000; /* src0 * src1 - src2 */
 
 	check_swap_src_0_1(pc, &src0, &src1);
-	set_dst(pc, dst, inst);
-	set_src_0(pc, src0, inst);
-	set_src_1(pc, src1, inst);
-	set_src_2(pc, src2, inst);
+	set_dst(pc, dst, e);
+	set_src_0(pc, src0, e);
+	set_src_1(pc, src1, e);
+	set_src_2(pc, src2, e);
 
-	emit(pc, inst);
+	emit(pc, e);
 }
 
 static void
 emit_flop(struct nv50_pc *pc, unsigned sub,
 	  struct nv50_reg *dst, struct nv50_reg *src)
 {
-	unsigned inst[2] = { 0, 0 };
+	struct nv50_program_exec *e = exec(pc);
 
-	inst[0] |= 0x90000000;
+	e->inst[0] |= 0x90000000;
 	if (sub) {
-		set_long(pc, inst);
-		inst[1] |= (sub << 29);
+		set_long(pc, e);
+		e->inst[1] |= (sub << 29);
 	}
 
-	set_dst(pc, dst, inst);
-	set_src_0(pc, src, inst);
+	set_dst(pc, dst, e);
+	set_src_0(pc, src, e);
 
-	emit(pc, inst);
+	emit(pc, e);
 }
 
 static void
 emit_preex2(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src)
 {
-	unsigned inst[2] = { 0, 0 };
+	struct nv50_program_exec *e = exec(pc);
 
-	inst[0] |= 0xb0000000;
+	e->inst[0] |= 0xb0000000;
 
-	set_dst(pc, dst, inst);
-	set_src_0(pc, src, inst);
-	set_long(pc, inst);
-	inst[1] |= (6 << 29) | 0x00004000;
+	set_dst(pc, dst, e);
+	set_src_0(pc, src, e);
+	set_long(pc, e);
+	e->inst[1] |= (6 << 29) | 0x00004000;
 
-	emit(pc, inst);
+	emit(pc, e);
 }
 
 static void
 emit_precossin(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src)
 {
-	unsigned inst[2] = { 0, 0 };
+	struct nv50_program_exec *e = exec(pc);
 
-	inst[0] |= 0xb0000000;
+	e->inst[0] |= 0xb0000000;
 
-	set_dst(pc, dst, inst);
-	set_src_0(pc, src, inst);
-	set_long(pc, inst);
-	inst[1] |= (6 << 29);
+	set_dst(pc, dst, e);
+	set_src_0(pc, src, e);
+	set_long(pc, e);
+	e->inst[1] |= (6 << 29);
 
-	emit(pc, inst);
+	emit(pc, e);
 }
 
 static void
 emit_set(struct nv50_pc *pc, unsigned c_op, struct nv50_reg *dst,
 	 struct nv50_reg *src0, struct nv50_reg *src1)
 {
-	unsigned inst[2] = { 0, 0 };
+	struct nv50_program_exec *e = exec(pc);
 	unsigned inv_cop[8] = { 0, 4, 2, 6, 1, 5, 3, 7 };
 	struct nv50_reg *rdst;
 
@@ -632,26 +639,27 @@ emit_set(struct nv50_pc *pc, unsigned c_op, struct nv50_reg *dst,
 		dst = alloc_temp(pc, NULL);
 
 	/* set.u32 */
-	set_long(pc, inst);
-	inst[0] |= 0xb0000000;
-	inst[1] |= (3 << 29);
-	inst[1] |= (c_op << 14);
+	set_long(pc, e);
+	e->inst[0] |= 0xb0000000;
+	e->inst[1] |= (3 << 29);
+	e->inst[1] |= (c_op << 14);
 	/*XXX: breaks things, .u32 by default?
 	 *     decuda will disasm as .u16 and use .lo/.hi regs, but this
 	 *     doesn't seem to match what the hw actually does.
 	inst[1] |= 0x04000000; << breaks things.. .u32 by default?
 	 */
-	set_dst(pc, dst, inst);
-	set_src_0(pc, src0, inst);
-	set_src_1(pc, src1, inst);
-	emit(pc, inst);
+	set_dst(pc, dst, e);
+	set_src_0(pc, src0, e);
+	set_src_1(pc, src1, e);
+	emit(pc, e);
 
 	/* cvt.f32.u32 */
-	inst[0] = 0xa0000001;
-	inst[1] = 0x64014780;
-	set_dst(pc, rdst, inst);
-	set_src_0(pc, dst, inst);
-	emit(pc, inst);
+	e = exec(pc);
+	e->inst[0] = 0xa0000001;
+	e->inst[1] = 0x64014780;
+	set_dst(pc, rdst, e);
+	set_src_0(pc, dst, e);
+	emit(pc, e);
 
 	if (dst != rdst)
 		free_temp(pc, dst);
@@ -660,19 +668,19 @@ emit_set(struct nv50_pc *pc, unsigned c_op, struct nv50_reg *dst,
 static void
 emit_flr(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src)
 {
-	unsigned inst[2] = { 0, 0 };
+	struct nv50_program_exec *e = exec(pc);
 
-	inst[0] = 0xa0000000; /* cvt */
-	set_long(pc, inst);
-	inst[1] |= (6 << 29); /* cvt */
-	inst[1] |= 0x08000000; /* integer mode */
-	inst[1] |= 0x04000000; /* 32 bit */
-	inst[1] |= ((0x1 << 3)) << 14; /* .rn */
-	inst[1] |= (1 << 14); /* src .f32 */
-	set_dst(pc, dst, inst);
-	set_src_0(pc, src, inst);
+	e->inst[0] = 0xa0000000; /* cvt */
+	set_long(pc, e);
+	e->inst[1] |= (6 << 29); /* cvt */
+	e->inst[1] |= 0x08000000; /* integer mode */
+	e->inst[1] |= 0x04000000; /* 32 bit */
+	e->inst[1] |= ((0x1 << 3)) << 14; /* .rn */
+	e->inst[1] |= (1 << 14); /* src .f32 */
+	set_dst(pc, dst, e);
+	set_src_0(pc, src, e);
 
-	emit(pc, inst);
+	emit(pc, e);
 }
 
 static void
@@ -692,18 +700,18 @@ emit_pow(struct nv50_pc *pc, struct nv50_reg *dst,
 static void
 emit_abs(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src)
 {
-	unsigned inst[2] = { 0, 0 };
+	struct nv50_program_exec *e = exec(pc);
 
-	inst[0] = 0xa0000000; /* cvt */
-	set_long(pc, inst);
-	inst[1] |= (6 << 29); /* cvt */
-	inst[1] |= 0x04000000; /* 32 bit */
-	inst[1] |= (1 << 14); /* src .f32 */
-	inst[1] |= ((1 << 6) << 14); /* .abs */
-	set_dst(pc, dst, inst);
-	set_src_0(pc, src, inst);
+	e->inst[0] = 0xa0000000; /* cvt */
+	set_long(pc, e);
+	e->inst[1] |= (6 << 29); /* cvt */
+	e->inst[1] |= 0x04000000; /* 32 bit */
+	e->inst[1] |= (1 << 14); /* src .f32 */
+	e->inst[1] |= ((1 << 6) << 14); /* .abs */
+	set_dst(pc, dst, e);
+	set_src_0(pc, src, e);
 
-	emit(pc, inst);
+	emit(pc, e);
 }
 
 static void
@@ -731,7 +739,7 @@ emit_lit(struct nv50_pc *pc, struct nv50_reg **dst, unsigned mask,
 	}
 
 	if (mask & (1 << 2)) {
-		set_pred_wr(pc, 1, 0, &pc->p->insns[pc->p->insns_nr - 2]);
+		set_pred_wr(pc, 1, 0, pc->p->exec_tail);
 
 		tmp[1] = temp_temp(pc);
 		emit_minmax(pc, 4, tmp[1], src[1], zero);
@@ -742,24 +750,24 @@ emit_lit(struct nv50_pc *pc, struct nv50_reg **dst, unsigned mask,
 
 		emit_pow(pc, dst[2], tmp[1], tmp[3]);
 		emit_mov(pc, dst[2], zero);
-		set_pred(pc, 3, 0, &pc->p->insns[pc->p->insns_nr - 2]);
+		set_pred(pc, 3, 0, pc->p->exec_tail);
 	}
 }
 
 static void
 emit_neg(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src)
 {
-	unsigned inst[2] = { 0, 0 };
+	struct nv50_program_exec *e = exec(pc);
 
-	set_long(pc, inst);
-	inst[0] |= 0xa0000000; /* delta */
-	inst[1] |= (7 << 29); /* delta */
-	inst[1] |= 0x04000000; /* negate arg0? probably not */
-	inst[1] |= (1 << 14); /* src .f32 */
-	set_dst(pc, dst, inst);
-	set_src_0(pc, src, inst);
+	set_long(pc, e);
+	e->inst[0] |= 0xa0000000; /* delta */
+	e->inst[1] |= (7 << 29); /* delta */
+	e->inst[1] |= 0x04000000; /* negate arg0? probably not */
+	e->inst[1] |= (1 << 14); /* src .f32 */
+	set_dst(pc, dst, e);
+	set_src_0(pc, src, e);
 
-	emit(pc, inst);
+	emit(pc, e);
 }
 
 static struct nv50_reg *
@@ -1132,20 +1140,21 @@ nv50_program_tx_insn(struct nv50_pc *pc, const union tgsi_full_token *tok)
 
 	if (sat) {
 		for (c = 0; c < 4; c++) {
-			unsigned inst[2] = { 0, 0 };
+			struct nv50_program_exec *e;
 
 			if (!(mask & (1 << c)))
 				continue;
+			e = exec(pc);
 
-			inst[0] = 0xa0000000; /* cvt */
-			set_long(pc, inst);
-			inst[1] |= (6 << 29); /* cvt */
-			inst[1] |= 0x04000000; /* 32 bit */
-			inst[1] |= (1 << 14); /* src .f32 */
-			inst[1] |= ((1 << 5) << 14); /* .sat */
-			set_dst(pc, rdst[c], inst);
-			set_src_0(pc, dst[c], inst);
-			emit(pc, inst);
+			e->inst[0] = 0xa0000000; /* cvt */
+			set_long(pc, e);
+			e->inst[1] |= (6 << 29); /* cvt */
+			e->inst[1] |= 0x04000000; /* 32 bit */
+			e->inst[1] |= (1 << 14); /* src .f32 */
+			e->inst[1] |= ((1 << 5) << 14); /* .sat */
+			set_dst(pc, rdst[c], e);
+			set_src_0(pc, dst[c], e);
+			emit(pc, e);
 		}
 	}
 
@@ -1384,6 +1393,9 @@ nv50_program_tx(struct nv50_program *p)
 			emit_mov(pc, &out, &pc->result[out.hw]);
 	}
 
+	assert(is_long(pc->p->exec_tail) && !is_immd(pc->p->exec_head));
+	pc->p->exec_tail->inst[1] |= 0x00000001;
+
 	p->immd_nr = pc->immd_nr * 4;
 	p->immd = pc->immd_buf;
 
@@ -1397,20 +1409,17 @@ out_cleanup:
 static void
 nv50_program_validate(struct nv50_context *nv50, struct nv50_program *p)
 {
-	int i;
+	struct nv50_program_exec *e;
 
 	if (nv50_program_tx(p) == FALSE)
 		assert(0);
-	/* *not* sufficient, it's fine if last inst is long and
-	 * NOT immd - otherwise it's fucked fucked fucked */
-	p->insns[p->insns_nr - 1] |= 0x00000001;
 
-	if (p->type == PIPE_SHADER_VERTEX) {
-	for (i = 0; i < p->insns_nr; i++)
-		NOUVEAU_ERR("VP0x%08x\n", p->insns[i]);
-	} else {
-	for (i = 0; i < p->insns_nr; i++)
-		NOUVEAU_ERR("FP0x%08x\n", p->insns[i]);
+	e = p->exec_head;
+	while (e) {
+		NOUVEAU_ERR("0x%08x\n", e->inst[0]);
+		if (is_long(e))
+			NOUVEAU_ERR("0x%08x\n", e->inst[1]);
+		e = e->next;
 	}
 
 	p->translated = TRUE;
@@ -1432,12 +1441,18 @@ static void
 nv50_program_validate_code(struct nv50_context *nv50, struct nv50_program *p)
 {
 	struct pipe_winsys *ws = nv50->pipe.winsys;
-	void *map;
+	struct nv50_program_exec *e;
+	unsigned *map;
 
 	if (!p->buffer)
-		p->buffer = ws->buffer_create(ws, 0x100, 0, p->insns_nr * 4);
+		p->buffer = ws->buffer_create(ws, 0x100, 0, p->exec_size * 4);
+
 	map = ws->buffer_map(ws, p->buffer, PIPE_BUFFER_USAGE_CPU_WRITE);
-	memcpy(map, p->insns, p->insns_nr * 4);
+	for (e = p->exec_head; e; e = e->next) {
+		*(map++) = e->inst[0];
+		if (is_long(e))
+			*(map++) = e->inst[1];
+	}
 	ws->buffer_unmap(ws, p->buffer);
 }
 
@@ -1519,11 +1534,14 @@ nv50_program_destroy(struct nv50_context *nv50, struct nv50_program *p)
 {
 	struct pipe_winsys *ws = nv50->pipe.winsys;
 
-	if (p->insns_nr) {
-		if (p->insns)
-			FREE(p->insns);
-		p->insns_nr = 0;
+	while (p->exec_head) {
+		struct nv50_program_exec *e = p->exec_head;
+
+		p->exec_head = e->next;
+		FREE(e);
 	}
+	p->exec_tail = NULL;
+	p->exec_size = 0;
 
 	if (p->buffer)
 		pipe_buffer_reference(ws, &p->buffer, NULL);

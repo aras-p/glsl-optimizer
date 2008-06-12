@@ -10,21 +10,35 @@ struct nv50_program_data {
 	float value;
 };
 
+struct nv50_program_exec {
+	struct nv50_program_exec *next;
+
+	unsigned inst[2];
+	struct {
+		int index;
+		unsigned mask;
+		unsigned shift;
+	} param;
+};
+
 struct nv50_program {
 	struct pipe_shader_state pipe;
 	struct tgsi_shader_info info;
 	boolean translated;
 
 	unsigned type;
-	unsigned *insns;
-	unsigned insns_nr;
+	struct nv50_program_exec *exec_head;
+	struct nv50_program_exec *exec_tail;
+	unsigned exec_size;
+	struct nv50_program_data *data;
+	struct nouveau_resource *data_res;
+	unsigned data_nr;
+	unsigned data_start;
 
 	struct pipe_buffer *buffer;
 
 	float *immd;
 	unsigned immd_nr;
-
-	struct nouveau_resource *data;
 
 	struct {
 		unsigned high_temp;
