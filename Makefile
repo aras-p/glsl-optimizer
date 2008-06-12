@@ -317,6 +317,7 @@ DRI_FILES = \
 	$(DIRECTORY)/src/glx/x11/*.[ch]					\
 	$(DIRECTORY)/src/mesa/drivers/dri/Makefile			\
 	$(DIRECTORY)/src/mesa/drivers/dri/Makefile.template		\
+	$(DIRECTORY)/src/mesa/drivers/dri/dri.pc.in			\
 	$(DIRECTORY)/src/mesa/drivers/dri/common/xmlpool/*.[ch]		\
 	$(DIRECTORY)/src/mesa/drivers/dri/common/xmlpool/*.po		\
 	$(DIRECTORY)/src/mesa/drivers/dri/*/*.[chS]			\
