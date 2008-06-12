@@ -172,7 +172,7 @@ static void varray_destroy(struct draw_pt_front_end *frontend)
 
 struct draw_pt_front_end *draw_pt_varray(struct draw_context *draw)
 {
-   unsigned i;
+   ushort i;
    struct varray_frontend *varray = CALLOC_STRUCT(varray_frontend);
    if (varray == NULL)
       return NULL;
