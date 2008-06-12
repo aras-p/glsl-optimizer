@@ -45,9 +45,6 @@
 #include "math/m_xform.h"
 
 
-#define ENUM_TO_FLOAT(X) ((GLfloat)(GLint)(X))
-#define ENUM_TO_DOUBLE(X) ((GLdouble)(GLint)(X))
-
 
 /**
  * Default texture combine environment state.  This is used to initialize

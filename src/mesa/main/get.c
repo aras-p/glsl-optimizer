@@ -19,10 +19,6 @@
 
 #define INT_TO_BOOLEAN(I)     ( (I) ? GL_TRUE : GL_FALSE )
 
-#define ENUM_TO_BOOLEAN(E)    ( (E) ? GL_TRUE : GL_FALSE )
-#define ENUM_TO_INT(E)        ( (GLint) (E) )
-#define ENUM_TO_FLOAT(E)      ( (GLfloat) (E) )
-
 #define BOOLEAN_TO_INT(B)     ( (GLint) (B) )
 #define BOOLEAN_TO_FLOAT(B)   ( (B) ? 1.0F : 0.0F )
 
@@ -870,6 +866,14 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
       case GL_TEXTURE_3D:
          params[0] = _mesa_IsEnabled(GL_TEXTURE_3D);
          break;
+      case GL_TEXTURE_1D_ARRAY_EXT:
+         CHECK_EXT1(MESA_texture_array, "GetBooleanv");
+         params[0] = _mesa_IsEnabled(GL_TEXTURE_1D_ARRAY_EXT);
+         break;
+      case GL_TEXTURE_2D_ARRAY_EXT:
+         CHECK_EXT1(MESA_texture_array, "GetBooleanv");
+         params[0] = _mesa_IsEnabled(GL_TEXTURE_2D_ARRAY_EXT);
+         break;
       case GL_TEXTURE_BINDING_1D:
          params[0] = INT_TO_BOOLEAN(ctx->Texture.Unit[ctx->Texture.CurrentUnit].Current1D->Name);
          break;
@@ -878,6 +882,14 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          break;
       case GL_TEXTURE_BINDING_3D:
          params[0] = INT_TO_BOOLEAN(ctx->Texture.Unit[ctx->Texture.CurrentUnit].Current3D->Name);
+         break;
+      case GL_TEXTURE_BINDING_1D_ARRAY_EXT:
+         CHECK_EXT1(MESA_texture_array, "GetBooleanv");
+         params[0] = INT_TO_BOOLEAN(ctx->Texture.Unit[ctx->Texture.CurrentUnit].Current1DArray->Name);
+         break;
+      case GL_TEXTURE_BINDING_2D_ARRAY_EXT:
+         CHECK_EXT1(MESA_texture_array, "GetBooleanv");
+         params[0] = INT_TO_BOOLEAN(ctx->Texture.Unit[ctx->Texture.CurrentUnit].Current2DArray->Name);
          break;
       case GL_TEXTURE_ENV_COLOR:
          {
@@ -2124,7 +2136,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          params[0] = (GLfloat)(ctx->DrawBuffer->Visual.depthBits);
          break;
       case GL_DEPTH_CLEAR_VALUE:
-         params[0] = (GLfloat)ctx->Depth.Clear;
+         params[0] = ctx->Depth.Clear;
          break;
       case GL_DEPTH_FUNC:
          params[0] = ENUM_TO_FLOAT(ctx->Depth.Func);
@@ -2701,6 +2713,14 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
       case GL_TEXTURE_3D:
          params[0] = BOOLEAN_TO_FLOAT(_mesa_IsEnabled(GL_TEXTURE_3D));
          break;
+      case GL_TEXTURE_1D_ARRAY_EXT:
+         CHECK_EXT1(MESA_texture_array, "GetFloatv");
+         params[0] = BOOLEAN_TO_FLOAT(_mesa_IsEnabled(GL_TEXTURE_1D_ARRAY_EXT));
+         break;
+      case GL_TEXTURE_2D_ARRAY_EXT:
+         CHECK_EXT1(MESA_texture_array, "GetFloatv");
+         params[0] = BOOLEAN_TO_FLOAT(_mesa_IsEnabled(GL_TEXTURE_2D_ARRAY_EXT));
+         break;
       case GL_TEXTURE_BINDING_1D:
          params[0] = (GLfloat)(ctx->Texture.Unit[ctx->Texture.CurrentUnit].Current1D->Name);
          break;
@@ -2709,6 +2729,14 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          break;
       case GL_TEXTURE_BINDING_3D:
          params[0] = (GLfloat)(ctx->Texture.Unit[ctx->Texture.CurrentUnit].Current3D->Name);
+         break;
+      case GL_TEXTURE_BINDING_1D_ARRAY_EXT:
+         CHECK_EXT1(MESA_texture_array, "GetFloatv");
+         params[0] = (GLfloat)(ctx->Texture.Unit[ctx->Texture.CurrentUnit].Current1DArray->Name);
+         break;
+      case GL_TEXTURE_BINDING_2D_ARRAY_EXT:
+         CHECK_EXT1(MESA_texture_array, "GetFloatv");
+         params[0] = (GLfloat)(ctx->Texture.Unit[ctx->Texture.CurrentUnit].Current2DArray->Name);
          break;
       case GL_TEXTURE_ENV_COLOR:
          {
@@ -2914,7 +2942,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          GLuint i, n = _mesa_get_compressed_formats(ctx, formats, GL_FALSE);
          ASSERT(n <= 100);
          for (i = 0; i < n; i++)
-            params[i] = (GLfloat)(ENUM_TO_INT(formats[i]));
+            params[i] = ENUM_TO_INT(formats[i]);
          }
          break;
       case GL_ARRAY_ELEMENT_LOCK_FIRST_EXT:
@@ -4532,6 +4560,14 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
       case GL_TEXTURE_3D:
          params[0] = BOOLEAN_TO_INT(_mesa_IsEnabled(GL_TEXTURE_3D));
          break;
+      case GL_TEXTURE_1D_ARRAY_EXT:
+         CHECK_EXT1(MESA_texture_array, "GetIntegerv");
+         params[0] = BOOLEAN_TO_INT(_mesa_IsEnabled(GL_TEXTURE_1D_ARRAY_EXT));
+         break;
+      case GL_TEXTURE_2D_ARRAY_EXT:
+         CHECK_EXT1(MESA_texture_array, "GetIntegerv");
+         params[0] = BOOLEAN_TO_INT(_mesa_IsEnabled(GL_TEXTURE_2D_ARRAY_EXT));
+         break;
       case GL_TEXTURE_BINDING_1D:
          params[0] = ctx->Texture.Unit[ctx->Texture.CurrentUnit].Current1D->Name;
          break;
@@ -4540,6 +4576,14 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          break;
       case GL_TEXTURE_BINDING_3D:
          params[0] = ctx->Texture.Unit[ctx->Texture.CurrentUnit].Current3D->Name;
+         break;
+      case GL_TEXTURE_BINDING_1D_ARRAY_EXT:
+         CHECK_EXT1(MESA_texture_array, "GetIntegerv");
+         params[0] = ctx->Texture.Unit[ctx->Texture.CurrentUnit].Current1DArray->Name;
+         break;
+      case GL_TEXTURE_BINDING_2D_ARRAY_EXT:
+         CHECK_EXT1(MESA_texture_array, "GetIntegerv");
+         params[0] = ctx->Texture.Unit[ctx->Texture.CurrentUnit].Current2DArray->Name;
          break;
       case GL_TEXTURE_ENV_COLOR:
          {

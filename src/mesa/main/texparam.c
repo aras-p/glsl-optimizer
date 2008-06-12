@@ -39,9 +39,6 @@
 #include "main/teximage.h"
 
 
-#define ENUM_TO_FLOAT(X) ((GLfloat)(GLint)(X))
-
-
 /**
  * Check if a coordinate wrap mode is supported for the texture target.
  * \return GL_TRUE if legal, GL_FALSE otherwise
