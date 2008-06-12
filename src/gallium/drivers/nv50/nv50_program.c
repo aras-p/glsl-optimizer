@@ -1484,10 +1484,13 @@ nv50_program_validate_code(struct nv50_context *nv50, struct nv50_program *p)
 {
 	struct pipe_winsys *ws = nv50->pipe.winsys;
 	struct nv50_program_exec *e;
+	boolean upload = FALSE;
 	unsigned *map;
 
-	if (!p->buffer)
+	if (!p->buffer) {
 		p->buffer = ws->buffer_create(ws, 0x100, 0, p->exec_size * 4);
+		upload = TRUE;
+	}
 
 	if (p->data && p->data->start != p->data_start) {
 		for (e = p->exec_head; e; e = e->next) {
@@ -1503,7 +1506,11 @@ nv50_program_validate_code(struct nv50_context *nv50, struct nv50_program *p)
 		}
 
 		p->data_start = p->data->start;
+		upload = TRUE;
 	}
+
+	if (!upload)
+		return FALSE;
 
 	map = ws->buffer_map(ws, p->buffer, PIPE_BUFFER_USAGE_CPU_WRITE);
 	for (e = p->exec_head; e; e = e->next) {
