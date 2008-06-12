@@ -1420,11 +1420,27 @@ out_cleanup:
 static void
 nv50_program_validate(struct nv50_context *nv50, struct nv50_program *p)
 {
-	struct nv50_program_exec *e;
-
 	if (nv50_program_tx(p) == FALSE)
 		assert(0);
 	p->translated = TRUE;
+}
+
+static void
+nv50_program_upload_data(struct nv50_context *nv50, float *map,
+			 unsigned start, unsigned count)
+{
+	while (count) {
+		unsigned nr = count > 2047 ? 2047 : count;
+
+		BEGIN_RING(tesla, 0x00000f00, 1);
+		OUT_RING  ((NV50_CB_PMISC << 0) | (start << 8));
+		BEGIN_RING(tesla, 0x40000f04, nr);
+		OUT_RINGp (map, nr);
+
+		map += nr;
+		start += nr;
+		count -= nr;
+	}
 }
 
 static void
@@ -1433,7 +1449,6 @@ nv50_program_validate_data(struct nv50_context *nv50, struct nv50_program *p)
 	struct nouveau_winsys *nvws = nv50->screen->nvws;
 	struct pipe_winsys *ws = nv50->pipe.winsys;
 	unsigned nr = p->param_nr + p->immd_nr;
-	int i;
 
 	if (!p->data && nr) {
 		struct nouveau_resource *heap = nv50->screen->vp_data_heap;
@@ -1452,20 +1467,15 @@ nv50_program_validate_data(struct nv50_context *nv50, struct nv50_program *p)
 	if (p->param_nr) {
 		float *map = ws->buffer_map(ws, nv50->constbuf[p->type],
 					    PIPE_BUFFER_USAGE_CPU_READ);
-		for (i = 0; i < p->param_nr; i++) {
-			BEGIN_RING(tesla, 0x0f00, 2);
-			OUT_RING  ((NV50_CB_PMISC << 0) |
-				   ((p->data->start + i) << 8));
-			OUT_RING  (fui(map[i]));
-		}
+		nv50_program_upload_data(nv50, map, p->data->start,
+					 p->param_nr);
 		ws->buffer_unmap(ws, nv50->constbuf[p->type]);
 	}
 
-	for (i = 0; i < p->immd_nr; i++) {
-		BEGIN_RING(tesla, 0x0f00, 2);
-		OUT_RING  ((NV50_CB_PMISC << 0) |
-			   ((p->data_start + p->param_nr + i) << 8));
-		OUT_RING  (fui(p->immd[i]));
+	if (p->immd_nr) {
+		nv50_program_upload_data(nv50, p->immd,
+					 p->data->start + p->param_nr,
+					 p->immd_nr);
 	}
 }
 
@@ -1481,11 +1491,15 @@ nv50_program_validate_code(struct nv50_context *nv50, struct nv50_program *p)
 
 	if (p->data && p->data->start != p->data_start) {
 		for (e = p->exec_head; e; e = e->next) {
+			unsigned ei, ci;
+
 			if (e->param.index < 0)
 				continue;
-			e->inst[e->param.shift / 32] &= ~e->param.mask;
-			e->inst[e->param.shift / 32] |= (e->param.index <<
-							 e->param.shift);
+			ei = e->param.shift >> 5;
+			ci = e->param.index + p->data->start;
+
+			e->inst[ei] &= ~e->param.mask;
+			e->inst[ei] |= (ci << e->param.shift);
 		}
 
 		p->data_start = p->data->start;

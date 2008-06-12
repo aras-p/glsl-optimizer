@@ -229,8 +229,8 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 	so_data  (so, 8);
 
 	/* Shared constant buffer */
-	screen->constbuf = ws->buffer_create(ws, 0, 0, 256 * 4 * 4);
-	if (nvws->res_init(&screen->vp_data_heap, 0, 256)) {
+	screen->constbuf = ws->buffer_create(ws, 0, 0, 128 * 4 * 4);
+	if (nvws->res_init(&screen->vp_data_heap, 0, 128)) {
 		NOUVEAU_ERR("Error initialising constant buffer\n");
 		nv50_screen_destroy(&screen->pipe);
 		return NULL;
