@@ -278,6 +278,7 @@ st_mesa_format_to_pipe_format(GLuint mesaFormat)
       return PIPE_FORMAT_S8Z24_UNORM;
    case MESA_FORMAT_YCBCR:
       return PIPE_FORMAT_YCBCR;
+#if FEATURE_texture_s3tc
    case MESA_FORMAT_RGB_DXT1:
       return PIPE_FORMAT_DXT1_RGB;
    case MESA_FORMAT_RGBA_DXT1:
@@ -286,6 +287,7 @@ st_mesa_format_to_pipe_format(GLuint mesaFormat)
       return PIPE_FORMAT_DXT3_RGBA;
    case MESA_FORMAT_RGBA_DXT5:
       return PIPE_FORMAT_DXT5_RGBA;
+#endif
    default:
       assert(0);
       return 0;
@@ -569,6 +571,7 @@ translate_gallium_format_to_mesa_format(enum pipe_format format)
       return &_mesa_texformat_ycbcr;
    case PIPE_FORMAT_YCBCR_REV:
       return &_mesa_texformat_ycbcr_rev;
+#if FEATURE_texture_s3tc
    case PIPE_FORMAT_DXT1_RGB:
       return &_mesa_texformat_rgb_dxt1;
    case PIPE_FORMAT_DXT1_RGBA:
@@ -577,6 +580,7 @@ translate_gallium_format_to_mesa_format(enum pipe_format format)
       return &_mesa_texformat_rgba_dxt3;
    case PIPE_FORMAT_DXT5_RGBA:
       return &_mesa_texformat_rgba_dxt5;
+#endif
    /* XXX add additional cases */
    default:
       assert(0);

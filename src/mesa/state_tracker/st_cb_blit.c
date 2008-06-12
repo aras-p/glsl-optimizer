@@ -106,5 +106,7 @@ st_BlitFramebuffer(GLcontext *ctx,
 void
 st_init_blit_functions(struct dd_function_table *functions)
 {
+#if FEATURE_EXT_framebuffer_blit
    functions->BlitFramebuffer = st_BlitFramebuffer;
+#endif
 }
