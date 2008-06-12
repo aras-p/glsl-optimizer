@@ -645,6 +645,12 @@ if test "$mesa_driver" = dri; then
                 DRI_DIRS="mach64 r128 r200 r300 radeon tdfx swrast"
             fi
             ;;
+        sparc*)
+            # Build only the drivers for cards that exist on sparc`
+            if test "x$DRI_DIRS" = x; then
+                DRI_DIRS="mach64 r128 r200 r300 radeon ffb"
+            fi
+            ;;
         esac
         ;;
     freebsd* | dragonfly*)
