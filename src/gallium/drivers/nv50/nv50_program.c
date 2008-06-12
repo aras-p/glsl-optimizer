@@ -201,6 +201,7 @@ exec(struct nv50_pc *pc)
 {
 	struct nv50_program_exec *e = CALLOC_STRUCT(nv50_program_exec);
 
+	e->param.index = -1;
 	return e;
 }
 
@@ -311,7 +312,8 @@ emit_interp(struct nv50_pc *pc, struct nv50_reg *dst,
 }
 
 static void
-set_cseg(struct nv50_pc *pc, struct nv50_reg *src, struct nv50_program_exec *e)
+set_data(struct nv50_pc *pc, struct nv50_reg *src, unsigned m, unsigned s,
+	 struct nv50_program_exec *e)
 {
 	set_long(pc, e);
 	if (src->type == P_IMMD) {
@@ -322,6 +324,10 @@ set_cseg(struct nv50_pc *pc, struct nv50_reg *src, struct nv50_program_exec *e)
 		else
 			e->inst[1] |= (NV50_CB_PFP << 22);
 	}
+
+	e->param.index = src->hw;
+	e->param.shift = s;
+	e->param.mask = m << (s % 32);
 }
 
 static void
@@ -342,8 +348,7 @@ emit_mov(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src)
 	} else
 	if (src->type == P_IMMD || src->type == P_CONST) {
 		set_long(pc, e);
-		set_cseg(pc, src, e);
-		e->inst[0] |= (src->hw << 9);
+		set_data(pc, src, 0x7f, 9, e);
 		e->inst[1] |= 0x20000000; /* src0 const? */
 	} else {
 		if (src->type == P_ATTR) {
@@ -426,7 +431,7 @@ set_src_1(struct nv50_pc *pc, struct nv50_reg *src, struct nv50_program_exec *e)
 			emit_mov(pc, temp, src);
 			src = temp;
 		} else {
-			set_cseg(pc, src, e);
+			set_data(pc, src, 0x7f, 16, e);
 			e->inst[0] |= 0x00800000;
 		}
 	}
@@ -454,7 +459,7 @@ set_src_2(struct nv50_pc *pc, struct nv50_reg *src, struct nv50_program_exec *e)
 			emit_mov(pc, temp, src);
 			src = temp;
 		} else {
-			set_cseg(pc, src, e);
+			set_data(pc, src, 0x7f, 32+14, e);
 			e->inst[0] |= 0x01000000;
 		}
 	}
@@ -1449,6 +1454,12 @@ nv50_program_validate_code(struct nv50_context *nv50, struct nv50_program *p)
 
 	map = ws->buffer_map(ws, p->buffer, PIPE_BUFFER_USAGE_CPU_WRITE);
 	for (e = p->exec_head; e; e = e->next) {
+		if (e->param.index >= 0) {
+			e->inst[e->param.shift / 32] &= ~e->param.mask;
+			e->inst[e->param.shift / 32] |= (e->param.index <<
+							 e->param.shift);
+		}
+
 		*(map++) = e->inst[0];
 		if (is_long(e))
 			*(map++) = e->inst[1];
