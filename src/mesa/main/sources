@@ -64,6 +64,7 @@ texformat.c \
 texgen.c \
 teximage.c \
 texobj.c \
+texparam.c \
 texrender.c \
 texstate.c \
 texstore.c \
@@ -144,6 +145,7 @@ texformat_tmp.h \
 texgen.h \
 teximage.h \
 texobj.h \
+texparam.h \
 texrender.h \
 texstate.h \
 texstore.h \

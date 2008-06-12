@@ -1,13 +1,8 @@
-/**
- * \file texstate.h
- * Texture state management.
- */
-
 /*
  * Mesa 3-D graphics library
  * Version:  7.1
  *
- * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2008  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -28,51 +23,41 @@
  */
 
 
-#ifndef TEXSTATE_H
-#define TEXSTATE_H
+#ifndef TEXPARAM_H
+#define TEXPARAM_H
 
 
-#include "mtypes.h"
+#include "main/glheader.h"
 
-
-extern void
-_mesa_copy_texture_state( const GLcontext *src, GLcontext *dst );
-
-extern void
-_mesa_print_texunit_state( GLcontext *ctx, GLuint unit );
-
-
-
-/**
- * \name Called from API
- */
-/*@{*/
-
-
-/*
- * GL_ARB_multitexture
- */
-extern void GLAPIENTRY
-_mesa_ActiveTextureARB( GLenum target );
 
 extern void GLAPIENTRY
-_mesa_ClientActiveTextureARB( GLenum target );
+_mesa_GetTexLevelParameterfv( GLenum target, GLint level,
+                              GLenum pname, GLfloat *params );
+
+extern void GLAPIENTRY
+_mesa_GetTexLevelParameteriv( GLenum target, GLint level,
+                              GLenum pname, GLint *params );
+
+extern void GLAPIENTRY
+_mesa_GetTexParameterfv( GLenum target, GLenum pname, GLfloat *params );
+
+extern void GLAPIENTRY
+_mesa_GetTexParameteriv( GLenum target, GLenum pname, GLint *params );
 
 
-/**
- * \name Initialization, state maintenance
- */
-/*@{*/
 
-extern void 
-_mesa_update_texture( GLcontext *ctx, GLuint new_state );
+extern void GLAPIENTRY
+_mesa_TexParameterfv( GLenum target, GLenum pname, const GLfloat *params );
 
-extern GLboolean
-_mesa_init_texture( GLcontext *ctx );
+extern void GLAPIENTRY
+_mesa_TexParameterf( GLenum target, GLenum pname, GLfloat param );
 
-extern void 
-_mesa_free_texture_data( GLcontext *ctx );
 
-/*@}*/
+extern void GLAPIENTRY
+_mesa_TexParameteri( GLenum target, GLenum pname, GLint param );
 
-#endif
+extern void GLAPIENTRY
+_mesa_TexParameteriv( GLenum target, GLenum pname, const GLint *params );
+
+
+#endif /* TEXPARAM_H */
