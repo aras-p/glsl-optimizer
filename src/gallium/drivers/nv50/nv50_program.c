@@ -10,6 +10,7 @@
 #include "nv50_context.h"
 
 #define NV50_SU_MAX_TEMP 64
+#define NV50_PROGRAM_DUMP
 
 /* ARL - gallium craps itself on progs/vp/arl.txt
  *
@@ -316,6 +317,9 @@ set_data(struct nv50_pc *pc, struct nv50_reg *src, unsigned m, unsigned s,
 	 struct nv50_program_exec *e)
 {
 	set_long(pc, e);
+#if 1
+	e->inst[1] |= (1 << 22);
+#else
 	if (src->type == P_IMMD) {
 		e->inst[1] |= (NV50_CB_PMISC << 22);
 	} else {
@@ -324,6 +328,7 @@ set_data(struct nv50_pc *pc, struct nv50_reg *src, unsigned m, unsigned s,
 		else
 			e->inst[1] |= (NV50_CB_PFP << 22);
 	}
+#endif
 
 	e->param.index = src->hw;
 	e->param.shift = s;
@@ -1335,7 +1340,7 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 	}
 
 	if (pc->immd_nr) {
-		int rid = 0;
+		int rid = pc->param_nr * 4;
 
 		pc->immd = calloc(pc->immd_nr * 4, sizeof(struct nv50_reg));
 		if (!pc->immd)
@@ -1401,6 +1406,7 @@ nv50_program_tx(struct nv50_program *p)
 	assert(is_long(pc->p->exec_tail) && !is_immd(pc->p->exec_head));
 	pc->p->exec_tail->inst[1] |= 0x00000001;
 
+	p->param_nr = pc->param_nr * 4;
 	p->immd_nr = pc->immd_nr * 4;
 	p->immd = pc->immd_buf;
 
@@ -1418,26 +1424,47 @@ nv50_program_validate(struct nv50_context *nv50, struct nv50_program *p)
 
 	if (nv50_program_tx(p) == FALSE)
 		assert(0);
-
-	e = p->exec_head;
-	while (e) {
-		NOUVEAU_ERR("0x%08x\n", e->inst[0]);
-		if (is_long(e))
-			NOUVEAU_ERR("0x%08x\n", e->inst[1]);
-		e = e->next;
-	}
-
 	p->translated = TRUE;
 }
 
 static void
 nv50_program_validate_data(struct nv50_context *nv50, struct nv50_program *p)
 {
+	struct nouveau_winsys *nvws = nv50->screen->nvws;
+	struct pipe_winsys *ws = nv50->pipe.winsys;
+	unsigned nr = p->param_nr + p->immd_nr;
 	int i;
+
+	if (!p->data && nr) {
+		struct nouveau_resource *heap = nv50->screen->vp_data_heap;
+
+		if (nvws->res_alloc(heap, nr, p, &p->data)) {
+			while (heap->next && heap->size < nr) {
+				struct nv50_program *evict = heap->next->priv;
+				nvws->res_free(&evict->data);
+			}
+
+			if (nvws->res_alloc(heap, nr, p, &p->data))
+				assert(0);
+		}
+	}
+
+	if (p->param_nr) {
+		float *map = ws->buffer_map(ws, nv50->constbuf[p->type],
+					    PIPE_BUFFER_USAGE_CPU_READ);
+		for (i = 0; i < p->param_nr; i++) {
+			BEGIN_RING(tesla, 0x0f00, 2);
+			OUT_RING  ((NV50_CB_PMISC << 0) |
+				   ((p->data->start + i) << 8));
+			OUT_RING  (fui(map[i]));
+		}
+		ws->buffer_unmap(ws, nv50->constbuf[p->type]);
+	}
 
 	for (i = 0; i < p->immd_nr; i++) {
 		BEGIN_RING(tesla, 0x0f00, 2);
-		OUT_RING  ((NV50_CB_PMISC << 0) | (i << 8));
+		OUT_RING  ((NV50_CB_PMISC << 0) |
+			   ((p->data_start + p->param_nr + i) << 8));
 		OUT_RING  (fui(p->immd[i]));
 	}
 }
@@ -1452,17 +1479,30 @@ nv50_program_validate_code(struct nv50_context *nv50, struct nv50_program *p)
 	if (!p->buffer)
 		p->buffer = ws->buffer_create(ws, 0x100, 0, p->exec_size * 4);
 
-	map = ws->buffer_map(ws, p->buffer, PIPE_BUFFER_USAGE_CPU_WRITE);
-	for (e = p->exec_head; e; e = e->next) {
-		if (e->param.index >= 0) {
+	if (p->data && p->data->start != p->data_start) {
+		for (e = p->exec_head; e; e = e->next) {
+			if (e->param.index < 0)
+				continue;
 			e->inst[e->param.shift / 32] &= ~e->param.mask;
 			e->inst[e->param.shift / 32] |= (e->param.index <<
 							 e->param.shift);
 		}
 
+		p->data_start = p->data->start;
+	}
+
+	map = ws->buffer_map(ws, p->buffer, PIPE_BUFFER_USAGE_CPU_WRITE);
+	for (e = p->exec_head; e; e = e->next) {
+#ifdef NV50_PROGRAM_DUMP
+		NOUVEAU_ERR("0x%08x\n", e->inst[0]);
+#endif
 		*(map++) = e->inst[0];
-		if (is_long(e))
+		if (is_long(e)) {
+#ifdef NV50_PROGRAM_DUMP
+			NOUVEAU_ERR("0x%08x\n", e->inst[1]);
+#endif
 			*(map++) = e->inst[1];
+		}
 	}
 	ws->buffer_unmap(ws, p->buffer);
 }
