@@ -55,15 +55,6 @@ extern void GLAPIENTRY
 _mesa_GetTexEnviv( GLenum target, GLenum pname, GLint *params );
 
 extern void GLAPIENTRY
-_mesa_GetTexGendv( GLenum coord, GLenum pname, GLdouble *params );
-
-extern void GLAPIENTRY
-_mesa_GetTexGenfv( GLenum coord, GLenum pname, GLfloat *params );
-
-extern void GLAPIENTRY
-_mesa_GetTexGeniv( GLenum coord, GLenum pname, GLint *params );
-
-extern void GLAPIENTRY
 _mesa_GetTexLevelParameterfv( GLenum target, GLint level,
                               GLenum pname, GLfloat *params );
 
@@ -103,25 +94,6 @@ _mesa_TexParameteri( GLenum target, GLenum pname, GLint param );
 
 extern void GLAPIENTRY
 _mesa_TexParameteriv( GLenum target, GLenum pname, const GLint *params );
-
-
-extern void GLAPIENTRY
-_mesa_TexGend( GLenum coord, GLenum pname, GLdouble param );
-
-extern void GLAPIENTRY
-_mesa_TexGendv( GLenum coord, GLenum pname, const GLdouble *params );
-
-extern void GLAPIENTRY
-_mesa_TexGenf( GLenum coord, GLenum pname, GLfloat param );
-
-extern void GLAPIENTRY
-_mesa_TexGenfv( GLenum coord, GLenum pname, const GLfloat *params );
-
-extern void GLAPIENTRY
-_mesa_TexGeni( GLenum coord, GLenum pname, GLint param );
-
-extern void GLAPIENTRY
-_mesa_TexGeniv( GLenum coord, GLenum pname, const GLint *params );
 
 
 /*
