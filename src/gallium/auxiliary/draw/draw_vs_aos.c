@@ -1662,7 +1662,14 @@ emit_instruction( struct aos_compilation *cp,
       return emit_RND(cp, inst);
 
    case TGSI_OPCODE_EXPBASE2:
+#if 0
+      /* this seems to fail for "larger" exponents.
+       * See glean tvertProg1's EX2 test.
+       */
       return emit_EX2(cp, inst);
+#else
+      return FALSE;
+#endif
 
    case TGSI_OPCODE_LOGBASE2:
       return emit_LG2(cp, inst);
