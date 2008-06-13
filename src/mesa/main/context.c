@@ -146,6 +146,7 @@
 #include "vtxfmt.h"
 #include "glapi/glthread.h"
 #include "glapi/glapioffsets.h"
+#include "glapi/glapitable.h"
 #include "shader/program.h"
 #include "shader/shader_api.h"
 #include "shader/atifragshader.h"
