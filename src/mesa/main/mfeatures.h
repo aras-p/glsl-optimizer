@@ -37,7 +37,7 @@
 #endif
 
 #define FEATURE_accum  _HAVE_FULL_GL
-#define FEATURE_attrib_stacks  _HAVE_FULL_GL
+#define FEATURE_attrib_stack  _HAVE_FULL_GL
 #define FEATURE_colortable  _HAVE_FULL_GL
 #define FEATURE_convolution  _HAVE_FULL_GL
 #define FEATURE_dlist  _HAVE_FULL_GL
