@@ -695,7 +695,6 @@ static int driUnbindContext(__DRIcontext *ctx)
 {
     TRACE;
     (void) ctx;
-    _mesa_make_current(NULL, NULL, NULL);
     return GL_TRUE;
 }
 
