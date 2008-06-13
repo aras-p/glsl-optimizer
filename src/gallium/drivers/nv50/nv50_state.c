@@ -1,6 +1,7 @@
 #include "pipe/p_state.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_util.h"
+#include "pipe/p_inlines.h"
 
 #include "nv50_context.h"
 
@@ -85,23 +86,47 @@ static void *
 nv50_sampler_state_create(struct pipe_context *pipe,
 			  const struct pipe_sampler_state *cso)
 {
-	return NULL;
+	unsigned *tsc = CALLOC(8, sizeof(unsigned));
+
+	tsc[0] = 0x00024080;
+	tsc[1] = 0x00000062;
+
+	return (void *)tsc;
 }
 
 static void
 nv50_sampler_state_bind(struct pipe_context *pipe, unsigned nr, void **sampler)
 {
+	struct nv50_context *nv50 = nv50_context(pipe);
+	int i;
+
+	nv50->sampler_nr = nr;
+	for (i = 0; i < nv50->sampler_nr; i++)
+		nv50->sampler[i] = sampler[i];
+
+	nv50->dirty |= NV50_NEW_SAMPLER;
 }
 
 static void
 nv50_sampler_state_delete(struct pipe_context *pipe, void *hwcso)
 {
+	FREE(hwcso);
 }
 
 static void
 nv50_set_sampler_texture(struct pipe_context *pipe, unsigned nr,
 			 struct pipe_texture **pt)
 {
+	struct nv50_context *nv50 = nv50_context(pipe);
+	int i;
+
+	for (i = 0; i < nr; i++)
+		pipe_texture_reference(&nv50->miptree[i], pt[i]);
+	for (i = nr; i < nv50->miptree_nr; i++)
+		pipe_texture_reference(&nv50->miptree[i], NULL);
+
+	nv50->miptree_nr = nr;
+	nv50->dirty |= NV50_NEW_TEXTURE;
 }
 
 static void *

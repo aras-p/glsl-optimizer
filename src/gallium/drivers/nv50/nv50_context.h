@@ -44,6 +44,8 @@
 #define NV50_NEW_FRAGPROG	(1 << 10)
 #define NV50_NEW_FRAGPROG_CB	(1 << 11)
 #define NV50_NEW_ARRAYS		(1 << 12)
+#define NV50_NEW_SAMPLER	(1 << 13)
+#define NV50_NEW_TEXTURE	(1 << 14)
 
 struct nv50_blend_stateobj {
 	struct pipe_blend_state pipe;
@@ -59,6 +61,17 @@ struct nv50_rasterizer_stateobj {
 	struct pipe_rasterizer_state pipe;
 	struct nouveau_stateobj *so;
 };
+
+struct nv50_miptree {
+	struct pipe_texture base;
+	struct pipe_buffer *buffer;
+};
+
+static INLINE struct nv50_miptree *
+nv50_miptree(struct pipe_texture *pt)
+{
+	return (struct nv50_miptree *)pt;
+}
 
 struct nv50_context {
 	struct pipe_context pipe;
@@ -84,6 +97,10 @@ struct nv50_context {
 	unsigned vtxbuf_nr;
 	struct pipe_vertex_element vtxelt[PIPE_MAX_ATTRIBS];
 	unsigned vtxelt_nr;
+	unsigned *sampler[PIPE_MAX_SAMPLERS];
+	unsigned sampler_nr;
+	struct nv50_miptree *miptree[PIPE_MAX_SAMPLERS];
+	unsigned miptree_nr;
 };
 
 static INLINE struct nv50_context *

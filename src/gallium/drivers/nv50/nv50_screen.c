@@ -28,6 +28,7 @@ nv50_screen_is_format_supported(struct pipe_screen *pscreen,
 		break;
 	case PIPE_TEXTURE:
 		switch (format) {
+		case PIPE_FORMAT_A8R8G8B8_UNORM:
 		case PIPE_FORMAT_I8_UNORM:
 			return TRUE;
 		default:

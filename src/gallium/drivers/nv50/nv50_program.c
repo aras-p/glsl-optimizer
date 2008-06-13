@@ -828,6 +828,8 @@ tgsi_src(struct nv50_pc *pc, int chan, const struct tgsi_full_src_register *src)
 		case TGSI_FILE_IMMEDIATE:
 			r = &pc->immd[src->SrcRegister.Index * 4 + c];
 			break;
+		case TGSI_FILE_SAMPLER:
+			break;
 		default:
 			assert(0);
 			break;
@@ -1130,6 +1132,8 @@ nv50_program_tx_insn(struct nv50_pc *pc, const union tgsi_full_token *tok)
 			emit_sub(pc, dst[c], src[0][c], src[1][c]);
 		}
 		break;
+	case TGSI_OPCODE_TEX:
+		break;
 	case TGSI_OPCODE_XPD:
 		temp = alloc_temp(pc, NULL);
 		if (mask & (1 << 0)) {
@@ -1225,6 +1229,8 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 			case TGSI_FILE_CONSTANT:
 				if (pc->param_nr < (last + 1))
 					pc->param_nr = last + 1;
+				break;
+			case TGSI_FILE_SAMPLER:
 				break;
 			default:
 				NOUVEAU_ERR("bad decl file %d\n",

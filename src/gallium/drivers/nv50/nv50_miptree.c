@@ -5,17 +5,6 @@
 
 #include "nv50_context.h"
 
-struct nv50_miptree {
-	struct pipe_texture base;
-	struct pipe_buffer *buffer;
-};
-
-static INLINE struct nv50_miptree *
-nv50_miptree(struct pipe_texture *pt)
-{
-	return (struct nv50_miptree *)pt;
-}
-
 static struct pipe_texture *
 nv50_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *pt)
 {

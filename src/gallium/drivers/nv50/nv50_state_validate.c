@@ -178,6 +178,39 @@ nv50_state_validate(struct nv50_context *nv50)
 		so_ref(NULL, &so);
 	}
 
+	if (nv50->dirty & NV50_NEW_SAMPLER) {
+		int i;
+
+		BEGIN_RING(tesla, 0x0f00, 1);
+		OUT_RING  ((NV50_CB_TSC << 0) | (0 << 8));
+		BEGIN_RING(tesla, 0x40000f04, nv50->sampler_nr * 8);
+		for (i = 0; i < nv50->sampler_nr; i++)
+			OUT_RINGp(nv50->sampler[i], 8);
+	}
+
+	if (nv50->dirty & NV50_NEW_TEXTURE) {
+		int i;
+
+		BEGIN_RING(tesla, 0x0f00, 1);
+		OUT_RING  ((NV50_CB_TIC << 0) | (0 << 8));
+		BEGIN_RING(tesla, 0x40000f04, nv50->miptree_nr * 8);
+		for (i = 0; i < nv50->sampler_nr; i++) {
+			struct nv50_miptree *mt = nv50->miptree[i];
+
+			OUT_RING  (0x2a712488);
+			OUT_RELOCl(mt->buffer, 0,
+				   NOUVEAU_BO_VRAM | NOUVEAU_BO_LOW);
+			OUT_RING  (0xd0c05000);
+			OUT_RING  (0x00300000);
+			OUT_RING  (mt->base.width[0]);
+			OUT_RING  ((mt->base.depth[0] << 16) |
+				    mt->base.height[0]);
+			OUT_RING  (0x03000000);
+			OUT_RELOCh(mt->buffer, 0,
+				   NOUVEAU_BO_VRAM | NOUVEAU_BO_HIGH);
+		}
+	}
+
 	if (nv50->dirty & NV50_NEW_ARRAYS)
 		nv50_vbo_validate(nv50);
 
