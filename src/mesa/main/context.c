@@ -126,7 +126,9 @@
 #include "pixelstore.h"
 #include "points.h"
 #include "polygon.h"
+#if FEATURE_ARB_occlusion_query
 #include "queryobj.h"
+#endif
 #if FEATURE_drawpix
 #include "rastpos.h"
 #endif
@@ -1013,7 +1015,9 @@ init_attrib_groups(GLcontext *ctx)
    _mesa_init_point( ctx );
    _mesa_init_polygon( ctx );
    _mesa_init_program( ctx );
+#if FEATURE_ARB_occlusion_query
    _mesa_init_query( ctx );
+#endif
 #if FEATURE_drawpix
    _mesa_init_rastpos( ctx );
 #endif
@@ -1213,6 +1217,7 @@ _mesa_create_context(const GLvisual *visual,
 {
    GLcontext *ctx;
 
+   printf("***** enter %s\n", __FUNCTION__);
    ASSERT(visual);
    /*ASSERT(driverContext);*/
 
@@ -1273,7 +1278,9 @@ _mesa_free_context_data( GLcontext *ctx )
 #endif
    _mesa_free_program_data(ctx);
    _mesa_free_shader_state(ctx);
+#if FEATURE_ARB_occlusion_query
    _mesa_free_query_data(ctx);
+#endif
 
 #if FEATURE_ARB_vertex_buffer_object
    _mesa_delete_buffer_object(ctx, ctx->Array.NullBufferObj);
