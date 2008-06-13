@@ -19,12 +19,7 @@ include sources
 
 
 
-# XXX work-around glapi.c build failure for DRI builds:
-ifeq ($(WINDOW_SYSTEM), dri)
-GLAPI_LIB = 
-else
 GLAPI_LIB = libglapi.a
-endif
 
 
 # Default: build dependencies, then asm_subdirs, then convenience
@@ -42,7 +37,11 @@ libmesa.a: $(MESA_OBJECTS) asm_subdirs
 
 # Make archive of gl* API dispatcher functions only
 $(GLAPI_LIB): $(GLAPI_OBJECTS) asm_subdirs
-	@ $(TOP)/bin/mklib -o glapi -static $(GLAPI_OBJECTS)
+	if [ "${WINDOW_SYSTEM}" = "dri" ] ; then \
+		$(TOP)/bin/mklib -o glapi -static ; \
+	else \
+		$(TOP)/bin/mklib -o glapi -static $(GLAPI_OBJECTS) ; \
+	fi
 
 
 ######################################################################
