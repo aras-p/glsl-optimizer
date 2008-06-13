@@ -54,6 +54,13 @@ static void Draw(void)
    glVertex2d(1.0, 0.0);
    glEnd();
 
+   glBegin(GL_QUADS);
+   glVertex2d(0.0,  0.0);
+   glVertex2d(0.0, -1.0);
+   glVertex2d(1.0, -1.0);
+   glVertex2d(1.0,  0.0);
+   glEnd();
+
    glEnable(GL_SCISSOR_TEST);
    glClearColor(1, 1, 0, 0);
    glScissor(Width / 2, 0, Width - Width / 2, Height / 2);
