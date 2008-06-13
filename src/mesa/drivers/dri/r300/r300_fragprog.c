@@ -245,6 +245,26 @@ struct r300_pfs_compile_state {
 #define REG_NEGS(reg)							\
 	reg = (reg | REG_NEGS_MASK)
 
+#define NOP_INST0 (						 \
+		(R300_ALU_OUTC_MAD) |				 \
+		(R300_ALU_ARGC_ZERO << R300_ALU_ARG0C_SHIFT) | \
+		(R300_ALU_ARGC_ZERO << R300_ALU_ARG1C_SHIFT) | \
+		(R300_ALU_ARGC_ZERO << R300_ALU_ARG2C_SHIFT))
+#define NOP_INST1 (					     \
+		((0 | SRC_CONST) << R300_ALU_SRC0C_SHIFT) | \
+		((0 | SRC_CONST) << R300_ALU_SRC1C_SHIFT) | \
+		((0 | SRC_CONST) << R300_ALU_SRC2C_SHIFT))
+#define NOP_INST2 ( \
+		(R300_ALU_OUTA_MAD) |				 \
+		(R300_ALU_ARGA_ZERO << R300_ALU_ARG0A_SHIFT) | \
+		(R300_ALU_ARGA_ZERO << R300_ALU_ARG1A_SHIFT) | \
+		(R300_ALU_ARGA_ZERO << R300_ALU_ARG2A_SHIFT))
+#define NOP_INST3 (					     \
+		((0 | SRC_CONST) << R300_ALU_SRC0A_SHIFT) | \
+		((0 | SRC_CONST) << R300_ALU_SRC1A_SHIFT) | \
+		((0 | SRC_CONST) << R300_ALU_SRC2A_SHIFT))
+
+
 /*
  * Datas structures for fragment program generation
  */
