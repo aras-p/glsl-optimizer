@@ -675,6 +675,7 @@ xdri_eglCreateContext(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
                                            xdri_config->mode, renderType,
                                            shared, &xdri_ctx->driContext);
    if (!xdri_ctx->driContext.private) {
+      _eglLog(_EGL_DEBUG, "driScreen.createNewContext failed");
       free(xdri_ctx);
       return EGL_NO_CONTEXT;
    }
