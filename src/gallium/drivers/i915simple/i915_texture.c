@@ -635,6 +635,7 @@ i915_get_tex_surface(struct pipe_screen *screen,
       ps->pitch = tex->pitch;
       ps->offset = offset;
       ps->usage = flags;
+      ps->status = PIPE_SURFACE_STATUS_DEFINED;
    }
    return ps;
 }
