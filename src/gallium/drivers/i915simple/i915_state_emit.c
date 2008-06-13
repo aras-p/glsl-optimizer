@@ -211,14 +211,18 @@ i915_emit_hardware_state(struct i915_context *i915 )
       struct pipe_surface *depth_surface = i915->framebuffer.zsbuf;
 
       if (cbuf_surface) {
-	 unsigned pitch = (cbuf_surface->pitch * cbuf_surface->cpp);
+	 unsigned cpitch = (cbuf_surface->pitch * cbuf_surface->cpp);
+	 unsigned ctile = BUF_3D_USE_FENCE;
+#if 0
+	 if (!((cpitch - 1) & cpitch) && cpitch >= 512)
+	    ctile = BUF_3D_TILED_SURFACE;
+#endif
 
 	 OUT_BATCH(_3DSTATE_BUF_INFO_CMD);
 
 	 OUT_BATCH(BUF_3D_ID_COLOR_BACK | 
-		   BUF_3D_PITCH(pitch) |  /* pitch in bytes */
-//		   BUF_3D_TILED_SURFACE); /* JB: Used to force tileing */
-		   BUF_3D_USE_FENCE);
+		   BUF_3D_PITCH(cpitch) |  /* pitch in bytes */
+		   ctile);
 
 	 OUT_RELOC(cbuf_surface->buffer,
 		   I915_BUFFER_ACCESS_WRITE,
@@ -229,12 +233,17 @@ i915_emit_hardware_state(struct i915_context *i915 )
        */
       if (depth_surface) {
 	 unsigned zpitch = (depth_surface->pitch * depth_surface->cpp);
-			 
+	 unsigned ztile = BUF_3D_USE_FENCE;
+#if 0
+	 if (!((zpitch - 1) & zpitch) && zpitch >= 512)
+	    ztile = BUF_3D_TILED_SURFACE;
+#endif
+
 	 OUT_BATCH(_3DSTATE_BUF_INFO_CMD);
 
 	 OUT_BATCH(BUF_3D_ID_DEPTH |
 		   BUF_3D_PITCH(zpitch) |  /* pitch in bytes */
-		   BUF_3D_USE_FENCE);
+		   ztile);
 
 	 OUT_RELOC(depth_surface->buffer,
 		   I915_BUFFER_ACCESS_WRITE,

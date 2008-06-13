@@ -104,16 +104,14 @@ i915_miptree_set_image_offset(struct i915_texture *tex,
    */
 }
 
-#if 0
 static unsigned
 power_of_two(unsigned x)
 {
-   int value = 1;
+   unsigned value = 1;
    while (value <= x)
       value = value << 1;
    return value;
 }
-#endif
 
 static unsigned
 round_up(unsigned n, unsigned multiple)
@@ -125,8 +123,7 @@ round_up(unsigned n, unsigned multiple)
  * Special case to deal with display targets.
  */
 static boolean
-i915_displaytarget_layout(struct pipe_screen *screen,
-                          struct i915_texture *tex)
+i915_displaytarget_layout(struct i915_texture *tex)
 {
    struct pipe_texture *pt = &tex->base;
 
@@ -139,13 +136,19 @@ i915_displaytarget_layout(struct pipe_screen *screen,
                                 1 );
    i915_miptree_set_image_offset( tex, 0, 0, 0, 0 );
 
-#if 0
-   tex->pitch = MAX2(512, power_of_two(tex->base.width[0] * pt->cpp)) / pt->cpp;
-   tex->total_height = round_up(tex->base.height[0], 8);
-#else
-   tex->pitch = round_up(tex->base.width[0], 64 / pt->cpp);
-   tex->total_height = tex->base.height[0];
-#endif
+   if (tex->base.width[0] >= 128) {
+      tex->pitch = power_of_two(tex->base.width[0] * pt->cpp) / pt->cpp;
+      tex->total_height = round_up(tex->base.height[0], 8);
+   } else {
+      tex->pitch = round_up(tex->base.width[0], 64 / pt->cpp);
+      tex->total_height = tex->base.height[0];
+   }
+
+/*
+   printf("%s size: %d,%d,%d offset %d,%d (0x%x)\n", __FUNCTION__,
+      tex->base.width[0], tex->base.height[0], pt->cpp,
+      tex->pitch, tex->total_height, tex->pitch * tex->total_height * 4);
+*/
 
    return 1;
 }
@@ -160,6 +163,12 @@ i945_miptree_layout_2d( struct i915_texture *tex )
    unsigned y = 0;
    unsigned width = pt->width[0];
    unsigned height = pt->height[0];
+
+#if 0 /* used for tiled display targets */
+   if (pt->last_level == 0 && pt->cpp == 4)
+      if (i915_displaytarget_layout(tex))
+	 return;
+#endif
 
    tex->pitch = pt->width[0];
 
