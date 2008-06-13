@@ -1217,7 +1217,6 @@ _mesa_create_context(const GLvisual *visual,
 {
    GLcontext *ctx;
 
-   printf("***** enter %s\n", __FUNCTION__);
    ASSERT(visual);
    /*ASSERT(driverContext);*/
 
