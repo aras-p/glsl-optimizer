@@ -247,8 +247,8 @@ nv50_depth_stencil_alpha_state_create(struct pipe_context *pipe,
 	struct nouveau_stateobj *so = so_new(64, 0);
 
 	so_method(so, tesla, NV50TCL_DEPTH_WRITE_ENABLE, 1);
-	so_data  (so, 0); //cso->depth.writemask ? 1 : 0);
-	if (0 && cso->depth.enabled) {
+	so_data  (so, cso->depth.writemask ? 1 : 0);
+	if (cso->depth.enabled) {
 		so_method(so, tesla, NV50TCL_DEPTH_TEST_ENABLE, 1);
 		so_data  (so, 1);
 		so_method(so, tesla, NV50TCL_DEPTH_TEST_FUNC, 1);

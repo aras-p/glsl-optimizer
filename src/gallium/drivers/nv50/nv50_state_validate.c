@@ -70,6 +70,9 @@ nv50_state_validate_fb(struct nv50_context *nv50)
 		case PIPE_FORMAT_Z24S8_UNORM:
 			so_data(so, 0x16);
 			break;
+		case PIPE_FORMAT_Z16_UNORM:
+			so_data(so, 0x15);
+			break;
 		default:
 			{
 				char fmt[128];
@@ -81,6 +84,13 @@ nv50_state_validate_fb(struct nv50_context *nv50)
 		}
 		so_data(so, 0x00000040);
 		so_data(so, 0x00000000);
+
+		so_method(so, tesla, 0x1538, 1);
+		so_data  (so, 1);
+		so_method(so, tesla, 0x1228, 3);
+		so_data  (so, fb->zsbuf->width);
+		so_data  (so, fb->zsbuf->height);
+		so_data  (so, 0x00010001);
 	}
 
 	so_method(so, tesla, NV50TCL_VIEWPORT_HORIZ, 2);

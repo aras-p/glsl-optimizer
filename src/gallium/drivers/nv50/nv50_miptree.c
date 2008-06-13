@@ -21,6 +21,7 @@ nv50_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *pt)
 {
 	struct pipe_winsys *ws = pscreen->winsys;
 	struct nv50_miptree *mt = CALLOC_STRUCT(nv50_miptree);
+	unsigned usage;
 
 	NOUVEAU_ERR("unimplemented\n");
 
@@ -28,7 +29,17 @@ nv50_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *pt)
 	mt->base.refcount = 1;
 	mt->base.screen = pscreen;
 
-	mt->buffer = ws->buffer_create(ws, 256, PIPE_BUFFER_USAGE_PIXEL,
+	usage = PIPE_BUFFER_USAGE_PIXEL;
+	switch (pt->format) {
+	case PIPE_FORMAT_Z24S8_UNORM:
+	case PIPE_FORMAT_Z16_UNORM:
+		usage |= NOUVEAU_BUFFER_USAGE_ZETA;
+		break;
+	default:
+		break;
+	}
+
+	mt->buffer = ws->buffer_create(ws, 256, usage,
 				       pt->width[0] * pt->cpp * pt->height[0]);
 	if (!mt->buffer) {
 		FREE(mt);

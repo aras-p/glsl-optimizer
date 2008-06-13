@@ -18,6 +18,7 @@
 #define NOUVEAU_CAP_HW_IDXBUF (0xbeef0001)
 
 #define NOUVEAU_BUFFER_USAGE_TEXTURE (1 << 16)
+#define NOUVEAU_BUFFER_USAGE_ZETA    (1 << 17)
 
 struct nouveau_winsys {
 	struct nouveau_context *nv;

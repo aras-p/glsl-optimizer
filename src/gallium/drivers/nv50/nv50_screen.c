@@ -284,6 +284,10 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 		so_data  (so, 0xffffffff);
 	}
 
+	so_method(so, screen->tesla, NV50TCL_DEPTH_RANGE_NEAR, 2);
+	so_data  (so, fui(0.0));
+	so_data  (so, fui(1.0));
+
 	so_emit(nvws, so);
 	so_ref(NULL, &so);
 	nvws->push_flush(nvws, 0, NULL);
