@@ -742,7 +742,7 @@ nv40_vertprog_translate(struct nv40_context *nv40,
 	}
 
 	/* Redirect post-transform vertex position to a temp if user clip
-	 * planes are enabled.  We need to append code the the vtxprog
+	 * planes are enabled.  We need to append code to the vtxprog
 	 * to handle clip planes later.
 	 */
 	if (vp->ucp.nr)  {

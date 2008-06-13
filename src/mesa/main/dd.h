@@ -1072,7 +1072,7 @@ struct dd_function_table {
  * These are the initial values to be installed into dispatch by
  * mesa.  If the T&L driver wants to modify the dispatch table
  * while installed, it must do so itself.  It would be possible for
- * the vertexformat to install it's own initial values for these
+ * the vertexformat to install its own initial values for these
  * functions, but this way there is an obvious list of what is
  * expected of the driver.
  *

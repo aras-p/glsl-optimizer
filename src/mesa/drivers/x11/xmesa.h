@@ -287,7 +287,7 @@ extern void XMesaCopySubBuffer( XMesaBuffer b,
 
 
 /*
- * Return a pointer to the the Pixmap or XImage being used as the back
+ * Return a pointer to the Pixmap or XImage being used as the back
  * color buffer of an XMesaBuffer.  This function is a way to get "under
  * the hood" of X/Mesa so one can manipulate the back buffer directly.
  * Input:  b - the XMesaBuffer

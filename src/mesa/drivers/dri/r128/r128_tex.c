@@ -468,7 +468,7 @@ static void r128TexEnv( GLcontext *ctx, GLenum target,
 	  * certain point.  It is better than completely ignoring the LOD
 	  * bias.  Unfortunately there isn't much range in the bias, the
 	  * spec mentions strides that vary between 0.5 and 2.0 but these
-	  * numbers don't seem to relate the the GL LOD bias value at all.
+	  * numbers don't seem to relate to the GL LOD bias value at all.
 	  */
 	 if ( param[0] >= 1.0 ) {
 	    bias = -128;

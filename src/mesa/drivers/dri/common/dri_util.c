@@ -698,7 +698,7 @@ setupLoaderExtensions(__DRIscreen *psp,
  * \param drm_version Version of the kernel DRM.
  * \param frame_buffer Data describing the location and layout of the
  *                     framebuffer.
- * \param pSAREA       Pointer the the SAREA.
+ * \param pSAREA       Pointer to the SAREA.
  * \param fd           Device handle for the DRM.
  * \param extensions   ??
  * \param driver_modes  Returns modes suppoted by the driver

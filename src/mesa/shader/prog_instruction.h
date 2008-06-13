@@ -97,8 +97,8 @@
 #define COND_EQ  2  /**< equal to zero */
 #define COND_LT  3  /**< less than zero */
 #define COND_UN  4  /**< unordered (NaN) */
-#define COND_GE  5  /**< greater then or equal to zero */
-#define COND_LE  6  /**< less then or equal to zero */
+#define COND_GE  5  /**< greater than or equal to zero */
+#define COND_LE  6  /**< less than or equal to zero */
 #define COND_NE  7  /**< not equal to zero */
 #define COND_TR  8  /**< always true */
 #define COND_FL  9  /**< always false */
