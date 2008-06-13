@@ -149,3 +149,101 @@ void radeonCompilerEraseClauses(
 
 	_mesa_free(oldClauses);
 }
+
+
+/**
+ * Insert new instructions at the given position, initialize them as NOPs
+ * and return a pointer to the first new instruction.
+ */
+struct prog_instruction* radeonClauseInsertInstructions(
+	struct radeon_compiler *compiler,
+	struct radeon_clause *clause,
+	int position, int count)
+{
+	int newNumInstructions = clause->NumInstructions + count;
+
+	assert(position >= 0 && position <= clause->NumInstructions);
+
+	if (newNumInstructions <= clause->ReservedInstructions) {
+		memmove(clause->Instructions + position + count, clause->Instructions + position,
+			(clause->NumInstructions - position) * sizeof(struct prog_instruction));
+	} else {
+		struct prog_instruction *oldInstructions = clause->Instructions;
+
+		clause->ReservedInstructions *= 2;
+		if (newNumInstructions > clause->ReservedInstructions)
+			clause->ReservedInstructions = newNumInstructions;
+
+		clause->Instructions = (struct prog_instruction*)
+			_mesa_malloc(clause->ReservedInstructions * sizeof(struct prog_instruction));
+
+		if (oldInstructions) {
+			_mesa_memcpy(clause->Instructions, oldInstructions,
+				position * sizeof(struct prog_instruction));
+			_mesa_memcpy(clause->Instructions + position + count, oldInstructions + position,
+				(clause->NumInstructions - position) * sizeof(struct prog_instruction));
+
+			_mesa_free(oldInstructions);
+		}
+	}
+
+	clause->NumInstructions = newNumInstructions;
+	_mesa_init_instructions(clause->Instructions + position, count);
+	return clause->Instructions + position;
+}
+
+
+/**
+ * Transform the given clause in the following way:
+ *  1. Replace it with an empty clause
+ *  2. For every instruction in the original clause, try the given
+ *     transformations in order.
+ *  3. If one of the transformations returns GL_TRUE, assume that it
+ *     has emitted the appropriate instruction(s) into the new clause;
+ *     otherwise, copy the instruction verbatim.
+ *
+ * \note The transformation is currently not recursive; in other words,
+ * instructions emitted by transformations are not transformed.
+ *
+ * \note The transform is called 'local' because it can only look at
+ * one instruction at a time.
+ */
+void radeonClauseLocalTransform(
+	struct radeon_compiler *compiler,
+	struct radeon_clause *clause,
+	int num_transformations,
+	struct radeon_program_transformation* transformations)
+{
+	struct radeon_program_transform_context context;
+	struct radeon_clause source;
+	int ip;
+
+	source = *clause;
+	clause->Instructions = 0;
+	clause->NumInstructions = 0;
+	clause->ReservedInstructions = 0;
+
+	context.compiler = compiler;
+	context.dest = clause;
+	context.src = &source;
+
+	for(ip = 0; ip < source.NumInstructions; ++ip) {
+		struct prog_instruction *instr = source.Instructions + ip;
+		int i;
+
+		for(i = 0; i < num_transformations; ++i) {
+			struct radeon_program_transformation* t = transformations + i;
+
+			if (t->function(&context, instr, t->userData))
+				break;
+		}
+
+		if (i >= num_transformations) {
+			struct prog_instruction *tgt =
+				radeonClauseInsertInstructions(compiler, clause, clause->NumInstructions, 1);
+			_mesa_copy_instructions(tgt, instr, 1);
+		}
+	}
+
+	_mesa_free_instructions(source.Instructions, source.NumInstructions);
+}

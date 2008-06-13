@@ -528,32 +528,6 @@ static GLuint get_temp_reg(struct r300_pfs_compile_state *cs)
 }
 
 /**
- * Create a new Mesa temporary register that will act as the destination
- * register for a texture read.
- */
-static GLuint get_temp_reg_tex(struct r300_pfs_compile_state *cs)
-{
-	COMPILE_STATE;
-	GLuint r = undef;
-	GLuint index;
-
-	index = ffs(~cs->temp_in_use);
-	if (!index) {
-		ERROR("Out of program temps\n");
-		return r;
-	}
-
-	cs->temp_in_use |= (1 << --index);
-	cs->temps[index].refcount = 0xFFFFFFFF;
-	cs->temps[index].reg = get_hw_temp_tex(cs);
-
-	REG_SET_TYPE(r, REG_TYPE_TEMP);
-	REG_SET_INDEX(r, index);
-	REG_SET_VALID(r, GL_TRUE);
-	return r;
-}
-
-/**
  * Free a Mesa temporary and the associated R300 temporary.
  */
 static void free_temp(struct r300_pfs_compile_state *cs, GLuint r)
@@ -847,6 +821,15 @@ static GLuint t_src(struct r300_pfs_compile_state *cs,
 				  fp->mesa_program.Base.Parameters->
 				  ParameterValues[fpsrc.Index]);
 		break;
+	case PROGRAM_BUILTIN:
+		switch(fpsrc.Swizzle) {
+		case SWIZZLE_1111: r = pfs_one; break;
+		case SWIZZLE_0000: r = pfs_zero; break;
+		default:
+			ERROR("bad PROGRAM_BUILTIN swizzle %u\n", fpsrc.Swizzle);
+			break;
+		}
+		break;
 	default:
 		ERROR("unknown SrcReg->File %x\n", fpsrc.File);
 		return r;
@@ -1003,56 +986,10 @@ static void emit_tex(struct r300_pfs_compile_state *cs,
 {
 	COMPILE_STATE;
 	GLuint coord = t_src(cs, fpi->SrcReg[0]);
-	GLuint dest = undef, rdest = undef;
+	GLuint dest = undef;
 	GLuint din, uin;
 	int unit = fpi->TexSrcUnit;
 	int hwsrc, hwdest;
-	GLuint tempreg = 0;
-
-	/**
-	 * Hardware uses [0..1]x[0..1] range for rectangle textures
-	 * instead of [0..Width]x[0..Height].
-	 * Add a scaling instruction.
-	 *
-	 * \todo Refactor this once we have proper rewriting/optimization
-	 * support for programs.
-	 */
-	if (opcode != R300_TEX_OP_KIL && fpi->TexSrcTarget == TEXTURE_RECT_INDEX) {
-		gl_state_index tokens[STATE_LENGTH] = {
-			STATE_INTERNAL, STATE_R300_TEXRECT_FACTOR, 0, 0,
-			0
-		};
-		int factor_index;
-		GLuint factorreg;
-
-		tokens[2] = unit;
-		factor_index =
-			_mesa_add_state_reference(fp->mesa_program.Base.
-						Parameters, tokens);
-		factorreg =
-			emit_const4fv(cs,
-				fp->mesa_program.Base.Parameters->
-				ParameterValues[factor_index]);
-		tempreg = keep(get_temp_reg(cs));
-
-		emit_arith(cs, PFS_OP_MAD, tempreg, WRITEMASK_XYZW,
-			coord, factorreg, pfs_zero, 0);
-
-		coord = tempreg;
-	}
-
-	/* Texture operations do not support swizzles etc. in hardware,
-	 * so emit an additional arithmetic operation if necessary.
-	 */
-	if (REG_GET_VSWZ(coord) != SWIZZLE_XYZ ||
-	    REG_GET_SSWZ(coord) != SWIZZLE_W ||
-	    coord & (REG_NEGV_MASK | REG_NEGS_MASK | REG_ABS_MASK)) {
-		assert(tempreg == 0);
-		tempreg = keep(get_temp_reg(cs));
-		emit_arith(cs, PFS_OP_MAD, tempreg, WRITEMASK_XYZW,
-			coord, pfs_one, pfs_zero, 0);
-		coord = tempreg;
-	}
 
 	/* Ensure correct node indirection */
 	uin = cs->used_in_node;
@@ -1064,15 +1001,6 @@ static void emit_tex(struct r300_pfs_compile_state *cs,
 	if (opcode != R300_TEX_OP_KIL) {
 		dest = t_dst(cs, fpi->DstReg);
 
-		/* r300 doesn't seem to be able to do TEX->output reg */
-		if (REG_GET_TYPE(dest) == REG_TYPE_OUTPUT) {
-			rdest = dest;
-			dest = get_temp_reg_tex(cs);
-		} else if (fpi->DstReg.WriteMask != WRITEMASK_XYZW) {
-			/* in case write mask isn't XYZW */
-			rdest = dest;
-			dest = get_temp_reg_tex(cs);
-		}
 		hwdest =
 		    t_hw_dst(cs, dest, GL_TRUE,
 			     code->node[code->cur_node].alu_offset);
@@ -1132,17 +1060,6 @@ static void emit_tex(struct r300_pfs_compile_state *cs,
 		cs->used_in_node |= (1 << hwsrc);
 
 	code->node[code->cur_node].tex_end++;
-
-	/* Copy from temp to output if needed */
-	if (REG_GET_VALID(rdest)) {
-		emit_arith(cs, PFS_OP_MAD, rdest, fpi->DstReg.WriteMask, dest,
-			   pfs_one, pfs_zero, 0);
-		free_temp(cs, dest);
-	}
-
-	/* Free temp register */
-	if (tempreg != 0)
-		free_temp(cs, tempreg);
 }
 
 /**

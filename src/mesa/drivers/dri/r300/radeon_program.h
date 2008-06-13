@@ -41,6 +41,13 @@ enum {
 	CLAUSE_TEX
 };
 
+enum {
+	PROGRAM_BUILTIN = PROGRAM_FILE_MAX /**< not a real register, but a special swizzle constant */
+};
+
+#define SWIZZLE_0000 MAKE_SWIZZLE4(SWIZZLE_ZERO, SWIZZLE_ZERO, SWIZZLE_ZERO, SWIZZLE_ZERO)
+#define SWIZZLE_1111 MAKE_SWIZZLE4(SWIZZLE_ONE, SWIZZLE_ONE, SWIZZLE_ONE, SWIZZLE_ONE)
+
 /**
  * A clause is simply a sequence of instructions that are executed
  * in order.
@@ -106,5 +113,51 @@ void radeonCompilerEraseClauses(
 	struct radeon_compiler *compiler,
 	int start,
 	int end);
+
+struct prog_instruction* radeonClauseInsertInstructions(
+	struct radeon_compiler *compiler,
+	struct radeon_clause *clause,
+	int position, int count);
+
+/**
+ *
+ */
+struct radeon_program_transform_context {
+	struct radeon_compiler *compiler;
+
+	/**
+	 * Destination clause where new instructions must be written.
+	 */
+	struct radeon_clause *dest;
+
+	/**
+	 * Original clause that is currently being transformed.
+	 */
+	struct radeon_clause *src;
+};
+
+/**
+ * A transformation that can be passed to \ref radeonClauseLinearTransform.
+ *
+ * The function will be called once for each instruction.
+ * It has to either emit the appropriate transformed code for the instruction
+ * and return GL_TRUE, or return GL_FALSE if it doesn't understand the
+ * instruction.
+ *
+ * The function gets passed the userData as last parameter.
+ */
+struct radeon_program_transformation {
+	GLboolean (*function)(
+		struct radeon_program_transform_context*,
+		struct prog_instruction*,
+		void*);
+	void *userData;
+};
+
+void radeonClauseLocalTransform(
+	struct radeon_compiler *compiler,
+	struct radeon_clause *clause,
+	int num_transformations,
+	struct radeon_program_transformation* transformations);
 
 #endif
