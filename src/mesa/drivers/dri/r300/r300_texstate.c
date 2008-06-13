@@ -127,18 +127,18 @@ void r300SetDepthTexMode(struct gl_texture_object *tObj)
 {
 	static const GLuint formats[3][3] = {
 		{
-			R300_EASY_TX_FORMAT(X, X, X, X, X16),
 			R300_EASY_TX_FORMAT(X, X, X, ONE, X16),
+			R300_EASY_TX_FORMAT(X, X, X, X, X16),
 			R300_EASY_TX_FORMAT(ZERO, ZERO, ZERO, X, X16),
 		},
 		{
-			R300_EASY_TX_FORMAT(X, X, X, X, X24_Y8),
 			R300_EASY_TX_FORMAT(X, X, X, ONE, X24_Y8),
+			R300_EASY_TX_FORMAT(X, X, X, X, X24_Y8),
 			R300_EASY_TX_FORMAT(ZERO, ZERO, ZERO, X, X24_Y8),
 		},
 		{
-			R300_EASY_TX_FORMAT(X, X, X, X, X32),
 			R300_EASY_TX_FORMAT(X, X, X, ONE, X32),
+			R300_EASY_TX_FORMAT(X, X, X, X, X32),
 			R300_EASY_TX_FORMAT(ZERO, ZERO, ZERO, X, X32),
 		},
 	};
