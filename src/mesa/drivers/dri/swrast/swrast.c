@@ -43,6 +43,7 @@
 #include "tnl/t_pipeline.h"
 #include "vbo/vbo.h"
 #include "drivers/common/driverfuncs.h"
+#include "utils.h"
 
 #include "swrast_priv.h"
 
@@ -51,6 +52,7 @@
 #define need_GL_VERSION_1_4
 #define need_GL_VERSION_1_5
 #define need_GL_VERSION_2_0
+#define need_GL_VERSION_2_1
 
 /* sw extensions for imaging */
 #define need_GL_EXT_blend_color
@@ -75,7 +77,6 @@
 #define need_GL_NV_fragment_program
 
 #include "extension_helper.h"
-#include "utils.h"
 
 const struct dri_extension card_extensions[] =
 {
@@ -83,6 +84,7 @@ const struct dri_extension card_extensions[] =
     { "GL_VERSION_1_4",			GL_VERSION_1_4_functions },
     { "GL_VERSION_1_5",			GL_VERSION_1_5_functions },
     { "GL_VERSION_2_0",			GL_VERSION_2_0_functions },
+    { "GL_VERSION_2_1",			GL_VERSION_2_1_functions },
 
     { "GL_EXT_blend_color",		GL_EXT_blend_color_functions },
     { "GL_EXT_blend_minmax",		GL_EXT_blend_minmax_functions },
