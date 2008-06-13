@@ -163,6 +163,10 @@ i915_vbuf_render_set_primitive( struct vbuf_render *render,
       i915_render->hwprim = PRIM3D_LINELIST;
       i915_render->fallback = 0;
       return TRUE;
+   case PIPE_PRIM_LINE_LOOP:
+      i915_render->hwprim = PRIM3D_LINELIST;
+      i915_render->fallback = PIPE_PRIM_LINE_LOOP;
+      return TRUE;
    case PIPE_PRIM_LINE_STRIP:
       i915_render->hwprim = PRIM3D_LINESTRIP;
       i915_render->fallback = 0;
@@ -175,6 +179,10 @@ i915_vbuf_render_set_primitive( struct vbuf_render *render,
       i915_render->hwprim = PRIM3D_TRISTRIP;
       i915_render->fallback = 0;
       return TRUE;
+   case PIPE_PRIM_TRIANGLE_FAN:
+      i915_render->hwprim = PRIM3D_TRIFAN;
+      i915_render->fallback = 0;
+      return TRUE;
    case PIPE_PRIM_QUADS:
       i915_render->hwprim = PRIM3D_TRILIST;
       i915_render->fallback = PIPE_PRIM_QUADS;
@@ -183,7 +191,12 @@ i915_vbuf_render_set_primitive( struct vbuf_render *render,
       i915_render->hwprim = PRIM3D_TRILIST;
       i915_render->fallback = PIPE_PRIM_QUAD_STRIP;
       return TRUE;
+   case PIPE_PRIM_POLYGON:
+      i915_render->hwprim = PRIM3D_POLY;
+      i915_render->fallback = 0;
+      return TRUE;
    default:
+      assert((int)"Error unkown primtive type" & 0);
       /* Actually, can handle a lot more just fine...  Fixme.
        */
       return FALSE;
@@ -211,6 +224,13 @@ draw_arrays_generate_indices( struct vbuf_render *render,
       if (i < end)
 	 OUT_BATCH( i );
       break;
+   case PIPE_PRIM_LINE_LOOP:
+      if (nr >= 2) {
+	 for (i = start + 1; i < end; i++)
+	    OUT_BATCH( (i-0) | (i+0) << 16 );
+	 OUT_BATCH( (i-0) | (  0) << 16 );
+      }
+      break;
    case PIPE_PRIM_QUADS:
       for (i = start; i + 3 < end; i += 4) {
 	 OUT_BATCH( (i+0) | (i+1) << 16 );
@@ -236,6 +256,11 @@ draw_arrays_calc_nr_indices( uint nr, unsigned type )
    switch (type) {
    case 0:
       return nr;
+   case PIPE_PRIM_LINE_LOOP:
+      if (nr >= 2)
+	 return nr * 2;
+      else
+	 return 0;
    case PIPE_PRIM_QUADS:
       return (nr / 4) * 6;
    case PIPE_PRIM_QUAD_STRIP:
@@ -262,6 +287,8 @@ draw_arrays_fallback( struct vbuf_render *render,
       i915_emit_hardware_state( i915 );
 
    nr_indices = draw_arrays_calc_nr_indices( nr, i915_render->fallback );
+   if (!nr_indices)
+      return;
 
    if (!BEGIN_BATCH( 1 + (nr_indices + 1)/2, 1 )) {
       FLUSH_BATCH(NULL);
@@ -328,6 +355,13 @@ draw_generate_indices( struct vbuf_render *render,
 	 OUT_BATCH( indices[i] );
       }
       break;
+   case PIPE_PRIM_LINE_LOOP:
+      if (nr_indices >= 2) {
+	 for (i = 1; i < nr_indices; i++)
+	    OUT_BATCH( indices[i-0] | indices[i+0] << 16 );
+	 OUT_BATCH( indices[i-0] | indices[0] << 16 );
+      }
+      break;
    case PIPE_PRIM_QUADS:
       for (i = 0; i + 3 < nr_indices; i += 4) {
 	 OUT_BATCH( indices[i+0] | indices[i+1] << 16 );
@@ -354,6 +388,11 @@ draw_calc_nr_indices( uint nr_indices, unsigned type )
    switch (type) {
    case 0:
       return nr_indices;
+   case PIPE_PRIM_LINE_LOOP:
+      if (nr_indices >= 2)
+	 return nr_indices * 2;
+      else
+	 return 0;
    case PIPE_PRIM_QUADS:
       return (nr_indices / 4) * 6;
    case PIPE_PRIM_QUAD_STRIP:
@@ -374,9 +413,10 @@ i915_vbuf_render_draw( struct vbuf_render *render,
    unsigned save_nr_indices;
 
    save_nr_indices = nr_indices;
-   nr_indices = draw_calc_nr_indices( nr_indices, i915_render->fallback );
 
-   assert(nr_indices);
+   nr_indices = draw_calc_nr_indices( nr_indices, i915_render->fallback );
+   if (!nr_indices)
+      return;
 
    if (i915->dirty)
       i915_update_derived( i915 );
