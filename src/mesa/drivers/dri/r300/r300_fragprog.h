@@ -40,6 +40,7 @@
 #include "shader/prog_instruction.h"
 
 #include "r300_context.h"
+#include "radeon_program.h"
 
 /* supported hw opcodes */
 #define PFS_OP_MAD 0
@@ -135,5 +136,24 @@ struct r300_fragment_program;
 
 extern void r300TranslateFragmentShader(r300ContextPtr r300,
 					struct r300_fragment_program *fp);
+
+
+/**
+ * Used internally by the r300 fragment program code to store compile-time
+ * only data.
+ */
+struct r300_fragment_program_compiler {
+	r300ContextPtr r300;
+	struct r300_fragment_program *fp;
+	struct r300_fragment_program_code *code;
+	struct radeon_compiler compiler;
+};
+
+extern GLboolean r300FragmentProgramEmit(struct r300_fragment_program_compiler *compiler);
+
+
+extern void r300FragmentProgramDump(
+	struct r300_fragment_program *fp,
+	struct r300_fragment_program_code *code);
 
 #endif

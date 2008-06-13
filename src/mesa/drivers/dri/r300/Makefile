@@ -37,8 +37,10 @@ DRIVER_SOURCES = \
 		 r300_texmem.c \
 		 r300_tex.c \
 		 r300_texstate.c \
+		 radeon_program.c \
 		 r300_vertprog.c \
 		 r300_fragprog.c \
+		 r300_fragprog_emit.c \
 		 r500_fragprog.c \
 		 r300_shader.c \
 		 r300_emit.c \
