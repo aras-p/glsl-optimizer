@@ -38,8 +38,7 @@
 #include "glheader.h"
 #include <GL/internal/glcore.h>	/* __GLcontextModes (GLvisual) */
 #include "config.h"		/* Hardwired parameters */
-#include "glapi/glapitable.h"
-#include "glapi/glthread.h"
+#include "glapi/glapi.h"
 #include "math/m_matrix.h"	/* GLmatrix */
 #include "bitset.h"
 

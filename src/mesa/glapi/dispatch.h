@@ -28,6 +28,9 @@
 #if !defined( _DISPATCH_H_ )
 #  define _DISPATCH_H_
 
+#include "glapitable.h"
+
+
 /**
  * \file dispatch.h
  * Macros for handling GL dispatch tables.
