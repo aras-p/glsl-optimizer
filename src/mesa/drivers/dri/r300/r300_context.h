@@ -657,17 +657,9 @@ struct r300_vertex_program_cont {
 struct r300_pfs_compile_state;
 
 /**
- * Store everything about a fragment program that is needed
- * to render with that program.
+ * Stores an R300 fragment program in its compiled-to-hardware form.
  */
-struct r300_fragment_program {
-	struct gl_fragment_program mesa_program;
-
-	GLcontext *ctx;
-	GLboolean translated;
-	GLboolean error;
-	struct r300_pfs_compile_state *cs;
-
+struct r300_fragment_program_code {
 	struct {
 		int length;
 		GLuint inst[PFS_MAX_TEX_INST];
@@ -708,6 +700,19 @@ struct r300_fragment_program {
 	int const_nr;
 
 	int max_temp_idx;
+};
+
+/**
+ * Store everything about a fragment program that is needed
+ * to render with that program.
+ */
+struct r300_fragment_program {
+	struct gl_fragment_program mesa_program;
+
+	GLboolean translated;
+	GLboolean error;
+
+	struct r300_fragment_program_code code;
 
 	GLboolean WritesDepth;
 	GLuint optimization;

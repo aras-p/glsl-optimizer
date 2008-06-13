@@ -28,7 +28,6 @@ static struct gl_program *r300NewProgram(GLcontext * ctx, GLenum target,
 							   target, id);
 		} else {
 			r300_fp = CALLOC_STRUCT(r300_fragment_program);
-			r300_fp->ctx = ctx;
 			return _mesa_init_fragment_program(ctx, &r300_fp->mesa_program,
 							   target, id);
 		}
