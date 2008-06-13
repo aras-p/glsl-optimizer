@@ -54,6 +54,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r300_vertprog.h"
 #include "radeon_reg.h"
 #include "r300_emit.h"
+#include "r300_fragprog.h"
 
 #include "vblank.h"
 

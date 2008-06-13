@@ -445,8 +445,8 @@ static int get_hw_temp(struct r300_pfs_compile_state *cs, int slot)
 	cs->hwtemps[r].vector_valid = 0;
 	cs->hwtemps[r].scalar_valid = 0;
 
-	if (r > fp->code.max_temp_idx)
-		fp->code.max_temp_idx = r;
+	if (r > code->max_temp_idx)
+		code->max_temp_idx = r;
 
 	return r;
 }
@@ -1029,11 +1029,11 @@ static void emit_tex(struct r300_pfs_compile_state *cs,
 
 		tokens[2] = unit;
 		factor_index =
-			_mesa_add_state_reference(cs->fp->mesa_program.Base.
+			_mesa_add_state_reference(fp->mesa_program.Base.
 						Parameters, tokens);
 		factorreg =
 			emit_const4fv(cs,
-				cs->fp->mesa_program.Base.Parameters->
+				fp->mesa_program.Base.Parameters->
 				ParameterValues[factor_index]);
 		tempreg = keep(get_temp_reg(cs));
 
@@ -1264,10 +1264,10 @@ static int find_and_prepare_slot(struct r300_pfs_compile_state *cs,
 				return -1;
 			}
 
-			fp->code.alu.inst[pos].inst0 = NOP_INST0;
-			fp->code.alu.inst[pos].inst1 = NOP_INST1;
-			fp->code.alu.inst[pos].inst2 = NOP_INST2;
-			fp->code.alu.inst[pos].inst3 = NOP_INST3;
+			code->alu.inst[pos].inst0 = NOP_INST0;
+			code->alu.inst[pos].inst1 = NOP_INST1;
+			code->alu.inst[pos].inst2 = NOP_INST2;
+			code->alu.inst[pos].inst3 = NOP_INST3;
 
 			cs->nrslots++;
 		}
@@ -1517,24 +1517,6 @@ static void emit_arith(struct r300_pfs_compile_state *cs,
 
 	return;
 }
-
-#if 0
-static GLuint get_attrib(struct r300_fragment_program *fp, GLuint attr)
-{
-	struct gl_fragment_program *mp = &fp->mesa_program;
-	GLuint r = undef;
-
-	if (!(mp->Base.InputsRead & (1 << attr))) {
-		ERROR("Attribute %d was not provided!\n", attr);
-		return undef;
-	}
-
-	REG_SET_TYPE(r, REG_TYPE_INPUT);
-	REG_SET_INDEX(r, attr);
-	REG_SET_VALID(r, GL_TRUE);
-	return r;
-}
-#endif
 
 static GLfloat SinCosConsts[2][4] = {
 	{

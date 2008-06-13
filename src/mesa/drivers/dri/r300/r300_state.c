@@ -60,6 +60,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r300_state.h"
 #include "r300_reg.h"
 #include "r300_emit.h"
+#include "r300_fragprog.h"
 #include "r300_tex.h"
 
 #include "drirenderbuffer.h"

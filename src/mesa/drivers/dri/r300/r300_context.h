@@ -73,7 +73,6 @@ typedef struct r300_context *r300ContextPtr;
 	}
 
 #include "r300_vertprog.h"
-#include "r300_fragprog.h"
 #include "r500_fragprog.h"
 
 /**
