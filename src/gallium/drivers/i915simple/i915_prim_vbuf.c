@@ -228,7 +228,7 @@ draw_arrays_generate_indices( struct vbuf_render *render,
       if (nr >= 2) {
 	 for (i = start + 1; i < end; i++)
 	    OUT_BATCH( (i-0) | (i+0) << 16 );
-	 OUT_BATCH( (i-0) | (  0) << 16 );
+	 OUT_BATCH( (i-0) | (  start) << 16 );
       }
       break;
    case PIPE_PRIM_QUADS:
@@ -358,8 +358,8 @@ draw_generate_indices( struct vbuf_render *render,
    case PIPE_PRIM_LINE_LOOP:
       if (nr_indices >= 2) {
 	 for (i = 1; i < nr_indices; i++)
-	    OUT_BATCH( indices[i-0] | indices[i+0] << 16 );
-	 OUT_BATCH( indices[i-0] | indices[0] << 16 );
+	    OUT_BATCH( indices[i-1] | indices[i] << 16 );
+	 OUT_BATCH( indices[i-1] | indices[0] << 16 );
       }
       break;
    case PIPE_PRIM_QUADS:
