@@ -37,8 +37,8 @@ libmesa.a: $(MESA_OBJECTS) asm_subdirs
 
 # Make archive of gl* API dispatcher functions only
 $(GLAPI_LIB): $(GLAPI_OBJECTS) asm_subdirs
-	if [ "${WINDOW_SYSTEM}" = "dri" ] ; then \
-		$(TOP)/bin/mklib -o glapi -static ; \
+	@if [ "${WINDOW_SYSTEM}" = "dri" ] ; then \
+		touch libglapi.a ; \
 	else \
 		$(TOP)/bin/mklib -o glapi -static $(GLAPI_OBJECTS) ; \
 	fi
