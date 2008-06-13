@@ -49,24 +49,7 @@ format_bits(
    pipe_format_rgbazs_t  info,
    GLuint comp )
 {
-   GLuint   size;
-
-   if (pf_swizzle_x(info) == comp) {
-      size = pf_size_x(info);
-   }
-   else if (pf_swizzle_y(info) == comp) {
-      size = pf_size_y(info);
-   }
-   else if (pf_swizzle_z(info) == comp) {
-      size = pf_size_z(info);
-   }
-   else if (pf_swizzle_w(info) == comp) {
-      size = pf_size_w(info);
-   }
-   else {
-      size = 0;
-   }
-   return size << (pf_exp8(info) * 3);
+   return pf_get_component_bits( (enum pipe_format) info, comp );
 }
 
 static GLuint
