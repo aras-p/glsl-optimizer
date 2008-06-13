@@ -121,21 +121,21 @@ static INLINE uint pf_get(pipe_format_rgbazs_t f, uint shift, uint mask)
 #define pf_size_z(f)          pf_get(f, 20, 0x7) /**< Size of Z */
 #define pf_size_w(f)          pf_get(f, 23, 0x7) /**< Size of W */
 #define pf_size_xyzw(f,i)     pf_get(f, 14+((i)*3), 0x7)
-#define pf_exp8(f)            pf_get(f, 26, 0x3) /**< Scale size by 8 ^ exp8 */
-#define pf_type(f)            pf_get(f, 28, 0xf) /**< PIPE_FORMAT_TYPE_ */
+#define pf_exp2(f)            pf_get(f, 26, 0x7) /**< Scale size by 2 ^ exp2 */
+#define pf_type(f)            pf_get(f, 29, 0x7) /**< PIPE_FORMAT_TYPE_ */
 
 /**
  * Helper macro to encode the above structure into a 32-bit value.
  */
-#define _PIPE_FORMAT_RGBAZS( SWZ, SIZEX, SIZEY, SIZEZ, SIZEW, EXP8, TYPE ) (\
+#define _PIPE_FORMAT_RGBAZS( SWZ, SIZEX, SIZEY, SIZEZ, SIZEW, EXP2, TYPE ) (\
    (PIPE_FORMAT_LAYOUT_RGBAZS << 0) |\
    ((SWZ) << 2) |\
    ((SIZEX) << 14) |\
    ((SIZEY) << 17) |\
    ((SIZEZ) << 20) |\
    ((SIZEW) << 23) |\
-   ((EXP8) << 26) |\
-   ((TYPE) << 28) )
+   ((EXP2) << 26) |\
+   ((TYPE) << 29) )
 
 /**
  * Helper macro to encode the swizzle part of the structure above.
@@ -149,16 +149,22 @@ static INLINE uint pf_get(pipe_format_rgbazs_t f, uint shift, uint mask)
    _PIPE_FORMAT_RGBAZS( SWZ, SIZEX, SIZEY, SIZEZ, SIZEW, 0, TYPE )
 
 /**
+ * Shorthand macro for RGBAZS layout with component sizes in 2-bit units.
+ */
+#define _PIPE_FORMAT_RGBAZS_2( SWZ, SIZEX, SIZEY, SIZEZ, SIZEW, TYPE )\
+   _PIPE_FORMAT_RGBAZS( SWZ, SIZEX, SIZEY, SIZEZ, SIZEW, 1, TYPE )
+
+/**
  * Shorthand macro for RGBAZS layout with component sizes in 8-bit units.
  */
 #define _PIPE_FORMAT_RGBAZS_8( SWZ, SIZEX, SIZEY, SIZEZ, SIZEW, TYPE )\
-   _PIPE_FORMAT_RGBAZS( SWZ, SIZEX, SIZEY, SIZEZ, SIZEW, 1, TYPE )
+   _PIPE_FORMAT_RGBAZS( SWZ, SIZEX, SIZEY, SIZEZ, SIZEW, 3, TYPE )
 
 /**
  * Shorthand macro for RGBAZS layout with component sizes in 64-bit units.
  */
 #define _PIPE_FORMAT_RGBAZS_64( SWZ, SIZEX, SIZEY, SIZEZ, SIZEW, TYPE )\
-   _PIPE_FORMAT_RGBAZS( SWZ, SIZEX, SIZEY, SIZEZ, SIZEW, 2, TYPE )
+   _PIPE_FORMAT_RGBAZS( SWZ, SIZEX, SIZEY, SIZEZ, SIZEW, 6, TYPE )
 
 /**
  * Shorthand macro for common format swizzles.
@@ -359,7 +365,7 @@ static INLINE uint pf_get_component_bits( enum pipe_format format, uint comp )
    else {
       size = 0;
    }
-   return size << (pf_exp8(format) * 3);
+   return size << pf_exp2(format);
 }
 
 /**
