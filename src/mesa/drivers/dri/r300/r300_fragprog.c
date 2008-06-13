@@ -1738,19 +1738,9 @@ static GLboolean parse_program(struct r300_fragment_program *fp)
 			/* src0.xyz1 -> temp
 			 * DP4 dest, temp, src1
 			 */
-#if 0
-			temp[0] = get_temp_reg(fp);
-			src[0].s_swz = SWIZZLE_ONE;
-			emit_arith(fp, PFS_OP_MAD, temp[0], mask,
-				   src[0], pfs_one, pfs_zero, 0);
-			emit_arith(fp, PFS_OP_DP4, dest, mask,
-				   temp[0], src[1], undef, flags);
-			free_temp(fp, temp[0]);
-#else
 			emit_arith(fp, PFS_OP_DP4, dest, mask,
 				   swizzle(src[0], X, Y, Z, ONE), src[1],
 				   undef, flags);
-#endif
 			break;
 		case OPCODE_DST:
 			src[0] = t_src(fp, fpi->SrcReg[0]);
