@@ -14,6 +14,7 @@ SOURCES = \
 	clear-fbo-tex.c \
 	clear-fbo.c \
 	clear-scissor.c \
+	clear-undefined.c \
 	clear.c \
 	dlist-dangling.c \
 	dlist-edgeflag-dangling.c \
