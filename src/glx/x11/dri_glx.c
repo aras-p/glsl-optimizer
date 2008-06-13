@@ -421,7 +421,7 @@ CallCreateNewScreen(Display *dpy, int scrn, __GLXscreenConfigs *psc,
 
     XF86DRICloseConnection(dpy, scrn);
 
-    ErrorMessageF("reverting to indirect rendering\n");
+    ErrorMessageF("reverting to software direct rendering\n");
 
     return NULL;
 }
