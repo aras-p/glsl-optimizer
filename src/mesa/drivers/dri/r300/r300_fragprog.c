@@ -52,6 +52,85 @@
 #include "r300_reg.h"
 #include "r300_state.h"
 
+/* Mapping Mesa registers to R300 temporaries */
+struct reg_acc {
+	int reg;		/* Assigned hw temp */
+	unsigned int refcount;	/* Number of uses by mesa program */
+};
+
+/**
+ * Describe the current lifetime information for an R300 temporary
+ */
+struct reg_lifetime {
+	/* Index of the first slot where this register is free in the sense
+	   that it can be used as a new destination register.
+	   This is -1 if the register has been assigned to a Mesa register
+	   and the last access to the register has not yet been emitted */
+	int free;
+
+	/* Index of the first slot where this register is currently reserved.
+	   This is used to stop e.g. a scalar operation from being moved
+	   before the allocation time of a register that was first allocated
+	   for a vector operation. */
+	int reserved;
+
+	/* Index of the first slot in which the register can be used as a
+	   source without losing the value that is written by the last
+	   emitted instruction that writes to the register */
+	int vector_valid;
+	int scalar_valid;
+
+	/* Index to the slot where the register was last read.
+	   This is also the first slot in which the register may be written again */
+	int vector_lastread;
+	int scalar_lastread;
+};
+
+/**
+ * Store usage information about an ALU instruction slot during the
+ * compilation of a fragment program.
+ */
+#define SLOT_SRC_VECTOR  (1<<0)
+#define SLOT_SRC_SCALAR  (1<<3)
+#define SLOT_SRC_BOTH    (SLOT_SRC_VECTOR | SLOT_SRC_SCALAR)
+#define SLOT_OP_VECTOR   (1<<16)
+#define SLOT_OP_SCALAR   (1<<17)
+#define SLOT_OP_BOTH     (SLOT_OP_VECTOR | SLOT_OP_SCALAR)
+
+struct r300_pfs_compile_slot {
+	/* Bitmask indicating which parts of the slot are used, using SLOT_ constants
+	   defined above */
+	unsigned int used;
+
+	/* Selected sources */
+	int vsrc[3];
+	int ssrc[3];
+};
+
+/**
+ * Store information during compilation of fragment programs.
+ */
+struct r300_pfs_compile_state {
+	int nrslots;		/* number of ALU slots used so far */
+
+	/* Track which (parts of) slots are already filled with instructions */
+	struct r300_pfs_compile_slot slot[PFS_MAX_ALU_INST];
+
+	/* Track the validity of R300 temporaries */
+	struct reg_lifetime hwtemps[PFS_NUM_TEMP_REGS];
+
+	/* Used to map Mesa's inputs/temps onto hardware temps */
+	int temp_in_use;
+	struct reg_acc temps[PFS_NUM_TEMP_REGS];
+	struct reg_acc inputs[32];	/* don't actually need 32... */
+
+	/* Track usage of hardware temps, for register allocation,
+	 * indirection detection, etc. */
+	GLuint used_in_node;
+	GLuint dest_in_node;
+};
+
+
 /*
  * Usefull macros and values
  */
@@ -2093,7 +2172,7 @@ static void insert_wpos(struct gl_program *prog)
  */
 static void init_program(r300ContextPtr r300, struct r300_fragment_program *fp)
 {
-	struct r300_pfs_compile_state *cs = NULL;
+	COMPILE_STATE;
 	struct gl_fragment_program *mp = &fp->mesa_program;
 	struct prog_instruction *fpi;
 	GLuint InputsRead = mp->Base.InputsRead;
@@ -2105,7 +2184,6 @@ static void init_program(r300ContextPtr r300, struct r300_fragment_program *fp)
 	    driQueryOptioni(&r300->radeon.optionCache, "fp_optimization");
 	fp->translated = GL_FALSE;
 	fp->error = GL_FALSE;
-	fp->cs = cs = &(R300_CONTEXT(fp->ctx)->state.pfs_compile);
 	fp->WritesDepth = GL_FALSE;
 	fp->tex.length = 0;
 	fp->cur_node = 0;
@@ -2227,13 +2305,11 @@ static void update_params(struct r300_fragment_program *fp)
 void r300TranslateFragmentShader(r300ContextPtr r300,
 				 struct r300_fragment_program *fp)
 {
-
-	struct r300_pfs_compile_state *cs = NULL;
-
 	if (!fp->translated) {
+		struct r300_pfs_compile_state cs;
 
+		fp->cs = &cs;
 		init_program(r300, fp);
-		cs = fp->cs;
 
 		if (parse_program(fp) == GL_FALSE) {
 			dump_program(fp);
@@ -2242,11 +2318,11 @@ void r300TranslateFragmentShader(r300ContextPtr r300,
 
 		/* Finish off */
 		fp->node[fp->cur_node].alu_end =
-		    cs->nrslots - fp->node[fp->cur_node].alu_offset - 1;
+		    cs.nrslots - fp->node[fp->cur_node].alu_offset - 1;
 		if (fp->node[fp->cur_node].tex_end < 0)
 			fp->node[fp->cur_node].tex_end = 0;
 		fp->alu_offset = 0;
-		fp->alu_end = cs->nrslots - 1;
+		fp->alu_end = cs.nrslots - 1;
 		fp->tex_offset = 0;
 		fp->tex_end = fp->tex.length ? fp->tex.length - 1 : 0;
 		assert(fp->node[fp->cur_node].alu_end >= 0);

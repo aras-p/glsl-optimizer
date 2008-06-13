@@ -57,6 +57,85 @@
 #include "r300_reg.h"
 #include "r300_state.h"
 
+/* Mapping Mesa registers to R500 temporaries */
+struct reg_acc {
+	int reg;		/* Assigned hw temp */
+	unsigned int refcount;	/* Number of uses by mesa program */
+};
+
+/**
+ * Describe the current lifetime information for an R300 temporary
+ */
+struct reg_lifetime {
+	/* Index of the first slot where this register is free in the sense
+	   that it can be used as a new destination register.
+	   This is -1 if the register has been assigned to a Mesa register
+	   and the last access to the register has not yet been emitted */
+	int free;
+
+	/* Index of the first slot where this register is currently reserved.
+	   This is used to stop e.g. a scalar operation from being moved
+	   before the allocation time of a register that was first allocated
+	   for a vector operation. */
+	int reserved;
+
+	/* Index of the first slot in which the register can be used as a
+	   source without losing the value that is written by the last
+	   emitted instruction that writes to the register */
+	int vector_valid;
+	int scalar_valid;
+
+	/* Index to the slot where the register was last read.
+	   This is also the first slot in which the register may be written again */
+	int vector_lastread;
+	int scalar_lastread;
+};
+
+/**
+ * Store usage information about an ALU instruction slot during the
+ * compilation of a fragment program.
+ */
+#define SLOT_SRC_VECTOR  (1<<0)
+#define SLOT_SRC_SCALAR  (1<<3)
+#define SLOT_SRC_BOTH    (SLOT_SRC_VECTOR | SLOT_SRC_SCALAR)
+#define SLOT_OP_VECTOR   (1<<16)
+#define SLOT_OP_SCALAR   (1<<17)
+#define SLOT_OP_BOTH     (SLOT_OP_VECTOR | SLOT_OP_SCALAR)
+
+struct r500_pfs_compile_slot {
+	/* Bitmask indicating which parts of the slot are used, using SLOT_ constants
+	   defined above */
+	unsigned int used;
+
+	/* Selected sources */
+	int vsrc[3];
+	int ssrc[3];
+};
+
+/**
+ * Store information during compilation of fragment programs.
+ */
+struct r500_pfs_compile_state {
+	int nrslots;		/* number of ALU slots used so far */
+
+	/* Track which (parts of) slots are already filled with instructions */
+	struct r500_pfs_compile_slot slot[PFS_MAX_ALU_INST];
+
+	/* Track the validity of R300 temporaries */
+	struct reg_lifetime hwtemps[PFS_NUM_TEMP_REGS];
+
+	/* Used to map Mesa's inputs/temps onto hardware temps */
+	int temp_in_use;
+	struct reg_acc temps[PFS_NUM_TEMP_REGS];
+	struct reg_acc inputs[32];	/* don't actually need 32... */
+
+	/* Track usage of hardware temps, for register allocation,
+	 * indirection detection, etc. */
+	GLuint used_in_node;
+	GLuint dest_in_node;
+};
+
+
 /*
  * Useful macros and values
  */
@@ -66,7 +145,7 @@
 		fp->error = GL_TRUE;			\
 	} while(0)
 
-#define COMPILE_STATE struct r300_pfs_compile_state *cs = fp->cs
+#define COMPILE_STATE struct r500_pfs_compile_state *cs = fp->cs
 
 #define R500_US_NUM_TEMP_REGS 128
 #define R500_US_NUM_CONST_REGS 256
@@ -293,7 +372,7 @@ static void emit_tex(struct r500_fragment_program *fp,
 
 	fp->inst[counter].inst1 = R500_TEX_ID(fpi->TexSrcUnit)
 		| R500_TEX_SEM_ACQUIRE | R500_TEX_IGNORE_UNCOVERED;
-	
+
 	if (fpi->TexSrcTarget == TEXTURE_RECT_INDEX)
 	        fp->inst[counter].inst1 |= R500_TEX_UNSCALED;
 
@@ -1227,7 +1306,7 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 
 static void init_program(r300ContextPtr r300, struct r500_fragment_program *fp)
 {
-	struct r300_pfs_compile_state *cs = NULL;
+	struct r500_pfs_compile_state *cs = fp->cs;
 	struct gl_fragment_program *mp = &fp->mesa_program;
 	struct prog_instruction *fpi;
 	GLuint InputsRead = mp->Base.InputsRead;
@@ -1239,7 +1318,6 @@ static void init_program(r300ContextPtr r300, struct r500_fragment_program *fp)
 	    driQueryOptioni(&r300->radeon.optionCache, "fp_optimization");
 	fp->translated = GL_FALSE;
 	fp->error = GL_FALSE;
-	fp->cs = cs = &(R300_CONTEXT(fp->ctx)->state.pfs_compile);
 	fp->const_nr = 0;
 	/* Size of pixel stack, plus 1. */
 	fp->max_temp_idx = 1;
@@ -1420,23 +1498,21 @@ static void dumb_shader(struct r500_fragment_program *fp)
 void r500TranslateFragmentShader(r300ContextPtr r300,
 				 struct r500_fragment_program *fp)
 {
-
-	struct r300_pfs_compile_state *cs = NULL;
-
 	if (!fp->translated) {
+		struct r500_pfs_compile_state cs;
+		fp->cs = &cs;
 
 		init_program(r300, fp);
-		cs = fp->cs;
 
 		if (parse_program(fp) == GL_FALSE) {
 			ERROR("Huh. Couldn't parse program. There should be additional errors explaining why.\nUsing dumb shader...\n");
 			dumb_shader(fp);
 			fp->inst_offset = 0;
-			fp->inst_end = cs->nrslots - 1;
+			fp->inst_end = cs.nrslots - 1;
 			return;
 		}
 		fp->inst_offset = 0;
-		fp->inst_end = cs->nrslots - 1;
+		fp->inst_end = cs.nrslots - 1;
 
 		fp->translated = GL_TRUE;
 		if (RADEON_DEBUG & DEBUG_PIXEL) {
@@ -1449,6 +1525,8 @@ void r500TranslateFragmentShader(r300ContextPtr r300,
 
 
 		r300UpdateStateParameters(fp->ctx, _NEW_PROGRAM);
+
+		fp->cs = 0;
 	}
 
 	update_params(fp);
