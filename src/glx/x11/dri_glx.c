@@ -302,7 +302,7 @@ CallCreateNewScreen(Display *dpy, int scrn, __GLXscreenConfigs *psc,
     framebuffer.dev_priv = NULL;
 
     if (!XF86DRIOpenConnection(dpy, scrn, &hSAREA, &BusID)) {
-	fprintf(stderr, "libGL error: XF86DRIOpenConnection failed\n");
+	ErrorMessageF("XF86DRIOpenConnection failed\n");
 	goto handle_error;
     }
 
@@ -311,13 +311,12 @@ CallCreateNewScreen(Display *dpy, int scrn, __GLXscreenConfigs *psc,
     Xfree(BusID); /* No longer needed */
 
     if (fd < 0) {
-	fprintf(stderr, "libGL error: drmOpenOnce failed (%s)\n",
-		strerror(-fd));
+	ErrorMessageF("drmOpenOnce failed (%s)\n", strerror(-fd));
 	goto handle_error;
     }
 
     if (drmGetMagic(fd, &magic)) {
-	fprintf(stderr, "libGL error: drmGetMagic failed\n");
+	ErrorMessageF("drmGetMagic failed\n");
 	goto handle_error;
     }
 
@@ -335,7 +334,7 @@ CallCreateNewScreen(Display *dpy, int scrn, __GLXscreenConfigs *psc,
     }
 
     if (newlyopened && !XF86DRIAuthConnection(dpy, scrn, magic)) {
-	fprintf(stderr, "libGL error: XF86DRIAuthConnection failed\n");
+	ErrorMessageF("XF86DRIAuthConnection failed\n");
 	goto handle_error;
     }
 
@@ -347,7 +346,7 @@ CallCreateNewScreen(Display *dpy, int scrn, __GLXscreenConfigs *psc,
 				    &ddx_version.minor,
 				    &ddx_version.patch,
 				    &driverName)) {
-	fprintf(stderr, "libGL error: XF86DRIGetClientDriverName failed\n");
+	ErrorMessageF("XF86DRIGetClientDriverName failed\n");
 	goto handle_error;
     }
 
@@ -362,7 +361,7 @@ CallCreateNewScreen(Display *dpy, int scrn, __GLXscreenConfigs *psc,
     if (!XF86DRIGetDeviceInfo(dpy, scrn, &hFB, &junk,
 			      &framebuffer.size, &framebuffer.stride,
 			      &framebuffer.dev_priv_size, &framebuffer.dev_priv)) {
-	fprintf(stderr, "libGL error: XF86DRIGetDeviceInfo failed");
+	ErrorMessageF("XF86DRIGetDeviceInfo failed");
 	goto handle_error;
     }
 
@@ -373,8 +372,7 @@ CallCreateNewScreen(Display *dpy, int scrn, __GLXscreenConfigs *psc,
     status = drmMap(fd, hFB, framebuffer.size, 
 		    (drmAddressPtr)&framebuffer.base);
     if (status != 0) {
-	fprintf(stderr, "libGL error: drmMap of framebuffer failed (%s)",
-		strerror(-status));
+	ErrorMessageF("drmMap of framebuffer failed (%s)", strerror(-status));
 	goto handle_error;
     }
 
@@ -383,8 +381,7 @@ CallCreateNewScreen(Display *dpy, int scrn, __GLXscreenConfigs *psc,
      */
     status = drmMap(fd, hSAREA, SAREA_MAX, &pSAREA);
     if (status != 0) {
-	fprintf(stderr, "libGL error: drmMap of SAREA failed (%s)",
-		strerror(-status));
+	ErrorMessageF("drmMap of SAREA failed (%s)", strerror(-status));
 	goto handle_error;
     }
 
@@ -400,7 +397,7 @@ CallCreateNewScreen(Display *dpy, int scrn, __GLXscreenConfigs *psc,
 					  psc);
 
     if (psp == NULL) {
-	fprintf(stderr, "libGL error: Calling driver entry point failed");
+	ErrorMessageF("Calling driver entry point failed");
 	goto handle_error;
     }
 
@@ -424,7 +421,7 @@ CallCreateNewScreen(Display *dpy, int scrn, __GLXscreenConfigs *psc,
 
     XF86DRICloseConnection(dpy, scrn);
 
-    fprintf(stderr, "libGL error: reverting to (slow) indirect rendering\n");
+    ErrorMessageF("reverting to indirect rendering\n");
 
     return NULL;
 }
