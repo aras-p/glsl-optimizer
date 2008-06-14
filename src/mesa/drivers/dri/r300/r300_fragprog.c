@@ -89,21 +89,15 @@ static GLboolean transform_TEX(
 			tgt = radeonClauseInsertInstructions(context->compiler, context->dest,
 				context->dest->NumInstructions, 1);
 
-			tgt->Opcode = OPCODE_MAD;
+			tgt->Opcode = OPCODE_MOV;
 			tgt->DstReg = inst.DstReg;
 			tgt->SrcReg[0].File = PROGRAM_BUILTIN;
-			tgt->SrcReg[0].Swizzle = SWIZZLE_0000;
-			tgt->SrcReg[1].File = PROGRAM_BUILTIN;
-			tgt->SrcReg[1].Swizzle = SWIZZLE_0000;
-			tgt->SrcReg[2].File = PROGRAM_BUILTIN;
-			tgt->SrcReg[2].Swizzle = comparefunc == GL_ALWAYS ? SWIZZLE_1111 : SWIZZLE_0000;
+			tgt->SrcReg[0].Swizzle = comparefunc == GL_ALWAYS ? SWIZZLE_1111 : SWIZZLE_0000;
 			return GL_TRUE;
 		}
 
-		int tempreg = radeonCompilerAllocateTemporary(context->compiler);
-
 		inst.DstReg.File = PROGRAM_TEMPORARY;
-		inst.DstReg.Index = tempreg;
+		inst.DstReg.Index = radeonCompilerAllocateTemporary(context->compiler);
 		inst.DstReg.WriteMask = WRITEMASK_XYZW;
 	}
 
@@ -129,14 +123,12 @@ static GLboolean transform_TEX(
 		tgt = radeonClauseInsertInstructions(context->compiler, context->dest,
 			context->dest->NumInstructions, 1);
 
-		tgt->Opcode = OPCODE_MAD;
+		tgt->Opcode = OPCODE_MUL;
 		tgt->DstReg.File = PROGRAM_TEMPORARY;
 		tgt->DstReg.Index = tempreg;
 		tgt->SrcReg[0] = inst.SrcReg[0];
 		tgt->SrcReg[1].File = PROGRAM_STATE_VAR;
 		tgt->SrcReg[1].Index = factor_index;
-		tgt->SrcReg[2].File = PROGRAM_BUILTIN;
-		tgt->SrcReg[2].Swizzle = SWIZZLE_0000;
 
 		reset_srcreg(&inst.SrcReg[0]);
 		inst.SrcReg[0].File = PROGRAM_TEMPORARY;
@@ -153,14 +145,10 @@ static GLboolean transform_TEX(
 		tgt = radeonClauseInsertInstructions(context->compiler, context->dest,
 			context->dest->NumInstructions, 1);
 
-		tgt->Opcode = OPCODE_MAD;
+		tgt->Opcode = OPCODE_MOV;
 		tgt->DstReg.File = PROGRAM_TEMPORARY;
 		tgt->DstReg.Index = tempreg;
 		tgt->SrcReg[0] = inst.SrcReg[0];
-		tgt->SrcReg[1].File = PROGRAM_BUILTIN;
-		tgt->SrcReg[1].Swizzle = SWIZZLE_1111;
-		tgt->SrcReg[2].File = PROGRAM_BUILTIN;
-		tgt->SrcReg[2].Swizzle = SWIZZLE_0000;
 
 		reset_srcreg(&inst.SrcReg[0]);
 		inst.SrcReg[0].File = PROGRAM_TEMPORARY;
@@ -191,7 +179,7 @@ static GLboolean transform_TEX(
 		tgt = radeonClauseInsertInstructions(context->compiler, context->dest,
 			context->dest->NumInstructions, 2);
 
-		tgt[0].Opcode = OPCODE_MAD;
+		tgt[0].Opcode = OPCODE_ADD;
 		tgt[0].DstReg = inst.DstReg;
 		tgt[0].DstReg.WriteMask = orig_inst->DstReg.WriteMask;
 		tgt[0].SrcReg[0].File = PROGRAM_TEMPORARY;
@@ -200,10 +188,8 @@ static GLboolean transform_TEX(
 			tgt[0].SrcReg[0].Swizzle = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_Z);
 		else if (depthmode == 2) /* GL_ALPHA */
 			tgt[0].SrcReg[0].Swizzle = SWIZZLE_WWWW;
-		tgt[0].SrcReg[1].File = PROGRAM_BUILTIN;
-		tgt[0].SrcReg[1].Swizzle = SWIZZLE_1111;
-		tgt[0].SrcReg[2] = inst.SrcReg[0];
-		tgt[0].SrcReg[2].Swizzle = SWIZZLE_ZZZZ;
+		tgt[0].SrcReg[1] = inst.SrcReg[0];
+		tgt[0].SrcReg[1].Swizzle = SWIZZLE_ZZZZ;
 
 		/* Recall that SrcReg[0] is tex, SrcReg[2] is r and:
 		 *   r  < tex  <=>      -tex+r < 0
@@ -211,7 +197,7 @@ static GLboolean transform_TEX(
 		if (comparefunc == GL_LESS || comparefunc == GL_GEQUAL)
 			tgt[0].SrcReg[0].NegateBase = tgt[0].SrcReg[0].NegateBase ^ NEGATE_XYZW;
 		else
-			tgt[0].SrcReg[2].NegateBase = tgt[0].SrcReg[2].NegateBase ^ NEGATE_XYZW;
+			tgt[0].SrcReg[1].NegateBase = tgt[0].SrcReg[1].NegateBase ^ NEGATE_XYZW;
 
 		tgt[1].Opcode = OPCODE_CMP;
 		tgt[1].DstReg = orig_inst->DstReg;
@@ -231,14 +217,10 @@ static GLboolean transform_TEX(
 		tgt = radeonClauseInsertInstructions(context->compiler, context->dest,
 			context->dest->NumInstructions, 1);
 
-		tgt->Opcode = OPCODE_MAD;
+		tgt->Opcode = OPCODE_MOV;
 		tgt->DstReg = orig_inst->DstReg;
 		tgt->SrcReg[0].File = PROGRAM_TEMPORARY;
 		tgt->SrcReg[0].Index = inst.DstReg.Index;
-		tgt->SrcReg[1].File = PROGRAM_BUILTIN;
-		tgt->SrcReg[1].Swizzle = SWIZZLE_1111;
-		tgt->SrcReg[2].File = PROGRAM_BUILTIN;
-		tgt->SrcReg[2].Swizzle = SWIZZLE_0000;
 	}
 
 	return GL_TRUE;
