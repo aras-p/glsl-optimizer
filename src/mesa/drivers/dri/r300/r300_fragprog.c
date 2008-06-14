@@ -301,6 +301,11 @@ void r300TranslateFragmentShader(r300ContextPtr r300,
 			&compiler.compiler.Clauses[0],
 			1, transformations);
 
+		if (RADEON_DEBUG & DEBUG_PIXEL) {
+			_mesa_printf("Compiler state after transformations:\n");
+			radeonCompilerDump(&compiler.compiler);
+		}
+
 		if (!r300FragmentProgramEmit(&compiler))
 			fp->error = GL_TRUE;
 

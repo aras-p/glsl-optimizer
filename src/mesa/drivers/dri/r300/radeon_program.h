@@ -104,6 +104,7 @@ void radeonCompilerInit(
 	struct gl_program *source);
 void radeonCompilerCleanup(struct radeon_compiler *compiler);
 int radeonCompilerAllocateTemporary(struct radeon_compiler *compiler);
+void radeonCompilerDump(struct radeon_compiler *compiler);
 
 struct radeon_clause *radeonCompilerInsertClause(
 	struct radeon_compiler *compiler,

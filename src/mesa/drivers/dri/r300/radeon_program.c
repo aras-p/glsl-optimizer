@@ -27,6 +27,7 @@
 
 #include "radeon_program.h"
 
+#include "shader/prog_print.h"
 
 /**
  * Initialize a compiler structure with a single mixed clause
@@ -76,6 +77,37 @@ int radeonCompilerAllocateTemporary(struct radeon_compiler *compiler)
 	}
 
 	return compiler->NumTemporaries++;
+}
+
+
+static const char* clausename(int type)
+{
+	switch(type) {
+	case CLAUSE_MIXED: return "CLAUSE_MIXED";
+	case CLAUSE_ALU: return "CLAUSE_ALU";
+	case CLAUSE_TEX: return "CLAUSE_TEX";
+	default: return "CLAUSE_UNKNOWN";
+	}
+}
+
+
+/**
+ * Dump the current compiler state to the console for debugging.
+ */
+void radeonCompilerDump(struct radeon_compiler *compiler)
+{
+	int i;
+	for(i = 0; i < compiler->NumClauses; ++i) {
+		struct radeon_clause *clause = &compiler->Clauses[i];
+		int j;
+
+		_mesa_printf("%2i: %s\n", i+1, clausename(clause->Type));
+
+		for(j = 0; j < clause->NumInstructions; ++j) {
+			_mesa_printf("%4i: ", j+1);
+			_mesa_print_instruction(&clause->Instructions[j]);
+		}
+	}
 }
 
 
