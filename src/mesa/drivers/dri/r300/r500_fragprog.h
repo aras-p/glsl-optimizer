@@ -36,10 +36,14 @@
 #include "glheader.h"
 #include "macros.h"
 #include "enums.h"
+#include "shader/prog_parameter.h"
+#include "shader/prog_print.h"
 #include "shader/program.h"
 #include "shader/prog_instruction.h"
 
 #include "r300_context.h"
+#include "r300_state.h"
+#include "radeon_program.h"
 
 /* supported hw opcodes */
 #define PFS_OP_MAD 0
@@ -75,5 +79,14 @@ struct r500_fragment_program;
 
 extern void r500TranslateFragmentShader(r300ContextPtr r300,
 					struct r500_fragment_program *fp);
+
+struct r500_fragment_program_compiler {
+	r300ContextPtr r300;
+	struct r500_fragment_program *fp;
+	struct r500_fragment_program_code *code;
+	struct radeon_compiler compiler;
+};
+
+extern GLboolean r500FragmentProgramEmit(struct r500_fragment_program_compiler *compiler);
 
 #endif

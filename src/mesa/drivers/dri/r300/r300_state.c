@@ -1351,14 +1351,15 @@ static void r500SetupFragmentShaderTextures(GLcontext *ctx, int *tmu_mappings)
 	int i;
 	struct r500_fragment_program *fp = (struct r500_fragment_program *)
 	    (char *)ctx->FragmentProgram._Current;
+	struct r500_fragment_program_code *code = &fp->code;
 
 	/* find all the texture instructions and relocate the texture units */
-	for (i = 0; i < fp->inst_end + 1; i++) {
-		if ((fp->inst[i].inst0 & 0x3) == R500_INST_TYPE_TEX) {
+	for (i = 0; i < code->inst_end + 1; i++) {
+		if ((code->inst[i].inst0 & 0x3) == R500_INST_TYPE_TEX) {
 			uint32_t val;
 			int unit, opcode, new_unit;
 
-			val = fp->inst[i].inst1;
+			val = code->inst[i].inst1;
 
 			unit = (val >> 16) & 0xf;
 
@@ -1375,7 +1376,7 @@ static void r500SetupFragmentShaderTextures(GLcontext *ctx, int *tmu_mappings)
 				}
 			}
 			val |= R500_TEX_ID(new_unit);
-			fp->inst[i].inst1 = val;
+			code->inst[i].inst1 = val;
 		}
 	}
 }
@@ -2499,6 +2500,7 @@ static void r500SetupPixelShader(r300ContextPtr rmesa)
 	struct r500_fragment_program *fp = (struct r500_fragment_program *)
 	    (char *)ctx->FragmentProgram._Current;
 	int i;
+	struct r500_fragment_program_code *code;
 
 	if (!fp)		/* should only happenen once, just after context is created */
 		return;
@@ -2512,42 +2514,43 @@ static void r500SetupPixelShader(r300ContextPtr rmesa)
 			__FUNCTION__);
 		return;
 	}
+	code = &fp->code;
 
 	r300SetupTextures(ctx);
 
 	R300_STATECHANGE(rmesa, fp);
-	rmesa->hw.fp.cmd[R500_FP_PIXSIZE] = fp->max_temp_idx;
+	rmesa->hw.fp.cmd[R500_FP_PIXSIZE] = code->max_temp_idx;
 
 	rmesa->hw.fp.cmd[R500_FP_CODE_ADDR] =
-	    R500_US_CODE_START_ADDR(fp->inst_offset) |
-	    R500_US_CODE_END_ADDR(fp->inst_end);
+	    R500_US_CODE_START_ADDR(code->inst_offset) |
+	    R500_US_CODE_END_ADDR(code->inst_end);
 	rmesa->hw.fp.cmd[R500_FP_CODE_RANGE] =
-	    R500_US_CODE_RANGE_ADDR(fp->inst_offset) |
-	    R500_US_CODE_RANGE_SIZE(fp->inst_end);
+	    R500_US_CODE_RANGE_ADDR(code->inst_offset) |
+	    R500_US_CODE_RANGE_SIZE(code->inst_end);
 	rmesa->hw.fp.cmd[R500_FP_CODE_OFFSET] =
 	    R500_US_CODE_OFFSET_ADDR(0); /* FIXME when we add flow control */
 
 	R300_STATECHANGE(rmesa, r500fp);
 	/* Emit our shader... */
-	for (i = 0; i < fp->inst_end+1; i++) {
-		rmesa->hw.r500fp.cmd[i*6+1] = fp->inst[i].inst0;
-		rmesa->hw.r500fp.cmd[i*6+2] = fp->inst[i].inst1;
-		rmesa->hw.r500fp.cmd[i*6+3] = fp->inst[i].inst2;
-		rmesa->hw.r500fp.cmd[i*6+4] = fp->inst[i].inst3;
-		rmesa->hw.r500fp.cmd[i*6+5] = fp->inst[i].inst4;
-		rmesa->hw.r500fp.cmd[i*6+6] = fp->inst[i].inst5;
+	for (i = 0; i < code->inst_end+1; i++) {
+		rmesa->hw.r500fp.cmd[i*6+1] = code->inst[i].inst0;
+		rmesa->hw.r500fp.cmd[i*6+2] = code->inst[i].inst1;
+		rmesa->hw.r500fp.cmd[i*6+3] = code->inst[i].inst2;
+		rmesa->hw.r500fp.cmd[i*6+4] = code->inst[i].inst3;
+		rmesa->hw.r500fp.cmd[i*6+5] = code->inst[i].inst4;
+		rmesa->hw.r500fp.cmd[i*6+6] = code->inst[i].inst5;
 	}
 
-	bump_r500fp_count(rmesa->hw.r500fp.cmd, (fp->inst_end + 1) * 6);
+	bump_r500fp_count(rmesa->hw.r500fp.cmd, (code->inst_end + 1) * 6);
 
 	R300_STATECHANGE(rmesa, r500fp_const);
-	for (i = 0; i < fp->const_nr; i++) {
-		rmesa->hw.r500fp_const.cmd[R300_FPP_PARAM_0 + 4 * i + 0] = r300PackFloat32(fp->constant[i][0]);
-		rmesa->hw.r500fp_const.cmd[R300_FPP_PARAM_0 + 4 * i + 1] = r300PackFloat32(fp->constant[i][1]);
-		rmesa->hw.r500fp_const.cmd[R300_FPP_PARAM_0 + 4 * i + 2] = r300PackFloat32(fp->constant[i][2]);
-		rmesa->hw.r500fp_const.cmd[R300_FPP_PARAM_0 + 4 * i + 3] = r300PackFloat32(fp->constant[i][3]);
+	for (i = 0; i < code->const_nr; i++) {
+		rmesa->hw.r500fp_const.cmd[R300_FPP_PARAM_0 + 4 * i + 0] = r300PackFloat32(code->constant[i][0]);
+		rmesa->hw.r500fp_const.cmd[R300_FPP_PARAM_0 + 4 * i + 1] = r300PackFloat32(code->constant[i][1]);
+		rmesa->hw.r500fp_const.cmd[R300_FPP_PARAM_0 + 4 * i + 2] = r300PackFloat32(code->constant[i][2]);
+		rmesa->hw.r500fp_const.cmd[R300_FPP_PARAM_0 + 4 * i + 3] = r300PackFloat32(code->constant[i][3]);
 	}
-	bump_r500fp_const_count(rmesa->hw.r500fp_const.cmd, fp->const_nr * 4);
+	bump_r500fp_const_count(rmesa->hw.r500fp_const.cmd, code->const_nr * 4);
 
 }
 

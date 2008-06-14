@@ -748,14 +748,30 @@ struct r300_fragment_program {
 
 struct r500_pfs_compile_state;
 
-struct r500_fragment_program {
-	struct gl_fragment_program mesa_program;
+struct r500_fragment_program_external_state {
+	struct {
+		/**
+		 * If the sampler is used as a shadow sampler,
+		 * this field is:
+		 *  0 - GL_LUMINANCE
+		 *  1 - GL_INTENSITY
+		 *  2 - GL_ALPHA
+		 * depending on the depth texture mode.
+		 */
+		GLuint depth_texture_mode : 2;
 
-	GLcontext *ctx;
-	GLboolean translated;
-	GLboolean error;
-	struct r500_pfs_compile_state *cs;
+		/**
+		 * If the sampler is used as a shadow sampler,
+		 * this field is (texture_compare_func - GL_NEVER).
+		 * [e.g. if compare function is GL_LEQUAL, this field is 3]
+		 *
+		 * Otherwise, this field is 0.
+		 */
+		GLuint texture_compare_func : 3;
+	} unit[16];
+};
 
+struct r500_fragment_program_code {
 	struct {
 		GLuint inst0;
 		GLuint inst1;
@@ -772,17 +788,28 @@ struct r500_fragment_program {
 	int inst_end;
 
 	/* Hardware constants.
-	 * Contains a pointer to the value. The destination of the pointer
-	 * is supposed to be updated when GL state changes.
-	 * Typically, this is either a pointer into
-	 * gl_program_parameter_list::ParameterValues, or a pointer to a
-	 * global constant (e.g. for sin/cos-approximation)
-	 */
+	* Contains a pointer to the value. The destination of the pointer
+	* is supposed to be updated when GL state changes.
+	* Typically, this is either a pointer into
+	* gl_program_parameter_list::ParameterValues, or a pointer to a
+	* global constant (e.g. for sin/cos-approximation)
+	*/
 	const GLfloat *constant[PFS_NUM_CONST_REGS];
 	int const_nr;
 
 	int max_temp_idx;
+};
 
+struct r500_fragment_program {
+	struct gl_fragment_program mesa_program;
+
+	GLcontext *ctx;
+	GLboolean translated;
+	GLboolean error;
+	
+	struct r500_fragment_program_external_state state;
+	struct r500_fragment_program_code code;
+	
 	GLboolean writes_depth;
 
 	GLuint optimization;

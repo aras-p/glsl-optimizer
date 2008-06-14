@@ -28,7 +28,6 @@ DRIVER_SOURCES = \
 		 radeon_span.c \
 		 radeon_state.c \
 		 r300_mem.c \
-		 \
 		 r300_context.c \
 		 r300_ioctl.c \
 		 r300_cmdbuf.c \
@@ -42,6 +41,7 @@ DRIVER_SOURCES = \
 		 r300_fragprog.c \
 		 r300_fragprog_emit.c \
 		 r500_fragprog.c \
+		 r500_fragprog_emit.c \
 		 r300_shader.c \
 		 r300_emit.c \
 		 r300_swtcl.c \
