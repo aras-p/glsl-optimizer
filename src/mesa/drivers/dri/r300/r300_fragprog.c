@@ -49,6 +49,8 @@
 #include "r300_fragprog.h"
 #include "r300_state.h"
 
+#include "radeon_program_alu.h"
+
 
 static void reset_srcreg(struct prog_src_register* reg)
 {
@@ -396,12 +398,13 @@ void r300TranslateFragmentShader(r300ContextPtr r300,
 
 		insert_WPOS_trailer(&compiler);
 
-		struct radeon_program_transformation transformations[1] = {
-			{ &transform_TEX, &compiler }
+		struct radeon_program_transformation transformations[] = {
+			{ &transform_TEX, &compiler },
+			{ &radeonTransformALU, 0 }
 		};
 		radeonClauseLocalTransform(&compiler.compiler,
 			&compiler.compiler.Clauses[0],
-			1, transformations);
+			2, transformations);
 
 		if (RADEON_DEBUG & DEBUG_PIXEL) {
 			_mesa_printf("Compiler state after transformations:\n");

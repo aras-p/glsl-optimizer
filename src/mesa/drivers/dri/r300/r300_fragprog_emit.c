@@ -838,6 +838,10 @@ static GLuint t_src(struct r300_pfs_compile_state *cs,
 	/* no point swizzling ONE/ZERO/HALF constants... */
 	if (REG_GET_VSWZ(r) < SWIZZLE_111 || REG_GET_SSWZ(r) < SWIZZLE_ZERO)
 		r = do_swizzle(cs, r, fpsrc.Swizzle, fpsrc.NegateBase);
+	if (fpsrc.Abs)
+		r = absolute(r);
+	if (fpsrc.NegateAbs)
+		r = negate(r);
 	return r;
 }
 
@@ -1309,7 +1313,7 @@ static int find_and_prepare_slot(struct r300_pfs_compile_state *cs,
 				swz[i] = (s_swiz[REG_GET_SSWZ(src[i])].base +
 					  (srcpos[i] *
 					   s_swiz[REG_GET_SSWZ(src[i])].
-					   stride)) | ((src[i] & REG_NEGV_MASK)
+					   stride)) | ((src[i] & REG_NEGS_MASK)
 						       ? ARG_NEG : 0) | ((src[i]
 									  &
 									  REG_ABS_MASK)
@@ -1562,11 +1566,6 @@ static void emit_instruction(struct r300_pfs_compile_state *cs, struct prog_inst
 	}
 
 	switch (fpi->Opcode) {
-	case OPCODE_ABS:
-		src[0] = t_src(cs, fpi->SrcReg[0]);
-		emit_arith(cs, PFS_OP_MAD, dest, mask,
-				absolute(src[0]), pfs_one, pfs_zero, flags);
-		break;
 	case OPCODE_ADD:
 		src[0] = t_src(cs, fpi->SrcReg[0]);
 		src[1] = t_src(cs, fpi->SrcReg[1]);
@@ -1649,16 +1648,6 @@ static void emit_instruction(struct r300_pfs_compile_state *cs, struct prog_inst
 		emit_arith(cs, PFS_OP_DP4, dest, mask,
 				src[0], src[1], undef, flags);
 		break;
-	case OPCODE_DPH:
-		src[0] = t_src(cs, fpi->SrcReg[0]);
-		src[1] = t_src(cs, fpi->SrcReg[1]);
-		/* src0.xyz1 -> temp
-			* DP4 dest, temp, src1
-			*/
-		emit_arith(cs, PFS_OP_DP4, dest, mask,
-				swizzle(src[0], X, Y, Z, ONE), src[1],
-				undef, flags);
-		break;
 	case OPCODE_DST:
 		src[0] = t_src(cs, fpi->SrcReg[0]);
 		src[1] = t_src(cs, fpi->SrcReg[1]);
@@ -1684,18 +1673,6 @@ static void emit_instruction(struct r300_pfs_compile_state *cs, struct prog_inst
 		src[0] = t_scalar_src(cs, fpi->SrcReg[0]);
 		emit_arith(cs, PFS_OP_EX2, dest, mask,
 				src[0], undef, undef, flags);
-		break;
-	case OPCODE_FLR:
-		src[0] = t_src(cs, fpi->SrcReg[0]);
-		temp[0] = get_temp_reg(cs);
-		/* FRC temp, src0
-			* MAD dest, src0, 1.0, -temp
-			*/
-		emit_arith(cs, PFS_OP_FRC, temp[0], mask,
-				keep(src[0]), undef, undef, 0);
-		emit_arith(cs, PFS_OP_MAD, dest, mask,
-				src[0], pfs_one, negate(temp[0]), flags);
-		free_temp(cs, temp[0]);
 		break;
 	case OPCODE_FRC:
 		src[0] = t_src(cs, fpi->SrcReg[0]);
@@ -1751,7 +1728,6 @@ static void emit_instruction(struct r300_pfs_compile_state *cs, struct prog_inst
 				src[0], src[1], undef, flags);
 		break;
 	case OPCODE_MOV:
-	case OPCODE_SWZ:
 		src[0] = t_src(cs, fpi->SrcReg[0]);
 		emit_arith(cs, PFS_OP_MAD, dest, mask,
 				src[0], pfs_one, pfs_zero, flags);
@@ -1761,18 +1737,6 @@ static void emit_instruction(struct r300_pfs_compile_state *cs, struct prog_inst
 		src[1] = t_src(cs, fpi->SrcReg[1]);
 		emit_arith(cs, PFS_OP_MAD, dest, mask,
 				src[0], src[1], pfs_zero, flags);
-		break;
-	case OPCODE_POW:
-		src[0] = t_scalar_src(cs, fpi->SrcReg[0]);
-		src[1] = t_scalar_src(cs, fpi->SrcReg[1]);
-		temp[0] = get_temp_reg(cs);
-		emit_arith(cs, PFS_OP_LG2, temp[0], WRITEMASK_W,
-				src[0], undef, undef, 0);
-		emit_arith(cs, PFS_OP_MAD, temp[0], WRITEMASK_W,
-				temp[0], src[1], pfs_zero, 0);
-		emit_arith(cs, PFS_OP_EX2, dest, fpi->DstReg.WriteMask,
-				temp[0], undef, undef, 0);
-		free_temp(cs, temp[0]);
 		break;
 	case OPCODE_RCP:
 		src[0] = t_scalar_src(cs, fpi->SrcReg[0]);
@@ -1852,19 +1816,6 @@ static void emit_instruction(struct r300_pfs_compile_state *cs, struct prog_inst
 		free_temp(cs, temp[0]);
 		free_temp(cs, temp[1]);
 		break;
-	case OPCODE_SGE:
-		src[0] = t_src(cs, fpi->SrcReg[0]);
-		src[1] = t_src(cs, fpi->SrcReg[1]);
-		temp[0] = get_temp_reg(cs);
-		/* temp = src0 - src1
-			* dest.c = (temp.c < 0.0) ? 0 : 1
-			*/
-		emit_arith(cs, PFS_OP_MAD, temp[0], mask,
-				src[0], pfs_one, negate(src[1]), 0);
-		emit_arith(cs, PFS_OP_CMP, dest, mask,
-				pfs_one, pfs_zero, temp[0], 0);
-		free_temp(cs, temp[0]);
-		break;
 	case OPCODE_SIN:
 		/*
 			*  using a parabola:
@@ -1918,25 +1869,6 @@ static void emit_instruction(struct r300_pfs_compile_state *cs, struct prog_inst
 
 		free_temp(cs, temp[0]);
 		break;
-	case OPCODE_SLT:
-		src[0] = t_src(cs, fpi->SrcReg[0]);
-		src[1] = t_src(cs, fpi->SrcReg[1]);
-		temp[0] = get_temp_reg(cs);
-		/* temp = src0 - src1
-			* dest.c = (temp.c < 0.0) ? 1 : 0
-			*/
-		emit_arith(cs, PFS_OP_MAD, temp[0], mask,
-				src[0], pfs_one, negate(src[1]), 0);
-		emit_arith(cs, PFS_OP_CMP, dest, mask,
-				pfs_zero, pfs_one, temp[0], 0);
-		free_temp(cs, temp[0]);
-		break;
-	case OPCODE_SUB:
-		src[0] = t_src(cs, fpi->SrcReg[0]);
-		src[1] = t_src(cs, fpi->SrcReg[1]);
-		emit_arith(cs, PFS_OP_MAD, dest, mask,
-				src[0], pfs_one, negate(src[1]), flags);
-		break;
 	case OPCODE_TEX:
 		emit_tex(cs, fpi, R300_TEX_OP_LD);
 		break;
@@ -1946,29 +1878,6 @@ static void emit_instruction(struct r300_pfs_compile_state *cs, struct prog_inst
 	case OPCODE_TXP:
 		emit_tex(cs, fpi, R300_TEX_OP_TXP);
 		break;
-	case OPCODE_XPD:{
-			src[0] = t_src(cs, fpi->SrcReg[0]);
-			src[1] = t_src(cs, fpi->SrcReg[1]);
-			temp[0] = get_temp_reg(cs);
-			/* temp = src0.zxy * src1.yzx */
-			emit_arith(cs, PFS_OP_MAD, temp[0],
-					WRITEMASK_XYZ, swizzle(keep(src[0]),
-								Z, X, Y, W),
-					swizzle(keep(src[1]), Y, Z, X, W),
-					pfs_zero, 0);
-			/* dest.xyz = src0.yzx * src1.zxy - temp
-				* dest.w       = undefined
-				* */
-			emit_arith(cs, PFS_OP_MAD, dest,
-					mask & WRITEMASK_XYZ, swizzle(src[0],
-									Y, Z,
-									X, W),
-					swizzle(src[1], Z, X, Y, W),
-					negate(temp[0]), flags);
-			/* cleanup */
-			free_temp(cs, temp[0]);
-			break;
-		}
 	default:
 		ERROR("unknown fpi->Opcode %d\n", fpi->Opcode);
 		break;
