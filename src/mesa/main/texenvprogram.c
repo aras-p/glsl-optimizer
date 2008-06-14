@@ -68,6 +68,7 @@ struct state_key {
    struct {
       GLuint enabled:1;
       GLuint source_index:3;   /* one of TEXTURE_1D/2D/3D/CUBE/RECT_INDEX */
+      GLuint shadow:1;
       GLuint ScaleShiftRGB:2;
       GLuint ScaleShiftA:2;
 
@@ -219,6 +220,7 @@ static void make_state_key( GLcontext *ctx,  struct state_key *key )
 
       key->unit[i].source_index = 
 	 translate_tex_src_bit(texUnit->_ReallyEnabled);		
+      key->unit[i].shadow = texUnit->_Current->CompareMode == GL_COMPARE_R_TO_TEXTURE;
 
       key->unit[i].NumArgsRGB = texUnit->_CurrentCombine->_NumArgsRGB;
       key->unit[i].NumArgsA = texUnit->_CurrentCombine->_NumArgsA;
@@ -945,11 +947,13 @@ static void load_texture( struct texenv_fragment_program *p, GLuint unit )
 			  
       /* TODO: Use D0_MASK_XY where possible.
        */
-      if (p->state->unit[unit].enabled) 
+      if (p->state->unit[unit].enabled) {
 	 p->src_texture[unit] = emit_texld( p, OPCODE_TXP,
 					    tmp, WRITEMASK_XYZW, 
 					    unit, dim, texcoord );
-      else
+	 if (p->state->unit[unit].shadow)
+	    p->program->Base.ShadowSamplers |= 1 << unit;
+      } else
 	 p->src_texture[unit] = get_zero(p);
    }
 }
