@@ -193,7 +193,7 @@ static void r300SetTexFilter(r300TexObjPtr t, GLenum minf, GLenum magf, GLfloat 
 	 * When anisotropic filtering is enabled, we override min and mag
 	 * filter settings completely. This includes driconf's settings.
 	 */
-	if (anisotropy >= 2.0) {
+	if (anisotropy >= 2.0 && (minf != GL_NEAREST) && (magf != GL_NEAREST)) {
 		t->filter |= R300_TX_MAG_FILTER_ANISO
 			| R300_TX_MIN_FILTER_ANISO
 			| R300_TX_MIN_FILTER_MIP_LINEAR
