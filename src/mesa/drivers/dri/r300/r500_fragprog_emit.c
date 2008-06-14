@@ -315,7 +315,7 @@ static GLuint make_src(struct r500_pfs_compile_state *cs, struct prog_src_regist
 		break;
 	case PROGRAM_ENV_PARAM:
 		reg = emit_const4fv(cs,
-			cs->compiler->fp->ctx->FragmentProgram.Parameters[src.Index]);
+			cs->compiler->compiler.Ctx->FragmentProgram.Parameters[src.Index]);
 		break;
 	case PROGRAM_STATE_VAR:
 	case PROGRAM_NAMED_PARAM:
@@ -1286,14 +1286,17 @@ static GLboolean parse_program(struct r500_pfs_compile_state *cs)
 	PROG_CODE;
 	int clauseidx, counter = 0;
 
-	for (clauseidx = 0; clauseidx < cs->compiler->compiler.NumClauses; ++clauseidx) {
+	for (clauseidx = 0; clauseidx < cs->compiler->compiler.NumClauses; clauseidx++) {
 		struct radeon_clause* clause = &cs->compiler->compiler.Clauses[clauseidx];
+		struct prog_instruction* fpi;
+
 		int ip;
 
-		for (ip = 0; ip < clause->NumInstructions; ++ip) {
-			counter = do_inst(cs, clause->Instructions + ip, counter);
+		for (ip = 0; ip < clause->NumInstructions; ip++) {
+			fpi = clause->Instructions + ip;
+			counter = do_inst(cs, fpi, counter);
 
-			if (cs->compiler->fp->error)
+			if (cs->compiler->fp->error == GL_TRUE)
 				return GL_FALSE;
 		}
 	}
@@ -1397,19 +1400,23 @@ static void init_program(struct r500_pfs_compile_state *cs)
 				cs->inputs[i].reg = 0;
 	}
 
-	if (!mp->Base.Instructions) {
-		ERROR("No instructions found in program, going to go die now.\n");
-		return;
-	}
+	int clauseidx;
 
-	for (fpi = mp->Base.Instructions; fpi->Opcode != OPCODE_END; fpi++) {
-		for (i = 0; i < 3; i++) {
-			if (fpi->SrcReg[i].File == PROGRAM_TEMPORARY) {
-				if (fpi->SrcReg[i].Index >= temps_used)
-					temps_used = fpi->SrcReg[i].Index + 1;
+	for (clauseidx = 0; clauseidx < cs->compiler->compiler.NumClauses; ++clauseidx) {
+		struct radeon_clause* clause = &cs->compiler->compiler.Clauses[clauseidx];
+		int ip;
+
+		for (ip = 0; ip < clause->NumInstructions; ip++) {
+			fpi = clause->Instructions + ip;
+			for (i = 0; i < 3; i++) {
+				if (fpi->SrcReg[i].File == PROGRAM_TEMPORARY) {
+					if (fpi->SrcReg[i].Index >= temps_used)
+						temps_used = fpi->SrcReg[i].Index + 1;
+				}
 			}
 		}
 	}
+
 
 	cs->temp_in_use = temps_used + 1;
 

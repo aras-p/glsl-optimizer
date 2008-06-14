@@ -39,8 +39,6 @@ static void reset_srcreg(struct prog_src_register* reg)
  *  - extract operand swizzles
  *  - introduce a temporary register when write masks are needed
  *
- * \todo If/when r5xx uses the radeon_program architecture, this can probably
- * be reused.
  */
 static GLboolean transform_TEX(
 	struct radeon_program_transform_context* context,
@@ -58,6 +56,7 @@ static GLboolean transform_TEX(
 	    inst.Opcode != OPCODE_KIL)
 		return GL_FALSE;
 
+	/* ARB_shadow & EXT_shadow_funcs */
 	if (inst.Opcode != OPCODE_KIL &&
 	    compiler->fp->mesa_program.Base.ShadowSamplers & (1 << inst.TexSrcUnit)) {
 		GLuint comparefunc = GL_NEVER + compiler->fp->state.unit[inst.TexSrcUnit].texture_compare_func;
@@ -82,78 +81,6 @@ static GLboolean transform_TEX(
 		inst.DstReg.File = PROGRAM_TEMPORARY;
 		inst.DstReg.Index = tempreg;
 		inst.DstReg.WriteMask = WRITEMASK_XYZW;
-	}
-
-
-	/* Hardware uses [0..1]x[0..1] range for rectangle textures
-	 * instead of [0..Width]x[0..Height].
-	 * Add a scaling instruction.
-	 */
-	if (inst.Opcode != OPCODE_KIL && inst.TexSrcTarget == TEXTURE_RECT_INDEX) {
-		gl_state_index tokens[STATE_LENGTH] = {
-			STATE_INTERNAL, STATE_R300_TEXRECT_FACTOR, 0, 0,
-			0
-		};
-
-		int tempreg = radeonCompilerAllocateTemporary(context->compiler);
-		int factor_index;
-
-		tokens[2] = inst.TexSrcUnit;
-		factor_index =
-			_mesa_add_state_reference(
-				compiler->fp->mesa_program.Base.Parameters, tokens);
-
-		tgt = radeonClauseInsertInstructions(context->compiler, context->dest,
-			context->dest->NumInstructions, 1);
-
-		tgt->Opcode = OPCODE_MAD;
-		tgt->DstReg.File = PROGRAM_TEMPORARY;
-		tgt->DstReg.Index = tempreg;
-		tgt->SrcReg[0] = inst.SrcReg[0];
-		tgt->SrcReg[1].File = PROGRAM_STATE_VAR;
-		tgt->SrcReg[1].Index = factor_index;
-		tgt->SrcReg[2].File = PROGRAM_BUILTIN;
-		tgt->SrcReg[2].Swizzle = SWIZZLE_0000;
-
-		reset_srcreg(&inst.SrcReg[0]);
-		inst.SrcReg[0].File = PROGRAM_TEMPORARY;
-		inst.SrcReg[0].Index = tempreg;
-	}
-
-	/* Texture operations do not support swizzles etc. in hardware,
-	 * so emit an additional arithmetic operation if necessary.
-	 */
-	if (inst.SrcReg[0].Swizzle != SWIZZLE_NOOP ||
-	    inst.SrcReg[0].Abs || inst.SrcReg[0].NegateBase || inst.SrcReg[0].NegateAbs) {
-		int tempreg = radeonCompilerAllocateTemporary(context->compiler);
-
-		tgt = radeonClauseInsertInstructions(context->compiler, context->dest,
-			context->dest->NumInstructions, 1);
-
-		tgt->Opcode = OPCODE_MAD;
-		tgt->DstReg.File = PROGRAM_TEMPORARY;
-		tgt->DstReg.Index = tempreg;
-		tgt->SrcReg[0] = inst.SrcReg[0];
-		tgt->SrcReg[1].File = PROGRAM_BUILTIN;
-		tgt->SrcReg[1].Swizzle = SWIZZLE_1111;
-		tgt->SrcReg[2].File = PROGRAM_BUILTIN;
-		tgt->SrcReg[2].Swizzle = SWIZZLE_0000;
-
-		reset_srcreg(&inst.SrcReg[0]);
-		inst.SrcReg[0].File = PROGRAM_TEMPORARY;
-		inst.SrcReg[0].Index = tempreg;
-	}
-
-	if (inst.Opcode != OPCODE_KIL) {
-		if (inst.DstReg.File != PROGRAM_TEMPORARY ||
-		    inst.DstReg.WriteMask != WRITEMASK_XYZW) {
-			int tempreg = radeonCompilerAllocateTemporary(context->compiler);
-
-			inst.DstReg.File = PROGRAM_TEMPORARY;
-			inst.DstReg.Index = tempreg;
-			inst.DstReg.WriteMask = WRITEMASK_XYZW;
-			destredirect = GL_TRUE;
-		}
 	}
 
 	tgt = radeonClauseInsertInstructions(context->compiler, context->dest,
@@ -390,7 +317,7 @@ void r500TranslateFragmentShader(r300ContextPtr r300,
 
 		radeonCompilerInit(&compiler.compiler, r300->radeon.glCtx, &fp->mesa_program.Base);
 
-		insert_WPOS_trailer(&compiler);
+		/* insert_WPOS_trailer(&compiler); */
 
 		struct radeon_program_transformation transformations[1] = {
 			{ &transform_TEX, &compiler }
