@@ -655,6 +655,34 @@ struct r300_vertex_program_cont {
 
 struct r300_pfs_compile_state;
 
+
+/**
+ * Stores state that influences the compilation of a fragment program.
+ */
+struct r300_fragment_program_external_state {
+	struct {
+		/**
+		 * If the sampler is used as a shadow sampler,
+		 * this field is:
+		 *  0 - GL_LUMINANCE
+		 *  1 - GL_INTENSITY
+		 *  2 - GL_ALPHA
+		 * depending on the depth texture mode.
+		 */
+		GLuint depth_texture_mode : 2;
+
+		/**
+		 * If the sampler is used as a shadow sampler,
+		 * this field is (texture_compare_func - GL_NEVER).
+		 * [e.g. if compare function is GL_LEQUAL, this field is 3]
+		 *
+		 * Otherwise, this field is 0.
+		 */
+		GLuint texture_compare_func : 3;
+	} unit[16];
+};
+
+
 /**
  * Stores an R300 fragment program in its compiled-to-hardware form.
  */
@@ -711,6 +739,7 @@ struct r300_fragment_program {
 	GLboolean translated;
 	GLboolean error;
 
+	struct r300_fragment_program_external_state state;
 	struct r300_fragment_program_code code;
 
 	GLboolean WritesDepth;

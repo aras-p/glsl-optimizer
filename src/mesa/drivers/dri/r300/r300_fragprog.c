@@ -81,6 +81,33 @@ static GLboolean transform_TEX(
 	    inst.Opcode != OPCODE_KIL)
 		return GL_FALSE;
 
+	if (inst.Opcode != OPCODE_KIL &&
+	    compiler->fp->mesa_program.Base.ShadowSamplers & (1 << inst.TexSrcUnit)) {
+		GLuint comparefunc = GL_NEVER + compiler->fp->state.unit[inst.TexSrcUnit].texture_compare_func;
+
+		if (comparefunc == GL_NEVER || comparefunc == GL_ALWAYS) {
+			tgt = radeonClauseInsertInstructions(context->compiler, context->dest,
+				context->dest->NumInstructions, 1);
+
+			tgt->Opcode = OPCODE_MAD;
+			tgt->DstReg = inst.DstReg;
+			tgt->SrcReg[0].File = PROGRAM_BUILTIN;
+			tgt->SrcReg[0].Swizzle = SWIZZLE_0000;
+			tgt->SrcReg[1].File = PROGRAM_BUILTIN;
+			tgt->SrcReg[1].Swizzle = SWIZZLE_0000;
+			tgt->SrcReg[2].File = PROGRAM_BUILTIN;
+			tgt->SrcReg[2].Swizzle = comparefunc == GL_ALWAYS ? SWIZZLE_1111 : SWIZZLE_0000;
+			return GL_TRUE;
+		}
+
+		int tempreg = radeonCompilerAllocateTemporary(context->compiler);
+
+		inst.DstReg.File = PROGRAM_TEMPORARY;
+		inst.DstReg.Index = tempreg;
+		inst.DstReg.WriteMask = WRITEMASK_XYZW;
+	}
+
+
 	/* Hardware uses [0..1]x[0..1] range for rectangle textures
 	 * instead of [0..Width]x[0..Height].
 	 * Add a scaling instruction.
@@ -156,7 +183,51 @@ static GLboolean transform_TEX(
 		context->dest->NumInstructions, 1);
 	_mesa_copy_instructions(tgt, &inst, 1);
 
-	if (destredirect) {
+	if (inst.Opcode != OPCODE_KIL &&
+	    compiler->fp->mesa_program.Base.ShadowSamplers & (1 << inst.TexSrcUnit)) {
+		GLuint comparefunc = GL_NEVER + compiler->fp->state.unit[inst.TexSrcUnit].texture_compare_func;
+		GLuint depthmode = compiler->fp->state.unit[inst.TexSrcUnit].depth_texture_mode;
+
+		tgt = radeonClauseInsertInstructions(context->compiler, context->dest,
+			context->dest->NumInstructions, 2);
+
+		tgt[0].Opcode = OPCODE_MAD;
+		tgt[0].DstReg = inst.DstReg;
+		tgt[0].DstReg.WriteMask = orig_inst->DstReg.WriteMask;
+		tgt[0].SrcReg[0].File = PROGRAM_TEMPORARY;
+		tgt[0].SrcReg[0].Index = inst.DstReg.Index;
+		if (depthmode == 0) /* GL_LUMINANCE */
+			tgt[0].SrcReg[0].Swizzle = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_Z);
+		else if (depthmode == 2) /* GL_ALPHA */
+			tgt[0].SrcReg[0].Swizzle = SWIZZLE_WWWW;
+		tgt[0].SrcReg[1].File = PROGRAM_BUILTIN;
+		tgt[0].SrcReg[1].Swizzle = SWIZZLE_1111;
+		tgt[0].SrcReg[2] = inst.SrcReg[0];
+		tgt[0].SrcReg[2].Swizzle = SWIZZLE_ZZZZ;
+
+		/* Recall that SrcReg[0] is tex, SrcReg[2] is r and:
+		 *   r  < tex  <=>      -tex+r < 0
+		 *   r >= tex  <=> not (-tex+r < 0 */
+		if (comparefunc == GL_LESS || comparefunc == GL_GEQUAL)
+			tgt[0].SrcReg[0].NegateBase = tgt[0].SrcReg[0].NegateBase ^ NEGATE_XYZW;
+		else
+			tgt[0].SrcReg[2].NegateBase = tgt[0].SrcReg[2].NegateBase ^ NEGATE_XYZW;
+
+		tgt[1].Opcode = OPCODE_CMP;
+		tgt[1].DstReg = orig_inst->DstReg;
+		tgt[1].SrcReg[0].File = PROGRAM_TEMPORARY;
+		tgt[1].SrcReg[0].Index = tgt[0].DstReg.Index;
+		tgt[1].SrcReg[1].File = PROGRAM_BUILTIN;
+		tgt[1].SrcReg[2].File = PROGRAM_BUILTIN;
+
+		if (comparefunc == GL_LESS || comparefunc == GL_GREATER) {
+			tgt[1].SrcReg[1].Swizzle = SWIZZLE_1111;
+			tgt[1].SrcReg[2].Swizzle = SWIZZLE_0000;
+		} else {
+			tgt[1].SrcReg[1].Swizzle = SWIZZLE_0000;
+			tgt[1].SrcReg[2].Swizzle = SWIZZLE_1111;
+		}
+	} else if (destredirect) {
 		tgt = radeonClauseInsertInstructions(context->compiler, context->dest,
 			context->dest->NumInstructions, 1);
 
@@ -280,9 +351,58 @@ static void insert_WPOS_trailer(struct r300_fragment_program_compiler *compiler)
 }
 
 
+static GLuint build_dtm(GLuint depthmode)
+{
+	switch(depthmode) {
+	default:
+	case GL_LUMINANCE: return 0;
+	case GL_INTENSITY: return 1;
+	case GL_ALPHA: return 2;
+	}
+}
+
+static GLuint build_func(GLuint comparefunc)
+{
+	return comparefunc - GL_NEVER;
+}
+
+
+/**
+ * Collect all external state that is relevant for compiling the given
+ * fragment program.
+ */
+static void build_state(
+	r300ContextPtr r300,
+	struct r300_fragment_program *fp,
+	struct r300_fragment_program_external_state *state)
+{
+	int unit;
+
+	_mesa_bzero(state, sizeof(*state));
+
+	for(unit = 0; unit < 16; ++unit) {
+		if (fp->mesa_program.Base.ShadowSamplers & (1 << unit)) {
+			struct gl_texture_object* tex = r300->radeon.glCtx->Texture.Unit[unit]._Current;
+
+			state->unit[unit].depth_texture_mode = build_dtm(tex->DepthMode);
+			state->unit[unit].texture_compare_func = build_func(tex->CompareFunc);
+		}
+	}
+}
+
+
 void r300TranslateFragmentShader(r300ContextPtr r300,
 				 struct r300_fragment_program *fp)
 {
+	struct r300_fragment_program_external_state state;
+
+	build_state(r300, fp, &state);
+	if (_mesa_memcmp(&fp->state, &state, sizeof(state))) {
+		/* TODO: cache compiled programs */
+		fp->translated = GL_FALSE;
+		_mesa_memcpy(&fp->state, &state, sizeof(state));
+	}
+
 	if (!fp->translated) {
 		struct r300_fragment_program_compiler compiler;
 
