@@ -1263,7 +1263,7 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 
 	NOUVEAU_ERR("%d attrib regs\n", pc->attr_nr);
 	if (pc->attr_nr) {
-		struct nv50_reg *iv = NULL, *tmp = NULL;
+		struct nv50_reg *iv = NULL;
 		int aid = 0;
 
 		pc->attr = calloc(pc->attr_nr * 4, sizeof(struct nv50_reg));
@@ -1272,6 +1272,8 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 
 		if (pc->p->type == PIPE_SHADER_FRAGMENT) {
 			iv = alloc_temp(pc, NULL);
+			emit_interp(pc, iv, iv, iv, FALSE);
+			emit_flop(pc, 0, iv, iv);
 			aid++;
 		}
 
@@ -1297,14 +1299,10 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 			if (pc->p->type != PIPE_SHADER_FRAGMENT)
 				continue;
 
-			emit_interp(pc, iv, iv, iv, FALSE);
-			tmp = alloc_temp(pc, NULL);
-			emit_flop(pc, 0, tmp, iv);
-			emit_interp(pc, &a[0], &a[0], tmp, TRUE);
-			emit_interp(pc, &a[1], &a[1], tmp, TRUE);
-			emit_interp(pc, &a[2], &a[2], tmp, TRUE);
-			emit_interp(pc, &a[3], &a[3], tmp, TRUE);
-			free_temp(pc, tmp);
+			emit_interp(pc, &a[0], &a[0], iv, TRUE);
+			emit_interp(pc, &a[1], &a[1], iv, TRUE);
+			emit_interp(pc, &a[2], &a[2], iv, TRUE);
+			emit_interp(pc, &a[3], &a[3], iv, TRUE);
 		}
 
 		if (iv)
