@@ -31,10 +31,6 @@
  * FUCK! watch dst==src vectors, can overwrite components that are needed.
  * 	ie. SUB R0, R0.yzxw, R0
  *
- * MOV dst, -src
- * 	"delta" tmp, -src (0xa0000204,0xe4004780 - delta r0, -r0)
- * 	mov dst, tmp
- *
  * Things to check with renouveau:
  * 	FP attr/result assignment - how?
  * 		attrib
@@ -349,7 +345,7 @@ emit_mov(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src)
 
 	set_dst(pc, dst, e);
 
-	if (dst->type != P_RESULT && src->type == P_IMMD) {
+	if (0 && dst->type != P_RESULT && src->type == P_IMMD) {
 		set_immd(pc, src, e);
 		/*XXX: 32-bit, but steals part of "half" reg space - need to
 		 *     catch and handle this case if/when we do half-regs
