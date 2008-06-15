@@ -323,6 +323,9 @@ static GLuint make_src(struct r500_pfs_compile_state *cs, struct prog_src_regist
 		reg = emit_const4fv(cs,
 			cs->compiler->fp->mesa_program.Base.Parameters->ParameterValues[src.Index]);
 		break;
+	case PROGRAM_BUILTIN:
+		reg = 0x0;
+		break;
 	default:
 		ERROR("Can't handle src.File %x\n", src.File);
 		reg = 0x0;
@@ -335,18 +338,21 @@ static GLuint make_dest(struct r500_pfs_compile_state *cs, struct prog_dst_regis
 	PROG_CODE;
 	GLuint reg;
 	switch (dest.File) {
-		case PROGRAM_TEMPORARY:
-			reg = dest.Index + code->temp_reg_offset;
-			break;
-		case PROGRAM_OUTPUT:
-			/* Eventually we may need to handle multiple
-			 * rendering targets... */
-			reg = dest.Index;
-			break;
-		default:
-			ERROR("Can't handle dest.File %x\n", dest.File);
-			reg = 0x0;
-			break;
+	case PROGRAM_TEMPORARY:
+		reg = dest.Index + code->temp_reg_offset;
+		break;
+	case PROGRAM_OUTPUT:
+		/* Eventually we may need to handle multiple
+			* rendering targets... */
+		reg = dest.Index;
+		break;
+	case PROGRAM_BUILTIN:
+		reg = 0x0;
+		break;
+	default:
+		ERROR("Can't handle dest.File %x\n", dest.File);
+		reg = 0x0;
+		break;
 	}
 	return reg;
 }

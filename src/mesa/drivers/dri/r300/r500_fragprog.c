@@ -65,21 +65,17 @@ static GLboolean transform_TEX(
 			tgt = radeonClauseInsertInstructions(context->compiler, context->dest,
 				context->dest->NumInstructions, 1);
 
-			tgt->Opcode = OPCODE_MAD;
-			tgt->DstReg = inst.DstReg;
+			tgt->Opcode = OPCODE_MOV;
+			tgt->DstReg.File = inst.DstReg.File;
+			tgt->DstReg.Index = inst.DstReg.Index;
+			tgt->DstReg.WriteMask = inst.DstReg.WriteMask;
 			tgt->SrcReg[0].File = PROGRAM_BUILTIN;
-			tgt->SrcReg[0].Swizzle = SWIZZLE_0000;
-			tgt->SrcReg[1].File = PROGRAM_BUILTIN;
-			tgt->SrcReg[1].Swizzle = SWIZZLE_0000;
-			tgt->SrcReg[2].File = PROGRAM_BUILTIN;
-			tgt->SrcReg[2].Swizzle = comparefunc == GL_ALWAYS ? SWIZZLE_1111 : SWIZZLE_0000;
+			tgt->SrcReg[0].Swizzle = comparefunc == GL_ALWAYS ? SWIZZLE_1111 : SWIZZLE_0000;
 			return GL_TRUE;
 		}
 
-		int tempreg = radeonCompilerAllocateTemporary(context->compiler);
-
 		inst.DstReg.File = PROGRAM_TEMPORARY;
-		inst.DstReg.Index = tempreg;
+		inst.DstReg.Index = radeonCompilerAllocateTemporary(context->compiler);
 		inst.DstReg.WriteMask = WRITEMASK_XYZW;
 	}
 
@@ -317,7 +313,7 @@ void r500TranslateFragmentShader(r300ContextPtr r300,
 
 		radeonCompilerInit(&compiler.compiler, r300->radeon.glCtx, &fp->mesa_program.Base);
 
-		/* insert_WPOS_trailer(&compiler); */
+		insert_WPOS_trailer(&compiler);
 
 		struct radeon_program_transformation transformations[1] = {
 			{ &transform_TEX, &compiler }
