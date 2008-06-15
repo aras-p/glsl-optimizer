@@ -1296,7 +1296,7 @@ static GLboolean parse_program(struct r500_pfs_compile_state *cs)
 			fpi = clause->Instructions + ip;
 			counter = do_inst(cs, fpi, counter);
 
-			if (cs->compiler->fp->error == GL_TRUE)
+			if (cs->compiler->fp->error)
 				return GL_FALSE;
 		}
 	}
