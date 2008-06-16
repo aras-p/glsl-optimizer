@@ -196,15 +196,28 @@ nv50_state_validate(struct nv50_context *nv50)
 		so_ref(so, &nv50->state.stipple);
 	}
 
-	if (nv50->dirty & NV50_NEW_SCISSOR) {
+	if (nv50->dirty & (NV50_NEW_SCISSOR | NV50_NEW_RASTERIZER)) {
+		struct pipe_rasterizer_state *rast = &nv50->rasterizer->pipe;
+		struct pipe_scissor_state *s = &nv50->scissor;
+
+		if (nv50->state.scissor &&
+		    (rast->scissor == 0 && nv50->state.scissor_enabled == 0))
+			goto scissor_uptodate;
+		nv50->state.scissor_enabled = rast->scissor;
+
 		so = so_new(3, 0);
-		so_method(so, tesla, NV50TCL_SCISSOR_HORIZ, 2);
-		so_data  (so, (nv50->scissor.maxx << 16) |
-			       nv50->scissor.minx);
-		so_data  (so, (nv50->scissor.maxy << 16) |
-			       nv50->scissor.miny);
+		so_method(so, tesla, 0xff4, 2); //NV50TCL_SCISSOR_HORIZ, 2);
+		if (nv50->state.scissor_enabled) {
+			so_data(so, ((s->maxx - s->minx) << 16) | s->minx);
+			so_data(so, ((s->maxy - s->miny) << 16) | s->miny);
+		} else {
+			so_data(so, (8192 << 16));
+			so_data(so, (8192 << 16));
+		}
 		so_ref(so, &nv50->state.scissor);
+		nv50->state.dirty |= NV50_NEW_SCISSOR;
 	}
+scissor_uptodate:
 
 	if (nv50->dirty & NV50_NEW_VIEWPORT) {
 		so = so_new(8, 0);
