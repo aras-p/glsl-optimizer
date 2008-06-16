@@ -185,6 +185,7 @@ static GLuint aniso_filter(GLfloat anisotropy)
  */
 static void r300SetTexFilter(r300TexObjPtr t, GLenum minf, GLenum magf, GLfloat anisotropy)
 {
+	fprintf(stderr, "Here I am!\n");
 	t->filter &= ~(R300_TX_MIN_FILTER_MASK | R300_TX_MIN_FILTER_MIP_MASK | R300_TX_MAG_FILTER_MASK | R300_TX_MAX_ANISO_MASK);
 	t->filter_1 &= ~R300_EDGE_ANISO_EDGE_ONLY;
 
@@ -1006,9 +1007,9 @@ static void r300TexEnv(GLcontext * ctx, GLenum target,
 		int unit = 1;
 
 		if (b != (rmesa->hw.tex.filter_1.cmd[R300_TEX_CMD_0 + unit] & R300_LOD_BIAS_MASK)) {
-			R300_STATECHANGE(rmesa, tex.filter_1);
 			rmesa->hw.tex.filter_1.cmd[R300_TEX_CMD_0 + unit] &= ~R300_LOD_BIAS_MASK;
 			rmesa->hw.tex.filter_1.cmd[R300_TEX_CMD_0 + unit] |= b;
+			R300_STATECHANGE(rmesa, tex.filter_1);
 		}
 		break;
 	}
