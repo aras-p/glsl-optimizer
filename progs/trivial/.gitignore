@@ -2,6 +2,7 @@ clear
 clear-fbo
 clear-fbo-tex
 clear-scissor
+clear-undefined
 dlist-dangling
 dlist-edgeflag
 dlist-edgeflag-dangling
@@ -37,6 +38,8 @@ point-wide
 point-wide-smooth
 poly
 poly-flat
+poly-flat-clip
+poly-flat-unfilled-clip
 poly-unfilled
 quad
 quad-clip
@@ -73,6 +76,11 @@ tri-cull
 tri-cull-both
 tri-dlist
 tri-edgeflag
+trifan
+trifan-flat
+trifan-flat-clip
+trifan-flat-unfilled-clip
+trifan-unfilled
 tri-fbo
 tri-fbo-tex
 tri-flat
@@ -96,10 +104,12 @@ tri-z
 tri-z-eq
 tristrip
 tristrip-clip
+tristrip-flat
 vbo-drawarrays
 vbo-drawelements
 vbo-drawrange
 vp-array
+vp-array-int
 vp-clip
 vp-line-clip
 vp-tri
