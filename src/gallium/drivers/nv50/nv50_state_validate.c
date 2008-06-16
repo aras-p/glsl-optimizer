@@ -135,11 +135,11 @@ nv50_state_validate(struct nv50_context *nv50)
 
 	if (nv50->dirty & NV50_NEW_BLEND_COLOUR) {
 		so = so_new(5, 0);
-		so_method(so, tesla, NV50TCL_BLEND_COLOR(0), 8);
-		so_data  (so, fui(nv50->blend_colour.color[3]));
+		so_method(so, tesla, NV50TCL_BLEND_COLOR(0), 4);
 		so_data  (so, fui(nv50->blend_colour.color[0]));
 		so_data  (so, fui(nv50->blend_colour.color[1]));
 		so_data  (so, fui(nv50->blend_colour.color[2]));
+		so_data  (so, fui(nv50->blend_colour.color[3]));
 		so_emit(nvws, so);
 		so_ref(NULL, &so);
 	}
