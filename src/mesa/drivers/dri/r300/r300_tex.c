@@ -968,6 +968,7 @@ r300TexSubImage3D(GLcontext * ctx, GLenum target, GLint level,
 static void r300TexEnv(GLcontext * ctx, GLenum target,
 		       GLenum pname, const GLfloat * param)
 {
+	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	if (RADEON_DEBUG & DEBUG_STATE) {
 		fprintf(stderr, "%s( %s )\n",
 			__FUNCTION__, _mesa_lookup_enum_by_nr(pname));
@@ -978,41 +979,39 @@ static void r300TexEnv(GLcontext * ctx, GLenum target,
 	 * between them according to _ReallyEnabled.
 	 */
 	switch (pname) {
-	case GL_TEXTURE_LOD_BIAS_EXT:{
-#if 0				/* Needs to be relocated in order to make sure we got the right tmu */
-			GLfloat bias, min;
-			GLuint b;
+	case GL_TEXTURE_LOD_BIAS_EXT: {
+		fprintf(stderr, "LOD Bias: %f\n", *param);
+		/* Needs to be relocated in order to make sure we got the right tmu */
+		GLfloat bias, min;
+		GLuint b;
 
-			/* The R300's LOD bias is a signed 2's complement value with a
-			 * range of -16.0 <= bias < 16.0.
-			 *
-			 * NOTE: Add a small bias to the bias for conform mipsel.c test.
-			 */
-			bias = *param + .01;
-			min =
-			    driQueryOptionb(&rmesa->radeon.optionCache,
-					    "no_neg_lod_bias") ? 0.0 : -16.0;
-			bias = CLAMP(bias, min, 16.0);
+		/* The R300's LOD bias is a signed 2's complement value with a
+		 * range of -16.0 <= bias < 16.0.
+		 *
+		 * NOTE: Add a small bias to the bias for conform mipsel.c test.
+		 */
+		bias = *param + .01;
+		min = driQueryOptionb(&rmesa->radeon.optionCache,
+			"no_neg_lod_bias") ? 0.0 : -16.0;
+		bias = CLAMP(bias, min, 16.0);
 
-			/* 0.0 - 16.0 == 0x0 - 0x1000 */
-			/* 0.0 - -16.0 == 0x1001 - 0x1fff */
-			b = 0x1000 / 16.0 * bias;
-			b &= R300_LOD_BIAS_MASK;
-
-			if (b !=
-			    (rmesa->hw.tex.unknown1.
-			     cmd[R300_TEX_VALUE_0 +
-				 unit] & R300_LOD_BIAS_MASK)) {
-				R300_STATECHANGE(rmesa, tex.unknown1);
-				rmesa->hw.tex.unknown1.cmd[R300_TEX_VALUE_0 +
-							   unit] &=
-				    ~R300_LOD_BIAS_MASK;
-				rmesa->hw.tex.unknown1.cmd[R300_TEX_VALUE_0 +
-							   unit] |= b;
-			}
-#endif
-			break;
+		b = (unsigned int)fabsf(ceilf(bias*31));
+		if (signbit(bias)) {
+			b ^= 0x3ff; /* 10 bits */
 		}
+		fprintf(stderr, "LOD Bias (hex): 0x%x\n", b);
+		b <<= 3;
+		b &= R300_LOD_BIAS_MASK;
+
+		int unit = 1;
+
+		if (b != (rmesa->hw.tex.filter_1.cmd[R300_TEX_CMD_0 + unit] & R300_LOD_BIAS_MASK)) {
+			R300_STATECHANGE(rmesa, tex.filter_1);
+			rmesa->hw.tex.filter_1.cmd[R300_TEX_CMD_0 + unit] &= ~R300_LOD_BIAS_MASK;
+			rmesa->hw.tex.filter_1.cmd[R300_TEX_CMD_0 + unit] |= b;
+		}
+		break;
+	}
 
 	default:
 		return;
