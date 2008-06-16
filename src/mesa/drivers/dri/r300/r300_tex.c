@@ -252,6 +252,7 @@ static void r300SetTexLodBias(r300TexObjPtr t, GLfloat bias)
 	b <<= 3;
 	b &= R300_LOD_BIAS_MASK;
 
+	t->filter_1 &= ~R300_LOD_BIAS_MASK;
 	t->filter_1 |= b;
 }
 
