@@ -1494,8 +1494,10 @@ nv50_program_validate_code(struct nv50_context *nv50, struct nv50_program *p)
 {
 	struct pipe_winsys *ws = nv50->pipe.winsys;
 	struct nv50_program_exec *e;
+	struct nouveau_stateobj *so;
+	const unsigned flags = NOUVEAU_BO_VRAM | NOUVEAU_BO_WR;
+	unsigned start, count, *up, *ptr;
 	boolean upload = FALSE;
-	unsigned *map;
 
 	if (!p->buffer) {
 		p->buffer = ws->buffer_create(ws, 0x100, 0, p->exec_size * 4);
@@ -1522,20 +1524,44 @@ nv50_program_validate_code(struct nv50_context *nv50, struct nv50_program *p)
 	if (!upload)
 		return FALSE;
 
-	map = ws->buffer_map(ws, p->buffer, PIPE_BUFFER_USAGE_CPU_WRITE);
+	up = ptr = MALLOC(p->exec_size * 4);
 	for (e = p->exec_head; e; e = e->next) {
-#ifdef NV50_PROGRAM_DUMP
-		NOUVEAU_ERR("0x%08x\n", e->inst[0]);
-#endif
-		*(map++) = e->inst[0];
-		if (is_long(e)) {
-#ifdef NV50_PROGRAM_DUMP
-			NOUVEAU_ERR("0x%08x\n", e->inst[1]);
-#endif
-			*(map++) = e->inst[1];
-		}
+		*(ptr++) = e->inst[0];
+		if (is_long(e))
+			*(ptr++) = e->inst[1];
 	}
-	ws->buffer_unmap(ws, p->buffer);
+
+	so = so_new(3,2);
+	so_method(so, nv50->screen->tesla, 0x1280, 3);
+	so_reloc (so, p->buffer, 0, flags | NOUVEAU_BO_HIGH, 0, 0);
+	so_reloc (so, p->buffer, 0, flags | NOUVEAU_BO_LOW, 0, 0);
+	so_data  (so, (NV50_CB_PUPLOAD << 16) | 0x0800); //(p->exec_size * 4));
+
+	start = 0; count = p->exec_size;
+	while (count) {
+		struct nouveau_winsys *nvws = nv50->screen->nvws;
+		unsigned nr;
+
+		so_emit(nvws, so);
+
+		nr = MIN2(count, 2047);
+		nr = MIN2(nvws->channel->pushbuf->remaining, nr);
+		if (nvws->channel->pushbuf->remaining < (nr + 3)) {
+			FIRE_RING(NULL);
+			continue;
+		}
+
+		BEGIN_RING(tesla, 0x0f00, 1);
+		OUT_RING  ((start << 8) | NV50_CB_PUPLOAD);
+		BEGIN_RING(tesla, 0x40000f04, nr);	
+		OUT_RINGp (up + start, nr);
+
+		start += nr;
+		count -= nr;
+	}
+
+	FREE(up);
+	so_ref(NULL, &so);
 }
 
 void

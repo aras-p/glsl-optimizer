@@ -30,6 +30,7 @@
 #define NV50_CB_PGP		3
 #define NV50_CB_TIC		4
 #define NV50_CB_TSC		5
+#define NV50_CB_PUPLOAD         6
 
 #define NV50_NEW_BLEND		(1 << 0)
 #define NV50_NEW_ZSA		(1 << 1)
