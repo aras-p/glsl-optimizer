@@ -925,6 +925,7 @@ struct r300_context {
 	driTextureObject swapped;
 	int texture_depth;
 	float initialMaxAnisotropy;
+	float LODBias;
 
 	/* Clientdata textures;
 	 */

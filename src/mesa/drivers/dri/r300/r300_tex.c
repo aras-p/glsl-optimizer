@@ -1005,6 +1005,7 @@ static GLenum r300TexUnitTarget(struct gl_texture_unit *unit) {
 	} else if (unit->Enabled & (TEXTURE_CUBE_BIT)) {
 		return GL_TEXTURE_CUBE_MAP;
 	}
+	return 0;
 }
 
 static void r300TexEnv(GLcontext * ctx, GLenum target,
@@ -1037,13 +1038,17 @@ static void r300TexEnv(GLcontext * ctx, GLenum target,
 
 		/* This next part feels quite hackish;
 		 * is there a cleaner way? */
-		struct gl_texture_object *texObj;
 		GLenum target = r300TexUnitTarget(&ctx->Texture.Unit[ctx->Texture.CurrentUnit]);
-		texObj = _mesa_select_tex_object(ctx, &ctx->Texture.Unit[ctx->Texture.CurrentUnit], target);
-		r300TexObjPtr t = (r300TexObjPtr) texObj->DriverData;
-		texObj->LodBias = bias;
+		if (target) {
+			struct gl_texture_object *texObj =
+				_mesa_select_tex_object(ctx, &ctx->Texture.Unit[ctx->Texture.CurrentUnit], target);
+			r300TexObjPtr t = (r300TexObjPtr) texObj->DriverData;
+			texObj->LodBias = bias;
 
-		r300SetTexLodBias(t, texObj->LodBias);
+			r300SetTexLodBias(t, texObj->LodBias);
+		}
+
+		rmesa->LODBias = bias;
 
 		break;
 	}
@@ -1174,6 +1179,10 @@ static struct gl_texture_object *r300NewTextureObject(GLcontext * ctx,
 	if (!obj)
 		return NULL;
 	obj->MaxAnisotropy = rmesa->initialMaxAnisotropy;
+
+	/* Attempt to fill LOD bias, if previously set.
+	 * Should start at 0.0, which won't affect the HW. */
+	obj->LodBias = rmesa->LODBias;
 
 	r300AllocTexObj(obj);
 	return obj;
