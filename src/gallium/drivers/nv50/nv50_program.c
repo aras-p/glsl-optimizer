@@ -93,6 +93,11 @@ alloc_reg(struct nv50_pc *pc, struct nv50_reg *reg)
 {
 	int i;
 
+	if (reg->type == P_RESULT) {
+		if (pc->p->cfg.high_result < (reg->hw + 1))
+			pc->p->cfg.high_result = reg->hw + 1;
+	}
+
 	if (reg->type != P_TEMP)
 		return;
 
@@ -1558,6 +1563,8 @@ nv50_vertprog_validate(struct nv50_context *nv50)
 	so_method(so, tesla, 0x1650, 2);
 	so_data  (so, p->cfg.vp.attr[0]);
 	so_data  (so, p->cfg.vp.attr[1]);
+	so_method(so, tesla, 0x16b8, 1);
+	so_data  (so, p->cfg.high_result);
 	so_method(so, tesla, 0x16ac, 2);
 	so_data  (so, 8);
 	so_data  (so, p->cfg.high_temp);
@@ -1594,9 +1601,10 @@ nv50_fragprog_validate(struct nv50_context *nv50)
 	so_data  (so, 0x00000004);
 	so_data  (so, 0x00000000);
 	so_data  (so, 0x00000000);
-	so_method(so, tesla, 0x16bc, 2); /*XXX: fixme */
+	so_method(so, tesla, 0x16bc, 3); /*XXX: fixme */
 	so_data  (so, 0x03020100);
 	so_data  (so, 0x07060504);
+	so_data  (so, 0x0b0a0908);
 	so_method(so, tesla, 0x1988, 2);
 	so_data  (so, 0x08040404); /* p: 0x0f000401 */
 	so_data  (so, p->cfg.high_temp);

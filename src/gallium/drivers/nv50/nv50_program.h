@@ -35,6 +35,7 @@ struct nv50_program {
 
 	struct {
 		unsigned high_temp;
+		unsigned high_result;
 		struct {
 			unsigned attr[2];
 		} vp;
