@@ -74,6 +74,25 @@ nv50_miptree(struct pipe_texture *pt)
 	return (struct nv50_miptree *)pt;
 }
 
+struct nv50_state {
+	unsigned dirty;
+
+	struct nouveau_stateobj *fb;
+	struct nouveau_stateobj *blend;
+	struct nouveau_stateobj *blend_colour;
+	struct nouveau_stateobj *zsa;
+	struct nouveau_stateobj *rast;
+	struct nouveau_stateobj *stipple;
+	struct nouveau_stateobj *scissor;
+	struct nouveau_stateobj *viewport;
+	struct nouveau_stateobj *tsc_upload;
+	struct nouveau_stateobj *tic_upload;
+	struct nouveau_stateobj *vertprog;
+	struct nouveau_stateobj *fragprog;
+	struct nouveau_stateobj *vtxfmt;
+	struct nouveau_stateobj *vtxbuf;
+};
+
 struct nv50_context {
 	struct pipe_context pipe;
 
@@ -81,6 +100,8 @@ struct nv50_context {
 	unsigned pctx_id;
 
 	struct draw_context *draw;
+
+	struct nv50_state state;
 
 	unsigned dirty;
 	struct nv50_blend_stateobj *blend;

@@ -208,9 +208,7 @@ nv50_vbo_validate(struct nv50_context *nv50)
 			  NOUVEAU_BO_LOW, 0, 0);
 	}
 
-	so_emit(nv50->screen->nvws, vtxfmt);
-	so_ref (NULL, &vtxfmt);
-	so_emit(nv50->screen->nvws, vtxbuf);
-	so_ref (NULL, &vtxbuf);
+	so_ref (vtxfmt, &nv50->state.vtxfmt);
+	so_ref (vtxbuf, &nv50->state.vtxbuf);
 }
 

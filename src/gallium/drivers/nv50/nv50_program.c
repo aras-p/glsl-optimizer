@@ -1615,8 +1615,7 @@ nv50_vertprog_validate(struct nv50_context *nv50)
 	so_data  (so, p->cfg.high_temp);
 	so_method(so, tesla, 0x140c, 1);
 	so_data  (so, 0); /* program start offset */
-	so_emit(nv50->screen->nvws, so);
-	so_ref(NULL, &so);
+	so_ref(so, &nv50->state.vertprog);
 }
 
 void
@@ -1655,8 +1654,7 @@ nv50_fragprog_validate(struct nv50_context *nv50)
 	so_data  (so, p->cfg.high_temp);
 	so_method(so, tesla, 0x1414, 1);
 	so_data  (so, 0); /* program start offset */
-	so_emit(nv50->screen->nvws, so);
-	so_ref(NULL, &so);
+	so_ref(so, &nv50->state.fragprog);
 }
 
 void
