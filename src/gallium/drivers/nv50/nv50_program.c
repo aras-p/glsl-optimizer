@@ -1135,21 +1135,33 @@ nv50_program_tx_insn(struct nv50_pc *pc, const union tgsi_full_token *tok)
 		break;
 	case TGSI_OPCODE_TEX:
 		{
-			struct nv50_reg *t0, *t1;
+			struct nv50_reg *t0, *t1, *t2, *t3;
 			struct nv50_program_exec *e;
 
 			t0 = alloc_temp(pc, NULL);
 			t0 = alloc_temp(pc, NULL);
 			t1 = alloc_temp(pc, NULL);
+			t2 = alloc_temp(pc, NULL);
+			t3 = alloc_temp(pc, NULL);
 			emit_mov(pc, t0, src[0][0]);
 			emit_mov(pc, t1, src[0][1]);
 
 			e = exec(pc);
-			e->inst[0] = 0xf0400100;
+			e->inst[0] = 0xf0400000;
+			set_long(pc, e);
+			e->inst[1] |= 0x0000c004;
 			set_dst(pc, t0, e);
 			emit(pc, e);
+
+			if (mask & (1 << 0)) emit_mov(pc, dst[0], t0);
+			if (mask & (1 << 1)) emit_mov(pc, dst[1], t1);
+			if (mask & (1 << 2)) emit_mov(pc, dst[2], t2);
+			if (mask & (1 << 3)) emit_mov(pc, dst[3], t3);
+
 			free_temp(pc, t0);
 			free_temp(pc, t1);
+			free_temp(pc, t2);
+			free_temp(pc, t3);
 		}
 		break;
 	case TGSI_OPCODE_XPD:
