@@ -1381,6 +1381,18 @@ static void r500SetupFragmentShaderTextures(GLcontext *ctx, int *tmu_mappings)
 	}
 }
 
+static GLuint r300CalculateTexLodBias(GLfloat bias)
+{
+	GLuint b;
+	b = (unsigned int)fabsf(ceilf(bias*31));
+	if (signbit(bias)) {
+		b ^= 0x3ff; /* 10 bits */
+	}
+	b <<= 3;
+	b &= R300_LOD_BIAS_MASK;
+	return b;
+}
+
 static void r300SetupTextures(GLcontext * ctx)
 {
 	int i, mtu;
@@ -1444,7 +1456,8 @@ static void r300SetupTextures(GLcontext * ctx)
 			r300->hw.tex.filter.cmd[R300_TEX_VALUE_0 +
 						hw_tmu] =
 			    gen_fixed_filter(t->filter) | (hw_tmu << 28);
-			r300->hw.tex.filter_1.cmd[R300_TEX_VALUE_0 + hw_tmu] = t->filter_1;
+			r300->hw.tex.filter_1.cmd[R300_TEX_VALUE_0 + hw_tmu] = t->filter_1
+				| r300CalculateTexLodBias(r300->LODBias);
 			r300->hw.tex.size.cmd[R300_TEX_VALUE_0 + hw_tmu] =
 			    t->size;
 			r300->hw.tex.format.cmd[R300_TEX_VALUE_0 +

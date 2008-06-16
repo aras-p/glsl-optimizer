@@ -284,7 +284,6 @@ static r300TexObjPtr r300AllocTexObj(struct gl_texture_object *texObj)
 		r300SetTexWrap(t, texObj->WrapS, texObj->WrapT, texObj->WrapR);
 		r300SetTexFilter(t, texObj->MinFilter, texObj->MagFilter, texObj->MaxAnisotropy);
 		r300SetTexBorderColor(t, texObj->_BorderChan);
-		r300SetTexLodBias(t, texObj->LodBias);
 	}
 
 	return t;
@@ -1035,18 +1034,6 @@ static void r300TexEnv(GLcontext * ctx, GLenum target,
 		min = driQueryOptionb(&rmesa->radeon.optionCache,
 			"no_neg_lod_bias") ? 0.0 : -16.0;
 		bias = CLAMP(bias, min, 16.0);
-
-		/* This next part feels quite hackish;
-		 * is there a cleaner way? */
-		GLenum target = r300TexUnitTarget(&ctx->Texture.Unit[ctx->Texture.CurrentUnit]);
-		if (target) {
-			struct gl_texture_object *texObj =
-				_mesa_select_tex_object(ctx, &ctx->Texture.Unit[ctx->Texture.CurrentUnit], target);
-			r300TexObjPtr t = (r300TexObjPtr) texObj->DriverData;
-			texObj->LodBias = bias;
-
-			r300SetTexLodBias(t, texObj->LodBias);
-		}
 
 		rmesa->LODBias = bias;
 
