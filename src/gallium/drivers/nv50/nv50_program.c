@@ -1145,9 +1145,7 @@ nv50_program_tx_insn(struct nv50_pc *pc, const union tgsi_full_token *tok)
 			emit_mov(pc, t1, src[0][1]);
 
 			e = exec(pc);
-			e->inst[0] = 0xf0400000;
-			set_long(pc, e);
-			e->inst[1] |= 0x0000c004;
+			e->inst[0] = 0xf0400100;
 			set_dst(pc, t0, e);
 			emit(pc, e);
 			free_temp(pc, t0);
