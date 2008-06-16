@@ -2,6 +2,7 @@
 #define __NOUVEAU_STATEOBJ_H__
 
 #include "pipe/p_util.h"
+#include "pipe/p_debug.h"
 
 struct nouveau_stateobj_reloc {
 	struct pipe_buffer *bo;
@@ -68,6 +69,14 @@ so_data(struct nouveau_stateobj *so, unsigned data)
 }
 
 static INLINE void
+so_datap(struct nouveau_stateobj *so, unsigned *data, unsigned size)
+{
+	so->cur_packet += (4 * size);
+	while (size--)
+		(*so->cur++) = (*data++);
+}
+
+static INLINE void
 so_method(struct nouveau_stateobj *so, struct nouveau_grobj *gr,
 	  unsigned mthd, unsigned size)
 {
@@ -89,6 +98,15 @@ so_reloc(struct nouveau_stateobj *so, struct pipe_buffer *bo,
 	r->vor = vor;
 	r->tor = tor;
 	so_data(so, data);
+}
+
+static INLINE void
+so_dump(struct nouveau_stateobj *so)
+{
+	unsigned i, nr = so->cur - so->push;
+
+	for (i = 0; i < nr; i++)
+		debug_printf("+0x%04x: 0x%08x\n", i, so->push[i]);
 }
 
 static INLINE void
