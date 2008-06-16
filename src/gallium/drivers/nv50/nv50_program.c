@@ -1592,7 +1592,7 @@ nv50_vertprog_validate(struct nv50_context *nv50)
 	so_method(so, tesla, 0x16b8, 1);
 	so_data  (so, p->cfg.high_result);
 	so_method(so, tesla, 0x16ac, 2);
-	so_data  (so, 8);
+	so_data  (so, p->cfg.high_result); //8);
 	so_data  (so, p->cfg.high_temp);
 	so_method(so, tesla, 0x140c, 1);
 	so_data  (so, 0); /* program start offset */
@@ -1632,7 +1632,7 @@ nv50_fragprog_validate(struct nv50_context *nv50)
 	so_data  (so, 0x07060504);
 	so_data  (so, 0x0b0a0908);
 	so_method(so, tesla, 0x1988, 2);
-	so_data  (so, 0x08040404); /* p: 0x0f000401 */
+	so_data  (so, 0x08080408); //0x08040404); /* p: 0x0f000401 */
 	so_data  (so, p->cfg.high_temp);
 	so_method(so, tesla, 0x1414, 1);
 	so_data  (so, 0); /* program start offset */
