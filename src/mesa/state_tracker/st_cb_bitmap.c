@@ -90,6 +90,8 @@ struct bitmap_cache
    /** Bounds of region used in window coords */
    GLint xmin, ymin, xmax, ymax;
 
+   GLfloat color[4];
+
    struct pipe_texture *texture;
    struct pipe_surface *surf;
 
@@ -429,7 +431,8 @@ setup_bitmap_vertex_data(struct st_context *st,
 static void
 draw_bitmap_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
                  GLsizei width, GLsizei height,
-                 struct pipe_texture *pt)
+                 struct pipe_texture *pt,
+                 const GLfloat *color)
 {
    struct st_context *st = ctx->st;
    struct pipe_context *pipe = ctx->st->pipe;
@@ -505,7 +508,7 @@ draw_bitmap_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
    /* draw textured quad */
    setup_bitmap_vertex_data(st, x, y, width, height,
                             ctx->Current.RasterPos[2],
-                            ctx->Current.RasterColor);
+                            color);
 
    util_draw_vertex_buffer(pipe, st->bitmap.vbuf,
                            PIPE_PRIM_TRIANGLE_FAN,
@@ -592,7 +595,8 @@ st_flush_bitmap_cache(struct st_context *st)
                           cache->ypos,
                           st->ctx->Current.RasterPos[2],
                           BITMAP_CACHE_WIDTH, BITMAP_CACHE_HEIGHT,
-                          cache->texture);
+                          cache->texture,
+                          cache->color);
       }
 
       /* release/free the texture */
@@ -624,8 +628,10 @@ accum_bitmap(struct st_context *st,
       px = x - cache->xpos;  /* pos in buffer */
       py = y - cache->ypos;
       if (px < 0 || px + width > BITMAP_CACHE_WIDTH ||
-          py < 0 || py + height > BITMAP_CACHE_HEIGHT) {
-         /* This bitmap would extend beyond cache bounds,
+          py < 0 || py + height > BITMAP_CACHE_HEIGHT ||
+          !TEST_EQ_4V(st->ctx->Current.RasterColor, cache->color)) {
+         /* This bitmap would extend beyond cache bounds, or the bitmap
+          * color is changing
           * so flush and continue.
           */
          st_flush_bitmap_cache(st);
@@ -639,6 +645,7 @@ accum_bitmap(struct st_context *st,
       cache->xpos = x;
       cache->ypos = y - py;
       cache->empty = GL_FALSE;
+      COPY_4FV(cache->color, st->ctx->Current.RasterColor);
    }
 
    assert(px != -999);
@@ -694,7 +701,8 @@ st_Bitmap(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
    if (pt) {
       assert(pt->target == PIPE_TEXTURE_2D);
       draw_bitmap_quad(ctx, x, y, ctx->Current.RasterPos[2],
-                       width, height, pt);
+                       width, height, pt,
+                       st->ctx->Current.RasterColor);
       /* release/free the texture */
       pipe_texture_reference(&pt, NULL);
    }
