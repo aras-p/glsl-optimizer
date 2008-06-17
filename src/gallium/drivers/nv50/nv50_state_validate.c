@@ -151,6 +151,7 @@ nv50_state_emit(struct nv50_context *nv50)
 	so_emit_reloc_markers(nvws, nv50->state.vertprog);
 	so_emit_reloc_markers(nvws, nv50->state.fragprog);
 	so_emit_reloc_markers(nvws, nv50->state.vtxbuf);
+	so_emit_reloc_markers(nvws, nv50->screen->static_init);
 }
 
 boolean

@@ -18,6 +18,8 @@ struct nv50_screen {
 
 	struct pipe_buffer *tic;
 	struct pipe_buffer *tsc;
+
+	struct nouveau_stateobj *static_init;
 };
 
 static INLINE struct nv50_screen *
