@@ -247,17 +247,27 @@ void st_init_driver_functions(struct dd_function_table *functions)
 {
    _mesa_init_glsl_driver_functions(functions);
 
+#if FEATURE_accum
    st_init_accum_functions(functions);
-   st_init_bitmap_functions(functions);
+#endif
+#if FEATURE_EXT_framebuffer_blit
    st_init_blit_functions(functions);
+#endif
    st_init_bufferobject_functions(functions);
    st_init_clear_functions(functions);
+#if FEATURE_drawpix
+   st_init_bitmap_functions(functions);
    st_init_drawpixels_functions(functions);
-   st_init_fbo_functions(functions);
-   st_init_feedback_functions(functions);
-   st_init_program_functions(functions);
-   st_init_query_functions(functions);
    st_init_rasterpos_functions(functions);
+#endif
+   st_init_fbo_functions(functions);
+#if FEATURE_feedback
+   st_init_feedback_functions(functions);
+#endif
+   st_init_program_functions(functions);
+#if FEATURE_ARB_occlusion_query
+   st_init_query_functions(functions);
+#endif
    st_init_readpixels_functions(functions);
    st_init_texture_functions(functions);
    st_init_flush_functions(functions);
