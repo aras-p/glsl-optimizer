@@ -57,6 +57,7 @@ extern GLboolean _mesa_texstore_a8(TEXSTORE_PARAMS);
 extern GLboolean _mesa_texstore_ci8(TEXSTORE_PARAMS);
 extern GLboolean _mesa_texstore_ycbcr(TEXSTORE_PARAMS);
 extern GLboolean _mesa_texstore_z24_s8(TEXSTORE_PARAMS);
+extern GLboolean _mesa_texstore_s8_z24(TEXSTORE_PARAMS);
 extern GLboolean _mesa_texstore_z16(TEXSTORE_PARAMS);
 extern GLboolean _mesa_texstore_z32(TEXSTORE_PARAMS);
 extern GLboolean _mesa_texstore_rgba_float32(TEXSTORE_PARAMS);

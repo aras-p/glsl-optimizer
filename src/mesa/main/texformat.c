@@ -1221,11 +1221,7 @@ const struct gl_texture_format _mesa_texformat_s8_z24 = {
    24,					/* DepthBits */
    8,					/* StencilBits */
    4,					/* TexelBytes */
-#if 0
    _mesa_texstore_s8_z24,		/* StoreTexImageFunc */
-#else
-   _mesa_texstore_z24_s8,		/* StoreTexImageFunc */
-#endif
    NULL,				/* FetchTexel1D */
    NULL,				/* FetchTexel2D */
    NULL,				/* FetchTexel3D */
