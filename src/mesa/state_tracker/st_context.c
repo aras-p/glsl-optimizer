@@ -164,10 +164,14 @@ static void st_destroy_context_priv( struct st_context *st )
    st_destroy_atoms( st );
    st_destroy_draw( st );
    st_destroy_generate_mipmap(st);
-   st_destroy_bitmap(st);
+#if FEATURE_EXT_framebuffer_blit
    st_destroy_blit(st);
+#endif
    st_destroy_clear(st);
+#if FEATURE_drawpix
+   st_destroy_bitmap(st);
    st_destroy_drawpix(st);
+#endif
 
    _vbo_DestroyContext(st->ctx);
 
