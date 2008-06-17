@@ -57,9 +57,39 @@ nv50_surface_fill(struct pipe_context *pipe, struct pipe_surface *dest,
 	nvws->surface_fill(nvws, dest, destx, desty, width, height, value);
 }
 
+static void *
+nv50_surface_map(struct pipe_screen *screen, struct pipe_surface *surface,
+		 unsigned flags )
+{
+	struct pipe_winsys *ws = screen->winsys;
+	void *map;
+
+	map = ws->buffer_map(ws, surface->buffer, flags);
+	if (!map)
+		return NULL;
+
+	return map + surface->offset;
+}
+
+static void
+nv50_surface_unmap(struct pipe_screen *screen, struct pipe_surface *surface)
+{
+	struct pipe_winsys *ws = screen->winsys;
+
+	ws->buffer_unmap(ws, surface->buffer);
+}
+
 void
 nv50_init_surface_functions(struct nv50_context *nv50)
 {
-   nv50->pipe.surface_copy = nv50_surface_copy;
-   nv50->pipe.surface_fill = nv50_surface_fill;
+	nv50->pipe.surface_copy = nv50_surface_copy;
+	nv50->pipe.surface_fill = nv50_surface_fill;
 }
+
+void
+nv50_surface_init_screen_functions(struct pipe_screen *pscreen)
+{
+	pscreen->surface_map = nv50_surface_map;
+	pscreen->surface_unmap = nv50_surface_unmap;
+}
+
