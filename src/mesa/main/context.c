@@ -1168,7 +1168,9 @@ _mesa_initialize_context(GLcontext *ctx,
       if (ctx->Exec)
          _mesa_free(ctx->Exec);
    }
+#if FEATURE_dispatch
    _mesa_init_exec_table(ctx->Exec);
+#endif
    ctx->CurrentDispatch = ctx->Exec;
 #if FEATURE_dlist
    _mesa_init_dlist_table(ctx->Save);
