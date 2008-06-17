@@ -67,7 +67,7 @@ static void vbo_exec_wrap_buffers( struct vbo_exec_context *exec )
       GLuint last_begin = exec->vtx.prim[exec->vtx.prim_count-1].begin;
       GLuint last_count;
 
-      if (exec->ctx->Driver.CurrentExecPrimitive != GL_POLYGON+1) {
+      if (exec->ctx->Driver.CurrentExecPrimitive != PRIM_OUTSIDE_BEGIN_END) {
 	 GLint i = exec->vtx.prim_count - 1;
 	 assert(i >= 0);
 	 exec->vtx.prim[i].count = (exec->vtx.vert_count - 
@@ -89,7 +89,7 @@ static void vbo_exec_wrap_buffers( struct vbo_exec_context *exec )
        */
       assert(exec->vtx.prim_count == 0);
 
-      if (exec->ctx->Driver.CurrentExecPrimitive != GL_POLYGON+1) {
+      if (exec->ctx->Driver.CurrentExecPrimitive != PRIM_OUTSIDE_BEGIN_END) {
 	 exec->vtx.prim[0].mode = exec->ctx->Driver.CurrentExecPrimitive;
 	 exec->vtx.prim[0].start = 0;
 	 exec->vtx.prim[0].count = 0;
@@ -503,7 +503,7 @@ static void GLAPIENTRY vbo_exec_Begin( GLenum mode )
 {
    GET_CURRENT_CONTEXT( ctx ); 
 
-   if (ctx->Driver.CurrentExecPrimitive == GL_POLYGON+1) {
+   if (ctx->Driver.CurrentExecPrimitive == PRIM_OUTSIDE_BEGIN_END) {
       struct vbo_exec_context *exec = &vbo_context(ctx)->exec;
       int i;
 
@@ -547,7 +547,7 @@ static void GLAPIENTRY vbo_exec_End( void )
 {
    GET_CURRENT_CONTEXT( ctx ); 
 
-   if (ctx->Driver.CurrentExecPrimitive != GL_POLYGON+1) {
+   if (ctx->Driver.CurrentExecPrimitive != PRIM_OUTSIDE_BEGIN_END) {
       struct vbo_exec_context *exec = &vbo_context(ctx)->exec;
       int idx = exec->vtx.vert_count;
       int i = exec->vtx.prim_count - 1;
@@ -555,7 +555,7 @@ static void GLAPIENTRY vbo_exec_End( void )
       exec->vtx.prim[i].end = 1; 
       exec->vtx.prim[i].count = idx - exec->vtx.prim[i].start;
 
-      ctx->Driver.CurrentExecPrimitive = GL_POLYGON+1;
+      ctx->Driver.CurrentExecPrimitive = PRIM_OUTSIDE_BEGIN_END;
 
       if (exec->vtx.prim_count == VBO_MAX_PRIM)
 	 vbo_exec_vtx_flush( exec );	
