@@ -35,6 +35,35 @@
 #include "i915_state.h"
 
 
+/*
+ * A note about min_lod & max_lod.
+ *
+ * There is a circular dependancy between the sampler state
+ * and the map state to be submitted to hw.
+ *
+ * Two condition must be meet:
+ * min_lod =< max_lod == true
+ * max_lod =< last_level == true
+ *
+ *
+ * This is all fine and dandy if it where for the fact that max_lod
+ * is set on the map state instead of the sampler state. That is
+ * the max_lod we submit on map is:
+ * max_lod = MIN2(last_level, max_lod);
+ *
+ * So we need to update the map state when we change samplers and
+ * we need to be change the sampler state when map state is changed.
+ * The first part is done by calling i915_update_texture in
+ * i915_update_samplers and the second part is done else where in
+ * code tracking the state changes.
+ */
+
+static void
+i915_update_texture(struct i915_context *i915,
+                    uint unit,
+                    const struct i915_texture *tex,
+                    const struct i915_sampler_state *sampler,
+                    uint state[6]);
 /**
  * Compute i915 texture sampling state.
  *
@@ -50,6 +79,7 @@ static void update_sampler(struct i915_context *i915,
 			   unsigned state[3] )
 {
    const struct pipe_texture *pt = &tex->base;
+   unsigned minlod, lastlod;
 
    /* Need to do this after updating the maps, which call the
     * intel_finalize_mipmap_tree and hence can update firstLevel:
@@ -95,6 +125,15 @@ static void update_sampler(struct i915_context *i915,
    }
 #endif
 
+   /* See note at the top of file */
+   minlod = sampler->minlod;
+   lastlod = pt->last_level << 4;
+
+   if (lastlod < minlod) {
+      minlod = lastlod;
+   }
+
+   state[1] |= (sampler->minlod << SS3_MIN_LOD_SHIFT);
    state[1] |= (unit << SS3_TEXTUREMAP_INDEX_SHIFT);
 }
 
@@ -112,18 +151,23 @@ void i915_update_samplers( struct i915_context *i915 )
       /* could also examine the fragment program? */
       if (i915->texture[unit]) {
 	 update_sampler( i915,
-                         unit,
-                         i915->sampler[unit],       /* sampler state */
-                         i915->texture[unit],        /* texture */
-			 i915->current.sampler[unit] /* the result */
-                         );
+	                 unit,
+	                 i915->sampler[unit],       /* sampler state */
+	                 i915->texture[unit],        /* texture */
+	                 i915->current.sampler[unit] /* the result */
+	                 );
+	 i915_update_texture( i915,
+	                      unit,
+	                      i915->texture[unit],          /* texture */
+	                      i915->sampler[unit],          /* sampler state */
+	                      i915->current.texbuffer[unit] );
 
-         i915->current.sampler_enable_nr++;
-         i915->current.sampler_enable_flags |= (1 << unit);
+	 i915->current.sampler_enable_nr++;
+	 i915->current.sampler_enable_flags |= (1 << unit);
       }
    }
 
-   i915->hardware_dirty |= I915_HW_SAMPLER;
+   i915->hardware_dirty |= I915_HW_SAMPLER | I915_HW_MAP;
 }
 
 
@@ -179,14 +223,17 @@ translate_texture_format(enum pipe_format pipeFormat)
 
 
 static void
-i915_update_texture(struct i915_context *i915, uint unit,
+i915_update_texture(struct i915_context *i915,
+                    uint unit,
+                    const struct i915_texture *tex,
+                    const struct i915_sampler_state *sampler,
                     uint state[6])
 {
-   const struct i915_texture *tex = i915->texture[unit];
    const struct pipe_texture *pt = &tex->base;
    uint format, pitch;
    const uint width = pt->width[0], height = pt->height[0], depth = pt->depth[0];
    const uint num_levels = pt->last_level;
+   unsigned max_lod = num_levels * 4;
 
    assert(tex);
    assert(width);
@@ -207,16 +254,19 @@ i915_update_texture(struct i915_context *i915, uint unit,
        | MS3_USE_FENCE_REGS);
 
    /*
-    * XXX sampler->max_lod should be used to program the MAX_LOD field below.
-    * Also, when min_filter != mag_filter and there's just one mipmap level,
+    * XXX When min_filter != mag_filter and there's just one mipmap level,
     * set max_lod = 1 to make sure i915 chooses between min/mag filtering.
     */
+
+   /* See note at the top of file */
+   if (max_lod > (sampler->maxlod >> 2))
+      max_lod = sampler->maxlod >> 2;
 
    /* MS4 state */
    state[1] =
       ((((pitch / 4) - 1) << MS4_PITCH_SHIFT)
        | MS4_CUBE_FACE_ENA_MASK
-       | ((num_levels * 4) << MS4_MAX_LOD_SHIFT)
+       | ((max_lod) << MS4_MAX_LOD_SHIFT)
        | ((depth - 1) << MS4_VOLUME_DEPTH_SHIFT));
 }
 
@@ -231,7 +281,11 @@ i915_update_textures(struct i915_context *i915)
       /* determine unit enable/disable by looking for a bound texture */
       /* could also examine the fragment program? */
       if (i915->texture[unit]) {
-         i915_update_texture(i915, unit, i915->current.texbuffer[unit]);
+	 i915_update_texture( i915,
+	                      unit,
+	                      i915->texture[unit],          /* texture */
+	                      i915->sampler[unit],          /* sampler state */
+	                      i915->current.texbuffer[unit] );
       }
    }
 

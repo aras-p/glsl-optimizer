@@ -251,11 +251,17 @@ i915_create_sampler_state(struct pipe_context *pipe,
    if (sampler->normalized_coords)
       cso->state[1] |= SS3_NORMALIZED_COORDS;
 
-   if (0) /* XXX not tested yet */
    {
       int minlod = (int) (16.0 * sampler->min_lod);
+      int maxlod = (int) (16.0 * sampler->max_lod);
       minlod = CLAMP(minlod, 0, 16 * 11);
-      cso->state[1] |= (minlod << SS3_MIN_LOD_SHIFT);
+      maxlod = CLAMP(maxlod, 0, 16 * 11);
+
+      if (minlod > maxlod)
+	 maxlod = minlod;
+
+      cso->minlod = minlod;
+      cso->maxlod = maxlod;
    }
 
    {
