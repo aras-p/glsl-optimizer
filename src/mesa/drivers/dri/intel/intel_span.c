@@ -106,11 +106,37 @@ static GLubyte *x_tile_swizzle(struct intel_renderbuffer *irb, struct intel_cont
 	x_tile_off = xbyte & 0x1ff;
 	y_tile_off = y & 7;
 
+#ifndef I915
+	/* The documentation says that X tile layout is arranged in 8 512-byte
+	 * lines of pixel data.  However, that doesn't appear to be the case
+	 * on GM965, tested by drawing a 128x8 quad in no_rast mode.  For lines
+	 * 1,2,4, and 7 of each tile, each consecutive pair of 64-byte spans
+	 * has the locations of those spans swapped.
+	 */
+	switch (y_tile_off) {
+	case 1:
+	case 2:
+	case 4:
+	case 7:
+		x_tile_off ^= 64;
+		break;
+	default:
+	   break;
+	}
+#endif
+
 	x_tile_number = xbyte >> 9;
 	y_tile_number = y >> 3;
 
 	tile_off = (y_tile_off << 9) + x_tile_off;
 	tile_base = (x_tile_number << 12) + y_tile_number * tile_stride;
+
+#if 0
+	printf("(%d,%d) -> %d + %d = %d (pitch = %d, tstride = %d)\n",
+	       x, y, tile_off, tile_base,
+	       tile_off + tile_base,
+	       irb->pfPitch, tile_stride);
+#endif
 
 	return buf + tile_base + tile_off;
 }
