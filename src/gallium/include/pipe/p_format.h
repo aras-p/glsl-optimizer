@@ -50,7 +50,7 @@ extern "C" {
 #define PIPE_FORMAT_LAYOUT_RGBAZS   0
 #define PIPE_FORMAT_LAYOUT_YCBCR    1
 #define PIPE_FORMAT_LAYOUT_DXT      2  /**< XXX temporary? */
-
+#define PIPE_FORMAT_LAYOUT_MIXED    3
 
 static INLINE uint pf_layout(uint f)  /**< PIPE_FORMAT_LAYOUT_ */
 {
@@ -62,7 +62,7 @@ static INLINE uint pf_layout(uint f)  /**< PIPE_FORMAT_LAYOUT_ */
  */
 
 /**
- * Format component selectors for RGBAZS layout.
+ * Format component selectors for RGBAZS & MIXED layout.
  */
 #define PIPE_FORMAT_COMP_R    0
 #define PIPE_FORMAT_COMP_G    1
@@ -108,8 +108,6 @@ static INLINE uint pf_get(pipe_format_rgbazs_t f, uint shift, uint mask)
 {
    return (f >> shift) & mask;
 }
-
-/* XXX: The bit layout needs to be revised, can't currently encode 10-bit components. */
 
 #define pf_swizzle_x(f)       pf_get(f, 2, 0x7)  /**< PIPE_FORMAT_COMP_ */
 #define pf_swizzle_y(f)       pf_get(f, 5, 0x7)  /**< PIPE_FORMAT_COMP_ */
@@ -166,6 +164,36 @@ static INLINE uint pf_get(pipe_format_rgbazs_t f, uint shift, uint mask)
 #define _PIPE_FORMAT_RGBAZS_64( SWZ, SIZEX, SIZEY, SIZEZ, SIZEW, TYPE )\
    _PIPE_FORMAT_RGBAZS( SWZ, SIZEX, SIZEY, SIZEZ, SIZEW, 6, TYPE )
 
+typedef uint pipe_format_mixed_t;
+
+/* NOTE: Use pf_swizzle_* and pf_size_* macros for swizzles and sizes.
+ */
+
+#define pf_mixed_sign_x(f)       pf_get( f, 26, 0x1 )       /*< Sign of X */
+#define pf_mixed_sign_y(f)       pf_get( f, 27, 0x1 )       /*< Sign of Y */
+#define pf_mixed_sign_z(f)       pf_get( f, 28, 0x1 )       /*< Sign of Z */
+#define pf_mixed_sign_w(f)       pf_get( f, 29, 0x1 )       /*< Sign of W */
+#define pf_mixed_sign_xyzw(f, i) pf_get( f, 26 + (i), 0x1 )
+#define pf_mixed_normalized(f)   pf_get( f, 30, 0x1 )       /*< Type is NORM (1) or SCALED (0) */
+#define pf_mixed_scale8(f)       pf_get( f, 31, 0x1 )       /*< Scale size by either one (0) or eight (1) */
+
+/**
+ * Helper macro to encode the above structure into a 32-bit value.
+ */
+#define _PIPE_FORMAT_MIXED( SWZ, SIZEX, SIZEY, SIZEZ, SIZEW, SIGNX, SIGNY, SIGNZ, SIGNW, NORMALIZED, SCALE8 ) (\
+   (PIPE_FORMAT_LAYOUT_MIXED << 0) |\
+   ((SWZ) << 2) |\
+   ((SIZEX) << 14) |\
+   ((SIZEY) << 17) |\
+   ((SIZEZ) << 20) |\
+   ((SIZEW) << 23) |\
+   ((SIGNX) << 26) |\
+   ((SIGNY) << 27) |\
+   ((SIGNZ) << 28) |\
+   ((SIGNW) << 29) |\
+   ((NORMALIZED) << 30) |\
+   ((SCALE8) << 31) )
+
 /**
  * Shorthand macro for common format swizzles.
  */
@@ -177,6 +205,7 @@ static INLINE uint pf_get(pipe_format_rgbazs_t f, uint shift, uint mask)
 #define _PIPE_FORMAT_ABGR _PIPE_FORMAT_SWZ( PIPE_FORMAT_COMP_A, PIPE_FORMAT_COMP_B, PIPE_FORMAT_COMP_G, PIPE_FORMAT_COMP_R )
 #define _PIPE_FORMAT_BGRA _PIPE_FORMAT_SWZ( PIPE_FORMAT_COMP_B, PIPE_FORMAT_COMP_G, PIPE_FORMAT_COMP_R, PIPE_FORMAT_COMP_A )
 #define _PIPE_FORMAT_1RGB _PIPE_FORMAT_SWZ( PIPE_FORMAT_COMP_1, PIPE_FORMAT_COMP_R, PIPE_FORMAT_COMP_G, PIPE_FORMAT_COMP_B )
+#define _PIPE_FORMAT_1BGR _PIPE_FORMAT_SWZ( PIPE_FORMAT_COMP_1, PIPE_FORMAT_COMP_B, PIPE_FORMAT_COMP_G, PIPE_FORMAT_COMP_R )
 #define _PIPE_FORMAT_BGR1 _PIPE_FORMAT_SWZ( PIPE_FORMAT_COMP_B, PIPE_FORMAT_COMP_G, PIPE_FORMAT_COMP_R, PIPE_FORMAT_COMP_1 )
 #define _PIPE_FORMAT_0000 _PIPE_FORMAT_SWZ( PIPE_FORMAT_COMP_0, PIPE_FORMAT_COMP_0, PIPE_FORMAT_COMP_0, PIPE_FORMAT_COMP_0 )
 #define _PIPE_FORMAT_000R _PIPE_FORMAT_SWZ( PIPE_FORMAT_COMP_0, PIPE_FORMAT_COMP_0, PIPE_FORMAT_COMP_0, PIPE_FORMAT_COMP_R )
@@ -331,13 +360,17 @@ enum pipe_format {
    PIPE_FORMAT_R8G8B8A8_SRGB         = _PIPE_FORMAT_RGBAZS_8 ( _PIPE_FORMAT_RGBA, 1, 1, 1, 1, PIPE_FORMAT_TYPE_SRGB ),
    PIPE_FORMAT_R8G8B8X8_SRGB         = _PIPE_FORMAT_RGBAZS_8 ( _PIPE_FORMAT_RGB1, 1, 1, 1, 1, PIPE_FORMAT_TYPE_SRGB ),
 
+   /* mixed formats */
+   PIPE_FORMAT_A8UB8UG8SR8S_NORM     = _PIPE_FORMAT_MIXED( _PIPE_FORMAT_ABGR, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1 ),
+   PIPE_FORMAT_X8UB8UG8SR8S_NORM     = _PIPE_FORMAT_MIXED( _PIPE_FORMAT_1BGR, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1 ),
+   PIPE_FORMAT_B6UG5SR5S_NORM        = _PIPE_FORMAT_MIXED( _PIPE_FORMAT_BGR1, 6, 5, 5, 0, 0, 1, 1, 0, 1, 0 ),
+
    /* compressed formats */
    PIPE_FORMAT_DXT1_RGB              = _PIPE_FORMAT_DXT( 1, 8, 8, 8, 0 ),
    PIPE_FORMAT_DXT1_RGBA             = _PIPE_FORMAT_DXT( 1, 8, 8, 8, 8 ),
    PIPE_FORMAT_DXT3_RGBA             = _PIPE_FORMAT_DXT( 3, 8, 8, 8, 8 ),
    PIPE_FORMAT_DXT5_RGBA             = _PIPE_FORMAT_DXT( 5, 8, 8, 8, 8 )
 };
-
 
 /**
  * Builds pipe format name from format token.
@@ -367,7 +400,9 @@ static INLINE uint pf_get_component_bits( enum pipe_format format, uint comp )
    else {
       size = 0;
    }
-   return size << pf_exp2(format);
+   if (pf_layout( format ) == PIPE_FORMAT_LAYOUT_RGBAZS)
+      return size << pf_exp2( format );
+   return size << (pf_mixed_scale8( format ) * 3);
 }
 
 /**
@@ -377,6 +412,7 @@ static INLINE uint pf_get_bits( enum pipe_format format )
 {
    switch (pf_layout(format)) {
    case PIPE_FORMAT_LAYOUT_RGBAZS:
+   case PIPE_FORMAT_LAYOUT_MIXED:
       return
          pf_get_component_bits( format, PIPE_FORMAT_COMP_0 ) +
          pf_get_component_bits( format, PIPE_FORMAT_COMP_1 ) +
