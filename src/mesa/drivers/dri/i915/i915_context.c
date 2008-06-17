@@ -140,6 +140,9 @@ i915CreateContext(const __GLcontextModes * mesaVis,
    _tnl_destroy_pipeline(ctx);
    _tnl_install_pipeline(ctx, intel_pipeline);
 
+   if (intel->no_rast)
+      FALLBACK(intel, INTEL_FALLBACK_USER, 1);
+
    ctx->Const.MaxTextureUnits = I915_TEX_UNITS;
    ctx->Const.MaxTextureImageUnits = I915_TEX_UNITS;
    ctx->Const.MaxTextureCoordUnits = I915_TEX_UNITS;

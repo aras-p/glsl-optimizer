@@ -88,6 +88,9 @@ i830CreateContext(const __GLcontextModes * mesaVis,
    _tnl_destroy_pipeline(ctx);
    _tnl_install_pipeline(ctx, intel_pipeline);
 
+   if (intel->no_rast)
+      FALLBACK(intel, INTEL_FALLBACK_USER, 1);
+
    intel->ctx.Const.MaxTextureUnits = I830_TEX_UNITS;
    intel->ctx.Const.MaxTextureImageUnits = I830_TEX_UNITS;
    intel->ctx.Const.MaxTextureCoordUnits = I830_TEX_UNITS;
