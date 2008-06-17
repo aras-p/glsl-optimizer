@@ -33,6 +33,7 @@
 #include "main/scissor.h"
 #include "vbo/vbo.h"
 #include "shader/shader_api.h"
+#include "glapi/glapi.h"
 #include "st_public.h"
 #include "st_context.h"
 #include "st_cb_accum.h"
@@ -241,6 +242,14 @@ void st_copy_context_state(struct st_context *dst,
 {
    _mesa_copy_context(dst->ctx, src->ctx, mask);
 }
+
+
+
+st_proc st_get_proc_address(const char *procname)
+{
+   return (st_proc) _glapi_get_proc_address(procname);
+}
+
 
 
 void st_init_driver_functions(struct dd_function_table *functions)

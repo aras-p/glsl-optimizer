@@ -86,4 +86,11 @@ void st_finish( struct st_context *st );
 void st_notify_swapbuffers(struct st_framebuffer *stfb);
 void st_notify_swapbuffers_complete(struct st_framebuffer *stfb);
 
+
+/** Generic function type */
+typedef void (*st_proc)();
+
+st_proc st_get_proc_address(const char *procname);
+
+
 #endif
