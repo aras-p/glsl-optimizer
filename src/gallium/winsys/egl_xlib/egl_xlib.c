@@ -210,11 +210,7 @@ xlib_eglTerminate(_EGLDriver *drv, EGLDisplay dpy)
 static _EGLProc
 xlib_eglGetProcAddress(const char *procname)
 {
-   /* XXX for each supported API, evaluate GetProcAddress(name) */
-   /*
-   return _glapi_get_proc_address(procname);
-   */
-   return NULL;
+   return (_EGLProc) st_get_proc_address(procname);
 }
 
 
