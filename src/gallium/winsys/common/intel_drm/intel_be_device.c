@@ -220,7 +220,18 @@ intel_be_init_device(struct intel_be_device *dev, int fd)
 
 	dev->mallocPool = driMallocPoolInit();
 	dev->staticPool = driDRMPoolInit(dev->fd);
-	dev->regionPool = driDRMPoolInit(dev->fd);
+	/* Sizes: 64 128 256 512 1024 2048 4096 8192 16384 32768 */
+	dev->regionPool = driSlabPoolInit(dev->fd,
+					  DRM_BO_FLAG_READ |
+					  DRM_BO_FLAG_WRITE |
+					  DRM_BO_FLAG_MEM_TT,
+					  DRM_BO_FLAG_READ |
+					  DRM_BO_FLAG_WRITE |
+					  DRM_BO_FLAG_MEM_TT,
+					  64,
+					  10, 120, 4096 * 64, 0,
+					  dev->fMan);
+
 	dev->vertexPool = driSlabPoolInit(dev->fd,
 					  DRM_BO_FLAG_READ |
 					  DRM_BO_FLAG_WRITE |
