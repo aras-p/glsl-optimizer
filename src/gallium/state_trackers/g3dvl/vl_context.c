@@ -209,6 +209,8 @@ static int vlCreateVertexShaderIMC(struct VL_CONTEXT *context)
 	
 	context->states.mc.i_vs = pipe->create_vs_state(pipe, &vs);
 	
+	free(tokens);
+	
 	return 0;
 }
 
@@ -345,6 +347,8 @@ static int vlCreateFragmentShaderIMC(struct VL_CONTEXT *context)
 	fs.tokens = tokens;
 	
 	context->states.mc.i_fs = pipe->create_fs_state(pipe, &fs);
+	
+	free(tokens);
 	
 	return 0;
 }
@@ -557,6 +561,8 @@ static int vlCreateVertexShaderPMC(struct VL_CONTEXT *context)
 	vs.tokens = tokens;
 	
 	context->states.mc.p_vs = pipe->create_vs_state(pipe, &vs);
+	
+	free(tokens);
 	
 	return 0;
 }
@@ -833,6 +839,8 @@ static int vlCreateFragmentShaderPMC(struct VL_CONTEXT *context)
 	
 	context->states.mc.p_fs = pipe->create_fs_state(pipe, &fs);
 	
+	free(tokens);
+	
 	return 0;
 }
 
@@ -1050,6 +1058,8 @@ static int vlCreateVertexShaderBMC(struct VL_CONTEXT *context)
 	vs.tokens = tokens;
 	
 	context->states.mc.b_vs = pipe->create_vs_state(pipe, &vs);
+	
+	free(tokens);
 	
 	return 0;
 }
@@ -1349,6 +1359,8 @@ static int vlCreateFragmentShaderBMC(struct VL_CONTEXT *context)
 	
 	context->states.mc.b_fs = pipe->create_fs_state(pipe, &fs);
 	
+	free(tokens);
+	
 	return 0;
 }
 
@@ -1502,7 +1514,7 @@ static int vlInitMC(struct VL_CONTEXT *context)
 		/*sampler.prefilter = ;*/
 		/*sampler.shadow_ambient = ;*/
 		/*sampler.lod_bias = ;*/
-		/*sampler.min_lod = ;*/
+		sampler.min_lod = 0;
 		/*sampler.max_lod = ;*/
 		/*sampler.border_color[i] = ;*/
 		/*sampler.max_anisotropy = ;*/
@@ -1692,6 +1704,8 @@ static int vlCreateVertexShaderCSC(struct VL_CONTEXT *context)
 	
 	context->states.csc.vertex_shader = pipe->create_vs_state(pipe, &vs);
 	
+	free(tokens);
+	
 	return 0;
 }
 
@@ -1880,6 +1894,8 @@ static int vlCreateFragmentShaderCSC(struct VL_CONTEXT *context)
 	
 	context->states.csc.fragment_shader = pipe->create_fs_state(pipe, &fs);
 	
+	free(tokens);
+	
 	return 0;
 }
 
@@ -2052,6 +2068,7 @@ static int vlInitCommon(struct VL_CONTEXT *context)
 	pipe = context->pipe;
 	
 	rast.flatshade = 1;
+	rast.flatshade_first = 0;
 	rast.light_twoside = 0;
 	rast.front_winding = PIPE_WINDING_CCW;
 	rast.cull_mode = PIPE_WINDING_CW;
@@ -2061,6 +2078,7 @@ static int vlInitCommon(struct VL_CONTEXT *context)
 	rast.offset_ccw = 0;
 	rast.scissor = 0;
 	rast.poly_smooth = 0;
+	rast.poly_stipple_enable = 0;
 	rast.point_sprite = 0;
 	rast.point_size_per_vertex = 0;
 	rast.multisample = 0;
@@ -2074,6 +2092,7 @@ static int vlInitCommon(struct VL_CONTEXT *context)
 	rast.bypass_vs = 0;
 	rast.origin_lower_left = 0;
 	rast.line_width = 1;
+	rast.point_smooth = 0;
 	rast.point_size = 1;
 	rast.offset_units = 1;
 	rast.offset_scale = 1;
@@ -2198,6 +2217,9 @@ int vlDestroyContext(struct VL_CONTEXT *context)
 	assert(context);
 	
 	vlDestroy(context);
+	
+	context->pipe->screen->destroy(context->pipe->screen);
+	context->pipe->destroy(context->pipe);
 	
 	free(context);
 	

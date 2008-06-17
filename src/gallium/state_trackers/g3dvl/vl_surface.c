@@ -195,6 +195,7 @@ int vlCreateSurface(struct VL_CONTEXT *context, struct VL_SURFACE **surface)
 	template.depth[0] = 1;
 	template.compressed = 0;
 	template.cpp = 4;
+	template.tex_usage = PIPE_TEXTURE_USAGE_SAMPLER | PIPE_TEXTURE_USAGE_RENDER_TARGET;
 	
 	sfc->texture = pipe->screen->texture_create(pipe->screen, &template);
 	
