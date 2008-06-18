@@ -28,9 +28,13 @@ WINSYS_OBJECTS = $(WINSYS_SOURCES:.c=.o)
 
 LIBS = \
 	$(GALLIUM_DRIVERS) \
+	$(GALLIUM_AUXILIARIES)
+
+# XXX temporary (should create a separate lib with the GL API funcs and
+# mesa code, as done for ES 1.x, 2.x, OpenVG, etc)
+UNUSED_LIBS = \
 	$(TOP)/src/mesa/libglapi.a \
 	$(TOP)/src/mesa/libmesa.a \
-	$(GALLIUM_AUXILIARIES)
 
 
 LOCAL_CFLAGS = -D_EGL_PLATFORM_X=1
@@ -56,7 +60,7 @@ $(TOP)/$(LIB_DIR)/$(DRIVER_NAME): $(WINSYS_OBJECTS) $(LIBS)
 		-noprefix \
 		-install $(TOP)/$(LIB_DIR) \
 		$(MKLIB_OPTIONS) $(WINSYS_OBJECTS) \
-		--start-group $(LIBS) --end-group
+		--whole-archive $(LIBS) --no-whole-archive
 
 
 depend: $(ALL_SOURCES)
