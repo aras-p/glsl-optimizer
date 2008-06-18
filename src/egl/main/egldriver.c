@@ -183,7 +183,7 @@ _eglOpenDriver(_EGLDisplay *dpy, const char *driverName, const char *args)
    /* XXX also prepend a directory path??? */
    sprintf(driverFilename, "%s.so", driverName);
    _eglLog(_EGL_DEBUG, "dlopen(%s)", driverFilename);
-   lib = dlopen(driverFilename, RTLD_NOW);
+   lib = dlopen(driverFilename, RTLD_LAZY);
 #endif
 
    if (!lib) {
