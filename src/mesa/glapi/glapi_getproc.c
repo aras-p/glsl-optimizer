@@ -38,6 +38,10 @@
 #include "glapitable.h"
 
 
+static void
+fill_in_entrypoint_offset(_glapi_proc entrypoint, GLuint offset);
+
+
 /**
  * strdup() is actually not a standard ANSI C or POSIX routine.
  * Irix will not define it if ANSI mode is in effect.
