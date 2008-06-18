@@ -407,7 +407,10 @@ test(GLenum type, GLint bits, const char *filename)
    glGetIntegerv(GL_ALPHA_BITS, &cBits);
    assert(cBits == bits);
 
-   printf("Rendering %d bit/channel image: %s\n", bits, filename);
+   if (WriteFiles)
+      printf("Rendering %d bit/channel image: %s\n", bits, filename);
+   else
+      printf("Rendering %d bit/channel image\n", bits);
 
    OSMesaColorClamp(GL_TRUE);
 
@@ -457,6 +460,8 @@ int
 main( int argc, char *argv[] )
 {
    int i;
+
+   printf("Use -f to write image files\n");
 
    for (i = 1; i < argc; i++) {
       if (strcmp(argv[i], "-f") == 0)

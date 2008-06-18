@@ -76,6 +76,7 @@ int textureWidth = 64;
 int textureHeight = 64;
 
 int winWidth = 580, winHeight = 720;
+int win;
 
 struct formatInfo {
    GLenum	baseFormat;
@@ -288,6 +289,7 @@ static void keyboard( unsigned char c, int x, int y )
       displayLevelInfo = !displayLevelInfo;
       break;
    case 27:             /* Escape key should force exit. */
+      glutDestroyWindow(win);
       exit(0);
       break;
    default:
@@ -785,7 +787,7 @@ int main( int argc, char *argv[] )
 
    glutInitWindowSize( winWidth, winHeight );
    glutInitWindowPosition( 0, 0 );
-   glutCreateWindow( "Texture Environment Test" );
+   win = glutCreateWindow( "Texture Environment Test" );
 
    initialize();
    instructions();

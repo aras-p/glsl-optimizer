@@ -54,6 +54,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r300_vertprog.h"
 #include "radeon_reg.h"
 #include "r300_emit.h"
+#include "r300_fragprog.h"
 
 #include "vblank.h"
 
@@ -130,8 +131,6 @@ static void r300ClearBuffer(r300ContextPtr r300, int flags, int buffer)
 			t1 |= R300_Z_ENABLE | R300_Z_WRITE_ENABLE;
 			t2 |=
 			    (R300_ZS_ALWAYS << R300_Z_FUNC_SHIFT);
-		} else { //XXX
-			t1 |= R300_STENCIL_FRONT_BACK;	// disable
 		}
 
 		if (flags & CLEARBUFFER_STENCIL) {
@@ -144,20 +143,13 @@ static void r300ClearBuffer(r300ContextPtr r300, int flags, int buffer)
 			    (R300_ZS_REPLACE <<
 			     R300_S_FRONT_ZPASS_OP_SHIFT) |
 			    (R300_ZS_REPLACE <<
-			     R300_S_FRONT_ZFAIL_OP_SHIFT) |
-			    (R300_ZS_ALWAYS <<
-			     R300_S_BACK_FUNC_SHIFT) |
-			    (R300_ZS_REPLACE <<
-			     R300_S_BACK_SFAIL_OP_SHIFT) |
-			    (R300_ZS_REPLACE <<
-			     R300_S_BACK_ZPASS_OP_SHIFT) |
-			    (R300_ZS_REPLACE <<
-			     R300_S_BACK_ZFAIL_OP_SHIFT);
+			     R300_S_FRONT_ZFAIL_OP_SHIFT);
 		}
 
 		e32(t1);
 		e32(t2);
-		e32(r300->state.stencil.clear);
+		e32(((ctx->Stencil.WriteMask[0] & R300_STENCILREF_MASK) << R300_STENCILWRITEMASK_SHIFT) |
+		    (ctx->Stencil.Clear & R300_STENCILREF_MASK));
 	}
 
 	cmd2 = (drm_r300_cmd_header_t *) r300AllocCmdBuf(r300, 9, __FUNCTION__);
@@ -307,7 +299,6 @@ static void r300EmitClearState(GLcontext * ctx)
 		reg_start(R300_RS_INST_0, 0);
 		e32(R300_RS_INST_COL_CN_WRITE);
 	} else {
-	  
 		R300_STATECHANGE(r300, ri);
 		reg_start(R500_RS_IP_0, 7);
 		for (i = 0; i < 8; ++i) {

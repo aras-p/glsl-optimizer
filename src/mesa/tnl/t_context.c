@@ -105,10 +105,10 @@ _tnl_InvalidateState( GLcontext *ctx, GLuint new_state )
    const struct gl_vertex_program *vp = ctx->VertexProgram._Current;
    const struct gl_fragment_program *fp = ctx->FragmentProgram._Current;
 
-   if (new_state & (_NEW_HINT)) {
+   if (new_state & (_NEW_HINT | _NEW_PROGRAM)) {
       ASSERT(tnl->AllowVertexFog || tnl->AllowPixelFog);
-      tnl->_DoVertexFog = (tnl->AllowVertexFog && (ctx->Hint.Fog != GL_NICEST))
-         || !tnl->AllowPixelFog;
+      tnl->_DoVertexFog = ((tnl->AllowVertexFog && (ctx->Hint.Fog != GL_NICEST))
+         || !tnl->AllowPixelFog) && !fp;
    }
 
    tnl->pipeline.new_state |= new_state;
@@ -202,8 +202,8 @@ _tnl_allow_vertex_fog( GLcontext *ctx, GLboolean value )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    tnl->AllowVertexFog = value;
-   tnl->_DoVertexFog = (tnl->AllowVertexFog && (ctx->Hint.Fog != GL_NICEST))
-      || !tnl->AllowPixelFog;
+   tnl->_DoVertexFog = ((tnl->AllowVertexFog && (ctx->Hint.Fog != GL_NICEST))
+      || !tnl->AllowPixelFog) && !ctx->FragmentProgram._Current;
 
 }
 
@@ -212,7 +212,7 @@ _tnl_allow_pixel_fog( GLcontext *ctx, GLboolean value )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    tnl->AllowPixelFog = value;
-   tnl->_DoVertexFog = (tnl->AllowVertexFog && (ctx->Hint.Fog != GL_NICEST))
-      || !tnl->AllowPixelFog;
+   tnl->_DoVertexFog = ((tnl->AllowVertexFog && (ctx->Hint.Fog != GL_NICEST))
+      || !tnl->AllowPixelFog) && !ctx->FragmentProgram._Current;
 }
 

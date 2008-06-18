@@ -160,21 +160,18 @@ static void r300SetTexWrap(r300TexObjPtr t, GLenum swrap, GLenum twrap,
 	t->filter |= hw_qwrap << R300_TX_WRAP_Q_SHIFT;
 }
 
-static void r300SetTexMaxAnisotropy(r300TexObjPtr t, GLfloat max)
+static GLuint aniso_filter(GLfloat anisotropy)
 {
-
-	t->filter &= ~R300_TX_MAX_ANISO_MASK;
-
-	if (max <= 1.0) {
-		t->filter |= R300_TX_MAX_ANISO_1_TO_1;
-	} else if (max <= 2.0) {
-		t->filter |= R300_TX_MAX_ANISO_2_TO_1;
-	} else if (max <= 4.0) {
-		t->filter |= R300_TX_MAX_ANISO_4_TO_1;
-	} else if (max <= 8.0) {
-		t->filter |= R300_TX_MAX_ANISO_8_TO_1;
+	if (anisotropy >= 16.0) {
+		return R300_TX_MAX_ANISO_16_TO_1;
+	} else if (anisotropy >= 8.0) {
+		return R300_TX_MAX_ANISO_8_TO_1;
+	} else if (anisotropy >= 4.0) {
+		return R300_TX_MAX_ANISO_4_TO_1;
+	} else if (anisotropy >= 2.0) {
+		return R300_TX_MAX_ANISO_2_TO_1;
 	} else {
-		t->filter |= R300_TX_MAX_ANISO_16_TO_1;
+		return R300_TX_MAX_ANISO_1_TO_1;
 	}
 }
 
@@ -184,54 +181,47 @@ static void r300SetTexMaxAnisotropy(r300TexObjPtr t, GLfloat max)
  * \param t Texture whose filter modes are to be set
  * \param minf Texture minification mode
  * \param magf Texture magnification mode
+ * \param anisotropy Maximum anisotropy level
  */
-
-static void r300SetTexFilter(r300TexObjPtr t, GLenum minf, GLenum magf)
+static void r300SetTexFilter(r300TexObjPtr t, GLenum minf, GLenum magf, GLfloat anisotropy)
 {
-	GLuint anisotropy = (t->filter & R300_TX_MAX_ANISO_MASK);
+	t->filter &= ~(R300_TX_MIN_FILTER_MASK | R300_TX_MIN_FILTER_MIP_MASK | R300_TX_MAG_FILTER_MASK | R300_TX_MAX_ANISO_MASK);
+	t->filter_1 &= ~R300_EDGE_ANISO_EDGE_ONLY;
 
-	t->filter &= ~(R300_TX_MIN_FILTER_MASK | R300_TX_MAG_FILTER_MASK);
+	/* Note that EXT_texture_filter_anisotropic is extremely vague about
+	 * how anisotropic filtering interacts with the "normal" filter modes.
+	 * When anisotropic filtering is enabled, we override min and mag
+	 * filter settings completely. This includes driconf's settings.
+	 */
+	if (anisotropy >= 2.0 && (minf != GL_NEAREST) && (magf != GL_NEAREST)) {
+		t->filter |= R300_TX_MAG_FILTER_ANISO
+			| R300_TX_MIN_FILTER_ANISO
+			| R300_TX_MIN_FILTER_MIP_LINEAR
+			| aniso_filter(anisotropy);
+		if (RADEON_DEBUG & DEBUG_TEXTURE)
+			fprintf(stderr, "Using maximum anisotropy of %f\n", anisotropy);
+		return;
+	}
 
-	if (anisotropy == R300_TX_MAX_ANISO_1_TO_1) {
-		switch (minf) {
-		case GL_NEAREST:
-			t->filter |= R300_TX_MIN_FILTER_NEAREST;
-			break;
-		case GL_LINEAR:
-			t->filter |= R300_TX_MIN_FILTER_LINEAR;
-			break;
-		case GL_NEAREST_MIPMAP_NEAREST:
-			t->filter |= R300_TX_MIN_FILTER_NEAREST_MIP_NEAREST;
-			break;
-		case GL_NEAREST_MIPMAP_LINEAR:
-			t->filter |= R300_TX_MIN_FILTER_NEAREST_MIP_LINEAR;
-			break;
-		case GL_LINEAR_MIPMAP_NEAREST:
-			t->filter |= R300_TX_MIN_FILTER_LINEAR_MIP_NEAREST;
-			break;
-		case GL_LINEAR_MIPMAP_LINEAR:
-			t->filter |= R300_TX_MIN_FILTER_LINEAR_MIP_LINEAR;
-			break;
-		}
-	} else {
-		switch (minf) {
-		case GL_NEAREST:
-			t->filter |= R300_TX_MIN_FILTER_ANISO_NEAREST;
-			break;
-		case GL_LINEAR:
-			t->filter |= R300_TX_MIN_FILTER_ANISO_LINEAR;
-			break;
-		case GL_NEAREST_MIPMAP_NEAREST:
-		case GL_LINEAR_MIPMAP_NEAREST:
-			t->filter |=
-			    R300_TX_MIN_FILTER_ANISO_NEAREST_MIP_NEAREST;
-			break;
-		case GL_NEAREST_MIPMAP_LINEAR:
-		case GL_LINEAR_MIPMAP_LINEAR:
-			t->filter |=
-			    R300_TX_MIN_FILTER_ANISO_NEAREST_MIP_LINEAR;
-			break;
-		}
+	switch (minf) {
+	case GL_NEAREST:
+		t->filter |= R300_TX_MIN_FILTER_NEAREST;
+		break;
+	case GL_LINEAR:
+		t->filter |= R300_TX_MIN_FILTER_LINEAR;
+		break;
+	case GL_NEAREST_MIPMAP_NEAREST:
+		t->filter |= R300_TX_MIN_FILTER_NEAREST|R300_TX_MIN_FILTER_MIP_NEAREST;
+		break;
+	case GL_NEAREST_MIPMAP_LINEAR:
+		t->filter |= R300_TX_MIN_FILTER_NEAREST|R300_TX_MIN_FILTER_MIP_LINEAR;
+		break;
+	case GL_LINEAR_MIPMAP_NEAREST:
+		t->filter |= R300_TX_MIN_FILTER_LINEAR|R300_TX_MIN_FILTER_MIP_NEAREST;
+		break;
+	case GL_LINEAR_MIPMAP_LINEAR:
+		t->filter |= R300_TX_MIN_FILTER_LINEAR|R300_TX_MIN_FILTER_MIP_LINEAR;
+		break;
 	}
 
 	/* Note we don't have 3D mipmaps so only use the mag filter setting
@@ -250,6 +240,20 @@ static void r300SetTexFilter(r300TexObjPtr t, GLenum minf, GLenum magf)
 static void r300SetTexBorderColor(r300TexObjPtr t, GLubyte c[4])
 {
 	t->pp_border_color = PACK_COLOR_8888(c[3], c[0], c[1], c[2]);
+}
+
+static void r300SetTexLodBias(r300TexObjPtr t, GLfloat bias)
+{
+	GLuint b;
+	b = (unsigned int)fabsf(ceilf(bias*31));
+	if (signbit(bias)) {
+		b ^= 0x3ff; /* 10 bits */
+	}
+	b <<= 3;
+	b &= R300_LOD_BIAS_MASK;
+
+	t->filter_1 &= ~R300_LOD_BIAS_MASK;
+	t->filter_1 |= b;
 }
 
 /**
@@ -278,8 +282,7 @@ static r300TexObjPtr r300AllocTexObj(struct gl_texture_object *texObj)
 		make_empty_list(&t->base);
 
 		r300SetTexWrap(t, texObj->WrapS, texObj->WrapT, texObj->WrapR);
-		r300SetTexMaxAnisotropy(t, texObj->MaxAnisotropy);
-		r300SetTexFilter(t, texObj->MinFilter, texObj->MagFilter);
+		r300SetTexFilter(t, texObj->MinFilter, texObj->MagFilter, texObj->MaxAnisotropy);
 		r300SetTexBorderColor(t, texObj->_BorderChan);
 	}
 
@@ -976,9 +979,38 @@ r300TexSubImage3D(GLcontext * ctx, GLenum target, GLint level,
 	t->dirty_images[0] |= (1 << level);
 }
 
+/* This feels like a prime target for code reuse, so I'm putting it here
+ * instead of inlining it in TexEnv. */
+static GLenum r300TexUnitTarget(struct gl_texture_unit *unit) {
+	if (unit->_ReallyEnabled & (TEXTURE_RECT_BIT)) {
+		return GL_TEXTURE_RECTANGLE_NV;
+	} else if (unit->_ReallyEnabled & (TEXTURE_1D_BIT)) {
+		return GL_TEXTURE_1D;
+	} else if (unit->_ReallyEnabled & (TEXTURE_2D_BIT)) {
+		return GL_TEXTURE_2D;
+	} else if (unit->_ReallyEnabled & (TEXTURE_3D_BIT)) {
+		return GL_TEXTURE_3D;
+	} else if (unit->_ReallyEnabled & (TEXTURE_CUBE_BIT)) {
+		return GL_TEXTURE_CUBE_MAP;
+	}
+	if (unit->Enabled & (TEXTURE_RECT_BIT)) {
+		return GL_TEXTURE_RECTANGLE_NV;
+	} else if (unit->Enabled & (TEXTURE_1D_BIT)) {
+		return GL_TEXTURE_1D;
+	} else if (unit->Enabled & (TEXTURE_2D_BIT)) {
+		return GL_TEXTURE_2D;
+	} else if (unit->Enabled & (TEXTURE_3D_BIT)) {
+		return GL_TEXTURE_3D;
+	} else if (unit->Enabled & (TEXTURE_CUBE_BIT)) {
+		return GL_TEXTURE_CUBE_MAP;
+	}
+	return 0;
+}
+
 static void r300TexEnv(GLcontext * ctx, GLenum target,
 		       GLenum pname, const GLfloat * param)
 {
+	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	if (RADEON_DEBUG & DEBUG_STATE) {
 		fprintf(stderr, "%s( %s )\n",
 			__FUNCTION__, _mesa_lookup_enum_by_nr(pname));
@@ -989,41 +1021,24 @@ static void r300TexEnv(GLcontext * ctx, GLenum target,
 	 * between them according to _ReallyEnabled.
 	 */
 	switch (pname) {
-	case GL_TEXTURE_LOD_BIAS_EXT:{
-#if 0				/* Needs to be relocated in order to make sure we got the right tmu */
-			GLfloat bias, min;
-			GLuint b;
+	case GL_TEXTURE_LOD_BIAS_EXT: {
+		/* Needs to be relocated in order to make sure we got the right tmu */
+		GLfloat bias, min;
 
-			/* The R300's LOD bias is a signed 2's complement value with a
-			 * range of -16.0 <= bias < 16.0.
-			 *
-			 * NOTE: Add a small bias to the bias for conform mipsel.c test.
-			 */
-			bias = *param + .01;
-			min =
-			    driQueryOptionb(&rmesa->radeon.optionCache,
-					    "no_neg_lod_bias") ? 0.0 : -16.0;
-			bias = CLAMP(bias, min, 16.0);
+		/* The R300's LOD bias is a signed 2's complement value with a
+		 * range of -16.0 <= bias < 16.0.
+		 *
+		 * NOTE: Add a small bias to the bias for conform mipsel.c test.
+		 */
+		bias = *param + .01;
+		min = driQueryOptionb(&rmesa->radeon.optionCache,
+			"no_neg_lod_bias") ? 0.0 : -16.0;
+		bias = CLAMP(bias, min, 16.0);
 
-			/* 0.0 - 16.0 == 0x0 - 0x1000 */
-			/* 0.0 - -16.0 == 0x1001 - 0x1fff */
-			b = 0x1000 / 16.0 * bias;
-			b &= R300_LOD_BIAS_MASK;
+		rmesa->LODBias = bias;
 
-			if (b !=
-			    (rmesa->hw.tex.unknown1.
-			     cmd[R300_TEX_VALUE_0 +
-				 unit] & R300_LOD_BIAS_MASK)) {
-				R300_STATECHANGE(rmesa, tex.unknown1);
-				rmesa->hw.tex.unknown1.cmd[R300_TEX_VALUE_0 +
-							   unit] &=
-				    ~R300_LOD_BIAS_MASK;
-				rmesa->hw.tex.unknown1.cmd[R300_TEX_VALUE_0 +
-							   unit] |= b;
-			}
-#endif
-			break;
-		}
+		break;
+	}
 
 	default:
 		return;
@@ -1050,8 +1065,7 @@ static void r300TexParameter(GLcontext * ctx, GLenum target,
 	case GL_TEXTURE_MIN_FILTER:
 	case GL_TEXTURE_MAG_FILTER:
 	case GL_TEXTURE_MAX_ANISOTROPY_EXT:
-		r300SetTexMaxAnisotropy(t, texObj->MaxAnisotropy);
-		r300SetTexFilter(t, texObj->MinFilter, texObj->MagFilter);
+		r300SetTexFilter(t, texObj->MinFilter, texObj->MagFilter, texObj->MaxAnisotropy);
 		break;
 
 	case GL_TEXTURE_WRAP_S:
@@ -1077,7 +1091,7 @@ static void r300TexParameter(GLcontext * ctx, GLenum target,
 		break;
 
 	case GL_DEPTH_TEXTURE_MODE:
-		if (texObj->Image[0][texObj->BaseLevel]->TexFormat->BaseFormat 
+		if (texObj->Image[0][texObj->BaseLevel]->TexFormat->BaseFormat
 		    == GL_DEPTH_COMPONENT) {
 			r300SetDepthTexMode(texObj);
 			break;
@@ -1092,10 +1106,6 @@ static void r300TexParameter(GLcontext * ctx, GLenum target,
 	default:
 		return;
 	}
-
-	/* Mark this texobj as dirty (one bit per tex unit)
-	 */
-	t->dirty_state = TEX_ALL;
 }
 
 static void r300BindTexture(GLcontext * ctx, GLenum target,
@@ -1156,6 +1166,10 @@ static struct gl_texture_object *r300NewTextureObject(GLcontext * ctx,
 	if (!obj)
 		return NULL;
 	obj->MaxAnisotropy = rmesa->initialMaxAnisotropy;
+
+	/* Attempt to fill LOD bias, if previously set.
+	 * Should start at 0.0, which won't affect the HW. */
+	obj->LodBias = rmesa->LODBias;
 
 	r300AllocTexObj(obj);
 	return obj;

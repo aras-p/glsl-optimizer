@@ -832,6 +832,8 @@ _swrast_DestroyContext( GLcontext *ctx )
    }
 
    FREE( swrast->SpanArrays );
+   if (swrast->ZoomedArrays)
+      FREE( swrast->ZoomedArrays );
    FREE( swrast->TexelBuffer );
    FREE( swrast );
 

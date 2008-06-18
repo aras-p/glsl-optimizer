@@ -73,7 +73,6 @@ typedef struct r300_context *r300ContextPtr;
 	}
 
 #include "r300_vertprog.h"
-#include "r300_fragprog.h"
 #include "r500_fragprog.h"
 
 /**
@@ -178,13 +177,6 @@ struct r300_tex_obj {
 
 	GLuint bufAddr;		/* Offset to start of locally
 				   shared texture block */
-
-	GLuint dirty_state;	/* Flags (1 per texunit) for
-				   whether or not this texobj
-				   has dirty hardware state
-				   (pp_*) that needs to be
-				   brought into the
-				   texunit. */
 
 	drm_radeon_tex_image_t image[6][RADEON_MAX_TEXTURE_LEVELS];
 	/* Six, for the cube faces */
@@ -581,9 +573,7 @@ struct r300_depthbuffer_state {
 };
 
 struct r300_stencilbuffer_state {
-	GLuint clear;
 	GLboolean hw_stencil;
-
 };
 
 /* Vertex shader state */
@@ -663,96 +653,40 @@ struct r300_vertex_program_cont {
 #define PFS_NUM_TEMP_REGS	32
 #define PFS_NUM_CONST_REGS	16
 
-/* Mapping Mesa registers to R300 temporaries */
-struct reg_acc {
-	int reg;		/* Assigned hw temp */
-	unsigned int refcount;	/* Number of uses by mesa program */
-};
+struct r300_pfs_compile_state;
+
 
 /**
- * Describe the current lifetime information for an R300 temporary
+ * Stores state that influences the compilation of a fragment program.
  */
-struct reg_lifetime {
-	/* Index of the first slot where this register is free in the sense
-	   that it can be used as a new destination register.
-	   This is -1 if the register has been assigned to a Mesa register
-	   and the last access to the register has not yet been emitted */
-	int free;
+struct r300_fragment_program_external_state {
+	struct {
+		/**
+		 * If the sampler is used as a shadow sampler,
+		 * this field is:
+		 *  0 - GL_LUMINANCE
+		 *  1 - GL_INTENSITY
+		 *  2 - GL_ALPHA
+		 * depending on the depth texture mode.
+		 */
+		GLuint depth_texture_mode : 2;
 
-	/* Index of the first slot where this register is currently reserved.
-	   This is used to stop e.g. a scalar operation from being moved
-	   before the allocation time of a register that was first allocated
-	   for a vector operation. */
-	int reserved;
-
-	/* Index of the first slot in which the register can be used as a
-	   source without losing the value that is written by the last
-	   emitted instruction that writes to the register */
-	int vector_valid;
-	int scalar_valid;
-
-	/* Index to the slot where the register was last read.
-	   This is also the first slot in which the register may be written again */
-	int vector_lastread;
-	int scalar_lastread;
+		/**
+		 * If the sampler is used as a shadow sampler,
+		 * this field is (texture_compare_func - GL_NEVER).
+		 * [e.g. if compare function is GL_LEQUAL, this field is 3]
+		 *
+		 * Otherwise, this field is 0.
+		 */
+		GLuint texture_compare_func : 3;
+	} unit[16];
 };
 
-/**
- * Store usage information about an ALU instruction slot during the
- * compilation of a fragment program.
- */
-#define SLOT_SRC_VECTOR  (1<<0)
-#define SLOT_SRC_SCALAR  (1<<3)
-#define SLOT_SRC_BOTH    (SLOT_SRC_VECTOR | SLOT_SRC_SCALAR)
-#define SLOT_OP_VECTOR   (1<<16)
-#define SLOT_OP_SCALAR   (1<<17)
-#define SLOT_OP_BOTH     (SLOT_OP_VECTOR | SLOT_OP_SCALAR)
-
-struct r300_pfs_compile_slot {
-	/* Bitmask indicating which parts of the slot are used, using SLOT_ constants
-	   defined above */
-	unsigned int used;
-
-	/* Selected sources */
-	int vsrc[3];
-	int ssrc[3];
-};
 
 /**
- * Store information during compilation of fragment programs.
+ * Stores an R300 fragment program in its compiled-to-hardware form.
  */
-struct r300_pfs_compile_state {
-	int nrslots;		/* number of ALU slots used so far */
-
-	/* Track which (parts of) slots are already filled with instructions */
-	struct r300_pfs_compile_slot slot[PFS_MAX_ALU_INST];
-
-	/* Track the validity of R300 temporaries */
-	struct reg_lifetime hwtemps[PFS_NUM_TEMP_REGS];
-
-	/* Used to map Mesa's inputs/temps onto hardware temps */
-	int temp_in_use;
-	struct reg_acc temps[PFS_NUM_TEMP_REGS];
-	struct reg_acc inputs[32];	/* don't actually need 32... */
-
-	/* Track usage of hardware temps, for register allocation,
-	 * indirection detection, etc. */
-	GLuint used_in_node;
-	GLuint dest_in_node;
-};
-
-/**
- * Store everything about a fragment program that is needed
- * to render with that program.
- */
-struct r300_fragment_program {
-	struct gl_fragment_program mesa_program;
-
-	GLcontext *ctx;
-	GLboolean translated;
-	GLboolean error;
-	struct r300_pfs_compile_state *cs;
-
+struct r300_fragment_program_code {
 	struct {
 		int length;
 		GLuint inst[PFS_MAX_TEX_INST];
@@ -793,19 +727,51 @@ struct r300_fragment_program {
 	int const_nr;
 
 	int max_temp_idx;
+};
+
+/**
+ * Store everything about a fragment program that is needed
+ * to render with that program.
+ */
+struct r300_fragment_program {
+	struct gl_fragment_program mesa_program;
+
+	GLboolean translated;
+	GLboolean error;
+
+	struct r300_fragment_program_external_state state;
+	struct r300_fragment_program_code code;
 
 	GLboolean WritesDepth;
 	GLuint optimization;
 };
 
-struct r500_fragment_program {
-	struct gl_fragment_program mesa_program;
+struct r500_pfs_compile_state;
 
-	GLcontext *ctx;
-	GLboolean translated;
-	GLboolean error;
-	struct r300_pfs_compile_state *cs;
+struct r500_fragment_program_external_state {
+	struct {
+		/**
+		 * If the sampler is used as a shadow sampler,
+		 * this field is:
+		 *  0 - GL_LUMINANCE
+		 *  1 - GL_INTENSITY
+		 *  2 - GL_ALPHA
+		 * depending on the depth texture mode.
+		 */
+		GLuint depth_texture_mode : 2;
 
+		/**
+		 * If the sampler is used as a shadow sampler,
+		 * this field is (texture_compare_func - GL_NEVER).
+		 * [e.g. if compare function is GL_LEQUAL, this field is 3]
+		 *
+		 * Otherwise, this field is 0.
+		 */
+		GLuint texture_compare_func : 3;
+	} unit[16];
+};
+
+struct r500_fragment_program_code {
 	struct {
 		GLuint inst0;
 		GLuint inst1;
@@ -822,17 +788,28 @@ struct r500_fragment_program {
 	int inst_end;
 
 	/* Hardware constants.
-	 * Contains a pointer to the value. The destination of the pointer
-	 * is supposed to be updated when GL state changes.
-	 * Typically, this is either a pointer into
-	 * gl_program_parameter_list::ParameterValues, or a pointer to a
-	 * global constant (e.g. for sin/cos-approximation)
-	 */
+	* Contains a pointer to the value. The destination of the pointer
+	* is supposed to be updated when GL state changes.
+	* Typically, this is either a pointer into
+	* gl_program_parameter_list::ParameterValues, or a pointer to a
+	* global constant (e.g. for sin/cos-approximation)
+	*/
 	const GLfloat *constant[PFS_NUM_CONST_REGS];
 	int const_nr;
 
 	int max_temp_idx;
+};
 
+struct r500_fragment_program {
+	struct gl_fragment_program mesa_program;
+
+	GLcontext *ctx;
+	GLboolean translated;
+	GLboolean error;
+	
+	struct r500_fragment_program_external_state state;
+	struct r500_fragment_program_code code;
+	
 	GLboolean writes_depth;
 
 	GLuint optimization;
@@ -849,7 +826,6 @@ struct r300_state {
 	struct r300_texture_state texture;
 	int sw_tcl_inputs[VERT_ATTRIB_MAX];
 	struct r300_vertex_shader_state vertex_shader;
-	struct r300_pfs_compile_state pfs_compile;
 	struct r300_dma_region aos[R300_MAX_AOS_ARRAYS];
 	int aos_count;
 
@@ -949,6 +925,7 @@ struct r300_context {
 	driTextureObject swapped;
 	int texture_depth;
 	float initialMaxAnisotropy;
+	float LODBias;
 
 	/* Clientdata textures;
 	 */

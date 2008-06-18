@@ -40,12 +40,7 @@
 #include "shader/prog_instruction.h"
 
 #include "r300_context.h"
-
-typedef struct r300_fragment_program_swizzle {
-	GLuint length;
-	GLuint src[4];
-	GLuint inst[8];
-} r300_fragment_program_swizzle_t;
+#include "radeon_program.h"
 
 /* supported hw opcodes */
 #define PFS_OP_MAD 0
@@ -73,25 +68,6 @@ typedef struct r300_fragment_program_swizzle {
 #define SRC_CONST		(1 << 5)
 #define SRC_MASK		(63 << 0)
 #define SRC_STRIDE		6
-
-#define NOP_INST0 (						 \
-		(R300_ALU_OUTC_MAD) |				 \
-		(R300_ALU_ARGC_ZERO << R300_ALU_ARG0C_SHIFT) | \
-		(R300_ALU_ARGC_ZERO << R300_ALU_ARG1C_SHIFT) | \
-		(R300_ALU_ARGC_ZERO << R300_ALU_ARG2C_SHIFT))
-#define NOP_INST1 (					     \
-		((0 | SRC_CONST) << R300_ALU_SRC0C_SHIFT) | \
-		((0 | SRC_CONST) << R300_ALU_SRC1C_SHIFT) | \
-		((0 | SRC_CONST) << R300_ALU_SRC2C_SHIFT))
-#define NOP_INST2 ( \
-		(R300_ALU_OUTA_MAD) |				 \
-		(R300_ALU_ARGA_ZERO << R300_ALU_ARG0A_SHIFT) | \
-		(R300_ALU_ARGA_ZERO << R300_ALU_ARG1A_SHIFT) | \
-		(R300_ALU_ARGA_ZERO << R300_ALU_ARG2A_SHIFT))
-#define NOP_INST3 (					     \
-		((0 | SRC_CONST) << R300_ALU_SRC0A_SHIFT) | \
-		((0 | SRC_CONST) << R300_ALU_SRC1A_SHIFT) | \
-		((0 | SRC_CONST) << R300_ALU_SRC2A_SHIFT))
 
 #define DRI_CONF_FP_OPTIMIZATION_SPEED   0
 #define DRI_CONF_FP_OPTIMIZATION_QUALITY 1
@@ -160,5 +136,25 @@ struct r300_fragment_program;
 
 extern void r300TranslateFragmentShader(r300ContextPtr r300,
 					struct r300_fragment_program *fp);
+
+
+/**
+ * Used internally by the r300 fragment program code to store compile-time
+ * only data.
+ */
+struct r300_fragment_program_compiler {
+	r300ContextPtr r300;
+	struct r300_fragment_program *fp;
+	struct r300_fragment_program_code *code;
+	struct radeon_compiler compiler;
+};
+
+extern void r300FPTransformTextures(struct r300_fragment_program_compiler *compiler);
+extern GLboolean r300FragmentProgramEmit(struct r300_fragment_program_compiler *compiler);
+
+
+extern void r300FragmentProgramDump(
+	struct r300_fragment_program *fp,
+	struct r300_fragment_program_code *code);
 
 #endif

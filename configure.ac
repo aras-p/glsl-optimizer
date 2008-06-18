@@ -39,11 +39,6 @@ if test "x$GCC" = xyes; then
 fi
 AC_SUBST([MKDEP_OPTIONS])
 
-dnl Check to see if dlopen is in default libraries (like Solaris, which
-dnl has it in libc), or if libdl is needed to get it.
-AC_CHECK_FUNC([dlopen], [],
-	[AC_CHECK_LIB([dl], [dlopen], [DLOPEN_LIBS="-ldl"])])
-
 dnl Make sure the pkg-config macros are defined
 m4_ifdef([PKG_PROG_PKG_CONFIG],[],[
     m4_errprint([Error: Could not locate the pkg-config autoconf macros.
@@ -231,6 +226,107 @@ AC_SUBST([GLW_LIB_NAME])
 AC_SUBST([OSMESA_LIB_NAME])
 
 dnl
+dnl Arch/platform-specific settings
+dnl
+AC_ARG_ENABLE([asm],
+    [AS_HELP_STRING([--disable-asm],
+        [disable assembly usage @<:@default=enabled on supported plaforms@:>@])],
+    [enable_asm="$enableval"],
+    [enable_asm=yes]
+)
+asm_arch=""
+ASM_FLAGS=""
+ASM_SOURCES=""
+ASM_API=""
+AC_MSG_CHECKING([whether to enable assembly])
+test "x$enable_asm" = xno && AC_MSG_RESULT([no])
+# disable if cross compiling on x86/x86_64 since we must run gen_matypes
+if test "x$enable_asm" = xyes && test "x$cross_compiling" = xyes; then
+    case "$host_cpu" in
+    i?86 | x86_64)
+        enable_asm=no
+        AC_MSG_RESULT([no, cross compiling])
+        ;;
+    esac
+fi
+# check for supported arches
+if test "x$enable_asm" = xyes; then
+    case "$host_cpu" in
+    i?86)
+        case "$host_os" in
+        linux* | freebsd* | dragonfly*)
+            test "x$enable_64bit" = xyes && asm_arch=x86_64 || asm_arch=x86
+            ;;
+        esac
+        ;;
+    x86_64)
+        case "$host_os" in
+        linux* | freebsd* | dragonfly*)
+            test "x$enable_32bit" = xyes && asm_arch=x86 || asm_arch=x86_64
+            ;;
+        esac
+        ;;
+    powerpc)
+        case "$host_os" in
+        linux*)
+            asm_arch=ppc
+            ;;
+        esac
+        ;;
+    esac
+
+    case "$asm_arch" in
+    x86)
+        ASM_FLAGS="-DUSE_X86_ASM -DUSE_MMX_ASM -DUSE_3DNOW_ASM -DUSE_SSE_ASM"
+        ASM_SOURCES='$(X86_SOURCES)'
+        ASM_API='$(X86_API)'
+        AC_MSG_RESULT([yes, x86])
+        ;;
+    x86_64)
+        ASM_FLAGS="-DUSE_X86_64_ASM"
+        ASM_SOURCES='$(X86-64_SOURCES)'
+        ASM_API='$(X86-64_API)'
+        AC_MSG_RESULT([yes, x86_64])
+        ;;
+    ppc)
+        ASM_FLAGS="-DUSE_PPC_ASM -DUSE_VMX_ASM"
+        ASM_SOURCES='$(PPC_SOURCES)'
+        AC_MSG_RESULT([yes, ppc])
+        ;;
+    *)
+        AC_MSG_RESULT([no, platform not supported])
+        ;;
+    esac
+fi
+AC_SUBST([ASM_FLAGS])
+AC_SUBST([ASM_SOURCES])
+AC_SUBST([ASM_API])
+
+dnl PIC code macro
+MESA_PIC_FLAGS
+
+dnl Check to see if dlopen is in default libraries (like Solaris, which
+dnl has it in libc), or if libdl is needed to get it.
+AC_CHECK_FUNC([dlopen], [],
+    [AC_CHECK_LIB([dl], [dlopen], [DLOPEN_LIBS="-ldl"])])
+
+dnl SELinux awareness.
+AC_ARG_ENABLE([selinux],
+    [AS_HELP_STRING([--enable-selinux],
+        [Build SELinux-aware Mesa @<:@default=disabled@:>@])],
+    [MESA_SELINUX="$enableval"],
+    [MESA_SELINUX=no])
+if test "x$enable_selinux" = "xyes"; then
+    AC_CHECK_HEADER([selinux/selinux.h],[],
+                    [AC_MSG_ERROR([SELinux headers not found])])
+    AC_CHECK_LIB([selinux],[is_selinux_enabled],[],
+                 [AC_MSG_ERROR([SELinux library not found])])
+    SELINUX_LIBS="-lselinux"
+    DEFINES="$DEFINES -DMESA_SELINUX"
+fi
+
+
+dnl
 dnl Driver configuration. Options are xlib, dri and osmesa right now.
 dnl More later: directfb, fbdev, ...
 dnl
@@ -368,21 +464,6 @@ else
     enable_xcb=no
 fi
 
-# SELinux awareness.
-AC_ARG_ENABLE([selinux],
-    [AS_HELP_STRING([--enable-selinux],
-        [Build SELinux-aware Mesa (default: disabled)])],
-    [MESA_SELINUX="$enableval"],
-    [MESA_SELINUX=no])
-if test "x$enable_selinux" = "xyes"; then
-    AC_CHECK_HEADER([selinux/selinux.h],[],
-		    [AC_MSG_ERROR([SELinux headers not found])])
-    AC_CHECK_LIB([selinux],[is_selinux_enabled],[],
-		 [AC_MSG_ERROR([SELinux library not found])])
-    SELINUX_LIBS="-lselinux"
-    DEFINES="$DEFINES -DMESA_SELINUX"
-fi
-
 dnl
 dnl libGL configuration per driver
 dnl
@@ -481,7 +562,7 @@ AC_ARG_ENABLE([driglx-direct],
 dnl ttm support
 AC_ARG_ENABLE([ttm-api],
     [AS_HELP_STRING([--enable-ttm-api],
-	[enable TTM API users])],
+        [enable TTM API users @<:@default=disabled@:>@])],
     [ttmapi="$enableval"],
     [ttmapi="no"])
 
@@ -562,6 +643,12 @@ if test "$mesa_driver" = dri; then
             # At some point MGA will be added, but not yet.
             if test "x$DRI_DIRS" = x; then
                 DRI_DIRS="mach64 r128 r200 r300 radeon tdfx swrast"
+            fi
+            ;;
+        sparc*)
+            # Build only the drivers for cards that exist on sparc`
+            if test "x$DRI_DIRS" = x; then
+                DRI_DIRS="mach64 r128 r200 r300 radeon ffb swrast"
             fi
             ;;
         esac
@@ -831,86 +918,6 @@ if test "x$APP_LIB_DEPS" = x; then
 fi
 AC_SUBST([APP_LIB_DEPS])
 AC_SUBST([PROGRAM_DIRS])
-
-dnl
-dnl Arch/platform-specific settings
-dnl
-AC_ARG_ENABLE([asm],
-    [AS_HELP_STRING([--disable-asm],
-        [disable assembly usage @<:@default=enabled on supported plaforms@:>@])],
-    [enable_asm="$enableval"],
-    [enable_asm=yes]
-)
-asm_arch=""
-ASM_FLAGS=""
-ASM_SOURCES=""
-ASM_API=""
-AC_MSG_CHECKING([whether to enable assembly])
-test "x$enable_asm" = xno && AC_MSG_RESULT([no])
-# disable if cross compiling on x86/x86_64 since we must run gen_matypes
-if test "x$enable_asm" = xyes && test "x$cross_compiling" = xyes; then
-    case "$host_cpu" in
-    i?86 | x86_64)
-        enable_asm=no
-        AC_MSG_RESULT([no, cross compiling])
-        ;;
-    esac
-fi
-# check for supported arches
-if test "x$enable_asm" = xyes; then
-    case "$host_cpu" in
-    i?86)
-        case "$host_os" in
-        linux* | freebsd* | dragonfly*)
-            test "x$enable_64bit" = xyes && asm_arch=x86_64 || asm_arch=x86
-            ;;
-        esac
-        ;;
-    x86_64)
-        case "$host_os" in
-        linux* | freebsd* | dragonfly*)
-            test "x$enable_32bit" = xyes && asm_arch=x86 || asm_arch=x86_64
-            ;;
-        esac
-        ;;
-    powerpc)
-        case "$host_os" in
-        linux*)
-            asm_arch=ppc
-            ;;
-        esac
-        ;;
-    esac
-
-    case "$asm_arch" in
-    x86)
-        ASM_FLAGS="-DUSE_X86_ASM -DUSE_MMX_ASM -DUSE_3DNOW_ASM -DUSE_SSE_ASM"
-        ASM_SOURCES='$(X86_SOURCES)'
-        ASM_API='$(X86_API)'
-        AC_MSG_RESULT([yes, x86])
-        ;;
-    x86_64)
-        ASM_FLAGS="-DUSE_X86_64_ASM"
-        ASM_SOURCES='$(X86-64_SOURCES)'
-        ASM_API='$(X86-64_API)'
-        AC_MSG_RESULT([yes, x86_64])
-        ;;
-    ppc)
-        ASM_FLAGS="-DUSE_PPC_ASM -DUSE_VMX_ASM"
-        ASM_SOURCES='$(PPC_SOURCES)'
-        AC_MSG_RESULT([yes, ppc])
-        ;;
-    *)
-        AC_MSG_RESULT([no, platform not supported])
-        ;;
-    esac
-fi
-AC_SUBST([ASM_FLAGS])
-AC_SUBST([ASM_SOURCES])
-AC_SUBST([ASM_API])
-
-dnl PIC code macro
-MESA_PIC_FLAGS
 
 
 dnl Restore LDFLAGS and CPPFLAGS

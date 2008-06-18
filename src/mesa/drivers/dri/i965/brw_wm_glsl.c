@@ -978,7 +978,7 @@ static void emit_wpos_xy(struct brw_wm_compile *c,
 	brw_ADD(p,
 		dst[0],
 		retype(src0[0], BRW_REGISTER_TYPE_W),
-		brw_imm_d(- c->key.origin_x));
+		brw_imm_d(0 - c->key.origin_x));
     }
 
     if (mask & WRITEMASK_Y) {

@@ -43,6 +43,7 @@
 #include "tnl/t_pipeline.h"
 #include "vbo/vbo.h"
 #include "drivers/common/driverfuncs.h"
+#include "utils.h"
 
 #include "swrast_priv.h"
 
@@ -51,6 +52,7 @@
 #define need_GL_VERSION_1_4
 #define need_GL_VERSION_1_5
 #define need_GL_VERSION_2_0
+#define need_GL_VERSION_2_1
 
 /* sw extensions for imaging */
 #define need_GL_EXT_blend_color
@@ -75,7 +77,6 @@
 #define need_GL_NV_fragment_program
 
 #include "extension_helper.h"
-#include "utils.h"
 
 const struct dri_extension card_extensions[] =
 {
@@ -83,6 +84,7 @@ const struct dri_extension card_extensions[] =
     { "GL_VERSION_1_4",			GL_VERSION_1_4_functions },
     { "GL_VERSION_1_5",			GL_VERSION_1_5_functions },
     { "GL_VERSION_2_0",			GL_VERSION_2_0_functions },
+    { "GL_VERSION_2_1",			GL_VERSION_2_1_functions },
 
     { "GL_EXT_blend_color",		GL_EXT_blend_color_functions },
     { "GL_EXT_blend_minmax",		GL_EXT_blend_minmax_functions },
@@ -326,7 +328,7 @@ swrast_alloc_back_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
 
     _mesa_free(rb->Data);
 
-    (void) swrast_alloc_front_storage(ctx, rb, internalFormat, width, height);
+    swrast_alloc_front_storage(ctx, rb, internalFormat, width, height);
 
     rb->Data = _mesa_malloc(height * xrb->pitch);
 
@@ -341,59 +343,61 @@ swrast_new_renderbuffer(const GLvisual *visual, GLboolean front)
 
     TRACE;
 
-    if (xrb) {
-	_mesa_init_renderbuffer(&xrb->Base, 0);
+    if (!xrb)
+	return NULL;
 
-	pixel_format = choose_pixel_format(visual);
+    _mesa_init_renderbuffer(&xrb->Base, 0);
 
-	xrb->Base.Delete = swrast_delete_renderbuffer;
-	if (front) {
-	    xrb->Base.AllocStorage = swrast_alloc_front_storage;
-	    swrast_set_span_funcs_front(xrb, pixel_format);
-	}
-	else {
-	    xrb->Base.AllocStorage = swrast_alloc_back_storage;
-	    swrast_set_span_funcs_back(xrb, pixel_format);
-	}
+    pixel_format = choose_pixel_format(visual);
 
-	switch (pixel_format) {
-	case PF_A8R8G8B8:
-	    xrb->Base.InternalFormat = GL_RGBA;
-	    xrb->Base._BaseFormat = GL_RGBA;
-	    xrb->Base.DataType = GL_UNSIGNED_BYTE;
-	    xrb->Base.RedBits   = 8 * sizeof(GLubyte);
-	    xrb->Base.GreenBits = 8 * sizeof(GLubyte);
-	    xrb->Base.BlueBits  = 8 * sizeof(GLubyte);
-	    xrb->Base.AlphaBits = 8 * sizeof(GLubyte);
-	    break;
-	case PF_R5G6B5:
-	    xrb->Base.InternalFormat = GL_RGB;
-	    xrb->Base._BaseFormat = GL_RGB;
-	    xrb->Base.DataType = GL_UNSIGNED_BYTE;
-	    xrb->Base.RedBits   = 5 * sizeof(GLubyte);
-	    xrb->Base.GreenBits = 6 * sizeof(GLubyte);
-	    xrb->Base.BlueBits  = 5 * sizeof(GLubyte);
-	    xrb->Base.AlphaBits = 0;
-	    break;
-	case PF_R3G3B2:
-	    xrb->Base.InternalFormat = GL_RGB;
-	    xrb->Base._BaseFormat = GL_RGB;
-	    xrb->Base.DataType = GL_UNSIGNED_BYTE;
-	    xrb->Base.RedBits   = 3 * sizeof(GLubyte);
-	    xrb->Base.GreenBits = 3 * sizeof(GLubyte);
-	    xrb->Base.BlueBits  = 2 * sizeof(GLubyte);
-	    xrb->Base.AlphaBits = 0;
-	    break;
-	case PF_CI8:
-	    xrb->Base.InternalFormat = GL_COLOR_INDEX8_EXT;
-	    xrb->Base._BaseFormat = GL_COLOR_INDEX;
-	    xrb->Base.DataType = GL_UNSIGNED_BYTE;
-	    xrb->Base.IndexBits = 8 * sizeof(GLubyte);
-	    break;
-	default:
-	    return NULL;
-	}
+    xrb->Base.Delete = swrast_delete_renderbuffer;
+    if (front) {
+	xrb->Base.AllocStorage = swrast_alloc_front_storage;
+	swrast_set_span_funcs_front(xrb, pixel_format);
     }
+    else {
+	xrb->Base.AllocStorage = swrast_alloc_back_storage;
+	swrast_set_span_funcs_back(xrb, pixel_format);
+    }
+
+    switch (pixel_format) {
+    case PF_A8R8G8B8:
+	xrb->Base.InternalFormat = GL_RGBA;
+	xrb->Base._BaseFormat = GL_RGBA;
+	xrb->Base.DataType = GL_UNSIGNED_BYTE;
+	xrb->Base.RedBits   = 8 * sizeof(GLubyte);
+	xrb->Base.GreenBits = 8 * sizeof(GLubyte);
+	xrb->Base.BlueBits  = 8 * sizeof(GLubyte);
+	xrb->Base.AlphaBits = 8 * sizeof(GLubyte);
+	break;
+    case PF_R5G6B5:
+	xrb->Base.InternalFormat = GL_RGB;
+	xrb->Base._BaseFormat = GL_RGB;
+	xrb->Base.DataType = GL_UNSIGNED_BYTE;
+	xrb->Base.RedBits   = 5 * sizeof(GLubyte);
+	xrb->Base.GreenBits = 6 * sizeof(GLubyte);
+	xrb->Base.BlueBits  = 5 * sizeof(GLubyte);
+	xrb->Base.AlphaBits = 0;
+	break;
+    case PF_R3G3B2:
+	xrb->Base.InternalFormat = GL_RGB;
+	xrb->Base._BaseFormat = GL_RGB;
+	xrb->Base.DataType = GL_UNSIGNED_BYTE;
+	xrb->Base.RedBits   = 3 * sizeof(GLubyte);
+	xrb->Base.GreenBits = 3 * sizeof(GLubyte);
+	xrb->Base.BlueBits  = 2 * sizeof(GLubyte);
+	xrb->Base.AlphaBits = 0;
+	break;
+    case PF_CI8:
+	xrb->Base.InternalFormat = GL_COLOR_INDEX8_EXT;
+	xrb->Base._BaseFormat = GL_COLOR_INDEX;
+	xrb->Base.DataType = GL_UNSIGNED_BYTE;
+	xrb->Base.IndexBits = 8 * sizeof(GLubyte);
+	break;
+    default:
+	return NULL;
+    }
+
     return xrb;
 }
 
@@ -691,7 +695,6 @@ static int driUnbindContext(__DRIcontext *ctx)
 {
     TRACE;
     (void) ctx;
-    _mesa_make_current(NULL, NULL, NULL);
     return GL_TRUE;
 }
 

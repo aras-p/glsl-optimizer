@@ -1371,29 +1371,22 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #	define R300_TX_MAG_FILTER_4              (0 << 9)
 #       define R300_TX_MAG_FILTER_NEAREST        (1 << 9)
 #       define R300_TX_MAG_FILTER_LINEAR         (2 << 9)
+#       define R300_TX_MAG_FILTER_ANISO          (3 << 9)
 #       define R300_TX_MAG_FILTER_MASK           (3 << 9)
 #       define R300_TX_MIN_FILTER_NEAREST        (1 << 11)
 #       define R300_TX_MIN_FILTER_LINEAR         (2 << 11)
-#	define R300_TX_MIN_FILTER_NEAREST_MIP_NEAREST       (5  <<  11) /* TODO: use spec */
-#	define R300_TX_MIN_FILTER_NEAREST_MIP_LINEAR        (9  <<  11) /* TODO: use spec */
-#	define R300_TX_MIN_FILTER_LINEAR_MIP_NEAREST        (6  <<  11) /* TODO: use spec */
-#	define R300_TX_MIN_FILTER_LINEAR_MIP_LINEAR         (10 <<  11) /* TODO: use spec */
-
-/* NOTE: NEAREST doesnt seem to exist.
- * Im not seting MAG_FILTER_MASK and (3 << 11) on for all
- * anisotropy modes because that would void selected mag filter
- */
-#	define R300_TX_MIN_FILTER_ANISO_NEAREST             (0 << 13)
-#	define R300_TX_MIN_FILTER_ANISO_LINEAR              (0 << 13)
-#	define R300_TX_MIN_FILTER_ANISO_NEAREST_MIP_NEAREST (1 << 13)
-#	define R300_TX_MIN_FILTER_ANISO_NEAREST_MIP_LINEAR  (2 << 13)
-#       define R300_TX_MIN_FILTER_MASK   ( (15 << 11) | (3 << 13) )
-#	define R300_TX_MAX_ANISO_1_TO_1  (0 << 21)
-#	define R300_TX_MAX_ANISO_2_TO_1  (2 << 21)
-#	define R300_TX_MAX_ANISO_4_TO_1  (4 << 21)
-#	define R300_TX_MAX_ANISO_8_TO_1  (6 << 21)
-#	define R300_TX_MAX_ANISO_16_TO_1 (8 << 21)
-#	define R300_TX_MAX_ANISO_MASK    (14 << 21)
+#	define R300_TX_MIN_FILTER_ANISO          (3 << 11)
+#	define R300_TX_MIN_FILTER_MASK           (3 << 11)
+#	define R300_TX_MIN_FILTER_MIP_NONE       (0 << 13)
+#	define R300_TX_MIN_FILTER_MIP_NEAREST    (1 << 13)
+#	define R300_TX_MIN_FILTER_MIP_LINEAR     (2 << 13)
+#	define R300_TX_MIN_FILTER_MIP_MASK       (3 << 13)
+#	define R300_TX_MAX_ANISO_1_TO_1          (0 << 21)
+#	define R300_TX_MAX_ANISO_2_TO_1          (1 << 21)
+#	define R300_TX_MAX_ANISO_4_TO_1          (2 << 21)
+#	define R300_TX_MAX_ANISO_8_TO_1          (3 << 21)
+#	define R300_TX_MAX_ANISO_16_TO_1         (4 << 21)
+#	define R300_TX_MAX_ANISO_MASK            (7 << 21)
 
 #define R300_TX_FILTER1_0                      0x4440
 #	define R300_CHROMA_KEY_MODE_DISABLE    0
@@ -1401,7 +1394,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #	define R300_CHROMA_KEY_BLEND           2
 #	define R300_MC_ROUND_NORMAL            (0<<2)
 #	define R300_MC_ROUND_MPEG4             (1<<2)
-#	define R300_LOD_BIAS_MASK	    0x1fff
+#	define R300_LOD_BIAS_SHIFT             3
+#	define R300_LOD_BIAS_MASK	       0x1ff8
 #	define R300_EDGE_ANISO_EDGE_DIAG       (0<<13)
 #	define R300_EDGE_ANISO_EDGE_ONLY       (1<<13)
 #	define R300_MC_COORD_TRUNCATE_DISABLE  (0<<14)
@@ -1432,9 +1426,9 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 	   They are given meanings as R, G, B and Alpha by the swizzle
 	   specification */
 #	define R300_TX_FORMAT_X8		    0x0
-#	define R500_TX_FORMAT_X1		    0x0 // bit set in format 2 
+#	define R500_TX_FORMAT_X1		    0x0 // bit set in format 2
 #	define R300_TX_FORMAT_X16		    0x1
-#	define R500_TX_FORMAT_X1_REV		    0x0 // bit set in format 2 
+#	define R500_TX_FORMAT_X1_REV		    0x0 // bit set in format 2
 #	define R300_TX_FORMAT_Y4X4		    0x2
 #	define R300_TX_FORMAT_Y8X8		    0x3
 #	define R300_TX_FORMAT_Y16X16		    0x4
@@ -2238,7 +2232,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #	define R300_RB3D_AARESOLVE_CTL_AARESOLVE_GAMMA_22      (1 << 1)
 #	define R300_RB3D_AARESOLVE_CTL_AARESOLVE_ALPHA_SAMPLE0 (0 << 2)
 #	define R300_RB3D_AARESOLVE_CTL_AARESOLVE_ALPHA_AVERAGE (1 << 2)
-  
+
 
 /* Discard src pixels less than or equal to threshold. */
 #define R500_RB3D_DISCARD_SRC_PIXEL_LTE_THRESHOLD 0x4ea0
@@ -3179,7 +3173,7 @@ enum {
  * 2 to end: Up to 16380 dwords of vertex data.
  */
 #define R300_PACKET3_3D_DRAW_INDX           0x00002A00
- 
+
 
 /* Specify the full set of vertex arrays as (address, stride).
  * The first parameter is the number of vertex arrays specified.
@@ -3209,7 +3203,7 @@ enum {
 /* Same as R300_PACKET3_3D_DRAW_INDX but without VAP_VTX_FMT */
 #define R300_PACKET3_3D_DRAW_INDX_2         0x00003600
 
-/* Clears a portion of hierachical Z RAM 
+/* Clears a portion of hierachical Z RAM
  * 3 dword parameters
  * 0. START
  * 1. COUNT: 13:0 (max is 0x3FFF)

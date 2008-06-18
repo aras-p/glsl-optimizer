@@ -147,6 +147,7 @@ struct __GLXDRIdrawableRec {
 ** Function to create and DRI display data and initialize the display
 ** dependent methods.
 */
+extern __GLXDRIdisplay *driswCreateDisplay(Display *dpy);
 extern __GLXDRIdisplay *driCreateDisplay(Display *dpy);
 extern __GLXDRIdisplay *dri2CreateDisplay(Display *dpy);
 
@@ -465,6 +466,7 @@ struct __GLXscreenConfigsRec {
     __DRIscreen *__driScreen;
     const __DRIcoreExtension *core;
     const __DRIlegacyExtension *legacy;
+    const __DRIswrastExtension *swrast;
     __glxHashTable *drawHash;
     Display *dpy;
     int scr, fd;
@@ -564,6 +566,7 @@ struct __GLXdisplayPrivateRec {
     /**
      * Per display direct rendering interface functions and data.
      */
+    __GLXDRIdisplay *driswDisplay;
     __GLXDRIdisplay *driDisplay;
     __GLXDRIdisplay *dri2Display;
 #endif

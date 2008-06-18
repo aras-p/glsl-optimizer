@@ -60,6 +60,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r300_state.h"
 #include "r300_reg.h"
 #include "r300_emit.h"
+#include "r300_fragprog.h"
 #include "r300_tex.h"
 
 #include "drirenderbuffer.h"
@@ -525,24 +526,15 @@ static void r300SetDepthState(GLcontext * ctx)
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 
 	R300_STATECHANGE(r300, zs);
-	r300->hw.zs.cmd[R300_ZS_CNTL_0] &= R300_STENCIL_ENABLE; // XXX
-	r300->hw.zs.cmd[R300_ZS_CNTL_1] &=
-	    ~(R300_ZS_MASK << R300_Z_FUNC_SHIFT);
+	r300->hw.zs.cmd[R300_ZS_CNTL_0] &= R300_STENCIL_ENABLE|R300_STENCIL_FRONT_BACK;
+	r300->hw.zs.cmd[R300_ZS_CNTL_1] &= ~(R300_ZS_MASK << R300_Z_FUNC_SHIFT);
 
-	if (ctx->Depth.Test && ctx->Depth.Func != GL_NEVER) {
+	if (ctx->Depth.Test) {
+		r300->hw.zs.cmd[R300_ZS_CNTL_0] |= R300_Z_ENABLE;
 		if (ctx->Depth.Mask)
-			r300->hw.zs.cmd[R300_ZS_CNTL_0] |=
-			    R300_Z_ENABLE | R300_Z_WRITE_ENABLE | R300_STENCIL_FRONT_BACK; // XXX
-		else
-		    r300->hw.zs.cmd[R300_ZS_CNTL_0] |= R300_Z_ENABLE | R300_STENCIL_FRONT_BACK; // XXX
-
+			r300->hw.zs.cmd[R300_ZS_CNTL_0] |= R300_Z_WRITE_ENABLE;
 		r300->hw.zs.cmd[R300_ZS_CNTL_1] |=
-		    translate_func(ctx->Depth.
-				   Func) << R300_Z_FUNC_SHIFT;
-	} else {
-	    r300->hw.zs.cmd[R300_ZS_CNTL_0] |= R300_STENCIL_FRONT_BACK; // XXX
-		r300->hw.zs.cmd[R300_ZS_CNTL_1] |=
-		    translate_func(GL_NEVER) << R300_Z_FUNC_SHIFT;
+		    translate_func(ctx->Depth.Func) << R300_Z_FUNC_SHIFT;
 	}
 
 	r300SetEarlyZState(ctx);
@@ -925,7 +917,7 @@ static void r300StencilFuncSeparate(GLcontext * ctx, GLenum face,
 	GLuint flag;
 
 	R300_STATECHANGE(rmesa, zs);
-
+	rmesa->hw.zs.cmd[R300_ZS_CNTL_0] |= R300_STENCIL_FRONT_BACK;
 	rmesa->hw.zs.cmd[R300_ZS_CNTL_1] &= ~((R300_ZS_MASK <<
 					       R300_S_FRONT_FUNC_SHIFT)
 					      | (R300_ZS_MASK <<
@@ -998,17 +990,6 @@ static void r300StencilOpSeparate(GLcontext * ctx, GLenum face,
 		    | (translate_stencil_op(ctx->Stencil.ZPassFunc[0]) <<
 		       R300_S_BACK_ZPASS_OP_SHIFT);
 	}
-}
-
-static void r300ClearStencil(GLcontext * ctx, GLint s)
-{
-	r300ContextPtr rmesa = R300_CONTEXT(ctx);
-
-	rmesa->state.stencil.clear =
-	    ((GLuint) (ctx->Stencil.Clear & R300_STENCILREF_MASK) |
-	     (R300_STENCILREF_MASK << R300_STENCILMASK_SHIFT) |
-	     ((ctx->Stencil.WriteMask[0] & R300_STENCILREF_MASK) <<
-		R300_STENCILMASK_SHIFT));
 }
 
 /* =============================================================
@@ -1284,7 +1265,7 @@ static unsigned long gen_fixed_filter(unsigned long f)
 		return f;
 
 	mag = f & R300_TX_MAG_FILTER_MASK;
-	min = f & R300_TX_MIN_FILTER_MASK;
+	min = f & (R300_TX_MIN_FILTER_MASK|R300_TX_MIN_FILTER_MIP_MASK);
 
 	/* TODO: Check for anisto filters too */
 	if ((mag != R300_TX_MAG_FILTER_NEAREST)
@@ -1328,18 +1309,19 @@ static void r300SetupFragmentShaderTextures(GLcontext *ctx, int *tmu_mappings)
 	int i;
 	struct r300_fragment_program *fp = (struct r300_fragment_program *)
 	    (char *)ctx->FragmentProgram._Current;
+	struct r300_fragment_program_code *code = &fp->code;
 
 	R300_STATECHANGE(r300, fpt);
 
-	for (i = 0; i < fp->tex.length; i++) {
+	for (i = 0; i < code->tex.length; i++) {
 		int unit;
 		int opcode;
 		unsigned long val;
 
-		unit = fp->tex.inst[i] >> R300_TEX_ID_SHIFT;
+		unit = code->tex.inst[i] >> R300_TEX_ID_SHIFT;
 		unit &= 15;
 
-		val = fp->tex.inst[i];
+		val = code->tex.inst[i];
 		val &= ~R300_TEX_ID_MASK;
 
 		opcode =
@@ -1361,7 +1343,7 @@ static void r300SetupFragmentShaderTextures(GLcontext *ctx, int *tmu_mappings)
 	}
 
 	r300->hw.fpt.cmd[R300_FPT_CMD_0] =
-		cmdpacket0(R300_US_TEX_INST_0, fp->tex.length);
+		cmdpacket0(R300_US_TEX_INST_0, code->tex.length);
 }
 
 static void r500SetupFragmentShaderTextures(GLcontext *ctx, int *tmu_mappings)
@@ -1369,14 +1351,15 @@ static void r500SetupFragmentShaderTextures(GLcontext *ctx, int *tmu_mappings)
 	int i;
 	struct r500_fragment_program *fp = (struct r500_fragment_program *)
 	    (char *)ctx->FragmentProgram._Current;
+	struct r500_fragment_program_code *code = &fp->code;
 
 	/* find all the texture instructions and relocate the texture units */
-	for (i = 0; i < fp->inst_end + 1; i++) {
-		if ((fp->inst[i].inst0 & 0x3) == R500_INST_TYPE_TEX) {
+	for (i = 0; i < code->inst_end + 1; i++) {
+		if ((code->inst[i].inst0 & 0x3) == R500_INST_TYPE_TEX) {
 			uint32_t val;
 			int unit, opcode, new_unit;
 
-			val = fp->inst[i].inst1;
+			val = code->inst[i].inst1;
 
 			unit = (val >> 16) & 0xf;
 
@@ -1393,9 +1376,21 @@ static void r500SetupFragmentShaderTextures(GLcontext *ctx, int *tmu_mappings)
 				}
 			}
 			val |= R500_TEX_ID(new_unit);
-			fp->inst[i].inst1 = val;
+			code->inst[i].inst1 = val;
 		}
 	}
+}
+
+static GLuint r300CalculateTexLodBias(GLfloat bias)
+{
+	GLuint b;
+	b = (unsigned int)fabsf(ceilf(bias*31));
+	if (signbit(bias)) {
+		b ^= 0x3ff; /* 10 bits */
+	}
+	b <<= 3;
+	b &= R300_LOD_BIAS_MASK;
+	return b;
 }
 
 static void r300SetupTextures(GLcontext * ctx)
@@ -1461,8 +1456,8 @@ static void r300SetupTextures(GLcontext * ctx)
 			r300->hw.tex.filter.cmd[R300_TEX_VALUE_0 +
 						hw_tmu] =
 			    gen_fixed_filter(t->filter) | (hw_tmu << 28);
-			/* Currently disabled! */
-			r300->hw.tex.filter_1.cmd[R300_TEX_VALUE_0 + hw_tmu] = 0x0;	//0x20501f80;
+			r300->hw.tex.filter_1.cmd[R300_TEX_VALUE_0 + hw_tmu] = t->filter_1
+				| r300CalculateTexLodBias(r300->LODBias);
 			r300->hw.tex.size.cmd[R300_TEX_VALUE_0 + hw_tmu] =
 			    t->size;
 			r300->hw.tex.format.cmd[R300_TEX_VALUE_0 +
@@ -2426,6 +2421,7 @@ static void r300SetupPixelShader(r300ContextPtr rmesa)
 	GLcontext *ctx = rmesa->radeon.glCtx;
 	struct r300_fragment_program *fp = (struct r300_fragment_program *)
 	    (char *)ctx->FragmentProgram._Current;
+	struct r300_fragment_program_code *code;
 	int i, k;
 
 	if (!fp)		/* should only happenen once, just after context is created */
@@ -2437,62 +2433,63 @@ static void r300SetupPixelShader(r300ContextPtr rmesa)
 			__FUNCTION__);
 		return;
 	}
+	code = &fp->code;
 
 	r300SetupTextures(ctx);
 
 	R300_STATECHANGE(rmesa, fpi[0]);
-	rmesa->hw.fpi[0].cmd[R300_FPI_CMD_0] = cmdpacket0(R300_US_ALU_RGB_INST_0, fp->alu_end + 1);
-	for (i = 0; i <= fp->alu_end; i++) {
-		rmesa->hw.fpi[0].cmd[R300_FPI_INSTR_0 + i] = fp->alu.inst[i].inst0;
+	rmesa->hw.fpi[0].cmd[R300_FPI_CMD_0] = cmdpacket0(R300_US_ALU_RGB_INST_0, code->alu_end + 1);
+	for (i = 0; i <= code->alu_end; i++) {
+		rmesa->hw.fpi[0].cmd[R300_FPI_INSTR_0 + i] = code->alu.inst[i].inst0;
 	}
 
 	R300_STATECHANGE(rmesa, fpi[1]);
-	rmesa->hw.fpi[1].cmd[R300_FPI_CMD_0] = cmdpacket0(R300_US_ALU_RGB_ADDR_0, fp->alu_end + 1);
-	for (i = 0; i <= fp->alu_end; i++) {
-		rmesa->hw.fpi[1].cmd[R300_FPI_INSTR_0 + i] = fp->alu.inst[i].inst1;
+	rmesa->hw.fpi[1].cmd[R300_FPI_CMD_0] = cmdpacket0(R300_US_ALU_RGB_ADDR_0, code->alu_end + 1);
+	for (i = 0; i <= code->alu_end; i++) {
+		rmesa->hw.fpi[1].cmd[R300_FPI_INSTR_0 + i] = code->alu.inst[i].inst1;
 	}
 
 	R300_STATECHANGE(rmesa, fpi[2]);
-	rmesa->hw.fpi[2].cmd[R300_FPI_CMD_0] = cmdpacket0(R300_US_ALU_ALPHA_INST_0, fp->alu_end + 1);
-	for (i = 0; i <= fp->alu_end; i++) {
-		rmesa->hw.fpi[2].cmd[R300_FPI_INSTR_0 + i] = fp->alu.inst[i].inst2;
+	rmesa->hw.fpi[2].cmd[R300_FPI_CMD_0] = cmdpacket0(R300_US_ALU_ALPHA_INST_0, code->alu_end + 1);
+	for (i = 0; i <= code->alu_end; i++) {
+		rmesa->hw.fpi[2].cmd[R300_FPI_INSTR_0 + i] = code->alu.inst[i].inst2;
 	}
 
 	R300_STATECHANGE(rmesa, fpi[3]);
-	rmesa->hw.fpi[3].cmd[R300_FPI_CMD_0] = cmdpacket0(R300_US_ALU_ALPHA_ADDR_0, fp->alu_end + 1);
-	for (i = 0; i <= fp->alu_end; i++) {
-		rmesa->hw.fpi[3].cmd[R300_FPI_INSTR_0 + i] = fp->alu.inst[i].inst3;
+	rmesa->hw.fpi[3].cmd[R300_FPI_CMD_0] = cmdpacket0(R300_US_ALU_ALPHA_ADDR_0, code->alu_end + 1);
+	for (i = 0; i <= code->alu_end; i++) {
+		rmesa->hw.fpi[3].cmd[R300_FPI_INSTR_0 + i] = code->alu.inst[i].inst3;
 	}
 
 	R300_STATECHANGE(rmesa, fp);
-	rmesa->hw.fp.cmd[R300_FP_CNTL0] = fp->cur_node | (fp->first_node_has_tex << 3);
-	rmesa->hw.fp.cmd[R300_FP_CNTL1] = fp->max_temp_idx;
+	rmesa->hw.fp.cmd[R300_FP_CNTL0] = code->cur_node | (code->first_node_has_tex << 3);
+	rmesa->hw.fp.cmd[R300_FP_CNTL1] = code->max_temp_idx;
 	rmesa->hw.fp.cmd[R300_FP_CNTL2] =
-	  (fp->alu_offset << R300_PFS_CNTL_ALU_OFFSET_SHIFT) |
-	  (fp->alu_end << R300_PFS_CNTL_ALU_END_SHIFT) |
-	  (fp->tex_offset << R300_PFS_CNTL_TEX_OFFSET_SHIFT) |
-	  (fp->tex_end << R300_PFS_CNTL_TEX_END_SHIFT);
+	  (code->alu_offset << R300_PFS_CNTL_ALU_OFFSET_SHIFT) |
+	  (code->alu_end << R300_PFS_CNTL_ALU_END_SHIFT) |
+	  (code->tex_offset << R300_PFS_CNTL_TEX_OFFSET_SHIFT) |
+	  (code->tex_end << R300_PFS_CNTL_TEX_END_SHIFT);
 	/* I just want to say, the way these nodes are stored.. weird.. */
-	for (i = 0, k = (4 - (fp->cur_node + 1)); i < 4; i++, k++) {
-		if (i < (fp->cur_node + 1)) {
+	for (i = 0, k = (4 - (code->cur_node + 1)); i < 4; i++, k++) {
+		if (i < (code->cur_node + 1)) {
 			rmesa->hw.fp.cmd[R300_FP_NODE0 + k] =
-			  (fp->node[i].alu_offset << R300_ALU_START_SHIFT) |
-			  (fp->node[i].alu_end << R300_ALU_SIZE_SHIFT) |
-			  (fp->node[i].tex_offset << R300_TEX_START_SHIFT) |
-			  (fp->node[i].tex_end << R300_TEX_SIZE_SHIFT) |
-			  fp->node[i].flags;
+			  (code->node[i].alu_offset << R300_ALU_START_SHIFT) |
+			  (code->node[i].alu_end << R300_ALU_SIZE_SHIFT) |
+			  (code->node[i].tex_offset << R300_TEX_START_SHIFT) |
+			  (code->node[i].tex_end << R300_TEX_SIZE_SHIFT) |
+			  code->node[i].flags;
 		} else {
 			rmesa->hw.fp.cmd[R300_FP_NODE0 + (3 - i)] = 0;
 		}
 	}
 
 	R300_STATECHANGE(rmesa, fpp);
-	rmesa->hw.fpp.cmd[R300_FPP_CMD_0] = cmdpacket0(R300_PFS_PARAM_0_X, fp->const_nr * 4);
-	for (i = 0; i < fp->const_nr; i++) {
-		rmesa->hw.fpp.cmd[R300_FPP_PARAM_0 + 4 * i + 0] = r300PackFloat24(fp->constant[i][0]);
-		rmesa->hw.fpp.cmd[R300_FPP_PARAM_0 + 4 * i + 1] = r300PackFloat24(fp->constant[i][1]);
-		rmesa->hw.fpp.cmd[R300_FPP_PARAM_0 + 4 * i + 2] = r300PackFloat24(fp->constant[i][2]);
-		rmesa->hw.fpp.cmd[R300_FPP_PARAM_0 + 4 * i + 3] = r300PackFloat24(fp->constant[i][3]);
+	rmesa->hw.fpp.cmd[R300_FPP_CMD_0] = cmdpacket0(R300_PFS_PARAM_0_X, code->const_nr * 4);
+	for (i = 0; i < code->const_nr; i++) {
+		rmesa->hw.fpp.cmd[R300_FPP_PARAM_0 + 4 * i + 0] = r300PackFloat24(code->constant[i][0]);
+		rmesa->hw.fpp.cmd[R300_FPP_PARAM_0 + 4 * i + 1] = r300PackFloat24(code->constant[i][1]);
+		rmesa->hw.fpp.cmd[R300_FPP_PARAM_0 + 4 * i + 2] = r300PackFloat24(code->constant[i][2]);
+		rmesa->hw.fpp.cmd[R300_FPP_PARAM_0 + 4 * i + 3] = r300PackFloat24(code->constant[i][3]);
 	}
 }
 
@@ -2516,6 +2513,7 @@ static void r500SetupPixelShader(r300ContextPtr rmesa)
 	struct r500_fragment_program *fp = (struct r500_fragment_program *)
 	    (char *)ctx->FragmentProgram._Current;
 	int i;
+	struct r500_fragment_program_code *code;
 
 	if (!fp)		/* should only happenen once, just after context is created */
 		return;
@@ -2529,42 +2527,43 @@ static void r500SetupPixelShader(r300ContextPtr rmesa)
 			__FUNCTION__);
 		return;
 	}
+	code = &fp->code;
 
 	r300SetupTextures(ctx);
 
 	R300_STATECHANGE(rmesa, fp);
-	rmesa->hw.fp.cmd[R500_FP_PIXSIZE] = fp->max_temp_idx;
+	rmesa->hw.fp.cmd[R500_FP_PIXSIZE] = code->max_temp_idx;
 
 	rmesa->hw.fp.cmd[R500_FP_CODE_ADDR] =
-	    R500_US_CODE_START_ADDR(fp->inst_offset) |
-	    R500_US_CODE_END_ADDR(fp->inst_end);
+	    R500_US_CODE_START_ADDR(code->inst_offset) |
+	    R500_US_CODE_END_ADDR(code->inst_end);
 	rmesa->hw.fp.cmd[R500_FP_CODE_RANGE] =
-	    R500_US_CODE_RANGE_ADDR(fp->inst_offset) |
-	    R500_US_CODE_RANGE_SIZE(fp->inst_end);
+	    R500_US_CODE_RANGE_ADDR(code->inst_offset) |
+	    R500_US_CODE_RANGE_SIZE(code->inst_end);
 	rmesa->hw.fp.cmd[R500_FP_CODE_OFFSET] =
 	    R500_US_CODE_OFFSET_ADDR(0); /* FIXME when we add flow control */
 
 	R300_STATECHANGE(rmesa, r500fp);
 	/* Emit our shader... */
-	for (i = 0; i < fp->inst_end+1; i++) {
-		rmesa->hw.r500fp.cmd[i*6+1] = fp->inst[i].inst0;
-		rmesa->hw.r500fp.cmd[i*6+2] = fp->inst[i].inst1;
-		rmesa->hw.r500fp.cmd[i*6+3] = fp->inst[i].inst2;
-		rmesa->hw.r500fp.cmd[i*6+4] = fp->inst[i].inst3;
-		rmesa->hw.r500fp.cmd[i*6+5] = fp->inst[i].inst4;
-		rmesa->hw.r500fp.cmd[i*6+6] = fp->inst[i].inst5;
+	for (i = 0; i < code->inst_end+1; i++) {
+		rmesa->hw.r500fp.cmd[i*6+1] = code->inst[i].inst0;
+		rmesa->hw.r500fp.cmd[i*6+2] = code->inst[i].inst1;
+		rmesa->hw.r500fp.cmd[i*6+3] = code->inst[i].inst2;
+		rmesa->hw.r500fp.cmd[i*6+4] = code->inst[i].inst3;
+		rmesa->hw.r500fp.cmd[i*6+5] = code->inst[i].inst4;
+		rmesa->hw.r500fp.cmd[i*6+6] = code->inst[i].inst5;
 	}
 
-	bump_r500fp_count(rmesa->hw.r500fp.cmd, (fp->inst_end + 1) * 6);
+	bump_r500fp_count(rmesa->hw.r500fp.cmd, (code->inst_end + 1) * 6);
 
 	R300_STATECHANGE(rmesa, r500fp_const);
-	for (i = 0; i < fp->const_nr; i++) {
-		rmesa->hw.r500fp_const.cmd[R300_FPP_PARAM_0 + 4 * i + 0] = r300PackFloat32(fp->constant[i][0]);
-		rmesa->hw.r500fp_const.cmd[R300_FPP_PARAM_0 + 4 * i + 1] = r300PackFloat32(fp->constant[i][1]);
-		rmesa->hw.r500fp_const.cmd[R300_FPP_PARAM_0 + 4 * i + 2] = r300PackFloat32(fp->constant[i][2]);
-		rmesa->hw.r500fp_const.cmd[R300_FPP_PARAM_0 + 4 * i + 3] = r300PackFloat32(fp->constant[i][3]);
+	for (i = 0; i < code->const_nr; i++) {
+		rmesa->hw.r500fp_const.cmd[R300_FPP_PARAM_0 + 4 * i + 0] = r300PackFloat32(code->constant[i][0]);
+		rmesa->hw.r500fp_const.cmd[R300_FPP_PARAM_0 + 4 * i + 1] = r300PackFloat32(code->constant[i][1]);
+		rmesa->hw.r500fp_const.cmd[R300_FPP_PARAM_0 + 4 * i + 2] = r300PackFloat32(code->constant[i][2]);
+		rmesa->hw.r500fp_const.cmd[R300_FPP_PARAM_0 + 4 * i + 3] = r300PackFloat32(code->constant[i][3]);
 	}
-	bump_r500fp_const_count(rmesa->hw.r500fp_const.cmd, fp->const_nr * 4);
+	bump_r500fp_const_count(rmesa->hw.r500fp_const.cmd, code->const_nr * 4);
 
 }
 
@@ -2637,12 +2636,10 @@ void r300InitState(r300ContextPtr r300)
 	case 16:
 		r300->state.depth.scale = 1.0 / (GLfloat) 0xffff;
 		depth_fmt = R300_DEPTHFORMAT_16BIT_INT_Z;
-		r300->state.stencil.clear = 0x00000000;
 		break;
 	case 24:
 		r300->state.depth.scale = 1.0 / (GLfloat) 0xffffff;
 		depth_fmt = R300_DEPTHFORMAT_24BIT_INT_Z_8BIT_STENCIL;
-		r300->state.stencil.clear = 0x00ff0000;
 		break;
 	default:
 		fprintf(stderr, "Error: Unsupported depth %d... exiting\n",
@@ -2706,7 +2703,6 @@ void r300InitStateFuncs(struct dd_function_table *functions)
 	functions->ShadeModel = r300ShadeModel;
 
 	/* Stencil related */
-	functions->ClearStencil = r300ClearStencil;
 	functions->StencilFuncSeparate = r300StencilFuncSeparate;
 	functions->StencilMaskSeparate = r300StencilMaskSeparate;
 	functions->StencilOpSeparate = r300StencilOpSeparate;

@@ -291,6 +291,10 @@ intelUpdateScreenFromSAREA(intelScreenPrivate * intelScreen,
       intelPrintSAREA(sarea);
 }
 
+
+/**
+ * DRI2 entrypoint
+ */
 static void
 intelHandleDrawableConfig(__DRIdrawablePrivate *dPriv,
 			  __DRIcontextPrivate *pcp,
@@ -332,6 +336,9 @@ intelHandleDrawableConfig(__DRIdrawablePrivate *dPriv,
 
 #define BUFFER_FLAG_TILED 0x0100
 
+/**
+ * DRI2 entrypoint
+ */
 static void
 intelHandleBufferAttach(__DRIdrawablePrivate *dPriv,
 			__DRIcontextPrivate *pcp,
@@ -734,6 +741,7 @@ intelFillInModes(__DRIscreenPrivate *psp,
 
 /**
  * This is the driver specific part of the createNewScreen entry point.
+ * Called when using legacy DRI.
  * 
  * \todo maybe fold this into intelInitDriver
  *
@@ -797,7 +805,8 @@ struct intel_context *intelScreenContext(intelScreenPrivate *intelScreen)
 
 /**
  * This is the driver specific part of the createNewScreen entry point.
- * 
+ * Called when using DRI2.
+ *
  * \return the __GLcontextModes supported by this driver
  */
 static const

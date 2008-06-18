@@ -258,9 +258,33 @@ parse_array_len(slang_parse_ctx * C, slang_output_ctx * O, GLuint * len)
 
    /* evaluate compile-time expression which is array size */
    _slang_simplify(&array_size, &space, C->atoms);
-   result = (array_size.type == SLANG_OPER_LITERAL_INT);
 
-   *len = (GLint) array_size.literal[0];
+   if (array_size.type == SLANG_OPER_LITERAL_INT) {
+      result = GL_TRUE;
+      *len = (GLint) array_size.literal[0];
+   } else if (array_size.type == SLANG_OPER_IDENTIFIER) {
+      slang_variable *var = _slang_locate_variable(array_size.locals, array_size.a_id, GL_TRUE);
+      if (!var) {
+         slang_info_log_error(C->L, "undefined variable '%s'",
+                              (char *) array_size.a_id);
+         result = GL_FALSE;
+      } else if (var->type.qualifier == SLANG_QUAL_CONST &&
+                 var->type.specifier.type == SLANG_SPEC_INT) {
+         if (var->initializer &&
+             var->initializer->type == SLANG_OPER_LITERAL_INT) {
+            *len = (GLint) var->initializer->literal[0];
+            result = GL_TRUE;
+         } else {
+            slang_info_log_error(C->L, "unable to parse array size declaration");
+            result = GL_FALSE;
+         }
+      } else {
+         slang_info_log_error(C->L, "unable to parse array size declaration");
+         result = GL_FALSE;
+      }
+   } else {
+      result = GL_FALSE;
+   }
 
    slang_operation_destruct(&array_size);
    return result;
@@ -2188,7 +2212,8 @@ _slang_compile(GLcontext *ctx, struct gl_shader *shader)
       printf("Pre-remove output reads:\n");
       _mesa_print_program(shader->Programs[0]);
 #endif
-      _mesa_remove_varying_reads(shader->Programs[0]);
+      _mesa_remove_output_reads(shader->Programs[0], PROGRAM_VARYING);
+      _mesa_remove_output_reads(shader->Programs[0], PROGRAM_OUTPUT);
 #if 0
       printf("Post-remove output reads:\n");
       _mesa_print_program(shader->Programs[0]);

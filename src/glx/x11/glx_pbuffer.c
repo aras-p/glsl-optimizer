@@ -293,7 +293,7 @@ GetDrawableAttribute( Display *dpy, GLXDrawable drawable,
 		__GLXDRIdrawable *pdraw = GetGLXDRIDrawable(dpy, drawable, NULL);
 
 		if (pdraw != NULL && !pdraw->textureTarget)
-		    pdraw->textureTarget = determineTextureTarget(data,
+		    pdraw->textureTarget = determineTextureTarget((const int *)data,
 								  num_attributes);
 	   }
 #endif

@@ -737,7 +737,8 @@ static void precalc_tex( struct brw_wm_compile *c,
       release_temp(c, tmp);
    }
 
-   if (inst->TexSrcTarget == GL_TEXTURE_RECTANGLE_NV) 
+   if ((inst->TexSrcTarget == TEXTURE_RECT_INDEX) ||
+       (inst->TexSrcTarget == TEXTURE_CUBE_INDEX))
       release_temp(c, tmpcoord);
 }
 
@@ -1019,7 +1020,11 @@ void brw_wm_pass_fp( struct brw_wm_compile *c )
       case OPCODE_LIT:
 	 precalc_lit(c, inst);
 	 break;
-     
+
+      case OPCODE_TEX:
+	 precalc_tex(c, inst);
+	 break;
+
       case OPCODE_TXP:
 	 precalc_txp(c, inst);
 	 break;

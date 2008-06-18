@@ -31,6 +31,8 @@ SOURCES = \
 	  xfont.c \
 	  glx_pbuffer.c \
 	  glx_query.c \
+	  drisw_glx.c \
+	  dri_common.c \
 	  dri_glx.c \
 	  XF86dri.c \
 	  glxhash.c \

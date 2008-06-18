@@ -32,7 +32,6 @@
 
 #ifdef GLX_DIRECT_RENDERING
 
-#include <unistd.h>
 #include <X11/Xlib.h>
 #include <X11/extensions/Xfixes.h>
 #include <X11/extensions/Xdamage.h>
@@ -46,18 +45,10 @@
 #include <sys/mman.h>
 #include "xf86drm.h"
 #include "dri2.h"
-
-
-#ifndef RTLD_NOW
-#define RTLD_NOW 0
-#endif
-#ifndef RTLD_GLOBAL
-#define RTLD_GLOBAL 0
-#endif
+#include "dri_common.h"
 
 typedef struct __GLXDRIdisplayPrivateRec __GLXDRIdisplayPrivate;
 typedef struct __GLXDRIcontextPrivateRec __GLXDRIcontextPrivate;
-typedef struct __GLXDRIconfigPrivateRec  __GLXDRIconfigPrivate;
 
 struct __GLXDRIdisplayPrivateRec {
     __GLXDRIdisplay base;
@@ -74,11 +65,6 @@ struct __GLXDRIcontextPrivateRec {
     __GLXDRIcontext base;
     __DRIcontext *driContext;
     __GLXscreenConfigs *psc;
-};
-
-struct __GLXDRIconfigPrivateRec {
-    __GLcontextModes modes;
-    const __DRIconfig *driConfig;
 };
 
 static void dri2DestroyContext(__GLXDRIcontext *context,
@@ -253,93 +239,11 @@ static const __DRIloaderExtension dri2LoaderExtension = {
     dri2PostDamage
 };
 
-_X_HIDDEN const __DRIsystemTimeExtension systemTimeExtension;
-
 static const __DRIextension *loader_extensions[] = {
     &dri2LoaderExtension.base,
     &systemTimeExtension.base,
     NULL
 };
-
-/* We need a dri_common.h type-of-thing. */
-
-extern void ErrorMessageF(const char *f, ...);
-
-extern void *driOpenDriver(const char *driverName);
-
-extern __GLcontextModes *
-driConvertConfigs(const __DRIcoreExtension *core,
-		  __GLcontextModes *modes, const __DRIconfig **configs);
-
-extern void driBindExtensions(__GLXscreenConfigs *psc);
-
-void
-driBindExtensions(__GLXscreenConfigs *psc)
-{
-    const __DRIextension **extensions;
-    int i;
-
-    extensions = psc->core->getExtensions(psc->__driScreen);
-
-    for (i = 0; extensions[i]; i++) {
-#ifdef __DRI_COPY_SUB_BUFFER
-	if (strcmp(extensions[i]->name, __DRI_COPY_SUB_BUFFER) == 0) {
-	    psc->copySubBuffer = (__DRIcopySubBufferExtension *) extensions[i];
-	    __glXEnableDirectExtension(psc, "GLX_MESA_copy_sub_buffer_bit");
-	}
-#endif
-
-#ifdef __DRI_SWAP_CONTROL
-	if (strcmp(extensions[i]->name, __DRI_SWAP_CONTROL) == 0) {
-	    psc->swapControl = (__DRIswapControlExtension *) extensions[i];
-	    __glXEnableDirectExtension(psc, "GLX_SGI_swap_control");
-	    __glXEnableDirectExtension(psc, "GLX_MESA_swap_control");
-	}
-#endif
-
-#ifdef __DRI_ALLOCATE
-	if (strcmp(extensions[i]->name, __DRI_ALLOCATE) == 0) {
-	    psc->allocate = (__DRIallocateExtension *) extensions[i];
-	    __glXEnableDirectExtension(psc, "GLX_MESA_allocate_memory");
-	}
-#endif
-
-#ifdef __DRI_FRAME_TRACKING
-	if (strcmp(extensions[i]->name, __DRI_FRAME_TRACKING) == 0) {
-	    psc->frameTracking = (__DRIframeTrackingExtension *) extensions[i];
-	    __glXEnableDirectExtension(psc, "GLX_MESA_swap_frame_usage");
-	}
-#endif
-
-#ifdef __DRI_MEDIA_STREAM_COUNTER
-	if (strcmp(extensions[i]->name, __DRI_MEDIA_STREAM_COUNTER) == 0) {
-	    psc->msc = (__DRImediaStreamCounterExtension *) extensions[i];
-	    __glXEnableDirectExtension(psc, "GLX_SGI_video_sync");
-	}
-#endif
-
-#ifdef __DRI_SWAP_BUFFER_COUNTER
-	/* No driver supports this at this time and the extension is
-	 * not defined in dri_interface.h.  Will enable
-	 * GLX_OML_sync_control if implemented. */
-#endif
-
-#ifdef __DRI_READ_DRAWABLE
-	if (strcmp(extensions[i]->name, __DRI_READ_DRAWABLE) == 0) {
-	    __glXEnableDirectExtension(psc, "GLX_SGI_make_current_read");
-	}
-#endif
-
-#ifdef __DRI_TEX_BUFFER
-	if (strcmp(extensions[i]->name, __DRI_TEX_BUFFER) == 0) {
-	    psc->texBuffer = (__DRItexBufferExtension *) extensions[i];
-	    __glXEnableDirectExtension(psc, "GLX_EXT_texture_from_pixmap");
-	}
-#endif
-
-	/* Ignore unknown extensions */
-    }
-}
 
 static __GLXDRIscreen *dri2CreateScreen(__GLXscreenConfigs *psc, int screen,
 					__GLXdisplayPrivate *priv)

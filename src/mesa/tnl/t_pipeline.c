@@ -199,11 +199,11 @@ const struct tnl_pipeline_stage *_tnl_default_pipeline[] = {
    &_tnl_vertex_transform_stage,
    &_tnl_normal_transform_stage,
    &_tnl_lighting_stage,
-   &_tnl_fog_coordinate_stage,
    &_tnl_texgen_stage,
    &_tnl_texture_transform_stage,
    &_tnl_point_attenuation_stage,
    &_tnl_vertex_program_stage, 
+   &_tnl_fog_coordinate_stage,
    &_tnl_render_stage,
    NULL 
 };
