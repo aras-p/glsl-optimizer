@@ -68,6 +68,9 @@ struct st_framebuffer *st_create_framebuffer( const __GLcontextModes *visual,
 void st_resize_framebuffer( struct st_framebuffer *stfb,
                             uint width, uint height );
 
+void st_set_framebuffer_surface(struct st_framebuffer *stfb,
+                                uint surfIndex, struct pipe_surface *surf);
+
 struct pipe_surface *st_get_framebuffer_surface(struct st_framebuffer *stfb,
                                                 uint surfIndex);
 
