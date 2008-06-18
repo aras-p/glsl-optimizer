@@ -326,9 +326,6 @@ intelEmitCopyBlit(struct intel_context *intel,
       return;
    }
 
-   dst_pitch &= 0xffff;
-   src_pitch &= 0xffff;
-
    /* Initial y values don't seem to work with negative pitches.  If
     * we adjust the offsets manually (below), it seems to work fine.
     *
@@ -359,7 +356,7 @@ intelEmitCopyBlit(struct intel_context *intel,
 
       BEGIN_BATCH(8, NO_LOOP_CLIPRECTS);
       OUT_BATCH(CMD);
-      OUT_BATCH(BR13 | dst_pitch);
+      OUT_BATCH(BR13 | ((uint16_t)dst_pitch));
       OUT_BATCH((0 << 16) | dst_x);
       OUT_BATCH((h << 16) | dst_x2);
       OUT_RELOC(dst_buffer, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_WRITE,
