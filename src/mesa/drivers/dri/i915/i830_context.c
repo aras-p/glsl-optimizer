@@ -52,7 +52,7 @@ static void
 i830InitDriverFunctions(struct dd_function_table *functions)
 {
    intelInitDriverFunctions(functions);
-//   intelInitPixelFuncs(functions);
+   intelInitPixelFuncs(functions);
    i830InitStateFuncs(functions);
    i830InitTextureFuncs(functions);
 }

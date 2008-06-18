@@ -218,7 +218,6 @@ do_blit_drawpixels(GLcontext * ctx,
    struct intel_buffer_object *src = intel_buffer_object(unpack->BufferObj);
    GLuint src_offset;
    GLuint rowLength;
-   dri_fence *fence = NULL;
 
    if (INTEL_DEBUG & DEBUG_PIXEL)
       _mesa_printf("%s\n", __FUNCTION__);
@@ -323,15 +322,8 @@ do_blit_drawpixels(GLcontext * ctx,
 			   ctx->Color.LogicOp : GL_COPY);
       }
       intel_batchbuffer_flush(intel->batch);
-      fence = intel->batch->last_fence;
-      dri_fence_reference(fence);
    }
    UNLOCK_HARDWARE(intel);
-
-   if (fence) {
-      dri_fence_wait(fence);
-      dri_fence_unreference(fence);
-   }
 
    if (INTEL_DEBUG & DEBUG_PIXEL)
       _mesa_printf("%s - DONE\n", __FUNCTION__);

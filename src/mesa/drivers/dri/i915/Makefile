@@ -6,11 +6,6 @@ LIBNAME = i915_dri.so
 
 MINIGLX_SOURCES = server/intel_dri.c
 
-PIXEL_SOURCES = \
-	intel_pixel.c \
-	intel_pixel_read.c \
-	intel_pixel_draw.c
-
 DRIVER_SOURCES = \
 	i830_context.c \
 	i830_metaops.c \
@@ -48,6 +43,9 @@ DRIVER_SOURCES = \
 	intel_context.c \
 	intel_decode.c \
 	intel_ioctl.c \
+	intel_pixel.c \
+	intel_pixel_draw.c \
+	intel_pixel_read.c \
 	intel_screen.c \
 	intel_span.c \
 	intel_state.c \
