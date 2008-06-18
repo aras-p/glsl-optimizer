@@ -147,6 +147,10 @@ static void varray_prepare(struct draw_pt_front_end *frontend,
 
    varray->middle = middle;
    middle->prepare(middle, varray->output_prim, opt, &varray->driver_fetch_max );
+
+   /* check that the max is even */
+   assert((varray->driver_fetch_max & 1) == 0);
+
    varray->fetch_max = MIN2(FETCH_MAX, varray->driver_fetch_max);
 }
 
