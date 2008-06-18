@@ -1011,6 +1011,8 @@ init_attrib_groups(GLcontext *ctx)
    _mesa_init_multisample( ctx );
 #if FEATURE_pixel_transfer
    _mesa_init_pixel( ctx );
+#else
+   ctx->Pixel.ReadBuffer = ctx->Visual.doubleBufferMode ? GL_BACK : GL_FRONT;
 #endif
    _mesa_init_pixelstore( ctx );
    _mesa_init_point( ctx );
