@@ -302,18 +302,19 @@ set_immd(struct nv50_pc *pc, struct nv50_reg *imm, struct nv50_program_exec *e)
 
 static void
 emit_interp(struct nv50_pc *pc, struct nv50_reg *dst,
-	    struct nv50_reg *src, struct nv50_reg *iv, boolean noperspective)
+	    struct nv50_reg *src, struct nv50_reg *iv)
 {
 	struct nv50_program_exec *e = exec(pc);
 
 	e->inst[0] |= 0x80000000;
 	set_dst(pc, dst, e);
-	alloc_reg(pc, iv);
-	e->inst[0] |= (iv->hw << 9);
 	alloc_reg(pc, src);
 	e->inst[0] |= (src->hw << 16);
-	if (noperspective)
+	if (iv) {
 		e->inst[0] |= (1 << 25);
+		alloc_reg(pc, iv);
+		e->inst[0] |= (iv->hw << 9);
+	}
 
 	emit(pc, e);
 }
@@ -1147,7 +1148,7 @@ nv50_program_tx_insn(struct nv50_pc *pc, const union tgsi_full_token *tok)
 			emit_mov(pc, t1, src[0][1]);
 
 			e = exec(pc);
-			e->inst[0] = 0xf0400000;
+			e->inst[0] = 0xf6400000;
 			set_long(pc, e);
 			e->inst[1] |= 0x0000c004;
 			set_dst(pc, t0, e);
@@ -1302,7 +1303,7 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 
 		if (pc->p->type == PIPE_SHADER_FRAGMENT) {
 			iv = alloc_temp(pc, NULL);
-			emit_interp(pc, iv, iv, iv, FALSE);
+			emit_interp(pc, iv, iv, NULL);
 			emit_flop(pc, 0, iv, iv);
 			aid++;
 		}
@@ -1329,10 +1330,10 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 			if (pc->p->type != PIPE_SHADER_FRAGMENT)
 				continue;
 
-			emit_interp(pc, &a[0], &a[0], iv, TRUE);
-			emit_interp(pc, &a[1], &a[1], iv, TRUE);
-			emit_interp(pc, &a[2], &a[2], iv, TRUE);
-			emit_interp(pc, &a[3], &a[3], iv, TRUE);
+			emit_interp(pc, &a[0], &a[0], iv);
+			emit_interp(pc, &a[1], &a[1], iv);
+			emit_interp(pc, &a[2], &a[2], iv);
+			emit_interp(pc, &a[3], &a[3], iv);
 		}
 
 		if (iv)
