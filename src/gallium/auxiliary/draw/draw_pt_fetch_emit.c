@@ -200,6 +200,15 @@ static void fetch_emit_prepare( struct draw_pt_middle_end *middle,
 
    *max_vertices = (draw->render->max_vertex_buffer_bytes / 
                     (vinfo->size * 4));
+
+   /* Return an even number of verts.
+    * This prevents "parity" errors when splitting long triangle strips which
+    * can lead to front/back culling mix-ups.
+    * Every other triangle in a strip has an alternate front/back orientation
+    * so splitting at an odd position can cause the orientation of subsequent
+    * triangles to get reversed.
+    */
+   *max_vertices = *max_vertices & ~1;
 }
 
 

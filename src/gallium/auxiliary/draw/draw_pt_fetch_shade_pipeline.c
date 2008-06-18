@@ -99,6 +99,9 @@ static void fetch_pipeline_prepare( struct draw_pt_middle_end *middle,
       *max_vertices = DRAW_PIPE_MAX_VERTICES; 
    }
 
+   /* return even number */
+   *max_vertices = *max_vertices & ~1;
+
    /* No need to prepare the shader.
     */
    vs->prepare(vs, draw);

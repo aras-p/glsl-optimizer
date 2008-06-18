@@ -143,6 +143,9 @@ void draw_pt_emit_prepare( struct pt_emit *emit,
 
    *max_vertices = (draw->render->max_vertex_buffer_bytes / 
                     (vinfo->size * 4));
+
+   /* even number */
+   *max_vertices = *max_vertices & ~1;
 }
 
 
