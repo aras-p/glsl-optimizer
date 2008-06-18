@@ -81,7 +81,8 @@ do_texture_drawpixels(GLcontext * ctx,
    else {
       /* PBO only for now:
        */
-/*       _mesa_printf("%s - not PBO\n", __FUNCTION__); */
+      if (INTEL_DEBUG & DEBUG_PIXEL)
+	 _mesa_printf("%s - not PBO\n", __FUNCTION__);
       return GL_FALSE;
    }
 
