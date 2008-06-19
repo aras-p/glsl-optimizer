@@ -263,8 +263,8 @@ debug_memory_end(unsigned long start_no)
       void *ptr;
       hdr = LIST_ENTRY(struct debug_memory_header, entry, head);
       ptr = data_from_header(hdr);
-      if(start_no <= hdr->no && hdr->no < last_no ||
-	 last_no < start_no && (hdr->no < last_no || start_no <= hdr->no)) {
+      if((start_no <= hdr->no && hdr->no < last_no) ||
+	 (last_no < start_no && (hdr->no < last_no || start_no <= hdr->no))) {
 	 debug_printf("%s:%u:%s: %u bytes at %p not freed\n",
 		      hdr->file, hdr->line, hdr->function,
 		      hdr->size, ptr);
