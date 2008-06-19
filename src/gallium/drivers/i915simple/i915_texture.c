@@ -142,6 +142,7 @@ i915_miptree_set_image_offset(struct i915_texture *tex,
    assert(img < tex->nr_images[level]);
 
    tex->image_offset[level][img] = (x + y * tex->pitch);
+
    /*
    printf("%s level %d img %d pos %d,%d image_offset %x\n",
        __FUNCTION__, level, img, x, y, tex->image_offset[level][img]);
@@ -266,9 +267,17 @@ i945_miptree_layout_cube(struct i915_texture *tex)
    unsigned face;
    unsigned lvlWidth = pt->width[0], lvlHeight = pt->height[0];
 
+   /*
+   printf("%s %i, %i\n", __FUNCTION__, pt->width[0], pt->height[0]);
+   */
+
    assert(lvlWidth == lvlHeight); /* cubemap images are square */
 
-   /* Depending on the size of the largest images, pitch can be
+   /*
+    * XXX Should only be used for compressed formats. But lets
+    * keep this code active just in case.
+    *
+    * Depending on the size of the largest images, pitch can be
     * determined either by the old-style packing of cubemap faces,
     * or the final row of 4x4, 2x2 and 1x1 faces below this.
     */
@@ -277,6 +286,9 @@ i945_miptree_layout_cube(struct i915_texture *tex)
    else
       tex->pitch = 14 * 8;
 
+   /*
+    * XXX The 4 is only needed for compressed formats. See above.
+    */
    tex->total_height = dim * 4 + 4;
 
    /* Set all the levels to effectively occupy the whole rectangular region.
@@ -292,6 +304,7 @@ i945_miptree_layout_cube(struct i915_texture *tex)
       unsigned y = initial_offsets[face][1] * dim;
       unsigned d = dim;
 
+#if 0 /* Fix and enable this code for compressed formats */
       if (dim == 4 && face >= 4) {
          y = tex->total_height - 4;
          x = (face - 4) * 8;
@@ -300,12 +313,14 @@ i945_miptree_layout_cube(struct i915_texture *tex)
          y = tex->total_height - 4;
          x = face * 8;
       }
+#endif
 
       for (level = 0; level <= pt->last_level; level++) {
          i915_miptree_set_image_offset(tex, level, face, x, y);
 
          d >>= 1;
 
+#if 0 /* Fix and enable this code for compressed formats */
          switch (d) {
             case 4:
                switch (face) {
@@ -325,7 +340,6 @@ i945_miptree_layout_cube(struct i915_texture *tex)
                      x = (face - 4) * 8;
                      break;
                }
-
             case 2:
                y = tex->total_height - 4;
                x = 16 + face * 8;
@@ -334,12 +348,14 @@ i945_miptree_layout_cube(struct i915_texture *tex)
             case 1:
                x += 48;
                break;
-
             default:
+#endif
                x += step_offsets[face][0] * d;
                y += step_offsets[face][1] * d;
+#if 0
                break;
          }
+#endif
       }
    }
 }
