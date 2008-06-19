@@ -1854,8 +1854,19 @@ sample_cube_nearest_mipmap_nearest(GLcontext *ctx,
    for (i = 0; i < n; i++) {
       const struct gl_texture_image **images;
       GLfloat newCoord[4];
-      GLint level = nearest_mipmap_level(tObj, lambda[i]);
+      GLint level;
       images = choose_cube_face(tObj, texcoord[i], newCoord);
+
+      /* XXX we actually need to recompute lambda here based on the newCoords.
+       * But we would need the texcoords of adjacent fragments to compute that
+       * properly, and we don't have those here.
+       * For now, do an approximation:  subtracting 1 from the chosen mipmap
+       * level seems to work in some test cases.
+       * The same adjustment is done in the next few functions.
+      */
+      level = nearest_mipmap_level(tObj, lambda[i]);
+      level = MAX2(level - 1, 0);
+
       sample_2d_nearest(ctx, tObj, images[level], newCoord, rgba[i]);
    }
 }
@@ -1873,6 +1884,7 @@ sample_cube_linear_mipmap_nearest(GLcontext *ctx,
       const struct gl_texture_image **images;
       GLfloat newCoord[4];
       GLint level = nearest_mipmap_level(tObj, lambda[i]);
+      level = MAX2(level - 1, 0); /* see comment above */
       images = choose_cube_face(tObj, texcoord[i], newCoord);
       sample_2d_linear(ctx, tObj, images[level], newCoord, rgba[i]);
    }
@@ -1891,6 +1903,7 @@ sample_cube_nearest_mipmap_linear(GLcontext *ctx,
       const struct gl_texture_image **images;
       GLfloat newCoord[4];
       GLint level = linear_mipmap_level(tObj, lambda[i]);
+      level = MAX2(level - 1, 0); /* see comment above */
       images = choose_cube_face(tObj, texcoord[i], newCoord);
       if (level >= tObj->_MaxLevel) {
          sample_2d_nearest(ctx, tObj, images[tObj->_MaxLevel],
@@ -1919,6 +1932,7 @@ sample_cube_linear_mipmap_linear(GLcontext *ctx,
       const struct gl_texture_image **images;
       GLfloat newCoord[4];
       GLint level = linear_mipmap_level(tObj, lambda[i]);
+      level = MAX2(level - 1, 0); /* see comment above */
       images = choose_cube_face(tObj, texcoord[i], newCoord);
       if (level >= tObj->_MaxLevel) {
          sample_2d_linear(ctx, tObj, images[tObj->_MaxLevel],
