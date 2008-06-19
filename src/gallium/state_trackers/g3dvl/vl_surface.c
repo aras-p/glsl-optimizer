@@ -31,7 +31,7 @@ static int vlGrabBlocks
 		0, 0, 0, PIPE_BUFFER_USAGE_CPU_WRITE
 	);
 	
-	texels = pipe_surface_map(tex_surface, 0);
+	texels = pipe_surface_map(tex_surface, PIPE_BUFFER_USAGE_CPU_WRITE);
 	
 	for (b = 0; b < 4; ++b)
 	{
@@ -131,7 +131,7 @@ static int vlGrabBlocks
 			0, 0, 0, PIPE_BUFFER_USAGE_CPU_WRITE
 		);
 	
-		texels = pipe_surface_map(tex_surface, 0);
+		texels = pipe_surface_map(tex_surface, PIPE_BUFFER_USAGE_CPU_WRITE);
 		
 		if ((coded_block_pattern >> (b + 4)) & 1)
 		{
@@ -164,6 +164,9 @@ static int vlGrabBlocks
 		
 		pipe_surface_unmap(tex_surface);
 	}
+	
+	/* XXX: Texture cache is not invalidated when texture contents change */
+	context->pipe->flush(context->pipe, PIPE_FLUSH_TEXTURE_CACHE, NULL);
 	
 	return 0;
 }
@@ -265,7 +268,7 @@ int vlRenderIMacroBlock
 	(
 		pipe->screen,
 		surface->texture,
-		0, 0, 0, PIPE_BUFFER_USAGE_CPU_READ | PIPE_BUFFER_USAGE_CPU_WRITE
+		0, 0, 0, PIPE_BUFFER_USAGE_GPU_READ | PIPE_BUFFER_USAGE_GPU_WRITE
 	);
 	pipe->set_framebuffer_state(pipe, &surface->context->states.mc.render_target);
 	pipe->set_sampler_textures(pipe, 3, surface->context->states.mc.textures);
@@ -346,7 +349,7 @@ int vlRenderPMacroBlock
 	(
 		pipe->screen,
 		surface->texture,
-		0, 0, 0, PIPE_BUFFER_USAGE_CPU_READ | PIPE_BUFFER_USAGE_CPU_WRITE
+		0, 0, 0, PIPE_BUFFER_USAGE_GPU_READ | PIPE_BUFFER_USAGE_GPU_WRITE
 	);
 	pipe->set_framebuffer_state(pipe, &surface->context->states.mc.render_target);
 	
@@ -434,7 +437,7 @@ int vlRenderBMacroBlock
 	(
 		pipe->screen,
 		surface->texture,
-		0, 0, 0, PIPE_BUFFER_USAGE_CPU_READ | PIPE_BUFFER_USAGE_CPU_WRITE
+		0, 0, 0, PIPE_BUFFER_USAGE_GPU_READ | PIPE_BUFFER_USAGE_GPU_WRITE
 	);
 	pipe->set_framebuffer_state(pipe, &surface->context->states.mc.render_target);
 	
@@ -510,6 +513,7 @@ int vlPutSurface
 			destw,
 			desth,
 			PIPE_FORMAT_A8R8G8B8_UNORM,
+			/*XXX: SoftPipe doesn't change GPU usage to CPU like it does for textures */
 			PIPE_BUFFER_USAGE_CPU_READ | PIPE_BUFFER_USAGE_CPU_WRITE,
 			0
 		);
