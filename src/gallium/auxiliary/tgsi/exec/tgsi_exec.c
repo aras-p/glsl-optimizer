@@ -165,9 +165,17 @@ tgsi_exec_machine_bind_shader(
    declarations = (struct tgsi_full_declaration *)
       MALLOC( maxDeclarations * sizeof(struct tgsi_full_declaration) );
 
+   if (!declarations) {
+      return;
+   }
+
    instructions = (struct tgsi_full_instruction *)
       MALLOC( maxInstructions * sizeof(struct tgsi_full_instruction) );
 
+   if (!instructions) {
+      FREE( declarations );
+      return;
+   }
 
    while( !tgsi_parse_end_of_tokens( &parse ) ) {
       uint pointer = parse.Position;
