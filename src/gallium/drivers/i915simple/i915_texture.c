@@ -100,7 +100,7 @@ static void
 i915_miptree_set_level_info(struct i915_texture *tex,
                              unsigned level,
                              unsigned nr_images,
-                             unsigned x, unsigned y, unsigned w, unsigned h, unsigned d)
+                             unsigned w, unsigned h, unsigned d)
 {
    struct pipe_texture *pt = &tex->base;
 
@@ -110,7 +110,6 @@ i915_miptree_set_level_info(struct i915_texture *tex,
    pt->height[level] = h;
    pt->depth[level] = d;
 
-   tex->level_offset[level] = (x + y * tex->pitch) * pt->cpp;
    tex->nr_images[level] = nr_images;
 
    /*
@@ -166,7 +165,7 @@ i915_displaytarget_layout(struct i915_texture *tex)
    if (pt->last_level > 0 || pt->cpp != 4)
       return 0;
 
-   i915_miptree_set_level_info( tex, 0, 1, 0, 0,
+   i915_miptree_set_level_info( tex, 0, 1,
                                 tex->base.width[0],
                                 tex->base.height[0],
                                 1 );
@@ -230,7 +229,8 @@ i945_miptree_layout_2d( struct i915_texture *tex )
    for (level = 0; level <= pt->last_level; level++) {
       unsigned img_height;
 
-      i915_miptree_set_level_info(tex, level, 1, x, y, width, height, 1);
+      i915_miptree_set_level_info(tex, level, 1, width, height, 1);
+      i915_miptree_set_image_offset(tex, level, 0, x, y);
 
       if (pt->compressed)
 	 img_height = MAX2(1, height/4);
@@ -294,7 +294,7 @@ i945_miptree_layout_cube(struct i915_texture *tex)
    /* Set all the levels to effectively occupy the whole rectangular region.
    */
    for (level = 0; level <= pt->last_level; level++) {
-      i915_miptree_set_level_info(tex, level, 6, 0, 0, lvlWidth, lvlHeight, 1);
+      i915_miptree_set_level_info(tex, level, 6, lvlWidth, lvlHeight, 1);
       lvlWidth /= 2;
       lvlHeight /= 2;
    }
@@ -380,8 +380,6 @@ i915_miptree_layout(struct i915_texture * tex)
 
          for (level = 0; level <= pt->last_level; level++) {
             i915_miptree_set_level_info(tex, level, 6,
-                                         0, 0,
-                                         /*OLD: tex->pitch, tex->total_height,*/
                                          lvlWidth, lvlHeight,
                                          1);
             lvlWidth /= 2;
@@ -416,7 +414,7 @@ i915_miptree_layout(struct i915_texture * tex)
           */
          for (level = 0; level <= MAX2(8, pt->last_level);
               level++) {
-            i915_miptree_set_level_info(tex, level, depth, 0, tex->total_height,
+            i915_miptree_set_level_info(tex, level, depth,
                                          width, height, depth);
 
 
@@ -458,8 +456,9 @@ i915_miptree_layout(struct i915_texture * tex)
 
          for (level = 0; level <= pt->last_level; level++) {
             i915_miptree_set_level_info(tex, level, 1,
-                                         0, tex->total_height,
                                          width, height, 1);
+            i915_miptree_set_image_offset(tex, level, 0,
+                                           0, tex->total_height);
 
             if (pt->compressed)
                img_height = MAX2(1, height / 4);
@@ -515,12 +514,11 @@ i945_miptree_layout(struct i915_texture * tex)
             unsigned q, j;
 
             i915_miptree_set_level_info(tex, level, nr_images,
-                                         0, tex->total_height,
                                          width, height, depth);
 
             for (q = 0; q < nr_images;) {
                for (j = 0; j < pack_x_nr && q < nr_images; j++, q++) {
-                  i915_miptree_set_image_offset(tex, level, q, x, y);
+                  i915_miptree_set_image_offset(tex, level, q, x, y + tex->total_height);
                   x += pack_x_pitch;
                }
 
@@ -648,15 +646,14 @@ i915_get_tex_surface(struct pipe_screen *screen,
    struct pipe_surface *ps;
    unsigned offset;  /* in bytes */
 
-   offset = tex->level_offset[level];
-
    if (pt->target == PIPE_TEXTURE_CUBE) {
-      offset += tex->image_offset[level][face] * pt->cpp;
+      offset = tex->image_offset[level][face] * pt->cpp;
    }
    else if (pt->target == PIPE_TEXTURE_3D) {
-      offset += tex->image_offset[level][zslice] * pt->cpp;
+      offset = tex->image_offset[level][zslice] * pt->cpp;
    }
    else {
+      offset = tex->image_offset[level][0] * pt->cpp;
       assert(face == 0);
       assert(zslice == 0);
    }

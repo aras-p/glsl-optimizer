@@ -202,10 +202,6 @@ struct i915_texture {
     */
    unsigned *image_offset[PIPE_MAX_TEXTURE_LEVELS];   /**< array [depth] of offsets */
 
-   /* Includes image offset tables:
-    */
-   unsigned level_offset[PIPE_MAX_TEXTURE_LEVELS];
-
    /* The data is held here:
     */
    struct pipe_buffer *buffer;
