@@ -33,6 +33,8 @@ _eglInitContext(_EGLDriver *drv, EGLDisplay dpy, _EGLContext *ctx,
       return EGL_FALSE;
    }
 
+   ctx->ClientVersion = 1; /* the default, per EGL spec */
+
    for (i = 0; attrib_list && attrib_list[i] != EGL_NONE; i++) {
       switch (attrib_list[i]) {
       case EGL_CONTEXT_CLIENT_VERSION:

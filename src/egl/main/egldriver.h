@@ -72,4 +72,8 @@ extern void
 _eglInitDriverFallbacks(_EGLDriver *drv);
 
 
+extern EGLint
+_eglFindAPIs(void);
+
+
 #endif /* EGLDRIVER_INCLUDED */

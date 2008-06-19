@@ -35,6 +35,44 @@ static const char *SysFS = "/sys/class";
 
 
 
+/**
+ * Wrappers for dlopen/dlclose()
+ */
+#if defined(_EGL_PLATFORM_WINDOWS)
+
+   typedef HMODULE lib_handle;
+
+   static HMODULE
+   open_library(const char *filename)
+   {
+      return LoadLibrary(filename);
+   }
+
+   static void
+   close_library(HMODULE lib)
+   {
+      FreeLibrary(lib);
+   }
+   
+#elif defined(_EGL_PLATFORM_X)
+
+   typedef void * lib_handle;
+
+   static void *
+   open_library(const char *filename)
+   {
+      return dlopen(filename, RTLD_LAZY);
+   }
+
+   static void
+   close_library(void *lib)
+   {
+      dlclose(lib);
+   }
+   
+#endif
+
+
 
 /**
  * Given a card number, use sysfs to determine the DRI driver name.
@@ -165,11 +203,7 @@ _eglOpenDriver(_EGLDisplay *dpy, const char *driverName, const char *args)
 {
    _EGLDriver *drv;
    _EGLMain_t mainFunc;
-#if defined(_EGL_PLATFORM_WINDOWS)
-   HMODULE lib;
-#elif defined(_EGL_PLATFORM_X)
-   void *lib;
-#endif
+   lib_handle lib;
    char driverFilename[1000];
 
    assert(driverName);
@@ -178,13 +212,12 @@ _eglOpenDriver(_EGLDisplay *dpy, const char *driverName, const char *args)
    /* XXX untested */
    sprintf(driverFilename, "%s.dll", driverName);
    _eglLog(_EGL_DEBUG, "dlopen(%s)", driverFilename);
-   lib = LoadLibrary(driverFilename);
 #elif defined(_EGL_PLATFORM_X)
    /* XXX also prepend a directory path??? */
    sprintf(driverFilename, "%s.so", driverName);
    _eglLog(_EGL_DEBUG, "dlopen(%s)", driverFilename);
-   lib = dlopen(driverFilename, RTLD_LAZY);
 #endif
+   lib = open_library(driverFilename);
 
    if (!lib) {
       _eglLog(_EGL_WARNING, "Could not open %s (%s)",
@@ -200,21 +233,13 @@ _eglOpenDriver(_EGLDisplay *dpy, const char *driverName, const char *args)
 
    if (!mainFunc) {
       _eglLog(_EGL_WARNING, "_eglMain not found in %s", driverFilename);
-#if defined(_EGL_PLATFORM_WINDOWS)
-      FreeLibrary(lib);
-#elif defined(_EGL_PLATFORM_X)
-      dlclose(lib);
-#endif
+      close_library(lib);
       return NULL;
    }
 
    drv = mainFunc(dpy, args);
    if (!drv) {
-#if defined(_EGL_PLATFORM_WINDOWS)
-      FreeLibrary(lib);
-#elif defined(_EGL_PLATFORM_X)
-      dlclose(lib);
-#endif
+      close_library(lib);
       return NULL;
    }
 
@@ -223,11 +248,7 @@ _eglOpenDriver(_EGLDisplay *dpy, const char *driverName, const char *args)
       drv->LibHandle = lib;
    }
    else {
-#if defined(_EGL_PLATFORM_WINDOWS)
-      FreeLibrary(lib);
-#elif defined(_EGL_PLATFORM_X)
-      dlclose(lib);
-#endif
+      close_library(lib);
    }
 
    /* update the global notion of supported APIs */
@@ -253,11 +274,7 @@ _eglCloseDriver(_EGLDriver *drv, EGLDisplay dpy)
 
    b = drv->API.Terminate(drv, dpy);
 
-#if defined(_EGL_PLATFORM_WINDOWS)
-   FreeLibrary(handle);
-#elif defined(_EGL_PLATFORM_X)
-   dlclose(handle);
-#endif
+   close_library(handle);
 
    return b;
 }
@@ -342,4 +359,51 @@ _eglInitDriverFallbacks(_EGLDriver *drv)
 #ifdef EGL_VERSION_1_2
    drv->API.CreatePbufferFromClientBuffer = _eglCreatePbufferFromClientBuffer;
 #endif /* EGL_VERSION_1_2 */
+}
+
+
+
+/**
+ * Try to determine which EGL APIs (OpenGL, OpenGL ES, OpenVG, etc)
+ * are supported on the system by looking for standard library names.
+ */
+EGLint
+_eglFindAPIs(void)
+{
+   EGLint mask = 0x0;
+   lib_handle lib;
+#if defined(_EGL_PLATFORM_WINDOWS)
+   /* XXX not sure about these names */
+   const char *es1_libname = "libGLESv1_CM.dll";
+   const char *es2_libname = "libGLESv2.dll";
+   const char *gl_libname = "OpenGL32.dll";
+   const char *vg_libname = "libOpenVG.dll";
+#elif defined(_EGL_PLATFORM_X)
+   const char *es1_libname = "libGLESv1_CM.so";
+   const char *es2_libname = "libGLESv2.so";
+   const char *gl_libname = "libGL.so";
+   const char *vg_libname = "libOpenVG.so";
+#endif
+
+   if ((lib = open_library(es1_libname))) {
+      close_library(lib);
+      mask |= EGL_OPENGL_ES_BIT;
+   }
+
+   if ((lib = open_library(es2_libname))) {
+      close_library(lib);
+      mask |= EGL_OPENGL_ES2_BIT;
+   }
+
+   if ((lib = open_library(gl_libname))) {
+      close_library(lib);
+      mask |= EGL_OPENGL_BIT;
+   }
+
+   if ((lib = open_library(vg_libname))) {
+      close_library(lib);
+      mask |= EGL_OPENVG_BIT;
+   }
+
+   return mask;
 }
