@@ -32,6 +32,7 @@
  */
 
 
+#include <dlfcn.h>
 #include <X11/Xutil.h>
 
 #include "pipe/p_compiler.h"
@@ -202,7 +203,6 @@ xlib_eglInitialize(_EGLDriver *drv, EGLDisplay dpy,
 static EGLBoolean
 xlib_eglTerminate(_EGLDriver *drv, EGLDisplay dpy)
 {
-
    return EGL_TRUE;
 }
 
@@ -342,6 +342,10 @@ xlib_eglCreateContext(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
 
    /* API-dependent context creation */
    switch (ctx->Base.ClientAPI) {
+   case EGL_OPENGL_ES_API:
+      _eglLog(_EGL_DEBUG, "Create Context for ES version %d\n",
+              ctx->Base.ClientVersion);
+      /* fall-through */
    case EGL_OPENGL_API:
       /* create a softpipe context */
       ctx->pipe = softpipe_create(xdrv->screen, xdrv->winsys, NULL);
@@ -372,6 +376,8 @@ xlib_eglDestroyContext(_EGLDriver *drv, EGLDisplay dpy, EGLContext ctx)
       else {
          /* API-dependent clean-up */
          switch (context->Base.ClientAPI) {
+         case EGL_OPENGL_ES_API:
+            /* fall-through */
          case EGL_OPENGL_API:
             st_destroy_context(context->Context);
             break;
@@ -555,6 +561,36 @@ xlib_eglSwapBuffers(_EGLDriver *drv, EGLDisplay dpy, EGLSurface draw)
 
 
 /**
+ * Determine which API(s) is(are) present by looking for some specific
+ * global symbols.
+ */
+static EGLint
+find_supported_apis(void)
+{
+   EGLint mask = 0;
+   void *handle;
+
+   handle = dlopen(NULL, 0);
+
+   if (dlsym(handle, "st_api_OpenGL_ES1"))
+      mask |= EGL_OPENGL_ES_BIT;
+
+   if (dlsym(handle, "st_api_OpenGL_ES2"))
+      mask |= EGL_OPENGL_ES2_BIT;
+
+   if (dlsym(handle, "st_api_OpenGL"))
+      mask |= EGL_OPENGL_BIT;
+
+   if (dlsym(handle, "st_api_OpenVG"))
+      mask |= EGL_OPENVG_BIT;
+
+   dlclose(handle);
+
+   return mask;
+}
+
+
+/**
  * This is the main entrypoint into the driver.
  * Called by libEGL to instantiate an _EGLDriver object.
  */
@@ -584,7 +620,14 @@ _eglMain(_EGLDisplay *dpy, const char *args)
    xdrv->Base.API.MakeCurrent = xlib_eglMakeCurrent;
    xdrv->Base.API.SwapBuffers = xlib_eglSwapBuffers;
 
-   xdrv->Base.ClientAPIsMask = EGL_OPENGL_BIT /*| EGL_OPENGL_ES_BIT*/;
+   xdrv->Base.ClientAPIsMask = find_supported_apis();
+   if (xdrv->Base.ClientAPIsMask == 0x0) {
+      /* the app isn't directly linked with any EGL-supprted APIs
+       * (such as libGLESv2.so) so use an EGL utility to see what
+       * APIs might be loaded dynamically on this system.
+       */
+      xdrv->Base.ClientAPIsMask = _eglFindAPIs();
+   }      
 
    xdrv->Base.Name = "Xlib/softpipe";
 
