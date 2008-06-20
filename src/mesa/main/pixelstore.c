@@ -260,4 +260,24 @@ _mesa_init_pixelstore( GLcontext *ctx )
 #if FEATURE_EXT_pixel_buffer_object
    ctx->Unpack.BufferObj = ctx->Array.NullBufferObj;
 #endif
+
+   /*
+    * _mesa_unpack_image() returns image data in this format.  When we
+    * execute image commands (glDrawPixels(), glTexImage(), etc) from
+    * within display lists we have to be sure to set the current
+    * unpacking parameters to these values!
+    */
+   ctx->DefaultPacking.Alignment = 1;
+   ctx->DefaultPacking.RowLength = 0;
+   ctx->DefaultPacking.SkipPixels = 0;
+   ctx->DefaultPacking.SkipRows = 0;
+   ctx->DefaultPacking.ImageHeight = 0;
+   ctx->DefaultPacking.SkipImages = 0;
+   ctx->DefaultPacking.SwapBytes = GL_FALSE;
+   ctx->DefaultPacking.LsbFirst = GL_FALSE;
+   ctx->DefaultPacking.ClientStorage = GL_FALSE;
+   ctx->DefaultPacking.Invert = GL_FALSE;
+#if FEATURE_EXT_pixel_buffer_object
+   ctx->DefaultPacking.BufferObj = ctx->Array.NullBufferObj;
+#endif
 }
