@@ -76,6 +76,10 @@ enum nv30_state_index {
 #define NV30_NEW_ARRAYS		(1 << 11)
 #define NV30_NEW_UCP		(1 << 12)
 
+struct nv30_state {
+	struct nouveau_stateobj *hw[NV30_STATE_MAX];
+};
+
 struct nv30_context {
 	struct pipe_context pipe;
 
@@ -85,6 +89,9 @@ struct nv30_context {
 
 	struct draw_context *draw;
 
+	/* HW state derived from pipe states */
+	struct nv30_state state;
+
 	uint32_t dirty;
 
 	struct nv30_sampler_state *tex_sampler[PIPE_MAX_SAMPLERS];
@@ -92,6 +99,9 @@ struct nv30_context {
 	unsigned dirty_samplers;
 	unsigned fp_samplers;
 	unsigned vp_samplers;
+
+	/* Context state */
+	struct pipe_framebuffer_state framebuffer;
 
 	uint32_t rt_enable;
 	struct pipe_buffer *rt[2];
@@ -131,6 +141,14 @@ nv30_context(struct pipe_context *pipe)
 {
 	return (struct nv30_context *)pipe;
 }
+
+struct nv30_state_entry {
+	boolean (*validate)(struct nv30_context *nv30);
+	struct {
+		unsigned pipe;
+		unsigned hw;
+	} dirty;
+};
 
 extern void nv30_init_state_functions(struct nv30_context *nv30);
 extern void nv30_init_surface_functions(struct nv30_context *nv30);
