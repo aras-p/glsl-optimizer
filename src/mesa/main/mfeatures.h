@@ -53,6 +53,7 @@
 #define FEATURE_texture_fxt1  _HAVE_FULL_GL
 #define FEATURE_texture_s3tc  _HAVE_FULL_GL
 #define FEATURE_userclip  _HAVE_FULL_GL
+#define FEATURE_vertex_array_byte 0
 #define FEATURE_windowpos  _HAVE_FULL_GL
 #define FEATURE_es2_glsl 0
 
