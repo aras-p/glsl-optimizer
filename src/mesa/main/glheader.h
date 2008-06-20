@@ -145,6 +145,11 @@
 #include "GL/glext.h"
 
 
+#ifndef GL_FIXED
+#define GL_FIXED 0x140C
+#endif
+
+
 #if !defined(CAPI) && defined(WIN32) && !defined(BUILD_FOR_SNAP)
 #define CAPI _cdecl
 #endif
