@@ -40,7 +40,6 @@
 
 #include "st_context.h"
 #include "st_program.h"
-#include "st_cb_drawpixels.h"
 #include "st_cb_blit.h"
 #include "st_cb_fbo.h"
 
