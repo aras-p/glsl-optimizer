@@ -926,6 +926,13 @@ save_BlendFuncSeparateEXT(GLenum sfactorRGB, GLenum dfactorRGB,
 
 
 static void GLAPIENTRY
+save_BlendFunc(GLenum srcfactor, GLenum dstfactor)
+{
+   save_BlendFuncSeparate(srcfactor, dstfactor, srcfactor, dstfactor);
+}
+
+
+static void GLAPIENTRY
 save_BlendColor(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -7602,7 +7609,7 @@ _mesa_init_dlist_table(struct _glapi_table *table)
    SET_Accum(table, save_Accum);
    SET_AlphaFunc(table, save_AlphaFunc);
    SET_Bitmap(table, save_Bitmap);
-   SET_BlendFunc(table, _mesa_BlendFunc);       /* loops-back to BlendFuncSeparate */
+   SET_BlendFunc(table, _save_BlendFunc);
    SET_CallList(table, _mesa_save_CallList);
    SET_CallLists(table, _mesa_save_CallLists);
    SET_Clear(table, save_Clear);
