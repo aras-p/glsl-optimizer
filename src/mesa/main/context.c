@@ -149,7 +149,9 @@
 #include "glapi/glapitable.h"
 #include "shader/program.h"
 #include "shader/shader_api.h"
+#if FEATURE_ATI_fragment_shader
 #include "shader/atifragshader.h"
+#endif
 #if _HAVE_FULL_GL
 #include "math/m_translate.h"
 #include "math/m_matrix.h"
