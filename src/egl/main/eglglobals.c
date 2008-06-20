@@ -49,7 +49,7 @@ _eglNewThreadInfo(void)
    if (t) {
       t->CurrentContext = EGL_NO_CONTEXT;
       t->LastError = EGL_SUCCESS;
-      t->CurrentAPI = EGL_NONE;
+      t->CurrentAPI = EGL_OPENGL_ES_API;  /* default, per EGL spec */
    }
    return t;
 }
