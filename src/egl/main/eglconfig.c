@@ -340,8 +340,10 @@ _eglChooseConfig(_EGLDriver *drv, EGLDisplay dpy, const EGLint *attrib_list,
    qsort(configList, count, sizeof(_EGLConfig *), _eglCompareConfigs);
 
    /* copy config handles to output array */
-   for (i = 0; i < count; i++) {
-      configs[i] = configList[i]->Handle;
+   if (configs) {
+      for (i = 0; i < count; i++) {
+         configs[i] = configList[i]->Handle;
+      }
    }
 
    free(configList);
