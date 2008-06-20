@@ -8,6 +8,7 @@
 #include <string.h>
 #include "eglcontext.h"
 #include "eglconfig.h"
+#include "egldriver.h"
 #include "eglglobals.h"
 #include "eglhash.h"
 #include "egllog.h"
@@ -319,7 +320,9 @@ _eglQuerySurface(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surf,
    case EGL_CONFIG_ID:
       *value = GET_CONFIG_ATTRIB(surface->Config, EGL_CONFIG_ID);
       return EGL_TRUE;
-   /*XXX case EGL_LARGEST_PBUFFER:*/
+   case EGL_LARGEST_PBUFFER:
+      *value = drv->LargestPbuffer;
+      return EGL_TRUE;
    case EGL_SURFACE_TYPE:
       *value = surface->Type;
       return EGL_TRUE;

@@ -39,6 +39,8 @@ struct _egl_driver
    _EGLAPI API;  /**< EGL API dispatch table */
 
    _EGLExtensions Extensions;
+
+   int LargestPbuffer;
 };
 
 
