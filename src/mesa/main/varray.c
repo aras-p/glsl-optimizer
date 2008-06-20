@@ -126,6 +126,11 @@ _mesa_VertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *ptr)
          elementSize = size * sizeof(GLfixed);
          break;
 #endif
+#if FEATURE_vertex_array_byte
+      case GL_BYTE:
+         elementSize = size * sizeof(GLbyte);
+         break;
+#endif
       default:
          _mesa_error( ctx, GL_INVALID_ENUM, "glVertexPointer(type)" );
          return;
@@ -423,6 +428,11 @@ _mesa_TexCoordPointer(GLint size, GLenum type, GLsizei stride,
 #if FEATURE_fixedpt
       case GL_FIXED:
          elementSize = size * sizeof(GLfixed);
+         break;
+#endif
+#if FEATURE_vertex_array_byte
+      case GL_BYTE:
+         elementSize = size * sizeof(GLbyte);
          break;
 #endif
       default:

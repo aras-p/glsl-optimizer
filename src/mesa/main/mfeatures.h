@@ -53,6 +53,7 @@
 #define FEATURE_texture_fxt1  _HAVE_FULL_GL
 #define FEATURE_texture_s3tc  _HAVE_FULL_GL
 #define FEATURE_userclip  _HAVE_FULL_GL
+#define FEATURE_vertex_array_byte 0
 
 #define FEATURE_ARB_occlusion_query  _HAVE_FULL_GL
 #define FEATURE_ARB_fragment_program  _HAVE_FULL_GL
