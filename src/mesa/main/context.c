@@ -441,9 +441,7 @@ alloc_shared_state( GLcontext *ctx )
 
    ss->DisplayList = _mesa_NewHashTable();
    ss->TexObjects = _mesa_NewHashTable();
-#if FEATURE_NV_vertex_program || FEATURE_NV_fragment_program
    ss->Programs = _mesa_NewHashTable();
-#endif
 
 #if FEATURE_ARB_vertex_program
    ss->DefaultVertexProgram = (struct gl_vertex_program *)
@@ -533,10 +531,8 @@ alloc_shared_state( GLcontext *ctx )
       _mesa_DeleteHashTable(ss->DisplayList);
    if (ss->TexObjects)
       _mesa_DeleteHashTable(ss->TexObjects);
-#if FEATURE_NV_vertex_program
    if (ss->Programs)
       _mesa_DeleteHashTable(ss->Programs);
-#endif
 #if FEATURE_ARB_vertex_program
    _mesa_reference_vertprog(ctx, &ss->DefaultVertexProgram, NULL);
 #endif
@@ -723,10 +719,9 @@ free_shared_state( GLcontext *ctx, struct gl_shared_state *ss )
    _mesa_DeleteHashTable(ss->ShaderObjects);
 #endif
 
-#if defined(FEATURE_NV_vertex_program) || defined(FEATURE_NV_fragment_program)
    _mesa_HashDeleteAll(ss->Programs, delete_program_cb, ctx);
    _mesa_DeleteHashTable(ss->Programs);
-#endif
+
 #if FEATURE_ARB_vertex_program
    _mesa_reference_vertprog(ctx, &ss->DefaultVertexProgram, NULL);
 #endif
