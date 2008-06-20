@@ -31,6 +31,7 @@
 #include "i830_reg.h"
 #include "intel_batchbuffer.h"
 #include "intel_regions.h"
+#include "intel_tris.h"
 #include "tnl/t_context.h"
 #include "tnl/t_vertex.h"
 
@@ -435,7 +436,8 @@ i830_emit_state(struct intel_context *intel)
     * Set the space as LOOP_CLIPRECTS now, since that's what our primitives
     * will be emitted under.
     */
-   intel_batchbuffer_require_space(intel->batch, get_state_size(state) + 8,
+   intel_batchbuffer_require_space(intel->batch,
+				   get_state_size(state) + INTEL_PRIM_EMIT_SIZE,
 				   LOOP_CLIPRECTS);
    count = 0;
  again:
@@ -674,6 +676,9 @@ i830_new_batch(struct intel_context *intel)
 {
    struct i830_context *i830 = i830_context(&intel->ctx);
    i830->state.emitted = 0;
+
+   /* Signal that we should put new vertices into a new vertex buffer. */
+   intel->prim.needs_new_vb = GL_TRUE;
 
    /* Check that we didn't just wrap our batchbuffer at a bad time. */
    assert(!intel->no_batch_wrap);

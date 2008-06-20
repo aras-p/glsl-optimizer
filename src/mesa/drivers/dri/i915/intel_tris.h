@@ -30,7 +30,9 @@
 
 #include "mtypes.h"
 
-
+#define INTEL_VB_SIZE		(8 * 1024)
+/** 3 dwords of state_immediate and 2 of 3dprim, in intel_flush_prim */
+#define INTEL_PRIM_EMIT_SIZE	(5 * 4)
 
 #define _INTEL_NEW_RENDERSTATE (_DD_NEW_LINE_STIPPLE |		\
 			       _DD_NEW_TRI_UNFILLED |		\
@@ -44,11 +46,8 @@ extern void intelInitTriFuncs(GLcontext * ctx);
 
 extern void intelChooseRenderState(GLcontext * ctx);
 
-extern void intelStartInlinePrimitive(struct intel_context *intel,
-                                      GLuint prim, GLuint flags);
-extern void intelWrapInlinePrimitive(struct intel_context *intel);
-
-GLuint *intelExtendInlinePrimitive(struct intel_context *intel,
-                                   GLuint dwords);
+void intel_set_prim(struct intel_context *intel, uint32_t prim);
+GLuint *intel_get_prim_space(struct intel_context *intel, unsigned int count);
+void intel_flush_prim(struct intel_context *intel);
 
 #endif

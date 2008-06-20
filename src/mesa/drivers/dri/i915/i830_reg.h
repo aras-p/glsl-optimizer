@@ -494,10 +494,6 @@
 #define VFT1_TEX0_FMT(x)	(x)
 #define VFT1_TEX0_MASK          3
 #define VFT1_TEX1_SHIFT         2
-#define TEXCOORDFMT_2D		0
-#define TEXCOORDFMT_3D		1
-#define TEXCOORDFMT_4D		2
-#define TEXCOORDFMT_1D		3
 
 /*New stuff picked up along the way */
 
