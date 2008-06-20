@@ -47,6 +47,8 @@ struct softpipe_texture
    /* The data is held here:
     */
    struct pipe_buffer *buffer;
+
+   boolean modified;
 };
 
 

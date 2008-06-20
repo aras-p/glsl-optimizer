@@ -207,12 +207,19 @@ softpipe_get_tex_surface(struct pipe_screen *screen,
        * done with the CPU.  Let's adjust the flags to take that into
        * account.
        */
-      if (ps->usage & PIPE_BUFFER_USAGE_GPU_WRITE)
-         ps->usage |= PIPE_BUFFER_USAGE_CPU_WRITE;
+      if (ps->usage & PIPE_BUFFER_USAGE_GPU_WRITE) {
+         /* GPU_WRITE means "render" and that can involve reads (blending) */
+         ps->usage |= PIPE_BUFFER_USAGE_CPU_WRITE | PIPE_BUFFER_USAGE_CPU_READ;
+      }
 
       if (ps->usage & PIPE_BUFFER_USAGE_GPU_READ)
          ps->usage |= PIPE_BUFFER_USAGE_CPU_READ;
 
+      if (ps->usage & (PIPE_BUFFER_USAGE_CPU_WRITE |
+                       PIPE_BUFFER_USAGE_GPU_WRITE)) {
+         /* Mark the surface as dirty.  The tile cache will look for this. */
+         spt->modified = TRUE;
+      }
 
       pipe_texture_reference(&ps->texture, pt); 
       ps->face = face;
