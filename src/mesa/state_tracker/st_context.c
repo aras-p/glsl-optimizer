@@ -38,15 +38,21 @@
 #include "st_context.h"
 #include "st_cb_accum.h"
 #include "st_cb_bitmap.h"
+#if FEATURE_EXT_framebuffer_blit
 #include "st_cb_blit.h"
+#endif
 #include "st_cb_bufferobjects.h"
 #include "st_cb_clear.h"
+#if FEATURE_drawpix
 #include "st_cb_drawpixels.h"
+#include "st_cb_rasterpos.h"
+#endif
 #include "st_cb_fbo.h"
+#if FEATURE_feedback
 #include "st_cb_feedback.h"
+#endif
 #include "st_cb_program.h"
 #include "st_cb_queryobj.h"
-#include "st_cb_rasterpos.h"
 #include "st_cb_readpixels.h"
 #include "st_cb_texture.h"
 #include "st_cb_flush.h"
@@ -114,7 +120,9 @@ st_create_context_priv( GLcontext *ctx, struct pipe_context *pipe )
    st_init_clear(st);
    st_init_draw( st );
    st_init_generate_mipmap(st);
+#if FEATURE_EXT_framebuffer_blit
    st_init_blit(st);
+#endif
 
    for (i = 0; i < PIPE_MAX_SAMPLERS; i++)
       st->state.sampler_list[i] = &st->state.samplers[i];
