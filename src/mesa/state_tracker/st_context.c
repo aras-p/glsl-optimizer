@@ -38,9 +38,7 @@
 #include "st_context.h"
 #include "st_cb_accum.h"
 #include "st_cb_bitmap.h"
-#if FEATURE_EXT_framebuffer_blit
 #include "st_cb_blit.h"
-#endif
 #include "st_cb_bufferobjects.h"
 #include "st_cb_clear.h"
 #if FEATURE_drawpix
@@ -120,9 +118,7 @@ st_create_context_priv( GLcontext *ctx, struct pipe_context *pipe )
    st_init_clear(st);
    st_init_draw( st );
    st_init_generate_mipmap(st);
-#if FEATURE_EXT_framebuffer_blit
    st_init_blit(st);
-#endif
 
    for (i = 0; i < PIPE_MAX_SAMPLERS; i++)
       st->state.sampler_list[i] = &st->state.samplers[i];
