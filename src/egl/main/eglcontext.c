@@ -33,6 +33,8 @@ _eglInitContext(_EGLDriver *drv, EGLDisplay dpy, _EGLContext *ctx,
       return EGL_FALSE;
    }
 
+   memset(ctx, 0, sizeof(_EGLContext));
+
    ctx->ClientVersion = 1; /* the default, per EGL spec */
 
    for (i = 0; attrib_list && attrib_list[i] != EGL_NONE; i++) {
@@ -47,7 +49,6 @@ _eglInitContext(_EGLDriver *drv, EGLDisplay dpy, _EGLContext *ctx,
       }
    }
 
-   memset(ctx, 0, sizeof(_EGLContext));
    ctx->Display = display;
    ctx->Config = conf;
    ctx->DrawSurface = EGL_NO_SURFACE;
@@ -188,8 +189,11 @@ _eglQueryContext(_EGLDriver *drv, EGLDisplay dpy, EGLContext ctx,
 #ifdef EGL_VERSION_1_2
    case EGL_CONTEXT_CLIENT_TYPE:
       *value = c->ClientAPI;
-      return EGL_FALSE;
+      return EGL_TRUE;
 #endif /* EGL_VERSION_1_2 */
+   case EGL_CONTEXT_CLIENT_VERSION:
+      *value = c->ClientVersion;
+      return EGL_TRUE;
    default:
       _eglError(EGL_BAD_ATTRIBUTE, "eglQueryContext");
       return EGL_FALSE;
