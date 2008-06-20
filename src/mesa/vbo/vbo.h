@@ -129,5 +129,8 @@ _vbo_Normal3f(GLfloat x, GLfloat y, GLfloat z);
 void
 _vbo_MultiTexCoord4f(GLenum target, GLfloat s, GLfloat t, GLfloat r, GLfloat q);
 
+void
+_vbo_Materialfv(GLenum face, GLenum pname, const GLfloat *params);
+
 
 #endif

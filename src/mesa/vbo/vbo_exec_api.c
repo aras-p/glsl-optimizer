@@ -790,3 +790,8 @@ _vbo_MultiTexCoord4f(GLenum target, GLfloat s, GLfloat t, GLfloat r, GLfloat q)
    vbo_MultiTexCoord4f(target, s, t, r, q);
 }
 
+void
+_vbo_Materialfv(GLenum face, GLenum pname, const GLfloat *params)
+{
+   vbo_Materialfv(face, pname, params);
+}
