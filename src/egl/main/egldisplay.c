@@ -68,8 +68,9 @@ _EGLDisplay *
 _eglLookupDisplay(EGLDisplay dpy)
 {
    EGLuint key = (EGLuint) dpy;
-   _EGLDisplay *d = (_EGLDisplay *) _eglHashLookup(_eglGlobal.Displays, key);
-   return d;
+   if (!_eglGlobal.Displays)
+      return NULL;
+   return (_EGLDisplay *) _eglHashLookup(_eglGlobal.Displays, key);
 }
 
 
