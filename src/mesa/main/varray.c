@@ -116,6 +116,11 @@ _mesa_VertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *ptr)
       case GL_DOUBLE:
          elementSize = size * sizeof(GLdouble);
          break;
+#if FEATURE_fixedpt
+      case GL_FIXED:
+         elementSize = size * sizeof(GLfixed);
+         break;
+#endif
       default:
          _mesa_error( ctx, GL_INVALID_ENUM, "glVertexPointer(type)" );
          return;
@@ -161,6 +166,11 @@ _mesa_NormalPointer(GLenum type, GLsizei stride, const GLvoid *ptr )
       case GL_DOUBLE:
          elementSize = 3 * sizeof(GLdouble);
          break;
+#if FEATURE_fixedpt
+      case GL_FIXED:
+         elementSize = 3 * sizeof(GLfixed);
+         break;
+#endif
       default:
          _mesa_error( ctx, GL_INVALID_ENUM, "glNormalPointer(type)" );
          return;
@@ -219,6 +229,11 @@ _mesa_ColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *ptr)
       case GL_DOUBLE:
          elementSize = size * sizeof(GLdouble);
          break;
+#if FEATURE_fixedpt
+      case GL_FIXED:
+         elementSize = size * sizeof(GLfixed);
+         break;
+#endif
       default:
          _mesa_error( ctx, GL_INVALID_ENUM, "glColorPointer(type)" );
          return;
@@ -400,6 +415,11 @@ _mesa_TexCoordPointer(GLint size, GLenum type, GLsizei stride,
       case GL_DOUBLE:
          elementSize = size * sizeof(GLdouble);
          break;
+#if FEATURE_fixedpt
+      case GL_FIXED:
+         elementSize = size * sizeof(GLfixed);
+         break;
+#endif
       default:
          _mesa_error( ctx, GL_INVALID_ENUM, "glTexCoordPointer(type)" );
          return;
