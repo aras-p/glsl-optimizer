@@ -996,6 +996,8 @@ init_attrib_groups(GLcontext *ctx)
 #endif
 #if FEATURE_feedback
    _mesa_init_feedback( ctx );
+#else
+   ctx->RenderMode = GL_RENDER;
 #endif
    _mesa_init_fog( ctx );
 #if FEATURE_histogram
