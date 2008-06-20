@@ -413,7 +413,10 @@ xlib_eglMakeCurrent(_EGLDriver *drv, EGLDisplay dpy,
                    (draw_surf ? draw_surf->Framebuffer : NULL),
                    (read_surf ? read_surf->Framebuffer : NULL));
 
-   check_and_update_buffer_size(draw_surf);
+   if (draw_surf)
+      check_and_update_buffer_size(draw_surf);
+   if (read_surf && read_surf != draw_surf)
+      check_and_update_buffer_size(draw_surf);
 
    return EGL_TRUE;
 }
