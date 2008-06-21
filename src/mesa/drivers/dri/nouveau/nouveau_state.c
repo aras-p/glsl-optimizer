@@ -38,9 +38,9 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "mtypes.h"
 #include "colormac.h"
 
-static __inline__ GLuint nouveauPackColor(GLuint format,
-				       GLubyte r, GLubyte g,
-				       GLubyte b, GLubyte a)
+static INLINE GLuint nouveauPackColor(GLuint format,
+                                      GLubyte r, GLubyte g,
+                                      GLubyte b, GLubyte a)
 {
    switch (format) {
    case 2:

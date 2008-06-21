@@ -137,7 +137,7 @@ do {								\
    memcpy( rmesa->hw.ATOM.lastcmd, rmesa->hw.ATOM.cmd,	\
 	   rmesa->hw.ATOM.cmd_size * 4)
 
-static __inline int R200_DB_STATECHANGE( 
+static INLINE int R200_DB_STATECHANGE( 
    r200ContextPtr rmesa,
    struct r200_state_atom *atom )
 {
@@ -183,7 +183,7 @@ do {							\
  * and hang on to the lock until the critical section is finished and we flush
  * the buffer again and unlock.
  */
-static __inline void r200EnsureCmdBufSpace( r200ContextPtr rmesa, int bytes )
+static INLINE void r200EnsureCmdBufSpace( r200ContextPtr rmesa, int bytes )
 {
    if (rmesa->store.cmd_used + bytes > R200_CMD_BUF_SZ)
       r200FlushCmdBuf( rmesa, __FUNCTION__ );
@@ -192,7 +192,7 @@ static __inline void r200EnsureCmdBufSpace( r200ContextPtr rmesa, int bytes )
 
 /* Alloc space in the command buffer
  */
-static __inline char *r200AllocCmdBuf( r200ContextPtr rmesa,
+static INLINE char *r200AllocCmdBuf( r200ContextPtr rmesa,
 					 int bytes, const char *where )
 {
    char * head;
