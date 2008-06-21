@@ -55,7 +55,7 @@ savageSetSpanFunctions(driRenderbuffer *rb, const GLvisual *vis,
  *
  * Note that there is no encoding for numbers < 2^-16.
  */
-static __inline GLuint savageEncodeFloat16( GLdouble x )
+static INLINE GLuint savageEncodeFloat16( GLdouble x )
 {
     GLint r = (GLint)(x * 0x10000000);
     GLint exp = 0;
@@ -67,7 +67,7 @@ static __inline GLuint savageEncodeFloat16( GLdouble x )
     }
     return exp > 0xf ? 0xffff : (r - 0x1000) | (exp << 12);
 }
-static __inline GLdouble savageDecodeFloat16( GLuint x )
+static INLINE GLdouble savageDecodeFloat16( GLuint x )
 {
     static const GLdouble pow2[16] = {
 	1.0/(1<<28), 1.0/(1<<27), 1.0/(1<<26), 1.0/(1<<25),
@@ -92,7 +92,7 @@ static __inline GLdouble savageDecodeFloat16( GLuint x )
  *
  * Details analogous to the 16-bit format.
  */
-static __inline GLuint savageEncodeFloat24( GLdouble x )
+static INLINE GLuint savageEncodeFloat24( GLdouble x )
 {
     int64_t r = (int64_t)(x * ((int64_t)1 << (19+32)));
     GLint exp = 0;
@@ -105,7 +105,7 @@ static __inline GLuint savageEncodeFloat24( GLdouble x )
     return exp > 0x1f ? 0xffffff : (r - 0x80000) | (exp << 19);
 }
 #define _1 (int64_t)1
-static __inline GLdouble savageDecodeFloat24( GLuint x )
+static INLINE GLdouble savageDecodeFloat24( GLuint x )
 {
     static const GLdouble pow2[32] = {
 	1.0/(_1<<51), 1.0/(_1<<50), 1.0/(_1<<49), 1.0/(_1<<48),

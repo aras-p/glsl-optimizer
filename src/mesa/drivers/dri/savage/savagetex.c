@@ -101,7 +101,7 @@ static const savageTileInfo tileInfo_s3d_s4[5] = {
  * \param w   width in bytes
  */
 #define SUBTILE_FUNC(w,h)					\
-static __inline GLubyte *savageUploadSubtile_##w##x##h		\
+static INLINE GLubyte *savageUploadSubtile_##w##x##h		\
 (GLubyte *dest, GLubyte *src, GLuint srcStride)			\
 {								\
     GLuint y;							\
