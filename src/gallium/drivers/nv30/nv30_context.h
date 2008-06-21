@@ -76,6 +76,13 @@ enum nv30_state_index {
 #define NV30_NEW_ARRAYS		(1 << 11)
 #define NV30_NEW_UCP		(1 << 12)
 
+/* TODO: rename when removing the old state emitter */
+struct nv30_blend_state_new {
+	struct pipe_blend_state pipe;
+	struct nouveau_stateobj *so;
+};
+
+
 struct nv30_state {
 	struct nouveau_stateobj *hw[NV30_STATE_MAX];
 };
@@ -101,6 +108,8 @@ struct nv30_context {
 	unsigned vp_samplers;
 
 	/* Context state */
+	struct nv30_blend_state_new *blend;
+	struct pipe_blend_color blend_colour;
 	struct pipe_framebuffer_state framebuffer;
 
 	uint32_t rt_enable;

@@ -13,6 +13,7 @@ DRIVER_SOURCES = \
 	nv30_query.c \
 	nv30_screen.c \
 	nv30_state.c \
+	nv30_state_blend.c \
 	nv30_state_emit.c \
 	nv30_state_fb.c \
 	nv30_surface.c \
