@@ -599,7 +599,6 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
    case PCI_CHIP_RV370_5B63:
    case PCI_CHIP_RV370_5B64:
    case PCI_CHIP_RV370_5B65:
-   case PCI_CHIP_RV370_5657:
    case PCI_CHIP_RV380_3150:
    case PCI_CHIP_RV380_3152:
    case PCI_CHIP_RV380_3154:
@@ -656,6 +655,7 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
    case PCI_CHIP_RV410_564F:
    case PCI_CHIP_RV410_5652:
    case PCI_CHIP_RV410_5653:
+   case PCI_CHIP_RV410_5657:
    case PCI_CHIP_RV410_5E48:
    case PCI_CHIP_RV410_5E4A:
    case PCI_CHIP_RV410_5E4B:
