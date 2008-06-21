@@ -37,7 +37,7 @@
 
 #if defined( __powerpc__ )
 
-static __inline__ u_int32_t
+static INLINE u_int32_t
 read_MMIO_LE32( volatile void * base, unsigned long offset )
 {
    u_int32_t val;
@@ -50,7 +50,7 @@ read_MMIO_LE32( volatile void * base, unsigned long offset )
 
 #else
 
-static __inline__ u_int32_t
+static INLINE u_int32_t
 read_MMIO_LE32( volatile void * base, unsigned long offset )
 {
    volatile u_int32_t * p = (volatile u_int32_t *) (((volatile char *) base) + offset);
