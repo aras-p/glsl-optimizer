@@ -74,7 +74,7 @@
 #include "eval.h"
 #endif
 #include "get.h"
-#if FEATURE_feadback
+#if FEATURE_feedback
 #include "feedback.h"
 #endif
 #include "fog.h"
@@ -222,7 +222,7 @@ _mesa_init_exec_table(struct _glapi_table *exec)
    SET_CopyPixels(exec, _mesa_CopyPixels);
    SET_DrawPixels(exec, _mesa_DrawPixels);
 #endif
-#if FEATURE_feadback
+#if FEATURE_feedback
    SET_InitNames(exec, _mesa_InitNames);
    SET_FeedbackBuffer(exec, _mesa_FeedbackBuffer);
    SET_LoadName(exec, _mesa_LoadName);
