@@ -685,7 +685,7 @@ void brw_upload_constant_buffer_state(struct brw_context *brw);
  * Inline conversion functions.  These are better-typed than the
  * macros used previously:
  */
-static inline struct brw_context *
+static INLINE struct brw_context *
 brw_context( GLcontext *ctx )
 {
    return (struct brw_context *)ctx;

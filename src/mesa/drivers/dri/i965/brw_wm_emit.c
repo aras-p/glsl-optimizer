@@ -39,7 +39,7 @@
 /* Not quite sure how correct this is - need to understand horiz
  * vs. vertical strides a little better.
  */
-static __inline struct brw_reg sechalf( struct brw_reg reg )
+static INLINE struct brw_reg sechalf( struct brw_reg reg )
 {
    if (reg.vstride)
       reg.nr++;
