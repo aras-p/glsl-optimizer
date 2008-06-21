@@ -51,7 +51,7 @@ nv30_blend_state_bind(struct pipe_context *pipe, void *hwcso)
 	OUT_RING  (cb->b_enable);
 	OUT_RING  (cb->b_srcfunc);
 	OUT_RING  (cb->b_dstfunc);
-	BEGIN_RING(rankine, NV34TCL_BLEND_FUNC_EQUATION, 1);
+	BEGIN_RING(rankine, NV34TCL_BLEND_EQUATION, 1);
 	OUT_RING  (cb->b_eqn);
 
 	BEGIN_RING(rankine, NV34TCL_COLOR_MASK, 1);
@@ -531,7 +531,7 @@ nv30_set_blend_color(struct pipe_context *pipe,
 {
 	struct nv30_context *nv30 = nv30_context(pipe);
 
-	BEGIN_RING(rankine, NV34TCL_BLEND_FUNC_COLOR, 1);
+	BEGIN_RING(rankine, NV34TCL_BLEND_COLOR, 1);
 	OUT_RING  ((float_to_ubyte(bcol->color[3]) << 24) |
 		   (float_to_ubyte(bcol->color[0]) << 16) |
 		   (float_to_ubyte(bcol->color[1]) <<  8) |
