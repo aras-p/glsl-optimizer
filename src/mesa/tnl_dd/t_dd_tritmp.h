@@ -389,7 +389,7 @@ static void TAG(triangle)( GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2 )
 
 #if DO_QUAD
 #if DO_FULL_QUAD
-static void TAG(quad)( GLcontext *ctx,
+static void TAG(quadr)( GLcontext *ctx,
 		       GLuint e0, GLuint e1, GLuint e2, GLuint e3 )
 {
    struct vertex_buffer *VB = &TNL_CONTEXT( ctx )->vb;
@@ -673,7 +673,7 @@ static void TAG(quad)( GLcontext *ctx,
    }
 }
 #else
-static void TAG(quad)( GLcontext *ctx, GLuint e0,
+static void TAG(quadr)( GLcontext *ctx, GLuint e0,
 		       GLuint e1, GLuint e2, GLuint e3 )
 {
    if (DO_UNFILLED) {
@@ -765,7 +765,7 @@ static void TAG(points)( GLcontext *ctx, GLuint first, GLuint last )
 static void TAG(init)( void )
 {
 #if DO_QUAD
-   TAB[IND].quad = TAG(quad);
+   TAB[IND].quad = TAG(quadr);
 #endif
 #if DO_TRI
    TAB[IND].triangle = TAG(triangle);
