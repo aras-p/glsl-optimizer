@@ -123,7 +123,7 @@ static const GLubyte *viaGetString(GLcontext *ctx, GLenum name)
  * 
  * \returns A pixel width that meets the alignment requirements.
  */
-static __inline__ unsigned
+static INLINE unsigned
 buffer_align( unsigned width )
 {
     return (width + 0x0f) & ~0x0f;

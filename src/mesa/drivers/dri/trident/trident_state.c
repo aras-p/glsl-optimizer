@@ -51,9 +51,9 @@
 #define TRIDENTPACKCOLOR4444(r, g, b, a)					\
    ((((a) & 0xf0) << 8) | (((r) & 0xf0) << 4) | ((g) & 0xf0) | ((b) >> 4))
 
-static __inline__ GLuint tridentPackColor( GLuint cpp,
-					  GLubyte r, GLubyte g,
-					  GLubyte b, GLubyte a )
+static INLINE GLuint tridentPackColor( GLuint cpp,
+                                       GLubyte r, GLubyte g,
+                                       GLubyte b, GLubyte a )
 {
    switch ( cpp ) {
    case 2:

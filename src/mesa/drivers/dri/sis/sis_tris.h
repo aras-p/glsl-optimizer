@@ -48,7 +48,7 @@ do {							\
       sisFlushPrims(smesa);				\
 } while (0)
 
-static __inline GLuint *sisAllocDmaLow(sisContextPtr smesa, int bytes)
+static INLINE GLuint *sisAllocDmaLow(sisContextPtr smesa, int bytes)
 {
    GLuint *start;
 
