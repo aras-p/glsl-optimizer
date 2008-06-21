@@ -98,3 +98,6 @@ DRI_DRIVER_INSTALL_DIR = @DRI_DRIVER_INSTALL_DIR@
 
 # Where libGL will look for DRI hardware drivers
 DRI_DRIVER_SEARCH_DIR = $(DRI_DRIVER_INSTALL_DIR)
+
+# Additional per-platform configuration settings
+@EXTRA_CONFIG_LINES@

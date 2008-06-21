@@ -29,6 +29,18 @@ AC_CHECK_PROGS([MAKE], [gmake make])
 AC_PATH_PROG([MKDEP], [makedepend])
 AC_PATH_PROG([SED], [sed])
 
+dnl Platform-specific program settings
+EXTRA_CONFIG_LINES=""
+AC_SUBST([EXTRA_CONFIG_LINES])
+case "$host_os" in
+solaris*)
+    # Solaris /bin/sh is too old/non-POSIX compliant
+    AC_PATH_PROGS(POSIX_SHELL, [ksh93 ksh sh])
+    EXTRA_CONFIG_LINES="SHELL=$POSIX_SHELL"
+    ;;
+esac
+
+
 MKDEP_OPTIONS=-fdepend
 dnl Ask gcc where it's keeping its secret headers
 if test "x$GCC" = xyes; then
@@ -74,6 +86,9 @@ if test "x$GCC" = xyes; then
     DEFINES="$DEFINES -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_BSD_SOURCE"
 fi
     DEFINES="$DEFINES -D_SVID_SOURCE -D_GNU_SOURCE -DPTHREADS -DHAVE_POSIX_MEMALIGN"
+    ;;
+solaris*)
+    DEFINES="$DEFINES -DPTHREADS -DSVR4"
     ;;
 esac
 
@@ -325,6 +340,16 @@ if test "x$enable_selinux" = "xyes"; then
     DEFINES="$DEFINES -DMESA_SELINUX"
 fi
 
+dnl OS-specific libraries
+OS_LIBS=""
+case "$host_os" in
+solaris*)
+    OS_LIBS="-lc"
+    if test "x$GXX" != xyes; then
+        OS_CPLUSPLUS_LIBS="-lCrun $OS_LIBS"
+    fi
+    ;;
+esac
 
 dnl
 dnl Driver configuration. Options are xlib, dri and osmesa right now.
@@ -478,7 +503,7 @@ xlib)
         X11_INCLUDES="$X11_INCLUDES $X_CFLAGS"
         GL_LIB_DEPS="$X_LIBS -lX11 -lXext"
     fi
-    GL_LIB_DEPS="$GL_LIB_DEPS $SELINUX_LIBS -lm -lpthread"
+    GL_LIB_DEPS="$GL_LIB_DEPS $SELINUX_LIBS -lm -lpthread $OS_LIBS"
 
     # if static, move the external libraries to the programs
     # and empty the libraries for libGL
@@ -522,11 +547,11 @@ dri)
     fi
 
     # need DRM libs, -lpthread, etc.
-    GL_LIB_DEPS="$GL_LIB_DEPS $LIBDRM_LIBS -lm -lpthread $DLOPEN_LIBS"
+    GL_LIB_DEPS="$GL_LIB_DEPS $LIBDRM_LIBS -lm -lpthread $DLOPEN_LIBS $OS_LIBS"
     ;;
 osmesa)
     # No libGL for osmesa
-    GL_LIB_DEPS=""
+    GL_LIB_DEPS="$OS_LIBS"
     ;;
 esac
 AC_SUBST([GL_LIB_DEPS])
@@ -671,6 +696,13 @@ if test "$mesa_driver" = dri; then
                 unichrome savage sis swrast"
         fi
         ;;
+    solaris*)
+        DEFINES="$DEFINES -DUSE_EXTERNAL_DXTN_LIB=1 -DIN_DRI_DRIVER"
+        DEFINES="$DEFINES -DGLX_INDIRECT_RENDERING"
+        if test "x$driglx_direct" = xyes; then
+            DEFINES="$DEFINES -DGLX_DIRECT_RENDERING"
+        fi
+        ;;
     esac
 
     # default drivers
@@ -750,7 +782,7 @@ AC_SUBST([OSMESA_LIB])
 
 case "$mesa_driver" in
 osmesa)
-    # only link librararies with osmesa if shared
+    # only link libraries with osmesa if shared
     if test "$enable_static" = no; then
         OSMESA_LIB_DEPS="-lm -lpthread $SELINUX_LIBS"
     else
@@ -761,7 +793,7 @@ osmesa)
 *)
     # Link OSMesa to libGL otherwise
     OSMESA_LIB_DEPS=""
-    # only link librararies with osmesa if shared
+    # only link libraries with osmesa if shared
     if test "$enable_static" = no; then
         OSMESA_MESA_DEPS='-l$(GL_LIB)'
     else
@@ -769,6 +801,9 @@ osmesa)
     fi
     ;;
 esac
+if test "$enable_static" = no; then
+    OSMESA_LIB_DEPS="$OSMESA_LIB_DEPS $OS_LIBS"
+fi
 AC_SUBST([OSMESA_LIB_DEPS])
 AC_SUBST([OSMESA_MESA_DEPS])
 
@@ -812,6 +847,9 @@ if test "x$enable_glu" = xyes; then
         ;;
     esac
 fi
+if test "$enable_static" = no; then
+    GLU_LIB_DEPS="$GLU_LIB_DEPS $OS_CPLUSPLUS_LIBS"
+fi
 AC_SUBST([GLU_LIB_DEPS])
 AC_SUBST([GLU_MESA_DEPS])
 
@@ -841,6 +879,7 @@ if test "x$enable_glw" = xyes; then
     # If static, empty GLW_LIB_DEPS and add libs for programs to link
     if test "$enable_static" = no; then
         GLW_MESA_DEPS='-l$(GL_LIB)'
+        GLW_LIB_DEPS="$GLW_LIB_DEPS $OS_LIBS"
     else
         APP_LIB_DEPS="$APP_LIB_DEPS $GLW_LIB_DEPS"
         GLW_LIB_DEPS=""
@@ -888,7 +927,7 @@ if test "x$enable_glut" = xyes; then
         # should check these...
         GLUT_LIB_DEPS="$X_LIBS -lX11 -lXmu -lXi"
     fi
-    GLUT_LIB_DEPS="$GLUT_LIB_DEPS -lm"
+    GLUT_LIB_DEPS="$GLUT_LIB_DEPS -lm $OS_LIBS"
 
     # If glut is available, we can build most programs
     if test "$with_demos" = yes; then
@@ -914,7 +953,14 @@ dnl    Only libm is added here if necessary as the libraries should
 dnl    be pulled in by the linker
 dnl
 if test "x$APP_LIB_DEPS" = x; then
-    APP_LIB_DEPS="-lm"
+    case "$host_os" in
+    solaris*)
+        APP_LIB_DEPS="-lX11 -lsocket -lnsl -lm"
+        ;;
+    *)
+        APP_LIB_DEPS="-lm"
+        ;;
+    esac
 fi
 AC_SUBST([APP_LIB_DEPS])
 AC_SUBST([PROGRAM_DIRS])
