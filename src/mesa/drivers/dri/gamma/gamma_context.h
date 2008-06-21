@@ -384,7 +384,7 @@ struct gamma_context {
     int                 TextureCount;
 };
 
-static __inline GLuint gammaPackColor( GLuint cpp,
+static INLINE GLuint gammaPackColor( GLuint cpp,
 					GLubyte r, GLubyte g,
 					GLubyte b, GLubyte a )
 {

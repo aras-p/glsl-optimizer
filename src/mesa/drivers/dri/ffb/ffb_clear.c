@@ -79,7 +79,7 @@ struct ff_fixups {
 /* Compute fixups of non-page aligned areas after a page fill.
  * Return the number of fixups needed.
  */
-static __inline__ int
+static INLINE int
 CreatorComputePageFillFixups(struct ff_fixups *fixups,
 			     int x, int y, int w, int h,
 			     int paligned_x, int paligned_y,

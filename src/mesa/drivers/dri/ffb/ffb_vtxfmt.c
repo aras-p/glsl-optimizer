@@ -42,10 +42,6 @@
 
 #include "ffb_vtxfmt.h"
 
-#ifndef __GNUC__
-#define __inline  /**/
-#endif
-
 #define TNL_VERTEX			ffbTnlVertex
 
 #define INTERP_RGBA(t, out, a, b)		\
@@ -60,7 +56,7 @@ do {						\
 
 /* Color functions: */
 
-static __inline void ffb_recalc_base_color(GLcontext *ctx)
+static INLINE void ffb_recalc_base_color(GLcontext *ctx)
 {
 	ffbContextPtr fmesa = FFB_CONTEXT(ctx);
 	struct gl_light *light;

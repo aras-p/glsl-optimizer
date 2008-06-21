@@ -64,7 +64,7 @@ void i810DestroyTexObj(i810ContextPtr imesa, i810TextureObjectPtr t)
 /* From linux kernel i386 header files, copes with odd sizes better
  * than COPY_DWORDS would:
  */
-static __inline__ void * __memcpy(void * to, const void * from, size_t n)
+static INLINE void * __memcpy(void * to, const void * from, size_t n)
 {
 int d0, d1, d2;
 __asm__ __volatile__(

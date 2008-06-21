@@ -129,13 +129,13 @@ static const GLuint hw_prim[GL_POLYGON+1] = {
    B_PrimType_Polygon
 };
 
-static __inline void gammaStartPrimitive( gammaContextPtr gmesa, GLenum prim )
+static INLINE void gammaStartPrimitive( gammaContextPtr gmesa, GLenum prim )
 {
    CHECK_DMA_BUFFER(gmesa, 1);
    WRITE(gmesa->buf, Begin, gmesa->Begin | hw_prim[prim]);
 }
 
-static __inline void gammaEndPrimitive( gammaContextPtr gmesa )
+static INLINE void gammaEndPrimitive( gammaContextPtr gmesa )
 {
    GLcontext *ctx = gmesa->glCtx;
 
