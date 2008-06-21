@@ -584,7 +584,7 @@ static GLuint emit_const4fv(struct r300_pfs_compile_state *cs,
 	return reg;
 }
 
-static inline GLuint negate(GLuint r)
+static INLINE GLuint negate(GLuint r)
 {
 	REG_NEGS(r);
 	REG_NEGV(r);
@@ -594,13 +594,13 @@ static inline GLuint negate(GLuint r)
 /* Hack, to prevent clobbering sources used multiple times when
  * emulating non-native instructions
  */
-static inline GLuint keep(GLuint r)
+static INLINE GLuint keep(GLuint r)
 {
 	REG_SET_NO_USE(r, GL_TRUE);
 	return r;
 }
 
-static inline GLuint absolute(GLuint r)
+static INLINE GLuint absolute(GLuint r)
 {
 	REG_ABS(r);
 	return r;

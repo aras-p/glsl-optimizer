@@ -201,7 +201,7 @@ static const GLfloat LIT[] = {127.999999,
 	127.999999,
 	-127.999999};
 
-static inline GLuint make_rgb_swizzle(struct prog_src_register src) {
+static INLINE GLuint make_rgb_swizzle(struct prog_src_register src) {
 	GLuint swiz = 0x0;
 	GLuint temp;
 	/* This could be optimized, but it should be plenty fast already. */
@@ -217,7 +217,7 @@ static inline GLuint make_rgb_swizzle(struct prog_src_register src) {
 	return swiz;
 }
 
-static inline GLuint make_rgba_swizzle(GLuint src) {
+static INLINE GLuint make_rgba_swizzle(GLuint src) {
 	GLuint swiz = 0x0;
 	GLuint temp;
 	int i;
@@ -230,7 +230,7 @@ static inline GLuint make_rgba_swizzle(GLuint src) {
 	return swiz;
 }
 
-static inline GLuint make_alpha_swizzle(struct prog_src_register src) {
+static INLINE GLuint make_alpha_swizzle(struct prog_src_register src) {
 	GLuint swiz = GET_SWZ(src.Swizzle, 3);
 
 	if (swiz == 5) swiz++;
@@ -241,14 +241,14 @@ static inline GLuint make_alpha_swizzle(struct prog_src_register src) {
 	return swiz;
 }
 
-static inline GLuint make_sop_swizzle(struct prog_src_register src) {
+static INLINE GLuint make_sop_swizzle(struct prog_src_register src) {
 	GLuint swiz = GET_SWZ(src.Swizzle, 0);
 
 	if (swiz == 5) swiz++;
 	return swiz;
 }
 
-static inline GLuint make_strq_swizzle(struct prog_src_register src) {
+static INLINE GLuint make_strq_swizzle(struct prog_src_register src) {
 	GLuint swiz = 0x0, temp = 0x0;
 	int i;
 	for (i = 0; i < 4; i++) {

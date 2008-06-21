@@ -36,7 +36,7 @@
 #ifndef _SWRAST_SPANTEMP_ONCE
 #define _SWRAST_SPANTEMP_ONCE
 
-static inline void
+static INLINE void
 PUT_PIXEL( GLcontext *glCtx, GLint x, GLint y, GLubyte *p )
 {
     __DRIcontext *ctx = swrast_context(glCtx);
@@ -50,7 +50,7 @@ PUT_PIXEL( GLcontext *glCtx, GLint x, GLint y, GLubyte *p )
 }
 
 
-static inline void
+static INLINE void
 GET_PIXEL( GLcontext *glCtx, GLint x, GLint y, GLubyte *p )
 {
     __DRIcontext *ctx = swrast_context(glCtx);
@@ -62,7 +62,7 @@ GET_PIXEL( GLcontext *glCtx, GLint x, GLint y, GLubyte *p )
 				    read->loaderPrivate);
 }
 
-static inline void
+static INLINE void
 PUT_ROW( GLcontext *glCtx, GLint x, GLint y, GLuint n, char *row )
 {
     __DRIcontext *ctx = swrast_context(glCtx);
@@ -75,7 +75,7 @@ PUT_ROW( GLcontext *glCtx, GLint x, GLint y, GLuint n, char *row )
 				    draw->loaderPrivate);
 }
 
-static inline void
+static INLINE void
 GET_ROW( GLcontext *glCtx, GLint x, GLint y, GLuint n, char *row )
 {
     __DRIcontext *ctx = swrast_context(glCtx);

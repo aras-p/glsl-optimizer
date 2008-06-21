@@ -50,7 +50,7 @@
 #define CP_PACKET3( pkt, n )						\
 	(RADEON_CP_PACKET3 | (pkt) | ((n) << 16))
 
-static inline uint32_t cmdpacket0(int reg, int count)
+static INLINE uint32_t cmdpacket0(int reg, int count)
 {
 	drm_r300_cmd_header_t cmd;
 
@@ -62,7 +62,7 @@ static inline uint32_t cmdpacket0(int reg, int count)
 	return cmd.u;
 }
 
-static inline uint32_t cmdvpu(int addr, int count)
+static INLINE uint32_t cmdvpu(int addr, int count)
 {
 	drm_r300_cmd_header_t cmd;
 
@@ -74,7 +74,7 @@ static inline uint32_t cmdvpu(int addr, int count)
 	return cmd.u;
 }
 
-static inline uint32_t cmdr500fp(int addr, int count, int type, int clamp)
+static INLINE uint32_t cmdr500fp(int addr, int count, int type, int clamp)
 {
 	drm_r300_cmd_header_t cmd;
 
@@ -88,7 +88,7 @@ static inline uint32_t cmdr500fp(int addr, int count, int type, int clamp)
 	return cmd.u;
 }
 
-static inline uint32_t cmdpacket3(int packet)
+static INLINE uint32_t cmdpacket3(int packet)
 {
 	drm_r300_cmd_header_t cmd;
 
@@ -98,7 +98,7 @@ static inline uint32_t cmdpacket3(int packet)
 	return cmd.u;
 }
 
-static inline uint32_t cmdcpdelay(unsigned short count)
+static INLINE uint32_t cmdcpdelay(unsigned short count)
 {
 	drm_r300_cmd_header_t cmd;
 
@@ -108,7 +108,7 @@ static inline uint32_t cmdcpdelay(unsigned short count)
 	return cmd.u;
 }
 
-static inline uint32_t cmdwait(unsigned char flags)
+static INLINE uint32_t cmdwait(unsigned char flags)
 {
 	drm_r300_cmd_header_t cmd;
 
@@ -118,7 +118,7 @@ static inline uint32_t cmdwait(unsigned char flags)
 	return cmd.u;
 }
 
-static inline uint32_t cmdpacify(void)
+static INLINE uint32_t cmdpacify(void)
 {
 	drm_r300_cmd_header_t cmd;
 
@@ -218,7 +218,7 @@ static inline uint32_t cmdpacify(void)
 /**
  * Must be sent to switch to 2d commands
  */
-void static inline end_3d(r300ContextPtr rmesa)
+void static INLINE end_3d(r300ContextPtr rmesa)
 {
 	drm_radeon_cmd_header_t *cmd = NULL;
 
@@ -227,7 +227,7 @@ void static inline end_3d(r300ContextPtr rmesa)
 	cmd[0].header.cmd_type = R300_CMD_END3D;
 }
 
-void static inline cp_delay(r300ContextPtr rmesa, unsigned short count)
+void static INLINE cp_delay(r300ContextPtr rmesa, unsigned short count)
 {
 	drm_radeon_cmd_header_t *cmd = NULL;
 
@@ -236,7 +236,7 @@ void static inline cp_delay(r300ContextPtr rmesa, unsigned short count)
 	cmd[0].i = cmdcpdelay(count);
 }
 
-void static inline cp_wait(r300ContextPtr rmesa, unsigned char flags)
+void static INLINE cp_wait(r300ContextPtr rmesa, unsigned char flags)
 {
 	drm_radeon_cmd_header_t *cmd = NULL;
 

@@ -100,7 +100,7 @@ static const int default_attr_size[8]={3,3,3,4,3,1,4,4};
 #endif
 
 
-static inline void nv10StartPrimitive(struct nouveau_context* nmesa,GLuint primitive,GLuint size)
+static INLINE void nv10StartPrimitive(struct nouveau_context* nmesa,GLuint primitive,GLuint size)
 {
 	if ((nmesa->screen->card->type>=NV_10) && (nmesa->screen->card->type<=NV_17))
 		BEGIN_RING_SIZE(NvSub3D,NV10_TCL_PRIMITIVE_3D_BEGIN_END,1);
@@ -131,7 +131,7 @@ void nv10FinishPrimitive(struct nouveau_context *nmesa)
 }
 
 
-static inline void nv10ExtendPrimitive(struct nouveau_context* nmesa, int size)
+static INLINE void nv10ExtendPrimitive(struct nouveau_context* nmesa, int size)
 {
 	/* make sure there's enough room. if not, wait */
 	if (RING_AVAILABLE()<size)
@@ -144,7 +144,7 @@ static inline void nv10ExtendPrimitive(struct nouveau_context* nmesa, int size)
 /*               Render unclipped begin/end objects                   */
 /**********************************************************************/
 
-static inline void nv10_render_generic_primitive_verts(GLcontext *ctx,GLuint start,GLuint count,GLuint flags,GLuint prim)
+static INLINE void nv10_render_generic_primitive_verts(GLcontext *ctx,GLuint start,GLuint count,GLuint flags,GLuint prim)
 {
 	struct nouveau_context *nmesa = NOUVEAU_CONTEXT(ctx);
 	GLfloat *vertptr = (GLfloat *)nmesa->verts;
@@ -230,7 +230,7 @@ static void (*nv10_render_tab_verts[GL_POLYGON+2])(GLcontext *,
 };
 
 
-static inline void nv10_render_generic_primitive_elts(GLcontext *ctx,GLuint start,GLuint count,GLuint flags,GLuint prim)
+static INLINE void nv10_render_generic_primitive_elts(GLcontext *ctx,GLuint start,GLuint count,GLuint flags,GLuint prim)
 {
 	struct nouveau_context *nmesa = NOUVEAU_CONTEXT(ctx);
 	GLfloat *vertptr = (GLfloat *)nmesa->verts;
@@ -332,7 +332,7 @@ do {									\
    nmesa->vertex_attr_count++;						\
 } while (0)
 
-static inline void nv10_render_point(GLcontext *ctx, GLfloat *vertptr)
+static INLINE void nv10_render_point(GLcontext *ctx, GLfloat *vertptr)
 {
 	struct nouveau_context *nmesa = NOUVEAU_CONTEXT(ctx);
 	GLuint vertsize = nmesa->vertex_size;
@@ -344,7 +344,7 @@ static inline void nv10_render_point(GLcontext *ctx, GLfloat *vertptr)
 	nv10FinishPrimitive(nmesa);
 }
 
-static inline void nv10_render_points(GLcontext *ctx,GLuint first,GLuint last)
+static INLINE void nv10_render_points(GLcontext *ctx,GLuint first,GLuint last)
 {
 	struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
 	struct nouveau_context *nmesa = NOUVEAU_CONTEXT(ctx);
@@ -364,7 +364,7 @@ static inline void nv10_render_points(GLcontext *ctx,GLuint first,GLuint last)
 	}
 }
 
-static inline void nv10_render_line(GLcontext *ctx,GLuint v1,GLuint v2)
+static INLINE void nv10_render_line(GLcontext *ctx,GLuint v1,GLuint v2)
 {
 	struct nouveau_context *nmesa = NOUVEAU_CONTEXT(ctx);
 	GLfloat *vertptr = (GLfloat *)nmesa->verts;
@@ -378,7 +378,7 @@ static inline void nv10_render_line(GLcontext *ctx,GLuint v1,GLuint v2)
 	nv10FinishPrimitive(nmesa);
 }
 
-static inline void nv10_render_triangle(GLcontext *ctx,GLuint v1,GLuint v2,GLuint v3)
+static INLINE void nv10_render_triangle(GLcontext *ctx,GLuint v1,GLuint v2,GLuint v3)
 {
 	struct nouveau_context *nmesa = NOUVEAU_CONTEXT(ctx);
 	GLfloat *vertptr = (GLfloat *)nmesa->verts;
@@ -393,7 +393,7 @@ static inline void nv10_render_triangle(GLcontext *ctx,GLuint v1,GLuint v2,GLuin
 	nv10FinishPrimitive(nmesa);
 }
 
-static inline void nv10_render_quad(GLcontext *ctx,GLuint v1,GLuint v2,GLuint v3,GLuint v4)
+static INLINE void nv10_render_quad(GLcontext *ctx,GLuint v1,GLuint v2,GLuint v3,GLuint v4)
 {
 	struct nouveau_context *nmesa = NOUVEAU_CONTEXT(ctx);
 	GLfloat *vertptr = (GLfloat *)nmesa->verts;
@@ -428,7 +428,7 @@ static void nv10ChooseRenderState(GLcontext *ctx)
 
 
 
-static inline void nv10OutputVertexFormat(struct nouveau_context* nmesa)
+static INLINE void nv10OutputVertexFormat(struct nouveau_context* nmesa)
 {
 	GLcontext* ctx=nmesa->glCtx;
 	TNLcontext *tnl = TNL_CONTEXT(ctx);

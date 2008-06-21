@@ -53,7 +53,7 @@ static void nv04RenderPrimitive( GLcontext *ctx, GLenum prim );
 static void nv04ResetLineStipple( GLcontext *ctx );
 
 
-static inline void nv04_2triangles(struct nouveau_context *nmesa,nouveauVertex* v0,nouveauVertex* v1,nouveauVertex* v2,nouveauVertex* v3,nouveauVertex* v4,nouveauVertex* v5)
+static INLINE void nv04_2triangles(struct nouveau_context *nmesa,nouveauVertex* v0,nouveauVertex* v1,nouveauVertex* v2,nouveauVertex* v3,nouveauVertex* v4,nouveauVertex* v5)
 {
 	BEGIN_RING_SIZE(NvSub3D,NV04_DX5_TEXTURED_TRIANGLE_TLVERTEX_SX(0xA),49);
 	OUT_RINGp(v0,8);
@@ -65,7 +65,7 @@ static inline void nv04_2triangles(struct nouveau_context *nmesa,nouveauVertex* 
 	OUT_RING(0xFEDCBA);
 }
 
-static inline void nv04_1triangle(struct nouveau_context *nmesa,nouveauVertex* v0,nouveauVertex* v1,nouveauVertex* v2)
+static INLINE void nv04_1triangle(struct nouveau_context *nmesa,nouveauVertex* v0,nouveauVertex* v1,nouveauVertex* v2)
 {
 	BEGIN_RING_SIZE(NvSub3D,NV04_DX5_TEXTURED_TRIANGLE_TLVERTEX_SX(0xD),25);
 	OUT_RINGp(v0,8);
@@ -74,7 +74,7 @@ static inline void nv04_1triangle(struct nouveau_context *nmesa,nouveauVertex* v
 	OUT_RING(0xFED);
 }
 
-static inline void nv04_1quad(struct nouveau_context *nmesa,nouveauVertex* v0,nouveauVertex* v1,nouveauVertex* v2,nouveauVertex* v3)
+static INLINE void nv04_1quad(struct nouveau_context *nmesa,nouveauVertex* v0,nouveauVertex* v1,nouveauVertex* v2,nouveauVertex* v3)
 {
 	BEGIN_RING_SIZE(NvSub3D,NV04_DX5_TEXTURED_TRIANGLE_TLVERTEX_SX(0xC),33);
 	OUT_RINGp(v0,8);
@@ -84,17 +84,17 @@ static inline void nv04_1quad(struct nouveau_context *nmesa,nouveauVertex* v0,no
 	OUT_RING(0xFECEDC);
 }
 
-static inline void nv04_render_points(GLcontext *ctx,GLuint first,GLuint last)
+static INLINE void nv04_render_points(GLcontext *ctx,GLuint first,GLuint last)
 {
 	WARN_ONCE("Unimplemented\n");
 }
 
-static inline void nv04_render_line(GLcontext *ctx,GLuint v1,GLuint v2)
+static INLINE void nv04_render_line(GLcontext *ctx,GLuint v1,GLuint v2)
 {
 	WARN_ONCE("Unimplemented\n");
 }
 
-static inline void nv04_render_triangle(GLcontext *ctx,GLuint v1,GLuint v2,GLuint v3)
+static INLINE void nv04_render_triangle(GLcontext *ctx,GLuint v1,GLuint v2,GLuint v3)
 {
 	struct nouveau_context *nmesa = NOUVEAU_CONTEXT(ctx);
 	GLubyte *vertptr = (GLubyte *)nmesa->verts;
@@ -107,7 +107,7 @@ static inline void nv04_render_triangle(GLcontext *ctx,GLuint v1,GLuint v2,GLuin
 		  );
 }
 
-static inline void nv04_render_quad(GLcontext *ctx,GLuint v1,GLuint v2,GLuint v3,GLuint v4)
+static INLINE void nv04_render_quad(GLcontext *ctx,GLuint v1,GLuint v2,GLuint v3,GLuint v4)
 {
 	struct nouveau_context *nmesa = NOUVEAU_CONTEXT(ctx);
 	GLubyte *vertptr = (GLubyte *)nmesa->verts;
@@ -465,7 +465,7 @@ static void nv04ChooseRenderState(GLcontext *ctx)
 
 
 
-static inline void nv04OutputVertexFormat(struct nouveau_context* nmesa)
+static INLINE void nv04OutputVertexFormat(struct nouveau_context* nmesa)
 {
 	GLcontext* ctx=nmesa->glCtx;
 	DECLARE_RENDERINPUTS(index);

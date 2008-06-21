@@ -396,21 +396,21 @@ struct _nvsFunc {
    int		(*GetLoopIncrement)	(nvsFunc *);
 };
 
-static inline nvsRegister
+static INLINE nvsRegister
 nvsNegate(nvsRegister reg)
 {
    reg.negate = !reg.negate;
    return reg;
 }
 
-static inline nvsRegister
+static INLINE nvsRegister
 nvsAbs(nvsRegister reg)
 {
    reg.abs = 1;
    return reg;
 }
 
-static inline nvsRegister
+static INLINE nvsRegister
 nvsSwizzle(nvsRegister reg, nvsSwzComp x, nvsSwzComp y,
       	   nvsSwzComp z, nvsSwzComp w)
 {

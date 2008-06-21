@@ -92,19 +92,19 @@ struct swrast_renderbuffer {
     GLuint pitch;
 };
 
-static inline __DRIcontext *
+static INLINE __DRIcontext *
 swrast_context(GLcontext *ctx)
 {
     return (__DRIcontext *) ctx;
 }
 
-static inline __DRIdrawable *
+static INLINE __DRIdrawable *
 swrast_drawable(GLframebuffer *fb)
 {
     return (__DRIdrawable *) fb;
 }
 
-static inline struct swrast_renderbuffer *
+static INLINE struct swrast_renderbuffer *
 swrast_renderbuffer(struct gl_renderbuffer *rb)
 {
     return (struct swrast_renderbuffer *) rb;
