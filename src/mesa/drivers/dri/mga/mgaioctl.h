@@ -62,7 +62,7 @@ void mgaInitIoctlFuncs( struct dd_function_table *functions );
 
 extern drmBufPtr mga_get_buffer_ioctl( mgaContextPtr mmesa );
 
-static __inline
+static INLINE
 GLuint *mgaAllocDmaLow( mgaContextPtr mmesa, int bytes )
 {
    GLuint *head;
