@@ -55,7 +55,7 @@ nv30_vbo_static_attrib(struct nv30_context *nv30, int attrib,
 	{
 		float *v = map;
 
-		BEGIN_RING(rankine, NV34TCL_VERTEX_ATTR_4F_X(attrib), 4);
+		BEGIN_RING(rankine, NV34TCL_VTX_ATTR_4F_X(attrib), 4);
 		switch (ncomp) {
 		case 4:
 			OUT_RINGf(v[0]);

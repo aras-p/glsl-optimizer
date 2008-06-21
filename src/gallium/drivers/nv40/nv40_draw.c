@@ -39,7 +39,7 @@ nv40_render_vertex(struct nv40_context *nv40, const struct vertex_header *v)
 		case EMIT_OMIT:
 			break;
 		case EMIT_1F:
-			BEGIN_RING(curie, 0x1e40 + (hw * 4), 1);
+			BEGIN_RING(curie, NV40TCL_VTX_ATTR_1F(hw), 1);
 			OUT_RING  (fui(v->data[idx][0]));
 			break;
 		case EMIT_2F:
@@ -61,7 +61,7 @@ nv40_render_vertex(struct nv40_context *nv40, const struct vertex_header *v)
 			OUT_RING  (fui(v->data[idx][3]));
 			break;
 		case EMIT_4UB:
-			BEGIN_RING(curie, 0x1940 + (hw * 4), 1);
+			BEGIN_RING(curie, NV40TCL_VTX_ATTR_4UB(hw), 1);
 			OUT_RING  (pack_ub4(float_to_ubyte(v->data[idx][0]),
 					    float_to_ubyte(v->data[idx][1]),
 					    float_to_ubyte(v->data[idx][2]),

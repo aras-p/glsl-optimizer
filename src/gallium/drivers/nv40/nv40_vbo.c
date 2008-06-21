@@ -149,7 +149,7 @@ nv40_vbo_static_attrib(struct nv40_context *nv40, struct nouveau_stateobj *so,
 			so_data  (so, fui(v[1]));
 			break;
 		case 1:
-			so_method(so, curie, 0x1e40 + (attrib * 4), 1);
+			so_method(so, curie, NV40TCL_VTX_ATTR_1F(attrib), 1);
 			so_data  (so, fui(v[0]));
 			break;
 		default:
