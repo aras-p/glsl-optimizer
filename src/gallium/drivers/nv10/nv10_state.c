@@ -469,6 +469,8 @@ nv10_set_constant_buffer(struct pipe_context *pipe, uint shader, uint index,
 		if (buf->size && (mapped = ws->buffer_map(ws, buf->buffer, PIPE_BUFFER_USAGE_CPU_READ)))
 		{
 			memcpy(nv10->constbuf[shader], mapped, buf->size);
+			nv10->constbuf_nr[shader] =
+				buf->size / (4 * sizeof(float));
 			ws->buffer_unmap(ws, buf->buffer);
 		}
 	}

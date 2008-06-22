@@ -66,6 +66,7 @@ struct nv10_context {
 
 	//struct pipe_buffer *constbuf[PIPE_SHADER_TYPES];
 	float *constbuf[PIPE_SHADER_TYPES][32][4];
+	unsigned constbuf_nr[PIPE_SHADER_TYPES];
 
 	struct vertex_info vertex_info;
 

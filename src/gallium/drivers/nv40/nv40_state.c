@@ -603,12 +603,13 @@ nv40_set_constant_buffer(struct pipe_context *pipe, uint shader, uint index,
 {
 	struct nv40_context *nv40 = nv40_context(pipe);
 
+	nv40->constbuf[shader] = buf->buffer;
+	nv40->constbuf_nr[shader] = buf->size / (4 * sizeof(float));
+
 	if (shader == PIPE_SHADER_VERTEX) {
-		nv40->constbuf[PIPE_SHADER_VERTEX] = buf->buffer;
 		nv40->dirty |= NV40_NEW_VERTPROG;
 	} else
 	if (shader == PIPE_SHADER_FRAGMENT) {
-		nv40->constbuf[PIPE_SHADER_FRAGMENT] = buf->buffer;
 		nv40->dirty |= NV40_NEW_FRAGPROG;
 	}
 }

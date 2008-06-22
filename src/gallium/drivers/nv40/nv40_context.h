@@ -136,6 +136,7 @@ struct nv40_context {
 	struct nv40_vertex_program *vertprog;
 	struct nv40_fragment_program *fragprog;
 	struct pipe_buffer *constbuf[PIPE_SHADER_TYPES];
+	unsigned constbuf_nr[PIPE_SHADER_TYPES];
 	struct nv40_rasterizer_state *rasterizer;
 	struct nv40_zsa_state *zsa;
 	struct nv40_blend_state *blend;

@@ -603,7 +603,7 @@ static boolean
 nv40_vertprog_parse_decl_output(struct nv40_vpc *vpc,
 				const struct tgsi_full_declaration *fdec)
 {
-	unsigned idx = fdec->u.DeclarationRange.First;
+	unsigned idx = fdec->DeclarationRange.First;
 	int hw;
 
 	switch (fdec->Semantic.SemanticName) {
@@ -678,16 +678,16 @@ nv40_vertprog_prepare(struct nv40_vpc *vpc)
 			fdec = &p.FullToken.FullDeclaration;
 			switch (fdec->Declaration.File) {
 			case TGSI_FILE_TEMPORARY:
-				if (fdec->u.DeclarationRange.Last > high_temp) {
+				if (fdec->DeclarationRange.Last > high_temp) {
 					high_temp =
-						fdec->u.DeclarationRange.Last;
+						fdec->DeclarationRange.Last;
 				}
 				break;
 #if 0 /* this would be nice.. except gallium doesn't track it */
 			case TGSI_FILE_ADDRESS:
-				if (fdec->u.DeclarationRange.Last > high_addr) {
+				if (fdec->DeclarationRange.Last > high_addr) {
 					high_addr =
-						fdec->u.DeclarationRange.Last;
+						fdec->DeclarationRange.Last;
 				}
 				break;
 #endif

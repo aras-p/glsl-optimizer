@@ -530,7 +530,7 @@ nv30_vertprog_parse_decl_output(struct nv30_vpc *vpc,
 		return FALSE;
 	}
 
-	vpc->output_map[fdec->u.DeclarationRange.First] = hw;
+	vpc->output_map[fdec->DeclarationRange.First] = hw;
 	return TRUE;
 }
 

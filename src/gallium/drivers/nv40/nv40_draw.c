@@ -253,9 +253,11 @@ nv40_draw_elements_swtnl(struct pipe_context *pipe,
 	}
 
 	if (nv40->constbuf[PIPE_SHADER_VERTEX]) {
+		const unsigned nr = nv40->constbuf_nr[PIPE_SHADER_VERTEX];
+
 		map = ws->buffer_map(ws, nv40->constbuf[PIPE_SHADER_VERTEX],
 				     PIPE_BUFFER_USAGE_CPU_READ);
-		draw_set_mapped_constant_buffer(nv40->draw, map);
+		draw_set_mapped_constant_buffer(nv40->draw, map, nr);
 	}
 
 	draw_arrays(nv40->draw, mode, start, count);
