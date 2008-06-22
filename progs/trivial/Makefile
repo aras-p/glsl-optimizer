@@ -14,6 +14,7 @@ SOURCES = \
 	clear-fbo-tex.c \
 	clear-fbo.c \
 	clear-scissor.c \
+	clear-undefined.c \
 	clear.c \
 	dlist-dangling.c \
 	dlist-edgeflag-dangling.c \
@@ -48,6 +49,8 @@ SOURCES = \
 	point-wide-smooth.c \
 	point.c \
 	poly-flat.c \
+	poly-flat-clip.c \
+	poly-flat-unfilled-clip.c \
 	poly-unfilled.c \
 	poly.c \
 	quad-clip-all-vertices.c \
@@ -104,12 +107,19 @@ SOURCES = \
 	tri-z-eq.c \
 	tri-z.c \
 	tri.c \
+	trifan-flat.c \
+	trifan-flat-clip.c \
+	trifan-flat-unfilled-clip.c \
+	trifan-unfilled.c \
+	trifan.c \
 	tristrip-clip.c \
+	tristrip-flat.c \
 	tristrip.c \
 	vbo-drawarrays.c \
 	vbo-drawelements.c \
 	vbo-drawrange.c \
 	vp-array.c \
+	vp-array-int.c \
 	vp-clip.c \
 	vp-line-clip.c \
 	vp-tri.c \

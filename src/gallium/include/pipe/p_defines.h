@@ -274,6 +274,10 @@ enum pipe_texture_target {
 #define PIPE_CAP_MAX_POINT_WIDTH_AA      17
 #define PIPE_CAP_MAX_TEXTURE_ANISOTROPY  18
 #define PIPE_CAP_MAX_TEXTURE_LOD_BIAS    19
+#define PIPE_CAP_GUARD_BAND_LEFT         20  /*< float */
+#define PIPE_CAP_GUARD_BAND_TOP          21  /*< float */
+#define PIPE_CAP_GUARD_BAND_RIGHT        22  /*< float */
+#define PIPE_CAP_GUARD_BAND_BOTTOM       23  /*< float */
 
 
 #ifdef __cplusplus

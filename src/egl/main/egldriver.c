@@ -1,112 +1,261 @@
+/**
+ * Functions for choosing and opening/loading device drivers.
+ */
+
+
 #include <assert.h>
-#include <dlfcn.h>
-#include <stdio.h>
 #include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include "eglconfig.h"
 #include "eglcontext.h"
+#include "egldefines.h"
 #include "egldisplay.h"
 #include "egldriver.h"
 #include "eglglobals.h"
 #include "egllog.h"
+#include "eglmisc.h"
 #include "eglmode.h"
 #include "eglscreen.h"
+#include "eglstring.h"
 #include "eglsurface.h"
 
+#if defined(_EGL_PLATFORM_X)
+#include <dlfcn.h>
+#include "eglx.h"
+#elif defined(_EGL_PLATFORM_WINDOWS)
+/* XXX to do */
+#elif defined(_EGL_PLATFORM_WINCE)
+/* XXX to do */
+#endif
 
-const char *DefaultDriverName = "demodriver";
+
+static const char *DefaultDriverName = ":0";
+static const char *SysFS = "/sys/class";
+
 
 
 /**
- * Choose and open/init the hardware driver for the given EGLDisplay.
- * Previously, the EGLDisplay was created with _eglNewDisplay() where
- * we recorded the user's NativeDisplayType parameter.
+ * Wrappers for dlopen/dlclose()
+ */
+#if defined(_EGL_PLATFORM_WINDOWS)
+
+   typedef HMODULE lib_handle;
+
+   static HMODULE
+   open_library(const char *filename)
+   {
+      return LoadLibrary(filename);
+   }
+
+   static void
+   close_library(HMODULE lib)
+   {
+      FreeLibrary(lib);
+   }
+   
+#elif defined(_EGL_PLATFORM_X)
+
+   typedef void * lib_handle;
+
+   static void *
+   open_library(const char *filename)
+   {
+      return dlopen(filename, RTLD_LAZY);
+   }
+
+   static void
+   close_library(void *lib)
+   {
+      dlclose(lib);
+   }
+   
+#endif
+
+
+
+/**
+ * Given a card number, use sysfs to determine the DRI driver name.
+ */
+const char *
+_eglChooseDRMDriver(int card)
+{
+#if 0
+   return _eglstrdup("libEGLdri");
+#else
+   char path[2000], driverName[2000];
+   FILE *f;
+   int length;
+
+   snprintf(path, sizeof(path), "%s/drm/card%d/dri_library_name", SysFS, card);
+
+   f = fopen(path, "r");
+   if (!f)
+      return NULL;
+
+   fgets(driverName, sizeof(driverName), f);
+   fclose(f);
+
+   if ((length = strlen(driverName)) > 1) {
+      /* remove the trailing newline from sysfs */
+      driverName[length - 1] = '\0';
+      strncat(driverName, "_dri", sizeof(driverName));
+      return _eglstrdup(driverName);
+   }
+   else {
+      return NULL;
+   }   
+#endif
+}
+
+
+/**
+ * XXX this function is totally subject change!!!
  *
- * Now we'll use the NativeDisplayType value.
  *
- * Currently, the native display value is treated as a string.
+ * Determine/return the name of the driver to use for the given _EGLDisplay.
+ *
+ * Try to be clever and determine if nativeDisplay is an Xlib Display
+ * ptr or a string (naming a driver or screen number, etc).
+ *
  * If the first character is ':' we interpret it as a screen or card index
  * number (i.e. ":0" or ":1", etc)
  * Else if the first character is '!' we interpret it as specific driver name
  * (i.e. "!r200" or "!i830".
+ *
+ * Whatever follows ':' is copied and put into dpy->DriverArgs.
+ *
+ * The caller may free() the returned string.
  */
-_EGLDriver *
-_eglChooseDriver(EGLDisplay display)
+const char *
+_eglChooseDriver(_EGLDisplay *dpy)
 {
-   _EGLDisplay *dpy = _eglLookupDisplay(display);
-   _EGLDriver *drv;
-   const char *driverName = DefaultDriverName;
-   const char *name;
+   const char *displayString = (const char *) dpy->NativeDisplay;
+   const char *driverName = NULL;
 
-   assert(dpy);
+   (void) DefaultDriverName;
 
-   name = dpy->Name;
-   if (!name) {
-      /* use default */
+   /* First, if the EGL_DRIVER env var is set, use that */
+   driverName = getenv("EGL_DRIVER");
+   if (driverName)
+      return _eglstrdup(driverName);
+
+#if 0
+   if (!displayString) {
+      /* choose a default */
+      displayString = DefaultDriverName;
    }
-   else if (name[0] == ':' && (name[1] >= '0' && name[1] <= '9') && !name[2]) {
-      /* XXX probe hardware here to determine which driver to open */
-      driverName = "libEGLdri";
+#endif
+   /* extract default DriverArgs = whatever follows ':' */
+   if (displayString &&
+       (displayString[0] == '!' ||
+        displayString[0] == ':')) {
+      const char *args = strchr(displayString, ':');
+      if (args)
+         dpy->DriverArgs = _eglstrdup(args + 1);
    }
-   else if (name[0] == '!') {
-      /* use specified driver name */
-      driverName = name + 1;
+
+   /* determine driver name now */
+   if (displayString && displayString[0] == ':' &&
+       (displayString[1] >= '0' && displayString[1] <= '9') &&
+       !displayString[2]) {
+      int card = atoi(displayString + 1);
+      driverName = _eglChooseDRMDriver(card);
+   }
+   else if (displayString && displayString[0] == '!') {
+      /* use user-specified driver name */
+      driverName = _eglstrdup(displayString + 1);
+      /* truncate driverName at ':' if present */
+      {
+         char *args = strchr(driverName, ':');
+         if (args) {
+            *args = 0;
+         }
+      }
    }
    else {
-      /* Maybe display was returned by XOpenDisplay? */
-      _eglLog(_EGL_FATAL, "eglChooseDriver() bad name");
+      /* NativeDisplay is not a string! */
+#if defined(_EGL_PLATFORM_X)
+      driverName = _xeglChooseDriver(dpy);
+#elif defined(_EGL_PLATFORM_WINDOWS)
+      /* XXX to do */
+      driverName = _weglChooseDriver(dpy);
+#elif defined(_EGL_PLATFORM_WINCE)
+      /* XXX to do */
+#else
+      driverName = DefaultDriverName;
+#endif
    }
 
-   _eglLog(_EGL_INFO, "eglChooseDriver() choosing %s", driverName);
-
-   drv = _eglOpenDriver(dpy, driverName);
-   dpy->Driver = drv;
-
-   return drv;
+   return driverName;
 }
 
 
 /**
  * Open/load the named driver and call its bootstrap function: _eglMain().
+ * By the time this function is called, the dpy->DriverName should have
+ * been determined.
+ *
  * \return  new _EGLDriver object.
  */
 _EGLDriver *
-_eglOpenDriver(_EGLDisplay *dpy, const char *driverName)
+_eglOpenDriver(_EGLDisplay *dpy, const char *driverName, const char *args)
 {
    _EGLDriver *drv;
    _EGLMain_t mainFunc;
-   void *lib;
+   lib_handle lib;
    char driverFilename[1000];
 
+   assert(driverName);
+
+#if defined(_EGL_PLATFORM_WINDOWS)
+   /* XXX untested */
+   sprintf(driverFilename, "%s.dll", driverName);
+   _eglLog(_EGL_DEBUG, "dlopen(%s)", driverFilename);
+#elif defined(_EGL_PLATFORM_X)
    /* XXX also prepend a directory path??? */
    sprintf(driverFilename, "%s.so", driverName);
-
    _eglLog(_EGL_DEBUG, "dlopen(%s)", driverFilename);
-   lib = dlopen(driverFilename, RTLD_NOW);
+#endif
+   lib = open_library(driverFilename);
+
    if (!lib) {
       _eglLog(_EGL_WARNING, "Could not open %s (%s)",
               driverFilename, dlerror());
       return NULL;
    }
 
+#if defined(_EGL_PLATFORM_WINDOWS)
+   mainFunc = (_EGLMain_t) GetProcAddress(lib, "_eglMain");
+#elif defined(_EGL_PLATFORM_X)
    mainFunc = (_EGLMain_t) dlsym(lib, "_eglMain");
+#endif
+
    if (!mainFunc) {
       _eglLog(_EGL_WARNING, "_eglMain not found in %s", driverFilename);
-      dlclose(lib);
+      close_library(lib);
       return NULL;
    }
 
-   drv = mainFunc(dpy);
+   drv = mainFunc(dpy, args);
    if (!drv) {
-      dlclose(lib);
+      close_library(lib);
       return NULL;
    }
-   /* with a recurvise open you want the inner most handle */
-   if (!drv->LibHandle)
-      drv->LibHandle = lib;
-   else
-      dlclose(lib);
 
-   drv->Display = dpy;
+   /* with a recurvise open you want the inner most handle */
+   if (!drv->LibHandle) {
+      drv->LibHandle = lib;
+   }
+   else {
+      close_library(lib);
+   }
+
+   /* update the global notion of supported APIs */
+   _eglGlobal.ClientAPIsMask |= drv->ClientAPIsMask;
+
+   _eglSaveDriver(drv);
+
    return drv;
 }
 
@@ -117,15 +266,27 @@ _eglCloseDriver(_EGLDriver *drv, EGLDisplay dpy)
    void *handle = drv->LibHandle;
    EGLBoolean b;
 
-   _eglLog(_EGL_INFO, "Closing driver");
+   _eglLog(_EGL_DEBUG, "Closing %s", drv->Name);
 
    /*
     * XXX check for currently bound context/surfaces and delete them?
     */
 
    b = drv->API.Terminate(drv, dpy);
-   dlclose(handle);
+
+   close_library(handle);
+
    return b;
+}
+
+
+/**
+ * Save the given driver pointer in the list of all known drivers.
+ */
+void
+_eglSaveDriver(_EGLDriver *drv)
+{
+   _eglGlobal.Drivers[ _eglGlobal.NumDrivers++ ] = drv;
 }
 
 
@@ -201,72 +362,48 @@ _eglInitDriverFallbacks(_EGLDriver *drv)
 }
 
 
+
 /**
- * Examine the individual extension enable/disable flags and recompute
- * the driver's Extensions string.
+ * Try to determine which EGL APIs (OpenGL, OpenGL ES, OpenVG, etc)
+ * are supported on the system by looking for standard library names.
  */
-static void
-_eglUpdateExtensionsString(_EGLDriver *drv)
+EGLint
+_eglFindAPIs(void)
 {
-   drv->Extensions.String[0] = 0;
-
-   if (drv->Extensions.MESA_screen_surface)
-      strcat(drv->Extensions.String, "EGL_MESA_screen_surface ");
-   if (drv->Extensions.MESA_copy_context)
-      strcat(drv->Extensions.String, "EGL_MESA_copy_context ");
-   assert(strlen(drv->Extensions.String) < MAX_EXTENSIONS_LEN);
-}
-
-
-
-const char *
-_eglQueryString(_EGLDriver *drv, EGLDisplay dpy, EGLint name)
-{
-   (void) drv;
-   (void) dpy;
-   switch (name) {
-   case EGL_VENDOR:
-      return "Mesa Project";
-   case EGL_VERSION:
-      return "1.0";
-   case EGL_EXTENSIONS:
-      _eglUpdateExtensionsString(drv);
-      return drv->Extensions.String;
-#ifdef EGL_VERSION_1_2
-   case EGL_CLIENT_APIS:
-      /* XXX need to initialize somewhere */
-      return drv->ClientAPIs;
+   EGLint mask = 0x0;
+   lib_handle lib;
+#if defined(_EGL_PLATFORM_WINDOWS)
+   /* XXX not sure about these names */
+   const char *es1_libname = "libGLESv1_CM.dll";
+   const char *es2_libname = "libGLESv2.dll";
+   const char *gl_libname = "OpenGL32.dll";
+   const char *vg_libname = "libOpenVG.dll";
+#elif defined(_EGL_PLATFORM_X)
+   const char *es1_libname = "libGLESv1_CM.so";
+   const char *es2_libname = "libGLESv2.so";
+   const char *gl_libname = "libGL.so";
+   const char *vg_libname = "libOpenVG.so";
 #endif
-   default:
-      _eglError(EGL_BAD_PARAMETER, "eglQueryString");
-      return NULL;
-   }
-}
 
-
-EGLBoolean
-_eglWaitGL(_EGLDriver *drv, EGLDisplay dpy)
-{
-   /* just a placeholder */
-   (void) drv;
-   (void) dpy;
-   return EGL_TRUE;
-}
-
-
-EGLBoolean
-_eglWaitNative(_EGLDriver *drv, EGLDisplay dpy, EGLint engine)
-{
-   /* just a placeholder */
-   (void) drv;
-   (void) dpy;
-   switch (engine) {
-   case EGL_CORE_NATIVE_ENGINE:
-      break;
-   default:
-      _eglError(EGL_BAD_PARAMETER, "eglWaitNative(engine)");
-      return EGL_FALSE;
+   if ((lib = open_library(es1_libname))) {
+      close_library(lib);
+      mask |= EGL_OPENGL_ES_BIT;
    }
 
-   return EGL_TRUE;
+   if ((lib = open_library(es2_libname))) {
+      close_library(lib);
+      mask |= EGL_OPENGL_ES2_BIT;
+   }
+
+   if ((lib = open_library(gl_libname))) {
+      close_library(lib);
+      mask |= EGL_OPENGL_BIT;
+   }
+
+   if ((lib = open_library(vg_libname))) {
+      close_library(lib);
+      mask |= EGL_OPENVG_BIT;
+   }
+
+   return mask;
 }

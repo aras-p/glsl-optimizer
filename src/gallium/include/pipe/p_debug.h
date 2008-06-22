@@ -59,6 +59,13 @@ extern "C" {
 #endif
 #endif
 
+   
+/* MSVC bebore VC7 does not have the __FUNCTION__ macro */
+#if defined(_MSC_VER) && _MSC_VER < 1300
+#define __FUNCTION__ "???"
+#endif
+
+
 void _debug_vprintf(const char *format, va_list ap);
    
 
@@ -127,8 +134,8 @@ void _debug_break(void);
 #ifdef DEBUG
 #if (defined(__i386__) || defined(__386__)) && defined(__GNUC__)
 #define debug_break() __asm("int3")
-#elif (defined(__i386__) || defined(__386__)) && defined(__MSC__)
-#define debug_break()  _asm {int 3}
+#elif defined(_M_IX86) && defined(_MSC_VER)
+#define debug_break()  do { _asm {int 3} } while(0)
 #else
 #define debug_break() _debug_break()
 #endif
@@ -282,7 +289,7 @@ boolean
 debug_get_bool_option(const char *name, boolean dfault);
 
 long
-debug_get_unsigned_option(const char *name, long dfault);
+debug_get_num_option(const char *name, long dfault);
 
 unsigned long
 debug_get_flags_option(const char *name, 

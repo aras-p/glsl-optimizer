@@ -1,8 +1,8 @@
 /**************************************************************************
- * 
+ *
  * Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -10,11 +10,11 @@
  * distribute, sub license, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice (including the
  * next paragraph) shall be included in all copies or substantial portions
  * of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
@@ -22,7 +22,7 @@
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
+ *
  **************************************************************************/
 
 #include "utils.h"
@@ -32,12 +32,10 @@
 #include "intel_context.h"
 #include "intel_screen.h"
 #include "intel_batchbuffer.h"
-//#include "intel_batchpool.h"
 #include "intel_swapbuffers.h"
-#include "intel_winsys.h"
 
 #include "i830_dri.h"
-#include "ws_dri_bufpool.h"
+#include "intel_drm/ws_dri_bufpool.h"
 
 #include "pipe/p_context.h"
 #include "state_tracker/st_public.h"
@@ -50,11 +48,11 @@ PUBLIC const char __driConfigOptions[] =
    DRI_CONF_FTHROTTLE_MODE(DRI_CONF_FTHROTTLE_IRQS)
    DRI_CONF_VBLANK_MODE(DRI_CONF_VBLANK_DEF_INTERVAL_0)
    DRI_CONF_SECTION_END DRI_CONF_SECTION_QUALITY
-   DRI_CONF_FORCE_S3TC_ENABLE(false)
+//   DRI_CONF_FORCE_S3TC_ENABLE(false)
    DRI_CONF_ALLOW_LARGE_TEXTURES(1)
    DRI_CONF_SECTION_END DRI_CONF_END;
 
-const uint __driNConfigOptions = 4;
+const uint __driNConfigOptions = 3;
 
 #ifdef USE_NEW_INTERFACE
 static PFNGLXCREATECONTEXTMODES create_context_modes = NULL;
@@ -152,16 +150,16 @@ intelUpdateScreenRotation(__DRIscreenPrivate * sPriv, drmI830Sarea * sarea)
 		    DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_NO_MOVE |
 		    DRM_BO_FLAG_READ | DRM_BO_FLAG_WRITE, 0);
 
-      driBOSetStatic(intelScreen->front.buffer, 
-		     intelScreen->front.offset, 		  
-		     intelScreen->front.pitch * intelScreen->front.height, 
+      driBOSetStatic(intelScreen->front.buffer,
+		     intelScreen->front.offset,
+		     intelScreen->front.pitch * intelScreen->front.height,
 		     intelScreen->front.map, 0);
    }
 #else
-   if (intelScreen->staticPool) {
+   if (intelScreen->base.staticPool) {
       if (intelScreen->front.buffer)
 	 driBOUnReference(intelScreen->front.buffer);
-      driGenBuffers(intelScreen->staticPool, "front", 1, &intelScreen->front.buffer, 0, 0, 0);
+      driGenBuffers(intelScreen->base.staticPool, "front", 1, &intelScreen->front.buffer, 0, 0, 0);
       driBOSetReferenced(intelScreen->front.buffer, sarea->front_bo_handle);
    }
 #endif
@@ -177,33 +175,6 @@ intelCreatePools(__DRIscreenPrivate * sPriv)
    if (intelScreen->havePools)
       return GL_TRUE;
 
-#if 0 /* ZZZ JB fix this */
-   intelScreen->staticPool = driDRMStaticPoolInit(sPriv->fd);
-   if (!intelScreen->staticPool)
-      return GL_FALSE;
-
-   batchPoolSize /= BATCH_SZ;
-   intelScreen->batchPool = driBatchPoolInit(sPriv->fd,
-                                             DRM_BO_FLAG_EXE |
-                                             DRM_BO_FLAG_MEM_TT |
-                                             DRM_BO_FLAG_MEM_LOCAL,
-                                             BATCH_SZ, 
-					     batchPoolSize, 5);
-   if (!intelScreen->batchPool) {
-      fprintf(stderr, "Failed to initialize batch pool - possible incorrect agpgart installed\n");
-      return GL_FALSE;
-   }
-#else
-   intelScreen->staticPool = driDRMPoolInit(sPriv->fd);
-   intelScreen->batchPool = driSlabPoolInit(sPriv->fd,
-						DRM_BO_FLAG_EXE |
-						DRM_BO_FLAG_MEM_TT,
-						DRM_BO_FLAG_EXE |
-						DRM_BO_FLAG_MEM_TT,
-						4 * 4096, //intelScreen->maxBatchSize,
-						1, 40, 16*16384, 0,
-						intelScreen->fMan);
-#endif
    intelScreen->havePools = GL_TRUE;
 
    intelUpdateScreenRotation(sPriv, intelScreen->sarea);
@@ -211,6 +182,27 @@ intelCreatePools(__DRIscreenPrivate * sPriv)
    return GL_TRUE;
 }
 
+static const char *
+intel_get_name( struct pipe_winsys *winsys )
+{
+   return "Intel/DRI/ttm";
+}
+
+/*
+ * The state tracker (should!) keep track of whether the fake
+ * frontbuffer has been touched by any rendering since the last time
+ * we copied its contents to the real frontbuffer.  Our task is easy:
+ */
+static void
+intel_flush_frontbuffer( struct pipe_winsys *winsys,
+                         struct pipe_surface *surf,
+                         void *context_private)
+{
+   struct intel_context *intel = (struct intel_context *) context_private;
+   __DRIdrawablePrivate *dPriv = intel->driDrawable;
+
+   intelDisplaySurface(dPriv, surf, NULL);
+}
 
 static boolean
 intelInitDriver(__DRIscreenPrivate * sPriv)
@@ -231,7 +223,7 @@ intelInitDriver(__DRIscreenPrivate * sPriv)
 
    /* Allocate the private area */
    intelScreen = CALLOC_STRUCT(intel_screen);
-   if (!intelScreen) 
+   if (!intelScreen)
       return GL_FALSE;
 
    /* parse information in __driConfigOptions */
@@ -262,26 +254,9 @@ intelInitDriver(__DRIscreenPrivate * sPriv)
       (*glx_enable_extension) (psc, "GLX_SGI_make_current_read");
    }
 
-
-
-#if 1 // ZZZ JB
-   intelScreen->mgr = driFenceMgrTTMInit(sPriv->fd);
-   if (!intelScreen->mgr) {
-      fprintf(stderr, "Failed to create fence manager.\n");
-      return GL_FALSE;
-   }
-
-   intelScreen->fMan = driInitFreeSlabManager(10, 10);
-   if (!intelScreen->fMan) {
-      fprintf(stderr, "Failed to create free slab manager.\n");
-      return GL_FALSE;
-   }
-
-   if (!intelCreatePools(sPriv))
-      return GL_FALSE;
-#endif
-
-   intelScreen->winsys = intel_create_pipe_winsys(sPriv->fd, intelScreen->fMan);
+   intel_be_init_device(&intelScreen->base, sPriv->fd);
+   intelScreen->base.base.flush_frontbuffer = intel_flush_frontbuffer;
+   intelScreen->base.base.get_name = intel_get_name;
 
    return GL_TRUE;
 }
@@ -292,12 +267,9 @@ intelDestroyScreen(__DRIscreenPrivate * sPriv)
 {
    struct intel_screen *intelScreen = intel_screen(sPriv);
 
+   intel_be_destroy_device(&intelScreen->base);
    /*  intelUnmapScreenRegions(intelScreen); */
 
-   if (intelScreen->havePools) {
-      driPoolTakeDown(intelScreen->staticPool);
-      driPoolTakeDown(intelScreen->batchPool);
-   }
    FREE(intelScreen);
    sPriv->private = NULL;
 }
@@ -518,8 +490,8 @@ intelFillInModes(unsigned pixel_bits, unsigned depth_bits,
  * This routine also fills in the linked list pointed to by \c driver_modes
  * with the \c __GLcontextModes that the driver can support for windows or
  * pbuffers.
- * 
- * \return A pointer to a \c __DRIscreenPrivate on success, or \c NULL on 
+ *
+ * \return A pointer to a \c __DRIscreenPrivate on success, or \c NULL on
  *         failure.
  */
 PUBLIC void *

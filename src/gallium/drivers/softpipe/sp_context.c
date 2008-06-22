@@ -88,7 +88,8 @@ static void softpipe_destroy( struct pipe_context *pipe )
    struct pipe_winsys *ws = pipe->winsys;
    uint i;
 
-   draw_destroy( softpipe->draw );
+   if (softpipe->draw)
+      draw_destroy( softpipe->draw );
 
    softpipe->quad.polygon_stipple->destroy( softpipe->quad.polygon_stipple );
    softpipe->quad.earlyz->destroy( softpipe->quad.earlyz );
@@ -128,12 +129,12 @@ softpipe_create( struct pipe_screen *screen,
    uint i;
 
 #ifdef PIPE_ARCH_X86
-   softpipe->use_sse = GETENV( "GALLIUM_NOSSE" ) == NULL;
+   softpipe->use_sse = !debug_get_bool_option( "GALLIUM_NOSSE", FALSE );
 #else
    softpipe->use_sse = FALSE;
 #endif
 
-   softpipe->dump_fs = GETENV( "GALLIUM_DUMP_FS" ) != NULL;
+   softpipe->dump_fs = debug_get_bool_option( "GALLIUM_DUMP_FS", FALSE );
 
    softpipe->pipe.winsys = pipe_winsys;
    softpipe->pipe.screen = screen;
@@ -178,6 +179,7 @@ softpipe_create( struct pipe_screen *screen,
 
    softpipe->pipe.draw_arrays = softpipe_draw_arrays;
    softpipe->pipe.draw_elements = softpipe_draw_elements;
+   softpipe->pipe.draw_range_elements = softpipe_draw_range_elements;
    softpipe->pipe.set_edgeflags = softpipe_set_edgeflags;
 
 
@@ -216,17 +218,23 @@ softpipe_create( struct pipe_screen *screen,
     * Create drawing context and plug our rendering stage into it.
     */
    softpipe->draw = draw_create();
-   assert(softpipe->draw);
-   softpipe->setup = sp_draw_render_stage(softpipe);
+   if (!softpipe->draw) 
+      goto fail;
 
-   if (GETENV( "SP_NO_RAST" ) != NULL)
+   softpipe->setup = sp_draw_render_stage(softpipe);
+   if (!softpipe->setup)
+      goto fail;
+
+   if (debug_get_bool_option( "SP_NO_RAST", FALSE ))
       softpipe->no_rast = TRUE;
 
-   if (GETENV( "SP_VBUF" ) != NULL) {
-      sp_init_vbuf(softpipe);
+   if (debug_get_bool_option( "SP_NO_VBUF", FALSE )) {
+      /* Deprecated path -- vbuf is the intended interface to the draw module:
+       */
+      draw_set_rasterize_stage(softpipe->draw, softpipe->setup);
    }
    else {
-      draw_set_rasterize_stage(softpipe->draw, softpipe->setup);
+      sp_init_vbuf(softpipe);
    }
 
    /* plug in AA line/point stages */
@@ -241,4 +249,8 @@ softpipe_create( struct pipe_screen *screen,
    sp_init_surface_functions(softpipe);
 
    return &softpipe->pipe;
+
+ fail:
+   softpipe_destroy(&softpipe->pipe);
+   return NULL;
 }

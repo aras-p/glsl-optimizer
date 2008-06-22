@@ -165,9 +165,17 @@ tgsi_exec_machine_bind_shader(
    declarations = (struct tgsi_full_declaration *)
       MALLOC( maxDeclarations * sizeof(struct tgsi_full_declaration) );
 
+   if (!declarations) {
+      return;
+   }
+
    instructions = (struct tgsi_full_instruction *)
       MALLOC( maxInstructions * sizeof(struct tgsi_full_instruction) );
 
+   if (!instructions) {
+      FREE( declarations );
+      return;
+   }
 
    while( !tgsi_parse_end_of_tokens( &parse ) ) {
       uint pointer = parse.Position;
@@ -1411,13 +1419,11 @@ exec_declaration(
          unsigned first, last, mask;
          eval_coef_func eval;
 
-         assert( decl->Declaration.Declare == TGSI_DECLARE_RANGE );
-
-         first = decl->u.DeclarationRange.First;
-         last = decl->u.DeclarationRange.Last;
+         first = decl->DeclarationRange.First;
+         last = decl->DeclarationRange.Last;
          mask = decl->Declaration.UsageMask;
 
-         switch( decl->Interpolation.Interpolate ) {
+         switch( decl->Declaration.Interpolate ) {
          case TGSI_INTERPOLATE_CONSTANT:
             eval = eval_constant_coef;
             break;
@@ -1479,7 +1485,7 @@ exec_instruction(
       break;
 
    case TGSI_OPCODE_MOV:
-   /* TGSI_OPCODE_SWZ */
+   case TGSI_OPCODE_SWZ:
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH( &r[0], 0, chan_index );
          STORE( &r[0], 0, chan_index );

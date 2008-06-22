@@ -539,26 +539,20 @@ static const char *TGSI_MODULATES[] =
    "MODULATE_EIGHTH"
 };
 
-static void
-dump_declaration_short(
-   struct tgsi_full_declaration  *decl )
+void
+tgsi_dump_declaration(
+   const struct tgsi_full_declaration  *decl )
 {
    TXT( "\nDCL " );
    ENM( decl->Declaration.File, TGSI_FILES_SHORT );
 
-   switch( decl->Declaration.Declare ) {
-   case TGSI_DECLARE_RANGE:
-      CHR( '[' );
-      UID( decl->u.DeclarationRange.First );
-      if( decl->u.DeclarationRange.First != decl->u.DeclarationRange.Last ) {
-         TXT( ".." );
-         UID( decl->u.DeclarationRange.Last );
-      }
-      CHR( ']' );
-      break;
-   default:
-      assert( 0 );
+   CHR( '[' );
+   UID( decl->DeclarationRange.First );
+   if (decl->DeclarationRange.First != decl->DeclarationRange.Last) {
+      TXT( ".." );
+      UID( decl->DeclarationRange.Last );
    }
+   CHR( ']' );
 
    if( decl->Declaration.UsageMask != TGSI_WRITEMASK_XYZW ) {
       CHR( '.' );
@@ -586,10 +580,8 @@ dump_declaration_short(
       }
    }
 
-   if (decl->Declaration.Interpolate) {
-      TXT( ", " );
-      ENM( decl->Interpolation.Interpolate, TGSI_INTERPOLATES_SHORT );
-   }
+   TXT( ", " );
+   ENM( decl->Declaration.Interpolate, TGSI_INTERPOLATES_SHORT );
 }
 
 static void
@@ -601,8 +593,6 @@ dump_declaration_verbose(
 {
    TXT( "\nFile       : " );
    ENM( decl->Declaration.File, TGSI_FILES );
-   TXT( "\nDeclare    : " );
-   ENM( decl->Declaration.Declare, TGSI_DECLARES );
    if( deflt || fd->Declaration.UsageMask != decl->Declaration.UsageMask ) {
       TXT( "\nUsageMask  : " );
       if( decl->Declaration.UsageMask & TGSI_WRITEMASK_X ) {
@@ -620,7 +610,7 @@ dump_declaration_verbose(
    }
    if( deflt || fd->Declaration.Interpolate != decl->Declaration.Interpolate ) {
       TXT( "\nInterpolate: " );
-      UID( decl->Declaration.Interpolate );
+      ENM( decl->Declaration.Interpolate, TGSI_INTERPOLATES );
    }
    if( deflt || fd->Declaration.Semantic != decl->Declaration.Semantic ) {
       TXT( "\nSemantic   : " );
@@ -632,32 +622,10 @@ dump_declaration_verbose(
    }
 
    EOL();
-   switch( decl->Declaration.Declare ) {
-   case TGSI_DECLARE_RANGE:
-      TXT( "\nFirst: " );
-      UID( decl->u.DeclarationRange.First );
-      TXT( "\nLast : " );
-      UID( decl->u.DeclarationRange.Last );
-      break;
-
-   case TGSI_DECLARE_MASK:
-      TXT( "\nMask: " );
-      UIX( decl->u.DeclarationMask.Mask );
-      break;
-
-   default:
-      assert( 0 );
-   }
-
-   if( decl->Declaration.Interpolate ) {
-      EOL();
-      TXT( "\nInterpolate: " );
-      ENM( decl->Interpolation.Interpolate, TGSI_INTERPOLATES );
-      if( ignored ) {
-         TXT( "\nPadding    : " );
-         UIX( decl->Interpolation.Padding );
-      }
-   }
+   TXT( "\nFirst: " );
+   UID( decl->DeclarationRange.First );
+   TXT( "\nLast : " );
+   UID( decl->DeclarationRange.Last );
 
    if( decl->Declaration.Semantic ) {
       EOL();
@@ -672,9 +640,9 @@ dump_declaration_verbose(
    }
 }
 
-static void
-dump_immediate_short(
-   struct tgsi_full_immediate *imm )
+void
+tgsi_dump_immediate(
+   const struct tgsi_full_immediate *imm )
 {
    unsigned i;
 
@@ -727,9 +695,9 @@ dump_immediate_verbose(
    }
 }
 
-static void
-dump_instruction_short(
-   struct tgsi_full_instruction  *inst,
+void
+tgsi_dump_instruction(
+   const struct tgsi_full_instruction  *inst,
    unsigned                      instno )
 {
    unsigned i;
@@ -754,7 +722,7 @@ dump_instruction_short(
    }
 
    for( i = 0; i < inst->Instruction.NumDstRegs; i++ ) {
-      struct tgsi_full_dst_register *dst = &inst->FullDstRegisters[i];
+      const struct tgsi_full_dst_register *dst = &inst->FullDstRegisters[i];
 
       if( !first_reg ) {
          CHR( ',' );
@@ -812,7 +780,7 @@ dump_instruction_short(
    }
 
    for( i = 0; i < inst->Instruction.NumSrcRegs; i++ ) {
-      struct tgsi_full_src_register *src = &inst->FullSrcRegisters[i];
+      const struct tgsi_full_src_register *src = &inst->FullSrcRegisters[i];
 
       if( !first_reg ) {
          CHR( ',' );
@@ -835,7 +803,14 @@ dump_instruction_short(
       ENM( src->SrcRegister.File, TGSI_FILES_SHORT );
 
       CHR( '[' );
-      SID( src->SrcRegister.Index );
+      if (src->SrcRegister.Indirect) {
+         TXT( "addr" );
+         if (src->SrcRegister.Index > 0)
+            CHR( '+' );
+         SID( src->SrcRegister.Index );
+      }
+      else
+         SID( src->SrcRegister.Index );
       CHR( ']' );
 
       if (src->SrcRegister.SwizzleX != TGSI_SWIZZLE_X ||
@@ -1281,17 +1256,17 @@ tgsi_dump(
 
       switch( parse.FullToken.Token.Type ) {
       case TGSI_TOKEN_TYPE_DECLARATION:
-         dump_declaration_short(
+         tgsi_dump_declaration(
             &parse.FullToken.FullDeclaration );
          break;
 
       case TGSI_TOKEN_TYPE_IMMEDIATE:
-         dump_immediate_short(
+         tgsi_dump_immediate(
             &parse.FullToken.FullImmediate );
          break;
 
       case TGSI_TOKEN_TYPE_INSTRUCTION:
-         dump_instruction_short(
+         tgsi_dump_instruction(
             &parse.FullToken.FullInstruction,
             instno );
          instno++;

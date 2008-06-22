@@ -63,7 +63,7 @@ rasterpos(GLfloat x, GLfloat y, GLfloat z, GLfloat w)
 void GLAPIENTRY
 _mesa_RasterPos2d(GLdouble x, GLdouble y)
 {
-   rasterpos(x, y, 0.0F, 1.0F);
+   rasterpos((GLfloat)x, (GLfloat)y, (GLfloat)0.0, (GLfloat)1.0);
 }
 
 void GLAPIENTRY
@@ -211,7 +211,7 @@ _mesa_RasterPos4sv(const GLshort *v)
 /***           GL_ARB_window_pos / GL_MESA_window_pos               ***/
 /**********************************************************************/
 
-#if FEATURE_windowpos
+#if FEATURE_drawpix
 /**
  * All glWindowPosMESA and glWindowPosARB commands call this function to
  * update the current raster position.

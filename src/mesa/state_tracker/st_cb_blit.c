@@ -40,7 +40,6 @@
 
 #include "st_context.h"
 #include "st_program.h"
-#include "st_cb_drawpixels.h"
 #include "st_cb_blit.h"
 #include "st_cb_fbo.h"
 
@@ -106,5 +105,7 @@ st_BlitFramebuffer(GLcontext *ctx,
 void
 st_init_blit_functions(struct dd_function_table *functions)
 {
+#if FEATURE_EXT_framebuffer_blit
    functions->BlitFramebuffer = st_BlitFramebuffer;
+#endif
 }

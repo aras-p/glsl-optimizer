@@ -37,7 +37,6 @@
 #include "mtypes.h"
 #include "prog_statevars.h"
 #include "prog_parameter.h"
-#include "nvvertparse.h"
 
 
 /**
@@ -133,10 +132,6 @@ _mesa_fetch_state(GLcontext *ctx, const gl_state_index state[],
 	       NORMALIZE_3FV(value);
 	       value[3] = 1.0;
             }						  
-            return;
-	 case STATE_POSITION_NORMALIZED:
-            COPY_4V(value, ctx->Light.Light[ln].EyePosition);
-	    NORMALIZE_3FV( value );
             return;
          default:
             _mesa_problem(ctx, "Invalid light state in fetch_state");
@@ -254,7 +249,7 @@ _mesa_fetch_state(GLcontext *ctx, const gl_state_index state[],
       value[1] = ctx->Fog.Start;
       value[2] = ctx->Fog.End;
       value[3] = (ctx->Fog.End == ctx->Fog.Start)
-         ? 1.0 : 1.0F / (ctx->Fog.End - ctx->Fog.Start);
+         ? 1.0 : (GLfloat)(1.0 / (ctx->Fog.End - ctx->Fog.Start));
       return;
    case STATE_CLIPPLANE:
       {
@@ -401,7 +396,11 @@ _mesa_fetch_state(GLcontext *ctx, const gl_state_index state[],
    case STATE_INTERNAL:
       switch (state[1]) {
       case STATE_NORMAL_SCALE:
-         ASSIGN_4V(value, ctx->_ModelViewInvScale, 0, 0, 1);
+         ASSIGN_4V(value, 
+                   ctx->_ModelViewInvScale, 
+                   ctx->_ModelViewInvScale, 
+                   ctx->_ModelViewInvScale, 
+                   1);
          return;
       case STATE_TEXRECT_SCALE:
          {
@@ -411,7 +410,7 @@ _mesa_fetch_state(GLcontext *ctx, const gl_state_index state[],
             if (texObj) {
                struct gl_texture_image *texImage = texObj->Image[0][0];
                ASSIGN_4V(value, 1.0 / texImage->Width,
-                         1.0 / texImage->Height,
+                         (GLfloat)(1.0 / texImage->Height),
                          0.0, 1.0);
             }
          }
@@ -426,20 +425,51 @@ _mesa_fetch_state(GLcontext *ctx, const gl_state_index state[],
           * exp2: 2^-((density/(ln(2)^2) * fogcoord)^2)
           */
          value[0] = (ctx->Fog.End == ctx->Fog.Start)
-            ? 1.0 : -1.0F / (ctx->Fog.End - ctx->Fog.Start);
+            ? 1.0 : (GLfloat)(-1.0F / (ctx->Fog.End - ctx->Fog.Start));
          value[1] = ctx->Fog.End * -value[0];
-         value[2] = ctx->Fog.Density * ONE_DIV_LN2;
-         value[3] = ctx->Fog.Density * ONE_DIV_SQRT_LN2;
+         value[2] = (GLfloat)(ctx->Fog.Density * ONE_DIV_LN2);
+         value[3] = (GLfloat)(ctx->Fog.Density * ONE_DIV_SQRT_LN2);
          return;
-      case STATE_SPOT_DIR_NORMALIZED: {
+
+      case STATE_LIGHT_SPOT_DIR_NORMALIZED: {
          /* here, state[2] is the light number */
          /* pre-normalize spot dir */
          const GLuint ln = (GLuint) state[2];
-         COPY_3V(value, ctx->Light.Light[ln].EyeDirection);
-         NORMALIZE_3FV(value);
+         COPY_3V(value, ctx->Light.Light[ln]._NormDirection);
          value[3] = ctx->Light.Light[ln]._CosCutoff;
          return;
       }
+
+      case STATE_LIGHT_POSITION: {
+         const GLuint ln = (GLuint) state[2];
+         COPY_4V(value, ctx->Light.Light[ln]._Position);
+         return;
+      }
+
+      case STATE_LIGHT_POSITION_NORMALIZED: {
+         const GLuint ln = (GLuint) state[2];
+         COPY_4V(value, ctx->Light.Light[ln]._Position);
+         NORMALIZE_3FV( value );
+         return;
+      }
+
+      case STATE_LIGHT_HALF_VECTOR: {
+         const GLuint ln = (GLuint) state[2];
+         GLfloat p[3];
+         /* Compute infinite half angle vector:
+          *   halfVector = normalize(normalize(lightPos) + (0, 0, 1))
+          * light.EyePosition.w should be 0 for infinite lights.
+          */
+         COPY_3V(p, ctx->Light.Light[ln]._Position);
+         NORMALIZE_3FV(p);
+         ADD_3V(value, p, ctx->_EyeZDir);
+         NORMALIZE_3FV(value);
+         value[3] = 1.0;
+         return;
+      }						  
+
+
+
       case STATE_PT_SCALE:
          value[0] = ctx->Pixel.RedScale;
          value[1] = ctx->Pixel.GreenScale;
@@ -696,7 +726,6 @@ append_token(char *dst, gl_state_index k)
       append(dst, "normalScale");
       break;
    case STATE_INTERNAL:
-   case STATE_POSITION_NORMALIZED:
       append(dst, "(internal)");
       break;
    case STATE_PT_SCALE:

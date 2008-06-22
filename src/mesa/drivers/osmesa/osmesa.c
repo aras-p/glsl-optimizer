@@ -33,14 +33,14 @@
  */
 
 
-#include "glheader.h"
+#include "main/glheader.h"
 #include "GL/osmesa.h"
-#include "context.h"
-#include "extensions.h"
-#include "framebuffer.h"
-#include "imports.h"
-#include "mtypes.h"
-#include "renderbuffer.h"
+#include "main/context.h"
+#include "main/extensions.h"
+#include "main/framebuffer.h"
+#include "main/imports.h"
+#include "main/mtypes.h"
+#include "main/renderbuffer.h"
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
 #include "swrast/s_context.h"

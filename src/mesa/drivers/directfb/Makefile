@@ -25,11 +25,24 @@ DIRECTFBGL_MESA_OBJECTS = $(DIRECTFBGL_MESA_SOURCES:.c=.o)
 
 DIRECTFBGL_MESA = libidirectfbgl_mesa.so
 
+LIBS = $(TOP)/src/mesa/libmesa.a $(TOP)/src/mesa/libglapi.a
+
+
 .c.o:
 	$(CC) -c $(INCLUDE_DIRS) $(CFLAGS) $(DFB_CFLAGS) $< -o $@
 
 
-default: directfbgl_mesa
+default: directfb-libgl directfbgl_mesa
+
+
+# XXX this used to be in src/mesa/Makefile and is probably broken now
+directfb-libgl: $(LIBS)
+	@ $(TOP)/bin/mklib -o $(GL_LIB) -linker '$(CC)' -ldflags '$(LDFLAGS)' \
+		-major $(MESA_MAJOR) -minor $(MESA_MINOR) -patch $(MESA_TINY) \
+		-install $(TOP)/$(LIB_DIR) $(MKLIB_OPTIONS) $(LIBS) \
+		$(GL_LIB_DEPS)
+
+
 
 # Mesa DirectFBGL module
 directfbgl_mesa: $(DIRECTFBGL_MESA_OBJECTS)
@@ -50,5 +63,5 @@ install:
 
 
 clean:
-	rm -f *.o *.so
+	-rm -f *.o *.so
 

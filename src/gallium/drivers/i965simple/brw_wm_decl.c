@@ -351,18 +351,16 @@ void brw_wm_emit_decls(struct brw_wm_compile *c)
       case TGSI_TOKEN_TYPE_DECLARATION:
       {
 	 const struct tgsi_full_declaration *decl = &parse.FullToken.FullDeclaration;
-	 unsigned first = decl->u.DeclarationRange.First;
-	 unsigned last = decl->u.DeclarationRange.Last;
+	 unsigned first = decl->DeclarationRange.First;
+	 unsigned last = decl->DeclarationRange.Last;
 	 unsigned mask = decl->Declaration.UsageMask; /* ? */
 	 unsigned i;
 
 	 if (decl->Declaration.File != TGSI_FILE_INPUT)
 	    break;
 
-	 assert(decl->Declaration.Interpolate);
-
 	 for( i = first; i <= last; i++ ) {
-	    switch (decl->Interpolation.Interpolate) {
+	    switch (decl->Declaration.Interpolate) {
 	    case TGSI_INTERPOLATE_CONSTANT:
 	       emit_cinterp(c, i, mask);
 	       break;

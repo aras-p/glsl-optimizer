@@ -112,7 +112,8 @@ static void interp( const struct clipper *clip,
 		    const struct vertex_header *out, 
 		    const struct vertex_header *in )
 {
-   const unsigned nr_attrs = clip->stage.draw->num_vs_outputs;
+   const unsigned nr_attrs = clip->stage.draw->vs.num_vs_outputs;
+   const unsigned pos_attr = clip->stage.draw->vs.position_output;
    unsigned j;
 
    /* Vertex header.
@@ -138,18 +139,17 @@ static void interp( const struct clipper *clip,
       const float *trans = clip->stage.draw->viewport.translate;
       const float oow = 1.0f / pos[3];
 
-      dst->data[0][0] = pos[0] * oow * scale[0] + trans[0];
-      dst->data[0][1] = pos[1] * oow * scale[1] + trans[1];
-      dst->data[0][2] = pos[2] * oow * scale[2] + trans[2];
-      dst->data[0][3] = oow;
+      dst->data[pos_attr][0] = pos[0] * oow * scale[0] + trans[0];
+      dst->data[pos_attr][1] = pos[1] * oow * scale[1] + trans[1];
+      dst->data[pos_attr][2] = pos[2] * oow * scale[2] + trans[2];
+      dst->data[pos_attr][3] = oow;
    }
 
    /* Other attributes
-    * Note: start at 1 to skip winpos (data[0]) since we just computed
-    * it above.
     */
-   for (j = 1; j < nr_attrs; j++) {
-      interp_attr(dst->data[j], t, in->data[j], out->data[j]);
+   for (j = 0; j < nr_attrs; j++) {
+      if (j != pos_attr)
+         interp_attr(dst->data[j], t, in->data[j], out->data[j]);
    }
 }
 
@@ -171,7 +171,7 @@ static void emit_poly( struct draw_stage *stage,
    header.flags = DRAW_PIPE_RESET_STIPPLE | edge_first | edge_middle;
    header.pad = 0;
 
-   for (i = 2; i < n; i++, header.flags = 0) {
+   for (i = 2; i < n; i++, header.flags = edge_middle) {
       header.v[0] = inlist[i-1];
       header.v[1] = inlist[i];
       header.v[2] = inlist[0];	/* keep in v[2] for flatshading */
@@ -180,7 +180,7 @@ static void emit_poly( struct draw_stage *stage,
         header.flags |= edge_last;
 
       if (0) {
-         const struct draw_vertex_shader *vs = stage->draw->vertex_shader;
+         const struct draw_vertex_shader *vs = stage->draw->vs.vertex_shader;
          uint j, k;
          debug_printf("Clipped tri:\n");
          for (j = 0; j < 3; j++) {
@@ -425,7 +425,7 @@ clip_init_state( struct draw_stage *stage )
    clipper->flat = stage->draw->rasterizer->flatshade ? TRUE : FALSE;
 
    if (clipper->flat) {
-      const struct draw_vertex_shader *vs = stage->draw->vertex_shader;
+      const struct draw_vertex_shader *vs = stage->draw->vs.vertex_shader;
       uint i;
 
       clipper->num_color_attribs = 0;

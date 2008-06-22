@@ -77,7 +77,7 @@ is_identity(const GLfloat m[16])
    GLuint i;
    for (i = 0; i < 16; i++) {
       const int row = i % 4, col = i / 4;
-      const float val = (row == col);
+      const float val = (GLfloat)(row == col);
       if (m[i] != val)
          return GL_FALSE;
    }

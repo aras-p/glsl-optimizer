@@ -30,8 +30,10 @@
 #include "main/extensions.h"
 #include "main/matrix.h"
 #include "main/buffers.h"
+#include "main/scissor.h"
 #include "vbo/vbo.h"
 #include "shader/shader_api.h"
+#include "glapi/glapi.h"
 #include "st_public.h"
 #include "st_context.h"
 #include "st_cb_accum.h"
@@ -39,12 +41,16 @@
 #include "st_cb_blit.h"
 #include "st_cb_bufferobjects.h"
 #include "st_cb_clear.h"
+#if FEATURE_drawpix
 #include "st_cb_drawpixels.h"
+#include "st_cb_rasterpos.h"
+#endif
 #include "st_cb_fbo.h"
+#if FEATURE_feedback
 #include "st_cb_feedback.h"
+#endif
 #include "st_cb_program.h"
 #include "st_cb_queryobj.h"
-#include "st_cb_rasterpos.h"
 #include "st_cb_readpixels.h"
 #include "st_cb_texture.h"
 #include "st_cb_flush.h"
@@ -162,10 +168,14 @@ static void st_destroy_context_priv( struct st_context *st )
    st_destroy_atoms( st );
    st_destroy_draw( st );
    st_destroy_generate_mipmap(st);
-   st_destroy_bitmap(st);
+#if FEATURE_EXT_framebuffer_blit
    st_destroy_blit(st);
+#endif
    st_destroy_clear(st);
+#if FEATURE_drawpix
+   st_destroy_bitmap(st);
    st_destroy_drawpix(st);
+#endif
 
    _vbo_DestroyContext(st->ctx);
 
@@ -242,21 +252,39 @@ void st_copy_context_state(struct st_context *dst,
 }
 
 
+
+st_proc st_get_proc_address(const char *procname)
+{
+   return (st_proc) _glapi_get_proc_address(procname);
+}
+
+
+
 void st_init_driver_functions(struct dd_function_table *functions)
 {
    _mesa_init_glsl_driver_functions(functions);
 
+#if FEATURE_accum
    st_init_accum_functions(functions);
-   st_init_bitmap_functions(functions);
+#endif
+#if FEATURE_EXT_framebuffer_blit
    st_init_blit_functions(functions);
+#endif
    st_init_bufferobject_functions(functions);
    st_init_clear_functions(functions);
+#if FEATURE_drawpix
+   st_init_bitmap_functions(functions);
    st_init_drawpixels_functions(functions);
-   st_init_fbo_functions(functions);
-   st_init_feedback_functions(functions);
-   st_init_program_functions(functions);
-   st_init_query_functions(functions);
    st_init_rasterpos_functions(functions);
+#endif
+   st_init_fbo_functions(functions);
+#if FEATURE_feedback
+   st_init_feedback_functions(functions);
+#endif
+   st_init_program_functions(functions);
+#if FEATURE_ARB_occlusion_query
+   st_init_query_functions(functions);
+#endif
    st_init_readpixels_functions(functions);
    st_init_texture_functions(functions);
    st_init_flush_functions(functions);

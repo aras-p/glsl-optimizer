@@ -24,7 +24,9 @@
 #ifndef _RTASM_X86SSE_H_
 #define _RTASM_X86SSE_H_
 
-#if defined(__i386__) || defined(__386__) || defined(i386)
+#include "pipe/p_config.h"
+
+#if defined(PIPE_ARCH_X86)
 
 /* It is up to the caller to ensure that instructions issued are
  * suitable for the host cpu.  There are no checks made in this module
@@ -41,10 +43,12 @@ struct x86_function {
    unsigned size;
    unsigned char *store;
    unsigned char *csr;
-   unsigned stack_offset;
-   int need_emms;
+
+   unsigned stack_offset:16;
+   unsigned need_emms:8;
+   int x87_stack:8;
+
    unsigned char error_overflow[4];
-   const char *fn;
 };
 
 enum x86_reg_file {
@@ -107,6 +111,9 @@ void x86_init_func_size( struct x86_function *p, unsigned code_size );
 void x86_release_func( struct x86_function *p );
 void (*x86_get_func( struct x86_function *p ))( void );
 
+/* Debugging:
+ */
+void x86_print_reg( struct x86_reg reg );
 
 
 /* Create and manipulate registers and regmem values:
@@ -150,6 +157,7 @@ void x86_call( struct x86_function *p, struct x86_reg reg);
  * I load the immediate into general purpose register and use it.
  */
 void x86_mov_reg_imm( struct x86_function *p, struct x86_reg dst, int imm );
+void x86_add_reg_imm8( struct x86_function *p, struct x86_reg dst, ubyte imm );
 
 
 /* Macro for sse_shufps() and sse2_pshufd():
@@ -183,7 +191,7 @@ void sse_divss( struct x86_function *p, struct x86_reg dst, struct x86_reg src )
 void sse_andnps( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 void sse_andps( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 void sse_cmpps( struct x86_function *p, struct x86_reg dst, struct x86_reg src,
-                unsigned char cc );
+                enum sse_cc cc );
 void sse_maxps( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 void sse_maxss( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 void sse_minps( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
@@ -220,6 +228,7 @@ void x86_imul( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 void x86_or( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 void x86_pop( struct x86_function *p, struct x86_reg reg );
 void x86_push( struct x86_function *p, struct x86_reg reg );
+void x86_push_imm32( struct x86_function *p, int imm );
 void x86_ret( struct x86_function *p );
 void x86_retw( struct x86_function *p, unsigned short imm );
 void x86_sub( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
@@ -227,13 +236,27 @@ void x86_test( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 void x86_xor( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 void x86_sahf( struct x86_function *p );
 
+
+void x86_cdecl_caller_push_regs( struct x86_function *p );
+void x86_cdecl_caller_pop_regs( struct x86_function *p );
+
+void x87_assert_stack_empty( struct x86_function *p );
+
 void x87_f2xm1( struct x86_function *p );
 void x87_fabs( struct x86_function *p );
 void x87_fadd( struct x86_function *p, struct x86_reg dst, struct x86_reg arg );
 void x87_faddp( struct x86_function *p, struct x86_reg dst );
 void x87_fchs( struct x86_function *p );
 void x87_fclex( struct x86_function *p );
+void x87_fcmovb( struct x86_function *p, struct x86_reg src );
+void x87_fcmovbe( struct x86_function *p, struct x86_reg src );
+void x87_fcmove( struct x86_function *p, struct x86_reg src );
+void x87_fcmovnb( struct x86_function *p, struct x86_reg src );
+void x87_fcmovnbe( struct x86_function *p, struct x86_reg src );
+void x87_fcmovne( struct x86_function *p, struct x86_reg src );
 void x87_fcom( struct x86_function *p, struct x86_reg dst );
+void x87_fcomi( struct x86_function *p, struct x86_reg dst );
+void x87_fcomip( struct x86_function *p, struct x86_reg dst );
 void x87_fcomp( struct x86_function *p, struct x86_reg dst );
 void x87_fcos( struct x86_function *p );
 void x87_fdiv( struct x86_function *p, struct x86_reg dst, struct x86_reg arg );
@@ -253,6 +276,7 @@ void x87_fmul( struct x86_function *p, struct x86_reg dst, struct x86_reg arg );
 void x87_fmulp( struct x86_function *p, struct x86_reg dst );
 void x87_fnclex( struct x86_function *p );
 void x87_fprndint( struct x86_function *p );
+void x87_fpop( struct x86_function *p );
 void x87_fscale( struct x86_function *p );
 void x87_fsin( struct x86_function *p );
 void x87_fsincos( struct x86_function *p );
@@ -263,11 +287,13 @@ void x87_fsub( struct x86_function *p, struct x86_reg dst, struct x86_reg arg );
 void x87_fsubp( struct x86_function *p, struct x86_reg dst );
 void x87_fsubr( struct x86_function *p, struct x86_reg dst, struct x86_reg arg );
 void x87_fsubrp( struct x86_function *p, struct x86_reg dst );
+void x87_ftst( struct x86_function *p );
 void x87_fxch( struct x86_function *p, struct x86_reg dst );
 void x87_fxtract( struct x86_function *p );
 void x87_fyl2x( struct x86_function *p );
 void x87_fyl2xp1( struct x86_function *p );
 void x87_fwait( struct x86_function *p );
+void x87_fnstcw( struct x86_function *p, struct x86_reg dst );
 void x87_fnstsw( struct x86_function *p, struct x86_reg dst );
 void x87_fucompp( struct x86_function *p );
 void x87_fucomp( struct x86_function *p, struct x86_reg arg );

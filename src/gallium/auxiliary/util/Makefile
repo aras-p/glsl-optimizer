@@ -15,8 +15,7 @@ C_SOURCES = \
 	u_mm.c \
 	u_simple_shaders.c \
 	u_snprintf.c \
-	u_time.c \
-	u_mm.c
+	u_time.c
 
 include ../../Makefile.template
 

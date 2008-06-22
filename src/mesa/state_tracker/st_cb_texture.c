@@ -26,7 +26,9 @@
  **************************************************************************/
 
 #include "main/imports.h"
+#if FEATURE_convolution
 #include "main/convolve.h"
+#endif
 #include "main/enums.h"
 #include "main/image.h"
 #include "main/macros.h"
@@ -95,14 +97,18 @@ static int
 compressed_num_bytes(GLuint mesaFormat)
 {
    switch(mesaFormat) {
+#if FEATURE_texture_fxt1
    case MESA_FORMAT_RGB_FXT1:
    case MESA_FORMAT_RGBA_FXT1:
+#endif
+#if FEATURE_texture_s3tc
    case MESA_FORMAT_RGB_DXT1:
    case MESA_FORMAT_RGBA_DXT1:
       return 2;
    case MESA_FORMAT_RGBA_DXT3:
    case MESA_FORMAT_RGBA_DXT5:
       return 4;
+#endif
    default:
       return 0;
    }
@@ -517,10 +523,12 @@ st_TexImage(GLcontext * ctx,
    stImage->face = _mesa_tex_target_to_face(target);
    stImage->level = level;
 
+#if FEATURE_convolution
    if (ctx->_ImageTransferState & IMAGE_CONVOLUTION_BIT) {
       _mesa_adjust_image_for_convolution(ctx, dims, &postConvWidth,
                                          &postConvHeight);
    }
+#endif
 
    /* choose the texture format */
    texImage->TexFormat = st_ChooseTextureFormat(ctx, internalFormat,

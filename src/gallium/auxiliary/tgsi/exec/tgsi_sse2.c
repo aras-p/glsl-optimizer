@@ -194,22 +194,12 @@ get_coef(
 }
 
 
-#ifdef WIN32
-static void
-emit_retw(
-   struct x86_function  *func,
-   unsigned             size )
-{
-   x86_retw( func, size );
-}
-#else
 static void
 emit_ret(
    struct x86_function  *func )
 {
    x86_ret( func );
 }
-#endif
 
 
 /**
@@ -475,7 +465,7 @@ static void
 emit_func_call_dst(
    struct x86_function *func,
    unsigned xmm_dst,
-   void (*code)() )
+   void (PIPE_CDECL *code)() )
 {
    sse_movaps(
       func,
@@ -496,9 +486,7 @@ emit_func_call_dst(
       x86_push( func, ecx );
       x86_mov_reg_imm( func, ecx, (unsigned long) code );
       x86_call( func, ecx );
-#ifndef WIN32
       x86_pop(func, ecx ); 
-#endif
    }
 
 
@@ -516,7 +504,7 @@ emit_func_call_dst_src(
    struct x86_function *func,
    unsigned xmm_dst,
    unsigned xmm_src,
-   void (*code)() )
+   void (PIPE_CDECL *code)() )
 {
    sse_movaps(
       func,
@@ -558,7 +546,7 @@ emit_add(
       make_xmm( xmm_src ) );
 }
 
-static void XSTDCALL
+static void PIPE_CDECL
 cos4f(
    float *store )
 {
@@ -581,7 +569,7 @@ emit_cos(
       cos4f );
 }
 
-static void XSTDCALL
+static void PIPE_CDECL
 ex24f(
    float *store )
 {
@@ -615,7 +603,7 @@ emit_f2it(
       make_xmm( xmm ) );
 }
 
-static void XSTDCALL
+static void PIPE_CDECL
 flr4f(
    float *store )
 {
@@ -638,7 +626,7 @@ emit_flr(
       flr4f );
 }
 
-static void XSTDCALL
+static void PIPE_CDECL
 frc4f(
    float *store )
 {
@@ -661,7 +649,7 @@ emit_frc(
       frc4f );
 }
 
-static void XSTDCALL
+static void PIPE_CDECL
 lg24f(
    float *store )
 {
@@ -720,7 +708,7 @@ emit_neg(
          TGSI_EXEC_TEMP_80000000_C ) );
 }
 
-static void XSTDCALL
+static void PIPE_CDECL
 pow4f(
    float *store )
 {
@@ -820,7 +808,7 @@ emit_setsign(
          TGSI_EXEC_TEMP_80000000_C ) );
 }
 
-static void XSTDCALL
+static void PIPE_CDECL
 sin4f(
    float *store )
 {
@@ -1190,7 +1178,7 @@ emit_instruction(
       break;
 
    case TGSI_OPCODE_MOV:
-   /* TGSI_OPCODE_SWZ */
+   case TGSI_OPCODE_SWZ:
       FOR_EACH_DST0_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH( func, *inst, 0, 0, chan_index );
          STORE( func, *inst, 0, 0, chan_index );
@@ -1736,11 +1724,7 @@ emit_instruction(
       break;
 
    case TGSI_OPCODE_RET:
-#ifdef WIN32
-      emit_retw( func, 16 );
-#else
       emit_ret( func );
-#endif
       break;
 
    case TGSI_OPCODE_END:
@@ -1923,16 +1907,14 @@ emit_declaration(
       unsigned first, last, mask;
       unsigned i, j;
 
-      assert( decl->Declaration.Declare == TGSI_DECLARE_RANGE );
-
-      first = decl->u.DeclarationRange.First;
-      last = decl->u.DeclarationRange.Last;
+      first = decl->DeclarationRange.First;
+      last = decl->DeclarationRange.Last;
       mask = decl->Declaration.UsageMask;
 
       for( i = first; i <= last; i++ ) {
          for( j = 0; j < NUM_CHANNELS; j++ ) {
             if( mask & (1 << j) ) {
-               switch( decl->Interpolation.Interpolate ) {
+               switch( decl->Declaration.Interpolate ) {
                case TGSI_INTERPOLATE_CONSTANT:
                   emit_coef_a0( func, 0, i, j );
                   emit_inputs( func, 0, i, j );
@@ -2283,11 +2265,7 @@ tgsi_emit_sse2(
       func,
       get_immediate_base() );
 
-#ifdef WIN32
-   emit_retw( func, 16 );
-#else
    emit_ret( func );
-#endif
 
    tgsi_parse_free( &parse );
 

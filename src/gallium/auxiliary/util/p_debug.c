@@ -153,7 +153,9 @@ const char *
 debug_get_option(const char *name, const char *dfault)
 {
    const char *result;
-#ifdef PIPE_SUBSYSTEM_WINDOWS_DISPLAY
+#if defined(PIPE_SUBSYSTEM_WINDOWS_DISPLAY)
+   /* EngMapFile creates the file if it does not exists, so it must either be
+    * disabled on release versions (or put in a less conspicuous place). */
 #ifdef DEBUG
    ULONG_PTR iFile = 0;
    const void *pMap = NULL;
@@ -161,9 +163,6 @@ debug_get_option(const char *name, const char *dfault)
    static char output[1024];
    
    result = dfault;
-   /* XXX: this creates the file if it does not exists, so it must either be
-    * disabled on release versions, or put in a less conspicuous place.
-    */
    pMap = EngMapFile(L"\\??\\c:\\gallium.cfg", 0, &iFile);
    if(pMap) {
       sol = (const char *)pMap;
@@ -187,13 +186,15 @@ debug_get_option(const char *name, const char *dfault)
 #else
    result = dfault;
 #endif
+#elif defined(PIPE_SUBSYSTEM_WINDOWS_CE)
+   /* TODO: implement */
+   result = dfault;
 #else
-   
    result = getenv(name);
    if(!result)
       result = dfault;
 #endif
-      
+
    debug_printf("%s: %s = %s\n", __FUNCTION__, name, result ? result : "(null)");
    
    return result;
@@ -229,8 +230,34 @@ debug_get_bool_option(const char *name, boolean dfault)
 long
 debug_get_num_option(const char *name, long dfault)
 {
-   /* FIXME */
-   return dfault;
+   long result;
+   const char *str;
+   
+   str = debug_get_option(name, NULL);
+   if(!str)
+      result = dfault;
+   else {
+      long sign;
+      char c;
+      c = *str++;
+      if(c == '-') {
+	 sign = -1;
+	 c = *str++;
+      } 
+      else {
+	 sign = 1;
+      }
+      result = 0;
+      while('0' <= c && c <= '9') {
+	 result = result*10 + (c - '0');
+	 c = *str++;
+      }
+      result *= sign;
+   }
+   
+   debug_printf("%s: %s = %li\n", __FUNCTION__, name, result);
+
+   return result;
 }
 
 
@@ -339,10 +366,12 @@ static const struct debug_named_value pipe_format_names[] = {
    DEBUG_NAMED_VALUE(PIPE_FORMAT_A1R5G5B5_UNORM),
    DEBUG_NAMED_VALUE(PIPE_FORMAT_A4R4G4B4_UNORM),
    DEBUG_NAMED_VALUE(PIPE_FORMAT_R5G6B5_UNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_A2B10G10R10_UNORM),
    DEBUG_NAMED_VALUE(PIPE_FORMAT_L8_UNORM),
    DEBUG_NAMED_VALUE(PIPE_FORMAT_A8_UNORM),
    DEBUG_NAMED_VALUE(PIPE_FORMAT_I8_UNORM),
    DEBUG_NAMED_VALUE(PIPE_FORMAT_A8L8_UNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_L16_UNORM),
    DEBUG_NAMED_VALUE(PIPE_FORMAT_YCBCR),
    DEBUG_NAMED_VALUE(PIPE_FORMAT_YCBCR_REV),
    DEBUG_NAMED_VALUE(PIPE_FORMAT_Z16_UNORM),
@@ -408,6 +437,9 @@ static const struct debug_named_value pipe_format_names[] = {
    DEBUG_NAMED_VALUE(PIPE_FORMAT_R8G8B8_SNORM),
    DEBUG_NAMED_VALUE(PIPE_FORMAT_R8G8B8A8_SNORM),
    DEBUG_NAMED_VALUE(PIPE_FORMAT_R8G8B8X8_SNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_B6G5R5_SNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_A8B8G8R8_SNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_X8B8G8R8_SNORM),
    DEBUG_NAMED_VALUE(PIPE_FORMAT_R8_SSCALED),
    DEBUG_NAMED_VALUE(PIPE_FORMAT_R8G8_SSCALED),
    DEBUG_NAMED_VALUE(PIPE_FORMAT_R8G8B8_SSCALED),
@@ -418,6 +450,8 @@ static const struct debug_named_value pipe_format_names[] = {
    DEBUG_NAMED_VALUE(PIPE_FORMAT_R8G8B8_SRGB),
    DEBUG_NAMED_VALUE(PIPE_FORMAT_R8G8B8A8_SRGB),
    DEBUG_NAMED_VALUE(PIPE_FORMAT_R8G8B8X8_SRGB),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_X8UB8UG8SR8S_NORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_B6UG5SR5S_NORM),
    DEBUG_NAMED_VALUE(PIPE_FORMAT_DXT1_RGB),
    DEBUG_NAMED_VALUE(PIPE_FORMAT_DXT1_RGBA),
    DEBUG_NAMED_VALUE(PIPE_FORMAT_DXT3_RGBA),

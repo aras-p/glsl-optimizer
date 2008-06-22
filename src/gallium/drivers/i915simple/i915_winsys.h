@@ -55,6 +55,7 @@ extern "C" {
  * etc.
  */
 
+struct i915_batchbuffer;
 struct pipe_buffer;
 struct pipe_fence_handle;
 struct pipe_winsys;
@@ -75,20 +76,10 @@ struct pipe_screen;
 struct i915_winsys {
 
    /**
-    * Reserve space on batch buffer. 
-    * 
-    * Returns a null pointer if there is insufficient space in the batch buffer 
-    * to hold the requested number of dwords and relocations.
-    * 
-    * The number of dwords should also include the number of relocations.
+    * Get the current batch buffer from the winsys.
     */
-   unsigned *(*batch_start)( struct i915_winsys *sws,
-			     unsigned dwords,
-			     unsigned relocs );
-   
-   void (*batch_dword)( struct i915_winsys *sws,
-			unsigned dword );
-   
+   struct i915_batchbuffer *(*batch_get)( struct i915_winsys *sws );
+
    /**
     * Emit a relocation to a buffer.
     * 
@@ -103,7 +94,10 @@ struct i915_winsys {
 			struct pipe_buffer *buf,
 			unsigned access_flags,
 			unsigned delta );
-   
+
+   /**
+    * Flush the batch.
+    */
    void (*batch_flush)( struct i915_winsys *sws,
                         struct pipe_fence_handle **fence );
 };

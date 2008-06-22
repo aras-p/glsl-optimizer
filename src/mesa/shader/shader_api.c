@@ -719,7 +719,7 @@ _mesa_get_attached_shaders(GLcontext *ctx, GLuint program, GLsizei maxCount,
    struct gl_shader_program *shProg
       = _mesa_lookup_shader_program(ctx, program);
    if (shProg) {
-      GLint i;
+      GLuint i;
       for (i = 0; i < maxCount && i < shProg->NumShaders; i++) {
          obj[i] = shProg->Shaders[i]->Name;
       }
@@ -893,7 +893,7 @@ _mesa_get_uniformfv(GLcontext *ctx, GLuint program, GLint location,
       = _mesa_lookup_shader_program(ctx, program);
    if (shProg) {
       if (location < shProg->Uniforms->NumUniforms) {
-         GLint progPos, i;
+         GLuint progPos, i;
          const struct gl_program *prog = NULL;
 
          progPos = shProg->Uniforms->Uniforms[location].VertPos;
@@ -1111,7 +1111,7 @@ set_program_uniform(GLcontext *ctx, struct gl_program *program, GLint location,
    }
    else {
       /* ordinary uniform variable */
-      GLint k, i;
+      GLuint k, i;
 
       if (count * elems > program->Parameters->Parameters[location].Size) {
          _mesa_error(ctx, GL_INVALID_OPERATION, "glUniform(count too large)");

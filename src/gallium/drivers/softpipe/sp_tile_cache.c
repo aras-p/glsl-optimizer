@@ -37,6 +37,7 @@
 #include "util/p_tile.h"
 #include "sp_context.h"
 #include "sp_surface.h"
+#include "sp_texture.h"
 #include "sp_tile_cache.h"
 
 #define NUM_ENTRIES 32
@@ -169,6 +170,7 @@ sp_tile_cache_set_surface(struct softpipe_tile_cache *tc,
                                                    PIPE_BUFFER_USAGE_CPU_WRITE);
 
       tc->depth_stencil = (ps->format == PIPE_FORMAT_S8Z24_UNORM ||
+                           ps->format == PIPE_FORMAT_Z24S8_UNORM ||
                            ps->format == PIPE_FORMAT_Z16_UNORM ||
                            ps->format == PIPE_FORMAT_Z32_UNORM ||
                            ps->format == PIPE_FORMAT_S8_UNORM);
@@ -504,6 +506,15 @@ sp_get_cached_tile_tex(struct pipe_context *pipe,
    const uint pos = tex_cache_pos(x / TILE_SIZE, y / TILE_SIZE, z,
                                   face, level);
    struct softpipe_cached_tile *tile = tc->entries + pos;
+
+   if (tc->texture) {
+      struct softpipe_texture *spt = softpipe_texture(tc->texture);
+      if (spt->modified) {
+         /* texture was modified, force a cache reload */
+         tile->x = -1;
+         spt->modified = FALSE;
+      }
+   }
 
    if (tile_x != tile->x ||
        tile_y != tile->y ||

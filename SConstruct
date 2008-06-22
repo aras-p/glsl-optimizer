@@ -30,14 +30,15 @@ import common
 # Configuration options
 
 if common.default_platform in ('linux', 'freebsd', 'darwin'):
-	default_statetrackers = 'mesa'
+	default_statetrackers = 'all'
 	default_drivers = 'softpipe,failover,i915simple,i965simple'
 	default_winsys = 'xlib'
 elif common.default_platform in ('winddk',):
-	default_statetrackers = 'none'
+	default_statetrackers = 'all'
 	default_drivers = 'softpipe,i915simple'
-	default_winsys = 'none'
+	default_winsys = 'all'
 else:
+	default_statetrackers = 'all'
 	default_drivers = 'all'
 	default_winsys = 'all'
 
@@ -48,11 +49,15 @@ opts.Add(ListOption('statetrackers', 'state_trackers to build', default_statetra
 opts.Add(ListOption('drivers', 'pipe drivers to build', default_drivers,
                      ['softpipe', 'failover', 'i915simple', 'i965simple', 'cell']))
 opts.Add(ListOption('winsys', 'winsys drivers to build', default_winsys,
-                     ['xlib', 'intel'])) 
+                     ['xlib', 'intel', 'gdi'])) 
 
 env = Environment(
-	options = opts, 
-	ENV = os.environ)
+	options = opts,
+	tools = ['gallium'],
+	toolpath = ['scons'],	
+	ENV = os.environ,
+)
+
 Help(opts.GenerateHelpText(env))
 
 # replicate options values in local variables
@@ -80,22 +85,6 @@ Export([
 
 #######################################################################
 # Environment setup
-#
-# TODO: put the compiler specific settings in separate files
-# TODO: auto-detect as much as possible
-
-if platform == 'winddk':
-	env.Tool('winddk', ['.'])
-	
-	env.Append(CPPPATH = [
-		env['SDK_INC_PATH'],
-		env['DDK_INC_PATH'],
-		env['WDM_INC_PATH'],
-		env['CRT_INC_PATH'],
-	])
-
-common.generate(env)
-
 
 # Includes
 env.Append(CPPPATH = [
@@ -104,13 +93,6 @@ env.Append(CPPPATH = [
 	'#/src/gallium/auxiliary',
 	'#/src/gallium/drivers',
 ])
-
-
-# x86 assembly
-if x86:
-	if gcc:	
-		env.Append(CFLAGS = '-m32')
-		env.Append(CXXFLAGS = '-m32')
 
 
 # Posix
@@ -177,6 +159,6 @@ Export('env')
 
 SConscript(
 	'src/SConscript',
-	build_dir = common.make_build_dir(env),
+	build_dir = env['build'],
 	duplicate = 0 # http://www.scons.org/doc/0.97/HTML/scons-user/x2261.html
 )

@@ -100,16 +100,19 @@ static boolean post_vs_cliptest_viewport_gl( struct pt_post_vs *pvs,
    struct vertex_header *out = vertices;
    const float *scale = pvs->draw->viewport.scale;
    const float *trans = pvs->draw->viewport.translate;
+   const unsigned pos = pvs->draw->vs.position_output;
    unsigned clipped = 0;
    unsigned j;
 
    if (0) debug_printf("%s\n");
 
    for (j = 0; j < count; j++) {
-      out->clip[0] = out->data[0][0];
-      out->clip[1] = out->data[0][1];
-      out->clip[2] = out->data[0][2];
-      out->clip[3] = out->data[0][3];
+      float *position = out->data[pos];
+
+      out->clip[0] = position[0];
+      out->clip[1] = position[1];
+      out->clip[2] = position[2];
+      out->clip[3] = position[3];
 
       out->vertex_id = 0xffff;
       out->clipmask = compute_clipmask_gl(out->clip, 
@@ -120,19 +123,19 @@ static boolean post_vs_cliptest_viewport_gl( struct pt_post_vs *pvs,
       if (out->clipmask == 0)
       {
 	 /* divide by w */
-	 float w = 1.0f / out->data[0][3];
+	 float w = 1.0f / position[3];
 
 	 /* Viewport mapping */
-	 out->data[0][0] = out->data[0][0] * w * scale[0] + trans[0];
-	 out->data[0][1] = out->data[0][1] * w * scale[1] + trans[1];
-	 out->data[0][2] = out->data[0][2] * w * scale[2] + trans[2];
-	 out->data[0][3] = w;
+	 position[0] = position[0] * w * scale[0] + trans[0];
+	 position[1] = position[1] * w * scale[1] + trans[1];
+	 position[2] = position[2] * w * scale[2] + trans[2];
+	 position[3] = w;
 #if 0
          debug_printf("post viewport: %f %f %f %f\n",
-                      out->data[0][0],
-                      out->data[0][1],
-                      out->data[0][2],
-                      out->data[0][3]);
+                      position[0],
+                      position[1],
+                      position[2],
+                      position[3]);
 #endif
       }
 
@@ -154,15 +157,18 @@ static boolean post_vs_viewport( struct pt_post_vs *pvs,
    struct vertex_header *out = vertices;
    const float *scale = pvs->draw->viewport.scale;
    const float *trans = pvs->draw->viewport.translate;
+   const unsigned pos = pvs->draw->vs.position_output;
    unsigned j;
 
    if (0) debug_printf("%s\n", __FUNCTION__);
    for (j = 0; j < count; j++) {
+      float *position = out->data[pos];
+
       /* Viewport mapping only, no cliptest/rhw divide
        */
-      out->data[0][0] = out->data[0][0] * scale[0] + trans[0];
-      out->data[0][1] = out->data[0][1] * scale[1] + trans[1];
-      out->data[0][2] = out->data[0][2] * scale[2] + trans[2];
+      position[0] = position[0] * scale[0] + trans[0];
+      position[1] = position[1] * scale[1] + trans[1];
+      position[2] = position[2] * scale[2] + trans[2];
 
       out = (struct vertex_header *)((char *)out + stride);
    }

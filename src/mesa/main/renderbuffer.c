@@ -49,8 +49,6 @@
 
 #include "rbadaptors.h"
 
-#include "state_tracker/st_context.h"
-
 
 /* 32-bit color index format.  Not a public format. */
 #define COLOR_INDEX32 0x424243

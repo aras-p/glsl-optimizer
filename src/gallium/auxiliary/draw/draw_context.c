@@ -56,17 +56,14 @@ struct draw_context *draw_create( void )
 
    draw->reduced_prim = ~0; /* != any of PIPE_PRIM_x */
 
-   tgsi_exec_machine_init(&draw->machine);
-
-   /* FIXME: give this machine thing a proper constructor:
-    */
-   draw->machine.Inputs = align_malloc(PIPE_MAX_ATTRIBS * sizeof(struct tgsi_exec_vector), 16);
-   draw->machine.Outputs = align_malloc(PIPE_MAX_ATTRIBS * sizeof(struct tgsi_exec_vector), 16);
 
    if (!draw_pipeline_init( draw ))
       goto fail;
 
    if (!draw_pt_init( draw ))
+      goto fail;
+
+   if (!draw_vs_init( draw ))
       goto fail;
 
    return draw;
@@ -83,13 +80,6 @@ void draw_destroy( struct draw_context *draw )
       return;
 
 
-   if (draw->machine.Inputs)
-      align_free(draw->machine.Inputs);
-
-   if (draw->machine.Outputs)
-      align_free(draw->machine.Outputs);
-
-   tgsi_exec_machine_free_data(&draw->machine);
 
    /* Not so fast -- we're just borrowing this at the moment.
     * 
@@ -99,6 +89,7 @@ void draw_destroy( struct draw_context *draw )
 
    draw_pipeline_destroy( draw );
    draw_pt_destroy( draw );
+   draw_vs_destroy( draw );
 
    FREE( draw );
 }
@@ -183,6 +174,8 @@ void draw_set_viewport_state( struct draw_context *draw,
                               viewport->translate[1] == 0.0f &&
                               viewport->translate[2] == 0.0f &&
                               viewport->translate[3] == 0.0f);
+
+   draw_vs_set_viewport( draw, viewport );
 }
 
 
@@ -224,9 +217,11 @@ draw_set_mapped_vertex_buffer(struct draw_context *draw,
 
 void
 draw_set_mapped_constant_buffer(struct draw_context *draw,
-                                const void *buffer)
+                                const void *buffer, 
+                                unsigned size )
 {
    draw->pt.user.constants = buffer;
+   draw_vs_set_constants( draw, (const float (*)[4])buffer, size );
 }
 
 
@@ -295,7 +290,7 @@ int
 draw_find_vs_output(struct draw_context *draw,
                     uint semantic_name, uint semantic_index)
 {
-   const struct draw_vertex_shader *vs = draw->vertex_shader;
+   const struct draw_vertex_shader *vs = draw->vs.vertex_shader;
    uint i;
    for (i = 0; i < vs->info.num_outputs; i++) {
       if (vs->info.output_semantic_name[i] == semantic_name &&
@@ -320,7 +315,7 @@ draw_find_vs_output(struct draw_context *draw,
 uint
 draw_num_vs_outputs(struct draw_context *draw)
 {
-   uint count = draw->vertex_shader->info.num_outputs;
+   uint count = draw->vs.vertex_shader->info.num_outputs;
    if (draw->extra_vp_outputs.slot > 0)
       count++;
    return count;
@@ -354,13 +349,29 @@ void draw_set_edgeflags( struct draw_context *draw,
  * \param elements  the element buffer ptr
  */
 void
-draw_set_mapped_element_buffer( struct draw_context *draw,
-                                unsigned eltSize, void *elements )
+draw_set_mapped_element_buffer_range( struct draw_context *draw,
+                                      unsigned eltSize,
+                                      unsigned min_index,
+                                      unsigned max_index,
+                                      void *elements )
 {
    draw->pt.user.elts = elements;
    draw->pt.user.eltSize = eltSize;
+   draw->pt.user.min_index = min_index;
+   draw->pt.user.max_index = max_index;
 }
 
+
+void
+draw_set_mapped_element_buffer( struct draw_context *draw,
+                                unsigned eltSize,
+                                void *elements )
+{
+   draw->pt.user.elts = elements;
+   draw->pt.user.eltSize = eltSize;
+   draw->pt.user.min_index = 0;
+   draw->pt.user.max_index = 0xffffffff;
+}
 
  
 /* Revamp me please:

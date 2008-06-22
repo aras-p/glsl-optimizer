@@ -62,6 +62,28 @@ _mesa_free_parameter_list(struct gl_program_parameter_list *paramList)
 }
 
 
+static GLint
+_mesa_fit_type_in_vec4(GLenum type)
+{
+   switch (type) {
+   case GL_FLOAT:
+   case GL_INT:
+      return 4;
+      break;
+   case GL_FLOAT_VEC2:
+   case GL_INT_VEC2:
+      return 2;
+      break;
+   case GL_FLOAT_VEC3:
+   case GL_INT_VEC3:
+      return 1;
+      break;
+   case GL_FLOAT_VEC4:
+   case GL_INT_VEC4:
+   default:
+      return 1;
+   }
+}
 
 /**
  * Add a new parameter to a parameter list.
@@ -272,7 +294,7 @@ _mesa_add_uniform(struct gl_program_parameter_list *paramList,
    }
    else {
       i = _mesa_add_parameter(paramList, PROGRAM_UNIFORM, name,
-                              size, datatype, NULL, NULL);
+                              size * _mesa_fit_type_in_vec4(datatype), datatype, NULL, NULL);
       return i;
    }
 }

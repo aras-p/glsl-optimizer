@@ -118,22 +118,7 @@ tgsi_parse_token(
       *decl = tgsi_default_full_declaration();
       decl->Declaration = *(struct tgsi_declaration *) &token;
 
-      switch( decl->Declaration.Type ) {
-      case TGSI_DECLARE_RANGE:
-         next_token( ctx, &decl->u.DeclarationRange );
-         break;
-
-      case TGSI_DECLARE_MASK:
-         next_token( ctx, &decl->u.DeclarationMask );
-         break;
-
-      default:
-         assert (0);
-      }
-
-      if( decl->Declaration.Interpolate ) {
-         next_token( ctx, &decl->Interpolation );
-      }
+      next_token( ctx, &decl->DeclarationRange );
 
       if( decl->Declaration.Semantic ) {
          next_token( ctx, &decl->Semantic );

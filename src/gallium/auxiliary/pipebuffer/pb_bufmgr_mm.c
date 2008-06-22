@@ -184,7 +184,6 @@ mm_bufmgr_create_buffer(struct pb_manager *mgr,
       
       mm_buf->block = mmAllocMem(mm->heap, size, mm->align2, 0);
       if(!mm_buf->block) {
-	 assert(0);
          FREE(mm_buf);
          _glthread_UNLOCK_MUTEX(mm->mutex);
          return NULL;

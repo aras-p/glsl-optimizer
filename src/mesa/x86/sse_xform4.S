@@ -24,6 +24,7 @@
  */
 
 #ifdef USE_SSE_ASM
+#include "assyntax.h"
 #include "matypes.h"
 #include "xform_args.h"
 

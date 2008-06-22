@@ -79,6 +79,15 @@ struct pb_manager
 };
 
 
+/**
+ * Malloc buffer provider.
+ * 
+ * Simple wrapper around pb_malloc_buffer_create for convenience.
+ */
+struct pb_manager *
+pb_malloc_bufmgr_create(void);
+
+
 /** 
  * Static buffer pool sub-allocator.
  * 
@@ -162,6 +171,11 @@ fenced_bufmgr_create(struct pb_manager *provider,
                      struct pipe_winsys *winsys);
 
 
+struct pb_manager *
+pb_alt_manager_create(struct pb_manager *provider1, 
+                      struct pb_manager *provider2);
+
+                      
 #ifdef __cplusplus
 }
 #endif

@@ -75,13 +75,13 @@ static void Draw(void)
 
    glBegin(GL_POLYGON);
    glColor3f(1,0,0); 
-   glVertex3f( 1.1, -1.1, -30.0);
+   glVertex3f( 0, 0, -30.0);
    glColor3f(1,1,0); 
-   glVertex3f( 1.1,  1.1, -30.0);
+   glVertex3f( 1.3,  1.1, -30.0);
    glColor3f(1,0,1); 
-   glVertex3f(-1.1,  1.1, -30.0);
+   glVertex3f(-.9,  .9, -30.0);
    glColor3f(0,1,1); 
-   glVertex3f(-1.1,  -1.1, -30.0);
+   glVertex3f(-1.1,  -1.3, -30.0);
    glEnd();
 
    glFlush();

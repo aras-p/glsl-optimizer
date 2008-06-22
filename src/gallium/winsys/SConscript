@@ -1,11 +1,16 @@
 Import('*')
 
-if 'intel' in env['winsys'] and dri:
+if env['dri']:
 	SConscript([
 		'dri/SConscript',
 	])
 	
-if 'xlib' in env['winsys'] and not dri:
+if 'xlib' in env['winsys']:
 	SConscript([
 		'xlib/SConscript',
+	])
+
+if 'gdi' in env['winsys']:
+	SConscript([
+		'gdi/SConscript',
 	])

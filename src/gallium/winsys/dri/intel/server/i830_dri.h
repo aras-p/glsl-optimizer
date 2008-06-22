@@ -40,7 +40,7 @@ typedef struct _I830DRIRec {
    int bitsPerPixel;
 
    int unused11[8]; /* was front/back/depth/rotated offset/pitch */
-   
+
    int unused12; /* logTextureGranularity */
    int unused13; /* textureOffset */
 

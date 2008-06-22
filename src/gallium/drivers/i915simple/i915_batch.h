@@ -29,26 +29,88 @@
 #define I915_BATCH_H
 
 #include "i915_winsys.h"
-#include "i915_debug.h"
 
-#define BATCH_LOCALS
+struct i915_batchbuffer
+{
+   struct pipe_buffer *buffer;
+   struct i915_winsys *winsys;
+
+   unsigned char *map;
+   unsigned char *ptr;
+
+   size_t size;
+   size_t actual_size;
+
+   size_t relocs;
+   size_t max_relocs;
+};
+
+static INLINE boolean
+i915_batchbuffer_check( struct i915_batchbuffer *batch,
+			size_t dwords,
+			size_t relocs )
+{
+   /** TODO JB: Check relocs */
+   return dwords * 4 <= batch->size - (batch->ptr - batch->map);
+}
+
+static INLINE size_t
+i915_batchbuffer_space( struct i915_batchbuffer *batch )
+{
+   return batch->size - (batch->ptr - batch->map);
+}
+
+static INLINE void
+i915_batchbuffer_dword( struct i915_batchbuffer *batch,
+			unsigned dword )
+{
+   if (i915_batchbuffer_space(batch) < 4)
+      return;
+
+   *(unsigned *)batch->ptr = dword;
+   batch->ptr += 4;
+}
+
+static INLINE void
+i915_batchbuffer_write( struct i915_batchbuffer *batch,
+			void *data,
+			size_t size )
+{
+   if (i915_batchbuffer_space(batch) < size)
+      return;
+
+   memcpy(data, batch->ptr, size);
+   batch->ptr += size;
+}
+
+static INLINE void
+i915_batchbuffer_reloc( struct i915_batchbuffer *batch,
+			struct pipe_buffer *buffer,
+			size_t flags,
+			size_t offset )
+{
+   batch->winsys->batch_reloc( batch->winsys, buffer, flags, offset );
+}
+
+static INLINE void
+i915_batchbuffer_flush( struct i915_batchbuffer *batch,
+			struct pipe_fence_handle **fence )
+{
+   batch->winsys->batch_flush( batch->winsys, fence );
+}
 
 #define BEGIN_BATCH( dwords, relocs ) \
-   (i915->batch_start = i915->winsys->batch_start( i915->winsys, dwords, relocs ))
+   (i915_batchbuffer_check( i915->batch, dwords, relocs ))
 
 #define OUT_BATCH( dword ) \
-   i915->winsys->batch_dword( i915->winsys, dword )
+   i915_batchbuffer_dword( i915->batch, dword )
 
 #define OUT_RELOC( buf, flags, delta ) \
-   i915->winsys->batch_reloc( i915->winsys, buf, flags, delta )
-
-#define ADVANCE_BATCH()
+   i915_batchbuffer_reloc( i915->batch, buf, flags, delta )
 
 #define FLUSH_BATCH(fence) do { 			\
-   if (0) i915_dump_batchbuffer( i915 );		\
    i915->winsys->batch_flush( i915->winsys, fence );	\
-   i915->batch_start = NULL;				\
    i915->hardware_dirty = ~0;				\
 } while (0)
 
-#endif 
+#endif

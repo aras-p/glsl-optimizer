@@ -8,6 +8,8 @@
 #ifndef ATIFRAGSHADER_H
 #define ATIFRAGSHADER_H
 
+#include "main/mtypes.h"
+
 #define MAX_NUM_INSTRUCTIONS_PER_PASS_ATI 8
 #define MAX_NUM_PASSES_ATI                2
 #define MAX_NUM_FRAGMENT_REGISTERS_ATI    6

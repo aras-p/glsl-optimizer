@@ -1119,7 +1119,7 @@ compute_light_positions( GLcontext *ctx )
       }
       else {
          /* positional light w/ homogeneous coordinate, divide by W */
-         GLfloat wInv = 1.0 / light->_Position[3];
+         GLfloat wInv = (GLfloat)1.0 / light->_Position[3];
          light->_Position[0] *= wInv;
          light->_Position[1] *= wInv;
          light->_Position[2] *= wInv;
@@ -1357,6 +1357,7 @@ _mesa_init_lighting( GLcontext *ctx )
    /* Miscellaneous */
    ctx->Light._NeedEyeCoords = GL_FALSE;
    ctx->_NeedEyeCoords = GL_FALSE;
+   ctx->_ForceEyeCoords = GL_FALSE;
    ctx->_ModelViewInvScale = 1.0;
 }
 

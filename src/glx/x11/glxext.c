@@ -671,8 +671,10 @@ filter_modes( __GLcontextModes ** server_modes,
 	if ( do_delete && (m->visualID != 0) ) {
 	    do_delete = GL_FALSE;
 
-	    fprintf(stderr, "libGL warning: 3D driver claims to not support "
-		    "visual 0x%02x\n", m->visualID);
+            if (getenv("LIBGL_DEBUG")) {
+               fprintf(stderr, "libGL warning: 3D driver claims to not support "
+                       "visual 0x%02x\n", m->visualID);
+            }
 	}
 
 	if ( do_delete ) {

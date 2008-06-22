@@ -18,6 +18,7 @@ bufferobj
 bug_3050
 bug_3101
 bug_3195
+bug_texstore_i8
 calibrate_rast
 copypixrate
 crossbar

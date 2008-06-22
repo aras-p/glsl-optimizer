@@ -29,6 +29,8 @@ SOURCES = egldri.c
 
 OBJECTS = $(SOURCES:.c=.o)
 
+DRM_LIB = `pkg-config --libs libdrm`
+
 
 .c.o:
 	$(CC) -c $(INCLUDE_DIRS) $(CFLAGS) $< -o $@
@@ -43,7 +45,7 @@ library: $(TOP)/$(LIB_DIR)/libEGLdri.so
 
 $(TOP)/$(LIB_DIR)/libEGLdri.so: $(OBJECTS)
 	$(TOP)/bin/mklib -o EGLdri -major 1 -minor 0 \
-		-install $(TOP)/$(LIB_DIR) -ldl $(OBJECTS)
+		-install $(TOP)/$(LIB_DIR) -ldl $(OBJECTS) $(DRM_LIB)
 
 
 clean:
@@ -55,7 +57,7 @@ depend: $(SOURCES) $(HEADERS)
 	@ rm -f depend
 	@ touch depend
 	$(MKDEP) $(MKDEP_OPTIONS) $(DEFINES) $(INCLUDE_DIRS) \
-		$(SOURCES) $(HEADERS) > /dev/null 
+		$(SOURCES) $(HEADERS) >/dev/null 2>/dev/null
 
 include depend
 # DO NOT DELETE

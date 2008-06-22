@@ -8,6 +8,7 @@
 #include <string.h>
 #include "eglcontext.h"
 #include "eglconfig.h"
+#include "egldriver.h"
 #include "eglglobals.h"
 #include "eglhash.h"
 #include "egllog.h"
@@ -175,7 +176,7 @@ _eglInitSurface(_EGLDriver *drv, EGLDisplay dpy,
       }
    }
 
-   if (width <= 0 || height <= 0) {
+   if (width < 0 || height < 0) {
       _eglError(EGL_BAD_ATTRIBUTE, func);
       return EGL_FALSE;
    }
@@ -207,25 +208,47 @@ _eglInitSurface(_EGLDriver *drv, EGLDisplay dpy,
 void
 _eglSaveSurface(_EGLSurface *surf)
 {
+   EGLuint key = _eglHashGenKey(_eglGlobal.Surfaces);
    assert(surf);
    assert(!surf->Handle);
-   surf->Handle = _eglHashGenKey(_eglGlobal.Contexts);
+   surf->Handle = (EGLSurface) key;
    assert(surf->Handle);
-   _eglHashInsert(_eglGlobal.Surfaces, surf->Handle, surf);
+   _eglHashInsert(_eglGlobal.Surfaces, key, surf);
 }
 
 
 void
 _eglRemoveSurface(_EGLSurface *surf)
 {
-   _eglHashRemove(_eglGlobal.Surfaces, surf->Handle);
+   _eglHashRemove(_eglGlobal.Surfaces, (EGLuint) surf->Handle);
 }
 
 
+
+/**
+ * Return the public handle for an internal _EGLSurface.
+ * This is the inverse of _eglLookupSurface().
+ */
+EGLSurface
+_eglGetSurfaceHandle(_EGLSurface *surface)
+{
+   if (surface)
+      return surface->Handle;
+   else
+      return EGL_NO_SURFACE;
+}
+
+
+/**
+ * Return the private _EGLSurface which corresponds to a public EGLSurface
+ * handle.
+ * This is the inverse of _eglGetSurfaceHandle().
+ */
 _EGLSurface *
 _eglLookupSurface(EGLSurface surf)
 {
-   _EGLSurface *c = (_EGLSurface *) _eglHashLookup(_eglGlobal.Surfaces, surf);
+   _EGLSurface *c = (_EGLSurface *) _eglHashLookup(_eglGlobal.Surfaces,
+                                                   (EGLuint) surf);
    return c;
 }
 
@@ -297,7 +320,9 @@ _eglQuerySurface(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surf,
    case EGL_CONFIG_ID:
       *value = GET_CONFIG_ATTRIB(surface->Config, EGL_CONFIG_ID);
       return EGL_TRUE;
-   /*XXX case EGL_LARGEST_PBUFFER:*/
+   case EGL_LARGEST_PBUFFER:
+      *value = drv->LargestPbuffer;
+      return EGL_TRUE;
    case EGL_SURFACE_TYPE:
       *value = surface->Type;
       return EGL_TRUE;
@@ -439,7 +464,7 @@ _eglDestroySurface(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surface)
 {
    _EGLSurface *surf = _eglLookupSurface(surface);
    if (surf) {
-      _eglHashRemove(_eglGlobal.Surfaces, surface);
+      _eglHashRemove(_eglGlobal.Surfaces, (EGLuint) surface);
       if (surf->IsBound) {
          surf->DeletePending = EGL_TRUE;
       }

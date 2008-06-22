@@ -1,0 +1,33 @@
+#######################################################################
+# SConscript for gdi winsys
+
+Import('*')
+
+if env['platform'] == 'windows':
+
+	env = env.Clone()
+
+	env.Append(CPPPATH = [
+		'#src/mesa/glapi',
+		'#src/mesa',
+		'#src/mesa/main',
+	])
+
+	sources = [
+		'opengl32.def',
+		'wgl.c',
+		'wmesa.c',
+	]
+		
+	drivers = [
+		softpipe,
+	]
+
+	env.Append(LIBS = ['gdi32', 'user32'])
+
+	# TODO: write a wrapper function http://www.scons.org/wiki/WrapperFunctions
+	env.SharedLibrary(
+		target ='opengl32',
+		source = sources,
+		LIBS = glapi + mesa + drivers + auxiliaries + env['LIBS'],
+	)

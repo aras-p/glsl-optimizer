@@ -76,6 +76,52 @@ static void check_link(GLuint prog)
    }
 }
 
+static void setup_uniforms()
+{
+   {
+      GLuint loc1f = glGetUniformLocationARB(program, "Offset1f");
+      GLuint loc2f = glGetUniformLocationARB(program, "Offset2f");
+      GLuint loc4f = glGetUniformLocationARB(program, "Offset4f");
+      GLfloat vecKer[] =
+         { 1.0, 0.0, 0.0,  1.0,
+           0.0, 1.0, 0.0,  1.0,
+           1.0, 0.0, 0.0,  1.0,
+           0.0, 0.0, 0.0,  1.0
+         };
+      if (loc1f >= 0)
+         glUniform1fv(loc1f, 16, vecKer);
+
+      if (loc2f >= 0)
+         glUniform2fv(loc2f, 8, vecKer);
+
+      if (loc4f >= 0)
+         glUniform4fv(loc4f, 4, vecKer);
+
+   }
+
+   GLuint loc1f = glGetUniformLocationARB(program, "KernelValue1f");
+   GLuint loc2f = glGetUniformLocationARB(program, "KernelValue2f");
+   GLuint loc4f = glGetUniformLocationARB(program, "KernelValue4f");
+   GLfloat vecKer[] =
+      { 1.0, 0.0, 0.0,  0.25,
+        0.0, 1.0, 0.0,  0.25,
+        0.0, 0.0, 1.0,  0.25,
+        0.0, 0.0, 0.0,  0.25,
+        0.5, 0.0, 0.0,  0.35,
+        0.0, 0.5, 0.0,  0.35,
+        0.0, 0.0, 0.5,  0.35,
+        0.0, 0.0, 0.0,  0.35
+      };
+   if (loc1f >= 0)
+      glUniform1fv(loc1f, 16, vecKer);
+
+   if (loc2f >= 0)
+      glUniform2fv(loc2f, 8, vecKer);
+
+   if (loc4f >= 0)
+      glUniform4fv(loc4f, 4, vecKer);
+}
+
 static void prepare_shaders()
 {
    static const char *fragShaderText =
@@ -103,6 +149,8 @@ static void prepare_shaders()
    glLinkProgram(program);
    check_link(program);
    glUseProgram(program);
+
+   setup_uniforms();
 }
 
 static void args(int argc, char *argv[])

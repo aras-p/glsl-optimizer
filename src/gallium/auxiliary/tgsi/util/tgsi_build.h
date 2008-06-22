@@ -37,7 +37,6 @@ tgsi_default_declaration( void );
 struct tgsi_declaration
 tgsi_build_declaration(
    unsigned file,
-   unsigned declare,
    unsigned usage_mask,
    unsigned interpolate,
    unsigned semantic,
@@ -54,24 +53,12 @@ tgsi_build_full_declaration(
    unsigned maxsize );
 
 struct tgsi_declaration_range
+tgsi_default_declaration_range( void );
+
+struct tgsi_declaration_range
 tgsi_build_declaration_range(
    unsigned first,
    unsigned last,
-   struct tgsi_declaration *declaration,
-   struct tgsi_header *header );
-
-struct tgsi_declaration_mask
-tgsi_build_declaration_mask(
-   unsigned mask,
-   struct tgsi_declaration *declaration,
-   struct tgsi_header *header );
-
-struct tgsi_declaration_interpolation
-tgsi_default_declaration_interpolation( void );
-
-struct tgsi_declaration_interpolation
-tgsi_build_declaration_interpolation(
-   unsigned interpolate,
    struct tgsi_declaration *declaration,
    struct tgsi_header *header );
 

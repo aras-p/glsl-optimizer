@@ -84,13 +84,29 @@ struct draw_pt_front_end {
 struct draw_pt_middle_end {
    void (*prepare)( struct draw_pt_middle_end *,
                     unsigned prim,
-		    unsigned opt );
+		    unsigned opt,
+                    unsigned *max_vertices );
 
    void (*run)( struct draw_pt_middle_end *,
                 const unsigned *fetch_elts,
                 unsigned fetch_count,
                 const ushort *draw_elts,
                 unsigned draw_count );
+
+   void (*run_linear)(struct draw_pt_middle_end *,
+                      unsigned start,
+                      unsigned count);
+
+   /* Transform all vertices in a linear range and then draw them with
+    * the supplied element list.
+    */
+   void (*run_linear_elts)( struct draw_pt_middle_end *,
+                            unsigned fetch_start,
+                            unsigned fetch_count,
+                            const ushort *draw_elts,
+                            unsigned draw_count );
+
+   int (*get_max_vertex_count)( struct draw_pt_middle_end * );
 
    void (*finish)( struct draw_pt_middle_end * );
    void (*destroy)( struct draw_pt_middle_end * );
@@ -117,6 +133,7 @@ const void *draw_pt_elt_ptr( struct draw_context *draw,
 struct draw_pt_front_end *draw_pt_vcache( struct draw_context *draw );
 struct draw_pt_front_end *draw_pt_varray(struct draw_context *draw);
 
+
 /* Middle-ends:
  *
  * Currently one general-purpose case which can do all possibilities,
@@ -128,6 +145,7 @@ struct draw_pt_front_end *draw_pt_varray(struct draw_context *draw);
  * vertex_elements.
  */
 struct draw_pt_middle_end *draw_pt_fetch_emit( struct draw_context *draw );
+struct draw_pt_middle_end *draw_pt_middle_fse( struct draw_context *draw );
 struct draw_pt_middle_end *draw_pt_fetch_pipeline_or_emit(struct draw_context *draw);
 
 
@@ -143,7 +161,8 @@ boolean draw_pt_get_edgeflag( struct draw_context *draw,
 struct pt_emit;
 
 void draw_pt_emit_prepare( struct pt_emit *emit,
-			   unsigned prim );
+			   unsigned prim,
+                           unsigned *max_vertices );
 
 void draw_pt_emit( struct pt_emit *emit,
 		   const float (*vertex_data)[4],
@@ -151,6 +170,13 @@ void draw_pt_emit( struct pt_emit *emit,
 		   unsigned stride,
 		   const ushort *elts,
 		   unsigned count );
+
+void draw_pt_emit_linear( struct pt_emit *emit,
+                          const float (*vertex_data)[4],
+                          unsigned vertex_count,
+                          unsigned stride,
+                          unsigned start,
+                          unsigned count );
 
 void draw_pt_emit_destroy( struct pt_emit *emit );
 
@@ -169,6 +195,11 @@ void draw_pt_fetch_run( struct pt_fetch *fetch,
 			const unsigned *elts,
 			unsigned count,
 			char *verts );
+
+void draw_pt_fetch_run_linear( struct pt_fetch *fetch,
+                               unsigned start,
+                               unsigned count,
+                               char *verts );
 
 void draw_pt_fetch_destroy( struct pt_fetch *fetch );
 
@@ -192,6 +223,13 @@ void draw_pt_post_vs_prepare( struct pt_post_vs *pvs,
 struct pt_post_vs *draw_pt_post_vs_create( struct draw_context *draw );
 
 void draw_pt_post_vs_destroy( struct pt_post_vs *pvs );
+
+
+/*******************************************************************************
+ * Utils: 
+ */
+void draw_pt_split_prim(unsigned prim, unsigned *first, unsigned *incr);
+unsigned draw_pt_reduced_prim(unsigned prim);
 
 
 #endif

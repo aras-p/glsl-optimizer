@@ -1,8 +1,8 @@
 /**************************************************************************
- * 
+ *
  * Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -10,11 +10,11 @@
  * distribute, sub license, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice (including the
  * next paragraph) shall be included in all copies or substantial portions
  * of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
@@ -22,21 +22,22 @@
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
+ *
  **************************************************************************/
 
 #include "intel_screen.h"
 #include "intel_context.h"
 #include "intel_swapbuffers.h"
-#include "intel_batchbuffer.h"
+
 #include "intel_reg.h"
-#include "intel_winsys.h"
 
 #include "pipe/p_context.h"
 #include "state_tracker/st_public.h"
 #include "state_tracker/st_context.h"
 #include "state_tracker/st_cb_fbo.h"
 
+#include "intel_drm/ws_dri_bufmgr.h"
+#include "intel_batchbuffer.h"
 
 /**
  * Display a colorbuffer surface in an X window.
@@ -114,7 +115,7 @@ intelDisplaySurface(__DRIdrawablePrivate *dPriv,
 
 	 if (pbox->x1 > pbox->x2 ||
 	     pbox->y1 > pbox->y2 ||
-	     pbox->x2 > intelScreen->front.width || 
+	     pbox->x2 > intelScreen->front.width ||
 	     pbox->y2 > intelScreen->front.height) {
             /* invalid cliprect, skip it */
 	    continue;
@@ -159,13 +160,22 @@ intelDisplaySurface(__DRIdrawablePrivate *dPriv,
          assert(box.y1 < box.y2);
 
          /* XXX this could be done with pipe->surface_copy() */
-	 BEGIN_BATCH(8, INTEL_BATCH_NO_CLIPRECTS);
+	 /* XXX should have its own batch buffer */
+	 if (!BEGIN_BATCH(8, 2)) {
+	    /*
+	     * Since we share this batch buffer with a context
+	     * we can't flush it since that risks a GPU lockup
+	     */
+	    assert(0);
+	    continue;
+	 }
+
 	 OUT_BATCH(CMD);
 	 OUT_BATCH(BR13);
 	 OUT_BATCH((box.y1 << 16) | box.x1);
 	 OUT_BATCH((box.y2 << 16) | box.x2);
 
-	 OUT_RELOC(intelScreen->front.buffer, 
+	 OUT_RELOC(intelScreen->front.buffer,
 		   DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_WRITE,
 		   DRM_BO_MASK_MEM | DRM_BO_FLAG_WRITE, 0);
 	 OUT_BATCH((sbox.y1 << 16) | sbox.x1);
@@ -174,12 +184,11 @@ intelDisplaySurface(__DRIdrawablePrivate *dPriv,
                    DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ,
 		   DRM_BO_MASK_MEM | DRM_BO_FLAG_READ, 0);
 
-	 ADVANCE_BATCH();
       }
 
       if (intel->first_swap_fence)
 	 driFenceUnReference(&intel->first_swap_fence);
-      intel->first_swap_fence = intel_batchbuffer_flush(intel->batch);
+      intel->first_swap_fence = intel_be_batchbuffer_flush(intel->base.batch);
    }
 
    UNLOCK_HARDWARE(intel);

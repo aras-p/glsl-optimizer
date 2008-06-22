@@ -65,13 +65,8 @@ struct tgsi_full_src_register
 struct tgsi_full_declaration
 {
    struct tgsi_declaration Declaration;
-   union
-   {
-      struct tgsi_declaration_range DeclarationRange;
-      struct tgsi_declaration_mask  DeclarationMask;
-   } u;
-   struct tgsi_declaration_interpolation  Interpolation;
-   struct tgsi_declaration_semantic       Semantic;
+   struct tgsi_declaration_range DeclarationRange;
+   struct tgsi_declaration_semantic Semantic;
 };
 
 struct tgsi_full_immediate

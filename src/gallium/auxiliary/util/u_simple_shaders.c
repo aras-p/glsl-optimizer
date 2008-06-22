@@ -92,8 +92,8 @@ util_make_vertex_passthrough_shader(struct pipe_context *pipe,
       decl.Semantic.SemanticName = semantic_names[i];
       decl.Semantic.SemanticIndex = semantic_indexes[i];
 
-      decl.u.DeclarationRange.First = 
-      decl.u.DeclarationRange.Last = i;
+      decl.DeclarationRange.First = 
+      decl.DeclarationRange.Last = i;
       ti += tgsi_build_full_declaration(&decl,
                                         &tokens[ti],
                                         header,
@@ -107,8 +107,8 @@ util_make_vertex_passthrough_shader(struct pipe_context *pipe,
       decl.Declaration.Semantic = 1;
       decl.Semantic.SemanticName = semantic_names[i];
       decl.Semantic.SemanticIndex = semantic_indexes[i];
-      decl.u.DeclarationRange.First = 
-         decl.u.DeclarationRange.Last = i;
+      decl.DeclarationRange.First = 
+         decl.DeclarationRange.Last = i;
       ti += tgsi_build_full_declaration(&decl,
                                         &tokens[ti],
                                         header,
@@ -190,14 +190,13 @@ util_make_fragment_tex_shader(struct pipe_context *pipe,
    /* declare TEX[0] input */
    decl = tgsi_default_full_declaration();
    decl.Declaration.File = TGSI_FILE_INPUT;
+   /* XXX this could be linear... */
+   decl.Declaration.Interpolate = TGSI_INTERPOLATE_PERSPECTIVE;
    decl.Declaration.Semantic = 1;
    decl.Semantic.SemanticName = TGSI_SEMANTIC_GENERIC;
    decl.Semantic.SemanticIndex = 0;
-   /* XXX this could be linear... */
-   decl.Declaration.Interpolate = 1;
-   decl.Interpolation.Interpolate = TGSI_INTERPOLATE_PERSPECTIVE;
-   decl.u.DeclarationRange.First = 
-   decl.u.DeclarationRange.Last = 0;
+   decl.DeclarationRange.First = 
+   decl.DeclarationRange.Last = 0;
    ti += tgsi_build_full_declaration(&decl,
                                      &tokens[ti],
                                      header,
@@ -209,8 +208,8 @@ util_make_fragment_tex_shader(struct pipe_context *pipe,
    decl.Declaration.Semantic = 1;
    decl.Semantic.SemanticName = TGSI_SEMANTIC_COLOR;
    decl.Semantic.SemanticIndex = 0;
-   decl.u.DeclarationRange.First = 
-   decl.u.DeclarationRange.Last = 0;
+   decl.DeclarationRange.First = 
+   decl.DeclarationRange.Last = 0;
    ti += tgsi_build_full_declaration(&decl,
                                      &tokens[ti],
                                      header,
@@ -219,8 +218,8 @@ util_make_fragment_tex_shader(struct pipe_context *pipe,
    /* declare sampler */
    decl = tgsi_default_full_declaration();
    decl.Declaration.File = TGSI_FILE_SAMPLER;
-   decl.u.DeclarationRange.First = 
-   decl.u.DeclarationRange.Last = 0;
+   decl.DeclarationRange.First = 
+   decl.DeclarationRange.Last = 0;
    ti += tgsi_build_full_declaration(&decl,
                                      &tokens[ti],
                                      header,
@@ -303,8 +302,8 @@ util_make_fragment_passthrough_shader(struct pipe_context *pipe,
    decl.Declaration.Semantic = 1;
    decl.Semantic.SemanticName = TGSI_SEMANTIC_COLOR;
    decl.Semantic.SemanticIndex = 0;
-   decl.u.DeclarationRange.First = 
-      decl.u.DeclarationRange.Last = 0;
+   decl.DeclarationRange.First = 
+      decl.DeclarationRange.Last = 0;
    ti += tgsi_build_full_declaration(&decl,
                                      &tokens[ti],
                                      header,
@@ -316,8 +315,8 @@ util_make_fragment_passthrough_shader(struct pipe_context *pipe,
    decl.Declaration.Semantic = 1;
    decl.Semantic.SemanticName = TGSI_SEMANTIC_COLOR;
    decl.Semantic.SemanticIndex = 0;
-   decl.u.DeclarationRange.First = 
-      decl.u.DeclarationRange.Last = 0;
+   decl.DeclarationRange.First = 
+      decl.DeclarationRange.Last = 0;
    ti += tgsi_build_full_declaration(&decl,
                                      &tokens[ti],
                                      header,

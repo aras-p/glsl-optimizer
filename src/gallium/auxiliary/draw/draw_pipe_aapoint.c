@@ -85,6 +85,7 @@ struct aapoint_stage
 
    /** this is the vertex attrib slot for the new texcoords */
    uint tex_slot;
+   uint pos_slot;
 
    /*
     * Currently bound state
@@ -131,11 +132,11 @@ aa_transform_decl(struct tgsi_transform_context *ctx,
    if (decl->Declaration.File == TGSI_FILE_OUTPUT &&
        decl->Semantic.SemanticName == TGSI_SEMANTIC_COLOR &&
        decl->Semantic.SemanticIndex == 0) {
-      aactx->colorOutput = decl->u.DeclarationRange.First;
+      aactx->colorOutput = decl->DeclarationRange.First;
    }
    else if (decl->Declaration.File == TGSI_FILE_INPUT) {
-      if ((int) decl->u.DeclarationRange.Last > aactx->maxInput)
-         aactx->maxInput = decl->u.DeclarationRange.Last;
+      if ((int) decl->DeclarationRange.Last > aactx->maxInput)
+         aactx->maxInput = decl->DeclarationRange.Last;
       if (decl->Semantic.SemanticName == TGSI_SEMANTIC_GENERIC &&
            (int) decl->Semantic.SemanticIndex > aactx->maxGeneric) {
          aactx->maxGeneric = decl->Semantic.SemanticIndex;
@@ -143,8 +144,8 @@ aa_transform_decl(struct tgsi_transform_context *ctx,
    }
    else if (decl->Declaration.File == TGSI_FILE_TEMPORARY) {
       uint i;
-      for (i = decl->u.DeclarationRange.First;
-           i <= decl->u.DeclarationRange.Last; i++) {
+      for (i = decl->DeclarationRange.First;
+           i <= decl->DeclarationRange.Last; i++) {
          aactx->tempsUsed |= (1 << i);
       }
    }
@@ -193,27 +194,26 @@ aa_transform_inst(struct tgsi_transform_context *ctx,
       /* declare new generic input/texcoord */
       decl = tgsi_default_full_declaration();
       decl.Declaration.File = TGSI_FILE_INPUT;
+      /* XXX this could be linear... */
+      decl.Declaration.Interpolate = TGSI_INTERPOLATE_PERSPECTIVE;
       decl.Declaration.Semantic = 1;
       decl.Semantic.SemanticName = TGSI_SEMANTIC_GENERIC;
       decl.Semantic.SemanticIndex = aactx->maxGeneric + 1;
-      decl.Declaration.Interpolate = 1;
-      /* XXX this could be linear... */
-      decl.Interpolation.Interpolate = TGSI_INTERPOLATE_PERSPECTIVE;
-      decl.u.DeclarationRange.First = 
-      decl.u.DeclarationRange.Last = texInput;
+      decl.DeclarationRange.First = 
+      decl.DeclarationRange.Last = texInput;
       ctx->emit_declaration(ctx, &decl);
 
       /* declare new temp regs */
       decl = tgsi_default_full_declaration();
       decl.Declaration.File = TGSI_FILE_TEMPORARY;
-      decl.u.DeclarationRange.First = 
-      decl.u.DeclarationRange.Last = tmp0;
+      decl.DeclarationRange.First = 
+      decl.DeclarationRange.Last = tmp0;
       ctx->emit_declaration(ctx, &decl);
 
       decl = tgsi_default_full_declaration();
       decl.Declaration.File = TGSI_FILE_TEMPORARY;
-      decl.u.DeclarationRange.First = 
-      decl.u.DeclarationRange.Last = aactx->colorTemp;
+      decl.DeclarationRange.First = 
+      decl.DeclarationRange.Last = aactx->colorTemp;
       ctx->emit_declaration(ctx, &decl);
 
       aactx->firstInstruction = FALSE;
@@ -571,6 +571,7 @@ aapoint_point(struct draw_stage *stage, struct prim_header *header)
    struct prim_header tri;
    struct vertex_header *v[4];
    uint texPos = aapoint->tex_slot;
+   uint pos_slot = aapoint->pos_slot;
    float radius, *pos, *tex;
    uint i;
    float k;
@@ -620,19 +621,19 @@ aapoint_point(struct draw_stage *stage, struct prim_header *header)
    }
 
    /* new verts */
-   pos = v[0]->data[0];
+   pos = v[0]->data[pos_slot];
    pos[0] -= radius;
    pos[1] -= radius;
 
-   pos = v[1]->data[0];
+   pos = v[1]->data[pos_slot];
    pos[0] += radius;
    pos[1] -= radius;
 
-   pos = v[2]->data[0];
+   pos = v[2]->data[pos_slot];
    pos[0] += radius;
    pos[1] += radius;
 
-   pos = v[3]->data[0];
+   pos = v[3]->data[pos_slot];
    pos[0] -= radius;
    pos[1] += radius;
 
@@ -681,8 +682,10 @@ aapoint_first_point(struct draw_stage *stage, struct prim_header *header)
    bind_aapoint_fragment_shader(aapoint);
 
    /* update vertex attrib info */
-   aapoint->tex_slot = draw->num_vs_outputs;
+   aapoint->tex_slot = draw->vs.num_vs_outputs;
    assert(aapoint->tex_slot > 0); /* output[0] is vertex pos */
+
+   aapoint->pos_slot = draw->vs.position_output;
 
    draw->extra_vp_outputs.semantic_name = TGSI_SEMANTIC_GENERIC;
    draw->extra_vp_outputs.semantic_index = aapoint->fs->generic_attrib;
@@ -692,7 +695,7 @@ aapoint_first_point(struct draw_stage *stage, struct prim_header *header)
    aapoint->psize_slot = -1;
    if (draw->rasterizer->point_size_per_vertex) {
       /* find PSIZ vertex output */
-      const struct draw_vertex_shader *vs = draw->vertex_shader;
+      const struct draw_vertex_shader *vs = draw->vs.vertex_shader;
       uint i;
       for (i = 0; i < vs->info.num_outputs; i++) {
          if (vs->info.output_semantic_name[i] == TGSI_SEMANTIC_PSIZE) {

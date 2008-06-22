@@ -26,6 +26,7 @@
  */
 
 
+#include "pipe/p_config.h"
 #include "pipe/p_compiler.h"
 #include "pipe/p_util.h"
 #include "util/u_simple_list.h"
@@ -33,7 +34,7 @@
 #include "translate.h"
 
 
-#if defined(__i386__) || defined(__386__) || defined(i386)
+#if defined(PIPE_ARCH_X86)
 
 #include "rtasm/rtasm_cpu.h"
 #include "rtasm/rtasm_x86sse.h"
@@ -45,21 +46,15 @@
 #define W    3
 
 
-#ifdef WIN32
-#define RTASM __cdecl
-#else
-#define RTASM
-#endif
-
-typedef void (RTASM *run_func)( struct translate *translate,
-                                unsigned start,
-                                unsigned count,
-                                void *output_buffer );
-
-typedef void (RTASM *run_elts_func)( struct translate *translate,
-                                     const unsigned *elts,
+typedef void (PIPE_CDECL *run_func)( struct translate *translate,
+                                     unsigned start,
                                      unsigned count,
                                      void *output_buffer );
+
+typedef void (PIPE_CDECL *run_elts_func)( struct translate *translate,
+                                          const unsigned *elts,
+                                          unsigned count,
+                                          void *output_buffer );
 
 
 
@@ -315,7 +310,7 @@ static void get_src_ptr( struct translate_sse *p,
 static void emit_swizzle( struct translate_sse *p,
 			  struct x86_reg dest,
 			  struct x86_reg src,
-			  unsigned shuffle )
+			  unsigned char shuffle )
 {
    sse_shufps(p->func, dest, src, shuffle);
 }
@@ -472,13 +467,7 @@ static boolean build_vertex_emit( struct translate_sse *p,
    x86_lea(p->func, vertexECX, x86_make_disp(vertexECX, p->translate.key.output_stride));
 
    /* Incr index
-    */   /* Emit code for each of the attributes.  Currently routes
-    * everything through SSE registers, even when it might be more
-    * efficient to stick with regular old x86.  No optimization or
-    * other tricks - enough new ground to cover here just getting
-    * things working.
-    */
-
+    */ 
    if (linear) {
       x86_inc(p->func, idxEBX);
    } 
@@ -546,7 +535,7 @@ static void translate_sse_release( struct translate *translate )
    FREE(p);
 }
 
-static void translate_sse_run_elts( struct translate *translate,
+static void PIPE_CDECL translate_sse_run_elts( struct translate *translate,
 			      const unsigned *elts,
 			      unsigned count,
 			      void *output_buffer )
@@ -559,7 +548,7 @@ static void translate_sse_run_elts( struct translate *translate,
 		    output_buffer );
 }
 
-static void translate_sse_run( struct translate *translate,
+static void PIPE_CDECL translate_sse_run( struct translate *translate,
 			 unsigned start,
 			 unsigned count,
 			 void *output_buffer )
@@ -617,7 +606,7 @@ struct translate *translate_sse2_create( const struct translate_key *key )
 
 #else
 
-void translate_create_sse( const struct translate_key *key )
+struct translate *translate_sse2_create( const struct translate_key *key )
 {
    return NULL;
 }

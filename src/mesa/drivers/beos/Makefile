@@ -169,28 +169,30 @@ OBJECTS := $(DRIVER_OBJECTS:.cpp=.o)
 
 default: depend $(TOP)/$(LIB_DIR) $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME)
 
+# XXX FIXME: mesa.a might be libmesa.a now
 $(MESA_MODULES):
-	cd $(TOP)/src/mesa; $(MAKE) mesa.a ;
+	cd $(TOP)/src/mesa && $(MAKE) mesa.a ;
+	mimeset -f "$@"
 
 $(GLU_MODULES):
-	cd $(GLU_DIR); $(MAKE) $(subst $(GLU_DIR)/,,$(GLU_MODULES)) ; 
+	cd $(GLU_DIR) && $(MAKE) $(subst $(GLU_DIR)/,,$(GLU_MODULES)) ;
 
 $(TOP)/$(LIB_DIR):
 	mkdir $(TOP)/$(LIB_DIR)
 
 $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME): $(OBJECTS) $(MESA_MODULES) $(GLU_MODULES)
-	@$(TOP)/bin/mklib -o $(GL_LIB) -install $(TOP)/$(LIB_DIR) -major $(MESA_MAJOR) -minor $(MESA_MINOR) -patch $(MESA_TINY) \
+	@$(TOP)/bin/mklib -o $(GL_LIB) -ldflags '$(LDFLAGS)' -install $(TOP)/$(LIB_DIR) \
+		-major $(MESA_MAJOR) -minor $(MESA_MINOR) -patch $(MESA_TINY) \
 		$(MKLIB_OPTIONS) $(GL_LIB_DEPS) $(OBJECTS) $(MESA_MODULES) $(GLU_MODULES)
 
 # $(GLU_OBJECTS):
-#	cd $(GLU_DIR); $(MAKE) $< ;
+#	cd $(GLU_DIR) && $(MAKE) $< ;
 
 depend: $(DRIVER_SOURCES) $(GLU_SOURCES)
-	rm -f depend
 	touch depend
 	$(MKDEP) $(MKDEP_OPTIONS) $(INCLUDES) $(DRIVER_SOURCES) $(GLU_SOURCES) > /dev/null 
 
 clean:
-	rm -f depend $(OBJECTS)
+	-rm -f depend depend.bak $(OBJECTS)
 
 include depend

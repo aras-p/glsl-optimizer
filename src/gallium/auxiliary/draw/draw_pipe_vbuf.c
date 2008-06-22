@@ -136,6 +136,8 @@ emit_vertex( struct vbuf_stage *vbuf,
        * set_buffer is efficient.  Consider a special one-shot mode for
        * translate.
        */
+      /* Note: we really do want data[0] here, not data[pos]: 
+       */
       vbuf->translate->set_buffer(vbuf->translate, 0, vertex->data[0], 0);
       vbuf->translate->run(vbuf->translate, 0, 1, vbuf->vertex_ptr);
 
@@ -145,7 +147,7 @@ emit_vertex( struct vbuf_stage *vbuf,
       vertex->vertex_id = vbuf->nr_vertices++;
    }
 
-   return vertex->vertex_id;
+   return (ushort)vertex->vertex_id;
 }
 
 
@@ -387,6 +389,15 @@ vbuf_alloc_vertices( struct vbuf_stage *vbuf )
    
    /* Allocate a new vertex buffer */
    vbuf->max_vertices = vbuf->render->max_vertex_buffer_bytes / vbuf->vertex_size;
+
+   /* even number */
+   vbuf->max_vertices = vbuf->max_vertices & ~1;
+
+   /* Must always succeed -- driver gives us a
+    * 'max_vertex_buffer_bytes' which it guarantees it can allocate,
+    * and it will flush itself if necessary to do so.  If this does
+    * fail, we are basically without usable hardware.
+    */
    vbuf->vertices = (uint *) vbuf->render->allocate_vertices(vbuf->render,
 							     (ushort) vbuf->vertex_size,
 							     (ushort) vbuf->max_vertices);

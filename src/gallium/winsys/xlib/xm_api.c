@@ -797,8 +797,14 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
       pipe = xmesa_create_i965simple(xmesa_get_pipe_winsys_aub(v));
    }
 
+   if (pipe == NULL)
+      goto fail;
+
    c->st = st_create_context(pipe, &v->mesa_visual,
                              share_list ? share_list->st : NULL);
+   if (c->st == NULL)
+      goto fail;
+   
    mesaCtx = c->st->ctx;
    c->st->ctx->DriverCtx = c;
 
@@ -818,6 +824,14 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
 #endif
 
    return c;
+
+ fail:
+   if (c->st)
+      st_destroy_context(c->st);
+   if (pipe)
+      pipe->destroy(pipe);
+   FREE(c);
+   return NULL;
 }
 
 

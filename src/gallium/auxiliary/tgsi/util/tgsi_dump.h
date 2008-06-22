@@ -14,6 +14,24 @@ tgsi_dump(
    const struct tgsi_token *tokens,
    unsigned                flags );
 
+struct tgsi_full_immediate;
+struct tgsi_full_instruction;
+struct tgsi_full_declaration;
+
+void
+tgsi_dump_immediate(
+   const struct tgsi_full_immediate *imm );
+
+void
+tgsi_dump_instruction(
+   const struct tgsi_full_instruction  *inst,
+   unsigned                      instno );
+
+void
+tgsi_dump_declaration(
+   const struct tgsi_full_declaration  *decl );
+
+
 #if defined __cplusplus
 }
 #endif

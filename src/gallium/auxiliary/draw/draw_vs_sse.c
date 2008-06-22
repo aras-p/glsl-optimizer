@@ -31,9 +31,11 @@
   *   Brian Paul
   */
 
+#include "pipe/p_config.h"
+
 #include "draw_vs.h"
 
-#if defined(__i386__) || defined(__386__)
+#if defined(PIPE_ARCH_X86)
 
 #include "pipe/p_util.h"
 #include "pipe/p_shader_tokens.h"
@@ -47,10 +49,8 @@
 #include "tgsi/util/tgsi_parse.h"
 
 #define SSE_MAX_VERTICES 4
-#define SSE_SWIZZLES 1
 
-#if SSE_SWIZZLES
-typedef void (XSTDCALL *codegen_function) (
+typedef void (PIPE_CDECL *codegen_function) (
    const struct tgsi_exec_vector *input, /* 1 */
    struct tgsi_exec_vector *output, /* 2 */
    float (*constant)[4],        /* 3 */
@@ -62,14 +62,6 @@ typedef void (XSTDCALL *codegen_function) (
    float (*aos_output)[4],      /* 9 */
    uint num_outputs,            /* 10 */
    uint output_stride );        /* 11 */
-#else
-typedef void (XSTDCALL *codegen_function) (
-   const struct tgsi_exec_vector *input,
-   struct tgsi_exec_vector *output,
-   float (*constant)[4],
-   struct tgsi_exec_vector *temporary,
-   float (*immediates)[4] );
-#endif
 
 struct draw_sse_vertex_shader {
    struct draw_vertex_shader base;
@@ -78,8 +70,6 @@ struct draw_sse_vertex_shader {
    codegen_function func;
    
    struct tgsi_exec_machine *machine;
-
-   float immediates[TGSI_EXEC_NUM_IMMEDIATES][4];
 };
 
 
@@ -111,14 +101,13 @@ vs_sse_run_linear( struct draw_vertex_shader *base,
    for (i = 0; i < count; i += MAX_TGSI_VERTICES) {
       unsigned int max_vertices = MIN2(MAX_TGSI_VERTICES, count - i);
 
-#if SSE_SWIZZLES
       /* run compiled shader
        */
       shader->func(machine->Inputs,
 		   machine->Outputs,
 		   (float (*)[4])constants,
 		   machine->Temps,
-		   shader->immediates,
+		   (float (*)[4])shader->base.immediates,
                    input,
                    base->info.num_inputs,
                    input_stride,
@@ -128,43 +117,6 @@ vs_sse_run_linear( struct draw_vertex_shader *base,
 
       input = (const float (*)[4])((const char *)input + input_stride * max_vertices);
       output = (float (*)[4])((char *)output + output_stride * max_vertices);
-#else
-      unsigned int j, slot;
-
-      /* Swizzle inputs.  
-       */
-      for (j = 0; j < max_vertices; j++) {
-         for (slot = 0; slot < base->info.num_inputs; slot++) {
-            machine->Inputs[slot].xyzw[0].f[j] = input[slot][0];
-            machine->Inputs[slot].xyzw[1].f[j] = input[slot][1];
-            machine->Inputs[slot].xyzw[2].f[j] = input[slot][2];
-            machine->Inputs[slot].xyzw[3].f[j] = input[slot][3];
-         } 
-
-	 input = (const float (*)[4])((const char *)input + input_stride);
-      }
-
-      /* run compiled shader
-       */
-      shader->func(machine->Inputs,
-		   machine->Outputs,
-		   (float (*)[4])constants,
-		   machine->Temps,
-		   shader->immediates);
-
-      /* Unswizzle all output results.  
-       */
-      for (j = 0; j < max_vertices; j++) {
-         for (slot = 0; slot < base->info.num_outputs; slot++) {
-            output[slot][0] = machine->Outputs[slot].xyzw[0].f[j];
-            output[slot][1] = machine->Outputs[slot].xyzw[1].f[j];
-            output[slot][2] = machine->Outputs[slot].xyzw[2].f[j];
-            output[slot][3] = machine->Outputs[slot].xyzw[3].f[j];
-         } 
-
-	 output = (float (*)[4])((char *)output + output_stride);
-      }
-#endif
    }
 }
 
@@ -177,6 +129,8 @@ vs_sse_delete( struct draw_vertex_shader *base )
    struct draw_sse_vertex_shader *shader = (struct draw_sse_vertex_shader *)base;
    
    x86_release_func( &shader->sse2_program );
+
+   align_free( (void *) shader->base.immediates );
 
    FREE( (void*) shader->base.state.tokens );
    FREE( shader );
@@ -203,15 +157,26 @@ draw_create_vs_sse(struct draw_context *draw,
 
    tgsi_scan_shader(templ->tokens, &vs->base.info);
 
+   vs->base.draw = draw;
+   if (1)
+      vs->base.create_varient = draw_vs_varient_aos_sse;
+   else
+      vs->base.create_varient = draw_vs_varient_generic;
    vs->base.prepare = vs_sse_prepare;
    vs->base.run_linear = vs_sse_run_linear;
    vs->base.delete = vs_sse_delete;
-   vs->machine = &draw->machine;
+   
+   vs->base.immediates = align_malloc(TGSI_EXEC_NUM_IMMEDIATES * 4 *
+                                      sizeof(float), 16);
+
+   vs->machine = &draw->vs.machine;
    
    x86_init_func( &vs->sse2_program );
 
    if (!tgsi_emit_sse2( (struct tgsi_token *) vs->base.state.tokens,
-			&vs->sse2_program, vs->immediates, SSE_SWIZZLES )) 
+			&vs->sse2_program, 
+                        (float (*)[4])vs->base.immediates, 
+                        TRUE )) 
       goto fail;
       
    vs->func = (codegen_function) x86_get_func( &vs->sse2_program );
@@ -222,7 +187,7 @@ draw_create_vs_sse(struct draw_context *draw,
    return &vs->base;
 
 fail:
-   fprintf(stderr, "tgsi_emit_sse2() failed, falling back to interpreter\n");
+   debug_error("tgsi_emit_sse2() failed, falling back to interpreter\n");
 
    x86_release_func( &vs->sse2_program );
    

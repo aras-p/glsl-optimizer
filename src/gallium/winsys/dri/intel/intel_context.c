@@ -1,8 +1,8 @@
 /**************************************************************************
- * 
+ *
  * Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -10,11 +10,11 @@
  * distribute, sub license, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice (including the
  * next paragraph) shall be included in all copies or substantial portions
  * of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
@@ -22,7 +22,7 @@
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
+ *
  **************************************************************************/
 
 
@@ -31,10 +31,13 @@
 #include "intel_screen.h"
 #include "intel_context.h"
 #include "intel_swapbuffers.h"
-#include "intel_winsys.h"
 #include "intel_batchbuffer.h"
+#include "intel_winsys_softpipe.h"
+
+#include "i915simple/i915_screen.h"
 
 #include "state_tracker/st_public.h"
+#include "state_tracker/st_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_context.h"
 
@@ -131,6 +134,46 @@ static const struct dri_debug_control debug_control[] = {
 
 
 
+/**
+ * Create i915 hardware rendering context.
+ */
+static struct pipe_context *
+intel_create_i915simple(struct intel_context *intel,
+			struct pipe_winsys *winsys)
+{
+   struct pipe_screen *screen;
+	
+   /* Fill in this struct with callbacks that i915simple will need to
+    * communicate with the window system, buffer manager, etc.
+    */
+   screen = i915_create_screen(winsys, intel->intelScreen->deviceID);
+
+   /* Create the i915simple context:
+    */
+   return i915_create_context(screen, winsys, &intel->base.base );
+}
+
+static void
+intel_lock_hardware(struct intel_be_context *context)
+{
+   struct intel_context *intel = (struct intel_context *)context;
+   LOCK_HARDWARE(intel);
+}
+
+static void
+intel_unlock_hardware(struct intel_be_context *context)
+{
+   struct intel_context *intel = (struct intel_context *)context;
+   UNLOCK_HARDWARE(intel);
+}
+
+static boolean
+intel_locked_hardware(struct intel_be_context *context)
+{
+   struct intel_context *intel = (struct intel_context *)context;
+   return intel->locked ? TRUE : FALSE;
+}
+
 GLboolean
 intelCreateContext(const __GLcontextModes * visual,
                    __DRIcontextPrivate * driContextPriv,
@@ -178,20 +221,24 @@ intelCreateContext(const __GLcontextModes * visual,
    intel->iw.irq_seq = -1;
    intel->irqsEmitted = 0;
 
-   intel->batch = intel_batchbuffer_alloc(intel);
    intel->last_swap_fence = NULL;
    intel->first_swap_fence = NULL;
 
 #ifdef DEBUG
    __intel_debug = driParseDebugString(getenv("INTEL_DEBUG"), debug_control);
 #endif
+   intel->base.hardware_lock = intel_lock_hardware;
+   intel->base.hardware_unlock = intel_unlock_hardware;
+   intel->base.hardware_locked = intel_locked_hardware;
+
+   intel_be_init_context(&intel->base, &intelScreen->base);
 
    /*
     * Pipe-related setup
     */
    if (getenv("INTEL_SP")) {
       /* use softpipe driver instead of hw */
-      pipe = intel_create_softpipe( intel, intelScreen->winsys );
+      pipe = intel_create_softpipe( intel, &intelScreen->base.base );
    }
    else {
       switch (intel->intelScreen->deviceID) {
@@ -203,13 +250,13 @@ intelCreateContext(const __GLcontextModes * visual,
       case PCI_CHIP_Q35_G:
       case PCI_CHIP_I915_G:
       case PCI_CHIP_I915_GM:
-	 pipe = intel_create_i915simple( intel, intelScreen->winsys );
+	 pipe = intel_create_i915simple( intel, &intelScreen->base.base );
 	 break;
       default:
-	 fprintf(stderr, "Unknown PCIID %x in %s, using software driver\n", 
+	 fprintf(stderr, "Unknown PCIID %x in %s, using software driver\n",
                  intel->intelScreen->deviceID, __FUNCTION__);
 
-	 pipe = intel_create_softpipe( intel, intelScreen->winsys );
+	 pipe = intel_create_softpipe( intel, &intelScreen->base.base );
 	 break;
       }
    }
@@ -217,6 +264,8 @@ intelCreateContext(const __GLcontextModes * visual,
    pipe->priv = intel;
 
    intel->st = st_create_context(pipe, visual, st_share);
+
+   driInitExtensions( intel->st->ctx, card_extensions, GL_TRUE );
 
    return GL_TRUE;
 }
@@ -230,8 +279,6 @@ intelDestroyContext(__DRIcontextPrivate * driContextPriv)
    assert(intel);               /* should never be null */
    if (intel) {
       st_finish(intel->st);
-
-      intel_batchbuffer_free(intel->batch);
 
       if (intel->last_swap_fence) {
 	 driFenceFinish(intel->last_swap_fence, DRM_FENCE_TYPE_EXE, GL_TRUE);
@@ -248,6 +295,7 @@ intelDestroyContext(__DRIcontextPrivate * driContextPriv)
          intel->intelScreen->dummyContext = NULL;
 
       st_destroy_context(intel->st);
+      intel_be_destroy_context(&intel->base);
       free(intel);
    }
 }

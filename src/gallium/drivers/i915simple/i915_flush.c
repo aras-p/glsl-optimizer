@@ -62,12 +62,12 @@ static void i915_flush( struct pipe_context *pipe,
 	 assert(BEGIN_BATCH(1, 0));
       }
       OUT_BATCH( flush );
-      ADVANCE_BATCH();
    }
 
    /* If there are no flags, just flush pending commands to hardware:
     */
    FLUSH_BATCH(fence);
+   i915->vbo_flushed = 1;
 }
 
 

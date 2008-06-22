@@ -61,7 +61,7 @@ struct util_time
 #if defined(PIPE_OS_LINUX)
    struct timeval tv;
 #else
-   long long counter;
+   int64_t counter;
 #endif
 };
    

@@ -27,13 +27,16 @@
  * Program runs for 5 seconds then exits, outputing framerate to console
  */
 
+#define EGL_EGLEXT_PROTOTYPES
+
+#include <assert.h>
 #include <math.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <GL/gl.h>
-#include <GLES/egl.h>
-#include <assert.h>
+#include <EGL/egl.h>
+#include <EGL/eglext.h>
 
 #define MAX_CONFIGS 10
 #define MAX_MODES 100
@@ -385,7 +388,7 @@ main(int argc, char *argv[])
 	}
 	
 	/* DBR : Create EGL context/surface etc */
-        d = eglGetDisplay("!EGL_i915");
+	d = eglGetDisplay((EGLNativeDisplayType)"!EGL_i915");
 	assert(d);
 
 	if (!eglInitialize(d, &maj, &min)) {

@@ -178,6 +178,8 @@ struct i915_rasterizer_state {
 struct i915_sampler_state {
    unsigned state[3];
    const struct pipe_sampler_state *templ;
+   unsigned minlod;
+   unsigned maxlod;
 };
 
 
@@ -208,6 +210,8 @@ struct i915_texture {
     */
    struct pipe_buffer *buffer;
 };
+
+struct i915_batchbuffer;
 
 struct i915_context
 {
@@ -241,10 +245,12 @@ struct i915_context
    unsigned num_vertex_elements;
    unsigned num_vertex_buffers;
 
-   unsigned *batch_start;
+   struct i915_batchbuffer *batch;
 
    /** Vertex buffer */
    struct pipe_buffer *vbo;
+   size_t vbo_offset;
+   unsigned vbo_flushed;
 
    struct i915_state current;
    unsigned hardware_dirty;

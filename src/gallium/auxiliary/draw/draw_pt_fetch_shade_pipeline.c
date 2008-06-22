@@ -51,11 +51,12 @@ struct fetch_pipeline_middle_end {
 
 static void fetch_pipeline_prepare( struct draw_pt_middle_end *middle,
                                     unsigned prim,
-				    unsigned opt )
+				    unsigned opt,
+                                    unsigned *max_vertices )
 {
    struct fetch_pipeline_middle_end *fpme = (struct fetch_pipeline_middle_end *)middle;
    struct draw_context *draw = fpme->draw;
-   struct draw_vertex_shader *vs = draw->vertex_shader;
+   struct draw_vertex_shader *vs = draw->vs.vertex_shader;
 
    /* Add one to num_outputs because the pipeline occasionally tags on
     * an additional texcoord, eg for AA lines.
@@ -81,21 +82,30 @@ static void fetch_pipeline_prepare( struct draw_pt_middle_end *middle,
     * but gl vs dx9 clip spaces.
     */
    draw_pt_post_vs_prepare( fpme->post_vs,
-			    draw->bypass_clipping,
-			    draw->identity_viewport,
-			    draw->rasterizer->gl_rasterization_rules );
+			    (boolean)draw->bypass_clipping,
+			    (boolean)draw->identity_viewport,
+			    (boolean)draw->rasterizer->gl_rasterization_rules );
 			    
 
-   if (!(opt & PT_PIPELINE)) 
+   if (!(opt & PT_PIPELINE)) {
       draw_pt_emit_prepare( fpme->emit, 
-			    prim );
+			    prim,
+                            max_vertices );
+
+      *max_vertices = MAX2( *max_vertices,
+                            DRAW_PIPE_MAX_VERTICES );
+   }
+   else {
+      *max_vertices = DRAW_PIPE_MAX_VERTICES; 
+   }
+
+   /* return even number */
+   *max_vertices = *max_vertices & ~1;
 
    /* No need to prepare the shader.
     */
    vs->prepare(vs, draw);
-
 }
-
 
 
 
@@ -107,7 +117,7 @@ static void fetch_pipeline_run( struct draw_pt_middle_end *middle,
 {
    struct fetch_pipeline_middle_end *fpme = (struct fetch_pipeline_middle_end *)middle;
    struct draw_context *draw = fpme->draw;
-   struct draw_vertex_shader *shader = draw->vertex_shader;
+   struct draw_vertex_shader *shader = draw->vs.vertex_shader;
    unsigned opt = fpme->opt;
    unsigned alloc_count = align_int( fetch_count, 4 );
 
@@ -162,7 +172,7 @@ static void fetch_pipeline_run( struct draw_pt_middle_end *middle,
                          fpme->vertex_size,
                          draw_elts,
                          draw_count );
-   } 
+   }
    else {
       draw_pt_emit( fpme->emit,
 		    (const float (*)[4])pipeline_verts->data,
@@ -172,6 +182,157 @@ static void fetch_pipeline_run( struct draw_pt_middle_end *middle,
 		    draw_count );
    }
 
+
+   FREE(pipeline_verts);
+}
+
+
+static void fetch_pipeline_linear_run( struct draw_pt_middle_end *middle,
+                                       unsigned start,
+                                       unsigned count)
+{
+   struct fetch_pipeline_middle_end *fpme = (struct fetch_pipeline_middle_end *)middle;
+   struct draw_context *draw = fpme->draw;
+   struct draw_vertex_shader *shader = draw->vs.vertex_shader;
+   unsigned opt = fpme->opt;
+   unsigned alloc_count = align_int( count, 4 );
+
+   struct vertex_header *pipeline_verts =
+      (struct vertex_header *)MALLOC(fpme->vertex_size * alloc_count);
+
+   if (!pipeline_verts) {
+      /* Not much we can do here - just skip the rendering.
+       */
+      assert(0);
+      return;
+   }
+
+   /* Fetch into our vertex buffer
+    */
+   draw_pt_fetch_run_linear( fpme->fetch,
+                             start,
+                             count,
+                             (char *)pipeline_verts );
+
+   /* Run the shader, note that this overwrites the data[] parts of
+    * the pipeline verts.  If there is no shader, ie a bypass shader,
+    * then the inputs == outputs, and are already in the correct
+    * place.
+    */
+   if (opt & PT_SHADE)
+   {
+      shader->run_linear(shader,
+			 (const float (*)[4])pipeline_verts->data,
+			 (      float (*)[4])pipeline_verts->data,
+			 (const float (*)[4])draw->pt.user.constants,
+			 count,
+			 fpme->vertex_size,
+			 fpme->vertex_size);
+   }
+
+   if (draw_pt_post_vs_run( fpme->post_vs,
+			    pipeline_verts,
+			    count,
+			    fpme->vertex_size ))
+   {
+      opt |= PT_PIPELINE;
+   }
+
+   /* Do we need to run the pipeline?
+    */
+   if (opt & PT_PIPELINE) {
+      draw_pipeline_run_linear( fpme->draw,
+                                fpme->prim,
+                                pipeline_verts,
+                                count,
+                                fpme->vertex_size);
+   }
+   else {
+      draw_pt_emit_linear( fpme->emit,
+                           (const float (*)[4])pipeline_verts->data,
+                           count,
+                           fpme->vertex_size,
+                           0, /*start*/
+                           count );
+   }
+
+   FREE(pipeline_verts);
+}
+
+
+
+static void fetch_pipeline_linear_run_elts( struct draw_pt_middle_end *middle,
+                                            unsigned start,
+                                            unsigned count,
+                                            const ushort *draw_elts,
+                                            unsigned draw_count )
+{
+   struct fetch_pipeline_middle_end *fpme = (struct fetch_pipeline_middle_end *)middle;
+   struct draw_context *draw = fpme->draw;
+   struct draw_vertex_shader *shader = draw->vs.vertex_shader;
+   unsigned opt = fpme->opt;
+   unsigned alloc_count = align_int( count, 4 );
+
+   struct vertex_header *pipeline_verts =
+      (struct vertex_header *)MALLOC(fpme->vertex_size * alloc_count);
+
+   if (!pipeline_verts) {
+      /* Not much we can do here - just skip the rendering.
+       */
+      assert(0);
+      return;
+   }
+
+   /* Fetch into our vertex buffer
+    */
+   draw_pt_fetch_run_linear( fpme->fetch,
+                             start,
+                             count,
+                             (char *)pipeline_verts );
+
+   /* Run the shader, note that this overwrites the data[] parts of
+    * the pipeline verts.  If there is no shader, ie a bypass shader,
+    * then the inputs == outputs, and are already in the correct
+    * place.
+    */
+   if (opt & PT_SHADE)
+   {
+      shader->run_linear(shader,
+			 (const float (*)[4])pipeline_verts->data,
+			 (      float (*)[4])pipeline_verts->data,
+			 (const float (*)[4])draw->pt.user.constants,
+			 count,
+			 fpme->vertex_size,
+			 fpme->vertex_size);
+   }
+
+   if (draw_pt_post_vs_run( fpme->post_vs,
+			    pipeline_verts,
+			    count,
+			    fpme->vertex_size ))
+   {
+      opt |= PT_PIPELINE;
+   }
+
+   /* Do we need to run the pipeline?
+    */
+   if (opt & PT_PIPELINE) {
+      draw_pipeline_run( fpme->draw,
+                         fpme->prim,
+                         pipeline_verts,
+                         count,
+                         fpme->vertex_size,
+                         draw_elts,
+                         draw_count );
+   }
+   else {
+      draw_pt_emit( fpme->emit,
+		    (const float (*)[4])pipeline_verts->data,
+		    count,
+		    fpme->vertex_size,
+		    draw_elts,
+		    draw_count );
+   }
 
    FREE(pipeline_verts);
 }
@@ -206,10 +367,12 @@ struct draw_pt_middle_end *draw_pt_fetch_pipeline_or_emit( struct draw_context *
    if (!fpme)
       goto fail;
 
-   fpme->base.prepare = fetch_pipeline_prepare;
-   fpme->base.run     = fetch_pipeline_run;
-   fpme->base.finish  = fetch_pipeline_finish;
-   fpme->base.destroy = fetch_pipeline_destroy;
+   fpme->base.prepare        = fetch_pipeline_prepare;
+   fpme->base.run            = fetch_pipeline_run;
+   fpme->base.run_linear     = fetch_pipeline_linear_run;
+   fpme->base.run_linear_elts = fetch_pipeline_linear_run_elts;
+   fpme->base.finish         = fetch_pipeline_finish;
+   fpme->base.destroy        = fetch_pipeline_destroy;
 
    fpme->draw = draw;
 

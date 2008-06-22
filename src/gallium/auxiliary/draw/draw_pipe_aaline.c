@@ -78,6 +78,8 @@ struct aaline_stage
 
    /** For AA lines, this is the vertex attrib slot for the new texcoords */
    uint tex_slot;
+   /** position, not necessarily output zero */
+   uint pos_slot;
 
    void *sampler_cso;
    struct pipe_texture *texture;
@@ -141,18 +143,18 @@ aa_transform_decl(struct tgsi_transform_context *ctx,
    if (decl->Declaration.File == TGSI_FILE_OUTPUT &&
        decl->Semantic.SemanticName == TGSI_SEMANTIC_COLOR &&
        decl->Semantic.SemanticIndex == 0) {
-      aactx->colorOutput = decl->u.DeclarationRange.First;
+      aactx->colorOutput = decl->DeclarationRange.First;
    }
    else if (decl->Declaration.File == TGSI_FILE_SAMPLER) {
       uint i;
-      for (i = decl->u.DeclarationRange.First;
-           i <= decl->u.DeclarationRange.Last; i++) {
+      for (i = decl->DeclarationRange.First;
+           i <= decl->DeclarationRange.Last; i++) {
          aactx->samplersUsed |= 1 << i;
       }
    }
    else if (decl->Declaration.File == TGSI_FILE_INPUT) {
-      if ((int) decl->u.DeclarationRange.Last > aactx->maxInput)
-         aactx->maxInput = decl->u.DeclarationRange.Last;
+      if ((int) decl->DeclarationRange.Last > aactx->maxInput)
+         aactx->maxInput = decl->DeclarationRange.Last;
       if (decl->Semantic.SemanticName == TGSI_SEMANTIC_GENERIC &&
            (int) decl->Semantic.SemanticIndex > aactx->maxGeneric) {
          aactx->maxGeneric = decl->Semantic.SemanticIndex;
@@ -160,8 +162,8 @@ aa_transform_decl(struct tgsi_transform_context *ctx,
    }
    else if (decl->Declaration.File == TGSI_FILE_TEMPORARY) {
       uint i;
-      for (i = decl->u.DeclarationRange.First;
-           i <= decl->u.DeclarationRange.Last; i++) {
+      for (i = decl->DeclarationRange.First;
+           i <= decl->DeclarationRange.Last; i++) {
          aactx->tempsUsed |= (1 << i);
       }
    }
@@ -225,34 +227,33 @@ aa_transform_inst(struct tgsi_transform_context *ctx,
       /* declare new generic input/texcoord */
       decl = tgsi_default_full_declaration();
       decl.Declaration.File = TGSI_FILE_INPUT;
+      /* XXX this could be linear... */
+      decl.Declaration.Interpolate = TGSI_INTERPOLATE_PERSPECTIVE;
       decl.Declaration.Semantic = 1;
       decl.Semantic.SemanticName = TGSI_SEMANTIC_GENERIC;
       decl.Semantic.SemanticIndex = aactx->maxGeneric + 1;
-      decl.Declaration.Interpolate = 1;
-      /* XXX this could be linear... */
-      decl.Interpolation.Interpolate = TGSI_INTERPOLATE_PERSPECTIVE;
-      decl.u.DeclarationRange.First = 
-      decl.u.DeclarationRange.Last = aactx->maxInput + 1;
+      decl.DeclarationRange.First = 
+      decl.DeclarationRange.Last = aactx->maxInput + 1;
       ctx->emit_declaration(ctx, &decl);
 
       /* declare new sampler */
       decl = tgsi_default_full_declaration();
       decl.Declaration.File = TGSI_FILE_SAMPLER;
-      decl.u.DeclarationRange.First = 
-      decl.u.DeclarationRange.Last = aactx->freeSampler;
+      decl.DeclarationRange.First = 
+      decl.DeclarationRange.Last = aactx->freeSampler;
       ctx->emit_declaration(ctx, &decl);
 
       /* declare new temp regs */
       decl = tgsi_default_full_declaration();
       decl.Declaration.File = TGSI_FILE_TEMPORARY;
-      decl.u.DeclarationRange.First = 
-      decl.u.DeclarationRange.Last = aactx->texTemp;
+      decl.DeclarationRange.First = 
+      decl.DeclarationRange.Last = aactx->texTemp;
       ctx->emit_declaration(ctx, &decl);
 
       decl = tgsi_default_full_declaration();
       decl.Declaration.File = TGSI_FILE_TEMPORARY;
-      decl.u.DeclarationRange.First = 
-      decl.u.DeclarationRange.Last = aactx->colorTemp;
+      decl.DeclarationRange.First = 
+      decl.DeclarationRange.Last = aactx->colorTemp;
       ctx->emit_declaration(ctx, &decl);
 
       aactx->firstInstruction = FALSE;
@@ -521,9 +522,10 @@ aaline_line(struct draw_stage *stage, struct prim_header *header)
    struct prim_header tri;
    struct vertex_header *v[8];
    uint texPos = aaline->tex_slot;
+   uint posPos = aaline->pos_slot;
    float *pos, *tex;
-   float dx = header->v[1]->data[0][0] - header->v[0]->data[0][0];
-   float dy = header->v[1]->data[0][1] - header->v[0]->data[0][1];
+   float dx = header->v[1]->data[posPos][0] - header->v[0]->data[posPos][0];
+   float dy = header->v[1]->data[posPos][1] - header->v[0]->data[posPos][1];
    double a = atan2(dy, dx);
    float c_a = (float) cos(a), s_a = (float) sin(a);
    uint i;
@@ -550,35 +552,35 @@ aaline_line(struct draw_stage *stage, struct prim_header *header)
     */
 
    /* new verts */
-   pos = v[0]->data[0];
+   pos = v[0]->data[posPos];
    pos[0] += (-dx * c_a -  dy * s_a);
    pos[1] += (-dx * s_a +  dy * c_a);
 
-   pos = v[1]->data[0];
+   pos = v[1]->data[posPos];
    pos[0] += (-dx * c_a - -dy * s_a);
    pos[1] += (-dx * s_a + -dy * c_a);
 
-   pos = v[2]->data[0];
+   pos = v[2]->data[posPos];
    pos[0] += ( dx * c_a -  dy * s_a);
    pos[1] += ( dx * s_a +  dy * c_a);
 
-   pos = v[3]->data[0];
+   pos = v[3]->data[posPos];
    pos[0] += ( dx * c_a - -dy * s_a);
    pos[1] += ( dx * s_a + -dy * c_a);
 
-   pos = v[4]->data[0];
+   pos = v[4]->data[posPos];
    pos[0] += (-dx * c_a -  dy * s_a);
    pos[1] += (-dx * s_a +  dy * c_a);
 
-   pos = v[5]->data[0];
+   pos = v[5]->data[posPos];
    pos[0] += (-dx * c_a - -dy * s_a);
    pos[1] += (-dx * s_a + -dy * c_a);
 
-   pos = v[6]->data[0];
+   pos = v[6]->data[posPos];
    pos[0] += ( dx * c_a -  dy * s_a);
    pos[1] += ( dx * s_a +  dy * c_a);
 
-   pos = v[7]->data[0];
+   pos = v[7]->data[posPos];
    pos[0] += ( dx * c_a - -dy * s_a);
    pos[1] += ( dx * s_a + -dy * c_a);
 
@@ -653,8 +655,8 @@ aaline_first_line(struct draw_stage *stage, struct prim_header *header)
    }
 
    /* update vertex attrib info */
-   aaline->tex_slot = draw->num_vs_outputs;
-   assert(aaline->tex_slot > 0); /* output[0] is vertex pos */
+   aaline->tex_slot = draw->vs.num_vs_outputs;
+   aaline->pos_slot = draw->vs.position_output;
 
    /* advertise the extra post-transformed vertex attribute */
    draw->extra_vp_outputs.semantic_name = TGSI_SEMANTIC_GENERIC;

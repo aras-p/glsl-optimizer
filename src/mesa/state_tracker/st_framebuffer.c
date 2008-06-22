@@ -32,11 +32,13 @@
 #include "main/framebuffer.h"
 #include "main/matrix.h"
 #include "main/renderbuffer.h"
+#include "main/scissor.h"
 #include "st_public.h"
 #include "st_context.h"
 #include "st_cb_fbo.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_context.h"
+#include "pipe/p_inlines.h"
 
 
 struct st_framebuffer *
@@ -149,6 +151,61 @@ void st_resize_framebuffer( struct st_framebuffer *stfb,
 void st_unreference_framebuffer( struct st_framebuffer **stfb )
 {
    _mesa_unreference_framebuffer((struct gl_framebuffer **) stfb);
+}
+
+
+
+/**
+ * Set/replace a framebuffer surface.
+ * The user of the state tracker can use this instead of
+ * st_resize_framebuffer() to provide new surfaces when a window is resized.
+ */
+void
+st_set_framebuffer_surface(struct st_framebuffer *stfb,
+                           uint surfIndex, struct pipe_surface *surf)
+{
+   static const GLuint invalid_size = 9999999;
+   struct st_renderbuffer *strb;
+   GLuint width, height, i;
+
+   assert(surfIndex < BUFFER_COUNT);
+
+   strb = st_renderbuffer(stfb->Base.Attachment[surfIndex].Renderbuffer);
+   assert(strb);
+
+   /* replace the renderbuffer's surface/texture pointers */
+   pipe_surface_reference( &strb->surface, surf );
+   pipe_texture_reference( &strb->texture, surf->texture );
+
+   /* update renderbuffer's width/height */
+   strb->Base.Width = surf->width;
+   strb->Base.Height = surf->height;
+
+   /* Try to update the framebuffer's width/height from the renderbuffer
+    * sizes.  Before we start drawing, all the rbs _should_ be the same size.
+    */
+   width = height = invalid_size;
+   for (i = 0; i < BUFFER_COUNT; i++) {
+      if (stfb->Base.Attachment[i].Renderbuffer) {
+         if (width == invalid_size) {
+            width = stfb->Base.Attachment[i].Renderbuffer->Width;
+            height = stfb->Base.Attachment[i].Renderbuffer->Height;
+         }
+         else if (width != stfb->Base.Attachment[i].Renderbuffer->Width ||
+                  height != stfb->Base.Attachment[i].Renderbuffer->Height) {
+            /* inconsistant renderbuffer sizes, bail out */
+            return;
+         }
+      }
+   }
+
+   if (width != invalid_size) {
+      /* OK, the renderbuffers are of a consistant size, so update the
+       * parent framebuffer's size.
+       */
+      stfb->Base.Width = width;
+      stfb->Base.Height = height;
+   }
 }
 
 

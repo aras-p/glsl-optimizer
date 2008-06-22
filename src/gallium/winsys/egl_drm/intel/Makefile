@@ -6,22 +6,13 @@ LIBNAME = EGL_i915.so
 
 PIPE_DRIVERS = \
 	$(TOP)/src/gallium/drivers/softpipe/libsoftpipe.a \
-	$(TOP)/src/gallium/drivers/i915simple/libi915simple.a
+	$(TOP)/src/gallium/drivers/i915simple/libi915simple.a \
+	$(TOP)/src/gallium/winsys/common/intel_drm/libinteldrm.a
 
 DRIVER_SOURCES = \
-	intel_winsys_pipe.c \
-	intel_winsys_softpipe.c \
-	intel_winsys_i915.c \
-	intel_batchbuffer.c \
 	intel_swapbuffers.c \
 	intel_context.c \
-	intel_lock.c \
 	intel_screen.c \
-	ws_dri_bufmgr.c \
-	ws_dri_drmpool.c \
-	ws_dri_fencemgr.c \
-	ws_dri_mallocpool.c \
-	ws_dri_slabpool.c \
 	intel_egl.c
 
 C_SOURCES = \
@@ -34,7 +25,5 @@ DRIVER_DEFINES = -I$(TOP)/src/mesa/drivers/dri/intel $(shell pkg-config libdrm -
 				&& echo "-DDRM_VBLANK_FLIP=DRM_VBLANK_FLIP")
 
 include ../Makefile.template
-
-intel_tex_layout.o: $(TOP)/src/mesa/drivers/dri/intel/intel_tex_layout.c
 
 symlinks:

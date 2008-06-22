@@ -71,7 +71,7 @@ screen_interp( struct draw_context *draw,
                const struct vertex_header *v1 )
 {
    uint attr;
-   for (attr = 0; attr < draw->num_vs_outputs; attr++) {
+   for (attr = 0; attr < draw->vs.num_vs_outputs; attr++) {
       const float *val0 = v0->data[attr];
       const float *val1 = v1->data[attr];
       float *newv = dst->data[attr];
@@ -119,8 +119,9 @@ stipple_line(struct draw_stage *stage, struct prim_header *header)
    struct stipple_stage *stipple = stipple_stage(stage);
    struct vertex_header *v0 = header->v[0];
    struct vertex_header *v1 = header->v[1];
-   const float *pos0 = v0->data[0];
-   const float *pos1 = v1->data[0];
+   const unsigned pos = stage->draw->vs.position_output;
+   const float *pos0 = v0->data[pos];
+   const float *pos1 = v1->data[pos];
    float start = 0;
    int state = 0;
 
@@ -175,6 +176,22 @@ reset_stipple_counter(struct draw_stage *stage)
    stage->next->reset_stipple_counter( stage->next );
 }
 
+static void
+stipple_reset_point(struct draw_stage *stage, struct prim_header *header)
+{
+   struct stipple_stage *stipple = stipple_stage(stage);
+   stipple->counter = 0;
+   stage->next->point(stage->next, header);
+}
+
+static void
+stipple_reset_tri(struct draw_stage *stage, struct prim_header *header)
+{
+   struct stipple_stage *stipple = stipple_stage(stage);
+   stipple->counter = 0;
+   stage->next->tri(stage->next, header);
+}
+
 
 static void
 stipple_first_line(struct draw_stage *stage, 
@@ -220,9 +237,9 @@ struct draw_stage *draw_stipple_stage( struct draw_context *draw )
 
    stipple->stage.draw = draw;
    stipple->stage.next = NULL;
-   stipple->stage.point = draw_pipe_passthrough_point;
+   stipple->stage.point = stipple_reset_point;
    stipple->stage.line = stipple_first_line;
-   stipple->stage.tri = draw_pipe_passthrough_tri;
+   stipple->stage.tri = stipple_reset_tri;
    stipple->stage.reset_stipple_counter = reset_stipple_counter;
    stipple->stage.flush = stipple_flush;
    stipple->stage.destroy = stipple_destroy;

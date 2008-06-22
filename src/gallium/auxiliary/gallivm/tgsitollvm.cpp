@@ -96,10 +96,8 @@ translate_declaration(struct gallivm_ir *prog,
       unsigned first, last, mask;
       uint interp_method;
 
-      assert(decl->Declaration.Declare == TGSI_DECLARE_RANGE);
-
-      first = decl->u.DeclarationRange.First;
-      last = decl->u.DeclarationRange.Last;
+      first = decl->DeclarationRange.First;
+      last = decl->DeclarationRange.Last;
       mask = decl->Declaration.UsageMask;
 
       /* Do not touch WPOS.xy */
@@ -113,7 +111,7 @@ translate_declaration(struct gallivm_ir *prog,
          }
       }
 
-      interp_method = decl->Interpolation.Interpolate;
+      interp_method = decl->Declaration.Interpolate;
 
       if (mask == TGSI_WRITEMASK_XYZW) {
          unsigned i, j;
@@ -153,7 +151,7 @@ translate_declarationir(struct gallivm_ir *,
                       struct tgsi_full_declaration *)
 {
    if (decl->Declaration.File == TGSI_FILE_ADDRESS) {
-      int idx = decl->u.DeclarationRange.First;
+      int idx = decl->DeclarationRange.First;
       storage->addAddress(idx);
    }
 }

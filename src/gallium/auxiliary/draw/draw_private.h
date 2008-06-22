@@ -124,6 +124,7 @@ struct draw_context
    struct {
       struct {
          struct draw_pt_middle_end *fetch_emit;
+         struct draw_pt_middle_end *fetch_shade_emit;
          struct draw_pt_middle_end *general;
       } middle;
 
@@ -146,6 +147,8 @@ struct draw_context
          const void *elts;
          /** bytes per index (0, 1, 2 or 4) */
          unsigned eltSize;
+         unsigned min_index;
+         unsigned max_index;
          
          /** vertex arrays */
          const void *vbuffer[PIPE_MAX_ATTRIBS];
@@ -154,6 +157,8 @@ struct draw_context
          const void *constants;
       } user;
 
+      boolean test_fse;         /* enable FSE even though its not correct (eg for softpipe) */
+      boolean no_fse;           /* disable FSE even when it is correct */
    } pt;
 
    struct {
@@ -167,13 +172,36 @@ struct draw_context
    /* pipe state that we need: */
    const struct pipe_rasterizer_state *rasterizer;
    struct pipe_viewport_state viewport;
-
-   struct draw_vertex_shader *vertex_shader;
-
    boolean identity_viewport;
 
-   uint num_vs_outputs;  /**< convenience, from vertex_shader */
+   struct {
+      struct draw_vertex_shader *vertex_shader;
+      uint num_vs_outputs;  /**< convenience, from vertex_shader */
+      uint position_output;
 
+      /** TGSI program interpreter runtime state */
+      struct tgsi_exec_machine machine;
+
+      /* This (and the tgsi_exec_machine struct) probably need to be moved somewhere private.
+       */
+      struct gallivm_cpu_engine *engine;   
+
+      /* Here's another one:
+       */
+      struct aos_machine *aos_machine; 
+
+
+      const float (*aligned_constants)[4];
+
+      float (*aligned_constant_storage)[4];
+      unsigned const_storage_size;
+
+
+      struct translate *fetch;
+      struct translate_cache *fetch_cache;
+      struct translate *emit;
+      struct translate_cache *emit_cache;
+   } vs;
 
    /* Clip derived state:
     */
@@ -190,17 +218,22 @@ struct draw_context
 
    unsigned reduced_prim;
 
-   /** TGSI program interpreter runtime state */
-   struct tgsi_exec_machine machine;
-
-   /* This (and the tgsi_exec_machine struct) probably need to be moved somewhere private.
-    */
-   struct gallivm_cpu_engine *engine;   
    void *driver_private;
 };
 
 
+/*******************************************************************************
+ * Vertex shader code:
+ */
+boolean draw_vs_init( struct draw_context *draw );
+void draw_vs_destroy( struct draw_context *draw );
 
+void draw_vs_set_viewport( struct draw_context *, 
+                           const struct pipe_viewport_state * );
+
+void draw_vs_set_constants( struct draw_context *,
+                            const float (*constants)[4],
+                            unsigned size );
 
 
 
@@ -232,6 +265,7 @@ void draw_pipeline_destroy( struct draw_context *draw );
  * These flags expected at first vertex of lines & triangles when
  * unfilled and/or line stipple modes are operational.
  */
+#define DRAW_PIPE_MAX_VERTICES  (0x1<<12)
 #define DRAW_PIPE_EDGE_FLAG_0   (0x1<<12)
 #define DRAW_PIPE_EDGE_FLAG_1   (0x2<<12)
 #define DRAW_PIPE_EDGE_FLAG_2   (0x4<<12)
@@ -246,6 +280,12 @@ void draw_pipeline_run( struct draw_context *draw,
                         unsigned stride,
                         const ushort *elts,
                         unsigned count );
+
+void draw_pipeline_run_linear( struct draw_context *draw,
+                               unsigned prim,
+                               struct vertex_header *vertices,
+                               unsigned count,
+                               unsigned stride );
 
 
 

@@ -118,35 +118,35 @@ extfuncs.h:  $(TOP)/progs/util/extfuncs.h
 
 
 reflect: reflect.o showbuffer.o readtex.o
-	$(CC) reflect.o showbuffer.o readtex.o $(APP_LIB_DEPS) -o $@
+	$(CC) reflect.o showbuffer.o readtex.o $(APP_LIB_DEPS) $(ARCH_FLAGS) -o $@
 
 reflect.o: reflect.c showbuffer.h
 	$(CC) -c -I$(INCDIR) $(CFLAGS) reflect.c
 
 
 shadowtex: shadowtex.o showbuffer.o
-	$(CC) shadowtex.o showbuffer.o $(APP_LIB_DEPS) -o $@
+	$(CC) shadowtex.o showbuffer.o $(APP_LIB_DEPS) $(ARCH_FLAGS) -o $@
 
 shadowtex.o: shadowtex.c showbuffer.h
 	$(CC) -c -I$(INCDIR) $(CFLAGS) shadowtex.c
 
 
 gloss: gloss.o trackball.o readtex.o
-	$(CC) gloss.o trackball.o readtex.o $(APP_LIB_DEPS) -o $@
+	$(CC) gloss.o trackball.o readtex.o $(APP_LIB_DEPS) $(ARCH_FLAGS) -o $@
 
 gloss.o: gloss.c trackball.h
 	$(CC) -c -I$(INCDIR) $(CFLAGS) gloss.c
 
 
 engine: engine.o trackball.o readtex.o
-	$(CC) engine.o trackball.o readtex.o $(APP_LIB_DEPS) -o $@
+	$(CC) engine.o trackball.o readtex.o $(APP_LIB_DEPS) $(ARCH_FLAGS) -o $@
 
 engine.o: engine.c trackball.h
 	$(CC) -c -I$(INCDIR) $(CFLAGS) engine.c
 
 
 fslight: fslight.o
-	$(CC) fslight.o $(APP_LIB_DEPS) -o $@
+	$(CC) fslight.o $(APP_LIB_DEPS) $(ARCH_FLAGS) -o $@
 
 fslight.o: fslight.c extfuncs.h
 	$(CC) -c -I$(INCDIR) $(CFLAGS) fslight.c

@@ -26,9 +26,7 @@ void brw_shader_info(const struct tgsi_token *tokens,
       case TGSI_TOKEN_TYPE_DECLARATION:
       {
 	 const struct tgsi_full_declaration *decl = &parse.FullToken.FullDeclaration;
-	 unsigned last = decl->u.DeclarationRange.Last;
-	 
-	 assert( decl->Declaration.Declare == TGSI_DECLARE_RANGE );
+	 unsigned last = decl->DeclarationRange.Last;
       
 	 // Broken by crazy wpos init:
 	 //assert( info->nr_regs[decl->Declaration.File] <= last);

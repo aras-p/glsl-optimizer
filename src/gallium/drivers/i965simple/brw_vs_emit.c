@@ -988,10 +988,8 @@ post_vs_emit( struct brw_vs_compile *c, struct brw_instruction *end_inst )
 static void process_declaration(const struct tgsi_full_declaration *decl,
                                 struct brw_prog_info *info)
 {
-   int first = decl->u.DeclarationRange.First;
-   int last = decl->u.DeclarationRange.Last;
-
-   assert (decl->Declaration.Declare != TGSI_DECLARE_MASK);
+   int first = decl->DeclarationRange.First;
+   int last = decl->DeclarationRange.Last;
    
    switch(decl->Declaration.File) {
    case TGSI_FILE_CONSTANT: 
@@ -1137,8 +1135,8 @@ static void process_instruction(struct brw_vs_compile *c,
       emit_min(p, dst, args[0], args[1]);
       break;
    case TGSI_OPCODE_MOV:
-#if 0
    case TGSI_OPCODE_SWZ:
+#if 0
       /* The args[0] value can't be used here as it won't have
        * correctly encoded the full swizzle:
        */

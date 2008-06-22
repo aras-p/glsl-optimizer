@@ -68,6 +68,9 @@ struct st_framebuffer *st_create_framebuffer( const __GLcontextModes *visual,
 void st_resize_framebuffer( struct st_framebuffer *stfb,
                             uint width, uint height );
 
+void st_set_framebuffer_surface(struct st_framebuffer *stfb,
+                                uint surfIndex, struct pipe_surface *surf);
+
 struct pipe_surface *st_get_framebuffer_surface(struct st_framebuffer *stfb,
                                                 uint surfIndex);
 
@@ -85,5 +88,12 @@ void st_finish( struct st_context *st );
 
 void st_notify_swapbuffers(struct st_framebuffer *stfb);
 void st_notify_swapbuffers_complete(struct st_framebuffer *stfb);
+
+
+/** Generic function type */
+typedef void (*st_proc)();
+
+st_proc st_get_proc_address(const char *procname);
+
 
 #endif

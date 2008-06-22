@@ -2,9 +2,14 @@
 #define EGLAPI_INCLUDED
 
 /**
+ * A generic function ptr type
+ */
+typedef void (*_EGLProc)();
+
+
+/**
  * Typedefs for all EGL API entrypoint functions.
  */
-
 
 /* driver funcs */
 typedef EGLBoolean (*Initialize_t)(_EGLDriver *, EGLDisplay dpy, EGLint *major, EGLint *minor);
@@ -38,6 +43,9 @@ typedef EGLBoolean (*CopyBuffers_t)(_EGLDriver *drv, EGLDisplay dpy, EGLSurface 
 typedef const char *(*QueryString_t)(_EGLDriver *drv, EGLDisplay dpy, EGLint name);
 typedef EGLBoolean (*WaitGL_t)(_EGLDriver *drv, EGLDisplay dpy);
 typedef EGLBoolean (*WaitNative_t)(_EGLDriver *drv, EGLDisplay dpy, EGLint engine);
+
+typedef _EGLProc (*GetProcAddress_t)(const char *procname);
+
 
 
 #ifdef EGL_MESA_screen_surface
@@ -95,6 +103,7 @@ struct _egl_api
    QueryString_t QueryString;
    WaitGL_t WaitGL;
    WaitNative_t WaitNative;
+   GetProcAddress_t GetProcAddress;
 
    /* EGL_MESA_screen extension */
    ChooseModeMESA_t ChooseModeMESA;

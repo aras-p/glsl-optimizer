@@ -84,6 +84,7 @@ enum _format {
    MESA_FORMAT_YCBCR,		/*                     YYYY YYYY UorV UorV */
    MESA_FORMAT_YCBCR_REV,	/*                     UorV UorV YYYY YYYY */
    MESA_FORMAT_Z24_S8,          /* ZZZZ ZZZZ ZZZZ ZZZZ ZZZZ ZZZZ SSSS SSSS */
+   MESA_FORMAT_S8_Z24,          /* SSSS SSSS ZZZZ ZZZZ ZZZZ ZZZZ ZZZZ ZZZZ */
    MESA_FORMAT_Z16,             /*                     ZZZZ ZZZZ ZZZZ ZZZZ */
    MESA_FORMAT_Z32,             /* ZZZZ ZZZZ ZZZZ ZZZZ ZZZZ ZZZZ ZZZZ ZZZZ */
    /*@}*/
@@ -104,12 +105,16 @@ enum _format {
     * \name Compressed texture formats.
     */
    /*@{*/
+#if FEATURE_texture_fxt1
    MESA_FORMAT_RGB_FXT1,
    MESA_FORMAT_RGBA_FXT1,
+#endif
+#if FEATURE_texture_s3tc
    MESA_FORMAT_RGB_DXT1,
    MESA_FORMAT_RGBA_DXT1,
    MESA_FORMAT_RGBA_DXT3,
    MESA_FORMAT_RGBA_DXT5,
+#endif
    /*@}*/
 
    /**
@@ -209,6 +214,7 @@ extern const struct gl_texture_format _mesa_texformat_l8;
 extern const struct gl_texture_format _mesa_texformat_i8;
 extern const struct gl_texture_format _mesa_texformat_ci8;
 extern const struct gl_texture_format _mesa_texformat_z24_s8;
+extern const struct gl_texture_format _mesa_texformat_s8_z24;
 extern const struct gl_texture_format _mesa_texformat_z16;
 extern const struct gl_texture_format _mesa_texformat_z32;
 /*@}*/
@@ -221,12 +227,16 @@ extern const struct gl_texture_format _mesa_texformat_ycbcr_rev;
 
 /** \name Compressed formats */
 /*@{*/
+#if FEATURE_texture_fxt1
 extern const struct gl_texture_format _mesa_texformat_rgb_fxt1;
 extern const struct gl_texture_format _mesa_texformat_rgba_fxt1;
+#endif
+#if FEATURE_texture_s3tc
 extern const struct gl_texture_format _mesa_texformat_rgb_dxt1;
 extern const struct gl_texture_format _mesa_texformat_rgba_dxt1;
 extern const struct gl_texture_format _mesa_texformat_rgba_dxt3;
 extern const struct gl_texture_format _mesa_texformat_rgba_dxt5;
+#endif
 /*@}*/
 
 /** \name The null format */

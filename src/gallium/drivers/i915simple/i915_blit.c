@@ -31,6 +31,7 @@
 #include "i915_blit.h"
 #include "i915_reg.h"
 #include "i915_batch.h"
+#include "i915_debug.h"
 
 #define FILE_DEBUG_FLAG DEBUG_BLIT
 
@@ -45,7 +46,6 @@ i915_fill_blit(struct i915_context *i915,
 	       unsigned color)
 {
    unsigned BR13, CMD;
-   BATCH_LOCALS;
 
    dst_pitch *= (short) cpp;
 
@@ -79,7 +79,6 @@ i915_fill_blit(struct i915_context *i915,
    OUT_BATCH(((y + h) << 16) | (x + w));
    OUT_RELOC( dst_buffer, I915_BUFFER_ACCESS_WRITE, dst_offset);
    OUT_BATCH(color);
-   ADVANCE_BATCH();
 }
 
 
@@ -100,7 +99,6 @@ i915_copy_blit( struct i915_context *i915,
    unsigned CMD, BR13;
    int dst_y2 = dst_y + h;
    int dst_x2 = dst_x + w;
-   BATCH_LOCALS;
 
 
    I915_DBG(i915,
@@ -156,7 +154,6 @@ i915_copy_blit( struct i915_context *i915,
    OUT_BATCH((src_y << 16) | src_x);
    OUT_BATCH(((int) src_pitch & 0xffff));
    OUT_RELOC(src_buffer, I915_BUFFER_ACCESS_READ, src_offset);
-   ADVANCE_BATCH();
 }
 
 

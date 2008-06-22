@@ -140,8 +140,6 @@ REALLOC( void *old_ptr, unsigned old_size, unsigned new_size )
 
 #define CALLOC_STRUCT(T)   (struct T *) CALLOC(1, sizeof(struct T))
 
-#define GETENV( X ) debug_get_option( X, NULL )
-
 
 /**
  * Return memory on given byte alignment
@@ -410,10 +408,9 @@ extern void pipe_copy_rect(ubyte * dst, unsigned cpp, unsigned dst_pitch,
 
 
 
-#ifdef WIN32
-
-#if !defined(_INC_MATH) || !defined(__cplusplus)
-
+#if defined(_MSC_VER) 
+#if _MSC_VER < 1400 && !defined(__cplusplus)
+ 
 static INLINE float cosf( float f ) 
 {
    return (float) cos( (double) f );
@@ -451,10 +448,17 @@ static INLINE float fabsf( float f )
 
 static INLINE float logf( float f ) 
 {
-   return (float) cos( (double) f );
+   return (float) log( (double) f );
 }
-#endif  /* _INC_MATH */
+
+#else
+/* Work-around an extra semi-colon in VS 2005 logf definition */
+#ifdef logf
+#undef logf
+#define logf(x) ((float)log((double)(x)))
+#endif /* logf */
 #endif
+#endif /* _MSC_VER */
 
 
 #ifdef __cplusplus

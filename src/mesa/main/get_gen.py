@@ -1127,10 +1127,6 @@ def EmitHeader():
 
 #define INT_TO_BOOLEAN(I)     ( (I) ? GL_TRUE : GL_FALSE )
 
-#define ENUM_TO_BOOLEAN(E)    ( (E) ? GL_TRUE : GL_FALSE )
-#define ENUM_TO_INT(E)        ( (GLint) (E) )
-#define ENUM_TO_FLOAT(E)      ( (GLfloat) (E) )
-
 #define BOOLEAN_TO_INT(B)     ( (GLint) (B) )
 #define BOOLEAN_TO_FLOAT(B)   ( (B) ? 1.0F : 0.0F )
 

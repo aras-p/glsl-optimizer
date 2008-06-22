@@ -40,8 +40,18 @@ struct flat_stage
    struct draw_stage stage;
 
    uint num_color_attribs;
-   uint color_attribs[4];  /* front/back primary/secondary colors */
+   uint color_attribs[2];  /* front/back primary colors */
+
+   uint num_spec_attribs;
+   uint spec_attribs[2];  /* front/back secondary colors */
 };
+
+#define COPY_3FV( DST, SRC )         \
+do {                                \
+   (DST)[0] = (SRC)[0];             \
+   (DST)[1] = (SRC)[1];             \
+   (DST)[2] = (SRC)[2];             \
+} while (0)
 
 
 static INLINE struct flat_stage *
@@ -58,9 +68,15 @@ static INLINE void copy_colors( struct draw_stage *stage,
 {
    const struct flat_stage *flat = flat_stage(stage);
    uint i;
+
    for (i = 0; i < flat->num_color_attribs; i++) {
       const uint attr = flat->color_attribs[i];
       COPY_4FV(dst->data[attr], src->data[attr]);
+   }
+
+   for (i = 0; i < flat->num_spec_attribs; i++) {
+      const uint attr = flat->spec_attribs[i];
+      COPY_3FV(dst->data[attr], src->data[attr]);
    }
 }
 
@@ -77,6 +93,12 @@ static INLINE void copy_colors2( struct draw_stage *stage,
       const uint attr = flat->color_attribs[i];
       COPY_4FV(dst0->data[attr], src->data[attr]);
       COPY_4FV(dst1->data[attr], src->data[attr]);
+   }
+
+   for (i = 0; i < flat->num_spec_attribs; i++) {
+      const uint attr = flat->spec_attribs[i];
+      COPY_3FV(dst0->data[attr], src->data[attr]);
+      COPY_3FV(dst1->data[attr], src->data[attr]);
    }
 }
 
@@ -159,15 +181,19 @@ static void flatshade_line_1( struct draw_stage *stage,
 static void flatshade_init_state( struct draw_stage *stage )
 {
    struct flat_stage *flat = flat_stage(stage);
-   const struct draw_vertex_shader *vs = stage->draw->vertex_shader;
+   const struct draw_vertex_shader *vs = stage->draw->vs.vertex_shader;
    uint i;
 
    /* Find which vertex shader outputs are colors, make a list */
    flat->num_color_attribs = 0;
+   flat->num_spec_attribs = 0;
    for (i = 0; i < vs->info.num_outputs; i++) {
       if (vs->info.output_semantic_name[i] == TGSI_SEMANTIC_COLOR ||
           vs->info.output_semantic_name[i] == TGSI_SEMANTIC_BCOLOR) {
-         flat->color_attribs[flat->num_color_attribs++] = i;
+         if (vs->info.output_semantic_index[i] == 0)
+            flat->color_attribs[flat->num_color_attribs++] = i;
+         else
+            flat->spec_attribs[flat->num_spec_attribs++] = i;
       }
    }
 

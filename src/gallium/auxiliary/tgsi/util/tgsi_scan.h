@@ -67,4 +67,8 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
                  struct tgsi_shader_info *info);
 
 
+extern boolean
+tgsi_is_passthrough_shader(const struct tgsi_token *tokens);
+
+
 #endif /* TGSI_SCAN_H */

@@ -29,6 +29,7 @@
 
 #ifdef USE_3DNOW_ASM
 
+#include "assyntax.h"
 #include "matypes.h"
 #include "norm_args.h"
 

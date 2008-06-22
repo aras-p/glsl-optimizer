@@ -36,8 +36,8 @@
 #include "draw/draw_pt.h"
 
 
-#define CACHE_MAX 32
-#define FETCH_MAX 128
+#define CACHE_MAX 256
+#define FETCH_MAX 256
 #define DRAW_MAX (16*1024)
 
 struct vcache_frontend {
@@ -52,15 +52,27 @@ struct vcache_frontend {
 
    unsigned draw_count;
    unsigned fetch_count;
+   unsigned fetch_max;
    
    struct draw_pt_middle_end *middle;
 
    unsigned input_prim;
    unsigned output_prim;
+
+   unsigned middle_prim;
+   unsigned opt;
 };
 
 static void vcache_flush( struct vcache_frontend *vcache )
 {
+   if (vcache->middle_prim != vcache->output_prim) {
+      vcache->middle_prim = vcache->output_prim;
+      vcache->middle->prepare( vcache->middle, 
+                               vcache->middle_prim, 
+                               vcache->opt, 
+                               &vcache->fetch_max );
+   }
+
    if (vcache->draw_count) {
       vcache->middle->run( vcache->middle,
                            vcache->fetch_elts,
@@ -171,15 +183,15 @@ static void vcache_ef_quad( struct vcache_frontend *vcache,
                             unsigned i2,
                             unsigned i3 )
 {
-   const unsigned omitEdge1 = DRAW_PIPE_EDGE_FLAG_0 | DRAW_PIPE_EDGE_FLAG_2;
-   const unsigned omitEdge2 = DRAW_PIPE_EDGE_FLAG_0 | DRAW_PIPE_EDGE_FLAG_1;
-
-   vcache_triangle_flags( vcache, 
-                          DRAW_PIPE_RESET_STIPPLE | omitEdge1, 
+   vcache_triangle_flags( vcache,
+                          ( DRAW_PIPE_RESET_STIPPLE |
+                            DRAW_PIPE_EDGE_FLAG_0 |
+                            DRAW_PIPE_EDGE_FLAG_2 ),
                           i0, i1, i3 );
 
-   vcache_triangle_flags( vcache, 
-                          omitEdge2, 
+   vcache_triangle_flags( vcache,
+                          ( DRAW_PIPE_EDGE_FLAG_0 |
+                            DRAW_PIPE_EDGE_FLAG_1 ),
                           i1, i2, i3 );
 }
 
@@ -201,21 +213,201 @@ static void vcache_ef_quad( struct vcache_frontend *vcache,
 #define FUNC vcache_run
 #include "draw_pt_vcache_tmp.h"
 
+static void rebase_uint_elts( const unsigned *src,
+                              unsigned count,
+                              int delta,
+                              ushort *dest )
+{
+   unsigned i;
+
+   for (i = 0; i < count; i++) 
+      dest[i] = (ushort)(src[i] + delta);
+}
+
+static void rebase_ushort_elts( const ushort *src,
+                                unsigned count,
+                                int delta,
+                                ushort *dest )
+{
+   unsigned i;
+
+   for (i = 0; i < count; i++) 
+      dest[i] = (ushort)(src[i] + delta);
+}
+
+static void rebase_ubyte_elts( const ubyte *src,
+                               unsigned count,
+                               int delta,
+                               ushort *dest )
+{
+   unsigned i;
+
+   for (i = 0; i < count; i++) 
+      dest[i] = (ushort)(src[i] + delta);
+}
 
 
 
-static unsigned reduced_prim[PIPE_PRIM_POLYGON + 1] = {
-   PIPE_PRIM_POINTS,
-   PIPE_PRIM_LINES,
-   PIPE_PRIM_LINES,
-   PIPE_PRIM_LINES,
-   PIPE_PRIM_TRIANGLES,
-   PIPE_PRIM_TRIANGLES,
-   PIPE_PRIM_TRIANGLES,
-   PIPE_PRIM_TRIANGLES,
-   PIPE_PRIM_TRIANGLES,
-   PIPE_PRIM_TRIANGLES
-};
+static void translate_uint_elts( const unsigned *src,
+                                 unsigned count,
+                                 ushort *dest )
+{
+   unsigned i;
+
+   for (i = 0; i < count; i++) 
+      dest[i] = (ushort)(src[i]);
+}
+
+static void translate_ushort_elts( const ushort *src,
+                                   unsigned count,
+                                   ushort *dest )
+{
+   unsigned i;
+
+   for (i = 0; i < count; i++) 
+      dest[i] = (ushort)(src[i]);
+}
+
+static void translate_ubyte_elts( const ubyte *src,
+                                  unsigned count,
+                                  ushort *dest )
+{
+   unsigned i;
+
+   for (i = 0; i < count; i++) 
+      dest[i] = (ushort)(src[i]);
+}
+
+
+
+
+#if 0
+static enum pipe_format format_from_get_elt( pt_elt_func get_elt )
+{
+   switch (draw->pt.user.eltSize) {
+   case 1: return PIPE_FORMAT_R8_UNORM;
+   case 2: return PIPE_FORMAT_R16_UNORM;
+   case 4: return PIPE_FORMAT_R32_UNORM;
+   default: return PIPE_FORMAT_NONE;
+   }
+}
+#endif
+
+static void vcache_check_run( struct draw_pt_front_end *frontend, 
+                              pt_elt_func get_elt,
+                              const void *elts,
+                              unsigned draw_count )
+{
+   struct vcache_frontend *vcache = (struct vcache_frontend *)frontend; 
+   struct draw_context *draw = vcache->draw;
+   unsigned min_index = draw->pt.user.min_index;
+   unsigned max_index = draw->pt.user.max_index;
+   unsigned index_size = draw->pt.user.eltSize;
+   unsigned fetch_count = max_index + 1 - min_index;
+   const ushort *transformed_elts;
+   ushort *storage = NULL;
+
+
+   if (0) debug_printf("fetch_count %d fetch_max %d draw_count %d\n", fetch_count, 
+                       vcache->fetch_max,
+                       draw_count);
+      
+   if (max_index == 0xffffffff ||
+       fetch_count >= vcache->fetch_max ||
+       fetch_count > draw_count) {
+      if (0) debug_printf("fail\n");
+      goto fail;
+   }
+      
+   if (vcache->middle_prim != vcache->input_prim) {
+      vcache->middle_prim = vcache->input_prim;
+      vcache->middle->prepare( vcache->middle, 
+                               vcache->middle_prim, 
+                               vcache->opt, 
+                               &vcache->fetch_max );
+   }
+
+
+   if (min_index == 0 &&
+       index_size == 2) 
+   {
+      transformed_elts = (const ushort *)elts;
+   }
+   else 
+   {
+      storage = MALLOC( draw_count * sizeof(ushort) );
+      if (!storage)
+         goto fail;
+      
+      if (min_index == 0) {
+         switch(index_size) {
+         case 1:
+            translate_ubyte_elts( (const ubyte *)elts,
+                                  draw_count,
+                                  storage );
+            break;
+
+         case 2:
+            translate_ushort_elts( (const ushort *)elts,
+                                   draw_count,
+                                   storage );
+            break;
+
+         case 4:
+            translate_uint_elts( (const uint *)elts,
+                                 draw_count,
+                                 storage );
+            break;
+
+         default:
+            assert(0);
+            return;
+         }
+      }
+      else {
+         switch(index_size) {
+         case 1:
+            rebase_ubyte_elts( (const ubyte *)elts,
+                                  draw_count,
+                                  0 - (int)min_index,
+                                  storage );
+            break;
+
+         case 2:
+            rebase_ushort_elts( (const ushort *)elts,
+                                   draw_count,
+                                   0 - (int)min_index,
+                                   storage );
+            break;
+
+         case 4:
+            rebase_uint_elts( (const uint *)elts,
+                                 draw_count,
+                                 0 - (int)min_index,
+                                 storage );
+            break;
+
+         default:
+            assert(0);
+            return;
+         }
+      }
+      transformed_elts = storage;
+   }
+
+   vcache->middle->run_linear_elts( vcache->middle,
+                                    min_index, /* start */
+                                    fetch_count,
+                                    transformed_elts,
+                                    draw_count );
+
+   FREE(storage);
+   return;
+
+ fail:
+   vcache_run( frontend, get_elt, elts, draw_count );
+}
+
 
 
 
@@ -232,14 +424,20 @@ static void vcache_prepare( struct draw_pt_front_end *frontend,
    }
    else 
    {
-      vcache->base.run = vcache_run;
+      vcache->base.run = vcache_check_run;
    }
 
    vcache->input_prim = prim;
-   vcache->output_prim = reduced_prim[prim];
+   vcache->output_prim = draw_pt_reduced_prim(prim);
 
    vcache->middle = middle;
-   middle->prepare( middle, vcache->output_prim, opt );
+   vcache->opt = opt;
+
+   /* Have to run prepare here, but try and guess a good prim for
+    * doing so:
+    */
+   vcache->middle_prim = (opt & PT_PIPELINE) ? vcache->output_prim : vcache->input_prim;
+   middle->prepare( middle, vcache->middle_prim, opt, &vcache->fetch_max );
 }
 
 

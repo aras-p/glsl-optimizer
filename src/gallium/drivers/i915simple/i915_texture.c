@@ -42,12 +42,58 @@
 #include "i915_debug.h"
 #include "i915_screen.h"
 
+/*
+ * Helper function and arrays
+ */
+
+/**
+ * Initial offset for Cube map.
+ */
+static const int initial_offsets[6][2] = {
+   {0, 0},
+   {0, 2},
+   {1, 0},
+   {1, 2},
+   {1, 1},
+   {1, 3}
+};
+
+/**
+ * Step offsets for Cube map.
+ */
+static const int step_offsets[6][2] = {
+   {0, 2},
+   {0, 2},
+   {-1, 2},
+   {-1, 2},
+   {-1, 1},
+   {-1, 1}
+};
 
 static unsigned minify( unsigned d )
 {
    return MAX2(1, d>>1);
 }
 
+static unsigned
+power_of_two(unsigned x)
+{
+   unsigned value = 1;
+   while (value <= x)
+      value = value << 1;
+   return value;
+}
+
+static unsigned
+round_up(unsigned n, unsigned multiple)
+{
+   return (n + multiple - 1) & ~(multiple - 1);
+}
+
+
+/*
+ * More advanced helper funcs
+ */
 
 
 static void
@@ -86,7 +132,6 @@ i915_miptree_set_level_info(struct i915_texture *tex,
    tex->image_offset[level][0] = 0;
 }
 
-
 static void
 i915_miptree_set_image_offset(struct i915_texture *tex,
 			      unsigned level, unsigned img, unsigned x, unsigned y)
@@ -99,56 +144,50 @@ i915_miptree_set_image_offset(struct i915_texture *tex,
    tex->image_offset[level][img] = (x + y * tex->pitch);
 
    /*
-   DBG("%s level %d img %d pos %d,%d image_offset %x\n",
+   printf("%s level %d img %d pos %d,%d image_offset %x\n",
        __FUNCTION__, level, img, x, y, tex->image_offset[level][img]);
    */
 }
 
 
-/* Hack it up to use the old winsys->surface_alloc_storage()
- * method for now:
+/*
+ * Layout functions
+ */
+
+
+/**
+ * Special case to deal with display targets.
  */
 static boolean
-i915_displaytarget_layout(struct pipe_screen *screen,
-                          struct i915_texture *tex)
+i915_displaytarget_layout(struct i915_texture *tex)
 {
-   struct pipe_winsys *ws = screen->winsys;
-   struct pipe_surface surf;
-   unsigned flags = (PIPE_BUFFER_USAGE_CPU_READ |
-                     PIPE_BUFFER_USAGE_CPU_WRITE |
-                     PIPE_BUFFER_USAGE_GPU_READ |
-                     PIPE_BUFFER_USAGE_GPU_WRITE);
+   struct pipe_texture *pt = &tex->base;
 
+   if (pt->last_level > 0 || pt->cpp != 4)
+      return 0;
 
-   memset(&surf, 0, sizeof(surf));
-
-   ws->surface_alloc_storage( ws, 
-                              &surf,
-                              tex->base.width[0], 
-                              tex->base.height[0],
-                              tex->base.format,
-                              flags,
-                              tex->base.tex_usage);
-      
-   /* Now extract the goodies: 
-    */
    i915_miptree_set_level_info( tex, 0, 1, 0, 0,
                                 tex->base.width[0],
                                 tex->base.height[0],
                                 1 );
    i915_miptree_set_image_offset( tex, 0, 0, 0, 0 );
 
-   tex->buffer = surf.buffer;
-   tex->pitch = surf.pitch;
-   tex->total_height = 0;
+   if (tex->base.width[0] >= 128) {
+      tex->pitch = power_of_two(tex->base.width[0] * pt->cpp) / pt->cpp;
+      tex->total_height = round_up(tex->base.height[0], 8);
+   } else {
+      tex->pitch = round_up(tex->base.width[0], 64 / pt->cpp);
+      tex->total_height = tex->base.height[0];
+   }
 
+   /*
+   printf("%s size: %d,%d,%d offset %d,%d (0x%x)\n", __FUNCTION__,
+      tex->base.width[0], tex->base.height[0], pt->cpp,
+      tex->pitch, tex->total_height, tex->pitch * tex->total_height * 4);
+   */
 
-   return tex->buffer != NULL;
+   return 1;
 }
-
-
-
-
 
 static void
 i945_miptree_layout_2d( struct i915_texture *tex )
@@ -160,6 +199,12 @@ i945_miptree_layout_2d( struct i915_texture *tex )
    unsigned y = 0;
    unsigned width = pt->width[0];
    unsigned height = pt->height[0];
+
+#if 0 /* used for tiled display targets */
+   if (pt->last_level == 0 && pt->cpp == 4)
+      if (i915_displaytarget_layout(tex))
+	 return;
+#endif
 
    tex->pitch = pt->width[0];
 
@@ -179,7 +224,7 @@ i945_miptree_layout_2d( struct i915_texture *tex )
    /* Pitch must be a whole number of dwords, even though we
     * express it in texels.
     */
-   tex->pitch = align_int(tex->pitch * pt->cpp, 4) / pt->cpp;
+   tex->pitch = align_int(tex->pitch * pt->cpp, 64) / pt->cpp;
    tex->total_height = 0;
 
    for (level = 0; level <= pt->last_level; level++) {
@@ -212,25 +257,108 @@ i945_miptree_layout_2d( struct i915_texture *tex )
    }
 }
 
+static void
+i945_miptree_layout_cube(struct i915_texture *tex)
+{
+   struct pipe_texture *pt = &tex->base;
+   unsigned level;
 
-static const int initial_offsets[6][2] = {
-   {0, 0},
-   {0, 2},
-   {1, 0},
-   {1, 2},
-   {1, 1},
-   {1, 3}
-};
+   const unsigned dim = pt->width[0];
+   unsigned face;
+   unsigned lvlWidth = pt->width[0], lvlHeight = pt->height[0];
 
-static const int step_offsets[6][2] = {
-   {0, 2},
-   {0, 2},
-   {-1, 2},
-   {-1, 2},
-   {-1, 1},
-   {-1, 1}
-};
+   /*
+   printf("%s %i, %i\n", __FUNCTION__, pt->width[0], pt->height[0]);
+   */
 
+   assert(lvlWidth == lvlHeight); /* cubemap images are square */
+
+   /*
+    * XXX Should only be used for compressed formats. But lets
+    * keep this code active just in case.
+    *
+    * Depending on the size of the largest images, pitch can be
+    * determined either by the old-style packing of cubemap faces,
+    * or the final row of 4x4, 2x2 and 1x1 faces below this.
+    */
+   if (dim > 32)
+      tex->pitch = ((dim * pt->cpp * 2 + 3) & ~3) / pt->cpp;
+   else
+      tex->pitch = 14 * 8;
+
+   /*
+    * XXX The 4 is only needed for compressed formats. See above.
+    */
+   tex->total_height = dim * 4 + 4;
+
+   /* Set all the levels to effectively occupy the whole rectangular region.
+   */
+   for (level = 0; level <= pt->last_level; level++) {
+      i915_miptree_set_level_info(tex, level, 6, 0, 0, lvlWidth, lvlHeight, 1);
+      lvlWidth /= 2;
+      lvlHeight /= 2;
+   }
+
+   for (face = 0; face < 6; face++) {
+      unsigned x = initial_offsets[face][0] * dim;
+      unsigned y = initial_offsets[face][1] * dim;
+      unsigned d = dim;
+
+#if 0 /* Fix and enable this code for compressed formats */
+      if (dim == 4 && face >= 4) {
+         y = tex->total_height - 4;
+         x = (face - 4) * 8;
+      }
+      else if (dim < 4 && (face > 0)) {
+         y = tex->total_height - 4;
+         x = face * 8;
+      }
+#endif
+
+      for (level = 0; level <= pt->last_level; level++) {
+         i915_miptree_set_image_offset(tex, level, face, x, y);
+
+         d >>= 1;
+
+#if 0 /* Fix and enable this code for compressed formats */
+         switch (d) {
+            case 4:
+               switch (face) {
+                  case PIPE_TEX_FACE_POS_X:
+                  case PIPE_TEX_FACE_NEG_X:
+                     x += step_offsets[face][0] * d;
+                     y += step_offsets[face][1] * d;
+                     break;
+                  case PIPE_TEX_FACE_POS_Y:
+                  case PIPE_TEX_FACE_NEG_Y:
+                     y += 12;
+                     x -= 8;
+                     break;
+                  case PIPE_TEX_FACE_POS_Z:
+                  case PIPE_TEX_FACE_NEG_Z:
+                     y = tex->total_height - 4;
+                     x = (face - 4) * 8;
+                     break;
+               }
+            case 2:
+               y = tex->total_height - 4;
+               x = 16 + face * 8;
+               break;
+
+            case 1:
+               x += 48;
+               break;
+            default:
+#endif
+               x += step_offsets[face][0] * d;
+               y += step_offsets[face][1] * d;
+#if 0
+               break;
+         }
+#endif
+      }
+   }
+}
 
 static boolean
 i915_miptree_layout(struct i915_texture * tex)
@@ -363,99 +491,15 @@ i945_miptree_layout(struct i915_texture * tex)
    unsigned level;
 
    switch (pt->target) {
-   case PIPE_TEXTURE_CUBE:{
-         const unsigned dim = pt->width[0];
-         unsigned face;
-         unsigned lvlWidth = pt->width[0], lvlHeight = pt->height[0];
-
-         assert(lvlWidth == lvlHeight); /* cubemap images are square */
-
-         /* Depending on the size of the largest images, pitch can be
-          * determined either by the old-style packing of cubemap faces,
-          * or the final row of 4x4, 2x2 and 1x1 faces below this. 
-          */
-         if (dim > 32)
-            tex->pitch = ((dim * pt->cpp * 2 + 3) & ~3) / pt->cpp;
-         else
-            tex->pitch = 14 * 8;
-
-         tex->total_height = dim * 4 + 4;
-
-         /* Set all the levels to effectively occupy the whole rectangular region. 
-          */
-         for (level = 0; level <= pt->last_level; level++) {
-            i915_miptree_set_level_info(tex, level, 6,
-                                         0, 0,
-                                         lvlWidth, lvlHeight, 1);
-	    lvlWidth /= 2;
-	    lvlHeight /= 2;
-	 }
-
-
-         for (face = 0; face < 6; face++) {
-            unsigned x = initial_offsets[face][0] * dim;
-            unsigned y = initial_offsets[face][1] * dim;
-            unsigned d = dim;
-
-            if (dim == 4 && face >= 4) {
-               y = tex->total_height - 4;
-               x = (face - 4) * 8;
-            }
-            else if (dim < 4 && (face > 0)) {
-               y = tex->total_height - 4;
-               x = face * 8;
-            }
-
-            for (level = 0; level <= pt->last_level; level++) {
-               i915_miptree_set_image_offset(tex, level, face, x, y);
-
-               d >>= 1;
-
-               switch (d) {
-               case 4:
-                  switch (face) {
-                  case PIPE_TEX_FACE_POS_X:
-                  case PIPE_TEX_FACE_NEG_X:
-                     x += step_offsets[face][0] * d;
-                     y += step_offsets[face][1] * d;
-                     break;
-                  case PIPE_TEX_FACE_POS_Y:
-                  case PIPE_TEX_FACE_NEG_Y:
-                     y += 12;
-                     x -= 8;
-                     break;
-                  case PIPE_TEX_FACE_POS_Z:
-                  case PIPE_TEX_FACE_NEG_Z:
-                     y = tex->total_height - 4;
-                     x = (face - 4) * 8;
-                     break;
-                  }
-
-               case 2:
-                  y = tex->total_height - 4;
-                  x = 16 + face * 8;
-                  break;
-
-               case 1:
-                  x += 48;
-                  break;
-
-               default:
-                  x += step_offsets[face][0] * d;
-                  y += step_offsets[face][1] * d;
-                  break;
-               }
-            }
-         }
-         break;
-      }
+   case PIPE_TEXTURE_CUBE:
+      i945_miptree_layout_cube(tex);
+      break;
    case PIPE_TEXTURE_3D:{
          unsigned width = pt->width[0];
          unsigned height = pt->height[0];
          unsigned depth = pt->depth[0];
          unsigned pack_x_pitch, pack_x_nr;
          unsigned pack_y_pitch;
-         unsigned level;
 
          tex->pitch = ((pt->width[0] * pt->cpp + 3) & ~3) / pt->cpp;
          tex->total_height = 0;
@@ -532,39 +576,32 @@ i915_texture_create(struct pipe_screen *screen,
    struct pipe_winsys *ws = screen->winsys;
    struct i915_texture *tex = CALLOC_STRUCT(i915_texture);
 
-   if (!tex) 
+   if (!tex)
       return NULL;
 
    tex->base = *templat;
    tex->base.refcount = 1;
    tex->base.screen = screen;
 
-   if (tex->base.tex_usage & PIPE_TEXTURE_USAGE_DISPLAY_TARGET) {
-      if (!i915_displaytarget_layout(screen, tex))
-         goto fail;
+   if (i915screen->is_i945) {
+      if (!i945_miptree_layout(tex))
+	 goto fail;
+   } else {
+      if (!i915_miptree_layout(tex))
+	 goto fail;
    }
-   else {
-      if (i915screen->is_i945) {
-         if (!i945_miptree_layout(tex))
-            goto fail;
-      }
-      else {
-         if (!i915_miptree_layout(tex))
-            goto fail;
-      }
-      
-      tex->buffer = ws->buffer_create(ws, 64,
-                                      PIPE_BUFFER_USAGE_PIXEL,
-                                      tex->pitch * tex->base.cpp *
-                                      tex->total_height);
 
-      if (!tex->buffer) 
-         goto fail;
-   }
+   tex->buffer = ws->buffer_create(ws, 64,
+				   PIPE_BUFFER_USAGE_PIXEL,
+				   tex->pitch * tex->base.cpp *
+				   tex->total_height);
+
+   if (!tex->buffer)
+      goto fail;
 
    return &tex->base;
 
- fail:
+fail:
    FREE(tex);
    return NULL;
 }
@@ -600,11 +637,6 @@ i915_texture_release(struct pipe_screen *screen,
    *pt = NULL;
 }
 
-
-
-/*
- * XXX note: same as code in sp_surface.c
- */
 static struct pipe_surface *
 i915_get_tex_surface(struct pipe_screen *screen,
                      struct pipe_texture *pt,
@@ -629,10 +661,10 @@ i915_get_tex_surface(struct pipe_screen *screen,
       assert(zslice == 0);
    }
 
-   ps = ws->surface_alloc(ws);
+   ps = CALLOC_STRUCT(pipe_surface);
    if (ps) {
-      assert(ps->refcount);
-      assert(ps->winsys);
+      ps->refcount = 1;
+      ps->winsys = ws;
       pipe_texture_reference(&ps->texture, pt);
       pipe_buffer_reference(ws, &ps->buffer, tex->buffer);
       ps->format = pt->format;
@@ -642,10 +674,10 @@ i915_get_tex_surface(struct pipe_screen *screen,
       ps->pitch = tex->pitch;
       ps->offset = offset;
       ps->usage = flags;
+      ps->status = PIPE_SURFACE_STATUS_DEFINED;
    }
    return ps;
 }
-
 
 void
 i915_init_texture_functions(struct i915_context *i915)

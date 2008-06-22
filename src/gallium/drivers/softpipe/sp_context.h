@@ -69,7 +69,7 @@ struct softpipe_context {
 
    struct pipe_blend_color blend_color;
    struct pipe_clip_state clip;
-   struct pipe_constant_buffer constants[2];
+   struct pipe_constant_buffer constants[PIPE_SHADER_TYPES];
    struct pipe_framebuffer_state framebuffer;
    struct pipe_poly_stipple poly_stipple;
    struct pipe_scissor_state scissor;

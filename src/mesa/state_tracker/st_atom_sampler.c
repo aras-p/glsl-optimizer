@@ -153,6 +153,15 @@ update_samplers(struct st_context *st)
          sampler->min_lod = MAX2(0.0f, texobj->MinLod);
          sampler->max_lod = MIN2(texobj->MaxLevel - texobj->BaseLevel,
                                  texobj->MaxLod);
+         if (sampler->max_lod < sampler->min_lod) {
+            /* The GL spec doesn't seem to specify what to do in this case.
+             * Swap the values.
+             */
+            float tmp = sampler->max_lod;
+            sampler->max_lod = sampler->min_lod;
+            sampler->min_lod = tmp;
+            assert(sampler->min_lod <= sampler->max_lod);
+         }
 
          sampler->border_color[0] = texobj->BorderColor[RCOMP];
          sampler->border_color[1] = texobj->BorderColor[GCOMP];

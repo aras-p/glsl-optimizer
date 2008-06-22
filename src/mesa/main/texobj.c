@@ -29,7 +29,9 @@
 
 
 #include "glheader.h"
+#if FEATURE_colortable
 #include "colortab.h"
+#endif
 #include "context.h"
 #include "enums.h"
 #include "fbobject.h"
@@ -153,7 +155,9 @@ _mesa_delete_texture_object( GLcontext *ctx, struct gl_texture_object *texObj )
 
    (void) ctx;
 
+#if FEATURE_colortable
    _mesa_free_colortable_data(&texObj->Palette);
+#endif
 
    /* free the texture images */
    for (face = 0; face < 6; face++) {

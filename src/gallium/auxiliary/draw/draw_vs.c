@@ -36,6 +36,38 @@
 #include "draw_private.h"
 #include "draw_context.h"
 #include "draw_vs.h"
+#include "translate/translate.h"
+#include "translate/translate_cache.h"
+
+
+
+
+void draw_vs_set_constants( struct draw_context *draw,
+                            const float (*constants)[4],
+                            unsigned size )
+{
+   if (((unsigned)constants) & 0xf) {
+      if (size > draw->vs.const_storage_size) {
+         if (draw->vs.aligned_constant_storage)
+            align_free((void *)draw->vs.aligned_constant_storage);
+         draw->vs.aligned_constant_storage = align_malloc( size, 16 );
+      }
+      memcpy( (void*)draw->vs.aligned_constant_storage,
+              constants, 
+              size );
+      constants = draw->vs.aligned_constant_storage;
+   }
+      
+   draw->vs.aligned_constants = constants;
+   draw_vs_aos_machine_constants( draw->vs.aos_machine, constants );
+}
+
+
+void draw_vs_set_viewport( struct draw_context *draw,
+                           const struct pipe_viewport_state *viewport )
+{
+   draw_vs_aos_machine_viewport( draw->vs.aos_machine, viewport );
+}
 
 
 
@@ -53,6 +85,16 @@ draw_create_vertex_shader(struct draw_context *draw,
       }
    }
 
+   if (vs)
+   {
+      uint i;
+      for (i = 0; i < vs->info.num_outputs; i++) {
+         if (vs->info.output_semantic_name[i] == TGSI_SEMANTIC_POSITION &&
+             vs->info.output_semantic_index[i] == 0)
+            vs->position_output = i;
+      }
+   }
+
    assert(vs);
    return vs;
 }
@@ -66,13 +108,14 @@ draw_bind_vertex_shader(struct draw_context *draw,
    
    if (dvs) 
    {
-      draw->vertex_shader = dvs;
-      draw->num_vs_outputs = dvs->info.num_outputs;
+      draw->vs.vertex_shader = dvs;
+      draw->vs.num_vs_outputs = dvs->info.num_outputs;
+      draw->vs.position_output = dvs->position_output;
       dvs->prepare( dvs, draw );
    }
    else {
-      draw->vertex_shader = NULL;
-      draw->num_vs_outputs = 0;
+      draw->vs.vertex_shader = NULL;
+      draw->vs.num_vs_outputs = 0;
    }
 }
 
@@ -81,5 +124,135 @@ void
 draw_delete_vertex_shader(struct draw_context *draw,
                           struct draw_vertex_shader *dvs)
 {
+   unsigned i;
+
+   for (i = 0; i < dvs->nr_varients; i++) 
+      dvs->varient[i]->destroy( dvs->varient[i] );
+
+   dvs->nr_varients = 0;
+
    dvs->delete( dvs );
+}
+
+
+
+boolean 
+draw_vs_init( struct draw_context *draw )
+{
+   tgsi_exec_machine_init(&draw->vs.machine);
+
+   /* FIXME: give this machine thing a proper constructor:
+    */
+   draw->vs.machine.Inputs = align_malloc(PIPE_MAX_ATTRIBS * sizeof(struct tgsi_exec_vector), 16);
+   if (!draw->vs.machine.Inputs)
+      return FALSE;
+
+   draw->vs.machine.Outputs = align_malloc(PIPE_MAX_ATTRIBS * sizeof(struct tgsi_exec_vector), 16);
+   if (!draw->vs.machine.Outputs)
+      return FALSE;
+
+   draw->vs.emit_cache = translate_cache_create();
+   if (!draw->vs.emit_cache) 
+      return FALSE;
+      
+   draw->vs.fetch_cache = translate_cache_create();
+   if (!draw->vs.fetch_cache) 
+      return FALSE;
+
+   draw->vs.aos_machine = draw_vs_aos_machine();
+   if (!draw->vs.aos_machine)
+      return FALSE;
+      
+   return TRUE;
+}
+
+void
+draw_vs_destroy( struct draw_context *draw )
+{
+   if (draw->vs.machine.Inputs)
+      align_free(draw->vs.machine.Inputs);
+
+   if (draw->vs.machine.Outputs)
+      align_free(draw->vs.machine.Outputs);
+
+   if (draw->vs.fetch_cache)
+      translate_cache_destroy(draw->vs.fetch_cache);
+
+   if (draw->vs.emit_cache)
+      translate_cache_destroy(draw->vs.emit_cache);
+
+   if (draw->vs.aos_machine)
+      draw_vs_aos_machine_destroy(draw->vs.aos_machine);
+
+   if (draw->vs.aligned_constant_storage)
+      align_free((void*)draw->vs.aligned_constant_storage);
+
+   tgsi_exec_machine_free_data(&draw->vs.machine);
+
+}
+
+
+struct draw_vs_varient *
+draw_vs_lookup_varient( struct draw_vertex_shader *vs,
+                        const struct draw_vs_varient_key *key )
+{
+   struct draw_vs_varient *varient;
+   unsigned i;
+
+   /* Lookup existing varient: 
+    */
+   for (i = 0; i < vs->nr_varients; i++)
+      if (draw_vs_varient_key_compare(key, &vs->varient[i]->key) == 0)
+         return vs->varient[i];
+   
+   /* Else have to create a new one: 
+    */
+   varient = vs->create_varient( vs, key );
+   if (varient == NULL)
+      return NULL;
+
+   /* Add it to our list, could be smarter: 
+    */
+   if (vs->nr_varients < Elements(vs->varient)) {
+      vs->varient[vs->nr_varients++] = varient;
+   }
+   else {
+      vs->last_varient++;
+      vs->last_varient %= Elements(vs->varient);
+      vs->varient[vs->last_varient]->destroy(vs->varient[vs->last_varient]);
+      vs->varient[vs->last_varient] = varient;
+   }
+
+   /* Done 
+    */
+   return varient;
+}
+
+
+struct translate *
+draw_vs_get_fetch( struct draw_context *draw,
+                   struct translate_key *key )
+{
+   if (!draw->vs.fetch ||
+       translate_key_compare(&draw->vs.fetch->key, key) != 0) 
+   {
+      translate_key_sanitize(key);
+      draw->vs.fetch = translate_cache_find(draw->vs.fetch_cache, key);
+   }
+   
+   return draw->vs.fetch;
+}
+
+struct translate *
+draw_vs_get_emit( struct draw_context *draw,
+                  struct translate_key *key )
+{
+   if (!draw->vs.emit ||
+       translate_key_compare(&draw->vs.emit->key, key) != 0) 
+   {
+      translate_key_sanitize(key);
+      draw->vs.emit = translate_cache_find(draw->vs.emit_cache, key);
+   }
+   
+   return draw->vs.emit;
 }

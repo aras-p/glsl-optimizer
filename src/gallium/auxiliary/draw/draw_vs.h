@@ -38,16 +38,88 @@
 struct draw_context;
 struct pipe_shader_state;
 
+struct draw_varient_input 
+{
+   enum pipe_format format;
+   unsigned buffer;
+   unsigned offset; 
+};
+
+struct draw_varient_output
+{
+   enum pipe_format format;     /* output format */
+   unsigned vs_output:8;        /* which vertex shader output is this? */
+   unsigned offset:24;          /* offset into output vertex */
+};
+
+struct draw_varient_element {
+   struct draw_varient_input in;
+   struct draw_varient_output out;
+};
+
+struct draw_vs_varient_key {
+   unsigned output_stride;
+   unsigned nr_elements:8;      /* max2(nr_inputs, nr_outputs) */
+   unsigned nr_inputs:8;
+   unsigned nr_outputs:8;
+   unsigned viewport:1;
+   unsigned clip:1;
+   unsigned pad:5;
+   struct draw_varient_element element[PIPE_MAX_ATTRIBS];
+};
+
+struct draw_vs_varient;
+
+
+struct draw_vs_varient {
+   struct draw_vs_varient_key key;
+
+   struct draw_vertex_shader *vs;
+
+   void (*set_input)( struct draw_vs_varient *,
+                      unsigned i,
+                      const void *ptr,
+                      unsigned stride );
+
+   void (PIPE_CDECL *run_linear)( struct draw_vs_varient *shader,
+                                  unsigned start,
+                                  unsigned count,
+                                  void *output_buffer );
+
+   void (PIPE_CDECL *run_elts)( struct draw_vs_varient *shader,
+                                const unsigned *elts,
+                                unsigned count,
+                                void *output_buffer );
+
+   void (*destroy)( struct draw_vs_varient * );
+};
+
+
 /**
  * Private version of the compiled vertex_shader
  */
 struct draw_vertex_shader {
+   struct draw_context *draw;
 
    /* This member will disappear shortly:
     */
    struct pipe_shader_state   state;
 
    struct tgsi_shader_info info;
+   unsigned position_output;
+
+   /* Extracted from shader:
+    */
+   const float (*immediates)[4];
+
+   /* 
+    */
+   struct draw_vs_varient *varient[16];
+   unsigned nr_varients;
+   unsigned last_varient;
+   struct draw_vs_varient *(*create_varient)( struct draw_vertex_shader *shader,
+                                              const struct draw_vs_varient_key *key );
+
 
    void (*prepare)( struct draw_vertex_shader *shader,
 		    struct draw_context *draw );
@@ -68,6 +140,15 @@ struct draw_vertex_shader {
 };
 
 
+struct draw_vs_varient *
+draw_vs_lookup_varient( struct draw_vertex_shader *base,
+                        const struct draw_vs_varient_key *key );
+
+
+/********************************************************************************
+ * Internal functions:
+ */
+
 struct draw_vertex_shader *
 draw_create_vs_exec(struct draw_context *draw,
 		    const struct pipe_shader_state *templ);
@@ -81,7 +162,59 @@ draw_create_vs_llvm(struct draw_context *draw,
 		    const struct pipe_shader_state *templ);
 
 
+
+struct draw_vs_varient_key;
+struct draw_vertex_shader;
+
+struct draw_vs_varient *draw_vs_varient_aos_sse( struct draw_vertex_shader *vs,
+                                                 const struct draw_vs_varient_key *key );
+
+
+
+/********************************************************************************
+ * Helpers for vs implementations that don't do their own fetch/emit varients.
+ * Means these can be shared between shaders.
+ */
+struct translate;
+struct translate_key;
+
+struct translate *draw_vs_get_fetch( struct draw_context *draw,
+                                     struct translate_key *key );
+
+
+struct translate *draw_vs_get_emit( struct draw_context *draw,
+                                    struct translate_key *key );
+
+struct draw_vs_varient *draw_vs_varient_generic( struct draw_vertex_shader *vs,
+                                                 const struct draw_vs_varient_key *key );
+
+
+
+static INLINE int draw_vs_varient_keysize( const struct draw_vs_varient_key *key )
+{
+   return 2 * sizeof(int) + key->nr_elements * sizeof(struct draw_varient_element);
+}
+
+static INLINE int draw_vs_varient_key_compare( const struct draw_vs_varient_key *a,
+                                         const struct draw_vs_varient_key *b )
+{
+   int keysize = draw_vs_varient_keysize(a);
+   return memcmp(a, b, keysize);
+}
+
+
+struct aos_machine *draw_vs_aos_machine( void );
+void draw_vs_aos_machine_destroy( struct aos_machine *machine );
+
+void draw_vs_aos_machine_constants( struct aos_machine *machine,
+                                    const float (*constants)[4] );
+
+void draw_vs_aos_machine_viewport( struct aos_machine *machine,
+                                   const struct pipe_viewport_state *viewport );
+
+
 #define MAX_TGSI_VERTICES 4
    
+
 
 #endif

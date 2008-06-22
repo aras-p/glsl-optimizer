@@ -21,7 +21,7 @@
 typedef struct demo_driver
 {
    _EGLDriver Base;  /* base class/object */
-   GLuint DemoStuff;
+   unsigned DemoStuff;
 } DemoDriver;
 
 #define DEMO_DRIVER(D) ((DemoDriver *) (D))
@@ -33,7 +33,7 @@ typedef struct demo_driver
 typedef struct demo_surface
 {
    _EGLSurface Base;  /* base class/object */
-   GLuint DemoStuff;
+   unsigned DemoStuff;
 } DemoSurface;
 
 
@@ -43,7 +43,7 @@ typedef struct demo_surface
 typedef struct demo_context
 {
    _EGLContext Base;  /* base class/object */
-   GLuint DemoStuff;
+   unsigned DemoStuff;
 } DemoContext;
 
 
@@ -152,9 +152,9 @@ demoCreateContext(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config, EGLContext 
 
    /* generate handle and insert into hash table */
    _eglSaveContext(&c->Base);
-   assert(c->Base.Handle);
+   assert(_eglGetContextHandle(&c->Base));
 
-   return c->Base.Handle;
+   return _eglGetContextHandle(&c->Base);
 }
 
 
@@ -286,7 +286,7 @@ demoMakeCurrent(_EGLDriver *drv, EGLDisplay dpy, EGLSurface draw, EGLSurface rea
  * plug in API functions.
  */
 _EGLDriver *
-_eglMain(_EGLDisplay *dpy)
+_eglMain(_EGLDisplay *dpy, const char *args)
 {
    DemoDriver *demo;
 
