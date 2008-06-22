@@ -28,7 +28,6 @@
 
 #include "pipe/p_config.h"
 
-#ifdef PIPE_ARCH_X86
 
 #include "pipe/p_util.h"
 #include "pipe/p_shader_tokens.h"
@@ -38,6 +37,8 @@
 #include "draw_vs.h"
 #include "draw_vs_aos.h"
 #include "draw_vertex.h"
+
+#ifdef PIPE_ARCH_X86
 
 #include "rtasm/rtasm_x86sse.h"
 
@@ -298,6 +299,25 @@ struct aos_machine *draw_vs_aos_machine( void )
    return machine;
 }
 
+#else
 
+void draw_vs_aos_machine_viewport( struct aos_machine *machine,
+                                   const struct pipe_viewport_state *viewport )
+{
+}
+
+void draw_vs_aos_machine_constants( struct aos_machine *machine,
+                                    const float (*constants)[4] )
+{
+}
+
+void draw_vs_aos_machine_destroy( struct aos_machine *machine )
+{
+}
+
+struct aos_machine *draw_vs_aos_machine( void )
+{
+   return NULL;
+}
 #endif
 
