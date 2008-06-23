@@ -82,6 +82,11 @@ struct nv30_rasterizer_state_new {
 	struct nouveau_stateobj *so;
 };
 
+struct nv30_zsa_state {
+	struct pipe_depth_stencil_alpha_state pipe;
+	struct nouveau_stateobj *so;
+};
+
 /* TODO: rename when removing the old state emitter */
 struct nv30_blend_state_new {
 	struct pipe_blend_state pipe;
@@ -124,6 +129,7 @@ struct nv30_context {
 	struct pipe_viewport_state viewport;
 	struct pipe_framebuffer_state framebuffer;
 	struct nv30_rasterizer_state_new *rasterizer;
+	struct nv30_zsa_state *zsa;
 	unsigned stipple[32];
 
 	uint32_t rt_enable;
