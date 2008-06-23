@@ -76,7 +76,7 @@ cell_surface_copy(struct pipe_context *pipe,
                   width, height,
                   pipe_surface_map(src),
                   do_flip ? -src->pitch : src->pitch,
-                  srcx, do_flip ? 1 - srcy - height : srcy);
+                  srcx, do_flip ? height - 1 - srcy : srcy);
 
    pipe_surface_unmap(src);
    pipe_surface_unmap(dst);

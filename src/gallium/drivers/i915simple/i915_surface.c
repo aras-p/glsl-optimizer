@@ -66,7 +66,7 @@ i915_surface_copy(struct pipe_context *pipe,
                      width, height, 
                      src_map, 
                      do_flip ? -(int) src->pitch : src->pitch, 
-                     srcx, do_flip ? 1 - srcy - height : srcy);
+                     srcx, do_flip ? height - 1 - srcy : srcy);
 
       pipe->screen->surface_unmap(pipe->screen, src);
       pipe->screen->surface_unmap(pipe->screen, dst);
