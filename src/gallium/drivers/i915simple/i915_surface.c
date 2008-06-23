@@ -41,7 +41,7 @@
  */
 static void
 i915_surface_copy(struct pipe_context *pipe,
-                  unsigned do_flip,
+                  boolean do_flip,
 		  struct pipe_surface *dst,
 		  unsigned dstx, unsigned dsty,
 		  struct pipe_surface *src,

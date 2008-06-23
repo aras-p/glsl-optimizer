@@ -192,7 +192,7 @@ struct pipe_context {
     */
    /*@{*/
    void (*surface_copy)(struct pipe_context *pipe,
-                        unsigned do_flip,	/*<< flip surface contents vertically */
+                        boolean do_flip,/**< flip surface contents vertically */
 			struct pipe_surface *dest,
 			unsigned destx, unsigned desty,
 			struct pipe_surface *src, /* don't make this const - 
