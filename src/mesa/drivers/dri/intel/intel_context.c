@@ -727,6 +727,7 @@ intelDestroyContext(__DRIcontextPrivate * driContextPriv)
       intel->Fallback = 0;      /* don't call _swrast_Flush later */
 
       intel_batchbuffer_free(intel->batch);
+      free(intel->prim.vb);
 
       if (release_texture_heaps) {
          /* This share group is about to go away, free our private

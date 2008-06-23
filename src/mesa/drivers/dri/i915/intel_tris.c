@@ -77,31 +77,28 @@ uint32_t *intel_get_prim_space(struct intel_context *intel, unsigned int count)
 
    /* Check for space in the existing VB */
    if (intel->prim.vb_bo == NULL ||
-       intel->prim.needs_new_vb ||
        (intel->prim.current_offset +
 	count * intel->vertex_size * 4) > INTEL_VB_SIZE ||
        (intel->prim.count + count) >= (1 << 16)) {
       /* Flush existing prim if any */
       INTEL_FIREVERTICES(intel);
 
+      intel_finish_vb(intel);
+
       /* Start a new VB */
-      dri_bo_unreference(intel->prim.vb_bo);
+      if (intel->prim.vb == NULL)
+	 intel->prim.vb = malloc(INTEL_VB_SIZE);
       intel->prim.vb_bo = dri_bo_alloc(intel->bufmgr, "vb",
 				       INTEL_VB_SIZE, 4);
       intel->prim.start_offset = 0;
       intel->prim.current_offset = 0;
 
       dri_bufmgr_check_aperture_space(intel->prim.vb_bo);
-
-      intel->prim.needs_new_vb = GL_FALSE;
-
-      dri_bo_map(intel->prim.vb_bo, GL_TRUE);
    }
 
    intel->prim.flush = intel_flush_prim;
 
-   addr = (uint32_t *)((char *)intel->prim.vb_bo->virtual +
-		       intel->prim.current_offset);
+   addr = (uint32_t *)(intel->prim.vb + intel->prim.current_offset);
    intel->prim.current_offset += intel->vertex_size * 4 * count;
    intel->prim.count += count;
 
@@ -112,6 +109,7 @@ uint32_t *intel_get_prim_space(struct intel_context *intel, unsigned int count)
 void intel_flush_prim(struct intel_context *intel)
 {
    BATCH_LOCALS;
+   dri_bo *vb_bo;
 
    /* Must be called after an intel_start_prim. */
    assert(intel->prim.primitive != ~0);
@@ -119,9 +117,13 @@ void intel_flush_prim(struct intel_context *intel)
    if (intel->prim.count == 0)
       return;
 
-   intel_wait_flips(intel);
+   /* Keep a reference on the BO as it may get finished as we start the
+    * batch emit.
+    */
+   vb_bo = intel->prim.vb_bo;
+   dri_bo_reference(vb_bo);
 
-   dri_bo_unmap(intel->prim.vb_bo);
+   intel_wait_flips(intel);
 
    intel->vtbl.emit_state(intel);
 
@@ -147,7 +149,7 @@ void intel_flush_prim(struct intel_context *intel)
       OUT_BATCH(_3DSTATE_LOAD_STATE_IMMEDIATE_1 |
 		I1_LOAD_S(0) | I1_LOAD_S(1) | 1);
       assert((intel->prim.start_offset & !S0_VB_OFFSET_MASK) == 0);
-      OUT_RELOC(intel->prim.vb_bo, I915_GEM_DOMAIN_VERTEX, 0,
+      OUT_RELOC(vb_bo, I915_GEM_DOMAIN_VERTEX, 0,
 		intel->prim.start_offset);
       OUT_BATCH((intel->vertex_size << S1_VERTEX_WIDTH_SHIFT) |
 		(intel->vertex_size << S1_VERTEX_PITCH_SHIFT));
@@ -167,7 +169,7 @@ void intel_flush_prim(struct intel_context *intel)
 		I1_LOAD_S(0) | I1_LOAD_S(2) | 1);
       /* S0 */
       assert((intel->prim.start_offset & !S0_VB_OFFSET_MASK_830) == 0);
-      OUT_RELOC(intel->prim.vb_bo, I915_GEM_DOMAIN_VERTEX, 0,
+      OUT_RELOC(vb_bo, I915_GEM_DOMAIN_VERTEX, 0,
 		intel->prim.start_offset |
 		(intel->vertex_size << S0_VB_PITCH_SHIFT_830) |
 		S0_VB_ENABLE_830);
@@ -193,17 +195,35 @@ void intel_flush_prim(struct intel_context *intel)
 
    intel->no_batch_wrap = GL_FALSE;
 
-   /* If we're going to keep using this VB for more primitives, map it
-    * again.
-    */
-   if (!intel->prim.needs_new_vb)
-      dri_bo_map(intel->prim.vb_bo, GL_TRUE);
-
    intel->prim.flush = NULL;
    intel->prim.start_offset = intel->prim.current_offset;
    if (!IS_9XX(intel->intelScreen->deviceID))
       intel->prim.start_offset = ALIGN(intel->prim.start_offset, 128);
    intel->prim.count = 0;
+
+   dri_bo_unreference(vb_bo);
+}
+
+/**
+ * Uploads the locally-accumulated VB into the buffer object.
+ *
+ * This avoids us thrashing the cachelines in and out as the buffer gets
+ * filled, dispatched, then reused as the hardware completes rendering from it,
+ * and also lets us clflush less if we dispatch with a partially-filled VB.
+ *
+ * This is called normally from get_space when we're finishing a BO, but also
+ * at batch flush time so that we don't try accessing the contents of a
+ * just-dispatched buffer.
+ */
+void intel_finish_vb(struct intel_context *intel)
+{
+   if (intel->prim.vb_bo == NULL)
+      return;
+
+   dri_bo_subdata(intel->prim.vb_bo, 0, intel->prim.start_offset,
+		  intel->prim.vb);
+   dri_bo_unreference(intel->prim.vb_bo);
+   intel->prim.vb_bo = NULL;
 }
 
 /***********************************************************************

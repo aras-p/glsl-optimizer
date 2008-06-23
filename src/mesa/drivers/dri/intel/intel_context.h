@@ -86,6 +86,7 @@ struct intel_context
    {
       void (*destroy) (struct intel_context * intel);
       void (*emit_state) (struct intel_context * intel);
+      void (*finish_batch) (struct intel_context * intel);
       void (*new_batch) (struct intel_context * intel);
       void (*emit_invarient_state) (struct intel_context * intel);
       void (*note_fence) (struct intel_context *intel, GLuint fence);
@@ -185,16 +186,10 @@ struct intel_context
       uint32_t primitive;	/**< Current hardware primitive type */
       void (*flush) (struct intel_context *);
       dri_bo *vb_bo;
+      uint8_t *vb;
       unsigned int start_offset; /**< Byte offset of primitive sequence */
       unsigned int current_offset; /**< Byte offset of next vertex */
       unsigned int count;	/**< Number of vertices in current primitive */
-      /**
-       * Signals when a new VB should be started, regardless of remaining
-       * space.
-       *
-       * Used to avoid rewriting a VB that's being rendered from.
-       */
-      GLboolean needs_new_vb;
    } prim;
 
    GLuint stats_wm;

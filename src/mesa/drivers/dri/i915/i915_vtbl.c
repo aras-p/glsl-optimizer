@@ -589,8 +589,6 @@ i915_new_batch(struct intel_context *intel)
     * difficulties associated with them (physical address requirements).
     */
    i915->state.emitted = 0;
-   /* Signal that we should put new vertices into a new vertex buffer. */
-   intel->prim.needs_new_vb = GL_TRUE;
 
    /* Check that we didn't just wrap our batchbuffer at a bad time. */
    assert(!intel->no_batch_wrap);
@@ -633,4 +631,5 @@ i915InitVtbl(struct i915_context *i915)
    i915->intel.vtbl.flush_cmd = i915_flush_cmd;
    i915->intel.vtbl.assert_not_dirty = i915_assert_not_dirty;
    i915->intel.vtbl.note_unlock = i915_note_unlock; 
+   i915->intel.vtbl.finish_batch = intel_finish_vb;
 }

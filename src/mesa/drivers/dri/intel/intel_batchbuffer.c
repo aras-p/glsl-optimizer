@@ -250,6 +250,9 @@ _intel_batchbuffer_flush(struct intel_batchbuffer *batch, const char *file,
     * avoid that in the first place. */
    batch->ptr = batch->map;
 
+   if (intel->vtbl.finish_batch)
+      intel->vtbl.finish_batch(intel);
+
    /* TODO: Just pass the relocation list and dma buffer up to the
     * kernel.
     */
