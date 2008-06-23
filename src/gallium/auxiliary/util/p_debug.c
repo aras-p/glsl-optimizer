@@ -30,13 +30,27 @@
 
 #include <stdarg.h>
 
+
 #ifdef PIPE_SUBSYSTEM_WINDOWS_DISPLAY
+
 #include <windows.h>
 #include <winddi.h>
+
+#elif defined(PIPE_SUBSYSTEM_WINDOWS_USER)
+
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN      // Exclude rarely-used stuff from Windows headers
+#endif
+#include <windows.h>
+
 #else
+
 #include <stdio.h>
 #include <stdlib.h>
+
 #endif
+
+
 
 #include "pipe/p_compiler.h" 
 #include "pipe/p_util.h" 
@@ -74,6 +88,17 @@ void _debug_vprintf(const char *format, va_list ap)
 #else
    /* TODO: Implement debug print for WINCE */
 #endif
+#elif defined(PIPE_SUBSYSTEM_WINDOWS_USER)
+   /* EngDebugPrint does not handle float point arguments, so we need to use
+    * our own vsnprintf implementation. It is also very slow, so buffer until
+    * we find a newline. */
+   static char buf[512 + 1] = {'\0'};
+   size_t len = strlen(buf);
+   int ret = util_vsnprintf(buf + len, sizeof(buf) - len, format, ap);
+   if(ret > (int)(sizeof(buf) - len - 1) || util_strchr(buf + len, '\n')) {
+      OutputDebugStringA(buf);
+      buf[0] = '\0';
+   }
 #else
    vfprintf(stderr, format, ap);
 #endif
