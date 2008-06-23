@@ -33,6 +33,7 @@
 extern "C" {
 #endif
 
+struct pipe_buffer;
 
 extern void 
 util_draw_vertex_buffer(struct pipe_context *pipe,
