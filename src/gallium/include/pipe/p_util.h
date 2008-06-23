@@ -409,7 +409,7 @@ extern void pipe_copy_rect(ubyte * dst, unsigned cpp, unsigned dst_pitch,
 
 
 #if defined(_MSC_VER) 
-#if _MSC_VER < 1400 && !defined(__cplusplus)
+#if _MSC_VER < 1400 && !defined(__cplusplus) || defined(PIPE_SUBSYSTEM_WINDOWS_CE)
  
 static INLINE float cosf( float f ) 
 {
