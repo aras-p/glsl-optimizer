@@ -1,6 +1,6 @@
-"""evc
+"""wcesdk
 
-Tool-specific initialization for Microsoft eMbedded Visual C++.
+Tool-specific initialization for Microsoft Window CE SDKs.
 
 """
 
@@ -44,7 +44,7 @@ import msvc_sa
 import mslib_sa
 import mslink_sa
 
-def get_evc_paths(env, version=None):
+def get_wce500_paths(env):
     """Return a 3-tuple of (INCLUDE, LIB, PATH) as the values
     of those three environment variables that should be set
     in order to execute the MSVC tools properly."""
@@ -76,6 +76,58 @@ def get_evc_paths(env, version=None):
     exe_path = string.join(exe_paths, os.pathsep )
     return (include_path, lib_path, exe_path)
 
+def get_wce600_paths(env):
+    """Return a 3-tuple of (INCLUDE, LIB, PATH) as the values
+    of those three environment variables that should be set
+    in order to execute the MSVC tools properly."""
+    
+    exe_paths = []
+    lib_paths = []
+    include_paths = []
+
+    # See also C:\WINCE600\public\common\oak\misc\wince.bat
+
+    os_version = os.environ.get('_winceosver', '600')
+    wince_root = os.environ.get('_winceroot', r'C:\WINCE600')
+    platform_root = os.environ.get('_platformroot', os.path.join(wince_root, 'platform'))
+    sdk_root = os.environ.get('_sdkroot' ,os.path.join(wince_root, 'sdk'))
+
+    platform_root = os.environ.get('_platformroot', os.path.join(wince_root, 'platform'))
+    sdk_root = os.environ.get('_sdkroot' ,os.path.join(wince_root, 'sdk'))
+
+    host_cpu = os.environ.get('_hostcputype', 'i386')
+    target_cpu = os.environ.get('_tgtcpu', 'x86')
+
+    if env['debug']:
+        build = 'debug'
+    else:
+        build = 'retail'
+
+    try:
+        project_root = os.environ['_projectroot']
+    except KeyError:
+        # No project root defined -- use the common stuff instead
+        project_root = os.path.join(wince_root, 'public', 'common')
+
+    exe_paths.append( os.path.join(sdk_root, 'bin', host_cpu) )
+    exe_paths.append( os.path.join(sdk_root, 'bin', host_cpu, target_cpu) )
+    exe_paths.append( os.path.join(wince_root, 'common', 'oak', 'bin', host_cpu) )
+    exe_paths.append( os.path.join(wince_root, 'common', 'oak', 'misc') )
+
+    include_paths.append( os.path.join(project_root, 'sdk', 'inc') )
+    include_paths.append( os.path.join(project_root, 'oak', 'inc') )
+    include_paths.append( os.path.join(project_root, 'ddk', 'inc') )
+    include_paths.append( os.path.join(sdk_root, 'CE', 'inc') )
+    
+    lib_paths.append( os.path.join(project_root, 'sdk', 'lib', target_cpu, build) )
+    lib_paths.append( os.path.join(project_root, 'oak', 'lib', target_cpu, build) )
+    lib_paths.append( os.path.join(project_root, 'ddk', 'lib', target_cpu, build) )
+
+    include_path = string.join( include_paths, os.pathsep )
+    lib_path = string.join(lib_paths, os.pathsep )
+    exe_path = string.join(exe_paths, os.pathsep )
+    return (include_path, lib_path, exe_path)
+
 def generate(env):
 
     msvc_sa.generate(env)
@@ -86,10 +138,8 @@ def generate(env):
         env['ENV'] = {}
     
     try:
-        include_path, lib_path, exe_path = get_evc_paths(env)
+        include_path, lib_path, exe_path = get_wce600_paths(env)
 
-        # since other tools can set these, we just make sure that the
-        # relevant stuff from WINDDK is in there somewhere.
         env.PrependENVPath('INCLUDE', include_path)
         env.PrependENVPath('LIB', lib_path)
         env.PrependENVPath('PATH', exe_path)
