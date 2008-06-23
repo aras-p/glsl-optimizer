@@ -233,12 +233,14 @@
 #endif
 
 
+#if !defined(_WIN32_WCE)
 #if defined(BUILD_FOR_SNAP) && defined(CHECKED)
 #  define ASSERT(X)   _CHECK(X) 
 #elif defined(DEBUG)
 #  define ASSERT(X)   assert(X)
 #else
 #  define ASSERT(X)
+#endif
 #endif
 
 
