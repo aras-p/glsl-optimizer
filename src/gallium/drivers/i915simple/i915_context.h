@@ -192,6 +192,8 @@ struct i915_texture {
    unsigned depth_pitch;          /* per-image on i945? */
    unsigned total_height;
 
+   unsigned tiled;
+
    unsigned nr_images[PIPE_MAX_TEXTURE_LEVELS];
 
    /* Explicitly store the offset of each image for each cube face or

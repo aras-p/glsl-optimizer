@@ -174,6 +174,7 @@ i915_displaytarget_layout(struct i915_texture *tex)
    if (tex->base.width[0] >= 128) {
       tex->pitch = power_of_two(tex->base.width[0] * pt->cpp) / pt->cpp;
       tex->total_height = round_up(tex->base.height[0], 8);
+      tex->tiled = 1;
    } else {
       tex->pitch = round_up(tex->base.width[0], 64 / pt->cpp);
       tex->total_height = tex->base.height[0];
