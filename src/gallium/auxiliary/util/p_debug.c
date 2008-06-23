@@ -100,9 +100,9 @@ void debug_print_blob( const char *name,
 
 void _debug_break(void) 
 {
-#if (defined(__i386__) || defined(__386__)) && defined(__GNUC__)
+#if defined(PIPE_ARCH_X86) && defined(PIPE_CC_GCC)
    __asm("int3");
-#elif (defined(__i386__) || defined(__386__)) && defined(__MSC__)
+#elif defined(PIPE_ARCH_X86) && defined(PIPE_CC_MSVC)
    _asm {int 3};
 #elif defined(PIPE_SUBSYSTEM_WINDOWS_DISPLAY)
    EngDebugBreak();
