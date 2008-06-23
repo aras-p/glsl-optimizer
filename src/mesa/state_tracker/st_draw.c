@@ -147,6 +147,14 @@ static GLuint byte_types_scale[4] = {
    PIPE_FORMAT_R8G8B8A8_SSCALED
 };
 
+static GLuint fixed_types[4] = {
+   PIPE_FORMAT_R32_FIXED,
+   PIPE_FORMAT_R32G32_FIXED,
+   PIPE_FORMAT_R32G32B32_FIXED,
+   PIPE_FORMAT_R32G32B32A32_FIXED
+};
+
+
 
 /**
  * Return a PIPE_FORMAT_x for the given GL datatype and size.
@@ -154,8 +162,8 @@ static GLuint byte_types_scale[4] = {
 static GLuint
 pipe_vertex_format(GLenum type, GLuint size, GLboolean normalized)
 {
-   assert(type >= GL_BYTE);
-   assert(type <= GL_DOUBLE);
+   assert((type >= GL_BYTE && type <= GL_DOUBLE) ||
+          type == GL_FIXED);
    assert(size >= 1);
    assert(size <= 4);
 
@@ -169,6 +177,7 @@ pipe_vertex_format(GLenum type, GLuint size, GLboolean normalized)
       case GL_UNSIGNED_INT: return uint_types_norm[size-1];
       case GL_UNSIGNED_SHORT: return ushort_types_norm[size-1];
       case GL_UNSIGNED_BYTE: return ubyte_types_norm[size-1];
+      case GL_FIXED: return fixed_types[size-1];
       default: assert(0); return 0;
       }      
    }
@@ -182,6 +191,7 @@ pipe_vertex_format(GLenum type, GLuint size, GLboolean normalized)
       case GL_UNSIGNED_INT: return uint_types_scale[size-1];
       case GL_UNSIGNED_SHORT: return ushort_types_scale[size-1];
       case GL_UNSIGNED_BYTE: return ubyte_types_scale[size-1];
+      case GL_FIXED: return fixed_types[size-1];
       default: assert(0); return 0;
       }      
    }

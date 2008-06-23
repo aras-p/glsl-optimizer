@@ -1161,7 +1161,8 @@ do_copy_texsubimage(GLcontext *ctx,
 
    (void) texImage;
 
-   /* XX need this?   st_flush(ctx->st, PIPE_FLUSH_RENDER_CACHE, NULL);*/
+   /* XX need this?*/
+   st_flush(ctx->st, PIPE_FLUSH_RENDER_CACHE, NULL);
 
    /* determine if copying depth or color data */
    if (baseFormat == GL_DEPTH_COMPONENT) {
