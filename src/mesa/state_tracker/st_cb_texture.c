@@ -1188,27 +1188,6 @@ do_copy_texsubimage(GLcontext *ctx,
 
    if (ctx->_ImageTransferState == 0x0) {
       /* do blit-style copy */
-
-      /* XXX may need to invert image depending on window
-       * vs. user-created FBO
-       */
-
-#if 0
-      /* A bit of fiddling to get the blitter to work with -ve
-       * pitches.  But we get a nice inverted blit this way, so it's
-       * worth it:
-       */
-      intelEmitCopyBlit(intel,
-                        stImage->pt->cpp,
-                        -src->pitch,
-                        src->buffer,
-                        src->height * src->pitch * src->cpp,
-                        stImage->pt->pitch,
-                        stImage->pt->region->buffer,
-                        dest_offset,
-                        x, y + height, dstx, dsty, width, height,
-                        GL_COPY); /* ? */
-#else
       struct pipe_surface *dest_surface;
 
       dest_surface = screen->get_tex_surface(screen, stImage->pt, stImage->face,
@@ -1246,7 +1225,6 @@ do_copy_texsubimage(GLcontext *ctx,
       }
 
       pipe_surface_reference(&dest_surface, NULL);
-#endif
    }
 
    if (use_fallback) {
