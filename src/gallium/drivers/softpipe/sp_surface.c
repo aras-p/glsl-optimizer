@@ -35,7 +35,11 @@
 
 
 
-/* Assumes all values are within bounds -- no checking at this level -
+/**
+ * Copy a rectangular region from one surface to another.
+ * Surfaces must have same bpp.
+ *
+ * Assumes all values are within bounds -- no checking at this level -
  * do it higher up if required.
  */
 static void
@@ -54,9 +58,11 @@ sp_surface_copy(struct pipe_context *pipe,
                                                     src,
                                                     PIPE_BUFFER_USAGE_CPU_READ );
 
-   assert( dst->cpp == src->cpp );
-   assert(src_map && dst_map);
+   assert(dst->cpp == src->cpp);
+   assert(src_map);
+   assert(dst_map);
 
+   /* If do_flip, invert src_y position and pass negative src stride */
    pipe_copy_rect(dst_map,
                   dst->cpp,
                   dst->pitch,
@@ -64,7 +70,7 @@ sp_surface_copy(struct pipe_context *pipe,
                   width, height,
                   src_map,
                   do_flip ? -(int) src->pitch : src->pitch,
-                  srcx, do_flip ? 1 - srcy - height : srcy);
+                  srcx, do_flip ? src->height - 1 - srcy : srcy);
 
    pipe->screen->surface_unmap(pipe->screen, src);
    pipe->screen->surface_unmap(pipe->screen, dst);
