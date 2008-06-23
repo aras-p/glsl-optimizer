@@ -113,7 +113,7 @@ install-osmesa: default
 	$(INSTALL) $(TOP)/$(LIB_DIR)/$(OSMESA_LIB_NAME)* \
 		$(DESTDIR)$(INSTALL_DIR)/$(LIB_DIR)
 
-install-dri:
+install-dri: default
 	cd drivers/dri && $(MAKE) install
 
 
