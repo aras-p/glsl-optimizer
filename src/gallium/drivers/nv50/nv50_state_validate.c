@@ -157,9 +157,16 @@ nv50_state_emit(struct nv50_context *nv50)
 boolean
 nv50_state_validate(struct nv50_context *nv50)
 {
+	const struct pipe_framebuffer_state *fb = &nv50->framebuffer;
 	struct nouveau_grobj *tesla = nv50->screen->tesla;
 	struct nouveau_stateobj *so;
 	unsigned i;
+
+	for (i = 0; i < fb->num_cbufs; i++)
+		fb->cbufs[i]->status = PIPE_SURFACE_STATUS_DEFINED;
+
+	if (fb->zsbuf)
+		fb->zsbuf->status = PIPE_SURFACE_STATUS_DEFINED;
 
 	if (nv50->dirty & NV50_NEW_FRAMEBUFFER)
 		nv50_state_validate_fb(nv50);
