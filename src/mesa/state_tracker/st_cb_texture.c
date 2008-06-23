@@ -1157,10 +1157,11 @@ do_copy_texsubimage(GLcontext *ctx,
    struct pipe_context *pipe = ctx->st->pipe;
    struct pipe_screen *screen = pipe->screen;
    uint dest_format, src_format;
-   uint do_flip = FALSE;
    GLboolean use_fallback = GL_TRUE;
 
    (void) texImage;
+
+   /* XX need this?   st_flush(ctx->st, PIPE_FLUSH_RENDER_CACHE, NULL);*/
 
    /* determine if copying depth or color data */
    if (baseFormat == GL_DEPTH_COMPONENT) {
@@ -1178,11 +1179,6 @@ do_copy_texsubimage(GLcontext *ctx,
    assert(strb->surface);
    assert(stImage->pt);
 
-   if (st_fb_orientation(ctx->ReadBuffer) == Y_0_TOP) {
-      srcY = strb->Base.Height - srcY - height;
-      do_flip = TRUE;
-   }
-
    src_format = strb->surface->format;
    dest_format = stImage->pt->format;
 
@@ -1190,7 +1186,8 @@ do_copy_texsubimage(GLcontext *ctx,
       /* do blit-style copy */
       struct pipe_surface *dest_surface;
 
-      dest_surface = screen->get_tex_surface(screen, stImage->pt, stImage->face,
+      dest_surface = screen->get_tex_surface(screen, stImage->pt,
+                                             stImage->face,
                                              stImage->level, destZ,
                                              PIPE_BUFFER_USAGE_GPU_WRITE);
 
@@ -1198,28 +1195,40 @@ do_copy_texsubimage(GLcontext *ctx,
       assert(dest_surface->buffer);
 
       if (src_format == dest_format) {
-          pipe->surface_copy(pipe,
-			     do_flip,
-			     /* dest */
-			     dest_surface,
-			     destX, destY,
-			     /* src */
-			     strb->surface,
-			     srcX, srcY,
-			     /* size */
-			     width, height);
-          use_fallback = GL_FALSE;
+         boolean do_flip = (st_fb_orientation(ctx->ReadBuffer) == Y_0_TOP);
+         pipe->surface_copy(pipe,
+                            do_flip,
+                            /* dest */
+                            dest_surface,
+                            destX, destY,
+                            /* src */
+                            strb->surface,
+                            srcX, srcY,
+                            /* size */
+                            width, height);
+         use_fallback = GL_FALSE;
       }
       else if (screen->is_format_supported(screen, strb->surface->format,
                                            PIPE_TEXTURE) &&
                screen->is_format_supported(screen, dest_surface->format,
                                            PIPE_SURFACE)) {
+         boolean do_flip = (st_fb_orientation(ctx->ReadBuffer) == Y_0_TOP);
+         int srcY0, srcY1;
+         if (do_flip) {
+            srcY1 = strb->Base.Height - srcY - height;
+            srcY0 = srcY1 + height;
+         }
+         else {
+            srcY0 = srcY;
+            srcY1 = srcY0 + height;
+         }
          util_blit_pixels(ctx->st->blit,
                           strb->surface,
-                          srcX, do_flip ? srcY + height : srcY,
-                          srcX + width, do_flip ? srcY : srcY + height,
+                          srcX, srcY0,
+                          srcX + width, srcY1,
                           dest_surface,
-                          destX, destY, destX + width, destY + height,
+                          destX, destY,
+                          destX + width, destY + height,
                           0.0, PIPE_TEX_MIPFILTER_NEAREST);
          use_fallback = GL_FALSE;
       }
