@@ -42,14 +42,12 @@ struct cso_context;
 
 struct blit_state;
 
+
 extern struct blit_state *
 util_create_blit(struct pipe_context *pipe, struct cso_context *cso);
 
-
 extern void
 util_destroy_blit(struct blit_state *ctx);
-
-
 
 extern void
 util_blit_pixels(struct blit_state *ctx,
@@ -60,6 +58,16 @@ util_blit_pixels(struct blit_state *ctx,
                  int dstX0, int dstY0,
                  int dstX1, int dstY1,
                  float z, uint filter);
+
+extern void
+util_blit_pixels_tex(struct blit_state *ctx,
+                     struct pipe_texture *tex,
+                     int srcX0, int srcY0,
+                     int srcX1, int srcY1,
+                     struct pipe_surface *dst,
+                     int dstX0, int dstY0,
+                     int dstX1, int dstY1,
+                     float z, uint filter);
 
 
 #ifdef __cplusplus
