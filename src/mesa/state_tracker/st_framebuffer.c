@@ -230,6 +230,22 @@ st_get_framebuffer_surface(struct st_framebuffer *stfb, uint surfIndex)
    return NULL;
 }
 
+struct pipe_texture *
+st_get_framebuffer_texture(struct st_framebuffer *stfb, uint surfIndex)
+{
+   struct st_renderbuffer *strb;
+
+   assert(surfIndex <= ST_SURFACE_DEPTH);
+
+   /* sanity checks, ST tokens should match Mesa tokens */
+   assert(ST_SURFACE_FRONT_LEFT == BUFFER_FRONT_LEFT);
+   assert(ST_SURFACE_BACK_RIGHT == BUFFER_BACK_RIGHT);
+
+   strb = st_renderbuffer(stfb->Base.Attachment[surfIndex].Renderbuffer);
+   if (strb)
+      return strb->texture;
+   return NULL;
+}
 
 /**
  * This function is to be called prior to SwapBuffers on the given

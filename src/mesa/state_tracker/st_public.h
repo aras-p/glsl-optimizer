@@ -74,6 +74,9 @@ void st_set_framebuffer_surface(struct st_framebuffer *stfb,
 struct pipe_surface *st_get_framebuffer_surface(struct st_framebuffer *stfb,
                                                 uint surfIndex);
 
+struct pipe_texture *st_get_framebuffer_texture(struct st_framebuffer *stfb,
+                                                uint surfIndex);
+
 void *st_framebuffer_private( struct st_framebuffer *stfb );
 
 void st_unreference_framebuffer( struct st_framebuffer **stfb );
