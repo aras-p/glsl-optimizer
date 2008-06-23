@@ -92,6 +92,7 @@ struct nv30_blend_state_new {
 struct nv30_state {
 	unsigned scissor_enabled;
 	unsigned stipple_enabled;
+	unsigned viewport_bypass;
 
 	struct nouveau_stateobj *hw[NV30_STATE_MAX];
 };
@@ -120,6 +121,7 @@ struct nv30_context {
 	/* Context state */
 	struct nv30_blend_state_new *blend;
 	struct pipe_blend_color blend_colour;
+	struct pipe_viewport_state viewport;
 	struct pipe_framebuffer_state framebuffer;
 	struct nv30_rasterizer_state_new *rasterizer;
 	unsigned stipple[32];
