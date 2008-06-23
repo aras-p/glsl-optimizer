@@ -198,7 +198,7 @@ softpipe_get_tex_surface(struct pipe_screen *screen,
       ps->cpp = pt->cpp;
       ps->width = pt->width[level];
       ps->height = pt->height[level];
-      ps->pitch = ps->width;
+      ps->pitch = spt->pitch[level];
       ps->offset = spt->level_offset[level];
       ps->usage = usage;
       
