@@ -29,11 +29,11 @@ default: depend asm_subdirs libmesa.a libglapi.a driver_subdirs
 # Helper libraries used by many drivers:
 
 # Make archive of core mesa object files
-libmesa.a: $(MESA_OBJECTS) asm_subdirs
+libmesa.a: $(MESA_OBJECTS)
 	@ $(TOP)/bin/mklib -o mesa -static $(MESA_OBJECTS)
 
 # Make archive of gl* API dispatcher functions only
-libglapi.a: $(GLAPI_OBJECTS) asm_subdirs
+libglapi.a: $(GLAPI_OBJECTS)
 	@ $(TOP)/bin/mklib -o glapi -static $(GLAPI_OBJECTS)
 
 
