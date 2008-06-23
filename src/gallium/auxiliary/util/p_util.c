@@ -53,6 +53,12 @@ pipe_copy_rect(ubyte * dst,
 {
    unsigned i;
 
+   assert(cpp > 0);
+   assert(src_x >= 0);
+   assert(src_y >= 0);
+   assert(dst_x >= 0);
+   assert(dst_y >= 0);
+
    dst_pitch *= cpp;
    src_pitch *= cpp;
    dst += dst_x * cpp;
