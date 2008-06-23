@@ -77,6 +77,12 @@ enum nv30_state_index {
 #define NV30_NEW_UCP		(1 << 12)
 
 /* TODO: rename when removing the old state emitter */
+struct nv30_rasterizer_state_new {
+	struct pipe_rasterizer_state pipe;
+	struct nouveau_stateobj *so;
+};
+
+/* TODO: rename when removing the old state emitter */
 struct nv30_blend_state_new {
 	struct pipe_blend_state pipe;
 	struct nouveau_stateobj *so;
@@ -111,6 +117,7 @@ struct nv30_context {
 	struct nv30_blend_state_new *blend;
 	struct pipe_blend_color blend_colour;
 	struct pipe_framebuffer_state framebuffer;
+	struct nv30_rasterizer_state_new *rasterizer;
 
 	uint32_t rt_enable;
 	struct pipe_buffer *rt[2];
