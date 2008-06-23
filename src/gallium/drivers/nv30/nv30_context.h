@@ -90,6 +90,8 @@ struct nv30_blend_state_new {
 
 
 struct nv30_state {
+	unsigned scissor_enabled;
+
 	struct nouveau_stateobj *hw[NV30_STATE_MAX];
 };
 
@@ -104,6 +106,7 @@ struct nv30_context {
 
 	/* HW state derived from pipe states */
 	struct nv30_state state;
+	struct pipe_scissor_state scissor;
 
 	uint32_t dirty;
 
