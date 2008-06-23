@@ -883,8 +883,6 @@ nv50_program_tx_insn(struct nv50_pc *pc, const union tgsi_full_token *tok)
 	unsigned mask, sat;
 	int i, c;
 
-	NOUVEAU_ERR("insn %p\n", tok);
-
 	mask = inst->FullDstRegisters[0].DstRegister.WriteMask;
 	sat = inst->Instruction.Saturate == TGSI_SAT_ZERO_ONE;
 
@@ -1277,7 +1275,6 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 		}
 	}
 
-	NOUVEAU_ERR("%d temps\n", pc->temp_nr);
 	if (pc->temp_nr) {
 		pc->temp = calloc(pc->temp_nr * 4, sizeof(struct nv50_reg));
 		if (!pc->temp)
@@ -1292,7 +1289,6 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 		}
 	}
 
-	NOUVEAU_ERR("%d attrib regs\n", pc->attr_nr);
 	if (pc->attr_nr) {
 		struct nv50_reg *iv = NULL;
 		int aid = 0;
@@ -1340,7 +1336,6 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 			free_temp(pc, iv);
 	}
 
-	NOUVEAU_ERR("%d result regs\n", pc->result_nr);
 	if (pc->result_nr) {
 		int rid = 0;
 
@@ -1362,7 +1357,6 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 		}
 	}
 
-	NOUVEAU_ERR("%d param regs\n", pc->param_nr);
 	if (pc->param_nr) {
 		int rid = 0;
 
