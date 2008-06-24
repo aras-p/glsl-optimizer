@@ -685,7 +685,6 @@ i915_texture_blanket(struct pipe_screen * screen,
 {
    struct i915_texture *tex;
    assert(screen);
-   assert(templat);
 
    /* Only supports one type */
    if (base->target != PIPE_TEXTURE_2D ||
