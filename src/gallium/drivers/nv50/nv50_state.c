@@ -157,7 +157,7 @@ nv50_rasterizer_state_create(struct pipe_context *pipe,
 		so_method(so, tesla, NV50TCL_LINE_STIPPLE_ENABLE, 1);
 		so_data  (so, 1);
 		so_method(so, tesla, NV50TCL_LINE_STIPPLE_PATTERN, 1);
-		so_data  (so, (cso->line_stipple_pattern << 16) |
+		so_data  (so, (cso->line_stipple_pattern << 8) |
 			       cso->line_stipple_factor);
 	} else {
 		so_method(so, tesla, NV50TCL_LINE_STIPPLE_ENABLE, 1);
