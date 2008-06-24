@@ -6,8 +6,9 @@ LIBNAME = i915_dri.so
 
 PIPE_DRIVERS = \
 	$(TOP)/src/gallium/drivers/softpipe/libsoftpipe.a \
-	$(TOP)/src/gallium/drivers/i915simple/libi915simple.a \
-	$(TOP)/src/gallium/winsys/common/intel_drm/libinteldrm.a
+	$(TOP)/src/gallium/winsys/common/intel_drm/libinteldrm.a \
+	$(TOP)/src/gallium/drivers/i915simple/libi915simple.a
+
 
 DRIVER_SOURCES = \
 	intel_winsys_softpipe.c \

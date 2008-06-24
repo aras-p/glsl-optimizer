@@ -198,10 +198,12 @@ intel_flush_frontbuffer( struct pipe_winsys *winsys,
                          struct pipe_surface *surf,
                          void *context_private)
 {
-   struct intel_context *intel = (struct intel_context *) context_private;
-   __DRIdrawablePrivate *dPriv = intel->driDrawable;
+   //struct intel_context *intel = (struct intel_context *) context_private;
+   //__DRIdrawablePrivate *dPriv = intel->driDrawable;
 
-   intelDisplaySurface(dPriv, surf, NULL);
+   assert((int)"Doesn't work currently" & 0);
+
+   //intelDisplaySurface(dPriv, surf, NULL);
 }
 
 static boolean
@@ -254,9 +256,9 @@ intelInitDriver(__DRIscreenPrivate * sPriv)
       (*glx_enable_extension) (psc, "GLX_SGI_make_current_read");
    }
 
-   intel_be_init_device(&intelScreen->base, sPriv->fd);
    intelScreen->base.base.flush_frontbuffer = intel_flush_frontbuffer;
    intelScreen->base.base.get_name = intel_get_name;
+   intel_be_init_device(&intelScreen->base, sPriv->fd, intelScreen->deviceID);
 
    return GL_TRUE;
 }
