@@ -40,7 +40,6 @@
 #include "intel_buffers.h"
 #include "intel_blit.h"
 #include "intel_regions.h"
-#include "intel_tris.h"
 #include "intel_pixel.h"
 
 #define FILE_DEBUG_FLAG DEBUG_PIXEL
@@ -99,6 +98,7 @@ intel_check_copypixel_blit_fragment_ops(GLcontext * ctx)
 	    ctx->Color.BlendEnabled);
 }
 
+#ifdef I915
 /* Doesn't work for overlapping regions.  Could do a double copy or
  * just fallback.
  */
@@ -236,9 +236,7 @@ do_texture_copypixels(GLcontext * ctx,
    DBG("%s: success\n", __FUNCTION__);
    return GL_TRUE;
 }
-
-
-
+#endif /* I915 */
 
 
 /**
@@ -374,8 +372,10 @@ intelCopyPixels(GLcontext * ctx,
    if (do_blit_copypixels(ctx, srcx, srcy, width, height, destx, desty, type))
       return;
 
+#ifdef I915
    if (do_texture_copypixels(ctx, srcx, srcy, width, height, destx, desty, type))
       return;
+#endif
 
    DBG("fallback to _swrast_CopyPixels\n");
 
