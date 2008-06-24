@@ -12,8 +12,6 @@ nv50_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *pt)
 	struct nv50_miptree *mt = CALLOC_STRUCT(nv50_miptree);
 	unsigned usage, pitch;
 
-	NOUVEAU_ERR("unimplemented\n");
-
 	mt->base = *pt;
 	mt->base.refcount = 1;
 	mt->base.screen = pscreen;
@@ -45,9 +43,8 @@ nv50_miptree_release(struct pipe_screen *pscreen, struct pipe_texture **ppt)
 	struct pipe_winsys *ws = pscreen->winsys;
 	struct pipe_texture *pt = *ppt;
 
-	NOUVEAU_ERR("unimplemented\n");
-
 	*ppt = NULL;
+
 	if (--pt->refcount <= 0) {
 		struct nv50_miptree *mt = nv50_miptree(pt);
 
@@ -65,13 +62,9 @@ nv50_miptree_surface_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 	struct nv50_miptree *mt = nv50_miptree(pt);
 	struct pipe_surface *ps;
 
-	NOUVEAU_ERR("unimplemented\n");
-
-	ps = ws->surface_alloc(ws);
-	if (!ps)
-		return NULL;
-
-	pipe_buffer_reference(ws, &ps->buffer, mt->buffer);
+	ps = CALLOC_STRUCT(pipe_surface);
+	ps->refcount = 1;
+	ps->winsys = ws;
 	ps->format = pt->format;
 	ps->width = pt->width[level];
 	ps->height = pt->height[level];
@@ -80,6 +73,11 @@ nv50_miptree_surface_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 	ps->nblocksy = pt->nblocksy[level];
 	ps->stride = ps->width * ps->block.size;
 	ps->offset = 0;
+	ps->usage = flags;
+	ps->status = PIPE_SURFACE_STATUS_DEFINED;
+
+	pipe_texture_reference(&ps->texture, pt);
+	pipe_buffer_reference(ws, &ps->buffer, mt->buffer);
 
 	return ps;
 }
@@ -88,6 +86,16 @@ static void
 nv50_miptree_surface_del(struct pipe_screen *pscreen,
 			 struct pipe_surface **psurface)
 {
+	struct pipe_winsys *ws = pscreen->winsys;
+	struct pipe_surface *surf = *psurface;
+
+	*psurface = NULL;
+
+	if (--surf->refcount <= 0) {
+		pipe_texture_reference(&surf->texture, NULL);
+		pipe_buffer_reference(ws, &surf->buffer, NULL);
+		FREE(surf);
+	}
 }
 
 void
