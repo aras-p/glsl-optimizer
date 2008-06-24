@@ -144,19 +144,19 @@ typedef unsigned int _glthread_Cond;
 //  #warning Condition variables not implemented.
 
 #define _glthread_INIT_COND(cond)	    \
-  abort();
+  ASSERT(0);
 
 #define _glthread_DESTROY_COND(name) \
-  abort();
+  ASSERT(0);
 
 #define _glthread_COND_WAIT(cond, mutex) \
-  abort();
+  ASSERT(0);
 
 #define _glthread_COND_SIGNAL(cond) \
-  abort();
+  ASSERT(0);
 
 #define _glthread_COND_BROADCAST(cond) \
-  abort();
+  ASSERT(0);
 
 #endif
 

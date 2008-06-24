@@ -67,7 +67,7 @@ gl_wrap_to_sp(GLenum wrap)
    case GL_MIRROR_CLAMP_TO_BORDER_EXT:
       return PIPE_TEX_WRAP_MIRROR_CLAMP_TO_BORDER;
    default:
-      abort();
+      assert(0);
       return 0;
    }
 }

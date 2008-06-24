@@ -772,7 +772,8 @@ tgsi_translate_mesa_program(
                                         TGSI_WRITEMASK_XYZW );
             break;
          default:
-            abort();
+            assert(0);
+            return 0;
          }
          ti += tgsi_build_full_declaration(&fulldecl,
                                            &tokens[ti],
