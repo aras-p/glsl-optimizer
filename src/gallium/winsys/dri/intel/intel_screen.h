@@ -47,6 +47,8 @@ struct intel_screen
       /* We create a static dri buffer for the frontbuffer.
        */
       struct _DriBufferObject *buffer;
+      struct pipe_surface *surface;
+      struct pipe_texture *texture;
 
       char *map;                   /* memory map */
       int offset;                  /* from start of video mem, in bytes */
