@@ -63,7 +63,7 @@ struct draw_context *draw_create( void )
    if (!draw_pt_init( draw ))
       goto fail;
 
-#ifndef PIPE_ARCH_X86
+#ifdef PIPE_ARCH_X86
    if (!draw_vs_init( draw ))
       goto fail;
 #endif
