@@ -32,7 +32,8 @@
 
 void intelInitPixelFuncs(struct dd_function_table *functions);
 
-GLboolean intel_check_blit_fragment_ops(GLcontext * ctx);
+GLboolean intel_check_blit_fragment_ops(GLcontext * ctx,
+					GLboolean src_alpha_is_one);
 
 GLboolean intel_check_meta_tex_fragment_ops(GLcontext * ctx);
 

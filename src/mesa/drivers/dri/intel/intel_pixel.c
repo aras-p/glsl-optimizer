@@ -35,12 +35,25 @@
 
 #define FILE_DEBUG_FLAG DEBUG_PIXEL
 
+static GLenum
+effective_func(GLenum func, GLboolean src_alpha_is_one)
+{
+   if (src_alpha_is_one) {
+      if (func == GL_SRC_ALPHA)
+	 return GL_ONE;
+      if (func == GL_ONE_MINUS_SRC_ALPHA)
+	 return GL_ZERO;
+   }
+
+   return func;
+}
+
 /**
  * Check if any fragment operations are in effect which might effect
  * glDraw/CopyPixels.
  */
 GLboolean
-intel_check_blit_fragment_ops(GLcontext * ctx)
+intel_check_blit_fragment_ops(GLcontext * ctx, GLboolean src_alpha_is_one)
 {
    if (ctx->NewState)
       _mesa_update_state(ctx);
@@ -50,7 +63,13 @@ intel_check_blit_fragment_ops(GLcontext * ctx)
       return GL_FALSE;
    }
 
-   if (ctx->Color.BlendEnabled) {
+   if (ctx->Color.BlendEnabled &&
+       (effective_func(ctx->Color.BlendSrcRGB, src_alpha_is_one) != GL_ONE ||
+	effective_func(ctx->Color.BlendDstRGB, src_alpha_is_one) != GL_ZERO ||
+	ctx->Color.BlendEquationRGB != GL_FUNC_ADD ||
+	effective_func(ctx->Color.BlendSrcA, src_alpha_is_one) != GL_ONE ||
+	effective_func(ctx->Color.BlendDstA, src_alpha_is_one) != GL_ZERO ||
+	ctx->Color.BlendEquationA != GL_FUNC_ADD)) {
       DBG("fallback due to blend\n");
       return GL_FALSE;
    }

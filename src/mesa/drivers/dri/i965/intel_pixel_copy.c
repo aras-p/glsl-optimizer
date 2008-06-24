@@ -188,7 +188,7 @@ do_blit_copypixels(GLcontext * ctx,
    /* Copypixels can be more than a straight copy.  Ensure all the
     * extra operations are disabled:
     */
-   if (!intel_check_blit_fragment_ops(ctx) ||
+   if (!intel_check_blit_fragment_ops(ctx, GL_FALSE) ||
        ctx->Pixel.ZoomX != 1.0F || ctx->Pixel.ZoomY != 1.0F)
       return GL_FALSE;
 
