@@ -705,9 +705,9 @@ struct radeon_context {
 
 #define RADEON_CONTEXT(ctx)		((radeonContextPtr)(ctx->DriverCtx))
 
-static __inline GLuint radeonPackColor(GLuint cpp,
-				       GLubyte r, GLubyte g,
-				       GLubyte b, GLubyte a)
+static INLINE GLuint radeonPackColor(GLuint cpp,
+                                     GLubyte r, GLubyte g,
+                                     GLubyte b, GLubyte a)
 {
 	switch (cpp) {
 	case 2:

@@ -1,6 +1,6 @@
 /* $XFree86: xc/lib/GL/mesa/src/drv/ffb/ffb_pointtmp.h,v 1.3 2002/02/22 21:32:59 dawes Exp $ */
 
-static __inline void TAG(ffb_draw_point)(GLcontext *ctx, ffb_vertex *tmp )
+static INLINE void TAG(ffb_draw_point)(GLcontext *ctx, ffb_vertex *tmp )
 {
 	ffbContextPtr fmesa = FFB_CONTEXT(ctx);
 	ffb_fbcPtr ffb = fmesa->regs;

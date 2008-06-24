@@ -72,9 +72,9 @@ extern void mach64InitTextureFuncs( struct dd_function_table *functions );
 #define MACH64PACKCOLOR4444(r, g, b, a)					\
    ((((a) & 0xf0) << 8) | (((r) & 0xf0) << 4) | ((g) & 0xf0) | ((b) >> 4))
 
-static __inline__ GLuint mach64PackColor( GLuint cpp,
-					  GLubyte r, GLubyte g,
-					  GLubyte b, GLubyte a )
+static INLINE GLuint mach64PackColor( GLuint cpp,
+                                      GLubyte r, GLubyte g,
+                                      GLubyte b, GLubyte a )
 {
    switch ( cpp ) {
    case 2:

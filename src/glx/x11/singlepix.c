@@ -34,6 +34,7 @@
 **
 */
 
+#include "glheader.h"
 #include "packsingle.h"
 #include "indirect.h"
 #include "dispatch.h"

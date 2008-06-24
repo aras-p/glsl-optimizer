@@ -102,7 +102,7 @@ typedef struct {
 static pthread_mutex_t global_lock = PTHREAD_MUTEX_INITIALIZER;
 static unsigned int    global_ref  = 0;
 
-static inline int directfbgl_init( void )
+static INLINE int directfbgl_init( void )
 {
      pthread_mutexattr_t attr;
      int                 ret;
@@ -118,7 +118,7 @@ static inline int directfbgl_init( void )
      return ret;
 }
 
-static inline void directfbgl_finish( void )
+static INLINE void directfbgl_finish( void )
 {
      if (--global_ref == 0)
           pthread_mutex_destroy( &global_lock );

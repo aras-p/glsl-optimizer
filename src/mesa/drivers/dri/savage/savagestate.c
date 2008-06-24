@@ -76,7 +76,7 @@
 static void savageBlendFunc_s4(GLcontext *);
 static void savageBlendFunc_s3d(GLcontext *);
 
-static __inline__ GLuint savagePackColor(GLuint format, 
+static INLINE GLuint savagePackColor(GLuint format, 
                                          GLubyte r, GLubyte g, 
                                          GLubyte b, GLubyte a)
 {

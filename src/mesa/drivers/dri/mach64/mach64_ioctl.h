@@ -44,7 +44,7 @@ extern void mach64FlushVerticesLocked( mach64ContextPtr mmesa );
 extern void mach64FlushDMALocked( mach64ContextPtr mmesa );
 extern void mach64UploadHwStateLocked( mach64ContextPtr mmesa );
 
-static __inline void *mach64AllocDmaLow( mach64ContextPtr mmesa, int bytes )
+static INLINE void *mach64AllocDmaLow( mach64ContextPtr mmesa, int bytes )
 {
    CARD32 *head;
 
@@ -60,7 +60,7 @@ static __inline void *mach64AllocDmaLow( mach64ContextPtr mmesa, int bytes )
    return head;
 }
 
-static __inline void *mach64AllocDmaLocked( mach64ContextPtr mmesa, int bytes )
+static INLINE void *mach64AllocDmaLocked( mach64ContextPtr mmesa, int bytes )
 {
    CARD32 *head;
 

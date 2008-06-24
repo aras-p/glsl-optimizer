@@ -586,9 +586,6 @@ intelEmitImmediateColorExpandBlit(struct intel_context *intel,
 
    dst_pitch *= cpp;
 
-   if (dst_tiled)
-      dst_pitch /= 4;
-
    DBG("%s dst:buf(%p)/%d+%d %d,%d sz:%dx%d, %d bytes %d dwords\n",
        __FUNCTION__,
        dst_buffer, dst_pitch, dst_offset, x, y, w, h, src_size, dwords);
@@ -602,8 +599,12 @@ intelEmitImmediateColorExpandBlit(struct intel_context *intel,
    opcode = XY_SETUP_BLT_CMD;
    if (cpp == 4)
       opcode |= XY_BLT_WRITE_ALPHA | XY_BLT_WRITE_RGB;
-   if (dst_tiled)
+#ifndef I915
+   if (dst_tiled) {
       opcode |= XY_DST_TILED;
+      dst_pitch /= 4;
+   }
+#endif
 
    br13 = dst_pitch | (translate_raster_op(logic_op) << 16) | (1 << 29);
    if (cpp == 2)

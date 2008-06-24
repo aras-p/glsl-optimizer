@@ -331,7 +331,7 @@ do {						\
  * XXX Put this in src/mesa/main/imports.h ???
  */
 #if defined(i386) || defined(__i386__)
-static inline void * __memcpy(void * to, const void * from, size_t n)
+static INLINE void * __memcpy(void * to, const void * from, size_t n)
 {
    int d0, d1, d2;
    __asm__ __volatile__(

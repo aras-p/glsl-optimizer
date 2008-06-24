@@ -984,9 +984,9 @@ FX_grColorMaskv_NoLock(GLcontext *ctx, const GLboolean rgba[4]);
 #define TDFXPACKCOLOR4444( r, g, b, a )					   \
    ((((a) & 0xf0) << 8) | (((b) & 0xf0) << 4) | ((g) & 0xf0) | ((r) >> 4))
 
-static __inline__ GrColor_t tdfxPackColor( GLuint cpp,
-					   GLubyte r, GLubyte g,
-					   GLubyte b, GLubyte a )
+static INLINE GrColor_t tdfxPackColor( GLuint cpp,
+                                       GLubyte r, GLubyte g,
+                                       GLubyte b, GLubyte a )
 {
    switch ( cpp ) {
    case 2:

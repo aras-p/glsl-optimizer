@@ -34,6 +34,7 @@
 **
 */
 
+#include "glheader.h"
 #include "glxclient.h"
 #include "indirect.h"
 

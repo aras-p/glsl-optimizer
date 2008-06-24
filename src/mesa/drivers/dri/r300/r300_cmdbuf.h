@@ -52,7 +52,7 @@ extern void r300DestroyCmdBuf(r300ContextPtr r300);
  *
  * \param dwords The number of dwords we need to be free on the command buffer
  */
-static inline void r300EnsureCmdBufSpace(r300ContextPtr r300,
+static INLINE void r300EnsureCmdBufSpace(r300ContextPtr r300,
 					     int dwords, const char *caller)
 {
 	assert(dwords < r300->cmdbuf.size);
@@ -68,7 +68,7 @@ static inline void r300EnsureCmdBufSpace(r300ContextPtr r300,
  * causes state reemission after a flush. This is necessary to ensure
  * correct hardware state after an unlock.
  */
-static inline uint32_t *r300RawAllocCmdBuf(r300ContextPtr r300,
+static INLINE uint32_t *r300RawAllocCmdBuf(r300ContextPtr r300,
 					       int dwords, const char *caller)
 {
 	uint32_t *ptr;
@@ -80,7 +80,7 @@ static inline uint32_t *r300RawAllocCmdBuf(r300ContextPtr r300,
 	return ptr;
 }
 
-static inline uint32_t *r300AllocCmdBuf(r300ContextPtr r300,
+static INLINE uint32_t *r300AllocCmdBuf(r300ContextPtr r300,
 					    int dwords, const char *caller)
 {
 	uint32_t *ptr;

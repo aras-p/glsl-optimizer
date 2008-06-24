@@ -61,7 +61,8 @@ do
 	    echo '  -minor N      specifies minor version number (default is 0)'
 	    echo '  -patch N      specifies patch version number (default is 0)'
 	    echo '  -lLIBRARY     specifies a dependency on LIBRARY'
-	    echo '  -LDIR         search in DIR for library dependencies'
+	    echo '  -LDIR         search in DIR for library dependencies at build time'
+	    echo '  -RDIR         search in DIR for library dependencies at run time'
 	    echo '  -linker L     explicity specify the linker program to use (eg: gcc, g++)'
 	    echo '                Not observed on all systems at this time.'
 	    echo '  -ldflags OPT  specify any additional linker flags in OPT'
@@ -105,6 +106,9 @@ do
 	    DEPS="$DEPS $1"
 	    ;;
 	-L*)
+	    DEPS="$DEPS $1"
+	    ;;
+	-R*)
 	    DEPS="$DEPS $1"
 	    ;;
 	-Wl*)
@@ -336,7 +340,7 @@ case $ARCH in
 			# use g++
 			LINK="g++"
 		    else
-			echo "mklib: warning: can't find C++ comiler, trying CC."
+			echo "mklib: warning: can't find C++ compiler, trying CC."
 			LINK="CC"
 		    fi
 		else
@@ -365,9 +369,11 @@ case $ARCH in
 	    # Check if objects are SPARC v9
 	    # file says: ELF 64-bit MSB relocatable SPARCV9 Version 1
 	    set ${OBJECTS}
-	    SPARCV9=`file $1 | grep SPARCV9`
-	    if [ "${SPARCV9}" ] ; then
-		OPTS="${OPTS} -xarch=v9"
+	    if [ ${LINK} = "cc" -o ${LINK} = "CC" ] ; then
+		SPARCV9=`file $1 | grep SPARCV9`
+		if [ "${SPARCV9}" ] ; then
+		    OPTS="${OPTS} -xarch=v9"
+		fi
 	    fi
             if [ "${ALTOPTS}" ] ; then
                 OPTS=${ALTOPTS}
@@ -379,7 +385,7 @@ case $ARCH in
 		${LINK} ${OPTS} ${LDFLAGS} -o ${LIBNAME} ${OBJECTS} ${DEPS}
 	    else
 		rm -f ${LIBNAME}.${MAJOR} ${LIBNAME}
-		${LINK} ${OPTS} ${LDFLAGS} -o ${LIBNAME}.${MAJOR} ${OBJECTS} ${DEPS}
+		${LINK} ${OPTS} ${LDFLAGS} -o ${LIBNAME}.${MAJOR} -h ${LIBNAME}.${MAJOR} ${OBJECTS} ${DEPS}
 		ln -s ${LIBNAME}.${MAJOR} ${LIBNAME}
 	    fi
 	    FINAL_LIBS="${LIBNAME}.${MAJOR} ${LIBNAME}"

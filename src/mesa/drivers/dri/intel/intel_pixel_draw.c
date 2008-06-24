@@ -253,7 +253,7 @@ do_blit_drawpixels(GLcontext * ctx,
       return GL_FALSE;
    }
 
-   if (!intel_check_blit_fragment_ops(ctx)) {
+   if (!intel_check_blit_fragment_ops(ctx, GL_FALSE)) {
       if (INTEL_DEBUG & DEBUG_PIXEL)
          _mesa_printf("%s - bad GL fragment state for blitter\n",
                       __FUNCTION__);

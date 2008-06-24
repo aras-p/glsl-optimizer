@@ -124,7 +124,7 @@ do {								\
    memcpy( rmesa->hw.ATOM.lastcmd, rmesa->hw.ATOM.cmd,	\
 	   rmesa->hw.ATOM.cmd_size * 4)
 
-static __inline int RADEON_DB_STATECHANGE( 
+static INLINE int RADEON_DB_STATECHANGE( 
    radeonContextPtr rmesa,
    struct radeon_state_atom *atom )
 {
@@ -177,7 +177,7 @@ do {							\
  * and hang on to the lock until the critical section is finished and we flush
  * the buffer again and unlock.
  */
-static __inline void radeonEnsureCmdBufSpace( radeonContextPtr rmesa,
+static INLINE void radeonEnsureCmdBufSpace( radeonContextPtr rmesa,
 					      int bytes )
 {
    if (rmesa->store.cmd_used + bytes > RADEON_CMD_BUF_SZ)
@@ -187,7 +187,7 @@ static __inline void radeonEnsureCmdBufSpace( radeonContextPtr rmesa,
 
 /* Alloc space in the command buffer
  */
-static __inline char *radeonAllocCmdBuf( radeonContextPtr rmesa,
+static INLINE char *radeonAllocCmdBuf( radeonContextPtr rmesa,
 					 int bytes, const char *where )
 {
    if (rmesa->store.cmd_used + bytes > RADEON_CMD_BUF_SZ)

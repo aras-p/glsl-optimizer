@@ -194,7 +194,7 @@ do_blit_bitmap( GLcontext *ctx,
 
    /* Does zoom apply to bitmaps?
     */
-   if (!intel_check_blit_fragment_ops(ctx) ||
+   if (!intel_check_blit_fragment_ops(ctx, tmpColor[3] == 1.0F) ||
        ctx->Pixel.ZoomX != 1.0F || 
        ctx->Pixel.ZoomY != 1.0F)
       return GL_FALSE;

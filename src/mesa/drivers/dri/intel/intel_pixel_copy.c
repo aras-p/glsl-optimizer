@@ -40,7 +40,6 @@
 #include "intel_buffers.h"
 #include "intel_blit.h"
 #include "intel_regions.h"
-#include "intel_tris.h"
 #include "intel_pixel.h"
 
 #define FILE_DEBUG_FLAG DEBUG_PIXEL
@@ -99,6 +98,7 @@ intel_check_copypixel_blit_fragment_ops(GLcontext * ctx)
 	    ctx->Color.BlendEnabled);
 }
 
+#ifdef I915
 /* Doesn't work for overlapping regions.  Could do a double copy or
  * just fallback.
  */
@@ -236,9 +236,7 @@ do_texture_copypixels(GLcontext * ctx,
    DBG("%s: success\n", __FUNCTION__);
    return GL_TRUE;
 }
-
-
-
+#endif /* I915 */
 
 
 /**
@@ -272,8 +270,8 @@ do_blit_copypixels(GLcontext * ctx,
 
    if (intel->driDrawable->numClipRects) {
       __DRIdrawablePrivate *dPriv = intel->driDrawable;
+      __DRIdrawablePrivate *dReadPriv = intel->driReadDrawable;
       drm_clip_rect_t *box = dPriv->pClipRects;
-      drm_clip_rect_t dest_rect;
       GLint nbox = dPriv->numClipRects;
       GLint delta_x = 0;
       GLint delta_y = 0;
@@ -303,8 +301,8 @@ do_blit_copypixels(GLcontext * ctx,
       srcy = dPriv->h - srcy - height;  
       dstx += dPriv->x;
       dsty += dPriv->y;
-      srcx += dPriv->x;
-      srcy += dPriv->y;
+      srcx += dReadPriv->x;
+      srcy += dReadPriv->y;
 
       /* Clip against the source region.  This is the only source
        * clipping we do.  Dst is clipped with cliprects below.
@@ -321,11 +319,6 @@ do_blit_copypixels(GLcontext * ctx,
          dsty = srcy - delta_y;
       }
 
-      dest_rect.x1 = dstx;
-      dest_rect.y1 = dsty;
-      dest_rect.x2 = dstx + width;
-      dest_rect.y2 = dsty + height;
-
       /* Could do slightly more clipping: Eg, take the intersection of
        * the existing set of cliprects and those cliprects translated
        * by delta_x, delta_y:
@@ -334,19 +327,21 @@ do_blit_copypixels(GLcontext * ctx,
        * introduce garbage when copying from obscured window regions.
        */
       for (i = 0; i < nbox; i++) {
-         drm_clip_rect_t rect;
+	 GLint clip_x = dstx;
+	 GLint clip_y = dsty;
+	 GLint clip_w = width;
+	 GLint clip_h = height;
 
-         if (!intel_intersect_cliprects(&rect, &dest_rect, &box[i]))
+         if (!_mesa_clip_to_region(box[i].x1, box[i].y1, box[i].x2, box[i].y2,
+				   &clip_x, &clip_y, &clip_w, &clip_h))
             continue;
 
-
-         intelEmitCopyBlit(intel, dst->cpp, 
+         intelEmitCopyBlit(intel, dst->cpp,
 			   src->pitch, src->buffer, 0, src->tiled,
 			   dst->pitch, dst->buffer, 0, dst->tiled,
-			   rect.x1 + delta_x, 
-			   rect.y1 + delta_y,       /* srcx, srcy */
-                           rect.x1, rect.y1,    /* dstx, dsty */
-                           rect.x2 - rect.x1, rect.y2 - rect.y1,
+			   clip_x + delta_x, clip_y + delta_y, /* srcx, srcy */
+			   clip_x, clip_y, /* dstx, dsty */
+			   clip_w, clip_h,
 			   ctx->Color.ColorLogicOpEnabled ?
 			   ctx->Color.LogicOp : GL_COPY);
       }
@@ -373,8 +368,10 @@ intelCopyPixels(GLcontext * ctx,
    if (do_blit_copypixels(ctx, srcx, srcy, width, height, destx, desty, type))
       return;
 
+#ifdef I915
    if (do_texture_copypixels(ctx, srcx, srcy, width, height, destx, desty, type))
       return;
+#endif
 
    DBG("fallback to _swrast_CopyPixels\n");
 

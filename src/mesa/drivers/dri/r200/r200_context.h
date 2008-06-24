@@ -927,7 +927,7 @@ struct r200_context {
 #define R200_CONTEXT(ctx)		((r200ContextPtr)(ctx->DriverCtx))
 
 
-static __inline GLuint r200PackColor( GLuint cpp,
+static INLINE GLuint r200PackColor( GLuint cpp,
 					GLubyte r, GLubyte g,
 					GLubyte b, GLubyte a )
 {

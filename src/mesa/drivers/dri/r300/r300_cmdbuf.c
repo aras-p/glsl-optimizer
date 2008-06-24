@@ -150,7 +150,7 @@ static void r300PrintStateAtom(r300ContextPtr r300, struct r300_state_atom *stat
  * The caller must have ensured that there is enough space in the command
  * buffer.
  */
-static inline void r300EmitAtoms(r300ContextPtr r300, GLboolean dirty)
+static INLINE void r300EmitAtoms(r300ContextPtr r300, GLboolean dirty)
 {
 	struct r300_state_atom *atom;
 	uint32_t *dest;

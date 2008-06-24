@@ -45,7 +45,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 extern drmBufPtr r128GetBufferLocked( r128ContextPtr rmesa );
 extern void r128FlushVerticesLocked( r128ContextPtr rmesa );
 
-static __inline void *r128AllocDmaLow( r128ContextPtr rmesa, int count,
+static INLINE void *r128AllocDmaLow( r128ContextPtr rmesa, int count,
 				       int vert_size )
 {
    u_int32_t *head;

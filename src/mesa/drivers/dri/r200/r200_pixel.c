@@ -382,7 +382,7 @@ r200TryDrawPixels( GLcontext *ctx,
    GLint pitch = unpack->RowLength ? unpack->RowLength : width;
    GLuint planemask;
    GLuint cpp = rmesa->r200Screen->cpp;
-   GLint size = width * pitch * cpp;
+   GLint size = height * pitch * cpp;
 
    if (R200_DEBUG & DEBUG_PIXEL)
       fprintf(stderr, "%s\n", __FUNCTION__);

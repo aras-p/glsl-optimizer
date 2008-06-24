@@ -65,14 +65,6 @@ static void brwInitDriverFunctions( struct dd_function_table *functions )
 {
    intelInitDriverFunctions( functions );
 
-   /* CopyPixels can be accelerated even with the current memory
-    * manager:
-    */
-   if (!getenv("INTEL_NO_BLIT")) {
-      functions->CopyPixels = intelCopyPixels;
-      functions->Bitmap = intelBitmap;
-   }
-
    brwInitFragProgFuncs( functions );
    brwInitProgFuncs( functions );
 }

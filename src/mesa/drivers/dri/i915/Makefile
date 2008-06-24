@@ -27,7 +27,11 @@ DRIVER_SOURCES = \
 	intel_tex_validate.c \
 	intel_tex_format.c \
 	intel_tex.c \
+	intel_pixel.c \
+	intel_pixel_bitmap.c \
 	intel_pixel_copy.c \
+	intel_pixel_draw.c \
+	intel_pixel_read.c \
 	intel_buffers.c \
 	intel_blit.c \
 	i915_tex.c \
@@ -43,9 +47,6 @@ DRIVER_SOURCES = \
 	intel_context.c \
 	intel_decode.c \
 	intel_ioctl.c \
-	intel_pixel.c \
-	intel_pixel_draw.c \
-	intel_pixel_read.c \
 	intel_screen.c \
 	intel_span.c \
 	intel_state.c \

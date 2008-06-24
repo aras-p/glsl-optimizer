@@ -54,14 +54,14 @@
 #undef TAG
 
 /* these require that base be dword-aligned */
-static inline void MMIO_OUT32(unsigned char *base, unsigned int offset,
+static INLINE void MMIO_OUT32(unsigned char *base, unsigned int offset,
                               unsigned int val)
 {
     unsigned int *addr = (unsigned int *)(base + offset);
     *addr = val;
 }
 
-static inline unsigned int MMIO_IN32(unsigned char *base, unsigned int offset)
+static INLINE unsigned int MMIO_IN32(unsigned char *base, unsigned int offset)
 {
     unsigned int *addr = (unsigned int *)(base + offset);
     return *addr;

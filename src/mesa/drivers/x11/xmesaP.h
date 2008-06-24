@@ -540,7 +540,6 @@ xmesa_renderbuffer(struct gl_renderbuffer *rb)
 /**
  * Return pointer to XMesaContext corresponding to a Mesa GLcontext.
  * Since we're using structure containment, it's just a cast!.
- * XXX should use inlined function for better type safety.
  */
 static INLINE XMesaContext
 XMESA_CONTEXT(GLcontext *ctx)
@@ -552,7 +551,6 @@ XMESA_CONTEXT(GLcontext *ctx)
 /**
  * Return pointer to XMesaBuffer corresponding to a Mesa GLframebuffer.
  * Since we're using structure containment, it's just a cast!.
- * XXX should use inlined function for better type safety.
  */
 static INLINE XMesaBuffer
 XMESA_BUFFER(GLframebuffer *b)

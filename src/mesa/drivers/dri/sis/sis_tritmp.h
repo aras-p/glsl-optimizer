@@ -234,7 +234,7 @@ static void TAG(sis6326_draw_point_mmio)(sisContextPtr smesa, char *verts)
 }
 #endif
 
-static __inline void TAG(sis_vert_init)( void )
+static INLINE void TAG(sis_vert_init)( void )
 {
    sis_tri_func_mmio[SIS_STATES] = TAG(sis_draw_tri_mmio);
    sis_line_func_mmio[SIS_STATES] = TAG(sis_draw_line_mmio);

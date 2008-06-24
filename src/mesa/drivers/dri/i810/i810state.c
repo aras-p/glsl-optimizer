@@ -27,7 +27,7 @@
 
 #include "tnl/t_pipeline.h"
 
-static __inline__ GLuint i810PackColor(GLuint format,
+static INLINE GLuint i810PackColor(GLuint format,
 				       GLubyte r, GLubyte g,
 				       GLubyte b, GLubyte a)
 {

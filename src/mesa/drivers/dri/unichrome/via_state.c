@@ -511,9 +511,9 @@ void viaEmitState(struct via_context *vmesa)
 }
 
 
-static __inline__ GLuint viaPackColor(GLuint bpp,
-                                      GLubyte r, GLubyte g,
-                                      GLubyte b, GLubyte a)
+static INLINE GLuint viaPackColor(GLuint bpp,
+                                  GLubyte r, GLubyte g,
+                                  GLubyte b, GLubyte a)
 {
     switch (bpp) {
     case 16:
