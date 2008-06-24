@@ -237,7 +237,7 @@ nv50_rasterizer_state_create(struct pipe_context *pipe,
 		so_method(so, tesla, NV50TCL_POLYGON_OFFSET_FACTOR, 1);
 		so_data  (so, fui(cso->offset_scale));
 		so_method(so, tesla, NV50TCL_POLYGON_OFFSET_UNITS, 1);
-		so_data  (so, fui(cso->offset_units * 2));
+		so_data  (so, fui(cso->offset_units));
 	}
 
 	rso->pipe = *cso;
