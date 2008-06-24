@@ -2405,15 +2405,14 @@ GLboolean
 _mesa_texstore_s8_z24(TEXSTORE_PARAMS)
 {
    const GLuint depthScale = 0xffffff;
-
-   ASSERT(dstFormat == &_mesa_texformat_s8_z24);
-   ASSERT(srcFormat == GL_DEPTH_STENCIL_EXT || srcFormat == GL_DEPTH_COMPONENT);
-   ASSERT(srcFormat != GL_DEPTH_STENCIL_EXT || srcType == GL_UNSIGNED_INT_24_8_EXT);
-
    const GLint srcRowStride
       = _mesa_image_row_stride(srcPacking, srcWidth, srcFormat, srcType)
       / sizeof(GLuint);
    GLint img, row;
+
+   ASSERT(dstFormat == &_mesa_texformat_s8_z24);
+   ASSERT(srcFormat == GL_DEPTH_STENCIL_EXT || srcFormat == GL_DEPTH_COMPONENT);
+   ASSERT(srcFormat != GL_DEPTH_STENCIL_EXT || srcType == GL_UNSIGNED_INT_24_8_EXT);
 
    /* Incase we only upload depth we need to preserve the stencil */
    if (srcFormat == GL_DEPTH_COMPONENT) {
