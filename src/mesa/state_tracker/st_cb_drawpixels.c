@@ -425,12 +425,12 @@ draw_quad(GLcontext *ctx, GLfloat x0, GLfloat y0, GLfloat z,
       const struct gl_framebuffer *fb = st->ctx->DrawBuffer;
       const GLfloat fb_width = fb->Width;
       const GLfloat fb_height = fb->Height;
-      const GLfloat clip_x0 = x0 / fb_width * 2.0 - 1.0;
-      const GLfloat clip_y0 = y0 / fb_height * 2.0 - 1.0;
-      const GLfloat clip_x1 = x1 / fb_width * 2.0 - 1.0;
-      const GLfloat clip_y1 = y1 / fb_height * 2.0 - 1.0;
-      const GLfloat sLeft = 0.0F, sRight = 1.0F;
-      const GLfloat tTop = invertTex, tBot = 1.0 - tTop;
+      const GLfloat clip_x0 = x0 / fb_width * 2.0f - 1.0f;
+      const GLfloat clip_y0 = y0 / fb_height * 2.0f - 1.0f;
+      const GLfloat clip_x1 = x1 / fb_width * 2.0f - 1.0f;
+      const GLfloat clip_y1 = y1 / fb_height * 2.0f - 1.0f;
+      const GLfloat sLeft = 0.0f, sRight = 1.0f;
+      const GLfloat tTop = invertTex, tBot = 1.0f - tTop;
       GLuint tex, i;
 
       /* upper-left */
@@ -463,21 +463,21 @@ draw_quad(GLcontext *ctx, GLfloat x0, GLfloat y0, GLfloat z,
       if (color) {
          for (i = 0; i < 4; i++) {
             verts[i][0][2] = z;   /*Z*/
-            verts[i][0][3] = 1.0; /*W*/
+            verts[i][0][3] = 1.0f; /*W*/
             verts[i][1][0] = color[0];
             verts[i][1][1] = color[1];
             verts[i][1][2] = color[2];
             verts[i][1][3] = color[3];
-            verts[i][2][2] = 0.0; /*R*/
-            verts[i][2][3] = 1.0; /*Q*/
+            verts[i][2][2] = 0.0f; /*R*/
+            verts[i][2][3] = 1.0f; /*Q*/
          }
       }
       else {
          for (i = 0; i < 4; i++) {
             verts[i][0][2] = z;   /*Z*/
-            verts[i][0][3] = 1.0; /*W*/
-            verts[i][1][2] = 0.0; /*R*/
-            verts[i][1][3] = 1.0; /*Q*/
+            verts[i][0][3] = 1.0f; /*W*/
+            verts[i][1][2] = 0.0f; /*R*/
+            verts[i][1][3] = 1.0f; /*Q*/
          }
       }
    }
