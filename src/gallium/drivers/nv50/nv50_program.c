@@ -1555,7 +1555,7 @@ nv50_program_validate_code(struct nv50_context *nv50, struct nv50_program *p)
 			*(ptr++) = e->inst[1];
 	}
 
-	so = so_new(3,2);
+	so = so_new(4,2);
 	so_method(so, nv50->screen->tesla, 0x1280, 3);
 	so_reloc (so, p->buffer, 0, flags | NOUVEAU_BO_HIGH, 0, 0);
 	so_reloc (so, p->buffer, 0, flags | NOUVEAU_BO_LOW, 0, 0);
@@ -1604,7 +1604,7 @@ nv50_vertprog_validate(struct nv50_context *nv50)
 	nv50_program_validate_data(nv50, p);
 	nv50_program_validate_code(nv50, p);
 
-	so = so_new(11, 2);
+	so = so_new(13, 2);
 	so_method(so, tesla, NV50TCL_VP_ADDRESS_HIGH, 2);
 	so_reloc (so, p->buffer, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD |
 		  NOUVEAU_BO_HIGH, 0, 0);
