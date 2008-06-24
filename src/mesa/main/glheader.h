@@ -69,16 +69,33 @@
 #include <stdarg.h>
 
 
-/* Get typedefs for uintptr_t and friends */
-#if defined(__MINGW32__) || defined(__NetBSD__)
-#  include <stdint.h>
-#elif defined(_WIN32)
-#  include <BaseTsd.h>
-#  if _MSC_VER == 1200
-     typedef UINT_PTR uintptr_t;
-#  endif 
+/* Get standard integer types */
+#if defined(_MSC_VER)
+
+   typedef __int8             int8_t;
+   typedef unsigned __int8    uint8_t;
+   typedef __int16            int16_t;
+   typedef unsigned __int16   uint16_t;
+#  ifndef __eglplatform_h_
+     typedef __int32            int32_t;
+#  endif
+   typedef unsigned __int32   uint32_t;
+   typedef __int64            int64_t;
+   typedef unsigned __int64   uint64_t;
+
+#  if defined(_WIN64)
+     typedef __int64            intptr_t;
+     typedef unsigned __int64   uintptr_t;
+#  else
+     typedef __int32            intptr_t;
+     typedef unsigned __int32   uintptr_t;
+#  endif
+
+#  define INT64_C(__val) __val##i64
+#  define UINT64_C(__val) __val##ui64
+
 #else
-#  include <inttypes.h>
+#  include <stdint.h>
 #endif
 
 #if defined(_WIN32) && !defined(__WIN32__) && !defined(__CYGWIN__) && !defined(BUILD_FOR_SNAP)
