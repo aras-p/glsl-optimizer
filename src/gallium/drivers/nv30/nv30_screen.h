@@ -8,6 +8,8 @@ struct nv30_screen {
 
 	struct nouveau_winsys *nvws;
 
+	unsigned cur_pctx;
+
 	/* HW graphics objects */
 	struct nouveau_grobj *rankine;
 	struct nouveau_notifier *sync;
