@@ -677,6 +677,39 @@ i915_get_tex_surface(struct pipe_screen *screen,
    return ps;
 }
 
+static struct pipe_texture *
+i915_texture_blanket(struct pipe_screen * screen,
+                     const struct pipe_texture *base,
+                     const unsigned *pitch,
+                     struct pipe_buffer *buffer)
+{
+   struct i915_texture *tex;
+   assert(screen);
+   assert(templat);
+
+   /* Only supports one type */
+   if (base->target != PIPE_TEXTURE_2D ||
+       base->last_level != 0 ||
+       base->depth[0] != 1) {
+      return NULL;
+   }
+
+   tex = CALLOC_STRUCT(i915_texture);
+   if (!tex)
+      return NULL;
+
+   tex->base = *base;
+
+   tex->pitch = pitch[0];
+
+   i915_miptree_set_level_info(tex, 0, 1, base->width[0], base->height[0], 1);
+   i915_miptree_set_image_offset(tex, 0, 0, 0, 0);
+
+   pipe_buffer_reference(screen->winsys, &tex->buffer, buffer);
+
+   return &tex->base;
+}
+
 void
 i915_init_texture_functions(struct i915_context *i915)
 {
@@ -713,5 +746,6 @@ i915_init_screen_texture_functions(struct pipe_screen *screen)
    screen->texture_create = i915_texture_create;
    screen->texture_release = i915_texture_release;
    screen->get_tex_surface = i915_get_tex_surface;
+   screen->texture_blanket = i915_texture_blanket;
    screen->tex_surface_release = i915_tex_surface_release;
 }
