@@ -132,9 +132,9 @@ void _debug_break(void);
  * Hard-coded breakpoint.
  */
 #ifdef DEBUG
-#if (defined(__i386__) || defined(__386__)) && defined(__GNUC__)
+#if defined(PIPE_ARCH_X86) && defined(PIPE_CC_GCC)
 #define debug_break() __asm("int3")
-#elif defined(_M_IX86) && defined(_MSC_VER)
+#elif defined(PIPE_ARCH_X86) && defined(PIPE_CC_MSVC)
 #define debug_break()  do { _asm {int 3} } while(0)
 #else
 #define debug_break() _debug_break()

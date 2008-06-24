@@ -16,6 +16,8 @@
 #include "pipe/p_util.h"
 #include "pipe/p_inlines.h"
 
+#include "i915simple/i915_screen.h"
+
 /* Turn a pipe winsys into an intel/pipe winsys:
  */
 static INLINE struct intel_be_device *
@@ -192,7 +194,7 @@ intel_be_fence_finish( struct pipe_winsys *sws,
  */
 
 boolean
-intel_be_init_device(struct intel_be_device *dev, int fd)
+intel_be_init_device(struct intel_be_device *dev, int fd, unsigned id)
 {
 	dev->fd = fd;
 	dev->max_batch_size = 16 * 4096;
@@ -251,6 +253,11 @@ intel_be_init_device(struct intel_be_device *dev, int fd)
 					 dev->max_batch_size,
 					 1, 40, dev->max_batch_size * 16, 0,
 					 dev->fMan);
+
+	/* Fill in this struct with callbacks that i915simple will need to
+	 * communicate with the window system, buffer manager, etc.
+	 */
+	dev->screen = i915_create_screen(&dev->base, id);
 
 	return true;
 }

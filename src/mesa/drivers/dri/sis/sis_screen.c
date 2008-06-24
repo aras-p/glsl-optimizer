@@ -77,8 +77,8 @@ sisFillInModes(int bpp)
    static const GLenum back_buffer_modes[] = {
       GLX_NONE, GLX_SWAP_UNDEFINED_OML
    };
-   u_int8_t depth_bits_array[4];
-   u_int8_t stencil_bits_array[4];
+   uint8_t depth_bits_array[4];
+   uint8_t stencil_bits_array[4];
 
    depth_bits_array[0] = 0;
    stencil_bits_array[0] = 0;

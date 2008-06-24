@@ -213,10 +213,10 @@ i915_emit_hardware_state(struct i915_context *i915 )
       if (cbuf_surface) {
 	 unsigned cpitch = (cbuf_surface->pitch * cbuf_surface->cpp);
 	 unsigned ctile = BUF_3D_USE_FENCE;
-#if 0
-	 if (!((cpitch - 1) & cpitch) && cpitch >= 512)
+	 if (cbuf_surface->texture &&
+	       ((struct i915_texture*)(cbuf_surface->texture))->tiled) {
 	    ctile = BUF_3D_TILED_SURFACE;
-#endif
+	 }
 
 	 OUT_BATCH(_3DSTATE_BUF_INFO_CMD);
 
@@ -234,10 +234,10 @@ i915_emit_hardware_state(struct i915_context *i915 )
       if (depth_surface) {
 	 unsigned zpitch = (depth_surface->pitch * depth_surface->cpp);
 	 unsigned ztile = BUF_3D_USE_FENCE;
-#if 0
-	 if (!((zpitch - 1) & zpitch) && zpitch >= 512)
+	 if (depth_surface->texture &&
+	       ((struct i915_texture*)(depth_surface->texture))->tiled) {
 	    ztile = BUF_3D_TILED_SURFACE;
-#endif
+	 }
 
 	 OUT_BATCH(_3DSTATE_BUF_INFO_CMD);
 

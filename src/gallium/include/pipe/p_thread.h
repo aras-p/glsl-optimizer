@@ -62,12 +62,6 @@
 #define _P_THREAD_H_
 
 
-#if defined(USE_MGL_NAMESPACE)
-#define _glapi_Dispatch _mglapi_Dispatch
-#endif
-
-
-
 #if (defined(PTHREADS) || defined(SOLARIS_THREADS) ||\
      defined(WIN32_THREADS) || defined(USE_XTHREADS) || defined(BEOS_THREADS)) \
     && !defined(THREADS)
@@ -330,22 +324,6 @@ _glthread_GetTSD(_glthread_TSD *);
 extern void
 _glthread_SetTSD(_glthread_TSD *, void *);
 
-#if defined(GLX_USE_TLS)
-
-extern __thread struct _glapi_table * _glapi_tls_Dispatch
-    __attribute__((tls_model("initial-exec")));
-
-#define GET_DISPATCH() _glapi_tls_Dispatch
-
-#elif !defined(GL_CALL)
-# if defined(THREADS)
-#  define GET_DISPATCH() \
-   ((__builtin_expect( _glapi_Dispatch != NULL, 1 )) \
-       ? _glapi_Dispatch : _glapi_get_dispatch())
-# else
-#  define GET_DISPATCH() _glapi_Dispatch
-# endif /* defined(THREADS) */
-#endif  /* ndef GL_CALL */
 
 
 #endif /* _P_THREAD_H_ */

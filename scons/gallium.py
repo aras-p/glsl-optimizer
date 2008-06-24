@@ -94,7 +94,7 @@ def generate(env):
 	if platform == 'winddk':
 		env.Tool('winddk')
 	elif platform == 'wince':
-		env.Tool('evc')
+		env.Tool('wcesdk')
 	else:
 		env.Tool('default')
 
@@ -165,16 +165,20 @@ def generate(env):
 			cppdefines += [('DBG', 1)]
 	if platform == 'wince':
 		cppdefines += [
-			('_WIN32_WCE', '500'), 
-			'WCE_PLATFORM_STANDARDSDK_500',
-			'_i386_',
-			('UNDER_CE', '500'),
+			'_CRT_SECURE_NO_DEPRECATE',
+			'_USE_32BIT_TIME_T',
 			'UNICODE',
 			'_UNICODE',
-			'_X86_',
+			('UNDER_CE', '600'),
+			('_WIN32_WCE', '0x600'),
+			'WINCEOEM',
+			'WINCEINTERNAL',
+			'WIN32',
+			'STRICT',
 			'x86',
-			'_USRDLL',
-			'TEST_EXPORTS' ,
+			'_X86_',
+			'INTERNATIONAL',
+			('INTLMSG_CODEPAGE', '1252'),
 		]
 	if platform == 'windows':
 		cppdefines += ['PIPE_SUBSYSTEM_WINDOWS_USER']
@@ -262,9 +266,18 @@ def generate(env):
 				#'/Z7', #enable old-style debug info
 			]
 		if platform == 'wince':
+			# See also C:\WINCE600\public\common\oak\misc\makefile.def
 			cflags += [
-				'/Gs8192',
 				'/GF', # enable read-only string pooling
+				'/GR-', # disable C++ RTTI
+				'/GS', # enable security checks
+				# Allow disabling language conformance to maintain backward compat
+				#'/Zc:wchar_t-', # don't force wchar_t as native type, instead of typedef
+				#'/Zc:forScope-', # don't enforce Standard C++ for scoping rules
+				#'/wd4867',
+				#'/wd4430',
+				#'/MT',
+				#'/U_MT',
 			]
 		# Automatic pdb generation
 		# See http://scons.tigris.org/issues/show_bug.cgi?id=1656

@@ -461,9 +461,9 @@ static void r128TexEnv( GLcontext *ctx, GLenum target,
 
    case GL_TEXTURE_LOD_BIAS:
       {
-	 u_int32_t t = rmesa->setup.tex_cntl_c;
+	 uint32_t t = rmesa->setup.tex_cntl_c;
 	 GLint bias;
-	 u_int32_t b;
+	 uint32_t b;
 
 	 /* GTH: This isn't exactly correct, but gives good results up to a
 	  * certain point.  It is better than completely ignoring the LOD
@@ -483,7 +483,7 @@ static void r128TexEnv( GLcontext *ctx, GLenum target,
 	    bias = 127;
 	 }
 
-	 b = (u_int32_t)bias & 0xff;
+	 b = (uint32_t)bias & 0xff;
 	 t &= ~R128_LOD_BIAS_MASK;
 	 t |= (b << R128_LOD_BIAS_SHIFT);
 

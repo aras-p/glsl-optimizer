@@ -231,6 +231,7 @@ if env['platform'] != 'winddk':
 	glapi_sources = [
 		'main/dispatch.c',
 		'glapi/glapi.c',
+		'glapi/glapi_getproc.c',
 		'glapi/glthread.c',
 	]
 	

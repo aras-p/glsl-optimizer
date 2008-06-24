@@ -60,7 +60,7 @@ cell_surface_data(struct pipe_context *pipe,
 
 static void
 cell_surface_copy(struct pipe_context *pipe,
-                  unsigned do_flip,
+                  boolean do_flip,
                   struct pipe_surface *dst,
                   unsigned dstx, unsigned dsty,
                   struct pipe_surface *src,
@@ -76,7 +76,7 @@ cell_surface_copy(struct pipe_context *pipe,
                   width, height,
                   pipe_surface_map(src),
                   do_flip ? -src->pitch : src->pitch,
-                  srcx, do_flip ? 1 - srcy - height : srcy);
+                  srcx, do_flip ? height - 1 - srcy : srcy);
 
    pipe_surface_unmap(src);
    pipe_surface_unmap(dst);

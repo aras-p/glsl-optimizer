@@ -84,7 +84,7 @@ static void uploadSubImage( r128ContextPtr rmesa, r128TexObjPtr t,
    int imageWidth, imageHeight;
    int remaining, rows;
    int format, dwords;
-   u_int32_t pitch, offset;
+   uint32_t pitch, offset;
    int i;
 
    /* Ensure we have a valid texture to upload */
@@ -200,7 +200,7 @@ static void uploadSubImage( r128ContextPtr rmesa, r128TexObjPtr t,
 	 remaining > 0 ;
 	 remaining -= rows, y += rows, i++ )
    {
-      u_int32_t *dst;
+      uint32_t *dst;
       drmBufPtr buffer;
 
       assert(image->Data);
@@ -211,7 +211,7 @@ static void uploadSubImage( r128ContextPtr rmesa, r128TexObjPtr t,
       LOCK_HARDWARE( rmesa );
       buffer = r128GetBufferLocked( rmesa );
 
-      dst = (u_int32_t *)((char *)buffer->address + R128_HOSTDATA_BLIT_OFFSET);
+      dst = (uint32_t *)((char *)buffer->address + R128_HOSTDATA_BLIT_OFFSET);
 
       /* Copy the next chunck of the texture image into the blit buffer */
       {

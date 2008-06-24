@@ -121,6 +121,8 @@ emit_##NAME(const float *attrib, void *ptr)		\
 #define FROM_16_SNORM(i)   ((float) ((short *) ptr)[i] / 32767.0f)
 #define FROM_32_SNORM(i)   ((float) ((int *) ptr)[i] / 2147483647.0f)
 
+#define FROM_32_FIXED(i)   (((int *) ptr)[i] / 65536.0f)
+
 #define TO_64_FLOAT(x)   ((double) x)
 #define TO_32_FLOAT(x)   (x)
 
@@ -139,6 +141,8 @@ emit_##NAME(const float *attrib, void *ptr)		\
 #define TO_8_SNORM(x)    ((char) (x * 127.0f))
 #define TO_16_SNORM(x)   ((short) (x * 32767.0f))
 #define TO_32_SNORM(x)   ((int) (x * 2147483647.0f))
+
+#define TO_32_FIXED(x)   ((int) (x * 65536.0f))
 
 
 
@@ -214,6 +218,11 @@ ATTRIB( R8_SNORM,        1, char, FROM_8_SNORM, TO_8_SNORM )
 
 ATTRIB( A8R8G8B8_UNORM,       4, ubyte, FROM_8_UNORM, TO_8_UNORM )
 //ATTRIB( R8G8B8A8_UNORM,       4, ubyte, FROM_8_UNORM, TO_8_UNORM )
+
+ATTRIB( R32G32B32A32_FIXED,   4, int, FROM_32_FIXED, TO_32_FIXED )
+ATTRIB( R32G32B32_FIXED,      3, int, FROM_32_FIXED, TO_32_FIXED )
+ATTRIB( R32G32_FIXED,         2, int, FROM_32_FIXED, TO_32_FIXED )
+ATTRIB( R32_FIXED,            1, int, FROM_32_FIXED, TO_32_FIXED )
 
 
 
@@ -385,6 +394,15 @@ static fetch_func get_fetch_func( enum pipe_format format )
 
    case PIPE_FORMAT_B8G8R8A8_UNORM:
       return &fetch_B8G8R8A8_UNORM;
+
+   case PIPE_FORMAT_R32_FIXED:
+      return &fetch_R32_FIXED;
+   case PIPE_FORMAT_R32G32_FIXED:
+      return &fetch_R32G32_FIXED;
+   case PIPE_FORMAT_R32G32B32_FIXED:
+      return &fetch_R32G32B32_FIXED;
+   case PIPE_FORMAT_R32G32B32A32_FIXED:
+      return &fetch_R32G32B32A32_FIXED;
 
    default:
       assert(0); 

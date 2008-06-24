@@ -40,10 +40,10 @@
 #include "intel_batchbuffer.h"
 #include "drm.h"
 
-u_int32_t intelGetLastFrame (intelContextPtr intel) 
+uint32_t intelGetLastFrame (intelContextPtr intel) 
 {
    int ret;
-   u_int32_t frame;
+   uint32_t frame;
    drm_i915_getparam_t gp;
    
    gp.param = I915_PARAM_LAST_DISPATCH;

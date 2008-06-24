@@ -1079,7 +1079,7 @@ update_textures_used(struct gl_program *prog)
  */
 static void
 set_program_uniform(GLcontext *ctx, struct gl_program *program, GLint location,
-                    GLenum type, GLint count, GLint elems, const void *values)
+                    GLenum type, GLsizei count, GLint elems, const void *values)
 {
    if (program->Parameters->Parameters[location].Type == PROGRAM_SAMPLER) {
       /* This controls which texture unit which is used by a sampler */
@@ -1111,7 +1111,7 @@ set_program_uniform(GLcontext *ctx, struct gl_program *program, GLint location,
    }
    else {
       /* ordinary uniform variable */
-      GLuint k, i;
+      GLsizei k, i;
 
       if (count * elems > program->Parameters->Parameters[location].Size) {
          _mesa_error(ctx, GL_INVALID_OPERATION, "glUniform(count too large)");

@@ -37,6 +37,7 @@
 /**
  * Copy 2D rect from one place to another.
  * Position and sizes are in pixels.
+ * src_pitch may be negative to do vertical flip of pixels from source.
  */
 void
 pipe_copy_rect(ubyte * dst,
@@ -52,13 +53,21 @@ pipe_copy_rect(ubyte * dst,
                int src_y)
 {
    unsigned i;
+   int src_pitch_pos = src_pitch < 0 ? -src_pitch : src_pitch;
+
+   assert(cpp > 0);
+   assert(src_x >= 0);
+   assert(src_y >= 0);
+   assert(dst_x >= 0);
+   assert(dst_y >= 0);
 
    dst_pitch *= cpp;
    src_pitch *= cpp;
+   src_pitch_pos *= cpp;
    dst += dst_x * cpp;
    src += src_x * cpp;
    dst += dst_y * dst_pitch;
-   src += src_y * src_pitch;
+   src += src_y * src_pitch_pos;
    width *= cpp;
 
    if (width == dst_pitch && width == src_pitch)

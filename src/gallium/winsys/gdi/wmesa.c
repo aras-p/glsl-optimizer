@@ -469,7 +469,8 @@ wm_surface_alloc_storage(struct pipe_winsys *winsys,
                          struct pipe_surface *surf,
                          unsigned width, unsigned height,
                          enum pipe_format format, 
-                         unsigned flags)
+                         unsigned flags,
+                         unsigned tex_usage)
 {
    const unsigned alignment = 64;
 

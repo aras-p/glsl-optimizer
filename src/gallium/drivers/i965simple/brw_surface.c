@@ -41,7 +41,7 @@
  */
 static void
 brw_surface_copy(struct pipe_context *pipe,
-                 unsigned do_flip,
+                 boolean do_flip,
                  struct pipe_surface *dst,
                  unsigned dstx, unsigned dsty,
                  struct pipe_surface *src,
@@ -66,7 +66,7 @@ brw_surface_copy(struct pipe_context *pipe,
                      width, height, 
                      src_map, 
                      do_flip ? -(int) src->pitch : src->pitch, 
-                     srcx, do_flip ? 1 - srcy - height : srcy);
+                     srcx, do_flip ? height - 1 - srcy : srcy);
 
       pipe->screen->surface_unmap(pipe->screen, src);
       pipe->screen->surface_unmap(pipe->screen, dst);

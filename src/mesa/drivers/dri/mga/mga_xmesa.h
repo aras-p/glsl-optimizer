@@ -148,7 +148,7 @@ do {						\
 #define MGA_BASE( reg )		((unsigned long)(mmesa->mgaScreen->mmio.map))
 #define MGA_ADDR( reg )		(MGA_BASE(reg) + reg)
 
-#define MGA_DEREF( reg )	*(volatile u_int32_t *)MGA_ADDR( reg )
+#define MGA_DEREF( reg )	*(volatile uint32_t *)MGA_ADDR( reg )
 #define MGA_READ( reg )		MGA_DEREF( reg )
 
 #endif

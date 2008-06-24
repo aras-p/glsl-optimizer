@@ -12,6 +12,11 @@ struct intel_be_device
 {
 	struct pipe_winsys base;
 
+	/**
+	 * Hw level screen
+	 */
+	struct pipe_screen *screen;
+
 	int fd; /**< Drm file discriptor */
 
 	size_t max_batch_size;
@@ -28,7 +33,7 @@ struct intel_be_device
 };
 
 boolean
-intel_be_init_device(struct intel_be_device *device, int fd);
+intel_be_init_device(struct intel_be_device *device, int fd, unsigned id);
 
 void
 intel_be_destroy_device(struct intel_be_device *dev);

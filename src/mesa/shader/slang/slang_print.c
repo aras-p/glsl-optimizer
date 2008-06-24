@@ -182,14 +182,14 @@ static void
 print_generic2(const slang_operation *op, const char *oper,
                const char *s, int indent)
 {
-   int i;
+   GLuint i;
    if (oper) {
       spaces(indent);
       printf("[%p locals %p] %s %s\n", (void*) op, (void*) op->locals, oper, s);
    }
    for (i = 0; i < op->num_children; i++) {
       spaces(indent);
-      printf("//child %d:\n", i);
+      printf("//child %u:\n", i);
       slang_print_tree(&op->children[i], indent);
    }
 }
@@ -804,7 +804,7 @@ int
 slang_checksum_tree(const slang_operation *op)
 {
    int s = op->num_children;
-   int i;
+   GLuint i;
 
    for (i = 0; i < op->num_children; i++) {
       s += slang_checksum_tree(&op->children[i]);

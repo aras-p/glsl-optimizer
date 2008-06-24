@@ -35,8 +35,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 typedef struct {
 	nouveau_card* card;
-	u_int32_t bus_type;
-	u_int32_t agp_mode;
+	uint32_t bus_type;
+	uint32_t agp_mode;
 
         GLint fbFormat;
 

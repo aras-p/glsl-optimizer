@@ -45,12 +45,12 @@ int nouveau_fifo_remaining=0;
 
 #define RING_SKIPS 8
 
-void WAIT_RING(nouveauContextPtr nmesa,u_int32_t size)
+void WAIT_RING(nouveauContextPtr nmesa,uint32_t size)
 {
 #ifdef NOUVEAU_RING_DEBUG
 	return;
 #endif
-	u_int32_t fifo_get;
+	uint32_t fifo_get;
 	while(nmesa->fifo.free < size+1) {
 		fifo_get = NV_FIFO_READ_GET();
 

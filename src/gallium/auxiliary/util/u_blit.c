@@ -223,6 +223,49 @@ setup_vertex_data(struct blit_state *ctx,
 
 
 /**
+ * Setup vertex data for the textured quad we'll draw.
+ * Note: y=0=top
+ */
+static void
+setup_vertex_data_tex(struct blit_state *ctx,
+                      float x0, float y0, float x1, float y1,
+                      float s0, float t0, float s1, float t1,
+                      float z)
+{
+   void *buf;
+
+   ctx->vertices[0][0][0] = x0;
+   ctx->vertices[0][0][1] = y0;
+   ctx->vertices[0][0][2] = z;
+   ctx->vertices[0][1][0] = s0; /*s*/
+   ctx->vertices[0][1][1] = t0; /*t*/
+
+   ctx->vertices[1][0][0] = x1;
+   ctx->vertices[1][0][1] = y0;
+   ctx->vertices[1][0][2] = z;
+   ctx->vertices[1][1][0] = s1; /*s*/
+   ctx->vertices[1][1][1] = t0; /*t*/
+
+   ctx->vertices[2][0][0] = x1;
+   ctx->vertices[2][0][1] = y1;
+   ctx->vertices[2][0][2] = z;
+   ctx->vertices[2][1][0] = s1;
+   ctx->vertices[2][1][1] = t1;
+
+   ctx->vertices[3][0][0] = x0;
+   ctx->vertices[3][0][1] = y1;
+   ctx->vertices[3][0][2] = z;
+   ctx->vertices[3][1][0] = s0;
+   ctx->vertices[3][1][1] = t1;
+
+   buf = ctx->pipe->winsys->buffer_map(ctx->pipe->winsys, ctx->vbuf,
+                                       PIPE_BUFFER_USAGE_CPU_WRITE);
+
+   memcpy(buf, ctx->vertices, sizeof(ctx->vertices));
+
+   ctx->pipe->winsys->buffer_unmap(ctx->pipe->winsys, ctx->vbuf);
+}
+/**
  * Copy pixel block from src surface to dst surface.
  * Overlapping regions are acceptable.
  * XXX need some control over blitting Z and/or stencil.
@@ -362,3 +405,99 @@ util_blit_pixels(struct blit_state *ctx,
    screen->texture_release(screen, &tex);
 }
 
+/**
+ * Copy pixel block from src texture to dst surface.
+ * Overlapping regions are acceptable.
+ *
+ * XXX Should support selection of level.
+ * XXX need some control over blitting Z and/or stencil.
+ */
+void
+util_blit_pixels_tex(struct blit_state *ctx,
+                 struct pipe_texture *tex,
+                 int srcX0, int srcY0,
+                 int srcX1, int srcY1,
+                 struct pipe_surface *dst,
+                 int dstX0, int dstY0,
+                 int dstX1, int dstY1,
+                 float z, uint filter)
+{
+   struct pipe_context *pipe = ctx->pipe;
+   struct pipe_screen *screen = pipe->screen;
+   struct pipe_framebuffer_state fb;
+   float s0, t0, s1, t1;
+
+   assert(filter == PIPE_TEX_MIPFILTER_NEAREST ||
+          filter == PIPE_TEX_MIPFILTER_LINEAR);
+
+   assert(tex->width[0] != 0);
+   assert(tex->height[0] != 0);
+
+   s0 = srcX0 / (float)tex->width[0];
+   s1 = srcX1 / (float)tex->width[0];
+   t0 = srcY0 / (float)tex->height[0];
+   t1 = srcY1 / (float)tex->height[0];
+
+   assert(screen->is_format_supported(screen, dst->format, PIPE_SURFACE));
+
+   /* save state (restored below) */
+   cso_save_blend(ctx->cso);
+   cso_save_depth_stencil_alpha(ctx->cso);
+   cso_save_rasterizer(ctx->cso);
+   cso_save_samplers(ctx->cso);
+   cso_save_sampler_textures(ctx->cso);
+   cso_save_framebuffer(ctx->cso);
+   cso_save_fragment_shader(ctx->cso);
+   cso_save_vertex_shader(ctx->cso);
+   cso_save_viewport(ctx->cso);
+
+   /* set misc state we care about */
+   cso_set_blend(ctx->cso, &ctx->blend);
+   cso_set_depth_stencil_alpha(ctx->cso, &ctx->depthstencil);
+   cso_set_rasterizer(ctx->cso, &ctx->rasterizer);
+   cso_set_viewport(ctx->cso, &ctx->viewport);
+
+   /* sampler */
+   ctx->sampler.min_img_filter = filter;
+   ctx->sampler.mag_img_filter = filter;
+   cso_single_sampler(ctx->cso, 0, &ctx->sampler);
+   cso_single_sampler_done(ctx->cso);
+
+   /* texture */
+   cso_set_sampler_textures(ctx->cso, 1, &tex);
+
+   /* shaders */
+   cso_set_fragment_shader_handle(ctx->cso, ctx->fs);
+   cso_set_vertex_shader_handle(ctx->cso, ctx->vs);
+
+   /* drawing dest */
+   memset(&fb, 0, sizeof(fb));
+   fb.width = dst->width;
+   fb.height = dst->height;
+   fb.num_cbufs = 1;
+   fb.cbufs[0] = dst;
+   cso_set_framebuffer(ctx->cso, &fb);
+
+   /* draw quad */
+   setup_vertex_data_tex(ctx,
+                     (float) dstX0, (float) dstY0,
+                     (float) dstX1, (float) dstY1,
+                     s0, t0, s1, t1,
+                     z);
+
+   util_draw_vertex_buffer(ctx->pipe, ctx->vbuf,
+                           PIPE_PRIM_TRIANGLE_FAN,
+                           4,  /* verts */
+                           2); /* attribs/vert */
+
+   /* restore state we changed */
+   cso_restore_blend(ctx->cso);
+   cso_restore_depth_stencil_alpha(ctx->cso);
+   cso_restore_rasterizer(ctx->cso);
+   cso_restore_samplers(ctx->cso);
+   cso_restore_sampler_textures(ctx->cso);
+   cso_restore_framebuffer(ctx->cso);
+   cso_restore_fragment_shader(ctx->cso);
+   cso_restore_vertex_shader(ctx->cso);
+   cso_restore_viewport(ctx->cso);
+}

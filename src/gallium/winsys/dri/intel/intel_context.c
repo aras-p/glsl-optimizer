@@ -134,25 +134,6 @@ static const struct dri_debug_control debug_control[] = {
 
 
 
-/**
- * Create i915 hardware rendering context.
- */
-static struct pipe_context *
-intel_create_i915simple(struct intel_context *intel,
-			struct pipe_winsys *winsys)
-{
-   struct pipe_screen *screen;
-	
-   /* Fill in this struct with callbacks that i915simple will need to
-    * communicate with the window system, buffer manager, etc.
-    */
-   screen = i915_create_screen(winsys, intel->intelScreen->deviceID);
-
-   /* Create the i915simple context:
-    */
-   return i915_create_context(screen, winsys, &intel->base.base );
-}
-
 static void
 intel_lock_hardware(struct intel_be_context *context)
 {
@@ -250,7 +231,9 @@ intelCreateContext(const __GLcontextModes * visual,
       case PCI_CHIP_Q35_G:
       case PCI_CHIP_I915_G:
       case PCI_CHIP_I915_GM:
-	 pipe = intel_create_i915simple( intel, &intelScreen->base.base );
+	 pipe = i915_create_context(intelScreen->base.screen,
+				    &intelScreen->base.base,
+				    &intel->base.base);
 	 break;
       default:
 	 fprintf(stderr, "Unknown PCIID %x in %s, using software driver\n",

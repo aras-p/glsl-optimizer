@@ -234,6 +234,7 @@ i915_update_texture(struct i915_context *i915,
    const uint width = pt->width[0], height = pt->height[0], depth = pt->depth[0];
    const uint num_levels = pt->last_level;
    unsigned max_lod = num_levels * 4;
+   unsigned tiled = MS3_USE_FENCE_REGS;
 
    assert(tex);
    assert(width);
@@ -246,12 +247,17 @@ i915_update_texture(struct i915_context *i915,
    assert(format);
    assert(pitch);
 
+   if (tex->tiled) {
+      assert(!((pitch - 1) & pitch));
+      tiled = MS3_TILED_SURFACE;
+   }
+
    /* MS3 state */
    state[0] =
       (((height - 1) << MS3_HEIGHT_SHIFT)
        | ((width - 1) << MS3_WIDTH_SHIFT)
        | format
-       | MS3_USE_FENCE_REGS);
+       | tiled);
 
    /*
     * XXX When min_filter != mag_filter and there's just one mipmap level,

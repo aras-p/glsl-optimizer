@@ -1934,7 +1934,7 @@ compile_with_grammar(grammar id, const char *source, slang_code_unit * unit,
    byte *prod;
    GLuint size, start, version;
    slang_string preprocessed;
-   int maxVersion;
+   GLuint maxVersion;
 
 #if FEATURE_ARB_shading_language_120
    maxVersion = 120;

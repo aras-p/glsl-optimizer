@@ -332,7 +332,7 @@ static INLINE int iround(float f)
    return r;
 }
 #define IROUND(x)  iround(x)
-#elif defined(USE_X86_ASM) && defined(__MSC__) && defined(__WIN32__)
+#elif defined(USE_X86_ASM) && defined(_MSC_VER)
 static INLINE int iround(float f)
 {
    int r;
@@ -697,14 +697,10 @@ extern double
 _mesa_pow(double x, double y);
 
 extern int
-_mesa_ffs(int i);
+_mesa_ffs(int32_t i);
 
 extern int
-#ifdef __MINGW32__
-_mesa_ffsll(long i);
-#else
-_mesa_ffsll(long long i);
-#endif
+_mesa_ffsll(int64_t i);
 
 extern unsigned int
 _mesa_bitcount(unsigned int n);

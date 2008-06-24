@@ -230,7 +230,7 @@ static int r128WaitForFrameCompletion( r128ContextPtr rmesa )
    int wait = 0;
 
    while ( 1 ) {
-      u_int32_t frame = read_MMIO_LE32( R128MMIO, R128_LAST_FRAME_REG );
+      uint32_t frame = read_MMIO_LE32( R128MMIO, R128_LAST_FRAME_REG );
 
       if ( rmesa->sarea->last_frame - frame <= R128_MAX_OUTSTANDING ) {
 	 break;

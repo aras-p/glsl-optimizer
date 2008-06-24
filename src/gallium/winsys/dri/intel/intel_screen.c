@@ -38,10 +38,69 @@
 #include "intel_drm/ws_dri_bufpool.h"
 
 #include "pipe/p_context.h"
+#include "pipe/p_screen.h"
+#include "pipe/p_inlines.h"
 #include "state_tracker/st_public.h"
 #include "state_tracker/st_cb_fbo.h"
 
+static void
+intelCreateSurface(struct intel_screen *intelScreen, struct pipe_winsys *winsys, unsigned handle);
 
+static void
+intelCreateSurface(struct intel_screen *intelScreen, struct pipe_winsys *winsys, unsigned handle)
+{
+   struct intel_be_buffer *be_buf = malloc(sizeof(*be_buf));
+   struct pipe_screen *screen = intelScreen->base.screen;
+   struct pipe_texture *texture;
+   struct pipe_texture templat;
+   struct pipe_surface *surface;
+   struct pipe_buffer *buffer = &be_buf->base;
+   unsigned pitch;
+
+   assert(intelScreen->front.cpp == 4);
+
+   /* XXX create a intel_be function for this */
+   {
+      driGenBuffers(intelScreen->base.staticPool, "front", 1, &intelScreen->front.buffer, 0, 0, 0);
+      driBOSetReferenced(intelScreen->front.buffer, handle);
+
+      memset(be_buf, 0, sizeof(*be_buf));
+      buffer->refcount = 1;
+      buffer->alignment = 0;
+      buffer->usage = 0;
+      buffer->size = driBOSize(intelScreen->front.buffer);
+      be_buf->driBO = intelScreen->front.buffer;
+   }
+
+   memset(&templat, 0, sizeof(templat));
+   templat.tex_usage |= PIPE_TEXTURE_USAGE_DISPLAY_TARGET;
+   templat.target = PIPE_TEXTURE_2D;
+   templat.last_level = 0;
+   templat.depth[0] = 1;
+   templat.format = PIPE_FORMAT_A8R8G8B8_UNORM;
+   templat.cpp = intelScreen->front.cpp;
+   templat.width[0] = intelScreen->front.width;
+   templat.height[0] = intelScreen->front.height;
+   pitch = intelScreen->front.pitch / intelScreen->front.cpp;
+
+   texture = screen->texture_blanket(screen,
+                                     &templat,
+                                     &pitch,
+                                     buffer);
+
+   /* Unref the buffer we don't need it anyways */
+   pipe_buffer_reference(screen->winsys, &buffer, NULL);
+
+   surface = screen->get_tex_surface(screen,
+                                     texture,
+                                     0,
+                                     0,
+                                     0,
+                                     PIPE_BUFFER_USAGE_GPU_WRITE);
+
+   intelScreen->front.texture = texture;
+   intelScreen->front.surface = surface;
+}
 
 PUBLIC const char __driConfigOptions[] =
    DRI_CONF_BEGIN DRI_CONF_SECTION_PERFORMANCE
@@ -157,10 +216,12 @@ intelUpdateScreenRotation(__DRIscreenPrivate * sPriv, drmI830Sarea * sarea)
    }
 #else
    if (intelScreen->base.staticPool) {
-      if (intelScreen->front.buffer)
+      if (intelScreen->front.buffer) {
 	 driBOUnReference(intelScreen->front.buffer);
-      driGenBuffers(intelScreen->base.staticPool, "front", 1, &intelScreen->front.buffer, 0, 0, 0);
-      driBOSetReferenced(intelScreen->front.buffer, sarea->front_bo_handle);
+	 pipe_surface_reference(&intelScreen->front.surface, NULL);
+	 pipe_texture_reference(&intelScreen->front.texture, NULL);
+      }
+      intelCreateSurface(intelScreen, &intelScreen->base.base, sarea->front_bo_handle);
    }
 #endif
 }
@@ -198,10 +259,12 @@ intel_flush_frontbuffer( struct pipe_winsys *winsys,
                          struct pipe_surface *surf,
                          void *context_private)
 {
-   struct intel_context *intel = (struct intel_context *) context_private;
-   __DRIdrawablePrivate *dPriv = intel->driDrawable;
+   //struct intel_context *intel = (struct intel_context *) context_private;
+   //__DRIdrawablePrivate *dPriv = intel->driDrawable;
 
-   intelDisplaySurface(dPriv, surf, NULL);
+   assert((int)"Doesn't work currently" & 0);
+
+   //intelDisplaySurface(dPriv, surf, NULL);
 }
 
 static boolean
@@ -254,9 +317,9 @@ intelInitDriver(__DRIscreenPrivate * sPriv)
       (*glx_enable_extension) (psc, "GLX_SGI_make_current_read");
    }
 
-   intel_be_init_device(&intelScreen->base, sPriv->fd);
    intelScreen->base.base.flush_frontbuffer = intel_flush_frontbuffer;
    intelScreen->base.base.get_name = intel_get_name;
+   intel_be_init_device(&intelScreen->base, sPriv->fd, intelScreen->deviceID);
 
    return GL_TRUE;
 }
@@ -418,8 +481,8 @@ intelFillInModes(unsigned pixel_bits, unsigned depth_bits,
       GLX_NONE, GLX_SWAP_UNDEFINED_OML, GLX_SWAP_COPY_OML
    };
 
-   u_int8_t depth_bits_array[3];
-   u_int8_t stencil_bits_array[3];
+   uint8_t depth_bits_array[3];
+   uint8_t stencil_bits_array[3];
 
 
    depth_bits_array[0] = 0;

@@ -224,7 +224,7 @@ static INLINE int align_int(int x, int align)
 
 
 
-#if defined(__MSC__) && defined(__WIN32__)
+#if defined(PIPE_CC_MSVC) && defined(PIPE_ARCH_X86)
 static INLINE unsigned ffs( unsigned u )
 {
    unsigned i;
@@ -341,14 +341,14 @@ static INLINE int ifloor(float f)
 }
 
 
-#if defined(__GNUC__) && defined(__i386__) 
+#if defined(PIPE_CC_GCC) && defined(PIPE_ARCH_X86) 
 static INLINE int iround(float f)
 {
    int r;
    __asm__ ("fistpl %0" : "=m" (r) : "t" (f) : "st");
    return r;
 }
-#elif defined(__MSC__) && defined(__WIN32__)
+#elif defined(PIPE_CC_MSVC) && defined(PIPE_ARCH_X86)
 static INLINE int iround(float f)
 {
    int r;
@@ -409,7 +409,7 @@ extern void pipe_copy_rect(ubyte * dst, unsigned cpp, unsigned dst_pitch,
 
 
 #if defined(_MSC_VER) 
-#if _MSC_VER < 1400 && !defined(__cplusplus)
+#if _MSC_VER < 1400 && !defined(__cplusplus) || defined(PIPE_SUBSYSTEM_WINDOWS_CE)
  
 static INLINE float cosf( float f ) 
 {
