@@ -332,7 +332,7 @@ static INLINE int iround(float f)
    return r;
 }
 #define IROUND(x)  iround(x)
-#elif defined(USE_X86_ASM) && defined(__MSC__) && defined(__WIN32__)
+#elif defined(USE_X86_ASM) && defined(_MSC_VER)
 static INLINE int iround(float f)
 {
    int r;
