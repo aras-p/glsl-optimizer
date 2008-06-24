@@ -786,7 +786,24 @@ void *
 _mesa_bsearch( const void *key, const void *base, size_t nmemb, size_t size, 
                int (*compar)(const void *, const void *) )
 {
+#if defined(_WIN32_WCE)
+   void *mid;
+   int cmp;
+   while (nmemb) {
+      nmemb >>= 1;
+      mid = (char *)base + nmemb * size;
+      cmp = (*compar)(key, mid);
+      if (cmp == 0)
+	 return mid;
+      if (cmp > 0) {
+	 base = (char *)mid + size;
+	 --nmemb;
+      }
+   }
+   return NULL;
+#else
    return bsearch(key, base, nmemb, size, compar);
+#endif
 }
 
 /*@}*/
@@ -802,7 +819,7 @@ _mesa_bsearch( const void *key, const void *base, size_t nmemb, size_t size,
 char *
 _mesa_getenv( const char *var )
 {
-#if defined(_XBOX)
+#if defined(_XBOX) || defined(_WIN32_WCE)
    return NULL;
 #else
    return getenv(var);
