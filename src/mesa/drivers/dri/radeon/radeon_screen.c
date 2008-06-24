@@ -271,8 +271,8 @@ radeonFillInModes( unsigned pixel_bits, unsigned depth_bits,
 	GLX_NONE, GLX_SWAP_UNDEFINED_OML /*, GLX_SWAP_COPY_OML */
     };
 
-    u_int8_t depth_bits_array[2];
-    u_int8_t stencil_bits_array[2];
+    uint8_t depth_bits_array[2];
+    uint8_t stencil_bits_array[2];
 
 
     depth_bits_array[0] = depth_bits;
@@ -427,7 +427,7 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
       __driUtilMessage("%s: drmMap (2) failed\n", __FUNCTION__ );
       return NULL;
    }
-   screen->scratch = (__volatile__ u_int32_t *)
+   screen->scratch = (__volatile__ uint32_t *)
       ((GLubyte *)screen->status.map + RADEON_SCRATCH_REG_OFFSET);
 
    screen->buffers = drmMapBufs( sPriv->fd );

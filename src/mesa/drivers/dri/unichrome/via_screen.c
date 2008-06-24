@@ -365,8 +365,8 @@ viaFillInModes( unsigned pixel_bits, GLboolean have_back_buffer )
     /* The 32-bit depth-buffer mode isn't supported yet, so don't actually
      * enable it.
      */
-    static const u_int8_t depth_bits_array[4]   = { 0, 16, 24, 32 };
-    static const u_int8_t stencil_bits_array[4] = { 0,  0,  8,  0 };
+    static const uint8_t depth_bits_array[4]   = { 0, 16, 24, 32 };
+    static const uint8_t stencil_bits_array[4] = { 0,  0,  8,  0 };
     const unsigned depth_buffer_factor = 3;
 
 

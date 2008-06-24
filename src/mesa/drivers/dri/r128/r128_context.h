@@ -137,9 +137,9 @@ struct r128_context {
    GLfloat hw_viewport[16];
    GLfloat depth_scale;
 
-   u_int32_t ClearColor;			/* Color used to clear color buffer */
-   u_int32_t ClearDepth;			/* Value used to clear depth buffer */
-   u_int32_t ClearStencil;		/* Value used to clear stencil */
+   uint32_t ClearColor;			/* Color used to clear color buffer */
+   uint32_t ClearDepth;			/* Value used to clear depth buffer */
+   uint32_t ClearStencil;		/* Value used to clear stencil */
 
    /* Map GL texture units onto hardware
     */

@@ -44,10 +44,10 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define NOUVEAU_RING_TRACE 1
 #endif
 
-#define NV_READ(reg) *(volatile u_int32_t *)(nmesa->mmio + (reg))
+#define NV_READ(reg) *(volatile uint32_t *)(nmesa->mmio + (reg))
 
-#define NV_FIFO_READ(reg) *(volatile u_int32_t *)(nmesa->fifo.mmio + (reg/4))
-#define NV_FIFO_WRITE(reg,value) *(volatile u_int32_t *)(nmesa->fifo.mmio + (reg/4)) = value;
+#define NV_FIFO_READ(reg) *(volatile uint32_t *)(nmesa->fifo.mmio + (reg/4))
+#define NV_FIFO_WRITE(reg,value) *(volatile uint32_t *)(nmesa->fifo.mmio + (reg/4)) = value;
 #define NV_FIFO_READ_GET() ((NV_FIFO_READ(NV03_FIFO_REGS_DMAGET) - nmesa->fifo.put_base) >> 2)
 #define NV_FIFO_WRITE_PUT(val) do { \
 	if (NOUVEAU_RING_TRACE) {\
@@ -136,7 +136,7 @@ if (NOUVEAU_RING_TRACE) \
 
 #endif
 
-extern void WAIT_RING(nouveauContextPtr nmesa,u_int32_t size);
+extern void WAIT_RING(nouveauContextPtr nmesa,uint32_t size);
 extern void nouveau_state_cache_flush(nouveauContextPtr nmesa);
 extern void nouveau_state_cache_init(nouveauContextPtr nmesa);
 

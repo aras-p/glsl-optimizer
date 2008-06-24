@@ -211,12 +211,12 @@ typedef struct _VIA {
     XAAInfoRecPtr       AccelInfoRec;
     xRectangle          Rect;
 #endif
-    u_int32_t            SavedCmd;
-    u_int32_t            SavedFgColor;
-    u_int32_t            SavedBgColor;
-    u_int32_t            SavedPattern0;
-    u_int32_t            SavedPattern1;
-    u_int32_t            SavedPatternAddr;
+    uint32_t            SavedCmd;
+    uint32_t            SavedFgColor;
+    uint32_t            SavedBgColor;
+    uint32_t            SavedPattern0;
+    uint32_t            SavedPattern1;
+    uint32_t            SavedPatternAddr;
 
 #if 0
     /* Support for Int10 processing */
@@ -254,8 +254,8 @@ typedef struct _VIA {
 #endif
 
 /*
-    u_int32_t            Cap0_Deinterlace;
-    u_int32_t            Cap1_Deinterlace;
+    uint32_t            Cap0_Deinterlace;
+    uint32_t            Cap1_Deinterlace;
 
     int                 Cap0_FieldSwap;
     int                 NoCap0_HFilter;
@@ -271,7 +271,7 @@ typedef struct _VIA {
     VIAConfigPrivPtr 	pVisualConfigsPriv;
     unsigned long 	agpHandle;
     unsigned long 	registerHandle;
-    u_int32_t            agpAddr;
+    uint32_t            agpAddr;
     unsigned char 	*agpBase;
     unsigned int 	agpSize;
     int  		IsPCI;
@@ -287,11 +287,11 @@ typedef struct _VIA {
 #endif
 
     int     V4LEnabled;
-    u_int16_t    ActiveDevice;	/* if SAMM, non-equal pBIOSInfo->ActiveDevice */
+    uint16_t    ActiveDevice;	/* if SAMM, non-equal pBIOSInfo->ActiveDevice */
     unsigned char       *CursorImage;
-    u_int32_t    CursorFG;
-    u_int32_t    CursorBG;
-    u_int32_t    CursorMC;
+    uint32_t    CursorFG;
+    uint32_t    CursorBG;
+    uint32_t    CursorMC;
 
     unsigned char	MemClk;
     int 		EnableExtendedFIFO;

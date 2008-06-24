@@ -63,11 +63,11 @@ static __GLcontextModes *fill_in_modes( __GLcontextModes *modes,
 				       unsigned num_db_modes,
 				       int visType )
 {
-    static const u_int8_t bits[1][4] = {
+    static const uint8_t bits[1][4] = {
 	{          5,          6,          5,          0 }
     };
 
-    static const u_int32_t masks[1][4] = {
+    static const uint32_t masks[1][4] = {
 	{ 0x0000F800, 0x000007E0, 0x0000001F, 0x00000000 }
     };
 

@@ -122,9 +122,9 @@ static void savageDDBlendEquationSeparate(GLcontext *ctx,
 static void savageBlendFunc_s4(GLcontext *ctx)
 {
     savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
-    u_int32_t drawLocalCtrl = imesa->regs.s4.drawLocalCtrl.ui;
-    u_int32_t drawCtrl0 = imesa->regs.s4.drawCtrl0.ui;
-    u_int32_t drawCtrl1 = imesa->regs.s4.drawCtrl1.ui;
+    uint32_t drawLocalCtrl = imesa->regs.s4.drawLocalCtrl.ui;
+    uint32_t drawCtrl0 = imesa->regs.s4.drawCtrl0.ui;
+    uint32_t drawCtrl1 = imesa->regs.s4.drawCtrl1.ui;
 
     /* set up draw control register (including blending, alpha
      * test, and shading model)
@@ -297,8 +297,8 @@ static void savageBlendFunc_s4(GLcontext *ctx)
 static void savageBlendFunc_s3d(GLcontext *ctx)
 {
     savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
-    u_int32_t drawCtrl = imesa->regs.s3d.drawCtrl.ui;
-    u_int32_t zBufCtrl = imesa->regs.s3d.zBufCtrl.ui;
+    uint32_t drawCtrl = imesa->regs.s3d.drawCtrl.ui;
+    uint32_t zBufCtrl = imesa->regs.s3d.zBufCtrl.ui;
 
     /* set up draw control register (including blending, alpha
      * test, dithering, and shading model)
@@ -486,9 +486,9 @@ static void savageDDDepthFunc_s4(GLcontext *ctx, GLenum func)
 {
     savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
     ZCmpFunc zmode;
-    u_int32_t drawLocalCtrl = imesa->regs.s4.drawLocalCtrl.ui;
-    u_int32_t zBufCtrl = imesa->regs.s4.zBufCtrl.ui;
-    u_int32_t zWatermarks = imesa->regs.s4.zWatermarks.ui; /* FIXME: in DRM */
+    uint32_t drawLocalCtrl = imesa->regs.s4.drawLocalCtrl.ui;
+    uint32_t zBufCtrl = imesa->regs.s4.zBufCtrl.ui;
+    uint32_t zWatermarks = imesa->regs.s4.zWatermarks.ui; /* FIXME: in DRM */
 
     /* set up z-buffer control register (global)
      * set up z-buffer offset register (global)
@@ -550,9 +550,9 @@ static void savageDDDepthFunc_s3d(GLcontext *ctx, GLenum func)
 {
     savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
     ZCmpFunc zmode;
-    u_int32_t drawCtrl = imesa->regs.s3d.drawCtrl.ui;
-    u_int32_t zBufCtrl = imesa->regs.s3d.zBufCtrl.ui;
-    u_int32_t zWatermarks = imesa->regs.s3d.zWatermarks.ui; /* FIXME: in DRM */
+    uint32_t drawCtrl = imesa->regs.s3d.drawCtrl.ui;
+    uint32_t zBufCtrl = imesa->regs.s3d.zBufCtrl.ui;
+    uint32_t zWatermarks = imesa->regs.s3d.zWatermarks.ui; /* FIXME: in DRM */
 
     /* set up z-buffer control register (global)
      * set up z-buffer offset register (global)
@@ -638,7 +638,7 @@ static void savageDDScissor( GLcontext *ctx, GLint x, GLint y,
 static void savageDDDrawBuffer(GLcontext *ctx, GLenum mode )
 {
     savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
-    u_int32_t destCtrl = imesa->regs.s4.destCtrl.ui;
+    uint32_t destCtrl = imesa->regs.s4.destCtrl.ui;
 
     /*
      * _DrawDestMask is easier to cope with than <mode>.
@@ -865,7 +865,7 @@ static void savageDDColorMask_s3d(GLcontext *ctx,
 
 static void savageUpdateSpecular_s4(GLcontext *ctx) {
     savageContextPtr imesa = SAVAGE_CONTEXT( ctx );
-    u_int32_t drawLocalCtrl = imesa->regs.s4.drawLocalCtrl.ui;
+    uint32_t drawLocalCtrl = imesa->regs.s4.drawLocalCtrl.ui;
 
     if (NEED_SECONDARY_COLOR(ctx)) {
 	imesa->regs.s4.drawLocalCtrl.ni.specShadeEn = GL_TRUE;
@@ -879,7 +879,7 @@ static void savageUpdateSpecular_s4(GLcontext *ctx) {
 
 static void savageUpdateSpecular_s3d(GLcontext *ctx) {
     savageContextPtr imesa = SAVAGE_CONTEXT( ctx );
-    u_int32_t drawCtrl = imesa->regs.s3d.drawCtrl.ui;
+    uint32_t drawCtrl = imesa->regs.s3d.drawCtrl.ui;
 
     if (NEED_SECONDARY_COLOR(ctx)) {
 	imesa->regs.s3d.drawCtrl.ni.specShadeEn = GL_TRUE;
@@ -905,7 +905,7 @@ static void savageDDLightModelfv_s3d(GLcontext *ctx, GLenum pname,
 static void savageDDShadeModel_s4(GLcontext *ctx, GLuint mod)
 {
     savageContextPtr imesa = SAVAGE_CONTEXT( ctx );
-    u_int32_t drawLocalCtrl = imesa->regs.s4.drawLocalCtrl.ui;
+    uint32_t drawLocalCtrl = imesa->regs.s4.drawLocalCtrl.ui;
 
     if (mod == GL_SMOOTH)  
     {    
@@ -922,7 +922,7 @@ static void savageDDShadeModel_s4(GLcontext *ctx, GLuint mod)
 static void savageDDShadeModel_s3d(GLcontext *ctx, GLuint mod)
 {
     savageContextPtr imesa = SAVAGE_CONTEXT( ctx );
-    u_int32_t drawCtrl = imesa->regs.s3d.drawCtrl.ui;
+    uint32_t drawCtrl = imesa->regs.s3d.drawCtrl.ui;
 
     if (mod == GL_SMOOTH)  
     {    
@@ -948,7 +948,7 @@ static void savageDDFogfv(GLcontext *ctx, GLenum pname, const GLfloat *param)
 {
     savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
     GLuint  fogClr;
-    u_int32_t fogCtrl = imesa->regs.s4.fogCtrl.ui;
+    uint32_t fogCtrl = imesa->regs.s4.fogCtrl.ui;
 
     /*if ((ctx->Fog.Enabled) &&(pname == GL_FOG_COLOR))*/
     if (ctx->Fog.Enabled)
@@ -980,8 +980,8 @@ savageDDStencilFuncSeparate(GLcontext *ctx, GLenum face, GLenum func,
 {
     savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
     unsigned a=0;
-    const u_int32_t zBufCtrl = imesa->regs.s4.zBufCtrl.ui;
-    const u_int32_t stencilCtrl = imesa->regs.s4.stencilCtrl.ui;
+    const uint32_t zBufCtrl = imesa->regs.s4.zBufCtrl.ui;
+    const uint32_t stencilCtrl = imesa->regs.s4.stencilCtrl.ui;
 
     imesa->regs.s4.zBufCtrl.ni.stencilRefVal = ctx->Stencil.Ref[0] & 0xff;
     imesa->regs.s4.stencilCtrl.ni.readMask  = ctx->Stencil.ValueMask[0] & 0xff;
@@ -1041,7 +1041,7 @@ savageDDStencilOpSeparate(GLcontext *ctx, GLenum face, GLenum fail,
                           GLenum zfail, GLenum zpass)
 {
     savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
-    const u_int32_t stencilCtrl = imesa->regs.s4.stencilCtrl.ui;
+    const uint32_t stencilCtrl = imesa->regs.s4.stencilCtrl.ui;
 
     imesa->regs.s4.stencilCtrl.ni.failOp = get_stencil_op_value( ctx->Stencil.FailFunc[0] );
     imesa->regs.s4.stencilCtrl.ni.passZfailOp = get_stencil_op_value( ctx->Stencil.ZFailFunc[0] );
@@ -1613,8 +1613,8 @@ static void savageDDInitState_s3d( savageContextPtr imesa )
     imesa->globalRegMask.s3d.zBufCtrl.ni.zBufEn = 0x1;
 }
 void savageDDInitState( savageContextPtr imesa ) {
-    memset (imesa->regs.ui, 0, SAVAGE_NR_REGS*sizeof(u_int32_t));
-    memset (imesa->globalRegMask.ui, 0xff, SAVAGE_NR_REGS*sizeof(u_int32_t));
+    memset (imesa->regs.ui, 0, SAVAGE_NR_REGS*sizeof(uint32_t));
+    memset (imesa->globalRegMask.ui, 0xff, SAVAGE_NR_REGS*sizeof(uint32_t));
     if (imesa->savageScreen->chipset >= S3_SAVAGE4)
 	savageDDInitState_s4 (imesa);
     else
@@ -1656,7 +1656,7 @@ void savageDDInitState( savageContextPtr imesa ) {
         imesa->regs.s4.zBufOffset.ni.zDepthSelect = 1;      
     }
 
-    memcpy (imesa->oldRegs.ui, imesa->regs.ui, SAVAGE_NR_REGS*sizeof(u_int32_t));
+    memcpy (imesa->oldRegs.ui, imesa->regs.ui, SAVAGE_NR_REGS*sizeof(uint32_t));
 
     /* Emit the initial state to the (empty) command buffer. */
     assert (imesa->cmdBuf.write == imesa->cmdBuf.base);

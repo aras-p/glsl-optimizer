@@ -46,13 +46,13 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 typedef struct nouveau_fifo_t{
 	int channel;
-	u_int32_t* buffer;
-	u_int32_t* mmio;
-	u_int32_t put_base;
-	u_int32_t current;
-	u_int32_t put;
-	u_int32_t free;
-	u_int32_t max;
+	uint32_t* buffer;
+	uint32_t* mmio;
+	uint32_t put_base;
+	uint32_t current;
+	uint32_t put;
+	uint32_t free;
+	uint32_t max;
 }
 nouveau_fifo;
 

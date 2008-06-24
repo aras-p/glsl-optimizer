@@ -773,10 +773,10 @@ void viaInitState(GLcontext *ctx)
 /**
  * Convert S and T texture coordinate wrap modes to hardware bits.
  */
-static u_int32_t
+static uint32_t
 get_wrap_mode( GLenum sWrap, GLenum tWrap )
 {
-    u_int32_t v = 0;
+    uint32_t v = 0;
 
 
     switch( sWrap ) {
@@ -808,10 +808,10 @@ get_wrap_mode( GLenum sWrap, GLenum tWrap )
     return v;
 }
 
-static u_int32_t
+static uint32_t
 get_minmag_filter( GLenum min, GLenum mag )
 {
-    u_int32_t v = 0;
+    uint32_t v = 0;
 
     switch (min) {
     case GL_NEAREST:

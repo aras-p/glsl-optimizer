@@ -200,7 +200,7 @@ struct __DRIswapInfoRec {
     /** 
      * Number of swapBuffers operations that have been *completed*. 
      */
-    u_int64_t swap_count;
+    uint64_t swap_count;
 
     /**
      * Unadjusted system time of the last buffer swap.  This is the time
@@ -214,7 +214,7 @@ struct __DRIswapInfoRec {
      * swap, it has missed its deadline.  If swap_interval is 0, then the
      * swap deadline is 1 frame after the previous swap.
      */
-    u_int64_t swap_missed_count;
+    uint64_t swap_missed_count;
 
     /**
      * Amount of time used by the last swap that missed its deadline.  This

@@ -2,8 +2,8 @@
 static void TAG(gamma_point)( gammaContextPtr gmesa, 
 			     const gammaVertex *v0 )
 {
-    u_int32_t vColor;
-    u_int32_t vBegin;
+    uint32_t vColor;
+    uint32_t vBegin;
 
     vBegin = gmesa->Begin | B_PrimType_Points;
 
@@ -56,8 +56,8 @@ static void TAG(gamma_line)( gammaContextPtr gmesa,
 			     const gammaVertex *v0,
 			     const gammaVertex *v1 )
 {
-    u_int32_t vColor;
-    u_int32_t vBegin;
+    uint32_t vColor;
+    uint32_t vBegin;
 
     vBegin = gmesa->Begin | B_PrimType_Lines;
 
@@ -165,8 +165,8 @@ static void TAG(gamma_triangle)( gammaContextPtr gmesa,
 				 const gammaVertex *v1, 
 				 const gammaVertex *v2 )
 {
-    u_int32_t vColor;
-    u_int32_t vBegin;
+    uint32_t vColor;
+    uint32_t vBegin;
 
     vBegin = gmesa->Begin | B_PrimType_Triangles;
 
@@ -310,8 +310,8 @@ static void TAG(gamma_quad)( gammaContextPtr gmesa,
 			    const gammaVertex *v2,
 			    const gammaVertex *v3 )
 {
-    u_int32_t vColor;
-    u_int32_t vBegin;
+    uint32_t vColor;
+    uint32_t vBegin;
 
     vBegin = gmesa->Begin | B_PrimType_Quads;
 
