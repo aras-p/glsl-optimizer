@@ -99,6 +99,11 @@ intel_check_blit_fragment_ops(GLcontext * ctx)
       return GL_FALSE;
    }
 
+   if (ctx->RenderMode != GL_RENDER) {
+      DBG("fallback due to render mode\n");
+      return GL_FALSE;
+   }
+
    return GL_TRUE;
 }
 
@@ -157,7 +162,9 @@ intelInitPixelFuncs(struct dd_function_table *functions)
    if (!getenv("INTEL_NO_BLIT")) {
       functions->Bitmap = intelBitmap;
       functions->CopyPixels = intelCopyPixels;
+#ifdef I915
       functions->ReadPixels = intelReadPixels;
       functions->DrawPixels = intelDrawPixels;
+#endif
    }
 }

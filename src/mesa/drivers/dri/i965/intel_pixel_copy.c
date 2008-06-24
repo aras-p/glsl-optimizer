@@ -70,34 +70,6 @@ copypix_src_region(struct intel_context *intel, GLenum type)
    return NULL;
 }
 
-
-
-
-/**
- * Check if any fragment operations are in effect which might effect
- * glDraw/CopyPixels.
- */
-GLboolean
-intel_check_blit_fragment_ops(GLcontext * ctx)
-{
-   if (ctx->NewState)
-      _mesa_update_state(ctx);
-
-   return !(ctx->_ImageTransferState ||
-	    ctx->RenderMode != GL_RENDER ||
-            ctx->Color.AlphaEnabled ||
-            ctx->Depth.Test ||
-            ctx->Fog.Enabled ||
-            ctx->Stencil.Enabled ||
-            !ctx->Color.ColorMask[0] ||
-            !ctx->Color.ColorMask[1] ||
-            !ctx->Color.ColorMask[2] ||
-            !ctx->Color.ColorMask[3] ||	/* can do this! */
-            ctx->Texture._EnabledUnits ||
-	    ctx->FragmentProgram._Enabled ||
-	    ctx->Color.BlendEnabled);
-}
-
 /* Doesn't work for overlapping regions.  Could do a double copy or
  * just fallback.
  */

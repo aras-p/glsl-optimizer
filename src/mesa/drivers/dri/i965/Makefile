@@ -19,6 +19,7 @@ DRIVER_SOURCES = \
 	intel_regions.c \
 	intel_screen.c \
 	intel_span.c \
+	intel_pixel.c \
 	intel_pixel_copy.c \
 	intel_pixel_bitmap.c \
 	intel_state.c \
