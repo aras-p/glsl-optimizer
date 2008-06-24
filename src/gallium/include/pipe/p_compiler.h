@@ -39,20 +39,15 @@
 #define __WIN32__
 #endif
 
-#if defined(_MSC_VER) && !defined(__MSC__)
-#define __MSC__
-#endif
-
-
-#if defined(__MSC__)
+#if defined(_MSC_VER)
 
 /* Avoid 'expression is always true' warning */
 #pragma warning(disable: 4296)
 
-#endif /* __MSC__ */
+#endif /* _MSC_VER */
 
 
-#if defined(__MSC__)
+#if defined(_MSC_VER)
 
 typedef __int8             int8_t;
 typedef unsigned __int8    uint8_t;
@@ -114,7 +109,7 @@ typedef unsigned char boolean;
 /* Function inlining */
 #if defined(__GNUC__)
 #  define INLINE __inline__
-#elif defined(__MSC__)
+#elif defined(_MSC_VER)
 #  define INLINE __inline
 #elif defined(__ICL)
 #  define INLINE __inline
@@ -138,7 +133,7 @@ typedef unsigned char boolean;
 
 
 
-#if defined __GNUC__
+#if defined(__GNUC__)
 #define ALIGN16_DECL(TYPE, NAME, SIZE)  TYPE NAME##___aligned[SIZE] __attribute__(( aligned( 16 ) ))
 #define ALIGN16_ASSIGN(NAME) NAME##___aligned
 #define ALIGN16_ATTRIB  __attribute__(( aligned( 16 ) ))
