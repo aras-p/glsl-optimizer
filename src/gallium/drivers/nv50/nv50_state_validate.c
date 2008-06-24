@@ -229,11 +229,11 @@ scissor_uptodate:
 
 	if (nv50->dirty & NV50_NEW_VIEWPORT) {
 		so = so_new(8, 0);
-		so_method(so, tesla, NV50TCL_VIEWPORT_UNK0(0), 3);
+		so_method(so, tesla, NV50TCL_VIEWPORT_UNK1(0), 3);
 		so_data  (so, fui(nv50->viewport.translate[0]));
 		so_data  (so, fui(nv50->viewport.translate[1]));
 		so_data  (so, fui(nv50->viewport.translate[2]));
-		so_method(so, tesla, NV50TCL_VIEWPORT_UNK1(0), 3);
+		so_method(so, tesla, NV50TCL_VIEWPORT_UNK0(0), 3);
 		so_data  (so, fui(nv50->viewport.scale[0]));
 		so_data  (so, fui(-nv50->viewport.scale[1]));
 		so_data  (so, fui(nv50->viewport.scale[2]));
