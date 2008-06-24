@@ -96,7 +96,7 @@ nv50_state_validate_fb(struct nv50_context *nv50)
 	so_method(so, tesla, NV50TCL_VIEWPORT_HORIZ, 2);
 	so_data  (so, w << 16);
 	so_data  (so, h << 16);
-	so_method(so, tesla, 0xff4, 2);
+	so_method(so, tesla, 0x0e04, 2);
 	so_data  (so, w << 16);
 	so_data  (so, h << 16);
 	so_method(so, tesla, 0xdf8, 2);
@@ -214,7 +214,7 @@ nv50_state_validate(struct nv50_context *nv50)
 		nv50->state.scissor_enabled = rast->scissor;
 
 		so = so_new(3, 0);
-		so_method(so, tesla, 0xff4, 2); //NV50TCL_SCISSOR_HORIZ, 2);
+		so_method(so, tesla, 0x0ff4, 2);
 		if (nv50->state.scissor_enabled) {
 			so_data(so, ((s->maxx - s->minx) << 16) | s->minx);
 			so_data(so, ((s->maxy - s->miny) << 16) | s->miny);
