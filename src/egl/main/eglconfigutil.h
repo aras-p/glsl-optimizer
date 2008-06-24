@@ -4,6 +4,7 @@
 
 #include "eglconfig.h"
 #include "GL/internal/glcore.h"
+#include "stdint.h"
 
 
 extern void
