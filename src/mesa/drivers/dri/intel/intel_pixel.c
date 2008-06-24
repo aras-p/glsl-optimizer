@@ -113,8 +113,10 @@ void
 intelInitPixelFuncs(struct dd_function_table *functions)
 {
    functions->Accum = _swrast_Accum;
-   functions->Bitmap = _swrast_Bitmap;
-   functions->CopyPixels = intelCopyPixels;
-   functions->ReadPixels = intelReadPixels;
-   functions->DrawPixels = intelDrawPixels;
+   if (!getenv("INTEL_NO_BLIT")) {
+      functions->Bitmap = _swrast_Bitmap;
+      functions->CopyPixels = intelCopyPixels;
+      functions->ReadPixels = intelReadPixels;
+      functions->DrawPixels = intelDrawPixels;
+   }
 }
