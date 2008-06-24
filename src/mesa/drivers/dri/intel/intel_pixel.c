@@ -33,6 +33,7 @@
 #include "intel_pixel.h"
 #include "intel_regions.h"
 
+#define FILE_DEBUG_FLAG DEBUG_PIXEL
 
 /**
  * Check if any fragment operations are in effect which might effect
@@ -44,21 +45,61 @@ intel_check_blit_fragment_ops(GLcontext * ctx)
    if (ctx->NewState)
       _mesa_update_state(ctx);
 
-   /* XXX Note: Scissor could be done with the blitter:
-    */
-   return !(ctx->_ImageTransferState ||
-            ctx->Color.AlphaEnabled ||
-            ctx->Depth.Test ||
-            ctx->Fog.Enabled ||
-            ctx->Scissor.Enabled ||
-            ctx->Stencil.Enabled ||
-            !ctx->Color.ColorMask[0] ||
-            !ctx->Color.ColorMask[1] ||
-            !ctx->Color.ColorMask[2] ||
-            !ctx->Color.ColorMask[3] ||
-            ctx->Texture._EnabledUnits || 
-	    ctx->FragmentProgram._Enabled ||
-	    ctx->Color.BlendEnabled);
+   if (ctx->FragmentProgram._Enabled) {
+      DBG("fallback due to fragment program\n");
+      return GL_FALSE;
+   }
+
+   if (ctx->Color.BlendEnabled) {
+      DBG("fallback due to blend\n");
+      return GL_FALSE;
+   }
+
+   if (ctx->Texture._EnabledUnits) {
+      DBG("fallback due to texturing\n");
+      return GL_FALSE;
+   }
+
+   if (!(ctx->Color.ColorMask[0] &&
+	 ctx->Color.ColorMask[1] &&
+	 ctx->Color.ColorMask[2] &&
+	 ctx->Color.ColorMask[3])) {
+      DBG("fallback due to color masking\n");
+      return GL_FALSE;
+   }
+
+   if (ctx->Color.AlphaEnabled) {
+      DBG("fallback due to alpha\n");
+      return GL_FALSE;
+   }
+
+   if (ctx->Depth.Test) {
+      DBG("fallback due to depth test\n");
+      return GL_FALSE;
+   }
+
+   if (ctx->Fog.Enabled) {
+      DBG("fallback due to fog\n");
+      return GL_FALSE;
+   }
+
+   if (ctx->_ImageTransferState) {
+      DBG("fallback due to image transfer\n");
+      return GL_FALSE;
+   }
+
+   if (ctx->Stencil.Enabled) {
+      DBG("fallback due to image stencil\n");
+      return GL_FALSE;
+   }
+
+   if (ctx->Scissor.Enabled) {
+      /* XXX Note: Scissor could be done with the blitter */
+      DBG("fallback due to image scissor\n");
+      return GL_FALSE;
+   }
+
+   return GL_TRUE;
 }
 
 
