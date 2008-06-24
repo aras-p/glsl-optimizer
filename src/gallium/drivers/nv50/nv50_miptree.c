@@ -10,7 +10,7 @@ nv50_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *pt)
 {
 	struct pipe_winsys *ws = pscreen->winsys;
 	struct nv50_miptree *mt = CALLOC_STRUCT(nv50_miptree);
-	unsigned usage;
+	unsigned usage, pitch;
 
 	NOUVEAU_ERR("unimplemented\n");
 
@@ -28,8 +28,9 @@ nv50_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *pt)
 		break;
 	}
 
-	mt->buffer = ws->buffer_create(ws, 256, usage,
-				       pt->width[0] * pt->cpp * pt->height[0]);
+	pitch = ((pt->width[0] + 63) & ~63) * pt->cpp;
+
+	mt->buffer = ws->buffer_create(ws, 256, usage, pitch * pt->height[0]);
 	if (!mt->buffer) {
 		FREE(mt);
 		return NULL;
