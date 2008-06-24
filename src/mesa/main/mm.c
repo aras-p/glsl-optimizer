@@ -164,8 +164,8 @@ mmAllocMem(struct mem_block *heap, int size, int align2, int startSearch)
 {
    struct mem_block *p;
    const int mask = (1 << align2)-1;
-   unsigned int startofs = 0;
-   unsigned int endofs;
+   int startofs = 0;
+   int endofs;
 
    if (!heap || align2 < 0 || size <= 0)
       return NULL;

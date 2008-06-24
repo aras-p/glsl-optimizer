@@ -517,7 +517,7 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
    struct pipe_context *pipe = ctx->st->pipe;
    struct cso_context *cso = ctx->st->cso_context;
    GLfloat x0, y0, x1, y1;
-   GLuint maxSize;
+   GLsizei maxSize;
 
    /* limit checks */
    /* XXX if DrawPixels image is larger than max texture size, break
@@ -574,14 +574,14 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
       const float width = ctx->DrawBuffer->Width;
       const float height = ctx->DrawBuffer->Height;
       struct pipe_viewport_state vp;
-      vp.scale[0] =  0.5 * width;
-      vp.scale[1] = -0.5 * height;
-      vp.scale[2] = 1.0;
-      vp.scale[3] = 1.0;
-      vp.translate[0] = 0.5 * width;
-      vp.translate[1] = 0.5 * height;
-      vp.translate[2] = 0.0;
-      vp.translate[3] = 0.0;
+      vp.scale[0] =  0.5f * width;
+      vp.scale[1] = -0.5f * height;
+      vp.scale[2] = 1.0f;
+      vp.scale[3] = 1.0f;
+      vp.translate[0] = 0.5f * width;
+      vp.translate[1] = 0.5f * height;
+      vp.translate[2] = 0.0f;
+      vp.translate[3] = 0.0f;
       cso_set_viewport(cso, &vp);
    }
 

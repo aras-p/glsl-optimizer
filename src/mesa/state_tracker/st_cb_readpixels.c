@@ -177,7 +177,8 @@ st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
    struct pipe_screen *screen = pipe->screen;
    GLfloat temp[MAX_WIDTH][4];
    const GLbitfield transferOps = ctx->_ImageTransferState;
-   GLint i, yStep, dfStride;
+   GLsizei i, j;
+   GLint yStep, dfStride;
    GLfloat *df;
    struct st_renderbuffer *strb;
    struct gl_pixelstore_attrib clippedPacking = *pack;
@@ -258,7 +259,7 @@ st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
           surf->format == PIPE_FORMAT_X8Z24_UNORM) {
          if (format == GL_DEPTH_COMPONENT) {
             for (i = 0; i < height; i++) {
-               GLuint ztemp[MAX_WIDTH], j;
+               GLuint ztemp[MAX_WIDTH];
                GLfloat zfloat[MAX_WIDTH];
                const double scale = 1.0 / ((1 << 24) - 1);
                pipe_get_tile_raw(pipe, surf, x, y, width, 1, ztemp, 0);
@@ -283,7 +284,7 @@ st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
       }
       else if (surf->format == PIPE_FORMAT_Z16_UNORM) {
          for (i = 0; i < height; i++) {
-            GLushort ztemp[MAX_WIDTH], j;
+            GLushort ztemp[MAX_WIDTH];
             GLfloat zfloat[MAX_WIDTH];
             const double scale = 1.0 / 0xffff;
             pipe_get_tile_raw(pipe, surf, x, y, width, 1, ztemp, 0);
@@ -298,7 +299,7 @@ st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
       }
       else if (surf->format == PIPE_FORMAT_Z32_UNORM) {
          for (i = 0; i < height; i++) {
-            GLuint ztemp[MAX_WIDTH], j;
+            GLuint ztemp[MAX_WIDTH];
             GLfloat zfloat[MAX_WIDTH];
             const double scale = 1.0 / 0xffffffff;
             pipe_get_tile_raw(pipe, surf, x, y, width, 1, ztemp, 0);

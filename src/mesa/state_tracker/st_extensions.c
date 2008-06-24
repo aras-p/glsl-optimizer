@@ -43,7 +43,7 @@ static int _min(int a, int b)
    return (a < b) ? a : b;
 }
 
-static int _max(int a, int b)
+static float _maxf(float a, float b)
 {
    return (a > b) ? a : b;
 }
@@ -94,17 +94,17 @@ void st_init_limits(struct st_context *st)
               1, MAX_DRAW_BUFFERS);
 
    c->MaxLineWidth
-      = _max(1.0, screen->get_paramf(screen, PIPE_CAP_MAX_LINE_WIDTH));
+      = _maxf(1.0f, screen->get_paramf(screen, PIPE_CAP_MAX_LINE_WIDTH));
    c->MaxLineWidthAA
-      = _max(1.0, screen->get_paramf(screen, PIPE_CAP_MAX_LINE_WIDTH_AA));
+      = _maxf(1.0f, screen->get_paramf(screen, PIPE_CAP_MAX_LINE_WIDTH_AA));
 
    c->MaxPointSize
-      = _max(1.0, screen->get_paramf(screen, PIPE_CAP_MAX_POINT_WIDTH));
+      = _maxf(1.0f, screen->get_paramf(screen, PIPE_CAP_MAX_POINT_WIDTH));
    c->MaxPointSizeAA
-      = _max(1.0, screen->get_paramf(screen, PIPE_CAP_MAX_POINT_WIDTH_AA));
+      = _maxf(1.0f, screen->get_paramf(screen, PIPE_CAP_MAX_POINT_WIDTH_AA));
 
    c->MaxTextureMaxAnisotropy
-      = _max(2.0, screen->get_paramf(screen, PIPE_CAP_MAX_TEXTURE_ANISOTROPY));
+      = _maxf(2.0f, screen->get_paramf(screen, PIPE_CAP_MAX_TEXTURE_ANISOTROPY));
 
    c->MaxTextureLodBias
       = screen->get_paramf(screen, PIPE_CAP_MAX_TEXTURE_LOD_BIAS);

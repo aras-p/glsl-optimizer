@@ -216,7 +216,7 @@ setup_edgeflags(GLcontext *ctx, GLenum primMode, GLint start, GLint count,
        (ctx->Polygon.FrontMode != GL_FILL ||
         ctx->Polygon.BackMode != GL_FILL)) {
       /* need edge flags */
-      GLuint i;
+      GLint i;
       unsigned *vec;
       struct st_buffer_object *stobj = st_buffer_object(array->BufferObj);
       ubyte *map;
