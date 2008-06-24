@@ -272,7 +272,6 @@ do_blit_copypixels(GLcontext * ctx,
       __DRIdrawablePrivate *dPriv = intel->driDrawable;
       __DRIdrawablePrivate *dReadPriv = intel->driReadDrawable;
       drm_clip_rect_t *box = dPriv->pClipRects;
-      drm_clip_rect_t dest_rect;
       GLint nbox = dPriv->numClipRects;
       GLint delta_x = 0;
       GLint delta_y = 0;
@@ -320,11 +319,6 @@ do_blit_copypixels(GLcontext * ctx,
          dsty = srcy - delta_y;
       }
 
-      dest_rect.x1 = dstx;
-      dest_rect.y1 = dsty;
-      dest_rect.x2 = dstx + width;
-      dest_rect.y2 = dsty + height;
-
       /* Could do slightly more clipping: Eg, take the intersection of
        * the existing set of cliprects and those cliprects translated
        * by delta_x, delta_y:
@@ -333,19 +327,21 @@ do_blit_copypixels(GLcontext * ctx,
        * introduce garbage when copying from obscured window regions.
        */
       for (i = 0; i < nbox; i++) {
-         drm_clip_rect_t rect;
+	 GLint clip_x = dstx;
+	 GLint clip_y = dsty;
+	 GLint clip_w = width;
+	 GLint clip_h = height;
 
-         if (!intel_intersect_cliprects(&rect, &dest_rect, &box[i]))
+         if (!_mesa_clip_to_region(box[i].x1, box[i].y1, box[i].x2, box[i].y2,
+				   &clip_x, &clip_y, &clip_w, &clip_h))
             continue;
 
-
-         intelEmitCopyBlit(intel, dst->cpp, 
+         intelEmitCopyBlit(intel, dst->cpp,
 			   src->pitch, src->buffer, 0, src->tiled,
 			   dst->pitch, dst->buffer, 0, dst->tiled,
-			   rect.x1 + delta_x, 
-			   rect.y1 + delta_y,       /* srcx, srcy */
-                           rect.x1, rect.y1,    /* dstx, dsty */
-                           rect.x2 - rect.x1, rect.y2 - rect.y1,
+			   clip_x + delta_x, clip_y + delta_y, /* srcx, srcy */
+			   clip_x, clip_y, /* dstx, dsty */
+			   clip_w, clip_h,
 			   ctx->Color.ColorLogicOpEnabled ?
 			   ctx->Color.LogicOp : GL_COPY);
       }
