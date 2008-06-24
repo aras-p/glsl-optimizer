@@ -121,7 +121,7 @@ emit_##NAME(const float *attrib, void *ptr)		\
 #define FROM_16_SNORM(i)   ((float) ((short *) ptr)[i] / 32767.0f)
 #define FROM_32_SNORM(i)   ((float) ((int *) ptr)[i] / 2147483647.0f)
 
-#define FROM_32_FIXED(i)   (((int *) ptr)[i] / 65536.0)
+#define FROM_32_FIXED(i)   (((int *) ptr)[i] / 65536.0f)
 
 #define TO_64_FLOAT(x)   ((double) x)
 #define TO_32_FLOAT(x)   (x)
