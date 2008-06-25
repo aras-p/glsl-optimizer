@@ -107,6 +107,10 @@ static void bind_array_obj( GLcontext *ctx )
    exec->array.legacy_array[VERT_ATTRIB_COLOR1] = &ctx->Array.ArrayObj->SecondaryColor;
    exec->array.legacy_array[VERT_ATTRIB_FOG] = &ctx->Array.ArrayObj->FogCoord;
    exec->array.legacy_array[VERT_ATTRIB_COLOR_INDEX] = &ctx->Array.ArrayObj->Index;
+   if (ctx->Array.ArrayObj->PointSize.Enabled) {
+      /* this aliases COLOR_INDEX */
+      exec->array.legacy_array[VERT_ATTRIB_POINT_SIZE] = &ctx->Array.ArrayObj->PointSize;
+   }
    exec->array.legacy_array[VERT_ATTRIB_EDGEFLAG] = &ctx->Array.ArrayObj->EdgeFlag;
 
    for (i = 0; i < 8; i++)

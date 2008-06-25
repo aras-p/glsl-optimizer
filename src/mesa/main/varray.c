@@ -468,6 +468,37 @@ _mesa_EdgeFlagPointer(GLsizei stride, const GLvoid *ptr)
 }
 
 
+void GLAPIENTRY
+_mesa_PointSizePointer(GLenum type, GLsizei stride, const GLvoid *ptr)
+{
+   GLsizei elementSize;
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+
+   if (stride < 0) {
+      _mesa_error( ctx, GL_INVALID_VALUE, "glPointSizePointer(stride)" );
+      return;
+   }
+
+   switch (type) {
+      case GL_FLOAT:
+         elementSize = sizeof(GLfloat);
+         break;
+#if FEATURE_fixedpt
+      case GL_FIXED:
+         elementSize = sizeof(GLfixed);
+         break;
+#endif
+      default:
+         _mesa_error( ctx, GL_INVALID_ENUM, "glPointSizePointer(type)" );
+         return;
+   }
+
+   update_array(ctx, &ctx->Array.ArrayObj->PointSize, _NEW_ARRAY_POINT_SIZE,
+                elementSize, 1, type, stride, GL_FALSE, ptr);
+}
+
+
 #if FEATURE_NV_vertex_program
 void GLAPIENTRY
 _mesa_VertexAttribPointerNV(GLuint index, GLint size, GLenum type,

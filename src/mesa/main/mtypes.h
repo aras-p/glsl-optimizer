@@ -151,6 +151,7 @@ enum
    VERT_ATTRIB_COLOR1 = 4,
    VERT_ATTRIB_FOG = 5,
    VERT_ATTRIB_COLOR_INDEX = 6,
+   VERT_ATTRIB_POINT_SIZE = 6,  /*alias*/
    VERT_ATTRIB_EDGEFLAG = 7,
    VERT_ATTRIB_TEX0 = 8,
    VERT_ATTRIB_TEX1 = 9,
@@ -1707,6 +1708,7 @@ struct gl_array_object
    struct gl_client_array Index;
    struct gl_client_array EdgeFlag;
    struct gl_client_array TexCoord[MAX_TEXTURE_COORD_UNITS];
+   struct gl_client_array PointSize;
    /*@}*/
 
    /** Generic arrays for vertex programs/shaders */
@@ -2748,6 +2750,7 @@ struct gl_matrix_stack
 #define _NEW_ARRAY_FOGCOORD         VERT_BIT_FOG
 #define _NEW_ARRAY_INDEX            VERT_BIT_COLOR_INDEX
 #define _NEW_ARRAY_EDGEFLAG         VERT_BIT_EDGEFLAG
+#define _NEW_ARRAY_POINT_SIZE       VERT_BIT_COLOR_INDEX  /* aliased */
 #define _NEW_ARRAY_TEXCOORD_0       VERT_BIT_TEX0
 #define _NEW_ARRAY_TEXCOORD_1       VERT_BIT_TEX1
 #define _NEW_ARRAY_TEXCOORD_2       VERT_BIT_TEX2
@@ -2763,6 +2766,7 @@ struct gl_matrix_stack
 #define _NEW_ARRAY_TEXCOORD(i) (_NEW_ARRAY_TEXCOORD_0 << (i))
 #define _NEW_ARRAY_ATTRIB(i) (_NEW_ARRAY_ATTRIB_0 << (i))
 /*@}*/
+
 
 
 /**

@@ -448,7 +448,7 @@ _mesa_update_state_locked( GLcontext *ctx )
       prog_flags |= (_NEW_TEXTURE | _NEW_FOG | _DD_NEW_SEPARATE_SPECULAR);
    }
    if (ctx->VertexProgram._MaintainTnlProgram) {
-      prog_flags |= (_NEW_TEXTURE | _NEW_TEXTURE_MATRIX |
+      prog_flags |= (_NEW_ARRAY | _NEW_TEXTURE | _NEW_TEXTURE_MATRIX |
                      _NEW_TRANSFORM | _NEW_POINT |
                      _NEW_FOG | _NEW_LIGHT |
                      _MESA_NEW_NEED_EYE_COORDS);
