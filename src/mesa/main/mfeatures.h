@@ -49,6 +49,7 @@
 #define FEATURE_fixedpt 0
 #define FEATURE_histogram  _HAVE_FULL_GL
 #define FEATURE_pixel_transfer  _HAVE_FULL_GL
+#define FEATURE_point_size_array 0
 #define FEATURE_texgen  _HAVE_FULL_GL
 #define FEATURE_texture_fxt1  _HAVE_FULL_GL
 #define FEATURE_texture_s3tc  _HAVE_FULL_GL

@@ -93,6 +93,13 @@ client_state(GLcontext *ctx, GLenum cap, GLboolean state)
          flag = _NEW_ARRAY_COLOR1;
          break;
 
+#if FEATURE_point_size_array
+      case GL_POINT_SIZE_ARRAY_OES:
+         var = &ctx->Array.ArrayObj->PointSize.Enabled;
+         flag = _NEW_ARRAY_POINT_SIZE;
+         break;
+#endif
+
 #if FEATURE_NV_vertex_program
       case GL_VERTEX_ATTRIB_ARRAY0_NV:
       case GL_VERTEX_ATTRIB_ARRAY1_NV:
@@ -665,6 +672,7 @@ _mesa_set_enable(GLcontext *ctx, GLenum cap, GLboolean state)
       case GL_EDGE_FLAG_ARRAY:
       case GL_FOG_COORDINATE_ARRAY_EXT:
       case GL_SECONDARY_COLOR_ARRAY_EXT:
+      case GL_POINT_SIZE_ARRAY_OES:
          client_state( ctx, cap, state );
          return;
 
@@ -1189,6 +1197,10 @@ _mesa_IsEnabled( GLenum cap )
       case GL_SECONDARY_COLOR_ARRAY_EXT:
          CHECK_EXTENSION(EXT_secondary_color);
          return (ctx->Array.ArrayObj->SecondaryColor.Enabled != 0);
+#if FEATURE_point_size_array
+      case GL_POINT_SIZE_ARRAY_OES:
+         return (ctx->Array.ArrayObj->PointSize.Enabled != 0);
+#endif
 
       /* GL_EXT_histogram */
       case GL_HISTOGRAM:
