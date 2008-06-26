@@ -445,6 +445,62 @@ static INLINE uint pf_get_size( enum pipe_format format )
    return pf_get_bits(format) / 8;
 }
 
+/**
+ * Describe accurately the pixel format.
+ * 
+ * The chars-per-pixel concept falls apart with compressed and yuv images, where
+ * more than one pixel are coded in a single data block. This structure 
+ * describes that block.
+ * 
+ * Simple pixel formats are effectively a 1x1xcpp block.
+ */
+struct pipe_format_block
+{
+   /** Block size in bytes */
+   unsigned size;
+   
+   /** Block width in pixels */
+   unsigned width;
+   
+   /** Block height in pixels */
+   unsigned height;
+};
+
+/**
+ * Describe pixel format's block.   
+ * 
+ * @sa http://msdn2.microsoft.com/en-us/library/ms796147.aspx
+ */
+static INLINE void 
+pf_get_block(enum pipe_format format, struct pipe_format_block *block)
+{
+   switch(format) {
+   case PIPE_FORMAT_DXT1_RGBA:
+   case PIPE_FORMAT_DXT1_RGB:
+      block->size = 8;
+      block->width = 4;
+      block->height = 4;
+      break;
+   case PIPE_FORMAT_DXT3_RGBA:
+   case PIPE_FORMAT_DXT5_RGBA:
+      block->size = 16;
+      block->width = 4;
+      block->height = 4;
+      break;
+   case PIPE_FORMAT_YCBCR:
+   case PIPE_FORMAT_YCBCR_REV:
+      block->size = 4; /* 2*cpp */
+      block->width = 2;
+      block->height = 1;
+      break;
+   default:
+      block->size = pf_get_size(format);
+      block->width = 1;
+      block->height = 1;
+      break;
+   }
+}
+
 #ifdef __cplusplus
 }
 #endif
