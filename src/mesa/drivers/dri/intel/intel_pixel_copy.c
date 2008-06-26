@@ -229,7 +229,7 @@ do_texture_copypixels(GLcontext * ctx,
 
     out:
       intel->vtbl.leave_meta_state(intel);
-      intel_batchbuffer_flush(intel->batch);
+      intel_batchbuffer_emit_mi_flush(intel->batch);
    }
    UNLOCK_HARDWARE(intel);
 
@@ -345,10 +345,8 @@ do_blit_copypixels(GLcontext * ctx,
 			   ctx->Color.ColorLogicOpEnabled ?
 			   ctx->Color.LogicOp : GL_COPY);
       }
-
-    out:
-      intel_batchbuffer_flush(intel->batch);
    }
+out:
    UNLOCK_HARDWARE(intel);
 
    DBG("%s: success\n", __FUNCTION__);

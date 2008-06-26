@@ -124,12 +124,9 @@ intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit)
    struct intel_texture_object *intelObj = intel_texture_object(tObj);
    int comp_byte = 0;
    int cpp;
-
    GLuint face, i;
    GLuint nr_faces = 0;
    struct intel_texture_image *firstImage;
-
-   GLboolean need_flush = GL_FALSE;
 
    /* We know/require this is true by now: 
     */
@@ -223,20 +220,9 @@ intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit)
           */
          if (intelObj->mt != intelImage->mt) {
             copy_image_data_to_tree(intel, intelObj, intelImage);
-	    need_flush = GL_TRUE;
          }
       }
    }
-
-#ifdef I915
-   /* XXX: what is this flush about?
-    * On 965, it causes a batch flush in the middle of the state relocation
-    * emits, which means that the eventual rendering doesn't have all of the
-    * required relocations in place.
-    */
-   if (need_flush)
-      intel_batchbuffer_flush(intel->batch);
-#endif
 
    return GL_TRUE;
 }

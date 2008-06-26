@@ -151,8 +151,6 @@ do_copy_texsubimage(struct intel_context *intel,
 			   intelImage->mt->region->tiled,
                            x, y + height, dstx, dsty, width, height,
 			   GL_COPY); /* ? */
-
-         intel_batchbuffer_flush(intel->batch);
       }
    }
 

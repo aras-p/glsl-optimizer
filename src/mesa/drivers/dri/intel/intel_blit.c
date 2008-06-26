@@ -159,14 +159,10 @@ intelCopyBuffer(const __DRIdrawablePrivate * dPriv,
 	 ADVANCE_BATCH();
       }
 
-      /* Emit a flush so that, on systems where we don't have automatic flushing
-       * set (such as 965), the results all land on the screen in a timely
-       * fashion.
+      /* Flush the rendering and the batch so that the results all land on the
+       * screen in a timely fashion.
        */
-      BEGIN_BATCH(1, IGNORE_CLIPRECTS);
-      OUT_BATCH(MI_FLUSH);
-      ADVANCE_BATCH();
-
+      intel_batchbuffer_emit_mi_flush(intel->batch);
       intel_batchbuffer_flush(intel->batch);
    }
 
@@ -372,10 +368,7 @@ intelEmitCopyBlit(struct intel_context *intel,
 		src_offset + src_y * src_pitch);
       ADVANCE_BATCH();
    }
-   BEGIN_BATCH(1, NO_LOOP_CLIPRECTS);
-   OUT_BATCH(MI_FLUSH);
-   ADVANCE_BATCH();
-   intel_batchbuffer_flush(intel->batch);
+   intel_batchbuffer_emit_mi_flush(intel->batch);
 }
 
 
@@ -556,7 +549,7 @@ intelClearWithBlit(GLcontext *ctx, GLbitfield mask)
             }
          }
       }
-      intel_batchbuffer_flush(intel->batch);
+      intel_batchbuffer_emit_mi_flush(intel->batch);
    }
 
    UNLOCK_HARDWARE(intel);
@@ -594,7 +587,7 @@ intelEmitImmediateColorExpandBlit(struct intel_context *intel,
 				    (8 * 4) +
 				    (3 * 4) +
 				    dwords,
-				    NO_LOOP_CLIPRECTS );
+				    REFERENCES_CLIPRECTS );
 
    opcode = XY_SETUP_BLT_CMD;
    if (cpp == 4)
@@ -616,7 +609,7 @@ intelEmitImmediateColorExpandBlit(struct intel_context *intel,
    if (dst_tiled)
       blit_cmd |= XY_DST_TILED;
 
-   BEGIN_BATCH(8 + 3, NO_LOOP_CLIPRECTS);
+   BEGIN_BATCH(8 + 3, REFERENCES_CLIPRECTS);
    OUT_BATCH(opcode);
    OUT_BATCH(br13);
    OUT_BATCH((0 << 16) | 0); /* clip x1, y1 */
@@ -636,5 +629,7 @@ intelEmitImmediateColorExpandBlit(struct intel_context *intel,
    intel_batchbuffer_data( intel->batch,
 			   src_bits,
 			   dwords * 4,
-			   NO_LOOP_CLIPRECTS );
+			   REFERENCES_CLIPRECTS );
+
+   intel_batchbuffer_emit_mi_flush(intel->batch);
 }

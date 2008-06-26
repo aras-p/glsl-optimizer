@@ -33,68 +33,6 @@
 #ifndef BRW_DEFINES_H
 #define BRW_DEFINES_H
 
-/*
- */
-#define MI_NOOP                              0x00
-#define MI_USER_INTERRUPT                    0x02
-#define MI_WAIT_FOR_EVENT                    0x03
-#define MI_REPORT_HEAD                       0x07
-#define MI_ARB_ON_OFF                        0x08
-#define MI_BATCH_BUFFER_END                  0x0A
-#define MI_OVERLAY_FLIP                      0x11
-#define MI_LOAD_SCAN_LINES_INCL              0x12
-#define MI_LOAD_SCAN_LINES_EXCL              0x13
-#define MI_DISPLAY_BUFFER_INFO               0x14
-#define MI_SET_CONTEXT                       0x18
-#define MI_STORE_DATA_IMM                    0x20
-#define MI_STORE_DATA_INDEX                  0x21
-#define MI_LOAD_REGISTER_IMM                 0x22
-#define MI_STORE_REGISTER_MEM                0x24
-#define MI_BATCH_BUFFER_START                0x31
-
-#define MI_SYNCHRONOUS_FLIP                  0x0 
-#define MI_ASYNCHRONOUS_FLIP                 0x1
-
-#define MI_BUFFER_SECURE                     0x0 
-#define MI_BUFFER_NONSECURE                  0x1
-
-#define MI_ARBITRATE_AT_CHAIN_POINTS         0x0 
-#define MI_ARBITRATE_BETWEEN_INSTS           0x1
-#define MI_NO_ARBITRATION                    0x3 
-
-#define MI_CONDITION_CODE_WAIT_DISABLED      0x0
-#define MI_CONDITION_CODE_WAIT_0             0x1
-#define MI_CONDITION_CODE_WAIT_1             0x2
-#define MI_CONDITION_CODE_WAIT_2             0x3
-#define MI_CONDITION_CODE_WAIT_3             0x4
-#define MI_CONDITION_CODE_WAIT_4             0x5
-
-#define MI_DISPLAY_PIPE_A                    0x0
-#define MI_DISPLAY_PIPE_B                    0x1
-
-#define MI_DISPLAY_PLANE_A                   0x0 
-#define MI_DISPLAY_PLANE_B                   0x1
-#define MI_DISPLAY_PLANE_C                   0x2
-
-#define MI_STANDARD_FLIP                                 0x0
-#define MI_ENQUEUE_FLIP_PERFORM_BASE_FRAME_NUMBER_LOAD   0x1
-#define MI_ENQUEUE_FLIP_TARGET_FRAME_NUMBER_RELATIVE     0x2
-#define MI_ENQUEUE_FLIP_ABSOLUTE_TARGET_FRAME_NUMBER     0x3
-
-#define MI_PHYSICAL_ADDRESS                  0x0
-#define MI_VIRTUAL_ADDRESS                   0x1
-
-#define MI_BUFFER_MEMORY_MAIN                0x0 
-#define MI_BUFFER_MEMORY_GTT                 0x2
-#define MI_BUFFER_MEMORY_PER_PROCESS_GTT     0x3 
-
-#define MI_FLIP_CONTINUE                     0x0
-#define MI_FLIP_ON                           0x1
-#define MI_FLIP_OFF                          0x2
-
-#define MI_UNTRUSTED_REGISTER_SPACE          0x0
-#define MI_TRUSTED_REGISTER_SPACE            0x1
-
 /* 3D state:
  */
 #define _3DOP_3DSTATE_PIPELINED       0x0
@@ -118,7 +56,6 @@
 #define _3DSTATE_LINE_STIPPLE                 0x08
 #define _3DSTATE_GLOBAL_DEPTH_OFFSET_CLAMP    0x09
 #define _3DCONTROL    0x00
-#define _3DPRIMITIVE  0x00
 
 #define PIPE_CONTROL_NOWRITE          0x00
 #define PIPE_CONTROL_WRITEIMMEDIATE   0x01

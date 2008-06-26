@@ -4,6 +4,7 @@
 #include "mtypes.h"
 
 #include "dri_bufmgr.h"
+#include "intel_reg.h"
 
 struct intel_context;
 
@@ -143,5 +144,12 @@ intel_batchbuffer_require_space(struct intel_batchbuffer *batch,
 
 #define ADVANCE_BATCH() do { } while(0)
 
+
+static INLINE void
+intel_batchbuffer_emit_mi_flush(struct intel_batchbuffer *batch)
+{
+   intel_batchbuffer_require_space(batch, 4, IGNORE_CLIPRECTS);
+   intel_batchbuffer_emit_dword(batch, MI_FLUSH);
+}
 
 #endif

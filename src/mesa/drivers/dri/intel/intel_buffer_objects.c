@@ -32,6 +32,7 @@
 
 #include "intel_context.h"
 #include "intel_buffer_objects.h"
+#include "intel_batchbuffer.h"
 #include "intel_regions.h"
 #include "dri_bufmgr.h"
 

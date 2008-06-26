@@ -1008,6 +1008,7 @@ void UNLOCK_HARDWARE( struct intel_context *intel )
     * Nothing should be left in batch outside of LOCK/UNLOCK which references
     * cliprects.
     */
-   assert(intel->batch->cliprect_mode != REFERENCES_CLIPRECTS);
+   if (intel->batch->cliprect_mode == REFERENCES_CLIPRECTS)
+      intel_batchbuffer_flush(intel->batch);
 }
 

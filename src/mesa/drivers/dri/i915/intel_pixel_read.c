@@ -272,8 +272,6 @@ do_blit_readpixels(GLcontext * ctx,
                            rect.x2 - rect.x1, rect.y2 - rect.y1,
 			   GL_COPY);
       }
-
-      intel_batchbuffer_flush(intel->batch);
    }
    UNLOCK_HARDWARE(intel);
 

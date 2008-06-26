@@ -181,7 +181,7 @@ do_texture_drawpixels(GLcontext * ctx,
 				 srcx, srcx + width, srcy + height, srcy);
     out:
       intel->vtbl.leave_meta_state(intel);
-      intel_batchbuffer_flush(intel->batch);
+      intel_batchbuffer_emit_mi_flush(intel->batch);
    }
    UNLOCK_HARDWARE(intel);
    return GL_TRUE;
@@ -322,7 +322,6 @@ do_blit_drawpixels(GLcontext * ctx,
 			   ctx->Color.ColorLogicOpEnabled ?
 			   ctx->Color.LogicOp : GL_COPY);
       }
-      intel_batchbuffer_flush(intel->batch);
    }
    UNLOCK_HARDWARE(intel);
 

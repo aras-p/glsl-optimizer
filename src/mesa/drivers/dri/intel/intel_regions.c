@@ -376,8 +376,6 @@ intel_region_cow(struct intel_context *intel, struct intel_region *region)
    /* Now blit from the texture buffer to the new buffer: 
     */
 
-   intel_batchbuffer_flush(intel->batch);
-
    was_locked = intel->locked;
    if (intel->locked)
       LOCK_HARDWARE(intel);
@@ -389,8 +387,6 @@ intel_region_cow(struct intel_context *intel, struct intel_region *region)
 		     0, 0, 0, 0,
 		     region->pitch, region->height,
 		     GL_COPY);
-
-   intel_batchbuffer_flush(intel->batch);
 
    if (was_locked)
       UNLOCK_HARDWARE(intel);
