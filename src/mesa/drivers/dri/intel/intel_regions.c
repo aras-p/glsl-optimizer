@@ -377,7 +377,7 @@ intel_region_cow(struct intel_context *intel, struct intel_region *region)
     */
 
    was_locked = intel->locked;
-   if (intel->locked)
+   if (!was_locked)
       LOCK_HARDWARE(intel);
 
    intelEmitCopyBlit(intel,
@@ -388,7 +388,7 @@ intel_region_cow(struct intel_context *intel, struct intel_region *region)
 		     region->pitch, region->height,
 		     GL_COPY);
 
-   if (was_locked)
+   if (!was_locked)
       UNLOCK_HARDWARE(intel);
 }
 
