@@ -147,7 +147,7 @@ _eglParseConfigAttribs(_EGLConfig *config, const EGLint *attrib_list)
       }
       else if (attr == EGL_RENDERABLE_TYPE) {
          EGLint renType = attrib_list[++i];
-         if (renType & ~(EGL_OPENGL_ES_BIT | EGL_OPENVG_BIT)) {
+         if (renType & ~(EGL_OPENGL_ES_BIT | EGL_OPENGL_ES2_BIT | EGL_OPENVG_BIT)) {
             _eglError(EGL_BAD_ATTRIBUTE, "eglChooseConfig");
             return EGL_FALSE;
          }

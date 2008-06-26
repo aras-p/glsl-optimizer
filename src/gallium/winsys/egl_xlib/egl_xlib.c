@@ -172,6 +172,7 @@ create_configs(_EGLDriver *drv, EGLDisplay dpy)
       SET_CONFIG_ATTRIB(config, EGL_STENCIL_SIZE, sbits);
       SET_CONFIG_ATTRIB(config, EGL_NATIVE_VISUAL_ID, visid);
       SET_CONFIG_ATTRIB(config, EGL_NATIVE_VISUAL_TYPE, vistype);
+      SET_CONFIG_ATTRIB(config, EGL_NATIVE_RENDERABLE, EGL_FALSE);
 
       _eglAddConfig(disp, config);
    }
