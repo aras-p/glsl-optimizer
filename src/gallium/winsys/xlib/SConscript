@@ -3,7 +3,11 @@
 
 Import('*')
 
-if env['platform'] == 'linux' and 'mesa' in env['statetrackers'] and not env['dri']:
+if env['platform'] == 'linux' \
+        and 'mesa' in env['statetrackers'] \
+        and 'softpipe' in env['drivers'] \
+        and 'i965simple' in env['drivers'] \
+        and not env['dri']:
 
 	env = env.Clone()
 
@@ -24,6 +28,7 @@ if env['platform'] == 'linux' and 'mesa' in env['statetrackers'] and not env['dr
 		
 	drivers = [
 		softpipe,
+		i965simple
 	]
 
 	# TODO: write a wrapper function http://www.scons.org/wiki/WrapperFunctions
