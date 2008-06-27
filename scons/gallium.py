@@ -286,6 +286,13 @@ def generate(env):
 	env.Append(CFLAGS = cflags)
 	env.Append(CXXFLAGS = cflags)
 
+	# Assembler options
+	if gcc:
+		if env['machine'] == 'x86':
+			env.Append(ASFLAGS = ['-m32'])
+		if env['machine'] == 'x86_64':
+			env.Append(ASFLAGS = ['-m64'])
+
 	# Linker options
 	linkflags = []
 	if gcc:
