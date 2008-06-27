@@ -483,11 +483,13 @@ intelFillInModes(unsigned pixel_bits, unsigned depth_bits,
 
    uint8_t depth_bits_array[3];
    uint8_t stencil_bits_array[3];
+   uint8_t msaa_samples_array[1];
 
 
    depth_bits_array[0] = 0;
    depth_bits_array[1] = depth_bits;
    depth_bits_array[2] = depth_bits;
+   msaa_samples_array[0] = 0;
 
    /* Just like with the accumulation buffer, always provide some modes
     * with a stencil buffer.  It will be a sw fallback, but some apps won't
@@ -521,7 +523,7 @@ intelFillInModes(unsigned pixel_bits, unsigned depth_bits,
    if (!driFillInModes(&m, fb_format, fb_type,
                        depth_bits_array, stencil_bits_array,
                        depth_buffer_factor, back_buffer_modes,
-                       back_buffer_factor, GLX_TRUE_COLOR)) {
+                       back_buffer_factor, msaa_samples_array, 1, GLX_TRUE_COLOR)) {
       fprintf(stderr, "[%s:%u] Error creating FBConfig!\n", __func__,
               __LINE__);
       return NULL;
@@ -529,7 +531,7 @@ intelFillInModes(unsigned pixel_bits, unsigned depth_bits,
    if (!driFillInModes(&m, fb_format, fb_type,
                        depth_bits_array, stencil_bits_array,
                        depth_buffer_factor, back_buffer_modes,
-                       back_buffer_factor, GLX_DIRECT_COLOR)) {
+                       back_buffer_factor, msaa_samples_array, 1, GLX_DIRECT_COLOR)) {
       fprintf(stderr, "[%s:%u] Error creating FBConfig!\n", __func__,
               __LINE__);
       return NULL;

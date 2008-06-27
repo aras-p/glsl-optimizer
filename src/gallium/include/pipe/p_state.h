@@ -276,7 +276,7 @@ struct pipe_surface
    unsigned layout;              /**< PIPE_SURFACE_LAYOUT_x */
    unsigned offset;              /**< offset from start of buffer, in bytes */
    unsigned refcount;
-   unsigned usage;              /**< PIPE_BUFFER_USAGE_*  */
+   unsigned usage;               /**< PIPE_BUFFER_USAGE_*  */
 
    struct pipe_winsys *winsys;   /**< winsys which owns/created the surface */
 
@@ -311,7 +311,9 @@ struct pipe_texture
 
    unsigned last_level:8;    /**< Index of last mipmap level present/defined */
    unsigned compressed:1;
-   
+
+   unsigned nr_samples:8;          /**< for multisampled surfaces, nr of samples */
+
    unsigned tex_usage;          /* PIPE_TEXTURE_USAGE_* */
 
    /* These are also refcounted:

@@ -51,27 +51,29 @@ st_create_framebuffer( const __GLcontextModes *visual,
 {
    struct st_framebuffer *stfb = CALLOC_STRUCT(st_framebuffer);
    if (stfb) {
+      int samples = 0;
       _mesa_initialize_framebuffer(&stfb->Base, visual);
+      if (visual->sampleBuffers) samples = visual->samples;
 
       {
          /* fake frontbuffer */
          /* XXX allocation should only happen in the unusual case
             it's actually needed */
          struct gl_renderbuffer *rb
-            = st_new_renderbuffer_fb(colorFormat);
+            = st_new_renderbuffer_fb(colorFormat, samples);
          _mesa_add_renderbuffer(&stfb->Base, BUFFER_FRONT_LEFT, rb);
       }
 
       if (visual->doubleBufferMode) {
          struct gl_renderbuffer *rb
-            = st_new_renderbuffer_fb(colorFormat);
+            = st_new_renderbuffer_fb(colorFormat, samples);
          _mesa_add_renderbuffer(&stfb->Base, BUFFER_BACK_LEFT, rb);
       }
 
       if (visual->depthBits == 24 && visual->stencilBits == 8) {
          /* combined depth/stencil buffer */
          struct gl_renderbuffer *depthStencilRb
-            = st_new_renderbuffer_fb(depthFormat);
+            = st_new_renderbuffer_fb(depthFormat, samples);
          /* note: bind RB to two attachment points */
          _mesa_add_renderbuffer(&stfb->Base, BUFFER_DEPTH, depthStencilRb);
          _mesa_add_renderbuffer(&stfb->Base, BUFFER_STENCIL, depthStencilRb);
@@ -82,26 +84,26 @@ st_create_framebuffer( const __GLcontextModes *visual,
          if (visual->depthBits == 32) {
             /* 32-bit depth buffer */
             struct gl_renderbuffer *depthRb
-               = st_new_renderbuffer_fb(depthFormat);
+               = st_new_renderbuffer_fb(depthFormat, samples);
             _mesa_add_renderbuffer(&stfb->Base, BUFFER_DEPTH, depthRb);
          }
          else if (visual->depthBits == 24) {
             /* 24-bit depth buffer, ignore stencil bits */
             struct gl_renderbuffer *depthRb
-               = st_new_renderbuffer_fb(depthFormat);
+               = st_new_renderbuffer_fb(depthFormat, samples);
             _mesa_add_renderbuffer(&stfb->Base, BUFFER_DEPTH, depthRb);
          }
          else if (visual->depthBits > 0) {
             /* 16-bit depth buffer */
             struct gl_renderbuffer *depthRb
-               = st_new_renderbuffer_fb(depthFormat);
+               = st_new_renderbuffer_fb(depthFormat, samples);
             _mesa_add_renderbuffer(&stfb->Base, BUFFER_DEPTH, depthRb);
          }
 
          if (visual->stencilBits > 0) {
             /* 8-bit stencil */
             struct gl_renderbuffer *stencilRb
-               = st_new_renderbuffer_fb(stencilFormat);
+               = st_new_renderbuffer_fb(stencilFormat, samples);
             _mesa_add_renderbuffer(&stfb->Base, BUFFER_STENCIL, stencilRb);
          }
       }
@@ -109,7 +111,7 @@ st_create_framebuffer( const __GLcontextModes *visual,
       if (visual->accumRedBits > 0) {
          /* 16-bit/channel accum */
          struct gl_renderbuffer *accumRb
-            = st_new_renderbuffer_fb(DEFAULT_ACCUM_PIPE_FORMAT);
+            = st_new_renderbuffer_fb(DEFAULT_ACCUM_PIPE_FORMAT, 0); /* XXX accum isn't multisampled right? */
          _mesa_add_renderbuffer(&stfb->Base, BUFFER_ACCUM, accumRb);
       }
 

@@ -58,7 +58,7 @@ st_renderbuffer(struct gl_renderbuffer *rb)
 
 
 extern struct gl_renderbuffer *
-st_new_renderbuffer_fb(enum pipe_format format);
+st_new_renderbuffer_fb(enum pipe_format format, int samples);
 
 extern void
 st_init_fbo_functions(struct dd_function_table *functions);

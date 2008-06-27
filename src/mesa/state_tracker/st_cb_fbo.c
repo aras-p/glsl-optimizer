@@ -118,6 +118,7 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
    template.height[0] = height;
    template.depth[0] = 1;
    template.last_level = 0;
+   template.nr_samples = rb->Samples;
 
    if (pf_is_depth_stencil(template.format)) {
       template.tex_usage = PIPE_TEXTURE_USAGE_DEPTH_STENCIL;
@@ -249,7 +250,7 @@ st_new_renderbuffer(GLcontext *ctx, GLuint name)
  * renderbuffer).  The window system code determines the format.
  */
 struct gl_renderbuffer *
-st_new_renderbuffer_fb(enum pipe_format format)
+st_new_renderbuffer_fb(enum pipe_format format, int samples)
 {
    struct st_renderbuffer *strb;
 
@@ -261,6 +262,7 @@ st_new_renderbuffer_fb(enum pipe_format format)
 
    _mesa_init_renderbuffer(&strb->Base, 0);
    strb->Base.ClassID = 0x4242; /* just a unique value */
+   strb->Base.Samples = samples;
    strb->format = format;
 
    switch (format) {

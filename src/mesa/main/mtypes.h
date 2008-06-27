@@ -2269,6 +2269,7 @@ struct gl_renderbuffer
    GLubyte IndexBits;
    GLubyte DepthBits;
    GLubyte StencilBits;
+   GLubyte Samples;     /**< Number of samples - 0 if not multisampled */
    GLvoid *Data;        /**< This may not be used by some kinds of RBs */
 
    /* Used to wrap one renderbuffer around another: */

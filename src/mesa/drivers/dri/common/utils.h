@@ -115,6 +115,7 @@ extern GLboolean driFillInModes( __GLcontextModes ** modes,
     GLenum fb_format, GLenum fb_type,
     const uint8_t * depth_bits, const uint8_t * stencil_bits,
     unsigned num_depth_stencil_bits,
-    const GLenum * db_modes, unsigned num_db_modes, int visType );
+    const GLenum * db_modes, unsigned num_db_modes,
+    const u_int8_t * msaa_samples, unsigned num_msaa_modes, int visType );
 
 #endif /* DRI_DEBUG_H */
