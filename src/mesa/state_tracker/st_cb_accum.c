@@ -160,7 +160,7 @@ accum_mad(GLcontext *ctx, GLfloat scale, GLfloat bias,
 {
    struct pipe_screen *screen = ctx->st->pipe->screen;
    struct pipe_surface *acc_ps = acc_strb->surface;
-   GLvoid *map;
+   GLubyte *map;
 
    map = screen->surface_map(screen, acc_ps, 
                              PIPE_BUFFER_USAGE_CPU_WRITE);
