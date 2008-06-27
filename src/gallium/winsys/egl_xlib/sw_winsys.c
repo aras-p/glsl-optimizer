@@ -190,7 +190,9 @@ surface_alloc_storage(struct pipe_winsys *winsys,
    surf->width = width;
    surf->height = height;
    surf->format = format;
-   pf_get_block(format, &surf->block);
+   pf_get_block(surf->format, &surf->block);
+   surf->nblocksx = pf_get_nblocksx(&surf->block, width);
+   surf->nblocksy = pf_get_nblocksy(&surf->block, height);
    surf->stride = round_up(surf->nblocksx * surf->block.size, alignment);
    surf->usage = flags;
 
