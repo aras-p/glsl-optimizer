@@ -78,10 +78,10 @@ intelCreateSurface(struct intel_screen *intelScreen, struct pipe_winsys *winsys,
    templat.last_level = 0;
    templat.depth[0] = 1;
    templat.format = PIPE_FORMAT_A8R8G8B8_UNORM;
-   templat.cpp = intelScreen->front.cpp;
    templat.width[0] = intelScreen->front.width;
    templat.height[0] = intelScreen->front.height;
-   pitch = intelScreen->front.pitch / intelScreen->front.cpp;
+   pf_get_block(templat.format, &templat.block);
+   pitch = intelScreen->front.pitch;
 
    texture = screen->texture_blanket(screen,
                                      &templat,

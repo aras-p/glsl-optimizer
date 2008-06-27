@@ -64,10 +64,10 @@ i915_surface_copy(struct pipe_context *pipe,
       pipe_copy_rect(dst_map,
                      &dst->block,
                      dst->stride,
-                     dstx, dsty, 
-                     width, height, 
-                     src_map, 
-                     do_flip ? -(int) src->stride : src->stride, 
+                     dstx, dsty,
+                     width, height,
+                     src_map,
+                     do_flip ? -(int) src->stride : src->stride,
                      srcx, do_flip ? height - 1 - srcy : srcy);
 
       pipe->screen->surface_unmap(pipe->screen, src);
@@ -79,8 +79,8 @@ i915_surface_copy(struct pipe_context *pipe,
       i915_copy_blit( i915_context(pipe),
                       do_flip,
                       dst->block.size,
-		      (short) src->stride/src->block.size, src->buffer, src->offset,
-		      (short) dst->stride/dst->block.size, dst->buffer, dst->offset,
+		      (short) src->stride, src->buffer, src->offset,
+		      (short) dst->stride, dst->buffer, dst->offset,
 		      (short) srcx, (short) srcy, (short) dstx, (short) dsty, (short) width, (short) height );
    }
 }
@@ -106,10 +106,10 @@ i915_surface_fill(struct pipe_context *pipe,
       assert(dst->block.height == 1);
       i915_fill_blit( i915_context(pipe),
 		      dst->block.size,
-		      (short) dst->stride/dst->block.size, 
+		      (short) dst->stride,
 		      dst->buffer, dst->offset,
-		      (short) dstx, (short) dsty, 
-		      (short) width, (short) height, 
+		      (short) dstx, (short) dsty,
+		      (short) width, (short) height,
 		      value );
    }
 }
