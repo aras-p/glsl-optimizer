@@ -291,7 +291,7 @@ display_surface(struct pipe_winsys *pws,
    ximage->data = data;
    ximage->width = psurf->width;
    ximage->height = psurf->height;
-   ximage->bytes_per_line = psurf->pitch * psurf->cpp;
+   ximage->bytes_per_line = psurf->stride;
    
    XPutImage(xsurf->Dpy, xsurf->Win, xsurf->Gc,
              ximage, 0, 0, 0, 0, psurf->width, psurf->height);

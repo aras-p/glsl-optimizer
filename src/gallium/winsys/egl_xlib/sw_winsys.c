@@ -190,16 +190,14 @@ surface_alloc_storage(struct pipe_winsys *winsys,
    surf->width = width;
    surf->height = height;
    surf->format = format;
-   surf->cpp = pf_get_size(format);
-   surf->pitch = round_up(width, alignment / surf->cpp);
+   pf_get_block(format, &surf->block);
+   surf->stride = round_up(surf->nblocksx * surf->block.size, alignment);
    surf->usage = flags;
 
-   assert(surf->cpp >= 1);
-   assert(surf->cpp <= 16);
    assert(!surf->buffer);
    surf->buffer = winsys->buffer_create(winsys, alignment,
                                         PIPE_BUFFER_USAGE_PIXEL,
-                                        surf->pitch * surf->cpp * height);
+                                        surf->stride * height);
    if(!surf->buffer)
       return -1;
    
