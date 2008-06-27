@@ -279,22 +279,25 @@ aub_i915_surface_alloc_storage(struct pipe_winsys *winsys,
                                unsigned flags,
                                unsigned tex_usage)
 {
-    const unsigned alignment = 64;
+   const unsigned alignment = 64;
 
-    surf->width = width;
-    surf->height = height;
-    surf->format = format;
-    surf->cpp = pf_get_size(format);
-    surf->pitch = round_up(width, alignment / surf->cpp);
+   surf->width = width;
+   surf->height = height;
+   surf->format = format;
+   pf_get_block(format, &surf->block);
+   surf->nblocksx = pf_get_nblocksx(&surf->block, width);
+   surf->nblocksy = pf_get_nblocksy(&surf->block, height);
+   surf->stride = round_up(surf->nblocksx * surf->block.size, alignment);
+   surf->usage = flags;
 
-    assert(!surf->buffer);
-    surf->buffer = winsys->buffer_create(winsys, alignment,
-                                         PIPE_BUFFER_USAGE_PIXEL,
-                                         surf->pitch * surf->cpp * height);
+   assert(!surf->buffer);
+   surf->buffer = winsys->buffer_create(winsys, alignment,
+                                        PIPE_BUFFER_USAGE_PIXEL,
+                                        surf->stride * surf->nblocksy);
     if(!surf->buffer)
-        return -1;
+       return -1;
 
-    return 0;
+   return 0;
 }
 
 static void

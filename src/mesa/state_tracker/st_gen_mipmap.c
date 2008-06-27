@@ -137,10 +137,10 @@ fallback_generate_mipmap(GLcontext *ctx, GLenum target,
       _mesa_generate_mipmap_level(target, datatype, comps,
                    0 /*border*/,
                    pt->width[srcLevel], pt->height[srcLevel], pt->depth[srcLevel],
-                   srcSurf->pitch * srcSurf->cpp, /* stride in bytes */
+                   srcSurf->stride, /* stride in bytes */
                    srcData,
                    pt->width[dstLevel], pt->height[dstLevel], pt->depth[dstLevel],
-                   dstSurf->pitch * dstSurf->cpp, /* stride in bytes */
+                   dstSurf->stride, /* stride in bytes */
                    dstData);
 
       pipe_buffer_unmap(pipe, srcSurf->buffer);

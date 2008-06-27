@@ -31,6 +31,7 @@
 #include "p_config.h"
 #include "p_compiler.h"
 #include "p_debug.h"
+#include "p_format.h"
 #include "p_pointer.h"
 #include <math.h>
 #include <stdarg.h>
@@ -401,11 +402,15 @@ static INLINE int align(int value, int alignment)
 
 /* util/p_util.c
  */
-extern void pipe_copy_rect(ubyte * dst, unsigned cpp, unsigned dst_pitch,
-                           unsigned dst_x, unsigned dst_y, unsigned width,
-                           unsigned height, const ubyte * src,
-                           int src_pitch, unsigned src_x, int src_y);
+extern void pipe_copy_rect(ubyte * dst, const struct pipe_format_block *block,
+                           unsigned dst_stride, unsigned dst_x, unsigned dst_y,
+                           unsigned width, unsigned height, const ubyte * src,
+                           int src_stride, unsigned src_x, int src_y);
 
+extern void
+pipe_fill_rect(ubyte * dst, const struct pipe_format_block *block,
+               unsigned dst_stride, unsigned dst_x, unsigned dst_y,
+               unsigned width, unsigned height, uint32_t value);
 
 
 #if defined(_MSC_VER) 

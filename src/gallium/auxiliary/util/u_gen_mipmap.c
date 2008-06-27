@@ -625,7 +625,9 @@ make_2d_mipmap(struct gen_mipmap_state *ctx,
    struct pipe_winsys *winsys = pipe->winsys;
    const uint zslice = 0;
    uint dstLevel;
-   const int bpt = pf_get_size(pt->format);
+   
+   assert(pt->block.width == 1);
+   assert(pt->block.height == 1);
 
    for (dstLevel = baseLevel + 1; dstLevel <= lastLevel; dstLevel++) {
       const uint srcLevel = dstLevel - 1;
@@ -646,9 +648,9 @@ make_2d_mipmap(struct gen_mipmap_state *ctx,
 
       reduce_2d(pt->format,
                 srcSurf->width, srcSurf->height,
-                srcSurf->pitch * bpt, srcMap,
+                srcSurf->stride, srcMap,
                 dstSurf->width, dstSurf->height,
-                dstSurf->pitch * bpt, dstMap);
+                dstSurf->stride, dstMap);
 
       winsys->buffer_unmap(winsys, srcSurf->buffer);
       winsys->buffer_unmap(winsys, dstSurf->buffer);

@@ -113,7 +113,7 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
 
    template.target = PIPE_TEXTURE_2D;
    template.compressed = 0;
-   template.cpp = pf_get_size(template.format);
+   pf_get_block(template.format, &template.block);
    template.width[0] = width;
    template.height[0] = height;
    template.depth[0] = 1;
@@ -171,10 +171,12 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
 
    assert(strb->surface->buffer);
    assert(strb->surface->format);
-   assert(strb->surface->cpp);
+   assert(strb->surface->block.size);
+   assert(strb->surface->block.width);
+   assert(strb->surface->block.height);
    assert(strb->surface->width == width);
    assert(strb->surface->height == height);
-   assert(strb->surface->pitch);
+   assert(strb->surface->stride);
 
 
    return strb->surface != NULL;

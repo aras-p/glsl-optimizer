@@ -501,6 +501,47 @@ pf_get_block(enum pipe_format format, struct pipe_format_block *block)
    }
 }
 
+static INLINE unsigned
+pf_get_nblocksx(const struct pipe_format_block *block, unsigned x)
+{
+   return (x + block->width - 1)/block->width;
+}
+
+static INLINE unsigned
+pf_get_nblocksy(const struct pipe_format_block *block, unsigned y)
+{
+   return (y + block->height - 1)/block->height;
+}
+
+static INLINE unsigned
+pf_get_nblocks(const struct pipe_format_block *block, unsigned width, unsigned height)
+{
+   return pf_get_nblocksx(block, width)*pf_get_nblocksy(block, height);
+}
+
+static INLINE void
+pipe_rect_to_blocks(const struct pipe_format_block *block,
+                    unsigned *width, unsigned *height,
+                    unsigned *src_x, unsigned *src_y,
+		    unsigned *dst_x, unsigned *dst_y)
+{
+   assert(block->size > 0);
+   assert(block->width > 0);
+   assert(block->height > 0);
+   if(width)
+      *width = pf_get_nblocksx(block, *width);
+   if(height)
+      *height = pf_get_nblocksy(block, *height);
+   if(src_x)
+      *src_x /= block->width;
+   if(src_y)
+      *src_y /= block->height;
+   if(dst_x)
+      *dst_x /= block->width;
+   if(dst_y)
+      *dst_y /= block->height;
+}
+
 #ifdef __cplusplus
 }
 #endif

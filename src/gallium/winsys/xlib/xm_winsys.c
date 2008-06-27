@@ -364,9 +364,10 @@ xmesa_display_surface(XMesaBuffer b, const struct pipe_surface *surf)
       return;
    }
 
-
    if (XSHM_ENABLED(xm_buf) && (xm_buf->tempImage == NULL)) {
-      alloc_shm_ximage(xm_buf, b, surf->pitch, surf->height);
+      assert(surf->block.width == 1);
+      assert(surf->block.height == 1);
+      alloc_shm_ximage(xm_buf, b, surf->stride/surf->block.size, surf->height);
    }
 
    ximage = (XSHM_ENABLED(xm_buf)) ? xm_buf->tempImage : b->tempImage;
@@ -386,7 +387,7 @@ xmesa_display_surface(XMesaBuffer b, const struct pipe_surface *surf)
       /* update XImage's fields */
       ximage->width = surf->width;
       ximage->height = surf->height;
-      ximage->bytes_per_line = surf->pitch * surf->cpp;
+      ximage->bytes_per_line = surf->stride;
 
       XPutImage(b->xm_visual->display, b->drawable, b->gc,
                 ximage, 0, 0, 0, 0, surf->width, surf->height);
@@ -497,18 +498,21 @@ xm_surface_alloc_storage(struct pipe_winsys *winsys,
    surf->width = width;
    surf->height = height;
    surf->format = format;
-   surf->cpp = pf_get_size(format);
-   surf->pitch = round_up(width, alignment / surf->cpp);
+   pf_get_block(format, &surf->block);
+   surf->nblocksx = pf_get_nblocksx(&surf->block, width);
+   surf->nblocksy = pf_get_nblocksy(&surf->block, height);
+   surf->stride = round_up(surf->nblocksx * surf->block.size, alignment);
    surf->usage = flags;
-
-#ifdef GALLIUM_CELL /* XXX a bit of a hack */
-   height = round_up(height, TILE_SIZE);
-#endif
 
    assert(!surf->buffer);
    surf->buffer = winsys->buffer_create(winsys, alignment,
                                         PIPE_BUFFER_USAGE_PIXEL,
-                                        surf->pitch * surf->cpp * height);
+#ifdef GALLIUM_CELL /* XXX a bit of a hack */
+                                        surf->stride * round_up(surf->nblocksy, TILE_SIZE));
+#else
+                                        surf->stride * surf->nblocksy);
+#endif
+
    if(!surf->buffer)
       return -1;
    

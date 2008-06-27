@@ -341,9 +341,9 @@ make_bitmap_texture(GLcontext *ctx, GLsizei width, GLsizei height,
    dest = screen->surface_map(screen, surface, PIPE_BUFFER_USAGE_CPU_WRITE);
 
    /* Put image into texture surface */
-   memset(dest, 0xff, height * surface->pitch);
+   memset(dest, 0xff, height * surface->stride);
    unpack_bitmap(ctx->st, 0, 0, width, height, unpack, bitmap,
-                 dest, surface->pitch);
+                 dest, surface->stride);
 
    _mesa_unmap_bitmap_pbo(ctx, unpack);
 

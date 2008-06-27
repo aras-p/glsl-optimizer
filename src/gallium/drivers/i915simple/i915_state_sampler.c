@@ -242,7 +242,7 @@ i915_update_texture(struct i915_context *i915,
    assert(depth);
 
    format = translate_texture_format(pt->format);
-   pitch = tex->pitch * pt->cpp;
+   pitch = tex->stride;
 
    assert(format);
    assert(pitch);

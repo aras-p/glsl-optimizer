@@ -324,7 +324,7 @@ util_blit_pixels(struct blit_state *ctx,
    texTemp.height[0] = srcH;
    texTemp.depth[0] = 1;
    texTemp.compressed = 0;
-   texTemp.cpp = pf_get_size(src->format);
+   pf_get_block(src->format, &texTemp.block);
 
    tex = screen->texture_create(screen, &texTemp);
    if (!tex)

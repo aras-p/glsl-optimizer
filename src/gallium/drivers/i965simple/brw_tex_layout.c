@@ -81,7 +81,7 @@ static void intel_miptree_set_image_offset(struct brw_texture *tex,
       assert(x == 0 && y == 0);
    assert(img < tex->nr_images[level]);
 
-   tex->image_offset[level][img] = (x + y * tex->pitch) * pt->cpp;
+   tex->image_offset[level][img] = y * tex->stride + x * pt->block.size;
 }
 
 static void intel_miptree_set_level_info(struct brw_texture *tex,
@@ -97,8 +97,11 @@ static void intel_miptree_set_level_info(struct brw_texture *tex,
    pt->width[level] = w;
    pt->height[level] = h;
    pt->depth[level] = d;
+   
+   pt->nblocksx[level] = pf_get_nblocksx(&pt->block, w);
+   pt->nblocksy[level] = pf_get_nblocksy(&pt->block, h);
 
-   tex->level_offset[level] = (x + y * tex->pitch) * pt->cpp;
+   tex->level_offset[level] = y * tex->stride + x * tex->base.block.size;
    tex->nr_images[level] = nr_images;
 
    /*
@@ -123,77 +126,60 @@ static void intel_miptree_set_level_info(struct brw_texture *tex,
 static void i945_miptree_layout_2d(struct brw_texture *tex)
 {
    struct pipe_texture *pt = &tex->base;
-   unsigned align_h = 2, align_w = 4;
+   const int align_x = 2, align_y = 4;
    unsigned level;
    unsigned x = 0;
    unsigned y = 0;
    unsigned width = pt->width[0];
    unsigned height = pt->height[0];
+   unsigned nblocksx = pt->nblocksx[0];
+   unsigned nblocksy = pt->nblocksy[0];
 
-   tex->pitch = pt->width[0];
-
-#if 0
-   if (pt->compressed) {
-      align_w = intel_compressed_alignment(pt->internal_format);
-      tex->pitch = ALIGN(pt->width[0], align_w);
-   }
-#endif
+   tex->stride = align(pt->nblocksx[0] * pt->block.size, 4);
 
    /* May need to adjust pitch to accomodate the placement of
-    * the 2nd mipmap.  This occurs when the alignment
+    * the 2nd mipmap level.  This occurs when the alignment
     * constraints of mipmap placement push the right edge of the
-    * 2nd mipmap out past the width of its parent.
+    * 2nd mipmap level out past the width of its parent.
     */
    if (pt->last_level > 0) {
-      unsigned mip1_width;
+      unsigned mip1_nblocksx 
+	 = align_int(pf_get_nblocksx(&pt->block, minify(width)), align_x)
+         + pf_get_nblocksx(&pt->block, minify(minify(width)));
 
-      if (pt->compressed) {
-         mip1_width = align(minify(pt->width[0]), align_w)
-                      + align(minify(minify(pt->width[0])), align_w);
-      } else {
-         mip1_width = align(minify(pt->width[0]), align_w)
-                      + minify(minify(pt->width[0]));
-      }
-
-      if (mip1_width > tex->pitch) {
-         tex->pitch = mip1_width;
-      }
+      if (mip1_nblocksx > nblocksx)
+	 tex->stride = mip1_nblocksx * pt->block.size;
    }
 
-   /* Pitch must be a whole number of dwords, even though we
-    * express it in texels.
+   /* Pitch must be a whole number of dwords
     */
-   tex->pitch = align(tex->pitch * pt->cpp, 4) / pt->cpp;
-   tex->total_height = 0;
+   tex->stride = align_int(tex->stride, 64);
+   tex->total_nblocksy = 0;
 
    for (level = 0; level <= pt->last_level; level++) {
-      unsigned img_height;
-
       intel_miptree_set_level_info(tex, level, 1, x, y, width,
 				   height, 1);
 
-      if (pt->compressed)
-	 img_height = MAX2(1, height/4);
-      else
-	 img_height = align(height, align_h);
-
+      nblocksy = align_int(nblocksy, align_y);
 
       /* Because the images are packed better, the final offset
        * might not be the maximal one:
        */
-      tex->total_height = MAX2(tex->total_height, y + img_height);
+      tex->total_nblocksy = MAX2(tex->total_nblocksy, y + nblocksy);
 
-      /* Layout_below: step right after second mipmap.
+      /* Layout_below: step right after second mipmap level.
        */
       if (level == 1) {
-	 x += align(width, align_w);
+	 x += align_int(nblocksx, align_x);
       }
       else {
-	 y += img_height;
+	 y += nblocksy;
       }
 
       width  = minify(width);
       height = minify(height);
+      nblocksx = pf_get_nblocksx(&pt->block, width);
+      nblocksy = pf_get_nblocksy(&pt->block, height);
    }
 }
 
@@ -210,26 +196,20 @@ static boolean brw_miptree_layout(struct brw_texture *tex)
       unsigned width  = pt->width[0];
       unsigned height = pt->height[0];
       unsigned depth = pt->depth[0];
+      unsigned nblocksx = pt->nblocksx[0];
+      unsigned nblocksy = pt->nblocksy[0];
       unsigned pack_x_pitch, pack_x_nr;
       unsigned pack_y_pitch;
       unsigned level;
       unsigned align_h = 2;
       unsigned align_w = 4;
 
-      tex->total_height = 0;
-#if 0
-      if (pt->compressed) {
-         align_w = intel_compressed_alignment(pt->internal_format);
-         pt->pitch = align(width, align_w);
-         pack_y_pitch = (height + 3) / 4;
-      } else
-#endif
-      {
-         tex->pitch = align(pt->width[0] * pt->cpp, 4) / pt->cpp;
-         pack_y_pitch = align(pt->height[0], align_h);
-      }
+      tex->total_nblocksy = 0;
 
-      pack_x_pitch = tex->pitch;
+      tex->stride = align(pt->nblocksx[0], 4);
+      pack_y_pitch = align(pt->nblocksy[0], align_h);
+
+      pack_x_pitch = tex->stride / pt->block.size;
       pack_x_nr = 1;
 
       for (level = 0; level <= pt->last_level; level++) {
@@ -239,7 +219,7 @@ static boolean brw_miptree_layout(struct brw_texture *tex)
 	 uint q, j;
 
 	 intel_miptree_set_level_info(tex, level, nr_images,
-				      0, tex->total_height,
+				      0, tex->total_nblocksy,
 				      width, height, depth);
 
 	 for (q = 0; q < nr_images;) {
@@ -253,10 +233,12 @@ static boolean brw_miptree_layout(struct brw_texture *tex)
 	 }
 
 
-	 tex->total_height += y;
+	 tex->total_nblocksy += y;
 	 width  = minify(width);
 	 height = minify(height);
 	 depth  = minify(depth);
+         nblocksx = pf_get_nblocksx(&pt->block, width);
+         nblocksy = pf_get_nblocksy(&pt->block, height);
 
          if (pt->compressed) {
             pack_y_pitch = (height + 3) / 4;
@@ -269,7 +251,7 @@ static boolean brw_miptree_layout(struct brw_texture *tex)
             if (pack_x_pitch > 4) {
                pack_x_pitch >>= 1;
                pack_x_nr <<= 1;
-               assert(pack_x_pitch * pack_x_nr <= tex->pitch);
+               assert(pack_x_pitch * pack_x_nr * pt->block.size <= tex->stride);
             }
 
             if (pack_y_pitch > 2) {
@@ -289,9 +271,9 @@ static boolean brw_miptree_layout(struct brw_texture *tex)
 #if 0
    PRINT("%s: %dx%dx%d - sz 0x%x\n", __FUNCTION__,
        pt->pitch,
-       pt->total_height,
-       pt->cpp,
-       pt->pitch * pt->total_height * pt->cpp );
+       pt->total_nblocksy,
+       pt->block.size,
+       pt->stride * pt->total_nblocksy );
 #endif
 
    return TRUE;
@@ -309,11 +291,14 @@ brw_texture_create_screen(struct pipe_screen *screen,
       tex->base = *templat;
       tex->base.refcount = 1;
 
+      tex->base.nblocksx[0] = pf_get_nblocksx(&tex->base.block, tex->base.width[0]);
+      tex->base.nblocksy[0] = pf_get_nblocksy(&tex->base.block, tex->base.height[0]);
+   
       if (brw_miptree_layout(tex))
 	 tex->buffer = ws->buffer_create(ws, 64,
                                          PIPE_BUFFER_USAGE_PIXEL,
-                                         tex->pitch * tex->base.cpp *
-                                         tex->total_height);
+                                         tex->stride *
+                                         tex->total_nblocksy);
 
       if (!tex->buffer) {
 	 FREE(tex);
@@ -370,10 +355,10 @@ brw_get_tex_surface_screen(struct pipe_screen *screen,
    offset = tex->level_offset[level];
 
    if (pt->target == PIPE_TEXTURE_CUBE) {
-      offset += tex->image_offset[level][face] * pt->cpp;
+      offset += tex->image_offset[level][face];
    }
    else if (pt->target == PIPE_TEXTURE_3D) {
-      offset += tex->image_offset[level][zslice] * pt->cpp;
+      offset += tex->image_offset[level][zslice];
    }
    else {
       assert(face == 0);
@@ -386,10 +371,12 @@ brw_get_tex_surface_screen(struct pipe_screen *screen,
       assert(ps->refcount);
       pipe_buffer_reference(ws, &ps->buffer, tex->buffer);
       ps->format = pt->format;
-      ps->cpp = pt->cpp;
       ps->width = pt->width[level];
       ps->height = pt->height[level];
-      ps->pitch = tex->pitch;
+      ps->block = pt->block;
+      ps->nblocksx = pt->nblocksx[level];
+      ps->nblocksy = pt->nblocksy[level];
+      ps->stride = tex->stride;
       ps->offset = offset;
    }
    return ps;

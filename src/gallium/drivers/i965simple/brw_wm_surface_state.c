@@ -160,7 +160,7 @@ void brw_update_texture_surface( struct brw_context *brw,
 
    surf.ss3.tile_walk = BRW_TILEWALK_XMAJOR;
    surf.ss3.tiled_surface = 0; /* always zero */
-   surf.ss3.pitch = tObj->pitch - 1;
+   surf.ss3.pitch = tObj->stride - 1;
    surf.ss3.depth = tObj->base.depth[0] - 1;
 
    surf.ss4.min_lod = 0;
@@ -197,7 +197,7 @@ static void upload_wm_surfaces(struct brw_context *brw )
       memset(&surf, 0, sizeof(surf));
 
       if (pipe_surface != NULL) {
-	 if (pipe_surface->cpp == 4)
+	 if (pipe_surface->block.size == 4)
 	    surf.ss0.surface_format = BRW_SURFACEFORMAT_B8G8R8A8_UNORM;
 	 else
 	    surf.ss0.surface_format = BRW_SURFACEFORMAT_B5G6R5_UNORM;
@@ -210,7 +210,7 @@ static void upload_wm_surfaces(struct brw_context *brw )
 	 surf.ss2.height = pipe_surface->height - 1;
 	 surf.ss3.tile_walk = BRW_TILEWALK_XMAJOR;
 	 surf.ss3.tiled_surface = 0;
-	 surf.ss3.pitch = (pipe_surface->pitch * pipe_surface->cpp) - 1;
+	 surf.ss3.pitch = pipe_surface->stride - 1;
       } else {
 	 surf.ss0.surface_format = BRW_SURFACEFORMAT_B8G8R8A8_UNORM;
 	 surf.ss0.surface_type = BRW_SURFACE_NULL;

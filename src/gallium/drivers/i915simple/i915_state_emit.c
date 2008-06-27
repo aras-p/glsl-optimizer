@@ -211,7 +211,7 @@ i915_emit_hardware_state(struct i915_context *i915 )
       struct pipe_surface *depth_surface = i915->framebuffer.zsbuf;
 
       if (cbuf_surface) {
-	 unsigned cpitch = (cbuf_surface->pitch * cbuf_surface->cpp);
+	 unsigned cpitch = cbuf_surface->stride;
 	 unsigned ctile = BUF_3D_USE_FENCE;
 	 if (cbuf_surface->texture &&
 	       ((struct i915_texture*)(cbuf_surface->texture))->tiled) {
@@ -232,7 +232,7 @@ i915_emit_hardware_state(struct i915_context *i915 )
       /* What happens if no zbuf??
        */
       if (depth_surface) {
-	 unsigned zpitch = (depth_surface->pitch * depth_surface->cpp);
+	 unsigned zpitch = depth_surface->stride;
 	 unsigned ztile = BUF_3D_USE_FENCE;
 	 if (depth_surface->texture &&
 	       ((struct i915_texture*)(depth_surface->texture))->tiled) {

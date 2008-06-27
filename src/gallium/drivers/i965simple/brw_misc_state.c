@@ -224,7 +224,9 @@ static void upload_depthbuffer(struct brw_context *brw)
    } else {
       unsigned int format;
 
-      switch (depth_surface->cpp) {
+      assert(depth_surface->block.width == 1);
+      assert(depth_surface->block.height == 1);
+      switch (depth_surface->block.size) {
       case 2:
 	 format = BRW_DEPTHFORMAT_D16_UNORM;
 	 break;
@@ -239,7 +241,7 @@ static void upload_depthbuffer(struct brw_context *brw)
 	 return;
       }
 
-      OUT_BATCH(((depth_surface->pitch * depth_surface->cpp) - 1) |
+      OUT_BATCH((depth_surface->stride - 1) |
 		(format << 18) |
 		(BRW_TILEWALK_YMAJOR << 26) |
 //		(depth_surface->region->tiled << 27) |
@@ -247,7 +249,7 @@ static void upload_depthbuffer(struct brw_context *brw)
       OUT_RELOC(depth_surface->buffer,
 		PIPE_BUFFER_USAGE_GPU_READ | PIPE_BUFFER_USAGE_GPU_WRITE, 0);
       OUT_BATCH((BRW_SURFACE_MIPMAPLAYOUT_BELOW << 1) |
-		((depth_surface->pitch - 1) << 6) |
+		((depth_surface->stride/depth_surface->block.size - 1) << 6) |
 		((depth_surface->height - 1) << 19));
       OUT_BATCH(0);
    }

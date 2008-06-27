@@ -48,7 +48,9 @@ i915_surface_copy(struct pipe_context *pipe,
 		  unsigned srcx, unsigned srcy, unsigned width, unsigned height)
 {
    assert( dst != src );
-   assert( dst->cpp == src->cpp );
+   assert( dst->block.size == src->block.size );
+   assert( dst->block.width == src->block.height );
+   assert( dst->block.height == src->block.height );
 
    if (0) {
       void *dst_map = pipe->screen->surface_map( pipe->screen,
@@ -60,35 +62,27 @@ i915_surface_copy(struct pipe_context *pipe,
                                                        PIPE_BUFFER_USAGE_CPU_READ );
       
       pipe_copy_rect(dst_map,
-                     dst->cpp,
-                     dst->pitch,
+                     &dst->block,
+                     dst->stride,
                      dstx, dsty, 
                      width, height, 
                      src_map, 
-                     do_flip ? -(int) src->pitch : src->pitch, 
+                     do_flip ? -(int) src->stride : src->stride, 
                      srcx, do_flip ? height - 1 - srcy : srcy);
 
       pipe->screen->surface_unmap(pipe->screen, src);
       pipe->screen->surface_unmap(pipe->screen, dst);
    }
    else {
+      assert(dst->block.width == 1);
+      assert(dst->block.height == 1);
       i915_copy_blit( i915_context(pipe),
                       do_flip,
-		      dst->cpp,
-		      (short) src->pitch, src->buffer, src->offset,
-		      (short) dst->pitch, dst->buffer, dst->offset,
+                      dst->block.size,
+		      (short) src->stride/src->block.size, src->buffer, src->offset,
+		      (short) dst->stride/dst->block.size, dst->buffer, dst->offset,
 		      (short) srcx, (short) srcy, (short) dstx, (short) dsty, (short) width, (short) height );
    }
-}
-
-
-/* Fill a rectangular sub-region.  Need better logic about when to
- * push buffers into AGP - will currently do so whenever possible.
- */
-static void *
-get_pointer(struct pipe_surface *dst, void *dst_map, unsigned x, unsigned y)
-{
-   return (char *)dst_map + (y * dst->pitch + x) * dst->cpp;
 }
 
 
@@ -99,50 +93,20 @@ i915_surface_fill(struct pipe_context *pipe,
 		  unsigned width, unsigned height, unsigned value)
 {
    if (0) {
-      unsigned i, j;
       void *dst_map = pipe->screen->surface_map( pipe->screen,
                                                  dst,
                                                  PIPE_BUFFER_USAGE_CPU_WRITE );
 
-
-      switch (dst->cpp) {
-      case 1: {
-	 ubyte *row = get_pointer(dst, dst_map, dstx, dsty);
-	 for (i = 0; i < height; i++) {
-	    memset(row, value, width);
-	    row += dst->pitch;
-	 }
-      }
-	 break;
-      case 2: {
-	 ushort *row = get_pointer(dst, dst_map, dstx, dsty);
-	 for (i = 0; i < height; i++) {
-	    for (j = 0; j < width; j++)
-	       row[j] = (ushort) value;
-	    row += dst->pitch;
-	 }
-      }
-	 break;
-      case 4: {
-	 unsigned *row = get_pointer(dst, dst_map, dstx, dsty);
-	 for (i = 0; i < height; i++) {
-	    for (j = 0; j < width; j++)
-	       row[j] = value;
-	    row += dst->pitch;
-	 }
-      }
-	 break;
-      default:
-	 assert(0);
-	 break;
-      }
+      pipe_fill_rect(dst_map, &dst->block, dst->stride, dstx, dsty, width, height, value);
 
       pipe->screen->surface_unmap(pipe->screen, dst);
    }
    else {
+      assert(dst->block.width == 1);
+      assert(dst->block.height == 1);
       i915_fill_blit( i915_context(pipe),
-		      dst->cpp,
-		      (short) dst->pitch, 
+		      dst->block.size,
+		      (short) dst->stride/dst->block.size, 
 		      dst->buffer, dst->offset,
 		      (short) dstx, (short) dsty, 
 		      (short) width, (short) height, 

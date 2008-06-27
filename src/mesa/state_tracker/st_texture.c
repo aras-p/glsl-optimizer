@@ -98,7 +98,7 @@ st_texture_create(struct st_context *st,
    pt.height[0] = height0;
    pt.depth[0] = depth0;
    pt.compressed = compress_byte ? 1 : 0;
-   pt.cpp = pt.compressed ? compress_byte : st_sizeof_format(format);
+   pf_get_block(format, &pt.block);
    pt.tex_usage = usage;
 
    newtex = screen->texture_create(screen, &pt);
@@ -231,16 +231,19 @@ static void
 st_surface_data(struct pipe_context *pipe,
 		struct pipe_surface *dst,
 		unsigned dstx, unsigned dsty,
-		const void *src, unsigned src_pitch,
+		const void *src, unsigned src_stride,
 		unsigned srcx, unsigned srcy, unsigned width, unsigned height)
 {
    struct pipe_screen *screen = pipe->screen;
    void *map = screen->surface_map(screen, dst, PIPE_BUFFER_USAGE_CPU_WRITE);
 
    pipe_copy_rect(map,
-                  dst->cpp,
-                  dst->pitch,
-                  dstx, dsty, width, height, src, src_pitch, srcx, srcy);
+                  &dst->block,
+                  dst->stride,
+                  dstx, dsty, 
+                  width, height, 
+                  src, src_stride, 
+                  srcx, srcy);
 
    screen->surface_unmap(screen, dst);
 }
@@ -254,34 +257,29 @@ st_texture_image_data(struct pipe_context *pipe,
                       GLuint face,
                       GLuint level,
                       void *src,
-                      GLuint src_row_pitch, GLuint src_image_pitch)
+                      GLuint src_row_stride, GLuint src_image_stride)
 {
    struct pipe_screen *screen = pipe->screen;
    GLuint depth = dst->depth[level];
    GLuint i;
-   GLuint height = 0;
    const GLubyte *srcUB = src;
    struct pipe_surface *dst_surface;
 
    DBG("%s\n", __FUNCTION__);
    for (i = 0; i < depth; i++) {
-      height = dst->height[level];
-      if(dst->compressed)
-	 height /= 4;
-
       dst_surface = screen->get_tex_surface(screen, dst, face, level, i,
                                             PIPE_BUFFER_USAGE_CPU_WRITE);
 
       st_surface_data(pipe, dst_surface,
 		      0, 0,                             /* dstx, dsty */
 		      srcUB,
-		      src_row_pitch,
+		      src_row_stride,
 		      0, 0,                             /* source x, y */
-		      dst->width[level], height);       /* width, height */
+		      dst->width[level], dst->height[level]);       /* width, height */
 
       screen->tex_surface_release(screen, &dst_surface);
 
-      srcUB += src_image_pitch * dst->cpp;
+      srcUB += src_image_stride;
    }
 }
 

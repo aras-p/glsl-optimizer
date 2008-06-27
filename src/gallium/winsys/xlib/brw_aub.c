@@ -322,7 +322,10 @@ void brw_aub_dump_bmp( struct brw_aubfile *aubfile,
    struct aub_dump_bmp db;
    unsigned format;
 
-   if (surface->cpp == 4)
+   assert(surface->block.width == 1);
+   assert(surface->block.height == 1);
+   
+   if (surface->block.size == 4)
       format = 0x7;
    else
       format = 0x3;
@@ -331,8 +334,8 @@ void brw_aub_dump_bmp( struct brw_aubfile *aubfile,
    db.xmin = 0;
    db.ymin = 0;
    db.format = format;
-   db.bpp = surface->cpp * 8;
-   db.pitch = surface->pitch;
+   db.bpp = surface->block.size * 8;
+   db.pitch = surface->stride/surface->block.size;
    db.xsize = surface->width;
    db.ysize = surface->height;
    db.addr = gtt_offset;
