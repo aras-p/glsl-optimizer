@@ -43,9 +43,7 @@ _eglInitConfig(_EGLConfig *config, EGLint id)
    _eglSetConfigAttrib(config, EGL_NATIVE_VISUAL_TYPE,      EGL_DONT_CARE);
    _eglSetConfigAttrib(config, EGL_MIN_SWAP_INTERVAL,       EGL_DONT_CARE);
    _eglSetConfigAttrib(config, EGL_MAX_SWAP_INTERVAL,       EGL_DONT_CARE);
-   _eglSetConfigAttrib(config, EGL_SURFACE_TYPE,            
-                   EGL_SCREEN_BIT_MESA | EGL_PBUFFER_BIT |
-                   EGL_PIXMAP_BIT | EGL_WINDOW_BIT);
+   _eglSetConfigAttrib(config, EGL_SURFACE_TYPE,            EGL_WINDOW_BIT);
    _eglSetConfigAttrib(config, EGL_TRANSPARENT_TYPE,        EGL_NONE);
    _eglSetConfigAttrib(config, EGL_TRANSPARENT_RED_VALUE,   EGL_DONT_CARE);
    _eglSetConfigAttrib(config, EGL_TRANSPARENT_GREEN_VALUE, EGL_DONT_CARE);
@@ -95,6 +93,14 @@ _eglAddConfig(_EGLDisplay *display, _EGLConfig *config)
 {
    _EGLConfig **newConfigs;
    EGLint n;
+
+   /* do some sanity checks on the config's attribs */
+   assert(GET_CONFIG_ATTRIB(config, EGL_CONFIG_ID) > 0);
+   assert(GET_CONFIG_ATTRIB(config, EGL_RENDERABLE_TYPE) != 0x0);
+   assert(GET_CONFIG_ATTRIB(config, EGL_SURFACE_TYPE) != 0x0);
+   assert(GET_CONFIG_ATTRIB(config, EGL_RED_SIZE) > 0);
+   assert(GET_CONFIG_ATTRIB(config, EGL_GREEN_SIZE) > 0);
+   assert(GET_CONFIG_ATTRIB(config, EGL_BLUE_SIZE) > 0);
 
    n = display->NumConfigs;
 
