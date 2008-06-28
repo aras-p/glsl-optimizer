@@ -265,8 +265,10 @@ static struct state_key *make_state_key( GLcontext *ctx )
    if (ctx->Point._Attenuated)
       key->point_attenuated = 1;
 
+#if FEATURE_point_size_array
    if (ctx->Array.ArrayObj->PointSize.Enabled)
       key->point_array = 1;
+#endif
 
    if (ctx->Texture._TexGenEnabled ||
        ctx->Texture._TexMatEnabled ||
