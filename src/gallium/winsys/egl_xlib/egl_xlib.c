@@ -133,6 +133,10 @@ bitcount(unsigned int n)
 static void
 create_configs(_EGLDriver *drv, EGLDisplay dpy)
 {
+   static const EGLint all_apis = (EGL_OPENGL_ES_BIT |
+                                   EGL_OPENGL_ES2_BIT |
+                                   EGL_OPENVG_BIT |
+                                   EGL_OPENGL_BIT);
    _EGLDisplay *disp = _eglLookupDisplay(dpy);
    XVisualInfo *visInfo, visTemplate;
    int num_visuals, i;
@@ -173,6 +177,9 @@ create_configs(_EGLDriver *drv, EGLDisplay dpy)
       SET_CONFIG_ATTRIB(config, EGL_NATIVE_VISUAL_ID, visid);
       SET_CONFIG_ATTRIB(config, EGL_NATIVE_VISUAL_TYPE, vistype);
       SET_CONFIG_ATTRIB(config, EGL_NATIVE_RENDERABLE, EGL_FALSE);
+      SET_CONFIG_ATTRIB(config, EGL_CONFORMANT, all_apis);
+      SET_CONFIG_ATTRIB(config, EGL_RENDERABLE_TYPE, all_apis);
+      SET_CONFIG_ATTRIB(config, EGL_SURFACE_TYPE, EGL_WINDOW_BIT);
 
       _eglAddConfig(disp, config);
    }
