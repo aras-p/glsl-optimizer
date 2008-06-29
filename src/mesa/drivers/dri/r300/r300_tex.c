@@ -955,7 +955,6 @@ static void r300TexEnv(GLcontext * ctx, GLenum target,
 	 */
 	switch (pname) {
 	case GL_TEXTURE_LOD_BIAS_EXT: {
-		/* Needs to be relocated in order to make sure we got the right tmu */
 		GLfloat bias, min;
 
 		/* The R300's LOD bias is a signed 2's complement value with a
@@ -968,7 +967,14 @@ static void r300TexEnv(GLcontext * ctx, GLenum target,
 			"no_neg_lod_bias") ? 0.0 : -16.0;
 		bias = CLAMP(bias, min, 16.0);
 
-		rmesa->LODBias = bias;
+		/* There's probably a magic Mesa method for finding the REAL
+		 * texture unit. I don't know it, though. */
+		if (!(ctx->Texture._EnabledUnits & (1 << ctx->Texture.CurrentUnit))) {
+			break;
+		}
+
+		/* Save our newly clamped LOD bias. */
+		ctx->Texture.Unit[ctx->Texture.CurrentUnit].LodBias = bias;
 
 		break;
 	}

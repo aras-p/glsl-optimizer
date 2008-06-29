@@ -1456,8 +1456,10 @@ static void r300SetupTextures(GLcontext * ctx)
 			r300->hw.tex.filter.cmd[R300_TEX_VALUE_0 +
 						hw_tmu] =
 			    gen_fixed_filter(t->filter) | (hw_tmu << 28);
-			r300->hw.tex.filter_1.cmd[R300_TEX_VALUE_0 + hw_tmu] = t->filter_1
-				| r300CalculateTexLodBias(r300->LODBias);
+			/* Make LOD bias a bit more per-tex and less per-everything. */
+			t->filter_1 &= ~R300_LOD_BIAS_MASK;
+			t->filter_1 |= r300CalculateTexLodBias(ctx->Texture.Unit[i].LodBias);
+			r300->hw.tex.filter_1.cmd[R300_TEX_VALUE_0 + hw_tmu] = t->filter_1;
 			r300->hw.tex.size.cmd[R300_TEX_VALUE_0 + hw_tmu] =
 			    t->size;
 			r300->hw.tex.format.cmd[R300_TEX_VALUE_0 +
