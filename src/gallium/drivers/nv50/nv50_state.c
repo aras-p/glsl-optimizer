@@ -121,9 +121,9 @@ nv50_set_sampler_texture(struct pipe_context *pipe, unsigned nr,
 	int i;
 
 	for (i = 0; i < nr; i++)
-		pipe_texture_reference(&nv50->miptree[i], pt[i]);
+		pipe_texture_reference((void *)&nv50->miptree[i], pt[i]);
 	for (i = nr; i < nv50->miptree_nr; i++)
-		pipe_texture_reference(&nv50->miptree[i], NULL);
+		pipe_texture_reference((void *)&nv50->miptree[i], NULL);
 
 	nv50->miptree_nr = nr;
 	nv50->dirty |= NV50_NEW_TEXTURE;

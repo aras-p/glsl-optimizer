@@ -1240,7 +1240,7 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 			unsigned last;
 
 			d = &p.FullToken.FullDeclaration;
-			last = d->u.DeclarationRange.Last;
+			last = d->DeclarationRange.Last;
 
 			switch (d->Declaration.File) {
 			case TGSI_FILE_TEMPORARY:
@@ -1546,7 +1546,7 @@ nv50_program_validate_code(struct nv50_context *nv50, struct nv50_program *p)
 	}
 
 	if (!upload)
-		return FALSE;
+		return;
 
 	up = ptr = MALLOC(p->exec_size * 4);
 	for (e = p->exec_head; e; e = e->next) {

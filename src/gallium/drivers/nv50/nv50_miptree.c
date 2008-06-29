@@ -26,7 +26,7 @@ nv50_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *pt)
 		break;
 	}
 
-	pitch = ((pt->width[0] + 63) & ~63) * pt->cpp;
+	pitch = ((pt->width[0] + 63) & ~63) * pt->block.size;
 
 	mt->buffer = ws->buffer_create(ws, 256, usage, pitch * pt->height[0]);
 	if (!mt->buffer) {
