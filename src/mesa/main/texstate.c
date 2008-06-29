@@ -2999,6 +2999,24 @@ update_texture_state( GLcontext *ctx )
          _mesa_problem(ctx, "invalid Alpha combine mode in update_texture_state");
 	 break;
       }
+   }
+
+   /* Determine which texture coordinate sets are actually needed */
+   if (fprog) {
+      const GLuint coordMask = (1 << MAX_TEXTURE_COORD_UNITS) - 1;
+      ctx->Texture._EnabledCoordUnits
+         = (fprog->Base.InputsRead >> FRAG_ATTRIB_TEX0) & coordMask;
+   }
+   else {
+      ctx->Texture._EnabledCoordUnits = ctx->Texture._EnabledUnits;
+   }
+
+   /* Setup texgen for those texture coordinate sets that are in use */
+   for (unit = 0; unit < ctx->Const.MaxTextureUnits; unit++) {
+      struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
+
+      if (!(ctx->Texture._EnabledCoordUnits & (1 << unit)))
+	 continue;
 
       if (texUnit->TexGenEnabled) {
 	 if (texUnit->TexGenEnabled & S_BIT) {
@@ -3020,16 +3038,6 @@ update_texture_state( GLcontext *ctx )
 
       if (ctx->TextureMatrixStack[unit].Top->type != MATRIX_IDENTITY)
 	 ctx->Texture._TexMatEnabled |= ENABLE_TEXMAT(unit);
-   }
-
-   /* Determine which texture coordinate sets are actually needed */
-   if (fprog) {
-      const GLuint coordMask = (1 << MAX_TEXTURE_COORD_UNITS) - 1;
-      ctx->Texture._EnabledCoordUnits
-         = (fprog->Base.InputsRead >> FRAG_ATTRIB_TEX0) & coordMask;
-   }
-   else {
-      ctx->Texture._EnabledCoordUnits = ctx->Texture._EnabledUnits;
    }
 }
 
