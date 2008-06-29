@@ -25,11 +25,13 @@ nv10_miptree_layout(struct nv10_miptree *nv10mt)
 		pt->width[l] = width;
 		pt->height[l] = height;
 		pt->depth[l] = depth;
+		pt->nblocksx[l] = pf_get_nblocksx(&pt->block, width);
+		pt->nblocksy[l] = pf_get_nblocksy(&pt->block, height);
 
 		if (swizzled)
-			nv10mt->level[l].pitch = pt->width[l] * pt->cpp;
+			nv10mt->level[l].pitch = pt->nblocksx[l] * pt->block.size;
 		else
-			nv10mt->level[l].pitch = pt->width[0] * pt->cpp;
+			nv10mt->level[l].pitch = pt->nblocksx[0] * pt->block.size;
 		nv10mt->level[l].pitch = (nv10mt->level[l].pitch + 63) & ~63;
 
 		nv10mt->level[l].image_offset =
@@ -117,10 +119,12 @@ nv10_miptree_surface_get(struct pipe_screen *screen, struct pipe_texture *pt,
 		return NULL;
 	pipe_buffer_reference(ws, &ps->buffer, nv10mt->buffer);
 	ps->format = pt->format;
-	ps->cpp = pt->cpp;
 	ps->width = pt->width[level];
 	ps->height = pt->height[level];
-	ps->pitch = nv10mt->level[level].pitch / ps->cpp;
+	ps->block = pt->block;
+	ps->nblocksx = pt->nblocksx[level];
+	ps->nblocksy = pt->nblocksy[level];
+	ps->stride = nv10mt->level[level].pitch;
 
 	if (pt->target == PIPE_TEXTURE_CUBE) {
 		ps->offset = nv10mt->level[level].image_offset[face];

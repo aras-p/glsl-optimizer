@@ -631,21 +631,21 @@ nv30_set_framebuffer_state(struct pipe_context *pipe,
 	}
 
 	if (rt_enable & NV34TCL_RT_ENABLE_COLOR0) {
-		uint32_t pitch = rt[0]->pitch * rt[0]->cpp;
+		uint32_t pitch = rt[0]->stride;
 		if (zeta) {
-			pitch |= (zeta->pitch * zeta->cpp)<<16;
+			pitch |= (zeta->stride << 16);
 		} else {
-			pitch |= pitch<<16;
+			pitch |= (pitch << 16);
 		}
 
 		BEGIN_RING(rankine, NV34TCL_COLOR0_PITCH, 1);
-		OUT_RING  ( pitch );
+		OUT_RING  (pitch);
 		nv30->rt[0] = rt[0]->buffer;
 	}
 
 	if (rt_enable & NV34TCL_RT_ENABLE_COLOR1) {
 		BEGIN_RING(rankine, NV34TCL_COLOR1_PITCH, 1);
-		OUT_RING  (rt[1]->pitch * rt[1]->cpp);
+		OUT_RING  (rt[1]->stride);
 		nv30->rt[1] = rt[1]->buffer;
 	}
 

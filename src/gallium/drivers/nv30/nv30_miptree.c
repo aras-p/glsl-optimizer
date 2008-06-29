@@ -28,12 +28,14 @@ nv30_miptree_layout(struct nv30_miptree *nv30mt)
 		pt->width[l] = width;
 		pt->height[l] = height;
 		pt->depth[l] = depth;
+		pt->nblocksx[l] = pf_get_nblocksx(&pt->block, width);
+		pt->nblocksy[l] = pf_get_nblocksy(&pt->block, height);
 
 		if (swizzled)
 			pitch = pt->width[l];
 		pitch = (pitch + 63) & ~63;
 
-		nv30mt->level[l].pitch = pitch * pt->cpp;
+		nv30mt->level[l].pitch = pitch * pt->block.size;
 		nv30mt->level[l].image_offset =
 			CALLOC(nr_faces, sizeof(unsigned));
 
@@ -114,10 +116,12 @@ nv30_miptree_surface_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 		return NULL;
 	pipe_buffer_reference(ws, &ps->buffer, nv30mt->buffer);
 	ps->format = pt->format;
-	ps->cpp = pt->cpp;
 	ps->width = pt->width[level];
 	ps->height = pt->height[level];
-	ps->pitch = nv30mt->level[level].pitch / ps->cpp;
+	ps->nblocksx = pt->nblocksx[level];
+	ps->nblocksy = pt->nblocksy[level];
+	ps->block = pt->block;
+	ps->stride = nv30mt->level[level].pitch;
 
 	if (pt->target == PIPE_TEXTURE_CUBE) {
 		ps->offset = nv30mt->level[level].image_offset[face];

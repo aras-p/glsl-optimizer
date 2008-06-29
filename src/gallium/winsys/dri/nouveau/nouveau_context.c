@@ -167,9 +167,14 @@ nouveau_context_create(const __GLcontextModes *glVis,
 		fb_buf->bo = &fb_bo->base;
 
 		fb_surf = calloc(1, sizeof(struct pipe_surface));
-		fb_surf->cpp = nv_screen->front_cpp;
-		fb_surf->pitch = nv_screen->front_pitch / fb_surf->cpp;
+		if (nv_screen->front_cpp == 2)
+			fb_surf->format = PIPE_FORMAT_R5G6B5_UNORM;
+		else
+			fb_surf->format = PIPE_FORMAT_A8R8G8B8_UNORM;
+		pf_get_block(fb_surf->format, &fb_surf->block);
+		fb_surf->width = nv_screen->front_pitch / nv_screen->front_cpp;
 		fb_surf->height = nv_screen->front_height;
+		fb_surf->stride = fb_surf->width * fb_surf->block.size;
 		fb_surf->refcount = 1;
 		fb_surf->buffer = &fb_buf->base;
 

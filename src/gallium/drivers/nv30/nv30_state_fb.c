@@ -59,11 +59,11 @@ nv30_state_framebuffer_validate(struct nv30_context *nv30)
 	}
 
 	if (rt_enable & NV34TCL_RT_ENABLE_COLOR0) {
-		uint32_t pitch = rt[0]->pitch * rt[0]->cpp;
+		uint32_t pitch = rt[0]->stride;
 		if (zeta) {
-			pitch |= (zeta->pitch * zeta->cpp)<<16;
+			pitch |= (zeta->stride << 16);
 		} else {
-			pitch |= pitch<<16;
+			pitch |= (pitch << 16);
 		}
 
 		so_method(so, nv30->screen->rankine, NV34TCL_DMA_COLOR0, 1);
@@ -84,7 +84,7 @@ nv30_state_framebuffer_validate(struct nv30_context *nv30)
 		so_method(so, nv30->screen->rankine, NV34TCL_COLOR1_OFFSET, 2);
 		so_reloc (so, rt[1]->buffer, rt[1]->offset, rt_flags |
 			  NOUVEAU_BO_LOW, 0, 0);
-		so_data  (so, rt[1]->pitch * rt[1]->cpp);
+		so_data  (so, rt[1]->stride);
 	}
 /*
 	if (rt_enable & NV34TCL_RT_ENABLE_COLOR2) {

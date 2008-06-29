@@ -28,19 +28,20 @@ nv40_miptree_layout(struct nv40_miptree *nv40mt)
 		pt->width[l] = width;
 		pt->height[l] = height;
 		pt->depth[l] = depth;
+		pt->nblocksx[l] = pf_get_nblocksx(&pt->block, width);
+		pt->nblocksy[l] = pf_get_nblocksy(&pt->block, height);
 
 		if (swizzled)
-			pitch = pt->width[l];
-		pitch = (pitch + 63) & ~63;
+			pitch = pt->nblocksx[l];
+		pitch = align_int(pitch, 64);
 
-		nv40mt->level[l].pitch = pitch * pt->cpp;
+		nv40mt->level[l].pitch = pitch * pt->block.size;
 		nv40mt->level[l].image_offset =
 			CALLOC(nr_faces, sizeof(unsigned));
 
 		width  = MAX2(1, width  >> 1);
 		height = MAX2(1, height >> 1);
 		depth  = MAX2(1, depth  >> 1);
-
 	}
 
 	for (f = 0; f < nr_faces; f++) {
@@ -109,15 +110,20 @@ nv40_miptree_surface_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 	struct nv40_miptree *nv40mt = (struct nv40_miptree *)pt;
 	struct pipe_surface *ps;
 
-	ps = ws->surface_alloc(ws);
+	ps = CALLOC_STRUCT(pipe_surface);
 	if (!ps)
 		return NULL;
+	pipe_texture_reference(&ps->texture, pt);
 	pipe_buffer_reference(ws, &ps->buffer, nv40mt->buffer);
 	ps->format = pt->format;
-	ps->cpp = pt->cpp;
 	ps->width = pt->width[level];
 	ps->height = pt->height[level];
-	ps->pitch = nv40mt->level[level].pitch / ps->cpp;
+	ps->block = pt->block;
+	ps->nblocksx = pt->nblocksx[level];
+	ps->nblocksy = pt->nblocksy[level];
+	ps->stride = nv40mt->level[level].pitch;
+	ps->usage = flags;
+	ps->status = PIPE_SURFACE_STATUS_DEFINED;
 
 	if (pt->target == PIPE_TEXTURE_CUBE) {
 		ps->offset = nv40mt->level[level].image_offset[face];
@@ -135,6 +141,15 @@ static void
 nv40_miptree_surface_del(struct pipe_screen *pscreen,
 			 struct pipe_surface **psurface)
 {
+	struct pipe_surface *ps = *psurface;
+
+	*psurface = NULL;
+	if (--ps->refcount > 0)
+		return;
+
+	pipe_texture_reference(&ps->texture, NULL);
+	pipe_buffer_reference(pscreen->winsys, &ps->buffer, NULL);
+	FREE(ps);
 }
 
 void

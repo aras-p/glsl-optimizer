@@ -72,10 +72,12 @@ nv50_miptree_surface_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 
 	pipe_buffer_reference(ws, &ps->buffer, mt->buffer);
 	ps->format = pt->format;
-	ps->cpp = pt->cpp;
 	ps->width = pt->width[level];
 	ps->height = pt->height[level];
-	ps->pitch = ps->width;
+	ps->block = pt->block;
+	ps->nblocksx = pt->nblocksx[level];
+	ps->nblocksy = pt->nblocksy[level];
+	ps->stride = ps->width * ps->block.size;
 	ps->offset = 0;
 
 	return ps;

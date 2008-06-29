@@ -209,8 +209,9 @@ nouveau_fill_in_modes(unsigned pixel_bits, unsigned depth_bits,
 		GLX_NONE, GLX_SWAP_UNDEFINED_OML, GLX_SWAP_COPY_OML
 	};
 
-	u_int8_t depth_bits_array[4]   = { 0, 16, 24, 24 };
-	u_int8_t stencil_bits_array[4] = { 0,  0,  0, 8 };
+	uint8_t depth_bits_array[4]   = { 0, 16, 24, 24 };
+	uint8_t stencil_bits_array[4] = { 0,  0,  0, 8 };
+	uint8_t msaa_samples_array[1] = { 0 };
 
 	depth_buffer_factor = 4;
 	back_buffer_factor  = (have_back_buffer) ? 3 : 1;
@@ -229,6 +230,7 @@ nouveau_fill_in_modes(unsigned pixel_bits, unsigned depth_bits,
 					depth_buffer_factor,
 					back_buffer_modes,
 					back_buffer_factor,
+					msaa_samples_array, 1,
 					GLX_TRUE_COLOR)) {
 		fprintf( stderr, "[%s:%u] Error creating FBConfig!\n",
 				__func__, __LINE__ );
@@ -242,6 +244,7 @@ nouveau_fill_in_modes(unsigned pixel_bits, unsigned depth_bits,
 					depth_buffer_factor,
 					back_buffer_modes,
 					back_buffer_factor,
+					msaa_samples_array, 1,
 					GLX_DIRECT_COLOR)) {
 		fprintf( stderr, "[%s:%u] Error creating FBConfig!\n",
 				__func__, __LINE__ );

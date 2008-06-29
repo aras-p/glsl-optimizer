@@ -1,26 +1,35 @@
 #include "pipe/p_context.h"
+#include "pipe/p_format.h"
 
 #include "nouveau_context.h"
 
 static INLINE int
-nv04_surface_format(int cpp)
+nv04_surface_format(enum pipe_format format)
 {
-	switch (cpp) {
-	case 1: return NV04_CONTEXT_SURFACES_2D_FORMAT_Y8;
-	case 2: return NV04_CONTEXT_SURFACES_2D_FORMAT_R5G6B5;
-	case 4: return NV04_CONTEXT_SURFACES_2D_FORMAT_Y32;
+	switch (format) {
+	case PIPE_FORMAT_A8_UNORM:
+		return NV04_CONTEXT_SURFACES_2D_FORMAT_Y8;
+	case PIPE_FORMAT_R5G6B5_UNORM:
+		return NV04_CONTEXT_SURFACES_2D_FORMAT_R5G6B5;
+	case PIPE_FORMAT_A8R8G8B8_UNORM:
+	case PIPE_FORMAT_Z24S8_UNORM:
+		return NV04_CONTEXT_SURFACES_2D_FORMAT_Y32;
 	default:
 		return -1;
 	}
 }
 
 static INLINE int
-nv04_rect_format(int cpp)
+nv04_rect_format(enum pipe_format format)
 {
-	switch (cpp) {
-	case 1: return NV04_GDI_RECTANGLE_TEXT_COLOR_FORMAT_A8R8G8B8;
-	case 2: return NV04_GDI_RECTANGLE_TEXT_COLOR_FORMAT_A16R5G6B5;
-	case 4: return NV04_GDI_RECTANGLE_TEXT_COLOR_FORMAT_A8R8G8B8;
+	switch (format) {
+	case PIPE_FORMAT_A8_UNORM:
+		return NV04_GDI_RECTANGLE_TEXT_COLOR_FORMAT_A8R8G8B8;
+	case PIPE_FORMAT_R5G6B5_UNORM:
+		return NV04_GDI_RECTANGLE_TEXT_COLOR_FORMAT_A16R5G6B5;
+	case PIPE_FORMAT_A8R8G8B8_UNORM:
+	case PIPE_FORMAT_Z24S8_UNORM:
+		return NV04_GDI_RECTANGLE_TEXT_COLOR_FORMAT_A8R8G8B8;
 	default:
 		return -1;
 	}
@@ -35,8 +44,8 @@ nv04_surface_copy_m2mf(struct nouveau_context *nv, unsigned dx, unsigned dy,
 	struct pipe_surface *src = nv->surf_src;
 	unsigned dst_offset, src_offset;
 
-	dst_offset = dst->offset + (dy * dst->pitch + dx) * dst->cpp;
-	src_offset = src->offset + (sy * src->pitch + sx) * src->cpp;
+	dst_offset = dst->offset + (dy * dst->stride) + (dx * dst->block.size);
+	src_offset = src->offset + (sy * src->stride) + (sx * src->block.size);
 
 	while (h) {
 		int count = (h > 2047) ? 2047 : h;
@@ -47,16 +56,16 @@ nv04_surface_copy_m2mf(struct nouveau_context *nv, unsigned dx, unsigned dy,
 			   NOUVEAU_BO_VRAM | NOUVEAU_BO_GART | NOUVEAU_BO_RD);
 		OUT_RELOCl(chan, nouveau_buffer(dst->buffer)->bo, dst_offset,
 			   NOUVEAU_BO_VRAM | NOUVEAU_BO_GART | NOUVEAU_BO_WR);
-		OUT_RING  (chan, src->pitch * src->cpp);
-		OUT_RING  (chan, dst->pitch * dst->cpp);
-		OUT_RING  (chan, w * src->cpp);
+		OUT_RING  (chan, src->stride);
+		OUT_RING  (chan, dst->stride);
+		OUT_RING  (chan, w * src->block.size);
 		OUT_RING  (chan, count);
 		OUT_RING  (chan, 0x0101);
 		OUT_RING  (chan, 0);
 
 		h -= count;
-		src_offset += src->pitch * src->cpp * count;
-		dst_offset += dst->pitch * dst->cpp * count;
+		src_offset += src->stride * count;
+		dst_offset += dst->stride * count;
 	}
 }
 
@@ -79,7 +88,7 @@ nv04_surface_copy_prep(struct nouveau_context *nv, struct pipe_surface *dst,
 	struct nouveau_channel *chan = nv->nvc->channel;
 	int format;
 
-	if (src->cpp != dst->cpp)
+	if (src->format != dst->format)
 		return 1;
 
 	/* NV_CONTEXT_SURFACES_2D has buffer alignment restrictions, fallback
@@ -100,8 +109,8 @@ nv04_surface_copy_prep(struct nouveau_context *nv, struct pipe_surface *dst,
 
 	}
 
-	if ((format = nv04_surface_format(dst->cpp)) < 0) {
-		NOUVEAU_ERR("Bad cpp = %d\n", dst->cpp);
+	if ((format = nv04_surface_format(dst->format)) < 0) {
+		NOUVEAU_ERR("Bad surface format 0x%x\n", dst->format);
 		return 1;
 	}
 	nv->surface_copy = nv04_surface_copy_blit;
@@ -116,8 +125,7 @@ nv04_surface_copy_prep(struct nouveau_context *nv, struct pipe_surface *dst,
 	BEGIN_RING(chan, nv->nvc->NvCtxSurf2D,
 		   NV04_CONTEXT_SURFACES_2D_FORMAT, 4);
 	OUT_RING  (chan, format);
-	OUT_RING  (chan, ((dst->pitch * dst->cpp) << 16) | 
-			  (src->pitch * src->cpp));
+	OUT_RING  (chan, (dst->stride << 16) | src->stride);
 	OUT_RELOCl(chan, nouveau_buffer(src->buffer)->bo, src->offset,
 		   NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
 	OUT_RELOCl(chan, nouveau_buffer(dst->buffer)->bo, dst->offset,
@@ -142,13 +150,13 @@ nv04_surface_fill(struct nouveau_context *nv, struct pipe_surface *dst,
 	struct nouveau_grobj *rect = nv->nvc->NvGdiRect;
 	int cs2d_format, gdirect_format;
 
-	if ((cs2d_format = nv04_surface_format(dst->cpp)) < 0) {
-		NOUVEAU_ERR("Bad cpp = %d\n", dst->cpp);
+	if ((cs2d_format = nv04_surface_format(dst->format)) < 0) {
+		NOUVEAU_ERR("Bad format = %d\n", dst->format);
 		return 1;
 	}
 
-	if ((gdirect_format = nv04_rect_format(dst->cpp)) < 0) {
-		NOUVEAU_ERR("Bad cpp = %d\n", dst->cpp);
+	if ((gdirect_format = nv04_rect_format(dst->format)) < 0) {
+		NOUVEAU_ERR("Bad format = %d\n", dst->format);
 		return 1;
 	}
 
@@ -159,8 +167,7 @@ nv04_surface_fill(struct nouveau_context *nv, struct pipe_surface *dst,
 		   NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
 	BEGIN_RING(chan, surf2d, NV04_CONTEXT_SURFACES_2D_FORMAT, 4);
 	OUT_RING  (chan, cs2d_format);
-	OUT_RING  (chan, ((dst->pitch * dst->cpp) << 16) |
-			  (dst->pitch * dst->cpp));
+	OUT_RING  (chan, (dst->stride << 16) | dst->stride);
 	OUT_RELOCl(chan, nouveau_buffer(dst->buffer)->bo, dst->offset,
 		   NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
 	OUT_RELOCl(chan, nouveau_buffer(dst->buffer)->bo, dst->offset,

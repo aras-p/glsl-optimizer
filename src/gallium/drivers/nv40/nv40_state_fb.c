@@ -64,7 +64,7 @@ nv40_state_framebuffer_validate(struct nv40_context *nv40)
 			  nv40->nvws->channel->vram->handle,
 			  nv40->nvws->channel->gart->handle);
 		so_method(so, nv40->screen->curie, NV40TCL_COLOR0_PITCH, 2);
-		so_data  (so, rt[0]->pitch * rt[0]->cpp);
+		so_data  (so, rt[0]->stride);
 		so_reloc (so, rt[0]->buffer, rt[0]->offset, rt_flags |
 			  NOUVEAU_BO_LOW, 0, 0);
 	}
@@ -77,7 +77,7 @@ nv40_state_framebuffer_validate(struct nv40_context *nv40)
 		so_method(so, nv40->screen->curie, NV40TCL_COLOR1_OFFSET, 2);
 		so_reloc (so, rt[1]->buffer, rt[1]->offset, rt_flags |
 			  NOUVEAU_BO_LOW, 0, 0);
-		so_data  (so, rt[1]->pitch * rt[1]->cpp);
+		so_data  (so, rt[1]->stride);
 	}
 
 	if (rt_enable & NV40TCL_RT_ENABLE_COLOR2) {
@@ -89,7 +89,7 @@ nv40_state_framebuffer_validate(struct nv40_context *nv40)
 		so_reloc (so, rt[2]->buffer, rt[2]->offset, rt_flags |
 			  NOUVEAU_BO_LOW, 0, 0);
 		so_method(so, nv40->screen->curie, NV40TCL_COLOR2_PITCH, 1);
-		so_data  (so, rt[2]->pitch * rt[2]->cpp);
+		so_data  (so, rt[2]->stride);
 	}
 
 	if (rt_enable & NV40TCL_RT_ENABLE_COLOR3) {
@@ -101,7 +101,7 @@ nv40_state_framebuffer_validate(struct nv40_context *nv40)
 		so_reloc (so, rt[3]->buffer, rt[3]->offset, rt_flags |
 			  NOUVEAU_BO_LOW, 0, 0);
 		so_method(so, nv40->screen->curie, NV40TCL_COLOR3_PITCH, 1);
-		so_data  (so, rt[3]->pitch * rt[3]->cpp);
+		so_data  (so, rt[3]->stride);
 	}
 
 	if (zeta_format) {
@@ -113,7 +113,7 @@ nv40_state_framebuffer_validate(struct nv40_context *nv40)
 		so_reloc (so, zeta->buffer, zeta->offset, rt_flags |
 			  NOUVEAU_BO_LOW, 0, 0);
 		so_method(so, nv40->screen->curie, NV40TCL_ZETA_PITCH, 1);
-		so_data  (so, zeta->pitch * zeta->cpp);
+		so_data  (so, zeta->stride);
 	}
 
 	so_method(so, nv40->screen->curie, NV40TCL_RT_ENABLE, 1);

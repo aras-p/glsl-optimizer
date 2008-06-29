@@ -34,7 +34,7 @@
 #include "util/p_tile.h"
 
 static void
-nv40_surface_copy(struct pipe_context *pipe, unsigned do_flip,
+nv40_surface_copy(struct pipe_context *pipe, boolean do_flip,
 		  struct pipe_surface *dest, unsigned destx, unsigned desty,
 		  struct pipe_surface *src, unsigned srcx, unsigned srcy,
 		  unsigned width, unsigned height)
