@@ -194,8 +194,7 @@ DRI_CONF_BEGIN
 	DRI_CONF_SECTION_QUALITY
 		DRI_CONF_TEXTURE_DEPTH(DRI_CONF_TEXTURE_DEPTH_FB)
 		DRI_CONF_DEF_MAX_ANISOTROPY(1.0, "1.0,2.0,4.0,8.0,16.0")
-		DRI_CONF_NO_NEG_LOD_BIAS(false)
-                DRI_CONF_FORCE_S3TC_ENABLE(false)
+		DRI_CONF_FORCE_S3TC_ENABLE(false)
 		DRI_CONF_DISABLE_S3TC(false)
 		DRI_CONF_COLOR_REDUCTION(DRI_CONF_COLOR_REDUCTION_DITHER)
 		DRI_CONF_ROUND_MODE(DRI_CONF_ROUND_TRUNC)
@@ -206,7 +205,7 @@ DRI_CONF_BEGIN
 		DRI_CONF_NO_RAST(false)
 	DRI_CONF_SECTION_END
 DRI_CONF_END;
-static const GLuint __driNConfigOptions = 18;
+static const GLuint __driNConfigOptions = 17;
 
 #ifndef RADEON_DEBUG
 int RADEON_DEBUG = 0;
@@ -244,10 +243,10 @@ radeonGetParam(int fd, int param, void *value)
 {
   int ret;
   drm_radeon_getparam_t gp;
-  
+
   gp.param = param;
   gp.value = value;
-  
+
   ret = drmCommandWriteRead( fd, DRM_RADEON_GETPARAM, &gp, sizeof(gp));
   return ret;
 }
@@ -280,7 +279,7 @@ radeonFillInModes( __DRIscreenPrivate *psp,
 
     depth_bits_array[0] = depth_bits;
     depth_bits_array[1] = depth_bits;
-    
+
     /* Just like with the accumulation buffer, always provide some modes
      * with a stencil buffer.  It will be a sw fallback, but some apps won't
      * care about that.
@@ -384,7 +383,7 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
       int ret;
       ret = radeonGetParam( sPriv->fd, RADEON_PARAM_GART_BUFFER_OFFSET,
 			    &screen->gart_buffer_offset);
-	
+
       if (ret) {
 	 FREE( screen );
 	 fprintf(stderr, "drm_radeon_getparam_t (RADEON_PARAM_GART_BUFFER_OFFSET): %d\n", ret);
@@ -1133,7 +1132,7 @@ static void radeonDestroyContext(__DRIcontextPrivate * driContextPriv)
 
 /**
  * This is the driver specific part of the createNewScreen entry point.
- * 
+ *
  * \todo maybe fold this into intelInitDriver
  *
  * \return the __GLcontextModes supported by this driver

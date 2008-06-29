@@ -1381,16 +1381,14 @@ static void r500SetupFragmentShaderTextures(GLcontext *ctx, int *tmu_mappings)
 	}
 }
 
-static GLuint r300CalculateTexLodBias(GLfloat bias)
+static GLuint translate_lod_bias(GLfloat bias)
 {
-	GLuint b;
-	b = (unsigned int)fabsf(ceilf(bias*31));
-	if (signbit(bias)) {
-		b ^= 0x3ff; /* 10 bits */
-	}
-	b <<= 3;
-	b &= R300_LOD_BIAS_MASK;
-	return b;
+	GLint b = (int)(bias*32);
+	if (b >= (1 << 9))
+		b = (1 << 9)-1;
+	else if (b < -(1 << 9))
+		b = -(1 << 9);
+	return ((GLuint)b) << R300_LOD_BIAS_SHIFT;
 }
 
 static void r300SetupTextures(GLcontext * ctx)
@@ -1456,10 +1454,14 @@ static void r300SetupTextures(GLcontext * ctx)
 			r300->hw.tex.filter.cmd[R300_TEX_VALUE_0 +
 						hw_tmu] =
 			    gen_fixed_filter(t->filter) | (hw_tmu << 28);
-			/* Make LOD bias a bit more per-tex and less per-everything. */
-			t->filter_1 &= ~R300_LOD_BIAS_MASK;
-			t->filter_1 |= r300CalculateTexLodBias(ctx->Texture.Unit[i].LodBias);
-			r300->hw.tex.filter_1.cmd[R300_TEX_VALUE_0 + hw_tmu] = t->filter_1;
+			/* Note: There is a LOD bias per texture unit and a LOD bias
+			 * per texture object. We add them here to get the correct behaviour.
+			 * (The per-texture object LOD bias was introduced in OpenGL 1.4
+			 * and is not present in the EXT_texture_object extension).
+			 */
+			r300->hw.tex.filter_1.cmd[R300_TEX_VALUE_0 + hw_tmu] =
+				t->filter_1 |
+				translate_lod_bias(ctx->Texture.Unit[i].LodBias + t->base.tObj->LodBias);
 			r300->hw.tex.size.cmd[R300_TEX_VALUE_0 + hw_tmu] =
 			    t->size;
 			r300->hw.tex.format.cmd[R300_TEX_VALUE_0 +

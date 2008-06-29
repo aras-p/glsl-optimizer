@@ -806,10 +806,10 @@ struct r500_fragment_program {
 	GLcontext *ctx;
 	GLboolean translated;
 	GLboolean error;
-	
+
 	struct r500_fragment_program_external_state state;
 	struct r500_fragment_program_code code;
-	
+
 	GLboolean writes_depth;
 
 	GLuint optimization;
@@ -925,7 +925,6 @@ struct r300_context {
 	driTextureObject swapped;
 	int texture_depth;
 	float initialMaxAnisotropy;
-	float LODBias;
 
 	/* Clientdata textures;
 	 */

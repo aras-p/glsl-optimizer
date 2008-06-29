@@ -279,6 +279,7 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	    MIN2(ctx->Const.MaxTextureImageUnits,
 		 ctx->Const.MaxTextureCoordUnits);
 	ctx->Const.MaxTextureMaxAnisotropy = 16.0;
+	ctx->Const.MaxTextureLodBias = 16.0;
 
 	if (screen->chip_family >= CHIP_FAMILY_RV515) {
 	    ctx->Const.MaxTextureLevels = 13;

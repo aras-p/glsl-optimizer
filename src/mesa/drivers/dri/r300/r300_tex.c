@@ -175,20 +175,6 @@ static void r300SetTexBorderColor(r300TexObjPtr t, GLubyte c[4])
 	t->pp_border_color = PACK_COLOR_8888(c[3], c[0], c[1], c[2]);
 }
 
-static void r300SetTexLodBias(r300TexObjPtr t, GLfloat bias)
-{
-	GLuint b;
-	b = (unsigned int)fabsf(ceilf(bias*31));
-	if (signbit(bias)) {
-		b ^= 0x3ff; /* 10 bits */
-	}
-	b <<= 3;
-	b &= R300_LOD_BIAS_MASK;
-
-	t->filter_1 &= ~R300_LOD_BIAS_MASK;
-	t->filter_1 |= b;
-}
-
 /**
  * Allocate space for and load the mesa images into the texture memory block.
  * This will happen before drawing with a new texture, or drawing with a
@@ -912,78 +898,6 @@ r300TexSubImage3D(GLcontext * ctx, GLenum target, GLint level,
 	t->dirty_images[0] |= (1 << level);
 }
 
-/* This feels like a prime target for code reuse, so I'm putting it here
- * instead of inlining it in TexEnv. */
-static GLenum r300TexUnitTarget(struct gl_texture_unit *unit) {
-	if (unit->_ReallyEnabled & (TEXTURE_RECT_BIT)) {
-		return GL_TEXTURE_RECTANGLE_NV;
-	} else if (unit->_ReallyEnabled & (TEXTURE_1D_BIT)) {
-		return GL_TEXTURE_1D;
-	} else if (unit->_ReallyEnabled & (TEXTURE_2D_BIT)) {
-		return GL_TEXTURE_2D;
-	} else if (unit->_ReallyEnabled & (TEXTURE_3D_BIT)) {
-		return GL_TEXTURE_3D;
-	} else if (unit->_ReallyEnabled & (TEXTURE_CUBE_BIT)) {
-		return GL_TEXTURE_CUBE_MAP;
-	}
-	if (unit->Enabled & (TEXTURE_RECT_BIT)) {
-		return GL_TEXTURE_RECTANGLE_NV;
-	} else if (unit->Enabled & (TEXTURE_1D_BIT)) {
-		return GL_TEXTURE_1D;
-	} else if (unit->Enabled & (TEXTURE_2D_BIT)) {
-		return GL_TEXTURE_2D;
-	} else if (unit->Enabled & (TEXTURE_3D_BIT)) {
-		return GL_TEXTURE_3D;
-	} else if (unit->Enabled & (TEXTURE_CUBE_BIT)) {
-		return GL_TEXTURE_CUBE_MAP;
-	}
-	return 0;
-}
-
-static void r300TexEnv(GLcontext * ctx, GLenum target,
-		       GLenum pname, const GLfloat * param)
-{
-	r300ContextPtr rmesa = R300_CONTEXT(ctx);
-	if (RADEON_DEBUG & DEBUG_STATE) {
-		fprintf(stderr, "%s( %s )\n",
-			__FUNCTION__, _mesa_lookup_enum_by_nr(pname));
-	}
-
-	/* This is incorrect: Need to maintain this data for each of
-	 * GL_TEXTURE_{123}D, GL_TEXTURE_RECTANGLE_NV, etc, and switch
-	 * between them according to _ReallyEnabled.
-	 */
-	switch (pname) {
-	case GL_TEXTURE_LOD_BIAS_EXT: {
-		GLfloat bias, min;
-
-		/* The R300's LOD bias is a signed 2's complement value with a
-		 * range of -16.0 <= bias < 16.0.
-		 *
-		 * NOTE: Add a small bias to the bias for conform mipsel.c test.
-		 */
-		bias = *param + .01;
-		min = driQueryOptionb(&rmesa->radeon.optionCache,
-			"no_neg_lod_bias") ? 0.0 : -16.0;
-		bias = CLAMP(bias, min, 16.0);
-
-		/* There's probably a magic Mesa method for finding the REAL
-		 * texture unit. I don't know it, though. */
-		if (!(ctx->Texture._EnabledUnits & (1 << ctx->Texture.CurrentUnit))) {
-			break;
-		}
-
-		/* Save our newly clamped LOD bias. */
-		ctx->Texture.Unit[ctx->Texture.CurrentUnit].LodBias = bias;
-
-		break;
-	}
-
-	default:
-		return;
-	}
-}
-
 /**
  * Changes variables and flags for a state update, which will happen at the
  * next UpdateTextureState
@@ -1106,10 +1020,6 @@ static struct gl_texture_object *r300NewTextureObject(GLcontext * ctx,
 		return NULL;
 	obj->MaxAnisotropy = rmesa->initialMaxAnisotropy;
 
-	/* Attempt to fill LOD bias, if previously set.
-	 * Should start at 0.0, which won't affect the HW. */
-	obj->LodBias = rmesa->LODBias;
-
 	r300AllocTexObj(obj);
 	return obj;
 }
@@ -1131,7 +1041,6 @@ void r300InitTextureFuncs(struct dd_function_table *functions)
 	functions->DeleteTexture = r300DeleteTexture;
 	functions->IsTextureResident = driIsTextureResident;
 
-	functions->TexEnv = r300TexEnv;
 	functions->TexParameter = r300TexParameter;
 
 	functions->CompressedTexImage2D = r300CompressedTexImage2D;
