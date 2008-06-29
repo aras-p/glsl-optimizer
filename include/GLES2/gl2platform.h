@@ -45,25 +45,22 @@ extern "C" {
  * Definition of GL_APICALL and GL_APIENTRY
  *-----------------------------------------------------------------------*/
 
-#if defined(_WIN32) || defined(__VC32__)             /* Win32 */
-#   if defined (_DLL_EXPORTS)
+#ifdef _WIN32
+#   ifdef __GL_EXPORTS
 #       define GL_APICALL __declspec(dllexport)
 #   else
 #       define GL_APICALL __declspec(dllimport)
 #   endif
-#elif defined (__ARMCC_VERSION)                      /* ADS */
-#   define GL_APICALL
-#elif defined (__SYMBIAN32__) && defined (__GCC32__) /* Symbian GCC */
-#   define GL_APICALL __declspec(dllexport)
-#elif defined (__GNUC__)                             /* GCC dependencies (kludge) */
-#   define GL_APICALL
+#   define GLAPIENTRY __stdcall
+#else
+#   ifdef __GL_EXPORTS
+#       define GL_APICALL
+#   else
+#       define GL_APICALL extern
+#   endif
 #endif
 
-#if !defined (GL_APICALL)
-#   error Unsupported platform!
-#endif
-
-#define GL_APIENTRY
+#define GL_APIENTRY 
 
 #ifdef __cplusplus
 }

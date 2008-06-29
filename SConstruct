@@ -44,7 +44,7 @@ else:
 
 opts = Options('config.py')
 common.AddOptions(opts)
-opts.Add(ListOption('statetrackers', 'state_trackers to build', default_statetrackers,
+opts.Add(ListOption('statetrackers', 'state trackers to build', default_statetrackers,
                      ['mesa']))
 opts.Add(ListOption('drivers', 'pipe drivers to build', default_drivers,
                      ['softpipe', 'failover', 'i915simple', 'i965simple', 'cell']))

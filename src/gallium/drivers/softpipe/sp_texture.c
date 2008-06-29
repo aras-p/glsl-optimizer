@@ -71,13 +71,15 @@ softpipe_texture_layout(struct pipe_screen *screen,
       pt->width[level] = width;
       pt->height[level] = height;
       pt->depth[level] = depth;
-      spt->pitch[level] = width;
+      pt->nblocksx[level] = pf_get_nblocksx(&pt->block, width);  
+      pt->nblocksy[level] = pf_get_nblocksy(&pt->block, height);  
+      spt->stride[level] = pt->nblocksx[level]*pt->block.size;
 
       spt->level_offset[level] = buffer_size;
 
-      buffer_size += (((pt->compressed) ? MAX2(1, height/4) : height) *
+      buffer_size += (pt->nblocksy[level] *
                       ((pt->target == PIPE_TEXTURE_CUBE) ? 6 : depth) *
-                      width * pt->cpp);
+                      spt->stride[level]);
 
       width  = minify(width);
       height = minify(height);
@@ -121,7 +123,7 @@ softpipe_displaytarget_layout(struct pipe_screen *screen,
    /* Now extract the goodies: 
     */
    spt->buffer = surf.buffer;
-   spt->pitch[0] = surf.pitch;
+   spt->stride[0] = surf.stride;
 
    return spt->buffer != NULL;
 }
@@ -195,10 +197,12 @@ softpipe_get_tex_surface(struct pipe_screen *screen,
       assert(ps->winsys);
       pipe_buffer_reference(ws, &ps->buffer, spt->buffer);
       ps->format = pt->format;
-      ps->cpp = pt->cpp;
+      ps->block = pt->block;
       ps->width = pt->width[level];
       ps->height = pt->height[level];
-      ps->pitch = spt->pitch[level];
+      ps->nblocksx = pt->nblocksx[level];
+      ps->nblocksy = pt->nblocksy[level];
+      ps->stride = spt->stride[level];
       ps->offset = spt->level_offset[level];
       ps->usage = usage;
       
@@ -228,8 +232,8 @@ softpipe_get_tex_surface(struct pipe_screen *screen,
 
       if (pt->target == PIPE_TEXTURE_CUBE || pt->target == PIPE_TEXTURE_3D) {
 	 ps->offset += ((pt->target == PIPE_TEXTURE_CUBE) ? face : zslice) *
-		       (pt->compressed ? ps->height/4 : ps->height) *
-		       ps->width * ps->cpp;
+		       ps->nblocksy *
+		       ps->stride;
       }
       else {
 	 assert(face == 0);

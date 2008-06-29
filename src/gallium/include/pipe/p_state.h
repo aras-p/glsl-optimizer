@@ -267,14 +267,16 @@ struct pipe_surface
    enum pipe_format format;      /**< PIPE_FORMAT_x */
    unsigned status;              /**< PIPE_SURFACE_STATUS_x */
    unsigned clear_value;         /**< XXX may be temporary */
-   unsigned cpp;                 /**< bytes per pixel */
    unsigned width;
    unsigned height;
-   unsigned pitch;               /**< in pixels */
+   struct pipe_format_block block;
+   unsigned nblocksx;
+   unsigned nblocksy;
+   unsigned stride;              /**< in bytes */
    unsigned layout;              /**< PIPE_SURFACE_LAYOUT_x */
    unsigned offset;              /**< offset from start of buffer, in bytes */
    unsigned refcount;
-   unsigned usage;              /**< PIPE_BUFFER_USAGE_*  */
+   unsigned usage;               /**< PIPE_BUFFER_USAGE_*  */
 
    struct pipe_winsys *winsys;   /**< winsys which owns/created the surface */
 
@@ -303,10 +305,15 @@ struct pipe_texture
    unsigned height[PIPE_MAX_TEXTURE_LEVELS];
    unsigned depth[PIPE_MAX_TEXTURE_LEVELS];
 
-   unsigned cpp:8;
+   struct pipe_format_block block;
+   unsigned nblocksx[PIPE_MAX_TEXTURE_LEVELS];
+   unsigned nblocksy[PIPE_MAX_TEXTURE_LEVELS];
+
    unsigned last_level:8;    /**< Index of last mipmap level present/defined */
    unsigned compressed:1;
-   
+
+   unsigned nr_samples:8;          /**< for multisampled surfaces, nr of samples */
+
    unsigned tex_usage;          /* PIPE_TEXTURE_USAGE_* */
 
    /* These are also refcounted:

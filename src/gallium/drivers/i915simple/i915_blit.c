@@ -47,8 +47,6 @@ i915_fill_blit(struct i915_context *i915,
 {
    unsigned BR13, CMD;
 
-   dst_pitch *= (short) cpp;
-
    switch (cpp) {
    case 1:
    case 2:

@@ -188,9 +188,9 @@ struct i915_texture {
 
    /* Derived from the above:
     */
-   unsigned pitch;
-   unsigned depth_pitch;          /* per-image on i945? */
-   unsigned total_height;
+   unsigned stride;
+   unsigned depth_stride;          /* per-image on i945? */
+   unsigned total_nblocksy;
 
    unsigned tiled;
 

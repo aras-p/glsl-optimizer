@@ -658,7 +658,7 @@ st_TexImage(GLcontext * ctx,
       texImage->Data = st_texture_image_map(ctx->st, stImage, 0,
                                             PIPE_BUFFER_USAGE_CPU_WRITE);
       if (stImage->surface)
-         dstRowStride = stImage->surface->pitch * stImage->surface->cpp;
+         dstRowStride = stImage->surface->stride;
    }
    else {
       /* Allocate regular memory and store the image there temporarily.   */
@@ -820,7 +820,7 @@ st_get_tex_image(GLcontext * ctx, GLenum target, GLint level,
        */
       texImage->Data = st_texture_image_map(ctx->st, stImage, 0,
                                             PIPE_BUFFER_USAGE_CPU_READ);
-      texImage->RowStride = stImage->surface->pitch;
+      texImage->RowStride = stImage->surface->stride / stImage->pt->block.size;
    }
    else {
       /* Otherwise, the image should actually be stored in
@@ -925,7 +925,7 @@ st_TexSubimage(GLcontext * ctx,
       texImage->Data = st_texture_image_map(ctx->st, stImage, zoffset, 
                                             PIPE_BUFFER_USAGE_CPU_WRITE);
       if (stImage->surface)
-         dstRowStride = stImage->surface->pitch * stImage->surface->cpp;
+         dstRowStride = stImage->surface->stride;
    }
 
    if (!texImage->Data) {
@@ -1425,9 +1425,11 @@ copy_image_data_to_texture(struct st_context *st,
                                stImage->face,
                                dstLevel,
                                stImage->base.Data,
-                               stImage->base.RowStride,
+                               stImage->base.RowStride * 
+                               stObj->pt->block.size,
                                stImage->base.RowStride *
-                               stImage->base.Height);
+                               stImage->base.Height *
+                               stObj->pt->block.size);
       _mesa_align_free(stImage->base.Data);
       stImage->base.Data = NULL;
    }
@@ -1477,6 +1479,7 @@ st_finalize_texture(GLcontext *ctx,
       pipe_texture_reference(&stObj->pt, firstImage->pt);
    }
 
+   /* FIXME: determine format block instead of cpp */
    if (firstImage->base.IsCompressed) {
       comp_byte = compressed_num_bytes(firstImage->base.TexFormat->MesaFormat);
       cpp = comp_byte;
@@ -1497,7 +1500,9 @@ st_finalize_texture(GLcontext *ctx,
           stObj->pt->width[0] != firstImage->base.Width2 ||
           stObj->pt->height[0] != firstImage->base.Height2 ||
           stObj->pt->depth[0] != firstImage->base.Depth2 ||
-          stObj->pt->cpp != cpp ||
+          stObj->pt->block.size != cpp ||
+          stObj->pt->block.width != 1 ||
+          stObj->pt->block.height != 1 ||
           stObj->pt->compressed != firstImage->base.IsCompressed) {
          pipe_texture_release(&stObj->pt);
          ctx->st->dirty.st |= ST_NEW_FRAMEBUFFER;

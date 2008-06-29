@@ -892,8 +892,10 @@ _mesa_get_uniformfv(GLcontext *ctx, GLuint program, GLint location,
    struct gl_shader_program *shProg
       = _mesa_lookup_shader_program(ctx, program);
    if (shProg) {
-      if (location < shProg->Uniforms->NumUniforms) {
-         GLuint progPos, i;
+      if (shProg->Uniforms &&
+          location >= 0 && location < shProg->Uniforms->NumUniforms) {
+         GLint progPos;
+         GLuint i;
          const struct gl_program *prog = NULL;
 
          progPos = shProg->Uniforms->Uniforms[location].VertPos;
@@ -915,11 +917,11 @@ _mesa_get_uniformfv(GLcontext *ctx, GLuint program, GLint location,
          }
       }
       else {
-         _mesa_error(ctx, GL_INVALID_VALUE, "glGetUniformfv(location)");
+         _mesa_error(ctx, GL_INVALID_OPERATION, "glGetUniformfv(location)");
       }
    }
    else {
-      _mesa_error(ctx, GL_INVALID_VALUE, "glGetUniformfv(program)");
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glGetUniformfv(program)");
    }
 }
 

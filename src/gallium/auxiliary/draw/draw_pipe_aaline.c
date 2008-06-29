@@ -398,7 +398,7 @@ aaline_create_texture(struct aaline_stage *aaline)
    texTemp.width[0] = 1 << MAX_TEXTURE_LEVEL;
    texTemp.height[0] = 1 << MAX_TEXTURE_LEVEL;
    texTemp.depth[0] = 1;
-   texTemp.cpp = 1;
+   pf_get_block(texTemp.format, &texTemp.block);
 
    aaline->texture = screen->texture_create(screen, &texTemp);
    if (!aaline->texture)
@@ -439,7 +439,7 @@ aaline_create_texture(struct aaline_stage *aaline)
             else {
                d = 255;
             }
-            data[i * surface->pitch + j] = d;
+            data[i * surface->stride + j] = d;
          }
       }
 

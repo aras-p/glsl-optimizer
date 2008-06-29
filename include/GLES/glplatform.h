@@ -45,14 +45,13 @@ extern "C" {
  * Definition of GL_API and GL_APIENTRY
  *-----------------------------------------------------------------------*/
 
-#define __GL_EXPORTS
-
 #ifdef _WIN32
 #   ifdef __GL_EXPORTS
 #       define GL_API __declspec(dllexport)
 #   else
 #       define GL_API __declspec(dllimport)
 #   endif
+#   define GLAPIENTRY __stdcall
 #else
 #   ifdef __GL_EXPORTS
 #       define GL_API

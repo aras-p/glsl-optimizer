@@ -66,15 +66,17 @@ acc_get_tile_rgba(struct pipe_context *pipe, struct pipe_surface *acc_ps,
                   uint x, uint y, uint w, uint h, float *p)
 {
    const enum pipe_format f = acc_ps->format;
-   const int cpp = acc_ps->cpp;
+   const struct pipe_format_block b = acc_ps->block;
 
    acc_ps->format = DEFAULT_ACCUM_PIPE_FORMAT;
-   acc_ps->cpp = 8;
+   acc_ps->block.size = 8;
+   acc_ps->block.width = 1;
+   acc_ps->block.height = 1;
 
    pipe_get_tile_rgba(pipe, acc_ps, x, y, w, h, p);
 
    acc_ps->format = f;
-   acc_ps->cpp = cpp;
+   acc_ps->block = b;
 }
 
 
@@ -88,15 +90,17 @@ acc_put_tile_rgba(struct pipe_context *pipe, struct pipe_surface *acc_ps,
                   uint x, uint y, uint w, uint h, const float *p)
 {
    enum pipe_format f = acc_ps->format;
-   const int cpp = acc_ps->cpp;
+   const struct pipe_format_block b = acc_ps->block;
 
    acc_ps->format = DEFAULT_ACCUM_PIPE_FORMAT;
-   acc_ps->cpp = 8;
+   acc_ps->block.size = 8;
+   acc_ps->block.width = 1;
+   acc_ps->block.height = 1;
 
    pipe_put_tile_rgba(pipe, acc_ps, x, y, w, h, p);
 
    acc_ps->format = f;
-   acc_ps->cpp = cpp;
+   acc_ps->block = b;
 }
 
 
@@ -111,7 +115,7 @@ st_clear_accum_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
    const GLint ypos = ctx->DrawBuffer->_Ymin;
    const GLint width = ctx->DrawBuffer->_Xmax - xpos;
    const GLint height = ctx->DrawBuffer->_Ymax - ypos;
-   GLvoid *map;
+   GLubyte *map;
 
    acc_ps = screen->get_tex_surface(screen, acc_strb->texture, 0, 0, 0,
                                     PIPE_BUFFER_USAGE_CPU_WRITE);
@@ -128,8 +132,7 @@ st_clear_accum_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
          GLshort a = FLOAT_TO_SHORT(ctx->Accum.ClearColor[3]);
          int i, j;
          for (i = 0; i < height; i++) {
-            GLshort *dst = ((GLshort *) map
-                            + ((ypos + i) * acc_ps->pitch + xpos) * 4);
+            GLshort *dst = (GLshort *) (map + (ypos + i) * acc_ps->stride + xpos * 8);
             for (j = 0; j < width; j++) {
                dst[0] = r;
                dst[1] = g;
@@ -157,7 +160,7 @@ accum_mad(GLcontext *ctx, GLfloat scale, GLfloat bias,
 {
    struct pipe_screen *screen = ctx->st->pipe->screen;
    struct pipe_surface *acc_ps = acc_strb->surface;
-   GLvoid *map;
+   GLubyte *map;
 
    map = screen->surface_map(screen, acc_ps, 
                              PIPE_BUFFER_USAGE_CPU_WRITE);
@@ -168,8 +171,7 @@ accum_mad(GLcontext *ctx, GLfloat scale, GLfloat bias,
       {
          int i, j;
          for (i = 0; i < height; i++) {
-            GLshort *acc = ((GLshort *) map
-                            + ((ypos + i) * acc_ps->pitch + xpos) * 4);
+            GLshort *acc = (GLshort *) (map + (ypos + i) * acc_ps->stride + xpos * 8);
             for (j = 0; j < width * 4; j++) {
                float val = SHORT_TO_FLOAT(acc[j]) * scale + bias;
                acc[j] = FLOAT_TO_SHORT(val);

@@ -34,30 +34,6 @@
 #include "cell_surface.h"
 
 
-/* Upload data to a rectangular sub-region.  Lots of choices how to do this:
- *
- * - memcpy by span to current destination
- * - upload data as new buffer and blit
- *
- * Currently always memcpy.
- */
-static void
-cell_surface_data(struct pipe_context *pipe,
-                  struct pipe_surface *dst,
-                  unsigned dstx, unsigned dsty,
-                  const void *src, unsigned src_pitch,
-                  unsigned srcx, unsigned srcy,
-                  unsigned width, unsigned height)
-{
-   pipe_copy_rect(pipe_surface_map(dst),
-                  dst->cpp,
-                  dst->pitch,
-                  dstx, dsty, width, height, src, src_pitch, srcx, srcy);
-
-   pipe_surface_unmap(dst);
-}
-
-
 static void
 cell_surface_copy(struct pipe_context *pipe,
                   boolean do_flip,
@@ -70,12 +46,12 @@ cell_surface_copy(struct pipe_context *pipe,
    assert( dst->cpp == src->cpp );
 
    pipe_copy_rect(pipe_surface_map(dst),
-                  dst->cpp,
-                  dst->pitch,
+                  &dst->block,
+                  dst->stride,
                   dstx, dsty,
                   width, height,
                   pipe_surface_map(src),
-                  do_flip ? -src->pitch : src->pitch,
+                  do_flip ? -src->stride : src->stride,
                   srcx, do_flip ? height - 1 - srcy : srcy);
 
    pipe_surface_unmap(src);
@@ -86,7 +62,7 @@ cell_surface_copy(struct pipe_context *pipe,
 static void *
 get_pointer(struct pipe_surface *dst, void *dst_map, unsigned x, unsigned y)
 {
-   return (char *)dst_map + (y * dst->pitch + x) * dst->cpp;
+   return (char *)dst_map + y / dst->block.height * dst->stride + x / dst->block.width * dst->block.size;
 }
 
 
@@ -106,38 +82,13 @@ cell_surface_fill(struct pipe_context *pipe,
    unsigned i, j;
    void *dst_map = pipe_surface_map(dst);
 
-   assert(dst->pitch > 0);
-   assert(width <= dst->pitch);
+   assert(dst->stride > 0);
 
-   switch (dst->cpp) {
+   switch (dst->block.size) {
    case 1:
-      {
-	 ubyte *row = get_pointer(dst, dst_map, dstx, dsty);
-         for (i = 0; i < height; i++) {
-            memset(row, value, width);
-	 row += dst->pitch;
-         }
-      }
-      break;
    case 2:
-      {
-         ushort *row = get_pointer(dst, dst_map, dstx, dsty);
-         for (i = 0; i < height; i++) {
-            for (j = 0; j < width; j++)
-               row[j] = (ushort) value;
-            row += dst->pitch;
-         }
-      }
-      break;
    case 4:
-      {
-         unsigned *row = get_pointer(dst, dst_map, dstx, dsty);
-         for (i = 0; i < height; i++) {
-            for (j = 0; j < width; j++)
-               row[j] = value;
-            row += dst->pitch;
-         }
-      }
+      pipe_fill_rect(dst_map, &dst->block, dst->stride, dstx, dsty, width, height, value);
       break;
    case 8:
       {
@@ -158,7 +109,7 @@ cell_surface_fill(struct pipe_context *pipe,
                row[j*4+2] = val2;
                row[j*4+3] = val3;
             }
-            row += dst->pitch * 4;
+            row += dst->stride/2;
          }
       }
       break;

@@ -394,11 +394,11 @@ pstip_update_texture(struct pstip_stage *pstip)
       for (j = 0; j < 32; j++) {
          if (stipple[i] & (bit31 >> j)) {
             /* fragment "on" */
-            data[i * surface->pitch + j] = 0;
+            data[i * surface->stride + j] = 0;
          }
          else {
             /* fragment "off" */
-            data[i * surface->pitch + j] = 255;
+            data[i * surface->stride + j] = 255;
          }
       }
    }
@@ -426,7 +426,7 @@ pstip_create_texture(struct pstip_stage *pstip)
    texTemp.width[0] = 32;
    texTemp.height[0] = 32;
    texTemp.depth[0] = 1;
-   texTemp.cpp = 1;
+   pf_get_block(texTemp.format, &texTemp.block);
 
    pstip->texture = screen->texture_create(screen, &texTemp);
    if (pstip->texture == NULL)

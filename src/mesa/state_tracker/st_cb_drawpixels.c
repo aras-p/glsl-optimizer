@@ -382,7 +382,7 @@ make_texture(struct st_context *st,
                                     mformat,          /* gl_texture_format */
                                     dest,             /* dest */
                                     0, 0, 0,          /* dstX/Y/Zoffset */
-                                    surface->pitch * cpp, /* dstRowStride, bytes */
+                                    surface->stride,  /* dstRowStride, bytes */
                                     &dstImageOffsets, /* dstImageOffsets */
                                     width, height, 1, /* size */
                                     format, type,     /* src format/type */
@@ -786,13 +786,13 @@ draw_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
             switch (ps->format) {
             case PIPE_FORMAT_S8_UNORM:
                {
-                  ubyte *dest = stmap + spanY * ps->pitch + spanX;
+                  ubyte *dest = stmap + spanY * ps->stride + spanX;
                   memcpy(dest, values, spanWidth);
                }
                break;
             case PIPE_FORMAT_S8Z24_UNORM:
                {
-                  uint *dest = (uint *) stmap + spanY * ps->pitch + spanX;
+                  uint *dest = (uint *) (stmap + spanY * ps->stride + spanX*4);
                   GLint k;
                   for (k = 0; k < spanWidth; k++) {
                      uint p = dest[k];
@@ -903,6 +903,9 @@ copy_stencil_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
    psDraw = screen->get_tex_surface(screen, rbDraw->texture, 0, 0, 0,
                                     PIPE_BUFFER_USAGE_CPU_WRITE);
 
+   assert(psDraw->block.width == 1);
+   assert(psDraw->block.height == 1);
+   
    /* map the stencil buffer */
    drawMap = screen->surface_map(screen, psDraw, PIPE_BUFFER_USAGE_CPU_WRITE);
 
@@ -919,7 +922,7 @@ copy_stencil_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
          y = ctx->DrawBuffer->Height - y - 1;
       }
 
-      dst = drawMap + (y * psDraw->pitch + dstx) * psDraw->cpp;
+      dst = drawMap + y * psDraw->stride + dstx * psDraw->block.size;
       src = buffer + i * width;
 
       switch (psDraw->format) {

@@ -164,6 +164,15 @@ _mesa_initialize_array_object( GLcontext *ctx,
       obj->VertexAttrib[i].Normalized = GL_FALSE;
    }
 
+#if FEATURE_point_size_array
+   obj->PointSize.Type = GL_FLOAT;
+   obj->PointSize.Stride = 0;
+   obj->PointSize.StrideB = 0;
+   obj->PointSize.Ptr = NULL;
+   obj->PointSize.Enabled = GL_FALSE;
+   obj->PointSize.BufferObj = ctx->Array.NullBufferObj;
+#endif
+
 #if FEATURE_ARB_vertex_buffer_object
    /* Vertex array buffers */
    obj->Vertex.BufferObj = ctx->Array.NullBufferObj;

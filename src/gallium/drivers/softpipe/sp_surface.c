@@ -58,18 +58,20 @@ sp_surface_copy(struct pipe_context *pipe,
                                                     src,
                                                     PIPE_BUFFER_USAGE_CPU_READ );
 
-   assert(dst->cpp == src->cpp);
+   assert(dst->block.size == src->block.size);
+   assert(dst->block.width == src->block.width);
+   assert(dst->block.height == src->block.height);
    assert(src_map);
    assert(dst_map);
 
    /* If do_flip, invert src_y position and pass negative src stride */
    pipe_copy_rect(dst_map,
-                  dst->cpp,
-                  dst->pitch,
+                  &dst->block,
+                  dst->stride,
                   dstx, dsty,
                   width, height,
                   src_map,
-                  do_flip ? -(int) src->pitch : src->pitch,
+                  do_flip ? -(int) src->stride : src->stride,
                   srcx, do_flip ? src->height - 1 - srcy : srcy);
 
    pipe->screen->surface_unmap(pipe->screen, src);
@@ -80,7 +82,7 @@ sp_surface_copy(struct pipe_context *pipe,
 static void *
 get_pointer(struct pipe_surface *dst, void *dst_map, unsigned x, unsigned y)
 {
-   return (char *)dst_map + (y * dst->pitch + x) * dst->cpp;
+   return (char *)dst_map + y / dst->block.height * dst->stride + x / dst->block.width * dst->block.size;
 }
 
 
@@ -102,39 +104,14 @@ sp_surface_fill(struct pipe_context *pipe,
                                               dst,
                                               PIPE_BUFFER_USAGE_CPU_WRITE );
 
-   assert(dst->pitch > 0);
-   assert(width <= dst->pitch);
+   assert(dst->stride > 0);
 
 
-   switch (dst->cpp) {
+   switch (dst->block.size) {
    case 1:
-      {
-	 ubyte *row = get_pointer(dst, dst_map, dstx, dsty);
-         for (i = 0; i < height; i++) {
-            memset(row, value, width);
-	 row += dst->pitch;
-         }
-      }
-      break;
    case 2:
-      {
-         ushort *row = get_pointer(dst, dst_map, dstx, dsty);
-         for (i = 0; i < height; i++) {
-            for (j = 0; j < width; j++)
-               row[j] = (ushort) value;
-            row += dst->pitch;
-         }
-      }
-      break;
    case 4:
-      {
-         unsigned *row = get_pointer(dst, dst_map, dstx, dsty);
-         for (i = 0; i < height; i++) {
-            for (j = 0; j < width; j++)
-               row[j] = value;
-            row += dst->pitch;
-         }
-      }
+      pipe_fill_rect(dst_map, &dst->block, dst->stride, dstx, dsty, width, height, value);
       break;
    case 8:
       {
@@ -155,7 +132,7 @@ sp_surface_fill(struct pipe_context *pipe,
                row[j*4+2] = val2;
                row[j*4+3] = val3;
             }
-            row += dst->pitch * 4;
+            row += dst->stride/2;
          }
       }
       break;

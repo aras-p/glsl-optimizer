@@ -167,6 +167,16 @@
 #endif
 
 
+#ifndef GL_OES_point_size_array
+#define GL_POINT_SIZE_ARRAY_OES                                 0x8B9C
+#define GL_POINT_SIZE_ARRAY_TYPE_OES                            0x898A
+#define GL_POINT_SIZE_ARRAY_STRIDE_OES                          0x898B
+#define GL_POINT_SIZE_ARRAY_POINTER_OES                         0x898C
+#define GL_POINT_SIZE_ARRAY_BUFFER_BINDING_OES                  0x8B9F
+#endif
+
+
+
 #if !defined(CAPI) && defined(WIN32) && !defined(BUILD_FOR_SNAP)
 #define CAPI _cdecl
 #endif

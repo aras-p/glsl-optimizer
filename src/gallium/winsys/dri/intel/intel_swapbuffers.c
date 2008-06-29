@@ -89,7 +89,7 @@ intelDisplaySurface(__DRIdrawablePrivate *dPriv,
       const drm_clip_rect_t *pbox = dPriv->pClipRects;
       const int pitch = intelScreen->front.pitch / intelScreen->front.cpp;
       const int cpp = intelScreen->front.cpp;
-      const int srcpitch = surf->pitch;
+      const int srcpitch = surf->stride / cpp;
       int BR13, CMD;
       int i;
 

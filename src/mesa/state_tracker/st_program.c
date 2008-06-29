@@ -136,6 +136,10 @@ st_translate_vertex_program(struct st_context *st,
             vs_input_semantic_name[slot] = TGSI_SEMANTIC_FOG;
             vs_input_semantic_index[slot] = 0;
             break;
+         case VERT_ATTRIB_POINT_SIZE:
+            vs_input_semantic_name[slot] = TGSI_SEMANTIC_PSIZE;
+            vs_input_semantic_index[slot] = 0;
+            break;
          case VERT_ATTRIB_TEX0:
          case VERT_ATTRIB_TEX1:
          case VERT_ATTRIB_TEX2:

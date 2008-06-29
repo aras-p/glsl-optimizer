@@ -521,6 +521,9 @@ GLboolean driClipRectToFramebuffer( const GLframebuffer *buffer,
  *                      \c GLX_SWAP_UNDEFINED_OML.  See the
  *                      GLX_OML_swap_method extension spec for more details.
  * \param num_db_modes  Number of entries in \c db_modes.
+ * \param msaa_samples  Array of msaa sample count. 0 represents a visual
+ *                      without a multisample buffer.
+ * \param num_msaa_modes Number of entries in \c msaa_samples.
  * \param visType       GLX visual type.  Usually either \c GLX_TRUE_COLOR or
  *                      \c GLX_DIRECT_COLOR.
  * 
@@ -542,6 +545,7 @@ driFillInModes( __GLcontextModes ** ptr_to_modes,
 		const uint8_t * depth_bits, const uint8_t * stencil_bits,
 		unsigned num_depth_stencil_bits,
 		const GLenum * db_modes, unsigned num_db_modes,
+		const u_int8_t * msaa_samples, unsigned num_msaa_modes,
 		int visType )
 {
    static const uint8_t bits_table[3][4] = {
@@ -607,9 +611,7 @@ driFillInModes( __GLcontextModes ** ptr_to_modes,
    const uint32_t * masks;
    const int index = fb_type & 0x07;
    __GLcontextModes * modes = *ptr_to_modes;
-   unsigned i;
-   unsigned j;
-   unsigned k;
+   unsigned i, j, k, h;
 
 
    if ( bytes_per_pixel[ index ] == 0 ) {
@@ -659,49 +661,54 @@ driFillInModes( __GLcontextModes ** ptr_to_modes,
 
     for ( k = 0 ; k < num_depth_stencil_bits ; k++ ) {
 	for ( i = 0 ; i < num_db_modes ; i++ ) {
-	    for ( j = 0 ; j < 2 ; j++ ) {
+	    for ( h = 0 ; h < num_msaa_modes; h++ ) {
+		for ( j = 0 ; j < 2 ; j++ ) {
 
-		modes->redBits   = bits[0];
-		modes->greenBits = bits[1];
-		modes->blueBits  = bits[2];
-		modes->alphaBits = bits[3];
-		modes->redMask   = masks[0];
-		modes->greenMask = masks[1];
-		modes->blueMask  = masks[2];
-		modes->alphaMask = masks[3];
-		modes->rgbBits   = modes->redBits + modes->greenBits
-		    + modes->blueBits + modes->alphaBits;
+		    modes->redBits   = bits[0];
+		    modes->greenBits = bits[1];
+		    modes->blueBits  = bits[2];
+		    modes->alphaBits = bits[3];
+		    modes->redMask   = masks[0];
+		    modes->greenMask = masks[1];
+		    modes->blueMask  = masks[2];
+		    modes->alphaMask = masks[3];
+		    modes->rgbBits   = modes->redBits + modes->greenBits
+			+ modes->blueBits + modes->alphaBits;
 
-		modes->accumRedBits   = 16 * j;
-		modes->accumGreenBits = 16 * j;
-		modes->accumBlueBits  = 16 * j;
-		modes->accumAlphaBits = (masks[3] != 0) ? 16 * j : 0;
-		modes->visualRating = (j == 0) ? GLX_NONE : GLX_SLOW_CONFIG;
+		    modes->accumRedBits   = 16 * j;
+		    modes->accumGreenBits = 16 * j;
+		    modes->accumBlueBits  = 16 * j;
+		    modes->accumAlphaBits = (masks[3] != 0) ? 16 * j : 0;
+		    modes->visualRating = (j == 0) ? GLX_NONE : GLX_SLOW_CONFIG;
 
-		modes->stencilBits = stencil_bits[k];
-		modes->depthBits = depth_bits[k];
+		    modes->stencilBits = stencil_bits[k];
+		    modes->depthBits = depth_bits[k];
 
-		modes->visualType = visType;
-		modes->renderType = GLX_RGBA_BIT;
-		modes->drawableType = GLX_WINDOW_BIT;
-		modes->rgbMode = GL_TRUE;
+		    modes->visualType = visType;
+		    modes->renderType = GLX_RGBA_BIT;
+		    modes->drawableType = GLX_WINDOW_BIT;
+		    modes->rgbMode = GL_TRUE;
 
-		if ( db_modes[i] == GLX_NONE ) {
-		    modes->doubleBufferMode = GL_FALSE;
+		    if ( db_modes[i] == GLX_NONE ) {
+			modes->doubleBufferMode = GL_FALSE;
+		    }
+		    else {
+			modes->doubleBufferMode = GL_TRUE;
+			modes->swapMethod = db_modes[i];
+		    }
+
+		    modes->samples = msaa_samples[h];
+		    modes->sampleBuffers = modes->samples ? 1 : 0;
+
+		    modes->haveAccumBuffer = ((modes->accumRedBits +
+					       modes->accumGreenBits +
+					       modes->accumBlueBits +
+					       modes->accumAlphaBits) > 0);
+		    modes->haveDepthBuffer = (modes->depthBits > 0);
+		    modes->haveStencilBuffer = (modes->stencilBits > 0);
+
+		    modes = modes->next;
 		}
-		else {
-		    modes->doubleBufferMode = GL_TRUE;
-		    modes->swapMethod = db_modes[i];
-		}
-
-		modes->haveAccumBuffer = ((modes->accumRedBits +
-					   modes->accumGreenBits +
-					   modes->accumBlueBits +
-					   modes->accumAlphaBits) > 0);
-		modes->haveDepthBuffer = (modes->depthBits > 0);
-		modes->haveStencilBuffer = (modes->stencilBits > 0);
-
-		modes = modes->next;
 	    }
 	}
     }

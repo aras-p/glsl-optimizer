@@ -65,12 +65,14 @@ cell_texture_layout(struct cell_texture * spt)
       pt->width[level] = width;
       pt->height[level] = height;
       pt->depth[level] = depth;
+      pt->nblocksx[level] = pf_get_nblocksx(&pt->block, width);  
+      pt->nblocksy[level] = pf_get_nblocksy(&pt->block, height);  
 
       spt->level_offset[level] = spt->buffer_size;
 
-      spt->buffer_size += ((pt->compressed) ? MAX2(1, height/4) : height) *
+      spt->buffer_size += (pt->nblocksy[level] *
 			  ((pt->target == PIPE_TEXTURE_CUBE) ? 6 : depth) *
-			  width * pt->cpp;
+			  pt->nblocksx[level] * pt->block.size;
 
       width  = minify(width);
       height = minify(height);
@@ -157,16 +159,18 @@ cell_get_tex_surface_screen(struct pipe_screen *screen,
       assert(ps->winsys);
       pipe_buffer_reference(ws, &ps->buffer, spt->buffer);
       ps->format = pt->format;
-      ps->cpp = pt->cpp;
+      ps->block = pt->block;
       ps->width = pt->width[level];
       ps->height = pt->height[level];
-      ps->pitch = ps->width;
+      ps->nblocksx = pt->nblocksx[level];
+      ps->nblocksy = pt->nblocksy[level];
+      ps->stride = spt->stride[level];
       ps->offset = spt->level_offset[level];
 
       if (pt->target == PIPE_TEXTURE_CUBE || pt->target == PIPE_TEXTURE_3D) {
 	 ps->offset += ((pt->target == PIPE_TEXTURE_CUBE) ? face : zslice) *
-		       (pt->compressed ? ps->height/4 : ps->height) *
-		       ps->width * ps->cpp;
+		       ps->nblocksy *
+		       ps->stride;
       } else {
 	 assert(face == 0);
 	 assert(zslice == 0);

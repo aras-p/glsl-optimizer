@@ -231,9 +231,9 @@ struct brw_texture {
 
    /* Derived from the above:
     */
-   unsigned pitch;
+   unsigned stride;
    unsigned depth_pitch;          /* per-image on i945? */
-   unsigned total_height;
+   unsigned total_nblocksy;
 
    unsigned nr_images[PIPE_MAX_TEXTURE_LEVELS];
 

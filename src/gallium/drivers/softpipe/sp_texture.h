@@ -42,7 +42,7 @@ struct softpipe_texture
    struct pipe_texture base;
 
    unsigned long level_offset[PIPE_MAX_TEXTURE_LEVELS];
-   unsigned long pitch[PIPE_MAX_TEXTURE_LEVELS];
+   unsigned long stride[PIPE_MAX_TEXTURE_LEVELS];
 
    /* The data is held here:
     */

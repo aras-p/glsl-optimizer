@@ -63,6 +63,7 @@ struct state_key {
    unsigned separate_specular:1;
    unsigned fog_mode:2;
    unsigned point_attenuated:1;
+   unsigned point_array:1;
    unsigned texture_enabled_global:1;
    unsigned fragprog_inputs_read:12;
 
@@ -264,6 +265,11 @@ static struct state_key *make_state_key( GLcontext *ctx )
    if (ctx->Point._Attenuated)
       key->point_attenuated = 1;
 
+#if FEATURE_point_size_array
+   if (ctx->Array.ArrayObj->PointSize.Enabled)
+      key->point_array = 1;
+#endif
+
    if (ctx->Texture._TexGenEnabled ||
        ctx->Texture._TexMatEnabled ||
        ctx->Texture._EnabledUnits)
@@ -444,12 +450,18 @@ static void release_temps( struct tnl_program *p )
 
 
 
+/**
+ * \param input  one of VERT_ATTRIB_x tokens.
+ */
 static struct ureg register_input( struct tnl_program *p, GLuint input )
 {
    p->program->Base.InputsRead |= (1<<input);
    return make_ureg(PROGRAM_INPUT, input);
 }
 
+/**
+ * \param input  one of VERT_RESULT_x tokens.
+ */
 static struct ureg register_output( struct tnl_program *p, GLuint output )
 {
    p->program->Base.OutputsWritten |= (1<<output);
@@ -1518,7 +1530,10 @@ static void build_texture_transform( struct tnl_program *p )
 }
 
 
-static void build_pointsize( struct tnl_program *p )
+/**
+ * Point size attenuation computation.
+ */
+static void build_atten_pointsize( struct tnl_program *p )
 {
    struct ureg eye = get_eye_position_z(p);
    struct ureg state_size = register_param1(p, STATE_POINT_SIZE);
@@ -1555,12 +1570,23 @@ static void build_pointsize( struct tnl_program *p )
 /**
  * Emit constant point size.
  */
-static void constant_pointsize( struct tnl_program *p )
+static void build_constant_pointsize( struct tnl_program *p )
 {
    struct ureg state_size = register_param1(p, STATE_POINT_SIZE);
    struct ureg out = register_output(p, VERT_RESULT_PSIZ);
    emit_op1(p, OPCODE_MOV, out, WRITEMASK_X, state_size);
 }
+
+/**
+ * Pass-though per-vertex point size, from user's point size array.
+ */
+static void build_array_pointsize( struct tnl_program *p )
+{
+   struct ureg in = register_input(p, VERT_ATTRIB_POINT_SIZE);
+   struct ureg out = register_output(p, VERT_RESULT_PSIZ);
+   emit_op1(p, OPCODE_MOV, out, WRITEMASK_X, in);
+}
+
 
 static void build_tnl_program( struct tnl_program *p )
 {   /* Emit the program, starting with modelviewproject:
@@ -1589,10 +1615,12 @@ static void build_tnl_program( struct tnl_program *p )
       build_texture_transform(p);
 
    if (p->state->point_attenuated)
-      build_pointsize(p);
+      build_atten_pointsize(p);
+   else if (p->state->point_array)
+      build_array_pointsize(p);
 #if 0
    else
-      constant_pointsize(p);
+      build_constant_pointsize(p);
 #endif
 
    /* Finish up:
