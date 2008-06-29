@@ -1366,8 +1366,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #       define R300_TX_WRAP_S_MASK               (7 << 0)
 #       define R300_TX_WRAP_T_SHIFT              3
 #       define R300_TX_WRAP_T_MASK               (7 << 3)
-#       define R300_TX_WRAP_Q_SHIFT              6
-#       define R300_TX_WRAP_Q_MASK               (7 << 6)
+#       define R300_TX_WRAP_R_SHIFT              6
+#       define R300_TX_WRAP_R_MASK               (7 << 6)
 #	define R300_TX_MAG_FILTER_4              (0 << 9)
 #       define R300_TX_MAG_FILTER_NEAREST        (1 << 9)
 #       define R300_TX_MAG_FILTER_LINEAR         (2 << 9)

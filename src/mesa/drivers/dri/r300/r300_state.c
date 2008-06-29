@@ -1256,8 +1256,8 @@ static unsigned long gen_fixed_filter(unsigned long f)
 	    (R300_TX_CLAMP << R300_TX_WRAP_T_SHIFT)) {
 		needs_fixing |= 2;
 	}
-	if ((f & ((7 - 1) << R300_TX_WRAP_Q_SHIFT)) ==
-	    (R300_TX_CLAMP << R300_TX_WRAP_Q_SHIFT)) {
+	if ((f & ((7 - 1) << R300_TX_WRAP_R_SHIFT)) ==
+	    (R300_TX_CLAMP << R300_TX_WRAP_R_SHIFT)) {
 		needs_fixing |= 4;
 	}
 
@@ -1297,8 +1297,8 @@ static unsigned long gen_fixed_filter(unsigned long f)
 		f |= R300_TX_CLAMP_TO_EDGE << R300_TX_WRAP_T_SHIFT;
 	}
 	if (needs_fixing & 4) {
-		f &= ~((7 - 1) << R300_TX_WRAP_Q_SHIFT);
-		f |= R300_TX_CLAMP_TO_EDGE << R300_TX_WRAP_Q_SHIFT;
+		f &= ~((7 - 1) << R300_TX_WRAP_R_SHIFT);
+		f |= R300_TX_CLAMP_TO_EDGE << R300_TX_WRAP_R_SHIFT;
 	}
 	return f;
 }

@@ -52,112 +52,45 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "xmlpool.h"
 
+
+static unsigned int translate_wrap_mode(GLenum wrapmode)
+{
+	switch(wrapmode) {
+	case GL_REPEAT: return R300_TX_REPEAT;
+	case GL_CLAMP: return R300_TX_CLAMP;
+	case GL_CLAMP_TO_EDGE: return R300_TX_CLAMP_TO_EDGE;
+	case GL_CLAMP_TO_BORDER: return R300_TX_CLAMP_TO_BORDER;
+	case GL_MIRRORED_REPEAT: return R300_TX_REPEAT | R300_TX_MIRRORED;
+	case GL_MIRROR_CLAMP_EXT: return R300_TX_CLAMP | R300_TX_MIRRORED;
+	case GL_MIRROR_CLAMP_TO_EDGE_EXT: return R300_TX_CLAMP_TO_EDGE | R300_TX_MIRRORED;
+	case GL_MIRROR_CLAMP_TO_BORDER_EXT: return R300_TX_CLAMP_TO_BORDER | R300_TX_MIRRORED;
+	default:
+		_mesa_problem(NULL, "bad wrap mode in %s", __FUNCTION__);
+		return 0;
+	}
+}
+
+
 /**
- * Set the texture wrap modes.
+ * Update the cached hardware registers based on the current texture wrap modes.
  *
  * \param t Texture object whose wrap modes are to be set
- * \param swrap Wrap mode for the \a s texture coordinate
- * \param twrap Wrap mode for the \a t texture coordinate
  */
-
-static void r300SetTexWrap(r300TexObjPtr t, GLenum swrap, GLenum twrap,
-			   GLenum rwrap)
+static void r300UpdateTexWrap(r300TexObjPtr t)
 {
-	unsigned long hw_swrap = 0, hw_twrap = 0, hw_qwrap = 0;
+	struct gl_texture_object *tObj = t->base.tObj;
 
 	t->filter &=
-	    ~(R300_TX_WRAP_S_MASK | R300_TX_WRAP_T_MASK | R300_TX_WRAP_Q_MASK);
+	    ~(R300_TX_WRAP_S_MASK | R300_TX_WRAP_T_MASK | R300_TX_WRAP_R_MASK);
 
-	switch (swrap) {
-	case GL_REPEAT:
-		hw_swrap |= R300_TX_REPEAT;
-		break;
-	case GL_CLAMP:
-		hw_swrap |= R300_TX_CLAMP;
-		break;
-	case GL_CLAMP_TO_EDGE:
-		hw_swrap |= R300_TX_CLAMP_TO_EDGE;
-		break;
-	case GL_CLAMP_TO_BORDER:
-		hw_swrap |= R300_TX_CLAMP_TO_BORDER;
-		break;
-	case GL_MIRRORED_REPEAT:
-		hw_swrap |= R300_TX_REPEAT | R300_TX_MIRRORED;
-		break;
-	case GL_MIRROR_CLAMP_EXT:
-		hw_swrap |= R300_TX_CLAMP | R300_TX_MIRRORED;
-		break;
-	case GL_MIRROR_CLAMP_TO_EDGE_EXT:
-		hw_swrap |= R300_TX_CLAMP_TO_EDGE | R300_TX_MIRRORED;
-		break;
-	case GL_MIRROR_CLAMP_TO_BORDER_EXT:
-		hw_swrap |= R300_TX_CLAMP_TO_BORDER | R300_TX_MIRRORED;
-		break;
-	default:
-		_mesa_problem(NULL, "bad S wrap mode in %s", __FUNCTION__);
+	t->filter |= translate_wrap_mode(tObj->WrapS) << R300_TX_WRAP_S_SHIFT;
+
+	if (tObj->Target != GL_TEXTURE_1D) {
+		t->filter |= translate_wrap_mode(tObj->WrapT) << R300_TX_WRAP_T_SHIFT;
+
+		if (tObj->Target == GL_TEXTURE_3D)
+			t->filter |= translate_wrap_mode(tObj->WrapR) << R300_TX_WRAP_R_SHIFT;
 	}
-
-	switch (twrap) {
-	case GL_REPEAT:
-		hw_twrap |= R300_TX_REPEAT;
-		break;
-	case GL_CLAMP:
-		hw_twrap |= R300_TX_CLAMP;
-		break;
-	case GL_CLAMP_TO_EDGE:
-		hw_twrap |= R300_TX_CLAMP_TO_EDGE;
-		break;
-	case GL_CLAMP_TO_BORDER:
-		hw_twrap |= R300_TX_CLAMP_TO_BORDER;
-		break;
-	case GL_MIRRORED_REPEAT:
-		hw_twrap |= R300_TX_REPEAT | R300_TX_MIRRORED;
-		break;
-	case GL_MIRROR_CLAMP_EXT:
-		hw_twrap |= R300_TX_CLAMP | R300_TX_MIRRORED;
-		break;
-	case GL_MIRROR_CLAMP_TO_EDGE_EXT:
-		hw_twrap |= R300_TX_CLAMP_TO_EDGE | R300_TX_MIRRORED;
-		break;
-	case GL_MIRROR_CLAMP_TO_BORDER_EXT:
-		hw_twrap |= R300_TX_CLAMP_TO_BORDER | R300_TX_MIRRORED;
-		break;
-	default:
-		_mesa_problem(NULL, "bad T wrap mode in %s", __FUNCTION__);
-	}
-
-	switch (rwrap) {
-	case GL_REPEAT:
-		hw_qwrap |= R300_TX_REPEAT;
-		break;
-	case GL_CLAMP:
-		hw_qwrap |= R300_TX_CLAMP;
-		break;
-	case GL_CLAMP_TO_EDGE:
-		hw_qwrap |= R300_TX_CLAMP_TO_EDGE;
-		break;
-	case GL_CLAMP_TO_BORDER:
-		hw_qwrap |= R300_TX_CLAMP_TO_BORDER;
-		break;
-	case GL_MIRRORED_REPEAT:
-		hw_qwrap |= R300_TX_REPEAT | R300_TX_MIRRORED;
-		break;
-	case GL_MIRROR_CLAMP_EXT:
-		hw_qwrap |= R300_TX_CLAMP | R300_TX_MIRRORED;
-		break;
-	case GL_MIRROR_CLAMP_TO_EDGE_EXT:
-		hw_qwrap |= R300_TX_CLAMP_TO_EDGE | R300_TX_MIRRORED;
-		break;
-	case GL_MIRROR_CLAMP_TO_BORDER_EXT:
-		hw_qwrap |= R300_TX_CLAMP_TO_BORDER | R300_TX_MIRRORED;
-		break;
-	default:
-		_mesa_problem(NULL, "bad R wrap mode in %s", __FUNCTION__);
-	}
-
-	t->filter |= hw_swrap << R300_TX_WRAP_S_SHIFT;
-	t->filter |= hw_twrap << R300_TX_WRAP_T_SHIFT;
-	t->filter |= hw_qwrap << R300_TX_WRAP_Q_SHIFT;
 }
 
 static GLuint aniso_filter(GLfloat anisotropy)
@@ -281,7 +214,7 @@ static r300TexObjPtr r300AllocTexObj(struct gl_texture_object *texObj)
 
 		make_empty_list(&t->base);
 
-		r300SetTexWrap(t, texObj->WrapS, texObj->WrapT, texObj->WrapR);
+		r300UpdateTexWrap(t);
 		r300SetTexFilter(t, texObj->MinFilter, texObj->MagFilter, texObj->MaxAnisotropy);
 		r300SetTexBorderColor(t, texObj->_BorderChan);
 	}
@@ -1071,7 +1004,7 @@ static void r300TexParameter(GLcontext * ctx, GLenum target,
 	case GL_TEXTURE_WRAP_S:
 	case GL_TEXTURE_WRAP_T:
 	case GL_TEXTURE_WRAP_R:
-		r300SetTexWrap(t, texObj->WrapS, texObj->WrapT, texObj->WrapR);
+		r300UpdateTexWrap(t);
 		break;
 
 	case GL_TEXTURE_BORDER_COLOR:
