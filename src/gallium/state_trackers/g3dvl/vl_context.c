@@ -36,8 +36,8 @@ static int vlCreateVertexShaderIMC(struct VL_CONTEXT *context)
 	const unsigned int		semantic_names[3] =
 					{
 						TGSI_SEMANTIC_POSITION,
-						TGSI_SEMANTIC_GENERIC,
-						TGSI_SEMANTIC_GENERIC,
+						TGSI_SEMANTIC_GENERIC,	/* Luma texcoords */
+						TGSI_SEMANTIC_GENERIC,	/* Chroma texcoords */
 					};
 	const unsigned int		semantic_indexes[3] = {0, 1, 2};
 	const unsigned int		proc_type = TGSI_PROCESSOR_VERTEX;
@@ -353,7 +353,7 @@ static int vlCreateFragmentShaderIMC(struct VL_CONTEXT *context)
 	return 0;
 }
 
-static int vlCreateVertexShaderPMC(struct VL_CONTEXT *context)
+static int vlCreateVertexShaderFramePMC(struct VL_CONTEXT *context)
 {
 	const unsigned int		max_tokens = 100;
 	const unsigned int		num_input_attribs = 3;
@@ -361,15 +361,15 @@ static int vlCreateVertexShaderPMC(struct VL_CONTEXT *context)
 	const unsigned int		input_semantic_names[3] =
 					{
 						TGSI_SEMANTIC_POSITION,
-						TGSI_SEMANTIC_GENERIC,
-						TGSI_SEMANTIC_GENERIC
+						TGSI_SEMANTIC_GENERIC,	/* Luma texcoords */
+						TGSI_SEMANTIC_GENERIC	/* Chroma texcoords */
 					};
 	const unsigned int		output_semantic_names[4] =
 					{
 						TGSI_SEMANTIC_POSITION,
-						TGSI_SEMANTIC_GENERIC,
-						TGSI_SEMANTIC_GENERIC,
-						TGSI_SEMANTIC_GENERIC
+						TGSI_SEMANTIC_GENERIC,	/* Luma texcoords */
+						TGSI_SEMANTIC_GENERIC,	/* Chroma texcoords */
+						TGSI_SEMANTIC_GENERIC	/* Ref surface texcoords */
 					};
 	const unsigned int		input_semantic_indexes[3] = {0, 1, 2};
 	const unsigned int		output_semantic_indexes[4] = {0, 1, 2, 3};
@@ -430,14 +430,15 @@ static int vlCreateVertexShaderPMC(struct VL_CONTEXT *context)
 	/* Declare constant inputs */
 	/* C[0] scales the normalized MB to cover 16x16 pixels,
 	   C[1] translates the macroblock into position on the surface
-	   C[2] translates the ref surface texcoords to the ref macroblock */
+	   C[2] unused
+	   C[3] translates the ref surface texcoords to the ref macroblock */
 	decl = tgsi_default_full_declaration();
 	decl.Declaration.File = TGSI_FILE_CONSTANT;
 	decl.Declaration.Semantic = 1;
 	decl.Semantic.SemanticName = TGSI_SEMANTIC_GENERIC;
 	decl.Semantic.SemanticIndex = 0;
 	decl.u.DeclarationRange.First = 0;
-	decl.u.DeclarationRange.Last = 2;
+	decl.u.DeclarationRange.Last = 3;
 	ti += tgsi_build_full_declaration
 	(
 		&decl,
@@ -526,7 +527,7 @@ static int vlCreateVertexShaderPMC(struct VL_CONTEXT *context)
 		);
 	}
 
-	/* add o3, t0, c2	; Translate texcoords into position */
+	/* add o3, t0, c3	; Translate texcoords into position */
 	inst = tgsi_default_full_instruction();
 	inst.Instruction.Opcode = TGSI_OPCODE_ADD;
 	inst.Instruction.NumDstRegs = 1;
@@ -535,6 +536,264 @@ static int vlCreateVertexShaderPMC(struct VL_CONTEXT *context)
 	inst.Instruction.NumSrcRegs = 2;
 	inst.FullSrcRegisters[0].SrcRegister.File = TGSI_FILE_TEMPORARY;
 	inst.FullSrcRegisters[0].SrcRegister.Index = 0;
+	inst.FullSrcRegisters[1].SrcRegister.File = TGSI_FILE_CONSTANT;
+	inst.FullSrcRegisters[1].SrcRegister.Index = 3;
+	ti += tgsi_build_full_instruction
+	(
+		&inst,
+		&tokens[ti],
+		header,
+		max_tokens - ti
+	);
+
+	/* END */
+	inst = tgsi_default_full_instruction();
+	inst.Instruction.Opcode = TGSI_OPCODE_END;
+	inst.Instruction.NumDstRegs = 0;
+	inst.Instruction.NumSrcRegs = 0;
+	ti += tgsi_build_full_instruction
+	(
+		&inst,
+		&tokens[ti],
+		header,
+		max_tokens - ti
+	);
+	
+	vs.tokens = tokens;
+	
+	context->states.mc.p_vs[0] = pipe->create_vs_state(pipe, &vs);
+	
+	free(tokens);
+	
+	return 0;
+}
+
+static int vlCreateVertexShaderFieldPMC(struct VL_CONTEXT *context)
+{
+	const unsigned int		max_tokens = 100;
+	const unsigned int		num_input_attribs = 3;
+	const unsigned int		num_output_attribs = 6;
+	const unsigned int		input_semantic_names[3] =
+					{
+						TGSI_SEMANTIC_POSITION,
+						TGSI_SEMANTIC_GENERIC,	/* Luma texcoords */
+						TGSI_SEMANTIC_GENERIC	/* Chroma texcoords */
+					};
+	const unsigned int		output_semantic_names[6] =
+					{
+						TGSI_SEMANTIC_POSITION,
+						TGSI_SEMANTIC_GENERIC,	/* Luma texcoords */
+						TGSI_SEMANTIC_GENERIC,	/* Chroma texcoords */
+						TGSI_SEMANTIC_GENERIC,	/* Top field surface texcoords */
+						TGSI_SEMANTIC_GENERIC,	/* Bottom field surface texcoords */
+						TGSI_SEMANTIC_POSITION	/* Pos */
+					};
+	const unsigned int		input_semantic_indexes[3] = {0, 1, 2};
+	const unsigned int		output_semantic_indexes[6] = {0, 1, 2, 3, 4, 5};
+	const unsigned int		proc_type = TGSI_PROCESSOR_VERTEX;
+	
+	struct pipe_context		*pipe;
+	struct pipe_shader_state	vs;
+	struct tgsi_token		*tokens;
+	struct tgsi_header		*header;
+	struct tgsi_processor		*processor;
+	
+	struct tgsi_full_declaration	decl;
+	struct tgsi_full_instruction	inst;
+	
+	unsigned int			ti;
+	unsigned int			i;
+	
+	assert(context);
+	
+	pipe = context->pipe;
+	
+	tokens = (struct tgsi_token*)malloc(max_tokens * sizeof(struct tgsi_token));
+
+	/* Version */
+	*(struct tgsi_version*)&tokens[0] = tgsi_build_version();
+
+	/* Header */
+	header = (struct tgsi_header*)&tokens[1];
+	*header = tgsi_build_header();
+
+	/* Processor */
+	processor = (struct tgsi_processor*)&tokens[2];
+	*processor = tgsi_build_processor(proc_type, header);
+
+	ti = 3;
+
+	/* Declare inputs (pos, texcoords) */
+	for (i = 0; i < num_input_attribs; i++)
+	{
+		decl = tgsi_default_full_declaration();
+		decl.Declaration.File = TGSI_FILE_INPUT;
+
+		decl.Declaration.Semantic = 1;
+		decl.Semantic.SemanticName = input_semantic_names[i];
+		decl.Semantic.SemanticIndex = input_semantic_indexes[i];
+
+		decl.u.DeclarationRange.First = i;
+		decl.u.DeclarationRange.Last = i;
+		ti += tgsi_build_full_declaration
+		(
+			&decl,
+			&tokens[ti],
+			header,
+			max_tokens - ti
+		);
+	}
+	
+	/* Declare constant inputs */
+	/* C[0] scales the normalized MB to cover 16x16 pixels,
+	   C[1] translates the macroblock into position on the surface
+	   C[2] denormalizes pos components
+	   C[3] translates the ref surface top field texcoords to the ref macroblock
+	   C[4] translates the ref surface bottom field texcoords to the ref macroblock */
+	decl = tgsi_default_full_declaration();
+	decl.Declaration.File = TGSI_FILE_CONSTANT;
+	decl.Declaration.Semantic = 1;
+	decl.Semantic.SemanticName = TGSI_SEMANTIC_GENERIC;
+	decl.Semantic.SemanticIndex = 0;
+	decl.u.DeclarationRange.First = 0;
+	decl.u.DeclarationRange.Last = 4;
+	ti += tgsi_build_full_declaration
+	(
+		&decl,
+		&tokens[ti],
+		header,
+		max_tokens - ti
+	);
+
+	/* Declare outputs (pos, texcoords) */
+	for (i = 0; i < num_output_attribs; i++)
+	{
+		decl = tgsi_default_full_declaration();
+		decl.Declaration.File = TGSI_FILE_OUTPUT;
+		decl.Declaration.Semantic = 1;
+		decl.Semantic.SemanticName = output_semantic_names[i];
+		decl.Semantic.SemanticIndex = output_semantic_indexes[i];
+		decl.u.DeclarationRange.First = i;
+		decl.u.DeclarationRange.Last = i;
+		ti += tgsi_build_full_declaration
+		(
+			&decl,
+			&tokens[ti],
+			header,
+			max_tokens - ti
+		);
+	}
+	
+	/* mul t0, i0, c0	; Scale normalized coords to window coords */
+	inst = tgsi_default_full_instruction();
+	inst.Instruction.Opcode = TGSI_OPCODE_MUL;
+	inst.Instruction.NumDstRegs = 1;
+	inst.FullDstRegisters[0].DstRegister.File = TGSI_FILE_TEMPORARY;
+	inst.FullDstRegisters[0].DstRegister.Index = 0;
+	inst.Instruction.NumSrcRegs = 2;
+	inst.FullSrcRegisters[0].SrcRegister.File = TGSI_FILE_INPUT;
+	inst.FullSrcRegisters[0].SrcRegister.Index = 0;
+	inst.FullSrcRegisters[1].SrcRegister.File = TGSI_FILE_CONSTANT;
+	inst.FullSrcRegisters[1].SrcRegister.Index = 0;
+	ti += tgsi_build_full_instruction
+	(
+		&inst,
+		&tokens[ti],
+		header,
+		max_tokens - ti
+	);
+
+	/* add t1, t0, c1	; Translate vertex into position */
+	inst = tgsi_default_full_instruction();
+	inst.Instruction.Opcode = TGSI_OPCODE_ADD;
+	inst.Instruction.NumDstRegs = 1;
+	inst.FullDstRegisters[0].DstRegister.File = TGSI_FILE_TEMPORARY;
+	inst.FullDstRegisters[0].DstRegister.Index = 1;
+	inst.Instruction.NumSrcRegs = 2;
+	inst.FullSrcRegisters[0].SrcRegister.File = TGSI_FILE_TEMPORARY;
+	inst.FullSrcRegisters[0].SrcRegister.Index = 0;
+	inst.FullSrcRegisters[1].SrcRegister.File = TGSI_FILE_CONSTANT;
+	inst.FullSrcRegisters[1].SrcRegister.Index = 1;
+	ti += tgsi_build_full_instruction
+	(
+		&inst,
+		&tokens[ti],
+		header,
+		max_tokens - ti
+	);
+	
+	/* mov o0, t1		; Move vertex pos to output */
+	inst = tgsi_default_full_instruction();
+	inst.Instruction.Opcode = TGSI_OPCODE_MOV;
+	inst.Instruction.NumDstRegs = 1;
+	inst.FullDstRegisters[0].DstRegister.File = TGSI_FILE_OUTPUT;
+	inst.FullDstRegisters[0].DstRegister.Index = 0;
+	inst.Instruction.NumSrcRegs = 1;
+	inst.FullSrcRegisters[0].SrcRegister.File = TGSI_FILE_TEMPORARY;
+	inst.FullSrcRegisters[0].SrcRegister.Index = 1;
+	ti += tgsi_build_full_instruction
+	(
+		&inst,
+		&tokens[ti],
+		header,
+		max_tokens - ti
+	);
+	
+	/*
+	mov o1, i1		; Move luma & chroma texcoords to output
+	mov o2, i2
+	*/
+	for (i = 1; i < num_output_attribs - 1; ++i)
+	{
+		inst = tgsi_default_full_instruction();
+		inst.Instruction.Opcode = TGSI_OPCODE_MOV;
+		inst.Instruction.NumDstRegs = 1;
+		inst.FullDstRegisters[0].DstRegister.File = TGSI_FILE_OUTPUT;
+		inst.FullDstRegisters[0].DstRegister.Index = i;
+		inst.Instruction.NumSrcRegs = 1;
+		inst.FullSrcRegisters[0].SrcRegister.File = TGSI_FILE_INPUT;
+		inst.FullSrcRegisters[0].SrcRegister.Index = i;
+		ti += tgsi_build_full_instruction
+		(
+			&inst,
+			&tokens[ti],
+			header,
+			max_tokens - ti
+		);
+	}
+
+	/* add o3, t0, c3	; Translate top field texcoords into position
+	   add o4, t0, c4	; Translate bottom field texcoords into position */
+	for (i = 0; i < 2; ++i)
+	{
+		inst = tgsi_default_full_instruction();
+		inst.Instruction.Opcode = TGSI_OPCODE_ADD;
+		inst.Instruction.NumDstRegs = 1;
+		inst.FullDstRegisters[0].DstRegister.File = TGSI_FILE_OUTPUT;
+		inst.FullDstRegisters[0].DstRegister.Index = i + 3;
+		inst.Instruction.NumSrcRegs = 2;
+		inst.FullSrcRegisters[0].SrcRegister.File = TGSI_FILE_TEMPORARY;
+		inst.FullSrcRegisters[0].SrcRegister.Index = 0;
+		inst.FullSrcRegisters[1].SrcRegister.File = TGSI_FILE_CONSTANT;
+		inst.FullSrcRegisters[1].SrcRegister.Index = i + 3;
+		ti += tgsi_build_full_instruction
+		(
+			&inst,
+			&tokens[ti],
+			header,
+			max_tokens - ti
+		);
+	}
+	
+	/* mul o5, t1, c2	; Denorm pos for fragment shader */
+	inst = tgsi_default_full_instruction();
+	inst.Instruction.Opcode = TGSI_OPCODE_MUL;
+	inst.Instruction.NumDstRegs = 1;
+	inst.FullDstRegisters[0].DstRegister.File = TGSI_FILE_OUTPUT;
+	inst.FullDstRegisters[0].DstRegister.Index = 5;
+	inst.Instruction.NumSrcRegs = 2;
+	inst.FullSrcRegisters[0].SrcRegister.File = TGSI_FILE_TEMPORARY;
+	inst.FullSrcRegisters[0].SrcRegister.Index = 1;
 	inst.FullSrcRegisters[1].SrcRegister.File = TGSI_FILE_CONSTANT;
 	inst.FullSrcRegisters[1].SrcRegister.Index = 2;
 	ti += tgsi_build_full_instruction
@@ -560,14 +819,14 @@ static int vlCreateVertexShaderPMC(struct VL_CONTEXT *context)
 	
 	vs.tokens = tokens;
 	
-	context->states.mc.p_vs = pipe->create_vs_state(pipe, &vs);
+	context->states.mc.p_vs[1] = pipe->create_vs_state(pipe, &vs);
 	
 	free(tokens);
 	
 	return 0;
 }
 
-static int vlCreateFragmentShaderPMC(struct VL_CONTEXT *context)
+static int vlCreateFragmentShaderFramePMC(struct VL_CONTEXT *context)
 {
 	const unsigned int		max_tokens = 100;
 	const unsigned int		proc_type = TGSI_PROCESSOR_FRAGMENT;
@@ -837,14 +1096,432 @@ static int vlCreateFragmentShaderPMC(struct VL_CONTEXT *context)
 
 	fs.tokens = tokens;
 	
-	context->states.mc.p_fs = pipe->create_fs_state(pipe, &fs);
+	context->states.mc.p_fs[0] = pipe->create_fs_state(pipe, &fs);
 	
 	free(tokens);
 	
 	return 0;
 }
 
-static int vlCreateVertexShaderBMC(struct VL_CONTEXT *context)
+static int vlCreateFragmentShaderFieldPMC(struct VL_CONTEXT *context)
+{
+	const unsigned int		max_tokens = 200;
+	const unsigned int		proc_type = TGSI_PROCESSOR_FRAGMENT;
+
+	struct pipe_context		*pipe;
+	struct pipe_shader_state	fs;
+	struct tgsi_token		*tokens;
+	struct tgsi_header		*header;
+	struct tgsi_processor		*processor;
+
+	struct tgsi_full_declaration	decl;
+	struct tgsi_full_instruction	inst;
+	
+	unsigned int			ti;
+	unsigned int			i;
+	
+	assert(context);
+	
+	pipe = context->pipe;
+
+	tokens = (struct tgsi_token*)malloc(max_tokens * sizeof(struct tgsi_token));
+
+	/* Version */
+	*(struct tgsi_version*)&tokens[0] = tgsi_build_version();
+	
+	/* Header */
+	header = (struct tgsi_header*)&tokens[1];
+	*header = tgsi_build_header();
+
+	/* Processor */
+	processor = (struct tgsi_processor*)&tokens[2];
+	*processor = tgsi_build_processor(proc_type, header);
+
+	ti = 3;
+
+	/* Declare inputs (texcoords) 
+	   I[0] Luma texcoords
+	   I[1] Chroma texcoords
+	   I[2] Ref top field surface texcoords
+	   I[3] Ref bottom field surface texcoords
+	   I[4] Denormalized texel pos */
+	for (i = 0; i < 5; ++i)
+	{
+		decl = tgsi_default_full_declaration();
+		decl.Declaration.File = TGSI_FILE_INPUT;
+		decl.Declaration.Semantic = 1;
+		decl.Semantic.SemanticName = TGSI_SEMANTIC_GENERIC;
+		decl.Semantic.SemanticIndex = i + 1;
+		decl.Declaration.Interpolate = 1;
+		decl.Interpolation.Interpolate = TGSI_INTERPOLATE_LINEAR;
+		decl.u.DeclarationRange.First = i;
+		decl.u.DeclarationRange.Last = i;
+		ti += tgsi_build_full_declaration
+		(
+			&decl,
+			&tokens[ti],
+			header,
+			max_tokens - ti
+		);
+	}
+	
+	/* Declare constant input */
+	/* C[0] is a multiplier to use when concatenating differential into a single channel
+	   C[1] is a bias to get differential back to -1,1 range
+	   C[2] is constants 2 and 1/2 for Y%2 field selector */
+	decl = tgsi_default_full_declaration();
+	decl.Declaration.File = TGSI_FILE_CONSTANT;
+	decl.Declaration.Semantic = 1;
+	decl.Semantic.SemanticName = TGSI_SEMANTIC_GENERIC;
+	decl.Semantic.SemanticIndex = 0;
+	decl.u.DeclarationRange.First = 0;
+	decl.u.DeclarationRange.Last = 2;
+	ti += tgsi_build_full_declaration
+	(
+		&decl,
+		&tokens[ti],
+		header,
+		max_tokens - ti
+	);
+
+	/* Declare output */
+	decl = tgsi_default_full_declaration();
+	decl.Declaration.File = TGSI_FILE_OUTPUT;
+	decl.Declaration.Semantic = 1;
+	decl.Semantic.SemanticName = TGSI_SEMANTIC_COLOR;
+	decl.Semantic.SemanticIndex = 0;
+	decl.u.DeclarationRange.First = 0;
+	decl.u.DeclarationRange.Last = 0;
+	ti += tgsi_build_full_declaration
+	(
+		&decl,
+		&tokens[ti],
+		header,
+		max_tokens - ti
+	);
+	
+	/* Declare samplers */
+	for (i = 0; i < 4; ++i)
+	{
+		decl = tgsi_default_full_declaration();
+		decl.Declaration.File = TGSI_FILE_SAMPLER;
+		decl.u.DeclarationRange.First = i;
+		decl.u.DeclarationRange.Last = i;
+		ti += tgsi_build_full_declaration
+		(
+			&decl,
+			&tokens[ti],
+			header,
+			max_tokens - ti
+		);
+	}
+	
+	/*
+	tex2d t0.xw, i0, s0	; Read texel from luma texture into .x and .w channels
+	mov t1.x, t0.w		; Move high part from .w channel to .x
+	tex2d t0.yw, i1, s1	; Read texel from chroma Cb texture into .y and .w channels
+	mov t1.y, t0.w		; Move high part from .w channel to .y
+	tex2d t0.zw, i1, s2	; Read texel from chroma Cr texture into .z and .w channels
+	mov t1.z, t0.w		; Move high part from .w channel to .z
+	*/
+	for (i = 0; i < 3; ++i)
+	{
+		inst = tgsi_default_full_instruction();
+		inst.Instruction.Opcode = TGSI_OPCODE_TEX;
+		inst.Instruction.NumDstRegs = 1;
+		inst.FullDstRegisters[0].DstRegister.File = TGSI_FILE_TEMPORARY;
+		inst.FullDstRegisters[0].DstRegister.Index = 0;
+		inst.FullDstRegisters[0].DstRegister.WriteMask = (TGSI_WRITEMASK_X << i) | TGSI_WRITEMASK_W;
+		inst.Instruction.NumSrcRegs = 2;
+		inst.InstructionExtTexture.Texture = TGSI_TEXTURE_2D;
+		inst.FullSrcRegisters[0].SrcRegister.File = TGSI_FILE_INPUT;
+		inst.FullSrcRegisters[0].SrcRegister.Index = i > 0 ? 1 : 0;
+		inst.FullSrcRegisters[1].SrcRegister.File = TGSI_FILE_SAMPLER;
+		inst.FullSrcRegisters[1].SrcRegister.Index = i;
+		ti += tgsi_build_full_instruction
+		(
+			&inst,
+			&tokens[ti],
+			header,
+			max_tokens - ti
+		);
+		
+		inst = tgsi_default_full_instruction();
+		inst.Instruction.Opcode = TGSI_OPCODE_MOV;
+		inst.Instruction.NumDstRegs = 1;
+		inst.FullDstRegisters[0].DstRegister.File = TGSI_FILE_TEMPORARY;
+		inst.FullDstRegisters[0].DstRegister.Index = 1;
+		inst.FullDstRegisters[0].DstRegister.WriteMask = TGSI_WRITEMASK_X << i;
+		inst.Instruction.NumSrcRegs = 1;
+		inst.FullSrcRegisters[0].SrcRegister.File = TGSI_FILE_TEMPORARY;
+		inst.FullSrcRegisters[0].SrcRegister.Index = 0;
+		inst.FullSrcRegisters[0].SrcRegister.SwizzleX = TGSI_SWIZZLE_W;
+		inst.FullSrcRegisters[0].SrcRegister.SwizzleY = TGSI_SWIZZLE_W;
+		inst.FullSrcRegisters[0].SrcRegister.SwizzleZ = TGSI_SWIZZLE_W;
+		inst.FullSrcRegisters[0].SrcRegister.SwizzleW = TGSI_SWIZZLE_W;
+		ti += tgsi_build_full_instruction
+		(
+			&inst,
+			&tokens[ti],
+			header,
+			max_tokens - ti
+		);
+	}
+	
+	/* mul t1, t1, c0	; Muliply high part by multiplier to get back its full value */
+	inst = tgsi_default_full_instruction();
+	inst.Instruction.Opcode = TGSI_OPCODE_MUL;
+	inst.Instruction.NumDstRegs = 1;
+	inst.FullDstRegisters[0].DstRegister.File = TGSI_FILE_TEMPORARY;
+	inst.FullDstRegisters[0].DstRegister.Index = 1;
+	inst.Instruction.NumSrcRegs = 2;
+	inst.FullSrcRegisters[0].SrcRegister.File = TGSI_FILE_TEMPORARY;
+	inst.FullSrcRegisters[0].SrcRegister.Index = 1;
+	inst.FullSrcRegisters[1].SrcRegister.File = TGSI_FILE_CONSTANT;
+	inst.FullSrcRegisters[1].SrcRegister.Index = 0;
+	ti += tgsi_build_full_instruction
+	(
+		&inst,
+		&tokens[ti],
+		header,
+		max_tokens - ti
+	);
+	
+	/* add t0, t0, t1	; Add luma and chroma low and high parts to get a single value */
+	inst = tgsi_default_full_instruction();
+	inst.Instruction.Opcode = TGSI_OPCODE_ADD;
+	inst.Instruction.NumDstRegs = 1;
+	inst.FullDstRegisters[0].DstRegister.File = TGSI_FILE_TEMPORARY;
+	inst.FullDstRegisters[0].DstRegister.Index = 0;
+	inst.Instruction.NumSrcRegs = 2;
+	inst.FullSrcRegisters[0].SrcRegister.File = TGSI_FILE_TEMPORARY;
+	inst.FullSrcRegisters[0].SrcRegister.Index = 0;
+	inst.FullSrcRegisters[1].SrcRegister.File = TGSI_FILE_TEMPORARY;
+	inst.FullSrcRegisters[1].SrcRegister.Index = 1;
+	ti += tgsi_build_full_instruction
+	(
+		&inst,
+		&tokens[ti],
+		header,
+		max_tokens - ti
+	);
+	
+	/* sub t0, t0, c1	; Subtract bias to get back the signed value */
+	inst = tgsi_default_full_instruction();
+	inst.Instruction.Opcode = TGSI_OPCODE_SUB;
+	inst.Instruction.NumDstRegs = 1;
+	inst.FullDstRegisters[0].DstRegister.File = TGSI_FILE_TEMPORARY;
+	inst.FullDstRegisters[0].DstRegister.Index = 0;
+	inst.Instruction.NumSrcRegs = 2;
+	inst.FullSrcRegisters[0].SrcRegister.File = TGSI_FILE_TEMPORARY;
+	inst.FullSrcRegisters[0].SrcRegister.Index = 0;
+	inst.FullSrcRegisters[1].SrcRegister.File = TGSI_FILE_CONSTANT;
+	inst.FullSrcRegisters[1].SrcRegister.Index = 1;
+	ti += tgsi_build_full_instruction
+	(
+		&inst,
+		&tokens[ti],
+		header,
+		max_tokens - ti
+	);
+	
+	/* tex2d t1, i2, s3	; Read texel from ref macroblock top field
+	   tex2d t2, i3, s3	; Read texel from ref macroblock bottom field */
+	for (i = 0; i < 2; ++i)
+	{
+		inst = tgsi_default_full_instruction();
+		inst.Instruction.Opcode = TGSI_OPCODE_TEX;
+		inst.Instruction.NumDstRegs = 1;
+		inst.FullDstRegisters[0].DstRegister.File = TGSI_FILE_TEMPORARY;
+		inst.FullDstRegisters[0].DstRegister.Index = i + 1;
+		inst.Instruction.NumSrcRegs = 2;
+		inst.InstructionExtTexture.Texture = TGSI_TEXTURE_2D;
+		inst.FullSrcRegisters[0].SrcRegister.File = TGSI_FILE_INPUT;
+		inst.FullSrcRegisters[0].SrcRegister.Index = i + 2;
+		inst.FullSrcRegisters[1].SrcRegister.File = TGSI_FILE_SAMPLER;
+		inst.FullSrcRegisters[1].SrcRegister.Index = 3;
+		ti += tgsi_build_full_instruction
+		(
+			&inst,
+			&tokens[ti],
+			header,
+			max_tokens - ti
+		);
+	}
+	
+	/* XXX: Pos values off by 0.5 for rounding? */
+	/* sub t4, i4.y, c2.x	; Sub 0.5 from position */
+	inst = tgsi_default_full_instruction();
+	inst.Instruction.Opcode = TGSI_OPCODE_SUB;
+	inst.Instruction.NumDstRegs = 1;
+	inst.FullDstRegisters[0].DstRegister.File = TGSI_FILE_TEMPORARY;
+	inst.FullDstRegisters[0].DstRegister.Index = 4;
+	inst.Instruction.NumSrcRegs = 2;
+	inst.FullSrcRegisters[0].SrcRegister.File = TGSI_FILE_INPUT;
+	inst.FullSrcRegisters[0].SrcRegister.Index = 4;
+	inst.FullSrcRegisters[0].SrcRegister.SwizzleX = TGSI_SWIZZLE_Y;
+	inst.FullSrcRegisters[0].SrcRegister.SwizzleY = TGSI_SWIZZLE_Y;
+	inst.FullSrcRegisters[0].SrcRegister.SwizzleZ = TGSI_SWIZZLE_Y;
+	inst.FullSrcRegisters[0].SrcRegister.SwizzleW = TGSI_SWIZZLE_Y;
+	inst.FullSrcRegisters[1].SrcRegister.File = TGSI_FILE_CONSTANT;
+	inst.FullSrcRegisters[1].SrcRegister.Index = 2;
+	inst.FullSrcRegisters[1].SrcRegister.SwizzleX = TGSI_SWIZZLE_X;
+	inst.FullSrcRegisters[1].SrcRegister.SwizzleY = TGSI_SWIZZLE_X;
+	inst.FullSrcRegisters[1].SrcRegister.SwizzleZ = TGSI_SWIZZLE_X;
+	inst.FullSrcRegisters[1].SrcRegister.SwizzleW = TGSI_SWIZZLE_X;
+	ti += tgsi_build_full_instruction
+	(
+		&inst,
+		&tokens[ti],
+		header,
+		max_tokens - ti
+	);
+	
+	/* mul t3, t4, c2.x	; Divide pos y coord by 2 (mul by 0.5) */
+	inst = tgsi_default_full_instruction();
+	inst.Instruction.Opcode = TGSI_OPCODE_MUL;
+	inst.Instruction.NumDstRegs = 1;
+	inst.FullDstRegisters[0].DstRegister.File = TGSI_FILE_TEMPORARY;
+	inst.FullDstRegisters[0].DstRegister.Index = 3;
+	inst.Instruction.NumSrcRegs = 2;
+	inst.FullSrcRegisters[0].SrcRegister.File = TGSI_FILE_TEMPORARY;
+	inst.FullSrcRegisters[0].SrcRegister.Index = 4;
+	inst.FullSrcRegisters[1].SrcRegister.File = TGSI_FILE_CONSTANT;
+	inst.FullSrcRegisters[1].SrcRegister.Index = 2;
+	inst.FullSrcRegisters[1].SrcRegister.SwizzleX = TGSI_SWIZZLE_X;
+	inst.FullSrcRegisters[1].SrcRegister.SwizzleY = TGSI_SWIZZLE_X;
+	inst.FullSrcRegisters[1].SrcRegister.SwizzleZ = TGSI_SWIZZLE_X;
+	inst.FullSrcRegisters[1].SrcRegister.SwizzleW = TGSI_SWIZZLE_X;
+	ti += tgsi_build_full_instruction
+	(
+		&inst,
+		&tokens[ti],
+		header,
+		max_tokens - ti
+	);
+	
+	/* floor t3, t3		; Get rid of fractional part */
+	inst = tgsi_default_full_instruction();
+	inst.Instruction.Opcode = TGSI_OPCODE_FLOOR;
+	inst.Instruction.NumDstRegs = 1;
+	inst.FullDstRegisters[0].DstRegister.File = TGSI_FILE_TEMPORARY;
+	inst.FullDstRegisters[0].DstRegister.Index = 3;
+	inst.Instruction.NumSrcRegs = 1;
+	inst.FullSrcRegisters[0].SrcRegister.File = TGSI_FILE_TEMPORARY;
+	inst.FullSrcRegisters[0].SrcRegister.Index = 3;
+	ti += tgsi_build_full_instruction
+	(
+		&inst,
+		&tokens[ti],
+		header,
+		max_tokens - ti
+	);
+	
+	/* mul t3, t3, c2.y	; Multiply by 2 */
+	inst = tgsi_default_full_instruction();
+	inst.Instruction.Opcode = TGSI_OPCODE_MUL;
+	inst.Instruction.NumDstRegs = 1;
+	inst.FullDstRegisters[0].DstRegister.File = TGSI_FILE_TEMPORARY;
+	inst.FullDstRegisters[0].DstRegister.Index = 3;
+	inst.Instruction.NumSrcRegs = 2;
+	inst.FullSrcRegisters[0].SrcRegister.File = TGSI_FILE_TEMPORARY;
+	inst.FullSrcRegisters[0].SrcRegister.Index = 3;
+	inst.FullSrcRegisters[1].SrcRegister.File = TGSI_FILE_CONSTANT;
+	inst.FullSrcRegisters[1].SrcRegister.Index = 2;
+	inst.FullSrcRegisters[1].SrcRegister.SwizzleX = TGSI_SWIZZLE_Y;
+	inst.FullSrcRegisters[1].SrcRegister.SwizzleY = TGSI_SWIZZLE_Y;
+	inst.FullSrcRegisters[1].SrcRegister.SwizzleZ = TGSI_SWIZZLE_Y;
+	inst.FullSrcRegisters[1].SrcRegister.SwizzleW = TGSI_SWIZZLE_Y;
+	ti += tgsi_build_full_instruction
+	(
+		&inst,
+		&tokens[ti],
+		header,
+		max_tokens - ti
+	);
+	
+	/* sub t3, t4, t3	; Subtract from y to get y % 2 */
+	inst = tgsi_default_full_instruction();
+	inst.Instruction.Opcode = TGSI_OPCODE_SUB;
+	inst.Instruction.NumDstRegs = 1;
+	inst.FullDstRegisters[0].DstRegister.File = TGSI_FILE_TEMPORARY;
+	inst.FullDstRegisters[0].DstRegister.Index = 3;
+	inst.Instruction.NumSrcRegs = 2;
+	inst.FullSrcRegisters[0].SrcRegister.File = TGSI_FILE_TEMPORARY;
+	inst.FullSrcRegisters[0].SrcRegister.Index = 4;
+	inst.FullSrcRegisters[1].SrcRegister.File = TGSI_FILE_TEMPORARY;
+	inst.FullSrcRegisters[1].SrcRegister.Index = 3;
+	ti += tgsi_build_full_instruction
+	(
+		&inst,
+		&tokens[ti],
+		header,
+		max_tokens - ti
+	);
+	
+	/* lerp t1, t3, t1, t2 */
+	inst = tgsi_default_full_instruction();
+	inst.Instruction.Opcode = TGSI_OPCODE_LERP;
+	inst.Instruction.NumDstRegs = 1;
+	inst.FullDstRegisters[0].DstRegister.File = TGSI_FILE_TEMPORARY;
+	inst.FullDstRegisters[0].DstRegister.Index = 1;
+	inst.Instruction.NumSrcRegs = 3;
+	inst.FullSrcRegisters[0].SrcRegister.File = TGSI_FILE_TEMPORARY;
+	inst.FullSrcRegisters[0].SrcRegister.Index = 3;
+	inst.FullSrcRegisters[1].SrcRegister.File = TGSI_FILE_TEMPORARY;
+	inst.FullSrcRegisters[1].SrcRegister.Index = 1;
+	inst.FullSrcRegisters[2].SrcRegister.File = TGSI_FILE_TEMPORARY;
+	inst.FullSrcRegisters[2].SrcRegister.Index = 2;
+	ti += tgsi_build_full_instruction
+	(
+		&inst,
+		&tokens[ti],
+		header,
+		max_tokens - ti
+	);
+	
+	/* add o0, t0, t1	; Add ref and differential to form final output */
+	inst = tgsi_default_full_instruction();
+	inst.Instruction.Opcode = TGSI_OPCODE_ADD;
+	inst.Instruction.NumDstRegs = 1;
+	inst.FullDstRegisters[0].DstRegister.File = TGSI_FILE_OUTPUT;
+	inst.FullDstRegisters[0].DstRegister.Index = 0;
+	inst.Instruction.NumSrcRegs = 2;
+	inst.FullSrcRegisters[0].SrcRegister.File = TGSI_FILE_TEMPORARY;
+	inst.FullSrcRegisters[0].SrcRegister.Index = 0;
+	inst.FullSrcRegisters[1].SrcRegister.File = TGSI_FILE_TEMPORARY;
+	inst.FullSrcRegisters[1].SrcRegister.Index = 1;
+	ti += tgsi_build_full_instruction
+	(
+		&inst,
+		&tokens[ti],
+		header,
+		max_tokens - ti
+	);
+
+	/* END */
+	inst = tgsi_default_full_instruction();
+	inst.Instruction.Opcode = TGSI_OPCODE_END;
+	inst.Instruction.NumDstRegs = 0;
+	inst.Instruction.NumSrcRegs = 0;
+	ti += tgsi_build_full_instruction
+	(
+		&inst,
+		&tokens[ti],
+		header,
+		max_tokens - ti
+	);
+
+	fs.tokens = tokens;
+	
+	context->states.mc.p_fs[1] = pipe->create_fs_state(pipe, &fs);
+	
+	free(tokens);
+	
+	return 0;
+}
+
+static int vlCreateVertexShaderFrameBMC(struct VL_CONTEXT *context)
 {
 	const unsigned int		max_tokens = 100;
 	const unsigned int		num_input_attribs = 3;
@@ -922,15 +1599,17 @@ static int vlCreateVertexShaderBMC(struct VL_CONTEXT *context)
 	/* Declare constant inputs */
 	/* C[0] scales the normalized MB to cover 16x16 pixels,
 	   C[1] translates the macroblock into position on the surface
-	   C[2] translates the past surface texcoords to the ref macroblock
-	   C[3] translates the future surface texcoords to the ref macroblock */
+	   C[2] unused
+	   C[3] translates the past surface texcoords to the ref macroblock
+	   C[4] unused
+	   C[5] translates the future surface texcoords to the ref macroblock */
 	decl = tgsi_default_full_declaration();
 	decl.Declaration.File = TGSI_FILE_CONSTANT;
 	decl.Declaration.Semantic = 1;
 	decl.Semantic.SemanticName = TGSI_SEMANTIC_GENERIC;
 	decl.Semantic.SemanticIndex = 0;
 	decl.u.DeclarationRange.First = 0;
-	decl.u.DeclarationRange.Last = 3;
+	decl.u.DeclarationRange.Last = 5;
 	ti += tgsi_build_full_declaration
 	(
 		&decl,
@@ -1019,8 +1698,8 @@ static int vlCreateVertexShaderBMC(struct VL_CONTEXT *context)
 		);
 	}
 	
-	/* add o3, t0, c2	; Translate past surface texcoords into position
-	   add o4, t0, c3	; Repeat for future surface texcoords */
+	/* add o3, t0, c3	; Translate past surface texcoords into position
+	   add o4, t0, c5	; Repeat for future surface texcoords */
 	for (i = 0; i < 2; ++i)
 	{
 		inst = tgsi_default_full_instruction();
@@ -1032,7 +1711,7 @@ static int vlCreateVertexShaderBMC(struct VL_CONTEXT *context)
 		inst.FullSrcRegisters[0].SrcRegister.File = TGSI_FILE_TEMPORARY;
 		inst.FullSrcRegisters[0].SrcRegister.Index = 0;
 		inst.FullSrcRegisters[1].SrcRegister.File = TGSI_FILE_CONSTANT;
-		inst.FullSrcRegisters[1].SrcRegister.Index = i + 2;
+		inst.FullSrcRegisters[1].SrcRegister.Index = i * 2 + 3;
 		ti += tgsi_build_full_instruction
 		(
 			&inst,
@@ -1057,14 +1736,278 @@ static int vlCreateVertexShaderBMC(struct VL_CONTEXT *context)
 	
 	vs.tokens = tokens;
 	
-	context->states.mc.b_vs = pipe->create_vs_state(pipe, &vs);
+	context->states.mc.b_vs[0] = pipe->create_vs_state(pipe, &vs);
 	
 	free(tokens);
 	
 	return 0;
 }
 
-static int vlCreateFragmentShaderBMC(struct VL_CONTEXT *context)
+static int vlCreateVertexShaderFieldBMC(struct VL_CONTEXT *context)
+{
+	const unsigned int		max_tokens = 100;
+	const unsigned int		num_input_attribs = 3;
+	const unsigned int		num_output_attribs = 8;
+	const unsigned int		input_semantic_names[3] =
+					{
+						TGSI_SEMANTIC_POSITION,
+						TGSI_SEMANTIC_GENERIC,	/* Luma texcoords */
+						TGSI_SEMANTIC_GENERIC	/* Chroma texcoords */
+					};
+	const unsigned int		output_semantic_names[8] =
+					{
+						TGSI_SEMANTIC_POSITION,
+						TGSI_SEMANTIC_GENERIC,	/* Luma texcoords */
+						TGSI_SEMANTIC_GENERIC,	/* Chroma texcoords */
+						TGSI_SEMANTIC_GENERIC,	/* Top field past surface texcoords */
+						TGSI_SEMANTIC_GENERIC,	/* Bottom field past surface texcoords */
+						TGSI_SEMANTIC_GENERIC,	/* Top field future surface texcoords */
+						TGSI_SEMANTIC_GENERIC,	/* Bottom field future surface texcoords */
+						TGSI_SEMANTIC_POSITION	/* Pos */
+					};
+	const unsigned int		input_semantic_indexes[3] = {0, 1, 2};
+	const unsigned int		output_semantic_indexes[8] = {0, 1, 2, 3, 4, 5, 6, 7};
+	const unsigned int		proc_type = TGSI_PROCESSOR_VERTEX;
+	
+	struct pipe_context		*pipe;
+	struct pipe_shader_state	vs;
+	struct tgsi_token		*tokens;
+	struct tgsi_header		*header;
+	struct tgsi_processor		*processor;
+	
+	struct tgsi_full_declaration	decl;
+	struct tgsi_full_instruction	inst;
+	
+	unsigned int			ti;
+	unsigned int			i;
+	
+	assert(context);
+	
+	pipe = context->pipe;
+	
+	tokens = (struct tgsi_token*)malloc(max_tokens * sizeof(struct tgsi_token));
+
+	/* Version */
+	*(struct tgsi_version*)&tokens[0] = tgsi_build_version();
+
+	/* Header */
+	header = (struct tgsi_header*)&tokens[1];
+	*header = tgsi_build_header();
+
+	/* Processor */
+	processor = (struct tgsi_processor*)&tokens[2];
+	*processor = tgsi_build_processor(proc_type, header);
+
+	ti = 3;
+
+	/* Declare inputs (pos, texcoords) */
+	for (i = 0; i < num_input_attribs; i++)
+	{
+		decl = tgsi_default_full_declaration();
+		decl.Declaration.File = TGSI_FILE_INPUT;
+
+		decl.Declaration.Semantic = 1;
+		decl.Semantic.SemanticName = input_semantic_names[i];
+		decl.Semantic.SemanticIndex = input_semantic_indexes[i];
+
+		decl.u.DeclarationRange.First = i;
+		decl.u.DeclarationRange.Last = i;
+		ti += tgsi_build_full_declaration
+		(
+			&decl,
+			&tokens[ti],
+			header,
+			max_tokens - ti
+		);
+	}
+	
+	/* Declare constant inputs */
+	/* C[0] scales the normalized MB to cover 16x16 pixels,
+	   C[1] translates the macroblock into position on the surface
+	   C[2] denormalizes pos components
+	   C[3] translates the past surface top field texcoords to the ref macroblock
+	   C[4] translates the past surface bottom field texcoords to the ref macroblock
+	   C[5] translates the future surface top field texcoords to the ref macroblock
+	   C[6] translates the future surface bottom field texcoords to the ref macroblock */
+	decl = tgsi_default_full_declaration();
+	decl.Declaration.File = TGSI_FILE_CONSTANT;
+	decl.Declaration.Semantic = 1;
+	decl.Semantic.SemanticName = TGSI_SEMANTIC_GENERIC;
+	decl.Semantic.SemanticIndex = 0;
+	decl.u.DeclarationRange.First = 0;
+	decl.u.DeclarationRange.Last = 6;
+	ti += tgsi_build_full_declaration
+	(
+		&decl,
+		&tokens[ti],
+		header,
+		max_tokens - ti
+	);
+
+	/* Declare outputs (pos, texcoords) */
+	for (i = 0; i < num_output_attribs; i++)
+	{
+		decl = tgsi_default_full_declaration();
+		decl.Declaration.File = TGSI_FILE_OUTPUT;
+		decl.Declaration.Semantic = 1;
+		decl.Semantic.SemanticName = output_semantic_names[i];
+		decl.Semantic.SemanticIndex = output_semantic_indexes[i];
+		decl.u.DeclarationRange.First = i;
+		decl.u.DeclarationRange.Last = i;
+		ti += tgsi_build_full_declaration
+		(
+			&decl,
+			&tokens[ti],
+			header,
+			max_tokens - ti
+		);
+	}
+	
+	/* mul t0, i0, c0	; Scale normalized coords to window coords */
+	inst = tgsi_default_full_instruction();
+	inst.Instruction.Opcode = TGSI_OPCODE_MUL;
+	inst.Instruction.NumDstRegs = 1;
+	inst.FullDstRegisters[0].DstRegister.File = TGSI_FILE_TEMPORARY;
+	inst.FullDstRegisters[0].DstRegister.Index = 0;
+	inst.Instruction.NumSrcRegs = 2;
+	inst.FullSrcRegisters[0].SrcRegister.File = TGSI_FILE_INPUT;
+	inst.FullSrcRegisters[0].SrcRegister.Index = 0;
+	inst.FullSrcRegisters[1].SrcRegister.File = TGSI_FILE_CONSTANT;
+	inst.FullSrcRegisters[1].SrcRegister.Index = 0;
+	ti += tgsi_build_full_instruction
+	(
+		&inst,
+		&tokens[ti],
+		header,
+		max_tokens - ti
+	);
+
+	/* add t1, t0, c1	; Translate vertex into position */
+	inst = tgsi_default_full_instruction();
+	inst.Instruction.Opcode = TGSI_OPCODE_ADD;
+	inst.Instruction.NumDstRegs = 1;
+	inst.FullDstRegisters[0].DstRegister.File = TGSI_FILE_TEMPORARY;
+	inst.FullDstRegisters[0].DstRegister.Index = 1;
+	inst.Instruction.NumSrcRegs = 2;
+	inst.FullSrcRegisters[0].SrcRegister.File = TGSI_FILE_TEMPORARY;
+	inst.FullSrcRegisters[0].SrcRegister.Index = 0;
+	inst.FullSrcRegisters[1].SrcRegister.File = TGSI_FILE_CONSTANT;
+	inst.FullSrcRegisters[1].SrcRegister.Index = 1;
+	ti += tgsi_build_full_instruction
+	(
+		&inst,
+		&tokens[ti],
+		header,
+		max_tokens - ti
+	);
+	
+	/* mov o0, t1		; Move vertex pos to output */
+	inst = tgsi_default_full_instruction();
+	inst.Instruction.Opcode = TGSI_OPCODE_MOV;
+	inst.Instruction.NumDstRegs = 1;
+	inst.FullDstRegisters[0].DstRegister.File = TGSI_FILE_OUTPUT;
+	inst.FullDstRegisters[0].DstRegister.Index = 0;
+	inst.Instruction.NumSrcRegs = 1;
+	inst.FullSrcRegisters[0].SrcRegister.File = TGSI_FILE_TEMPORARY;
+	inst.FullSrcRegisters[0].SrcRegister.Index = 1;
+	ti += tgsi_build_full_instruction
+	(
+		&inst,
+		&tokens[ti],
+		header,
+		max_tokens - ti
+	);
+	
+	/*
+	mov o1, i1		; Move luma & chroma texcoords to output
+	mov o2, i2
+	*/
+	for (i = 1; i < num_output_attribs - 1; ++i)
+	{
+		inst = tgsi_default_full_instruction();
+		inst.Instruction.Opcode = TGSI_OPCODE_MOV;
+		inst.Instruction.NumDstRegs = 1;
+		inst.FullDstRegisters[0].DstRegister.File = TGSI_FILE_OUTPUT;
+		inst.FullDstRegisters[0].DstRegister.Index = i;
+		inst.Instruction.NumSrcRegs = 1;
+		inst.FullSrcRegisters[0].SrcRegister.File = TGSI_FILE_INPUT;
+		inst.FullSrcRegisters[0].SrcRegister.Index = i;
+		ti += tgsi_build_full_instruction
+		(
+			&inst,
+			&tokens[ti],
+			header,
+			max_tokens - ti
+		);
+	}
+
+	/* add o3, t0, c3	; Translate top field past texcoords into position
+	   add o4, t0, c4	; Translate bottom field past texcoords into position
+	   add o5, t0, c5	; Translate top field past texcoords into position
+	   add o6, t0, c6	; Translate bottom field past texcoords into position */
+	for (i = 0; i < 4; ++i)
+	{
+		inst = tgsi_default_full_instruction();
+		inst.Instruction.Opcode = TGSI_OPCODE_ADD;
+		inst.Instruction.NumDstRegs = 1;
+		inst.FullDstRegisters[0].DstRegister.File = TGSI_FILE_OUTPUT;
+		inst.FullDstRegisters[0].DstRegister.Index = i + 3;
+		inst.Instruction.NumSrcRegs = 2;
+		inst.FullSrcRegisters[0].SrcRegister.File = TGSI_FILE_TEMPORARY;
+		inst.FullSrcRegisters[0].SrcRegister.Index = 0;
+		inst.FullSrcRegisters[1].SrcRegister.File = TGSI_FILE_CONSTANT;
+		inst.FullSrcRegisters[1].SrcRegister.Index = i + 3;
+		ti += tgsi_build_full_instruction
+		(
+			&inst,
+			&tokens[ti],
+			header,
+			max_tokens - ti
+		);
+	}
+	
+	/* mul o7, t1, c2	; Denorm pos for fragment shader */
+	inst = tgsi_default_full_instruction();
+	inst.Instruction.Opcode = TGSI_OPCODE_MUL;
+	inst.Instruction.NumDstRegs = 1;
+	inst.FullDstRegisters[0].DstRegister.File = TGSI_FILE_OUTPUT;
+	inst.FullDstRegisters[0].DstRegister.Index = 7;
+	inst.Instruction.NumSrcRegs = 2;
+	inst.FullSrcRegisters[0].SrcRegister.File = TGSI_FILE_TEMPORARY;
+	inst.FullSrcRegisters[0].SrcRegister.Index = 1;
+	inst.FullSrcRegisters[1].SrcRegister.File = TGSI_FILE_CONSTANT;
+	inst.FullSrcRegisters[1].SrcRegister.Index = 2;
+	ti += tgsi_build_full_instruction
+	(
+		&inst,
+		&tokens[ti],
+		header,
+		max_tokens - ti
+	);
+
+	/* END */
+	inst = tgsi_default_full_instruction();
+	inst.Instruction.Opcode = TGSI_OPCODE_END;
+	inst.Instruction.NumDstRegs = 0;
+	inst.Instruction.NumSrcRegs = 0;
+	ti += tgsi_build_full_instruction
+	(
+		&inst,
+		&tokens[ti],
+		header,
+		max_tokens - ti
+	);
+	
+	vs.tokens = tokens;
+	
+	context->states.mc.b_vs[1] = pipe->create_vs_state(pipe, &vs);
+	
+	free(tokens);
+	
+	return 0;
+}
+
+static int vlCreateFragmentShaderFrameBMC(struct VL_CONTEXT *context)
 {
 	const unsigned int		max_tokens = 100;
 	const unsigned int		proc_type = TGSI_PROCESSOR_FRAGMENT;
@@ -1123,14 +2066,15 @@ static int vlCreateFragmentShaderBMC(struct VL_CONTEXT *context)
 	
 	/* Declare constant input */
 	/* C[0] is a multiplier to use when concatenating differential into a single channel
-	   C[0] is a bias to get differential back to -1,1 range*/
+	   C[1] is a bias to get differential back to -1,1 range
+	   C[2] contains 0.5 in channel X for use as a weight to blend past and future samples */
 	decl = tgsi_default_full_declaration();
 	decl.Declaration.File = TGSI_FILE_CONSTANT;
 	decl.Declaration.Semantic = 1;
 	decl.Semantic.SemanticName = TGSI_SEMANTIC_GENERIC;
 	decl.Semantic.SemanticIndex = 0;
 	decl.u.DeclarationRange.First = 0;
-	decl.u.DeclarationRange.Last = 1;
+	decl.u.DeclarationRange.Last = 2;
 	ti += tgsi_build_full_declaration
 	(
 		&decl,
@@ -1304,17 +2248,23 @@ static int vlCreateFragmentShaderBMC(struct VL_CONTEXT *context)
 		);
 	}
 	
-	/* add t0, t0, t1	; Add past and differential to form partial output */
+	/* lerp t1, c2.x, t1, t2	; Blend past and future texels */
 	inst = tgsi_default_full_instruction();
-	inst.Instruction.Opcode = TGSI_OPCODE_ADD;
+	inst.Instruction.Opcode = TGSI_OPCODE_LERP;
 	inst.Instruction.NumDstRegs = 1;
 	inst.FullDstRegisters[0].DstRegister.File = TGSI_FILE_TEMPORARY;
-	inst.FullDstRegisters[0].DstRegister.Index = 0;
-	inst.Instruction.NumSrcRegs = 2;
-	inst.FullSrcRegisters[0].SrcRegister.File = TGSI_FILE_TEMPORARY;
-	inst.FullSrcRegisters[0].SrcRegister.Index = 0;
+	inst.FullDstRegisters[0].DstRegister.Index = 1;
+	inst.Instruction.NumSrcRegs = 3;
+	inst.FullSrcRegisters[0].SrcRegister.File = TGSI_FILE_CONSTANT;
+	inst.FullSrcRegisters[0].SrcRegister.Index = 2;
+	inst.FullSrcRegisters[0].SrcRegister.SwizzleX = TGSI_SWIZZLE_X;
+	inst.FullSrcRegisters[0].SrcRegister.SwizzleY = TGSI_SWIZZLE_X;
+	inst.FullSrcRegisters[0].SrcRegister.SwizzleZ = TGSI_SWIZZLE_X;
+	inst.FullSrcRegisters[0].SrcRegister.SwizzleW = TGSI_SWIZZLE_X;
 	inst.FullSrcRegisters[1].SrcRegister.File = TGSI_FILE_TEMPORARY;
 	inst.FullSrcRegisters[1].SrcRegister.Index = 1;
+	inst.FullSrcRegisters[2].SrcRegister.File = TGSI_FILE_TEMPORARY;
+	inst.FullSrcRegisters[2].SrcRegister.Index = 2;
 	ti += tgsi_build_full_instruction
 	(
 		&inst,
@@ -1323,7 +2273,7 @@ static int vlCreateFragmentShaderBMC(struct VL_CONTEXT *context)
 		max_tokens - ti
 	);
 	
-	/* add o0, t0, t2	; Add future and differential to form final output */
+	/* add o0, t0, t1	; Add ref and differential to form final output */
 	inst = tgsi_default_full_instruction();
 	inst.Instruction.Opcode = TGSI_OPCODE_ADD;
 	inst.Instruction.NumDstRegs = 1;
@@ -1333,7 +2283,7 @@ static int vlCreateFragmentShaderBMC(struct VL_CONTEXT *context)
 	inst.FullSrcRegisters[0].SrcRegister.File = TGSI_FILE_TEMPORARY;
 	inst.FullSrcRegisters[0].SrcRegister.Index = 0;
 	inst.FullSrcRegisters[1].SrcRegister.File = TGSI_FILE_TEMPORARY;
-	inst.FullSrcRegisters[1].SrcRegister.Index = 2;
+	inst.FullSrcRegisters[1].SrcRegister.Index = 1;
 	ti += tgsi_build_full_instruction
 	(
 		&inst,
@@ -1357,7 +2307,497 @@ static int vlCreateFragmentShaderBMC(struct VL_CONTEXT *context)
 
 	fs.tokens = tokens;
 	
-	context->states.mc.b_fs = pipe->create_fs_state(pipe, &fs);
+	context->states.mc.b_fs[0] = pipe->create_fs_state(pipe, &fs);
+	
+	free(tokens);
+	
+	return 0;
+}
+
+static int vlCreateFragmentShaderFieldBMC(struct VL_CONTEXT *context)
+{
+	const unsigned int		max_tokens = 200;
+	const unsigned int		proc_type = TGSI_PROCESSOR_FRAGMENT;
+
+	struct pipe_context		*pipe;
+	struct pipe_shader_state	fs;
+	struct tgsi_token		*tokens;
+	struct tgsi_header		*header;
+	struct tgsi_processor		*processor;
+
+	struct tgsi_full_declaration	decl;
+	struct tgsi_full_instruction	inst;
+	
+	unsigned int			ti;
+	unsigned int			i;
+	
+	assert(context);
+	
+	pipe = context->pipe;
+
+	tokens = (struct tgsi_token*)malloc(max_tokens * sizeof(struct tgsi_token));
+
+	/* Version */
+	*(struct tgsi_version*)&tokens[0] = tgsi_build_version();
+	
+	/* Header */
+	header = (struct tgsi_header*)&tokens[1];
+	*header = tgsi_build_header();
+
+	/* Processor */
+	processor = (struct tgsi_processor*)&tokens[2];
+	*processor = tgsi_build_processor(proc_type, header);
+
+	ti = 3;
+
+	/* Declare inputs (texcoords) 
+	   I[0] Luma texcoords
+	   I[1] Chroma texcoords
+	   I[2] Past top field surface texcoords
+	   I[3] Past bottom field surface texcoords
+	   I[4] Future top field surface texcoords
+	   I[5] Future bottom field surface texcoords
+	   I[6] Denormalized texel pos */
+	for (i = 0; i < 7; ++i)
+	{
+		decl = tgsi_default_full_declaration();
+		decl.Declaration.File = TGSI_FILE_INPUT;
+		decl.Declaration.Semantic = 1;
+		decl.Semantic.SemanticName = TGSI_SEMANTIC_GENERIC;
+		decl.Semantic.SemanticIndex = i + 1;
+		decl.Declaration.Interpolate = 1;
+		decl.Interpolation.Interpolate = TGSI_INTERPOLATE_LINEAR;
+		decl.u.DeclarationRange.First = i;
+		decl.u.DeclarationRange.Last = i;
+		ti += tgsi_build_full_declaration
+		(
+			&decl,
+			&tokens[ti],
+			header,
+			max_tokens - ti
+		);
+	}
+	
+	/* Declare constant input */
+	/* C[0] is a multiplier to use when concatenating differential into a single channel
+	   C[1] is a bias to get differential back to -1,1 range
+	   C[2] is constants 2 and 1/2 for Y%2 field selector */
+	decl = tgsi_default_full_declaration();
+	decl.Declaration.File = TGSI_FILE_CONSTANT;
+	decl.Declaration.Semantic = 1;
+	decl.Semantic.SemanticName = TGSI_SEMANTIC_GENERIC;
+	decl.Semantic.SemanticIndex = 0;
+	decl.u.DeclarationRange.First = 0;
+	decl.u.DeclarationRange.Last = 2;
+	ti += tgsi_build_full_declaration
+	(
+		&decl,
+		&tokens[ti],
+		header,
+		max_tokens - ti
+	);
+
+	/* Declare output */
+	decl = tgsi_default_full_declaration();
+	decl.Declaration.File = TGSI_FILE_OUTPUT;
+	decl.Declaration.Semantic = 1;
+	decl.Semantic.SemanticName = TGSI_SEMANTIC_COLOR;
+	decl.Semantic.SemanticIndex = 0;
+	decl.u.DeclarationRange.First = 0;
+	decl.u.DeclarationRange.Last = 0;
+	ti += tgsi_build_full_declaration
+	(
+		&decl,
+		&tokens[ti],
+		header,
+		max_tokens - ti
+	);
+	
+	/* Declare samplers */
+	for (i = 0; i < 5; ++i)
+	{
+		decl = tgsi_default_full_declaration();
+		decl.Declaration.File = TGSI_FILE_SAMPLER;
+		decl.u.DeclarationRange.First = i;
+		decl.u.DeclarationRange.Last = i;
+		ti += tgsi_build_full_declaration
+		(
+			&decl,
+			&tokens[ti],
+			header,
+			max_tokens - ti
+		);
+	}
+	
+	/*
+	tex2d t0.xw, i0, s0	; Read texel from luma texture into .x and .w channels
+	mov t1.x, t0.w		; Move high part from .w channel to .x
+	tex2d t0.yw, i1, s1	; Read texel from chroma Cb texture into .y and .w channels
+	mov t1.y, t0.w		; Move high part from .w channel to .y
+	tex2d t0.zw, i1, s2	; Read texel from chroma Cr texture into .z and .w channels
+	mov t1.z, t0.w		; Move high part from .w channel to .z
+	*/
+	for (i = 0; i < 3; ++i)
+	{
+		inst = tgsi_default_full_instruction();
+		inst.Instruction.Opcode = TGSI_OPCODE_TEX;
+		inst.Instruction.NumDstRegs = 1;
+		inst.FullDstRegisters[0].DstRegister.File = TGSI_FILE_TEMPORARY;
+		inst.FullDstRegisters[0].DstRegister.Index = 0;
+		inst.FullDstRegisters[0].DstRegister.WriteMask = (TGSI_WRITEMASK_X << i) | TGSI_WRITEMASK_W;
+		inst.Instruction.NumSrcRegs = 2;
+		inst.InstructionExtTexture.Texture = TGSI_TEXTURE_2D;
+		inst.FullSrcRegisters[0].SrcRegister.File = TGSI_FILE_INPUT;
+		inst.FullSrcRegisters[0].SrcRegister.Index = i > 0 ? 1 : 0;
+		inst.FullSrcRegisters[1].SrcRegister.File = TGSI_FILE_SAMPLER;
+		inst.FullSrcRegisters[1].SrcRegister.Index = i;
+		ti += tgsi_build_full_instruction
+		(
+			&inst,
+			&tokens[ti],
+			header,
+			max_tokens - ti
+		);
+		
+		inst = tgsi_default_full_instruction();
+		inst.Instruction.Opcode = TGSI_OPCODE_MOV;
+		inst.Instruction.NumDstRegs = 1;
+		inst.FullDstRegisters[0].DstRegister.File = TGSI_FILE_TEMPORARY;
+		inst.FullDstRegisters[0].DstRegister.Index = 1;
+		inst.FullDstRegisters[0].DstRegister.WriteMask = TGSI_WRITEMASK_X << i;
+		inst.Instruction.NumSrcRegs = 1;
+		inst.FullSrcRegisters[0].SrcRegister.File = TGSI_FILE_TEMPORARY;
+		inst.FullSrcRegisters[0].SrcRegister.Index = 0;
+		inst.FullSrcRegisters[0].SrcRegister.SwizzleX = TGSI_SWIZZLE_W;
+		inst.FullSrcRegisters[0].SrcRegister.SwizzleY = TGSI_SWIZZLE_W;
+		inst.FullSrcRegisters[0].SrcRegister.SwizzleZ = TGSI_SWIZZLE_W;
+		inst.FullSrcRegisters[0].SrcRegister.SwizzleW = TGSI_SWIZZLE_W;
+		ti += tgsi_build_full_instruction
+		(
+			&inst,
+			&tokens[ti],
+			header,
+			max_tokens - ti
+		);
+	}
+	
+	/* mul t1, t1, c0	; Muliply high part by multiplier to get back its full value */
+	inst = tgsi_default_full_instruction();
+	inst.Instruction.Opcode = TGSI_OPCODE_MUL;
+	inst.Instruction.NumDstRegs = 1;
+	inst.FullDstRegisters[0].DstRegister.File = TGSI_FILE_TEMPORARY;
+	inst.FullDstRegisters[0].DstRegister.Index = 1;
+	inst.Instruction.NumSrcRegs = 2;
+	inst.FullSrcRegisters[0].SrcRegister.File = TGSI_FILE_TEMPORARY;
+	inst.FullSrcRegisters[0].SrcRegister.Index = 1;
+	inst.FullSrcRegisters[1].SrcRegister.File = TGSI_FILE_CONSTANT;
+	inst.FullSrcRegisters[1].SrcRegister.Index = 0;
+	ti += tgsi_build_full_instruction
+	(
+		&inst,
+		&tokens[ti],
+		header,
+		max_tokens - ti
+	);
+	
+	/* add t0, t0, t1	; Add luma and chroma low and high parts to get a single value */
+	inst = tgsi_default_full_instruction();
+	inst.Instruction.Opcode = TGSI_OPCODE_ADD;
+	inst.Instruction.NumDstRegs = 1;
+	inst.FullDstRegisters[0].DstRegister.File = TGSI_FILE_TEMPORARY;
+	inst.FullDstRegisters[0].DstRegister.Index = 0;
+	inst.Instruction.NumSrcRegs = 2;
+	inst.FullSrcRegisters[0].SrcRegister.File = TGSI_FILE_TEMPORARY;
+	inst.FullSrcRegisters[0].SrcRegister.Index = 0;
+	inst.FullSrcRegisters[1].SrcRegister.File = TGSI_FILE_TEMPORARY;
+	inst.FullSrcRegisters[1].SrcRegister.Index = 1;
+	ti += tgsi_build_full_instruction
+	(
+		&inst,
+		&tokens[ti],
+		header,
+		max_tokens - ti
+	);
+	
+	/* sub t0, t0, c1	; Subtract bias to get back the signed value */
+	inst = tgsi_default_full_instruction();
+	inst.Instruction.Opcode = TGSI_OPCODE_SUB;
+	inst.Instruction.NumDstRegs = 1;
+	inst.FullDstRegisters[0].DstRegister.File = TGSI_FILE_TEMPORARY;
+	inst.FullDstRegisters[0].DstRegister.Index = 0;
+	inst.Instruction.NumSrcRegs = 2;
+	inst.FullSrcRegisters[0].SrcRegister.File = TGSI_FILE_TEMPORARY;
+	inst.FullSrcRegisters[0].SrcRegister.Index = 0;
+	inst.FullSrcRegisters[1].SrcRegister.File = TGSI_FILE_CONSTANT;
+	inst.FullSrcRegisters[1].SrcRegister.Index = 1;
+	ti += tgsi_build_full_instruction
+	(
+		&inst,
+		&tokens[ti],
+		header,
+		max_tokens - ti
+	);
+	
+	/* XXX: Pos values off by 0.5 for rounding? */
+	/* sub t4, i6.y, c2.x	; Sub 0.5 from position */
+	inst = tgsi_default_full_instruction();
+	inst.Instruction.Opcode = TGSI_OPCODE_SUB;
+	inst.Instruction.NumDstRegs = 1;
+	inst.FullDstRegisters[0].DstRegister.File = TGSI_FILE_TEMPORARY;
+	inst.FullDstRegisters[0].DstRegister.Index = 4;
+	inst.Instruction.NumSrcRegs = 2;
+	inst.FullSrcRegisters[0].SrcRegister.File = TGSI_FILE_INPUT;
+	inst.FullSrcRegisters[0].SrcRegister.Index = 6;
+	inst.FullSrcRegisters[0].SrcRegister.SwizzleX = TGSI_SWIZZLE_Y;
+	inst.FullSrcRegisters[0].SrcRegister.SwizzleY = TGSI_SWIZZLE_Y;
+	inst.FullSrcRegisters[0].SrcRegister.SwizzleZ = TGSI_SWIZZLE_Y;
+	inst.FullSrcRegisters[0].SrcRegister.SwizzleW = TGSI_SWIZZLE_Y;
+	inst.FullSrcRegisters[1].SrcRegister.File = TGSI_FILE_CONSTANT;
+	inst.FullSrcRegisters[1].SrcRegister.Index = 2;
+	inst.FullSrcRegisters[1].SrcRegister.SwizzleX = TGSI_SWIZZLE_X;
+	inst.FullSrcRegisters[1].SrcRegister.SwizzleY = TGSI_SWIZZLE_X;
+	inst.FullSrcRegisters[1].SrcRegister.SwizzleZ = TGSI_SWIZZLE_X;
+	inst.FullSrcRegisters[1].SrcRegister.SwizzleW = TGSI_SWIZZLE_X;
+	ti += tgsi_build_full_instruction
+	(
+		&inst,
+		&tokens[ti],
+		header,
+		max_tokens - ti
+	);
+	
+	/* mul t3, t4, c2.x	; Divide pos y coord by 2 (mul by 0.5) */
+	inst = tgsi_default_full_instruction();
+	inst.Instruction.Opcode = TGSI_OPCODE_MUL;
+	inst.Instruction.NumDstRegs = 1;
+	inst.FullDstRegisters[0].DstRegister.File = TGSI_FILE_TEMPORARY;
+	inst.FullDstRegisters[0].DstRegister.Index = 3;
+	inst.Instruction.NumSrcRegs = 2;
+	inst.FullSrcRegisters[0].SrcRegister.File = TGSI_FILE_TEMPORARY;
+	inst.FullSrcRegisters[0].SrcRegister.Index = 4;
+	inst.FullSrcRegisters[1].SrcRegister.File = TGSI_FILE_CONSTANT;
+	inst.FullSrcRegisters[1].SrcRegister.Index = 2;
+	inst.FullSrcRegisters[1].SrcRegister.SwizzleX = TGSI_SWIZZLE_X;
+	inst.FullSrcRegisters[1].SrcRegister.SwizzleY = TGSI_SWIZZLE_X;
+	inst.FullSrcRegisters[1].SrcRegister.SwizzleZ = TGSI_SWIZZLE_X;
+	inst.FullSrcRegisters[1].SrcRegister.SwizzleW = TGSI_SWIZZLE_X;
+	ti += tgsi_build_full_instruction
+	(
+		&inst,
+		&tokens[ti],
+		header,
+		max_tokens - ti
+	);
+	
+	/* floor t3, t3		; Get rid of fractional part */
+	inst = tgsi_default_full_instruction();
+	inst.Instruction.Opcode = TGSI_OPCODE_FLOOR;
+	inst.Instruction.NumDstRegs = 1;
+	inst.FullDstRegisters[0].DstRegister.File = TGSI_FILE_TEMPORARY;
+	inst.FullDstRegisters[0].DstRegister.Index = 3;
+	inst.Instruction.NumSrcRegs = 1;
+	inst.FullSrcRegisters[0].SrcRegister.File = TGSI_FILE_TEMPORARY;
+	inst.FullSrcRegisters[0].SrcRegister.Index = 3;
+	ti += tgsi_build_full_instruction
+	(
+		&inst,
+		&tokens[ti],
+		header,
+		max_tokens - ti
+	);
+	
+	/* mul t3, t3, c2.y	; Multiply by 2 */
+	inst = tgsi_default_full_instruction();
+	inst.Instruction.Opcode = TGSI_OPCODE_MUL;
+	inst.Instruction.NumDstRegs = 1;
+	inst.FullDstRegisters[0].DstRegister.File = TGSI_FILE_TEMPORARY;
+	inst.FullDstRegisters[0].DstRegister.Index = 3;
+	inst.Instruction.NumSrcRegs = 2;
+	inst.FullSrcRegisters[0].SrcRegister.File = TGSI_FILE_TEMPORARY;
+	inst.FullSrcRegisters[0].SrcRegister.Index = 3;
+	inst.FullSrcRegisters[1].SrcRegister.File = TGSI_FILE_CONSTANT;
+	inst.FullSrcRegisters[1].SrcRegister.Index = 2;
+	inst.FullSrcRegisters[1].SrcRegister.SwizzleX = TGSI_SWIZZLE_Y;
+	inst.FullSrcRegisters[1].SrcRegister.SwizzleY = TGSI_SWIZZLE_Y;
+	inst.FullSrcRegisters[1].SrcRegister.SwizzleZ = TGSI_SWIZZLE_Y;
+	inst.FullSrcRegisters[1].SrcRegister.SwizzleW = TGSI_SWIZZLE_Y;
+	ti += tgsi_build_full_instruction
+	(
+		&inst,
+		&tokens[ti],
+		header,
+		max_tokens - ti
+	);
+	
+	/* sub t3, t4, t3	; Subtract from y to get y % 2 */
+	inst = tgsi_default_full_instruction();
+	inst.Instruction.Opcode = TGSI_OPCODE_SUB;
+	inst.Instruction.NumDstRegs = 1;
+	inst.FullDstRegisters[0].DstRegister.File = TGSI_FILE_TEMPORARY;
+	inst.FullDstRegisters[0].DstRegister.Index = 3;
+	inst.Instruction.NumSrcRegs = 2;
+	inst.FullSrcRegisters[0].SrcRegister.File = TGSI_FILE_TEMPORARY;
+	inst.FullSrcRegisters[0].SrcRegister.Index = 4;
+	inst.FullSrcRegisters[1].SrcRegister.File = TGSI_FILE_TEMPORARY;
+	inst.FullSrcRegisters[1].SrcRegister.Index = 3;
+	ti += tgsi_build_full_instruction
+	(
+		&inst,
+		&tokens[ti],
+		header,
+		max_tokens - ti
+	);
+	
+	/* tex2d t1, i2, s3	; Read texel from past macroblock top field
+	   tex2d t2, i3, s3	; Read texel from past macroblock bottom field */
+	for (i = 0; i < 2; ++i)
+	{
+		inst = tgsi_default_full_instruction();
+		inst.Instruction.Opcode = TGSI_OPCODE_TEX;
+		inst.Instruction.NumDstRegs = 1;
+		inst.FullDstRegisters[0].DstRegister.File = TGSI_FILE_TEMPORARY;
+		inst.FullDstRegisters[0].DstRegister.Index = i + 1;
+		inst.Instruction.NumSrcRegs = 2;
+		inst.InstructionExtTexture.Texture = TGSI_TEXTURE_2D;
+		inst.FullSrcRegisters[0].SrcRegister.File = TGSI_FILE_INPUT;
+		inst.FullSrcRegisters[0].SrcRegister.Index = i + 2;
+		inst.FullSrcRegisters[1].SrcRegister.File = TGSI_FILE_SAMPLER;
+		inst.FullSrcRegisters[1].SrcRegister.Index = 3;
+		ti += tgsi_build_full_instruction
+		(
+			&inst,
+			&tokens[ti],
+			header,
+			max_tokens - ti
+		);
+	}
+	
+	/* lerp t1, t3, t1, t2 */
+	inst = tgsi_default_full_instruction();
+	inst.Instruction.Opcode = TGSI_OPCODE_LERP;
+	inst.Instruction.NumDstRegs = 1;
+	inst.FullDstRegisters[0].DstRegister.File = TGSI_FILE_TEMPORARY;
+	inst.FullDstRegisters[0].DstRegister.Index = 1;
+	inst.Instruction.NumSrcRegs = 3;
+	inst.FullSrcRegisters[0].SrcRegister.File = TGSI_FILE_TEMPORARY;
+	inst.FullSrcRegisters[0].SrcRegister.Index = 3;
+	inst.FullSrcRegisters[1].SrcRegister.File = TGSI_FILE_TEMPORARY;
+	inst.FullSrcRegisters[1].SrcRegister.Index = 1;
+	inst.FullSrcRegisters[2].SrcRegister.File = TGSI_FILE_TEMPORARY;
+	inst.FullSrcRegisters[2].SrcRegister.Index = 2;
+	ti += tgsi_build_full_instruction
+	(
+		&inst,
+		&tokens[ti],
+		header,
+		max_tokens - ti
+	);
+	
+	/* tex2d t4, i4, s4	; Read texel from future macroblock top field
+	   tex2d t5, i5, s4	; Read texel from future macroblock bottom field */
+	for (i = 0; i < 2; ++i)
+	{
+		inst = tgsi_default_full_instruction();
+		inst.Instruction.Opcode = TGSI_OPCODE_TEX;
+		inst.Instruction.NumDstRegs = 1;
+		inst.FullDstRegisters[0].DstRegister.File = TGSI_FILE_TEMPORARY;
+		inst.FullDstRegisters[0].DstRegister.Index = i + 4;
+		inst.Instruction.NumSrcRegs = 2;
+		inst.InstructionExtTexture.Texture = TGSI_TEXTURE_2D;
+		inst.FullSrcRegisters[0].SrcRegister.File = TGSI_FILE_INPUT;
+		inst.FullSrcRegisters[0].SrcRegister.Index = i + 4;
+		inst.FullSrcRegisters[1].SrcRegister.File = TGSI_FILE_SAMPLER;
+		inst.FullSrcRegisters[1].SrcRegister.Index = 4;
+		ti += tgsi_build_full_instruction
+		(
+			&inst,
+			&tokens[ti],
+			header,
+			max_tokens - ti
+		);
+	}
+	
+	/* lerp t2, t3, t4, t5 */
+	inst = tgsi_default_full_instruction();
+	inst.Instruction.Opcode = TGSI_OPCODE_LERP;
+	inst.Instruction.NumDstRegs = 1;
+	inst.FullDstRegisters[0].DstRegister.File = TGSI_FILE_TEMPORARY;
+	inst.FullDstRegisters[0].DstRegister.Index = 2;
+	inst.Instruction.NumSrcRegs = 3;
+	inst.FullSrcRegisters[0].SrcRegister.File = TGSI_FILE_TEMPORARY;
+	inst.FullSrcRegisters[0].SrcRegister.Index = 3;
+	inst.FullSrcRegisters[1].SrcRegister.File = TGSI_FILE_TEMPORARY;
+	inst.FullSrcRegisters[1].SrcRegister.Index = 4;
+	inst.FullSrcRegisters[2].SrcRegister.File = TGSI_FILE_TEMPORARY;
+	inst.FullSrcRegisters[2].SrcRegister.Index = 5;
+	ti += tgsi_build_full_instruction
+	(
+		&inst,
+		&tokens[ti],
+		header,
+		max_tokens - ti
+	);
+	
+	/* lerp t1, c2.x, t1, t2 */
+	inst = tgsi_default_full_instruction();
+	inst.Instruction.Opcode = TGSI_OPCODE_LERP;
+	inst.Instruction.NumDstRegs = 1;
+	inst.FullDstRegisters[0].DstRegister.File = TGSI_FILE_TEMPORARY;
+	inst.FullDstRegisters[0].DstRegister.Index = 1;
+	inst.Instruction.NumSrcRegs = 3;
+	inst.FullSrcRegisters[0].SrcRegister.File = TGSI_FILE_CONSTANT;
+	inst.FullSrcRegisters[0].SrcRegister.Index = 2;
+	inst.FullSrcRegisters[0].SrcRegister.SwizzleX = TGSI_SWIZZLE_X;
+	inst.FullSrcRegisters[0].SrcRegister.SwizzleY = TGSI_SWIZZLE_X;
+	inst.FullSrcRegisters[0].SrcRegister.SwizzleZ = TGSI_SWIZZLE_X;
+	inst.FullSrcRegisters[0].SrcRegister.SwizzleW = TGSI_SWIZZLE_X;
+	inst.FullSrcRegisters[1].SrcRegister.File = TGSI_FILE_TEMPORARY;
+	inst.FullSrcRegisters[1].SrcRegister.Index = 1;
+	inst.FullSrcRegisters[2].SrcRegister.File = TGSI_FILE_TEMPORARY;
+	inst.FullSrcRegisters[2].SrcRegister.Index = 2;
+	ti += tgsi_build_full_instruction
+	(
+		&inst,
+		&tokens[ti],
+		header,
+		max_tokens - ti
+	);
+	
+	/* add o0, t0, t1	; Add future and differential to form final output */
+	inst = tgsi_default_full_instruction();
+	inst.Instruction.Opcode = TGSI_OPCODE_ADD;
+	inst.Instruction.NumDstRegs = 1;
+	inst.FullDstRegisters[0].DstRegister.File = TGSI_FILE_OUTPUT;
+	inst.FullDstRegisters[0].DstRegister.Index = 0;
+	inst.Instruction.NumSrcRegs = 2;
+	inst.FullSrcRegisters[0].SrcRegister.File = TGSI_FILE_TEMPORARY;
+	inst.FullSrcRegisters[0].SrcRegister.Index = 0;
+	inst.FullSrcRegisters[1].SrcRegister.File = TGSI_FILE_TEMPORARY;
+	inst.FullSrcRegisters[1].SrcRegister.Index = 1;
+	ti += tgsi_build_full_instruction
+	(
+		&inst,
+		&tokens[ti],
+		header,
+		max_tokens - ti
+	);
+
+	/* END */
+	inst = tgsi_default_full_instruction();
+	inst.Instruction.Opcode = TGSI_OPCODE_END;
+	inst.Instruction.NumDstRegs = 0;
+	inst.Instruction.NumSrcRegs = 0;
+	ti += tgsi_build_full_instruction
+	(
+		&inst,
+		&tokens[ti],
+		header,
+		max_tokens - ti
+	);
+
+	fs.tokens = tokens;
+	
+	context->states.mc.b_fs[1] = pipe->create_fs_state(pipe, &fs);
 	
 	free(tokens);
 	
@@ -1491,7 +2931,6 @@ static int vlInitMC(struct VL_CONTEXT *context)
 	context->states.mc.render_target.height = context->video_height;
 	context->states.mc.render_target.num_cbufs = 1;
 	/* FB for MC stage is a VL_SURFACE, set in vlSetRenderSurface() */
-	/*context->states.mc.render_target.cbufs[0] = ;*/
 	context->states.mc.render_target.zsbuf = NULL;
 	
 	filters[0] = PIPE_TEX_FILTER_NEAREST;
@@ -1530,6 +2969,7 @@ static int vlInitMC(struct VL_CONTEXT *context)
 	template.depth[0] = 1;
 	template.compressed = 0;
 	template.cpp = 2;
+	
 	context->states.mc.textures[0] = pipe->screen->texture_create(pipe->screen, &template);
 	
 	if (context->video_format == VL_FORMAT_YCBCR_420)
@@ -1548,10 +2988,14 @@ static int vlInitMC(struct VL_CONTEXT *context)
 	
 	vlCreateVertexShaderIMC(context);
 	vlCreateFragmentShaderIMC(context);
-	vlCreateVertexShaderPMC(context);
-	vlCreateFragmentShaderPMC(context);
-	vlCreateVertexShaderBMC(context);
-	vlCreateFragmentShaderBMC(context);
+	vlCreateVertexShaderFramePMC(context);
+	vlCreateVertexShaderFieldPMC(context);
+	vlCreateFragmentShaderFramePMC(context);
+	vlCreateFragmentShaderFieldPMC(context);
+	vlCreateVertexShaderFrameBMC(context);
+	vlCreateVertexShaderFieldBMC(context);
+	vlCreateFragmentShaderFrameBMC(context);
+	vlCreateFragmentShaderFieldBMC(context);
 	vlCreateDataBufsMC(context);
 	
 	return 0;
@@ -1575,10 +3019,14 @@ static int vlDestroyMC(struct VL_CONTEXT *context)
 	
 	context->pipe->delete_vs_state(context->pipe, context->states.mc.i_vs);
 	context->pipe->delete_fs_state(context->pipe, context->states.mc.i_fs);
-	context->pipe->delete_vs_state(context->pipe, context->states.mc.p_vs);
-	context->pipe->delete_fs_state(context->pipe, context->states.mc.p_fs);
-	context->pipe->delete_vs_state(context->pipe, context->states.mc.b_vs);
-	context->pipe->delete_fs_state(context->pipe, context->states.mc.b_fs);
+	
+	for (i = 0; i < 2; ++i)
+	{
+		context->pipe->delete_vs_state(context->pipe, context->states.mc.p_vs[i]);
+		context->pipe->delete_fs_state(context->pipe, context->states.mc.p_fs[i]);
+		context->pipe->delete_vs_state(context->pipe, context->states.mc.b_vs[i]);
+		context->pipe->delete_fs_state(context->pipe, context->states.mc.b_fs[i]);
+	}
 	
 	context->pipe->winsys->buffer_destroy(context->pipe->winsys, context->states.mc.vs_const_buf.buffer);
 	context->pipe->winsys->buffer_destroy(context->pipe->winsys, context->states.mc.fs_const_buf.buffer);
@@ -1982,7 +3430,7 @@ static int vlCreateDataBufsCSC(struct VL_CONTEXT *context)
 	
 	/*
 	TODO: Refactor this into a seperate function,
-	allow changing the csc matrix at runtime to switch between regular & full versions
+	allow changing the CSC matrix at runtime to switch between regular & full versions
 	*/
 	memcpy
 	(
@@ -2166,7 +3614,7 @@ static int vlDestroy(struct VL_CONTEXT *context)
 {
 	assert(context);
 	
-	/* Must unbind shaders before we can delete them for some reason */
+	/* XXX: Must unbind shaders before we can delete them for some reason */
 	context->pipe->bind_vs_state(context->pipe, NULL);
 	context->pipe->bind_fs_state(context->pipe, NULL);
 	

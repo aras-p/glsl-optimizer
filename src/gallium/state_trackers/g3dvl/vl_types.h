@@ -36,7 +36,9 @@ enum VL_SAMPLE_TYPE
 enum VL_MC_TYPE
 {
 	VL_FIELD_MC,
-	VL_FRAME_MC
+	VL_FRAME_MC,
+	VL_DUAL_PRIME_MC,
+	VL_16x8_MC = VL_FRAME_MC
 };
 
 struct VL_VERTEX4F
@@ -58,13 +60,19 @@ struct VL_MC_VS_CONSTS
 {
 	struct VL_VERTEX4F	scale;
 	struct VL_VERTEX4F	mb_pos_trans;
-	struct VL_VERTEX4F	mb_tc_trans[2];
+	struct VL_VERTEX4F	denorm;
+	struct
+	{
+		struct VL_VERTEX4F	top_field;
+		struct VL_VERTEX4F	bottom_field;
+	} mb_tc_trans[2];
 };
 
 struct VL_MC_FS_CONSTS
 {
 	struct VL_VERTEX4F	multiplier;
 	struct VL_VERTEX4F	bias;
+	struct VL_VERTEX4F	y_divider;
 };
 
 struct VL_CSC_FS_CONSTS

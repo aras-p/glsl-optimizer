@@ -32,6 +32,34 @@ static enum VL_PICTURE PictureToVL(int xvmc_pic)
 	return vl_pic;
 }
 
+static enum VL_MC_TYPE MotionToVL(int xvmc_motion_type)
+{
+	enum VL_MC_TYPE vl_mc_type;
+	
+	switch (xvmc_motion_type)
+	{
+		case XVMC_PREDICTION_FRAME:
+		{
+			vl_mc_type = VL_FRAME_MC;
+			break;
+		}
+		case XVMC_PREDICTION_FIELD:
+		{
+			vl_mc_type = VL_FIELD_MC;
+			break;
+		}
+		case XVMC_PREDICTION_DUAL_PRIME:
+		{
+			vl_mc_type = VL_DUAL_PRIME_MC;
+			break;
+		}
+		default:
+			assert(0);
+	}
+	
+	return vl_mc_type;
+}
+
 Status XvMCCreateSurface(Display *display, XvMCContext *context, XvMCSurface *surface)
 {
 	struct VL_CONTEXT *vl_ctx;
@@ -155,7 +183,7 @@ Status XvMCRenderSurface
 				flags == XVMC_SECOND_FIELD ? VL_FIELD_SECOND : VL_FIELD_FIRST,
 				macroblocks->macro_blocks[i].x,
 				macroblocks->macro_blocks[i].y,
-				macroblocks->macro_blocks[i].motion_type == XVMC_PREDICTION_FRAME ? VL_FIELD_MC : VL_FRAME_MC,
+				MotionToVL(macroblocks->macro_blocks[i].motion_type),
 				&motion_vector,
 				macroblocks->macro_blocks[i].coded_block_pattern,
 				macroblocks->macro_blocks[i].dct_type == XVMC_DCT_TYPE_FIELD ? VL_DCT_FIELD_CODED : VL_DCT_FRAME_CODED,
@@ -188,7 +216,7 @@ Status XvMCRenderSurface
 				flags == XVMC_SECOND_FIELD ? VL_FIELD_SECOND : VL_FIELD_FIRST,
 				macroblocks->macro_blocks[i].x,
 				macroblocks->macro_blocks[i].y,
-				macroblocks->macro_blocks[i].motion_type == XVMC_PREDICTION_FRAME ? VL_FIELD_MC : VL_FRAME_MC,
+				MotionToVL(macroblocks->macro_blocks[i].motion_type),
 				&motion_vector,
 				macroblocks->macro_blocks[i].coded_block_pattern,
 				macroblocks->macro_blocks[i].dct_type == XVMC_DCT_TYPE_FIELD ? VL_DCT_FIELD_CODED : VL_DCT_FRAME_CODED,
@@ -233,7 +261,7 @@ Status XvMCRenderSurface
 				flags == XVMC_SECOND_FIELD ? VL_FIELD_SECOND : VL_FIELD_FIRST,
 				macroblocks->macro_blocks[i].x,
 				macroblocks->macro_blocks[i].y,
-				macroblocks->macro_blocks[i].motion_type == XVMC_PREDICTION_FRAME ? VL_FIELD_MC : VL_FRAME_MC,
+				MotionToVL(macroblocks->macro_blocks[i].motion_type),
 				motion_vector,
 				macroblocks->macro_blocks[i].coded_block_pattern,
 				macroblocks->macro_blocks[i].dct_type == XVMC_DCT_TYPE_FIELD ? VL_DCT_FIELD_CODED : VL_DCT_FRAME_CODED,

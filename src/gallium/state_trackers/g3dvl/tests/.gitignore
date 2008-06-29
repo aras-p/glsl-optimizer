@@ -2,5 +2,5 @@ test_context
 test_surface
 test_i_rendering
 test_p_rendering
+test_pf_rendering
 test_b_rendering
-

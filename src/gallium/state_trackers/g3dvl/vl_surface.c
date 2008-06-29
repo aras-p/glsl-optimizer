@@ -8,6 +8,85 @@
 #include "vl_context.h"
 #include "vl_defs.h"
 
+static int vlGrabFrameCodedFullBlock(short *src, short *dst, unsigned int dst_pitch)
+{
+	unsigned int y;
+	
+	for (y = 0; y < VL_BLOCK_HEIGHT; ++y)
+		memcpy
+		(
+			dst + y * dst_pitch,
+			src + y * VL_BLOCK_WIDTH,
+			VL_BLOCK_WIDTH * 2
+		);
+	
+	return 0;
+}
+
+static int vlGrabFrameCodedDiffBlock(short *src, short *dst, unsigned int dst_pitch)
+{
+	unsigned int x, y;
+	
+	for (y = 0; y < VL_BLOCK_HEIGHT; ++y)
+		for (x = 0; x < VL_BLOCK_WIDTH; ++x)
+			dst[y * dst_pitch + x] = src[y * VL_BLOCK_WIDTH + x] + 0x100;
+	
+	return 0;
+}
+
+static int vlGrabFieldCodedFullBlock(short *src, short *dst, unsigned int dst_pitch)
+{
+	unsigned int y;
+	
+	for (y = 0; y < VL_BLOCK_HEIGHT / 2; ++y)
+		memcpy
+		(
+			dst + y * dst_pitch * 2,
+			src + y * VL_BLOCK_WIDTH,
+			VL_BLOCK_WIDTH * 2
+		);
+	
+	dst += VL_BLOCK_HEIGHT * dst_pitch;
+	
+	for (; y < VL_BLOCK_HEIGHT; ++y)
+		memcpy
+		(
+			dst + y * dst_pitch * 2,
+			src + y * VL_BLOCK_WIDTH,
+			VL_BLOCK_WIDTH * 2
+		);
+	
+	return 0;
+}
+
+static int vlGrabFieldCodedDiffBlock(short *src, short *dst, unsigned int dst_pitch)
+{
+	unsigned int x, y;
+	
+	for (y = 0; y < VL_BLOCK_HEIGHT / 2; ++y)
+		for (x = 0; x < VL_BLOCK_WIDTH; ++x)
+			dst[y * dst_pitch * 2 + x] = src[y * VL_BLOCK_WIDTH + x] + 0x100;
+	
+	dst += VL_BLOCK_HEIGHT * dst_pitch;
+	
+	for (; y < VL_BLOCK_HEIGHT; ++y)
+		for (x = 0; x < VL_BLOCK_WIDTH; ++x)
+			dst[y * dst_pitch * 2 + x] = src[y * VL_BLOCK_WIDTH + x] + 0x100;
+	
+	return 0;
+}
+
+static int vlGrabNoBlock(short *dst, unsigned int dst_pitch)
+{
+	unsigned int x, y;
+	
+	for (y = 0; y < VL_BLOCK_HEIGHT; ++y)
+		for (x = 0; x < VL_BLOCK_WIDTH; ++x)
+			dst[y * dst_pitch + x] = 0x100;
+	
+	return 0;
+}
+
 static int vlGrabBlocks
 (
 	struct VL_CONTEXT *context,
@@ -19,7 +98,7 @@ static int vlGrabBlocks
 {
 	struct pipe_surface	*tex_surface;
 	short			*texels;
-	unsigned int		b, x, y, y2;
+	unsigned int		tb, sb = 0;
 	
 	assert(context);
 	assert(blocks);
@@ -33,134 +112,81 @@ static int vlGrabBlocks
 	
 	texels = pipe_surface_map(tex_surface, PIPE_BUFFER_USAGE_CPU_WRITE);
 	
-	for (b = 0; b < 4; ++b)
+	for (tb = 0; tb < 4; ++tb)
 	{
-		if ((coded_block_pattern >> b) & 1)
+		if ((coded_block_pattern >> (5 - tb)) & 1)
 		{
 			if (dct_type == VL_DCT_FRAME_CODED)
-			{
 				if (sample_type == VL_FULL_SAMPLE)
-				{
-					for (y = VL_BLOCK_HEIGHT * b; y < VL_BLOCK_HEIGHT * (b + 1); ++y)
-						memcpy
-						(
-							texels + y * tex_surface->pitch,
-							blocks + y * VL_BLOCK_WIDTH,
-							VL_BLOCK_WIDTH * 2
-						);
-				}
+					vlGrabFrameCodedFullBlock
+					(
+						blocks + sb * VL_BLOCK_WIDTH * VL_BLOCK_HEIGHT,
+						texels + tb * tex_surface->pitch * VL_BLOCK_HEIGHT,
+						tex_surface->pitch
+					);
 				else
-				{
-					for (y = VL_BLOCK_HEIGHT * b; y < VL_BLOCK_HEIGHT * (b + 1); ++y)
-						for (x = 0; x < VL_BLOCK_WIDTH; ++x)
-							texels[y * tex_surface->pitch + x] =
-							blocks[y * VL_BLOCK_WIDTH + x] + 0x100;
-				}
-			}
+					vlGrabFrameCodedDiffBlock
+					(
+						blocks + sb * VL_BLOCK_WIDTH * VL_BLOCK_HEIGHT,
+						texels + tb * tex_surface->pitch * VL_BLOCK_HEIGHT,
+						tex_surface->pitch
+					);
 			else
-			{
 				if (sample_type == VL_FULL_SAMPLE)
-				{
-					for
+					vlGrabFieldCodedFullBlock
 					(
-						y = VL_BLOCK_HEIGHT * (b % 2), y2 = VL_BLOCK_HEIGHT * b;
-						y < VL_BLOCK_HEIGHT * ((b % 2) + 1);
-						y += 2, ++y2
-					)
-						memcpy
-						(
-							texels + y * tex_surface->pitch,
-							blocks + y2 * VL_BLOCK_WIDTH,
-							VL_BLOCK_WIDTH * 2
-						);
-					for
-					(
-						y = VL_BLOCK_HEIGHT * ((b % 2) + 2);
-						y < VL_BLOCK_HEIGHT * (((b % 2) + 2) + 1);
-						y += 2, ++y2
-					)
-						memcpy
-						(
-							texels + y * tex_surface->pitch,
-							blocks + y2 * VL_BLOCK_WIDTH,
-							VL_BLOCK_WIDTH * 2
-						);
-				}
+						blocks + sb * VL_BLOCK_WIDTH * VL_BLOCK_HEIGHT,
+						texels + (tb % 2) * tex_surface->pitch * VL_BLOCK_HEIGHT + (tb / 2) * tex_surface->pitch,
+						tex_surface->pitch
+					);
 				else
-				{
-					for
+					vlGrabFieldCodedDiffBlock
 					(
-						y = VL_BLOCK_HEIGHT * (b % 2), y2 = VL_BLOCK_HEIGHT * b;
-						y < VL_BLOCK_HEIGHT * ((b % 2) + 1);
-						y += 2, ++y2
-					)
-						for (x = 0; x < VL_BLOCK_WIDTH; ++x)
-							texels[y * tex_surface->pitch + x] =
-							blocks[y2 * VL_BLOCK_WIDTH + x] + 0x100;
-					for
-					(
-						y = VL_BLOCK_HEIGHT * ((b % 2) + 2);
-						y < VL_BLOCK_HEIGHT * (((b % 2) + 2) + 1);
-						y += 2, ++y2
-					)
-						for (x = 0; x < VL_BLOCK_WIDTH; ++x)
-							texels[y * tex_surface->pitch + x] =
-							blocks[y2 * VL_BLOCK_WIDTH + x] + 0x100;
-				}
-			}
+						blocks + sb * VL_BLOCK_WIDTH * VL_BLOCK_HEIGHT,
+						texels + (tb % 2) * tex_surface->pitch * VL_BLOCK_HEIGHT + (tb / 2) * tex_surface->pitch,
+						tex_surface->pitch
+					);
+			++sb;
 		}
 		else
-		{
-			for (y = VL_BLOCK_HEIGHT * b; y < VL_BLOCK_HEIGHT * (b + 1); ++y)
-			{
-				for (x = 0; x < VL_BLOCK_WIDTH; ++x)
-					texels[y * tex_surface->pitch + x] = 0x100;
-			}
-		}
+			vlGrabNoBlock(texels + tb * tex_surface->pitch * VL_BLOCK_HEIGHT, tex_surface->pitch);
 	}
 	
 	pipe_surface_unmap(tex_surface);
 	
 	/* TODO: Implement 422, 444 */
-	for (b = 0; b < 2; ++b)
+	for (tb = 0; tb < 2; ++tb)
 	{
 		tex_surface = context->pipe->screen->get_tex_surface
-		(
-			context->pipe->screen,
-			context->states.mc.textures[b + 1],
-			0, 0, 0, PIPE_BUFFER_USAGE_CPU_WRITE
-		);
+			(
+				context->pipe->screen,
+				context->states.mc.textures[tb + 1],
+				0, 0, 0, PIPE_BUFFER_USAGE_CPU_WRITE
+			);
 	
 		texels = pipe_surface_map(tex_surface, PIPE_BUFFER_USAGE_CPU_WRITE);
 		
-		if ((coded_block_pattern >> (b + 4)) & 1)
-		{
+		if ((coded_block_pattern >> (1 - tb)) & 1)
+		{			
 			if (sample_type == VL_FULL_SAMPLE)
-			{
-				for (y = 0; y < tex_surface->height; ++y)
-					memcpy
-					(
-						texels + y * tex_surface->pitch,
-						blocks + VL_BLOCK_SIZE * (b + 4) + y * VL_BLOCK_WIDTH,
-						VL_BLOCK_WIDTH * 2
-					);
-			}
+				vlGrabFrameCodedFullBlock
+				(
+					blocks + sb * VL_BLOCK_WIDTH * VL_BLOCK_HEIGHT,
+					texels,
+					tex_surface->pitch
+				);
 			else
-			{
-				for (y = 0; y < tex_surface->height; ++y)
-					for (x = 0; x < VL_BLOCK_WIDTH; ++x)
-						texels[y * tex_surface->pitch + x] =
-						blocks[VL_BLOCK_SIZE * (b + 4) + y * VL_BLOCK_WIDTH + x] + 0x100;
-			}
+				vlGrabFrameCodedDiffBlock
+				(
+					blocks + sb * VL_BLOCK_WIDTH * VL_BLOCK_HEIGHT,
+					texels,
+					tex_surface->pitch
+				);
+			
+			++sb;
 		}
 		else
-		{
-			for (y = 0; y < tex_surface->height; ++y)
-			{
-				for (x = 0; x < VL_BLOCK_WIDTH; ++x)
-					texels[y * tex_surface->pitch + x] = 0x100;
-			}
-		}
+			vlGrabNoBlock(texels, tex_surface->pitch);
 		
 		pipe_surface_unmap(tex_surface);
 	}
@@ -229,40 +255,34 @@ int vlRenderIMacroBlock
 )
 {
 	struct pipe_context	*pipe;
-	struct VL_MC_VS_CONSTS	*vscbdata;
+	struct VL_MC_VS_CONSTS	*vs_consts;
 	
 	assert(blocks);
 	assert(surface);
 	
 	/* TODO: Implement interlaced rendering */
-	/*assert(picture_type == VL_FRAME_PICTURE);*/
 	if (picture_type != VL_FRAME_PICTURE)
-	{
-		/*fprintf(stderr, "field picture (I) unimplemented, ignoring\n");*/
 		return 0;
-	}
 	
 	pipe = surface->context->pipe;
 	
-	vscbdata = pipe->winsys->buffer_map
+	vs_consts = pipe->winsys->buffer_map
 	(
 		pipe->winsys,
 		surface->context->states.mc.vs_const_buf.buffer,
 		PIPE_BUFFER_USAGE_CPU_WRITE
 	);
 	
-	vscbdata->scale.x = VL_MACROBLOCK_WIDTH / (float)surface->width;
-	vscbdata->scale.y = VL_MACROBLOCK_HEIGHT / (float)surface->height;
-	vscbdata->scale.z = 1.0f;
-	vscbdata->scale.w = 1.0f;
-	vscbdata->mb_pos_trans.x = (mbx * VL_MACROBLOCK_WIDTH) / (float)surface->width;
-	vscbdata->mb_pos_trans.y = (mby * VL_MACROBLOCK_HEIGHT) / (float)surface->height;
-	vscbdata->mb_pos_trans.z = 0.0f;
-	vscbdata->mb_pos_trans.w = 0.0f;
+	vs_consts->scale.x = VL_MACROBLOCK_WIDTH / (float)surface->width;
+	vs_consts->scale.y = VL_MACROBLOCK_HEIGHT / (float)surface->height;
+	vs_consts->scale.z = 1.0f;
+	vs_consts->scale.w = 1.0f;
+	vs_consts->mb_pos_trans.x = (mbx * VL_MACROBLOCK_WIDTH) / (float)surface->width;
+	vs_consts->mb_pos_trans.y = (mby * VL_MACROBLOCK_HEIGHT) / (float)surface->height;
+	vs_consts->mb_pos_trans.z = 0.0f;
+	vs_consts->mb_pos_trans.w = 0.0f;
 	
 	pipe->winsys->buffer_unmap(pipe->winsys, surface->context->states.mc.vs_const_buf.buffer);
-	
-	vlGrabBlocks(surface->context, coded_block_pattern, dct_type, VL_FULL_SAMPLE, blocks);
 	
 	surface->context->states.mc.render_target.cbufs[0] = pipe->screen->get_tex_surface
 	(
@@ -275,6 +295,8 @@ int vlRenderIMacroBlock
 	pipe->bind_sampler_states(pipe, 3, (void**)surface->context->states.mc.samplers);
 	pipe->bind_vs_state(pipe, surface->context->states.mc.i_vs);
 	pipe->bind_fs_state(pipe, surface->context->states.mc.i_fs);
+	
+	vlGrabBlocks(surface->context, coded_block_pattern, dct_type, VL_FULL_SAMPLE, blocks);
 	
 	pipe->draw_arrays(pipe, PIPE_PRIM_TRIANGLES, 0, 24);
 	
@@ -297,7 +319,7 @@ int vlRenderPMacroBlock
 )
 {
 	struct pipe_context	*pipe;
-	struct VL_MC_VS_CONSTS	*vscbdata;
+	struct VL_MC_VS_CONSTS	*vs_consts;
 	
 	assert(motion_vectors);
 	assert(blocks);
@@ -305,45 +327,54 @@ int vlRenderPMacroBlock
 	assert(surface);
 	
 	/* TODO: Implement interlaced rendering */
-	/*assert(picture_type == VL_FRAME_PICTURE);*/
 	if (picture_type != VL_FRAME_PICTURE)
-	{
-		/*fprintf(stderr, "field picture (P) unimplemented, ignoring\n");*/
 		return 0;
-	}
-	/* TODO: Implement field based motion compensation */
-	/*assert(mc_type == VL_FRAME_MC);*/
-	if (mc_type != VL_FRAME_MC)
-	{
-		/*fprintf(stderr, "field MC (P) unimplemented, ignoring\n");*/
+	/* TODO: Implement other MC types */
+	if (mc_type != VL_FRAME_MC && mc_type != VL_FIELD_MC)
 		return 0;
-	}
 	
 	pipe = surface->context->pipe;
 	
-	vscbdata = pipe->winsys->buffer_map
+	vs_consts = pipe->winsys->buffer_map
 	(
 		pipe->winsys,
 		surface->context->states.mc.vs_const_buf.buffer,
 		PIPE_BUFFER_USAGE_CPU_WRITE
 	);
 	
-	vscbdata->scale.x = VL_MACROBLOCK_WIDTH / (float)surface->width;
-	vscbdata->scale.y = VL_MACROBLOCK_HEIGHT / (float)surface->height;
-	vscbdata->scale.z = 1.0f;
-	vscbdata->scale.w = 1.0f;
-	vscbdata->mb_pos_trans.x = (mbx * VL_MACROBLOCK_WIDTH) / (float)surface->width;
-	vscbdata->mb_pos_trans.y = (mby * VL_MACROBLOCK_HEIGHT) / (float)surface->height;
-	vscbdata->mb_pos_trans.z = 0.0f;
-	vscbdata->mb_pos_trans.w = 0.0f;
-	vscbdata->mb_tc_trans[0].x = (mbx * VL_MACROBLOCK_WIDTH + motion_vector->top_field.x * 0.5f) / (float)surface->width;
-	vscbdata->mb_tc_trans[0].y = (mby * VL_MACROBLOCK_HEIGHT + motion_vector->top_field.y * 0.5f) / (float)surface->height;
-	vscbdata->mb_tc_trans[0].z = 0.0f;
-	vscbdata->mb_tc_trans[0].w = 0.0f;
+	vs_consts->scale.x = VL_MACROBLOCK_WIDTH / (float)surface->width;
+	vs_consts->scale.y = VL_MACROBLOCK_HEIGHT / (float)surface->height;
+	vs_consts->scale.z = 1.0f;
+	vs_consts->scale.w = 1.0f;
+	vs_consts->mb_pos_trans.x = (mbx * VL_MACROBLOCK_WIDTH) / (float)surface->width;
+	vs_consts->mb_pos_trans.y = (mby * VL_MACROBLOCK_HEIGHT) / (float)surface->height;
+	vs_consts->mb_pos_trans.z = 0.0f;
+	vs_consts->mb_pos_trans.w = 0.0f;
+	vs_consts->mb_tc_trans[0].top_field.x = (mbx * VL_MACROBLOCK_WIDTH + motion_vector->top_field.x * 0.5f) / (float)surface->width;
+	vs_consts->mb_tc_trans[0].top_field.y = (mby * VL_MACROBLOCK_HEIGHT + motion_vector->top_field.y * 0.5f) / (float)surface->height;
+	vs_consts->mb_tc_trans[0].top_field.z = 0.0f;
+	vs_consts->mb_tc_trans[0].top_field.w = 0.0f;
+	
+	if (mc_type == VL_FIELD_MC)
+	{
+		vs_consts->denorm.x = (float)surface->width;
+		vs_consts->denorm.y = (float)surface->height;
+		
+		vs_consts->mb_tc_trans[0].bottom_field.x = (mbx * VL_MACROBLOCK_WIDTH + motion_vector->bottom_field.x * 0.5f) / (float)surface->width;
+		vs_consts->mb_tc_trans[0].bottom_field.y = (mby * VL_MACROBLOCK_HEIGHT + motion_vector->bottom_field.y * 0.5f) / (float)surface->height;
+		vs_consts->mb_tc_trans[0].bottom_field.z = 0.0f;
+		vs_consts->mb_tc_trans[0].bottom_field.w = 0.0f;
+		
+		pipe->bind_vs_state(pipe, surface->context->states.mc.p_vs[1]);
+		pipe->bind_fs_state(pipe, surface->context->states.mc.p_fs[1]);
+	}
+	else
+	{
+		pipe->bind_vs_state(pipe, surface->context->states.mc.p_vs[0]);
+		pipe->bind_fs_state(pipe, surface->context->states.mc.p_fs[0]);
+	}
 	
 	pipe->winsys->buffer_unmap(pipe->winsys, surface->context->states.mc.vs_const_buf.buffer);
-	
-	vlGrabBlocks(surface->context, coded_block_pattern, dct_type, VL_DIFFERENCE_SAMPLE, blocks);
 	
 	surface->context->states.mc.render_target.cbufs[0] = pipe->screen->get_tex_surface
 	(
@@ -356,8 +387,8 @@ int vlRenderPMacroBlock
 	surface->context->states.mc.textures[3] = ref_surface->texture;
 	pipe->set_sampler_textures(pipe, 4, surface->context->states.mc.textures);
 	pipe->bind_sampler_states(pipe, 4, (void**)surface->context->states.mc.samplers);
-	pipe->bind_vs_state(pipe, surface->context->states.mc.p_vs);
-	pipe->bind_fs_state(pipe, surface->context->states.mc.p_fs);
+	
+	vlGrabBlocks(surface->context, coded_block_pattern, dct_type, VL_DIFFERENCE_SAMPLE, blocks);
 	
 	pipe->draw_arrays(pipe, PIPE_PRIM_TRIANGLES, 0, 24);
 	
@@ -381,7 +412,7 @@ int vlRenderBMacroBlock
 )
 {
 	struct pipe_context	*pipe;
-	struct VL_MC_VS_CONSTS	*vscbdata;
+	struct VL_MC_VS_CONSTS	*vs_consts;
 	
 	assert(motion_vectors);
 	assert(blocks);
@@ -389,49 +420,62 @@ int vlRenderBMacroBlock
 	assert(surface);
 	
 	/* TODO: Implement interlaced rendering */
-	/*assert(picture_type == VL_FRAME_PICTURE);*/
 	if (picture_type != VL_FRAME_PICTURE)
-	{
-		/*fprintf(stderr, "field picture (B) unimplemented, ignoring\n");*/
 		return 0;
-	}
-	/* TODO: Implement field based motion compensation */
-	/*assert(mc_type == VL_FRAME_MC);*/
-	if (mc_type != VL_FRAME_MC)
-	{
-		/*fprintf(stderr, "field MC (B) unimplemented, ignoring\n");*/
+	/* TODO: Implement other MC types */
+	if (mc_type != VL_FRAME_MC && mc_type != VL_FIELD_MC)
 		return 0;
-	}
 	
 	pipe = surface->context->pipe;
 	
-	vscbdata = pipe->winsys->buffer_map
+	vs_consts = pipe->winsys->buffer_map
 	(
 		pipe->winsys,
 		surface->context->states.mc.vs_const_buf.buffer,
 		PIPE_BUFFER_USAGE_CPU_WRITE
 	);
 	
-	vscbdata->scale.x = VL_MACROBLOCK_WIDTH / (float)surface->width;
-	vscbdata->scale.y = VL_MACROBLOCK_HEIGHT / (float)surface->height;
-	vscbdata->scale.z = 1.0f;
-	vscbdata->scale.w = 1.0f;
-	vscbdata->mb_pos_trans.x = (mbx * VL_MACROBLOCK_WIDTH) / (float)surface->width;
-	vscbdata->mb_pos_trans.y = (mby * VL_MACROBLOCK_HEIGHT) / (float)surface->height;
-	vscbdata->mb_pos_trans.z = 0.0f;
-	vscbdata->mb_pos_trans.w = 0.0f;
-	vscbdata->mb_tc_trans[0].x = (mbx * VL_MACROBLOCK_WIDTH + motion_vector[0].top_field.x * 0.5f) / (float)surface->width;
-	vscbdata->mb_tc_trans[0].y = (mby * VL_MACROBLOCK_HEIGHT + motion_vector[0].top_field.y * 0.5f) / (float)surface->height;
-	vscbdata->mb_tc_trans[0].z = 0.0f;
-	vscbdata->mb_tc_trans[0].w = 0.0f;
-	vscbdata->mb_tc_trans[1].x = (mbx * VL_MACROBLOCK_WIDTH + motion_vector[1].top_field.x * 0.5f) / (float)surface->width;
-	vscbdata->mb_tc_trans[1].y = (mby * VL_MACROBLOCK_HEIGHT + motion_vector[1].top_field.y * 0.5f) / (float)surface->height;
-	vscbdata->mb_tc_trans[1].z = 0.0f;
-	vscbdata->mb_tc_trans[1].w = 0.0f;
+	vs_consts->scale.x = VL_MACROBLOCK_WIDTH / (float)surface->width;
+	vs_consts->scale.y = VL_MACROBLOCK_HEIGHT / (float)surface->height;
+	vs_consts->scale.z = 1.0f;
+	vs_consts->scale.w = 1.0f;
+	vs_consts->mb_pos_trans.x = (mbx * VL_MACROBLOCK_WIDTH) / (float)surface->width;
+	vs_consts->mb_pos_trans.y = (mby * VL_MACROBLOCK_HEIGHT) / (float)surface->height;
+	vs_consts->mb_pos_trans.z = 0.0f;
+	vs_consts->mb_pos_trans.w = 0.0f;
+	vs_consts->mb_tc_trans[0].top_field.x = (mbx * VL_MACROBLOCK_WIDTH + motion_vector[0].top_field.x * 0.5f) / (float)surface->width;
+	vs_consts->mb_tc_trans[0].top_field.y = (mby * VL_MACROBLOCK_HEIGHT + motion_vector[0].top_field.y * 0.5f) / (float)surface->height;
+	vs_consts->mb_tc_trans[0].top_field.z = 0.0f;
+	vs_consts->mb_tc_trans[0].top_field.w = 0.0f;
+	vs_consts->mb_tc_trans[1].top_field.x = (mbx * VL_MACROBLOCK_WIDTH + motion_vector[1].top_field.x * 0.5f) / (float)surface->width;
+	vs_consts->mb_tc_trans[1].top_field.y = (mby * VL_MACROBLOCK_HEIGHT + motion_vector[1].top_field.y * 0.5f) / (float)surface->height;
+	vs_consts->mb_tc_trans[1].top_field.z = 0.0f;
+	vs_consts->mb_tc_trans[1].top_field.w = 0.0f;
+	
+	if (mc_type == VL_FIELD_MC)
+	{
+		vs_consts->denorm.x = (float)surface->width;
+		vs_consts->denorm.y = (float)surface->height;
+		
+		vs_consts->mb_tc_trans[0].bottom_field.x = (mbx * VL_MACROBLOCK_WIDTH + motion_vector[0].bottom_field.x * 0.5f) / (float)surface->width;
+		vs_consts->mb_tc_trans[0].bottom_field.y = (mby * VL_MACROBLOCK_HEIGHT + motion_vector[0].bottom_field.y * 0.5f) / (float)surface->height;
+		vs_consts->mb_tc_trans[0].bottom_field.z = 0.0f;
+		vs_consts->mb_tc_trans[0].bottom_field.w = 0.0f;
+		vs_consts->mb_tc_trans[1].bottom_field.x = (mbx * VL_MACROBLOCK_WIDTH + motion_vector[1].bottom_field.x * 0.5f) / (float)surface->width;
+		vs_consts->mb_tc_trans[1].bottom_field.y = (mby * VL_MACROBLOCK_HEIGHT + motion_vector[1].bottom_field.y * 0.5f) / (float)surface->height;
+		vs_consts->mb_tc_trans[1].bottom_field.z = 0.0f;
+		vs_consts->mb_tc_trans[1].bottom_field.w = 0.0f;
+		
+		pipe->bind_vs_state(pipe, surface->context->states.mc.b_vs[1]);
+		pipe->bind_fs_state(pipe, surface->context->states.mc.b_fs[1]);
+	}
+	else
+	{
+		pipe->bind_vs_state(pipe, surface->context->states.mc.b_vs[0]);
+		pipe->bind_fs_state(pipe, surface->context->states.mc.b_fs[0]);
+	}
 	
 	pipe->winsys->buffer_unmap(pipe->winsys, surface->context->states.mc.vs_const_buf.buffer);
-	
-	vlGrabBlocks(surface->context, coded_block_pattern, dct_type, VL_DIFFERENCE_SAMPLE, blocks);
 	
 	surface->context->states.mc.render_target.cbufs[0] = pipe->screen->get_tex_surface
 	(
@@ -445,8 +489,8 @@ int vlRenderBMacroBlock
 	surface->context->states.mc.textures[4] = future_surface->texture;
 	pipe->set_sampler_textures(pipe, 5, surface->context->states.mc.textures);
 	pipe->bind_sampler_states(pipe, 5, (void**)surface->context->states.mc.samplers);
-	pipe->bind_vs_state(pipe, surface->context->states.mc.b_vs);
-	pipe->bind_fs_state(pipe, surface->context->states.mc.b_fs);
+	
+	vlGrabBlocks(surface->context, coded_block_pattern, dct_type, VL_DIFFERENCE_SAMPLE, blocks);
 	
 	pipe->draw_arrays(pipe, PIPE_PRIM_TRIANGLES, 0, 24);
 	
@@ -513,7 +557,7 @@ int vlPutSurface
 			destw,
 			desth,
 			PIPE_FORMAT_A8R8G8B8_UNORM,
-			/*XXX: SoftPipe doesn't change GPU usage to CPU like it does for textures */
+			/* XXX: SoftPipe doesn't change GPU usage to CPU like it does for textures */
 			PIPE_BUFFER_USAGE_CPU_READ | PIPE_BUFFER_USAGE_CPU_WRITE,
 			0
 		);
