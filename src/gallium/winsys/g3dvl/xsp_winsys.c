@@ -101,6 +101,12 @@ static struct pipe_surface* xsp_surface_alloc(struct pipe_winsys *pws)
 	return surface;
 }
 
+/* Borrowed from Mesa's xm_winsys */
+static unsigned int round_up(unsigned n, unsigned multiple)
+{
+   return (n + multiple - 1) & ~(multiple - 1);
+}
+
 static int xsp_surface_alloc_storage
 (
 	struct pipe_winsys *pws,
@@ -120,10 +126,13 @@ static int xsp_surface_alloc_storage
 	surface->width = width;
 	surface->height = height;
 	surface->format = format;
-	surface->cpp = pf_get_size(format);
-	surface->pitch = width;
+	pf_get_block(format, &surface->block);
+	surface->nblocksx = pf_get_nblocksx(&surface->block, width);
+	surface->nblocksy = pf_get_nblocksy(&surface->block, height);
+	surface->stride = round_up(surface->nblocksx * surface->block.size, ALIGNMENT);
 	surface->usage = flags;
-	surface->buffer = pws->buffer_create(pws, ALIGNMENT, PIPE_BUFFER_USAGE_PIXEL, surface->pitch * surface->cpp * height);
+	/* XXX: Need to consider block dims? See xm_winsys.c */
+	surface->buffer = pws->buffer_create(pws, ALIGNMENT, PIPE_BUFFER_USAGE_PIXEL, surface->stride * height);
 	
 	return 0;
 }

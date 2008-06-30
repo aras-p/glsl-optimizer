@@ -98,6 +98,7 @@ static int vlGrabBlocks
 {
 	struct pipe_surface	*tex_surface;
 	short			*texels;
+	unsigned int		tex_pitch;
 	unsigned int		tb, sb = 0;
 	
 	assert(context);
@@ -111,6 +112,7 @@ static int vlGrabBlocks
 	);
 	
 	texels = pipe_surface_map(tex_surface, PIPE_BUFFER_USAGE_CPU_WRITE);
+	tex_pitch = tex_surface->stride / tex_surface->block.size;
 	
 	for (tb = 0; tb < 4; ++tb)
 	{
@@ -121,35 +123,35 @@ static int vlGrabBlocks
 					vlGrabFrameCodedFullBlock
 					(
 						blocks + sb * VL_BLOCK_WIDTH * VL_BLOCK_HEIGHT,
-						texels + tb * tex_surface->pitch * VL_BLOCK_HEIGHT,
-						tex_surface->pitch
+						texels + tb * tex_pitch * VL_BLOCK_HEIGHT,
+						tex_pitch
 					);
 				else
 					vlGrabFrameCodedDiffBlock
 					(
 						blocks + sb * VL_BLOCK_WIDTH * VL_BLOCK_HEIGHT,
-						texels + tb * tex_surface->pitch * VL_BLOCK_HEIGHT,
-						tex_surface->pitch
+						texels + tb * tex_pitch * VL_BLOCK_HEIGHT,
+						tex_pitch
 					);
 			else
 				if (sample_type == VL_FULL_SAMPLE)
 					vlGrabFieldCodedFullBlock
 					(
 						blocks + sb * VL_BLOCK_WIDTH * VL_BLOCK_HEIGHT,
-						texels + (tb % 2) * tex_surface->pitch * VL_BLOCK_HEIGHT + (tb / 2) * tex_surface->pitch,
-						tex_surface->pitch
+						texels + (tb % 2) * tex_pitch * VL_BLOCK_HEIGHT + (tb / 2) * tex_pitch,
+						tex_pitch
 					);
 				else
 					vlGrabFieldCodedDiffBlock
 					(
 						blocks + sb * VL_BLOCK_WIDTH * VL_BLOCK_HEIGHT,
-						texels + (tb % 2) * tex_surface->pitch * VL_BLOCK_HEIGHT + (tb / 2) * tex_surface->pitch,
-						tex_surface->pitch
+						texels + (tb % 2) * tex_pitch * VL_BLOCK_HEIGHT + (tb / 2) * tex_pitch,
+						tex_pitch
 					);
 			++sb;
 		}
 		else
-			vlGrabNoBlock(texels + tb * tex_surface->pitch * VL_BLOCK_HEIGHT, tex_surface->pitch);
+			vlGrabNoBlock(texels + tb * tex_pitch * VL_BLOCK_HEIGHT, tex_pitch);
 	}
 	
 	pipe_surface_unmap(tex_surface);
@@ -165,6 +167,7 @@ static int vlGrabBlocks
 			);
 	
 		texels = pipe_surface_map(tex_surface, PIPE_BUFFER_USAGE_CPU_WRITE);
+		tex_pitch = tex_surface->stride / tex_surface->block.size;
 		
 		if ((coded_block_pattern >> (1 - tb)) & 1)
 		{			
@@ -173,20 +176,20 @@ static int vlGrabBlocks
 				(
 					blocks + sb * VL_BLOCK_WIDTH * VL_BLOCK_HEIGHT,
 					texels,
-					tex_surface->pitch
+					tex_pitch
 				);
 			else
 				vlGrabFrameCodedDiffBlock
 				(
 					blocks + sb * VL_BLOCK_WIDTH * VL_BLOCK_HEIGHT,
 					texels,
-					tex_surface->pitch
+					tex_pitch
 				);
 			
 			++sb;
 		}
 		else
-			vlGrabNoBlock(texels, tex_surface->pitch);
+			vlGrabNoBlock(texels, tex_pitch);
 		
 		pipe_surface_unmap(tex_surface);
 	}
@@ -223,7 +226,7 @@ int vlCreateSurface(struct VL_CONTEXT *context, struct VL_SURFACE **surface)
 	template.height[0] = sfc->height;
 	template.depth[0] = 1;
 	template.compressed = 0;
-	template.cpp = 4;
+	pf_get_block(template.format, &template.block);
 	template.tex_usage = PIPE_TEXTURE_USAGE_SAMPLER | PIPE_TEXTURE_USAGE_RENDER_TARGET;
 	
 	sfc->texture = pipe->screen->texture_create(pipe->screen, &template);

@@ -1407,7 +1407,7 @@ static int vlInitMC(struct VL_CONTEXT *context)
 	template.height[0] = 8 * 4;
 	template.depth[0] = 1;
 	template.compressed = 0;
-	template.cpp = 2;
+	pf_get_block(template.format, &template.block);
 	
 	context->states.mc.textures[0] = pipe->screen->texture_create(pipe->screen, &template);
 	

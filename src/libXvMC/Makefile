@@ -17,7 +17,7 @@ LDFLAGS	+= -L${GALLIUMDIR}/state_trackers/g3dvl		\
 	   -L${GALLIUMDIR}/auxiliary/cso_cache		\
 	   -L${GALLIUMDIR}/auxiliary/util		\
 	   -L${GALLIUMDIR}/auxiliary/rtasm
-LIBS	+= -lg3dvl -lsoftpipe -ldraw -ltgsi -ltranslate -lrtasm -lcso_cache -lutil
+LIBS	+= -lg3dvl -lsoftpipe -ldraw -ltgsi -ltranslate -lrtasm -lcso_cache -lutil -lm
 
 #############################################
 
