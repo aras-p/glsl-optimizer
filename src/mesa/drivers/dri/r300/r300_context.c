@@ -79,6 +79,7 @@ int hw_tcl_on = 1;
 
 #define need_GL_EXT_stencil_two_side
 #define need_GL_ARB_multisample
+#define need_GL_ARB_point_parameters
 #define need_GL_ARB_texture_compression
 #define need_GL_ARB_vertex_buffer_object
 #define need_GL_ARB_vertex_program
@@ -98,6 +99,7 @@ const struct dri_extension card_extensions[] = {
   {"GL_ARB_fragment_program",		NULL},
   {"GL_ARB_multisample",		GL_ARB_multisample_functions},
   {"GL_ARB_multitexture",		NULL},
+  {"GL_ARB_point_parameters",		GL_ARB_point_parameters_functions},
   {"GL_ARB_shadow",			NULL},
   {"GL_ARB_texture_border_clamp",	NULL},
   {"GL_ARB_texture_compression",	GL_ARB_texture_compression_functions},

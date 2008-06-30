@@ -827,6 +827,31 @@ static void r300PointSize(GLcontext * ctx, GLfloat size)
 	    ((int)(size * 6) << R300_POINTSIZE_Y_SHIFT);
 }
 
+static void r300PointParameter(GLcontext * ctx, GLenum pname, const GLfloat * param)
+{
+	r300ContextPtr r300 = R300_CONTEXT(ctx);
+
+	switch (pname) {
+	case GL_POINT_SIZE_MIN:
+		R300_STATECHANGE(r300, ga_point_minmax);
+		r300->hw.ga_point_minmax.cmd[1] &= ~R300_GA_POINT_MINMAX_MIN_MASK;
+		r300->hw.ga_point_minmax.cmd[1] |= (GLuint)(ctx->Point.MinSize * 16.0);
+		break;
+	case GL_POINT_SIZE_MAX:
+		R300_STATECHANGE(r300, ga_point_minmax);
+		r300->hw.ga_point_minmax.cmd[1] &= ~R300_GA_POINT_MINMAX_MAX_MASK;
+		r300->hw.ga_point_minmax.cmd[1] |= (GLuint)(ctx->Point.MaxSize * 16.0)
+			<< R300_GA_POINT_MINMAX_MAX_SHIFT;
+		break;
+	case GL_POINT_DISTANCE_ATTENUATION:
+		break;
+	case GL_POINT_FADE_THRESHOLD_SIZE:
+		break;
+	default:
+		break;
+	}
+}
+
 /* =============================================================
  * Line state
  */
@@ -2705,6 +2730,9 @@ void r300InitStateFuncs(struct dd_function_table *functions)
 	functions->Fogfv = r300Fogfv;
 	functions->FrontFace = r300FrontFace;
 	functions->ShadeModel = r300ShadeModel;
+
+	/* ARB_point_parameters */
+	functions->PointParameterfv = r300PointParameter;
 
 	/* Stencil related */
 	functions->StencilFuncSeparate = r300StencilFuncSeparate;
