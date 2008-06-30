@@ -1388,7 +1388,7 @@ static GLuint translate_lod_bias(GLfloat bias)
 		b = (1 << 9)-1;
 	else if (b < -(1 << 9))
 		b = -(1 << 9);
-	return ((GLuint)b) << R300_LOD_BIAS_SHIFT;
+	return (((GLuint)b) << R300_LOD_BIAS_SHIFT) & R300_LOD_BIAS_MASK;
 }
 
 static void r300SetupTextures(GLcontext * ctx)
