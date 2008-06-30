@@ -33,17 +33,15 @@ AC_CHECK_PROGS([MAKE], [gmake make])
 AC_PATH_PROG([MKDEP], [makedepend])
 AC_PATH_PROG([SED], [sed])
 
-dnl Platform-specific program settings
-EXTRA_CONFIG_LINES=""
-AC_SUBST([EXTRA_CONFIG_LINES])
+dnl We need a POSIX shell for parts of the build. Assume we have one
+dnl in most cases.
 case "$host_os" in
 solaris*)
     # Solaris /bin/sh is too old/non-POSIX compliant
     AC_PATH_PROGS(POSIX_SHELL, [ksh93 ksh sh])
-    EXTRA_CONFIG_LINES="SHELL=$POSIX_SHELL"
+    SHELL="$POSIX_SHELL"
     ;;
 esac
-
 
 MKDEP_OPTIONS=-fdepend
 dnl Ask gcc where it's keeping its secret headers
