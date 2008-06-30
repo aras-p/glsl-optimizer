@@ -604,7 +604,8 @@ fi
 dnl Which drivers to build - default is chosen by platform
 AC_ARG_WITH([dri-drivers],
     [AS_HELP_STRING([--with-dri-drivers@<:@=DIRS...@:>@],
-        [comma delimited DRI drivers, e.g. "i965,radeon,nouveau" @<:@default=auto@:>@])],
+        [comma delimited DRI drivers list, e.g.
+        "swrast,i965,radeon,nouveau" @<:@default=auto@:>@])],
     [with_dri_drivers="$withval"],
     [with_dri_drivers=yes])
 if test "x$with_dri_drivers" = x; then

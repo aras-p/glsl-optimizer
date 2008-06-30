@@ -182,11 +182,12 @@ will search for DRI drivers. The default is <code>${libdir}/dri</code>.
 </li>
 <li><code>--with-dri-drivers=DRIVER,DRIVER,...</code> - This option
 allows a specific set of DRI drivers to be built. For example,
-<code>--with-dri-drivers="i965,radeon,nouveau"</code>. By default,
-the drivers will be chosen depending on the target platform. See the
-directory <code>src/mesa/drivers/dri</code> in the source tree for
-available drivers.
-</li>
+<code>--with-dri-drivers="swrast,i965,radeon,nouveau"</code>. By
+default, the drivers will be chosen depending on the target platform.
+See the directory <code>src/mesa/drivers/dri</code> in the source tree
+for available drivers. Beware that the swrast DRI driver is used by both
+libGL and the X.Org xserver GLX module to do software rendering, so you
+may run into problems if it is not available.</li>
 <!-- This explanation might be totally bogus. Kristian? -->
 <li><code>--disable-driglx-direct</code> - Disable direct rendering in
 GLX. Normally, direct hardware rendering through the DRI drivers and
