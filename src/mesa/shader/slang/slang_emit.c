@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  7.0.3
+ * Version:  7.1
  *
- * Copyright (C) 2005-2007  Brian Paul   All Rights Reserved.
+ * Copyright (C) 2005-2008  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -110,13 +110,16 @@ writemask_to_swizzle(GLuint writemask)
 /**
  * Swizzle a swizzle.  That is, return swz2(swz1)
  */
-static GLuint
-swizzle_swizzle(GLuint swz1, GLuint swz2)
+GLuint
+_slang_swizzle_swizzle(GLuint swz1, GLuint swz2)
 {
    GLuint i, swz, s[4];
    for (i = 0; i < 4; i++) {
       GLuint c = GET_SWZ(swz2, i);
-      s[i] = GET_SWZ(swz1, c);
+      if (c <= SWIZZLE_W)
+         s[i] = GET_SWZ(swz1, c);
+      else
+         s[i] = c;
    }
    swz = MAKE_SWIZZLE4(s[0], s[1], s[2], s[3]);
    return swz;
@@ -1459,8 +1462,8 @@ emit_swizzle(slang_emit_info *emitInfo, slang_ir_node *n)
 
    /* apply this swizzle to child's swizzle to get composed swizzle */
    swizzle = fix_swizzle(n->Store->Swizzle); /* remove the don't care terms */
-   n->Store->Swizzle = swizzle_swizzle(n->Children[0]->Store->Swizzle,
-                                       swizzle);
+   n->Store->Swizzle = _slang_swizzle_swizzle(n->Children[0]->Store->Swizzle,
+                                              swizzle);
 
    return inst;
 }
