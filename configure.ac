@@ -456,7 +456,7 @@ esac
 
 dnl
 dnl Find out if X is available. The variable have_x is set if libX11 is
-dnl to mimic AC_PATH_XTRA.
+dnl found to mimic AC_PATH_XTRA.
 dnl
 if test -n "$PKG_CONFIG"; then
     AC_MSG_CHECKING([pkg-config files for X11 are available])
@@ -474,6 +474,12 @@ dnl Use the autoconf macro if no pkg-config files
 if test "$x11_pkgconfig" = no; then
     AC_PATH_XTRA
 fi
+
+dnl Try to tell the user that the --x-* options are only used when
+dnl pkg-config is not available. This must be right after AC_PATH_XTRA.
+m4_divert_once([HELP_BEGIN],
+[These options are only used when the X libraries cannot be found by the
+pkg-config utility.])
 
 dnl We need X for xlib and dri, so bomb now if it's not found
 case "$mesa_driver" in
