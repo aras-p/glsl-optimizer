@@ -12,6 +12,10 @@ m4_ifval(mesa_version,[],[
     m4_exit([1])
 ])
 
+dnl Tell the user about autoconf.html in the --help output
+m4_divert_once([HELP_END], [
+See docs/autoconf.html for more details on the options for Mesa.])
+
 AC_INIT([Mesa],[mesa_version],
     [https://bugs.freedesktop.org/enter_bug.cgi?product=Mesa])
 AC_CONFIG_AUX_DIR([bin])
