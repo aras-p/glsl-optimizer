@@ -330,6 +330,10 @@ def generate(env):
 			
 			'/entry:DrvEnableDriver',
 		]
+		if env['profile']:
+			linkflags += [
+				'/MAP', # http://msdn.microsoft.com/en-us/library/k7xkk3e2.aspx
+			]
 	env.Append(LINKFLAGS = linkflags)
 
 	# Convenience Library Builder
