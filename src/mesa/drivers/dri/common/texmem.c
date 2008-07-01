@@ -1278,6 +1278,7 @@ driCalculateTextureFirstLastLevel( driTextureObject * t )
       else {
 	 firstLevel = tObj->BaseLevel + (GLint)(tObj->MinLod + 0.5);
 	 firstLevel = MAX2(firstLevel, tObj->BaseLevel);
+	 firstLevel = MIN2(firstLevel, tObj->BaseLevel + baseImage->MaxLog2);
 	 lastLevel = tObj->BaseLevel + (GLint)(tObj->MaxLod + 0.5);
 	 lastLevel = MAX2(lastLevel, t->tObj->BaseLevel);
 	 lastLevel = MIN2(lastLevel, t->tObj->BaseLevel + baseImage->MaxLog2);
