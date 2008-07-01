@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.3
+ * Version:  7.1
  *
- * Copyright (C) 2005-2007  Brian Paul   All Rights Reserved.
+ * Copyright (C) 2005-2008  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -50,6 +50,7 @@ static const slang_ir_info IrInfo[] = {
    { IR_SLE, "IR_SLE", OPCODE_SLE, 4, 2 },
    { IR_SLT, "IR_SLT", OPCODE_SLT, 4, 2 },
    { IR_POW, "IR_POW", OPCODE_POW, 1, 2 },
+   { IR_EQUAL, "IR_EQUAL", OPCODE_NOP, 1, 2 },
    /* unary ops */
    { IR_I_TO_F, "IR_I_TO_F", OPCODE_NOP, 1, 1 },
    { IR_F_TO_I, "IR_F_TO_I", OPCODE_INT, 4, 1 }, /* 4 floats to 4 ints */
@@ -90,7 +91,8 @@ static const slang_ir_info IrInfo[] = {
    { IR_FIELD, "IR_FIELD", OPCODE_NOP, 0, 0 },
    { IR_ELEMENT, "IR_ELEMENT", OPCODE_NOP, 0, 0 },
    { IR_SWIZZLE, "IR_SWIZZLE", OPCODE_NOP, 0, 0 },
-   { IR_NOP, NULL, OPCODE_NOP, 0, 0 }
+   { IR_NOP, "IR_NOP", OPCODE_NOP, 0, 0 },
+   { 0, NULL, 0, 0, 0 }
 };
 
 
