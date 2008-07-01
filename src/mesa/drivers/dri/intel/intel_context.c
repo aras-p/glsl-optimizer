@@ -697,6 +697,9 @@ intelInitContext(struct intel_context *intel,
       intel->no_rast = 1;
    }
 
+   intel->tiling_swizzle_mode = driQueryOptioni(&intel->optionCache,
+						"swizzle_mode");
+
    /* Disable all hardware rendering (skip emitting batches and fences/waits
     * to the kernel)
     */

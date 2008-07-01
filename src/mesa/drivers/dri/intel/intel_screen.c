@@ -69,13 +69,20 @@ PUBLIC const char __driConfigOptions[] =
    DRI_CONF_SECTION_QUALITY
       DRI_CONF_FORCE_S3TC_ENABLE(false)
       DRI_CONF_ALLOW_LARGE_TEXTURES(2)
+      DRI_CONF_OPT_BEGIN_V(swizzle_mode, enum, 0, "0:2")
+	 DRI_CONF_DESC_BEGIN(en, "Tiling swizzle mode for software fallbacks")
+	    DRI_CONF_ENUM(0, "No swizzling")
+	    DRI_CONF_ENUM(1, "addr[6] = addr[6] ^ addr[9]")
+	    DRI_CONF_ENUM(2, "addr[6] = addr[6] ^ addr[9] ^ addr[10]")
+	 DRI_CONF_DESC_END
+      DRI_CONF_OPT_END
    DRI_CONF_SECTION_END
    DRI_CONF_SECTION_DEBUG
      DRI_CONF_NO_RAST(false)
    DRI_CONF_SECTION_END
 DRI_CONF_END;
 
-const GLuint __driNConfigOptions = 6;
+const GLuint __driNConfigOptions = 7;
 
 #ifdef USE_NEW_INTERFACE
 static PFNGLXCREATECONTEXTMODES create_context_modes = NULL;

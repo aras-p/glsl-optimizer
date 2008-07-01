@@ -106,29 +106,46 @@ static GLubyte *x_tile_swizzle(struct intel_renderbuffer *irb, struct intel_cont
 	x_tile_off = xbyte & 0x1ff;
 	y_tile_off = y & 7;
 
-#ifndef I915
-	/* The documentation says that X tile layout is arranged in 8 512-byte
-	 * lines of pixel data.  However, that doesn't appear to be the case
-	 * on GM965, tested by drawing a 128x8 quad in no_rast mode.  For lines
-	 * 1,2,4, and 7 of each tile, each consecutive pair of 64-byte spans
-	 * has the locations of those spans swapped.
-	 */
-	switch (y_tile_off) {
-	case 1:
-	case 2:
-	case 4:
-	case 7:
-		x_tile_off ^= 64;
-		break;
-	default:
-	   break;
-	}
-#endif
-
 	x_tile_number = xbyte >> 9;
 	y_tile_number = y >> 3;
 
 	tile_off = (y_tile_off << 9) + x_tile_off;
+
+	/* bit swizzling tricks your parents never told you about:
+	 *
+	 * The specs say that the X tiling layout is just 8 512-byte rows
+	 * packed into a page.  It turns out that there's some additional
+	 * swizzling of bit 6 to reduce cache aliasing issues.  Experimental
+	 * results below:
+	 *
+	 * line    bit	 GM965	945G/Q965
+	 *	9 10 11
+	 * 0	0  0  0  0	0
+	 * 1	0  1  0  1	1
+	 * 2	1  0  0  1	1
+	 * 3	1  1  0  0	0
+	 * 4	0  0  1  1	0
+	 * 5	0  1  1  0	1
+	 * 6	1  0  1  0	1
+	 * 7	1  1  1  1	0
+	 *
+	 * So we see that the GM965 is bit 6 ^ 9 ^ 10 ^ 11, while other
+	 * parts were just 6 ^ 9 ^ 10.  However, some systems, including a
+	 * GM965 we've seen, don't perform the swizzling at all.  Information
+	 * on how to detect it through register reads is expected soon.
+	 */
+	switch (intel->tiling_swizzle_mode) {
+	case 0:
+	   break;
+	case 1:
+	   tile_off ^= ((tile_off >> 3) & 64) ^ ((tile_off >> 4) & 64);
+	   break;
+	case 2:
+	   tile_off ^= ((tile_off >> 3) & 64) ^ ((tile_off >> 4) & 64) ^
+	      ((tile_off >> 5) & 64);
+	   break;
+	}
+
 	tile_base = (x_tile_number << 12) + y_tile_number * tile_stride;
 
 #if 0
