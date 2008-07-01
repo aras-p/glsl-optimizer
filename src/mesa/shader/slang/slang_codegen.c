@@ -707,6 +707,64 @@ _slang_find_node_type(slang_operation *oper, slang_operation_type type)
 }
 
 
+/**
+ * Count the number of operations of the given time rooted at 'oper'.
+ */
+static GLuint
+_slang_count_node_type(slang_operation *oper, slang_operation_type type)
+{
+   GLuint i, count = 0;
+   if (oper->type == type) {
+      return 1;
+   }
+   for (i = 0; i < oper->num_children; i++) {
+      count += _slang_count_node_type(&oper->children[i], type);
+   }
+   return count;
+}
+
+
+/**
+ * Check if the 'return' statement found under 'oper' is a "tail return"
+ * that can be no-op'd.  For example:
+ *
+ * void func(void)
+ * {
+ *    .. do something ..
+ *    return;   // this is a no-op
+ * }
+ *
+ * This is used when determining if a function can be inlined.  If the
+ * 'return' is not the last statement, we can't inline the function since
+ * we still need the semantic behaviour of the 'return' but we don't want
+ * to accidentally return from the _calling_ function.  We'd need to use an
+ * unconditional branch, but we don't have such a GPU instruction (not
+ * always, at least).
+ */
+static GLboolean
+_slang_is_tail_return(const slang_operation *oper)
+{
+   GLuint k = oper->num_children;
+
+   while (k > 0) {
+      const slang_operation *last = &oper->children[k - 1];
+      if (last->type == SLANG_OPER_RETURN)
+         return GL_TRUE;
+      else if (last->type == SLANG_OPER_IDENTIFIER ||
+               last->type == SLANG_OPER_LABEL)
+         k--; /* try prev child */
+      else if (last->type == SLANG_OPER_BLOCK_NO_NEW_SCOPE ||
+               last->type == SLANG_OPER_BLOCK_NEW_SCOPE)
+         /* try sub-children */
+         return _slang_is_tail_return(last);
+      else
+         break;
+   }
+
+   return GL_FALSE;
+}
+
+
 static void
 slang_resolve_variable(slang_operation *oper)
 {
@@ -1207,38 +1265,62 @@ _slang_gen_function_call(slang_assemble_ctx *A, slang_function *fun,
    }
    else {
       /* non-assembly function */
+      /* We always generate an "inline-able" block of code here.
+       * We may either:
+       *  1. insert the inline code
+       *  2. Generate a call to the "inline" code as a subroutine
+       */
+
+
+      slang_operation *ret = NULL;
+
       inlined = slang_inline_function_call(A, fun, oper, dest);
-      if (inlined && _slang_find_node_type(inlined, SLANG_OPER_RETURN)) {
-         slang_operation *callOper;
-         /* The function we're calling has one or more 'return' statements.
-          * So, we can't truly inline this function because we need to
-          * implement 'return' with RET (and CAL).
-          * Nevertheless, we performed "inlining" to make a new instance
-          * of the function body to deal with static register allocation.
-          *
-          * XXX check if there's one 'return' and if it's the very last
-          * statement in the function - we can optimize that case.
-          */
-         assert(inlined->type == SLANG_OPER_BLOCK_NEW_SCOPE ||
-                inlined->type == SLANG_OPER_SEQUENCE);
-         if (_slang_function_has_return_value(fun) && !dest) {
-            assert(inlined->children[0].type == SLANG_OPER_VARIABLE_DECL);
-            assert(inlined->children[2].type == SLANG_OPER_IDENTIFIER);
-            callOper = &inlined->children[1];
+      if (!inlined)
+         return NULL;
+
+      ret = _slang_find_node_type(inlined, SLANG_OPER_RETURN);
+      if (ret) {
+         /* check if this is a "tail" return */
+         if (_slang_count_node_type(inlined, SLANG_OPER_RETURN) == 1 &&
+             _slang_is_tail_return(inlined)) {
+            /* The only RETURN is the last stmt in the function, no-op it
+             * and inline the function body.
+             */
+            ret->type = SLANG_OPER_NONE;
          }
          else {
-            callOper = inlined;
+            slang_operation *callOper;
+            /* The function we're calling has one or more 'return' statements.
+             * So, we can't truly inline this function because we need to
+             * implement 'return' with RET (and CAL).
+             * Nevertheless, we performed "inlining" to make a new instance
+             * of the function body to deal with static register allocation.
+             *
+             * XXX check if there's one 'return' and if it's the very last
+             * statement in the function - we can optimize that case.
+             */
+            assert(inlined->type == SLANG_OPER_BLOCK_NEW_SCOPE ||
+                   inlined->type == SLANG_OPER_SEQUENCE);
+
+            if (_slang_function_has_return_value(fun) && !dest) {
+               assert(inlined->children[0].type == SLANG_OPER_VARIABLE_DECL);
+               assert(inlined->children[2].type == SLANG_OPER_IDENTIFIER);
+               callOper = &inlined->children[1];
+            }
+            else {
+               callOper = inlined;
+            }
+            callOper->type = SLANG_OPER_NON_INLINED_CALL;
+            callOper->fun = fun;
+            callOper->label = _slang_label_new_unique((char*) fun->header.a_name);
          }
-         callOper->type = SLANG_OPER_NON_INLINED_CALL;
-         callOper->fun = fun;
-         callOper->label = _slang_label_new_unique((char*) fun->header.a_name);
       }
    }
 
    if (!inlined)
       return NULL;
 
-   /* Replace the function call with the inlined block */
+   /* Replace the function call with the inlined block (or new CALL stmt) */
    slang_operation_destruct(oper);
    *oper = *inlined;
    _slang_free(inlined);
@@ -3024,7 +3106,7 @@ _slang_codegen_function(slang_assemble_ctx * A, slang_function * fun)
 
    if (_mesa_strcmp((char *) fun->header.a_name, "main") != 0) {
       /* we only really generate code for main, all other functions get
-       * inlined.
+       * inlined or codegen'd upon an actual call.
        */
 #if 0
       /* do some basic error checking though */
