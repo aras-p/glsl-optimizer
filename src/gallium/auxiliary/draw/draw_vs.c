@@ -160,8 +160,10 @@ draw_vs_init( struct draw_context *draw )
       return FALSE;
 
    draw->vs.aos_machine = draw_vs_aos_machine();
+#ifdef PIPE_ARCH_X86
    if (!draw->vs.aos_machine)
       return FALSE;
+#endif
       
    return TRUE;
 }
