@@ -63,6 +63,9 @@
 
 #include <stdlib.h>
 #include <string.h>
+#ifdef DEBUG
+#include <assert.h>
+#endif
 
 #include "glapi.h"
 #include "glapioffsets.h"
