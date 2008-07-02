@@ -373,7 +373,7 @@ static int r300Fallback(GLcontext * ctx)
 
 	if (!r300->disable_lowimpact_fallback) {
 		FALLBACK_IF(ctx->Polygon.StippleFlag);
-		FALLBACK_IF(ctx->Multisample.Enabled);
+		FALLBACK_IF(ctx->Multisample._Enabled);
 		FALLBACK_IF(ctx->Line.StippleFlag);
 		FALLBACK_IF(ctx->Line.SmoothFlag);
 		FALLBACK_IF(ctx->Point.SmoothFlag);
