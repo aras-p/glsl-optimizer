@@ -7291,27 +7291,57 @@
 </category>
 
 <category name="GL_ARB_vertex_buffer_object" number="28">
-    <enum name="BUFFER_SIZE_ARB"                          value="0x8764"/>
-    <enum name="BUFFER_USAGE_ARB"                         value="0x8765"/>
-    <enum name="ARRAY_BUFFER_ARB"                         value="0x8892"/>
-    <enum name="ELEMENT_ARRAY_BUFFER_ARB"                 value="0x8893"/>
-    <enum name="ARRAY_BUFFER_BINDING_ARB"                 value="0x8894"/>
-    <enum name="ELEMENT_ARRAY_BUFFER_BINDING_ARB"         value="0x8895"/>
-    <enum name="VERTEX_ARRAY_BUFFER_BINDING_ARB"          value="0x8896"/>
-    <enum name="NORMAL_ARRAY_BUFFER_BINDING_ARB"          value="0x8897"/>
-    <enum name="COLOR_ARRAY_BUFFER_BINDING_ARB"           value="0x8898"/>
-    <enum name="INDEX_ARRAY_BUFFER_BINDING_ARB"           value="0x8899"/>
-    <enum name="TEXTURE_COORD_ARRAY_BUFFER_BINDING_ARB"   value="0x889A"/>
-    <enum name="EDGE_FLAG_ARRAY_BUFFER_BINDING_ARB"       value="0x889B"/>
-    <enum name="SECONDARY_COLOR_ARRAY_BUFFER_BINDING_ARB" value="0x889C"/>
-    <enum name="FOG_COORDINATE_ARRAY_BUFFER_BINDING_ARB"  value="0x889D"/>
-    <enum name="WEIGHT_ARRAY_BUFFER_BINDING_ARB"          value="0x889E"/>
-    <enum name="VERTEX_ATTRIB_ARRAY_BUFFER_BINDING_ARB"   value="0x889F"/>
+    <enum name="BUFFER_SIZE_ARB"               count="1"  value="0x8764">
+        <size name="GetBufferParameterivARB" mode="get"/>
+    </enum>
+    <enum name="BUFFER_USAGE_ARB"              count="1"  value="0x8765">
+        <size name="GetBufferParameterivARB" mode="get"/>
+    </enum>
+    <enum name="ARRAY_BUFFER_BINDING_ARB"      count="1"  value="0x8894">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="ELEMENT_ARRAY_BUFFER_BINDING_ARB" count="1" value="0x8895">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="VERTEX_ARRAY_BUFFER_BINDING_ARB" count="1" value="0x8896">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="NORMAL_ARRAY_BUFFER_BINDING_ARB" count="1" value="0x8897">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="COLOR_ARRAY_BUFFER_BINDING_ARB" count="1" value="0x8898">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="INDEX_ARRAY_BUFFER_BINDING_ARB" count="1" value="0x8899">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="TEXTURE_COORD_ARRAY_BUFFER_BINDING_ARB" count="1" value="0x889A">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="EDGE_FLAG_ARRAY_BUFFER_BINDING_ARB" count="1" value="0x889B">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="SECONDARY_COLOR_ARRAY_BUFFER_BINDING_ARB" count="1" value="0x889C">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="FOG_COORDINATE_ARRAY_BUFFER_BINDING_ARB" count="1" value="0x889D">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="WEIGHT_ARRAY_BUFFER_BINDING_ARB" count="1" value="0x889E">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="VERTEX_ATTRIB_ARRAY_BUFFER_BINDING_ARB" count="1" value="0x889F">
+        <size name="GetVertexAttribivARB" mode="get"/>
+    </enum>
     <enum name="READ_ONLY_ARB"                            value="0x88B8"/>
     <enum name="WRITE_ONLY_ARB"                           value="0x88B9"/>
     <enum name="READ_WRITE_ARB"                           value="0x88BA"/>
-    <enum name="BUFFER_ACCESS_ARB"                        value="0x88BB"/>
-    <enum name="BUFFER_MAPPED_ARB"                        value="0x88BC"/>
+    <enum name="BUFFER_ACCESS_ARB"             count="1"  value="0x88BB">
+        <size name="GetBufferParameterivARB" mode="get"/>
+    </enum>
+    <enum name="BUFFER_MAPPED_ARB"             count="1"  value="0x88BC">
+        <size name="GetBufferParameterivARB" mode="get"/>
+    </enum>
     <enum name="BUFFER_MAP_POINTER_ARB"                   value="0x88BD"/>
     <enum name="STREAM_DRAW_ARB"                          value="0x88E0"/>
     <enum name="STREAM_READ_ARB"                          value="0x88E1"/>
@@ -7323,8 +7353,8 @@
     <enum name="DYNAMIC_READ_ARB"                         value="0x88E9"/>
     <enum name="DYNAMIC_COPY_ARB"                         value="0x88EA"/>
 
-    <type name="intptrARB"                   size="4"/>
-    <type name="sizeiptrARB" unsigned="true" size="4"/>
+    <type name="intptrARB"   size="4"                  glx_name="CARD32"/>
+    <type name="sizeiptrARB" size="4"  unsigned="true" glx_name="CARD32"/>
 
     <function name="BindBufferARB" offset="assign">
         <param name="target" type="GLenum"/>
@@ -7334,8 +7364,8 @@
 
     <function name="BufferDataARB" offset="assign">
         <param name="target" type="GLenum"/>
-        <param name="size" type="GLsizeiptrARB"/>
-        <param name="data" type="const GLvoid *"/>
+        <param name="size" type="GLsizeiptrARB" counter="true"/>
+        <param name="data" type="const GLvoid *" count="size" img_null_flag="true"/>
         <param name="usage" type="GLenum"/>
         <glx ignore="true"/>
     </function>
@@ -7343,14 +7373,14 @@
     <function name="BufferSubDataARB" offset="assign">
         <param name="target" type="GLenum"/>
         <param name="offset" type="GLintptrARB"/>
-        <param name="size" type="GLsizeiptrARB"/>
-        <param name="data" type="const GLvoid *"/>
+        <param name="size" type="GLsizeiptrARB" counter="true"/>
+        <param name="data" type="const GLvoid *" count="size"/>
         <glx ignore="true"/>
     </function>
 
     <function name="DeleteBuffersARB" offset="assign">
-        <param name="n" type="GLsizei"/>
-        <param name="buffer" type="const GLuint *"/>
+        <param name="n" type="GLsizei" counter="true"/>
+        <param name="buffer" type="const GLuint *" count="n"/>
         <glx ignore="true"/>
     </function>
 
@@ -7363,7 +7393,7 @@
     <function name="GetBufferParameterivARB" offset="assign">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
-        <param name="params" type="GLint *" output="true"/>
+        <param name="params" type="GLint *" output="true" variable_param="pname"/>
         <glx ignore="true"/>
     </function>
 
@@ -7377,8 +7407,8 @@
     <function name="GetBufferSubDataARB" offset="assign">
         <param name="target" type="GLenum"/>
         <param name="offset" type="GLintptrARB"/>
-        <param name="size" type="GLsizeiptrARB"/>
-        <param name="data" type="GLvoid *" output="true"/>
+        <param name="size" type="GLsizeiptrARB" counter="true"/>
+        <param name="data" type="GLvoid *" output="true" count="size"/>
         <glx ignore="true"/>
     </function>
 
