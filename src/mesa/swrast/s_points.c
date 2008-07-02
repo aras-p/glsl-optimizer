@@ -250,7 +250,7 @@ smooth_point(GLcontext *ctx, const SWvertex *vert)
    size = CLAMP(size, ctx->Const.MinPointSizeAA, ctx->Const.MaxPointSizeAA);
 
    /* alpha attenuation / fade factor */
-   if (ctx->Multisample.Enabled) {
+   if (ctx->Multisample._Enabled) {
       if (vert->pointSize >= ctx->Point.Threshold) {
          alphaAtten = 1.0F;
       }

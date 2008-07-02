@@ -254,7 +254,7 @@ static void update_raster_state( struct st_context *st )
    raster->line_stipple_factor = ctx->Line.StippleFactor - 1;
 
    /* _NEW_MULTISAMPLE */
-   if (ctx->Multisample.Enabled)
+   if (ctx->Multisample._Enabled)
       raster->multisample = 1;
 
    /* _NEW_SCISSOR */
