@@ -49,20 +49,26 @@ _slang_lookup_constant(const char *name)
    struct constant_info {
       const char *Name;
       const GLenum Token;
+      GLint Divisor;
    };
    static const struct constant_info info[] = {
-      { "gl_MaxClipPlanes", GL_MAX_CLIP_PLANES },
-      { "gl_MaxCombinedTextureImageUnits", GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS },
-      { "gl_MaxDrawBuffers", GL_MAX_DRAW_BUFFERS },
-      { "gl_MaxFragmentUniformComponents", GL_MAX_FRAGMENT_UNIFORM_COMPONENTS },
-      { "gl_MaxLights", GL_MAX_LIGHTS },
-      { "gl_MaxTextureUnits", GL_MAX_TEXTURE_UNITS },
-      { "gl_MaxTextureCoords", GL_MAX_TEXTURE_COORDS },
-      { "gl_MaxVertexAttribs", GL_MAX_VERTEX_ATTRIBS },
-      { "gl_MaxVertexUniformComponents", GL_MAX_VERTEX_UNIFORM_COMPONENTS },
-      { "gl_MaxVaryingFloats", GL_MAX_VARYING_FLOATS },
-      { "gl_MaxVertexTextureImageUnits", GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS },
-      { "gl_MaxTextureImageUnits", GL_MAX_TEXTURE_IMAGE_UNITS },
+      { "gl_MaxClipPlanes", GL_MAX_CLIP_PLANES, 1 },
+      { "gl_MaxCombinedTextureImageUnits", GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, 1 },
+      { "gl_MaxDrawBuffers", GL_MAX_DRAW_BUFFERS, 1 },
+      { "gl_MaxFragmentUniformComponents", GL_MAX_FRAGMENT_UNIFORM_COMPONENTS, 1 },
+      { "gl_MaxLights", GL_MAX_LIGHTS, 1 },
+      { "gl_MaxTextureUnits", GL_MAX_TEXTURE_UNITS, 1 },
+      { "gl_MaxTextureCoords", GL_MAX_TEXTURE_COORDS, 1 },
+      { "gl_MaxVertexAttribs", GL_MAX_VERTEX_ATTRIBS, 1 },
+      { "gl_MaxVertexUniformComponents", GL_MAX_VERTEX_UNIFORM_COMPONENTS, 1 },
+      { "gl_MaxVaryingFloats", GL_MAX_VARYING_FLOATS, 1 },
+      { "gl_MaxVertexTextureImageUnits", GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS, 1 },
+      { "gl_MaxTextureImageUnits", GL_MAX_TEXTURE_IMAGE_UNITS, 1 },
+#if FEATURE_es2_glsl
+      { "gl_MaxVertexUniformVectors", GL_MAX_VERTEX_UNIFORM_COMPONENTS, 4 },
+      { "gl_MaxVaryingVectors", GL_MAX_VARYING_FLOATS, 4 },
+      { "gl_MaxFragmentUniformVectors", GL_MAX_FRAGMENT_UNIFORM_COMPONENTS, 4 },
+#endif
       { NULL, 0 }
    };
    GLuint i;
@@ -73,7 +79,7 @@ _slang_lookup_constant(const char *name)
          GLint value = -1.0;
          _mesa_GetIntegerv(info[i].Token, &value);
          ASSERT(value >= 0);  /* sanity check that glGetFloatv worked */
-         return value;
+         return value / info[i].Divisor;
       }
    }
    return -1;
