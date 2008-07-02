@@ -7331,6 +7331,8 @@
         <size name="Get" mode="get"/>
     </enum>
     <enum name="VERTEX_ATTRIB_ARRAY_BUFFER_BINDING_ARB" count="1" value="0x889F">
+        <size name="GetVertexAttribdvARB" mode="get"/>
+        <size name="GetVertexAttribfvARB" mode="get"/>
         <size name="GetVertexAttribivARB" mode="get"/>
     </enum>
     <enum name="READ_ONLY_ARB"                            value="0x88B8"/>
