@@ -1395,6 +1395,105 @@ make_writemask(const char *field)
 
 
 /**
+ * Some write-masked assignments are simple, but others are hard.
+ * Simple example:
+ *    vec3 v;
+ *    v.xy = vec2(a, b);
+ * Hard example:
+ *    vec3 v;
+ *    v.zy = vec2(a, b);
+ * this gets transformed/swizzled into:
+ *    v.zy = vec2(a, b).*yx*         (* = don't care)
+ * This function helps to determine simple vs. non-simple.
+ */
+static GLboolean
+_slang_simple_writemask(GLuint writemask, GLuint swizzle)
+{
+   switch (writemask) {
+   case WRITEMASK_X:
+      return GET_SWZ(swizzle, 0) == SWIZZLE_X;
+   case WRITEMASK_Y:
+      return GET_SWZ(swizzle, 1) == SWIZZLE_Y;
+   case WRITEMASK_Z:
+      return GET_SWZ(swizzle, 2) == SWIZZLE_Z;
+   case WRITEMASK_W:
+      return GET_SWZ(swizzle, 3) == SWIZZLE_W;
+   case WRITEMASK_XY:
+      return (GET_SWZ(swizzle, 0) == SWIZZLE_X)
+         && (GET_SWZ(swizzle, 1) == SWIZZLE_Y);
+   case WRITEMASK_XYZ:
+      return (GET_SWZ(swizzle, 0) == SWIZZLE_X)
+         && (GET_SWZ(swizzle, 1) == SWIZZLE_Y)
+         && (GET_SWZ(swizzle, 2) == SWIZZLE_Z);
+   case WRITEMASK_XYZW:
+      return swizzle == SWIZZLE_NOOP;
+   default:
+      return GL_FALSE;
+   }
+}
+
+
+/**
+ * Convert the given swizzle into a writemask.  In some cases this
+ * is trivial, in other cases, we'll need to also swizzle the right
+ * hand side to put components in the right places.
+ * \param swizzle  the incoming swizzle
+ * \param writemaskOut  returns the writemask
+ * \param swizzleOut  swizzle to apply to the right-hand-side
+ * \return GL_FALSE for simple writemasks, GL_TRUE for non-simple
+ */
+static GLboolean
+swizzle_to_writemask(GLuint swizzle,
+                     GLuint *writemaskOut, GLuint *swizzleOut)
+{
+   GLuint mask = 0x0, newSwizzle[4];
+   GLint i, size;
+
+   /* make new dst writemask, compute size */
+   for (i = 0; i < 4; i++) {
+      const GLuint swz = GET_SWZ(swizzle, i);
+      if (swz == SWIZZLE_NIL) {
+         /* end */
+         break;
+      }
+      assert(swz >= 0 && swz <= 3);
+      mask |= (1 << swz);
+   }
+   assert(mask <= 0xf);
+   size = i;  /* number of components in mask/swizzle */
+
+   *writemaskOut = mask;
+
+   /* make new src swizzle, by inversion */
+   for (i = 0; i < 4; i++) {
+      newSwizzle[i] = i; /*identity*/
+   }
+   for (i = 0; i < size; i++) {
+      const GLuint swz = GET_SWZ(swizzle, i);
+      newSwizzle[swz] = i;
+   }
+   *swizzleOut = MAKE_SWIZZLE4(newSwizzle[0],
+                               newSwizzle[1],
+                               newSwizzle[2],
+                               newSwizzle[3]);
+
+   if (_slang_simple_writemask(mask, *swizzleOut)) {
+      if (size >= 1)
+         assert(GET_SWZ(*swizzleOut, 0) == SWIZZLE_X);
+      if (size >= 2)
+         assert(GET_SWZ(*swizzleOut, 1) == SWIZZLE_Y);
+      if (size >= 3)
+         assert(GET_SWZ(*swizzleOut, 2) == SWIZZLE_Z);
+      if (size >= 4)
+         assert(GET_SWZ(*swizzleOut, 3) == SWIZZLE_W);
+      return GL_TRUE;
+   }
+   else
+      return GL_FALSE;
+}
+
+
+/**
  * Generate IR tree for an asm instruction/operation such as:
  *    __asm vec4_dot __retVal.x, v1, v2;
  */
@@ -2205,105 +2304,6 @@ _slang_gen_variable(slang_assemble_ctx * A, slang_operation *oper)
       return NULL;
    }
    return n;
-}
-
-
-/**
- * Some write-masked assignments are simple, but others are hard.
- * Simple example:
- *    vec3 v;
- *    v.xy = vec2(a, b);
- * Hard example:
- *    vec3 v;
- *    v.zy = vec2(a, b);
- * this gets transformed/swizzled into:
- *    v.zy = vec2(a, b).*yx*         (* = don't care)
- * This function helps to determine simple vs. non-simple.
- */
-static GLboolean
-_slang_simple_writemask(GLuint writemask, GLuint swizzle)
-{
-   switch (writemask) {
-   case WRITEMASK_X:
-      return GET_SWZ(swizzle, 0) == SWIZZLE_X;
-   case WRITEMASK_Y:
-      return GET_SWZ(swizzle, 1) == SWIZZLE_Y;
-   case WRITEMASK_Z:
-      return GET_SWZ(swizzle, 2) == SWIZZLE_Z;
-   case WRITEMASK_W:
-      return GET_SWZ(swizzle, 3) == SWIZZLE_W;
-   case WRITEMASK_XY:
-      return (GET_SWZ(swizzle, 0) == SWIZZLE_X)
-         && (GET_SWZ(swizzle, 1) == SWIZZLE_Y);
-   case WRITEMASK_XYZ:
-      return (GET_SWZ(swizzle, 0) == SWIZZLE_X)
-         && (GET_SWZ(swizzle, 1) == SWIZZLE_Y)
-         && (GET_SWZ(swizzle, 2) == SWIZZLE_Z);
-   case WRITEMASK_XYZW:
-      return swizzle == SWIZZLE_NOOP;
-   default:
-      return GL_FALSE;
-   }
-}
-
-
-/**
- * Convert the given swizzle into a writemask.  In some cases this
- * is trivial, in other cases, we'll need to also swizzle the right
- * hand side to put components in the right places.
- * \param swizzle  the incoming swizzle
- * \param writemaskOut  returns the writemask
- * \param swizzleOut  swizzle to apply to the right-hand-side
- * \return GL_FALSE for simple writemasks, GL_TRUE for non-simple
- */
-static GLboolean
-swizzle_to_writemask(GLuint swizzle,
-                     GLuint *writemaskOut, GLuint *swizzleOut)
-{
-   GLuint mask = 0x0, newSwizzle[4];
-   GLint i, size;
-
-   /* make new dst writemask, compute size */
-   for (i = 0; i < 4; i++) {
-      const GLuint swz = GET_SWZ(swizzle, i);
-      if (swz == SWIZZLE_NIL) {
-         /* end */
-         break;
-      }
-      assert(swz >= 0 && swz <= 3);
-      mask |= (1 << swz);
-   }
-   assert(mask <= 0xf);
-   size = i;  /* number of components in mask/swizzle */
-
-   *writemaskOut = mask;
-
-   /* make new src swizzle, by inversion */
-   for (i = 0; i < 4; i++) {
-      newSwizzle[i] = i; /*identity*/
-   }
-   for (i = 0; i < size; i++) {
-      const GLuint swz = GET_SWZ(swizzle, i);
-      newSwizzle[swz] = i;
-   }
-   *swizzleOut = MAKE_SWIZZLE4(newSwizzle[0],
-                               newSwizzle[1],
-                               newSwizzle[2],
-                               newSwizzle[3]);
-
-   if (_slang_simple_writemask(mask, *swizzleOut)) {
-      if (size >= 1)
-         assert(GET_SWZ(*swizzleOut, 0) == SWIZZLE_X);
-      if (size >= 2)
-         assert(GET_SWZ(*swizzleOut, 1) == SWIZZLE_Y);
-      if (size >= 3)
-         assert(GET_SWZ(*swizzleOut, 2) == SWIZZLE_Z);
-      if (size >= 4)
-         assert(GET_SWZ(*swizzleOut, 3) == SWIZZLE_W);
-      return GL_TRUE;
-   }
-   else
-      return GL_FALSE;
 }
 
 
