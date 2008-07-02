@@ -875,7 +875,12 @@ _mesa_get_shader_source(GLcontext *ctx, GLuint shader, GLsizei maxLength,
 {
    struct gl_shader *sh = _mesa_lookup_shader(ctx, shader);
    if (!sh) {
-      _mesa_error(ctx, GL_INVALID_VALUE, "glGetShaderSource(shader)");
+      GLenum err;
+      if (_mesa_lookup_shader_program(ctx, shader))
+         err = GL_INVALID_OPERATION;
+      else
+         err = GL_INVALID_VALUE;
+      _mesa_error(ctx, err, "glGetShaderSource(shader)");
       return;
    }
    copy_string(sourceOut, maxLength, length, sh->Source);
@@ -966,7 +971,12 @@ _mesa_shader_source(GLcontext *ctx, GLuint shader, const GLchar *source)
 {
    struct gl_shader *sh = _mesa_lookup_shader(ctx, shader);
    if (!sh) {
-      _mesa_error(ctx, GL_INVALID_VALUE, "glShaderSource(shaderObj)");
+      GLenum err;
+      if (_mesa_lookup_shader_program(ctx, shader))
+         err = GL_INVALID_OPERATION;
+      else
+         err = GL_INVALID_VALUE;
+      _mesa_error(ctx, err, "glShaderSource(shaderObj)");
       return;
    }
 
