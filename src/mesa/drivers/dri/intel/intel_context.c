@@ -365,6 +365,12 @@ intelFlush(GLcontext * ctx)
    if (!IS_965(intel->intelScreen->deviceID))
       INTEL_FIREVERTICES(intel);
 
+   /* Emit a flush so that any frontbuffer rendering that might have occurred
+    * lands onscreen in a timely manner, even if the X Server doesn't trigger
+    * a flush for us.
+    */
+   intel_batchbuffer_emit_mi_flush(intel->batch);
+
    if (intel->batch->map != intel->batch->ptr)
       intel_batchbuffer_flush(intel->batch);
 }
