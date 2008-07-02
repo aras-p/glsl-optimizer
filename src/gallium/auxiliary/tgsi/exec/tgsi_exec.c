@@ -214,7 +214,7 @@ tgsi_exec_machine_bind_shader(
          break;
 
       case TGSI_TOKEN_TYPE_INSTRUCTION:
-         assert( labels->count < 128 );
+         assert( labels->count < MAX_LABELS );
 
          labels->labels[labels->count][0] = instno;
          labels->labels[labels->count][1] = pointer;

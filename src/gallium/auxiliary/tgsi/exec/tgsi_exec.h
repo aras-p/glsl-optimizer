@@ -34,6 +34,8 @@
 extern "C" {
 #endif
 
+#define MAX_LABELS 1024
+
 #define NUM_CHANNELS 4  /* R,G,B,A */
 #define QUAD_SIZE    4  /* 4 pixel/quad */
 
@@ -93,7 +95,7 @@ struct tgsi_sampler
  */
 struct tgsi_exec_labels
 {
-   unsigned labels[128][2];
+   unsigned labels[MAX_LABELS][2];
    unsigned count;
 };
 
