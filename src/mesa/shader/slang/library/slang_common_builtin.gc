@@ -1496,6 +1496,23 @@ bvec4 equal(const ivec4 u, const ivec4 v)
    __asm vec4_seq __retVal, u, v;
 }
 
+bvec2 equal(const bvec2 u, const bvec2 v)
+{
+   __asm vec4_seq __retVal.xy, u, v;
+}
+
+bvec3 equal(const bvec3 u, const bvec3 v)
+{
+   __asm vec4_seq __retVal.xyz, u, v;
+}
+
+bvec4 equal(const bvec4 u, const bvec4 v)
+{
+   __asm vec4_seq __retVal, u, v;
+}
+
+
+
 
 //// notEqual
 
@@ -1528,6 +1545,22 @@ bvec4 notEqual(const ivec4 u, const ivec4 v)
 {
    __asm vec4_sne __retVal, u, v;
 }
+
+bvec2 notEqual(const bvec2 u, const bvec2 v)
+{
+   __asm vec4_sne __retVal.xy, u, v;
+}
+
+bvec3 notEqual(const bvec3 u, const bvec3 v)
+{
+   __asm vec4_sne __retVal.xyz, u, v;
+}
+
+bvec4 notEqual(const bvec4 u, const bvec4 v)
+{
+   __asm vec4_sne __retVal, u, v;
+}
+
 
 
 //// any
