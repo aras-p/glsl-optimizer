@@ -388,6 +388,14 @@ _slang_link(GLcontext *ctx,
 
    _mesa_clear_shader_program_data(ctx, shProg);
 
+   /* check that all programs compiled successfully */
+   for (i = 0; i < shProg->NumShaders; i++) {
+      if (!shProg->Shaders[i]->CompileStatus) {
+         link_error(shProg, "linking with uncompiled shader\n");
+         return;
+      }
+   }
+
    shProg->Uniforms = _mesa_new_uniform_list();
    shProg->Varying = _mesa_new_parameter_list();
 
