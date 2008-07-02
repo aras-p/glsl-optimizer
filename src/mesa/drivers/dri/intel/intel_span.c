@@ -183,6 +183,16 @@ static GLubyte *y_tile_swizzle(struct intel_renderbuffer *irb, struct intel_cont
 
 	tile_off = ((x_tile_off & ~0xf) << 5) + (y_tile_off << 4) +
 	   (x_tile_off & 0xf);
+
+	switch (intel->tiling_swizzle_mode) {
+	case 0:
+	   break;
+	case 1:
+	   tile_off ^= (tile_off >> 3) & 64;
+	   break;
+	case 2:
+	   break;
+	}
 	tile_base = (x_tile_number << 12) + y_tile_number * tile_stride;
 
 	return buf + tile_base + tile_off;
