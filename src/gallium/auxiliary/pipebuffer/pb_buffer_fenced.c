@@ -406,7 +406,7 @@ fenced_buffer_list_create(struct pipe_winsys *winsys)
 {
    struct fenced_buffer_list *fenced_list;
 
-   fenced_list = (struct fenced_buffer_list *)CALLOC(1, sizeof(*fenced_list));
+   fenced_list = CALLOC_STRUCT(fenced_buffer_list);
    if (!fenced_list)
       return NULL;
 

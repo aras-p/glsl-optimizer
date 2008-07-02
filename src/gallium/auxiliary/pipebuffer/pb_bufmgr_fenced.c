@@ -117,7 +117,7 @@ fenced_bufmgr_create(struct pb_manager *provider,
    if(!provider)
       return NULL;
    
-   fenced_mgr = (struct fenced_pb_manager *)CALLOC(1, sizeof(*fenced_mgr));
+   fenced_mgr = CALLOC_STRUCT(fenced_pb_manager);
    if (!fenced_mgr)
       return NULL;
 

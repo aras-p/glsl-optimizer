@@ -217,7 +217,8 @@ pb_cache_is_buffer_compat(struct pb_cache_buffer *buf,
    if(!pb_check_alignment(desc->alignment, buf->base.base.alignment))
       return FALSE;
    
-   /* XXX: check usage too? */
+   if(!pb_check_usage(desc->usage, buf->base.base.usage))
+      return FALSE;
    
    return TRUE;
 }
@@ -282,7 +283,7 @@ pb_cache_manager_create_buffer(struct pb_manager *_mgr,
    
    assert(buf->buffer->base.refcount >= 1);
    assert(pb_check_alignment(desc->alignment, buf->buffer->base.alignment));
-   assert((buf->buffer->base.usage & desc->usage) == desc->usage);
+   assert(pb_check_usage(desc->usage, buf->buffer->base.usage));
    assert(buf->buffer->base.size >= size);
    
    buf->base.base.refcount = 1;
@@ -331,7 +332,10 @@ pb_cache_manager_create(struct pb_manager *provider,
 {
    struct pb_cache_manager *mgr;
 
-   mgr = (struct pb_cache_manager *)CALLOC(1, sizeof(*mgr));
+   if(!provider)
+      return NULL;
+   
+   mgr = CALLOC_STRUCT(pb_cache_manager);
    if (!mgr)
       return NULL;
 

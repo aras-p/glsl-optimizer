@@ -324,8 +324,10 @@ pb_slab_manager_create_buffer(struct pb_manager *_mgr,
    if(!pb_check_alignment(desc->alignment, mgr->bufSize))
       return NULL;
 
-   /* XXX: check for compatible buffer usage too? */
-   
+   assert(pb_check_usage(desc->usage, mgr->desc.usage));
+   if(!pb_check_usage(desc->usage, mgr->desc.usage))
+      return NULL;
+
    _glthread_LOCK_MUTEX(mgr->mutex);
    if (mgr->slabs.next == &mgr->slabs) {
       (void) pb_slab_create(mgr);
@@ -438,6 +440,9 @@ pb_slab_range_manager_create(struct pb_manager *provider,
    size_t bufSize;
    unsigned i;
 
+   if(!provider)
+      return NULL;
+   
    mgr = CALLOC_STRUCT(pb_slab_range_manager);
    if (!mgr)
       goto out_err0;

@@ -30,8 +30,8 @@
  * \file
  * Batch buffer pool management.
  * 
- * \author José Fonseca <jrfonseca-at-tungstengraphics-dot-com>
- * \author Thomas Hellström <thomas-at-tungstengraphics-dot-com>
+ * \author JosÃ© Fonseca <jrfonseca-at-tungstengraphics-dot-com>
+ * \author Thomas HellstrÃ¶m <thomas-at-tungstengraphics-dot-com>
  */
 
 
@@ -229,7 +229,10 @@ pool_bufmgr_create(struct pb_manager *provider,
    struct pool_buffer *pool_buf;
    size_t i;
 
-   pool = (struct pool_pb_manager *)CALLOC(1, sizeof(*pool));
+   if(!provider)
+      return NULL;
+   
+   pool = CALLOC_STRUCT(pool_pb_manager);
    if (!pool)
       return NULL;
 
