@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.3
+ * Version:  7.1
  *
- * Copyright (C) 2005-2007  Brian Paul   All Rights Reserved.
+ * Copyright (C) 2005-2008  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -34,6 +34,10 @@
 
 extern void
 slang_print_ir(const slang_ir_node *n, int indent);
+
+
+extern GLuint
+_slang_swizzle_swizzle(GLuint swz1, GLuint swz2);
 
 
 extern slang_ir_storage *
