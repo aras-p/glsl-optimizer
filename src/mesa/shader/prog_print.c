@@ -356,6 +356,19 @@ _mesa_swizzle_string(GLuint swizzle, GLuint negateBase, GLboolean extended)
 }
 
 
+void
+_mesa_print_swizzle(GLuint swizzle)
+{
+   if (swizzle == SWIZZLE_XYZW) {
+      _mesa_printf(".xyzw\n");
+   }
+   else {
+      char *s = _mesa_swizzle_string(swizzle, 0, 0);
+      _mesa_printf("%s\n", s);
+   }
+}
+
+
 static const char *
 writemask_string(GLuint writeMask)
 {
