@@ -474,6 +474,12 @@ _slang_link(GLcontext *ctx,
       }         
    }
 
+   /* Check that the vertex program doesn't use too many sampler units */
+   if (shProg->VertexProgram &&
+       _mesa_bitcount(shProg->VertexProgram->Base.SamplersUsed) > ctx->Const.MaxVertexTextureImageUnits) {
+      link_error(shProg, "Vertex program uses too many samplers.\n");
+      return;
+   }
 
    if (fragProg && shProg->FragmentProgram) {
       /* notify driver that a new fragment program has been compiled/linked */
