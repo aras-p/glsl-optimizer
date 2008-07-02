@@ -125,7 +125,7 @@ GLboolean brwCreateContext( const __GLcontextModes *mesaVis,
    ctx->Const.MaxTextureUnits = BRW_MAX_TEX_UNIT;
    ctx->Const.MaxTextureImageUnits = BRW_MAX_TEX_UNIT;
    ctx->Const.MaxTextureCoordUnits = BRW_MAX_TEX_UNIT;
-
+   ctx->Const.MaxVertexTextureImageUnits = 0; /* no vertex shader textures */
 
    /* Advertise the full hardware capabilities.  The new memory
     * manager should cope much better with overload situations:
