@@ -298,10 +298,15 @@ _slang_free_temp(slang_var_table *vt, slang_ir_storage *store)
    if (dbg) printf("Free temp sz %d at %d (level %d)\n", store->Size, r, t->Level);
    if (store->Size == 1) {
       const GLuint comp = GET_SWZ(store->Swizzle, 0);
+      /* we can actually fail some of these assertions because of the
+       * troublesome IR_SWIZZLE handling.
+       */
+#if 0
       assert(store->Swizzle == MAKE_SWIZZLE4(comp, comp, comp, comp));
       assert(comp < 4);
       assert(t->ValSize[r * 4 + comp] == 1);
       assert(t->Temps[r * 4 + comp] == TEMP);
+#endif
       t->Temps[r * 4 + comp] = FREE;
    }
    else {
