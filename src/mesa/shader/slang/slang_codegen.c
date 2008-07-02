@@ -1355,45 +1355,6 @@ slang_find_asm_info(const char *name)
 }
 
 
-static GLuint
-make_writemask(const char *field)
-{
-   GLuint mask = 0x0;
-   while (*field) {
-      switch (*field) {
-      case 'x':
-      case 's':
-      case 'r':
-         mask |= WRITEMASK_X;
-         break;
-      case 'y':
-      case 't':
-      case 'g':
-         mask |= WRITEMASK_Y;
-         break;
-      case 'z':
-      case 'p':
-      case 'b':
-         mask |= WRITEMASK_Z;
-         break;
-      case 'w':
-      case 'q':
-      case 'a':
-         mask |= WRITEMASK_W;
-         break;
-      default:
-         _mesa_problem(NULL, "invalid writemask in make_writemask()");
-         return 0;
-      }
-      field++;
-   }
-   if (mask == 0x0)
-      return WRITEMASK_XYZW;
-   else
-      return mask;
-}
-
-
 /**
  * Some write-masked assignments are simple, but others are hard.
  * Simple example:
@@ -1494,6 +1455,88 @@ swizzle_to_writemask(GLuint swizzle,
 
 
 /**
+ * Recursively traverse 'oper' to produce a swizzle mask in the event
+ * of any vector subscripts and swizzle suffixes.
+ * Ex:  for "vec4 v",  "v[2].x" resolves to v.z
+ */
+static GLuint
+resolve_swizzle(const slang_operation *oper)
+{
+   if (oper->type == SLANG_OPER_FIELD) {
+      /* writemask from .xyzw suffix */
+      slang_swizzle swz;
+      if (_slang_is_swizzle((char*) oper->a_id, 4, &swz)) {
+         GLuint swizzle = MAKE_SWIZZLE4(swz.swizzle[0],
+                                        swz.swizzle[1],
+                                        swz.swizzle[2],
+                                        swz.swizzle[3]);
+         GLuint child_swizzle = resolve_swizzle(&oper->children[0]);
+         GLuint s = _slang_swizzle_swizzle(child_swizzle, swizzle);
+         return s;
+      }
+      else
+         return SWIZZLE_XYZW;
+   }
+   else if (oper->type == SLANG_OPER_SUBSCRIPT &&
+            oper->children[1].type == SLANG_OPER_LITERAL_INT) {
+      /* writemask from [index] */
+      GLuint child_swizzle = resolve_swizzle(&oper->children[0]);
+      GLuint i = (GLuint) oper->children[1].literal[0];
+      GLuint swizzle;
+      GLuint s;
+      switch (i) {
+      case 0:
+         swizzle = SWIZZLE_XXXX;
+         break;
+      case 1:
+         swizzle = SWIZZLE_YYYY;
+         break;
+      case 2:
+         swizzle = SWIZZLE_ZZZZ;
+         break;
+      case 3:
+         swizzle = SWIZZLE_WWWW;
+         break;
+      default:
+         swizzle = SWIZZLE_XYZW;
+      }
+      s = _slang_swizzle_swizzle(child_swizzle, swizzle);
+      return s;
+   }
+   else {
+      return SWIZZLE_XYZW;
+   }
+}
+
+
+/**
+ * As above, but produce a writemask.
+ */
+static GLuint
+resolve_writemask(const slang_operation *oper)
+{
+   GLuint swizzle = resolve_swizzle(oper);
+   GLuint writemask, swizzleOut;
+   swizzle_to_writemask(swizzle, &writemask, &swizzleOut);
+   return writemask;
+}
+
+
+/**
+ * Recursively descend through swizzle nodes to find the node's storage info.
+ */
+static slang_ir_storage *
+get_store(const slang_ir_node *n)
+{
+   if (n->Opcode == IR_SWIZZLE) {
+      return get_store(n->Children[0]);
+   }
+   return n->Store;
+}
+
+
+
+/**
  * Generate IR tree for an asm instruction/operation such as:
  *    __asm vec4_dot __retVal.x, v1, v2;
  */
@@ -1547,18 +1590,18 @@ _slang_gen_asm(slang_assemble_ctx *A, slang_operation *oper,
       slang_ir_node *n0;
 
       dest_oper = &oper->children[0];
-      while (dest_oper->type == SLANG_OPER_FIELD) {
-         /* writemask */
-         writemask &= make_writemask((char*) dest_oper->a_id);
-         dest_oper = &dest_oper->children[0];
-      }
+
+      writemask = resolve_writemask(dest_oper);
 
       n0 = _slang_gen_operation(A, dest_oper);
-      assert(n0->Var);
-      assert(n0->Store);
+      if (!n0)
+         return NULL;
+
       assert(!n->Store);
-      n->Store = n0->Store;
+      n->Store = get_store(n0);
       n->Writemask = writemask;
+
+      assert(n->Store->File != PROGRAM_UNDEFINED);
 
       _slang_free(n0);
    }
