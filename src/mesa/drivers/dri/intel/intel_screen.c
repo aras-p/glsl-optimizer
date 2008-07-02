@@ -528,6 +528,7 @@ intelCreateBuffer(__DRIscreenPrivate * driScrnPriv,
       GLboolean swStencil = (mesaVis->stencilBits > 0 &&
                              mesaVis->depthBits != 24);
       GLenum rgbFormat = (mesaVis->redBits == 5 ? GL_RGB5 : GL_RGBA8);
+      enum tiling_mode tiling;
 
       struct intel_framebuffer *intel_fb = CALLOC_STRUCT(intel_framebuffer);
 
@@ -537,34 +538,46 @@ intelCreateBuffer(__DRIscreenPrivate * driScrnPriv,
       _mesa_initialize_framebuffer(&intel_fb->Base, mesaVis);
 
       /* setup the hardware-based renderbuffers */
+      /* We get only a boolean value from the DDX for whether tiling is
+       * enabled, so we have to guess when it's Y and not X (965 depth).
+       */
       {
-         intel_fb->color_rb[0] = intel_create_renderbuffer(rgbFormat, 
-							   screen->ttm ? screen->front.tiled : INTEL_TILE_NONE);
+	 tiling = screen->front.tiled ? INTEL_TILE_X : INTEL_TILE_NONE;
+	 intel_fb->color_rb[0] = intel_create_renderbuffer(screen,
+							   rgbFormat, tiling);
          _mesa_add_renderbuffer(&intel_fb->Base, BUFFER_FRONT_LEFT,
 				&intel_fb->color_rb[0]->Base);
       }
 
       if (mesaVis->doubleBufferMode) {
-         intel_fb->color_rb[1] = intel_create_renderbuffer(rgbFormat,
-							   screen->ttm ? screen->back.tiled : INTEL_TILE_NONE);
+	 tiling = screen->back.tiled ? INTEL_TILE_X : INTEL_TILE_NONE;
+	 intel_fb->color_rb[1] = intel_create_renderbuffer(screen,
+							   rgbFormat, tiling);
+
          _mesa_add_renderbuffer(&intel_fb->Base, BUFFER_BACK_LEFT,
 				&intel_fb->color_rb[1]->Base);
 
 	 if (screen->third.handle) {
 	    struct gl_renderbuffer *tmp_rb = NULL;
-
-	    intel_fb->color_rb[2] = intel_create_renderbuffer(rgbFormat,
-							      screen->ttm ? screen->third.tiled : INTEL_TILE_NONE);
+	    tiling = screen->third.tiled ? INTEL_TILE_X : INTEL_TILE_NONE;
+	    intel_fb->color_rb[2] = intel_create_renderbuffer(screen,
+							      rgbFormat,
+							      tiling);
 	    _mesa_reference_renderbuffer(&tmp_rb, &intel_fb->color_rb[2]->Base);
 	 }
       }
 
+#ifdef I915
+      tiling = screen->depth.tiled ? INTEL_TILE_X : INTEL_TILE_NONE;
+#else
+      tiling = screen->depth.tiled ? INTEL_TILE_Y : INTEL_TILE_NONE;
+#endif
       if (mesaVis->depthBits == 24) {
 	 if (mesaVis->stencilBits == 8) {
 	    /* combined depth/stencil buffer */
 	    struct intel_renderbuffer *depthStencilRb
-	       = intel_create_renderbuffer(GL_DEPTH24_STENCIL8_EXT,
-					   screen->ttm ? screen->depth.tiled : INTEL_TILE_NONE);
+	       = intel_create_renderbuffer(screen,
+					   GL_DEPTH24_STENCIL8_EXT, tiling);
 	    /* note: bind RB to two attachment points */
 	    _mesa_add_renderbuffer(&intel_fb->Base, BUFFER_DEPTH,
 				   &depthStencilRb->Base);
@@ -572,8 +585,8 @@ intelCreateBuffer(__DRIscreenPrivate * driScrnPriv,
 				   &depthStencilRb->Base);
 	 } else {
 	    struct intel_renderbuffer *depthRb
-	       = intel_create_renderbuffer(GL_DEPTH_COMPONENT24,
-					   screen->ttm ? screen->depth.tiled : INTEL_TILE_NONE);
+	       = intel_create_renderbuffer(screen,
+					   GL_DEPTH_COMPONENT24, tiling);
 	    _mesa_add_renderbuffer(&intel_fb->Base, BUFFER_DEPTH,
 				   &depthRb->Base);
 	 }
@@ -581,8 +594,8 @@ intelCreateBuffer(__DRIscreenPrivate * driScrnPriv,
       else if (mesaVis->depthBits == 16) {
          /* just 16-bit depth buffer, no hw stencil */
          struct intel_renderbuffer *depthRb
-            = intel_create_renderbuffer(GL_DEPTH_COMPONENT16,
-					screen->ttm ? screen->depth.tiled : INTEL_TILE_NONE);
+	    = intel_create_renderbuffer(screen,
+					GL_DEPTH_COMPONENT16, tiling);
          _mesa_add_renderbuffer(&intel_fb->Base, BUFFER_DEPTH, &depthRb->Base);
       }
 

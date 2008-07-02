@@ -33,10 +33,7 @@ extern void intelInitSpanFuncs(GLcontext * ctx);
 extern void intelSpanRenderFinish(GLcontext * ctx);
 extern void intelSpanRenderStart(GLcontext * ctx);
 
-extern void intel_set_span_functions(struct gl_renderbuffer *rb, int tiling);
-
-#define INTEL_TILE_NONE	0
-#define INTEL_TILE_X	1
-#define INTEL_TILE_Y	2
+extern void intel_set_span_functions(struct gl_renderbuffer *rb,
+				     enum tiling_mode tiling);
 
 #endif

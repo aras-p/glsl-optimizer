@@ -28,9 +28,9 @@
 #ifndef INTEL_FBO_H
 #define INTEL_FBO_H
 
+#include "intel_screen.h"
 
 struct intel_context;
-struct intel_region;
 
 /**
  * Intel framebuffer, derived from gl_framebuffer.
@@ -72,7 +72,7 @@ struct intel_renderbuffer
    struct intel_region *region;
    void *pfMap;                 /* possibly paged flipped map pointer */
    GLuint pfPitch;              /* possibly paged flipped pitch */
-   int tiling;
+   enum tiling_mode tiling;
    GLboolean RenderToTexture;   /* RTT? */
 
    GLuint PairedDepth;   /**< only used if this is a depth renderbuffer */
@@ -91,7 +91,8 @@ intel_renderbuffer_set_region(struct intel_renderbuffer *irb,
 			      struct intel_region *region);
 
 extern struct intel_renderbuffer *
-intel_create_renderbuffer(GLenum intFormat, int tiling);
+intel_create_renderbuffer(intelScreenPrivate *intelScreen,
+			  GLenum intFormat, enum tiling_mode tiling);
 
 extern void intel_fbo_init(struct intel_context *intel);
 

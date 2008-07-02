@@ -168,7 +168,7 @@ static GLubyte *y_tile_swizzle(struct intel_renderbuffer *irb, struct intel_cont
 	int	x_tile_number, y_tile_number;
 	int	tile_off, tile_base;
 	
-	tile_stride = (irb->pfPitch * irb->region->cpp) << 3;
+	tile_stride = (irb->pfPitch * irb->region->cpp) << 5;
 	
 	x += intel->drawX;
 	y += intel->drawY;
@@ -181,7 +181,8 @@ static GLubyte *y_tile_swizzle(struct intel_renderbuffer *irb, struct intel_cont
 	x_tile_number = xbyte >> 7;
 	y_tile_number = y >> 5;
 
-	tile_off = ((x_tile_off & ~0xf) << 5) + (y_tile_off << 4) + (x_tile_off & 0xf);
+	tile_off = ((x_tile_off & ~0xf) << 5) + (y_tile_off << 4) +
+	   (x_tile_off & 0xf);
 	tile_base = (x_tile_number << 12) + y_tile_number * tile_stride;
 
 	return buf + tile_base + tile_off;
@@ -670,7 +671,7 @@ intelInitSpanFuncs(GLcontext * ctx)
  * These are used for the software fallbacks.
  */
 void
-intel_set_span_functions(struct gl_renderbuffer *rb, int tiling)
+intel_set_span_functions(struct gl_renderbuffer *rb, enum tiling_mode tiling)
 {
    if (rb->_ActualFormat == GL_RGB5) {
       /* 565 RGB */
