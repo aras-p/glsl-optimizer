@@ -1559,7 +1559,7 @@ bool any(const bvec4 v)
 
 //// all
 
-bool all (const vec2 v)
+bool all (const bvec2 v)
 {
    float prod;
    __asm vec4_multiply prod.x, v.x, v.y;
