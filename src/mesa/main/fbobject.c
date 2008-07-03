@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.1
+ * Version:  7.1
  *
- * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2008  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -64,6 +64,27 @@ static struct gl_renderbuffer DummyRenderbuffer;
 #define IS_CUBE_FACE(TARGET) \
    ((TARGET) >= GL_TEXTURE_CUBE_MAP_POSITIVE_X && \
     (TARGET) <= GL_TEXTURE_CUBE_MAP_NEGATIVE_Z)
+
+
+static void
+delete_dummy_renderbuffer(struct gl_renderbuffer *rb)
+{
+   /* no op */
+}
+
+static void
+delete_dummy_framebuffer(struct gl_framebuffer *fb)
+{
+   /* no op */
+}
+
+
+void
+_mesa_init_fbobjects(GLcontext *ctx)
+{
+   DummyFramebuffer.Delete = delete_dummy_framebuffer;
+   DummyRenderbuffer.Delete = delete_dummy_renderbuffer;
+}
 
 
 /**
