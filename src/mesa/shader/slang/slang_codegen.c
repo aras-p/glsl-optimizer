@@ -2071,6 +2071,14 @@ _slang_gen_var_decl(slang_assemble_ctx *A, slang_variable *var)
 
       n->Store->File = PROGRAM_TEMPORARY;
       n->Store->Size = _slang_sizeof_type_specifier(&n->Var->type.specifier);
+      if (var->array_len > 0) {
+         /* this is an array */
+         /* round up element size to mult of 4 */
+         GLint sz = (n->Store->Size + 3) & ~3;
+         /* mult by array size */
+         sz *= var->array_len;
+         n->Store->Size = sz;
+      }
       A->program->NumTemporaries++;
       assert(n->Store->Size > 0);
    }
