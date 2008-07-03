@@ -298,6 +298,33 @@ a4r4g4b4_get_tile_rgba(ushort *src,
 }
 
 
+static void
+a4r4g4b4_put_tile_rgba(ushort *dst,
+                       unsigned w, unsigned h,
+                       const float *p,
+                       unsigned src_stride)
+{
+   unsigned i, j;
+
+   for (i = 0; i < h; i++) {
+      const float *pRow = p;
+      for (j = 0; j < w; j++, pRow += 4) {
+         unsigned r, g, b, a;
+         UNCLAMPED_FLOAT_TO_UBYTE(r, pRow[0]);
+         UNCLAMPED_FLOAT_TO_UBYTE(g, pRow[1]);
+         UNCLAMPED_FLOAT_TO_UBYTE(b, pRow[2]);
+         UNCLAMPED_FLOAT_TO_UBYTE(a, pRow[3]);
+         r >>= 4;
+         g >>= 4;
+         b >>= 4;
+         a >>= 4;
+         *dst++ = (a << 12) | (r << 16) | (g << 4) | b;
+      }
+      p += src_stride;
+   }
+}
+
+
 /*** PIPE_FORMAT_R5G6B5_UNORM ***/
 
 static void
@@ -774,6 +801,10 @@ pipe_put_tile_rgba(struct pipe_context *pipe,
       r5g5b5_put_tile_rgba((ushort *) packed, w, h, p, src_stride);
       break;
    case PIPE_FORMAT_R8G8B8A8_UNORM:
+      assert(0);
+      break;
+   case PIPE_FORMAT_A4R4G4B4_UNORM:
+      a4r4g4b4_put_tile_rgba((ushort *) packed, w, h, p, src_stride);
       break;
    case PIPE_FORMAT_L8_UNORM:
       /*l8_put_tile_rgba((ubyte *) packed, w, h, p, src_stride);*/
