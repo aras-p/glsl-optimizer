@@ -541,6 +541,9 @@ reset_cache(struct st_context *st)
    cache->ymin = 1000000;
    cache->ymax = -1000000;
 
+   if (cache->surf)
+      screen->tex_surface_release(screen, &cache->surf);
+
    assert(!cache->texture);
 
    /* allocate a new texture */
@@ -588,6 +591,8 @@ st_flush_bitmap_cache(struct st_context *st)
           * So unmap and release the texture surface before drawing.
           */
          screen->surface_unmap(screen, cache->surf);
+         cache->buffer = NULL;
+
          screen->tex_surface_release(screen, &cache->surf);
 
          draw_bitmap_quad(st->ctx,
