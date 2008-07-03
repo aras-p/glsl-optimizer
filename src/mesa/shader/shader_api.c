@@ -360,6 +360,22 @@ copy_string(GLchar *dst, GLsizei maxLength, GLsizei *length, const GLchar *src)
 }
 
 
+static GLboolean
+_mesa_is_program(GLcontext *ctx, GLuint name)
+{
+   struct gl_shader_program *shProg = _mesa_lookup_shader_program(ctx, name);
+   return shProg ? GL_TRUE : GL_FALSE;
+}
+
+
+static GLboolean
+_mesa_is_shader(GLcontext *ctx, GLuint name)
+{
+   struct gl_shader *shader = _mesa_lookup_shader(ctx, name);
+   return shader ? GL_TRUE : GL_FALSE;
+}
+
+
 /**
  * Called via ctx->Driver.AttachShader()
  */
@@ -372,11 +388,20 @@ _mesa_attach_shader(GLcontext *ctx, GLuint program, GLuint shader)
    GLuint n;
    GLuint i;
 
-   if (!shProg || !sh) {
-      _mesa_error(ctx, GL_INVALID_VALUE,
-                  "glAttachShader(bad program or shader name)");
+   if (!shProg) {
+      GLenum err = _mesa_is_shader(ctx, program)
+         ? GL_INVALID_OPERATION : GL_INVALID_VALUE;
+      _mesa_error(ctx, err, "glAttachShader(bad program or shader name)");
       return;
    }
+
+   if (!sh) {
+      GLenum err = _mesa_is_program(ctx, shader)
+         ? GL_INVALID_OPERATION : GL_INVALID_VALUE;
+      _mesa_error(ctx, err, "glAttachShader(bad program or shader name)");
+      return;
+   }
+
 
    n = shProg->NumShaders;
 
@@ -445,7 +470,9 @@ _mesa_bind_attrib_location(GLcontext *ctx, GLuint program, GLuint index,
    GLint i, oldIndex;
 
    if (!shProg) {
-      _mesa_error(ctx, GL_INVALID_VALUE, "glBindAttribLocation(program)");
+      GLenum err = _mesa_is_shader(ctx, program)
+         ? GL_INVALID_OPERATION : GL_INVALID_VALUE;
+      _mesa_error(ctx, err, "glBindAttribLocation(program)");
       return;
    }
 
@@ -455,6 +482,11 @@ _mesa_bind_attrib_location(GLcontext *ctx, GLuint program, GLuint index,
    if (strncmp(name, "gl_", 3) == 0) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
                   "glBindAttribLocation(illegal name)");
+      return;
+   }
+
+   if (index >= ctx->Const.VertexProgram.MaxAttribs) {
+      _mesa_error(ctx, GL_INVALID_VALUE, "glBindAttribLocation(index)");
       return;
    }
 
@@ -943,22 +975,6 @@ _mesa_get_uniform_location(GLcontext *ctx, GLuint program, const GLchar *name)
       return -1;
 
    return _mesa_lookup_uniform(shProg->Uniforms, name);
-}
-
-
-static GLboolean
-_mesa_is_program(GLcontext *ctx, GLuint name)
-{
-   struct gl_shader_program *shProg = _mesa_lookup_shader_program(ctx, name);
-   return shProg ? GL_TRUE : GL_FALSE;
-}
-
-
-static GLboolean
-_mesa_is_shader(GLcontext *ctx, GLuint name)
-{
-   struct gl_shader *shader = _mesa_lookup_shader(ctx, name);
-   return shader ? GL_TRUE : GL_FALSE;
 }
 
 
