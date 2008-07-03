@@ -28,7 +28,7 @@ struct table
    slang_variable **Vars;  /* array [NumVars] */
 
    TempState Temps[MAX_PROGRAM_TEMPS * 4];  /* per-component state */
-   int ValSize[MAX_PROGRAM_TEMPS];     /* For debug only */
+   int ValSize[MAX_PROGRAM_TEMPS * 4];     /**< For debug only */
 
    struct table *Parent;  /** Parent scope table */
 };
@@ -220,6 +220,7 @@ alloc_reg(slang_var_table *vt, GLint size, GLboolean isTemp)
             assert(i % 4 == 0);
          for (j = 0; j < size; j++)
             t->Temps[i + j] = isTemp ? TEMP : VAR;
+         assert(i < MAX_PROGRAM_TEMPS * 4);
          t->ValSize[i] = size;
          return i;
       }
