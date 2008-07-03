@@ -262,7 +262,7 @@ tgsi_exec_machine_init(
    uint i;
 
    mach->Temps = (struct tgsi_exec_vector *) tgsi_align_128bit( mach->_Temps);
-   mach->Addrs = &mach->Temps[TGSI_EXEC_NUM_TEMPS];
+   mach->Addrs = &mach->Temps[TGSI_EXEC_TEMP_ADDR];
 
    /* Setup constants. */
    for( i = 0; i < 4; i++ ) {
@@ -941,6 +941,7 @@ fetch_src_file_channel(
          break;
 
       case TGSI_FILE_TEMPORARY:
+         assert(index->i[0] < TGSI_EXEC_NUM_TEMPS);
          chan->u[0] = mach->Temps[index->i[0]].xyzw[swizzle].u[0];
          chan->u[1] = mach->Temps[index->i[1]].xyzw[swizzle].u[1];
          chan->u[2] = mach->Temps[index->i[2]].xyzw[swizzle].u[2];
@@ -1127,6 +1128,7 @@ store_dest(
       break;
 
    case TGSI_FILE_TEMPORARY:
+      assert(reg->DstRegister.Index < TGSI_EXEC_NUM_TEMPS);
       dst = &mach->Temps[reg->DstRegister.Index].xyzw[chan_index];
       break;
 
