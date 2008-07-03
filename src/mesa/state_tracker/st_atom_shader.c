@@ -175,6 +175,7 @@ find_translated_vp(struct st_context *st,
       GLuint outAttr, dummySlot;
       const GLbitfield outputsWritten = stvp->Base.Base.OutputsWritten;
       GLuint numVpOuts = 0;
+      GLboolean emitPntSize = GL_FALSE, emitBFC0 = GL_FALSE, emitBFC1 = GL_FALSE;
 
       /* Compute mapping of vertex program outputs to slots, which depends
        * on the fragment program's input->slot mapping.
@@ -199,18 +200,27 @@ find_translated_vp(struct st_context *st,
                   numVpOuts++;
                }
             }
-            else if (outAttr == VERT_RESULT_PSIZ ||
-                     outAttr == VERT_RESULT_BFC0 ||
-                     outAttr == VERT_RESULT_BFC1) {
-               /* backface colors go into last slots */
-               xvp->output_to_slot[outAttr] = numVpOuts++;
-            }
+            else if (outAttr == VERT_RESULT_PSIZ)
+               emitPntSize = GL_TRUE;
+            else if (outAttr == VERT_RESULT_BFC0)
+               emitBFC0 = GL_TRUE;
+            else if (outAttr == VERT_RESULT_BFC1)
+               emitBFC1 = GL_TRUE;
          }
-         /*
-         printf("output_to_slot[%d] = %d\n", outAttr, 
+#if 0 /*debug*/
+         printf("assign output_to_slot[%d] = %d\n", outAttr, 
                 xvp->output_to_slot[outAttr]);
-         */
+#endif
       }
+
+      /* must do these last */
+      if (emitPntSize)
+         xvp->output_to_slot[VERT_RESULT_PSIZ] = numVpOuts++;
+      if (emitBFC0)
+         xvp->output_to_slot[VERT_RESULT_BFC0] = numVpOuts++;
+      if (emitBFC1)
+         xvp->output_to_slot[VERT_RESULT_BFC1] = numVpOuts++;
+
 
       /* Unneeded vertex program outputs will go to this slot.
        * We could use this info to do dead code elimination in the
@@ -224,6 +234,11 @@ find_translated_vp(struct st_context *st,
             if (xvp->output_to_slot[outAttr] == UNUSED)
                xvp->output_to_slot[outAttr] = dummySlot;
          }
+#if 0 /*debug*/
+         printf("output_to_slot[%d] = %d\n", outAttr, 
+                xvp->output_to_slot[outAttr]);
+#endif
+
       }
 
       assert(stvp->Base.Base.NumInstructions > 1);
