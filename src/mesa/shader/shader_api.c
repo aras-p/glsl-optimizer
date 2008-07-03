@@ -213,6 +213,35 @@ _mesa_lookup_shader_program(GLcontext *ctx, GLuint name)
 
 
 /**
+ * As above, but record an error if program is not found.
+ */
+static struct gl_shader_program *
+_mesa_lookup_shader_program_err(GLcontext *ctx, GLuint name,
+                                const char *caller)
+{
+   if (!name) {
+      _mesa_error(ctx, GL_INVALID_VALUE, caller);
+      return NULL;
+   }
+   else {
+      struct gl_shader_program *shProg = (struct gl_shader_program *)
+         _mesa_HashLookup(ctx->Shared->ShaderObjects, name);
+      if (!shProg) {
+         _mesa_error(ctx, GL_INVALID_VALUE, caller);
+         return NULL;
+      }
+      if (shProg->Type != GL_SHADER_PROGRAM_MESA) {
+         _mesa_error(ctx, GL_INVALID_OPERATION, caller);
+         return NULL;
+      }
+      return shProg;
+   }
+}
+
+
+
+
+/**
  * Allocate a new gl_shader object, initialize it.
  */
 struct gl_shader *
@@ -315,6 +344,33 @@ _mesa_lookup_shader(GLcontext *ctx, GLuint name)
 
 
 /**
+ * As above, but record an error if shader is not found.
+ */
+static struct gl_shader *
+_mesa_lookup_shader_err(GLcontext *ctx, GLuint name, const char *caller)
+{
+   if (!name) {
+      _mesa_error(ctx, GL_INVALID_VALUE, caller);
+      return NULL;
+   }
+   else {
+      struct gl_shader *sh = (struct gl_shader *)
+         _mesa_HashLookup(ctx->Shared->ShaderObjects, name);
+      if (!sh) {
+         _mesa_error(ctx, GL_INVALID_VALUE, caller);
+         return NULL;
+      }
+      if (sh->Type == GL_SHADER_PROGRAM_MESA) {
+         _mesa_error(ctx, GL_INVALID_OPERATION, caller);
+         return NULL;
+      }
+      return sh;
+   }
+}
+
+
+
+/**
  * Initialize context's shader state.
  */
 void
@@ -382,29 +438,20 @@ _mesa_is_shader(GLcontext *ctx, GLuint name)
 static void
 _mesa_attach_shader(GLcontext *ctx, GLuint program, GLuint shader)
 {
-   struct gl_shader_program *shProg
-      = _mesa_lookup_shader_program(ctx, program);
-   struct gl_shader *sh = _mesa_lookup_shader(ctx, shader);
-   GLuint n;
-   GLuint i;
+   struct gl_shader_program *shProg;
+   struct gl_shader *sh;
+   GLuint i, n;
 
-   if (!shProg) {
-      GLenum err = _mesa_is_shader(ctx, program)
-         ? GL_INVALID_OPERATION : GL_INVALID_VALUE;
-      _mesa_error(ctx, err, "glAttachShader(bad program or shader name)");
+   shProg = _mesa_lookup_shader_program_err(ctx, program, "glAttachShader");
+   if (!shProg)
       return;
-   }
 
+   sh = _mesa_lookup_shader_err(ctx, shader, "glAttachShader");
    if (!sh) {
-      GLenum err = _mesa_is_program(ctx, shader)
-         ? GL_INVALID_OPERATION : GL_INVALID_VALUE;
-      _mesa_error(ctx, err, "glAttachShader(bad program or shader name)");
       return;
    }
-
 
    n = shProg->NumShaders;
-
    for (i = 0; i < n; i++) {
       if (shProg->Shaders[i] == sh) {
          /* already attached */
@@ -434,10 +481,9 @@ _mesa_get_attrib_location(GLcontext *ctx, GLuint program,
                           const GLchar *name)
 {
    struct gl_shader_program *shProg
-      = _mesa_lookup_shader_program(ctx, program);
+      = _mesa_lookup_shader_program_err(ctx, program, "glGetAttribLocation");
 
    if (!shProg) {
-      _mesa_error(ctx, GL_INVALID_VALUE, "glGetAttribLocation");
       return -1;
    }
 
@@ -464,15 +510,13 @@ static void
 _mesa_bind_attrib_location(GLcontext *ctx, GLuint program, GLuint index,
                            const GLchar *name)
 {
-   struct gl_shader_program *shProg
-      = _mesa_lookup_shader_program(ctx, program);
+   struct gl_shader_program *shProg;
    const GLint size = -1; /* unknown size */
    GLint i, oldIndex;
 
+   shProg = _mesa_lookup_shader_program_err(ctx, program,
+                                            "glBindAttribLocation");
    if (!shProg) {
-      GLenum err = _mesa_is_shader(ctx, program)
-         ? GL_INVALID_OPERATION : GL_INVALID_VALUE;
-      _mesa_error(ctx, err, "glBindAttribLocation(program)");
       return;
    }
 
@@ -571,11 +615,9 @@ _mesa_delete_program2(GLcontext *ctx, GLuint name)
     */
    struct gl_shader_program *shProg;
 
-   shProg = _mesa_lookup_shader_program(ctx, name);
-   if (!shProg) {
-      _mesa_error(ctx, GL_INVALID_VALUE, "glDeleteProgram(name)");
+   shProg = _mesa_lookup_shader_program_err(ctx, name, "glDeleteProgram");
+   if (!shProg)
       return;
-   }
 
    shProg->DeletePending = GL_TRUE;
 
@@ -587,10 +629,11 @@ _mesa_delete_program2(GLcontext *ctx, GLuint name)
 static void
 _mesa_delete_shader(GLcontext *ctx, GLuint shader)
 {
-   struct gl_shader *sh = _mesa_lookup_shader(ctx, shader);
-   if (!sh) {
+   struct gl_shader *sh;
+
+   sh = _mesa_lookup_shader_err(ctx, shader, "glDeleteShader");
+   if (!sh)
       return;
-   }
 
    sh->DeletePending = GL_TRUE;
 
@@ -602,16 +645,13 @@ _mesa_delete_shader(GLcontext *ctx, GLuint shader)
 static void
 _mesa_detach_shader(GLcontext *ctx, GLuint program, GLuint shader)
 {
-   struct gl_shader_program *shProg
-      = _mesa_lookup_shader_program(ctx, program);
+   struct gl_shader_program *shProg;
    GLuint n;
    GLuint i, j;
 
-   if (!shProg) {
-      _mesa_error(ctx, GL_INVALID_VALUE,
-                  "glDetachShader(bad program or shader name)");
+   shProg = _mesa_lookup_shader_program_err(ctx, program, "glDetachShader");
+   if (!shProg)
       return;
-   }
 
    n = shProg->NumShaders;
 
@@ -620,7 +660,7 @@ _mesa_detach_shader(GLcontext *ctx, GLuint program, GLuint shader)
          /* found it */
          struct gl_shader **newList;
 
-         /* derefernce */
+         /* release */
          _mesa_reference_shader(ctx, &shProg->Shaders[i], NULL);
 
          /* alloc new, smaller array */
@@ -656,8 +696,17 @@ _mesa_detach_shader(GLcontext *ctx, GLuint program, GLuint shader)
    }
 
    /* not found */
-   _mesa_error(ctx, GL_INVALID_VALUE,
-               "glDetachShader(shader not found)");
+   {
+      GLenum err;
+      if (_mesa_is_shader(ctx, shader))
+         err = GL_INVALID_OPERATION;
+      else if (_mesa_is_program(ctx, shader))
+         err = GL_INVALID_OPERATION;
+      else
+         err = GL_INVALID_VALUE;
+      _mesa_error(ctx, err, "glDetachProgram(shader)");
+      return;
+   }
 }
 
 
@@ -669,14 +718,12 @@ _mesa_get_active_attrib(GLcontext *ctx, GLuint program, GLuint index,
    static const GLenum vec_types[] = {
       GL_FLOAT, GL_FLOAT_VEC2, GL_FLOAT_VEC3, GL_FLOAT_VEC4
    };
-   struct gl_shader_program *shProg
-      = _mesa_lookup_shader_program(ctx, program);
+   struct gl_shader_program *shProg;
    GLint sz;
 
-   if (!shProg) {
-      _mesa_error(ctx, GL_INVALID_VALUE, "glGetActiveAttrib");
+   shProg = _mesa_lookup_shader_program_err(ctx, program, "glGetActiveAttrib");
+   if (!shProg)
       return;
-   }
 
    if (!shProg->Attributes || index >= shProg->Attributes->NumParameters) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glGetActiveAttrib(index)");
@@ -701,15 +748,13 @@ _mesa_get_active_uniform(GLcontext *ctx, GLuint program, GLuint index,
                          GLsizei maxLength, GLsizei *length, GLint *size,
                          GLenum *type, GLchar *nameOut)
 {
-   const struct gl_shader_program *shProg
-      = _mesa_lookup_shader_program(ctx, program);
+   const struct gl_shader_program *shProg;
    const struct gl_program *prog;
    GLint progPos;
 
-   if (!shProg) {
-      _mesa_error(ctx, GL_INVALID_VALUE, "glGetActiveUniform");
+   shProg = _mesa_lookup_shader_program_err(ctx, program, "glGetActiveUniform");
+   if (!shProg)
       return;
-   }
 
    if (!shProg->Uniforms || index >= shProg->Uniforms->NumUniforms) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glGetActiveUniform(index)");
@@ -748,18 +793,15 @@ static void
 _mesa_get_attached_shaders(GLcontext *ctx, GLuint program, GLsizei maxCount,
                            GLsizei *count, GLuint *obj)
 {
-   struct gl_shader_program *shProg
-      = _mesa_lookup_shader_program(ctx, program);
+   struct gl_shader_program *shProg =
+      _mesa_lookup_shader_program_err(ctx, program, "glGetAttachedShaders");
    if (shProg) {
-      GLint i;
-      for (i = 0; i < maxCount && i < shProg->NumShaders; i++) {
+      GLuint i;
+      for (i = 0; i < (GLuint) maxCount && i < shProg->NumShaders; i++) {
          obj[i] = shProg->Shaders[i]->Name;
       }
       if (count)
          *count = i;
-   }
-   else {
-      _mesa_error(ctx, GL_INVALID_VALUE, "glGetAttachedShaders");
    }
 }
 
@@ -841,10 +883,9 @@ _mesa_get_programiv(GLcontext *ctx, GLuint program,
 static void
 _mesa_get_shaderiv(GLcontext *ctx, GLuint name, GLenum pname, GLint *params)
 {
-   struct gl_shader *shader = _mesa_lookup_shader(ctx, name);
+   struct gl_shader *shader = _mesa_lookup_shader_err(ctx, name, "glGetShaderiv");
 
    if (!shader) {
-      _mesa_error(ctx, GL_INVALID_VALUE, "glGetShaderiv(shader)");
       return;
    }
 
@@ -905,14 +946,9 @@ static void
 _mesa_get_shader_source(GLcontext *ctx, GLuint shader, GLsizei maxLength,
                         GLsizei *length, GLchar *sourceOut)
 {
-   struct gl_shader *sh = _mesa_lookup_shader(ctx, shader);
+   struct gl_shader *sh;
+   sh = _mesa_lookup_shader_err(ctx, shader, "glGetShaderSource");
    if (!sh) {
-      GLenum err;
-      if (_mesa_lookup_shader_program(ctx, shader))
-         err = GL_INVALID_OPERATION;
-      else
-         err = GL_INVALID_VALUE;
-      _mesa_error(ctx, err, "glGetShaderSource(shader)");
       return;
    }
    copy_string(sourceOut, maxLength, length, sh->Source);
@@ -969,10 +1005,15 @@ _mesa_get_uniformfv(GLcontext *ctx, GLuint program, GLint location,
 static GLint
 _mesa_get_uniform_location(GLcontext *ctx, GLuint program, const GLchar *name)
 {
-   struct gl_shader_program *shProg
-      = _mesa_lookup_shader_program(ctx, program);
+   struct gl_shader_program *shProg =
+      _mesa_lookup_shader_program_err(ctx, program, "glGetUniformLocation");
+
    if (!shProg)
       return -1;
+
+   /* XXX we should return -1 if the uniform was declared, but not
+    * actually used.
+    */
 
    return _mesa_lookup_uniform(shProg->Uniforms, name);
 }
@@ -985,16 +1026,11 @@ _mesa_get_uniform_location(GLcontext *ctx, GLuint program, const GLchar *name)
 static void
 _mesa_shader_source(GLcontext *ctx, GLuint shader, const GLchar *source)
 {
-   struct gl_shader *sh = _mesa_lookup_shader(ctx, shader);
-   if (!sh) {
-      GLenum err;
-      if (_mesa_lookup_shader_program(ctx, shader))
-         err = GL_INVALID_OPERATION;
-      else
-         err = GL_INVALID_VALUE;
-      _mesa_error(ctx, err, "glShaderSource(shaderObj)");
+   struct gl_shader *sh;
+
+   sh = _mesa_lookup_shader_err(ctx, shader, "glShaderSource");
+   if (!sh)
       return;
-   }
 
    /* free old shader source string and install new one */
    if (sh->Source) {
@@ -1011,12 +1047,11 @@ _mesa_shader_source(GLcontext *ctx, GLuint shader, const GLchar *source)
 static void
 _mesa_compile_shader(GLcontext *ctx, GLuint shaderObj)
 {
-   struct gl_shader *sh = _mesa_lookup_shader(ctx, shaderObj);
+   struct gl_shader *sh;
 
-   if (!sh) {
-      _mesa_error(ctx, GL_INVALID_VALUE, "glCompileShader(shaderObj)");
+   sh = _mesa_lookup_shader_err(ctx, shaderObj, "glCompileShader");
+   if (!sh)
       return;
-   }
 
    sh->CompileStatus = _slang_compile(ctx, sh);
 }
@@ -1030,11 +1065,9 @@ _mesa_link_program(GLcontext *ctx, GLuint program)
 {
    struct gl_shader_program *shProg;
 
-   shProg = _mesa_lookup_shader_program(ctx, program);
-   if (!shProg) {
-      _mesa_error(ctx, GL_INVALID_VALUE, "glLinkProgram(program)");
+   shProg = _mesa_lookup_shader_program_err(ctx, program, "glLinkProgram");
+   if (!shProg)
       return;
-   }
 
    FLUSH_VERTICES(ctx, _NEW_PROGRAM);
 
@@ -1059,10 +1092,12 @@ _mesa_use_program(GLcontext *ctx, GLuint program)
    FLUSH_VERTICES(ctx, _NEW_PROGRAM);
 
    if (program) {
-      shProg = _mesa_lookup_shader_program(ctx, program);
+      shProg = _mesa_lookup_shader_program_err(ctx, program, "glUseProgram");
       if (!shProg) {
-         _mesa_error(ctx, GL_INVALID_VALUE,
-                     "glUseProgramObjectARB(programObj)");
+         return;
+      }
+      if (!shProg->LinkStatus) {
+         _mesa_error(ctx, GL_INVALID_OPERATION, "glUseProgram");
          return;
       }
    }
@@ -1107,7 +1142,7 @@ update_textures_used(struct gl_program *prog)
  */
 static void
 set_program_uniform(GLcontext *ctx, struct gl_program *program, GLint location,
-                    GLenum type, GLint count, GLint elems, const void *values)
+                    GLenum type, GLsizei count, GLint elems, const void *values)
 {
    if (program->Parameters->Parameters[location].Type == PROGRAM_SAMPLER) {
       /* This controls which texture unit which is used by a sampler */
@@ -1139,7 +1174,7 @@ set_program_uniform(GLcontext *ctx, struct gl_program *program, GLint location,
    }
    else {
       /* ordinary uniform variable */
-      GLint k, i;
+      GLsizei k, i;
 
       if (count * elems > program->Parameters->Parameters[location].Size) {
          _mesa_error(ctx, GL_INVALID_OPERATION, "glUniform(count too large)");
