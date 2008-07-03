@@ -597,8 +597,8 @@ nv30_set_polygon_stipple(struct pipe_context *pipe,
 {
 	struct nv30_context *nv30 = nv30_context(pipe);
 
-	BEGIN_RING(rankine, NV34TCL_POLYGON_STIPPLE_PATTERN(0), 32);
-	OUT_RINGp ((uint32_t *)stipple->stipple, 32);
+	memcpy(nv30->stipple, stipple->stipple, 4 * 32);
+	nv30->dirty |= NV30_NEW_STIPPLE;
 }
 
 static void
