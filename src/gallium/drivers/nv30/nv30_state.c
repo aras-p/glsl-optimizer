@@ -531,11 +531,8 @@ nv30_set_blend_color(struct pipe_context *pipe,
 {
 	struct nv30_context *nv30 = nv30_context(pipe);
 
-	BEGIN_RING(rankine, NV34TCL_BLEND_COLOR, 1);
-	OUT_RING  ((float_to_ubyte(bcol->color[3]) << 24) |
-		   (float_to_ubyte(bcol->color[0]) << 16) |
-		   (float_to_ubyte(bcol->color[1]) <<  8) |
-		   (float_to_ubyte(bcol->color[2]) <<  0));
+	nv30->blend_colour = *bcol;
+	nv30->dirty |= NV30_NEW_BCOL;
 }
 
 static void
