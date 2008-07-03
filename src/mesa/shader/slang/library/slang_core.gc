@@ -249,6 +249,14 @@ vec4 __constructor(const vec3 v3, const float f)
    __retVal.w = f;
 }
 
+vec4 __constructor(const vec2 v2, const float f1, const float f2)
+{
+   // XXX this constructor shouldn't be needed anymore
+   __retVal.xy = v2;
+   __retVal.z = f1;
+   __retVal.w = f2;
+}
+
 
 //// ivec2 constructors
 
