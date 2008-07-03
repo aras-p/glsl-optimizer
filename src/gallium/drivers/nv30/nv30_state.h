@@ -65,36 +65,6 @@ struct nv30_fragment_program {
 	uint32_t fp_reg_control;
 };
 
-struct nv30_stencil_push {
-	uint32_t enable;
-	uint32_t wmask;
-	uint32_t func;
-	uint32_t ref;
-	uint32_t vmask;
-	uint32_t fail;
-	uint32_t zfail;
-	uint32_t zpass;
-};
-
-struct nv30_depth_stencil_alpha_state {
-	struct {
-		uint32_t func;
-		uint32_t write_enable;
-		uint32_t test_enable;
-	} depth;
-
-	struct {
-		struct nv30_stencil_push back;
-		struct nv30_stencil_push front;
-	} stencil;
-
-	struct {
-		uint32_t enabled;
-		uint32_t func;
-		uint32_t ref;
-	} alpha;
-};
-
 struct nv30_miptree {
 	struct pipe_texture base;
 

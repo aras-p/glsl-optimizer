@@ -405,65 +405,76 @@ nv30_rasterizer_state_delete(struct pipe_context *pipe, void *hwcso)
 	FREE(rsso);
 }
 
-static void
-nv30_translate_stencil(const struct pipe_depth_stencil_alpha_state *cso,
-		       unsigned idx, struct nv30_stencil_push *hw)
-{
-	hw->enable = cso->stencil[idx].enabled ? 1 : 0;
-	hw->wmask = cso->stencil[idx].write_mask;
-	hw->func = nvgl_comparison_op(cso->stencil[idx].func);
-	hw->ref	= cso->stencil[idx].ref_value;
-	hw->vmask = cso->stencil[idx].value_mask;
-	hw->fail = nvgl_stencil_op(cso->stencil[idx].fail_op);
-	hw->zfail = nvgl_stencil_op(cso->stencil[idx].zfail_op);
-	hw->zpass = nvgl_stencil_op(cso->stencil[idx].zpass_op);
-}
-
 static void *
 nv30_depth_stencil_alpha_state_create(struct pipe_context *pipe,
 			const struct pipe_depth_stencil_alpha_state *cso)
 {
-	struct nv30_depth_stencil_alpha_state *hw;
+	struct nv30_context *nv30 = nv30_context(pipe);
+	struct nv30_zsa_state *zsaso = CALLOC(1, sizeof(*zsaso));
+	struct nouveau_stateobj *so = so_new(32, 0);
+	struct nouveau_grobj *rankine = nv30->screen->rankine;
 
-	hw = malloc(sizeof(struct nv30_depth_stencil_alpha_state));
+	so_method(so, rankine, NV34TCL_DEPTH_FUNC, 3);
+	so_data  (so, nvgl_comparison_op(cso->depth.func));
+	so_data  (so, cso->depth.writemask ? 1 : 0);
+	so_data  (so, cso->depth.enabled ? 1 : 0);
 
-	hw->depth.func		= nvgl_comparison_op(cso->depth.func);
-	hw->depth.write_enable	= cso->depth.writemask ? 1 : 0;
-	hw->depth.test_enable	= cso->depth.enabled ? 1 : 0;
+	so_method(so, rankine, NV34TCL_ALPHA_FUNC_ENABLE, 3);
+	so_data  (so, cso->alpha.enabled ? 1 : 0);
+	so_data  (so, nvgl_comparison_op(cso->alpha.func));
+	so_data  (so, float_to_ubyte(cso->alpha.ref));
 
-	nv30_translate_stencil(cso, 0, &hw->stencil.front);
-	nv30_translate_stencil(cso, 1, &hw->stencil.back);
+	if (cso->stencil[0].enabled) {
+		so_method(so, rankine, NV34TCL_STENCIL_FRONT_ENABLE, 8);
+		so_data  (so, cso->stencil[0].enabled ? 1 : 0);
+		so_data  (so, cso->stencil[0].write_mask);
+		so_data  (so, nvgl_comparison_op(cso->stencil[0].func));
+		so_data  (so, cso->stencil[0].ref_value);
+		so_data  (so, cso->stencil[0].value_mask);
+		so_data  (so, nvgl_stencil_op(cso->stencil[0].fail_op));
+		so_data  (so, nvgl_stencil_op(cso->stencil[0].zfail_op));
+		so_data  (so, nvgl_stencil_op(cso->stencil[0].zpass_op));
+	} else {
+		so_method(so, rankine, NV34TCL_STENCIL_FRONT_ENABLE, 1);
+		so_data  (so, 0);
+	}
 
-	hw->alpha.enabled = cso->alpha.enabled ? 1 : 0;
-	hw->alpha.func = nvgl_comparison_op(cso->alpha.func);
-	hw->alpha.ref  = float_to_ubyte(cso->alpha.ref);
+	if (cso->stencil[1].enabled) {
+		so_method(so, rankine, NV34TCL_STENCIL_BACK_ENABLE, 8);
+		so_data  (so, cso->stencil[1].enabled ? 1 : 0);
+		so_data  (so, cso->stencil[1].write_mask);
+		so_data  (so, nvgl_comparison_op(cso->stencil[1].func));
+		so_data  (so, cso->stencil[1].ref_value);
+		so_data  (so, cso->stencil[1].value_mask);
+		so_data  (so, nvgl_stencil_op(cso->stencil[1].fail_op));
+		so_data  (so, nvgl_stencil_op(cso->stencil[1].zfail_op));
+		so_data  (so, nvgl_stencil_op(cso->stencil[1].zpass_op));
+	} else {
+		so_method(so, rankine, NV34TCL_STENCIL_BACK_ENABLE, 1);
+		so_data  (so, 0);
+	}
 
-	return (void *)hw;
+	so_ref(so, &zsaso->so);
+	zsaso->pipe = *cso;
+	return (void *)zsaso;
 }
 
 static void
 nv30_depth_stencil_alpha_state_bind(struct pipe_context *pipe, void *hwcso)
 {
 	struct nv30_context *nv30 = nv30_context(pipe);
-	struct nv30_depth_stencil_alpha_state *hw = hwcso;
 
-	if (!hwcso) {
-		return;
-	}
-
-	BEGIN_RING(rankine, NV34TCL_DEPTH_FUNC, 3);
-	OUT_RINGp ((uint32_t *)&hw->depth, 3);
-	BEGIN_RING(rankine, NV34TCL_STENCIL_BACK_ENABLE, 16);
-	OUT_RINGp ((uint32_t *)&hw->stencil.back, 8);
-	OUT_RINGp ((uint32_t *)&hw->stencil.front, 8);
-	BEGIN_RING(rankine, NV34TCL_ALPHA_FUNC_ENABLE, 3);
-	OUT_RINGp ((uint32_t *)&hw->alpha.enabled, 3);
+	nv30->zsa = hwcso;
+	nv30->dirty |= NV30_NEW_ZSA;
 }
 
 static void
 nv30_depth_stencil_alpha_state_delete(struct pipe_context *pipe, void *hwcso)
 {
-	free(hwcso);
+	struct nv30_zsa_state *zsaso = hwcso;
+
+	so_ref(NULL, &zsaso->so);
+	FREE(zsaso);
 }
 
 static void *

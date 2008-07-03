@@ -6,6 +6,7 @@ static struct nv30_state_entry *render_states[] = {
 	&nv30_state_rasterizer,
 	&nv30_state_blend,
 	&nv30_state_blend_colour,
+	&nv30_state_zsa,
 	NULL
 };
 
