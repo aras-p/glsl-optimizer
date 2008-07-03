@@ -46,8 +46,18 @@ void
 nv30_emit_hw_state(struct nv30_context *nv30)
 {
 	struct nv30_state *state = &nv30->state;
+	struct nv30_screen *screen = nv30->screen;
 	unsigned i;
 	uint64 states;
+
+	if (nv30->pctx_id != screen->cur_pctx) {
+		for (i = 0; i < NV30_STATE_MAX; i++) {
+			if (state->hw[i] && screen->state[i] != state->hw[i])
+				state->dirty |= (1ULL << i);
+		}
+
+		screen->cur_pctx = nv30->pctx_id;
+	}
 
 	for (i = 0, states = state->dirty; states; i++) {
 		if (!(states & (1ULL << i)))
