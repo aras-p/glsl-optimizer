@@ -293,30 +293,72 @@ formats = {
 }
 
 
+def clip(g):
+	return min(max(g, 0), 255)
+
+
+def yuv2rgb(y, u, v):
+	C = y - 16
+	D = u - 128
+	E = v - 128
+
+	r = clip(( 298 * C           + 409 * E + 128) >> 8)
+	g = clip(( 298 * C - 100 * D - 208 * E + 128) >> 8)
+	b = clip(( 298 * C + 516 * D           + 128) >> 8)
+	
+	return r, g, b
+
+	
+def translate_rgba(data):
+	r, g, b, a = data
+	return [[(r, g, b, a)]]
+
+
+def translate_ycbcr(data):
+	y1, u, y2, v = data
+	r1, g1, b1 = yuv2rgb(y1, u, v)
+	r2, g2, b2 = yuv2rgb(y1, u, v)
+	return [[(r1, g1, b1, 255), (r2, g2, b2, 255)]]
+
+def translate_ycbcr_rev(data):
+    v, y2, u, y1 = data
+    r1, g1, b1 = yuv2rgb(y1, u, v)
+    r2, g2, b2 = yuv2rgb(y1, u, v)
+    return [[(r1, g1, b1, 255), (r2, g2, b2, 255)]]
+
+
+translate = {
+	PIPE_FORMAT_A8R8G8B8_UNORM: (4, 1, 1, translate_rgba),
+	PIPE_FORMAT_X8R8G8B8_UNORM: (4, 1, 1, translate_rgba),
+	PIPE_FORMAT_B8G8R8A8_UNORM: (4, 1, 1, translate_rgba),
+	PIPE_FORMAT_B8G8R8X8_UNORM: (4, 1, 1, translate_rgba),
+	PIPE_FORMAT_YCBCR: (4, 2, 1, translate_ycbcr),
+	PIPE_FORMAT_YCBCR_REV: (4, 2, 1, translate_ycbcr_rev),
+}
+
 def read_header(infile):
 	header_fmt = "IIII"
 	header = infile.read(struct.calcsize(header_fmt))
 	return struct.unpack_from(header_fmt, header)
-
-def read_pixel(infile, fmt, cpp):
-	assert cpp == 4
-	r, g, b, a = map(ord, infile.read(4))
-	return r, g, b, a
-
 
 def process(infilename, outfilename):
 	infile = open(infilename, "rb")
 	format, cpp, width, height = read_header(infile)
 	sys.stderr.write("format = %s, cpp = %u, width = %u, height = %u\n" % (formats[format], cpp, width, height))
 	outimage = Image.new(
-    mode='RGB',
-    size=(width, height),
-    color=(0,0,0))
+	mode='RGB',
+	size=(width, height),
+	color=(0,0,0))
 	outpixels = outimage.load()
-	for y in range(height):
-		for x in range(width):
-			r, g, b, a = read_pixel(infile, format, cpp)
-			outpixels[x, y] = r, g, b
+	bsize, bwidth, bheight, translate_func = translate[format]
+	for y in range(0, height, bheight):
+		for x in range(0, width, bwidth):
+			indata = map(ord, infile.read(4))
+			outdata = translate_func(indata)
+			for j in range(bheight):
+				for i in range(bwidth):
+					r, g, b, a = outdata[j][i]
+					outpixels[x+i, y+j] = r, g, b
 	outimage.save(outfilename, "PNG")
 
 
