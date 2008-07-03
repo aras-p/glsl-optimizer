@@ -147,9 +147,9 @@ struct tgsi_exec_labels
 #define TGSI_EXEC_NUM_ADDRS   1
 #define TGSI_EXEC_NUM_IMMEDIATES  256
 
-#define TGSI_EXEC_MAX_COND_NESTING  10
-#define TGSI_EXEC_MAX_LOOP_NESTING  10
-#define TGSI_EXEC_MAX_CALL_NESTING  10
+#define TGSI_EXEC_MAX_COND_NESTING  20
+#define TGSI_EXEC_MAX_LOOP_NESTING  20
+#define TGSI_EXEC_MAX_CALL_NESTING  20
 
 /**
  * Run-time virtual machine state for executing TGSI shader.
