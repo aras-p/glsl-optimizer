@@ -34,6 +34,7 @@
 
 struct pipe_screen;
 struct egl_drm_device;
+struct intel_context;
 
 struct intel_screen
 {
@@ -42,6 +43,8 @@ struct intel_screen
 
 	int deviceID;
 	struct egl_drm_device *device;
+
+	struct intel_context *dummy;
 };
 
 #endif

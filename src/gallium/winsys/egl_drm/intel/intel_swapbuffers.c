@@ -68,17 +68,22 @@ intel_display_surface(struct egl_drm_drawable *draw,
 
 	//const int srcWidth = surf->width;
 	//const int srcHeight = surf->height;
-	const int srcPitch = surf->pitch;
+
+	intel = intel_fb->screen->dummy;
+	if (!intel) {
+		printf("No dummy context\n");
+		return;
+	}
 
 	const int dstWidth = intel_fb->front->width;
 	const int dstHeight = intel_fb->front->height;
 	const int dstPitch = intel_fb->front->pitch / 4;//draw->front.cpp;
 
 	const int cpp = 4;//intel_fb->front->cpp;
+	const int srcPitch = surf->stride / cpp;
 
 	int BR13, CMD;
 	//int i;
-
 
 	BR13 = (dstPitch * cpp) | (0xCC << 16) | (1 << 24) | (1 << 25);
 	CMD = (XY_SRC_COPY_BLT_CMD | XY_SRC_COPY_BLT_WRITE_ALPHA |
