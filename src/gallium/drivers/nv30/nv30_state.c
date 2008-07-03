@@ -617,15 +617,9 @@ nv30_set_viewport_state(struct pipe_context *pipe,
 {
 	struct nv30_context *nv30 = nv30_context(pipe);
 
-	BEGIN_RING(rankine, NV34TCL_VIEWPORT_TRANSLATE_X, 8);
-	OUT_RINGf (vpt->translate[0]);
-	OUT_RINGf (vpt->translate[1]);
-	OUT_RINGf (vpt->translate[2]);
-	OUT_RINGf (vpt->translate[3]);
-	OUT_RINGf (vpt->scale[0]);
-	OUT_RINGf (vpt->scale[1]);
-	OUT_RINGf (vpt->scale[2]);
-	OUT_RINGf (vpt->scale[3]);
+	nv30->viewport = *vpt;
+	nv30->dirty |= NV30_NEW_VIEWPORT;
+	/*nv30->draw_dirty |= NV30_NEW_VIEWPORT;*/
 }
 
 static void

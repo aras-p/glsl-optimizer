@@ -215,6 +215,7 @@ extern struct nv30_state_entry nv30_state_stipple;
 extern struct nv30_state_entry nv30_state_blend;
 extern struct nv30_state_entry nv30_state_blend_colour;
 extern struct nv30_state_entry nv30_state_zsa;
+extern struct nv30_state_entry nv30_state_viewport;
 extern struct nv30_state_entry nv30_state_framebuffer;
 
 /* nv30_vbo.c */
