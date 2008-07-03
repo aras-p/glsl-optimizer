@@ -607,9 +607,8 @@ nv30_set_scissor_state(struct pipe_context *pipe,
 {
 	struct nv30_context *nv30 = nv30_context(pipe);
 
-	BEGIN_RING(rankine, NV34TCL_SCISSOR_HORIZ, 2);
-	OUT_RING  (((s->maxx - s->minx) << 16) | s->minx);
-	OUT_RING  (((s->maxy - s->miny) << 16) | s->miny);
+	nv30->scissor = *s;
+	nv30->dirty |= NV30_NEW_SCISSOR;
 }
 
 static void
