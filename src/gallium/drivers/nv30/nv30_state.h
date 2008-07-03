@@ -3,20 +3,6 @@
 
 #include "pipe/p_state.h"
 
-struct nv30_blend_state {
-	uint32_t b_enable;
-	uint32_t b_srcfunc;
-	uint32_t b_dstfunc;
-	uint32_t b_eqn;
-
-	uint32_t l_enable;
-	uint32_t l_op;
-
-	uint32_t c_mask;
-
-	uint32_t d_enable;
-};
-
 struct nv30_sampler_state {
 	uint32_t fmt;
 	uint32_t wrap;

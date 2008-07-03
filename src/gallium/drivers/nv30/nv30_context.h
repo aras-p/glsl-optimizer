@@ -87,8 +87,7 @@ struct nv30_zsa_state {
 	struct nouveau_stateobj *so;
 };
 
-/* TODO: rename when removing the old state emitter */
-struct nv30_blend_state_new {
+struct nv30_blend_state {
 	struct pipe_blend_state pipe;
 	struct nouveau_stateobj *so;
 };
@@ -125,7 +124,7 @@ struct nv30_context {
 	unsigned vp_samplers;
 
 	/* Context state */
-	struct nv30_blend_state_new *blend;
+	struct nv30_blend_state *blend;
 	struct pipe_blend_color blend_colour;
 	struct pipe_viewport_state viewport;
 	struct pipe_framebuffer_state framebuffer;
@@ -212,6 +211,7 @@ extern void nv30_fragtex_bind(struct nv30_context *);
 extern boolean nv30_state_validate(struct nv30_context *nv30);
 extern void nv30_emit_hw_state(struct nv30_context *nv30);
 extern void nv30_state_tex_update(struct nv30_context *nv30);
+extern struct nv30_state_entry nv30_state_blend;
 extern struct nv30_state_entry nv30_state_blend_colour;
 extern struct nv30_state_entry nv30_state_framebuffer;
 

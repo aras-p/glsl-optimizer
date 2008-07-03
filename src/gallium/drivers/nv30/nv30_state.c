@@ -9,63 +9,65 @@ static void *
 nv30_blend_state_create(struct pipe_context *pipe,
 			const struct pipe_blend_state *cso)
 {
-	struct nv30_blend_state *cb;
+	struct nv30_context *nv30 = nv30_context(pipe);
+	struct nouveau_grobj *rankine = nv30->screen->rankine;
+	struct nv30_blend_state *bso = CALLOC(1, sizeof(*bso));
+	struct nouveau_stateobj *so = so_new(16, 0);
 
-	cb = malloc(sizeof(struct nv30_blend_state));
+	if (cso->blend_enable) {
+		so_method(so, rankine, NV34TCL_BLEND_FUNC_ENABLE, 3);
+		so_data  (so, 1);
+		so_data  (so, (nvgl_blend_func(cso->alpha_src_factor) << 16) |
+			       nvgl_blend_func(cso->rgb_src_factor));
+		so_data  (so, nvgl_blend_func(cso->alpha_dst_factor) << 16 |
+			      nvgl_blend_func(cso->rgb_dst_factor));
+		so_method(so, rankine, NV34TCL_BLEND_EQUATION, 1);
+		so_data  (so, nvgl_blend_eqn(cso->alpha_func) << 16 |
+			      nvgl_blend_eqn(cso->rgb_func));
+	} else {
+		so_method(so, rankine, NV34TCL_BLEND_FUNC_ENABLE, 1);
+		so_data  (so, 0);
+	}
 
-	cb->b_enable = cso->blend_enable ? 1 : 0;
-	cb->b_srcfunc = ((nvgl_blend_func(cso->alpha_src_factor)<<16) |
-			 (nvgl_blend_func(cso->rgb_src_factor)));
-	cb->b_dstfunc = ((nvgl_blend_func(cso->alpha_dst_factor)<<16) |
-			 (nvgl_blend_func(cso->rgb_dst_factor)));
-	cb->b_eqn = ((nvgl_blend_eqn(cso->alpha_func) << 16) |
-		     (nvgl_blend_eqn(cso->rgb_func)));
+	so_method(so, rankine, NV34TCL_COLOR_MASK, 1);
+	so_data  (so, (((cso->colormask & PIPE_MASK_A) ? (0x01 << 24) : 0) |
+		       ((cso->colormask & PIPE_MASK_R) ? (0x01 << 16) : 0) |
+		       ((cso->colormask & PIPE_MASK_G) ? (0x01 <<  8) : 0) |
+		       ((cso->colormask & PIPE_MASK_B) ? (0x01 <<  0) : 0)));
 
-	cb->l_enable = cso->logicop_enable ? 1 : 0;
-	cb->l_op = nvgl_logicop_func(cso->logicop_func);
+	if (cso->logicop_enable) {
+		so_method(so, rankine, NV34TCL_COLOR_LOGIC_OP_ENABLE, 2);
+		so_data  (so, 1);
+		so_data  (so, nvgl_logicop_func(cso->logicop_func));
+	} else {
+		so_method(so, rankine, NV34TCL_COLOR_LOGIC_OP_ENABLE, 1);
+		so_data  (so, 0);
+	}
 
-	cb->c_mask = (((cso->colormask & PIPE_MASK_A) ? (0x01<<24) : 0) |
-		      ((cso->colormask & PIPE_MASK_R) ? (0x01<<16) : 0) |
-		      ((cso->colormask & PIPE_MASK_G) ? (0x01<< 8) : 0) |
-		      ((cso->colormask & PIPE_MASK_B) ? (0x01<< 0) : 0));
+	so_method(so, rankine, NV34TCL_DITHER_ENABLE, 1);
+	so_data  (so, cso->dither ? 1 : 0);
 
-	cb->d_enable = cso->dither ? 1 : 0;
-
-	return (void *)cb;
+	so_ref(so, &bso->so);
+	bso->pipe = *cso;
+	return (void *)bso;
 }
 
 static void
 nv30_blend_state_bind(struct pipe_context *pipe, void *hwcso)
 {
 	struct nv30_context *nv30 = nv30_context(pipe);
-	struct nv30_blend_state *cb = hwcso;
 
-	if (!hwcso) {
-		return;
-	}
-
-	BEGIN_RING(rankine, NV34TCL_DITHER_ENABLE, 1);
-	OUT_RING  (cb->d_enable);
-
-	BEGIN_RING(rankine, NV34TCL_BLEND_FUNC_ENABLE, 3);
-	OUT_RING  (cb->b_enable);
-	OUT_RING  (cb->b_srcfunc);
-	OUT_RING  (cb->b_dstfunc);
-	BEGIN_RING(rankine, NV34TCL_BLEND_EQUATION, 1);
-	OUT_RING  (cb->b_eqn);
-
-	BEGIN_RING(rankine, NV34TCL_COLOR_MASK, 1);
-	OUT_RING  (cb->c_mask);
-
-	BEGIN_RING(rankine, NV34TCL_COLOR_LOGIC_OP_ENABLE, 2);
-	OUT_RING  (cb->l_enable);
-	OUT_RING  (cb->l_op);
+	nv30->blend = hwcso;
+	nv30->dirty |= NV30_NEW_BLEND;
 }
 
 static void
 nv30_blend_state_delete(struct pipe_context *pipe, void *hwcso)
 {
-	free(hwcso);
+	struct nv30_blend_state *bso = hwcso;
+
+	so_ref(NULL, &bso->so);
+	FREE(bso);
 }
 
 

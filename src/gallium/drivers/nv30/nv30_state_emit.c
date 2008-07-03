@@ -3,6 +3,7 @@
 
 static struct nv30_state_entry *render_states[] = {
 	&nv30_state_framebuffer,
+	&nv30_state_blend,
 	&nv30_state_blend_colour,
 	NULL
 };

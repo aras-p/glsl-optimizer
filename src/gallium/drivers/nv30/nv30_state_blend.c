@@ -7,7 +7,7 @@ nv30_state_blend_validate(struct nv30_context *nv30)
 	return TRUE;
 }
 
-struct nv30_state_entry nv30_state_blend_new = {
+struct nv30_state_entry nv30_state_blend = {
 	.validate = nv30_state_blend_validate,
 	.dirty = {
 		.pipe = NV30_NEW_BLEND,
