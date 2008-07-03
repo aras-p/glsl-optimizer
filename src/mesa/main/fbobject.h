@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5
+ * Version:  7.1
  *
- * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2008  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -26,6 +26,9 @@
 #ifndef FBOBJECT_H
 #define FBOBJECT_H
 
+
+extern void
+_mesa_init_fbobjects(GLcontext *ctx);
 
 extern struct gl_renderbuffer *
 _mesa_lookup_renderbuffer(GLcontext *ctx, GLuint id);

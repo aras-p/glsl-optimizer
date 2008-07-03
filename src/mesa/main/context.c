@@ -691,6 +691,37 @@ delete_shader_cb(GLuint id, void *data, void *userData)
    }
 }
 
+/**
+ * Callback for deleting a framebuffer object.  Called by _mesa_HashDeleteAll()
+ */
+static void
+delete_framebuffer_cb(GLuint id, void *data, void *userData)
+{
+   struct gl_framebuffer *fb = (struct gl_framebuffer *) data;
+   /* The fact that the framebuffer is in the hashtable means its refcount
+    * is one, but we're removing from the hashtable now.  So clear refcount.
+    */
+   /*assert(fb->RefCount == 1);*/
+   fb->RefCount = 0;
+
+   /* NOTE: Delete should always be defined but there are two reports
+    * of it being NULL (bugs 13507, 14293).  Work-around for now.
+    */
+   if (fb->Delete)
+      fb->Delete(fb);
+}
+
+/**
+ * Callback for deleting a renderbuffer object. Called by _mesa_HashDeleteAll()
+ */
+static void
+delete_renderbuffer_cb(GLuint id, void *data, void *userData)
+{
+   struct gl_renderbuffer *rb = (struct gl_renderbuffer *) data;
+   rb->RefCount = 0;  /* see comment for FBOs above */
+   rb->Delete(rb);
+}
+
 
 /**
  * Deallocate a shared state object and all children structures.
@@ -744,7 +775,9 @@ free_shared_state( GLcontext *ctx, struct gl_shared_state *ss )
    _mesa_DeleteHashTable(ss->ArrayObjects);
 
 #if FEATURE_EXT_framebuffer_object
+   _mesa_HashDeleteAll(ss->FrameBuffers, delete_framebuffer_cb, ctx);
    _mesa_DeleteHashTable(ss->FrameBuffers);
+   _mesa_HashDeleteAll(ss->RenderBuffers, delete_renderbuffer_cb, ctx);
    _mesa_DeleteHashTable(ss->RenderBuffers);
 #endif
 
@@ -994,6 +1027,7 @@ init_attrib_groups(GLcontext *ctx)
 #if FEATURE_evaluators
    _mesa_init_eval( ctx );
 #endif
+   _mesa_init_fbobjects( ctx );
 #if FEATURE_feedback
    _mesa_init_feedback( ctx );
 #else
