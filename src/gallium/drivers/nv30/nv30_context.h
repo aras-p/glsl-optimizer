@@ -76,8 +76,7 @@ enum nv30_state_index {
 #define NV30_NEW_ARRAYS		(1 << 11)
 #define NV30_NEW_UCP		(1 << 12)
 
-/* TODO: rename when removing the old state emitter */
-struct nv30_rasterizer_state_new {
+struct nv30_rasterizer_state {
 	struct pipe_rasterizer_state pipe;
 	struct nouveau_stateobj *so;
 };
@@ -124,11 +123,11 @@ struct nv30_context {
 	unsigned vp_samplers;
 
 	/* Context state */
+	struct nv30_rasterizer_state *rasterizer;
 	struct nv30_blend_state *blend;
 	struct pipe_blend_color blend_colour;
 	struct pipe_viewport_state viewport;
 	struct pipe_framebuffer_state framebuffer;
-	struct nv30_rasterizer_state_new *rasterizer;
 	struct nv30_zsa_state *zsa;
 	unsigned stipple[32];
 
@@ -211,6 +210,7 @@ extern void nv30_fragtex_bind(struct nv30_context *);
 extern boolean nv30_state_validate(struct nv30_context *nv30);
 extern void nv30_emit_hw_state(struct nv30_context *nv30);
 extern void nv30_state_tex_update(struct nv30_context *nv30);
+extern struct nv30_state_entry nv30_state_rasterizer;
 extern struct nv30_state_entry nv30_state_blend;
 extern struct nv30_state_entry nv30_state_blend_colour;
 extern struct nv30_state_entry nv30_state_framebuffer;

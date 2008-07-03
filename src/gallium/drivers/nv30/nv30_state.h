@@ -11,29 +11,6 @@ struct nv30_sampler_state {
 	uint32_t bcol;
 };
 
-struct nv30_rasterizer_state {
-	uint32_t shade_model;
-
-	uint32_t line_width;
-	uint32_t line_smooth_en;
-	uint32_t line_stipple_en;
-	uint32_t line_stipple;
-
-	uint32_t point_size;
-
-	uint32_t poly_smooth_en;
-	uint32_t poly_stipple_en;
-	
-	uint32_t poly_mode_front;
-	uint32_t poly_mode_back;
-
-	uint32_t front_face;
-	uint32_t cull_face;
-	uint32_t cull_face_en;
-
-	uint32_t point_sprite;
-};
-
 struct nv30_vertex_program_exec {
 	uint32_t data[4];
 	boolean has_branch_offset;
