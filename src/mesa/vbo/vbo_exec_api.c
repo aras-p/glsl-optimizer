@@ -795,3 +795,10 @@ _vbo_Materialfv(GLenum face, GLenum pname, const GLfloat *params)
 {
    vbo_Materialfv(face, pname, params);
 }
+
+
+void
+_vbo_VertexAttrib4f(GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w)
+{
+   vbo_VertexAttrib4fARB(index, x, y, z, w);
+}
