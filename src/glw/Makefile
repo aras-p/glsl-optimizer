@@ -28,18 +28,19 @@ default: $(TOP)/$(LIB_DIR)/$(GLW_LIB_NAME)
 # GLU pkg-config file
 pcedit = sed \
 	-e 's,@INSTALL_DIR@,$(INSTALL_DIR),' \
-	-e 's,@LIB_DIR@,$(LIB_DIR),' \
+	-e 's,@INSTALL_LIB_DIR@,$(INSTALL_LIB_DIR),' \
+	-e 's,@INSTALL_INC_DIR@,$(INSTALL_INC_DIR),' \
 	-e 's,@VERSION@,$(MAJOR).$(MINOR).$(TINY),'
 glw.pc: glw.pc.in
 	$(pcedit) $< > $@
 
 install: glw.pc
-	$(INSTALL) -d $(DESTDIR)$(INSTALL_DIR)/include/GL
-	$(INSTALL) -d $(DESTDIR)$(INSTALL_DIR)/$(LIB_DIR)
-	$(INSTALL) -d $(DESTDIR)$(INSTALL_DIR)/$(LIB_DIR)/pkgconfig
-	$(INSTALL) -m 644 *.h $(DESTDIR)$(INSTALL_DIR)/include/GL
-	$(INSTALL) $(TOP)/$(LIB_DIR)/libGLw.* $(DESTDIR)$(INSTALL_DIR)/$(LIB_DIR)
-	$(INSTALL) -m 644 glw.pc $(DESTDIR)$(INSTALL_DIR)/$(LIB_DIR)/pkgconfig
+	$(INSTALL) -d $(DESTDIR)$(INSTALL_INC_DIR)/GL
+	$(INSTALL) -d $(DESTDIR)$(INSTALL_LIB_DIR)
+	$(INSTALL) -d $(DESTDIR)$(INSTALL_LIB_DIR)/pkgconfig
+	$(INSTALL) -m 644 *.h $(DESTDIR)$(INSTALL_INC_DIR)/GL
+	$(INSTALL) $(TOP)/$(LIB_DIR)/libGLw.* $(DESTDIR)$(INSTALL_LIB_DIR)
+	$(INSTALL) -m 644 glw.pc $(DESTDIR)$(INSTALL_LIB_DIR)/pkgconfig
 
 clean:
 	-rm -f depend depend.bak

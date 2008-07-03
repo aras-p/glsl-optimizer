@@ -1,7 +1,7 @@
 prefix=@INSTALL_DIR@
 exec_prefix=${prefix}
-libdir=${exec_prefix}/@LIB_DIR@
-includedir=${prefix}/include
+libdir=@INSTALL_LIB_DIR@
+includedir=@INSTALL_INC_DIR@
 
 Name: glw
 Description: Mesa OpenGL widget library

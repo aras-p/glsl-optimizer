@@ -22,7 +22,8 @@ subdirs:
 
 pcedit = sed \
 	-e 's,@INSTALL_DIR@,$(INSTALL_DIR),' \
-	-e 's,@LIB_DIR@,$(LIB_DIR),' \
+	-e 's,@INSTALL_LIB_DIR@,$(INSTALL_LIB_DIR),' \
+	-e 's,@INSTALL_INC_DIR@,$(INSTALL_INC_DIR),' \
 	-e 's,@VERSION@,$(MESA_MAJOR).$(MESA_MINOR).$(MESA_TINY),' \
 	-e 's,@DRI_DRIVER_DIR@,$(DRI_DRIVER_SEARCH_DIR),'
 
@@ -36,11 +37,13 @@ install: dri.pc
 			(cd $$dir && $(MAKE) install) || exit 1 ; \
 		fi \
 	done
-	$(INSTALL) -d $(DESTDIR)$(INSTALL_DIR)/include/GL/internal
-	$(INSTALL) -m 0644 $(TOP)/include/GL/internal/dri_interface.h $(DESTDIR)$(INSTALL_DIR)/include/GL/internal
-	$(INSTALL) -m 0644 $(TOP)/include/GL/internal/dri_sarea.h $(DESTDIR)$(INSTALL_DIR)/include/GL/internal
-	$(INSTALL) -d $(DESTDIR)$(INSTALL_DIR)/$(LIB_DIR)/pkgconfig
-	$(INSTALL) -m 0644 dri.pc $(DESTDIR)$(INSTALL_DIR)/$(LIB_DIR)/pkgconfig
+	$(INSTALL) -d $(DESTDIR)$(INSTALL_INC_DIR)/GL/internal
+	$(INSTALL) -m 0644 $(TOP)/include/GL/internal/dri_interface.h \
+	  $(DESTDIR)$(INSTALL_INC_DIR)/GL/internal
+	$(INSTALL) -m 0644 $(TOP)/include/GL/internal/dri_sarea.h \
+	  $(DESTDIR)$(INSTALL_INC_DIR)/GL/internal
+	$(INSTALL) -d $(DESTDIR)$(INSTALL_LIB_DIR)/pkgconfig
+	$(INSTALL) -m 0644 dri.pc $(DESTDIR)$(INSTALL_LIB_DIR)/pkgconfig
 
 
 clean:

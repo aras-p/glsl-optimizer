@@ -994,6 +994,7 @@ echo ""
 echo "        prefix:          $prefix"
 echo "        exec_prefix:     $exec_prefix"
 echo "        libdir:          $libdir"
+echo "        includedir:      $includedir"
 
 dnl Driver info
 echo ""
