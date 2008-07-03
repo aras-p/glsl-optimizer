@@ -4,7 +4,7 @@ static boolean
 nv30_state_framebuffer_validate(struct nv30_context *nv30)
 {
 	struct pipe_framebuffer_state *fb = &nv30->framebuffer;
-	struct pipe_surface *rt[4], *zeta = NULL;
+	struct pipe_surface *rt[2], *zeta = NULL;
 	uint32_t rt_enable, rt_format;
 	int i, colour_format = 0, zeta_format = 0;
 	struct nouveau_stateobj *so = so_new(64, 10);
@@ -23,8 +23,7 @@ nv30_state_framebuffer_validate(struct nv30_context *nv30)
 		}
 	}
 
-	if (rt_enable & (NV34TCL_RT_ENABLE_COLOR1 | NV34TCL_RT_ENABLE_COLOR2 |
-			 NV34TCL_RT_ENABLE_COLOR3))
+	if (rt_enable & NV34TCL_RT_ENABLE_COLOR1)
 		rt_enable |= NV34TCL_RT_ENABLE_MRT;
 
 	if (fb->zsbuf) {
@@ -86,31 +85,7 @@ nv30_state_framebuffer_validate(struct nv30_context *nv30)
 			  NOUVEAU_BO_LOW, 0, 0);
 		so_data  (so, rt[1]->stride);
 	}
-/*
-	if (rt_enable & NV34TCL_RT_ENABLE_COLOR2) {
-		so_method(so, nv30->screen->rankine, NV34TCL_DMA_COLOR2, 1);
-		so_reloc (so, rt[2]->buffer, 0, rt_flags | NOUVEAU_BO_OR,
-			  nv30->nvws->channel->vram->handle,
-			  nv30->nvws->channel->gart->handle);
-		so_method(so, nv30->screen->rankine, NV34TCL_COLOR2_OFFSET, 1);
-		so_reloc (so, rt[2]->buffer, rt[2]->offset, rt_flags |
-			  NOUVEAU_BO_LOW, 0, 0);
-		so_method(so, nv30->screen->rankine, NV34TCL_COLOR2_PITCH, 1);
-		so_data  (so, rt[2]->pitch * rt[2]->cpp);
-	}
 
-	if (rt_enable & NV34TCL_RT_ENABLE_COLOR3) {
-		so_method(so, nv30->screen->rankine, NV34TCL_DMA_COLOR3, 1);
-		so_reloc (so, rt[3]->buffer, 0, rt_flags | NOUVEAU_BO_OR,
-			  nv30->nvws->channel->vram->handle,
-			  nv30->nvws->channel->gart->handle);
-		so_method(so, nv30->screen->rankine, NV34TCL_COLOR3_OFFSET, 1);
-		so_reloc (so, rt[3]->buffer, rt[3]->offset, rt_flags |
-			  NOUVEAU_BO_LOW, 0, 0);
-		so_method(so, nv30->screen->rankine, NV34TCL_COLOR3_PITCH, 1);
-		so_data  (so, rt[3]->pitch * rt[3]->cpp);
-	}
-*/
 	if (zeta_format) {
 		so_method(so, nv30->screen->rankine, NV34TCL_DMA_ZETA, 1);
 		so_reloc (so, zeta->buffer, 0, rt_flags | NOUVEAU_BO_OR,
@@ -119,8 +94,7 @@ nv30_state_framebuffer_validate(struct nv30_context *nv30)
 		so_method(so, nv30->screen->rankine, NV34TCL_ZETA_OFFSET, 1);
 		so_reloc (so, zeta->buffer, zeta->offset, rt_flags |
 			  NOUVEAU_BO_LOW, 0, 0);
-		/*so_method(so, nv30->screen->rankine, NV34TCL_ZETA_PITCH, 1);
-		so_data  (so, zeta->pitch * zeta->cpp);*/
+		/* TODO: allocate LMA depth buffer */
 	}
 
 	so_method(so, nv30->screen->rankine, NV34TCL_RT_ENABLE, 1);
@@ -137,6 +111,9 @@ nv30_state_framebuffer_validate(struct nv30_context *nv30)
 	so_data  (so, ((h - 1) << 16) | 0);
 	so_method(so, nv30->screen->rankine, 0x1d88, 1);
 	so_data  (so, (1 << 12) | h);
+	/* Wonder why this is needed, context should all be set to zero on init */
+	so_method(so, nv30->screen->rankine, NV34TCL_VIEWPORT_TX_ORIGIN, 1);
+	so_data  (so, 0);
 
 	so_ref(so, &nv30->state.hw[NV30_STATE_FB]);
 	return TRUE;

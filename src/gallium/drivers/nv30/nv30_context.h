@@ -99,6 +99,7 @@ struct nv30_state {
 	unsigned stipple_enabled;
 	unsigned viewport_bypass;
 
+	uint64_t dirty;
 	struct nouveau_stateobj *hw[NV30_STATE_MAX];
 };
 
@@ -208,8 +209,10 @@ extern void nv30_fragprog_destroy(struct nv30_context *,
 extern void nv30_fragtex_bind(struct nv30_context *);
 
 /* nv30_state.c and friends */
+extern boolean nv30_state_validate(struct nv30_context *nv30);
 extern void nv30_emit_hw_state(struct nv30_context *nv30);
 extern void nv30_state_tex_update(struct nv30_context *nv30);
+extern struct nv30_state_entry nv30_state_framebuffer;
 
 /* nv30_vbo.c */
 extern boolean nv30_draw_arrays(struct pipe_context *, unsigned mode,

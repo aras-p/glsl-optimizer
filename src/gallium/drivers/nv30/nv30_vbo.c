@@ -154,6 +154,8 @@ nv30_vbo_validate_state(struct nv30_context *nv30,
 {
 	unsigned inputs;
 
+	nv30_state_validate(nv30);
+
 	nv30_emit_hw_state(nv30);
 
 	if (nv30->dirty & NV30_NEW_ARRAYS) {
