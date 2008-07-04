@@ -272,7 +272,12 @@ def generate(env):
 		if env['profile']:
 			cflags += ['-pg']
 		if env['machine'] == 'x86':
-			cflags += ['-m32']
+			cflags += [
+				'-m32',
+				#'-march=pentium4',
+				'-mmmx', '-msse', '-msse2', # enable SIMD intrinsics
+				#'-mfpmath=sse',
+			]
 		if env['machine'] == 'x86_64':
 			cflags += ['-m64']
 		cflags += [
