@@ -7,6 +7,7 @@
 #include <pipe/p_inlines.h>
 #include "vl_context.h"
 #include "vl_defs.h"
+#include "vl_util.h"
 
 static int vlGrabFrameCodedFullBlock(short *src, short *dst, unsigned int dst_pitch)
 {
@@ -194,9 +195,6 @@ static int vlGrabBlocks
 		pipe_surface_unmap(tex_surface);
 	}
 	
-	/* XXX: Texture cache is not invalidated when texture contents change */
-	context->pipe->flush(context->pipe, PIPE_FLUSH_TEXTURE_CACHE, NULL);
-	
 	return 0;
 }
 
@@ -214,8 +212,8 @@ int vlCreateSurface(struct VL_CONTEXT *context, struct VL_SURFACE **surface)
 	sfc = calloc(1, sizeof(struct VL_SURFACE));
 	
 	sfc->context = context;
-	sfc->width = context->video_width;
-	sfc->height = context->video_height;
+	sfc->width = vlRoundUpPOT(context->video_width);
+	sfc->height = vlRoundUpPOT(context->video_height);
 	sfc->format = context->video_format;
 	
 	memset(&template, 0, sizeof(struct pipe_texture));
@@ -227,6 +225,7 @@ int vlCreateSurface(struct VL_CONTEXT *context, struct VL_SURFACE **surface)
 	template.depth[0] = 1;
 	template.compressed = 0;
 	pf_get_block(template.format, &template.block);
+	/* XXX: Needed? */
 	template.tex_usage = PIPE_TEXTURE_USAGE_SAMPLER | PIPE_TEXTURE_USAGE_RENDER_TARGET;
 	
 	sfc->texture = pipe->screen->texture_create(pipe->screen, &template);
@@ -517,6 +516,7 @@ int vlPutSurface
 {
 	unsigned int		create_fb = 0;
 	struct pipe_context	*pipe;
+	struct VL_CSC_VS_CONSTS	*vs_consts;
 	
 	assert(surface);
 	
@@ -568,9 +568,28 @@ int vlPutSurface
 	
 	vlEndRender(surface->context);
 	
+	vs_consts = pipe->winsys->buffer_map
+	(
+		pipe->winsys,
+		surface->context->states.csc.vs_const_buf.buffer,
+		PIPE_BUFFER_USAGE_CPU_WRITE
+	);
+	
+	vs_consts->src_scale.x = srcw / (float)surface->width;
+	vs_consts->src_scale.y = srch / (float)surface->height;
+	vs_consts->src_scale.z = 1;
+	vs_consts->src_scale.w = 1;
+	vs_consts->src_trans.x = srcx / (float)surface->width;
+	vs_consts->src_trans.y = srcy / (float)surface->height;
+	vs_consts->src_trans.z = 0;
+	vs_consts->src_trans.w = 0;
+	
+	pipe->winsys->buffer_unmap(pipe->winsys, surface->context->states.csc.vs_const_buf.buffer);
+	
 	pipe->set_sampler_textures(pipe, 1, &surface->texture);
 	pipe->draw_arrays(pipe, PIPE_PRIM_TRIANGLE_STRIP, 0, 4);
 	pipe->flush(pipe, PIPE_FLUSH_RENDER_CACHE, NULL);
+	/* XXX: Need to take destx, desty into consideration */
 	pipe->winsys->flush_frontbuffer
 	(
 		pipe->winsys,

@@ -11,6 +11,7 @@
 #include <tgsi/util/tgsi_build.h>
 #include "vl_shader_build.h"
 #include "vl_data.h"
+#include "vl_util.h"
 
 static int vlInitIDCT(struct VL_CONTEXT *context)
 {
@@ -1357,8 +1358,9 @@ static int vlInitMC(struct VL_CONTEXT *context)
 	
 	pipe = context->pipe;
 	
-	context->states.mc.viewport.scale[0] = context->video_width;
-	context->states.mc.viewport.scale[1] = context->video_height;
+	/* For MC we render to textures, which are rounded up to nearest POT */
+	context->states.mc.viewport.scale[0] = vlRoundUpPOT(context->video_width);
+	context->states.mc.viewport.scale[1] = vlRoundUpPOT(context->video_height);
 	context->states.mc.viewport.scale[2] = 1;
 	context->states.mc.viewport.scale[3] = 1;
 	context->states.mc.viewport.translate[0] = 0;
@@ -1512,6 +1514,13 @@ static int vlCreateVertexShaderCSC(struct VL_CONTEXT *context)
 		decl = vl_decl_input(i == 0 ? TGSI_SEMANTIC_POSITION : TGSI_SEMANTIC_GENERIC, i, i, i);
 		ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
 	}
+	
+	/*
+	 * decl c0		; Scaling vector to scale texcoord rect to source size
+	 * decl c1		; Translation vector to move texcoord rect into position
+	 */
+	decl = vl_decl_constants(TGSI_SEMANTIC_GENERIC, 0, 0, 1);
+	ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
 
 	/*
 	 * decl o0		; Vertex pos
@@ -1522,16 +1531,18 @@ static int vlCreateVertexShaderCSC(struct VL_CONTEXT *context)
 		decl = vl_decl_output(i == 0 ? TGSI_SEMANTIC_POSITION : TGSI_SEMANTIC_GENERIC, i, i, i);
 		ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
 	}
+	
+	/* mov o0, i0		; Move pos in to pos out */
+	inst = vl_inst2(TGSI_OPCODE_MOV, TGSI_FILE_OUTPUT, 0, TGSI_FILE_INPUT, 0);
+	ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
+	
+	/* mul t0, i1, c0	; Scale unit texcoord rect to source size */
+	inst = vl_inst3(TGSI_OPCODE_MUL, TGSI_FILE_TEMPORARY, 0, TGSI_FILE_INPUT, 1, TGSI_FILE_CONSTANT, 0);
+	ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
 
-	/*
-	 * mov o0, i0		; Move pos in to pos out
-	 * mov o1, i1		; Move input texcoords to output
-	 */
-	for (i = 0; i < 2; i++)
-	{
-		inst = vl_inst2(TGSI_OPCODE_MOV, TGSI_FILE_OUTPUT, i, TGSI_FILE_INPUT, i);
-		ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
-	}
+	/* add o1, t0, c1	; Translate texcoord rect into position */
+	inst = vl_inst3(TGSI_OPCODE_ADD, TGSI_FILE_OUTPUT, 1, TGSI_FILE_TEMPORARY, 0, TGSI_FILE_CONSTANT, 1);
+	ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
 
 	/* end */
 	inst = vl_end();
@@ -1694,6 +1705,19 @@ static int vlCreateDataBufsCSC(struct VL_CONTEXT *context)
 	context->states.csc.vertex_buf_elems[1].src_format = PIPE_FORMAT_R32G32_FLOAT;
 	
 	/*
+	Create our vertex shader's constant buffer
+	Const buffer contains scaling and translation vectors
+	*/
+	context->states.csc.vs_const_buf.size = sizeof(struct VL_CSC_VS_CONSTS);
+	context->states.csc.vs_const_buf.buffer = pipe->winsys->buffer_create
+	(
+		pipe->winsys,
+		1,
+		PIPE_BUFFER_USAGE_CONSTANT,
+		context->states.csc.vs_const_buf.size
+	);
+	
+	/*
 	Create our fragment shader's constant buffer
 	Const buffer contains the color conversion matrix and bias vectors
 	*/
@@ -1776,6 +1800,7 @@ static int vlDestroyCSC(struct VL_CONTEXT *context)
 	context->pipe->delete_fs_state(context->pipe, context->states.csc.fragment_shader);
 	context->pipe->winsys->buffer_destroy(context->pipe->winsys, context->states.csc.vertex_bufs[0].buffer);
 	context->pipe->winsys->buffer_destroy(context->pipe->winsys, context->states.csc.vertex_bufs[1].buffer);
+	context->pipe->winsys->buffer_destroy(context->pipe->winsys, context->states.csc.vs_const_buf.buffer);
 	context->pipe->winsys->buffer_destroy(context->pipe->winsys, context->states.csc.fs_const_buf.buffer);
 	
 	return 0;
@@ -1986,6 +2011,7 @@ int vlEndRender(struct VL_CONTEXT *context)
 	pipe->bind_fs_state(pipe, context->states.csc.fragment_shader);
 	pipe->set_vertex_buffers(pipe, 2, context->states.csc.vertex_bufs);
 	pipe->set_vertex_elements(pipe, 2, context->states.csc.vertex_buf_elems);
+	pipe->set_constant_buffer(pipe, PIPE_SHADER_VERTEX, 0, &context->states.csc.vs_const_buf);
 	pipe->set_constant_buffer(pipe, PIPE_SHADER_FRAGMENT, 0, &context->states.csc.fs_const_buf);
 	
 	return 0;

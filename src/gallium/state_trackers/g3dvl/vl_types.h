@@ -75,6 +75,12 @@ struct VL_MC_FS_CONSTS
 	struct VL_VERTEX4F	y_divider;
 };
 
+struct VL_CSC_VS_CONSTS
+{
+	struct VL_VERTEX4F	src_scale;
+	struct VL_VERTEX4F	src_trans;
+};
+
 struct VL_CSC_FS_CONSTS
 {
 	struct VL_VERTEX4F	bias;
