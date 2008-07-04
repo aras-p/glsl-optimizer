@@ -581,6 +581,7 @@ i915_texture_create(struct pipe_screen *screen,
    struct i915_screen *i915screen = i915_screen(screen);
    struct pipe_winsys *ws = screen->winsys;
    struct i915_texture *tex = CALLOC_STRUCT(i915_texture);
+   size_t tex_size;
 
    if (!tex)
       return NULL;
@@ -600,13 +601,21 @@ i915_texture_create(struct pipe_screen *screen,
 	 goto fail;
    }
 
+   tex_size = tex->stride * tex->total_nblocksy;
+
    tex->buffer = ws->buffer_create(ws, 64,
 				   PIPE_BUFFER_USAGE_PIXEL,
-				   tex->stride *
-				   tex->total_nblocksy);
+				   tex_size);
 
    if (!tex->buffer)
       goto fail;
+
+#if 0
+   void *ptr = ws->buffer_map(ws, tex->buffer,
+      PIPE_BUFFER_USAGE_CPU_WRITE);
+   memset(ptr, 0x80, tex_size);
+   ws->buffer_unmap(ws, tex->buffer);
+#endif
 
    return &tex->base;
 
