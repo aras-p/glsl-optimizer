@@ -1011,6 +1011,11 @@ _mesa_get_uniform_location(GLcontext *ctx, GLuint program, const GLchar *name)
    if (!shProg)
       return -1;
 
+   if (shProg->LinkStatus == GL_FALSE) {
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glGetUniformfv(program)");
+      return -1;
+   }
+
    /* XXX we should return -1 if the uniform was declared, but not
     * actually used.
     */
