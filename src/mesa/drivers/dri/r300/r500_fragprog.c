@@ -87,45 +87,54 @@ static GLboolean transform_TEX(
 	    compiler->fp->mesa_program.Base.ShadowSamplers & (1 << inst.TexSrcUnit)) {
 		GLuint comparefunc = GL_NEVER + compiler->fp->state.unit[inst.TexSrcUnit].texture_compare_func;
 		GLuint depthmode = compiler->fp->state.unit[inst.TexSrcUnit].depth_texture_mode;
+		int rcptemp = radeonCompilerAllocateTemporary(context->compiler);
 
 		tgt = radeonClauseInsertInstructions(context->compiler, context->dest,
-			context->dest->NumInstructions, 2);
+			context->dest->NumInstructions, 3);
 
-		tgt[0].Opcode = OPCODE_MAD;
-		tgt[0].DstReg = inst.DstReg;
-		tgt[0].DstReg.WriteMask = orig_inst->DstReg.WriteMask;
-		tgt[0].SrcReg[0].File = PROGRAM_TEMPORARY;
-		tgt[0].SrcReg[0].Index = inst.DstReg.Index;
+		tgt[0].Opcode = OPCODE_RCP;
+		tgt[0].DstReg.File = PROGRAM_TEMPORARY;
+		tgt[0].DstReg.Index = rcptemp;
+		tgt[0].DstReg.WriteMask = WRITEMASK_W;
+		tgt[0].SrcReg[0] = inst.SrcReg[0];
+		tgt[0].SrcReg[0].Swizzle = SWIZZLE_WWWW;
+
+		tgt[1].Opcode = OPCODE_MAD;
+		tgt[1].DstReg = inst.DstReg;
+		tgt[1].DstReg.WriteMask = orig_inst->DstReg.WriteMask;
+		tgt[1].SrcReg[0] = inst.SrcReg[0];
+		tgt[1].SrcReg[0].Swizzle = SWIZZLE_ZZZZ;
+		tgt[1].SrcReg[1].File = PROGRAM_TEMPORARY;
+		tgt[1].SrcReg[1].Index = rcptemp;
+		tgt[1].SrcReg[1].Swizzle = SWIZZLE_WWWW;
+		tgt[1].SrcReg[2].File = PROGRAM_TEMPORARY;
+		tgt[1].SrcReg[2].Index = inst.DstReg.Index;
 		if (depthmode == 0) /* GL_LUMINANCE */
-			tgt[0].SrcReg[0].Swizzle = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_Z);
+			tgt[1].SrcReg[2].Swizzle = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_Z);
 		else if (depthmode == 2) /* GL_ALPHA */
-			tgt[0].SrcReg[0].Swizzle = SWIZZLE_WWWW;
-		tgt[0].SrcReg[1].File = PROGRAM_BUILTIN;
-		tgt[0].SrcReg[1].Swizzle = SWIZZLE_1111;
-		tgt[0].SrcReg[2] = inst.SrcReg[0];
-		tgt[0].SrcReg[2].Swizzle = SWIZZLE_ZZZZ;
+			tgt[1].SrcReg[2].Swizzle = SWIZZLE_WWWW;
 
 		/* Recall that SrcReg[0] is tex, SrcReg[2] is r and:
 		 *   r  < tex  <=>      -tex+r < 0
 		 *   r >= tex  <=> not (-tex+r < 0 */
 		if (comparefunc == GL_LESS || comparefunc == GL_GEQUAL)
-			tgt[0].SrcReg[0].NegateBase = tgt[0].SrcReg[0].NegateBase ^ NEGATE_XYZW;
+			tgt[1].SrcReg[2].NegateBase = tgt[0].SrcReg[2].NegateBase ^ NEGATE_XYZW;
 		else
-			tgt[0].SrcReg[2].NegateBase = tgt[0].SrcReg[2].NegateBase ^ NEGATE_XYZW;
+			tgt[1].SrcReg[0].NegateBase = tgt[0].SrcReg[0].NegateBase ^ NEGATE_XYZW;
 
-		tgt[1].Opcode = OPCODE_CMP;
-		tgt[1].DstReg = orig_inst->DstReg;
-		tgt[1].SrcReg[0].File = PROGRAM_TEMPORARY;
-		tgt[1].SrcReg[0].Index = tgt[0].DstReg.Index;
-		tgt[1].SrcReg[1].File = PROGRAM_BUILTIN;
-		tgt[1].SrcReg[2].File = PROGRAM_BUILTIN;
+		tgt[2].Opcode = OPCODE_CMP;
+		tgt[2].DstReg = orig_inst->DstReg;
+		tgt[2].SrcReg[0].File = PROGRAM_TEMPORARY;
+		tgt[2].SrcReg[0].Index = tgt[1].DstReg.Index;
+		tgt[2].SrcReg[1].File = PROGRAM_BUILTIN;
+		tgt[2].SrcReg[2].File = PROGRAM_BUILTIN;
 
 		if (comparefunc == GL_LESS || comparefunc == GL_GREATER) {
-			tgt[1].SrcReg[1].Swizzle = SWIZZLE_1111;
-			tgt[1].SrcReg[2].Swizzle = SWIZZLE_0000;
+			tgt[2].SrcReg[1].Swizzle = SWIZZLE_1111;
+			tgt[2].SrcReg[2].Swizzle = SWIZZLE_0000;
 		} else {
-			tgt[1].SrcReg[1].Swizzle = SWIZZLE_0000;
-			tgt[1].SrcReg[2].Swizzle = SWIZZLE_1111;
+			tgt[2].SrcReg[1].Swizzle = SWIZZLE_0000;
+			tgt[2].SrcReg[2].Swizzle = SWIZZLE_1111;
 		}
 	} else if (destredirect) {
 		tgt = radeonClauseInsertInstructions(context->compiler, context->dest,
