@@ -267,7 +267,7 @@ static void TAG(triangle)( GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2 )
 	    GLfloat bc	= b * ic;
 	    if ( ac < 0.0f ) ac = -ac;
 	    if ( bc < 0.0f ) bc = -bc;
-	    offset += MAX2( ac, bc ) * ctx->Polygon.OffsetFactor;
+	    offset += MAX2( ac, bc ) * ctx->Polygon.OffsetFactor / ctx->DrawBuffer->_MRD;
 	 }
 	 offset *= ctx->DrawBuffer->_MRD * (REVERSE_DEPTH ? -1.0 : 1.0);
       }
@@ -539,7 +539,7 @@ static void TAG(quadr)( GLcontext *ctx,
 	    GLfloat bc	= b * ic;
 	    if ( ac < 0.0f ) ac = -ac;
 	    if ( bc < 0.0f ) bc = -bc;
-	    offset += MAX2( ac, bc ) * ctx->Polygon.OffsetFactor;
+	    offset += MAX2( ac, bc ) * ctx->Polygon.OffsetFactor / ctx->DrawBuffer->_MRD;
 	 }
 	 offset *= ctx->DrawBuffer->_MRD * (REVERSE_DEPTH ? -1.0 : 1.0);
       }
