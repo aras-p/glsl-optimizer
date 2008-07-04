@@ -1,6 +1,7 @@
 #include "pipe/p_state.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_util.h"
+#include "pipe/p_inlines.h"
 
 #include "nv30_context.h"
 #include "nv30_state.h"
@@ -116,7 +117,7 @@ nv30_sampler_state_create(struct pipe_context *pipe,
 	struct nv30_sampler_state *ps;
 	uint32_t filter = 0;
 
-	ps = malloc(sizeof(struct nv30_sampler_state));
+	ps = MALLOC(sizeof(struct nv30_sampler_state));
 
 	ps->fmt = 0;
 	if (!cso->normalized_coords)
@@ -197,6 +198,19 @@ nv30_sampler_state_create(struct pipe_context *pipe,
 
 	ps->filt = filter;
 
+	/*{
+		float limit;
+
+		limit = CLAMP(cso->lod_bias, -16.0, 15.0);
+		ps->filt |= (int)(cso->lod_bias * 256.0) & 0x1fff;
+
+		limit = CLAMP(cso->max_lod, 0.0, 15.0);
+		ps->en |= (int)(limit * 256.0) << 7;
+
+		limit = CLAMP(cso->min_lod, 0.0, 15.0);
+		ps->en |= (int)(limit * 256.0) << 19;
+	}*/
+
 /*	if (cso->compare_mode == PIPE_TEX_COMPARE_R_TO_TEXTURE) {
 		switch (cso->compare_func) {
 		case PIPE_FUNC_NEVER:
@@ -242,20 +256,24 @@ nv30_sampler_state_bind(struct pipe_context *pipe, unsigned nr, void **sampler)
 	struct nv30_context *nv30 = nv30_context(pipe);
 	unsigned unit;
 
-	if (!sampler) {
-		return;
-	}
-
 	for (unit = 0; unit < nr; unit++) {
 		nv30->tex_sampler[unit] = sampler[unit];
 		nv30->dirty_samplers |= (1 << unit);
 	}
+
+	for (unit = nr; unit < nv30->nr_samplers; unit++) {
+		nv30->tex_sampler[unit] = NULL;
+		nv30->dirty_samplers |= (1 << unit);
+	}
+
+	nv30->nr_samplers = nr;
+	nv30->dirty |= NV30_NEW_SAMPLER;
 }
 
 static void
 nv30_sampler_state_delete(struct pipe_context *pipe, void *hwcso)
 {
-	free(hwcso);
+	FREE(hwcso);
 }
 
 static void
@@ -266,9 +284,19 @@ nv30_set_sampler_texture(struct pipe_context *pipe, unsigned nr,
 	unsigned unit;
 
 	for (unit = 0; unit < nr; unit++) {
-		nv30->tex_miptree[unit] = (struct nv30_miptree *)miptree[unit];
+		pipe_texture_reference((struct pipe_texture **)
+				       &nv30->tex_miptree[unit], miptree[unit]);
 		nv30->dirty_samplers |= (1 << unit);
 	}
+
+	for (unit = nr; unit < nv30->nr_textures; unit++) {
+		pipe_texture_reference((struct pipe_texture **)
+				       &nv30->tex_miptree[unit], NULL);
+		nv30->dirty_samplers |= (1 << unit);
+	}
+
+	nv30->nr_textures = nr;
+	nv30->dirty |= NV30_NEW_SAMPLER;
 }
 
 static void *

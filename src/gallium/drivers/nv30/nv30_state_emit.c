@@ -47,7 +47,7 @@ nv30_emit_hw_state(struct nv30_context *nv30)
 {
 	struct nv30_state *state = &nv30->state;
 	struct nv30_screen *screen = nv30->screen;
-	unsigned i;
+	unsigned i, samplers;
 	uint64 states;
 
 	if (nv30->pctx_id != screen->cur_pctx) {
@@ -91,6 +91,13 @@ nv30_emit_hw_state(struct nv30_context *nv30)
 	nv30->dirty_samplers = 0;
 
 	so_emit_reloc_markers(nv30->nvws, state->hw[NV30_STATE_FB]);
+	for (i = 0, samplers = state->fp_samplers; i < 16 && samplers; i++) {
+		if (!(samplers & (1 << i)))
+			continue;
+		so_emit_reloc_markers(nv30->nvws,
+				      state->hw[NV30_STATE_FRAGTEX0+i]);
+		samplers &= ~(1ULL << i);
+	}
 
 	/* Texture images, emitted in nv30_fragtex_build */
 #if 0

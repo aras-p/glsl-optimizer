@@ -96,6 +96,7 @@ struct nv30_state {
 	unsigned scissor_enabled;
 	unsigned stipple_enabled;
 	unsigned viewport_bypass;
+	unsigned fp_samplers;
 
 	uint64_t dirty;
 	struct nouveau_stateobj *hw[NV30_STATE_MAX];
@@ -129,6 +130,8 @@ struct nv30_context {
 	struct pipe_blend_color blend_colour;
 	struct pipe_viewport_state viewport;
 	struct pipe_framebuffer_state framebuffer;
+	unsigned nr_samplers;
+	unsigned nr_textures;
 
 	uint32_t rt_enable;
 	struct pipe_buffer *rt[2];
