@@ -1579,6 +1579,7 @@ struct gl_texture_attrib
 
    struct gl_texture_unit Unit[MAX_TEXTURE_UNITS];
 
+#if 0
    struct gl_texture_object *Proxy1D;
    struct gl_texture_object *Proxy2D;
    struct gl_texture_object *Proxy3D;
@@ -1586,6 +1587,9 @@ struct gl_texture_attrib
    struct gl_texture_object *ProxyRect;
    struct gl_texture_object *Proxy1DArray;
    struct gl_texture_object *Proxy2DArray;
+#else
+   struct gl_texture_object *ProxyTex[NUM_TEXTURE_TARGETS];
+#endif
 
    /** GL_EXT_shared_texture_palette */
    GLboolean SharedPalette;

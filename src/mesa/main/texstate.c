@@ -674,54 +674,32 @@ _mesa_update_texture( GLcontext *ctx, GLuint new_state )
 static GLboolean
 alloc_proxy_textures( GLcontext *ctx )
 {
-   ctx->Texture.Proxy1D = (*ctx->Driver.NewTextureObject)(ctx, 0, GL_TEXTURE_1D);
-   if (!ctx->Texture.Proxy1D)
-      goto cleanup;
+   static const GLenum targets[] = {
+      GL_TEXTURE_1D,
+      GL_TEXTURE_2D,
+      GL_TEXTURE_3D,
+      GL_TEXTURE_CUBE_MAP_ARB,
+      GL_TEXTURE_RECTANGLE_NV,
+      GL_TEXTURE_1D_ARRAY_EXT,
+      GL_TEXTURE_2D_ARRAY_EXT
+   };
+   GLint tgt;
 
-   ctx->Texture.Proxy2D = (*ctx->Driver.NewTextureObject)(ctx, 0, GL_TEXTURE_2D);
-   if (!ctx->Texture.Proxy2D)
-      goto cleanup;
+   ASSERT(Elements(targets) == NUM_TEXTURE_TARGETS);
 
-   ctx->Texture.Proxy3D = (*ctx->Driver.NewTextureObject)(ctx, 0, GL_TEXTURE_3D);
-   if (!ctx->Texture.Proxy3D)
-      goto cleanup;
+   for (tgt = 0; tgt < NUM_TEXTURE_TARGETS; tgt++) {
+      if (!(ctx->Texture.ProxyTex[tgt]
+            = ctx->Driver.NewTextureObject(ctx, 0, targets[tgt]))) {
+         /* out of memory, free what we did allocate */
+         while (--tgt >= 0) {
+            ctx->Driver.DeleteTexture(ctx, ctx->Texture.ProxyTex[tgt]);
+         }
+         return GL_FALSE;
+      }
+   }
 
-   ctx->Texture.ProxyCubeMap = (*ctx->Driver.NewTextureObject)(ctx, 0, GL_TEXTURE_CUBE_MAP_ARB);
-   if (!ctx->Texture.ProxyCubeMap)
-      goto cleanup;
-
-   ctx->Texture.ProxyRect = (*ctx->Driver.NewTextureObject)(ctx, 0, GL_TEXTURE_RECTANGLE_NV);
-   if (!ctx->Texture.ProxyRect)
-      goto cleanup;
-
-   ctx->Texture.Proxy1DArray = (*ctx->Driver.NewTextureObject)(ctx, 0, GL_TEXTURE_1D_ARRAY_EXT);
-   if (!ctx->Texture.Proxy1DArray)
-      goto cleanup;
-
-   ctx->Texture.Proxy2DArray = (*ctx->Driver.NewTextureObject)(ctx, 0, GL_TEXTURE_2D_ARRAY_EXT);
-   if (!ctx->Texture.Proxy2DArray)
-      goto cleanup;
-
-   assert(ctx->Texture.Proxy1D->RefCount == 1);
-
+   assert(ctx->Texture.ProxyTex[0]->RefCount == 1); /* sanity check */
    return GL_TRUE;
-
- cleanup:
-   if (ctx->Texture.Proxy1D)
-      (ctx->Driver.DeleteTexture)(ctx, ctx->Texture.Proxy1D);
-   if (ctx->Texture.Proxy2D)
-      (ctx->Driver.DeleteTexture)(ctx, ctx->Texture.Proxy2D);
-   if (ctx->Texture.Proxy3D)
-      (ctx->Driver.DeleteTexture)(ctx, ctx->Texture.Proxy3D);
-   if (ctx->Texture.ProxyCubeMap)
-      (ctx->Driver.DeleteTexture)(ctx, ctx->Texture.ProxyCubeMap);
-   if (ctx->Texture.ProxyRect)
-      (ctx->Driver.DeleteTexture)(ctx, ctx->Texture.ProxyRect);
-   if (ctx->Texture.Proxy1DArray)
-      (ctx->Driver.DeleteTexture)(ctx, ctx->Texture.Proxy1DArray);
-   if (ctx->Texture.Proxy2DArray)
-      (ctx->Driver.DeleteTexture)(ctx, ctx->Texture.Proxy2DArray);
-   return GL_FALSE;
 }
 
 
@@ -815,7 +793,7 @@ _mesa_init_texture(GLcontext *ctx)
 void
 _mesa_free_texture_data(GLcontext *ctx)
 {
-   GLuint u;
+   GLuint u, tgt;
 
    /* unreference current textures */
    for (u = 0; u < MAX_TEXTURE_IMAGE_UNITS; u++) {
@@ -830,13 +808,8 @@ _mesa_free_texture_data(GLcontext *ctx)
    }
 
    /* Free proxy texture objects */
-   (ctx->Driver.DeleteTexture)(ctx,  ctx->Texture.Proxy1D );
-   (ctx->Driver.DeleteTexture)(ctx,  ctx->Texture.Proxy2D );
-   (ctx->Driver.DeleteTexture)(ctx,  ctx->Texture.Proxy3D );
-   (ctx->Driver.DeleteTexture)(ctx,  ctx->Texture.ProxyCubeMap );
-   (ctx->Driver.DeleteTexture)(ctx,  ctx->Texture.ProxyRect );
-   (ctx->Driver.DeleteTexture)(ctx,  ctx->Texture.Proxy1DArray );
-   (ctx->Driver.DeleteTexture)(ctx,  ctx->Texture.Proxy2DArray );
+   for (tgt = 0; tgt < NUM_TEXTURE_TARGETS; tgt++)
+      ctx->Driver.DeleteTexture(ctx, ctx->Texture.ProxyTex[tgt]);
 
 
 #if FEATURE_colortable
