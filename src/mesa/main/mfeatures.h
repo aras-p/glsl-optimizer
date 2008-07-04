@@ -44,6 +44,7 @@
 #define FEATURE_dlist  _HAVE_FULL_GL
 #define FEATURE_draw_read_buffer  _HAVE_FULL_GL
 #define FEATURE_drawpix  _HAVE_FULL_GL
+#define FEATURE_es2_glsl 0
 #define FEATURE_evaluators  _HAVE_FULL_GL
 #define FEATURE_feedback  _HAVE_FULL_GL
 #define FEATURE_fixedpt 0

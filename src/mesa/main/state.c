@@ -289,6 +289,20 @@ update_viewport_matrix(GLcontext *ctx)
 
 
 /**
+ * Update derived multisample state.
+ */
+static void
+update_multisample(GLcontext *ctx)
+{
+   ctx->Multisample._Enabled = GL_FALSE;
+   if (ctx->DrawBuffer) {
+      if (ctx->DrawBuffer->Visual.sampleBuffers)
+         ctx->Multisample._Enabled = GL_TRUE;
+   }
+}
+
+
+/**
  * Update derived color/blend/logicop state.
  */
 static void
@@ -424,6 +438,9 @@ _mesa_update_state_locked( GLcontext *ctx )
 
    if (new_state & (_NEW_BUFFERS | _NEW_VIEWPORT))
       update_viewport_matrix(ctx);
+
+   if (new_state & _NEW_MULTISAMPLE)
+      update_multisample( ctx );
 
    if (new_state & _NEW_COLOR)
       update_color( ctx );

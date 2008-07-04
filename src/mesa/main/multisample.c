@@ -57,7 +57,7 @@ _mesa_SampleCoverageARB(GLclampf value, GLboolean invert)
 void
 _mesa_init_multisample(GLcontext *ctx)
 {
-   ctx->Multisample.Enabled = GL_FALSE;
+   ctx->Multisample.Enabled = GL_TRUE;
    ctx->Multisample.SampleAlphaToCoverage = GL_FALSE;
    ctx->Multisample.SampleAlphaToOne = GL_FALSE;
    ctx->Multisample.SampleCoverage = GL_FALSE;

@@ -172,6 +172,9 @@ intel_create_context(struct egl_drm_context *egl_context, const __GLcontextModes
 	pipe->priv = intel;
 
 	intel->st = st_create_context(pipe, visual, st_share);
+
+	screen->dummy = intel;
+
 	return TRUE;
 }
 

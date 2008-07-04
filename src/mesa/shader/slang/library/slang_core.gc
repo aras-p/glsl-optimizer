@@ -249,6 +249,14 @@ vec4 __constructor(const vec3 v3, const float f)
    __retVal.w = f;
 }
 
+vec4 __constructor(const vec2 v2, const float f1, const float f2)
+{
+   // XXX this constructor shouldn't be needed anymore
+   __retVal.xy = v2;
+   __retVal.z = f1;
+   __retVal.w = f2;
+}
+
 
 //// ivec2 constructors
 
@@ -350,6 +358,19 @@ bvec2 __constructor(const int i)
    __asm vec4_seq __retVal.xy, i.xx, zero;
 }
 
+bvec2 __constructor(const vec2 v)
+{
+   const vec2 zero = vec2(0.0, 0.0);
+   __asm vec4_seq __retVal.xy, v, zero;
+}
+
+bvec2 __constructor(const ivec2 v)
+{
+   const ivec2 zero = ivec2(0, 0);
+   __asm vec4_seq __retVal.xy, v, zero;
+}
+
+
 
 //// bvec3 constructors
 
@@ -377,6 +398,19 @@ bvec3 __constructor(const int i)
    __asm vec4_seq __retVal.xyz, i.xxx, zero;
 }
 
+bvec3 __constructor(const vec3 v)
+{
+   const vec3 zero = vec3(0.0, 0.0, 0.0);
+   __asm vec4_seq __retVal.xyz, v, zero;
+}
+
+bvec3 __constructor(const ivec3 v)
+{
+   const ivec3 zero = ivec3(0, 0, 0);
+   __asm vec4_seq __retVal.xyz, v, zero;
+}
+
+
 
 //// bvec4 constructors
 
@@ -403,6 +437,18 @@ bvec4 __constructor(const int i)
 {
    const ivec4 zero = ivec4(0, 0, 0, 0);
    __asm vec4_seq __retVal, i.xxxx, zero;
+}
+
+bvec4 __constructor(const vec4 v)
+{
+   const vec4 zero = vec4(0.0, 0.0, 0.0, 0.0);
+   __asm vec4_seq __retVal, v, zero;
+}
+
+bvec4 __constructor(const ivec4 v)
+{
+   const ivec4 zero = ivec4(0, 0, 0, 0);
+   __asm vec4_seq __retVal, v, zero;
 }
 
 

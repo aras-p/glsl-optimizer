@@ -174,7 +174,9 @@ _fenced_buffer_finish(struct fenced_buffer *fenced_buf)
    struct fenced_buffer_list *fenced_list = fenced_buf->list;
    struct pipe_winsys *winsys = fenced_list->winsys;
 
+#if 0
    debug_warning("waiting for GPU");
+#endif
 
    assert(fenced_buf->fence);
    if(fenced_buf->fence) {
@@ -278,11 +280,13 @@ fenced_buffer_map(struct pb_buffer *buf,
       _fenced_buffer_finish(fenced_buf);
    }
 
+#if 0
    /* Check for CPU write access (read is OK) */
    if(fenced_buf->flags & PIPE_BUFFER_USAGE_CPU_READ_WRITE) {
       /* this is legal -- just for debugging */
       debug_warning("concurrent CPU writes");
    }
+#endif
    
    map = pb_map(fenced_buf->buffer, flags);
    if(map) {
@@ -406,7 +410,7 @@ fenced_buffer_list_create(struct pipe_winsys *winsys)
 {
    struct fenced_buffer_list *fenced_list;
 
-   fenced_list = (struct fenced_buffer_list *)CALLOC(1, sizeof(*fenced_list));
+   fenced_list = CALLOC_STRUCT(fenced_buffer_list);
    if (!fenced_list)
       return NULL;
 

@@ -88,6 +88,9 @@ pb_alt_manager_create(struct pb_manager *provider1,
 {
    struct pb_alt_manager *mgr;
 
+   if(!provider1 || !provider2)
+      return NULL;
+   
    mgr = CALLOC_STRUCT(pb_alt_manager);
    if (!mgr)
       return NULL;

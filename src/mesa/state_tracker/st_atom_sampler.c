@@ -136,7 +136,8 @@ update_samplers(struct st_context *st)
          const struct gl_texture_object *texobj
             = st->ctx->Texture.Unit[texUnit]._Current;
 
-         assert(texobj);
+         if (!texobj)
+            continue;
 
          sampler->wrap_s = gl_wrap_to_sp(texobj->WrapS);
          sampler->wrap_t = gl_wrap_to_sp(texobj->WrapT);

@@ -29,7 +29,7 @@
  * \file
  * Buffer manager using the old texture memory manager.
  * 
- * \author José Fonseca <jrfonseca@tungstengraphics.com>
+ * \author JosÃ© Fonseca <jrfonseca@tungstengraphics.com>
  */
 
 
@@ -271,8 +271,8 @@ mm_bufmgr_create(struct pb_manager *provider,
    struct pb_manager *mgr;
    struct pb_desc desc;
 
-   assert(provider);
-   assert(provider->create_buffer);
+   if(!provider)
+      return NULL;
    
    memset(&desc, 0, sizeof(desc));
    desc.alignment = 1 << align2;

@@ -308,6 +308,17 @@ util_blit_pixels(struct blit_state *ctx,
    }
 
    assert(screen->is_format_supported(screen, src->format, PIPE_TEXTURE));
+   assert(screen->is_format_supported(screen, dst->format, PIPE_TEXTURE));
+
+   if(dst->format == src->format && (dstX1 - dstX0) == srcW && (dstY1 - dstY0) == srcH) {
+      /* FIXME: this will most surely fail for overlapping rectangles */
+      pipe->surface_copy(pipe, FALSE,
+			 dst, dstX0, dstY0,   /* dest */
+			 src, srcX0, srcY0, /* src */
+			 srcW, srcH);     /* size */
+      return;
+   }
+   
    assert(screen->is_format_supported(screen, dst->format, PIPE_SURFACE));
 
    /*

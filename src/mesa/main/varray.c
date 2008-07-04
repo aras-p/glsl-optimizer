@@ -615,6 +615,11 @@ _mesa_VertexAttribPointerARB(GLuint index, GLint size, GLenum type,
       case GL_DOUBLE:
          elementSize = size * sizeof(GLdouble);
          break;
+#if FEATURE_fixedpt
+      case GL_FIXED:
+         elementSize = size * sizeof(GLfixed);
+         break;
+#endif
       default:
          _mesa_error( ctx, GL_INVALID_ENUM, "glVertexAttribPointerARB(type)" );
          return;

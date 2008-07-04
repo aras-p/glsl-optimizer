@@ -56,7 +56,7 @@ intel_init_driver(struct egl_drm_device *device)
 	/** TODO JB: ugly hack */
 	intel_screen->deviceID = PCI_CHIP_I945_GM;
 
-	intel_be_init_device(&intel_screen->base, device->drmFD);
+	intel_be_init_device(&intel_screen->base, device->drmFD, PCI_CHIP_I945_GM);
 
 	intel_screen->pipe = i915_create_screen(&intel_screen->base.base, intel_screen->deviceID);
 
@@ -75,6 +75,8 @@ intel_create_drawable(struct egl_drm_drawable *drawable,
 
 	if (!intelfb)
 		return GL_FALSE;
+
+	intelfb->screen = drawable->device->priv;
 
 	if (visual->redBits == 5)
 		colorFormat = PIPE_FORMAT_R5G6B5_UNORM;

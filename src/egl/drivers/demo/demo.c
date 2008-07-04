@@ -67,22 +67,22 @@ demoInitialize(_EGLDriver *drv, EGLDisplay dpy, EGLint *major, EGLint *minor)
 
    /* Create the display's visual configs - silly example */
    for (i = 0; i < 4; i++) {
-      _EGLConfig config;
-      _eglInitConfig(&config, i + 1);
-      _eglSetConfigAttrib(&config, EGL_RED_SIZE, 8);
-      _eglSetConfigAttrib(&config, EGL_GREEN_SIZE, 8);
-      _eglSetConfigAttrib(&config, EGL_BLUE_SIZE, 8);
-      _eglSetConfigAttrib(&config, EGL_ALPHA_SIZE, 8);
-      _eglSetConfigAttrib(&config, EGL_BUFFER_SIZE, 32);
+      _EGLConfig *config = calloc(1, sizeof(_EGLConfig));
+      _eglInitConfig(config, i + 1);
+      _eglSetConfigAttrib(config, EGL_RED_SIZE, 8);
+      _eglSetConfigAttrib(config, EGL_GREEN_SIZE, 8);
+      _eglSetConfigAttrib(config, EGL_BLUE_SIZE, 8);
+      _eglSetConfigAttrib(config, EGL_ALPHA_SIZE, 8);
+      _eglSetConfigAttrib(config, EGL_BUFFER_SIZE, 32);
       if (i & 1) {
-         _eglSetConfigAttrib(&config, EGL_DEPTH_SIZE, 32);
+         _eglSetConfigAttrib(config, EGL_DEPTH_SIZE, 32);
       }
       if (i & 2) {
-         _eglSetConfigAttrib(&config, EGL_STENCIL_SIZE, 8);
+         _eglSetConfigAttrib(config, EGL_STENCIL_SIZE, 8);
       }
-      _eglSetConfigAttrib(&config, EGL_SURFACE_TYPE,
+      _eglSetConfigAttrib(config, EGL_SURFACE_TYPE,
                           (EGL_WINDOW_BIT | EGL_PIXMAP_BIT | EGL_PBUFFER_BIT));
-      _eglAddConfig(disp, &config);
+      _eglAddConfig(disp, config);
    }
 
    drv->Initialized = EGL_TRUE;

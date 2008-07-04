@@ -175,7 +175,16 @@ struct pb_manager *
 pb_alt_manager_create(struct pb_manager *provider1, 
                       struct pb_manager *provider2);
 
-                      
+
+/** 
+ * Debug buffer manager to detect buffer under- and overflows.
+ *
+ * Band size should be a multiple of the largest alignment
+ */
+struct pb_manager *
+pb_debug_manager_create(struct pb_manager *provider, size_t band_size); 
+
+
 #ifdef __cplusplus
 }
 #endif

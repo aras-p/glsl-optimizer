@@ -49,6 +49,9 @@
 #include "cso_cache/cso_context.h"
 
 
+#define ST_MAX_SHADER_TOKENS 4096
+
+
 #define TGSI_DEBUG 0
 
 
@@ -296,6 +299,8 @@ st_translate_vertex_program(struct st_context *st,
                                 /* tokenized result */
                                 tokens, ST_MAX_SHADER_TOKENS);
 
+   assert(num_tokens < ST_MAX_SHADER_TOKENS);
+
    vs.tokens = (struct tgsi_token *)
       mem_dup(tokens, num_tokens * sizeof(tokens[0]));
 
@@ -466,6 +471,8 @@ st_translate_fragment_program(struct st_context *st,
                                 fs_output_semantic_index,
                                 /* tokenized result */
                                 tokens, ST_MAX_SHADER_TOKENS);
+
+   assert(num_tokens < ST_MAX_SHADER_TOKENS);
 
    fs.tokens = (struct tgsi_token *)
       mem_dup(tokens, num_tokens * sizeof(tokens[0]));

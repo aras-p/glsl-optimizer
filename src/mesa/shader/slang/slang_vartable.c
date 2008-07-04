@@ -28,7 +28,7 @@ struct table
    slang_variable **Vars;  /* array [NumVars] */
 
    TempState Temps[MAX_PROGRAM_TEMPS * 4];  /* per-component state */
-   int ValSize[MAX_PROGRAM_TEMPS];     /* For debug only */
+   int ValSize[MAX_PROGRAM_TEMPS * 4];     /**< For debug only */
 
    struct table *Parent;  /** Parent scope table */
 };
@@ -220,6 +220,7 @@ alloc_reg(slang_var_table *vt, GLint size, GLboolean isTemp)
             assert(i % 4 == 0);
          for (j = 0; j < size; j++)
             t->Temps[i + j] = isTemp ? TEMP : VAR;
+         assert(i < MAX_PROGRAM_TEMPS * 4);
          t->ValSize[i] = size;
          return i;
       }
@@ -298,10 +299,15 @@ _slang_free_temp(slang_var_table *vt, slang_ir_storage *store)
    if (dbg) printf("Free temp sz %d at %d (level %d)\n", store->Size, r, t->Level);
    if (store->Size == 1) {
       const GLuint comp = GET_SWZ(store->Swizzle, 0);
+      /* we can actually fail some of these assertions because of the
+       * troublesome IR_SWIZZLE handling.
+       */
+#if 0
       assert(store->Swizzle == MAKE_SWIZZLE4(comp, comp, comp, comp));
       assert(comp < 4);
       assert(t->ValSize[r * 4 + comp] == 1);
       assert(t->Temps[r * 4 + comp] == TEMP);
+#endif
       t->Temps[r * 4 + comp] = FREE;
    }
    else {

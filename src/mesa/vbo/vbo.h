@@ -132,5 +132,7 @@ _vbo_MultiTexCoord4f(GLenum target, GLfloat s, GLfloat t, GLfloat r, GLfloat q);
 void
 _vbo_Materialfv(GLenum face, GLenum pname, const GLfloat *params);
 
+void
+_vbo_VertexAttrib4f(GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w);
 
 #endif

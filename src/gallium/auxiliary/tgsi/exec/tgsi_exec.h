@@ -34,6 +34,8 @@
 extern "C" {
 #endif
 
+#define MAX_LABELS 1024
+
 #define NUM_CHANNELS 4  /* R,G,B,A */
 #define QUAD_SIZE    4  /* 4 pixel/quad */
 
@@ -93,74 +95,76 @@ struct tgsi_sampler
  */
 struct tgsi_exec_labels
 {
-   unsigned labels[128][2];
+   unsigned labels[MAX_LABELS][2];
    unsigned count;
 };
+
+
+#define TGSI_EXEC_NUM_TEMPS        64
+#define TGSI_EXEC_NUM_TEMP_EXTRAS   6
+#define TGSI_EXEC_NUM_IMMEDIATES  256
 
 /*
  * Locations of various utility registers (_I = Index, _C = Channel)
  */
-#define TGSI_EXEC_TEMP_00000000_I   32
+#define TGSI_EXEC_TEMP_00000000_I   (TGSI_EXEC_NUM_TEMPS + 0)
 #define TGSI_EXEC_TEMP_00000000_C   0
 
-#define TGSI_EXEC_TEMP_7FFFFFFF_I   32
+#define TGSI_EXEC_TEMP_7FFFFFFF_I   (TGSI_EXEC_NUM_TEMPS + 0)
 #define TGSI_EXEC_TEMP_7FFFFFFF_C   1
 
-#define TGSI_EXEC_TEMP_80000000_I   32
+#define TGSI_EXEC_TEMP_80000000_I   (TGSI_EXEC_NUM_TEMPS + 0)
 #define TGSI_EXEC_TEMP_80000000_C   2
 
-#define TGSI_EXEC_TEMP_FFFFFFFF_I   32
+#define TGSI_EXEC_TEMP_FFFFFFFF_I   (TGSI_EXEC_NUM_TEMPS + 0)
 #define TGSI_EXEC_TEMP_FFFFFFFF_C   3
 
-#define TGSI_EXEC_TEMP_ONE_I        33
+#define TGSI_EXEC_TEMP_ONE_I        (TGSI_EXEC_NUM_TEMPS + 1)
 #define TGSI_EXEC_TEMP_ONE_C        0
 
-#define TGSI_EXEC_TEMP_TWO_I        33
+#define TGSI_EXEC_TEMP_TWO_I        (TGSI_EXEC_NUM_TEMPS + 1)
 #define TGSI_EXEC_TEMP_TWO_C        1
 
-#define TGSI_EXEC_TEMP_128_I        33
+#define TGSI_EXEC_TEMP_128_I        (TGSI_EXEC_NUM_TEMPS + 1)
 #define TGSI_EXEC_TEMP_128_C        2
 
-#define TGSI_EXEC_TEMP_MINUS_128_I  33
+#define TGSI_EXEC_TEMP_MINUS_128_I  (TGSI_EXEC_NUM_TEMPS + 1)
 #define TGSI_EXEC_TEMP_MINUS_128_C  3
 
-#define TGSI_EXEC_TEMP_KILMASK_I    34
+#define TGSI_EXEC_TEMP_KILMASK_I    (TGSI_EXEC_NUM_TEMPS + 2)
 #define TGSI_EXEC_TEMP_KILMASK_C    0
 
-#define TGSI_EXEC_TEMP_OUTPUT_I     34
+#define TGSI_EXEC_TEMP_OUTPUT_I     (TGSI_EXEC_NUM_TEMPS + 2)
 #define TGSI_EXEC_TEMP_OUTPUT_C     1
 
-#define TGSI_EXEC_TEMP_PRIMITIVE_I  34
+#define TGSI_EXEC_TEMP_PRIMITIVE_I  (TGSI_EXEC_NUM_TEMPS + 2)
 #define TGSI_EXEC_TEMP_PRIMITIVE_C  2
 
-#define TGSI_EXEC_TEMP_THREE_I      34
+#define TGSI_EXEC_TEMP_THREE_I      (TGSI_EXEC_NUM_TEMPS + 2)
 #define TGSI_EXEC_TEMP_THREE_C      3
 
-#define TGSI_EXEC_TEMP_HALF_I       35
+#define TGSI_EXEC_TEMP_HALF_I       (TGSI_EXEC_NUM_TEMPS + 3)
 #define TGSI_EXEC_TEMP_HALF_C       0
 
-#define TGSI_EXEC_TEMP_R0           36
+#define TGSI_EXEC_TEMP_R0           (TGSI_EXEC_NUM_TEMPS + 4)
 
-#define TGSI_EXEC_NUM_TEMPS   (32 + 5)
-#define TGSI_EXEC_NUM_ADDRS   1
-#define TGSI_EXEC_NUM_IMMEDIATES  256
+#define TGSI_EXEC_TEMP_ADDR         (TGSI_EXEC_NUM_TEMPS + 5)
 
-#define TGSI_EXEC_MAX_COND_NESTING  10
-#define TGSI_EXEC_MAX_LOOP_NESTING  10
-#define TGSI_EXEC_MAX_CALL_NESTING  10
+
+#define TGSI_EXEC_MAX_COND_NESTING  20
+#define TGSI_EXEC_MAX_LOOP_NESTING  20
+#define TGSI_EXEC_MAX_CALL_NESTING  20
 
 /**
  * Run-time virtual machine state for executing TGSI shader.
  */
 struct tgsi_exec_machine
 {
-   /*
-    * 32 program temporaries
-    * 4  internal temporaries
-    * 1  address
-    * 1  temporary of padding to align to 16 bytes
+   /* Total = program temporaries + internal temporaries
+    *         + 1 padding to align to 16 bytes
     */
-   struct tgsi_exec_vector       _Temps[TGSI_EXEC_NUM_TEMPS + TGSI_EXEC_NUM_ADDRS + 1];
+   struct tgsi_exec_vector       _Temps[TGSI_EXEC_NUM_TEMPS +
+                                        TGSI_EXEC_NUM_TEMP_EXTRAS + 1];
 
    /*
     * This will point to _Temps after aligning to 16B boundary.

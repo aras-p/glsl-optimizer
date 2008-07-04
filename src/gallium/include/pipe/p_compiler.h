@@ -107,7 +107,9 @@ typedef unsigned char boolean;
 
 
 /* Function inlining */
-#if defined(__GNUC__)
+#ifdef __cplusplus
+#  define INLINE inline
+#elif defined(__GNUC__)
 #  define INLINE __inline__
 #elif defined(_MSC_VER)
 #  define INLINE __inline

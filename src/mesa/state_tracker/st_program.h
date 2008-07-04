@@ -39,9 +39,6 @@
 #include "pipe/p_shader_tokens.h"
 
 
-#define ST_MAX_SHADER_TOKENS 1024
-
-
 struct cso_fragment_shader;
 struct cso_vertex_shader;
 struct translated_vertex_program;

@@ -204,13 +204,24 @@ pb_reference(struct pb_buffer **dst,
 
 
 /**
- * Utility function to check whether a requested alignment is consistent with
- * the provided alignment or not.
+ * Utility function to check whether the provided alignment is consistent with
+ * the requested or not.
  */
-static INLINE int
+static INLINE boolean
 pb_check_alignment(size_t requested, size_t provided)
 {
-   return requested <= provided && (provided % requested) == 0;
+   return requested <= provided && (provided % requested) == 0 ? TRUE : FALSE;
+}
+
+
+/**
+ * Utility function to check whether the provided alignment is consistent with
+ * the requested or not.
+ */
+static INLINE boolean
+pb_check_usage(unsigned requested, unsigned provided)
+{
+   return (requested & provided) == provided ? TRUE : FALSE;
 }
 
 

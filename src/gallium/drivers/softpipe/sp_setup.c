@@ -1266,11 +1266,13 @@ void setup_prepare( struct setup_context *setup )
       sp->framebuffer.zsbuf->status = PIPE_SURFACE_STATUS_DEFINED;
    }
 
+   /* Note: nr_attrs is only used for debugging (vertex printing) */
    {
       const struct sp_fragment_shader *fs = setup->softpipe->fs;
-      setup->quad.nr_attrs = fs->info.num_inputs;
-      sp->quad.first->begin(sp->quad.first);
+      setup->quad.nr_attrs = fs->info.num_inputs + 1; /* +1 for vert pos */
    }
+
+   sp->quad.first->begin(sp->quad.first);
 
    if (sp->reduced_api_prim == PIPE_PRIM_TRIANGLES &&
        sp->rasterizer->fill_cw == PIPE_POLYGON_MODE_FILL &&
