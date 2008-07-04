@@ -710,6 +710,8 @@ i915_texture_blanket(struct pipe_screen * screen,
       return NULL;
 
    tex->base = *base;
+   tex->base.refcount = 1;
+   tex->base.screen = screen;
 
    tex->stride = stride[0];
 
