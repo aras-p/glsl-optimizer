@@ -185,9 +185,9 @@ _mesa_remove_attachment(GLcontext *ctx, struct gl_renderbuffer_attachment *att)
       att->Texture = NULL;
    }
    if (att->Type == GL_TEXTURE || att->Type == GL_RENDERBUFFER_EXT) {
-      ASSERT(att->Renderbuffer);
       ASSERT(!att->Texture);
-      _mesa_reference_renderbuffer(&att->Renderbuffer, NULL);
+      _mesa_reference_renderbuffer(&att->Renderbuffer, NULL); /* unbind */
+      ASSERT(!att->Renderbuffer);
    }
    att->Type = GL_NONE;
    att->Complete = GL_TRUE;
