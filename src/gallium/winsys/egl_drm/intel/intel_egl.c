@@ -33,8 +33,8 @@ egl_drm_create_device(int drmFD)
 	device->drmFD = drmFD;
 
 	if (!intel_init_driver(device)) {
-		printf("EGL: failed to initalize device\n");
 		free(device);
+		return NULL;
 	}
 
 	return device;
@@ -105,22 +105,9 @@ drm_add_modes_from_connector(_EGLScreen *screen, drmModeConnectorPtr connector)
 	}
 }
 
-static void
-print_modes(drmModeConnectorPtr connector)
-{
-	struct drm_mode_modeinfo *m;
-	int i;
-
-	for (i = 0; i < connector->count_modes; i++) {
-		m = &connector->modes[i];
-		printf("dfm %p %i %i %i\n", m, m->hdisplay, m->vdisplay, m->vrefresh);
-	}
-}
-
 static EGLBoolean
 drm_initialize(_EGLDriver *drv, EGLDisplay dpy, EGLint *major, EGLint *minor)
 {
-	printf("%s enter\n", __FUNCTION__);
 	_EGLDisplay *disp = _eglLookupDisplay(dpy);
 	struct drm_driver *drm_drv = (struct drm_driver *)drv;
 	struct drm_screen *screen = NULL;
@@ -490,10 +477,8 @@ drm_show_screen_surface_mesa(_EGLDriver *drv, EGLDisplay dpy,
 		DRM_BO_FLAG_NO_EVICT,
 		DRM_BO_HINT_DONT_FENCE, &scrn->buffer);
 
-	if (ret) {
-		printf("failed to create framebuffer (ret %d)\n", ret);
+	if (ret)
 		return EGL_FALSE;
-	}
 
 	prettyColors(drm_drv->device->drmFD, scrn->buffer.handle, pitch);
 
@@ -510,10 +495,8 @@ drm_show_screen_surface_mesa(_EGLDriver *drv, EGLDisplay dpy,
 		goto err_bo;
 
 	scrn->mode = drm_find_mode(scrn->connector, mode);
-	if (!scrn->mode) {
-		printf("oh noes, no matching mode found\n");
+	if (!scrn->mode)
 		goto err_fb;
-	}
 
 	ret = drmModeSetCrtc(
 			drm_drv->device->drmFD,
@@ -602,7 +585,6 @@ _EGLDriver *
 _eglMain(_EGLDisplay *dpy, const char *args)
 {
 	struct drm_driver *drm;
-	printf("%s enter\n", __FUNCTION__);
 
 	drm = (struct drm_driver *) calloc(1, sizeof(struct drm_driver));
 	if (!drm) {
