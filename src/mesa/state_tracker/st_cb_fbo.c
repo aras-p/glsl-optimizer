@@ -422,7 +422,8 @@ st_finish_render_texture(GLcontext *ctx,
    struct pipe_screen *screen = ctx->st->pipe->screen;
    struct st_renderbuffer *strb = st_renderbuffer(att->Renderbuffer);
 
-   assert(strb);
+   if (!strb)
+      return;
 
    ctx->st->pipe->flush(ctx->st->pipe, PIPE_FLUSH_RENDER_CACHE, NULL);
 
