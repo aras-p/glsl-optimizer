@@ -122,8 +122,10 @@ softpipe_displaytarget_layout(struct pipe_screen *screen,
       
    /* Now extract the goodies: 
     */
-   spt->buffer = surf.buffer;
+   spt->base.nblocksx[0] = pf_get_nblocksx(&spt->base.block, spt->base.width[0]);  
+   spt->base.nblocksy[0] = pf_get_nblocksy(&spt->base.block, spt->base.height[0]);  
    spt->stride[0] = surf.stride;
+   spt->buffer = surf.buffer;
 
    return spt->buffer != NULL;
 }
