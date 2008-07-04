@@ -62,31 +62,6 @@ static const struct gl_tex_env_combine_state default_combine_state = {
 };
 
 
-/**
- * Copy a texture binding.  Helper used by _mesa_copy_texture_state().
- */
-static void
-copy_texture_binding(const GLcontext *ctx,
-                     struct gl_texture_object **dst,
-                     struct gl_texture_object *src)
-{
-   /* only copy if names differ (per OpenGL SI) */
-   if ((*dst)->Name != src->Name) {
-      /* unbind/delete dest binding which we're changing */
-      (*dst)->RefCount--;
-      if ((*dst)->RefCount == 0) {
-         /* time to delete this texture object */
-         ASSERT((*dst)->Name != 0);
-         ASSERT(ctx->Driver.DeleteTexture);
-         /* XXX cast-away const, unfortunately */
-         (*ctx->Driver.DeleteTexture)((GLcontext *) ctx, *dst);
-      }
-      /* make new binding, incrementing ref count */
-      *dst = src;
-      src->RefCount++;
-   }
-}
-
 
 /**
  * Used by glXCopyContext to copy texture state from one context to another.
@@ -143,20 +118,20 @@ _mesa_copy_texture_state( const GLcontext *src, GLcontext *dst )
       /* copy texture object bindings, not contents of texture objects */
       _mesa_lock_context_textures(dst);
 
-      copy_texture_binding(src, &dst->Texture.Unit[i].Current1D,
-                           src->Texture.Unit[i].Current1D);
-      copy_texture_binding(src, &dst->Texture.Unit[i].Current2D,
-                           src->Texture.Unit[i].Current2D);
-      copy_texture_binding(src, &dst->Texture.Unit[i].Current3D,
-                           src->Texture.Unit[i].Current3D);
-      copy_texture_binding(src, &dst->Texture.Unit[i].CurrentCubeMap,
-                           src->Texture.Unit[i].CurrentCubeMap);
-      copy_texture_binding(src, &dst->Texture.Unit[i].CurrentRect,
-                           src->Texture.Unit[i].CurrentRect);
-      copy_texture_binding(src, &dst->Texture.Unit[i].Current1DArray,
-                           src->Texture.Unit[i].Current1DArray);
-      copy_texture_binding(src, &dst->Texture.Unit[i].Current2DArray,
-                           src->Texture.Unit[i].Current2DArray);
+       _mesa_reference_texobj(&dst->Texture.Unit[i].Current1D,
+                              src->Texture.Unit[i].Current1D);
+       _mesa_reference_texobj(&dst->Texture.Unit[i].Current2D,
+                              src->Texture.Unit[i].Current2D);
+       _mesa_reference_texobj(&dst->Texture.Unit[i].Current3D,
+                              src->Texture.Unit[i].Current3D);
+       _mesa_reference_texobj(&dst->Texture.Unit[i].CurrentCubeMap,
+                              src->Texture.Unit[i].CurrentCubeMap);
+       _mesa_reference_texobj(&dst->Texture.Unit[i].CurrentRect,
+                              src->Texture.Unit[i].CurrentRect);
+       _mesa_reference_texobj(&dst->Texture.Unit[i].Current1DArray,
+                              src->Texture.Unit[i].Current1DArray);
+       _mesa_reference_texobj(&dst->Texture.Unit[i].Current2DArray,
+                              src->Texture.Unit[i].Current2DArray);
 
       _mesa_unlock_context_textures(dst);
    }
@@ -727,6 +702,8 @@ alloc_proxy_textures( GLcontext *ctx )
    if (!ctx->Texture.Proxy2DArray)
       goto cleanup;
 
+   assert(ctx->Texture.Proxy1D->RefCount == 1);
+
    return GL_TRUE;
 
  cleanup:
@@ -786,13 +763,14 @@ init_texture_unit( GLcontext *ctx, GLuint unit )
    ASSIGN_4V( texUnit->EyePlaneR, 0.0, 0.0, 0.0, 0.0 );
    ASSIGN_4V( texUnit->EyePlaneQ, 0.0, 0.0, 0.0, 0.0 );
 
-   texUnit->Current1D = ctx->Shared->Default1D;
-   texUnit->Current2D = ctx->Shared->Default2D;
-   texUnit->Current3D = ctx->Shared->Default3D;
-   texUnit->CurrentCubeMap = ctx->Shared->DefaultCubeMap;
-   texUnit->CurrentRect = ctx->Shared->DefaultRect;
-   texUnit->Current1DArray = ctx->Shared->Default1DArray;
-   texUnit->Current2DArray = ctx->Shared->Default2DArray;
+   /* initialize current texture object ptrs to the shared default objects */
+   _mesa_reference_texobj(&texUnit->Current1D, ctx->Shared->Default1D);
+   _mesa_reference_texobj(&texUnit->Current2D, ctx->Shared->Default2D);
+   _mesa_reference_texobj(&texUnit->Current3D, ctx->Shared->Default3D);
+   _mesa_reference_texobj(&texUnit->CurrentCubeMap, ctx->Shared->DefaultCubeMap);
+   _mesa_reference_texobj(&texUnit->CurrentRect, ctx->Shared->DefaultRect);
+   _mesa_reference_texobj(&texUnit->Current1DArray, ctx->Shared->Default1DArray);
+   _mesa_reference_texobj(&texUnit->Current2DArray, ctx->Shared->Default2DArray);
 }
 
 
@@ -807,24 +785,21 @@ _mesa_init_texture(GLcontext *ctx)
    assert(MAX_TEXTURE_LEVELS >= MAX_3D_TEXTURE_LEVELS);
    assert(MAX_TEXTURE_LEVELS >= MAX_CUBE_TEXTURE_LEVELS);
 
-   /* Effectively bind the default textures to all texture units */
-   ctx->Shared->Default1D->RefCount += MAX_TEXTURE_UNITS;
-   ctx->Shared->Default2D->RefCount += MAX_TEXTURE_UNITS;
-   ctx->Shared->Default3D->RefCount += MAX_TEXTURE_UNITS;
-   ctx->Shared->DefaultCubeMap->RefCount += MAX_TEXTURE_UNITS;
-   ctx->Shared->DefaultRect->RefCount += MAX_TEXTURE_UNITS;
-   ctx->Shared->Default1DArray->RefCount += MAX_TEXTURE_UNITS;
-   ctx->Shared->Default2DArray->RefCount += MAX_TEXTURE_UNITS;
-
    /* Texture group */
    ctx->Texture.CurrentUnit = 0;      /* multitexture */
    ctx->Texture._EnabledUnits = 0;
-   for (i=0; i<MAX_TEXTURE_UNITS; i++)
-      init_texture_unit( ctx, i );
    ctx->Texture.SharedPalette = GL_FALSE;
 #if FEATURE_colortable
    _mesa_init_colortable(&ctx->Texture.Palette);
 #endif
+
+   for (i = 0; i < MAX_TEXTURE_UNITS; i++)
+      init_texture_unit( ctx, i );
+
+   /* After we're done initializing the context's texture state the default
+    * texture objects' refcounts should be at least MAX_TEXTURE_UNITS + 1.
+    */
+   assert(ctx->Shared->Default1D->RefCount >= MAX_TEXTURE_UNITS + 1);
 
    /* Allocate proxy textures */
    if (!alloc_proxy_textures( ctx ))
@@ -840,6 +815,20 @@ _mesa_init_texture(GLcontext *ctx)
 void
 _mesa_free_texture_data(GLcontext *ctx)
 {
+   GLuint u;
+
+   /* unreference current textures */
+   for (u = 0; u < MAX_TEXTURE_IMAGE_UNITS; u++) {
+      struct gl_texture_unit *unit = ctx->Texture.Unit + u;
+      _mesa_reference_texobj(&unit->Current1D, NULL);
+      _mesa_reference_texobj(&unit->Current2D, NULL);
+      _mesa_reference_texobj(&unit->Current3D, NULL);
+      _mesa_reference_texobj(&unit->CurrentCubeMap, NULL);
+      _mesa_reference_texobj(&unit->CurrentRect, NULL);
+      _mesa_reference_texobj(&unit->Current1DArray, NULL);
+      _mesa_reference_texobj(&unit->Current2DArray, NULL);
+   }
+
    /* Free proxy texture objects */
    (ctx->Driver.DeleteTexture)(ctx,  ctx->Texture.Proxy1D );
    (ctx->Driver.DeleteTexture)(ctx,  ctx->Texture.Proxy2D );
@@ -848,6 +837,7 @@ _mesa_free_texture_data(GLcontext *ctx)
    (ctx->Driver.DeleteTexture)(ctx,  ctx->Texture.ProxyRect );
    (ctx->Driver.DeleteTexture)(ctx,  ctx->Texture.Proxy1DArray );
    (ctx->Driver.DeleteTexture)(ctx,  ctx->Texture.Proxy2DArray );
+
 
 #if FEATURE_colortable
    {

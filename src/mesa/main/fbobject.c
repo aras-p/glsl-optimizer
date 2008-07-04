@@ -172,17 +172,12 @@ _mesa_remove_attachment(GLcontext *ctx, struct gl_renderbuffer_attachment *att)
 {
    if (att->Type == GL_TEXTURE) {
       ASSERT(att->Texture);
-      att->Texture->RefCount--;
-      if (att->Texture->RefCount == 0) {
-	 ctx->Driver.DeleteTexture(ctx, att->Texture);
-      }
-      else {
+      if (ctx->Driver.FinishRenderTexture) {
          /* tell driver that we're done rendering to this texture. */
-         if (ctx->Driver.FinishRenderTexture) {
-            ctx->Driver.FinishRenderTexture(ctx, att);
-         }
+         ctx->Driver.FinishRenderTexture(ctx, att);
       }
-      att->Texture = NULL;
+      _mesa_reference_texobj(&att->Texture, NULL); /* unbind */
+      ASSERT(!att->Texture);
    }
    if (att->Type == GL_TEXTURE || att->Type == GL_RENDERBUFFER_EXT) {
       ASSERT(!att->Texture);
@@ -213,8 +208,8 @@ _mesa_set_texture_attachment(GLcontext *ctx,
       /* new attachment */
       _mesa_remove_attachment(ctx, att);
       att->Type = GL_TEXTURE;
-      att->Texture = texObj;
-      texObj->RefCount++;
+      assert(!att->Texture);
+      _mesa_reference_texobj(&att->Texture, texObj);
    }
 
    /* always update these fields */
