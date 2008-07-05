@@ -27,11 +27,6 @@
 
 #include "r500_fragprog.h"
 
-static void reset_srcreg(struct prog_src_register* reg)
-{
-	_mesa_bzero(reg, sizeof(*reg));
-	reg->Swizzle = SWIZZLE_NOOP;
-}
 
 /**
  * Transform TEX, TXP, TXB, and KIL instructions in the following way:
