@@ -266,7 +266,7 @@ static int get_temp(struct r500_pfs_compile_state *cs, int slot) {
 
 /* Borrowed verbatim from r300_fragprog since it hasn't changed. */
 static GLuint emit_const4fv(struct r500_pfs_compile_state *cs,
-			    const GLfloat * cp)
+			    struct prog_src_register srcreg)
 {
 	PROG_CODE;
 
@@ -274,7 +274,8 @@ static GLuint emit_const4fv(struct r500_pfs_compile_state *cs,
 	int index;
 
 	for (index = 0; index < code->const_nr; ++index) {
-		if (code->constant[index] == cp)
+		if (code->constant[index].File == srcreg.File &&
+		    code->constant[index].Index == srcreg.Index)
 			break;
 	}
 
@@ -285,7 +286,7 @@ static GLuint emit_const4fv(struct r500_pfs_compile_state *cs,
 		}
 
 		code->const_nr++;
-		code->constant[index] = cp;
+		code->constant[index] = srcreg;
 	}
 
 	reg = index | REG_CONSTANT;
@@ -303,18 +304,11 @@ static GLuint make_src(struct r500_pfs_compile_state *cs, struct prog_src_regist
 		reg = cs->inputs[src.Index].reg;
 		break;
 	case PROGRAM_LOCAL_PARAM:
-		reg = emit_const4fv(cs,
-			cs->compiler->fp->mesa_program.Base.LocalParams[src.Index]);
-		break;
 	case PROGRAM_ENV_PARAM:
-		reg = emit_const4fv(cs,
-			cs->compiler->r300->radeon.glCtx->FragmentProgram.Parameters[src.Index]);
-		break;
 	case PROGRAM_STATE_VAR:
 	case PROGRAM_NAMED_PARAM:
 	case PROGRAM_CONSTANT:
-		reg = emit_const4fv(cs,
-			cs->compiler->fp->mesa_program.Base.Parameters->ParameterValues[src.Index]);
+		reg = emit_const4fv(cs, src);
 		break;
 	case PROGRAM_BUILTIN:
 		reg = 0x0;
@@ -628,12 +622,20 @@ static void emit_trig(struct r500_pfs_compile_state *cs, struct prog_instruction
 	temp.Index = get_temp(cs, 0);
 	temp.WriteMask = WRITEMASK_W;
 
+	struct prog_src_register srcreg;
+	GLuint constant_swizzle;
+
+	srcreg.File = PROGRAM_CONSTANT;
+	srcreg.Index = _mesa_add_unnamed_constant(cs->compiler->program->Parameters,
+		RCP_2PI, 4, &constant_swizzle);
+	srcreg.Swizzle = constant_swizzle;
+
 	/* temp = Input*(1/2pi) */
 	ip = emit_alu(cs, R500_ALU_RGBA_OP_MAD, R500_ALPHA_OP_MAD, temp);
 	set_src0(cs, ip, fpi->SrcReg[0]);
-	set_src1_direct(cs, ip, emit_const4fv(cs, RCP_2PI));
+	set_src1(cs, ip, srcreg);
 	set_argA(cs, ip, 0, R500_SWIZ_RGB_ZERO, make_sop_swizzle(fpi->SrcReg[0]));
-	set_argB(cs, ip, 1, R500_SWIZ_RGB_ZERO, SWIZZLE_W);
+	set_argB(cs, ip, 1, R500_SWIZ_RGB_ZERO, make_alpha_swizzle(srcreg));
 	set_argC(cs, ip, 0, R500_SWIZ_RGB_ZERO, R500_SWIZZLE_ZERO);
 
 	/* temp = frac(dst) */
@@ -657,87 +659,6 @@ static void emit_trig(struct r500_pfs_compile_state *cs, struct prog_instruction
 			moddst.WriteMask = WRITEMASK_Y;
 			emit_sop(cs, R500_ALPHA_OP_SIN, fpi->DstReg, temp.Index, SWIZZLE_W);
 		}
-	}
-}
-
-/**
- * Emit a LIT instruction.
- *
- * Definition of LIT (from ARB_fragment_program):
- *  tmp = VectorLoad(op0);
- *  if (tmp.x < 0) tmp.x = 0;
- *  if (tmp.y < 0) tmp.y = 0;
- *  if (tmp.w < -(128.0-epsilon)) tmp.w = -(128.0-epsilon);
- *  else if (tmp.w > 128-epsilon) tmp.w = 128-epsilon;
- *  result.x = 1.0;
- *  result.y = tmp.x;
- *  result.z = (tmp.x > 0) ? RoughApproxPower(tmp.y, tmp.w) : 0.0;
- *  result.w = 1.0;
- */
-static void emit_lit(struct r500_pfs_compile_state *cs, struct prog_instruction *fpi)
-{
-	GLuint cnst;
-	int needTemporary;
-	GLuint temp;
-	int ip;
-
-	cnst = emit_const4fv(cs, LIT);
-
-	needTemporary = 0;
-	if (fpi->DstReg.WriteMask != WRITEMASK_XYZW || fpi->DstReg.File == PROGRAM_OUTPUT)
-		needTemporary = 1;
-
-	if (needTemporary) {
-		temp = get_temp(cs, 0);
-	} else {
-		temp = fpi->DstReg.Index;
-	}
-
-	// MAX tmp.xyw, op0, { 0, 0, 0, -128+eps }
-	ip = emit_alu_temp(cs, R500_ALU_RGBA_OP_MAX, R500_ALPHA_OP_MAX, temp, WRITEMASK_XYW);
-	set_src0(cs, ip, fpi->SrcReg[0]);
-	set_src1_direct(cs, ip, cnst);
-	set_argA_reg(cs, ip, 0, fpi->SrcReg[0]);
-	set_argB(cs, ip, 1, R500_SWIZ_RGB_ZERO, SWIZZLE_W);
-
-	// MIN tmp.z, tmp.w, { 128-eps }
-	// LG2 tmp.w, tmp.y
-	ip = emit_alu_temp(cs, R500_ALU_RGBA_OP_MIN, R500_ALPHA_OP_LN2, temp, WRITEMASK_ZW);
-	set_src0_direct(cs, ip, temp);
-	set_src1_direct(cs, ip, cnst);
-	set_argA(cs, ip, 0, SWIZZLE_W | (SWIZZLE_W<<3) | (SWIZZLE_W<<6), SWIZZLE_Y);
-	set_argB(cs, ip, 1, SWIZZLE_X | (SWIZZLE_X<<3) | (SWIZZLE_X<<6), SWIZZLE_X);
-
-	// MOV tmp.y, tmp.x
-	// MUL tmp.w, tmp.z, tmp.w
-	ip = emit_alu_temp(cs, R500_ALU_RGBA_OP_MAD, R500_ALPHA_OP_MAD, temp, WRITEMASK_YW);
-	set_src0_direct(cs, ip, temp);
-	set_argA(cs, ip, 0, SWIZZLE_X | (SWIZZLE_X<<3) | (SWIZZLE_X<<6), SWIZZLE_Z);
-	set_argB(cs, ip, 0, R500_SWIZ_RGB_ONE, SWIZZLE_W);
-	set_argC(cs, ip, 0, R500_SWIZ_RGB_ZERO, R500_SWIZZLE_ZERO);
-
-	// MOV tmp.x, 1.0
-	// EX2 tmp.w, tmp.w
-	ip = emit_alu_temp(cs, R500_ALU_RGBA_OP_CMP, R500_ALPHA_OP_EX2, temp, WRITEMASK_XW);
-	set_src0_direct(cs, ip, temp);
-	set_argA(cs, ip, 0, R500_SWIZ_RGB_ONE, SWIZZLE_W);
-	set_argB(cs, ip, 0, R500_SWIZ_RGB_ONE, R500_SWIZZLE_ZERO);
-	set_argC(cs, ip, 0, R500_SWIZ_RGB_ZERO, R500_SWIZZLE_ZERO);
-
-	// tmp.z := (-tmp.x >= 0) ? tmp.y : 0.0
-	// MOV tmp.w, 1.0
-	ip = emit_alu_temp(cs, R500_ALU_RGBA_OP_CMP, R500_ALPHA_OP_CMP, temp, WRITEMASK_ZW);
-	set_src0_direct(cs, ip, temp);
-	set_argA(cs, ip, 0, R500_SWIZZLE_ZERO, R500_SWIZZLE_ONE);
-	set_argB(cs, ip, 0, SWIZZLE_W | (SWIZZLE_W<<3) | (SWIZZLE_W<<6), R500_SWIZZLE_ONE);
-	set_argC(cs, ip, 0, SWIZZLE_Y | (SWIZZLE_Y<<3) | (SWIZZLE_Y<<6) | (R500_SWIZ_MOD_NEG<<9), R500_SWIZZLE_ZERO);
-
-	if (needTemporary) {
-		ip = emit_alu(cs, R500_ALU_RGBA_OP_CMP, R500_ALPHA_OP_CMP, fpi->DstReg);
-		set_src0_direct(cs, ip, temp);
-		set_argA(cs, ip, 0, R500_SWIZ_RGB_RGB, SWIZZLE_W);
-		set_argB(cs, ip, 1, R500_SWIZ_RGB_RGB, SWIZZLE_W);
-		set_argC(cs, ip, 0, R500_SWIZ_RGB_ZERO, R500_SWIZZLE_ZERO);
 	}
 }
 
@@ -829,9 +750,6 @@ static void do_inst(struct r500_pfs_compile_state *cs, struct prog_instruction *
 		case OPCODE_LG2:
 			src[0] = make_src(cs, fpi->SrcReg[0]);
 			emit_sop(cs, R500_ALPHA_OP_LN2, fpi->DstReg, src[0], make_sop_swizzle(fpi->SrcReg[0]));
-			break;
-		case OPCODE_LIT:
-			emit_lit(cs, fpi);
 			break;
 		case OPCODE_LRP:
 			/* result = src0*src1 + (1-src0)*src2

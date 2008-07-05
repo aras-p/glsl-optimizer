@@ -117,9 +117,7 @@ static GLboolean transform_TEX(
 		int factor_index;
 
 		tokens[2] = inst.TexSrcUnit;
-		factor_index =
-			_mesa_add_state_reference(
-				compiler->fp->mesa_program.Base.Parameters, tokens);
+		factor_index = _mesa_add_state_reference(t->Program->Parameters, tokens);
 
 		tgt = radeonAppendInstructions(t->Program, 1);
 
@@ -303,7 +301,7 @@ static void insert_WPOS_trailer(struct r300_fragment_program_compiler *compiler)
 	i++;
 
 	/* viewport transformation */
-	window_index = _mesa_add_state_reference(compiler->fp->mesa_program.Base.Parameters, tokens);
+	window_index = _mesa_add_state_reference(compiler->program->Parameters, tokens);
 
 	fpi[i].Opcode = OPCODE_MAD;
 
@@ -401,6 +399,11 @@ void r300TranslateFragmentShader(r300ContextPtr r300,
 		compiler.code = &fp->code;
 		compiler.program = _mesa_clone_program(r300->radeon.glCtx, &fp->mesa_program.Base);
 
+		if (RADEON_DEBUG & DEBUG_PIXEL) {
+			_mesa_printf("Fragment Program: Initial program:\n");
+			_mesa_print_program(compiler.program);
+		}
+
 		insert_WPOS_trailer(&compiler);
 
 		struct radeon_program_transformation transformations[] = {
@@ -413,12 +416,17 @@ void r300TranslateFragmentShader(r300ContextPtr r300,
 			2, transformations);
 
 		if (RADEON_DEBUG & DEBUG_PIXEL) {
-			_mesa_printf("Program after transformations:\n");
+			_mesa_printf("Fragment Program: After transformations:\n");
 			_mesa_print_program(compiler.program);
 		}
 
 		if (!r300FragmentProgramEmit(&compiler))
 			fp->error = GL_TRUE;
+
+		/* Subtle: Rescue any parameters that have been added during transformations */
+		_mesa_free_parameter_list(fp->mesa_program.Base.Parameters);
+		fp->mesa_program.Base.Parameters = compiler.program->Parameters;
+		compiler.program->Parameters = 0;
 
 		_mesa_reference_program(r300->radeon.glCtx, &compiler.program, NULL);
 

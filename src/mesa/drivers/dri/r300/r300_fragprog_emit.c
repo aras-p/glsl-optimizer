@@ -549,22 +549,17 @@ static void free_temp(struct r300_pfs_compile_state *cs, GLuint r)
 
 /**
  * Emit a hardware constant/parameter.
- *
- * \p cp Stable pointer to an array of 4 floats.
- *  The pointer must be stable in the sense that it remains to be valid
- *  and hold the contents of the constant/parameter throughout the lifetime
- *  of the fragment program (actually, up until the next time the fragment
- *  program is translated).
  */
 static GLuint emit_const4fv(struct r300_pfs_compile_state *cs,
-			    const GLfloat * cp)
+			    struct prog_src_register srcreg)
 {
 	COMPILE_STATE;
 	GLuint reg = undef;
 	int index;
 
 	for (index = 0; index < code->const_nr; ++index) {
-		if (code->constant[index] == cp)
+		if (code->constant[index].File == srcreg.File &&
+		    code->constant[index].Index == srcreg.Index)
 			break;
 	}
 
@@ -575,7 +570,7 @@ static GLuint emit_const4fv(struct r300_pfs_compile_state *cs,
 		}
 
 		code->const_nr++;
-		code->constant[index] = cp;
+		code->constant[index] = srcreg;
 	}
 
 	REG_SET_TYPE(reg, REG_TYPE_CONST);
@@ -806,20 +801,11 @@ static GLuint t_src(struct r300_pfs_compile_state *cs,
 		REG_SET_TYPE(r, REG_TYPE_INPUT);
 		break;
 	case PROGRAM_LOCAL_PARAM:
-		r = emit_const4fv(cs,
-				  fp->mesa_program.Base.LocalParams[fpsrc.
-								    Index]);
-		break;
 	case PROGRAM_ENV_PARAM:
-		r = emit_const4fv(cs,
-			cs->compiler->r300->radeon.glCtx->FragmentProgram.Parameters[fpsrc.Index]);
-		break;
 	case PROGRAM_STATE_VAR:
 	case PROGRAM_NAMED_PARAM:
 	case PROGRAM_CONSTANT:
-		r = emit_const4fv(cs,
-				  fp->mesa_program.Base.Parameters->
-				  ParameterValues[fpsrc.Index]);
+		r = emit_const4fv(cs, fpsrc);
 		break;
 	case PROGRAM_BUILTIN:
 		switch(fpsrc.Swizzle) {
@@ -1452,100 +1438,17 @@ static GLfloat SinCosConsts[2][4] = {
 	 }
 };
 
-/**
- * Emit a LIT instruction.
- * \p flags may be PFS_FLAG_SAT
- *
- * Definition of LIT (from ARB_fragment_program):
- * tmp = VectorLoad(op0);
- * if (tmp.x < 0) tmp.x = 0;
- * if (tmp.y < 0) tmp.y = 0;
- * if (tmp.w < -(128.0-epsilon)) tmp.w = -(128.0-epsilon);
- * else if (tmp.w > 128-epsilon) tmp.w = 128-epsilon;
- * result.x = 1.0;
- * result.y = tmp.x;
- * result.z = (tmp.x > 0) ? RoughApproxPower(tmp.y, tmp.w) : 0.0;
- * result.w = 1.0;
- *
- * The longest path of computation is the one leading to result.z,
- * consisting of 5 operations. This implementation of LIT takes
- * 5 slots. So unless there's some special undocumented opcode,
- * this implementation is potentially optimal. Unfortunately,
- * emit_arith is a bit too conservative because it doesn't understand
- * partial writes to the vector component.
- */
-static const GLfloat LitConst[4] =
-    { 127.999999, 127.999999, 127.999999, -127.999999 };
-
-static void emit_lit(struct r300_pfs_compile_state *cs,
-		     GLuint dest, int mask, GLuint src, int flags)
+static GLuint emit_sincosconsts(struct r300_pfs_compile_state *cs, int i)
 {
-	COMPILE_STATE;
-	GLuint cnst;
-	int needTemporary;
-	GLuint temp;
+	struct prog_src_register srcreg;
+	GLuint constant_swizzle;
 
-	cnst = emit_const4fv(cs, LitConst);
+	srcreg.File = PROGRAM_CONSTANT;
+	srcreg.Index = _mesa_add_unnamed_constant(cs->compiler->program->Parameters,
+		SinCosConsts[i], 4, &constant_swizzle);
+	srcreg.Swizzle = constant_swizzle;
 
-	needTemporary = 0;
-	if ((mask & WRITEMASK_XYZW) != WRITEMASK_XYZW) {
-		needTemporary = 1;
-	} else if (REG_GET_TYPE(dest) == REG_TYPE_OUTPUT) {
-		// LIT is typically followed by DP3/DP4, so there's no point
-		// in creating special code for this case
-		needTemporary = 1;
-	}
-
-	if (needTemporary) {
-		temp = keep(get_temp_reg(cs));
-	} else {
-		temp = keep(dest);
-	}
-
-	// Note: The order of emit_arith inside the slots is relevant,
-	// because emit_arith only looks at scalar vs. vector when resolving
-	// dependencies, and it does not consider individual vector components,
-	// so swizzling between the two parts can create fake dependencies.
-
-	// First slot
-	emit_arith(cs, PFS_OP_MAX, temp, WRITEMASK_XY,
-		   keep(src), pfs_zero, undef, 0);
-	emit_arith(cs, PFS_OP_MAX, temp, WRITEMASK_W, src, cnst, undef, 0);
-
-	// Second slot
-	emit_arith(cs, PFS_OP_MIN, temp, WRITEMASK_Z,
-		   swizzle(temp, W, W, W, W), cnst, undef, 0);
-	emit_arith(cs, PFS_OP_LG2, temp, WRITEMASK_W,
-		   swizzle(temp, Y, Y, Y, Y), undef, undef, 0);
-
-	// Third slot
-	// If desired, we saturate the y result here.
-	// This does not affect the use as a condition variable in the CMP later
-	emit_arith(cs, PFS_OP_MAD, temp, WRITEMASK_W,
-		   temp, swizzle(temp, Z, Z, Z, Z), pfs_zero, 0);
-	emit_arith(cs, PFS_OP_MAD, temp, WRITEMASK_Y,
-		   swizzle(temp, X, X, X, X), pfs_one, pfs_zero, flags);
-
-	// Fourth slot
-	emit_arith(cs, PFS_OP_MAD, temp, WRITEMASK_X,
-		   pfs_one, pfs_one, pfs_zero, 0);
-	emit_arith(cs, PFS_OP_EX2, temp, WRITEMASK_W, temp, undef, undef, 0);
-
-	// Fifth slot
-	emit_arith(cs, PFS_OP_CMP, temp, WRITEMASK_Z,
-		   pfs_zero, swizzle(temp, W, W, W, W),
-		   negate(swizzle(temp, Y, Y, Y, Y)), flags);
-	emit_arith(cs, PFS_OP_MAD, temp, WRITEMASK_W, pfs_one, pfs_one,
-		   pfs_zero, 0);
-
-	if (needTemporary) {
-		emit_arith(cs, PFS_OP_MAD, dest, mask,
-			   temp, pfs_one, pfs_zero, flags);
-		free_temp(cs, temp);
-	} else {
-		// Decrease refcount of the destination
-		t_hw_dst(cs, dest, GL_FALSE, cs->nrslots);
-	}
+	return emit_const4fv(cs, srcreg);
 }
 
 static void emit_instruction(struct r300_pfs_compile_state *cs, struct prog_instruction *fpi)
@@ -1577,8 +1480,8 @@ static void emit_instruction(struct r300_pfs_compile_state *cs, struct prog_inst
 		src[1] = t_src(cs, fpi->SrcReg[1]);
 		src[2] = t_src(cs, fpi->SrcReg[2]);
 		/* ARB_f_p - if src0.c < 0.0 ? src1.c : src2.c
-			*    r300 - if src2.c < 0.0 ? src1.c : src0.c
-			*/
+		 *    r300 - if src2.c < 0.0 ? src1.c : src0.c
+		 */
 		emit_arith(cs, PFS_OP_CMP, dest, mask,
 				src[2], src[1], src[0], flags);
 		break;
@@ -1592,8 +1495,8 @@ static void emit_instruction(struct r300_pfs_compile_state *cs, struct prog_inst
 			*   result = sin(x)
 			*/
 		temp[0] = get_temp_reg(cs);
-		const_sin[0] = emit_const4fv(cs, SinCosConsts[0]);
-		const_sin[1] = emit_const4fv(cs, SinCosConsts[1]);
+		const_sin[0] = emit_sincosconsts(cs, 0);
+		const_sin[1] = emit_sincosconsts(cs, 1);
 		src[0] = t_scalar_src(cs, fpi->SrcReg[0]);
 
 		/* add 0.5*PI and do range reduction */
@@ -1687,10 +1590,6 @@ static void emit_instruction(struct r300_pfs_compile_state *cs, struct prog_inst
 		emit_arith(cs, PFS_OP_LG2, dest, mask,
 				src[0], undef, undef, flags);
 		break;
-	case OPCODE_LIT:
-		src[0] = t_src(cs, fpi->SrcReg[0]);
-		emit_lit(cs, dest, mask, src[0], flags);
-		break;
 	case OPCODE_LRP:
 		src[0] = t_src(cs, fpi->SrcReg[0]);
 		src[1] = t_src(cs, fpi->SrcReg[1]);
@@ -1758,8 +1657,8 @@ static void emit_instruction(struct r300_pfs_compile_state *cs, struct prog_inst
 			*/
 		temp[0] = get_temp_reg(cs);
 		temp[1] = get_temp_reg(cs);
-		const_sin[0] = emit_const4fv(cs, SinCosConsts[0]);
-		const_sin[1] = emit_const4fv(cs, SinCosConsts[1]);
+		const_sin[0] = emit_sincosconsts(cs, 0);
+		const_sin[1] = emit_sincosconsts(cs, 1);
 		src[0] = t_scalar_src(cs, fpi->SrcReg[0]);
 
 		/* x = -abs(x)+0.5*PI */
@@ -1825,8 +1724,8 @@ static void emit_instruction(struct r300_pfs_compile_state *cs, struct prog_inst
 			*/
 
 		temp[0] = get_temp_reg(cs);
-		const_sin[0] = emit_const4fv(cs, SinCosConsts[0]);
-		const_sin[1] = emit_const4fv(cs, SinCosConsts[1]);
+		const_sin[0] = emit_sincosconsts(cs, 0);
+		const_sin[1] = emit_sincosconsts(cs, 1);
 		src[0] = t_scalar_src(cs, fpi->SrcReg[0]);
 
 		/* do range reduction */

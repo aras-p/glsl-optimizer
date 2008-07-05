@@ -212,7 +212,7 @@ static void insert_WPOS_trailer(struct r500_fragment_program_compiler *compiler)
 	i++;
 
 	/* viewport transformation */
-	window_index = _mesa_add_state_reference(compiler->fp->mesa_program.Base.Parameters, tokens);
+	window_index = _mesa_add_state_reference(compiler->program->Parameters, tokens);
 
 	fpi[i].Opcode = OPCODE_MAD;
 
@@ -331,6 +331,11 @@ void r500TranslateFragmentShader(r300ContextPtr r300,
 		}
 
 		fp->translated = r500FragmentProgramEmit(&compiler);
+
+		/* Subtle: Rescue any parameters that have been added during transformations */
+		_mesa_free_parameter_list(fp->mesa_program.Base.Parameters);
+		fp->mesa_program.Base.Parameters = compiler.program->Parameters;
+		compiler.program->Parameters = 0;
 
 		_mesa_reference_program(r300->radeon.glCtx, &compiler.program, 0);
 
@@ -461,9 +466,8 @@ static void dump_program(struct r500_fragment_program_code *code)
   if (code->const_nr) {
     fprintf(stderr, "--------\nConstants:\n");
     for (n = 0; n < code->const_nr; n++) {
-      fprintf(stderr, "Constant %d: %f %f\n\t %f %f\n", n,
-        code->constant[n][0], code->constant[n][1], code->constant[n][2],
-        code->constant[n][3]);
+      fprintf(stderr, "Constant %d: %i[%i]\n", n,
+        code->constant[n].File, code->constant[n].Index);
     }
     fprintf(stderr, "--------\n");
   }

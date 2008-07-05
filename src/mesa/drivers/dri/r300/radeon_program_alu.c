@@ -35,6 +35,8 @@
 
 #include "radeon_program_alu.h"
 
+#include "shader/prog_parameter.h"
+
 
 static struct prog_instruction *emit1(struct gl_program* p,
 	gl_inst_opcode Opcode, struct prog_dst_register DstReg,
@@ -101,6 +103,19 @@ static struct prog_dst_register dstreg(int file, int index)
 	return dst;
 }
 
+static struct prog_dst_register dstregtmpmask(int index, int mask)
+{
+	struct prog_dst_register dst;
+	dst.File = PROGRAM_TEMPORARY;
+	dst.Index = index;
+	dst.WriteMask = mask;
+	dst.CondMask = COND_TR;
+	dst.CondSwizzle = SWIZZLE_NOOP;
+	dst.CondSrc = 0;
+	dst.pad = 0;
+	return dst;
+}
+
 static const struct prog_src_register builtin_zero = {
 	.File = PROGRAM_BUILTIN,
 	.Index = 0,
@@ -125,6 +140,15 @@ static struct prog_src_register srcreg(int file, int index)
 	return src;
 }
 
+static struct prog_src_register srcregswz(int file, int index, int swz)
+{
+	struct prog_src_register src = srcreg_undefined;
+	src.File = file;
+	src.Index = index;
+	src.Swizzle = swz;
+	return src;
+}
+
 static struct prog_src_register negate(struct prog_src_register reg)
 {
 	struct prog_src_register newreg = reg;
@@ -136,10 +160,10 @@ static struct prog_src_register swizzle(struct prog_src_register reg, GLuint x, 
 {
 	struct prog_src_register swizzled = reg;
 	swizzled.Swizzle = MAKE_SWIZZLE4(
-		GET_SWZ(reg.Swizzle, x),
-		GET_SWZ(reg.Swizzle, y),
-		GET_SWZ(reg.Swizzle, z),
-		GET_SWZ(reg.Swizzle, w));
+		x >= 4 ? x : GET_SWZ(reg.Swizzle, x),
+		y >= 4 ? y : GET_SWZ(reg.Swizzle, y),
+		z >= 4 ? z : GET_SWZ(reg.Swizzle, z),
+		w >= 4 ? w : GET_SWZ(reg.Swizzle, w));
 	return swizzled;
 }
 
@@ -183,6 +207,93 @@ static void transform_FLR(struct radeon_transform_context* t,
 	int tempreg = radeonFindFreeTemporary(t);
 	emit1(t->Program, OPCODE_FRC, dstreg(PROGRAM_TEMPORARY, tempreg), inst->SrcReg[0]);
 	emit2(t->Program, OPCODE_ADD, inst->DstReg, inst->SrcReg[0], negate(srcreg(PROGRAM_TEMPORARY, tempreg)));
+}
+
+/**
+ * Definition of LIT (from ARB_fragment_program):
+ *
+ *  tmp = VectorLoad(op0);
+ *  if (tmp.x < 0) tmp.x = 0;
+ *  if (tmp.y < 0) tmp.y = 0;
+ *  if (tmp.w < -(128.0-epsilon)) tmp.w = -(128.0-epsilon);
+ *  else if (tmp.w > 128-epsilon) tmp.w = 128-epsilon;
+ *  result.x = 1.0;
+ *  result.y = tmp.x;
+ *  result.z = (tmp.x > 0) ? RoughApproxPower(tmp.y, tmp.w) : 0.0;
+ *  result.w = 1.0;
+ *
+ * The longest path of computation is the one leading to result.z,
+ * consisting of 5 operations. This implementation of LIT takes
+ * 5 slots, if the subsequent optimization passes are clever enough
+ * to pair instructions correctly.
+ */
+static void transform_LIT(struct radeon_transform_context* t,
+	struct prog_instruction* inst)
+{
+	static const GLfloat LitConst[4] = { -127.999999 };
+
+	GLuint constant;
+	GLuint constant_swizzle;
+	GLuint temp;
+	int needTemporary = 0;
+	struct prog_src_register srctemp;
+
+	constant = _mesa_add_unnamed_constant(t->Program->Parameters, LitConst, 1, &constant_swizzle);
+
+	if (inst->DstReg.WriteMask != WRITEMASK_XYZW) {
+		needTemporary = 1;
+	} else if (inst->DstReg.File != PROGRAM_TEMPORARY) {
+		// LIT is typically followed by DP3/DP4, so there's no point
+		// in creating special code for this case
+		needTemporary = 1;
+	}
+
+	if (needTemporary) {
+		temp = radeonFindFreeTemporary(t);
+	} else {
+		temp = inst->DstReg.Index;
+	}
+	srctemp = srcreg(PROGRAM_TEMPORARY, temp);
+
+	// tmp.x = max(0.0, Src.x);
+	// tmp.y = max(0.0, Src.y);
+	// tmp.w = clamp(Src.z, -128+eps, 128-eps);
+	emit2(t->Program, OPCODE_MAX,
+		dstregtmpmask(temp, WRITEMASK_XYW),
+		inst->SrcReg[0],
+		swizzle(srcreg(PROGRAM_CONSTANT, constant),
+			SWIZZLE_ZERO, SWIZZLE_ZERO, SWIZZLE_ZERO, constant_swizzle&3));
+	emit2(t->Program, OPCODE_MIN,
+		dstregtmpmask(temp, WRITEMASK_Z),
+		swizzle(srctemp, SWIZZLE_W, SWIZZLE_W, SWIZZLE_W, SWIZZLE_W),
+		negate(srcregswz(PROGRAM_CONSTANT, constant, constant_swizzle)));
+
+	// tmp.w = Pow(tmp.y, tmp.w)
+	emit1(t->Program, OPCODE_LG2,
+		dstregtmpmask(temp, WRITEMASK_W),
+		swizzle(srctemp, SWIZZLE_Y, SWIZZLE_Y, SWIZZLE_Y, SWIZZLE_Y));
+	emit2(t->Program, OPCODE_MUL,
+		dstregtmpmask(temp, WRITEMASK_W),
+		swizzle(srctemp, SWIZZLE_W, SWIZZLE_W, SWIZZLE_W, SWIZZLE_W),
+		swizzle(srctemp, SWIZZLE_Z, SWIZZLE_Z, SWIZZLE_Z, SWIZZLE_Z));
+	emit1(t->Program, OPCODE_EX2,
+		dstregtmpmask(temp, WRITEMASK_W),
+		swizzle(srctemp, SWIZZLE_W, SWIZZLE_W, SWIZZLE_W, SWIZZLE_W));
+
+	// tmp.z = (tmp.x > 0) ? tmp.w : 0.0
+	emit3(t->Program, OPCODE_CMP,
+		dstregtmpmask(temp, WRITEMASK_Z),
+		negate(swizzle(srctemp, SWIZZLE_X, SWIZZLE_X, SWIZZLE_X, SWIZZLE_X)),
+		swizzle(srctemp, SWIZZLE_W, SWIZZLE_W, SWIZZLE_W, SWIZZLE_W),
+		builtin_zero);
+
+	// tmp.x, tmp.y, tmp.w = 1.0, tmp.x, 1.0
+	emit1(t->Program, OPCODE_MOV,
+		dstregtmpmask(temp, WRITEMASK_XYW),
+		swizzle(srctemp, SWIZZLE_ONE, SWIZZLE_X, SWIZZLE_ONE, SWIZZLE_ONE));
+
+	if (needTemporary)
+		emit1(t->Program, OPCODE_MOV, inst->DstReg, srctemp);
 }
 
 static void transform_POW(struct radeon_transform_context* t,
@@ -249,13 +360,11 @@ static void transform_XPD(struct radeon_transform_context* t,
  * no userData necessary.
  *
  * Eliminates the following ALU instructions:
- *  ABS, DPH, FLR, POW, SGE, SLT, SUB, SWZ, XPD
+ *  ABS, DPH, FLR, LIT, POW, SGE, SLT, SUB, SWZ, XPD
  * using:
  *  MOV, ADD, MUL, MAD, FRC, DP3, LG2, EX2, CMP
  *
  * @note should be applicable to R300 and R500 fragment programs.
- *
- * @todo add LIT here as well?
  */
 GLboolean radeonTransformALU(struct radeon_transform_context* t,
 	struct prog_instruction* inst,
@@ -265,6 +374,7 @@ GLboolean radeonTransformALU(struct radeon_transform_context* t,
 	case OPCODE_ABS: transform_ABS(t, inst); return GL_TRUE;
 	case OPCODE_DPH: transform_DPH(t, inst); return GL_TRUE;
 	case OPCODE_FLR: transform_FLR(t, inst); return GL_TRUE;
+	case OPCODE_LIT: transform_LIT(t, inst); return GL_TRUE;
 	case OPCODE_POW: transform_POW(t, inst); return GL_TRUE;
 	case OPCODE_SGE: transform_SGE(t, inst); return GL_TRUE;
 	case OPCODE_SLT: transform_SLT(t, inst); return GL_TRUE;

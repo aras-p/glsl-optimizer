@@ -2453,6 +2453,27 @@ void r300UpdateShaders(r300ContextPtr rmesa)
 	r300UpdateStateParameters(ctx, _NEW_PROGRAM);
 }
 
+static const GLfloat *get_fragmentprogram_constant(GLcontext *ctx,
+	struct gl_program *program, struct prog_src_register srcreg)
+{
+	static const GLfloat dummy[4] = { 0, 0, 0, 0 };
+
+	switch(srcreg.File) {
+	case PROGRAM_LOCAL_PARAM:
+		return program->LocalParams[srcreg.Index];
+	case PROGRAM_ENV_PARAM:
+		return ctx->FragmentProgram.Parameters[srcreg.Index];
+	case PROGRAM_STATE_VAR:
+	case PROGRAM_NAMED_PARAM:
+	case PROGRAM_CONSTANT:
+		return program->Parameters->ParameterValues[srcreg.Index];
+	default:
+		_mesa_problem(ctx, "get_fragmentprogram_constant: Unknown\n");
+		return dummy;
+	}
+}
+
+
 static void r300SetupPixelShader(r300ContextPtr rmesa)
 {
 	GLcontext *ctx = rmesa->radeon.glCtx;
@@ -2523,10 +2544,12 @@ static void r300SetupPixelShader(r300ContextPtr rmesa)
 	R300_STATECHANGE(rmesa, fpp);
 	rmesa->hw.fpp.cmd[R300_FPP_CMD_0] = cmdpacket0(R300_PFS_PARAM_0_X, code->const_nr * 4);
 	for (i = 0; i < code->const_nr; i++) {
-		rmesa->hw.fpp.cmd[R300_FPP_PARAM_0 + 4 * i + 0] = r300PackFloat24(code->constant[i][0]);
-		rmesa->hw.fpp.cmd[R300_FPP_PARAM_0 + 4 * i + 1] = r300PackFloat24(code->constant[i][1]);
-		rmesa->hw.fpp.cmd[R300_FPP_PARAM_0 + 4 * i + 2] = r300PackFloat24(code->constant[i][2]);
-		rmesa->hw.fpp.cmd[R300_FPP_PARAM_0 + 4 * i + 3] = r300PackFloat24(code->constant[i][3]);
+		const GLfloat *constant = get_fragmentprogram_constant(ctx,
+			&fp->mesa_program.Base, code->constant[i]);
+		rmesa->hw.fpp.cmd[R300_FPP_PARAM_0 + 4 * i + 0] = r300PackFloat24(constant[0]);
+		rmesa->hw.fpp.cmd[R300_FPP_PARAM_0 + 4 * i + 1] = r300PackFloat24(constant[1]);
+		rmesa->hw.fpp.cmd[R300_FPP_PARAM_0 + 4 * i + 2] = r300PackFloat24(constant[2]);
+		rmesa->hw.fpp.cmd[R300_FPP_PARAM_0 + 4 * i + 3] = r300PackFloat24(constant[3]);
 	}
 }
 
@@ -2595,10 +2618,12 @@ static void r500SetupPixelShader(r300ContextPtr rmesa)
 
 	R300_STATECHANGE(rmesa, r500fp_const);
 	for (i = 0; i < code->const_nr; i++) {
-		rmesa->hw.r500fp_const.cmd[R300_FPP_PARAM_0 + 4 * i + 0] = r300PackFloat32(code->constant[i][0]);
-		rmesa->hw.r500fp_const.cmd[R300_FPP_PARAM_0 + 4 * i + 1] = r300PackFloat32(code->constant[i][1]);
-		rmesa->hw.r500fp_const.cmd[R300_FPP_PARAM_0 + 4 * i + 2] = r300PackFloat32(code->constant[i][2]);
-		rmesa->hw.r500fp_const.cmd[R300_FPP_PARAM_0 + 4 * i + 3] = r300PackFloat32(code->constant[i][3]);
+		const GLfloat *constant = get_fragmentprogram_constant(ctx,
+			&fp->mesa_program.Base, code->constant[i]);
+		rmesa->hw.r500fp_const.cmd[R300_FPP_PARAM_0 + 4 * i + 0] = r300PackFloat32(constant[0]);
+		rmesa->hw.r500fp_const.cmd[R300_FPP_PARAM_0 + 4 * i + 1] = r300PackFloat32(constant[1]);
+		rmesa->hw.r500fp_const.cmd[R300_FPP_PARAM_0 + 4 * i + 2] = r300PackFloat32(constant[2]);
+		rmesa->hw.r500fp_const.cmd[R300_FPP_PARAM_0 + 4 * i + 3] = r300PackFloat32(constant[3]);
 	}
 	bump_r500fp_const_count(rmesa->hw.r500fp_const.cmd, code->const_nr * 4);
 

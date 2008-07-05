@@ -716,14 +716,11 @@ struct r300_fragment_program_code {
 	int tex_offset;
 	int tex_end;
 
-	/* Hardware constants.
-	 * Contains a pointer to the value. The destination of the pointer
-	 * is supposed to be updated when GL state changes.
-	 * Typically, this is either a pointer into
-	 * gl_program_parameter_list::ParameterValues, or a pointer to a
-	 * global constant (e.g. for sin/cos-approximation)
+	/**
+	 * Remember which program register a given hardware constant
+	 * belongs to.
 	 */
-	const GLfloat *constant[PFS_NUM_CONST_REGS];
+	struct prog_src_register constant[PFS_NUM_CONST_REGS];
 	int const_nr;
 
 	int max_temp_idx;
@@ -787,14 +784,11 @@ struct r500_fragment_program_code {
 	int inst_offset;
 	int inst_end;
 
-	/* Hardware constants.
-	* Contains a pointer to the value. The destination of the pointer
-	* is supposed to be updated when GL state changes.
-	* Typically, this is either a pointer into
-	* gl_program_parameter_list::ParameterValues, or a pointer to a
-	* global constant (e.g. for sin/cos-approximation)
-	*/
-	const GLfloat *constant[PFS_NUM_CONST_REGS];
+	/**
+	 * Remember which program register a given hardware constant
+	 * belongs to.
+	 */
+	struct prog_src_register constant[PFS_NUM_CONST_REGS];
 	int const_nr;
 
 	int max_temp_idx;
