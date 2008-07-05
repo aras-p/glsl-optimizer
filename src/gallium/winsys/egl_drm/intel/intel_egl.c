@@ -171,7 +171,7 @@ drm_initialize(_EGLDriver *drv, EGLDisplay dpy, EGLint *major, EGLint *minor)
 	drv->Initialized = EGL_TRUE;
 
 	*major = 1;
-	*minor = 0;
+	*minor = 4;
 
 	return EGL_TRUE;
 }
@@ -610,6 +610,7 @@ _eglMain(_EGLDisplay *dpy, const char *args)
 	drm->base.API.SwapBuffers = drm_swap_buffers;
 
 	drm->base.ClientAPIsMask = EGL_OPENGL_BIT /*| EGL_OPENGL_ES_BIT*/;
+	drm->base.Name = "DRM/Gallium";
 
 	/* enable supported extensions */
 	drm->base.Extensions.MESA_screen_surface = EGL_TRUE;
