@@ -437,6 +437,7 @@ _mesa_clone_program(GLcontext *ctx, const struct gl_program *prog)
    clone->InputsRead = prog->InputsRead;
    clone->OutputsWritten = prog->OutputsWritten;
    clone->SamplersUsed = prog->SamplersUsed;
+   clone->ShadowSamplers = prog->ShadowSamplers;
    memcpy(clone->TexturesUsed, prog->TexturesUsed, sizeof(prog->TexturesUsed));
 
    if (prog->Parameters)
