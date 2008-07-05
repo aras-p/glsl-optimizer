@@ -1551,27 +1551,6 @@ static void emit_instruction(struct r300_pfs_compile_state *cs, struct prog_inst
 		emit_arith(cs, PFS_OP_DP4, dest, mask,
 				src[0], src[1], undef, flags);
 		break;
-	case OPCODE_DST:
-		src[0] = t_src(cs, fpi->SrcReg[0]);
-		src[1] = t_src(cs, fpi->SrcReg[1]);
-		/* dest.y = src0.y * src1.y */
-		if (mask & WRITEMASK_Y)
-			emit_arith(cs, PFS_OP_MAD, dest, WRITEMASK_Y,
-					keep(src[0]), keep(src[1]),
-					pfs_zero, flags);
-		/* dest.z = src0.z */
-		if (mask & WRITEMASK_Z)
-			emit_arith(cs, PFS_OP_MAD, dest, WRITEMASK_Z,
-					src[0], pfs_one, pfs_zero, flags);
-		/* result.x = 1.0
-			* result.w = src1.w */
-		if (mask & WRITEMASK_XW) {
-			REG_SET_VSWZ(src[1], SWIZZLE_111);	/*Cheat */
-			emit_arith(cs, PFS_OP_MAD, dest,
-					mask & WRITEMASK_XW,
-					src[1], pfs_one, pfs_zero, flags);
-		}
-		break;
 	case OPCODE_EX2:
 		src[0] = t_scalar_src(cs, fpi->SrcReg[0]);
 		emit_arith(cs, PFS_OP_EX2, dest, mask,

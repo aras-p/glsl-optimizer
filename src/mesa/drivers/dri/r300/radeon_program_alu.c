@@ -201,6 +201,18 @@ static void transform_DPH(struct radeon_transform_context* t,
 	emit2(t->Program, OPCODE_DP4, inst->DstReg, src0, inst->SrcReg[1]);
 }
 
+/**
+ * [1, src0.y*src1.y, src0.z, src1.w]
+ * So basically MUL with lotsa swizzling.
+ */
+static void transform_DST(struct radeon_transform_context* t,
+	struct prog_instruction* inst)
+{
+	emit2(t->Program, OPCODE_MUL, inst->DstReg,
+		swizzle(inst->SrcReg[0], SWIZZLE_ONE, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_ONE),
+		swizzle(inst->SrcReg[1], SWIZZLE_ONE, SWIZZLE_Y, SWIZZLE_ONE, SWIZZLE_W));
+}
+
 static void transform_FLR(struct radeon_transform_context* t,
 	struct prog_instruction* inst)
 {
@@ -373,7 +385,7 @@ static void transform_XPD(struct radeon_transform_context* t,
  * no userData necessary.
  *
  * Eliminates the following ALU instructions:
- *  ABS, DPH, FLR, LIT, LRP, POW, SGE, SLT, SUB, SWZ, XPD
+ *  ABS, DPH, DST, FLR, LIT, LRP, POW, SGE, SLT, SUB, SWZ, XPD
  * using:
  *  MOV, ADD, MUL, MAD, FRC, DP3, LG2, EX2, CMP
  *
@@ -386,6 +398,7 @@ GLboolean radeonTransformALU(struct radeon_transform_context* t,
 	switch(inst->Opcode) {
 	case OPCODE_ABS: transform_ABS(t, inst); return GL_TRUE;
 	case OPCODE_DPH: transform_DPH(t, inst); return GL_TRUE;
+	case OPCODE_DST: transform_DST(t, inst); return GL_TRUE;
 	case OPCODE_FLR: transform_FLR(t, inst); return GL_TRUE;
 	case OPCODE_LIT: transform_LIT(t, inst); return GL_TRUE;
 	case OPCODE_LRP: transform_LRP(t, inst); return GL_TRUE;

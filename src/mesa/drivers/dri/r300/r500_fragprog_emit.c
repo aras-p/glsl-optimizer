@@ -709,20 +709,6 @@ static void do_inst(struct r500_pfs_compile_state *cs, struct prog_instruction *
 			set_argA_reg(cs, ip, 0, fpi->SrcReg[0]);
 			set_argB_reg(cs, ip, 1, fpi->SrcReg[1]);
 			break;
-		case OPCODE_DST:
-			/* [1, src0.y*src1.y, src0.z, src1.w]
-			 * So basically MUL with lotsa swizzling. */
-			ip = emit_alu(cs, R500_ALU_RGBA_OP_MAD, R500_ALPHA_OP_MAD, fpi->DstReg);
-			set_src0(cs, ip, fpi->SrcReg[0]);
-			set_src1(cs, ip, fpi->SrcReg[1]);
-			set_argA(cs, ip, 0,
-				(make_rgb_swizzle(fpi->SrcReg[0]) & ~0x7) | R500_SWIZZLE_ONE,
-				R500_SWIZZLE_ONE);
-			set_argB(cs, ip, 1,
-				(make_rgb_swizzle(fpi->SrcReg[0]) & ~0x1c7) | R500_SWIZZLE_ONE | (R500_SWIZZLE_ONE << 6),
-				make_alpha_swizzle(fpi->SrcReg[1]));
-			set_argC(cs, ip, 0, R500_SWIZ_RGB_ZERO, R500_SWIZZLE_ZERO);
-			break;
 		case OPCODE_EX2:
 			src[0] = make_src(cs, fpi->SrcReg[0]);
 			emit_sop(cs, R500_ALPHA_OP_EX2, fpi->DstReg, src[0], make_sop_swizzle(fpi->SrcReg[0]));
