@@ -942,16 +942,15 @@ static int do_inst(struct r500_pfs_compile_state *cs, struct prog_instruction *f
 				| R500_ALPHA_SRCP_OP_1_MINUS_A0;
 			code->inst[counter].inst3 = R500_ALU_RGB_SEL_A_SRCP
 				| MAKE_SWIZ_RGB_A(make_rgb_swizzle(fpi->SrcReg[0]))
-				| R500_ALU_RGB_SEL_B_SRC1 | MAKE_SWIZ_RGB_B(R500_SWIZ_RGB_RGB);
+				| R500_ALU_RGB_SEL_B_SRC1 | MAKE_SWIZ_RGB_B(make_rgb_swizzle(fpi->SrcReg[2]));
 			code->inst[counter].inst4 |= R500_ALPHA_OP_MAD
 				| R500_ALPHA_ADDRD(dest)
 				| R500_ALPHA_SEL_A_SRCP | MAKE_SWIZ_ALPHA_A(make_alpha_swizzle(fpi->SrcReg[0]))
-				| R500_ALPHA_SEL_B_SRC1 | R500_ALPHA_SWIZ_B_A;
+				| R500_ALPHA_SEL_B_SRC1 | MAKE_SWIZ_ALPHA_B(make_alpha_swizzle(fpi->SrcReg[2]));
 			code->inst[counter].inst5 = R500_ALU_RGBA_OP_MAD
 				| R500_ALU_RGBA_ADDRD(dest)
-				| R500_ALU_RGBA_SEL_C_SRC2 | MAKE_SWIZ_RGBA_C(make_rgb_swizzle(fpi->SrcReg[2]))
-				| R500_ALU_RGBA_ALPHA_SEL_C_SRC2
-				| MAKE_SWIZ_ALPHA_C(make_alpha_swizzle(fpi->SrcReg[2]));
+				| R500_ALU_RGBA_SEL_C_SRC2 | MAKE_SWIZ_RGBA_C(R500_SWIZ_RGB_RGB)
+				| R500_ALU_RGBA_ALPHA_SEL_C_SRC2 | R500_ALU_RGBA_A_SWIZ_A;
 			break;
 		case OPCODE_MAD:
 			emit_mad(cs, counter, fpi, 0, 1, 2);
