@@ -70,20 +70,28 @@ extern void _tnl_UpdateFixedFunctionProgram(GLcontext * ctx);
 
 static void r300BlendColor(GLcontext * ctx, const GLfloat cf[4])
 {
-	GLubyte color[4];
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 
 	R300_STATECHANGE(rmesa, blend_color);
 
-	CLAMPED_FLOAT_TO_UBYTE(color[0], cf[0]);
-	CLAMPED_FLOAT_TO_UBYTE(color[1], cf[1]);
-	CLAMPED_FLOAT_TO_UBYTE(color[2], cf[2]);
-	CLAMPED_FLOAT_TO_UBYTE(color[3], cf[3]);
+	if (rmesa->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV515) {
+		GLuint r = IROUND(cf[0]*1023.0f);
+		GLuint g = IROUND(cf[1]*1023.0f);
+		GLuint b = IROUND(cf[2]*1023.0f);
+		GLuint a = IROUND(cf[3]*1023.0f);
 
-	rmesa->hw.blend_color.cmd[1] = PACK_COLOR_8888(color[3], color[0],
-						       color[1], color[2]);
-	rmesa->hw.blend_color.cmd[2] = 0;
-	rmesa->hw.blend_color.cmd[3] = 0;
+		rmesa->hw.blend_color.cmd[1] = r | (a << 16);
+		rmesa->hw.blend_color.cmd[2] = b | (g << 16);
+	} else {
+		GLubyte color[4];
+		CLAMPED_FLOAT_TO_UBYTE(color[0], cf[0]);
+		CLAMPED_FLOAT_TO_UBYTE(color[1], cf[1]);
+		CLAMPED_FLOAT_TO_UBYTE(color[2], cf[2]);
+		CLAMPED_FLOAT_TO_UBYTE(color[3], cf[3]);
+
+		rmesa->hw.blend_color.cmd[1] = PACK_COLOR_8888(color[3], color[0],
+							color[1], color[2]);
+	}
 }
 
 /**

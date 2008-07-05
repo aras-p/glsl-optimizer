@@ -405,7 +405,7 @@ void r300InitCmdBuf(r300ContextPtr r300)
 		ALLOC_STATE(ri, always, R500_RI_CMDSIZE, 0);
 		r300->hw.ri.cmd[R300_RI_CMD_0] = cmdpacket0(R500_RS_IP_0, 16);
 		for (i = 0; i < 8; i++) {
-			r300->hw.ri.cmd[R300_RI_CMD_0 + i +1] = 
+			r300->hw.ri.cmd[R300_RI_CMD_0 + i +1] =
 			  (R500_RS_IP_PTR_K0 << R500_RS_IP_TEX_PTR_S_SHIFT) |
                           (R500_RS_IP_PTR_K0 << R500_RS_IP_TEX_PTR_T_SHIFT) |
                           (R500_RS_IP_PTR_K0 << R500_RS_IP_TEX_PTR_R_SHIFT) |
@@ -470,8 +470,13 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	r300->hw.bld.cmd[R300_BLD_CMD_0] = cmdpacket0(R300_RB3D_CBLEND, 2);
 	ALLOC_STATE(cmk, always, R300_CMK_CMDSIZE, 0);
 	r300->hw.cmk.cmd[R300_CMK_CMD_0] = cmdpacket0(RB3D_COLOR_CHANNEL_MASK, 1);
-	ALLOC_STATE(blend_color, always, 4, 0);
-	r300->hw.blend_color.cmd[0] = cmdpacket0(R300_RB3D_BLEND_COLOR, 3);
+	if (is_r500) {
+		ALLOC_STATE(blend_color, always, 3, 0);
+		r300->hw.blend_color.cmd[0] = cmdpacket0(R500_RB3D_CONSTANT_COLOR_AR, 2);
+	} else {
+		ALLOC_STATE(blend_color, always, 2, 0);
+		r300->hw.blend_color.cmd[0] = cmdpacket0(R300_RB3D_BLEND_COLOR, 1);
+	}
 	ALLOC_STATE(cb, always, R300_CB_CMDSIZE, 0);
 	r300->hw.cb.cmd[R300_CB_CMD_0] = cmdpacket0(R300_RB3D_COLOROFFSET0, 1);
 	r300->hw.cb.cmd[R300_CB_CMD_1] = cmdpacket0(R300_RB3D_COLORPITCH0, 1);
