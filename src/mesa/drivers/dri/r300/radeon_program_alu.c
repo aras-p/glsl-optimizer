@@ -296,6 +296,19 @@ static void transform_LIT(struct radeon_transform_context* t,
 		emit1(t->Program, OPCODE_MOV, inst->DstReg, srctemp);
 }
 
+static void transform_LRP(struct radeon_transform_context* t,
+	struct prog_instruction* inst)
+{
+	int tempreg = radeonFindFreeTemporary(t);
+
+	emit2(t->Program, OPCODE_ADD,
+		dstreg(PROGRAM_TEMPORARY, tempreg),
+		inst->SrcReg[1], negate(inst->SrcReg[2]));
+	emit3(t->Program, OPCODE_MAD,
+		inst->DstReg,
+		inst->SrcReg[0], srcreg(PROGRAM_TEMPORARY, tempreg), inst->SrcReg[2]);
+}
+
 static void transform_POW(struct radeon_transform_context* t,
 	struct prog_instruction* inst)
 {
@@ -360,7 +373,7 @@ static void transform_XPD(struct radeon_transform_context* t,
  * no userData necessary.
  *
  * Eliminates the following ALU instructions:
- *  ABS, DPH, FLR, LIT, POW, SGE, SLT, SUB, SWZ, XPD
+ *  ABS, DPH, FLR, LIT, LRP, POW, SGE, SLT, SUB, SWZ, XPD
  * using:
  *  MOV, ADD, MUL, MAD, FRC, DP3, LG2, EX2, CMP
  *
@@ -375,6 +388,7 @@ GLboolean radeonTransformALU(struct radeon_transform_context* t,
 	case OPCODE_DPH: transform_DPH(t, inst); return GL_TRUE;
 	case OPCODE_FLR: transform_FLR(t, inst); return GL_TRUE;
 	case OPCODE_LIT: transform_LIT(t, inst); return GL_TRUE;
+	case OPCODE_LRP: transform_LRP(t, inst); return GL_TRUE;
 	case OPCODE_POW: transform_POW(t, inst); return GL_TRUE;
 	case OPCODE_SGE: transform_SGE(t, inst); return GL_TRUE;
 	case OPCODE_SLT: transform_SLT(t, inst); return GL_TRUE;

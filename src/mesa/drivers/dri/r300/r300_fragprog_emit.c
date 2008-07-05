@@ -1590,23 +1590,6 @@ static void emit_instruction(struct r300_pfs_compile_state *cs, struct prog_inst
 		emit_arith(cs, PFS_OP_LG2, dest, mask,
 				src[0], undef, undef, flags);
 		break;
-	case OPCODE_LRP:
-		src[0] = t_src(cs, fpi->SrcReg[0]);
-		src[1] = t_src(cs, fpi->SrcReg[1]);
-		src[2] = t_src(cs, fpi->SrcReg[2]);
-		/* result = tmp0tmp1 + (1 - tmp0)tmp2
-			*        = tmp0tmp1 + tmp2 + (-tmp0)tmp2
-			*     MAD temp, -tmp0, tmp2, tmp2
-			*     MAD result, tmp0, tmp1, temp
-			*/
-		temp[0] = get_temp_reg(cs);
-		emit_arith(cs, PFS_OP_MAD, temp[0], mask,
-				negate(keep(src[0])), keep(src[2]), src[2],
-				0);
-		emit_arith(cs, PFS_OP_MAD, dest, mask,
-				src[0], src[1], temp[0], flags);
-		free_temp(cs, temp[0]);
-		break;
 	case OPCODE_MAD:
 		src[0] = t_src(cs, fpi->SrcReg[0]);
 		src[1] = t_src(cs, fpi->SrcReg[1]);

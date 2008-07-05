@@ -751,33 +751,6 @@ static void do_inst(struct r500_pfs_compile_state *cs, struct prog_instruction *
 			src[0] = make_src(cs, fpi->SrcReg[0]);
 			emit_sop(cs, R500_ALPHA_OP_LN2, fpi->DstReg, src[0], make_sop_swizzle(fpi->SrcReg[0]));
 			break;
-		case OPCODE_LRP:
-			/* result = src0*src1 + (1-src0)*src2
-			 *        = src0*src1 + src2 + (-src0)*src2
-			 *
-			 * Note: LRP without swizzling (or with only limited
-			 * swizzling) could be done more efficiently using the
-			 * presubtract hardware.
-			 */
-			dest = get_temp(cs, 0);
-			ip = emit_alu_temp(cs, R500_ALU_RGBA_OP_MAD, R500_ALPHA_OP_MAD, dest, WRITEMASK_XYZW);
-			set_src0(cs, ip, fpi->SrcReg[0]);
-			set_src1(cs, ip, fpi->SrcReg[1]);
-			set_src2(cs, ip, fpi->SrcReg[2]);
-			set_argA_reg(cs, ip, 0, fpi->SrcReg[0]);
-			set_argB_reg(cs, ip, 1, fpi->SrcReg[1]);
-			set_argC_reg(cs, ip, 2, fpi->SrcReg[2]);
-
-			ip = emit_alu(cs, R500_ALU_RGBA_OP_MAD, R500_ALPHA_OP_MAD, fpi->DstReg);
-			set_src0(cs, ip, fpi->SrcReg[0]);
-			set_src1(cs, ip, fpi->SrcReg[2]);
-			set_src2_direct(cs, ip, dest);
-			set_argA(cs, ip, 0,
-				make_rgb_swizzle(fpi->SrcReg[0]) ^ (R500_SWIZ_MOD_NEG<<9),
-				make_alpha_swizzle(fpi->SrcReg[0]) ^ (R500_SWIZ_MOD_NEG<<3));
-			set_argB_reg(cs, ip, 1, fpi->SrcReg[2]);
-			set_argC(cs, ip, 2, R500_SWIZ_RGB_RGB, SWIZZLE_W);
-			break;
 		case OPCODE_MAD:
 			ip = emit_alu(cs, R500_ALU_RGBA_OP_MAD, R500_ALPHA_OP_MAD, fpi->DstReg);
 			set_src0(cs, ip, fpi->SrcReg[0]);
