@@ -48,14 +48,23 @@ struct intel_be_buffer {
 	struct _DriBufferObject *driBO;
 };
 
+/**
+ * Create a be buffer from a drm bo handle
+ *
+ * Takes a reference
+ */
+struct pipe_buffer *
+intel_be_buffer_from_handle(struct intel_be_device *device,
+                            const char* name, unsigned handle);
+
 static INLINE struct intel_be_buffer *
-intel_be_buffer( struct pipe_buffer *buf )
+intel_be_buffer(struct pipe_buffer *buf)
 {
 	return (struct intel_be_buffer *)buf;
 }
 
 static INLINE struct _DriBufferObject *
-dri_bo( struct pipe_buffer *buf )
+dri_bo(struct pipe_buffer *buf)
 {
 	return intel_be_buffer(buf)->driBO;
 }

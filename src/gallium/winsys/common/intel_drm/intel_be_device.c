@@ -125,6 +125,37 @@ intel_be_user_buffer_create(struct pipe_winsys *winsys, void *ptr, unsigned byte
 	return &buffer->base;
 }
 
+struct pipe_buffer *
+intel_be_buffer_from_handle(struct intel_be_device *device,
+                            const char* name, unsigned handle)
+{
+	struct intel_be_buffer *be_buf = malloc(sizeof(*be_buf));
+	struct pipe_buffer *buffer;
+
+	if (!be_buf)
+		goto err;
+
+	memset(be_buf, 0, sizeof(*be_buf));
+
+	driGenBuffers(device->staticPool, name, 1, &be_buf->driBO, 0, 0, 0);
+    driBOSetReferenced(be_buf->driBO, handle);
+
+	if (0) /** XXX TODO check error */
+		goto err_bo;
+	
+	buffer = &be_buf->base;
+	buffer->refcount = 1;
+	buffer->alignment = 0;
+	buffer->usage = 0;
+	buffer->size = driBOSize(be_buf->driBO);
+
+	return buffer;
+err_bo:
+	free(be_buf);
+err:
+	return NULL;
+}
+
 
 /*
  * Surface functions.
@@ -157,6 +188,7 @@ intel_i915_surface_release(struct pipe_winsys *winsys, struct pipe_surface **s)
 	assert((size_t)"intel_i915_surface_release is deprecated" & 0);
 }
 
+
 /*
  * Fence functions
  */
@@ -188,6 +220,7 @@ intel_be_fence_finish( struct pipe_winsys *sws,
 {
 	return driFenceFinish((struct _DriFenceObject *)fence, flag, 0);
 }
+
 
 /*
  * Misc functions
