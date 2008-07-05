@@ -1423,40 +1423,11 @@ static void emit_arith(struct r300_pfs_compile_state *cs,
 	return;
 }
 
-static GLfloat SinCosConsts[2][4] = {
-	{
-	 1.273239545,		// 4/PI
-	 -0.405284735,		// -4/(PI*PI)
-	 3.141592654,		// PI
-	 0.2225			// weight
-	 },
-	{
-	 0.75,
-	 0.0,
-	 0.159154943,		// 1/(2*PI)
-	 6.283185307		// 2*PI
-	 }
-};
-
-static GLuint emit_sincosconsts(struct r300_pfs_compile_state *cs, int i)
-{
-	struct prog_src_register srcreg;
-	GLuint constant_swizzle;
-
-	srcreg.File = PROGRAM_CONSTANT;
-	srcreg.Index = _mesa_add_unnamed_constant(cs->compiler->program->Parameters,
-		SinCosConsts[i], 4, &constant_swizzle);
-	srcreg.Swizzle = constant_swizzle;
-
-	return emit_const4fv(cs, srcreg);
-}
-
 static void emit_instruction(struct r300_pfs_compile_state *cs, struct prog_instruction *fpi)
 {
 	COMPILE_STATE;
-	GLuint src[3], dest, temp[2];
+	GLuint src[3], dest;
 	int flags, mask = 0;
-	int const_sin[2];
 
 	if (fpi->SaturateMode == SATURATE_ZERO_ONE)
 		flags = PFS_FLAG_SAT;
@@ -1484,60 +1455,6 @@ static void emit_instruction(struct r300_pfs_compile_state *cs, struct prog_inst
 		 */
 		emit_arith(cs, PFS_OP_CMP, dest, mask,
 				src[2], src[1], src[0], flags);
-		break;
-	case OPCODE_COS:
-		/*
-			* cos using a parabola (see SIN):
-			* cos(x):
-			*   x = (x/(2*PI))+0.75
-			*   x = frac(x)
-			*   x = (x*2*PI)-PI
-			*   result = sin(x)
-			*/
-		temp[0] = get_temp_reg(cs);
-		const_sin[0] = emit_sincosconsts(cs, 0);
-		const_sin[1] = emit_sincosconsts(cs, 1);
-		src[0] = t_scalar_src(cs, fpi->SrcReg[0]);
-
-		/* add 0.5*PI and do range reduction */
-
-		emit_arith(cs, PFS_OP_MAD, temp[0], WRITEMASK_X,
-				swizzle(src[0], X, X, X, X),
-				swizzle(const_sin[1], Z, Z, Z, Z),
-				swizzle(const_sin[1], X, X, X, X), 0);
-
-		emit_arith(cs, PFS_OP_FRC, temp[0], WRITEMASK_X,
-				swizzle(temp[0], X, X, X, X),
-				undef, undef, 0);
-
-		emit_arith(cs, PFS_OP_MAD, temp[0], WRITEMASK_Z, swizzle(temp[0], X, X, X, X), swizzle(const_sin[1], W, W, W, W),	//2*PI
-				negate(swizzle(const_sin[0], Z, Z, Z, Z)),	//-PI
-				0);
-
-		/* SIN */
-
-		emit_arith(cs, PFS_OP_MAD, temp[0],
-				WRITEMASK_X | WRITEMASK_Y, swizzle(temp[0],
-								Z, Z, Z,
-								Z),
-				const_sin[0], pfs_zero, 0);
-
-		emit_arith(cs, PFS_OP_MAD, temp[0], WRITEMASK_X,
-				swizzle(temp[0], Y, Y, Y, Y),
-				absolute(swizzle(temp[0], Z, Z, Z, Z)),
-				swizzle(temp[0], X, X, X, X), 0);
-
-		emit_arith(cs, PFS_OP_MAD, temp[0], WRITEMASK_Y,
-				swizzle(temp[0], X, X, X, X),
-				absolute(swizzle(temp[0], X, X, X, X)),
-				negate(swizzle(temp[0], X, X, X, X)), 0);
-
-		emit_arith(cs, PFS_OP_MAD, dest, mask,
-				swizzle(temp[0], Y, Y, Y, Y),
-				swizzle(const_sin[0], W, W, W, W),
-				swizzle(temp[0], X, X, X, X), flags);
-
-		free_temp(cs, temp[0]);
 		break;
 	case OPCODE_DP3:
 		src[0] = t_src(cs, fpi->SrcReg[0]);
@@ -1608,127 +1525,6 @@ static void emit_instruction(struct r300_pfs_compile_state *cs, struct prog_inst
 		src[0] = t_scalar_src(cs, fpi->SrcReg[0]);
 		emit_arith(cs, PFS_OP_RSQ, dest, mask,
 				absolute(src[0]), pfs_zero, pfs_zero, flags);
-		break;
-	case OPCODE_SCS:
-		/*
-			* scs using a parabola :
-			* scs(x):
-			*   result.x = sin(-abs(x)+0.5*PI)  (cos)
-			*   result.y = sin(x)               (sin)
-			*
-			*/
-		temp[0] = get_temp_reg(cs);
-		temp[1] = get_temp_reg(cs);
-		const_sin[0] = emit_sincosconsts(cs, 0);
-		const_sin[1] = emit_sincosconsts(cs, 1);
-		src[0] = t_scalar_src(cs, fpi->SrcReg[0]);
-
-		/* x = -abs(x)+0.5*PI */
-		emit_arith(cs, PFS_OP_MAD, temp[0], WRITEMASK_Z, swizzle(const_sin[0], Z, Z, Z, Z),	//PI
-				pfs_half,
-				negate(abs
-					(swizzle(keep(src[0]), X, X, X, X))),
-				0);
-
-		/* C*x (sin) */
-		emit_arith(cs, PFS_OP_MAD, temp[0], WRITEMASK_W,
-				swizzle(const_sin[0], Y, Y, Y, Y),
-				swizzle(keep(src[0]), X, X, X, X),
-				pfs_zero, 0);
-
-		/* B*x, C*x (cos) */
-		emit_arith(cs, PFS_OP_MAD, temp[0],
-				WRITEMASK_X | WRITEMASK_Y, swizzle(temp[0],
-								Z, Z, Z,
-								Z),
-				const_sin[0], pfs_zero, 0);
-
-		/* B*x (sin) */
-		emit_arith(cs, PFS_OP_MAD, temp[1], WRITEMASK_W,
-				swizzle(const_sin[0], X, X, X, X),
-				keep(src[0]), pfs_zero, 0);
-
-		/* y = B*x + C*x*abs(x) (sin) */
-		emit_arith(cs, PFS_OP_MAD, temp[1], WRITEMASK_Z,
-				absolute(src[0]),
-				swizzle(temp[0], W, W, W, W),
-				swizzle(temp[1], W, W, W, W), 0);
-
-		/* y = B*x + C*x*abs(x) (cos) */
-		emit_arith(cs, PFS_OP_MAD, temp[1], WRITEMASK_W,
-				swizzle(temp[0], Y, Y, Y, Y),
-				absolute(swizzle(temp[0], Z, Z, Z, Z)),
-				swizzle(temp[0], X, X, X, X), 0);
-
-		/* y*abs(y) - y (cos), y*abs(y) - y (sin) */
-		emit_arith(cs, PFS_OP_MAD, temp[0],
-				WRITEMASK_X | WRITEMASK_Y, swizzle(temp[1],
-								W, Z, Y,
-								X),
-				absolute(swizzle(temp[1], W, Z, Y, X)),
-				negate(swizzle(temp[1], W, Z, Y, X)), 0);
-
-		/* dest.xy = mad(temp.xy, P, temp2.wz) */
-		emit_arith(cs, PFS_OP_MAD, dest,
-				mask & (WRITEMASK_X | WRITEMASK_Y), temp[0],
-				swizzle(const_sin[0], W, W, W, W),
-				swizzle(temp[1], W, Z, Y, X), flags);
-
-		free_temp(cs, temp[0]);
-		free_temp(cs, temp[1]);
-		break;
-	case OPCODE_SIN:
-		/*
-			*  using a parabola:
-			* sin(x) = 4/pi * x + -4/(pi*pi) * x * abs(x)
-			* extra precision is obtained by weighting against
-			* itself squared.
-			*/
-
-		temp[0] = get_temp_reg(cs);
-		const_sin[0] = emit_sincosconsts(cs, 0);
-		const_sin[1] = emit_sincosconsts(cs, 1);
-		src[0] = t_scalar_src(cs, fpi->SrcReg[0]);
-
-		/* do range reduction */
-
-		emit_arith(cs, PFS_OP_MAD, temp[0], WRITEMASK_X,
-				swizzle(keep(src[0]), X, X, X, X),
-				swizzle(const_sin[1], Z, Z, Z, Z),
-				pfs_half, 0);
-
-		emit_arith(cs, PFS_OP_FRC, temp[0], WRITEMASK_X,
-				swizzle(temp[0], X, X, X, X),
-				undef, undef, 0);
-
-		emit_arith(cs, PFS_OP_MAD, temp[0], WRITEMASK_Z, swizzle(temp[0], X, X, X, X), swizzle(const_sin[1], W, W, W, W),	//2*PI
-				negate(swizzle(const_sin[0], Z, Z, Z, Z)),	//PI
-				0);
-
-		/* SIN */
-
-		emit_arith(cs, PFS_OP_MAD, temp[0],
-				WRITEMASK_X | WRITEMASK_Y, swizzle(temp[0],
-								Z, Z, Z,
-								Z),
-				const_sin[0], pfs_zero, 0);
-
-		emit_arith(cs, PFS_OP_MAD, temp[0], WRITEMASK_X,
-				swizzle(temp[0], Y, Y, Y, Y),
-				absolute(swizzle(temp[0], Z, Z, Z, Z)),
-				swizzle(temp[0], X, X, X, X), 0);
-
-		emit_arith(cs, PFS_OP_MAD, temp[0], WRITEMASK_Y,
-				swizzle(temp[0], X, X, X, X),
-				absolute(swizzle(temp[0], X, X, X, X)),
-				negate(swizzle(temp[0], X, X, X, X)), 0);
-
-		emit_arith(cs, PFS_OP_MAD, dest, mask,
-				swizzle(temp[0], Y, Y, Y, Y),
-				swizzle(const_sin[0], W, W, W, W),
-				swizzle(temp[0], X, X, X, X), flags);
-
-		free_temp(cs, temp[0]);
 		break;
 	case OPCODE_TEX:
 		emit_tex(cs, fpi, R300_TEX_OP_LD);

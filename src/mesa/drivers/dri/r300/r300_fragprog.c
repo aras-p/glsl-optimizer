@@ -408,12 +408,13 @@ void r300TranslateFragmentShader(r300ContextPtr r300,
 
 		struct radeon_program_transformation transformations[] = {
 			{ &transform_TEX, &compiler },
-			{ &radeonTransformALU, 0 }
+			{ &radeonTransformALU, 0 },
+			{ &radeonTransformTrigSimple, 0 }
 		};
 		radeonLocalTransform(
 			r300->radeon.glCtx,
 			compiler.program,
-			2, transformations);
+			3, transformations);
 
 		if (RADEON_DEBUG & DEBUG_PIXEL) {
 			_mesa_printf("Fragment Program: After transformations:\n");
