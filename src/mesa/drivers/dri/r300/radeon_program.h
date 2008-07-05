@@ -49,6 +49,19 @@ enum {
 #define SWIZZLE_1111 MAKE_SWIZZLE4(SWIZZLE_ONE, SWIZZLE_ONE, SWIZZLE_ONE, SWIZZLE_ONE)
 
 /**
+ * Transformation context that is passed to local transformations.
+ *
+ * Care must be taken with some operations during transformation,
+ * e.g. finding new temporary registers must use @ref radeonFindFreeTemporary
+ */
+struct radeon_transform_context {
+	GLcontext *Ctx;
+	struct gl_program *Program;
+	struct prog_instruction *OldInstructions;
+	GLuint OldNumInstructions;
+};
+
+/**
  * A transformation that can be passed to \ref radeonLocalTransform.
  *
  * The function will be called once for each instruction.
@@ -60,8 +73,7 @@ enum {
  */
 struct radeon_program_transformation {
 	GLboolean (*function)(
-		GLcontext*,
-		struct gl_program*,
+		struct radeon_transform_context*,
 		struct prog_instruction*,
 		void*);
 	void *userData;
@@ -73,6 +85,10 @@ void radeonLocalTransform(
 	int num_transformations,
 	struct radeon_program_transformation* transformations);
 
+/**
+ * Find a usable free temporary register during program transformation
+ */
+GLint radeonFindFreeTemporary(struct radeon_transform_context *ctx);
 
 struct prog_instruction *radeonAppendInstructions(struct gl_program *program, int count);
 

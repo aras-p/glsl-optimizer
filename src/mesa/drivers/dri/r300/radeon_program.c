@@ -46,29 +46,30 @@
  * one instruction at a time.
  */
 void radeonLocalTransform(
-	GLcontext *ctx,
+	GLcontext *Ctx,
 	struct gl_program *program,
 	int num_transformations,
 	struct radeon_program_transformation* transformations)
 {
-	struct prog_instruction *source;
-	int numinstructions;
+	struct radeon_transform_context ctx;
 	int ip;
 
-	source = program->Instructions;
-	numinstructions = program->NumInstructions;
+	ctx.Ctx = Ctx;
+	ctx.Program = program;
+	ctx.OldInstructions = program->Instructions;
+	ctx.OldNumInstructions = program->NumInstructions;
 
 	program->Instructions = 0;
 	program->NumInstructions = 0;
 
-	for(ip = 0; ip < numinstructions; ++ip) {
-		struct prog_instruction *instr = source + ip;
+	for(ip = 0; ip < ctx.OldNumInstructions; ++ip) {
+		struct prog_instruction *instr = ctx.OldInstructions + ip;
 		int i;
 
 		for(i = 0; i < num_transformations; ++i) {
 			struct radeon_program_transformation* t = transformations + i;
 
-			if (t->function(ctx, program, instr, t->userData))
+			if (t->function(&ctx, instr, t->userData))
 				break;
 		}
 
@@ -78,7 +79,40 @@ void radeonLocalTransform(
 		}
 	}
 
-	_mesa_free_instructions(source, numinstructions);
+	_mesa_free_instructions(ctx.OldInstructions, ctx.OldNumInstructions);
+}
+
+
+static void scan_instructions(GLboolean* used, const struct prog_instruction* insts, GLuint count)
+{
+	GLuint i;
+	for (i = 0; i < count; i++) {
+		const struct prog_instruction *inst = insts + i;
+		const GLuint n = _mesa_num_inst_src_regs(inst->Opcode);
+		GLuint k;
+
+		for (k = 0; k < n; k++) {
+			if (inst->SrcReg[k].File == PROGRAM_TEMPORARY)
+				used[inst->SrcReg[k].Index] = GL_TRUE;
+		}
+	}
+}
+
+GLint radeonFindFreeTemporary(struct radeon_transform_context *t)
+{
+	GLboolean used[MAX_PROGRAM_TEMPS];
+	GLuint i;
+
+	_mesa_memset(used, 0, sizeof(used));
+	scan_instructions(used, t->Program->Instructions, t->Program->NumInstructions);
+	scan_instructions(used, t->OldInstructions, t->OldNumInstructions);
+
+	for (i = 0; i < MAX_PROGRAM_TEMPS; i++) {
+		if (!used[i])
+			return i;
+	}
+
+	return -1;
 }
 
 

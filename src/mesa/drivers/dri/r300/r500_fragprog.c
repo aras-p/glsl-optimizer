@@ -38,7 +38,7 @@
  *
  */
 static GLboolean transform_TEX(
-	GLcontext *ctx, struct gl_program *p,
+	struct radeon_transform_context *t,
 	struct prog_instruction* orig_inst, void* data)
 {
 	struct r500_fragment_program_compiler *compiler =
@@ -55,11 +55,11 @@ static GLboolean transform_TEX(
 
 	/* ARB_shadow & EXT_shadow_funcs */
 	if (inst.Opcode != OPCODE_KIL &&
-	    p->ShadowSamplers & (1 << inst.TexSrcUnit)) {
+	    t->Program->ShadowSamplers & (1 << inst.TexSrcUnit)) {
 		GLuint comparefunc = GL_NEVER + compiler->fp->state.unit[inst.TexSrcUnit].texture_compare_func;
 
 		if (comparefunc == GL_NEVER || comparefunc == GL_ALWAYS) {
-			tgt = radeonAppendInstructions(p, 1);
+			tgt = radeonAppendInstructions(t->Program, 1);
 
 			tgt->Opcode = OPCODE_MOV;
 			tgt->DstReg.File = inst.DstReg.File;
@@ -71,20 +71,20 @@ static GLboolean transform_TEX(
 		}
 
 		inst.DstReg.File = PROGRAM_TEMPORARY;
-		inst.DstReg.Index = _mesa_find_free_register(p, PROGRAM_TEMPORARY);
+		inst.DstReg.Index = radeonFindFreeTemporary(t);
 		inst.DstReg.WriteMask = WRITEMASK_XYZW;
 	}
 
-	tgt = radeonAppendInstructions(p, 1);
+	tgt = radeonAppendInstructions(t->Program, 1);
 	_mesa_copy_instructions(tgt, &inst, 1);
 
 	if (inst.Opcode != OPCODE_KIL &&
-	    p->ShadowSamplers & (1 << inst.TexSrcUnit)) {
+	    t->Program->ShadowSamplers & (1 << inst.TexSrcUnit)) {
 		GLuint comparefunc = GL_NEVER + compiler->fp->state.unit[inst.TexSrcUnit].texture_compare_func;
 		GLuint depthmode = compiler->fp->state.unit[inst.TexSrcUnit].depth_texture_mode;
-		int rcptemp = _mesa_find_free_register(p, PROGRAM_TEMPORARY);
+		int rcptemp = radeonFindFreeTemporary(t);
 
-		tgt = radeonAppendInstructions(p, 3);
+		tgt = radeonAppendInstructions(t->Program, 3);
 
 		tgt[0].Opcode = OPCODE_RCP;
 		tgt[0].DstReg.File = PROGRAM_TEMPORARY;
@@ -131,7 +131,7 @@ static GLboolean transform_TEX(
 			tgt[2].SrcReg[2].Swizzle = SWIZZLE_1111;
 		}
 	} else if (destredirect) {
-		tgt = radeonAppendInstructions(p, 1);
+		tgt = radeonAppendInstructions(t->Program, 1);
 
 		tgt->Opcode = OPCODE_MOV;
 		tgt->DstReg = orig_inst->DstReg;

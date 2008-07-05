@@ -68,7 +68,7 @@ static void reset_srcreg(struct prog_src_register* reg)
  * be reused.
  */
 static GLboolean transform_TEX(
-	GLcontext *ctx, struct gl_program *p,
+	struct radeon_transform_context *t,
 	struct prog_instruction* orig_inst, void* data)
 {
 	struct r300_fragment_program_compiler *compiler =
@@ -84,11 +84,11 @@ static GLboolean transform_TEX(
 		return GL_FALSE;
 
 	if (inst.Opcode != OPCODE_KIL &&
-	    p->ShadowSamplers & (1 << inst.TexSrcUnit)) {
+	    t->Program->ShadowSamplers & (1 << inst.TexSrcUnit)) {
 		GLuint comparefunc = GL_NEVER + compiler->fp->state.unit[inst.TexSrcUnit].texture_compare_func;
 
 		if (comparefunc == GL_NEVER || comparefunc == GL_ALWAYS) {
-			tgt = radeonAppendInstructions(p, 1);
+			tgt = radeonAppendInstructions(t->Program, 1);
 
 			tgt->Opcode = OPCODE_MOV;
 			tgt->DstReg = inst.DstReg;
@@ -98,7 +98,7 @@ static GLboolean transform_TEX(
 		}
 
 		inst.DstReg.File = PROGRAM_TEMPORARY;
-		inst.DstReg.Index = _mesa_find_free_register(p, PROGRAM_TEMPORARY);
+		inst.DstReg.Index = radeonFindFreeTemporary(t);
 		inst.DstReg.WriteMask = WRITEMASK_XYZW;
 	}
 
@@ -113,7 +113,7 @@ static GLboolean transform_TEX(
 			0
 		};
 
-		int tempreg = _mesa_find_free_register(p, PROGRAM_TEMPORARY);
+		int tempreg = radeonFindFreeTemporary(t);
 		int factor_index;
 
 		tokens[2] = inst.TexSrcUnit;
@@ -121,7 +121,7 @@ static GLboolean transform_TEX(
 			_mesa_add_state_reference(
 				compiler->fp->mesa_program.Base.Parameters, tokens);
 
-		tgt = radeonAppendInstructions(p, 1);
+		tgt = radeonAppendInstructions(t->Program, 1);
 
 		tgt->Opcode = OPCODE_MUL;
 		tgt->DstReg.File = PROGRAM_TEMPORARY;
@@ -140,9 +140,9 @@ static GLboolean transform_TEX(
 	 */
 	if (inst.SrcReg[0].Swizzle != SWIZZLE_NOOP ||
 	    inst.SrcReg[0].Abs || inst.SrcReg[0].NegateBase || inst.SrcReg[0].NegateAbs) {
-		int tempreg = _mesa_find_free_register(p, PROGRAM_TEMPORARY);
+		int tempreg = radeonFindFreeTemporary(t);
 
-		tgt = radeonAppendInstructions(p, 1);
+		tgt = radeonAppendInstructions(t->Program, 1);
 
 		tgt->Opcode = OPCODE_MOV;
 		tgt->DstReg.File = PROGRAM_TEMPORARY;
@@ -157,7 +157,7 @@ static GLboolean transform_TEX(
 	if (inst.Opcode != OPCODE_KIL) {
 		if (inst.DstReg.File != PROGRAM_TEMPORARY ||
 		    inst.DstReg.WriteMask != WRITEMASK_XYZW) {
-			int tempreg = _mesa_find_free_register(p, PROGRAM_TEMPORARY);
+			int tempreg = radeonFindFreeTemporary(t);
 
 			inst.DstReg.File = PROGRAM_TEMPORARY;
 			inst.DstReg.Index = tempreg;
@@ -166,16 +166,16 @@ static GLboolean transform_TEX(
 		}
 	}
 
-	tgt = radeonAppendInstructions(p, 1);
+	tgt = radeonAppendInstructions(t->Program, 1);
 	_mesa_copy_instructions(tgt, &inst, 1);
 
 	if (inst.Opcode != OPCODE_KIL &&
-	    p->ShadowSamplers & (1 << inst.TexSrcUnit)) {
+	    t->Program->ShadowSamplers & (1 << inst.TexSrcUnit)) {
 		GLuint comparefunc = GL_NEVER + compiler->fp->state.unit[inst.TexSrcUnit].texture_compare_func;
 		GLuint depthmode = compiler->fp->state.unit[inst.TexSrcUnit].depth_texture_mode;
-		int rcptemp = _mesa_find_free_register(p, PROGRAM_TEMPORARY);
+		int rcptemp = radeonFindFreeTemporary(t);
 
-		tgt = radeonAppendInstructions(p, 3);
+		tgt = radeonAppendInstructions(t->Program, 3);
 
 		tgt[0].Opcode = OPCODE_RCP;
 		tgt[0].DstReg.File = PROGRAM_TEMPORARY;
@@ -222,7 +222,7 @@ static GLboolean transform_TEX(
 			tgt[2].SrcReg[2].Swizzle = SWIZZLE_1111;
 		}
 	} else if (destredirect) {
-		tgt = radeonAppendInstructions(p, 1);
+		tgt = radeonAppendInstructions(t->Program, 1);
 
 		tgt->Opcode = OPCODE_MOV;
 		tgt->DstReg = orig_inst->DstReg;

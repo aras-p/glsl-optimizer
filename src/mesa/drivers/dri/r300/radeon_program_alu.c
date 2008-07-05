@@ -148,24 +148,24 @@ static struct prog_src_register scalar(struct prog_src_register reg)
 	return swizzle(reg, SWIZZLE_X, SWIZZLE_X, SWIZZLE_X, SWIZZLE_X);
 }
 
-static void transform_ABS(struct gl_program* p,
+static void transform_ABS(struct radeon_transform_context* t,
 	struct prog_instruction* inst)
 {
 	struct prog_src_register src = inst->SrcReg[0];
 	src.Abs = 1;
 	src.NegateBase = 0;
 	src.NegateAbs = 0;
-	emit1(p, OPCODE_MOV, inst->DstReg, src);
+	emit1(t->Program, OPCODE_MOV, inst->DstReg, src);
 }
 
-static void transform_DPH(struct gl_program* p,
+static void transform_DPH(struct radeon_transform_context* t,
 	struct prog_instruction* inst)
 {
 	struct prog_src_register src0 = inst->SrcReg[0];
 	if (src0.NegateAbs) {
 		if (src0.Abs) {
-			int tempreg = _mesa_find_free_register(p, PROGRAM_TEMPORARY);
-			emit1(p, OPCODE_MOV, dstreg(PROGRAM_TEMPORARY, tempreg), src0);
+			int tempreg = radeonFindFreeTemporary(t);
+			emit1(t->Program, OPCODE_MOV, dstreg(PROGRAM_TEMPORARY, tempreg), src0);
 			src0 = srcreg(src0.File, src0.Index);
 		} else {
 			src0.NegateAbs = 0;
@@ -174,70 +174,70 @@ static void transform_DPH(struct gl_program* p,
 	}
 	set_swizzle(&src0, 3, SWIZZLE_ONE);
 	set_negate_base(&src0, 3, 0);
-	emit2(p, OPCODE_DP4, inst->DstReg, src0, inst->SrcReg[1]);
+	emit2(t->Program, OPCODE_DP4, inst->DstReg, src0, inst->SrcReg[1]);
 }
 
-static void transform_FLR(struct gl_program* p,
+static void transform_FLR(struct radeon_transform_context* t,
 	struct prog_instruction* inst)
 {
-	int tempreg = _mesa_find_free_register(p, PROGRAM_TEMPORARY);
-	emit1(p, OPCODE_FRC, dstreg(PROGRAM_TEMPORARY, tempreg), inst->SrcReg[0]);
-	emit2(p, OPCODE_ADD, inst->DstReg, inst->SrcReg[0], negate(srcreg(PROGRAM_TEMPORARY, tempreg)));
+	int tempreg = radeonFindFreeTemporary(t);
+	emit1(t->Program, OPCODE_FRC, dstreg(PROGRAM_TEMPORARY, tempreg), inst->SrcReg[0]);
+	emit2(t->Program, OPCODE_ADD, inst->DstReg, inst->SrcReg[0], negate(srcreg(PROGRAM_TEMPORARY, tempreg)));
 }
 
-static void transform_POW(struct gl_program* p,
+static void transform_POW(struct radeon_transform_context* t,
 	struct prog_instruction* inst)
 {
-	int tempreg = _mesa_find_free_register(p, PROGRAM_TEMPORARY);
+	int tempreg = radeonFindFreeTemporary(t);
 	struct prog_dst_register tempdst = dstreg(PROGRAM_TEMPORARY, tempreg);
 	struct prog_src_register tempsrc = srcreg(PROGRAM_TEMPORARY, tempreg);
 	tempdst.WriteMask = WRITEMASK_W;
 	tempsrc.Swizzle = SWIZZLE_WWWW;
 
-	emit1(p, OPCODE_LG2, tempdst, scalar(inst->SrcReg[0]));
-	emit2(p, OPCODE_MUL, tempdst, tempsrc, scalar(inst->SrcReg[1]));
-	emit1(p, OPCODE_EX2, inst->DstReg, tempsrc);
+	emit1(t->Program, OPCODE_LG2, tempdst, scalar(inst->SrcReg[0]));
+	emit2(t->Program, OPCODE_MUL, tempdst, tempsrc, scalar(inst->SrcReg[1]));
+	emit1(t->Program, OPCODE_EX2, inst->DstReg, tempsrc);
 }
 
-static void transform_SGE(struct gl_program* p,
+static void transform_SGE(struct radeon_transform_context* t,
 	struct prog_instruction* inst)
 {
-	int tempreg = _mesa_find_free_register(p, PROGRAM_TEMPORARY);
+	int tempreg = radeonFindFreeTemporary(t);
 
-	emit2(p, OPCODE_ADD, dstreg(PROGRAM_TEMPORARY, tempreg), inst->SrcReg[0], negate(inst->SrcReg[1]));
-	emit3(p, OPCODE_CMP, inst->DstReg, srcreg(PROGRAM_TEMPORARY, tempreg), builtin_zero, builtin_one);
+	emit2(t->Program, OPCODE_ADD, dstreg(PROGRAM_TEMPORARY, tempreg), inst->SrcReg[0], negate(inst->SrcReg[1]));
+	emit3(t->Program, OPCODE_CMP, inst->DstReg, srcreg(PROGRAM_TEMPORARY, tempreg), builtin_zero, builtin_one);
 }
 
-static void transform_SLT(struct gl_program* p,
+static void transform_SLT(struct radeon_transform_context* t,
 	struct prog_instruction* inst)
 {
-	int tempreg = _mesa_find_free_register(p, PROGRAM_TEMPORARY);
+	int tempreg = radeonFindFreeTemporary(t);
 
-	emit2(p, OPCODE_ADD, dstreg(PROGRAM_TEMPORARY, tempreg), inst->SrcReg[0], negate(inst->SrcReg[1]));
-	emit3(p, OPCODE_CMP, inst->DstReg, srcreg(PROGRAM_TEMPORARY, tempreg), builtin_one, builtin_zero);
+	emit2(t->Program, OPCODE_ADD, dstreg(PROGRAM_TEMPORARY, tempreg), inst->SrcReg[0], negate(inst->SrcReg[1]));
+	emit3(t->Program, OPCODE_CMP, inst->DstReg, srcreg(PROGRAM_TEMPORARY, tempreg), builtin_one, builtin_zero);
 }
 
-static void transform_SUB(struct gl_program* p,
+static void transform_SUB(struct radeon_transform_context* t,
 	struct prog_instruction* inst)
 {
-	emit2(p, OPCODE_ADD, inst->DstReg, inst->SrcReg[0], negate(inst->SrcReg[1]));
+	emit2(t->Program, OPCODE_ADD, inst->DstReg, inst->SrcReg[0], negate(inst->SrcReg[1]));
 }
 
-static void transform_SWZ(struct gl_program* p,
+static void transform_SWZ(struct radeon_transform_context* t,
 	struct prog_instruction* inst)
 {
-	emit1(p, OPCODE_MOV, inst->DstReg, inst->SrcReg[0]);
+	emit1(t->Program, OPCODE_MOV, inst->DstReg, inst->SrcReg[0]);
 }
 
-static void transform_XPD(struct gl_program* p,
+static void transform_XPD(struct radeon_transform_context* t,
 	struct prog_instruction* inst)
 {
-	int tempreg = _mesa_find_free_register(p, PROGRAM_TEMPORARY);
+	int tempreg = radeonFindFreeTemporary(t);
 
-	emit2(p, OPCODE_MUL, dstreg(PROGRAM_TEMPORARY, tempreg),
+	emit2(t->Program, OPCODE_MUL, dstreg(PROGRAM_TEMPORARY, tempreg),
 		swizzle(inst->SrcReg[0], SWIZZLE_Z, SWIZZLE_X, SWIZZLE_Y, SWIZZLE_W),
 		swizzle(inst->SrcReg[1], SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_X, SWIZZLE_W));
-	emit3(p, OPCODE_MAD, inst->DstReg,
+	emit3(t->Program, OPCODE_MAD, inst->DstReg,
 		swizzle(inst->SrcReg[0], SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_X, SWIZZLE_W),
 		swizzle(inst->SrcReg[1], SWIZZLE_Z, SWIZZLE_X, SWIZZLE_Y, SWIZZLE_W),
 		negate(srcreg(PROGRAM_TEMPORARY, tempreg)));
@@ -257,22 +257,20 @@ static void transform_XPD(struct gl_program* p,
  *
  * @todo add LIT here as well?
  */
-GLboolean radeonTransformALU(
-	GLcontext* ctx,
-	struct gl_program* prog,
+GLboolean radeonTransformALU(struct radeon_transform_context* t,
 	struct prog_instruction* inst,
 	void* unused)
 {
 	switch(inst->Opcode) {
-	case OPCODE_ABS: transform_ABS(prog, inst); return GL_TRUE;
-	case OPCODE_DPH: transform_DPH(prog, inst); return GL_TRUE;
-	case OPCODE_FLR: transform_FLR(prog, inst); return GL_TRUE;
-	case OPCODE_POW: transform_POW(prog, inst); return GL_TRUE;
-	case OPCODE_SGE: transform_SGE(prog, inst); return GL_TRUE;
-	case OPCODE_SLT: transform_SLT(prog, inst); return GL_TRUE;
-	case OPCODE_SUB: transform_SUB(prog, inst); return GL_TRUE;
-	case OPCODE_SWZ: transform_SWZ(prog, inst); return GL_TRUE;
-	case OPCODE_XPD: transform_XPD(prog, inst); return GL_TRUE;
+	case OPCODE_ABS: transform_ABS(t, inst); return GL_TRUE;
+	case OPCODE_DPH: transform_DPH(t, inst); return GL_TRUE;
+	case OPCODE_FLR: transform_FLR(t, inst); return GL_TRUE;
+	case OPCODE_POW: transform_POW(t, inst); return GL_TRUE;
+	case OPCODE_SGE: transform_SGE(t, inst); return GL_TRUE;
+	case OPCODE_SLT: transform_SLT(t, inst); return GL_TRUE;
+	case OPCODE_SUB: transform_SUB(t, inst); return GL_TRUE;
+	case OPCODE_SWZ: transform_SWZ(t, inst); return GL_TRUE;
+	case OPCODE_XPD: transform_XPD(t, inst); return GL_TRUE;
 	default:
 		return GL_FALSE;
 	}
