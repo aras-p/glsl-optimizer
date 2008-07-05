@@ -27,6 +27,8 @@
 
 #include "r500_fragprog.h"
 
+#include "radeon_program_alu.h"
+
 
 /**
  * Transform TEX, TXP, TXB, and KIL instructions in the following way:
@@ -316,11 +318,12 @@ void r500TranslateFragmentShader(r300ContextPtr r300,
 
 		insert_WPOS_trailer(&compiler);
 
-		struct radeon_program_transformation transformations[1] = {
-			{ &transform_TEX, &compiler }
+		struct radeon_program_transformation transformations[2] = {
+			{ &transform_TEX, &compiler },
+			{ &radeonTransformALU, 0 }
 		};
 		radeonLocalTransform(r300->radeon.glCtx, compiler.program,
-			1, transformations);
+			2, transformations);
 
 		if (RADEON_DEBUG & DEBUG_PIXEL) {
 			_mesa_printf("Compiler: after all transformations:\n");

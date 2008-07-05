@@ -168,6 +168,12 @@ static const GLfloat LIT[] = {127.999999,
 	127.999999,
 	-127.999999};
 
+static const struct prog_dst_register dstreg_template = {
+	.File = PROGRAM_TEMPORARY,
+	.Index = 0,
+	.WriteMask = WRITEMASK_XYZW
+};
+
 static INLINE GLuint make_rgb_swizzle(struct prog_src_register src) {
 	GLuint swiz = 0x0;
 	GLuint temp;
@@ -179,8 +185,14 @@ static INLINE GLuint make_rgb_swizzle(struct prog_src_register src) {
 		if (temp == 5) temp++;
 		swiz |= temp << i*3;
 	}
-	if (src.NegateBase)
-		swiz |= (R500_SWIZ_MOD_NEG << 9);
+	if (src.Abs) {
+		swiz |= R500_SWIZ_MOD_ABS << 9;
+	} else if (src.NegateBase & 7) {
+		ASSERT((src.NegateBase & 7) == 7);
+		swiz |= R500_SWIZ_MOD_NEG << 9;
+	}
+	if (src.NegateAbs)
+		swiz ^= R500_SWIZ_MOD_NEG << 9;
 	return swiz;
 }
 
@@ -202,8 +214,13 @@ static INLINE GLuint make_alpha_swizzle(struct prog_src_register src) {
 
 	if (swiz == 5) swiz++;
 
-	if (src.NegateBase)
-		swiz |= (R500_SWIZ_MOD_NEG << 3);
+	if (src.Abs) {
+		swiz |= R500_SWIZ_MOD_ABS << 3;
+	} else if (src.NegateBase & 8) {
+		swiz |= R500_SWIZ_MOD_NEG << 3;
+	}
+	if (src.NegateAbs)
+		swiz ^= R500_SWIZ_MOD_NEG << 3;
 
 	return swiz;
 }
@@ -212,6 +229,15 @@ static INLINE GLuint make_sop_swizzle(struct prog_src_register src) {
 	GLuint swiz = GET_SWZ(src.Swizzle, 0);
 
 	if (swiz == 5) swiz++;
+
+	if (src.Abs) {
+		swiz |= R500_SWIZ_MOD_ABS << 3;
+	} else if (src.NegateBase & 1) {
+		swiz |= R500_SWIZ_MOD_NEG << 3;
+	}
+	if (src.NegateAbs)
+		swiz ^= R500_SWIZ_MOD_NEG << 3;
+
 	return swiz;
 }
 
@@ -324,12 +350,23 @@ static GLuint make_dest(struct r500_pfs_compile_state *cs, struct prog_dst_regis
 	return reg;
 }
 
-static void emit_tex(struct r500_pfs_compile_state *cs,
-		     struct prog_instruction *fpi, int dest, int counter)
+static int emit_slot(struct r500_pfs_compile_state *cs)
+{
+	if (cs->nrslots >= 512) {
+		ERROR("Too many instructions");
+		cs->nrslots = 1;
+		return 0;
+	}
+	return cs->nrslots++;
+}
+
+static int emit_tex(struct r500_pfs_compile_state *cs,
+		     struct prog_instruction *fpi, int dest)
 {
 	PROG_CODE;
 	int hwsrc, hwdest;
 	GLuint mask;
+	int counter = emit_slot(cs);
 
 	mask = fpi->DstReg.WriteMask << 11;
 	hwsrc = make_src(cs, fpi->SrcReg[0]);
@@ -399,844 +436,490 @@ static void emit_tex(struct r500_pfs_compile_state *cs,
 			| MAKE_SWIZ_RGBA_C(R500_SWIZ_RGB_ZERO)
 			| MAKE_SWIZ_ALPHA_C(R500_SWIZZLE_ZERO);
 	}
+
+	return counter;
 }
 
-static void emit_alu(struct r500_pfs_compile_state *cs, int counter, struct prog_instruction *fpi) {
+/* Do not call directly */
+static int _helper_emit_alu(struct r500_pfs_compile_state *cs, GLuint rgbop, GLuint alphaop,
+	int File, int Index, int WriteMask)
+{
 	PROG_CODE;
-	/* Ideally, we shouldn't have to explicitly clear memory here! */
-	code->inst[counter].inst0 = 0x0;
-	code->inst[counter].inst1 = 0x0;
-	code->inst[counter].inst2 = 0x0;
-	code->inst[counter].inst3 = 0x0;
-	code->inst[counter].inst4 = 0x0;
-	code->inst[counter].inst5 = 0x0;
+	int counter = emit_slot(cs);
 
-	if (fpi->DstReg.File == PROGRAM_OUTPUT) {
+	code->inst[counter].inst4 = alphaop;
+	code->inst[counter].inst5 = rgbop;
+
+	if (File == PROGRAM_OUTPUT) {
 		code->inst[counter].inst0 = R500_INST_TYPE_OUT;
 
-		if (fpi->DstReg.Index == FRAG_RESULT_COLR)
-			code->inst[counter].inst0 |= (fpi->DstReg.WriteMask << 15);
-
-		if (fpi->DstReg.Index == FRAG_RESULT_DEPR) {
+		if (Index == FRAG_RESULT_COLR) {
+			code->inst[counter].inst0 |= WriteMask << 15;
+		} else if (Index == FRAG_RESULT_DEPR) {
 			code->inst[counter].inst4 |= R500_ALPHA_W_OMASK;
-			/* Notify the state emission! */
 			cs->compiler->fp->writes_depth = GL_TRUE;
 		}
 	} else {
+		int dest = Index + code->temp_reg_offset;
+
 		code->inst[counter].inst0 = R500_INST_TYPE_ALU
-			/* pixel_mask */
-			| (fpi->DstReg.WriteMask << 11);
+			| (WriteMask << 11);
+		code->inst[counter].inst4 |= R500_ALPHA_ADDRD(dest);
+		code->inst[counter].inst5 |= R500_ALU_RGBA_ADDRD(dest);
 	}
 
 	code->inst[counter].inst0 |= R500_INST_TEX_SEM_WAIT;
+
+	return counter;
 }
 
-static void emit_mov(struct r500_pfs_compile_state *cs, int counter, struct prog_instruction *fpi, GLuint src_reg, GLuint swizzle, GLuint dest) {
+/**
+ * Prepare an ALU slot with the given RGB operation, ALPHA operation, and
+ * destination register.
+ */
+static int emit_alu(struct r500_pfs_compile_state *cs, GLuint rgbop, GLuint alphaop, struct prog_dst_register dst)
+{
+	return _helper_emit_alu(cs, rgbop, alphaop, dst.File, dst.Index, dst.WriteMask);
+}
+
+static int emit_alu_temp(struct r500_pfs_compile_state *cs, GLuint rgbop, GLuint alphaop, int dst, int writemask)
+{
+	return _helper_emit_alu(cs, rgbop, alphaop,
+		PROGRAM_TEMPORARY, dst - cs->compiler->code->temp_reg_offset, writemask);
+}
+
+/**
+ * Set an instruction's source 0 (both RGB and ALPHA) to the given hardware index.
+ */
+static void set_src0_direct(struct r500_pfs_compile_state *cs, int ip, GLuint src)
+{
 	PROG_CODE;
-	/* The r3xx shader uses MAD to implement MOV. We are using CMP, since
-	 * it is technically more accurate and recommended by ATI/AMD. */
-	emit_alu(cs, counter, fpi);
-	code->inst[counter].inst1 = R500_RGB_ADDR0(src_reg);
-	code->inst[counter].inst2 = R500_ALPHA_ADDR0(src_reg);
-	/* (De)mangle the swizzle from Mesa to R500. */
-	swizzle = make_rgba_swizzle(swizzle);
-	/* 0x1FF is 9 bits, size of an RGB swizzle. */
-	code->inst[counter].inst3 = R500_ALU_RGB_SEL_A_SRC0
-		| MAKE_SWIZ_RGB_A((swizzle & 0x1ff))
-		| R500_ALU_RGB_SEL_B_SRC0
-		| MAKE_SWIZ_RGB_B((swizzle & 0x1ff))
-		| R500_ALU_RGB_OMOD_DISABLE;
-	code->inst[counter].inst4 |= R500_ALPHA_OP_CMP
-		| R500_ALPHA_ADDRD(dest)
-		| R500_ALPHA_SEL_A_SRC0 | MAKE_SWIZ_ALPHA_A(GET_SWZ(swizzle, 3))
-		| R500_ALPHA_SEL_B_SRC0 | MAKE_SWIZ_ALPHA_B(GET_SWZ(swizzle, 3))
-		| R500_ALPHA_OMOD_DISABLE;
-	code->inst[counter].inst5 = R500_ALU_RGBA_OP_CMP
-		| R500_ALU_RGBA_ADDRD(dest)
-		| MAKE_SWIZ_RGBA_C(R500_SWIZ_RGB_ZERO)
-		| MAKE_SWIZ_ALPHA_C(R500_SWIZZLE_ZERO);
+	code->inst[ip].inst1 |= R500_RGB_ADDR0(src);
+	code->inst[ip].inst2 |= R500_ALPHA_ADDR0(src);
 }
 
-static void emit_mad(struct r500_pfs_compile_state *cs, int counter, struct prog_instruction *fpi, int one, int two, int three) {
+/**
+ * Set an instruction's source 1 (both RGB and ALPHA) to the given hardware index.
+ */
+static void set_src1_direct(struct r500_pfs_compile_state *cs, int ip, GLuint src)
+{
 	PROG_CODE;
-	/* Note: This code was all Corbin's. Corbin is a rather hackish coder.
-	 * If you can make it pretty or fast, please do so! */
-	emit_alu(cs, counter, fpi);
-	/* Common MAD stuff */
-	code->inst[counter].inst4 |= R500_ALPHA_OP_MAD
-		| R500_ALPHA_ADDRD(make_dest(cs, fpi->DstReg));
-	code->inst[counter].inst5 |= R500_ALU_RGBA_OP_MAD
-		| R500_ALU_RGBA_ADDRD(make_dest(cs, fpi->DstReg));
-	switch (one) {
-		case 0:
-		case 1:
-		case 2:
-			code->inst[counter].inst1 |= R500_RGB_ADDR0(make_src(cs, fpi->SrcReg[one]));
-			code->inst[counter].inst2 |= R500_ALPHA_ADDR0(make_src(cs, fpi->SrcReg[one]));
-			code->inst[counter].inst3 |= R500_ALU_RGB_SEL_A_SRC0
-				| MAKE_SWIZ_RGB_A(make_rgb_swizzle(fpi->SrcReg[one]));
-			code->inst[counter].inst4 |= R500_ALPHA_SEL_A_SRC0
-				| MAKE_SWIZ_ALPHA_A(make_alpha_swizzle(fpi->SrcReg[one]));
-			break;
-		case R500_SWIZZLE_ZERO:
-			code->inst[counter].inst3 |= MAKE_SWIZ_RGB_A(R500_SWIZ_RGB_ZERO);
-			code->inst[counter].inst4 |= MAKE_SWIZ_ALPHA_A(R500_SWIZZLE_ZERO);
-			break;
-		case R500_SWIZZLE_ONE:
-			code->inst[counter].inst3 |= MAKE_SWIZ_RGB_A(R500_SWIZ_RGB_ONE);
-			code->inst[counter].inst4 |= MAKE_SWIZ_ALPHA_A(R500_SWIZZLE_ONE);
-			break;
-		default:
-			ERROR("Bad src index in emit_mad: %d\n", one);
-			break;
-	}
-	switch (two) {
-		case 0:
-		case 1:
-		case 2:
-			code->inst[counter].inst1 |= R500_RGB_ADDR1(make_src(cs, fpi->SrcReg[two]));
-			code->inst[counter].inst2 |= R500_ALPHA_ADDR1(make_src(cs, fpi->SrcReg[two]));
-			code->inst[counter].inst3 |= R500_ALU_RGB_SEL_B_SRC1
-				| MAKE_SWIZ_RGB_B(make_rgb_swizzle(fpi->SrcReg[two]));
-			code->inst[counter].inst4 |= R500_ALPHA_SEL_B_SRC1
-				| MAKE_SWIZ_ALPHA_B(make_alpha_swizzle(fpi->SrcReg[two]));
-			break;
-		case R500_SWIZZLE_ZERO:
-			code->inst[counter].inst3 |= MAKE_SWIZ_RGB_B(R500_SWIZ_RGB_ZERO);
-			code->inst[counter].inst4 |= MAKE_SWIZ_ALPHA_B(R500_SWIZZLE_ZERO);
-			break;
-		case R500_SWIZZLE_ONE:
-			code->inst[counter].inst3 |= MAKE_SWIZ_RGB_B(R500_SWIZ_RGB_ONE);
-			code->inst[counter].inst4 |= MAKE_SWIZ_ALPHA_B(R500_SWIZZLE_ONE);
-			break;
-		default:
-			ERROR("Bad src index in emit_mad: %d\n", two);
-			break;
-	}
-	switch (three) {
-		case 0:
-		case 1:
-		case 2:
-			code->inst[counter].inst1 |= R500_RGB_ADDR2(make_src(cs, fpi->SrcReg[three]));
-			code->inst[counter].inst2 |= R500_ALPHA_ADDR2(make_src(cs, fpi->SrcReg[three]));
-			code->inst[counter].inst5 |= R500_ALU_RGBA_SEL_C_SRC2
-				| MAKE_SWIZ_RGBA_C(make_rgb_swizzle(fpi->SrcReg[three]))
-				| R500_ALU_RGBA_ALPHA_SEL_C_SRC2
-				| MAKE_SWIZ_ALPHA_C(make_alpha_swizzle(fpi->SrcReg[three]));
-			break;
-		case R500_SWIZZLE_ZERO:
-			code->inst[counter].inst5 |= MAKE_SWIZ_RGBA_C(R500_SWIZ_RGB_ZERO)
-				| MAKE_SWIZ_ALPHA_C(R500_SWIZZLE_ZERO);
-			break;
-		case R500_SWIZZLE_ONE:
-			code->inst[counter].inst5 |= MAKE_SWIZ_RGBA_C(R500_SWIZ_RGB_ONE)
-			| MAKE_SWIZ_ALPHA_C(R500_SWIZZLE_ONE);
-			break;
-		default:
-			ERROR("Bad src index in emit_mad: %d\n", three);
-			break;
-	}
+	code->inst[ip].inst1 |= R500_RGB_ADDR1(src);
+	code->inst[ip].inst2 |= R500_ALPHA_ADDR1(src);
 }
 
-static void emit_sop(struct r500_pfs_compile_state *cs, int counter, struct prog_instruction *fpi, int opcode, GLuint src, GLuint swiz, GLuint dest) {
+/**
+ * Set an instruction's source 2 (both RGB and ALPHA) to the given hardware index.
+ */
+static void set_src2_direct(struct r500_pfs_compile_state *cs, int ip, GLuint src)
+{
 	PROG_CODE;
-	emit_alu(cs, counter, fpi);
-	code->inst[counter].inst1 = R500_RGB_ADDR0(src);
-	code->inst[counter].inst2 = R500_ALPHA_ADDR0(src);
-	code->inst[counter].inst4 |= R500_ALPHA_ADDRD(dest)
-		| R500_ALPHA_SEL_A_SRC0 | MAKE_SWIZ_ALPHA_A(swiz);
-	code->inst[counter].inst5 = R500_ALU_RGBA_OP_SOP
-		| R500_ALU_RGBA_ADDRD(dest);
-	switch (opcode) {
-		case OPCODE_COS:
-			code->inst[counter].inst4 |= R500_ALPHA_OP_COS;
-			break;
-		case OPCODE_EX2:
-			code->inst[counter].inst4 |= R500_ALPHA_OP_EX2;
-			break;
-		case OPCODE_LG2:
-			code->inst[counter].inst4 |= R500_ALPHA_OP_LN2;
-			break;
-		case OPCODE_RCP:
-			code->inst[counter].inst4 |= R500_ALPHA_OP_RCP;
-			break;
-		case OPCODE_RSQ:
-			code->inst[counter].inst4 |= R500_ALPHA_OP_RSQ;
-			break;
-		case OPCODE_SIN:
-			code->inst[counter].inst4 |= R500_ALPHA_OP_SIN;
-			break;
-		default:
-			ERROR("Bad opcode in emit_sop: %d\n", opcode);
-			break;
+	code->inst[ip].inst1 |= R500_RGB_ADDR2(src);
+	code->inst[ip].inst2 |= R500_ALPHA_ADDR2(src);
+}
+
+/**
+ * Set an instruction's source 0 (both RGB and ALPHA) according to the given source register.
+ */
+static void set_src0(struct r500_pfs_compile_state *cs, int ip, struct prog_src_register srcreg)
+{
+	set_src0_direct(cs, ip, make_src(cs, srcreg));
+}
+
+/**
+ * Set an instruction's source 1 (both RGB and ALPHA) according to the given source register.
+ */
+static void set_src1(struct r500_pfs_compile_state *cs, int ip, struct prog_src_register srcreg)
+{
+	set_src1_direct(cs, ip, make_src(cs, srcreg));
+}
+
+/**
+ * Set an instruction's source 2 (both RGB and ALPHA) according to the given source register.
+ */
+static void set_src2(struct r500_pfs_compile_state *cs, int ip, struct prog_src_register srcreg)
+{
+	set_src2_direct(cs, ip, make_src(cs, srcreg));
+}
+
+/**
+ * Set an instruction's argument A (both RGB and ALPHA) from the given source,
+ * taking swizzles+neg+abs as specified (see also _reg version below).
+ */
+static void set_argA(struct r500_pfs_compile_state *cs, int ip, int source, GLuint swizRGB, GLuint swizA)
+{
+	PROG_CODE;
+	code->inst[ip].inst3 |= (source << R500_ALU_RGB_SEL_A_SHIFT) | MAKE_SWIZ_RGB_A(swizRGB);
+	code->inst[ip].inst4 |= (source << R500_ALPHA_SEL_A_SHIFT) | MAKE_SWIZ_ALPHA_A(swizA);
+}
+
+/**
+ * Set an instruction's argument B (both RGB and ALPHA) from the given source,
+ * taking swizzles+neg+abs as specified (see also _reg version below).
+ */
+static void set_argB(struct r500_pfs_compile_state *cs, int ip, int source, GLuint swizRGB, GLuint swizA)
+{
+	PROG_CODE;
+	code->inst[ip].inst3 |= (source << R500_ALU_RGB_SEL_B_SHIFT) | MAKE_SWIZ_RGB_B(swizRGB);
+	code->inst[ip].inst4 |= (source << R500_ALPHA_SEL_B_SHIFT) | MAKE_SWIZ_ALPHA_B(swizA);
+}
+
+/**
+ * Set an instruction's argument C (both RGB and ALPHA) from the given source,
+ * taking swizzles+neg+abs as specified (see also _reg version below).
+ */
+static void set_argC(struct r500_pfs_compile_state *cs, int ip, int source, GLuint swizRGB, GLuint swizA)
+{
+	PROG_CODE;
+	code->inst[ip].inst5 |=
+		(source << R500_ALU_RGBA_SEL_C_SHIFT) |
+		MAKE_SWIZ_RGBA_C(swizRGB) |
+		(source << R500_ALU_RGBA_ALPHA_SEL_C_SHIFT) |
+		MAKE_SWIZ_ALPHA_C(swizA);
+}
+
+/**
+ * Set an instruction's argument A (both RGB and ALPHA) from the given source,
+ * taking swizzles, negation and absolute value from the given source register.
+ */
+static void set_argA_reg(struct r500_pfs_compile_state *cs, int ip, int source, struct prog_src_register srcreg)
+{
+	set_argA(cs, ip, source, make_rgb_swizzle(srcreg), make_alpha_swizzle(srcreg));
+}
+
+/**
+ * Set an instruction's argument B (both RGB and ALPHA) from the given source,
+ * taking swizzles, negation and absolute value from the given source register.
+ */
+static void set_argB_reg(struct r500_pfs_compile_state *cs, int ip, int source, struct prog_src_register srcreg)
+{
+	set_argB(cs, ip, source, make_rgb_swizzle(srcreg), make_alpha_swizzle(srcreg));
+}
+
+/**
+ * Set an instruction's argument C (both RGB and ALPHA) from the given source,
+ * taking swizzles, negation and absolute value from the given source register.
+ */
+static void set_argC_reg(struct r500_pfs_compile_state *cs, int ip, int source, struct prog_src_register srcreg)
+{
+	set_argC(cs, ip, source, make_rgb_swizzle(srcreg), make_alpha_swizzle(srcreg));
+}
+
+/**
+ * Emit a special scalar operation.
+ */
+static int emit_sop(struct r500_pfs_compile_state *cs,
+	int opcode, struct prog_dst_register dstreg, GLuint src, GLuint swiz)
+{
+	int ip = emit_alu(cs, R500_ALU_RGBA_OP_SOP, opcode, dstreg);
+	set_src0_direct(cs, ip, src);
+	set_argA(cs, ip, 0, R500_SWIZ_RGB_ZERO, swiz);
+	return ip;
+}
+
+
+/**
+ * Emit trigonometric function COS, SIN, SCS
+ */
+static void emit_trig(struct r500_pfs_compile_state *cs, struct prog_instruction *fpi)
+{
+	int ip;
+	struct prog_dst_register temp = dstreg_template;
+	temp.Index = get_temp(cs, 0);
+	temp.WriteMask = WRITEMASK_W;
+
+	/* temp = Input*(1/2pi) */
+	ip = emit_alu(cs, R500_ALU_RGBA_OP_MAD, R500_ALPHA_OP_MAD, temp);
+	set_src0(cs, ip, fpi->SrcReg[0]);
+	set_src1_direct(cs, ip, emit_const4fv(cs, RCP_2PI));
+	set_argA(cs, ip, 0, R500_SWIZ_RGB_ZERO, make_sop_swizzle(fpi->SrcReg[0]));
+	set_argB(cs, ip, 1, R500_SWIZ_RGB_ZERO, SWIZZLE_W);
+	set_argC(cs, ip, 0, R500_SWIZ_RGB_ZERO, R500_SWIZZLE_ZERO);
+
+	/* temp = frac(dst) */
+	ip = emit_alu(cs, R500_ALU_RGBA_OP_FRC, R500_ALPHA_OP_FRC, temp);
+	set_src0_direct(cs, ip, temp.Index);
+	set_argA(cs, ip, 0, R500_SWIZ_RGB_RGB, SWIZZLE_W);
+
+	/* Dest = trig(temp) */
+	if (fpi->Opcode == OPCODE_COS) {
+		emit_sop(cs, R500_ALPHA_OP_COS, fpi->DstReg, temp.Index, SWIZZLE_W);
+	} else if (fpi->Opcode == OPCODE_SIN) {
+		emit_sop(cs, R500_ALPHA_OP_SIN, fpi->DstReg, temp.Index, SWIZZLE_W);
+	} else if (fpi->Opcode == OPCODE_SCS) {
+		struct prog_dst_register moddst = fpi->DstReg;
+
+		if (fpi->DstReg.WriteMask & WRITEMASK_X) {
+			moddst.WriteMask = WRITEMASK_X;
+			emit_sop(cs, R500_ALPHA_OP_COS, fpi->DstReg, temp.Index, SWIZZLE_W);
+		}
+		if (fpi->DstReg.WriteMask & WRITEMASK_Y) {
+			moddst.WriteMask = WRITEMASK_Y;
+			emit_sop(cs, R500_ALPHA_OP_SIN, fpi->DstReg, temp.Index, SWIZZLE_W);
+		}
 	}
 }
 
-static int do_inst(struct r500_pfs_compile_state *cs, struct prog_instruction *fpi, int counter) {
+/**
+ * Emit a LIT instruction.
+ *
+ * Definition of LIT (from ARB_fragment_program):
+ *  tmp = VectorLoad(op0);
+ *  if (tmp.x < 0) tmp.x = 0;
+ *  if (tmp.y < 0) tmp.y = 0;
+ *  if (tmp.w < -(128.0-epsilon)) tmp.w = -(128.0-epsilon);
+ *  else if (tmp.w > 128-epsilon) tmp.w = 128-epsilon;
+ *  result.x = 1.0;
+ *  result.y = tmp.x;
+ *  result.z = (tmp.x > 0) ? RoughApproxPower(tmp.y, tmp.w) : 0.0;
+ *  result.w = 1.0;
+ */
+static void emit_lit(struct r500_pfs_compile_state *cs, struct prog_instruction *fpi)
+{
+	GLuint cnst;
+	int needTemporary;
+	GLuint temp;
+	int ip;
+
+	cnst = emit_const4fv(cs, LIT);
+
+	needTemporary = 0;
+	if (fpi->DstReg.WriteMask != WRITEMASK_XYZW || fpi->DstReg.File == PROGRAM_OUTPUT)
+		needTemporary = 1;
+
+	if (needTemporary) {
+		temp = get_temp(cs, 0);
+	} else {
+		temp = fpi->DstReg.Index;
+	}
+
+	// MAX tmp.xyw, op0, { 0, 0, 0, -128+eps }
+	ip = emit_alu_temp(cs, R500_ALU_RGBA_OP_MAX, R500_ALPHA_OP_MAX, temp, WRITEMASK_XYW);
+	set_src0(cs, ip, fpi->SrcReg[0]);
+	set_src1_direct(cs, ip, cnst);
+	set_argA_reg(cs, ip, 0, fpi->SrcReg[0]);
+	set_argB(cs, ip, 1, R500_SWIZ_RGB_ZERO, SWIZZLE_W);
+
+	// MIN tmp.z, tmp.w, { 128-eps }
+	// LG2 tmp.w, tmp.y
+	ip = emit_alu_temp(cs, R500_ALU_RGBA_OP_MIN, R500_ALPHA_OP_LN2, temp, WRITEMASK_ZW);
+	set_src0_direct(cs, ip, temp);
+	set_src1_direct(cs, ip, cnst);
+	set_argA(cs, ip, 0, SWIZZLE_W | (SWIZZLE_W<<3) | (SWIZZLE_W<<6), SWIZZLE_Y);
+	set_argB(cs, ip, 1, SWIZZLE_X | (SWIZZLE_X<<3) | (SWIZZLE_X<<6), SWIZZLE_X);
+
+	// MOV tmp.y, tmp.x
+	// MUL tmp.w, tmp.z, tmp.w
+	ip = emit_alu_temp(cs, R500_ALU_RGBA_OP_MAD, R500_ALPHA_OP_MAD, temp, WRITEMASK_YW);
+	set_src0_direct(cs, ip, temp);
+	set_argA(cs, ip, 0, SWIZZLE_X | (SWIZZLE_X<<3) | (SWIZZLE_X<<6), SWIZZLE_Z);
+	set_argB(cs, ip, 0, R500_SWIZ_RGB_ONE, SWIZZLE_W);
+	set_argC(cs, ip, 0, R500_SWIZ_RGB_ZERO, R500_SWIZZLE_ZERO);
+
+	// MOV tmp.x, 1.0
+	// EX2 tmp.w, tmp.w
+	ip = emit_alu_temp(cs, R500_ALU_RGBA_OP_CMP, R500_ALPHA_OP_EX2, temp, WRITEMASK_XW);
+	set_src0_direct(cs, ip, temp);
+	set_argA(cs, ip, 0, R500_SWIZ_RGB_ONE, SWIZZLE_W);
+	set_argB(cs, ip, 0, R500_SWIZ_RGB_ONE, R500_SWIZZLE_ZERO);
+	set_argC(cs, ip, 0, R500_SWIZ_RGB_ZERO, R500_SWIZZLE_ZERO);
+
+	// tmp.z := (-tmp.x >= 0) ? tmp.y : 0.0
+	// MOV tmp.w, 1.0
+	ip = emit_alu_temp(cs, R500_ALU_RGBA_OP_CMP, R500_ALPHA_OP_CMP, temp, WRITEMASK_ZW);
+	set_src0_direct(cs, ip, temp);
+	set_argA(cs, ip, 0, R500_SWIZZLE_ZERO, R500_SWIZZLE_ONE);
+	set_argB(cs, ip, 0, SWIZZLE_W | (SWIZZLE_W<<3) | (SWIZZLE_W<<6), R500_SWIZZLE_ONE);
+	set_argC(cs, ip, 0, SWIZZLE_Y | (SWIZZLE_Y<<3) | (SWIZZLE_Y<<6) | (R500_SWIZ_MOD_NEG<<9), R500_SWIZZLE_ZERO);
+
+	if (needTemporary) {
+		ip = emit_alu(cs, R500_ALU_RGBA_OP_CMP, R500_ALPHA_OP_CMP, fpi->DstReg);
+		set_src0_direct(cs, ip, temp);
+		set_argA(cs, ip, 0, R500_SWIZ_RGB_RGB, SWIZZLE_W);
+		set_argB(cs, ip, 1, R500_SWIZ_RGB_RGB, SWIZZLE_W);
+		set_argC(cs, ip, 0, R500_SWIZ_RGB_ZERO, R500_SWIZZLE_ZERO);
+	}
+}
+
+static void do_inst(struct r500_pfs_compile_state *cs, struct prog_instruction *fpi) {
 	PROG_CODE;
 	GLuint src[3], dest = 0;
-	int temp_swiz = 0;
+	int ip;
 
 	if (fpi->Opcode != OPCODE_KIL) {
 		dest = make_dest(cs, fpi->DstReg);
 	}
 
 	switch (fpi->Opcode) {
-		case OPCODE_ABS:
-			emit_mov(cs, counter, fpi, make_src(cs, fpi->SrcReg[0]), fpi->SrcReg[0].Swizzle, dest);
-			code->inst[counter].inst3 |= R500_ALU_RGB_MOD_A_ABS
-				| R500_ALU_RGB_MOD_B_ABS;
-			code->inst[counter].inst4 |= R500_ALPHA_MOD_A_ABS
-				| R500_ALPHA_MOD_B_ABS;
-			break;
 		case OPCODE_ADD:
 			/* Variation on MAD: 1*src0+src1 */
-			emit_mad(cs, counter, fpi, R500_SWIZZLE_ONE, 0, 1);
+			ip = emit_alu(cs, R500_ALU_RGBA_OP_MAD, R500_ALPHA_OP_MAD, fpi->DstReg);
+			set_src0(cs, ip, fpi->SrcReg[0]);
+			set_src1(cs, ip, fpi->SrcReg[1]);
+			set_argA(cs, ip, 0, R500_SWIZ_RGB_ONE, R500_SWIZZLE_ONE);
+			set_argB_reg(cs, ip, 0, fpi->SrcReg[0]);
+			set_argC_reg(cs, ip, 1, fpi->SrcReg[1]);
 			break;
 		case OPCODE_CMP:
 			/* This inst's selects need to be swapped as follows:
 				* 0 -> C ; 1 -> B ; 2 -> A */
-			src[0] = make_src(cs, fpi->SrcReg[0]);
-			src[1] = make_src(cs, fpi->SrcReg[1]);
-			src[2] = make_src(cs, fpi->SrcReg[2]);
-			emit_alu(cs, counter, fpi);
-			code->inst[counter].inst1 = R500_RGB_ADDR0(src[2])
-				| R500_RGB_ADDR1(src[1]) | R500_RGB_ADDR2(src[0]);
-			code->inst[counter].inst2 = R500_ALPHA_ADDR0(src[2])
-				| R500_ALPHA_ADDR1(src[1]) | R500_ALPHA_ADDR2(src[0]);
-			code->inst[counter].inst3 = R500_ALU_RGB_SEL_A_SRC0
-				| MAKE_SWIZ_RGB_A(make_rgb_swizzle(fpi->SrcReg[2]))
-				| R500_ALU_RGB_SEL_B_SRC1 | MAKE_SWIZ_RGB_B(make_rgb_swizzle(fpi->SrcReg[1]));
-			code->inst[counter].inst4 |= R500_ALPHA_OP_CMP
-				| R500_ALPHA_ADDRD(dest)
-				| R500_ALPHA_SEL_A_SRC0 | MAKE_SWIZ_ALPHA_A(make_alpha_swizzle(fpi->SrcReg[2]))
-				| R500_ALPHA_SEL_B_SRC1 | MAKE_SWIZ_ALPHA_B(make_alpha_swizzle(fpi->SrcReg[1]));
-			code->inst[counter].inst5 = R500_ALU_RGBA_OP_CMP
-				| R500_ALU_RGBA_ADDRD(dest)
-				| R500_ALU_RGBA_SEL_C_SRC2
-				| MAKE_SWIZ_RGBA_C(make_rgb_swizzle(fpi->SrcReg[0]))
-				| R500_ALU_RGBA_ALPHA_SEL_C_SRC2
-				| MAKE_SWIZ_ALPHA_C(make_alpha_swizzle(fpi->SrcReg[0]));
+			ip = emit_alu(cs, R500_ALU_RGBA_OP_CMP, R500_ALPHA_OP_CMP, fpi->DstReg);
+			set_src0(cs, ip, fpi->SrcReg[0]);
+			set_src1(cs, ip, fpi->SrcReg[1]);
+			set_src2(cs, ip, fpi->SrcReg[2]);
+			set_argA_reg(cs, ip, 2, fpi->SrcReg[2]);
+			set_argB_reg(cs, ip, 1, fpi->SrcReg[1]);
+			set_argC_reg(cs, ip, 0, fpi->SrcReg[0]);
 			break;
 		case OPCODE_COS:
-			src[0] = make_src(cs, fpi->SrcReg[0]);
-			src[1] = emit_const4fv(cs, RCP_2PI);
-			code->inst[counter].inst0 = R500_INST_TYPE_ALU | R500_INST_TEX_SEM_WAIT
-				| (R500_WRITEMASK_ARGB << 11);
-			code->inst[counter].inst1 = R500_RGB_ADDR0(src[0])
-				| R500_RGB_ADDR1(src[1]);
-			code->inst[counter].inst2 = R500_ALPHA_ADDR0(src[0])
-				| R500_ALPHA_ADDR1(src[1]);
-			code->inst[counter].inst3 = R500_ALU_RGB_SEL_A_SRC0
-				| MAKE_SWIZ_RGB_A(R500_SWIZ_RGB_RGB)
-				| R500_ALU_RGB_SEL_B_SRC1 | MAKE_SWIZ_RGB_B(R500_SWIZ_RGB_RGB);
-			code->inst[counter].inst4 = R500_ALPHA_OP_MAD
-				| R500_ALPHA_ADDRD(get_temp(cs, 0))
-				| R500_ALPHA_SEL_A_SRC0 | R500_ALPHA_SWIZ_A_A
-				| R500_ALPHA_SEL_B_SRC1 | R500_ALPHA_SWIZ_B_A;
-			code->inst[counter].inst5 = R500_ALU_RGBA_OP_MAD
-				| R500_ALU_RGBA_ADDRD(get_temp(cs, 0))
-				| MAKE_SWIZ_RGBA_C(R500_SWIZ_RGB_ZERO)
-				| MAKE_SWIZ_ALPHA_C(R500_SWIZZLE_ZERO);
-			counter++;
-			code->inst[counter].inst0 = R500_INST_TYPE_ALU | (R500_WRITEMASK_ARGB << 11);
-			code->inst[counter].inst1 = R500_RGB_ADDR0(get_temp(cs, 0));
-			code->inst[counter].inst2 = R500_ALPHA_ADDR0(get_temp(cs, 0));
-			code->inst[counter].inst3 = R500_ALU_RGB_SEL_A_SRC0
-				| MAKE_SWIZ_RGB_A(R500_SWIZ_RGB_RGB);
-			code->inst[counter].inst4 = R500_ALPHA_OP_FRC
-				| R500_ALPHA_ADDRD(get_temp(cs, 1))
-				| R500_ALPHA_SEL_A_SRC0 | R500_ALPHA_SWIZ_A_A;
-			code->inst[counter].inst5 = R500_ALU_RGBA_OP_FRC
-				| R500_ALU_RGBA_ADDRD(get_temp(cs, 1));
-			counter++;
-			emit_sop(cs, counter, fpi, OPCODE_COS, get_temp(cs, 1), make_sop_swizzle(fpi->SrcReg[0]), dest);
+			emit_trig(cs, fpi);
 			break;
 		case OPCODE_DP3:
-			src[0] = make_src(cs, fpi->SrcReg[0]);
-			src[1] = make_src(cs, fpi->SrcReg[1]);
-			emit_alu(cs, counter, fpi);
-			code->inst[counter].inst1 = R500_RGB_ADDR0(src[0])
-				| R500_RGB_ADDR1(src[1]);
-			code->inst[counter].inst2 = R500_ALPHA_ADDR0(src[0])
-				| R500_ALPHA_ADDR1(src[1]);
-			code->inst[counter].inst3 = R500_ALU_RGB_SEL_A_SRC0
-				| MAKE_SWIZ_RGB_A(make_rgb_swizzle(fpi->SrcReg[0]))
-				| R500_ALU_RGB_SEL_B_SRC1 | MAKE_SWIZ_RGB_B(make_rgb_swizzle(fpi->SrcReg[1]));
-			code->inst[counter].inst4 |= R500_ALPHA_OP_DP
-				| R500_ALPHA_ADDRD(dest)
-				| R500_ALPHA_SEL_A_SRC0 | MAKE_SWIZ_ALPHA_A(make_alpha_swizzle(fpi->SrcReg[0]))
-				| R500_ALPHA_SEL_B_SRC1 | MAKE_SWIZ_ALPHA_B(make_alpha_swizzle(fpi->SrcReg[1]));
-			code->inst[counter].inst5 = R500_ALU_RGBA_OP_DP3
-				| R500_ALU_RGBA_ADDRD(dest);
+			ip = emit_alu(cs, R500_ALU_RGBA_OP_DP3, R500_ALPHA_OP_DP, fpi->DstReg);
+			set_src0(cs, ip, fpi->SrcReg[0]);
+			set_src1(cs, ip, fpi->SrcReg[1]);
+			set_argA_reg(cs, ip, 0, fpi->SrcReg[0]);
+			set_argB_reg(cs, ip, 1, fpi->SrcReg[1]);
 			break;
 		case OPCODE_DP4:
-			src[0] = make_src(cs, fpi->SrcReg[0]);
-			src[1] = make_src(cs, fpi->SrcReg[1]);
-			/* Based on DP3 */
-			emit_alu(cs, counter, fpi);
-			code->inst[counter].inst1 = R500_RGB_ADDR0(src[0])
-				| R500_RGB_ADDR1(src[1]);
-			code->inst[counter].inst2 = R500_ALPHA_ADDR0(src[0])
-				| R500_ALPHA_ADDR1(src[1]);
-			code->inst[counter].inst3 = R500_ALU_RGB_SEL_A_SRC0
-				| MAKE_SWIZ_RGB_A(make_rgb_swizzle(fpi->SrcReg[0]))
-				| R500_ALU_RGB_SEL_B_SRC1 | MAKE_SWIZ_RGB_B(make_rgb_swizzle(fpi->SrcReg[1]));
-			code->inst[counter].inst4 |= R500_ALPHA_OP_DP
-				| R500_ALPHA_ADDRD(dest)
-				| R500_ALPHA_SEL_A_SRC0 | MAKE_SWIZ_ALPHA_A(make_alpha_swizzle(fpi->SrcReg[0]))
-				| R500_ALPHA_SEL_B_SRC1 | MAKE_SWIZ_ALPHA_B(make_alpha_swizzle(fpi->SrcReg[1]));
-			code->inst[counter].inst5 = R500_ALU_RGBA_OP_DP4
-				| R500_ALU_RGBA_ADDRD(dest);
-			break;
-		case OPCODE_DPH:
-			src[0] = make_src(cs, fpi->SrcReg[0]);
-			src[1] = make_src(cs, fpi->SrcReg[1]);
-			/* Based on DP3 */
-			emit_alu(cs, counter, fpi);
-			code->inst[counter].inst1 = R500_RGB_ADDR0(src[0])
-				| R500_RGB_ADDR1(src[1]);
-			code->inst[counter].inst2 = R500_ALPHA_ADDR0(src[0])
-				| R500_ALPHA_ADDR1(src[1]);
-			code->inst[counter].inst3 = R500_ALU_RGB_SEL_A_SRC0
-				| MAKE_SWIZ_RGB_A(make_rgb_swizzle(fpi->SrcReg[0]))
-				| R500_ALU_RGB_SEL_B_SRC1 | MAKE_SWIZ_RGB_B(make_rgb_swizzle(fpi->SrcReg[1]));
-			code->inst[counter].inst4 |= R500_ALPHA_OP_DP
-				| R500_ALPHA_ADDRD(dest)
-				| R500_ALPHA_SEL_A_SRC0 | MAKE_SWIZ_ALPHA_A(R500_SWIZZLE_ONE)
-				| R500_ALPHA_SEL_B_SRC1 | MAKE_SWIZ_ALPHA_B(make_alpha_swizzle(fpi->SrcReg[1]));
-			code->inst[counter].inst5 = R500_ALU_RGBA_OP_DP4
-				| R500_ALU_RGBA_ADDRD(dest);
+			ip = emit_alu(cs, R500_ALU_RGBA_OP_DP4, R500_ALPHA_OP_DP, fpi->DstReg);
+			set_src0(cs, ip, fpi->SrcReg[0]);
+			set_src1(cs, ip, fpi->SrcReg[1]);
+			set_argA_reg(cs, ip, 0, fpi->SrcReg[0]);
+			set_argB_reg(cs, ip, 1, fpi->SrcReg[1]);
 			break;
 		case OPCODE_DST:
-			src[0] = make_src(cs, fpi->SrcReg[0]);
-			src[1] = make_src(cs, fpi->SrcReg[1]);
 			/* [1, src0.y*src1.y, src0.z, src1.w]
-				* So basically MUL with lotsa swizzling. */
-			emit_alu(cs, counter, fpi);
-			code->inst[counter].inst1 = R500_RGB_ADDR0(src[0])
-				| R500_RGB_ADDR1(src[1]);
-			code->inst[counter].inst2 = R500_ALPHA_ADDR0(src[0])
-				| R500_ALPHA_ADDR1(src[1]);
-			code->inst[counter].inst3 = R500_ALU_RGB_SEL_A_SRC0
-				| R500_ALU_RGB_SEL_B_SRC1;
-			/* Select [1, y, z, 1] */
-			temp_swiz = (make_rgb_swizzle(fpi->SrcReg[0]) & ~0x7) | R500_SWIZZLE_ONE;
-			code->inst[counter].inst3 |= MAKE_SWIZ_RGB_A(temp_swiz);
-			/* Select [1, y, 1, w] */
-			temp_swiz = (make_rgb_swizzle(fpi->SrcReg[0]) & ~0x1c7) | R500_SWIZZLE_ONE | (R500_SWIZZLE_ONE << 6);
-			code->inst[counter].inst3 |= MAKE_SWIZ_RGB_B(temp_swiz);
-			code->inst[counter].inst4 |= R500_ALPHA_OP_MAD
-				| R500_ALPHA_ADDRD(dest)
-				| R500_ALPHA_SEL_A_SRC0 | MAKE_SWIZ_ALPHA_A(R500_SWIZZLE_ONE)
-				| R500_ALPHA_SEL_B_SRC1 | MAKE_SWIZ_ALPHA_B(make_alpha_swizzle(fpi->SrcReg[1]));
-			code->inst[counter].inst5 = R500_ALU_RGBA_OP_MAD
-				| R500_ALU_RGBA_ADDRD(dest)
-				| MAKE_SWIZ_RGBA_C(R500_SWIZ_RGB_ZERO)
-				| MAKE_SWIZ_ALPHA_C(R500_SWIZZLE_ZERO);
+			 * So basically MUL with lotsa swizzling. */
+			ip = emit_alu(cs, R500_ALU_RGBA_OP_MAD, R500_ALPHA_OP_MAD, fpi->DstReg);
+			set_src0(cs, ip, fpi->SrcReg[0]);
+			set_src1(cs, ip, fpi->SrcReg[1]);
+			set_argA(cs, ip, 0,
+				(make_rgb_swizzle(fpi->SrcReg[0]) & ~0x7) | R500_SWIZZLE_ONE,
+				R500_SWIZZLE_ONE);
+			set_argB(cs, ip, 1,
+				(make_rgb_swizzle(fpi->SrcReg[0]) & ~0x1c7) | R500_SWIZZLE_ONE | (R500_SWIZZLE_ONE << 6),
+				make_alpha_swizzle(fpi->SrcReg[1]));
+			set_argC(cs, ip, 0, R500_SWIZ_RGB_ZERO, R500_SWIZZLE_ZERO);
 			break;
 		case OPCODE_EX2:
 			src[0] = make_src(cs, fpi->SrcReg[0]);
-			emit_sop(cs, counter, fpi, OPCODE_EX2, src[0], make_sop_swizzle(fpi->SrcReg[0]), dest);
+			emit_sop(cs, R500_ALPHA_OP_EX2, fpi->DstReg, src[0], make_sop_swizzle(fpi->SrcReg[0]));
 			break;
 		case OPCODE_FLR:
-			src[0] = make_src(cs, fpi->SrcReg[0]);
-			code->inst[counter].inst0 = R500_INST_TYPE_ALU | (R500_WRITEMASK_ARGB << 11);
-			code->inst[counter].inst1 = R500_RGB_ADDR0(src[0]);
-			code->inst[counter].inst2 = R500_ALPHA_ADDR0(src[0]);
-			code->inst[counter].inst3 = R500_ALU_RGB_SEL_A_SRC0
-				| MAKE_SWIZ_RGB_A(make_rgb_swizzle(fpi->SrcReg[0]));
-			code->inst[counter].inst4 |= R500_ALPHA_OP_FRC
-				| R500_ALPHA_ADDRD(get_temp(cs, 0))
-				| R500_ALPHA_SEL_A_SRC0 | MAKE_SWIZ_ALPHA_A(make_alpha_swizzle(fpi->SrcReg[0]));
-			code->inst[counter].inst5 = R500_ALU_RGBA_OP_FRC
-				| R500_ALU_RGBA_ADDRD(get_temp(cs, 0));
-			counter++;
-			emit_alu(cs, counter, fpi);
-			code->inst[counter].inst1 = R500_RGB_ADDR0(src[0])
-				| R500_RGB_ADDR1(get_temp(cs, 0));
-			code->inst[counter].inst2 = R500_ALPHA_ADDR0(src[0])
-				| R500_ALPHA_ADDR1(get_temp(cs, 0));
-			code->inst[counter].inst3 = MAKE_SWIZ_RGB_A(R500_SWIZ_RGB_ONE)
-				| R500_ALU_RGB_SEL_B_SRC0 | MAKE_SWIZ_RGB_B(make_rgb_swizzle(fpi->SrcReg[0]));
-			code->inst[counter].inst4 = R500_ALPHA_OP_MAD
-				| R500_ALPHA_ADDRD(dest)
-				| R500_ALPHA_SWIZ_A_A
-				| R500_ALPHA_SEL_B_SRC0 | MAKE_SWIZ_ALPHA_B(make_alpha_swizzle(fpi->SrcReg[0]));
-			code->inst[counter].inst5 = R500_ALU_RGBA_OP_MAD
-				| R500_ALU_RGBA_ADDRD(dest)
-				| R500_ALU_RGBA_SEL_C_SRC1
-				| MAKE_SWIZ_RGBA_C(make_rgb_swizzle(fpi->SrcReg[0]))
-				| R500_ALU_RGBA_ALPHA_SEL_C_SRC1
-				| MAKE_SWIZ_ALPHA_C(make_alpha_swizzle(fpi->SrcReg[0]))
-				| R500_ALU_RGBA_MOD_C_NEG;
+			dest = get_temp(cs, 0);
+			ip = emit_alu_temp(cs, R500_ALU_RGBA_OP_FRC, R500_ALPHA_OP_FRC, dest, WRITEMASK_XYZW);
+			set_src0(cs, ip, fpi->SrcReg[0]);
+			set_argA_reg(cs, ip, 0, fpi->SrcReg[0]);
+
+			ip = emit_alu(cs, R500_ALU_RGBA_OP_MAD, R500_ALPHA_OP_MAD, fpi->DstReg);
+			set_src0(cs, ip, fpi->SrcReg[0]);
+			set_src1_direct(cs, ip, dest);
+			set_argA_reg(cs, ip, 0, fpi->SrcReg[1]);
+			set_argB(cs, ip, 0, R500_SWIZ_RGB_ONE, R500_SWIZZLE_ONE);
+			set_argC(cs, ip, 1,
+				R500_SWIZ_RGB_RGB|(R500_SWIZ_MOD_NEG<<9),
+				SWIZZLE_W|(R500_SWIZ_MOD_NEG<<3));
 			break;
 		case OPCODE_FRC:
-			src[0] = make_src(cs, fpi->SrcReg[0]);
-			emit_alu(cs, counter, fpi);
-			code->inst[counter].inst1 = R500_RGB_ADDR0(src[0]);
-			code->inst[counter].inst2 = R500_ALPHA_ADDR0(src[0]);
-			code->inst[counter].inst3 = R500_ALU_RGB_SEL_A_SRC0
-				| MAKE_SWIZ_RGB_A(make_rgb_swizzle(fpi->SrcReg[0]));
-			code->inst[counter].inst4 |= R500_ALPHA_OP_FRC
-				| R500_ALPHA_ADDRD(dest)
-				| R500_ALPHA_SEL_A_SRC0 | MAKE_SWIZ_ALPHA_A(make_alpha_swizzle(fpi->SrcReg[0]));
-			code->inst[counter].inst5 = R500_ALU_RGBA_OP_FRC
-				| R500_ALU_RGBA_ADDRD(dest);
+			ip = emit_alu(cs, R500_ALU_RGBA_OP_FRC, R500_ALPHA_OP_FRC, fpi->DstReg);
+			set_src0(cs, ip, fpi->SrcReg[0]);
+			set_argA_reg(cs, ip, 0, fpi->SrcReg[0]);
 			break;
 		case OPCODE_LG2:
 			src[0] = make_src(cs, fpi->SrcReg[0]);
-			emit_sop(cs, counter, fpi, OPCODE_LG2, src[0], make_sop_swizzle(fpi->SrcReg[0]), dest);
+			emit_sop(cs, R500_ALPHA_OP_LN2, fpi->DstReg, src[0], make_sop_swizzle(fpi->SrcReg[0]));
 			break;
 		case OPCODE_LIT:
-			src[0] = make_src(cs, fpi->SrcReg[0]);
-			src[1] = emit_const4fv(cs, LIT);
-			/* First inst: MAX temp, input, [0, 0, 0, -128]
-				* Write: RG, A  */
-			code->inst[counter].inst0 = R500_INST_TYPE_ALU | R500_INST_TEX_SEM_WAIT
-				| (R500_WRITEMASK_ARG << 11);
-			code->inst[counter].inst1 = R500_RGB_ADDR0(src[0]) | R500_RGB_ADDR1(src[1]);
-			code->inst[counter].inst2 = R500_ALPHA_ADDR0(src[0]) | R500_ALPHA_ADDR1(src[1]);
-			code->inst[counter].inst3 = R500_ALU_RGB_SEL_A_SRC0
-				| MAKE_SWIZ_RGB_A(make_rgb_swizzle(fpi->SrcReg[0]))
-				| MAKE_SWIZ_RGB_B(R500_SWIZ_RGB_ZERO);
-			code->inst[counter].inst4 = R500_ALPHA_OP_MAX
-				| R500_ALPHA_ADDRD(get_temp(cs, 0))
-				| R500_ALPHA_SEL_A_SRC0 | MAKE_SWIZ_ALPHA_A(make_alpha_swizzle(fpi->SrcReg[0]))
-				| R500_ALPHA_SEL_B_SRC1 | R500_ALPHA_SWIZ_B_A;
-			code->inst[counter].inst5 = R500_ALU_RGBA_OP_MAX
-				| R500_ALU_RGBA_ADDRD(get_temp(cs, 0));
-			counter++;
-			/* Second inst: MIN temp, temp, [x, x, x, 128]
-				* Write: A */
-			code->inst[counter].inst0 = R500_INST_TYPE_ALU | (R500_WRITEMASK_A << 11);
-			code->inst[counter].inst1 = R500_RGB_ADDR0(get_temp(cs, 0)) | R500_RGB_ADDR1(src[1]);
-			code->inst[counter].inst2 = R500_ALPHA_ADDR0(get_temp(cs, 0)) | R500_ALPHA_ADDR1(src[1]);
-			/* code->inst[counter].inst3; */
-			code->inst[counter].inst4 = R500_ALPHA_OP_MAX
-				| R500_ALPHA_ADDRD(dest)
-				| R500_ALPHA_SEL_A_SRC0 | R500_ALPHA_SWIZ_A_A
-				| R500_ALPHA_SEL_B_SRC1 | R500_ALPHA_SWIZ_B_A;
-			code->inst[counter].inst5 = R500_ALU_RGBA_OP_MAX
-				| R500_ALU_RGBA_ADDRD(dest);
-			counter++;
-			/* Third-fifth insts: POW temp, temp.y, temp.w
-				* Write: B */
-			emit_sop(cs, counter, fpi, OPCODE_LG2, get_temp(cs, 0), SWIZZLE_Y, get_temp(cs, 1));
-			code->inst[counter].inst0 |= (R500_WRITEMASK_ARGB << 11);
-			counter++;
-			code->inst[counter].inst0 = R500_INST_TYPE_ALU | (R500_WRITEMASK_ARGB << 11);
-			code->inst[counter].inst1 = R500_RGB_ADDR0(get_temp(cs, 1))
-				| R500_RGB_ADDR1(get_temp(cs, 0));
-			code->inst[counter].inst2 = R500_ALPHA_ADDR0(get_temp(cs, 1))
-				| R500_ALPHA_ADDR1(get_temp(cs, 0));
-			code->inst[counter].inst3 = R500_ALU_RGB_SEL_A_SRC0
-				| MAKE_SWIZ_RGB_A(R500_SWIZ_RGB_RGB)
-				| R500_ALU_RGB_SEL_B_SRC1 | MAKE_SWIZ_RGB_B(R500_SWIZ_RGB_RGB);
-			code->inst[counter].inst4 = R500_ALPHA_OP_MAD
-				| R500_ALPHA_ADDRD(get_temp(cs, 1))
-				| R500_ALPHA_SEL_A_SRC0 | R500_ALPHA_SWIZ_A_A
-				| R500_ALPHA_SEL_B_SRC1 | R500_ALPHA_SWIZ_B_A;
-			code->inst[counter].inst5 = R500_ALU_RGBA_OP_MAD
-				| R500_ALU_RGBA_ADDRD(get_temp(cs, 1))
-				| MAKE_SWIZ_RGBA_C(R500_SWIZ_RGB_ZERO)
-				| MAKE_SWIZ_ALPHA_C(R500_SWIZZLE_ZERO);
-			counter++;
-			emit_sop(cs, counter, fpi, OPCODE_EX2, get_temp(cs, 1), SWIZZLE_W, get_temp(cs, 0));
-			code->inst[counter].inst0 |= (R500_WRITEMASK_B << 11);
-			counter++;
-			/* Sixth inst: CMP dest, temp.xxxx, temp.[1, x, z, 1], temp.[1, x, 0, 1];
-				* Write: ARGB
-				* This inst's selects need to be swapped as follows:
-				* 0 -> C ; 1 -> B ; 2 -> A */
-			emit_alu(cs, counter, fpi);
-			code->inst[counter].inst1 = R500_RGB_ADDR0(get_temp(cs, 0));
-			code->inst[counter].inst2 = R500_ALPHA_ADDR0(get_temp(cs, 0));
-			code->inst[counter].inst3 = R500_ALU_RGB_SEL_A_SRC0
-				| R500_ALU_RGB_R_SWIZ_A_1
-				| R500_ALU_RGB_G_SWIZ_A_R
-				| R500_ALU_RGB_B_SWIZ_A_B
-				| R500_ALU_RGB_SEL_B_SRC0
-				| R500_ALU_RGB_R_SWIZ_B_1
-				| R500_ALU_RGB_G_SWIZ_B_R
-				| R500_ALU_RGB_B_SWIZ_B_0;
-			code->inst[counter].inst4 |= R500_ALPHA_OP_CMP
-				| R500_ALPHA_ADDRD(dest)
-				| R500_ALPHA_SEL_A_SRC0 | R500_ALPHA_SWIZ_A_1
-				| R500_ALPHA_SEL_B_SRC0 | R500_ALPHA_SWIZ_B_1;
-			code->inst[counter].inst5 = R500_ALU_RGBA_OP_CMP
-				| R500_ALU_RGBA_ADDRD(dest)
-				| R500_ALU_RGBA_SEL_C_SRC0
-				| R500_ALU_RGBA_ALPHA_SEL_C_SRC0
-				| R500_ALU_RGBA_R_SWIZ_R
-				| R500_ALU_RGBA_G_SWIZ_R
-				| R500_ALU_RGBA_B_SWIZ_R
-				| R500_ALU_RGBA_A_SWIZ_R;
+			emit_lit(cs, fpi);
 			break;
 		case OPCODE_LRP:
-			/* src0 * src1 + INV(src0) * src2
-				* 1) MUL src0, src1, temp
-				* 2) PRE 1-src0; MAD srcp, src2, temp */
-			src[0] = make_src(cs, fpi->SrcReg[0]);
-			src[1] = make_src(cs, fpi->SrcReg[1]);
-			src[2] = make_src(cs, fpi->SrcReg[2]);
-			code->inst[counter].inst0 = R500_INST_TYPE_ALU | R500_INST_TEX_SEM_WAIT
-				| R500_INST_NOP | (R500_WRITEMASK_ARGB << 11);
-			code->inst[counter].inst1 = R500_RGB_ADDR0(src[0])
-				| R500_RGB_ADDR1(src[1]);
-			code->inst[counter].inst2 = R500_ALPHA_ADDR0(src[0])
-				| R500_ALPHA_ADDR1(src[1]);
-			code->inst[counter].inst3 = R500_ALU_RGB_SEL_A_SRC0
-				| MAKE_SWIZ_RGB_A(make_rgb_swizzle(fpi->SrcReg[0]))
-				| R500_ALU_RGB_SEL_B_SRC1 | MAKE_SWIZ_RGB_B(make_rgb_swizzle(fpi->SrcReg[1]));
-			code->inst[counter].inst4 = R500_ALPHA_OP_MAD
-				| R500_ALPHA_ADDRD(get_temp(cs, 0))
-				| R500_ALPHA_SEL_A_SRC0 | MAKE_SWIZ_ALPHA_A(make_alpha_swizzle(fpi->SrcReg[0]))
-				| R500_ALPHA_SEL_B_SRC1 | MAKE_SWIZ_ALPHA_B(make_alpha_swizzle(fpi->SrcReg[1]));
-			code->inst[counter].inst5 = R500_ALU_RGBA_OP_MAD
-				| R500_ALU_RGBA_ADDRD(get_temp(cs, 0))
-				| MAKE_SWIZ_RGBA_C(R500_SWIZ_RGB_ZERO)
-				| MAKE_SWIZ_ALPHA_C(R500_SWIZZLE_ZERO);
-			counter++;
-			emit_alu(cs, counter, fpi);
-			code->inst[counter].inst1 = R500_RGB_ADDR0(src[0])
-				| R500_RGB_ADDR1(src[2])
-				| R500_RGB_ADDR2(get_temp(cs, 0))
-				| R500_RGB_SRCP_OP_1_MINUS_RGB0;
-			code->inst[counter].inst2 = R500_ALPHA_ADDR0(src[0])
-				| R500_ALPHA_ADDR1(src[2])
-				| R500_ALPHA_ADDR2(get_temp(cs, 0))
-				| R500_ALPHA_SRCP_OP_1_MINUS_A0;
-			code->inst[counter].inst3 = R500_ALU_RGB_SEL_A_SRCP
-				| MAKE_SWIZ_RGB_A(make_rgb_swizzle(fpi->SrcReg[0]))
-				| R500_ALU_RGB_SEL_B_SRC1 | MAKE_SWIZ_RGB_B(make_rgb_swizzle(fpi->SrcReg[2]));
-			code->inst[counter].inst4 |= R500_ALPHA_OP_MAD
-				| R500_ALPHA_ADDRD(dest)
-				| R500_ALPHA_SEL_A_SRCP | MAKE_SWIZ_ALPHA_A(make_alpha_swizzle(fpi->SrcReg[0]))
-				| R500_ALPHA_SEL_B_SRC1 | MAKE_SWIZ_ALPHA_B(make_alpha_swizzle(fpi->SrcReg[2]));
-			code->inst[counter].inst5 = R500_ALU_RGBA_OP_MAD
-				| R500_ALU_RGBA_ADDRD(dest)
-				| R500_ALU_RGBA_SEL_C_SRC2 | MAKE_SWIZ_RGBA_C(R500_SWIZ_RGB_RGB)
-				| R500_ALU_RGBA_ALPHA_SEL_C_SRC2 | R500_ALU_RGBA_A_SWIZ_A;
+			/* result = src0*src1 + (1-src0)*src2
+			 *        = src0*src1 + src2 + (-src0)*src2
+			 *
+			 * Note: LRP without swizzling (or with only limited
+			 * swizzling) could be done more efficiently using the
+			 * presubtract hardware.
+			 */
+			dest = get_temp(cs, 0);
+			ip = emit_alu_temp(cs, R500_ALU_RGBA_OP_MAD, R500_ALPHA_OP_MAD, dest, WRITEMASK_XYZW);
+			set_src0(cs, ip, fpi->SrcReg[0]);
+			set_src1(cs, ip, fpi->SrcReg[1]);
+			set_src2(cs, ip, fpi->SrcReg[2]);
+			set_argA_reg(cs, ip, 0, fpi->SrcReg[0]);
+			set_argB_reg(cs, ip, 1, fpi->SrcReg[1]);
+			set_argC_reg(cs, ip, 2, fpi->SrcReg[2]);
+
+			ip = emit_alu(cs, R500_ALU_RGBA_OP_MAD, R500_ALPHA_OP_MAD, fpi->DstReg);
+			set_src0(cs, ip, fpi->SrcReg[0]);
+			set_src1(cs, ip, fpi->SrcReg[2]);
+			set_src2_direct(cs, ip, dest);
+			set_argA(cs, ip, 0,
+				make_rgb_swizzle(fpi->SrcReg[0]) ^ (R500_SWIZ_MOD_NEG<<9),
+				make_alpha_swizzle(fpi->SrcReg[0]) ^ (R500_SWIZ_MOD_NEG<<3));
+			set_argB_reg(cs, ip, 1, fpi->SrcReg[2]);
+			set_argC(cs, ip, 2, R500_SWIZ_RGB_RGB, SWIZZLE_W);
 			break;
 		case OPCODE_MAD:
-			emit_mad(cs, counter, fpi, 0, 1, 2);
+			ip = emit_alu(cs, R500_ALU_RGBA_OP_MAD, R500_ALPHA_OP_MAD, fpi->DstReg);
+			set_src0(cs, ip, fpi->SrcReg[0]);
+			set_src1(cs, ip, fpi->SrcReg[1]);
+			set_src2(cs, ip, fpi->SrcReg[2]);
+			set_argA_reg(cs, ip, 0, fpi->SrcReg[0]);
+			set_argB_reg(cs, ip, 1, fpi->SrcReg[1]);
+			set_argC_reg(cs, ip, 2, fpi->SrcReg[2]);
 			break;
 		case OPCODE_MAX:
-			src[0] = make_src(cs, fpi->SrcReg[0]);
-			src[1] = make_src(cs, fpi->SrcReg[1]);
-			emit_alu(cs, counter, fpi);
-			code->inst[counter].inst1 = R500_RGB_ADDR0(src[0]) | R500_RGB_ADDR1(src[1]);
-			code->inst[counter].inst2 = R500_ALPHA_ADDR0(src[0]) | R500_ALPHA_ADDR1(src[1]);
-			code->inst[counter].inst3 = R500_ALU_RGB_SEL_A_SRC0
-				| MAKE_SWIZ_RGB_A(make_rgb_swizzle(fpi->SrcReg[0]))
-				| R500_ALU_RGB_SEL_B_SRC1
-				| MAKE_SWIZ_RGB_B(make_rgb_swizzle(fpi->SrcReg[1]));
-			code->inst[counter].inst4 |= R500_ALPHA_OP_MAX
-				| R500_ALPHA_ADDRD(dest)
-				| R500_ALPHA_SEL_A_SRC0 | MAKE_SWIZ_ALPHA_A(make_alpha_swizzle(fpi->SrcReg[0]))
-				| R500_ALPHA_SEL_B_SRC1 | MAKE_SWIZ_ALPHA_B(make_alpha_swizzle(fpi->SrcReg[1]));
-			code->inst[counter].inst5 = R500_ALU_RGBA_OP_MAX
-				| R500_ALU_RGBA_ADDRD(dest);
+			ip = emit_alu(cs, R500_ALU_RGBA_OP_MAX, R500_ALPHA_OP_MAX, fpi->DstReg);
+			set_src0(cs, ip, fpi->SrcReg[0]);
+			set_src1(cs, ip, fpi->SrcReg[1]);
+			set_argA_reg(cs, ip, 0, fpi->SrcReg[0]);
+			set_argB_reg(cs, ip, 1, fpi->SrcReg[1]);
 			break;
 		case OPCODE_MIN:
-			src[0] = make_src(cs, fpi->SrcReg[0]);
-			src[1] = make_src(cs, fpi->SrcReg[1]);
-			emit_alu(cs, counter, fpi);
-			code->inst[counter].inst1 = R500_RGB_ADDR0(src[0]) | R500_RGB_ADDR1(src[1]);
-			code->inst[counter].inst2 = R500_ALPHA_ADDR0(src[0]) | R500_ALPHA_ADDR1(src[1]);
-			code->inst[counter].inst3 = R500_ALU_RGB_SEL_A_SRC0
-				| MAKE_SWIZ_RGB_A(make_rgb_swizzle(fpi->SrcReg[0]))
-				| R500_ALU_RGB_SEL_B_SRC1
-				| MAKE_SWIZ_RGB_B(make_rgb_swizzle(fpi->SrcReg[1]));
-			code->inst[counter].inst4 |= R500_ALPHA_OP_MIN
-				| R500_ALPHA_ADDRD(dest)
-				| R500_ALPHA_SEL_A_SRC0 | MAKE_SWIZ_ALPHA_A(make_alpha_swizzle(fpi->SrcReg[0]))
-				| R500_ALPHA_SEL_B_SRC1 | MAKE_SWIZ_ALPHA_B(make_alpha_swizzle(fpi->SrcReg[1]));
-			code->inst[counter].inst5 = R500_ALU_RGBA_OP_MIN
-				| R500_ALU_RGBA_ADDRD(dest);
+			ip = emit_alu(cs, R500_ALU_RGBA_OP_MIN, R500_ALPHA_OP_MIN, fpi->DstReg);
+			set_src0(cs, ip, fpi->SrcReg[0]);
+			set_src1(cs, ip, fpi->SrcReg[1]);
+			set_argA_reg(cs, ip, 0, fpi->SrcReg[0]);
+			set_argB_reg(cs, ip, 1, fpi->SrcReg[1]);
 			break;
 		case OPCODE_MOV:
-			emit_mov(cs, counter, fpi, make_src(cs, fpi->SrcReg[0]), fpi->SrcReg[0].Swizzle, dest);
+			ip = emit_alu(cs, R500_ALU_RGBA_OP_CMP, R500_ALPHA_OP_CMP, fpi->DstReg);
+			set_src0(cs, ip, fpi->SrcReg[0]);
+			set_argA_reg(cs, ip, 0, fpi->SrcReg[0]);
+			set_argB_reg(cs, ip, 0, fpi->SrcReg[0]);
+			set_argC(cs, ip, 0, R500_SWIZ_RGB_ZERO, R500_SWIZZLE_ZERO);
+			code->inst[ip].inst3 |= R500_ALU_RGB_OMOD_DISABLE;
+			code->inst[ip].inst4 |= R500_ALPHA_OMOD_DISABLE;
 			break;
 		case OPCODE_MUL:
 			/* Variation on MAD: src0*src1+0 */
-			emit_mad(cs, counter, fpi, 0, 1, R500_SWIZZLE_ZERO);
-			break;
-		case OPCODE_POW:
-			/* POW(a,b) = EX2(LN2(a)*b) */
-			src[0] = make_src(cs, fpi->SrcReg[0]);
-			src[1] = make_src(cs, fpi->SrcReg[1]);
-			emit_sop(cs, counter, fpi, OPCODE_LG2, src[0], make_sop_swizzle(fpi->SrcReg[0]), get_temp(cs, 0));
-			code->inst[counter].inst0 |= (R500_WRITEMASK_ARGB << 11);
-			counter++;
-			code->inst[counter].inst0 = R500_INST_TYPE_ALU | (R500_WRITEMASK_ARGB << 11);
-			code->inst[counter].inst1 = R500_RGB_ADDR0(get_temp(cs, 0))
-				| R500_RGB_ADDR1(src[1]);
-			code->inst[counter].inst2 = R500_ALPHA_ADDR0(get_temp(cs, 0))
-				| R500_ALPHA_ADDR1(src[1]);
-			code->inst[counter].inst3 = R500_ALU_RGB_SEL_A_SRC0
-				| MAKE_SWIZ_RGB_A(make_rgb_swizzle(fpi->SrcReg[0]))
-				| R500_ALU_RGB_SEL_B_SRC1 | MAKE_SWIZ_RGB_B(make_rgb_swizzle(fpi->SrcReg[1]));
-			code->inst[counter].inst4 = R500_ALPHA_OP_MAD
-				| R500_ALPHA_ADDRD(get_temp(cs, 1))
-				| R500_ALPHA_SEL_A_SRC0 | MAKE_SWIZ_ALPHA_A(make_alpha_swizzle(fpi->SrcReg[0]))
-				| R500_ALPHA_SEL_B_SRC1 | MAKE_SWIZ_ALPHA_B(make_alpha_swizzle(fpi->SrcReg[1]));
-			code->inst[counter].inst5 = R500_ALU_RGBA_OP_MAD
-				| R500_ALU_RGBA_ADDRD(get_temp(cs, 1))
-				| MAKE_SWIZ_RGBA_C(R500_SWIZ_RGB_ZERO)
-				| MAKE_SWIZ_ALPHA_C(R500_SWIZZLE_ZERO);
-			counter++;
-			emit_sop(cs, counter, fpi, OPCODE_EX2, get_temp(cs, 1), make_sop_swizzle(fpi->SrcReg[0]), dest);
+			ip = emit_alu(cs, R500_ALU_RGBA_OP_MAD, R500_ALPHA_OP_MAD, fpi->DstReg);
+			set_src0(cs, ip, fpi->SrcReg[0]);
+			set_src1(cs, ip, fpi->SrcReg[1]);
+			set_argA_reg(cs, ip, 0, fpi->SrcReg[0]);
+			set_argB_reg(cs, ip, 1, fpi->SrcReg[1]);
+			set_argC(cs, ip, 0, R500_SWIZ_RGB_ZERO, R500_SWIZZLE_ZERO);
 			break;
 		case OPCODE_RCP:
 			src[0] = make_src(cs, fpi->SrcReg[0]);
-			emit_sop(cs, counter, fpi, OPCODE_RCP, src[0], make_sop_swizzle(fpi->SrcReg[0]), dest);
+			emit_sop(cs, R500_ALPHA_OP_RCP, fpi->DstReg, src[0], make_sop_swizzle(fpi->SrcReg[0]));
 			break;
 		case OPCODE_RSQ:
 			src[0] = make_src(cs, fpi->SrcReg[0]);
-			emit_sop(cs, counter, fpi, OPCODE_RSQ, src[0], make_sop_swizzle(fpi->SrcReg[0]), dest);
+			emit_sop(cs, R500_ALPHA_OP_RSQ, fpi->DstReg, src[0], make_sop_swizzle(fpi->SrcReg[0]));
 			break;
 		case OPCODE_SCS:
-			src[0] = make_src(cs, fpi->SrcReg[0]);
-			src[1] = emit_const4fv(cs, RCP_2PI);
-			code->inst[counter].inst0 = R500_INST_TYPE_ALU | R500_INST_TEX_SEM_WAIT
-				| (R500_WRITEMASK_ARGB << 11);
-			code->inst[counter].inst1 = R500_RGB_ADDR0(src[0])
-				| R500_RGB_ADDR1(src[1]);
-			code->inst[counter].inst2 = R500_ALPHA_ADDR0(src[0])
-				| R500_ALPHA_ADDR1(src[1]);
-			code->inst[counter].inst3 = R500_ALU_RGB_SEL_A_SRC0
-				| MAKE_SWIZ_RGB_A(R500_SWIZ_RGB_RGB)
-				| R500_ALU_RGB_SEL_B_SRC1 | MAKE_SWIZ_RGB_B(R500_SWIZ_RGB_RGB);
-			code->inst[counter].inst4 = R500_ALPHA_OP_MAD
-				| R500_ALPHA_ADDRD(get_temp(cs, 0))
-				| R500_ALPHA_SEL_A_SRC0 | R500_ALPHA_SWIZ_A_A
-				| R500_ALPHA_SEL_B_SRC1 | R500_ALPHA_SWIZ_B_A;
-			code->inst[counter].inst5 = R500_ALU_RGBA_OP_MAD
-				| R500_ALU_RGBA_ADDRD(get_temp(cs, 0))
-				| MAKE_SWIZ_RGBA_C(R500_SWIZ_RGB_ZERO)
-				| MAKE_SWIZ_ALPHA_C(R500_SWIZZLE_ZERO);
-			counter++;
-			code->inst[counter].inst0 = R500_INST_TYPE_ALU | (R500_WRITEMASK_ARGB << 11);
-			code->inst[counter].inst1 = R500_RGB_ADDR0(get_temp(cs, 0));
-			code->inst[counter].inst2 = R500_ALPHA_ADDR0(get_temp(cs, 0));
-			code->inst[counter].inst3 = R500_ALU_RGB_SEL_A_SRC0
-				| MAKE_SWIZ_RGB_A(R500_SWIZ_RGB_RGB);
-			code->inst[counter].inst4 = R500_ALPHA_OP_FRC
-				| R500_ALPHA_ADDRD(get_temp(cs, 1))
-				| R500_ALPHA_SEL_A_SRC0 | R500_ALPHA_SWIZ_A_A;
-			code->inst[counter].inst5 = R500_ALU_RGBA_OP_FRC
-				| R500_ALU_RGBA_ADDRD(get_temp(cs, 1));
-			counter++;
-			/* Do a cosine, then a sine, masking out the channels we want to protect. */
-			/* Cosine only goes in R (x) channel. */
-			fpi->DstReg.WriteMask = 0x1;
-			emit_sop(cs, counter, fpi, OPCODE_COS, get_temp(cs, 1), make_sop_swizzle(fpi->SrcReg[0]), dest);
-			counter++;
-			/* Sine only goes in G (y) channel. */
-			fpi->DstReg.WriteMask = 0x2;
-			emit_sop(cs, counter, fpi, OPCODE_SIN, get_temp(cs, 1), make_sop_swizzle(fpi->SrcReg[0]), dest);
-			break;
-		case OPCODE_SGE:
-			src[0] = make_src(cs, fpi->SrcReg[0]);
-			src[1] = make_src(cs, fpi->SrcReg[1]);
-			code->inst[counter].inst0 = R500_INST_TYPE_ALU | R500_INST_TEX_SEM_WAIT
-				| (R500_WRITEMASK_ARGB << 11);
-			code->inst[counter].inst1 = R500_RGB_ADDR1(src[0])
-				| R500_RGB_ADDR2(src[1]);
-			code->inst[counter].inst2 = R500_ALPHA_ADDR1(src[0])
-				| R500_ALPHA_ADDR2(src[1]);
-			code->inst[counter].inst3 = /* 1 */
-				MAKE_SWIZ_RGB_A(R500_SWIZ_RGB_ONE)
-				| R500_ALU_RGB_SEL_B_SRC1 | MAKE_SWIZ_RGB_B(make_rgb_swizzle(fpi->SrcReg[0]));
-			code->inst[counter].inst4 = R500_ALPHA_OP_MAD
-				| R500_ALPHA_ADDRD(get_temp(cs, 0))
-				| R500_ALPHA_SEL_A_SRC0 | MAKE_SWIZ_ALPHA_A(R500_SWIZZLE_ONE)
-				| R500_ALPHA_SEL_B_SRC1 | MAKE_SWIZ_ALPHA_B(make_alpha_swizzle(fpi->SrcReg[0]));
-			code->inst[counter].inst5 = R500_ALU_RGBA_OP_MAD
-				| R500_ALU_RGBA_ADDRD(get_temp(cs, 0))
-				| R500_ALU_RGBA_SEL_C_SRC2
-				| MAKE_SWIZ_RGBA_C(make_rgb_swizzle(fpi->SrcReg[1]))
-				| R500_ALU_RGBA_MOD_C_NEG
-				| R500_ALU_RGBA_ALPHA_SEL_C_SRC2
-				| MAKE_SWIZ_ALPHA_C(make_alpha_swizzle(fpi->SrcReg[1]))
-				| R500_ALU_RGBA_ALPHA_MOD_C_NEG;
-			counter++;
-			/* This inst's selects need to be swapped as follows:
-				* 0 -> C ; 1 -> B ; 2 -> A */
-			emit_alu(cs, counter, fpi);
-			code->inst[counter].inst1 = R500_RGB_ADDR0(get_temp(cs, 0));
-			code->inst[counter].inst2 = R500_ALPHA_ADDR0(get_temp(cs, 0));
-			code->inst[counter].inst3 = R500_ALU_RGB_SEL_A_SRC0
-				| MAKE_SWIZ_RGB_A(R500_SWIZ_RGB_ONE)
-				| R500_ALU_RGB_SEL_B_SRC0
-				| MAKE_SWIZ_RGB_B(R500_SWIZ_RGB_ZERO);
-			code->inst[counter].inst4 |= R500_ALPHA_OP_CMP
-				| R500_ALPHA_ADDRD(dest)
-				| R500_ALPHA_SEL_A_SRC0 | MAKE_SWIZ_ALPHA_A(R500_SWIZZLE_ONE)
-				| R500_ALPHA_SEL_B_SRC0 | MAKE_SWIZ_ALPHA_B(R500_SWIZZLE_ZERO);
-			code->inst[counter].inst5 = R500_ALU_RGBA_OP_CMP
-				| R500_ALU_RGBA_ADDRD(dest)
-				| R500_ALU_RGBA_SEL_C_SRC0
-				| MAKE_SWIZ_RGBA_C(R500_SWIZ_RGB_RGB)
-				| R500_ALU_RGBA_ALPHA_SEL_C_SRC0
-				| R500_ALU_RGBA_A_SWIZ_A;
+			emit_trig(cs, fpi);
 			break;
 		case OPCODE_SIN:
-			src[0] = make_src(cs, fpi->SrcReg[0]);
-			src[1] = emit_const4fv(cs, RCP_2PI);
-			code->inst[counter].inst0 = R500_INST_TYPE_ALU | R500_INST_TEX_SEM_WAIT
-				| (R500_WRITEMASK_ARGB << 11);
-			code->inst[counter].inst1 = R500_RGB_ADDR0(src[0])
-				| R500_RGB_ADDR1(src[1]);
-			code->inst[counter].inst2 = R500_ALPHA_ADDR0(src[0])
-				| R500_ALPHA_ADDR1(src[1]);
-			code->inst[counter].inst3 = R500_ALU_RGB_SEL_A_SRC0
-				| MAKE_SWIZ_RGB_A(R500_SWIZ_RGB_RGB)
-				| R500_ALU_RGB_SEL_B_SRC1 | MAKE_SWIZ_RGB_B(R500_SWIZ_RGB_RGB);
-			code->inst[counter].inst4 = R500_ALPHA_OP_MAD
-				| R500_ALPHA_ADDRD(get_temp(cs, 0))
-				| R500_ALPHA_SEL_A_SRC0 | R500_ALPHA_SWIZ_A_A
-				| R500_ALPHA_SEL_B_SRC1 | R500_ALPHA_SWIZ_B_A;
-			code->inst[counter].inst5 = R500_ALU_RGBA_OP_MAD
-				| R500_ALU_RGBA_ADDRD(get_temp(cs, 0))
-				| MAKE_SWIZ_RGBA_C(R500_SWIZ_RGB_ZERO)
-				| MAKE_SWIZ_ALPHA_C(R500_SWIZZLE_ZERO);
-			counter++;
-			code->inst[counter].inst0 = R500_INST_TYPE_ALU | (R500_WRITEMASK_ARGB << 11);
-			code->inst[counter].inst1 = R500_RGB_ADDR0(get_temp(cs, 0));
-			code->inst[counter].inst2 = R500_ALPHA_ADDR0(get_temp(cs, 0));
-			code->inst[counter].inst3 = R500_ALU_RGB_SEL_A_SRC0
-				| MAKE_SWIZ_RGB_A(R500_SWIZ_RGB_RGB);
-			code->inst[counter].inst4 = R500_ALPHA_OP_FRC
-				| R500_ALPHA_ADDRD(get_temp(cs, 1))
-				| R500_ALPHA_SEL_A_SRC0 | R500_ALPHA_SWIZ_A_A;
-			code->inst[counter].inst5 = R500_ALU_RGBA_OP_FRC
-				| R500_ALU_RGBA_ADDRD(get_temp(cs, 1));
-			counter++;
-			emit_sop(cs, counter, fpi, OPCODE_SIN, get_temp(cs, 1), make_sop_swizzle(fpi->SrcReg[0]), dest);
-			break;
-		case OPCODE_SLT:
-			src[0] = make_src(cs, fpi->SrcReg[0]);
-			src[1] = make_src(cs, fpi->SrcReg[1]);
-			code->inst[counter].inst0 = R500_INST_TYPE_ALU | R500_INST_TEX_SEM_WAIT
-				| (R500_WRITEMASK_ARGB << 11);
-			code->inst[counter].inst1 = R500_RGB_ADDR1(src[0])
-				| R500_RGB_ADDR2(src[1]);
-			code->inst[counter].inst2 = R500_ALPHA_ADDR1(src[0])
-				| R500_ALPHA_ADDR2(src[1]);
-			code->inst[counter].inst3 = /* 1 */
-				MAKE_SWIZ_RGB_A(R500_SWIZ_RGB_ONE)
-				| R500_ALU_RGB_SEL_B_SRC1 | MAKE_SWIZ_RGB_B(make_rgb_swizzle(fpi->SrcReg[0]));
-			code->inst[counter].inst4 = R500_ALPHA_OP_MAD
-				| R500_ALPHA_ADDRD(get_temp(cs, 0))
-				| R500_ALPHA_SEL_A_SRC0 | MAKE_SWIZ_ALPHA_A(R500_SWIZZLE_ONE)
-				| R500_ALPHA_SEL_B_SRC1 | MAKE_SWIZ_ALPHA_B(make_alpha_swizzle(fpi->SrcReg[0]));
-			code->inst[counter].inst5 = R500_ALU_RGBA_OP_MAD
-				| R500_ALU_RGBA_ADDRD(get_temp(cs, 0))
-				| R500_ALU_RGBA_SEL_C_SRC2
-				| MAKE_SWIZ_RGBA_C(make_rgb_swizzle(fpi->SrcReg[1]))
-				| R500_ALU_RGBA_MOD_C_NEG
-				| R500_ALU_RGBA_ALPHA_SEL_C_SRC2
-				| MAKE_SWIZ_ALPHA_C(make_alpha_swizzle(fpi->SrcReg[1]))
-				| R500_ALU_RGBA_ALPHA_MOD_C_NEG;
-			counter++;
-			/* This inst's selects need to be swapped as follows:
-				* 0 -> C ; 1 -> B ; 2 -> A */
-			emit_alu(cs, counter, fpi);
-			code->inst[counter].inst1 = R500_RGB_ADDR0(get_temp(cs, 0));
-			code->inst[counter].inst2 = R500_ALPHA_ADDR0(get_temp(cs, 0));
-			code->inst[counter].inst3 = R500_ALU_RGB_SEL_A_SRC0
-				| MAKE_SWIZ_RGB_A(R500_SWIZ_RGB_ZERO)
-				| R500_ALU_RGB_SEL_B_SRC0
-				| MAKE_SWIZ_RGB_B(R500_SWIZ_RGB_ONE);
-			code->inst[counter].inst4 |= R500_ALPHA_OP_CMP
-				| R500_ALPHA_ADDRD(dest)
-				| R500_ALPHA_SEL_A_SRC0 | MAKE_SWIZ_ALPHA_A(R500_SWIZZLE_ZERO)
-				| R500_ALPHA_SEL_B_SRC0 | MAKE_SWIZ_ALPHA_B(R500_SWIZZLE_ONE);
-			code->inst[counter].inst5 = R500_ALU_RGBA_OP_CMP
-				| R500_ALU_RGBA_ADDRD(dest)
-				| R500_ALU_RGBA_SEL_C_SRC0
-				| MAKE_SWIZ_RGBA_C(R500_SWIZ_RGB_RGB)
-				| R500_ALU_RGBA_ALPHA_SEL_C_SRC0
-				| R500_ALU_RGBA_A_SWIZ_A;
-			break;
-		case OPCODE_SUB:
-			/* Variation on MAD: 1*src0-src1 */
-			fpi->SrcReg[1].NegateBase = 0xF; /* NEG_XYZW */
-			emit_mad(cs, counter, fpi, R500_SWIZZLE_ONE, 0, 1);
-			break;
-		case OPCODE_SWZ:
-			/* TODO: The rarer negation masks! */
-			emit_mov(cs, counter, fpi, make_src(cs, fpi->SrcReg[0]), fpi->SrcReg[0].Swizzle, dest);
-			break;
-		case OPCODE_XPD:
-			/* src0 * src1 - src1 * src0
-				* 1) MUL temp.xyz, src0.yzx, src1.zxy
-				* 2) MAD src0.zxy, src1.yzx, -temp.xyz */
-			src[0] = make_src(cs, fpi->SrcReg[0]);
-			src[1] = make_src(cs, fpi->SrcReg[1]);
-			code->inst[counter].inst0 = R500_INST_TYPE_ALU | R500_INST_TEX_SEM_WAIT
-				| (R500_WRITEMASK_RGB << 11);
-			code->inst[counter].inst1 = R500_RGB_ADDR0(src[0])
-				| R500_RGB_ADDR1(src[1]);
-			code->inst[counter].inst2 = R500_ALPHA_ADDR0(src[0])
-				| R500_ALPHA_ADDR1(src[1]);
-			/* Select [y, z, x] */
-			temp_swiz = make_rgb_swizzle(fpi->SrcReg[0]);
-			temp_swiz = (GET_SWZ(temp_swiz, 1) << 0) | (GET_SWZ(temp_swiz, 2) << 3) | (GET_SWZ(temp_swiz, 0) << 6);
-			code->inst[counter].inst3 = R500_ALU_RGB_SEL_A_SRC0
-				| MAKE_SWIZ_RGB_A(temp_swiz);
-			/* Select [z, x, y] */
-			temp_swiz = make_rgb_swizzle(fpi->SrcReg[1]);
-			temp_swiz = (GET_SWZ(temp_swiz, 2) << 0) | (GET_SWZ(temp_swiz, 0) << 3) | (GET_SWZ(temp_swiz, 1) << 6);
-			code->inst[counter].inst3 |= R500_ALU_RGB_SEL_B_SRC1
-				| MAKE_SWIZ_RGB_B(temp_swiz);
-			code->inst[counter].inst4 = R500_ALPHA_OP_MAD
-				| R500_ALPHA_ADDRD(get_temp(cs, 0))
-				| R500_ALPHA_SEL_A_SRC0 | MAKE_SWIZ_ALPHA_A(make_alpha_swizzle(fpi->SrcReg[0]))
-				| R500_ALPHA_SEL_B_SRC1 | MAKE_SWIZ_ALPHA_B(make_alpha_swizzle(fpi->SrcReg[1]));
-			code->inst[counter].inst5 = R500_ALU_RGBA_OP_MAD
-				| R500_ALU_RGBA_ADDRD(get_temp(cs, 0))
-				| MAKE_SWIZ_RGBA_C(R500_SWIZ_RGB_ZERO)
-				| MAKE_SWIZ_ALPHA_C(R500_SWIZZLE_ZERO);
-			counter++;
-			emit_alu(cs, counter, fpi);
-			code->inst[counter].inst1 = R500_RGB_ADDR0(src[0])
-				| R500_RGB_ADDR1(src[1])
-				| R500_RGB_ADDR2(get_temp(cs, 0));
-			code->inst[counter].inst2 = R500_ALPHA_ADDR0(src[0])
-				| R500_ALPHA_ADDR1(src[1])
-				| R500_ALPHA_ADDR2(get_temp(cs, 0));
-			/* Select [z, x, y] */
-			temp_swiz = make_rgb_swizzle(fpi->SrcReg[0]);
-			temp_swiz = (GET_SWZ(temp_swiz, 2) << 0) | (GET_SWZ(temp_swiz, 0) << 3) | (GET_SWZ(temp_swiz, 1) << 6);
-			code->inst[counter].inst3 = R500_ALU_RGB_SEL_A_SRC0
-				| MAKE_SWIZ_RGB_A(temp_swiz);
-			/* Select [y, z, x] */
-			temp_swiz = make_rgb_swizzle(fpi->SrcReg[1]);
-			temp_swiz = (GET_SWZ(temp_swiz, 1) << 0) | (GET_SWZ(temp_swiz, 2) << 3) | (GET_SWZ(temp_swiz, 0) << 6);
-			code->inst[counter].inst3 |= R500_ALU_RGB_SEL_B_SRC1
-				| MAKE_SWIZ_RGB_B(temp_swiz);
-			code->inst[counter].inst4 |= R500_ALPHA_OP_MAD
-				| R500_ALPHA_ADDRD(dest)
-				| R500_ALPHA_SWIZ_A_1
-				| R500_ALPHA_SWIZ_B_1;
-			code->inst[counter].inst5 = R500_ALU_RGBA_OP_MAD
-				| R500_ALU_RGBA_ADDRD(dest)
-				| R500_ALU_RGBA_SEL_C_SRC2
-				| MAKE_SWIZ_RGBA_C(R500_SWIZ_RGB_RGB)
-				| R500_ALU_RGBA_MOD_C_NEG
-				| R500_ALU_RGBA_A_SWIZ_0;
+			emit_trig(cs, fpi);
 			break;
 		case OPCODE_KIL:
 		case OPCODE_TEX:
 		case OPCODE_TXB:
 		case OPCODE_TXP:
-			emit_tex(cs, fpi, dest, counter);
-				if (fpi->DstReg.File == PROGRAM_OUTPUT)
-					counter++;
+			emit_tex(cs, fpi, dest);
 			break;
 		default:
 			ERROR("unknown fpi->Opcode %s\n", _mesa_opcode_string(fpi->Opcode));
@@ -1245,36 +928,29 @@ static int do_inst(struct r500_pfs_compile_state *cs, struct prog_instruction *f
 
 	/* Finishing touches */
 	if (fpi->SaturateMode == SATURATE_ZERO_ONE) {
-		code->inst[counter].inst0 |= R500_INST_RGB_CLAMP | R500_INST_ALPHA_CLAMP;
+		code->inst[cs->nrslots-1].inst0 |= R500_INST_RGB_CLAMP | R500_INST_ALPHA_CLAMP;
 	}
-
-	counter++;
-
-	return counter;
 }
 
 static GLboolean parse_program(struct r500_pfs_compile_state *cs)
 {
 	PROG_CODE;
-	int counter = 0;
 	struct prog_instruction* fpi;
 
 	for(fpi = cs->compiler->program->Instructions; fpi->Opcode != OPCODE_END; ++fpi) {
-		counter = do_inst(cs, fpi, counter);
+		do_inst(cs, fpi);
 
 		if (cs->compiler->fp->error)
 			return GL_FALSE;
 	}
 
 	/* Finish him! (If it's an ALU/OUT instruction...) */
-	if ((code->inst[counter-1].inst0 & 0x3) == 1) {
-		code->inst[counter-1].inst0 |= R500_INST_LAST;
+	if ((code->inst[cs->nrslots-1].inst0 & 0x3) == 1) {
+		code->inst[cs->nrslots-1].inst0 |= R500_INST_LAST;
 	} else {
 		/* We still need to put an output inst, right? */
 		WARN_ONCE("Final FP instruction is not an OUT.\n");
 	}
-
-	cs->nrslots = counter;
 
 	code->max_temp_idx++;
 
@@ -1295,12 +971,10 @@ static void init_program(struct r500_pfs_compile_state *cs)
 	    driQueryOptioni(&cs->compiler->r300->radeon.optionCache, "fp_optimization");
 	cs->compiler->fp->translated = GL_FALSE;
 	cs->compiler->fp->error = GL_FALSE;
-	code->const_nr = 0;
-	/* Size of pixel stack, plus 1. */
-	code->max_temp_idx = 1;
-	/* Temp register offset. */
-	code->temp_reg_offset = 0;
-	/* Whether or not we perform any depth writing. */
+
+	_mesa_bzero(code, sizeof(*code));
+	code->max_temp_idx = 1; /* Size of pixel stack, plus 1. */
+	cs->nrslots = 0;
 	cs->compiler->fp->writes_depth = GL_FALSE;
 
 	/* Work out what temps the Mesa inputs correspond to, this must match

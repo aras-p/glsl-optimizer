@@ -2705,6 +2705,7 @@ enum {
 #   define R500_ALPHA_OP_MDV				15
 #   define R500_ALPHA_ADDRD(x)				(x << 4)
 #   define R500_ALPHA_ADDRD_REL				(1 << 11)
+#  define R500_ALPHA_SEL_A_SHIFT			12
 #   define R500_ALPHA_SEL_A_SRC0			(0 << 12)
 #   define R500_ALPHA_SEL_A_SRC1			(1 << 12)
 #   define R500_ALPHA_SEL_A_SRC2			(2 << 12)
@@ -2721,6 +2722,7 @@ enum {
 #   define R500_ALPHA_MOD_A_NEG				(1 << 17)
 #   define R500_ALPHA_MOD_A_ABS				(2 << 17)
 #   define R500_ALPHA_MOD_A_NAB				(3 << 17)
+#  define R500_ALPHA_SEL_B_SHIFT			19
 #   define R500_ALPHA_SEL_B_SRC0			(0 << 19)
 #   define R500_ALPHA_SEL_B_SRC1			(1 << 19)
 #   define R500_ALPHA_SEL_B_SRC2			(2 << 19)
@@ -2777,6 +2779,7 @@ enum {
 #   define R500_ALU_RGBA_OP_MDV				(12 << 0)
 #   define R500_ALU_RGBA_ADDRD(x)			(x << 4)
 #   define R500_ALU_RGBA_ADDRD_REL			(1 << 11)
+#  define R500_ALU_RGBA_SEL_C_SHIFT			12
 #   define R500_ALU_RGBA_SEL_C_SRC0			(0 << 12)
 #   define R500_ALU_RGBA_SEL_C_SRC1			(1 << 12)
 #   define R500_ALU_RGBA_SEL_C_SRC2			(2 << 12)
@@ -2809,6 +2812,7 @@ enum {
 #   define R500_ALU_RGBA_MOD_C_NEG			(1 << 23)
 #   define R500_ALU_RGBA_MOD_C_ABS			(2 << 23)
 #   define R500_ALU_RGBA_MOD_C_NAB			(3 << 23)
+#  define R500_ALU_RGBA_ALPHA_SEL_C_SHIFT		25
 #   define R500_ALU_RGBA_ALPHA_SEL_C_SRC0		(0 << 25)
 #   define R500_ALU_RGBA_ALPHA_SEL_C_SRC1		(1 << 25)
 #   define R500_ALU_RGBA_ALPHA_SEL_C_SRC2		(2 << 25)
@@ -2826,6 +2830,7 @@ enum {
 #   define R500_ALU_RGBA_ALPHA_MOD_C_ABS		(2 << 30)
 #   define R500_ALU_RGBA_ALPHA_MOD_C_NAB		(3 << 30)
 #define R500_US_ALU_RGB_INST_0				0xa000
+#  define R500_ALU_RGB_SEL_A_SHIFT			0
 #   define R500_ALU_RGB_SEL_A_SRC0			(0 << 0)
 #   define R500_ALU_RGB_SEL_A_SRC1			(1 << 0)
 #   define R500_ALU_RGB_SEL_A_SRC2			(2 << 0)
@@ -2858,6 +2863,7 @@ enum {
 #   define R500_ALU_RGB_MOD_A_NEG			(1 << 11)
 #   define R500_ALU_RGB_MOD_A_ABS			(2 << 11)
 #   define R500_ALU_RGB_MOD_A_NAB			(3 << 11)
+#  define R500_ALU_RGB_SEL_B_SHIFT			13
 #   define R500_ALU_RGB_SEL_B_SRC0			(0 << 13)
 #   define R500_ALU_RGB_SEL_B_SRC1			(1 << 13)
 #   define R500_ALU_RGB_SEL_B_SRC2			(2 << 13)
