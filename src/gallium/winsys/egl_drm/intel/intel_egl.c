@@ -224,7 +224,9 @@ visual_from_config(_EGLConfig *conf)
 	visual->doubleBufferMode = 1;
 
 	visual->depthBits = 24;
+	visual->haveDepthBuffer = visual->depthBits > 0;
 	visual->stencilBits = 8;
+	visual->haveStencilBuffer = visual->stencilBits > 0;
 
 	return visual;
 }
