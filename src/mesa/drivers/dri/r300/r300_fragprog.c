@@ -68,7 +68,7 @@ static void reset_srcreg(struct prog_src_register* reg)
  * be reused.
  */
 static GLboolean transform_TEX(
-	struct radeon_program_transform_context* context,
+	GLcontext *ctx, struct gl_program *p,
 	struct prog_instruction* orig_inst, void* data)
 {
 	struct r300_fragment_program_compiler *compiler =
@@ -84,12 +84,11 @@ static GLboolean transform_TEX(
 		return GL_FALSE;
 
 	if (inst.Opcode != OPCODE_KIL &&
-	    compiler->fp->mesa_program.Base.ShadowSamplers & (1 << inst.TexSrcUnit)) {
+	    p->ShadowSamplers & (1 << inst.TexSrcUnit)) {
 		GLuint comparefunc = GL_NEVER + compiler->fp->state.unit[inst.TexSrcUnit].texture_compare_func;
 
 		if (comparefunc == GL_NEVER || comparefunc == GL_ALWAYS) {
-			tgt = radeonClauseInsertInstructions(context->compiler, context->dest,
-				context->dest->NumInstructions, 1);
+			tgt = radeonAppendInstructions(p, 1);
 
 			tgt->Opcode = OPCODE_MOV;
 			tgt->DstReg = inst.DstReg;
@@ -99,7 +98,7 @@ static GLboolean transform_TEX(
 		}
 
 		inst.DstReg.File = PROGRAM_TEMPORARY;
-		inst.DstReg.Index = radeonCompilerAllocateTemporary(context->compiler);
+		inst.DstReg.Index = _mesa_find_free_register(p, PROGRAM_TEMPORARY);
 		inst.DstReg.WriteMask = WRITEMASK_XYZW;
 	}
 
@@ -114,7 +113,7 @@ static GLboolean transform_TEX(
 			0
 		};
 
-		int tempreg = radeonCompilerAllocateTemporary(context->compiler);
+		int tempreg = _mesa_find_free_register(p, PROGRAM_TEMPORARY);
 		int factor_index;
 
 		tokens[2] = inst.TexSrcUnit;
@@ -122,8 +121,7 @@ static GLboolean transform_TEX(
 			_mesa_add_state_reference(
 				compiler->fp->mesa_program.Base.Parameters, tokens);
 
-		tgt = radeonClauseInsertInstructions(context->compiler, context->dest,
-			context->dest->NumInstructions, 1);
+		tgt = radeonAppendInstructions(p, 1);
 
 		tgt->Opcode = OPCODE_MUL;
 		tgt->DstReg.File = PROGRAM_TEMPORARY;
@@ -142,10 +140,9 @@ static GLboolean transform_TEX(
 	 */
 	if (inst.SrcReg[0].Swizzle != SWIZZLE_NOOP ||
 	    inst.SrcReg[0].Abs || inst.SrcReg[0].NegateBase || inst.SrcReg[0].NegateAbs) {
-		int tempreg = radeonCompilerAllocateTemporary(context->compiler);
+		int tempreg = _mesa_find_free_register(p, PROGRAM_TEMPORARY);
 
-		tgt = radeonClauseInsertInstructions(context->compiler, context->dest,
-			context->dest->NumInstructions, 1);
+		tgt = radeonAppendInstructions(p, 1);
 
 		tgt->Opcode = OPCODE_MOV;
 		tgt->DstReg.File = PROGRAM_TEMPORARY;
@@ -160,7 +157,7 @@ static GLboolean transform_TEX(
 	if (inst.Opcode != OPCODE_KIL) {
 		if (inst.DstReg.File != PROGRAM_TEMPORARY ||
 		    inst.DstReg.WriteMask != WRITEMASK_XYZW) {
-			int tempreg = radeonCompilerAllocateTemporary(context->compiler);
+			int tempreg = _mesa_find_free_register(p, PROGRAM_TEMPORARY);
 
 			inst.DstReg.File = PROGRAM_TEMPORARY;
 			inst.DstReg.Index = tempreg;
@@ -169,18 +166,16 @@ static GLboolean transform_TEX(
 		}
 	}
 
-	tgt = radeonClauseInsertInstructions(context->compiler, context->dest,
-		context->dest->NumInstructions, 1);
+	tgt = radeonAppendInstructions(p, 1);
 	_mesa_copy_instructions(tgt, &inst, 1);
 
 	if (inst.Opcode != OPCODE_KIL &&
-	    compiler->fp->mesa_program.Base.ShadowSamplers & (1 << inst.TexSrcUnit)) {
+	    p->ShadowSamplers & (1 << inst.TexSrcUnit)) {
 		GLuint comparefunc = GL_NEVER + compiler->fp->state.unit[inst.TexSrcUnit].texture_compare_func;
 		GLuint depthmode = compiler->fp->state.unit[inst.TexSrcUnit].depth_texture_mode;
-		int rcptemp = radeonCompilerAllocateTemporary(context->compiler);
+		int rcptemp = _mesa_find_free_register(p, PROGRAM_TEMPORARY);
 
-		tgt = radeonClauseInsertInstructions(context->compiler, context->dest,
-			context->dest->NumInstructions, 3);
+		tgt = radeonAppendInstructions(p, 3);
 
 		tgt[0].Opcode = OPCODE_RCP;
 		tgt[0].DstReg.File = PROGRAM_TEMPORARY;
@@ -227,8 +222,7 @@ static GLboolean transform_TEX(
 			tgt[2].SrcReg[2].Swizzle = SWIZZLE_1111;
 		}
 	} else if (destredirect) {
-		tgt = radeonClauseInsertInstructions(context->compiler, context->dest,
-			context->dest->NumInstructions, 1);
+		tgt = radeonAppendInstructions(p, 1);
 
 		tgt->Opcode = OPCODE_MOV;
 		tgt->DstReg = orig_inst->DstReg;
@@ -274,9 +268,10 @@ static void insert_WPOS_trailer(struct r300_fragment_program_compiler *compiler)
 	struct prog_instruction *fpi;
 	GLuint window_index;
 	int i = 0;
-	GLuint tempregi = radeonCompilerAllocateTemporary(&compiler->compiler);
+	GLuint tempregi = _mesa_find_free_register(compiler->program, PROGRAM_TEMPORARY);
 
-	fpi = radeonClauseInsertInstructions(&compiler->compiler, &compiler->compiler.Clauses[0], 0, 3);
+	_mesa_insert_instructions(compiler->program, 0, 3);
+	fpi = compiler->program->Instructions;
 
 	/* perspective divide */
 	fpi[i].Opcode = OPCODE_RCP;
@@ -333,7 +328,7 @@ static void insert_WPOS_trailer(struct r300_fragment_program_compiler *compiler)
 	    MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_ZERO);
 	i++;
 
-	for (; i < compiler->compiler.Clauses[0].NumInstructions; ++i) {
+	for (; i < compiler->program->NumInstructions; ++i) {
 		int reg;
 		for (reg = 0; reg < 3; reg++) {
 			if (fpi[i].SrcReg[reg].File == PROGRAM_INPUT &&
@@ -404,8 +399,7 @@ void r300TranslateFragmentShader(r300ContextPtr r300,
 		compiler.r300 = r300;
 		compiler.fp = fp;
 		compiler.code = &fp->code;
-
-		radeonCompilerInit(&compiler.compiler, r300->radeon.glCtx, &fp->mesa_program.Base);
+		compiler.program = _mesa_clone_program(r300->radeon.glCtx, &fp->mesa_program.Base);
 
 		insert_WPOS_trailer(&compiler);
 
@@ -413,19 +407,20 @@ void r300TranslateFragmentShader(r300ContextPtr r300,
 			{ &transform_TEX, &compiler },
 			{ &radeonTransformALU, 0 }
 		};
-		radeonClauseLocalTransform(&compiler.compiler,
-			&compiler.compiler.Clauses[0],
+		radeonLocalTransform(
+			r300->radeon.glCtx,
+			compiler.program,
 			2, transformations);
 
 		if (RADEON_DEBUG & DEBUG_PIXEL) {
-			_mesa_printf("Compiler state after transformations:\n");
-			radeonCompilerDump(&compiler.compiler);
+			_mesa_printf("Program after transformations:\n");
+			_mesa_print_program(compiler.program);
 		}
 
 		if (!r300FragmentProgramEmit(&compiler))
 			fp->error = GL_TRUE;
 
-		radeonCompilerCleanup(&compiler.compiler);
+		_mesa_reference_program(r300->radeon.glCtx, &compiler.program, NULL);
 
 		if (!fp->error)
 			fp->translated = GL_TRUE;

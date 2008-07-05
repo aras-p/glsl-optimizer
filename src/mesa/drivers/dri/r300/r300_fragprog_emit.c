@@ -1887,18 +1887,13 @@ static void emit_instruction(struct r300_pfs_compile_state *cs, struct prog_inst
 static GLboolean parse_program(struct r300_pfs_compile_state *cs)
 {
 	COMPILE_STATE;
-	int clauseidx;
+	struct prog_instruction* fpi;
 
-	for (clauseidx = 0; clauseidx < cs->compiler->compiler.NumClauses; ++clauseidx) {
-		struct radeon_clause* clause = &cs->compiler->compiler.Clauses[clauseidx];
-		int ip;
+	for(fpi = cs->compiler->program->Instructions; fpi->Opcode != OPCODE_END; ++fpi) {
+		emit_instruction(cs, fpi);
 
-		for(ip = 0; ip < clause->NumInstructions; ++ip) {
-			emit_instruction(cs, clause->Instructions + ip);
-
-			if (fp->error)
-				return GL_FALSE;
-		}
+		if (fp->error)
+			return GL_FALSE;
 	}
 
 	return GL_TRUE;
@@ -1988,8 +1983,8 @@ static void init_program(struct r300_pfs_compile_state *cs)
 	/* Pre-parse the program, grabbing refcounts on input/temp regs.
 	 * That way, we can free up the reg when it's no longer needed
 	 */
-	for (i = 0; i < cs->compiler->compiler.Clauses[0].NumInstructions; ++i) {
-		struct prog_instruction *fpi = cs->compiler->compiler.Clauses[0].Instructions + i;
+	for (i = 0; i < cs->compiler->program->NumInstructions; ++i) {
+		struct prog_instruction *fpi = cs->compiler->program->Instructions + i;
 		int idx;
 
 		for (j = 0; j < 3; j++) {

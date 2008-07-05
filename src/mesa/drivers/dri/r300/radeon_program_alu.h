@@ -31,7 +31,8 @@
 #include "radeon_program.h"
 
 GLboolean radeonTransformALU(
-	struct radeon_program_transform_context*,
+	GLcontext*,
+	struct gl_program*,
 	struct prog_instruction*,
 	void*);
 

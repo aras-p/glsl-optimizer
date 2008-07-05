@@ -282,7 +282,7 @@ static GLuint make_src(struct r500_pfs_compile_state *cs, struct prog_src_regist
 		break;
 	case PROGRAM_ENV_PARAM:
 		reg = emit_const4fv(cs,
-			cs->compiler->compiler.Ctx->FragmentProgram.Parameters[src.Index]);
+			cs->compiler->r300->radeon.glCtx->FragmentProgram.Parameters[src.Index]);
 		break;
 	case PROGRAM_STATE_VAR:
 	case PROGRAM_NAMED_PARAM:
@@ -1256,21 +1256,14 @@ static int do_inst(struct r500_pfs_compile_state *cs, struct prog_instruction *f
 static GLboolean parse_program(struct r500_pfs_compile_state *cs)
 {
 	PROG_CODE;
-	int clauseidx, counter = 0;
+	int counter = 0;
+	struct prog_instruction* fpi;
 
-	for (clauseidx = 0; clauseidx < cs->compiler->compiler.NumClauses; clauseidx++) {
-		struct radeon_clause* clause = &cs->compiler->compiler.Clauses[clauseidx];
-		struct prog_instruction* fpi;
+	for(fpi = cs->compiler->program->Instructions; fpi->Opcode != OPCODE_END; ++fpi) {
+		counter = do_inst(cs, fpi, counter);
 
-		int ip;
-
-		for (ip = 0; ip < clause->NumInstructions; ip++) {
-			fpi = clause->Instructions + ip;
-			counter = do_inst(cs, fpi, counter);
-
-			if (cs->compiler->fp->error)
-				return GL_FALSE;
-		}
+		if (cs->compiler->fp->error)
+			return GL_FALSE;
 	}
 
 	/* Finish him! (If it's an ALU/OUT instruction...) */
@@ -1365,19 +1358,14 @@ static void init_program(struct r500_pfs_compile_state *cs)
 				cs->inputs[i].reg = 0;
 	}
 
-	int clauseidx;
+	int ip;
 
-	for (clauseidx = 0; clauseidx < cs->compiler->compiler.NumClauses; ++clauseidx) {
-		struct radeon_clause* clause = &cs->compiler->compiler.Clauses[clauseidx];
-		int ip;
-
-		for (ip = 0; ip < clause->NumInstructions; ip++) {
-			fpi = clause->Instructions + ip;
-			for (i = 0; i < 3; i++) {
-				if (fpi->SrcReg[i].File == PROGRAM_TEMPORARY) {
-					if (fpi->SrcReg[i].Index >= temps_used)
-						temps_used = fpi->SrcReg[i].Index + 1;
-				}
+	for (ip = 0; ip < cs->compiler->program->NumInstructions; ip++) {
+		fpi = cs->compiler->program->Instructions + ip;
+		for (i = 0; i < 3; i++) {
+			if (fpi->SrcReg[i].File == PROGRAM_TEMPORARY) {
+				if (fpi->SrcReg[i].Index >= temps_used)
+					temps_used = fpi->SrcReg[i].Index + 1;
 			}
 		}
 	}

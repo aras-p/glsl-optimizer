@@ -146,10 +146,9 @@ struct r300_fragment_program_compiler {
 	r300ContextPtr r300;
 	struct r300_fragment_program *fp;
 	struct r300_fragment_program_code *code;
-	struct radeon_compiler compiler;
+	struct gl_program *program;
 };
 
-extern void r300FPTransformTextures(struct r300_fragment_program_compiler *compiler);
 extern GLboolean r300FragmentProgramEmit(struct r300_fragment_program_compiler *compiler);
 
 

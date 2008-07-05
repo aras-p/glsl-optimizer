@@ -84,7 +84,7 @@ struct r500_fragment_program_compiler {
 	r300ContextPtr r300;
 	struct r500_fragment_program *fp;
 	struct r500_fragment_program_code *code;
-	struct radeon_compiler compiler;
+	struct gl_program *program;
 };
 
 extern GLboolean r500FragmentProgramEmit(struct r500_fragment_program_compiler *compiler);
