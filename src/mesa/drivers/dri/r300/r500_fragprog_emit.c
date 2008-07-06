@@ -156,17 +156,6 @@ struct r500_pfs_compile_state {
 #define R500_WRITEMASK_AB 0xC
 #define R500_WRITEMASK_ARGB 0xF
 
-/* 1/(2pi), needed for quick modulus in trig insts
- * Thanks to glisse for pointing out how to do it! */
-static const GLfloat RCP_2PI[] = {0.15915494309189535,
-	0.15915494309189535,
-	0.15915494309189535,
-	0.15915494309189535};
-
-static const GLfloat LIT[] = {127.999999,
-	127.999999,
-	127.999999,
-	-127.999999};
 
 static const struct prog_dst_register dstreg_template = {
 	.File = PROGRAM_TEMPORARY,
@@ -476,12 +465,6 @@ static int emit_alu(struct r500_pfs_compile_state *cs, GLuint rgbop, GLuint alph
 	return _helper_emit_alu(cs, rgbop, alphaop, dst.File, dst.Index, dst.WriteMask);
 }
 
-static int emit_alu_temp(struct r500_pfs_compile_state *cs, GLuint rgbop, GLuint alphaop, int dst, int writemask)
-{
-	return _helper_emit_alu(cs, rgbop, alphaop,
-		PROGRAM_TEMPORARY, dst - cs->compiler->code->temp_reg_offset, writemask);
-}
-
 /**
  * Set an instruction's source 0 (both RGB and ALPHA) to the given hardware index.
  */
@@ -612,56 +595,6 @@ static int emit_sop(struct r500_pfs_compile_state *cs,
 }
 
 
-/**
- * Emit trigonometric function COS, SIN, SCS
- */
-static void emit_trig(struct r500_pfs_compile_state *cs, struct prog_instruction *fpi)
-{
-	int ip;
-	struct prog_dst_register temp = dstreg_template;
-	temp.Index = get_temp(cs, 0);
-	temp.WriteMask = WRITEMASK_W;
-
-	struct prog_src_register srcreg;
-	GLuint constant_swizzle;
-
-	srcreg.File = PROGRAM_CONSTANT;
-	srcreg.Index = _mesa_add_unnamed_constant(cs->compiler->program->Parameters,
-		RCP_2PI, 4, &constant_swizzle);
-	srcreg.Swizzle = constant_swizzle;
-
-	/* temp = Input*(1/2pi) */
-	ip = emit_alu(cs, R500_ALU_RGBA_OP_MAD, R500_ALPHA_OP_MAD, temp);
-	set_src0(cs, ip, fpi->SrcReg[0]);
-	set_src1(cs, ip, srcreg);
-	set_argA(cs, ip, 0, R500_SWIZ_RGB_ZERO, make_sop_swizzle(fpi->SrcReg[0]));
-	set_argB(cs, ip, 1, R500_SWIZ_RGB_ZERO, make_alpha_swizzle(srcreg));
-	set_argC(cs, ip, 0, R500_SWIZ_RGB_ZERO, R500_SWIZZLE_ZERO);
-
-	/* temp = frac(dst) */
-	ip = emit_alu(cs, R500_ALU_RGBA_OP_FRC, R500_ALPHA_OP_FRC, temp);
-	set_src0_direct(cs, ip, temp.Index);
-	set_argA(cs, ip, 0, R500_SWIZ_RGB_RGB, SWIZZLE_W);
-
-	/* Dest = trig(temp) */
-	if (fpi->Opcode == OPCODE_COS) {
-		emit_sop(cs, R500_ALPHA_OP_COS, fpi->DstReg, temp.Index, SWIZZLE_W);
-	} else if (fpi->Opcode == OPCODE_SIN) {
-		emit_sop(cs, R500_ALPHA_OP_SIN, fpi->DstReg, temp.Index, SWIZZLE_W);
-	} else if (fpi->Opcode == OPCODE_SCS) {
-		struct prog_dst_register moddst = fpi->DstReg;
-
-		if (fpi->DstReg.WriteMask & WRITEMASK_X) {
-			moddst.WriteMask = WRITEMASK_X;
-			emit_sop(cs, R500_ALPHA_OP_COS, fpi->DstReg, temp.Index, SWIZZLE_W);
-		}
-		if (fpi->DstReg.WriteMask & WRITEMASK_Y) {
-			moddst.WriteMask = WRITEMASK_Y;
-			emit_sop(cs, R500_ALPHA_OP_SIN, fpi->DstReg, temp.Index, SWIZZLE_W);
-		}
-	}
-}
-
 static void do_inst(struct r500_pfs_compile_state *cs, struct prog_instruction *fpi) {
 	PROG_CODE;
 	GLuint src[3], dest = 0;
@@ -693,7 +626,8 @@ static void do_inst(struct r500_pfs_compile_state *cs, struct prog_instruction *
 			set_argC_reg(cs, ip, 0, fpi->SrcReg[0]);
 			break;
 		case OPCODE_COS:
-			emit_trig(cs, fpi);
+			src[0] = make_src(cs, fpi->SrcReg[0]);
+			emit_sop(cs, R500_ALPHA_OP_COS, fpi->DstReg, src[0], make_sop_swizzle(fpi->SrcReg[0]));
 			break;
 		case OPCODE_DP3:
 			ip = emit_alu(cs, R500_ALU_RGBA_OP_DP3, R500_ALPHA_OP_DP, fpi->DstReg);
@@ -712,21 +646,6 @@ static void do_inst(struct r500_pfs_compile_state *cs, struct prog_instruction *
 		case OPCODE_EX2:
 			src[0] = make_src(cs, fpi->SrcReg[0]);
 			emit_sop(cs, R500_ALPHA_OP_EX2, fpi->DstReg, src[0], make_sop_swizzle(fpi->SrcReg[0]));
-			break;
-		case OPCODE_FLR:
-			dest = get_temp(cs, 0);
-			ip = emit_alu_temp(cs, R500_ALU_RGBA_OP_FRC, R500_ALPHA_OP_FRC, dest, WRITEMASK_XYZW);
-			set_src0(cs, ip, fpi->SrcReg[0]);
-			set_argA_reg(cs, ip, 0, fpi->SrcReg[0]);
-
-			ip = emit_alu(cs, R500_ALU_RGBA_OP_MAD, R500_ALPHA_OP_MAD, fpi->DstReg);
-			set_src0(cs, ip, fpi->SrcReg[0]);
-			set_src1_direct(cs, ip, dest);
-			set_argA_reg(cs, ip, 0, fpi->SrcReg[1]);
-			set_argB(cs, ip, 0, R500_SWIZ_RGB_ONE, R500_SWIZZLE_ONE);
-			set_argC(cs, ip, 1,
-				R500_SWIZ_RGB_RGB|(R500_SWIZ_MOD_NEG<<9),
-				SWIZZLE_W|(R500_SWIZ_MOD_NEG<<3));
 			break;
 		case OPCODE_FRC:
 			ip = emit_alu(cs, R500_ALU_RGBA_OP_FRC, R500_ALPHA_OP_FRC, fpi->DstReg);
@@ -787,11 +706,9 @@ static void do_inst(struct r500_pfs_compile_state *cs, struct prog_instruction *
 			emit_sop(cs, R500_ALPHA_OP_RSQ, fpi->DstReg, src[0],
 				(make_sop_swizzle(fpi->SrcReg[0]) | (R500_SWIZ_MOD_ABS<<3)) & ~(R500_SWIZ_MOD_NEG<<3));
 			break;
-		case OPCODE_SCS:
-			emit_trig(cs, fpi);
-			break;
 		case OPCODE_SIN:
-			emit_trig(cs, fpi);
+			src[0] = make_src(cs, fpi->SrcReg[0]);
+			emit_sop(cs, R500_ALPHA_OP_SIN, fpi->DstReg, src[0], make_sop_swizzle(fpi->SrcReg[0]));
 			break;
 		case OPCODE_KIL:
 		case OPCODE_TEX:

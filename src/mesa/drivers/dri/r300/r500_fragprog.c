@@ -318,12 +318,13 @@ void r500TranslateFragmentShader(r300ContextPtr r300,
 
 		insert_WPOS_trailer(&compiler);
 
-		struct radeon_program_transformation transformations[2] = {
+		struct radeon_program_transformation transformations[3] = {
 			{ &transform_TEX, &compiler },
-			{ &radeonTransformALU, 0 }
+			{ &radeonTransformALU, 0 },
+			{ &radeonTransformTrigScale, 0 }
 		};
 		radeonLocalTransform(r300->radeon.glCtx, compiler.program,
-			2, transformations);
+			3, transformations);
 
 		if (RADEON_DEBUG & DEBUG_PIXEL) {
 			_mesa_printf("Compiler: after all transformations:\n");

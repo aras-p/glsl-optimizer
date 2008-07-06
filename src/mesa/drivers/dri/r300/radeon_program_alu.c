@@ -556,3 +556,55 @@ GLboolean radeonTransformTrigSimple(struct radeon_transform_context* t,
 
 	return GL_TRUE;
 }
+
+
+/**
+ * Transform the trigonometric functions COS, SIN, and SCS
+ * to include pre-scaling by 1/(2*PI) and taking the fractional
+ * part, so that the input to COS and SIN is always in the range [0,1).
+ * SCS is replaced by one COS and one SIN instruction.
+ *
+ * @warning This transformation implicitly changes the semantics of SIN and COS!
+ */
+GLboolean radeonTransformTrigScale(struct radeon_transform_context* t,
+	struct prog_instruction* inst,
+	void* unused)
+{
+	if (inst->Opcode != OPCODE_COS &&
+	    inst->Opcode != OPCODE_SIN &&
+	    inst->Opcode != OPCODE_SCS)
+		return GL_FALSE;
+
+	static const GLfloat RCP_2PI[] = { 0.15915494309189535 };
+	GLuint temp;
+	GLuint constant;
+	GLuint constant_swizzle;
+
+	temp = radeonFindFreeTemporary(t);
+	constant = _mesa_add_unnamed_constant(t->Program->Parameters, RCP_2PI, 1, &constant_swizzle);
+
+	emit2(t->Program, OPCODE_MUL, dstregtmpmask(temp, WRITEMASK_W),
+		swizzle(inst->SrcReg[0], SWIZZLE_X, SWIZZLE_X, SWIZZLE_X, SWIZZLE_X),
+		srcregswz(PROGRAM_CONSTANT, constant, constant_swizzle));
+	emit1(t->Program, OPCODE_FRC, dstregtmpmask(temp, WRITEMASK_W),
+		srcreg(PROGRAM_TEMPORARY, temp));
+
+	if (inst->Opcode == OPCODE_COS) {
+		emit1(t->Program, OPCODE_COS, inst->DstReg, srcregswz(PROGRAM_TEMPORARY, temp, SWIZZLE_WWWW));
+	} else if (inst->Opcode == OPCODE_SIN) {
+		emit1(t->Program, OPCODE_SIN, inst->DstReg, srcregswz(PROGRAM_TEMPORARY, temp, SWIZZLE_WWWW));
+	} else if (inst->Opcode == OPCODE_SCS) {
+		struct prog_dst_register moddst = inst->DstReg;
+
+		if (inst->DstReg.WriteMask & WRITEMASK_X) {
+			moddst.WriteMask = WRITEMASK_X;
+			emit1(t->Program, OPCODE_COS, moddst, srcregswz(PROGRAM_TEMPORARY, temp, SWIZZLE_WWWW));
+		}
+		if (inst->DstReg.WriteMask & WRITEMASK_Y) {
+			moddst.WriteMask = WRITEMASK_Y;
+			emit1(t->Program, OPCODE_SIN, moddst, srcregswz(PROGRAM_TEMPORARY, temp, SWIZZLE_WWWW));
+		}
+	}
+
+	return GL_TRUE;
+}
