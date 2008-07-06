@@ -784,7 +784,8 @@ static void do_inst(struct r500_pfs_compile_state *cs, struct prog_instruction *
 			break;
 		case OPCODE_RSQ:
 			src[0] = make_src(cs, fpi->SrcReg[0]);
-			emit_sop(cs, R500_ALPHA_OP_RSQ, fpi->DstReg, src[0], make_sop_swizzle(fpi->SrcReg[0]));
+			emit_sop(cs, R500_ALPHA_OP_RSQ, fpi->DstReg, src[0],
+				(make_sop_swizzle(fpi->SrcReg[0]) | (R500_SWIZ_MOD_ABS<<3)) & ~(R500_SWIZ_MOD_NEG<<3));
 			break;
 		case OPCODE_SCS:
 			emit_trig(cs, fpi);
