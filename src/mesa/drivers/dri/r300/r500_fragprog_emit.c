@@ -163,23 +163,30 @@ static const struct prog_dst_register dstreg_template = {
 	.WriteMask = WRITEMASK_XYZW
 };
 
+static INLINE GLuint fix_hw_swizzle(GLuint swz)
+{
+	if (swz == 5) swz = 6;
+	if (swz == SWIZZLE_NIL) swz = 4;
+	return swz;
+}
+
 static INLINE GLuint make_rgb_swizzle(struct prog_src_register src) {
 	GLuint swiz = 0x0;
 	GLuint temp;
 	/* This could be optimized, but it should be plenty fast already. */
 	int i;
+	int negatebase = 0;
 	for (i = 0; i < 3; i++) {
-	        temp = GET_SWZ(src.Swizzle, i);
-		/* Fix SWIZZLE_ONE */
-		if (temp == 5) temp++;
+		temp = GET_SWZ(src.Swizzle, i);
+		if (temp != SWIZZLE_NIL && GET_BIT(src.NegateBase, i))
+			negatebase = 1;
+		temp = fix_hw_swizzle(temp);
 		swiz |= temp << i*3;
 	}
-	if (src.Abs) {
+	if (src.Abs)
 		swiz |= R500_SWIZ_MOD_ABS << 9;
-	} else if (src.NegateBase & 7) {
-		ASSERT((src.NegateBase & 7) == 7);
+	else if (negatebase)
 		swiz |= R500_SWIZ_MOD_NEG << 9;
-	}
 	if (src.NegateAbs)
 		swiz ^= R500_SWIZ_MOD_NEG << 9;
 	return swiz;
@@ -191,8 +198,7 @@ static INLINE GLuint make_rgba_swizzle(GLuint src) {
 	int i;
 	for (i = 0; i < 4; i++) {
 	        temp = GET_SWZ(src, i);
-		/* Fix SWIZZLE_ONE */
-		if (temp == 5) temp++;
+		temp = fix_hw_swizzle(temp);
 		swiz |= temp << i*3;
 	}
 	return swiz;
@@ -201,7 +207,7 @@ static INLINE GLuint make_rgba_swizzle(GLuint src) {
 static INLINE GLuint make_alpha_swizzle(struct prog_src_register src) {
 	GLuint swiz = GET_SWZ(src.Swizzle, 3);
 
-	if (swiz == 5) swiz++;
+	swiz = fix_hw_swizzle(swiz);
 
 	if (src.Abs) {
 		swiz |= R500_SWIZ_MOD_ABS << 3;
@@ -217,7 +223,7 @@ static INLINE GLuint make_alpha_swizzle(struct prog_src_register src) {
 static INLINE GLuint make_sop_swizzle(struct prog_src_register src) {
 	GLuint swiz = GET_SWZ(src.Swizzle, 0);
 
-	if (swiz == 5) swiz++;
+	swiz = fix_hw_swizzle(swiz);
 
 	if (src.Abs) {
 		swiz |= R500_SWIZ_MOD_ABS << 3;

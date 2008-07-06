@@ -27,6 +27,7 @@
 
 #include "r500_fragprog.h"
 
+#include "radeon_nqssadce.h"
 #include "radeon_program_alu.h"
 
 
@@ -250,6 +251,57 @@ static void insert_WPOS_trailer(struct r500_fragment_program_compiler *compiler)
 }
 
 
+static void nqssadce_init(struct nqssadce_state* s)
+{
+	s->Outputs[FRAG_RESULT_COLR].Sourced = WRITEMASK_XYZW;
+	s->Outputs[FRAG_RESULT_DEPR].Sourced = WRITEMASK_W;
+}
+
+static GLboolean is_native_swizzle(GLuint opcode, struct prog_src_register reg)
+{
+	GLuint relevant;
+	int i;
+
+	if (reg.Abs)
+		return GL_TRUE;
+
+	relevant = 0;
+	for(i = 0; i < 3; ++i) {
+		GLuint swz = GET_SWZ(reg.Swizzle, i);
+		if (swz != SWIZZLE_NIL && swz != SWIZZLE_ZERO)
+			relevant |= 1 << i;
+	}
+	if ((reg.NegateBase & relevant) && ((reg.NegateBase & relevant) != relevant))
+		return GL_FALSE;
+
+	return GL_TRUE;
+}
+
+/**
+ * Implement a non-native swizzle. This function assumes that
+ * is_native_swizzle returned true.
+ */
+static void nqssadce_build_swizzle(struct nqssadce_state *s,
+	struct prog_dst_register dst, struct prog_src_register src)
+{
+	struct prog_instruction *inst;
+
+	_mesa_insert_instructions(s->Program, s->IP, 2);
+	inst = s->Program->Instructions + s->IP;
+
+	inst[0].Opcode = OPCODE_MOV;
+	inst[0].DstReg = dst;
+	inst[0].DstReg.WriteMask &= src.NegateBase;
+	inst[0].SrcReg[0] = src;
+
+	inst[1].Opcode = OPCODE_MOV;
+	inst[1].DstReg = dst;
+	inst[1].DstReg.WriteMask &= ~src.NegateBase;
+	inst[1].SrcReg[0] = src;
+
+	s->IP += 2;
+}
+
 static GLuint build_dtm(GLuint depthmode)
 {
 	switch(depthmode) {
@@ -327,7 +379,20 @@ void r500TranslateFragmentShader(r300ContextPtr r300,
 			3, transformations);
 
 		if (RADEON_DEBUG & DEBUG_PIXEL) {
-			_mesa_printf("Compiler: after all transformations:\n");
+			_mesa_printf("Compiler: after native rewrite:\n");
+			_mesa_print_program(compiler.program);
+		}
+
+		struct radeon_nqssadce_descr nqssadce = {
+			.Init = &nqssadce_init,
+			.IsNativeSwizzle = &is_native_swizzle,
+			.BuildSwizzle = &nqssadce_build_swizzle,
+			.RewriteDepthOut = GL_TRUE
+		};
+		radeonNqssaDce(r300->radeon.glCtx, compiler.program, &nqssadce);
+
+		if (RADEON_DEBUG & DEBUG_PIXEL) {
+			_mesa_printf("Compiler: after NqSSA-DCE:\n");
 			_mesa_print_program(compiler.program);
 		}
 
