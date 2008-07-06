@@ -619,7 +619,7 @@ case "$with_dri_drivers" in
 no|yes) ;;
 *)
     # verify the requested driver directories exist
-    dri_drivers=`IFS=,; echo $with_dri_drivers`
+    dri_drivers=`IFS=', '; echo $with_dri_drivers`
     for driver in $dri_drivers; do
         test -d "$srcdir/src/mesa/drivers/dri/$driver" || \
             AC_MSG_ERROR([DRI driver directory '$driver' doesn't exist])
