@@ -2,10 +2,15 @@
 #ifndef _INTEL_EGL_H_
 #define _INTEL_EGL_H_
 
+#include <xf86drm.h>
+
 struct egl_drm_device
 {
 	void *priv;
 	int drmFD;
+
+	drmVersionPtr version;
+	int deviceID;
 };
 
 struct egl_drm_context

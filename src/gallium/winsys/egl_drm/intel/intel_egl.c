@@ -13,6 +13,7 @@
 #include "eglmode.h"
 #include "eglscreen.h"
 #include "eglsurface.h"
+#include "egllog.h"
 
 #include "intel_egl.h"
 
@@ -23,14 +24,37 @@
 
 #include "state_tracker/st_public.h"
 
-struct egl_drm_device* egl_drm_create_device(int drmFD);
+static void
+drm_get_device_id(struct egl_drm_device *device)
+{
+	char path[512];
+	FILE *file;
 
-struct egl_drm_device*
+	/* TODO get the real minor */
+	int minor = 0;
+
+	snprintf(path, sizeof(path), "/sys/class/drm/card%d/device/device", minor);
+	file = fopen(path, "r");
+	if (!file) {
+		_eglLog(_EGL_WARNING, "Could not retrive device ID\n");
+		return;
+	}
+
+	fgets(path, sizeof( path ), file);
+	sscanf(path, "%x", &device->deviceID);
+	fclose(file);
+}
+
+static struct egl_drm_device*
 egl_drm_create_device(int drmFD)
 {
 	struct egl_drm_device *device = malloc(sizeof(*device));
 	memset(device, 0, sizeof(*device));
 	device->drmFD = drmFD;
+
+	device->version = drmGetVersion(device->drmFD);
+
+	drm_get_device_id(device);
 
 	if (!intel_create_device(device)) {
 		free(device);
@@ -104,6 +128,7 @@ drm_add_modes_from_connector(_EGLScreen *screen, drmModeConnectorPtr connector)
 		_eglAddNewMode(screen, m->hdisplay, m->vdisplay, m->vrefresh, m->name);
 	}
 }
+
 
 static EGLBoolean
 drm_initialize(_EGLDriver *drv, EGLDisplay dpy, EGLint *major, EGLint *minor)
@@ -183,6 +208,7 @@ drm_terminate(_EGLDriver *drv, EGLDisplay dpy)
 	struct drm_driver *drm_drv = (struct drm_driver *)drv;
 
 	intel_destroy_device(drm_drv->device);
+	drmFreeVersion(drm_drv->device->version);
 
 	drmClose(drm_drv->device->drmFD);
 

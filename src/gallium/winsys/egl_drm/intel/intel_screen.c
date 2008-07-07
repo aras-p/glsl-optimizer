@@ -53,8 +53,7 @@ intel_create_device(struct egl_drm_device *device)
 	device->priv = (void *)intel_screen;
 	intel_screen->device = device;
 
-	/** TODO JB: ugly hack */
-	intel_screen->deviceID = PCI_CHIP_I945_GM;
+	intel_screen->deviceID = device->deviceID;
 
 	intel_be_init_device(&intel_screen->base, device->drmFD, PCI_CHIP_I945_GM);
 
