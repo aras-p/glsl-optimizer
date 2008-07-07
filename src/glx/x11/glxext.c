@@ -631,6 +631,9 @@ _X_HIDDEN __GLXdisplayPrivate *__glXInitialize(Display* dpy)
     __GLXdisplayPrivate *dpyPriv;
     XEDataObject dataObj;
     int major, minor;
+#ifdef GLX_DIRECT_RENDERING
+    Bool glx_direct, glx_accel;
+#endif
 
 #if defined(USE_XTHREADS)
     {
@@ -698,16 +701,20 @@ _X_HIDDEN __GLXdisplayPrivate *__glXInitialize(Display* dpy)
     dpyPriv->serverGLXversion = 0x0;
 
 #ifdef GLX_DIRECT_RENDERING
+    glx_direct = (getenv("LIBGL_ALWAYS_INDIRECT") == NULL);
+    glx_accel = (getenv("LIBGL_ALWAYS_SOFTWARE") == NULL);
+
     /*
     ** Initialize the direct rendering per display data and functions.
     ** Note: This _must_ be done before calling any other DRI routines
     ** (e.g., those called in AllocAndFetchScreenConfigs).
     */
-    if (getenv("LIBGL_ALWAYS_INDIRECT") == NULL) {
+    if (glx_direct && glx_accel) {
 	dpyPriv->dri2Display = dri2CreateDisplay(dpy);
 	dpyPriv->driDisplay = driCreateDisplay(dpy);
-	dpyPriv->driswDisplay = driswCreateDisplay(dpy);
     }
+    if (glx_direct)
+	dpyPriv->driswDisplay = driswCreateDisplay(dpy);
 #endif
 
     if (!AllocAndFetchScreenConfigs(dpy, dpyPriv)) {
