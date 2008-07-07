@@ -593,12 +593,15 @@ drm_make_current(_EGLDriver *drv, EGLDisplay dpy, EGLSurface draw, EGLSurface re
 	if (!b)
 		return EGL_FALSE;
 
-	/* XXX this is where we'd do the hardware context switch */
-	(void) drawSurf;
-	(void) readSurf;
-	(void) ctx;
+	if (ctx) {
+		if (!drawSurf || !readSurf)
+			return EGL_FALSE;
 
-	intel_make_current(ctx->context, drawSurf->drawable, readSurf->drawable);
+		intel_make_current(ctx->context, drawSurf->drawable, readSurf->drawable);
+	} else {
+		intel_make_current(NULL, NULL, NULL);
+	}
+
 	return EGL_TRUE;
 }
 
