@@ -51,15 +51,16 @@ extern "C" {
 #   else
 #       define GL_APICALL __declspec(dllimport)
 #   endif
+#   define GL_APIENTRY __stdcall
 #else
 #   ifdef __GL_EXPORTS
 #       define GL_APICALL
 #   else
 #       define GL_APICALL extern
 #   endif
+#   define GL_APIENTRY
 #endif
 
-#define GL_APIENTRY 
 
 #ifdef __cplusplus
 }
