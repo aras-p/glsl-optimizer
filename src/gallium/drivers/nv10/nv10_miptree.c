@@ -11,7 +11,7 @@ nv10_miptree_layout(struct nv10_miptree *nv10mt)
 {
 	struct pipe_texture *pt = &nv10mt->base;
 	boolean swizzled = FALSE;
-	uint width = pt->width[0], height = pt->height[0], depth = pt->depth[0];
+	uint width = pt->width[0], height = pt->height[0];
 	uint offset = 0;
 	int nr_faces, l, f;
 
@@ -24,7 +24,6 @@ nv10_miptree_layout(struct nv10_miptree *nv10mt)
 	for (l = 0; l <= pt->last_level; l++) {
 		pt->width[l] = width;
 		pt->height[l] = height;
-		pt->depth[l] = depth;
 		pt->nblocksx[l] = pf_get_nblocksx(&pt->block, width);
 		pt->nblocksy[l] = pf_get_nblocksy(&pt->block, height);
 
@@ -39,7 +38,6 @@ nv10_miptree_layout(struct nv10_miptree *nv10mt)
 
 		width  = MAX2(1, width  >> 1);
 		height = MAX2(1, height >> 1);
-		depth  = MAX2(1, depth  >> 1);
 
 	}
 
