@@ -11,22 +11,262 @@
 #include <tgsi/util/tgsi_build.h>
 #include "vl_shader_build.h"
 #include "vl_data.h"
+#include "vl_defs.h"
 #include "vl_util.h"
+
+static int vlCreateVertexShaderFrameIDCT(struct VL_CONTEXT *context)
+{
+	const unsigned int		max_tokens = 50;
+
+	struct pipe_context		*pipe;
+	struct pipe_shader_state	fs;
+	struct tgsi_token		*tokens;
+	struct tgsi_header		*header;
+
+	struct tgsi_full_declaration	decl;
+	struct tgsi_full_instruction	inst;
+	
+	unsigned int			ti;
+	unsigned int			i;
+	
+	assert(context);
+	
+	pipe = context->pipe;
+	tokens = (struct tgsi_token*)malloc(max_tokens * sizeof(struct tgsi_token));
+
+	/* Version */
+	*(struct tgsi_version*)&tokens[0] = tgsi_build_version();
+	/* Header */
+	header = (struct tgsi_header*)&tokens[1];
+	*header = tgsi_build_header();
+	/* Processor */
+	*(struct tgsi_processor*)&tokens[2] = tgsi_build_processor(TGSI_PROCESSOR_FRAGMENT, header);
+
+	ti = 3;
+	
+	/*
+	 * decl i0		; Vertex pos
+	 * decl i1		; Vertex texcoords
+	 */
+	for (i = 0; i < 2; i++)
+	{
+		decl = vl_decl_input(i == 0 ? TGSI_SEMANTIC_POSITION : TGSI_SEMANTIC_GENERIC, i, i, i);
+		ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
+	}
+	
+	/*
+	 * decl o0		; Vertex pos
+	 * decl o1		; Vertex texcoords
+	 */
+	for (i = 0; i < 2; i++)
+	{
+		decl = vl_decl_output(i == 0 ? TGSI_SEMANTIC_POSITION : TGSI_SEMANTIC_GENERIC, i, i, i);
+		ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
+	}
+	
+	/*
+	 * mov o0, i0		; Move pos in to pos out
+	 * mov o1, i1		; Move texcoord in to texcoord out */
+	for (i = 0; i < 2; ++i)
+	{
+		inst = vl_inst2(TGSI_OPCODE_MOV, TGSI_FILE_OUTPUT, i, TGSI_FILE_INPUT, i);
+		ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
+	}
+	
+	/* end */
+	inst = vl_end();
+	ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
+
+	fs.tokens = tokens;
+	//context->states.idct.frame_vs = pipe->create_fs_state(pipe, &fs);
+	free(tokens);
+	
+	return 0;
+}
+
+static int vlCreateFragmentShaderFrameIDCT(struct VL_CONTEXT *context)
+{
+	const unsigned int		max_tokens = 50;
+
+	struct pipe_context		*pipe;
+	struct pipe_shader_state	fs;
+	struct tgsi_token		*tokens;
+	struct tgsi_header		*header;
+
+	struct tgsi_full_declaration	decl;
+	struct tgsi_full_instruction	inst;
+	
+	unsigned int			ti;
+	unsigned int			i;
+	
+	assert(context);
+	
+	pipe = context->pipe;
+	tokens = (struct tgsi_token*)malloc(max_tokens * sizeof(struct tgsi_token));
+
+	/* Version */
+	*(struct tgsi_version*)&tokens[0] = tgsi_build_version();
+	/* Header */
+	header = (struct tgsi_header*)&tokens[1];
+	*header = tgsi_build_header();
+	/* Processor */
+	*(struct tgsi_processor*)&tokens[2] = tgsi_build_processor(TGSI_PROCESSOR_FRAGMENT, header);
+
+	ti = 3;
+
+	/* decl i0		; Texcoords for s0 */
+	decl = vl_decl_interpolated_input(TGSI_SEMANTIC_GENERIC, 1, 0, 0, TGSI_INTERPOLATE_LINEAR);
+	ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
+
+	/* decl o0		; Fragment color */
+	decl = vl_decl_output(TGSI_SEMANTIC_COLOR, 0, 0, 0);
+	ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
+	
+	/* decl s0		; Sampler for tex containing picture to display */
+	decl = vl_decl_samplers(0, 0);
+	ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
+	
+	/* tex2d t0, i0, s0	; Read src pixel */
+	inst = vl_tex(TGSI_TEXTURE_2D, TGSI_FILE_TEMPORARY, 0, TGSI_FILE_INPUT, 0, TGSI_FILE_SAMPLER, 0);
+	ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
+	
+	/* sub t0, t0, c0	; Subtract bias vector from pixel */
+	inst = vl_inst3(TGSI_OPCODE_SUB, TGSI_FILE_TEMPORARY, 0, TGSI_FILE_TEMPORARY, 0, TGSI_FILE_CONSTANT, 0);
+	ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
+	
+	/*
+	 * dp4 o0.x, t0, c1	; Multiply pixel by the color conversion matrix
+	 * dp4 o0.y, t0, c2
+	 * dp4 o0.z, t0, c3
+	 * dp4 o0.w, t0, c4	; XXX: Don't need 4th coefficient
+	 */
+	for (i = 0; i < 4; ++i)
+	{
+		inst = vl_inst3(TGSI_OPCODE_DP4, TGSI_FILE_OUTPUT, 0, TGSI_FILE_TEMPORARY, 0, TGSI_FILE_CONSTANT, i + 1);
+		inst.FullDstRegisters[0].DstRegister.WriteMask = TGSI_WRITEMASK_X << i;
+		ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
+	}
+
+	/* end */
+	inst = vl_end();
+	ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
+
+	fs.tokens = tokens;
+	//context->states.idct.frame_fs = pipe->create_fs_state(pipe, &fs);
+	free(tokens);
+	
+	return 0;
+}
 
 static int vlInitIDCT(struct VL_CONTEXT *context)
 {
+	struct pipe_context		*pipe;
+	struct pipe_sampler_state	sampler;
+	struct pipe_texture		template;
+	unsigned int			i;
+	
 	assert(context);
 	
+	pipe = context->pipe;
 	
+	context->states.idct.viewport.scale[0] = VL_BLOCK_WIDTH;
+	context->states.idct.viewport.scale[1] = VL_BLOCK_HEIGHT;
+	context->states.idct.viewport.scale[2] = 1;
+	context->states.idct.viewport.scale[3] = 1;
+	context->states.idct.viewport.translate[0] = 0;
+	context->states.idct.viewport.translate[1] = 0;
+	context->states.idct.viewport.translate[2] = 0;
+	context->states.idct.viewport.translate[3] = 0;
+	
+	context->states.idct.render_target.width = VL_BLOCK_WIDTH;
+	context->states.idct.render_target.height = VL_BLOCK_HEIGHT;
+	context->states.idct.render_target.num_cbufs = 1;
+	context->states.idct.render_target.zsbuf = NULL;
+	
+	sampler.wrap_s = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
+	sampler.wrap_t = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
+	sampler.wrap_r = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
+	sampler.min_img_filter = PIPE_TEX_FILTER_NEAREST;
+	sampler.min_mip_filter = PIPE_TEX_MIPFILTER_NONE;
+	sampler.mag_img_filter = PIPE_TEX_FILTER_NEAREST;
+	sampler.compare_mode = PIPE_TEX_COMPARE_NONE;
+	sampler.compare_func = PIPE_FUNC_ALWAYS;
+	sampler.normalized_coords = 1;
+	/*sampler.prefilter = ;*/
+	/*sampler.shadow_ambient = ;*/
+	/*sampler.lod_bias = ;*/
+	sampler.min_lod = 0;
+	/*sampler.max_lod = ;*/
+	/*sampler.border_color[i] = ;*/
+	/*sampler.max_anisotropy = ;*/
+	context->states.idct.sampler = pipe->create_sampler_state(pipe, &sampler);
+	
+	memset(&template, 0, sizeof(struct pipe_texture));
+	template.target = PIPE_TEXTURE_2D;
+	template.format = PIPE_FORMAT_A8L8_UNORM;
+	template.last_level = 0;
+	template.width[0] = 8;
+	template.height[0] = 8;
+	template.depth[0] = 1;
+	template.compressed = 0;
+	pf_get_block(template.format, &template.block);
+	
+	context->states.idct.texture = pipe->screen->texture_create(pipe->screen, &template);
+	
+	template.format = PIPE_FORMAT_A8R8G8B8_UNORM;
+	template.width[0] = 16;
+	template.height[0] = 1;
+	
+	context->states.idct.basis = pipe->screen->texture_create(pipe->screen, &template);
+	
+	for (i = 0; i < 2; ++i)
+	{
+		context->states.idct.vertex_bufs[i] = &context->states.csc.vertex_bufs[i];
+		context->states.idct.vertex_buf_elems[i] = &context->states.csc.vertex_buf_elems[i];
+		/*
+		context->states.idct.vertex_bufs[i].pitch = sizeof(struct VL_VERTEX2F);
+		context->states.idct.vertex_bufs[i].max_index = 3;
+		context->states.idct.vertex_bufs[i].buffer_offset = 0;
+		context->states.idct.vertex_bufs[i].buffer = pipe->winsys->buffer_create
+		(
+			pipe->winsys,
+			1,
+			PIPE_BUFFER_USAGE_VERTEX,
+			sizeof(struct VL_VERTEX2F) * 4
+		);
+	
+		context->states.idct.vertex_buf_elems[i].src_offset = 0;
+		context->states.idct.vertex_buf_elems[i].vertex_buffer_index = i;
+		context->states.idct.vertex_buf_elems[i].nr_components = 2;
+		context->states.idct.vertex_buf_elems[i].src_format = PIPE_FORMAT_R32G32_FLOAT;
+		*/
+	}
+	
+	vlCreateVertexShaderFrameIDCT(context);
+	vlCreateFragmentShaderFrameIDCT(context);
 	
 	return 0;
 }
 
 static int vlDestroyIDCT(struct VL_CONTEXT *context)
 {
+	//unsigned int i;
+	
 	assert(context);
 	
+	context->pipe->delete_sampler_state(context->pipe, context->states.idct.sampler);
 	
+	//for (i = 0; i < 2; ++i)
+		//context->pipe->winsys->buffer_destroy(context->pipe->winsys, context->states.idct.vertex_bufs[i].buffer);
+	
+	pipe_texture_release(&context->states.idct.texture);
+	pipe_texture_release(&context->states.idct.basis);
+	
+	//context->pipe->delete_vs_state(context->pipe, context->states.idct.frame_vs);
+	//context->pipe->delete_fs_state(context->pipe, context->states.idct.frame_fs);
+	
+	//context->pipe->winsys->buffer_destroy(context->pipe->winsys, context->states.idct.vs_const_buf.buffer);
+	//context->pipe->winsys->buffer_destroy(context->pipe->winsys, context->states.idct.fs_const_buf.buffer);
 	
 	return 0;
 }
@@ -1271,7 +1511,6 @@ int vlCreateDataBufsMC(struct VL_CONTEXT *context)
 	context->states.mc.vertex_buf_elems[0].src_format = PIPE_FORMAT_R32G32_FLOAT;
 	
 	/* Create our texcoord buffers and texcoord buffer elements */
-	/* TODO: Should be able to use 1 texcoord buf for chroma textures, 1 buf for ref surfaces */
 	for (i = 1; i < 3; ++i)
 	{
 		context->states.mc.vertex_bufs[i].pitch = sizeof(struct VL_TEXCOORD2F);

@@ -9,6 +9,59 @@
 #include "vl_defs.h"
 #include "vl_util.h"
 
+static int vlTransformBlock(short *src, short *dst, short bias)
+{
+	static const float basis[8][8] =
+	{
+		{0.3536,   0.4904,   0.4619,   0.4157,   0.3536,   0.2778,   0.1913,   0.0975},
+		{0.3536,   0.4157,   0.1913,  -0.0975,  -0.3536,  -0.4904,  -0.4619,  -0.2778},
+		{0.3536,   0.2778,  -0.1913,  -0.4904,  -0.3536,   0.0975,   0.4619,   0.4157},
+		{0.3536,   0.0975,  -0.4619,  -0.2778,   0.3536,   0.4157,  -0.1913,  -0.4904},
+		{0.3536,  -0.0975,  -0.4619,   0.2778,   0.3536,  -0.4157,  -0.1913,   0.4904},
+		{0.3536,  -0.2778,  -0.1913,   0.4904,  -0.3536,  -0.0975,   0.4619,  -0.4157},
+		{0.3536,  -0.4157,   0.1913,   0.0975,  -0.3536,   0.4904,  -0.4619,   0.2778},
+		{0.3536,  -0.4904,   0.4619,  -0.4157,   0.3536,  -0.2778,   0.1913,  -0.0975}
+	};
+	
+	unsigned int	x, y;
+	short		tmp[64];
+	
+	for (y = 0; y < VL_BLOCK_HEIGHT; ++y)
+		for (x = 0; x < VL_BLOCK_WIDTH; ++x)
+			tmp[y * VL_BLOCK_WIDTH + x] = (short)
+			(
+				src[y * VL_BLOCK_WIDTH + 0] * basis[x][0] +
+				src[y * VL_BLOCK_WIDTH + 1] * basis[x][1] +
+				src[y * VL_BLOCK_WIDTH + 2] * basis[x][2] +
+				src[y * VL_BLOCK_WIDTH + 3] * basis[x][3] +
+				src[y * VL_BLOCK_WIDTH + 4] * basis[x][4] +
+				src[y * VL_BLOCK_WIDTH + 5] * basis[x][5] +
+				src[y * VL_BLOCK_WIDTH + 6] * basis[x][6] +
+				src[y * VL_BLOCK_WIDTH + 7] * basis[x][7]
+			);
+
+	for (x = 0; x < VL_BLOCK_WIDTH; ++x)
+		for (y = 0; y < VL_BLOCK_HEIGHT; ++y)
+		{
+			dst[y * VL_BLOCK_WIDTH + x] = bias + (short)
+			(
+				tmp[0 * VL_BLOCK_WIDTH + x] * basis[y][0] +
+				tmp[1 * VL_BLOCK_WIDTH + x] * basis[y][1] +
+				tmp[2 * VL_BLOCK_WIDTH + x] * basis[y][2] +
+				tmp[3 * VL_BLOCK_WIDTH + x] * basis[y][3] +
+				tmp[4 * VL_BLOCK_WIDTH + x] * basis[y][4] +
+				tmp[5 * VL_BLOCK_WIDTH + x] * basis[y][5] +
+				tmp[6 * VL_BLOCK_WIDTH + x] * basis[y][6] +
+				tmp[7 * VL_BLOCK_WIDTH + x] * basis[y][7]
+			);
+			if (dst[y * VL_BLOCK_WIDTH + x] > 255)
+				dst[y * VL_BLOCK_WIDTH + x] = 255;
+			else if (bias > 0 && dst[y * VL_BLOCK_WIDTH + x] < 0)
+				dst[y * VL_BLOCK_WIDTH + x] = 0;
+		}
+	return 0;
+}
+
 static int vlGrabFrameCodedFullBlock(short *src, short *dst, unsigned int dst_pitch)
 {
 	unsigned int y;
@@ -102,6 +155,9 @@ static int vlGrabBlocks
 	unsigned int		tex_pitch;
 	unsigned int		tb, sb = 0;
 	
+	const int		do_idct = 1;
+	short			temp_block[64];
+	
 	assert(context);
 	assert(blocks);
 	
@@ -121,6 +177,17 @@ static int vlGrabBlocks
 		{
 			if (dct_type == VL_DCT_FRAME_CODED)
 				if (sample_type == VL_FULL_SAMPLE)
+					if (do_idct)
+					{
+						vlTransformBlock(blocks + sb * VL_BLOCK_WIDTH * VL_BLOCK_HEIGHT, temp_block, 128);
+						vlGrabFrameCodedFullBlock
+						(
+							temp_block,
+							texels + tb * tex_pitch * VL_BLOCK_HEIGHT,
+							tex_pitch
+						);
+					}
+					else
 					vlGrabFrameCodedFullBlock
 					(
 						blocks + sb * VL_BLOCK_WIDTH * VL_BLOCK_HEIGHT,
@@ -128,6 +195,17 @@ static int vlGrabBlocks
 						tex_pitch
 					);
 				else
+					if (do_idct)
+					{
+						vlTransformBlock(blocks + sb * VL_BLOCK_WIDTH * VL_BLOCK_HEIGHT, temp_block, 0);
+						vlGrabFrameCodedDiffBlock
+						(
+							temp_block,
+							texels + tb * tex_pitch * VL_BLOCK_HEIGHT,
+							tex_pitch
+						);
+					}
+					else
 					vlGrabFrameCodedDiffBlock
 					(
 						blocks + sb * VL_BLOCK_WIDTH * VL_BLOCK_HEIGHT,
@@ -136,6 +214,17 @@ static int vlGrabBlocks
 					);
 			else
 				if (sample_type == VL_FULL_SAMPLE)
+					if (do_idct)
+					{
+						vlTransformBlock(blocks + sb * VL_BLOCK_WIDTH * VL_BLOCK_HEIGHT, temp_block, 128);
+						vlGrabFieldCodedFullBlock
+						(
+							temp_block,
+							texels + (tb % 2) * tex_pitch * VL_BLOCK_HEIGHT + (tb / 2) * tex_pitch,
+							tex_pitch
+						);
+					}
+					else
 					vlGrabFieldCodedFullBlock
 					(
 						blocks + sb * VL_BLOCK_WIDTH * VL_BLOCK_HEIGHT,
@@ -143,6 +232,17 @@ static int vlGrabBlocks
 						tex_pitch
 					);
 				else
+					if (do_idct)
+					{
+						vlTransformBlock(blocks + sb * VL_BLOCK_WIDTH * VL_BLOCK_HEIGHT, temp_block, 0);
+						vlGrabFieldCodedDiffBlock
+						(
+							temp_block,
+							texels + (tb % 2) * tex_pitch * VL_BLOCK_HEIGHT + (tb / 2) * tex_pitch,
+							tex_pitch
+						);
+					}
+					else
 					vlGrabFieldCodedDiffBlock
 					(
 						blocks + sb * VL_BLOCK_WIDTH * VL_BLOCK_HEIGHT,
@@ -173,6 +273,17 @@ static int vlGrabBlocks
 		if ((coded_block_pattern >> (1 - tb)) & 1)
 		{			
 			if (sample_type == VL_FULL_SAMPLE)
+				if (do_idct)
+				{
+					vlTransformBlock(blocks + sb * VL_BLOCK_WIDTH * VL_BLOCK_HEIGHT, temp_block, 128);
+					vlGrabFrameCodedFullBlock
+					(
+						temp_block,
+						texels,
+						tex_pitch
+					);
+				}
+				else
 				vlGrabFrameCodedFullBlock
 				(
 					blocks + sb * VL_BLOCK_WIDTH * VL_BLOCK_HEIGHT,
@@ -180,6 +291,17 @@ static int vlGrabBlocks
 					tex_pitch
 				);
 			else
+				if (do_idct)
+				{
+					vlTransformBlock(blocks + sb * VL_BLOCK_WIDTH * VL_BLOCK_HEIGHT, temp_block, 0);
+					vlGrabFrameCodedDiffBlock
+					(
+						temp_block,
+						texels,
+						tex_pitch
+					);
+				}
+				else
 				vlGrabFrameCodedDiffBlock
 				(
 					blocks + sb * VL_BLOCK_WIDTH * VL_BLOCK_HEIGHT,
@@ -266,6 +388,8 @@ int vlRenderIMacroBlock
 	if (picture_type != VL_FRAME_PICTURE)
 		return 0;
 	
+	vlGrabBlocks(surface->context, coded_block_pattern, dct_type, VL_FULL_SAMPLE, blocks);
+	
 	pipe = surface->context->pipe;
 	
 	vs_consts = pipe->winsys->buffer_map
@@ -297,8 +421,6 @@ int vlRenderIMacroBlock
 	pipe->bind_sampler_states(pipe, 3, (void**)surface->context->states.mc.samplers);
 	pipe->bind_vs_state(pipe, surface->context->states.mc.i_vs);
 	pipe->bind_fs_state(pipe, surface->context->states.mc.i_fs);
-	
-	vlGrabBlocks(surface->context, coded_block_pattern, dct_type, VL_FULL_SAMPLE, blocks);
 	
 	pipe->draw_arrays(pipe, PIPE_PRIM_TRIANGLES, 0, 24);
 	
@@ -334,6 +456,8 @@ int vlRenderPMacroBlock
 	/* TODO: Implement other MC types */
 	if (mc_type != VL_FRAME_MC && mc_type != VL_FIELD_MC)
 		return 0;
+	
+	vlGrabBlocks(surface->context, coded_block_pattern, dct_type, VL_DIFFERENCE_SAMPLE, blocks);
 	
 	pipe = surface->context->pipe;
 	
@@ -390,8 +514,6 @@ int vlRenderPMacroBlock
 	pipe->set_sampler_textures(pipe, 4, surface->context->states.mc.textures);
 	pipe->bind_sampler_states(pipe, 4, (void**)surface->context->states.mc.samplers);
 	
-	vlGrabBlocks(surface->context, coded_block_pattern, dct_type, VL_DIFFERENCE_SAMPLE, blocks);
-	
 	pipe->draw_arrays(pipe, PIPE_PRIM_TRIANGLES, 0, 24);
 	
 	return 0;
@@ -427,6 +549,8 @@ int vlRenderBMacroBlock
 	/* TODO: Implement other MC types */
 	if (mc_type != VL_FRAME_MC && mc_type != VL_FIELD_MC)
 		return 0;
+	
+	vlGrabBlocks(surface->context, coded_block_pattern, dct_type, VL_DIFFERENCE_SAMPLE, blocks);
 	
 	pipe = surface->context->pipe;
 	
@@ -491,8 +615,6 @@ int vlRenderBMacroBlock
 	surface->context->states.mc.textures[4] = future_surface->texture;
 	pipe->set_sampler_textures(pipe, 5, surface->context->states.mc.textures);
 	pipe->bind_sampler_states(pipe, 5, (void**)surface->context->states.mc.samplers);
-	
-	vlGrabBlocks(surface->context, coded_block_pattern, dct_type, VL_DIFFERENCE_SAMPLE, blocks);
 	
 	pipe->draw_arrays(pipe, PIPE_PRIM_TRIANGLES, 0, 24);
 	
@@ -589,7 +711,7 @@ int vlPutSurface
 	pipe->set_sampler_textures(pipe, 1, &surface->texture);
 	pipe->draw_arrays(pipe, PIPE_PRIM_TRIANGLE_STRIP, 0, 4);
 	pipe->flush(pipe, PIPE_FLUSH_RENDER_CACHE, NULL);
-	/* XXX: Need to take destx, desty into consideration */
+	/* TODO: Need to take destx, desty into consideration */
 	pipe->winsys->flush_frontbuffer
 	(
 		pipe->winsys,

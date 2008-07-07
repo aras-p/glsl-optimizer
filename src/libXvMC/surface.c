@@ -146,6 +146,8 @@ Status XvMCRenderSurface
 	
 	assert(flags == 0 || flags == XVMC_SECOND_FIELD);
 	
+	/* TODO: Batch macroblocks by type (I,P,B) */
+	
 	for (i = first_macroblock; i < first_macroblock + num_macroblocks; ++i)
 		if (macroblocks->macro_blocks[i].macroblock_type & XVMC_MB_TYPE_INTRA)
 			vlRenderIMacroBlock

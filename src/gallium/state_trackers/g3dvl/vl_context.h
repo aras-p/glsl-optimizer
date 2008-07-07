@@ -26,6 +26,16 @@ struct VL_CONTEXT
 		
 		struct
 		{
+			struct pipe_viewport_state		viewport;
+			struct pipe_framebuffer_state		render_target;
+			struct pipe_sampler_state		*sampler;
+			struct pipe_texture			*texture;
+			struct pipe_texture			*basis;
+			struct pipe_shader_state		*frame_vs;
+			struct pipe_shader_state		*frame_fs;
+			struct pipe_vertex_buffer 		*vertex_bufs[2];
+			struct pipe_vertex_element		*vertex_buf_elems[2];
+			//struct pipe_constant_buffer		vs_const_buf, fs_const_buf;
 		} idct;
 		
 		struct
