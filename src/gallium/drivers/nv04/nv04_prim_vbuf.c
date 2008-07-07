@@ -1,8 +1,4 @@
 
-// XXX this has to go somewhere else
-#define NONINC_METHOD 0x40000000
-
-
 #include "draw/draw_vbuf.h"
 #include "pipe/p_debug.h"
 #include "pipe/p_util.h"
@@ -160,7 +156,7 @@ static void nv04_vbuf_render_tri_strip_elts(struct nv04_vbuf_render* render, con
 		for(j = 0; j<numvert; j++)
 			OUT_RINGp( buffer + VERTEX_SIZE * indices [i+j], 8 );
 
-		BEGIN_RING( fahrenheit, NV04_DX5_TEXTURED_TRIANGLE_TLVERTEX_DRAWPRIMITIVE(0) | NONINC_METHOD, (numtri+1)/2 );
+		BEGIN_RING_NI( fahrenheit, NV04_DX5_TEXTURED_TRIANGLE_TLVERTEX_DRAWPRIMITIVE(0), (numtri+1)/2 );
 		for(j = 0; j<numtri/2; j++ )
 			OUT_RING(striptbl[j]);
 		if (numtri%2)
@@ -190,7 +186,7 @@ static void nv04_vbuf_render_tri_fan_elts(struct nv04_vbuf_render* render, const
 		for(j=0;j<numvert;j++)
 			OUT_RINGp( buffer + VERTEX_SIZE * indices[ i+j ], 8 );
 
-		BEGIN_RING(fahrenheit, NV04_DX5_TEXTURED_TRIANGLE_TLVERTEX_DRAWPRIMITIVE(0) | NONINC_METHOD, (numtri+1)/2);
+		BEGIN_RING_NI(fahrenheit, NV04_DX5_TEXTURED_TRIANGLE_TLVERTEX_DRAWPRIMITIVE(0), (numtri+1)/2);
 		for(j = 0; j<numtri/2; j++)
 			OUT_RING(fantbl[j]);
 		if (numtri%2)
