@@ -178,6 +178,20 @@ intel_create_context(struct egl_drm_context *egl_context, const __GLcontextModes
 	return TRUE;
 }
 
+int
+intel_destroy_context(struct egl_drm_context *egl_context)
+{
+	struct intel_context *intel = egl_context->priv;
+
+	if (intel->intel_screen->dummy == intel)
+		intel->intel_screen->dummy = NULL;
+
+	st_destroy_context(intel->st);
+	intel_be_destroy_context(&intel->base);
+	free(intel);
+	return TRUE;
+}
+
 void
 intel_make_current(struct egl_drm_context *context, struct egl_drm_drawable *draw, struct egl_drm_drawable *read)
 {

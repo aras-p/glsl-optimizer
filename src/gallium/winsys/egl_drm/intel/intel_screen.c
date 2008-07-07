@@ -41,7 +41,7 @@ extern const struct dri_extension card_extensions[];
 
 
 int
-intel_init_driver(struct egl_drm_device *device)
+intel_create_device(struct egl_drm_device *device)
 {
 	struct intel_screen *intel_screen;
 
@@ -62,6 +62,19 @@ intel_init_driver(struct egl_drm_device *device)
 
 	/* hack */
 	driInitExtensions(NULL, card_extensions, GL_FALSE);
+
+	return TRUE;
+}
+
+int
+intel_destroy_device(struct egl_drm_device *device)
+{
+	struct intel_screen *intel_screen = (struct intel_screen *)device->priv;
+	
+	intel_be_destroy_device(&intel_screen->base);
+
+	free(intel_screen);
+	device->priv = NULL;
 
 	return TRUE;
 }
@@ -108,6 +121,18 @@ intel_create_drawable(struct egl_drm_drawable *drawable,
 		return GL_FALSE;
 	}
 
-   drawable->priv = (void *) intelfb;
-   return GL_TRUE;
+	drawable->priv = (void *) intelfb;
+	return GL_TRUE;
+}
+
+int
+intel_destroy_drawable(struct egl_drm_drawable *drawable)
+{
+	struct intel_framebuffer *intelfb = (struct intel_framebuffer *)drawable->priv;
+	drawable->priv = NULL;
+
+	assert(intelfb->stfb);
+	st_unreference_framebuffer(&intelfb->stfb);
+	free(intelfb);
+	return TRUE;
 }

@@ -32,7 +32,7 @@ egl_drm_create_device(int drmFD)
 	memset(device, 0, sizeof(*device));
 	device->drmFD = drmFD;
 
-	if (!intel_init_driver(device)) {
+	if (!intel_create_device(device)) {
 		free(device);
 		return NULL;
 	}
@@ -180,8 +180,15 @@ drm_initialize(_EGLDriver *drv, EGLDisplay dpy, EGLint *major, EGLint *minor)
 static EGLBoolean
 drm_terminate(_EGLDriver *drv, EGLDisplay dpy)
 {
-	/* TODO: clean up */
-	free(drv);
+	struct drm_driver *drm_drv = (struct drm_driver *)drv;
+
+	intel_destroy_device(drm_drv->device);
+
+	drmClose(drm_drv->device->drmFD);
+
+	free(drm_drv->device);
+	free(drm_drv);
+
 	return EGL_TRUE;
 }
 
@@ -303,6 +310,8 @@ drm_destroy_context(_EGLDriver *drv, EGLDisplay dpy, EGLContext context)
 	if (fc->base.IsBound) {
 		fc->base.DeletePending = EGL_TRUE;
 	} else {
+		intel_destroy_context(fc->context);
+		free(fc->context);
 		free(fc);
 	}
 	return EGL_TRUE;
@@ -321,6 +330,7 @@ drm_create_pixmap_surface(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config, Nat
 {
 	return EGL_NO_SURFACE;
 }
+
 
 static EGLSurface
 drm_create_pbuffer_surface(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
@@ -534,12 +544,13 @@ drm_destroy_surface(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surface)
 	if (fs->base.IsBound) {
 		fs->base.DeletePending = EGL_TRUE;
 	} else {
+		intel_bind_frontbuffer(fs->drawable, NULL);
+		intel_destroy_drawable(fs->drawable);
+		free(fs->drawable);
 		free(fs);
 	}
 	return EGL_TRUE;
 }
-
-
 
 
 static EGLBoolean
