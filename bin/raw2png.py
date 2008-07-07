@@ -277,6 +277,7 @@ translate = {
 	PIPE_FORMAT_X8R8G8B8_UNORM: (4, 1, 1, translate_rgba),
 	PIPE_FORMAT_B8G8R8A8_UNORM: (4, 1, 1, translate_rgba),
 	PIPE_FORMAT_B8G8R8X8_UNORM: (4, 1, 1, translate_rgba),
+	PIPE_FORMAT_A8B8G8R8_SNORM: (4, 1, 1, translate_rgba),
 	PIPE_FORMAT_YCBCR: (4, 2, 1, translate_ycbcr),
 	PIPE_FORMAT_YCBCR_REV: (4, 2, 1, translate_ycbcr_rev),
 }
@@ -287,15 +288,20 @@ def read_header(infile):
 	return struct.unpack_from(header_fmt, header)
 
 def process(infilename, outfilename):
+	sys.stderr.write("%s -> %s\n" % (infilename, outfilename))
 	infile = open(infilename, "rb")
 	format, cpp, width, height = read_header(infile)
-	sys.stderr.write("format = %s, cpp = %u, width = %u, height = %u\n" % (formats[format], cpp, width, height))
+	sys.stderr.write("  %ux%ux%ubpp %s\n" % (width, height, cpp*8, formats[format]))
 	outimage = Image.new(
 	mode='RGB',
 	size=(width, height),
 	color=(0,0,0))
 	outpixels = outimage.load()
-	bsize, bwidth, bheight, translate_func = translate[format]
+	try:
+		bsize, bwidth, bheight, translate_func = translate[format]
+	except KeyError:
+		sys.stderr.write('error: unsupported format %s\n' % formats[format])
+		return
 	for y in range(0, height, bheight):
 		for x in range(0, width, bwidth):
 			indata = map(ord, infile.read(4))
