@@ -213,6 +213,8 @@ drm_terminate(_EGLDriver *drv, EGLDisplay dpy)
 	drmClose(drm_drv->device->drmFD);
 
 	free(drm_drv->device);
+
+	_eglCleanupDisplay(drv);
 	free(drm_drv);
 
 	return EGL_TRUE;
