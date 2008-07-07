@@ -302,7 +302,6 @@ st_draw_vbo(GLcontext *ctx,
          pipe_reference_buffer(pipe, &vbuffer[attr].buffer, stobj->buffer);
          vbuffer[attr].buffer_offset = (unsigned) arrays[mesaAttr]->Ptr;
          velements[attr].src_offset = 0;
-         assert(velements[attr].src_offset <= 2048); /* 11-bit field */
       }
       else {
          /* attribute data is in user-space memory, not a VBO */
@@ -322,6 +321,8 @@ st_draw_vbo(GLcontext *ctx,
          vbuffer[attr].buffer_offset = 0;
          velements[attr].src_offset = 0;
       }
+
+      assert(velements[attr].src_offset <= 2048); /* 11-bit field */
 
       /* common-case setup */
       vbuffer[attr].pitch = arrays[mesaAttr]->StrideB; /* in bytes */
