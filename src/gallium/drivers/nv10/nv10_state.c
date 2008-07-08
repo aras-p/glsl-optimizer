@@ -14,7 +14,7 @@ nv10_blend_state_create(struct pipe_context *pipe,
 {
 	struct nv10_blend_state *cb;
 
-	cb = malloc(sizeof(struct nv10_blend_state));
+	cb = MALLOC(sizeof(struct nv10_blend_state));
 
 	cb->b_enable = cso->blend_enable ? 1 : 0;
 	cb->b_srcfunc = ((nvgl_blend_func(cso->alpha_src_factor)<<16) |
@@ -88,7 +88,7 @@ nv10_sampler_state_create(struct pipe_context *pipe,
 	struct nv10_sampler_state *ps;
 	uint32_t filter = 0;
 
-	ps = malloc(sizeof(struct nv10_sampler_state));
+	ps = MALLOC(sizeof(struct nv10_sampler_state));
 
 	ps->wrap = ((wrap_mode(cso->wrap_s) << NV10TCL_TX_FORMAT_WRAP_S_SHIFT) |
 		    (wrap_mode(cso->wrap_t) << NV10TCL_TX_FORMAT_WRAP_T_SHIFT));
@@ -249,7 +249,7 @@ nv10_rasterizer_state_create(struct pipe_context *pipe,
 	 * 	multisample
 	 * 	offset_units / offset_scale
 	 */
-	rs = malloc(sizeof(struct nv10_rasterizer_state));
+	rs = MALLOC(sizeof(struct nv10_rasterizer_state));
 
 	rs->templ = cso;
 	
@@ -335,7 +335,7 @@ nv10_depth_stencil_alpha_state_create(struct pipe_context *pipe,
 {
 	struct nv10_depth_stencil_alpha_state *hw;
 
-	hw = malloc(sizeof(struct nv10_depth_stencil_alpha_state));
+	hw = MALLOC(sizeof(struct nv10_depth_stencil_alpha_state));
 
 	hw->depth.func		= nvgl_comparison_op(cso->depth.func);
 	hw->depth.write_enable	= cso->depth.writemask ? 1 : 0;
