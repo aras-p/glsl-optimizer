@@ -275,6 +275,7 @@ MAIN_FILES = \
 	$(DIRECTORY)/src/mesa/drivers/ggi/display/*.c			\
 	$(DIRECTORY)/src/mesa/drivers/ggi/display/fbdev.conf.in		\
 	$(DIRECTORY)/src/mesa/drivers/ggi/include/ggi/mesa/*.h		\
+	$(DIRECTORY)/src/mesa/drivers/osmesa/Makefile			\
 	$(DIRECTORY)/src/mesa/drivers/osmesa/Makefile.win		\
 	$(DIRECTORY)/src/mesa/drivers/osmesa/descrip.mms		\
 	$(DIRECTORY)/src/mesa/drivers/osmesa/osmesa.def			\
@@ -282,6 +283,7 @@ MAIN_FILES = \
 	$(DIRECTORY)/src/mesa/drivers/svga/*.[ch]			\
 	$(DIRECTORY)/src/mesa/drivers/windows/*/*.[ch]			\
 	$(DIRECTORY)/src/mesa/drivers/windows/*/*.def			\
+	$(DIRECTORY)/src/mesa/drivers/x11/Makefile			\
 	$(DIRECTORY)/src/mesa/drivers/x11/descrip.mms			\
 	$(DIRECTORY)/src/mesa/drivers/x11/*.[ch]			\
 	$(DIRECTORY)/src/mesa/ppc/*.[ch]				\
