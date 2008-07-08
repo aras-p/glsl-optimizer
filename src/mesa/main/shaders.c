@@ -128,6 +128,7 @@ _mesa_DeleteObjectARB(GLhandleARB obj)
 void GLAPIENTRY
 _mesa_DeleteProgram(GLuint name)
 {
+   printf("%s name=%u\n", __FUNCTION__, name);
    if (name) {
       GET_CURRENT_CONTEXT(ctx);
       ctx->Driver.DeleteProgram2(ctx, name);
@@ -309,11 +310,7 @@ void GLAPIENTRY
 _mesa_GetUniformivARB(GLhandleARB program, GLint location, GLint * params)
 {
    GET_CURRENT_CONTEXT(ctx);
-   GLfloat fparams[16]; /* XXX is 16 enough? */
-   GLuint i;
-   ctx->Driver.GetUniformfv(ctx, program, location, fparams);
-   for (i = 0; i < 16; i++)
-      params[i] = (GLint) fparams[i];  /* XXX correct? */
+   ctx->Driver.GetUniformiv(ctx, program, location, params);
 }
 
 
