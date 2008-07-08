@@ -266,6 +266,7 @@ MAIN_FILES = \
 	$(DIRECTORY)/src/mesa/drivers/directfb/*.[ch]			\
 	$(DIRECTORY)/src/mesa/drivers/directfb/Makefile			\
 	$(DIRECTORY)/src/mesa/drivers/dos/*.[chS]			\
+	$(DIRECTORY)/src/mesa/drivers/fbdev/Makefile			\
 	$(DIRECTORY)/src/mesa/drivers/fbdev/glfbdev.c			\
 	$(DIRECTORY)/src/mesa/drivers/glide/*.[ch]			\
 	$(DIRECTORY)/src/mesa/drivers/ggi/*.[ch]			\
