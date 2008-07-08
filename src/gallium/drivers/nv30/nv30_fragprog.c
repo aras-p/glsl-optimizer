@@ -510,9 +510,7 @@ nv30_fragprog_parse_instruction(struct nv30_fpc *fpc,
 		break;
 //	case TGSI_OPCODE_LIT:
 	case TGSI_OPCODE_LRP:
-		tmp = temp(fpc);
-		arith(fpc, 0, MAD, tmp, mask, neg(src[0]), src[2], src[2]);
-		arith(fpc, sat, MAD, dst, mask, src[0], src[1], tmp);
+		arith(fpc, sat, LRP, dst, mask, src[0], src[1], src[2]);
 		break;
 	case TGSI_OPCODE_MAD:
 		arith(fpc, sat, MAD, dst, mask, src[0], src[1], src[2]);
@@ -530,13 +528,7 @@ nv30_fragprog_parse_instruction(struct nv30_fpc *fpc,
 		arith(fpc, sat, MUL, dst, mask, src[0], src[1], none);
 		break;
 	case TGSI_OPCODE_POW:
-		tmp = temp(fpc);
-		arith(fpc, 0, LG2, tmp, MASK_X,
-		      swz(src[0], X, X, X, X), none, none);
-		arith(fpc, 0, MUL, tmp, MASK_X, swz(tmp, X, X, X, X),
-		      swz(src[1], X, X, X, X), none);
-		arith(fpc, sat, EX2, dst, mask,
-		      swz(tmp, X, X, X, X), none, none);
+		arith(fpc, sat, POW, dst, mask, src[0], src[1], none);
 		break;
 	case TGSI_OPCODE_RCP:
 		arith(fpc, sat, RCP, dst, mask, src[0], none, none);
@@ -545,20 +537,10 @@ nv30_fragprog_parse_instruction(struct nv30_fpc *fpc,
 		assert(0);
 		break;
 	case TGSI_OPCODE_RFL:
-		tmp = temp(fpc);
-		arith(fpc, 0, DP3, tmp, MASK_X, src[0], src[0], none);
-		arith(fpc, 0, DP3, tmp, MASK_Y, src[0], src[1], none);
-		arith(fpc, 0, DIV, scale(tmp, 2X), MASK_Z,
-		      swz(tmp, Y, Y, Y, Y), swz(tmp, X, X, X, X), none);
-		arith(fpc, sat, MAD, dst, mask,
-		      swz(tmp, Z, Z, Z, Z), src[0], neg(src[1]));
+		arith(fpc, 0, RFL, dst, mask, src[0], src[1], none);
 		break;
 	case TGSI_OPCODE_RSQ:
-		tmp = temp(fpc);
-		arith(fpc, 0, LG2, scale(tmp, INV_2X), MASK_X,
-		      abs(swz(src[0], X, X, X, X)), none, none);
-		arith(fpc, sat, EX2, dst, mask,
-		      neg(swz(tmp, X, X, X, X)), none, none);
+		arith(fpc, sat, RSQ, dst, mask, abs(swz(src[0], X, X, X, X)), none, none);
 		break;
 	case TGSI_OPCODE_SCS:
 		if (mask & MASK_X) {
