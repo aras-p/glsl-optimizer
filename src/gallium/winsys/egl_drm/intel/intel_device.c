@@ -88,7 +88,7 @@ intel_create_drawable(struct egl_drm_drawable *drawable,
 	if (!intelfb)
 		return GL_FALSE;
 
-	intelfb->screen = drawable->device->priv;
+	intelfb->device = drawable->device->priv;
 
 	if (visual->redBits == 5)
 		colorFormat = PIPE_FORMAT_R5G6B5_UNORM;

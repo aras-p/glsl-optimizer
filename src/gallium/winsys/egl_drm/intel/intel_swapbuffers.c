@@ -69,7 +69,7 @@ intel_display_surface(struct egl_drm_drawable *draw,
 	//const int srcWidth = surf->width;
 	//const int srcHeight = surf->height;
 
-	intel = intel_fb->screen->dummy;
+	intel = intel_fb->device->dummy;
 	if (!intel) {
 		printf("No dummy context\n");
 		return;

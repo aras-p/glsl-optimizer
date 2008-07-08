@@ -64,7 +64,7 @@ struct intel_framebuffer
 {
 	struct st_framebuffer *stfb;
 
-	struct intel_device *screen;
+	struct intel_device *device;
 	struct _DriBufferObject *front_buffer;
 	struct egl_drm_frontbuffer *front;
 };
