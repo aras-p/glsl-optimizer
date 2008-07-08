@@ -218,12 +218,14 @@ storage_string(const slang_ir_storage *st)
       "NAMED_PARAM",
       "CONSTANT",
       "UNIFORM",
+      "VARYING",
       "WRITE_ONLY",
       "ADDRESS",
       "SAMPLER",
       "UNDEFINED"
    };
    static char s[100];
+   assert(Elements(files) == PROGRAM_FILE_MAX);
 #if 0
    if (st->Size == 1)
       sprintf(s, "%s[%d]", files[st->File], st->Index);
