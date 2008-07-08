@@ -14,7 +14,7 @@ nv04_blend_state_create(struct pipe_context *pipe,
 {
 	struct nv04_blend_state *cb;
 
-	cb = malloc(sizeof(struct nv04_blend_state));
+	cb = MALLOC(sizeof(struct nv04_blend_state));
 
 	cb->b_enable = cso->blend_enable ? 1 : 0;
 	cb->b_src = ((nvgl_blend_func(cso->alpha_src_factor)<<16) |
@@ -81,7 +81,7 @@ nv04_sampler_state_create(struct pipe_context *pipe,
 	struct nv04_sampler_state *ss;
 	uint32_t filter = 0;
 
-	ss = malloc(sizeof(struct nv04_sampler_state));
+	ss = MALLOC(sizeof(struct nv04_sampler_state));
 
 	ss->format = ((wrap_mode(cso->wrap_s) << NV04_DX5_TEXTURED_TRIANGLE_FORMAT_ADDRESSU_SHIFT) |
 		    (wrap_mode(cso->wrap_t) << NV04_DX5_TEXTURED_TRIANGLE_FORMAT_ADDRESSV_SHIFT));
@@ -178,7 +178,7 @@ nv04_rasterizer_state_create(struct pipe_context *pipe,
 	 * 	scissor
 	 * 	points/lines (no hw support, emulated with tris in gallium)
 	 */
-	rs = malloc(sizeof(struct nv04_rasterizer_state));
+	rs = MALLOC(sizeof(struct nv04_rasterizer_state));
 
 	rs->blend = cso->flatshade ? NV04_DX5_TEXTURED_TRIANGLE_BLEND_SHADE_MODE_FLAT : NV04_DX5_TEXTURED_TRIANGLE_BLEND_SHADE_MODE_GOURAUD;
 
@@ -225,7 +225,7 @@ nv04_depth_stencil_alpha_state_create(struct pipe_context *pipe,
 {
 	struct nv04_depth_stencil_alpha_state *hw;
 
-	hw = malloc(sizeof(struct nv04_depth_stencil_alpha_state));
+	hw = MALLOC(sizeof(struct nv04_depth_stencil_alpha_state));
 
 	hw->control = float_to_ubyte(cso->alpha.ref);
 	hw->control |= ( nv04_compare_func(cso->alpha.func) << NV04_DX5_TEXTURED_TRIANGLE_CONTROL_ALPHA_FUNC_SHIFT );

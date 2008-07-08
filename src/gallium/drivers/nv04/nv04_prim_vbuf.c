@@ -57,7 +57,7 @@ nv04_vbuf_render_allocate_vertices( struct vbuf_render *render,
 {
 	struct nv04_vbuf_render *nv04_render = nv04_vbuf_render(render);
 
-	nv04_render->buffer = (unsigned char*) malloc(VERTEX_BUFFER_SIZE);
+	nv04_render->buffer = (unsigned char*) MALLOC(VERTEX_BUFFER_SIZE);
 	assert(!nv04_render->buffer);
 
 	return nv04_render->buffer;
