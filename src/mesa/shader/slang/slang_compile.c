@@ -1634,6 +1634,15 @@ parse_init_declarator(slang_parse_ctx * C, slang_output_ctx * O,
       return 0;
    }
 
+   /* allocate global address space for a variable with a known size */
+   if (C->global_scope
+       && !(var->type.specifier.type == SLANG_SPEC_ARRAY
+            && var->array_len == 0)) {
+      if (!calculate_var_size(C, O, var))
+         return GL_FALSE;
+      var->address = slang_var_pool_alloc(O->global_pool, var->size);
+   }
+
    /* emit code for global var decl */
    if (C->global_scope) {
       slang_assemble_ctx A;
@@ -1646,15 +1655,6 @@ parse_init_declarator(slang_parse_ctx * C, slang_output_ctx * O,
       A.curFuncEndLabel = NULL;
       if (!_slang_codegen_global_variable(&A, var, C->type))
          return 0;
-   }
-
-   /* allocate global address space for a variable with a known size */
-   if (C->global_scope
-       && !(var->type.specifier.type == SLANG_SPEC_ARRAY
-            && var->array_len == 0)) {
-      if (!calculate_var_size(C, O, var))
-         return GL_FALSE;
-      var->address = slang_var_pool_alloc(O->global_pool, var->size);
    }
 
    /* initialize global variable */
