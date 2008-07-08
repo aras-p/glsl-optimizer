@@ -12,7 +12,7 @@ PIPE_DRIVERS = \
 DRIVER_SOURCES = \
 	intel_swapbuffers.c \
 	intel_context.c \
-	intel_screen.c \
+	intel_device.c \
 	intel_egl.c
 
 C_SOURCES = \

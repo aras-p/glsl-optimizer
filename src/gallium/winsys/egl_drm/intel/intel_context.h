@@ -47,7 +47,7 @@ struct intel_context
 
 	struct st_context *st;
 
-	struct intel_screen *intel_screen;
+	struct intel_device *intel_device;
 
 	/* new egl stuff */
 	struct egl_drm_device *egl_device;
@@ -64,7 +64,7 @@ struct intel_framebuffer
 {
 	struct st_framebuffer *stfb;
 
-	struct intel_screen *screen;
+	struct intel_device *screen;
 	struct _DriBufferObject *front_buffer;
 	struct egl_drm_frontbuffer *front;
 };

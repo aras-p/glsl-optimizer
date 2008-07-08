@@ -32,7 +32,7 @@
 #include "i915simple/i915_screen.h"
 
 #include "intel_context.h"
-#include "intel_screen.h"
+#include "intel_device.h"
 #include "intel_batchbuffer.h"
 #include "intel_egl.h"
 
@@ -43,21 +43,21 @@ extern const struct dri_extension card_extensions[];
 int
 intel_create_device(struct egl_drm_device *device)
 {
-	struct intel_screen *intel_screen;
+	struct intel_device *intel_device;
 
 	/* Allocate the private area */
-	intel_screen = CALLOC_STRUCT(intel_screen);
-	if (!intel_screen)
+	intel_device = CALLOC_STRUCT(intel_device);
+	if (!intel_device)
 		return FALSE;
 
-	device->priv = (void *)intel_screen;
-	intel_screen->device = device;
+	device->priv = (void *)intel_device;
+	intel_device->device = device;
 
-	intel_screen->deviceID = device->deviceID;
+	intel_device->deviceID = device->deviceID;
 
-	intel_be_init_device(&intel_screen->base, device->drmFD, PCI_CHIP_I945_GM);
+	intel_be_init_device(&intel_device->base, device->drmFD, PCI_CHIP_I945_GM);
 
-	intel_screen->pipe = i915_create_screen(&intel_screen->base.base, intel_screen->deviceID);
+	intel_device->pipe = i915_create_screen(&intel_device->base.base, intel_device->deviceID);
 
 	/* hack */
 	driInitExtensions(NULL, card_extensions, GL_FALSE);
@@ -68,11 +68,11 @@ intel_create_device(struct egl_drm_device *device)
 int
 intel_destroy_device(struct egl_drm_device *device)
 {
-	struct intel_screen *intel_screen = (struct intel_screen *)device->priv;
+	struct intel_device *intel_device = (struct intel_device *)device->priv;
 	
-	intel_be_destroy_device(&intel_screen->base);
+	intel_be_destroy_device(&intel_device->base);
 
-	free(intel_screen);
+	free(intel_device);
 	device->priv = NULL;
 
 	return TRUE;

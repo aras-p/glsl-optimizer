@@ -27,7 +27,7 @@
 
 #include "i915simple/i915_screen.h"
 
-#include "intel_screen.h"
+#include "intel_device.h"
 #include "intel_context.h"
 #include "intel_batchbuffer.h"
 
@@ -147,13 +147,13 @@ int
 intel_create_context(struct egl_drm_context *egl_context, const __GLcontextModes *visual, void *sharedContextPrivate)
 {
 	struct intel_context *intel = CALLOC_STRUCT(intel_context);
-	struct intel_screen *screen = (struct intel_screen *)egl_context->device->priv;
+	struct intel_device *screen = (struct intel_device *)egl_context->device->priv;
 	struct pipe_context *pipe;
 	struct st_context *st_share = NULL;
 
 	egl_context->priv = intel;
 
-	intel->intel_screen = screen;
+	intel->intel_device = screen;
 	intel->egl_context = egl_context;
 	intel->egl_device = egl_context->device;
 
@@ -183,8 +183,8 @@ intel_destroy_context(struct egl_drm_context *egl_context)
 {
 	struct intel_context *intel = egl_context->priv;
 
-	if (intel->intel_screen->dummy == intel)
-		intel->intel_screen->dummy = NULL;
+	if (intel->intel_device->dummy == intel)
+		intel->intel_device->dummy = NULL;
 
 	st_destroy_context(intel->st);
 	intel_be_destroy_context(&intel->base);
@@ -220,7 +220,7 @@ intel_make_current(struct egl_drm_context *context, struct egl_drm_drawable *dra
 void
 intel_bind_frontbuffer(struct egl_drm_drawable *draw, struct egl_drm_frontbuffer *front)
 {
-	struct intel_screen *intelScreen = (struct intel_screen *)draw->device->priv;
+	struct intel_device *intelScreen = (struct intel_device *)draw->device->priv;
 	struct intel_framebuffer *draw_fb = (struct intel_framebuffer *)draw->priv;
 
 	if (draw_fb->front_buffer)
