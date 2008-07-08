@@ -25,6 +25,7 @@ LDFLAGS =
 GLU_CFLAGS = 
 
 # Misc tools and flags
+SHELL = /bin/sh
 MKLIB_OPTIONS = 
 MKDEP = makedepend
 MKDEP_OPTIONS = -fdepend
