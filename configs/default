@@ -30,7 +30,7 @@ MKLIB_OPTIONS =
 MKDEP = makedepend
 MKDEP_OPTIONS = -fdepend
 MAKE = make
-INSTALL = $(TOP)/bin/minstall
+INSTALL = $(SHELL) $(TOP)/bin/minstall
 
 # Tools for regenerating glapi (generally only needed by the developers)
 PYTHON2 = python
