@@ -101,7 +101,6 @@ typedef struct __glxHashBucket {
 typedef struct __glxHashTable *__glxHashTablePtr;
 struct __glxHashTable {
     unsigned long    magic;
-    unsigned long    entries;
     unsigned long    hits;	/* At top of linked list */
     unsigned long    partials;	/* Not at top of linked list */
     unsigned long    misses;	/* Not in table */
@@ -146,7 +145,6 @@ _X_HIDDEN __glxHashTable *__glxHashCreate(void)
     table           = HASH_ALLOC(sizeof(*table));
     if (!table) return NULL;
     table->magic    = HASH_MAGIC;
-    table->entries  = 0;
     table->hits     = 0;
     table->partials = 0;
     table->misses   = 0;
@@ -319,8 +317,8 @@ static void compute_dist(__glxHashTablePtr table)
     int           i;
     __glxHashBucketPtr bucket;
 
-    printf("Entries = %ld, hits = %ld, partials = %ld, misses = %ld\n",
-	   table->entries, table->hits, table->partials, table->misses);
+    printf("Hits = %ld, partials = %ld, misses = %ld\n",
+	   table->hits, table->partials, table->misses);
     clear_dist();
     for (i = 0; i < HASH_SIZE; i++) {
 	bucket = table->buckets[i];
