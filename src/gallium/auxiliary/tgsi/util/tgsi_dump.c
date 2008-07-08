@@ -573,7 +573,8 @@ tgsi_dump_declaration(
    if (decl->Declaration.Semantic) {
       TXT( ", " );
       ENM( decl->Semantic.SemanticName, TGSI_SEMANTICS_SHORT );
-      if (decl->Semantic.SemanticIndex != 0) {
+      if (decl->Semantic.SemanticIndex != 0 ||
+          decl->Semantic.SemanticName == TGSI_SEMANTIC_GENERIC) {
          CHR( '[' );
          UID( decl->Semantic.SemanticIndex );
          CHR( ']' );
