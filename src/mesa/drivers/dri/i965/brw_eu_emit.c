@@ -329,14 +329,14 @@ static void brw_set_sampler_message(struct brw_context *brw,
 {
    brw_set_src1(insn, brw_imm_d(0));
 
-   if (BRW_IS_IGD(brw)) {
-      insn->bits3.sampler_igd.binding_table_index = binding_table_index;
-      insn->bits3.sampler_igd.sampler = sampler;
-      insn->bits3.sampler_igd.msg_type = msg_type;
-      insn->bits3.sampler_igd.response_length = response_length;
-      insn->bits3.sampler_igd.msg_length = msg_length;
-      insn->bits3.sampler_igd.end_of_thread = eot;
-      insn->bits3.sampler_igd.msg_target = BRW_MESSAGE_TARGET_SAMPLER;
+   if (BRW_IS_GM45(brw) || BRW_IS_G4X(brw)) {
+      insn->bits3.sampler_gm45_g4x.binding_table_index = binding_table_index;
+      insn->bits3.sampler_gm45_g4x.sampler = sampler;
+      insn->bits3.sampler_gm45_g4x.msg_type = msg_type;
+      insn->bits3.sampler_gm45_g4x.response_length = response_length;
+      insn->bits3.sampler_gm45_g4x.msg_length = msg_length;
+      insn->bits3.sampler_gm45_g4x.end_of_thread = eot;
+      insn->bits3.sampler_gm45_g4x.msg_target = BRW_MESSAGE_TARGET_SAMPLER;
    } else {
       insn->bits3.sampler.binding_table_index = binding_table_index;
       insn->bits3.sampler.sampler = sampler;

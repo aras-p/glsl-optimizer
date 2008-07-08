@@ -148,7 +148,7 @@ static void clip_and_emit_line( struct brw_clip_compile *c )
    brw_clip_init_clipmask(c);
 
    /* -ve rhw workaround */
-   if (!BRW_IS_IGD(p->brw)) {
+   if (!(BRW_IS_GM45(p->brw) || BRW_IS_G4X(p->brw))) {
       brw_set_conditionalmod(p, BRW_CONDITIONAL_NZ);
       brw_AND(p, brw_null_reg(), get_element_ud(c->reg.R0, 2),
               brw_imm_ud(1<<20));

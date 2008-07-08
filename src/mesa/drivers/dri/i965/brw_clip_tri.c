@@ -536,7 +536,7 @@ void brw_emit_tri_clip( struct brw_clip_compile *c )
 
    /* if -ve rhw workaround bit is set, 
       do cliptest */
-   if (!BRW_IS_IGD(p->brw)) {
+   if (!(BRW_IS_GM45(p->brw) || BRW_IS_G4X(p->brw))) {
       brw_set_conditionalmod(p, BRW_CONDITIONAL_NZ);
       brw_AND(p, brw_null_reg(), get_element_ud(c->reg.R0, 2), 
               brw_imm_ud(1<<20));

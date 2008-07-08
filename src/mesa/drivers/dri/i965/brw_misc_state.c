@@ -192,7 +192,7 @@ static void emit_depthbuffer(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
    struct intel_region *region = brw->state.depth_region;
-   unsigned int len = BRW_IS_IGD(brw) ? sizeof(struct brw_depthbuffer_igd) / 4 : sizeof(struct brw_depthbuffer) / 4;
+   unsigned int len = (BRW_IS_GM45(brw) || BRW_IS_G4X(brw)) ? sizeof(struct brw_depthbuffer_gm45_g4x) / 4 : sizeof(struct brw_depthbuffer) / 4;
 
    if (region == NULL) {
       BEGIN_BATCH(len, IGNORE_CLIPRECTS);
@@ -203,7 +203,7 @@ static void emit_depthbuffer(struct brw_context *brw)
       OUT_BATCH(0);
       OUT_BATCH(0);
 
-      if (BRW_IS_IGD(brw))
+      if (BRW_IS_GM45(brw) || BRW_IS_G4X(brw))
          OUT_BATCH(0);
 
       ADVANCE_BATCH();
@@ -239,7 +239,7 @@ static void emit_depthbuffer(struct brw_context *brw)
 		((region->height - 1) << 19));
       OUT_BATCH(0);
 
-      if (BRW_IS_IGD(brw))
+      if (BRW_IS_GM45(brw) || BRW_IS_G4X(brw))
          OUT_BATCH(0);
 
       ADVANCE_BATCH();
@@ -324,7 +324,7 @@ static void upload_aa_line_parameters(struct brw_context *brw)
 {
    struct brw_aa_line_parameters balp;
    
-   if (!BRW_IS_IGD(brw))
+   if (!(BRW_IS_GM45(brw) || BRW_IS_G4X(brw)))
       return;
 
    /* use legacy aa line coverage computation */
