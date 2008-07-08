@@ -136,6 +136,9 @@ so_emit_reloc_markers(struct nouveau_winsys *nvws, struct nouveau_stateobj *so)
 	struct nouveau_pushbuf *pb = nvws->channel->pushbuf;
 	unsigned i;
 
+	if (!so)
+		return;
+
 	i = so->cur_reloc << 1;
 	if (nvws->channel->pushbuf->remaining < i)
 		nvws->push_flush(nvws, i, NULL);

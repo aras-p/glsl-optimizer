@@ -76,6 +76,18 @@ nouveau_pipe_bo_create(struct pipe_winsys *pws, unsigned alignment,
 		if (usage & NOUVEAU_BUFFER_USAGE_TEXTURE)
 			flags |= NOUVEAU_BO_GART;
 		flags |= NOUVEAU_BO_VRAM;
+
+		switch (dev->chipset & 0xf0) {
+		case 0x50:
+		case 0x80:
+		case 0x90:
+			flags |= NOUVEAU_BO_TILED;
+			if (usage & NOUVEAU_BUFFER_USAGE_ZETA)
+				flags |= NOUVEAU_BO_ZTILE;
+			break;
+		default:
+			break;
+		}
 	}
 
 	if (usage & PIPE_BUFFER_USAGE_VERTEX) {
