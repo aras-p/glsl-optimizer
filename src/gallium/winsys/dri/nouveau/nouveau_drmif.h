@@ -259,6 +259,7 @@ struct nouveau_bo_priv {
 
 	uint64_t offset;
 	uint64_t flags;
+	int tiled;
 };
 #define nouveau_bo(n) ((struct nouveau_bo_priv *)(n))
 

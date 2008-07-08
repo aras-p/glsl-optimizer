@@ -182,6 +182,13 @@ nouveau_bo_new(struct nouveau_device *dev, uint32_t flags, int align,
 	nvbo->drm.alignment = align;
 	nvbo->refcount = 1;
 
+	if (flags & NOUVEAU_BO_TILED) {
+		nvbo->tiled = 1;
+		if (flags & NOUVEAU_BO_ZTILE)
+			nvbo->tiled |= 2;
+		flags &= ~NOUVEAU_BO_TILED;
+	}
+
 	ret = nouveau_bo_set_status(&nvbo->base, flags);
 	if (ret) {
 		free(nvbo);
@@ -332,6 +339,12 @@ nouveau_bo_set_status(struct nouveau_bo *bo, uint32_t flags)
 	else
 	if (flags & NOUVEAU_BO_GART)
 		new_flags |= (NOUVEAU_MEM_AGP | NOUVEAU_MEM_PCI);
+	
+	if (nvbo->tiled && flags) {
+		new_flags |= NOUVEAU_MEM_TILE;
+		if (nvbo->tiled & 2)
+			new_flags |= NOUVEAU_MEM_TILE_ZETA;
+	}
 
 	if (new_flags) {
 		ret = nouveau_mem_alloc(bo->device, bo->size,
@@ -347,9 +360,12 @@ nouveau_bo_set_status(struct nouveau_bo *bo, uint32_t flags)
 	/* Copy old -> new */
 	/*XXX: use M2MF */
 	if (nvbo->sysmem || nvbo->map) {
+		struct nouveau_pushbuf_bo *pbo = nvbo->pending;
+		nvbo->pending = NULL;
 		nouveau_bo_map(bo, NOUVEAU_BO_RD);
 		memcpy(new_map, bo->map, bo->size);
 		nouveau_bo_unmap(bo);
+		nvbo->pending = pbo;
 	}
 
 	/* Free old memory */

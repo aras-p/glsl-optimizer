@@ -44,7 +44,7 @@ nv50_state_validate_fb(struct nv50_context *nv50)
 			so_data(so, 0xe6);
 			break;
 		}
-		so_data(so, 0x00000040);
+		so_data(so, 0x00000000);
 		so_data(so, 0x00000000);
 
 		so_method(so, tesla, 0x1224, 1);
@@ -82,7 +82,7 @@ nv50_state_validate_fb(struct nv50_context *nv50)
 			so_data(so, 0x16);
 			break;
 		}
-		so_data(so, 0x00000040);
+		so_data(so, 0x00000000);
 		so_data(so, 0x00000000);
 
 		so_method(so, tesla, 0x1538, 1);
@@ -265,7 +265,7 @@ scissor_uptodate:
 			so_data (so, 0x2a712488);
 			so_reloc(so, mt->buffer, 0, NOUVEAU_BO_VRAM |
 				     NOUVEAU_BO_LOW, 0, 0);
-			so_data (so, 0xd0c05000);
+			so_data (so, 0xd0005000);
 			so_data (so, 0x00300000);
 			so_data (so, mt->base.width[0]);
 			so_data (so, (mt->base.depth[0] << 16) |
