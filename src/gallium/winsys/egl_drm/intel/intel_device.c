@@ -55,7 +55,7 @@ intel_create_device(struct egl_drm_device *device)
 
 	intel_device->deviceID = device->deviceID;
 
-	intel_be_init_device(&intel_device->base, device->drmFD, PCI_CHIP_I945_GM);
+	intel_be_init_device(&intel_device->base, device->drmFD, intel_device->deviceID);
 
 	intel_device->pipe = i915_create_screen(&intel_device->base.base, intel_device->deviceID);
 
