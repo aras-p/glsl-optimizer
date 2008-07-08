@@ -128,7 +128,6 @@ _mesa_DeleteObjectARB(GLhandleARB obj)
 void GLAPIENTRY
 _mesa_DeleteProgram(GLuint name)
 {
-   printf("%s name=%u\n", __FUNCTION__, name);
    if (name) {
       GET_CURRENT_CONTEXT(ctx);
       ctx->Driver.DeleteProgram2(ctx, name);
