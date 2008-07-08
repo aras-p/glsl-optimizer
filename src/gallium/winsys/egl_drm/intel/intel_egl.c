@@ -24,6 +24,8 @@
 
 #include "state_tracker/st_public.h"
 
+#define MAX_SCREENS 16
+
 static void
 drm_get_device_id(struct egl_drm_device *device)
 {
@@ -66,11 +68,17 @@ egl_drm_create_device(int drmFD)
 
 __GLcontextModes* _gl_context_modes_create( unsigned count, size_t minimum_size );
 
+struct drm_screen;
+
 struct drm_driver
 {
 	_EGLDriver base;  /* base class/object */
 
 	drmModeResPtr res;
+
+	struct drm_screen *screens[MAX_SCREENS];
+	size_t count_screens;
+
 	struct egl_drm_device *device;
 };
 
@@ -92,17 +100,26 @@ struct drm_screen
 {
 	_EGLScreen base;
 
-	/* backing buffer and crtc */
-	drmBO buffer;
-	drmModeFBPtr fb;
-	uint32_t fbID;
-	drmModeCrtcPtr crtc;
-
 	/* currently only support one connector */
 	drmModeConnectorPtr connector;
-	drmModeEncoderPtr encoder;
 	uint32_t connectorID;
-	uint32_t encoderID;
+
+	/* Has this screen been shown */
+	int shown;
+
+	/* Surface that is currently attached to this screen */
+	struct drm_surface *surf;
+
+	/* backing buffer */
+	drmBO buffer;
+
+	/* framebuffer */
+	drmModeFBPtr fb;
+	uint32_t fbID;
+
+	/* crtc and mode used */
+	drmModeCrtcPtr crtc;
+	uint32_t crtcID;
 
 	struct drm_mode_modeinfo *mode;
 
@@ -139,6 +156,7 @@ drm_initialize(_EGLDriver *drv, EGLDisplay dpy, EGLint *major, EGLint *minor)
 	drmModeConnectorPtr connector = NULL;
 	drmModeResPtr res = NULL;
 	unsigned count_connectors = 0;
+	int num_screens = 0;
 
 	EGLint i;
 	int fd;
@@ -159,13 +177,13 @@ drm_initialize(_EGLDriver *drv, EGLDisplay dpy, EGLint *major, EGLint *minor)
 	if (res)
 		count_connectors = res->count_connectors;
 
-	for(i = 0; i < count_connectors; i++) {
+	for(i = 0; i < count_connectors && i < MAX_SCREENS; i++) {
 		connector = drmModeGetConnector(fd, res->connectors[i]);
 
 		if (!connector)
 			continue;
 
-		if (connector->connection == DRM_MODE_DISCONNECTED) {
+		if (connector->connection != DRM_MODE_CONNECTED) {
 			drmModeFreeConnector(connector);
 			continue;
 		}
@@ -177,7 +195,9 @@ drm_initialize(_EGLDriver *drv, EGLDisplay dpy, EGLint *major, EGLint *minor)
 		_eglInitScreen(&screen->base);
 		_eglAddScreen(disp, &screen->base);
 		drm_add_modes_from_connector(&screen->base, connector);
+		drm_drv->screens[num_screens++] = screen;
 	}
+	drm_drv->count_screens = num_screens;
 
 	/* for now we only have one config */
 	_EGLConfig *config = calloc(1, sizeof(*config));
@@ -201,14 +221,51 @@ drm_initialize(_EGLDriver *drv, EGLDisplay dpy, EGLint *major, EGLint *minor)
 	return EGL_TRUE;
 }
 
+static void
+drm_takedown_shown_screen(_EGLDriver *drv, struct drm_screen *screen)
+{
+	struct drm_driver *drm_drv = (struct drm_driver *)drv;
+
+	intel_bind_frontbuffer(screen->surf->drawable, NULL);
+	screen->surf = NULL;
+
+	drmModeSetCrtc(
+		drm_drv->device->drmFD,
+		drm_drv->res->crtcs[1],
+		0, // FD
+		0, 0,
+		NULL, 0, // List of output ids
+		NULL);
+
+	drmModeRmFB(drm_drv->device->drmFD, screen->fbID);
+	drmModeFreeFB(screen->fb);
+	screen->fb = NULL;
+
+	drmBOUnreference(drm_drv->device->drmFD, &screen->buffer);
+
+	screen->shown = 0;
+}
 
 static EGLBoolean
 drm_terminate(_EGLDriver *drv, EGLDisplay dpy)
 {
 	struct drm_driver *drm_drv = (struct drm_driver *)drv;
+	struct drm_screen *screen;
+	int i = 0;
 
 	intel_destroy_device(drm_drv->device);
 	drmFreeVersion(drm_drv->device->version);
+
+	for (i = 0; i < drm_drv->count_screens; i++) {
+		screen = drm_drv->screens[i];
+
+		if (screen->shown)
+			drm_takedown_shown_screen(drv, screen);
+
+		drmModeFreeConnector(screen->connector);
+		_eglDestroyScreen(&screen->base);
+		drm_drv->screens[i] = NULL;
+	}
 
 	drmClose(drm_drv->device->drmFD);
 
@@ -507,7 +564,8 @@ drm_show_screen_surface_mesa(_EGLDriver *drv, EGLDisplay dpy,
 	size_t size = mode->Height * pitch;
 	int ret;
 
-	/* TODO if allready shown take down */
+	if (scrn->shown)
+		drm_takedown_shown_screen(drv, scrn);
 
 	ret = drmBOCreate(drm_drv->device->drmFD, size, 0, 0,
 		DRM_BO_FLAG_READ |
@@ -552,7 +610,10 @@ drm_show_screen_surface_mesa(_EGLDriver *drv, EGLDisplay dpy,
 	scrn->front.width = mode->Width;
 	scrn->front.height = mode->Height;
 
+	scrn->surf = surf;
 	intel_bind_frontbuffer(surf->drawable, &scrn->front);
+
+	scrn->shown = 1;
 
 	return EGL_TRUE;
 
