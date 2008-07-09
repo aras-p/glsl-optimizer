@@ -120,38 +120,28 @@ nv30_sampler_state_create(struct pipe_context *pipe,
 	ps = MALLOC(sizeof(struct nv30_sampler_state));
 
 	ps->fmt = 0;
+	/* TODO: Not all RECTs formats have this bit set, bits 15-8 of format
+	   are the tx format to use. We should store normalized coord flag
+	   in sampler state structure, and set appropriate format in
+	   nvxx_fragtex_build()
+	 */
 	if (!cso->normalized_coords)
-		ps->fmt |= NV34TCL_TX_FORMAT_RECT;
+		ps->fmt |= (1<<14) /*NV34TCL_TX_FORMAT_RECT*/;
 
 	ps->wrap = ((wrap_mode(cso->wrap_s) << NV34TCL_TX_WRAP_S_SHIFT) |
 		    (wrap_mode(cso->wrap_t) << NV34TCL_TX_WRAP_T_SHIFT) |
 		    (wrap_mode(cso->wrap_r) << NV34TCL_TX_WRAP_R_SHIFT));
 
 	ps->en = 0;
-	if (cso->max_anisotropy >= 2.0) {
-		/* no idea, binary driver sets it, works without it.. meh.. */
-		ps->wrap |= (1 << 5);
 
-/*		if (cso->max_anisotropy >= 16.0) {
-			ps->en |= NV34TCL_TX_ENABLE_ANISO_16X;
-		} else
-		if (cso->max_anisotropy >= 12.0) {
-			ps->en |= NV34TCL_TX_ENABLE_ANISO_12X;
-		} else
-		if (cso->max_anisotropy >= 10.0) {
-			ps->en |= NV34TCL_TX_ENABLE_ANISO_10X;
-		} else
-		if (cso->max_anisotropy >= 8.0) {
-			ps->en |= NV34TCL_TX_ENABLE_ANISO_8X;
-		} else
-		if (cso->max_anisotropy >= 6.0) {
-			ps->en |= NV34TCL_TX_ENABLE_ANISO_6X;
-		} else
-		if (cso->max_anisotropy >= 4.0) {
-			ps->en |= NV34TCL_TX_ENABLE_ANISO_4X;
-		} else {
-			ps->en |= NV34TCL_TX_ENABLE_ANISO_2X;
-		}*/
+	if (cso->max_anisotropy >= 8.0) {
+		ps->en |= NV34TCL_TX_ENABLE_ANISO_8X;
+	} else
+	if (cso->max_anisotropy >= 4.0) {
+		ps->en |= NV34TCL_TX_ENABLE_ANISO_4X;
+	} else
+	if (cso->max_anisotropy >= 2.0) {
+		ps->en |= NV34TCL_TX_ENABLE_ANISO_2X;
 	}
 
 	switch (cso->mag_img_filter) {
@@ -198,7 +188,7 @@ nv30_sampler_state_create(struct pipe_context *pipe,
 
 	ps->filt = filter;
 
-	/*{
+	{
 		float limit;
 
 		limit = CLAMP(cso->lod_bias, -16.0, 15.0);
@@ -209,9 +199,9 @@ nv30_sampler_state_create(struct pipe_context *pipe,
 
 		limit = CLAMP(cso->min_lod, 0.0, 15.0);
 		ps->en |= (int)(limit * 256.0) << 19;
-	}*/
+	}
 
-/*	if (cso->compare_mode == PIPE_TEX_COMPARE_R_TO_TEXTURE) {
+	if (cso->compare_mode == PIPE_TEX_COMPARE_R_TO_TEXTURE) {
 		switch (cso->compare_func) {
 		case PIPE_FUNC_NEVER:
 			ps->wrap |= NV34TCL_TX_WRAP_RCOMP_NEVER;
@@ -240,7 +230,7 @@ nv30_sampler_state_create(struct pipe_context *pipe,
 		default:
 			break;
 		}
-	}*/
+	}
 
 	ps->bcol = ((float_to_ubyte(cso->border_color[3]) << 24) |
 		    (float_to_ubyte(cso->border_color[0]) << 16) |
