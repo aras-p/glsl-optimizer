@@ -96,11 +96,11 @@ nv30_fragtex_build(struct nv30_context *nv30, int unit)
 	}
 
 	txf  = tf->format << 8;
-	txf |= (pt->last_level + 1) << 16;
+	txf |= ((pt->last_level>0) ? NV34TCL_TX_FORMAT_MIPMAP : 0);
 	txf |= log2i(pt->width[0]) << 20;
 	txf |= log2i(pt->height[0]) << 24;
 	txf |= log2i(pt->depth[0]) << 28;
-	txf |= NV34TCL_TX_FORMAT_NO_BORDER;
+	txf |= NV34TCL_TX_FORMAT_NO_BORDER | 0x10000;
 
 	switch (pt->target) {
 	case PIPE_TEXTURE_CUBE:
