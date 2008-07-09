@@ -27,6 +27,8 @@ OBJECTS = $(SOURCES:.c=.o)
 
 DRM_LIB = `pkg-config --libs libdrm`
 
+MISC_LIBS = -ldl -lXext -lGL
+
 
 .c.o:
 	$(CC) -c $(INCLUDE_DIRS) $(CFLAGS) $< -o $@
@@ -47,7 +49,7 @@ $(TOP)/$(LIB_DIR)/$(DRIVER_NAME): $(OBJECTS)
 		-noprefix \
 		-major 1 -minor 0 \
 		-install $(TOP)/$(LIB_DIR) \
-		-ldl $(OBJECTS) $(DRM_LIB)
+		$(OBJECTS) $(DRM_LIB) $(MISC_LIBS)
 
 
 clean:
