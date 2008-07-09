@@ -87,6 +87,7 @@ nv30_fragtex_build(struct nv30_context *nv30, int unit)
 	struct nv30_texture_format *tf;
 	uint32_t txf, txs, txp;
 	int swizzled = 0; /*XXX: implement in region code? */
+	unsigned tex_flags = NOUVEAU_BO_VRAM | NOUVEAU_BO_GART | NOUVEAU_BO_RD;
 
 	tf = nv30_fragtex_format(pt->format);
 	if (!tf || !tf->defined) {
@@ -99,20 +100,20 @@ nv30_fragtex_build(struct nv30_context *nv30, int unit)
 	txf |= log2i(pt->width[0]) << 20;
 	txf |= log2i(pt->height[0]) << 24;
 	txf |= log2i(pt->depth[0]) << 28;
-	txf |= 8;
+	txf |= NV34TCL_TX_FORMAT_NO_BORDER;
 
 	switch (pt->target) {
-/*	case PIPE_TEXTURE_CUBE:
-		txf |= NV34TCL_TEX_FORMAT_CUBIC;*/
+	case PIPE_TEXTURE_CUBE:
+		txf |= NV34TCL_TX_FORMAT_CUBIC;
 		/* fall-through */
 	case PIPE_TEXTURE_2D:
-		txf |= (2<<4);
+		txf |= NV34TCL_TX_FORMAT_DIMS_2D;
 		break;
 	case PIPE_TEXTURE_3D:
-		txf |= (3<<4);
+		txf |= NV34TCL_TX_FORMAT_DIMS_3D;
 		break;
 	case PIPE_TEXTURE_1D:
-		txf |= (1<<4);
+		txf |= NV34TCL_TX_FORMAT_DIMS_1D;
 		break;
 	default:
 		NOUVEAU_ERR("Unknown target %d\n", pt->target);
@@ -122,13 +123,13 @@ nv30_fragtex_build(struct nv30_context *nv30, int unit)
 	txs = tf->swizzle;
 
 	BEGIN_RING(rankine, NV34TCL_TX_OFFSET(unit), 8);
-	OUT_RELOCl(nv30mt->buffer, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_GART | NOUVEAU_BO_RD);
-	OUT_RELOCd(nv30mt->buffer,txf,NOUVEAU_BO_VRAM | NOUVEAU_BO_GART | NOUVEAU_BO_OR | NOUVEAU_BO_RD, 1/*VRAM*/,2/*TT*/);
+	OUT_RELOCl(nv30mt->buffer, 0, tex_flags | NOUVEAU_BO_LOW);
+	OUT_RELOCd(nv30mt->buffer,txf, tex_flags | NOUVEAU_BO_RD, 1/*VRAM*/,2/*TT*/);
 	OUT_RING  (ps->wrap);
-	OUT_RING  (0x40000000); /* enable */
+	OUT_RING  (NV34TCL_TX_ENABLE_ENABLE | ps->en);
 	OUT_RING  (txs);
 	OUT_RING  (ps->filt | 0x2000 /* magic */);
-	OUT_RING  ((pt->width[0] << 16) | pt->height[0]);
+	OUT_RING  ((pt->width[0] << NV34TCL_TX_NPOT_SIZE_W_SHIFT) | pt->height[0]);
 	OUT_RING  (ps->bcol);
 }
 
