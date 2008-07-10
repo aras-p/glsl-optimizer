@@ -189,13 +189,13 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 	so_data  (so, 1);
 	so_method(so, screen->tesla, NV50TCL_DMA_NOTIFY, 1);
 	so_data  (so, screen->sync->handle);
-	so_method(so, screen->tesla, NV50TCL_DMA_IN_MEMORY0(0),
-		  NV50TCL_DMA_IN_MEMORY0__SIZE);
-	for (i = 0; i < NV50TCL_DMA_IN_MEMORY0__SIZE; i++)
+	so_method(so, screen->tesla, NV50TCL_DMA_UNK0(0),
+				     NV50TCL_DMA_UNK0__SIZE);
+	for (i = 0; i < NV50TCL_DMA_UNK0__SIZE; i++)
 		so_data(so, nvws->channel->vram->handle);
-	so_method(so, screen->tesla, NV50TCL_DMA_IN_MEMORY1(0),
-		  NV50TCL_DMA_IN_MEMORY1__SIZE);
-	for (i = 0; i < NV50TCL_DMA_IN_MEMORY1__SIZE; i++)
+	so_method(so, screen->tesla, NV50TCL_DMA_UNK1(0),
+				     NV50TCL_DMA_UNK1__SIZE);
+	for (i = 0; i < NV50TCL_DMA_UNK1__SIZE; i++)
 		so_data(so, nvws->channel->vram->handle);
 	so_method(so, screen->tesla, 0x121c, 1);
 	so_data  (so, 1);
