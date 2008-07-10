@@ -574,7 +574,8 @@ init_drm(struct xdri_egl_driver *xdri_drv, _EGLDisplay *disp)
 
       for (m = modes; m; m = m->next) {
          _eglLog(_EGL_DEBUG,
-                 "mode ID 0x%x rgba %d %d %d %d  z %d  s %d  db %d\n", m->visualID,
+                 "mode ID 0x%x rgba %d %d %d %d  z %d  s %d  db %d\n",
+                 m->visualID,
                  m->redBits, m->greenBits, m->blueBits, m->alphaBits,
                  m->depthBits, m->stencilBits, m->doubleBufferMode);
       }
@@ -584,6 +585,15 @@ init_drm(struct xdri_egl_driver *xdri_drv, _EGLDisplay *disp)
 }
 
 
+/**
+ * Load the DRI driver named by "xdri_drv->dri_driver_name".
+ * Basically, dlopen() the library to set "xdri_drv->dri_driver_handle".
+ *
+ * Later, we'll call dlsym(createNewScreenName) to get a pointer to
+ * the driver's createNewScreen() function which is the bootstrap function.
+ *
+ * \return EGL_TRUE for success, EGL_FALSE for failure
+ */
 static EGLBoolean
 load_dri_driver(struct xdri_egl_driver *xdri_drv)
 {
@@ -678,6 +688,9 @@ xdri_eglTerminate(_EGLDriver *drv, EGLDisplay dpy)
 }
 
 
+/*
+ * Called from eglGetProcAddress() via drv->API.GetProcAddress().
+ */
 static _EGLProc
 xdri_eglGetProcAddress(const char *procname)
 {
@@ -688,8 +701,17 @@ xdri_eglGetProcAddress(const char *procname)
    /*_EGLDisplay *disp = _eglLookupDisplay(dpy);*/
    _EGLProc *proc = xdri_drv->driScreen.getProcAddress(procname);
    return proc;
-#elif 0
-   return (_EGLProc) st_get_proc_address(procname);
+#elif 1
+   /* This is a bit of a hack to get at the gallium/Mesa state tracker
+    * function st_get_proc_address().  This will probably change at
+    * some point.
+    */
+   _EGLProc (*st_get_proc_addr)(const char *procname);
+   st_get_proc_addr = dlsym(NULL, "st_get_proc_address");
+   if (st_get_proc_addr) {
+      return st_get_proc_addr(procname);
+   }
+   return NULL;   
 #else
    return NULL;
 #endif
