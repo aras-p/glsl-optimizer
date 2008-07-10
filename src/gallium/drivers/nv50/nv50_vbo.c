@@ -204,11 +204,11 @@ nv50_vbo_validate(struct nv50_context *nv50)
 		so_method(vtxbuf, tesla, 0x900 + (i * 16), 3);
 		so_data  (vtxbuf, 0x20000000 | vb->pitch);
 		so_reloc (vtxbuf, vb->buffer, vb->buffer_offset +
-			  ve->src_offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD |
-			  NOUVEAU_BO_HIGH, 0, 0);
+			  ve->src_offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_GART |
+			  NOUVEAU_BO_RD | NOUVEAU_BO_HIGH, 0, 0);
 		so_reloc (vtxbuf, vb->buffer, vb->buffer_offset +
-			  ve->src_offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD |
-			  NOUVEAU_BO_LOW, 0, 0);
+			  ve->src_offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_GART |
+			  NOUVEAU_BO_RD | NOUVEAU_BO_LOW, 0, 0);
 	}
 
 	so_ref (vtxfmt, &nv50->state.vtxfmt);
