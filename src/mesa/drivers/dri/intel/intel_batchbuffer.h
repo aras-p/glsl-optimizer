@@ -118,8 +118,10 @@ intel_batchbuffer_require_space(struct intel_batchbuffer *batch,
       if (batch->cliprect_mode == IGNORE_CLIPRECTS) {
 	 batch->cliprect_mode = cliprect_mode;
       } else {
-	 if (batch->cliprect_mode != cliprect_mode)
+	 if (batch->cliprect_mode != cliprect_mode) {
 	    intel_batchbuffer_flush(batch);
+	    batch->cliprect_mode = cliprect_mode;
+	 }
       }
    }
 }

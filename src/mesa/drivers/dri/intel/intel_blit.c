@@ -123,7 +123,8 @@ intelCopyBuffer(const __DRIdrawablePrivate * dPriv,
 	 dst_pitch /= 4;
       }
 #endif
-
+      /* do space/cliprects check before going any further */
+      intel_batchbuffer_require_space(intel->batch, 8 * 4, REFERENCES_CLIPRECTS);
    again:
       ret = dri_bufmgr_check_aperture_space(dst->buffer);
       ret |= dri_bufmgr_check_aperture_space(src->buffer);
@@ -278,6 +279,8 @@ intelEmitCopyBlit(struct intel_context *intel,
    int ret;
    BATCH_LOCALS;
 
+   /* do space/cliprects check before going any further */
+   intel_batchbuffer_require_space(intel->batch, 8 * 4, NO_LOOP_CLIPRECTS);
  again:
    ret = dri_bufmgr_check_aperture_space(dst_buffer);
    ret |= dri_bufmgr_check_aperture_space(src_buffer);
