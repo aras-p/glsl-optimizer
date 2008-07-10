@@ -68,7 +68,7 @@ PROGRAM_DIRS = demos redbook samples glsl xdemos
 
 
 # Gallium directories and 
-GALLIUM_AUXILIARY_DIRS = draw cso_cache pipebuffer tgsi sct translate rtasm util
+GALLIUM_AUXILIARY_DIRS = draw util translate cso_cache pipebuffer tgsi sct rtasm
 GALLIUM_AUXILIARIES = $(foreach DIR,$(GALLIUM_AUXILIARY_DIRS),$(TOP)/src/gallium/auxiliary/$(DIR)/lib$(DIR).a)
 GALLIUM_DRIVER_DIRS = softpipe i915simple i965simple failover
 GALLIUM_WINSYS_COMMON_DIRS =
