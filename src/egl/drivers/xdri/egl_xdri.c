@@ -909,7 +909,10 @@ _eglMain(_EGLDisplay *disp, const char *args)
    xdri_drv->Base.API.DestroySurface = xdri_eglDestroySurface;
    xdri_drv->Base.API.SwapBuffers = xdri_eglSwapBuffers;
 
-   xdri_drv->Base.ClientAPIsMask = EGL_OPENGL_BIT | EGL_OPENGL_ES_BIT;
+   xdri_drv->Base.ClientAPIsMask = (EGL_OPENGL_BIT |
+                                    EGL_OPENGL_ES_BIT |
+                                    EGL_OPENGL_ES2_BIT |
+                                    EGL_OPENVG_BIT);
    xdri_drv->Base.Name = "X/DRI";
 
    _eglLog(_EGL_DEBUG, "XDRI: main(%s)", args);
