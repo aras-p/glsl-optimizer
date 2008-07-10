@@ -98,6 +98,7 @@ st_create_context_priv( GLcontext *ctx, struct pipe_context *pipe )
    /* state tracker needs the VBO module */
    _vbo_CreateContext(ctx);
 
+#if FEATURE_feedback || FEATURE_drawpix
    st->draw = draw_create(); /* for selection/feedback */
 
    /* Disable draw options that might convert points/lines to tris, etc.
@@ -107,6 +108,7 @@ st_create_context_priv( GLcontext *ctx, struct pipe_context *pipe )
    draw_wide_point_threshold(st->draw, 1000.0f);
    draw_enable_line_stipple(st->draw, FALSE);
    draw_enable_point_sprites(st->draw, FALSE);
+#endif
 
    st->dirty.mesa = ~0;
    st->dirty.st = ~0;
@@ -164,7 +166,9 @@ static void st_destroy_context_priv( struct st_context *st )
 {
    uint i;
 
+#if FEATURE_feedback || FEATURE_drawpix
    draw_destroy(st->draw);
+#endif
    st_destroy_atoms( st );
    st_destroy_draw( st );
    st_destroy_generate_mipmap(st);
