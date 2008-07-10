@@ -27,7 +27,7 @@
 
 #include "i915simple/i915_screen.h"
 
-#include "intel_screen.h"
+#include "intel_device.h"
 #include "intel_context.h"
 #include "intel_batchbuffer.h"
 
@@ -147,13 +147,13 @@ int
 intel_create_context(struct egl_drm_context *egl_context, const __GLcontextModes *visual, void *sharedContextPrivate)
 {
 	struct intel_context *intel = CALLOC_STRUCT(intel_context);
-	struct intel_screen *screen = (struct intel_screen *)egl_context->device->priv;
+	struct intel_device *device = (struct intel_device *)egl_context->device->priv;
 	struct pipe_context *pipe;
 	struct st_context *st_share = NULL;
 
 	egl_context->priv = intel;
 
-	intel->intel_screen = screen;
+	intel->intel_device = device;
 	intel->egl_context = egl_context;
 	intel->egl_device = egl_context->device;
 
@@ -161,20 +161,34 @@ intel_create_context(struct egl_drm_context *egl_context, const __GLcontextModes
 	intel->base.hardware_unlock = intel_unlock_hardware;
 	intel->base.hardware_locked = intel_locked_hardware;
 
-	intel_be_init_context(&intel->base, &screen->base);
+	intel_be_init_context(&intel->base, &device->base);
 
 #if 0
 	pipe = intel_create_softpipe(intel, screen->winsys);
 #else
-	pipe = i915_create_context(screen->pipe, &screen->base.base, &intel->base.base);
+	pipe = i915_create_context(device->pipe, &device->base.base, &intel->base.base);
 #endif
 
 	pipe->priv = intel;
 
 	intel->st = st_create_context(pipe, visual, st_share);
 
-	screen->dummy = intel;
+	device->dummy = intel;
 
+	return TRUE;
+}
+
+int
+intel_destroy_context(struct egl_drm_context *egl_context)
+{
+	struct intel_context *intel = egl_context->priv;
+
+	if (intel->intel_device->dummy == intel)
+		intel->intel_device->dummy = NULL;
+
+	st_destroy_context(intel->st);
+	intel_be_destroy_context(&intel->base);
+	free(intel);
 	return TRUE;
 }
 
@@ -206,7 +220,7 @@ intel_make_current(struct egl_drm_context *context, struct egl_drm_drawable *dra
 void
 intel_bind_frontbuffer(struct egl_drm_drawable *draw, struct egl_drm_frontbuffer *front)
 {
-	struct intel_screen *intelScreen = (struct intel_screen *)draw->device->priv;
+	struct intel_device *device = (struct intel_device *)draw->device->priv;
 	struct intel_framebuffer *draw_fb = (struct intel_framebuffer *)draw->priv;
 
 	if (draw_fb->front_buffer)
@@ -221,7 +235,7 @@ intel_bind_frontbuffer(struct egl_drm_drawable *draw, struct egl_drm_frontbuffer
 
 	draw_fb->front = front;
 
-	driGenBuffers(intelScreen->base.staticPool, "front", 1, &draw_fb->front_buffer, 0, 0, 0);
+	driGenBuffers(device->base.staticPool, "front", 1, &draw_fb->front_buffer, 0, 0, 0);
 	driBOSetReferenced(draw_fb->front_buffer, front->handle);
 
 	st_resize_framebuffer(draw_fb->stfb, draw->w, draw->h);

@@ -25,7 +25,7 @@
  *
  **************************************************************************/
 
-#include "intel_screen.h"
+#include "intel_device.h"
 #include "intel_context.h"
 #include "intel_batchbuffer.h"
 #include "intel_reg.h"
@@ -69,7 +69,7 @@ intel_display_surface(struct egl_drm_drawable *draw,
 	//const int srcWidth = surf->width;
 	//const int srcHeight = surf->height;
 
-	intel = intel_fb->screen->dummy;
+	intel = intel_fb->device->dummy;
 	if (!intel) {
 		printf("No dummy context\n");
 		return;

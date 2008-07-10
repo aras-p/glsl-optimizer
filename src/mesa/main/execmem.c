@@ -36,7 +36,7 @@
 
 
 
-#if defined(__linux__)
+#if defined(__linux__) || defined(__OpenBSD__)
 
 /*
  * Allocate a large block of memory which can hold code then dole it out
@@ -46,6 +46,16 @@
 #include <unistd.h>
 #include <sys/mman.h>
 #include "mm.h"
+
+#ifdef MESA_SELINUX
+#include <selinux/selinux.h>
+#endif
+
+
+#ifndef MAP_ANONYMOUS
+#define MAP_ANONYMOUS MAP_ANON
+#endif
+
 
 #define EXEC_HEAP_SIZE (10*1024*1024)
 

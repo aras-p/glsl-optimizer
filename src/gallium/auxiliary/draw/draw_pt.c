@@ -37,6 +37,8 @@
 
 static unsigned trim( unsigned count, unsigned first, unsigned incr )
 {
+   if (count < first)
+      return 0;
    return count - (count - first) % incr; 
 }
 

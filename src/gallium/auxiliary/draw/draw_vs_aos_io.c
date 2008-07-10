@@ -184,7 +184,6 @@ boolean aos_fetch_inputs( struct aos_compilation *cp, boolean linear )
       if (!load_input( cp, i, linear ))
          return FALSE;
       cp->insn_counter++;
-      debug_printf("\n");
    }
 
    return TRUE;
@@ -316,7 +315,6 @@ boolean aos_emit_outputs( struct aos_compilation *cp )
       aos_release_xmm_reg( cp, data.idx );
 
       cp->insn_counter++;
-      debug_printf("\n");
    }
 
    return TRUE;

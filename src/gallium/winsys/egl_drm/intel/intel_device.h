@@ -36,7 +36,7 @@ struct pipe_screen;
 struct egl_drm_device;
 struct intel_context;
 
-struct intel_screen
+struct intel_device
 {
 	struct intel_be_device base;
 	struct pipe_screen *pipe;

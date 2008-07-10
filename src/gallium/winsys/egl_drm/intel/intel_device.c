@@ -32,7 +32,7 @@
 #include "i915simple/i915_screen.h"
 
 #include "intel_context.h"
-#include "intel_screen.h"
+#include "intel_device.h"
 #include "intel_batchbuffer.h"
 #include "intel_egl.h"
 
@@ -41,27 +41,39 @@ extern const struct dri_extension card_extensions[];
 
 
 int
-intel_init_driver(struct egl_drm_device *device)
+intel_create_device(struct egl_drm_device *device)
 {
-	struct intel_screen *intel_screen;
+	struct intel_device *intel_device;
 
 	/* Allocate the private area */
-	intel_screen = CALLOC_STRUCT(intel_screen);
-	if (!intel_screen)
+	intel_device = CALLOC_STRUCT(intel_device);
+	if (!intel_device)
 		return FALSE;
 
-	device->priv = (void *)intel_screen;
-	intel_screen->device = device;
+	device->priv = (void *)intel_device;
+	intel_device->device = device;
 
-	/** TODO JB: ugly hack */
-	intel_screen->deviceID = PCI_CHIP_I945_GM;
+	intel_device->deviceID = device->deviceID;
 
-	intel_be_init_device(&intel_screen->base, device->drmFD, PCI_CHIP_I945_GM);
+	intel_be_init_device(&intel_device->base, device->drmFD, intel_device->deviceID);
 
-	intel_screen->pipe = i915_create_screen(&intel_screen->base.base, intel_screen->deviceID);
+	intel_device->pipe = i915_create_screen(&intel_device->base.base, intel_device->deviceID);
 
 	/* hack */
 	driInitExtensions(NULL, card_extensions, GL_FALSE);
+
+	return TRUE;
+}
+
+int
+intel_destroy_device(struct egl_drm_device *device)
+{
+	struct intel_device *intel_device = (struct intel_device *)device->priv;
+	
+	intel_be_destroy_device(&intel_device->base);
+
+	free(intel_device);
+	device->priv = NULL;
 
 	return TRUE;
 }
@@ -76,7 +88,7 @@ intel_create_drawable(struct egl_drm_drawable *drawable,
 	if (!intelfb)
 		return GL_FALSE;
 
-	intelfb->screen = drawable->device->priv;
+	intelfb->device = drawable->device->priv;
 
 	if (visual->redBits == 5)
 		colorFormat = PIPE_FORMAT_R5G6B5_UNORM;
@@ -108,6 +120,18 @@ intel_create_drawable(struct egl_drm_drawable *drawable,
 		return GL_FALSE;
 	}
 
-   drawable->priv = (void *) intelfb;
-   return GL_TRUE;
+	drawable->priv = (void *) intelfb;
+	return GL_TRUE;
+}
+
+int
+intel_destroy_drawable(struct egl_drm_drawable *drawable)
+{
+	struct intel_framebuffer *intelfb = (struct intel_framebuffer *)drawable->priv;
+	drawable->priv = NULL;
+
+	assert(intelfb->stfb);
+	st_unreference_framebuffer(&intelfb->stfb);
+	free(intelfb);
+	return TRUE;
 }

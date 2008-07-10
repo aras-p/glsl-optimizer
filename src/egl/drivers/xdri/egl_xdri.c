@@ -118,6 +118,10 @@ struct xdri_egl_config
 };
 
 
+/* XXX temp hack */
+static struct xdri_egl_driver *TheDriver = NULL;
+
+
 /** cast wrapper */
 static struct xdri_egl_driver *
 xdri_egl_driver(_EGLDriver *drv)
@@ -152,6 +156,21 @@ lookup_config(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config)
    return (struct xdri_egl_config *) conf;
 }
 
+
+
+/** Get size of given window */
+static Status
+get_drawable_size(Display *dpy, Drawable d, uint *width, uint *height)
+{
+   Window root;
+   Status stat;
+   int xpos, ypos;
+   unsigned int w, h, bw, depth;
+   stat = XGetGeometry(dpy, d, &root, &xpos, &ypos, &w, &h, &bw, &depth);
+   *width = w;
+   *height = h;
+   return stat;
+}
 
 
 /**
@@ -273,24 +292,25 @@ dri_context_modes_create(unsigned count, size_t minimum_size)
 static __DRIscreen *
 dri_find_dri_screen(__DRInativeDisplay *ndpy, int scrn)
 {
-   /* unused? */
-   return NULL;
+   assert(TheDriver);
+
+   return &TheDriver->driScreen;
 }
 
 
 static GLboolean
-dri_window_exists(__DRInativeDisplay *dpy, __DRIid draw)
+dri_window_exists(__DRInativeDisplay *ndpy, __DRIid draw)
 {
    return EGL_TRUE;
 }
 
 
 static GLboolean
-dri_create_context(__DRInativeDisplay *dpy, int screenNum, int configID,
+dri_create_context(__DRInativeDisplay *ndpy, int screenNum, int configID,
                    void * contextID, drm_context_t * hw_context)
 {
    assert(configID >= 0);
-   return XF86DRICreateContextWithConfig(dpy, screenNum,
+   return XF86DRICreateContextWithConfig(ndpy, screenNum,
                                          configID, contextID, hw_context);
 }
 
@@ -325,7 +345,7 @@ dri_destroy_drawable(__DRInativeDisplay * ndpy, int screen, __DRIid drawable)
 
 
 static GLboolean
-dri_get_drawable_info(__DRInativeDisplay *dpy, int scrn,
+dri_get_drawable_info(__DRInativeDisplay *ndpy, int scrn,
                       __DRIid draw, unsigned int * index, unsigned int * stamp,
                       int * x, int * y, int * width, int * height,
                       int * numClipRects, drm_clip_rect_t ** pClipRects,
@@ -335,7 +355,7 @@ dri_get_drawable_info(__DRInativeDisplay *dpy, int scrn,
 {
    _eglLog(_EGL_DEBUG, "XDRI: %s", __FUNCTION__);
 
-   if (!XF86DRIGetDrawableInfo(dpy, scrn, draw, index, stamp,
+   if (!XF86DRIGetDrawableInfo(ndpy, scrn, draw, index, stamp,
                                x, y, width, height,
                                numClipRects, pClipRects,
                                backX, backY,
@@ -570,17 +590,29 @@ load_dri_driver(struct xdri_egl_driver *xdri_drv)
    char filename[100];
    int flags = RTLD_NOW;
 
+   /* try "egl_xxx_dri.so" first */
+   snprintf(filename, sizeof(filename), "egl_%s.so", xdri_drv->dri_driver_name);
+   _eglLog(_EGL_DEBUG, "XDRI: dlopen(%s)", filename);
+   xdri_drv->dri_driver_handle = dlopen(filename, flags);
+   if (xdri_drv->dri_driver_handle) {
+      _eglLog(_EGL_DEBUG, "XDRI: dlopen(%s) OK", filename);
+      return EGL_TRUE;
+   }
+   else {
+      _eglLog(_EGL_DEBUG, "XDRI: dlopen(%s) fail (%s)", filename, dlerror());
+   }
+
+   /* try regular "xxx_dri.so" next */
    snprintf(filename, sizeof(filename), "%s.so", xdri_drv->dri_driver_name);
    _eglLog(_EGL_DEBUG, "XDRI: dlopen(%s)", filename);
-
    xdri_drv->dri_driver_handle = dlopen(filename, flags);
-   if (!xdri_drv->dri_driver_handle) {
-      _eglLog(_EGL_WARNING, "XDRI Could not open %s (%s)",
-              filename, dlerror());
-
-      return EGL_FALSE;
+   if (xdri_drv->dri_driver_handle) {
+      _eglLog(_EGL_DEBUG, "XDRI: dlopen(%s) OK", filename);
+      return EGL_TRUE;
    }
-   return EGL_TRUE;
+
+   _eglLog(_EGL_WARNING, "XDRI Could not open %s (%s)", filename, dlerror());
+   return EGL_FALSE;
 }
 
 
@@ -643,6 +675,24 @@ xdri_eglTerminate(_EGLDriver *drv, EGLDisplay dpy)
    free((void*) xdri_drv->dri_driver_name);
 
    return EGL_TRUE;
+}
+
+
+static _EGLProc
+xdri_eglGetProcAddress(const char *procname)
+{
+#if 0
+   _EGLDriver *drv = NULL;
+
+   struct xdri_egl_driver *xdri_drv = xdri_egl_driver(drv);
+   /*_EGLDisplay *disp = _eglLookupDisplay(dpy);*/
+   _EGLProc *proc = xdri_drv->driScreen.getProcAddress(procname);
+   return proc;
+#elif 0
+   return (_EGLProc) st_get_proc_address(procname);
+#else
+   return NULL;
+#endif
 }
 
 
@@ -724,6 +774,7 @@ xdri_eglCreateWindowSurface(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
    _EGLDisplay *disp = _eglLookupDisplay(dpy);
    struct xdri_egl_surface *xdri_surf;
    int scrn = DefaultScreen(disp->Xdpy);
+   uint width, height;
 
    xdri_surf = CALLOC_STRUCT(xdri_egl_surface);
    if (!xdri_surf)
@@ -743,6 +794,10 @@ xdri_eglCreateWindowSurface(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
    xdri_surf->driDrawable = window;
 
    _eglSaveSurface(&xdri_surf->Base);
+
+   get_drawable_size(disp->Xdpy, window, &width, &height);
+   xdri_surf->Base.Width = width;
+   xdri_surf->Base.Height = height;
 
    _eglLog(_EGL_DEBUG,
            "XDRI: CreateWindowSurface win 0x%x  handle %d  hDrawable %d",
@@ -790,9 +845,8 @@ xdri_eglSwapBuffers(_EGLDriver *drv, EGLDisplay dpy, EGLSurface draw)
 
    {
       struct xdri_egl_surface *xdri_surf = lookup_surface(draw);
-      __GLXdisplayPrivate *priv = __glXInitialize(disp->Xdpy);
-      __GLXscreenConfigs *scrn = priv->screenConfigs;
-      __DRIscreen *psc = &scrn->driScreen;
+      struct xdri_egl_driver *xdri_drv = xdri_egl_driver(drv);
+      __DRIscreen *psc = &xdri_drv->driScreen;
       __DRIdrawable * const pdraw = psc->getDrawable(disp->Xdpy,
                                                      xdri_surf->driDrawable,
                                                      psc->private);
@@ -818,9 +872,14 @@ _eglMain(_EGLDisplay *disp, const char *args)
    if (!xdri_drv)
       return NULL;
 
+   /* XXX temp hack */
+   TheDriver = xdri_drv;
+
    _eglInitDriverFallbacks(&xdri_drv->Base);
    xdri_drv->Base.API.Initialize = xdri_eglInitialize;
    xdri_drv->Base.API.Terminate = xdri_eglTerminate;
+
+   xdri_drv->Base.API.GetProcAddress = xdri_eglGetProcAddress;
 
    xdri_drv->Base.API.CreateContext = xdri_eglCreateContext;
    xdri_drv->Base.API.MakeCurrent = xdri_eglMakeCurrent;

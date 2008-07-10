@@ -49,28 +49,22 @@ intelCreateSurface(struct intel_screen *intelScreen, struct pipe_winsys *winsys,
 static void
 intelCreateSurface(struct intel_screen *intelScreen, struct pipe_winsys *winsys, unsigned handle)
 {
-   struct intel_be_buffer *be_buf = malloc(sizeof(*be_buf));
    struct pipe_screen *screen = intelScreen->base.screen;
    struct pipe_texture *texture;
    struct pipe_texture templat;
    struct pipe_surface *surface;
-   struct pipe_buffer *buffer = &be_buf->base;
+   struct pipe_buffer *buffer;
    unsigned pitch;
 
    assert(intelScreen->front.cpp == 4);
 
-   /* XXX create a intel_be function for this */
-   {
-      driGenBuffers(intelScreen->base.staticPool, "front", 1, &intelScreen->front.buffer, 0, 0, 0);
-      driBOSetReferenced(intelScreen->front.buffer, handle);
+   buffer = intel_be_buffer_from_handle(&intelScreen->base,
+                                        "front", handle);
 
-      memset(be_buf, 0, sizeof(*be_buf));
-      buffer->refcount = 1;
-      buffer->alignment = 0;
-      buffer->usage = 0;
-      buffer->size = driBOSize(intelScreen->front.buffer);
-      be_buf->driBO = intelScreen->front.buffer;
-   }
+   if (!buffer)
+      return;
+
+   intelScreen->front.buffer = dri_bo(buffer);
 
    memset(&templat, 0, sizeof(templat));
    templat.tex_usage |= PIPE_TEXTURE_USAGE_DISPLAY_TARGET;

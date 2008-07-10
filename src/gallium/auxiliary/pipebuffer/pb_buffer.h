@@ -221,7 +221,7 @@ pb_check_alignment(size_t requested, size_t provided)
 static INLINE boolean
 pb_check_usage(unsigned requested, unsigned provided)
 {
-   return (requested & provided) == provided ? TRUE : FALSE;
+   return (requested & provided) == requested ? TRUE : FALSE;
 }
 
 

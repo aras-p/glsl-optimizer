@@ -362,7 +362,10 @@ st_choose_format(struct pipe_context *pipe, GLint internalFormat,
    case GL_RGBA12:
       return default_rgba_format( screen, surfType );
    case GL_RGBA16:
-      return default_deep_rgba_format( screen, surfType );
+      if (surfType == PIPE_SURFACE)
+         return default_deep_rgba_format( screen, surfType );
+      else
+         return default_rgba_format( screen, surfType );
 
    case GL_RGBA4:
    case GL_RGBA2:

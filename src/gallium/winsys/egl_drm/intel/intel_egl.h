@@ -2,10 +2,15 @@
 #ifndef _INTEL_EGL_H_
 #define _INTEL_EGL_H_
 
+#include <xf86drm.h>
+
 struct egl_drm_device
 {
 	void *priv;
 	int drmFD;
+
+	drmVersionPtr version;
+	int deviceID;
 };
 
 struct egl_drm_context
@@ -32,9 +37,15 @@ struct egl_drm_frontbuffer
 
 #include "GL/internal/glcore.h"
 
-int intel_init_driver(struct egl_drm_device *device);
+int intel_create_device(struct egl_drm_device *device);
+int intel_destroy_device(struct egl_drm_device *device);
+
 int intel_create_context(struct egl_drm_context *context, const __GLcontextModes *visual, void *sharedContextPrivate);
+int intel_destroy_context(struct egl_drm_context *context);
+
 int intel_create_drawable(struct egl_drm_drawable *drawable, const __GLcontextModes * visual);
+int intel_destroy_drawable(struct egl_drm_drawable *drawable);
+
 void intel_make_current(struct egl_drm_context *context, struct egl_drm_drawable *draw, struct egl_drm_drawable *read);
 void intel_swap_buffers(struct egl_drm_drawable *draw);
 void intel_bind_frontbuffer(struct egl_drm_drawable *draw, struct egl_drm_frontbuffer *front);

@@ -300,9 +300,8 @@ st_draw_vbo(GLcontext *ctx,
 
          vbuffer[attr].buffer = NULL;
          pipe_reference_buffer(pipe, &vbuffer[attr].buffer, stobj->buffer);
-         vbuffer[attr].buffer_offset = (unsigned) arrays[0]->Ptr;/* in bytes */
-         velements[attr].src_offset = arrays[mesaAttr]->Ptr - arrays[0]->Ptr;
-         assert(velements[attr].src_offset <= 2048); /* 11-bit field */
+         vbuffer[attr].buffer_offset = (unsigned) arrays[mesaAttr]->Ptr;
+         velements[attr].src_offset = 0;
       }
       else {
          /* attribute data is in user-space memory, not a VBO */
@@ -323,6 +322,8 @@ st_draw_vbo(GLcontext *ctx,
          velements[attr].src_offset = 0;
       }
 
+      assert(velements[attr].src_offset <= 2048); /* 11-bit field */
+
       /* common-case setup */
       vbuffer[attr].pitch = arrays[mesaAttr]->StrideB; /* in bytes */
       vbuffer[attr].max_index = max_index;
@@ -334,6 +335,25 @@ st_draw_vbo(GLcontext *ctx,
                               arrays[mesaAttr]->Normalized);
       assert(velements[attr].src_format);
    }
+
+#if 0
+   {
+      GLuint i;
+      char buf[100];
+      for (i = 0; i < vp->num_inputs; i++) {
+         printf("buffers[%d].pitch = %u\n", i, vbuffer[i].pitch);
+         printf("buffers[%d].max_index = %u\n", i, vbuffer[i].max_index);
+         printf("buffers[%d].buffer_offset = %u\n", i, vbuffer[i].buffer_offset);
+         printf("buffers[%d].buffer = %p\n", i, (void*) vbuffer[i].buffer);
+      }
+      for (i = 0; i < vp->num_inputs; i++) {
+         printf("vlements[%d].src_offset = %u\n", i, velements[i].src_offset);
+         printf("vlements[%d].vbuffer_index = %u\n", i, velements[i].vertex_buffer_index);
+         printf("vlements[%d].nr_comps = %u\n", i, velements[i].nr_components);
+         printf("vlements[%d].format = %s\n", i, pf_sprint_name(buf, velements[i].src_format));
+      }
+   }
+#endif
 
    pipe->set_vertex_buffers(pipe, vp->num_inputs, vbuffer);
    pipe->set_vertex_elements(pipe, vp->num_inputs, velements);

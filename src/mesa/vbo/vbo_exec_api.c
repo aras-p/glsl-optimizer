@@ -770,34 +770,34 @@ static void reset_attrfv( struct vbo_exec_context *exec )
 }
       
 
-void
+void GLAPIENTRY
 _vbo_Color4f(GLfloat r, GLfloat g, GLfloat b, GLfloat a)
 {
    vbo_Color4f(r, g, b, a);
 }
 
 
-void
+void GLAPIENTRY
 _vbo_Normal3f(GLfloat x, GLfloat y, GLfloat z)
 {
    vbo_Normal3f(x, y, z);
 }
 
 
-void
+void GLAPIENTRY
 _vbo_MultiTexCoord4f(GLenum target, GLfloat s, GLfloat t, GLfloat r, GLfloat q)
 {
    vbo_MultiTexCoord4f(target, s, t, r, q);
 }
 
-void
+void GLAPIENTRY
 _vbo_Materialfv(GLenum face, GLenum pname, const GLfloat *params)
 {
    vbo_Materialfv(face, pname, params);
 }
 
 
-void
+void GLAPIENTRY
 _vbo_VertexAttrib4f(GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w)
 {
    vbo_VertexAttrib4fARB(index, x, y, z, w);

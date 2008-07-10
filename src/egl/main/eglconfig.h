@@ -6,7 +6,7 @@
 #include <GLES/gl.h>
 
 
-#define MAX_ATTRIBS 100
+#define MAX_ATTRIBS 128
 #define FIRST_ATTRIB EGL_BUFFER_SIZE
 
 
@@ -17,7 +17,11 @@ struct _egl_config
 };
 
 
-#define SET_CONFIG_ATTRIB(CONF, ATTR, VAL) ((CONF)->Attrib[(ATTR) - FIRST_ATTRIB] = VAL)
+#define SET_CONFIG_ATTRIB(CONF, ATTR, VAL) \
+   assert((ATTR) - FIRST_ATTRIB < MAX_ATTRIBS); \
+   ((CONF)->Attrib[(ATTR) - FIRST_ATTRIB] = VAL)
+
+
 #define GET_CONFIG_ATTRIB(CONF, ATTR) ((CONF)->Attrib[(ATTR) - FIRST_ATTRIB])
 
 

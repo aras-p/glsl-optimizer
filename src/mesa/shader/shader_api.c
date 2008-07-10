@@ -955,12 +955,15 @@ _mesa_get_shader_source(GLcontext *ctx, GLuint shader, GLsizei maxLength,
 }
 
 
+#define MAX_UNIFORM_ELEMENTS 16
+
 /**
- * Called via ctx->Driver.GetUniformfv().
+ * Helper for GetUniformfv(), GetUniformiv()
+ * Returns number of elements written to 'params' output.
  */
-static void
-_mesa_get_uniformfv(GLcontext *ctx, GLuint program, GLint location,
-                    GLfloat *params)
+static GLuint
+get_uniformfv(GLcontext *ctx, GLuint program, GLint location,
+              GLfloat *params)
 {
    struct gl_shader_program *shProg
       = _mesa_lookup_shader_program(ctx, program);
@@ -984,9 +987,13 @@ _mesa_get_uniformfv(GLcontext *ctx, GLuint program, GLint location,
 
          ASSERT(prog);
          if (prog) {
+            /* See uniformiv() below */                    
+            assert(prog->Parameters->Parameters[progPos].Size <= MAX_UNIFORM_ELEMENTS);
+
             for (i = 0; i < prog->Parameters->Parameters[progPos].Size; i++) {
                params[i] = prog->Parameters->ParameterValues[progPos][i];
             }
+            return prog->Parameters->Parameters[progPos].Size;
          }
       }
       else {
@@ -995,6 +1002,35 @@ _mesa_get_uniformfv(GLcontext *ctx, GLuint program, GLint location,
    }
    else {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glGetUniformfv(program)");
+   }
+   return 0;
+}
+
+
+/**
+ * Called via ctx->Driver.GetUniformfv().
+ */
+static void
+_mesa_get_uniformfv(GLcontext *ctx, GLuint program, GLint location,
+                    GLfloat *params)
+{
+   (void) get_uniformfv(ctx, program, location, params);
+}
+
+
+/**
+ * Called via ctx->Driver.GetUniformiv().
+ */
+static void
+_mesa_get_uniformiv(GLcontext *ctx, GLuint program, GLint location,
+                    GLint *params)
+{
+   GLfloat fparams[MAX_UNIFORM_ELEMENTS];
+   GLuint n = get_uniformfv(ctx, program, location, fparams);
+   GLuint i;
+   assert(n <= MAX_UNIFORM_ELEMENTS);
+   for (i = 0; i < n; i++) {
+      params[i] = (GLint) fparams[i];
    }
 }
 
@@ -1010,6 +1046,11 @@ _mesa_get_uniform_location(GLcontext *ctx, GLuint program, const GLchar *name)
 
    if (!shProg)
       return -1;
+
+   if (shProg->LinkStatus == GL_FALSE) {
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glGetUniformfv(program)");
+      return -1;
+   }
 
    /* XXX we should return -1 if the uniform was declared, but not
     * actually used.
@@ -1408,6 +1449,7 @@ _mesa_init_glsl_driver_functions(struct dd_function_table *driver)
    driver->GetShaderInfoLog = _mesa_get_shader_info_log;
    driver->GetShaderSource = _mesa_get_shader_source;
    driver->GetUniformfv = _mesa_get_uniformfv;
+   driver->GetUniformiv = _mesa_get_uniformiv;
    driver->GetUniformLocation = _mesa_get_uniform_location;
    driver->IsProgram = _mesa_is_program;
    driver->IsShader = _mesa_is_shader;

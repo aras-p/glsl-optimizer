@@ -13,6 +13,7 @@
 #include "eglmode.h"
 #include "eglscreen.h"
 #include "eglsurface.h"
+#include "egllog.h"
 
 #include "intel_egl.h"
 
@@ -23,18 +24,43 @@
 
 #include "state_tracker/st_public.h"
 
-struct egl_drm_device* egl_drm_create_device(int drmFD);
+#define MAX_SCREENS 16
 
-struct egl_drm_device*
+static void
+drm_get_device_id(struct egl_drm_device *device)
+{
+	char path[512];
+	FILE *file;
+
+	/* TODO get the real minor */
+	int minor = 0;
+
+	snprintf(path, sizeof(path), "/sys/class/drm/card%d/device/device", minor);
+	file = fopen(path, "r");
+	if (!file) {
+		_eglLog(_EGL_WARNING, "Could not retrive device ID\n");
+		return;
+	}
+
+	fgets(path, sizeof( path ), file);
+	sscanf(path, "%x", &device->deviceID);
+	fclose(file);
+}
+
+static struct egl_drm_device*
 egl_drm_create_device(int drmFD)
 {
 	struct egl_drm_device *device = malloc(sizeof(*device));
 	memset(device, 0, sizeof(*device));
 	device->drmFD = drmFD;
 
-	if (!intel_init_driver(device)) {
-		printf("EGL: failed to initalize device\n");
+	device->version = drmGetVersion(device->drmFD);
+
+	drm_get_device_id(device);
+
+	if (!intel_create_device(device)) {
 		free(device);
+		return NULL;
 	}
 
 	return device;
@@ -42,11 +68,17 @@ egl_drm_create_device(int drmFD)
 
 __GLcontextModes* _gl_context_modes_create( unsigned count, size_t minimum_size );
 
+struct drm_screen;
+
 struct drm_driver
 {
 	_EGLDriver base;  /* base class/object */
 
 	drmModeResPtr res;
+
+	struct drm_screen *screens[MAX_SCREENS];
+	size_t count_screens;
+
 	struct egl_drm_device *device;
 };
 
@@ -68,17 +100,26 @@ struct drm_screen
 {
 	_EGLScreen base;
 
-	/* backing buffer and crtc */
-	drmBO buffer;
-	drmModeFBPtr fb;
-	uint32_t fbID;
-	drmModeCrtcPtr crtc;
-
 	/* currently only support one connector */
 	drmModeConnectorPtr connector;
-	drmModeEncoderPtr encoder;
 	uint32_t connectorID;
-	uint32_t encoderID;
+
+	/* Has this screen been shown */
+	int shown;
+
+	/* Surface that is currently attached to this screen */
+	struct drm_surface *surf;
+
+	/* backing buffer */
+	drmBO buffer;
+
+	/* framebuffer */
+	drmModeFBPtr fb;
+	uint32_t fbID;
+
+	/* crtc and mode used */
+	drmModeCrtcPtr crtc;
+	uint32_t crtcID;
 
 	struct drm_mode_modeinfo *mode;
 
@@ -105,28 +146,17 @@ drm_add_modes_from_connector(_EGLScreen *screen, drmModeConnectorPtr connector)
 	}
 }
 
-static void
-print_modes(drmModeConnectorPtr connector)
-{
-	struct drm_mode_modeinfo *m;
-	int i;
-
-	for (i = 0; i < connector->count_modes; i++) {
-		m = &connector->modes[i];
-		printf("dfm %p %i %i %i\n", m, m->hdisplay, m->vdisplay, m->vrefresh);
-	}
-}
 
 static EGLBoolean
 drm_initialize(_EGLDriver *drv, EGLDisplay dpy, EGLint *major, EGLint *minor)
 {
-	printf("%s enter\n", __FUNCTION__);
 	_EGLDisplay *disp = _eglLookupDisplay(dpy);
 	struct drm_driver *drm_drv = (struct drm_driver *)drv;
 	struct drm_screen *screen = NULL;
 	drmModeConnectorPtr connector = NULL;
 	drmModeResPtr res = NULL;
 	unsigned count_connectors = 0;
+	int num_screens = 0;
 
 	EGLint i;
 	int fd;
@@ -147,13 +177,13 @@ drm_initialize(_EGLDriver *drv, EGLDisplay dpy, EGLint *major, EGLint *minor)
 	if (res)
 		count_connectors = res->count_connectors;
 
-	for(i = 0; i < count_connectors; i++) {
+	for(i = 0; i < count_connectors && i < MAX_SCREENS; i++) {
 		connector = drmModeGetConnector(fd, res->connectors[i]);
 
 		if (!connector)
 			continue;
 
-		if (connector->connection == DRM_MODE_DISCONNECTED) {
+		if (connector->connection != DRM_MODE_CONNECTED) {
 			drmModeFreeConnector(connector);
 			continue;
 		}
@@ -165,7 +195,9 @@ drm_initialize(_EGLDriver *drv, EGLDisplay dpy, EGLint *major, EGLint *minor)
 		_eglInitScreen(&screen->base);
 		_eglAddScreen(disp, &screen->base);
 		drm_add_modes_from_connector(&screen->base, connector);
+		drm_drv->screens[num_screens++] = screen;
 	}
+	drm_drv->count_screens = num_screens;
 
 	/* for now we only have one config */
 	_EGLConfig *config = calloc(1, sizeof(*config));
@@ -184,17 +216,64 @@ drm_initialize(_EGLDriver *drv, EGLDisplay dpy, EGLint *major, EGLint *minor)
 	drv->Initialized = EGL_TRUE;
 
 	*major = 1;
-	*minor = 0;
+	*minor = 4;
 
 	return EGL_TRUE;
 }
 
+static void
+drm_takedown_shown_screen(_EGLDriver *drv, struct drm_screen *screen)
+{
+	struct drm_driver *drm_drv = (struct drm_driver *)drv;
+
+	intel_bind_frontbuffer(screen->surf->drawable, NULL);
+	screen->surf = NULL;
+
+	drmModeSetCrtc(
+		drm_drv->device->drmFD,
+		drm_drv->res->crtcs[1],
+		0, // FD
+		0, 0,
+		NULL, 0, // List of output ids
+		NULL);
+
+	drmModeRmFB(drm_drv->device->drmFD, screen->fbID);
+	drmModeFreeFB(screen->fb);
+	screen->fb = NULL;
+
+	drmBOUnreference(drm_drv->device->drmFD, &screen->buffer);
+
+	screen->shown = 0;
+}
 
 static EGLBoolean
 drm_terminate(_EGLDriver *drv, EGLDisplay dpy)
 {
-	/* TODO: clean up */
-	free(drv);
+	struct drm_driver *drm_drv = (struct drm_driver *)drv;
+	struct drm_screen *screen;
+	int i = 0;
+
+	intel_destroy_device(drm_drv->device);
+	drmFreeVersion(drm_drv->device->version);
+
+	for (i = 0; i < drm_drv->count_screens; i++) {
+		screen = drm_drv->screens[i];
+
+		if (screen->shown)
+			drm_takedown_shown_screen(drv, screen);
+
+		drmModeFreeConnector(screen->connector);
+		_eglDestroyScreen(&screen->base);
+		drm_drv->screens[i] = NULL;
+	}
+
+	drmClose(drm_drv->device->drmFD);
+
+	free(drm_drv->device);
+
+	_eglCleanupDisplay(_eglLookupDisplay(dpy));
+	free(drm_drv);
+
 	return EGL_TRUE;
 }
 
@@ -237,7 +316,9 @@ visual_from_config(_EGLConfig *conf)
 	visual->doubleBufferMode = 1;
 
 	visual->depthBits = 24;
+	visual->haveDepthBuffer = visual->depthBits > 0;
 	visual->stencilBits = 8;
+	visual->haveStencilBuffer = visual->stencilBits > 0;
 
 	return visual;
 }
@@ -314,6 +395,8 @@ drm_destroy_context(_EGLDriver *drv, EGLDisplay dpy, EGLContext context)
 	if (fc->base.IsBound) {
 		fc->base.DeletePending = EGL_TRUE;
 	} else {
+		intel_destroy_context(fc->context);
+		free(fc->context);
 		free(fc);
 	}
 	return EGL_TRUE;
@@ -332,6 +415,7 @@ drm_create_pixmap_surface(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config, Nat
 {
 	return EGL_NO_SURFACE;
 }
+
 
 static EGLSurface
 drm_create_pbuffer_surface(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
@@ -480,7 +564,8 @@ drm_show_screen_surface_mesa(_EGLDriver *drv, EGLDisplay dpy,
 	size_t size = mode->Height * pitch;
 	int ret;
 
-	/* TODO if allready shown take down */
+	if (scrn->shown)
+		drm_takedown_shown_screen(drv, scrn);
 
 	ret = drmBOCreate(drm_drv->device->drmFD, size, 0, 0,
 		DRM_BO_FLAG_READ |
@@ -490,10 +575,8 @@ drm_show_screen_surface_mesa(_EGLDriver *drv, EGLDisplay dpy,
 		DRM_BO_FLAG_NO_EVICT,
 		DRM_BO_HINT_DONT_FENCE, &scrn->buffer);
 
-	if (ret) {
-		printf("failed to create framebuffer (ret %d)\n", ret);
+	if (ret)
 		return EGL_FALSE;
-	}
 
 	prettyColors(drm_drv->device->drmFD, scrn->buffer.handle, pitch);
 
@@ -510,10 +593,8 @@ drm_show_screen_surface_mesa(_EGLDriver *drv, EGLDisplay dpy,
 		goto err_bo;
 
 	scrn->mode = drm_find_mode(scrn->connector, mode);
-	if (!scrn->mode) {
-		printf("oh noes, no matching mode found\n");
+	if (!scrn->mode)
 		goto err_fb;
-	}
 
 	ret = drmModeSetCrtc(
 			drm_drv->device->drmFD,
@@ -529,7 +610,10 @@ drm_show_screen_surface_mesa(_EGLDriver *drv, EGLDisplay dpy,
 	scrn->front.width = mode->Width;
 	scrn->front.height = mode->Height;
 
+	scrn->surf = surf;
 	intel_bind_frontbuffer(surf->drawable, &scrn->front);
+
+	scrn->shown = 1;
 
 	return EGL_TRUE;
 
@@ -549,12 +633,13 @@ drm_destroy_surface(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surface)
 	if (fs->base.IsBound) {
 		fs->base.DeletePending = EGL_TRUE;
 	} else {
+		intel_bind_frontbuffer(fs->drawable, NULL);
+		intel_destroy_drawable(fs->drawable);
+		free(fs->drawable);
 		free(fs);
 	}
 	return EGL_TRUE;
 }
-
-
 
 
 static EGLBoolean
@@ -569,12 +654,15 @@ drm_make_current(_EGLDriver *drv, EGLDisplay dpy, EGLSurface draw, EGLSurface re
 	if (!b)
 		return EGL_FALSE;
 
-	/* XXX this is where we'd do the hardware context switch */
-	(void) drawSurf;
-	(void) readSurf;
-	(void) ctx;
+	if (ctx) {
+		if (!drawSurf || !readSurf)
+			return EGL_FALSE;
 
-	intel_make_current(ctx->context, drawSurf->drawable, readSurf->drawable);
+		intel_make_current(ctx->context, drawSurf->drawable, readSurf->drawable);
+	} else {
+		intel_make_current(NULL, NULL, NULL);
+	}
+
 	return EGL_TRUE;
 }
 
@@ -602,7 +690,6 @@ _EGLDriver *
 _eglMain(_EGLDisplay *dpy, const char *args)
 {
 	struct drm_driver *drm;
-	printf("%s enter\n", __FUNCTION__);
 
 	drm = (struct drm_driver *) calloc(1, sizeof(struct drm_driver));
 	if (!drm) {
@@ -626,6 +713,7 @@ _eglMain(_EGLDisplay *dpy, const char *args)
 	drm->base.API.SwapBuffers = drm_swap_buffers;
 
 	drm->base.ClientAPIsMask = EGL_OPENGL_BIT /*| EGL_OPENGL_ES_BIT*/;
+	drm->base.Name = "DRM/Gallium";
 
 	/* enable supported extensions */
 	drm->base.Extensions.MESA_screen_surface = EGL_TRUE;

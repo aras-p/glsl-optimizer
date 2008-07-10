@@ -310,8 +310,10 @@ void driInitSingleExtension( GLcontext * ctx,
 	     */
 	    offset = _glapi_add_dispatch( functions, parameter_signature );
 	    if (offset == -1) {
+#if 0 /* this causes noise with egl */
 		fprintf(stderr, "DISPATCH ERROR! _glapi_add_dispatch failed "
 			"to add %s!\n", functions[0]);
+#endif
 	    }
 	    else if (ext->functions[i].remap_index != -1) {
 		driDispatchRemapTable[ ext->functions[i].remap_index ] = 

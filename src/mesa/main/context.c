@@ -500,18 +500,11 @@ alloc_shared_state( GLcontext *ctx )
    if (!ss->Default2DArray)
       goto cleanup;
 
-   /* Effectively bind the default textures to all texture units */
-   ss->Default1D->RefCount += MAX_TEXTURE_IMAGE_UNITS;
-   ss->Default2D->RefCount += MAX_TEXTURE_IMAGE_UNITS;
-   ss->Default3D->RefCount += MAX_TEXTURE_IMAGE_UNITS;
-   ss->DefaultCubeMap->RefCount += MAX_TEXTURE_IMAGE_UNITS;
-   ss->DefaultRect->RefCount += MAX_TEXTURE_IMAGE_UNITS;
-   ss->Default1DArray->RefCount += MAX_TEXTURE_IMAGE_UNITS;
-   ss->Default2DArray->RefCount += MAX_TEXTURE_IMAGE_UNITS;
+   /* sanity check */
+   assert(ss->Default1D->RefCount == 1);
 
    _glthread_INIT_MUTEX(ss->TexMutex);
    ss->TextureStateStamp = 0;
-
 
 #if FEATURE_EXT_framebuffer_object
    ss->FrameBuffers = _mesa_NewHashTable();
@@ -522,10 +515,9 @@ alloc_shared_state( GLcontext *ctx )
       goto cleanup;
 #endif
 
-
    return GL_TRUE;
 
- cleanup:
+cleanup:
    /* Ran out of memory at some point.  Free everything and return NULL */
    if (ss->DisplayList)
       _mesa_DeleteHashTable(ss->DisplayList);

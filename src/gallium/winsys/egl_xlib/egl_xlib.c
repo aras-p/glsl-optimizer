@@ -535,6 +535,7 @@ xlib_eglDestroySurface(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surface)
          surf->Base.DeletePending = EGL_TRUE;
       }
       else {
+         XFreeGC(surf->Dpy, surf->Gc);
          st_unreference_framebuffer(&surf->Framebuffer);
          free(surf);
       }

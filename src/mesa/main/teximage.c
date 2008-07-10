@@ -767,15 +767,15 @@ _mesa_select_tex_object(GLcontext *ctx, const struct gl_texture_unit *texUnit,
       case GL_TEXTURE_1D:
          return texUnit->Current1D;
       case GL_PROXY_TEXTURE_1D:
-         return ctx->Texture.Proxy1D;
+         return ctx->Texture.ProxyTex[TEXTURE_1D_INDEX];
       case GL_TEXTURE_2D:
          return texUnit->Current2D;
       case GL_PROXY_TEXTURE_2D:
-         return ctx->Texture.Proxy2D;
+         return ctx->Texture.ProxyTex[TEXTURE_2D_INDEX];
       case GL_TEXTURE_3D:
          return texUnit->Current3D;
       case GL_PROXY_TEXTURE_3D:
-         return ctx->Texture.Proxy3D;
+         return ctx->Texture.ProxyTex[TEXTURE_3D_INDEX];
       case GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB:
       case GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB:
       case GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB:
@@ -787,25 +787,25 @@ _mesa_select_tex_object(GLcontext *ctx, const struct gl_texture_unit *texUnit,
                 ? texUnit->CurrentCubeMap : NULL;
       case GL_PROXY_TEXTURE_CUBE_MAP_ARB:
          return ctx->Extensions.ARB_texture_cube_map
-                ? ctx->Texture.ProxyCubeMap : NULL;
+                ? ctx->Texture.ProxyTex[TEXTURE_CUBE_INDEX] : NULL;
       case GL_TEXTURE_RECTANGLE_NV:
          return ctx->Extensions.NV_texture_rectangle
                 ? texUnit->CurrentRect : NULL;
       case GL_PROXY_TEXTURE_RECTANGLE_NV:
          return ctx->Extensions.NV_texture_rectangle
-                ? ctx->Texture.ProxyRect : NULL;
+                ? ctx->Texture.ProxyTex[TEXTURE_RECT_INDEX] : NULL;
       case GL_TEXTURE_1D_ARRAY_EXT:
          return ctx->Extensions.MESA_texture_array
                 ? texUnit->Current1DArray : NULL;
       case GL_PROXY_TEXTURE_1D_ARRAY_EXT:
          return ctx->Extensions.MESA_texture_array
-                ? ctx->Texture.Proxy1DArray : NULL;
+                ? ctx->Texture.ProxyTex[TEXTURE_1D_ARRAY_INDEX] : NULL;
       case GL_TEXTURE_2D_ARRAY_EXT:
          return ctx->Extensions.MESA_texture_array
                 ? texUnit->Current2DArray : NULL;
       case GL_PROXY_TEXTURE_2D_ARRAY_EXT:
          return ctx->Extensions.MESA_texture_array
-                ? ctx->Texture.Proxy2DArray : NULL;
+                ? ctx->Texture.ProxyTex[TEXTURE_2D_ARRAY_INDEX] : NULL;
       default:
          _mesa_problem(NULL, "bad target in _mesa_select_tex_object()");
          return NULL;
@@ -932,106 +932,106 @@ _mesa_get_proxy_tex_image(GLcontext *ctx, GLenum target, GLint level)
    case GL_PROXY_TEXTURE_1D:
       if (level >= ctx->Const.MaxTextureLevels)
          return NULL;
-      texImage = ctx->Texture.Proxy1D->Image[0][level];
+      texImage = ctx->Texture.ProxyTex[TEXTURE_1D_INDEX]->Image[0][level];
       if (!texImage) {
          texImage = ctx->Driver.NewTextureImage(ctx);
          if (!texImage) {
             _mesa_error(ctx, GL_OUT_OF_MEMORY, "proxy texture allocation");
             return NULL;
          }
-         ctx->Texture.Proxy1D->Image[0][level] = texImage;
+         ctx->Texture.ProxyTex[TEXTURE_1D_INDEX]->Image[0][level] = texImage;
          /* Set the 'back' pointer */
-         texImage->TexObject = ctx->Texture.Proxy1D;
+         texImage->TexObject = ctx->Texture.ProxyTex[TEXTURE_1D_INDEX];
       }
       return texImage;
    case GL_PROXY_TEXTURE_2D:
       if (level >= ctx->Const.MaxTextureLevels)
          return NULL;
-      texImage = ctx->Texture.Proxy2D->Image[0][level];
+      texImage = ctx->Texture.ProxyTex[TEXTURE_2D_INDEX]->Image[0][level];
       if (!texImage) {
          texImage = ctx->Driver.NewTextureImage(ctx);
          if (!texImage) {
             _mesa_error(ctx, GL_OUT_OF_MEMORY, "proxy texture allocation");
             return NULL;
          }
-         ctx->Texture.Proxy2D->Image[0][level] = texImage;
+         ctx->Texture.ProxyTex[TEXTURE_2D_INDEX]->Image[0][level] = texImage;
          /* Set the 'back' pointer */
-         texImage->TexObject = ctx->Texture.Proxy2D;
+         texImage->TexObject = ctx->Texture.ProxyTex[TEXTURE_2D_INDEX];
       }
       return texImage;
    case GL_PROXY_TEXTURE_3D:
       if (level >= ctx->Const.Max3DTextureLevels)
          return NULL;
-      texImage = ctx->Texture.Proxy3D->Image[0][level];
+      texImage = ctx->Texture.ProxyTex[TEXTURE_3D_INDEX]->Image[0][level];
       if (!texImage) {
          texImage = ctx->Driver.NewTextureImage(ctx);
          if (!texImage) {
             _mesa_error(ctx, GL_OUT_OF_MEMORY, "proxy texture allocation");
             return NULL;
          }
-         ctx->Texture.Proxy3D->Image[0][level] = texImage;
+         ctx->Texture.ProxyTex[TEXTURE_3D_INDEX]->Image[0][level] = texImage;
          /* Set the 'back' pointer */
-         texImage->TexObject = ctx->Texture.Proxy3D;
+         texImage->TexObject = ctx->Texture.ProxyTex[TEXTURE_3D_INDEX];
       }
       return texImage;
    case GL_PROXY_TEXTURE_CUBE_MAP:
       if (level >= ctx->Const.MaxCubeTextureLevels)
          return NULL;
-      texImage = ctx->Texture.ProxyCubeMap->Image[0][level];
+      texImage = ctx->Texture.ProxyTex[TEXTURE_CUBE_INDEX]->Image[0][level];
       if (!texImage) {
          texImage = ctx->Driver.NewTextureImage(ctx);
          if (!texImage) {
             _mesa_error(ctx, GL_OUT_OF_MEMORY, "proxy texture allocation");
             return NULL;
          }
-         ctx->Texture.ProxyCubeMap->Image[0][level] = texImage;
+         ctx->Texture.ProxyTex[TEXTURE_CUBE_INDEX]->Image[0][level] = texImage;
          /* Set the 'back' pointer */
-         texImage->TexObject = ctx->Texture.ProxyCubeMap;
+         texImage->TexObject = ctx->Texture.ProxyTex[TEXTURE_CUBE_INDEX];
       }
       return texImage;
    case GL_PROXY_TEXTURE_RECTANGLE_NV:
       if (level > 0)
          return NULL;
-      texImage = ctx->Texture.ProxyRect->Image[0][level];
+      texImage = ctx->Texture.ProxyTex[TEXTURE_RECT_INDEX]->Image[0][level];
       if (!texImage) {
          texImage = ctx->Driver.NewTextureImage(ctx);
          if (!texImage) {
             _mesa_error(ctx, GL_OUT_OF_MEMORY, "proxy texture allocation");
             return NULL;
          }
-         ctx->Texture.ProxyRect->Image[0][level] = texImage;
+         ctx->Texture.ProxyTex[TEXTURE_RECT_INDEX]->Image[0][level] = texImage;
          /* Set the 'back' pointer */
-         texImage->TexObject = ctx->Texture.ProxyRect;
+         texImage->TexObject = ctx->Texture.ProxyTex[TEXTURE_RECT_INDEX];
       }
       return texImage;
    case GL_PROXY_TEXTURE_1D_ARRAY_EXT:
       if (level >= ctx->Const.MaxTextureLevels)
          return NULL;
-      texImage = ctx->Texture.Proxy1DArray->Image[0][level];
+      texImage = ctx->Texture.ProxyTex[TEXTURE_1D_ARRAY_INDEX]->Image[0][level];
       if (!texImage) {
          texImage = ctx->Driver.NewTextureImage(ctx);
          if (!texImage) {
             _mesa_error(ctx, GL_OUT_OF_MEMORY, "proxy texture allocation");
             return NULL;
          }
-         ctx->Texture.Proxy1DArray->Image[0][level] = texImage;
+         ctx->Texture.ProxyTex[TEXTURE_1D_ARRAY_INDEX]->Image[0][level] = texImage;
          /* Set the 'back' pointer */
-         texImage->TexObject = ctx->Texture.Proxy1DArray;
+         texImage->TexObject = ctx->Texture.ProxyTex[TEXTURE_1D_ARRAY_INDEX];
       }
       return texImage;
    case GL_PROXY_TEXTURE_2D_ARRAY_EXT:
       if (level >= ctx->Const.MaxTextureLevels)
          return NULL;
-      texImage = ctx->Texture.Proxy2DArray->Image[0][level];
+      texImage = ctx->Texture.ProxyTex[TEXTURE_2D_ARRAY_INDEX]->Image[0][level];
       if (!texImage) {
          texImage = ctx->Driver.NewTextureImage(ctx);
          if (!texImage) {
             _mesa_error(ctx, GL_OUT_OF_MEMORY, "proxy texture allocation");
             return NULL;
          }
-         ctx->Texture.Proxy2DArray->Image[0][level] = texImage;
+         ctx->Texture.ProxyTex[TEXTURE_2D_ARRAY_INDEX]->Image[0][level] = texImage;
          /* Set the 'back' pointer */
-         texImage->TexObject = ctx->Texture.Proxy2DArray;
+         texImage->TexObject = ctx->Texture.ProxyTex[TEXTURE_2D_ARRAY_INDEX];
       }
       return texImage;
    default:
@@ -2611,7 +2611,7 @@ _mesa_TexImage2D( GLenum target, GLint level, GLint internalFormat,
                               1, border)) {
          /* when error, clear all proxy texture image parameters */
          if (texImage)
-            clear_teximage_fields(ctx->Texture.Proxy2D->Image[0][level]);
+            clear_teximage_fields(ctx->Texture.ProxyTex[TEXTURE_2D_INDEX]->Image[0][level]);
       }
       else {
          /* no error, set the tex image parameters */
