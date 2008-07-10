@@ -29,11 +29,11 @@
 #define INTEL_SWAPBUFFERS_H
 
 
-struct pipe_surface;
+struct pipe_texture;
 
 
 extern void intelDisplaySurface(__DRIdrawablePrivate * dPriv,
-                                struct pipe_surface *surf,
+                                struct pipe_texture *surf,
                                 const drm_clip_rect_t * rect);
 
 extern void intelSwapBuffers(__DRIdrawablePrivate * dPriv);
