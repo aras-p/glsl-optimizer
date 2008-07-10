@@ -86,6 +86,7 @@ struct nv50_state {
 	struct nouveau_stateobj *scissor;
 	unsigned scissor_enabled;
 	struct nouveau_stateobj *viewport;
+	unsigned viewport_bypass;
 	struct nouveau_stateobj *tsc_upload;
 	struct nouveau_stateobj *tic_upload;
 	struct nouveau_stateobj *vertprog;
