@@ -8,8 +8,7 @@
  * XvMC defines 64 element blocks (8x8 elements).
  * Elements are 8 bits when they represent color values,
  * 9 bits when they reprecent DCT coefficients, we
- * store them in 2 bytes in either case. DCT coefficients
- * can be signed or unsigned, at our option.
+ * store them in 2 bytes in either case.
  */
 #define BLOCK_SIZE (64 * 2)
 

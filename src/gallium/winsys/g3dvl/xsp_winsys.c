@@ -62,6 +62,7 @@ static void* xsp_buffer_map(struct pipe_winsys *pws, struct pipe_buffer *buffer,
 	assert(buffer);
 	
 	xsp_buf->mapped_data = xsp_buf->data;
+	
 	return xsp_buf->mapped_data;
 }
 
@@ -131,8 +132,7 @@ static int xsp_surface_alloc_storage
 	surface->nblocksy = pf_get_nblocksy(&surface->block, height);
 	surface->stride = round_up(surface->nblocksx * surface->block.size, ALIGNMENT);
 	surface->usage = flags;
-	/* XXX: Need to consider block dims? See xm_winsys.c */
-	surface->buffer = pws->buffer_create(pws, ALIGNMENT, PIPE_BUFFER_USAGE_PIXEL, surface->stride * height);
+	surface->buffer = pws->buffer_create(pws, ALIGNMENT, PIPE_BUFFER_USAGE_PIXEL, surface->stride * surface->nblocksy);
 	
 	return 0;
 }
@@ -156,6 +156,29 @@ static void xsp_surface_release(struct pipe_winsys *pws, struct pipe_surface **s
 	}
 	
 	*surface = NULL;
+}
+
+static void xsp_fence_reference(struct pipe_winsys *pws, struct pipe_fence_handle **ptr, struct pipe_fence_handle *fence)
+{
+	assert(pws);
+	assert(ptr);
+	assert(fence);
+}
+
+static int xsp_fence_signalled(struct pipe_winsys *pws, struct pipe_fence_handle *fence, unsigned flag)
+{
+	assert(pws);
+	assert(fence);
+	
+	return 0;
+}
+
+static int xsp_fence_finish(struct pipe_winsys *pws, struct pipe_fence_handle *fence, unsigned flag)
+{
+	assert(pws);
+	assert(fence);
+	
+	return 0;
 }
 
 static void xsp_flush_frontbuffer(struct pipe_winsys *pws, struct pipe_surface *surface, void *context_private)
@@ -196,22 +219,11 @@ static const char* xsp_get_name(struct pipe_winsys *pws)
 	return "X11 SoftPipe";
 }
 
-/* softpipe_winsys implementation */
-
-static boolean xsp_is_format_supported(struct softpipe_winsys *spws, enum pipe_format format)
-{
-	assert(spws);
-	
-	/* TODO: Test that 'format' is equal to our output window's format */
-	return TRUE;
-}
-
 /* Show starts here */
 
 struct pipe_context* create_pipe_context(Display *display)
 {
 	struct xsp_pipe_winsys	*xsp_winsys;
-	struct softpipe_winsys	*sp_winsys;
 	struct pipe_screen	*p_screen;
 	struct pipe_context	*p_context;
 	
@@ -226,6 +238,9 @@ struct pipe_context* create_pipe_context(Display *display)
 	xsp_winsys->base.surface_alloc = xsp_surface_alloc;
 	xsp_winsys->base.surface_alloc_storage = xsp_surface_alloc_storage;
 	xsp_winsys->base.surface_release = xsp_surface_release;
+	xsp_winsys->base.fence_reference = xsp_fence_reference;
+	xsp_winsys->base.fence_signalled = xsp_fence_signalled;
+	xsp_winsys->base.fence_finish = xsp_fence_finish;
 	xsp_winsys->base.flush_frontbuffer = xsp_flush_frontbuffer;
 	xsp_winsys->base.get_name = xsp_get_name;
 	xsp_winsys->display = display;
@@ -253,12 +268,9 @@ struct pipe_context* create_pipe_context(Display *display)
 		
 		XDestroyImage(template);
 	}
-
-	sp_winsys = calloc(1, sizeof(struct softpipe_winsys));
-	sp_winsys->is_format_supported = xsp_is_format_supported;
 	
 	p_screen = softpipe_create_screen((struct pipe_winsys*)xsp_winsys);
-	p_context = softpipe_create(p_screen, (struct pipe_winsys*)xsp_winsys, sp_winsys);
+	p_context = softpipe_create(p_screen, (struct pipe_winsys*)xsp_winsys, NULL);
 	
 	return p_context;
 }
