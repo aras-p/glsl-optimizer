@@ -21,7 +21,7 @@ nv50_destroy(struct pipe_context *pipe)
 	struct nv50_context *nv50 = (struct nv50_context *)pipe;
 
 	draw_destroy(nv50->draw);
-	free(nv50);
+	FREE(nv50);
 }
 
 

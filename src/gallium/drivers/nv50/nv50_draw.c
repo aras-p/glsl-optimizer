@@ -46,7 +46,7 @@ nv50_render_reset_stipple_counter(struct draw_stage *stage)
 static void
 nv50_render_destroy(struct draw_stage *stage)
 {
-	free(stage);
+	FREE(stage);
 }
 
 struct draw_stage *

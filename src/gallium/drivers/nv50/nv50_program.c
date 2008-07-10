@@ -180,8 +180,8 @@ kill_temp_temp(struct nv50_pc *pc)
 static int
 ctor_immd(struct nv50_pc *pc, float x, float y, float z, float w)
 {
-	pc->immd_buf = realloc(pc->immd_buf, (pc->immd_nr + 1) * 4 * 
-					     sizeof(float));
+	pc->immd_buf = REALLOC(pc->immd_buf, (pc->immd_nr * r * sizeof(float)),
+			       (pc->immd_nr + 1) * 4 * sizeof(float));
 	pc->immd_buf[(pc->immd_nr * 4) + 0] = x;
 	pc->immd_buf[(pc->immd_nr * 4) + 1] = y;
 	pc->immd_buf[(pc->immd_nr * 4) + 2] = z;
@@ -1276,7 +1276,7 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 	}
 
 	if (pc->temp_nr) {
-		pc->temp = calloc(pc->temp_nr * 4, sizeof(struct nv50_reg));
+		pc->temp = CALLOC(pc->temp_nr * 4, sizeof(struct nv50_reg));
 		if (!pc->temp)
 			goto out_err;
 
@@ -1293,7 +1293,7 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 		struct nv50_reg *iv = NULL;
 		int aid = 0;
 
-		pc->attr = calloc(pc->attr_nr * 4, sizeof(struct nv50_reg));
+		pc->attr = CALLOC(pc->attr_nr * 4, sizeof(struct nv50_reg));
 		if (!pc->attr)
 			goto out_err;
 
@@ -1339,7 +1339,7 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 	if (pc->result_nr) {
 		int rid = 0;
 
-		pc->result = calloc(pc->result_nr * 4, sizeof(struct nv50_reg));
+		pc->result = CALLOC(pc->result_nr * 4, sizeof(struct nv50_reg));
 		if (!pc->result)
 			goto out_err;
 
@@ -1360,7 +1360,7 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 	if (pc->param_nr) {
 		int rid = 0;
 
-		pc->param = calloc(pc->param_nr * 4, sizeof(struct nv50_reg));
+		pc->param = CALLOC(pc->param_nr * 4, sizeof(struct nv50_reg));
 		if (!pc->param)
 			goto out_err;
 
@@ -1376,7 +1376,7 @@ nv50_program_tx_prep(struct nv50_pc *pc)
 	if (pc->immd_nr) {
 		int rid = pc->param_nr * 4;
 
-		pc->immd = calloc(pc->immd_nr * 4, sizeof(struct nv50_reg));
+		pc->immd = CALLOC(pc->immd_nr * 4, sizeof(struct nv50_reg));
 		if (!pc->immd)
 			goto out_err;
 
