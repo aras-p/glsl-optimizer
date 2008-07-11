@@ -44,7 +44,7 @@ install: glw.pc
 
 clean:
 	-rm -f depend depend.bak
-	-rm -f *.o *~
+	-rm -f *.o *.pc *~
 
 
 # Make the library

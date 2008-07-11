@@ -129,6 +129,7 @@ clean:
 	-rm -f */*/*.o
 	-rm -f depend depend.bak libmesa.a libglapi.a
 	-rm -f drivers/*/*.o
+	-rm -f *.pc
 	-@cd drivers/dri && $(MAKE) clean
 	-@cd drivers/x11 && $(MAKE) clean
 	-@cd drivers/osmesa && $(MAKE) clean

@@ -53,3 +53,4 @@ clean:
 		fi \
 	done
 	-rm -f common/*.o
+	-rm -f *.pc

@@ -119,6 +119,7 @@ clean:
 	-rm -f *.o *~
 	-rm -f *.lo
 	-rm -f *.la
+	-rm -f *.pc
 	-rm -rf .libs
 	-rm -f depend depend.bak
 
