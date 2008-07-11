@@ -220,6 +220,7 @@ extern struct nv30_state_entry nv30_state_blend_colour;
 extern struct nv30_state_entry nv30_state_zsa;
 extern struct nv30_state_entry nv30_state_viewport;
 extern struct nv30_state_entry nv30_state_framebuffer;
+extern struct nv30_state_entry nv30_state_fragtex;
 
 /* nv30_vbo.c */
 extern boolean nv30_draw_arrays(struct pipe_context *, unsigned mode,

@@ -6,6 +6,7 @@ static struct nv30_state_entry *render_states[] = {
 	&nv30_state_rasterizer,
 	&nv30_state_scissor,
 	&nv30_state_stipple,
+	&nv30_state_fragtex,
 	&nv30_state_blend,
 	&nv30_state_blend_colour,
 	&nv30_state_zsa,
@@ -59,6 +60,11 @@ nv30_emit_hw_state(struct nv30_context *nv30)
 		screen->cur_pctx = nv30->pctx_id;
 	}
 
+	if (nv30->dirty & NV30_NEW_FRAGPROG) {
+		nv30_fragprog_bind(nv30, nv30->fragprog.current);
+		/*XXX: clear NV30_NEW_FRAGPROG if no new program uploaded */
+	}
+
 	for (i = 0, states = state->dirty; states; i++) {
 		if (!(states & (1ULL << i)))
 			continue;
@@ -68,27 +74,10 @@ nv30_emit_hw_state(struct nv30_context *nv30)
 		states &= ~(1ULL << i);
 	}
 
-	if (nv30->dirty & NV30_NEW_FRAGPROG) {
-		nv30_fragprog_bind(nv30, nv30->fragprog.current);
-		/*XXX: clear NV30_NEW_FRAGPROG if no new program uploaded */
-	}
-
-	if (nv30->dirty_samplers || (nv30->dirty & NV30_NEW_FRAGPROG)) {
-		nv30_fragtex_bind(nv30);
-/*
-		BEGIN_RING(rankine, NV34TCL_TX_CACHE_CTL, 1);
-		OUT_RING  (2);
-		BEGIN_RING(rankine, NV34TCL_TX_CACHE_CTL, 1);
-		OUT_RING  (1);*/
-		nv30->dirty &= ~NV30_NEW_FRAGPROG;
-	}
-
 	if (nv30->dirty & NV30_NEW_VERTPROG) {
 		nv30_vertprog_bind(nv30, nv30->vertprog.current);
 		nv30->dirty &= ~NV30_NEW_VERTPROG;
 	}
-
-	nv30->dirty_samplers = 0;
 
 	so_emit_reloc_markers(nv30->nvws, state->hw[NV30_STATE_FB]);
 	for (i = 0, samplers = state->fp_samplers; i < 16 && samplers; i++) {
@@ -98,21 +87,6 @@ nv30_emit_hw_state(struct nv30_context *nv30)
 				      state->hw[NV30_STATE_FRAGTEX0+i]);
 		samplers &= ~(1ULL << i);
 	}
-
-	/* Texture images, emitted in nv30_fragtex_build */
-#if 0
-	for (i = 0; i < 16; i++) {
-		if (!(nv30->fp_samplers & (1 << i)))
-			continue;
-		BEGIN_RING(rankine, NV34TCL_TX_OFFSET(i), 2);
-		OUT_RELOCl(nv30->tex[i].buffer, 0, NOUVEAU_BO_VRAM |
-			   NOUVEAU_BO_GART | NOUVEAU_BO_RD);
-		OUT_RELOCd(nv30->tex[i].buffer, nv30->tex[i].format,
-			   NOUVEAU_BO_VRAM | NOUVEAU_BO_GART | NOUVEAU_BO_RD |
-			   NOUVEAU_BO_OR, NV34TCL_TX_FORMAT_DMA0,
-			   NV34TCL_TX_FORMAT_DMA1);
-	}
-#endif
 
 	/* Fragment program */
 	BEGIN_RING(rankine, NV34TCL_FP_ACTIVE_PROGRAM, 1);

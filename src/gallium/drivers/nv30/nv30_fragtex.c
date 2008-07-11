@@ -49,17 +49,17 @@ nv30_texture_formats[] = {
 	_(A8R8G8B8_UNORM, A8R8G8B8,   S1,   S1,   S1,   S1, X, Y, Z, W),
 	_(A1R5G5B5_UNORM, A1R5G5B5,   S1,   S1,   S1,   S1, X, Y, Z, W),
 	_(A4R4G4B4_UNORM, A4R4G4B4,   S1,   S1,   S1,   S1, X, Y, Z, W),
-//	_(R5G6B5_UNORM  , R5G6B5  ,   S1,   S1,   S1,  ONE, X, Y, Z, W),
+	_(R5G6B5_UNORM  , R5G6B5  ,   S1,   S1,   S1,  ONE, X, Y, Z, W),
 	_(L8_UNORM      , L8      ,   S1,   S1,   S1,  ONE, X, X, X, X),
 	_(A8_UNORM      , L8      , ZERO, ZERO, ZERO,   S1, X, X, X, X),
 	_(I8_UNORM      , L8      ,   S1,   S1,   S1,   S1, X, X, X, X),
 	_(A8L8_UNORM    , A8L8    ,   S1,   S1,   S1,   S1, X, X, X, Y),
 //	_(Z16_UNORM     , Z16     ,   S1,   S1,   S1,  ONE, X, X, X, X),
 //	_(Z24S8_UNORM   , Z24     ,   S1,   S1,   S1,  ONE, X, X, X, X),
-//	_(RGB_DXT1      , 0x86,   S1,   S1,   S1,  ONE, X, Y, Z, W, 0x00, 0x00),
-//	_(RGBA_DXT1     , 0x86,   S1,   S1,   S1,   S1, X, Y, Z, W, 0x00, 0x00),
-//	_(RGBA_DXT3     , 0x87,   S1,   S1,   S1,   S1, X, Y, Z, W, 0x00, 0x00),
-//	_(RGBA_DXT5     , 0x88,   S1,   S1,   S1,   S1, X, Y, Z, W, 0x00, 0x00),
+	_(DXT1_RGB      , DXT1    ,   S1,   S1,   S1,  ONE, X, Y, Z, W),
+	_(DXT1_RGBA     , DXT1    ,   S1,   S1,   S1,   S1, X, Y, Z, W),
+	_(DXT3_RGBA     , DXT3    ,   S1,   S1,   S1,   S1, X, Y, Z, W),
+	_(DXT5_RGBA     , DXT5    ,   S1,   S1,   S1,   S1, X, Y, Z, W),
 	{},
 };
 
@@ -67,6 +67,7 @@ static struct nv30_texture_format *
 nv30_fragtex_format(uint pipe_format)
 {
 	struct nv30_texture_format *tf = nv30_texture_formats;
+	char fs[128];
 
 	while (tf->defined) {
 		if (tf->pipe == pipe_format)
@@ -74,26 +75,27 @@ nv30_fragtex_format(uint pipe_format)
 		tf++;
 	}
 
+	pf_sprint_name(fs, pipe_format);
+	NOUVEAU_ERR("unknown texture format %s\n", fs);
 	return NULL;
 }
 
 
-static void
+static struct nouveau_stateobj *
 nv30_fragtex_build(struct nv30_context *nv30, int unit)
 {
 	struct nv30_sampler_state *ps = nv30->tex_sampler[unit];
 	struct nv30_miptree *nv30mt = nv30->tex_miptree[unit];
 	struct pipe_texture *pt = &nv30mt->base;
 	struct nv30_texture_format *tf;
-	uint32_t txf, txs, txp;
-	int swizzled = 0; /*XXX: implement in region code? */
+	struct nouveau_stateobj *so;
+	uint32_t txf, txs /*, txp*/;
+	/*int swizzled = 0;*/ /*XXX: implement in region code? */
 	unsigned tex_flags = NOUVEAU_BO_VRAM | NOUVEAU_BO_GART | NOUVEAU_BO_RD;
 
 	tf = nv30_fragtex_format(pt->format);
-	if (!tf || !tf->defined) {
-		NOUVEAU_ERR("Unsupported texture format: 0x%x\n", pt->format);
-		return;
-	}
+	if (!tf)
+		assert(0);
 
 	txf  = tf->format << 8;
 	txf |= ((pt->last_level>0) ? NV34TCL_TX_FORMAT_MIPMAP : 0);
@@ -117,35 +119,45 @@ nv30_fragtex_build(struct nv30_context *nv30, int unit)
 		break;
 	default:
 		NOUVEAU_ERR("Unknown target %d\n", pt->target);
-		return;
+		return NULL;
 	}
 
 	txs = tf->swizzle;
 
-	BEGIN_RING(rankine, NV34TCL_TX_OFFSET(unit), 8);
-	OUT_RELOCl(nv30mt->buffer, 0, tex_flags | NOUVEAU_BO_LOW);
-	OUT_RELOCd(nv30mt->buffer,txf, tex_flags | NOUVEAU_BO_RD, 1/*VRAM*/,2/*TT*/);
-	OUT_RING  (ps->wrap);
-	OUT_RING  (NV34TCL_TX_ENABLE_ENABLE | ps->en);
-	OUT_RING  (txs);
-	OUT_RING  (ps->filt | 0x2000 /* magic */);
-	OUT_RING  ((pt->width[0] << NV34TCL_TX_NPOT_SIZE_W_SHIFT) | pt->height[0]);
-	OUT_RING  (ps->bcol);
+	so = so_new(16, 2);
+	so_method(so, nv30->screen->rankine, NV34TCL_TX_OFFSET(unit), 8);
+	so_reloc (so, nv30mt->buffer, 0, tex_flags | NOUVEAU_BO_LOW, 0, 0);
+	so_reloc (so, nv30mt->buffer, txf, tex_flags | NOUVEAU_BO_OR,
+		  NV34TCL_TX_FORMAT_DMA0, NV34TCL_TX_FORMAT_DMA1);
+	so_data  (so, ps->wrap);
+	so_data  (so, NV34TCL_TX_ENABLE_ENABLE | ps->en);
+	so_data  (so, txs);
+	so_data  (so, ps->filt | 0x2000 /*voodoo*/);
+	so_data  (so, (pt->width[0] << NV34TCL_TX_NPOT_SIZE_W_SHIFT) |
+		       pt->height[0]);
+	so_data  (so, ps->bcol);
+
+	return so;
 }
 
-void
-nv30_fragtex_bind(struct nv30_context *nv30)
+static boolean
+nv30_fragtex_validate(struct nv30_context *nv30)
 {
-	struct nv30_fragment_program *fp = nv30->fragprog.active;
+	struct nv30_fragment_program *fp = nv30->fragprog.current;
+	struct nv30_state *state = &nv30->state;
+	struct nouveau_stateobj *so;
 	unsigned samplers, unit;
 
-	samplers = nv30->fp_samplers & ~fp->samplers;
+	samplers = state->fp_samplers & ~fp->samplers;
 	while (samplers) {
 		unit = ffs(samplers) - 1;
 		samplers &= ~(1 << unit);
 
-		BEGIN_RING(rankine, NV34TCL_TX_ENABLE(unit), 1);
-		OUT_RING  (0);
+		so = so_new(2, 0);
+		so_method(so, nv30->screen->rankine, NV34TCL_TX_ENABLE(unit), 1);
+		so_data  (so, 0);
+		so_ref(so, &nv30->state.hw[NV30_STATE_FRAGTEX0 + unit]);
+		state->dirty |= (1ULL << (NV30_STATE_FRAGTEX0 + unit));
 	}
 
 	samplers = nv30->dirty_samplers & fp->samplers;
@@ -153,9 +165,19 @@ nv30_fragtex_bind(struct nv30_context *nv30)
 		unit = ffs(samplers) - 1;
 		samplers &= ~(1 << unit);
 
-		nv30_fragtex_build(nv30, unit);
+		so = nv30_fragtex_build(nv30, unit);
+		so_ref(so, &nv30->state.hw[NV30_STATE_FRAGTEX0 + unit]);
+		state->dirty |= (1ULL << (NV30_STATE_FRAGTEX0 + unit));
 	}
 
-	nv30->fp_samplers = fp->samplers;
+	nv30->state.fp_samplers = fp->samplers;
+	return FALSE;
 }
 
+struct nv30_state_entry nv30_state_fragtex = {
+	.validate = nv30_fragtex_validate,
+	.dirty = {
+		.pipe = NV30_NEW_SAMPLER | NV30_NEW_FRAGPROG,
+		.hw = 0
+	}
+};
