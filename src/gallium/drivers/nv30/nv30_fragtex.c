@@ -143,7 +143,7 @@ nv30_fragtex_build(struct nv30_context *nv30, int unit)
 static boolean
 nv30_fragtex_validate(struct nv30_context *nv30)
 {
-	struct nv30_fragment_program *fp = nv30->fragprog.current;
+	struct nv30_fragment_program *fp = nv30->fragprog;
 	struct nv30_state *state = &nv30->state;
 	struct nouveau_stateobj *so;
 	unsigned samplers, unit;

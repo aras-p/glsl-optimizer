@@ -2,6 +2,7 @@
 #define __NV30_STATE_H__
 
 #include "pipe/p_state.h"
+#include "tgsi/util/tgsi_scan.h"
 
 struct nv30_sampler_state {
 	uint32_t fmt;
@@ -50,6 +51,7 @@ struct nv30_fragment_program_data {
 
 struct nv30_fragment_program {
 	struct pipe_shader_state pipe;
+	struct tgsi_shader_info info;
 
 	boolean translated;
 	boolean on_hw;
@@ -65,6 +67,7 @@ struct nv30_fragment_program {
 
 	uint32_t fp_control;
 	uint32_t fp_reg_control;
+	struct nouveau_stateobj *so;
 };
 
 struct nv30_miptree {

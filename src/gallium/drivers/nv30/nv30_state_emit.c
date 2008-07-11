@@ -6,6 +6,7 @@ static struct nv30_state_entry *render_states[] = {
 	&nv30_state_rasterizer,
 	&nv30_state_scissor,
 	&nv30_state_stipple,
+	&nv30_state_fragprog,
 	&nv30_state_fragtex,
 	&nv30_state_vertprog,
 	&nv30_state_blend,
@@ -61,11 +62,6 @@ nv30_emit_hw_state(struct nv30_context *nv30)
 		screen->cur_pctx = nv30->pctx_id;
 	}
 
-	if (nv30->dirty & NV30_NEW_FRAGPROG) {
-		nv30_fragprog_bind(nv30, nv30->fragprog.current);
-		/*XXX: clear NV30_NEW_FRAGPROG if no new program uploaded */
-	}
-
 	for (i = 0, states = state->dirty; states; i++) {
 		if (!(states & (1ULL << i)))
 			continue;
@@ -83,13 +79,7 @@ nv30_emit_hw_state(struct nv30_context *nv30)
 				      state->hw[NV30_STATE_FRAGTEX0+i]);
 		samplers &= ~(1ULL << i);
 	}
-
-	/* Fragment program */
-	BEGIN_RING(rankine, NV34TCL_FP_ACTIVE_PROGRAM, 1);
-	OUT_RELOC (nv30->fragprog.active->buffer, 0, NOUVEAU_BO_VRAM |
-	           NOUVEAU_BO_GART | NOUVEAU_BO_RD | NOUVEAU_BO_LOW |
-		   NOUVEAU_BO_OR, NV34TCL_FP_ACTIVE_PROGRAM_DMA0,
-		   NV34TCL_FP_ACTIVE_PROGRAM_DMA1);
+	so_emit_reloc_markers(nv30->nvws, state->hw[NV30_STATE_FRAGPROG]);
 }
 
 boolean

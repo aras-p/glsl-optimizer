@@ -125,6 +125,7 @@ struct nv30_context {
 	struct pipe_scissor_state scissor;
 	unsigned stipple[32];
 	struct nv30_vertex_program *vertprog;
+	struct nv30_fragment_program *fragprog;
 	struct pipe_buffer *constbuf[PIPE_SHADER_TYPES];
 	unsigned constbuf_nr[PIPE_SHADER_TYPES];
 	struct nv30_rasterizer_state *rasterizer;
@@ -150,11 +151,6 @@ struct nv30_context {
 		struct pipe_buffer *buffer;
 		unsigned delta;
 	} vb[16];
-
-	struct {
-		struct nv30_fragment_program *active;
-		struct nv30_fragment_program *current;
-	} fragprog;
 
 	struct pipe_vertex_buffer  vtxbuf[PIPE_MAX_ATTRIBS];
 	struct pipe_vertex_element vtxelt[PIPE_MAX_ATTRIBS];
@@ -188,10 +184,6 @@ extern void nv30_vertprog_destroy(struct nv30_context *,
 				  struct nv30_vertex_program *);
 
 /* nv30_fragprog.c */
-extern void nv30_fragprog_translate(struct nv30_context *,
-				    struct nv30_fragment_program *);
-extern void nv30_fragprog_bind(struct nv30_context *,
-			       struct nv30_fragment_program *);
 extern void nv30_fragprog_destroy(struct nv30_context *,
 				  struct nv30_fragment_program *);
 
@@ -205,6 +197,7 @@ extern void nv30_state_tex_update(struct nv30_context *nv30);
 extern struct nv30_state_entry nv30_state_rasterizer;
 extern struct nv30_state_entry nv30_state_scissor;
 extern struct nv30_state_entry nv30_state_stipple;
+extern struct nv30_state_entry nv30_state_fragprog;
 extern struct nv30_state_entry nv30_state_vertprog;
 extern struct nv30_state_entry nv30_state_blend;
 extern struct nv30_state_entry nv30_state_blend_colour;

@@ -539,6 +539,8 @@ nv30_fp_state_create(struct pipe_context *pipe,
 	fp = CALLOC(1, sizeof(struct nv30_fragment_program));
 	fp->pipe = *cso;
 
+	tgsi_scan_shader(fp->pipe.tokens, &fp->info);
+
 	return (void *)fp;
 }
 
@@ -546,13 +548,8 @@ static void
 nv30_fp_state_bind(struct pipe_context *pipe, void *hwcso)
 {
 	struct nv30_context *nv30 = nv30_context(pipe);
-	struct nv30_fragment_program *fp = hwcso;
 
-	if (!hwcso) {
-		return;
-	}
-
-	nv30->fragprog.current = fp;
+	nv30->fragprog = hwcso;
 	nv30->dirty |= NV30_NEW_FRAGPROG;
 }
 

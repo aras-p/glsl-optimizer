@@ -723,7 +723,7 @@ out_err:
 	return FALSE;
 }
 
-void
+static void
 nv30_fragprog_translate(struct nv30_context *nv30,
 			struct nv30_fragment_program *fp)
 {
@@ -817,23 +817,46 @@ nv30_fragprog_upload(struct nv30_context *nv30,
 	ws->buffer_unmap(ws, fp->buffer);
 }
 
-void
-nv30_fragprog_bind(struct nv30_context *nv30, struct nv30_fragment_program *fp)
+static boolean
+nv30_fragprog_validate(struct nv30_context *nv30)
 {
+	struct nv30_fragment_program *fp = nv30->fragprog;
 	struct pipe_buffer *constbuf =
 		nv30->constbuf[PIPE_SHADER_FRAGMENT];
 	struct pipe_winsys *ws = nv30->pipe.winsys;
+	struct nouveau_stateobj *so;
+	boolean new_consts = FALSE;
 	int i;
 
+	if (fp->translated)
+		goto update_constants;
+
+	/*nv30->fallback_swrast &= ~NV30_NEW_FRAGPROG;*/
+	nv30_fragprog_translate(nv30, fp);
 	if (!fp->translated) {
-		nv30_fragprog_translate(nv30, fp);
-		if (!fp->translated)
-			assert(0);
+		/*nv30->fallback_swrast |= NV30_NEW_FRAGPROG;*/
+		return FALSE;
 	}
 
+	fp->buffer = ws->buffer_create(ws, 0x100, 0, fp->insn_len * 4);
+	nv30_fragprog_upload(nv30, fp);
+
+	so = so_new(4, 1);
+	so_method(so, nv30->screen->rankine, NV34TCL_FP_ACTIVE_PROGRAM, 1);
+	so_reloc (so, fp->buffer, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_GART |
+		  NOUVEAU_BO_RD | NOUVEAU_BO_LOW | NOUVEAU_BO_OR,
+		  NV34TCL_FP_ACTIVE_PROGRAM_DMA0, NV34TCL_FP_ACTIVE_PROGRAM_DMA1);
+	so_method(so, nv30->screen->rankine, NV34TCL_FP_CONTROL, 1);
+	so_data  (so, fp->fp_control);
+	/* FIXME: Add these, and you'll have big slowdown */
+	/*so_method(so, nv30->screen->rankine, NV34TCL_FP_REG_CONTROL, 1);
+	so_data  (so, fp->fp_control);*/
+	so_ref(so, &fp->so);
+
+update_constants:
 	if (fp->nr_consts) {
 		float *map;
-
+		
 		map = ws->buffer_map(ws, constbuf, PIPE_BUFFER_USAGE_CPU_READ);
 		for (i = 0; i < fp->nr_consts; i++) {
 			struct nv30_fragment_program_data *fpd = &fp->consts[i];
@@ -843,25 +866,20 @@ nv30_fragprog_bind(struct nv30_context *nv30, struct nv30_fragment_program *fp)
 			if (!memcmp(p, cb, 4 * sizeof(float)))
 				continue;
 			memcpy(p, cb, 4 * sizeof(float));
-			fp->on_hw = 0;
+			new_consts = TRUE;
 		}
 		ws->buffer_unmap(ws, constbuf);
+
+		if (new_consts)
+			nv30_fragprog_upload(nv30, fp);
 	}
 
-	if (!fp->on_hw) {
-		if (!fp->buffer)
-			fp->buffer = ws->buffer_create(ws, 0x100, 0,
-						       fp->insn_len * 4);
-		nv30_fragprog_upload(nv30, fp);
-		fp->on_hw = TRUE;
+	if (new_consts || fp->so != nv30->state.hw[NV30_STATE_FRAGPROG]) {
+		so_ref(fp->so, &nv30->state.hw[NV30_STATE_FRAGPROG]);
+		return TRUE;
 	}
 
-	BEGIN_RING(rankine, NV34TCL_FP_CONTROL, 1);
-	OUT_RING  (fp->fp_control);
-	BEGIN_RING(rankine, NV34TCL_FP_REG_CONTROL, 1);
-	OUT_RING  (fp->fp_reg_control);
-
-	nv30->fragprog.active = fp;
+	return FALSE;
 }
 
 void
@@ -872,3 +890,10 @@ nv30_fragprog_destroy(struct nv30_context *nv30,
 		FREE(fp->insn);
 }
 
+struct nv30_state_entry nv30_state_fragprog = {
+	.validate = nv30_fragprog_validate,
+	.dirty = {
+		.pipe = NV30_NEW_FRAGPROG,
+		.hw = NV30_STATE_FRAGPROG
+	}
+};
