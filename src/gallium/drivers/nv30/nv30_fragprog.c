@@ -1,7 +1,6 @@
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_state.h"
-#include "pipe/p_util.h"
 
 #include "pipe/p_shader_tokens.h"
 #include "tgsi/util/tgsi_parse.h"
@@ -650,6 +649,80 @@ nv30_fragprog_parse_decl_output(struct nv30_fpc *fpc,
 	return TRUE;
 }
 
+static boolean
+nv30_fragprog_prepare(struct nv30_fpc *fpc)
+{
+	struct tgsi_parse_context p;
+	/*int high_temp = -1, i;*/
+
+	tgsi_parse_init(&p, fpc->fp->pipe.tokens);
+	while (!tgsi_parse_end_of_tokens(&p)) {
+		const union tgsi_full_token *tok = &p.FullToken;
+
+		tgsi_parse_token(&p);
+		switch(tok->Token.Type) {
+		case TGSI_TOKEN_TYPE_DECLARATION:
+		{
+			const struct tgsi_full_declaration *fdec;
+			fdec = &p.FullToken.FullDeclaration;
+			switch (fdec->Declaration.File) {
+			case TGSI_FILE_INPUT:
+				if (!nv30_fragprog_parse_decl_attrib(fpc, fdec))
+					goto out_err;
+				break;
+			case TGSI_FILE_OUTPUT:
+				if (!nv30_fragprog_parse_decl_output(fpc, fdec))
+					goto out_err;
+				break;
+			/*case TGSI_FILE_TEMPORARY:
+				if (fdec->DeclarationRange.Last > high_temp) {
+					high_temp =
+						fdec->DeclarationRange.Last;
+				}
+				break;*/
+			default:
+				break;
+			}
+		}
+			break;
+		case TGSI_TOKEN_TYPE_IMMEDIATE:
+		{
+			struct tgsi_full_immediate *imm;
+			float vals[4];
+			
+			imm = &p.FullToken.FullImmediate;
+			assert(imm->Immediate.DataType == TGSI_IMM_FLOAT32);
+			assert(fpc->nr_imm < MAX_IMM);
+
+			vals[0] = imm->u.ImmediateFloat32[0].Float;
+			vals[1] = imm->u.ImmediateFloat32[1].Float;
+			vals[2] = imm->u.ImmediateFloat32[2].Float;
+			vals[3] = imm->u.ImmediateFloat32[3].Float;
+			fpc->imm[fpc->nr_imm++] = constant(fpc, -1, vals);
+		}
+			break;
+		default:
+			break;
+		}
+	}
+	tgsi_parse_free(&p);
+
+	/*if (++high_temp) {
+		fpc->r_temp = CALLOC(high_temp, sizeof(struct nv30_sreg));
+		for (i = 0; i < high_temp; i++)
+			fpc->r_temp[i] = temp(fpc);
+		fpc->r_temps_discard = 0;
+	}*/
+
+	return TRUE;
+
+out_err:
+	/*if (fpc->r_temp)
+		FREE(fpc->r_temp);*/
+	tgsi_parse_free(&p);
+	return FALSE;
+}
+
 void
 nv30_fragprog_translate(struct nv30_context *nv30,
 			struct nv30_fragment_program *fp)
@@ -664,45 +737,17 @@ nv30_fragprog_translate(struct nv30_context *nv30,
 	fpc->high_temp = -1;
 	fpc->num_regs = 2;
 
+	if (!nv30_fragprog_prepare(fpc)) {
+		FREE(fpc);
+		return;
+	}
+
 	tgsi_parse_init(&parse, fp->pipe.tokens);
 
 	while (!tgsi_parse_end_of_tokens(&parse)) {
 		tgsi_parse_token(&parse);
 
 		switch (parse.FullToken.Token.Type) {
-		case TGSI_TOKEN_TYPE_DECLARATION:
-		{
-			const struct tgsi_full_declaration *fdec;
-			fdec = &parse.FullToken.FullDeclaration;
-			switch (fdec->Declaration.File) {
-			case TGSI_FILE_INPUT:
-				if (!nv30_fragprog_parse_decl_attrib(fpc, fdec))
-					goto out_err;
-				break;
-			case TGSI_FILE_OUTPUT:
-				if (!nv30_fragprog_parse_decl_output(fpc, fdec))
-					goto out_err;
-				break;
-			default:
-				break;
-			}
-		}
-			break;
-		case TGSI_TOKEN_TYPE_IMMEDIATE:
-		{
-			struct tgsi_full_immediate *imm;
-			float vals[4];
-			int i;
-			
-			imm = &parse.FullToken.FullImmediate;
-			assert(imm->Immediate.DataType == TGSI_IMM_FLOAT32);
-			assert(fpc->nr_imm < MAX_IMM);
-
-			for (i = 0; i < 4; i++)
-				vals[i] = imm->u.ImmediateFloat32[i].Float;
-			fpc->imm[fpc->nr_imm++] = constant(fpc, -1, vals);
-		}
-			break;
 		case TGSI_TOKEN_TYPE_INSTRUCTION:
 		{
 			const struct tgsi_full_instruction *finst;
