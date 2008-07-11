@@ -294,10 +294,6 @@ intel_alloc_renderbuffer_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
       rb->Width = width;
       rb->Height = height;
 
-      /* This sets the Get/PutRow/Value functions */
-      /* XXX can we choose a different tile here? */
-      intel_set_span_functions(&irb->Base, INTEL_TILE_NONE);
-
       return GL_TRUE;
    }
 }
@@ -376,8 +372,7 @@ intel_renderbuffer_set_region(struct intel_renderbuffer *rb,
  * not a user-created renderbuffer.
  */
 struct intel_renderbuffer *
-intel_create_renderbuffer(intelScreenPrivate *intelScreen,
-			  GLenum intFormat, enum tiling_mode tiling)
+intel_create_renderbuffer(GLenum intFormat)
 {
    GET_CURRENT_CONTEXT(ctx);
 
@@ -444,20 +439,10 @@ intel_create_renderbuffer(intelScreenPrivate *intelScreen,
 
    irb->Base.InternalFormat = intFormat;
 
-   irb->tiling = tiling;
-
    /* intel-specific methods */
    irb->Base.Delete = intel_delete_renderbuffer;
    irb->Base.AllocStorage = intel_alloc_window_storage;
    irb->Base.GetPointer = intel_get_pointer;
-   /* This sets the Get/PutRow/Value functions.  In classic mode, all access
-    * is through the aperture and will be swizzled by the fence registers, so
-    * we don't need the span functions to perfom tile swizzling
-    */
-   if (intelScreen->ttm)
-      intel_set_span_functions(&irb->Base, tiling);
-   else
-      intel_set_span_functions(&irb->Base, INTEL_TILE_NONE);
 
    return irb;
 }
@@ -568,7 +553,6 @@ intel_update_wrapper(GLcontext *ctx, struct intel_renderbuffer *irb,
 
    irb->Base.Delete = intel_delete_renderbuffer;
    irb->Base.AllocStorage = intel_nop_alloc_storage;
-   intel_set_span_functions(&irb->Base, irb->tiling);
 
    irb->RenderToTexture = GL_TRUE;
 
@@ -595,9 +579,6 @@ intel_wrap_texture(GLcontext * ctx, struct gl_texture_image *texImage)
 
    _mesa_init_renderbuffer(&irb->Base, name);
    irb->Base.ClassID = INTEL_RB_CLASS;
-
-   /* XXX can we fix this? */
-   irb->tiling = INTEL_TILE_NONE;
 
    if (!intel_update_wrapper(ctx, irb, texImage)) {
       _mesa_free(irb);

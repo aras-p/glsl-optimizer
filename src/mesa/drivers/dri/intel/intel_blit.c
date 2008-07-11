@@ -106,11 +106,11 @@ intelCopyBuffer(const __DRIdrawablePrivate * dPriv,
       }
 
 #ifndef I915
-      if (src->tiled) {
+      if (src->tiling != I915_TILING_NONE) {
 	 CMD |= XY_SRC_TILED;
 	 src_pitch /= 4;
       }
-      if (dst->tiled) {
+      if (dst->tiling != I915_TILING_NONE) {
 	 CMD |= XY_DST_TILED;
 	 dst_pitch /= 4;
       }
@@ -178,7 +178,7 @@ intelEmitFillBlit(struct intel_context *intel,
 		  GLshort dst_pitch,
 		  dri_bo *dst_buffer,
 		  GLuint dst_offset,
-		  GLboolean dst_tiled,
+		  uint32_t dst_tiling,
 		  GLshort x, GLshort y,
 		  GLshort w, GLshort h,
 		  GLuint color)
@@ -203,7 +203,7 @@ intelEmitFillBlit(struct intel_context *intel,
       return;
    }
 #ifndef I915
-   if (dst_tiled) {
+   if (dst_tiling != I915_TILING_NONE) {
       CMD |= XY_DST_TILED;
       dst_pitch /= 4;
    }
@@ -259,11 +259,11 @@ intelEmitCopyBlit(struct intel_context *intel,
 		  GLshort src_pitch,
 		  dri_bo *src_buffer,
 		  GLuint src_offset,
-		  GLboolean src_tiled,
+		  uint32_t src_tiling,
 		  GLshort dst_pitch,
 		  dri_bo *dst_buffer,
 		  GLuint dst_offset,
-		  GLboolean dst_tiled,
+		  uint32_t dst_tiling,
 		  GLshort src_x, GLshort src_y,
 		  GLshort dst_x, GLshort dst_y,
 		  GLshort w, GLshort h,
@@ -309,11 +309,11 @@ intelEmitCopyBlit(struct intel_context *intel,
    }
 
 #ifndef I915
-   if (dst_tiled) {
+   if (dst_tiling != I915_TILING_NONE) {
       CMD |= XY_DST_TILED;
       dst_pitch /= 4;
    }
-   if (src_tiled) {
+   if (src_tiling != I915_TILING_NONE) {
       CMD |= XY_SRC_TILED;
       src_pitch /= 4;
    }
@@ -512,7 +512,7 @@ intelClearWithBlit(GLcontext *ctx, GLbitfield mask)
                }
 
 #ifndef I915
-	       if (irb_region->tiled) {
+	       if (irb_region->tiling != I915_TILING_NONE) {
 		  CMD |= XY_DST_TILED;
 		  pitch /= 4;
 	       }
@@ -563,7 +563,7 @@ intelEmitImmediateColorExpandBlit(struct intel_context *intel,
 				  GLshort dst_pitch,
 				  dri_bo *dst_buffer,
 				  GLuint dst_offset,
-				  GLboolean dst_tiled,
+				  uint32_t dst_tiling,
 				  GLshort x, GLshort y,
 				  GLshort w, GLshort h,
 				  GLenum logic_op)
@@ -593,7 +593,7 @@ intelEmitImmediateColorExpandBlit(struct intel_context *intel,
    if (cpp == 4)
       opcode |= XY_BLT_WRITE_ALPHA | XY_BLT_WRITE_RGB;
 #ifndef I915
-   if (dst_tiled) {
+   if (dst_tiling != I915_TILING_NONE) {
       opcode |= XY_DST_TILED;
       dst_pitch /= 4;
    }
@@ -606,7 +606,7 @@ intelEmitImmediateColorExpandBlit(struct intel_context *intel,
       br13 |= BR13_8888;
 
    blit_cmd = XY_TEXT_IMMEDIATE_BLIT_CMD | XY_TEXT_BYTE_PACKED; /* packing? */
-   if (dst_tiled)
+   if (dst_tiling != I915_TILING_NONE)
       blit_cmd |= XY_DST_TILED;
 
    BEGIN_BATCH(8 + 3, REFERENCES_CLIPRECTS);

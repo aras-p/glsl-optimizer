@@ -266,7 +266,6 @@ struct intel_context
    GLuint lastStamp;
 
    GLboolean no_hw;
-   int tiling_swizzle_mode;
 
    /**
     * Configuration cache

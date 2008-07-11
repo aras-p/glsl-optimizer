@@ -69,20 +69,13 @@ PUBLIC const char __driConfigOptions[] =
    DRI_CONF_SECTION_QUALITY
       DRI_CONF_FORCE_S3TC_ENABLE(false)
       DRI_CONF_ALLOW_LARGE_TEXTURES(2)
-      DRI_CONF_OPT_BEGIN_V(swizzle_mode, enum, 0, "0:2")
-	 DRI_CONF_DESC_BEGIN(en, "Tiling swizzle mode for software fallbacks")
-	    DRI_CONF_ENUM(0, "No swizzling")
-	    DRI_CONF_ENUM(1, "addr[6] = addr[6] ^ addr[9]")
-	    DRI_CONF_ENUM(2, "addr[6] = addr[6] ^ addr[9] ^ addr[10]")
-	 DRI_CONF_DESC_END
-      DRI_CONF_OPT_END
    DRI_CONF_SECTION_END
    DRI_CONF_SECTION_DEBUG
      DRI_CONF_NO_RAST(false)
    DRI_CONF_SECTION_END
 DRI_CONF_END;
 
-const GLuint __driNConfigOptions = 7;
+const GLuint __driNConfigOptions = 6;
 
 #ifdef USE_NEW_INTERFACE
 static PFNGLXCREATECONTEXTMODES create_context_modes = NULL;
@@ -97,51 +90,6 @@ intelMapScreenRegions(__DRIscreenPrivate * sPriv)
 {
    intelScreenPrivate *intelScreen = (intelScreenPrivate *) sPriv->private;
 
-   if (intelScreen->front.handle) {
-      if (drmMap(sPriv->fd,
-                 intelScreen->front.handle,
-                 intelScreen->front.size,
-                 (drmAddress *) & intelScreen->front.map) != 0) {
-         _mesa_problem(NULL, "drmMap(frontbuffer) failed!");
-         return GL_FALSE;
-      }
-   }
-   else {
-      _mesa_warning(NULL, "no front buffer handle in intelMapScreenRegions!");
-   }
-
-   if (0)
-      _mesa_printf("Back 0x%08x ", intelScreen->back.handle);
-   if (drmMap(sPriv->fd,
-              intelScreen->back.handle,
-              intelScreen->back.size,
-              (drmAddress *) & intelScreen->back.map) != 0) {
-      intelUnmapScreenRegions(intelScreen);
-      return GL_FALSE;
-   }
-
-   if (intelScreen->third.handle) {
-      if (0)
-	 _mesa_printf("Third 0x%08x ", intelScreen->third.handle);
-      if (drmMap(sPriv->fd,
-		 intelScreen->third.handle,
-		 intelScreen->third.size,
-		 (drmAddress *) & intelScreen->third.map) != 0) {
-	 intelUnmapScreenRegions(intelScreen);
-	 return GL_FALSE;
-      }
-   }
-
-   if (0)
-      _mesa_printf("Depth 0x%08x ", intelScreen->depth.handle);
-   if (drmMap(sPriv->fd,
-              intelScreen->depth.handle,
-              intelScreen->depth.size,
-              (drmAddress *) & intelScreen->depth.map) != 0) {
-      intelUnmapScreenRegions(intelScreen);
-      return GL_FALSE;
-   }
-
    if (0)
       _mesa_printf("TEX 0x%08x ", intelScreen->tex.handle);
    if (intelScreen->tex.size != 0) {
@@ -154,50 +102,15 @@ intelMapScreenRegions(__DRIscreenPrivate * sPriv)
       }
    }
 
-   if (0)
-      printf("Mappings:  front: %p  back: %p  third: %p  depth: %p  tex: %p\n",
-             intelScreen->front.map,
-             intelScreen->back.map, intelScreen->third.map,
-             intelScreen->depth.map, intelScreen->tex.map);
    return GL_TRUE;
 }
 
 void
 intelUnmapScreenRegions(intelScreenPrivate * intelScreen)
 {
-#define REALLY_UNMAP 1
-   if (intelScreen->front.map) {
-#if REALLY_UNMAP
-      if (drmUnmap(intelScreen->front.map, intelScreen->front.size) != 0)
-         printf("drmUnmap front failed!\n");
-#endif
-      intelScreen->front.map = NULL;
-   }
-   if (intelScreen->back.map) {
-#if REALLY_UNMAP
-      if (drmUnmap(intelScreen->back.map, intelScreen->back.size) != 0)
-         printf("drmUnmap back failed!\n");
-#endif
-      intelScreen->back.map = NULL;
-   }
-   if (intelScreen->third.map) {
-#if REALLY_UNMAP
-      if (drmUnmap(intelScreen->third.map, intelScreen->third.size) != 0)
-         printf("drmUnmap third failed!\n");
-#endif
-      intelScreen->third.map = NULL;
-   }
-   if (intelScreen->depth.map) {
-#if REALLY_UNMAP
-      drmUnmap(intelScreen->depth.map, intelScreen->depth.size);
-      intelScreen->depth.map = NULL;
-#endif
-   }
    if (intelScreen->tex.map) {
-#if REALLY_UNMAP
       drmUnmap(intelScreen->tex.map, intelScreen->tex.size);
       intelScreen->tex.map = NULL;
-#endif
    }
 }
 
@@ -341,8 +254,6 @@ intelHandleDrawableConfig(__DRIdrawablePrivate *dPriv,
     * attached. */
 }
 
-#define BUFFER_FLAG_TILED 0x0100
-
 /**
  * DRI2 entrypoint
  */
@@ -355,7 +266,6 @@ intelHandleBufferAttach(__DRIdrawablePrivate *dPriv,
    struct intel_renderbuffer *rb;
    struct intel_region *region;
    struct intel_context *intel = pcp->driverPrivate;
-   GLuint tiled;
 
    switch (ba->buffer.attachment) {
    case DRI_DRAWABLE_BUFFER_FRONT_LEFT:
@@ -389,10 +299,9 @@ intelHandleBufferAttach(__DRIdrawablePrivate *dPriv,
       return;
 #endif
 
-   tiled = (ba->buffer.flags & BUFFER_FLAG_TILED) > 0;
    region = intel_region_alloc_for_handle(intel, ba->buffer.cpp,
 					  ba->buffer.pitch / ba->buffer.cpp,
-					  dPriv->h, tiled,
+					  dPriv->h,
 					  ba->buffer.handle);
 
    intel_renderbuffer_set_region(rb, region);
@@ -528,7 +437,6 @@ intelCreateBuffer(__DRIscreenPrivate * driScrnPriv,
       GLboolean swStencil = (mesaVis->stencilBits > 0 &&
                              mesaVis->depthBits != 24);
       GLenum rgbFormat = (mesaVis->redBits == 5 ? GL_RGB5 : GL_RGBA8);
-      enum tiling_mode tiling;
 
       struct intel_framebuffer *intel_fb = CALLOC_STRUCT(intel_framebuffer);
 
@@ -538,46 +446,29 @@ intelCreateBuffer(__DRIscreenPrivate * driScrnPriv,
       _mesa_initialize_framebuffer(&intel_fb->Base, mesaVis);
 
       /* setup the hardware-based renderbuffers */
-      /* We get only a boolean value from the DDX for whether tiling is
-       * enabled, so we have to guess when it's Y and not X (965 depth).
-       */
-      {
-	 tiling = screen->front.tiled ? INTEL_TILE_X : INTEL_TILE_NONE;
-	 intel_fb->color_rb[0] = intel_create_renderbuffer(screen,
-							   rgbFormat, tiling);
-         _mesa_add_renderbuffer(&intel_fb->Base, BUFFER_FRONT_LEFT,
-				&intel_fb->color_rb[0]->Base);
-      }
+      intel_fb->color_rb[0] = intel_create_renderbuffer(rgbFormat);
+      _mesa_add_renderbuffer(&intel_fb->Base, BUFFER_FRONT_LEFT,
+			     &intel_fb->color_rb[0]->Base);
 
       if (mesaVis->doubleBufferMode) {
-	 tiling = screen->back.tiled ? INTEL_TILE_X : INTEL_TILE_NONE;
-	 intel_fb->color_rb[1] = intel_create_renderbuffer(screen,
-							   rgbFormat, tiling);
+	 intel_fb->color_rb[1] = intel_create_renderbuffer(rgbFormat);
 
          _mesa_add_renderbuffer(&intel_fb->Base, BUFFER_BACK_LEFT,
 				&intel_fb->color_rb[1]->Base);
 
 	 if (screen->third.handle) {
 	    struct gl_renderbuffer *tmp_rb = NULL;
-	    tiling = screen->third.tiled ? INTEL_TILE_X : INTEL_TILE_NONE;
-	    intel_fb->color_rb[2] = intel_create_renderbuffer(screen,
-							      rgbFormat,
-							      tiling);
+
+	    intel_fb->color_rb[2] = intel_create_renderbuffer(rgbFormat);
 	    _mesa_reference_renderbuffer(&tmp_rb, &intel_fb->color_rb[2]->Base);
 	 }
       }
 
-#ifdef I915
-      tiling = screen->depth.tiled ? INTEL_TILE_X : INTEL_TILE_NONE;
-#else
-      tiling = screen->depth.tiled ? INTEL_TILE_Y : INTEL_TILE_NONE;
-#endif
       if (mesaVis->depthBits == 24) {
 	 if (mesaVis->stencilBits == 8) {
 	    /* combined depth/stencil buffer */
 	    struct intel_renderbuffer *depthStencilRb
-	       = intel_create_renderbuffer(screen,
-					   GL_DEPTH24_STENCIL8_EXT, tiling);
+	       = intel_create_renderbuffer(GL_DEPTH24_STENCIL8_EXT);
 	    /* note: bind RB to two attachment points */
 	    _mesa_add_renderbuffer(&intel_fb->Base, BUFFER_DEPTH,
 				   &depthStencilRb->Base);
@@ -585,8 +476,7 @@ intelCreateBuffer(__DRIscreenPrivate * driScrnPriv,
 				   &depthStencilRb->Base);
 	 } else {
 	    struct intel_renderbuffer *depthRb
-	       = intel_create_renderbuffer(screen,
-					   GL_DEPTH_COMPONENT24, tiling);
+	       = intel_create_renderbuffer(GL_DEPTH_COMPONENT24);
 	    _mesa_add_renderbuffer(&intel_fb->Base, BUFFER_DEPTH,
 				   &depthRb->Base);
 	 }
@@ -594,8 +484,7 @@ intelCreateBuffer(__DRIscreenPrivate * driScrnPriv,
       else if (mesaVis->depthBits == 16) {
          /* just 16-bit depth buffer, no hw stencil */
          struct intel_renderbuffer *depthRb
-	    = intel_create_renderbuffer(screen,
-					GL_DEPTH_COMPONENT16, tiling);
+	    = intel_create_renderbuffer(GL_DEPTH_COMPONENT16);
          _mesa_add_renderbuffer(&intel_fb->Base, BUFFER_DEPTH, &depthRb->Base);
       }
 

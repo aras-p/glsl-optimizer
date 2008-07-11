@@ -39,6 +39,10 @@
 
 #include "swrast/swrast.h"
 
+static void
+intel_set_span_functions(struct intel_context *intel,
+			 struct gl_renderbuffer *rb);
+
 /*
  * Deal with tiled surfaces
  */
@@ -111,39 +115,26 @@ static GLubyte *x_tile_swizzle(struct intel_renderbuffer *irb, struct intel_cont
 
 	tile_off = (y_tile_off << 9) + x_tile_off;
 
-	/* bit swizzling tricks your parents never told you about:
-	 *
-	 * The specs say that the X tiling layout is just 8 512-byte rows
-	 * packed into a page.  It turns out that there's some additional
-	 * swizzling of bit 6 to reduce cache aliasing issues.  Experimental
-	 * results below:
-	 *
-	 * line    bit	 GM965	945G/Q965
-	 *	9 10 11
-	 * 0	0  0  0  0	0
-	 * 1	0  1  0  1	1
-	 * 2	1  0  0  1	1
-	 * 3	1  1  0  0	0
-	 * 4	0  0  1  1	0
-	 * 5	0  1  1  0	1
-	 * 6	1  0  1  0	1
-	 * 7	1  1  1  1	0
-	 *
-	 * So we see that the GM965 is bit 6 ^ 9 ^ 10 ^ 11, while other
-	 * parts were just 6 ^ 9 ^ 10.  However, some systems, including a
-	 * GM965 we've seen, don't perform the swizzling at all.  Information
-	 * on how to detect it through register reads is expected soon.
-	 */
-	switch (intel->tiling_swizzle_mode) {
-	case 0:
+	switch (irb->region->bit_6_swizzle) {
+	case I915_BIT_6_SWIZZLE_NONE:
 	   break;
-	case 1:
+	case I915_BIT_6_SWIZZLE_9:
+	   tile_off ^= ((tile_off >> 3) & 64);
+	   break;
+	case I915_BIT_6_SWIZZLE_9_10:
 	   tile_off ^= ((tile_off >> 3) & 64) ^ ((tile_off >> 4) & 64);
 	   break;
-	case 2:
+	case I915_BIT_6_SWIZZLE_9_11:
+	   tile_off ^= ((tile_off >> 3) & 64) ^ ((tile_off >> 5) & 64);
+	   break;
+	case I915_BIT_6_SWIZZLE_9_10_11:
 	   tile_off ^= ((tile_off >> 3) & 64) ^ ((tile_off >> 4) & 64) ^
 	      ((tile_off >> 5) & 64);
 	   break;
+	default:
+	   fprintf(stderr, "Unknown tile swizzling mode %d\n",
+		   irb->region->bit_6_swizzle);
+	   exit(1);
 	}
 
 	tile_base = (x_tile_number << 12) + y_tile_number * tile_stride;
@@ -184,15 +175,28 @@ static GLubyte *y_tile_swizzle(struct intel_renderbuffer *irb, struct intel_cont
 	tile_off = ((x_tile_off & ~0xf) << 5) + (y_tile_off << 4) +
 	   (x_tile_off & 0xf);
 
-	switch (intel->tiling_swizzle_mode) {
-	case 0:
+	switch (irb->region->bit_6_swizzle) {
+	case I915_BIT_6_SWIZZLE_NONE:
 	   break;
-	case 1:
-	   tile_off ^= (tile_off >> 3) & 64;
+	case I915_BIT_6_SWIZZLE_9:
+	   tile_off ^= ((tile_off >> 3) & 64);
 	   break;
-	case 2:
+	case I915_BIT_6_SWIZZLE_9_10:
+	   tile_off ^= ((tile_off >> 3) & 64) ^ ((tile_off >> 4) & 64);
 	   break;
+	case I915_BIT_6_SWIZZLE_9_11:
+	   tile_off ^= ((tile_off >> 3) & 64) ^ ((tile_off >> 5) & 64);
+	   break;
+	case I915_BIT_6_SWIZZLE_9_10_11:
+	   tile_off ^= ((tile_off >> 3) & 64) ^ ((tile_off >> 4) & 64) ^
+	      ((tile_off >> 5) & 64);
+	   break;
+	default:
+	   fprintf(stderr, "Unknown tile swizzling mode %d\n",
+		   irb->region->bit_6_swizzle);
+	   exit(1);
 	}
+
 	tile_base = (x_tile_number << 12) + y_tile_number * tile_stride;
 
 	return buf + tile_base + tile_off;
@@ -491,16 +495,14 @@ intel_map_unmap_buffers(struct intel_context *intel, GLboolean map)
    for (j = 0; j < ctx->DrawBuffer->_NumColorDrawBuffers; j++) {
       struct gl_renderbuffer *rb = ctx->DrawBuffer->_ColorDrawBuffers[j];
       irb = intel_renderbuffer(rb);
-      if (irb) {
-         /* this is a user-created intel_renderbuffer */
-         if (irb->region) {
-            if (map)
-               intel_region_map(intel, irb->region);
-            else
-               intel_region_unmap(intel, irb->region);
-            irb->pfMap = irb->region->map;
-            irb->pfPitch = irb->region->pitch;
-         }
+      if (irb && irb->region) {
+	 intel_set_span_functions(intel, rb);
+	 if (map)
+	    intel_region_map(intel, irb->region);
+	 else
+	    intel_region_unmap(intel, irb->region);
+	 irb->pfMap = irb->region->map;
+	 irb->pfPitch = irb->region->pitch;
       }
    }
 
@@ -526,6 +528,7 @@ intel_map_unmap_buffers(struct intel_context *intel, GLboolean map)
    /* color read buffers */
    irb = intel_renderbuffer(ctx->ReadBuffer->_ColorReadBuffer);
    if (irb && irb->region) {
+      intel_set_span_functions(intel, ctx->ReadBuffer->_ColorReadBuffer);
       if (map)
          intel_region_map(intel, irb->region);
       else
@@ -568,6 +571,8 @@ intel_map_unmap_buffers(struct intel_context *intel, GLboolean map)
       irb = intel_renderbuffer(ctx->DrawBuffer->_DepthBuffer->Wrapped);
       if (irb && irb->region) {
          if (map) {
+	    intel_set_span_functions(intel,
+				     ctx->DrawBuffer->_DepthBuffer->Wrapped);
             intel_region_map(intel, irb->region);
             irb->pfMap = irb->region->map;
             irb->pfPitch = irb->region->pitch;
@@ -585,6 +590,8 @@ intel_map_unmap_buffers(struct intel_context *intel, GLboolean map)
       irb = intel_renderbuffer(ctx->DrawBuffer->_StencilBuffer->Wrapped);
       if (irb && irb->region) {
          if (map) {
+	    intel_set_span_functions(intel,
+				     ctx->DrawBuffer->_StencilBuffer->Wrapped);
             intel_region_map(intel, irb->region);
             irb->pfMap = irb->region->map;
             irb->pfPitch = irb->region->pitch;
@@ -615,15 +622,6 @@ intelSpanRenderStart(GLcontext * ctx)
    intelFlush(&intel->ctx);
    LOCK_HARDWARE(intel);
 
-#if 0
-   /* Just map the framebuffer and all textures.  Bufmgr code will
-    * take care of waiting on the necessary fences:
-    */
-   intel_region_map(intel, intel->front_region);
-   intel_region_map(intel, intel->back_region);
-   intel_region_map(intel, intel->depth_region);
-#endif
-
    for (i = 0; i < ctx->Const.MaxTextureCoordUnits; i++) {
       if (ctx->Texture.Unit[i]._ReallyEnabled) {
          struct gl_texture_object *texObj = ctx->Texture.Unit[i]._Current;
@@ -645,14 +643,6 @@ intelSpanRenderFinish(GLcontext * ctx)
    GLuint i;
 
    _swrast_flush(ctx);
-
-   /* Now unmap the framebuffer:
-    */
-#if 0
-   intel_region_unmap(intel, intel->front_region);
-   intel_region_unmap(intel, intel->back_region);
-   intel_region_unmap(intel, intel->depth_region);
-#endif
 
    for (i = 0; i < ctx->Const.MaxTextureCoordUnits; i++) {
       if (ctx->Texture.Unit[i]._ReallyEnabled) {
@@ -680,20 +670,32 @@ intelInitSpanFuncs(GLcontext * ctx)
  * Plug in appropriate span read/write functions for the given renderbuffer.
  * These are used for the software fallbacks.
  */
-void
-intel_set_span_functions(struct gl_renderbuffer *rb, enum tiling_mode tiling)
+static void
+intel_set_span_functions(struct intel_context *intel,
+			 struct gl_renderbuffer *rb)
 {
+   struct intel_renderbuffer *irb = (struct intel_renderbuffer *) rb;
+   uint32_t tiling;
+
+   /* If in GEM mode, we need to do the tile address swizzling ourselves,
+    * instead of the fence registers handling it.
+    */
+   if (intel->ttm)
+      tiling = irb->region->tiling;
+   else
+      tiling = I915_TILING_NONE;
+
    if (rb->_ActualFormat == GL_RGB5) {
       /* 565 RGB */
       switch (tiling) {
-      case INTEL_TILE_NONE:
+      case I915_TILING_NONE:
       default:
 	 intelInitPointers_RGB565(rb);
 	 break;
-      case INTEL_TILE_X:
+      case I915_TILING_X:
 	 intel_XTile_InitPointers_RGB565(rb);
 	 break;
-      case INTEL_TILE_Y:
+      case I915_TILING_Y:
 	 intel_YTile_InitPointers_RGB565(rb);
 	 break;
       }
@@ -701,28 +703,28 @@ intel_set_span_functions(struct gl_renderbuffer *rb, enum tiling_mode tiling)
    else if (rb->_ActualFormat == GL_RGBA8) {
       /* 8888 RGBA */
       switch (tiling) {
-      case INTEL_TILE_NONE:
+      case I915_TILING_NONE:
       default:
 	 intelInitPointers_ARGB8888(rb);
 	 break;
-      case INTEL_TILE_X:
+      case I915_TILING_X:
 	 intel_XTile_InitPointers_ARGB8888(rb);
 	 break;
-      case INTEL_TILE_Y:
+      case I915_TILING_Y:
 	 intel_YTile_InitPointers_ARGB8888(rb);
 	 break;
       }
    }
    else if (rb->_ActualFormat == GL_DEPTH_COMPONENT16) {
       switch (tiling) {
-      case INTEL_TILE_NONE:
+      case I915_TILING_NONE:
       default:
 	 intelInitDepthPointers_z16(rb);
 	 break;
-      case INTEL_TILE_X:
+      case I915_TILING_X:
 	 intel_XTile_InitDepthPointers_z16(rb);
 	 break;
-      case INTEL_TILE_Y:
+      case I915_TILING_Y:
 	 intel_YTile_InitDepthPointers_z16(rb);
 	 break;
       }
@@ -730,28 +732,28 @@ intel_set_span_functions(struct gl_renderbuffer *rb, enum tiling_mode tiling)
    else if (rb->_ActualFormat == GL_DEPTH_COMPONENT24 ||        /* XXX FBO remove */
             rb->_ActualFormat == GL_DEPTH24_STENCIL8_EXT) {
       switch (tiling) {
-      case INTEL_TILE_NONE:
+      case I915_TILING_NONE:
       default:
 	 intelInitDepthPointers_z24_s8(rb);
 	 break;
-      case INTEL_TILE_X:
+      case I915_TILING_X:
 	 intel_XTile_InitDepthPointers_z24_s8(rb);
 	 break;
-      case INTEL_TILE_Y:
+      case I915_TILING_Y:
 	 intel_YTile_InitDepthPointers_z24_s8(rb);
 	 break;
       }
    }
    else if (rb->_ActualFormat == GL_STENCIL_INDEX8_EXT) {
       switch (tiling) {
-      case INTEL_TILE_NONE:
+      case I915_TILING_NONE:
       default:
 	 intelInitStencilPointers_z24_s8(rb);
 	 break;
-      case INTEL_TILE_X:
+      case I915_TILING_X:
 	 intel_XTile_InitStencilPointers_z24_s8(rb);
 	 break;
-      case INTEL_TILE_Y:
+      case I915_TILING_Y:
 	 intel_YTile_InitStencilPointers_z24_s8(rb);
 	 break;
       }

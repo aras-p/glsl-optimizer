@@ -33,12 +33,6 @@
 #include "i915_drm.h"
 #include "xmlconfig.h"
 
-enum tiling_mode {
-   INTEL_TILE_NONE,
-   INTEL_TILE_X,
-   INTEL_TILE_Y
-};
-
 /* XXX: change name or eliminate to avoid conflict with "struct
  * intel_region"!!!
  */
