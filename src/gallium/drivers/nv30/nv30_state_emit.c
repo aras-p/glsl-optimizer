@@ -7,6 +7,7 @@ static struct nv30_state_entry *render_states[] = {
 	&nv30_state_scissor,
 	&nv30_state_stipple,
 	&nv30_state_fragtex,
+	&nv30_state_vertprog,
 	&nv30_state_blend,
 	&nv30_state_blend_colour,
 	&nv30_state_zsa,
@@ -72,11 +73,6 @@ nv30_emit_hw_state(struct nv30_context *nv30)
 		if (state->hw[i])
 			so_emit(nv30->nvws, nv30->screen->state[i]);
 		states &= ~(1ULL << i);
-	}
-
-	if (nv30->dirty & NV30_NEW_VERTPROG) {
-		nv30_vertprog_bind(nv30, nv30->vertprog.current);
-		nv30->dirty &= ~NV30_NEW_VERTPROG;
 	}
 
 	so_emit_reloc_markers(nv30->nvws, state->hw[NV30_STATE_FB]);

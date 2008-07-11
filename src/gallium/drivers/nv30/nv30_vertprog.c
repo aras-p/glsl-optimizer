@@ -563,7 +563,7 @@ nv30_vertprog_prepare(struct nv30_vpc *vpc)
 	return TRUE;
 }
 
-void
+static void
 nv30_vertprog_translate(struct nv30_context *nv30,
 			struct nv30_vertex_program *vp)
 {
@@ -636,27 +636,31 @@ out_err:
 	FREE(vpc);
 }
 
-void
-nv30_vertprog_bind(struct nv30_context *nv30, struct nv30_vertex_program *vp)
+static boolean
+nv30_vertprog_validate(struct nv30_context *nv30)
 { 
 	struct nouveau_winsys *nvws = nv30->nvws;
 	struct pipe_winsys *ws = nv30->pipe.winsys;
+	struct nouveau_grobj *rankine = nv30->screen->rankine;
+	struct nv30_vertex_program *vp;
 	struct pipe_buffer *constbuf;
 	boolean upload_code = FALSE, upload_data = FALSE;
 	int i;
 
+	vp = nv30->vertprog;
 	constbuf = nv30->constbuf[PIPE_SHADER_VERTEX];
 
 	/* Translate TGSI shader into hw bytecode */
 	if (!vp->translated) {
 		nv30_vertprog_translate(nv30, vp);
 		if (!vp->translated)
-			assert(0);
+			return FALSE;
 	}
 
 	/* Allocate hw vtxprog exec slots */
 	if (!vp->exec) {
 		struct nouveau_resource *heap = nv30->screen->vp_exec_heap;
+		struct nouveau_stateobj *so;
 		uint vplen = vp->nr_insns;
 
 		if (nvws->res_alloc(heap, vplen, vp, &vp->exec)) {
@@ -670,6 +674,15 @@ nv30_vertprog_bind(struct nv30_context *nv30, struct nv30_vertex_program *vp)
 			if (nvws->res_alloc(heap, vplen, vp, &vp->exec))
 				assert(0);
 		}
+
+		so = so_new(2, 0);
+		so_method(so, rankine, NV34TCL_VP_START_FROM_ID, 1);
+		so_data  (so, vp->exec->start);
+		/* Add these, and you'll go 1/3 speed */
+		/*so_method(so, rankine, NV34TCL_VP_ATTRIB_EN, 2);
+		so_data  (so, vp->ir);
+		so_data  (so, vp->or);*/
+		so_ref(so, &vp->so);
 
 		upload_code = TRUE;
 	}
@@ -777,10 +790,12 @@ nv30_vertprog_bind(struct nv30_context *nv30, struct nv30_vertex_program *vp)
 		}
 	}
 
-	BEGIN_RING(rankine, NV34TCL_VP_START_FROM_ID, 1);
-	OUT_RING  (vp->exec->start);
+	if (vp->so != nv30->state.hw[NV30_STATE_VERTPROG]) {
+		so_ref(vp->so, &nv30->state.hw[NV30_STATE_VERTPROG]);
+		return TRUE;
+	}
 
-	nv30->vertprog.active = vp;
+	return FALSE;
 }
 
 void
@@ -808,7 +823,14 @@ nv30_vertprog_destroy(struct nv30_context *nv30, struct nv30_vertex_program *vp)
 	vp->data_start = 0;
 	vp->data_start_min = 0;
 
-	/* vp->ir = vp->or = vp->clip_ctrl = 0;
-	so_ref(NULL, &vp->so); */
+	vp->ir = vp->or = 0;
+	so_ref(NULL, &vp->so);
 }
 
+struct nv30_state_entry nv30_state_vertprog = {
+	.validate = nv30_vertprog_validate,
+	.dirty = {
+		.pipe = NV30_NEW_VERTPROG /*| NV30_NEW_UCP*/,
+		.hw = NV30_STATE_VERTPROG,
+	}
+};

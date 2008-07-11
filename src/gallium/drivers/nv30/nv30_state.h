@@ -26,6 +26,7 @@ struct nv30_vertex_program {
 	struct pipe_shader_state pipe;
 
 	boolean translated;
+
 	struct nv30_vertex_program_exec *insns;
 	unsigned nr_insns;
 	struct nv30_vertex_program_data *consts;
@@ -39,6 +40,7 @@ struct nv30_vertex_program {
 
 	uint32_t ir;
 	uint32_t or;
+	struct nouveau_stateobj *so;
 };
 
 struct nv30_fragment_program_data {

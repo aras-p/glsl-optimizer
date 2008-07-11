@@ -499,10 +499,12 @@ static void *
 nv30_vp_state_create(struct pipe_context *pipe,
 		     const struct pipe_shader_state *cso)
 {
+	/*struct nv30_context *nv30 = nv30_context(pipe);*/
 	struct nv30_vertex_program *vp;
 
 	vp = CALLOC(1, sizeof(struct nv30_vertex_program));
 	vp->pipe = *cso;
+	/*vp->draw = draw_create_vertex_shader(nv30->draw, &vp->pipe);*/
 
 	return (void *)vp;
 }
@@ -511,14 +513,10 @@ static void
 nv30_vp_state_bind(struct pipe_context *pipe, void *hwcso)
 {
 	struct nv30_context *nv30 = nv30_context(pipe);
-	struct nv30_vertex_program *vp = hwcso;
 
-	if (!hwcso) {
-		return;
-	}
-
-	nv30->vertprog.current = vp;
+	nv30->vertprog = hwcso;
 	nv30->dirty |= NV30_NEW_VERTPROG;
+	/*nv30->draw_dirty |= NV30_NEW_VERTPROG;*/
 }
 
 static void
@@ -527,6 +525,7 @@ nv30_vp_state_delete(struct pipe_context *pipe, void *hwcso)
 	struct nv30_context *nv30 = nv30_context(pipe);
 	struct nv30_vertex_program *vp = hwcso;
 
+	/*draw_delete_vertex_shader(nv30->draw, vp->draw);*/
 	nv30_vertprog_destroy(nv30, vp);
 	FREE(vp);
 }

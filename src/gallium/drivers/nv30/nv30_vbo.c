@@ -100,7 +100,7 @@ nv30_vbo_static_attrib(struct nv30_context *nv30, int attrib,
 static void
 nv30_vbo_arrays_update(struct nv30_context *nv30)
 {
-	struct nv30_vertex_program *vp = nv30->vertprog.active;
+	struct nv30_vertex_program *vp = nv30->vertprog;
 	uint32_t inputs, vtxfmt[16];
 	int hw, num_hw = 0;
 
