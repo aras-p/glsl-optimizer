@@ -820,6 +820,8 @@ nv30_fragprog_upload(struct nv30_context *nv30,
 void
 nv30_fragprog_bind(struct nv30_context *nv30, struct nv30_fragment_program *fp)
 {
+	struct pipe_buffer *constbuf =
+		nv30->constbuf[PIPE_SHADER_FRAGMENT];
 	struct pipe_winsys *ws = nv30->pipe.winsys;
 	int i;
 
@@ -830,8 +832,9 @@ nv30_fragprog_bind(struct nv30_context *nv30, struct nv30_fragment_program *fp)
 	}
 
 	if (fp->nr_consts) {
-		float *map = ws->buffer_map(ws, nv30->fragprog.constant_buf,
-					    PIPE_BUFFER_USAGE_CPU_READ);
+		float *map;
+
+		map = ws->buffer_map(ws, constbuf, PIPE_BUFFER_USAGE_CPU_READ);
 		for (i = 0; i < fp->nr_consts; i++) {
 			struct nv30_fragment_program_data *fpd = &fp->consts[i];
 			uint32_t *p = &fp->insn[fpd->offset];
@@ -842,13 +845,10 @@ nv30_fragprog_bind(struct nv30_context *nv30, struct nv30_fragment_program *fp)
 			memcpy(p, cb, 4 * sizeof(float));
 			fp->on_hw = 0;
 		}
-		ws->buffer_unmap(ws, nv30->fragprog.constant_buf);
+		ws->buffer_unmap(ws, constbuf);
 	}
 
 	if (!fp->on_hw) {
-		const uint32_t le = 1;
-		uint32_t *map;
-
 		if (!fp->buffer)
 			fp->buffer = ws->buffer_create(ws, 0x100, 0,
 						       fp->insn_len * 4);

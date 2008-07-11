@@ -124,6 +124,8 @@ struct nv30_context {
 	unsigned dirty;
 	struct pipe_scissor_state scissor;
 	unsigned stipple[32];
+	struct pipe_buffer *constbuf[PIPE_SHADER_TYPES];
+	unsigned constbuf_nr[PIPE_SHADER_TYPES];
 	struct nv30_rasterizer_state *rasterizer;
 	struct nv30_zsa_state *zsa;
 	struct nv30_blend_state *blend;
@@ -150,16 +152,12 @@ struct nv30_context {
 
 	struct {
 		struct nv30_vertex_program *active;
-
 		struct nv30_vertex_program *current;
-		struct pipe_buffer *constant_buf;
 	} vertprog;
 
 	struct {
 		struct nv30_fragment_program *active;
-
 		struct nv30_fragment_program *current;
-		struct pipe_buffer *constant_buf;
 	} fragprog;
 
 	struct pipe_vertex_buffer  vtxbuf[PIPE_MAX_ATTRIBS];

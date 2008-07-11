@@ -135,7 +135,7 @@ emit_src(struct nv30_vpc *vpc, uint32_t *hw, int pos, struct nv30_sreg src)
 
 /*
  * |VVV|
- * d°.°b
+ * dï¿½.ï¿½b
  *  \u/
  *
  */
@@ -641,8 +641,11 @@ nv30_vertprog_bind(struct nv30_context *nv30, struct nv30_vertex_program *vp)
 { 
 	struct nouveau_winsys *nvws = nv30->nvws;
 	struct pipe_winsys *ws = nv30->pipe.winsys;
+	struct pipe_buffer *constbuf;
 	boolean upload_code = FALSE, upload_data = FALSE;
 	int i;
+
+	constbuf = nv30->constbuf[PIPE_SHADER_VERTEX];
 
 	/* Translate TGSI shader into hw bytecode */
 	if (!vp->translated) {
@@ -730,8 +733,8 @@ nv30_vertprog_bind(struct nv30_context *nv30, struct nv30_vertex_program *vp)
 	if (vp->nr_consts) {
 		float *map = NULL;
 
-		if (nv30->vertprog.constant_buf) {
-			map = ws->buffer_map(ws, nv30->vertprog.constant_buf,
+		if (constbuf) {
+			map = ws->buffer_map(ws, constbuf,
 					     PIPE_BUFFER_USAGE_CPU_READ);
 		}
 
@@ -750,15 +753,10 @@ nv30_vertprog_bind(struct nv30_context *nv30, struct nv30_vertex_program *vp)
 			BEGIN_RING(rankine, NV34TCL_VP_UPLOAD_CONST_ID, 5);
 			OUT_RING  (i + vp->data->start);
 			OUT_RINGp ((uint32_t *)vpd->value, 4);
-#if 0
-			NOUVEAU_MSG("VP const %d: %f %f %f %f\n",
-				i, vpd->value[0], vpd->value[1],
-				vpd->value[2], vpd->value[3]);
-#endif
 		}
 
-		if (map) {
-			ws->buffer_unmap(ws, nv30->vertprog.constant_buf);
+		if (constbuf) {
+			ws->buffer_unmap(ws, constbuf);
 		}
 	}
 
