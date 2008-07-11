@@ -45,6 +45,10 @@ enum {
 	PROGRAM_BUILTIN = PROGRAM_FILE_MAX /**< not a real register, but a special swizzle constant */
 };
 
+enum {
+	OPCODE_REPL_ALPHA = MAX_OPCODE /**< used in paired instructions */
+};
+
 #define SWIZZLE_0000 MAKE_SWIZZLE4(SWIZZLE_ZERO, SWIZZLE_ZERO, SWIZZLE_ZERO, SWIZZLE_ZERO)
 #define SWIZZLE_1111 MAKE_SWIZZLE4(SWIZZLE_ONE, SWIZZLE_ONE, SWIZZLE_ONE, SWIZZLE_ONE)
 

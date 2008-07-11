@@ -408,12 +408,10 @@ void r500TranslateFragmentShader(r300ContextPtr r300,
 		r300UpdateStateParameters(r300->radeon.glCtx, _NEW_PROGRAM);
 
 		if (RADEON_DEBUG & DEBUG_PIXEL) {
-			fprintf(stderr, "Mesa program:\n");
-			fprintf(stderr, "-------------\n");
-			_mesa_print_program(&fp->mesa_program.Base);
-			fflush(stdout);
-			if (fp->translated)
+			if (fp->translated) {
+				_mesa_printf("Machine-readable code:\n");
 				dump_program(&fp->code);
+			}
 		}
 
 	}

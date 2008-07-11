@@ -777,9 +777,6 @@ struct r500_fragment_program_code {
 		GLuint inst4;
 		GLuint inst5;
 	} inst[512];
-	/* TODO: This is magic! */
-
-	int temp_reg_offset;
 
 	int inst_offset;
 	int inst_end;

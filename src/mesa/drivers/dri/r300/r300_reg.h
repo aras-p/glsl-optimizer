@@ -2921,6 +2921,7 @@ enum {
 #   define R500_RGB_SRCP_OP_RGB1_PLUS_RGB0		(2 << 30)
 #   define R500_RGB_SRCP_OP_1_MINUS_RGB0		(3 << 30)
 #define R500_US_CMN_INST_0				0xb800
+#  define R500_INST_TYPE_MASK				(3 << 0)
 #   define R500_INST_TYPE_ALU				(0 << 0)
 #   define R500_INST_TYPE_OUT				(1 << 0)
 #   define R500_INST_TYPE_FC				(2 << 0)
