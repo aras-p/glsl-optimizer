@@ -45,6 +45,8 @@
 #define NV50TIC_0_0_TYPEB_UNORM                                   0x00000080
 #define NV50TIC_0_0_FMT_MASK                                      0x0000003c
 #define NV50TIC_0_0_FMT_8_8_8_8                                   0x00000008
+#define NV50TIC_0_0_FMT_4_4_4_4                                   0x00000012
+#define NV50TIC_0_0_FMT_1_5_5_5                                   0x00000013
 #define NV50TIC_0_0_FMT_5_6_5                                     0x00000015
 #define NV50TIC_0_0_FMT_8_8                                       0x00000018
 #define NV50TIC_0_0_FMT_8                                         0x0000001d

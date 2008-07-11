@@ -1701,6 +1701,8 @@ nv50_program_destroy(struct nv50_context *nv50, struct nv50_program *p)
 	if (p->buffer)
 		pipe_buffer_reference(ws, &p->buffer, NULL);
 
+	nv50->screen->nvws->res_free(&p->data);
+
 	p->translated = 0;
 }
 
