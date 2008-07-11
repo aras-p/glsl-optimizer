@@ -28,7 +28,7 @@
 #include "util/p_tile.h"
 
 static void
-nv50_surface_copy(struct pipe_context *pipe, unsigned flip,
+nv50_surface_copy(struct pipe_context *pipe, boolean flip,
 		  struct pipe_surface *dest, unsigned destx, unsigned desty,
 		  struct pipe_surface *src, unsigned srcx, unsigned srcy,
 		  unsigned width, unsigned height)
@@ -36,8 +36,16 @@ nv50_surface_copy(struct pipe_context *pipe, unsigned flip,
 	struct nv50_context *nv50 = (struct nv50_context *)pipe;
 	struct nouveau_winsys *nvws = nv50->screen->nvws;
 
-	nvws->surface_copy(nvws, dest, destx, desty, src, srcx, srcy,
-			   width, height);
+	if (flip) {
+		desty += height;
+		while (height--) {
+			nvws->surface_copy(nvws, dest, destx, desty--, src,
+					   srcx, srcy++, width, 1);
+		}
+	} else {
+		nvws->surface_copy(nvws, dest, destx, desty, src, srcx, srcy,
+				   width, height);
+	}
 }
 
 static void
