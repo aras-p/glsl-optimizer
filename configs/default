@@ -26,6 +26,7 @@ GLU_CFLAGS =
 
 # Misc tools and flags
 SHELL = /bin/sh
+MKLIB = $(SHELL) $(TOP)/bin/mklib
 MKLIB_OPTIONS = 
 MKDEP = makedepend
 MKDEP_OPTIONS = -fdepend
