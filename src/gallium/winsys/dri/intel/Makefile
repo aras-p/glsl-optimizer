@@ -3,6 +3,7 @@ TOP = ../../../../..
 include $(TOP)/configs/current
 
 LIBNAME = i915_dri.so
+LIBNAME_EGL = egl_i915_dri.so
 
 PIPE_DRIVERS = \
 	$(TOP)/src/gallium/drivers/softpipe/libsoftpipe.a \
