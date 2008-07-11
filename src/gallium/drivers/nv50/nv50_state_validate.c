@@ -300,31 +300,8 @@ viewport_uptodate:
 		so_ref(so, &nv50->state.tsc_upload);
 	}
 
-	if (nv50->dirty & NV50_NEW_TEXTURE) {
-		int i;
-
-		so = so_new(nv50->miptree_nr * 8 + 3, nv50->miptree_nr * 2);
-		so_method(so, tesla, 0x0f00, 1);
-		so_data  (so, NV50_CB_TIC);
-		so_method(so, tesla, 0x40000f04, nv50->miptree_nr * 8);
-		for (i = 0; i < nv50->miptree_nr; i++) {
-			struct nv50_miptree *mt = nv50->miptree[i];
-
-			so_data (so, 0x2a712488);
-			so_reloc(so, mt->buffer, 0, NOUVEAU_BO_VRAM |
-				     NOUVEAU_BO_LOW, 0, 0);
-			so_data (so, 0xd0005000);
-			so_data (so, 0x00300000);
-			so_data (so, mt->base.width[0]);
-			so_data (so, (mt->base.depth[0] << 16) |
-				      mt->base.height[0]);
-			so_data (so, 0x03000000);
-			so_reloc(so, mt->buffer, 0, NOUVEAU_BO_VRAM |
-				     NOUVEAU_BO_HIGH, 0, 0);
-		}
-	
-		so_ref(so, &nv50->state.tic_upload);
-	}
+	if (nv50->dirty & NV50_NEW_TEXTURE)
+		nv50_tex_validate(nv50);
 
 	if (nv50->dirty & NV50_NEW_ARRAYS)
 		nv50_vbo_validate(nv50);

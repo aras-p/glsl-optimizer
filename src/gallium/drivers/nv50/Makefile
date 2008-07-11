@@ -14,6 +14,7 @@ DRIVER_SOURCES = \
 	nv50_state.c \
 	nv50_state_validate.c \
 	nv50_surface.c \
+	nv50_tex.c \
 	nv50_vbo.c
 
 C_SOURCES = \

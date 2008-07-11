@@ -164,4 +164,7 @@ extern void nv50_program_destroy(struct nv50_context *nv50, struct nv50_program 
 /* nv50_state_validate.c */
 extern boolean nv50_state_validate(struct nv50_context *nv50);
 
+/* nv50_tex.c */
+extern void nv50_tex_validate(struct nv50_context *);
+
 #endif
