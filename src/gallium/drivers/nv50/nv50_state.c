@@ -26,6 +26,7 @@
 #include "pipe/p_inlines.h"
 
 #include "nv50_context.h"
+#include "nv50_texture.h"
 
 #include "nouveau/nouveau_stateobj.h"
 
@@ -104,14 +105,74 @@ nv50_blend_state_delete(struct pipe_context *pipe, void *hwcso)
 	FREE(bso);
 }
 
+static INLINE unsigned
+wrap_mode(unsigned wrap)
+{
+	switch (wrap) {
+	case PIPE_TEX_WRAP_REPEAT:
+		return NV50TSC_1_0_WRAPS_REPEAT;
+	case PIPE_TEX_WRAP_MIRROR_REPEAT:
+		return NV50TSC_1_0_WRAPS_MIRROR_REPEAT;
+	case PIPE_TEX_WRAP_CLAMP_TO_EDGE:
+		return NV50TSC_1_0_WRAPS_CLAMP_TO_EDGE;
+	case PIPE_TEX_WRAP_CLAMP_TO_BORDER:
+		return NV50TSC_1_0_WRAPS_CLAMP_TO_BORDER;
+	case PIPE_TEX_WRAP_CLAMP:
+		return NV50TSC_1_0_WRAPS_CLAMP;
+	case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_EDGE:
+		return NV50TSC_1_0_WRAPS_MIRROR_CLAMP_TO_EDGE;
+	case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_BORDER:
+		return NV50TSC_1_0_WRAPS_MIRROR_CLAMP_TO_BORDER;
+	case PIPE_TEX_WRAP_MIRROR_CLAMP:
+		return NV50TSC_1_0_WRAPS_MIRROR_CLAMP;
+	default:
+		NOUVEAU_ERR("unknown wrap mode: %d\n", wrap);
+		return NV50TSC_1_0_WRAPS_REPEAT;
+	}
+}
 static void *
 nv50_sampler_state_create(struct pipe_context *pipe,
 			  const struct pipe_sampler_state *cso)
 {
 	unsigned *tsc = CALLOC(8, sizeof(unsigned));
 
-	tsc[0] = 0x00024080;
-	tsc[1] = 0x00000062;
+	tsc[0] = (0x00024000 |
+		  (wrap_mode(cso->wrap_s) << 0) |
+		  (wrap_mode(cso->wrap_t) << 3) |
+		  (wrap_mode(cso->wrap_r) << 6));
+
+	switch (cso->mag_img_filter) {
+	case PIPE_TEX_FILTER_LINEAR:
+		tsc[1] |= NV50TSC_1_1_MAGF_LINEAR;
+		break;
+	case PIPE_TEX_FILTER_NEAREST:
+	default:
+		tsc[1] |= NV50TSC_1_1_MAGF_NEAREST;
+		break;
+	}
+
+	switch (cso->min_img_filter) {
+	case PIPE_TEX_FILTER_LINEAR:
+		tsc[1] |= NV50TSC_1_1_MINF_LINEAR;
+		break;
+	case PIPE_TEX_FILTER_NEAREST:
+	default:
+		tsc[1] |= NV50TSC_1_1_MINF_NEAREST;
+		break;
+	}
+
+	switch (cso->min_mip_filter) {
+	case PIPE_TEX_MIPFILTER_LINEAR:
+		tsc[1] |= NV50TSC_1_1_MIPF_LINEAR;
+		break;
+	case PIPE_TEX_MIPFILTER_NEAREST:
+		tsc[1] |= NV50TSC_1_1_MIPF_NEAREST;
+		break;
+	case PIPE_TEX_MIPFILTER_NONE:
+	default:
+		tsc[1] |= NV50TSC_1_1_MIPF_NONE;
+		break;
+	}
 
 	return (void *)tsc;
 }
