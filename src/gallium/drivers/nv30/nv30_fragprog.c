@@ -783,6 +783,40 @@ out_err:
 	FREE(fpc);
 }
 
+static void
+nv30_fragprog_upload(struct nv30_context *nv30,
+		     struct nv30_fragment_program *fp)
+{
+	struct pipe_winsys *ws = nv30->pipe.winsys;
+	const uint32_t le = 1;
+	uint32_t *map;
+	int i;
+
+	map = ws->buffer_map(ws, fp->buffer, PIPE_BUFFER_USAGE_CPU_WRITE);
+
+#if 0
+	for (i = 0; i < fp->insn_len; i++) {
+		fflush(stdout); fflush(stderr);
+		NOUVEAU_ERR("%d 0x%08x\n", i, fp->insn[i]);
+		fflush(stdout); fflush(stderr);
+	}
+#endif
+
+	if ((*(const uint8_t *)&le)) {
+		for (i = 0; i < fp->insn_len; i++) {
+			map[i] = fp->insn[i];
+		}
+	} else {
+		/* Weird swapping for big-endian chips */
+		for (i = 0; i < fp->insn_len; i++) {
+			map[i] = ((fp->insn[i] & 0xffff) << 16) |
+				  ((fp->insn[i] >> 16) & 0xffff);
+		}
+	}
+
+	ws->buffer_unmap(ws, fp->buffer);
+}
+
 void
 nv30_fragprog_bind(struct nv30_context *nv30, struct nv30_fragment_program *fp)
 {
@@ -818,28 +852,7 @@ nv30_fragprog_bind(struct nv30_context *nv30, struct nv30_fragment_program *fp)
 		if (!fp->buffer)
 			fp->buffer = ws->buffer_create(ws, 0x100, 0,
 						       fp->insn_len * 4);
-		map = ws->buffer_map(ws, fp->buffer,
-				     PIPE_BUFFER_USAGE_CPU_WRITE);
-
-#if 0
-		for (i = 0; i < fp->insn_len; i++) {
-			NOUVEAU_ERR("%d 0x%08x\n", i, fp->insn[i]);
-		}
-#endif
-
-		if ((*(const uint8_t *)&le)) {
-			for (i = 0; i < fp->insn_len; i++) {
-				map[i] = fp->insn[i];
-			}
-		} else {
-			/* Weird swapping for big-endian chips */
-			for (i = 0; i < fp->insn_len; i++) {
-				map[i] = ((fp->insn[i] & 0xffff) << 16) |
-					  ((fp->insn[i] >> 16) & 0xffff);
-			}
-		}
-
-		ws->buffer_unmap(ws, fp->buffer);
+		nv30_fragprog_upload(nv30, fp);
 		fp->on_hw = TRUE;
 	}
 
