@@ -678,7 +678,7 @@ nv30_vertprog_validate(struct nv30_context *nv30)
 		so = so_new(2, 0);
 		so_method(so, rankine, NV34TCL_VP_START_FROM_ID, 1);
 		so_data  (so, vp->exec->start);
-		/* Add these, and you'll go 1/3 speed */
+		/* FIXME: Add these, and you'll have big slowdown */
 		/*so_method(so, rankine, NV34TCL_VP_ATTRIB_EN, 2);
 		so_data  (so, vp->ir);
 		so_data  (so, vp->or);*/
