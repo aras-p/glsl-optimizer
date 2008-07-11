@@ -153,6 +153,7 @@ static struct prog_src_register absolute(struct prog_src_register reg)
 {
 	struct prog_src_register newreg = reg;
 	newreg.Abs = 1;
+	newreg.NegateBase = 0;
 	newreg.NegateAbs = 0;
 	return newreg;
 }
@@ -343,6 +344,12 @@ static void transform_POW(struct radeon_transform_context* t,
 	emit1(t->Program, OPCODE_EX2, inst->DstReg, tempsrc);
 }
 
+static void transform_RSQ(struct radeon_transform_context* t,
+	struct prog_instruction* inst)
+{
+	emit1(t->Program, OPCODE_RSQ, inst->DstReg, absolute(inst->SrcReg[0]));
+}
+
 static void transform_SGE(struct radeon_transform_context* t,
 	struct prog_instruction* inst)
 {
@@ -397,6 +404,9 @@ static void transform_XPD(struct radeon_transform_context* t,
  * using:
  *  MOV, ADD, MUL, MAD, FRC, DP3, LG2, EX2, CMP
  *
+ * Transforms RSQ to Radeon's native RSQ by explicitly setting
+ * absolute value.
+ *
  * @note should be applicable to R300 and R500 fragment programs.
  */
 GLboolean radeonTransformALU(struct radeon_transform_context* t,
@@ -411,6 +421,7 @@ GLboolean radeonTransformALU(struct radeon_transform_context* t,
 	case OPCODE_LIT: transform_LIT(t, inst); return GL_TRUE;
 	case OPCODE_LRP: transform_LRP(t, inst); return GL_TRUE;
 	case OPCODE_POW: transform_POW(t, inst); return GL_TRUE;
+	case OPCODE_RSQ: transform_RSQ(t, inst); return GL_TRUE;
 	case OPCODE_SGE: transform_SGE(t, inst); return GL_TRUE;
 	case OPCODE_SLT: transform_SLT(t, inst); return GL_TRUE;
 	case OPCODE_SUB: transform_SUB(t, inst); return GL_TRUE;
