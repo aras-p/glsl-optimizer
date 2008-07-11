@@ -64,6 +64,20 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 static __DRIdriver *Drivers = NULL;
 
 
+/** If non-zero, prefer an "egl_foo_dri.so" driver over "foo_dri.so" */
+static int PreferEGL = 0;
+
+
+/**
+ * This may be called by libEGL.so to tell libGL to prefer "egl_" drivers
+ * over regular DRI drivers".
+ */
+void __glXPreferEGL(int state)
+{
+   PreferEGL = state;
+}
+
+
 /*
  * printf wrappers
  */
@@ -161,6 +175,33 @@ ExtractDir(int index, const char *paths, int dirLen, char *dir)
 
 
 /**
+ * Try to dlopen() a driver.
+ * \param libDir  the directory to search
+ * \param driverName  the name of the driver (such as "r300").
+ * \param tls  if true, try to find TLS version of driver
+ * \param preferEGL  if true, try to find EGL-specific driver
+ * \return  handle from dlopen(), will be NULL if fails.
+ */
+static void *
+try_open(const char *libDir, const char *driverName,
+         GLboolean tls, GLboolean preferEGL)
+{
+   const char *tlsDir = tls ? "/tls/" : "";
+   const char *eglPrefix = preferEGL ? "egl_" : "";
+   char fullPathName[200];
+   void *handle = NULL;
+
+   snprintf(fullPathName, 200, "%s%s/%s%s_dri.so",
+            libDir, tlsDir, eglPrefix, driverName);
+   InfoMessageF("OpenDriver: trying %s\n", fullPathName);
+   handle = dlopen(fullPathName, RTLD_NOW | RTLD_GLOBAL);
+
+   return handle;
+}
+
+
+
+/**
  * Versioned name of the expected \c __driCreateNewScreen function.
  * 
  * The version of the last incompatible loader/driver inteface change is
@@ -214,24 +255,16 @@ static __DRIdriver *OpenDriver(const char *driverName)
       libPaths = DEFAULT_DRIVER_DIR;
 
    for ( i = 0 ; ExtractDir(i, libPaths, 1000, libDir) != 0 ; i++ ) {
-      char realDriverName[200];
       void *handle = NULL;
 
-      
-      /* If TLS support is enabled, try to open the TLS version of the driver
-       * binary first.  If that fails, try the non-TLS version.
-       */
+      if (PreferEGL)
+         handle = try_open(libDir, driverName, GL_FALSE, GL_TRUE);
 #ifdef GLX_USE_TLS
-      snprintf(realDriverName, 200, "%s/tls/%s_dri.so", libDir, driverName);
-      InfoMessageF("OpenDriver: trying %s\n", realDriverName);
-      handle = dlopen(realDriverName, RTLD_NOW | RTLD_GLOBAL);
+      if (!handle)
+         handle = try_open(libDir, driverName, GL_TRUE, GL_FALSE);
 #endif
-
-      if ( handle == NULL ) {
-	 snprintf(realDriverName, 200, "%s/%s_dri.so", libDir, driverName);
-	 InfoMessageF("OpenDriver: trying %s\n", realDriverName);
-	 handle = dlopen(realDriverName, RTLD_NOW | RTLD_GLOBAL);
-      }
+      if (!handle)
+         handle = try_open(libDir, driverName, GL_FALSE, GL_FALSE);
 
       if ( handle != NULL ) {
          /* allocate __DRIdriver struct */
@@ -268,7 +301,8 @@ static __DRIdriver *OpenDriver(const char *driverName)
          break;
       }
       else {
-	 ErrorMessageF("dlopen %s failed (%s)\n", realDriverName, dlerror());
+	 ErrorMessageF("Unable to find/open driver for %s (%s)\n",
+                       driverName, dlerror());
       }
    }
 
@@ -402,7 +436,7 @@ static void driDestroyDisplay(Display *dpy, void *private)
 		    else
 		       Drivers = driver->next;
 
-		    Xfree(driver->name);
+		    Xfree((void *) driver->name);
 		    Xfree(driver);
 		    break;
 		 }
