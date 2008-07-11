@@ -82,9 +82,14 @@ nv50_miptree_surface_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 {
 	struct pipe_winsys *ws = pscreen->winsys;
 	struct nv50_miptree *mt = nv50_miptree(pt);
+	struct nv50_surface *s;
 	struct pipe_surface *ps;
 
-	ps = CALLOC_STRUCT(pipe_surface);
+	s = CALLOC_STRUCT(nv50_surface);
+	if (!s)
+		return NULL;
+	ps = &s->base;
+
 	ps->refcount = 1;
 	ps->winsys = ws;
 	ps->format = pt->format;
@@ -109,14 +114,15 @@ nv50_miptree_surface_del(struct pipe_screen *pscreen,
 			 struct pipe_surface **psurface)
 {
 	struct pipe_winsys *ws = pscreen->winsys;
-	struct pipe_surface *surf = *psurface;
+	struct pipe_surface *ps = *psurface;
+	struct nv50_surface *s = nv50_surface(ps);
 
 	*psurface = NULL;
 
-	if (--surf->refcount <= 0) {
-		pipe_texture_reference(&surf->texture, NULL);
-		pipe_buffer_reference(ws, &surf->buffer, NULL);
-		FREE(surf);
+	if (--ps->refcount <= 0) {
+		pipe_texture_reference(&ps->texture, NULL);
+		pipe_buffer_reference(ws, &ps->buffer, NULL);
+		FREE(s);
 	}
 }
 

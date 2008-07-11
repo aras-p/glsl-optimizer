@@ -52,25 +52,51 @@ nv50_surface_fill(struct pipe_context *pipe, struct pipe_surface *dest,
 }
 
 static void *
-nv50_surface_map(struct pipe_screen *screen, struct pipe_surface *surface,
+nv50_surface_map(struct pipe_screen *screen, struct pipe_surface *ps,
 		 unsigned flags )
 {
+	struct nouveau_winsys *nvws = nv50_screen(screen)->nvws;
 	struct pipe_winsys *ws = screen->winsys;
+	struct nv50_surface *s = nv50_surface(ps);
+	struct nv50_surface m = *s;
 	void *map;
 
-	map = ws->buffer_map(ws, surface->buffer, flags);
+	if (!s->untiled) {
+		s->untiled = ws->buffer_create(ws, 0, 0, ps->buffer->size);
+
+		m.base.buffer = s->untiled;
+		nvws->surface_copy(nvws, &m.base, 0, 0, &s->base, 0, 0,
+					 ps->width, ps->height);
+	}
+
+	/* Map original tiled surface to disallow it being validated while
+	 * untiled mirror is mapped.
+	 */
+	ws->buffer_map(ws, ps->buffer, flags);
+
+	map = ws->buffer_map(ws, s->untiled, flags);
 	if (!map)
 		return NULL;
 
-	return map + surface->offset;
+	return map;
 }
 
 static void
-nv50_surface_unmap(struct pipe_screen *screen, struct pipe_surface *surface)
+nv50_surface_unmap(struct pipe_screen *screen, struct pipe_surface *ps)
 {
+	struct nouveau_winsys *nvws = nv50_screen(screen)->nvws;
 	struct pipe_winsys *ws = screen->winsys;
+	struct nv50_surface *s = nv50_surface(ps);
+	struct nv50_surface m = *s;
 
-	ws->buffer_unmap(ws, surface->buffer);
+	ws->buffer_unmap(ws, s->untiled);
+	ws->buffer_unmap(ws, ps->buffer);
+
+	m.base.buffer = s->untiled;
+	nvws->surface_copy(nvws, &s->base, 0, 0, &m.base, 0, 0,
+				 ps->width, ps->height);
+
+	pipe_buffer_reference(ws, &s->untiled, NULL);
 }
 
 void
