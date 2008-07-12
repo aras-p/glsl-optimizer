@@ -97,7 +97,7 @@ nv30_fragtex_build(struct nv30_context *nv30, int unit)
 	if (!tf)
 		assert(0);
 
-	txf  = tf->format << 8;
+	txf  = tf->format;
 	txf |= ((pt->last_level>0) ? NV34TCL_TX_FORMAT_MIPMAP : 0);
 	txf |= log2i(pt->width[0]) << 20;
 	txf |= log2i(pt->height[0]) << 24;
