@@ -32,12 +32,6 @@ nv30_destroy(struct pipe_context *pipe)
 	FREE(nv30);
 }
 
-
-static void
-nv30_set_edgeflags(struct pipe_context *pipe, const unsigned *bitfield)
-{
-}
-
 struct pipe_context *
 nv30_create(struct pipe_screen *pscreen, unsigned pctx_id)
 {
@@ -57,7 +51,6 @@ nv30_create(struct pipe_screen *pscreen, unsigned pctx_id)
 	nv30->pipe.winsys = ws;
 	nv30->pipe.screen = pscreen;
 	nv30->pipe.destroy = nv30_destroy;
-	nv30->pipe.set_edgeflags = nv30_set_edgeflags;
 	nv30->pipe.draw_arrays = nv30_draw_arrays;
 	nv30->pipe.draw_elements = nv30_draw_elements;
 	nv30->pipe.clear = nv30_clear;

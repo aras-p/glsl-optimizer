@@ -142,6 +142,7 @@ struct nv30_context {
 
 	struct pipe_vertex_buffer  vtxbuf[PIPE_MAX_ATTRIBS];
 	struct pipe_vertex_element vtxelt[PIPE_MAX_ATTRIBS];
+	const unsigned *edgeflags;
 };
 
 static INLINE struct nv30_context *
