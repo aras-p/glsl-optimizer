@@ -805,10 +805,12 @@ tgsi_dump_instruction(
 
       CHR( '[' );
       if (src->SrcRegister.Indirect) {
-         TXT( "addr" );
-         if (src->SrcRegister.Index > 0)
-            CHR( '+' );
-         SID( src->SrcRegister.Index );
+         TXT( "ADDR[0]" );
+         if (src->SrcRegister.Index != 0) {
+            if (src->SrcRegister.Index > 0)
+               CHR( '+' );
+            SID( src->SrcRegister.Index );
+         }
       }
       else
          SID( src->SrcRegister.Index );
