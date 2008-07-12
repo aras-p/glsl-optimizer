@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005 Ben Skeggs.
+ * Copyright (C) 2008 Nicolai Haehnle.
  *
  * All Rights Reserved.
  *
@@ -25,38 +25,18 @@
  *
  */
 
-/*
- * Authors:
- *   Ben Skeggs <darktama@iinet.net.au>
- *   Jerome Glisse <j.glisse@gmail.com>
- */
-#ifndef __R500_FRAGPROG_H_
-#define __R500_FRAGPROG_H_
+#ifndef __R300_FRAGPROG_SWIZZLE_H_
+#define __R300_FRAGPROG_SWIZZLE_H_
 
 #include "glheader.h"
-#include "macros.h"
-#include "enums.h"
-#include "shader/prog_parameter.h"
-#include "shader/prog_print.h"
-#include "shader/program.h"
 #include "shader/prog_instruction.h"
 
-#include "r300_context.h"
-#include "r300_state.h"
-#include "radeon_program.h"
+struct nqssadce_state;
 
-struct r500_fragment_program;
+GLboolean r300FPIsNativeSwizzle(GLuint opcode, struct prog_src_register reg);
+void r300FPBuildSwizzle(struct nqssadce_state*, struct prog_dst_register dst, struct prog_src_register src);
 
-extern void r500TranslateFragmentShader(r300ContextPtr r300,
-					struct r500_fragment_program *fp);
+GLuint r300FPTranslateRGBSwizzle(GLuint src, GLuint swizzle);
+GLuint r300FPTranslateAlphaSwizzle(GLuint src, GLuint swizzle);
 
-struct r500_fragment_program_compiler {
-	r300ContextPtr r300;
-	struct r500_fragment_program *fp;
-	struct r500_fragment_program_code *code;
-	struct gl_program *program;
-};
-
-extern GLboolean r500FragmentProgramEmit(struct r500_fragment_program_compiler *compiler);
-
-#endif
+#endif /* __R300_FRAGPROG_SWIZZLE_H_ */

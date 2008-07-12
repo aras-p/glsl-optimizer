@@ -42,6 +42,7 @@ DRIVER_SOURCES = \
 		 radeon_nqssadce.c \
 		 r300_vertprog.c \
 		 r300_fragprog.c \
+		 r300_fragprog_swizzle.c \
 		 r300_fragprog_emit.c \
 		 r500_fragprog.c \
 		 r500_fragprog_emit.c \

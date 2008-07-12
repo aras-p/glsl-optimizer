@@ -29,10 +29,8 @@
  * \file
  *
  * Fragment program compiler. Perform transformations on the intermediate
- * \ref radeon_program representation (which is essentially the Mesa
- * program representation plus the notion of clauses) until the program
- * is in a form where we can translate it more or less directly into
- * machine-readable form.
+ * representation until the program is in a form where we can translate
+ * it more or less directly into machine-readable form.
  *
  * \author Ben Skeggs <darktama@iinet.net.au>
  * \author Jerome Glisse <j.glisse@gmail.com>
@@ -47,8 +45,10 @@
 
 #include "r300_context.h"
 #include "r300_fragprog.h"
+#include "r300_fragprog_swizzle.h"
 #include "r300_state.h"
 
+#include "radeon_nqssadce.h"
 #include "radeon_program_alu.h"
 
 
@@ -127,25 +127,6 @@ static GLboolean transform_TEX(
 		tgt->SrcReg[0] = inst.SrcReg[0];
 		tgt->SrcReg[1].File = PROGRAM_STATE_VAR;
 		tgt->SrcReg[1].Index = factor_index;
-
-		reset_srcreg(&inst.SrcReg[0]);
-		inst.SrcReg[0].File = PROGRAM_TEMPORARY;
-		inst.SrcReg[0].Index = tempreg;
-	}
-
-	/* Texture operations do not support swizzles etc. in hardware,
-	 * so emit an additional arithmetic operation if necessary.
-	 */
-	if (inst.SrcReg[0].Swizzle != SWIZZLE_NOOP ||
-	    inst.SrcReg[0].Abs || inst.SrcReg[0].NegateBase || inst.SrcReg[0].NegateAbs) {
-		int tempreg = radeonFindFreeTemporary(t);
-
-		tgt = radeonAppendInstructions(t->Program, 1);
-
-		tgt->Opcode = OPCODE_MOV;
-		tgt->DstReg.File = PROGRAM_TEMPORARY;
-		tgt->DstReg.Index = tempreg;
-		tgt->SrcReg[0] = inst.SrcReg[0];
 
 		reset_srcreg(&inst.SrcReg[0]);
 		inst.SrcReg[0].File = PROGRAM_TEMPORARY;
@@ -339,6 +320,13 @@ static void insert_WPOS_trailer(struct r300_fragment_program_compiler *compiler)
 }
 
 
+static void nqssadce_init(struct nqssadce_state* s)
+{
+	s->Outputs[FRAG_RESULT_COLR].Sourced = WRITEMASK_XYZW;
+	s->Outputs[FRAG_RESULT_DEPR].Sourced = WRITEMASK_W;
+}
+
+
 static GLuint build_dtm(GLuint depthmode)
 {
 	switch(depthmode) {
@@ -417,7 +405,20 @@ void r300TranslateFragmentShader(r300ContextPtr r300,
 			3, transformations);
 
 		if (RADEON_DEBUG & DEBUG_PIXEL) {
-			_mesa_printf("Fragment Program: After transformations:\n");
+			_mesa_printf("Fragment Program: After native rewrite:\n");
+			_mesa_print_program(compiler.program);
+		}
+
+		struct radeon_nqssadce_descr nqssadce = {
+			.Init = &nqssadce_init,
+			.IsNativeSwizzle = &r300FPIsNativeSwizzle,
+			.BuildSwizzle = &r300FPBuildSwizzle,
+			.RewriteDepthOut = GL_TRUE
+		};
+		radeonNqssaDce(r300->radeon.glCtx, compiler.program, &nqssadce);
+
+		if (RADEON_DEBUG & DEBUG_PIXEL) {
+			_mesa_printf("Compiler: after NqSSA-DCE:\n");
 			_mesa_print_program(compiler.program);
 		}
 
@@ -451,22 +452,18 @@ void r300FragmentProgramDump(
 
 	fprintf(stderr, "pc=%d*************************************\n", pc++);
 
-	fprintf(stderr, "Mesa program:\n");
-	fprintf(stderr, "-------------\n");
-	_mesa_print_program(&fp->mesa_program.Base);
-	fflush(stdout);
-
 	fprintf(stderr, "Hardware program\n");
 	fprintf(stderr, "----------------\n");
 
 	for (n = 0; n < (code->cur_node + 1); n++) {
 		fprintf(stderr, "NODE %d: alu_offset: %d, tex_offset: %d, "
-			"alu_end: %d, tex_end: %d\n", n,
+			"alu_end: %d, tex_end: %d, flags: %08x\n", n,
 			code->node[n].alu_offset,
 			code->node[n].tex_offset,
-			code->node[n].alu_end, code->node[n].tex_end);
+			code->node[n].alu_end, code->node[n].tex_end,
+			code->node[n].flags);
 
-		if (code->tex.length) {
+		if (n > 0 || code->first_node_has_tex) {
 			fprintf(stderr, "  TEX:\n");
 			for (i = code->node[n].tex_offset;
 			     i <= code->node[n].tex_offset + code->node[n].tex_end;

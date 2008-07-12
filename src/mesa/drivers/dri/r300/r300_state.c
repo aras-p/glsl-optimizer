@@ -2497,26 +2497,17 @@ static void r300SetupPixelShader(r300ContextPtr rmesa)
 	r300SetupTextures(ctx);
 
 	R300_STATECHANGE(rmesa, fpi[0]);
-	rmesa->hw.fpi[0].cmd[R300_FPI_CMD_0] = cmdpacket0(R300_US_ALU_RGB_INST_0, code->alu_end + 1);
-	for (i = 0; i <= code->alu_end; i++) {
-		rmesa->hw.fpi[0].cmd[R300_FPI_INSTR_0 + i] = code->alu.inst[i].inst0;
-	}
-
 	R300_STATECHANGE(rmesa, fpi[1]);
-	rmesa->hw.fpi[1].cmd[R300_FPI_CMD_0] = cmdpacket0(R300_US_ALU_RGB_ADDR_0, code->alu_end + 1);
-	for (i = 0; i <= code->alu_end; i++) {
-		rmesa->hw.fpi[1].cmd[R300_FPI_INSTR_0 + i] = code->alu.inst[i].inst1;
-	}
-
 	R300_STATECHANGE(rmesa, fpi[2]);
-	rmesa->hw.fpi[2].cmd[R300_FPI_CMD_0] = cmdpacket0(R300_US_ALU_ALPHA_INST_0, code->alu_end + 1);
-	for (i = 0; i <= code->alu_end; i++) {
-		rmesa->hw.fpi[2].cmd[R300_FPI_INSTR_0 + i] = code->alu.inst[i].inst2;
-	}
-
 	R300_STATECHANGE(rmesa, fpi[3]);
-	rmesa->hw.fpi[3].cmd[R300_FPI_CMD_0] = cmdpacket0(R300_US_ALU_ALPHA_ADDR_0, code->alu_end + 1);
-	for (i = 0; i <= code->alu_end; i++) {
+	rmesa->hw.fpi[0].cmd[R300_FPI_CMD_0] = cmdpacket0(R300_US_ALU_RGB_INST_0, code->alu.length);
+	rmesa->hw.fpi[1].cmd[R300_FPI_CMD_0] = cmdpacket0(R300_US_ALU_RGB_ADDR_0, code->alu.length);
+	rmesa->hw.fpi[2].cmd[R300_FPI_CMD_0] = cmdpacket0(R300_US_ALU_ALPHA_INST_0, code->alu.length);
+	rmesa->hw.fpi[3].cmd[R300_FPI_CMD_0] = cmdpacket0(R300_US_ALU_ALPHA_ADDR_0, code->alu.length);
+	for (i = 0; i < code->alu.length; i++) {
+		rmesa->hw.fpi[0].cmd[R300_FPI_INSTR_0 + i] = code->alu.inst[i].inst0;
+		rmesa->hw.fpi[1].cmd[R300_FPI_INSTR_0 + i] = code->alu.inst[i].inst1;
+		rmesa->hw.fpi[2].cmd[R300_FPI_INSTR_0 + i] = code->alu.inst[i].inst2;
 		rmesa->hw.fpi[3].cmd[R300_FPI_INSTR_0 + i] = code->alu.inst[i].inst3;
 	}
 
@@ -2524,10 +2515,10 @@ static void r300SetupPixelShader(r300ContextPtr rmesa)
 	rmesa->hw.fp.cmd[R300_FP_CNTL0] = code->cur_node | (code->first_node_has_tex << 3);
 	rmesa->hw.fp.cmd[R300_FP_CNTL1] = code->max_temp_idx;
 	rmesa->hw.fp.cmd[R300_FP_CNTL2] =
-	  (code->alu_offset << R300_PFS_CNTL_ALU_OFFSET_SHIFT) |
-	  (code->alu_end << R300_PFS_CNTL_ALU_END_SHIFT) |
-	  (code->tex_offset << R300_PFS_CNTL_TEX_OFFSET_SHIFT) |
-	  (code->tex_end << R300_PFS_CNTL_TEX_END_SHIFT);
+	  (0 << R300_PFS_CNTL_ALU_OFFSET_SHIFT) |
+	  ((code->alu.length-1) << R300_PFS_CNTL_ALU_END_SHIFT) |
+	  (0 << R300_PFS_CNTL_TEX_OFFSET_SHIFT) |
+	  ((code->tex.length ? code->tex.length-1 : 0) << R300_PFS_CNTL_TEX_END_SHIFT);
 	/* I just want to say, the way these nodes are stored.. weird.. */
 	for (i = 0, k = (4 - (code->cur_node + 1)); i < 4; i++, k++) {
 		if (i < (code->cur_node + 1)) {

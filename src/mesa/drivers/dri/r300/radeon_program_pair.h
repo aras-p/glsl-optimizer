@@ -110,10 +110,10 @@ struct radeon_pair_handler {
 	GLboolean (*EmitTex)(void*, struct prog_instruction*);
 
 	/**
-	 * Called after a block of contiguous, independent texture
-	 * instructions has been emitted.
+	 * Called before a block of contiguous, independent texture
+	 * instructions is emitted.
 	 */
-	void (*EndTexBlock)(void*);
+	GLboolean (*BeginTexBlock)(void*);
 
 	GLuint MaxHwTemps;
 };

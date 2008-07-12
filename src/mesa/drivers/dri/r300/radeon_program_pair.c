@@ -578,6 +578,9 @@ static void emit_all_tex(struct pair_state *s)
 	if (s->Debug)
 		_mesa_printf(" BEGIN_TEX\n");
 
+	if (s->Handler->BeginTexBlock)
+		s->Error = s->Error || !s->Handler->BeginTexBlock(s->UserData);
+
 	for(pairinst = readytex; pairinst; pairinst = pairinst->NextReady) {
 		int ip = pairinst - s->Instructions;
 		struct prog_instruction *inst = s->Program->Instructions + ip;
@@ -593,9 +596,6 @@ static void emit_all_tex(struct pair_state *s)
 		}
 		s->Error = s->Error || !s->Handler->EmitTex(s->UserData, inst);
 	}
-
-	if (s->Handler->EndTexBlock)
-		s->Handler->EndTexBlock(s->UserData);
 
 	if (s->Debug)
 		_mesa_printf(" END_TEX\n");
