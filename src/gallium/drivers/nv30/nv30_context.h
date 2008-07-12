@@ -114,12 +114,6 @@ struct nv30_context {
 	/* HW state derived from pipe states */
 	struct nv30_state state;
 
-	struct nv30_sampler_state *tex_sampler[PIPE_MAX_SAMPLERS];
-	struct nv30_miptree *tex_miptree[PIPE_MAX_SAMPLERS];
-	unsigned dirty_samplers;
-	unsigned fp_samplers;
-	unsigned vp_samplers;
-
 	/* Context state */
 	unsigned dirty;
 	struct pipe_scissor_state scissor;
@@ -134,17 +128,11 @@ struct nv30_context {
 	struct pipe_blend_color blend_colour;
 	struct pipe_viewport_state viewport;
 	struct pipe_framebuffer_state framebuffer;
+	struct nv30_sampler_state *tex_sampler[PIPE_MAX_SAMPLERS];
+	struct nv30_miptree *tex_miptree[PIPE_MAX_SAMPLERS];
 	unsigned nr_samplers;
 	unsigned nr_textures;
-
-	uint32_t rt_enable;
-	struct pipe_buffer *rt[2];
-	struct pipe_buffer *zeta;
-
-	/*struct {
-		struct pipe_buffer *buffer;
-		uint32_t format;
-	} tex[16];*/
+	unsigned dirty_samplers;
 
 	unsigned vb_enable;
 	struct {
@@ -193,7 +181,6 @@ extern void nv30_fragtex_bind(struct nv30_context *);
 /* nv30_state.c and friends */
 extern boolean nv30_state_validate(struct nv30_context *nv30);
 extern void nv30_state_emit(struct nv30_context *nv30);
-extern void nv30_state_tex_update(struct nv30_context *nv30);
 extern struct nv30_state_entry nv30_state_rasterizer;
 extern struct nv30_state_entry nv30_state_scissor;
 extern struct nv30_state_entry nv30_state_stipple;
