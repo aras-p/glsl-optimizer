@@ -32,7 +32,7 @@ nv30_screen_get_param(struct pipe_screen *pscreen, int param)
 	case PIPE_CAP_MAX_TEXTURE_IMAGE_UNITS:
 		return 16;
 	case PIPE_CAP_NPOT_TEXTURES:
-		return 0;
+		return 1;
 	case PIPE_CAP_TWO_SIDED_STENCIL:
 		return 1;
 	case PIPE_CAP_GLSL:
@@ -75,7 +75,7 @@ nv30_screen_get_paramf(struct pipe_screen *pscreen, int param)
 	case PIPE_CAP_MAX_POINT_WIDTH_AA:
 		return 64.0;
 	case PIPE_CAP_MAX_TEXTURE_ANISOTROPY:
-		return 16.0;
+		return 8.0;
 	case PIPE_CAP_MAX_TEXTURE_LOD_BIAS:
 		return 4.0;
 	default:
