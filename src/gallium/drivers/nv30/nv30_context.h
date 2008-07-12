@@ -128,20 +128,17 @@ struct nv30_context {
 	struct pipe_blend_color blend_colour;
 	struct pipe_viewport_state viewport;
 	struct pipe_framebuffer_state framebuffer;
+	struct pipe_buffer *idxbuf;
+	unsigned idxbuf_format;
 	struct nv30_sampler_state *tex_sampler[PIPE_MAX_SAMPLERS];
 	struct nv30_miptree *tex_miptree[PIPE_MAX_SAMPLERS];
 	unsigned nr_samplers;
 	unsigned nr_textures;
 	unsigned dirty_samplers;
-
-	unsigned vb_enable;
-	struct {
-		struct pipe_buffer *buffer;
-		unsigned delta;
-	} vb[16];
-
-	struct pipe_vertex_buffer  vtxbuf[PIPE_MAX_ATTRIBS];
+	struct pipe_vertex_buffer vtxbuf[PIPE_MAX_ATTRIBS];
+	unsigned vtxbuf_nr;
 	struct pipe_vertex_element vtxelt[PIPE_MAX_ATTRIBS];
+	unsigned vtxelt_nr;
 	const unsigned *edgeflags;
 };
 
@@ -193,6 +190,7 @@ extern struct nv30_state_entry nv30_state_zsa;
 extern struct nv30_state_entry nv30_state_viewport;
 extern struct nv30_state_entry nv30_state_framebuffer;
 extern struct nv30_state_entry nv30_state_fragtex;
+extern struct nv30_state_entry nv30_state_vbo;
 
 /* nv30_vbo.c */
 extern boolean nv30_draw_arrays(struct pipe_context *, unsigned mode,

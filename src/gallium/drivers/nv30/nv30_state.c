@@ -644,7 +644,10 @@ nv30_set_vertex_buffers(struct pipe_context *pipe, unsigned count,
 	struct nv30_context *nv30 = nv30_context(pipe);
 
 	memcpy(nv30->vtxbuf, vb, sizeof(*vb) * count);
+	nv30->vtxbuf_nr = count;
+
 	nv30->dirty |= NV30_NEW_ARRAYS;
+	/*nv30->draw_dirty |= NV30_NEW_ARRAYS;*/
 }
 
 static void
@@ -654,7 +657,10 @@ nv30_set_vertex_elements(struct pipe_context *pipe, unsigned count,
 	struct nv30_context *nv30 = nv30_context(pipe);
 
 	memcpy(nv30->vtxelt, ve, sizeof(*ve) * count);
+	nv30->vtxelt_nr = count;
+
 	nv30->dirty |= NV30_NEW_ARRAYS;
+	/*nv30->draw_dirty |= NV30_NEW_ARRAYS;*/
 }
 
 static void

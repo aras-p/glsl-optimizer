@@ -13,6 +13,7 @@ static struct nv30_state_entry *render_states[] = {
 	&nv30_state_blend_colour,
 	&nv30_state_zsa,
 	&nv30_state_viewport,
+	&nv30_state_vbo,
 	NULL
 };
 
@@ -39,10 +40,7 @@ nv30_state_do_validate(struct nv30_context *nv30,
 
 		states++;
 	}
-
-/*	TODO: uncomment when finished converting
 	nv30->dirty = 0;
-*/
 }
 
 void
@@ -71,6 +69,8 @@ nv30_state_emit(struct nv30_context *nv30)
 		states &= ~(1ULL << i);
 	}
 
+	state->dirty = 0;
+
 	so_emit_reloc_markers(nv30->nvws, state->hw[NV30_STATE_FB]);
 	for (i = 0, samplers = state->fp_samplers; i < 16 && samplers; i++) {
 		if (!(samplers & (1 << i)))
@@ -80,6 +80,8 @@ nv30_state_emit(struct nv30_context *nv30)
 		samplers &= ~(1ULL << i);
 	}
 	so_emit_reloc_markers(nv30->nvws, state->hw[NV30_STATE_FRAGPROG]);
+	if (state->hw[NV30_STATE_VTXBUF] /*&& nv30->render_mode == HW*/)
+		so_emit_reloc_markers(nv30->nvws, state->hw[NV30_STATE_VTXBUF]);
 }
 
 boolean

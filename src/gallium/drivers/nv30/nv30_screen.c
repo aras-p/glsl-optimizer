@@ -57,7 +57,7 @@ nv30_screen_get_param(struct pipe_screen *pscreen, int param)
 		return 13;
 	case NOUVEAU_CAP_HW_VTXBUF:
 	case NOUVEAU_CAP_HW_IDXBUF:
-		return 0;
+		return 1;
 	default:
 		NOUVEAU_ERR("Unknown PIPE_CAP %d\n", param);
 		return 0;
