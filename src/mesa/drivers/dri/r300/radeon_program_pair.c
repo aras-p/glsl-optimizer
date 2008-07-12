@@ -167,6 +167,15 @@ static struct pair_register_translation *get_register(struct pair_state *s, GLui
 	}
 }
 
+static void alloc_hw_reg(struct pair_state *s, GLuint file, GLuint index, GLuint hwindex)
+{
+	struct pair_register_translation *t = get_register(s, file, index);
+	ASSERT(!s->HwTemps[hwindex].RefCount);
+	ASSERT(!t->Allocated);
+	s->HwTemps[hwindex].RefCount = t->RefCount;
+	t->Allocated = 1;
+	t->HwIndex = hwindex;
+}
 
 static GLuint get_hw_reg(struct pair_state *s, GLuint file, GLuint index)
 {
@@ -190,9 +199,7 @@ static GLuint get_hw_reg(struct pair_state *s, GLuint file, GLuint index)
 		return 0;
 	}
 
-	s->HwTemps[hwindex].RefCount = t->RefCount;
-	t->Allocated = 1;
-	t->HwIndex = hwindex;
+	alloc_hw_reg(s, file, index, hwindex);
 	return hwindex;
 }
 
@@ -430,27 +437,28 @@ static void allocate_input_registers(struct pair_state *s)
 {
 	GLuint InputsRead = s->Program->InputsRead;
 	int i;
+	GLuint hwindex = 0;
 
 	/* Texcoords come first */
 	for (i = 0; i < s->Ctx->Const.MaxTextureUnits; i++) {
 		if (InputsRead & (FRAG_BIT_TEX0 << i))
-			get_hw_reg(s, PROGRAM_INPUT, FRAG_ATTRIB_TEX0+i);
+			alloc_hw_reg(s, PROGRAM_INPUT, FRAG_ATTRIB_TEX0+i, hwindex++);
 	}
 	InputsRead &= ~FRAG_BITS_TEX_ANY;
 
 	/* fragment position treated as a texcoord */
 	if (InputsRead & FRAG_BIT_WPOS)
-		get_hw_reg(s, PROGRAM_INPUT, FRAG_ATTRIB_WPOS);
+		alloc_hw_reg(s, PROGRAM_INPUT, FRAG_ATTRIB_WPOS, hwindex++);
 	InputsRead &= ~FRAG_BIT_WPOS;
 
 	/* Then primary colour */
 	if (InputsRead & FRAG_BIT_COL0)
-		get_hw_reg(s, PROGRAM_INPUT, FRAG_ATTRIB_COL0);
+		alloc_hw_reg(s, PROGRAM_INPUT, FRAG_ATTRIB_COL0, hwindex++);
 	InputsRead &= ~FRAG_BIT_COL0;
 
 	/* Secondary color */
 	if (InputsRead & FRAG_BIT_COL1)
-		get_hw_reg(s, PROGRAM_INPUT, FRAG_ATTRIB_COL1);
+		alloc_hw_reg(s, PROGRAM_INPUT, FRAG_ATTRIB_COL1, hwindex++);
 	InputsRead &= ~FRAG_BIT_COL1;
 
 	/* Anything else */
