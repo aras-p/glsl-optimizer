@@ -32,7 +32,7 @@ nv30_screen_get_param(struct pipe_screen *pscreen, int param)
 	case PIPE_CAP_MAX_TEXTURE_IMAGE_UNITS:
 		return 16;
 	case PIPE_CAP_NPOT_TEXTURES:
-		return 1;
+		return 0;
 	case PIPE_CAP_TWO_SIDED_STENCIL:
 		return 1;
 	case PIPE_CAP_GLSL:
