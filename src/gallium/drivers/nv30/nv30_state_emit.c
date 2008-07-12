@@ -46,7 +46,7 @@ nv30_state_do_validate(struct nv30_context *nv30,
 }
 
 void
-nv30_emit_hw_state(struct nv30_context *nv30)
+nv30_state_emit(struct nv30_context *nv30)
 {
 	struct nv30_state *state = &nv30->state;
 	struct nv30_screen *screen = nv30->screen;

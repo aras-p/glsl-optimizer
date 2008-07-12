@@ -192,7 +192,7 @@ extern void nv30_fragtex_bind(struct nv30_context *);
 
 /* nv30_state.c and friends */
 extern boolean nv30_state_validate(struct nv30_context *nv30);
-extern void nv30_emit_hw_state(struct nv30_context *nv30);
+extern void nv30_state_emit(struct nv30_context *nv30);
 extern void nv30_state_tex_update(struct nv30_context *nv30);
 extern struct nv30_state_entry nv30_state_rasterizer;
 extern struct nv30_state_entry nv30_state_scissor;
