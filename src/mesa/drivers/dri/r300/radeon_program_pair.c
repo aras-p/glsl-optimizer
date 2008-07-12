@@ -682,9 +682,14 @@ static GLboolean fill_instruction_into_pair(struct pair_state *s, struct radeon_
 			pair->RGB.Opcode = OPCODE_REPL_ALPHA;
 		else
 			pair->RGB.Opcode = inst->Opcode;
+		if (inst->SaturateMode == SATURATE_ZERO_ONE)
+			pair->RGB.Saturate = 1;
 	}
-	if (pairinst->NeedAlpha)
+	if (pairinst->NeedAlpha) {
 		pair->Alpha.Opcode = inst->Opcode;
+		if (inst->SaturateMode == SATURATE_ZERO_ONE)
+			pair->Alpha.Saturate = 1;
+	}
 
 	int nargs = _mesa_num_inst_src_regs(inst->Opcode);
 	int i;
