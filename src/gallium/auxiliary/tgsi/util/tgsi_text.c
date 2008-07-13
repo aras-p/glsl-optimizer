@@ -100,6 +100,51 @@ static boolean parse_uint( const char **pcur, uint *val )
    return FALSE;
 }
 
+/* Parse floating point.
+ */
+static boolean parse_float( const char **pcur, float *val )
+{
+   const char *cur = *pcur;
+   boolean integral_part = FALSE;
+   boolean fractional_part = FALSE;
+
+   *val = (float) atof( cur );
+
+   if (*cur == '-' || *cur == '+')
+      cur++;
+   if (is_digit( cur )) {
+      cur++;
+      integral_part = TRUE;
+      while (is_digit( cur ))
+         cur++;
+   }
+   if (*cur == '.') {
+      cur++;
+      if (is_digit( cur )) {
+         cur++;
+         fractional_part = TRUE;
+         while (is_digit( cur ))
+            cur++;
+      }
+   }
+   if (!integral_part && !fractional_part)
+      return FALSE;
+   if (toupper( *cur ) == 'E') {
+      cur++;
+      if (*cur == '-' || *cur == '+')
+         cur++;
+      if (is_digit( cur )) {
+         cur++;
+         while (is_digit( cur ))
+            cur++;
+      }
+      else
+         return FALSE;
+   }
+   *pcur = cur;
+   return TRUE;
+}
+
 struct translate_ctx
 {
    const char *text;
@@ -744,6 +789,66 @@ static boolean parse_declaration( struct translate_ctx *ctx )
    return TRUE;
 }
 
+static boolean parse_immediate( struct translate_ctx *ctx )
+{
+   struct tgsi_full_immediate imm;
+   uint i;
+   float values[4];
+   uint advance;
+
+   if (!eat_white( &ctx->cur )) {
+      report_error( ctx, "Syntax error" );
+      return FALSE;
+   }
+   if (!str_match_no_case( &ctx->cur, "FLT32" ) || is_digit_alpha_underscore( ctx->cur )) {
+      report_error( ctx, "Expected `FLT32'" );
+      return FALSE;
+   }
+   eat_opt_white( &ctx->cur );
+   if (*ctx->cur != '{') {
+      report_error( ctx, "Expected `{'" );
+      return FALSE;
+   }
+   ctx->cur++;
+   for (i = 0; i < 4; i++) {
+      eat_opt_white( &ctx->cur );
+      if (i > 0) {
+         if (*ctx->cur != ',') {
+            report_error( ctx, "Expected `,'" );
+            return FALSE;
+         }
+         ctx->cur++;
+         eat_opt_white( &ctx->cur );
+      }
+      if (!parse_float( &ctx->cur, &values[i] )) {
+         report_error( ctx, "Expected literal floating point" );
+         return FALSE;
+      }
+   }
+   eat_opt_white( &ctx->cur );
+   if (*ctx->cur != '}') {
+      report_error( ctx, "Expected `}'" );
+      return FALSE;
+   }
+   ctx->cur++;
+
+   imm = tgsi_default_full_immediate();
+   imm.Immediate.Size += 4;
+   imm.Immediate.DataType = TGSI_IMM_FLOAT32;
+   imm.u.Pointer = values;
+
+   advance = tgsi_build_full_immediate(
+      &imm,
+      ctx->tokens_cur,
+      ctx->header,
+      (uint) (ctx->tokens_end - ctx->tokens_cur) );
+   if (advance == 0)
+      return FALSE;
+   ctx->tokens_cur += advance;
+
+   return TRUE;
+}
+
 static boolean translate( struct translate_ctx *ctx )
 {
    eat_opt_white( &ctx->cur );
@@ -766,8 +871,12 @@ static boolean translate( struct translate_ctx *ctx )
          if (!parse_declaration( ctx ))
             return FALSE;
       }
+      else if (str_match_no_case( &ctx->cur, "IMM" )) {
+         if (!parse_immediate( ctx ))
+            return FALSE;
+      }
       else {
-         report_error( ctx, "Expected `DCL' or a label" );
+         report_error( ctx, "Expected `DCL', `IMM' or a label" );
          return FALSE;
       }
    }
