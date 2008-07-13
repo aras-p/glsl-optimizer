@@ -1,6 +1,6 @@
 /**************************************************************************
  * 
- * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2008 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -25,25 +25,59 @@
  * 
  **************************************************************************/
 
-#ifndef TGSI_SSE2_H
-#define TGSI_SSE2_H
 
-#if defined __cplusplus
-extern "C" {
-#endif
+#ifndef ST_DEVICE_H_
+#define ST_DEVICE_H_
 
-struct tgsi_token;
-struct x86_function;
 
-unsigned
-tgsi_emit_sse2(
-   const struct tgsi_token *tokens,
-   struct x86_function *function,
-   float (*immediates)[4],
-   boolean do_swizzles );
+#include "pipe/p_state.h"
 
-#if defined __cplusplus
-}
-#endif
+struct cso_context;
+struct pipe_screen;
+struct pipe_context;
+struct st_winsys; 
 
-#endif /* TGSI_SSE2_H */
+
+struct st_context {
+   struct st_device *st_dev;
+   
+   struct pipe_context *pipe;
+   
+   struct cso_context *cso;
+   
+   struct pipe_shader_state vert_shader;
+   struct pipe_shader_state frag_shader;
+
+   void *vs;
+   void *fs;
+
+   struct pipe_texture *sampler_textures[PIPE_MAX_SAMPLERS];
+   struct pipe_vertex_buffer vertex_buffers[PIPE_MAX_ATTRIBS];
+   struct pipe_vertex_element vertex_elements[PIPE_MAX_ATTRIBS];
+};
+
+
+struct st_device {
+   const struct st_winsys *st_ws; 
+   
+   struct pipe_screen *screen;
+   
+   /* FIXME: we also need to refcount for textures and surfaces... */
+   unsigned refcount;
+};
+
+
+struct st_context *
+st_context_create(struct st_device *st_dev);
+
+void
+st_context_destroy(struct st_context *st_ctx);
+
+struct st_device *
+st_device_create(boolean hardware);
+
+void
+st_device_destroy(struct st_device *st_dev);
+
+
+#endif /* ST_DEVICE_H_ */

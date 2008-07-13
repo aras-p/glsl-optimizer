@@ -33,7 +33,7 @@
  * to render into X-created windows.
  *
  * This is an EGL driver that, in turn, loads a regular DRI driver.
- * There are some dependencies on code in libGL, but those coudl be
+ * There are some dependencies on code in libGL, but those could be
  * removed with some effort.
  *
  * Authors: Brian Paul
@@ -77,11 +77,14 @@ struct xdri_egl_driver
    const char *dri_driver_name;  /**< name of DRI driver to load */
    void *dri_driver_handle;      /**< returned by dlopen(dri_driver_name) */
 
+   __GLXdisplayPrivate *glx_priv;
+
+
+   /* XXX we're not actually using these at this time: */
    int chipset;
    int minor;
    int drmFD;
 
-   __DRIscreen driScreen;
    __DRIframebuffer framebuffer;
    drm_handle_t hSAREA;
    drmAddress pSAREA;
@@ -117,9 +120,6 @@ struct xdri_egl_config
    const __GLcontextModes *mode;  /**< corresponding GLX mode */
 };
 
-
-/* XXX temp hack */
-static struct xdri_egl_driver *TheDriver = NULL;
 
 
 /** cast wrapper */
@@ -179,11 +179,10 @@ get_drawable_size(Display *dpy, Drawable d, uint *width, uint *height)
  * This dependency on GLX lib will be removed someday.
  */
 static void
-create_configs(_EGLDisplay *disp)
+create_configs(_EGLDisplay *disp, __GLXdisplayPrivate *glx_priv)
 {
+   __GLXscreenConfigs *scrn = glx_priv->screenConfigs;
    const __GLcontextModes *m;
-   __GLXdisplayPrivate *priv = __glXInitialize(disp->Xdpy);
-   __GLXscreenConfigs *scrn = priv->screenConfigs;
    int id = 1;
 
    for (m = scrn->configs; m; m = m->next) {
@@ -292,9 +291,9 @@ dri_context_modes_create(unsigned count, size_t minimum_size)
 static __DRIscreen *
 dri_find_dri_screen(__DRInativeDisplay *ndpy, int scrn)
 {
-   assert(TheDriver);
-
-   return &TheDriver->driScreen;
+   __GLXdisplayPrivate *priv = __glXInitialize(ndpy);
+   __GLXscreenConfigs *scrnConf = priv->screenConfigs;
+   return &scrnConf->driScreen;
 }
 
 
@@ -395,9 +394,6 @@ static const __DRIinterfaceMethods interface_methods = {
 static EGLBoolean
 init_drm(struct xdri_egl_driver *xdri_drv, _EGLDisplay *disp)
 {
-   static const char createNewScreenName[] = "__driCreateNewScreen_20050727";
-   PFNCREATENEWSCREENFUNC createNewScreen;
-   int api_ver = 0;/*__glXGetInternalVersion();*/
    __DRIversion ddx_version;
    __DRIversion dri_version;
    __DRIversion drm_version;
@@ -405,9 +401,9 @@ init_drm(struct xdri_egl_driver *xdri_drv, _EGLDisplay *disp)
    drm_handle_t  hFB;
    int newlyopened;
    int status;
-   __GLcontextModes *modes;
    int scrn = DefaultScreen(disp->Xdpy);
 
+#if 0
    createNewScreen = (PFNCREATENEWSCREENFUNC)
       dlsym(xdri_drv->dri_driver_handle, createNewScreenName);
    if (!createNewScreen) {
@@ -418,6 +414,7 @@ init_drm(struct xdri_egl_driver *xdri_drv, _EGLDisplay *disp)
    else {
       _eglLog(_EGL_DEBUG, "XDRI: Found %s", createNewScreenName);
    }
+#endif
 
    /*
     * Get the DRI X extension version.
@@ -425,7 +422,6 @@ init_drm(struct xdri_egl_driver *xdri_drv, _EGLDisplay *disp)
    dri_version.major = 4;
    dri_version.minor = 0;
    dri_version.patch = 0;
-
 
    if (!XF86DRIOpenConnection(disp->Xdpy, scrn,
                               &xdri_drv->hSAREA, &xdri_drv->busID)) {
@@ -543,47 +539,19 @@ init_drm(struct xdri_egl_driver *xdri_drv, _EGLDisplay *disp)
       _eglLog(_EGL_DEBUG, "XDRI: drmMap(sarea) success");
    }
 
-   /* Create the DRI screen.
-    */
-   xdri_drv->driScreen.private = createNewScreen(disp->Xdpy,
-                                             scrn,  /* screen number */
-                                             &xdri_drv->driScreen,
-                                             NULL,  /* visuals */
-                                             &ddx_version,
-                                             &dri_version,
-                                             &drm_version,
-                                             &xdri_drv->framebuffer,
-                                             xdri_drv->pSAREA,
-                                             xdri_drv->drmFD,
-                                             api_ver,
-                                             &interface_methods,
-                                             &modes);
-   if (!xdri_drv->driScreen.private) {
-      _eglLog(_EGL_WARNING, "XDRI: create new screen failed");
-      return EGL_FALSE;
-   }
-   else {
-      _eglLog(_EGL_DEBUG, "XDRI: create new screen success");
-   }
-
-   create_configs(disp);
-
-   /* print modes / debug */
-   if (0) {
-      __GLcontextModes *m;
-
-      for (m = modes; m; m = m->next) {
-         _eglLog(_EGL_DEBUG,
-                 "mode ID 0x%x rgba %d %d %d %d  z %d  s %d  db %d\n", m->visualID,
-                 m->redBits, m->greenBits, m->blueBits, m->alphaBits,
-                 m->depthBits, m->stencilBits, m->doubleBufferMode);
-      }
-   }
-
    return EGL_TRUE;
 }
 
 
+/**
+ * Load the DRI driver named by "xdri_drv->dri_driver_name".
+ * Basically, dlopen() the library to set "xdri_drv->dri_driver_handle".
+ *
+ * Later, we'll call dlsym(createNewScreenName) to get a pointer to
+ * the driver's createNewScreen() function which is the bootstrap function.
+ *
+ * \return EGL_TRUE for success, EGL_FALSE for failure
+ */
 static EGLBoolean
 load_dri_driver(struct xdri_egl_driver *xdri_drv)
 {
@@ -637,13 +605,30 @@ xdri_eglInitialize(_EGLDriver *drv, EGLDisplay dpy,
       }
    }
 
+#if 0
    /* choose the DRI driver to load */
    xdri_drv->dri_driver_name = _eglChooseDRMDriver(0);
    if (!load_dri_driver(xdri_drv))
       return EGL_FALSE;
+#else
+   (void) load_dri_driver;
+#endif
 
+#if 0
    if (!init_drm(xdri_drv, disp))
       return EGL_FALSE;
+#else
+   (void) init_drm;
+#endif
+
+   /*
+    * NOTE: this call to __glXInitialize() bootstraps the whole GLX/DRI
+    * interface, loads the DRI driver, etc.
+    * This replaces the load_dri_driver()  and init_drm() code above.
+    */
+   xdri_drv->glx_priv = __glXInitialize(disp->Xdpy);
+
+   create_configs(disp, xdri_drv->glx_priv);
 
    xdri_drv->Base.Initialized = EGL_TRUE;
 
@@ -678,6 +663,9 @@ xdri_eglTerminate(_EGLDriver *drv, EGLDisplay dpy)
 }
 
 
+/*
+ * Called from eglGetProcAddress() via drv->API.GetProcAddress().
+ */
 static _EGLProc
 xdri_eglGetProcAddress(const char *procname)
 {
@@ -688,8 +676,17 @@ xdri_eglGetProcAddress(const char *procname)
    /*_EGLDisplay *disp = _eglLookupDisplay(dpy);*/
    _EGLProc *proc = xdri_drv->driScreen.getProcAddress(procname);
    return proc;
-#elif 0
-   return (_EGLProc) st_get_proc_address(procname);
+#elif 1
+   /* This is a bit of a hack to get at the gallium/Mesa state tracker
+    * function st_get_proc_address().  This will probably change at
+    * some point.
+    */
+   _EGLProc (*st_get_proc_addr)(const char *procname);
+   st_get_proc_addr = dlsym(NULL, "st_get_proc_address");
+   if (st_get_proc_addr) {
+      return st_get_proc_addr(procname);
+   }
+   return NULL;   
 #else
    return NULL;
 #endif
@@ -703,7 +700,6 @@ static EGLContext
 xdri_eglCreateContext(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
                       EGLContext share_list, const EGLint *attrib_list)
 {
-   struct xdri_egl_driver *xdri_drv = xdri_egl_driver(drv);
    _EGLDisplay *disp = _eglLookupDisplay(dpy);
    struct xdri_egl_config *xdri_config = lookup_config(drv, dpy, config);
    void *shared = NULL;
@@ -720,10 +716,15 @@ xdri_eglCreateContext(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
 
    assert(xdri_config);
 
-   xdri_ctx->driContext.private = 
-      xdri_drv->driScreen.createNewContext(disp->Xdpy,
-                                           xdri_config->mode, renderType,
-                                           shared, &xdri_ctx->driContext);
+   {
+      struct xdri_egl_driver *xdri_drv = xdri_egl_driver(drv);
+      __GLXscreenConfigs *scrnConf = xdri_drv->glx_priv->screenConfigs;
+      xdri_ctx->driContext.private = 
+         scrnConf->driScreen.createNewContext(disp->Xdpy,
+                                              xdri_config->mode, renderType,
+                                              shared, &xdri_ctx->driContext);
+   }
+
    if (!xdri_ctx->driContext.private) {
       _eglLog(_EGL_DEBUG, "driScreen.createNewContext failed");
       free(xdri_ctx);
@@ -846,7 +847,8 @@ xdri_eglSwapBuffers(_EGLDriver *drv, EGLDisplay dpy, EGLSurface draw)
    {
       struct xdri_egl_surface *xdri_surf = lookup_surface(draw);
       struct xdri_egl_driver *xdri_drv = xdri_egl_driver(drv);
-      __DRIscreen *psc = &xdri_drv->driScreen;
+      __GLXscreenConfigs *scrnConf = xdri_drv->glx_priv->screenConfigs;
+      __DRIscreen *psc = &scrnConf->driScreen;
       __DRIdrawable * const pdraw = psc->getDrawable(disp->Xdpy,
                                                      xdri_surf->driDrawable,
                                                      psc->private);
@@ -872,8 +874,8 @@ _eglMain(_EGLDisplay *disp, const char *args)
    if (!xdri_drv)
       return NULL;
 
-   /* XXX temp hack */
-   TheDriver = xdri_drv;
+   /* Tell libGL to prefer the EGL drivers over regular DRI drivers */
+   __glXPreferEGL(1);
 
    _eglInitDriverFallbacks(&xdri_drv->Base);
    xdri_drv->Base.API.Initialize = xdri_eglInitialize;
@@ -887,7 +889,10 @@ _eglMain(_EGLDisplay *disp, const char *args)
    xdri_drv->Base.API.DestroySurface = xdri_eglDestroySurface;
    xdri_drv->Base.API.SwapBuffers = xdri_eglSwapBuffers;
 
-   xdri_drv->Base.ClientAPIsMask = EGL_OPENGL_BIT | EGL_OPENGL_ES_BIT;
+   xdri_drv->Base.ClientAPIsMask = (EGL_OPENGL_BIT |
+                                    EGL_OPENGL_ES_BIT |
+                                    EGL_OPENGL_ES2_BIT |
+                                    EGL_OPENVG_BIT);
    xdri_drv->Base.Name = "X/DRI";
 
    _eglLog(_EGL_DEBUG, "XDRI: main(%s)", args);

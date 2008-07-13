@@ -447,6 +447,7 @@ st_draw_vbo(GLcontext *ctx,
 }
 
 
+#if FEATURE_feedback || FEATURE_drawpix
 
 /**
  * Set the (private) draw module's post-transformed vertex format when in
@@ -657,6 +658,7 @@ st_feedback_draw_vbo(GLcontext *ctx,
    }
 }
 
+#endif /* FEATURE_feedback || FEATURE_drawpix */
 
 
 void st_init_draw( struct st_context *st )

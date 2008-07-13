@@ -1,6 +1,6 @@
 /**************************************************************************
  * 
- * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2008 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -25,25 +25,23 @@
  * 
  **************************************************************************/
 
-#ifndef TGSI_SSE2_H
-#define TGSI_SSE2_H
+#ifndef TGSI_TEXT_H
+#define TGSI_TEXT_H
+
+#include "pipe/p_shader_tokens.h"
 
 #if defined __cplusplus
 extern "C" {
 #endif
 
-struct tgsi_token;
-struct x86_function;
-
-unsigned
-tgsi_emit_sse2(
-   const struct tgsi_token *tokens,
-   struct x86_function *function,
-   float (*immediates)[4],
-   boolean do_swizzles );
+boolean
+tgsi_text_translate(
+   const char *text,
+   struct tgsi_token *tokens,
+   uint num_tokens );
 
 #if defined __cplusplus
 }
 #endif
 
-#endif /* TGSI_SSE2_H */
+#endif /* TGSI_TEXT_H */

@@ -30,7 +30,6 @@
 
 #include "pipe/p_compiler.h"
 
-struct pipe_context;
 struct pipe_surface;
 
 
@@ -57,40 +56,34 @@ extern "C" {
 #endif
 
 void
-pipe_get_tile_raw(struct pipe_context *pipe,
-                  struct pipe_surface *ps,
+pipe_get_tile_raw(struct pipe_surface *ps,
                   uint x, uint y, uint w, uint h,
                   void *p, int dst_stride);
 
 void
-pipe_put_tile_raw(struct pipe_context *pipe,
-                  struct pipe_surface *ps,
+pipe_put_tile_raw(struct pipe_surface *ps,
                   uint x, uint y, uint w, uint h,
                   const void *p, int src_stride);
 
 
 void
-pipe_get_tile_rgba(struct pipe_context *pipe,
-                   struct pipe_surface *ps,
+pipe_get_tile_rgba(struct pipe_surface *ps,
                    uint x, uint y, uint w, uint h,
                    float *p);
 
 void
-pipe_put_tile_rgba(struct pipe_context *pipe,
-                   struct pipe_surface *ps,
+pipe_put_tile_rgba(struct pipe_surface *ps,
                    uint x, uint y, uint w, uint h,
                    const float *p);
 
 
 void
-pipe_get_tile_z(struct pipe_context *pipe,
-                struct pipe_surface *ps,
+pipe_get_tile_z(struct pipe_surface *ps,
                 uint x, uint y, uint w, uint h,
                 uint *z);
 
 void
-pipe_put_tile_z(struct pipe_context *pipe,
-                struct pipe_surface *ps,
+pipe_put_tile_z(struct pipe_surface *ps,
                 uint x, uint y, uint w, uint h,
                 const uint *z);
 

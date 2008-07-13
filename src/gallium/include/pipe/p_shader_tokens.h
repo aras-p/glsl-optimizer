@@ -75,6 +75,7 @@ enum tgsi_file_type {
 #define TGSI_INTERPOLATE_CONSTANT      0
 #define TGSI_INTERPOLATE_LINEAR        1
 #define TGSI_INTERPOLATE_PERSPECTIVE   2
+#define TGSI_INTERPOLATE_COUNT         3
 
 struct tgsi_declaration
 {
@@ -528,6 +529,7 @@ struct tgsi_instruction_ext_label
 #define TGSI_TEXTURE_SHADOW1D       6
 #define TGSI_TEXTURE_SHADOW2D       7
 #define TGSI_TEXTURE_SHADOWRECT     8
+#define TGSI_TEXTURE_COUNT          9
 
 struct tgsi_instruction_ext_texture
 {
@@ -741,6 +743,7 @@ struct tgsi_dst_register_ext_concode
 #define TGSI_MODULATE_HALF      4
 #define TGSI_MODULATE_QUARTER   5
 #define TGSI_MODULATE_EIGHTH    6
+#define TGSI_MODULATE_COUNT     7
 
 struct tgsi_dst_register_ext_modulate
 {

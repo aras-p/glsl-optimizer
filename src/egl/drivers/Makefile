@@ -7,10 +7,10 @@ include $(TOP)/configs/current
 SUBDIRS = demo dri xdri
 
 
-default: conditional_subdirs
+default: dri_subdirs
 
 
-# depending on $DRIVER_DIRS...
+# (UNUSED) depending on $DRIVER_DIRS...
 conditional_subdirs:
 	@if [ "${DRIVER_DIRS}" = "dri" ] ; then \
 		$(MAKE) dri_subdirs ; \

@@ -339,7 +339,7 @@ sp_tile_cache_flush_clear(struct pipe_context *pipe,
    for (y = 0; y < h; y += TILE_SIZE) {
       for (x = 0; x < w; x += TILE_SIZE) {
          if (is_clear_flag_set(tc->clear_flags, x, y)) {
-            pipe_put_tile_raw(pipe, ps,
+            pipe_put_tile_raw(ps,
                               x, y, TILE_SIZE, TILE_SIZE,
                               tc->tile.data.color32, 0/*STRIDE*/);
 
@@ -374,12 +374,12 @@ sp_flush_tile_cache(struct softpipe_context *softpipe,
          struct softpipe_cached_tile *tile = tc->entries + pos;
          if (tile->x >= 0) {
             if (tc->depth_stencil) {
-               pipe_put_tile_raw(pipe, ps,
+               pipe_put_tile_raw(ps,
                                  tile->x, tile->y, TILE_SIZE, TILE_SIZE,
                                  tile->data.depth32, 0/*STRIDE*/);
             }
             else {
-               pipe_put_tile_rgba(pipe, ps,
+               pipe_put_tile_rgba(ps,
                                   tile->x, tile->y, TILE_SIZE, TILE_SIZE,
                                   (float *) tile->data.color);
             }
@@ -431,12 +431,12 @@ sp_get_cached_tile(struct softpipe_context *softpipe,
       if (tile->x != -1) {
          /* put dirty tile back in framebuffer */
          if (tc->depth_stencil) {
-            pipe_put_tile_raw(pipe, ps,
+            pipe_put_tile_raw(ps,
                               tile->x, tile->y, TILE_SIZE, TILE_SIZE,
                               tile->data.depth32, 0/*STRIDE*/);
          }
          else {
-            pipe_put_tile_rgba(pipe, ps,
+            pipe_put_tile_rgba(ps,
                                tile->x, tile->y, TILE_SIZE, TILE_SIZE,
                                (float *) tile->data.color);
          }
@@ -458,12 +458,12 @@ sp_get_cached_tile(struct softpipe_context *softpipe,
       else {
          /* get new tile data from surface */
          if (tc->depth_stencil) {
-            pipe_get_tile_raw(pipe, ps,
+            pipe_get_tile_raw(ps,
                               tile->x, tile->y, TILE_SIZE, TILE_SIZE,
                               tile->data.depth32, 0/*STRIDE*/);
          }
          else {
-            pipe_get_tile_rgba(pipe, ps,
+            pipe_get_tile_rgba(ps,
                                tile->x, tile->y, TILE_SIZE, TILE_SIZE,
                                (float *) tile->data.color);
          }
@@ -544,7 +544,7 @@ sp_get_cached_tile_tex(struct pipe_context *pipe,
       }
 
       /* get tile from the surface (view into texture) */
-      pipe_get_tile_rgba(pipe, tc->tex_surf,
+      pipe_get_tile_rgba(tc->tex_surf,
                          tile_x, tile_y, TILE_SIZE, TILE_SIZE,
                          (float *) tile->data.color);
       tile->x = tile_x;

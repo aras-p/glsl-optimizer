@@ -142,12 +142,12 @@ pb_debug_buffer_destroy(struct pb_buffer *_buf)
    assert(map);
    if(map) {
       if(!check_random_pattern(map, buf->underflow_size)) {
-	 debug_printf("buffer underflow\n");
+	 debug_error("buffer underflow detected\n");
 	 debug_assert(0);
       }
       if(!check_random_pattern(map + buf->underflow_size + buf->base.base.size, 
                                buf->overflow_size)) {
-	 debug_printf("buffer overflow\n");
+	 debug_error("buffer overflow detected\n");
 	 debug_assert(0);
       }
       pb_unmap(buf->buffer);

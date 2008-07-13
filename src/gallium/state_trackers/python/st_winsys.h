@@ -1,6 +1,6 @@
 /**************************************************************************
  * 
- * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2008 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -25,25 +25,34 @@
  * 
  **************************************************************************/
 
-#ifndef TGSI_SSE2_H
-#define TGSI_SSE2_H
 
-#if defined __cplusplus
-extern "C" {
-#endif
+#ifndef ST_WINSYS_H_
+#define ST_WINSYS_H_
 
-struct tgsi_token;
-struct x86_function;
 
-unsigned
-tgsi_emit_sse2(
-   const struct tgsi_token *tokens,
-   struct x86_function *function,
-   float (*immediates)[4],
-   boolean do_swizzles );
+struct pipe_screen;
+struct pipe_context;
 
-#if defined __cplusplus
-}
-#endif
 
-#endif /* TGSI_SSE2_H */
+struct st_winsys 
+{
+   struct pipe_screen *
+   (*screen_create)(void);
+
+   void
+   (*screen_destroy)(struct pipe_screen *screen);
+
+   struct pipe_context *
+   (*context_create)(struct pipe_screen *screen);
+
+   void
+   (*context_destroy)(struct pipe_context *pipe);
+};
+
+
+extern const struct st_winsys st_software_winsys;
+
+extern const struct st_winsys st_hardware_winsys;
+
+
+#endif /* ST_WINSYS_H_ */

@@ -85,7 +85,7 @@ public:
    llvm::Value *lit(llvm::Value *in);
    llvm::Value *lg2(llvm::Value *in);
    llvm::Value *madd(llvm::Value *in1, llvm::Value *in2,
-                     llvm::Value *in2);
+                     llvm::Value *in3);
    llvm::Value *min(llvm::Value *in1, llvm::Value *in2);
    llvm::Value *max(llvm::Value *in1, llvm::Value *in2);
    llvm::Value *mul(llvm::Value *in1, llvm::Value *in2);

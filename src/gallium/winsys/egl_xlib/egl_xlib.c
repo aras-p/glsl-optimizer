@@ -350,6 +350,7 @@ xlib_eglCreateContext(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
 
    /* API-dependent context creation */
    switch (ctx->Base.ClientAPI) {
+   case EGL_OPENVG_API:
    case EGL_OPENGL_ES_API:
       _eglLog(_EGL_DEBUG, "Create Context for ES version %d\n",
               ctx->Base.ClientVersion);
