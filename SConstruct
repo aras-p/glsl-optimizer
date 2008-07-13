@@ -29,23 +29,22 @@ import common
 #######################################################################
 # Configuration options
 
+default_statetrackers = 'mesa'
+
 if common.default_platform in ('linux', 'freebsd', 'darwin'):
-	default_statetrackers = 'all'
 	default_drivers = 'softpipe,failover,i915simple,i965simple'
 	default_winsys = 'xlib'
 elif common.default_platform in ('winddk',):
-	default_statetrackers = 'all'
 	default_drivers = 'softpipe,i915simple'
 	default_winsys = 'all'
 else:
-	default_statetrackers = 'all'
 	default_drivers = 'all'
 	default_winsys = 'all'
 
 opts = Options('config.py')
 common.AddOptions(opts)
 opts.Add(ListOption('statetrackers', 'state trackers to build', default_statetrackers,
-                     ['mesa']))
+                     ['mesa', 'python']))
 opts.Add(ListOption('drivers', 'pipe drivers to build', default_drivers,
                      ['softpipe', 'failover', 'i915simple', 'i965simple', 'cell']))
 opts.Add(ListOption('winsys', 'winsys drivers to build', default_winsys,

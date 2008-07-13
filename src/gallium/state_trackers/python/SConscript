@@ -1,0 +1,24 @@
+Import('*')
+
+if 'python' in env['statetrackers']:
+
+    env = env.Clone()
+    
+    env.Append(CPPPATH = '.')
+    
+    env.Tool('swig')
+    env.Append(SWIGPATH = ['#src/gallium/include', '#src/gallium/include/pipe'])
+    env.Append(SWIGFLAGS = ['-python', '-keyword'])
+    
+    env.ParseConfig('python-config --cflags --ldflags --libs')
+    
+    env.SharedLibrary(
+    	target = '_gallium',
+    	source = [
+    		'gallium.i',
+            'st_device.c',
+            'st_softpipe_winsys.c',
+    	],
+        SHLIBPREFIX = '',
+        LIBS = softpipe + auxiliaries + env['LIBS'],
+    )
