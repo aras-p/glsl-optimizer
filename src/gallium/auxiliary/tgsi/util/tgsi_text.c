@@ -393,14 +393,78 @@ parse_src_operand(
    struct tgsi_full_src_register *src )
 {
    const char *cur;
+   float value;
    uint file;
    uint index;
 
-   /* TODO: Extended register modifiers */
+   if (*ctx->cur == '-') {
+      cur = ctx->cur;
+      cur++;
+      eat_opt_white( &cur );
+      if (*cur == '(') {
+         cur++;
+         src->SrcRegisterExtMod.Negate = 1;
+         eat_opt_white( &cur );
+         ctx->cur = cur;
+      }
+   }
+
+   if (*ctx->cur == '|') {
+      ctx->cur++;
+      eat_opt_white( &ctx->cur );
+      src->SrcRegisterExtMod.Absolute = 1;
+   }
+
    if (*ctx->cur == '-') {
       ctx->cur++;
-      src->SrcRegister.Negate = 1;
       eat_opt_white( &ctx->cur );
+      src->SrcRegister.Negate = 1;
+   }
+
+   cur = ctx->cur;
+   if (parse_float( &cur, &value )) {
+      if (value == 2.0f) {
+         eat_opt_white( &cur );
+         if (*cur != '*') {
+            report_error( ctx, "Expected `*'" );
+            return FALSE;
+         }
+         cur++;
+         if (*cur != '(') {
+            report_error( ctx, "Expected `('" );
+            return FALSE;
+         }
+         cur++;
+         src->SrcRegisterExtMod.Scale2X = 1;
+         eat_opt_white( &cur );
+         ctx->cur = cur;
+      }
+   }
+
+   if (*ctx->cur == '(') {
+      ctx->cur++;
+      eat_opt_white( &ctx->cur );
+      src->SrcRegisterExtMod.Bias = 1;
+   }
+
+   cur = ctx->cur;
+   if (parse_float( &cur, &value )) {
+      if (value == 1.0f) {
+         eat_opt_white( &cur );
+         if (*cur != '-') {
+            report_error( ctx, "Expected `-'" );
+            return FALSE;
+         }
+         cur++;
+         if (*cur != '(') {
+            report_error( ctx, "Expected `('" );
+            return FALSE;
+         }
+         cur++;
+         src->SrcRegisterExtMod.Complement = 1;
+         eat_opt_white( &cur );
+         ctx->cur = cur;
+      }
    }
 
    if (!parse_register( ctx, &file, &index ))
@@ -438,6 +502,67 @@ parse_src_operand(
 
       ctx->cur = cur;
    }
+
+   if (src->SrcRegisterExtMod.Complement) {
+      eat_opt_white( &ctx->cur );
+      if (*ctx->cur != ')') {
+         report_error( ctx, "Expected `)'" );
+         return FALSE;
+      }
+      ctx->cur++;
+   }
+
+   if (src->SrcRegisterExtMod.Bias) {
+      eat_opt_white( &ctx->cur );
+      if (*ctx->cur != ')') {
+         report_error( ctx, "Expected `)'" );
+         return FALSE;
+      }
+      ctx->cur++;
+      eat_opt_white( &ctx->cur );
+      if (*ctx->cur != '-') {
+         report_error( ctx, "Expected `-'" );
+         return FALSE;
+      }
+      ctx->cur++;
+      eat_opt_white( &ctx->cur );
+      if (!parse_float( &ctx->cur, &value )) {
+         report_error( ctx, "Expected literal floating point" );
+         return FALSE;
+      }
+      if (value != 0.5f) {
+         report_error( ctx, "Expected 0.5" );
+         return FALSE;
+      }
+   }
+
+   if (src->SrcRegisterExtMod.Scale2X) {
+      eat_opt_white( &ctx->cur );
+      if (*ctx->cur != ')') {
+         report_error( ctx, "Expected `)'" );
+         return FALSE;
+      }
+      ctx->cur++;
+   }
+
+   if (src->SrcRegisterExtMod.Absolute) {
+      eat_opt_white( &ctx->cur );
+      if (*ctx->cur != '|') {
+         report_error( ctx, "Expected `|'" );
+         return FALSE;
+      }
+      ctx->cur++;
+   }
+
+   if (src->SrcRegisterExtMod.Negate) {
+      eat_opt_white( &ctx->cur );
+      if (*ctx->cur != ')') {
+         report_error( ctx, "Expected `)'" );
+         return FALSE;
+      }
+      ctx->cur++;
+   }
+
    return TRUE;
 }
 
