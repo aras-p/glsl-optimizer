@@ -329,7 +329,7 @@ driConvertConfigs(const __DRIcoreExtension *core,
 }
 
 _X_HIDDEN void
-driBindExtensions(__GLXscreenConfigs *psc)
+driBindExtensions(__GLXscreenConfigs *psc, int dri2)
 {
     const __DRIextension **extensions;
     int i;
@@ -386,7 +386,7 @@ driBindExtensions(__GLXscreenConfigs *psc)
 #endif
 
 #ifdef __DRI_TEX_BUFFER
-	if (strcmp(extensions[i]->name, __DRI_TEX_BUFFER) == 0) {
+	if ((strcmp(extensions[i]->name, __DRI_TEX_BUFFER) == 0) && dri2) {
 	    psc->texBuffer = (__DRItexBufferExtension *) extensions[i];
 	    __glXEnableDirectExtension(psc, "GLX_EXT_texture_from_pixmap");
 	}
