@@ -271,7 +271,7 @@ case $ARCH in
 	    if [ $EXPORTS ] ; then
 		#OPTS="${OPTS} -Xlinker --retain-symbols-file ${EXPORTS}"
 		# Make the 'exptmp' file for --version-script option
-		echo "VERSION_${MAJOR}.${MINOR} {" > exptmp
+		echo "{" > exptmp
 		echo "global:" >> exptmp
 		sed 's/$/;/' ${EXPORTS} >> exptmp
 		echo "local:" >> exptmp
