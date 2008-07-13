@@ -743,6 +743,7 @@ struct tgsi_dst_register_ext_concode
 #define TGSI_MODULATE_HALF      4
 #define TGSI_MODULATE_QUARTER   5
 #define TGSI_MODULATE_EIGHTH    6
+#define TGSI_MODULATE_COUNT     7
 
 struct tgsi_dst_register_ext_modulate
 {

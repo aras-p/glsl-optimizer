@@ -368,6 +368,17 @@ parse_register_dcl(
    return TRUE;
 }
 
+static const char *modulate_names[TGSI_MODULATE_COUNT] =
+{
+   "_1X",
+   "_2X",
+   "_4X",
+   "_8X",
+   "_D2",
+   "_D4",
+   "_D8"
+};
+
 static boolean
 parse_dst_operand(
    struct translate_ctx *ctx,
@@ -376,11 +387,30 @@ parse_dst_operand(
    uint file;
    uint index;
    uint writemask;
+   const char *cur;
 
    if (!parse_register( ctx, &file, &index ))
       return FALSE;
+
+   cur = ctx->cur;
+   eat_opt_white( &cur );
+   if (*cur == '_') {
+      uint i;
+
+      for (i = 0; i < TGSI_MODULATE_COUNT; i++) {
+         if (str_match_no_case( &cur, modulate_names[i] )) {
+            if (!is_digit_alpha_underscore( cur )) {
+               dst->DstRegisterExtModulate.Modulate = i;
+               ctx->cur = cur;
+               break;
+            }
+         }
+      }
+   }
+
    if (!parse_opt_writemask( ctx, &writemask ))
       return FALSE;
+
    dst->DstRegister.File = file;
    dst->DstRegister.Index = index;
    dst->DstRegister.WriteMask = writemask;

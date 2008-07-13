@@ -539,6 +539,17 @@ static const char *TGSI_MODULATES[] =
    "MODULATE_EIGHTH"
 };
 
+static const char *TGSI_MODULATES_SHORT[TGSI_MODULATE_COUNT] =
+{
+   "",
+   "_2X",
+   "_4X",
+   "_8X",
+   "_D2",
+   "_D4",
+   "_D8"
+};
+
 void
 tgsi_dump_declaration(
    const struct tgsi_full_declaration  *decl )
@@ -736,30 +747,7 @@ tgsi_dump_instruction(
       SID( dst->DstRegister.Index );
       CHR( ']' );
 
-      switch (dst->DstRegisterExtModulate.Modulate) {
-      case TGSI_MODULATE_1X:
-         break;
-      case TGSI_MODULATE_2X:
-         TXT( "_2X" );
-         break;
-      case TGSI_MODULATE_4X:
-         TXT( "_4X" );
-         break;
-      case TGSI_MODULATE_8X:
-         TXT( "_8X" );
-         break;
-      case TGSI_MODULATE_HALF:
-         TXT( "_D2" );
-         break;
-      case TGSI_MODULATE_QUARTER:
-         TXT( "_D4" );
-         break;
-      case TGSI_MODULATE_EIGHTH:
-         TXT( "_D8" );
-         break;
-      default:
-         assert( 0 );
-      }
+      ENM( dst->DstRegisterExtModulate.Modulate, TGSI_MODULATES_SHORT );
 
       if( dst->DstRegister.WriteMask != TGSI_WRITEMASK_XYZW ) {
          CHR( '.' );
