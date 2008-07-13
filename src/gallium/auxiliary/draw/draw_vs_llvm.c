@@ -119,7 +119,7 @@ draw_create_vs_llvm(struct draw_context *draw,
    vs->base.create_varient = draw_vs_varient_generic;
    vs->base.run_linear = vs_llvm_run_linear;
    vs->base.delete = vs_llvm_delete;
-   vs->machine = &draw->machine;
+   vs->machine = &draw->vs.machine;
 
    {
       struct gallivm_ir *ir = gallivm_ir_new(GALLIVM_VS);
@@ -130,16 +130,16 @@ draw_create_vs_llvm(struct draw_context *draw,
       gallivm_ir_delete(ir);
    }
 
-   draw->engine = gallivm_global_cpu_engine();
+   draw->vs.engine = gallivm_global_cpu_engine();
 
    /* XXX: Why are there two versions of this?  Shouldn't creating the
     *      engine be a separate operation to compiling a shader?
     */
-   if (!draw->engine) {
-      draw->engine = gallivm_cpu_engine_create(vs->llvm_prog);
+   if (!draw->vs.engine) {
+      draw->vs.engine = gallivm_cpu_engine_create(vs->llvm_prog);
    }
    else {
-      gallivm_cpu_jit_compile(draw->engine, vs->llvm_prog);
+      gallivm_cpu_jit_compile(draw->vs.engine, vs->llvm_prog);
    }
 
    return &vs->base;
