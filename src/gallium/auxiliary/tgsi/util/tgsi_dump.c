@@ -395,7 +395,8 @@ static const char *TGSI_OPCODES_SHORT[TGSI_OPCODE_LAST] =
    "IFC",
    "BREAKC",
    "KIL",
-   "END"
+   "END",
+   "SWZ"
 };
 
 static const char *TGSI_SATS[] =

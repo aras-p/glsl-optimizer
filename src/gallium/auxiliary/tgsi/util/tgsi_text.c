@@ -522,7 +522,8 @@ static const struct opcode_info opcode_info[TGSI_OPCODE_LAST] =
 { 1, 2, "IFC" },
 { 1, 2, "BREAKC" },
 { 1, 2, "KIL" },
-   { 0, 0, "END" }
+   { 0, 0, "END" },
+   { 1, 1, "SWZ" }
 };
 
 static boolean parse_instruction( struct translate_ctx *ctx )
