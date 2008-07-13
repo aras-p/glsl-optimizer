@@ -106,7 +106,7 @@ xmesa_get_tile_rgba(struct pipe_context *pipe, struct pipe_surface *ps,
    }
    else {
       /* other softpipe surface */
-      softpipe_get_tile_rgba(pipe, ps, x, y, w, h, p);
+      softpipe_get_tile_rgba(ps, x, y, w, h, p);
    }
 }
 
@@ -142,7 +142,7 @@ xmesa_put_tile_rgba(struct pipe_context *pipe, struct pipe_surface *ps,
    }
    else {
       /* other softpipe surface */
-      softpipe_put_tile_rgba(pipe, ps, x, y, w, h, p);
+      softpipe_put_tile_rgba(ps, x, y, w, h, p);
    }
 }
 

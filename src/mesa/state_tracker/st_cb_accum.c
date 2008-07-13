@@ -73,7 +73,7 @@ acc_get_tile_rgba(struct pipe_context *pipe, struct pipe_surface *acc_ps,
    acc_ps->block.width = 1;
    acc_ps->block.height = 1;
 
-   pipe_get_tile_rgba(pipe, acc_ps, x, y, w, h, p);
+   pipe_get_tile_rgba(acc_ps, x, y, w, h, p);
 
    acc_ps->format = f;
    acc_ps->block = b;
@@ -97,7 +97,7 @@ acc_put_tile_rgba(struct pipe_context *pipe, struct pipe_surface *acc_ps,
    acc_ps->block.width = 1;
    acc_ps->block.height = 1;
 
-   pipe_put_tile_rgba(pipe, acc_ps, x, y, w, h, p);
+   pipe_put_tile_rgba(acc_ps, x, y, w, h, p);
 
    acc_ps->format = f;
    acc_ps->block = b;
@@ -208,7 +208,7 @@ accum_accum(struct pipe_context *pipe, GLfloat value,
    colorBuf = (GLfloat *) malloc(width * height * 4 * sizeof(GLfloat));
    accBuf = (GLfloat *) malloc(width * height * 4 * sizeof(GLfloat));
 
-   pipe_get_tile_rgba(pipe, color_surf, xpos, ypos, width, height, colorBuf);
+   pipe_get_tile_rgba(color_surf, xpos, ypos, width, height, colorBuf);
    acc_get_tile_rgba(pipe, acc_surf, xpos, ypos, width, height, accBuf);
 
    for (i = 0; i < 4 * width * height; i++) {
@@ -243,7 +243,7 @@ accum_load(struct pipe_context *pipe, GLfloat value,
 
    buf = (GLfloat *) malloc(width * height * 4 * sizeof(GLfloat));
 
-   pipe_get_tile_rgba(pipe, color_surf, xpos, ypos, width, height, buf);
+   pipe_get_tile_rgba(color_surf, xpos, ypos, width, height, buf);
 
    for (i = 0; i < 4 * width * height; i++) {
       buf[i] = buf[i] * value;
@@ -283,7 +283,7 @@ accum_return(GLcontext *ctx, GLfloat value,
 
    if (!colormask[0] || !colormask[1] || !colormask[2] || !colormask[3]) {
       cbuf = (GLfloat *) malloc(width * height * 4 * sizeof(GLfloat));
-      pipe_get_tile_rgba(pipe, color_surf, xpos, ypos, width, height, cbuf);
+      pipe_get_tile_rgba(color_surf, xpos, ypos, width, height, cbuf);
    }
 
    for (i = 0; i < width * height; i++) {
@@ -298,7 +298,7 @@ accum_return(GLcontext *ctx, GLfloat value,
       }
    }
 
-   pipe_put_tile_rgba(pipe, color_surf, xpos, ypos, width, height, abuf);
+   pipe_put_tile_rgba(color_surf, xpos, ypos, width, height, abuf);
 
    free(abuf);
    if (cbuf)

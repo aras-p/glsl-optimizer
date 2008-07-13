@@ -45,12 +45,10 @@
  * This should be usable by any hw driver that has mappable surfaces.
  */
 void
-pipe_get_tile_raw(struct pipe_context *pipe,
-                  struct pipe_surface *ps,
+pipe_get_tile_raw(struct pipe_surface *ps,
                   uint x, uint y, uint w, uint h,
                   void *dst, int dst_stride)
 {
-   struct pipe_screen *screen = pipe->screen;
    const void *src;
 
    if (pipe_clip_tile(x, y, &w, &h, ps))
@@ -59,14 +57,14 @@ pipe_get_tile_raw(struct pipe_context *pipe,
    if (dst_stride == 0)
       dst_stride = pf_get_nblocksx(&ps->block, w) * ps->block.size;
 
-   src = screen->surface_map(screen, ps, PIPE_BUFFER_USAGE_CPU_READ);
+   src = pipe_surface_map(ps, PIPE_BUFFER_USAGE_CPU_READ);
    assert(src);
    if(!src)
       return;
 
    pipe_copy_rect(dst, &ps->block, dst_stride, 0, 0, w, h, src, ps->stride, x, y);
 
-   screen->surface_unmap(screen, ps);
+   pipe_surface_unmap(ps);
 }
 
 
@@ -75,12 +73,10 @@ pipe_get_tile_raw(struct pipe_context *pipe,
  * This should be usable by any hw driver that has mappable surfaces.
  */
 void
-pipe_put_tile_raw(struct pipe_context *pipe,
-                  struct pipe_surface *ps,
+pipe_put_tile_raw(struct pipe_surface *ps,
                   uint x, uint y, uint w, uint h,
                   const void *src, int src_stride)
 {
-   struct pipe_screen *screen = pipe->screen;
    void *dst;
 
    if (pipe_clip_tile(x, y, &w, &h, ps))
@@ -89,14 +85,14 @@ pipe_put_tile_raw(struct pipe_context *pipe,
    if (src_stride == 0)
       src_stride = pf_get_nblocksx(&ps->block, w) * ps->block.size;
 
-   dst = screen->surface_map(screen, ps, PIPE_BUFFER_USAGE_CPU_WRITE);
+   dst = pipe_surface_map(ps, PIPE_BUFFER_USAGE_CPU_WRITE);
    assert(dst);
    if(!dst)
       return;
 
    pipe_copy_rect(dst, &ps->block, ps->stride, x, y, w, h, src, src_stride, 0, 0);
 
-   screen->surface_unmap(screen, ps);
+   pipe_surface_unmap(ps);
 }
 
 
@@ -686,8 +682,7 @@ ycbcr_get_tile_rgba(ushort *src,
 
 
 void
-pipe_get_tile_rgba(struct pipe_context *pipe,
-                   struct pipe_surface *ps,
+pipe_get_tile_rgba(struct pipe_surface *ps,
                    uint x, uint y, uint w, uint h,
                    float *p)
 {
@@ -702,7 +697,7 @@ pipe_get_tile_rgba(struct pipe_context *pipe,
    if (!packed)
       return;
 
-   pipe_get_tile_raw(pipe, ps, x, y, w, h, packed, 0);
+   pipe_get_tile_raw(ps, x, y, w, h, packed, 0);
 
    switch (ps->format) {
    case PIPE_FORMAT_A8R8G8B8_UNORM:
@@ -768,8 +763,7 @@ pipe_get_tile_rgba(struct pipe_context *pipe,
 
 
 void
-pipe_put_tile_rgba(struct pipe_context *pipe,
-                   struct pipe_surface *ps,
+pipe_put_tile_rgba(struct pipe_surface *ps,
                    uint x, uint y, uint w, uint h,
                    const float *p)
 {
@@ -838,7 +832,7 @@ pipe_put_tile_rgba(struct pipe_context *pipe,
       assert(0);
    }
 
-   pipe_put_tile_raw(pipe, ps, x, y, w, h, packed, 0);
+   pipe_put_tile_raw(ps, x, y, w, h, packed, 0);
 
    FREE(packed);
 }
@@ -848,12 +842,10 @@ pipe_put_tile_rgba(struct pipe_context *pipe,
  * Get a block of Z values, converted to 32-bit range.
  */
 void
-pipe_get_tile_z(struct pipe_context *pipe,
-                struct pipe_surface *ps,
+pipe_get_tile_z(struct pipe_surface *ps,
                 uint x, uint y, uint w, uint h,
                 uint *z)
 {
-   struct pipe_screen *screen = pipe->screen;
    const uint dstStride = w;
    ubyte *map;
    uint *pDest = z;
@@ -862,7 +854,7 @@ pipe_get_tile_z(struct pipe_context *pipe,
    if (pipe_clip_tile(x, y, &w, &h, ps))
       return;
 
-   map = (ubyte *)screen->surface_map(screen, ps, PIPE_BUFFER_USAGE_CPU_READ);
+   map = (ubyte *)pipe_surface_map(ps, PIPE_BUFFER_USAGE_CPU_READ);
    if (!map) {
       assert(0);
       return;
@@ -913,17 +905,15 @@ pipe_get_tile_z(struct pipe_context *pipe,
       assert(0);
    }
 
-   screen->surface_unmap(screen, ps);
+   pipe_surface_unmap(ps);
 }
 
 
 void
-pipe_put_tile_z(struct pipe_context *pipe,
-                struct pipe_surface *ps,
+pipe_put_tile_z(struct pipe_surface *ps,
                 uint x, uint y, uint w, uint h,
                 const uint *zSrc)
 {
-   struct pipe_screen *screen = pipe->screen;
    const uint srcStride = w;
    const uint *pSrc = zSrc;
    ubyte *map;
@@ -932,7 +922,7 @@ pipe_put_tile_z(struct pipe_context *pipe,
    if (pipe_clip_tile(x, y, &w, &h, ps))
       return;
 
-   map = (ubyte *)screen->surface_map(screen, ps, PIPE_BUFFER_USAGE_CPU_WRITE);
+   map = (ubyte *)pipe_surface_map(ps, PIPE_BUFFER_USAGE_CPU_WRITE);
    if (!map) {
       assert(0);
       return;
@@ -980,7 +970,7 @@ pipe_put_tile_z(struct pipe_context *pipe,
       assert(0);
    }
 
-   screen->surface_unmap(screen, ps);
+   pipe_surface_unmap(ps);
 }
 
 

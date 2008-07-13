@@ -262,7 +262,7 @@ st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
                GLuint ztemp[MAX_WIDTH];
                GLfloat zfloat[MAX_WIDTH];
                const double scale = 1.0 / ((1 << 24) - 1);
-               pipe_get_tile_raw(pipe, surf, x, y, width, 1, ztemp, 0);
+               pipe_get_tile_raw(surf, x, y, width, 1, ztemp, 0);
                y += yStep;
                for (j = 0; j < width; j++) {
                   zfloat[j] = (float) (scale * (ztemp[j] & 0xffffff));
@@ -276,7 +276,7 @@ st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
             /* untested, but simple: */
             assert(format == GL_DEPTH_STENCIL_EXT);
             for (i = 0; i < height; i++) {
-               pipe_get_tile_raw(pipe, surf, x, y, width, 1, dst, 0);
+               pipe_get_tile_raw(surf, x, y, width, 1, dst, 0);
                y += yStep;
                dst += dstStride;
             }
@@ -287,7 +287,7 @@ st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
             GLushort ztemp[MAX_WIDTH];
             GLfloat zfloat[MAX_WIDTH];
             const double scale = 1.0 / 0xffff;
-            pipe_get_tile_raw(pipe, surf, x, y, width, 1, ztemp, 0);
+            pipe_get_tile_raw(surf, x, y, width, 1, ztemp, 0);
             y += yStep;
             for (j = 0; j < width; j++) {
                zfloat[j] = (float) (scale * ztemp[j]);
@@ -302,7 +302,7 @@ st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
             GLuint ztemp[MAX_WIDTH];
             GLfloat zfloat[MAX_WIDTH];
             const double scale = 1.0 / 0xffffffff;
-            pipe_get_tile_raw(pipe, surf, x, y, width, 1, ztemp, 0);
+            pipe_get_tile_raw(surf, x, y, width, 1, ztemp, 0);
             y += yStep;
             for (j = 0; j < width; j++) {
                zfloat[j] = (float) (scale * ztemp[j]);
@@ -316,7 +316,7 @@ st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
          /* RGBA format */
          /* Do a row at a time to flip image data vertically */
          for (i = 0; i < height; i++) {
-            pipe_get_tile_rgba(pipe, surf, x, y, width, 1, df);
+            pipe_get_tile_rgba(surf, x, y, width, 1, df);
             y += yStep;
             df += dfStride;
             if (!dfStride) {

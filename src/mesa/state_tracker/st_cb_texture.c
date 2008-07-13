@@ -1100,25 +1100,25 @@ fallback_copy_texsubimage(GLcontext *ctx,
 
       for (row = 0; row < height; row++, srcY++, destY += yStep) {
          uint data[MAX_WIDTH];
-         pipe_get_tile_z(pipe, src_surf, srcX, srcY, width, 1, data);
+         pipe_get_tile_z(src_surf, srcX, srcY, width, 1, data);
          if (scaleOrBias) {
             _mesa_scale_and_bias_depth_uint(ctx, width, data);
          }
-         pipe_put_tile_z(pipe, dest_surf, destX, destY, width, 1, data);
+         pipe_put_tile_z(dest_surf, destX, destY, width, 1, data);
       }
    }
    else {
       /* RGBA format */
       for (row = 0; row < height; row++, srcY++, destY += yStep) {
          float data[4 * MAX_WIDTH];
-         pipe_get_tile_rgba(pipe, src_surf, srcX, srcY, width, 1, data);
+         pipe_get_tile_rgba(src_surf, srcX, srcY, width, 1, data);
          /* XXX we're ignoring convolution for now */
          if (ctx->_ImageTransferState) {
             _mesa_apply_rgba_transfer_ops(ctx,
                           ctx->_ImageTransferState & ~IMAGE_CONVOLUTION_BIT,
                           width, (GLfloat (*)[4]) data);
          }
-         pipe_put_tile_rgba(pipe, dest_surf, destX, destY, width, 1, data);
+         pipe_put_tile_rgba(dest_surf, destX, destY, width, 1, data);
       }
    }
 
