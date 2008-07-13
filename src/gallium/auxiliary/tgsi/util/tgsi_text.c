@@ -541,7 +541,7 @@ static boolean parse_instruction( struct translate_ctx *ctx )
 
       if (str_match_no_case( &cur, opcode_info[i].mnemonic )) {
          /* TODO: _SAT suffix */
-         if (eat_white( &cur )) {
+         if (*cur == '\0' || eat_white( &cur )) {
             ctx->cur = cur;
             break;
          }
