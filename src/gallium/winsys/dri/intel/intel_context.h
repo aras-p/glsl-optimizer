@@ -32,7 +32,6 @@
 #include "drm.h"
 
 #include "pipe/p_debug.h"
-#include "util/u_blit.h"
 
 #include "intel_screen.h"
 #include "i915_drm.h"
@@ -83,11 +82,6 @@ struct intel_context
     * Configuration cache
     */
    driOptionCache optionCache;
-
-   /**
-    * Blit state for swapbuffers
-    */
-   struct blit_state *blit;
 };
 
 

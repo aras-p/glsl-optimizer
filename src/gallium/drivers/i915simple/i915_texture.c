@@ -79,7 +79,7 @@ static unsigned
 power_of_two(unsigned x)
 {
    unsigned value = 1;
-   while (value < x)
+   while (value <= x)
       value = value << 1;
    return value;
 }
@@ -205,8 +205,8 @@ i945_miptree_layout_2d( struct i915_texture *tex )
    unsigned nblocksx = pt->nblocksx[0];
    unsigned nblocksy = pt->nblocksy[0];
 
-#if 1 /* used for tiled display targets */
-   if (pt->last_level == 0 /*&& pt->bpp == 4*/)
+#if 0 /* used for tiled display targets */
+   if (pt->last_level == 0 && pt->cpp == 4)
       if (i915_displaytarget_layout(tex))
 	 return;
 #endif
