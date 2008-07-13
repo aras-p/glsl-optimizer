@@ -588,6 +588,7 @@ static const char *texture_names[TGSI_TEXTURE_COUNT] =
 static boolean parse_instruction( struct translate_ctx *ctx )
 {
    uint i;
+   uint saturate = TGSI_SAT_NONE;
    const struct opcode_info *info;
    struct tgsi_full_instruction inst;
    uint advance;
@@ -599,7 +600,11 @@ static boolean parse_instruction( struct translate_ctx *ctx )
       const char *cur = ctx->cur;
 
       if (str_match_no_case( &cur, opcode_info[i].mnemonic )) {
-         /* TODO: _SAT suffix */
+         if (str_match_no_case( &cur, "_SATNV" ))
+            saturate = TGSI_SAT_MINUS_PLUS_ONE;
+         else if (str_match_no_case( &cur, "_SAT" ))
+            saturate = TGSI_SAT_ZERO_ONE;
+
          if (*cur == '\0' || eat_white( &cur )) {
             ctx->cur = cur;
             break;
@@ -614,6 +619,7 @@ static boolean parse_instruction( struct translate_ctx *ctx )
 
    inst = tgsi_default_full_instruction();
    inst.Instruction.Opcode = i;
+   inst.Instruction.Saturate = saturate;
    inst.Instruction.NumDstRegs = info->num_dst;
    inst.Instruction.NumSrcRegs = info->num_src;
 

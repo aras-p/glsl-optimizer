@@ -716,7 +716,7 @@ tgsi_dump_instruction(
       TXT( "_SAT" );
       break;
    case TGSI_SAT_MINUS_PLUS_ONE:
-      TXT( "_SAT[-1,1]" );
+      TXT( "_SATNV" );
       break;
    default:
       assert( 0 );
