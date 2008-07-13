@@ -75,6 +75,7 @@ enum tgsi_file_type {
 #define TGSI_INTERPOLATE_CONSTANT      0
 #define TGSI_INTERPOLATE_LINEAR        1
 #define TGSI_INTERPOLATE_PERSPECTIVE   2
+#define TGSI_INTERPOLATE_COUNT         3
 
 struct tgsi_declaration
 {

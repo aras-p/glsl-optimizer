@@ -119,8 +119,7 @@ static const char *TGSI_INTERPOLATES_SHORT[] =
 {
    "CONSTANT",
    "LINEAR",
-   "PERSPECTIVE",
-   "ATTRIB"
+   "PERSPECTIVE"
 };
 
 static const char *TGSI_SEMANTICS[] =
