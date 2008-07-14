@@ -121,9 +121,9 @@ def test(dev):
     vs = Shader('''
         VERT1.1
         DCL IN[0], POSITION, CONSTANT
-        DCL IN[1], GENERIC[0], CONSTANT
+        DCL IN[1], COLOR, CONSTANT
         DCL OUT[0], POSITION, CONSTANT
-        DCL OUT[1], GENERIC[0], CONSTANT
+        DCL OUT[1], COLOR, CONSTANT
         0:MOV OUT[0], IN[0]
         1:MOV OUT[1], IN[1]
         2:END
@@ -134,7 +134,7 @@ def test(dev):
     # fragment shader
     fs = Shader('''
         FRAG1.1
-        DCL IN[0], COLOR, CONSTANT
+        DCL IN[0], COLOR, LINEAR
         DCL OUT[0], COLOR, CONSTANT
         0:MOV OUT[0], IN[0]
         1:END
@@ -142,36 +142,50 @@ def test(dev):
     #fs.dump()
     ctx.set_fragment_shader(fs)
 
-    ctx.surface_clear(surface, 0x00ff0000)
+    nverts = 3
+    nattrs = 2
+    verts = FloatArray(nverts * nattrs * 4)
 
-    if 0:
-        nverts = 4
-        nattrs = 1
-        vertices = FloatArray(n_verts * nattrs * 4)
+    verts[ 0] = 128.0 # x1
+    verts[ 1] =  32.0 # y1
+    verts[ 2] =   0.0 # z1
+    verts[ 3] =   1.0 # w1
+    verts[ 4] =   1.0 # r1
+    verts[ 5] =   0.0 # g1
+    verts[ 6] =   0.0 # b1
+    verts[ 7] =   1.0 # a1
+    verts[ 8] =  32.0 # x2
+    verts[ 9] = 224.0 # y2
+    verts[10] =   0.0 # z2
+    verts[11] =   1.0 # w2
+    verts[12] =   0.0 # r2
+    verts[13] =   1.0 # g2
+    verts[14] =   0.0 # b2
+    verts[15] =   1.0 # a2
+    verts[16] = 224.0 # x3
+    verts[17] = 224.0 # y3
+    verts[18] =   0.0 # z3
+    verts[19] =   1.0 # w3
+    verts[20] =   0.0 # r3
+    verts[21] =   0.0 # g3
+    verts[22] =   1.0 # b3
+    verts[23] =   1.0 # a3
 
-        # init vertex data that doesn't change
-        for i in range(nverts):
-            for j in range(nattrs):
-                vertices[(i*nattrs +j)*4 + 0] = 0.0
-                vertices[(i*nattrs +j)*4 + 1] = 0.0
-                vertices[(i*nattrs +j)*4 + 2] = 0.0
-                vertices[(i*nattrs +j)*4 + 3] = 0.0
-
-        ctx.draw_vertices(PIPE_PRIM_TRIANGLE_FAN,
-                          4,  #  verts 
-                          2, #  attribs/vert 
-                          vertices)
-    else:
-        ctx.draw_quad(32.0, 32.0, 224.0, 224.0)
+    ctx.surface_clear(surface, 0x00000000)
+    
+    ctx.draw_vertices(PIPE_PRIM_TRIANGLES,
+                      nverts, 
+                      nattrs, 
+                      verts)
 
     ctx.flush()
 
-    save_image("simple.png", surface)
+    save_image("tri.png", surface)
 
 
 
 def main():
-    dev = Device(0)
+    dev = Device(hardware = False)
     test(dev)
 
 
