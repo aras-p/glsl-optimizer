@@ -266,6 +266,8 @@ struct st_context {
 
    void set_sampler_texture(unsigned index,
                             struct pipe_texture *texture) {
+      if(!texture)
+         texture = $self->default_texture;
       pipe_texture_reference(&$self->sampler_textures[index], texture);
       $self->pipe->set_sampler_textures($self->pipe, 
                                         PIPE_MAX_SAMPLERS,

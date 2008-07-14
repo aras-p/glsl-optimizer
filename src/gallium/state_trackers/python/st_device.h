@@ -45,12 +45,10 @@ struct st_context {
    
    struct cso_context *cso;
    
-   struct pipe_shader_state vert_shader;
-   struct pipe_shader_state frag_shader;
-
    void *vs;
    void *fs;
 
+   struct pipe_texture *default_texture;
    struct pipe_texture *sampler_textures[PIPE_MAX_SAMPLERS];
    struct pipe_vertex_buffer vertex_buffers[PIPE_MAX_ATTRIBS];
    struct pipe_vertex_element vertex_elements[PIPE_MAX_ATTRIBS];
