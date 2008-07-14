@@ -36,7 +36,7 @@
 
 
 
-#if defined(__linux__) || defined(__OpenBSD__)
+#if defined(__linux__) || defined(__OpenBSD__) || defined(_NetBSD__)
 
 /*
  * Allocate a large block of memory which can hold code then dole it out
