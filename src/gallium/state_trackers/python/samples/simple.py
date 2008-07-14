@@ -103,7 +103,9 @@ def test(dev):
     ctx.set_sampler(0, sampler)
 
     #  texture 
-    texture = dev.texture_create(PIPE_FORMAT_A8R8G8B8_UNORM, width, height, usage=PIPE_TEXTURE_USAGE_RENDER_TARGET)
+    texture = dev.texture_create(PIPE_FORMAT_A8R8G8B8_UNORM, 
+                                 width, height, 
+                                 usage=PIPE_TEXTURE_USAGE_RENDER_TARGET)
     ctx.set_sampler_texture(0, texture)
 
     #  drawing dest 
@@ -116,12 +118,29 @@ def test(dev):
     ctx.set_framebuffer(fb)
 
     # vertex shader
-    # vs = Shader()
-    #ctx.set_vertex_shader(vs)
+    vs = Shader('''
+        VERT1.1
+        DCL IN[0], POSITION, CONSTANT
+        DCL IN[1], GENERIC[0], CONSTANT
+        DCL OUT[0], POSITION, CONSTANT
+        DCL OUT[1], GENERIC[0], CONSTANT
+        0:MOV OUT[0], IN[0]
+        1:MOV OUT[1], IN[1]
+        2:END
+    ''')
+    #vs.dump()
+    ctx.set_vertex_shader(vs)
 
     # fragment shader
-    #fs = Shader()
-    #ctx.set_fragment_shader(fs)
+    fs = Shader('''
+        FRAG1.1
+        DCL IN[0], COLOR, CONSTANT
+        DCL OUT[0], COLOR, CONSTANT
+        0:MOV OUT[0], IN[0]
+        1:END
+    ''')
+    #fs.dump()
+    ctx.set_fragment_shader(fs)
 
     if 0:
         nverts = 4

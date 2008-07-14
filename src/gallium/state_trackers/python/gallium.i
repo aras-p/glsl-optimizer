@@ -44,9 +44,11 @@
 #include "pipe/p_inlines.h"
 #include "pipe/p_util.h"
 #include "pipe/p_shader_tokens.h" 
+#include "cso_cache/cso_context.h"
 #include "util/u_draw_quad.h" 
 #include "util/p_tile.h" 
-#include "cso_cache/cso_context.h"
+#include "tgsi/util/tgsi_text.h" 
+#include "tgsi/util/tgsi_dump.h" 
 
 #include "st_device.h"
 
@@ -201,29 +203,32 @@ struct st_context {
       cso_set_depth_stencil_alpha($self->cso, state);
    }
 
-   
-   void * create_fs( const struct pipe_shader_state *state ) {
-      return $self->pipe->create_fs_state($self->pipe, state);
-   }
-   
-   void bind_fs( void *state_obj ) {
-      $self->pipe->bind_fs_state($self->pipe, state_obj);
-   }
-   
-   void delete_fs( void *state_obj ) {
-      $self->pipe->delete_fs_state($self->pipe, state_obj);
+   void set_fragment_shader( const struct pipe_shader_state *state ) {
+      void *fs;
+      
+      fs = $self->pipe->create_fs_state($self->pipe, state);
+      if(!fs)
+         return;
+      
+      if(cso_set_fragment_shader_handle($self->cso, fs) != PIPE_OK)
+         return;
+
+      cso_delete_fragment_shader($self->cso, $self->fs);
+      $self->fs = fs;
    }
 
-   void * create_vs( const struct pipe_shader_state *state ) {
-      return $self->pipe->create_vs_state($self->pipe, state);
-   }
-   
-   void bind_vs( void *state_obj ) {
-      $self->pipe->bind_vs_state($self->pipe, state_obj);
-   }
-   
-   void delete_vs( void *state_obj ) {
-      $self->pipe->delete_vs_state($self->pipe, state_obj);
+   void set_vertex_shader( const struct pipe_shader_state *state ) {
+      void *vs;
+      
+      vs = $self->pipe->create_vs_state($self->pipe, state);
+      if(!vs)
+         return;
+      
+      if(cso_set_vertex_shader_handle($self->cso, vs) != PIPE_OK)
+         return;
+
+      cso_delete_vertex_shader($self->cso, $self->vs);
+      $self->vs = vs;
    }
 
    /*
@@ -446,3 +451,42 @@ error1:
    }
    
 };
+
+
+%extend pipe_shader_state {
+   
+   pipe_shader_state(const char *text, unsigned num_tokens = 1024) {
+      struct tgsi_token *tokens;
+      struct pipe_shader_state *shader;
+      
+      tokens = MALLOC(num_tokens * sizeof(struct tgsi_token));
+      if(!tokens)
+         goto error1;
+      
+      if(tgsi_text_translate(text, tokens, num_tokens ) != TRUE)
+         goto error2;
+      
+      shader = CALLOC_STRUCT(pipe_shader_state);
+      if(!shader)
+         goto error3;
+      
+      shader->tokens = tokens;
+      
+      return shader;
+      
+error3:
+error2:
+      FREE(tokens);
+error1:      
+      return NULL;
+   }
+   
+   ~pipe_shader_state() {
+      FREE((void*)$self->tokens);
+      FREE($self);
+   }
+
+   void dump(unsigned flags = 0) {
+      tgsi_dump($self->tokens, flags);
+   }
+}

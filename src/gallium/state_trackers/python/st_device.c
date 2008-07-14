@@ -99,18 +99,12 @@ st_context_destroy(struct st_context *st_ctx)
    if(st_ctx) {
       struct st_device *st_dev = st_ctx->st_dev;
       
-      if(st_ctx->vs) {
-         st_ctx->pipe->bind_vs_state(st_ctx->pipe, NULL);
-         st_ctx->pipe->delete_vs_state(st_ctx->pipe, st_ctx->vs);
-      }
-
-      if(st_ctx->fs) {
-         st_ctx->pipe->bind_fs_state(st_ctx->pipe, NULL);
-         st_ctx->pipe->delete_fs_state(st_ctx->pipe, st_ctx->fs);
-      }
-      
-      if(st_ctx->cso)
+      if(st_ctx->cso) {
+         cso_delete_vertex_shader(st_ctx->cso, st_ctx->vs);
+         cso_delete_fragment_shader(st_ctx->cso, st_ctx->fs);
+         
          cso_destroy_context(st_ctx->cso);
+      }
       
       if(st_ctx->pipe)
          st_ctx->st_dev->st_ws->context_destroy(st_ctx->pipe);
@@ -162,8 +156,8 @@ st_context_create(struct st_device *st_dev)
    st_ctx->fs = util_make_fragment_passthrough_shader(st_ctx->pipe, 
                                                       &st_ctx->frag_shader);
    
-   st_ctx->pipe->bind_fs_state(st_ctx->pipe, st_ctx->fs);
-   st_ctx->pipe->bind_vs_state(st_ctx->pipe, st_ctx->vs);
+   cso_set_fragment_shader_handle(st_ctx->cso, st_ctx->fs);
+   cso_set_vertex_shader_handle(st_ctx->cso, st_ctx->vs);
 
    return st_ctx;
 }
