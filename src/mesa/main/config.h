@@ -190,8 +190,8 @@
 #define MAX_PROGRAM_CALL_DEPTH 8
 #define MAX_PROGRAM_TEMPS 128
 #define MAX_PROGRAM_ADDRESS_REGS 2
-#define MAX_UNIFORMS 128
-#define MAX_VARYING 8
+#define MAX_UNIFORMS 128   /**< number of float components */
+#define MAX_VARYING 8      /**< number of float[4] vectors */
 #define MAX_SAMPLERS 8
 /*@}*/
 
