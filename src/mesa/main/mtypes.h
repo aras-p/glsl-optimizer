@@ -2519,7 +2519,7 @@ struct gl_constants
    GLuint MaxRenderbufferSize;
    /* GL_ARB_vertex_shader */
    GLuint MaxVertexTextureImageUnits;
-   GLuint MaxVarying;
+   GLuint MaxVarying;  /**< Number of float[4] vectors */
 };
 
 
