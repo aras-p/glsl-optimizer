@@ -1788,20 +1788,6 @@ parse_function(slang_parse_ctx * C, slang_output_ctx * O, int definition,
       *parsed_func_ret = found_func;
    }
 
-   /* assemble the parsed function */
-   {
-      slang_assemble_ctx A;
-
-      A.atoms = C->atoms;
-      A.space.funcs = O->funs;
-      A.space.structs = O->structs;
-      A.space.vars = O->vars;
-      A.program = O->program;
-      A.vartable = O->vartable;
-      A.log = C->L;
-
-      _slang_codegen_function(&A, *parsed_func_ret);
-   }
    return GL_TRUE;
 }
 
@@ -1844,6 +1830,7 @@ parse_code_unit(slang_parse_ctx * C, slang_code_unit * unit,
    slang_output_ctx o;
    GLboolean success;
    GLuint maxRegs;
+   slang_function *mainFunc = NULL;
 
    if (unit->type == SLANG_UNIT_FRAGMENT_BUILTIN ||
        unit->type == SLANG_UNIT_FRAGMENT_SHADER) {
@@ -1871,6 +1858,11 @@ parse_code_unit(slang_parse_ctx * C, slang_code_unit * unit,
          {
             slang_function *func;
             success = parse_function(C, &o, 1, &func);
+            if (success &&
+                _mesa_strcmp((char *) func->header.a_name, "main") == 0) {
+               /* found main() */
+               mainFunc = func;
+            }
          }
          break;
       case EXTERNAL_DECLARATION:
@@ -1887,6 +1879,22 @@ parse_code_unit(slang_parse_ctx * C, slang_code_unit * unit,
       }
    }
    C->I++;
+
+   if (mainFunc) {
+      /* assemble (generate code) for main() */
+      slang_assemble_ctx A;
+
+      A.atoms = C->atoms;
+      A.space.funcs = o.funs;
+      A.space.structs = o.structs;
+      A.space.vars = o.vars;
+      A.program = o.program;
+      A.vartable = o.vartable;
+      A.log = C->L;
+
+      _slang_codegen_function(&A, mainFunc);
+
+   }
 
    _slang_pop_var_table(o.vartable);
    _slang_delete_var_table(o.vartable);
