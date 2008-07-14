@@ -263,7 +263,7 @@ do_blit_readpixels(GLcontext * ctx,
 
          intelEmitCopyBlit(intel,
                            src->cpp,
-                           src->pitch, src->buffer, 0, src->tiled,
+                           src->pitch, src->buffer, 0, src->tiling,
                            rowLength, dst_buffer, dst_offset, GL_FALSE,
                            rect.x1,
                            rect.y1,
