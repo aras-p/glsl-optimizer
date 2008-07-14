@@ -82,12 +82,10 @@ st_device_create_from_st_winsys(const struct st_winsys *st_ws)
 
 struct st_device *
 st_device_create(boolean hardware) {
-#if 0
    if(hardware)
-      return st_device_create_from_st_winsys(&st_hardware_winsys);
+      return st_device_create_from_st_winsys(&st_hardpipe_winsys);
    else
-#endif
-      return st_device_create_from_st_winsys(&st_software_winsys);
+      return st_device_create_from_st_winsys(&st_softpipe_winsys);
 }
 
 

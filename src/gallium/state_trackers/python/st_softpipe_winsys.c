@@ -313,7 +313,7 @@ st_softpipe_context_create(struct pipe_screen *screen)
 }
 
 
-const struct st_winsys st_software_winsys = {
+const struct st_winsys st_softpipe_winsys = {
    &st_softpipe_screen_create,
    &st_softpipe_screen_destroy,
    &st_softpipe_context_create,

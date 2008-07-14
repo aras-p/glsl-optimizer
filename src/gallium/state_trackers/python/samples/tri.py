@@ -185,7 +185,7 @@ def test(dev):
 
 
 def main():
-    dev = Device(hardware = False)
+    dev = Device()
     test(dev)
 
 

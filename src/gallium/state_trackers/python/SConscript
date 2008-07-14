@@ -15,12 +15,19 @@ if 'python' in env['statetrackers']:
     
     env.Append(CPPPATH = '.')
 
-    env.SharedLibrary(
-        target = '_gallium',
+    pyst = env.ConvenienceLibrary(
+        target = 'pyst',
         source = [
             'gallium.i',
             'st_device.c',
             'st_softpipe_winsys.c',
         ],
-        LIBS = softpipe + auxiliaries + env['LIBS'],
+    )
+
+    env.SharedLibrary(
+        target = '_gallium',
+        source = [
+            'st_hardpipe_winsys.c',
+        ],
+        LIBS = [pyst, softpipe] + auxiliaries + env['LIBS'],
     )

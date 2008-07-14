@@ -100,7 +100,7 @@ struct st_context {
 
 %extend st_device {
    
-   st_device(int hardware = 0) {
+   st_device(int hardware = 1) {
       return st_device_create(hardware ? TRUE : FALSE);
    }
 
