@@ -38,6 +38,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifndef __RADEON_TEX_H__
 #define __RADEON_TEX_H__
 
+extern void radeonSetTexOffset(__DRIcontext *pDRICtx, GLint texname,
+                               unsigned long long offset, GLint depth,
+                               GLuint pitch);
+
 extern void radeonUpdateTextureState( GLcontext *ctx );
 
 extern int radeonUploadTexImages( radeonContextPtr rmesa, radeonTexObjPtr t,

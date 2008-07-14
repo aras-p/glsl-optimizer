@@ -49,6 +49,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #if !RADEON_COMMON
 #include "radeon_context.h"
 #include "radeon_span.h"
+#include "radeon_tex.h"
 #elif RADEON_COMMON && defined(RADEON_COMMON_FOR_R200)
 #include "r200_context.h"
 #include "r200_ioctl.h"
@@ -320,6 +321,13 @@ radeonFillInModes( __DRIscreenPrivate *psp,
 
     return (const __DRIconfig **) configs;
 }
+
+#if !RADEON_COMMON
+static const __DRItexOffsetExtension radeonTexOffsetExtension = {
+    { __DRI_TEX_OFFSET, __DRI_TEX_OFFSET_VERSION },
+    radeonSetTexOffset,
+};
+#endif
 
 #if RADEON_COMMON && defined(RADEON_COMMON_FOR_R200)
 static const __DRIallocateExtension r200AllocateExtension = {
@@ -933,6 +941,10 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
        screen->extensions[i++] = &driSwapControlExtension.base;
        screen->extensions[i++] = &driMediaStreamCounterExtension.base;
    }
+
+#if !RADEON_COMMON
+   screen->extensions[i++] = &radeonTexOffsetExtension.base;
+#endif
 
 #if RADEON_COMMON && defined(RADEON_COMMON_FOR_R200)
    if (IS_R200_CLASS(screen))

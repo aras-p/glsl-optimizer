@@ -161,6 +161,8 @@ struct radeon_tex_obj {
 	drm_radeon_tex_image_t image[6][RADEON_MAX_TEXTURE_LEVELS];
 	/* Six, for the cube faces */
 
+	GLboolean image_override; /* Image overridden by GLX_EXT_tfp */
+
 	GLuint pp_txfilter;	/* hardware register values */
 	GLuint pp_txformat;
 	GLuint pp_txoffset;	/* Image location in texmem.
