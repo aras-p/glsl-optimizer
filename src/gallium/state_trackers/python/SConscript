@@ -1,3 +1,6 @@
+import sys
+import os.path
+
 Import('*')
 
 if 'python' in env['statetrackers']:
@@ -10,8 +13,38 @@ if 'python' in env['statetrackers']:
     env.Append(SWIGPATH = ['#src/gallium/include', '#src/gallium/include/pipe'])
     env.Append(SWIGFLAGS = ['-python', '-keyword'])
     
-    env.ParseConfig('python-config --cflags --ldflags --libs')
+    # http://www.scons.org/wiki/PythonExtensions
+    #env.AppendUnique(CPPATH = [distutils.sysconfig.get_python_inc()])
+    #distutils.sysconfig.get_config_vars('SO')
+        
+    env['SHLIBPREFIX'] = ''
     
+    if platform in ['linux']:
+        env.ParseConfig('python-config --cflags --ldflags --libs')
+        
+    if platform in ['windows']:
+        python_root = sys.prefix
+        python_version = '%u%u' % sys.version_info[:2]
+        python_include = os.path.join(python_root, 'include')
+        python_libs = os.path.join(python_root, 'libs')
+        python_lib = os.path.join(python_libs, 'python' + python_version + '.lib')
+        
+        env.Append(CPPPATH = [python_include])
+        env.Append(LIBPATH = [python_libs])
+        env.Append(LIBS = ['python' + python_version + '.lib'])
+        env.Replace(SHLIBSUFFIX = '.pyd')
+        
+        if env['debug']:
+            # XXX; python25_d.lib is not included in Python for windows, and 
+            # we'll get missing symbols unless we undefine _DEBUG
+            cppdefines = env['CPPDEFINES']
+            cppdefines = [define for define in cppdefines if define != '_DEBUG']
+            env.Replace(CPPDEFINES = cppdefines)
+        
+        # http://www.swig.org/Doc1.3/Windows.html
+        env['ENV']['PYTHON_INCLUDE'] = python_include
+        env['ENV']['PYTHON_LIB'] = python_lib
+        
     env.SharedLibrary(
     	target = '_gallium',
     	source = [
@@ -19,6 +52,5 @@ if 'python' in env['statetrackers']:
             'st_device.c',
             'st_softpipe_winsys.c',
     	],
-        SHLIBPREFIX = '',
         LIBS = softpipe + auxiliaries + env['LIBS'],
     )
