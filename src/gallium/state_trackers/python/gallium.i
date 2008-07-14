@@ -55,6 +55,7 @@
 %}
 
 %include "carrays.i"
+%array_class(unsigned char, ByteArray);
 %array_class(int, IntArray);
 %array_class(float, FloatArray);
 
@@ -404,6 +405,16 @@ error1:
 
    // gets mapped to pipe_surface_unmap automatically
    void unmap( void );
+
+   void
+   get_tile_raw(unsigned x, unsigned y, unsigned w, unsigned h, unsigned char *p, unsigned stride) {
+      pipe_get_tile_raw($self, x, y, w, h, p, stride);
+   }
+
+   void
+   put_tile_raw(unsigned x, unsigned y, unsigned w, unsigned h, const unsigned char *p, unsigned stride) {
+      pipe_put_tile_raw($self, x, y, w, h, p, stride);
+   }
 
    void
    get_tile_rgba(unsigned x, unsigned y, unsigned w, unsigned h, float *p) {
