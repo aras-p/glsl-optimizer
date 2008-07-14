@@ -142,6 +142,8 @@ def test(dev):
     #fs.dump()
     ctx.set_fragment_shader(fs)
 
+    ctx.surface_clear(surface, 0x00ff0000)
+
     if 0:
         nverts = 4
         nattrs = 1

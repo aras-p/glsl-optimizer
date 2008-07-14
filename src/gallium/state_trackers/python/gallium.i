@@ -367,7 +367,7 @@ error1:
       $self->pipe->surface_fill($self->pipe, dst, x, y, width, height, value);
    }
 
-   void clear(struct pipe_surface *surface, unsigned value) {
+   void surface_clear(struct pipe_surface *surface, unsigned value = 0) {
       $self->pipe->clear($self->pipe, surface, value);
    }
 
