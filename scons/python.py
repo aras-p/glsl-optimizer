@@ -31,20 +31,13 @@ Frontend-tool for Gallium3D architecture.
 
 
 import sys
+import distutils.sysconfig
 import os.path
 
 
 def generate(env):
-
-    # http://www.scons.org/wiki/PythonExtensions
-    #env.AppendUnique(CPPATH = [distutils.sysconfig.get_python_inc()])
-    #distutils.sysconfig.get_config_vars('SO')
-        
-    env['SHLIBPREFIX'] = ''
+    # See http://www.scons.org/wiki/PythonExtensions
     
-    if sys.platform in ['linux2']:
-        env.ParseConfig('python-config --cflags --ldflags --libs')
-        
     if sys.platform in ['windows']:
         python_root = sys.prefix
         python_version = '%u%u' % sys.version_info[:2]
@@ -55,6 +48,7 @@ def generate(env):
         env.Append(CPPPATH = [python_include])
         env.Append(LIBPATH = [python_libs])
         env.Append(LIBS = ['python' + python_version + '.lib'])
+        env.Replace(SHLIBPREFIX = '')
         env.Replace(SHLIBSUFFIX = '.pyd')
         
         # XXX; python25_d.lib is not included in Python for windows, and 
@@ -62,6 +56,11 @@ def generate(env):
         cppdefines = env['CPPDEFINES']
         cppdefines = [define for define in cppdefines if define != '_DEBUG']
         env.Replace(CPPDEFINES = cppdefines)
+    else:
+        #env.ParseConfig('python-config --cflags --ldflags --libs')
+        env.AppendUnique(CPPPATH = [distutils.sysconfig.get_python_inc()])
+        env.Replace(SHLIBPREFIX = '')
+        env.Replace(SHLIBSUFFIX = distutils.sysconfig.get_config_vars()['SO'])
 
     # for debugging
     #print env.Dump()
