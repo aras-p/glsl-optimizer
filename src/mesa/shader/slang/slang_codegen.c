@@ -651,6 +651,8 @@ new_var(slang_assemble_ctx *A, slang_operation *oper, slang_atom name)
    if (!var)
       return NULL;
 
+   assert(var->declared);
+
    assert(!oper->var || oper->var == var);
 
    n = new_node0(IR_VAR);
@@ -922,31 +924,6 @@ slang_substitute(slang_assemble_ctx *A, slang_operation *oper,
       }
    }
 }
-
-
-/**
- * Recursively traverse 'oper', replacing occurances of 'oldScope' with
- * 'newScope' in the oper->locals->outer_scope filed.
- *
- * This is used after function inlining to update the scoping of
- * the newly copied/inlined code so that vars are found in the new,
- * inlined scope and not in the original function code.
- */
-static void
-slang_replace_scope(slang_operation *oper,
-                    slang_variable_scope *oldScope,
-                    slang_variable_scope *newScope)
-{
-   GLuint i;
-   if (oper->locals != newScope &&
-       oper->locals->outer_scope == oldScope) {
-      oper->locals->outer_scope = newScope;
-   }
-   for (i = 0; i < oper->num_children; i++) {
-      slang_replace_scope(&oper->children[i], oldScope, newScope);
-   }
-}
-
 
 
 /**
@@ -1234,6 +1211,16 @@ slang_inline_function_call(slang_assemble_ctx * A, slang_function *fun,
 	 numCopyIn++;
       }
    }
+
+   /* Now add copies of the function's local vars to the new variable scope */
+   for (i = totalArgs; i < fun->parameters->num_variables; i++) {
+      slang_variable *p = fun->parameters->variables[i];
+      slang_variable *pCopy = slang_variable_scope_grow(inlined->locals);
+      pCopy->type = p->type;
+      pCopy->a_name = p->a_name;
+      pCopy->array_len = p->array_len;
+   }
+
 
    /* New epilog statements:
     * 1. Create end of function label to jump to from return statements.
@@ -2105,6 +2092,8 @@ static slang_ir_node *
 _slang_gen_var_decl(slang_assemble_ctx *A, slang_variable *var)
 {
    slang_ir_node *n;
+   /*assert(!var->declared);*/
+   var->declared = GL_TRUE;
    assert(!is_sampler_type(&var->type));
    n = new_node0(IR_VAR_DECL);
    if (n) {
@@ -3189,6 +3178,8 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
 
    if (store)
       var->aux = store;  /* save var's storage info */
+
+   var->declared = GL_TRUE;
 
    return success;
 }
