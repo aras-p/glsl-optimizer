@@ -1658,6 +1658,9 @@ emit(slang_emit_info *emitInfo, slang_ir_node *n)
    case IR_COS:
    case IR_DDX:
    case IR_DDY:
+   case IR_EXP:
+   case IR_EXP2:
+   case IR_LOG2:
    case IR_NOISE1:
    case IR_NOISE2:
    case IR_NOISE3:
@@ -1678,8 +1681,6 @@ emit(slang_emit_info *emitInfo, slang_ir_node *n)
    case IR_SLE:
    case IR_SLT:
    case IR_POW:
-   case IR_EXP:
-   case IR_EXP2:
    /* trinary operators */
    case IR_LRP:
       return emit_arith(emitInfo, n);
