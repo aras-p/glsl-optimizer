@@ -203,17 +203,17 @@ clear_with_quad(GLcontext *ctx,
                 GLboolean color, GLboolean depth, GLboolean stencil)
 {
    struct st_context *st = ctx->st;
-   const GLfloat x0 = ctx->DrawBuffer->_Xmin;
-   const GLfloat x1 = ctx->DrawBuffer->_Xmax;
+   const GLfloat x0 = (GLfloat) ctx->DrawBuffer->_Xmin;
+   const GLfloat x1 = (GLfloat) ctx->DrawBuffer->_Xmax;
    GLfloat y0, y1;
 
    if (st_fb_orientation(ctx->DrawBuffer) == Y_0_TOP) {
-      y0 = ctx->DrawBuffer->Height - ctx->DrawBuffer->_Ymax;
-      y1 = ctx->DrawBuffer->Height - ctx->DrawBuffer->_Ymin;
+      y0 = (GLfloat) (ctx->DrawBuffer->Height - ctx->DrawBuffer->_Ymax);
+      y1 = (GLfloat) (ctx->DrawBuffer->Height - ctx->DrawBuffer->_Ymin);
    }
    else {
-      y0 = ctx->DrawBuffer->_Ymin;
-      y1 = ctx->DrawBuffer->_Ymax;
+      y0 = (GLfloat) ctx->DrawBuffer->_Ymin;
+      y1 = (GLfloat) ctx->DrawBuffer->_Ymax;
    }
 
    /*
@@ -286,7 +286,7 @@ clear_with_quad(GLcontext *ctx,
    cso_set_vertex_shader_handle(st->cso_context, st->clear.vs);
 
    /* draw quad matching scissor rect (XXX verify coord round-off) */
-   draw_quad(ctx, x0, y0, x1, y1, ctx->Depth.Clear, ctx->Color.ClearColor);
+   draw_quad(ctx, x0, y0, x1, y1, (GLfloat) ctx->Depth.Clear, ctx->Color.ClearColor);
 
    /* Restore pipe state */
    cso_restore_blend(st->cso_context);

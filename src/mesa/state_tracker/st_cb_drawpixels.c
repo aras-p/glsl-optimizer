@@ -423,8 +423,8 @@ draw_quad(GLcontext *ctx, GLfloat x0, GLfloat y0, GLfloat z,
    /* setup vertex data */
    {
       const struct gl_framebuffer *fb = st->ctx->DrawBuffer;
-      const GLfloat fb_width = fb->Width;
-      const GLfloat fb_height = fb->Height;
+      const GLfloat fb_width = (GLfloat) fb->Width;
+      const GLfloat fb_height = (GLfloat) fb->Height;
       const GLfloat clip_x0 = x0 / fb_width * 2.0f - 1.0f;
       const GLfloat clip_y0 = y0 / fb_height * 2.0f - 1.0f;
       const GLfloat clip_x1 = x1 / fb_width * 2.0f - 1.0f;
@@ -571,8 +571,8 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
 
    /* viewport state: viewport matching window dims */
    {
-      const float width = ctx->DrawBuffer->Width;
-      const float height = ctx->DrawBuffer->Height;
+      const float width = (float) ctx->DrawBuffer->Width;
+      const float height = (float) ctx->DrawBuffer->Height;
       struct pipe_viewport_state vp;
       vp.scale[0] =  0.5f * width;
       vp.scale[1] = -0.5f * height;
@@ -600,9 +600,9 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
     * Recall that these coords are transformed by the current
     * vertex shader and viewport transformation.
     */
-   x0 = x;
+   x0 = (GLfloat) x;
    x1 = x + width * ctx->Pixel.ZoomX;
-   y0 = y;
+   y0 = (GLfloat) y;
    y1 = y + height * ctx->Pixel.ZoomY;
    //if(!color)
    draw_quad(ctx, x0, y0, z, x1, y1, color, invertTex);

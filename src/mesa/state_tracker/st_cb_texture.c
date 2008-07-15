@@ -285,7 +285,7 @@ guess_and_alloc_texture(struct st_context *st,
    assert(!stObj->pt);
 
    if (stObj->pt &&
-       stImage->level > stObj->base.BaseLevel &&
+       (GLint) stImage->level > stObj->base.BaseLevel &&
        (stImage->base.Width == 1 ||
         (stObj->base.Target != GL_TEXTURE_1D &&
          stImage->base.Height == 1) ||
@@ -296,7 +296,7 @@ guess_and_alloc_texture(struct st_context *st,
    /* If this image disrespects BaseLevel, allocate from level zero.
     * Usually BaseLevel == 0, so it's unlikely to happen.
     */
-   if (stImage->level < stObj->base.BaseLevel)
+   if ((GLint) stImage->level < stObj->base.BaseLevel)
       firstLevel = 0;
    else
       firstLevel = stObj->base.BaseLevel;
@@ -810,7 +810,7 @@ st_get_tex_image(GLcontext * ctx, GLenum target, GLint level,
 						    texImage->Height, format,
 						    type);
    GLuint depth;
-   int i;
+   GLuint i;
    GLubyte *dest;
 
    /* Map */
@@ -1383,7 +1383,7 @@ calculate_first_last_level(struct st_texture_object *stObj)
       }
       else {
          firstLevel = 0;
-         lastLevel = MIN2(tObj->MaxLevel, tObj->Image[0][tObj->BaseLevel]->WidthLog2);
+         lastLevel = MIN2(tObj->MaxLevel, (int) tObj->Image[0][tObj->BaseLevel]->WidthLog2);
       }
       break;
    case GL_TEXTURE_RECTANGLE_NV:
