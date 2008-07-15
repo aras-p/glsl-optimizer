@@ -48,6 +48,10 @@
 #define HW_WRITE_CLIPLOOP()	HW_CLIPLOOP()
 #endif
 
+/* Whether GET_PTR(x, y) + cpp != GET_PTR(x+1, y) */
+#ifndef GET_PTR_NONLINEAR
+#define GET_PTR_NONLINEAR 0
+#endif
 
 #if (SPANTMP_PIXEL_FMT == GL_RGB)  && (SPANTMP_PIXEL_TYPE == GL_UNSIGNED_SHORT_5_6_5)
 
@@ -389,7 +393,8 @@ static void TAG(ReadRGBASpan)( GLcontext *ctx,
 }
 
 
-#if defined(USE_MMX_ASM) && \
+#if !GET_PTR_NONLINEAR && \
+   defined(USE_MMX_ASM) && \
    (((SPANTMP_PIXEL_FMT == GL_BGRA) && \
 	(SPANTMP_PIXEL_TYPE == GL_UNSIGNED_INT_8_8_8_8_REV)) || \
     ((SPANTMP_PIXEL_FMT == GL_RGB) && \
@@ -440,7 +445,8 @@ static void TAG2(ReadRGBASpan,_MMX)( GLcontext *ctx,
 #endif
 
 
-#if defined(USE_SSE_ASM) && \
+#if !GET_PTR_NONLINEAR && \
+   defined(USE_SSE_ASM) && \
    (SPANTMP_PIXEL_FMT == GL_BGRA) && \
      (SPANTMP_PIXEL_TYPE == GL_UNSIGNED_INT_8_8_8_8_REV)
 static void TAG2(ReadRGBASpan,_SSE2)( GLcontext *ctx,
@@ -474,7 +480,8 @@ static void TAG2(ReadRGBASpan,_SSE2)( GLcontext *ctx,
 }
 #endif
 
-#if defined(USE_SSE_ASM) && \
+#if !GET_PTR_NONLINEAR && \
+   defined(USE_SSE_ASM) && \
    (SPANTMP_PIXEL_FMT == GL_BGRA) && \
      (SPANTMP_PIXEL_TYPE == GL_UNSIGNED_INT_8_8_8_8_REV)
 static void TAG2(ReadRGBASpan,_SSE)( GLcontext *ctx,
@@ -567,6 +574,7 @@ static void TAG(InitPointers)(struct gl_renderbuffer *rb)
    rb->PutMonoValues = TAG(WriteMonoRGBAPixels);
    rb->GetValues = TAG(ReadRGBAPixels);
 
+#if !GET_PTR_NONLINEAR
 #if defined(USE_SSE_ASM) && \
    (SPANTMP_PIXEL_FMT == GL_BGRA) && \
      (SPANTMP_PIXEL_TYPE == GL_UNSIGNED_INT_8_8_8_8_REV)
@@ -596,6 +604,7 @@ static void TAG(InitPointers)(struct gl_renderbuffer *rb)
    }
    else
 #endif
+#endif /* GET_PTR_NONLINEAR */
    {
       if (DBG) fprintf( stderr, "Using %s version of GetRow\n", "C" );
       rb->GetRow = TAG(ReadRGBASpan);
@@ -611,5 +620,6 @@ static void TAG(InitPointers)(struct gl_renderbuffer *rb)
 #undef TAG
 #undef TAG2
 #undef GET_PTR
+#undef GET_PTR_NONLINEAR
 #undef SPANTMP_PIXEL_FMT
 #undef SPANTMP_PIXEL_TYPE

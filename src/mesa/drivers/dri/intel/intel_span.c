@@ -273,6 +273,7 @@ static GLubyte *y_tile_swizzle(struct intel_renderbuffer *irb, struct intel_cont
 #define TAG(x)    intel_XTile_##x##_RGB565
 #define TAG2(x,y) intel_XTile_##x##_RGB565##y
 #define GET_PTR(X,Y) x_tile_swizzle(irb, intel, X, Y)
+#define GET_PTR_NONLINEAR 1
 #include "spantmp2.h"
 
 #define SPANTMP_PIXEL_FMT GL_RGB
@@ -281,6 +282,7 @@ static GLubyte *y_tile_swizzle(struct intel_renderbuffer *irb, struct intel_cont
 #define TAG(x)    intel_YTile_##x##_RGB565
 #define TAG2(x,y) intel_YTile_##x##_RGB565##y
 #define GET_PTR(X,Y) y_tile_swizzle(irb, intel, X, Y)
+#define GET_PTR_NONLINEAR 1
 #include "spantmp2.h"
 
 /* 32 bit ARGB888 color tile spanline and pixel functions
@@ -292,6 +294,7 @@ static GLubyte *y_tile_swizzle(struct intel_renderbuffer *irb, struct intel_cont
 #define TAG(x)    intel_XTile_##x##_ARGB8888
 #define TAG2(x,y) intel_XTile_##x##_ARGB8888##y
 #define GET_PTR(X,Y) x_tile_swizzle(irb, intel, X, Y)
+#define GET_PTR_NONLINEAR 1
 #include "spantmp2.h"
 
 #define SPANTMP_PIXEL_FMT GL_BGRA
@@ -300,6 +303,7 @@ static GLubyte *y_tile_swizzle(struct intel_renderbuffer *irb, struct intel_cont
 #define TAG(x)    intel_YTile_##x##_ARGB8888
 #define TAG2(x,y) intel_YTile_##x##_ARGB8888##y
 #define GET_PTR(X,Y) y_tile_swizzle(irb, intel, X, Y)
+#define GET_PTR_NONLINEAR 1
 #include "spantmp2.h"
 
 #define LOCAL_DEPTH_VARS						\
