@@ -740,7 +740,10 @@ static const char *texture_names[TGSI_TEXTURE_COUNT] =
    "SHADOWRECT"
 };
 
-static boolean parse_instruction( struct translate_ctx *ctx )
+static boolean
+parse_instruction(
+   struct translate_ctx *ctx,
+   boolean has_label )
 {
    uint i;
    uint saturate = TGSI_SAT_NONE;
@@ -767,7 +770,10 @@ static boolean parse_instruction( struct translate_ctx *ctx )
       }
    }
    if (i == TGSI_OPCODE_LAST) {
-      report_error( ctx, "Unknown opcode" );
+      if (has_label)
+         report_error( ctx, "Unknown opcode" );
+      else
+         report_error( ctx, "Expected `DCL', `IMM' or a label" );
       return FALSE;
    }
    info = &opcode_info[i];
@@ -1025,7 +1031,7 @@ static boolean translate( struct translate_ctx *ctx )
       }
 
       if (parse_label( ctx, &label_val )) {
-         if (!parse_instruction( ctx ))
+         if (!parse_instruction( ctx, TRUE ))
             return FALSE;
       }
       else if (str_match_no_case( &ctx->cur, "DCL" )) {
@@ -1036,8 +1042,7 @@ static boolean translate( struct translate_ctx *ctx )
          if (!parse_immediate( ctx ))
             return FALSE;
       }
-      else {
-         report_error( ctx, "Expected `DCL', `IMM' or a label" );
+      else if (!parse_instruction( ctx, FALSE )) {
          return FALSE;
       }
    }
