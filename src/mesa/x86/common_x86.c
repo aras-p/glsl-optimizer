@@ -113,6 +113,14 @@ static void check_os_sse_support( void )
       if (ret || !enabled)
          _mesa_x86_cpu_features &= ~(X86_FEATURE_XMM);
    }
+#elif defined (__NetBSD__)
+   {
+      int ret, enabled;
+      size_t len = sizeof(enabled);
+      ret = sysctlbyname("machdep.sse", &enabled, &len, (void *)NULL, 0);
+      if (ret || !enabled)
+         _mesa_x86_cpu_features &= ~(X86_FEATURE_XMM);
+   }
 #elif defined(WIN32)
    LPTOP_LEVEL_EXCEPTION_FILTER oldFilter;
    
