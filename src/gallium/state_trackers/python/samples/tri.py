@@ -143,24 +143,16 @@ def test(dev):
     cbuf = dev.texture_create(PIPE_FORMAT_X8R8G8B8_UNORM, 
                               width, height,
                               usage=PIPE_TEXTURE_USAGE_DISPLAY_TARGET)
-    zbuf = dev.texture_create(PIPE_FORMAT_X8Z24_UNORM, 
-                              width, height,
-                              usage=PIPE_TEXTURE_USAGE_DEPTH_STENCIL)
     _cbuf = cbuf.get_surface(usage = PIPE_BUFFER_USAGE_GPU_READ|PIPE_BUFFER_USAGE_GPU_WRITE)
-    _zsbuf = zbuf.get_surface(usage = PIPE_BUFFER_USAGE_GPU_READ|PIPE_BUFFER_USAGE_GPU_WRITE)
     fb = Framebuffer()
     fb.width = width
     fb.height = height
     fb.num_cbufs = 1
     fb.set_cbuf(0, _cbuf)
-    fb.set_zsbuf(_zsbuf)
     ctx.set_framebuffer(fb)
     _cbuf.clear_value = 0x00000000
-    _zsbuf.clear_value = 0x00ffffff
     ctx.surface_clear(_cbuf, _cbuf.clear_value)
-    ctx.surface_clear(_zsbuf, _zsbuf.clear_value)
     del _cbuf
-    del _zsbuf
     
     # vertex shader
     vs = Shader('''

@@ -61,8 +61,8 @@ class TextureTest(Test):
     def run(self):
         dev = self.dev
         
-        format = PIPE_FORMAT_A8R8G8B8_UNORM
-        #format = PIPE_FORMAT_DXT1_RGB
+        #format = PIPE_FORMAT_A8R8G8B8_UNORM
+        format = PIPE_FORMAT_DXT1_RGB
         
         if not dev.is_format_supported(format, PIPE_TEXTURE):
             pass
@@ -130,20 +130,21 @@ class TextureTest(Test):
         
         expected_rgba = generate_data(texture.get_surface(usage = PIPE_BUFFER_USAGE_CPU_READ|PIPE_BUFFER_USAGE_CPU_WRITE))
         
+        #  framebuffer 
         cbuf_tex = dev.texture_create(PIPE_FORMAT_A8R8G8B8_UNORM, 
                                       width, 
                                       height,
                                       usage = PIPE_TEXTURE_USAGE_RENDER_TARGET)
 
-        #  drawing dest 
         cbuf = cbuf_tex.get_surface(usage = PIPE_BUFFER_USAGE_GPU_WRITE|PIPE_BUFFER_USAGE_GPU_READ)
         fb = Framebuffer()
         fb.width = width
         fb.height = height
         fb.num_cbufs = 1
         fb.set_cbuf(0, cbuf)
-        ctx.surface_clear(cbuf, 0x00000000)
         ctx.set_framebuffer(fb)
+        ctx.surface_clear(cbuf, 0x00000000)
+        del fb
     
         # vertex shader
         vs = Shader('''
@@ -220,14 +221,15 @@ class TextureTest(Test):
     
         ctx.flush()
 
+        del ctx
+        
         rgba = FloatArray(height*width*4)
 
         cbuf_tex.get_surface(usage = PIPE_BUFFER_USAGE_CPU_READ).get_tile_rgba(x, y, w, h, rgba)
 
         compare_rgba(width, height, rgba, expected_rgba)
         
-        show_image(texture.get_surface(usage = PIPE_BUFFER_USAGE_CPU_READ), 
-                   cbuf_tex.get_surface(usage = PIPE_BUFFER_USAGE_CPU_READ))
+        show_image(width, height, Result=rgba, Expected=expected_rgba)
 
 
 def main():

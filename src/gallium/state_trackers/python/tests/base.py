@@ -37,28 +37,25 @@ for name, value in globals().items():
         formats[value] = name
 
 
-def make_image(surface):
-    pixels = FloatArray(surface.height*surface.width*4)
-    surface.get_tile_rgba(0, 0, surface.width, surface.height, pixels)
-
+def make_image(width, height, rgba):
     import Image
     outimage = Image.new(
         mode='RGB',
-        size=(surface.width, surface.height),
+        size=(width, height),
         color=(0,0,0))
     outpixels = outimage.load()
-    for y in range(0, surface.height):
-        for x in range(0, surface.width):
-            offset = (y*surface.width + x)*4
-            r, g, b, a = [int(pixels[offset + ch]*255) for ch in range(4)]
+    for y in range(0, height):
+        for x in range(0, width):
+            offset = (y*width + x)*4
+            r, g, b, a = [int(rgba[offset + ch]*255) for ch in range(4)]
             outpixels[x, y] = r, g, b
     return outimage
 
-def save_image(filename, surface):
-    outimage = make_image(surface)
+def save_image(width, height, rgba, filename):
+    outimage = make_image(width, height, rgba)
     outimage.save(filename, "PNG")
 
-def show_image(*surfaces):
+def show_image(width, height, **rgbas):
     import Tkinter as tk
     from PIL import Image, ImageTk
 
@@ -67,15 +64,17 @@ def show_image(*surfaces):
     x = 64
     y = 64
     
-    for i in range(len(surfaces)):
-        surface = surfaces[i]
-        outimage = make_image(surface)
+    labels = rgbas.keys()
+    labels.sort() 
+    for i in range(len(labels)):
+        label = labels[i]
+        outimage = make_image(width, height, rgbas[label])
         
         if i:
             window = tk.Toplevel(root)
         else:
             window = root    
-        window.title('Image %u' % (i+1))
+        window.title(label)
         image1 = ImageTk.PhotoImage(outimage)
         w = image1.width()
         h = image1.height()
