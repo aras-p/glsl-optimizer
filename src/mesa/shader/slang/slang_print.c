@@ -156,7 +156,7 @@ print_variable(const slang_variable *v, int indent)
    spaces(indent);
    printf("VAR ");
    print_type(&v->type);
-   printf(" %s", (char *) v->a_name);
+   printf(" %s (at %p)", (char *) v->a_name, (void *) v);
    if (v->initializer) {
       printf(" :=\n");
       slang_print_tree(v->initializer, indent + 3);
@@ -171,10 +171,12 @@ static void
 print_binary(const slang_operation *op, const char *oper, int indent)
 {
    assert(op->num_children == 2);
+#if 0
    printf("binary at %p locals=%p outer=%p\n",
           (void *) op,
           (void *) op->locals,
           (void *) op->locals->outer_scope);
+#endif
    slang_print_tree(&op->children[0], indent + 3);
    spaces(indent);
    printf("%s at %p locals=%p outer=%p\n",
@@ -260,9 +262,14 @@ slang_print_tree(const slang_operation *op, int indent)
 
    case SLANG_OPER_BLOCK_NEW_SCOPE:
       spaces(indent);
-      printf("{{ // new scope  locals=%p: ", (void*)op->locals);
-      for (i = 0; i < op->locals->num_variables; i++) {
-         printf("%s ", (char *) op->locals->variables[i]->a_name);
+      printf("{{ // new scope  locals=%p outer=%p: ",
+             (void *) op->locals,
+             (void *) op->locals->outer_scope);
+      {
+         int i;
+         for (i = 0; i < op->locals->num_variables; i++) {
+            printf("%s ", (char *) op->locals->variables[i]->a_name);
+         }
       }
       printf("\n");
       print_generic(op, NULL, indent+3);
@@ -669,8 +676,8 @@ slang_print_function(const slang_function *f, GLboolean body)
      return;
 #endif
 
-   printf("FUNCTION %s (\n",
-          (char *) f->header.a_name);
+   printf("FUNCTION %s ( scope=%p\n",
+          (char *) f->header.a_name, (void *) f->parameters);
 
    for (i = 0; i < f->param_count; i++) {
       print_variable(f->parameters->variables[i], 3);
