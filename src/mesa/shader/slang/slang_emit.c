@@ -539,8 +539,9 @@ emit_arith(slang_emit_info *emitInfo, slang_ir_node *n)
 
    /* result storage */
    if (!n->Store) {
-      /* XXX this size isn't correct, it depends on the operands */
-      if (!alloc_temp_storage(emitInfo, n, info->ResultSize))
+      GLint size = n->Children[0]->Store
+         ? n->Children[0]->Store->Size : info->ResultSize;
+      if (!alloc_temp_storage(emitInfo, n, size))
          return NULL;
    }
    storage_to_dst_reg(&inst->DstReg, n->Store, n->Writemask);
