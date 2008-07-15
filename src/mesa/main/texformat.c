@@ -55,10 +55,10 @@ nonlinear_to_linear(GLubyte cs8)
       for (i = 0; i < 256; i++) {
          const GLfloat cs = UBYTE_TO_FLOAT(i);
          if (cs <= 0.04045) {
-            table[i] = cs / 12.92;
+            table[i] = cs / 12.92f;
          }
          else {
-            table[i] = _mesa_pow((cs + 0.055) / 1.055, 2.4);
+            table[i] = (GLfloat) _mesa_pow((cs + 0.055) / 1.055, 2.4);
          }
       }
       tableReady = GL_TRUE;
