@@ -62,7 +62,7 @@
  * "vbo", to support multiple texture coordinate arrays, generic attributes,
  * and vertex buffer objects.
  *
- * \author Ian Romanick <idr@us.ibm.com>
+ * \author Ian Romanick <ian.d.romanick@intel.com>
  */
 
 static void emit_DrawArrays_none( GLenum mode, GLint first, GLsizei count );
