@@ -159,7 +159,7 @@ texture_put_row(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
       const GLuint *zValues = (const GLuint *) values;
       for (i = 0; i < count; i++) {
          if (!mask || mask[i]) {
-            GLfloat flt = (zValues[i] >> 8) * (1.0 / 0xffffff);
+            GLfloat flt = (GLfloat) ((zValues[i] >> 8) * (1.0 / 0xffffff));
             trb->Store(trb->TexImage, x + i, y, z, &flt);
          }
       }
@@ -199,7 +199,7 @@ texture_put_mono_row(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
    }
    else if (rb->DataType == GL_UNSIGNED_INT_24_8_EXT) {
       const GLuint zValue = *((const GLuint *) value);
-      const GLfloat flt = (zValue >> 8) * (1.0 / 0xffffff);
+      const GLfloat flt = (GLfloat) ((zValue >> 8) * (1.0 / 0xffffff));
       for (i = 0; i < count; i++) {
          if (!mask || mask[i]) {
             trb->Store(trb->TexImage, x + i, y, z, &flt);
@@ -244,7 +244,7 @@ texture_put_values(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
       const GLuint *zValues = (const GLuint *) values;
       for (i = 0; i < count; i++) {
          if (!mask || mask[i]) {
-            GLfloat flt = (zValues[i] >> 8) * (1.0 / 0xffffff);
+            GLfloat flt = (GLfloat) ((zValues[i] >> 8) * (1.0 / 0xffffff));
             trb->Store(trb->TexImage, x[i], y[i] + trb->Yoffset, z, &flt);
          }
       }
@@ -283,7 +283,7 @@ texture_put_mono_values(GLcontext *ctx, struct gl_renderbuffer *rb,
    }
    else if (rb->DataType == GL_UNSIGNED_INT_24_8_EXT) {
       const GLuint zValue = *((const GLuint *) value);
-      const GLfloat flt = (zValue >> 8) * (1.0 / 0xffffff);
+      const GLfloat flt = (GLfloat) ((zValue >> 8) * (1.0 / 0xffffff));
       for (i = 0; i < count; i++) {
          if (!mask || mask[i]) {
             trb->Store(trb->TexImage, x[i], y[i] + trb->Yoffset, z, &flt);
