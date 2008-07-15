@@ -66,6 +66,7 @@
 %rename(Surface) pipe_surface;
 
 %rename(Buffer) pipe_buffer;
+
 %rename(BlendColor) pipe_blend_color;
 %rename(Blend) pipe_blend_state;
 %rename(Clip) pipe_clip_state;
@@ -82,14 +83,29 @@
 %rename(VertexElement) pipe_vertex_element;
 %rename(Viewport) pipe_viewport_state;
 
+%nodefaultctor st_device;
+%nodefaultctor st_context;
+%nodefaultctor pipe_texture;
+%nodefaultctor pipe_surface;
+%nodefaultctor pipe_buffer;
+
+%nodefaultdtor st_device;
+%nodefaultdtor st_context;
+%nodefaultdtor pipe_texture;
+%nodefaultdtor pipe_surface;
+%nodefaultdtor pipe_buffer;
+
+%ignore pipe_texture::screen;
+
+%ignore pipe_surface::winsys;
+%immutable pipe_surface::texture;
+%immutable pipe_surface::buffer;
+
 %include "p_format.i";
 %include "pipe/p_defines.h";
 %include "pipe/p_state.h";
 %include "pipe/p_shader_tokens.h";
 
-
-%nodefaultctor;
-%nodefaultdtor;
 
 struct st_device {
 };
@@ -97,6 +113,10 @@ struct st_device {
 struct st_context {
 };
 
+
+%newobject st_device::texture_create;
+%newobject st_device::context_create;
+%newobject st_device::buffer_create;
 
 %extend st_device {
    
@@ -157,6 +177,7 @@ struct st_context {
          unsigned usage = 0
       ) {
       struct pipe_texture templat;
+      struct pipe_texture *texture;
       memset(&templat, 0, sizeof(templat));
       templat.format = format;
       pf_get_block(templat.format, &templat.block);
@@ -166,7 +187,9 @@ struct st_context {
       templat.last_level = last_level;
       templat.target = target;
       templat.tex_usage = usage;
-      return $self->screen->texture_create($self->screen, &templat);
+      texture = $self->screen->texture_create($self->screen, &templat);
+      fprintf(stderr, "creating texture %p\n", texture);
+      return texture;
    }
    
    struct pipe_buffer *
@@ -335,10 +358,6 @@ error1:
       ;
    }
    
-   void draw_quad(float x0, float y0, float x1, float y1, float z = 0.0f) {
-      util_draw_texquad($self->pipe, x0, y0, x1, y1, z);
-   }
-   
    void
    flush(void) {
       struct pipe_fence_handle *fence = NULL; 
@@ -375,10 +394,13 @@ error1:
 };
 
 
+%newobject pipe_texture::get_surface;
+
 %extend pipe_texture {
    
    ~pipe_texture() {
       struct pipe_texture *ptr = $self;
+      fprintf(stderr, "destroying texture %p\n", $self);
       pipe_texture_reference(&ptr, NULL);
    }
    
@@ -387,7 +409,10 @@ error1:
    get_surface(unsigned face=0, unsigned level=0, unsigned zslice=0, unsigned usage=0 )
    {
       struct pipe_screen *screen = $self->screen;
-      return screen->get_tex_surface(screen, $self, face, level, zslice, usage);
+      struct pipe_surface *surface; 
+      surface = screen->get_tex_surface(screen, $self, face, level, zslice, usage);
+      fprintf(stderr, "creating surface %p\n", surface);
+      return surface;
    }
    
 };
@@ -397,6 +422,7 @@ error1:
    
    ~pipe_surface() {
       struct pipe_surface *ptr = $self;
+      fprintf(stderr, "destroying surface %p\n", $self);
       pipe_surface_reference(&ptr, NULL);
    }
    

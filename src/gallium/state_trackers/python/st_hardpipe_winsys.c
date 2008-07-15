@@ -37,8 +37,8 @@
 #include "st_winsys.h"
 
 
+/* XXX: Force init_gallium symbol to be linked */
 extern void init_gallium(void);
-
 void (*force_init_gallium_linkage)(void) = &init_gallium;
 
 

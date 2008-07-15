@@ -70,6 +70,7 @@ st_device_create_from_st_winsys(const struct st_winsys *st_ws)
    if(!st_dev)
       return NULL;
    
+   st_dev->refcount = 1;
    st_dev->st_ws = st_ws;
    
    st_dev->screen = st_ws->screen_create();
