@@ -1226,6 +1226,7 @@ void __operator /= (inout int a, const int b)
    float invB;
    __asm float_rcp invB, b;
    __asm vec4_multiply a, a, invB;
+   __asm float_to_int __retVal, a;
 }
 
 
@@ -1518,7 +1519,7 @@ void __operator /= (inout vec2 v, const float a)
 {
    float invA;
    __asm float_rcp invA, a;
-   __asm vec4_multiply v.xy, v.xy, a.xx;
+   __asm vec4_multiply v.xy, v.xy, invA.xx;
 }
 
 
@@ -1543,7 +1544,7 @@ void __operator /= (inout vec3 v, const float a)
 {
    float invA;
    __asm float_rcp invA, a;
-   __asm vec4_multiply v.xyz, v.xyz, a.xxx;
+   __asm vec4_multiply v.xyz, v.xyz, invA.xxx;
 }
 
 
@@ -1568,7 +1569,7 @@ void __operator /= (inout vec4 v, const float a)
 {
    float invA;
    __asm float_rcp invA, a;
-   __asm vec4_multiply v, v, a.xxxx;
+   __asm vec4_multiply v, v, invA.xxxx;
 }
 
 
