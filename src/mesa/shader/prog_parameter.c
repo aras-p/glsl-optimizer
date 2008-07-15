@@ -319,6 +319,7 @@ _mesa_add_sampler(struct gl_program_parameter_list *paramList,
       return (GLint) paramList->ParameterValues[i][0];
    }
    else {
+      GLuint i;
       const GLint size = 1; /* a sampler is basically a texture unit number */
       GLfloat value;
       GLint numSamplers = 0;

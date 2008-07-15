@@ -129,7 +129,7 @@ _slang_pop_var_table(slang_var_table *vt)
       /* just verify that any remaining allocations in this scope 
        * were for temps
        */
-      for (i = 0; i < vt->MaxRegisters * 4; i++) {
+      for (i = 0; i < (int) vt->MaxRegisters * 4; i++) {
          if (t->Temps[i] != FREE && t->Parent->Temps[i] == FREE) {
             if (dbg) printf("  Free reg %d\n", i/4);
             assert(t->Temps[i] == TEMP);
@@ -206,7 +206,7 @@ alloc_reg(slang_var_table *vt, GLint size, GLboolean isTemp)
 
    for (i = 0; i <= vt->MaxRegisters * 4 - size; i += step) {
       GLuint found = 0;
-      for (j = 0; j < size; j++) {
+      for (j = 0; j < (GLuint) size; j++) {
          if (i + j < vt->MaxRegisters * 4 && t->Temps[i + j] == FREE) {
             found++;
          }
@@ -218,7 +218,7 @@ alloc_reg(slang_var_table *vt, GLint size, GLboolean isTemp)
          /* found block of size free regs */
          if (size > 1)
             assert(i % 4 == 0);
-         for (j = 0; j < size; j++)
+         for (j = 0; j < (GLuint) size; j++)
             t->Temps[i + j] = isTemp ? TEMP : VAR;
          assert(i < MAX_PROGRAM_TEMPS * 4);
          t->ValSize[i] = size;
@@ -313,7 +313,7 @@ _slang_free_temp(slang_var_table *vt, slang_ir_storage *store)
    else {
       /*assert(store->Swizzle == SWIZZLE_NOOP);*/
       assert(t->ValSize[r*4] == store->Size);
-      for (i = 0; i < store->Size; i++) {
+      for (i = 0; i < (GLuint) store->Size; i++) {
          assert(t->Temps[r * 4 + i] == TEMP);
          t->Temps[r * 4 + i] = FREE;
       }
@@ -327,7 +327,7 @@ _slang_is_temp(const slang_var_table *vt, const slang_ir_storage *store)
    struct table *t = vt->Top;
    GLuint comp;
    assert(store->Index >= 0);
-   assert(store->Index < vt->MaxRegisters);
+   assert(store->Index < (int) vt->MaxRegisters);
    if (store->Swizzle == SWIZZLE_NOOP)
       comp = 0;
    else

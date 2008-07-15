@@ -969,7 +969,7 @@ get_uniformfv(GLcontext *ctx, GLuint program, GLint location,
       = _mesa_lookup_shader_program(ctx, program);
    if (shProg) {
       if (shProg->Uniforms &&
-          location >= 0 && location < shProg->Uniforms->NumUniforms) {
+          location >= 0 && location < (GLint) shProg->Uniforms->NumUniforms) {
          GLint progPos;
          GLuint i;
          const struct gl_program *prog = NULL;
@@ -1217,7 +1217,7 @@ set_program_uniform(GLcontext *ctx, struct gl_program *program, GLint location,
       /* ordinary uniform variable */
       GLsizei k, i;
 
-      if (count * elems > program->Parameters->Parameters[location].Size) {
+      if (count * elems > (GLint) program->Parameters->Parameters[location].Size) {
          _mesa_error(ctx, GL_INVALID_OPERATION, "glUniform(count too large)");
          return;
       }
@@ -1367,7 +1367,7 @@ _mesa_uniform_matrix(GLcontext *ctx, GLint cols, GLint rows,
    if (location == -1)
       return;   /* The standard specifies this as a no-op */
 
-   if (location < 0 || location >= shProg->Uniforms->NumUniforms) {
+   if (location < 0 || location >= (GLint) shProg->Uniforms->NumUniforms) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glUniformMatrix(location)");
       return;
    }

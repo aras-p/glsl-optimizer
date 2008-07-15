@@ -241,7 +241,7 @@ find_var(const slang_variable_scope *s, slang_atom name)
 void
 slang_print_tree(const slang_operation *op, int indent)
 {
-   int i;
+   GLuint i;
 
    switch (op->type) {
 
@@ -261,13 +261,10 @@ slang_print_tree(const slang_operation *op, int indent)
    case SLANG_OPER_BLOCK_NEW_SCOPE:
       spaces(indent);
       printf("{{ // new scope  locals=%p: ", (void*)op->locals);
-      {
-         int i;
-         for (i = 0; i < op->locals->num_variables; i++) {
-            printf("%s ", (char *) op->locals->variables[i]->a_name);
-         }
-         printf("\n");
+      for (i = 0; i < op->locals->num_variables; i++) {
+         printf("%s ", (char *) op->locals->variables[i]->a_name);
       }
+      printf("\n");
       print_generic(op, NULL, indent+3);
       spaces(indent);
       printf("}}\n");
@@ -665,7 +662,7 @@ slang_print_tree(const slang_operation *op, int indent)
 void
 slang_print_function(const slang_function *f, GLboolean body)
 {
-   int i;
+   GLuint i;
 
 #if 0
    if (_mesa_strcmp((char *) f->header.a_name, "main") != 0)

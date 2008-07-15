@@ -363,7 +363,7 @@ _mesa_print_swizzle(GLuint swizzle)
       _mesa_printf(".xyzw\n");
    }
    else {
-      char *s = _mesa_swizzle_string(swizzle, 0, 0);
+      const char *s = _mesa_swizzle_string(swizzle, 0, 0);
       _mesa_printf("%s\n", s);
    }
 }
