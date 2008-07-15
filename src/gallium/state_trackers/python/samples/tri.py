@@ -30,7 +30,7 @@
 from gallium import *
 
 
-def save_image(filename, surface):
+def make_image(surface):
     pixels = FloatArray(surface.height*surface.width*4)
     surface.get_tile_rgba(0, 0, surface.width, surface.height, pixels)
 
@@ -45,14 +45,38 @@ def save_image(filename, surface):
             offset = (y*surface.width + x)*4
             r, g, b, a = [int(pixels[offset + ch]*255) for ch in range(4)]
             outpixels[x, y] = r, g, b
+    return outimage
+
+def save_image(filename, surface):
+    outimage = make_image(surface)
     outimage.save(filename, "PNG")
+
+def show_image(surface):
+    outimage = make_image(surface)
+    
+    import Tkinter as tk
+    from PIL import Image, ImageTk
+    root = tk.Tk()
+    
+    root.title('background image')
+    
+    image1 = ImageTk.PhotoImage(outimage)
+    w = image1.width()
+    h = image1.height()
+    x = 100
+    y = 100
+    root.geometry("%dx%d+%d+%d" % (w, h, x, y))
+    panel1 = tk.Label(root, image=image1)
+    panel1.pack(side='top', fill='both', expand='yes')
+    panel1.image = image1
+    root.mainloop()
 
 
 def test(dev):
     ctx = dev.context_create()
 
-    width = 256
-    height = 256
+    width = 255
+    height = 255
 
     # disabled blending/masking
     blend = Blend()
@@ -72,6 +96,7 @@ def test(dev):
     rasterizer.front_winding = PIPE_WINDING_CW
     rasterizer.cull_mode = PIPE_WINDING_NONE
     rasterizer.bypass_clipping = 1
+    rasterizer.scissor = 1
     #rasterizer.bypass_vs = 1
     ctx.set_rasterizer(rasterizer)
 
@@ -102,21 +127,41 @@ def test(dev):
     sampler.normalized_coords = 1
     ctx.set_sampler(0, sampler)
 
-    #  texture 
-    texture = dev.texture_create(PIPE_FORMAT_A8R8G8B8_UNORM, 
-                                 width, height, 
-                                 usage=PIPE_TEXTURE_USAGE_RENDER_TARGET)
-    ctx.set_sampler_texture(0, texture)
+    # scissor
+    scissor = Scissor()
+    scissor.minx = 0
+    scissor.miny = 0
+    scissor.maxx = width
+    scissor.maxy = height
+    ctx.set_scissor(scissor)
 
-    #  drawing dest 
-    surface = texture.get_surface(usage = PIPE_BUFFER_USAGE_GPU_WRITE)
+    clip = Clip()
+    clip.nr = 0
+    ctx.set_clip(clip)
+
+    # framebuffer
+    cbuf = dev.texture_create(PIPE_FORMAT_X8R8G8B8_UNORM, 
+                              width, height,
+                              usage=PIPE_TEXTURE_USAGE_DISPLAY_TARGET)
+    zbuf = dev.texture_create(PIPE_FORMAT_X8Z24_UNORM, 
+                              width, height,
+                              usage=PIPE_TEXTURE_USAGE_DEPTH_STENCIL)
+    _cbuf = cbuf.get_surface(usage = PIPE_BUFFER_USAGE_GPU_READ|PIPE_BUFFER_USAGE_GPU_WRITE)
+    _zsbuf = zbuf.get_surface(usage = PIPE_BUFFER_USAGE_GPU_READ|PIPE_BUFFER_USAGE_GPU_WRITE)
     fb = Framebuffer()
-    fb.width = surface.width
-    fb.height = surface.height
+    fb.width = width
+    fb.height = height
     fb.num_cbufs = 1
-    fb.set_cbuf(0, surface)
+    fb.set_cbuf(0, _cbuf)
+    fb.set_zsbuf(_zsbuf)
     ctx.set_framebuffer(fb)
-
+    _cbuf.clear_value = 0x00000000
+    _zsbuf.clear_value = 0x00ffffff
+    ctx.surface_clear(_cbuf, _cbuf.clear_value)
+    ctx.surface_clear(_zsbuf, _zsbuf.clear_value)
+    del _cbuf
+    del _zsbuf
+    
     # vertex shader
     vs = Shader('''
         VERT1.1
@@ -171,16 +216,14 @@ def test(dev):
     verts[22] =   1.0 # b3
     verts[23] =   1.0 # a3
 
-    ctx.surface_clear(surface, 0x00000000)
-    
     ctx.draw_vertices(PIPE_PRIM_TRIANGLES,
                       nverts, 
                       nattrs, 
                       verts)
 
     ctx.flush()
-
-    save_image("tri.png", surface)
+    
+    show_image(cbuf.get_surface(usage = PIPE_BUFFER_USAGE_CPU_READ|PIPE_BUFFER_USAGE_CPU_WRITE))
 
 
 

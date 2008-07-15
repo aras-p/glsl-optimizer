@@ -27,13 +27,14 @@
 ##########################################################################
 
 
+import sys
 from gallium import *
 from base import *
 from data import generate_data
 
 
 def compare_rgba(width, height, rgba1, rgba2, tol=0.01):
-    result = True
+    errors = 0
     for y in range(0, height):
         for x in range(0, width):
             for ch in range(4):
@@ -41,9 +42,14 @@ def compare_rgba(width, height, rgba1, rgba2, tol=0.01):
                 v1 = rgba1[offset]
                 v2 = rgba2[offset]
                 if abs(v1 - v2) > tol:
-                    sys.stderr.write("x=%u, y=%u, ch=%u differ: %f vs %f\n", 
-                                     x, y, ch, v1, v2)
-                    result = False
+                    if errors == 0:
+                        sys.stderr.write("x=%u, y=%u, ch=%u differ: %f vs %f\n" % (x, y, ch, v1, v2))
+                    if errors == 1:
+                        sys.stderr.write("...\n")
+                    errors += 1
+    if errors:
+        sys.stderr.write("%u out of %u pixels differ\n" % (errors/4, height*width))
+    return errors == 0
 
 
 class TextureTest(Test):
@@ -65,8 +71,8 @@ class TextureTest(Test):
         
         ctx = dev.context_create()
     
-        width = 256
-        height = 256
+        width = 64
+        height = 64
     
         # disabled blending/masking
         blend = Blend()
@@ -122,21 +128,21 @@ class TextureTest(Test):
                                      height)
         ctx.set_sampler_texture(0, texture)
         
-        surface = texture.get_surface(usage = PIPE_BUFFER_USAGE_CPU_READ|PIPE_BUFFER_USAGE_CPU_WRITE)
-
-        expected_rgba = generate_data(surface)
+        expected_rgba = generate_data(texture.get_surface(usage = PIPE_BUFFER_USAGE_CPU_READ|PIPE_BUFFER_USAGE_CPU_WRITE))
         
         cbuf_tex = dev.texture_create(PIPE_FORMAT_A8R8G8B8_UNORM, 
                                       width, 
-                                      height)
+                                      height,
+                                      usage = PIPE_TEXTURE_USAGE_RENDER_TARGET)
 
         #  drawing dest 
-        cbuf = cbuf_tex.get_surface(usage = PIPE_BUFFER_USAGE_GPU_WRITE)
+        cbuf = cbuf_tex.get_surface(usage = PIPE_BUFFER_USAGE_GPU_WRITE|PIPE_BUFFER_USAGE_GPU_READ)
         fb = Framebuffer()
-        fb.width = cbuf.width
-        fb.height = cbuf.height
+        fb.width = width
+        fb.height = height
         fb.num_cbufs = 1
         fb.set_cbuf(0, cbuf)
+        ctx.surface_clear(cbuf, 0x00000000)
         ctx.set_framebuffer(fb)
     
         # vertex shader
@@ -164,7 +170,7 @@ class TextureTest(Test):
         ''')
         fs.dump()
         ctx.set_fragment_shader(fs)
-    
+
         nverts = 4
         nattrs = 2
         verts = FloatArray(nverts * nattrs * 4)
@@ -207,23 +213,21 @@ class TextureTest(Test):
         verts[30] =   0.0
         verts[31] =   0.0
     
-        ctx.surface_clear(cbuf, 0x00000000)
-        
         ctx.draw_vertices(PIPE_PRIM_TRIANGLE_FAN,
                           nverts, 
                           nattrs, 
                           verts)
     
         ctx.flush()
-    
-        rgba = FloatArray(surface.height*surface.width*4)
 
-        cbuf.get_tile_rgba(x, y, w, h, rgba)
+        rgba = FloatArray(height*width*4)
+
+        cbuf_tex.get_surface(usage = PIPE_BUFFER_USAGE_CPU_READ).get_tile_rgba(x, y, w, h, rgba)
 
         compare_rgba(width, height, rgba, expected_rgba)
         
-        #save_image("texture1.png", surface)
-        #save_image("texture2.png", cbuf)
+        show_image(texture.get_surface(usage = PIPE_BUFFER_USAGE_CPU_READ), 
+                   cbuf_tex.get_surface(usage = PIPE_BUFFER_USAGE_CPU_READ))
 
 
 def main():

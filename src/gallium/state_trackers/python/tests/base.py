@@ -37,7 +37,7 @@ for name, value in globals().items():
         formats[value] = name
 
 
-def save_image(filename, surface):
+def make_image(surface):
     pixels = FloatArray(surface.height*surface.width*4)
     surface.get_tile_rgba(0, 0, surface.width, surface.height, pixels)
 
@@ -52,7 +52,40 @@ def save_image(filename, surface):
             offset = (y*surface.width + x)*4
             r, g, b, a = [int(pixels[offset + ch]*255) for ch in range(4)]
             outpixels[x, y] = r, g, b
+    return outimage
+
+def save_image(filename, surface):
+    outimage = make_image(surface)
     outimage.save(filename, "PNG")
+
+def show_image(*surfaces):
+    import Tkinter as tk
+    from PIL import Image, ImageTk
+
+    root = tk.Tk()
+    
+    x = 64
+    y = 64
+    
+    for i in range(len(surfaces)):
+        surface = surfaces[i]
+        outimage = make_image(surface)
+        
+        if i:
+            window = tk.Toplevel(root)
+        else:
+            window = root    
+        window.title('Image %u' % (i+1))
+        image1 = ImageTk.PhotoImage(outimage)
+        w = image1.width()
+        h = image1.height()
+        window.geometry("%dx%d+%d+%d" % (w, h, x, y))
+        panel1 = tk.Label(window, image=image1)
+        panel1.pack(side='top', fill='both', expand='yes')
+        panel1.image = image1
+        x += w + 2
+    
+    root.mainloop()
 
 
 
