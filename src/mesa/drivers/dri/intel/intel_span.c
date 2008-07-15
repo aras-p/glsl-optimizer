@@ -474,7 +474,39 @@ static GLubyte *y_tile_swizzle(struct intel_renderbuffer *irb, struct intel_cont
 #define TAG(x) intel_YTile_##x##_z24_s8
 #include "stenciltmp.h"
 
+void
+intel_renderbuffer_map(struct intel_context *intel, struct gl_renderbuffer *rb)
+{
+   struct intel_renderbuffer *irb = intel_renderbuffer(rb);
 
+   if (irb == NULL || irb->region == NULL)
+      return;
+
+   intel_region_map(intel, irb->region);
+
+   irb->pfMap = irb->region->map;
+   irb->pfPitch = irb->region->pitch;
+
+   intel_set_span_functions(intel, rb);
+}
+
+void
+intel_renderbuffer_unmap(struct intel_context *intel,
+			 struct gl_renderbuffer *rb)
+{
+   struct intel_renderbuffer *irb = intel_renderbuffer(rb);
+
+   if (irb == NULL || irb->region == NULL)
+      return;
+
+   intel_region_unmap(intel, irb->region);
+
+   irb->pfMap = NULL;
+   irb->pfPitch = 0;
+
+   rb->GetRow = NULL;
+   rb->PutRow = NULL;
+}
 
 /**
  * Map or unmap all the renderbuffers which we may need during
@@ -493,21 +525,13 @@ intel_map_unmap_buffers(struct intel_context *intel, GLboolean map)
 {
    GLcontext *ctx = &intel->ctx;
    GLuint i, j;
-   struct intel_renderbuffer *irb;
 
    /* color draw buffers */
    for (j = 0; j < ctx->DrawBuffer->_NumColorDrawBuffers; j++) {
-      struct gl_renderbuffer *rb = ctx->DrawBuffer->_ColorDrawBuffers[j];
-      irb = intel_renderbuffer(rb);
-      if (irb && irb->region) {
-	 intel_set_span_functions(intel, rb);
-	 if (map)
-	    intel_region_map(intel, irb->region);
-	 else
-	    intel_region_unmap(intel, irb->region);
-	 irb->pfMap = irb->region->map;
-	 irb->pfPitch = irb->region->pitch;
-      }
+      if (map)
+	 intel_renderbuffer_map(intel, ctx->DrawBuffer->_ColorDrawBuffers[j]);
+      else
+	 intel_renderbuffer_unmap(intel, ctx->DrawBuffer->_ColorDrawBuffers[j]);
    }
 
    /* check for render to textures */
@@ -530,16 +554,10 @@ intel_map_unmap_buffers(struct intel_context *intel, GLboolean map)
    }
 
    /* color read buffers */
-   irb = intel_renderbuffer(ctx->ReadBuffer->_ColorReadBuffer);
-   if (irb && irb->region) {
-      intel_set_span_functions(intel, ctx->ReadBuffer->_ColorReadBuffer);
-      if (map)
-         intel_region_map(intel, irb->region);
-      else
-         intel_region_unmap(intel, irb->region);
-      irb->pfMap = irb->region->map;
-      irb->pfPitch = irb->region->pitch;
-   }
+   if (map)
+      intel_renderbuffer_map(intel, ctx->ReadBuffer->_ColorReadBuffer);
+   else
+      intel_renderbuffer_unmap(intel, ctx->ReadBuffer->_ColorReadBuffer);
 
    /* Account for front/back color page flipping.
     * The span routines use the pfMap and pfPitch fields which will
@@ -572,40 +590,21 @@ intel_map_unmap_buffers(struct intel_context *intel, GLboolean map)
 
    /* depth buffer (Note wrapper!) */
    if (ctx->DrawBuffer->_DepthBuffer) {
-      irb = intel_renderbuffer(ctx->DrawBuffer->_DepthBuffer->Wrapped);
-      if (irb && irb->region) {
-         if (map) {
-	    intel_set_span_functions(intel,
-				     ctx->DrawBuffer->_DepthBuffer->Wrapped);
-            intel_region_map(intel, irb->region);
-            irb->pfMap = irb->region->map;
-            irb->pfPitch = irb->region->pitch;
-         }
-         else {
-            intel_region_unmap(intel, irb->region);
-            irb->pfMap = irb->region->map;
-            irb->pfPitch = irb->region->pitch;
-         }
-      }
+      if (map)
+	 intel_renderbuffer_map(intel, ctx->DrawBuffer->_DepthBuffer->Wrapped);
+      else
+	 intel_renderbuffer_unmap(intel,
+				  ctx->DrawBuffer->_DepthBuffer->Wrapped);
    }
 
    /* stencil buffer (Note wrapper!) */
    if (ctx->DrawBuffer->_StencilBuffer) {
-      irb = intel_renderbuffer(ctx->DrawBuffer->_StencilBuffer->Wrapped);
-      if (irb && irb->region) {
-         if (map) {
-	    intel_set_span_functions(intel,
-				     ctx->DrawBuffer->_StencilBuffer->Wrapped);
-            intel_region_map(intel, irb->region);
-            irb->pfMap = irb->region->map;
-            irb->pfPitch = irb->region->pitch;
-         }
-         else {
-            intel_region_unmap(intel, irb->region);
-            irb->pfMap = irb->region->map;
-            irb->pfPitch = irb->region->pitch;
-         }
-      }
+      if (map)
+	 intel_renderbuffer_map(intel,
+				ctx->DrawBuffer->_StencilBuffer->Wrapped);
+      else
+	 intel_renderbuffer_unmap(intel,
+				  ctx->DrawBuffer->_StencilBuffer->Wrapped);
    }
 }
 
