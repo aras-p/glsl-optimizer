@@ -135,7 +135,11 @@ class TextureTest(TestCase):
             }[self.face]
         else:
             face = ""
-        return "%s %s %ux%u %s level=%u" % (target, format, self.width, self.height, face, self.level)
+        return "%s %s %ux%u last_level=%u %s level=%u" % (
+            target, format, 
+            self.width, self.height, 
+            self.last_level, face, self.level,
+        )
     
     def test(self):
         dev = self.dev
@@ -144,11 +148,10 @@ class TextureTest(TestCase):
         format = self.format
         width = self.width
         height = self.height
+        last_level = self.last_level
         level = self.level
         face = self.face
         
-        levels = lods(width, height)
-
         if not dev.is_format_supported(format, PIPE_TEXTURE):
             raise TestSkip
         
@@ -209,14 +212,15 @@ class TextureTest(TestCase):
                                      format=format, 
                                      width=width, 
                                      height=height,
-                                     last_level = levels - 1)
-        ctx.set_sampler_texture(0, texture)
+                                     last_level = last_level)
         
         expected_rgba = generate_data(texture.get_surface(
             usage = PIPE_BUFFER_USAGE_CPU_READ|PIPE_BUFFER_USAGE_CPU_WRITE,
             face = face,
             level = level))
         
+        ctx.set_sampler_texture(0, texture)
+
         #  framebuffer 
         cbuf_tex = dev.texture_create(PIPE_FORMAT_A8R8G8B8_UNORM, 
                                       width, 
@@ -332,8 +336,8 @@ def main():
     formats += [PIPE_FORMAT_YCBCR]
     formats += [PIPE_FORMAT_DXT1_RGB]
     
-    sizes = [64, 32, 16, 8, 4, 2]
-    #sizes = [16]
+    sizes = [64, 32, 16, 8, 4, 2, 1]
+    #sizes = [64]
     
     for target in targets:
         for format in formats:
@@ -347,21 +351,24 @@ def main():
                         PIPE_TEX_FACE_POS_Z, 
                         PIPE_TEX_FACE_NEG_Z,
                     ]
+                    #faces = [PIPE_TEX_FACE_NEG_X]
                 else:
                     faces = [0]
                 for face in faces:
                     levels = lods(size)
-                    for level in range(levels):
-                        test = TextureTest(
-                            dev=dev,
-                            target=target,
-                            format=format, 
-                            width=size,
-                            height=size,
-                            face=face,
-                            level=level,
-                        )
-                        suite.add_test(test)
+                    for last_level in range(levels):
+                        for level in range(0, last_level + 1):
+                            test = TextureTest(
+                                dev=dev,
+                                target=target,
+                                format=format, 
+                                width=size,
+                                height=size,
+                                face=face,
+                                last_level = last_level,
+                                level=level,
+                            )
+                            suite.add_test(test)
     suite.run()
 
 
