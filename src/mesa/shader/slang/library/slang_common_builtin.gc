@@ -203,19 +203,19 @@ float degrees(const float rad)
 
 vec2 degrees(const vec2 rad)
 {
-   const float c = 3.1415926 / 180.0;
+   const float c = 180.0 / 3.1415926;
    __asm vec4_multiply __retVal.xy, rad.xy, c.xx;
 }
 
 vec3 degrees(const vec3 rad)
 {
-   const float c = 3.1415926 / 180.0;
+   const float c = 180.0 / 3.1415926;
    __asm vec4_multiply __retVal.xyz, rad.xyz, c.xxx;
 }
 
 vec4 degrees(const vec4 rad)
 {
-   const float c = 3.1415926 / 180.0;
+   const float c = 180.0 / 3.1415926;
    __asm vec4_multiply __retVal, rad, c.xxxx;
 }
 
