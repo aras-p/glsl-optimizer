@@ -519,27 +519,18 @@ pf_get_nblocks(const struct pipe_format_block *block, unsigned width, unsigned h
    return pf_get_nblocksx(block, width)*pf_get_nblocksy(block, height);
 }
 
-static INLINE void
-pipe_rect_to_blocks(const struct pipe_format_block *block,
-                    unsigned *width, unsigned *height,
-                    unsigned *src_x, unsigned *src_y,
-		    unsigned *dst_x, unsigned *dst_y)
+static INLINE boolean 
+pf_is_compressed( enum pipe_format format )
 {
-   assert(block->size > 0);
-   assert(block->width > 0);
-   assert(block->height > 0);
-   if(width)
-      *width = pf_get_nblocksx(block, *width);
-   if(height)
-      *height = pf_get_nblocksy(block, *height);
-   if(src_x)
-      *src_x /= block->width;
-   if(src_y)
-      *src_y /= block->height;
-   if(dst_x)
-      *dst_x /= block->width;
-   if(dst_y)
-      *dst_y /= block->height;
+   switch (format) {
+   case PIPE_FORMAT_DXT1_RGB:
+   case PIPE_FORMAT_DXT1_RGBA:
+   case PIPE_FORMAT_DXT3_RGBA:
+   case PIPE_FORMAT_DXT5_RGBA:
+      return TRUE;
+   default:
+      return FALSE;
+   }
 }
 
 #ifdef __cplusplus
