@@ -42,12 +42,6 @@
  * Mesa's Driver Functions
  ***************************************/
 
-static const struct dri_extension i830_extensions[] = {
-   {"GL_ARB_texture_env_crossbar", NULL},
-   {NULL, NULL}
-};
-
-
 static void
 i830InitDriverFunctions(struct dd_function_table *functions)
 {
@@ -104,8 +98,6 @@ i830CreateContext(const __GLcontextModes * mesaVis,
                       18 * sizeof(GLfloat));
 
    intel->verts = TNL_CONTEXT(ctx)->clipspace.vertex_buf;
-
-   driInitExtensions(ctx, i830_extensions, GL_FALSE);
 
    i830InitState(i830);
    i830InitMetaFuncs(i830);
