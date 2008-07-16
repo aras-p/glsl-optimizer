@@ -177,7 +177,6 @@ struct st_context {
          unsigned usage = 0
       ) {
       struct pipe_texture templat;
-      struct pipe_texture *texture;
       memset(&templat, 0, sizeof(templat));
       templat.format = format;
       pf_get_block(templat.format, &templat.block);
@@ -187,9 +186,7 @@ struct st_context {
       templat.last_level = last_level;
       templat.target = target;
       templat.tex_usage = usage;
-      texture = $self->screen->texture_create($self->screen, &templat);
-      fprintf(stderr, "creating texture %p\n", texture);
-      return texture;
+      return $self->screen->texture_create($self->screen, &templat);
    }
    
    struct pipe_buffer *
@@ -400,7 +397,6 @@ error1:
    
    ~pipe_texture() {
       struct pipe_texture *ptr = $self;
-      fprintf(stderr, "destroying texture %p\n", $self);
       pipe_texture_reference(&ptr, NULL);
    }
    
@@ -409,10 +405,7 @@ error1:
    get_surface(unsigned face=0, unsigned level=0, unsigned zslice=0, unsigned usage=0 )
    {
       struct pipe_screen *screen = $self->screen;
-      struct pipe_surface *surface; 
-      surface = screen->get_tex_surface(screen, $self, face, level, zslice, usage);
-      fprintf(stderr, "creating surface %p\n", surface);
-      return surface;
+      return screen->get_tex_surface(screen, $self, face, level, zslice, usage);
    }
    
 };
@@ -422,7 +415,6 @@ error1:
    
    ~pipe_surface() {
       struct pipe_surface *ptr = $self;
-      fprintf(stderr, "destroying surface %p\n", $self);
       pipe_surface_reference(&ptr, NULL);
    }
    
