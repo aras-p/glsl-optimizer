@@ -93,6 +93,9 @@ class Test:
     def __init__(self):
         pass
     
+    def description(self):
+        raise NotImplementedError
+        
     def run(self):
         raise NotImplementedError
 
@@ -111,7 +114,8 @@ class TestSuite(Test):
     
     def run(self):
         for test in self.tests:
-            self.test.run()
+            print "Running %s..." % test.description()
+            test.run()
 
 
 class TextureTemplate:

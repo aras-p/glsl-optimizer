@@ -211,7 +211,6 @@ dxt1_rgba = [
 
 
 def generate_data_compressed(surface, blocks):
-    pixels, block = blocks[0]
     
     stride = surface.nblocksx*surface.block.size
     size = surface.nblocksy*stride
@@ -219,19 +218,23 @@ def generate_data_compressed(surface, blocks):
     raw = ByteArray(size)
     rgba = FloatArray(surface.height*surface.width*4)
     
-    for y in range(0, surface.nblocksx):
-        for x in range(0, surface.nblocksy):
+    for yj in range(0, surface.nblocksy):
+        for xj in range(0, surface.nblocksx):
+            pixels, block = blocks[random.randint(0, len(blocks) - 1)]
             
-            offset = (y*surface.nblocksx + x)*surface.block.width
+            offset = (yj*surface.nblocksx + xj)*surface.block.size
             for i in range(0, surface.block.size):
                 raw[offset + i] = block[i]
             
-            for j in range(0, surface.block.width):
-                for i in range(0, surface.block.height):
-                    offset = ((y*surface.block.height + j)*surface.width + x*surface.block.width + i)*4 
-                    pixel = pixels[j*surface.block.width + i]
-                    for ch in range(0, 4):
-                        rgba[offset + ch] = float(pixel[ch])/255.0
+            for yi in range(0, surface.block.height):
+                for xi in range(0, surface.block.width):
+                    y = yj*surface.block.height + yi
+                    x = xj*surface.block.width + xi
+                    if y < surface.height and x < surface.width:
+                        offset = (y*surface.width + x)*4 
+                        pixel = pixels[yi*surface.block.width + xi]
+                        for ch in range(0, 4):
+                            rgba[offset + ch] = float(pixel[ch])/255.0
     
     surface.put_tile_raw(0, 0, surface.width, surface.height, raw, stride)
 
@@ -251,6 +254,14 @@ def generate_data_simple(surface):
     surface.put_tile_raw(0, 0, surface.width, surface.height, raw, stride)
     
     surface.get_tile_rgba(0, 0, surface.width, surface.height, rgba)
+    
+    if surface.format in (PIPE_FORMAT_YCBCR, PIPE_FORMAT_YCBCR_REV):
+        # normalize
+        for y in range(0, surface.height):
+            for x in range(0, surface.width):
+                for ch in range(4):
+                    offset = (y*surface.width + x)*4 + ch
+                    rgba[offset] = min(max(rgba[offset], 0.0), 1.0)
     
     return rgba
 

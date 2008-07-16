@@ -33,7 +33,7 @@ from base import *
 from data import generate_data
 
 
-def compare_rgba(width, height, rgba1, rgba2, tol=0.01):
+def compare_rgba(width, height, rgba1, rgba2, tol=4.0/256):
     errors = 0
     for y in range(0, height):
         for x in range(0, width):
@@ -58,21 +58,24 @@ class TextureTest(Test):
         Test.__init__(self)
         self.__dict__.update(kargs)
 
+    def description(self):
+        return "%s %ux%u" % (formats[self.format], self.width, self.height)
+        
     def run(self):
         dev = self.dev
         
-        #format = PIPE_FORMAT_A8R8G8B8_UNORM
-        format = PIPE_FORMAT_DXT1_RGB
+        format = self.format
+        width = self.width
+        height = self.height
         
         if not dev.is_format_supported(format, PIPE_TEXTURE):
-            pass
+            print "SKIP"
+            return
         if not dev.is_format_supported(format, PIPE_SURFACE):
-            pass
+            print "SKIP"
+            return
         
         ctx = dev.context_create()
-    
-        width = 64
-        height = 64
     
         # disabled blending/masking
         blend = Blend()
@@ -169,7 +172,7 @@ class TextureTest(Test):
             0:TEX OUT[0], IN[0], SAMP[0], 2D
             1:END
         ''')
-        fs.dump()
+        #fs.dump()
         ctx.set_fragment_shader(fs)
 
         nverts = 4
@@ -227,15 +230,26 @@ class TextureTest(Test):
 
         cbuf_tex.get_surface(usage = PIPE_BUFFER_USAGE_CPU_READ).get_tile_rgba(x, y, w, h, rgba)
 
-        compare_rgba(width, height, rgba, expected_rgba)
+        if compare_rgba(width, height, rgba, expected_rgba):
+            print "OK"
+        else:
+            print "FAIL"
         
-        show_image(width, height, Result=rgba, Expected=expected_rgba)
+            show_image(width, height, Result=rgba, Expected=expected_rgba)
+            #save_image(width, height, rgba, "result.png")
+            #save_image(width, height, expected_rgba, "expected.png")
+            sys.exit(0)
 
 
 def main():
     dev = Device()
-    test = TextureTest(dev = dev)
-    test.run()
+    suite = TestSuite()
+    formats = [PIPE_FORMAT_A8R8G8B8_UNORM, PIPE_FORMAT_YCBCR, PIPE_FORMAT_DXT1_RGB]
+    sizes = [64, 32, 16, 8, 4, 2]
+    for format in formats:
+        for size in sizes:
+            suite.add_test(TextureTest(dev=dev, format=format, width=size, height=size))
+    suite.run()
 
 
 if __name__ == '__main__':
