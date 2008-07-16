@@ -632,13 +632,10 @@ ycbcr_get_tile_rgba(ushort *src,
    const float scale = 1.0f / 255.0f;
    unsigned i, j;
 
-   /* we're assuming we're being asked for an even number of texels */
-   assert((w & 1) == 0);
-
    for (i = 0; i < h; i++) {
       float *pRow = p;
       /* do two texels at a time */
-      for (j = 0; j < w; j += 2, src += 2) {
+      for (j = 0; j < (w & ~1); j += 2, src += 2) {
          const ushort t0 = src[0];
          const ushort t1 = src[1];
          const ubyte y0 = (t0 >> 8) & 0xff;  /* luminance */
@@ -675,6 +672,33 @@ ycbcr_get_tile_rgba(ushort *src,
          pRow[3] = 1.0f;
          pRow += 4;
 
+      }
+      /* do the last texel */
+      if (w & 1) {
+         const ushort t0 = src[0];
+         const ushort t1 = src[1];
+         const ubyte y0 = (t0 >> 8) & 0xff;  /* luminance */
+         ubyte cb, cr;
+         float r, g, b;
+
+         if (rev) {
+            cb = t1 & 0xff;         /* chroma U */
+            cr = t0 & 0xff;         /* chroma V */
+         }
+         else {
+            cb = t0 & 0xff;         /* chroma U */
+            cr = t1 & 0xff;         /* chroma V */
+         }
+
+         /* even pixel: y0,cr,cb */
+         r = 1.164f * (y0-16) + 1.596f * (cr-128);
+         g = 1.164f * (y0-16) - 0.813f * (cr-128) - 0.391f * (cb-128);
+         b = 1.164f * (y0-16) + 2.018f * (cb-128);
+         pRow[0] = r * scale;
+         pRow[1] = g * scale;
+         pRow[2] = b * scale;
+         pRow[3] = 1.0f;
+         pRow += 4;
       }
       p += dst_stride;
    }
