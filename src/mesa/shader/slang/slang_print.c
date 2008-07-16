@@ -265,11 +265,8 @@ slang_print_tree(const slang_operation *op, int indent)
       printf("{{ // new scope  locals=%p outer=%p: ",
              (void *) op->locals,
              (void *) op->locals->outer_scope);
-      {
-         int i;
-         for (i = 0; i < op->locals->num_variables; i++) {
-            printf("%s ", (char *) op->locals->variables[i]->a_name);
-         }
+      for (i = 0; i < op->locals->num_variables; i++) {
+         printf("%s ", (char *) op->locals->variables[i]->a_name);
       }
       printf("\n");
       print_generic(op, NULL, indent+3);
