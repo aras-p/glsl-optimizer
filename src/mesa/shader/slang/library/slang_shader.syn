@@ -51,10 +51,17 @@
 /* revision number - increment after each change affecting emitted output */
 .emtcode REVISION                                   3
 
-/* external declaration */
+/* external declaration (or precision or invariant stmt) */
 .emtcode EXTERNAL_NULL                              0
 .emtcode EXTERNAL_FUNCTION_DEFINITION               1
 .emtcode EXTERNAL_DECLARATION                       2
+.emtcode DEFAULT_PRECISION                          3
+.emtcode INVARIANT_STMT                             4
+
+/* precision */
+.emtcode PRECISION_LOW                              0
+.emtcode PRECISION_MEDIUM                           1
+.emtcode PRECISION_HIGH                             2
 
 /* declaration */
 .emtcode DECLARATION_FUNCTION_PROTOTYPE             1
@@ -240,6 +247,9 @@
 .errtext LBRACE_EXPECTED                            "2003: '{' expected but '$err_token$' found."
 .errtext LPAREN_EXPECTED                            "2004: '(' expected but '$err_token$' found."
 .errtext RPAREN_EXPECTED                            "2005: ')' expected but '$err_token$' found."
+.errtext INVALID_PRECISION                          "2006: Invalid precision specifier '$err_token$'."
+.errtext INVALID_PRECISION_TYPE                     "2007: Invalid precision type '$err_token$'."
+
 
 /* tells whether the shader that is being parsed is a built-in shader or not */
 /*   0 - normal behaviour */
@@ -1226,22 +1236,69 @@ asm_argument
 var_with_field
     variable_identifier .and dot .and field_selection .emit OP_FIELD;
 
+
 /*
-    <translation_unit>                  ::= <external_declaration>
-                                          | <translation_unit> <external_declaration>
-*/
+ *  <translation_unit>                  ::= <external_declaration>
+ *                                        | <translation_unit> <external_declaration>
+ */
 translation_unit
     optional_space .emit REVISION .and external_declaration .error INVALID_EXTERNAL_DECLARATION .and
     .loop external_declaration .and optional_space .and
     '\0' .error INVALID_EXTERNAL_DECLARATION .emit EXTERNAL_NULL;
 
+
 /*
-    <external_declaration>              ::= <function_definition>
-                                          | <declaration>
-*/
+ *  <external_declaration>              ::= <function_definition>
+ *                                        | <declaration>
+ */
 external_declaration
+    precision_stmt .emit DEFAULT_PRECISION .or
+    invariant_stmt .emit INVARIANT_STMT .or
     function_definition .emit EXTERNAL_FUNCTION_DEFINITION .or
     declaration .emit EXTERNAL_DECLARATION;
+
+
+/*
+ * <precision_stmt>    ::= "precision" <precision> <prectype>
+ */
+precision_stmt
+    "precision" .and space .and precision .error INVALID_PRECISION .and space .and prectype .error INVALID_PRECISION_TYPE .and semicolon;
+
+/*
+ * <precision>           ::= "lowp"
+ *                         | "mediump"
+ *                         | "highp"
+ */
+precision
+    "lowp" .emit PRECISION_LOW .or
+    "mediump" .emit PRECISION_MEDIUM .or
+    "highp" .emit PRECISION_HIGH;
+
+/*
+ * <prectype> ::= "int"
+ *              | "float"
+ *              | "a sampler type"
+ */
+prectype
+    "int" .emit TYPE_SPECIFIER_INT .or
+    "float" .emit TYPE_SPECIFIER_FLOAT .or
+    "sampler1D" .emit TYPE_SPECIFIER_SAMPLER1D .or
+    "sampler2D" .emit TYPE_SPECIFIER_SAMPLER2D .or
+    "sampler3D" .emit TYPE_SPECIFIER_SAMPLER3D .or
+    "samplerCube" .emit TYPE_SPECIFIER_SAMPLERCUBE .or
+    "sampler1DShadow" .emit TYPE_SPECIFIER_SAMPLER1DSHADOW .or
+    "sampler2DShadow" .emit TYPE_SPECIFIER_SAMPLER2DSHADOW .or
+    "sampler2DRect" .emit TYPE_SPECIFIER_SAMPLER2DRECT .or
+    "sampler2DRectShadow" .emit TYPE_SPECIFIER_SAMPLER2DRECTSHADOW;
+
+
+/*
+ * <invariant_stmt>    ::= "invariant" identifier;
+ */
+invariant_stmt
+    "invariant" .and space .and identifier .and semicolon;
+
+
 
 /*
     <function_definition>               :: <function_prototype> <compound_statement_no_new_scope>
