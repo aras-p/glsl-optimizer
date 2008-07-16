@@ -338,6 +338,7 @@ def generate(env):
 		if platform == 'wince':
 			# See also C:\WINCE600\public\common\oak\misc\makefile.def
 			cflags += [
+				'/Zl', # omit default library name in .OBJ
 				'/GF', # enable read-only string pooling
 				'/GR-', # disable C++ RTTI
 				'/GS', # enable security checks
@@ -399,6 +400,13 @@ def generate(env):
 			'/base:0x10000',
 			
 			'/entry:DrvEnableDriver',
+		]
+	if platform == 'wince':
+		linkflags += [
+			'/nodefaultlib',
+#			'/incremental:no',
+#			'/fullbuild',
+			'/entry:_DllMainCRTStartup',
 		]
 		if env['profile']:
 			linkflags += [
