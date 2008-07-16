@@ -119,11 +119,16 @@ softpipe_is_format_supported( struct pipe_screen *screen,
 {
    switch (type) {
    case PIPE_TEXTURE:
-      /* softpipe supports all texture formats */
-      return TRUE;
    case PIPE_SURFACE:
-      /* softpipe supports all (off-screen) surface formats */
-      return TRUE;
+      switch(format) {
+      case PIPE_FORMAT_DXT1_RGB:
+      case PIPE_FORMAT_DXT1_RGBA:
+      case PIPE_FORMAT_DXT3_RGBA:
+      case PIPE_FORMAT_DXT5_RGBA:
+         return FALSE;
+      default:
+         return TRUE;
+      }
    default:
       assert(0);
       return FALSE;
