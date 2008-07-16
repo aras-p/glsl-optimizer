@@ -203,6 +203,8 @@ create_configs(_EGLDisplay *disp, __GLXdisplayPrivate *glx_priv)
          SET_CONFIG_ATTRIB(&config->Base, EGL_ALPHA_SIZE, m->alphaBits);
          SET_CONFIG_ATTRIB(&config->Base, EGL_DEPTH_SIZE, m->depthBits);
          SET_CONFIG_ATTRIB(&config->Base, EGL_STENCIL_SIZE, m->stencilBits);
+         SET_CONFIG_ATTRIB(&config->Base, EGL_SAMPLES, m->samples);
+         SET_CONFIG_ATTRIB(&config->Base, EGL_SAMPLE_BUFFERS, m->sampleBuffers);
          SET_CONFIG_ATTRIB(&config->Base, EGL_NATIVE_VISUAL_ID, m->visualID);
          SET_CONFIG_ATTRIB(&config->Base, EGL_NATIVE_VISUAL_TYPE, m->visualType);
          SET_CONFIG_ATTRIB(&config->Base, EGL_CONFORMANT, all_apis);
