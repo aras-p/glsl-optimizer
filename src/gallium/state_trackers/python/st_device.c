@@ -192,7 +192,7 @@ st_context_create(struct st_device *st_dev)
       sampler.wrap_s = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
       sampler.wrap_t = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
       sampler.wrap_r = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
-      sampler.min_mip_filter = PIPE_TEX_MIPFILTER_NONE;
+      sampler.min_mip_filter = PIPE_TEX_MIPFILTER_NEAREST;
       sampler.min_img_filter = PIPE_TEX_MIPFILTER_NEAREST;
       sampler.mag_img_filter = PIPE_TEX_MIPFILTER_NEAREST;
       sampler.normalized_coords = 1;
