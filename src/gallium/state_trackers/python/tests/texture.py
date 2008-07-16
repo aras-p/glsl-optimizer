@@ -52,30 +52,39 @@ def compare_rgba(width, height, rgba1, rgba2, tol=4.0/256):
     return errors == 0
 
 
-class TextureTest(Test):
-    
-    def __init__(self, **kargs):
-        Test.__init__(self)
-        self.__dict__.update(kargs)
+def lods(*dims):
+    size = max(dims)
+    lods = 0
+    while size:
+        lods += 1
+        size >>= 1
+    return lods
 
+
+def minify(dims, level = 1):
+    return [max(dim>>level, 1) for dim in dims]
+
+
+class TextureTest(TestCase):
+    
     def description(self):
-        return "%s %ux%u" % (formats[self.format], self.width, self.height)
-        
-    def run(self):
+        return "%s %ux%u level=%u" % (formats[self.format], self.width, self.height, self.level)
+    
+    def test(self):
         dev = self.dev
         
         format = self.format
         width = self.width
         height = self.height
+        level = self.level
+        
+        levels = lods(width, height)
+
         
         if not dev.is_format_supported(format, PIPE_TEXTURE):
-            print "SKIP"
-            return
-        if not dev.is_format_supported(format, PIPE_SURFACE):
-            print "SKIP"
-            return
+            raise TestSkip
         
-        ctx = dev.context_create()
+        ctx = self.dev.context_create()
     
         # disabled blending/masking
         blend = Blend()
@@ -123,15 +132,20 @@ class TextureTest(Test):
         sampler.min_img_filter = PIPE_TEX_MIPFILTER_NEAREST
         sampler.mag_img_filter = PIPE_TEX_MIPFILTER_NEAREST
         sampler.normalized_coords = 1
+        sampler.min_lod = level
+        sampler.max_lod = level
         ctx.set_sampler(0, sampler)
     
         #  texture 
         texture = dev.texture_create(format, 
                                      width, 
-                                     height)
+                                     height,
+                                     last_level = levels - 1)
         ctx.set_sampler_texture(0, texture)
         
-        expected_rgba = generate_data(texture.get_surface(usage = PIPE_BUFFER_USAGE_CPU_READ|PIPE_BUFFER_USAGE_CPU_WRITE))
+        expected_rgba = generate_data(texture.get_surface(
+            usage = PIPE_BUFFER_USAGE_CPU_READ|PIPE_BUFFER_USAGE_CPU_WRITE,
+            level = level))
         
         #  framebuffer 
         cbuf_tex = dev.texture_create(PIPE_FORMAT_A8R8G8B8_UNORM, 
@@ -181,8 +195,7 @@ class TextureTest(Test):
     
         x = 0
         y = 0
-        w = width
-        h = height
+        w, h = minify((width, height), level)
     
         verts[ 0] =     x # x1
         verts[ 1] =     y # y1
@@ -223,32 +236,35 @@ class TextureTest(Test):
                           verts)
     
         ctx.flush()
-
-        del ctx
-        
-        rgba = FloatArray(height*width*4)
+    
+        rgba = FloatArray(h*w*4)
 
         cbuf_tex.get_surface(usage = PIPE_BUFFER_USAGE_CPU_READ).get_tile_rgba(x, y, w, h, rgba)
 
-        if compare_rgba(width, height, rgba, expected_rgba):
-            print "OK"
-        else:
-            print "FAIL"
+        if not compare_rgba(w, h, rgba, expected_rgba):
         
-            show_image(width, height, Result=rgba, Expected=expected_rgba)
+            show_image(w, h, Result=rgba, Expected=expected_rgba)
             #save_image(width, height, rgba, "result.png")
             #save_image(width, height, expected_rgba, "expected.png")
             sys.exit(0)
+            
+            raise TestFailure
+
+        del ctx
+        
 
 
 def main():
     dev = Device()
     suite = TestSuite()
     formats = [PIPE_FORMAT_A8R8G8B8_UNORM, PIPE_FORMAT_YCBCR, PIPE_FORMAT_DXT1_RGB]
+    #formats = [PIPE_FORMAT_A8R8G8B8_UNORM, PIPE_FORMAT_DXT1_RGB]
     sizes = [64, 32, 16, 8, 4, 2]
     for format in formats:
         for size in sizes:
-            suite.add_test(TextureTest(dev=dev, format=format, width=size, height=size))
+            levels = lods(size)
+            for level in range(levels):
+                suite.add_test(TextureTest(dev=dev, format=format, width=size, height=size, level=level))
     suite.run()
 
 

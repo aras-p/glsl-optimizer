@@ -27,6 +27,12 @@
 ##########################################################################
 
 
+"""Base classes for tests.
+
+Loosely inspired on Python's unittest module.
+"""
+
+
 from gallium import *
 
 
@@ -87,17 +93,54 @@ def show_image(width, height, **rgbas):
     root.mainloop()
 
 
+class TestFailure(Exception):
+
+    pass
+
+class TestSkip(Exception):
+    
+    pass
+
 
 class Test:
-    
+
     def __init__(self):
         pass
+
+    def _run(self, result):
+        raise NotImplementedError
     
+    def run(self):
+        result = TestResult()
+        self._run(result)
+        result.summary()
+
+
+class TestCase(Test):
+    
+    def __init__(self, dev, **kargs):
+        Test.__init__(self)
+        self.dev = dev
+        self.__dict__.update(kargs)
+
     def description(self):
         raise NotImplementedError
         
-    def run(self):
+    def test(self):
         raise NotImplementedError
+    
+    def _run(self, result):
+        result.test_start(self)
+        try:
+            self.test()
+        except KeyboardInterrupt:
+            raise
+        except TestSkip:
+            result.test_skipped(self)
+        except TestFailure:
+            result.test_failed(self)
+        else:
+            result.test_passed(self)
 
 
 class TestSuite(Test):
@@ -112,21 +155,35 @@ class TestSuite(Test):
     def add_test(self, test):
         self.tests.append(test) 
     
-    def run(self):
+    def _run(self, result):
         for test in self.tests:
-            print "Running %s..." % test.description()
-            test.run()
+            test._run(result)
 
 
-class TextureTemplate:
+class TestResult:
     
-    def __init__(self, format=PIPE_FORMAT_R8G8B8A8_UNORM, width=1, height=1, depth=1, last_level=0, target=PIPE_TEXTURE_2D):
-        self.format = format
-        self.width = width
-        self.height = height
-        self.depth = depth
-        self.last_level = last_level
-        self.target = target
+    def __init__(self):
+        self.tests = 0
+        self.passed = 0
+        self.skipped = 0
+        self.failed = 0
+    
+    def test_start(self, test):
+        self.tests += 1
+        print "Running %s..." % test.description()
+    
+    def test_passed(self, test):
+        self.passed += 1
+        print "PASS"
+            
+    def test_skipped(self, test):
+        self.skipped += 1
+        print "SKIP"
+        
+    def test_failed(self):
+        self.failed += 1
+        print "FAIL"
 
-
-
+    def summary(self):
+        print "%u tests, %u passed, %u skipped, %u failed" % (self.tests, self.passed, self.skipped, self.failed)
+ 
