@@ -53,7 +53,7 @@ def make_image(width, height, rgba):
     for y in range(0, height):
         for x in range(0, width):
             offset = (y*width + x)*4
-            r, g, b, a = [int(rgba[offset + ch]*255) for ch in range(4)]
+            r, g, b, a = [int(min(max(rgba[offset + ch], 0.0), 1.0)*255) for ch in range(4)]
             outpixels[x, y] = r, g, b
     return outimage
 
@@ -167,6 +167,7 @@ class TestResult:
         self.passed = 0
         self.skipped = 0
         self.failed = 0
+        self.failed_descriptions = []
     
     def test_start(self, test):
         self.tests += 1
@@ -180,10 +181,13 @@ class TestResult:
         self.skipped += 1
         print "SKIP"
         
-    def test_failed(self):
+    def test_failed(self, test):
         self.failed += 1
+        self.failed_descriptions.append(test.description())
         print "FAIL"
 
     def summary(self):
         print "%u tests, %u passed, %u skipped, %u failed" % (self.tests, self.passed, self.skipped, self.failed)
+        for description in self.failed_descriptions:
+            print "  %s" % description
  
