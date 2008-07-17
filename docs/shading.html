@@ -25,7 +25,7 @@ Contents
 <li><a href="#unsup">Unsupported Features</a>
 <li><a href="#notes">Implementation Notes</a>
 <li><a href="#hints">Programming Hints</a>
-<li><a href="#standalone">Stand-alone Compiler</a>
+<li><a href="#standalone">Stand-alone GLSL Compiler</a>
 <li><a href="#implementation">Compiler Implementation</a>
 <li><a href="#validation">Compiler Validation</a>
 </ul>
@@ -133,7 +133,7 @@ These issues will be addressed/resolved in the future.
 
 
 <a name="standalone">
-<h2>Stand-alone Compiler</h2>
+<h2>Stand-alone GLSL Compiler</h2>
 
 <p>
 A unique stand-alone GLSL compiler driver has been added to Mesa.
@@ -155,12 +155,11 @@ This tool is useful for:
 </ul>
 
 <p>
-To build the glslcompiler program (this will be improved someday):
+After building Mesa the glslcompiler should be found in the Mesa/bin/ directory.
+If it's not there, it can be built manually:
 </p>
 <pre>
-    cd src/mesa
-    make libmesa.a
-    cd drivers/glslcompiler
+    cd src/mesa/drivers/glslcompiler
     make
 </pre>
 
@@ -170,20 +169,31 @@ Here's an example of using the compiler to compile a vertex shader and
 emit GL_ARB_vertex_program-style instructions:
 </p>
 <pre>
-    glslcompiler --arb --linenumbers --vs vertshader.txt
+    bin/glslcompiler --debug --numbers --fs progs/glsl/CH06-brick.frag.txt
 </pre>
 <p>
-The output may look similar to this:
+results in:
 </p>
 <pre>
-!!ARBvp1.0
-  0: MOV result.texcoord[0], vertex.texcoord[0];
-  1: DP4 temp0.x, state.matrix.mvp.row[0], vertex.position;
-  2: DP4 temp0.y, state.matrix.mvp.row[1], vertex.position;
-  3: DP4 temp0.z, state.matrix.mvp.row[2], vertex.position;
-  4: DP4 temp0.w, state.matrix.mvp.row[3], vertex.position;
-  5: MOV result.position, temp0;
-  6: END
+# Fragment Program/Shader
+  0: RCP TEMP[4].x, UNIFORM[2].xxxx;
+  1: RCP TEMP[4].y, UNIFORM[2].yyyy;
+  2: MUL TEMP[3].xy, VARYING[0], TEMP[4];
+  3: MOV TEMP[1], TEMP[3];
+  4: MUL TEMP[0].w, TEMP[1].yyyy, CONST[4].xxxx;
+  5: FRC TEMP[1].z, TEMP[0].wwww;
+  6: SGT.C TEMP[0].w, TEMP[1].zzzz, CONST[4].xxxx;
+  7: IF (NE.wwww); # (if false, goto 9);
+  8:    ADD TEMP[1].x, TEMP[1].xxxx, CONST[4].xxxx;
+  9: ENDIF;
+ 10: FRC TEMP[1].xy, TEMP[1];
+ 11: SGT TEMP[2].xy, UNIFORM[3], TEMP[1];
+ 12: MUL TEMP[1].z, TEMP[2].xxxx, TEMP[2].yyyy;
+ 13: LRP TEMP[0], TEMP[1].zzzz, UNIFORM[0], UNIFORM[1];
+ 14: MUL TEMP[0].xyz, TEMP[0], VARYING[1].xxxx;
+ 15: MOV OUTPUT[0].xyz, TEMP[0];
+ 16: MOV OUTPUT[0].w, CONST[4].yyyy;
+ 17: END
 </pre>
 
 <p>
