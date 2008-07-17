@@ -401,16 +401,17 @@ vec4 atan(const vec4 y_over_x)
 
 float atan(const float y, const float x)
 {
-    if (x == 0.0)
-       return 0.0;
-    float z = atan(y / x);
-    if (x < 0.0)
-    {
-        if (y < 0.0)
-            return z - 3.141593;
-        return z + 3.141593;
-    }
-    return z;
+   float r;
+   if (abs(x) > 1.0e-4) {
+      r = atan(y / x);
+      if (x < 0.0) {
+         r = r + sign(y) * 3.141593;
+      }
+   }
+   else {
+      r = sign(y) * 1.5707965;  // pi/2
+   }
+   return r;
 }
 
 vec2 atan(const vec2 u, const vec2 v)
