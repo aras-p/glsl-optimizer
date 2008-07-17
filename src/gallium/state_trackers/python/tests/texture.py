@@ -304,15 +304,21 @@ class TextureTest(TestCase):
     
         ctx.flush()
     
-        rgba = FloatArray(h*w*4)
-
-        cbuf_tex.get_surface(usage = PIPE_BUFFER_USAGE_CPU_READ).get_tile_rgba(x, y, w, h, rgba)
-
-        if not compare_rgba(w, h, rgba, expected_rgba):
+        cbuf = cbuf_tex.get_surface(usage = PIPE_BUFFER_USAGE_CPU_READ)
         
-            #show_image(w, h, Result=rgba, Expected=expected_rgba)
-            #save_image(w, h, rgba, "result.png")
-            #save_image(w, h, expected_rgba, "expected.png")
+        total = h*w
+        different = cbuf.compare_tile_rgba(x, y, w, h, expected_rgba, tol=4.0/256)
+        if different:
+            sys.stderr.write("%u out of %u pixels differ\n" % (different, total))
+
+        if float(total - different)/float(total) < 0.85:
+        
+            if 0:
+                rgba = FloatArray(h*w*4)
+                cbuf.get_tile_rgba(x, y, w, h, rgba)
+                show_image(w, h, Result=rgba, Expected=expected_rgba)
+                save_image(w, h, rgba, "result.png")
+                save_image(w, h, expected_rgba, "expected.png")
             #sys.exit(0)
             
             raise TestFailure

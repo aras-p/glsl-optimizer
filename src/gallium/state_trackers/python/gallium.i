@@ -425,23 +425,23 @@ error1:
    void unmap( void );
 
    void
-   get_tile_raw(unsigned x, unsigned y, unsigned w, unsigned h, unsigned char *p, unsigned stride) {
-      pipe_get_tile_raw($self, x, y, w, h, p, stride);
+   get_tile_raw(unsigned x, unsigned y, unsigned w, unsigned h, unsigned char *raw, unsigned stride) {
+      pipe_get_tile_raw($self, x, y, w, h, raw, stride);
    }
 
    void
-   put_tile_raw(unsigned x, unsigned y, unsigned w, unsigned h, const unsigned char *p, unsigned stride) {
-      pipe_put_tile_raw($self, x, y, w, h, p, stride);
+   put_tile_raw(unsigned x, unsigned y, unsigned w, unsigned h, const unsigned char *raw, unsigned stride) {
+      pipe_put_tile_raw($self, x, y, w, h, raw, stride);
    }
 
    void
-   get_tile_rgba(unsigned x, unsigned y, unsigned w, unsigned h, float *p) {
-      pipe_get_tile_rgba($self, x, y, w, h, p);
+   get_tile_rgba(unsigned x, unsigned y, unsigned w, unsigned h, float *rgba) {
+      pipe_get_tile_rgba($self, x, y, w, h, rgba);
    }
 
    void
-   put_tile_rgba(unsigned x, unsigned y, unsigned w, unsigned h, const float *p) {
-      pipe_put_tile_rgba($self, x, y, w, h, p);
+   put_tile_rgba(unsigned x, unsigned y, unsigned w, unsigned h, const float *rgba) {
+      pipe_put_tile_rgba($self, x, y, w, h, rgba);
    }
 
    void
@@ -454,6 +454,38 @@ error1:
       pipe_put_tile_z($self, x, y, w, h, z);
    }
    
+   unsigned
+   compare_tile_rgba(unsigned x, unsigned y, unsigned w, unsigned h, const float *rgba, float tol = 0.0) 
+   {
+      float *rgba2;
+      const float *p1;
+      const float *p2;
+      unsigned i, j, n;
+      
+      rgba2 = MALLOC(h*w*4*sizeof(float));
+      if(!rgba2)
+         return ~0;
+
+      pipe_get_tile_rgba($self, x, y, w, h, rgba2);
+
+      p1 = rgba;
+      p2 = rgba2;
+      n = 0;
+      for(i = h*w; i; --i) {
+         unsigned differs = 0;
+         for(j = 4; j; --j) {
+            float delta = *p2++ - *p1++;
+            if (delta < -tol || delta > tol)
+                differs = 1;
+         }
+         n += differs;
+      }
+      
+      FREE(rgba2);
+      
+      return n;
+   }
+
 };
 
 
