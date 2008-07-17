@@ -414,6 +414,9 @@ def generate(env):
         ]
     env.Append(LINKFLAGS = linkflags)
 
+    # Default libs
+    env.Append(LIBS = [])
+
     # Custom builders and methods
     createConvenienceLibBuilder(env)
     createCodeGenerateMethod(env)
