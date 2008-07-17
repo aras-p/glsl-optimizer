@@ -29,6 +29,7 @@
 #include "tgsi_text.h"
 #include "tgsi_build.h"
 #include "tgsi_parse.h"
+#include "tgsi_sanity.h"
 #include "tgsi_util.h"
 
 static boolean is_alpha_underscore( const char *cur )
@@ -1064,5 +1065,8 @@ tgsi_text_translate(
    ctx.tokens_cur = tokens;
    ctx.tokens_end = tokens + num_tokens;
 
-   return translate( &ctx );
+   if (!translate( &ctx ))
+      return FALSE;
+
+   return tgsi_sanity_check( tokens );
 }
