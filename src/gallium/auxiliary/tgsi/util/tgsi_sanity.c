@@ -27,7 +27,7 @@
 
 #include "pipe/p_debug.h"
 #include "tgsi_sanity.h"
-#include "tgsi_transform.h"
+#include "tgsi_iterate.h"
 
 #define MAX_REGISTERS 256
 
@@ -37,7 +37,7 @@ typedef uint reg_flag;
 
 struct sanity_check_ctx
 {
-   struct tgsi_transform_context xform;
+   struct tgsi_iterate_context iter;
 
    reg_flag regs_decl[TGSI_FILE_COUNT][MAX_REGISTERS / sizeof( uint ) / 8];
    reg_flag regs_used[TGSI_FILE_COUNT][MAX_REGISTERS / sizeof( uint ) / 8];
@@ -101,11 +101,12 @@ is_register_used(
    return (ctx->regs_used[file][index / BITS_IN_REG_FLAG] & (1 << (index % BITS_IN_REG_FLAG))) ? TRUE : FALSE;
 }
 
-static void xform_instruction(
-   struct tgsi_transform_context *xform,
+static boolean
+iter_instruction(
+   struct tgsi_iterate_context *iter,
    struct tgsi_full_instruction *inst )
 {
-   struct sanity_check_ctx *ctx = (struct sanity_check_ctx *) xform;
+   struct sanity_check_ctx *ctx = (struct sanity_check_ctx *) iter;
    uint i;
 
    /* There must be no other instructions after END.
@@ -126,7 +127,7 @@ static void xform_instruction(
 
       file = inst->FullDstRegisters[i].DstRegister.File;
       if (!check_file_name( ctx, file ))
-         return;
+         return TRUE;
       index = inst->FullDstRegisters[i].DstRegister.Index;
       if (!is_register_declared( ctx, file, index ))
          report_error( ctx, "Undeclared destination register" );
@@ -138,7 +139,7 @@ static void xform_instruction(
 
       file = inst->FullSrcRegisters[i].SrcRegister.File;
       if (!check_file_name( ctx, file ))
-         return;
+         return TRUE;
       index = inst->FullSrcRegisters[i].SrcRegister.Index;
       if (!is_register_declared( ctx, file, index ))
          report_error( ctx, "Undeclared source register" );
@@ -146,13 +147,16 @@ static void xform_instruction(
    }
 
    ctx->num_instructions++;
+
+   return TRUE;
 }
 
-static void xform_declaration(
-   struct tgsi_transform_context *xform,
+static boolean
+iter_declaration(
+   struct tgsi_iterate_context *iter,
    struct tgsi_full_declaration *decl )
 {
-   struct sanity_check_ctx *ctx = (struct sanity_check_ctx *) xform;
+   struct sanity_check_ctx *ctx = (struct sanity_check_ctx *) iter;
    uint file;
    uint i;
 
@@ -166,19 +170,22 @@ static void xform_declaration(
     */
    file = decl->Declaration.File;
    if (!check_file_name( ctx, file ))
-      return;
+      return TRUE;
    for (i = decl->DeclarationRange.First; i <= decl->DeclarationRange.Last; i++) {
       if (is_register_declared( ctx, file, i ))
          report_error( ctx, "The same register declared twice" );
       ctx->regs_decl[file][i / BITS_IN_REG_FLAG] |= (1 << (i % BITS_IN_REG_FLAG));
    }
+
+   return TRUE;
 }
 
-static void xform_immediate(
-   struct tgsi_transform_context *xform,
+static boolean
+iter_immediate(
+   struct tgsi_iterate_context *iter,
    struct tgsi_full_immediate *imm )
 {
-   struct sanity_check_ctx *ctx = (struct sanity_check_ctx *) xform;
+   struct sanity_check_ctx *ctx = (struct sanity_check_ctx *) iter;
 
    assert( ctx->num_imms < MAX_REGISTERS );
 
@@ -196,14 +203,17 @@ static void xform_immediate(
     */
    if (imm->Immediate.DataType != TGSI_IMM_FLOAT32) {
       report_error( ctx, "Invalid immediate data type" );
-      return;
+      return TRUE;
    }
+
+   return TRUE;
 }
 
-static void epilog(
-   struct tgsi_transform_context *xform )
+static boolean
+epilog(
+   struct tgsi_iterate_context *iter )
 {
-   struct sanity_check_ctx *ctx = (struct sanity_check_ctx *) xform;
+   struct sanity_check_ctx *ctx = (struct sanity_check_ctx *) iter;
    uint file;
 
    /* There must be an END instruction at the end.
@@ -228,6 +238,8 @@ static void epilog(
     */
    if (ctx->errors || ctx->warnings)
       debug_printf( "\n%u errors, %u warnings", ctx->errors, ctx->warnings );
+
+   return TRUE;
 }
 
 boolean
@@ -235,12 +247,12 @@ tgsi_sanity_check(
    struct tgsi_token *tokens )
 {
    struct sanity_check_ctx ctx;
-   struct tgsi_token dummy_tokens[16];
 
-   ctx.xform.transform_instruction = xform_instruction;
-   ctx.xform.transform_declaration = xform_declaration;
-   ctx.xform.transform_immediate = xform_immediate;
-   ctx.xform.epilog = epilog;
+   ctx.iter.prolog = NULL;
+   ctx.iter.iterate_instruction = iter_instruction;
+   ctx.iter.iterate_declaration = iter_declaration;
+   ctx.iter.iterate_immediate = iter_immediate;
+   ctx.iter.epilog = epilog;
 
    memset( ctx.regs_decl, 0, sizeof( ctx.regs_decl ) );
    memset( ctx.regs_used, 0, sizeof( ctx.regs_used ) );
@@ -251,7 +263,7 @@ tgsi_sanity_check(
    ctx.errors = 0;
    ctx.warnings = 0;
 
-   if (tgsi_transform_shader( tokens, dummy_tokens, 16, &ctx.xform ) == -1)
+   if (tgsi_iterate_shader( tokens, &ctx.iter ) == -1)
       return FALSE;
 
    return ctx.errors > 0;
