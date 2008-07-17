@@ -758,13 +758,20 @@ parse_instruction(
    for (i = 0; i < TGSI_OPCODE_LAST; i++) {
       const char *cur = ctx->cur;
 
-      if (str_match_no_case( &cur, opcode_info[i].mnemonic )) {
+      info = &opcode_info[i];
+      if (str_match_no_case( &cur, info->mnemonic )) {
          if (str_match_no_case( &cur, "_SATNV" ))
             saturate = TGSI_SAT_MINUS_PLUS_ONE;
          else if (str_match_no_case( &cur, "_SAT" ))
             saturate = TGSI_SAT_ZERO_ONE;
 
-         if (*cur == '\0' || eat_white( &cur )) {
+         if (info->num_dst + info->num_src + info->is_tex == 0) {
+            if (!is_digit_alpha_underscore( cur )) {
+               ctx->cur = cur;
+               break;
+            }
+         }
+         else if (*cur == '\0' || eat_white( &cur )) {
             ctx->cur = cur;
             break;
          }
@@ -777,7 +784,6 @@ parse_instruction(
          report_error( ctx, "Expected `DCL', `IMM' or a label" );
       return FALSE;
    }
-   info = &opcode_info[i];
 
    inst = tgsi_default_full_instruction();
    inst.Instruction.Opcode = i;
@@ -1030,6 +1036,9 @@ static boolean translate( struct translate_ctx *ctx )
          report_error( ctx, "Syntax error" );
          return FALSE;
       }
+
+      if (*ctx->cur == '\0')
+         break;
 
       if (parse_label( ctx, &label_val )) {
          if (!parse_instruction( ctx, TRUE ))
