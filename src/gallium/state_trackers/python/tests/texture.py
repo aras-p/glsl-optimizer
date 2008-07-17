@@ -30,29 +30,6 @@
 import sys
 from gallium import *
 from base import *
-from data import generate_data
-
-
-def compare_rgba(width, height, rgba1, rgba2, tol=4.0/256, ratio=0.85):
-    errors = 0
-    for y in range(0, height):
-        for x in range(0, width):
-            differs = 0
-            for ch in range(4):
-                offset = (y*width + x)*4 + ch
-                v1 = rgba1[offset]
-                v2 = rgba2[offset]
-                if abs(v1 - v2) > tol:
-                    if errors == 0:
-                        sys.stderr.write("x=%u, y=%u, ch=%u differ: %f vs %f\n" % (x, y, ch, v1, v2))
-                    if errors == 1 and ch == 0:
-                        sys.stderr.write("...\n")
-                    differs = 1
-            errors += differs
-    total = height*width
-    if errors:
-        sys.stderr.write("%u out of %u pixels differ\n" % (errors, total))
-    return float(total - errors)/float(total) >= ratio 
 
 
 def lods(*dims):
@@ -214,10 +191,12 @@ class TextureTest(TestCase):
                                      height=height,
                                      last_level = last_level)
         
-        expected_rgba = generate_data(texture.get_surface(
+        expected_rgba = FloatArray(height*width*4) 
+        texture.get_surface(
             usage = PIPE_BUFFER_USAGE_CPU_READ|PIPE_BUFFER_USAGE_CPU_WRITE,
             face = face,
-            level = level))
+            level = level,
+        ).sample_rgba(expected_rgba)
         
         ctx.set_sampler_texture(0, texture)
 

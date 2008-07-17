@@ -51,6 +51,7 @@
 #include "tgsi/util/tgsi_dump.h" 
 
 #include "st_device.h"
+#include "st_sample.h"
 
 %}
 
@@ -452,6 +453,11 @@ error1:
    void
    put_tile_z(unsigned x, unsigned y, unsigned w, unsigned h, const unsigned *z) {
       pipe_put_tile_z($self, x, y, w, h, z);
+   }
+   
+   void
+   sample_rgba(float *rgba) {
+      st_sample_surface($self, rgba);
    }
    
    unsigned

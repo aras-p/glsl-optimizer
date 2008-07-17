@@ -20,6 +20,7 @@ if 'python' in env['statetrackers']:
         source = [
             'gallium.i',
             'st_device.c',
+            'st_sample.c',
             'st_softpipe_winsys.c',
         ],
     )
