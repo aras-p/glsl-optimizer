@@ -166,6 +166,12 @@ enum pipe_texture_target {
 #define PIPE_TEX_FACE_NEG_Z   5
 #define PIPE_TEX_FACE_MAX     6
 
+#define PIPE_TEXTURE_USAGE_RENDER_TARGET   0x1
+#define PIPE_TEXTURE_USAGE_DISPLAY_TARGET  0x2 /* ie a backbuffer */
+#define PIPE_TEXTURE_USAGE_PRIMARY         0x4 /* ie a frontbuffer */
+#define PIPE_TEXTURE_USAGE_DEPTH_STENCIL   0x8
+#define PIPE_TEXTURE_USAGE_SAMPLER         0x10
+
 /**
  * Surfaces, textures, etc. (others may be added)
  */
