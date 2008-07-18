@@ -522,15 +522,13 @@ pf_get_nblocks(const struct pipe_format_block *block, unsigned width, unsigned h
 static INLINE boolean 
 pf_is_compressed( enum pipe_format format )
 {
-   switch (format) {
-   case PIPE_FORMAT_DXT1_RGB:
-   case PIPE_FORMAT_DXT1_RGBA:
-   case PIPE_FORMAT_DXT3_RGBA:
-   case PIPE_FORMAT_DXT5_RGBA:
-      return TRUE;
-   default:
-      return FALSE;
-   }
+   return pf_layout(format) == PIPE_FORMAT_LAYOUT_DXT ? TRUE : FALSE;
+}
+
+static INLINE boolean 
+pf_is_ycbcr( enum pipe_format format )
+{
+   return pf_layout(format) == PIPE_FORMAT_LAYOUT_YCBCR ? TRUE : FALSE;
 }
 
 #ifdef __cplusplus
