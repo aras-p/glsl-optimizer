@@ -96,11 +96,13 @@ int INTEL_DEBUG = (0);
 
 #include "extension_helper.h"
 
-#define DRIVER_DATE                     "20061102"
+#define DRIVER_DATE                     "20080716"
+#define DRIVER_DATE_GEM                 "GEM " DRIVER_DATE
 
 static const GLubyte *
 intelGetString(GLcontext * ctx, GLenum name)
 {
+   const struct intel_context *const intel = intel_context(ctx);
    const char *chipset;
    static char buffer[128];
 
@@ -110,7 +112,7 @@ intelGetString(GLcontext * ctx, GLenum name)
       break;
 
    case GL_RENDERER:
-      switch (intel_context(ctx)->intelScreen->deviceID) {
+      switch (intel->intelScreen->deviceID) {
       case PCI_CHIP_845_G:
          chipset = "Intel(R) 845G";
          break;
@@ -181,7 +183,9 @@ intelGetString(GLcontext * ctx, GLenum name)
          break;
       }
 
-      (void) driGetRendererString(buffer, chipset, DRIVER_DATE, 0);
+      (void) driGetRendererString(buffer, chipset, 
+				  (intel->ttm) ? DRIVER_DATE_GEM : DRIVER_DATE,
+				  0);
       return (GLubyte *) buffer;
 
    default:
