@@ -176,6 +176,11 @@ vec2 __constructor(const bool b)
    __retVal.xy = b.xx;
 }
 
+vec2 __constructor(const bvec2 b)
+{
+   __retVal = b;
+}
+
 vec2 __constructor(const vec3 v)
 {
    __retVal.xy = v.xy;
@@ -211,6 +216,11 @@ vec3 __constructor(const bool b)
    __retVal.xyz = b.xxx;
 }
 
+vec3 __constructor(const bvec3 b)
+{
+   __retVal = b;
+}
+
 vec3 __constructor(const vec4 v)
 {
    __retVal.xyz = v.xyz;
@@ -240,6 +250,11 @@ vec4 __constructor(const int i)
 vec4 __constructor(const bool b)
 {
    __retVal = b.xxxx;
+}
+
+vec4 __constructor(const bvec4 b)
+{
+   __retVal = b;
 }
 
 vec4 __constructor(const vec3 v3, const float f)
@@ -360,8 +375,7 @@ bvec2 __constructor(const int i)
 
 bvec2 __constructor(const vec2 v)
 {
-   const vec2 zero = vec2(0.0, 0.0);
-   __asm vec4_sne __retVal.xy, v, zero;
+   __asm vec4_sne __retVal.xy, v, 0.0;
 }
 
 bvec2 __constructor(const ivec2 v)
@@ -1226,7 +1240,7 @@ void __operator /= (inout int a, const int b)
    float invB;
    __asm float_rcp invB, b;
    __asm vec4_multiply a, a, invB;
-   __asm float_to_int __retVal, a;
+   __asm float_to_int a, a;
 }
 
 
@@ -1253,7 +1267,7 @@ void __operator /= (inout ivec2 v, const ivec2 u)
    __asm float_rcp inv.x, u.x;
    __asm float_rcp inv.y, u.y;
    __asm vec4_multiply z, v, inv;
-   __asm float_to_int __retVal, z;
+   __asm float_to_int v, z;
 }
 
 
@@ -1280,7 +1294,7 @@ void __operator /= (inout ivec3 v, const ivec3 u)
    __asm float_rcp inv.x, u.x;
    __asm float_rcp inv.y, u.y;
    __asm vec4_multiply z, v, inv;
-   __asm float_to_int __retVal, z;
+   __asm float_to_int v, z;
 }
 
 
@@ -1307,7 +1321,7 @@ void __operator /= (inout ivec4 v, const ivec4 u)
    __asm float_rcp inv.x, u.x;
    __asm float_rcp inv.y, u.y;
    __asm vec4_multiply z, v, inv;
-   __asm float_to_int __retVal, z;
+   __asm float_to_int v, z;
 }
 
 
@@ -1315,7 +1329,7 @@ void __operator /= (inout ivec4 v, const ivec4 u)
 
 void __operator += (inout float a, const float b)
 {
-    __asm vec4_add a.x, a.x, b;
+    __asm vec4_add a.x, a.x, b.x;
 }
 
 void __operator -= (inout float a, const float b)
