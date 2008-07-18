@@ -56,7 +56,12 @@ def tex_coords(texture, face, level, zslice):
     if texture.target == PIPE_TEXTURE_2D:
         return [[s, t, 0.0] for s, t in st]
     elif texture.target == PIPE_TEXTURE_3D:
-        assert 0
+        depth = texture.get_depth(level)
+        if depth > 1:
+            r = float(zslice)/float(depth - 1)
+        else:
+            r = 0.0
+        return [[s, t, r] for s, t in st]
     elif texture.target == PIPE_TEXTURE_CUBE:
         result = []
         for s, t in st:
@@ -112,10 +117,10 @@ class TextureTest(TestCase):
             }[self.face]
         else:
             face = ""
-        return "%s %s %ux%u last_level=%u %s level=%u" % (
+        return "%s %s %ux%ux%u last_level=%u face=%s level=%u zslice=%u" % (
             target, format, 
-            self.width, self.height, 
-            self.last_level, face, self.level,
+            self.width, self.height, self.depth, self.last_level, 
+            face, self.level, self.zslice, 
         )
     
     def test(self):
@@ -125,9 +130,11 @@ class TextureTest(TestCase):
         format = self.format
         width = self.width
         height = self.height
+        depth = self.depth
         last_level = self.last_level
-        level = self.level
         face = self.face
+        level = self.level
+        zslice = self.zslice
         
         if not dev.is_format_supported(format, PIPE_TEXTURE):
             raise TestSkip
@@ -185,17 +192,21 @@ class TextureTest(TestCase):
         ctx.set_sampler(0, sampler)
     
         #  texture 
-        texture = dev.texture_create(target=target,
-                                     format=format, 
-                                     width=width, 
-                                     height=height,
-                                     last_level = last_level)
+        texture = dev.texture_create(
+            target = target,
+            format = format, 
+            width = width, 
+            height = height,
+            depth = depth, 
+            last_level = last_level,
+        )
         
         expected_rgba = FloatArray(height*width*4) 
         texture.get_surface(
             usage = PIPE_BUFFER_USAGE_CPU_READ|PIPE_BUFFER_USAGE_CPU_WRITE,
             face = face,
             level = level,
+            zslice = zslice,
         ).sample_rgba(expected_rgba)
         
         ctx.set_sampler_texture(0, texture)
@@ -263,7 +274,7 @@ class TextureTest(TestCase):
             [x, y+h],
         ]
     
-        tex = tex_coords(texture, face, level, zslice=0)
+        tex = tex_coords(texture, face, level, zslice)
     
         for i in range(0, 4):
             j = 8*i
@@ -313,6 +324,7 @@ def main():
     targets = []
     targets += [PIPE_TEXTURE_2D]
     targets += [PIPE_TEXTURE_CUBE]
+    targets += [PIPE_TEXTURE_3D]
     
     formats = []
     formats += [PIPE_FORMAT_A8R8G8B8_UNORM]
@@ -322,7 +334,9 @@ def main():
     formats += [PIPE_FORMAT_DXT1_RGB]
     
     sizes = [64, 32, 16, 8, 4, 2, 1]
+    #sizes = [1020, 508, 252, 62, 30, 14, 6, 3]
     #sizes = [64]
+    #sizes = [63]
     
     for target in targets:
         for format in formats:
@@ -339,21 +353,28 @@ def main():
                     #faces = [PIPE_TEX_FACE_NEG_X]
                 else:
                     faces = [0]
+                if target == PIPE_TEXTURE_3D:
+                    depth = size
+                else:
+                    depth = 1
                 for face in faces:
                     levels = lods(size)
                     for last_level in range(levels):
                         for level in range(0, last_level + 1):
-                            test = TextureTest(
-                                dev=dev,
-                                target=target,
-                                format=format, 
-                                width=size,
-                                height=size,
-                                face=face,
-                                last_level = last_level,
-                                level=level,
-                            )
-                            suite.add_test(test)
+                            for zslice in range(0, depth >> level):
+                                test = TextureTest(
+                                    dev = dev,
+                                    target = target,
+                                    format = format, 
+                                    width = size,
+                                    height = size,
+                                    depth = depth,
+                                    last_level = last_level,
+                                    face = face,
+                                    level = level,
+                                    zslice = zslice,
+                                )
+                                suite.add_test(test)
     suite.run()
 
 
