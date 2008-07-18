@@ -61,6 +61,7 @@ ASM_SOURCES =
 # GLw widget sources (Append "GLwMDrawA.c" here and add -lXm to GLW_LIB_DEPS in
 # order to build the Motif widget too)
 GLW_SOURCES = GLwDrawA.c
+MOTIF_CFLAGS = -I/usr/include/Motif1.2
 
 
 # Directories to build

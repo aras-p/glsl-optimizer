@@ -878,6 +878,12 @@ if test "x$enable_glw" = xyes && test "$mesa_driver" = osmesa; then
     AC_MSG_WARN([Disabling GLw since the driver is OSMesa])
     enable_glw=no
 fi
+AC_ARG_ENABLE([motif],
+    [AS_HELP_STRING([--enable-motif],
+        [use Motif widgets in GLw @<:@default=disabled@:>@])],
+    [enable_motif="$enableval"],
+    [enable_motif=no])
+
 if test "x$enable_glw" = xyes; then
     SRC_DIRS="$SRC_DIRS glw"
     if test "$x11_pkgconfig" = yes; then
@@ -885,7 +891,25 @@ if test "x$enable_glw" = xyes; then
         GLW_LIB_DEPS="$GLW_LIBS"
     else
         # should check these...
-        GLW_LIB_DEPS="$X_LIBS -lX11 -lXt"
+        GLW_LIB_DEPS="$X_LIBS -lXt -lX11"
+    fi
+
+    GLW_SOURCES="GLwDrawA.c"
+    MOTIF_CFLAGS=
+    if test "x$enable_motif" = xyes; then
+        GLW_SOURCES="$GLW_SOURCES GLwMDrawA.c"
+        AC_PATH_PROG([MOTIF_CONFIG], [motif-config], [no])
+        if test "x$MOTIF_CONFIG" != xno; then
+            MOTIF_CFLAGS=`$MOTIF_CONFIG --cflags`
+            MOTIF_LIBS=`$MOTIF_CONFIG --libs`
+        else
+            AC_CHECK_HEADER([Xm/PrimitiveP.h], [],
+                [AC_MSG_ERROR([Can't locate Motif headers])])
+            AC_CHECK_LIB([Xm], [XmGetPixmap], [MOTIF_LIBS="-lXm"],
+                [AC_MSG_ERROR([Can't locate Motif Xm library])])
+        fi
+        # MOTIF_LIBS is prepended to GLW_LIB_DEPS since Xm needs Xt/X11
+        GLW_LIB_DEPS="$MOTIF_LIBS $GLW_LIB_DEPS"
     fi
 
     # If static, empty GLW_LIB_DEPS and add libs for programs to link
@@ -900,6 +924,8 @@ if test "x$enable_glw" = xyes; then
 fi
 AC_SUBST([GLW_LIB_DEPS])
 AC_SUBST([GLW_MESA_DEPS])
+AC_SUBST([GLW_SOURCES])
+AC_SUBST([MOTIF_CFLAGS])
 
 dnl
 dnl GLUT configuration
@@ -1025,7 +1051,7 @@ echo ""
 echo "        Shared libs:     $enable_shared"
 echo "        Static libs:     $enable_static"
 echo "        GLU:             $enable_glu"
-echo "        GLw:             $enable_glw"
+echo "        GLw:             $enable_glw (Motif: $enable_motif)"
 echo "        glut:            $enable_glut"
 
 dnl Programs
