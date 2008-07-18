@@ -401,6 +401,26 @@ error1:
       pipe_texture_reference(&ptr, NULL);
    }
    
+   unsigned get_width(unsigned level=0) {
+      return $self->width[level];
+   }
+   
+   unsigned get_height(unsigned level=0) {
+      return $self->height[level];
+   }
+   
+   unsigned get_depth(unsigned level=0) {
+      return $self->depth[level];
+   }
+   
+   unsigned get_nblocksx(unsigned level=0) {
+      return $self->nblocksx[level];
+   }
+   
+   unsigned get_nblocksy(unsigned level=0) {
+      return $self->nblocksy[level];
+   }
+   
    /** Get a surface which is a "view" into a texture */
    struct pipe_surface *
    get_surface(unsigned face=0, unsigned level=0, unsigned zslice=0, unsigned usage=0 )
