@@ -1319,37 +1319,43 @@ _mesa_uniform(GLcontext *ctx, GLint location, GLsizei count,
 
 static void
 set_program_uniform_matrix(GLcontext *ctx, struct gl_program *program,
-                           GLuint location, GLuint rows, GLuint cols,
+                           GLuint location, GLuint count,
+                           GLuint rows, GLuint cols,
                            GLboolean transpose, const GLfloat *values)
 {
    /*
     * Note: the _columns_ of a matrix are stored in program registers, not
-    * the rows.
+    * the rows.  So, the loops below look a little funny.
+    * XXX could optimize this a bit...
     */
-   /* XXXX need to test 3x3 and 2x2 matrices... */
-   if (transpose) {
-      GLuint row, col;
+   GLuint mat, row, col;
+   GLuint dst = location, src = 0;
+
+   /* loop over matrices */
+   for (mat = 0; mat < count; mat++) {
+
+      /* each matrix: */
       for (col = 0; col < cols; col++) {
-         GLfloat *v = program->Parameters->ParameterValues[location + col];
+         GLfloat *v = program->Parameters->ParameterValues[dst];
          for (row = 0; row < rows; row++) {
-            v[row] = values[row * cols + col];
+            if (transpose) {
+               v[row] = values[src + row * cols + col];
+            }
+            else {
+               v[row] = values[src + col * rows + row];
+            }
          }
+         dst++;
       }
-   }
-   else {
-      GLuint row, col;
-      for (col = 0; col < cols; col++) {
-         GLfloat *v = program->Parameters->ParameterValues[location + col];
-         for (row = 0; row < rows; row++) {
-            v[row] = values[col * rows + row];
-         }
-      }
+
+      src += rows * cols;  /* next matrix */
    }
 }
 
 
 /**
  * Called by ctx->Driver.UniformMatrix().
+ * Note: cols=2, rows=4  ==>  array[2] of vec4
  */
 static void
 _mesa_uniform_matrix(GLcontext *ctx, GLint cols, GLint rows,
@@ -1382,7 +1388,7 @@ _mesa_uniform_matrix(GLcontext *ctx, GLint cols, GLint rows,
       GLint loc = shProg->Uniforms->Uniforms[location].VertPos;
       if (loc >= 0) {
          set_program_uniform_matrix(ctx, &shProg->VertexProgram->Base,
-                                    loc, rows, cols, transpose, values);
+                                    loc, count, rows, cols, transpose, values);
       }
    }
 
@@ -1390,7 +1396,7 @@ _mesa_uniform_matrix(GLcontext *ctx, GLint cols, GLint rows,
       GLint loc = shProg->Uniforms->Uniforms[location].FragPos;
       if (loc >= 0) {
          set_program_uniform_matrix(ctx, &shProg->FragmentProgram->Base,
-                                    loc, rows, cols, transpose, values);
+                                    loc, count, rows, cols, transpose, values);
       }
    }
 }
