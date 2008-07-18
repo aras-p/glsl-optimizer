@@ -1,6 +1,7 @@
 
 #include "main/imports.h"
-#include "shader/prog_instruction.h"
+#include "shader/program.h"
+#include "shader/prog_print.h"
 #include "slang_compile.h"
 #include "slang_compile_variable.h"
 #include "slang_mem.h"
@@ -247,14 +248,25 @@ _slang_alloc_var(slang_var_table *vt, slang_ir_storage *store)
    if (store->Size == 1) {
       const GLuint comp = i % 4;
       store->Swizzle = MAKE_SWIZZLE4(comp, comp, comp, comp);
-      if (dbg) printf("Alloc var sz %d at %d.%c (level %d)\n",
-                      store->Size, store->Index, "xyzw"[comp], t->Level);
+   }
+   else if (store->Size == 2) {
+      store->Swizzle = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y,
+                                     SWIZZLE_NIL, SWIZZLE_NIL);
+   }
+   else if (store->Size == 3) {
+      store->Swizzle = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y,
+                                     SWIZZLE_Z, SWIZZLE_NIL);
    }
    else {
       store->Swizzle = SWIZZLE_NOOP;
-      if (dbg) printf("Alloc var sz %d at %d.xyzw (level %d)\n",
-                      store->Size, store->Index, t->Level);
    }
+
+   if (dbg)
+      printf("Alloc var sz %d at %d.%s (level %d)\n",
+             store->Size, store->Index,
+             _mesa_swizzle_string(store->Swizzle, 0, 0),
+             t->Level);
+
    return GL_TRUE;
 }
 
@@ -279,6 +291,7 @@ _slang_alloc_temp(slang_var_table *vt, slang_ir_storage *store)
                       store->Size, store->Index, "xyzw"[comp], t->Level);
    }
    else {
+      /* XXX improve swizzled for size=2/3, use for writemask... */
       store->Swizzle = SWIZZLE_NOOP;
       if (dbg) printf("Alloc temp sz %d at %d.xyzw (level %d)\n",
                       store->Size, store->Index, t->Level);
