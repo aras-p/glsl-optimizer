@@ -171,21 +171,33 @@ free_temp_storage(slang_var_table *vt, slang_ir_node *n)
 
 
 /**
- * Remove any SWIZZLE_NIL terms from given swizzle mask (smear prev term).
- * Ex: fix_swizzle("zyNN") -> "zyyy"
- * XXX should put in the default component for the position...
+ * Remove any SWIZZLE_NIL terms from given swizzle mask.
+ * For a swizzle like .z??? generate .zzzz (replicate single component).
+ * Else, for .wx?? generate .wxzw (insert default component for the position).
  */
 static GLuint
 fix_swizzle(GLuint swizzle)
 {
-   GLuint swz[4], i;
-   for (i = 0; i < 4; i++) {
-      swz[i] = GET_SWZ(swizzle, i);
-      if (swz[i] == SWIZZLE_NIL) {
-         swz[i] = swz[i - 1];
-      }
+   GLuint c0 = GET_SWZ(swizzle, 0),
+      c1 = GET_SWZ(swizzle, 1),
+      c2 = GET_SWZ(swizzle, 2),
+      c3 = GET_SWZ(swizzle, 3);
+   if (c1 == SWIZZLE_NIL && c2 == SWIZZLE_NIL && c3 == SWIZZLE_NIL) {
+      /* smear first component across all positions */
+      c1 = c2 = c3 = c0;
    }
-   return MAKE_SWIZZLE4(swz[0], swz[1], swz[2], swz[3]);
+   else {
+      /* insert default swizzle components */
+      if (c0 == SWIZZLE_NIL)
+         c0 = SWIZZLE_X;
+      if (c1 == SWIZZLE_NIL)
+         c1 = SWIZZLE_Y;
+      if (c2 == SWIZZLE_NIL)
+         c2 = SWIZZLE_Z;
+      if (c3 == SWIZZLE_NIL)
+         c3 = SWIZZLE_W;
+   }
+   return MAKE_SWIZZLE4(c0, c1, c2, c3);
 }
 
 
@@ -216,6 +228,7 @@ storage_to_dst_reg(struct prog_dst_register *dst, const slang_ir_storage *st,
 
    assert(size >= 1);
    assert(size <= 4);
+
    if (size == 1) {
       GLuint comp = GET_SWZ(swizzle, 0);
       assert(comp < 4);
@@ -233,13 +246,6 @@ storage_to_dst_reg(struct prog_dst_register *dst, const slang_ir_storage *st,
 static void
 storage_to_src_reg(struct prog_src_register *src, const slang_ir_storage *st)
 {
-   static const GLuint defaultSwizzle[4] = {
-      MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_X, SWIZZLE_X, SWIZZLE_X),
-      MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_W),
-      MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_W),
-      MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_W)
-   };
-   const GLint size = st->Size;
    const GLboolean relAddr = st->RelAddr;
    GLint index = st->Index;
    GLuint swizzle = st->Swizzle;
@@ -250,7 +256,6 @@ storage_to_src_reg(struct prog_src_register *src, const slang_ir_storage *st)
       index += st->Index;
       swizzle = _slang_swizzle_swizzle(st->Swizzle, swizzle);
    }
-   swizzle = fix_swizzle(swizzle);
 
    assert(st->File >= 0);
    assert(st->File < PROGRAM_UNDEFINED);
@@ -259,20 +264,14 @@ storage_to_src_reg(struct prog_src_register *src, const slang_ir_storage *st)
    assert(index >= 0);
    src->Index = index;
 
-   assert(size >= 1);
-   assert(size <= 4);
+   swizzle = fix_swizzle(swizzle);
+   assert(GET_SWZ(swizzle, 0) <= SWIZZLE_W);
+   assert(GET_SWZ(swizzle, 1) <= SWIZZLE_W);
+   assert(GET_SWZ(swizzle, 2) <= SWIZZLE_W);
+   assert(GET_SWZ(swizzle, 3) <= SWIZZLE_W);
+   src->Swizzle = swizzle;
 
    src->RelAddr = relAddr;
-
-   if (swizzle != SWIZZLE_NOOP)
-      src->Swizzle = swizzle;
-   else
-      src->Swizzle = defaultSwizzle[size - 1]; /*XXX really need this?*/
-
-   assert(GET_SWZ(src->Swizzle, 0) <= 3);
-   assert(GET_SWZ(src->Swizzle, 1) <= 3);
-   assert(GET_SWZ(src->Swizzle, 2) <= 3);
-   assert(GET_SWZ(src->Swizzle, 3) <= 3);
 }
 
 
@@ -582,8 +581,7 @@ emit_arith(slang_emit_info *emitInfo, slang_ir_node *n)
 
    /* result storage */
    if (!n->Store) {
-      GLint size = n->Children[0]->Store
-         ? n->Children[0]->Store->Size : info->ResultSize;
+      GLint size = info->ResultSize;
       if (!alloc_temp_storage(emitInfo, n, size))
          return NULL;
 #if 0000 /* this should work, but doesn't yet */
@@ -591,6 +589,8 @@ emit_arith(slang_emit_info *emitInfo, slang_ir_node *n)
          n->Writemask = WRITEMASK_XY;
       else if (size == 3)
          n->Writemask = WRITEMASK_XYZ;
+      else if (size == 1)
+         n->Writemask = WRITEMASK_X << GET_SWZ(n->Store->Swizzle,0);
 #endif
    }
 
@@ -1045,10 +1045,9 @@ emit_move(slang_emit_info *emitInfo, slang_ir_node *n)
       assert(n->Children[0]->Store->Index >= 0);
 
       /* use tighter writemask when possible */
-#if 0000 /* XXX enable this after more testing... */
       if (n->Writemask == WRITEMASK_XYZW)
          n->Writemask = inst->DstReg.WriteMask;
-#endif
+
       storage_to_dst_reg(&inst->DstReg, n->Children[0]->Store, n->Writemask);
       return inst;
    }

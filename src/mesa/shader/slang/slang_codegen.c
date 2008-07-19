@@ -1388,6 +1388,27 @@ slang_find_asm_info(const char *name)
 
 
 /**
+ * Return the default swizzle mask for accessing a variable of the
+ * given size (in floats).  If size = 1, comp is used to identify
+ * which component [0..3] of the register holds the variable.
+ */
+static GLuint
+_slang_var_swizzle(GLint size, GLint comp)
+{
+   switch (size) {
+   case 1:
+      return MAKE_SWIZZLE4(comp, comp, comp, comp);
+   case 2:
+      return MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_NIL, SWIZZLE_NIL);
+   case 3:
+      return MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_NIL);
+   default:
+      return SWIZZLE_XYZW;
+   }
+}
+
+
+/**
  * Some write-masked assignments are simple, but others are hard.
  * Simple example:
  *    vec3 v;
@@ -3041,6 +3062,7 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
    int dbg = 0;
    const GLenum datatype = _slang_gltype_from_specifier(&var->type.specifier);
    const GLint texIndex = sampler_to_texture_index(var->type.specifier.type);
+   const GLint size = _slang_sizeof_type_specifier(&var->type.specifier);
 
    if (texIndex != -1) {
       /* This is a texture sampler variable...
@@ -3054,8 +3076,8 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
    }
    else if (var->type.qualifier == SLANG_QUAL_UNIFORM) {
       /* Uniform variable */
-      const GLint size = _slang_sizeof_type_specifier(&var->type.specifier)
-                         * MAX2(var->array_len, 1);
+      const GLint totalSize = size * MAX2(var->array_len, 1);
+      const GLuint swizzle = _slang_var_swizzle(totalSize, 0);
       if (prog) {
          /* user-defined uniform */
          if (datatype == GL_NONE) {
@@ -3084,8 +3106,10 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
          }
          else {
             GLint uniformLoc = _mesa_add_uniform(prog->Parameters, varName,
-                                                 size, datatype);
-            store = _slang_new_ir_storage(PROGRAM_UNIFORM, uniformLoc, size);
+                                                 totalSize, datatype);
+            store = _slang_new_ir_storage_swz(PROGRAM_UNIFORM, uniformLoc,
+                                              totalSize, swizzle);
+            printf("GLOBAL USER UNIFORM %s size %d\n", varName, totalSize);
          }
       }
       else {
@@ -3093,33 +3117,40 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
          /* We know it's a uniform, but don't allocate storage unless
           * it's really used.
           */
-         store = _slang_new_ir_storage(PROGRAM_STATE_VAR, -1, size);
+         store = _slang_new_ir_storage_swz(PROGRAM_STATE_VAR, -1,
+                                           totalSize, swizzle);
       }
-      if (dbg) printf("UNIFORM (sz %d) ", size);
+      if (dbg) printf("UNIFORM (sz %d) ", totalSize);
    }
    else if (var->type.qualifier == SLANG_QUAL_VARYING) {
-      const GLint size = 4; /* XXX fix */
       if (prog) {
          /* user-defined varying */
          GLint varyingLoc = _mesa_add_varying(prog->Varying, varName, size);
-         store = _slang_new_ir_storage(PROGRAM_VARYING, varyingLoc, size);
+         GLuint swizzle = _slang_var_swizzle(size, 0);
+         store = _slang_new_ir_storage_swz(PROGRAM_VARYING, varyingLoc,
+                                           size, swizzle);
       }
       else {
          /* pre-defined varying, like gl_Color or gl_TexCoord */
          if (type == SLANG_UNIT_FRAGMENT_BUILTIN) {
+            /* fragment program input */
             GLuint swizzle;
             GLint index = _slang_input_index(varName, GL_FRAGMENT_PROGRAM_ARB,
                                              &swizzle);
             assert(index >= 0);
-            store = _slang_new_ir_storage_swz(PROGRAM_INPUT, index, size, swizzle);
             assert(index < FRAG_ATTRIB_MAX);
+            store = _slang_new_ir_storage_swz(PROGRAM_INPUT, index,
+                                              size, swizzle);
          }
          else {
+            /* vertex program output */
             GLint index = _slang_output_index(varName, GL_VERTEX_PROGRAM_ARB);
+            GLuint swizzle = _slang_var_swizzle(size, 0);
             assert(index >= 0);
-            assert(type == SLANG_UNIT_VERTEX_BUILTIN);
-            store = _slang_new_ir_storage(PROGRAM_OUTPUT, index, size);
             assert(index < VERT_RESULT_MAX);
+            assert(type == SLANG_UNIT_VERTEX_BUILTIN);
+            store = _slang_new_ir_storage_swz(PROGRAM_OUTPUT, index,
+                                              size, swizzle);
          }
          if (dbg) printf("V/F ");
       }
@@ -3128,7 +3159,6 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
    else if (var->type.qualifier == SLANG_QUAL_ATTRIBUTE) {
       if (prog) {
          /* user-defined vertex attribute */
-         const GLint size = _slang_sizeof_type_specifier(&var->type.specifier);
          const GLint attr = -1; /* unknown */
          GLint index = _mesa_add_attribute(prog->Attributes, varName,
                                            size, attr);
@@ -3141,7 +3171,6 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
          GLuint swizzle;
          GLint index = _slang_input_index(varName, GL_VERTEX_PROGRAM_ARB,
                                           &swizzle);
-         GLint size = 4; /* XXX? */
          assert(index >= 0);
          store = _slang_new_ir_storage_swz(PROGRAM_INPUT, index, size, swizzle);
       }
@@ -3151,27 +3180,24 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
       GLuint swizzle = SWIZZLE_XYZW; /* silence compiler warning */
       GLint index = _slang_input_index(varName, GL_FRAGMENT_PROGRAM_ARB,
                                        &swizzle);
-      GLint size = 4; /* XXX? */
       store = _slang_new_ir_storage_swz(PROGRAM_INPUT, index, size, swizzle);
       if (dbg) printf("INPUT ");
    }
    else if (var->type.qualifier == SLANG_QUAL_FIXEDOUTPUT) {
       if (type == SLANG_UNIT_VERTEX_BUILTIN) {
          GLint index = _slang_output_index(varName, GL_VERTEX_PROGRAM_ARB);
-         GLint size = 4; /* XXX? */
          store = _slang_new_ir_storage(PROGRAM_OUTPUT, index, size);
       }
       else {
          GLint index = _slang_output_index(varName, GL_FRAGMENT_PROGRAM_ARB);
-         GLint size = 4; /* XXX? */
+         GLint specialSize = 4; /* treat all fragment outputs as float[4] */
          assert(type == SLANG_UNIT_FRAGMENT_BUILTIN);
-         store = _slang_new_ir_storage(PROGRAM_OUTPUT, index, size);
+         store = _slang_new_ir_storage(PROGRAM_OUTPUT, index, specialSize);
       }
       if (dbg) printf("OUTPUT ");
    }
    else if (var->type.qualifier == SLANG_QUAL_CONST && !prog) {
       /* pre-defined global constant, like gl_MaxLights */
-      const GLint size = _slang_sizeof_type_specifier(&var->type.specifier);
       store = _slang_new_ir_storage(PROGRAM_CONSTANT, -1, size);
       if (dbg) printf("CONST ");
    }

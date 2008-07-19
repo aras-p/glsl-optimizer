@@ -347,7 +347,7 @@ _mesa_add_varying(struct gl_program_parameter_list *paramList,
       return i;
    }
    else {
-      assert(size == 4);
+      /*assert(size == 4);*/
       i = _mesa_add_parameter(paramList, PROGRAM_VARYING, name,
                               size, GL_NONE, NULL, NULL);
       return i;

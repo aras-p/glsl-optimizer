@@ -313,7 +313,7 @@ reg_string(enum register_file f, GLint index, gl_prog_print_mode mode,
 const char *
 _mesa_swizzle_string(GLuint swizzle, GLuint negateBase, GLboolean extended)
 {
-   static const char swz[] = "xyzw01?!";
+   static const char swz[] = "xyzw01!?";  /* See SWIZZLE_x definitions */
    static char s[20];
    GLuint i = 0;
 
