@@ -6,6 +6,7 @@
 struct pipe_context;
 
 struct pipe_context* create_pipe_context(Display *display);
+int destroy_pipe_context(struct pipe_context *pipe);
 
 #endif
 

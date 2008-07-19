@@ -136,7 +136,8 @@ Status XvMCCreateContext(Display *display, XvPortID port, int surface_type_id, i
 
 Status XvMCDestroyContext(Display *display, XvMCContext *context)
 {
-	struct VL_CONTEXT *vl_ctx;
+	struct VL_CONTEXT	*vl_ctx;
+	struct pipe_context	*pipe;
 	
 	assert(display);
 	
@@ -147,7 +148,9 @@ Status XvMCDestroyContext(Display *display, XvMCContext *context)
 	
 	assert(display == vl_ctx->display);
 	
+	pipe = vl_ctx->pipe;
 	vlDestroyContext(vl_ctx);
+	destroy_pipe_context(pipe);
 	
 	return Success;
 }

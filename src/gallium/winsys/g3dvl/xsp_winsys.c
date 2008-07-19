@@ -224,8 +224,8 @@ static const char* xsp_get_name(struct pipe_winsys *pws)
 struct pipe_context* create_pipe_context(Display *display)
 {
 	struct xsp_pipe_winsys	*xsp_winsys;
-	struct pipe_screen	*p_screen;
-	struct pipe_context	*p_context;
+	struct pipe_screen	*screen;
+	struct pipe_context	*pipe;
 	
 	assert(display);
 	
@@ -269,9 +269,25 @@ struct pipe_context* create_pipe_context(Display *display)
 		XDestroyImage(template);
 	}
 	
-	p_screen = softpipe_create_screen((struct pipe_winsys*)xsp_winsys);
-	p_context = softpipe_create(p_screen, (struct pipe_winsys*)xsp_winsys, NULL);
+	screen = softpipe_create_screen((struct pipe_winsys*)xsp_winsys);
+	pipe = softpipe_create(screen, (struct pipe_winsys*)xsp_winsys, NULL);
 	
-	return p_context;
+	return pipe;
+}
+
+int destroy_pipe_context(struct pipe_context *pipe)
+{
+	struct pipe_screen *screen;
+	struct pipe_winsys *winsys;
+	
+	assert(pipe);
+	
+	screen = pipe->screen;
+	winsys = pipe->winsys;
+	pipe->destroy(pipe);
+	screen->destroy(screen);
+	free(winsys);
+	
+	return 0;
 }
 

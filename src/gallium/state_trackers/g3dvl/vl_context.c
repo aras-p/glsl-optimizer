@@ -2208,8 +2208,6 @@ int vlDestroyContext(struct VL_CONTEXT *context)
 	
 	vlDestroy(context);
 	
-	context->pipe->destroy(context->pipe);
-	
 	free(context);
 	
 	return 0;
