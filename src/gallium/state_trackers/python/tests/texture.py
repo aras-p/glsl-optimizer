@@ -136,7 +136,7 @@ class TextureTest(TestCase):
         level = self.level
         zslice = self.zslice
         
-        if not dev.is_format_supported(format, PIPE_TEXTURE_2D, PIPE_TEXTURE_USAGE_SAMPLER, 0):
+        if not dev.is_format_supported(format, target, PIPE_TEXTURE_USAGE_SAMPLER, 0):
             raise TestSkip
         
         ctx = self.dev.context_create()
@@ -364,7 +364,8 @@ def main():
                     levels = lods(size)
                     for last_level in range(levels):
                         for level in range(0, last_level + 1):
-                            for zslice in range(0, depth >> level):
+                            zslice = 0
+                            while zslice < depth >> level:
                                 test = TextureTest(
                                     dev = dev,
                                     target = target,
@@ -378,6 +379,7 @@ def main():
                                     zslice = zslice,
                                 )
                                 suite.add_test(test)
+                                zslice = (zslice + 1)*2 - 1
     suite.run()
 
 
