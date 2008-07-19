@@ -266,5 +266,5 @@ tgsi_sanity_check(
    if (tgsi_iterate_shader( tokens, &ctx.iter ) == -1)
       return FALSE;
 
-   return ctx.errors > 0;
+   return ctx.errors == 0;
 }
