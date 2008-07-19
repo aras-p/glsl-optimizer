@@ -240,20 +240,6 @@ _slang_free_ir_tree(slang_ir_node *n)
 
 
 static const char *
-swizzle_string(GLuint swizzle)
-{
-   static char s[6];
-   GLuint i;
-   s[0] = '.';
-   for (i = 1; i < 5; i++) {
-      s[i] = "xyzw"[GET_SWZ(swizzle, i-1)];
-   }
-   s[i] = 0;
-   return s;
-}
-
-
-static const char *
 writemask_string(GLuint writemask)
 {
    static char s[6];
@@ -410,7 +396,7 @@ _slang_print_ir_tree(const slang_ir_node *n, int indent)
    case IR_VAR:
       printf("VAR %s%s at %s  store %p\n",
              (n->Var ? (char *) n->Var->a_name : "TEMP"),
-             swizzle_string(n->Store->Swizzle),
+             _mesa_swizzle_string(n->Store->Swizzle, 0, 0),
              storage_string(n->Store), (void*) n->Store);
       break;
    case IR_VAR_DECL:
@@ -437,7 +423,7 @@ _slang_print_ir_tree(const slang_ir_node *n, int indent)
       break;
    case IR_SWIZZLE:
       printf("SWIZZLE %s of  (store %p) \n",
-             swizzle_string(n->Store->Swizzle), (void*) n->Store);
+             _mesa_swizzle_string(n->Store->Swizzle, 0, 0), (void*) n->Store);
       _slang_print_ir_tree(n->Children[0], indent + 3);
       break;
    default:
