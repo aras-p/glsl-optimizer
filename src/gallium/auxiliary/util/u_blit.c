@@ -307,8 +307,10 @@ util_blit_pixels(struct blit_state *ctx,
       dstY1 = tmp;
    }
 
-   assert(screen->is_format_supported(screen, src->format, PIPE_TEXTURE));
-   assert(screen->is_format_supported(screen, dst->format, PIPE_TEXTURE));
+   assert(screen->is_format_supported(screen, src->format, PIPE_TEXTURE_2D,
+                                      PIPE_TEXTURE_USAGE_SAMPLER, 0));
+   assert(screen->is_format_supported(screen, dst->format, PIPE_TEXTURE_2D,
+                                      PIPE_TEXTURE_USAGE_SAMPLER, 0));
 
    if(dst->format == src->format && (dstX1 - dstX0) == srcW && (dstY1 - dstY0) == srcH) {
       /* FIXME: this will most surely fail for overlapping rectangles */
@@ -319,7 +321,8 @@ util_blit_pixels(struct blit_state *ctx,
       return;
    }
    
-   assert(screen->is_format_supported(screen, dst->format, PIPE_SURFACE));
+   assert(screen->is_format_supported(screen, dst->format, PIPE_TEXTURE_2D,
+                                      PIPE_TEXTURE_USAGE_RENDER_TARGET, 0));
 
    /*
     * XXX for now we're always creating a temporary texture.
@@ -449,7 +452,8 @@ util_blit_pixels_tex(struct blit_state *ctx,
    t0 = srcY0 / (float)tex->height[0];
    t1 = srcY1 / (float)tex->height[0];
 
-   assert(screen->is_format_supported(screen, dst->format, PIPE_SURFACE));
+   assert(screen->is_format_supported(screen, dst->format, PIPE_TEXTURE_2D,
+                                      PIPE_TEXTURE_USAGE_RENDER_TARGET, 0));
 
    /* save state (restored below) */
    cso_save_blend(ctx->cso);

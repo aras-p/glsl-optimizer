@@ -995,18 +995,21 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
 
    srcFormat = rbRead->texture->format;
 
-   if (screen->is_format_supported(screen, srcFormat, PIPE_TEXTURE)) {
+   if (screen->is_format_supported(screen, srcFormat, PIPE_TEXTURE_2D, 
+                                   PIPE_TEXTURE_USAGE_SAMPLER, 0)) {
       texFormat = srcFormat;
    }
    else {
       /* srcFormat can't be used as a texture format */
       if (type == GL_DEPTH) {
-         texFormat = st_choose_format(pipe, GL_DEPTH_COMPONENT, PIPE_TEXTURE);
+         texFormat = st_choose_format(pipe, GL_DEPTH_COMPONENT, PIPE_TEXTURE_2D, 
+                                      PIPE_TEXTURE_USAGE_DEPTH_STENCIL);
          assert(texFormat != PIPE_FORMAT_NONE); /* XXX no depth texture formats??? */
       }
       else {
          /* default color format */
-         texFormat = st_choose_format(pipe, GL_RGBA, PIPE_TEXTURE);
+         texFormat = st_choose_format(pipe, GL_RGBA, PIPE_TEXTURE_2D, 
+                                      PIPE_TEXTURE_USAGE_SAMPLER);
          assert(texFormat != PIPE_FORMAT_NONE);
       }
    }

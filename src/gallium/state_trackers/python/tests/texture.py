@@ -136,7 +136,7 @@ class TextureTest(TestCase):
         level = self.level
         zslice = self.zslice
         
-        if not dev.is_format_supported(format, PIPE_TEXTURE):
+        if not dev.is_format_supported(format, PIPE_TEXTURE_2D, PIPE_TEXTURE_USAGE_SAMPLER, 0):
             raise TestSkip
         
         ctx = self.dev.context_create()
@@ -199,6 +199,7 @@ class TextureTest(TestCase):
             height = height,
             depth = depth, 
             last_level = last_level,
+            tex_usage = PIPE_TEXTURE_USAGE_SAMPLER,
         )
         
         expected_rgba = FloatArray(height*width*4) 
@@ -212,10 +213,12 @@ class TextureTest(TestCase):
         ctx.set_sampler_texture(0, texture)
 
         #  framebuffer 
-        cbuf_tex = dev.texture_create(PIPE_FORMAT_A8R8G8B8_UNORM, 
-                                      width, 
-                                      height,
-                                      usage = PIPE_TEXTURE_USAGE_RENDER_TARGET)
+        cbuf_tex = dev.texture_create(
+            PIPE_FORMAT_A8R8G8B8_UNORM, 
+            width, 
+            height,
+            tex_usage = PIPE_TEXTURE_USAGE_RENDER_TARGET,
+        )
 
         cbuf = cbuf_tex.get_surface(usage = PIPE_BUFFER_USAGE_GPU_WRITE|PIPE_BUFFER_USAGE_GPU_READ)
         fb = Framebuffer()

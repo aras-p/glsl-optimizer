@@ -158,8 +158,15 @@ struct st_context {
     * drawing surface.
     * \param type  one of PIPE_TEXTURE, PIPE_SURFACE
     */
-   int is_format_supported( enum pipe_format format, unsigned type ) {
-      return $self->screen->is_format_supported( $self->screen, format, type);
+   int is_format_supported( enum pipe_format format, 
+                            enum pipe_texture_target target,
+                            unsigned tex_usage, 
+                            unsigned geom_flags ) {
+      return $self->screen->is_format_supported( $self->screen, 
+                                                 format, 
+                                                 target, 
+                                                 tex_usage, 
+                                                 geom_flags );
    }
 
    struct st_context *
@@ -175,7 +182,7 @@ struct st_context {
          unsigned depth = 1,
          unsigned last_level = 0,
          enum pipe_texture_target target = PIPE_TEXTURE_2D,
-         unsigned usage = 0
+         unsigned tex_usage = 0
       ) {
       struct pipe_texture templat;
       memset(&templat, 0, sizeof(templat));
@@ -186,7 +193,7 @@ struct st_context {
       templat.depth[0] = depth;
       templat.last_level = last_level;
       templat.target = target;
-      templat.tex_usage = usage;
+      templat.tex_usage = tex_usage;
       return $self->screen->texture_create($self->screen, &templat);
    }
    

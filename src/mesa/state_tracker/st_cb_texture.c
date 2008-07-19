@@ -1210,9 +1210,13 @@ do_copy_texsubimage(GLcontext *ctx,
          use_fallback = GL_FALSE;
       }
       else if (screen->is_format_supported(screen, strb->surface->format,
-                                           PIPE_TEXTURE) &&
+                                           PIPE_TEXTURE_2D, 
+                                           PIPE_TEXTURE_USAGE_SAMPLER,
+                                           0) &&
                screen->is_format_supported(screen, dest_surface->format,
-                                           PIPE_SURFACE)) {
+                                           PIPE_TEXTURE_2D, 
+                                           PIPE_TEXTURE_USAGE_RENDER_TARGET,
+                                           0)) {
          boolean do_flip = (st_fb_orientation(ctx->ReadBuffer) == Y_0_TOP);
          int srcY0, srcY1;
          if (do_flip) {

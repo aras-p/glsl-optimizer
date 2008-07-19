@@ -115,23 +115,17 @@ cell_get_paramf(struct pipe_screen *screen, int param)
 
 static boolean
 cell_is_format_supported( struct pipe_screen *screen,
-                          enum pipe_format format, uint type )
+                          enum pipe_format format, 
+                          enum pipe_texture_target target,
+                          unsigned tex_usage, 
+                          unsigned geom_flags )
 {
-   switch (type) {
-   case PIPE_TEXTURE:
-      /* cell supports most texture formats, XXX for now anyway */
-      if (format == PIPE_FORMAT_DXT5_RGBA ||
-          format == PIPE_FORMAT_R8G8B8A8_SRGB)
-         return FALSE;
-      else
-         return TRUE;
-   case PIPE_SURFACE:
-      /* cell supports all (off-screen) surface formats, XXX for now */
-      return TRUE;
-   default:
-      assert(0);
+   /* cell supports most formats, XXX for now anyway */
+   if (format == PIPE_FORMAT_DXT5_RGBA ||
+       format == PIPE_FORMAT_R8G8B8A8_SRGB)
       return FALSE;
-   }
+   else
+      return TRUE;
 }
 
 

@@ -140,9 +140,11 @@ def test(dev):
     ctx.set_clip(clip)
 
     # framebuffer
-    cbuf = dev.texture_create(PIPE_FORMAT_X8R8G8B8_UNORM, 
-                              width, height,
-                              usage=PIPE_TEXTURE_USAGE_DISPLAY_TARGET)
+    cbuf = dev.texture_create(
+        PIPE_FORMAT_X8R8G8B8_UNORM, 
+        width, height,
+        tex_usage=PIPE_TEXTURE_USAGE_DISPLAY_TARGET,
+    )
     _cbuf = cbuf.get_surface(usage = PIPE_BUFFER_USAGE_GPU_READ|PIPE_BUFFER_USAGE_GPU_WRITE)
     fb = Framebuffer()
     fb.width = width

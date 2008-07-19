@@ -281,7 +281,10 @@ st_mesa_format_to_pipe_format(GLuint mesaFormat)
  * Find an RGBA format supported by the context/winsys.
  */
 static enum pipe_format
-default_rgba_format(struct pipe_screen *screen, uint type)
+default_rgba_format(struct pipe_screen *screen, 
+                    enum pipe_texture_target target,
+                    unsigned tex_usage, 
+                    unsigned geom_flags)
 {
    static const enum pipe_format colorFormats[] = {
       PIPE_FORMAT_A8R8G8B8_UNORM,
@@ -291,7 +294,7 @@ default_rgba_format(struct pipe_screen *screen, uint type)
    };
    uint i;
    for (i = 0; i < Elements(colorFormats); i++) {
-      if (screen->is_format_supported( screen, colorFormats[i], type )) {
+      if (screen->is_format_supported( screen, colorFormats[i], target, tex_usage, geom_flags )) {
          return colorFormats[i];
       }
    }
@@ -303,13 +306,16 @@ default_rgba_format(struct pipe_screen *screen, uint type)
  * Search list of formats for first RGBA format with >8 bits/channel.
  */
 static enum pipe_format
-default_deep_rgba_format(struct pipe_screen *screen, uint type)
+default_deep_rgba_format(struct pipe_screen *screen, 
+                         enum pipe_texture_target target,
+                         unsigned tex_usage, 
+                         unsigned geom_flags)
 {
-   if (screen->is_format_supported(screen, PIPE_FORMAT_R16G16B16A16_SNORM, type)) {
+   if (screen->is_format_supported(screen, PIPE_FORMAT_R16G16B16A16_SNORM, target, tex_usage, geom_flags)) {
       return PIPE_FORMAT_R16G16B16A16_SNORM;
    }
-   if (type == PIPE_TEXTURE)
-      return default_rgba_format(screen, type);
+   if (tex_usage & PIPE_TEXTURE_USAGE_RENDER_TARGET)
+      return default_rgba_format(screen, target, tex_usage, geom_flags);
    else
       return PIPE_FORMAT_NONE;
 }
@@ -319,7 +325,10 @@ default_deep_rgba_format(struct pipe_screen *screen, uint type)
  * Find an Z format supported by the context/winsys.
  */
 static enum pipe_format
-default_depth_format(struct pipe_screen *screen, uint type)
+default_depth_format(struct pipe_screen *screen, 
+                     enum pipe_texture_target target,
+                     unsigned tex_usage, 
+                     unsigned geom_flags)
 {
    static const enum pipe_format zFormats[] = {
       PIPE_FORMAT_Z16_UNORM,
@@ -329,7 +338,7 @@ default_depth_format(struct pipe_screen *screen, uint type)
    };
    uint i;
    for (i = 0; i < Elements(zFormats); i++) {
-      if (screen->is_format_supported( screen, zFormats[i], type )) {
+      if (screen->is_format_supported( screen, zFormats[i], target, tex_usage, geom_flags )) {
          return zFormats[i];
       }
    }
@@ -343,12 +352,10 @@ default_depth_format(struct pipe_screen *screen, uint type)
  */
 enum pipe_format
 st_choose_format(struct pipe_context *pipe, GLint internalFormat,
-                 uint surfType)
+                 enum pipe_texture_target target, unsigned tex_usage)
 {
    struct pipe_screen *screen = pipe->screen;
-
-   assert(surfType == PIPE_SURFACE ||
-          surfType == PIPE_TEXTURE);
+   unsigned geom_flags = 0;
 
    switch (internalFormat) {
    case 4:
@@ -360,38 +367,38 @@ st_choose_format(struct pipe_context *pipe, GLint internalFormat,
    case GL_RGBA8:
    case GL_RGB10_A2:
    case GL_RGBA12:
-      return default_rgba_format( screen, surfType );
+      return default_rgba_format( screen, target, tex_usage, geom_flags );
    case GL_RGBA16:
-      if (surfType == PIPE_SURFACE)
-         return default_deep_rgba_format( screen, surfType );
+      if (tex_usage & PIPE_TEXTURE_USAGE_RENDER_TARGET)
+         return default_deep_rgba_format( screen, target, tex_usage, geom_flags );
       else
-         return default_rgba_format( screen, surfType );
+         return default_rgba_format( screen, target, tex_usage, geom_flags );
 
    case GL_RGBA4:
    case GL_RGBA2:
-      if (screen->is_format_supported( screen, PIPE_FORMAT_A4R4G4B4_UNORM, surfType ))
+      if (screen->is_format_supported( screen, PIPE_FORMAT_A4R4G4B4_UNORM, target, tex_usage, geom_flags ))
          return PIPE_FORMAT_A4R4G4B4_UNORM;
-      return default_rgba_format( screen, surfType );
+      return default_rgba_format( screen, target, tex_usage, geom_flags );
 
    case GL_RGB5_A1:
-      if (screen->is_format_supported( screen, PIPE_FORMAT_A1R5G5B5_UNORM, surfType ))
+      if (screen->is_format_supported( screen, PIPE_FORMAT_A1R5G5B5_UNORM, target, tex_usage, geom_flags ))
          return PIPE_FORMAT_A1R5G5B5_UNORM;
-      return default_rgba_format( screen, surfType );
+      return default_rgba_format( screen, target, tex_usage, geom_flags );
 
    case GL_RGB8:
    case GL_RGB10:
    case GL_RGB12:
    case GL_RGB16:
-      return default_rgba_format( screen, surfType );
+      return default_rgba_format( screen, target, tex_usage, geom_flags );
 
    case GL_RGB5:
    case GL_RGB4:
    case GL_R3_G3_B2:
-      if (screen->is_format_supported( screen, PIPE_FORMAT_A1R5G5B5_UNORM, surfType ))
+      if (screen->is_format_supported( screen, PIPE_FORMAT_A1R5G5B5_UNORM, target, tex_usage, geom_flags ))
          return PIPE_FORMAT_A1R5G5B5_UNORM;
-      if (screen->is_format_supported( screen, PIPE_FORMAT_R5G6B5_UNORM, surfType ))
+      if (screen->is_format_supported( screen, PIPE_FORMAT_R5G6B5_UNORM, target, tex_usage, geom_flags ))
          return PIPE_FORMAT_R5G6B5_UNORM;
-      return default_rgba_format( screen, surfType );
+      return default_rgba_format( screen, target, tex_usage, geom_flags );
 
    case GL_ALPHA:
    case GL_ALPHA4:
@@ -399,9 +406,9 @@ st_choose_format(struct pipe_context *pipe, GLint internalFormat,
    case GL_ALPHA12:
    case GL_ALPHA16:
    case GL_COMPRESSED_ALPHA:
-      if (screen->is_format_supported( screen, PIPE_FORMAT_A8_UNORM, surfType ))
+      if (screen->is_format_supported( screen, PIPE_FORMAT_A8_UNORM, target, tex_usage, geom_flags ))
          return PIPE_FORMAT_A8_UNORM;
-      return default_rgba_format( screen, surfType );
+      return default_rgba_format( screen, target, tex_usage, geom_flags );
 
    case 1:
    case GL_LUMINANCE:
@@ -410,9 +417,9 @@ st_choose_format(struct pipe_context *pipe, GLint internalFormat,
    case GL_LUMINANCE12:
    case GL_LUMINANCE16:
    case GL_COMPRESSED_LUMINANCE:
-      if (screen->is_format_supported( screen, PIPE_FORMAT_L8_UNORM, surfType ))
+      if (screen->is_format_supported( screen, PIPE_FORMAT_L8_UNORM, target, tex_usage, geom_flags ))
          return PIPE_FORMAT_L8_UNORM;
-      return default_rgba_format( screen, surfType );
+      return default_rgba_format( screen, target, tex_usage, geom_flags );
 
    case 2:
    case GL_LUMINANCE_ALPHA:
@@ -423,9 +430,9 @@ st_choose_format(struct pipe_context *pipe, GLint internalFormat,
    case GL_LUMINANCE12_ALPHA12:
    case GL_LUMINANCE16_ALPHA16:
    case GL_COMPRESSED_LUMINANCE_ALPHA:
-      if (screen->is_format_supported( screen, PIPE_FORMAT_A8L8_UNORM, surfType ))
+      if (screen->is_format_supported( screen, PIPE_FORMAT_A8L8_UNORM, target, tex_usage, geom_flags ))
          return PIPE_FORMAT_A8L8_UNORM;
-      return default_rgba_format( screen, surfType );
+      return default_rgba_format( screen, target, tex_usage, geom_flags );
 
    case GL_INTENSITY:
    case GL_INTENSITY4:
@@ -433,17 +440,17 @@ st_choose_format(struct pipe_context *pipe, GLint internalFormat,
    case GL_INTENSITY12:
    case GL_INTENSITY16:
    case GL_COMPRESSED_INTENSITY:
-      if (screen->is_format_supported( screen, PIPE_FORMAT_I8_UNORM, surfType ))
+      if (screen->is_format_supported( screen, PIPE_FORMAT_I8_UNORM, target, tex_usage, geom_flags ))
          return PIPE_FORMAT_I8_UNORM;
-      return default_rgba_format( screen, surfType );
+      return default_rgba_format( screen, target, tex_usage, geom_flags );
 
    case GL_YCBCR_MESA:
       if (screen->is_format_supported(screen, PIPE_FORMAT_YCBCR,
-                                      PIPE_TEXTURE)) {
+                                      target, tex_usage, geom_flags)) {
          return PIPE_FORMAT_YCBCR;
       }
       if (screen->is_format_supported(screen, PIPE_FORMAT_YCBCR_REV,
-                                      PIPE_TEXTURE)) {
+                                      target, tex_usage, geom_flags)) {
          return PIPE_FORMAT_YCBCR_REV;
       }
       return PIPE_FORMAT_NONE;
@@ -472,40 +479,40 @@ st_choose_format(struct pipe_context *pipe, GLint internalFormat,
 #endif
 
    case GL_DEPTH_COMPONENT16:
-      if (screen->is_format_supported( screen, PIPE_FORMAT_Z16_UNORM, surfType ))
+      if (screen->is_format_supported( screen, PIPE_FORMAT_Z16_UNORM, target, tex_usage, geom_flags ))
          return PIPE_FORMAT_Z16_UNORM;
       /* fall-through */
    case GL_DEPTH_COMPONENT24:
-      if (screen->is_format_supported( screen, PIPE_FORMAT_S8Z24_UNORM, surfType ))
+      if (screen->is_format_supported( screen, PIPE_FORMAT_S8Z24_UNORM, target, tex_usage, geom_flags ))
          return PIPE_FORMAT_S8Z24_UNORM;
-      if (screen->is_format_supported( screen, PIPE_FORMAT_Z24S8_UNORM, surfType ))
+      if (screen->is_format_supported( screen, PIPE_FORMAT_Z24S8_UNORM, target, tex_usage, geom_flags ))
          return PIPE_FORMAT_Z24S8_UNORM;
       /* fall-through */
    case GL_DEPTH_COMPONENT32:
-      if (screen->is_format_supported( screen, PIPE_FORMAT_Z32_UNORM, surfType ))
+      if (screen->is_format_supported( screen, PIPE_FORMAT_Z32_UNORM, target, tex_usage, geom_flags ))
          return PIPE_FORMAT_Z32_UNORM;
       /* fall-through */
    case GL_DEPTH_COMPONENT:
-      return default_depth_format( screen, surfType );
+      return default_depth_format( screen, target, tex_usage, geom_flags );
 
    case GL_STENCIL_INDEX:
    case GL_STENCIL_INDEX1_EXT:
    case GL_STENCIL_INDEX4_EXT:
    case GL_STENCIL_INDEX8_EXT:
    case GL_STENCIL_INDEX16_EXT:
-      if (screen->is_format_supported( screen, PIPE_FORMAT_S8_UNORM, surfType ))
+      if (screen->is_format_supported( screen, PIPE_FORMAT_S8_UNORM, target, tex_usage, geom_flags ))
          return PIPE_FORMAT_S8_UNORM;
-      if (screen->is_format_supported( screen, PIPE_FORMAT_S8Z24_UNORM, surfType ))
+      if (screen->is_format_supported( screen, PIPE_FORMAT_S8Z24_UNORM, target, tex_usage, geom_flags ))
          return PIPE_FORMAT_S8Z24_UNORM;
-      if (screen->is_format_supported( screen, PIPE_FORMAT_Z24S8_UNORM, surfType ))
+      if (screen->is_format_supported( screen, PIPE_FORMAT_Z24S8_UNORM, target, tex_usage, geom_flags ))
          return PIPE_FORMAT_Z24S8_UNORM;
       return PIPE_FORMAT_NONE;
 
    case GL_DEPTH_STENCIL_EXT:
    case GL_DEPTH24_STENCIL8_EXT:
-      if (screen->is_format_supported( screen, PIPE_FORMAT_S8Z24_UNORM, surfType ))
+      if (screen->is_format_supported( screen, PIPE_FORMAT_S8Z24_UNORM, target, tex_usage, geom_flags ))
          return PIPE_FORMAT_S8Z24_UNORM;
-      if (screen->is_format_supported( screen, PIPE_FORMAT_Z24S8_UNORM, surfType ))
+      if (screen->is_format_supported( screen, PIPE_FORMAT_Z24S8_UNORM, target, tex_usage, geom_flags ))
          return PIPE_FORMAT_Z24S8_UNORM;
       return PIPE_FORMAT_NONE;
 
@@ -521,7 +528,8 @@ st_choose_format(struct pipe_context *pipe, GLint internalFormat,
 enum pipe_format
 st_choose_renderbuffer_format(struct pipe_context *pipe, GLint internalFormat)
 {
-   return st_choose_format(pipe, internalFormat, PIPE_SURFACE);
+   return st_choose_format(pipe, internalFormat, PIPE_TEXTURE_2D, 
+                           PIPE_TEXTURE_USAGE_RENDER_TARGET);
 }
 
 
@@ -587,7 +595,8 @@ st_ChooseTextureFormat(GLcontext *ctx, GLint internalFormat,
    (void) format;
    (void) type;
 
-   pFormat = st_choose_format(ctx->st->pipe, internalFormat, PIPE_TEXTURE);
+   pFormat = st_choose_format(ctx->st->pipe, internalFormat, PIPE_TEXTURE_2D, 
+                              PIPE_TEXTURE_USAGE_SAMPLER);
    if (pFormat == PIPE_FORMAT_NONE)
       return NULL;
 

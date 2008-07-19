@@ -136,7 +136,10 @@ brw_get_paramf(struct pipe_screen *screen, int param)
 
 static boolean
 brw_is_format_supported( struct pipe_screen *screen,
-                         enum pipe_format format, uint type )
+                         enum pipe_format format, 
+                         enum pipe_texture_target target,
+                         unsigned tex_usage, 
+                         unsigned geom_flags )
 {
 #if 0
    /* XXX: This is broken -- rewrite if still needed. */

@@ -172,11 +172,8 @@ enum pipe_texture_target {
 #define PIPE_TEXTURE_USAGE_DEPTH_STENCIL   0x8
 #define PIPE_TEXTURE_USAGE_SAMPLER         0x10
 
-/**
- * Surfaces, textures, etc. (others may be added)
- */
-#define PIPE_TEXTURE        1
-#define PIPE_SURFACE        2  /**< user-created surfaces */
+#define PIPE_TEXTURE_GEOM_NON_SQUARE       0x1
+#define PIPE_TEXTURE_GEOM_NON_POWER_OF_TWO 0x2
 
 
 /**
