@@ -38,6 +38,9 @@ tgsi_iterate_shader(
    if (tgsi_parse_init( &parse, tokens ) != TGSI_PARSE_OK)
       return FALSE;
 
+   ctx->processor = parse.FullHeader.Processor;
+   ctx->version = parse.FullVersion.Version;
+
    if (ctx->prolog)
       if (!ctx->prolog( ctx ))
          goto fail;

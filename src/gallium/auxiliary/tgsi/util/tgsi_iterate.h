@@ -59,6 +59,9 @@ struct tgsi_iterate_context
    boolean
    (* epilog)(
       struct tgsi_iterate_context *ctx );
+
+   struct tgsi_processor processor;
+   struct tgsi_version version;
 };
 
 boolean
