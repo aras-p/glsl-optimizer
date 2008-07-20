@@ -263,7 +263,7 @@ tgsi_sanity_check(
    ctx.errors = 0;
    ctx.warnings = 0;
 
-   if (tgsi_iterate_shader( tokens, &ctx.iter ) == -1)
+   if (!tgsi_iterate_shader( tokens, &ctx.iter ))
       return FALSE;
 
    return ctx.errors == 0;
