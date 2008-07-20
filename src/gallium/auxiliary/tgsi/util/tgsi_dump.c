@@ -536,7 +536,6 @@ tgsi_dump(
    /* sanity checks */
    assert( strcmp( opcode_names[TGSI_OPCODE_CONT], "CONT" ) == 0 );
    assert( strcmp( opcode_names[TGSI_OPCODE_END], "END" ) == 0 );
-   assert( strcmp( opcode_names[TGSI_OPCODE_END], "END" ) == 0 );
 
    ctx.iter.prolog = prolog;
    ctx.iter.iterate_instruction = iter_instruction;
