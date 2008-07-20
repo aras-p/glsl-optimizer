@@ -486,7 +486,8 @@ tgsi_dump_instruction(
 
 void
 tgsi_dump(
-   const struct tgsi_token *tokens )
+   const struct tgsi_token *tokens,
+   uint flags )
 {
    struct tgsi_parse_context parse;
    struct tgsi_full_instruction fi;

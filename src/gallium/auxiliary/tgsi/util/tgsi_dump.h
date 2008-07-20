@@ -36,7 +36,8 @@ extern "C" {
 
 void
 tgsi_dump(
-   const struct tgsi_token *tokens );
+   const struct tgsi_token *tokens,
+   uint flags );
 
 struct tgsi_full_immediate;
 struct tgsi_full_instruction;
