@@ -35,8 +35,6 @@ import struct
 
 __version__ = '0.1'
 
-verbose = False
-
 
 class ParseError(Exception):
 	pass
@@ -211,7 +209,7 @@ class Profile:
 			if self.base_addr is None:
 				ref_addr = self.lookup_symbol('__debug_profile_reference2')
 				if ref_addr:
-					self.base_addr = addr - ref_addr
+					self.base_addr = (addr - ref_addr) & ~(options.align - 1)
 				else:
 					self.base_addr = 0
 				#print hex(self.base_addr)
@@ -224,27 +222,27 @@ class Profile:
 			delta += stamp - last_stamp
 
 			if not exit:
-				if verbose >= 2:
+				if options.verbose >= 2:
 					print "%10u >> 0x%08x" % (stamp, addr)
-				if verbose:
+				if options.verbose:
 					print "%10u >> %s" % (stamp, name)
 				delta -= caller_overhead
 				stack.append((name, stamp, delta))
 				delta = 0
 			else:
-				if verbose >= 2:
+				if options.verbose >= 2:
 					print "%10u << 0x%08x" % (stamp, addr)
 				if len(stack):
 					self_time = delta - callee_overhead
 					entry_name, entry_stamp, delta = stack.pop()
 					if entry_name != name:
-						if verbose:
+						if options.verbose:
 							print "%10u << %s" % (stamp, name)
 						#assert entry_name == name
 						break
 					total_time = stamp - entry_stamp
 					self.functions[entry_name] = self.functions.get(entry_name, 0) + self_time
-					if verbose:
+					if options.verbose:
 						print "%10u << %s %+u" % (stamp, name, self_time)
 				else:
 					delta = 0
@@ -265,6 +263,10 @@ def main():
 			usage="\n\t%prog [options] [file] ...",
 			version="%%prog %s" % __version__)
 		parser.add_option(
+			'-a', '--align', metavar='NUMBER',
+			type="int", dest="align", default=16,
+			help="section alignment")
+		parser.add_option(
 			'-m', '--map', metavar='FILE',
 			type="string", dest="map",
 			help="map file")
@@ -277,10 +279,9 @@ def main():
 			action="count",
 			dest="verbose", default=0,
 			help="verbose output")
-		(options, args) = parser.parse_args(sys.argv[1:])
 
-		global verbose
-		verbose = options.verbose
+		global options
+		(options, args) = parser.parse_args(sys.argv[1:])
 
 		profile = Profile()
 		if options.base is not None:
