@@ -171,11 +171,14 @@ iter_instruction(
          inst->FullSrcRegisters[i].SrcRegister.Index,
          inst->FullSrcRegisters[i].SrcRegister.Indirect );
       if (inst->FullSrcRegisters[i].SrcRegister.Indirect) {
-         check_register_usage(
-            ctx,
-            inst->FullSrcRegisters[i].SrcRegisterInd.File,
-            inst->FullSrcRegisters[i].SrcRegisterInd.Index,
-            FALSE );
+         uint file;
+         int index;
+
+         file = inst->FullSrcRegisters[i].SrcRegisterInd.File;
+         index = inst->FullSrcRegisters[i].SrcRegisterInd.Index;
+         check_register_usage( ctx, file, index, FALSE );
+         if (file != TGSI_FILE_ADDRESS || index != 0)
+            report_warning( ctx, "Indirect register not ADDR[0]" );
       }
    }
 
