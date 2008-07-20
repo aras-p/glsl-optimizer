@@ -26,11 +26,15 @@
  **************************************************************************/
 
 #include "pipe/p_debug.h"
-#include "pipe/p_util.h"
-#include "util/u_string.h"
 #include "tgsi_dump.h"
-#include "tgsi_parse.h"
-#include "tgsi_build.h"
+#include "tgsi_iterate.h"
+
+struct dump_ctx
+{
+   struct tgsi_iterate_context iter;
+
+   uint instno;
+};
 
 static void
 dump_enum(
@@ -321,6 +325,15 @@ tgsi_dump_declaration(
    ENM( decl->Declaration.Interpolate, interpolate_names );
 }
 
+static boolean
+iter_declaration(
+   struct tgsi_iterate_context *iter,
+   struct tgsi_full_declaration *decl )
+{
+   tgsi_dump_declaration( decl );
+   return TRUE;
+}
+
 void
 tgsi_dump_immediate(
    const struct tgsi_full_immediate *imm )
@@ -344,6 +357,15 @@ tgsi_dump_immediate(
          TXT( ", " );
    }
    TXT( " }" );
+}
+
+static boolean
+iter_immediate(
+   struct tgsi_iterate_context *iter,
+   struct tgsi_full_immediate *imm )
+{
+   tgsi_dump_immediate( imm );
+   return TRUE;
 }
 
 void
@@ -481,45 +503,48 @@ tgsi_dump_instruction(
    }
 }
 
+static boolean
+iter_instruction(
+   struct tgsi_iterate_context *iter,
+   struct tgsi_full_instruction *inst )
+{
+   struct dump_ctx *ctx = (struct dump_ctx *) iter;
+
+   tgsi_dump_instruction( inst, ctx->instno++ );
+   return TRUE;
+}
+
+static boolean
+prolog(
+   struct tgsi_iterate_context *ctx )
+{
+   EOL();
+   ENM( ctx->processor.Processor, processor_type_names );
+   UID( ctx->version.MajorVersion );
+   CHR( '.' );
+   UID( ctx->version.MinorVersion );
+   return TRUE;
+}
+
 void
 tgsi_dump(
    const struct tgsi_token *tokens,
    uint flags )
 {
-   struct tgsi_parse_context parse;
-   uint instno = 0;
+   struct dump_ctx ctx;
 
    /* sanity checks */
    assert( strcmp( opcode_names[TGSI_OPCODE_CONT], "CONT" ) == 0 );
    assert( strcmp( opcode_names[TGSI_OPCODE_END], "END" ) == 0 );
    assert( strcmp( opcode_names[TGSI_OPCODE_END], "END" ) == 0 );
 
-   tgsi_parse_init( &parse, tokens );
+   ctx.iter.prolog = prolog;
+   ctx.iter.iterate_instruction = iter_instruction;
+   ctx.iter.iterate_declaration = iter_declaration;
+   ctx.iter.iterate_immediate = iter_immediate;
+   ctx.iter.epilog = NULL;
 
-   EOL();
-   ENM( parse.FullHeader.Processor.Processor, processor_type_names );
-   UID( parse.FullVersion.Version.MajorVersion );
-   CHR( '.' );
-   UID( parse.FullVersion.Version.MinorVersion );
+   ctx.instno = 0;
 
-   while (!tgsi_parse_end_of_tokens( &parse )) {
-      tgsi_parse_token( &parse );
-
-      switch (parse.FullToken.Token.Type) {
-      case TGSI_TOKEN_TYPE_DECLARATION:
-         tgsi_dump_declaration( &parse.FullToken.FullDeclaration );
-         break;
-      case TGSI_TOKEN_TYPE_IMMEDIATE:
-         tgsi_dump_immediate( &parse.FullToken.FullImmediate );
-         break;
-      case TGSI_TOKEN_TYPE_INSTRUCTION:
-         tgsi_dump_instruction( &parse.FullToken.FullInstruction, instno );
-         instno++;
-         break;
-      default:
-         assert( 0 );
-      }
-   }
-
-   tgsi_parse_free( &parse );
+   tgsi_iterate_shader( tokens, &ctx.iter );
 }
