@@ -34,16 +34,14 @@
 
 static void
 dump_enum(
-   const unsigned    e,
-   const char        **enums,
-   const unsigned    enums_count )
+   uint e,
+   const char **enums,
+   uint enum_count )
 {
-   if (e >= enums_count) {
+   if (e >= enum_count)
       debug_printf( "%u", e );
-   }
-   else {
+   else
       debug_printf( "%s", enums[e] );
-   }
 }
 
 #define EOL()           debug_printf( "\n" )
@@ -55,14 +53,14 @@ dump_enum(
 #define FLT(F)          debug_printf( "%10.4f", F )
 #define ENM(E,ENUMS)    dump_enum( E, ENUMS, sizeof( ENUMS ) / sizeof( *ENUMS ) )
 
-static const char *TGSI_PROCESSOR_TYPES_SHORT[] =
+static const char *processor_type_names[] =
 {
    "FRAG",
    "VERT",
    "GEOM"
 };
 
-static const char *TGSI_FILES_SHORT[] =
+static const char *file_names[] =
 {
    "NULL",
    "CONST",
@@ -74,14 +72,14 @@ static const char *TGSI_FILES_SHORT[] =
    "IMM"
 };
 
-static const char *TGSI_INTERPOLATES_SHORT[] =
+static const char *interpolate_names[] =
 {
    "CONSTANT",
    "LINEAR",
    "PERSPECTIVE"
 };
 
-static const char *TGSI_SEMANTICS_SHORT[] =
+static const char *semantic_names[] =
 {
    "POSITION",
    "COLOR",
@@ -92,12 +90,12 @@ static const char *TGSI_SEMANTICS_SHORT[] =
    "NORMAL"
 };
 
-static const char *TGSI_IMMS_SHORT[] =
+static const char *immediate_type_names[] =
 {
    "FLT32"
 };
 
-static const char *TGSI_OPCODES_SHORT[TGSI_OPCODE_LAST] =
+static const char *opcode_names[TGSI_OPCODE_LAST] =
 {
    "ARL",
    "MOV",
@@ -220,7 +218,7 @@ static const char *TGSI_OPCODES_SHORT[TGSI_OPCODE_LAST] =
    "SWZ"
 };
 
-static const char *TGSI_SWIZZLES_SHORT[] =
+static const char *swizzle_names[] =
 {
    "x",
    "y",
@@ -228,7 +226,7 @@ static const char *TGSI_SWIZZLES_SHORT[] =
    "w"
 };
 
-static const char *TGSI_TEXTURES_SHORT[] =
+static const char *texture_names[] =
 {
    "UNKNOWN",
    "1D",
@@ -241,7 +239,7 @@ static const char *TGSI_TEXTURES_SHORT[] =
    "SHADOWRECT"
 };
 
-static const char *TGSI_EXTSWIZZLES_SHORT[] =
+static const char *extswizzle_names[] =
 {
    "x",
    "y",
@@ -251,7 +249,7 @@ static const char *TGSI_EXTSWIZZLES_SHORT[] =
    "1"
 };
 
-static const char *TGSI_MODULATES_SHORT[TGSI_MODULATE_COUNT] =
+static const char *modulate_names[TGSI_MODULATE_COUNT] =
 {
    "",
    "_2X",
@@ -262,40 +260,55 @@ static const char *TGSI_MODULATES_SHORT[TGSI_MODULATE_COUNT] =
    "_D8"
 };
 
+static void
+_dump_register(
+   uint file,
+   uint first,
+   uint last )
+{
+   ENM( file, file_names );
+   CHR( '[' );
+   UID( first );
+   if (first != last) {
+      TXT( ".." );
+      UID( last );
+   }
+   CHR( ']' );
+}
+
+static void
+_dump_writemask(
+   uint writemask )
+{
+   if (writemask != TGSI_WRITEMASK_XYZW) {
+      CHR( '.' );
+      if (writemask & TGSI_WRITEMASK_X)
+         CHR( 'x' );
+      if (writemask & TGSI_WRITEMASK_Y)
+         CHR( 'y' );
+      if (writemask & TGSI_WRITEMASK_Z)
+         CHR( 'z' );
+      if (writemask & TGSI_WRITEMASK_W)
+         CHR( 'w' );
+   }
+}
+
 void
 tgsi_dump_declaration(
    const struct tgsi_full_declaration *decl )
 {
    TXT( "\nDCL " );
-   ENM( decl->Declaration.File, TGSI_FILES_SHORT );
 
-   CHR( '[' );
-   UID( decl->DeclarationRange.First );
-   if (decl->DeclarationRange.First != decl->DeclarationRange.Last) {
-      TXT( ".." );
-      UID( decl->DeclarationRange.Last );
-   }
-   CHR( ']' );
-
-   if( decl->Declaration.UsageMask != TGSI_WRITEMASK_XYZW ) {
-      CHR( '.' );
-      if( decl->Declaration.UsageMask & TGSI_WRITEMASK_X ) {
-         CHR( 'x' );
-      }
-      if( decl->Declaration.UsageMask & TGSI_WRITEMASK_Y ) {
-         CHR( 'y' );
-      }
-      if( decl->Declaration.UsageMask & TGSI_WRITEMASK_Z ) {
-         CHR( 'z' );
-      }
-      if( decl->Declaration.UsageMask & TGSI_WRITEMASK_W ) {
-         CHR( 'w' );
-      }
-   }
+   _dump_register(
+      decl->Declaration.File,
+      decl->DeclarationRange.First,
+      decl->DeclarationRange.Last );
+   _dump_writemask(
+      decl->Declaration.UsageMask );
 
    if (decl->Declaration.Semantic) {
       TXT( ", " );
-      ENM( decl->Semantic.SemanticName, TGSI_SEMANTICS_SHORT );
+      ENM( decl->Semantic.SemanticName, semantic_names );
       if (decl->Semantic.SemanticIndex != 0 ||
           decl->Semantic.SemanticName == TGSI_SEMANTIC_GENERIC) {
          CHR( '[' );
@@ -305,32 +318,30 @@ tgsi_dump_declaration(
    }
 
    TXT( ", " );
-   ENM( decl->Declaration.Interpolate, TGSI_INTERPOLATES_SHORT );
+   ENM( decl->Declaration.Interpolate, interpolate_names );
 }
 
 void
 tgsi_dump_immediate(
    const struct tgsi_full_immediate *imm )
 {
-   unsigned i;
+   uint i;
 
    TXT( "\nIMM " );
-   ENM( imm->Immediate.DataType, TGSI_IMMS_SHORT );
+   ENM( imm->Immediate.DataType, immediate_type_names );
 
    TXT( " { " );
-   for( i = 0; i < imm->Immediate.Size - 1; i++ ) {
-      switch( imm->Immediate.DataType ) {
+   for (i = 0; i < imm->Immediate.Size - 1; i++) {
+      switch (imm->Immediate.DataType) {
       case TGSI_IMM_FLOAT32:
          FLT( imm->u.ImmediateFloat32[i].Float );
          break;
-
       default:
          assert( 0 );
       }
 
-      if( i < imm->Immediate.Size - 2 ) {
+      if (i < imm->Immediate.Size - 2)
          TXT( ", " );
-      }
    }
    TXT( " }" );
 }
@@ -340,15 +351,15 @@ tgsi_dump_instruction(
    const struct tgsi_full_instruction *inst,
    uint instno )
 {
-   unsigned i;
-   boolean  first_reg = TRUE;
+   uint i;
+   boolean first_reg = TRUE;
 
    EOL();
    UID( instno );
    CHR( ':' );
-   ENM( inst->Instruction.Opcode, TGSI_OPCODES_SHORT );
+   ENM( inst->Instruction.Opcode, opcode_names );
 
-   switch( inst->Instruction.Saturate ) {
+   switch (inst->Instruction.Saturate) {
    case TGSI_SAT_NONE:
       break;
    case TGSI_SAT_ZERO_ONE:
@@ -361,47 +372,28 @@ tgsi_dump_instruction(
       assert( 0 );
    }
 
-   for( i = 0; i < inst->Instruction.NumDstRegs; i++ ) {
+   for (i = 0; i < inst->Instruction.NumDstRegs; i++) {
       const struct tgsi_full_dst_register *dst = &inst->FullDstRegisters[i];
 
-      if( !first_reg ) {
+      if (!first_reg)
          CHR( ',' );
-      }
       CHR( ' ' );
 
-      ENM( dst->DstRegister.File, TGSI_FILES_SHORT );
-
-      CHR( '[' );
-      SID( dst->DstRegister.Index );
-      CHR( ']' );
-
-      ENM( dst->DstRegisterExtModulate.Modulate, TGSI_MODULATES_SHORT );
-
-      if( dst->DstRegister.WriteMask != TGSI_WRITEMASK_XYZW ) {
-         CHR( '.' );
-         if( dst->DstRegister.WriteMask & TGSI_WRITEMASK_X ) {
-            CHR( 'x' );
-         }
-         if( dst->DstRegister.WriteMask & TGSI_WRITEMASK_Y ) {
-            CHR( 'y' );
-         }
-         if( dst->DstRegister.WriteMask & TGSI_WRITEMASK_Z ) {
-            CHR( 'z' );
-         }
-         if( dst->DstRegister.WriteMask & TGSI_WRITEMASK_W ) {
-            CHR( 'w' );
-         }
-      }
+      _dump_register(
+         dst->DstRegister.File,
+         dst->DstRegister.Index,
+         dst->DstRegister.Index );
+      ENM( dst->DstRegisterExtModulate.Modulate, modulate_names );
+      _dump_writemask( dst->DstRegister.WriteMask );
 
       first_reg = FALSE;
    }
 
-   for( i = 0; i < inst->Instruction.NumSrcRegs; i++ ) {
+   for (i = 0; i < inst->Instruction.NumSrcRegs; i++) {
       const struct tgsi_full_src_register *src = &inst->FullSrcRegisters[i];
 
-      if( !first_reg ) {
+      if (!first_reg)
          CHR( ',' );
-      }
       CHR( ' ' );
 
       if (src->SrcRegisterExtMod.Negate)
@@ -417,40 +409,45 @@ tgsi_dump_instruction(
       if (src->SrcRegister.Negate)
          CHR( '-' );
 
-      ENM( src->SrcRegister.File, TGSI_FILES_SHORT );
-
-      CHR( '[' );
       if (src->SrcRegister.Indirect) {
+         /* TODO: Tidy up
+          */
+         ENM( src->SrcRegister.File, file_names );
+         CHR( '[' );
          TXT( "ADDR[0]" );
          if (src->SrcRegister.Index != 0) {
             if (src->SrcRegister.Index > 0)
                CHR( '+' );
             SID( src->SrcRegister.Index );
          }
+         CHR( ']' );
       }
-      else
-         SID( src->SrcRegister.Index );
-      CHR( ']' );
+      else {
+         _dump_register(
+            src->SrcRegister.File,
+            src->SrcRegister.Index,
+            src->SrcRegister.Index );
+      }
 
       if (src->SrcRegister.SwizzleX != TGSI_SWIZZLE_X ||
           src->SrcRegister.SwizzleY != TGSI_SWIZZLE_Y ||
           src->SrcRegister.SwizzleZ != TGSI_SWIZZLE_Z ||
           src->SrcRegister.SwizzleW != TGSI_SWIZZLE_W) {
          CHR( '.' );
-         ENM( src->SrcRegister.SwizzleX, TGSI_SWIZZLES_SHORT );
-         ENM( src->SrcRegister.SwizzleY, TGSI_SWIZZLES_SHORT );
-         ENM( src->SrcRegister.SwizzleZ, TGSI_SWIZZLES_SHORT );
-         ENM( src->SrcRegister.SwizzleW, TGSI_SWIZZLES_SHORT );
+         ENM( src->SrcRegister.SwizzleX, swizzle_names );
+         ENM( src->SrcRegister.SwizzleY, swizzle_names );
+         ENM( src->SrcRegister.SwizzleZ, swizzle_names );
+         ENM( src->SrcRegister.SwizzleW, swizzle_names );
       }
       if (src->SrcRegisterExtSwz.ExtSwizzleX != TGSI_EXTSWIZZLE_X ||
           src->SrcRegisterExtSwz.ExtSwizzleY != TGSI_EXTSWIZZLE_Y ||
           src->SrcRegisterExtSwz.ExtSwizzleZ != TGSI_EXTSWIZZLE_Z ||
           src->SrcRegisterExtSwz.ExtSwizzleW != TGSI_EXTSWIZZLE_W) {
          CHR( '.' );
-         ENM( src->SrcRegisterExtSwz.ExtSwizzleX, TGSI_EXTSWIZZLES_SHORT );
-         ENM( src->SrcRegisterExtSwz.ExtSwizzleY, TGSI_EXTSWIZZLES_SHORT );
-         ENM( src->SrcRegisterExtSwz.ExtSwizzleZ, TGSI_EXTSWIZZLES_SHORT );
-         ENM( src->SrcRegisterExtSwz.ExtSwizzleW, TGSI_EXTSWIZZLES_SHORT );
+         ENM( src->SrcRegisterExtSwz.ExtSwizzleX, extswizzle_names );
+         ENM( src->SrcRegisterExtSwz.ExtSwizzleY, extswizzle_names );
+         ENM( src->SrcRegisterExtSwz.ExtSwizzleZ, extswizzle_names );
+         ENM( src->SrcRegisterExtSwz.ExtSwizzleW, extswizzle_names );
       }
 
       if (src->SrcRegisterExtMod.Complement)
@@ -469,10 +466,10 @@ tgsi_dump_instruction(
 
    if (inst->InstructionExtTexture.Texture != TGSI_TEXTURE_UNKNOWN) {
       TXT( ", " );
-      ENM( inst->InstructionExtTexture.Texture, TGSI_TEXTURES_SHORT );
+      ENM( inst->InstructionExtTexture.Texture, texture_names );
    }
 
-   switch( inst->Instruction.Opcode ) {
+   switch (inst->Instruction.Opcode) {
    case TGSI_OPCODE_IF:
    case TGSI_OPCODE_ELSE:
    case TGSI_OPCODE_BGNLOOP2:
@@ -490,47 +487,35 @@ tgsi_dump(
    uint flags )
 {
    struct tgsi_parse_context parse;
-   struct tgsi_full_instruction fi;
-   struct tgsi_full_declaration fd;
-   unsigned instno = 0;
+   uint instno = 0;
 
    /* sanity checks */
-   assert(strcmp(TGSI_OPCODES_SHORT[TGSI_OPCODE_CONT], "OPCODE_CONT") == 0);
-   assert(strcmp(TGSI_OPCODES_SHORT[TGSI_OPCODE_END], "OPCODE_END") == 0);
-   assert(strcmp(TGSI_OPCODES_SHORT[TGSI_OPCODE_END], "END") == 0);
+   assert( strcmp( opcode_names[TGSI_OPCODE_CONT], "CONT" ) == 0 );
+   assert( strcmp( opcode_names[TGSI_OPCODE_END], "END" ) == 0 );
+   assert( strcmp( opcode_names[TGSI_OPCODE_END], "END" ) == 0 );
 
    tgsi_parse_init( &parse, tokens );
 
    EOL();
-   ENM( parse.FullHeader.Processor.Processor, TGSI_PROCESSOR_TYPES_SHORT );
+   ENM( parse.FullHeader.Processor.Processor, processor_type_names );
    UID( parse.FullVersion.Version.MajorVersion );
    CHR( '.' );
    UID( parse.FullVersion.Version.MinorVersion );
 
-   fi = tgsi_default_full_instruction();
-   fd = tgsi_default_full_declaration();
-
-   while( !tgsi_parse_end_of_tokens( &parse ) ) {
+   while (!tgsi_parse_end_of_tokens( &parse )) {
       tgsi_parse_token( &parse );
 
-      switch( parse.FullToken.Token.Type ) {
+      switch (parse.FullToken.Token.Type) {
       case TGSI_TOKEN_TYPE_DECLARATION:
-         tgsi_dump_declaration(
-            &parse.FullToken.FullDeclaration );
+         tgsi_dump_declaration( &parse.FullToken.FullDeclaration );
          break;
-
       case TGSI_TOKEN_TYPE_IMMEDIATE:
-         tgsi_dump_immediate(
-            &parse.FullToken.FullImmediate );
+         tgsi_dump_immediate( &parse.FullToken.FullImmediate );
          break;
-
       case TGSI_TOKEN_TYPE_INSTRUCTION:
-         tgsi_dump_instruction(
-            &parse.FullToken.FullInstruction,
-            instno );
+         tgsi_dump_instruction( &parse.FullToken.FullInstruction, instno );
          instno++;
          break;
-
       default:
          assert( 0 );
       }

@@ -773,7 +773,7 @@ tgsi_dump_c(
    /* sanity checks */
    assert(strcmp(TGSI_OPCODES[TGSI_OPCODE_CONT], "OPCODE_CONT") == 0);
    assert(strcmp(TGSI_OPCODES[TGSI_OPCODE_END], "OPCODE_END") == 0);
-   assert(strcmp(TGSI_OPCODES[TGSI_OPCODE_END], "END") == 0);
+   assert(strcmp(TGSI_OPCODES[TGSI_OPCODE_END], "OPCODE_END") == 0);
 
    tgsi_parse_init( &parse, tokens );
 
