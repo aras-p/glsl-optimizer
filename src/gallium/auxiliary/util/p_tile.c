@@ -346,7 +346,7 @@ r5g6b5_get_tile_rgba(ushort *src,
 
 
 static void
-r5g5b5_put_tile_rgba(ushort *dst,
+r5g6b5_put_tile_rgba(ushort *dst,
                      unsigned w, unsigned h,
                      const float *p,
                      unsigned src_stride)
@@ -827,7 +827,7 @@ pipe_put_tile_rgba(struct pipe_surface *ps,
       /*a1r5g5b5_put_tile_rgba((ushort *) packed, w, h, p, src_stride);*/
       break;
    case PIPE_FORMAT_R5G6B5_UNORM:
-      r5g5b5_put_tile_rgba((ushort *) packed, w, h, p, src_stride);
+      r5g6b5_put_tile_rgba((ushort *) packed, w, h, p, src_stride);
       break;
    case PIPE_FORMAT_R8G8B8A8_UNORM:
       assert(0);
