@@ -25,8 +25,8 @@
  * 
  **************************************************************************/
 
-#ifndef TGSI_DUMP_H
-#define TGSI_DUMP_H
+#ifndef TGSI_DUMP_C_H
+#define TGSI_DUMP_C_H
 
 #include "pipe/p_shader_tokens.h"
 
@@ -34,29 +34,16 @@
 extern "C" {
 #endif
 
-void
-tgsi_dump(
-   const struct tgsi_token *tokens );
-
-struct tgsi_full_immediate;
-struct tgsi_full_instruction;
-struct tgsi_full_declaration;
+#define TGSI_DUMP_C_IGNORED 1
+#define TGSI_DUMP_C_DEFAULT 2
 
 void
-tgsi_dump_immediate(
-   const struct tgsi_full_immediate *imm );
-
-void
-tgsi_dump_instruction(
-   const struct tgsi_full_instruction *inst,
-   uint instno );
-
-void
-tgsi_dump_declaration(
-   const struct tgsi_full_declaration *decl );
+tgsi_dump_c(
+   const struct tgsi_token *tokens,
+   uint flags );
 
 #if defined __cplusplus
 }
 #endif
 
-#endif /* TGSI_DUMP_H */
+#endif /* TGSI_DUMP_C_H */
