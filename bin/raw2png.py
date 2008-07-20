@@ -254,30 +254,40 @@ def yuv2rgb(y, u, v):
 	return r, g, b
 
 	
-def translate_rgba(data):
-	r, g, b, a = data
+def translate_r5g6b5(data):
+	value, = struct.unpack_from("H", data)
+	r = ((value >> 11) & 0x1f)*0xff/0x1f
+	g = ((value >>  5) & 0x3f)*0xff/0x3f
+	b = ((value >>  0) & 0x1f)*0xff/0x1f
+	a = 255
+	return [[(r, g, b, a)]]
+
+
+def translate_r8g8b8a8(data):
+	r, g, b, a = struct.unpack_from("BBBB", data)
 	return [[(r, g, b, a)]]
 
 
 def translate_ycbcr(data):
-	y1, u, y2, v = data
+	y1, u, y2, v = struct.unpack_from("BBBB", data)
 	r1, g1, b1 = yuv2rgb(y1, u, v)
 	r2, g2, b2 = yuv2rgb(y1, u, v)
 	return [[(r1, g1, b1, 255), (r2, g2, b2, 255)]]
 
 def translate_ycbcr_rev(data):
-    v, y2, u, y1 = data
+    v, y2, u, y1 = struct.unpack_from("BBBB", data)
     r1, g1, b1 = yuv2rgb(y1, u, v)
     r2, g2, b2 = yuv2rgb(y1, u, v)
     return [[(r1, g1, b1, 255), (r2, g2, b2, 255)]]
 
 
 translate = {
-	PIPE_FORMAT_A8R8G8B8_UNORM: (4, 1, 1, translate_rgba),
-	PIPE_FORMAT_X8R8G8B8_UNORM: (4, 1, 1, translate_rgba),
-	PIPE_FORMAT_B8G8R8A8_UNORM: (4, 1, 1, translate_rgba),
-	PIPE_FORMAT_B8G8R8X8_UNORM: (4, 1, 1, translate_rgba),
-	PIPE_FORMAT_A8B8G8R8_SNORM: (4, 1, 1, translate_rgba),
+	PIPE_FORMAT_A8R8G8B8_UNORM: (4, 1, 1, translate_r8g8b8a8),
+	PIPE_FORMAT_X8R8G8B8_UNORM: (4, 1, 1, translate_r8g8b8a8),
+	PIPE_FORMAT_B8G8R8A8_UNORM: (4, 1, 1, translate_r8g8b8a8),
+	PIPE_FORMAT_B8G8R8X8_UNORM: (4, 1, 1, translate_r8g8b8a8),
+	PIPE_FORMAT_A8B8G8R8_SNORM: (4, 1, 1, translate_r8g8b8a8),
+	PIPE_FORMAT_R5G6B5_UNORM: (2, 1, 1, translate_r5g6b5),
 	PIPE_FORMAT_YCBCR: (4, 2, 1, translate_ycbcr),
 	PIPE_FORMAT_YCBCR_REV: (4, 2, 1, translate_ycbcr_rev),
 }
@@ -304,7 +314,7 @@ def process(infilename, outfilename):
 		return
 	for y in range(0, height, bheight):
 		for x in range(0, width, bwidth):
-			indata = map(ord, infile.read(4))
+			indata = infile.read(bsize)
 			outdata = translate_func(indata)
 			for j in range(bheight):
 				for i in range(bwidth):
