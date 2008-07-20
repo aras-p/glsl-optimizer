@@ -52,8 +52,12 @@ st_create_framebuffer( const __GLcontextModes *visual,
    struct st_framebuffer *stfb = CALLOC_STRUCT(st_framebuffer);
    if (stfb) {
       int samples = 0;
+      const char *msaa_override = _mesa_getenv("__GL_FSAA_MODE");
       _mesa_initialize_framebuffer(&stfb->Base, visual);
       if (visual->sampleBuffers) samples = visual->samples;
+      if (msaa_override) {
+         samples = _mesa_atoi(msaa_override);
+      }
 
       {
          /* fake frontbuffer */
