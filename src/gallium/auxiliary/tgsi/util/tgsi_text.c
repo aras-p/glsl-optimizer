@@ -497,6 +497,52 @@ parse_dst_operand(
 }
 
 static boolean
+parse_optional_swizzle(
+   struct translate_ctx *ctx,
+   uint swizzle[4],
+   boolean *parsed_swizzle,
+   boolean *parsed_extswizzle )
+{
+   const char *cur = ctx->cur;
+
+   *parsed_swizzle = FALSE;
+   *parsed_extswizzle = FALSE;
+
+   eat_opt_white( &cur );
+   if (*cur == '.') {
+      uint i;
+
+      cur++;
+      eat_opt_white( &cur );
+      for (i = 0; i < 4; i++) {
+         if (toupper( *cur ) == 'X')
+            swizzle[i] = TGSI_SWIZZLE_X;
+         else if (toupper( *cur ) == 'Y')
+            swizzle[i] = TGSI_SWIZZLE_Y;
+         else if (toupper( *cur ) == 'Z')
+            swizzle[i] = TGSI_SWIZZLE_Z;
+         else if (toupper( *cur ) == 'W')
+            swizzle[i] = TGSI_SWIZZLE_W;
+         else {
+            if (*cur == '0')
+               swizzle[i] = TGSI_EXTSWIZZLE_ZERO;
+            else if (*cur == '1')
+               swizzle[i] = TGSI_EXTSWIZZLE_ONE;
+            else {
+               report_error( ctx, "Expected register swizzle component `x', `y', `z', `w', `0' or `1'" );
+               return FALSE;
+            }
+            *parsed_extswizzle = TRUE;
+         }
+         cur++;
+      }
+      *parsed_swizzle = TRUE;
+      ctx->cur = cur;
+   }
+   return TRUE;
+}
+
+static boolean
 parse_src_operand(
    struct translate_ctx *ctx,
    struct tgsi_full_src_register *src )
@@ -507,6 +553,9 @@ parse_src_operand(
    int index;
    uint ind_file;
    int ind_index;
+   uint swizzle[4];
+   boolean parsed_swizzle;
+   boolean parsed_extswizzle;
 
    if (*ctx->cur == '-') {
       cur = ctx->cur;
@@ -588,35 +637,23 @@ parse_src_operand(
       src->SrcRegisterInd.Index = ind_index;
    }
 
-   /* Parse optional swizzle
+   /* Parse optional swizzle.
     */
-   cur = ctx->cur;
-   eat_opt_white( &cur );
-   if (*cur == '.') {
-      uint i;
+   if (parse_optional_swizzle( ctx, swizzle, &parsed_swizzle, &parsed_extswizzle )) {
+      if (parsed_extswizzle) {
+         assert( parsed_swizzle );
 
-      cur++;
-      eat_opt_white( &cur );
-      for (i = 0; i < 4; i++) {
-         uint swizzle;
-
-         if (toupper( *cur ) == 'X')
-            swizzle = TGSI_SWIZZLE_X;
-         else if (toupper( *cur ) == 'Y')
-            swizzle = TGSI_SWIZZLE_Y;
-         else if (toupper( *cur ) == 'Z')
-            swizzle = TGSI_SWIZZLE_Z;
-         else if (toupper( *cur ) == 'W')
-            swizzle = TGSI_SWIZZLE_W;
-         else {
-            report_error( ctx, "Expected register swizzle component either `x', `y', `z' or `w'" );
-            return FALSE;
-         }
-         cur++;
-         tgsi_util_set_src_register_swizzle( &src->SrcRegister, swizzle, i );
+         src->SrcRegisterExtSwz.ExtSwizzleX = swizzle[0];
+         src->SrcRegisterExtSwz.ExtSwizzleY = swizzle[1];
+         src->SrcRegisterExtSwz.ExtSwizzleZ = swizzle[2];
+         src->SrcRegisterExtSwz.ExtSwizzleW = swizzle[3];
       }
-
-      ctx->cur = cur;
+      else if (parsed_swizzle) {
+         src->SrcRegister.SwizzleX = swizzle[0];
+         src->SrcRegister.SwizzleY = swizzle[1];
+         src->SrcRegister.SwizzleZ = swizzle[2];
+         src->SrcRegister.SwizzleW = swizzle[3];
+      }
    }
 
    if (src->SrcRegisterExtMod.Complement) {
