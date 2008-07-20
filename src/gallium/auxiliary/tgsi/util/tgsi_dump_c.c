@@ -81,18 +81,11 @@ static const char *TGSI_FILES[] =
    "FILE_IMMEDIATE"
 };
 
-static const char *TGSI_DECLARES[] =
-{
-   "DECLARE_RANGE",
-   "DECLARE_MASK"
-};
-
 static const char *TGSI_INTERPOLATES[] =
 {
    "INTERPOLATE_CONSTANT",
    "INTERPOLATE_LINEAR",
-   "INTERPOLATE_PERSPECTIVE",
-   "INTERPOLATE_ATTRIB"
+   "INTERPOLATE_PERSPECTIVE"
 };
 
 static const char *TGSI_SEMANTICS[] =
@@ -250,9 +243,9 @@ static const char *TGSI_INSTRUCTION_EXTS[] =
 static const char *TGSI_PRECISIONS[] =
 {
    "PRECISION_DEFAULT",
-   "TGSI_PRECISION_FLOAT32",
-   "TGSI_PRECISION_FLOAT16",
-   "TGSI_PRECISION_FIXED12"
+   "PRECISION_FLOAT32",
+   "PRECISION_FLOAT16",
+   "PRECISION_FIXED12"
 };
 
 static const char *TGSI_CCS[] =
