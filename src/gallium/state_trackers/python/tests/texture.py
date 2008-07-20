@@ -94,7 +94,10 @@ def tex_coords(texture, face, level, zslice):
                 rz = -1.0
             result.append([rx, ry, rz])
         return result
-                    
+
+def is_pot(n):
+    return n & (n - 1) == 0
+      
                 
 class TextureTest(TestCase):
     
@@ -136,7 +139,14 @@ class TextureTest(TestCase):
         level = self.level
         zslice = self.zslice
         
-        if not dev.is_format_supported(format, target, PIPE_TEXTURE_USAGE_SAMPLER, 0):
+        tex_usage = PIPE_TEXTURE_USAGE_SAMPLER
+        geom_flags = 0
+        if width != height:
+            geom_flags |= PIPE_TEXTURE_GEOM_NON_SQUARE
+        if not is_pot(width) or not is_pot(height) or not is_pot(depth):
+            geom_flags |= PIPE_TEXTURE_GEOM_NON_POWER_OF_TWO
+        
+        if not dev.is_format_supported(format, target, tex_usage, geom_flags):
             raise TestSkip
         
         ctx = self.dev.context_create()
@@ -199,7 +209,7 @@ class TextureTest(TestCase):
             height = height,
             depth = depth, 
             last_level = last_level,
-            tex_usage = PIPE_TEXTURE_USAGE_SAMPLER,
+            tex_usage = tex_usage,
         )
         
         expected_rgba = FloatArray(height*width*4) 
