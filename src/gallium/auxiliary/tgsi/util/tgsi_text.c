@@ -226,24 +226,21 @@ static const char *file_names[TGSI_FILE_COUNT] =
 };
 
 static boolean
-parse_file(
-   struct translate_ctx *ctx,
-   uint *file )
+parse_file( const char **pcur, uint *file )
 {
    uint i;
 
    for (i = 0; i < TGSI_FILE_COUNT; i++) {
-      const char *cur = ctx->cur;
+      const char *cur = *pcur;
 
       if (str_match_no_case( &cur, file_names[i] )) {
          if (!is_digit_alpha_underscore( cur )) {
-            ctx->cur = cur;
+            *pcur = cur;
             *file = i;
             return TRUE;
          }
       }
    }
-   report_error( ctx, "Unknown register file" );
    return FALSE;
 }
 
@@ -290,41 +287,57 @@ parse_opt_writemask(
    return TRUE;
 }
 
-/* Parse register part common for decls and operands.
- *    <register_prefix> ::= <file> `[' <index>
+/* <register_file_bracket> ::= <file> `['
  */
 static boolean
-parse_register_prefix(
+parse_register_file_bracket(
    struct translate_ctx *ctx,
-   uint *file,
-   uint *index )
+   uint *file )
 {
-   if (!parse_file( ctx, file ))
+   if (!parse_file( &ctx->cur, file )) {
+      report_error( ctx, "Unknown register file" );
       return FALSE;
+   }
    eat_opt_white( &ctx->cur );
    if (*ctx->cur != '[') {
       report_error( ctx, "Expected `['" );
       return FALSE;
    }
    ctx->cur++;
-   eat_opt_white( &ctx->cur );
-   if (!parse_uint( &ctx->cur, index )) {
-      report_error( ctx, "Expected literal integer" );
-      return FALSE;
-   }
    return TRUE;
 }
 
-/* Parse register operand.
- *    <register> ::= <register_prefix> `]'
+/* <register_file_bracket_index> ::= <register_file_bracket> <uint>
  */
 static boolean
-parse_register(
+parse_register_file_bracket_index(
    struct translate_ctx *ctx,
    uint *file,
-   uint *index )
+   int *index )
 {
-   if (!parse_register_prefix( ctx, file, index ))
+   uint uindex;
+
+   if (!parse_register_file_bracket( ctx, file ))
+      return FALSE;
+   eat_opt_white( &ctx->cur );
+   if (!parse_uint( &ctx->cur, &uindex )) {
+      report_error( ctx, "Expected literal unsigned integer" );
+      return FALSE;
+   }
+   *index = (int) uindex;
+   return TRUE;
+}
+
+/* Parse destination register operand.
+ *    <register_dst> ::= <register_file_bracket_index> `]'
+ */
+static boolean
+parse_register_dst(
+   struct translate_ctx *ctx,
+   uint *file,
+   int *index )
+{
+   if (!parse_register_file_bracket_index( ctx, file, index ))
       return FALSE;
    eat_opt_white( &ctx->cur );
    if (*ctx->cur != ']') {
@@ -332,30 +345,95 @@ parse_register(
       return FALSE;
    }
    ctx->cur++;
-   /* TODO: Modulate suffix */
+   return TRUE;
+}
+
+/* Parse source register operand.
+ *    <register_src> ::= <register_file_bracket_index> `]' |
+ *                       <register_file_bracket> <register_dst> `]' |
+ *                       <register_file_bracket> <register_dst> `+' <uint> `]' |
+ *                       <register_file_bracket> <register_dst> `-' <uint> `]'
+ */
+static boolean
+parse_register_src(
+   struct translate_ctx *ctx,
+   uint *file,
+   int *index,
+   uint *ind_file,
+   int *ind_index )
+{
+   const char *cur;
+   uint uindex;
+
+   if (!parse_register_file_bracket( ctx, file ))
+      return FALSE;
+   eat_opt_white( &ctx->cur );
+   cur = ctx->cur;
+   if (parse_file( &cur, ind_file )) {
+      if (!parse_register_dst( ctx, ind_file, ind_index ))
+         return FALSE;
+      eat_opt_white( &ctx->cur );
+      if (*ctx->cur == '+' || *ctx->cur == '-') {
+         boolean negate;
+
+         negate = *ctx->cur == '-';
+         ctx->cur++;
+         eat_opt_white( &ctx->cur );
+         if (!parse_uint( &ctx->cur, &uindex )) {
+            report_error( ctx, "Expected literal unsigned integer" );
+            return FALSE;
+         }
+         if (negate)
+            *index = -(int) uindex;
+         else
+            *index = (int) uindex;
+      }
+      else {
+         *index = 0;
+      }
+   }
+   else {
+      if (!parse_uint( &ctx->cur, &uindex )) {
+         report_error( ctx, "Expected literal unsigned integer" );
+         return FALSE;
+      }
+      *index = (int) uindex;
+      *ind_file = TGSI_FILE_NULL;
+      *ind_index = 0;
+   }
+   eat_opt_white( &ctx->cur );
+   if (*ctx->cur != ']') {
+      report_error( ctx, "Expected `]'" );
+      return FALSE;
+   }
+   ctx->cur++;
    return TRUE;
 }
 
 /* Parse register declaration.
- *    <register> ::= <register_prefix> `]' | <register_prefix> `..' <index> `]'
+ *    <register_dcl> ::= <register_file_bracket_index> `]' |
+ *                       <register_file_bracket_index> `..' <index> `]'
  */
 static boolean
 parse_register_dcl(
    struct translate_ctx *ctx,
    uint *file,
-   uint *first,
-   uint *last )
+   int *first,
+   int *last )
 {
-   if (!parse_register_prefix( ctx, file, first ))
+   if (!parse_register_file_bracket_index( ctx, file, first ))
       return FALSE;
    eat_opt_white( &ctx->cur );
    if (ctx->cur[0] == '.' && ctx->cur[1] == '.') {
+      uint uindex;
+
       ctx->cur += 2;
       eat_opt_white( &ctx->cur );
-      if (!parse_uint( &ctx->cur, last )) {
+      if (!parse_uint( &ctx->cur, &uindex )) {
          report_error( ctx, "Expected literal integer" );
          return FALSE;
       }
+      *last = (int) uindex;
       eat_opt_white( &ctx->cur );
    }
    else {
@@ -386,11 +464,11 @@ parse_dst_operand(
    struct tgsi_full_dst_register *dst )
 {
    uint file;
-   uint index;
+   int index;
    uint writemask;
    const char *cur;
 
-   if (!parse_register( ctx, &file, &index ))
+   if (!parse_register_dst( ctx, &file, &index ))
       return FALSE;
 
    cur = ctx->cur;
@@ -426,7 +504,9 @@ parse_src_operand(
    const char *cur;
    float value;
    uint file;
-   uint index;
+   int index;
+   uint ind_file;
+   int ind_index;
 
    if (*ctx->cur == '-') {
       cur = ctx->cur;
@@ -498,10 +578,15 @@ parse_src_operand(
       }
    }
 
-   if (!parse_register( ctx, &file, &index ))
+   if (!parse_register_src( ctx, &file, &index, &ind_file, &ind_index ))
       return FALSE;
    src->SrcRegister.File = file;
    src->SrcRegister.Index = index;
+   if (ind_file != TGSI_FILE_NULL) {
+      src->SrcRegister.Indirect = 1;
+      src->SrcRegisterInd.File = ind_file;
+      src->SrcRegisterInd.Index = ind_index;
+   }
 
    /* Parse optional swizzle
     */
@@ -864,8 +949,8 @@ static boolean parse_declaration( struct translate_ctx *ctx )
 {
    struct tgsi_full_declaration decl;
    uint file;
-   uint first;
-   uint last;
+   int first;
+   int last;
    uint writemask;
    const char *cur;
    uint advance;

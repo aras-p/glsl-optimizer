@@ -39,8 +39,9 @@ struct sanity_check_ctx
 {
    struct tgsi_iterate_context iter;
 
-   reg_flag regs_decl[TGSI_FILE_COUNT][MAX_REGISTERS / sizeof( uint ) / 8];
-   reg_flag regs_used[TGSI_FILE_COUNT][MAX_REGISTERS / sizeof( uint ) / 8];
+   reg_flag regs_decl[TGSI_FILE_COUNT][MAX_REGISTERS / BITS_IN_REG_FLAG];
+   reg_flag regs_used[TGSI_FILE_COUNT][MAX_REGISTERS / BITS_IN_REG_FLAG];
+   boolean regs_ind_used[TGSI_FILE_COUNT];
    uint num_imms;
    uint num_instructions;
    uint index_of_END;
@@ -83,22 +84,57 @@ static boolean
 is_register_declared(
    struct sanity_check_ctx *ctx,
    uint file,
-   uint index )
+   int index )
 {
-   assert( index < MAX_REGISTERS );
+   assert( index >= 0 && index < MAX_REGISTERS );
 
    return (ctx->regs_decl[file][index / BITS_IN_REG_FLAG] & (1 << (index % BITS_IN_REG_FLAG))) ? TRUE : FALSE;
+}
+
+static boolean
+is_any_register_declared(
+   struct sanity_check_ctx *ctx,
+   uint file )
+{
+   uint i;
+
+   for (i = 0; i < MAX_REGISTERS / BITS_IN_REG_FLAG; i++)
+      if (ctx->regs_decl[file][i])
+         return TRUE;
+   return FALSE;
 }
 
 static boolean
 is_register_used(
    struct sanity_check_ctx *ctx,
    uint file,
-   uint index )
+   int index )
 {
    assert( index < MAX_REGISTERS );
 
    return (ctx->regs_used[file][index / BITS_IN_REG_FLAG] & (1 << (index % BITS_IN_REG_FLAG))) ? TRUE : FALSE;
+}
+
+static boolean
+check_register_usage(
+   struct sanity_check_ctx *ctx,
+   uint file,
+   int index,
+   boolean indirect )
+{
+   if (!check_file_name( ctx, file ))
+      return FALSE;
+   if (indirect) {
+      if (!is_any_register_declared( ctx, file ))
+         report_error( ctx, "Undeclared source register" );
+      ctx->regs_ind_used[file] = TRUE;
+   }
+   else {
+      if (!is_register_declared( ctx, file, index ))
+         report_error( ctx, "Undeclared destination register" );
+      ctx->regs_used[file][index / BITS_IN_REG_FLAG] |= (1 << (index % BITS_IN_REG_FLAG));
+   }
+   return TRUE;
 }
 
 static boolean
@@ -122,28 +158,25 @@ iter_instruction(
     * Mark the registers as used.
     */
    for (i = 0; i < inst->Instruction.NumDstRegs; i++) {
-      uint file;
-      uint index;
-
-      file = inst->FullDstRegisters[i].DstRegister.File;
-      if (!check_file_name( ctx, file ))
-         return TRUE;
-      index = inst->FullDstRegisters[i].DstRegister.Index;
-      if (!is_register_declared( ctx, file, index ))
-         report_error( ctx, "Undeclared destination register" );
-      ctx->regs_used[file][index / BITS_IN_REG_FLAG] |= (1 << (index % BITS_IN_REG_FLAG));
+      check_register_usage(
+         ctx,
+         inst->FullDstRegisters[i].DstRegister.File,
+         inst->FullDstRegisters[i].DstRegister.Index,
+         FALSE );
    }
    for (i = 0; i < inst->Instruction.NumSrcRegs; i++) {
-      uint file;
-      uint index;
-
-      file = inst->FullSrcRegisters[i].SrcRegister.File;
-      if (!check_file_name( ctx, file ))
-         return TRUE;
-      index = inst->FullSrcRegisters[i].SrcRegister.Index;
-      if (!is_register_declared( ctx, file, index ))
-         report_error( ctx, "Undeclared source register" );
-      ctx->regs_used[file][index / BITS_IN_REG_FLAG] |= (1 << (index % BITS_IN_REG_FLAG));
+      check_register_usage(
+         ctx,
+         inst->FullSrcRegisters[i].SrcRegister.File,
+         inst->FullSrcRegisters[i].SrcRegister.Index,
+         inst->FullSrcRegisters[i].SrcRegister.Indirect );
+      if (inst->FullSrcRegisters[i].SrcRegister.Indirect) {
+         check_register_usage(
+            ctx,
+            inst->FullSrcRegisters[i].SrcRegisterInd.File,
+            inst->FullSrcRegisters[i].SrcRegisterInd.Index,
+            FALSE );
+      }
    }
 
    ctx->num_instructions++;
@@ -228,7 +261,7 @@ epilog(
       uint i;
 
       for (i = 0; i < MAX_REGISTERS; i++) {
-         if (is_register_declared( ctx, file, i ) && !is_register_used( ctx, file, i )) {
+         if (is_register_declared( ctx, file, i ) && !is_register_used( ctx, file, i ) && !ctx->regs_ind_used[file]) {
             report_warning( ctx, "Register never used" );
          }
       }
@@ -256,6 +289,7 @@ tgsi_sanity_check(
 
    memset( ctx.regs_decl, 0, sizeof( ctx.regs_decl ) );
    memset( ctx.regs_used, 0, sizeof( ctx.regs_used ) );
+   memset( ctx.regs_ind_used, 0, sizeof( ctx.regs_ind_used ) );
    ctx.num_imms = 0;
    ctx.num_instructions = 0;
    ctx.index_of_END = ~0;

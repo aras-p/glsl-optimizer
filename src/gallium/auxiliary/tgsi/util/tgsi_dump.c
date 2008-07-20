@@ -265,17 +265,48 @@ static const char *modulate_names[TGSI_MODULATE_COUNT] =
 };
 
 static void
-_dump_register(
+_dump_register_prefix(
    uint file,
    uint first,
    uint last )
 {
+   
+   
+}
+
+static void
+_dump_register(
+   uint file,
+   int first,
+   int last )
+{
    ENM( file, file_names );
    CHR( '[' );
-   UID( first );
+   SID( first );
    if (first != last) {
       TXT( ".." );
-      UID( last );
+      SID( last );
+   }
+   CHR( ']' );
+}
+
+static void
+_dump_register_ind(
+   uint file,
+   int index,
+   uint ind_file,
+   int ind_index )
+{
+   ENM( file, file_names );
+   CHR( '[' );
+   ENM( ind_file, file_names );
+   CHR( '[' );
+   SID( ind_index );
+   CHR( ']' );
+   if (index != 0) {
+      if (index > 0)
+         CHR( '+' );
+      SID( index );
    }
    CHR( ']' );
 }
@@ -432,17 +463,11 @@ tgsi_dump_instruction(
          CHR( '-' );
 
       if (src->SrcRegister.Indirect) {
-         /* TODO: Tidy up
-          */
-         ENM( src->SrcRegister.File, file_names );
-         CHR( '[' );
-         TXT( "ADDR[0]" );
-         if (src->SrcRegister.Index != 0) {
-            if (src->SrcRegister.Index > 0)
-               CHR( '+' );
-            SID( src->SrcRegister.Index );
-         }
-         CHR( ']' );
+         _dump_register_ind(
+            src->SrcRegister.File,
+            src->SrcRegister.Index,
+            src->SrcRegisterInd.File,
+            src->SrcRegisterInd.Index );
       }
       else {
          _dump_register(
