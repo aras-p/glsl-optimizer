@@ -523,11 +523,6 @@ _mesa_VertexAttribPointerARB(GLuint index, GLint size, GLenum type,
       return;
    }
 
-   if (type == GL_UNSIGNED_BYTE && size != 4) {
-      _mesa_error(ctx, GL_INVALID_VALUE, "glVertexAttribPointerARB(size!=4)");
-      return;
-   }
-
    /* check for valid 'type' and compute StrideB right away */
    /* NOTE: more types are supported here than in the NV extension */
    switch (type) {
