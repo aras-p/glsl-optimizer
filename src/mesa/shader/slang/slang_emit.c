@@ -696,29 +696,72 @@ emit_compare(slang_emit_info *emitInfo, slang_ir_node *n)
       }
    }
    else {
-      /* size > 4, struct compare */
-#if 0
+      /* size > 4, struct or array compare.
+       * XXX this won't work reliably for structs with padding!!
+       */
       GLint i, num = (n->Children[0]->Store->Size + 3) / 4;
-      /*printf("BEGIN COMPARE size %d\n", num);*/
+      slang_ir_storage accTemp;
+
+      if (!n->Store) {
+         if (!alloc_temp_storage(emitInfo, n, 4))
+            return NULL;
+      }
+
+      accTemp.Size = 4;
+      accTemp.File = PROGRAM_TEMPORARY;
+      if (!_slang_alloc_temp(emitInfo->vt, &accTemp)) {
+         return NULL;
+         /* out of temps */
+      }
+
       for (i = 0; i < num; i++) {
-         inst = new_instruction(emitInfo, opcode);
+         /* SNE t0, left[i], right[i] */
+         inst = new_instruction(emitInfo, OPCODE_SNE);
          inst->SrcReg[0].File = n->Children[0]->Store->File;
          inst->SrcReg[0].Index = n->Children[0]->Store->Index + i;
          inst->SrcReg[1].File = n->Children[1]->Store->File;
          inst->SrcReg[1].Index = n->Children[1]->Store->Index + i;
-         inst->DstReg.File = n->Store->File;
-         inst->DstReg.Index = n->Store->Index;
-
-         inst->CondUpdate = 1; /* update cond code */
-         if (i > 0) {
-            inst->DstReg.CondMask = COND_NE; /* update if !=0 */
+         if (i == 0) {
+            inst->DstReg.File = accTemp.File;
+            inst->DstReg.Index = accTemp.Index;
+            inst->Comment = _mesa_strdup("Begin struct/array comparison");
          }
-         /*_mesa_print_instruction(inst);*/
+         else {
+            inst->DstReg.File = n->Store->File;
+            inst->DstReg.Index = n->Store->Index;
+         }
+         if (i > 0) {
+            /* ADD accTemp, accTemp, temp; # like logical-OR */
+            inst = new_instruction(emitInfo, OPCODE_ADD);
+            inst->SrcReg[0].File = accTemp.File;
+            inst->SrcReg[0].Index = accTemp.Index;
+            inst->SrcReg[1].File = n->Store->File;
+            inst->SrcReg[1].Index = n->Store->Index;
+            inst->DstReg.File = accTemp.File;
+            inst->DstReg.Index = accTemp.Index;
+         }
       }
-      storage_to_dst_reg(&inst->DstReg, n->Store, n->Writemask);
-#endif
-      _mesa_problem(NULL, "struct comparison not implemented yet");
-      inst = NULL;
+
+      /* compute accTemp.x || accTemp.y || accTemp.z || accTemp.w with DOT4 */
+      inst = new_instruction(emitInfo, OPCODE_DP4);
+      inst->SrcReg[0].File = accTemp.File;
+      inst->SrcReg[0].Index = accTemp.Index;
+      inst->SrcReg[1].File = accTemp.File;
+      inst->SrcReg[1].Index = accTemp.Index;
+      inst->DstReg.File = n->Store->File;
+      inst->DstReg.Index = n->Store->Index;
+      inst->Comment = _mesa_strdup("End struct/array comparison");
+
+      if (n->Opcode == IR_EQUAL) {
+         /* compute tmp.x = !tmp.x  via tmp.x = (tmp.x == 0) */
+         inst = new_instruction(emitInfo, OPCODE_SEQ);
+         storage_to_src_reg(&inst->SrcReg[0], n->Store);
+         constant_to_src_reg(&inst->SrcReg[1], 0.0, emitInfo);
+         storage_to_dst_reg(&inst->DstReg, n->Store, n->Writemask);
+         inst->Comment = _mesa_strdup("Invert true/false");
+      }
+
+      _slang_free_temp(emitInfo->vt, &accTemp);
    }
 
    /* free temps */
