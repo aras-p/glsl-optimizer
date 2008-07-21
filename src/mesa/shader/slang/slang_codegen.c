@@ -3059,6 +3059,23 @@ _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper)
 }
 
 
+/**
+ * Compute total size of array give size of element, number of elements.
+ */
+static GLint
+array_size(GLint baseSize, GLint arrayLen)
+{
+   GLint total;
+   if (arrayLen > 1) {
+      /* round up base type to multiple of 4 */
+      total = ((baseSize + 3) & ~0x3) * MAX2(arrayLen, 1);
+   }
+   else {
+      total = baseSize;
+   }
+   return total;
+}
+
 
 /**
  * Called by compiler when a global variable has been parsed/compiled.
@@ -3098,7 +3115,7 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
    }
    else if (var->type.qualifier == SLANG_QUAL_UNIFORM) {
       /* Uniform variable */
-      const GLint totalSize = size * MAX2(var->array_len, 1);
+      const GLint totalSize = array_size(size, var->array_len);
       const GLuint swizzle = _slang_var_swizzle(totalSize, 0);
       if (prog) {
          /* user-defined uniform */
@@ -3182,7 +3199,7 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
          /* user-defined vertex attribute */
          const GLint attr = -1; /* unknown */
          GLint index = _mesa_add_attribute(prog->Attributes, varName,
-                                           size, attr);
+                                           size, datatype, attr);
          assert(index >= 0);
          store = _slang_new_ir_storage(PROGRAM_INPUT,
                                        VERT_ATTRIB_GENERIC0 + index, size);
