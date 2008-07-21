@@ -2903,14 +2903,14 @@ _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper)
       {
 	 slang_ir_node *n;
          assert(oper->num_children == 2);
-	 n = _slang_gen_function_call_name(A, "+=", oper, &oper->children[0]);
+	 n = _slang_gen_function_call_name(A, "+=", oper, NULL);
 	 return n;
       }
    case SLANG_OPER_SUBASSIGN:
       {
 	 slang_ir_node *n;
          assert(oper->num_children == 2);
-	 n = _slang_gen_function_call_name(A, "-=", oper, &oper->children[0]);
+	 n = _slang_gen_function_call_name(A, "-=", oper, NULL);
 	 return n;
       }
       break;
@@ -2918,14 +2918,14 @@ _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper)
       {
 	 slang_ir_node *n;
          assert(oper->num_children == 2);
-	 n = _slang_gen_function_call_name(A, "*=", oper, &oper->children[0]);
+	 n = _slang_gen_function_call_name(A, "*=", oper, NULL);
 	 return n;
       }
    case SLANG_OPER_DIVASSIGN:
       {
 	 slang_ir_node *n;
          assert(oper->num_children == 2);
-	 n = _slang_gen_function_call_name(A, "/=", oper, &oper->children[0]);
+	 n = _slang_gen_function_call_name(A, "/=", oper, NULL);
 	 return n;
       }
    case SLANG_OPER_LOGICALAND:
