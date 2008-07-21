@@ -1225,6 +1225,9 @@ emit_if(slang_emit_info *emitInfo, slang_ir_node *n)
       }
    }
 
+   if (!n->Children[0]->Store)
+      return NULL;
+
 #if 0
    assert(n->Children[0]->Store->Size == 1); /* a bool! */
 #endif
