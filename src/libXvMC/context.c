@@ -155,3 +155,46 @@ Status XvMCDestroyContext(Display *display, XvMCContext *context)
 	return Success;
 }
 
+/* XXX: The following are here temporarily, need to be implemented in the DDX driver */
+/* TODO: Figure out which of these need to be in DDX, which are better off in DDX, which can stay */
+
+Bool XvMCQueryExtension(Display *display, int *event_base, int *err_base)
+{
+	*event_base = 0;
+	*err_base = 0;
+	
+	return True;
+}
+
+Status XvMCQueryVersion(Display *display, int *major, int *minor)
+{
+	*major = 1;
+	*minor = 0;
+	
+	return Success;
+}
+
+XvMCSurfaceInfo* XvMCListSurfaceTypes(Display *display, XvPortID port, int *num)
+{
+	XvMCSurfaceInfo	*surface_info = calloc(1, sizeof(XvMCSurfaceInfo));
+	
+	*num = 1;
+	
+	surface_info->chroma_format = XVMC_CHROMA_FORMAT_420;
+	surface_info->max_width = 2048;
+	surface_info->max_height = 2048;
+	surface_info->mc_type = XVMC_IDCT | XVMC_MPEG_2;
+	surface_info->surface_type_id = 123; /* FIXME: XAllocID(display)*/;
+	surface_info->flags |= XVMC_INTRA_UNSIGNED;
+	
+	return surface_info;
+}
+
+XvImageFormatValues* XvMCListSubpictureTypes(Display* display, XvPortID port, int surface_type_id, int *count_return)
+{
+	/* TODO */
+	*count_return = 0;
+	
+	return NULL;
+}
+
