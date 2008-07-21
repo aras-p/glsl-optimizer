@@ -1160,9 +1160,29 @@ void brw_vs_emit(struct brw_vs_compile *c )
       }
 
       if (inst->DstReg.File == PROGRAM_OUTPUT
-	      &&inst->DstReg.Index != VERT_RESULT_HPOS
-	      &&c->output_regs[inst->DstReg.Index].used_in_src)
-	  brw_MOV(p, get_dst(c, inst->DstReg), dst);
+          && inst->DstReg.Index != VERT_RESULT_HPOS
+          && c->output_regs[inst->DstReg.Index].used_in_src) {
+         /* Result color clamping.
+          * 
+          * When destination register is an output register and it's
+          * primary/secondary front/back color, we have to clamp the result
+          * to [0,1]. This is done by enabling the saturation bit for the
+          * last instruction.
+          * 
+          * We don't use brw_set_saturate() as it modifies
+          * p->current->header.saturate, which affects all the subsequent
+          * instructions. Instead, we directly modify the header of the last
+          * (already stored) instruction.
+          */
+         if (inst->DstReg.File == PROGRAM_OUTPUT) {
+            if ((inst->DstReg.Index == VERT_RESULT_COL0) ||
+                (inst->DstReg.Index == VERT_RESULT_COL1) ||
+                (inst->DstReg.Index == VERT_RESULT_BFC0) ||
+                (inst->DstReg.Index == VERT_RESULT_BFC1)) {            
+               p->store[p->nr_insn-1].header.saturate = 1;
+            }
+         }
+      }
 
       release_tmps(c);
    }
