@@ -1534,15 +1534,19 @@ static void
 _mesa_validate_program(GLcontext *ctx, GLuint program)
 {
    struct gl_shader_program *shProg;
-   shProg = _mesa_lookup_shader_program(ctx, program);
+
+   shProg = _mesa_lookup_shader_program_err(ctx, program, "glValidateProgram");
    if (!shProg) {
-      _mesa_error(ctx, GL_INVALID_VALUE, "glValidateProgram(program)");
       return;
    }
-   /* XXX temporary */
-   shProg->Validated = GL_TRUE;
 
-   /* From the GL spec:
+   if (!shProg->LinkStatus) {
+      shProg->Validated = GL_FALSE;
+      return;
+   }
+
+   /* From the GL spec, a program is invalid if any of these are true:
+
      any two active samplers in the current program object are of
      different types, but refer to the same texture image unit,
 
@@ -1555,6 +1559,8 @@ _mesa_validate_program(GLcontext *ctx, GLuint program)
      processing exceeds the combined limit on the total number of texture
      image units allowed.
    */
+
+   shProg->Validated = GL_TRUE;
 }
 
 
