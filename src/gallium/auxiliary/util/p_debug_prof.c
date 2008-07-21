@@ -49,12 +49,97 @@
 #define PROFILE_FILE_SIZE 4*1024*1024
 #define FILE_NAME_SIZE 256
 
-static WCHAR wFileName[FILE_NAME_SIZE];
+static WCHAR wFileName[FILE_NAME_SIZE] = L"\\??\\c:\\00000000.trace";
 static ULONG_PTR iFile = 0;
-static void *pMap = NULL;
-static void *pMapEnd = NULL;
+static BYTE *pMap = NULL;
+static BYTE *pMapBegin = NULL;
+static BYTE *pMapEnd = NULL;
 
 
+void __declspec(naked) __cdecl 
+debug_profile_close(void)
+{
+   _asm {
+      push eax
+      push ebx
+      push ecx
+      push edx
+      push ebp
+      push edi
+      push esi
+    }
+
+   if(iFile) {
+      EngUnmapFile(iFile);
+      /* Truncate the file */
+      pMap = EngMapFile(wFileName, pMap - pMapBegin, &iFile);
+      if(pMap)
+         EngUnmapFile(iFile);
+   }
+   iFile = 0;
+   pMapBegin = pMapEnd = pMap = NULL;
+   
+   _asm {
+      pop esi
+      pop edi
+      pop ebp
+      pop edx
+      pop ecx
+      pop ebx
+      pop eax
+      ret
+    }
+}
+
+
+void __declspec(naked) __cdecl 
+debug_profile_open(void)
+{
+   WCHAR *p;
+   
+   _asm {
+      push eax
+      push ebx
+      push ecx
+      push edx
+      push ebp
+      push edi
+      push esi
+    }
+
+   debug_profile_close();
+   
+   // increment starting from the less significant digit
+   p = &wFileName[14];
+   while(1) {
+      if(*p == '9') {
+         *p-- = '0';
+      }
+      else {
+         *p += 1;
+         break;
+      }
+   }
+
+   pMap = EngMapFile(wFileName, PROFILE_FILE_SIZE, &iFile);
+   if(pMap) {
+      pMapBegin = pMap;
+      pMapEnd = pMap + PROFILE_FILE_SIZE;
+   }
+   
+   _asm {
+      pop esi
+      pop edi
+      pop ebp
+      pop edx
+      pop ecx
+      pop ebx
+      pop eax
+      ret
+    }
+}
+   
+   
 /**
  * Called at the start of every method or function.
  * 
@@ -64,11 +149,15 @@ void __declspec(naked) __cdecl
 _penter(void) {
    _asm {
       push ebx
+retry:
       mov ebx, [pMap]
       test ebx, ebx
       jz done
       cmp ebx, [pMapEnd]
-      je done
+      jne ready
+      call debug_profile_open
+      jmp retry
+ready:
       push eax
       push edx
       mov eax, [esp+12]
@@ -97,11 +186,15 @@ void __declspec(naked) __cdecl
 _pexit(void) {
    _asm {
       push ebx
+retry:
       mov ebx, [pMap]
       test ebx, ebx
       jz done
       cmp ebx, [pMapEnd]
-      je done
+      jne ready
+      call debug_profile_open
+      jmp retry
+ready:
       push eax
       push edx
       mov eax, [esp+12]
@@ -121,21 +214,13 @@ done:
 }
 
 
+/**
+ * Reference function for calibration. 
+ */
 void __declspec(naked) 
-__debug_profile_reference1(void) {
+__debug_profile_reference(void) {
    _asm {
       call _penter
-      call _pexit
-      ret
-   }
-}
-
-
-void __declspec(naked) 
-__debug_profile_reference2(void) {
-   _asm {
-      call _penter
-      call __debug_profile_reference1
       call _pexit
       ret
    }
@@ -145,31 +230,25 @@ __debug_profile_reference2(void) {
 void
 debug_profile_start(void)
 {
-   static unsigned no = 0; 
-   char filename[FILE_NAME_SIZE];
-   unsigned i;
-
-   util_snprintf(filename, sizeof(filename), "\\??\\c:\\%03u.prof", ++no);
-   for(i = 0; i < FILE_NAME_SIZE; ++i)
-      wFileName[i] = (WCHAR)filename[i];
+   debug_profile_open();
    
-   pMap = EngMapFile(wFileName, PROFILE_FILE_SIZE, &iFile);
    if(pMap) {
-      pMapEnd = (unsigned char*)pMap + PROFILE_FILE_SIZE;
-      /* reference functions for calibration purposes */
-      __debug_profile_reference2();
+      unsigned i;
+      for(i = 0; i < 8; ++i) {
+         _asm {
+            call _penter
+            call __debug_profile_reference
+            call _pexit
+         }
+      }
    }
 }
+
 
 void 
 debug_profile_stop(void)
 {
-   if(iFile) {
-      EngUnmapFile(iFile);
-      /* TODO: truncate file */
-   }
-   iFile = 0;
-   pMapEnd = pMap = NULL; 
+   debug_profile_close();
 }
 
 #endif /* PROFILE */
