@@ -32,6 +32,10 @@ import optparse
 import re
 import struct
 
+from gprof2dot import Call, Function, Profile
+from gprof2dot import CALLS, SAMPLES, TIME, TIME_RATIO, TOTAL_TIME, TOTAL_TIME_RATIO
+from gprof2dot import DotWriter, TEMPERATURE_COLORMAP
+
 
 __version__ = '0.1'
 
@@ -104,18 +108,15 @@ def demangle(name):
     if name.startswith('?'):
         demangler = MsvcDemangler(name)
         return demangler.parse()
-
-        return name
     return name
 
 
-class Profile:
+class Reader:
 
     def __init__(self):
         self.symbols = []
         self.symbol_cache = {}
         self.base_addr = None
-        self.functions = {}
         self.last_stamp = 0
         self.stamp_base = 0
     
@@ -139,7 +140,6 @@ class Profile:
                 continue
             section, offset = section_offset.split(':')
             addr = int(offset, 16)
-            name = demangle(name)
             if last_addr == addr:
                 # TODO: handle collapsed functions
                 #assert last_name == name
@@ -174,8 +174,8 @@ class Profile:
             if addr > end_addr:
                 s = i
                 continue
-            return name
-        return "0x%08x" % addr
+            return name, addr - start_addr
+        return "0x%08x" % addr, 0
 
     def lookup_symbol(self, name):
         for symbol_addr, symbol_name in self.symbols:
@@ -184,16 +184,13 @@ class Profile:
         return 0
 
     def read_data(self, data):
-        # TODO: compute these automatically
-        caller_overhead = 672 - 2*144 # __debug_profile_reference2 - 2*__debug_profile_reference1
-        callee_overhead = 144 # __debug_profile_reference1
-        callee_overhead -= 48 # tolerance
-        caller_overhead = callee_overhead
+        profile = Profile()
 
         fp = file(data, "rb")
         entry_format = "II"
         entry_size = struct.calcsize(entry_format)
-        stack = []
+        caller = None
+        caller_stack = []
         last_stamp = 0
         delta = 0
         while True:
@@ -207,7 +204,7 @@ class Profile:
             exit = addr_exit & 0x00000001
 
             if self.base_addr is None:
-                ref_addr = self.lookup_symbol('__debug_profile_reference2')
+                ref_addr = self.lookup_symbol('___debug_profile_reference2@0')
                 if ref_addr:
                     self.base_addr = (addr - ref_addr) & ~(options.align - 1)
                 else:
@@ -216,46 +213,80 @@ class Profile:
             rel_addr = addr - self.base_addr
             #print hex(addr - self.base_addr)
 
-            name = self.lookup_addr(rel_addr)
+            symbol, offset = self.lookup_addr(rel_addr)
             stamp = self.unwrap_stamp(stamp)
-
-            delta += stamp - last_stamp
+            delta = stamp - last_stamp
 
             if not exit:
                 if options.verbose >= 2:
-                    print "%10u >> 0x%08x" % (stamp, addr)
+                    sys.stderr.write("%08x >> 0x%08x\n" % (stamp, addr))
                 if options.verbose:
-                    print "%10u >> %s" % (stamp, name)
-                delta -= caller_overhead
-                stack.append((name, stamp, delta))
-                delta = 0
+                    sys.stderr.write("%+8u >> %s+%u\n" % (delta, symbol, offset))
             else:
                 if options.verbose >= 2:
-                    print "%10u << 0x%08x" % (stamp, addr)
-                if len(stack):
-                    self_time = delta - callee_overhead
-                    entry_name, entry_stamp, delta = stack.pop()
-                    if entry_name != name:
-                        if options.verbose:
-                            print "%10u << %s" % (stamp, name)
-                        #assert entry_name == name
-                        break
-                    total_time = stamp - entry_stamp
-                    self.functions[entry_name] = self.functions.get(entry_name, 0) + self_time
-                    if options.verbose:
-                        print "%10u << %s %+u" % (stamp, name, self_time)
+                    sys.stderr.write("%08x << 0x%08x\n" % (stamp, addr))
+                if options.verbose:
+                    sys.stderr.write("%+8u << %s+%u\n" % (delta, symbol, offset))
+
+            # Eliminate outliers
+            if exit and delta > 0x1000000:
+                # TODO: Use a statistic test instead of a threshold
+                sys.stderr.write("warning: ignoring excessive delta of +%u in function %s\n" % (delta, symbol))
+                delta = 0
+
+            # Remove overhead
+            # TODO: compute the overhead automatically
+            delta = max(0, delta - 84)
+
+            if caller is not None:
+                caller[SAMPLES] += delta
+
+            if not exit:
+                # Function call
+                try:
+                    callee = profile.functions[symbol]
+                except KeyError:
+                    name = demangle(symbol)
+                    callee = Function(symbol, name)
+                    profile.add_function(callee)
+                    callee[CALLS] = 1
+                    callee[SAMPLES] = 0
                 else:
-                    delta = 0
+                    callee[CALLS] += 1
+
+                if caller is not None:
+                    try:
+                        call = caller.calls[callee.id]
+                    except KeyError:
+                        call = Call(callee.id)
+                        call[CALLS] = 1
+                        caller.add_call(call)
+                    else:
+                        call[CALLS] += 1
+                    caller_stack.append(caller)
+
+                caller = callee
+
+            else:
+                # Function return
+                if caller is not None:
+                    assert caller.id == symbol
+                    try:
+                        caller = caller_stack.pop()
+                    except IndexError:
+                        caller = None
 
             last_stamp = stamp
 
-    def write_report(self):
-        total = sum(self.functions.values())
-        results = self.functions.items()
-        results.sort(key = lambda (name, time): -time)
-        for name, time in results:
-            perc = float(time)/float(total)*100.0
-            print "%6.03f %s" % (perc, name)
+        # compute derived data
+        profile.validate()
+        profile.find_cycles()
+        profile.aggregate(SAMPLES)
+        profile.ratio(TIME_RATIO, SAMPLES)
+        profile.call_ratios(CALLS)
+        profile.integrate(TOTAL_TIME_RATIO, TIME_RATIO)
+
+        return profile
 
 
 def main():
@@ -275,6 +306,14 @@ def main():
         type="string", dest="base",
         help="base addr")
     parser.add_option(
+        '-n', '--node-thres', metavar='PERCENTAGE',
+        type="float", dest="node_thres", default=0.5,
+        help="eliminate nodes below this threshold [default: %default]")
+    parser.add_option(
+        '-e', '--edge-thres', metavar='PERCENTAGE',
+        type="float", dest="edge_thres", default=0.1,
+        help="eliminate edges below this threshold [default: %default]")
+    parser.add_option(
         '-v', '--verbose',
         action="count",
         dest="verbose", default=0,
@@ -283,14 +322,18 @@ def main():
     global options
     (options, args) = parser.parse_args(sys.argv[1:])
 
-    profile = Profile()
+    reader = Reader()
     if options.base is not None:
-        profile.base_addr = int(options.base, 16)
+        reader.base_addr = int(options.base, 16)
     if options.map is not None:
-        profile.read_map(options.map)
+        reader.read_map(options.map)
     for arg in args:
-        profile.read_data(arg)
-    profile.write_report()
+        profile = reader.read_data(arg)
+        profile.prune(options.node_thres/100.0, options.edge_thres/100.0)
+        output = sys.stdout
+        dot = DotWriter(output)
+        colormap = TEMPERATURE_COLORMAP
+        dot.graph(profile, colormap)
 
 
 if __name__ == '__main__':
