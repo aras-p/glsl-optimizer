@@ -29,8 +29,8 @@
 #include "nouveau/nouveau_stateobj.h"
 
 #define NV5X_GRCLASS5097_CHIPSETS 0x00000001
-#define NV8X_GRCLASS8297_CHIPSETS 0x00000010
-#define NV9X_GRCLASS8297_CHIPSETS 0x00000004
+#define NV8X_GRCLASS8297_CHIPSETS 0x00000050
+#define NV9X_GRCLASS8297_CHIPSETS 0x00000014
 
 static boolean
 nv50_screen_is_format_supported(struct pipe_screen *pscreen,
