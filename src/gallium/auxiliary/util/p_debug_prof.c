@@ -46,97 +46,83 @@
 #include "util/u_string.h" 
 
 
-#define PROFILE_FILE_SIZE 4*1024*1024
+#define PROFILE_TABLE_SIZE (1024*1024)
 #define FILE_NAME_SIZE 256
 
-static WCHAR wFileName[FILE_NAME_SIZE] = L"\\??\\c:\\00000000.trace";
-static ULONG_PTR iFile = 0;
-static BYTE *pMap = NULL;
-static BYTE *pMapBegin = NULL;
-static BYTE *pMapEnd = NULL;
-
-
-void __declspec(naked) __cdecl 
-debug_profile_close(void)
+struct debug_profile_entry
 {
-   _asm {
-      push eax
-      push ebx
-      push ecx
-      push edx
-      push ebp
-      push edi
-      push esi
-    }
+   uintptr_t caller;
+   uintptr_t callee;
+   uint64_t samples;
+};
 
-   if(iFile) {
-      EngUnmapFile(iFile);
-      /* Truncate the file */
-      pMap = EngMapFile(wFileName, pMap - pMapBegin, &iFile);
-      if(pMap)
-         EngUnmapFile(iFile);
-   }
-   iFile = 0;
-   pMapBegin = pMapEnd = pMap = NULL;
+static unsigned long enabled = 0;
+
+static WCHAR wFileName[FILE_NAME_SIZE] = L"\\??\\c:\\00000000.prof";
+static ULONG_PTR iFile = 0;
+
+static struct debug_profile_entry *table = NULL;
+static unsigned long free_table_entries = 0;
+static unsigned long max_table_entries = 0;
+
+uint64_t start_stamp = 0;
+uint64_t end_stamp = 0;
+
+
+static void
+debug_profile_entry(uintptr_t caller, uintptr_t callee, uint64_t samples)
+{
+   unsigned hash = ( caller + callee ) & PROFILE_TABLE_SIZE - 1;
    
-   _asm {
-      pop esi
-      pop edi
-      pop ebp
-      pop edx
-      pop ecx
-      pop ebx
-      pop eax
-      ret
-    }
+   while(1) {
+      if(table[hash].caller == 0 && table[hash].callee == 0) {
+         table[hash].caller = caller;
+         table[hash].callee = callee;
+         table[hash].samples = samples;
+         --free_table_entries;
+         break;
+      }
+      else if(table[hash].caller == caller && table[hash].callee == callee) {
+         table[hash].samples += samples;
+         break;
+      }
+      else {
+         ++hash;
+      }
+   }
 }
 
 
-void __declspec(naked) __cdecl 
-debug_profile_open(void)
+static uintptr_t caller_stack[1024];
+static unsigned last_caller = 0;
+
+
+static int64_t delta(void) {
+   int64_t result = end_stamp - start_stamp;
+   if(result > UINT64_C(0xffffffff))
+      result = 0;
+   return result;
+}
+
+
+static void __cdecl 
+debug_profile_enter(uintptr_t callee)
 {
-   WCHAR *p;
-   
-   _asm {
-      push eax
-      push ebx
-      push ecx
-      push edx
-      push ebp
-      push edi
-      push esi
-    }
+   uintptr_t caller = last_caller ? caller_stack[last_caller - 1] : 0;
+                
+   if (caller)
+      debug_profile_entry(caller, 0, delta());
+   debug_profile_entry(caller, callee, 1);
+   caller_stack[last_caller++] = callee;
+}
 
-   debug_profile_close();
-   
-   // increment starting from the less significant digit
-   p = &wFileName[14];
-   while(1) {
-      if(*p == '9') {
-         *p-- = '0';
-      }
-      else {
-         *p += 1;
-         break;
-      }
-   }
 
-   pMap = EngMapFile(wFileName, PROFILE_FILE_SIZE, &iFile);
-   if(pMap) {
-      pMapBegin = pMap;
-      pMapEnd = pMap + PROFILE_FILE_SIZE;
-   }
-   
-   _asm {
-      pop esi
-      pop edi
-      pop ebp
-      pop edx
-      pop ecx
-      pop ebx
-      pop eax
-      ret
-    }
+static void __cdecl
+debug_profile_exit(uintptr_t callee)
+{
+   debug_profile_entry(callee, 0, delta());
+   if(last_caller)
+      --last_caller;
 }
    
    
@@ -148,31 +134,49 @@ debug_profile_open(void)
 void __declspec(naked) __cdecl 
 _penter(void) {
    _asm {
-      push ebx
-retry:
-      mov ebx, [pMap]
-      test ebx, ebx
-      jz done
-      cmp ebx, [pMapEnd]
-      jne ready
-      call debug_profile_open
-      jmp retry
-ready:
       push eax
+      mov eax, [enabled]
+      test eax, eax
+      jz skip
+
       push edx
-      mov eax, [esp+12]
-      and eax, 0xfffffffe
-      mov [ebx], eax
-      add ebx, 4
+      
       rdtsc
-      mov [ebx], eax
-      add ebx, 4
-      mov [pMap], ebx
-      pop edx
-      pop eax
-done:
+      mov dword ptr [end_stamp], eax
+      mov dword ptr [end_stamp+4], edx
+
+      xor eax, eax
+      mov [enabled], eax
+
+      mov eax, [esp+8]
+
+      push ebx
+      push ecx
+      push ebp
+      push edi
+      push esi
+
+      push eax
+      call debug_profile_enter
+      add esp, 4
+
+      pop esi
+      pop edi
+      pop ebp
+      pop ecx
       pop ebx
-      ret  
+
+      mov eax, 1
+      mov [enabled], eax 
+
+      rdtsc
+      mov dword ptr [start_stamp], eax
+      mov dword ptr [start_stamp+4], edx
+      
+      pop edx
+skip:
+      pop eax
+      ret
    }
 }
 
@@ -185,30 +189,48 @@ done:
 void __declspec(naked) __cdecl 
 _pexit(void) {
    _asm {
-      push ebx
-retry:
-      mov ebx, [pMap]
-      test ebx, ebx
-      jz done
-      cmp ebx, [pMapEnd]
-      jne ready
-      call debug_profile_open
-      jmp retry
-ready:
       push eax
+      mov eax, [enabled]
+      test eax, eax
+      jz skip
+
       push edx
-      mov eax, [esp+12]
-      or eax, 0x00000001
-      mov [ebx], eax
-      add ebx, 4
+      
       rdtsc
-      mov [ebx], eax
-      add ebx, 4
-      mov [pMap], ebx
-      pop edx
-      pop eax
-done:
+      mov dword ptr [end_stamp], eax
+      mov dword ptr [end_stamp+4], edx
+
+      xor eax, eax
+      mov [enabled], eax
+
+      mov eax, [esp+8]
+
+      push ebx
+      push ecx
+      push ebp
+      push edi
+      push esi
+
+      push eax
+      call debug_profile_exit
+      add esp, 4
+
+      pop esi
+      pop edi
+      pop ebp
+      pop ecx
       pop ebx
+
+      mov eax, 1
+      mov [enabled], eax 
+
+      rdtsc
+      mov dword ptr [start_stamp], eax
+      mov dword ptr [start_stamp+4], edx
+      
+      pop edx
+skip:
+      pop eax
       ret
    }
 }
@@ -230,15 +252,53 @@ __debug_profile_reference(void) {
 void
 debug_profile_start(void)
 {
-   debug_profile_open();
-   
-   if(pMap) {
+   WCHAR *p;
+
+   // increment starting from the less significant digit
+   p = &wFileName[14];
+   while(1) {
+      if(*p == '9') {
+         *p-- = '0';
+      }
+      else {
+         *p += 1;
+         break;
+      }
+   }
+
+   table = EngMapFile(wFileName, 
+                      PROFILE_TABLE_SIZE*sizeof(struct debug_profile_entry), 
+                      &iFile);
+   if(table) {
       unsigned i;
+      
+      free_table_entries = max_table_entries = PROFILE_TABLE_SIZE;
+      memset(table, 0, PROFILE_TABLE_SIZE*sizeof(struct debug_profile_entry));
+      
+      table[0].caller = (uintptr_t)&__debug_profile_reference;
+      table[0].callee = 0;
+      table[0].samples = 0;
+      --free_table_entries;
+
+      _asm {
+         push edx
+         push eax
+      
+         rdtsc
+         mov dword ptr [start_stamp], eax
+         mov dword ptr [start_stamp+4], edx
+         
+         pop edx
+         pop eax
+      }
+
+      last_caller = 0;
+      
+      enabled = 1;
+
       for(i = 0; i < 8; ++i) {
          _asm {
-            call _penter
             call __debug_profile_reference
-            call _pexit
          }
       }
    }
@@ -248,7 +308,13 @@ debug_profile_start(void)
 void 
 debug_profile_stop(void)
 {
-   debug_profile_close();
+   enabled = 0;
+
+   if(iFile)
+      EngUnmapFile(iFile);
+   iFile = 0;
+   table = NULL;
+   free_table_entries = max_table_entries = 0;
 }
 
 #endif /* PROFILE */

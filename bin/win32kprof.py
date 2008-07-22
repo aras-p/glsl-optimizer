@@ -117,15 +117,7 @@ class Reader:
         self.symbols = []
         self.symbol_cache = {}
         self.base_addr = None
-        self.last_stamp = 0
-        self.stamp_base = 0
     
-    def unwrap_stamp(self, stamp):
-        if stamp < self.last_stamp:
-            self.stamp_base += 1 << 32
-        self.last_stamp = stamp
-        return self.stamp_base + stamp
-
     def read_map(self, mapfile):
         # See http://msdn.microsoft.com/en-us/library/k7xkk3e2.aspx
         last_addr = 0
@@ -140,10 +132,6 @@ class Reader:
                 continue
             section, offset = section_offset.split(':')
             addr = int(offset, 16)
-            if last_addr == addr:
-                # TODO: handle collapsed functions
-                #assert last_name == name
-                continue
             self.symbols.append((addr, name))
             last_addr = addr
             last_name = name
@@ -170,12 +158,12 @@ class Reader:
                 e = i
                 continue
             if addr == end_addr:
-                return next_name
+                return next_name, addr - start_addr
             if addr > end_addr:
                 s = i
                 continue
             return name, addr - start_addr
-        return "0x%08x" % addr, 0
+        raise ValueError
 
     def lookup_symbol(self, name):
         for symbol_addr, symbol_name in self.symbols:
@@ -187,96 +175,76 @@ class Reader:
         profile = Profile()
 
         fp = file(data, "rb")
-        entry_format = "II"
+        entry_format = "IIII"
         entry_size = struct.calcsize(entry_format)
         caller = None
         caller_stack = []
-        last_stamp = 0
-        delta = 0
         while True:
             entry = fp.read(entry_size)
             if len(entry) < entry_size:
                 break
-            addr_exit, stamp = struct.unpack(entry_format, entry)
-            if addr_exit == 0 and stamp == 0:
-                break
-            addr = addr_exit & 0xfffffffe
-            exit = addr_exit & 0x00000001
+            caller_addr, callee_addr, samples_lo, samples_hi = struct.unpack(entry_format, entry)
+            if caller_addr == 0 and callee_addr == 0:
+                continue
 
             if self.base_addr is None:
-                ref_addr = self.lookup_symbol('___debug_profile_reference2@0')
+                ref_addr = self.lookup_symbol('___debug_profile_reference@0')
                 if ref_addr:
-                    self.base_addr = (addr - ref_addr) & ~(options.align - 1)
+                    self.base_addr = (caller_addr - ref_addr) & ~(options.align - 1)
                 else:
                     self.base_addr = 0
-                #print hex(self.base_addr)
-            rel_addr = addr - self.base_addr
-            #print hex(addr - self.base_addr)
+                sys.stderr.write('Base addr: %08x\n' % self.base_addr)
 
-            symbol, offset = self.lookup_addr(rel_addr)
-            stamp = self.unwrap_stamp(stamp)
-            delta = stamp - last_stamp
+            samples = (samples_hi << 32) | samples_lo
+            
+            try:
+                caller_raddr = caller_addr - self.base_addr
+                caller_sym, caller_ofs = self.lookup_addr(caller_raddr)
 
-            if not exit:
-                if options.verbose >= 2:
-                    sys.stderr.write("%08x >> 0x%08x\n" % (stamp, addr))
-                if options.verbose:
-                    sys.stderr.write("%+8u >> %s+%u\n" % (delta, symbol, offset))
-            else:
-                if options.verbose >= 2:
-                    sys.stderr.write("%08x << 0x%08x\n" % (stamp, addr))
-                if options.verbose:
-                    sys.stderr.write("%+8u << %s+%u\n" % (delta, symbol, offset))
-
-            # Eliminate outliers
-            if exit and delta > 0x1000000:
-                # TODO: Use a statistic test instead of a threshold
-                sys.stderr.write("warning: ignoring excessive delta of +%u in function %s\n" % (delta, symbol))
-                delta = 0
-
-            # Remove overhead
-            # TODO: compute the overhead automatically
-            delta = max(0, delta - 84)
-
-            if caller is not None:
-                caller[SAMPLES] += delta
-
-            if not exit:
-                # Function call
                 try:
-                    callee = profile.functions[symbol]
+                    caller = profile.functions[caller_sym]
                 except KeyError:
-                    name = demangle(symbol)
-                    callee = Function(symbol, name)
+                    caller_name = demangle(caller_sym)
+                    caller = Function(caller_sym, caller_name)
+                    profile.add_function(caller)
+                    caller[CALLS] = 0
+                    caller[SAMPLES] = 0
+            except ValueError:
+                caller = None
+
+            if not callee_addr:
+                if caller:
+                    caller[SAMPLES] += samples
+            else:
+                callee_raddr = callee_addr - self.base_addr
+                callee_sym, callee_ofs = self.lookup_addr(callee_raddr)
+
+                try:
+                    callee = profile.functions[callee_sym]
+                except KeyError:
+                    callee_name = demangle(callee_sym)
+                    callee = Function(callee_sym, callee_name)
                     profile.add_function(callee)
-                    callee[CALLS] = 1
+                    callee[CALLS] = samples
                     callee[SAMPLES] = 0
                 else:
-                    callee[CALLS] += 1
+                    callee[CALLS] += samples
 
                 if caller is not None:
                     try:
                         call = caller.calls[callee.id]
                     except KeyError:
                         call = Call(callee.id)
-                        call[CALLS] = 1
+                        call[CALLS] = samples
                         caller.add_call(call)
                     else:
-                        call[CALLS] += 1
-                    caller_stack.append(caller)
-
-                caller = callee
-
-            else:
-                # Function return
-                if caller is not None:
-                    assert caller.id == symbol
-                    try:
-                        caller = caller_stack.pop()
-                    except IndexError:
-                        caller = None
-
-            last_stamp = stamp
+                        call[CALLS] += samples
+            
+            if options.verbose:
+                if not callee_addr:
+                    sys.stderr.write('%s+%u: %u\n' % (caller_sym, caller_ofs, samples))
+                else:
+                    sys.stderr.write('%s+%u -> %s+%u: %u\n' % (caller_sym, caller_ofs, callee_sym, callee_ofs, samples))
 
         # compute derived data
         profile.validate()
