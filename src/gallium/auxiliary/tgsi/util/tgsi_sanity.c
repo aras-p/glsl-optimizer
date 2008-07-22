@@ -53,18 +53,32 @@ struct sanity_check_ctx
 static void
 report_error(
    struct sanity_check_ctx *ctx,
-   const char *msg )
+   const char *format,
+   ... )
 {
-   debug_printf( "\nError: %s", msg );
+   va_list args;
+
+   debug_printf( "Error  : " );
+   va_start( args, format );
+   _debug_vprintf( format, args );
+   va_end( args );
+   debug_printf( "\n" );
    ctx->errors++;
 }
 
 static void
 report_warning(
    struct sanity_check_ctx *ctx,
-   const char *msg )
+   const char *format,
+   ... )
 {
-   debug_printf( "\nWarning: %s", msg );
+   va_list args;
+
+   debug_printf( "Warning: " );
+   va_start( args, format );
+   _debug_vprintf( format, args );
+   va_end( args );
+   debug_printf( "\n" );
    ctx->warnings++;
 }
 
@@ -74,7 +88,7 @@ check_file_name(
    uint file )
 {
    if (file <= TGSI_FILE_NULL || file >= TGSI_FILE_COUNT) {
-      report_error( ctx, "Invalid file name" );
+      report_error( ctx, "Invalid register file name" );
       return FALSE;
    }
    return TRUE;
@@ -115,23 +129,36 @@ is_register_used(
    return (ctx->regs_used[file][index / BITS_IN_REG_FLAG] & (1 << (index % BITS_IN_REG_FLAG))) ? TRUE : FALSE;
 }
 
+static const char *file_names[] =
+{
+   "NULL",
+   "CONST",
+   "IN",
+   "OUT",
+   "TEMP",
+   "SAMP",
+   "ADDR",
+   "IMM"
+};
+
 static boolean
 check_register_usage(
    struct sanity_check_ctx *ctx,
    uint file,
    int index,
-   boolean indirect )
+   const char *name,
+   boolean indirect_access )
 {
    if (!check_file_name( ctx, file ))
       return FALSE;
-   if (indirect) {
+   if (indirect_access) {
       if (!is_any_register_declared( ctx, file ))
-         report_error( ctx, "Undeclared source register" );
+         report_error( ctx, "%s: Undeclared %s register", file_names[file], name );
       ctx->regs_ind_used[file] = TRUE;
    }
    else {
       if (!is_register_declared( ctx, file, index ))
-         report_error( ctx, "Undeclared destination register" );
+         report_error( ctx, "%s[%d]: Undeclared %s register", file_names[file], index, name );
       ctx->regs_used[file][index / BITS_IN_REG_FLAG] |= (1 << (index % BITS_IN_REG_FLAG));
    }
    return TRUE;
@@ -162,6 +189,7 @@ iter_instruction(
          ctx,
          inst->FullDstRegisters[i].DstRegister.File,
          inst->FullDstRegisters[i].DstRegister.Index,
+         "destination",
          FALSE );
    }
    for (i = 0; i < inst->Instruction.NumSrcRegs; i++) {
@@ -169,6 +197,7 @@ iter_instruction(
          ctx,
          inst->FullSrcRegisters[i].SrcRegister.File,
          inst->FullSrcRegisters[i].SrcRegister.Index,
+         "source",
          inst->FullSrcRegisters[i].SrcRegister.Indirect );
       if (inst->FullSrcRegisters[i].SrcRegister.Indirect) {
          uint file;
@@ -176,7 +205,12 @@ iter_instruction(
 
          file = inst->FullSrcRegisters[i].SrcRegisterInd.File;
          index = inst->FullSrcRegisters[i].SrcRegisterInd.Index;
-         check_register_usage( ctx, file, index, FALSE );
+         check_register_usage(
+            ctx,
+            file,
+            index,
+            "indirect",
+            FALSE );
          if (file != TGSI_FILE_ADDRESS || index != 0)
             report_warning( ctx, "Indirect register not ADDR[0]" );
       }
@@ -232,8 +266,8 @@ iter_immediate(
 
    /* Mark the register as declared.
     */
-   ctx->num_imms++;
    ctx->regs_decl[TGSI_FILE_IMMEDIATE][ctx->num_imms / BITS_IN_REG_FLAG] |= (1 << (ctx->num_imms % BITS_IN_REG_FLAG));
+   ctx->num_imms++;
 
    /* Check data type validity.
     */
