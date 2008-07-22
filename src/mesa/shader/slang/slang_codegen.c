@@ -1702,6 +1702,167 @@ _slang_first_function(struct slang_function_scope_ *scope, const char *name)
 }
 
 
+/**
+ * Generate a new slang_function which is a constructor for a user-defined
+ * struct type.
+ */
+static slang_function *
+_slang_make_constructor(slang_assemble_ctx *A, slang_struct *str)
+{
+   const GLint numFields = str->fields->num_variables;
+
+   slang_function *fun = (slang_function *) _mesa_malloc(sizeof(slang_function));
+   if (!fun)
+      return NULL;
+
+   slang_function_construct(fun);
+
+   /* function header (name, return type) */
+   fun->kind = SLANG_FUNC_CONSTRUCTOR;
+   fun->header.a_name = str->a_name;
+   fun->header.type.qualifier = SLANG_QUAL_NONE;
+   fun->header.type.specifier.type = SLANG_SPEC_STRUCT;
+   fun->header.type.specifier._struct = str;
+
+   /* function parameters (= struct's fields) */
+   {
+      GLint i;
+      for (i = 0; i < numFields; i++) {
+         /*
+         printf("Field %d: %s\n", i, (char*) str->fields->variables[i]->a_name);
+         */
+         slang_variable *p = slang_variable_scope_grow(fun->parameters);
+         *p = *str->fields->variables[i];
+      }
+      fun->param_count = fun->parameters->num_variables;
+   }
+
+   /* Add __retVal to params */
+   {
+      slang_variable *p = slang_variable_scope_grow(fun->parameters);
+      slang_atom a_retVal = slang_atom_pool_atom(A->atoms, "__retVal");
+      assert(a_retVal);
+      p->a_name = a_retVal;
+      p->type = fun->header.type;
+      p->type.qualifier = SLANG_QUAL_OUT;
+      fun->param_count++;
+   }
+
+   /* function body is:
+    *    block:
+    *       declare T;
+    *       T.f1 = p1;
+    *       T.f2 = p2;
+    *       ...
+    *       T.fn = pn;
+    *       return T;
+    */
+   {
+      slang_variable *var;
+      GLint i;
+
+      fun->body = slang_operation_new(1);
+      fun->body->type = SLANG_OPER_BLOCK_NO_NEW_SCOPE;
+      fun->body->num_children = numFields + 2;
+      fun->body->children = slang_operation_new(numFields + 2);
+
+      /* create local var 't' */
+      var = slang_variable_scope_grow(fun->parameters);
+      var->a_name = slang_atom_pool_atom(A->atoms, "t");
+      var->type = fun->header.type;
+
+      /* declare t */
+      {
+         slang_operation *decl;
+
+         decl = &fun->body->children[0];
+         decl->type = SLANG_OPER_VARIABLE_DECL;
+         decl->locals = _slang_variable_scope_new(fun->parameters);
+         decl->a_id = var->a_name;
+      }
+
+      /* assign params to fields of t */
+      for (i = 0; i < numFields; i++) {
+         slang_operation *assign = &fun->body->children[1 + i];
+
+         assign->type = SLANG_OPER_ASSIGN;
+         assign->locals = _slang_variable_scope_new(fun->parameters);
+         assign->num_children = 2;
+         assign->children = slang_operation_new(2);
+         
+         {
+            slang_operation *lhs = &assign->children[0];
+
+            lhs->type = SLANG_OPER_FIELD;
+            lhs->locals = _slang_variable_scope_new(fun->parameters);
+            lhs->num_children = 1;
+            lhs->children = slang_operation_new(1);
+            lhs->a_id = str->fields->variables[i]->a_name;
+
+            lhs->children[0].type = SLANG_OPER_IDENTIFIER;
+            lhs->children[0].a_id = var->a_name;
+            lhs->children[0].locals = _slang_variable_scope_new(fun->parameters);
+
+#if 0
+            lhs->children[1].num_children = 1;
+            lhs->children[1].children = slang_operation_new(1);
+            lhs->children[1].children[0].type = SLANG_OPER_IDENTIFIER;
+            lhs->children[1].children[0].a_id = str->fields->variables[i]->a_name;
+            lhs->children[1].children->locals = _slang_variable_scope_new(fun->parameters);
+#endif
+         }
+
+         {
+            slang_operation *rhs = &assign->children[1];
+
+            rhs->type = SLANG_OPER_IDENTIFIER;
+            rhs->locals = _slang_variable_scope_new(fun->parameters);
+            rhs->a_id = str->fields->variables[i]->a_name;
+         }         
+      }
+
+      /* return t; */
+      {
+         slang_operation *ret = &fun->body->children[numFields + 1];
+
+         ret->type = SLANG_OPER_RETURN;
+         ret->locals = _slang_variable_scope_new(fun->parameters);
+         ret->num_children = 1;
+         ret->children = slang_operation_new(1);
+         ret->children[0].type = SLANG_OPER_IDENTIFIER;
+         ret->children[0].a_id = var->a_name;
+         ret->children[0].locals = _slang_variable_scope_new(fun->parameters);
+
+      }
+   }
+   /*
+   slang_print_function(fun, 1);
+   */
+   return fun;
+}
+
+
+/**
+ * Find/create a function (constructor) for the given structure name.
+ */
+static slang_function *
+_slang_locate_struct_constructor(slang_assemble_ctx *A, const char *name)
+{
+   int i;
+   for (i = 0; i < A->space.structs->num_structs; i++) {
+      slang_struct *str = &A->space.structs->structs[i];
+      if (strcmp(name, (const char *) str->a_name) == 0) {
+         /* found a structure type that matches the function name */
+         if (!str->constructor) {
+            /* create the constructor function now */
+            str->constructor = _slang_make_constructor(A, str);
+         }
+         return str->constructor;
+      }
+   }
+   return NULL;
+}
+
 
 /**
  * Assemble a function call, given a particular function name.
@@ -1725,6 +1886,11 @@ _slang_gen_function_call_name(slang_assemble_ctx *A, const char *name,
     */
    fun = _slang_locate_function(A->space.funcs, atom, params, param_count,
 				&A->space, A->atoms, A->log);
+
+   if (!fun) {
+      fun = _slang_locate_struct_constructor(A, name);
+   }
+
    if (!fun) {
       /* A function with exactly the right parameters/types was not found.
        * Try adapting the parameters.
