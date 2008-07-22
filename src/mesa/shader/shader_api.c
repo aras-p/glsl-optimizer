@@ -538,7 +538,6 @@ _mesa_bind_attrib_location(GLcontext *ctx, GLuint program, GLuint index,
    if (shProg->LinkStatus) {
       /* get current index/location for the attribute */
       oldIndex = _mesa_get_attrib_location(ctx, program, name);
-      assert(0);
    }
    else {
       oldIndex = -1;
