@@ -1209,6 +1209,27 @@ update_textures_used(struct gl_program *prog)
 }
 
 
+static GLboolean
+is_sampler_type(GLenum type)
+{
+   switch (type) {
+   case GL_SAMPLER_1D:
+   case GL_SAMPLER_2D:
+   case GL_SAMPLER_3D:
+   case GL_SAMPLER_CUBE:
+   case GL_SAMPLER_1D_SHADOW:
+   case GL_SAMPLER_2D_SHADOW:
+   case GL_SAMPLER_2D_RECT_ARB:
+   case GL_SAMPLER_2D_RECT_SHADOW_ARB:
+   case GL_SAMPLER_1D_ARRAY_EXT:
+   case GL_SAMPLER_2D_ARRAY_EXT:
+      return GL_TRUE;
+   default:
+      return GL_FALSE;
+   }
+}
+
+
 /**
  * Check if the type given by userType is allowed to set a uniform of the
  * target type.  Generally, equivalence is required, but setting Boolean
@@ -1233,6 +1254,9 @@ compatible_types(GLenum userType, GLenum targetType)
 
    if (targetType == GL_BOOL_VEC4 && (userType == GL_FLOAT_VEC4 ||
                                       userType == GL_INT_VEC4))
+      return GL_TRUE;
+
+   if (is_sampler_type(targetType) && userType == GL_INT)
       return GL_TRUE;
 
    return GL_FALSE;
