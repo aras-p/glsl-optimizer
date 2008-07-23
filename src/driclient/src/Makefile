@@ -12,6 +12,7 @@ all: ${TARGET} test
 
 ${TARGET}: ${OBJECTS}
 	ar rcs $@ $^
+	if ! test -d ../lib; then mkdir ../lib; fi
 	cp ${TARGET} ../lib
 
 test: test.o

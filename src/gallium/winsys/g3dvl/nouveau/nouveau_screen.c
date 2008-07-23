@@ -1,7 +1,7 @@
 #include "pipe/p_context.h"
 #include "pipe/p_util.h"
 #include "nouveau_context.h"
-#include "nouveau_drm.h"
+#include <nouveau_drm.h>
 #include "nouveau_dri.h"
 #include "nouveau_local.h"
 #include "nouveau_screen.h"
@@ -18,40 +18,44 @@ DRI_CONF_END;
 static const GLuint __driNConfigOptions = 0;
 */
 
-int
-nouveau_screen_create(dri_screen_t *dri_screen, dri_framebuffer_t *dri_framebuf)
+int nouveau_check_dri_drm_ddx(dri_version_t *dri, dri_version_t *drm, dri_version_t *ddx)
 {
-	/* XXX: Someone forgot to bump this? */
-	static const dri_version_t ddx_expected = {0, 0, 10 /*NOUVEAU_DRM_HEADER_PATCHLEVEL*/};
-	static const dri_version_t dri_expected = {4, 1, 0};
+	static const dri_version_t ddx_expected = {0, 0, NOUVEAU_DRM_HEADER_PATCHLEVEL};
+	static const dri_version_t dri_expected = {4, 0, 0};
 	static const dri_version_t drm_expected = {0, 0, NOUVEAU_DRM_HEADER_PATCHLEVEL};
 	
-	struct nouveau_dri	*nv_dri = dri_framebuf->private;
-	struct nouveau_screen	*nv_screen;
-	int			ret;
+	assert(dri);
+	assert(drm);
+	assert(ddx);
 	
-	if (!driCompareVersions(&ddx_expected, &dri_screen->ddx))
+	if (dri->major != dri_expected.major || dri->minor < dri_expected.minor)
+	{
+		NOUVEAU_ERR("Unexpected DRI version.\n");
+		return 1;
+	}
+	if (drm->major != drm_expected.major || drm->minor < drm_expected.minor)
+	{
+		NOUVEAU_ERR("Unexpected DRM version.\n");
+		return 1;
+	}
+	if (ddx->major != ddx_expected.major || ddx->minor < ddx_expected.minor)
 	{
 		NOUVEAU_ERR("Unexpected DDX version.\n");
 		return 1;
 	}
 	
-	if (!driCompareVersions(&drm_expected, &dri_screen->drm))
-	{
-		NOUVEAU_ERR("Unexpected DRM version.\n");
-		return 1;
-	}
-	
-	if (!driCompareVersions(&dri_expected, &dri_screen->dri))
-	{
-		NOUVEAU_ERR("Unexpected DRI version.\n");
-		return 1;
-	}
+	return 0;
+}
 
-	if (dri_framebuf->private_size != sizeof(struct nouveau_dri)) {
-		NOUVEAU_ERR("DRI struct mismatch between DDX/DRI.\n");
+int
+nouveau_screen_create(dri_screen_t *dri_screen, dri_framebuffer_t *dri_framebuf)
+{	
+	struct nouveau_dri	*nv_dri = dri_framebuf->private;
+	struct nouveau_screen	*nv_screen;
+	int			ret;
+	
+	if (nouveau_check_dri_drm_ddx(&dri_screen->dri, &dri_screen->drm, &dri_screen->ddx))
 		return 1;
-	}
 
 	nv_screen = CALLOC_STRUCT(nouveau_screen);
 	if (!nv_screen)

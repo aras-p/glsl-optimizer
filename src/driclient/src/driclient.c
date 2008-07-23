@@ -285,8 +285,3 @@ int driDestroyContext(dri_context_t *dri_context)
 	return 0;
 }
 
-int driCompareVersions(const dri_version_t *v1, const dri_version_t *v2)
-{
-	return (v1->major == v2->major) && (v1->minor == v2->minor) && (v1->patch == v2->patch);
-}
-

@@ -68,7 +68,6 @@ int driUpdateDrawableInfo(dri_drawable_t *dri_drawable);
 int driDestroyDrawable(dri_drawable_t *dri_drawable);
 int driCreateContext(dri_screen_t *dri_screen, Visual *visual, dri_context_t **dri_context);
 int driDestroyContext(dri_context_t *dri_context);
-int driCompareVersions(const dri_version_t *v1, const dri_version_t *v2);
 
 #define DRI_VALIDATE_DRAWABLE_INFO_ONCE(dri_drawable)					\
 do											\
