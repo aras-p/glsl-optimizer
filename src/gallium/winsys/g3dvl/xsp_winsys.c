@@ -1,4 +1,4 @@
-#include "xsp_winsys.h"
+#include "vl_winsys.h"
 #include <X11/Xutil.h>
 #include <pipe/p_winsys.h>
 #include <pipe/p_state.h>
@@ -11,8 +11,15 @@
 struct xsp_pipe_winsys
 {
 	struct pipe_winsys	base;
-	Display			*display;
 	XImage			fbimage;
+};
+
+struct xsp_context
+{
+	Display			*display;
+	int			screen;
+	Drawable		drawable;
+	int			drawable_bound;
 };
 
 struct xsp_buffer
@@ -183,13 +190,18 @@ static int xsp_fence_finish(struct pipe_winsys *pws, struct pipe_fence_handle *f
 
 static void xsp_flush_frontbuffer(struct pipe_winsys *pws, struct pipe_surface *surface, void *context_private)
 {	
-	struct xsp_pipe_winsys *xsp_winsys;
+	struct xsp_pipe_winsys	*xsp_winsys;
+	struct xsp_context	*xsp_context;
 	
 	assert(pws);
 	assert(surface);
 	assert(context_private);
 	
 	xsp_winsys = (struct xsp_pipe_winsys*)pws;
+	xsp_context = (struct xsp_context*)context_private;
+	
+	if (!xsp_context->drawable_bound)
+		return;
 	
 	xsp_winsys->fbimage.width = surface->width;
 	xsp_winsys->fbimage.height = surface->height;
@@ -198,9 +210,9 @@ static void xsp_flush_frontbuffer(struct pipe_winsys *pws, struct pipe_surface *
 	
 	XPutImage
 	(
-		xsp_winsys->display,
-		*(Drawable*)context_private,
-		XDefaultGC(xsp_winsys->display, XDefaultScreen(xsp_winsys->display)),
+		xsp_context->display,
+		xsp_context->drawable,
+		XDefaultGC(xsp_context->display, xsp_context->screen),
 		&xsp_winsys->fbimage,
 		0,
 		0,
@@ -209,7 +221,7 @@ static void xsp_flush_frontbuffer(struct pipe_winsys *pws, struct pipe_surface *
 		surface->width,
 		surface->height
 	);
-	XFlush(xsp_winsys->display);
+	XFlush(xsp_context->display);
 	pipe_surface_unmap(surface);
 }
 
@@ -221,11 +233,37 @@ static const char* xsp_get_name(struct pipe_winsys *pws)
 
 /* Show starts here */
 
-struct pipe_context* create_pipe_context(Display *display)
+int bind_pipe_drawable(struct pipe_context *pipe, Drawable drawable)
+{
+	struct xsp_context *xsp_context;
+	
+	assert(pipe);
+	
+	xsp_context = pipe->priv;
+	xsp_context->drawable = drawable;
+	xsp_context->drawable_bound = 1;
+	
+	return 0;
+}
+
+int unbind_pipe_drawable(struct pipe_context *pipe)
+{
+	struct xsp_context *xsp_context;
+	
+	assert(pipe);
+	
+	xsp_context = pipe->priv;
+	xsp_context->drawable_bound = 0;
+	
+	return 0;
+}
+
+struct pipe_context* create_pipe_context(Display *display, int screen)
 {
 	struct xsp_pipe_winsys	*xsp_winsys;
-	struct pipe_screen	*screen;
-	struct pipe_context	*pipe;
+	struct xsp_context	*xsp_context;
+	struct pipe_screen	*sp_screen;
+	struct pipe_context	*sp_pipe;
 	
 	assert(display);
 	
@@ -243,7 +281,6 @@ struct pipe_context* create_pipe_context(Display *display)
 	xsp_winsys->base.fence_finish = xsp_fence_finish;
 	xsp_winsys->base.flush_frontbuffer = xsp_flush_frontbuffer;
 	xsp_winsys->base.get_name = xsp_get_name;
-	xsp_winsys->display = display;
 	
 	{
 		/* XXX: Can't use the returned XImage* directly,
@@ -269,10 +306,16 @@ struct pipe_context* create_pipe_context(Display *display)
 		XDestroyImage(template);
 	}
 	
-	screen = softpipe_create_screen((struct pipe_winsys*)xsp_winsys);
-	pipe = softpipe_create(screen, (struct pipe_winsys*)xsp_winsys, NULL);
+	sp_screen = softpipe_create_screen((struct pipe_winsys*)xsp_winsys);
+	sp_pipe = softpipe_create(sp_screen, (struct pipe_winsys*)xsp_winsys, NULL);
 	
-	return pipe;
+	xsp_context = calloc(1, sizeof(struct xsp_context));
+	xsp_context->display = display;
+	xsp_context->screen = screen;
+	
+	sp_pipe->priv = xsp_context;
+	
+	return sp_pipe;
 }
 
 int destroy_pipe_context(struct pipe_context *pipe)
@@ -284,6 +327,7 @@ int destroy_pipe_context(struct pipe_context *pipe)
 	
 	screen = pipe->screen;
 	winsys = pipe->winsys;
+	free(pipe->priv);
 	pipe->destroy(pipe);
 	screen->destroy(screen);
 	free(winsys);

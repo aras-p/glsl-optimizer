@@ -74,6 +74,18 @@ struct tgsi_full_declaration vl_decl_output(unsigned int name, unsigned int inde
 	return decl;
 }
 
+struct tgsi_full_declaration vl_decl_temps(unsigned int first, unsigned int last)
+{
+	struct tgsi_full_declaration decl = tgsi_default_full_declaration();
+
+	decl = tgsi_default_full_declaration();
+	decl.Declaration.File = TGSI_FILE_TEMPORARY;
+	decl.DeclarationRange.First = first;
+	decl.DeclarationRange.Last = last;
+	
+	return decl;
+}
+
 struct tgsi_full_declaration vl_decl_samplers(unsigned int first, unsigned int last)
 {
 	struct tgsi_full_declaration decl = tgsi_default_full_declaration();

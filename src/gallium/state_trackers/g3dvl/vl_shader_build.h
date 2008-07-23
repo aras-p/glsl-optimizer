@@ -14,6 +14,7 @@ struct tgsi_full_declaration vl_decl_interpolated_input
 );
 struct tgsi_full_declaration vl_decl_constants(unsigned int name, unsigned int index, unsigned int first, unsigned int last);
 struct tgsi_full_declaration vl_decl_output(unsigned int name, unsigned int index, unsigned int first, unsigned int last);
+struct tgsi_full_declaration vl_decl_temps(unsigned int first, unsigned int last);
 struct tgsi_full_declaration vl_decl_samplers(unsigned int first, unsigned int last);
 struct tgsi_full_instruction vl_inst2
 (

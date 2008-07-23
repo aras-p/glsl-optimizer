@@ -5,6 +5,7 @@
 #include <pipe/p_state.h>
 #include <pipe/p_format.h>
 #include <pipe/p_inlines.h>
+#include <vl_winsys.h>
 #include "vl_context.h"
 #include "vl_defs.h"
 #include "vl_util.h"
@@ -711,12 +712,13 @@ int vlPutSurface
 	pipe->set_sampler_textures(pipe, 1, &surface->texture);
 	pipe->draw_arrays(pipe, PIPE_PRIM_TRIANGLE_STRIP, 0, 4);
 	pipe->flush(pipe, PIPE_FLUSH_RENDER_CACHE, NULL);
+	bind_pipe_drawable(pipe, drawable);
 	/* TODO: Need to take destx, desty into consideration */
 	pipe->winsys->flush_frontbuffer
 	(
 		pipe->winsys,
 		surface->context->states.csc.framebuffer.cbufs[0],
-		&drawable
+		pipe->priv
 	);
 	
 	vlBeginRender(surface->context);

@@ -330,6 +330,10 @@ static int vlCreateVertexShaderIMC(struct VL_CONTEXT *context)
 		ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
 	}
 	
+	/* decl t0 */
+	decl = vl_decl_temps(0, 0);
+	ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
+	
 	/* mul t0, i0, c0	; Scale unit rect to normalized MB size */
 	inst = vl_inst3(TGSI_OPCODE_MUL, TGSI_FILE_TEMPORARY, 0, TGSI_FILE_INPUT, 0, TGSI_FILE_CONSTANT, 0);
 	ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
@@ -354,7 +358,7 @@ static int vlCreateVertexShaderIMC(struct VL_CONTEXT *context)
 	
 	vs.tokens = tokens;
 	context->states.mc.i_vs = pipe->create_vs_state(pipe, &vs);
-	free(tokens);
+	//free(tokens);
 	
 	return 0;
 }
@@ -432,7 +436,7 @@ static int vlCreateFragmentShaderIMC(struct VL_CONTEXT *context)
 
 	fs.tokens = tokens;
 	context->states.mc.i_fs = pipe->create_fs_state(pipe, &fs);
-	free(tokens);
+	//free(tokens);
 	
 	return 0;
 }
@@ -499,6 +503,10 @@ static int vlCreateVertexShaderFramePMC(struct VL_CONTEXT *context)
 		ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
 	}
 	
+	/* decl t0 */
+	decl = vl_decl_temps(0, 0);
+	ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
+	
 	/* mul t0, i0, c0	; Scale unit rect to normalized MB size */
 	inst = vl_inst3(TGSI_OPCODE_MUL, TGSI_FILE_TEMPORARY, 0, TGSI_FILE_INPUT, 0, TGSI_FILE_CONSTANT, 0);
 	ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
@@ -527,7 +535,7 @@ static int vlCreateVertexShaderFramePMC(struct VL_CONTEXT *context)
 	
 	vs.tokens = tokens;
 	context->states.mc.p_vs[0] = pipe->create_vs_state(pipe, &vs);
-	free(tokens);
+	//free(tokens);
 	
 	return 0;
 }
@@ -603,6 +611,10 @@ static int vlCreateVertexShaderFieldPMC(struct VL_CONTEXT *context)
 		ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
 	}
 	
+	/* decl t0, t1 */
+	decl = vl_decl_temps(0, 1);
+	ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
+	
 	/* mul t0, i0, c0	; Scale unit rect to normalized MB size */
 	inst = vl_inst3(TGSI_OPCODE_MUL, TGSI_FILE_TEMPORARY, 0, TGSI_FILE_INPUT, 0, TGSI_FILE_CONSTANT, 0);
 	ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
@@ -643,7 +655,7 @@ static int vlCreateVertexShaderFieldPMC(struct VL_CONTEXT *context)
 	
 	vs.tokens = tokens;
 	context->states.mc.p_vs[1] = pipe->create_vs_state(pipe, &vs);
-	free(tokens);
+	//free(tokens);
 	
 	return 0;
 }
@@ -698,6 +710,10 @@ static int vlCreateFragmentShaderFramePMC(struct VL_CONTEXT *context)
 
 	/* decl o0			; Fragment color */
 	decl = vl_decl_output(TGSI_SEMANTIC_COLOR, 0, 0, 0);
+	ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
+	
+	/* decl t0, t1 */
+	decl = vl_decl_temps(0, 1);
 	ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
 	
 	/*
@@ -761,7 +777,7 @@ static int vlCreateFragmentShaderFramePMC(struct VL_CONTEXT *context)
 
 	fs.tokens = tokens;
 	context->states.mc.p_fs[0] = pipe->create_fs_state(pipe, &fs);
-	free(tokens);
+	//free(tokens);
 	
 	return 0;
 }
@@ -819,6 +835,10 @@ static int vlCreateFragmentShaderFieldPMC(struct VL_CONTEXT *context)
 
 	/* decl o0			; Fragment color */
 	decl = vl_decl_output(TGSI_SEMANTIC_COLOR, 0, 0, 0);
+	ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
+	
+	/* decl t0-t4 */
+	decl = vl_decl_temps(0, 4);
 	ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
 	
 	/*
@@ -928,7 +948,7 @@ static int vlCreateFragmentShaderFieldPMC(struct VL_CONTEXT *context)
 
 	fs.tokens = tokens;
 	context->states.mc.p_fs[1] = pipe->create_fs_state(pipe, &fs);
-	free(tokens);
+	//free(tokens);
 	
 	return 0;
 }
@@ -998,6 +1018,10 @@ static int vlCreateVertexShaderFrameBMC(struct VL_CONTEXT *context)
 		ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
 	}
 	
+	/* decl t0 */
+	decl = vl_decl_temps(0, 0);
+	ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
+	
 	/* mul t0, i0, c0	; Scale unit rect to normalized MB size */
 	inst = vl_inst3(TGSI_OPCODE_MUL, TGSI_FILE_TEMPORARY, 0, TGSI_FILE_INPUT, 0, TGSI_FILE_CONSTANT, 0);
 	ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
@@ -1030,7 +1054,7 @@ static int vlCreateVertexShaderFrameBMC(struct VL_CONTEXT *context)
 	
 	vs.tokens = tokens;
 	context->states.mc.b_vs[0] = pipe->create_vs_state(pipe, &vs);
-	free(tokens);
+	//free(tokens);
 	
 	return 0;
 }
@@ -1104,6 +1128,10 @@ static int vlCreateVertexShaderFieldBMC(struct VL_CONTEXT *context)
 		ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
 	}
 	
+	/* decl t0, t1 */
+	decl = vl_decl_temps(0, 1);
+	ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
+	
 	/* mul t0, i0, c0	; Scale unit rect to normalized MB size */
 	inst = vl_inst3(TGSI_OPCODE_MUL, TGSI_FILE_TEMPORARY, 0, TGSI_FILE_INPUT, 0, TGSI_FILE_CONSTANT, 0);
 	ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
@@ -1148,7 +1176,7 @@ static int vlCreateVertexShaderFieldBMC(struct VL_CONTEXT *context)
 	
 	vs.tokens = tokens;
 	context->states.mc.b_vs[1] = pipe->create_vs_state(pipe, &vs);
-	free(tokens);
+	//free(tokens);
 	
 	return 0;
 }
@@ -1205,6 +1233,10 @@ static int vlCreateFragmentShaderFrameBMC(struct VL_CONTEXT *context)
 
 	/* decl o0			; Fragment color */
 	decl = vl_decl_output(TGSI_SEMANTIC_COLOR, 0, 0, 0);
+	ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
+	
+	/* decl t0-t2 */
+	decl = vl_decl_temps(0, 2);
 	ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
 	
 	/*
@@ -1283,7 +1315,7 @@ static int vlCreateFragmentShaderFrameBMC(struct VL_CONTEXT *context)
 
 	fs.tokens = tokens;
 	context->states.mc.b_fs[0] = pipe->create_fs_state(pipe, &fs);
-	free(tokens);
+	//free(tokens);
 	
 	return 0;
 }
@@ -1344,6 +1376,10 @@ static int vlCreateFragmentShaderFieldBMC(struct VL_CONTEXT *context)
 
 	/* decl o0			; Fragment color */
 	decl = vl_decl_output(TGSI_SEMANTIC_COLOR, 0, 0, 0);
+	ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
+	
+	/* decl t0-t5 */
+	decl = vl_decl_temps(0, 5);
 	ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
 	
 	/*
@@ -1479,7 +1515,7 @@ static int vlCreateFragmentShaderFieldBMC(struct VL_CONTEXT *context)
 
 	fs.tokens = tokens;
 	context->states.mc.b_fs[1] = pipe->create_fs_state(pipe, &fs);
-	free(tokens);
+	//free(tokens);
 	
 	return 0;
 }
@@ -1771,6 +1807,10 @@ static int vlCreateVertexShaderCSC(struct VL_CONTEXT *context)
 		ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
 	}
 	
+	/* decl t0 */
+	decl = vl_decl_temps(0, 0);
+	ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
+	
 	/* mov o0, i0		; Move pos in to pos out */
 	inst = vl_inst2(TGSI_OPCODE_MOV, TGSI_FILE_OUTPUT, 0, TGSI_FILE_INPUT, 0);
 	ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
@@ -1789,7 +1829,7 @@ static int vlCreateVertexShaderCSC(struct VL_CONTEXT *context)
 	
 	vs.tokens = tokens;
 	context->states.csc.vertex_shader = pipe->create_vs_state(pipe, &vs);
-	free(tokens);
+	//free(tokens);
 	
 	return 0;
 }
@@ -1839,6 +1879,10 @@ static int vlCreateFragmentShaderCSC(struct VL_CONTEXT *context)
 	decl = vl_decl_output(TGSI_SEMANTIC_COLOR, 0, 0, 0);
 	ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
 	
+	/* decl t0 */
+	decl = vl_decl_temps(0, 0);
+	ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
+	
 	/* decl s0		; Sampler for tex containing picture to display */
 	decl = vl_decl_samplers(0, 0);
 	ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
@@ -1870,7 +1914,7 @@ static int vlCreateFragmentShaderCSC(struct VL_CONTEXT *context)
 
 	fs.tokens = tokens;
 	context->states.csc.fragment_shader = pipe->create_fs_state(pipe, &fs);
-	free(tokens);
+	//free(tokens);
 	
 	return 0;
 }

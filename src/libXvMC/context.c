@@ -2,7 +2,7 @@
 #include <X11/Xlib.h>
 #include <X11/extensions/XvMClib.h>
 #include <vl_context.h>
-#include <xsp_winsys.h>
+#include <vl_winsys.h>
 
 static Status Validate(Display *display, XvPortID port, int surface_type_id, unsigned int width, unsigned int height, int flags, int *chroma_format)
 {
@@ -117,7 +117,7 @@ Status XvMCCreateContext(Display *display, XvPortID port, int surface_type_id, i
 	if (ret != Success)
 		return ret;
 	
-	pipe = create_pipe_context(display);
+	pipe = create_pipe_context(display, XDefaultScreen(display));
 	
 	assert(pipe);
 	
