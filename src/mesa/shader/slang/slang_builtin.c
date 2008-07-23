@@ -439,13 +439,11 @@ _slang_alloc_statevar(slang_ir_node *n,
    pos = lookup_statevar(var, index1, index2, field, &swizzle, paramList);
    assert(pos >= 0);
    if (pos >= 0) {
-      /* XXX should overwrite Store's fields instead of changing pointers
-       * since there may be a child storage_info pointing to this one.
-       */
-      n0->Store = _slang_new_ir_storage_swz(PROGRAM_STATE_VAR,
-                                            pos,
-                                            n0->Store->Size,
-                                            swizzle);
+      /* newly resolved storage for the statevar/constant/uniform */
+      n0->Store->File = PROGRAM_STATE_VAR;
+      n0->Store->Index = pos;
+      n0->Store->Swizzle = swizzle;
+      n0->Store->Parent = NULL;
    }
    return pos;
 }
