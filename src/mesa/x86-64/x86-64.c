@@ -31,8 +31,8 @@
 
 #ifdef USE_X86_64_ASM
 
-#include "glheader.h"
-#include "context.h"
+#include "main/glheader.h"
+#include "main/context.h"
 #include "math/m_xform.h"
 #include "tnl/t_context.h"
 #include "x86-64.h"
