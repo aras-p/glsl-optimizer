@@ -364,7 +364,6 @@ void
 sp_flush_tile_cache(struct softpipe_context *softpipe,
                     struct softpipe_tile_cache *tc)
 {
-   struct pipe_context *pipe = &softpipe->pipe;
    struct pipe_surface *ps = tc->surface;
    int inuse = 0, pos;
 
@@ -414,7 +413,6 @@ struct softpipe_cached_tile *
 sp_get_cached_tile(struct softpipe_context *softpipe,
                    struct softpipe_tile_cache *tc, int x, int y)
 {
-   struct pipe_context *pipe = &softpipe->pipe;
    struct pipe_surface *ps = tc->surface;
 
    /* tile pos in framebuffer: */
