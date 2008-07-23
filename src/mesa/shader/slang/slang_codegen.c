@@ -2630,14 +2630,34 @@ _slang_gen_variable(slang_assemble_ctx * A, slang_operation *oper)
 }
 
 
+
+/**
+ * Return the number of components actually named by the swizzle.
+ * Recall that swizzles may have undefined/don't-care values.
+ */
+static GLuint
+swizzle_size(GLuint swizzle)
+{
+   GLuint size = 0, i;
+   for (i = 0; i < 4; i++) {
+      GLuint swz = GET_SWZ(swizzle, i);
+      size += (swz >= 0 && swz <= 3);
+   }
+   return size;
+}
+
+
 static slang_ir_node *
 _slang_gen_swizzle(slang_ir_node *child, GLuint swizzle)
 {
-   /* XXX should rewrite this to use relative/Parent storage */
    slang_ir_node *n = new_node1(IR_SWIZZLE, child);
    assert(child);
    if (n) {
-      n->Store = _slang_new_ir_storage_swz(PROGRAM_UNDEFINED, -1, -1, swizzle);
+      assert(!n->Store);
+      n->Store = _slang_new_ir_storage_relative(0,
+                                                swizzle_size(swizzle),
+                                                child->Store);
+      n->Store->Swizzle = swizzle;
    }
    return n;
 }

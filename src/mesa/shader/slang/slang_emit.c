@@ -1505,57 +1505,18 @@ emit_cont_break_if_true(slang_emit_info *emitInfo, slang_ir_node *n)
 }
 
 
-/**
- * Return the number of components actually named by the swizzle.
- * Recall that swizzles may have undefined/don't-care values.
- */
-static GLuint
-swizzle_size(GLuint swizzle)
-{
-   GLuint size = 0, i;
-   for (i = 0; i < 4; i++) {
-      GLuint swz = GET_SWZ(swizzle, i);
-      size += (swz >= 0 && swz <= 3);
-   }
-   return size;
-}
-
-
 static struct prog_instruction *
 emit_swizzle(slang_emit_info *emitInfo, slang_ir_node *n)
 {
-   GLuint swizzle;
    struct prog_instruction *inst;
 
    inst = emit(emitInfo, n->Children[0]);
 
-   /* For debug: n->Var = n->Children[0]->Var; */
+   /* setup storage info, if needed */
+   if (!n->Store->Parent)
+      n->Store->Parent = n->Children[0]->Store;
 
-   /* "pull-up" the child's storage info, applying our swizzle info */
-   n->Store->File  = n->Children[0]->Store->File;
-   n->Store->Index = n->Children[0]->Store->Index;
-   n->Store->Size = swizzle_size(n->Store->Swizzle);
-#if 0
-   printf("Emit Swizzle %s  reg %d  chSize %d  mySize %d\n",
-          _mesa_swizzle_string(n->Store->Swizzle, 0, 0),
-          n->Store->Index, n->Children[0]->Store->Size,
-          n->Store->Size);
-#endif
-
-   /* apply this swizzle to child's swizzle to get composed swizzle */
-   swizzle = fix_swizzle(n->Store->Swizzle); /* remove the don't care terms */
-
-#ifdef DEBUG
-   {
-      assert(GET_SWZ(swizzle, 0) != SWIZZLE_NIL);
-      assert(GET_SWZ(swizzle, 1) != SWIZZLE_NIL);
-      assert(GET_SWZ(swizzle, 2) != SWIZZLE_NIL);
-      assert(GET_SWZ(swizzle, 3) != SWIZZLE_NIL);
-   }
-#endif
-
-   n->Store->Swizzle = _slang_swizzle_swizzle(n->Children[0]->Store->Swizzle,
-                                              swizzle);
+   assert(n->Store->Parent);
 
    return inst;
 }
@@ -1614,7 +1575,11 @@ emit_array_element(slang_emit_info *emitInfo, slang_ir_node *n)
       /* resolve new absolute storage location */
       assert(n->Store);
       n->Store->File = root->File;
-      n->Store->Index = index;
+      if (root->File == PROGRAM_STATE_VAR)
+         n->Store->Index = 0;
+      else
+         n->Store->Index = index;
+
       n->Store->Parent = NULL;
    }
    else {
@@ -1638,6 +1603,10 @@ emit_array_element(slang_emit_info *emitInfo, slang_ir_node *n)
 
       n->Store->RelAddr = GL_TRUE;
    }
+
+   /* if array element size is one, make sure we only access X */
+   if (n->Store->Size == 1)
+      n->Store->Swizzle = SWIZZLE_XXXX;
 
    return NULL; /* no instruction */
 }
