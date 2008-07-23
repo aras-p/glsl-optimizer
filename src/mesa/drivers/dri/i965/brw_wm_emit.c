@@ -948,15 +948,16 @@ static void emit_fb_write( struct brw_wm_compile *c,
       GLuint off = c->key.dest_depth_reg % 2;
 
       if (off != 0) {
-	 brw_push_insn_state(p);
-	 brw_set_compression_control(p, BRW_COMPRESSION_NONE);
-	 brw_MOV(p, brw_message_reg(nr), arg1[comp]);
-	 /* 2nd half? */
-	 brw_MOV(p, brw_message_reg(nr+1), offset(arg1[comp],1));
-	 brw_pop_insn_state(p);
+         brw_push_insn_state(p);
+         brw_set_compression_control(p, BRW_COMPRESSION_NONE);
+
+         brw_MOV(p, brw_message_reg(nr), offset(arg1[comp],1));
+         /* 2nd half? */
+         brw_MOV(p, brw_message_reg(nr+1), arg1[comp+1]);
+         brw_pop_insn_state(p);
       }
       else {
-	 brw_MOV(p, brw_message_reg(nr), arg1[comp]);
+         brw_MOV(p, brw_message_reg(nr), arg1[comp]);
       }
       nr += 2;
    }
