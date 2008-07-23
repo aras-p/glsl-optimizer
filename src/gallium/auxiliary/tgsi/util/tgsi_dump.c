@@ -491,9 +491,17 @@ tgsi_dump_instruction(
           src->SrcRegisterExtSwz.ExtSwizzleZ != TGSI_EXTSWIZZLE_Z ||
           src->SrcRegisterExtSwz.ExtSwizzleW != TGSI_EXTSWIZZLE_W) {
          CHR( '.' );
+         if (src->SrcRegisterExtSwz.NegateX)
+            TXT("-");
          ENM( src->SrcRegisterExtSwz.ExtSwizzleX, extswizzle_names );
+         if (src->SrcRegisterExtSwz.NegateY)
+            TXT("-");
          ENM( src->SrcRegisterExtSwz.ExtSwizzleY, extswizzle_names );
+         if (src->SrcRegisterExtSwz.NegateZ)
+            TXT("-");
          ENM( src->SrcRegisterExtSwz.ExtSwizzleZ, extswizzle_names );
+         if (src->SrcRegisterExtSwz.NegateW)
+            TXT("-");
          ENM( src->SrcRegisterExtSwz.ExtSwizzleW, extswizzle_names );
       }
 
