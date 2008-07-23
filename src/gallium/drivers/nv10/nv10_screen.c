@@ -82,10 +82,11 @@ nv10_screen_get_paramf(struct pipe_screen *screen, int param)
 
 static boolean
 nv10_screen_is_format_supported(struct pipe_screen *screen,
-				enum pipe_format format, uint type)
+				enum pipe_format format,
+				enum pipe_texture_target target,
+				unsigned tex_usage, unsigned geom_flags)
 {
-	switch (type) {
-	case PIPE_SURFACE:
+	if (tex_usage & PIPE_TEXTURE_USAGE_RENDER_TARGET) {
 		switch (format) {
 		case PIPE_FORMAT_A8R8G8B8_UNORM:
 		case PIPE_FORMAT_R5G6B5_UNORM: 
@@ -95,8 +96,7 @@ nv10_screen_is_format_supported(struct pipe_screen *screen,
 		default:
 			break;
 		}
-		break;
-	case PIPE_TEXTURE:
+	} else {
 		switch (format) {
 		case PIPE_FORMAT_A8R8G8B8_UNORM:
 		case PIPE_FORMAT_A1R5G5B5_UNORM:
@@ -109,10 +109,7 @@ nv10_screen_is_format_supported(struct pipe_screen *screen,
 		default:
 			break;
 		}
-		break;
-	default:
-		assert(0);
-	};
+	}
 
 	return FALSE;
 }
