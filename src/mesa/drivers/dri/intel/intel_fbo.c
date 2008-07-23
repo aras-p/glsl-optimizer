@@ -153,6 +153,9 @@ intel_delete_renderbuffer(struct gl_renderbuffer *rb)
       intel_unpair_depth_stencil(ctx, irb);
    }
 
+   if (irb->span_cache != NULL)
+      _mesa_free(irb->span_cache);
+
    if (intel && irb->region) {
       intel_region_release(&irb->region);
    }

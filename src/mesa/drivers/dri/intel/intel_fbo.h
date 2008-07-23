@@ -79,6 +79,9 @@ struct intel_renderbuffer
    GLuint pf_pending;  /**< sequence number of pending flip */
 
    GLuint vbl_pending;   /**< vblank sequence number of pending flip */
+
+   uint8_t *span_cache;
+   unsigned long span_cache_offset;
 };
 
 extern struct intel_renderbuffer *intel_renderbuffer(struct gl_renderbuffer

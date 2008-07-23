@@ -43,51 +43,74 @@ static void
 intel_set_span_functions(struct intel_context *intel,
 			 struct gl_renderbuffer *rb);
 
+#define SPAN_CACHE_SIZE		4096
+
+static void
+get_span_cache(struct intel_renderbuffer *irb, uint32_t offset)
+{
+   if (irb->span_cache == NULL) {
+      irb->span_cache = _mesa_malloc(SPAN_CACHE_SIZE);
+      irb->span_cache_offset = -1;
+   }
+
+   if ((offset & ~(SPAN_CACHE_SIZE - 1)) != irb->span_cache_offset) {
+      irb->span_cache_offset = offset & ~(SPAN_CACHE_SIZE - 1);
+      dri_bo_get_subdata(irb->region->buffer, irb->span_cache_offset,
+			 SPAN_CACHE_SIZE, irb->span_cache);
+   }
+}
+
+static void
+clear_span_cache(struct intel_renderbuffer *irb)
+{
+   irb->span_cache_offset = -1;
+}
+
 static uint32_t
 pread_32(struct intel_renderbuffer *irb, uint32_t offset)
 {
-   uint32_t val;
+   get_span_cache(irb, offset);
 
-   dri_bo_get_subdata(irb->region->buffer, offset, 4, &val);
-
-   return val;
+   return *(uint32_t *)(irb->span_cache + (offset & (SPAN_CACHE_SIZE - 1)));
 }
 
 static uint16_t
 pread_16(struct intel_renderbuffer *irb, uint32_t offset)
 {
-   uint16_t val;
+   get_span_cache(irb, offset);
 
-   dri_bo_get_subdata(irb->region->buffer, offset, 2, &val);
-
-   return val;
+   return *(uint16_t *)(irb->span_cache + (offset & (SPAN_CACHE_SIZE - 1)));
 }
 
 static uint8_t
 pread_8(struct intel_renderbuffer *irb, uint32_t offset)
 {
-   uint8_t val;
+   get_span_cache(irb, offset);
 
-   dri_bo_get_subdata(irb->region->buffer, offset, 1, &val);
-
-   return val;
+   return *(uint8_t *)(irb->span_cache + (offset & (SPAN_CACHE_SIZE - 1)));
 }
 
 static void
 pwrite_32(struct intel_renderbuffer *irb, uint32_t offset, uint32_t val)
 {
+   clear_span_cache(irb);
+
    dri_bo_subdata(irb->region->buffer, offset, 4, &val);
 }
 
 static void
 pwrite_16(struct intel_renderbuffer *irb, uint32_t offset, uint16_t val)
 {
+   clear_span_cache(irb);
+
    dri_bo_subdata(irb->region->buffer, offset, 2, &val);
 }
 
 static void
 pwrite_8(struct intel_renderbuffer *irb, uint32_t offset, uint8_t val)
 {
+   clear_span_cache(irb);
+
    dri_bo_subdata(irb->region->buffer, offset, 1, &val);
 }
 
@@ -481,6 +504,7 @@ intel_renderbuffer_unmap(struct intel_context *intel,
    if (irb == NULL || irb->region == NULL)
       return;
 
+   clear_span_cache(irb);
    irb->pfPitch = 0;
 
    rb->GetRow = NULL;
