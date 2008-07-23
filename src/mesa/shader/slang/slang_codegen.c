@@ -1732,7 +1732,8 @@ _slang_make_constructor(slang_assemble_ctx *A, slang_struct *str)
          printf("Field %d: %s\n", i, (char*) str->fields->variables[i]->a_name);
          */
          slang_variable *p = slang_variable_scope_grow(fun->parameters);
-         *p = *str->fields->variables[i];
+         *p = *str->fields->variables[i]; /* copy the type */
+         p->type.qualifier = SLANG_QUAL_CONST;
       }
       fun->param_count = fun->parameters->num_variables;
    }
