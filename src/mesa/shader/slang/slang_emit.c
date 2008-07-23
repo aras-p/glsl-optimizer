@@ -717,10 +717,10 @@ emit_compare(slang_emit_info *emitInfo, slang_ir_node *n)
       for (i = 0; i < num; i++) {
          /* SNE t0, left[i], right[i] */
          inst = new_instruction(emitInfo, OPCODE_SNE);
-         inst->SrcReg[0].File = n->Children[0]->Store->File;
-         inst->SrcReg[0].Index = n->Children[0]->Store->Index + i;
-         inst->SrcReg[1].File = n->Children[1]->Store->File;
-         inst->SrcReg[1].Index = n->Children[1]->Store->Index + i;
+         storage_to_src_reg(&inst->SrcReg[0], n->Children[0]->Store);
+         storage_to_src_reg(&inst->SrcReg[1], n->Children[1]->Store);
+         inst->SrcReg[0].Index += i;
+         inst->SrcReg[1].Index += i;
          if (i == 0) {
             inst->DstReg.File = accTemp.File;
             inst->DstReg.Index = accTemp.Index;
@@ -1547,47 +1547,23 @@ emit_array_element(slang_emit_info *emitInfo, slang_ir_node *n)
       return NULL;
    }
 
+   /* do codegen for array */
+   emit(emitInfo, n->Children[0]);
+
    if (n->Children[1]->Opcode == IR_FLOAT) {
-      /* Constant array index */
-#if 0 /* just debug code */
-      const GLint arrayAddr = n->Children[0]->Store->Index;
-      const GLint index = (GLint) n->Children[1]->Value[0];
-      assert(index == n->Store->Index);
-      assert(arrayAddr == parent->Index);
-      assert(n->Children[0]->Store == parent);
-      assert(n->Children[0]->Store->Index == parent->Index);
-#endif
+      /* Constant array index.
+       * Set Store's index to be the offset of the array element in
+       * the register file.
+       */
+      const GLint element = (GLint) n->Children[1]->Value[0];
+      const GLint sz = (n->Store->Size + 3) / 4; /* size in slots/registers */
 
-      GLint index = n->Store->Index;
-
-      slang_ir_storage *p = n->Store;
-      index = 0;
-      while (p->Parent) {
-         int sz = (p->Size + 3) / 4;
-         /*printf("element [%d] of size %d (%d)\n", p->Index, p->Size, sz);*/
-         index += sz * p->Index;
-         p = p->Parent;
-      }
-      index += p->Index;
-
-      assert(root->File != PROGRAM_UNDEFINED);
-
-      /* resolve new absolute storage location */
-      assert(n->Store);
-      n->Store->File = root->File;
-      if (root->File == PROGRAM_STATE_VAR)
-         n->Store->Index = 0;
-      else
-         n->Store->Index = index;
-
-      n->Store->Parent = NULL;
+      n->Store->Index = sz * element;
+      assert(n->Store->Parent);
    }
    else {
       /* Variable array index */
       struct prog_instruction *inst;
-
-      /* do codegen for array */
-      emit(emitInfo, n->Children[0]);
 
       /* do codegen for array index expression */
       emit(emitInfo, n->Children[1]);
