@@ -30,7 +30,7 @@
  */
 
 
-#include "glheader.h"
+#include "main/glheader.h"
 #include "main/ffvertex_prog.h"
 #include "t_vp_build.h"
 

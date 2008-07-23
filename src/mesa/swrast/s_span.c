@@ -30,11 +30,11 @@
  * \author Brian Paul
  */
 
-#include "glheader.h"
-#include "colormac.h"
-#include "context.h"
-#include "macros.h"
-#include "imports.h"
+#include "main/glheader.h"
+#include "main/colormac.h"
+#include "main/context.h"
+#include "main/macros.h"
+#include "main/imports.h"
 #include "image.h"
 
 #include "s_atifragshader.h"

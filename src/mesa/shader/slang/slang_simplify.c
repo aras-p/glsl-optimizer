@@ -28,9 +28,9 @@
  * \author Michal Krol
  */
 
-#include "imports.h"
-#include "macros.h"
-#include "get.h"
+#include "main/imports.h"
+#include "main/macros.h"
+#include "main/get.h"
 #include "slang_compile.h"
 #include "slang_codegen.h"
 #include "slang_simplify.h"

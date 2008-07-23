@@ -31,7 +31,7 @@
 #ifndef PROG_PARAMETER_H
 #define PROG_PARAMETER_H
 
-#include "mtypes.h"
+#include "main/mtypes.h"
 #include "prog_statevars.h"
 
 

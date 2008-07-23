@@ -38,9 +38,9 @@
 #include "programopt.h"
 #include "prog_parameter.h"
 #include "prog_statevars.h"
-#include "context.h"
-#include "macros.h"
-#include "mtypes.h"
+#include "main/context.h"
+#include "main/macros.h"
+#include "main/mtypes.h"
 #include "prog_instruction.h"
 
 

@@ -22,7 +22,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "imports.h"
+#include "main/imports.h"
 #include "slang_log.h"
 #include "slang_utility.h"
 

@@ -25,9 +25,9 @@
  *    Keith Whitwell <keithw@tungstengraphics.com>
  */
 
-#include "glheader.h"
-#include "context.h"
-#include "colormac.h"
+#include "main/glheader.h"
+#include "main/context.h"
+#include "main/colormac.h"
 
 #include "vf.h"
 

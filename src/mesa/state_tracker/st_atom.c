@@ -26,8 +26,8 @@
  **************************************************************************/
 
 
-#include "glheader.h"
-#include "context.h"
+#include "main/glheader.h"
+#include "main/context.h"
 
 #include "pipe/p_defines.h"
 #include "st_context.h"

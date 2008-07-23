@@ -28,10 +28,10 @@
  * \author Brian Paul
  */
 
-#include "glheader.h"
+#include "main/glheader.h"
 #include "bufferobj.h"
 #include "image.h"
-#include "macros.h"
+#include "main/macros.h"
 #include "pixel.h"
 
 #include "s_context.h"

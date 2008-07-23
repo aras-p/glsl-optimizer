@@ -27,7 +27,7 @@
 #ifndef S_POINTS_H
 #define S_POINTS_H
 
-#include "mtypes.h"
+#include "main/mtypes.h"
 
 extern void
 _swrast_choose_point( GLcontext *ctx );

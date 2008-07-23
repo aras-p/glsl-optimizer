@@ -27,7 +27,7 @@
 #define S_STENCIL_H
 
 
-#include "mtypes.h"
+#include "main/mtypes.h"
 #include "swrast.h"
 
 

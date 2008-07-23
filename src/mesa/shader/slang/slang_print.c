@@ -4,7 +4,7 @@
  */
 
 
-#include "imports.h"
+#include "main/imports.h"
 #include "slang_compile.h"
 #include "slang_print.h"
 

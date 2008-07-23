@@ -23,11 +23,11 @@
  */
 
 
-#include "glheader.h"
-#include "context.h"
-#include "colormac.h"
-#include "imports.h"
-#include "macros.h"
+#include "main/glheader.h"
+#include "main/context.h"
+#include "main/colormac.h"
+#include "main/imports.h"
+#include "main/macros.h"
 #include "image.h"
 
 #include "s_context.h"

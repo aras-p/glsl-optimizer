@@ -35,9 +35,9 @@
  */
 
 
-#include "glheader.h"
-#include "colormac.h"
-#include "context.h"
+#include "main/glheader.h"
+#include "main/colormac.h"
+#include "main/context.h"
 #include "program.h"
 #include "prog_execute.h"
 #include "prog_instruction.h"

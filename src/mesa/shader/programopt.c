@@ -31,8 +31,8 @@
  */
 
 
-#include "glheader.h"
-#include "context.h"
+#include "main/glheader.h"
+#include "main/context.h"
 #include "prog_parameter.h"
 #include "prog_statevars.h"
 #include "program.h"

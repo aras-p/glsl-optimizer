@@ -342,7 +342,6 @@ COMMON_DRIVER_OBJECTS = $(COMMON_DRIVER_SOURCES:.c=.o)
 INCLUDE_DIRS = \
 	-I$(TOP)/include \
 	-I$(TOP)/src/mesa \
-	-I$(TOP)/src/mesa/main \
 	-I$(TOP)/src/gallium/include \
 	-I$(TOP)/src/gallium/drivers \
 	-I$(TOP)/src/gallium/auxiliary

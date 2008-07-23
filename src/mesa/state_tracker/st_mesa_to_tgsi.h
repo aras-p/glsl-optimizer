@@ -29,7 +29,7 @@
 #ifndef ST_MESA_TO_TGSI_H
 #define ST_MESA_TO_TGSI_H
 
-#include "mtypes.h"
+#include "main/mtypes.h"
 
 
 #if defined __cplusplus

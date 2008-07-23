@@ -25,8 +25,8 @@
 #ifndef SLANG_TYPEINFO_H
 #define SLANG_TYPEINFO_H 1
 
-#include "imports.h"
-#include "mtypes.h"
+#include "main/imports.h"
+#include "main/mtypes.h"
 #include "slang_log.h"
 #include "slang_utility.h"
 #include "slang_vartable.h"

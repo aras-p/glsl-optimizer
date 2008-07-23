@@ -25,7 +25,7 @@
 #ifndef PROG_STATEVARS_H
 #define PROG_STATEVARS_H
 
-#include "mtypes.h"
+#include "main/mtypes.h"
 
 
 /**

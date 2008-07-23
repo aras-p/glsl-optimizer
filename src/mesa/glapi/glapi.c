@@ -50,7 +50,7 @@
 
 
 
-#include "glheader.h"
+#include "main/glheader.h"
 #include "glapi.h"
 #include "glapioffsets.h"
 #include "glapitable.h"

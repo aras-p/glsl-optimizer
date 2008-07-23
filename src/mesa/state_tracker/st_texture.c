@@ -28,7 +28,7 @@
 #include "st_context.h"
 #include "st_format.h"
 #include "st_texture.h"
-#include "enums.h"
+#include "main/enums.h"
 
 #undef Elements  /* fix re-defined macro warning */
 

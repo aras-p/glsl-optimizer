@@ -25,7 +25,7 @@
 #ifndef S_ZOOM_H
 #define S_ZOOM_H
 
-#include "mtypes.h"
+#include "main/mtypes.h"
 #include "swrast.h"
 
 
