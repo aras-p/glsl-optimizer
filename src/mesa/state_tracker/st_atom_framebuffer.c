@@ -59,7 +59,7 @@ update_renderbuffer_surface(struct st_context *st,
        strb->surface->texture != texture ||
        strb->surface->width != rtt_width ||
        strb->surface->height != rtt_height) {
-      int level;
+      GLuint level;
       /* find matching mipmap level size */
       for (level = 0; level <= texture->last_level; level++) {
          if (texture->width[level] == rtt_width &&

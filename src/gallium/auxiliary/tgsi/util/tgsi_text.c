@@ -29,6 +29,7 @@
 #include "tgsi_text.h"
 #include "tgsi_build.h"
 #include "tgsi_parse.h"
+#include "tgsi_sanity.h"
 #include "tgsi_util.h"
 
 static boolean is_alpha_underscore( const char *cur )
@@ -225,24 +226,21 @@ static const char *file_names[TGSI_FILE_COUNT] =
 };
 
 static boolean
-parse_file(
-   struct translate_ctx *ctx,
-   uint *file )
+parse_file( const char **pcur, uint *file )
 {
    uint i;
 
    for (i = 0; i < TGSI_FILE_COUNT; i++) {
-      const char *cur = ctx->cur;
+      const char *cur = *pcur;
 
       if (str_match_no_case( &cur, file_names[i] )) {
          if (!is_digit_alpha_underscore( cur )) {
-            ctx->cur = cur;
+            *pcur = cur;
             *file = i;
             return TRUE;
          }
       }
    }
-   report_error( ctx, "Unknown register file" );
    return FALSE;
 }
 
@@ -289,41 +287,57 @@ parse_opt_writemask(
    return TRUE;
 }
 
-/* Parse register part common for decls and operands.
- *    <register_prefix> ::= <file> `[' <index>
+/* <register_file_bracket> ::= <file> `['
  */
 static boolean
-parse_register_prefix(
+parse_register_file_bracket(
    struct translate_ctx *ctx,
-   uint *file,
-   uint *index )
+   uint *file )
 {
-   if (!parse_file( ctx, file ))
+   if (!parse_file( &ctx->cur, file )) {
+      report_error( ctx, "Unknown register file" );
       return FALSE;
+   }
    eat_opt_white( &ctx->cur );
    if (*ctx->cur != '[') {
       report_error( ctx, "Expected `['" );
       return FALSE;
    }
    ctx->cur++;
-   eat_opt_white( &ctx->cur );
-   if (!parse_uint( &ctx->cur, index )) {
-      report_error( ctx, "Expected literal integer" );
-      return FALSE;
-   }
    return TRUE;
 }
 
-/* Parse register operand.
- *    <register> ::= <register_prefix> `]'
+/* <register_file_bracket_index> ::= <register_file_bracket> <uint>
  */
 static boolean
-parse_register(
+parse_register_file_bracket_index(
    struct translate_ctx *ctx,
    uint *file,
-   uint *index )
+   int *index )
 {
-   if (!parse_register_prefix( ctx, file, index ))
+   uint uindex;
+
+   if (!parse_register_file_bracket( ctx, file ))
+      return FALSE;
+   eat_opt_white( &ctx->cur );
+   if (!parse_uint( &ctx->cur, &uindex )) {
+      report_error( ctx, "Expected literal unsigned integer" );
+      return FALSE;
+   }
+   *index = (int) uindex;
+   return TRUE;
+}
+
+/* Parse destination register operand.
+ *    <register_dst> ::= <register_file_bracket_index> `]'
+ */
+static boolean
+parse_register_dst(
+   struct translate_ctx *ctx,
+   uint *file,
+   int *index )
+{
+   if (!parse_register_file_bracket_index( ctx, file, index ))
       return FALSE;
    eat_opt_white( &ctx->cur );
    if (*ctx->cur != ']') {
@@ -331,30 +345,95 @@ parse_register(
       return FALSE;
    }
    ctx->cur++;
-   /* TODO: Modulate suffix */
+   return TRUE;
+}
+
+/* Parse source register operand.
+ *    <register_src> ::= <register_file_bracket_index> `]' |
+ *                       <register_file_bracket> <register_dst> `]' |
+ *                       <register_file_bracket> <register_dst> `+' <uint> `]' |
+ *                       <register_file_bracket> <register_dst> `-' <uint> `]'
+ */
+static boolean
+parse_register_src(
+   struct translate_ctx *ctx,
+   uint *file,
+   int *index,
+   uint *ind_file,
+   int *ind_index )
+{
+   const char *cur;
+   uint uindex;
+
+   if (!parse_register_file_bracket( ctx, file ))
+      return FALSE;
+   eat_opt_white( &ctx->cur );
+   cur = ctx->cur;
+   if (parse_file( &cur, ind_file )) {
+      if (!parse_register_dst( ctx, ind_file, ind_index ))
+         return FALSE;
+      eat_opt_white( &ctx->cur );
+      if (*ctx->cur == '+' || *ctx->cur == '-') {
+         boolean negate;
+
+         negate = *ctx->cur == '-';
+         ctx->cur++;
+         eat_opt_white( &ctx->cur );
+         if (!parse_uint( &ctx->cur, &uindex )) {
+            report_error( ctx, "Expected literal unsigned integer" );
+            return FALSE;
+         }
+         if (negate)
+            *index = -(int) uindex;
+         else
+            *index = (int) uindex;
+      }
+      else {
+         *index = 0;
+      }
+   }
+   else {
+      if (!parse_uint( &ctx->cur, &uindex )) {
+         report_error( ctx, "Expected literal unsigned integer" );
+         return FALSE;
+      }
+      *index = (int) uindex;
+      *ind_file = TGSI_FILE_NULL;
+      *ind_index = 0;
+   }
+   eat_opt_white( &ctx->cur );
+   if (*ctx->cur != ']') {
+      report_error( ctx, "Expected `]'" );
+      return FALSE;
+   }
+   ctx->cur++;
    return TRUE;
 }
 
 /* Parse register declaration.
- *    <register> ::= <register_prefix> `]' | <register_prefix> `..' <index> `]'
+ *    <register_dcl> ::= <register_file_bracket_index> `]' |
+ *                       <register_file_bracket_index> `..' <index> `]'
  */
 static boolean
 parse_register_dcl(
    struct translate_ctx *ctx,
    uint *file,
-   uint *first,
-   uint *last )
+   int *first,
+   int *last )
 {
-   if (!parse_register_prefix( ctx, file, first ))
+   if (!parse_register_file_bracket_index( ctx, file, first ))
       return FALSE;
    eat_opt_white( &ctx->cur );
    if (ctx->cur[0] == '.' && ctx->cur[1] == '.') {
+      uint uindex;
+
       ctx->cur += 2;
       eat_opt_white( &ctx->cur );
-      if (!parse_uint( &ctx->cur, last )) {
+      if (!parse_uint( &ctx->cur, &uindex )) {
          report_error( ctx, "Expected literal integer" );
          return FALSE;
       }
+      *last = (int) uindex;
       eat_opt_white( &ctx->cur );
    }
    else {
@@ -385,11 +464,11 @@ parse_dst_operand(
    struct tgsi_full_dst_register *dst )
 {
    uint file;
-   uint index;
+   int index;
    uint writemask;
    const char *cur;
 
-   if (!parse_register( ctx, &file, &index ))
+   if (!parse_register_dst( ctx, &file, &index ))
       return FALSE;
 
    cur = ctx->cur;
@@ -418,6 +497,52 @@ parse_dst_operand(
 }
 
 static boolean
+parse_optional_swizzle(
+   struct translate_ctx *ctx,
+   uint swizzle[4],
+   boolean *parsed_swizzle,
+   boolean *parsed_extswizzle )
+{
+   const char *cur = ctx->cur;
+
+   *parsed_swizzle = FALSE;
+   *parsed_extswizzle = FALSE;
+
+   eat_opt_white( &cur );
+   if (*cur == '.') {
+      uint i;
+
+      cur++;
+      eat_opt_white( &cur );
+      for (i = 0; i < 4; i++) {
+         if (toupper( *cur ) == 'X')
+            swizzle[i] = TGSI_SWIZZLE_X;
+         else if (toupper( *cur ) == 'Y')
+            swizzle[i] = TGSI_SWIZZLE_Y;
+         else if (toupper( *cur ) == 'Z')
+            swizzle[i] = TGSI_SWIZZLE_Z;
+         else if (toupper( *cur ) == 'W')
+            swizzle[i] = TGSI_SWIZZLE_W;
+         else {
+            if (*cur == '0')
+               swizzle[i] = TGSI_EXTSWIZZLE_ZERO;
+            else if (*cur == '1')
+               swizzle[i] = TGSI_EXTSWIZZLE_ONE;
+            else {
+               report_error( ctx, "Expected register swizzle component `x', `y', `z', `w', `0' or `1'" );
+               return FALSE;
+            }
+            *parsed_extswizzle = TRUE;
+         }
+         cur++;
+      }
+      *parsed_swizzle = TRUE;
+      ctx->cur = cur;
+   }
+   return TRUE;
+}
+
+static boolean
 parse_src_operand(
    struct translate_ctx *ctx,
    struct tgsi_full_src_register *src )
@@ -425,7 +550,12 @@ parse_src_operand(
    const char *cur;
    float value;
    uint file;
-   uint index;
+   int index;
+   uint ind_file;
+   int ind_index;
+   uint swizzle[4];
+   boolean parsed_swizzle;
+   boolean parsed_extswizzle;
 
    if (*ctx->cur == '-') {
       cur = ctx->cur;
@@ -497,40 +627,33 @@ parse_src_operand(
       }
    }
 
-   if (!parse_register( ctx, &file, &index ))
+   if (!parse_register_src( ctx, &file, &index, &ind_file, &ind_index ))
       return FALSE;
    src->SrcRegister.File = file;
    src->SrcRegister.Index = index;
+   if (ind_file != TGSI_FILE_NULL) {
+      src->SrcRegister.Indirect = 1;
+      src->SrcRegisterInd.File = ind_file;
+      src->SrcRegisterInd.Index = ind_index;
+   }
 
-   /* Parse optional swizzle
+   /* Parse optional swizzle.
     */
-   cur = ctx->cur;
-   eat_opt_white( &cur );
-   if (*cur == '.') {
-      uint i;
+   if (parse_optional_swizzle( ctx, swizzle, &parsed_swizzle, &parsed_extswizzle )) {
+      if (parsed_extswizzle) {
+         assert( parsed_swizzle );
 
-      cur++;
-      eat_opt_white( &cur );
-      for (i = 0; i < 4; i++) {
-         uint swizzle;
-
-         if (toupper( *cur ) == 'X')
-            swizzle = TGSI_SWIZZLE_X;
-         else if (toupper( *cur ) == 'Y')
-            swizzle = TGSI_SWIZZLE_Y;
-         else if (toupper( *cur ) == 'Z')
-            swizzle = TGSI_SWIZZLE_Z;
-         else if (toupper( *cur ) == 'W')
-            swizzle = TGSI_SWIZZLE_W;
-         else {
-            report_error( ctx, "Expected register swizzle component either `x', `y', `z' or `w'" );
-            return FALSE;
-         }
-         cur++;
-         tgsi_util_set_src_register_swizzle( &src->SrcRegister, swizzle, i );
+         src->SrcRegisterExtSwz.ExtSwizzleX = swizzle[0];
+         src->SrcRegisterExtSwz.ExtSwizzleY = swizzle[1];
+         src->SrcRegisterExtSwz.ExtSwizzleZ = swizzle[2];
+         src->SrcRegisterExtSwz.ExtSwizzleW = swizzle[3];
       }
-
-      ctx->cur = cur;
+      else if (parsed_swizzle) {
+         src->SrcRegister.SwizzleX = swizzle[0];
+         src->SrcRegister.SwizzleY = swizzle[1];
+         src->SrcRegister.SwizzleZ = swizzle[2];
+         src->SrcRegister.SwizzleW = swizzle[3];
+      }
    }
 
    if (src->SrcRegisterExtMod.Complement) {
@@ -601,130 +724,131 @@ struct opcode_info
    uint num_dst;
    uint num_src;
    uint is_tex;
+   uint is_branch;
    const char *mnemonic;
 };
 
 static const struct opcode_info opcode_info[TGSI_OPCODE_LAST] =
 {
-   { 1, 1, 0, "ARL" },
-   { 1, 1, 0, "MOV" },
-   { 1, 1, 0, "LIT" },
-   { 1, 1, 0, "RCP" },
-   { 1, 1, 0, "RSQ" },
-   { 1, 1, 0, "EXP" },
-   { 1, 1, 0, "LOG" },
-   { 1, 2, 0, "MUL" },
-   { 1, 2, 0, "ADD" },
-   { 1, 2, 0, "DP3" },
-   { 1, 2, 0, "DP4" },
-   { 1, 2, 0, "DST" },
-   { 1, 2, 0, "MIN" },
-   { 1, 2, 0, "MAX" },
-   { 1, 2, 0, "SLT" },
-   { 1, 2, 0, "SGE" },
-   { 1, 3, 0, "MAD" },
-   { 1, 2, 0, "SUB" },
-   { 1, 3, 0, "LERP" },
-   { 1, 3, 0, "CND" },
-   { 1, 3, 0, "CND0" },
-   { 1, 3, 0, "DOT2ADD" },
-   { 1, 2, 0, "INDEX" },
-   { 1, 1, 0, "NEGATE" },
-   { 1, 1, 0, "FRAC" },
-   { 1, 3, 0, "CLAMP" },
-   { 1, 1, 0, "FLOOR" },
-   { 1, 1, 0, "ROUND" },
-   { 1, 1, 0, "EXPBASE2" },
-   { 1, 1, 0, "LOGBASE2" },
-   { 1, 2, 0, "POWER" },
-   { 1, 2, 0, "CROSSPRODUCT" },
-   { 1, 2, 0, "MULTIPLYMATRIX" },
-   { 1, 1, 0, "ABS" },
-   { 1, 1, 0, "RCC" },
-   { 1, 2, 0, "DPH" },
-   { 1, 1, 0, "COS" },
-   { 1, 1, 0, "DDX" },
-   { 1, 1, 0, "DDY" },
-   { 0, 1, 0, "KILP" },
-   { 1, 1, 0, "PK2H" },
-   { 1, 1, 0, "PK2US" },
-   { 1, 1, 0, "PK4B" },
-   { 1, 1, 0, "PK4UB" },
-   { 1, 2, 0, "RFL" },
-   { 1, 2, 0, "SEQ" },
-   { 1, 2, 0, "SFL" },
-   { 1, 2, 0, "SGT" },
-   { 1, 1, 0, "SIN" },
-   { 1, 2, 0, "SLE" },
-   { 1, 2, 0, "SNE" },
-   { 1, 2, 0, "STR" },
-   { 1, 2, 1, "TEX" },
-   { 1, 4, 1, "TXD" },
-   { 1, 2, 1, "TXP" },
-   { 1, 1, 0, "UP2H" },
-   { 1, 1, 0, "UP2US" },
-   { 1, 1, 0, "UP4B" },
-   { 1, 1, 0, "UP4UB" },
-   { 1, 3, 0, "X2D" },
-   { 1, 1, 0, "ARA" },
-   { 1, 1, 0, "ARR" },
-   { 0, 1, 0, "BRA" },
-   { 0, 0, 0, "CAL" },
-   { 0, 0, 0, "RET" },
-   { 1, 1, 0, "SSG" },
-   { 1, 3, 0, "CMP" },
-   { 1, 1, 0, "SCS" },
-   { 1, 2, 1, "TXB" },
-   { 1, 1, 0, "NRM" },
-   { 1, 2, 0, "DIV" },
-   { 1, 2, 0, "DP2" },
-   { 1, 2, 1, "TXL" },
-   { 0, 0, 0, "BRK" },
-   { 0, 1, 0, "IF" },
-   { 0, 0, 0, "LOOP" },
-   { 0, 1, 0, "REP" },
-   { 0, 0, 0, "ELSE" },
-   { 0, 0, 0, "ENDIF" },
-   { 0, 0, 0, "ENDLOOP" },
-   { 0, 0, 0, "ENDREP" },
-   { 0, 1, 0, "PUSHA" },
-   { 1, 0, 0, "POPA" },
-   { 1, 1, 0, "CEIL" },
-   { 1, 1, 0, "I2F" },
-   { 1, 1, 0, "NOT" },
-   { 1, 1, 0, "TRUNC" },
-   { 1, 2, 0, "SHL" },
-   { 1, 2, 0, "SHR" },
-   { 1, 2, 0, "AND" },
-   { 1, 2, 0, "OR" },
-   { 1, 2, 0, "MOD" },
-   { 1, 2, 0, "XOR" },
-   { 1, 3, 0, "SAD" },
-   { 1, 2, 1, "TXF" },
-   { 1, 2, 1, "TXQ" },
-   { 0, 0, 0, "CONT" },
-   { 0, 0, 0, "EMIT" },
-   { 0, 0, 0, "ENDPRIM" },
-   { 0, 0, 0, "BGNLOOP2" },
-   { 0, 0, 0, "BGNSUB" },
-   { 0, 0, 0, "ENDLOOP2" },
-   { 0, 0, 0, "ENDSUB" },
-   { 1, 1, 0, "NOISE1" },
-   { 1, 1, 0, "NOISE2" },
-   { 1, 1, 0, "NOISE3" },
-   { 1, 1, 0, "NOISE4" },
-   { 0, 0, 0, "NOP" },
-   { 1, 2, 0, "M4X3" },
-   { 1, 2, 0, "M3X4" },
-   { 1, 2, 0, "M3X3" },
-   { 1, 2, 0, "M3X2" },
-   { 1, 1, 0, "NRM4" },
-   { 0, 1, 0, "CALLNZ" },
-   { 0, 1, 0, "IFC" },
-   { 0, 1, 0, "BREAKC" },
-   { 0, 0, 0, "KIL" },
-   { 0, 0, 0, "END" },
-   { 1, 1, 0, "SWZ" }
+   { 1, 1, 0, 0, "ARL" },
+   { 1, 1, 0, 0, "MOV" },
+   { 1, 1, 0, 0, "LIT" },
+   { 1, 1, 0, 0, "RCP" },
+   { 1, 1, 0, 0, "RSQ" },
+   { 1, 1, 0, 0, "EXP" },
+   { 1, 1, 0, 0, "LOG" },
+   { 1, 2, 0, 0, "MUL" },
+   { 1, 2, 0, 0, "ADD" },
+   { 1, 2, 0, 0, "DP3" },
+   { 1, 2, 0, 0, "DP4" },
+   { 1, 2, 0, 0, "DST" },
+   { 1, 2, 0, 0, "MIN" },
+   { 1, 2, 0, 0, "MAX" },
+   { 1, 2, 0, 0, "SLT" },
+   { 1, 2, 0, 0, "SGE" },
+   { 1, 3, 0, 0, "MAD" },
+   { 1, 2, 0, 0, "SUB" },
+   { 1, 3, 0, 0, "LERP" },
+   { 1, 3, 0, 0, "CND" },
+   { 1, 3, 0, 0, "CND0" },
+   { 1, 3, 0, 0, "DOT2ADD" },
+   { 1, 2, 0, 0, "INDEX" },
+   { 1, 1, 0, 0, "NEGATE" },
+   { 1, 1, 0, 0, "FRAC" },
+   { 1, 3, 0, 0, "CLAMP" },
+   { 1, 1, 0, 0, "FLOOR" },
+   { 1, 1, 0, 0, "ROUND" },
+   { 1, 1, 0, 0, "EXPBASE2" },
+   { 1, 1, 0, 0, "LOGBASE2" },
+   { 1, 2, 0, 0, "POWER" },
+   { 1, 2, 0, 0, "CROSSPRODUCT" },
+   { 1, 2, 0, 0, "MULTIPLYMATRIX" },
+   { 1, 1, 0, 0, "ABS" },
+   { 1, 1, 0, 0, "RCC" },
+   { 1, 2, 0, 0, "DPH" },
+   { 1, 1, 0, 0, "COS" },
+   { 1, 1, 0, 0, "DDX" },
+   { 1, 1, 0, 0, "DDY" },
+   { 0, 1, 0, 0, "KILP" },
+   { 1, 1, 0, 0, "PK2H" },
+   { 1, 1, 0, 0, "PK2US" },
+   { 1, 1, 0, 0, "PK4B" },
+   { 1, 1, 0, 0, "PK4UB" },
+   { 1, 2, 0, 0, "RFL" },
+   { 1, 2, 0, 0, "SEQ" },
+   { 1, 2, 0, 0, "SFL" },
+   { 1, 2, 0, 0, "SGT" },
+   { 1, 1, 0, 0, "SIN" },
+   { 1, 2, 0, 0, "SLE" },
+   { 1, 2, 0, 0, "SNE" },
+   { 1, 2, 0, 0, "STR" },
+   { 1, 2, 1, 0, "TEX" },
+   { 1, 4, 1, 0, "TXD" },
+   { 1, 2, 1, 0, "TXP" },
+   { 1, 1, 0, 0, "UP2H" },
+   { 1, 1, 0, 0, "UP2US" },
+   { 1, 1, 0, 0, "UP4B" },
+   { 1, 1, 0, 0, "UP4UB" },
+   { 1, 3, 0, 0, "X2D" },
+   { 1, 1, 0, 0, "ARA" },
+   { 1, 1, 0, 0, "ARR" },
+   { 0, 1, 0, 0, "BRA" },
+   { 0, 0, 0, 1, "CAL" },
+   { 0, 0, 0, 0, "RET" },
+   { 1, 1, 0, 0, "SSG" },
+   { 1, 3, 0, 0, "CMP" },
+   { 1, 1, 0, 0, "SCS" },
+   { 1, 2, 1, 0, "TXB" },
+   { 1, 1, 0, 0, "NRM" },
+   { 1, 2, 0, 0, "DIV" },
+   { 1, 2, 0, 0, "DP2" },
+   { 1, 2, 1, 0, "TXL" },
+   { 0, 0, 0, 0, "BRK" },
+   { 0, 1, 0, 1, "IF" },
+   { 0, 0, 0, 0, "LOOP" },
+   { 0, 1, 0, 0, "REP" },
+   { 0, 0, 0, 1, "ELSE" },
+   { 0, 0, 0, 0, "ENDIF" },
+   { 0, 0, 0, 0, "ENDLOOP" },
+   { 0, 0, 0, 0, "ENDREP" },
+   { 0, 1, 0, 0, "PUSHA" },
+   { 1, 0, 0, 0, "POPA" },
+   { 1, 1, 0, 0, "CEIL" },
+   { 1, 1, 0, 0, "I2F" },
+   { 1, 1, 0, 0, "NOT" },
+   { 1, 1, 0, 0, "TRUNC" },
+   { 1, 2, 0, 0, "SHL" },
+   { 1, 2, 0, 0, "SHR" },
+   { 1, 2, 0, 0, "AND" },
+   { 1, 2, 0, 0, "OR" },
+   { 1, 2, 0, 0, "MOD" },
+   { 1, 2, 0, 0, "XOR" },
+   { 1, 3, 0, 0, "SAD" },
+   { 1, 2, 1, 0, "TXF" },
+   { 1, 2, 1, 0, "TXQ" },
+   { 0, 0, 0, 0, "CONT" },
+   { 0, 0, 0, 0, "EMIT" },
+   { 0, 0, 0, 0, "ENDPRIM" },
+   { 0, 0, 0, 1, "BGNLOOP2" },
+   { 0, 0, 0, 0, "BGNSUB" },
+   { 0, 0, 0, 1, "ENDLOOP2" },
+   { 0, 0, 0, 0, "ENDSUB" },
+   { 1, 1, 0, 0, "NOISE1" },
+   { 1, 1, 0, 0, "NOISE2" },
+   { 1, 1, 0, 0, "NOISE3" },
+   { 1, 1, 0, 0, "NOISE4" },
+   { 0, 0, 0, 0, "NOP" },
+   { 1, 2, 0, 0, "M4X3" },
+   { 1, 2, 0, 0, "M3X4" },
+   { 1, 2, 0, 0, "M3X3" },
+   { 1, 2, 0, 0, "M3X2" },
+   { 1, 1, 0, 0, "NRM4" },
+   { 0, 1, 0, 0, "CALLNZ" },
+   { 0, 1, 0, 0, "IFC" },
+   { 0, 1, 0, 0, "BREAKC" },
+   { 0, 0, 0, 0, "KIL" },
+   { 0, 0, 0, 0, "END" },
+   { 1, 1, 0, 0, "SWZ" }
 };
 
 static const char *texture_names[TGSI_TEXTURE_COUNT] =
@@ -740,7 +864,10 @@ static const char *texture_names[TGSI_TEXTURE_COUNT] =
    "SHADOWRECT"
 };
 
-static boolean parse_instruction( struct translate_ctx *ctx )
+static boolean
+parse_instruction(
+   struct translate_ctx *ctx,
+   boolean has_label )
 {
    uint i;
    uint saturate = TGSI_SAT_NONE;
@@ -754,23 +881,32 @@ static boolean parse_instruction( struct translate_ctx *ctx )
    for (i = 0; i < TGSI_OPCODE_LAST; i++) {
       const char *cur = ctx->cur;
 
-      if (str_match_no_case( &cur, opcode_info[i].mnemonic )) {
+      info = &opcode_info[i];
+      if (str_match_no_case( &cur, info->mnemonic )) {
          if (str_match_no_case( &cur, "_SATNV" ))
             saturate = TGSI_SAT_MINUS_PLUS_ONE;
          else if (str_match_no_case( &cur, "_SAT" ))
             saturate = TGSI_SAT_ZERO_ONE;
 
-         if (*cur == '\0' || eat_white( &cur )) {
+         if (info->num_dst + info->num_src + info->is_tex == 0) {
+            if (!is_digit_alpha_underscore( cur )) {
+               ctx->cur = cur;
+               break;
+            }
+         }
+         else if (*cur == '\0' || eat_white( &cur )) {
             ctx->cur = cur;
             break;
          }
       }
    }
    if (i == TGSI_OPCODE_LAST) {
-      report_error( ctx, "Unknown opcode" );
+      if (has_label)
+         report_error( ctx, "Unknown opcode" );
+      else
+         report_error( ctx, "Expected `DCL', `IMM' or a label" );
       return FALSE;
    }
-   info = &opcode_info[i];
 
    inst = tgsi_default_full_instruction();
    inst.Instruction.Opcode = i;
@@ -817,6 +953,23 @@ static boolean parse_instruction( struct translate_ctx *ctx )
       }
    }
 
+   if (info->is_branch) {
+      uint target;
+
+      eat_opt_white( &ctx->cur );
+      if (*ctx->cur != ':') {
+         report_error( ctx, "Expected `:'" );
+         return FALSE;
+      }
+      ctx->cur++;
+      eat_opt_white( &ctx->cur );
+      if (!parse_uint( &ctx->cur, &target )) {
+         report_error( ctx, "Expected a label" );
+         return FALSE;
+      }
+      inst.InstructionExtLabel.Label = target;
+   }
+
    advance = tgsi_build_full_instruction(
       &inst,
       ctx->tokens_cur,
@@ -851,8 +1004,8 @@ static boolean parse_declaration( struct translate_ctx *ctx )
 {
    struct tgsi_full_declaration decl;
    uint file;
-   uint first;
-   uint last;
+   int first;
+   int last;
    uint writemask;
    const char *cur;
    uint advance;
@@ -1024,8 +1177,11 @@ static boolean translate( struct translate_ctx *ctx )
          return FALSE;
       }
 
+      if (*ctx->cur == '\0')
+         break;
+
       if (parse_label( ctx, &label_val )) {
-         if (!parse_instruction( ctx ))
+         if (!parse_instruction( ctx, TRUE ))
             return FALSE;
       }
       else if (str_match_no_case( &ctx->cur, "DCL" )) {
@@ -1036,8 +1192,7 @@ static boolean translate( struct translate_ctx *ctx )
          if (!parse_immediate( ctx ))
             return FALSE;
       }
-      else {
-         report_error( ctx, "Expected `DCL', `IMM' or a label" );
+      else if (!parse_instruction( ctx, FALSE )) {
          return FALSE;
       }
    }
@@ -1059,5 +1214,8 @@ tgsi_text_translate(
    ctx.tokens_cur = tokens;
    ctx.tokens_end = tokens + num_tokens;
 
-   return translate( &ctx );
+   if (!translate( &ctx ))
+      return FALSE;
+
+   return tgsi_sanity_check( tokens );
 }

@@ -50,9 +50,9 @@ struct st_winsys
 };
 
 
-extern const struct st_winsys st_software_winsys;
+extern const struct st_winsys st_softpipe_winsys;
 
-extern const struct st_winsys st_hardware_winsys;
+extern const struct st_winsys st_hardpipe_winsys;
 
 
 #endif /* ST_WINSYS_H_ */

@@ -174,20 +174,19 @@ copy(char *dst, const char *start, const char *end, size_t n)
 #endif
 
 
-const char *
-debug_get_option(const char *name, const char *dfault)
+static INLINE const char *
+_debug_get_option(const char *name)
 {
-   const char *result;
 #if defined(PIPE_SUBSYSTEM_WINDOWS_DISPLAY)
    /* EngMapFile creates the file if it does not exists, so it must either be
     * disabled on release versions (or put in a less conspicuous place). */
 #ifdef DEBUG
+   const char *result = NULL;
    ULONG_PTR iFile = 0;
    const void *pMap = NULL;
    const char *sol, *eol, *sep;
    static char output[1024];
    
-   result = dfault;
    pMap = EngMapFile(L"\\??\\c:\\gallium.cfg", 0, &iFile);
    if(pMap) {
       sol = (const char *)pMap;
@@ -208,18 +207,27 @@ debug_get_option(const char *name, const char *dfault)
       }
       EngUnmapFile(iFile);
    }
+   return result;
 #else
-   result = dfault;
+   return NULL;
 #endif
 #elif defined(PIPE_SUBSYSTEM_WINDOWS_CE)
    /* TODO: implement */
-   result = dfault;
+   return NULL;
 #else
-   result = getenv(name);
+   return getenv(name);
+#endif
+}
+
+const char *
+debug_get_option(const char *name, const char *dfault)
+{
+   const char *result;
+
+   result = _debug_get_option(name);
    if(!result)
       result = dfault;
-#endif
-
+      
    debug_printf("%s: %s = %s\n", __FUNCTION__, name, result ? result : "(null)");
    
    return result;
@@ -228,7 +236,7 @@ debug_get_option(const char *name, const char *dfault)
 boolean
 debug_get_bool_option(const char *name, boolean dfault)
 {
-   const char *str = debug_get_option(name, NULL);
+   const char *str = _debug_get_option(name);
    boolean result;
    
    if(str == NULL)
@@ -258,7 +266,7 @@ debug_get_num_option(const char *name, long dfault)
    long result;
    const char *str;
    
-   str = debug_get_option(name, NULL);
+   str = _debug_get_option(name);
    if(!str)
       result = dfault;
    else {
@@ -294,7 +302,7 @@ debug_get_flags_option(const char *name,
    unsigned long result;
    const char *str;
    
-   str = debug_get_option(name, NULL);
+   str = _debug_get_option(name);
    if(!str)
       result = dfault;
    else {

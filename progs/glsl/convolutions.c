@@ -12,6 +12,7 @@ enum Filter {
    SHARPEN,
    MEAN_REMOVAL,
    EMBOSS,
+   EDGE_DETECT,
    NO_FILTER,
    LAST
 };
@@ -141,6 +142,17 @@ static void fillConvolution(GLint *k,
       k[6] = -1; k[7] =  0; k[8] = -1;
 
       *scale = 1./1.;
+      color[0] = 0.5;
+      color[1] = 0.5;
+      color[2] = 0.5;
+      color[3] = 0.5;
+      break;
+   case EDGE_DETECT:
+      k[0] =  1; k[1] =  1; k[2] =  1;
+      k[3] =  0; k[4] =  0; k[5] =  0;
+      k[6] = -1; k[7] = -1; k[8] = -1;
+
+      *scale = 1.;
       color[0] = 0.5;
       color[1] = 0.5;
       color[2] = 0.5;
@@ -294,6 +306,7 @@ static void menuInit()
    glutAddMenuEntry("Sharpen", SHARPEN);
    glutAddMenuEntry("Mean removal", MEAN_REMOVAL);
    glutAddMenuEntry("Emboss", EMBOSS);
+   glutAddMenuEntry("Edge detect", EDGE_DETECT);
    glutAddMenuEntry("None", NO_FILTER);
 
    glutAddMenuEntry("Quit", QUIT);

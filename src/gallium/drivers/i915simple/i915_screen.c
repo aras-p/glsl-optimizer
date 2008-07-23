@@ -148,7 +148,10 @@ i915_get_paramf(struct pipe_screen *screen, int param)
 
 static boolean
 i915_is_format_supported( struct pipe_screen *screen,
-                          enum pipe_format format, uint type )
+                          enum pipe_format format, 
+                          enum pipe_texture_target target,
+                          unsigned tex_usage, 
+                          unsigned geom_flags )
 {
    static const enum pipe_format tex_supported[] = {
       PIPE_FORMAT_R8G8B8A8_UNORM,
@@ -173,17 +176,10 @@ i915_is_format_supported( struct pipe_screen *screen,
    const enum pipe_format *list;
    uint i;
 
-   switch (type) {
-   case PIPE_TEXTURE:
-      list = tex_supported;
-      break;
-   case PIPE_SURFACE:
+   if(tex_usage & PIPE_TEXTURE_USAGE_RENDER_TARGET)
       list = surface_supported;
-      break;
-   default:
-      assert(0);
-      return FALSE;
-   }
+   else
+      list = tex_supported;
 
    for (i = 0; list[i] != PIPE_FORMAT_NONE; i++) {
       if (list[i] == format)

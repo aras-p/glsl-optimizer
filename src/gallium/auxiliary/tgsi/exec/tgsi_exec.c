@@ -2400,7 +2400,8 @@ exec_instruction(
       /* Restore ContMask, but don't pop */
       assert(mach->ContStackTop > 0);
       mach->ContMask = mach->ContStack[mach->ContStackTop - 1];
-      if (mach->LoopMask) {
+      UPDATE_EXEC_MASK(mach);
+      if (mach->ExecMask) {
          /* repeat loop: jump to instruction just past BGNLOOP */
          *pc = inst->InstructionExtLabel.Label + 1;
       }

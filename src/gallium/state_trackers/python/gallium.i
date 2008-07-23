@@ -44,15 +44,19 @@
 #include "pipe/p_inlines.h"
 #include "pipe/p_util.h"
 #include "pipe/p_shader_tokens.h" 
+#include "cso_cache/cso_context.h"
 #include "util/u_draw_quad.h" 
 #include "util/p_tile.h" 
-#include "cso_cache/cso_context.h"
+#include "tgsi/util/tgsi_text.h" 
+#include "tgsi/util/tgsi_dump.h" 
 
 #include "st_device.h"
+#include "st_sample.h"
 
 %}
 
 %include "carrays.i"
+%array_class(unsigned char, ByteArray);
 %array_class(int, IntArray);
 %array_class(float, FloatArray);
 
@@ -63,6 +67,7 @@
 %rename(Surface) pipe_surface;
 
 %rename(Buffer) pipe_buffer;
+
 %rename(BlendColor) pipe_blend_color;
 %rename(Blend) pipe_blend_state;
 %rename(Clip) pipe_clip_state;
@@ -79,14 +84,29 @@
 %rename(VertexElement) pipe_vertex_element;
 %rename(Viewport) pipe_viewport_state;
 
+%nodefaultctor st_device;
+%nodefaultctor st_context;
+%nodefaultctor pipe_texture;
+%nodefaultctor pipe_surface;
+%nodefaultctor pipe_buffer;
+
+%nodefaultdtor st_device;
+%nodefaultdtor st_context;
+%nodefaultdtor pipe_texture;
+%nodefaultdtor pipe_surface;
+%nodefaultdtor pipe_buffer;
+
+%ignore pipe_texture::screen;
+
+%ignore pipe_surface::winsys;
+%immutable pipe_surface::texture;
+%immutable pipe_surface::buffer;
+
 %include "p_format.i";
 %include "pipe/p_defines.h";
 %include "pipe/p_state.h";
 %include "pipe/p_shader_tokens.h";
 
-
-%nodefaultctor;
-%nodefaultdtor;
 
 struct st_device {
 };
@@ -95,9 +115,13 @@ struct st_context {
 };
 
 
+%newobject st_device::texture_create;
+%newobject st_device::context_create;
+%newobject st_device::buffer_create;
+
 %extend st_device {
    
-   st_device(int hardware = 0) {
+   st_device(int hardware = 1) {
       return st_device_create(hardware ? TRUE : FALSE);
    }
 
@@ -134,8 +158,15 @@ struct st_context {
     * drawing surface.
     * \param type  one of PIPE_TEXTURE, PIPE_SURFACE
     */
-   int is_format_supported( enum pipe_format format, unsigned type ) {
-      return $self->screen->is_format_supported( $self->screen, format, type);
+   int is_format_supported( enum pipe_format format, 
+                            enum pipe_texture_target target,
+                            unsigned tex_usage, 
+                            unsigned geom_flags ) {
+      return $self->screen->is_format_supported( $self->screen, 
+                                                 format, 
+                                                 target, 
+                                                 tex_usage, 
+                                                 geom_flags );
    }
 
    struct st_context *
@@ -151,7 +182,7 @@ struct st_context {
          unsigned depth = 1,
          unsigned last_level = 0,
          enum pipe_texture_target target = PIPE_TEXTURE_2D,
-         unsigned usage = 0
+         unsigned tex_usage = 0
       ) {
       struct pipe_texture templat;
       memset(&templat, 0, sizeof(templat));
@@ -162,7 +193,7 @@ struct st_context {
       templat.depth[0] = depth;
       templat.last_level = last_level;
       templat.target = target;
-      templat.tex_usage = usage;
+      templat.tex_usage = tex_usage;
       return $self->screen->texture_create($self->screen, &templat);
    }
    
@@ -201,29 +232,32 @@ struct st_context {
       cso_set_depth_stencil_alpha($self->cso, state);
    }
 
-   
-   void * create_fs( const struct pipe_shader_state *state ) {
-      return $self->pipe->create_fs_state($self->pipe, state);
-   }
-   
-   void bind_fs( void *state_obj ) {
-      $self->pipe->bind_fs_state($self->pipe, state_obj);
-   }
-   
-   void delete_fs( void *state_obj ) {
-      $self->pipe->delete_fs_state($self->pipe, state_obj);
+   void set_fragment_shader( const struct pipe_shader_state *state ) {
+      void *fs;
+      
+      fs = $self->pipe->create_fs_state($self->pipe, state);
+      if(!fs)
+         return;
+      
+      if(cso_set_fragment_shader_handle($self->cso, fs) != PIPE_OK)
+         return;
+
+      cso_delete_fragment_shader($self->cso, $self->fs);
+      $self->fs = fs;
    }
 
-   void * create_vs( const struct pipe_shader_state *state ) {
-      return $self->pipe->create_vs_state($self->pipe, state);
-   }
-   
-   void bind_vs( void *state_obj ) {
-      $self->pipe->bind_vs_state($self->pipe, state_obj);
-   }
-   
-   void delete_vs( void *state_obj ) {
-      $self->pipe->delete_vs_state($self->pipe, state_obj);
+   void set_vertex_shader( const struct pipe_shader_state *state ) {
+      void *vs;
+      
+      vs = $self->pipe->create_vs_state($self->pipe, state);
+      if(!vs)
+         return;
+      
+      if(cso_set_vertex_shader_handle($self->cso, vs) != PIPE_OK)
+         return;
+
+      cso_delete_vertex_shader($self->cso, $self->vs);
+      $self->vs = vs;
    }
 
    /*
@@ -261,6 +295,8 @@ struct st_context {
 
    void set_sampler_texture(unsigned index,
                             struct pipe_texture *texture) {
+      if(!texture)
+         texture = $self->default_texture;
       pipe_texture_reference(&$self->sampler_textures[index], texture);
       $self->pipe->set_sampler_textures($self->pipe, 
                                         PIPE_MAX_SAMPLERS,
@@ -327,10 +363,6 @@ error1:
       ;
    }
    
-   void draw_quad(float x0, float y0, float x1, float y1, float z = 0.0f) {
-      util_draw_texquad($self->pipe, x0, y0, x1, y1, z);
-   }
-   
    void
    flush(void) {
       struct pipe_fence_handle *fence = NULL; 
@@ -360,18 +392,40 @@ error1:
       $self->pipe->surface_fill($self->pipe, dst, x, y, width, height, value);
    }
 
-   void clear(struct pipe_surface *surface, unsigned value) {
+   void surface_clear(struct pipe_surface *surface, unsigned value = 0) {
       $self->pipe->clear($self->pipe, surface, value);
    }
 
 };
 
 
+%newobject pipe_texture::get_surface;
+
 %extend pipe_texture {
    
    ~pipe_texture() {
       struct pipe_texture *ptr = $self;
       pipe_texture_reference(&ptr, NULL);
+   }
+   
+   unsigned get_width(unsigned level=0) {
+      return $self->width[level];
+   }
+   
+   unsigned get_height(unsigned level=0) {
+      return $self->height[level];
+   }
+   
+   unsigned get_depth(unsigned level=0) {
+      return $self->depth[level];
+   }
+   
+   unsigned get_nblocksx(unsigned level=0) {
+      return $self->nblocksx[level];
+   }
+   
+   unsigned get_nblocksy(unsigned level=0) {
+      return $self->nblocksy[level];
    }
    
    /** Get a surface which is a "view" into a texture */
@@ -399,13 +453,23 @@ error1:
    void unmap( void );
 
    void
-   get_tile_rgba(unsigned x, unsigned y, unsigned w, unsigned h, float *p) {
-      pipe_get_tile_rgba($self, x, y, w, h, p);
+   get_tile_raw(unsigned x, unsigned y, unsigned w, unsigned h, unsigned char *raw, unsigned stride) {
+      pipe_get_tile_raw($self, x, y, w, h, raw, stride);
    }
 
    void
-   put_tile_rgba(unsigned x, unsigned y, unsigned w, unsigned h, const float *p) {
-      pipe_put_tile_rgba($self, x, y, w, h, p);
+   put_tile_raw(unsigned x, unsigned y, unsigned w, unsigned h, const unsigned char *raw, unsigned stride) {
+      pipe_put_tile_raw($self, x, y, w, h, raw, stride);
+   }
+
+   void
+   get_tile_rgba(unsigned x, unsigned y, unsigned w, unsigned h, float *rgba) {
+      pipe_get_tile_rgba($self, x, y, w, h, rgba);
+   }
+
+   void
+   put_tile_rgba(unsigned x, unsigned y, unsigned w, unsigned h, const float *rgba) {
+      pipe_put_tile_rgba($self, x, y, w, h, rgba);
    }
 
    void
@@ -418,6 +482,43 @@ error1:
       pipe_put_tile_z($self, x, y, w, h, z);
    }
    
+   void
+   sample_rgba(float *rgba) {
+      st_sample_surface($self, rgba);
+   }
+   
+   unsigned
+   compare_tile_rgba(unsigned x, unsigned y, unsigned w, unsigned h, const float *rgba, float tol = 0.0) 
+   {
+      float *rgba2;
+      const float *p1;
+      const float *p2;
+      unsigned i, j, n;
+      
+      rgba2 = MALLOC(h*w*4*sizeof(float));
+      if(!rgba2)
+         return ~0;
+
+      pipe_get_tile_rgba($self, x, y, w, h, rgba2);
+
+      p1 = rgba;
+      p2 = rgba2;
+      n = 0;
+      for(i = h*w; i; --i) {
+         unsigned differs = 0;
+         for(j = 4; j; --j) {
+            float delta = *p2++ - *p1++;
+            if (delta < -tol || delta > tol)
+                differs = 1;
+         }
+         n += differs;
+      }
+      
+      FREE(rgba2);
+      
+      return n;
+   }
+
 };
 
 
@@ -446,3 +547,42 @@ error1:
    }
    
 };
+
+
+%extend pipe_shader_state {
+   
+   pipe_shader_state(const char *text, unsigned num_tokens = 1024) {
+      struct tgsi_token *tokens;
+      struct pipe_shader_state *shader;
+      
+      tokens = MALLOC(num_tokens * sizeof(struct tgsi_token));
+      if(!tokens)
+         goto error1;
+      
+      if(tgsi_text_translate(text, tokens, num_tokens ) != TRUE)
+         goto error2;
+      
+      shader = CALLOC_STRUCT(pipe_shader_state);
+      if(!shader)
+         goto error3;
+      
+      shader->tokens = tokens;
+      
+      return shader;
+      
+error3:
+error2:
+      FREE(tokens);
+error1:      
+      return NULL;
+   }
+   
+   ~pipe_shader_state() {
+      FREE((void*)$self->tokens);
+      FREE($self);
+   }
+
+   void dump(unsigned flags = 0) {
+      tgsi_dump($self->tokens, flags);
+   }
+}

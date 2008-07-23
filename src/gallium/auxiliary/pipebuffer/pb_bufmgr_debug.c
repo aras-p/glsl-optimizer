@@ -109,7 +109,7 @@ static const uint8_t random_pattern[32] = {
 static INLINE void 
 fill_random_pattern(uint8_t *dst, size_t size)
 {
-   unsigned i = 0;
+   size_t i = 0;
    while(size--) {
       *dst++ = random_pattern[i++];
       i &= sizeof(random_pattern) - 1;
@@ -118,15 +118,21 @@ fill_random_pattern(uint8_t *dst, size_t size)
 
 
 static INLINE boolean 
-check_random_pattern(const uint8_t *dst, size_t size) 
+check_random_pattern(const uint8_t *dst, size_t size, 
+                     size_t *min_ofs, size_t *max_ofs) 
 {
-   unsigned i = 0;
-   while(size--) {
-      if(*dst++ != random_pattern[i++])
-	 return FALSE;
-      i &= sizeof(random_pattern) - 1;
+   boolean result = TRUE;
+   size_t i;
+   *min_ofs = size;
+   *max_ofs = 0;
+   for(i = 0; i < size; ++i) {
+      if(*dst++ != random_pattern[i % sizeof(random_pattern)]) {
+         *min_ofs = MIN2(*min_ofs, i);
+         *max_ofs = MIN2(*max_ofs, i);
+	 result = FALSE;
+      }
    }
-   return TRUE;
+   return result;
 }
 
 
@@ -141,15 +147,28 @@ pb_debug_buffer_destroy(struct pb_buffer *_buf)
    map = pb_map(buf->buffer, PIPE_BUFFER_USAGE_CPU_READ);
    assert(map);
    if(map) {
-      if(!check_random_pattern(map, buf->underflow_size)) {
-	 debug_error("buffer underflow detected\n");
-	 debug_assert(0);
+      boolean underflow, overflow;
+      size_t min_ofs, max_ofs;
+      
+      underflow = !check_random_pattern(map, buf->underflow_size, 
+                                        &min_ofs, &max_ofs);
+      if(underflow) {
+	 debug_printf("buffer underflow (%u of %u bytes) detected\n",
+	              buf->underflow_size - min_ofs,
+	              buf->underflow_size);
       }
-      if(!check_random_pattern(map + buf->underflow_size + buf->base.base.size, 
-                               buf->overflow_size)) {
-	 debug_error("buffer overflow detected\n");
-	 debug_assert(0);
+      
+      overflow = !check_random_pattern(map + buf->underflow_size + buf->base.base.size, 
+                                       buf->overflow_size, 
+                                       &min_ofs, &max_ofs);
+      if(overflow) {
+         debug_printf("buffer overflow (%u of %u bytes) detected\n",
+                      max_ofs,
+                      buf->overflow_size);
       }
+      
+      debug_assert(!underflow && !overflow);
+      
       pb_unmap(buf->buffer);
    }
 

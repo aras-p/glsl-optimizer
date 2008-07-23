@@ -181,6 +181,10 @@ get_drawable_size(Display *dpy, Drawable d, uint *width, uint *height)
 static void
 create_configs(_EGLDisplay *disp, __GLXdisplayPrivate *glx_priv)
 {
+   static const EGLint all_apis = (EGL_OPENGL_ES_BIT |
+                                   EGL_OPENGL_ES2_BIT |
+                                   EGL_OPENVG_BIT |
+                                   EGL_OPENGL_BIT);
    __GLXscreenConfigs *scrn = glx_priv->screenConfigs;
    const __GLcontextModes *m;
    int id = 1;
@@ -199,8 +203,12 @@ create_configs(_EGLDisplay *disp, __GLXdisplayPrivate *glx_priv)
          SET_CONFIG_ATTRIB(&config->Base, EGL_ALPHA_SIZE, m->alphaBits);
          SET_CONFIG_ATTRIB(&config->Base, EGL_DEPTH_SIZE, m->depthBits);
          SET_CONFIG_ATTRIB(&config->Base, EGL_STENCIL_SIZE, m->stencilBits);
+         SET_CONFIG_ATTRIB(&config->Base, EGL_SAMPLES, m->samples);
+         SET_CONFIG_ATTRIB(&config->Base, EGL_SAMPLE_BUFFERS, m->sampleBuffers);
          SET_CONFIG_ATTRIB(&config->Base, EGL_NATIVE_VISUAL_ID, m->visualID);
          SET_CONFIG_ATTRIB(&config->Base, EGL_NATIVE_VISUAL_TYPE, m->visualType);
+         SET_CONFIG_ATTRIB(&config->Base, EGL_CONFORMANT, all_apis);
+         SET_CONFIG_ATTRIB(&config->Base, EGL_RENDERABLE_TYPE, all_apis);
          /* XXX only window rendering allowed ATM */
          SET_CONFIG_ATTRIB(&config->Base, EGL_SURFACE_TYPE, EGL_WINDOW_BIT);
 
@@ -654,7 +662,9 @@ xdri_eglTerminate(_EGLDriver *drv, EGLDisplay dpy)
    _eglLog(_EGL_DEBUG, "XDRI: eglTerminate");
 
    _eglLog(_EGL_DEBUG, "XDRI: Closing %s", xdri_drv->dri_driver_name);
+#if 0
    dlclose(xdri_drv->dri_driver_handle);
+#endif
    xdri_drv->dri_driver_handle = NULL;
 
    free((void*) xdri_drv->dri_driver_name);
@@ -748,15 +758,16 @@ xdri_eglMakeCurrent(_EGLDriver *drv, EGLDisplay dpy, EGLSurface d,
    struct xdri_egl_context *xdri_ctx = lookup_context(context);
    struct xdri_egl_surface *xdri_draw = lookup_surface(d);
    struct xdri_egl_surface *xdri_read = lookup_surface(r);
-   __DRIid draw = xdri_draw->driDrawable;
-   __DRIid read = xdri_read->driDrawable;
+   __DRIid draw = xdri_draw ? xdri_draw->driDrawable : 0;
+   __DRIid read = xdri_read ? xdri_read->driDrawable : 0;
    int scrn = DefaultScreen(disp->Xdpy);
 
    if (!_eglMakeCurrent(drv, dpy, d, r, context))
       return EGL_FALSE;
 
 
-   if (!xdri_ctx->driContext.bindContext(disp->Xdpy, scrn, draw, read,
+   if (xdri_ctx &&
+       !xdri_ctx->driContext.bindContext(disp->Xdpy, scrn, draw, read,
                                          &xdri_ctx->driContext)) {
       return EGL_FALSE;
    }

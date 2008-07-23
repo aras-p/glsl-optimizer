@@ -35,6 +35,7 @@
 #include "shader/prog_parameter.h"
 #include "shader/prog_statevars.h"
 #include "shader/slang/slang_ir.h"
+#include "shader/slang/slang_emit.h"
 #include "shader/slang/slang_builtin.h"
 
 
@@ -438,8 +439,11 @@ _slang_alloc_statevar(slang_ir_node *n,
    pos = lookup_statevar(var, index1, index2, field, &swizzle, paramList);
    assert(pos >= 0);
    if (pos >= 0) {
+      /* newly resolved storage for the statevar/constant/uniform */
+      n0->Store->File = PROGRAM_STATE_VAR;
       n0->Store->Index = pos;
       n0->Store->Swizzle = swizzle;
+      n0->Store->Parent = NULL;
    }
    return pos;
 }

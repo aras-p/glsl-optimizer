@@ -87,6 +87,13 @@ pipe_put_tile_z(struct pipe_surface *ps,
                 uint x, uint y, uint w, uint h,
                 const uint *z);
 
+void
+pipe_tile_raw_to_rgba(enum pipe_format format,
+                      void *src,
+                      uint w, uint h,
+                      float *dst, unsigned dst_stride);
+
+
 #ifdef __cplusplus
 }
 #endif

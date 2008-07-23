@@ -858,7 +858,8 @@ util_gen_mipmap(struct gen_mipmap_state *ctx,
    uint zslice = 0;
 
    /* check if we can render in the texture's format */
-   if (!screen->is_format_supported(screen, pt->format, PIPE_SURFACE)) {
+   if (!screen->is_format_supported(screen, pt->format, PIPE_TEXTURE_2D,
+                                    PIPE_TEXTURE_USAGE_RENDER_TARGET, 0)) {
       fallback_gen_mipmap(ctx, pt, face, baseLevel, lastLevel);
       return;
    }

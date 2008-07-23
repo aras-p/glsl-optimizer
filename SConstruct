@@ -53,7 +53,7 @@ opts.Add(ListOption('winsys', 'winsys drivers to build', default_winsys,
 env = Environment(
 	options = opts,
 	tools = ['gallium'],
-	toolpath = ['scons'],	
+	toolpath = ['#scons'],	
 	ENV = os.environ,
 )
 

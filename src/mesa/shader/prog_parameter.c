@@ -62,29 +62,6 @@ _mesa_free_parameter_list(struct gl_program_parameter_list *paramList)
 }
 
 
-static GLint
-_mesa_fit_type_in_vec4(GLenum type)
-{
-   switch (type) {
-   case GL_FLOAT:
-   case GL_INT:
-      return 4;
-      break;
-   case GL_FLOAT_VEC2:
-   case GL_INT_VEC2:
-      return 2;
-      break;
-   case GL_FLOAT_VEC3:
-   case GL_INT_VEC3:
-      return 1;
-      break;
-   case GL_FLOAT_VEC4:
-   case GL_INT_VEC4:
-   default:
-      return 1;
-   }
-}
-
 /**
  * Add a new parameter to a parameter list.
  * Note that parameter values are usually 4-element GLfloat vectors.
@@ -294,7 +271,7 @@ _mesa_add_uniform(struct gl_program_parameter_list *paramList,
    }
    else {
       i = _mesa_add_parameter(paramList, PROGRAM_UNIFORM, name,
-                              size * _mesa_fit_type_in_vec4(datatype), datatype, NULL, NULL);
+                              size, datatype, NULL, NULL);
       return i;
    }
 }
@@ -319,6 +296,7 @@ _mesa_add_sampler(struct gl_program_parameter_list *paramList,
       return (GLint) paramList->ParameterValues[i][0];
    }
    else {
+      GLuint i;
       const GLint size = 1; /* a sampler is basically a texture unit number */
       GLfloat value;
       GLint numSamplers = 0;
@@ -347,7 +325,7 @@ _mesa_add_varying(struct gl_program_parameter_list *paramList,
       return i;
    }
    else {
-      assert(size == 4);
+      /*assert(size == 4);*/
       i = _mesa_add_parameter(paramList, PROGRAM_VARYING, name,
                               size, GL_NONE, NULL, NULL);
       return i;
@@ -362,7 +340,7 @@ _mesa_add_varying(struct gl_program_parameter_list *paramList,
  */
 GLint
 _mesa_add_attribute(struct gl_program_parameter_list *paramList,
-                    const char *name, GLint size, GLint attrib)
+                    const char *name, GLint size, GLenum datatype, GLint attrib)
 {
    GLint i = _mesa_lookup_parameter_index(paramList, -1, name);
    if (i >= 0) {
@@ -378,7 +356,7 @@ _mesa_add_attribute(struct gl_program_parameter_list *paramList,
       if (size < 0)
          size = 4;
       i = _mesa_add_parameter(paramList, PROGRAM_INPUT, name,
-                              size, GL_NONE, NULL, state);
+                              size, datatype, NULL, state);
    }
    return i;
 }

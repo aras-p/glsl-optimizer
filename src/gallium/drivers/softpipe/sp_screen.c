@@ -115,18 +115,19 @@ softpipe_get_paramf(struct pipe_screen *screen, int param)
  */
 static boolean
 softpipe_is_format_supported( struct pipe_screen *screen,
-                              enum pipe_format format, uint type )
+                              enum pipe_format format, 
+                              enum pipe_texture_target target,
+                              unsigned tex_usage, 
+                              unsigned geom_flags )
 {
-   switch (type) {
-   case PIPE_TEXTURE:
-      /* softpipe supports all texture formats */
-      return TRUE;
-   case PIPE_SURFACE:
-      /* softpipe supports all (off-screen) surface formats */
-      return TRUE;
-   default:
-      assert(0);
+   switch(format) {
+   case PIPE_FORMAT_DXT1_RGB:
+   case PIPE_FORMAT_DXT1_RGBA:
+   case PIPE_FORMAT_DXT3_RGBA:
+   case PIPE_FORMAT_DXT5_RGBA:
       return FALSE;
+   default:
+      return TRUE;
    }
 }
 

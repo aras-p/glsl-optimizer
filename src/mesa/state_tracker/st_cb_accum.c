@@ -290,7 +290,7 @@ accum_return(GLcontext *ctx, GLfloat value,
       for (ch = 0; ch < 4; ch++) {
          if (colormask[ch]) {
             GLfloat val = abuf[i * 4 + ch] * value;
-            abuf[i * 4 + ch] = CLAMP(val, 0.0, 1.0);
+            abuf[i * 4 + ch] = CLAMP(val, 0.0f, 1.0f);
          }
          else {
             abuf[i * 4 + ch] = cbuf[i * 4 + ch];

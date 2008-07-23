@@ -346,7 +346,7 @@ r5g6b5_get_tile_rgba(ushort *src,
 
 
 static void
-r5g5b5_put_tile_rgba(ushort *dst,
+r5g6b5_put_tile_rgba(ushort *dst,
                      unsigned w, unsigned h,
                      const float *p,
                      unsigned src_stride)
@@ -632,13 +632,10 @@ ycbcr_get_tile_rgba(ushort *src,
    const float scale = 1.0f / 255.0f;
    unsigned i, j;
 
-   /* we're assuming we're being asked for an even number of texels */
-   assert((w & 1) == 0);
-
    for (i = 0; i < h; i++) {
       float *pRow = p;
       /* do two texels at a time */
-      for (j = 0; j < w; j += 2, src += 2) {
+      for (j = 0; j < (w & ~1); j += 2, src += 2) {
          const ushort t0 = src[0];
          const ushort t1 = src[1];
          const ubyte y0 = (t0 >> 8) & 0xff;  /* luminance */
@@ -676,7 +673,99 @@ ycbcr_get_tile_rgba(ushort *src,
          pRow += 4;
 
       }
+      /* do the last texel */
+      if (w & 1) {
+         const ushort t0 = src[0];
+         const ushort t1 = src[1];
+         const ubyte y0 = (t0 >> 8) & 0xff;  /* luminance */
+         ubyte cb, cr;
+         float r, g, b;
+
+         if (rev) {
+            cb = t1 & 0xff;         /* chroma U */
+            cr = t0 & 0xff;         /* chroma V */
+         }
+         else {
+            cb = t0 & 0xff;         /* chroma U */
+            cr = t1 & 0xff;         /* chroma V */
+         }
+
+         /* even pixel: y0,cr,cb */
+         r = 1.164f * (y0-16) + 1.596f * (cr-128);
+         g = 1.164f * (y0-16) - 0.813f * (cr-128) - 0.391f * (cb-128);
+         b = 1.164f * (y0-16) + 2.018f * (cb-128);
+         pRow[0] = r * scale;
+         pRow[1] = g * scale;
+         pRow[2] = b * scale;
+         pRow[3] = 1.0f;
+         pRow += 4;
+      }
       p += dst_stride;
+   }
+}
+
+
+void
+pipe_tile_raw_to_rgba(enum pipe_format format,
+                      void *src,
+                      uint w, uint h,
+                      float *dst, unsigned dst_stride)
+{
+   switch (format) {
+   case PIPE_FORMAT_A8R8G8B8_UNORM:
+      a8r8g8b8_get_tile_rgba((unsigned *) src, w, h, dst, dst_stride);
+      break;
+   case PIPE_FORMAT_X8R8G8B8_UNORM:
+      x8r8g8b8_get_tile_rgba((unsigned *) src, w, h, dst, dst_stride);
+      break;
+   case PIPE_FORMAT_B8G8R8A8_UNORM:
+      b8g8r8a8_get_tile_rgba((unsigned *) src, w, h, dst, dst_stride);
+      break;
+   case PIPE_FORMAT_A1R5G5B5_UNORM:
+      a1r5g5b5_get_tile_rgba((ushort *) src, w, h, dst, dst_stride);
+      break;
+   case PIPE_FORMAT_A4R4G4B4_UNORM:
+      a4r4g4b4_get_tile_rgba((ushort *) src, w, h, dst, dst_stride);
+      break;
+   case PIPE_FORMAT_R5G6B5_UNORM:
+      r5g6b5_get_tile_rgba((ushort *) src, w, h, dst, dst_stride);
+      break;
+   case PIPE_FORMAT_L8_UNORM:
+      l8_get_tile_rgba((ubyte *) src, w, h, dst, dst_stride);
+      break;
+   case PIPE_FORMAT_A8_UNORM:
+      a8_get_tile_rgba((ubyte *) src, w, h, dst, dst_stride);
+      break;
+   case PIPE_FORMAT_I8_UNORM:
+      i8_get_tile_rgba((ubyte *) src, w, h, dst, dst_stride);
+      break;
+   case PIPE_FORMAT_A8L8_UNORM:
+      a8_l8_get_tile_rgba((ushort *) src, w, h, dst, dst_stride);
+      break;
+   case PIPE_FORMAT_R16G16B16A16_SNORM:
+      r16g16b16a16_get_tile_rgba((short *) src, w, h, dst, dst_stride);
+      break;
+   case PIPE_FORMAT_Z16_UNORM:
+      z16_get_tile_rgba((ushort *) src, w, h, dst, dst_stride);
+      break;
+   case PIPE_FORMAT_Z32_UNORM:
+      z32_get_tile_rgba((unsigned *) src, w, h, dst, dst_stride);
+      break;
+   case PIPE_FORMAT_S8Z24_UNORM:
+   case PIPE_FORMAT_X8Z24_UNORM:
+      s8z24_get_tile_rgba((unsigned *) src, w, h, dst, dst_stride);
+      break;
+   case PIPE_FORMAT_Z24S8_UNORM:
+      z24s8_get_tile_rgba((unsigned *) src, w, h, dst, dst_stride);
+      break;
+   case PIPE_FORMAT_YCBCR:
+      ycbcr_get_tile_rgba((ushort *) src, w, h, dst, dst_stride, FALSE);
+      break;
+   case PIPE_FORMAT_YCBCR_REV:
+      ycbcr_get_tile_rgba((ushort *) src, w, h, dst, dst_stride, TRUE);
+      break;
+   default:
+      assert(0);
    }
 }
 
@@ -697,66 +786,12 @@ pipe_get_tile_rgba(struct pipe_surface *ps,
    if (!packed)
       return;
 
+   if(ps->format == PIPE_FORMAT_YCBCR || ps->format == PIPE_FORMAT_YCBCR_REV)
+      assert((x & 1) == 0);
+
    pipe_get_tile_raw(ps, x, y, w, h, packed, 0);
 
-   switch (ps->format) {
-   case PIPE_FORMAT_A8R8G8B8_UNORM:
-      a8r8g8b8_get_tile_rgba((unsigned *) packed, w, h, p, dst_stride);
-      break;
-   case PIPE_FORMAT_X8R8G8B8_UNORM:
-      x8r8g8b8_get_tile_rgba((unsigned *) packed, w, h, p, dst_stride);
-      break;
-   case PIPE_FORMAT_B8G8R8A8_UNORM:
-      b8g8r8a8_get_tile_rgba((unsigned *) packed, w, h, p, dst_stride);
-      break;
-   case PIPE_FORMAT_A1R5G5B5_UNORM:
-      a1r5g5b5_get_tile_rgba((ushort *) packed, w, h, p, dst_stride);
-      break;
-   case PIPE_FORMAT_A4R4G4B4_UNORM:
-      a4r4g4b4_get_tile_rgba((ushort *) packed, w, h, p, dst_stride);
-      break;
-   case PIPE_FORMAT_R5G6B5_UNORM:
-      r5g6b5_get_tile_rgba((ushort *) packed, w, h, p, dst_stride);
-      break;
-   case PIPE_FORMAT_L8_UNORM:
-      l8_get_tile_rgba((ubyte *) packed, w, h, p, dst_stride);
-      break;
-   case PIPE_FORMAT_A8_UNORM:
-      a8_get_tile_rgba((ubyte *) packed, w, h, p, dst_stride);
-      break;
-   case PIPE_FORMAT_I8_UNORM:
-      i8_get_tile_rgba((ubyte *) packed, w, h, p, dst_stride);
-      break;
-   case PIPE_FORMAT_A8L8_UNORM:
-      a8_l8_get_tile_rgba((ushort *) packed, w, h, p, dst_stride);
-      break;
-   case PIPE_FORMAT_R16G16B16A16_SNORM:
-      r16g16b16a16_get_tile_rgba((short *) packed, w, h, p, dst_stride);
-      break;
-   case PIPE_FORMAT_Z16_UNORM:
-      z16_get_tile_rgba((ushort *) packed, w, h, p, dst_stride);
-      break;
-   case PIPE_FORMAT_Z32_UNORM:
-      z32_get_tile_rgba((unsigned *) packed, w, h, p, dst_stride);
-      break;
-   case PIPE_FORMAT_S8Z24_UNORM:
-   case PIPE_FORMAT_X8Z24_UNORM:
-      s8z24_get_tile_rgba((unsigned *) packed, w, h, p, dst_stride);
-      break;
-   case PIPE_FORMAT_Z24S8_UNORM:
-      z24s8_get_tile_rgba((unsigned *) packed, w, h, p, dst_stride);
-      break;
-   case PIPE_FORMAT_YCBCR:
-      assert((x & 1) == 0);
-      ycbcr_get_tile_rgba((ushort *) packed, w, h, p, dst_stride, FALSE);
-      break;
-   case PIPE_FORMAT_YCBCR_REV:
-      assert((x & 1) == 0);
-      ycbcr_get_tile_rgba((ushort *) packed, w, h, p, dst_stride, TRUE);
-      break;
-   default:
-      assert(0);
-   }
+   pipe_tile_raw_to_rgba(ps->format, packed, w, h, p, dst_stride);
 
    FREE(packed);
 }
@@ -792,7 +827,7 @@ pipe_put_tile_rgba(struct pipe_surface *ps,
       /*a1r5g5b5_put_tile_rgba((ushort *) packed, w, h, p, src_stride);*/
       break;
    case PIPE_FORMAT_R5G6B5_UNORM:
-      r5g5b5_put_tile_rgba((ushort *) packed, w, h, p, src_stride);
+      r5g6b5_put_tile_rgba((ushort *) packed, w, h, p, src_stride);
       break;
    case PIPE_FORMAT_R8G8B8A8_UNORM:
       assert(0);

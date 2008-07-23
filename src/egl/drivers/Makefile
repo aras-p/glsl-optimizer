@@ -3,27 +3,10 @@
 TOP = ../../..
 include $(TOP)/configs/current
 
-
-SUBDIRS = demo dri xdri
-
-
-default: dri_subdirs
+SUBDIRS = $(EGL_DRIVERS_DIRS)
 
 
-# (UNUSED) depending on $DRIVER_DIRS...
-conditional_subdirs:
-	@if [ "${DRIVER_DIRS}" = "dri" ] ; then \
-		$(MAKE) dri_subdirs ; \
-	fi
-
-
-dri_subdirs:
-	@ (cd dri ; $(MAKE)) || exit 1
-	@ (cd xdri ; $(MAKE)) || exit 1
-
-demo_subdir:
-	@ (cd demo ; $(MAKE)) || exit 1
-
+default: subdirs
 
 
 subdirs:

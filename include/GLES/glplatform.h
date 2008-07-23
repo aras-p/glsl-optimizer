@@ -51,7 +51,11 @@ extern "C" {
 #   else
 #       define GL_API __declspec(dllimport)
 #   endif
-#   define GL_APIENTRY __stdcall
+#   ifdef UNDER_CE
+#       define GL_APIENTRY
+#   else
+#       define GL_APIENTRY __stdcall
+#   endif
 #else
 #   ifdef __GL_EXPORTS
 #       define GL_API

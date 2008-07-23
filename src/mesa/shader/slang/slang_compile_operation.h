@@ -128,6 +128,11 @@ slang_operation_construct(slang_operation *);
 extern void
 slang_operation_destruct(slang_operation *);
 
+extern void
+slang_replace_scope(slang_operation *oper,
+                    slang_variable_scope *oldScope,
+                    slang_variable_scope *newScope);
+
 extern GLboolean
 slang_operation_copy(slang_operation *, const slang_operation *);
 

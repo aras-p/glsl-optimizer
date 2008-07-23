@@ -941,6 +941,11 @@ setup_line(struct setup_context *setup,
    print_vertex(setup, v1);
 #endif
 
+   assert(v0[0][0] < 1.0e9);
+   assert(v0[0][1] < 1.0e9);
+   assert(v1[0][0] < 1.0e9);
+   assert(v1[0][1] < 1.0e9);
+
    if (setup->softpipe->no_rast)
       return;
 

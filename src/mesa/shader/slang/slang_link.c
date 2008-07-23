@@ -211,7 +211,6 @@ _slang_resolve_attributes(struct gl_shader_program *shProg,
 {
    GLuint i, j;
    GLbitfield usedAttributes;
-   GLint size = 4; /* XXX fix */
 
    assert(prog->Target == GL_VERTEX_PROGRAM_ARB);
 
@@ -253,6 +252,8 @@ _slang_resolve_attributes(struct gl_shader_program *shProg,
                 * Start at 1 since generic attribute 0 always aliases
                 * glVertex/position.
                 */
+               GLint size = prog->Attributes->Parameters[k].Size;
+               GLenum datatype = prog->Attributes->Parameters[k].DataType;
                for (attr = 1; attr < MAX_VERTEX_ATTRIBS; attr++) {
                   if (((1 << attr) & usedAttributes) == 0)
                      break;
@@ -261,7 +262,7 @@ _slang_resolve_attributes(struct gl_shader_program *shProg,
                   /* too many!  XXX record error log */
                   return GL_FALSE;
                }
-               _mesa_add_attribute(shProg->Attributes, name, size, attr);
+               _mesa_add_attribute(shProg->Attributes, name, size, datatype,attr);
 
 	       /* set the attribute as used */
 	       usedAttributes |= 1<<attr;

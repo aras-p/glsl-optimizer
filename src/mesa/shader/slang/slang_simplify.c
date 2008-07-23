@@ -76,7 +76,7 @@ _slang_lookup_constant(const char *name)
    for (i = 0; info[i].Name; i++) {
       if (strcmp(info[i].Name, name) == 0) {
          /* found */
-         GLint value = -1.0;
+         GLint value = -1;
          _mesa_GetIntegerv(info[i].Token, &value);
          ASSERT(value >= 0);  /* sanity check that glGetFloatv worked */
          return value / info[i].Divisor;
@@ -110,7 +110,7 @@ _slang_simplify(slang_operation *oper,
          oper->literal[0] =
          oper->literal[1] =
          oper->literal[2] =
-         oper->literal[3] = value;
+         oper->literal[3] = (GLfloat) value;
          oper->type = SLANG_OPER_LITERAL_INT;
          return;
       }
@@ -380,7 +380,7 @@ _slang_adapt_call(slang_operation *callOper, const slang_function *fun,
                                        &origArg);
                   callOper->children[i + j].children[1].type
                      = SLANG_OPER_LITERAL_INT;
-                  callOper->children[i + j].children[1].literal[0] = j;
+                  callOper->children[i + j].children[1].literal[0] = (GLfloat) j;
                }
 
             }
@@ -394,11 +394,11 @@ _slang_adapt_call(slang_operation *callOper, const slang_function *fun,
       }
    }
 
-   if (callOper->num_children < numParams) {
+   if (callOper->num_children < (GLuint) numParams) {
       /* still not enough args for all params */
       return GL_FALSE;
    }
-   else if (callOper->num_children > numParams) {
+   else if (callOper->num_children > (GLuint) numParams) {
       /* now too many arguments */
       /* XXX this isn't always an error, see spec */
       return GL_FALSE;

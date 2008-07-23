@@ -1,6 +1,6 @@
 /**************************************************************************
  * 
- * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2007-2008 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -28,18 +28,16 @@
 #ifndef TGSI_DUMP_H
 #define TGSI_DUMP_H
 
+#include "pipe/p_shader_tokens.h"
+
 #if defined __cplusplus
 extern "C" {
 #endif
 
-#define TGSI_DUMP_VERBOSE       1
-#define TGSI_DUMP_NO_IGNORED    2
-#define TGSI_DUMP_NO_DEFAULT    4
-
 void
 tgsi_dump(
    const struct tgsi_token *tokens,
-   unsigned                flags );
+   uint flags );
 
 struct tgsi_full_immediate;
 struct tgsi_full_instruction;
@@ -51,12 +49,12 @@ tgsi_dump_immediate(
 
 void
 tgsi_dump_instruction(
-   const struct tgsi_full_instruction  *inst,
-   unsigned                      instno );
+   const struct tgsi_full_instruction *inst,
+   uint instno );
 
 void
 tgsi_dump_declaration(
-   const struct tgsi_full_declaration  *decl );
+   const struct tgsi_full_declaration *decl );
 
 #if defined __cplusplus
 }

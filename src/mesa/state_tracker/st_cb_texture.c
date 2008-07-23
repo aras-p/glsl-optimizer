@@ -285,7 +285,7 @@ guess_and_alloc_texture(struct st_context *st,
    assert(!stObj->pt);
 
    if (stObj->pt &&
-       stImage->level > stObj->base.BaseLevel &&
+       (GLint) stImage->level > stObj->base.BaseLevel &&
        (stImage->base.Width == 1 ||
         (stObj->base.Target != GL_TEXTURE_1D &&
          stImage->base.Height == 1) ||
@@ -296,7 +296,7 @@ guess_and_alloc_texture(struct st_context *st,
    /* If this image disrespects BaseLevel, allocate from level zero.
     * Usually BaseLevel == 0, so it's unlikely to happen.
     */
-   if (stImage->level < stObj->base.BaseLevel)
+   if ((GLint) stImage->level < stObj->base.BaseLevel)
       firstLevel = 0;
    else
       firstLevel = stObj->base.BaseLevel;
@@ -810,7 +810,7 @@ st_get_tex_image(GLcontext * ctx, GLenum target, GLint level,
 						    texImage->Height, format,
 						    type);
    GLuint depth;
-   int i;
+   GLuint i;
    GLubyte *dest;
 
    /* Map */
@@ -1210,9 +1210,13 @@ do_copy_texsubimage(GLcontext *ctx,
          use_fallback = GL_FALSE;
       }
       else if (screen->is_format_supported(screen, strb->surface->format,
-                                           PIPE_TEXTURE) &&
+                                           PIPE_TEXTURE_2D, 
+                                           PIPE_TEXTURE_USAGE_SAMPLER,
+                                           0) &&
                screen->is_format_supported(screen, dest_surface->format,
-                                           PIPE_SURFACE)) {
+                                           PIPE_TEXTURE_2D, 
+                                           PIPE_TEXTURE_USAGE_RENDER_TARGET,
+                                           0)) {
          boolean do_flip = (st_fb_orientation(ctx->ReadBuffer) == Y_0_TOP);
          int srcY0, srcY1;
          if (do_flip) {
@@ -1383,7 +1387,7 @@ calculate_first_last_level(struct st_texture_object *stObj)
       }
       else {
          firstLevel = 0;
-         lastLevel = MIN2(tObj->MaxLevel, tObj->Image[0][tObj->BaseLevel]->WidthLog2);
+         lastLevel = MIN2(tObj->MaxLevel, (int) tObj->Image[0][tObj->BaseLevel]->WidthLog2);
       }
       break;
    case GL_TEXTURE_RECTANGLE_NV:

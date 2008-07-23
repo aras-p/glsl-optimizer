@@ -188,7 +188,7 @@ static void update_raster_state( struct st_context *st )
    {
       GLfloat mrd = (ctx->DrawBuffer ? 
 		     ctx->DrawBuffer->_MRD : 
-		     1.0);
+		     1.0f);
 
       raster->offset_units = ctx->Polygon.OffsetFactor * mrd;
       raster->offset_scale = (ctx->Polygon.OffsetUnits * mrd *

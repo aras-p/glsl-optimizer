@@ -213,18 +213,24 @@ void st_init_extensions(struct st_context *st)
    }
 
    if (screen->is_format_supported(screen, PIPE_FORMAT_R8G8B8A8_SRGB,
-                                   PIPE_TEXTURE)) {
+                                   PIPE_TEXTURE_2D, 
+                                   PIPE_TEXTURE_USAGE_SAMPLER, 0)) {
       ctx->Extensions.EXT_texture_sRGB = GL_TRUE;
    }
 
 #if 01
    if (screen->is_format_supported(screen, PIPE_FORMAT_DXT5_RGBA,
-                                   PIPE_TEXTURE)) {
+                                   PIPE_TEXTURE_2D, 
+                                   PIPE_TEXTURE_USAGE_SAMPLER, 0)) {
       ctx->Extensions.EXT_texture_compression_s3tc = GL_TRUE;
    }
 #endif
-   if (screen->is_format_supported(screen, PIPE_FORMAT_YCBCR, PIPE_TEXTURE) ||
-       screen->is_format_supported(screen, PIPE_FORMAT_YCBCR_REV, PIPE_TEXTURE)) {
+   if (screen->is_format_supported(screen, PIPE_FORMAT_YCBCR, 
+                                   PIPE_TEXTURE_2D, 
+                                   PIPE_TEXTURE_USAGE_SAMPLER, 0) ||
+       screen->is_format_supported(screen, PIPE_FORMAT_YCBCR_REV, 
+                                   PIPE_TEXTURE_2D, 
+                                   PIPE_TEXTURE_USAGE_SAMPLER, 0)) {
       ctx->Extensions.MESA_ycbcr_texture = GL_TRUE;
    }
 
