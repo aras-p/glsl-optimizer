@@ -1849,7 +1849,7 @@ _slang_make_constructor(slang_assemble_ctx *A, slang_struct *str)
 static slang_function *
 _slang_locate_struct_constructor(slang_assemble_ctx *A, const char *name)
 {
-   int i;
+   unsigned int i;
    for (i = 0; i < A->space.structs->num_structs; i++) {
       slang_struct *str = &A->space.structs->structs[i];
       if (strcmp(name, (const char *) str->a_name) == 0) {
