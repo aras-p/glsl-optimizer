@@ -1930,7 +1930,7 @@ parse_invariant(slang_parse_ctx * C, slang_output_ctx * O)
 
 static GLboolean
 parse_code_unit(slang_parse_ctx * C, slang_code_unit * unit,
-                struct gl_program *program)
+                struct gl_shader *shader)
 {
    GET_CURRENT_CONTEXT(ctx);
    slang_output_ctx o;
@@ -1954,7 +1954,7 @@ parse_code_unit(slang_parse_ctx * C, slang_code_unit * unit,
    o.structs = &unit->structs;
    o.vars = &unit->vars;
    o.global_pool = &unit->object->varpool;
-   o.program = program;
+   o.program = shader ? shader->Program : NULL;
    o.vartable = _slang_new_var_table(maxRegs);
    _slang_push_var_table(o.vartable);
 
@@ -2007,6 +2007,7 @@ parse_code_unit(slang_parse_ctx * C, slang_code_unit * unit,
 
       _slang_codegen_function(&A, mainFunc);
 
+      shader->Main = GL_TRUE; /* this shader defines main() */
    }
 
    _slang_pop_var_table(o.vartable);
@@ -2020,7 +2021,7 @@ compile_binary(const byte * prod, slang_code_unit * unit,
                GLuint version,
                slang_unit_type type, slang_info_log * infolog,
                slang_code_unit * builtin, slang_code_unit * downlink,
-               struct gl_program *program)
+               struct gl_shader *shader)
 {
    slang_parse_ctx C;
 
@@ -2045,14 +2046,14 @@ compile_binary(const byte * prod, slang_code_unit * unit,
    }
 
    /* parse translation unit */
-   return parse_code_unit(&C, unit, program);
+   return parse_code_unit(&C, unit, shader);
 }
 
 static GLboolean
 compile_with_grammar(grammar id, const char *source, slang_code_unit * unit,
                      slang_unit_type type, slang_info_log * infolog,
                      slang_code_unit * builtin,
-                     struct gl_program *program)
+                     struct gl_shader *shader)
 {
    byte *prod;
    GLuint size, start, version;
@@ -2114,7 +2115,7 @@ compile_with_grammar(grammar id, const char *source, slang_code_unit * unit,
    /* Syntax is okay - translate it to internal representation. */
    if (!compile_binary(prod, unit, version, type, infolog, builtin,
                        &builtin[SLANG_BUILTIN_TOTAL - 1],
-                       program)) {
+                       shader)) {
       grammar_alloc_free(prod);
       return GL_FALSE;
    }
@@ -2153,7 +2154,7 @@ static const byte slang_vertex_builtin_gc[] = {
 static GLboolean
 compile_object(grammar * id, const char *source, slang_code_object * object,
                slang_unit_type type, slang_info_log * infolog,
-               struct gl_program *program)
+               struct gl_shader *shader)
 {
    slang_code_unit *builtins = NULL;
    GLuint base_version = 110;
@@ -2252,7 +2253,7 @@ compile_object(grammar * id, const char *source, slang_code_object * object,
 
    /* compile the actual shader - pass-in built-in library for external shader */
    return compile_with_grammar(*id, source, &object->unit, type, infolog,
-                               builtins, program);
+                               builtins, shader);
 }
 
 
@@ -2261,7 +2262,6 @@ compile_shader(GLcontext *ctx, slang_code_object * object,
                slang_unit_type type, slang_info_log * infolog,
                struct gl_shader *shader)
 {
-   struct gl_program *program = shader->Programs[0];
    GLboolean success;
    grammar id = 0;
 
@@ -2271,12 +2271,12 @@ compile_shader(GLcontext *ctx, slang_code_object * object,
    _mesa_printf("************************************\n");
 #endif
 
-   assert(program);
+   assert(shader->Program);
 
    _slang_code_object_dtr(object);
    _slang_code_object_ctr(object);
 
-   success = compile_object(&id, shader->Source, object, type, infolog, program);
+   success = compile_object(&id, shader->Source, object, type, infolog, shader);
    if (id != 0)
       grammar_destroy(id);
    if (!success)
@@ -2308,21 +2308,18 @@ _slang_compile(GLcontext *ctx, struct gl_shader *shader)
 
    ctx->Shader.MemPool = _slang_new_mempool(1024*1024);
 
-   /* XXX temporary hack */
-   if (!shader->Programs) {
+   shader->Main = GL_FALSE;
+
+   if (!shader->Program) {
       GLenum progTarget;
       if (shader->Type == GL_VERTEX_SHADER)
          progTarget = GL_VERTEX_PROGRAM_ARB;
       else
          progTarget = GL_FRAGMENT_PROGRAM_ARB;
-      shader->Programs
-         = (struct gl_program **) malloc(sizeof(struct gl_program*));
-      shader->Programs[0] = ctx->Driver.NewProgram(ctx, progTarget, 1);
-      shader->NumPrograms = 1;
-
-      shader->Programs[0]->Parameters = _mesa_new_parameter_list();
-      shader->Programs[0]->Varying = _mesa_new_parameter_list();
-      shader->Programs[0]->Attributes = _mesa_new_parameter_list();
+      shader->Program = ctx->Driver.NewProgram(ctx, progTarget, 1);
+      shader->Program->Parameters = _mesa_new_parameter_list();
+      shader->Program->Varying = _mesa_new_parameter_list();
+      shader->Program->Attributes = _mesa_new_parameter_list();
    }
 
    slang_info_log_construct(&info_log);
@@ -2355,13 +2352,13 @@ _slang_compile(GLcontext *ctx, struct gl_shader *shader)
       /* remove any reads of varying (output) registers */
 #if 0
       printf("Pre-remove output reads:\n");
-      _mesa_print_program(shader->Programs[0]);
+      _mesa_print_program(shader->Programs);
 #endif
-      _mesa_remove_output_reads(shader->Programs[0], PROGRAM_VARYING);
-      _mesa_remove_output_reads(shader->Programs[0], PROGRAM_OUTPUT);
+      _mesa_remove_output_reads(shader->Program, PROGRAM_VARYING);
+      _mesa_remove_output_reads(shader->Program, PROGRAM_OUTPUT);
 #if 0
       printf("Post-remove output reads:\n");
-      _mesa_print_program(shader->Programs[0]);
+      _mesa_print_program(shader->Programs);
 #endif
    }
 
