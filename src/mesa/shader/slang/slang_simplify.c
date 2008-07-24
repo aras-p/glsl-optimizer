@@ -331,8 +331,9 @@ _slang_adapt_call(slang_operation *callOper, const slang_function *fun,
    int i;
    int dbg = 0;
 
-   if (dbg) printf("Adapt %d args to %d parameters\n",
-                   callOper->num_children, numParams);
+   if (dbg)
+      printf("Adapt %d args to %d parameters for %s\n",
+             callOper->num_children, numParams, (char *) fun->header.a_name);
 
    /* Only try adapting for constructors */
    if (fun->kind != SLANG_FUNC_CONSTRUCTOR)
@@ -440,6 +441,9 @@ _slang_adapt_call(slang_operation *callOper, const slang_function *fun,
          const char *constructorName =
             slang_type_specifier_type_to_string(paramVar->type.specifier.type);
          slang_operation *child = slang_operation_new(1);
+
+         if (dbg)
+            printf("Need to adapt types of arg %d\n", i);
 
          slang_operation_copy(child, &callOper->children[i]);
          child->locals->outer_scope = callOper->children[i].locals;
