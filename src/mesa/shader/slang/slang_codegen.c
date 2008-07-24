@@ -2172,22 +2172,16 @@ _slang_gen_if(slang_assemble_ctx * A, const slang_operation *oper)
    cond = _slang_gen_operation(A, &oper->children[0]);
    cond = new_cond(cond);
 
-   if (is_operation_type(&oper->children[1], SLANG_OPER_BREAK)) {
+   if (is_operation_type(&oper->children[1], SLANG_OPER_BREAK)
+       && !haveElseClause) {
       /* Special case: generate a conditional break */
       ifBody = new_break_if_true(A->CurLoop, cond);
-      if (haveElseClause) {
-         elseBody = _slang_gen_operation(A, &oper->children[2]);
-         return new_seq(ifBody, elseBody);
-      }
       return ifBody;
    }
-   else if (is_operation_type(&oper->children[1], SLANG_OPER_CONTINUE)) {
+   else if (is_operation_type(&oper->children[1], SLANG_OPER_CONTINUE)
+            && !haveElseClause) {
       /* Special case: generate a conditional break */
       ifBody = new_cont_if_true(A->CurLoop, cond);
-      if (haveElseClause) {
-         elseBody = _slang_gen_operation(A, &oper->children[2]);
-         return new_seq(ifBody, elseBody);
-      }
       return ifBody;
    }
    else {

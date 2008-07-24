@@ -161,9 +161,7 @@ free_temp_storage(slang_var_table *vt, slang_ir_node *n)
       if (_slang_is_temp(vt, n->Store)) {
          _slang_free_temp(vt, n->Store);
          n->Store->Index = -1;
-         n->Store->Size = -1;
-         /*_mesa_free(n->Store);*/ /* XXX leak */
-         n->Store = NULL;
+         n->Store = NULL; /* XXX this may not be needed */
       }
    }
 }
