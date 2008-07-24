@@ -99,7 +99,7 @@ static const char *texNames[] =
     "GL_RGB GL_UNSIGNED_INT_5_6_5",
     "GL_RGB GL_UNSIGNED_INT_5_6_5_REV",
     "GL_BGR GL_UNSIGNED_INT_5_6_5",
-    "BL_BGR GL_UNSIGNED_INT_5_6_5_REV"};
+    "GL_BGR GL_UNSIGNED_INT_5_6_5_REV"};
 
 
 
