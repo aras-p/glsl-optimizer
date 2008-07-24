@@ -183,18 +183,36 @@ XvMCSurfaceInfo* XvMCListSurfaceTypes(Display *display, XvPortID port, int *num)
 	surface_info->chroma_format = XVMC_CHROMA_FORMAT_420;
 	surface_info->max_width = 2048;
 	surface_info->max_height = 2048;
+	surface_info->subpicture_max_width = 2048;
+	surface_info->subpicture_max_height = 2048;
 	surface_info->mc_type = XVMC_IDCT | XVMC_MPEG_2;
 	surface_info->surface_type_id = 123; /* FIXME: XAllocID(display)*/;
-	surface_info->flags |= XVMC_INTRA_UNSIGNED;
+	surface_info->flags = XVMC_INTRA_UNSIGNED | XVMC_SUBPICTURE_INDEPENDENT_SCALING | XVMC_BACKEND_SUBPICTURE;
 	
 	return surface_info;
 }
 
 XvImageFormatValues* XvMCListSubpictureTypes(Display* display, XvPortID port, int surface_type_id, int *count_return)
 {
-	/* TODO */
-	*count_return = 0;
+	XvImageFormatValues *image_formats = calloc(1, sizeof(XvImageFormatValues));
 	
-	return NULL;
+	*count_return = 1;
+	
+	image_formats[0].id = 123;
+	image_formats[0].type = XvRGB;
+	image_formats[0].byte_order = LSBFirst;
+	image_formats[0].bits_per_pixel = 8;
+	image_formats[0].format = XvPacked;
+	image_formats[0].num_planes = 1;
+	image_formats[0].depth = 8;
+	image_formats[0].red_mask = 0x0000FF;
+	image_formats[0].green_mask = 0x00FF00;
+	image_formats[0].blue_mask = 0xFF0000;
+	image_formats[0].component_order[0] = 'R';
+	image_formats[0].component_order[0] = 'G';
+	image_formats[0].component_order[0] = 'B';
+	image_formats[0].scanline_order = XvTopToBottom;
+	
+	return image_formats;
 }
 

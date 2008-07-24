@@ -281,14 +281,23 @@ Status XvMCRenderSurface
 
 Status XvMCFlushSurface(Display *display, XvMCSurface *surface)
 {
+	assert(display);
+	
+	if (!surface)
+		return XvMCBadSurface;
+	
 	/* TODO: Check display & surface match */
-	return BadImplementation;
+	return Success;
 }
 
 Status XvMCSyncSurface(Display *display, XvMCSurface *surface)
 {
-	/* TODO: Check display & surface match */
-	return BadImplementation;
+	assert(display);
+	
+	if (!surface)
+		return XvMCBadSurface;
+	
+	return Success;
 }
 
 Status XvMCPutSurface
@@ -358,7 +367,7 @@ Status XvMCGetSurfaceStatus(Display *display, XvMCSurface *surface, int *status)
 	/* TODO */
 	*status = 0;
 	
-	return BadImplementation;
+	return Success;
 }
 
 Status XvMCDestroySurface(Display *display, XvMCSurface *surface)

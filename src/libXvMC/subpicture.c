@@ -13,7 +13,33 @@ Status XvMCCreateSubpicture
 	int xvimage_id
 )
 {
-	return BadImplementation;
+	assert(display);
+	
+	if (!context)
+		return XvMCBadContext;
+	
+	assert(subpicture);
+	
+	if (width > 2048 || height > 2048)
+		return BadValue;
+	
+	if (xvimage_id != 123)
+		return BadMatch;
+	
+	subpicture->subpicture_id = XAllocID(display);
+	subpicture->context_id = context->context_id;
+	subpicture->xvimage_id = xvimage_id;
+	subpicture->width = width;
+	subpicture->height = height;
+	subpicture->num_palette_entries = 0;
+	subpicture->entry_bytes = 0;
+	subpicture->component_order[0] = 0;
+	subpicture->component_order[1] = 0;
+	subpicture->component_order[2] = 0;
+	subpicture->component_order[3] = 0;
+	/* TODO: subpicture->privData = ;*/
+	
+	return Success;
 }
 
 Status XvMCClearSubpicture
@@ -27,7 +53,14 @@ Status XvMCClearSubpicture
 	unsigned int color
 )
 {
-	return BadImplementation;
+	assert(display);
+	
+	if (!subpicture)
+		return XvMCBadSubpicture;
+	
+	/* TODO: Assert clear rect is within bounds? Or clip? */
+	
+	return Success;
 }
 
 Status XvMCCompositeSubpicture
@@ -43,17 +76,42 @@ Status XvMCCompositeSubpicture
 	short dsty
 )
 {
-	return BadImplementation;
+	assert(display);
+	
+	if (!subpicture)
+		return XvMCBadSubpicture;
+	
+	assert(image);
+	
+	if (subpicture->xvimage_id != image->id)
+		return BadMatch;
+	
+	/* TODO: Assert rects are within bounds? Or clip? */
+	
+	return Success;
 }
 
 Status XvMCDestroySubpicture(Display *display, XvMCSubpicture *subpicture)
 {
+	assert(display);
+	
+	if (!subpicture)
+		return XvMCBadSubpicture;
+	
 	return BadImplementation;
 }
 
 Status XvMCSetSubpicturePalette(Display *display, XvMCSubpicture *subpicture, unsigned char *palette)
 {
-	return BadImplementation;
+	assert(display);
+	
+	if (!subpicture)
+		return XvMCBadSubpicture;
+	
+	assert(palette);
+	
+	/* We don't support paletted subpictures */
+	return BadMatch;
 }
 
 Status XvMCBlendSubpicture
@@ -71,7 +129,19 @@ Status XvMCBlendSubpicture
 	unsigned short surfh
 )
 {
-	return BadImplementation;
+	assert(display);
+	
+	if (!target_surface)
+		return XvMCBadSurface;
+	
+	if (!subpicture)
+		return XvMCBadSubpicture;
+	
+	if (target_surface->context_id != subpicture->context_id)
+		return BadMatch;
+	
+	/* TODO: Assert rects are within bounds? Or clip? */
+	return Success;
 }
 
 Status XvMCBlendSubpicture2
@@ -90,21 +160,56 @@ Status XvMCBlendSubpicture2
 	unsigned short surfh
 )
 {
-	return BadImplementation;
+	assert(display);
+	
+	if (!source_surface || !target_surface)
+		return XvMCBadSurface;
+	
+	if (!subpicture)
+		return XvMCBadSubpicture;
+	
+	if (source_surface->context_id != subpicture->context_id)
+		return BadMatch;
+		
+	if (source_surface->context_id != subpicture->context_id)
+		return BadMatch;
+	
+	/* TODO: Assert rects are within bounds? Or clip? */
+	return Success;
 }
 
 Status XvMCSyncSubpicture(Display *display, XvMCSubpicture *subpicture)
 {
-	return BadImplementation;
+	assert(display);
+	
+	if (!subpicture)
+		return XvMCBadSubpicture;
+	
+	return Success;
 }
 
 Status XvMCFlushSubpicture(Display *display, XvMCSubpicture *subpicture)
 {
-	return BadImplementation;
+	assert(display);
+	
+	if (!subpicture)
+		return XvMCBadSubpicture;
+	
+	return Success;
 }
 
 Status XvMCGetSubpictureStatus(Display *display, XvMCSubpicture *subpicture, int *status)
 {
-	return BadImplementation;
+	assert(display);
+	
+	if (!subpicture)
+		return XvMCBadSubpicture;
+	
+	assert(status);
+	
+	/* TODO */
+	*status = 0;
+	
+	return Success;
 }
 
