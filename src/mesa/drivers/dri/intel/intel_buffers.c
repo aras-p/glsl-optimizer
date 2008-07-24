@@ -709,10 +709,8 @@ intelScheduleSwap(__DRIdrawablePrivate * dPriv, GLboolean *missed_target)
 
    if (!dPriv->vblFlags ||
        (dPriv->vblFlags & VBLANK_FLAG_NO_IRQ) ||
-       intelScreen->drmMinor < (intel_fb->pf_active ? 9 : 6)) {
-	   printf("swap schedule failed: bad flags or drm minor\n");
+       intelScreen->drmMinor < (intel_fb->pf_active ? 9 : 6))
       return GL_FALSE;
-   }
 
    interval = driGetVBlankInterval(dPriv);
 
@@ -720,10 +718,8 @@ intelScheduleSwap(__DRIdrawablePrivate * dPriv, GLboolean *missed_target)
 
    if (dPriv->vblFlags & VBLANK_FLAG_SYNC) {
       swap.seqtype |= DRM_VBLANK_NEXTONMISS;
-   } else if (interval == 0) {
-	   printf("swap schedule failed: bad interval\n");
+   } else if (interval == 0)
       return GL_FALSE;
-   }
 
    swap.drawable = dPriv->hHWDrawable;
    target = swap.sequence = dPriv->vblSeq + interval;
@@ -769,7 +765,6 @@ intelScheduleSwap(__DRIdrawablePrivate * dPriv, GLboolean *missed_target)
       }
 
       ret = GL_FALSE;
-      printf("swap schedule failed: vblank swap failed\n");
    }
 
    UNLOCK_HARDWARE(intel);
@@ -799,7 +794,6 @@ intelSwapBuffers(__DRIdrawablePrivate * dPriv)
 	 _mesa_notifySwapBuffers(ctx);  /* flush pending rendering comands */
 
          if (!intelScheduleSwap(dPriv, &missed_target)) {
-		 printf("schedule swap failed, trying to wait manually\n");
 	    driWaitForVBlank(dPriv, &missed_target);
 
 	    /*
