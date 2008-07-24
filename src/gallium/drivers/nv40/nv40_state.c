@@ -5,6 +5,8 @@
 
 #include "draw/draw_context.h"
 
+#include "tgsi/util/tgsi_parse.h"
+
 #include "nv40_context.h"
 #include "nv40_state.h"
 
@@ -516,7 +518,7 @@ nv40_vp_state_create(struct pipe_context *pipe,
 	struct nv40_vertex_program *vp;
 
 	vp = CALLOC(1, sizeof(struct nv40_vertex_program));
-	vp->pipe = *cso;
+	vp->pipe.tokens = tgsi_dup_tokens(cso->tokens);
 	vp->draw = draw_create_vertex_shader(nv40->draw, &vp->pipe);
 
 	return (void *)vp;
@@ -540,6 +542,7 @@ nv40_vp_state_delete(struct pipe_context *pipe, void *hwcso)
 
 	draw_delete_vertex_shader(nv40->draw, vp->draw);
 	nv40_vertprog_destroy(nv40, vp);
+	FREE((void*)vp->pipe.tokens);
 	FREE(vp);
 }
 
@@ -550,7 +553,7 @@ nv40_fp_state_create(struct pipe_context *pipe,
 	struct nv40_fragment_program *fp;
 
 	fp = CALLOC(1, sizeof(struct nv40_fragment_program));
-	fp->pipe = *cso;
+	fp->pipe.tokens = tgsi_dup_tokens(cso->tokens);
 
 	tgsi_scan_shader(fp->pipe.tokens, &fp->info);
 
@@ -573,6 +576,7 @@ nv40_fp_state_delete(struct pipe_context *pipe, void *hwcso)
 	struct nv40_fragment_program *fp = hwcso;
 
 	nv40_fragprog_destroy(nv40, fp);
+	FREE((void*)fp->pipe.tokens);
 	FREE(fp);
 }
 

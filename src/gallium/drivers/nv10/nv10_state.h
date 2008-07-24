@@ -79,7 +79,7 @@ struct nv10_fragment_program_data {
 };
 
 struct nv10_fragment_program {
-	const struct pipe_shader_state *pipe;
+	struct pipe_shader_state pipe;
 	struct tgsi_shader_info info;
 
 	boolean translated;

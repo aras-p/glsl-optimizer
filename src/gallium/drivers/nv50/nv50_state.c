@@ -25,6 +25,8 @@
 #include "pipe/p_util.h"
 #include "pipe/p_inlines.h"
 
+#include "tgsi/util/tgsi_parse.h"
+
 #include "nv50_context.h"
 #include "nv50_texture.h"
 
@@ -438,7 +440,7 @@ nv50_vp_state_create(struct pipe_context *pipe,
 {
 	struct nv50_program *p = CALLOC_STRUCT(nv50_program);
 
-	p->pipe = *cso;
+	p->pipe.tokens = tgsi_dup_tokens(cso->tokens);
 	p->type = PIPE_SHADER_VERTEX;
 	tgsi_scan_shader(p->pipe.tokens, &p->info);
 	return (void *)p;
@@ -457,9 +459,11 @@ static void
 nv50_vp_state_delete(struct pipe_context *pipe, void *hwcso)
 {
 	struct nv50_context *nv50 = nv50_context(pipe);
+	struct nv50_program *p = hwcso;
 
-	nv50_program_destroy(nv50, hwcso);
-	FREE(hwcso);
+	nv50_program_destroy(nv50, p);
+	FREE((void*)p->pipe.tokens);
+	FREE(p);
 }
 
 static void *
@@ -468,7 +472,7 @@ nv50_fp_state_create(struct pipe_context *pipe,
 {
 	struct nv50_program *p = CALLOC_STRUCT(nv50_program);
 
-	p->pipe = *cso;
+	p->pipe.tokens = tgsi_dup_tokens(cso->tokens);
 	p->type = PIPE_SHADER_FRAGMENT;
 	tgsi_scan_shader(p->pipe.tokens, &p->info);
 	return (void *)p;
@@ -487,9 +491,11 @@ static void
 nv50_fp_state_delete(struct pipe_context *pipe, void *hwcso)
 {
 	struct nv50_context *nv50 = nv50_context(pipe);
+	struct nv50_program *p = hwcso;
 
-	nv50_program_destroy(nv50, hwcso);
-	FREE(hwcso);
+	nv50_program_destroy(nv50, p);
+	FREE((void*)p->pipe.tokens);
+	FREE(p);
 }
 
 static void

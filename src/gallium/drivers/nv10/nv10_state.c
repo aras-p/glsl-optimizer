@@ -4,6 +4,7 @@
 #include "pipe/p_util.h"
 #include "pipe/p_shader_tokens.h"
 
+#include "tgsi/util/tgsi_parse.h"
 
 #include "nv10_context.h"
 #include "nv10_state.h"
@@ -407,7 +408,7 @@ nv10_fp_state_create(struct pipe_context *pipe,
 	struct nv10_fragment_program *fp;
 
 	fp = CALLOC(1, sizeof(struct nv10_fragment_program));
-	fp->pipe = cso;
+	fp->pipe.tokens = tgsi_dup_tokens(cso->tokens);
 	
 	tgsi_scan_shader(cso->tokens, &fp->info);
 
@@ -431,6 +432,7 @@ nv10_fp_state_delete(struct pipe_context *pipe, void *hwcso)
 	struct nv10_fragment_program *fp = hwcso;
 
 	nv10_fragprog_destroy(nv10, fp);
+	FREE((void*)fp->pipe.tokens);
 	FREE(fp);
 }
 

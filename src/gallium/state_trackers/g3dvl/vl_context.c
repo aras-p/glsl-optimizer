@@ -358,7 +358,7 @@ static int vlCreateVertexShaderIMC(struct VL_CONTEXT *context)
 	
 	vs.tokens = tokens;
 	context->states.mc.i_vs = pipe->create_vs_state(pipe, &vs);
-	//free(tokens);
+	free(tokens);
 	
 	return 0;
 }
@@ -436,7 +436,7 @@ static int vlCreateFragmentShaderIMC(struct VL_CONTEXT *context)
 
 	fs.tokens = tokens;
 	context->states.mc.i_fs = pipe->create_fs_state(pipe, &fs);
-	//free(tokens);
+	free(tokens);
 	
 	return 0;
 }
@@ -535,7 +535,7 @@ static int vlCreateVertexShaderFramePMC(struct VL_CONTEXT *context)
 	
 	vs.tokens = tokens;
 	context->states.mc.p_vs[0] = pipe->create_vs_state(pipe, &vs);
-	//free(tokens);
+	free(tokens);
 	
 	return 0;
 }
@@ -655,7 +655,7 @@ static int vlCreateVertexShaderFieldPMC(struct VL_CONTEXT *context)
 	
 	vs.tokens = tokens;
 	context->states.mc.p_vs[1] = pipe->create_vs_state(pipe, &vs);
-	//free(tokens);
+	free(tokens);
 	
 	return 0;
 }
@@ -777,7 +777,7 @@ static int vlCreateFragmentShaderFramePMC(struct VL_CONTEXT *context)
 
 	fs.tokens = tokens;
 	context->states.mc.p_fs[0] = pipe->create_fs_state(pipe, &fs);
-	//free(tokens);
+	free(tokens);
 	
 	return 0;
 }
@@ -948,7 +948,7 @@ static int vlCreateFragmentShaderFieldPMC(struct VL_CONTEXT *context)
 
 	fs.tokens = tokens;
 	context->states.mc.p_fs[1] = pipe->create_fs_state(pipe, &fs);
-	//free(tokens);
+	free(tokens);
 	
 	return 0;
 }
@@ -1054,7 +1054,7 @@ static int vlCreateVertexShaderFrameBMC(struct VL_CONTEXT *context)
 	
 	vs.tokens = tokens;
 	context->states.mc.b_vs[0] = pipe->create_vs_state(pipe, &vs);
-	//free(tokens);
+	free(tokens);
 	
 	return 0;
 }
@@ -1176,7 +1176,7 @@ static int vlCreateVertexShaderFieldBMC(struct VL_CONTEXT *context)
 	
 	vs.tokens = tokens;
 	context->states.mc.b_vs[1] = pipe->create_vs_state(pipe, &vs);
-	//free(tokens);
+	free(tokens);
 	
 	return 0;
 }
@@ -1315,7 +1315,7 @@ static int vlCreateFragmentShaderFrameBMC(struct VL_CONTEXT *context)
 
 	fs.tokens = tokens;
 	context->states.mc.b_fs[0] = pipe->create_fs_state(pipe, &fs);
-	//free(tokens);
+	free(tokens);
 	
 	return 0;
 }
@@ -1515,7 +1515,7 @@ static int vlCreateFragmentShaderFieldBMC(struct VL_CONTEXT *context)
 
 	fs.tokens = tokens;
 	context->states.mc.b_fs[1] = pipe->create_fs_state(pipe, &fs);
-	//free(tokens);
+	free(tokens);
 	
 	return 0;
 }
