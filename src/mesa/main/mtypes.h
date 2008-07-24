@@ -2105,9 +2105,9 @@ struct gl_shader
 
    const GLchar *Source;  /**< Source code string */
    GLboolean CompileStatus;
-   GLuint NumPrograms;  /**< size of Programs[] array */
-   struct gl_program **Programs;  /**< Post-compile assembly code */
+   struct gl_program *Program;  /**< Post-compile assembly code */
    GLchar *InfoLog;
+   GLboolean Main;  /**< shader defines main() */
 };
 
 
