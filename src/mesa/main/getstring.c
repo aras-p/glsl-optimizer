@@ -57,8 +57,10 @@ _mesa_GetString( GLenum name )
    static const char *version_2_0 = "2.0 Mesa " MESA_VERSION_STRING;
    static const char *version_2_1 = "2.1 Mesa " MESA_VERSION_STRING;
 
-#if FEATURE_ARB_shading_language_100
-   static const char *sl_version_110 = "1.10 Mesa " MESA_VERSION_STRING;
+#if FEATURE_ARB_shading_language_120_foo /* support not complete! */
+   static const char *sl_version = "1.20";
+#elif FEATURE_ARB_shading_language_100
+   static const char *sl_version = "1.10";
 #endif
 
    if (!ctx)
@@ -151,7 +153,7 @@ _mesa_GetString( GLenum name )
 #if FEATURE_ARB_shading_language_100
       case GL_SHADING_LANGUAGE_VERSION_ARB:
          if (ctx->Extensions.ARB_shading_language_100)
-            return (const GLubyte *) sl_version_110;
+            return (const GLubyte *) sl_version;
          goto error;
 #endif
 #if FEATURE_NV_fragment_program || FEATURE_ARB_fragment_program || \
