@@ -1680,7 +1680,7 @@ print_funcs(struct slang_function_scope_ *scope, const char *name)
 
 
 /**
- * Return first function in the scope that has the given name.
+ * Find a function of the given name, taking 'numArgs' arguments.
  * This is the function we'll try to call when there is no exact match
  * between function parameters and call arguments.
  *
@@ -1688,16 +1688,18 @@ print_funcs(struct slang_function_scope_ *scope, const char *name)
  * all of them...
  */
 static slang_function *
-_slang_first_function(struct slang_function_scope_ *scope, const char *name)
+_slang_find_function_by_argc(struct slang_function_scope_ *scope,
+                             const char *name, int numArgs)
 {
    GLuint i;
    for (i = 0; i < scope->num_functions; i++) {
       slang_function *f = &scope->functions[i];
-      if (strcmp(name, (char*) f->header.a_name) == 0)
+      if (strcmp(name, (char*) f->header.a_name) == 0
+          /*&& numArgs == f->param_count*/)
          return f;
    }
    if (scope->outer_scope)
-      return _slang_first_function(scope->outer_scope, name);
+      return _slang_find_function_by_argc(scope->outer_scope, name, numArgs);
    return NULL;
 }
 
@@ -1896,7 +1898,8 @@ _slang_gen_function_call_name(slang_assemble_ctx *A, const char *name,
       /* A function with exactly the right parameters/types was not found.
        * Try adapting the parameters.
        */
-      fun = _slang_first_function(A->space.funcs, name);
+      int numArgs = oper->num_children;
+      fun = _slang_find_function_by_argc(A->space.funcs, name, numArgs);
       if (!fun || !_slang_adapt_call(oper, fun, &A->space, A->atoms, A->log)) {
          slang_info_log_error(A->log, "Function '%s' not found (check argument types)", name);
          return NULL;
@@ -2291,6 +2294,11 @@ _slang_gen_var_decl(slang_assemble_ctx *A, slang_variable *var)
       n->Store->File = PROGRAM_TEMPORARY;
       n->Store->Size = _slang_sizeof_type_specifier(&n->Var->type.specifier);
 
+      if (n->Store->Size <= 0) {
+         slang_info_log_error(A->log, "invalid declaration for '%s'",
+                              (char*) var->a_name);
+         return NULL;
+      }
 #if 0
       printf("%s var %p %s  store=%p index=%d size=%d\n",
              __FUNCTION__, (void *) var, (char *) var->a_name,
@@ -2526,7 +2534,15 @@ _slang_gen_declaration(slang_assemble_ctx *A, slang_operation *oper)
    assert(oper->num_children == 0 || oper->num_children == 1);
 
    v = _slang_locate_variable(oper->locals, oper->a_id, GL_TRUE);
+   /*printf("Declare %s at %p\n", varName, v);*/
    assert(v);
+
+#if 0
+   if (v->declared) {
+      slang_info_log_error(A->log, "variable '%s' redeclared", varName);
+      return NULL;
+   }
+#endif
 
    varDecl = _slang_gen_var_decl(A, v);
 
@@ -2684,6 +2700,11 @@ _slang_gen_assignment(slang_assemble_ctx * A, slang_operation *oper)
       lhs = _slang_gen_operation(A, &oper->children[0]);
 
       if (lhs) {
+         if (!lhs->Store) {
+            slang_info_log_error(A->log,
+                                 "invalid left hand side for assignment");
+            return NULL;
+         }
          if (!(lhs->Store->File == PROGRAM_OUTPUT ||
                lhs->Store->File == PROGRAM_TEMPORARY ||
                (lhs->Store->File == PROGRAM_VARYING &&
@@ -2737,6 +2758,7 @@ _slang_gen_struct_field(slang_assemble_ctx * A, slang_operation *oper)
       GLuint swizzle;
       if (!_slang_is_swizzle((char *) oper->a_id, rows, &swz)) {
          slang_info_log_error(A->log, "Bad swizzle");
+         return NULL;
       }
       swizzle = MAKE_SWIZZLE4(swz.swizzle[0],
                               swz.swizzle[1],
@@ -2785,10 +2807,14 @@ _slang_gen_struct_field(slang_assemble_ctx * A, slang_operation *oper)
          fieldOffset = _slang_field_offset(&ti.spec, oper->a_id);
 
       if (fieldSize == 0 || fieldOffset < 0) {
+         const char *structName;
+         if (ti.spec._struct)
+            structName = (char *) ti.spec._struct->a_name;
+         else
+            structName = "unknown";
          slang_info_log_error(A->log,
                               "\"%s\" is not a member of struct \"%s\"",
-                              (char *) oper->a_id,
-                              (char *) ti.spec._struct->a_name);
+                              (char *) oper->a_id, structName);
          return NULL;
       }
       assert(fieldSize >= 0);
@@ -2923,6 +2949,23 @@ _slang_gen_array_element(slang_assemble_ctx * A, slang_operation *oper)
 }
 
 
+#if 0
+static void
+print_vars(slang_variable_scope *s)
+{
+   int i;
+   printf("vars: ");
+   for (i = 0; i < s->num_variables; i++) {
+      printf("%s %d, \n",
+             (char*) s->variables[i]->a_name,
+             s->variables[i]->declared);
+   }
+
+   printf("\n");
+}
+#endif
+
+
 /**
  * Generate IR tree for a slang_operation (AST node)
  */
@@ -2941,6 +2984,8 @@ _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper)
          oper->type = SLANG_OPER_BLOCK_NEW_SCOPE; /* restore */
 
          _slang_pop_var_table(A->vartable);
+
+         /*print_vars(oper->locals);*/
 
          if (n)
             n = new_node1(IR_SCOPE, n);
@@ -2984,6 +3029,7 @@ _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper)
             }
          }
 #endif
+         /*print_vars(oper->locals);*/
          return tree;
       }
       else {

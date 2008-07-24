@@ -625,7 +625,11 @@ emit_compare(slang_emit_info *emitInfo, slang_ir_node *n)
    emit(emitInfo, n->Children[0]);
    emit(emitInfo, n->Children[1]);
 
-   assert(n->Children[0]->Store->Size == n->Children[1]->Store->Size);
+   if (n->Children[0]->Store->Size != n->Children[1]->Store->Size) {
+      slang_info_log_error(emitInfo->log, "invalid operands to == or !=");
+      return NULL;
+   }
+
    size = n->Children[0]->Store->Size;
 
    if (size == 1) {
