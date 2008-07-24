@@ -523,6 +523,13 @@ print_screen_info(Display *dpy, int scrnum, Bool allowDirect, GLboolean limits)
       printf("OpenGL vendor string: %s\n", glVendor);
       printf("OpenGL renderer string: %s\n", glRenderer);
       printf("OpenGL version string: %s\n", glVersion);
+#ifdef GL_VERSION_2_0
+      if (glVersion[0] >= '2' && glVersion[1] == '.') {
+         char *v = (char *) glGetString(GL_SHADING_LANGUAGE_VERSION);
+         printf("OpenGL shading language version string: %s\n", v);
+      }
+#endif
+
       printf("OpenGL extensions:\n");
       print_extension_list(glExtensions);
       if (limits)
