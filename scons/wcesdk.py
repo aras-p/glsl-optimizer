@@ -76,6 +76,27 @@ def get_wce500_paths(env):
     exe_path = string.join(exe_paths, os.pathsep )
     return (include_path, lib_path, exe_path)
 
+def get_wce600_root(env):
+    try:
+        return os.environ['_WINCEROOT']
+    except KeyError:
+        pass
+
+    if SCons.Util.can_read_reg:
+        key = r'SOFTWARE\Microsoft\Platform Builder\6.00\Directories\OS Install Dir'
+        try:
+            path, t = SCons.Util.RegGetValue(SCons.Util.HKEY_LOCAL_MACHINE, key)
+        except SCons.Util.RegError:
+            pass
+        else:
+            return path
+
+    default_path = os.path.join(r'C:\WINCE600', version)
+    if os.path.exists(default_path):
+        return default_path
+    
+    return None 
+
 def get_wce600_paths(env):
     """Return a 3-tuple of (INCLUDE, LIB, PATH) as the values
     of those three environment variables that should be set
@@ -87,16 +108,19 @@ def get_wce600_paths(env):
 
     # See also C:\WINCE600\public\common\oak\misc\wince.bat
 
-    os_version = os.environ.get('_winceosver', '600')
-    wince_root = os.environ.get('_winceroot', r'C:\WINCE600')
-    platform_root = os.environ.get('_platformroot', os.path.join(wince_root, 'platform'))
-    sdk_root = os.environ.get('_sdkroot' ,os.path.join(wince_root, 'sdk'))
+    wince_root = get_wce600_root(env)
+    if wince_root is None:
+        raise SCons.Errors.InternalError, "Windows CE 6.0 SDK not found"
+    
+    os_version = os.environ.get('_WINCEOSVER', '600')
+    platform_root = os.environ.get('_PLATFORMROOT', os.path.join(wince_root, 'platform'))
+    sdk_root = os.environ.get('_SDKROOT' ,os.path.join(wince_root, 'sdk'))
 
-    platform_root = os.environ.get('_platformroot', os.path.join(wince_root, 'platform'))
-    sdk_root = os.environ.get('_sdkroot' ,os.path.join(wince_root, 'sdk'))
+    platform_root = os.environ.get('_PLATFORMROOT', os.path.join(wince_root, 'platform'))
+    sdk_root = os.environ.get('_SDKROOT' ,os.path.join(wince_root, 'sdk'))
 
-    host_cpu = os.environ.get('_hostcputype', 'i386')
-    target_cpu = os.environ.get('_tgtcpu', 'x86')
+    host_cpu = os.environ.get('_HOSTCPUTYPE', 'i386')
+    target_cpu = os.environ.get('_TGTCPU', 'x86')
 
     if env['debug']:
         build = 'debug'
@@ -104,7 +128,7 @@ def get_wce600_paths(env):
         build = 'retail'
 
     try:
-        project_root = os.environ['_projectroot']
+        project_root = os.environ['_PROJECTROOT']
     except KeyError:
         # No project root defined -- use the common stuff instead
         project_root = os.path.join(wince_root, 'public', 'common')
@@ -147,12 +171,6 @@ def generate(env):
         pass
 
 def exists(env):
-    if not msvc_sa.exits(env):
-        return 0
-    if not mslib_sa.exits(env):
-        return 0
-    if not mslink_sa.exits(env):
-        return 0
-    return 1
+    return get_wce600_root(env) is not None
 
 # vim:set ts=4 sw=4 et:

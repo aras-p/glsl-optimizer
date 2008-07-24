@@ -44,7 +44,30 @@ import msvc_sa
 import mslib_sa
 import mslink_sa
 
-def get_winddk_paths(env, version=None):
+def get_winddk_root(env):
+    try:
+        return os.environ['BASEDIR']
+    except KeyError:
+        pass
+
+    version = "3790.1830"
+    
+    if SCons.Util.can_read_reg:
+        key = r'SOFTWARE\Microsoft\WINDDK\%s\LFNDirectory' % version
+        try:
+            path, t = SCons.Util.RegGetValue(SCons.Util.HKEY_LOCAL_MACHINE, key)
+        except SCons.Util.RegError:
+            pass
+        else:
+            return path
+
+    default_path = os.path.join(r'C:\WINDDK', version)
+    if os.path.exists(default_path):
+        return default_path
+    
+    return None 
+
+def get_winddk_paths(env):
     """Return a 3-tuple of (INCLUDE, LIB, PATH) as the values
     of those three environment variables that should be set
     in order to execute the MSVC tools properly."""
@@ -54,10 +77,9 @@ def get_winddk_paths(env, version=None):
     lib_paths = []
     include_paths = []
 
-    if 'BASEDIR' in os.environ:
-        WINDDKdir = os.environ['BASEDIR']
-    else:
-        WINDDKdir = "C:\\WINDDK\\3790.1830"
+    WINDDKdir = get_winddk_root(env)
+    if WINDDKdir is None:
+        raise SCons.Errors.InternalError, "WINDDK not found"
 
     exe_paths.append( os.path.join(WINDDKdir, 'bin') )
     exe_paths.append( os.path.join(WINDDKdir, 'bin', 'x86') )
@@ -103,12 +125,6 @@ def generate(env):
         pass
 
 def exists(env):
-    if not msvc_sa.exits(env):
-        return 0
-    if not mslib_sa.exits(env):
-        return 0
-    if not mslink_sa.exits(env):
-        return 0
-    return 1
+    return get_winddk_root(env) is not None
 
 # vim:set ts=4 sw=4 et:
