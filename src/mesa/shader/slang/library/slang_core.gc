@@ -110,6 +110,16 @@ int __constructor(const float f)
    __asm float_to_int __retVal, f;
 }
 
+int __constructor(const bool b)
+{
+   __retVal = b;
+}
+
+int __constructor(const int i)
+{
+   __retVal = i;
+}
+
 bool __constructor(const int i)
 {
    const float zero = 0.0;
@@ -122,12 +132,7 @@ bool __constructor(const float f)
    __asm vec4_sne __retVal, f, zero;
 }
 
-int __constructor(const bool b)
-{
-   __retVal = b;
-}
-
-float __constructor(const bool b)
+bool __constructor(const bool b)
 {
    __retVal = b;
 }
@@ -137,14 +142,9 @@ float __constructor(const int i)
     __asm int_to_float __retVal, i;
 }
 
-bool __constructor(const bool b)
+float __constructor(const bool b)
 {
    __retVal = b;
-}
-
-int __constructor(const int i)
-{
-   __retVal = i;
 }
 
 float __constructor(const float f)
