@@ -539,6 +539,10 @@ _mesa_bind_attrib_location(GLcontext *ctx, GLuint program, GLuint index,
       oldIndex = -1;
    }
 
+   /* XXX: `datatype' is uninitialised at this point -- windows compiler
+    *      will issue a warning for the following line.
+    */
+
    /* this will replace the current value if it's already in the list */
    i = _mesa_add_attribute(shProg->Attributes, name, size, datatype, index);
    if (i < 0) {

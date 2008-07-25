@@ -408,6 +408,11 @@ make_temp_float_image(GLcontext *ctx, GLuint dims,
             const GLint logComponents
                = _mesa_components_in_format(logicalBaseFormat);
             const GLfloat *src = convImage;
+
+            /* XXX: Both `convWidth' and `convHeight' are uninitialised -- windows compiler
+             *      will issue warnings for the following line.
+             *      Presumably this happens when `FEATURE_convolve' is defined to `0'.
+             */
             GLfloat *dst = tempImage + img * (convWidth * convHeight * 4);
             for (row = 0; row < convHeight; row++) {
                _mesa_pack_rgba_span_float(ctx, convWidth,
