@@ -1178,7 +1178,8 @@ slang_inline_function_call(slang_assemble_ctx * A, slang_function *fun,
    slang_operation_copy(inlined, fun->body);
 
    /*** XXX review this */
-   assert(inlined->type == SLANG_OPER_BLOCK_NO_NEW_SCOPE);
+   assert(inlined->type == SLANG_OPER_BLOCK_NO_NEW_SCOPE ||
+          inlined->type == SLANG_OPER_BLOCK_NEW_SCOPE);
    inlined->type = SLANG_OPER_BLOCK_NEW_SCOPE;
 
 #if 0
@@ -1710,19 +1711,48 @@ print_funcs(struct slang_function_scope_ *scope, const char *name)
  * all of them...
  */
 static slang_function *
-_slang_find_function_by_argc(struct slang_function_scope_ *scope,
+_slang_find_function_by_argc(slang_function_scope *scope,
                              const char *name, int numArgs)
 {
-   GLuint i;
-   for (i = 0; i < scope->num_functions; i++) {
-      slang_function *f = &scope->functions[i];
-      if (strcmp(name, (char*) f->header.a_name) == 0
-          /*&& numArgs == f->param_count*/)
-         return f;
+   while (scope) {
+      GLuint i;
+      for (i = 0; i < scope->num_functions; i++) {
+         slang_function *f = &scope->functions[i];
+         if (strcmp(name, (char*) f->header.a_name) == 0) {
+            int haveRetValue = _slang_function_has_return_value(f);
+            if (numArgs == f->param_count - haveRetValue)
+               return f;
+         }
+      }
+      scope = scope->outer_scope;
    }
-   if (scope->outer_scope)
-      return _slang_find_function_by_argc(scope->outer_scope, name, numArgs);
+
    return NULL;
+}
+
+
+static slang_function *
+_slang_find_function_by_max_argc(slang_function_scope *scope,
+                                 const char *name)
+{
+   slang_function *maxFunc = NULL;
+   GLuint maxArgs = 0;
+
+   while (scope) {
+      GLuint i;
+      for (i = 0; i < scope->num_functions; i++) {
+         slang_function *f = &scope->functions[i];
+         if (strcmp(name, (char*) f->header.a_name) == 0) {
+            if (f->param_count > maxArgs) {
+               maxArgs = f->param_count;
+               maxFunc = f;
+            }
+         }
+      }
+      scope = scope->outer_scope;
+   }
+
+   return maxFunc;
 }
 
 
@@ -1783,16 +1813,20 @@ _slang_make_constructor(slang_assemble_ctx *A, slang_struct *str)
     *       return T;
     */
    {
+      slang_variable_scope *scope;
       slang_variable *var;
       GLint i;
 
       fun->body = slang_operation_new(1);
-      fun->body->type = SLANG_OPER_BLOCK_NO_NEW_SCOPE;
+      fun->body->type = SLANG_OPER_BLOCK_NEW_SCOPE;
       fun->body->num_children = numFields + 2;
       fun->body->children = slang_operation_new(numFields + 2);
 
+      scope = fun->body->locals;
+      scope->outer_scope = fun->parameters;
+
       /* create local var 't' */
-      var = slang_variable_scope_grow(fun->parameters);
+      var = slang_variable_scope_grow(scope);
       var->a_name = slang_atom_pool_atom(A->atoms, "t");
       var->type = fun->header.type;
 
@@ -1802,7 +1836,7 @@ _slang_make_constructor(slang_assemble_ctx *A, slang_struct *str)
 
          decl = &fun->body->children[0];
          decl->type = SLANG_OPER_VARIABLE_DECL;
-         decl->locals = _slang_variable_scope_new(fun->parameters);
+         decl->locals = _slang_variable_scope_new(scope);
          decl->a_id = var->a_name;
       }
 
@@ -1811,7 +1845,7 @@ _slang_make_constructor(slang_assemble_ctx *A, slang_struct *str)
          slang_operation *assign = &fun->body->children[1 + i];
 
          assign->type = SLANG_OPER_ASSIGN;
-         assign->locals = _slang_variable_scope_new(fun->parameters);
+         assign->locals = _slang_variable_scope_new(scope);
          assign->num_children = 2;
          assign->children = slang_operation_new(2);
          
@@ -1819,21 +1853,21 @@ _slang_make_constructor(slang_assemble_ctx *A, slang_struct *str)
             slang_operation *lhs = &assign->children[0];
 
             lhs->type = SLANG_OPER_FIELD;
-            lhs->locals = _slang_variable_scope_new(fun->parameters);
+            lhs->locals = _slang_variable_scope_new(scope);
             lhs->num_children = 1;
             lhs->children = slang_operation_new(1);
             lhs->a_id = str->fields->variables[i]->a_name;
 
             lhs->children[0].type = SLANG_OPER_IDENTIFIER;
             lhs->children[0].a_id = var->a_name;
-            lhs->children[0].locals = _slang_variable_scope_new(fun->parameters);
+            lhs->children[0].locals = _slang_variable_scope_new(scope);
 
 #if 0
             lhs->children[1].num_children = 1;
             lhs->children[1].children = slang_operation_new(1);
             lhs->children[1].children[0].type = SLANG_OPER_IDENTIFIER;
             lhs->children[1].children[0].a_id = str->fields->variables[i]->a_name;
-            lhs->children[1].children->locals = _slang_variable_scope_new(fun->parameters);
+            lhs->children[1].children->locals = _slang_variable_scope_new(scope);
 #endif
          }
 
@@ -1841,7 +1875,7 @@ _slang_make_constructor(slang_assemble_ctx *A, slang_struct *str)
             slang_operation *rhs = &assign->children[1];
 
             rhs->type = SLANG_OPER_IDENTIFIER;
-            rhs->locals = _slang_variable_scope_new(fun->parameters);
+            rhs->locals = _slang_variable_scope_new(scope);
             rhs->a_id = str->fields->variables[i]->a_name;
          }         
       }
@@ -1851,12 +1885,12 @@ _slang_make_constructor(slang_assemble_ctx *A, slang_struct *str)
          slang_operation *ret = &fun->body->children[numFields + 1];
 
          ret->type = SLANG_OPER_RETURN;
-         ret->locals = _slang_variable_scope_new(fun->parameters);
+         ret->locals = _slang_variable_scope_new(scope);
          ret->num_children = 1;
          ret->children = slang_operation_new(1);
          ret->children[0].type = SLANG_OPER_IDENTIFIER;
          ret->children[0].a_id = var->a_name;
-         ret->children[0].locals = _slang_variable_scope_new(fun->parameters);
+         ret->children[0].locals = _slang_variable_scope_new(scope);
 
       }
    }
@@ -1889,6 +1923,27 @@ _slang_locate_struct_constructor(slang_assemble_ctx *A, const char *name)
 }
 
 
+
+static GLboolean
+_slang_is_vec_mat_type(const char *name)
+{
+   static const char *vecmat_types[] = {
+      "float", "int", "bool",
+      "vec2", "vec3", "vec4",
+      "ivec2", "ivec3", "ivec4",
+      "bvec2", "bvec3", "bvec4",
+      "mat2", "mat3", "mat4",
+      "mat2x3", "mat2x4", "mat3x2", "mat3x4", "mat4x2", "mat4x3",
+      NULL
+   };
+   int i;
+   for (i = 0; vecmat_types[i]; i++)
+      if (_mesa_strcmp(name, vecmat_types[i]) == 0)
+         return GL_TRUE;
+   return GL_FALSE;
+}
+
+
 /**
  * Assemble a function call, given a particular function name.
  * \param name  the function's name (operators like '*' are possible).
@@ -1901,29 +1956,53 @@ _slang_gen_function_call_name(slang_assemble_ctx *A, const char *name,
    const GLuint param_count = oper->num_children;
    slang_atom atom;
    slang_function *fun;
+   GLboolean error;
 
    atom = slang_atom_pool_atom(A->atoms, name);
    if (atom == SLANG_ATOM_NULL)
       return NULL;
 
    /*
-    * Use 'name' to find the function to call
+    * First, try to find function by name and exact argument type matching.
     */
    fun = _slang_locate_function(A->space.funcs, atom, params, param_count,
-				&A->space, A->atoms, A->log);
+				&A->space, A->atoms, A->log, &error);
 
-   if (!fun) {
-      fun = _slang_locate_struct_constructor(A, name);
+   if (error) {
+      slang_info_log_error(A->log,
+                           "Function '%s' not found (check argument types)",
+                           name);
+      return NULL;
    }
 
    if (!fun) {
-      /* A function with exactly the right parameters/types was not found.
-       * Try adapting the parameters.
+      /* Next, try locating a constructor function for a user-defined type */
+      fun = _slang_locate_struct_constructor(A, name);
+   }
+
+   if (!fun && _slang_is_vec_mat_type(name)) {
+      /* Next, if this call looks like a vec() or mat() constructor call,
+       * try "unwinding" the args to satisfy a constructor.
        */
+      fun = _slang_find_function_by_max_argc(A->space.funcs, name);
+      if (fun) {
+         if (!_slang_adapt_call(oper, fun, &A->space, A->atoms, A->log)) {
+            slang_info_log_error(A->log,
+                                 "Function '%s' not found (check argument types)",
+                                 name);
+            return NULL;
+         }
+      }
+   }
+
+   if (!fun) {
+      /* Next, try casting args to the types of the formal parameters */
       int numArgs = oper->num_children;
       fun = _slang_find_function_by_argc(A->space.funcs, name, numArgs);
-      if (!fun || !_slang_adapt_call(oper, fun, &A->space, A->atoms, A->log)) {
-         slang_info_log_error(A->log, "Function '%s' not found (check argument types)", name);
+      if (!fun || !_slang_cast_func_params(oper, fun, &A->space, A->atoms, A->log)) {
+         slang_info_log_error(A->log,
+                              "Function '%s' not found (check argument types)",
+                              name);
          return NULL;
       }
       assert(fun);
@@ -2910,6 +2989,7 @@ _slang_gen_array_element(slang_assemble_ctx * A, slang_operation *oper)
          /*n->Store = _slang_clone_ir_storage_swz(n->Store, */
          n->Writemask = WRITEMASK_X << index;
       }
+      assert(n->Store);
       return n;
    }
    else {
@@ -2954,11 +3034,17 @@ _slang_gen_array_element(slang_assemble_ctx * A, slang_operation *oper)
             }
          }
 
+         if (!array->Store) {
+            slang_info_log_error(A->log, "Invalid array");
+            return NULL;
+         }
+
          elem = new_node2(IR_ELEMENT, array, index);
          elem->Store = _slang_new_ir_storage_relative(constIndex,
                                                       elemSize,
                                                       array->Store);
 
+         assert(elem->Store->Parent);
          /* XXX try to do some array bounds checking here */
          return elem;
       }
@@ -2988,6 +3074,22 @@ print_vars(slang_variable_scope *s)
 #endif
 
 
+#if 0
+static void
+_slang_undeclare_vars(slang_variable_scope *locals)
+{
+   if (locals->num_variables > 0) {
+      int i;
+      for (i = 0; i < locals->num_variables; i++) {
+         slang_variable *v = locals->variables[i];
+         printf("undeclare %s at %p\n", (char*) v->a_name, v);
+         v->declared = GL_FALSE;
+      }
+   }
+}
+#endif
+
+
 /**
  * Generate IR tree for a slang_operation (AST node)
  */
@@ -3007,6 +3109,7 @@ _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper)
 
          _slang_pop_var_table(A->vartable);
 
+         /*_slang_undeclare_vars(oper->locals);*/
          /*print_vars(oper->locals);*/
 
          if (n)
@@ -3031,27 +3134,6 @@ _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper)
             tree = new_seq(tree, n);
          }
 
-#if 00
-         if (oper->locals->num_variables > 0) {
-            int i;
-            /*
-            printf("\n****** Deallocate vars in scope!\n");
-            */
-            for (i = 0; i < oper->locals->num_variables; i++) {
-               slang_variable *v = oper->locals->variables + i;
-               if (v->aux) {
-                  slang_ir_storage *store = (slang_ir_storage *) v->aux;
-                  /*
-                  printf("  Deallocate var %s\n", (char*) v->a_name);
-                  */
-                  assert(store->File == PROGRAM_TEMPORARY);
-                  assert(store->Index >= 0);
-                  _slang_free_temp(A->vartable, store->Index, store->Size);
-               }
-            }
-         }
-#endif
-         /*print_vars(oper->locals);*/
          return tree;
       }
       else {

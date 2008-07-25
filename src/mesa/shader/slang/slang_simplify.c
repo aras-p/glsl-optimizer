@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.2
+ * Version:  7.1
  *
- * Copyright (C) 2005-2006  Brian Paul   All Rights Reserved.
+ * Copyright (C) 2005-2008  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -23,10 +23,10 @@
  */
 
 /**
- * \file slang_assemble_typeinfo.c
- * slang type info
- * \author Michal Krol
+ * Functions for constant folding, built-in constant lookup, and function
+ * call casting.
  */
+
 
 #include "main/imports.h"
 #include "main/macros.h"
@@ -314,6 +314,81 @@ _slang_simplify(slang_operation *oper,
 
 
 /**
+ * Insert casts to try to adapt actual parameters to formal parameters for a
+ * function call when an exact match for the parameter types is not found.
+ * Example:
+ *   void foo(int i, bool b) {}
+ *   x = foo(3.15, 9);
+ * Gets translated into:
+ *   x = foo(int(3.15), bool(9))
+ */
+GLboolean
+_slang_cast_func_params(slang_operation *callOper, const slang_function *fun,
+                        const slang_name_space * space,
+                        slang_atom_pool * atoms, slang_info_log *log)
+{
+   const GLboolean haveRetValue = _slang_function_has_return_value(fun);
+   const int numParams = fun->param_count - haveRetValue;
+   int i;
+   int dbg = 0;
+
+   if (dbg)
+      printf("Adapt call of %d args to func %s (%d params)\n",
+             callOper->num_children, (char*) fun->header.a_name, numParams);
+
+   for (i = 0; i < numParams; i++) {
+      slang_typeinfo argType;
+      slang_variable *paramVar = fun->parameters->variables[i];
+
+      /* Get type of arg[i] */
+      if (!slang_typeinfo_construct(&argType))
+         return GL_FALSE;
+      if (!_slang_typeof_operation_(&callOper->children[i], space,
+                                    &argType, atoms, log)) {
+         slang_typeinfo_destruct(&argType);
+         return GL_FALSE;
+      }
+
+      /* see if arg type matches parameter type */
+      if (!slang_type_specifier_equal(&argType.spec,
+                                      &paramVar->type.specifier)) {
+         /* need to adapt arg type to match param type */
+         const char *constructorName =
+            slang_type_specifier_type_to_string(paramVar->type.specifier.type);
+         slang_operation *child = slang_operation_new(1);
+
+         if (dbg)
+            printf("Need to adapt types of arg %d\n", i);
+
+         slang_operation_copy(child, &callOper->children[i]);
+         child->locals->outer_scope = callOper->children[i].locals;
+
+#if 0
+         if (_slang_sizeof_type_specifier(&argType.spec) >
+             _slang_sizeof_type_specifier(&paramVar->type.specifier)) {
+         }
+#endif
+
+         callOper->children[i].type = SLANG_OPER_CALL;
+         callOper->children[i].a_id = slang_atom_pool_atom(atoms, constructorName);
+         callOper->children[i].num_children = 1;
+         callOper->children[i].children = child;
+      }
+
+      slang_typeinfo_destruct(&argType);
+   }
+
+   if (dbg) {
+      printf("===== New call to %s with cast arguments ===============\n",
+             (char*) fun->header.a_name);
+      slang_print_tree(callOper, 5);
+   }
+
+   return GL_TRUE;
+}
+
+
+/**
  * Adapt the arguments for a function call to match the parameters of
  * the given function.
  * This is for:
@@ -342,64 +417,55 @@ _slang_adapt_call(slang_operation *callOper, const slang_function *fun,
    if (callOper->num_children != numParams) {
       /* number of arguments doesn't match number of parameters */
 
-      if (fun->kind == SLANG_FUNC_CONSTRUCTOR) {
-         /* For constructor calls, we can try to unroll vector/matrix args
-          * into individual floats/ints and try to match the function params.
-          */
-         for (i = 0; i < numParams; i++) {
-            slang_typeinfo argType;
-            GLint argSz, j;
+      /* For constructor calls, we can try to unroll vector/matrix args
+       * into individual floats/ints and try to match the function params.
+       */
+      for (i = 0; i < numParams; i++) {
+         slang_typeinfo argType;
+         GLint argSz, j;
 
-            /* Get type of arg[i] */
-            if (!slang_typeinfo_construct(&argType))
-               return GL_FALSE;
-            if (!_slang_typeof_operation_(&callOper->children[i], space,
-                                          &argType, atoms, log)) {
-               slang_typeinfo_destruct(&argType);
-               return GL_FALSE;
+         /* Get type of arg[i] */
+         if (!slang_typeinfo_construct(&argType))
+            return GL_FALSE;
+         if (!_slang_typeof_operation_(&callOper->children[i], space,
+                                       &argType, atoms, log)) {
+            slang_typeinfo_destruct(&argType);
+            return GL_FALSE;
+         }
+
+         /*
+           paramSz = _slang_sizeof_type_specifier(&paramVar->type.specifier);
+           assert(paramSz == 1);
+         */
+         argSz = _slang_sizeof_type_specifier(&argType.spec);
+         if (argSz > 1) {
+            slang_operation origArg;
+            /* break up arg[i] into components */
+            if (dbg)
+               printf("Break up arg %d from 1 to %d elements\n", i, argSz);
+
+            slang_operation_construct(&origArg);
+            slang_operation_copy(&origArg, &callOper->children[i]);
+
+            /* insert argSz-1 new children/args */
+            for (j = 0; j < argSz - 1; j++) {
+               (void) slang_operation_insert(&callOper->num_children,
+                                             &callOper->children, i);
             }
 
-            /*
-            paramSz = _slang_sizeof_type_specifier(&paramVar->type.specifier);
-            assert(paramSz == 1);
-            */
-            argSz = _slang_sizeof_type_specifier(&argType.spec);
-            if (argSz > 1) {
-               slang_operation origArg;
-               /* break up arg[i] into components */
-               if (dbg)
-                  printf("Break up arg %d from 1 to %d elements\n", i, argSz);
-
-               slang_operation_construct(&origArg);
-               slang_operation_copy(&origArg,
-                                    &callOper->children[i]);
-
-               /* insert argSz-1 new children/args */
-               for (j = 0; j < argSz - 1; j++) {
-                  (void) slang_operation_insert(&callOper->num_children,
-                                                &callOper->children, i);
-               }
-
-               /* replace arg[i+j] with subscript/index oper */
-               for (j = 0; j < argSz; j++) {
-                  callOper->children[i + j].type = SLANG_OPER_SUBSCRIPT;
-                  callOper->children[i + j].num_children = 2;
-                  callOper->children[i + j].children = slang_operation_new(2);
-                  slang_operation_copy(&callOper->children[i + j].children[0],
-                                       &origArg);
-                  callOper->children[i + j].children[1].type
-                     = SLANG_OPER_LITERAL_INT;
-                  callOper->children[i + j].children[1].literal[0] = (GLfloat) j;
-               }
-
+            /* replace arg[i+j] with subscript/index oper */
+            for (j = 0; j < argSz; j++) {
+               callOper->children[i + j].type = SLANG_OPER_SUBSCRIPT;
+               callOper->children[i + j].locals = _slang_variable_scope_new(callOper->locals);
+               callOper->children[i + j].num_children = 2;
+               callOper->children[i + j].children = slang_operation_new(2);
+               slang_operation_copy(&callOper->children[i + j].children[0],
+                                    &origArg);
+               callOper->children[i + j].children[1].type
+                  = SLANG_OPER_LITERAL_INT;
+               callOper->children[i + j].children[1].literal[0] = (GLfloat) j;
             }
-         } /* for i */
-      }
-      else {
-         /* non-constructor function: number of args must match number
-          * of function params.
-          */
-         return GL_FALSE; /* caller will record an error msg */
+         }
       }
    }
 
@@ -409,52 +475,8 @@ _slang_adapt_call(slang_operation *callOper, const slang_function *fun,
    }
    else if (callOper->num_children > (GLuint) numParams) {
       /* now too many arguments */
-      /* XXX this isn't always an error, see spec */
-      return GL_FALSE;
-   }
-
-   /*
-    * Second phase, argument casting.
-    * Example:
-    *   void foo(int i, bool b) {}
-    *   x = foo(3.15, 9);
-    * Gets translated into:
-    *   x = foo(int(3.15), bool(9))
-    */
-   for (i = 0; i < numParams; i++) {
-      slang_typeinfo argType;
-      slang_variable *paramVar = fun->parameters->variables[i];
-
-      /* Get type of arg[i] */
-      if (!slang_typeinfo_construct(&argType))
-         return GL_FALSE;
-      if (!_slang_typeof_operation_(&callOper->children[i], space,
-                                    &argType, atoms, log)) {
-         slang_typeinfo_destruct(&argType);
-         return GL_FALSE;
-      }
-
-      /* see if arg type matches parameter type */
-      if (!slang_type_specifier_equal(&argType.spec,
-                                      &paramVar->type.specifier)) {
-         /* need to adapt arg type to match param type */
-         const char *constructorName =
-            slang_type_specifier_type_to_string(paramVar->type.specifier.type);
-         slang_operation *child = slang_operation_new(1);
-
-         if (dbg)
-            printf("Need to adapt types of arg %d\n", i);
-
-         slang_operation_copy(child, &callOper->children[i]);
-         child->locals->outer_scope = callOper->children[i].locals;
-
-         callOper->children[i].type = SLANG_OPER_CALL;
-         callOper->children[i].a_id = slang_atom_pool_atom(atoms, constructorName);
-         callOper->children[i].num_children = 1;
-         callOper->children[i].children = child;
-      }
-
-      slang_typeinfo_destruct(&argType);
+      /* just truncate */
+      callOper->num_children = (GLuint) numParams;
    }
 
    if (dbg) {

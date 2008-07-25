@@ -256,6 +256,12 @@ storage_to_src_reg(struct prog_src_register *src, const slang_ir_storage *st)
    }
 
    assert(st->File >= 0);
+#if 1 /* XXX temporary */
+   if (st->File == PROGRAM_UNDEFINED) {
+      slang_ir_storage *st0 = (slang_ir_storage *) st;
+      st0->File = PROGRAM_TEMPORARY;
+   }
+#endif
    assert(st->File < PROGRAM_UNDEFINED);
    src->File = st->File;
 
