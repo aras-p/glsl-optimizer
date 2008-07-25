@@ -188,7 +188,17 @@ brw_create_texture_surface( struct brw_context *brw,
 
    surf.ss0.mipmap_layout_mode = BRW_SURFACE_MIPMAPLAYOUT_BELOW;
    surf.ss0.surface_type = translate_tex_target(key->target);
-   surf.ss0.surface_format = translate_tex_format(key->format, key->depthmode);
+
+   if (key->bo) 
+      surf.ss0.surface_format = translate_tex_format(key->format, key->depthmode);
+   else {
+     switch(key->depth) {
+     case 32: surf.ss0.surface_format = BRW_SURFACEFORMAT_B8G8R8A8_UNORM; break;
+     default:
+     case 24: surf.ss0.surface_format = BRW_SURFACEFORMAT_B8G8R8X8_UNORM; break;
+     case 16: surf.ss0.surface_format = BRW_SURFACEFORMAT_B5G6R5_UNORM; break;
+     }
+   }
 
    /* This is ok for all textures with channel width 8bit or less:
     */
@@ -250,6 +260,7 @@ brw_update_texture_surface( GLcontext *ctx, GLuint unit )
       key.bo = NULL;
       key.offset = intelObj->textureOffset;
    } else {
+      key.format = firstImage->TexFormat->MesaFormat;
       key.pitch = intelObj->mt->pitch;
       key.depth = firstImage->Depth;
       key.bo = intelObj->mt->region->buffer;
@@ -258,7 +269,6 @@ brw_update_texture_surface( GLcontext *ctx, GLuint unit )
 
    key.target = tObj->Target;
    key.depthmode = tObj->DepthMode;
-   key.format = firstImage->TexFormat->MesaFormat;
    key.first_level = intelObj->firstLevel;
    key.last_level = intelObj->lastLevel;
    key.width = firstImage->Width;
