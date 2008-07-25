@@ -155,6 +155,7 @@ struct brw_wm_surface_key {
    GLint width, height, depth;
    GLint pitch, cpp;
    uint32_t tiling;
+   GLuint offset;
 };
 
 static void
@@ -192,8 +193,10 @@ brw_create_texture_surface( struct brw_context *brw,
    /* This is ok for all textures with channel width 8bit or less:
     */
 /*    surf.ss0.data_return_format = BRW_SURFACERETURNFORMAT_S1; */
-
-   surf.ss1.base_addr = key->bo->offset; /* reloc */
+   if (key->bo)
+     surf.ss1.base_addr = key->bo->offset; /* reloc */
+   else
+     surf.ss1.base_addr = key->offset;
 
    surf.ss2.mip_count = key->last_level - key->first_level;
    surf.ss2.width = key->width - 1;
@@ -215,17 +218,18 @@ brw_create_texture_surface( struct brw_context *brw,
 
    bo = brw_upload_cache(&brw->cache, BRW_SS_SURFACE,
 			 key, sizeof(*key),
-			 &key->bo, 1,
+			 &key->bo, key->bo ? 1 : 0,
 			 &surf, sizeof(surf),
 			 NULL, NULL);
 
-   /* Emit relocation to surface contents */
-   intel_bo_emit_reloc(bo,
-		       I915_GEM_DOMAIN_SAMPLER, 0,
-		       0,
-		       offsetof(struct brw_surface_state, ss1),
-		       key->bo);
-
+   if (key->bo) {
+      /* Emit relocation to surface contents */
+      intel_bo_emit_reloc(bo,
+			  I915_GEM_DOMAIN_SAMPLER, 0,
+			  0,
+			  offsetof(struct brw_surface_state, ss1),
+			  key->bo);
+   }
    return bo;
 }
 
@@ -239,24 +243,35 @@ brw_update_texture_surface( GLcontext *ctx, GLuint unit )
    struct brw_wm_surface_key key;
 
    memset(&key, 0, sizeof(key));
+
+   if (intelObj->imageOverride) {
+      key.pitch = intelObj->pitchOverride / intelObj->mt->cpp;
+      key.depth = intelObj->depthOverride;
+      key.bo = NULL;
+      key.offset = intelObj->textureOffset;
+   } else {
+      key.pitch = intelObj->mt->pitch;
+      key.depth = firstImage->Depth;
+      key.bo = intelObj->mt->region->buffer;
+      key.offset = 0;
+   }
+
    key.target = tObj->Target;
    key.depthmode = tObj->DepthMode;
    key.format = firstImage->TexFormat->MesaFormat;
-   key.bo = intelObj->mt->region->buffer;
    key.first_level = intelObj->firstLevel;
    key.last_level = intelObj->lastLevel;
    key.width = firstImage->Width;
    key.height = firstImage->Height;
-   key.pitch = intelObj->mt->pitch;
    key.cpp = intelObj->mt->cpp;
    key.depth = firstImage->Depth;
    key.tiling = intelObj->mt->region->tiling;
 
    dri_bo_unreference(brw->wm.surf_bo[unit + MAX_DRAW_BUFFERS]);
    brw->wm.surf_bo[unit + MAX_DRAW_BUFFERS] = brw_search_cache(&brw->cache, BRW_SS_SURFACE,
-						&key, sizeof(key),
-						&key.bo, 1,
-						NULL);
+							       &key, sizeof(key),
+							       &key.bo, key.bo ? 1 : 0,
+							       NULL);
    if (brw->wm.surf_bo[unit + MAX_DRAW_BUFFERS] == NULL) {
       brw->wm.surf_bo[unit + MAX_DRAW_BUFFERS] = brw_create_texture_surface(brw, &key);
    }
