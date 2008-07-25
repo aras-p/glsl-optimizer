@@ -380,12 +380,14 @@ make_temp_float_image(GLcontext *ctx, GLuint dims,
             dst += srcWidth * 4;
          }
 
+         /* size after optional convolution */
+         convWidth = srcWidth;
+         convHeight = srcHeight;
+
 #if FEATURE_convolve
          /* do convolution */
          {
             GLfloat *src = tempImage + img * (srcWidth * srcHeight * 4);
-            convWidth = srcWidth;
-            convHeight = srcHeight;
             if (dims == 1) {
                ASSERT(ctx->Pixel.Convolution1DEnabled);
                _mesa_convolve_1d_image(ctx, &convWidth, src, convImage);
@@ -408,11 +410,6 @@ make_temp_float_image(GLcontext *ctx, GLuint dims,
             const GLint logComponents
                = _mesa_components_in_format(logicalBaseFormat);
             const GLfloat *src = convImage;
-
-            /* XXX: Both `convWidth' and `convHeight' are uninitialised -- windows compiler
-             *      will issue warnings for the following line.
-             *      Presumably this happens when `FEATURE_convolve' is defined to `0'.
-             */
             GLfloat *dst = tempImage + img * (convWidth * convHeight * 4);
             for (row = 0; row < convHeight; row++) {
                _mesa_pack_rgba_span_float(ctx, convWidth,
