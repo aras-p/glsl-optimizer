@@ -391,10 +391,12 @@ intelHandleBufferAttach(__DRIdrawablePrivate *dPriv,
    intel_renderbuffer_set_region(rb, region);
 }
 
+#if 0
 static const __DRItexOffsetExtension intelTexOffsetExtension = {
    { __DRI_TEX_OFFSET },
    intelSetTexOffset,
 };
+#endif
 
 static const __DRItexBufferExtension intelTexBufferExtension = {
     { __DRI_TEX_BUFFER, __DRI_TEX_BUFFER_VERSION },
@@ -407,7 +409,9 @@ static const __DRIextension *intelScreenExtensions[] = {
     &driSwapControlExtension.base,
     &driFrameTrackingExtension.base,
     &driMediaStreamCounterExtension.base,
+#if 0
     &intelTexOffsetExtension.base,
+#endif
     &intelTexBufferExtension.base,
     NULL
 };
