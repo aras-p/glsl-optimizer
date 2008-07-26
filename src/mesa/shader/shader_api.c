@@ -35,10 +35,10 @@
  */
 
 
-#include "glheader.h"
-#include "context.h"
-#include "hash.h"
-#include "macros.h"
+#include "main/glheader.h"
+#include "main/context.h"
+#include "main/hash.h"
+#include "main/macros.h"
 #include "program.h"
 #include "prog_parameter.h"
 #include "prog_print.h"
@@ -262,15 +262,11 @@ _mesa_new_shader(GLcontext *ctx, GLuint name, GLenum type)
 void
 _mesa_free_shader(GLcontext *ctx, struct gl_shader *sh)
 {
-   GLuint i;
    if (sh->Source)
       _mesa_free((void *) sh->Source);
    if (sh->InfoLog)
       _mesa_free(sh->InfoLog);
-   for (i = 0; i < sh->NumPrograms; i++)
-      _mesa_reference_program(ctx, &sh->Programs[i], NULL);
-   if (sh->Programs)
-      _mesa_free(sh->Programs);
+   _mesa_reference_program(ctx, &sh->Program, NULL);
    _mesa_free(sh);
 }
 
@@ -513,7 +509,7 @@ _mesa_bind_attrib_location(GLcontext *ctx, GLuint program, GLuint index,
    struct gl_shader_program *shProg;
    const GLint size = -1; /* unknown size */
    GLint i, oldIndex;
-   GLenum datatype;
+   GLenum datatype = GL_FLOAT_VEC4;
 
    shProg = _mesa_lookup_shader_program_err(ctx, program,
                                             "glBindAttribLocation");
@@ -547,6 +543,7 @@ _mesa_bind_attrib_location(GLcontext *ctx, GLuint program, GLuint index,
    i = _mesa_add_attribute(shProg->Attributes, name, size, datatype, index);
    if (i < 0) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBindAttribLocation");
+      return;
    }
 
    if (shProg->VertexProgram && oldIndex >= 0 && oldIndex != index) {

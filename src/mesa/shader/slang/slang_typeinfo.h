@@ -25,8 +25,8 @@
 #ifndef SLANG_TYPEINFO_H
 #define SLANG_TYPEINFO_H 1
 
-#include "imports.h"
-#include "mtypes.h"
+#include "main/imports.h"
+#include "main/mtypes.h"
 #include "slang_log.h"
 #include "slang_utility.h"
 #include "slang_vartable.h"
@@ -73,7 +73,8 @@ _slang_locate_function(const struct slang_function_scope_ *funcs,
                        slang_atom name, struct slang_operation_ *params,
                        GLuint num_params,
                        const slang_name_space *space,
-                       slang_atom_pool *atoms, slang_info_log *log);
+                       slang_atom_pool *atoms, slang_info_log *log,
+                       GLboolean *error);
 
 
 extern GLboolean

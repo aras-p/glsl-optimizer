@@ -28,9 +28,9 @@
  * \author Brian Paul
  */
 
-#include "glheader.h"
-#include "context.h"
-#include "imports.h"
+#include "main/glheader.h"
+#include "main/context.h"
+#include "main/imports.h"
 #include "prog_instruction.h"
 #include "prog_parameter.h"
 #include "prog_print.h"

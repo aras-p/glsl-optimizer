@@ -100,7 +100,7 @@ struct tgsi_exec_labels
 };
 
 
-#define TGSI_EXEC_NUM_TEMPS        64
+#define TGSI_EXEC_NUM_TEMPS       128
 #define TGSI_EXEC_NUM_TEMP_EXTRAS   6
 #define TGSI_EXEC_NUM_IMMEDIATES  256
 

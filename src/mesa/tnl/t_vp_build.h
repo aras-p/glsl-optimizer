@@ -27,7 +27,7 @@
 #ifndef T_VP_BUILD_H
 #define T_VP_BUILD_H
 
-#include "mtypes.h"
+#include "main/mtypes.h"
 
 #define TNL_FIXED_FUNCTION_STATE_FLAGS (_NEW_PROGRAM |		\
 					_NEW_LIGHT |		\

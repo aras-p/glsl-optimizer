@@ -25,10 +25,10 @@
  *    Keith Whitwell <keithw@tungstengraphics.com>
  */
 
-#include "glheader.h"
-#include "colormac.h"
-#include "simple_list.h"
-#include "enums.h"
+#include "main/glheader.h"
+#include "main/colormac.h"
+#include "main/simple_list.h"
+#include "main/enums.h"
 
 #include "vf/vf.h"
 

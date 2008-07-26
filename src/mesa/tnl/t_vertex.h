@@ -28,7 +28,7 @@
 #ifndef _TNL_VERTEX_H
 #define _TNL_VERTEX_H
 
-#include "mtypes.h"
+#include "main/mtypes.h"
 #include "t_context.h"
 
 /* New mechanism to specify hardware vertices so that tnl can build

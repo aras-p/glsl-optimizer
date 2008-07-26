@@ -29,9 +29,9 @@
  */
 
 
-#include "glheader.h"
-#include "imports.h"
-#include "macros.h"
+#include "main/glheader.h"
+#include "main/imports.h"
+#include "main/macros.h"
 #include "prog_instruction.h"
 #include "prog_parameter.h"
 #include "prog_statevars.h"

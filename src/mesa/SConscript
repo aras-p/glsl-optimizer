@@ -10,7 +10,6 @@ if env['platform'] != 'winddk':
 	
 	env.Append(CPPPATH = [
 		'#/src/mesa',
-		'#/src/mesa/main',
 	])
 	
 	if gcc:

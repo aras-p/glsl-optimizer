@@ -32,7 +32,7 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "glheader.h"
+#include "main/glheader.h"
 #include "glapi.h"
 #include "glapioffsets.h"
 #include "glapitable.h"

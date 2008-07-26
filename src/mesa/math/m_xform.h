@@ -27,8 +27,8 @@
 #define _M_XFORM_H
 
 
-#include "glheader.h"
-#include "config.h"
+#include "main/glheader.h"
+#include "main/config.h"
 #include "math/m_vector.h"
 #include "math/m_matrix.h"
 

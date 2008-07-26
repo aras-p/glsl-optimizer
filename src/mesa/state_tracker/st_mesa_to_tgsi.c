@@ -39,8 +39,6 @@
 #include "shader/prog_instruction.h"
 #include "shader/prog_parameter.h"
 
-#define TGSI_DEBUG 0
-
 
 /*
  * Map mesa register file to TGSI register file.
@@ -56,8 +54,8 @@ map_register_file(
       return TGSI_FILE_NULL;
    case PROGRAM_TEMPORARY:
       return TGSI_FILE_TEMPORARY;
-   //case PROGRAM_LOCAL_PARAM:
-   //case PROGRAM_ENV_PARAM:
+   /*case PROGRAM_LOCAL_PARAM:*/
+   /*case PROGRAM_ENV_PARAM:*/
 
       /* Because of the longstanding problem with mesa arb shaders
        * where constants, immediates and state variables are all
@@ -230,21 +228,27 @@ compile_instruction(
          outputMapping,
          immediateMapping);
 
-      for( j = 0; j < 4; j++ ) {
-         GLuint swz;
-
-         swz = GET_SWZ( inst->SrcReg[i].Swizzle, j );
-         if( swz > SWIZZLE_W ) {
-            tgsi_util_set_src_register_extswizzle(
-               &fullsrc->SrcRegisterExtSwz,
-               swz,
-               j );
+      /* swizzle (ext swizzle also depends on negation) */
+      {
+         GLuint swz[4];
+         GLboolean extended = (inst->SrcReg[i].NegateBase != NEGATE_NONE &&
+                               inst->SrcReg[i].NegateBase != NEGATE_XYZW);
+         for( j = 0; j < 4; j++ ) {
+            swz[j] = GET_SWZ( inst->SrcReg[i].Swizzle, j );
+            if (swz[j] > SWIZZLE_W)
+               extended = GL_TRUE;
+         }
+         if (extended) {
+            for (j = 0; j < 4; j++) {
+               tgsi_util_set_src_register_extswizzle(&fullsrc->SrcRegisterExtSwz,
+                                                     swz[j], j);
+            }
          }
          else {
-            tgsi_util_set_src_register_swizzle(
-               &fullsrc->SrcRegister,
-               swz,
-               j );
+            for (j = 0; j < 4; j++) {
+               tgsi_util_set_src_register_swizzle(&fullsrc->SrcRegister,
+                                                  swz[j], j);
+            }
          }
       }
 

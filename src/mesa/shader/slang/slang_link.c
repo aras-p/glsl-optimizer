@@ -401,15 +401,16 @@ _slang_link(GLcontext *ctx,
    shProg->Varying = _mesa_new_parameter_list();
 
    /**
-    * Find attached vertex shader, fragment shader
+    * Find attached vertex, fragment shaders defining main()
     */
    vertProg = NULL;
    fragProg = NULL;
    for (i = 0; i < shProg->NumShaders; i++) {
-      if (shProg->Shaders[i]->Type == GL_VERTEX_SHADER)
-         vertProg = vertex_program(shProg->Shaders[i]->Programs[0]);
-      else if (shProg->Shaders[i]->Type == GL_FRAGMENT_SHADER)
-         fragProg = fragment_program(shProg->Shaders[i]->Programs[0]);
+      struct gl_shader *shader = shProg->Shaders[i];
+      if (shader->Type == GL_VERTEX_SHADER && shader->Main)
+         vertProg = vertex_program(shader->Program);
+      else if (shader->Type == GL_FRAGMENT_SHADER && shader->Main)
+         fragProg = fragment_program(shader->Program);
       else
          _mesa_problem(ctx, "unexpected shader target in slang_link()");
    }

@@ -27,8 +27,8 @@
 #define SHADER_API_H
 
 
-#include "glheader.h"
-#include "mtypes.h"
+#include "main/glheader.h"
+#include "main/mtypes.h"
 
 
 /**

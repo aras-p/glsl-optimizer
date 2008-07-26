@@ -198,7 +198,7 @@ iter_instruction(
          inst->FullSrcRegisters[i].SrcRegister.File,
          inst->FullSrcRegisters[i].SrcRegister.Index,
          "source",
-         inst->FullSrcRegisters[i].SrcRegister.Indirect );
+         (boolean)inst->FullSrcRegisters[i].SrcRegister.Indirect );
       if (inst->FullSrcRegisters[i].SrcRegister.Indirect) {
          uint file;
          int index;

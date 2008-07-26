@@ -23,8 +23,8 @@
  */
 
 
-#include "imports.h"
-#include "context.h"
+#include "main/imports.h"
+#include "main/context.h"
 #include "slang_ir.h"
 #include "slang_mem.h"
 #include "shader/prog_print.h"

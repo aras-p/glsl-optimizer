@@ -33,8 +33,71 @@
 #include "p_debug.h"
 #include "p_format.h"
 #include "p_pointer.h"
+
+#if defined(PIPE_SUBSYSTEM_WINDOWS_MINIPORT) || defined(PIPE_SUBSYSTEM_WINDOWS_CE)
+__inline double ceil(double val)
+{
+	double ceil_val;
+
+	if((val - (long) val) == 0) {
+		ceil_val = val;
+	} else {
+		if(val > 0) {
+			ceil_val = (long) val + 1;
+		} else {
+			ceil_val = (long) val;
+		}
+	}
+
+	return ceil_val;
+}
+
+#ifndef PIPE_SUBSYSTEM_WINDOWS_CE
+__inline double floor(double val)
+{
+	double floor_val;
+
+	if((val - (long) val) == 0) {
+		floor_val = val;
+	} else {
+		if(val > 0) {
+			floor_val = (long) val;
+		} else {
+			floor_val = (long) val - 1;
+		}
+	}
+
+	return floor_val;
+}
+#endif
+
+#pragma function(pow)
+__inline double __cdecl pow(double val, double exponent)
+{
+	/* XXX */
+	assert(0);
+	return 0;
+}
+
+#pragma function(log)
+__inline double __cdecl log(double val)
+{
+	/* XXX */
+	assert(0);
+	return 0;
+}
+
+#pragma function(atan2)
+__inline double __cdecl atan2(double val)
+{
+	/* XXX */
+	assert(0);
+	return 0;
+}
+#else
 #include <math.h>
 #include <stdarg.h>
+#endif
 
 
 #ifdef __cplusplus
