@@ -388,6 +388,14 @@ _slang_link(GLcontext *ctx,
 
    _mesa_clear_shader_program_data(ctx, shProg);
 
+   /* check that all programs compiled successfully */
+   for (i = 0; i < shProg->NumShaders; i++) {
+      if (!shProg->Shaders[i]->CompileStatus) {
+         link_error(shProg, "linking with uncompiled shader\n");
+         return;
+      }
+   }
+
    shProg->Uniforms = _mesa_new_uniform_list();
    shProg->Varying = _mesa_new_parameter_list();
 
@@ -474,6 +482,12 @@ _slang_link(GLcontext *ctx,
       }         
    }
 
+   /* Check that the vertex program doesn't use too many sampler units */
+   if (shProg->VertexProgram &&
+       _mesa_bitcount(shProg->VertexProgram->Base.SamplersUsed) > ctx->Const.MaxVertexTextureImageUnits) {
+      link_error(shProg, "Vertex program uses too many samplers.\n");
+      return;
+   }
 
    if (fragProg && shProg->FragmentProgram) {
       /* notify driver that a new fragment program has been compiled/linked */

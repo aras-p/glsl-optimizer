@@ -34,6 +34,76 @@
 
 
 /**
+ * Examine enabled GL extensions to determine GL version.
+ * \return version string
+ */
+static const char *
+compute_version(const GLcontext *ctx)
+{
+   static const char *version_1_2 = "1.2 Mesa " MESA_VERSION_STRING;
+   static const char *version_1_3 = "1.3 Mesa " MESA_VERSION_STRING;
+   static const char *version_1_4 = "1.4 Mesa " MESA_VERSION_STRING;
+   static const char *version_1_5 = "1.5 Mesa " MESA_VERSION_STRING;
+   static const char *version_2_0 = "2.0 Mesa " MESA_VERSION_STRING;
+   static const char *version_2_1 = "2.1 Mesa " MESA_VERSION_STRING;
+
+   const GLboolean ver_1_3 = (ctx->Extensions.ARB_multisample &&
+                              ctx->Extensions.ARB_multitexture &&
+                              ctx->Extensions.ARB_texture_border_clamp &&
+                              ctx->Extensions.ARB_texture_compression &&
+                              ctx->Extensions.ARB_texture_cube_map &&
+                              ctx->Extensions.EXT_texture_env_add &&
+                              ctx->Extensions.ARB_texture_env_combine &&
+                              ctx->Extensions.ARB_texture_env_dot3);
+   const GLboolean ver_1_4 = (ver_1_3 &&
+                              ctx->Extensions.ARB_depth_texture &&
+                              ctx->Extensions.ARB_shadow &&
+                              ctx->Extensions.ARB_texture_env_crossbar &&
+                              ctx->Extensions.ARB_texture_mirrored_repeat &&
+                              ctx->Extensions.ARB_window_pos &&
+                              ctx->Extensions.EXT_blend_color &&
+                              ctx->Extensions.EXT_blend_func_separate &&
+                              ctx->Extensions.EXT_blend_minmax &&
+                              ctx->Extensions.EXT_blend_subtract &&
+                              ctx->Extensions.EXT_fog_coord &&
+                              ctx->Extensions.EXT_multi_draw_arrays &&
+                              ctx->Extensions.EXT_point_parameters &&
+                              ctx->Extensions.EXT_secondary_color &&
+                              ctx->Extensions.EXT_stencil_wrap &&
+                              ctx->Extensions.EXT_texture_lod_bias &&
+                              ctx->Extensions.SGIS_generate_mipmap);
+   const GLboolean ver_1_5 = (ver_1_4 &&
+                              ctx->Extensions.ARB_occlusion_query &&
+                              ctx->Extensions.ARB_vertex_buffer_object &&
+                              ctx->Extensions.EXT_shadow_funcs);
+   const GLboolean ver_2_0 = (ver_1_5 &&
+                              ctx->Extensions.ARB_draw_buffers &&
+                              ctx->Extensions.ARB_point_sprite &&
+                              ctx->Extensions.ARB_shader_objects &&
+                              ctx->Extensions.ARB_vertex_shader &&
+                              ctx->Extensions.ARB_fragment_shader &&
+                              ctx->Extensions.ARB_texture_non_power_of_two &&
+                              ctx->Extensions.EXT_blend_equation_separate);
+   const GLboolean ver_2_1 = (ver_2_0 &&
+                              ctx->Extensions.ARB_shading_language_120 &&
+                              ctx->Extensions.EXT_pixel_buffer_object &&
+                              ctx->Extensions.EXT_texture_sRGB);
+   if (ver_2_1)
+      return version_2_1;
+   if (ver_2_0)
+      return version_2_0;
+   if (ver_1_5)
+      return version_1_5;
+   if (ver_1_4)
+      return version_1_4;
+   if (ver_1_3)
+      return version_1_3;
+   return version_1_2;
+}
+
+
+
+/**
  * Query string-valued state.  The return value should _not_ be freed by
  * the caller.
  *
@@ -50,15 +120,11 @@ _mesa_GetString( GLenum name )
    GET_CURRENT_CONTEXT(ctx);
    static const char *vendor = "Brian Paul";
    static const char *renderer = "Mesa";
-   static const char *version_1_2 = "1.2 Mesa " MESA_VERSION_STRING;
-   static const char *version_1_3 = "1.3 Mesa " MESA_VERSION_STRING;
-   static const char *version_1_4 = "1.4 Mesa " MESA_VERSION_STRING;
-   static const char *version_1_5 = "1.5 Mesa " MESA_VERSION_STRING;
-   static const char *version_2_0 = "2.0 Mesa " MESA_VERSION_STRING;
-   static const char *version_2_1 = "2.1 Mesa " MESA_VERSION_STRING;
 
-#if FEATURE_ARB_shading_language_100
-   static const char *sl_version_110 = "1.10 Mesa " MESA_VERSION_STRING;
+#if FEATURE_ARB_shading_language_120_foo /* support not complete! */
+   static const char *sl_version = "1.20";
+#elif FEATURE_ARB_shading_language_100
+   static const char *sl_version = "1.10";
 #endif
 
    if (!ctx)
@@ -79,71 +145,9 @@ _mesa_GetString( GLenum name )
       case GL_VENDOR:
          return (const GLubyte *) vendor;
       case GL_RENDERER:
-          return (const GLubyte *) renderer;
+         return (const GLubyte *) renderer;
       case GL_VERSION:
-         /* tests for 1.3: */
-         if (ctx->Extensions.ARB_multisample &&
-             ctx->Extensions.ARB_multitexture &&
-             ctx->Extensions.ARB_texture_border_clamp &&
-             ctx->Extensions.ARB_texture_compression &&
-             ctx->Extensions.ARB_texture_cube_map &&
-             ctx->Extensions.EXT_texture_env_add &&
-             ctx->Extensions.ARB_texture_env_combine &&
-             ctx->Extensions.ARB_texture_env_dot3) {
-            /* tests for 1.4: */
-            if (ctx->Extensions.ARB_depth_texture &&
-                ctx->Extensions.ARB_shadow &&
-                ctx->Extensions.ARB_texture_env_crossbar &&
-                ctx->Extensions.ARB_texture_mirrored_repeat &&
-                ctx->Extensions.ARB_window_pos &&
-                ctx->Extensions.EXT_blend_color &&
-                ctx->Extensions.EXT_blend_func_separate &&
-                ctx->Extensions.EXT_blend_minmax &&
-                ctx->Extensions.EXT_blend_subtract &&
-                ctx->Extensions.EXT_fog_coord &&
-                ctx->Extensions.EXT_multi_draw_arrays &&
-                ctx->Extensions.EXT_point_parameters && /*aka ARB*/
-                ctx->Extensions.EXT_secondary_color &&
-                ctx->Extensions.EXT_stencil_wrap &&
-                ctx->Extensions.EXT_texture_lod_bias &&
-                ctx->Extensions.SGIS_generate_mipmap) {
-               /* tests for 1.5: */
-               if (ctx->Extensions.ARB_occlusion_query &&
-                   ctx->Extensions.ARB_vertex_buffer_object &&
-                   ctx->Extensions.EXT_shadow_funcs) {
-                  /* tests for 2.0: */
-                  if (ctx->Extensions.ARB_draw_buffers &&
-                      ctx->Extensions.ARB_point_sprite &&
-                      ctx->Extensions.ARB_shader_objects &&
-                      ctx->Extensions.ARB_vertex_shader &&
-                      ctx->Extensions.ARB_fragment_shader &&
-                      ctx->Extensions.ARB_texture_non_power_of_two &&
-                      ctx->Extensions.EXT_blend_equation_separate) {
-                     /* tests for 2.1: */
-                     if (ctx->Extensions.ARB_shading_language_120 &&
-                         ctx->Extensions.EXT_pixel_buffer_object &&
-                         ctx->Extensions.EXT_texture_sRGB) {
-                        return (const GLubyte *) version_2_1;
-                     }
-                     else {
-                        return (const GLubyte *) version_2_0;
-                     }
-                  }
-                  else {
-                     return (const GLubyte *) version_1_5;
-                  }
-               }
-               else {
-                  return (const GLubyte *) version_1_4;
-               }
-            }
-            else {
-               return (const GLubyte *) version_1_3;
-            }
-         }
-         else {
-            return (const GLubyte *) version_1_2;
-         }
+         return (const GLubyte *) compute_version(ctx);
       case GL_EXTENSIONS:
          if (!ctx->Extensions.String)
             ctx->Extensions.String = _mesa_make_extension_string(ctx);
@@ -151,7 +155,7 @@ _mesa_GetString( GLenum name )
 #if FEATURE_ARB_shading_language_100
       case GL_SHADING_LANGUAGE_VERSION_ARB:
          if (ctx->Extensions.ARB_shading_language_100)
-            return (const GLubyte *) sl_version_110;
+            return (const GLubyte *) sl_version;
          goto error;
 #endif
 #if FEATURE_NV_fragment_program || FEATURE_ARB_fragment_program || \

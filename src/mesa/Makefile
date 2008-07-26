@@ -30,11 +30,11 @@ default: depend asm_subdirs libmesa.a libglapi.a driver_subdirs
 
 # Make archive of core mesa object files
 libmesa.a: $(MESA_OBJECTS)
-	@ $(TOP)/bin/mklib -o mesa -static $(MESA_OBJECTS)
+	@ $(MKLIB) -o mesa -static $(MESA_OBJECTS)
 
 # Make archive of gl* API dispatcher functions only
 libglapi.a: $(GLAPI_OBJECTS)
-	@ $(TOP)/bin/mklib -o glapi -static $(GLAPI_OBJECTS)
+	@ $(MKLIB) -o glapi -static $(GLAPI_OBJECTS)
 
 
 ######################################################################
@@ -90,28 +90,29 @@ install: default
 
 pcedit = sed \
 	-e 's,@INSTALL_DIR@,$(INSTALL_DIR),' \
-	-e 's,@LIB_DIR@,$(LIB_DIR),' \
+	-e 's,@INSTALL_LIB_DIR@,$(INSTALL_LIB_DIR),' \
+	-e 's,@INSTALL_INC_DIR@,$(INSTALL_INC_DIR),' \
 	-e 's,@VERSION@,$(MESA_MAJOR).$(MESA_MINOR).$(MESA_TINY),'
 
 gl.pc: gl.pc.in
 	$(pcedit) $< > $@
 
 install-headers:
-	$(INSTALL) -d $(DESTDIR)$(INSTALL_DIR)/include/GL
+	$(INSTALL) -d $(DESTDIR)$(INSTALL_INC_DIR)/GL
 	$(INSTALL) -m 644 $(TOP)/include/GL/*.h \
-		$(DESTDIR)$(INSTALL_DIR)/include/GL
+		$(DESTDIR)$(INSTALL_INC_DIR)/GL
 
 install-libgl: default gl.pc install-headers
-	$(INSTALL) -d $(DESTDIR)$(INSTALL_DIR)/$(LIB_DIR)
-	$(INSTALL) -d $(DESTDIR)$(INSTALL_DIR)/$(LIB_DIR)/pkgconfig
+	$(INSTALL) -d $(DESTDIR)$(INSTALL_LIB_DIR)
+	$(INSTALL) -d $(DESTDIR)$(INSTALL_LIB_DIR)/pkgconfig
 	$(INSTALL) $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME)* \
-		$(DESTDIR)$(INSTALL_DIR)/$(LIB_DIR)
-	$(INSTALL) -m 644 gl.pc $(DESTDIR)$(INSTALL_DIR)/$(LIB_DIR)/pkgconfig
+		$(DESTDIR)$(INSTALL_LIB_DIR)
+	$(INSTALL) -m 644 gl.pc $(DESTDIR)$(INSTALL_LIB_DIR)/pkgconfig
 
 install-osmesa: default
-	$(INSTALL) -d $(DESTDIR)$(INSTALL_DIR)/$(LIB_DIR)
+	$(INSTALL) -d $(DESTDIR)$(INSTALL_LIB_DIR)
 	$(INSTALL) $(TOP)/$(LIB_DIR)/$(OSMESA_LIB_NAME)* \
-		$(DESTDIR)$(INSTALL_DIR)/$(LIB_DIR)
+		$(DESTDIR)$(INSTALL_LIB_DIR)
 
 install-dri: default
 	cd drivers/dri && $(MAKE) install
@@ -128,6 +129,7 @@ clean:
 	-rm -f */*/*.o
 	-rm -f depend depend.bak libmesa.a libglapi.a
 	-rm -f drivers/*/*.o
+	-rm -f *.pc
 	-@cd drivers/dri && $(MAKE) clean
 	-@cd drivers/x11 && $(MAKE) clean
 	-@cd drivers/osmesa && $(MAKE) clean

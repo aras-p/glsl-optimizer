@@ -283,7 +283,7 @@ __driUtilUpdateDrawableInfo(__DRIdrawablePrivate *pdp)
 int
 __driParseEvents(__DRIcontextPrivate *pcp, __DRIdrawablePrivate *pdp)
 {
-    __DRIscreenPrivate *psp = pcp->driScreenPriv;
+    __DRIscreenPrivate *psp = pdp->driScreenPriv;
     __DRIDrawableConfigEvent *dc, *last_dc;
     __DRIBufferAttachEvent *ba, *last_ba;
     unsigned int tail, mask, *p, end, total, size, changed;
@@ -291,7 +291,7 @@ __driParseEvents(__DRIcontextPrivate *pcp, __DRIdrawablePrivate *pdp)
     size_t rect_size;
 
     /* Check for wraparound. */
-    if (psp->dri2.buffer->prealloc - pdp->dri2.tail > psp->dri2.buffer->size) {
+    if (pcp && psp->dri2.buffer->prealloc - pdp->dri2.tail > psp->dri2.buffer->size) {
        /* If prealloc overlaps into what we just parsed, the
 	* server overwrote it and we have to reset our tail
 	* pointer. */
@@ -459,6 +459,9 @@ static void driSwapBuffers(__DRIdrawable *dPriv)
 
     if (!dPriv->numClipRects)
         return;
+
+    if (psp->dri2.enabled)
+       __driParseEvents(NULL, dPriv);
 
     psp->DriverAPI.SwapBuffers(dPriv);
 

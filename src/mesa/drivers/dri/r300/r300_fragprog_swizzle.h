@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007 Ben Skeggs.
+ * Copyright (C) 2008 Nicolai Haehnle.
  *
  * All Rights Reserved.
  *
@@ -25,14 +25,18 @@
  *
  */
 
-#ifndef __NOUVEAU_QUERY_H__
-#define __NOUVEAU_QUERY_H__
+#ifndef __R300_FRAGPROG_SWIZZLE_H_
+#define __R300_FRAGPROG_SWIZZLE_H_
 
-typedef struct nouveau_query_object_t {
-	struct gl_query_object mesa;
+#include "glheader.h"
+#include "shader/prog_instruction.h"
 
-	int notifier_id;
-} nouveau_query_object;
+struct nqssadce_state;
 
-extern void nouveauQueryInitFuncs(GLcontext *ctx);
-#endif
+GLboolean r300FPIsNativeSwizzle(GLuint opcode, struct prog_src_register reg);
+void r300FPBuildSwizzle(struct nqssadce_state*, struct prog_dst_register dst, struct prog_src_register src);
+
+GLuint r300FPTranslateRGBSwizzle(GLuint src, GLuint swizzle);
+GLuint r300FPTranslateAlphaSwizzle(GLuint src, GLuint swizzle);
+
+#endif /* __R300_FRAGPROG_SWIZZLE_H_ */

@@ -86,6 +86,9 @@ slang_info_log_message(slang_info_log * log, const char *prefix,
    }
    slang_string_concat(log->text, msg);
    slang_string_concat(log->text, "\n");
+#if 0 /* debug */
+   _mesa_printf("Mesa GLSL error/warning: %s\n", log->text);
+#endif
    return 1;
 }
 

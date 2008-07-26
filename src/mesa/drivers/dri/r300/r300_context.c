@@ -79,6 +79,7 @@ int hw_tcl_on = 1;
 
 #define need_GL_EXT_stencil_two_side
 #define need_GL_ARB_multisample
+#define need_GL_ARB_point_parameters
 #define need_GL_ARB_texture_compression
 #define need_GL_ARB_vertex_buffer_object
 #define need_GL_ARB_vertex_program
@@ -98,6 +99,7 @@ const struct dri_extension card_extensions[] = {
   {"GL_ARB_fragment_program",		NULL},
   {"GL_ARB_multisample",		GL_ARB_multisample_functions},
   {"GL_ARB_multitexture",		NULL},
+  {"GL_ARB_point_parameters",		GL_ARB_point_parameters_functions},
   {"GL_ARB_shadow",			NULL},
   {"GL_ARB_texture_border_clamp",	NULL},
   {"GL_ARB_texture_compression",	GL_ARB_texture_compression_functions},
@@ -279,6 +281,7 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	    MIN2(ctx->Const.MaxTextureImageUnits,
 		 ctx->Const.MaxTextureCoordUnits);
 	ctx->Const.MaxTextureMaxAnisotropy = 16.0;
+	ctx->Const.MaxTextureLodBias = 16.0;
 
 	if (screen->chip_family >= CHIP_FAMILY_RV515) {
 	    ctx->Const.MaxTextureLevels = 13;

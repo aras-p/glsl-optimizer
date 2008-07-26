@@ -31,7 +31,17 @@
 #include "radeon_program.h"
 
 GLboolean radeonTransformALU(
-	struct radeon_program_transform_context*,
+	struct radeon_transform_context *t,
+	struct prog_instruction*,
+	void*);
+
+GLboolean radeonTransformTrigSimple(
+	struct radeon_transform_context *t,
+	struct prog_instruction*,
+	void*);
+
+GLboolean radeonTransformTrigScale(
+	struct radeon_transform_context *t,
 	struct prog_instruction*,
 	void*);
 

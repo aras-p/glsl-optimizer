@@ -45,11 +45,9 @@ default:
 osmesa8: $(TOP)/lib/$(OSMESA_LIB_NAME)
 
 $(TOP)/lib/$(OSMESA_LIB_NAME): $(OBJECTS)
-	$(TOP)/bin/mklib -o $(OSMESA_LIB) \
-		-linker "$(CC)" \
+	$(MKLIB) -o $(OSMESA_LIB) -linker '$(CC)' -ldflags '$(LDFLAGS)' \
 		-major $(MESA_MAJOR) -minor $(MESA_MINOR) -patch $(MESA_TINY) \
-		-install $(TOP)/$(LIB_DIR) \
-		$(MKLIB_OPTIONS) \
+		-install $(TOP)/$(LIB_DIR) $(MKLIB_OPTIONS) \
 		$(OSMESA_LIB_DEPS) $(OBJECTS)
 
 
@@ -58,11 +56,9 @@ $(TOP)/lib/$(OSMESA_LIB_NAME): $(OBJECTS)
 # The libOSMesa16/libOSMesa32 libraries do not use libGL but rather are built
 # with all the other Mesa sources (compiled with -DCHAN_BITS=16/32
 osmesa16: $(OBJECTS) $(CORE_MESA)
-	$(TOP)/bin/mklib -o $(OSMESA_LIB) \
-		-linker "$(CC)" \
+	$(MKLIB) -o $(OSMESA_LIB) -linker '$(CC)' -ldflags '$(LDFLAGS)' \
 		-major $(MESA_MAJOR) -minor $(MESA_MINOR) -patch $(MESA_TINY) \
-		-install $(TOP)/$(LIB_DIR) \
-		$(MKLIB_OPTIONS) \
+		-install $(TOP)/$(LIB_DIR) $(MKLIB_OPTIONS) \
 		$(OSMESA_LIB_DEPS) $(OBJECTS) $(CORE_MESA)
 
 

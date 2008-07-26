@@ -683,16 +683,25 @@ struct r300_fragment_program_external_state {
 };
 
 
+struct r300_fragment_program_node {
+	int tex_offset; /**< first tex instruction */
+	int tex_end; /**< last tex instruction, relative to tex_offset */
+	int alu_offset; /**< first ALU instruction */
+	int alu_end; /**< last ALU instruction, relative to alu_offset */
+	int flags;
+};
+
 /**
  * Stores an R300 fragment program in its compiled-to-hardware form.
  */
 struct r300_fragment_program_code {
 	struct {
-		int length;
+		int length; /**< total # of texture instructions used */
 		GLuint inst[PFS_MAX_TEX_INST];
 	} tex;
 
 	struct {
+		int length; /**< total # of ALU instructions used */
 		struct {
 			GLuint inst0;
 			GLuint inst1;
@@ -701,29 +710,15 @@ struct r300_fragment_program_code {
 		} inst[PFS_MAX_ALU_INST];
 	} alu;
 
-	struct {
-		int tex_offset;
-		int tex_end;
-		int alu_offset;
-		int alu_end;
-		int flags;
-	} node[4];
+	struct r300_fragment_program_node node[4];
 	int cur_node;
 	int first_node_has_tex;
 
-	int alu_offset;
-	int alu_end;
-	int tex_offset;
-	int tex_end;
-
-	/* Hardware constants.
-	 * Contains a pointer to the value. The destination of the pointer
-	 * is supposed to be updated when GL state changes.
-	 * Typically, this is either a pointer into
-	 * gl_program_parameter_list::ParameterValues, or a pointer to a
-	 * global constant (e.g. for sin/cos-approximation)
+	/**
+	 * Remember which program register a given hardware constant
+	 * belongs to.
 	 */
-	const GLfloat *constant[PFS_NUM_CONST_REGS];
+	struct prog_src_register constant[PFS_NUM_CONST_REGS];
 	int const_nr;
 
 	int max_temp_idx;
@@ -780,21 +775,15 @@ struct r500_fragment_program_code {
 		GLuint inst4;
 		GLuint inst5;
 	} inst[512];
-	/* TODO: This is magic! */
-
-	int temp_reg_offset;
 
 	int inst_offset;
 	int inst_end;
 
-	/* Hardware constants.
-	* Contains a pointer to the value. The destination of the pointer
-	* is supposed to be updated when GL state changes.
-	* Typically, this is either a pointer into
-	* gl_program_parameter_list::ParameterValues, or a pointer to a
-	* global constant (e.g. for sin/cos-approximation)
-	*/
-	const GLfloat *constant[PFS_NUM_CONST_REGS];
+	/**
+	 * Remember which program register a given hardware constant
+	 * belongs to.
+	 */
+	struct prog_src_register constant[PFS_NUM_CONST_REGS];
 	int const_nr;
 
 	int max_temp_idx;
@@ -806,10 +795,10 @@ struct r500_fragment_program {
 	GLcontext *ctx;
 	GLboolean translated;
 	GLboolean error;
-	
+
 	struct r500_fragment_program_external_state state;
 	struct r500_fragment_program_code code;
-	
+
 	GLboolean writes_depth;
 
 	GLuint optimization;
@@ -925,7 +914,6 @@ struct r300_context {
 	driTextureObject swapped;
 	int texture_depth;
 	float initialMaxAnisotropy;
-	float LODBias;
 
 	/* Clientdata textures;
 	 */

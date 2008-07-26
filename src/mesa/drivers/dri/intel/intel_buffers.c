@@ -197,7 +197,6 @@ intelSetBackClipRects(struct intel_context *intel)
    }
 }
 
-#ifdef I915
 static void
 intelUpdatePageFlipping(struct intel_context *intel,
 			GLint areaA, GLint areaB)
@@ -267,7 +266,6 @@ intelUpdatePageFlipping(struct intel_context *intel,
    intel_flip_renderbuffers(intel_fb);
    intel_draw_buffer(&intel->ctx, intel->ctx.DrawBuffer);
 }
-#endif /* I915 */
 
 /**
  * This will be called whenever the currently bound window is moved/resized.
@@ -318,9 +316,7 @@ intelWindowMoved(struct intel_context *intel)
       GLint areaB = driIntersectArea( drw_rect, planeB_rect );
       GLuint flags = dPriv->vblFlags;
 
-#ifdef I915
       intelUpdatePageFlipping(intel, areaA, areaB);
-#endif
 
       /* Update vblank info
        */
@@ -645,7 +641,6 @@ intel_wait_flips(struct intel_context *intel)
 static GLboolean
 intelPageFlip(const __DRIdrawablePrivate * dPriv)
 {
-#ifdef I915
    struct intel_context *intel;
    int ret;
    struct intel_framebuffer *intel_fb = dPriv->driverPrivate;
@@ -698,39 +693,7 @@ intelPageFlip(const __DRIdrawablePrivate * dPriv)
    intel_draw_buffer(&intel->ctx, &intel_fb->Base);
 
    return GL_TRUE;
-#else
-   return GL_FALSE;
-#endif
 }
-
-#if 0
-void
-intelSwapBuffers(__DRIdrawablePrivate * dPriv)
-{
-   if (dPriv->driverPrivate) {
-      const struct gl_framebuffer *fb
-         = (struct gl_framebuffer *) dPriv->driverPrivate;
-      if (fb->Visual.doubleBufferMode) {
-         GET_CURRENT_CONTEXT(ctx);
-         if (ctx && ctx->DrawBuffer == fb) {
-            _mesa_notifySwapBuffers(ctx);       /* flush pending rendering */
-         }
-         if (intel->doPageFlip) {
-            intelPageFlip(dPriv);
-         }
-         else {
-            intelCopyBuffer(dPriv);
-         }
-      }
-   }
-   else {
-      _mesa_problem(NULL,
-                    "dPriv has no gl_framebuffer pointer in intelSwapBuffers");
-   }
-}
-#else
-/* Trunk version:
- */
 
 static GLboolean
 intelScheduleSwap(__DRIdrawablePrivate * dPriv, GLboolean *missed_target)
@@ -755,9 +718,8 @@ intelScheduleSwap(__DRIdrawablePrivate * dPriv, GLboolean *missed_target)
 
    if (dPriv->vblFlags & VBLANK_FLAG_SYNC) {
       swap.seqtype |= DRM_VBLANK_NEXTONMISS;
-   } else if (interval == 0) {
+   } else if (interval == 0)
       return GL_FALSE;
-   }
 
    swap.drawable = dPriv->hHWDrawable;
    target = swap.sequence = dPriv->vblSeq + interval;
@@ -834,6 +796,15 @@ intelSwapBuffers(__DRIdrawablePrivate * dPriv)
          if (!intelScheduleSwap(dPriv, &missed_target)) {
 	    driWaitForVBlank(dPriv, &missed_target);
 
+	    /*
+	     * Update each buffer's vbl_pending so we don't get too out of
+	     * sync
+	     */
+	    intel_get_renderbuffer(&intel_fb->Base,
+				   BUFFER_BACK_LEFT)->vbl_pending = 
+		    intel_get_renderbuffer(&intel_fb->Base,
+					   BUFFER_FRONT_LEFT)->vbl_pending =
+		    dPriv->vblSeq;
 	    if (!intelPageFlip(dPriv)) {
 	       intelCopyBuffer(dPriv, NULL);
 	    }
@@ -856,7 +827,6 @@ intelSwapBuffers(__DRIdrawablePrivate * dPriv)
       fprintf(stderr, "%s: drawable has no context!\n", __FUNCTION__);
    }
 }
-#endif
 
 void
 intelCopySubBuffer(__DRIdrawablePrivate * dPriv, int x, int y, int w, int h)

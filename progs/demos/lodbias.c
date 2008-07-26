@@ -40,7 +40,7 @@
 
 static GLfloat Xrot = 0, Yrot = -30, Zrot = 0;
 static GLboolean Anim = GL_TRUE;
-static GLint Bias = 4, BiasStepSign = +1; /* ints avoid fp precision problem */
+static GLint Bias = 0, BiasStepSign = +1; /* ints avoid fp precision problem */
 static GLint BiasMin = -400, BiasMax = 400;
 
 

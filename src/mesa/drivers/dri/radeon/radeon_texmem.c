@@ -334,7 +334,7 @@ int radeonUploadTexImages( radeonContextPtr rmesa, radeonTexObjPtr t, GLuint fac
 {
    int numLevels;
 
-   if ( !t || t->base.totalSize == 0 )
+   if ( !t || t->base.totalSize == 0 || t->image_override )
       return 0;
 
    if ( RADEON_DEBUG & (DEBUG_TEXTURE|DEBUG_IOCTL) ) {

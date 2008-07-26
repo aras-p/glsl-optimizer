@@ -45,100 +45,28 @@ enum {
 	PROGRAM_BUILTIN = PROGRAM_FILE_MAX /**< not a real register, but a special swizzle constant */
 };
 
+enum {
+	OPCODE_REPL_ALPHA = MAX_OPCODE /**< used in paired instructions */
+};
+
 #define SWIZZLE_0000 MAKE_SWIZZLE4(SWIZZLE_ZERO, SWIZZLE_ZERO, SWIZZLE_ZERO, SWIZZLE_ZERO)
 #define SWIZZLE_1111 MAKE_SWIZZLE4(SWIZZLE_ONE, SWIZZLE_ONE, SWIZZLE_ONE, SWIZZLE_ONE)
 
 /**
- * A clause is simply a sequence of instructions that are executed
- * in order.
- */
-struct radeon_clause {
-	/**
-	 * Type of this clause, one of CLAUSE_XXX.
-	 */
-	int Type : 2;
-
-	/**
-	 * Pointer to an array of instructions.
-	 * The array is terminated by an OPCODE_END instruction.
-	 */
-	struct prog_instruction *Instructions;
-
-	/**
-	 * Number of instructions in this clause.
-	 */
-	int NumInstructions;
-
-	/**
-	 * Space reserved for instructions in this clause.
-	 */
-	int ReservedInstructions;
-};
-
-/**
- * A compile object, holding the current intermediate state during compilation.
- */
-struct radeon_compiler {
-	struct gl_program *Source;
-	GLcontext* Ctx;
-
-	/**
-	 * Number of clauses in this program.
-	 */
-	int NumClauses;
-
-	/**
-	 * Pointer to an array of NumClauses clauses.
-	 */
-	struct radeon_clause *Clauses;
-
-	/**
-	 * Number of registers in the PROGRAM_TEMPORARIES file.
-	 */
-	int NumTemporaries;
-};
-
-void radeonCompilerInit(
-	struct radeon_compiler *compiler,
-	GLcontext *ctx,
-	struct gl_program *source);
-void radeonCompilerCleanup(struct radeon_compiler *compiler);
-int radeonCompilerAllocateTemporary(struct radeon_compiler *compiler);
-void radeonCompilerDump(struct radeon_compiler *compiler);
-
-struct radeon_clause *radeonCompilerInsertClause(
-	struct radeon_compiler *compiler,
-	int position,
-	int type);
-void radeonCompilerEraseClauses(
-	struct radeon_compiler *compiler,
-	int start,
-	int end);
-
-struct prog_instruction* radeonClauseInsertInstructions(
-	struct radeon_compiler *compiler,
-	struct radeon_clause *clause,
-	int position, int count);
-
-/**
+ * Transformation context that is passed to local transformations.
  *
+ * Care must be taken with some operations during transformation,
+ * e.g. finding new temporary registers must use @ref radeonFindFreeTemporary
  */
-struct radeon_program_transform_context {
-	struct radeon_compiler *compiler;
-
-	/**
-	 * Destination clause where new instructions must be written.
-	 */
-	struct radeon_clause *dest;
-
-	/**
-	 * Original clause that is currently being transformed.
-	 */
-	struct radeon_clause *src;
+struct radeon_transform_context {
+	GLcontext *Ctx;
+	struct gl_program *Program;
+	struct prog_instruction *OldInstructions;
+	GLuint OldNumInstructions;
 };
 
 /**
- * A transformation that can be passed to \ref radeonClauseLinearTransform.
+ * A transformation that can be passed to \ref radeonLocalTransform.
  *
  * The function will be called once for each instruction.
  * It has to either emit the appropriate transformed code for the instruction
@@ -149,16 +77,23 @@ struct radeon_program_transform_context {
  */
 struct radeon_program_transformation {
 	GLboolean (*function)(
-		struct radeon_program_transform_context*,
+		struct radeon_transform_context*,
 		struct prog_instruction*,
 		void*);
 	void *userData;
 };
 
-void radeonClauseLocalTransform(
-	struct radeon_compiler *compiler,
-	struct radeon_clause *clause,
+void radeonLocalTransform(
+	GLcontext* ctx,
+	struct gl_program *program,
 	int num_transformations,
 	struct radeon_program_transformation* transformations);
+
+/**
+ * Find a usable free temporary register during program transformation
+ */
+GLint radeonFindFreeTemporary(struct radeon_transform_context *ctx);
+
+struct prog_instruction *radeonAppendInstructions(struct gl_program *program, int count);
 
 #endif

@@ -136,9 +136,10 @@ $(TOP)/$(LIB_DIR):
 
 # Make the library:
 $(TOP)/$(LIB_DIR)/$(GLU_LIB_NAME): $(OBJECTS)
-	$(TOP)/bin/mklib -o $(GLU_LIB) -linker '$(CXX)' -ldflags '$(LDFLAGS)' \
+	$(MKLIB) -o $(GLU_LIB) -linker '$(CXX)' -ldflags '$(LDFLAGS)' \
 		-major $(GLU_MAJOR) -minor $(GLU_MINOR) -patch $(GLU_TINY) \
 		-cplusplus $(MKLIB_OPTIONS) -install $(TOP)/$(LIB_DIR) \
+		-exports glu.exports \
 		$(GLU_LIB_DEPS) $(OBJECTS)
 
 

@@ -52,112 +52,45 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "xmlpool.h"
 
+
+static unsigned int translate_wrap_mode(GLenum wrapmode)
+{
+	switch(wrapmode) {
+	case GL_REPEAT: return R300_TX_REPEAT;
+	case GL_CLAMP: return R300_TX_CLAMP;
+	case GL_CLAMP_TO_EDGE: return R300_TX_CLAMP_TO_EDGE;
+	case GL_CLAMP_TO_BORDER: return R300_TX_CLAMP_TO_BORDER;
+	case GL_MIRRORED_REPEAT: return R300_TX_REPEAT | R300_TX_MIRRORED;
+	case GL_MIRROR_CLAMP_EXT: return R300_TX_CLAMP | R300_TX_MIRRORED;
+	case GL_MIRROR_CLAMP_TO_EDGE_EXT: return R300_TX_CLAMP_TO_EDGE | R300_TX_MIRRORED;
+	case GL_MIRROR_CLAMP_TO_BORDER_EXT: return R300_TX_CLAMP_TO_BORDER | R300_TX_MIRRORED;
+	default:
+		_mesa_problem(NULL, "bad wrap mode in %s", __FUNCTION__);
+		return 0;
+	}
+}
+
+
 /**
- * Set the texture wrap modes.
+ * Update the cached hardware registers based on the current texture wrap modes.
  *
  * \param t Texture object whose wrap modes are to be set
- * \param swrap Wrap mode for the \a s texture coordinate
- * \param twrap Wrap mode for the \a t texture coordinate
  */
-
-static void r300SetTexWrap(r300TexObjPtr t, GLenum swrap, GLenum twrap,
-			   GLenum rwrap)
+static void r300UpdateTexWrap(r300TexObjPtr t)
 {
-	unsigned long hw_swrap = 0, hw_twrap = 0, hw_qwrap = 0;
+	struct gl_texture_object *tObj = t->base.tObj;
 
 	t->filter &=
-	    ~(R300_TX_WRAP_S_MASK | R300_TX_WRAP_T_MASK | R300_TX_WRAP_Q_MASK);
+	    ~(R300_TX_WRAP_S_MASK | R300_TX_WRAP_T_MASK | R300_TX_WRAP_R_MASK);
 
-	switch (swrap) {
-	case GL_REPEAT:
-		hw_swrap |= R300_TX_REPEAT;
-		break;
-	case GL_CLAMP:
-		hw_swrap |= R300_TX_CLAMP;
-		break;
-	case GL_CLAMP_TO_EDGE:
-		hw_swrap |= R300_TX_CLAMP_TO_EDGE;
-		break;
-	case GL_CLAMP_TO_BORDER:
-		hw_swrap |= R300_TX_CLAMP_TO_BORDER;
-		break;
-	case GL_MIRRORED_REPEAT:
-		hw_swrap |= R300_TX_REPEAT | R300_TX_MIRRORED;
-		break;
-	case GL_MIRROR_CLAMP_EXT:
-		hw_swrap |= R300_TX_CLAMP | R300_TX_MIRRORED;
-		break;
-	case GL_MIRROR_CLAMP_TO_EDGE_EXT:
-		hw_swrap |= R300_TX_CLAMP_TO_EDGE | R300_TX_MIRRORED;
-		break;
-	case GL_MIRROR_CLAMP_TO_BORDER_EXT:
-		hw_swrap |= R300_TX_CLAMP_TO_BORDER | R300_TX_MIRRORED;
-		break;
-	default:
-		_mesa_problem(NULL, "bad S wrap mode in %s", __FUNCTION__);
+	t->filter |= translate_wrap_mode(tObj->WrapS) << R300_TX_WRAP_S_SHIFT;
+
+	if (tObj->Target != GL_TEXTURE_1D) {
+		t->filter |= translate_wrap_mode(tObj->WrapT) << R300_TX_WRAP_T_SHIFT;
+
+		if (tObj->Target == GL_TEXTURE_3D)
+			t->filter |= translate_wrap_mode(tObj->WrapR) << R300_TX_WRAP_R_SHIFT;
 	}
-
-	switch (twrap) {
-	case GL_REPEAT:
-		hw_twrap |= R300_TX_REPEAT;
-		break;
-	case GL_CLAMP:
-		hw_twrap |= R300_TX_CLAMP;
-		break;
-	case GL_CLAMP_TO_EDGE:
-		hw_twrap |= R300_TX_CLAMP_TO_EDGE;
-		break;
-	case GL_CLAMP_TO_BORDER:
-		hw_twrap |= R300_TX_CLAMP_TO_BORDER;
-		break;
-	case GL_MIRRORED_REPEAT:
-		hw_twrap |= R300_TX_REPEAT | R300_TX_MIRRORED;
-		break;
-	case GL_MIRROR_CLAMP_EXT:
-		hw_twrap |= R300_TX_CLAMP | R300_TX_MIRRORED;
-		break;
-	case GL_MIRROR_CLAMP_TO_EDGE_EXT:
-		hw_twrap |= R300_TX_CLAMP_TO_EDGE | R300_TX_MIRRORED;
-		break;
-	case GL_MIRROR_CLAMP_TO_BORDER_EXT:
-		hw_twrap |= R300_TX_CLAMP_TO_BORDER | R300_TX_MIRRORED;
-		break;
-	default:
-		_mesa_problem(NULL, "bad T wrap mode in %s", __FUNCTION__);
-	}
-
-	switch (rwrap) {
-	case GL_REPEAT:
-		hw_qwrap |= R300_TX_REPEAT;
-		break;
-	case GL_CLAMP:
-		hw_qwrap |= R300_TX_CLAMP;
-		break;
-	case GL_CLAMP_TO_EDGE:
-		hw_qwrap |= R300_TX_CLAMP_TO_EDGE;
-		break;
-	case GL_CLAMP_TO_BORDER:
-		hw_qwrap |= R300_TX_CLAMP_TO_BORDER;
-		break;
-	case GL_MIRRORED_REPEAT:
-		hw_qwrap |= R300_TX_REPEAT | R300_TX_MIRRORED;
-		break;
-	case GL_MIRROR_CLAMP_EXT:
-		hw_qwrap |= R300_TX_CLAMP | R300_TX_MIRRORED;
-		break;
-	case GL_MIRROR_CLAMP_TO_EDGE_EXT:
-		hw_qwrap |= R300_TX_CLAMP_TO_EDGE | R300_TX_MIRRORED;
-		break;
-	case GL_MIRROR_CLAMP_TO_BORDER_EXT:
-		hw_qwrap |= R300_TX_CLAMP_TO_BORDER | R300_TX_MIRRORED;
-		break;
-	default:
-		_mesa_problem(NULL, "bad R wrap mode in %s", __FUNCTION__);
-	}
-
-	t->filter |= hw_swrap << R300_TX_WRAP_S_SHIFT;
-	t->filter |= hw_twrap << R300_TX_WRAP_T_SHIFT;
-	t->filter |= hw_qwrap << R300_TX_WRAP_Q_SHIFT;
 }
 
 static GLuint aniso_filter(GLfloat anisotropy)
@@ -242,20 +175,6 @@ static void r300SetTexBorderColor(r300TexObjPtr t, GLubyte c[4])
 	t->pp_border_color = PACK_COLOR_8888(c[3], c[0], c[1], c[2]);
 }
 
-static void r300SetTexLodBias(r300TexObjPtr t, GLfloat bias)
-{
-	GLuint b;
-	b = (unsigned int)fabsf(ceilf(bias*31));
-	if (signbit(bias)) {
-		b ^= 0x3ff; /* 10 bits */
-	}
-	b <<= 3;
-	b &= R300_LOD_BIAS_MASK;
-
-	t->filter_1 &= ~R300_LOD_BIAS_MASK;
-	t->filter_1 |= b;
-}
-
 /**
  * Allocate space for and load the mesa images into the texture memory block.
  * This will happen before drawing with a new texture, or drawing with a
@@ -281,7 +200,7 @@ static r300TexObjPtr r300AllocTexObj(struct gl_texture_object *texObj)
 
 		make_empty_list(&t->base);
 
-		r300SetTexWrap(t, texObj->WrapS, texObj->WrapT, texObj->WrapR);
+		r300UpdateTexWrap(t);
 		r300SetTexFilter(t, texObj->MinFilter, texObj->MagFilter, texObj->MaxAnisotropy);
 		r300SetTexBorderColor(t, texObj->_BorderChan);
 	}
@@ -979,72 +898,6 @@ r300TexSubImage3D(GLcontext * ctx, GLenum target, GLint level,
 	t->dirty_images[0] |= (1 << level);
 }
 
-/* This feels like a prime target for code reuse, so I'm putting it here
- * instead of inlining it in TexEnv. */
-static GLenum r300TexUnitTarget(struct gl_texture_unit *unit) {
-	if (unit->_ReallyEnabled & (TEXTURE_RECT_BIT)) {
-		return GL_TEXTURE_RECTANGLE_NV;
-	} else if (unit->_ReallyEnabled & (TEXTURE_1D_BIT)) {
-		return GL_TEXTURE_1D;
-	} else if (unit->_ReallyEnabled & (TEXTURE_2D_BIT)) {
-		return GL_TEXTURE_2D;
-	} else if (unit->_ReallyEnabled & (TEXTURE_3D_BIT)) {
-		return GL_TEXTURE_3D;
-	} else if (unit->_ReallyEnabled & (TEXTURE_CUBE_BIT)) {
-		return GL_TEXTURE_CUBE_MAP;
-	}
-	if (unit->Enabled & (TEXTURE_RECT_BIT)) {
-		return GL_TEXTURE_RECTANGLE_NV;
-	} else if (unit->Enabled & (TEXTURE_1D_BIT)) {
-		return GL_TEXTURE_1D;
-	} else if (unit->Enabled & (TEXTURE_2D_BIT)) {
-		return GL_TEXTURE_2D;
-	} else if (unit->Enabled & (TEXTURE_3D_BIT)) {
-		return GL_TEXTURE_3D;
-	} else if (unit->Enabled & (TEXTURE_CUBE_BIT)) {
-		return GL_TEXTURE_CUBE_MAP;
-	}
-	return 0;
-}
-
-static void r300TexEnv(GLcontext * ctx, GLenum target,
-		       GLenum pname, const GLfloat * param)
-{
-	r300ContextPtr rmesa = R300_CONTEXT(ctx);
-	if (RADEON_DEBUG & DEBUG_STATE) {
-		fprintf(stderr, "%s( %s )\n",
-			__FUNCTION__, _mesa_lookup_enum_by_nr(pname));
-	}
-
-	/* This is incorrect: Need to maintain this data for each of
-	 * GL_TEXTURE_{123}D, GL_TEXTURE_RECTANGLE_NV, etc, and switch
-	 * between them according to _ReallyEnabled.
-	 */
-	switch (pname) {
-	case GL_TEXTURE_LOD_BIAS_EXT: {
-		/* Needs to be relocated in order to make sure we got the right tmu */
-		GLfloat bias, min;
-
-		/* The R300's LOD bias is a signed 2's complement value with a
-		 * range of -16.0 <= bias < 16.0.
-		 *
-		 * NOTE: Add a small bias to the bias for conform mipsel.c test.
-		 */
-		bias = *param + .01;
-		min = driQueryOptionb(&rmesa->radeon.optionCache,
-			"no_neg_lod_bias") ? 0.0 : -16.0;
-		bias = CLAMP(bias, min, 16.0);
-
-		rmesa->LODBias = bias;
-
-		break;
-	}
-
-	default:
-		return;
-	}
-}
-
 /**
  * Changes variables and flags for a state update, which will happen at the
  * next UpdateTextureState
@@ -1071,7 +924,7 @@ static void r300TexParameter(GLcontext * ctx, GLenum target,
 	case GL_TEXTURE_WRAP_S:
 	case GL_TEXTURE_WRAP_T:
 	case GL_TEXTURE_WRAP_R:
-		r300SetTexWrap(t, texObj->WrapS, texObj->WrapT, texObj->WrapR);
+		r300UpdateTexWrap(t);
 		break;
 
 	case GL_TEXTURE_BORDER_COLOR:
@@ -1167,10 +1020,6 @@ static struct gl_texture_object *r300NewTextureObject(GLcontext * ctx,
 		return NULL;
 	obj->MaxAnisotropy = rmesa->initialMaxAnisotropy;
 
-	/* Attempt to fill LOD bias, if previously set.
-	 * Should start at 0.0, which won't affect the HW. */
-	obj->LodBias = rmesa->LODBias;
-
 	r300AllocTexObj(obj);
 	return obj;
 }
@@ -1192,7 +1041,6 @@ void r300InitTextureFuncs(struct dd_function_table *functions)
 	functions->DeleteTexture = r300DeleteTexture;
 	functions->IsTextureResident = driIsTextureResident;
 
-	functions->TexEnv = r300TexEnv;
 	functions->TexParameter = r300TexParameter;
 
 	functions->CompressedTexImage2D = r300CompressedTexImage2D;

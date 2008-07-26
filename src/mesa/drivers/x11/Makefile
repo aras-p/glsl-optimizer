@@ -55,11 +55,10 @@ default: $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME)
 
 
 $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME): $(OBJECTS) $(CORE_MESA)
-	@ $(TOP)/bin/mklib -o $(GL_LIB) \
-		-linker '$(CC)' -ldflags '$(LDFLAGS)' \
+	@ $(MKLIB) -o $(GL_LIB) -linker '$(CC)' -ldflags '$(LDFLAGS)' \
 		-major $(GL_MAJOR) -minor $(GL_MINOR) -patch $(GL_TINY) \
-		-install $(TOP)/$(LIB_DIR) \
-		$(MKLIB_OPTIONS) $(GL_LIB_DEPS) $(OBJECTS) $(CORE_MESA)
+		-install $(TOP)/$(LIB_DIR) $(MKLIB_OPTIONS) \
+		$(GL_LIB_DEPS) $(OBJECTS) $(CORE_MESA)
 
 
 

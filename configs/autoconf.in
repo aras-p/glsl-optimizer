@@ -27,10 +27,10 @@ ASM_API = @ASM_API@
 
 # Misc tools and flags
 MAKE = @MAKE@
+SHELL = @SHELL@
 MKLIB_OPTIONS = @MKLIB_OPTIONS@
 MKDEP = @MKDEP@
 MKDEP_OPTIONS = @MKDEP_OPTIONS@
-INSTALL = $(TOP)/bin/minstall
 
 # Python and flags (generally only needed by the developers)
 PYTHON2 = python
@@ -66,6 +66,10 @@ USING_EGL = @USING_EGL@
 # Dependencies
 X11_INCLUDES = @X11_INCLUDES@
 
+# GLw motif setup
+GLW_SOURCES = @GLW_SOURCES@
+MOTIF_CFLAGS = @MOTIF_CFLAGS@
+
 # Library/program dependencies
 GL_LIB_DEPS = $(EXTRA_LIB_PATH) @GL_LIB_DEPS@
 OSMESA_LIB_DEPS = -L$(TOP)/$(LIB_DIR) @OSMESA_MESA_DEPS@ \
@@ -89,15 +93,15 @@ EXPAT_INCLUDES = @EXPAT_INCLUDES@
 prefix = @prefix@
 exec_prefix = @exec_prefix@
 libdir = @libdir@
+includedir = @includedir@
 
 # Installation directories (for make install)
 INSTALL_DIR = $(prefix)
+INSTALL_LIB_DIR = $(libdir)
+INSTALL_INC_DIR = $(includedir)
 
 # DRI installation directories
 DRI_DRIVER_INSTALL_DIR = @DRI_DRIVER_INSTALL_DIR@
 
 # Where libGL will look for DRI hardware drivers
 DRI_DRIVER_SEARCH_DIR = $(DRI_DRIVER_INSTALL_DIR)
-
-# Additional per-platform configuration settings
-@EXTRA_CONFIG_LINES@

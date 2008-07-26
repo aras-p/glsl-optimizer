@@ -45,36 +45,6 @@
 #include "r300_state.h"
 #include "radeon_program.h"
 
-/* supported hw opcodes */
-#define PFS_OP_MAD 0
-#define PFS_OP_DP3 1
-#define PFS_OP_DP4 2
-#define PFS_OP_MIN 3
-#define PFS_OP_MAX 4
-#define PFS_OP_CMP 5
-#define PFS_OP_FRC 6
-#define PFS_OP_EX2 7
-#define PFS_OP_LG2 8
-#define PFS_OP_RCP 9
-#define PFS_OP_RSQ 10
-#define PFS_OP_REPL_ALPHA 11
-#define PFS_OP_CMPH 12
-#define MAX_PFS_OP 12
-
-#define PFS_FLAG_SAT	(1 << 0)
-#define PFS_FLAG_ABS	(1 << 1)
-
-#define ARG_NEG			(1 << 5)
-#define ARG_ABS			(1 << 6)
-#define ARG_MASK		(127 << 0)
-#define ARG_STRIDE		7
-#define SRC_CONST		(1 << 5)
-#define SRC_MASK		(63 << 0)
-#define SRC_STRIDE		6
-
-#define DRI_CONF_FP_OPTIMIZATION_SPEED   0
-#define DRI_CONF_FP_OPTIMIZATION_QUALITY 1
-
 struct r500_fragment_program;
 
 extern void r500TranslateFragmentShader(r300ContextPtr r300,
@@ -84,7 +54,7 @@ struct r500_fragment_program_compiler {
 	r300ContextPtr r300;
 	struct r500_fragment_program *fp;
 	struct r500_fragment_program_code *code;
-	struct radeon_compiler compiler;
+	struct gl_program *program;
 };
 
 extern GLboolean r500FragmentProgramEmit(struct r500_fragment_program_compiler *compiler);

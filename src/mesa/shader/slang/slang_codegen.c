@@ -707,6 +707,64 @@ _slang_find_node_type(slang_operation *oper, slang_operation_type type)
 }
 
 
+/**
+ * Count the number of operations of the given time rooted at 'oper'.
+ */
+static GLuint
+_slang_count_node_type(slang_operation *oper, slang_operation_type type)
+{
+   GLuint i, count = 0;
+   if (oper->type == type) {
+      return 1;
+   }
+   for (i = 0; i < oper->num_children; i++) {
+      count += _slang_count_node_type(&oper->children[i], type);
+   }
+   return count;
+}
+
+
+/**
+ * Check if the 'return' statement found under 'oper' is a "tail return"
+ * that can be no-op'd.  For example:
+ *
+ * void func(void)
+ * {
+ *    .. do something ..
+ *    return;   // this is a no-op
+ * }
+ *
+ * This is used when determining if a function can be inlined.  If the
+ * 'return' is not the last statement, we can't inline the function since
+ * we still need the semantic behaviour of the 'return' but we don't want
+ * to accidentally return from the _calling_ function.  We'd need to use an
+ * unconditional branch, but we don't have such a GPU instruction (not
+ * always, at least).
+ */
+static GLboolean
+_slang_is_tail_return(const slang_operation *oper)
+{
+   GLuint k = oper->num_children;
+
+   while (k > 0) {
+      const slang_operation *last = &oper->children[k - 1];
+      if (last->type == SLANG_OPER_RETURN)
+         return GL_TRUE;
+      else if (last->type == SLANG_OPER_IDENTIFIER ||
+               last->type == SLANG_OPER_LABEL)
+         k--; /* try prev child */
+      else if (last->type == SLANG_OPER_BLOCK_NO_NEW_SCOPE ||
+               last->type == SLANG_OPER_BLOCK_NEW_SCOPE)
+         /* try sub-children */
+         return _slang_is_tail_return(last);
+      else
+         break;
+   }
+
+   return GL_FALSE;
+}
+
+
 static void
 slang_resolve_variable(slang_operation *oper)
 {
@@ -1207,38 +1265,62 @@ _slang_gen_function_call(slang_assemble_ctx *A, slang_function *fun,
    }
    else {
       /* non-assembly function */
+      /* We always generate an "inline-able" block of code here.
+       * We may either:
+       *  1. insert the inline code
+       *  2. Generate a call to the "inline" code as a subroutine
+       */
+
+
+      slang_operation *ret = NULL;
+
       inlined = slang_inline_function_call(A, fun, oper, dest);
-      if (inlined && _slang_find_node_type(inlined, SLANG_OPER_RETURN)) {
-         slang_operation *callOper;
-         /* The function we're calling has one or more 'return' statements.
-          * So, we can't truly inline this function because we need to
-          * implement 'return' with RET (and CAL).
-          * Nevertheless, we performed "inlining" to make a new instance
-          * of the function body to deal with static register allocation.
-          *
-          * XXX check if there's one 'return' and if it's the very last
-          * statement in the function - we can optimize that case.
-          */
-         assert(inlined->type == SLANG_OPER_BLOCK_NEW_SCOPE ||
-                inlined->type == SLANG_OPER_SEQUENCE);
-         if (_slang_function_has_return_value(fun) && !dest) {
-            assert(inlined->children[0].type == SLANG_OPER_VARIABLE_DECL);
-            assert(inlined->children[2].type == SLANG_OPER_IDENTIFIER);
-            callOper = &inlined->children[1];
+      if (!inlined)
+         return NULL;
+
+      ret = _slang_find_node_type(inlined, SLANG_OPER_RETURN);
+      if (ret) {
+         /* check if this is a "tail" return */
+         if (_slang_count_node_type(inlined, SLANG_OPER_RETURN) == 1 &&
+             _slang_is_tail_return(inlined)) {
+            /* The only RETURN is the last stmt in the function, no-op it
+             * and inline the function body.
+             */
+            ret->type = SLANG_OPER_NONE;
          }
          else {
-            callOper = inlined;
+            slang_operation *callOper;
+            /* The function we're calling has one or more 'return' statements.
+             * So, we can't truly inline this function because we need to
+             * implement 'return' with RET (and CAL).
+             * Nevertheless, we performed "inlining" to make a new instance
+             * of the function body to deal with static register allocation.
+             *
+             * XXX check if there's one 'return' and if it's the very last
+             * statement in the function - we can optimize that case.
+             */
+            assert(inlined->type == SLANG_OPER_BLOCK_NEW_SCOPE ||
+                   inlined->type == SLANG_OPER_SEQUENCE);
+
+            if (_slang_function_has_return_value(fun) && !dest) {
+               assert(inlined->children[0].type == SLANG_OPER_VARIABLE_DECL);
+               assert(inlined->children[2].type == SLANG_OPER_IDENTIFIER);
+               callOper = &inlined->children[1];
+            }
+            else {
+               callOper = inlined;
+            }
+            callOper->type = SLANG_OPER_NON_INLINED_CALL;
+            callOper->fun = fun;
+            callOper->label = _slang_label_new_unique((char*) fun->header.a_name);
          }
-         callOper->type = SLANG_OPER_NON_INLINED_CALL;
-         callOper->fun = fun;
-         callOper->label = _slang_label_new_unique((char*) fun->header.a_name);
       }
    }
 
    if (!inlined)
       return NULL;
 
-   /* Replace the function call with the inlined block */
+   /* Replace the function call with the inlined block (or new CALL stmt) */
    slang_operation_destruct(oper);
    *oper = *inlined;
    _slang_free(inlined);
@@ -1273,43 +1355,185 @@ slang_find_asm_info(const char *name)
 }
 
 
-static GLuint
-make_writemask(const char *field)
+/**
+ * Some write-masked assignments are simple, but others are hard.
+ * Simple example:
+ *    vec3 v;
+ *    v.xy = vec2(a, b);
+ * Hard example:
+ *    vec3 v;
+ *    v.zy = vec2(a, b);
+ * this gets transformed/swizzled into:
+ *    v.zy = vec2(a, b).*yx*         (* = don't care)
+ * This function helps to determine simple vs. non-simple.
+ */
+static GLboolean
+_slang_simple_writemask(GLuint writemask, GLuint swizzle)
 {
-   GLuint mask = 0x0;
-   while (*field) {
-      switch (*field) {
-      case 'x':
-      case 's':
-      case 'r':
-         mask |= WRITEMASK_X;
+   switch (writemask) {
+   case WRITEMASK_X:
+      return GET_SWZ(swizzle, 0) == SWIZZLE_X;
+   case WRITEMASK_Y:
+      return GET_SWZ(swizzle, 1) == SWIZZLE_Y;
+   case WRITEMASK_Z:
+      return GET_SWZ(swizzle, 2) == SWIZZLE_Z;
+   case WRITEMASK_W:
+      return GET_SWZ(swizzle, 3) == SWIZZLE_W;
+   case WRITEMASK_XY:
+      return (GET_SWZ(swizzle, 0) == SWIZZLE_X)
+         && (GET_SWZ(swizzle, 1) == SWIZZLE_Y);
+   case WRITEMASK_XYZ:
+      return (GET_SWZ(swizzle, 0) == SWIZZLE_X)
+         && (GET_SWZ(swizzle, 1) == SWIZZLE_Y)
+         && (GET_SWZ(swizzle, 2) == SWIZZLE_Z);
+   case WRITEMASK_XYZW:
+      return swizzle == SWIZZLE_NOOP;
+   default:
+      return GL_FALSE;
+   }
+}
+
+
+/**
+ * Convert the given swizzle into a writemask.  In some cases this
+ * is trivial, in other cases, we'll need to also swizzle the right
+ * hand side to put components in the right places.
+ * \param swizzle  the incoming swizzle
+ * \param writemaskOut  returns the writemask
+ * \param swizzleOut  swizzle to apply to the right-hand-side
+ * \return GL_FALSE for simple writemasks, GL_TRUE for non-simple
+ */
+static GLboolean
+swizzle_to_writemask(GLuint swizzle,
+                     GLuint *writemaskOut, GLuint *swizzleOut)
+{
+   GLuint mask = 0x0, newSwizzle[4];
+   GLint i, size;
+
+   /* make new dst writemask, compute size */
+   for (i = 0; i < 4; i++) {
+      const GLuint swz = GET_SWZ(swizzle, i);
+      if (swz == SWIZZLE_NIL) {
+         /* end */
          break;
-      case 'y':
-      case 't':
-      case 'g':
-         mask |= WRITEMASK_Y;
+      }
+      assert(swz >= 0 && swz <= 3);
+      mask |= (1 << swz);
+   }
+   assert(mask <= 0xf);
+   size = i;  /* number of components in mask/swizzle */
+
+   *writemaskOut = mask;
+
+   /* make new src swizzle, by inversion */
+   for (i = 0; i < 4; i++) {
+      newSwizzle[i] = i; /*identity*/
+   }
+   for (i = 0; i < size; i++) {
+      const GLuint swz = GET_SWZ(swizzle, i);
+      newSwizzle[swz] = i;
+   }
+   *swizzleOut = MAKE_SWIZZLE4(newSwizzle[0],
+                               newSwizzle[1],
+                               newSwizzle[2],
+                               newSwizzle[3]);
+
+   if (_slang_simple_writemask(mask, *swizzleOut)) {
+      if (size >= 1)
+         assert(GET_SWZ(*swizzleOut, 0) == SWIZZLE_X);
+      if (size >= 2)
+         assert(GET_SWZ(*swizzleOut, 1) == SWIZZLE_Y);
+      if (size >= 3)
+         assert(GET_SWZ(*swizzleOut, 2) == SWIZZLE_Z);
+      if (size >= 4)
+         assert(GET_SWZ(*swizzleOut, 3) == SWIZZLE_W);
+      return GL_TRUE;
+   }
+   else
+      return GL_FALSE;
+}
+
+
+/**
+ * Recursively traverse 'oper' to produce a swizzle mask in the event
+ * of any vector subscripts and swizzle suffixes.
+ * Ex:  for "vec4 v",  "v[2].x" resolves to v.z
+ */
+static GLuint
+resolve_swizzle(const slang_operation *oper)
+{
+   if (oper->type == SLANG_OPER_FIELD) {
+      /* writemask from .xyzw suffix */
+      slang_swizzle swz;
+      if (_slang_is_swizzle((char*) oper->a_id, 4, &swz)) {
+         GLuint swizzle = MAKE_SWIZZLE4(swz.swizzle[0],
+                                        swz.swizzle[1],
+                                        swz.swizzle[2],
+                                        swz.swizzle[3]);
+         GLuint child_swizzle = resolve_swizzle(&oper->children[0]);
+         GLuint s = _slang_swizzle_swizzle(child_swizzle, swizzle);
+         return s;
+      }
+      else
+         return SWIZZLE_XYZW;
+   }
+   else if (oper->type == SLANG_OPER_SUBSCRIPT &&
+            oper->children[1].type == SLANG_OPER_LITERAL_INT) {
+      /* writemask from [index] */
+      GLuint child_swizzle = resolve_swizzle(&oper->children[0]);
+      GLuint i = (GLuint) oper->children[1].literal[0];
+      GLuint swizzle;
+      GLuint s;
+      switch (i) {
+      case 0:
+         swizzle = SWIZZLE_XXXX;
          break;
-      case 'z':
-      case 'p':
-      case 'b':
-         mask |= WRITEMASK_Z;
+      case 1:
+         swizzle = SWIZZLE_YYYY;
          break;
-      case 'w':
-      case 'q':
-      case 'a':
-         mask |= WRITEMASK_W;
+      case 2:
+         swizzle = SWIZZLE_ZZZZ;
+         break;
+      case 3:
+         swizzle = SWIZZLE_WWWW;
          break;
       default:
-         _mesa_problem(NULL, "invalid writemask in make_writemask()");
-         return 0;
+         swizzle = SWIZZLE_XYZW;
       }
-      field++;
+      s = _slang_swizzle_swizzle(child_swizzle, swizzle);
+      return s;
    }
-   if (mask == 0x0)
-      return WRITEMASK_XYZW;
-   else
-      return mask;
+   else {
+      return SWIZZLE_XYZW;
+   }
 }
+
+
+/**
+ * As above, but produce a writemask.
+ */
+static GLuint
+resolve_writemask(const slang_operation *oper)
+{
+   GLuint swizzle = resolve_swizzle(oper);
+   GLuint writemask, swizzleOut;
+   swizzle_to_writemask(swizzle, &writemask, &swizzleOut);
+   return writemask;
+}
+
+
+/**
+ * Recursively descend through swizzle nodes to find the node's storage info.
+ */
+static slang_ir_storage *
+get_store(const slang_ir_node *n)
+{
+   if (n->Opcode == IR_SWIZZLE) {
+      return get_store(n->Children[0]);
+   }
+   return n->Store;
+}
+
 
 
 /**
@@ -1366,18 +1590,18 @@ _slang_gen_asm(slang_assemble_ctx *A, slang_operation *oper,
       slang_ir_node *n0;
 
       dest_oper = &oper->children[0];
-      while (dest_oper->type == SLANG_OPER_FIELD) {
-         /* writemask */
-         writemask &= make_writemask((char*) dest_oper->a_id);
-         dest_oper = &dest_oper->children[0];
-      }
+
+      writemask = resolve_writemask(dest_oper);
 
       n0 = _slang_gen_operation(A, dest_oper);
-      assert(n0->Var);
-      assert(n0->Store);
+      if (!n0)
+         return NULL;
+
       assert(!n->Store);
-      n->Store = n0->Store;
+      n->Store = get_store(n0);
       n->Writemask = writemask;
+
+      assert(n->Store->File != PROGRAM_UNDEFINED);
 
       _slang_free(n0);
    }
@@ -1847,6 +2071,14 @@ _slang_gen_var_decl(slang_assemble_ctx *A, slang_variable *var)
 
       n->Store->File = PROGRAM_TEMPORARY;
       n->Store->Size = _slang_sizeof_type_specifier(&n->Var->type.specifier);
+      if (var->array_len > 0) {
+         /* this is an array */
+         /* round up element size to mult of 4 */
+         GLint sz = (n->Store->Size + 3) & ~3;
+         /* mult by array size */
+         sz *= var->array_len;
+         n->Store->Size = sz;
+      }
       A->program->NumTemporaries++;
       assert(n->Store->Size > 0);
    }
@@ -2123,105 +2355,6 @@ _slang_gen_variable(slang_assemble_ctx * A, slang_operation *oper)
       return NULL;
    }
    return n;
-}
-
-
-/**
- * Some write-masked assignments are simple, but others are hard.
- * Simple example:
- *    vec3 v;
- *    v.xy = vec2(a, b);
- * Hard example:
- *    vec3 v;
- *    v.zy = vec2(a, b);
- * this gets transformed/swizzled into:
- *    v.zy = vec2(a, b).*yx*         (* = don't care)
- * This function helps to determine simple vs. non-simple.
- */
-static GLboolean
-_slang_simple_writemask(GLuint writemask, GLuint swizzle)
-{
-   switch (writemask) {
-   case WRITEMASK_X:
-      return GET_SWZ(swizzle, 0) == SWIZZLE_X;
-   case WRITEMASK_Y:
-      return GET_SWZ(swizzle, 1) == SWIZZLE_Y;
-   case WRITEMASK_Z:
-      return GET_SWZ(swizzle, 2) == SWIZZLE_Z;
-   case WRITEMASK_W:
-      return GET_SWZ(swizzle, 3) == SWIZZLE_W;
-   case WRITEMASK_XY:
-      return (GET_SWZ(swizzle, 0) == SWIZZLE_X)
-         && (GET_SWZ(swizzle, 1) == SWIZZLE_Y);
-   case WRITEMASK_XYZ:
-      return (GET_SWZ(swizzle, 0) == SWIZZLE_X)
-         && (GET_SWZ(swizzle, 1) == SWIZZLE_Y)
-         && (GET_SWZ(swizzle, 2) == SWIZZLE_Z);
-   case WRITEMASK_XYZW:
-      return swizzle == SWIZZLE_NOOP;
-   default:
-      return GL_FALSE;
-   }
-}
-
-
-/**
- * Convert the given swizzle into a writemask.  In some cases this
- * is trivial, in other cases, we'll need to also swizzle the right
- * hand side to put components in the right places.
- * \param swizzle  the incoming swizzle
- * \param writemaskOut  returns the writemask
- * \param swizzleOut  swizzle to apply to the right-hand-side
- * \return GL_FALSE for simple writemasks, GL_TRUE for non-simple
- */
-static GLboolean
-swizzle_to_writemask(GLuint swizzle,
-                     GLuint *writemaskOut, GLuint *swizzleOut)
-{
-   GLuint mask = 0x0, newSwizzle[4];
-   GLint i, size;
-
-   /* make new dst writemask, compute size */
-   for (i = 0; i < 4; i++) {
-      const GLuint swz = GET_SWZ(swizzle, i);
-      if (swz == SWIZZLE_NIL) {
-         /* end */
-         break;
-      }
-      assert(swz >= 0 && swz <= 3);
-      mask |= (1 << swz);
-   }
-   assert(mask <= 0xf);
-   size = i;  /* number of components in mask/swizzle */
-
-   *writemaskOut = mask;
-
-   /* make new src swizzle, by inversion */
-   for (i = 0; i < 4; i++) {
-      newSwizzle[i] = i; /*identity*/
-   }
-   for (i = 0; i < size; i++) {
-      const GLuint swz = GET_SWZ(swizzle, i);
-      newSwizzle[swz] = i;
-   }
-   *swizzleOut = MAKE_SWIZZLE4(newSwizzle[0],
-                               newSwizzle[1],
-                               newSwizzle[2],
-                               newSwizzle[3]);
-
-   if (_slang_simple_writemask(mask, *swizzleOut)) {
-      if (size >= 1)
-         assert(GET_SWZ(*swizzleOut, 0) == SWIZZLE_X);
-      if (size >= 2)
-         assert(GET_SWZ(*swizzleOut, 1) == SWIZZLE_Y);
-      if (size >= 3)
-         assert(GET_SWZ(*swizzleOut, 2) == SWIZZLE_Z);
-      if (size >= 4)
-         assert(GET_SWZ(*swizzleOut, 3) == SWIZZLE_W);
-      return GL_TRUE;
-   }
-   else
-      return GL_FALSE;
 }
 
 
@@ -3024,7 +3157,7 @@ _slang_codegen_function(slang_assemble_ctx * A, slang_function * fun)
 
    if (_mesa_strcmp((char *) fun->header.a_name, "main") != 0) {
       /* we only really generate code for main, all other functions get
-       * inlined.
+       * inlined or codegen'd upon an actual call.
        */
 #if 0
       /* do some basic error checking though */

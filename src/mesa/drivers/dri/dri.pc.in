@@ -1,0 +1,10 @@
+prefix=@INSTALL_DIR@
+exec_prefix=${prefix}
+libdir=@INSTALL_LIB_DIR@
+includedir=@INSTALL_INC_DIR@
+dridriverdir=@DRI_DRIVER_DIR@
+
+Name: dri
+Description: Direct Rendering Infrastructure
+Version: @VERSION@
+Cflags: -I${includedir}

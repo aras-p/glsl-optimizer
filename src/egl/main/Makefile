@@ -46,7 +46,8 @@ default: depend library
 library: $(TOP)/$(LIB_DIR)/libEGL.so
 
 $(TOP)/$(LIB_DIR)/libEGL.so: $(OBJECTS)
-	$(TOP)/bin/mklib -o EGL -ldflags '$(LDFLAGS)' -major 1 -minor 0 \
+	$(MKLIB) -o EGL -linker '$(CC)' -ldflags '$(LDFLAGS)' \
+		-major 1 -minor 0 \
 		-install $(TOP)/$(LIB_DIR) -ldl $(OBJECTS)
 
 

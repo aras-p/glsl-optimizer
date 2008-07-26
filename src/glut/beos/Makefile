@@ -83,10 +83,10 @@ $(TOP)/$(LIB_DIR):
 
 # Make the library
 $(TOP)/$(LIB_DIR)/$(GLUT_LIB_NAME): depend $(OBJECTS)
-	@$(TOP)/bin/mklib -o $(GLUT_LIB) -ldflags '$(LDFLAGS)' \
+	@$(MKLIB) -o $(GLUT_LIB) -linker '$(CC)' -ldflags '$(LDFLAGS)' \
 		-major $(GLUT_MAJOR) -minor $(GLUT_MINOR) -patch $(GLUT_TINY) \
-		-install $(TOP)/$(LIB_DIR) $(MKLIB_OPTIONS) $(GLUT_LIB_DEPS) \
-		$(OBJECTS)
+		-install $(TOP)/$(LIB_DIR) $(MKLIB_OPTIONS) \
+		$(GLUT_LIB_DEPS) $(OBJECTS)
 
 clean:
 	-rm -f *.o

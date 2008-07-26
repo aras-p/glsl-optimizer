@@ -27,6 +27,7 @@ PROGS = \
 	cubemap \
 	drawpix \
 	engine \
+	fbo_firecube \
 	fire \
 	fogcoord \
 	fplight \

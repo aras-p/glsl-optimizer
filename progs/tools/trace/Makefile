@@ -16,7 +16,7 @@ TRACER = gltrace.so
 default: $(TRACER)
 
 $(TRACER): $(OBJECTS)
-	$(TOP)/bin/mklib -o $(TRACER) -noprefix -cplusplus \
+	$(MKLIB) -o $(TRACER) -noprefix -cplusplus -linker '$(CXX)' \
 		-ldflags '$(LDFLAGS)' $(MKLIB_OPTIONS) $(OBJECTS)
 
 gltrace.cc: gltrace.py

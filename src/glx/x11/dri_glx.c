@@ -635,7 +635,7 @@ static __GLXDRIscreen *driCreateScreen(__GLXscreenConfigs *psc, int screen,
  	return NULL;
     }
 
-    driBindExtensions(psc);
+    driBindExtensions(psc, 0);
 
     psp->destroyScreen = driDestroyScreen;
     psp->createContext = driCreateContext;

@@ -174,10 +174,10 @@ ultrix-gcc:
 
 # Rules for making release tarballs
 
-DIRECTORY = Mesa-7.1-rc1
-LIB_NAME = MesaLib-7.1-rc1
-DEMO_NAME = MesaDemos-7.1-rc1
-GLUT_NAME = MesaGLUT-7.1-rc1
+DIRECTORY = Mesa-7.1-rc3
+LIB_NAME = MesaLib-7.1-rc3
+DEMO_NAME = MesaDemos-7.1-rc3
+GLUT_NAME = MesaGLUT-7.1-rc3
 
 MAIN_FILES = \
 	$(DIRECTORY)/Makefile*						\
@@ -258,6 +258,7 @@ MAIN_FILES = \
 	$(DIRECTORY)/src/mesa/tnl_dd/*.[ch]				\
 	$(DIRECTORY)/src/mesa/tnl_dd/imm/*.[ch]				\
 	$(DIRECTORY)/src/mesa/tnl_dd/imm/NOTES.imm			\
+	$(DIRECTORY)/src/mesa/drivers/Makefile				\
 	$(DIRECTORY)/src/mesa/drivers/beos/*.cpp			\
 	$(DIRECTORY)/src/mesa/drivers/beos/Makefile			\
 	$(DIRECTORY)/src/mesa/drivers/common/*.[ch]			\
@@ -265,6 +266,7 @@ MAIN_FILES = \
 	$(DIRECTORY)/src/mesa/drivers/directfb/*.[ch]			\
 	$(DIRECTORY)/src/mesa/drivers/directfb/Makefile			\
 	$(DIRECTORY)/src/mesa/drivers/dos/*.[chS]			\
+	$(DIRECTORY)/src/mesa/drivers/fbdev/Makefile			\
 	$(DIRECTORY)/src/mesa/drivers/fbdev/glfbdev.c			\
 	$(DIRECTORY)/src/mesa/drivers/glide/*.[ch]			\
 	$(DIRECTORY)/src/mesa/drivers/ggi/*.[ch]			\
@@ -274,6 +276,7 @@ MAIN_FILES = \
 	$(DIRECTORY)/src/mesa/drivers/ggi/display/*.c			\
 	$(DIRECTORY)/src/mesa/drivers/ggi/display/fbdev.conf.in		\
 	$(DIRECTORY)/src/mesa/drivers/ggi/include/ggi/mesa/*.h		\
+	$(DIRECTORY)/src/mesa/drivers/osmesa/Makefile			\
 	$(DIRECTORY)/src/mesa/drivers/osmesa/Makefile.win		\
 	$(DIRECTORY)/src/mesa/drivers/osmesa/descrip.mms		\
 	$(DIRECTORY)/src/mesa/drivers/osmesa/osmesa.def			\
@@ -281,6 +284,7 @@ MAIN_FILES = \
 	$(DIRECTORY)/src/mesa/drivers/svga/*.[ch]			\
 	$(DIRECTORY)/src/mesa/drivers/windows/*/*.[ch]			\
 	$(DIRECTORY)/src/mesa/drivers/windows/*/*.def			\
+	$(DIRECTORY)/src/mesa/drivers/x11/Makefile			\
 	$(DIRECTORY)/src/mesa/drivers/x11/descrip.mms			\
 	$(DIRECTORY)/src/mesa/drivers/x11/*.[ch]			\
 	$(DIRECTORY)/src/mesa/ppc/*.[ch]				\
@@ -317,6 +321,7 @@ DRI_FILES = \
 	$(DIRECTORY)/src/glx/x11/*.[ch]					\
 	$(DIRECTORY)/src/mesa/drivers/dri/Makefile			\
 	$(DIRECTORY)/src/mesa/drivers/dri/Makefile.template		\
+	$(DIRECTORY)/src/mesa/drivers/dri/dri.pc.in			\
 	$(DIRECTORY)/src/mesa/drivers/dri/common/xmlpool/*.[ch]		\
 	$(DIRECTORY)/src/mesa/drivers/dri/common/xmlpool/*.po		\
 	$(DIRECTORY)/src/mesa/drivers/dri/*/*.[chS]			\

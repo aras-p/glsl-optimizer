@@ -168,7 +168,9 @@ intelGetString(GLcontext * ctx, GLenum name)
       case PCI_CHIP_I965_GME:
 	 chipset = "Intel(R) 965GME/GLE";
 	 break;
-      case PCI_CHIP_IGD_GM:
+      case PCI_CHIP_GM45_GM:
+	 chipset = "Mobile Intel® GM45 Express Chipset";
+	 break; 
       case PCI_CHIP_IGD_E_G:
 	 chipset = "Intel(R) Integrated Graphics Device";
 	 break;
@@ -196,9 +198,8 @@ intelGetString(GLcontext * ctx, GLenum name)
 /**
  * Extension strings exported by the intel driver.
  *
- * \note
- * It appears that ARB_texture_env_crossbar has "disappeared" compared to the
- * old i830-specific driver.
+ * Extensions supported by all chips supported by i830_dri, i915_dri, or
+ * i965_dri.
  */
 static const struct dri_extension card_extensions[] = {
    {"GL_ARB_multisample", GL_ARB_multisample_functions},
@@ -210,6 +211,7 @@ static const struct dri_extension card_extensions[] = {
    {"GL_ARB_texture_cube_map", NULL},
    {"GL_ARB_texture_env_add", NULL},
    {"GL_ARB_texture_env_combine", NULL},
+   {"GL_ARB_texture_env_crossbar", NULL},
    {"GL_ARB_texture_env_dot3", NULL},
    {"GL_ARB_texture_mirrored_repeat", NULL},
    {"GL_ARB_texture_non_power_of_two",   NULL },
@@ -266,7 +268,6 @@ static const struct dri_extension brw_extensions[] = {
    { "GL_EXT_shadow_funcs",               NULL },
    /* ARB extn won't work if not enabled */
    { "GL_SGIX_depth_texture",             NULL },
-   { "GL_ARB_texture_env_crossbar",       NULL },
    { "GL_EXT_texture_sRGB",		  NULL},
    { NULL,                                NULL }
 };

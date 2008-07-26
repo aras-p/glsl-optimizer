@@ -42,7 +42,8 @@ default: depend library Makefile
 library: $(TOP)/$(LIB_DIR)/libEGLdri.so
 
 $(TOP)/$(LIB_DIR)/libEGLdri.so: $(OBJECTS)
-	$(TOP)/bin/mklib -o EGLdri -ldflags '$(LDFLAGS)' -major 1 -minor 0 \
+	$(MKLIB) -o EGLdri -linker '$(CC)' -ldflags '$(LDFLAGS)' \
+		-major 1 -minor 0 \
 		-install $(TOP)/$(LIB_DIR) -ldl $(OBJECTS)
 
 

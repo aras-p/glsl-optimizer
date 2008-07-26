@@ -1634,6 +1634,15 @@ parse_init_declarator(slang_parse_ctx * C, slang_output_ctx * O,
       return 0;
    }
 
+   /* allocate global address space for a variable with a known size */
+   if (C->global_scope
+       && !(var->type.specifier.type == SLANG_SPEC_ARRAY
+            && var->array_len == 0)) {
+      if (!calculate_var_size(C, O, var))
+         return GL_FALSE;
+      var->address = slang_var_pool_alloc(O->global_pool, var->size);
+   }
+
    /* emit code for global var decl */
    if (C->global_scope) {
       slang_assemble_ctx A;
@@ -1646,15 +1655,6 @@ parse_init_declarator(slang_parse_ctx * C, slang_output_ctx * O,
       A.curFuncEndLabel = NULL;
       if (!_slang_codegen_global_variable(&A, var, C->type))
          return 0;
-   }
-
-   /* allocate global address space for a variable with a known size */
-   if (C->global_scope
-       && !(var->type.specifier.type == SLANG_SPEC_ARRAY
-            && var->array_len == 0)) {
-      if (!calculate_var_size(C, O, var))
-         return GL_FALSE;
-      var->address = slang_var_pool_alloc(O->global_pool, var->size);
    }
 
    /* initialize global variable */
@@ -1788,20 +1788,6 @@ parse_function(slang_parse_ctx * C, slang_output_ctx * O, int definition,
       *parsed_func_ret = found_func;
    }
 
-   /* assemble the parsed function */
-   {
-      slang_assemble_ctx A;
-
-      A.atoms = C->atoms;
-      A.space.funcs = O->funs;
-      A.space.structs = O->structs;
-      A.space.vars = O->vars;
-      A.program = O->program;
-      A.vartable = O->vartable;
-      A.log = C->L;
-
-      _slang_codegen_function(&A, *parsed_func_ret);
-   }
    return GL_TRUE;
 }
 
@@ -1844,6 +1830,7 @@ parse_code_unit(slang_parse_ctx * C, slang_code_unit * unit,
    slang_output_ctx o;
    GLboolean success;
    GLuint maxRegs;
+   slang_function *mainFunc = NULL;
 
    if (unit->type == SLANG_UNIT_FRAGMENT_BUILTIN ||
        unit->type == SLANG_UNIT_FRAGMENT_SHADER) {
@@ -1871,6 +1858,11 @@ parse_code_unit(slang_parse_ctx * C, slang_code_unit * unit,
          {
             slang_function *func;
             success = parse_function(C, &o, 1, &func);
+            if (success &&
+                _mesa_strcmp((char *) func->header.a_name, "main") == 0) {
+               /* found main() */
+               mainFunc = func;
+            }
          }
          break;
       case EXTERNAL_DECLARATION:
@@ -1887,6 +1879,22 @@ parse_code_unit(slang_parse_ctx * C, slang_code_unit * unit,
       }
    }
    C->I++;
+
+   if (mainFunc) {
+      /* assemble (generate code) for main() */
+      slang_assemble_ctx A;
+
+      A.atoms = C->atoms;
+      A.space.funcs = o.funs;
+      A.space.structs = o.structs;
+      A.space.vars = o.vars;
+      A.program = o.program;
+      A.vartable = o.vartable;
+      A.log = C->L;
+
+      _slang_codegen_function(&A, mainFunc);
+
+   }
 
    _slang_pop_var_table(o.vartable);
    _slang_delete_var_table(o.vartable);
@@ -2129,6 +2137,12 @@ compile_shader(GLcontext *ctx, slang_code_object * object,
    GLboolean success;
    grammar id = 0;
 
+#if 0 /* for debug */
+   _mesa_printf("********* COMPILE SHADER ***********\n");
+   _mesa_printf("%s\n", shader->Source);
+   _mesa_printf("************************************\n");
+#endif
+
    assert(program);
 
    _slang_code_object_dtr(object);
@@ -2160,6 +2174,9 @@ _slang_compile(GLcontext *ctx, struct gl_shader *shader)
       assert(shader->Type == GL_FRAGMENT_SHADER);
       type = SLANG_UNIT_FRAGMENT_SHADER;
    }
+
+   if (!shader->Source)
+      return GL_FALSE;
 
    ctx->Shader.MemPool = _slang_new_mempool(1024*1024);
 

@@ -25,11 +25,13 @@ LDFLAGS =
 GLU_CFLAGS = 
 
 # Misc tools and flags
+SHELL = /bin/sh
+MKLIB = $(SHELL) $(TOP)/bin/mklib
 MKLIB_OPTIONS = 
 MKDEP = makedepend
 MKDEP_OPTIONS = -fdepend
 MAKE = make
-INSTALL = $(TOP)/bin/minstall
+INSTALL = $(SHELL) $(TOP)/bin/minstall
 
 # Tools for regenerating glapi (generally only needed by the developers)
 PYTHON2 = python
@@ -59,6 +61,7 @@ ASM_SOURCES =
 # GLw widget sources (Append "GLwMDrawA.c" here and add -lXm to GLW_LIB_DEPS in
 # order to build the Motif widget too)
 GLW_SOURCES = GLwDrawA.c
+MOTIF_CFLAGS = -I/usr/include/Motif1.2
 
 
 # Directories to build
@@ -84,7 +87,9 @@ APP_LIB_DEPS = -lm
 
 # Installation directories (for make install)
 INSTALL_DIR = /usr/local
-DRI_DRIVER_INSTALL_DIR = $(INSTALL_DIR)/$(LIB_DIR)/dri
+INSTALL_LIB_DIR = $(INSTALL_DIR)/$(LIB_DIR)
+INSTALL_INC_DIR = $(INSTALL_DIR)/include
+DRI_DRIVER_INSTALL_DIR = $(INSTALL_LIB_DIR)/dri
 
 # Where libGL will look for DRI hardware drivers
 DRI_DRIVER_SEARCH_DIR = $(DRI_DRIVER_INSTALL_DIR)

@@ -62,7 +62,7 @@
  * "vbo", to support multiple texture coordinate arrays, generic attributes,
  * and vertex buffer objects.
  *
- * \author Ian Romanick <idr@us.ibm.com>
+ * \author Ian Romanick <ian.d.romanick@intel.com>
  */
 
 static void emit_DrawArrays_none( GLenum mode, GLint first, GLsizei count );
@@ -1601,17 +1601,21 @@ void __indirect_glClientActiveTextureARB(GLenum texture)
 
 
 /**
+ * Modify the enable state for the selected array
  */
 GLboolean
-__glXSetArrayEnable( __GLXattribute * state,
-		     GLenum key, unsigned index, GLboolean enable )
+__glXSetArrayEnable(__GLXattribute *state, GLenum key, unsigned index,
+                    GLboolean enable)
 {
     struct array_state_vector * arrays = state->array_state;
     struct array_state * a;
     
 
-    if ( key == GL_TEXTURE_COORD_ARRAY ) {
-	index = arrays->active_texture_unit;
+    /* Texture coordinate arrays have an implict index set when the
+     * application calls glClientActiveTexture.
+     */
+    if (key == GL_TEXTURE_COORD_ARRAY) {
+        index = arrays->active_texture_unit;
     }
 
     a = get_array_entry( arrays, key, index );

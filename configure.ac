@@ -12,6 +12,10 @@ m4_ifval(mesa_version,[],[
     m4_exit([1])
 ])
 
+dnl Tell the user about autoconf.html in the --help output
+m4_divert_once([HELP_END], [
+See docs/autoconf.html for more details on the options for Mesa.])
+
 AC_INIT([Mesa],[mesa_version],
     [https://bugs.freedesktop.org/enter_bug.cgi?product=Mesa])
 AC_CONFIG_AUX_DIR([bin])
@@ -29,17 +33,15 @@ AC_CHECK_PROGS([MAKE], [gmake make])
 AC_PATH_PROG([MKDEP], [makedepend])
 AC_PATH_PROG([SED], [sed])
 
-dnl Platform-specific program settings
-EXTRA_CONFIG_LINES=""
-AC_SUBST([EXTRA_CONFIG_LINES])
+dnl We need a POSIX shell for parts of the build. Assume we have one
+dnl in most cases.
 case "$host_os" in
 solaris*)
     # Solaris /bin/sh is too old/non-POSIX compliant
     AC_PATH_PROGS(POSIX_SHELL, [ksh93 ksh sh])
-    EXTRA_CONFIG_LINES="SHELL=$POSIX_SHELL"
+    SHELL="$POSIX_SHELL"
     ;;
 esac
-
 
 MKDEP_OPTIONS=-fdepend
 dnl Ask gcc where it's keeping its secret headers
@@ -85,7 +87,7 @@ linux*)
 if test "x$GCC" = xyes; then
     DEFINES="$DEFINES -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_BSD_SOURCE"
 fi
-    DEFINES="$DEFINES -D_SVID_SOURCE -D_GNU_SOURCE -DPTHREADS -DHAVE_POSIX_MEMALIGN"
+    DEFINES="$DEFINES -D_SVID_SOURCE -D_GNU_SOURCE -DPTHREADS"
     ;;
 solaris*)
     DEFINES="$DEFINES -DPTHREADS -DSVR4"
@@ -325,6 +327,9 @@ dnl has it in libc), or if libdl is needed to get it.
 AC_CHECK_FUNC([dlopen], [],
     [AC_CHECK_LIB([dl], [dlopen], [DLOPEN_LIBS="-ldl"])])
 
+dnl See if posix_memalign is available
+AC_CHECK_FUNC([posix_memalign], [DEFINES="$DEFINES -DHAVE_POSIX_MEMALIGN"])
+
 dnl SELinux awareness.
 AC_ARG_ENABLE([selinux],
     [AS_HELP_STRING([--enable-selinux],
@@ -449,7 +454,7 @@ esac
 
 dnl
 dnl Find out if X is available. The variable have_x is set if libX11 is
-dnl to mimic AC_PATH_XTRA.
+dnl found to mimic AC_PATH_XTRA.
 dnl
 if test -n "$PKG_CONFIG"; then
     AC_MSG_CHECKING([pkg-config files for X11 are available])
@@ -467,6 +472,12 @@ dnl Use the autoconf macro if no pkg-config files
 if test "$x11_pkgconfig" = no; then
     AC_PATH_XTRA
 fi
+
+dnl Try to tell the user that the --x-* options are only used when
+dnl pkg-config is not available. This must be right after AC_PATH_XTRA.
+m4_divert_once([HELP_BEGIN],
+[These options are only used when the X libraries cannot be found by the
+pkg-config utility.])
 
 dnl We need X for xlib and dri, so bomb now if it's not found
 case "$mesa_driver" in
@@ -601,7 +612,8 @@ fi
 dnl Which drivers to build - default is chosen by platform
 AC_ARG_WITH([dri-drivers],
     [AS_HELP_STRING([--with-dri-drivers@<:@=DIRS...@:>@],
-        [comma delimited DRI drivers, e.g. "i965,radeon,nouveau" @<:@default=auto@:>@])],
+        [comma delimited DRI drivers list, e.g.
+        "swrast,i965,radeon,nouveau" @<:@default=auto@:>@])],
     [with_dri_drivers="$withval"],
     [with_dri_drivers=yes])
 if test "x$with_dri_drivers" = x; then
@@ -615,7 +627,7 @@ case "$with_dri_drivers" in
 no|yes) ;;
 *)
     # verify the requested driver directories exist
-    dri_drivers=`IFS=,; echo $with_dri_drivers`
+    dri_drivers=`IFS=', '; echo $with_dri_drivers`
     for driver in $dri_drivers; do
         test -d "$srcdir/src/mesa/drivers/dri/$driver" || \
             AC_MSG_ERROR([DRI driver directory '$driver' doesn't exist])
@@ -866,6 +878,12 @@ if test "x$enable_glw" = xyes && test "$mesa_driver" = osmesa; then
     AC_MSG_WARN([Disabling GLw since the driver is OSMesa])
     enable_glw=no
 fi
+AC_ARG_ENABLE([motif],
+    [AS_HELP_STRING([--enable-motif],
+        [use Motif widgets in GLw @<:@default=disabled@:>@])],
+    [enable_motif="$enableval"],
+    [enable_motif=no])
+
 if test "x$enable_glw" = xyes; then
     SRC_DIRS="$SRC_DIRS glw"
     if test "$x11_pkgconfig" = yes; then
@@ -873,7 +891,25 @@ if test "x$enable_glw" = xyes; then
         GLW_LIB_DEPS="$GLW_LIBS"
     else
         # should check these...
-        GLW_LIB_DEPS="$X_LIBS -lX11 -lXt"
+        GLW_LIB_DEPS="$X_LIBS -lXt -lX11"
+    fi
+
+    GLW_SOURCES="GLwDrawA.c"
+    MOTIF_CFLAGS=
+    if test "x$enable_motif" = xyes; then
+        GLW_SOURCES="$GLW_SOURCES GLwMDrawA.c"
+        AC_PATH_PROG([MOTIF_CONFIG], [motif-config], [no])
+        if test "x$MOTIF_CONFIG" != xno; then
+            MOTIF_CFLAGS=`$MOTIF_CONFIG --cflags`
+            MOTIF_LIBS=`$MOTIF_CONFIG --libs`
+        else
+            AC_CHECK_HEADER([Xm/PrimitiveP.h], [],
+                [AC_MSG_ERROR([Can't locate Motif headers])])
+            AC_CHECK_LIB([Xm], [XmGetPixmap], [MOTIF_LIBS="-lXm"],
+                [AC_MSG_ERROR([Can't locate Motif Xm library])])
+        fi
+        # MOTIF_LIBS is prepended to GLW_LIB_DEPS since Xm needs Xt/X11
+        GLW_LIB_DEPS="$MOTIF_LIBS $GLW_LIB_DEPS"
     fi
 
     # If static, empty GLW_LIB_DEPS and add libs for programs to link
@@ -888,6 +924,8 @@ if test "x$enable_glw" = xyes; then
 fi
 AC_SUBST([GLW_LIB_DEPS])
 AC_SUBST([GLW_MESA_DEPS])
+AC_SUBST([GLW_SOURCES])
+AC_SUBST([MOTIF_CFLAGS])
 
 dnl
 dnl GLUT configuration
@@ -990,6 +1028,7 @@ echo ""
 echo "        prefix:          $prefix"
 echo "        exec_prefix:     $exec_prefix"
 echo "        libdir:          $libdir"
+echo "        includedir:      $includedir"
 
 dnl Driver info
 echo ""
@@ -1012,7 +1051,7 @@ echo ""
 echo "        Shared libs:     $enable_shared"
 echo "        Static libs:     $enable_static"
 echo "        GLU:             $enable_glu"
-echo "        GLw:             $enable_glw"
+echo "        GLw:             $enable_glw (Motif: $enable_motif)"
 echo "        glut:            $enable_glut"
 
 dnl Programs
