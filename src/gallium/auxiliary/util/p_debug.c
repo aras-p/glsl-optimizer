@@ -73,8 +73,7 @@ _EngDebugPrint(const char *format, ...)
 
 void _debug_vprintf(const char *format, va_list ap)
 {
-#ifdef PIPE_SUBSYSTEM_WINDOWS_DISPLAY
-#ifndef WINCE
+#if defined(PIPE_SUBSYSTEM_WINDOWS_DISPLAY)
    /* EngDebugPrint does not handle float point arguments, so we need to use
     * our own vsnprintf implementation. It is also very slow, so buffer until
     * we find a newline. */
@@ -85,9 +84,6 @@ void _debug_vprintf(const char *format, va_list ap)
       _EngDebugPrint("%s", buf);
       buf[0] = '\0';
    }
-#else
-   /* TODO: Implement debug print for WINCE */
-#endif
 #elif defined(PIPE_SUBSYSTEM_WINDOWS_USER)
    /* EngDebugPrint does not handle float point arguments, so we need to use
     * our own vsnprintf implementation. It is also very slow, so buffer until
@@ -99,7 +95,9 @@ void _debug_vprintf(const char *format, va_list ap)
       OutputDebugStringA(buf);
       buf[0] = '\0';
    }
-#else
+#elif defined(PIPE_SUBSYSTEM_WINDOWS_CE) || defined(PIPE_SUBSYSTEM_WINDOWS_MINIPORT) 
+   /* TODO */
+#else /* !PIPE_SUBSYSTEM_WINDOWS */
    vfprintf(stderr, format, ap);
 #endif
 }
@@ -211,7 +209,7 @@ _debug_get_option(const char *name)
 #else
    return NULL;
 #endif
-#elif defined(PIPE_SUBSYSTEM_WINDOWS_CE)
+#elif defined(PIPE_SUBSYSTEM_WINDOWS_CE) || defined(PIPE_SUBSYSTEM_WINDOWS_MINIPORT) 
    /* TODO: implement */
    return NULL;
 #else
