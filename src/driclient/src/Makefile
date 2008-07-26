@@ -19,5 +19,5 @@ test: test.o
 	$(CC) -L../lib -L${DRMDIR}/lib ${LDFLAGS} -o $@ $^ -ldriclient -lX11 -lXext -ldrm
 
 clean:
-	rm -rf ${OBJECTS} ${TARGET} test test.o
+	rm -rf ${OBJECTS} ${TARGET} ../lib/${TARGET} test test.o
 

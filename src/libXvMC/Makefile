@@ -42,9 +42,23 @@ endif
 
 all: ${TARGET}
 
+ifeq (${DRIVER}, softpipe)
 ${TARGET}: ${OBJECTS}
+	cd ${GALLIUMDIR}/state_trackers/g3dvl; ${MAKE}
 	$(CC) ${LDFLAGS} -shared -Wl,-soname,${SONAME} -o $@ $^ ${LIBS}
 
 clean:
+	cd ${GALLIUMDIR}/state_trackers/g3dvl; ${MAKE} clean
 	rm -rf ${OBJECTS} ${TARGET}
+else
+${TARGET}: ${OBJECTS}
+	cd ${GALLIUMDIR}/state_trackers/g3dvl; ${MAKE}
+	cd ${GALLIUMDIR}/winsys/g3dvl/nouveau; ${MAKE}
+	$(CC) ${LDFLAGS} -shared -Wl,-soname,${SONAME} -o $@ $^ ${LIBS}
+
+clean:
+	cd ${GALLIUMDIR}/state_trackers/g3dvl; ${MAKE} clean
+	cd ${GALLIUMDIR}/winsys/g3dvl/nouveau; ${MAKE} clean
+	rm -rf ${OBJECTS} ${TARGET}
+endif
 
