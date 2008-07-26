@@ -269,13 +269,24 @@ static void r300RunRenderPrimitive(r300ContextPtr rmesa, GLcontext * ctx,
 		return;
 
 	if (vb->Elts) {
-		r300EmitAOS(rmesa, rmesa->state.aos_count, start);
 		if (num_verts > 65535) {
 			/* not implemented yet */
 			WARN_ONCE("Too many elts\n");
 			return;
 		}
+		/* Note: The following is incorrect, but it's the best I can do
+		 * without a major refactoring of how DMA memory is handled.
+		 * The problem: Ensuring that both vertex arrays *and* index
+		 * arrays are at the right position, and then ensuring that
+		 * the LOAD_VBPNTR, DRAW_INDX and INDX_BUFFER packets are emitted
+		 * at once.
+		 *
+		 * So why is the following incorrect? Well, it seems like
+		 * allocating the index array might actually evict the vertex
+		 * arrays. *sigh*
+		 */
 		r300EmitElts(ctx, vb->Elts, num_verts);
+		r300EmitAOS(rmesa, rmesa->state.aos_count, start);
 		r300FireEB(rmesa, rmesa->state.elt_dma.aos_offset, num_verts, type);
 	} else {
 		r300EmitAOS(rmesa, rmesa->state.aos_count, start);
