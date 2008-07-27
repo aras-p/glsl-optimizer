@@ -74,6 +74,13 @@ static GLboolean transform_TEX(
 		inst.DstReg.File = PROGRAM_TEMPORARY;
 		inst.DstReg.Index = radeonFindFreeTemporary(t);
 		inst.DstReg.WriteMask = WRITEMASK_XYZW;
+	} else if (inst.Opcode != OPCODE_KIL && inst.DstReg.File != PROGRAM_TEMPORARY) {
+		int tempreg = radeonFindFreeTemporary(t);
+
+		inst.DstReg.File = PROGRAM_TEMPORARY;
+		inst.DstReg.Index = tempreg;
+		inst.DstReg.WriteMask = WRITEMASK_XYZW;
+		destredirect = GL_TRUE;
 	}
 
 	tgt = radeonAppendInstructions(t->Program, 1);
