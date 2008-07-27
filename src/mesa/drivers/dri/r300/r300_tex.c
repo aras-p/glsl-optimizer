@@ -944,6 +944,8 @@ static void r300TexParameter(GLcontext * ctx, GLenum target,
 		break;
 
 	case GL_DEPTH_TEXTURE_MODE:
+		if (!texObj->Image[0][texObj->BaseLevel])
+			return;
 		if (texObj->Image[0][texObj->BaseLevel]->TexFormat->BaseFormat
 		    == GL_DEPTH_COMPONENT) {
 			r300SetDepthTexMode(texObj);
