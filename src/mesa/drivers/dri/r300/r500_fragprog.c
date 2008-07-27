@@ -269,44 +269,87 @@ static GLboolean is_native_swizzle(GLuint opcode, struct prog_src_register reg)
 	GLuint relevant;
 	int i;
 
-	if (reg.Abs)
+	if (opcode == OPCODE_TEX ||
+	    opcode == OPCODE_TXB ||
+	    opcode == OPCODE_TXP ||
+	    opcode == OPCODE_KIL) {
+		if (reg.Abs)
+			return GL_FALSE;
+
+		if (reg.NegateAbs)
+			reg.NegateBase ^= 15;
+
+		if (opcode == OPCODE_KIL) {
+			if (reg.Swizzle != SWIZZLE_NOOP)
+				return GL_FALSE;
+		} else {
+			for(i = 0; i < 4; ++i) {
+				GLuint swz = GET_SWZ(reg.Swizzle, i);
+				if (swz == SWIZZLE_NIL) {
+					reg.NegateBase &= ~(1 << i);
+					continue;
+				}
+				if (swz >= 4)
+					return GL_FALSE;
+			}
+		}
+
+		if (reg.NegateBase)
+			return GL_FALSE;
+
 		return GL_TRUE;
+	} else {
+		/* ALU instructions support almost everything */
+		if (reg.Abs)
+			return GL_TRUE;
 
-	relevant = 0;
-	for(i = 0; i < 3; ++i) {
-		GLuint swz = GET_SWZ(reg.Swizzle, i);
-		if (swz != SWIZZLE_NIL && swz != SWIZZLE_ZERO)
-			relevant |= 1 << i;
+		relevant = 0;
+		for(i = 0; i < 3; ++i) {
+			GLuint swz = GET_SWZ(reg.Swizzle, i);
+			if (swz != SWIZZLE_NIL && swz != SWIZZLE_ZERO)
+				relevant |= 1 << i;
+		}
+		if ((reg.NegateBase & relevant) && ((reg.NegateBase & relevant) != relevant))
+			return GL_FALSE;
+
+		return GL_TRUE;
 	}
-	if ((reg.NegateBase & relevant) && ((reg.NegateBase & relevant) != relevant))
-		return GL_FALSE;
-
-	return GL_TRUE;
 }
 
 /**
- * Implement a non-native swizzle. This function assumes that
- * is_native_swizzle returned true.
+ * Implement a MOV with a potentially non-native swizzle.
+ *
+ * The only thing we *cannot* do in an ALU instruction is per-component
+ * negation. Therefore, we split the MOV into two instructions when necessary.
  */
 static void nqssadce_build_swizzle(struct nqssadce_state *s,
 	struct prog_dst_register dst, struct prog_src_register src)
 {
 	struct prog_instruction *inst;
+	GLuint negatebase[2] = { 0, 0 };
+	int i;
 
-	_mesa_insert_instructions(s->Program, s->IP, 2);
+	for(i = 0; i < 4; ++i) {
+		GLuint swz = GET_SWZ(src.Swizzle, i);
+		if (swz == SWIZZLE_NIL)
+			continue;
+		negatebase[GET_BIT(src.NegateBase, i)] |= 1 << i;
+	}
+
+	_mesa_insert_instructions(s->Program, s->IP, (negatebase[0] ? 1 : 0) + (negatebase[1] ? 1 : 0));
 	inst = s->Program->Instructions + s->IP;
 
-	inst[0].Opcode = OPCODE_MOV;
-	inst[0].DstReg = dst;
-	inst[0].DstReg.WriteMask &= src.NegateBase;
-	inst[0].SrcReg[0] = src;
+	for(i = 0; i <= 1; ++i) {
+		if (!negatebase[i])
+			continue;
 
-	inst[1].Opcode = OPCODE_MOV;
-	inst[1].DstReg = dst;
-	inst[1].DstReg.WriteMask &= ~src.NegateBase;
-	inst[1].SrcReg[0] = src;
-
-	s->IP += 2;
+		inst->Opcode = OPCODE_MOV;
+		inst->DstReg = dst;
+		inst->DstReg.WriteMask = negatebase[i];
+		inst->SrcReg[0] = src;
+		inst++;
+		s->IP++;
+	}
 }
 
 static GLuint build_dtm(GLuint depthmode)
