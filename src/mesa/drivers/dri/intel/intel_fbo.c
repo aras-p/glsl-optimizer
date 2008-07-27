@@ -212,6 +212,14 @@ intel_alloc_renderbuffer_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
    case GL_RGB10:
    case GL_RGB12:
    case GL_RGB16:
+      rb->_ActualFormat = GL_RGB8;
+      rb->DataType = GL_UNSIGNED_BYTE;
+      rb->RedBits = 8;
+      rb->GreenBits = 8;
+      rb->BlueBits = 8;
+      rb->AlphaBits = 0;
+      cpp = 4;
+      break;
    case GL_RGBA:
    case GL_RGBA2:
    case GL_RGBA4:

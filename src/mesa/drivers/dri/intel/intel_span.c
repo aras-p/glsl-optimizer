@@ -74,6 +74,15 @@ pread_32(struct intel_renderbuffer *irb, uint32_t offset)
    return *(uint32_t *)(irb->span_cache + (offset & (SPAN_CACHE_SIZE - 1)));
 }
 
+static uint32_t
+pread_xrgb8888(struct intel_renderbuffer *irb, uint32_t offset)
+{
+   get_span_cache(irb, offset);
+
+   return *(uint32_t *)(irb->span_cache + (offset & (SPAN_CACHE_SIZE - 1))) |
+      0xff000000;
+}
+
 static uint16_t
 pread_16(struct intel_renderbuffer *irb, uint32_t offset)
 {
@@ -96,6 +105,14 @@ pwrite_32(struct intel_renderbuffer *irb, uint32_t offset, uint32_t val)
    clear_span_cache(irb);
 
    dri_bo_subdata(irb->region->buffer, offset, 4, &val);
+}
+
+static void
+pwrite_xrgb8888(struct intel_renderbuffer *irb, uint32_t offset, uint32_t val)
+{
+   clear_span_cache(irb);
+
+   dri_bo_subdata(irb->region->buffer, offset, 3, &val);
 }
 
 static void
@@ -301,6 +318,17 @@ static uint32_t y_tile_swizzle(struct intel_renderbuffer *irb,
 #define PUT_VALUE(X, Y, V) pwrite_32(irb, no_tile_swizzle(irb, intel, X, Y), V)
 #include "spantmp2.h"
 
+/* 32 bit, xRGB8888 color spanline and pixel functions
+ */
+#define SPANTMP_PIXEL_FMT GL_BGRA
+#define SPANTMP_PIXEL_TYPE GL_UNSIGNED_INT_8_8_8_8_REV
+
+#define TAG(x)    intel##x##_xRGB8888
+#define TAG2(x,y) intel##x##_xRGB8888##y
+#define GET_VALUE(X, Y) pread_xrgb8888(irb, no_tile_swizzle(irb, intel, X, Y))
+#define PUT_VALUE(X, Y, V) pwrite_xrgb8888(irb, no_tile_swizzle(irb, intel, X, Y), V)
+#include "spantmp2.h"
+
 /* 16 bit RGB565 color tile spanline and pixel functions
  */
 
@@ -341,6 +369,27 @@ static uint32_t y_tile_swizzle(struct intel_renderbuffer *irb,
 #define TAG2(x,y) intel_YTile_##x##_ARGB8888##y
 #define GET_VALUE(X, Y) pread_32(irb, y_tile_swizzle(irb, intel, X, Y))
 #define PUT_VALUE(X, Y, V) pwrite_32(irb, y_tile_swizzle(irb, intel, X, Y), V)
+#include "spantmp2.h"
+
+/* 32 bit xRGB888 color tile spanline and pixel functions
+ */
+
+#define SPANTMP_PIXEL_FMT GL_BGRA
+#define SPANTMP_PIXEL_TYPE GL_UNSIGNED_INT_8_8_8_8_REV
+
+#define TAG(x)    intel_XTile_##x##_xRGB8888
+#define TAG2(x,y) intel_XTile_##x##_xRGB8888##y
+#define GET_VALUE(X, Y) pread_xrgb8888(irb, x_tile_swizzle(irb, intel, X, Y))
+#define PUT_VALUE(X, Y, V) pwrite_xrgb8888(irb, x_tile_swizzle(irb, intel, X, Y), V)
+#include "spantmp2.h"
+
+#define SPANTMP_PIXEL_FMT GL_BGRA
+#define SPANTMP_PIXEL_TYPE GL_UNSIGNED_INT_8_8_8_8_REV
+
+#define TAG(x)    intel_YTile_##x##_xRGB8888
+#define TAG2(x,y) intel_YTile_##x##_xRGB8888##y
+#define GET_VALUE(X, Y) pread_xrgb8888(irb, y_tile_swizzle(irb, intel, X, Y))
+#define PUT_VALUE(X, Y, V) pwrite_xrgb8888(irb, y_tile_swizzle(irb, intel, X, Y), V)
 #include "spantmp2.h"
 
 #define LOCAL_DEPTH_VARS						\
@@ -674,6 +723,21 @@ intel_set_span_functions(struct intel_context *intel,
 	 break;
       case I915_TILING_Y:
 	 intel_YTile_InitPointers_RGB565(rb);
+	 break;
+      }
+   }
+   else if (rb->_ActualFormat == GL_RGB8) {
+      /* 8888 RGBx */
+      switch (tiling) {
+      case I915_TILING_NONE:
+      default:
+	 intelInitPointers_xRGB8888(rb);
+	 break;
+      case I915_TILING_X:
+	 intel_XTile_InitPointers_xRGB8888(rb);
+	 break;
+      case I915_TILING_Y:
+	 intel_YTile_InitPointers_xRGB8888(rb);
 	 break;
       }
    }
