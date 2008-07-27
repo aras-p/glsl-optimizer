@@ -377,8 +377,6 @@ static int r300Fallback(GLcontext * ctx)
 			|| ctx->Stencil.WriteMask[0] !=
 			ctx->Stencil.WriteMask[1]));
 
-	FALLBACK_IF(ctx->Color.ColorLogicOpEnabled);
-
 	if (ctx->Extensions.NV_point_sprite || ctx->Extensions.ARB_point_sprite)
 		FALLBACK_IF(ctx->Point.PointSprite);
 

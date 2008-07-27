@@ -477,6 +477,8 @@ void r300InitCmdBuf(r300ContextPtr r300)
 		ALLOC_STATE(blend_color, always, 2, 0);
 		r300->hw.blend_color.cmd[0] = cmdpacket0(R300_RB3D_BLEND_COLOR, 1);
 	}
+	ALLOC_STATE(rop, always, 2, 0);
+	r300->hw.rop.cmd[0] = cmdpacket0(R300_RB3D_ROPCNTL, 1);
 	ALLOC_STATE(cb, always, R300_CB_CMDSIZE, 0);
 	r300->hw.cb.cmd[R300_CB_CMD_0] = cmdpacket0(R300_RB3D_COLOROFFSET0, 1);
 	r300->hw.cb.cmd[R300_CB_CMD_1] = cmdpacket0(R300_RB3D_COLORPITCH0, 1);

@@ -516,6 +516,7 @@ struct r300_hw_state {
 	struct r300_state_atom bld;	/* blending (4E04) */
 	struct r300_state_atom cmk;	/* colormask (4E0C) */
 	struct r300_state_atom blend_color;	/* constant blend color */
+	struct r300_state_atom rop;	/* ropcntl */
 	struct r300_state_atom cb;	/* colorbuffer (4E28) */
 	struct r300_state_atom rb3d_dither_ctl;	/* (4E50) */
 	struct r300_state_atom rb3d_aaresolve_ctl;	/* (4E88) */

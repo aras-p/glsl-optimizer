@@ -2249,7 +2249,9 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 /* 3D ROP Control. Stalls the 2d/3d datapath until it is idle. */
 #define R300_RB3D_ROPCNTL                             0x4e18
-/* TODO: fill in content here */
+#	define R300_RB3D_ROPCNTL_ROP_ENABLE            0x00000004
+#	define R300_RB3D_ROPCNTL_ROP_MASK              (15 << 8)
+#	define R300_RB3D_ROPCNTL_ROP_SHIFT             8
 
 /* Color Compare Flip. Stalls the 2d/3d datapath until it is idle. */
 #define R300_RB3D_CLRCMP_FLIPE                        0x4e1c
