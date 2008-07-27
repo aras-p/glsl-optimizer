@@ -132,7 +132,7 @@ _mesa_fetch_state(GLcontext *ctx, const gl_state_index state[],
 	       ADD_3V(value, p, eye_z);
 	       NORMALIZE_3FV(value);
 	       value[3] = 1.0;
-            }						  
+            }
             return;
 	 case STATE_POSITION_NORMALIZED:
             COPY_4V(value, ctx->Light.Light[ln].EyePosition);
@@ -240,11 +240,11 @@ _mesa_fetch_state(GLcontext *ctx, const gl_state_index state[],
          }
       }
    case STATE_TEXENV_COLOR:
-      {		
+      {
          /* state[1] is the texture unit */
          const GLuint unit = (GLuint) state[1];
          COPY_4V(value, ctx->Texture.Unit[unit].EnvColor);
-      }			
+      }
       return;
    case STATE_FOG_COLOR:
       COPY_4V(value, ctx->Fog.Color);
@@ -374,7 +374,7 @@ _mesa_fetch_state(GLcontext *ctx, const gl_state_index state[],
          }
       }
       return;
-		
+
    case STATE_VERTEX_PROGRAM:
       {
          /* state[1] = {STATE_ENV, STATE_LOCAL} */
@@ -458,6 +458,20 @@ _mesa_fetch_state(GLcontext *ctx, const gl_state_index state[],
       case STATE_PCM_BIAS:
          COPY_4V(value, ctx->Pixel.PostColorMatrixBias);
          break;
+      case STATE_SHADOW_AMBIENT:
+         {
+            const int unit = (int) state[2];
+            const struct gl_texture_object *texObj
+               = ctx->Texture.Unit[unit]._Current;
+            if (texObj) {
+               value[0] = texObj->ShadowAmbient;
+               value[1] = texObj->ShadowAmbient;
+               value[2] = texObj->ShadowAmbient;
+               value[3] = texObj->ShadowAmbient;
+            }
+         }
+         return;
+
       default:
          /* unknown state indexes are silently ignored
           *  should be handled by the driver.
@@ -532,6 +546,7 @@ _mesa_program_state_flags(const gl_state_index state[STATE_LENGTH])
    case STATE_INTERNAL:
       switch (state[1]) {
       case STATE_TEXRECT_SCALE:
+      case STATE_SHADOW_AMBIENT:
 	 return _NEW_TEXTURE;
       case STATE_FOG_PARAMS_OPTIMIZED:
 	 return _NEW_FOG;
@@ -711,6 +726,9 @@ append_token(char *dst, gl_state_index k)
    case STATE_PCM_BIAS:
       append(dst, "PCMbias");
       break;
+   case STATE_SHADOW_AMBIENT:
+      append(dst, "ShadowAmbient");
+      break;
    default:
       ;
    }
@@ -861,7 +879,7 @@ _mesa_load_state_parameters(GLcontext *ctx,
 
    for (i = 0; i < paramList->NumParameters; i++) {
       if (paramList->Parameters[i].Type == PROGRAM_STATE_VAR) {
-         _mesa_fetch_state(ctx, 
+         _mesa_fetch_state(ctx,
 			   (gl_state_index *) paramList->Parameters[i].StateIndexes,
                            paramList->ParameterValues[i]);
       }

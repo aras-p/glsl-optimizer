@@ -58,6 +58,20 @@ static void reset_srcreg(struct prog_src_register* reg)
 	reg->Swizzle = SWIZZLE_NOOP;
 }
 
+static struct prog_src_register shadow_ambient(struct gl_program *program, int tmu)
+{
+	gl_state_index fail_value_tokens[STATE_LENGTH] = {
+		STATE_INTERNAL, STATE_SHADOW_AMBIENT, 0, 0, 0
+	};
+	struct prog_src_register reg = { 0, };
+
+	fail_value_tokens[2] = tmu;
+	reg.File = PROGRAM_STATE_VAR;
+	reg.Index = _mesa_add_state_reference(program->Parameters, fail_value_tokens);
+	reg.Swizzle = SWIZZLE_WWWW;
+	return reg;
+}
+
 /**
  * Transform TEX, TXP, TXB, and KIL instructions in the following way:
  *  - premultiply texture coordinates for RECT
@@ -92,8 +106,12 @@ static GLboolean transform_TEX(
 
 			tgt->Opcode = OPCODE_MOV;
 			tgt->DstReg = inst.DstReg;
-			tgt->SrcReg[0].File = PROGRAM_BUILTIN;
-			tgt->SrcReg[0].Swizzle = comparefunc == GL_ALWAYS ? SWIZZLE_1111 : SWIZZLE_0000;
+			if (comparefunc == GL_ALWAYS) {
+				tgt->SrcReg[0].File = PROGRAM_BUILTIN;
+				tgt->SrcReg[0].Swizzle = SWIZZLE_1111;
+			} else {
+				tgt->SrcReg[0] = shadow_ambient(t->Program, inst.TexSrcUnit);
+			}
 			return GL_TRUE;
 		}
 
@@ -153,6 +171,7 @@ static GLboolean transform_TEX(
 		GLuint comparefunc = GL_NEVER + compiler->fp->state.unit[inst.TexSrcUnit].texture_compare_func;
 		GLuint depthmode = compiler->fp->state.unit[inst.TexSrcUnit].depth_texture_mode;
 		int rcptemp = radeonFindFreeTemporary(t);
+		int pass, fail;
 
 		tgt = radeonAppendInstructions(t->Program, 3);
 
@@ -190,16 +209,18 @@ static GLboolean transform_TEX(
 		tgt[2].DstReg = orig_inst->DstReg;
 		tgt[2].SrcReg[0].File = PROGRAM_TEMPORARY;
 		tgt[2].SrcReg[0].Index = tgt[1].DstReg.Index;
-		tgt[2].SrcReg[1].File = PROGRAM_BUILTIN;
-		tgt[2].SrcReg[2].File = PROGRAM_BUILTIN;
 
 		if (comparefunc == GL_LESS || comparefunc == GL_GREATER) {
-			tgt[2].SrcReg[1].Swizzle = SWIZZLE_1111;
-			tgt[2].SrcReg[2].Swizzle = SWIZZLE_0000;
+			pass = 1;
+			fail = 2;
 		} else {
-			tgt[2].SrcReg[1].Swizzle = SWIZZLE_0000;
-			tgt[2].SrcReg[2].Swizzle = SWIZZLE_1111;
+			pass = 2;
+			fail = 1;
 		}
+
+		tgt[2].SrcReg[pass].File = PROGRAM_BUILTIN;
+		tgt[2].SrcReg[pass].Swizzle = SWIZZLE_1111;
+		tgt[2].SrcReg[fail] = shadow_ambient(t->Program, inst.TexSrcUnit);
 	} else if (destredirect) {
 		tgt = radeonAppendInstructions(t->Program, 1);
 

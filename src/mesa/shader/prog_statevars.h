@@ -77,7 +77,7 @@ typedef enum gl_state_index_ {
    STATE_SPECULAR,
    STATE_EMISSION,
    STATE_SHININESS,
-   STATE_HALF_VECTOR,	
+   STATE_HALF_VECTOR,
 
    STATE_POSITION,
    STATE_ATTENUATION,
@@ -94,7 +94,7 @@ typedef enum gl_state_index_ {
    STATE_TEXGEN_OBJECT_Q,
 
    STATE_TEXENV_COLOR,
-	
+
    STATE_DEPTH_RANGE,
 
    STATE_VERTEX_PROGRAM,
@@ -113,6 +113,7 @@ typedef enum gl_state_index_ {
    STATE_PT_BIAS,               /**< Pixel transfer RGBA bias */
    STATE_PCM_SCALE,             /**< Post color matrix RGBA scale */
    STATE_PCM_BIAS,              /**< Post color matrix RGBA bias */
+   STATE_SHADOW_AMBIENT,        /**< ARB_shadow_ambient fail value; token[2] is texture unit index */
    STATE_INTERNAL_DRIVER	/* first available state index for drivers (must be last) */
 } gl_state_index;
 

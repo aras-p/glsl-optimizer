@@ -101,6 +101,7 @@ const struct dri_extension card_extensions[] = {
   {"GL_ARB_multitexture",		NULL},
   {"GL_ARB_point_parameters",		GL_ARB_point_parameters_functions},
   {"GL_ARB_shadow",			NULL},
+  {"GL_ARB_shadow_ambient",		NULL},
   {"GL_ARB_texture_border_clamp",	NULL},
   {"GL_ARB_texture_compression",	GL_ARB_texture_compression_functions},
   {"GL_ARB_texture_cube_map",		NULL},
