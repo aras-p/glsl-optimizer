@@ -34,8 +34,8 @@
 #include "pipe/p_util.h"
 #include "pipe/p_inlines.h"
 #include "pipe/p_shader_tokens.h"
-#include "tgsi/util/tgsi_dump.h"
-#include "tgsi/util/tgsi_parse.h"
+#include "tgsi/tgsi_dump.h"
+#include "tgsi/tgsi_parse.h"
 
 #include "brw_context.h"
 #include "brw_defines.h"

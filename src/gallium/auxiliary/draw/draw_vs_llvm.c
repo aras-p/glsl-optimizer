@@ -38,7 +38,7 @@
 #include "draw_context.h"
 #include "draw_vs.h"
 
-#include "tgsi/util/tgsi_parse.h"
+#include "tgsi/tgsi_parse.h"
 
 #ifdef MESA_LLVM
 

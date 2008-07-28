@@ -33,7 +33,7 @@
 #include "pipe/p_winsys.h"
 #include "pipe/p_util.h"
 #include "pipe/p_inlines.h"
-#include "tgsi/util/tgsi_parse.h"
+#include "tgsi/tgsi_parse.h"
 
 #include "i915_context.h"
 #include "i915_reg.h"

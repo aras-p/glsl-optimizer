@@ -30,7 +30,7 @@
 #include "pipe/p_inlines.h"
 #include "pipe/p_winsys.h"
 #include "draw/draw_context.h"
-#include "tgsi/util/tgsi_parse.h"
+#include "tgsi/tgsi_parse.h"
 
 #include "cell_context.h"
 #include "cell_state.h"

@@ -43,9 +43,9 @@
 
 #include "util/u_simple_shaders.h"
 
-#include "tgsi/util/tgsi_build.h"
-#include "tgsi/util/tgsi_dump.h"
-#include "tgsi/util/tgsi_parse.h"
+#include "tgsi/tgsi_build.h"
+#include "tgsi/tgsi_dump.h"
+#include "tgsi/tgsi_parse.h"
 
 
 

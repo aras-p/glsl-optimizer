@@ -40,8 +40,8 @@
 #include "pipe/p_defines.h"
 #include "pipe/p_shader_tokens.h"
 
-#include "tgsi/util/tgsi_transform.h"
-#include "tgsi/util/tgsi_dump.h"
+#include "tgsi/tgsi_transform.h"
+#include "tgsi/tgsi_dump.h"
 
 #include "draw_context.h"
 #include "draw_pipe.h"

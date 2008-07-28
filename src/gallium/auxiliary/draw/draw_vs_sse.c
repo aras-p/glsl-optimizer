@@ -45,8 +45,8 @@
 
 #include "rtasm/rtasm_cpu.h"
 #include "rtasm/rtasm_x86sse.h"
-#include "tgsi/exec/tgsi_sse2.h"
-#include "tgsi/util/tgsi_parse.h"
+#include "tgsi/tgsi_sse2.h"
+#include "tgsi/tgsi_parse.h"
 
 #define SSE_MAX_VERTICES 4
 

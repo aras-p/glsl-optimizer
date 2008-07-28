@@ -38,8 +38,8 @@
 #include "draw_context.h"
 #include "draw_vs.h"
 
-#include "tgsi/util/tgsi_parse.h"
-#include "tgsi/util/tgsi_scan.h"
+#include "tgsi/tgsi_parse.h"
+#include "tgsi/tgsi_scan.h"
 
 
 struct exec_vertex_shader {

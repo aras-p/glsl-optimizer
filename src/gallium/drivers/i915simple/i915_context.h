@@ -35,7 +35,7 @@
 
 #include "draw/draw_vertex.h"
 
-#include "tgsi/util/tgsi_scan.h"
+#include "tgsi/tgsi_scan.h"
 
 
 #define I915_TEX_UNITS 8

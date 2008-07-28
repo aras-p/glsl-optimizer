@@ -10,11 +10,11 @@
 
 #include "pipe/p_shader_tokens.h"
 
-#include "tgsi/util/tgsi_parse.h"
-#include "tgsi/exec/tgsi_exec.h"
-#include "tgsi/util/tgsi_util.h"
-#include "tgsi/util/tgsi_build.h"
-#include "tgsi/util/tgsi_dump.h"
+#include "tgsi/tgsi_parse.h"
+#include "tgsi/tgsi_exec.h"
+#include "tgsi/tgsi_util.h"
+#include "tgsi/tgsi_build.h"
+#include "tgsi/tgsi_dump.h"
 
 
 #include <llvm/Module.h>

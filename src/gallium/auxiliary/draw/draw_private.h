@@ -44,8 +44,8 @@
 #include "pipe/p_state.h"
 #include "pipe/p_defines.h"
 
-#include "tgsi/exec/tgsi_exec.h"
-#include "tgsi/util/tgsi_scan.h"
+#include "tgsi/tgsi_exec.h"
+#include "tgsi/tgsi_scan.h"
 
 
 struct pipe_context;
