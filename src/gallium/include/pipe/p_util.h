@@ -34,7 +34,7 @@
 #include "p_format.h"
 #include "p_pointer.h"
 
-#if defined(PIPE_SUBSYSTEM_WINDOWS_MINIPORT) || defined(PIPE_SUBSYSTEM_WINDOWS_CE)
+#if defined(PIPE_SUBSYSTEM_WINDOWS_MINIPORT)
 __inline double ceil(double val)
 {
 	double ceil_val;
