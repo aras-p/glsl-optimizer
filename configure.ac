@@ -624,7 +624,10 @@ dnl If $with_dri_drivers is yes, directories will be added through
 dnl platform checks
 DRI_DIRS=""
 case "$with_dri_drivers" in
-no|yes) ;;
+no) ;;
+yes)
+    DRI_DIRS="yes"
+    ;;
 *)
     # verify the requested driver directories exist
     dri_drivers=`IFS=', '; echo $with_dri_drivers`
@@ -670,7 +673,7 @@ if test "$mesa_driver" = dri; then
             # converted to use the new interface.  i810 are missing
             # because there is no x86-64 system where they could *ever*
             # be used.
-            if test "x$DRI_DIRS" = x; then
+            if test "x$DRI_DIRS" = "xyes"; then
                 DRI_DIRS="i915 i965 mach64 mga r128 r200 r300 radeon \
                     savage tdfx unichrome swrast"
             fi
@@ -678,13 +681,13 @@ if test "$mesa_driver" = dri; then
         powerpc*)
             # Build only the drivers for cards that exist on PowerPC.
             # At some point MGA will be added, but not yet.
-            if test "x$DRI_DIRS" = x; then
+            if test "x$DRI_DIRS" = "xyes"; then
                 DRI_DIRS="mach64 r128 r200 r300 radeon tdfx swrast"
             fi
             ;;
         sparc*)
             # Build only the drivers for cards that exist on sparc`
-            if test "x$DRI_DIRS" = x; then
+            if test "x$DRI_DIRS" = "xyes"; then
                 DRI_DIRS="mach64 r128 r200 r300 radeon ffb swrast"
             fi
             ;;
@@ -703,7 +706,7 @@ if test "$mesa_driver" = dri; then
 
         # ffb and gamma are missing because they have not been converted
         # to use the new interface.
-        if test "x$DRI_DIRS" = x; then
+        if test "x$DRI_DIRS" = "xyes"; then
             DRI_DIRS="i810 i915 i965 mach64 mga r128 r200 r300 radeon tdfx \
                 unichrome savage sis swrast"
         fi
@@ -718,7 +721,7 @@ if test "$mesa_driver" = dri; then
     esac
 
     # default drivers
-    if test "x$DRI_DIRS" = x; then
+    if test "x$DRI_DIRS" = "xyes"; then
         DRI_DIRS="i810 i915 i965 mach64 mga r128 r200 r300 radeon s3v \
             savage sis tdfx trident unichrome ffb swrast"
     fi
@@ -1041,7 +1044,11 @@ fi
 if test "$mesa_driver" = dri; then
     # cleanup the drivers var
     dri_dirs=`echo $DRI_DIRS | $SED 's/^ *//;s/  */ /;s/ *$//'`
+if test "x$DRI_DIRS" = x; then
+    echo "        DRI drivers:     no"
+else
     echo "        DRI drivers:     $dri_dirs"
+fi
     echo "        DRI driver dir:  $DRI_DRIVER_INSTALL_DIR"
     echo "        TTM API support: $ttmapi"
 fi
