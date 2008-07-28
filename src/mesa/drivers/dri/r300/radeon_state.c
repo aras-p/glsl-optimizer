@@ -125,8 +125,8 @@ void radeonUpdateScissor(GLcontext* ctx)
 
 		radeon->state.scissor.rect.x1 = x1;
 		radeon->state.scissor.rect.y1 = y1;
-		radeon->state.scissor.rect.x2 = x1 + ctx->Scissor.Width - 1;
-		radeon->state.scissor.rect.y2 = y1 + ctx->Scissor.Height - 1;
+		radeon->state.scissor.rect.x2 = x1 + ctx->Scissor.Width;
+		radeon->state.scissor.rect.y2 = y1 + ctx->Scissor.Height;
 
 		radeonRecalcScissorRects(radeon);
 	}
