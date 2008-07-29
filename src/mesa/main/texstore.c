@@ -368,11 +368,13 @@ make_temp_float_image(GLcontext *ctx, GLuint dims,
             dst += srcWidth * 4;
          }
 
+         /* size after optional convolution */
+         convWidth = srcWidth;
+         convHeight = srcHeight;
+
          /* do convolution */
          {
             GLfloat *src = tempImage + img * (srcWidth * srcHeight * 4);
-            convWidth = srcWidth;
-            convHeight = srcHeight;
             if (dims == 1) {
                ASSERT(ctx->Pixel.Convolution1DEnabled);
                _mesa_convolve_1d_image(ctx, &convWidth, src, convImage);

@@ -509,7 +509,7 @@ _mesa_bind_attrib_location(GLcontext *ctx, GLuint program, GLuint index,
    struct gl_shader_program *shProg;
    const GLint size = -1; /* unknown size */
    GLint i, oldIndex;
-   GLenum datatype;
+   GLenum datatype = GL_FLOAT_VEC4;
 
    shProg = _mesa_lookup_shader_program_err(ctx, program,
                                             "glBindAttribLocation");
@@ -543,6 +543,7 @@ _mesa_bind_attrib_location(GLcontext *ctx, GLuint program, GLuint index,
    i = _mesa_add_attribute(shProg->Attributes, name, size, datatype, index);
    if (i < 0) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBindAttribLocation");
+      return;
    }
 
    if (shProg->VertexProgram && oldIndex >= 0 && oldIndex != index) {
