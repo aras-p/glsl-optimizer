@@ -243,7 +243,7 @@ find_var(const slang_variable_scope *s, slang_atom name)
 void
 slang_print_tree(const slang_operation *op, int indent)
 {
-   int i;
+   GLuint i;
 
    switch (op->type) {
 
@@ -265,12 +265,8 @@ slang_print_tree(const slang_operation *op, int indent)
       printf("{{ // new scope  locals=%p outer=%p: ",
              (void *) op->locals,
              (void *) op->locals->outer_scope);
-      {
-         int i;
-         for (i = 0; i < op->locals->num_variables; i++) {
-            printf("%s ", (char *) op->locals->variables[i]->a_name);
-         }
-         printf("\n");
+      for (i = 0; i < op->locals->num_variables; i++) {
+         printf("%s ", (char *) op->locals->variables[i]->a_name);
       }
       print_generic(op, NULL, indent+3);
       spaces(indent);
