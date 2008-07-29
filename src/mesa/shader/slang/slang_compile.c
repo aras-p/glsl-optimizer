@@ -2285,7 +2285,7 @@ compile_shader(GLcontext *ctx, slang_code_object * object,
    GLboolean success;
    grammar id = 0;
 
-#if 1 /* for debug */
+#if 0 /* for debug */
    _mesa_printf("********* COMPILE SHADER ***********\n");
    _mesa_printf("%s\n", shader->Source);
    _mesa_printf("************************************\n");
