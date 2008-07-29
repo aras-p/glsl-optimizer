@@ -80,6 +80,7 @@ typedef struct slang_variable_
    GLuint address;                  /**< Storage location */
    GLuint size;                     /**< Variable's size in bytes */
    GLboolean isTemp;                /**< a named temporary (__resultTmp) */
+   GLboolean declared;              /**< for debug */
    void *aux;                       /**< Used during code gen */
 } slang_variable;
 
