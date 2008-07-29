@@ -35,6 +35,7 @@
 #include "shader/prog_parameter.h"
 #include "shader/prog_statevars.h"
 #include "shader/slang/slang_ir.h"
+#include "shader/slang/slang_emit.h"
 #include "shader/slang/slang_builtin.h"
 
 
@@ -438,8 +439,13 @@ _slang_alloc_statevar(slang_ir_node *n,
    pos = lookup_statevar(var, index1, index2, field, &swizzle, paramList);
    assert(pos >= 0);
    if (pos >= 0) {
-      n0->Store->Index = pos;
-      n0->Store->Swizzle = swizzle;
+      /* XXX should overwrite Store's fields instead of changing pointers
+       * since there may be a child storage_info pointing to this one.
+       */
+      n0->Store = _slang_new_ir_storage_swz(PROGRAM_STATE_VAR,
+                                            pos,
+                                            n0->Store->Size,
+                                            swizzle);
    }
    return pos;
 }

@@ -43,6 +43,7 @@
 #include "shader/program.h"
 #include "shader/prog_instruction.h"
 #include "shader/prog_parameter.h"
+#include "shader/prog_print.h"
 #include "shader/prog_statevars.h"
 #include "slang_typeinfo.h"
 #include "slang_codegen.h"
@@ -243,7 +244,12 @@ _slang_attach_storage(slang_ir_node *n, slang_variable *var)
       }
       else {
          /* alloc new storage info */
-         n->Store = _slang_new_ir_storage(PROGRAM_UNDEFINED, -1, -5);
+         n->Store = _slang_new_ir_storage(PROGRAM_UNDEFINED, -7, -5);
+#if 0
+         printf("%s var=%s Store=%p Size=%d\n", __FUNCTION__,
+                (char*) var->a_name,
+                (void*) n->Store, n->Store->Size);
+#endif
          if (n->Var)
             n->Var->aux = n->Store;
          assert(n->Var->aux);
@@ -658,6 +664,9 @@ new_var(slang_assemble_ctx *A, slang_operation *oper, slang_atom name)
    n = new_node0(IR_VAR);
    if (n) {
       _slang_attach_storage(n, var);
+      /*
+      printf("new_var %s store=%p\n", (char*)name, (void*) n->Store);
+      */
    }
    return n;
 }
@@ -935,6 +944,18 @@ slang_substitute(slang_assemble_ctx *A, slang_operation *oper,
  *    __asm vec4_lrp __retVal, a, y, x;
  * }
  *
+ *
+ * A call to
+ *     r = mix(p1, p2, p3);
+ *
+ * Becomes:
+ *
+ *              mov
+ *             /   \
+ *            r   vec4_lrp
+ *                 /  |  \
+ *                p3  p2  p1
+ *
  * We basically translate a SLANG_OPER_CALL into a SLANG_OPER_ASM.
  */
 static slang_operation *
@@ -974,10 +995,10 @@ slang_inline_asm_function(slang_assemble_ctx *A,
    slang_operation_copy(inlined, &fun->body->children[0]);
    if (haveRetValue) {
       /* get rid of the __retVal child */
-      for (i = 0; i < numArgs; i++) {
+      inlined->num_children--;
+      for (i = 0; i < inlined->num_children; i++) {
          inlined->children[i] = inlined->children[i + 1];
       }
-      inlined->num_children--;
    }
 
    /* now do formal->actual substitutions */
@@ -1571,13 +1592,13 @@ _slang_gen_asm(slang_assemble_ctx *A, slang_operation *oper,
 
    if (info->NumParams == oper->num_children) {
       /* Storage for result is not specified.
-       * Children[0], [1] are the operands.
+       * Children[0], [1], [2] are the operands.
        */
       firstOperand = 0;
    }
    else {
       /* Storage for result (child[0]) is specified.
-       * Children[1], [2] are the operands.
+       * Children[1], [2], [3] are the operands.
        */
       firstOperand = 1;
    }
@@ -1612,7 +1633,8 @@ _slang_gen_asm(slang_assemble_ctx *A, slang_operation *oper,
       n->Store = get_store(n0);
       n->Writemask = writemask;
 
-      assert(n->Store->File != PROGRAM_UNDEFINED);
+      assert(n->Store->File != PROGRAM_UNDEFINED ||
+             n->Store->Parent);
 
       _slang_free(n0);
    }
@@ -2049,7 +2071,7 @@ _slang_gen_temporary(GLint size)
    slang_ir_storage *store;
    slang_ir_node *n = NULL;
 
-   store = _slang_new_ir_storage(PROGRAM_TEMPORARY, -1, size);
+   store = _slang_new_ir_storage(PROGRAM_TEMPORARY, -2, size);
    if (store) {
       n = new_node0(IR_VAR_DECL);
       if (n) {
@@ -2070,13 +2092,15 @@ static slang_ir_node *
 _slang_gen_var_decl(slang_assemble_ctx *A, slang_variable *var)
 {
    slang_ir_node *n;
+
    /*assert(!var->declared);*/
    var->declared = GL_TRUE;
+
    assert(!is_sampler_type(&var->type));
+
    n = new_node0(IR_VAR_DECL);
    if (n) {
       _slang_attach_storage(n, var);
-
       assert(var->aux);
       assert(n->Store == var->aux);
       assert(n->Store);
@@ -2084,6 +2108,13 @@ _slang_gen_var_decl(slang_assemble_ctx *A, slang_variable *var)
 
       n->Store->File = PROGRAM_TEMPORARY;
       n->Store->Size = _slang_sizeof_type_specifier(&n->Var->type.specifier);
+
+#if 0
+      printf("%s var %p %s  store=%p index=%d size=%d\n",
+             __FUNCTION__, (void *) var, (char *) var->a_name,
+             (void *) n->Store, n->Store->Index, n->Store->Size);
+#endif
+
       if (var->array_len > 0) {
          /* this is an array */
          /* round up element size to mult of 4 */
@@ -2092,8 +2123,27 @@ _slang_gen_var_decl(slang_assemble_ctx *A, slang_variable *var)
          sz *= var->array_len;
          n->Store->Size = sz;
       }
-      A->program->NumTemporaries++;
+
       assert(n->Store->Size > 0);
+
+      /* setup default swizzle for storing the variable */
+      switch (n->Store->Size) {
+      case 2:
+         n->Store->Swizzle = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y,
+                                           SWIZZLE_NIL, SWIZZLE_NIL);
+         break;
+      case 3:
+         n->Store->Swizzle = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y,
+                                           SWIZZLE_Z, SWIZZLE_NIL);
+         break;
+      default:
+         /* Note that float-sized vars may be allocated in any x/y/z/w
+          * slot, but that won't be determined until code emit time.
+          */
+         n->Store->Swizzle = SWIZZLE_NOOP;
+      }
+
+      A->program->NumTemporaries++; /* an approximation */
    }
    return n;
 }
@@ -2374,11 +2424,11 @@ _slang_gen_variable(slang_assemble_ctx * A, slang_operation *oper)
 static slang_ir_node *
 _slang_gen_swizzle(slang_ir_node *child, GLuint swizzle)
 {
+   /* XXX should rewrite this to use relative/Parent storage */
    slang_ir_node *n = new_node1(IR_SWIZZLE, child);
    assert(child);
    if (n) {
-      n->Store = _slang_new_ir_storage(PROGRAM_UNDEFINED, -1, -1);
-      n->Store->Swizzle = swizzle;
+      n->Store = _slang_new_ir_storage_swz(PROGRAM_UNDEFINED, -1, -1, swizzle);
    }
    return n;
 }
@@ -2469,7 +2519,7 @@ _slang_gen_assignment(slang_assemble_ctx * A, slang_operation *oper)
  * Generate IR tree for referencing a field in a struct (or basic vector type)
  */
 static slang_ir_node *
-_slang_gen_field(slang_assemble_ctx * A, slang_operation *oper)
+_slang_gen_struct_field(slang_assemble_ctx * A, slang_operation *oper)
 {
    slang_typeinfo ti;
 
@@ -2522,7 +2572,8 @@ _slang_gen_field(slang_assemble_ctx * A, slang_operation *oper)
       /* oper->a_id is the field name */
       slang_ir_node *base, *n;
       slang_typeinfo field_ti;
-      GLint fieldSize, fieldOffset = -1;
+      GLint fieldSize, fieldOffset = -1, swz;
+
       /* type of field */
       slang_typeinfo_construct(&field_ti);
       _slang_typeof_operation(A, oper, &field_ti);
@@ -2547,20 +2598,27 @@ _slang_gen_field(slang_assemble_ctx * A, slang_operation *oper)
       }
 
       n = new_node1(IR_FIELD, base);
-      if (n) {
-         n->Field = (char *) oper->a_id;
-         n->FieldOffset = fieldOffset;
-         assert(n->FieldOffset >= 0);
-         n->Store = _slang_new_ir_storage(base->Store->File,
-                                          base->Store->Index,
-                                          fieldSize);
-      }
-      return n;
+      if (!n)
+         return NULL;
 
-#if 0
-      _mesa_problem(NULL, "glsl structs/fields not supported yet");
-      return NULL;
-#endif
+
+      /* setup the storage info for this node */
+      swz = fieldOffset % 4;
+
+      n->Field = (char *) oper->a_id;
+      n->Store = _slang_new_ir_storage_relative(fieldOffset / 4,
+                                                fieldSize,
+                                                base->Store);
+      if (fieldSize == 1)
+         n->Store->Swizzle = MAKE_SWIZZLE4(swz, swz, swz, swz);
+      else if (fieldSize == 2)
+         n->Store->Swizzle = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y,
+                                           SWIZZLE_NIL, SWIZZLE_NIL);
+      else if (fieldSize == 3)
+         n->Store->Swizzle = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y,
+                                           SWIZZLE_Z, SWIZZLE_NIL);
+
+      return n;
    }
 }
 
@@ -2569,7 +2627,7 @@ _slang_gen_field(slang_assemble_ctx * A, slang_operation *oper)
  * Gen code for array indexing.
  */
 static slang_ir_node *
-_slang_gen_subscript(slang_assemble_ctx * A, slang_operation *oper)
+_slang_gen_array_element(slang_assemble_ctx * A, slang_operation *oper)
 {
    slang_typeinfo array_ti;
 
@@ -2633,21 +2691,24 @@ _slang_gen_subscript(slang_assemble_ctx * A, slang_operation *oper)
       index = _slang_gen_operation(A, &oper->children[1]);
       if (array && index) {
          /* bounds check */
-         if (index->Opcode == IR_FLOAT &&
-             ((int) index->Value[0] < 0 ||
-              (int) index->Value[0] >= arrayLen)) {
-            slang_info_log_error(A->log,
+         GLint constIndex = 0;
+         if (index->Opcode == IR_FLOAT) {
+            constIndex = (int) index->Value[0];
+            if (constIndex < 0 || constIndex >= arrayLen) {
+               slang_info_log_error(A->log,
                                 "Array index out of bounds (index=%d size=%d)",
-                                 (int) index->Value[0], arrayLen);
-            _slang_free_ir_tree(array);
-            _slang_free_ir_tree(index);
-            return NULL;
+                                 constIndex, arrayLen);
+               _slang_free_ir_tree(array);
+               _slang_free_ir_tree(index);
+               return NULL;
+            }
          }
 
          elem = new_node2(IR_ELEMENT, array, index);
-         elem->Store = _slang_new_ir_storage(array->Store->File,
-                                             array->Store->Index,
-                                             elemSize);
+         elem->Store = _slang_new_ir_storage_relative(constIndex,
+                                                      elemSize,
+                                                      array->Store);
+
          /* XXX try to do some array bounds checking here */
          return elem;
       }
@@ -2886,9 +2947,9 @@ _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper)
    case SLANG_OPER_IF:
       return _slang_gen_if(A, oper);
    case SLANG_OPER_FIELD:
-      return _slang_gen_field(A, oper);
+      return _slang_gen_struct_field(A, oper);
    case SLANG_OPER_SUBSCRIPT:
-      return _slang_gen_subscript(A, oper);
+      return _slang_gen_array_element(A, oper);
    case SLANG_OPER_LITERAL_FLOAT:
       /* fall-through */
    case SLANG_OPER_LITERAL_INT:
@@ -3050,8 +3111,7 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
             GLint index = _slang_input_index(varName, GL_FRAGMENT_PROGRAM_ARB,
                                              &swizzle);
             assert(index >= 0);
-            store = _slang_new_ir_storage(PROGRAM_INPUT, index, size);
-            store->Swizzle = swizzle;
+            store = _slang_new_ir_storage_swz(PROGRAM_INPUT, index, size, swizzle);
             assert(index < FRAG_ATTRIB_MAX);
          }
          else {
@@ -3083,8 +3143,7 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
                                           &swizzle);
          GLint size = 4; /* XXX? */
          assert(index >= 0);
-         store = _slang_new_ir_storage(PROGRAM_INPUT, index, size);
-         store->Swizzle = swizzle;
+         store = _slang_new_ir_storage_swz(PROGRAM_INPUT, index, size, swizzle);
       }
       if (dbg) printf("ATTRIB ");
    }
@@ -3093,8 +3152,7 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
       GLint index = _slang_input_index(varName, GL_FRAGMENT_PROGRAM_ARB,
                                        &swizzle);
       GLint size = 4; /* XXX? */
-      store = _slang_new_ir_storage(PROGRAM_INPUT, index, size);
-      store->Swizzle = swizzle;
+      store = _slang_new_ir_storage_swz(PROGRAM_INPUT, index, size, swizzle);
       if (dbg) printf("INPUT ");
    }
    else if (var->type.qualifier == SLANG_QUAL_FIXEDOUTPUT) {
