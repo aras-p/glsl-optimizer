@@ -3435,7 +3435,6 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
                                                  totalSize, datatype);
             store = _slang_new_ir_storage_swz(PROGRAM_UNIFORM, uniformLoc,
                                               totalSize, swizzle);
-            printf("GLOBAL USER UNIFORM %s size %d\n", varName, totalSize);
          }
       }
       else {
