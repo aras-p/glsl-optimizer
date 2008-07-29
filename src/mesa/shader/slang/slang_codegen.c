@@ -2973,7 +2973,7 @@ _slang_gen_array_element(slang_assemble_ctx * A, slang_operation *oper)
 
       index = (GLint) oper->children[1].literal[0];
       if (oper->children[1].type != SLANG_OPER_LITERAL_INT ||
-          index >= max) {
+          index >= (GLint) max) {
          slang_info_log_error(A->log, "Invalid array index for vector type");
          return NULL;
       }
