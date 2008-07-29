@@ -124,7 +124,8 @@ slang_struct_destruct(slang_struct * stru)
 {
    slang_variable_scope_destruct(stru->fields);
    _slang_free(stru->fields);
-   slang_struct_scope_destruct(stru->structs);
+   if (stru->structs)
+      slang_struct_scope_destruct(stru->structs);
    _slang_free(stru->structs);
 }
 
