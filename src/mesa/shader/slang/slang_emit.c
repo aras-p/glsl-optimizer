@@ -1021,7 +1021,7 @@ emit_tex(slang_emit_info *emitInfo, slang_ir_node *n)
    storage_to_dst_reg(&inst->DstReg, n->Store, n->Writemask);
 
    /* Child[1] is the coord */
-   assert(n->Children[1]->Store->File != PROGRAM_UNDEFINED);
+   /*assert(n->Children[1]->Store->File != PROGRAM_UNDEFINED);*/
    assert(n->Children[1]->Store->Index >= 0);
    storage_to_src_reg(&inst->SrcReg[0], n->Children[1]->Store);
 
