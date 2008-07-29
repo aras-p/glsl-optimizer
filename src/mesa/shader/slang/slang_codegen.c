@@ -1007,6 +1007,13 @@ slang_inline_asm_function(slang_assemble_ctx *A,
    _slang_free(substOld);
    _slang_free(substNew);
 
+#if 0
+   printf("+++++++++++++ inlined asm function %s +++++++++++++\n",
+          (char *) fun->header.a_name);
+   slang_print_tree(inlined, 3);
+   printf("+++++++++++++++++++++++++++++++++++++++++++++++++++\n");
+#endif
+
    return inlined;
 }
 
@@ -1034,6 +1041,7 @@ slang_inline_function_call(slang_assemble_ctx * A, slang_function *fun,
    slang_operation **substNew;
    GLuint substCount, numCopyIn, i;
    slang_function *prevFunction;
+   slang_variable_scope *newScope = NULL;
 
    /* save / push */
    prevFunction = A->CurFunction;
@@ -1051,7 +1059,7 @@ slang_inline_function_call(slang_assemble_ctx * A, slang_function *fun,
       _slang_alloc(totalArgs * sizeof(slang_operation *));
 
 #if 0
-   printf("Inline call to %s  (total vars=%d  nparams=%d)\n",
+   printf("\nInline call to %s  (total vars=%d  nparams=%d)\n",
 	  (char *) fun->header.a_name,
 	  fun->parameters->num_variables, numArgs);
 #endif
@@ -1202,9 +1210,7 @@ slang_inline_function_call(slang_assemble_ctx * A, slang_function *fun,
 	 slang_operation *decl = slang_operation_insert(&inlined->num_children,
 							&inlined->children,
 							numCopyIn);
-         /*
-         printf("COPY_IN %s from expr\n", (char*)p->a_name);
-         */
+
 	 decl->type = SLANG_OPER_VARIABLE_DECL;
          assert(decl->locals);
          decl->locals->outer_scope = inlined->locals;
@@ -1215,6 +1221,15 @@ slang_inline_function_call(slang_assemble_ctx * A, slang_function *fun,
          /* child[0] is the var's initializer */
          slang_operation_copy(&decl->children[0], args + i);
 
+         /* add parameter 'p' to the local variable scope here */
+         {
+            slang_variable *pCopy = slang_variable_scope_grow(inlined->locals);
+            pCopy->type = p->type;
+            pCopy->a_name = p->a_name;
+            pCopy->array_len = p->array_len;
+         }
+
+         newScope = inlined->locals;
 	 numCopyIn++;
       }
    }
@@ -1264,8 +1279,15 @@ slang_inline_function_call(slang_assemble_ctx * A, slang_function *fun,
    _slang_free(substOld);
    _slang_free(substNew);
 
+   /* Update scoping to use the new local vars instead of the
+    * original function's vars.  This is especially important
+    * for nested inlining.
+    */
+   if (newScope)
+      slang_replace_scope(inlined, fun->parameters, newScope);
+
 #if 0
-   printf("Done Inline call to %s  (total vars=%d  nparams=%d)\n",
+   printf("Done Inline call to %s  (total vars=%d  nparams=%d)\n\n",
 	  (char *) fun->header.a_name,
 	  fun->parameters->num_variables, numArgs);
    slang_print_tree(top, 0);
