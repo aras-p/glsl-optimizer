@@ -69,7 +69,7 @@ _slang_lookup_constant(const char *name)
    for (i = 0; info[i].Name; i++) {
       if (strcmp(info[i].Name, name) == 0) {
          /* found */
-         GLint value = -1.0;
+         GLint value = -1;
          _mesa_GetIntegerv(info[i].Token, &value);
          ASSERT(value >= 0);  /* sanity check that glGetFloatv worked */
          return value;
@@ -103,7 +103,7 @@ _slang_simplify(slang_operation *oper,
          oper->literal[0] =
          oper->literal[1] =
          oper->literal[2] =
-         oper->literal[3] = value;
+         oper->literal[3] = (GLfloat) value;
          oper->type = SLANG_OPER_LITERAL_INT;
          return;
       }

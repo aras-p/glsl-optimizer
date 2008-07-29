@@ -268,6 +268,7 @@ slang_print_tree(const slang_operation *op, int indent)
       for (i = 0; i < op->locals->num_variables; i++) {
          printf("%s ", (char *) op->locals->variables[i]->a_name);
       }
+      printf("\n");
       print_generic(op, NULL, indent+3);
       spaces(indent);
       printf("}}\n");
@@ -665,7 +666,7 @@ slang_print_tree(const slang_operation *op, int indent)
 void
 slang_print_function(const slang_function *f, GLboolean body)
 {
-   int i;
+   GLuint i;
 
 #if 0
    if (_mesa_strcmp((char *) f->header.a_name, "main") != 0)

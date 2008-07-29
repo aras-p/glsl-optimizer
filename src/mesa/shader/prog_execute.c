@@ -717,7 +717,7 @@ _mesa_execute_program(GLcontext * ctx,
                 * result.z = result.x * APPX(result.y)
                 * We do what the ARB extension says.
                 */
-               q[2] = pow(2.0, t[0]);
+               q[2] = (GLfloat) pow(2.0, t[0]);
             }
             q[1] = t[0] - floor_t0;
             q[3] = 1.0F;

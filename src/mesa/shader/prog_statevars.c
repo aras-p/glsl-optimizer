@@ -254,7 +254,7 @@ _mesa_fetch_state(GLcontext *ctx, const gl_state_index state[],
       value[1] = ctx->Fog.Start;
       value[2] = ctx->Fog.End;
       value[3] = (ctx->Fog.End == ctx->Fog.Start)
-         ? 1.0 : 1.0F / (ctx->Fog.End - ctx->Fog.Start);
+         ? 1.0f : (GLfloat)(1.0 / (ctx->Fog.End - ctx->Fog.Start));
       return;
    case STATE_CLIPPLANE:
       {
@@ -410,9 +410,9 @@ _mesa_fetch_state(GLcontext *ctx, const gl_state_index state[],
                = ctx->Texture.Unit[unit]._Current;
             if (texObj) {
                struct gl_texture_image *texImage = texObj->Image[0][0];
-               ASSIGN_4V(value, 1.0 / texImage->Width,
-                         1.0 / texImage->Height,
-                         0.0, 1.0);
+               ASSIGN_4V(value, (GLfloat) (1.0 / texImage->Width),
+                         (GLfloat)(1.0 / texImage->Height),
+                         0.0f, 1.0f);
             }
          }
          return;
@@ -426,7 +426,7 @@ _mesa_fetch_state(GLcontext *ctx, const gl_state_index state[],
           * exp2: 2^-((density/(ln(2)^2) * fogcoord)^2)
           */
          value[0] = (ctx->Fog.End == ctx->Fog.Start)
-            ? 1.0 : -1.0F / (ctx->Fog.End - ctx->Fog.Start);
+            ? 1.0f : (GLfloat)(-1.0F / (ctx->Fog.End - ctx->Fog.Start));
          value[1] = ctx->Fog.End * -value[0];
          value[2] = ctx->Fog.Density * ONE_DIV_LN2;
          value[3] = ctx->Fog.Density * ONE_DIV_SQRT_LN2;
