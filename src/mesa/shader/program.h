@@ -46,10 +46,6 @@
 extern struct gl_program _mesa_DummyProgram;
 
 
-/*
- * Internal functions
- */
-
 extern void
 _mesa_init_program(GLcontext *ctx);
 
@@ -125,20 +121,6 @@ _mesa_combine_programs(GLcontext *ctx,
 
 extern GLint
 _mesa_find_free_register(const struct gl_program *prog, GLuint regFile);
-
-
-/*
- * API functions common to ARB/NV_vertex/fragment_program
- */
-
-extern void GLAPIENTRY
-_mesa_BindProgram(GLenum target, GLuint id);
-
-extern void GLAPIENTRY
-_mesa_DeletePrograms(GLsizei n, const GLuint *ids);
-
-extern void GLAPIENTRY
-_mesa_GenPrograms(GLsizei n, GLuint *ids);
 
 
 
