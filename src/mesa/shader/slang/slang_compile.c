@@ -337,9 +337,10 @@ convert_to_array(slang_parse_ctx * C, slang_variable * var,
 
 static GLboolean
 parse_struct_field_var(slang_parse_ctx * C, slang_output_ctx * O,
-                       slang_variable * var, const slang_type_specifier * sp)
+                       slang_variable * var, slang_atom a_name,
+                       const slang_type_specifier * sp)
 {
-   var->a_name = parse_identifier(C);
+   var->a_name = a_name;
    if (var->a_name == SLANG_ATOM_NULL)
       return GL_FALSE;
 
@@ -372,12 +373,19 @@ parse_struct_field(slang_parse_ctx * C, slang_output_ctx * O,
       return 0;
 
    do {
+      slang_atom a_name;
       slang_variable *var = slang_variable_scope_grow(st->fields);
       if (!var) {
          slang_info_log_memory(C->L);
          return 0;
       }
-      if (!parse_struct_field_var(C, &o, var, sp))
+      a_name = parse_identifier(C);
+      if (_slang_locate_variable(st->fields, a_name, GL_FALSE)) {
+         slang_info_log_error(C->L, "duplicate field '%s'", (char *) a_name);
+         return 0;
+      }
+
+      if (!parse_struct_field_var(C, &o, var, a_name, sp))
          return 0;
    }
    while (*C->I++ != FIELD_NONE);
@@ -1579,10 +1587,21 @@ parse_init_declarator(slang_parse_ctx * C, slang_output_ctx * O,
                       const slang_fully_specified_type * type)
 {
    slang_variable *var;
+   slang_atom a_name;
 
    /* empty init declatator (without name, e.g. "float ;") */
    if (*C->I++ == VARIABLE_NONE)
       return 1;
+
+   a_name = parse_identifier(C);
+
+   /* check if name is already in this scope */
+   if (_slang_locate_variable(O->vars, a_name, GL_FALSE)) {
+      slang_info_log_error(C->L,
+                   "declaration of '%s' conflicts with previous declaration",
+                   (char *) a_name);
+      return 0;
+   }
 
    /* make room for the new variable and initialize it */
    var = slang_variable_scope_grow(O->vars);
@@ -1593,7 +1612,7 @@ parse_init_declarator(slang_parse_ctx * C, slang_output_ctx * O,
 
    /* copy the declarator qualifier type, parse the identifier */
    var->type.qualifier = type->qualifier;
-   var->a_name = parse_identifier(C);
+   var->a_name = a_name;
    if (var->a_name == SLANG_ATOM_NULL)
       return 0;
 
@@ -1657,6 +1676,7 @@ parse_init_declarator(slang_parse_ctx * C, slang_output_ctx * O,
       A.space.vars = O->vars;
       A.program = O->program;
       A.vartable = O->vartable;
+      A.log = C->L;
       A.curFuncEndLabel = NULL;
       if (!_slang_codegen_global_variable(&A, var, C->type))
          return 0;
@@ -2265,7 +2285,7 @@ compile_shader(GLcontext *ctx, slang_code_object * object,
    GLboolean success;
    grammar id = 0;
 
-#if 0 /* for debug */
+#if 1 /* for debug */
    _mesa_printf("********* COMPILE SHADER ***********\n");
    _mesa_printf("%s\n", shader->Source);
    _mesa_printf("************************************\n");
