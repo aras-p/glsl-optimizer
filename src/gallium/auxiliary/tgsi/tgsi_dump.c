@@ -332,7 +332,7 @@ void
 tgsi_dump_declaration(
    const struct tgsi_full_declaration *decl )
 {
-   TXT( "\nDCL " );
+   TXT( "DCL " );
 
    _dump_register(
       decl->Declaration.File,
@@ -354,6 +354,8 @@ tgsi_dump_declaration(
 
    TXT( ", " );
    ENM( decl->Declaration.Interpolate, interpolate_names );
+   
+   EOL();
 }
 
 static boolean
@@ -407,7 +409,6 @@ tgsi_dump_instruction(
    uint i;
    boolean first_reg = TRUE;
 
-   EOL();
    UID( instno );
    CHR( ':' );
    ENM( inst->Instruction.Opcode, opcode_names );
@@ -534,6 +535,8 @@ tgsi_dump_instruction(
       UID( inst->InstructionExtLabel.Label );
       break;
    }
+   
+   EOL();
 }
 
 static boolean
@@ -551,11 +554,11 @@ static boolean
 prolog(
    struct tgsi_iterate_context *ctx )
 {
-   EOL();
    ENM( ctx->processor.Processor, processor_type_names );
    UID( ctx->version.MajorVersion );
    CHR( '.' );
    UID( ctx->version.MinorVersion );
+   EOL();
    return TRUE;
 }
 
