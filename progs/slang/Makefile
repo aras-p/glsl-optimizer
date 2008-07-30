@@ -31,27 +31,27 @@ clean:
 #
 
 cltest: cltest.o framework.o $(LIB_DEP)
-	$(CC) $(LDFLAGS) cltest.o framework.o $(LIBS) -o cltest
+	$(CC) $(CFLAGS) $(LDFLAGS) cltest.o framework.o $(LIBS) -o cltest
 
 sotest: sotest.o framework.o $(LIB_DEP)
-	$(CC) $(LDFLAGS) sotest.o framework.o $(LIBS) -o sotest
+	$(CC) $(CFLAGS) $(LDFLAGS) sotest.o framework.o $(LIBS) -o sotest
 
 vstest: vstest.o framework.o $(LIB_DEP)
-	$(CC) $(LDFLAGS) vstest.o framework.o $(LIBS) -o vstest
+	$(CC) $(CFLAGS) $(LDFLAGS) vstest.o framework.o $(LIBS) -o vstest
 
 #
 # objects
 #
 
 framework.o: framework.c framework.h
-	$(CC) -c -I$(INCDIR) framework.c -o framework.o
+	$(CC) -c -I$(INCDIR) $(CFLAGS) framework.c -o framework.o
 
 cltest.o: cltest.c framework.h
-	$(CC) -c -I$(INCDIR) cltest.c -o cltest.o
+	$(CC) -c -I$(INCDIR) $(CFLAGS) cltest.c -o cltest.o
 
 sotest.o: sotest.c framework.h
-	$(CC) -c -I$(INCDIR) sotest.c -o sotest.o
+	$(CC) -c -I$(INCDIR) $(CFLAGS) sotest.c -o sotest.o
 
 vstest.o: vstest.c framework.h
-	$(CC) -c -I$(INCDIR) vstest.c -o vstest.o
+	$(CC) -c -I$(INCDIR) $(CFLAGS) vstest.c -o vstest.o
 

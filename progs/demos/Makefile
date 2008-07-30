@@ -125,41 +125,41 @@ extfuncs.h:  $(TOP)/progs/util/extfuncs.h
 
 
 reflect: reflect.o showbuffer.o readtex.o
-	$(CC) $(LDFLAGS) reflect.o showbuffer.o readtex.o $(LIBS) -o $@
+	$(CC) $(CFLAGS) $(LDFLAGS) reflect.o showbuffer.o readtex.o $(LIBS) -o $@
 
 reflect.o: reflect.c showbuffer.h
 	$(CC) -c -I$(INCDIR) $(CFLAGS) reflect.c
 
 
 shadowtex: shadowtex.o showbuffer.o
-	$(CC) $(LDFLAGS) shadowtex.o showbuffer.o $(LIBS) -o $@
+	$(CC) $(CFLAGS) $(LDFLAGS) shadowtex.o showbuffer.o $(LIBS) -o $@
 
 shadowtex.o: shadowtex.c showbuffer.h
 	$(CC) -c -I$(INCDIR) $(CFLAGS) shadowtex.c
 
 
 gloss: gloss.o trackball.o readtex.o
-	$(CC) $(LDFLAGS) gloss.o trackball.o readtex.o $(LIBS) -o $@
+	$(CC) $(CFLAGS) $(LDFLAGS) gloss.o trackball.o readtex.o $(LIBS) -o $@
 
 gloss.o: gloss.c trackball.h
 	$(CC) -c -I$(INCDIR) $(CFLAGS) gloss.c
 
 
 engine: engine.o trackball.o readtex.o
-	$(CC) $(LDFLAGS) engine.o trackball.o readtex.o $(LIBS) -o $@
+	$(CC) $(CFLAGS) $(LDFLAGS) engine.o trackball.o readtex.o $(LIBS) -o $@
 
 engine.o: engine.c trackball.h
 	$(CC) -c -I$(INCDIR) $(CFLAGS) engine.c
 
 
 fslight: fslight.o
-	$(CC) $(LDFLAGS) fslight.o $(LIBS) -o $@
+	$(CC) $(CFLAGS) $(LDFLAGS) fslight.o $(LIBS) -o $@
 
 fslight.o: fslight.c extfuncs.h
 	$(CC) -c -I$(INCDIR) $(CFLAGS) fslight.c
 
 rain: particles.o rain.o readtex.o
-	$(CXX) $(LDFLAGS) $^ $(LIBS) -o $@
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ $(LIBS) -o $@
 
 rain.o: rain.cxx readtex.h
 	$(CXX) -c -I$(INCDIR) $(CXXFLAGS) $<
