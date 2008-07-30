@@ -464,7 +464,14 @@ intel_init_bufmgr(struct intel_context *intel)
 {
    intelScreenPrivate *intelScreen = intel->intelScreen;
    GLboolean gem_disable = getenv("INTEL_NO_GEM") != NULL;
+   int gem_kernel = 0;
    GLboolean gem_supported;
+   struct drm_i915_getparam gp;
+
+   gp.param = I915_PARAM_HAS_GEM;
+   gp.value = &gem_kernel;
+
+   (void) drmCommandWriteRead(intel->driFd, DRM_I915_GETPARAM, &gp, sizeof(gp));
 
    /* If we've got a new enough DDX that's initializing GEM and giving us
     * object handles for the shared buffers, use that.
@@ -473,7 +480,7 @@ intel_init_bufmgr(struct intel_context *intel)
    if (intel->intelScreen->driScrnPriv->dri2.enabled)
        gem_supported = GL_TRUE;
    else if (intel->intelScreen->driScrnPriv->ddx_version.minor >= 9 &&
-	    intel->intelScreen->drmMinor >= 11 &&
+	    gem_kernel &&
 	    intel->intelScreen->front.bo_handle != -1)
        gem_supported = GL_TRUE;
    else
