@@ -86,8 +86,7 @@ const struct VL_TEXCOORD2F *vl_surface_texcoords = (const struct VL_TEXCOORD2F*)
  */
 const struct VL_MC_FS_CONSTS vl_mc_fs_consts =
 {
-	{256.0f, 256.0f, 256.0f, 0.0f},
-	{256.0f / 255.0f, 256.0f / 255.0f, 256.0f / 255.0f, 0.0f},
+	{32767.0f / 255.0f, 32767.0f / 255.0f, 32767.0f / 255.0f, 0.0f},
 	{0.5f, 2.0f, 0.0f, 0.0f}
 };
 

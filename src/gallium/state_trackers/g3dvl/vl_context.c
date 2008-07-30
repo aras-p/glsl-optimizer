@@ -365,7 +365,7 @@ static int vlCreateVertexShaderIMC(struct VL_CONTEXT *context)
 
 static int vlCreateFragmentShaderIMC(struct VL_CONTEXT *context)
 {
-	const unsigned int		max_tokens = 50;
+	const unsigned int		max_tokens = 100;
 	
 	struct pipe_context		*pipe;
 	struct pipe_shader_state	fs;
@@ -402,9 +402,17 @@ static int vlCreateFragmentShaderIMC(struct VL_CONTEXT *context)
 		decl = vl_decl_interpolated_input(TGSI_SEMANTIC_GENERIC, i + 1, i, i, TGSI_INTERPOLATE_LINEAR);
 		ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
 	}
+	
+	/* decl c0			; Scaling factor, rescales 16-bit snorm to 9-bit snorm */
+	decl = vl_decl_constants(TGSI_SEMANTIC_GENERIC, 0, 0, 0);
+	ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
 
 	/* decl o0			; Fragment color */
 	decl = vl_decl_output(TGSI_SEMANTIC_COLOR, 0, 0, 0);
+	ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
+	
+	/* decl t0, t1 */
+	decl = vl_decl_temps(0, 1);
 	ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
 	
 	/*
@@ -419,16 +427,30 @@ static int vlCreateFragmentShaderIMC(struct VL_CONTEXT *context)
 	}
 	
 	/*
-	 * tex2d o0.x, i0, s0		; Read texel from luma texture into .x channel
-	 * tex2d o0.y, i1, s1		; Read texel from chroma Cb texture into .y channel
-	 * tex2d o0.z, i1, s2		; Read texel from chroma Cr texture into .z channel
-	*/
+	 * tex2d t1, i0, s0		; Read texel from luma texture
+	 * mov t0.x, t1.x		; Move luma sample into .x component
+	 * tex2d t1, i1, s1		; Read texel from chroma Cb texture
+	 * mov t0.y, t1.x		; Move Cb sample into .y component
+	 * tex2d t1, i1, s2		; Read texel from chroma Cr texture
+	 * mov t0.z, t1.x		; Move Cr sample into .z component
+	 */
 	for (i = 0; i < 3; ++i)
 	{
-		inst = vl_tex(TGSI_TEXTURE_2D, TGSI_FILE_OUTPUT, 0, TGSI_FILE_INPUT, i > 0 ? 1 : 0, TGSI_FILE_SAMPLER, i);
+		inst = vl_tex(TGSI_TEXTURE_2D, TGSI_FILE_TEMPORARY, 1, TGSI_FILE_INPUT, i > 0 ? 1 : 0, TGSI_FILE_SAMPLER, i);
+		ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
+		
+		inst = vl_inst2(TGSI_OPCODE_MOV, TGSI_FILE_TEMPORARY, 0, TGSI_FILE_TEMPORARY, 1);
+		inst.FullSrcRegisters[0].SrcRegister.SwizzleX = TGSI_SWIZZLE_X;
+		inst.FullSrcRegisters[0].SrcRegister.SwizzleY = TGSI_SWIZZLE_X;
+		inst.FullSrcRegisters[0].SrcRegister.SwizzleZ = TGSI_SWIZZLE_X;
 		inst.FullDstRegisters[0].DstRegister.WriteMask = TGSI_WRITEMASK_X << i;
 		ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
+		
 	}
+	
+	/* mul o0, t0, c0		; Rescale texel to correct range */
+	inst = vl_inst3(TGSI_OPCODE_MUL, TGSI_FILE_OUTPUT, 0, TGSI_FILE_TEMPORARY, 0, TGSI_FILE_CONSTANT, 0);
+	ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
 
 	/* end */
 	inst = vl_end();
@@ -701,10 +723,7 @@ static int vlCreateFragmentShaderFramePMC(struct VL_CONTEXT *context)
 		ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
 	}
 	
-	/*
-	 * decl c0			; Multiplier to shift 9th bit of differential into place
-	 * decl c1			; Bias to get differential back to a signed value
-	 */
+	/* decl c0			; Scaling factor, rescales 16-bit snorm to 9-bit snorm */
 	decl = vl_decl_constants(TGSI_SEMANTIC_GENERIC, 0, 0, 1);
 	ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
 
@@ -729,38 +748,29 @@ static int vlCreateFragmentShaderFramePMC(struct VL_CONTEXT *context)
 	}
 	
 	/*
-	 * tex2d t0.xw, i0, s0		; Read texel from luma texture into .x and .w channels
-	 * mov t1.x, t0.w		; Move 9th bit from .w channel to .x
-	 * tex2d t0.yw, i1, s1		; Read texel from chroma Cb texture into .y and .w channels
-	 * mov t1.y, t0.w		; Move 9th bit from .w channel to .y
-	 * tex2d t0.zw, i1, s2		; Read texel from chroma Cr texture into .z and .w channels
-	 * mov t1.z, t0.w		; Move 9th bit from .w channel to .z
+	 * tex2d t1, i0, s0		; Read texel from luma texture
+	 * mov t0.x, t1.x		; Move luma sample into .x component
+	 * tex2d t1, i1, s1		; Read texel from chroma Cb texture
+	 * mov t0.y, t1.x		; Move Cb sample into .y component
+	 * tex2d t1, i1, s2		; Read texel from chroma Cr texture
+	 * mov t0.z, t1.x		; Move Cr sample into .z component
 	 */
 	for (i = 0; i < 3; ++i)
 	{
-		inst = vl_tex(TGSI_TEXTURE_2D, TGSI_FILE_TEMPORARY, 0, TGSI_FILE_INPUT, i > 0 ? 1 : 0, TGSI_FILE_SAMPLER, i);
-		inst.FullDstRegisters[0].DstRegister.WriteMask = (TGSI_WRITEMASK_X << i) | TGSI_WRITEMASK_W;
+		inst = vl_tex(TGSI_TEXTURE_2D, TGSI_FILE_TEMPORARY, 1, TGSI_FILE_INPUT, i > 0 ? 1 : 0, TGSI_FILE_SAMPLER, i);
 		ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
 		
-		inst = vl_inst2(TGSI_OPCODE_MOV, TGSI_FILE_TEMPORARY, 1, TGSI_FILE_TEMPORARY, 0);
+		inst = vl_inst2(TGSI_OPCODE_MOV, TGSI_FILE_TEMPORARY, 0, TGSI_FILE_TEMPORARY, 1);
+		inst.FullSrcRegisters[0].SrcRegister.SwizzleX = TGSI_SWIZZLE_X;
+		inst.FullSrcRegisters[0].SrcRegister.SwizzleY = TGSI_SWIZZLE_X;
+		inst.FullSrcRegisters[0].SrcRegister.SwizzleZ = TGSI_SWIZZLE_X;
 		inst.FullDstRegisters[0].DstRegister.WriteMask = TGSI_WRITEMASK_X << i;
-		inst.FullSrcRegisters[0].SrcRegister.SwizzleX = TGSI_SWIZZLE_W;
-		inst.FullSrcRegisters[0].SrcRegister.SwizzleY = TGSI_SWIZZLE_W;
-		inst.FullSrcRegisters[0].SrcRegister.SwizzleZ = TGSI_SWIZZLE_W;
-		inst.FullSrcRegisters[0].SrcRegister.SwizzleW = TGSI_SWIZZLE_W;
 		ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
+		
 	}
 	
-	/* mul t1, t1, c0		; Muliply 9th bit by multiplier to shift it into place */
-	inst = vl_inst3(TGSI_OPCODE_MUL, TGSI_FILE_TEMPORARY, 1, TGSI_FILE_TEMPORARY, 1, TGSI_FILE_CONSTANT, 0);
-	ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
-	
-	/* add t0, t0, t1		; Add luma and chroma low and high parts to get normalized unsigned 9-bit values */
-	inst = vl_inst3(TGSI_OPCODE_ADD, TGSI_FILE_TEMPORARY, 0, TGSI_FILE_TEMPORARY, 0, TGSI_FILE_TEMPORARY, 1);
-	ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
-	
-	/* sub t0, t0, c1		; Subtract bias to get back signed values */
-	inst = vl_inst3(TGSI_OPCODE_SUB, TGSI_FILE_TEMPORARY, 0, TGSI_FILE_TEMPORARY, 0, TGSI_FILE_CONSTANT, 1);
+	/* mul t0, t0, c0		; Rescale texel to correct range */
+	inst = vl_inst3(TGSI_OPCODE_MUL, TGSI_FILE_TEMPORARY, 0, TGSI_FILE_TEMPORARY, 0, TGSI_FILE_CONSTANT, 0);
 	ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
 	
 	/* tex2d t1, i2, s3		; Read texel from ref macroblock */
@@ -826,11 +836,10 @@ static int vlCreateFragmentShaderFieldPMC(struct VL_CONTEXT *context)
 	}
 	
 	/*
-	 * decl c0			; Multiplier to shift 9th bit of differential into place
-	 * decl c1			; Bias to get differential back to a signed value
-	 * decl c2			; Constants 1/2 & 2 in .x, .y channels for Y-mod-2 top/bottom field selection
+	 * decl c0			; Scaling factor, rescales 16-bit snorm to 9-bit snorm
+	 * decl c1			; Constants 1/2 & 2 in .x, .y channels for Y-mod-2 top/bottom field selection
 	 */
-	decl = vl_decl_constants(TGSI_SEMANTIC_GENERIC, 0, 0, 2);
+	decl = vl_decl_constants(TGSI_SEMANTIC_GENERIC, 0, 0, 1);
 	ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
 
 	/* decl o0			; Fragment color */
@@ -854,42 +863,35 @@ static int vlCreateFragmentShaderFieldPMC(struct VL_CONTEXT *context)
 	}
 	
 	/*
-	 * tex2d t0.xw, i0, s0		; Read texel from luma texture into .x and .w channels
-	 * mov t1.x, t0.w		; Move 9th bit from .w channel to .x
-	 * tex2d t0.yw, i1, s1		; Read texel from chroma Cb texture into .y and .w channels
-	 * mov t1.y, t0.w		; Move 9th bit from .w channel to .y
-	 * tex2d t0.zw, i1, s2		; Read texel from chroma Cr texture into .z and .w channels
-	 * mov t1.z, t0.w		; Move 9th bit from .w channel to .z
+	 * tex2d t1, i0, s0		; Read texel from luma texture
+	 * mov t0.x, t1.x		; Move luma sample into .x component
+	 * tex2d t1, i1, s1		; Read texel from chroma Cb texture
+	 * mov t0.y, t1.x		; Move Cb sample into .y component
+	 * tex2d t1, i1, s2		; Read texel from chroma Cr texture
+	 * mov t0.z, t1.x		; Move Cr sample into .z component
 	 */
 	for (i = 0; i < 3; ++i)
 	{
-		inst = vl_tex(TGSI_TEXTURE_2D, TGSI_FILE_TEMPORARY, 0, TGSI_FILE_INPUT, i > 0 ? 1 : 0, TGSI_FILE_SAMPLER, i);
-		inst.FullDstRegisters[0].DstRegister.WriteMask = (TGSI_WRITEMASK_X << i) | TGSI_WRITEMASK_W;
+		inst = vl_tex(TGSI_TEXTURE_2D, TGSI_FILE_TEMPORARY, 1, TGSI_FILE_INPUT, i > 0 ? 1 : 0, TGSI_FILE_SAMPLER, i);
 		ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
 		
-		inst = vl_inst2(TGSI_OPCODE_MOV, TGSI_FILE_TEMPORARY, 1, TGSI_FILE_TEMPORARY, 0);
+		inst = vl_inst2(TGSI_OPCODE_MOV, TGSI_FILE_TEMPORARY, 0, TGSI_FILE_TEMPORARY, 1);
+		inst.FullSrcRegisters[0].SrcRegister.SwizzleX = TGSI_SWIZZLE_X;
+		inst.FullSrcRegisters[0].SrcRegister.SwizzleY = TGSI_SWIZZLE_X;
+		inst.FullSrcRegisters[0].SrcRegister.SwizzleZ = TGSI_SWIZZLE_X;
 		inst.FullDstRegisters[0].DstRegister.WriteMask = TGSI_WRITEMASK_X << i;
-		inst.FullSrcRegisters[0].SrcRegister.SwizzleX = TGSI_SWIZZLE_W;
-		inst.FullSrcRegisters[0].SrcRegister.SwizzleY = TGSI_SWIZZLE_W;
-		inst.FullSrcRegisters[0].SrcRegister.SwizzleZ = TGSI_SWIZZLE_W;
-		inst.FullSrcRegisters[0].SrcRegister.SwizzleW = TGSI_SWIZZLE_W;
 		ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
+		
 	}
 	
-	/* mul t1, t1, c0		; Muliply 9th bit by multiplier to shift it into place */
-	inst = vl_inst3(TGSI_OPCODE_MUL, TGSI_FILE_TEMPORARY, 1, TGSI_FILE_TEMPORARY, 1, TGSI_FILE_CONSTANT, 0);
+	/* mul t0, t0, c0		; Rescale texel to correct range */
+	inst = vl_inst3(TGSI_OPCODE_MUL, TGSI_FILE_TEMPORARY, 0, TGSI_FILE_TEMPORARY, 0, TGSI_FILE_CONSTANT, 0);
 	ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
 	
-	/* add t0, t0, t1		; Add luma and chroma low and high parts to get normalized unsigned 9-bit values */
-	inst = vl_inst3(TGSI_OPCODE_ADD, TGSI_FILE_TEMPORARY, 0, TGSI_FILE_TEMPORARY, 0, TGSI_FILE_TEMPORARY, 1);
-	ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
-	
-	/* sub t0, t0, c1		; Subtract bias to get back signed values */
-	inst = vl_inst3(TGSI_OPCODE_SUB, TGSI_FILE_TEMPORARY, 0, TGSI_FILE_TEMPORARY, 0, TGSI_FILE_CONSTANT, 1);
-	ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
-	
-	/* tex2d t1, i2, s3		; Read texel from ref macroblock top field
-	   tex2d t2, i3, s3		; Read texel from ref macroblock bottom field */
+	/*
+	 * tex2d t1, i2, s3		; Read texel from ref macroblock top field
+	 * tex2d t2, i3, s3		; Read texel from ref macroblock bottom field
+	 */
 	for (i = 0; i < 2; ++i)
 	{
 		inst = vl_tex(TGSI_TEXTURE_2D, TGSI_FILE_TEMPORARY, i + 1, TGSI_FILE_INPUT, i + 2, TGSI_FILE_SAMPLER, 3);
@@ -897,8 +899,8 @@ static int vlCreateFragmentShaderFieldPMC(struct VL_CONTEXT *context)
 	}
 	
 	/* XXX: Pos values off by 0.5? */
-	/* sub t4, i4.y, c2.x		; Sub 0.5 from denormalized pos */
-	inst = vl_inst3(TGSI_OPCODE_SUB, TGSI_FILE_TEMPORARY, 4, TGSI_FILE_INPUT, 4, TGSI_FILE_INPUT, 2);
+	/* sub t4, i4.y, c1.x		; Sub 0.5 from denormalized pos */
+	inst = vl_inst3(TGSI_OPCODE_SUB, TGSI_FILE_TEMPORARY, 4, TGSI_FILE_INPUT, 4, TGSI_FILE_CONSTANT, 1);
 	inst.FullSrcRegisters[0].SrcRegister.SwizzleX = TGSI_SWIZZLE_Y;
 	inst.FullSrcRegisters[0].SrcRegister.SwizzleY = TGSI_SWIZZLE_Y;
 	inst.FullSrcRegisters[0].SrcRegister.SwizzleZ = TGSI_SWIZZLE_Y;
@@ -909,8 +911,8 @@ static int vlCreateFragmentShaderFieldPMC(struct VL_CONTEXT *context)
 	inst.FullSrcRegisters[1].SrcRegister.SwizzleW = TGSI_SWIZZLE_X;
 	ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
 	
-	/* mul t3, t4, c2.x		; Multiply pos Y-coord by 1/2 */
-	inst = vl_inst3(TGSI_OPCODE_MUL, TGSI_FILE_TEMPORARY, 3, TGSI_FILE_TEMPORARY, 4, TGSI_FILE_CONSTANT, 2);
+	/* mul t3, t4, c1.x		; Multiply pos Y-coord by 1/2 */
+	inst = vl_inst3(TGSI_OPCODE_MUL, TGSI_FILE_TEMPORARY, 3, TGSI_FILE_TEMPORARY, 4, TGSI_FILE_CONSTANT, 1);
 	inst.FullSrcRegisters[1].SrcRegister.SwizzleX = TGSI_SWIZZLE_X;
 	inst.FullSrcRegisters[1].SrcRegister.SwizzleY = TGSI_SWIZZLE_X;
 	inst.FullSrcRegisters[1].SrcRegister.SwizzleZ = TGSI_SWIZZLE_X;
@@ -921,8 +923,8 @@ static int vlCreateFragmentShaderFieldPMC(struct VL_CONTEXT *context)
 	inst = vl_inst2(TGSI_OPCODE_FLOOR, TGSI_FILE_TEMPORARY, 3, TGSI_FILE_TEMPORARY, 3);
 	ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
 	
-	/* mul t3, t3, c2.y		; Multiply by 2 */
-	inst = vl_inst3(TGSI_OPCODE_MUL, TGSI_FILE_TEMPORARY, 3, TGSI_FILE_TEMPORARY, 3, TGSI_FILE_CONSTANT, 2);
+	/* mul t3, t3, c1.y		; Multiply by 2 */
+	inst = vl_inst3(TGSI_OPCODE_MUL, TGSI_FILE_TEMPORARY, 3, TGSI_FILE_TEMPORARY, 3, TGSI_FILE_CONSTANT, 1);
 	inst.FullSrcRegisters[1].SrcRegister.SwizzleX = TGSI_SWIZZLE_Y;
 	inst.FullSrcRegisters[1].SrcRegister.SwizzleY = TGSI_SWIZZLE_Y;
 	inst.FullSrcRegisters[1].SrcRegister.SwizzleZ = TGSI_SWIZZLE_Y;
@@ -1224,11 +1226,10 @@ static int vlCreateFragmentShaderFrameBMC(struct VL_CONTEXT *context)
 	}
 	
 	/*
-	 * decl c0			; Multiplier to shift 9th bit of differential into place
-	 * decl c1			; Bias to get differential back to a signed value
-	 * decl c2			; Constant 1/2 in .x channel to use as weight to blend past and future texels
+	 * decl c0			; Scaling factor, rescales 16-bit snorm to 9-bit snorm
+	 * decl c1			; Constant 1/2 in .x channel to use as weight to blend past and future texels
 	 */
-	decl = vl_decl_constants(TGSI_SEMANTIC_GENERIC, 0, 0, 2);
+	decl = vl_decl_constants(TGSI_SEMANTIC_GENERIC, 0, 0, 1);
 	ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
 
 	/* decl o0			; Fragment color */
@@ -1253,38 +1254,29 @@ static int vlCreateFragmentShaderFrameBMC(struct VL_CONTEXT *context)
 	}
 	
 	/*
-	 * tex2d t0.xw, i0, s0		; Read texel from luma texture into .x and .w channels
-	 * mov t1.x, t0.w		; Move 9th bit from .w channel to .x
-	 * tex2d t0.yw, i1, s1		; Read texel from chroma Cb texture into .y and .w channels
-	 * mov t1.y, t0.w		; Move 9th bit from .w channel to .y
-	 * tex2d t0.zw, i1, s2		; Read texel from chroma Cr texture into .z and .w channels
-	 * mov t1.z, t0.w		; Move 9th bit from .w channel to .z
+	 * tex2d t1, i0, s0		; Read texel from luma texture
+	 * mov t0.x, t1.x		; Move luma sample into .x component
+	 * tex2d t1, i1, s1		; Read texel from chroma Cb texture
+	 * mov t0.y, t1.x		; Move Cb sample into .y component
+	 * tex2d t1, i1, s2		; Read texel from chroma Cr texture
+	 * mov t0.z, t1.x		; Move Cr sample into .z component
 	 */
 	for (i = 0; i < 3; ++i)
 	{
-		inst = vl_tex(TGSI_TEXTURE_2D, TGSI_FILE_TEMPORARY, 0, TGSI_FILE_INPUT, i > 0 ? 1 : 0, TGSI_FILE_SAMPLER, i);
-		inst.FullDstRegisters[0].DstRegister.WriteMask = (TGSI_WRITEMASK_X << i) | TGSI_WRITEMASK_W;
+		inst = vl_tex(TGSI_TEXTURE_2D, TGSI_FILE_TEMPORARY, 1, TGSI_FILE_INPUT, i > 0 ? 1 : 0, TGSI_FILE_SAMPLER, i);
 		ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
 		
-		inst = vl_inst2(TGSI_OPCODE_MOV, TGSI_FILE_TEMPORARY, 1, TGSI_FILE_TEMPORARY, 0);
+		inst = vl_inst2(TGSI_OPCODE_MOV, TGSI_FILE_TEMPORARY, 0, TGSI_FILE_TEMPORARY, 1);
+		inst.FullSrcRegisters[0].SrcRegister.SwizzleX = TGSI_SWIZZLE_X;
+		inst.FullSrcRegisters[0].SrcRegister.SwizzleY = TGSI_SWIZZLE_X;
+		inst.FullSrcRegisters[0].SrcRegister.SwizzleZ = TGSI_SWIZZLE_X;
 		inst.FullDstRegisters[0].DstRegister.WriteMask = TGSI_WRITEMASK_X << i;
-		inst.FullSrcRegisters[0].SrcRegister.SwizzleX = TGSI_SWIZZLE_W;
-		inst.FullSrcRegisters[0].SrcRegister.SwizzleY = TGSI_SWIZZLE_W;
-		inst.FullSrcRegisters[0].SrcRegister.SwizzleZ = TGSI_SWIZZLE_W;
-		inst.FullSrcRegisters[0].SrcRegister.SwizzleW = TGSI_SWIZZLE_W;
 		ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
+		
 	}
 	
-	/* mul t1, t1, c0		; Muliply 9th bit by multiplier to shift it into place */
-	inst = vl_inst3(TGSI_OPCODE_MUL, TGSI_FILE_TEMPORARY, 1, TGSI_FILE_TEMPORARY, 1, TGSI_FILE_CONSTANT, 0);
-	ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
-	
-	/* add t0, t0, t1		; Add luma and chroma low and high parts to get normalized unsigned 9-bit values */
-	inst = vl_inst3(TGSI_OPCODE_ADD, TGSI_FILE_TEMPORARY, 0, TGSI_FILE_TEMPORARY, 0, TGSI_FILE_TEMPORARY, 1);
-	ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
-	
-	/* sub t0, t0, c1		; Subtract bias to get back signed values */
-	inst = vl_inst3(TGSI_OPCODE_SUB, TGSI_FILE_TEMPORARY, 0, TGSI_FILE_TEMPORARY, 0, TGSI_FILE_CONSTANT, 1);
+	/* mul t0, t0, c0		; Rescale texel to correct range */
+	inst = vl_inst3(TGSI_OPCODE_MUL, TGSI_FILE_TEMPORARY, 0, TGSI_FILE_TEMPORARY, 0, TGSI_FILE_CONSTANT, 0);
 	ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
 	
 	/*
@@ -1297,8 +1289,8 @@ static int vlCreateFragmentShaderFrameBMC(struct VL_CONTEXT *context)
 		ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
 	}
 	
-	/* lerp t1, c2.x, t1, t2	; Blend past and future texels */
-	inst = vl_inst4(TGSI_OPCODE_LERP, TGSI_FILE_TEMPORARY, 1, TGSI_FILE_CONSTANT, 2, TGSI_FILE_TEMPORARY, 1, TGSI_FILE_TEMPORARY, 2);
+	/* lerp t1, c1.x, t1, t2	; Blend past and future texels */
+	inst = vl_inst4(TGSI_OPCODE_LERP, TGSI_FILE_TEMPORARY, 1, TGSI_FILE_CONSTANT, 1, TGSI_FILE_TEMPORARY, 1, TGSI_FILE_TEMPORARY, 2);
 	inst.FullSrcRegisters[0].SrcRegister.SwizzleX = TGSI_SWIZZLE_X;
 	inst.FullSrcRegisters[0].SrcRegister.SwizzleY = TGSI_SWIZZLE_X;
 	inst.FullSrcRegisters[0].SrcRegister.SwizzleZ = TGSI_SWIZZLE_X;
@@ -1366,12 +1358,11 @@ static int vlCreateFragmentShaderFieldBMC(struct VL_CONTEXT *context)
 	}
 	
 	/*
-	 * decl c0			; Multiplier to shift 9th bit of differential into place
-	 * decl c1			; Bias to get differential back to a signed value
-	 * decl c2			; Constants 1/2 & 2 in .x, .y channels to use as weight to blend past and future texels
+	 * decl c0			; Scaling factor, rescales 16-bit snorm to 9-bit snorm
+	 * decl c1			; Constants 1/2 & 2 in .x, .y channels to use as weight to blend past and future texels
 	 *				; and for Y-mod-2 top/bottom field selection
 	 */
-	decl = vl_decl_constants(TGSI_SEMANTIC_GENERIC, 0, 0, 2);
+	decl = vl_decl_constants(TGSI_SEMANTIC_GENERIC, 0, 0, 1);
 	ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
 
 	/* decl o0			; Fragment color */
@@ -1396,43 +1387,34 @@ static int vlCreateFragmentShaderFieldBMC(struct VL_CONTEXT *context)
 	}
 	
 	/*
-	 * tex2d t0.xw, i0, s0		; Read texel from luma texture into .x and .w channels
-	 * mov t1.x, t0.w		; Move 9th bit from .w channel to .x
-	 * tex2d t0.yw, i1, s1		; Read texel from chroma Cb texture into .y and .w channels
-	 * mov t1.y, t0.w		; Move 9th bit from .w channel to .y
-	 * tex2d t0.zw, i1, s2		; Read texel from chroma Cr texture into .z and .w channels
-	 * mov t1.z, t0.w		; Move 9th bit from .w channel to .z
+	 * tex2d t1, i0, s0		; Read texel from luma texture
+	 * mov t0.x, t1.x		; Move luma sample into .x component
+	 * tex2d t1, i1, s1		; Read texel from chroma Cb texture
+	 * mov t0.y, t1.x		; Move Cb sample into .y component
+	 * tex2d t1, i1, s2		; Read texel from chroma Cr texture
+	 * mov t0.z, t1.x		; Move Cr sample into .z component
 	 */
 	for (i = 0; i < 3; ++i)
 	{
-		inst = vl_tex(TGSI_TEXTURE_2D, TGSI_FILE_TEMPORARY, 0, TGSI_FILE_INPUT, i > 0 ? 1 : 0, TGSI_FILE_SAMPLER, i);
-		inst.FullDstRegisters[0].DstRegister.WriteMask = (TGSI_WRITEMASK_X << i) | TGSI_WRITEMASK_W;
+		inst = vl_tex(TGSI_TEXTURE_2D, TGSI_FILE_TEMPORARY, 1, TGSI_FILE_INPUT, i > 0 ? 1 : 0, TGSI_FILE_SAMPLER, i);
 		ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
 		
-		inst = vl_inst2(TGSI_OPCODE_MOV, TGSI_FILE_TEMPORARY, 1, TGSI_FILE_TEMPORARY, 0);
+		inst = vl_inst2(TGSI_OPCODE_MOV, TGSI_FILE_TEMPORARY, 0, TGSI_FILE_TEMPORARY, 1);
+		inst.FullSrcRegisters[0].SrcRegister.SwizzleX = TGSI_SWIZZLE_X;
+		inst.FullSrcRegisters[0].SrcRegister.SwizzleY = TGSI_SWIZZLE_X;
+		inst.FullSrcRegisters[0].SrcRegister.SwizzleZ = TGSI_SWIZZLE_X;
 		inst.FullDstRegisters[0].DstRegister.WriteMask = TGSI_WRITEMASK_X << i;
-		inst.FullSrcRegisters[0].SrcRegister.SwizzleX = TGSI_SWIZZLE_W;
-		inst.FullSrcRegisters[0].SrcRegister.SwizzleY = TGSI_SWIZZLE_W;
-		inst.FullSrcRegisters[0].SrcRegister.SwizzleZ = TGSI_SWIZZLE_W;
-		inst.FullSrcRegisters[0].SrcRegister.SwizzleW = TGSI_SWIZZLE_W;
 		ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
+		
 	}
 	
-	/* mul t1, t1, c0		; Muliply 9th bit by multiplier to shift it into place */
-	inst = vl_inst3(TGSI_OPCODE_MUL, TGSI_FILE_TEMPORARY, 1, TGSI_FILE_TEMPORARY, 1, TGSI_FILE_CONSTANT, 0);
-	ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
-	
-	/* add t0, t0, t1		; Add luma and chroma low and high parts to get normalized unsigned 9-bit values */
-	inst = vl_inst3(TGSI_OPCODE_ADD, TGSI_FILE_TEMPORARY, 0, TGSI_FILE_TEMPORARY, 0, TGSI_FILE_TEMPORARY, 1);
-	ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
-	
-	/* sub t0, t0, c1		; Subtract bias to get back signed values */
-	inst = vl_inst3(TGSI_OPCODE_SUB, TGSI_FILE_TEMPORARY, 0, TGSI_FILE_TEMPORARY, 0, TGSI_FILE_CONSTANT, 1);
+	/* mul t0, t0, c0		; Rescale texel to correct range */
+	inst = vl_inst3(TGSI_OPCODE_MUL, TGSI_FILE_TEMPORARY, 0, TGSI_FILE_TEMPORARY, 0, TGSI_FILE_CONSTANT, 0);
 	ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
 	
 	/* XXX: Pos values off by 0.5? */
-	/* sub t4, i6.y, c2.x		; Sub 0.5 from denormalized pos */
-	inst = vl_inst3(TGSI_OPCODE_SUB, TGSI_FILE_TEMPORARY, 4, TGSI_FILE_INPUT, 6, TGSI_FILE_CONSTANT, 2);
+	/* sub t4, i6.y, c1.x		; Sub 0.5 from denormalized pos */
+	inst = vl_inst3(TGSI_OPCODE_SUB, TGSI_FILE_TEMPORARY, 4, TGSI_FILE_INPUT, 6, TGSI_FILE_CONSTANT, 1);
 	inst.FullSrcRegisters[0].SrcRegister.SwizzleX = TGSI_SWIZZLE_Y;
 	inst.FullSrcRegisters[0].SrcRegister.SwizzleY = TGSI_SWIZZLE_Y;
 	inst.FullSrcRegisters[0].SrcRegister.SwizzleZ = TGSI_SWIZZLE_Y;
@@ -1443,8 +1425,8 @@ static int vlCreateFragmentShaderFieldBMC(struct VL_CONTEXT *context)
 	inst.FullSrcRegisters[1].SrcRegister.SwizzleW = TGSI_SWIZZLE_X;
 	ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
 	
-	/* mul t3, t4, c2.x		; Multiply pos Y-coord by 1/2 */
-	inst = vl_inst3(TGSI_OPCODE_MUL, TGSI_FILE_TEMPORARY, 3, TGSI_FILE_TEMPORARY, 4, TGSI_FILE_CONSTANT, 2);
+	/* mul t3, t4, c1.x		; Multiply pos Y-coord by 1/2 */
+	inst = vl_inst3(TGSI_OPCODE_MUL, TGSI_FILE_TEMPORARY, 3, TGSI_FILE_TEMPORARY, 4, TGSI_FILE_CONSTANT, 1);
 	inst.FullSrcRegisters[1].SrcRegister.SwizzleX = TGSI_SWIZZLE_X;
 	inst.FullSrcRegisters[1].SrcRegister.SwizzleY = TGSI_SWIZZLE_X;
 	inst.FullSrcRegisters[1].SrcRegister.SwizzleZ = TGSI_SWIZZLE_X;
@@ -1455,8 +1437,8 @@ static int vlCreateFragmentShaderFieldBMC(struct VL_CONTEXT *context)
 	inst = vl_inst2(TGSI_OPCODE_FLOOR, TGSI_FILE_TEMPORARY, 3, TGSI_FILE_TEMPORARY, 3);
 	ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
 	
-	/* mul t3, t3, c2.y		; Multiply by 2 */
-	inst = vl_inst3( TGSI_OPCODE_MUL, TGSI_FILE_TEMPORARY, 3, TGSI_FILE_TEMPORARY, 3, TGSI_FILE_CONSTANT, 2);
+	/* mul t3, t3, c1.y		; Multiply by 2 */
+	inst = vl_inst3( TGSI_OPCODE_MUL, TGSI_FILE_TEMPORARY, 3, TGSI_FILE_TEMPORARY, 3, TGSI_FILE_CONSTANT, 1);
 	inst.FullSrcRegisters[1].SrcRegister.SwizzleX = TGSI_SWIZZLE_Y;
 	inst.FullSrcRegisters[1].SrcRegister.SwizzleY = TGSI_SWIZZLE_Y;
 	inst.FullSrcRegisters[1].SrcRegister.SwizzleZ = TGSI_SWIZZLE_Y;
@@ -1497,8 +1479,8 @@ static int vlCreateFragmentShaderFieldBMC(struct VL_CONTEXT *context)
 	inst = vl_inst4(TGSI_OPCODE_LERP, TGSI_FILE_TEMPORARY, 2, TGSI_FILE_TEMPORARY, 3, TGSI_FILE_TEMPORARY, 4, TGSI_FILE_TEMPORARY, 5);
 	ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
 	
-	/* lerp t1, c2.x, t1, t2	; Blend past and future texels */
-	inst = vl_inst4(TGSI_OPCODE_LERP, TGSI_FILE_TEMPORARY, 1, TGSI_FILE_CONSTANT, 2, TGSI_FILE_TEMPORARY, 1, TGSI_FILE_TEMPORARY, 2);
+	/* lerp t1, c1.x, t1, t2	; Blend past and future texels */
+	inst = vl_inst4(TGSI_OPCODE_LERP, TGSI_FILE_TEMPORARY, 1, TGSI_FILE_CONSTANT, 1, TGSI_FILE_TEMPORARY, 1, TGSI_FILE_TEMPORARY, 2);
 	inst.FullSrcRegisters[0].SrcRegister.SwizzleX = TGSI_SWIZZLE_X;
 	inst.FullSrcRegisters[0].SrcRegister.SwizzleY = TGSI_SWIZZLE_X;
 	inst.FullSrcRegisters[0].SrcRegister.SwizzleZ = TGSI_SWIZZLE_X;
@@ -1678,7 +1660,7 @@ static int vlInitMC(struct VL_CONTEXT *context)
 	
 	memset(&template, 0, sizeof(struct pipe_texture));
 	template.target = PIPE_TEXTURE_2D;
-	template.format = PIPE_FORMAT_A8L8_UNORM;
+	template.format = PIPE_FORMAT_R16_SNORM;
 	template.last_level = 0;
 	template.width[0] = 8;
 	template.height[0] = 8 * 4;

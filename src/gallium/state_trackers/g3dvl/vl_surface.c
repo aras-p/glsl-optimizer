@@ -63,7 +63,7 @@ static int vlTransformBlock(short *src, short *dst, short bias)
 	return 0;
 }
 
-static int vlGrabFrameCodedFullBlock(short *src, short *dst, unsigned int dst_pitch)
+static int vlGrabFrameCodedBlock(short *src, short *dst, unsigned int dst_pitch)
 {
 	unsigned int y;
 	
@@ -78,18 +78,7 @@ static int vlGrabFrameCodedFullBlock(short *src, short *dst, unsigned int dst_pi
 	return 0;
 }
 
-static int vlGrabFrameCodedDiffBlock(short *src, short *dst, unsigned int dst_pitch)
-{
-	unsigned int x, y;
-	
-	for (y = 0; y < VL_BLOCK_HEIGHT; ++y)
-		for (x = 0; x < VL_BLOCK_WIDTH; ++x)
-			dst[y * dst_pitch + x] = src[y * VL_BLOCK_WIDTH + x] + 0x100;
-	
-	return 0;
-}
-
-static int vlGrabFieldCodedFullBlock(short *src, short *dst, unsigned int dst_pitch)
+static int vlGrabFieldCodedBlock(short *src, short *dst, unsigned int dst_pitch)
 {
 	unsigned int y;
 	
@@ -114,30 +103,17 @@ static int vlGrabFieldCodedFullBlock(short *src, short *dst, unsigned int dst_pi
 	return 0;
 }
 
-static int vlGrabFieldCodedDiffBlock(short *src, short *dst, unsigned int dst_pitch)
-{
-	unsigned int x, y;
-	
-	for (y = 0; y < VL_BLOCK_HEIGHT / 2; ++y)
-		for (x = 0; x < VL_BLOCK_WIDTH; ++x)
-			dst[y * dst_pitch * 2 + x] = src[y * VL_BLOCK_WIDTH + x] + 0x100;
-	
-	dst += VL_BLOCK_HEIGHT * dst_pitch;
-	
-	for (; y < VL_BLOCK_HEIGHT; ++y)
-		for (x = 0; x < VL_BLOCK_WIDTH; ++x)
-			dst[y * dst_pitch * 2 + x] = src[y * VL_BLOCK_WIDTH + x] + 0x100;
-	
-	return 0;
-}
-
 static int vlGrabNoBlock(short *dst, unsigned int dst_pitch)
 {
-	unsigned int x, y;
+	unsigned int y;
 	
 	for (y = 0; y < VL_BLOCK_HEIGHT; ++y)
-		for (x = 0; x < VL_BLOCK_WIDTH; ++x)
-			dst[y * dst_pitch + x] = 0x100;
+		memset
+		(
+			dst + y * dst_pitch,
+			0,
+			VL_BLOCK_WIDTH * 2
+		);
 	
 	return 0;
 }
@@ -156,7 +132,6 @@ static int vlGrabBlocks
 	unsigned int		tex_pitch;
 	unsigned int		tb, sb = 0;
 	
-	const int		do_idct = 1;
 	short			temp_block[64];
 	
 	assert(context);
@@ -176,80 +151,26 @@ static int vlGrabBlocks
 	{
 		if ((coded_block_pattern >> (5 - tb)) & 1)
 		{
-			if (dct_type == VL_DCT_FRAME_CODED)
-				if (sample_type == VL_FULL_SAMPLE)
-					if (do_idct)
-					{
-						vlTransformBlock(blocks + sb * VL_BLOCK_WIDTH * VL_BLOCK_HEIGHT, temp_block, 128);
-						vlGrabFrameCodedFullBlock
-						(
-							temp_block,
-							texels + tb * tex_pitch * VL_BLOCK_HEIGHT,
-							tex_pitch
-						);
-					}
-					else
-					vlGrabFrameCodedFullBlock
-					(
-						blocks + sb * VL_BLOCK_WIDTH * VL_BLOCK_HEIGHT,
-						texels + tb * tex_pitch * VL_BLOCK_HEIGHT,
-						tex_pitch
-					);
-				else
-					if (do_idct)
-					{
-						vlTransformBlock(blocks + sb * VL_BLOCK_WIDTH * VL_BLOCK_HEIGHT, temp_block, 0);
-						vlGrabFrameCodedDiffBlock
-						(
-							temp_block,
-							texels + tb * tex_pitch * VL_BLOCK_HEIGHT,
-							tex_pitch
-						);
-					}
-					else
-					vlGrabFrameCodedDiffBlock
-					(
-						blocks + sb * VL_BLOCK_WIDTH * VL_BLOCK_HEIGHT,
-						texels + tb * tex_pitch * VL_BLOCK_HEIGHT,
-						tex_pitch
-					);
+			if (sample_type == VL_FULL_SAMPLE)
+				vlTransformBlock(blocks + sb * VL_BLOCK_WIDTH * VL_BLOCK_HEIGHT, temp_block, 128);
 			else
-				if (sample_type == VL_FULL_SAMPLE)
-					if (do_idct)
-					{
-						vlTransformBlock(blocks + sb * VL_BLOCK_WIDTH * VL_BLOCK_HEIGHT, temp_block, 128);
-						vlGrabFieldCodedFullBlock
-						(
-							temp_block,
-							texels + (tb % 2) * tex_pitch * VL_BLOCK_HEIGHT + (tb / 2) * tex_pitch,
-							tex_pitch
-						);
-					}
-					else
-					vlGrabFieldCodedFullBlock
-					(
-						blocks + sb * VL_BLOCK_WIDTH * VL_BLOCK_HEIGHT,
-						texels + (tb % 2) * tex_pitch * VL_BLOCK_HEIGHT + (tb / 2) * tex_pitch,
-						tex_pitch
-					);
-				else
-					if (do_idct)
-					{
-						vlTransformBlock(blocks + sb * VL_BLOCK_WIDTH * VL_BLOCK_HEIGHT, temp_block, 0);
-						vlGrabFieldCodedDiffBlock
-						(
-							temp_block,
-							texels + (tb % 2) * tex_pitch * VL_BLOCK_HEIGHT + (tb / 2) * tex_pitch,
-							tex_pitch
-						);
-					}
-					else
-					vlGrabFieldCodedDiffBlock
-					(
-						blocks + sb * VL_BLOCK_WIDTH * VL_BLOCK_HEIGHT,
-						texels + (tb % 2) * tex_pitch * VL_BLOCK_HEIGHT + (tb / 2) * tex_pitch,
-						tex_pitch
-					);
+				vlTransformBlock(blocks + sb * VL_BLOCK_WIDTH * VL_BLOCK_HEIGHT, temp_block, 0);
+			
+			if (dct_type == VL_DCT_FRAME_CODED)
+				vlGrabFrameCodedBlock
+				(
+					temp_block,
+					texels + tb * tex_pitch * VL_BLOCK_HEIGHT,
+					tex_pitch
+				);
+			else
+				vlGrabFieldCodedBlock
+				(
+					blocks + sb * VL_BLOCK_WIDTH * VL_BLOCK_HEIGHT,
+					texels + (tb % 2) * tex_pitch * VL_BLOCK_HEIGHT + (tb / 2) * tex_pitch,
+					tex_pitch
+				);
+			
 			++sb;
 		}
 		else
@@ -272,43 +193,18 @@ static int vlGrabBlocks
 		tex_pitch = tex_surface->stride / tex_surface->block.size;
 		
 		if ((coded_block_pattern >> (1 - tb)) & 1)
-		{			
+		{
 			if (sample_type == VL_FULL_SAMPLE)
-				if (do_idct)
-				{
-					vlTransformBlock(blocks + sb * VL_BLOCK_WIDTH * VL_BLOCK_HEIGHT, temp_block, 128);
-					vlGrabFrameCodedFullBlock
-					(
-						temp_block,
-						texels,
-						tex_pitch
-					);
-				}
-				else
-				vlGrabFrameCodedFullBlock
-				(
-					blocks + sb * VL_BLOCK_WIDTH * VL_BLOCK_HEIGHT,
-					texels,
-					tex_pitch
-				);
+				vlTransformBlock(blocks + sb * VL_BLOCK_WIDTH * VL_BLOCK_HEIGHT, temp_block, 128);
 			else
-				if (do_idct)
-				{
-					vlTransformBlock(blocks + sb * VL_BLOCK_WIDTH * VL_BLOCK_HEIGHT, temp_block, 0);
-					vlGrabFrameCodedDiffBlock
-					(
-						temp_block,
-						texels,
-						tex_pitch
-					);
-				}
-				else
-				vlGrabFrameCodedDiffBlock
-				(
-					blocks + sb * VL_BLOCK_WIDTH * VL_BLOCK_HEIGHT,
-					texels,
-					tex_pitch
-				);
+				vlTransformBlock(blocks + sb * VL_BLOCK_WIDTH * VL_BLOCK_HEIGHT, temp_block, 0);
+			
+			vlGrabFrameCodedBlock
+			(
+				temp_block,
+				texels,
+				tex_pitch
+			);
 			
 			++sb;
 		}
