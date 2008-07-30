@@ -1159,10 +1159,11 @@ void brw_vs_emit(struct brw_vs_compile *c )
 	 break;
       }
 
-      if (inst->DstReg.File == PROGRAM_OUTPUT
-	      &&inst->DstReg.Index != VERT_RESULT_HPOS
-	      &&c->output_regs[inst->DstReg.Index].used_in_src)
-	  brw_MOV(p, get_dst(c, inst->DstReg), dst);
+      if ((inst->DstReg.File == PROGRAM_OUTPUT)
+          && (inst->DstReg.Index != VERT_RESULT_HPOS)
+          && c->output_regs[inst->DstReg.Index].used_in_src) {
+         brw_MOV(p, get_dst(c, inst->DstReg), dst);
+      }
 
       release_tmps(c);
    }
