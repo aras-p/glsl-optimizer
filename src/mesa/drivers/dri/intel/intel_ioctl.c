@@ -150,7 +150,6 @@ intel_batch_ioctl(struct intel_context *intel,
    return 0;
 }
 
-#ifdef TTM_API
 int
 intel_exec_ioctl(struct intel_context *intel,
 		 GLuint used,
@@ -184,13 +183,3 @@ intel_exec_ioctl(struct intel_context *intel,
 
    return 0;
 }
-#else
-int
-int intel_exec_ioctl(struct intel_context *intel,
-		     GLuint used,
-		     GLboolean ignore_cliprects, GLboolean allow_unlock,
-		     struct drm_i915_gem_execbuffer *execbuf);
-{
-    return -EINVAL;
-}
-#endif
