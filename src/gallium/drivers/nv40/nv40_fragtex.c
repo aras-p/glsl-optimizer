@@ -1,6 +1,6 @@
 #include "nv40_context.h"
 
-#define _(m,tf,ts0x,ts0y,ts0z,ts0w,ts1x,ts1y,ts1z,ts1w)                        \
+#define _(m,tf,ts0x,ts0y,ts0z,ts0w,ts1x,ts1y,ts1z,ts1w,sx,sy,sz,sw)            \
 {                                                                              \
   TRUE,                                                                        \
   PIPE_FORMAT_##m,                                                             \
@@ -9,6 +9,8 @@
    NV40TCL_TEX_SWIZZLE_S0_Z_##ts0z | NV40TCL_TEX_SWIZZLE_S0_W_##ts0w |         \
    NV40TCL_TEX_SWIZZLE_S1_X_##ts1x | NV40TCL_TEX_SWIZZLE_S1_Y_##ts1y |         \
    NV40TCL_TEX_SWIZZLE_S1_Z_##ts1z | NV40TCL_TEX_SWIZZLE_S1_W_##ts1w),         \
+  ((NV40TCL_TEX_FILTER_SIGNED_RED*sx) | (NV40TCL_TEX_FILTER_SIGNED_GREEN*sy) |       \
+   (NV40TCL_TEX_FILTER_SIGNED_BLUE*sz) | (NV40TCL_TEX_FILTER_SIGNED_ALPHA*sw))       \
 }
 
 struct nv40_texture_format {
@@ -16,24 +18,26 @@ struct nv40_texture_format {
 	uint	pipe;
 	int     format;
 	int     swizzle;
+	int     sign;
 };
 
 static struct nv40_texture_format
 nv40_texture_formats[] = {
-	_(A8R8G8B8_UNORM, A8R8G8B8,   S1,   S1,   S1,   S1, X, Y, Z, W),
-	_(A1R5G5B5_UNORM, A1R5G5B5,   S1,   S1,   S1,   S1, X, Y, Z, W),
-	_(A4R4G4B4_UNORM, A4R4G4B4,   S1,   S1,   S1,   S1, X, Y, Z, W),
-	_(R5G6B5_UNORM  , R5G6B5  ,   S1,   S1,   S1,  ONE, X, Y, Z, W),
-	_(L8_UNORM      , L8      ,   S1,   S1,   S1,  ONE, X, X, X, X),
-	_(A8_UNORM      , L8      , ZERO, ZERO, ZERO,   S1, X, X, X, X),
-	_(I8_UNORM      , L8      ,   S1,   S1,   S1,   S1, X, X, X, X),
-	_(A8L8_UNORM    , A8L8    ,   S1,   S1,   S1,   S1, X, X, X, Y),
-	_(Z16_UNORM     , Z16     ,   S1,   S1,   S1,  ONE, X, X, X, X),
-	_(Z24S8_UNORM   , Z24     ,   S1,   S1,   S1,  ONE, X, X, X, X),
-	_(DXT1_RGB      , DXT1    ,   S1,   S1,   S1,  ONE, X, Y, Z, W),
-	_(DXT1_RGBA     , DXT1    ,   S1,   S1,   S1,   S1, X, Y, Z, W),
-	_(DXT3_RGBA     , DXT3    ,   S1,   S1,   S1,   S1, X, Y, Z, W),
-	_(DXT5_RGBA     , DXT5    ,   S1,   S1,   S1,   S1, X, Y, Z, W),
+	_(A8R8G8B8_UNORM, A8R8G8B8,   S1,   S1,   S1,   S1, X, Y, Z, W, 0, 0, 0, 0),
+	_(A1R5G5B5_UNORM, A1R5G5B5,   S1,   S1,   S1,   S1, X, Y, Z, W, 0, 0, 0, 0),
+	_(A4R4G4B4_UNORM, A4R4G4B4,   S1,   S1,   S1,   S1, X, Y, Z, W, 0, 0, 0, 0),
+	_(R5G6B5_UNORM  , R5G6B5  ,   S1,   S1,   S1,  ONE, X, Y, Z, W, 0, 0, 0, 0),
+	_(L8_UNORM      , L8      ,   S1,   S1,   S1,  ONE, X, X, X, X, 0, 0, 0, 0),
+	_(A8_UNORM      , L8      , ZERO, ZERO, ZERO,   S1, X, X, X, X, 0, 0, 0, 0),
+	_(R16_SNORM     , A16     , ZERO, ZERO,   S1,  ONE, X, X, X, Y, 1, 1, 1, 1),
+	_(I8_UNORM      , L8      ,   S1,   S1,   S1,   S1, X, X, X, X, 0, 0, 0, 0),
+	_(A8L8_UNORM    , A8L8    ,   S1,   S1,   S1,   S1, X, X, X, Y, 0, 0, 0, 0),
+	_(Z16_UNORM     , Z16     ,   S1,   S1,   S1,  ONE, X, X, X, X, 0, 0, 0, 0),
+	_(Z24S8_UNORM   , Z24     ,   S1,   S1,   S1,  ONE, X, X, X, X, 0, 0, 0, 0),
+	_(DXT1_RGB      , DXT1    ,   S1,   S1,   S1,  ONE, X, Y, Z, W, 0, 0, 0, 0),
+	_(DXT1_RGBA     , DXT1    ,   S1,   S1,   S1,   S1, X, Y, Z, W, 0, 0, 0, 0),
+	_(DXT3_RGBA     , DXT3    ,   S1,   S1,   S1,   S1, X, Y, Z, W, 0, 0, 0, 0),
+	_(DXT5_RGBA     , DXT5    ,   S1,   S1,   S1,   S1, X, Y, Z, W, 0, 0, 0, 0),
 	{},
 };
 
@@ -113,7 +117,7 @@ nv40_fragtex_build(struct nv40_context *nv40, int unit)
 	so_data  (so, ps->wrap);
 	so_data  (so, NV40TCL_TEX_ENABLE_ENABLE | ps->en);
 	so_data  (so, txs);
-	so_data  (so, ps->filt | 0x2000 /*voodoo*/);
+	so_data  (so, ps->filt | tf->sign | 0x2000 /*voodoo*/);
 	so_data  (so, (pt->width[0] << NV40TCL_TEX_SIZE0_W_SHIFT) |
 		       pt->height[0]);
 	so_data  (so, ps->bcol);
