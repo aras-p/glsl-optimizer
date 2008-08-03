@@ -10,6 +10,9 @@
 #include "vl_defs.h"
 #include "vl_util.h"
 
+/*#define DO_IDCT*/
+
+#ifdef DO_IDCT
 static int vlTransformBlock(short *src, short *dst, short bias)
 {
 	static const float basis[8][8] =
@@ -62,6 +65,7 @@ static int vlTransformBlock(short *src, short *dst, short bias)
 		}
 	return 0;
 }
+#endif
 
 static int vlGrabFrameCodedBlock(short *src, short *dst, unsigned int dst_pitch)
 {
@@ -132,8 +136,6 @@ static int vlGrabBlocks
 	unsigned int		tex_pitch;
 	unsigned int		tb, sb = 0;
 	
-	short			temp_block[64];
-	
 	assert(context);
 	assert(blocks);
 	
@@ -151,22 +153,23 @@ static int vlGrabBlocks
 	{
 		if ((coded_block_pattern >> (5 - tb)) & 1)
 		{
-			if (sample_type == VL_FULL_SAMPLE)
-				vlTransformBlock(blocks + sb * VL_BLOCK_WIDTH * VL_BLOCK_HEIGHT, temp_block, 128);
-			else
-				vlTransformBlock(blocks + sb * VL_BLOCK_WIDTH * VL_BLOCK_HEIGHT, temp_block, 0);
+			short *cur_block = blocks + sb * VL_BLOCK_WIDTH * VL_BLOCK_HEIGHT;
+			
+#ifdef DO_IDCT
+			vlTransformBlock(cur_block, cur_block, sample_type == VL_FULL_SAMPLE ? 128 : 0);
+#endif
 			
 			if (dct_type == VL_DCT_FRAME_CODED)
 				vlGrabFrameCodedBlock
 				(
-					temp_block,
+					cur_block,
 					texels + tb * tex_pitch * VL_BLOCK_HEIGHT,
 					tex_pitch
 				);
 			else
 				vlGrabFieldCodedBlock
 				(
-					blocks + sb * VL_BLOCK_WIDTH * VL_BLOCK_HEIGHT,
+					cur_block,
 					texels + (tb % 2) * tex_pitch * VL_BLOCK_HEIGHT + (tb / 2) * tex_pitch,
 					tex_pitch
 				);
@@ -194,14 +197,15 @@ static int vlGrabBlocks
 		
 		if ((coded_block_pattern >> (1 - tb)) & 1)
 		{
-			if (sample_type == VL_FULL_SAMPLE)
-				vlTransformBlock(blocks + sb * VL_BLOCK_WIDTH * VL_BLOCK_HEIGHT, temp_block, 128);
-			else
-				vlTransformBlock(blocks + sb * VL_BLOCK_WIDTH * VL_BLOCK_HEIGHT, temp_block, 0);
+			short *cur_block = blocks + sb * VL_BLOCK_WIDTH * VL_BLOCK_HEIGHT;
+			
+#ifdef DO_IDCT
+			vlTransformBlock(cur_block, cur_block, sample_type == VL_FULL_SAMPLE ? 128 : 0);
+#endif
 			
 			vlGrabFrameCodedBlock
 			(
-				temp_block,
+				cur_block,
 				texels,
 				tex_pitch
 			);

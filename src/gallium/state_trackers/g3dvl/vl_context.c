@@ -1625,8 +1625,8 @@ static int vlInitMC(struct VL_CONTEXT *context)
 	context->states.mc.viewport.translate[2] = 0;
 	context->states.mc.viewport.translate[3] = 0;
 	
-	context->states.mc.render_target.width = context->video_width;
-	context->states.mc.render_target.height = context->video_height;
+	context->states.mc.render_target.width = vlRoundUpPOT(context->video_width);
+	context->states.mc.render_target.height = vlRoundUpPOT(context->video_height);
 	context->states.mc.render_target.num_cbufs = 1;
 	/* FB for MC stage is a VL_SURFACE, set in vlSetRenderSurface() */
 	context->states.mc.render_target.zsbuf = NULL;
