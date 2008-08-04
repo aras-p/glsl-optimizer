@@ -2,9 +2,10 @@
 #include <stdlib.h>
 #include "eglglobals.h"
 
-
-struct _egl_global _eglGlobal = { .Initialized = EGL_FALSE };
-
+struct _egl_global _eglGlobal = 
+{
+   EGL_FALSE
+};
 
 /**
  * Init the fields in the _eglGlobal struct
