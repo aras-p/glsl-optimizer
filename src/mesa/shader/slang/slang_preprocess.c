@@ -537,7 +537,11 @@ pp_state_init (pp_state *self, slang_info_log *elog)
 {
    self->line = 0;
    self->file = 1;
+#if FEATURE_es2_glsl
+   self->version = 100;
+#else
    self->version = 110;
+#endif
    pp_symbols_init (&self->symbols);
    pp_ext_init (&self->ext);
    self->elog = elog;
