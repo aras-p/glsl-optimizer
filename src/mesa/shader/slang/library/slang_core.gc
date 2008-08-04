@@ -436,6 +436,15 @@ bvec4 __constructor(const bool b1, const bool b2, const bool b3, const bool b4)
    __retVal.w = b4;
 }
 
+bvec4 __constructor(const float f1, const float f2, const float f3, const float f4)
+{
+   const float zero = 0.0;
+   __asm vec4_sne __retVal.x, f1, zero;   
+   __asm vec4_sne __retVal.y, f2, zero;   
+   __asm vec4_sne __retVal.z, f3, zero;   
+   __asm vec4_sne __retVal.w, f4, zero;   
+}
+
 bvec4 __constructor(const bool b)
 {
    __retVal.xyzw = b.xxxx;
