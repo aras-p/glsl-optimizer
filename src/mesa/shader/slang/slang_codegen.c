@@ -2459,16 +2459,36 @@ _slang_gen_select(slang_assemble_ctx *A, slang_operation *oper)
 {
    slang_ir_node *cond, *ifNode, *trueExpr, *falseExpr, *trueNode, *falseNode;
    slang_ir_node *tmpDecl, *tmpVar, *tree;
-   slang_typeinfo type;
-   int size;
+   slang_typeinfo type0, type1, type2;
+   int size, isBool, isEqual;
 
    assert(oper->type == SLANG_OPER_SELECT);
    assert(oper->num_children == 3);
 
+   /* type of children[0] must be boolean */
+   slang_typeinfo_construct(&type0);
+   _slang_typeof_operation(A, &oper->children[0], &type0);
+   isBool = (type0.spec.type == SLANG_SPEC_BOOL);
+   slang_typeinfo_destruct(&type0);
+   if (!isBool) {
+      slang_info_log_error(A->log, "selector type is not boolean");
+      return NULL;
+   }
+
+   slang_typeinfo_construct(&type1);
+   slang_typeinfo_construct(&type2);
+   _slang_typeof_operation(A, &oper->children[1], &type1);
+   _slang_typeof_operation(A, &oper->children[2], &type2);
+   isEqual = slang_type_specifier_equal(&type1.spec, &type2.spec);
+   slang_typeinfo_destruct(&type1);
+   slang_typeinfo_destruct(&type2);
+   if (!isEqual) {
+      slang_info_log_error(A->log, "incompatible types for ?: operator");
+      return NULL;
+   }
+
    /* size of x or y's type */
-   slang_typeinfo_construct(&type);
-   _slang_typeof_operation(A, &oper->children[1], &type);
-   size = _slang_sizeof_type_specifier(&type.spec);
+   size = _slang_sizeof_type_specifier(&type1.spec);
    assert(size > 0);
 
    /* temporary var */
@@ -2801,6 +2821,32 @@ _slang_gen_swizzle(slang_ir_node *child, GLuint swizzle)
 
 
 /**
+ * Check if an assignment of type t1 to t0 is legal.
+ * XXX more cases needed.
+ */
+static GLboolean
+_slang_assignment_compatible(const slang_typeinfo *t0,
+                             const slang_typeinfo *t1)
+
+{
+#if 01 /* not used just yet - causes problems elsewhere */
+   if (t0->spec.type == SLANG_SPEC_INT &&
+       t1->spec.type == SLANG_SPEC_FLOAT)
+      return GL_FALSE;
+
+   if (t0->spec.type == SLANG_SPEC_BOOL &&
+       t1->spec.type == SLANG_SPEC_FLOAT)
+      return GL_FALSE;
+
+   if (t0->spec.type == SLANG_SPEC_BOOL &&
+       t1->spec.type == SLANG_SPEC_INT)
+      return GL_FALSE;
+#endif
+   return GL_TRUE;
+}
+
+
+/**
  * Generate IR tree for an assignment (=).
  */
 static slang_ir_node *
@@ -2845,8 +2891,25 @@ _slang_gen_assignment(slang_assemble_ctx * A, slang_operation *oper)
    }
    else {
       slang_ir_node *n, *lhs, *rhs;
-      lhs = _slang_gen_operation(A, &oper->children[0]);
 
+      /* lhs and rhs type checking */
+      {
+         slang_typeinfo t0, t1;
+   
+         slang_typeinfo_construct(&t0);
+         _slang_typeof_operation(A, &oper->children[0], &t0);
+
+         slang_typeinfo_construct(&t1);
+         _slang_typeof_operation(A, &oper->children[1], &t1);
+
+         if (!_slang_assignment_compatible(&t0, &t1)) {
+            slang_info_log_error(A->log,
+                                 "illegal types in assignment");
+            return NULL;
+         }
+      }
+
+      lhs = _slang_gen_operation(A, &oper->children[0]);
       if (lhs) {
          if (!lhs->Store) {
             slang_info_log_error(A->log,
