@@ -257,6 +257,11 @@ vec4 __constructor(const bvec4 b)
    __retVal = b;
 }
 
+vec4 __constructor(const ivec4 i)
+{
+   __retVal = i;
+}
+
 vec4 __constructor(const vec3 v3, const float f)
 {
    // XXX this constructor shouldn't be needed anymore
