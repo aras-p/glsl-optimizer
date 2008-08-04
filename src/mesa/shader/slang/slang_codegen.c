@@ -2622,6 +2622,32 @@ _slang_gen_return(slang_assemble_ctx * A, slang_operation *oper)
 
 
 /**
+ * Determine if the given operation/expression is const-valued.
+ */
+static GLboolean
+_slang_is_constant_expr(const slang_operation *oper)
+{
+   slang_variable *var;
+   GLuint i;
+
+   switch (oper->type) {
+   case SLANG_OPER_IDENTIFIER:
+      var = _slang_locate_variable(oper->locals, oper->a_id, GL_TRUE);
+      if (var && var->type.qualifier == SLANG_QUAL_CONST)
+         return GL_TRUE;
+      return GL_FALSE;
+   default:
+      for (i = 0; i < oper->num_children; i++) {
+         if (!_slang_is_constant_expr(&oper->children[i]))
+            return GL_FALSE;
+      }
+      return GL_TRUE;
+   }
+}
+
+
+
+/**
  * Generate IR tree for a variable declaration.
  */
 static slang_ir_node *
@@ -2671,6 +2697,18 @@ _slang_gen_declaration(slang_assemble_ctx *A, slang_operation *oper)
          slang_info_log_error(A->log, "undefined variable '%s'", varName);
          return NULL;
       }
+
+      if (v->type.qualifier == SLANG_QUAL_CONST) {
+         /* if the variable is const, the initializer must be a const
+          * expression as well.
+          */
+         if (!_slang_is_constant_expr(v->initializer)) {
+            slang_info_log_error(A->log,
+                                 "initializer for %s not constant", varName);
+            return NULL;
+         }
+      }
+
 #if 0
       /* XXX make copy of this initializer? */
       {
