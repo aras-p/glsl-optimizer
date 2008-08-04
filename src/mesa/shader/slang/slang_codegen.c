@@ -3385,6 +3385,8 @@ _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper)
          for (i = 0; i < oper->num_children; i++) {
             slang_ir_node *n = _slang_gen_operation(A, &oper->children[i]);
             tree = new_seq(tree, n);
+            if (n)
+               tree->Store = n->Store;
          }
          if (oper->type == SLANG_OPER_NON_INLINED_CALL) {
             tree = new_function_call(tree, oper->label);
