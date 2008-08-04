@@ -1633,12 +1633,18 @@ emit(slang_emit_info *emitInfo, slang_ir_node *n)
    if (!n)
       return NULL;
 
+   if (emitInfo->log->error_flag) {
+      return NULL;
+   }
+
    switch (n->Opcode) {
    case IR_SEQ:
       /* sequence of two sub-trees */
       assert(n->Children[0]);
       assert(n->Children[1]);
       emit(emitInfo, n->Children[0]);
+      if (emitInfo->log->error_flag)
+         return NULL;
       inst = emit(emitInfo, n->Children[1]);
 #if 0
       assert(!n->Store);
