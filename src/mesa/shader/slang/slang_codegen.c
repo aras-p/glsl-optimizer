@@ -2050,6 +2050,23 @@ _slang_is_scalar_or_boolean(slang_assemble_ctx *A, slang_operation *oper)
 
 
 /**
+ * Test if an operation is boolean.
+ */
+static GLboolean
+_slang_is_boolean(slang_assemble_ctx *A, slang_operation *oper)
+{
+   slang_typeinfo type;
+   GLboolean isBool;
+
+   slang_typeinfo_construct(&type);
+   _slang_typeof_operation(A, oper, &type);
+   isBool = (type.spec.type == SLANG_SPEC_BOOL);
+   slang_typeinfo_destruct(&type);
+   return isBool;
+}
+
+
+/**
  * Generate loop code using high-level IR_LOOP instruction
  */
 static slang_ir_node *
@@ -2064,7 +2081,7 @@ _slang_gen_while(slang_assemble_ctx * A, const slang_operation *oper)
    GLboolean isConst, constTrue;
 
    /* type-check expression */
-   if (!_slang_is_scalar_or_boolean(A, &oper->children[0])) {
+   if (!_slang_is_boolean(A, &oper->children[0])) {
       slang_info_log_error(A->log, "scalar/boolean expression expected for 'while'");
       return NULL;
    }
@@ -2127,7 +2144,7 @@ _slang_gen_do(slang_assemble_ctx * A, const slang_operation *oper)
    GLboolean isConst, constTrue;
 
    /* type-check expression */
-   if (!_slang_is_scalar_or_boolean(A, &oper->children[1])) {
+   if (!_slang_is_boolean(A, &oper->children[1])) {
       slang_info_log_error(A->log, "scalar/boolean expression expected for 'do/while'");
       return NULL;
    }
@@ -2256,6 +2273,11 @@ _slang_gen_if(slang_assemble_ctx * A, const slang_operation *oper)
    GLboolean isConst, constTrue;
 
    /* type-check expression */
+   if (!_slang_is_boolean(A, &oper->children[0])) {
+      slang_info_log_error(A->log, "boolean expression expected for 'while'");
+      return NULL;
+   }
+
    if (!_slang_is_scalar_or_boolean(A, &oper->children[0])) {
       slang_info_log_error(A->log, "scalar/boolean expression expected for 'if'");
       return NULL;
