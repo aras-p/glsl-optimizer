@@ -3104,6 +3104,30 @@ _slang_gen_array_element(slang_assemble_ctx * A, slang_operation *oper)
 }
 
 
+static slang_ir_node *
+_slang_gen_compare(slang_assemble_ctx *A, slang_operation *oper,
+                   slang_ir_opcode opcode)
+{
+   slang_typeinfo t0, t1;
+   
+   slang_typeinfo_construct(&t0);
+   _slang_typeof_operation(A, &oper->children[0], &t0);
+
+   slang_typeinfo_construct(&t1);
+   _slang_typeof_operation(A, &oper->children[0], &t1);
+
+   if (t0.spec.type == SLANG_SPEC_ARRAY ||
+       t1.spec.type == SLANG_SPEC_ARRAY) {
+      slang_info_log_error(A->log, "Illegal array comparison");
+      return NULL;
+   }
+
+   return new_node2(opcode,
+                    _slang_gen_operation(A, &oper->children[0]),
+                    _slang_gen_operation(A, &oper->children[1]));
+}
+
+
 #if 0
 static void
 print_vars(slang_variable_scope *s)
@@ -3212,29 +3236,17 @@ _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper)
       return new_node0(IR_KILL);
 
    case SLANG_OPER_EQUAL:
-      return new_node2(IR_EQUAL,
-                      _slang_gen_operation(A, &oper->children[0]),
-                      _slang_gen_operation(A, &oper->children[1]));
+      return _slang_gen_compare(A, oper, IR_EQUAL);
    case SLANG_OPER_NOTEQUAL:
-      return new_node2(IR_NOTEQUAL,
-                      _slang_gen_operation(A, &oper->children[0]),
-                      _slang_gen_operation(A, &oper->children[1]));
+      return _slang_gen_compare(A, oper, IR_NOTEQUAL);
    case SLANG_OPER_GREATER:
-      return new_node2(IR_SGT,
-                      _slang_gen_operation(A, &oper->children[0]),
-                      _slang_gen_operation(A, &oper->children[1]));
+      return _slang_gen_compare(A, oper, IR_SGT);
    case SLANG_OPER_LESS:
-      return new_node2(IR_SLT,
-                      _slang_gen_operation(A, &oper->children[0]),
-                      _slang_gen_operation(A, &oper->children[1]));
+      return _slang_gen_compare(A, oper, IR_SLT);
    case SLANG_OPER_GREATEREQUAL:
-      return new_node2(IR_SGE,
-                      _slang_gen_operation(A, &oper->children[0]),
-                      _slang_gen_operation(A, &oper->children[1]));
+      return _slang_gen_compare(A, oper, IR_SGE);
    case SLANG_OPER_LESSEQUAL:
-      return new_node2(IR_SLE,
-                       _slang_gen_operation(A, &oper->children[0]),
-                       _slang_gen_operation(A, &oper->children[1]));
+      return _slang_gen_compare(A, oper, IR_SLE);
    case SLANG_OPER_ADD:
       {
 	 slang_ir_node *n;
