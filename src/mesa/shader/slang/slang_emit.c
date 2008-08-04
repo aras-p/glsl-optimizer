@@ -1621,6 +1621,10 @@ emit_struct_field(slang_emit_info *emitInfo, slang_ir_node *n)
          return NULL;
       }
    }
+   else {
+      /* do codegen for struct */
+      emit(emitInfo, n->Children[0]);
+   }
 
    return NULL; /* no instruction */
 }
