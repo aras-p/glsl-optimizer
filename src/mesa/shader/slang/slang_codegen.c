@@ -2687,7 +2687,7 @@ _slang_gen_declaration(slang_assemble_ctx *A, slang_operation *oper)
       if (!rhs)
          return NULL;
 
-      if (!rhs->Store || var->Store->Size != rhs->Store->Size) {
+      if (rhs->Store && var->Store->Size != rhs->Store->Size) {
          slang_info_log_error(A->log, "invalid assignment (wrong types)");
          return NULL;
       }
