@@ -145,6 +145,7 @@ _slang_simplify(slang_operation *oper,
                oper->literal[1] = var->initializer->literal[1];
                oper->literal[2] = var->initializer->literal[2];
                oper->literal[3] = var->initializer->literal[3];
+               oper->literal_size = var->initializer->literal_size;
                oper->type = var->initializer->type;
                /*
                printf("value[%s] = %f\n",
