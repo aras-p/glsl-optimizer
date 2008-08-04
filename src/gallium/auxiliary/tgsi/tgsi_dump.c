@@ -265,16 +265,6 @@ static const char *modulate_names[TGSI_MODULATE_COUNT] =
 };
 
 static void
-_dump_register_prefix(
-   uint file,
-   uint first,
-   uint last )
-{
-   
-   
-}
-
-static void
 _dump_register(
    uint file,
    int first,
@@ -354,7 +344,7 @@ tgsi_dump_declaration(
 
    TXT( ", " );
    ENM( decl->Declaration.Interpolate, interpolate_names );
-   
+
    EOL();
 }
 
@@ -373,7 +363,7 @@ tgsi_dump_immediate(
 {
    uint i;
 
-   TXT( "\nIMM " );
+   TXT( "IMM " );
    ENM( imm->Immediate.DataType, immediate_type_names );
 
    TXT( " { " );
@@ -390,6 +380,8 @@ tgsi_dump_immediate(
          TXT( ", " );
    }
    TXT( " }" );
+
+   EOL();
 }
 
 static boolean
@@ -535,7 +527,7 @@ tgsi_dump_instruction(
       UID( inst->InstructionExtLabel.Label );
       break;
    }
-   
+
    EOL();
 }
 
