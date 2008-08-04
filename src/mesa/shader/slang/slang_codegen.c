@@ -3594,7 +3594,7 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
             else {
                slang_info_log_error(A->log,
                                     "invalid datatype for uniform variable %s",
-                                    (char *) var->a_name);
+                                    varName);
             }
             return GL_FALSE;
          }
@@ -3616,6 +3616,13 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
       if (dbg) printf("UNIFORM (sz %d) ", totalSize);
    }
    else if (var->type.qualifier == SLANG_QUAL_VARYING) {
+      if (var->type.specifier.type == SLANG_SPEC_STRUCT) {
+         slang_info_log_error(A->log,
+                              "varying '%s' cannot be a structure type",
+                              varName);
+         return GL_FALSE;
+      }
+
       if (prog) {
          /* user-defined varying */
          GLint varyingLoc = _mesa_add_varying(prog->Varying, varName, size);
