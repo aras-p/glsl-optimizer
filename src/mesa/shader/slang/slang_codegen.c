@@ -2408,11 +2408,19 @@ _slang_gen_var_decl(slang_assemble_ctx *A, slang_variable *var)
 
       if (var->array_len > 0) {
          /* this is an array */
-         /* round up element size to mult of 4 */
-         GLint sz = (n->Store->Size + 3) & ~3;
-         /* mult by array size */
-         sz *= var->array_len;
-         n->Store->Size = sz;
+         /* cannot be const-qualified */
+         if (var->type.qualifier == SLANG_QUAL_CONST) {
+            slang_info_log_error(A->log, "array '%s' cannot be const",
+                                 (char*) var->a_name);
+            return NULL;
+         }
+         else {
+            /* round up element size to mult of 4 */
+            GLint sz = (n->Store->Size + 3) & ~3;
+            /* mult by array size */
+            sz *= var->array_len;
+            n->Store->Size = sz;
+         }
       }
 
       assert(n->Store->Size > 0);
