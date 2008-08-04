@@ -2687,11 +2687,12 @@ _slang_gen_declaration(slang_assemble_ctx *A, slang_operation *oper)
       if (!rhs)
          return NULL;
 
-      assert(rhs);
+      if (!rhs->Store || var->Store->Size != rhs->Store->Size) {
+         slang_info_log_error(A->log, "invalid assignment (wrong types)");
+         return NULL;
+      }
+
       init = new_node2(IR_MOVE, var, rhs);
-      /*
-        assert(rhs->Opcode != IR_SEQ);
-      */
       n = new_seq(varDecl, init);
    }
    else {
