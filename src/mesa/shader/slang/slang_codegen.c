@@ -2851,7 +2851,20 @@ _slang_assignment_compatible(const slang_typeinfo *t0,
                              const slang_typeinfo *t1)
 
 {
-#if 01 /* not used just yet - causes problems elsewhere */
+#if 0
+   GLuint sz0 = _slang_sizeof_type_specifier(&t0->spec);
+   GLuint sz1 = _slang_sizeof_type_specifier(&t1->spec);
+
+   if (sz0 != sz1)
+      return GL_FALSE;
+#endif
+
+   if (t0->spec.type == SLANG_SPEC_STRUCT &&
+       t1->spec.type == SLANG_SPEC_STRUCT &&
+       t0->spec._struct->a_name != t1->spec._struct->a_name)
+      return GL_FALSE;
+
+#if 0 /* not used just yet - causes problems elsewhere */
    if (t0->spec.type == SLANG_SPEC_INT &&
        t1->spec.type == SLANG_SPEC_FLOAT)
       return GL_FALSE;
