@@ -2928,6 +2928,7 @@ _slang_gen_assignment(slang_assemble_ctx * A, slang_operation *oper)
       slang_ir_node *n, *lhs, *rhs;
 
       /* lhs and rhs type checking */
+      if (0)
       {
          slang_typeinfo t0, t1;
    
