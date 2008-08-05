@@ -57,6 +57,8 @@
 #endif
 typedef long	int32_t;
 typedef unsigned long u_int32_t;
+typedef unsigned char uint8_t;
+
 typedef HDC		NativeDisplayType;
 typedef HWND	NativeWindowType;
 typedef HBITMAP NativePixmapType;
