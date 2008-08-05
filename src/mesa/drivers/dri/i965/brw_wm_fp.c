@@ -562,6 +562,7 @@ static void precalc_tex( struct brw_wm_compile *c,
 {
    struct prog_src_register coord;
    struct prog_dst_register tmpcoord;
+   GLuint unit = c->fp->program.Base.SamplerUnits[inst->TexSrcUnit];
 
    if (inst->TexSrcTarget == TEXTURE_CUBE_INDEX) {
        struct prog_instruction *out;
@@ -618,7 +619,7 @@ static void precalc_tex( struct brw_wm_compile *c,
 	 search_or_add_param5( c, 
 			       STATE_INTERNAL, 
 			       STATE_TEXRECT_SCALE,
-			       inst->TexSrcUnit,
+			       unit,
 			       0,0 );
 
       tmpcoord = get_temp(c);
@@ -644,19 +645,19 @@ static void precalc_tex( struct brw_wm_compile *c,
     * conversion requires allocating a temporary variable which we
     * don't have the facility to do that late in the compilation.
     */
-   if (!(c->key.yuvtex_mask & (1<<inst->TexSrcUnit))) {
+   if (!(c->key.yuvtex_mask & (1<<unit))) {
       emit_op(c, 
 	      OPCODE_TEX,
 	      inst->DstReg,
 	      inst->SaturateMode,
-	      inst->TexSrcUnit,
+	      unit,
 	      inst->TexSrcTarget,
 	      coord,
 	      src_undef(),
 	      src_undef());
    }
    else {
-       GLboolean  swap_uv = c->key.yuvtex_swap_mask & (1<<inst->TexSrcUnit);
+       GLboolean  swap_uv = c->key.yuvtex_swap_mask & (1<<unit);
 
       /* 
 	 CONST C0 = { -.5, -.0625,  -.5, 1.164 }
@@ -682,7 +683,7 @@ static void precalc_tex( struct brw_wm_compile *c,
 	      OPCODE_TEX,
 	      tmp,
 	      inst->SaturateMode,
-	      inst->TexSrcUnit,
+	      unit,
 	      inst->TexSrcTarget,
 	      coord,
 	      src_undef(),

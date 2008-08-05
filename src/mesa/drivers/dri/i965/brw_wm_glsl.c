@@ -998,6 +998,8 @@ static void emit_txb(struct brw_wm_compile *c,
 {
     struct brw_compile *p = &c->func;
     struct brw_reg dst[4], src[4], payload_reg;
+    GLuint unit = c->fp->program.Base.SamplerUnits[inst->TexSrcUnit];
+
     GLuint i;
     payload_reg = get_reg(c, PROGRAM_PAYLOAD, PAYLOAD_DEPTH, 0, 1, 0, 0);
     for (i = 0; i < 4; i++) 
@@ -1029,8 +1031,8 @@ static void emit_txb(struct brw_wm_compile *c,
 	    retype(vec8(dst[0]), BRW_REGISTER_TYPE_UW),
 	    1,
 	    retype(payload_reg, BRW_REGISTER_TYPE_UW),
-	    inst->TexSrcUnit + MAX_DRAW_BUFFERS, /* surface */
-	    inst->TexSrcUnit,     /* sampler */
+	    unit + MAX_DRAW_BUFFERS, /* surface */
+	    unit,     /* sampler */
 	    inst->DstReg.WriteMask,
 	    BRW_SAMPLER_MESSAGE_SIMD16_SAMPLE_BIAS,
 	    4,
@@ -1043,10 +1045,12 @@ static void emit_tex(struct brw_wm_compile *c,
 {
     struct brw_compile *p = &c->func;
     struct brw_reg dst[4], src[4], payload_reg;
+    GLuint unit = c->fp->program.Base.SamplerUnits[inst->TexSrcUnit];
+
     GLuint msg_len;
     GLuint i, nr;
     GLuint emit;
-    GLboolean shadow = (c->key.shadowtex_mask & (1<<inst->TexSrcUnit)) ? 1 : 0;
+    GLboolean shadow = (c->key.shadowtex_mask & (1<<unit)) ? 1 : 0;
 
     payload_reg = get_reg(c, PROGRAM_PAYLOAD, PAYLOAD_DEPTH, 0, 1, 0, 0);
 
@@ -1091,8 +1095,8 @@ static void emit_tex(struct brw_wm_compile *c,
 	    retype(vec8(dst[0]), BRW_REGISTER_TYPE_UW),
 	    1,
 	    retype(payload_reg, BRW_REGISTER_TYPE_UW),
-	    inst->TexSrcUnit + MAX_DRAW_BUFFERS, /* surface */
-	    inst->TexSrcUnit,     /* sampler */
+	    unit + MAX_DRAW_BUFFERS, /* surface */
+	    unit,     /* sampler */
 	    inst->DstReg.WriteMask,
 	    BRW_SAMPLER_MESSAGE_SIMD8_SAMPLE,
 	    4,
