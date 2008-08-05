@@ -425,6 +425,7 @@ static slang_asm_info AsmInfo[] = {
    { "vec4_sle", IR_SLE, 1, 2 },
    { "vec4_slt", IR_SLT, 1, 2 },
    /* vec4 unary */
+   { "vec4_move", IR_MOVE, 1, 1 },
    { "vec4_floor", IR_FLOOR, 1, 1 },
    { "vec4_frac", IR_FRAC, 1, 1 },
    { "vec4_abs", IR_ABS, 1, 1 },
@@ -448,8 +449,8 @@ static slang_asm_info AsmInfo[] = {
    { "vec4_texp_rect", IR_TEX, 1, 2 },/* rectangle w/ projection */
 
    /* unary op */
-   { "int_to_float", IR_I_TO_F, 1, 1 },
-   { "float_to_int", IR_F_TO_I, 1, 1 },
+   { "ivec4_to_vec4", IR_I_TO_F, 1, 1 }, /* int[4] to float[4] */
+   { "vec4_to_ivec4", IR_F_TO_I, 1, 1 },  /* float[4] to int[4] */
    { "float_exp", IR_EXP, 1, 1 },
    { "float_exp2", IR_EXP2, 1, 1 },
    { "float_log2", IR_LOG2, 1, 1 },
@@ -1674,11 +1675,9 @@ _slang_gen_asm(slang_assemble_ctx *A, slang_operation *oper,
          return NULL;
 
       assert(!n->Store);
-      n->Store = get_store(n0);
-      n->Writemask = writemask;
+      n->Store = n0->Store;
 
-      assert(n->Store->File != PROGRAM_UNDEFINED ||
-             n->Store->Parent);
+      assert(n->Store->File != PROGRAM_UNDEFINED || n->Store->Parent);
 
       _slang_free(n0);
    }
@@ -1957,6 +1956,7 @@ _slang_gen_function_call_name(slang_assemble_ctx *A, const char *name,
    slang_atom atom;
    slang_function *fun;
    GLboolean error;
+   slang_ir_node *n;
 
    atom = slang_atom_pool_atom(A->atoms, name);
    if (atom == SLANG_ATOM_NULL)
@@ -2008,7 +2008,17 @@ _slang_gen_function_call_name(slang_assemble_ctx *A, const char *name,
       assert(fun);
    }
 
-   return _slang_gen_function_call(A, fun, oper, dest);
+   n = _slang_gen_function_call(A, fun, oper, dest);
+
+   if (n && !n->Store && !dest
+       && fun->header.type.specifier.type != SLANG_SPEC_VOID) {
+      /* setup n->Store for the result of the function call */
+      GLint size = _slang_sizeof_type_specifier(&fun->header.type.specifier);
+      n->Store = _slang_new_ir_storage(PROGRAM_TEMPORARY, -1, size);
+      /*printf("Alloc storage for function result, size %d \n", size);*/
+   }
+
+   return n;
 }
 
 
@@ -2524,13 +2534,13 @@ _slang_gen_select(slang_assemble_ctx *A, slang_operation *oper)
    tmpVar = new_node0(IR_VAR);
    tmpVar->Store = tmpDecl->Store;
    trueExpr = _slang_gen_operation(A, &oper->children[1]);
-   trueNode = new_node2(IR_MOVE, tmpVar, trueExpr);
+   trueNode = new_node2(IR_COPY, tmpVar, trueExpr);
 
    /* if-false body (child 2) */
    tmpVar = new_node0(IR_VAR);
    tmpVar->Store = tmpDecl->Store;
    falseExpr = _slang_gen_operation(A, &oper->children[2]);
-   falseNode = new_node2(IR_MOVE, tmpVar, falseExpr);
+   falseNode = new_node2(IR_COPY, tmpVar, falseExpr);
 
    ifNode = new_if(cond, trueNode, falseNode);
 
@@ -2711,7 +2721,7 @@ _slang_gen_declaration(slang_assemble_ctx *A, slang_operation *oper)
    assert(oper->num_children == 0 || oper->num_children == 1);
 
    v = _slang_locate_variable(oper->locals, oper->a_id, GL_TRUE);
-   /*printf("Declare %s at %p\n", varName, v);*/
+   /*printf("Declare %s at %p\n", varName, (void *) v);*/
    assert(v);
 
 #if 0
@@ -2736,7 +2746,8 @@ _slang_gen_declaration(slang_assemble_ctx *A, slang_operation *oper)
       rhs = _slang_gen_operation(A, &oper->children[0]);
       if (!rhs)
          return NULL;  /* must have found an error */
-      init = new_node2(IR_MOVE, var, rhs);
+      init = new_node2(IR_COPY, var, rhs);
+
       /*assert(rhs->Opcode != IR_SEQ);*/
       n = new_seq(varDecl, init);
    }
@@ -2775,12 +2786,14 @@ _slang_gen_declaration(slang_assemble_ctx *A, slang_operation *oper)
       if (!rhs)
          return NULL;
 
+      /*assert(rhs->Store);*/
+
       if (rhs->Store && var->Store->Size != rhs->Store->Size) {
          slang_info_log_error(A->log, "invalid assignment (wrong types)");
          return NULL;
       }
 
-      init = new_node2(IR_MOVE, var, rhs);
+      init = new_node2(IR_COPY, var, rhs);
       n = new_seq(varDecl, init);
    }
    else {
@@ -2851,12 +2864,14 @@ _slang_assignment_compatible(const slang_typeinfo *t0,
                              const slang_typeinfo *t1)
 
 {
-#if 0
+#if 1
    GLuint sz0 = _slang_sizeof_type_specifier(&t0->spec);
    GLuint sz1 = _slang_sizeof_type_specifier(&t1->spec);
 
-   if (sz0 != sz1)
+   if (sz0 != sz1) {
+      printf("size mismatch %u vs %u\n", sz0, sz1);
       return GL_FALSE;
+   }
 #endif
 
    if (t0->spec.type == SLANG_SPEC_STRUCT &&
@@ -2974,7 +2989,7 @@ _slang_gen_assignment(slang_assemble_ctx * A, slang_operation *oper)
              */
             rhs = _slang_gen_swizzle(rhs, newSwizzle);
          }
-         n = new_node2(IR_MOVE, lhs, rhs);
+         n = new_node2(IR_COPY, lhs, rhs);
          n->Writemask = writemask;
          return n;
       }
@@ -3208,6 +3223,7 @@ _slang_gen_compare(slang_assemble_ctx *A, slang_operation *oper,
                    slang_ir_opcode opcode)
 {
    slang_typeinfo t0, t1;
+   slang_ir_node *n;
    
    slang_typeinfo_construct(&t0);
    _slang_typeof_operation(A, &oper->children[0], &t0);
@@ -3221,9 +3237,14 @@ _slang_gen_compare(slang_assemble_ctx *A, slang_operation *oper,
       return NULL;
    }
 
-   return new_node2(opcode,
-                    _slang_gen_operation(A, &oper->children[0]),
-                    _slang_gen_operation(A, &oper->children[1]));
+   n =  new_node2(opcode,
+                  _slang_gen_operation(A, &oper->children[0]),
+                  _slang_gen_operation(A, &oper->children[1]));
+
+   /* result is a bool (size 1) */
+   n->Store = _slang_new_ir_storage(PROGRAM_TEMPORARY, -1, 1);
+
+   return n;
 }
 
 
@@ -3726,7 +3747,7 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
       if (var->initializer) {
          slang_ir_node *lhs, *rhs, *init;
 
-         /* Generate IR_MOVE instruction to initialize the variable */
+         /* Generate IR_COPY instruction to initialize the variable */
          lhs = new_node0(IR_VAR);
          lhs->Var = var;
          lhs->Store = n->Store;
@@ -3736,7 +3757,7 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
 
          rhs = _slang_gen_operation(A, var->initializer);
          assert(rhs);
-         init = new_node2(IR_MOVE, lhs, rhs);
+         init = new_node2(IR_COPY, lhs, rhs);
          n = new_seq(n, init);
       }
 

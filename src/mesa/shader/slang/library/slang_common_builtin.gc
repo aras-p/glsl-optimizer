@@ -1418,7 +1418,7 @@ bvec4 greaterThan(const vec4 u, const vec4 v)
 
 bvec2 greaterThan(const ivec2 u, const ivec2 v)
 {
-   __asm vec4_sgt __retVal.xy, u, v;
+   __asm vec4_sgt __retVal.xy, u.xy, v.xy;
 }
 
 bvec3 greaterThan(const ivec3 u, const ivec3 v)
