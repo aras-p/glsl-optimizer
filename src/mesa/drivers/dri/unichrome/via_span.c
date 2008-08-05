@@ -86,6 +86,7 @@
 
 #define LOCAL_STENCIL_VARS LOCAL_DEPTH_VARS 
 
+#define VALUE_TYPE GLushort
 
 #define WRITE_DEPTH(_x, _y, d)                      \
     *(GLushort *)(buf + (_x) * 2 + (_y) * depth_pitch) = d;
@@ -98,6 +99,8 @@
 
 /* 32 bit depthbuffer functions.
  */
+#define VALUE_TYPE GLuint
+
 #define WRITE_DEPTH(_x, _y, d)                      \
     *(GLuint *)(buf + (_x) * 4 + (_y) * depth_pitch) = d;
 
@@ -111,6 +114,8 @@
 
 /* 24/8 bit interleaved depth/stencil functions
  */
+#define VALUE_TYPE GLuint
+
 #define WRITE_DEPTH( _x, _y, d ) {			\
    GLuint tmp = *(GLuint *)(buf + (_x)*4 + (_y)*depth_pitch);	\
    tmp &= 0x000000ff;					\

@@ -99,7 +99,6 @@
 #define GET_PTR(X,Y) (buf + ((Y) * irb->pfPitch + (X)) * 4)
 #include "spantmp2.h"
 
-
 #define LOCAL_DEPTH_VARS						\
    struct intel_context *intel = intel_context(ctx);			\
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);		\
@@ -115,6 +114,8 @@
 /**
  ** 16-bit depthbuffer functions.
  **/
+#define VALUE_TYPE GLushort
+
 #define WRITE_DEPTH( _x, _y, d ) \
    ((GLushort *)buf)[(_x) + (_y) * pitch] = d;
 
@@ -132,6 +133,8 @@
  ** The wrappers in main/depthstencil.c are used to extract the depth
  ** and stencil values.
  **/
+#define VALUE_TYPE GLuint
+
 /* Change ZZZS -> SZZZ */
 #define WRITE_DEPTH( _x, _y, d ) {				\
    GLuint tmp = ((d) >> 8) | ((d) << 24);			\

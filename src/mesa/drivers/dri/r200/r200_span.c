@@ -172,6 +172,7 @@ r200_mba_z16( driRenderbuffer *drb, GLint x, GLint y )
 
 /* 16-bit depth buffer functions
  */
+#define VALUE_TYPE GLushort
 
 #define WRITE_DEPTH( _x, _y, d )					\
    *(GLushort *)(buf + r200_mba_z16( drb, _x + xo, _y + yo )) = d;
@@ -185,6 +186,7 @@ r200_mba_z16( driRenderbuffer *drb, GLint x, GLint y )
 
 /* 24 bit depth, 8 bit stencil depthbuffer functions
  */
+#define VALUE_TYPE GLuint
 
 #define WRITE_DEPTH( _x, _y, d )					\
 do {									\

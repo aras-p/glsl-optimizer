@@ -275,6 +275,8 @@
 #undef BYTESPERPIXEL
 #define BYTESPERPIXEL 2
 
+#define VALUE_TYPE GLushort
+
 #define WRITE_DEPTH( _x, _y, d )					\
     *(GLushort *)(buf + _x*BYTESPERPIXEL + _y*pitch) = d
 
@@ -301,6 +303,8 @@
 
 #undef BYTESPERPIXEL
 #define BYTESPERPIXEL 4
+
+#define VALUE_TYPE GLuint
 
 #define WRITE_DEPTH( _x, _y, d )					\
     *(GLuint *)(buf + _x*BYTESPERPIXEL + _y*pitch) = d << 8

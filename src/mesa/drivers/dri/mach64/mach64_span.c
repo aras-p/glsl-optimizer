@@ -117,6 +117,8 @@
 
 /* 16 bit depthbuffer functions.
  */
+#define VALUE_TYPE GLushort
+
 #define WRITE_DEPTH( _x, _y, d )					\
    *(GLushort *)(buf + ((_x) + (_y) * drb->pitch) * 2) = d;
 

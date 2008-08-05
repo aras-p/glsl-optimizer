@@ -131,6 +131,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 /* 16-bit depth buffer functions
  */
+#define VALUE_TYPE GLushort
 
 #define WRITE_DEPTH_SPAN()						\
 do {									\
@@ -207,6 +208,8 @@ do {									\
 
 /* 24-bit depth, 8-bit stencil buffer functions
  */
+#define VALUE_TYPE GLuint
+
 #define WRITE_DEPTH_SPAN()						\
 do {									\
    GLuint buf[n];							\

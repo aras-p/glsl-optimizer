@@ -128,6 +128,8 @@ do { \
 
 /* 16 bit depthbuffer functions.
  */
+#define VALUE_TYPE GLushort
+
 #define WRITE_DEPTH( _x, _y, d ) \
    *(GLushort *)(buf + _x*2 + _y*dPriv->w*2) = d
 
@@ -143,6 +145,8 @@ do { \
 /* 32 bit depthbuffer functions.
  */
 #if 0
+#define VALUE_TYPE GLuint
+
 #define WRITE_DEPTH( _x, _y, d )	\
    *(GLuint *)(buf + _x*4 + _y*pitch) = d;
 
@@ -157,6 +161,8 @@ do { \
 /* 24/8 bit interleaved depth/stencil functions
  */
 #if 0
+#define VALUE_TYPE GLuint
+
 #define WRITE_DEPTH( _x, _y, d ) { \
    GLuint tmp = *(GLuint *)(buf + _x*4 + _y*pitch);	\
    tmp &= 0xff; \
