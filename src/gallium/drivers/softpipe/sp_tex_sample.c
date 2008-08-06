@@ -601,15 +601,25 @@ get_texel(struct tgsi_sampler *sampler,
           unsigned face, unsigned level, int x, int y, int z,
           float rgba[NUM_CHANNELS][QUAD_SIZE], unsigned j)
 {
-   const int tx = x % TILE_SIZE;
-   const int ty = y % TILE_SIZE;
-   const struct softpipe_cached_tile *tile
-      = sp_get_cached_tile_tex(sampler->pipe, sampler->cache,
-                               x, y, z, face, level);
-   rgba[0][j] = tile->data.color[ty][tx][0];
-   rgba[1][j] = tile->data.color[ty][tx][1];
-   rgba[2][j] = tile->data.color[ty][tx][2];
-   rgba[3][j] = tile->data.color[ty][tx][3];
+   if (x < 0 || x >= sampler->texture->width[level] ||
+       y < 0 || y >= sampler->texture->height[level] ||
+       z < 0 || z >= sampler->texture->depth[level]) {
+      rgba[0][j] = sampler->state->border_color[0];
+      rgba[1][j] = sampler->state->border_color[1];
+      rgba[2][j] = sampler->state->border_color[2];
+      rgba[3][j] = sampler->state->border_color[3];
+   }
+   else {
+      const int tx = x % TILE_SIZE;
+      const int ty = y % TILE_SIZE;
+      const struct softpipe_cached_tile *tile
+         = sp_get_cached_tile_tex(sampler->pipe, sampler->cache,
+                                  x, y, z, face, level);
+      rgba[0][j] = tile->data.color[ty][tx][0];
+      rgba[1][j] = tile->data.color[ty][tx][1];
+      rgba[2][j] = tile->data.color[ty][tx][2];
+      rgba[3][j] = tile->data.color[ty][tx][3];
+   }
 }
 
 
