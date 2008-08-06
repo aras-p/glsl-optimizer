@@ -50,6 +50,11 @@
 
 
 
+#ifndef GL_PROGRAM_BINARY_LENGTH_OES
+#define GL_PROGRAM_BINARY_LENGTH_OES 0x8741
+#endif
+
+
 /**
  * Allocate a new gl_shader_program object, initialize it.
  */
@@ -929,6 +934,9 @@ _mesa_get_programiv(GLcontext *ctx, GLuint program,
       if (*params > 0)
          (*params)++;  /* add one for terminating zero */
       break;
+   case GL_PROGRAM_BINARY_LENGTH_OES:
+      *params = 0;
+      break;
    default:
       _mesa_error(ctx, GL_INVALID_ENUM, "glGetProgramiv(pname)");
       return;
@@ -1022,7 +1030,7 @@ get_uniformfv(GLcontext *ctx, GLuint program, GLint location,
               GLfloat *params)
 {
    struct gl_shader_program *shProg
-      = _mesa_lookup_shader_program(ctx, program);
+      = _mesa_lookup_shader_program_err(ctx, program, "glGetUniform[if]v");
    if (shProg) {
       if (shProg->Uniforms &&
           location >= 0 && location < (GLint) shProg->Uniforms->NumUniforms) {
@@ -1055,9 +1063,6 @@ get_uniformfv(GLcontext *ctx, GLuint program, GLint location,
       else {
          _mesa_error(ctx, GL_INVALID_OPERATION, "glGetUniformfv(location)");
       }
-   }
-   else {
-      _mesa_error(ctx, GL_INVALID_OPERATION, "glGetUniformfv(program)");
    }
    return 0;
 }
