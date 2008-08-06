@@ -392,7 +392,6 @@ _slang_typeof_operation_(slang_operation * op,
    switch (op->type) {
    case SLANG_OPER_BLOCK_NO_NEW_SCOPE:
    case SLANG_OPER_BLOCK_NEW_SCOPE:
-   case SLANG_OPER_VARIABLE_DECL:
    case SLANG_OPER_ASM:
    case SLANG_OPER_BREAK:
    case SLANG_OPER_CONTINUE:
@@ -477,6 +476,7 @@ _slang_typeof_operation_(slang_operation * op,
       }
       break;
    case SLANG_OPER_IDENTIFIER:
+   case SLANG_OPER_VARIABLE_DECL:
       {
          slang_variable *var;
          var = _slang_locate_variable(op->locals, op->a_id, GL_TRUE);
