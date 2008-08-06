@@ -2433,8 +2433,6 @@ _slang_gen_var_decl(slang_assemble_ctx *A, slang_variable *var)
           */
          n->Store->Swizzle = SWIZZLE_NOOP;
       }
-
-      A->program->NumTemporaries++; /* an approximation */
    }
    return n;
 }
