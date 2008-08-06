@@ -72,6 +72,10 @@ softpipe_get_param(struct pipe_screen *screen, int param)
       return PIPE_MAX_COLOR_BUFS;
    case PIPE_CAP_OCCLUSION_QUERY:
       return 1;
+   case PIPE_CAP_TEXTURE_MIRROR_CLAMP:
+      return 1;
+   case PIPE_CAP_TEXTURE_MIRROR_REPEAT:
+      return 1;
    case PIPE_CAP_TEXTURE_SHADOW_MAP:
       return 1;
    case PIPE_CAP_MAX_TEXTURE_2D_LEVELS:
