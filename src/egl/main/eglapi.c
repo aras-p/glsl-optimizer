@@ -63,6 +63,8 @@ eglGetDisplay(NativeDisplayType nativeDisplay)
 EGLBoolean EGLAPIENTRY
 eglInitialize(EGLDisplay dpy, EGLint *major, EGLint *minor)
 {
+   EGLint major_int, minor_int;
+
    if (dpy) {
       EGLBoolean retVal;
       _EGLDisplay *dpyPriv = _eglLookupDisplay(dpy);
@@ -77,12 +79,19 @@ eglInitialize(EGLDisplay dpy, EGLint *major, EGLint *minor)
       }
       /* Initialize the particular driver now */
       retVal = dpyPriv->Driver->API.Initialize(dpyPriv->Driver, dpy,
-                                               major, minor);
+                                               &major_int, &minor_int);
 
-      dpyPriv->Driver->APImajor = *major;
-      dpyPriv->Driver->APIminor = *minor;
+      dpyPriv->Driver->APImajor = major_int;
+      dpyPriv->Driver->APIminor = minor_int;
       snprintf(dpyPriv->Driver->Version, sizeof(dpyPriv->Driver->Version),
-               "%d.%d (%s)", *major, *minor, dpyPriv->Driver->Name);
+               "%d.%d (%s)", major_int, minor_int, dpyPriv->Driver->Name);
+
+      /* Update applications version of major and minor if not NULL */
+      if((major != NULL) && (minor != NULL))
+      {
+         *major = major_int;
+         *minor = minor_int;
+      }
 
       return retVal;
    }
