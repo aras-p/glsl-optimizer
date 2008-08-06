@@ -3647,7 +3647,7 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
       const GLuint swizzle = _slang_var_swizzle(totalSize, 0);
 
       if (var->initializer) {
-         slang_info_log_error(A->log, "illegal assignment to '%s'", varName);
+         slang_info_log_error(A->log, "illegal initializer for uniform '%s'", varName);
          return GL_FALSE;
       }
 
@@ -3695,9 +3695,17 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
       if (dbg) printf("UNIFORM (sz %d) ", totalSize);
    }
    else if (var->type.qualifier == SLANG_QUAL_VARYING) {
-      if (!_slang_type_is_float_vec_mat(var->type.specifier.type)) {
+      /* varyings must be float, vec or mat */
+      if (!_slang_type_is_float_vec_mat(var->type.specifier.type) &&
+          var->type.specifier.type != SLANG_SPEC_ARRAY) {
          slang_info_log_error(A->log,
                               "varying '%s' must be float/vector/matrix",
+                              varName);
+         return GL_FALSE;
+      }
+
+      if (var->initializer) {
+         slang_info_log_error(A->log, "illegal initializer for varying '%s'",
                               varName);
          return GL_FALSE;
       }
