@@ -2025,6 +2025,12 @@ parse_code_unit(slang_parse_ctx * C, slang_code_unit * unit,
       A.vartable = o.vartable;
       A.log = C->L;
 
+      /* main() takes no parameters */
+      if (mainFunc->param_count > 0) {
+         slang_info_log_error(A.log, "main() takes no arguments");
+         return GL_FALSE;
+      }
+
       _slang_codegen_function(&A, mainFunc);
 
       shader->Main = GL_TRUE; /* this shader defines main() */
