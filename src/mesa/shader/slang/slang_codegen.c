@@ -2717,6 +2717,7 @@ _slang_gen_declaration(slang_assemble_ctx *A, slang_operation *oper)
    slang_ir_node *varDecl;
    slang_variable *v;
    const char *varName = (char *) oper->a_id;
+   slang_operation *initializer;
 
    assert(oper->num_children == 0 || oper->num_children == 1);
 
@@ -2733,26 +2734,24 @@ _slang_gen_declaration(slang_assemble_ctx *A, slang_operation *oper)
 
    varDecl = _slang_gen_var_decl(A, v);
 
+   /* check if the var has an initializer */
    if (oper->num_children > 0) {
-      /* child is initializer */
-      slang_ir_node *var, *init, *rhs;
       assert(oper->num_children == 1);
-      var = new_var(A, oper, oper->a_id);
-      if (!var) {
-         slang_info_log_error(A->log, "undefined variable '%s'", varName);
-         return NULL;
-      }
-      /* XXX make copy of this initializer? */
-      rhs = _slang_gen_operation(A, &oper->children[0]);
-      if (!rhs)
-         return NULL;  /* must have found an error */
-      init = new_node2(IR_COPY, var, rhs);
-
-      /*assert(rhs->Opcode != IR_SEQ);*/
-      n = new_seq(varDecl, init);
+      initializer = &oper->children[0];
    }
    else if (v->initializer) {
-      slang_ir_node *var, *init, *rhs;
+      initializer = v->initializer;
+   }
+   else {
+      initializer = NULL;
+   }
+
+   if (initializer) {
+      slang_ir_node *var, *init;
+
+      /* XXX todo: type check/compare var and initializer */
+
+
       var = new_var(A, oper, oper->a_id);
       if (!var) {
          slang_info_log_error(A->log, "undefined variable '%s'", varName);
@@ -2763,42 +2762,36 @@ _slang_gen_declaration(slang_assemble_ctx *A, slang_operation *oper)
          /* if the variable is const, the initializer must be a const
           * expression as well.
           */
-         if (!_slang_is_constant_expr(v->initializer)) {
+#if 0
+         if (!_slang_is_constant_expr(initializer)) {
             slang_info_log_error(A->log,
                                  "initializer for %s not constant", varName);
             return NULL;
          }
+#endif
       }
 
-#if 0
-      /* XXX make copy of this initializer? */
-      {
-         slang_operation dup;
-         slang_operation_construct(&dup);
-         slang_operation_copy(&dup, v->initializer);
-         _slang_simplify(&dup, &A->space, A->atoms); 
-         rhs = _slang_gen_operation(A, &dup);
-      }
-#else
-      _slang_simplify(v->initializer, &A->space, A->atoms); 
-      rhs = _slang_gen_operation(A, v->initializer);
-#endif
-      if (!rhs)
+      _slang_simplify(initializer, &A->space, A->atoms); 
+
+      init = _slang_gen_operation(A, initializer);
+      if (!init)
          return NULL;
 
-      /*assert(rhs->Store);*/
+      /*assert(init->Store);*/
 
-      if (rhs->Store && var->Store->Size != rhs->Store->Size) {
+      /* XXX remove this when type checking is added above */
+      if (init->Store && var->Store->Size != init->Store->Size) {
          slang_info_log_error(A->log, "invalid assignment (wrong types)");
          return NULL;
       }
 
-      init = new_node2(IR_COPY, var, rhs);
-      n = new_seq(varDecl, init);
+      n = new_node2(IR_COPY, var, init);
+      n = new_seq(varDecl, n);
    }
    else {
       n = varDecl;
    }
+
    return n;
 }
 
@@ -2893,11 +2886,11 @@ _slang_assignment_compatible(slang_assemble_ctx *A,
        t1.spec.type == SLANG_SPEC_BOOL)
       return GL_FALSE;
 
-#if 0 /* not used just yet - causes problems elsewhere */
    if (t0.spec.type == SLANG_SPEC_INT &&
        t1.spec.type == SLANG_SPEC_FLOAT)
       return GL_FALSE;
 
+#if 0 /* not used just yet - causes problems elsewhere */
    if (t0.spec.type == SLANG_SPEC_BOOL &&
        t1.spec.type == SLANG_SPEC_FLOAT)
       return GL_FALSE;
