@@ -1073,6 +1073,71 @@ _mesa_get_shader_source(GLcontext *ctx, GLuint shader, GLsizei maxLength,
 }
 
 
+static void
+get_matrix_dims(GLenum type, GLint *rows, GLint *cols)
+{
+   switch (type) {
+   case GL_FLOAT_MAT2:
+      *rows = *cols = 2;
+      break;
+   case GL_FLOAT_MAT2x3:
+      *rows = 3;
+      *cols = 2;
+      break;
+   case GL_FLOAT_MAT2x4:
+      *rows = 4;
+      *cols = 2;
+      break;
+   case GL_FLOAT_MAT3:
+      *rows = 3;
+      *cols = 3;
+      break;
+   case GL_FLOAT_MAT3x2:
+      *rows = 2;
+      *cols = 3;
+      break;
+   case GL_FLOAT_MAT3x4:
+      *rows = 4;
+      *cols = 3;
+      break;
+   case GL_FLOAT_MAT4:
+      *rows = 4;
+      *cols = 4;
+      break;
+   case GL_FLOAT_MAT4x2:
+      *rows = 2;
+      *cols = 4;
+      break;
+   case GL_FLOAT_MAT4x3:
+      *rows = 3;
+      *cols = 4;
+      break;
+   default:
+      *rows = *cols = 0;
+   }
+}
+
+
+/**
+ * Determine the number of rows and columns occupied by a uniform
+ * according to its datatype.
+ */
+static void
+get_uniform_rows_cols(const struct gl_program_parameter *p,
+                      GLint *rows, GLint *cols)
+{
+   get_matrix_dims(p->DataType, rows, cols);
+   if (*rows == 0 && *cols == 0) {
+      /* not a matrix type, probably a float or vector */
+      *rows = p->Size / 4 + 1;
+      if (p->Size % 4 == 0)
+         *cols = 4;
+      else
+         *cols = p->Size % 4;
+   }
+}
+
+
 #define MAX_UNIFORM_ELEMENTS 16
 
 /**
@@ -1089,7 +1154,6 @@ get_uniformfv(GLcontext *ctx, GLuint program, GLint location,
       if (shProg->Uniforms &&
           location >= 0 && location < (GLint) shProg->Uniforms->NumUniforms) {
          GLint progPos;
-         GLuint i;
          const struct gl_program *prog = NULL;
 
          progPos = shProg->Uniforms->Uniforms[location].VertPos;
@@ -1105,13 +1169,23 @@ get_uniformfv(GLcontext *ctx, GLuint program, GLint location,
 
          ASSERT(prog);
          if (prog) {
-            /* See uniformiv() below */                    
-            assert(prog->Parameters->Parameters[progPos].Size <= MAX_UNIFORM_ELEMENTS);
+            const struct gl_program_parameter *p =
+               &prog->Parameters->Parameters[progPos];
+            GLint rows, cols, i, j, k;
 
-            for (i = 0; i < prog->Parameters->Parameters[progPos].Size; i++) {
-               params[i] = prog->Parameters->ParameterValues[progPos][i];
+            /* See uniformiv() below */                    
+            assert(p->Size <= MAX_UNIFORM_ELEMENTS);
+
+            get_uniform_rows_cols(p, &rows, &cols);
+
+            k = 0;
+            for (i = 0; i < rows; i++) {
+               for (j = 0; j < cols; j++ ) {
+                  params[k++] = prog->Parameters->ParameterValues[progPos+i][j];
+               }
             }
-            return prog->Parameters->Parameters[progPos].Size;
+
+            return p->Size;
          }
       }
       else {
@@ -1594,51 +1668,6 @@ _mesa_uniform(GLcontext *ctx, GLint location, GLsizei count,
 /**
  * Set a matrix-valued program parameter.
  */
-static void
-get_matrix_dims(GLenum type, GLint *rows, GLint *cols)
-{
-   switch (type) {
-   case GL_FLOAT_MAT2:
-      *rows = *cols = 2;
-      break;
-   case GL_FLOAT_MAT2x3:
-      *rows = 3;
-      *cols = 2;
-      break;
-   case GL_FLOAT_MAT2x4:
-      *rows = 4;
-      *cols = 2;
-      break;
-   case GL_FLOAT_MAT3:
-      *rows = 3;
-      *cols = 3;
-      break;
-   case GL_FLOAT_MAT3x2:
-      *rows = 2;
-      *cols = 3;
-      break;
-   case GL_FLOAT_MAT3x4:
-      *rows = 4;
-      *cols = 3;
-      break;
-   case GL_FLOAT_MAT4:
-      *rows = 4;
-      *cols = 4;
-      break;
-   case GL_FLOAT_MAT4x2:
-      *rows = 2;
-      *cols = 4;
-      break;
-   case GL_FLOAT_MAT4x3:
-      *rows = 3;
-      *cols = 4;
-      break;
-   default:
-      *rows = *cols = 0;
-   }
-}
-
-
 static void
 set_program_uniform_matrix(GLcontext *ctx, struct gl_program *program,
                            GLuint index, GLuint offset,
