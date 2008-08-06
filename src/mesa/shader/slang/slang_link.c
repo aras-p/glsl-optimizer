@@ -445,6 +445,18 @@ _slang_link(GLcontext *ctx,
          _mesa_problem(ctx, "unexpected shader target in slang_link()");
    }
 
+#if FEATURE_es2_glsl
+   /* must have both a vertex and fragment program for ES2 */
+   if (!vertProg) {
+      link_error(shProg, "missing vertex shader\n");
+      return;
+   }
+   if (!fragProg) {
+      link_error(shProg, "missing fragment shader\n");
+      return;
+   }
+#endif
+
    /*
     * Make copies of the vertex/fragment programs now since we'll be
     * changing src/dst registers after merging the uniforms and varying vars.
