@@ -2889,6 +2889,10 @@ _slang_assignment_compatible(slang_assemble_ctx *A,
        t0.spec._struct->a_name != t1.spec._struct->a_name)
       return GL_FALSE;
 
+   if (t0.spec.type == SLANG_SPEC_FLOAT &&
+       t1.spec.type == SLANG_SPEC_BOOL)
+      return GL_FALSE;
+
 #if 0 /* not used just yet - causes problems elsewhere */
    if (t0.spec.type == SLANG_SPEC_INT &&
        t1.spec.type == SLANG_SPEC_FLOAT)
@@ -3235,6 +3239,18 @@ _slang_gen_compare(slang_assemble_ctx *A, slang_operation *oper,
        t1.spec.type == SLANG_SPEC_ARRAY) {
       slang_info_log_error(A->log, "Illegal array comparison");
       return NULL;
+   }
+
+   if (oper->type != SLANG_OPER_EQUAL &&
+       oper->type != SLANG_OPER_NOTEQUAL) {
+      /* <, <=, >, >= can only be used with scalars */
+      if ((t0.spec.type != SLANG_SPEC_INT &&
+           t0.spec.type != SLANG_SPEC_FLOAT) ||
+          (t1.spec.type != SLANG_SPEC_INT &&
+           t1.spec.type != SLANG_SPEC_FLOAT)) {
+         slang_info_log_error(A->log, "Illegal type(s) for inequality operator");
+         return NULL;
+      }
    }
 
    n =  new_node2(opcode,
