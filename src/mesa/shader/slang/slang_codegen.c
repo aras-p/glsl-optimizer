@@ -2704,6 +2704,62 @@ _slang_is_constant_expr(const slang_operation *oper)
 }
 
 
+/**
+ * Check if an assignment of type t1 to t0 is legal.
+ * XXX more cases needed.
+ */
+static GLboolean
+_slang_assignment_compatible(slang_assemble_ctx *A,
+                             slang_operation *op0,
+                             slang_operation *op1)
+{
+   slang_typeinfo t0, t1;
+   GLuint sz0, sz1;
+
+   
+   slang_typeinfo_construct(&t0);
+   _slang_typeof_operation(A, op0, &t0);
+
+   slang_typeinfo_construct(&t1);
+   _slang_typeof_operation(A, op1, &t1);
+
+   sz0 = _slang_sizeof_type_specifier(&t0.spec);
+   sz1 = _slang_sizeof_type_specifier(&t1.spec);
+
+#if 1
+   if (sz0 != sz1) {
+      /*printf("assignment size mismatch %u vs %u\n", sz0, sz1);*/
+      return GL_FALSE;
+   }
+#endif
+
+   if (t0.spec.type == SLANG_SPEC_STRUCT &&
+       t1.spec.type == SLANG_SPEC_STRUCT &&
+       t0.spec._struct->a_name != t1.spec._struct->a_name)
+      return GL_FALSE;
+
+   if (t0.spec.type == SLANG_SPEC_FLOAT &&
+       t1.spec.type == SLANG_SPEC_BOOL)
+      return GL_FALSE;
+
+#if 0 /* not used just yet - causes problems elsewhere */
+   if (t0.spec.type == SLANG_SPEC_INT &&
+       t1.spec.type == SLANG_SPEC_FLOAT)
+      return GL_FALSE;
+#endif
+
+   if (t0.spec.type == SLANG_SPEC_BOOL &&
+       t1.spec.type == SLANG_SPEC_FLOAT)
+      return GL_FALSE;
+
+   if (t0.spec.type == SLANG_SPEC_BOOL &&
+       t1.spec.type == SLANG_SPEC_INT)
+      return GL_FALSE;
+
+   return GL_TRUE;
+}
+
+
 
 /**
  * Generate IR tree for a variable declaration.
@@ -2717,7 +2773,8 @@ _slang_gen_declaration(slang_assemble_ctx *A, slang_operation *oper)
    const char *varName = (char *) oper->a_id;
    slang_operation *initializer;
 
-   assert(oper->num_children == 0 || oper->num_children == 1);
+   assert(oper->type == SLANG_OPER_VARIABLE_DECL);
+   assert(oper->num_children <= 1);
 
    v = _slang_locate_variable(oper->locals, oper->a_id, GL_TRUE);
    /*printf("Declare %s at %p\n", varName, (void *) v);*/
@@ -2731,6 +2788,8 @@ _slang_gen_declaration(slang_assemble_ctx *A, slang_operation *oper)
 #endif
 
    varDecl = _slang_gen_var_decl(A, v);
+   if (!varDecl)
+      return NULL;
 
    /* check if the var has an initializer */
    if (oper->num_children > 0) {
@@ -2744,11 +2803,22 @@ _slang_gen_declaration(slang_assemble_ctx *A, slang_operation *oper)
       initializer = NULL;
    }
 
+   if (v->type.qualifier == SLANG_QUAL_CONST && !initializer) {
+      slang_info_log_error(A->log,
+                           "const-qualified variable '%s' requires initializer",
+                           varName);
+      return NULL;
+   }
+
+
    if (initializer) {
       slang_ir_node *var, *init;
 
-      /* XXX todo: type check/compare var and initializer */
-
+      /* type check/compare var and initializer */
+      if (!_slang_assignment_compatible(A, oper, initializer)) {
+         slang_info_log_error(A->log, "illegal types in assignment");
+         return NULL;
+      }         
 
       var = new_var(A, oper, oper->a_id);
       if (!var) {
@@ -2843,61 +2913,6 @@ _slang_gen_swizzle(slang_ir_node *child, GLuint swizzle)
       n->Store->Swizzle = swizzle;
    }
    return n;
-}
-
-
-/**
- * Check if an assignment of type t1 to t0 is legal.
- * XXX more cases needed.
- */
-static GLboolean
-_slang_assignment_compatible(slang_assemble_ctx *A,
-                             slang_operation *op0,
-                             slang_operation *op1)
-{
-   slang_typeinfo t0, t1;
-   GLuint sz0, sz1;
-
-   
-   slang_typeinfo_construct(&t0);
-   _slang_typeof_operation(A, op0, &t0);
-
-   slang_typeinfo_construct(&t1);
-   _slang_typeof_operation(A, op1, &t1);
-
-   sz0 = _slang_sizeof_type_specifier(&t0.spec);
-   sz1 = _slang_sizeof_type_specifier(&t1.spec);
-
-#if 1
-   if (sz0 != sz1) {
-      printf("size mismatch %u vs %u\n", sz0, sz1);
-      return GL_FALSE;
-   }
-#endif
-
-   if (t0.spec.type == SLANG_SPEC_STRUCT &&
-       t1.spec.type == SLANG_SPEC_STRUCT &&
-       t0.spec._struct->a_name != t1.spec._struct->a_name)
-      return GL_FALSE;
-
-   if (t0.spec.type == SLANG_SPEC_FLOAT &&
-       t1.spec.type == SLANG_SPEC_BOOL)
-      return GL_FALSE;
-
-   if (t0.spec.type == SLANG_SPEC_INT &&
-       t1.spec.type == SLANG_SPEC_FLOAT)
-      return GL_FALSE;
-
-#if 0 /* not used just yet - causes problems elsewhere */
-   if (t0.spec.type == SLANG_SPEC_BOOL &&
-       t1.spec.type == SLANG_SPEC_FLOAT)
-      return GL_FALSE;
-
-   if (t0.spec.type == SLANG_SPEC_BOOL &&
-       t1.spec.type == SLANG_SPEC_INT)
-      return GL_FALSE;
-#endif
-   return GL_TRUE;
 }
 
 
@@ -3606,14 +3621,26 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
        * store->Index = sampler number (0..7, typically)
        * store->Size = texture type index (1D, 2D, 3D, cube, etc)
        */
-      GLint sampNum = _mesa_add_sampler(prog->Parameters, varName, datatype);
-      store = _slang_new_ir_storage(PROGRAM_SAMPLER, sampNum, texIndex);
+      if (var->initializer) {
+         slang_info_log_error(A->log, "illegal assignment to '%s'", varName);
+         return GL_FALSE;
+      }
+      else {
+         GLint sampNum = _mesa_add_sampler(prog->Parameters, varName, datatype);
+         store = _slang_new_ir_storage(PROGRAM_SAMPLER, sampNum, texIndex);
+      }
       if (dbg) printf("SAMPLER ");
    }
    else if (var->type.qualifier == SLANG_QUAL_UNIFORM) {
       /* Uniform variable */
       const GLint totalSize = array_size(size, var->array_len);
       const GLuint swizzle = _slang_var_swizzle(totalSize, 0);
+
+      if (var->initializer) {
+         slang_info_log_error(A->log, "illegal assignment to '%s'", varName);
+         return GL_FALSE;
+      }
+
       if (prog) {
          /* user-defined uniform */
          if (datatype == GL_NONE) {
