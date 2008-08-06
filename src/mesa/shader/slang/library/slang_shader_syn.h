@@ -137,7 +137,7 @@
 ".emtcode PARAMETER_NEXT 1\n"
 ".emtcode PARAMETER_ARRAY_NOT_PRESENT 0\n"
 ".emtcode PARAMETER_ARRAY_PRESENT 1\n"
-".errtext INVALID_EXTERNAL_DECLARATION \"2001: Invalid external declaration.\"\n"
+".errtext INVALID_EXTERNAL_DECLARATION \"2001: Syntax error.\"\n"
 ".errtext INVALID_OPERATOR_OVERRIDE \"2002: Invalid operator override.\"\n"
 ".errtext LBRACE_EXPECTED \"2003: '{' expected but '$err_token$' found.\"\n"
 ".errtext LPAREN_EXPECTED \"2004: '(' expected but '$err_token$' found.\"\n"
