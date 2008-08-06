@@ -2777,8 +2777,18 @@ _slang_gen_declaration(slang_assemble_ctx *A, slang_operation *oper)
    assert(oper->num_children <= 1);
 
    v = _slang_locate_variable(oper->locals, oper->a_id, GL_TRUE);
-   /*printf("Declare %s at %p\n", varName, (void *) v);*/
-   assert(v);
+   if (!v)
+      return NULL;  /* "shouldn't happen" */
+
+   if (v->type.qualifier == SLANG_QUAL_ATTRIBUTE ||
+       v->type.qualifier == SLANG_QUAL_VARYING ||
+       v->type.qualifier == SLANG_QUAL_UNIFORM) {
+      /* can't declare attribute/uniform vars inside functions */
+      slang_info_log_error(A->log,
+                "local variable '%s' cannot be an attribute/uniform/varying",
+                varName);
+      return NULL;
+   }
 
 #if 0
    if (v->declared) {
@@ -3685,9 +3695,9 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
       if (dbg) printf("UNIFORM (sz %d) ", totalSize);
    }
    else if (var->type.qualifier == SLANG_QUAL_VARYING) {
-      if (var->type.specifier.type == SLANG_SPEC_STRUCT) {
+      if (!_slang_type_is_float_vec_mat(var->type.specifier.type)) {
          slang_info_log_error(A->log,
-                              "varying '%s' cannot be a structure type",
+                              "varying '%s' must be float/vector/matrix",
                               varName);
          return GL_FALSE;
       }
