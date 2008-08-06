@@ -1030,6 +1030,11 @@ void brw_wm_pass_fp( struct brw_wm_compile *c )
 	 precalc_txp(c, inst);
 	 break;
 
+      case OPCODE_TXB:
+	 out = emit_insn(c, inst);
+	 out->TexSrcUnit = fp->program.Base.SamplerUnits[inst->TexSrcUnit];
+	 break;
+
       case OPCODE_XPD: 
 	 out = emit_insn(c, inst);
 	 /* This should probably be done in the parser. 
