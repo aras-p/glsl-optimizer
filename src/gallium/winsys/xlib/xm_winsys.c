@@ -54,6 +54,11 @@
 #define TILE_SIZE 32  /* avoid compilation errors */
 #endif
 
+#ifdef GALLIUM_TRACE
+#include "trace/tr_screen.h"
+#include "trace/tr_context.h"
+#endif
+
 #include "xm_winsys_aub.h"
 
 
@@ -674,7 +679,15 @@ xmesa_create_pipe_context(XMesaContext xmesa, uint pixelformat)
    {
       struct pipe_screen *screen = softpipe_create_screen(pws);
 
+#ifdef GALLIUM_TRACE
+      screen = trace_screen_create(screen);
+#endif
+      
       pipe = softpipe_create(screen, pws, NULL);
+
+#ifdef GALLIUM_TRACE
+      pipe = trace_context_create(pipe);
+#endif
    }
 
    if (pipe)
