@@ -3726,6 +3726,14 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
       if (dbg) printf("VARYING ");
    }
    else if (var->type.qualifier == SLANG_QUAL_ATTRIBUTE) {
+      /* attributes must be float, vec or mat */
+      if (!_slang_type_is_float_vec_mat(var->type.specifier.type)) {
+         slang_info_log_error(A->log,
+                              "attribute '%s' must be float/vector/matrix",
+                              varName);
+         return GL_FALSE;
+      }
+
       if (prog) {
          /* user-defined vertex attribute */
          const GLint attr = -1; /* unknown */

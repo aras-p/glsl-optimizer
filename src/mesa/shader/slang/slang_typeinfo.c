@@ -875,6 +875,34 @@ _slang_type_is_vector(slang_type_specifier_type ty)
 
 
 /**
+ * Determine if a type is a float, float vector or float matrix.
+ * \return GL_TRUE if so, GL_FALSE otherwise
+ */
+GLboolean
+_slang_type_is_float_vec_mat(slang_type_specifier_type ty)
+{
+   switch (ty) {
+   case SLANG_SPEC_FLOAT:
+   case SLANG_SPEC_VEC2:
+   case SLANG_SPEC_VEC3:
+   case SLANG_SPEC_VEC4:
+   case SLANG_SPEC_MAT2:
+   case SLANG_SPEC_MAT3:
+   case SLANG_SPEC_MAT4:
+   case SLANG_SPEC_MAT23:
+   case SLANG_SPEC_MAT32:
+   case SLANG_SPEC_MAT24:
+   case SLANG_SPEC_MAT42:
+   case SLANG_SPEC_MAT34:
+   case SLANG_SPEC_MAT43:
+      return GL_TRUE;
+   default:
+      return GL_FALSE;
+   }
+}
+
+
+/**
  * Given a vector type, return the type of the vector's elements.
  * For a matrix, return the type of the columns.
  */
