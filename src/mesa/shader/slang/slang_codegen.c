@@ -3635,7 +3635,15 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
          slang_info_log_error(A->log, "illegal assignment to '%s'", varName);
          return GL_FALSE;
       }
-      else {
+#if FEATURE_es2_glsl /* XXX should use FEATURE_texture_rect */
+      /* disallow rect samplers */
+      if (var->type.specifier.type == SLANG_SPEC_SAMPLER2DRECT ||
+          var->type.specifier.type == SLANG_SPEC_SAMPLER2DRECTSHADOW) {
+         slang_info_log_error(A->log, "invalid sampler type for '%s'", varName);
+         return GL_FALSE;
+      }
+#endif
+      {
          GLint sampNum = _mesa_add_sampler(prog->Parameters, varName, datatype);
          store = _slang_new_ir_storage(PROGRAM_SAMPLER, sampNum, texIndex);
       }
