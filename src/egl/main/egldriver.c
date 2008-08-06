@@ -146,10 +146,12 @@ _eglChooseDriver(_EGLDisplay *dpy)
 
    (void) DefaultDriverName;
 
+#if defined(_EGL_PLATFORM_X)
    /* First, if the EGL_DRIVER env var is set, use that */
    driverName = getenv("EGL_DRIVER");
    if (driverName)
       return _eglstrdup(driverName);
+#endif
 
 #if 0
    if (!displayString) {
@@ -217,7 +219,8 @@ _eglOpenDriver(_EGLDisplay *dpy, const char *driverName, const char *args)
 
 #if defined(_EGL_PLATFORM_WINDOWS)
 /* Use static linking on Windows for now */
-#ifdef WINDOWS_STATIC_LINK   
+#ifdef WINDOWS_STATIC_LINK
+   lib = 0;
    mainFunc = (_EGLMain_t)_eglMain;
 #else
    /* XXX untested */
