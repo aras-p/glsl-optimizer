@@ -332,13 +332,17 @@ debug_profile_stop(void);
 
 
 #ifdef DEBUG
+struct pipe_surface;
 void debug_dump_image(const char *prefix,
                       unsigned format, unsigned cpp,
                       unsigned width, unsigned height,
-                      unsigned pitch,
+                      unsigned stride,
                       const void *data);
+void debug_dump_surface(const char *prefix,
+                        struct pipe_surface *surface);   
 #else
-#define debug_dump_image(prefix, format, cpp, width, height, pitch, data) ((void)0)
+#define debug_dump_image(prefix, format, cpp, width, height, stride, data) ((void)0)
+#define debug_dump_surface(prefix, surface) ((void)0)
 #endif
 
 
