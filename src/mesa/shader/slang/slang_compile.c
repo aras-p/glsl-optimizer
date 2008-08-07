@@ -707,20 +707,33 @@ parse_fully_specified_type(slang_parse_ctx * C, slang_output_ctx * O,
    precision = *C->I++;
    if (!parse_type_specifier(C, O, &type->specifier))
       return 0;
+
    switch (precision) {
    case PRECISION_DEFAULT:
-      /* TODO: Grab the default precision for the given type specifier.
-       */
+      assert(type->specifier.type < TYPE_SPECIFIER_COUNT);
+      if (type->specifier.type < TYPE_SPECIFIER_COUNT)
+         type->precision = O->default_precision[type->specifier.type];
       break;
    case PRECISION_LOW:
+      type->precision = SLANG_PREC_LOW;
+      break;
    case PRECISION_MEDIUM:
+      type->precision = SLANG_PREC_MEDIUM;
+      break;
    case PRECISION_HIGH:
-      /* TODO: Translate to mesa representation.
-       */
+      type->precision = SLANG_PREC_HIGH;
       break;
    default:
       return 0;
    }
+
+#if !FEATURE_es2_glsl
+   if (precision != PRECISION_DEFAULT) {
+      slang_info_log_error(C->L, "precision qualifiers not allowed");
+      return 0;
+   }
+#endif
+
    return 1;
 }
 
