@@ -143,4 +143,3 @@ XVisualInfo * glXChooseVisual(int mode)
 #if POKA
 #endif /* POKA */
 
-
