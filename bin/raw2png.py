@@ -262,11 +262,19 @@ def translate_r5g6b5(data):
 	a = 255
 	return [[(r, g, b, a)]]
 
+def translate_a8r8g8b8(data):
+    b, g, r, a = struct.unpack_from("BBBB", data)
+    return [[(r, g, b, a)]]
+
+
+def translate_x8r8g8b8(data):
+    b, g, r, x = struct.unpack_from("BBBB", data)
+    a = 255
+    return [[(r, g, b, a)]]
 
 def translate_r8g8b8a8(data):
 	r, g, b, a = struct.unpack_from("BBBB", data)
 	return [[(r, g, b, a)]]
-
 
 def translate_ycbcr(data):
 	y1, u, y2, v = struct.unpack_from("BBBB", data)
@@ -296,8 +304,8 @@ def translate_s8z24(data):
 
 
 translate = {
-	PIPE_FORMAT_A8R8G8B8_UNORM: (4, 1, 1, translate_r8g8b8a8),
-	PIPE_FORMAT_X8R8G8B8_UNORM: (4, 1, 1, translate_r8g8b8a8),
+	PIPE_FORMAT_A8R8G8B8_UNORM: (4, 1, 1, translate_a8r8g8b8),
+	PIPE_FORMAT_X8R8G8B8_UNORM: (4, 1, 1, translate_x8r8g8b8),
 	PIPE_FORMAT_B8G8R8A8_UNORM: (4, 1, 1, translate_r8g8b8a8),
 	PIPE_FORMAT_B8G8R8X8_UNORM: (4, 1, 1, translate_r8g8b8a8),
 	PIPE_FORMAT_A8B8G8R8_SNORM: (4, 1, 1, translate_r8g8b8a8),
