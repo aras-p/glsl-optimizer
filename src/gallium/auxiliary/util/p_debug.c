@@ -335,7 +335,7 @@ const char *
 debug_dump_enum(const struct debug_named_value *names, 
                 unsigned long value)
 {
-   static char rest[256];
+   static char rest[64];
    
    while(names->name) {
       if(names->value == value)
@@ -498,10 +498,9 @@ void debug_print_format(const char *msg, unsigned fmt )
 }
 #endif
 
-char *pf_sprint_name( char *str, enum pipe_format format )
+const char *pf_name( enum pipe_format format )
 {
-   strcpy( str, debug_dump_enum(pipe_format_names, format) );
-   return str;
+   return debug_dump_enum(pipe_format_names, format);
 }
 
 

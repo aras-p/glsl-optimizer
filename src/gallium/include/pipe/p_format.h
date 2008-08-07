@@ -379,7 +379,7 @@ enum pipe_format {
 /**
  * Builds pipe format name from format token.
  */
-extern char *pf_sprint_name( char *str, enum pipe_format format );
+extern const char *pf_name( enum pipe_format format );
 
 /**
  * Return bits for a particular component.
