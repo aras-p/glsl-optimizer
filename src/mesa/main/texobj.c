@@ -875,9 +875,9 @@ _mesa_BindTexture( GLenum target, GLuint texName )
       if (newTexObj) {
          /* error checking */
          if (newTexObj->Target != 0 && newTexObj->Target != target) {
-            /* the named texture object's dimensions don't match the target */
+            /* the named texture object's target doesn't match the given target */
             _mesa_error( ctx, GL_INVALID_OPERATION,
-                         "glBindTexture(wrong dimensionality)" );
+                         "glBindTexture(target mismatch)" );
             return;
          }
          if (newTexObj->Target == 0 && target == GL_TEXTURE_RECTANGLE_NV) {
