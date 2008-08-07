@@ -34,6 +34,9 @@
 #define TR_DUMP_H
 
 
+#include "pipe/p_util.h"
+
+
 struct trace_stream;
 
 
@@ -58,6 +61,7 @@ void trace_dump_struct_begin(struct trace_stream *stream, const char *name);
 void trace_dump_struct_end(struct trace_stream *stream);
 void trace_dump_member_begin(struct trace_stream *stream, const char *name);
 void trace_dump_member_end(struct trace_stream *stream);
+void trace_dump_null(struct trace_stream *stream);
 void trace_dump_ptr(struct trace_stream *stream, const void *value);
 
 
@@ -83,12 +87,31 @@ void trace_dump_ptr(struct trace_stream *stream, const void *value);
    do { \
       unsigned long idx; \
       trace_dump_array_begin(_stream); \
-      for(idx = 0; idx < _size; ++idx) { \
+      for(idx = 0; idx < (_size); ++idx) { \
          trace_dump_elem_begin(_stream); \
-         trace_dump_##_type(_stream, _obj[idx]); \
+         trace_dump_##_type(_stream, (_obj)[idx]); \
          trace_dump_elem_end(_stream); \
       } \
       trace_dump_array_end(_stream); \
+   } while(0)
+
+#define trace_dump_struct_array(_stream, _type, _obj, _size) \
+   do { \
+      unsigned long idx; \
+      trace_dump_array_begin(_stream); \
+      for(idx = 0; idx < (_size); ++idx) { \
+         trace_dump_elem_begin(_stream); \
+         trace_dump_##_type(_stream, &(_obj)[idx]); \
+         trace_dump_elem_end(_stream); \
+      } \
+      trace_dump_array_end(_stream); \
+   } while(0)
+
+#define trace_dump_member(_stream, _type, _obj, _member) \
+   do { \
+      trace_dump_member_begin(_stream, #_member); \
+      trace_dump_##_type(_stream, (_obj)->_member); \
+      trace_dump_member_end(_stream); \
    } while(0)
 
 #define trace_dump_arg_array(_stream, _type, _arg, _size) \
@@ -98,10 +121,10 @@ void trace_dump_ptr(struct trace_stream *stream, const void *value);
       trace_dump_arg_end(_stream); \
    } while(0)
 
-#define trace_dump_member(_stream, _type, _obj, _member) \
+#define trace_dump_member_array(_stream, _type, _obj, _member) \
    do { \
       trace_dump_member_begin(_stream, #_member); \
-      trace_dump_##_type(_stream, _obj->_member); \
+      trace_dump_array(_stream, _type, (_obj)->_member, sizeof((_obj)->_member)/sizeof((_obj)->_member[0])); \
       trace_dump_member_end(_stream); \
    } while(0)
 

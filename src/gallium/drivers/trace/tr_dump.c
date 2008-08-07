@@ -322,8 +322,16 @@ void trace_dump_member_end(struct trace_stream *stream)
    trace_dump_write(stream, "</member>");
 }
 
+void trace_dump_null(struct trace_stream *stream)
+{
+   trace_dump_write(stream, "<null/>");
+}
+
 void trace_dump_ptr(struct trace_stream *stream, 
                     const void *value)
 {
-   trace_dump_writef(stream, "<ptr>%p</ptr>", value);
+   if(value)
+      trace_dump_writef(stream, "<ptr>%p</ptr>", value);
+   else
+      trace_dump_null(stream);
 }

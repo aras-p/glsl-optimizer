@@ -280,7 +280,7 @@ trace_context_create_blend_state(struct pipe_context *_pipe,
    trace_dump_call_begin(stream, "pipe_context", "create_blend_state");
 
    trace_dump_arg(stream, ptr, pipe);
-   trace_dump_arg(stream, ptr, state);
+   trace_dump_arg(stream, blend_state, state);
 
    result = pipe->create_blend_state(pipe, state);;
 
@@ -347,7 +347,7 @@ trace_context_create_sampler_state(struct pipe_context *_pipe,
 
    result = pipe->create_sampler_state(pipe, state);;
 
-   trace_dump_ret(stream, ptr, result);
+   trace_dump_ret(stream, sampler_state, result);
    
    trace_dump_call_end(stream);
    
@@ -409,7 +409,7 @@ trace_context_create_rasterizer_state(struct pipe_context *_pipe,
    trace_dump_call_begin(stream, "pipe_context", "create_rasterizer_state");
 
    trace_dump_arg(stream, ptr, pipe);
-   trace_dump_arg(stream, ptr, state);
+   trace_dump_arg(stream, rasterizer_state, state);
 
    result = pipe->create_rasterizer_state(pipe, state);;
 
@@ -476,7 +476,7 @@ trace_context_create_depth_stencil_alpha_state(struct pipe_context *_pipe,
    result = pipe->create_depth_stencil_alpha_state(pipe, state);;
 
    trace_dump_ret(stream, ptr, result);
-   trace_dump_arg(stream, ptr, state);
+   trace_dump_arg(stream, depth_stencil_alpha_state, state);
 
    trace_dump_call_end(stream);
    
@@ -537,7 +537,7 @@ trace_context_create_fs_state(struct pipe_context *_pipe,
    trace_dump_call_begin(stream, "pipe_context", "create_fs_state");
 
    trace_dump_arg(stream, ptr, pipe);
-   trace_dump_arg(stream, ptr, state);
+   trace_dump_arg(stream, shader_state, state);
 
    result = pipe->create_fs_state(pipe, state);;
 
@@ -602,7 +602,7 @@ trace_context_create_vs_state(struct pipe_context *_pipe,
    trace_dump_call_begin(stream, "pipe_context", "create_vs_state");
 
    trace_dump_arg(stream, ptr, pipe);
-   trace_dump_arg(stream, ptr, state);
+   trace_dump_arg(stream, shader_state, state);
 
    result = pipe->create_vs_state(pipe, state);;
 
@@ -666,7 +666,7 @@ trace_context_set_blend_color(struct pipe_context *_pipe,
    trace_dump_call_begin(stream, "pipe_context", "set_blend_color");
 
    trace_dump_arg(stream, ptr, pipe);
-   trace_dump_arg(stream, ptr, state);
+   trace_dump_arg(stream, blend_color, state);
 
    pipe->set_blend_color(pipe, state);;
 
@@ -686,7 +686,7 @@ trace_context_set_clip_state(struct pipe_context *_pipe,
    trace_dump_call_begin(stream, "pipe_context", "set_clip_state");
 
    trace_dump_arg(stream, ptr, pipe);
-   trace_dump_arg(stream, ptr, state);
+   trace_dump_arg(stream, clip_state, state);
 
    pipe->set_clip_state(pipe, state);;
 
@@ -709,7 +709,7 @@ trace_context_set_constant_buffer(struct pipe_context *_pipe,
    trace_dump_arg(stream, ptr, pipe);
    trace_dump_arg(stream, uint, shader);
    trace_dump_arg(stream, uint, index);
-   trace_dump_arg(stream, ptr, buffer);
+   trace_dump_arg(stream, constant_buffer, buffer);
 
    pipe->set_constant_buffer(pipe, shader, index, buffer);;
 
@@ -729,7 +729,7 @@ trace_context_set_framebuffer_state(struct pipe_context *_pipe,
    trace_dump_call_begin(stream, "pipe_context", "set_framebuffer_state");
 
    trace_dump_arg(stream, ptr, pipe);
-   trace_dump_arg(stream, ptr, state);
+   trace_dump_arg(stream, framebuffer_state, state);
 
    pipe->set_framebuffer_state(pipe, state);;
 
@@ -749,7 +749,7 @@ trace_context_set_polygon_stipple(struct pipe_context *_pipe,
    trace_dump_call_begin(stream, "pipe_context", "set_polygon_stipple");
 
    trace_dump_arg(stream, ptr, pipe);
-   trace_dump_arg(stream, ptr, state);
+   trace_dump_arg(stream, poly_stipple, state);
 
    pipe->set_polygon_stipple(pipe, state);;
 
@@ -769,7 +769,7 @@ trace_context_set_scissor_state(struct pipe_context *_pipe,
    trace_dump_call_begin(stream, "pipe_context", "set_scissor_state");
 
    trace_dump_arg(stream, ptr, pipe);
-   trace_dump_arg(stream, ptr, state);
+   trace_dump_arg(stream, scissor_state, state);
 
    pipe->set_scissor_state(pipe, state);;
 
@@ -789,7 +789,7 @@ trace_context_set_viewport_state(struct pipe_context *_pipe,
    trace_dump_call_begin(stream, "pipe_context", "set_viewport_state");
 
    trace_dump_arg(stream, ptr, pipe);
-   trace_dump_arg(stream, ptr, state);
+   trace_dump_arg(stream, viewport_state, state);
 
    pipe->set_viewport_state(pipe, state);;
 
@@ -833,8 +833,10 @@ trace_context_set_vertex_buffers(struct pipe_context *_pipe,
 
    trace_dump_arg(stream, ptr, pipe);
    trace_dump_arg(stream, uint, num_buffers);
-   trace_dump_arg(stream, ptr, buffers);
-   //trace_dump_arg_array(stream, ptr, buffers, num_buffers);
+   
+   trace_dump_arg_begin(stream, "buffers");
+   trace_dump_struct_array(stream, vertex_buffer, buffers, num_buffers);
+   trace_dump_arg_end(stream);
 
    pipe->set_vertex_buffers(pipe, num_buffers, buffers);;
 
@@ -857,7 +859,10 @@ trace_context_set_vertex_elements(struct pipe_context *_pipe,
    trace_dump_arg(stream, ptr, pipe);
    trace_dump_arg(stream, uint, num_elements);
    trace_dump_arg(stream, ptr, elements);
-   //trace_dump_arg_array(stream, ptr, elements, num_elements);
+
+   trace_dump_arg_begin(stream, "elements");
+   trace_dump_struct_array(stream, vertex_element, elements, num_elements);
+   trace_dump_arg_end(stream);
 
    pipe->set_vertex_elements(pipe, num_elements, elements);;
 

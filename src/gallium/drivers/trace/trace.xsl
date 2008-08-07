@@ -100,6 +100,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 		</li>
 	</xsl:template>
 
+	<xsl:template match="null">
+		<span class="ptr">
+			<xsl:text>NULL</xsl:text>
+		</span>
+	</xsl:template>
+
 	<xsl:template match="ptr">
 		<span class="ptr">
 			<xsl:value-of select="text()"/>
