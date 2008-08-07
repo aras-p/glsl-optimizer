@@ -1073,9 +1073,9 @@ fallback_copy_texsubimage(GLcontext *ctx,
 
    st_flush(ctx->st, PIPE_FLUSH_RENDER_CACHE, NULL);
 
-   /* determine bottom-to-top vs. top-to-bottom order */
+   /* determine bottom-to-top vs. top-to-bottom order for src renderbuffer */
    if (st_fb_orientation(ctx->ReadBuffer) == Y_0_TOP) {
-      destY = height - 1 - destY;
+      srcY = strb->Base.Height - 1 - srcY;
       yStep = -1;
    }
    else {
@@ -1083,9 +1083,6 @@ fallback_copy_texsubimage(GLcontext *ctx,
    }
 
    src_surf = strb->surface;
-   src_surf = screen->get_tex_surface(screen, strb->texture, face, level, destZ,
-                                       PIPE_BUFFER_USAGE_CPU_READ);
-
    dest_surf = screen->get_tex_surface(screen, pt, face, level, destZ,
                                        PIPE_BUFFER_USAGE_CPU_WRITE);
 
@@ -1098,7 +1095,7 @@ fallback_copy_texsubimage(GLcontext *ctx,
       const GLboolean scaleOrBias = (ctx->Pixel.DepthScale != 1.0F ||
                                      ctx->Pixel.DepthBias != 0.0F);
 
-      for (row = 0; row < height; row++, srcY++, destY += yStep) {
+      for (row = 0; row < height; row++, srcY += yStep, destY++) {
          uint data[MAX_WIDTH];
          pipe_get_tile_z(src_surf, srcX, srcY, width, 1, data);
          if (scaleOrBias) {
@@ -1109,7 +1106,7 @@ fallback_copy_texsubimage(GLcontext *ctx,
    }
    else {
       /* RGBA format */
-      for (row = 0; row < height; row++, srcY++, destY += yStep) {
+      for (row = 0; row < height; row++, srcY += yStep, destY++) {
          float data[4 * MAX_WIDTH];
          pipe_get_tile_rgba(src_surf, srcX, srcY, width, 1, data);
          /* XXX we're ignoring convolution for now */
@@ -1123,7 +1120,6 @@ fallback_copy_texsubimage(GLcontext *ctx,
    }
 
    screen->tex_surface_release(screen, &dest_surf);
-   screen->tex_surface_release(screen, &src_surf);
 }
 
 
