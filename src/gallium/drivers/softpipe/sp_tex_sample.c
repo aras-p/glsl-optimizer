@@ -621,10 +621,9 @@ get_texel(struct tgsi_sampler *sampler,
       rgba[3][j] = tile->data.color[ty][tx][3];
       if (0)
       {
-         char fmt[100];
-         pf_sprint_name( fmt, sampler->texture->format);
          debug_printf("Get texel %f %f %f %f from %s\n",
-                      rgba[0][j], rgba[1][j], rgba[2][j], rgba[3][j], fmt);
+                      rgba[0][j], rgba[1][j], rgba[2][j], rgba[3][j],
+                      pf_name(sampler->texture->format));
       }
    }
 }
