@@ -623,8 +623,8 @@ get_texel(struct tgsi_sampler *sampler,
       {
          char fmt[100];
          pf_sprint_name( fmt, sampler->texture->format);
-         printf("Get texel %f %f %f %f from %s\n",
-                rgba[0][j], rgba[1][j], rgba[2][j], rgba[3][j], fmt);
+         debug_printf("Get texel %f %f %f %f from %s\n",
+                      rgba[0][j], rgba[1][j], rgba[2][j], rgba[3][j], fmt);
       }
    }
 }
