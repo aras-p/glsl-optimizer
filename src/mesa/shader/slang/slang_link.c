@@ -296,7 +296,7 @@ _slang_count_temporaries(struct gl_program *prog)
                maxIndex = inst->SrcReg[j].Index;
          }
          if (inst->DstReg.File == PROGRAM_TEMPORARY) {
-            if (maxIndex < inst->DstReg.Index)
+            if (maxIndex < (GLint) inst->DstReg.Index)
                maxIndex = inst->DstReg.Index;
          }
       }
