@@ -393,10 +393,18 @@ micro_div(
    const union tgsi_exec_channel *src0,
    const union tgsi_exec_channel *src1 )
 {
-   dst->f[0] = src0->f[0] / src1->f[0];
-   dst->f[1] = src0->f[1] / src1->f[1];
-   dst->f[2] = src0->f[2] / src1->f[2];
-   dst->f[3] = src0->f[3] / src1->f[3];
+   if (src1->f[0] != 0) {
+      dst->f[0] = src0->f[0] / src1->f[0];
+   }
+   if (src1->f[1] != 0) {
+      dst->f[1] = src0->f[1] / src1->f[1];
+   }
+   if (src1->f[2] != 0) {
+      dst->f[2] = src0->f[2] / src1->f[2];
+   }
+   if (src1->f[3] != 0) {
+      dst->f[3] = src0->f[3] / src1->f[3];
+   }
 }
 
 static void
