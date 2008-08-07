@@ -339,7 +339,6 @@ st_draw_vbo(GLcontext *ctx,
 #if 0
    {
       GLuint i;
-      char buf[100];
       for (i = 0; i < vp->num_inputs; i++) {
          printf("buffers[%d].pitch = %u\n", i, vbuffer[i].pitch);
          printf("buffers[%d].max_index = %u\n", i, vbuffer[i].max_index);
@@ -350,7 +349,7 @@ st_draw_vbo(GLcontext *ctx,
          printf("vlements[%d].src_offset = %u\n", i, velements[i].src_offset);
          printf("vlements[%d].vbuffer_index = %u\n", i, velements[i].vertex_buffer_index);
          printf("vlements[%d].nr_comps = %u\n", i, velements[i].nr_components);
-         printf("vlements[%d].format = %s\n", i, pf_sprint_name(buf, velements[i].src_format));
+         printf("vlements[%d].format = %s\n", i, pf_name(velements[i].src_format));
       }
    }
 #endif
