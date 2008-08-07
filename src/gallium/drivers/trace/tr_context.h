@@ -38,21 +38,21 @@ struct trace_context
 {
    struct pipe_context base;
    
-   /* TODO */
+   struct pipe_context *pipe;
 };
 
 
 static INLINE struct trace_context *
-trace_context(struct pipe_context *context)
+trace_context(struct pipe_context *pipe)
 {
-   assert(context);
-   return (struct trace_context *)context;
+   assert(pipe);
+   return (struct trace_context *)pipe;
 }
 
 
 
 struct pipe_context *
-trace_context_create(struct pipe_context *context);
+trace_context_create(struct pipe_context *pipe);
 
 
 #endif /* TR_CONTEXT_H_ */

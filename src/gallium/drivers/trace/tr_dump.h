@@ -91,6 +91,13 @@ void trace_dump_ptr(struct trace_stream *stream, const void *value);
       trace_dump_array_end(_stream); \
    } while(0)
 
+#define trace_dump_arg_array(_stream, _type, _arg, _size) \
+   do { \
+      trace_dump_arg_begin(_stream, #_arg); \
+      trace_dump_array(_stream, _type, _arg, _size); \
+      trace_dump_arg_end(_stream); \
+   } while(0)
+
 #define trace_dump_member(_stream, _type, _obj, _member) \
    do { \
       trace_dump_member_begin(_stream, #_member); \
