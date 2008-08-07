@@ -3,7 +3,7 @@
 TOP = ../..
 include $(TOP)/configs/current
 
-include sources
+include sources.mak
 
 
 .SUFFIXES : .cpp
