@@ -281,6 +281,9 @@ enum pipe_texture_target {
 #define PIPE_CAP_GUARD_BAND_TOP          21  /*< float */
 #define PIPE_CAP_GUARD_BAND_RIGHT        22  /*< float */
 #define PIPE_CAP_GUARD_BAND_BOTTOM       23  /*< float */
+#define PIPE_CAP_TEXTURE_MIRROR_CLAMP    24
+#define PIPE_CAP_TEXTURE_MIRROR_REPEAT   25
+
 
 
 #ifdef __cplusplus

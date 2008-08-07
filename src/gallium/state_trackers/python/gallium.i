@@ -47,8 +47,8 @@
 #include "cso_cache/cso_context.h"
 #include "util/u_draw_quad.h" 
 #include "util/p_tile.h" 
-#include "tgsi/util/tgsi_text.h" 
-#include "tgsi/util/tgsi_dump.h" 
+#include "tgsi/tgsi_text.h" 
+#include "tgsi/tgsi_dump.h" 
 
 #include "st_device.h"
 #include "st_sample.h"

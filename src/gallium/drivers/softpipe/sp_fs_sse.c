@@ -36,8 +36,8 @@
 #include "pipe/p_defines.h"
 #include "pipe/p_util.h"
 #include "pipe/p_inlines.h"
-#include "tgsi/exec/tgsi_exec.h"
-#include "tgsi/exec/tgsi_sse2.h"
+#include "tgsi/tgsi_exec.h"
+#include "tgsi/tgsi_sse2.h"
 
 
 #ifdef PIPE_ARCH_X86

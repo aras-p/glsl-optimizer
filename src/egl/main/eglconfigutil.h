@@ -4,7 +4,9 @@
 
 #include "eglconfig.h"
 #include "GL/internal/glcore.h"
+#if (!defined(WIN32) && !defined(_WIN32_WCE))
 #include "stdint.h"
+#endif
 
 
 extern void

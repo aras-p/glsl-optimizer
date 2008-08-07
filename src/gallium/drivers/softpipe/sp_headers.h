@@ -32,7 +32,7 @@
 #define SP_HEADERS_H
 
 #include "pipe/p_state.h"
-#include "tgsi/exec/tgsi_exec.h"
+#include "tgsi/tgsi_exec.h"
 
 #define PRIM_POINT 1
 #define PRIM_LINE  2

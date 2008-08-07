@@ -24,37 +24,45 @@
 #include <dlfcn.h>
 #include "eglx.h"
 #elif defined(_EGL_PLATFORM_WINDOWS)
-/* XXX to do */
-#elif defined(_EGL_PLATFORM_WINCE)
-/* XXX to do */
+/* Use static linking on Windows for now */
+#define WINDOWS_STATIC_LINK
 #endif
-
-
-static const char *DefaultDriverName = ":0";
-static const char *SysFS = "/sys/class";
-
-
 
 /**
  * Wrappers for dlopen/dlclose()
  */
 #if defined(_EGL_PLATFORM_WINDOWS)
-
+#ifdef WINDOWS_STATIC_LINK
+   static const char *DefaultDriverName = "Windows EGL Static Library";
+#else
+   /* XXX Need to decide how to do dynamic name lookup on Windows */
+   static const char *DefaultDriverName = "TBD";
+#endif
+   static const char *SysFS = NULL;
    typedef HMODULE lib_handle;
 
    static HMODULE
    open_library(const char *filename)
    {
+#ifdef WINDOWS_STATIC_LINK
+      return 0;
+#else
       return LoadLibrary(filename);
+#endif
    }
 
    static void
    close_library(HMODULE lib)
    {
+#ifdef WINDOWS_STATIC_LINK
+#else
       FreeLibrary(lib);
+#endif
    }
-   
+
 #elif defined(_EGL_PLATFORM_X)
+   static const char *DefaultDriverName = ":0";
+   static const char *SysFS = "/sys/class";
 
    typedef void * lib_handle;
 
@@ -71,8 +79,6 @@ static const char *SysFS = "/sys/class";
    }
    
 #endif
-
-
 
 /**
  * Given a card number, use sysfs to determine the DRI driver name.
@@ -108,7 +114,6 @@ _eglChooseDRMDriver(int card)
 #endif
 }
 
-
 /**
  * XXX this function is totally subject change!!!
  *
@@ -130,15 +135,23 @@ _eglChooseDRMDriver(int card)
 const char *
 _eglChooseDriver(_EGLDisplay *dpy)
 {
+   /* Under Windows, the NativeDisplay is an HDC handle, therefore */
+   /* it can't be interpreted as a string or a pointer. */
+#if defined(_EGL_PLATFORM_WINDOWS)
+   const char *displayString = NULL;
+#else
    const char *displayString = (const char *) dpy->NativeDisplay;
+#endif
    const char *driverName = NULL;
 
    (void) DefaultDriverName;
 
+#if defined(_EGL_PLATFORM_X)
    /* First, if the EGL_DRIVER env var is set, use that */
    driverName = getenv("EGL_DRIVER");
    if (driverName)
       return _eglstrdup(driverName);
+#endif
 
 #if 0
    if (!displayString) {
@@ -173,15 +186,11 @@ _eglChooseDriver(_EGLDisplay *dpy)
          }
       }
    }
-   else {
+   else 
+   {
       /* NativeDisplay is not a string! */
 #if defined(_EGL_PLATFORM_X)
       driverName = _xeglChooseDriver(dpy);
-#elif defined(_EGL_PLATFORM_WINDOWS)
-      /* XXX to do */
-      driverName = _weglChooseDriver(dpy);
-#elif defined(_EGL_PLATFORM_WINCE)
-      /* XXX to do */
 #else
       driverName = DefaultDriverName;
 #endif
@@ -209,25 +218,32 @@ _eglOpenDriver(_EGLDisplay *dpy, const char *driverName, const char *args)
    assert(driverName);
 
 #if defined(_EGL_PLATFORM_WINDOWS)
+/* Use static linking on Windows for now */
+#ifdef WINDOWS_STATIC_LINK
+   lib = 0;
+   mainFunc = (_EGLMain_t)_eglMain;
+#else
    /* XXX untested */
    sprintf(driverFilename, "%s.dll", driverName);
    _eglLog(_EGL_DEBUG, "dlopen(%s)", driverFilename);
+   lib = open_library(driverFilename);
+   if (!lib) {
+      _eglLog(_EGL_WARNING, "Could not open %s",
+              driverFilename);
+      return NULL;
+   }
+   mainFunc = (_EGLMain_t) GetProcAddress(lib, "_eglMain");
+#endif
 #elif defined(_EGL_PLATFORM_X)
    /* XXX also prepend a directory path??? */
    sprintf(driverFilename, "%s.so", driverName);
    _eglLog(_EGL_DEBUG, "dlopen(%s)", driverFilename);
-#endif
    lib = open_library(driverFilename);
-
    if (!lib) {
       _eglLog(_EGL_WARNING, "Could not open %s (%s)",
               driverFilename, dlerror());
       return NULL;
    }
-
-#if defined(_EGL_PLATFORM_WINDOWS)
-   mainFunc = (_EGLMain_t) GetProcAddress(lib, "_eglMain");
-#elif defined(_EGL_PLATFORM_X)
    mainFunc = (_EGLMain_t) dlsym(lib, "_eglMain");
 #endif
 

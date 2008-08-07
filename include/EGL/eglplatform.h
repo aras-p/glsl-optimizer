@@ -55,7 +55,14 @@
 #ifndef EGLAPI
 #define EGLAPI __declspec(dllexport)
 #endif
+
 typedef long	int32_t;
+typedef unsigned long u_int32_t;
+typedef unsigned char uint8_t;
+#define snprintf _snprintf
+#define strcasecmp _stricmp
+#define vsnprintf _vsnprintf
+
 typedef HDC		NativeDisplayType;
 typedef HWND	NativeWindowType;
 typedef HBITMAP NativePixmapType;

@@ -134,8 +134,6 @@ void st_init_extensions(struct st_context *st)
    ctx->Extensions.ARB_texture_env_combine = GL_TRUE;
    ctx->Extensions.ARB_texture_env_crossbar = GL_TRUE;
    ctx->Extensions.ARB_texture_env_dot3 = GL_TRUE;
-   ctx->Extensions.ARB_texture_mirrored_repeat = GL_TRUE; /* XXX temp */
-
    ctx->Extensions.ARB_vertex_program = GL_TRUE;
    ctx->Extensions.ARB_vertex_buffer_object = GL_TRUE;
 
@@ -177,6 +175,14 @@ void st_init_extensions(struct st_context *st)
       ctx->Extensions.ARB_shader_objects = GL_TRUE;
       ctx->Extensions.ARB_shading_language_100 = GL_TRUE;
       ctx->Extensions.ARB_shading_language_120 = GL_TRUE;
+   }
+
+   if (screen->get_param(screen, PIPE_CAP_TEXTURE_MIRROR_REPEAT) > 0) {
+      ctx->Extensions.ARB_texture_mirrored_repeat = GL_TRUE;
+   }
+
+   if (screen->get_param(screen, PIPE_CAP_TEXTURE_MIRROR_CLAMP) > 0) {
+      ctx->Extensions.EXT_texture_mirror_clamp = GL_TRUE;
    }
 
    if (screen->get_param(screen, PIPE_CAP_NPOT_TEXTURES)) {

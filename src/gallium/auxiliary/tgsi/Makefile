@@ -4,15 +4,15 @@ include $(TOP)/configs/current
 LIBNAME = tgsi
 
 C_SOURCES = \
-	exec/tgsi_exec.c \
-	exec/tgsi_sse2.c \
-	util/tgsi_iterate.c \
-	util/tgsi_build.c \
-	util/tgsi_dump.c \
-	util/tgsi_parse.c \
-	util/tgsi_scan.c \
-	util/tgsi_transform.c \
-	util/tgsi_util.c
+	tgsi_build.c \
+	tgsi_dump.c \
+	tgsi_exec.c \
+	tgsi_iterate.c \
+	tgsi_parse.c \
+	tgsi_scan.c \
+	tgsi_sse2.c \
+	tgsi_transform.c \
+	tgsi_util.c
 
 include ../../Makefile.template
 

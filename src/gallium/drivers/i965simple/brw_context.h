@@ -38,7 +38,7 @@
 #include "pipe/p_defines.h"
 #include "pipe/p_state.h"
 
-#include "tgsi/util/tgsi_scan.h"
+#include "tgsi/tgsi_scan.h"
 
 #include "brw_structs.h"
 #include "brw_winsys.h"

@@ -36,7 +36,7 @@
 #include "brw_util.h"
 #include "brw_sf.h"
 #include "brw_state.h"
-#include "tgsi/util/tgsi_parse.h"
+#include "tgsi/tgsi_parse.h"
 
 
 static void compile_sf_prog( struct brw_context *brw,

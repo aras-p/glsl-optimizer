@@ -34,8 +34,8 @@
 
 #include "pipe/p_shader_tokens.h"
 #include "util/u_string.h"
-#include "tgsi/util/tgsi_parse.h"
-#include "tgsi/util/tgsi_dump.h"
+#include "tgsi/tgsi_parse.h"
+#include "tgsi/tgsi_dump.h"
 
 #include "draw/draw_vertex.h"
 

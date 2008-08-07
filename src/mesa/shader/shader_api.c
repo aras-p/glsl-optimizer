@@ -50,6 +50,11 @@
 
 
 
+#ifndef GL_PROGRAM_BINARY_LENGTH_OES
+#define GL_PROGRAM_BINARY_LENGTH_OES 0x8741
+#endif
+
+
 /**
  * Allocate a new gl_shader_program object, initialize it.
  */
@@ -747,6 +752,36 @@ sizeof_glsl_type(GLenum type)
 }
 
 
+static GLboolean
+is_boolean_type(GLenum type)
+{
+   switch (type) {
+   case GL_BOOL:
+   case GL_BOOL_VEC2:
+   case GL_BOOL_VEC3:
+   case GL_BOOL_VEC4:
+      return GL_TRUE;
+   default:
+      return GL_FALSE;
+   }
+}
+
+
+static GLboolean
+is_integer_type(GLenum type)
+{
+   switch (type) {
+   case GL_INT:
+   case GL_INT_VEC2:
+   case GL_INT_VEC3:
+   case GL_INT_VEC4:
+      return GL_TRUE;
+   default:
+      return GL_FALSE;
+   }
+}
+
+
 static void
 _mesa_get_active_attrib(GLcontext *ctx, GLuint program, GLuint index,
                         GLsizei maxLength, GLsizei *length, GLint *size,
@@ -770,6 +805,30 @@ _mesa_get_active_attrib(GLcontext *ctx, GLuint program, GLuint index,
          / sizeof_glsl_type(shProg->Attributes->Parameters[index].DataType);
    if (type)
       *type = shProg->Attributes->Parameters[index].DataType;
+}
+
+
+static struct gl_program_parameter *
+get_uniform_parameter(const struct gl_shader_program *shProg, GLuint index)
+{
+   const struct gl_program *prog;
+   GLint progPos;
+
+   progPos = shProg->Uniforms->Uniforms[index].VertPos;
+   if (progPos >= 0) {
+      prog = &shProg->VertexProgram->Base;
+   }
+   else {
+      progPos = shProg->Uniforms->Uniforms[index].FragPos;
+      if (progPos >= 0) {
+         prog = &shProg->FragmentProgram->Base;
+      }
+   }
+
+   if (!prog || progPos < 0)
+      return NULL; /* should never happen */
+
+   return &prog->Parameters->Parameters[progPos];
 }
 
 
@@ -906,6 +965,9 @@ _mesa_get_programiv(GLcontext *ctx, GLuint program,
       if (*params > 0)
          (*params)++;  /* add one for terminating zero */
       break;
+   case GL_PROGRAM_BINARY_LENGTH_OES:
+      *params = 0;
+      break;
    default:
       _mesa_error(ctx, GL_INVALID_ENUM, "glGetProgramiv(pname)");
       return;
@@ -988,6 +1050,71 @@ _mesa_get_shader_source(GLcontext *ctx, GLuint shader, GLsizei maxLength,
 }
 
 
+static void
+get_matrix_dims(GLenum type, GLint *rows, GLint *cols)
+{
+   switch (type) {
+   case GL_FLOAT_MAT2:
+      *rows = *cols = 2;
+      break;
+   case GL_FLOAT_MAT2x3:
+      *rows = 3;
+      *cols = 2;
+      break;
+   case GL_FLOAT_MAT2x4:
+      *rows = 4;
+      *cols = 2;
+      break;
+   case GL_FLOAT_MAT3:
+      *rows = 3;
+      *cols = 3;
+      break;
+   case GL_FLOAT_MAT3x2:
+      *rows = 2;
+      *cols = 3;
+      break;
+   case GL_FLOAT_MAT3x4:
+      *rows = 4;
+      *cols = 3;
+      break;
+   case GL_FLOAT_MAT4:
+      *rows = 4;
+      *cols = 4;
+      break;
+   case GL_FLOAT_MAT4x2:
+      *rows = 2;
+      *cols = 4;
+      break;
+   case GL_FLOAT_MAT4x3:
+      *rows = 3;
+      *cols = 4;
+      break;
+   default:
+      *rows = *cols = 0;
+   }
+}
+
+
+/**
+ * Determine the number of rows and columns occupied by a uniform
+ * according to its datatype.
+ */
+static void
+get_uniform_rows_cols(const struct gl_program_parameter *p,
+                      GLint *rows, GLint *cols)
+{
+   get_matrix_dims(p->DataType, rows, cols);
+   if (*rows == 0 && *cols == 0) {
+      /* not a matrix type, probably a float or vector */
+      *rows = p->Size / 4 + 1;
+      if (p->Size % 4 == 0)
+         *cols = 4;
+      else
+         *cols = p->Size % 4;
+   }
+}
+
+
 #define MAX_UNIFORM_ELEMENTS 16
 
 /**
@@ -999,12 +1126,11 @@ get_uniformfv(GLcontext *ctx, GLuint program, GLint location,
               GLfloat *params)
 {
    struct gl_shader_program *shProg
-      = _mesa_lookup_shader_program(ctx, program);
+      = _mesa_lookup_shader_program_err(ctx, program, "glGetUniform[if]v");
    if (shProg) {
       if (shProg->Uniforms &&
           location >= 0 && location < (GLint) shProg->Uniforms->NumUniforms) {
          GLint progPos;
-         GLuint i;
          const struct gl_program *prog = NULL;
 
          progPos = shProg->Uniforms->Uniforms[location].VertPos;
@@ -1020,21 +1146,28 @@ get_uniformfv(GLcontext *ctx, GLuint program, GLint location,
 
          ASSERT(prog);
          if (prog) {
-            /* See uniformiv() below */                    
-            assert(prog->Parameters->Parameters[progPos].Size <= MAX_UNIFORM_ELEMENTS);
+            const struct gl_program_parameter *p =
+               &prog->Parameters->Parameters[progPos];
+            GLint rows, cols, i, j, k;
 
-            for (i = 0; i < prog->Parameters->Parameters[progPos].Size; i++) {
-               params[i] = prog->Parameters->ParameterValues[progPos][i];
+            /* See uniformiv() below */                    
+            assert(p->Size <= MAX_UNIFORM_ELEMENTS);
+
+            get_uniform_rows_cols(p, &rows, &cols);
+
+            k = 0;
+            for (i = 0; i < rows; i++) {
+               for (j = 0; j < cols; j++ ) {
+                  params[k++] = prog->Parameters->ParameterValues[progPos+i][j];
+               }
             }
-            return prog->Parameters->Parameters[progPos].Size;
+
+            return p->Size;
          }
       }
       else {
          _mesa_error(ctx, GL_INVALID_OPERATION, "glGetUniformfv(location)");
       }
-   }
-   else {
-      _mesa_error(ctx, GL_INVALID_OPERATION, "glGetUniformfv(program)");
    }
    return 0;
 }
@@ -1069,11 +1202,41 @@ _mesa_get_uniformiv(GLcontext *ctx, GLuint program, GLint location,
 
 
 /**
+ * The value returned by GetUniformLocation actually encodes two things:
+ * 1. the index into the prog->Uniforms[] array for the uniform
+ * 2. an offset in the prog->ParameterValues[] array for specifying array
+ *    elements or structure fields.
+ * This function merges those two values.
+ */
+static void
+merge_location_offset(GLint *location, GLint offset)
+{
+   *location = *location | (offset << 16);
+}
+
+
+/**
+ * Seperate the uniform location and parameter offset.  See above.
+ */
+static void
+split_location_offset(GLint *location, GLint *offset)
+{
+   *offset = (*location >> 16);
+   *location = *location & 0xffff;
+}
+
+
+/**
  * Called via ctx->Driver.GetUniformLocation().
+ *
+ * The return value will encode two values, the uniform location and an
+ * offset (used for arrays, structs).
  */
 static GLint
 _mesa_get_uniform_location(GLcontext *ctx, GLuint program, const GLchar *name)
 {
+   GLint offset = 0, location = -1;
+
    struct gl_shader_program *shProg =
       _mesa_lookup_shader_program_err(ctx, program, "glGetUniformLocation");
 
@@ -1089,7 +1252,54 @@ _mesa_get_uniform_location(GLcontext *ctx, GLuint program, const GLchar *name)
     * actually used.
     */
 
-   return _mesa_lookup_uniform(shProg->Uniforms, name);
+   /* XXX we need to be able to parse uniform names for structs and arrays
+    * such as:
+    *   mymatrix[1]
+    *   mystruct.field1
+    */
+
+   {
+      /* handle 1-dimension arrays here... */
+      char *c = strchr(name, '[');
+      if (c) {
+         /* truncate name at [ */
+         const GLint len = c - name;
+         GLchar *newName = _mesa_malloc(len + 1);
+         if (!newName)
+            return -1; /* out of mem */
+         _mesa_memcpy(newName, name, len);
+         newName[len] = 0;
+
+         location = _mesa_lookup_uniform(shProg->Uniforms, newName);
+         if (location >= 0) {
+            const GLint element = _mesa_atoi(c + 1);
+            if (element > 0) {
+               /* get type of the uniform array element */
+               struct gl_program_parameter *p;
+               p = get_uniform_parameter(shProg, location);
+               if (p) {
+                  GLint rows, cols;
+                  get_matrix_dims(p->DataType, &rows, &cols);
+                  if (rows < 1)
+                     rows = 1;
+                  offset = element * rows;
+               }
+            }
+         }
+
+         _mesa_free(newName);
+      }
+   }
+
+   if (location < 0) {
+      location = _mesa_lookup_uniform(shProg->Uniforms, name);
+   }
+
+   if (location >= 0) {
+      merge_location_offset(&location, offset);
+   }
+
+   return location;
 }
 
 
@@ -1262,23 +1472,33 @@ compatible_types(GLenum userType, GLenum targetType)
 /**
  * Set the value of a program's uniform variable.
  * \param program  the program whose uniform to update
- * \param location  the location/index of the uniform
+ * \param index  the index of the program parameter for the uniform
+ * \param offset  additional parameter slot offset (for arrays)
  * \param type  the datatype of the uniform
  * \param count  the number of uniforms to set
  * \param elems  number of elements per uniform
  * \param values  the new values
  */
 static void
-set_program_uniform(GLcontext *ctx, struct gl_program *program, GLint location,
-                    GLenum type, GLsizei count, GLint elems, const void *values)
+set_program_uniform(GLcontext *ctx, struct gl_program *program,
+                    GLint index, GLint offset,
+                    GLenum type, GLsizei count, GLint elems,
+                    const void *values)
 {
+   assert(offset >= 0);
+
    if (!compatible_types(type,
-                         program->Parameters->Parameters[location].DataType)) {
+                         program->Parameters->Parameters[index].DataType)) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glUniform(type mismatch)");
       return;
    }
 
-   if (program->Parameters->Parameters[location].Type == PROGRAM_SAMPLER) {
+   if (index + offset > program->Parameters->Size) {
+      /* out of bounds! */
+      return;
+   }
+
+   if (program->Parameters->Parameters[index].Type == PROGRAM_SAMPLER) {
       /* This controls which texture unit which is used by a sampler */
       GLuint texUnit, sampler;
 
@@ -1290,7 +1510,7 @@ set_program_uniform(GLcontext *ctx, struct gl_program *program, GLint location,
          return;
       }
 
-      sampler = (GLuint) program->Parameters->ParameterValues[location][0];
+      sampler = (GLuint) program->Parameters->ParameterValues[index][0];
       texUnit = ((GLuint *) values)[0];
 
       /* check that the sampler (tex unit index) is legal */
@@ -1309,18 +1529,19 @@ set_program_uniform(GLcontext *ctx, struct gl_program *program, GLint location,
    else {
       /* ordinary uniform variable */
       GLsizei k, i;
+      GLint slots = (program->Parameters->Parameters[index].Size + 3) / 4;
 
-      if (count * elems > (GLint) program->Parameters->Parameters[location].Size) {
+      if (count * elems > (GLint) program->Parameters->Parameters[index].Size) {
          _mesa_error(ctx, GL_INVALID_OPERATION, "glUniform(count too large)");
          return;
       }
 
+      if (count > slots)
+         count = slots;
+
       for (k = 0; k < count; k++) {
-         GLfloat *uniformVal = program->Parameters->ParameterValues[location + k];
-         if (type == GL_INT ||
-             type == GL_INT_VEC2 ||
-             type == GL_INT_VEC3 ||
-             type == GL_INT_VEC4) {
+         GLfloat *uniformVal = program->Parameters->ParameterValues[index + offset + k];
+         if (is_integer_type(type)) {
             const GLint *iValues = ((const GLint *) values) + k * elems;
             for (i = 0; i < elems; i++) {
                uniformVal[i] = (GLfloat) iValues[i];
@@ -1330,6 +1551,13 @@ set_program_uniform(GLcontext *ctx, struct gl_program *program, GLint location,
             const GLfloat *fValues = ((const GLfloat *) values) + k * elems;
             for (i = 0; i < elems; i++) {
                uniformVal[i] = fValues[i];
+            }
+         }
+
+         /* if the uniform is bool-valued, convert to 1.0 or 0.0 */
+         if (is_boolean_type(program->Parameters->Parameters[index].DataType)) {
+            for (i = 0; i < elems; i++) {
+               uniformVal[i] = uniformVal[i] ? 1.0 : 0.0;
             }
          }
       }
@@ -1345,7 +1573,7 @@ _mesa_uniform(GLcontext *ctx, GLint location, GLsizei count,
               const GLvoid *values, GLenum type)
 {
    struct gl_shader_program *shProg = ctx->Shader.CurrentProgram;
-   GLint elems;
+   GLint elems, offset;
 
    if (!shProg || !shProg->LinkStatus) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glUniform(program not linked)");
@@ -1354,6 +1582,8 @@ _mesa_uniform(GLcontext *ctx, GLint location, GLsizei count,
 
    if (location == -1)
       return;   /* The standard specifies this as a no-op */
+
+   split_location_offset(&location, &offset);
 
    if (location < 0 || location >= (GLint) shProg->Uniforms->NumUniforms) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glUniform(location)");
@@ -1393,83 +1623,48 @@ _mesa_uniform(GLcontext *ctx, GLint location, GLsizei count,
     * shader.  We may need to update one or both shader's uniform here:
     */
    if (shProg->VertexProgram) {
-      GLint loc = shProg->Uniforms->Uniforms[location].VertPos;
-      if (loc >= 0) {
+      /* convert uniform location to program parameter index */
+      GLint index = shProg->Uniforms->Uniforms[location].VertPos;
+      if (index >= 0) {
          set_program_uniform(ctx, &shProg->VertexProgram->Base,
-                             loc, type, count, elems, values);
+                             index, offset, type, count, elems, values);
       }
    }
 
    if (shProg->FragmentProgram) {
-      GLint loc = shProg->Uniforms->Uniforms[location].FragPos;
-      if (loc >= 0) {
+      /* convert uniform location to program parameter index */
+      GLint index = shProg->Uniforms->Uniforms[location].FragPos;
+      if (index >= 0) {
          set_program_uniform(ctx, &shProg->FragmentProgram->Base,
-                             loc, type, count, elems, values);
+                             index, offset, type, count, elems, values);
       }
    }
 }
 
 
-static void
-get_matrix_dims(GLenum type, GLint *rows, GLint *cols)
-{
-   switch (type) {
-   case GL_FLOAT_MAT2:
-      *rows = *cols = 2;
-      break;
-   case GL_FLOAT_MAT2x3:
-      *rows = 3;
-      *cols = 2;
-      break;
-   case GL_FLOAT_MAT2x4:
-      *rows = 4;
-      *cols = 2;
-      break;
-   case GL_FLOAT_MAT3:
-      *rows = 3;
-      *cols = 3;
-      break;
-   case GL_FLOAT_MAT3x2:
-      *rows = 2;
-      *cols = 3;
-      break;
-   case GL_FLOAT_MAT3x4:
-      *rows = 4;
-      *cols = 3;
-      break;
-   case GL_FLOAT_MAT4:
-      *rows = 4;
-      *cols = 4;
-      break;
-   case GL_FLOAT_MAT4x2:
-      *rows = 2;
-      *cols = 4;
-      break;
-   case GL_FLOAT_MAT4x3:
-      *rows = 3;
-      *cols = 4;
-      break;
-   default:
-      *rows = *cols = 0;
-   }
-}
-
-
+/**
+ * Set a matrix-valued program parameter.
+ */
 static void
 set_program_uniform_matrix(GLcontext *ctx, struct gl_program *program,
-                           GLuint location, GLuint count,
-                           GLuint rows, GLuint cols,
+                           GLuint index, GLuint offset,
+                           GLuint count, GLuint rows, GLuint cols,
                            GLboolean transpose, const GLfloat *values)
 {
    GLuint mat, row, col;
-   GLuint dst = location, src = 0;
+   GLuint dst = index + offset, src = 0;
    GLint nr, nc;
 
    /* check that the number of rows, columns is correct */
-   get_matrix_dims(program->Parameters->Parameters[location].DataType, &nr, &nc);
+   get_matrix_dims(program->Parameters->Parameters[index].DataType, &nr, &nc);
    if (rows != nr || cols != nc) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
-                  "glUniformMatrix(matrix size mismatch");
+                  "glUniformMatrix(matrix size mismatch)");
+      return;
+   }
+
+   if (index + offset > program->Parameters->Size) {
+      /* out of bounds! */
       return;
    }
 
@@ -1510,6 +1705,7 @@ _mesa_uniform_matrix(GLcontext *ctx, GLint cols, GLint rows,
                      GLenum matrixType, GLint location, GLsizei count,
                      GLboolean transpose, const GLfloat *values)
 {
+   GLint offset;
    struct gl_shader_program *shProg = ctx->Shader.CurrentProgram;
 
    if (!shProg || !shProg->LinkStatus) {
@@ -1520,6 +1716,8 @@ _mesa_uniform_matrix(GLcontext *ctx, GLint cols, GLint rows,
 
    if (location == -1)
       return;   /* The standard specifies this as a no-op */
+
+   split_location_offset(&location, &offset);
 
    if (location < 0 || location >= (GLint) shProg->Uniforms->NumUniforms) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glUniformMatrix(location)");
@@ -1533,18 +1731,22 @@ _mesa_uniform_matrix(GLcontext *ctx, GLint cols, GLint rows,
    FLUSH_VERTICES(ctx, _NEW_PROGRAM);
 
    if (shProg->VertexProgram) {
-      GLint loc = shProg->Uniforms->Uniforms[location].VertPos;
-      if (loc >= 0) {
+      /* convert uniform location to program parameter index */
+      GLint index = shProg->Uniforms->Uniforms[location].VertPos;
+      if (index >= 0) {
          set_program_uniform_matrix(ctx, &shProg->VertexProgram->Base,
-                                    loc, count, rows, cols, transpose, values);
+                                    index, offset,
+                                    count, rows, cols, transpose, values);
       }
    }
 
    if (shProg->FragmentProgram) {
-      GLint loc = shProg->Uniforms->Uniforms[location].FragPos;
-      if (loc >= 0) {
+      /* convert uniform location to program parameter index */
+      GLint index = shProg->Uniforms->Uniforms[location].FragPos;
+      if (index >= 0) {
          set_program_uniform_matrix(ctx, &shProg->FragmentProgram->Base,
-                                    loc, count, rows, cols, transpose, values);
+                                    index, offset,
+                                    count, rows, cols, transpose, values);
       }
    }
 }

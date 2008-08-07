@@ -21,7 +21,11 @@ static EGLint ReportingLevel = -1;
 static void
 log_level_initialize(void)
 {
+#if defined(_EGL_PLATFORM_X)  
    char *log_env = getenv("EGL_LOG_LEVEL");
+#else
+   char *log_env = NULL;
+#endif
 
    if (log_env == NULL) {
       ReportingLevel = FALLBACK_LOG_LEVEL;

@@ -94,6 +94,15 @@ _slang_lookup_constant(const char *name)
 }
 
 
+static slang_operation_type
+literal_type(slang_operation_type t1, slang_operation_type t2)
+{
+   if (t1 == SLANG_OPER_LITERAL_FLOAT || t2 == SLANG_OPER_LITERAL_FLOAT)
+      return SLANG_OPER_LITERAL_FLOAT;
+   else
+      return SLANG_OPER_LITERAL_INT;
+}
+
 
 /**
  * Recursively traverse an AST tree, applying simplifications wherever
@@ -114,6 +123,7 @@ _slang_simplify(slang_operation *oper,
    if (oper->type == SLANG_OPER_IDENTIFIER) {
       /* see if it's a named constant */
       GLint value = _slang_lookup_constant((char *) oper->a_id);
+      /*printf("value[%s] = %d\n", (char*) oper->a_id, value);*/
       if (value >= 0) {
          oper->literal[0] =
          oper->literal[1] =
@@ -121,6 +131,29 @@ _slang_simplify(slang_operation *oper,
          oper->literal[3] = (GLfloat) value;
          oper->type = SLANG_OPER_LITERAL_INT;
          return;
+      }
+      /* look for user-defined constant */
+      {
+         slang_variable *var;
+         var = _slang_locate_variable(oper->locals, oper->a_id, GL_TRUE);
+         if (var) {
+            if (var->type.qualifier == SLANG_QUAL_CONST &&
+                var->initializer &&
+                (var->initializer->type == SLANG_OPER_LITERAL_INT ||
+                 var->initializer->type == SLANG_OPER_LITERAL_FLOAT)) {
+               oper->literal[0] = var->initializer->literal[0];
+               oper->literal[1] = var->initializer->literal[1];
+               oper->literal[2] = var->initializer->literal[2];
+               oper->literal[3] = var->initializer->literal[3];
+               oper->literal_size = var->initializer->literal_size;
+               oper->type = var->initializer->type;
+               /*
+               printf("value[%s] = %f\n",
+                      (char*) oper->a_id, oper->literal[0]);
+               */
+               return;
+            }
+         }
       }
    }
 
@@ -146,8 +179,9 @@ _slang_simplify(slang_operation *oper,
                = oper->children[0].literal[i] + oper->children[1].literal[i];
          }
          oper->literal_size = oper->children[0].literal_size;
-         slang_operation_destruct(oper);
-         oper->type = SLANG_OPER_LITERAL_FLOAT;
+         oper->type = literal_type(oper->children[0].type, 
+                                   oper->children[1].type);
+         slang_operation_destruct(oper);  /* frees unused children */
          return;
       case SLANG_OPER_SUBTRACT:
          for (i = 0; i < 4; i++) {
@@ -155,8 +189,9 @@ _slang_simplify(slang_operation *oper,
                = oper->children[0].literal[i] - oper->children[1].literal[i];
          }
          oper->literal_size = oper->children[0].literal_size;
+         oper->type = literal_type(oper->children[0].type, 
+                                   oper->children[1].type);
          slang_operation_destruct(oper);
-         oper->type = SLANG_OPER_LITERAL_FLOAT;
          return;
       case SLANG_OPER_MULTIPLY:
          for (i = 0; i < 4; i++) {
@@ -164,8 +199,9 @@ _slang_simplify(slang_operation *oper,
                = oper->children[0].literal[i] * oper->children[1].literal[i];
          }
          oper->literal_size = oper->children[0].literal_size;
+         oper->type = literal_type(oper->children[0].type, 
+                                   oper->children[1].type);
          slang_operation_destruct(oper);
-         oper->type = SLANG_OPER_LITERAL_FLOAT;
          return;
       case SLANG_OPER_DIVIDE:
          for (i = 0; i < 4; i++) {
@@ -173,8 +209,9 @@ _slang_simplify(slang_operation *oper,
                = oper->children[0].literal[i] / oper->children[1].literal[i];
          }
          oper->literal_size = oper->children[0].literal_size;
+         oper->type = literal_type(oper->children[0].type, 
+                                   oper->children[1].type);
          slang_operation_destruct(oper);
-         oper->type = SLANG_OPER_LITERAL_FLOAT;
          return;
       default:
          ; /* nothing */

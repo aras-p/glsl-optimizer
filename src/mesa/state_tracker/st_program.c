@@ -40,7 +40,7 @@
 #include "pipe/p_defines.h"
 #include "pipe/p_shader_tokens.h"
 #include "draw/draw_context.h"
-#include "tgsi/util/tgsi_dump.h"
+#include "tgsi/tgsi_dump.h"
 
 #include "st_context.h"
 #include "st_atom.h"

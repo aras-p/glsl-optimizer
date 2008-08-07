@@ -35,8 +35,8 @@
 #include "pipe/p_winsys.h"
 #include "pipe/p_shader_tokens.h"
 #include "draw/draw_context.h"
-#include "tgsi/util/tgsi_dump.h"
-#include "tgsi/util/tgsi_scan.h"
+#include "tgsi/tgsi_dump.h"
+#include "tgsi/tgsi_scan.h"
 
 
 void *

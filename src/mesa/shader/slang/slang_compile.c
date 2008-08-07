@@ -61,6 +61,20 @@
 
 
 /**
+ * Check if the given identifier is legal.
+ */
+static GLboolean
+legal_identifier(slang_atom name)
+{
+   /* "gl_" is a reserved prefix */
+   if (_mesa_strncmp((char *) name, "gl_", 3) == 0) {
+      return GL_FALSE;
+   }
+   return GL_TRUE;
+}
+
+
+/**
  * Allocate storage for a variable of 'size' bytes from given pool.
  * Return the allocated address for the variable.
  */
@@ -835,6 +849,12 @@ parse_statement(slang_parse_ctx * C, slang_output_ctx * O,
                o->type = SLANG_OPER_VARIABLE_DECL;
                o->locals->outer_scope = O->vars;
                o->a_id = O->vars->variables[i]->a_name;
+
+               if (!legal_identifier(o->a_id)) {
+                  slang_info_log_error(C->L, "illegal variable name '%s'",
+                                       (char *) o->a_id);
+                  return 0;
+               }
             }
          }
       }
@@ -1404,6 +1424,7 @@ parse_operator_name(slang_parse_ctx * C)
    return 0;
 }
 
+
 static int
 parse_function_prototype(slang_parse_ctx * C, slang_output_ctx * O,
                          slang_function * func)
@@ -1438,6 +1459,12 @@ parse_function_prototype(slang_parse_ctx * C, slang_output_ctx * O,
          return 0;
       break;
    default:
+      return 0;
+   }
+
+   if (!legal_identifier(func->header.a_name)) {
+      slang_info_log_error(C->L, "illegal function name '%s'",
+                           (char *) func->header.a_name);
       return 0;
    }
 
@@ -2025,6 +2052,12 @@ parse_code_unit(slang_parse_ctx * C, slang_code_unit * unit,
       A.vartable = o.vartable;
       A.log = C->L;
 
+      /* main() takes no parameters */
+      if (mainFunc->param_count > 0) {
+         slang_info_log_error(A.log, "main() takes no arguments");
+         return GL_FALSE;
+      }
+
       _slang_codegen_function(&A, mainFunc);
 
       shader->Main = GL_TRUE; /* this shader defines main() */
@@ -2285,7 +2318,7 @@ compile_shader(GLcontext *ctx, slang_code_object * object,
    GLboolean success;
    grammar id = 0;
 
-#if 1 /* for debug */
+#if 0 /* for debug */
    _mesa_printf("********* COMPILE SHADER ***********\n");
    _mesa_printf("%s\n", shader->Source);
    _mesa_printf("************************************\n");

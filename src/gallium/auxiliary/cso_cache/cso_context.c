@@ -38,7 +38,7 @@
 #include "pipe/p_state.h"
 #include "pipe/p_util.h"
 #include "pipe/p_inlines.h"
-#include "tgsi/util/tgsi_parse.h"
+#include "tgsi/tgsi_parse.h"
 
 #include "cso_cache/cso_context.h"
 #include "cso_cache/cso_cache.h"

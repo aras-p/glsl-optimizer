@@ -36,8 +36,8 @@
 #include "pipe/p_defines.h"
 #include "pipe/p_util.h"
 #include "pipe/p_inlines.h"
-#include "tgsi/exec/tgsi_exec.h"
-#include "tgsi/util/tgsi_parse.h"
+#include "tgsi/tgsi_exec.h"
+#include "tgsi/tgsi_parse.h"
 
 struct sp_exec_fragment_shader {
    struct sp_fragment_shader base;

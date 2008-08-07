@@ -32,7 +32,7 @@
 #define SP_STATE_H
 
 #include "pipe/p_state.h"
-#include "tgsi/util/tgsi_scan.h"
+#include "tgsi/tgsi_scan.h"
 
 
 #define SP_NEW_VIEWPORT      0x1

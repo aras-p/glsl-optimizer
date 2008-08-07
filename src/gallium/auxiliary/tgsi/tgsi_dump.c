@@ -265,16 +265,6 @@ static const char *modulate_names[TGSI_MODULATE_COUNT] =
 };
 
 static void
-_dump_register_prefix(
-   uint file,
-   uint first,
-   uint last )
-{
-   
-   
-}
-
-static void
 _dump_register(
    uint file,
    int first,
@@ -332,7 +322,7 @@ void
 tgsi_dump_declaration(
    const struct tgsi_full_declaration *decl )
 {
-   TXT( "\nDCL " );
+   TXT( "DCL " );
 
    _dump_register(
       decl->Declaration.File,
@@ -354,6 +344,8 @@ tgsi_dump_declaration(
 
    TXT( ", " );
    ENM( decl->Declaration.Interpolate, interpolate_names );
+
+   EOL();
 }
 
 static boolean
@@ -371,7 +363,7 @@ tgsi_dump_immediate(
 {
    uint i;
 
-   TXT( "\nIMM " );
+   TXT( "IMM " );
    ENM( imm->Immediate.DataType, immediate_type_names );
 
    TXT( " { " );
@@ -388,6 +380,8 @@ tgsi_dump_immediate(
          TXT( ", " );
    }
    TXT( " }" );
+
+   EOL();
 }
 
 static boolean
@@ -407,7 +401,6 @@ tgsi_dump_instruction(
    uint i;
    boolean first_reg = TRUE;
 
-   EOL();
    UID( instno );
    CHR( ':' );
    ENM( inst->Instruction.Opcode, opcode_names );
@@ -534,6 +527,8 @@ tgsi_dump_instruction(
       UID( inst->InstructionExtLabel.Label );
       break;
    }
+
+   EOL();
 }
 
 static boolean
@@ -551,11 +546,11 @@ static boolean
 prolog(
    struct tgsi_iterate_context *ctx )
 {
-   EOL();
    ENM( ctx->processor.Processor, processor_type_names );
    UID( ctx->version.MajorVersion );
    CHR( '.' );
    UID( ctx->version.MinorVersion );
+   EOL();
    return TRUE;
 }
 

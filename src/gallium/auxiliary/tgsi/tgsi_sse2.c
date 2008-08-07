@@ -27,8 +27,8 @@
 
 #include "pipe/p_util.h"
 #include "pipe/p_shader_tokens.h"
-#include "tgsi/util/tgsi_parse.h"
-#include "tgsi/util/tgsi_util.h"
+#include "tgsi/tgsi_parse.h"
+#include "tgsi/tgsi_util.h"
 #include "tgsi_exec.h"
 #include "tgsi_sse2.h"
 

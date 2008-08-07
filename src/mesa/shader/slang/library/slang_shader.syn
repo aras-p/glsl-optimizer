@@ -242,7 +242,9 @@
 .emtcode PARAMETER_ARRAY_NOT_PRESENT                0
 .emtcode PARAMETER_ARRAY_PRESENT                    1
 
-.errtext INVALID_EXTERNAL_DECLARATION               "2001: Invalid external declaration."
+/* INVALID_EXTERNAL_DECLARATION seems to be reported when there's */
+/* any syntax errors... */
+.errtext INVALID_EXTERNAL_DECLARATION               "2001: Syntax error."
 .errtext INVALID_OPERATOR_OVERRIDE                  "2002: Invalid operator override."
 .errtext LBRACE_EXPECTED                            "2003: '{' expected but '$err_token$' found."
 .errtext LPAREN_EXPECTED                            "2004: '(' expected but '$err_token$' found."

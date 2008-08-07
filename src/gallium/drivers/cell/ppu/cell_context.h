@@ -37,7 +37,7 @@
 #include "cell_winsys.h"
 #include "cell/common.h"
 #include "rtasm/rtasm_ppc_spe.h"
-#include "tgsi/util/tgsi_scan.h"
+#include "tgsi/tgsi_scan.h"
 
 struct cell_vbuf_render;
 

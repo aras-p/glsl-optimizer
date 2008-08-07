@@ -191,6 +191,9 @@ _slang_type_is_matrix(slang_type_specifier_type);
 extern GLboolean
 _slang_type_is_vector(slang_type_specifier_type);
 
+extern GLboolean
+_slang_type_is_float_vec_mat(slang_type_specifier_type);
+
 extern slang_type_specifier_type
 _slang_type_base(slang_type_specifier_type);
 
