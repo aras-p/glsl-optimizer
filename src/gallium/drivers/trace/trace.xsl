@@ -38,33 +38,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 					text-align : left;
 				}
 
-				ul.calls {
-					list-style: none;
-					margin-left: 0px;
-					padding-left: 0px;
-				}
-
-				ul.args {
-					display:inline;
-					list-style: none;
-					margin-left: 0px;
-					padding-left: 0px;
-				}
-
-				ul.args li {
-					display:inline;
-				}
-
-				ul.elems {
-					list-style: none;
-					margin-left: 2em;
-					padding-left: 0px;
-				}
-
-				ul.elems li {
-					display:block;
-				}
-
 				.fun {
 					font-weight: bold;
 				}
@@ -86,9 +59,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 				}
 			</style>
 			<body>
-				<ul class="calls">
+				<ol class="calls">
 					<xsl:apply-templates/>
-				</ul>
+				</ol>
 			</body>
 		</html>
 	</xsl:template>
@@ -101,23 +74,19 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 				<xsl:value-of select="@method"/>
 			</span>
 			<xsl:text>(</xsl:text>
-			<ul class="args">
-				<xsl:apply-templates select="arg"/>
-			</ul>
+			<xsl:apply-templates select="arg"/>
 			<xsl:text>)</xsl:text>
 			<xsl:apply-templates select="ret"/>
 		</li>
 	</xsl:template>
 
 	<xsl:template match="arg|member">
-		<li>
 			<xsl:apply-templates select="@name"/>
 			<xsl:text> = </xsl:text>
 			<xsl:apply-templates />
 			<xsl:if test="position() != last()">
 				<xsl:text>, </xsl:text>
 			</xsl:if>
-		</li>
 	</xsl:template>
 
 	<xsl:template match="ret">
@@ -146,12 +115,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 	</xsl:template>
 
 	<xsl:template match="elem">
-		<li>
-			<xsl:apply-templates />
-			<xsl:if test="position() != last()">
-				<xsl:text>, </xsl:text>
-			</xsl:if>
-		</li>
+		<xsl:apply-templates />
+		<xsl:if test="position() != last()">
+			<xsl:text>, </xsl:text>
+		</xsl:if>
 	</xsl:template>
 
 	<xsl:template match="null">
