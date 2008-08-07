@@ -124,4 +124,3 @@ glutHideWindow(void)
 }
 
 /* ENDCENTRY */
-

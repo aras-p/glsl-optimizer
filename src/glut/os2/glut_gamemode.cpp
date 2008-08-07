@@ -677,4 +677,3 @@ glutGameModeGet(GLenum mode)
     return -1;
   }
 }
-
