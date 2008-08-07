@@ -891,7 +891,7 @@ pipe_put_tile_rgba(struct pipe_surface *ps,
       /*a8_l8_put_tile_rgba((ushort *) packed, w, h, p, src_stride);*/
       break;
    case PIPE_FORMAT_R16_SNORM:
-      /*r16_put_tile_rgba((short *) packed, w, h, p, src_stride);*/
+      r16_put_tile_rgba((short *) packed, w, h, p, src_stride);
       break;
    case PIPE_FORMAT_R16G16B16A16_SNORM:
       r16g16b16a16_put_tile_rgba((short *) packed, w, h, p, src_stride);
