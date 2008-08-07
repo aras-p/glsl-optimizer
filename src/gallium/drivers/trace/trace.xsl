@@ -29,8 +29,62 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 		<html>
 			<head>
 				<title>Gallium Trace</title>
-				<link rel="stylesheet" type="text/css" href="trace.css"/>
 			</head>
+			<style>
+				body {
+					font-family: verdana, sans-serif;
+					font-size: 11px;
+					font-weight: normal;
+					text-align : left;
+				}
+
+				ul.calls {
+					list-style: none;
+					margin-left: 0px;
+					padding-left: 0px;
+				}
+
+				ul.args {
+					display:inline;
+					list-style: none;
+					margin-left: 0px;
+					padding-left: 0px;
+				}
+
+				ul.args li {
+					display:inline;
+				}
+
+				ul.elems {
+					list-style: none;
+					margin-left: 2em;
+					padding-left: 0px;
+				}
+
+				ul.elems li {
+					display:block;
+				}
+
+				.fun {
+					font-weight: bold;
+				}
+
+				.var {
+					font-style: italic;
+				}
+
+				.typ {
+					display: none;
+				}
+
+				.lit {
+					color: #0000ff;
+				}
+
+				.ptr {
+					color: #008000;
+				}
+			</style>
 			<body>
 				<ul class="calls">
 					<xsl:apply-templates/>
@@ -71,7 +125,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 		<xsl:apply-templates />
 	</xsl:template>
 
-	<xsl:template match="bool|int|uint|enum">
+	<xsl:template match="bool|int|uint|float|enum">
 		<span class="lit">
 			<xsl:value-of select="text()"/>
 		</span>
