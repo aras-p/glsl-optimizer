@@ -36,7 +36,7 @@
 void trace_dump_format(struct trace_stream *stream, 
                        enum pipe_format format)
 {
-   trace_dump_int(stream, format);
+   trace_dump_enum(stream, pf_name(format) );
 }
 
 
@@ -80,7 +80,7 @@ void trace_dump_template(struct trace_stream *stream,
    trace_dump_struct_begin(stream, "pipe_texture");
    
    trace_dump_member(stream, int, templat, target);
-   trace_dump_member(stream, int, templat, format);
+   trace_dump_member(stream, format, templat, format);
    
    trace_dump_member_begin(stream, "width");
    trace_dump_array(stream, uint, templat->width, 1);

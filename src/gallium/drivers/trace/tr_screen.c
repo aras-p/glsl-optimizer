@@ -140,7 +140,7 @@ trace_screen_is_format_supported(struct pipe_screen *_screen,
    trace_dump_call_begin(stream, "pipe_screen", "is_format_supported");
    
    trace_dump_arg(stream, ptr, screen);
-   trace_dump_arg(stream, int, format);
+   trace_dump_arg(stream, format, format);
    trace_dump_arg(stream, int, target);
    trace_dump_arg(stream, uint, tex_usage);
    trace_dump_arg(stream, uint, geom_flags);

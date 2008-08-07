@@ -280,6 +280,14 @@ void trace_dump_string(struct trace_stream *stream,
    trace_dump_write(stream, "</string>");
 }
 
+void trace_dump_enum(struct trace_stream *stream, 
+                     const char *value)
+{
+   trace_dump_write(stream, "<enum>");
+   trace_dump_escape(stream, value);
+   trace_dump_write(stream, "</enum>");
+}
+
 void trace_dump_array_begin(struct trace_stream *stream)
 {
    trace_dump_write(stream, "<array>");

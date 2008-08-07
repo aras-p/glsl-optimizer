@@ -71,7 +71,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 		<xsl:apply-templates />
 	</xsl:template>
 
-	<xsl:template match="bool|int|uint">
+	<xsl:template match="bool|int|uint|enum">
 		<span class="lit">
 			<xsl:value-of select="text()"/>
 		</span>
