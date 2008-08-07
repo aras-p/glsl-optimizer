@@ -2,7 +2,7 @@
 #define __NV50_PROGRAM_H__
 
 #include "pipe/p_state.h"
-#include "tgsi/util/tgsi_scan.h"
+#include "tgsi/tgsi_scan.h"
 
 struct nv50_program_exec {
 	struct nv50_program_exec *next;

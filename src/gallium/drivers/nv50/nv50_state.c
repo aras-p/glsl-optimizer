@@ -25,7 +25,7 @@
 #include "pipe/p_util.h"
 #include "pipe/p_inlines.h"
 
-#include "tgsi/util/tgsi_parse.h"
+#include "tgsi/tgsi_parse.h"
 
 #include "nv50_context.h"
 #include "nv50_texture.h"

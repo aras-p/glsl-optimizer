@@ -4,7 +4,7 @@
 #include "pipe/p_util.h"
 #include "pipe/p_shader_tokens.h"
 
-#include "tgsi/util/tgsi_parse.h"
+#include "tgsi/tgsi_parse.h"
 
 #include "nv04_context.h"
 #include "nv04_state.h"

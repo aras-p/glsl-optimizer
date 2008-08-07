@@ -2,7 +2,7 @@
 #define __NV30_STATE_H__
 
 #include "pipe/p_state.h"
-#include "tgsi/util/tgsi_scan.h"
+#include "tgsi/tgsi_scan.h"
 
 struct nv30_sampler_state {
 	uint32_t fmt;

@@ -3,8 +3,8 @@
 #include "pipe/p_state.h"
 
 #include "pipe/p_shader_tokens.h"
-#include "tgsi/util/tgsi_parse.h"
-#include "tgsi/util/tgsi_util.h"
+#include "tgsi/tgsi_parse.h"
+#include "tgsi/tgsi_util.h"
 
 #include "nv40_context.h"
 

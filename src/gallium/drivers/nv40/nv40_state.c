@@ -5,7 +5,7 @@
 
 #include "draw/draw_context.h"
 
-#include "tgsi/util/tgsi_parse.h"
+#include "tgsi/tgsi_parse.h"
 
 #include "nv40_context.h"
 #include "nv40_state.h"

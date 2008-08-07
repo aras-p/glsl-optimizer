@@ -3,7 +3,7 @@
 #include "pipe/p_util.h"
 #include "pipe/p_inlines.h"
 
-#include "tgsi/util/tgsi_parse.h"
+#include "tgsi/tgsi_parse.h"
 
 #include "nv30_context.h"
 #include "nv30_state.h"
