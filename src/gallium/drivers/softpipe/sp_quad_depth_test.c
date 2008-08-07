@@ -104,6 +104,8 @@ sp_depth_test_quad(struct quad_stage *qs, struct quad_header *quad)
          }
       }
       break;
+   case PIPE_FORMAT_X8Z24_UNORM:
+      /* fall-through */
    case PIPE_FORMAT_S8Z24_UNORM:
       {
          float scale = (float) ((1 << 24) - 1);
@@ -119,6 +121,8 @@ sp_depth_test_quad(struct quad_stage *qs, struct quad_header *quad)
          }
       }
       break;
+   case PIPE_FORMAT_Z24X8_UNORM:
+      /* fall-through */
    case PIPE_FORMAT_Z24S8_UNORM:
       {
          float scale = (float) ((1 << 24) - 1);
@@ -209,6 +213,9 @@ sp_depth_test_quad(struct quad_stage *qs, struct quad_header *quad)
             tile->data.depth16[y][x] = (ushort) bzzzz[j];
          }
          break;
+      case PIPE_FORMAT_X8Z24_UNORM:
+         /* fall-through */
+         /* (yes, this falls through to a different case than above) */
       case PIPE_FORMAT_Z32_UNORM:
          for (j = 0; j < QUAD_SIZE; j++) {
             int x = quad->x0 % TILE_SIZE + (j & 1);
@@ -232,6 +239,13 @@ sp_depth_test_quad(struct quad_stage *qs, struct quad_header *quad)
             uint z24s8 = tile->data.depth32[y][x];
             z24s8 = (z24s8 & 0xff) | (bzzzz[j] << 8);
             tile->data.depth32[y][x] = z24s8;
+         }
+         break;
+      case PIPE_FORMAT_Z24X8_UNORM:
+         for (j = 0; j < QUAD_SIZE; j++) {
+            int x = quad->x0 % TILE_SIZE + (j & 1);
+            int y = quad->y0 % TILE_SIZE + (j >> 1);
+            tile->data.depth32[y][x] = bzzzz[j] << 8;
          }
          break;
       default:
