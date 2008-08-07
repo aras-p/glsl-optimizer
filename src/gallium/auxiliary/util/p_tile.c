@@ -51,11 +51,11 @@ pipe_get_tile_raw(struct pipe_surface *ps,
 {
    const void *src;
 
-   if (pipe_clip_tile(x, y, &w, &h, ps))
-      return;
-
    if (dst_stride == 0)
       dst_stride = pf_get_nblocksx(&ps->block, w) * ps->block.size;
+
+   if (pipe_clip_tile(x, y, &w, &h, ps))
+      return;
 
    src = pipe_surface_map(ps, PIPE_BUFFER_USAGE_CPU_READ);
    assert(src);
@@ -79,11 +79,11 @@ pipe_put_tile_raw(struct pipe_surface *ps,
 {
    void *dst;
 
-   if (pipe_clip_tile(x, y, &w, &h, ps))
-      return;
-
    if (src_stride == 0)
       src_stride = pf_get_nblocksx(&ps->block, w) * ps->block.size;
+
+   if (pipe_clip_tile(x, y, &w, &h, ps))
+      return;
 
    dst = pipe_surface_map(ps, PIPE_BUFFER_USAGE_CPU_WRITE);
    assert(dst);
