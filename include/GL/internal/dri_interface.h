@@ -40,7 +40,14 @@
 #ifndef DRI_INTERFACE_H
 #define DRI_INTERFACE_H
 
+/* Make this something other than __APPLE__ for other arcs with no drm.h */
+#ifndef __APPLE__
 #include <drm.h>
+#else
+typedef unsigned int drm_context_t;
+typedef unsigned int drm_drawable_t;
+typedef struct drm_clip_rect drm_clip_rect_t;
+#endif
 
 /**
  * \name DRI interface structures
