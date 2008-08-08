@@ -44,8 +44,6 @@ struct trace_screen
    struct pipe_screen *screen;
    
    struct trace_stream *stream;
-   
-   unsigned event_no;
 };
 
 
