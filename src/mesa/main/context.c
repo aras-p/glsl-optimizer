@@ -120,9 +120,7 @@
 #include "macros.h"
 #include "matrix.h"
 #include "multisample.h"
-#if FEATURE_pixel_transfer
 #include "pixel.h"
-#endif
 #include "pixelstore.h"
 #include "points.h"
 #include "polygon.h"
@@ -1035,11 +1033,7 @@ init_attrib_groups(GLcontext *ctx)
    _mesa_init_lighting( ctx );
    _mesa_init_matrix( ctx );
    _mesa_init_multisample( ctx );
-#if FEATURE_pixel_transfer
    _mesa_init_pixel( ctx );
-#else
-   ctx->Pixel.ReadBuffer = ctx->Visual.doubleBufferMode ? GL_BACK : GL_FRONT;
-#endif
    _mesa_init_pixelstore( ctx );
    _mesa_init_point( ctx );
    _mesa_init_polygon( ctx );

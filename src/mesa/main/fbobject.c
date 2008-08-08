@@ -508,6 +508,7 @@ _mesa_test_framebuffer_completeness(GLcontext *ctx, struct gl_framebuffer *fb)
       }
    }
 
+#ifndef FEATURE_OES_framebuffer_object
    /* Check that all DrawBuffers are present */
    for (j = 0; j < ctx->Const.MaxDrawBuffers; j++) {
       if (fb->ColorDrawBuffer[j] != GL_NONE) {
@@ -533,6 +534,7 @@ _mesa_test_framebuffer_completeness(GLcontext *ctx, struct gl_framebuffer *fb)
          return;
       }
    }
+#endif
 
    if (numImages == 0) {
       fb->_Status = GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT_EXT;
