@@ -55,6 +55,7 @@
 #endif
 
 #ifdef GALLIUM_TRACE
+#include "trace/tr_winsys.h"
 #include "trace/tr_screen.h"
 #include "trace/tr_context.h"
 #endif
@@ -650,7 +651,11 @@ xmesa_get_pipe_winsys(struct xmesa_visual *xm_vis)
       ws->base.get_name = xm_get_name;
    }
 
-   return &ws->base;
+#ifdef GALLIUM_TRACE
+      return trace_winsys_create(&ws->base);
+#else
+      return &ws->base;
+#endif
 }
 
 

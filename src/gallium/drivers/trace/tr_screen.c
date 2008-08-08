@@ -30,6 +30,7 @@
 #include "tr_stream.h"
 #include "tr_dump.h"
 #include "tr_state.h"
+#include "tr_winsys.h"
 #include "tr_screen.h"
 
 
@@ -338,10 +339,6 @@ trace_screen_destroy(struct pipe_screen *_screen)
    
    trace_dump_call_end(stream);
    
-   trace_dump_trace_end(stream);
-   
-   trace_stream_close(tr_scr->stream);
-   
    FREE(tr_scr);
 }
 
@@ -375,11 +372,9 @@ trace_screen_create(struct pipe_screen *screen)
    
    tr_scr->screen = screen;
       
-   tr_scr->stream = trace_stream_create("gallium", "trace");
+   tr_scr->stream = trace_winsys(screen->winsys)->stream;
    if(!tr_scr->stream)
       return NULL;
 
-   trace_dump_trace_begin(tr_scr->stream, 0);
-   
    return &tr_scr->base;
 }
