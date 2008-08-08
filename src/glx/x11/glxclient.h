@@ -66,6 +66,8 @@
 # include <pthread.h>
 #endif
 
+#include "glxextensions.h"
+
 #define GLX_MAJOR_VERSION	1	/* current version numbers */
 #define GLX_MINOR_VERSION	4
 

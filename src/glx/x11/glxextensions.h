@@ -244,7 +244,7 @@ extern GLboolean __glExtensionBitIsEnabled( const struct __GLXcontextRec * gc,
     unsigned bit );
 
 extern void
-__glXEnableDirectExtension(__GLXscreenConfigs *psc, const char *name);
+__glXEnableDirectExtension(struct __GLXscreenConfigsRec *psc, const char *name);
 
 /* Source-level backwards compatibility with old drivers. They won't
  * find the respective functions, though. 
