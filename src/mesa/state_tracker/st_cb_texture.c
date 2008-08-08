@@ -932,16 +932,6 @@ fallback_copy_texsubimage(GLcontext *ctx,
    const uint face = texture_face(target);
    struct pipe_texture *pt = stImage->pt;
    struct pipe_surface *src_surf, *dest_surf;
-   GLint row, yStep;
-
-   /* determine bottom-to-top vs. top-to-bottom order for src renderbuffer */
-   if (st_fb_orientation(ctx->ReadBuffer) == Y_0_TOP) {
-      srcY = strb->Base.Height - 1 - srcY;
-      yStep = -1;
-   }
-   else {
-      yStep = 1;
-   }
 
    src_surf = strb->surface;
    dest_surf = screen->get_tex_surface(screen, pt, face, level, destZ,
@@ -949,13 +939,21 @@ fallback_copy_texsubimage(GLcontext *ctx,
 
    assert(width <= MAX_WIDTH);
 
-   /*
-    * To avoid a large temp memory allocation, do copy row by row.
-    */
    if (baseFormat == GL_DEPTH_COMPONENT) {
       const GLboolean scaleOrBias = (ctx->Pixel.DepthScale != 1.0F ||
                                      ctx->Pixel.DepthBias != 0.0F);
+      GLint row, yStep;
 
+      /* determine bottom-to-top vs. top-to-bottom order for src buffer */
+      if (st_fb_orientation(ctx->ReadBuffer) == Y_0_TOP) {
+         srcY = strb->Base.Height - 1 - srcY;
+         yStep = -1;
+      }
+      else {
+         yStep = 1;
+      }
+
+      /* To avoid a large temp memory allocation, do copy row by row */
       for (row = 0; row < height; row++, srcY += yStep, destY++) {
          uint data[MAX_WIDTH];
          pipe_get_tile_z(src_surf, srcX, srcY, width, 1, data);
@@ -967,17 +965,54 @@ fallback_copy_texsubimage(GLcontext *ctx,
    }
    else {
       /* RGBA format */
-      for (row = 0; row < height; row++, srcY += yStep, destY++) {
-         float data[4 * MAX_WIDTH];
-         pipe_get_tile_rgba(src_surf, srcX, srcY, width, 1, data);
-         /* XXX we're ignoring convolution for now */
-         if (ctx->_ImageTransferState) {
-            _mesa_apply_rgba_transfer_ops(ctx,
-                          ctx->_ImageTransferState & ~IMAGE_CONVOLUTION_BIT,
-                          width, (GLfloat (*)[4]) data);
+      GLfloat *tempSrc =
+         (GLfloat *) _mesa_malloc(width * height * 4 * sizeof(GLfloat));
+      GLvoid *texDest =
+         st_texture_image_map(ctx->st, stImage, 0,PIPE_BUFFER_USAGE_CPU_WRITE);
+
+      if (tempSrc && texDest) {
+         const GLint dims = 2;
+         struct gl_texture_image *texImage = &stImage->base;
+         GLint dstRowStride = stImage->surface->stride;
+         struct gl_pixelstore_attrib unpack = ctx->DefaultPacking;
+
+         if (st_fb_orientation(ctx->ReadBuffer) == Y_0_TOP) {
+            /* need to invert src */
+            srcY = strb->Base.Height - srcY - height;
+            unpack.Invert = GL_TRUE;
          }
-         pipe_put_tile_rgba(dest_surf, destX, destY, width, 1, data);
+
+         /* get float/RGBA image from framebuffer */
+         /* XXX this usually involves a lot of int/float conversion.
+          * try to avoid that someday.
+          */
+         pipe_get_tile_rgba(src_surf, srcX, srcY, width, height, tempSrc);
+
+         /* Store into texture memory.
+          * Note that this does some special things such as pixel transfer
+          * ops and format conversion.  In particular, if the dest tex format
+          * is actually RGBA but the user created the texture as GL_RGB we
+          * need to fill-in/override the alpha channel with 1.0.
+          */
+         texImage->TexFormat->StoreImage(ctx, dims,
+                                         texImage->_BaseFormat, 
+                                         texImage->TexFormat, 
+                                         texDest,
+                                         destX, destY, destZ,
+                                         dstRowStride,
+                                         texImage->ImageOffsets,
+                                         width, height, 1,
+                                         GL_RGBA, GL_FLOAT, tempSrc, /* src */
+                                         &unpack);
       }
+      else {
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexSubImage");
+      }
+
+      if (tempSrc)
+         _mesa_free(tempSrc);
+      if (texDest)
+         st_texture_image_unmap(ctx->st, stImage);
    }
 
    screen->tex_surface_release(screen, &dest_surf);
@@ -1010,8 +1045,9 @@ st_copy_texsubimage(GLcontext *ctx,
    struct st_renderbuffer *strb;
    struct pipe_context *pipe = ctx->st->pipe;
    struct pipe_screen *screen = pipe->screen;
-   uint dest_format, src_format;
+   enum pipe_format dest_format, src_format;
    GLboolean use_fallback = GL_TRUE;
+   GLboolean matching_base_formats;
 
    st_flush(ctx->st, PIPE_FLUSH_RENDER_CACHE, NULL);
 
@@ -1034,21 +1070,28 @@ st_copy_texsubimage(GLcontext *ctx,
    src_format = strb->surface->format;
    dest_format = stImage->pt->format;
 
-   if (ctx->_ImageTransferState == 0x0) {
-      /* do blit-style copy */
-      struct pipe_surface *dest_surface;
+   /*
+    * Determine if the src framebuffer and dest texture have the same
+    * base format.  We need this to detect a case such as the framebuffer
+    * being GL_RGBA but the texture being GL_RGB.  If the actual hardware
+    * texture format stores RGBA we need to set A=1 (overriding the
+    * framebuffer's alpha values).  We can't do that with the blit or
+    * textured-quad paths.
+    */
+   matching_base_formats = (strb->Base._BaseFormat == texImage->_BaseFormat);
 
-      dest_surface = screen->get_tex_surface(screen, stImage->pt,
-                                             stImage->face,
-                                             stImage->level, destZ,
-                                             PIPE_BUFFER_USAGE_GPU_WRITE);
-
-      assert(strb->surface->buffer);
-      assert(dest_surface->buffer);
+   if (matching_base_formats && ctx->_ImageTransferState == 0x0) {
+      /* try potential hardware path */
+      struct pipe_surface *dest_surface = NULL;
 
       if (src_format == dest_format) {
          /* use surface_copy() / blit */
          boolean do_flip = (st_fb_orientation(ctx->ReadBuffer) == Y_0_TOP);
+
+         dest_surface = screen->get_tex_surface(screen, stImage->pt,
+                                                stImage->face, stImage->level,
+                                                destZ,
+                                                PIPE_BUFFER_USAGE_GPU_WRITE);
          pipe->surface_copy(pipe,
                             do_flip,
                             /* dest */
@@ -1072,6 +1115,12 @@ st_copy_texsubimage(GLcontext *ctx,
          /* draw textured quad to do the copy */
          boolean do_flip = (st_fb_orientation(ctx->ReadBuffer) == Y_0_TOP);
          int srcY0, srcY1;
+
+         dest_surface = screen->get_tex_surface(screen, stImage->pt,
+                                                stImage->face, stImage->level,
+                                                destZ,
+                                                PIPE_BUFFER_USAGE_GPU_WRITE);
+
          if (do_flip) {
             srcY1 = strb->Base.Height - srcY - height;
             srcY0 = srcY1 + height;
@@ -1091,7 +1140,8 @@ st_copy_texsubimage(GLcontext *ctx,
          use_fallback = GL_FALSE;
       }
 
-      pipe_surface_reference(&dest_surface, NULL);
+      if (dest_surface)
+         pipe_surface_reference(&dest_surface, NULL);
    }
 
    if (use_fallback) {
