@@ -423,7 +423,11 @@ CreateContext(Display *dpy, XVisualInfo *vis,
 	    req->visual = vis->visualid;
 	    req->screen = vis->screen;
 	    req->shareList = shareList ? shareList->xid : None;
+#ifdef GLX_DIRECT_RENDERING
 	    req->isDirect = gc->driContext != NULL;
+#else
+	    req->isDirect = 0;
+#endif
 	}
 	else if ( use_glx_1_3 ) {
 	    xGLXCreateNewContextReq *req;
@@ -437,7 +441,11 @@ CreateContext(Display *dpy, XVisualInfo *vis,
 	    req->screen = fbconfig->screen;
 	    req->renderType = renderType;
 	    req->shareList = shareList ? shareList->xid : None;
+#ifdef GLX_DIRECT_RENDERING
 	    req->isDirect = gc->driContext != NULL;
+#else
+	    req->isDirect = 0;
+#endif
 	}
 	else {
 	    xGLXVendorPrivateWithReplyReq *vpreq;
@@ -455,7 +463,11 @@ CreateContext(Display *dpy, XVisualInfo *vis,
 	    req->screen = fbconfig->screen;
 	    req->renderType = renderType;
 	    req->shareList = shareList ? shareList->xid : None;
+#ifdef GLX_DIRECT_RENDERING
 	    req->isDirect = gc->driContext != NULL;
+#else
+	    req->isDirect = 0;
+#endif
 	}
 
 	UnlockDisplay(dpy);
@@ -1525,7 +1537,11 @@ glXQueryContext(Display *dpy, GLXContext ctx, int attribute, int *value)
     int retVal;
 
     /* get the information from the server if we don't have it already */
+#ifdef GLX_DIRECT_RENDERING
     if (!ctx->driContext && (ctx->mode == NULL)) {
+#else
+    if (ctx->mode == NULL) {
+#endif
 	retVal = __glXQueryContextInfo(dpy, ctx);
 	if (Success != retVal) return retVal;
     }

@@ -595,9 +595,9 @@ static Bool AllocAndFetchScreenConfigs(Display *dpy, __GLXdisplayPrivate *priv)
 	getVisualConfigs(dpy, priv, i);
 	getFBConfigs(dpy, priv, i);
 
+#ifdef GLX_DIRECT_RENDERING
 	psc->scr = i;
 	psc->dpy = dpy;
-#ifdef GLX_DIRECT_RENDERING
 	psc->drawHash = __glxHashCreate();
 	if (psc->drawHash == NULL)
 	    continue;

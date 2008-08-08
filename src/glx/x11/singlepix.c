@@ -119,12 +119,14 @@ void NAME(_gloffset_GetSeparableFilter)(GLenum target, GLenum format, GLenum typ
 {
     __GLXcontext * const gc = __glXGetCurrentContext();
 
+#ifdef GLX_DIRECT_RENDERING
     if (gc->driContext) {
 	CALL_GetSeparableFilter(GET_DISPATCH(),
 				(target, format, type, row, column, span));
 	return;
-    }
-    else {
+    } else 
+#endif
+    {
         Display *const dpy = gc->currentDpy;
 	const GLuint cmdlen = __GLX_PAD(13);
 

@@ -399,8 +399,12 @@ static Bool MakeContextCurrent(Display *dpy, GLXDrawable draw,
 	return False;
     }
 
+#ifdef GLX_DIRECT_RENDERING
     if ((dpy != oldGC->currentDpy || (gc && gc->driContext)) &&
 	!oldGC->isDirect && oldGC != &dummyContext) {
+#else
+    if ((dpy != oldGC->currentDpy) && oldGC != &dummyContext) {
+#endif
 	xGLXMakeCurrentReply dummy_reply;
 
 	/* We are either switching from one dpy to another and have to
@@ -462,7 +466,9 @@ static Bool MakeContextCurrent(Display *dpy, GLXDrawable draw,
 	    gc->currentDrawable = draw;
 	    gc->currentReadable = read;
 
+#ifdef GLX_DIRECT_RENDERING    
             if (!gc->driContext) {
+#endif
                if (!IndirectAPI)
                   IndirectAPI = __glXNewIndirectAPI();
                _glapi_set_dispatch(IndirectAPI);
@@ -483,10 +489,12 @@ static Bool MakeContextCurrent(Display *dpy, GLXDrawable draw,
 		    (void) glGetString(GL_VERSION);
 		    __glXInitVertexArrayState(gc);
 		}
+#ifdef GLX_DIRECT_RENDERING    
 	    }
 	    else {
 		gc->currentContextTag = -1;
 	    }
+#endif
 	} else {
 	    __glXSetCurrentContextNull();
 	}
