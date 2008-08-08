@@ -37,7 +37,7 @@
 #include "macros.h"
 #include "enums.h"
 
-static int prepare_cc_vp( struct brw_context *brw )
+static void prepare_cc_vp( struct brw_context *brw )
 {
    struct brw_cc_viewport ccv;
 
@@ -48,7 +48,6 @@ static int prepare_cc_vp( struct brw_context *brw )
 
    dri_bo_unreference(brw->cc.vp_bo);
    brw->cc.vp_bo = brw_cache_data( &brw->cache, BRW_CC_VP, &ccv, NULL, 0 );
-   return dri_bufmgr_check_aperture_space(brw->cc.vp_bo);
 }
 
 const struct brw_tracked_state brw_cc_vp = {
@@ -266,7 +265,7 @@ cc_unit_create_from_key(struct brw_context *brw, struct brw_cc_unit_key *key)
    return bo;
 }
 
-static int prepare_cc_unit( struct brw_context *brw )
+static void prepare_cc_unit( struct brw_context *brw )
 {
    struct brw_cc_unit_key key;
 
@@ -280,7 +279,6 @@ static int prepare_cc_unit( struct brw_context *brw )
 
    if (brw->cc.state_bo == NULL)
       brw->cc.state_bo = cc_unit_create_from_key(brw, &key);
-   return dri_bufmgr_check_aperture_space(brw->cc.state_bo);
 }
 
 const struct brw_tracked_state brw_cc_unit = {

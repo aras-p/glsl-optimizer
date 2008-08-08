@@ -54,7 +54,6 @@ intelCopyBuffer(const __DRIdrawablePrivate * dPriv,
 
    struct intel_context *intel;
    const intelScreenPrivate *intelScreen;
-   int ret;
 
    DBG("%s\n", __FUNCTION__);
 
@@ -81,6 +80,7 @@ intelCopyBuffer(const __DRIdrawablePrivate * dPriv,
       unsigned short src_x, src_y;
       int BR13, CMD;
       int i;
+      dri_bo *aper_array[3];
 
       src = intel_get_rb_region(&intel_fb->Base, BUFFER_BACK_LEFT);
       dst = intel_get_rb_region(&intel_fb->Base, BUFFER_FRONT_LEFT);
@@ -116,16 +116,18 @@ intelCopyBuffer(const __DRIdrawablePrivate * dPriv,
       }
 #endif
       /* do space/cliprects check before going any further */
-      intel_batchbuffer_require_space(intel->batch, 8 * 4, REFERENCES_CLIPRECTS);
+      intel_batchbuffer_require_space(intel->batch, 8 * 4,
+				      REFERENCES_CLIPRECTS);
    again:
-      ret = dri_bufmgr_check_aperture_space(dst->buffer);
-      ret |= dri_bufmgr_check_aperture_space(src->buffer);
-      
-      if (ret) {
+      aper_array[0] = intel->batch->buf;
+      aper_array[1] = dst->buffer;
+      aper_array[2] = src->buffer;
+
+      if (dri_bufmgr_check_aperture_space(aper_array, 3) != 0) {
 	intel_batchbuffer_flush(intel->batch);
 	goto again;
       }
-      
+
       for (i = 0; i < nbox; i++, pbox++) {
 	 drm_clip_rect_t box = *pbox;
 
@@ -273,17 +275,19 @@ intelEmitCopyBlit(struct intel_context *intel,
    GLuint CMD, BR13;
    int dst_y2 = dst_y + h;
    int dst_x2 = dst_x + w;
-   int ret;
+   dri_bo *aper_array[3];
    BATCH_LOCALS;
 
    /* do space/cliprects check before going any further */
    intel_batchbuffer_require_space(intel->batch, 8 * 4, NO_LOOP_CLIPRECTS);
  again:
-   ret = dri_bufmgr_check_aperture_space(dst_buffer);
-   ret |= dri_bufmgr_check_aperture_space(src_buffer);
-   if (ret) {
-     intel_batchbuffer_flush(intel->batch);
-     goto again;
+   aper_array[0] = intel->batch->buf;
+   aper_array[1] = dst_buffer;
+   aper_array[2] = src_buffer;
+
+   if (dri_bufmgr_check_aperture_space(aper_array, 3) != 0) {
+      intel_batchbuffer_flush(intel->batch);
+      goto again;
    }
 
    DBG("%s src:buf(%p)/%d+%d %d,%d dst:buf(%p)/%d+%d %d,%d sz:%dx%d\n",

@@ -94,10 +94,6 @@ intel_batchbuffer_reset(struct intel_batchbuffer *batch)
    batch->ptr = batch->map;
    batch->dirty_state = ~0;
    batch->cliprect_mode = IGNORE_CLIPRECTS;
-
-   /* account batchbuffer in aperture */
-   dri_bufmgr_check_aperture_space(batch->buf);
-
 }
 
 struct intel_batchbuffer *

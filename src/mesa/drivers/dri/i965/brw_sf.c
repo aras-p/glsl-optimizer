@@ -125,7 +125,7 @@ static void compile_sf_prog( struct brw_context *brw,
 
 /* Calculate interpolants for triangle and line rasterization.
  */
-static int upload_sf_prog( struct brw_context *brw )
+static void upload_sf_prog(struct brw_context *brw)
 {
    struct brw_sf_prog_key key;
 
@@ -174,7 +174,6 @@ static int upload_sf_prog( struct brw_context *brw )
 				      &brw->sf.prog_data);
    if (brw->sf.prog_bo == NULL)
       compile_sf_prog( brw, &key );
-   return dri_bufmgr_check_aperture_space(brw->sf.prog_bo);
 }
 
 

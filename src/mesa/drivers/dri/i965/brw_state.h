@@ -80,6 +80,9 @@ const struct brw_tracked_state brw_pipe_control;
 const struct brw_tracked_state brw_clear_surface_cache;
 const struct brw_tracked_state brw_clear_batch_cache;
 
+const struct brw_tracked_state brw_indices;
+const struct brw_tracked_state brw_vertices;
+
 /***********************************************************************
  * brw_state_cache.c
  */

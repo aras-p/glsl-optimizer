@@ -229,7 +229,7 @@ brw_create_texture_surface( struct brw_context *brw,
    return bo;
 }
 
-static int
+static void
 brw_update_texture_surface( GLcontext *ctx, GLuint unit )
 {
    struct brw_context *brw = brw_context(ctx);
@@ -237,7 +237,6 @@ brw_update_texture_surface( GLcontext *ctx, GLuint unit )
    struct intel_texture_object *intelObj = intel_texture_object(tObj);
    struct gl_texture_image *firstImage = tObj->Image[0][intelObj->firstLevel];
    struct brw_wm_surface_key key;
-   int ret = 0;
 
    memset(&key, 0, sizeof(key));
    key.target = tObj->Target;
@@ -253,8 +252,6 @@ brw_update_texture_surface( GLcontext *ctx, GLuint unit )
    key.depth = firstImage->Depth;
    key.tiling = intelObj->mt->region->tiling;
 
-   ret |= dri_bufmgr_check_aperture_space(key.bo);
-
    dri_bo_unreference(brw->wm.surf_bo[unit + MAX_DRAW_BUFFERS]);
    brw->wm.surf_bo[unit + MAX_DRAW_BUFFERS] = brw_search_cache(&brw->cache, BRW_SS_SURFACE,
 						&key, sizeof(key),
@@ -263,9 +260,6 @@ brw_update_texture_surface( GLcontext *ctx, GLuint unit )
    if (brw->wm.surf_bo[unit + MAX_DRAW_BUFFERS] == NULL) {
       brw->wm.surf_bo[unit + MAX_DRAW_BUFFERS] = brw_create_texture_surface(brw, &key);
    }
-
-   ret |= dri_bufmgr_check_aperture_space(brw->wm.surf_bo[unit + MAX_DRAW_BUFFERS]);
-   return ret;
 }
 
 /**
@@ -273,12 +267,11 @@ brw_update_texture_surface( GLcontext *ctx, GLuint unit )
  * While it is only used for the front/back buffer currently, it should be
  * usable for further buffers when doing ARB_draw_buffer support.
  */
-static int
+static void
 brw_update_region_surface(struct brw_context *brw, struct intel_region *region,
 			  unsigned int unit, GLboolean cached)
 {
    dri_bo *region_bo = NULL;
-   int ret = 0;
    struct {
       unsigned int surface_type;
       unsigned int surface_format;
@@ -302,8 +295,6 @@ brw_update_region_surface(struct brw_context *brw, struct intel_region *region,
       key.width = region->pitch; /* XXX: not really! */
       key.height = region->height;
       key.cpp = region->cpp;
-
-      ret |= dri_bufmgr_check_aperture_space(region->buffer);
    } else {
       key.surface_type = BRW_SURFACE_NULL;
       key.surface_format = BRW_SURFACEFORMAT_B8G8R8A8_UNORM;
@@ -367,10 +358,6 @@ brw_update_region_surface(struct brw_context *brw, struct intel_region *region,
 			     region_bo);
       }
    }
-
-   ret |= dri_bufmgr_check_aperture_space(brw->wm.surf_bo[unit]);
-
-   return ret;
 }
 
 
@@ -422,23 +409,19 @@ brw_wm_get_binding_table(struct brw_context *brw)
    return bind_bo;
 }
 
-static int prepare_wm_surfaces(struct brw_context *brw )
+static void prepare_wm_surfaces(struct brw_context *brw )
 {
    GLcontext *ctx = &brw->intel.ctx;
    struct intel_context *intel = &brw->intel;
-   GLuint i, ret;
+   GLuint i;
 
    if (brw->state.nr_draw_regions  > 1) {
       for (i = 0; i < brw->state.nr_draw_regions; i++) {
-         ret = brw_update_region_surface(brw, brw->state.draw_regions[i], i,
-                                         GL_FALSE);
-         if (ret)
-            return ret;
+         brw_update_region_surface(brw, brw->state.draw_regions[i], i,
+				   GL_FALSE);
       }
    }else {
-      ret = brw_update_region_surface(brw, brw->state.draw_regions[0], 0, GL_TRUE);
-      if (ret)
-         return ret;
+      brw_update_region_surface(brw, brw->state.draw_regions[0], 0, GL_TRUE);
    }
 
    brw->wm.nr_surfaces = MAX_DRAW_BUFFERS;
@@ -454,11 +437,8 @@ static int prepare_wm_surfaces(struct brw_context *brw )
             dri_bo_reference(brw->wm.surf_bo[i+MAX_DRAW_BUFFERS]);
             brw->wm.nr_surfaces = i + MAX_DRAW_BUFFERS + 1;
          } else {
-            ret = brw_update_texture_surface(ctx, i);
+            brw_update_texture_surface(ctx, i);
             brw->wm.nr_surfaces = i + MAX_DRAW_BUFFERS + 1;
-
-            if (ret)
-               return ret;
          }
       } else {
          dri_bo_unreference(brw->wm.surf_bo[i+MAX_DRAW_BUFFERS]);
@@ -469,8 +449,6 @@ static int prepare_wm_surfaces(struct brw_context *brw )
 
    dri_bo_unreference(brw->wm.bind_bo);
    brw->wm.bind_bo = brw_wm_get_binding_table(brw);
-
-   return dri_bufmgr_check_aperture_space(brw->wm.bind_bo);
 }
 
 

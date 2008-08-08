@@ -255,11 +255,10 @@ brw_wm_sampler_populate_key(struct brw_context *brw,
  * complicates various things.  However, this is still too confusing -
  * FIXME: simplify all the different new texture state flags.
  */
-static int upload_wm_samplers( struct brw_context *brw )
+static void upload_wm_samplers( struct brw_context *brw )
 {
    struct wm_sampler_key key;
    int i;
-   int ret = 0;
 
    brw_wm_sampler_populate_key(brw, &key);
 
@@ -271,7 +270,7 @@ static int upload_wm_samplers( struct brw_context *brw )
    dri_bo_unreference(brw->wm.sampler_bo);
    brw->wm.sampler_bo = NULL;
    if (brw->wm.sampler_count == 0)
-      return 0;
+      return;
 
    brw->wm.sampler_bo = brw_search_cache(&brw->cache, BRW_SAMPLER,
 					 &key, sizeof(key),
@@ -304,7 +303,6 @@ static int upload_wm_samplers( struct brw_context *brw )
 	 if (!brw->attribs.Texture->Unit[i]._ReallyEnabled)
 	    continue;
 
-	 ret |= dri_bufmgr_check_aperture_space(brw->wm.sdc_bo[i]);
 	 intel_bo_emit_reloc(brw->wm.sampler_bo,
 			     I915_GEM_DOMAIN_INSTRUCTION, 0,
 			     0,
@@ -313,10 +311,6 @@ static int upload_wm_samplers( struct brw_context *brw )
 			     brw->wm.sdc_bo[i]);
       }
    }
-
-   ret |= dri_bufmgr_check_aperture_space(brw->wm.sampler_bo);
-   return ret;
-
 }
 
 const struct brw_tracked_state brw_wm_samplers = {

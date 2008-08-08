@@ -92,8 +92,6 @@ uint32_t *intel_get_prim_space(struct intel_context *intel, unsigned int count)
 				       INTEL_VB_SIZE, 4);
       intel->prim.start_offset = 0;
       intel->prim.current_offset = 0;
-
-      dri_bufmgr_check_aperture_space(intel->prim.vb_bo);
    }
 
    intel->prim.flush = intel_flush_prim;
@@ -109,6 +107,7 @@ uint32_t *intel_get_prim_space(struct intel_context *intel, unsigned int count)
 void intel_flush_prim(struct intel_context *intel)
 {
    BATCH_LOCALS;
+   dri_bo *aper_array[2];
    dri_bo *vb_bo;
 
    /* Must be called after an intel_start_prim. */
@@ -126,6 +125,13 @@ void intel_flush_prim(struct intel_context *intel)
    intel_wait_flips(intel);
 
    intel->vtbl.emit_state(intel);
+
+   aper_array[0] = intel->batch->buf;
+   aper_array[1] = vb_bo;
+   if (dri_bufmgr_check_aperture_space(aper_array, 2)) {
+      intel_batchbuffer_flush(intel->batch);
+      intel->vtbl.emit_state(intel);
+   }
 
    /* Ensure that we don't start a new batch for the following emit, which
     * depends on the state just emitted. emit_state should be making sure we

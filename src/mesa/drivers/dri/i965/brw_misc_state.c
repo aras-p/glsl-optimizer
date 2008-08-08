@@ -81,6 +81,13 @@ const struct brw_tracked_state brw_blend_constant_color = {
 static void upload_binding_table_pointers(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
+   dri_bo *aper_array[] = {
+      intel->batch->buf,
+      brw->wm.bind_bo,
+   };
+
+   if (dri_bufmgr_check_aperture_space(aper_array, ARRAY_SIZE(aper_array)))
+      intel_batchbuffer_flush(intel->batch);
 
    BEGIN_BATCH(6, IGNORE_CLIPRECTS);
    OUT_BATCH(CMD_BINDING_TABLE_PTRS << 16 | (6 - 2));
@@ -135,6 +142,19 @@ static void upload_pipelined_state_pointers(struct brw_context *brw )
 
 static void upload_psp_urb_cbs(struct brw_context *brw )
 {
+   struct intel_context *intel = &brw->intel;
+   dri_bo *aper_array[] = {
+      intel->batch->buf,
+      brw->vs.state_bo,
+      brw->gs.state_bo,
+      brw->clip.state_bo,
+      brw->wm.state_bo,
+      brw->cc.state_bo,
+   };
+
+   if (dri_bufmgr_check_aperture_space(aper_array, ARRAY_SIZE(aper_array)))
+      intel_batchbuffer_flush(intel->batch);
+
    upload_pipelined_state_pointers(brw);
    brw_upload_urb_fence(brw);
    brw_upload_constant_buffer_state(brw);
@@ -154,22 +174,6 @@ const struct brw_tracked_state brw_psp_urb_cbs = {
    },
    .emit = upload_psp_urb_cbs,
 };
-
-/**
- * Upload the depthbuffer offset and format.
- *
- * We have to do this per state validation as we need to emit the relocation
- * in the batch buffer.
- */
-
-static int prepare_depthbuffer(struct brw_context *brw)
-{
-   struct intel_region *region = brw->state.depth_region;
-
-   if (!region || !region->buffer)
-      return 0;
-   return dri_bufmgr_check_aperture_space(region->buffer);
-}
 
 static void emit_depthbuffer(struct brw_context *brw)
 {
@@ -192,6 +196,10 @@ static void emit_depthbuffer(struct brw_context *brw)
       ADVANCE_BATCH();
    } else {
       unsigned int format;
+      dri_bo *aper_array[] = {
+	 intel->batch->buf,
+	 region->buffer
+      };
 
       switch (region->cpp) {
       case 2:
@@ -207,6 +215,9 @@ static void emit_depthbuffer(struct brw_context *brw)
 	 assert(0);
 	 return;
       }
+
+      if (dri_bufmgr_check_aperture_space(aper_array, ARRAY_SIZE(aper_array)))
+	 intel_batchbuffer_flush(intel->batch);
 
       BEGIN_BATCH(len, IGNORE_CLIPRECTS);
       OUT_BATCH(CMD_DEPTH_BUFFER << 16 | (len - 2));
@@ -236,7 +247,6 @@ const struct brw_tracked_state brw_depthbuffer = {
       .brw = BRW_NEW_DEPTH_BUFFER | BRW_NEW_BATCH,
       .cache = 0,
    },
-   .prepare = prepare_depthbuffer,
    .emit = emit_depthbuffer,
 };
 

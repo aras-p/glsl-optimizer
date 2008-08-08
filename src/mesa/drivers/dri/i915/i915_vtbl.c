@@ -297,9 +297,9 @@ i915_emit_state(struct intel_context *intel)
 {
    struct i915_context *i915 = i915_context(&intel->ctx);
    struct i915_hw_state *state = i915->current;
-   int i;
-   int ret, count;
+   int i, count, aper_count;
    GLuint dirty;
+   dri_bo *aper_array[3 + I915_TEX_UNITS];
    GET_CURRENT_CONTEXT(ctx);
    BATCH_LOCALS;
 
@@ -319,24 +319,27 @@ i915_emit_state(struct intel_context *intel)
 				   LOOP_CLIPRECTS);
    count = 0;
  again:
+   aper_count = 0;
    dirty = get_dirty(state);
 
-   ret = 0;
+   aper_array[aper_count++] = intel->batch->buf;
    if (dirty & I915_UPLOAD_BUFFERS) {
-     ret |= dri_bufmgr_check_aperture_space(state->draw_region->buffer);
-     if (state->depth_region)
-        ret |= dri_bufmgr_check_aperture_space(state->depth_region->buffer);
+      aper_array[aper_count++] = state->draw_region->buffer;
+      if (state->depth_region)
+	 aper_array[aper_count++] = state->depth_region->buffer;
    }
 
    if (dirty & I915_UPLOAD_TEX_ALL) {
-     for (i = 0; i < I915_TEX_UNITS; i++)
-       if (dirty & I915_UPLOAD_TEX(i)) {
-	   if (state->tex_buffer[i]) {
-	       ret |= dri_bufmgr_check_aperture_space(state->tex_buffer[i]);
-	   }
-       }
+      for (i = 0; i < I915_TEX_UNITS; i++) {
+	 if (dirty & I915_UPLOAD_TEX(i)) {
+	    if (state->tex_buffer[i]) {
+	       aper_array[aper_count++] = state->tex_buffer[i];
+	    }
+	 }
+      }
    }
-   if (ret) {
+
+   if (dri_bufmgr_check_aperture_space(aper_array, aper_count)) {
        if (count == 0) {
 	   count++;
 	   intel_batchbuffer_flush(intel->batch);

@@ -420,10 +420,12 @@ i830_emit_state(struct intel_context *intel)
 {
    struct i830_context *i830 = i830_context(&intel->ctx);
    struct i830_hw_state *state = i830->current;
-   int i, ret, count;
+   int i, count;
    GLuint dirty;
    GET_CURRENT_CONTEXT(ctx);
    BATCH_LOCALS;
+   dri_bo *aper_array[3 + I830_TEX_UNITS];
+   int aper_count;
 
    /* We don't hold the lock at this point, so want to make sure that
     * there won't be a buffer wrap between the state emits and the primitive
@@ -441,22 +443,23 @@ i830_emit_state(struct intel_context *intel)
 				   LOOP_CLIPRECTS);
    count = 0;
  again:
+   aper_count = 0;
    dirty = get_dirty(state);
 
-   ret = 0;
+   aper_array[aper_count++] = intel->batch->buf;
    if (dirty & I830_UPLOAD_BUFFERS) {
-     ret |= dri_bufmgr_check_aperture_space(state->draw_region->buffer);
-     ret |= dri_bufmgr_check_aperture_space(state->depth_region->buffer);
+      aper_array[aper_count++] = state->draw_region->buffer;
+      aper_array[aper_count++] = state->depth_region->buffer;
    }
-   
+
    for (i = 0; i < I830_TEX_UNITS; i++)
      if (dirty & I830_UPLOAD_TEX(i)) {
 	if (state->tex_buffer[i]) {
-	  ret |= dri_bufmgr_check_aperture_space(state->tex_buffer[i]);
+	   aper_array[aper_count++] = state->tex_buffer[i];
 	}
      }
 
-   if (ret) {
+   if (dri_bufmgr_check_aperture_space(aper_array, aper_count)) {
        if (count == 0) {
 	   count++;
 	   intel_batchbuffer_flush(intel->batch);
