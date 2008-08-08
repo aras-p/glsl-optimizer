@@ -37,7 +37,7 @@
 #include "macros.h"
 #include "enums.h"
 
-static int upload_cc_vp( struct brw_context *brw )
+static int prepare_cc_vp( struct brw_context *brw )
 {
    struct brw_cc_viewport ccv;
 
@@ -57,7 +57,7 @@ const struct brw_tracked_state brw_cc_vp = {
       .brw = BRW_NEW_CONTEXT,
       .cache = 0
    },
-   .prepare = upload_cc_vp
+   .prepare = prepare_cc_vp
 };
 
 struct brw_cc_unit_key {

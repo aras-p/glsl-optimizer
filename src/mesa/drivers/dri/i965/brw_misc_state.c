@@ -133,31 +133,12 @@ static void upload_pipelined_state_pointers(struct brw_context *brw )
    brw->state.dirty.brw |= BRW_NEW_PSP;
 }
 
-#if 0
-/* Combined into brw_psp_urb_cbs */
-const struct brw_tracked_state brw_pipelined_state_pointers = {
-   .dirty = {
-      .mesa = 0,
-      .brw = BRW_NEW_METAOPS | BRW_NEW_BATCH,
-      .cache = (CACHE_NEW_VS_UNIT | 
-		CACHE_NEW_GS_UNIT | 
-		CACHE_NEW_GS_PROG | 
-		CACHE_NEW_CLIP_UNIT | 
-		CACHE_NEW_SF_UNIT | 
-		CACHE_NEW_WM_UNIT | 
-		CACHE_NEW_CC_UNIT)
-   },
-   .emit = upload_pipelined_state_pointers
-};
-#endif
-
 static void upload_psp_urb_cbs(struct brw_context *brw )
 {
    upload_pipelined_state_pointers(brw);
    brw_upload_urb_fence(brw);
    brw_upload_constant_buffer_state(brw);
 }
-
 
 const struct brw_tracked_state brw_psp_urb_cbs = {
    .dirty = {
