@@ -193,6 +193,11 @@ i915_is_format_supported( struct pipe_screen *screen,
 static void
 i915_destroy_screen( struct pipe_screen *screen )
 {
+   struct pipe_winsys *winsys = screen->winsys;
+
+   if(winsys->destroy)
+      winsys->destroy(winsys);
+
    FREE(screen);
 }
 

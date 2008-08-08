@@ -75,6 +75,8 @@ struct pipe_screen;
  */
 struct i915_winsys {
 
+   void (*destroy)( struct i915_winsys *sws );
+   
    /**
     * Get the current batch buffer from the winsys.
     */

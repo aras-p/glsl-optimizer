@@ -62,6 +62,8 @@ struct pipe_surface;
  */
 struct pipe_winsys
 {
+   void (*destroy)( struct pipe_winsys *ws );
+
    /** Returns name of this winsys interface */
    const char *(*get_name)( struct pipe_winsys *ws );
 
