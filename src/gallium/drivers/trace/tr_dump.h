@@ -52,6 +52,7 @@ void trace_dump_bool(struct trace_stream *stream, int value);
 void trace_dump_int(struct trace_stream *stream, long int value);
 void trace_dump_uint(struct trace_stream *stream, long unsigned value);
 void trace_dump_float(struct trace_stream *stream, double value);
+void trace_dump_bytes(struct trace_stream *stream, const void *data, long unsigned size);
 void trace_dump_string(struct trace_stream *stream, const char *str);
 void trace_dump_enum(struct trace_stream *stream, const char *value);
 void trace_dump_array_begin(struct trace_stream *stream);

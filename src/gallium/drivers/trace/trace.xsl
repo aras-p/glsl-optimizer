@@ -100,6 +100,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 		</span>
 	</xsl:template>
 
+	<xsl:template match="bytes">
+		<span class="lit">
+			<xsl:text>...</xsl:text>
+		</span>
+	</xsl:template>
+
 	<xsl:template match="string">
 		<span class="lit">
 			<xsl:text>"</xsl:text>

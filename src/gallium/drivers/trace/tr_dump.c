@@ -272,6 +272,25 @@ void trace_dump_float(struct trace_stream *stream,
    trace_dump_writef(stream, "<float>%g</float>", value);
 }
 
+void trace_dump_bytes(struct trace_stream *stream, 
+                      const void *data,
+                      long unsigned size)
+{
+   static char hex_table[] = "0123456789ABCDE";
+   const uint8_t *p = data;
+   long unsigned i;
+   trace_dump_write(stream, "<bytes>");
+   for(i = 0; i < size; ++i) {
+      uint8_t byte = *p++;
+      char str[3];
+      str[0] = hex_table[byte >> 4];
+      str[1] = hex_table[byte & 0xf];
+      str[2] = 0;
+      trace_dump_write(stream, str);
+   }
+   trace_dump_write(stream, "</bytes>");
+}
+
 void trace_dump_string(struct trace_stream *stream, 
                        const char *str)
 {

@@ -51,23 +51,6 @@ void trace_dump_block(struct trace_stream *stream,
 }
 
 
-void trace_dump_buffer(struct trace_stream *stream, 
-                      const struct pipe_buffer *buffer)
-{
-   if(!buffer) {
-      trace_dump_null(stream);
-      return;
-   }
-   
-   trace_dump_struct_begin(stream, "pipe_buffer");
-   trace_dump_member(stream, uint, buffer, alignment);
-   trace_dump_member(stream, uint, buffer, usage);
-   trace_dump_member(stream, uint, buffer, size);
-   /* TODO: buffer data */
-   trace_dump_struct_end(stream);
-}
-
-
 void trace_dump_template(struct trace_stream *stream, 
                          const struct pipe_texture *templat)
 {
@@ -162,7 +145,11 @@ void trace_dump_poly_stipple(struct trace_stream *stream,
 
    trace_dump_struct_begin(stream, "pipe_poly_stipple");
 
-   trace_dump_member_array(stream, uint, state, stipple);
+   trace_dump_member_begin(stream, "stipple");
+   trace_dump_bytes(stream, 
+                    state->stipple, 
+                    sizeof(state->stipple));
+   trace_dump_member_end(stream);
    
    trace_dump_struct_end(stream);
 }
@@ -243,7 +230,7 @@ void trace_dump_constant_buffer(struct trace_stream *stream,
 
    trace_dump_struct_begin(stream, "pipe_constant_buffer");
 
-   trace_dump_member(stream, buffer, state, buffer);
+   trace_dump_member(stream, ptr, state, buffer);
    trace_dump_member(stream, uint, state, size);
 
    trace_dump_struct_end(stream);
@@ -253,21 +240,18 @@ void trace_dump_constant_buffer(struct trace_stream *stream,
 void trace_dump_shader_state(struct trace_stream *stream,
                              const struct pipe_shader_state *state)
 {
-   uint32_t *p = (uint32_t *)state->tokens;
-   unsigned n = tgsi_num_tokens(state->tokens);
-   
    assert(state);
    if(!state) {
       trace_dump_null(stream);
       return;
    }
 
-   assert(sizeof(struct tgsi_token) == 4);
-   
    trace_dump_struct_begin(stream, "pipe_shader_state");
 
    trace_dump_member_begin(stream, "tokens");
-   trace_dump_array(stream, uint, p, n);
+   trace_dump_bytes(stream, 
+                    state->tokens, 
+                    sizeof(struct tgsi_token) * tgsi_num_tokens(state->tokens));
    trace_dump_member_end(stream);
 
    trace_dump_struct_end(stream);
@@ -433,7 +417,7 @@ void trace_dump_surface(struct trace_stream *stream,
 
    trace_dump_struct_begin(stream, "pipe_surface");
 
-   trace_dump_member(stream, buffer, state, buffer);
+   trace_dump_member(stream, ptr, state, buffer);
    trace_dump_member(stream, format, state, format);
    trace_dump_member(stream, uint, state, status);
    trace_dump_member(stream, uint, state, clear_value);
@@ -475,7 +459,7 @@ void trace_dump_vertex_buffer(struct trace_stream *stream,
    trace_dump_member(stream, uint, state, pitch);
    trace_dump_member(stream, uint, state, max_index);
    trace_dump_member(stream, uint, state, buffer_offset);
-   trace_dump_member(stream, buffer, state, buffer);
+   trace_dump_member(stream, ptr, state, buffer);
 
    trace_dump_struct_end(stream);
 }
