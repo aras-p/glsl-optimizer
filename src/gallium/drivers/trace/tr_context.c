@@ -999,10 +999,13 @@ trace_context_destroy(struct pipe_context *_pipe)
 struct pipe_context *
 trace_context_create(struct pipe_context *pipe)
 {
+   struct trace_screen *tr_scr;
    struct trace_context *tr_ctx;
    
    if(!debug_get_bool_option("GALLIUM_TRACE", FALSE))
       return pipe;
+   
+   tr_scr = trace_screen(pipe->screen);
    
    tr_ctx = CALLOC_STRUCT(trace_context);
    if(!tr_ctx)
@@ -1054,6 +1057,9 @@ trace_context_create(struct pipe_context *pipe)
    tr_ctx->base.flush = trace_context_flush;
 
    tr_ctx->pipe = pipe;
+   
+   /* We don't want to trace the pipe calls */
+   pipe->screen = tr_scr->screen;
    
    return &tr_ctx->base;
 }
