@@ -37,7 +37,7 @@
 #include "macros.h"
 #include "enums.h"
 
-static int upload_cc_vp( struct brw_context *brw )
+static void prepare_cc_vp( struct brw_context *brw )
 {
    struct brw_cc_viewport ccv;
 
@@ -48,7 +48,6 @@ static int upload_cc_vp( struct brw_context *brw )
 
    dri_bo_unreference(brw->cc.vp_bo);
    brw->cc.vp_bo = brw_cache_data( &brw->cache, BRW_CC_VP, &ccv, NULL, 0 );
-   return dri_bufmgr_check_aperture_space(brw->cc.vp_bo);
 }
 
 const struct brw_tracked_state brw_cc_vp = {
@@ -57,7 +56,7 @@ const struct brw_tracked_state brw_cc_vp = {
       .brw = BRW_NEW_CONTEXT,
       .cache = 0
    },
-   .prepare = upload_cc_vp
+   .prepare = prepare_cc_vp
 };
 
 struct brw_cc_unit_key {
@@ -256,16 +255,17 @@ cc_unit_create_from_key(struct brw_context *brw, struct brw_cc_unit_key *key)
 			 NULL, NULL);
 
    /* Emit CC viewport relocation */
-   dri_emit_reloc(bo,
-		  DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ,
-		  0,
-		  offsetof(struct brw_cc_unit_state, cc4),
-		  brw->cc.vp_bo);
+   intel_bo_emit_reloc(bo,
+		       I915_GEM_DOMAIN_INSTRUCTION,
+		       0,
+		       0,
+		       offsetof(struct brw_cc_unit_state, cc4),
+		       brw->cc.vp_bo);
 
    return bo;
 }
 
-static int prepare_cc_unit( struct brw_context *brw )
+static void prepare_cc_unit( struct brw_context *brw )
 {
    struct brw_cc_unit_key key;
 
@@ -279,7 +279,6 @@ static int prepare_cc_unit( struct brw_context *brw )
 
    if (brw->cc.state_bo == NULL)
       brw->cc.state_bo = cc_unit_create_from_key(brw, &key);
-   return dri_bufmgr_check_aperture_space(brw->cc.state_bo);
 }
 
 const struct brw_tracked_state brw_cc_unit = {

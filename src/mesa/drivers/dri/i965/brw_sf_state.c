@@ -37,7 +37,7 @@
 #include "macros.h"
 #include "intel_fbo.h"
 
-static int upload_sf_vp(struct brw_context *brw)
+static void upload_sf_vp(struct brw_context *brw)
 {
    GLcontext *ctx = &brw->intel.ctx;
    const GLfloat depth_scale = 1.0F / ctx->DrawBuffer->_DepthMaxF;
@@ -98,8 +98,6 @@ static int upload_sf_vp(struct brw_context *brw)
 
    dri_bo_unreference(brw->sf.vp_bo);
    brw->sf.vp_bo = brw_cache_data( &brw->cache, BRW_SF_VP, &sfv, NULL, 0 );
-
-   return dri_bufmgr_check_aperture_space(brw->sf.vp_bo);
 }
 
 const struct brw_tracked_state brw_sf_vp = {
@@ -253,27 +251,26 @@ sf_unit_create_from_key(struct brw_context *brw, struct brw_sf_unit_key *key,
 			 NULL, NULL);
 
    /* Emit SF program relocation */
-   dri_emit_reloc(bo,
-		  DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ,
-		  sf.thread0.grf_reg_count << 1,
-		  offsetof(struct brw_sf_unit_state, thread0),
-		  brw->sf.prog_bo);
+   intel_bo_emit_reloc(bo,
+		       I915_GEM_DOMAIN_INSTRUCTION, 0,
+		       sf.thread0.grf_reg_count << 1,
+		       offsetof(struct brw_sf_unit_state, thread0),
+		       brw->sf.prog_bo);
 
    /* Emit SF viewport relocation */
-   dri_emit_reloc(bo,
-		  DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ,
-		  sf.sf5.front_winding | (sf.sf5.viewport_transform << 1),
-		  offsetof(struct brw_sf_unit_state, sf5),
-		  brw->sf.vp_bo);
+   intel_bo_emit_reloc(bo,
+		       I915_GEM_DOMAIN_INSTRUCTION, 0,
+		       sf.sf5.front_winding | (sf.sf5.viewport_transform << 1),
+		       offsetof(struct brw_sf_unit_state, sf5),
+		       brw->sf.vp_bo);
 
    return bo;
 }
 
-static int upload_sf_unit( struct brw_context *brw )
+static void upload_sf_unit( struct brw_context *brw )
 {
    struct brw_sf_unit_key key;
    dri_bo *reloc_bufs[2];
-   int ret = 0;
 
    sf_unit_populate_key(brw, &key);
 
@@ -288,15 +285,6 @@ static int upload_sf_unit( struct brw_context *brw )
    if (brw->sf.state_bo == NULL) {
       brw->sf.state_bo = sf_unit_create_from_key(brw, &key, reloc_bufs);
    }
-
-   if (reloc_bufs[0])
-     ret |= dri_bufmgr_check_aperture_space(reloc_bufs[0]);
-
-   if (reloc_bufs[1])
-     ret |= dri_bufmgr_check_aperture_space(reloc_bufs[1]);
-
-   ret |= dri_bufmgr_check_aperture_space(brw->sf.state_bo);
-   return ret;
 }
 
 const struct brw_tracked_state brw_sf_unit = {

@@ -4,6 +4,7 @@
 #include "mtypes.h"
 
 #include "dri_bufmgr.h"
+#include "intel_reg.h"
 
 struct intel_context;
 
@@ -40,7 +41,8 @@ struct intel_batchbuffer
    struct intel_context *intel;
 
    dri_bo *buf;
-   dri_fence *last_fence;
+
+   GLubyte *buffer;
 
    GLubyte *map;
    GLubyte *ptr;
@@ -57,8 +59,6 @@ struct intel_batchbuffer *intel_batchbuffer_alloc(struct intel_context
 
 void intel_batchbuffer_free(struct intel_batchbuffer *batch);
 
-
-void intel_batchbuffer_finish(struct intel_batchbuffer *batch);
 
 void _intel_batchbuffer_flush(struct intel_batchbuffer *batch,
 			      const char *file, int line);
@@ -82,14 +82,16 @@ void intel_batchbuffer_release_space(struct intel_batchbuffer *batch,
 
 GLboolean intel_batchbuffer_emit_reloc(struct intel_batchbuffer *batch,
                                        dri_bo *buffer,
-                                       GLuint flags, GLuint offset);
+				       uint32_t read_domains,
+				       uint32_t write_domain,
+				       uint32_t offset);
 
 /* Inline functions - might actually be better off with these
  * non-inlined.  Certainly better off switching all command packets to
  * be passed as structs rather than dwords, but that's a little bit of
  * work...
  */
-static INLINE GLuint
+static INLINE GLint
 intel_batchbuffer_space(struct intel_batchbuffer *batch)
 {
    return (batch->size - BATCH_RESERVED) - (batch->ptr - batch->map);
@@ -136,12 +138,20 @@ intel_batchbuffer_require_space(struct intel_batchbuffer *batch,
 
 #define OUT_BATCH(d)  intel_batchbuffer_emit_dword(intel->batch, d)
 
-#define OUT_RELOC(buf, cliprect_mode, delta) do { 			\
+#define OUT_RELOC(buf, read_domains, write_domain, delta) do {		\
    assert((delta) >= 0);						\
-   intel_batchbuffer_emit_reloc(intel->batch, buf, cliprect_mode, delta); \
+   intel_batchbuffer_emit_reloc(intel->batch, buf,			\
+				read_domains, write_domain, delta);	\
 } while (0)
 
 #define ADVANCE_BATCH() do { } while(0)
 
+
+static INLINE void
+intel_batchbuffer_emit_mi_flush(struct intel_batchbuffer *batch)
+{
+   intel_batchbuffer_require_space(batch, 4, IGNORE_CLIPRECTS);
+   intel_batchbuffer_emit_dword(batch, MI_FLUSH);
+}
 
 #endif

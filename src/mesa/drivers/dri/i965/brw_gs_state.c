@@ -106,17 +106,17 @@ gs_unit_create_from_key(struct brw_context *brw, struct brw_gs_unit_key *key)
 
    if (key->prog_active) {
       /* Emit GS program relocation */
-      dri_emit_reloc(bo,
-		     DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ,
-		     gs.thread0.grf_reg_count << 1,
-		     offsetof(struct brw_gs_unit_state, thread0),
-		     brw->gs.prog_bo);
+      intel_bo_emit_reloc(bo,
+			  I915_GEM_DOMAIN_INSTRUCTION, 0,
+			  gs.thread0.grf_reg_count << 1,
+			  offsetof(struct brw_gs_unit_state, thread0),
+			  brw->gs.prog_bo);
    }
 
    return bo;
 }
 
-static int prepare_gs_unit( struct brw_context *brw )
+static void prepare_gs_unit(struct brw_context *brw)
 {
    struct brw_gs_unit_key key;
 
@@ -130,7 +130,6 @@ static int prepare_gs_unit( struct brw_context *brw )
    if (brw->gs.state_bo == NULL) {
       brw->gs.state_bo = gs_unit_create_from_key(brw, &key);
    }
-   return dri_bufmgr_check_aperture_space(brw->gs.state_bo);
 }
 
 const struct brw_tracked_state brw_gs_unit = {

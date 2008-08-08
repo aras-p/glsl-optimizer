@@ -28,9 +28,9 @@
 #ifndef INTEL_FBO_H
 #define INTEL_FBO_H
 
+#include "intel_screen.h"
 
 struct intel_context;
-struct intel_region;
 
 /**
  * Intel framebuffer, derived from gl_framebuffer.
@@ -70,7 +70,6 @@ struct intel_renderbuffer
 {
    struct gl_renderbuffer Base;
    struct intel_region *region;
-   void *pfMap;                 /* possibly paged flipped map pointer */
    GLuint pfPitch;              /* possibly paged flipped pitch */
    GLboolean RenderToTexture;   /* RTT? */
 
@@ -80,6 +79,9 @@ struct intel_renderbuffer
    GLuint pf_pending;  /**< sequence number of pending flip */
 
    GLuint vbl_pending;   /**< vblank sequence number of pending flip */
+
+   uint8_t *span_cache;
+   unsigned long span_cache_offset;
 };
 
 extern struct intel_renderbuffer *intel_renderbuffer(struct gl_renderbuffer

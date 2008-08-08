@@ -81,7 +81,8 @@ do_texture_drawpixels(GLcontext * ctx,
    else {
       /* PBO only for now:
        */
-/*       _mesa_printf("%s - not PBO\n", __FUNCTION__); */
+      if (INTEL_DEBUG & DEBUG_PIXEL)
+	 _mesa_printf("%s - not PBO\n", __FUNCTION__);
       return GL_FALSE;
    }
 
@@ -180,7 +181,7 @@ do_texture_drawpixels(GLcontext * ctx,
 				 srcx, srcx + width, srcy + height, srcy);
     out:
       intel->vtbl.leave_meta_state(intel);
-      intel_batchbuffer_flush(intel->batch);
+      intel_batchbuffer_emit_mi_flush(intel->batch);
    }
    UNLOCK_HARDWARE(intel);
    return GL_TRUE;
@@ -218,7 +219,6 @@ do_blit_drawpixels(GLcontext * ctx,
    struct intel_buffer_object *src = intel_buffer_object(unpack->BufferObj);
    GLuint src_offset;
    GLuint rowLength;
-   dri_fence *fence = NULL;
 
    if (INTEL_DEBUG & DEBUG_PIXEL)
       _mesa_printf("%s\n", __FUNCTION__);
@@ -314,7 +314,7 @@ do_blit_drawpixels(GLcontext * ctx,
          intelEmitCopyBlit(intel,
                            dest->cpp,
                            rowLength, src_buffer, src_offset, GL_FALSE,
-                           dest->pitch, dest->buffer, 0, dest->tiled,
+                           dest->pitch, dest->buffer, 0, dest->tiling,
                            rect.x1 - dest_rect.x1,
                            rect.y2 - dest_rect.y2,
                            rect.x1,
@@ -322,16 +322,8 @@ do_blit_drawpixels(GLcontext * ctx,
 			   ctx->Color.ColorLogicOpEnabled ?
 			   ctx->Color.LogicOp : GL_COPY);
       }
-      intel_batchbuffer_flush(intel->batch);
-      fence = intel->batch->last_fence;
-      dri_fence_reference(fence);
    }
    UNLOCK_HARDWARE(intel);
-
-   if (fence) {
-      dri_fence_wait(fence);
-      dri_fence_unreference(fence);
-   }
 
    if (INTEL_DEBUG & DEBUG_PIXEL)
       _mesa_printf("%s - DONE\n", __FUNCTION__);

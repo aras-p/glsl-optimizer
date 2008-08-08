@@ -135,6 +135,8 @@ struct brw_context;
 #define BRW_NEW_METAOPS                 0x1000
 #define BRW_NEW_FENCE                   0x2000
 #define BRW_NEW_LOCK                    0x4000
+#define BRW_NEW_INDICES			0x8000
+#define BRW_NEW_VERTICES		0x10000
 /**
  * Used for any batch entry with a relocated pointer that will be used
  * by any 3D rendering.
@@ -332,7 +334,7 @@ struct brw_state_pointers {
  */
 struct brw_tracked_state {
    struct brw_state_flags dirty;
-   int (*prepare)( struct brw_context *brw );
+   void (*prepare)( struct brw_context *brw );
    void (*emit)( struct brw_context *brw );
 };
 
@@ -450,7 +452,20 @@ struct brw_context
        * for changes to this state:
        */
       struct brw_vertex_info info;
+      unsigned int min_index, max_index;
    } vb;
+
+   struct {
+      /**
+       * Index buffer for this draw_prims call.
+       *
+       * Updates are signaled by BRW_NEW_INDICES.
+       */
+      const struct _mesa_index_buffer *ib;
+
+      dri_bo *bo;
+      unsigned int offset;
+   } ib;
 
    struct {
       /* Will be allocated on demand if needed.   
@@ -641,7 +656,7 @@ GLboolean brwCreateContext( const __GLcontextModes *mesaVis,
 /*======================================================================
  * brw_state.c
  */
-int brw_validate_state( struct brw_context *brw );
+void brw_validate_state( struct brw_context *brw );
 void brw_init_state( struct brw_context *brw );
 void brw_destroy_state( struct brw_context *brw );
 

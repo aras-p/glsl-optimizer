@@ -119,19 +119,19 @@ clip_unit_create_from_key(struct brw_context *brw,
 
    /* Emit clip program relocation */
    assert(brw->clip.prog_bo);
-   dri_emit_reloc(bo,
-		  DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ,
-		  clip.thread0.grf_reg_count << 1,
-		  offsetof(struct brw_clip_unit_state, thread0),
-		  brw->clip.prog_bo);
+   intel_bo_emit_reloc(bo,
+		       I915_GEM_DOMAIN_INSTRUCTION,
+		       0,
+		       clip.thread0.grf_reg_count << 1,
+		       offsetof(struct brw_clip_unit_state, thread0),
+		       brw->clip.prog_bo);
 
    return bo;
 }
 
-static int upload_clip_unit( struct brw_context *brw )
+static void upload_clip_unit( struct brw_context *brw )
 {
    struct brw_clip_unit_key key;
-   int ret = 0;
 
    clip_unit_populate_key(brw, &key);
 
@@ -143,9 +143,6 @@ static int upload_clip_unit( struct brw_context *brw )
    if (brw->clip.state_bo == NULL) {
       brw->clip.state_bo = clip_unit_create_from_key(brw, &key);
    }
-
-   ret = dri_bufmgr_check_aperture_space(brw->clip.state_bo);
-   return ret;
 }
 
 const struct brw_tracked_state brw_clip_unit = {

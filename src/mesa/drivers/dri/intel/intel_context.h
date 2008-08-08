@@ -35,6 +35,7 @@
 #include "mm.h"
 #include "texmem.h"
 #include "dri_bufmgr.h"
+#include "intel_bufmgr.h"
 
 #include "intel_screen.h"
 #include "intel_tex_obj.h"
@@ -85,6 +86,7 @@ struct intel_context
    {
       void (*destroy) (struct intel_context * intel);
       void (*emit_state) (struct intel_context * intel);
+      void (*finish_batch) (struct intel_context * intel);
       void (*new_batch) (struct intel_context * intel);
       void (*emit_invarient_state) (struct intel_context * intel);
       void (*note_fence) (struct intel_context *intel, GLuint fence);
@@ -174,9 +176,6 @@ struct intel_context
     */
    GLboolean ttm;
 
-   dri_fence *last_swap_fence;
-   dri_fence *first_swap_fence;
-
    struct intel_batchbuffer *batch;
    GLboolean no_batch_wrap;
    unsigned batch_id;
@@ -184,9 +183,13 @@ struct intel_context
    struct
    {
       GLuint id;
-      GLuint primitive;
-      GLubyte *start_ptr;
+      uint32_t primitive;	/**< Current hardware primitive type */
       void (*flush) (struct intel_context *);
+      dri_bo *vb_bo;
+      uint8_t *vb;
+      unsigned int start_offset; /**< Byte offset of primitive sequence */
+      unsigned int current_offset; /**< Byte offset of next vertex */
+      unsigned int count;	/**< Number of vertices in current primitive */
    } prim;
 
    GLuint stats_wm;
@@ -291,6 +294,7 @@ extern char *__progname;
 #define SUBPIXEL_X 0.125
 #define SUBPIXEL_Y 0.125
 
+#define ARRAY_SIZE(x) (sizeof(x) / sizeof(x[0]))
 #define ALIGN(value, alignment)  ((value + alignment - 1) & ~(alignment - 1))
 
 #define INTEL_FIREVERTICES(intel)		\

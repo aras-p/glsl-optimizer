@@ -28,6 +28,12 @@
 #ifndef INTEL_REGIONS_H
 #define INTEL_REGIONS_H
 
+/** @file intel_regions.h
+ *
+ * Structure definitions and prototypes for intel_region handling, which is
+ * the basic structure for rectangular collections of pixels stored in a dri_bo.
+ */
+
 #include "mtypes.h"
 #include "dri_bufmgr.h"
 
@@ -53,8 +59,9 @@ struct intel_region
    GLuint map_refcount;  /**< Reference count for mapping */
 
    GLuint draw_offset; /**< Offset of drawing address within the region */
-   GLboolean tiled; /**< True if the region is X or Y-tiled.  Used on 965. */
-
+   uint32_t tiling; /**< Which tiling mode the region is in */
+   uint32_t bit_6_swizzle; /**< GEM flag for address swizzling requirement */
+   drmAddress classic_map; /**< drmMap of the region when not in GEM mode */
    struct intel_buffer_object *pbo;     /* zero-copy uploads */
 };
 
@@ -69,7 +76,7 @@ struct intel_region *intel_region_alloc(struct intel_context *intel,
 struct intel_region *
 intel_region_alloc_for_handle(struct intel_context *intel,
 			      GLuint cpp, GLuint pitch, GLuint height,
-			      GLuint tiled, unsigned int handle);
+			      unsigned int handle);
 
 void intel_region_reference(struct intel_region **dst,
                             struct intel_region *src);

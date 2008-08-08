@@ -183,9 +183,10 @@ decode_2d(uint32_t *data, int count, uint32_t hw_offset, int *failures)
     switch ((data[0] & 0x1fc00000) >> 22) {
     case 0x50:
 	instr_out(data, hw_offset, 0,
-		  "XY_COLOR_BLT (rgb %sabled, alpha %sabled)\n",
+		  "XY_COLOR_BLT (rgb %sabled, alpha %sabled, dst tile %d)\n",
 		  (data[0] & (1 << 20)) ? "en" : "dis",
-		  (data[0] & (1 << 21)) ? "en" : "dis");
+		  (data[0] & (1 << 21)) ? "en" : "dis",
+		  (data[0] >> 11) & 1);
 
 	len = (data[0] & 0x000000ff) + 2;
 	if (len != 6)
@@ -210,7 +211,8 @@ decode_2d(uint32_t *data, int count, uint32_t hw_offset, int *failures)
 
 	instr_out(data, hw_offset, 1, "format %s, pitch %d, "
 		  "clipping %sabled\n", format,
-		  data[1] & 0xffff, data[1] & (1 << 30) ? "en" : "dis");
+		  (short)(data[1] & 0xffff),
+		  data[1] & (1 << 30) ? "en" : "dis");
 	instr_out(data, hw_offset, 2, "(%d,%d)\n",
 		  data[2] & 0xffff, data[2] >> 16);
 	instr_out(data, hw_offset, 3, "(%d,%d)\n",
@@ -220,9 +222,12 @@ decode_2d(uint32_t *data, int count, uint32_t hw_offset, int *failures)
 	return len;
     case 0x53:
 	instr_out(data, hw_offset, 0,
-		  "XY_SRC_COPY_BLT (rgb %sabled, alpha %sabled)\n",
+		  "XY_SRC_COPY_BLT (rgb %sabled, alpha %sabled, "
+		  "src tile %d, dst tile %d)\n",
 		  (data[0] & (1 << 20)) ? "en" : "dis",
-		  (data[0] & (1 << 21)) ? "en" : "dis");
+		  (data[0] & (1 << 21)) ? "en" : "dis",
+		  (data[0] >> 15) & 1,
+		  (data[0] >> 11) & 1);
 
 	len = (data[0] & 0x000000ff) + 2;
 	if (len != 8)
@@ -247,16 +252,17 @@ decode_2d(uint32_t *data, int count, uint32_t hw_offset, int *failures)
 
 	instr_out(data, hw_offset, 1, "format %s, dst pitch %d, "
 		  "clipping %sabled\n", format,
-		  data[1] & 0xffff, data[1] & (1 << 30) ? "en" : "dis");
+		  (short)(data[1] & 0xffff),
+		  data[1] & (1 << 30) ? "en" : "dis");
 	instr_out(data, hw_offset, 2, "dst (%d,%d)\n",
 		  data[2] & 0xffff, data[2] >> 16);
 	instr_out(data, hw_offset, 3, "dst (%d,%d)\n",
-		  data[2] & 0xffff, data[2] >> 16);
+		  data[3] & 0xffff, data[3] >> 16);
 	instr_out(data, hw_offset, 4, "dst offset 0x%08x\n", data[4]);
 	instr_out(data, hw_offset, 5, "src (%d,%d)\n",
 		  data[5] & 0xffff, data[5] >> 16);
 	instr_out(data, hw_offset, 6, "src pitch %d\n",
-		  data[6] & 0xffff);
+		  (short)(data[6] & 0xffff));
 	instr_out(data, hw_offset, 7, "src offset 0x%08x\n", data[7]);
 	return len;
     }

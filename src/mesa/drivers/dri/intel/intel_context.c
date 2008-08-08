@@ -59,7 +59,7 @@
 #include "intel_buffer_objects.h"
 #include "intel_fbo.h"
 #include "intel_decode.h"
-#include "intel_bufmgr_ttm.h"
+#include "intel_bufmgr.h"
 
 #include "drirenderbuffer.h"
 #include "vblank.h"
@@ -96,11 +96,13 @@ int INTEL_DEBUG = (0);
 
 #include "extension_helper.h"
 
-#define DRIVER_DATE                     "20061102"
+#define DRIVER_DATE                     "20080716"
+#define DRIVER_DATE_GEM                 "GEM " DRIVER_DATE
 
 static const GLubyte *
 intelGetString(GLcontext * ctx, GLenum name)
 {
+   const struct intel_context *const intel = intel_context(ctx);
    const char *chipset;
    static char buffer[128];
 
@@ -110,7 +112,7 @@ intelGetString(GLcontext * ctx, GLenum name)
       break;
 
    case GL_RENDERER:
-      switch (intel_context(ctx)->intelScreen->deviceID) {
+      switch (intel->intelScreen->deviceID) {
       case PCI_CHIP_845_G:
          chipset = "Intel(R) 845G";
          break;
@@ -183,7 +185,9 @@ intelGetString(GLcontext * ctx, GLenum name)
          break;
       }
 
-      (void) driGetRendererString(buffer, chipset, DRIVER_DATE, 0);
+      (void) driGetRendererString(buffer, chipset, 
+				  (intel->ttm) ? DRIVER_DATE_GEM : DRIVER_DATE,
+				  0);
       return (GLubyte *) buffer;
 
    default:
@@ -366,22 +370,34 @@ intelFlush(GLcontext * ctx)
    if (!IS_965(intel->intelScreen->deviceID))
       INTEL_FIREVERTICES(intel);
 
+   /* Emit a flush so that any frontbuffer rendering that might have occurred
+    * lands onscreen in a timely manner, even if the X Server doesn't trigger
+    * a flush for us.
+    */
+   intel_batchbuffer_emit_mi_flush(intel->batch);
+
    if (intel->batch->map != intel->batch->ptr)
       intel_batchbuffer_flush(intel->batch);
-
-   /* XXX: Need to do an MI_FLUSH here.
-    */
 }
 
 void
 intelFinish(GLcontext * ctx)
 {
-   struct intel_context *intel = intel_context(ctx);
+   struct gl_framebuffer *fb = ctx->DrawBuffer;
+   int i;
+
    intelFlush(ctx);
-   if (intel->batch->last_fence) {
-      dri_fence_wait(intel->batch->last_fence);
-      dri_fence_unreference(intel->batch->last_fence);
-      intel->batch->last_fence = NULL;
+
+   for (i = 0; i < fb->_NumColorDrawBuffers; i++) {
+       struct intel_renderbuffer *irb;
+
+       irb = intel_renderbuffer(fb->_ColorDrawBuffers[i]);
+
+       if (irb->region)
+	  dri_bo_wait_rendering(irb->region->buffer);
+   }
+   if (fb->_DepthBuffer) {
+      /* XXX: Wait on buffer idle */
    }
 }
 
@@ -447,28 +463,32 @@ static GLboolean
 intel_init_bufmgr(struct intel_context *intel)
 {
    intelScreenPrivate *intelScreen = intel->intelScreen;
-   GLboolean ttm_disable = getenv("INTEL_NO_TTM") != NULL;
-   GLboolean ttm_supported;
+   GLboolean gem_disable = getenv("INTEL_NO_GEM") != NULL;
+   int gem_kernel = 0;
+   GLboolean gem_supported;
+   struct drm_i915_getparam gp;
 
-   /* If we've got a new enough DDX that's initializing TTM and giving us
+   gp.param = I915_PARAM_HAS_GEM;
+   gp.value = &gem_kernel;
+
+   (void) drmCommandWriteRead(intel->driFd, DRM_I915_GETPARAM, &gp, sizeof(gp));
+
+   /* If we've got a new enough DDX that's initializing GEM and giving us
     * object handles for the shared buffers, use that.
     */
    intel->ttm = GL_FALSE;
    if (intel->intelScreen->driScrnPriv->dri2.enabled)
-       ttm_supported = GL_TRUE;
+       gem_supported = GL_TRUE;
    else if (intel->intelScreen->driScrnPriv->ddx_version.minor >= 9 &&
-	    intel->intelScreen->drmMinor >= 11 &&
+	    gem_kernel &&
 	    intel->intelScreen->front.bo_handle != -1)
-       ttm_supported = GL_TRUE;
+       gem_supported = GL_TRUE;
    else
-       ttm_supported = GL_FALSE;
+       gem_supported = GL_FALSE;
 
-   if (!ttm_disable && ttm_supported) {
+   if (!gem_disable && gem_supported) {
       int bo_reuse_mode;
-      intel->bufmgr = intel_bufmgr_ttm_init(intel->driFd,
-					    DRM_FENCE_TYPE_EXE,
-					    DRM_FENCE_TYPE_EXE |
-					    DRM_I915_FENCE_TYPE_RW,
+      intel->bufmgr = intel_bufmgr_gem_init(intel->driFd,
 					    BATCH_SZ);
       if (intel->bufmgr != NULL)
 	 intel->ttm = GL_TRUE;
@@ -478,16 +498,16 @@ intel_init_bufmgr(struct intel_context *intel)
       case DRI_CONF_BO_REUSE_DISABLED:
 	 break;
       case DRI_CONF_BO_REUSE_ALL:
-	 intel_ttm_enable_bo_reuse(intel->bufmgr);
+	 intel_bufmgr_gem_enable_reuse(intel->bufmgr);
 	 break;
       }
    }
    /* Otherwise, use the classic buffer manager. */
    if (intel->bufmgr == NULL) {
-      if (ttm_disable) {
-	 fprintf(stderr, "TTM buffer manager disabled.  Using classic.\n");
+      if (gem_disable) {
+	 fprintf(stderr, "GEM disabled.  Using classic.\n");
       } else {
-	 fprintf(stderr, "Failed to initialize TTM buffer manager.  "
+	 fprintf(stderr, "Failed to initialize GEM.  "
 		 "Falling back to classic.\n");
       }
 
@@ -497,13 +517,16 @@ intel_init_bufmgr(struct intel_context *intel)
 	 return GL_FALSE;
       }
 
-      intel->bufmgr = dri_bufmgr_fake_init(intelScreen->tex.offset,
-					   intelScreen->tex.map,
-					   intelScreen->tex.size,
-					   intel_fence_emit,
-					   intel_fence_wait,
-					   intel);
+      intel->bufmgr = intel_bufmgr_fake_init(intelScreen->tex.offset,
+					     intelScreen->tex.map,
+					     intelScreen->tex.size,
+					     intel_fence_emit,
+					     intel_fence_wait,
+					     intel);
    }
+
+   /* XXX bufmgr should be per-screen, not per-context */
+   intelScreen->ttm = intel->ttm;
 
    return GL_TRUE;
 }
@@ -672,8 +695,6 @@ intelInitContext(struct intel_context *intel,
       intel_recreate_static_regions(intel);
 
    intel->batch = intel_batchbuffer_alloc(intel);
-   intel->last_swap_fence = NULL;
-   intel->first_swap_fence = NULL;
 
    intel_bufferobj_init(intel);
    intel_fbo_init(intel);
@@ -691,7 +712,6 @@ intelInitContext(struct intel_context *intel,
    /* Force all software fallbacks */
    if (driQueryOptionb(&intel->optionCache, "no_rast")) {
       fprintf(stderr, "disabling 3D rasterization\n");
-      FALLBACK(intel, INTEL_FALLBACK_USER, 1);
       intel->no_rast = 1;
    }
 
@@ -726,17 +746,7 @@ intelDestroyContext(__DRIcontextPrivate * driContextPriv)
       intel->Fallback = 0;      /* don't call _swrast_Flush later */
 
       intel_batchbuffer_free(intel->batch);
-
-      if (intel->last_swap_fence) {
-	 dri_fence_wait(intel->last_swap_fence);
-	 dri_fence_unreference(intel->last_swap_fence);
-	 intel->last_swap_fence = NULL;
-      }
-      if (intel->first_swap_fence) {
-	 dri_fence_wait(intel->first_swap_fence);
-	 dri_fence_unreference(intel->first_swap_fence);
-	 intel->first_swap_fence = NULL;
-      }
+      free(intel->prim.vb);
 
       if (release_texture_heaps) {
          /* This share group is about to go away, free our private
@@ -888,7 +898,7 @@ intelContendedLock(struct intel_context *intel, GLuint flags)
     */
    if (!intel->ttm && sarea->texAge != intel->hHWContext) {
       sarea->texAge = intel->hHWContext;
-      dri_bufmgr_fake_contended_lock_take(intel->bufmgr);
+      intel_bufmgr_fake_contended_lock_take(intel->bufmgr);
       if (INTEL_DEBUG & DEBUG_BATCH)
 	 intel_decode_context_reset();
       if (INTEL_DEBUG & DEBUG_BUFMGR)
@@ -1016,6 +1026,7 @@ void UNLOCK_HARDWARE( struct intel_context *intel )
     * Nothing should be left in batch outside of LOCK/UNLOCK which references
     * cliprects.
     */
-   assert(intel->batch->cliprect_mode != REFERENCES_CLIPRECTS);
+   if (intel->batch->cliprect_mode == REFERENCES_CLIPRECTS)
+      intel_batchbuffer_flush(intel->batch);
 }
 

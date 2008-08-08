@@ -131,7 +131,7 @@ static void compile_clip_prog( struct brw_context *brw,
 
 /* Calculate interpolants for triangle and line rasterization.
  */
-static int upload_clip_prog( struct brw_context *brw )
+static void upload_clip_prog(struct brw_context *brw)
 {
    GLcontext *ctx = &brw->intel.ctx;
    struct brw_clip_prog_key key;
@@ -242,8 +242,6 @@ static int upload_clip_prog( struct brw_context *brw )
 					&brw->clip.prog_data);
    if (brw->clip.prog_bo == NULL)
       compile_clip_prog( brw, &key );
-
-   return dri_bufmgr_check_aperture_space(brw->clip.prog_bo);
 }
 
 
