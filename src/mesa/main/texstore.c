@@ -1160,7 +1160,8 @@ _mesa_texstore_z32(TEXSTORE_PARAMS)
    ASSERT(dstFormat == &_mesa_texformat_z32);
    ASSERT(dstFormat->TexelBytes == sizeof(GLuint));
 
-   if (!ctx->_ImageTransferState &&
+   if (ctx->Pixel.DepthScale == 1.0f &&
+       ctx->Pixel.DepthBias == 0.0f &&
        !srcPacking->SwapBytes &&
        baseInternalFormat == GL_DEPTH_COMPONENT &&
        srcFormat == GL_DEPTH_COMPONENT &&
@@ -1207,7 +1208,8 @@ _mesa_texstore_z16(TEXSTORE_PARAMS)
    ASSERT(dstFormat == &_mesa_texformat_z16);
    ASSERT(dstFormat->TexelBytes == sizeof(GLushort));
 
-   if (!ctx->_ImageTransferState &&
+   if (ctx->Pixel.DepthScale == 1.0f &&
+       ctx->Pixel.DepthBias == 0.0f &&
        !srcPacking->SwapBytes &&
        baseInternalFormat == GL_DEPTH_COMPONENT &&
        srcFormat == GL_DEPTH_COMPONENT &&
@@ -2405,7 +2407,8 @@ _mesa_texstore_z24_s8(TEXSTORE_PARAMS)
    ASSERT(srcFormat == GL_DEPTH_STENCIL_EXT);
    ASSERT(srcType == GL_UNSIGNED_INT_24_8_EXT);
 
-   if (!ctx->_ImageTransferState &&
+   if (ctx->Pixel.DepthScale == 1.0f &&
+       ctx->Pixel.DepthBias == 0.0f &&
        !srcPacking->SwapBytes) {
       /* simple path */
       memcpy_texture(ctx, dims,
@@ -2476,7 +2479,7 @@ _mesa_texstore_s8_z24(TEXSTORE_PARAMS)
    ASSERT(srcFormat == GL_DEPTH_STENCIL_EXT || srcFormat == GL_DEPTH_COMPONENT);
    ASSERT(srcFormat != GL_DEPTH_STENCIL_EXT || srcType == GL_UNSIGNED_INT_24_8_EXT);
 
-   /* Incase we only upload depth we need to preserve the stencil */
+   /* In case we only upload depth we need to preserve the stencil */
    if (srcFormat == GL_DEPTH_COMPONENT) {
       for (img = 0; img < srcDepth; img++) {
          GLuint *dstRow = (GLuint *) dstAddr
@@ -2504,7 +2507,8 @@ _mesa_texstore_s8_z24(TEXSTORE_PARAMS)
             dstRow += dstRowStride / sizeof(GLuint);
          }
       }
-   } else {
+   }
+   else {
       for (img = 0; img < srcDepth; img++) {
          GLuint *dstRow = (GLuint *) dstAddr
             + dstImageOffsets[dstZoffset + img]
