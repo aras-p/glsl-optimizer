@@ -176,6 +176,43 @@ util_memmove(void *dest, const void *src, size_t n)
 #endif
 
 
+/**
+ * Printable string buffer
+ */
+struct util_strbuf
+{
+   char *str;
+   char *ptr;
+   size_t left;
+};
+
+
+static INLINE void
+util_strbuf_init(struct util_strbuf *sbuf, char *str, size_t size) 
+{
+   sbuf->str = str;
+   sbuf->str[0] = 0;
+   sbuf->ptr = sbuf->str;
+   sbuf->left = size;
+}
+
+
+static INLINE void
+util_strbuf_printf(struct util_strbuf *sbuf, const char *format, ...)
+{
+   if(sbuf->left > 1) {
+      size_t written;
+      va_list ap;
+      va_start(ap, format);
+      written = util_vsnprintf(sbuf->ptr, sbuf->left, format, ap);
+      va_end(ap);
+      sbuf->ptr += written;
+      sbuf->left -= written;
+   }
+}
+
+
+
 #ifdef __cplusplus
 }
 #endif
