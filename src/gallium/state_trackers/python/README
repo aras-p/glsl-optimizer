@@ -7,7 +7,7 @@ To build you'll need:
 * Python (with development packages)
 * SCons
 * SWIG
-* Python Imaging Library (for the samples)
+* Python Imaging Library with TK support (for the samples)
 
 Invoke scons on the top dir as
  
@@ -19,9 +19,9 @@ To use do
 
 and then try running
 
-  python src/gallium/state_trackers/python/samples/simple.py
+  python src/gallium/state_trackers/python/samples/tri.py
 
-which should create a simple.png
+which should show a triangle.
 
 
 This is still in experimental phase, and there many limitations to what you can
