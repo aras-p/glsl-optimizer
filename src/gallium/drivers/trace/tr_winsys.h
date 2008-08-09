@@ -34,6 +34,7 @@
 #include "pipe/p_winsys.h"
 
 
+struct hash_table;
 struct trace_stream;
 
 
@@ -44,6 +45,8 @@ struct trace_winsys
    struct pipe_winsys *winsys;
    
    struct trace_stream *stream;
+   
+   struct hash_table *buffer_maps;
 };
 
 

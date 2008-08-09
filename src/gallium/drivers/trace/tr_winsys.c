@@ -26,6 +26,7 @@
  **************************************************************************/
 
 #include "pipe/p_util.h"
+#include "util/u_hash_table.h"
 
 #include "tr_stream.h"
 #include "tr_dump.h"
@@ -33,6 +34,18 @@
 #include "tr_winsys.h"
 
 
+static unsigned trace_buffer_hash(void *buffer)
+{
+   return (unsigned)(uintptr_t)buffer;
+}
+
+
+static int trace_buffer_compare(void *buffer1, void *buffer2)
+{
+   return (char *)buffer2 - (char *)buffer1;
+}
+
+                  
 static const char *
 trace_winsys_get_name(struct pipe_winsys *_winsys)
 {
@@ -232,6 +245,13 @@ trace_winsys_buffer_map(struct pipe_winsys *_winsys,
    
    trace_dump_call_end(stream);
    
+   if(result) {
+      if(usage & PIPE_BUFFER_USAGE_CPU_WRITE) {
+         assert(!hash_table_get(tr_ws->buffer_maps, buffer));
+         hash_table_set(tr_ws->buffer_maps, buffer, result);
+      }
+   }
+   
    return result;
 }
 
@@ -243,6 +263,30 @@ trace_winsys_buffer_unmap(struct pipe_winsys *_winsys,
    struct trace_winsys *tr_ws = trace_winsys(_winsys);
    struct trace_stream *stream = tr_ws->stream;
    struct pipe_winsys *winsys = tr_ws->winsys;
+   const void *map;
+   
+   map = hash_table_get(tr_ws->buffer_maps, buffer);
+   if(map) {
+      trace_dump_call_begin(stream, "", "memcpy");
+      
+      trace_dump_arg_begin(stream, "dst");
+      trace_dump_ptr(stream, map);
+      trace_dump_arg_end(stream);
+      
+      trace_dump_arg_begin(stream, "src");
+      trace_dump_bytes(stream, map, buffer->size);
+      trace_dump_arg_end(stream);
+
+      trace_dump_arg_begin(stream, "size");
+      trace_dump_uint(stream, buffer->size);
+      trace_dump_arg_end(stream);
+   
+      trace_dump_call_end(stream);
+
+      winsys->buffer_unmap(winsys, buffer);
+
+      hash_table_remove(tr_ws->buffer_maps, buffer);
+   }
    
    trace_dump_call_begin(stream, "pipe_winsys", "buffer_unmap");
    
@@ -365,6 +409,8 @@ trace_winsys_destroy(struct pipe_winsys *_winsys)
    
    trace_dump_trace_end(stream);
    
+   hash_table_destroy(tr_ws->buffer_maps);
+
    trace_stream_close(tr_ws->stream);
    
    FREE(tr_ws);
@@ -399,11 +445,17 @@ trace_winsys_create(struct pipe_winsys *winsys)
    tr_ws->base.fence_finish = trace_winsys_fence_finish;
    
    tr_ws->winsys = winsys;
-      
+
    tr_ws->stream = trace_stream_create("gallium", "trace");
    if(!tr_ws->stream)
       return NULL;
 
+   tr_ws->buffer_maps = hash_table_create(trace_buffer_hash, 
+                                          trace_buffer_compare);
+   if(!tr_ws->buffer_maps)
+      return NULL;
+   
+   
    trace_dump_trace_begin(tr_ws->stream, 0);
    
    return &tr_ws->base;
