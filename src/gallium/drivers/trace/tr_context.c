@@ -30,6 +30,7 @@
 #include "tr_stream.h"
 #include "tr_dump.h"
 #include "tr_state.h"
+#include "tr_winsys.h"
 #include "tr_screen.h"
 #include "tr_context.h"
 
@@ -999,13 +1000,10 @@ trace_context_destroy(struct pipe_context *_pipe)
 struct pipe_context *
 trace_context_create(struct pipe_context *pipe)
 {
-   struct trace_screen *tr_scr;
    struct trace_context *tr_ctx;
    
    if(!debug_get_bool_option("GALLIUM_TRACE", FALSE))
       return pipe;
-   
-   tr_scr = trace_screen(pipe->screen);
    
    tr_ctx = CALLOC_STRUCT(trace_context);
    if(!tr_ctx)
@@ -1058,8 +1056,9 @@ trace_context_create(struct pipe_context *pipe)
 
    tr_ctx->pipe = pipe;
    
-   /* We don't want to trace the pipe calls */
-   pipe->screen = tr_scr->screen;
+   /* We don't want to trace the internal pipe calls */
+   pipe->winsys = trace_winsys(pipe->winsys)->winsys;
+   pipe->screen = trace_screen(pipe->screen)->screen;
    
    return &tr_ctx->base;
 }

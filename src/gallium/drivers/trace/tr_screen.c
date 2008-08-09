@@ -376,5 +376,8 @@ trace_screen_create(struct pipe_screen *screen)
    if(!tr_scr->stream)
       return NULL;
 
+   /* We don't want to trace the internal pipe calls */
+   screen->winsys = trace_winsys(screen->winsys)->winsys;
+
    return &tr_scr->base;
 }
