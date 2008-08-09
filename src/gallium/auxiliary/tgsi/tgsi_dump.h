@@ -35,6 +35,13 @@ extern "C" {
 #endif
 
 void
+tgsi_dump_str(
+   const struct tgsi_token *tokens,
+   uint flags,
+   char *str,
+   size_t size);
+
+void
 tgsi_dump(
    const struct tgsi_token *tokens,
    uint flags );
