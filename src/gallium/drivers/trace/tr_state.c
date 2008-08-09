@@ -27,7 +27,7 @@
 
 
 #include "pipe/p_compiler.h"
-#include "tgsi/tgsi_parse.h"
+#include "tgsi/tgsi_dump.h"
 
 #include "tr_dump.h"
 #include "tr_state.h"
@@ -240,18 +240,19 @@ void trace_dump_constant_buffer(struct trace_stream *stream,
 void trace_dump_shader_state(struct trace_stream *stream,
                              const struct pipe_shader_state *state)
 {
+   static char str[8192];
    assert(state);
    if(!state) {
       trace_dump_null(stream);
       return;
    }
 
+   tgsi_dump_str(state->tokens, 0, str, sizeof(str));
+   
    trace_dump_struct_begin(stream, "pipe_shader_state");
 
    trace_dump_member_begin(stream, "tokens");
-   trace_dump_bytes(stream, 
-                    state->tokens, 
-                    sizeof(struct tgsi_token) * tgsi_num_tokens(state->tokens));
+   trace_dump_string(stream, str);
    trace_dump_member_end(stream);
 
    trace_dump_struct_end(stream);
