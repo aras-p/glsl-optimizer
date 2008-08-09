@@ -28,10 +28,10 @@
 #ifndef PIPE_FORMAT_H
 #define PIPE_FORMAT_H
 
-#include "util/u_string.h"
-
 #include "p_compiler.h"
 #include "p_debug.h"
+
+#include "util/u_string.h"
 
 #ifdef __cplusplus
 extern "C" {
