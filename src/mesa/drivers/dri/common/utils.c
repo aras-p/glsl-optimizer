@@ -836,6 +836,10 @@ driGetConfigAttribIndex(const __DRIconfig *config,
     case __DRI_ATTRIB_SWAP_METHOD:
 	break;
 
+    case __DRI_ATTRIB_FLOAT_MODE:
+        *value = config->modes.floatMode;
+        break;
+
     default:
 	*value = *(unsigned int *)
 	    ((char *) &config->modes + attribMap[index].offset);
