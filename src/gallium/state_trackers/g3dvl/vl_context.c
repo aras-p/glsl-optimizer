@@ -7,8 +7,8 @@
 #include <pipe/p_state.h>
 #include <pipe/p_inlines.h>
 #include <pipe/p_shader_tokens.h>
-#include <tgsi/util/tgsi_parse.h>
-#include <tgsi/util/tgsi_build.h>
+#include <tgsi/tgsi_parse.h>
+#include <tgsi/tgsi_build.h>
 #include "vl_shader_build.h"
 #include "vl_data.h"
 #include "vl_defs.h"

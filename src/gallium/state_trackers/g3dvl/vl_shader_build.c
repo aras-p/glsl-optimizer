@@ -1,7 +1,7 @@
 #include "vl_shader_build.h"
 #include <assert.h>
-#include <tgsi/util/tgsi_parse.h>
-#include <tgsi/util/tgsi_build.h>
+#include <tgsi/tgsi_parse.h>
+#include <tgsi/tgsi_build.h>
 
 struct tgsi_full_declaration vl_decl_input(unsigned int name, unsigned int index, unsigned int first, unsigned int last)
 {
