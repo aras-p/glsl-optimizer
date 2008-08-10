@@ -26,6 +26,7 @@
  **************************************************************************/
 
 #include "pipe/p_util.h"
+#include "pipe/p_state.h"
 #include "util/u_hash_table.h"
 
 #include "tr_stream.h"
@@ -178,7 +179,7 @@ trace_winsys_buffer_create(struct pipe_winsys *_winsys,
    struct trace_winsys *tr_ws = trace_winsys(_winsys);
    struct trace_stream *stream = tr_ws->stream;
    struct pipe_winsys *winsys = tr_ws->winsys;
-   struct pipe_buffer *result;
+   struct pipe_buffer *buffer;
    
    trace_dump_call_begin(stream, "pipe_winsys", "buffer_create");
    
@@ -187,13 +188,23 @@ trace_winsys_buffer_create(struct pipe_winsys *_winsys,
    trace_dump_arg(stream, uint, usage);
    trace_dump_arg(stream, uint, size);
 
-   result = winsys->buffer_create(winsys, alignment, usage, size);
+   buffer = winsys->buffer_create(winsys, alignment, usage, size);
    
-   trace_dump_ret(stream, ptr, result);
+   trace_dump_ret(stream, ptr, buffer);
    
    trace_dump_call_end(stream);
+
+   /* Zero the buffer to avoid dumping uninitialized memory */
+   if(buffer->usage & PIPE_BUFFER_USAGE_CPU_WRITE) {
+      void *map;
+      map = winsys->buffer_map(winsys, buffer, PIPE_BUFFER_USAGE_CPU_WRITE);
+      if(map) {
+         memset(map, 0, buffer->size);
+         winsys->buffer_unmap(winsys, buffer);
+      }
+   }
    
-   return result;
+   return buffer;
 }
 
 
