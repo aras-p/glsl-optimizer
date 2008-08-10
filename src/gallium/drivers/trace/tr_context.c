@@ -40,8 +40,7 @@ trace_context_set_edgeflags(struct pipe_context *_pipe,
                             const unsigned *bitfield)
 {
    struct trace_context *tr_ctx = trace_context(_pipe);
-   struct trace_screen *tr_scr = trace_screen(_pipe->screen);
-   struct trace_stream *stream = tr_scr->stream;
+   struct trace_stream *stream = tr_ctx->stream;
    struct pipe_context *pipe = tr_ctx->pipe;
 
    trace_dump_call_begin(stream, "pipe_context", "set_edgeflags");
@@ -61,8 +60,7 @@ trace_context_draw_arrays(struct pipe_context *_pipe,
                           unsigned mode, unsigned start, unsigned count)
 {
    struct trace_context *tr_ctx = trace_context(_pipe);
-   struct trace_screen *tr_scr = trace_screen(_pipe->screen);
-   struct trace_stream *stream = tr_scr->stream;
+   struct trace_stream *stream = tr_ctx->stream;
    struct pipe_context *pipe = tr_ctx->pipe;
    boolean result;
 
@@ -90,8 +88,7 @@ trace_context_draw_elements(struct pipe_context *_pipe,
                           unsigned mode, unsigned start, unsigned count)
 {
    struct trace_context *tr_ctx = trace_context(_pipe);
-   struct trace_screen *tr_scr = trace_screen(_pipe->screen);
-   struct trace_stream *stream = tr_scr->stream;
+   struct trace_stream *stream = tr_ctx->stream;
    struct pipe_context *pipe = tr_ctx->pipe;
    boolean result;
 
@@ -125,8 +122,7 @@ trace_context_draw_range_elements(struct pipe_context *_pipe,
                                   unsigned count)
 {
    struct trace_context *tr_ctx = trace_context(_pipe);
-   struct trace_screen *tr_scr = trace_screen(_pipe->screen);
-   struct trace_stream *stream = tr_scr->stream;
+   struct trace_stream *stream = tr_ctx->stream;
    struct pipe_context *pipe = tr_ctx->pipe;
    boolean result;
 
@@ -159,8 +155,7 @@ trace_context_create_query(struct pipe_context *_pipe,
                            unsigned query_type)
 {
    struct trace_context *tr_ctx = trace_context(_pipe);
-   struct trace_screen *tr_scr = trace_screen(_pipe->screen);
-   struct trace_stream *stream = tr_scr->stream;
+   struct trace_stream *stream = tr_ctx->stream;
    struct pipe_context *pipe = tr_ctx->pipe;
    struct pipe_query *result;
 
@@ -184,8 +179,7 @@ trace_context_destroy_query(struct pipe_context *_pipe,
                             struct pipe_query *query)
 {
    struct trace_context *tr_ctx = trace_context(_pipe);
-   struct trace_screen *tr_scr = trace_screen(_pipe->screen);
-   struct trace_stream *stream = tr_scr->stream;
+   struct trace_stream *stream = tr_ctx->stream;
    struct pipe_context *pipe = tr_ctx->pipe;
 
    trace_dump_call_begin(stream, "pipe_context", "destroy_query");
@@ -204,8 +198,7 @@ trace_context_begin_query(struct pipe_context *_pipe,
                           struct pipe_query *query)
 {
    struct trace_context *tr_ctx = trace_context(_pipe);
-   struct trace_screen *tr_scr = trace_screen(_pipe->screen);
-   struct trace_stream *stream = tr_scr->stream;
+   struct trace_stream *stream = tr_ctx->stream;
    struct pipe_context *pipe = tr_ctx->pipe;
 
    trace_dump_call_begin(stream, "pipe_context", "begin_query");
@@ -224,8 +217,7 @@ trace_context_end_query(struct pipe_context *_pipe,
                         struct pipe_query *query)
 {
    struct trace_context *tr_ctx = trace_context(_pipe);
-   struct trace_screen *tr_scr = trace_screen(_pipe->screen);
-   struct trace_stream *stream = tr_scr->stream;
+   struct trace_stream *stream = tr_ctx->stream;
    struct pipe_context *pipe = tr_ctx->pipe;
 
    trace_dump_call_begin(stream, "pipe_context", "end_query");
@@ -246,8 +238,7 @@ trace_context_get_query_result(struct pipe_context *_pipe,
                                uint64 *presult)
 {
    struct trace_context *tr_ctx = trace_context(_pipe);
-   struct trace_screen *tr_scr = trace_screen(_pipe->screen);
-   struct trace_stream *stream = tr_scr->stream;
+   struct trace_stream *stream = tr_ctx->stream;
    struct pipe_context *pipe = tr_ctx->pipe;
    uint64 result;
    boolean _result;
@@ -273,8 +264,7 @@ trace_context_create_blend_state(struct pipe_context *_pipe,
                                  const struct pipe_blend_state *state)
 {
    struct trace_context *tr_ctx = trace_context(_pipe);
-   struct trace_screen *tr_scr = trace_screen(_pipe->screen);
-   struct trace_stream *stream = tr_scr->stream;
+   struct trace_stream *stream = tr_ctx->stream;
    struct pipe_context *pipe = tr_ctx->pipe;
    void * result;
 
@@ -296,8 +286,7 @@ trace_context_bind_blend_state(struct pipe_context *_pipe,
                                void *state)
 {
    struct trace_context *tr_ctx = trace_context(_pipe);
-   struct trace_screen *tr_scr = trace_screen(_pipe->screen);
-   struct trace_stream *stream = tr_scr->stream;
+   struct trace_stream *stream = tr_ctx->stream;
    struct pipe_context *pipe = tr_ctx->pipe;
 
    trace_dump_call_begin(stream, "pipe_context", "bind_blend_state");
@@ -316,8 +305,7 @@ trace_context_delete_blend_state(struct pipe_context *_pipe,
                                  void *state)
 {
    struct trace_context *tr_ctx = trace_context(_pipe);
-   struct trace_screen *tr_scr = trace_screen(_pipe->screen);
-   struct trace_stream *stream = tr_scr->stream;
+   struct trace_stream *stream = tr_ctx->stream;
    struct pipe_context *pipe = tr_ctx->pipe;
 
    trace_dump_call_begin(stream, "pipe_context", "delete_blend_state");
@@ -336,8 +324,7 @@ trace_context_create_sampler_state(struct pipe_context *_pipe,
                                    const struct pipe_sampler_state *state)
 {
    struct trace_context *tr_ctx = trace_context(_pipe);
-   struct trace_screen *tr_scr = trace_screen(_pipe->screen);
-   struct trace_stream *stream = tr_scr->stream;
+   struct trace_stream *stream = tr_ctx->stream;
    struct pipe_context *pipe = tr_ctx->pipe;
    void * result;
 
@@ -361,8 +348,7 @@ trace_context_bind_sampler_states(struct pipe_context *_pipe,
                                   unsigned num_states, void **states)
 {
    struct trace_context *tr_ctx = trace_context(_pipe);
-   struct trace_screen *tr_scr = trace_screen(_pipe->screen);
-   struct trace_stream *stream = tr_scr->stream;
+   struct trace_stream *stream = tr_ctx->stream;
    struct pipe_context *pipe = tr_ctx->pipe;
 
    trace_dump_call_begin(stream, "pipe_context", "bind_sampler_states");
@@ -382,8 +368,7 @@ trace_context_delete_sampler_state(struct pipe_context *_pipe,
                                    void *state)
 {
    struct trace_context *tr_ctx = trace_context(_pipe);
-   struct trace_screen *tr_scr = trace_screen(_pipe->screen);
-   struct trace_stream *stream = tr_scr->stream;
+   struct trace_stream *stream = tr_ctx->stream;
    struct pipe_context *pipe = tr_ctx->pipe;
 
    trace_dump_call_begin(stream, "pipe_context", "delete_sampler_state");
@@ -402,8 +387,7 @@ trace_context_create_rasterizer_state(struct pipe_context *_pipe,
                                       const struct pipe_rasterizer_state *state)
 {
    struct trace_context *tr_ctx = trace_context(_pipe);
-   struct trace_screen *tr_scr = trace_screen(_pipe->screen);
-   struct trace_stream *stream = tr_scr->stream;
+   struct trace_stream *stream = tr_ctx->stream;
    struct pipe_context *pipe = tr_ctx->pipe;
    void * result;
 
@@ -427,8 +411,7 @@ trace_context_bind_rasterizer_state(struct pipe_context *_pipe,
                                     void *state)
 {
    struct trace_context *tr_ctx = trace_context(_pipe);
-   struct trace_screen *tr_scr = trace_screen(_pipe->screen);
-   struct trace_stream *stream = tr_scr->stream;
+   struct trace_stream *stream = tr_ctx->stream;
    struct pipe_context *pipe = tr_ctx->pipe;
 
    trace_dump_call_begin(stream, "pipe_context", "bind_rasterizer_state");
@@ -447,8 +430,7 @@ trace_context_delete_rasterizer_state(struct pipe_context *_pipe,
                                       void *state)
 {
    struct trace_context *tr_ctx = trace_context(_pipe);
-   struct trace_screen *tr_scr = trace_screen(_pipe->screen);
-   struct trace_stream *stream = tr_scr->stream;
+   struct trace_stream *stream = tr_ctx->stream;
    struct pipe_context *pipe = tr_ctx->pipe;
 
    trace_dump_call_begin(stream, "pipe_context", "delete_rasterizer_state");
@@ -467,8 +449,7 @@ trace_context_create_depth_stencil_alpha_state(struct pipe_context *_pipe,
                                                const struct pipe_depth_stencil_alpha_state *state)
 {
    struct trace_context *tr_ctx = trace_context(_pipe);
-   struct trace_screen *tr_scr = trace_screen(_pipe->screen);
-   struct trace_stream *stream = tr_scr->stream;
+   struct trace_stream *stream = tr_ctx->stream;
    struct pipe_context *pipe = tr_ctx->pipe;
    void * result;
 
@@ -490,8 +471,7 @@ trace_context_bind_depth_stencil_alpha_state(struct pipe_context *_pipe,
                                              void *state)
 {
    struct trace_context *tr_ctx = trace_context(_pipe);
-   struct trace_screen *tr_scr = trace_screen(_pipe->screen);
-   struct trace_stream *stream = tr_scr->stream;
+   struct trace_stream *stream = tr_ctx->stream;
    struct pipe_context *pipe = tr_ctx->pipe;
 
    trace_dump_call_begin(stream, "pipe_context", "bind_depth_stencil_alpha_state");
@@ -510,8 +490,7 @@ trace_context_delete_depth_stencil_alpha_state(struct pipe_context *_pipe,
                                                void *state)
 {
    struct trace_context *tr_ctx = trace_context(_pipe);
-   struct trace_screen *tr_scr = trace_screen(_pipe->screen);
-   struct trace_stream *stream = tr_scr->stream;
+   struct trace_stream *stream = tr_ctx->stream;
    struct pipe_context *pipe = tr_ctx->pipe;
 
    trace_dump_call_begin(stream, "pipe_context", "delete_depth_stencil_alpha_state");
@@ -530,8 +509,7 @@ trace_context_create_fs_state(struct pipe_context *_pipe,
                               const struct pipe_shader_state *state)
 {
    struct trace_context *tr_ctx = trace_context(_pipe);
-   struct trace_screen *tr_scr = trace_screen(_pipe->screen);
-   struct trace_stream *stream = tr_scr->stream;
+   struct trace_stream *stream = tr_ctx->stream;
    struct pipe_context *pipe = tr_ctx->pipe;
    void * result;
 
@@ -555,8 +533,7 @@ trace_context_bind_fs_state(struct pipe_context *_pipe,
                             void *state)
 {
    struct trace_context *tr_ctx = trace_context(_pipe);
-   struct trace_screen *tr_scr = trace_screen(_pipe->screen);
-   struct trace_stream *stream = tr_scr->stream;
+   struct trace_stream *stream = tr_ctx->stream;
    struct pipe_context *pipe = tr_ctx->pipe;
 
    trace_dump_call_begin(stream, "pipe_context", "bind_fs_state");
@@ -575,8 +552,7 @@ trace_context_delete_fs_state(struct pipe_context *_pipe,
                               void *state)
 {
    struct trace_context *tr_ctx = trace_context(_pipe);
-   struct trace_screen *tr_scr = trace_screen(_pipe->screen);
-   struct trace_stream *stream = tr_scr->stream;
+   struct trace_stream *stream = tr_ctx->stream;
    struct pipe_context *pipe = tr_ctx->pipe;
 
    trace_dump_call_begin(stream, "pipe_context", "delete_fs_state");
@@ -595,8 +571,7 @@ trace_context_create_vs_state(struct pipe_context *_pipe,
                               const struct pipe_shader_state *state)
 {
    struct trace_context *tr_ctx = trace_context(_pipe);
-   struct trace_screen *tr_scr = trace_screen(_pipe->screen);
-   struct trace_stream *stream = tr_scr->stream;
+   struct trace_stream *stream = tr_ctx->stream;
    struct pipe_context *pipe = tr_ctx->pipe;
    void * result;
 
@@ -620,8 +595,7 @@ trace_context_bind_vs_state(struct pipe_context *_pipe,
                             void *state)
 {
    struct trace_context *tr_ctx = trace_context(_pipe);
-   struct trace_screen *tr_scr = trace_screen(_pipe->screen);
-   struct trace_stream *stream = tr_scr->stream;
+   struct trace_stream *stream = tr_ctx->stream;
    struct pipe_context *pipe = tr_ctx->pipe;
 
    trace_dump_call_begin(stream, "pipe_context", "bind_vs_state");
@@ -640,8 +614,7 @@ trace_context_delete_vs_state(struct pipe_context *_pipe,
                               void *state)
 {
    struct trace_context *tr_ctx = trace_context(_pipe);
-   struct trace_screen *tr_scr = trace_screen(_pipe->screen);
-   struct trace_stream *stream = tr_scr->stream;
+   struct trace_stream *stream = tr_ctx->stream;
    struct pipe_context *pipe = tr_ctx->pipe;
 
    trace_dump_call_begin(stream, "pipe_context", "delete_vs_state");
@@ -660,8 +633,7 @@ trace_context_set_blend_color(struct pipe_context *_pipe,
                               const struct pipe_blend_color *state)
 {
    struct trace_context *tr_ctx = trace_context(_pipe);
-   struct trace_screen *tr_scr = trace_screen(_pipe->screen);
-   struct trace_stream *stream = tr_scr->stream;
+   struct trace_stream *stream = tr_ctx->stream;
    struct pipe_context *pipe = tr_ctx->pipe;
 
    trace_dump_call_begin(stream, "pipe_context", "set_blend_color");
@@ -680,8 +652,7 @@ trace_context_set_clip_state(struct pipe_context *_pipe,
                              const struct pipe_clip_state *state)
 {
    struct trace_context *tr_ctx = trace_context(_pipe);
-   struct trace_screen *tr_scr = trace_screen(_pipe->screen);
-   struct trace_stream *stream = tr_scr->stream;
+   struct trace_stream *stream = tr_ctx->stream;
    struct pipe_context *pipe = tr_ctx->pipe;
 
    trace_dump_call_begin(stream, "pipe_context", "set_clip_state");
@@ -701,8 +672,7 @@ trace_context_set_constant_buffer(struct pipe_context *_pipe,
                                   const struct pipe_constant_buffer *buffer)
 {
    struct trace_context *tr_ctx = trace_context(_pipe);
-   struct trace_screen *tr_scr = trace_screen(_pipe->screen);
-   struct trace_stream *stream = tr_scr->stream;
+   struct trace_stream *stream = tr_ctx->stream;
    struct pipe_context *pipe = tr_ctx->pipe;
 
    trace_dump_call_begin(stream, "pipe_context", "set_constant_buffer");
@@ -723,8 +693,7 @@ trace_context_set_framebuffer_state(struct pipe_context *_pipe,
                                     const struct pipe_framebuffer_state *state)
 {
    struct trace_context *tr_ctx = trace_context(_pipe);
-   struct trace_screen *tr_scr = trace_screen(_pipe->screen);
-   struct trace_stream *stream = tr_scr->stream;
+   struct trace_stream *stream = tr_ctx->stream;
    struct pipe_context *pipe = tr_ctx->pipe;
 
    trace_dump_call_begin(stream, "pipe_context", "set_framebuffer_state");
@@ -743,8 +712,7 @@ trace_context_set_polygon_stipple(struct pipe_context *_pipe,
                                   const struct pipe_poly_stipple *state)
 {
    struct trace_context *tr_ctx = trace_context(_pipe);
-   struct trace_screen *tr_scr = trace_screen(_pipe->screen);
-   struct trace_stream *stream = tr_scr->stream;
+   struct trace_stream *stream = tr_ctx->stream;
    struct pipe_context *pipe = tr_ctx->pipe;
 
    trace_dump_call_begin(stream, "pipe_context", "set_polygon_stipple");
@@ -763,8 +731,7 @@ trace_context_set_scissor_state(struct pipe_context *_pipe,
                                 const struct pipe_scissor_state *state)
 {
    struct trace_context *tr_ctx = trace_context(_pipe);
-   struct trace_screen *tr_scr = trace_screen(_pipe->screen);
-   struct trace_stream *stream = tr_scr->stream;
+   struct trace_stream *stream = tr_ctx->stream;
    struct pipe_context *pipe = tr_ctx->pipe;
 
    trace_dump_call_begin(stream, "pipe_context", "set_scissor_state");
@@ -783,8 +750,7 @@ trace_context_set_viewport_state(struct pipe_context *_pipe,
                                  const struct pipe_viewport_state *state)
 {
    struct trace_context *tr_ctx = trace_context(_pipe);
-   struct trace_screen *tr_scr = trace_screen(_pipe->screen);
-   struct trace_stream *stream = tr_scr->stream;
+   struct trace_stream *stream = tr_ctx->stream;
    struct pipe_context *pipe = tr_ctx->pipe;
 
    trace_dump_call_begin(stream, "pipe_context", "set_viewport_state");
@@ -804,8 +770,7 @@ trace_context_set_sampler_textures(struct pipe_context *_pipe,
                                    struct pipe_texture **textures)
 {
    struct trace_context *tr_ctx = trace_context(_pipe);
-   struct trace_screen *tr_scr = trace_screen(_pipe->screen);
-   struct trace_stream *stream = tr_scr->stream;
+   struct trace_stream *stream = tr_ctx->stream;
    struct pipe_context *pipe = tr_ctx->pipe;
 
    trace_dump_call_begin(stream, "pipe_context", "set_sampler_textures");
@@ -826,8 +791,7 @@ trace_context_set_vertex_buffers(struct pipe_context *_pipe,
                                  const struct pipe_vertex_buffer *buffers)
 {
    struct trace_context *tr_ctx = trace_context(_pipe);
-   struct trace_screen *tr_scr = trace_screen(_pipe->screen);
-   struct trace_stream *stream = tr_scr->stream;
+   struct trace_stream *stream = tr_ctx->stream;
    struct pipe_context *pipe = tr_ctx->pipe;
 
    trace_dump_call_begin(stream, "pipe_context", "set_vertex_buffers");
@@ -851,8 +815,7 @@ trace_context_set_vertex_elements(struct pipe_context *_pipe,
                                   const struct pipe_vertex_element *elements)
 {
    struct trace_context *tr_ctx = trace_context(_pipe);
-   struct trace_screen *tr_scr = trace_screen(_pipe->screen);
-   struct trace_stream *stream = tr_scr->stream;
+   struct trace_stream *stream = tr_ctx->stream;
    struct pipe_context *pipe = tr_ctx->pipe;
 
    trace_dump_call_begin(stream, "pipe_context", "set_vertex_elements");
@@ -881,8 +844,7 @@ trace_context_surface_copy(struct pipe_context *_pipe,
                            unsigned width, unsigned height)
 {
    struct trace_context *tr_ctx = trace_context(_pipe);
-   struct trace_screen *tr_scr = trace_screen(_pipe->screen);
-   struct trace_stream *stream = tr_scr->stream;
+   struct trace_stream *stream = tr_ctx->stream;
    struct pipe_context *pipe = tr_ctx->pipe;
 
    trace_dump_call_begin(stream, "pipe_context", "surface_copy");
@@ -914,8 +876,7 @@ trace_context_surface_fill(struct pipe_context *_pipe,
                            unsigned value)
 {
    struct trace_context *tr_ctx = trace_context(_pipe);
-   struct trace_screen *tr_scr = trace_screen(_pipe->screen);
-   struct trace_stream *stream = tr_scr->stream;
+   struct trace_stream *stream = tr_ctx->stream;
    struct pipe_context *pipe = tr_ctx->pipe;
 
    trace_dump_call_begin(stream, "pipe_context", "surface_fill");
@@ -939,8 +900,7 @@ trace_context_clear(struct pipe_context *_pipe,
                     unsigned clearValue)
 {
    struct trace_context *tr_ctx = trace_context(_pipe);
-   struct trace_screen *tr_scr = trace_screen(_pipe->screen);
-   struct trace_stream *stream = tr_scr->stream;
+   struct trace_stream *stream = tr_ctx->stream;
    struct pipe_context *pipe = tr_ctx->pipe;
 
    trace_dump_call_begin(stream, "pipe_context", "clear");
@@ -961,8 +921,7 @@ trace_context_flush(struct pipe_context *_pipe,
                     struct pipe_fence_handle **fence)
 {
    struct trace_context *tr_ctx = trace_context(_pipe);
-   struct trace_screen *tr_scr = trace_screen(_pipe->screen);
-   struct trace_stream *stream = tr_scr->stream;
+   struct trace_stream *stream = tr_ctx->stream;
    struct pipe_context *pipe = tr_ctx->pipe;
 
    trace_dump_call_begin(stream, "pipe_context", "flush");
@@ -981,8 +940,7 @@ static INLINE void
 trace_context_destroy(struct pipe_context *_pipe)
 {
    struct trace_context *tr_ctx = trace_context(_pipe);
-   struct trace_screen *tr_scr = trace_screen(_pipe->screen);
-   struct trace_stream *stream = tr_scr->stream;
+   struct trace_stream *stream = tr_ctx->stream;
    struct pipe_context *pipe = tr_ctx->pipe;
 
    trace_dump_call_begin(stream, "pipe_context", "destroy");
@@ -1000,6 +958,7 @@ trace_context_destroy(struct pipe_context *_pipe)
 struct pipe_context *
 trace_context_create(struct pipe_context *pipe)
 {
+   struct trace_stream *stream;
    struct trace_context *tr_ctx;
    
    if(!debug_get_bool_option("GALLIUM_TRACE", FALSE))
@@ -1055,10 +1014,18 @@ trace_context_create(struct pipe_context *pipe)
    tr_ctx->base.flush = trace_context_flush;
 
    tr_ctx->pipe = pipe;
+   tr_ctx->stream = stream = trace_winsys(pipe->winsys)->stream;
    
    /* We don't want to trace the internal pipe calls */
    pipe->winsys = trace_winsys(pipe->winsys)->winsys;
    pipe->screen = trace_screen(pipe->screen)->screen;
    
+   trace_dump_call_begin(stream, "", "pipe_context_create");
+   trace_dump_arg_begin(stream, "screen");
+   trace_dump_ptr(stream, pipe->screen);
+   trace_dump_arg_end(stream);
+   trace_dump_ret(stream, ptr, pipe);
+   trace_dump_call_end(stream);
+
    return &tr_ctx->base;
 }

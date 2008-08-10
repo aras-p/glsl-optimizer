@@ -34,11 +34,16 @@
 #include "pipe/p_context.h"
 
 
+struct trace_stream;
+
+   
 struct trace_context
 {
    struct pipe_context base;
    
    struct pipe_context *pipe;
+   
+   struct trace_stream *stream;
 };
 
 

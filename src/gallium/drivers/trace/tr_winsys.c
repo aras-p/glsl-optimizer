@@ -420,6 +420,7 @@ trace_winsys_destroy(struct pipe_winsys *_winsys)
 struct pipe_winsys *
 trace_winsys_create(struct pipe_winsys *winsys)
 {
+   struct trace_stream *stream;
    struct trace_winsys *tr_ws;
    
    if(!debug_get_bool_option("GALLIUM_TRACE", FALSE))
@@ -446,7 +447,7 @@ trace_winsys_create(struct pipe_winsys *winsys)
    
    tr_ws->winsys = winsys;
 
-   tr_ws->stream = trace_stream_create("gallium", "trace");
+   tr_ws->stream = stream = trace_stream_create("gallium", "trace");
    if(!tr_ws->stream)
       return NULL;
 
@@ -455,8 +456,11 @@ trace_winsys_create(struct pipe_winsys *winsys)
    if(!tr_ws->buffer_maps)
       return NULL;
    
-   
    trace_dump_trace_begin(tr_ws->stream, 0);
    
+   trace_dump_call_begin(stream, "", "pipe_winsys_create");
+   trace_dump_ret(stream, ptr, winsys);
+   trace_dump_call_end(stream);
+
    return &tr_ws->base;
 }
