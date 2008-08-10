@@ -58,6 +58,7 @@
 %include "carrays.i"
 %array_class(unsigned char, ByteArray);
 %array_class(int, IntArray);
+%array_class(unsigned, UnsignedArray);
 %array_class(float, FloatArray);
 
 
