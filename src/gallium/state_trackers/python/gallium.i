@@ -65,8 +65,7 @@
 %rename(Context) st_context;
 %rename(Texture) pipe_texture;
 %rename(Surface) pipe_surface;
-
-%rename(Buffer) pipe_buffer;
+%rename(Buffer) st_buffer;
 
 %rename(BlendColor) pipe_blend_color;
 %rename(Blend) pipe_blend_state;
@@ -88,13 +87,13 @@
 %nodefaultctor st_context;
 %nodefaultctor pipe_texture;
 %nodefaultctor pipe_surface;
-%nodefaultctor pipe_buffer;
+%nodefaultctor st_buffer;
 
 %nodefaultdtor st_device;
 %nodefaultdtor st_context;
 %nodefaultdtor pipe_texture;
 %nodefaultdtor pipe_surface;
-%nodefaultdtor pipe_buffer;
+%nodefaultdtor st_buffer;
 
 %ignore pipe_texture::screen;
 
@@ -112,6 +111,9 @@ struct st_device {
 };
 
 struct st_context {
+};
+
+struct st_buffer {
 };
 
 
@@ -197,9 +199,9 @@ struct st_context {
       return $self->screen->texture_create($self->screen, &templat);
    }
    
-   struct pipe_buffer *
+   struct st_buffer *
    buffer_create(unsigned size, unsigned alignment = 0, unsigned usage = 0) {
-      return $self->screen->winsys->buffer_create($self->screen->winsys, alignment, usage, size);
+      return st_buffer_create($self, alignment, usage, size);
    }
 
 };
@@ -323,10 +325,10 @@ struct st_context {
       $self->pipe->draw_arrays($self->pipe, mode, start, count);
    }
 
-   void draw_elements( struct pipe_buffer *indexBuffer,
+   void draw_elements( struct st_buffer *indexBuffer,
                        unsigned indexSize,
                        unsigned mode, unsigned start, unsigned count) {
-      $self->pipe->draw_elements($self->pipe, indexBuffer, indexSize, mode, start, count);
+      $self->pipe->draw_elements($self->pipe, indexBuffer->buffer, indexSize, mode, start, count);
    }
 
    void draw_vertices(unsigned prim,
@@ -519,6 +521,25 @@ error1:
       return n;
    }
 
+};
+
+
+%extend st_buffer {
+   
+   ~st_buffer() {
+      st_buffer_destroy($self);
+   }
+   
+   void write( const char *STRING, unsigned LENGTH, unsigned offset = 0) {
+      struct pipe_winsys *winsys = $self->st_dev->screen->winsys;
+      char *map;
+      
+      map = winsys->buffer_map(winsys, $self->buffer, PIPE_BUFFER_USAGE_CPU_WRITE);
+      if(!map) {
+         memcpy(map + offset, STRING, LENGTH);
+         winsys->buffer_unmap(winsys, $self->buffer);
+      }
+   }
 };
 
 
