@@ -73,6 +73,10 @@ void trace_dump_template(struct trace_stream *stream,
    trace_dump_array(stream, uint, templat->height, 1);
    trace_dump_member_end(stream);
 
+   trace_dump_member_begin(stream, "depth");
+   trace_dump_array(stream, uint, templat->depth, 1);
+   trace_dump_member_end(stream);
+
    trace_dump_member_begin(stream, "block");
    trace_dump_block(stream, &templat->block);
    trace_dump_member_end(stream);
