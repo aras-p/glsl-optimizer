@@ -240,30 +240,18 @@ trace_winsys_buffer_map(struct pipe_winsys *_winsys,
                         unsigned usage)
 {
    struct trace_winsys *tr_ws = trace_winsys(_winsys);
-   struct trace_stream *stream = tr_ws->stream;
    struct pipe_winsys *winsys = tr_ws->winsys;
-   void *result;
+   void *map;
    
-   trace_dump_call_begin(stream, "pipe_winsys", "buffer_map");
-   
-   trace_dump_arg(stream, ptr, winsys);
-   trace_dump_arg(stream, ptr, buffer);
-   trace_dump_arg(stream, uint, usage);
-
-   result = winsys->buffer_map(winsys, buffer, usage);
-   
-   trace_dump_ret(stream, ptr, result);
-   
-   trace_dump_call_end(stream);
-   
-   if(result) {
+   map = winsys->buffer_map(winsys, buffer, usage);
+   if(map) {
       if(usage & PIPE_BUFFER_USAGE_CPU_WRITE) {
          assert(!hash_table_get(tr_ws->buffer_maps, buffer));
-         hash_table_set(tr_ws->buffer_maps, buffer, result);
+         hash_table_set(tr_ws->buffer_maps, buffer, map);
       }
    }
    
-   return result;
+   return map;
 }
 
 
@@ -278,13 +266,11 @@ trace_winsys_buffer_unmap(struct pipe_winsys *_winsys,
    
    map = hash_table_get(tr_ws->buffer_maps, buffer);
    if(map) {
-      trace_dump_call_begin(stream, "", "memcpy");
+      trace_dump_call_begin(stream, "pipe_winsys", "buffer_write");
       
-      trace_dump_arg_begin(stream, "dst");
-      trace_dump_ptr(stream, map);
-      trace_dump_arg_end(stream);
+      trace_dump_arg(stream, ptr, buffer);
       
-      trace_dump_arg_begin(stream, "src");
+      trace_dump_arg_begin(stream, "data");
       trace_dump_bytes(stream, map, buffer->size);
       trace_dump_arg_end(stream);
 
@@ -294,19 +280,10 @@ trace_winsys_buffer_unmap(struct pipe_winsys *_winsys,
    
       trace_dump_call_end(stream);
 
-      winsys->buffer_unmap(winsys, buffer);
-
       hash_table_remove(tr_ws->buffer_maps, buffer);
    }
    
-   trace_dump_call_begin(stream, "pipe_winsys", "buffer_unmap");
-   
-   trace_dump_arg(stream, ptr, winsys);
-   trace_dump_arg(stream, ptr, buffer);
-
    winsys->buffer_unmap(winsys, buffer);
-   
-   trace_dump_call_end(stream);
 }
 
 
