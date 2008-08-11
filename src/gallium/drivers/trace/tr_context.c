@@ -457,8 +457,10 @@ trace_context_create_depth_stencil_alpha_state(struct pipe_context *_pipe,
 
    result = pipe->create_depth_stencil_alpha_state(pipe, state);;
 
-   trace_dump_ret(stream, ptr, result);
+   trace_dump_arg(stream, ptr, pipe);
    trace_dump_arg(stream, depth_stencil_alpha_state, state);
+   
+   trace_dump_ret(stream, ptr, result);
 
    trace_dump_call_end(stream);
    
