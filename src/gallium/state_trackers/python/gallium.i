@@ -72,6 +72,9 @@
 %rename(Blend) pipe_blend_state;
 %rename(Clip) pipe_clip_state;
 %rename(ConstantBuffer) pipe_constant_buffer;
+%rename(Depth) pipe_depth_state;
+%rename(Stencil) pipe_stencil_state;
+%rename(Alpha) pipe_alpha_state;
 %rename(DepthStencilAlpha) pipe_depth_stencil_alpha_state;
 %rename(FormatBlock) pipe_format_block;
 %rename(Framebuffer) pipe_framebuffer_state;
@@ -86,7 +89,6 @@
 
 
 %include "pipe/p_defines.h";
-%include "pipe/p_shader_tokens.h";
 %include "p_format.i"
 
 %include "p_device.i"
