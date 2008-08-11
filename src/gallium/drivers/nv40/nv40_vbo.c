@@ -14,8 +14,6 @@
 static INLINE int
 nv40_vbo_format_to_hw(enum pipe_format pipe, unsigned *fmt, unsigned *ncomp)
 {
-	char fs[128];
-
 	switch (pipe) {
 	case PIPE_FORMAT_R32_FLOAT:
 	case PIPE_FORMAT_R32G32_FLOAT:
@@ -36,8 +34,7 @@ nv40_vbo_format_to_hw(enum pipe_format pipe, unsigned *fmt, unsigned *ncomp)
 		*fmt = NV40TCL_VTXFMT_TYPE_USHORT;
 		break;
 	default:
-		pf_sprint_name(fs, pipe);
-		NOUVEAU_ERR("Unknown format %s\n", fs);
+		NOUVEAU_ERR("Unknown format %s\n", pf_name(pipe));
 		return 1;
 	}
 
@@ -63,8 +60,7 @@ nv40_vbo_format_to_hw(enum pipe_format pipe, unsigned *fmt, unsigned *ncomp)
 		*ncomp = 4;
 		break;
 	default:
-		pf_sprint_name(fs, pipe);
-		NOUVEAU_ERR("Unknown format %s\n", fs);
+		NOUVEAU_ERR("Unknown format %s\n", pf_name(pipe));
 		return 1;
 	}
 

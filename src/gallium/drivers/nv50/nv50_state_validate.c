@@ -58,11 +58,8 @@ nv50_state_validate_fb(struct nv50_context *nv50)
 			so_data(so, 0xe8);
 			break;
 		default:
-			{
-				char fmt[128];
-				pf_sprint_name(fmt, fb->cbufs[i]->format);
-				NOUVEAU_ERR("AIIII unknown format %s\n", fmt);
-			}		    
+			NOUVEAU_ERR("AIIII unknown format %s\n",
+				    pf_name(fb->cbufs[i]->format));
 			so_data(so, 0xe6);
 			break;
 		}
@@ -96,11 +93,8 @@ nv50_state_validate_fb(struct nv50_context *nv50)
 			so_data(so, 0x15);
 			break;
 		default:
-			{
-				char fmt[128];
-				pf_sprint_name(fmt, fb->zsbuf->format);
-				NOUVEAU_ERR("AIIII unknown format %s\n", fmt);
-			}		    
+			NOUVEAU_ERR("AIIII unknown format %s\n",
+				    pf_name(fb->zsbuf->format));
 			so_data(so, 0x16);
 			break;
 		}

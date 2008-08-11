@@ -51,7 +51,6 @@ static uint32_t
 nv04_fragtex_format(uint pipe_format)
 {
 	struct nv04_texture_format *tf = nv04_texture_formats;
-	char fs[128];
 	int i;
 
 	for (i=0; i< sizeof(nv04_texture_formats)/sizeof(nv04_texture_formats[0]); i++) {
@@ -60,8 +59,7 @@ nv04_fragtex_format(uint pipe_format)
 		tf++;
 	}
 
-	pf_sprint_name(fs, pipe_format);
-	NOUVEAU_ERR("unknown texture format %s\n", fs);
+	NOUVEAU_ERR("unknown texture format %s\n", pf_name(pipe_format));
 	return 0;
 }
 

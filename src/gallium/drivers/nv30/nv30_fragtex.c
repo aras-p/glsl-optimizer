@@ -75,8 +75,7 @@ nv30_fragtex_format(uint pipe_format)
 		tf++;
 	}
 
-	pf_sprint_name(fs, pipe_format);
-	NOUVEAU_ERR("unknown texture format %s\n", fs);
+	NOUVEAU_ERR("unknown texture format %s\n", pf_name(pipe_format));
 	return NULL;
 }
 

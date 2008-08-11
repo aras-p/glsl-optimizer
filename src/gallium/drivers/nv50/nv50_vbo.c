@@ -215,9 +215,8 @@ nv50_vbo_validate(struct nv50_context *nv50)
 			break;
 		default:
 		{
-			char fmt[128];
-			pf_sprint_name(fmt, ve->src_format);
-			NOUVEAU_ERR("invalid vbo format %s\n", fmt);
+			NOUVEAU_ERR("invalid vbo format %s\n",
+				    pf_name(ve->src_format));
 			assert(0);
 			return;
 		}
