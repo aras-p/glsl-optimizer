@@ -142,12 +142,13 @@ _fenced_buffer_destroy(struct fenced_buffer *fenced_buf)
 
 
 static INLINE void
-_fenced_buffer_remove(struct fenced_buffer *fenced_buf)
+_fenced_buffer_remove(struct fenced_buffer_list *fenced_list,
+                      struct fenced_buffer *fenced_buf)
 {
-   struct fenced_buffer_list *fenced_list = fenced_buf->list;
    struct pipe_winsys *winsys = fenced_list->winsys;
 
    assert(fenced_buf->fence);
+   assert(fenced_buf->list == fenced_list);
    
    winsys->fence_reference(winsys, &fenced_buf->fence, NULL);
    fenced_buf->flags &= ~PIPE_BUFFER_USAGE_GPU_READ_WRITE;
@@ -184,7 +185,8 @@ _fenced_buffer_finish(struct fenced_buffer *fenced_buf)
 	 return PIPE_ERROR;
       }
       /* Remove from the fenced list */
-      _fenced_buffer_remove(fenced_buf); /* TODO: remove consequents */
+      /* TODO: remove consequents */
+      _fenced_buffer_remove(fenced_list, fenced_buf);
    }
 
    fenced_buf->flags &= ~PIPE_BUFFER_USAGE_GPU_READ_WRITE;
@@ -223,7 +225,7 @@ _fenced_buffer_list_check_free(struct fenced_buffer_list *fenced_list,
 	 assert(winsys->fence_signalled(winsys, fenced_buf->fence, 0) == 0);
       }
 
-      _fenced_buffer_remove(fenced_buf);
+      _fenced_buffer_remove(fenced_list, fenced_buf);
 
       curr = next; 
       next = curr->next;
@@ -248,7 +250,7 @@ fenced_buffer_destroy(struct pb_buffer *buf)
 	 do {
 	    fenced_buf = LIST_ENTRY(struct fenced_buffer, curr, head);
 	    assert(winsys->fence_signalled(winsys, fenced_buf->fence, 0) == 0);
-	    _fenced_buffer_remove(fenced_buf);
+	    _fenced_buffer_remove(fenced_list, fenced_buf);
 	    curr = prev;
 	    prev = curr->prev;
 	 } while (curr != &fenced_list->delayed);
@@ -395,7 +397,7 @@ buffer_fence(struct pb_buffer *buf,
    
    _glthread_LOCK_MUTEX(fenced_list->mutex);
    if (fenced_buf->fence)
-      _fenced_buffer_remove(fenced_buf);
+      _fenced_buffer_remove(fenced_list, fenced_buf);
    if (fence) {
       winsys->fence_reference(winsys, &fenced_buf->fence, fence);
       fenced_buf->flags |= flags & PIPE_BUFFER_USAGE_GPU_READ_WRITE;

@@ -139,6 +139,11 @@ softpipe_is_format_supported( struct pipe_screen *screen,
 static void
 softpipe_destroy_screen( struct pipe_screen *screen )
 {
+   struct pipe_winsys *winsys = screen->winsys;
+
+   if(winsys->destroy)
+      winsys->destroy(winsys);
+
    FREE(screen);
 }
 

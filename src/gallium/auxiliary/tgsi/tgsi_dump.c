@@ -26,6 +26,7 @@
  **************************************************************************/
 
 #include "pipe/p_debug.h"
+#include "util/u_string.h"
 #include "tgsi_dump.h"
 #include "tgsi_iterate.h"
 
@@ -34,28 +35,31 @@ struct dump_ctx
    struct tgsi_iterate_context iter;
 
    uint instno;
+   
+   struct util_strbuf *sbuf;
 };
 
 static void
 dump_enum(
+   struct util_strbuf *sbuf,
    uint e,
    const char **enums,
    uint enum_count )
 {
    if (e >= enum_count)
-      debug_printf( "%u", e );
+      util_strbuf_printf( sbuf, "%u", e );
    else
-      debug_printf( "%s", enums[e] );
+      util_strbuf_printf( sbuf, "%s", enums[e] );
 }
 
-#define EOL()           debug_printf( "\n" )
-#define TXT(S)          debug_printf( "%s", S )
-#define CHR(C)          debug_printf( "%c", C )
-#define UIX(I)          debug_printf( "0x%x", I )
-#define UID(I)          debug_printf( "%u", I )
-#define SID(I)          debug_printf( "%d", I )
-#define FLT(F)          debug_printf( "%10.4f", F )
-#define ENM(E,ENUMS)    dump_enum( E, ENUMS, sizeof( ENUMS ) / sizeof( *ENUMS ) )
+#define EOL()           util_strbuf_printf( sbuf, "\n" )
+#define TXT(S)          util_strbuf_printf( sbuf, "%s", S )
+#define CHR(C)          util_strbuf_printf( sbuf, "%c", C )
+#define UIX(I)          util_strbuf_printf( sbuf, "0x%x", I )
+#define UID(I)          util_strbuf_printf( sbuf, "%u", I )
+#define SID(I)          util_strbuf_printf( sbuf, "%d", I )
+#define FLT(F)          util_strbuf_printf( sbuf, "%10.4f", F )
+#define ENM(E,ENUMS)    dump_enum( sbuf, E, ENUMS, sizeof( ENUMS ) / sizeof( *ENUMS ) )
 
 static const char *processor_type_names[] =
 {
@@ -266,6 +270,7 @@ static const char *modulate_names[TGSI_MODULATE_COUNT] =
 
 static void
 _dump_register(
+   struct util_strbuf *sbuf,
    uint file,
    int first,
    int last )
@@ -282,6 +287,7 @@ _dump_register(
 
 static void
 _dump_register_ind(
+   struct util_strbuf *sbuf,
    uint file,
    int index,
    uint ind_file,
@@ -303,6 +309,7 @@ _dump_register_ind(
 
 static void
 _dump_writemask(
+   struct util_strbuf *sbuf,
    uint writemask )
 {
    if (writemask != TGSI_WRITEMASK_XYZW) {
@@ -318,17 +325,23 @@ _dump_writemask(
    }
 }
 
-void
-tgsi_dump_declaration(
-   const struct tgsi_full_declaration *decl )
+static boolean
+iter_declaration(
+   struct tgsi_iterate_context *iter,
+   struct tgsi_full_declaration *decl )
 {
+   struct dump_ctx *ctx = (struct dump_ctx *) iter;
+   struct util_strbuf *sbuf = ctx->sbuf;
+
    TXT( "DCL " );
 
    _dump_register(
+      sbuf,
       decl->Declaration.File,
       decl->DeclarationRange.First,
       decl->DeclarationRange.Last );
    _dump_writemask(
+      sbuf,
       decl->Declaration.UsageMask );
 
    if (decl->Declaration.Semantic) {
@@ -346,21 +359,35 @@ tgsi_dump_declaration(
    ENM( decl->Declaration.Interpolate, interpolate_names );
 
    EOL();
-}
 
-static boolean
-iter_declaration(
-   struct tgsi_iterate_context *iter,
-   struct tgsi_full_declaration *decl )
-{
-   tgsi_dump_declaration( decl );
    return TRUE;
 }
 
 void
-tgsi_dump_immediate(
-   const struct tgsi_full_immediate *imm )
+tgsi_dump_declaration(
+   const struct tgsi_full_declaration *decl )
 {
+   static char str[1024];
+   struct util_strbuf sbuf;
+   struct dump_ctx ctx;
+
+   util_strbuf_init(&sbuf, str, sizeof(str));
+   
+   ctx.sbuf = &sbuf;
+
+   iter_declaration( &ctx.iter, (struct tgsi_full_declaration *)decl );
+   
+   debug_printf("%s", str);
+}
+
+static boolean
+iter_immediate(
+   struct tgsi_iterate_context *iter,
+   struct tgsi_full_immediate *imm )
+{
+   struct dump_ctx *ctx = (struct dump_ctx *) iter;
+   struct util_strbuf *sbuf = ctx->sbuf;
+
    uint i;
 
    TXT( "IMM " );
@@ -382,22 +409,36 @@ tgsi_dump_immediate(
    TXT( " }" );
 
    EOL();
-}
 
-static boolean
-iter_immediate(
-   struct tgsi_iterate_context *iter,
-   struct tgsi_full_immediate *imm )
-{
-   tgsi_dump_immediate( imm );
    return TRUE;
 }
 
 void
-tgsi_dump_instruction(
-   const struct tgsi_full_instruction *inst,
-   uint instno )
+tgsi_dump_immediate(
+   const struct tgsi_full_immediate *imm )
 {
+   static char str[1024];
+   struct util_strbuf sbuf;
+   struct dump_ctx ctx;
+
+   util_strbuf_init(&sbuf, str, sizeof(str));
+   
+   ctx.sbuf = &sbuf;
+
+   iter_immediate( &ctx.iter, (struct tgsi_full_immediate *)imm );
+   
+   debug_printf("%s", str);
+}
+
+static boolean
+iter_instruction(
+   struct tgsi_iterate_context *iter,
+   struct tgsi_full_instruction *inst )
+{
+   struct dump_ctx *ctx = (struct dump_ctx *) iter;
+   struct util_strbuf *sbuf = ctx->sbuf;
+   uint instno = ctx->instno++;
+   
    uint i;
    boolean first_reg = TRUE;
 
@@ -426,11 +467,12 @@ tgsi_dump_instruction(
       CHR( ' ' );
 
       _dump_register(
+         sbuf,
          dst->DstRegister.File,
          dst->DstRegister.Index,
          dst->DstRegister.Index );
       ENM( dst->DstRegisterExtModulate.Modulate, modulate_names );
-      _dump_writemask( dst->DstRegister.WriteMask );
+      _dump_writemask( sbuf, dst->DstRegister.WriteMask );
 
       first_reg = FALSE;
    }
@@ -457,6 +499,7 @@ tgsi_dump_instruction(
 
       if (src->SrcRegister.Indirect) {
          _dump_register_ind(
+            sbuf,
             src->SrcRegister.File,
             src->SrcRegister.Index,
             src->SrcRegisterInd.File,
@@ -464,6 +507,7 @@ tgsi_dump_instruction(
       }
       else {
          _dump_register(
+            sbuf,
             src->SrcRegister.File,
             src->SrcRegister.Index,
             src->SrcRegister.Index );
@@ -529,38 +573,55 @@ tgsi_dump_instruction(
    }
 
    EOL();
+
+   return TRUE;
 }
 
-static boolean
-iter_instruction(
-   struct tgsi_iterate_context *iter,
-   struct tgsi_full_instruction *inst )
+void
+tgsi_dump_instruction(
+   const struct tgsi_full_instruction *inst,
+   uint instno )
 {
-   struct dump_ctx *ctx = (struct dump_ctx *) iter;
+   static char str[1024];
+   struct util_strbuf sbuf;
+   struct dump_ctx ctx;
 
-   tgsi_dump_instruction( inst, ctx->instno++ );
-   return TRUE;
+   util_strbuf_init(&sbuf, str, sizeof(str));
+   
+   ctx.instno = instno;
+   ctx.sbuf = &sbuf;
+
+   iter_instruction( &ctx.iter, (struct tgsi_full_instruction *)inst );
+   
+   debug_printf("%s", str);
 }
 
 static boolean
 prolog(
-   struct tgsi_iterate_context *ctx )
+   struct tgsi_iterate_context *iter )
 {
-   ENM( ctx->processor.Processor, processor_type_names );
-   UID( ctx->version.MajorVersion );
+   struct dump_ctx *ctx = (struct dump_ctx *) iter;
+   struct util_strbuf *sbuf = ctx->sbuf;
+   ENM( iter->processor.Processor, processor_type_names );
+   UID( iter->version.MajorVersion );
    CHR( '.' );
-   UID( ctx->version.MinorVersion );
+   UID( iter->version.MinorVersion );
    EOL();
    return TRUE;
 }
 
 void
-tgsi_dump(
+tgsi_dump_str(
    const struct tgsi_token *tokens,
-   uint flags )
+   uint flags,
+   char *str,
+   size_t size)
 {
+   struct util_strbuf sbuf;
    struct dump_ctx ctx;
 
+   util_strbuf_init(&sbuf, str, size);
+   
    /* sanity checks */
    assert( strcmp( opcode_names[TGSI_OPCODE_CONT], "CONT" ) == 0 );
    assert( strcmp( opcode_names[TGSI_OPCODE_END], "END" ) == 0 );
@@ -572,6 +633,19 @@ tgsi_dump(
    ctx.iter.epilog = NULL;
 
    ctx.instno = 0;
+   ctx.sbuf = &sbuf;
 
    tgsi_iterate_shader( tokens, &ctx.iter );
+}
+
+void
+tgsi_dump(
+   const struct tgsi_token *tokens,
+   uint flags )
+{
+   static char str[4096];
+   
+   tgsi_dump_str(tokens, flags, str, sizeof(str));
+   
+   debug_printf("%s", str);
 }

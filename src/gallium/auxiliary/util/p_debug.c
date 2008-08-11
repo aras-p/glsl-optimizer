@@ -50,12 +50,12 @@
 
 #endif
 
-
-
 #include "pipe/p_compiler.h" 
 #include "pipe/p_util.h" 
 #include "pipe/p_debug.h" 
 #include "pipe/p_format.h" 
+#include "pipe/p_state.h" 
+#include "pipe/p_inlines.h" 
 #include "util/u_string.h" 
 
 
@@ -335,7 +335,7 @@ const char *
 debug_dump_enum(const struct debug_named_value *names, 
                 unsigned long value)
 {
-   static char rest[256];
+   static char rest[64];
    
    while(names->name) {
       if(names->value == value)
@@ -498,10 +498,9 @@ void debug_print_format(const char *msg, unsigned fmt )
 }
 #endif
 
-char *pf_sprint_name( char *str, enum pipe_format format )
+const char *pf_name( enum pipe_format format )
 {
-   strcpy( str, debug_dump_enum(pipe_format_names, format) );
-   return str;
+   return debug_dump_enum(pipe_format_names, format);
 }
 
 
@@ -509,7 +508,7 @@ char *pf_sprint_name( char *str, enum pipe_format format )
 void debug_dump_image(const char *prefix,
                       unsigned format, unsigned cpp,
                       unsigned width, unsigned height,
-                      unsigned pitch,
+                      unsigned stride,
                       const void *data)     
 {
 #ifdef PIPE_SUBSYSTEM_WINDOWS_DISPLAY
@@ -530,7 +529,7 @@ void debug_dump_image(const char *prefix,
    for(i = 0; i < sizeof(filename); ++i)
       wfilename[i] = (WCHAR)filename[i];
    
-   pMap = (unsigned char *)EngMapFile(wfilename, sizeof(header) + cpp*width*height, &iFile);
+   pMap = (unsigned char *)EngMapFile(wfilename, sizeof(header) + height*width*cpp, &iFile);
    if(!pMap)
       return;
    
@@ -542,11 +541,44 @@ void debug_dump_image(const char *prefix,
    pMap += sizeof(header);
    
    for(i = 0; i < height; ++i) {
-      memcpy(pMap, (unsigned char *)data + cpp*pitch*i, cpp*width);
+      memcpy(pMap, (unsigned char *)data + stride*i, cpp*width);
       pMap += cpp*width;
    }
       
    EngUnmapFile(iFile);
 #endif
+}
+
+void debug_dump_surface(const char *prefix,
+                        struct pipe_surface *surface)     
+{
+   unsigned surface_usage;
+   void *data;
+
+   if (!surface)
+      goto error1;
+
+   /* XXX: force mappable surface */
+   surface_usage = surface->usage;
+   surface->usage |= PIPE_BUFFER_USAGE_CPU_READ;
+   
+   data = pipe_surface_map(surface, 
+                           PIPE_BUFFER_USAGE_CPU_READ);
+   if(!data)
+      goto error2;
+   
+   debug_dump_image(prefix, 
+                    surface->format,
+                    surface->block.size, 
+                    surface->nblocksx,
+                    surface->nblocksy,
+                    surface->stride,
+                    data);
+   
+   pipe_surface_unmap(surface);
+error2:
+   surface->usage = surface_usage;
+error1:
+   ;
 }
 #endif

@@ -1493,7 +1493,7 @@ set_program_uniform(GLcontext *ctx, struct gl_program *program,
       return;
    }
 
-   if (index + offset > program->Parameters->Size) {
+   if (index + offset > (GLint) program->Parameters->Size) {
       /* out of bounds! */
       return;
    }
@@ -1557,7 +1557,7 @@ set_program_uniform(GLcontext *ctx, struct gl_program *program,
          /* if the uniform is bool-valued, convert to 1.0 or 0.0 */
          if (is_boolean_type(program->Parameters->Parameters[index].DataType)) {
             for (i = 0; i < elems; i++) {
-               uniformVal[i] = uniformVal[i] ? 1.0 : 0.0;
+               uniformVal[i] = uniformVal[i] ? 1.0f : 0.0f;
             }
          }
       }

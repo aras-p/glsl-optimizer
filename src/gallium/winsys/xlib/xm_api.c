@@ -363,7 +363,12 @@ create_xmesa_buffer(XMesaDrawable d, BufferType type,
          stencilFormat = PIPE_FORMAT_S8_UNORM;
    }
    else {
+      /* no stencil */
       stencilFormat = PIPE_FORMAT_NONE;
+      if (depthFormat == PIPE_FORMAT_S8Z24_UNORM) {
+         /* use 24-bit Z, undefined stencil channel */
+         depthFormat = PIPE_FORMAT_X8Z24_UNORM;
+      }
    }
 
 

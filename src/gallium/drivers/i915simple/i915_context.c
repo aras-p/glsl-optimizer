@@ -44,6 +44,9 @@ static void i915_destroy( struct pipe_context *pipe )
    struct i915_context *i915 = i915_context( pipe );
 
    draw_destroy( i915->draw );
+   
+   if(i915->winsys)
+      i915->winsys->destroy(i915->winsys);
 
    FREE( i915 );
 }

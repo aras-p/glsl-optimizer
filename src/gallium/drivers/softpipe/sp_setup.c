@@ -284,9 +284,9 @@ static void print_vertex(const struct setup_context *setup,
                          const float (*v)[4])
 {
    int i;
-   debug_printf("Vertex: (%p)\n", v);
+   debug_printf("   Vertex: (%p)\n", v);
    for (i = 0; i < setup->quad.nr_attrs; i++) {
-      debug_printf("  %d: %f %f %f %f\n",  i,
+      debug_printf("     %d: %f %f %f %f\n",  i,
               v[i][0], v[i][1], v[i][2], v[i][3]);
    }
 }

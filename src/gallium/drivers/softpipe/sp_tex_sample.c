@@ -601,9 +601,9 @@ get_texel(struct tgsi_sampler *sampler,
           unsigned face, unsigned level, int x, int y, int z,
           float rgba[NUM_CHANNELS][QUAD_SIZE], unsigned j)
 {
-   if (x < 0 || x >= sampler->texture->width[level] ||
-       y < 0 || y >= sampler->texture->height[level] ||
-       z < 0 || z >= sampler->texture->depth[level]) {
+   if (x < 0 || x >= (int) sampler->texture->width[level] ||
+       y < 0 || y >= (int) sampler->texture->height[level] ||
+       z < 0 || z >= (int) sampler->texture->depth[level]) {
       rgba[0][j] = sampler->state->border_color[0];
       rgba[1][j] = sampler->state->border_color[1];
       rgba[2][j] = sampler->state->border_color[2];
@@ -619,6 +619,12 @@ get_texel(struct tgsi_sampler *sampler,
       rgba[1][j] = tile->data.color[ty][tx][1];
       rgba[2][j] = tile->data.color[ty][tx][2];
       rgba[3][j] = tile->data.color[ty][tx][3];
+      if (0)
+      {
+         debug_printf("Get texel %f %f %f %f from %s\n",
+                      rgba[0][j], rgba[1][j], rgba[2][j], rgba[3][j],
+                      pf_name(sampler->texture->format));
+      }
    }
 }
 

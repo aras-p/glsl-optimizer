@@ -237,7 +237,7 @@ parse_float(slang_parse_ctx * C, float *number)
 }
 
 /* revision number - increment after each change affecting emitted output */
-#define REVISION 3
+#define REVISION 4
 
 static int
 check_revision(slang_parse_ctx * C)
@@ -691,14 +691,49 @@ parse_type_specifier(slang_parse_ctx * C, slang_output_ctx * O,
    return 1;
 }
 
+#define PRECISION_DEFAULT 0
+#define PRECISION_LOW     1
+#define PRECISION_MEDIUM  2
+#define PRECISION_HIGH    3
+
 static int
 parse_fully_specified_type(slang_parse_ctx * C, slang_output_ctx * O,
                            slang_fully_specified_type * type)
 {
+   GLuint precision;
+
    if (!parse_type_qualifier(C, &type->qualifier))
       return 0;
+   precision = *C->I++;
    if (!parse_type_specifier(C, O, &type->specifier))
       return 0;
+
+   switch (precision) {
+   case PRECISION_DEFAULT:
+      assert(type->specifier.type < TYPE_SPECIFIER_COUNT);
+      if (type->specifier.type < TYPE_SPECIFIER_COUNT)
+         type->precision = O->default_precision[type->specifier.type];
+      break;
+   case PRECISION_LOW:
+      type->precision = SLANG_PREC_LOW;
+      break;
+   case PRECISION_MEDIUM:
+      type->precision = SLANG_PREC_MEDIUM;
+      break;
+   case PRECISION_HIGH:
+      type->precision = SLANG_PREC_HIGH;
+      break;
+   default:
+      return 0;
+   }
+
+#if !FEATURE_es2_glsl
+   if (precision != PRECISION_DEFAULT) {
+      slang_info_log_error(C->L, "precision qualifiers not allowed");
+      return 0;
+   }
+#endif
+
    return 1;
 }
 
@@ -1868,11 +1903,6 @@ parse_declaration(slang_parse_ctx * C, slang_output_ctx * O)
    }
    return 1;
 }
-
-
-#define PRECISION_LOW    0
-#define PRECISION_MEDIUM 1
-#define PRECISION_HIGH   2
 
 static int
 parse_default_precision(slang_parse_ctx * C, slang_output_ctx * O)

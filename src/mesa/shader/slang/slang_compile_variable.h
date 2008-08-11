@@ -51,10 +51,20 @@ slang_type_specifier_type_to_string(slang_type_specifier_type);
 
 
 
+typedef enum slang_type_precision_
+{
+   SLANG_PREC_DEFAULT,
+   SLANG_PREC_LOW,
+   SLANG_PREC_MEDIUM,
+   SLANG_PREC_HIGH
+} slang_type_precision;
+
+
 typedef struct slang_fully_specified_type_
 {
    slang_type_qualifier qualifier;
    slang_type_specifier specifier;
+   slang_type_precision precision;
 } slang_fully_specified_type;
 
 extern int

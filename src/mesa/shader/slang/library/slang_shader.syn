@@ -49,7 +49,7 @@
 .syntax translation_unit;
 
 /* revision number - increment after each change affecting emitted output */
-.emtcode REVISION                                   3
+.emtcode REVISION                                   4
 
 /* external declaration (or precision or invariant stmt) */
 .emtcode EXTERNAL_NULL                              0
@@ -59,9 +59,10 @@
 .emtcode INVARIANT_STMT                             4
 
 /* precision */
-.emtcode PRECISION_LOW                              0
-.emtcode PRECISION_MEDIUM                           1
-.emtcode PRECISION_HIGH                             2
+.emtcode PRECISION_DEFAULT                          0
+.emtcode PRECISION_LOW                              1
+.emtcode PRECISION_MEDIUM                           2
+.emtcode PRECISION_HIGH                             3
 
 /* declaration */
 .emtcode DECLARATION_FUNCTION_PROTOTYPE             1
@@ -855,15 +856,21 @@ single_declaration_6
 /*
     <fully_specified_type>              ::= <type_specifier>
                                           | <type_qualifier> <type_specifier>
+                                          | <precision> <type_specifier>
+                                          | <type_qualifier> <precision> <type_specifier>
 */
 fully_specified_type_space
-    fully_specified_type_1 .and type_specifier_space;
+    fully_specified_type_optqual .and fully_specified_type_optprec .and type_specifier_space;
 fully_specified_type_nospace
-    fully_specified_type_1 .and type_specifier_nospace;
-fully_specified_type_1
-    fully_specified_type_2 .or .true .emit TYPE_QUALIFIER_NONE;
-fully_specified_type_2
+    fully_specified_type_optqual .and fully_specified_type_optprec .and type_specifier_nospace;
+fully_specified_type_optqual
+    fully_specified_type_qual .or .true .emit TYPE_QUALIFIER_NONE;
+fully_specified_type_qual
     type_qualifier .and space;
+fully_specified_type_optprec
+    fully_specified_type_prec .or .true .emit PRECISION_DEFAULT;
+fully_specified_type_prec
+    precision .and space;
 
 /*
     <type_qualifier>                    ::= "const"

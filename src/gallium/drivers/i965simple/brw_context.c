@@ -52,6 +52,9 @@ static void brw_destroy(struct pipe_context *pipe)
 {
    struct brw_context *brw = brw_context(pipe);
 
+   if(brw->winsys->destroy)
+      brw->winsys->destroy(brw->winsys);
+   
    FREE(brw);
 }
 

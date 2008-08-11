@@ -262,11 +262,19 @@ def translate_r5g6b5(data):
 	a = 255
 	return [[(r, g, b, a)]]
 
+def translate_a8r8g8b8(data):
+    b, g, r, a = struct.unpack_from("BBBB", data)
+    return [[(r, g, b, a)]]
+
+
+def translate_x8r8g8b8(data):
+    b, g, r, x = struct.unpack_from("BBBB", data)
+    a = 255
+    return [[(r, g, b, a)]]
 
 def translate_r8g8b8a8(data):
 	r, g, b, a = struct.unpack_from("BBBB", data)
 	return [[(r, g, b, a)]]
-
 
 def translate_ycbcr(data):
 	y1, u, y2, v = struct.unpack_from("BBBB", data)
@@ -280,16 +288,32 @@ def translate_ycbcr_rev(data):
     r2, g2, b2 = yuv2rgb(y1, u, v)
     return [[(r1, g1, b1, 255), (r2, g2, b2, 255)]]
 
+def translate_x8z24(data):
+    value, = struct.unpack_from("I", data)
+    r = g = b = (value & 0xffffff)*0xff/0xffffff
+    a = 255
+    return [[(r, g, b, a)]]
+
+def translate_s8z24(data):
+    value, = struct.unpack_from("I", data)
+    r = (value & 0xffffff)*0xff/0xffffff
+    g = value >> 24
+    b = 0
+    a = 255
+    return [[(r, g, b, a)]]
+
 
 translate = {
-	PIPE_FORMAT_A8R8G8B8_UNORM: (4, 1, 1, translate_r8g8b8a8),
-	PIPE_FORMAT_X8R8G8B8_UNORM: (4, 1, 1, translate_r8g8b8a8),
+	PIPE_FORMAT_A8R8G8B8_UNORM: (4, 1, 1, translate_a8r8g8b8),
+	PIPE_FORMAT_X8R8G8B8_UNORM: (4, 1, 1, translate_x8r8g8b8),
 	PIPE_FORMAT_B8G8R8A8_UNORM: (4, 1, 1, translate_r8g8b8a8),
 	PIPE_FORMAT_B8G8R8X8_UNORM: (4, 1, 1, translate_r8g8b8a8),
 	PIPE_FORMAT_A8B8G8R8_SNORM: (4, 1, 1, translate_r8g8b8a8),
 	PIPE_FORMAT_R5G6B5_UNORM: (2, 1, 1, translate_r5g6b5),
 	PIPE_FORMAT_YCBCR: (4, 2, 1, translate_ycbcr),
 	PIPE_FORMAT_YCBCR_REV: (4, 2, 1, translate_ycbcr_rev),
+    PIPE_FORMAT_S8Z24_UNORM: (4, 1, 1, translate_s8z24),
+    PIPE_FORMAT_X8Z24_UNORM: (4, 1, 1, translate_x8z24),
 }
 
 def read_header(infile):

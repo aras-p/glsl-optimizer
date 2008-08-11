@@ -1,0 +1,37 @@
+This directory contains a Gallium3D pipe driver which traces all incoming calls.
+
+To build, invoke scons on the top dir as
+ 
+ scons statetrackers=mesa drivers=softpipe,i915simple,trace winsys=xlib
+
+To use do
+
+ ln -s libGL.so build/linux-x86-debug/gallium/winsys/xlib/libGL.so.1
+ export LD_LIBRARY_PATH=$PWD/build/linux-x86-debug/gallium/winsys/xlib
+ export GALLIUM_TRACE=y
+
+ensure the right libGL.so is being picked by doing
+
+ ldd `which glxingo` 
+
+and then try running
+
+ glxinfo
+
+which should create a gallium.*.trace file, which is an XML file. You can view 
+copying trace.xsl and trace.css to the same directory, and opening with a 
+XSLT capable browser like Firefox or Internet Explorer. It often happens that 
+the trace file was not properly terminated, and a
+
+ </trace>
+ 
+closing tag is missing from the file end. Add it before try to open or 
+further transform it by doing
+
+  echo '</trace>' >> gallium.??.trace
+
+
+This is still work in progress.  
+
+--
+Jose Fonseca <jrfonseca@tungstengraphics.com>

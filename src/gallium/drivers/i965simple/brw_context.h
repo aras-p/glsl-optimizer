@@ -188,7 +188,7 @@ extern int BRW_DEBUG;
 } while(0)
 
 #define PRINT(...) do {						\
-   debug_printf(brw->pipe.winsys, __VA_ARGS__);			\
+   debug_printf(__VA_ARGS__);			                \
 } while(0)
 
 struct brw_state_flags {

@@ -112,6 +112,8 @@ enum brw_cache_id {
  */
 struct brw_winsys {
 
+   void (*destroy)(struct brw_winsys *);
+   
    /**
     * Reserve space on batch buffer.
     *

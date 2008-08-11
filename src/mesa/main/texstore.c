@@ -2,7 +2,7 @@
  * Mesa 3-D graphics library
  * Version:  7.1
  *
- * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2008  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -678,54 +678,114 @@ static void
 swizzle_copy(GLubyte *dst, GLuint dstComponents, const GLubyte *src, 
              GLuint srcComponents, const GLubyte *map, GLuint count)
 {
+#define SWZ_CPY(dst, src, count, dstComps, srcComps) \
+   do {                                              \
+      GLuint i;                                      \
+      for (i = 0; i < count; i++) {                  \
+         GLuint j;                                   \
+         if (srcComps == 4) {                        \
+            COPY_4UBV(tmp, src);                     \
+         }                                           \
+         else {                                      \
+            for (j = 0; j < srcComps; j++) {         \
+               tmp[j] = src[j];                      \
+            }                                        \
+         }                                           \
+         src += srcComps;                            \
+         for (j = 0; j < dstComps; j++) {            \
+            dst[j] = tmp[map[j]];                    \
+         }                                           \
+         dst += dstComps;                            \
+      }                                              \
+   } while (0)
+
    GLubyte tmp[6];
-   GLuint i;
 
    tmp[ZERO] = 0x0;
    tmp[ONE] = 0xff;
 
+   ASSERT(srcComponents <= 4);
+   ASSERT(dstComponents <= 4);
+
    switch (dstComponents) {
    case 4:
-      for (i = 0; i < count; i++) {
- 	 COPY_4UBV(tmp, src); 
-	 src += srcComponents;      
-	 dst[0] = tmp[map[0]];
-	 dst[1] = tmp[map[1]];
-	 dst[2] = tmp[map[2]];
-	 dst[3] = tmp[map[3]];
-	 dst += 4;
+      switch (srcComponents) {
+      case 4:
+         SWZ_CPY(dst, src, count, 4, 4);
+         break;
+      case 3:
+         SWZ_CPY(dst, src, count, 4, 3);
+         break;
+      case 2:
+         SWZ_CPY(dst, src, count, 4, 2);
+         break;
+      case 1:
+         SWZ_CPY(dst, src, count, 4, 1);
+         break;
+      default:
+         ;
       }
       break;
    case 3:
-      for (i = 0; i < count; i++) {
- 	 COPY_4UBV(tmp, src); 
-	 src += srcComponents;      
-	 dst[0] = tmp[map[0]];
-	 dst[1] = tmp[map[1]];
-	 dst[2] = tmp[map[2]];
-	 dst += 3;
+      switch (srcComponents) {
+      case 4:
+         SWZ_CPY(dst, src, count, 3, 4);
+         break;
+      case 3:
+         SWZ_CPY(dst, src, count, 3, 3);
+         break;
+      case 2:
+         SWZ_CPY(dst, src, count, 3, 2);
+         break;
+      case 1:
+         SWZ_CPY(dst, src, count, 3, 1);
+         break;
+      default:
+         ;
       }
       break;
    case 2:
-      for (i = 0; i < count; i++) {
- 	 COPY_4UBV(tmp, src); 
-	 src += srcComponents;      
-	 dst[0] = tmp[map[0]];
-	 dst[1] = tmp[map[1]];
-	 dst += 2;
+      switch (srcComponents) {
+      case 4:
+         SWZ_CPY(dst, src, count, 2, 4);
+         break;
+      case 3:
+         SWZ_CPY(dst, src, count, 2, 3);
+         break;
+      case 2:
+         SWZ_CPY(dst, src, count, 2, 2);
+         break;
+      case 1:
+         SWZ_CPY(dst, src, count, 2, 1);
+         break;
+      default:
+         ;
       }
       break;
    case 1:
-      /* XXX investigate valgrind invalid read when running demos/texenv.c */
-      for (i = 0; i < count; i++) {
- 	 COPY_4UBV(tmp, src); 
-	 src += srcComponents;      
-	 dst[0] = tmp[map[0]];
-	 dst += 1;
+      switch (srcComponents) {
+      case 4:
+         SWZ_CPY(dst, src, count, 1, 4);
+         break;
+      case 3:
+         SWZ_CPY(dst, src, count, 1, 3);
+         break;
+      case 2:
+         SWZ_CPY(dst, src, count, 1, 2);
+         break;
+      case 1:
+         SWZ_CPY(dst, src, count, 1, 1);
+         break;
+      default:
+         ;
       }
       break;
+   default:
+      ;
    }
+#undef SWZ_CPY
 }
+
 
 
 static const GLubyte map_identity[6] = { 0, 1, 2, 3, ZERO, ONE };
@@ -1100,7 +1160,8 @@ _mesa_texstore_z32(TEXSTORE_PARAMS)
    ASSERT(dstFormat == &_mesa_texformat_z32);
    ASSERT(dstFormat->TexelBytes == sizeof(GLuint));
 
-   if (!ctx->_ImageTransferState &&
+   if (ctx->Pixel.DepthScale == 1.0f &&
+       ctx->Pixel.DepthBias == 0.0f &&
        !srcPacking->SwapBytes &&
        baseInternalFormat == GL_DEPTH_COMPONENT &&
        srcFormat == GL_DEPTH_COMPONENT &&
@@ -1147,7 +1208,8 @@ _mesa_texstore_z16(TEXSTORE_PARAMS)
    ASSERT(dstFormat == &_mesa_texformat_z16);
    ASSERT(dstFormat->TexelBytes == sizeof(GLushort));
 
-   if (!ctx->_ImageTransferState &&
+   if (ctx->Pixel.DepthScale == 1.0f &&
+       ctx->Pixel.DepthBias == 0.0f &&
        !srcPacking->SwapBytes &&
        baseInternalFormat == GL_DEPTH_COMPONENT &&
        srcFormat == GL_DEPTH_COMPONENT &&
@@ -2345,7 +2407,8 @@ _mesa_texstore_z24_s8(TEXSTORE_PARAMS)
    ASSERT(srcFormat == GL_DEPTH_STENCIL_EXT);
    ASSERT(srcType == GL_UNSIGNED_INT_24_8_EXT);
 
-   if (!ctx->_ImageTransferState &&
+   if (ctx->Pixel.DepthScale == 1.0f &&
+       ctx->Pixel.DepthBias == 0.0f &&
        !srcPacking->SwapBytes) {
       /* simple path */
       memcpy_texture(ctx, dims,
@@ -2416,7 +2479,7 @@ _mesa_texstore_s8_z24(TEXSTORE_PARAMS)
    ASSERT(srcFormat == GL_DEPTH_STENCIL_EXT || srcFormat == GL_DEPTH_COMPONENT);
    ASSERT(srcFormat != GL_DEPTH_STENCIL_EXT || srcType == GL_UNSIGNED_INT_24_8_EXT);
 
-   /* Incase we only upload depth we need to preserve the stencil */
+   /* In case we only upload depth we need to preserve the stencil */
    if (srcFormat == GL_DEPTH_COMPONENT) {
       for (img = 0; img < srcDepth; img++) {
          GLuint *dstRow = (GLuint *) dstAddr
@@ -2444,7 +2507,8 @@ _mesa_texstore_s8_z24(TEXSTORE_PARAMS)
             dstRow += dstRowStride / sizeof(GLuint);
          }
       }
-   } else {
+   }
+   else {
       for (img = 0; img < srcDepth; img++) {
          GLuint *dstRow = (GLuint *) dstAddr
             + dstImageOffsets[dstZoffset + img]

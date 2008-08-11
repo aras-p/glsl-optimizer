@@ -91,14 +91,7 @@ st_get_format_info(enum pipe_format format, struct pipe_format_info *pinfo)
       info = format;
 
 #if 0
-      {
-         char  fmtname[256];
-
-         pf_sprint_name( fmtname, format );
-         printf(
-            "%s\n",
-            fmtname );
-      }
+      printf("%s\n", pf_name( format ) );
 #endif
 
       /* Data type */
