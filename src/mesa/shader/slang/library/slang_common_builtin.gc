@@ -872,35 +872,29 @@ vec4 mod(const vec4 a, const float b)
 
 vec2 mod(const vec2 a, const vec2 b)
 {
-    float oneOverBx, oneOverBy;
-    __asm float_rcp oneOverBx, b.x;
-    __asm float_rcp oneOverBy, b.y;
-    __retVal.x = a.x - b.x * floor(a.x * oneOverBx);
-    __retVal.y = a.y - b.y * floor(a.y * oneOverBy);
+    vec2 oneOverB;
+    __asm float_rcp oneOverB.x, b.x;
+    __asm float_rcp oneOverB.y, b.y;
+    __retVal = a - b * floor(a * oneOverB);
 }
 
 vec3 mod(const vec3 a, const vec3 b)
 {
-    float oneOverBx, oneOverBy, oneOverBz;
-    __asm float_rcp oneOverBx, b.x;
-    __asm float_rcp oneOverBy, b.y;
-    __asm float_rcp oneOverBz, b.z;
-    __retVal.x = a.x - b.x * floor(a.x * oneOverBx);
-    __retVal.y = a.y - b.y * floor(a.y * oneOverBy);
-    __retVal.z = a.z - b.z * floor(a.z * oneOverBz);
+    vec3 oneOverB;
+    __asm float_rcp oneOverB.x, b.x;
+    __asm float_rcp oneOverB.y, b.y;
+    __asm float_rcp oneOverB.z, b.z;
+    __retVal = a - b * floor(a * oneOverB);
 }
 
 vec4 mod(const vec4 a, const vec4 b)
 {
-    float oneOverBx, oneOverBy, oneOverBz, oneOverBw;
-    __asm float_rcp oneOverBx, b.x;
-    __asm float_rcp oneOverBy, b.y;
-    __asm float_rcp oneOverBz, b.z;
-    __asm float_rcp oneOverBw, b.w;
-    __retVal.x = a.x - b.x * floor(a.x * oneOverBx);
-    __retVal.y = a.y - b.y * floor(a.y * oneOverBy);
-    __retVal.z = a.z - b.z * floor(a.z * oneOverBz);
-    __retVal.w = a.w - b.w * floor(a.w * oneOverBw);
+    vec4 oneOverB;
+    __asm float_rcp oneOverB.x, b.x;
+    __asm float_rcp oneOverB.y, b.y;
+    __asm float_rcp oneOverB.z, b.z;
+    __asm float_rcp oneOverB.w, b.w;
+    __retVal = a - b * floor(a * oneOverB);
 }
 
 
