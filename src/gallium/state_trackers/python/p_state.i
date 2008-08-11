@@ -34,63 +34,70 @@
 
 %module gallium;
 
-%{
-
-#include <stdio.h>
-#include <Python.h>
-
-#include "pipe/p_screen.h"
-#include "pipe/p_context.h"
-#include "pipe/p_inlines.h"
-#include "pipe/p_util.h"
-#include "pipe/p_shader_tokens.h" 
-#include "cso_cache/cso_context.h"
-#include "util/u_draw_quad.h" 
-#include "util/p_tile.h" 
-#include "tgsi/tgsi_text.h" 
-#include "tgsi/tgsi_dump.h" 
-
-#include "st_device.h"
-#include "st_sample.h"
-
-%}
-
-%include "carrays.i"
-%array_class(unsigned char, ByteArray);
-%array_class(int, IntArray);
-%array_class(unsigned, UnsignedArray);
-%array_class(float, FloatArray);
+%include "pipe/p_state.h";
 
 
-%rename(Device) st_device;
-%rename(Context) st_context;
-%rename(Texture) pipe_texture;
-%rename(Surface) pipe_surface;
-%rename(Buffer) st_buffer;
+%extend pipe_framebuffer_state {
+   
+   pipe_framebuffer_state(void) {
+      return CALLOC_STRUCT(pipe_framebuffer_state);
+   }
+   
+   ~pipe_framebuffer_state() {
+      unsigned index;
+      for(index = 0; index < PIPE_MAX_COLOR_BUFS; ++index)
+         pipe_surface_reference(&$self->cbufs[index], NULL);
+      pipe_surface_reference(&$self->zsbuf, NULL);
+      FREE($self);
+   }
+   
+   void
+   set_cbuf(unsigned index, struct pipe_surface *surface) {
+      pipe_surface_reference(&$self->cbufs[index], surface);
+   }
+   
+   void
+   set_zsbuf(struct pipe_surface *surface) {
+      pipe_surface_reference(&$self->zsbuf, surface);
+   }
+   
+};
 
-%rename(BlendColor) pipe_blend_color;
-%rename(Blend) pipe_blend_state;
-%rename(Clip) pipe_clip_state;
-%rename(ConstantBuffer) pipe_constant_buffer;
-%rename(DepthStencilAlpha) pipe_depth_stencil_alpha_state;
-%rename(FormatBlock) pipe_format_block;
-%rename(Framebuffer) pipe_framebuffer_state;
-%rename(PolyStipple) pipe_poly_stipple;
-%rename(Rasterizer) pipe_rasterizer_state;
-%rename(Sampler) pipe_sampler_state;
-%rename(Scissor) pipe_scissor_state;
-%rename(Shader) pipe_shader_state;
-%rename(VertexBuffer) pipe_vertex_buffer;
-%rename(VertexElement) pipe_vertex_element;
-%rename(Viewport) pipe_viewport_state;
 
+%extend pipe_shader_state {
+   
+   pipe_shader_state(const char *text, unsigned num_tokens = 1024) {
+      struct tgsi_token *tokens;
+      struct pipe_shader_state *shader;
+      
+      tokens = MALLOC(num_tokens * sizeof(struct tgsi_token));
+      if(!tokens)
+         goto error1;
+      
+      if(tgsi_text_translate(text, tokens, num_tokens ) != TRUE)
+         goto error2;
+      
+      shader = CALLOC_STRUCT(pipe_shader_state);
+      if(!shader)
+         goto error3;
+      
+      shader->tokens = tokens;
+      
+      return shader;
+      
+error3:
+error2:
+      FREE(tokens);
+error1:      
+      return NULL;
+   }
+   
+   ~pipe_shader_state() {
+      FREE((void*)$self->tokens);
+      FREE($self);
+   }
 
-%include "pipe/p_defines.h";
-%include "pipe/p_shader_tokens.h";
-%include "p_format.i"
-
-%include "p_device.i"
-%include "p_context.i"
-%include "p_texture.i"
-%include "p_state.i"
-
+   void dump(unsigned flags = 0) {
+      tgsi_dump($self->tokens, flags);
+   }
+}
