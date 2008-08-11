@@ -1277,34 +1277,38 @@ vec4 reflect(const vec4 I, const vec4 N)
 
 float refract(const float I, const float N, const float eta)
 {
-   float k = 1.0 - eta * eta * (1.0 - dot(N, I) * dot(N, I));
+   float n_dot_i = dot(N, I);
+   float k = 1.0 - eta * eta * (1.0 - n_dot_i * n_dot_i);
    if (k < 0.0)
        return 0.0;
-   return eta * I - (eta * dot(N, I) + sqrt(k)) * N;
+   return eta * I - (eta * n_dot_i + sqrt(k)) * N;
 }
 
 vec2 refract(const vec2 I, const vec2 N, const float eta)
 {
-   float k = 1.0 - eta * eta * (1.0 - dot(N, I) * dot(N, I));
+   float n_dot_i = dot(N, I);
+   float k = 1.0 - eta * eta * (1.0 - n_dot_i * n_dot_i);
    if (k < 0.0)
-      return 0.0;
-   return eta * I - (eta * dot(N, I) + sqrt(k)) * N;
+      return vec2(0.0);
+   return eta * I - (eta * n_dot_i + sqrt(k)) * N;
 }
 
 vec3 refract(const vec3 I, const vec3 N, const float eta)
 {
-   float k = 1.0 - eta * eta * (1.0 - dot(N, I) * dot(N, I));
+   float n_dot_i = dot(N, I);
+   float k = 1.0 - eta * eta * (1.0 - n_dot_i * n_dot_i);
    if (k < 0.0)
-      return 0.0;
-   return eta * I - (eta * dot(N, I) + sqrt(k)) * N;
+      return vec3(0.0);
+   return eta * I - (eta * n_dot_i + sqrt(k)) * N;
 }
 
 vec4 refract(const vec4 I, const vec4 N, const float eta)
 {
-   float k = 1.0 - eta * eta * (1.0 - dot(N, I) * dot(N, I));
+   float n_dot_i = dot(N, I);
+   float k = 1.0 - eta * eta * (1.0 - n_dot_i * n_dot_i);
    if (k < 0.0)
-      return 0.0;
-   return eta * I - (eta * dot(N, I) + sqrt(k)) * N;
+      return vec4(0.0);
+   return eta * I - (eta * n_dot_i + sqrt(k)) * N;
 }
 
 
