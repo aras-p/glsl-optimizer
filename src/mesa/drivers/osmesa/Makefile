@@ -48,6 +48,7 @@ $(TOP)/lib/$(OSMESA_LIB_NAME): $(OBJECTS)
 	$(MKLIB) -o $(OSMESA_LIB) -linker '$(CC)' -ldflags '$(LDFLAGS)' \
 		-major $(MESA_MAJOR) -minor $(MESA_MINOR) -patch $(MESA_TINY) \
 		-install $(TOP)/$(LIB_DIR) $(MKLIB_OPTIONS) \
+		-id $(INSTALL_LIB_DIR)/lib$(OSMESA_LIB).$(MESA_MAJOR).dylib \
 		$(OSMESA_LIB_DEPS) $(OBJECTS)
 
 
@@ -59,6 +60,7 @@ osmesa16: $(OBJECTS) $(CORE_MESA)
 	$(MKLIB) -o $(OSMESA_LIB) -linker '$(CC)' -ldflags '$(LDFLAGS)' \
 		-major $(MESA_MAJOR) -minor $(MESA_MINOR) -patch $(MESA_TINY) \
 		-install $(TOP)/$(LIB_DIR) $(MKLIB_OPTIONS) \
+		-id $(INSTALL_LIB_DIR)/lib$(OSMESA_LIB).$(MESA_MAJOR).dylib \
 		$(OSMESA_LIB_DEPS) $(OBJECTS) $(CORE_MESA)
 
 

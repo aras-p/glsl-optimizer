@@ -58,6 +58,7 @@ $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME): $(OBJECTS) $(CORE_MESA)
 	@ $(MKLIB) -o $(GL_LIB) -linker '$(CC)' -ldflags '$(LDFLAGS)' \
 		-major $(GL_MAJOR) -minor $(GL_MINOR) -patch $(GL_TINY) \
 		-install $(TOP)/$(LIB_DIR) $(MKLIB_OPTIONS) \
+		-id $(INSTALL_LIB_DIR)/lib$(GL_LIB).$(GL_MAJOR).dylib \
 		$(GL_LIB_DEPS) $(OBJECTS) $(CORE_MESA)
 
 

@@ -94,6 +94,7 @@ $(TOP)/$(LIB_DIR)/$(GLUT_LIB_NAME): depend $(OBJECTS)
 	$(MKLIB) -o $(GLUT_LIB) -linker '$(CC)' -ldflags '$(LDFLAGS)' \
 		-major $(GLUT_MAJOR) -minor $(GLUT_MINOR) -patch $(GLUT_TINY) \
 		$(MKLIB_OPTIONS) -install $(TOP)/$(LIB_DIR) \
+		-id $(INSTALL_LIB_DIR)/lib$(GLUT_LIB).$(GLUT_MAJOR).dylib \
 		$(GLUT_LIB_DEPS) $(OBJECTS)
 
 

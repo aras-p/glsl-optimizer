@@ -73,7 +73,8 @@ default: depend $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME)
 $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME):  $(OBJECTS) Makefile
 	$(MKLIB) -o $(GL_LIB) -linker '$(CC)' -ldflags '$(LDFLAGS)' \
 		-major 1 -minor 2 $(MKLIB_OPTIONS) \
-		-install $(TOP)/$(LIB_DIR) $(GL_LIB_DEPS) $(OBJECTS)
+		-install $(TOP)/$(LIB_DIR) -id $(INSTALL_LIB_DIR)/libGL.1.dylib \
+		$(GL_LIB_DEPS) $(OBJECTS)
 
 
 depend: $(SOURCES) $(MESA_GLAPI_SOURCES) $(MESA_ASM_API) Makefile

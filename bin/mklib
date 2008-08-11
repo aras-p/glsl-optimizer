@@ -43,7 +43,7 @@ ARCH="auto"
 ARCHOPT=""
 NOPREFIX=0
 EXPORTS=""
-
+ID=""
 
 #
 # Parse arguments
@@ -75,6 +75,7 @@ do
 	    echo '  -altopts OPTS alternate options to override all others'
 	    echo "  -noprefix     don't prefix library name with 'lib' nor add any suffix"
 	    echo '  -exports FILE only export the symbols listed in FILE'
+	    echo '  -id NAME      Sets the id of the dylib (Darwin)'
 	    echo '  -h, --help    display this information and exit'
 	    exit 1
 	    ;;
@@ -153,6 +154,10 @@ do
 	    shift 1;
 	    EXPORTS=$1
 	    ;;
+	'-id')
+	    shift 1;
+	    ID=$1
+	    ;;
 	-*)
 	    echo "mklib: Unknown option: " $1 ;
 	    exit 1
@@ -196,6 +201,7 @@ if [  ]  ; then
     echo PATCH is $PATCH
     echo DEPS are $DEPS
     echo "EXPORTS in" $EXPORTS
+    echo ID is $ID
     echo "-----------------"
 fi
 
@@ -630,13 +636,19 @@ case $ARCH in
                 LIBSUFFIX="bundle"
                 OPTS="${ARCHOPT} -bundle -multiply_defined suppress"
             else
-		LIBSUFFIX="dylib"
-                OPTS="${ARCHOPT} -dynamiclib -multiply_defined suppress -current_version ${MAJOR}.${MINOR}.0 -compatibility_version ${MAJOR}.${MINOR}.0 -install_name lib${LIBNAME}.${MAJOR}.${LIBSUFFIX}"
+                LIBSUFFIX="dylib"
+                if [ -z "$ID" ] ; then
+                    ID="lib${LIBNAME}.${MAJOR}.${LIBSUFFIX}"
+                fi
+                OPTS="${ARCHOPT} -dynamiclib -multiply_defined suppress -current_version ${MAJOR}.${MINOR}.0 -compatibility_version ${MAJOR}.${MINOR}.0 -install_name ${ID}"
             fi
 
             if [ ${EXPORTS} ] ; then
+                if [ -f ${EXPORTS}".darwin" ] ; then
+                    EXPORTS=$EXPORTS".darwin"
+                fi
                 OPTS="${OPTS} -exported_symbols_list ${EXPORTS}"
-            fi 
+            fi
 
             LINKNAME="lib${LIBNAME}.${MAJOR}.${LIBSUFFIX}"
             LINKNAME2="lib${LIBNAME}.${LIBSUFFIX}"
