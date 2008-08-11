@@ -150,9 +150,10 @@ void trace_dump_poly_stipple(struct trace_stream *stream,
    trace_dump_struct_begin(stream, "pipe_poly_stipple");
 
    trace_dump_member_begin(stream, "stipple");
-   trace_dump_bytes(stream, 
+   trace_dump_array(stream,
+                    uint,
                     state->stipple, 
-                    sizeof(state->stipple));
+                    Elements(state->stipple));
    trace_dump_member_end(stream);
    
    trace_dump_struct_end(stream);
