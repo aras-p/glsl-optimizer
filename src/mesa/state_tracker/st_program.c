@@ -187,6 +187,12 @@ st_translate_vertex_program(struct st_context *st,
       if (stvp->Base.Base.OutputsWritten & (1 << attr)) {
          GLuint slot;
 
+         /* XXX
+          * Pass in the fragment program's input's semantic info.
+          * Use the generic semantic indexes from there, instead of
+          * guessing below.
+          */
+
          if (outputMapping) {
             slot = outputMapping[attr];
             assert(slot != ~0);
