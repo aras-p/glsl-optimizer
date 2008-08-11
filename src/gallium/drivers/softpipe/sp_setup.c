@@ -1272,10 +1272,7 @@ void setup_prepare( struct setup_context *setup )
    }
 
    /* Note: nr_attrs is only used for debugging (vertex printing) */
-   {
-      const struct sp_fragment_shader *fs = setup->softpipe->fs;
-      setup->quad.nr_attrs = fs->info.num_inputs + 1; /* +1 for vert pos */
-   }
+   setup->quad.nr_attrs = draw_num_vs_outputs(sp->draw);
 
    sp->quad.first->begin(sp->quad.first);
 
