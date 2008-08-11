@@ -129,6 +129,7 @@ init_machine(GLcontext *ctx, struct gl_program_machine *machine,
    if (ctx->Shader.CurrentProgram) {
       /* Store front/back facing value in register FOGC.Y */
       machine->Attribs[FRAG_ATTRIB_FOGC][col][1] = 1.0 - span->facing;
+      /* Note FOGC.ZW is gl_PointCoord if drawing a sprite */
    }
 
    machine->CurElement = col;
