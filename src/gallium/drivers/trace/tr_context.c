@@ -275,6 +275,8 @@ trace_context_create_blend_state(struct pipe_context *_pipe,
 
    result = pipe->create_blend_state(pipe, state);;
 
+   trace_dump_ret(stream, ptr, result);
+
    trace_dump_call_end(stream);
    
    return result;
