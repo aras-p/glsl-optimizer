@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  7.0
+ * Version:  7.1
  *
- * Copyright (C) 2004-2007  Brian Paul   All Rights Reserved.
+ * Copyright (C) 2004-2008  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -715,6 +715,17 @@ sizeof_glsl_type(GLenum type)
    case GL_FLOAT:
    case GL_INT:
    case GL_BOOL:
+   case GL_SAMPLER_1D:
+   case GL_SAMPLER_2D:
+   case GL_SAMPLER_3D:
+   case GL_SAMPLER_CUBE:
+   case GL_SAMPLER_1D_SHADOW:
+   case GL_SAMPLER_2D_SHADOW:
+   case GL_SAMPLER_2D_RECT_ARB:
+   case GL_SAMPLER_2D_RECT_SHADOW_ARB:
+   case GL_SAMPLER_1D_ARRAY_SHADOW_EXT:
+   case GL_SAMPLER_2D_ARRAY_SHADOW_EXT:
+   case GL_SAMPLER_CUBE_SHADOW_EXT:
       return 1;
    case GL_FLOAT_VEC2:
    case GL_INT_VEC2:
