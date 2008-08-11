@@ -88,6 +88,7 @@
 %rename(Viewport) pipe_viewport_state;
 
 
+%include "p_compiler.i"
 %include "pipe/p_defines.h";
 %include "p_format.i"
 
