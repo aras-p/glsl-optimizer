@@ -46,9 +46,9 @@ extern "C" {
 /*************************************************************/
 
 /* Header file version number, required by OpenGL ABI for Linux */
-/* glxext.h last updated 2007/04/21 */
+/* glxext.h last updated 2008/08/10 */
 /* Current version at http://www.opengl.org/registry/ */
-#define GLX_GLXEXT_VERSION 19
+#define GLX_GLXEXT_VERSION 20
 
 #ifndef GLX_VERSION_1_3
 #define GLX_WINDOW_BIT                     0x00000001
@@ -344,6 +344,26 @@ extern "C" {
 #define GLX_AUX7_EXT                       0x20E9
 #define GLX_AUX8_EXT                       0x20EA
 #define GLX_AUX9_EXT                       0x20EB
+#endif
+
+#ifndef GLX_NV_present_video
+#define GLX_GLX_NUM_VIDEO_SLOTS_NV         0x20F0
+#endif
+
+#ifndef GLX_NV_video_out
+#define GLX_GLX_VIDEO_OUT_COLOR_NV         0x20C3
+#define GLX_GLX_VIDEO_OUT_ALPHA_NV         0x20C4
+#define GLX_GLX_VIDEO_OUT_DEPTH_NV         0x20C5
+#define GLX_GLX_VIDEO_OUT_COLOR_AND_ALPHA_NV 0x20C6
+#define GLX_GLX_VIDEO_OUT_COLOR_AND_DEPTH_NV 0x20C7
+#define GLX_GLX_VIDEO_OUT_FRAME_NV         0x20C8
+#define GLX_GLX_VIDEO_OUT_FIELD_1_NV       0x20C9
+#define GLX_GLX_VIDEO_OUT_FIELD_2_NV       0x20CA
+#define GLX_GLX_VIDEO_OUT_STACKED_FIELDS_1_2_NV 0x20CB
+#define GLX_GLX_VIDEO_OUT_STACKED_FIELDS_2_1_NV 0x20CC
+#endif
+
+#ifndef GLX_NV_swap_group
 #endif
 
 
@@ -775,6 +795,18 @@ extern void glXReleaseTexImageEXT (Display *, GLXDrawable, int);
 #endif /* GLX_GLXEXT_PROTOTYPES */
 typedef void ( * PFNGLXBINDTEXIMAGEEXTPROC) (Display *dpy, GLXDrawable drawable, int buffer, const int *attrib_list);
 typedef void ( * PFNGLXRELEASETEXIMAGEEXTPROC) (Display *dpy, GLXDrawable drawable, int buffer);
+#endif
+
+#ifndef GLX_NV_present_video
+#define GLX_NV_present_video 1
+#endif
+
+#ifndef GLX_NV_video_out
+#define GLX_NV_video_out 1
+#endif
+
+#ifndef GLX_NV_swap_group
+#define GLX_NV_swap_group 1
 #endif
 
 
