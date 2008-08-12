@@ -54,6 +54,12 @@ GLUT_LIB_NAME = lib$(GLUT_LIB).so
 GLW_LIB_NAME = lib$(GLW_LIB).so
 OSMESA_LIB_NAME = lib$(OSMESA_LIB).so
 
+# globs used to install the lib and all symlinks
+GL_LIB_GLOB = $(GL_LIB_NAME)*
+GLU_LIB_GLOB = $(GLU_LIB_NAME)*
+GLUT_LIB_GLOB = $(GLUT_LIB_NAME)*
+GLW_LIB_GLOB = $(GLW_LIB_NAME)*
+OSMESA_LIB_GLOB = $(OSMESA_LIB_NAME)*
 
 # Optional assembly language optimization files for libGL
 ASM_SOURCES = 

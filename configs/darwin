@@ -32,6 +32,13 @@ GLUT_LIB_NAME = libglut.dylib
 GLW_LIB_NAME = libGLw.dylib
 OSMESA_LIB_NAME = libOSMesa.dylib
 
+# globs used to install the lib and all symlinks
+GL_LIB_GLOB = libGL.*dylib
+GLU_LIB_GLOB = libGLU.*dylib
+GLUT_LIB_GLOB = libglut.*dylib
+GLW_LIB_GLOB = libGLw.*dylib
+OSMESA_LIB_GLOB = libOSMesa.*dylib
+
 GL_LIB_DEPS = -L$(INSTALL_DIR)/$(LIB_DIR) -lX11 -lXext -lm -lpthread
 OSMESA_LIB_DEPS = -L$(TOP)/$(LIB_DIR) -l$(GL_LIB)
 GLU_LIB_DEPS = -L$(TOP)/$(LIB_DIR) -l$(GL_LIB)

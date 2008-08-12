@@ -105,13 +105,13 @@ install-headers:
 install-libgl: default gl.pc install-headers
 	$(INSTALL) -d $(DESTDIR)$(INSTALL_LIB_DIR)
 	$(INSTALL) -d $(DESTDIR)$(INSTALL_LIB_DIR)/pkgconfig
-	$(INSTALL) $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME)* \
+	$(INSTALL) $(TOP)/$(LIB_DIR)/$(GL_LIB_GLOB) \
 		$(DESTDIR)$(INSTALL_LIB_DIR)
 	$(INSTALL) -m 644 gl.pc $(DESTDIR)$(INSTALL_LIB_DIR)/pkgconfig
 
 install-osmesa: default
 	$(INSTALL) -d $(DESTDIR)$(INSTALL_LIB_DIR)
-	$(INSTALL) $(TOP)/$(LIB_DIR)/$(OSMESA_LIB_NAME)* \
+	$(INSTALL) $(TOP)/$(LIB_DIR)/$(OSMESA_LIB_GLOB) \
 		$(DESTDIR)$(INSTALL_LIB_DIR)
 
 install-dri: default
