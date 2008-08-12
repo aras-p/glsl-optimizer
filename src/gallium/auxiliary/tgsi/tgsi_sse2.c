@@ -1002,7 +1002,7 @@ emit_store(
  */
 
 static void
-emit_kil(
+emit_kilp(
    struct x86_function *func,
    const struct tgsi_full_src_register *reg )
 {
@@ -1095,6 +1095,15 @@ emit_kil(
       func,
       x86_make_reg( file_REG32, reg_AX ) );
 }
+
+
+static void
+emit_kil(
+   struct x86_function *func )
+{
+   /* XXX todo / fix me */
+}
+
 
 static void
 emit_setcc(
@@ -1609,8 +1618,15 @@ emit_instruction(
       return 0;
       break;
 
+   case TGSI_OPCODE_KILP:
+      /* predicated kill */
+      emit_kilp( func, &inst->FullSrcRegisters[0] );
+      break;
+
    case TGSI_OPCODE_KIL:
-      emit_kil( func, &inst->FullSrcRegisters[0] );
+      /* unconditional kill */
+      emit_kil( func );
+      return 0; /* XXX fix me */
       break;
 
    case TGSI_OPCODE_PK2H:
