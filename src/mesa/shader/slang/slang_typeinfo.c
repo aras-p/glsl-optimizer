@@ -273,7 +273,7 @@ slang_type_specifier_compatible(const slang_type_specifier * x,
 GLboolean
 slang_typeinfo_construct(slang_typeinfo * ti)
 {
-   /*_mesa_bzero(ti, sizeof(*ti));*/
+   _mesa_bzero(ti, sizeof(*ti));
    slang_type_specifier_ctr(&ti->spec);
    ti->array_len = 0;
    return GL_TRUE;
