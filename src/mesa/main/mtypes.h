@@ -1432,6 +1432,7 @@ struct gl_texture_object
    GLenum DepthMode;		/**< GL_ARB_depth_texture */
    GLint _MaxLevel;		/**< actual max mipmap level (q in the spec) */
    GLfloat _MaxLambda;		/**< = _MaxLevel - BaseLevel (q - b in spec) */
+   GLint CropRect[4];           /**< GL_OES_draw_texture */
    GLboolean GenerateMipmap;    /**< GL_SGIS_generate_mipmap */
    GLboolean _Complete;		/**< Is texture object complete? */
 
@@ -1440,7 +1441,6 @@ struct gl_texture_object
 
    /** GL_EXT_paletted_texture */
    struct gl_color_table Palette;
-
 
    /**
     * \name For device driver.
