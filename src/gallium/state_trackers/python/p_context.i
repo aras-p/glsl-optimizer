@@ -106,12 +106,12 @@ struct st_context {
    }
 
    void set_constant_buffer(unsigned shader, unsigned index,
-                            const struct pipe_constant_buffer *buf ) 
+                            struct st_buffer *buffer ) 
    {
       struct pipe_constant_buffer state;
       memset(&state, 0, sizeof(state));
-      state.buffer = buf->buffer;
-      state.size = buf->buffer->size;
+      state.buffer = buffer->buffer;
+      state.size = buffer->buffer->size;
       $self->pipe->set_constant_buffer($self->pipe, shader, index, &state);
    }
 
@@ -142,9 +142,29 @@ struct st_context {
    }
 
    void set_vertex_buffer(unsigned index,
-                          const struct pipe_vertex_buffer *buffer) {
-      memcpy(&$self->vertex_buffers[index], buffer, sizeof(*buffer));
-      $self->pipe->set_vertex_buffers($self->pipe, PIPE_MAX_ATTRIBS, $self->vertex_buffers);
+                          unsigned pitch, 
+                          unsigned max_index,
+                          unsigned buffer_offset,
+                          struct st_buffer *buffer)
+   {
+      unsigned i, num_vertex_buffers;
+      struct pipe_vertex_buffer state;
+      
+      memset(&state, 0, sizeof(state));
+      state.pitch = pitch;
+      state.max_index = max_index;
+      state.buffer_offset = buffer_offset;
+      state.buffer = buffer->buffer;
+
+      memcpy(&$self->vertex_buffers[index], &state, sizeof(state));
+      
+      for(i = 0; i < PIPE_MAX_ATTRIBS; ++i)
+         if(self->vertex_buffers[i].buffer)
+            num_vertex_buffers = i + 1;
+      
+      $self->pipe->set_vertex_buffers($self->pipe, 
+                                      num_vertex_buffers, 
+                                      $self->vertex_buffers);
    }
 
    void set_vertex_element(unsigned index,
