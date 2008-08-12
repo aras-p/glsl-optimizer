@@ -826,7 +826,6 @@ trace_context_set_vertex_elements(struct pipe_context *_pipe,
 
    trace_dump_arg(stream, ptr, pipe);
    trace_dump_arg(stream, uint, num_elements);
-   trace_dump_arg(stream, ptr, elements);
 
    trace_dump_arg_begin(stream, "elements");
    trace_dump_struct_array(stream, vertex_element, elements, num_elements);

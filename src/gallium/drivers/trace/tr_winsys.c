@@ -268,6 +268,8 @@ trace_winsys_buffer_unmap(struct pipe_winsys *_winsys,
    if(map) {
       trace_dump_call_begin(stream, "pipe_winsys", "buffer_write");
       
+      trace_dump_arg(stream, ptr, winsys);
+      
       trace_dump_arg(stream, ptr, buffer);
       
       trace_dump_arg_begin(stream, "data");
