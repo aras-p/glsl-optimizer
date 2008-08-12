@@ -2826,7 +2826,7 @@ _slang_gen_declaration(slang_assemble_ctx *A, slang_operation *oper)
 
       /* type check/compare var and initializer */
       if (!_slang_assignment_compatible(A, oper, initializer)) {
-         slang_info_log_error(A->log, "illegal types in assignment");
+         slang_info_log_error(A->log, "incompatible types in assignment");
          return NULL;
       }         
 
@@ -2976,7 +2976,7 @@ _slang_gen_assignment(slang_assemble_ctx * A, slang_operation *oper)
       if (!_slang_assignment_compatible(A,
                                         &oper->children[0],
                                         &oper->children[1])) {
-         slang_info_log_error(A->log, "illegal types in assignment");
+         slang_info_log_error(A->log, "incompatible types in assignment");
          return NULL;
       }
 
@@ -3264,7 +3264,7 @@ _slang_gen_compare(slang_assemble_ctx *A, slang_operation *oper,
            t0.spec.type != SLANG_SPEC_FLOAT) ||
           (t1.spec.type != SLANG_SPEC_INT &&
            t1.spec.type != SLANG_SPEC_FLOAT)) {
-         slang_info_log_error(A->log, "Illegal type(s) for inequality operator");
+         slang_info_log_error(A->log, "Incompatible type(s) for inequality operator");
          return NULL;
       }
    }
