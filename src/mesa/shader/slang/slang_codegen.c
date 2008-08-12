@@ -2926,6 +2926,24 @@ _slang_gen_swizzle(slang_ir_node *child, GLuint swizzle)
 }
 
 
+static GLboolean
+is_store_writable(const slang_assemble_ctx *A, const slang_ir_storage *store)
+{
+   while (store->Parent)
+      store = store->Parent;
+
+   if (!(store->File == PROGRAM_OUTPUT ||
+         store->File == PROGRAM_TEMPORARY ||
+         (store->File == PROGRAM_VARYING &&
+          A->program->Target == GL_VERTEX_PROGRAM_ARB))) {
+      return GL_FALSE;
+   }
+   else {
+      return GL_TRUE;
+   }
+}
+
+
 /**
  * Generate IR tree for an assignment (=).
  */
@@ -2981,21 +2999,21 @@ _slang_gen_assignment(slang_assemble_ctx * A, slang_operation *oper)
       }
 
       lhs = _slang_gen_operation(A, &oper->children[0]);
-      if (lhs) {
-         if (!lhs->Store) {
-            slang_info_log_error(A->log,
-                                 "invalid left hand side for assignment");
-            return NULL;
-         }
-         if (!(lhs->Store->File == PROGRAM_OUTPUT ||
-               lhs->Store->File == PROGRAM_TEMPORARY ||
-               (lhs->Store->File == PROGRAM_VARYING &&
-                A->program->Target == GL_VERTEX_PROGRAM_ARB) ||
-               lhs->Store->File == PROGRAM_UNDEFINED)) {
-            slang_info_log_error(A->log,
-                                 "illegal assignment to read-only l-value");
-            return NULL;
-         }
+      if (!lhs) {
+         return NULL;
+      }
+
+      if (!lhs->Store) {
+         slang_info_log_error(A->log,
+                              "invalid left hand side for assignment");
+         return NULL;
+      }
+
+      /* check that lhs is writable */
+      if (!is_store_writable(A, lhs->Store)) {
+         slang_info_log_error(A->log,
+                              "illegal assignment to read-only l-value");
+         return NULL;
       }
 
       rhs = _slang_gen_operation(A, &oper->children[1]);
@@ -3663,7 +3681,13 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
          /* user-defined uniform */
          if (datatype == GL_NONE) {
             if (var->type.specifier.type == SLANG_SPEC_STRUCT) {
-               _mesa_problem(NULL, "user-declared uniform structs not supported yet");
+               /* temporary work-around */
+               GLenum datatype = GL_FLOAT;
+               GLint uniformLoc = _mesa_add_uniform(prog->Parameters, varName,
+                                                    totalSize, datatype);
+               store = _slang_new_ir_storage_swz(PROGRAM_UNIFORM, uniformLoc,
+                                                 totalSize, swizzle);
+
                /* XXX what we need to do is unroll the struct into its
                 * basic types, creating a uniform variable for each.
                 * For example:
@@ -3682,8 +3706,8 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
                slang_info_log_error(A->log,
                                     "invalid datatype for uniform variable %s",
                                     varName);
+               return GL_FALSE;
             }
-            return GL_FALSE;
          }
          else {
             GLint uniformLoc = _mesa_add_uniform(prog->Parameters, varName,
