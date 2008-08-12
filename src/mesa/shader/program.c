@@ -58,7 +58,11 @@ _mesa_init_program(GLcontext *ctx)
 
 #if FEATURE_NV_vertex_program || FEATURE_ARB_vertex_program
    ctx->VertexProgram.Enabled = GL_FALSE;
+#if FEATURE_es2_glsl
+   ctx->VertexProgram.PointSizeEnabled = GL_TRUE;
+#else
    ctx->VertexProgram.PointSizeEnabled = GL_FALSE;
+#endif
    ctx->VertexProgram.TwoSideEnabled = GL_FALSE;
    _mesa_reference_vertprog(ctx, &ctx->VertexProgram.Current,
                             ctx->Shared->DefaultVertexProgram);
