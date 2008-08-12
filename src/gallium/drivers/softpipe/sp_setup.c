@@ -39,6 +39,7 @@
 #include "sp_quad.h"
 #include "sp_state.h"
 #include "sp_prim_setup.h"
+#include "draw/draw_context.h"
 #include "draw/draw_private.h"
 #include "draw/draw_vertex.h"
 #include "pipe/p_util.h"
