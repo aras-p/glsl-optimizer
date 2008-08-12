@@ -2431,19 +2431,20 @@ _slang_compile(GLcontext *ctx, struct gl_shader *shader)
    _slang_delete_mempool((slang_mempool *) ctx->Shader.MemPool);
    ctx->Shader.MemPool = NULL;
 
+   /* remove any reads of output registers */
+#if 0
+   printf("Pre-remove output reads:\n");
+   _mesa_print_program(shader->Program);
+#endif
+   _mesa_remove_output_reads(shader->Program, PROGRAM_OUTPUT);
    if (shader->Type == GL_VERTEX_SHADER) {
-      /* remove any reads of varying (output) registers */
-#if 0
-      printf("Pre-remove output reads:\n");
-      _mesa_print_program(shader->Programs);
-#endif
+      /* and remove writes to varying vars in vertex programs */
       _mesa_remove_output_reads(shader->Program, PROGRAM_VARYING);
-      _mesa_remove_output_reads(shader->Program, PROGRAM_OUTPUT);
-#if 0
-      printf("Post-remove output reads:\n");
-      _mesa_print_program(shader->Programs);
-#endif
    }
+#if 0
+   printf("Post-remove output reads:\n");
+   _mesa_print_program(shader->Program);
+#endif
 
    return success;
 }
