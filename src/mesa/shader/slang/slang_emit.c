@@ -991,7 +991,7 @@ emit_kill(slang_emit_info *emitInfo)
     * Note that ARB-KILL depends on sign of vector operand.
     */
    inst = new_instruction(emitInfo, OPCODE_KIL_NV);
-   inst->DstReg.CondMask = COND_TR;  /* always branch */
+   inst->DstReg.CondMask = COND_TR;  /* always kill */
 
    assert(emitInfo->prog->Target == GL_FRAGMENT_PROGRAM_ARB);
    fp = (struct gl_fragment_program *) emitInfo->prog;
