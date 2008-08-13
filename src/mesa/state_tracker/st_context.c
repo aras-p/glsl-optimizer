@@ -45,6 +45,9 @@
 #include "st_cb_drawpixels.h"
 #include "st_cb_rasterpos.h"
 #endif
+#ifdef FEATURE_OES_draw_texture
+#include "st_cb_drawtex.h"
+#endif
 #include "st_cb_fbo.h"
 #if FEATURE_feedback
 #include "st_cb_feedback.h"
@@ -179,6 +182,9 @@ static void st_destroy_context_priv( struct st_context *st )
 #if FEATURE_drawpix
    st_destroy_bitmap(st);
    st_destroy_drawpix(st);
+#endif
+#ifdef FEATURE_OES_draw_texture
+   st_destroy_drawtex(st);
 #endif
 
    _vbo_DestroyContext(st->ctx);
