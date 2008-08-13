@@ -105,7 +105,7 @@ inline float4 vsin(float4 val)
    return result;
 }
 
-inline int kilp(float4 val)
+inline int kil(float4 val)
 {
    if (val.x < 0 || val.y < 0 || val.z < 0 || val.w < 0)
       return 1;

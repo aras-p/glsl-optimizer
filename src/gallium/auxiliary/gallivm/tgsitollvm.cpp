@@ -396,11 +396,7 @@ translate_instruction(llvm::Module *module,
       break;
    case TGSI_OPCODE_DDY:
       break;
-   case TGSI_OPCODE_KILP: {
-      out = instr->kilp(inputs[0]);
-      storage->setKilElement(out);
-      return;
-   }
+   case TGSI_OPCODE_KILP:
       break;
    case TGSI_OPCODE_PK2H:
       break;
@@ -602,7 +598,11 @@ translate_instruction(llvm::Module *module,
       break;
    case TGSI_OPCODE_BREAKC:
       break;
-   case TGSI_OPCODE_KIL:
+   case TGSI_OPCODE_KIL: {
+      out = instr->kil(inputs[0]);
+      storage->setKilElement(out);
+      return;
+   }
       break;
    case TGSI_OPCODE_END:
       instr->end();
@@ -799,8 +799,7 @@ translate_instructionir(llvm::Module *module,
       break;
    case TGSI_OPCODE_DDY:
       break;
-   case TGSI_OPCODE_KILP: {
-   }
+   case TGSI_OPCODE_KILP:
       break;
    case TGSI_OPCODE_PK2H:
       break;
@@ -967,7 +966,8 @@ translate_instructionir(llvm::Module *module,
       break;
    case TGSI_OPCODE_BREAKC:
       break;
-   case TGSI_OPCODE_KIL:
+   case TGSI_OPCODE_KIL: {
+   }
       break;
    case TGSI_OPCODE_END:
       instr->end();
