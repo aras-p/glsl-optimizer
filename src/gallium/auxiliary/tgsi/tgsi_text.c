@@ -51,11 +51,18 @@ static boolean is_digit_alpha_underscore( const char *cur )
    return is_digit( cur ) || is_alpha_underscore( cur );
 }
 
+static boolean uprcase( char c )
+{
+   if (c >= 'a' && c <= 'z')
+      return c += 'A' - 'a';
+   return c;
+}
+
 static boolean str_match_no_case( const char **pcur, const char *str )
 {
    const char *cur = *pcur;
 
-   while (*str != '\0' && *str == toupper( *cur )) {
+   while (*str != '\0' && *str == uprcase( *cur )) {
       str++;
       cur++;
    }
@@ -131,7 +138,7 @@ static boolean parse_float( const char **pcur, float *val )
    }
    if (!integral_part && !fractional_part)
       return FALSE;
-   if (toupper( *cur ) == 'E') {
+   if (uprcase( *cur ) == 'E') {
       cur++;
       if (*cur == '-' || *cur == '+')
          cur++;
@@ -258,19 +265,19 @@ parse_opt_writemask(
       cur++;
       *writemask = TGSI_WRITEMASK_NONE;
       eat_opt_white( &cur );
-      if (toupper( *cur ) == 'X') {
+      if (uprcase( *cur ) == 'X') {
          cur++;
          *writemask |= TGSI_WRITEMASK_X;
       }
-      if (toupper( *cur ) == 'Y') {
+      if (uprcase( *cur ) == 'Y') {
          cur++;
          *writemask |= TGSI_WRITEMASK_Y;
       }
-      if (toupper( *cur ) == 'Z') {
+      if (uprcase( *cur ) == 'Z') {
          cur++;
          *writemask |= TGSI_WRITEMASK_Z;
       }
-      if (toupper( *cur ) == 'W') {
+      if (uprcase( *cur ) == 'W') {
          cur++;
          *writemask |= TGSI_WRITEMASK_W;
       }
@@ -516,13 +523,13 @@ parse_optional_swizzle(
       cur++;
       eat_opt_white( &cur );
       for (i = 0; i < 4; i++) {
-         if (toupper( *cur ) == 'X')
+         if (uprcase( *cur ) == 'X')
             swizzle[i] = TGSI_SWIZZLE_X;
-         else if (toupper( *cur ) == 'Y')
+         else if (uprcase( *cur ) == 'Y')
             swizzle[i] = TGSI_SWIZZLE_Y;
-         else if (toupper( *cur ) == 'Z')
+         else if (uprcase( *cur ) == 'Z')
             swizzle[i] = TGSI_SWIZZLE_Z;
-         else if (toupper( *cur ) == 'W')
+         else if (uprcase( *cur ) == 'W')
             swizzle[i] = TGSI_SWIZZLE_W;
          else {
             if (*cur == '0')
