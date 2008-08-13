@@ -240,6 +240,7 @@ struct tgsi_immediate_float32
  * GL_ARB_fragment_program
  */
 #define TGSI_OPCODE_CMP                 66
+#define TGSI_OPCODE_KIL                 116  /* conditional kill */
 #define TGSI_OPCODE_SCS                 67
 #define TGSI_OPCODE_TXB                 68
 
@@ -327,7 +328,7 @@ struct tgsi_immediate_float32
 /*
  * ps_1_1
  */
-#define TGSI_OPCODE_TEXKILL             TGSI_OPCODE_KILP
+#define TGSI_OPCODE_TEXKILL             TGSI_OPCODE_KIL
 
 /*
  * ps_1_2
@@ -386,7 +387,6 @@ struct tgsi_immediate_float32
  * vs_2_x
  */
 
-#define TGSI_OPCODE_KIL                 116  /* unpredicated kill */
 #define TGSI_OPCODE_END                 117  /* aka HALT */
 
 #define TGSI_OPCODE_LAST                119
