@@ -176,6 +176,10 @@
 #endif
 
 
+#ifndef GL_OES_draw_texture
+#define GL_TEXTURE_CROP_RECT_OES  0x8B9D
+#endif
+
 
 #if !defined(CAPI) && defined(WIN32) && !defined(BUILD_FOR_SNAP)
 #define CAPI _cdecl

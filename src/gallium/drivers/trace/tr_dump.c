@@ -276,17 +276,16 @@ void trace_dump_bytes(struct trace_stream *stream,
                       const void *data,
                       long unsigned size)
 {
-   static char hex_table[] = "0123456789ABCDE";
+   static const char hex_table[16] = "0123456789ABCDEF";
    const uint8_t *p = data;
    long unsigned i;
    trace_dump_write(stream, "<bytes>");
    for(i = 0; i < size; ++i) {
       uint8_t byte = *p++;
-      char str[3];
-      str[0] = hex_table[byte >> 4];
-      str[1] = hex_table[byte & 0xf];
-      str[2] = 0;
-      trace_dump_write(stream, str);
+      char hex[2];
+      hex[0] = hex_table[byte >> 4];
+      hex[1] = hex_table[byte & 0xf];
+      trace_stream_write(stream, hex, 2);
    }
    trace_dump_write(stream, "</bytes>");
 }

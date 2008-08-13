@@ -73,6 +73,10 @@ void trace_dump_template(struct trace_stream *stream,
    trace_dump_array(stream, uint, templat->height, 1);
    trace_dump_member_end(stream);
 
+   trace_dump_member_begin(stream, "depth");
+   trace_dump_array(stream, uint, templat->depth, 1);
+   trace_dump_member_end(stream);
+
    trace_dump_member_begin(stream, "block");
    trace_dump_block(stream, &templat->block);
    trace_dump_member_end(stream);
@@ -146,9 +150,10 @@ void trace_dump_poly_stipple(struct trace_stream *stream,
    trace_dump_struct_begin(stream, "pipe_poly_stipple");
 
    trace_dump_member_begin(stream, "stipple");
-   trace_dump_bytes(stream, 
+   trace_dump_array(stream,
+                    uint,
                     state->stipple, 
-                    sizeof(state->stipple));
+                    Elements(state->stipple));
    trace_dump_member_end(stream);
    
    trace_dump_struct_end(stream);
@@ -273,7 +278,7 @@ void trace_dump_depth_stencil_alpha_state(struct trace_stream *stream,
    trace_dump_struct_begin(stream, "pipe_depth_stencil_alpha_state");
 
    trace_dump_member_begin(stream, "depth");
-   trace_dump_struct_begin(stream, "");
+   trace_dump_struct_begin(stream, "pipe_depth_state");
    trace_dump_member(stream, bool, &state->depth, enabled);
    trace_dump_member(stream, bool, &state->depth, writemask);
    trace_dump_member(stream, uint, &state->depth, func);
@@ -285,7 +290,7 @@ void trace_dump_depth_stencil_alpha_state(struct trace_stream *stream,
    trace_dump_array_begin(stream);
    for(i = 0; i < Elements(state->stencil); ++i) {
       trace_dump_elem_begin(stream);
-      trace_dump_struct_begin(stream, "");
+      trace_dump_struct_begin(stream, "pipe_stencil_state");
       trace_dump_member(stream, bool, &state->stencil[i], enabled);
       trace_dump_member(stream, uint, &state->stencil[i], func);
       trace_dump_member(stream, uint, &state->stencil[i], fail_op);
@@ -301,7 +306,7 @@ void trace_dump_depth_stencil_alpha_state(struct trace_stream *stream,
    trace_dump_member_end(stream);
 
    trace_dump_member_begin(stream, "alpha");
-   trace_dump_struct_begin(stream, "");
+   trace_dump_struct_begin(stream, "pipe_alpha_state");
    trace_dump_member(stream, bool, &state->alpha, enabled);
    trace_dump_member(stream, uint, &state->alpha, func);
    trace_dump_member(stream, float, &state->alpha, ref);

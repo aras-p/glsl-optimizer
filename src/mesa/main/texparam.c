@@ -409,6 +409,14 @@ _mesa_TexParameterfv( GLenum target, GLenum pname, const GLfloat *params )
             }
          }
          break;
+#ifdef FEATURE_OES_draw_texture
+      case GL_TEXTURE_CROP_RECT_OES:
+         texObj->CropRect[0] = (GLint) params[0];
+         texObj->CropRect[1] = (GLint) params[1];
+         texObj->CropRect[2] = (GLint) params[2];
+         texObj->CropRect[3] = (GLint) params[3];
+         break;
+#endif
 
       default:
          _mesa_error(ctx, GL_INVALID_ENUM,
@@ -446,6 +454,12 @@ _mesa_TexParameteriv( GLenum target, GLenum pname, const GLint *params )
       fparam[1] = INT_TO_FLOAT(params[1]);
       fparam[2] = INT_TO_FLOAT(params[2]);
       fparam[3] = INT_TO_FLOAT(params[3]);
+   }
+   else if (pname == GL_TEXTURE_CROP_RECT_OES) {
+      fparam[0] = (GLfloat) params[0];
+      fparam[1] = (GLfloat) params[1];
+      fparam[2] = (GLfloat) params[2];
+      fparam[3] = (GLfloat) params[3];
    }
    else {
       if (pname == GL_TEXTURE_PRIORITY)
@@ -885,6 +899,14 @@ _mesa_GetTexParameterfv( GLenum target, GLenum pname, GLfloat *params )
 	 else 
 	    error = 1;
          break;
+#ifdef FEATURE_OES_draw_texture
+      case GL_TEXTURE_CROP_RECT_OES:
+         params[0] = obj->CropRect[0];
+         params[0] = obj->CropRect[1];
+         params[0] = obj->CropRect[2];
+         params[0] = obj->CropRect[3];
+         break;
+#endif
       default:
 	 error = 1;
 	 break;
@@ -1027,6 +1049,14 @@ _mesa_GetTexParameteriv( GLenum target, GLenum pname, GLint *params )
             return;
          }
          break;
+#ifdef FEATURE_OES_draw_texture
+      case GL_TEXTURE_CROP_RECT_OES:
+         params[0] = obj->CropRect[0];
+         params[0] = obj->CropRect[1];
+         params[0] = obj->CropRect[2];
+         params[0] = obj->CropRect[3];
+         break;
+#endif
       default:
          ; /* silence warnings */
    }

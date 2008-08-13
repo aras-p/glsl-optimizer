@@ -603,8 +603,8 @@ store_dest(
  * Kill fragment if any of the four values is less than zero.
  */
 static void
-exec_kilp(struct spu_exec_machine *mach,
-          const struct tgsi_full_instruction *inst)
+exec_kil(struct spu_exec_machine *mach,
+         const struct tgsi_full_instruction *inst)
 {
    uint uniquemask;
    uint chan_index;
@@ -640,6 +640,20 @@ exec_kilp(struct spu_exec_machine *mach,
    mach->Temps[TEMP_KILMASK_I].xyzw[TEMP_KILMASK_C].u[0] |= kilmask;
 }
 
+/**
+ * Execute NVIDIA-style KIL which is predicated by a condition code.
+ * Kill fragment if the condition code is TRUE.
+ */
+static void
+exec_kilp(struct tgsi_exec_machine *mach,
+          const struct tgsi_full_instruction *inst)
+{
+   uint kilmask = 0; /* bit 0 = pixel 0, bit 1 = pixel 1, etc */
+
+   /* TODO: build kilmask from CC mask */
+
+   mach->Temps[TEMP_KILMASK_I].xyzw[TEMP_KILMASK_C].u[0] |= kilmask;
+}
 
 /*
  * Fetch a texel using STR texture coordinates.
@@ -1336,8 +1350,7 @@ exec_instruction(
       break;
 
    case TGSI_OPCODE_KIL:
-      /* for enabled ExecMask bits, set the killed bit */
-      mach->Temps[TEMP_KILMASK_I].xyzw[TEMP_KILMASK_C].u[0] |= mach->ExecMask;
+      exec_kil (mach, inst);
       break;
 
    case TGSI_OPCODE_PK2H:

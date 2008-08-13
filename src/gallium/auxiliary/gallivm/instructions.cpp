@@ -878,9 +878,9 @@ llvm::Value * Instructions::scs(llvm::Value *in)
    return call;
 }
 
-llvm::Value * Instructions::kilp(llvm::Value *in)
+llvm::Value * Instructions::kil(llvm::Value *in)
 {
-   llvm::Function *func = m_mod->getFunction("kilp");
+   llvm::Function *func = m_mod->getFunction("kil");
    assert(func);
 
    CallInst *call = m_builder.CreateCall(func, in, name("kilpres"));

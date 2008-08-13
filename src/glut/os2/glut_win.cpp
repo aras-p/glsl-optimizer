@@ -1218,4 +1218,3 @@ glutReshapeFunc(GLUTreshapeCB reshapeFunc)
     __glutCurrentWindow->reshape = __glutDefaultReshape;
   }
 }
-

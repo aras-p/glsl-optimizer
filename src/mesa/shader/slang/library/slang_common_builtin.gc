@@ -872,35 +872,29 @@ vec4 mod(const vec4 a, const float b)
 
 vec2 mod(const vec2 a, const vec2 b)
 {
-    float oneOverBx, oneOverBy;
-    __asm float_rcp oneOverBx, b.x;
-    __asm float_rcp oneOverBy, b.y;
-    __retVal.x = a.x - b.x * floor(a.x * oneOverBx);
-    __retVal.y = a.y - b.y * floor(a.y * oneOverBy);
+    vec2 oneOverB;
+    __asm float_rcp oneOverB.x, b.x;
+    __asm float_rcp oneOverB.y, b.y;
+    __retVal = a - b * floor(a * oneOverB);
 }
 
 vec3 mod(const vec3 a, const vec3 b)
 {
-    float oneOverBx, oneOverBy, oneOverBz;
-    __asm float_rcp oneOverBx, b.x;
-    __asm float_rcp oneOverBy, b.y;
-    __asm float_rcp oneOverBz, b.z;
-    __retVal.x = a.x - b.x * floor(a.x * oneOverBx);
-    __retVal.y = a.y - b.y * floor(a.y * oneOverBy);
-    __retVal.z = a.z - b.z * floor(a.z * oneOverBz);
+    vec3 oneOverB;
+    __asm float_rcp oneOverB.x, b.x;
+    __asm float_rcp oneOverB.y, b.y;
+    __asm float_rcp oneOverB.z, b.z;
+    __retVal = a - b * floor(a * oneOverB);
 }
 
 vec4 mod(const vec4 a, const vec4 b)
 {
-    float oneOverBx, oneOverBy, oneOverBz, oneOverBw;
-    __asm float_rcp oneOverBx, b.x;
-    __asm float_rcp oneOverBy, b.y;
-    __asm float_rcp oneOverBz, b.z;
-    __asm float_rcp oneOverBw, b.w;
-    __retVal.x = a.x - b.x * floor(a.x * oneOverBx);
-    __retVal.y = a.y - b.y * floor(a.y * oneOverBy);
-    __retVal.z = a.z - b.z * floor(a.z * oneOverBz);
-    __retVal.w = a.w - b.w * floor(a.w * oneOverBw);
+    vec4 oneOverB;
+    __asm float_rcp oneOverB.x, b.x;
+    __asm float_rcp oneOverB.y, b.y;
+    __asm float_rcp oneOverB.z, b.z;
+    __asm float_rcp oneOverB.w, b.w;
+    __retVal = a - b * floor(a * oneOverB);
 }
 
 
@@ -1056,45 +1050,45 @@ vec4 mix(const vec4 x, const vec4 y, const vec4 a)
 }
 
 
-//// step (untested)
+//// step
 
 float step(const float edge, const float x)
 {
-   __asm vec4_sgt __retVal.x, x, edge;
+   __asm vec4_sge __retVal, x, edge;
 }
 
 vec2 step(const vec2 edge, const vec2 x)
 {
-   __asm vec4_sgt __retVal.xy, x, edge;
+   __asm vec4_sge __retVal.xy, x, edge;
 }
 
 vec3 step(const vec3 edge, const vec3 x)
 {
-   __asm vec4_sgt __retVal.xyz, x, edge;
+   __asm vec4_sge __retVal.xyz, x, edge;
 }
 
 vec4 step(const vec4 edge, const vec4 x)
 {
-   __asm vec4_sgt __retVal, x, edge;
+   __asm vec4_sge __retVal, x, edge;
 }
 
 vec2 step(const float edge, const vec2 v)
 {
-   __asm vec4_sgt __retVal.xy, v, edge.xx;
+   __asm vec4_sge __retVal.xy, v, edge;
 }
 
 vec3 step(const float edge, const vec3 v)
 {
-   __asm vec4_sgt __retVal.xyz, v, edge.xxx;
+   __asm vec4_sge __retVal.xyz, v, edge;
 }
 
 vec4 step(const float edge, const vec4 v)
 {
-   __asm vec4_sgt __retVal, v, edge.xxxx;
+   __asm vec4_sge __retVal, v, edge;
 }
 
 
-//// smoothstep (untested)
+//// smoothstep
 
 float smoothstep(const float edge0, const float edge1, const float x)
 {
@@ -1277,34 +1271,50 @@ vec4 reflect(const vec4 I, const vec4 N)
 
 float refract(const float I, const float N, const float eta)
 {
-   float k = 1.0 - eta * eta * (1.0 - dot(N, I) * dot(N, I));
+   float n_dot_i = dot(N, I);
+   float k = 1.0 - eta * eta * (1.0 - n_dot_i * n_dot_i);
+   float retval;
    if (k < 0.0)
-       return 0.0;
-   return eta * I - (eta * dot(N, I) + sqrt(k)) * N;
+      retval = 0.0;
+   else
+      retval = eta * I - (eta * n_dot_i + sqrt(k)) * N;
+   return retval;
 }
 
 vec2 refract(const vec2 I, const vec2 N, const float eta)
 {
-   float k = 1.0 - eta * eta * (1.0 - dot(N, I) * dot(N, I));
+   float n_dot_i = dot(N, I);
+   float k = 1.0 - eta * eta * (1.0 - n_dot_i * n_dot_i);
+   vec2 retval;
    if (k < 0.0)
-      return 0.0;
-   return eta * I - (eta * dot(N, I) + sqrt(k)) * N;
+      retval = vec2(0.0);
+   else
+      retval = eta * I - (eta * n_dot_i + sqrt(k)) * N;
+   return retval;
 }
 
 vec3 refract(const vec3 I, const vec3 N, const float eta)
 {
-   float k = 1.0 - eta * eta * (1.0 - dot(N, I) * dot(N, I));
+   float n_dot_i = dot(N, I);
+   float k = 1.0 - eta * eta * (1.0 - n_dot_i * n_dot_i);
+   vec3 retval;
    if (k < 0.0)
-      return 0.0;
-   return eta * I - (eta * dot(N, I) + sqrt(k)) * N;
+      retval = vec3(0.0);
+   else
+      retval = eta * I - (eta * n_dot_i + sqrt(k)) * N;
+   return retval;
 }
 
 vec4 refract(const vec4 I, const vec4 N, const float eta)
 {
-   float k = 1.0 - eta * eta * (1.0 - dot(N, I) * dot(N, I));
+   float n_dot_i = dot(N, I);
+   float k = 1.0 - eta * eta * (1.0 - n_dot_i * n_dot_i);
+   vec4 retval;
    if (k < 0.0)
-      return 0.0;
-   return eta * I - (eta * dot(N, I) + sqrt(k)) * N;
+      retval = vec4(0.0);
+   else
+      retval = eta * I - (eta * n_dot_i + sqrt(k)) * N;
+   return retval;
 }
 
 

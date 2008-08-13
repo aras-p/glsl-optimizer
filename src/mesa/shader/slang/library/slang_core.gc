@@ -362,6 +362,13 @@ bvec2 __constructor(const bool b1, const bool b2)
    __retVal.y = b2;
 }
 
+bvec2 __constructor(const int i1, const int i2)
+{
+   __asm vec4_sne __retVal.x, i1, 0.0;
+   __asm vec4_sne __retVal.y, i2, 0.0;
+}
+
+
 bvec2 __constructor(const bool b)
 {
    __asm vec4_move __retVal.xy, b;
@@ -396,6 +403,13 @@ bvec3 __constructor(const bool b1, const bool b2, const bool b3)
    __retVal.x = b1;
    __retVal.y = b2;
    __retVal.z = b3;
+}
+
+bvec3 __constructor(const float f1, const float f2, const float f3)
+{
+   __asm vec4_sne __retVal.x, f1, 0.0;
+   __asm vec4_sne __retVal.y, f2, 0.0;
+   __asm vec4_sne __retVal.z, f3, 0.0;
 }
 
 bvec3 __constructor(const bool b)

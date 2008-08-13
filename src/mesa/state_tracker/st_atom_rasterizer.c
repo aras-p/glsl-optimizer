@@ -267,11 +267,17 @@ static void update_raster_state( struct st_context *st )
 }
 
 const struct st_tracked_state st_update_rasterizer = {
-   "st_update_rasterizer",					/* name */
-   {								/* dirty */
-      (_NEW_LIGHT | _NEW_POLYGON | _NEW_LINE | _NEW_SCISSOR |	/* mesa */
-               _NEW_POINT | _NEW_BUFFERS | _NEW_MULTISAMPLE),	
-      0,							/* st */
+   "st_update_rasterizer",    /* name */
+   {
+      (_NEW_BUFFERS |
+       _NEW_LIGHT |
+       _NEW_LINE |
+       _NEW_MULTISAMPLE |
+       _NEW_POINT |
+       _NEW_POLYGON |
+       _NEW_PROGRAM |
+       _NEW_SCISSOR),      /* mesa state dependencies*/
+      0,                   /* state tracker dependencies */
    },
-   update_raster_state						/* update */
+   update_raster_state     /* update function */
 };

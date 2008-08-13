@@ -28,14 +28,14 @@
 /**
  * @file
  * Platform independent functions for string manipulation.
- * 
+ *
  * @author Jose Fonseca <jrfonseca@tungstengraphics.com>
  */
 
 #ifndef U_STRING_H_
 #define U_STRING_H_
 
-#ifndef WIN32
+#if !defined(WIN32) && !defined(XF86_LIBC_H)
 #include <stdio.h>
 #endif
 #include <stddef.h>
@@ -48,19 +48,19 @@
 extern "C" {
 #endif
 
-   
+
 #ifdef WIN32
-   
+
 int util_vsnprintf(char *, size_t, const char *, va_list);
 int util_snprintf(char *str, size_t size, const char *format, ...);
 
-static INLINE void 
+static INLINE void
 util_vsprintf(char *str, const char *format, va_list ap)
 {
    util_vsnprintf(str, (size_t)-1, format, ap);
 }
 
-static INLINE void 
+static INLINE void
 util_sprintf(char *str, const char *format, ...)
 {
    va_list ap;

@@ -1,5 +1,3 @@
-/* $Id: wgl.c,v 1.12 2006/03/30 07:58:24 kschultz Exp $ */
-
 /*
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public

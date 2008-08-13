@@ -393,10 +393,18 @@ micro_div(
    const union tgsi_exec_channel *src0,
    const union tgsi_exec_channel *src1 )
 {
-   dst->f[0] = src0->f[0] / src1->f[0];
-   dst->f[1] = src0->f[1] / src1->f[1];
-   dst->f[2] = src0->f[2] / src1->f[2];
-   dst->f[3] = src0->f[3] / src1->f[3];
+   if (src1->f[0] != 0) {
+      dst->f[0] = src0->f[0] / src1->f[0];
+   }
+   if (src1->f[1] != 0) {
+      dst->f[1] = src0->f[1] / src1->f[1];
+   }
+   if (src1->f[2] != 0) {
+      dst->f[2] = src0->f[2] / src1->f[2];
+   }
+   if (src1->f[3] != 0) {
+      dst->f[3] = src0->f[3] / src1->f[3];
+   }
 }
 
 static void
@@ -1181,8 +1189,8 @@ store_dest(
  * Kill fragment if any of the four values is less than zero.
  */
 static void
-exec_kilp(struct tgsi_exec_machine *mach,
-          const struct tgsi_full_instruction *inst)
+exec_kil(struct tgsi_exec_machine *mach,
+         const struct tgsi_full_instruction *inst)
 {
    uint uniquemask;
    uint chan_index;
@@ -1214,6 +1222,21 @@ exec_kilp(struct tgsi_exec_machine *mach,
          if (r[0].f[i] < 0.0f)
             kilmask |= 1 << i;
    }
+
+   mach->Temps[TEMP_KILMASK_I].xyzw[TEMP_KILMASK_C].u[0] |= kilmask;
+}
+
+/**
+ * Execute NVIDIA-style KIL which is predicated by a condition code.
+ * Kill fragment if the condition code is TRUE.
+ */
+static void
+exec_kilp(struct tgsi_exec_machine *mach,
+          const struct tgsi_full_instruction *inst)
+{
+   uint kilmask = 0; /* bit 0 = pixel 0, bit 1 = pixel 1, etc */
+
+   /* TODO: build kilmask from CC mask */
 
    mach->Temps[TEMP_KILMASK_I].xyzw[TEMP_KILMASK_C].u[0] |= kilmask;
 }
@@ -1963,8 +1986,7 @@ exec_instruction(
       break;
 
    case TGSI_OPCODE_KIL:
-      /* for enabled ExecMask bits, set the killed bit */
-      mach->Temps[TEMP_KILMASK_I].xyzw[TEMP_KILMASK_C].u[0] |= mach->ExecMask;
+      exec_kil (mach, inst);
       break;
 
    case TGSI_OPCODE_PK2H:

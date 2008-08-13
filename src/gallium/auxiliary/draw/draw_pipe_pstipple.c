@@ -299,9 +299,9 @@ pstip_transform_inst(struct tgsi_transform_context *ctx,
       newInst.FullSrcRegisters[1].SrcRegister.Index = pctx->freeSampler;
       ctx->emit_instruction(ctx, &newInst);
 
-      /* KILP texTemp;   # if texTemp < 0, KILL fragment */
+      /* KIL -texTemp;   # if -texTemp < 0, KILL fragment */
       newInst = tgsi_default_full_instruction();
-      newInst.Instruction.Opcode = TGSI_OPCODE_KILP;
+      newInst.Instruction.Opcode = TGSI_OPCODE_KIL;
       newInst.Instruction.NumDstRegs = 0;
       newInst.Instruction.NumSrcRegs = 1;
       newInst.FullSrcRegisters[0].SrcRegister.File = TGSI_FILE_TEMPORARY;

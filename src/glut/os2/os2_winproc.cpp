@@ -1294,4 +1294,3 @@ Bool __glutSetWindowText(Window window, char *text)
 }
 
 #endif
-

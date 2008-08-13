@@ -170,29 +170,38 @@ struct pipe_shader_state
 };
 
 
+struct pipe_depth_state {
+   unsigned enabled:1;         /**< depth test enabled? */
+   unsigned writemask:1;       /**< allow depth buffer writes? */
+   unsigned func:3;            /**< depth test func (PIPE_FUNC_x) */
+   unsigned occlusion_count:1; /**< do occlusion counting? */
+};
+
+
+struct pipe_stencil_state {
+   unsigned enabled:1;  /**< stencil[0]: stencil enabled, stencil[1]: two-side enabled */
+   unsigned func:3;     /**< PIPE_FUNC_x */
+   unsigned fail_op:3;  /**< PIPE_STENCIL_OP_x */
+   unsigned zpass_op:3; /**< PIPE_STENCIL_OP_x */
+   unsigned zfail_op:3; /**< PIPE_STENCIL_OP_x */
+   ubyte ref_value;    
+   ubyte value_mask;
+   ubyte write_mask;
+};
+
+
+struct pipe_alpha_state {
+   unsigned enabled:1;
+   unsigned func:3;     /**< PIPE_FUNC_x */
+   float ref;           /**< reference value */
+};
+
+
 struct pipe_depth_stencil_alpha_state
 {
-   struct {
-      unsigned enabled:1;         /**< depth test enabled? */
-      unsigned writemask:1;       /**< allow depth buffer writes? */
-      unsigned func:3;            /**< depth test func (PIPE_FUNC_x) */
-      unsigned occlusion_count:1; /**< do occlusion counting? */
-   } depth;
-   struct {
-      unsigned enabled:1;  /**< stencil[0]: stencil enabled, stencil[1]: two-side enabled */
-      unsigned func:3;     /**< PIPE_FUNC_x */
-      unsigned fail_op:3;  /**< PIPE_STENCIL_OP_x */
-      unsigned zpass_op:3; /**< PIPE_STENCIL_OP_x */
-      unsigned zfail_op:3; /**< PIPE_STENCIL_OP_x */
-      ubyte ref_value;    
-      ubyte value_mask;
-      ubyte write_mask;
-   } stencil[2];           /**< [0] = front, [1] = back */
-   struct {
-      unsigned enabled:1;
-      unsigned func:3;     /**< PIPE_FUNC_x */
-      float ref;           /**< reference value */
-   } alpha;
+   struct pipe_depth_state depth;
+   struct pipe_stencil_state stencil[2]; /**< [0] = front, [1] = back */
+   struct pipe_alpha_state alpha;
 };
 
 

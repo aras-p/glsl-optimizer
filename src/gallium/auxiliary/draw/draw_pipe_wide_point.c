@@ -50,6 +50,8 @@ struct widepoint_stage {
    uint num_texcoords;
 
    int psize_slot;
+
+   int point_coord_fs_input;  /**< input for pointcoord (and fog) */
 };
 
 
@@ -83,6 +85,13 @@ static void set_texcoords(const struct widepoint_stage *wide,
          v->data[j][2] = tc[2];
          v->data[j][3] = tc[3];
       }
+   }
+
+   if (wide->point_coord_fs_input >= 0) {
+      /* put gl_PointCoord into extra vertex output's zw components */
+      uint k = wide->stage.draw->extra_vp_outputs.slot;
+      v->data[k][2] = tc[0];
+      v->data[k][3] = tc[1];
    }
 }
 
@@ -208,6 +217,18 @@ static void widepoint_first_point( struct draw_stage *stage,
          }
       }
       wide->num_texcoords = j;
+
+      /* find fragment shader PointCoord/Fog input */
+      wide->point_coord_fs_input = 0; /* XXX fix this! */
+
+      /* setup extra vp output */
+      draw->extra_vp_outputs.semantic_name = TGSI_SEMANTIC_FOG;
+      draw->extra_vp_outputs.semantic_index = 0;
+      draw->extra_vp_outputs.slot = draw->vs.num_vs_outputs;
+   }
+   else {
+      wide->point_coord_fs_input = -1;
+      draw->extra_vp_outputs.slot = 0;
    }
 
    wide->psize_slot = -1;

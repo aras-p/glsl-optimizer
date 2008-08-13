@@ -324,7 +324,11 @@ void _debug_assert_fail(const char *expr,
                         const char *function) 
 {
    _debug_printf("%s:%u:%s: Assertion `%s' failed.\n", file, line, function, expr);
+#if defined(PIPE_OS_WINDOWS)
+   if (debug_get_bool_option("GALLIUM_ABORT_ON_ASSERT", FALSE))
+#else
    if (debug_get_bool_option("GALLIUM_ABORT_ON_ASSERT", TRUE))
+#endif
       debug_break();
    else
       _debug_printf("continuing...\n");

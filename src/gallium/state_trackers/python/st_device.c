@@ -266,3 +266,36 @@ st_context_create(struct st_device *st_dev)
 
    return st_ctx;
 }
+
+
+void
+st_buffer_destroy(struct st_buffer *st_buf)
+{
+   if(st_buf) {
+      struct pipe_winsys *winsys = st_buf->st_dev->screen->winsys;
+      pipe_buffer_reference(winsys, &st_buf->buffer, NULL);
+      FREE(st_buf);
+   }
+}
+
+
+struct st_buffer *
+st_buffer_create(struct st_device *st_dev,
+                 unsigned alignment, unsigned usage, unsigned size)
+{
+   struct pipe_winsys *winsys = st_dev->screen->winsys;
+   struct st_buffer *st_buf;
+   
+   st_buf = CALLOC_STRUCT(st_buffer);
+   if(!st_buf)
+      return NULL;
+
+   st_buf->st_dev = st_dev;
+   
+   st_buf->buffer = winsys->buffer_create(winsys, alignment, usage, size);
+   if(!st_buf->buffer)
+      st_buffer_destroy(st_buf);
+   
+   return st_buf;
+}
+

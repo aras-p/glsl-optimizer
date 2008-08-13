@@ -33,7 +33,7 @@ SOURCES = \
 	  dri_glx.c \
 	  XF86dri.c
 
-include $(TOP)/src/mesa/sources
+include $(TOP)/src/mesa/sources.mak
 
 MESA_GLAPI_ASM_SOURCES = $(addprefix $(TOP)/src/mesa/, $(GLAPI_ASM_SOURCES))
 MESA_GLAPI_SOURCES = $(addprefix $(TOP)/src/mesa/, $(GLAPI_SOURCES))
