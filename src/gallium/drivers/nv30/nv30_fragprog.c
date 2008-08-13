@@ -494,10 +494,10 @@ nv30_fragprog_parse_instruction(struct nv30_fpc *fpc,
 	case TGSI_OPCODE_FRC:
 		arith(fpc, sat, FRC, dst, mask, src[0], none, none);
 		break;
-	case TGSI_OPCODE_KIL:
+	case TGSI_OPCODE_KILP:
 		arith(fpc, 0, KIL, none, 0, none, none, none);
 		break;
-	case TGSI_OPCODE_KILP:
+	case TGSI_OPCODE_KIL:
 		dst = nv30_sr(NV30SR_NONE, 0);
 		dst.cc_update = 1;
 		arith(fpc, 0, MOV, dst, MASK_ALL, src[0], none, none);
