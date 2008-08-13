@@ -40,8 +40,6 @@ install: dri.pc
 	$(INSTALL) -d $(DESTDIR)$(INSTALL_INC_DIR)/GL/internal
 	$(INSTALL) -m 0644 $(TOP)/include/GL/internal/dri_interface.h \
 	  $(DESTDIR)$(INSTALL_INC_DIR)/GL/internal
-	$(INSTALL) -m 0644 $(TOP)/include/GL/internal/dri_sarea.h \
-	  $(DESTDIR)$(INSTALL_INC_DIR)/GL/internal
 	$(INSTALL) -d $(DESTDIR)$(INSTALL_LIB_DIR)/pkgconfig
 	$(INSTALL) -m 0644 dri.pc $(DESTDIR)$(INSTALL_LIB_DIR)/pkgconfig
 

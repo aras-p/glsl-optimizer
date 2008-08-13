@@ -145,12 +145,12 @@ intel_region_alloc(struct intel_context *intel,
 struct intel_region *
 intel_region_alloc_for_handle(struct intel_context *intel,
 			      GLuint cpp, GLuint pitch, GLuint height,
-			      GLuint handle)
+			      GLuint handle, const char *name)
 {
    struct intel_region *region;
    dri_bo *buffer;
 
-   buffer = intel_bo_gem_create_from_name(intel->bufmgr, "dri2 region", handle);
+   buffer = intel_bo_gem_create_from_name(intel->bufmgr, name, handle);
 
    region = intel_region_alloc_internal(intel, cpp, pitch, height, buffer);
    if (region == NULL)
@@ -164,6 +164,9 @@ intel_region_alloc_for_handle(struct intel_context *intel,
 void
 intel_region_reference(struct intel_region **dst, struct intel_region *src)
 {
+   if (src)
+      DBG("%s %d\n", __FUNCTION__, src->refcount);
+
    assert(*dst == NULL);
    if (src) {
       src->refcount++;

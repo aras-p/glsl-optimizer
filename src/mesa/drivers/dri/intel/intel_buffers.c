@@ -618,6 +618,9 @@ intel_wait_flips(struct intel_context *intel)
 			     BUFFER_FRONT_LEFT ? BUFFER_FRONT_LEFT :
 			     BUFFER_BACK_LEFT);
 
+   if (intel->intelScreen->driScrnPriv->dri2.enabled)
+      return;
+
    if (intel_fb->Base.Name == 0 && intel_rb &&
        intel_rb->pf_pending == intel_fb->pf_seq) {
       GLint pf_planes = intel_fb->pf_planes;

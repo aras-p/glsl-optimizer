@@ -257,6 +257,7 @@ struct intel_context
    drmLock *driHwLock;
    int driFd;
 
+   __DRIcontextPrivate *driContext;
    __DRIdrawablePrivate *driDrawable;
    __DRIdrawablePrivate *driReadDrawable;
    __DRIscreenPrivate *driScreen;

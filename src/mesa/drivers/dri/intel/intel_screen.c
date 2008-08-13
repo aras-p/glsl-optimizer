@@ -211,102 +211,6 @@ intelUpdateScreenFromSAREA(intelScreenPrivate * intelScreen,
       intelPrintSAREA(sarea);
 }
 
-
-/**
- * DRI2 entrypoint
- */
-static void
-intelHandleDrawableConfig(__DRIdrawablePrivate *dPriv,
-			  __DRIcontextPrivate *pcp,
-			  __DRIDrawableConfigEvent *event)
-{
-   struct intel_framebuffer *intel_fb = dPriv->driverPrivate;
-   struct intel_region *region = NULL;
-   struct intel_renderbuffer *rb, *depth_rb, *stencil_rb;
-   struct intel_context *intel = pcp->driverPrivate;
-   int cpp, pitch;
-
-   cpp = intel->ctx.Visual.rgbBits / 8;
-   pitch = ((cpp * dPriv->w + 63) & ~63) / cpp;
-
-   rb = intel_fb->color_rb[1];
-   if (rb) {
-      region = intel_region_alloc(intel, cpp, pitch, dPriv->h);
-      intel_renderbuffer_set_region(rb, region);
-   }
-
-   rb = intel_fb->color_rb[2];
-   if (rb) {
-      region = intel_region_alloc(intel, cpp, pitch, dPriv->h);
-      intel_renderbuffer_set_region(rb, region);
-   }
-
-   depth_rb = intel_get_renderbuffer(&intel_fb->Base, BUFFER_DEPTH);
-   stencil_rb = intel_get_renderbuffer(&intel_fb->Base, BUFFER_STENCIL);
-   if (depth_rb || stencil_rb)
-      region = intel_region_alloc(intel, cpp, pitch, dPriv->h);
-   if (depth_rb)
-      intel_renderbuffer_set_region(depth_rb, region);
-   if (stencil_rb)
-      intel_renderbuffer_set_region(stencil_rb, region);
-
-   /* FIXME: Tell the X server about the regions we just allocated and
-    * attached. */
-}
-
-/**
- * DRI2 entrypoint
- */
-static void
-intelHandleBufferAttach(__DRIdrawablePrivate *dPriv,
-			__DRIcontextPrivate *pcp,
-			__DRIBufferAttachEvent *ba)
-{
-   struct intel_framebuffer *intel_fb = dPriv->driverPrivate;
-   struct intel_renderbuffer *rb;
-   struct intel_region *region;
-   struct intel_context *intel = pcp->driverPrivate;
-
-   switch (ba->buffer.attachment) {
-   case DRI_DRAWABLE_BUFFER_FRONT_LEFT:
-      rb = intel_fb->color_rb[0];
-      break;
-
-   case DRI_DRAWABLE_BUFFER_BACK_LEFT:
-      rb = intel_fb->color_rb[0];
-      break;
-
-   case DRI_DRAWABLE_BUFFER_DEPTH:
-     rb = intel_get_renderbuffer(&intel_fb->Base, BUFFER_DEPTH);
-     break;
-
-   case DRI_DRAWABLE_BUFFER_STENCIL:
-     rb = intel_get_renderbuffer(&intel_fb->Base, BUFFER_STENCIL);
-     break;
-
-   case DRI_DRAWABLE_BUFFER_ACCUM:
-   default:
-      fprintf(stderr, "unhandled buffer attach event, attacment type %d\n",
-	      ba->buffer.attachment);
-      return;
-   }
-
-#if 0
-   /* FIXME: Add this so we can filter out when the X server sends us
-    * attachment events for the buffers we just allocated.  Need to
-    * get the BO handle for a render buffer. */
-   if (intel_renderbuffer_get_region_handle(rb) == ba->buffer.handle)
-      return;
-#endif
-
-   region = intel_region_alloc_for_handle(intel, ba->buffer.cpp,
-					  ba->buffer.pitch / ba->buffer.cpp,
-					  dPriv->h,
-					  ba->buffer.handle);
-
-   intel_renderbuffer_set_region(rb, region);
-}
-
 static const __DRItexOffsetExtension intelTexOffsetExtension = {
    { __DRI_TEX_OFFSET },
    intelSetTexOffset,
@@ -750,26 +654,12 @@ __DRIconfig **intelInitScreen2(__DRIscreenPrivate *psp)
 
    intelScreen->drmMinor = psp->drm_version.minor;
 
-   /* Determine chipset ID? */
+   /* Determine chipset ID */
    if (!intel_get_param(psp, I915_PARAM_CHIPSET_ID,
 			&intelScreen->deviceID))
       return GL_FALSE;
 
-   /* Determine if IRQs are active? */
-   if (!intel_get_param(psp, I915_PARAM_IRQ_ACTIVE,
-			&intelScreen->irq_active))
-      return GL_FALSE;
-
-   /* Determine if batchbuffers are allowed */
-   if (!intel_get_param(psp, I915_PARAM_ALLOW_BATCHBUFFER,
-			&intelScreen->allow_batchbuffer))
-      return GL_FALSE;
-
-   if (!intelScreen->allow_batchbuffer) {
-      fprintf(stderr, "batch buffer not allowed\n");
-      return GL_FALSE;
-   }
-
+   intelScreen->irq_active = 1;
    psp->extensions = intelScreenExtensions;
 
    return driConcatConfigs(intelFillInModes(psp, 16, 16, 0, 1),
@@ -792,6 +682,4 @@ const struct __DriverAPIRec driDriverAPI = {
    .CopySubBuffer	 = intelCopySubBuffer,
 
    .InitScreen2		 = intelInitScreen2,
-   .HandleDrawableConfig = intelHandleDrawableConfig,
-   .HandleBufferAttach	 = intelHandleBufferAttach,
 };
