@@ -55,6 +55,8 @@
 
 %}
 
+%include "typemaps.i"
+
 %include "carrays.i"
 %array_class(unsigned char, ByteArray);
 %array_class(int, IntArray);
