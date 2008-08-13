@@ -29,8 +29,9 @@
 #include "pipe/p_util.h"
 #include "util/u_string.h"
 #include "tgsi_dump_c.h"
-#include "tgsi_parse.h"
 #include "tgsi_build.h"
+#include "tgsi_info.h"
+#include "tgsi_parse.h"
 
 static void
 dump_enum(
@@ -102,128 +103,6 @@ static const char *TGSI_SEMANTICS[] =
 static const char *TGSI_IMMS[] =
 {
    "IMM_FLOAT32"
-};
-
-static const char *TGSI_OPCODES[TGSI_OPCODE_LAST] =
-{
-   "OPCODE_ARL",
-   "OPCODE_MOV",
-   "OPCODE_LIT",
-   "OPCODE_RCP",
-   "OPCODE_RSQ",
-   "OPCODE_EXP",
-   "OPCODE_LOG",
-   "OPCODE_MUL",
-   "OPCODE_ADD",
-   "OPCODE_DP3",
-   "OPCODE_DP4",
-   "OPCODE_DST",
-   "OPCODE_MIN",
-   "OPCODE_MAX",
-   "OPCODE_SLT",
-   "OPCODE_SGE",
-   "OPCODE_MAD",
-   "OPCODE_SUB",
-   "OPCODE_LERP",
-   "OPCODE_CND",
-   "OPCODE_CND0",
-   "OPCODE_DOT2ADD",
-   "OPCODE_INDEX",
-   "OPCODE_NEGATE",
-   "OPCODE_FRAC",
-   "OPCODE_CLAMP",
-   "OPCODE_FLOOR",
-   "OPCODE_ROUND",
-   "OPCODE_EXPBASE2",
-   "OPCODE_LOGBASE2",
-   "OPCODE_POWER",
-   "OPCODE_CROSSPRODUCT",
-   "OPCODE_MULTIPLYMATRIX",
-   "OPCODE_ABS",
-   "OPCODE_RCC",
-   "OPCODE_DPH",
-   "OPCODE_COS",
-   "OPCODE_DDX",
-   "OPCODE_DDY",
-   "OPCODE_KILP",
-   "OPCODE_PK2H",
-   "OPCODE_PK2US",
-   "OPCODE_PK4B",
-   "OPCODE_PK4UB",
-   "OPCODE_RFL",
-   "OPCODE_SEQ",
-   "OPCODE_SFL",
-   "OPCODE_SGT",
-   "OPCODE_SIN",
-   "OPCODE_SLE",
-   "OPCODE_SNE",
-   "OPCODE_STR",
-   "OPCODE_TEX",
-   "OPCODE_TXD",
-   "OPCODE_TXP",
-   "OPCODE_UP2H",
-   "OPCODE_UP2US",
-   "OPCODE_UP4B",
-   "OPCODE_UP4UB",
-   "OPCODE_X2D",
-   "OPCODE_ARA",
-   "OPCODE_ARR",
-   "OPCODE_BRA",
-   "OPCODE_CAL",
-   "OPCODE_RET",
-   "OPCODE_SSG",
-   "OPCODE_CMP",
-   "OPCODE_SCS",
-   "OPCODE_TXB",
-   "OPCODE_NRM",
-   "OPCODE_DIV",
-   "OPCODE_DP2",
-   "OPCODE_TXL",
-   "OPCODE_BRK",
-   "OPCODE_IF",
-   "OPCODE_LOOP",
-   "OPCODE_REP",
-   "OPCODE_ELSE",
-   "OPCODE_ENDIF",
-   "OPCODE_ENDLOOP",
-   "OPCODE_ENDREP",
-   "OPCODE_PUSHA",
-   "OPCODE_POPA",
-   "OPCODE_CEIL",
-   "OPCODE_I2F",
-   "OPCODE_NOT",
-   "OPCODE_TRUNC",
-   "OPCODE_SHL",
-   "OPCODE_SHR",
-   "OPCODE_AND",
-   "OPCODE_OR",
-   "OPCODE_MOD",
-   "OPCODE_XOR",
-   "OPCODE_SAD",
-   "OPCODE_TXF",
-   "OPCODE_TXQ",
-   "OPCODE_CONT",
-   "OPCODE_EMIT",
-   "OPCODE_ENDPRIM",
-   "OPCODE_BGNLOOP2",
-   "OPCODE_BGNSUB",
-   "OPCODE_ENDLOOP2",
-   "OPCODE_ENDSUB",
-   "OPCODE_NOISE1",
-   "OPCODE_NOISE2",
-   "OPCODE_NOISE3",
-   "OPCODE_NOISE4",
-   "OPCODE_NOP",
-   "OPCODE_M4X3",
-   "OPCODE_M3X4",
-   "OPCODE_M3X3",
-   "OPCODE_M3X2",
-   "OPCODE_NRM4",
-   "OPCODE_CALLNZ",
-   "OPCODE_IFC",
-   "OPCODE_BREAKC",
-   "OPCODE_KIL",
-   "OPCODE_END"
 };
 
 static const char *TGSI_SATS[] =
@@ -428,8 +307,8 @@ dump_instruction_verbose(
 {
    unsigned i;
 
-   TXT( "\nOpcode     : " );
-   ENM( inst->Instruction.Opcode, TGSI_OPCODES );
+   TXT( "\nOpcode     : OPCODE_" );
+   TXT( tgsi_get_opcode_info( inst->Instruction.Opcode )->mnemonic );
    if( deflt || fi->Instruction.Saturate != inst->Instruction.Saturate ) {
       TXT( "\nSaturate   : " );
       ENM( inst->Instruction.Saturate, TGSI_SATS );
@@ -769,10 +648,6 @@ tgsi_dump_c(
    uint ignored = flags & TGSI_DUMP_C_IGNORED;
    uint deflt = flags & TGSI_DUMP_C_DEFAULT;
    uint instno = 0;
-
-   /* sanity checks */
-   assert(strcmp(TGSI_OPCODES[TGSI_OPCODE_CONT], "OPCODE_CONT") == 0);
-   assert(strcmp(TGSI_OPCODES[TGSI_OPCODE_END], "OPCODE_END") == 0);
 
    tgsi_parse_init( &parse, tokens );
 

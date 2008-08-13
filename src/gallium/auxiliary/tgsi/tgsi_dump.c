@@ -28,6 +28,7 @@
 #include "pipe/p_debug.h"
 #include "util/u_string.h"
 #include "tgsi_dump.h"
+#include "tgsi_info.h"
 #include "tgsi_iterate.h"
 
 struct dump_ctx
@@ -101,129 +102,6 @@ static const char *semantic_names[] =
 static const char *immediate_type_names[] =
 {
    "FLT32"
-};
-
-static const char *opcode_names[TGSI_OPCODE_LAST] =
-{
-   "ARL",
-   "MOV",
-   "LIT",
-   "RCP",
-   "RSQ",
-   "EXP",
-   "LOG",
-   "MUL",
-   "ADD",
-   "DP3",
-   "DP4",
-   "DST",
-   "MIN",
-   "MAX",
-   "SLT",
-   "SGE",
-   "MAD",
-   "SUB",
-   "LERP",
-   "CND",
-   "CND0",
-   "DOT2ADD",
-   "INDEX",
-   "NEGATE",
-   "FRAC",
-   "CLAMP",
-   "FLOOR",
-   "ROUND",
-   "EXPBASE2",
-   "LOGBASE2",
-   "POWER",
-   "CROSSPRODUCT",
-   "MULTIPLYMATRIX",
-   "ABS",
-   "RCC",
-   "DPH",
-   "COS",
-   "DDX",
-   "DDY",
-   "KILP",
-   "PK2H",
-   "PK2US",
-   "PK4B",
-   "PK4UB",
-   "RFL",
-   "SEQ",
-   "SFL",
-   "SGT",
-   "SIN",
-   "SLE",
-   "SNE",
-   "STR",
-   "TEX",
-   "TXD",
-   "TXP",
-   "UP2H",
-   "UP2US",
-   "UP4B",
-   "UP4UB",
-   "X2D",
-   "ARA",
-   "ARR",
-   "BRA",
-   "CAL",
-   "RET",
-   "SSG",
-   "CMP",
-   "SCS",
-   "TXB",
-   "NRM",
-   "DIV",
-   "DP2",
-   "TXL",
-   "BRK",
-   "IF",
-   "LOOP",
-   "REP",
-   "ELSE",
-   "ENDIF",
-   "ENDLOOP",
-   "ENDREP",
-   "PUSHA",
-   "POPA",
-   "CEIL",
-   "I2F",
-   "NOT",
-   "TRUNC",
-   "SHL",
-   "SHR",
-   "AND",
-   "OR",
-   "MOD",
-   "XOR",
-   "SAD",
-   "TXF",
-   "TXQ",
-   "CONT",
-   "EMIT",
-   "ENDPRIM",
-   "BGNLOOP2",
-   "BGNSUB",
-   "ENDLOOP2",
-   "ENDSUB",
-   "NOISE1",
-   "NOISE2",
-   "NOISE3",
-   "NOISE4",
-   "NOP",
-   "M4X3",
-   "M3X4",
-   "M3X3",
-   "M3X2",
-   "NRM4",
-   "CALLNZ",
-   "IFC",
-   "BREAKC",
-   "KIL",
-   "END",
-   "SWZ"
 };
 
 static const char *swizzle_names[] =
@@ -444,7 +322,7 @@ iter_instruction(
 
    UID( instno );
    CHR( ':' );
-   ENM( inst->Instruction.Opcode, opcode_names );
+   TXT( tgsi_get_opcode_info( inst->Instruction.Opcode )->mnemonic );
 
    switch (inst->Instruction.Saturate) {
    case TGSI_SAT_NONE:
@@ -622,10 +500,6 @@ tgsi_dump_str(
 
    util_strbuf_init(&sbuf, str, size);
    
-   /* sanity checks */
-   assert( strcmp( opcode_names[TGSI_OPCODE_CONT], "CONT" ) == 0 );
-   assert( strcmp( opcode_names[TGSI_OPCODE_END], "END" ) == 0 );
-
    ctx.iter.prolog = prolog;
    ctx.iter.iterate_instruction = iter_instruction;
    ctx.iter.iterate_declaration = iter_declaration;
