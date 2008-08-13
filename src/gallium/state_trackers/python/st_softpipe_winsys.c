@@ -253,13 +253,9 @@ st_softpipe_fence_finish(struct pipe_winsys *winsys,
 }
 
 
-static void 
-st_softpipe_screen_destroy(struct pipe_screen *screen)
+static void
+st_softpipe_destroy(struct pipe_winsys *winsys)
 {
-   struct pipe_winsys *winsys = screen->winsys;
-
-   screen->destroy(screen);
-
    FREE(winsys);
 }
 
@@ -274,6 +270,8 @@ st_softpipe_screen_create(void)
    if(!winsys)
       return NULL;
 
+   winsys->destroy = st_softpipe_destroy;
+   
    winsys->buffer_create = st_softpipe_buffer_create;
    winsys->user_buffer_create = st_softpipe_user_buffer_create;
    winsys->buffer_map = st_softpipe_buffer_map;
@@ -293,16 +291,9 @@ st_softpipe_screen_create(void)
 
    screen = softpipe_create_screen(winsys);
    if(!screen)
-      FREE(winsys);
+      st_softpipe_destroy(winsys);
 
    return screen;
-}
-
-
-static void
-st_softpipe_context_destroy(struct pipe_context *pipe)
-{
-   pipe->destroy(pipe);
 }
 
 
@@ -315,7 +306,5 @@ st_softpipe_context_create(struct pipe_screen *screen)
 
 const struct st_winsys st_softpipe_winsys = {
    &st_softpipe_screen_create,
-   &st_softpipe_screen_destroy,
    &st_softpipe_context_create,
-   &st_softpipe_context_destroy
 };

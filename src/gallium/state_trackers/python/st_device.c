@@ -41,7 +41,7 @@ static void
 st_device_really_destroy(struct st_device *st_dev) 
 {
    if(st_dev->screen)
-      st_dev->st_ws->screen_destroy(st_dev->screen);
+      st_dev->screen->destroy(st_dev->screen);
    
    FREE(st_dev);
 }
@@ -61,9 +61,7 @@ st_device_create_from_st_winsys(const struct st_winsys *st_ws)
    struct st_device *st_dev;
    
    if(!st_ws->screen_create ||
-      !st_ws->screen_destroy ||
-      !st_ws->context_create ||
-      !st_ws->context_destroy)
+      !st_ws->context_create)
       return NULL;
    
    st_dev = CALLOC_STRUCT(st_device);
@@ -106,7 +104,7 @@ st_context_destroy(struct st_context *st_ctx)
       }
       
       if(st_ctx->pipe)
-         st_ctx->st_dev->st_ws->context_destroy(st_ctx->pipe);
+         st_ctx->pipe->destroy(st_ctx->pipe);
       
       for(i = 0; i < PIPE_MAX_SAMPLERS; ++i)
          pipe_texture_reference(&st_ctx->sampler_textures[i], NULL);
