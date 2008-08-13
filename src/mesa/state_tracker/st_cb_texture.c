@@ -933,7 +933,12 @@ fallback_copy_texsubimage(GLcontext *ctx,
    struct pipe_texture *pt = stImage->pt;
    struct pipe_surface *src_surf, *dest_surf;
 
-   src_surf = strb->surface;
+   /* We'd use strb->surface, here but it's created for GPU read/write only */
+   src_surf = pipe->screen->get_tex_surface( pipe->screen,
+                                             strb->texture,
+                                             0, 0, 0,
+                                             PIPE_BUFFER_USAGE_CPU_READ);
+
    dest_surf = screen->get_tex_surface(screen, pt, face, level, destZ,
                                        PIPE_BUFFER_USAGE_CPU_WRITE);
 
@@ -1016,6 +1021,7 @@ fallback_copy_texsubimage(GLcontext *ctx,
    }
 
    screen->tex_surface_release(screen, &dest_surf);
+   screen->tex_surface_release(screen, &src_surf);
 }
 
 
