@@ -7,6 +7,7 @@ C_SOURCES = \
 	tgsi_build.c \
 	tgsi_dump.c \
 	tgsi_exec.c \
+	tgsi_info.c \
 	tgsi_iterate.c \
 	tgsi_parse.c \
 	tgsi_scan.c \
