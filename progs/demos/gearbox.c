@@ -264,38 +264,44 @@ draw(void)
    glLoadIdentity();
    glTranslatef(0.0, 0.0, -40.0);
 
+   /* clear whole depth buffer */
    glDisable(GL_SCISSOR_TEST);
    glClear(GL_DEPTH_BUFFER_BIT);
    glEnable(GL_SCISSOR_TEST);
 
-   /* draw gears */
+   /* clear upper-left corner of color buffer (unused space) */
+   glScissor(0, TexHeight, TexWidth, WinHeight - TexHeight);
+   glClearColor(0.0, 0.0, 0.0, 0.0);
+   glClear(GL_COLOR_BUFFER_BIT);
+
+   /* clear lower-left corner of color buffer */
    glViewport(0, 0, TexWidth, TexHeight);
    glScissor(0, 0, TexWidth, TexHeight);
-   glClearColor(0.5, 0.5, 0.8, 0.0);
    glClearColor(1, 1, 1, 0);
    glClear(GL_COLOR_BUFFER_BIT);
 
+   /* draw gears in lower-left corner */
    glMatrixMode(GL_PROJECTION);
    glLoadIdentity();
    glFrustum(-1.0, 1.0, -1.0, 1.0, 5.0, 60.0);
    glMatrixMode(GL_MODELVIEW);
-
    DrawGears();
 
+   /* copy color buffer to texture */
    glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, TexWidth, TexHeight);
    
-   /* draw textured cube */
+   /* clear right half of color buffer */
    glViewport(TexWidth, 0, WinWidth - TexWidth, WinHeight);
    glScissor(TexWidth, 0, WinWidth - TexWidth, WinHeight);
    glClearColor(0.5, 0.5, 0.8, 0.0);
    glClear(GL_COLOR_BUFFER_BIT);
 
+   /* draw textured cube in right half of window */
    ar = (float) (WinWidth - TexWidth) / WinHeight;
    glMatrixMode(GL_PROJECTION);
    glLoadIdentity();
    glFrustum(-ar, ar, -1.0, 1.0, 5.0, 60.0);
    glMatrixMode(GL_MODELVIEW);
-
    DrawCube();
 
    /* finish up */
