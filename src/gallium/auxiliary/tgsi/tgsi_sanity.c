@@ -27,6 +27,7 @@
 
 #include "pipe/p_debug.h"
 #include "tgsi_sanity.h"
+#include "tgsi_info.h"
 #include "tgsi_iterate.h"
 
 #define MAX_REGISTERS 256
@@ -170,6 +171,7 @@ iter_instruction(
    struct tgsi_full_instruction *inst )
 {
    struct sanity_check_ctx *ctx = (struct sanity_check_ctx *) iter;
+   const struct tgsi_opcode_info *info;
    uint i;
 
    /* There must be no other instructions after END.
@@ -179,6 +181,19 @@ iter_instruction(
    }
    else if (inst->Instruction.Opcode == TGSI_OPCODE_END) {
       ctx->index_of_END = ctx->num_instructions;
+   }
+
+   info = tgsi_get_opcode_info( inst->Instruction.Opcode );
+   if (info == NULL) {
+      report_error( ctx, "Invalid instruction opcode" );
+      return TRUE;
+   }
+
+   if (info->num_dst != inst->Instruction.NumDstRegs) {
+      report_error( ctx, "Invalid number of destination operands" );
+   }
+   if (info->num_src != inst->Instruction.NumSrcRegs) {
+      report_error( ctx, "Invalid number of source operands" );
    }
 
    /* Check destination and source registers' validity.
