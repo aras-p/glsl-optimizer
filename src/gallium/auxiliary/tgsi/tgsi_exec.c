@@ -1234,10 +1234,13 @@ static void
 exec_kilp(struct tgsi_exec_machine *mach,
           const struct tgsi_full_instruction *inst)
 {
+   uint kilmask; /* bit 0 = pixel 0, bit 1 = pixel 1, etc */
+
    if (inst->InstructionExtNv.CondFlowEnable) {
       uint swizzle[4];
       uint chan_index;
-      uint kilmask = 0; /* bit 0 = pixel 0, bit 1 = pixel 1, etc */
+
+      kilmask = 0x0;
 
       swizzle[0] = inst->InstructionExtNv.CondSwizzleX;
       swizzle[1] = inst->InstructionExtNv.CondSwizzleY;
@@ -1254,9 +1257,12 @@ exec_kilp(struct tgsi_exec_machine *mach,
                kilmask |= 1 << i;
          }
       }
-
-      mach->Temps[TEMP_KILMASK_I].xyzw[TEMP_KILMASK_C].u[0] |= kilmask;
    }
+   else {
+      /* "unconditional" kil */
+      kilmask = mach->ExecMask;
+   }
+   mach->Temps[TEMP_KILMASK_I].xyzw[TEMP_KILMASK_C].u[0] |= kilmask;
 }
 
 
@@ -2176,7 +2182,7 @@ exec_instruction(
       mach->FuncMask &= ~mach->ExecMask;
       UPDATE_EXEC_MASK(mach);
 
-      if (mach->ExecMask == 0x0) {
+      if (mach->FuncMask == 0x0) {
          /* really return now (otherwise, keep executing */
 
          if (mach->CallStackTop == 0) {
