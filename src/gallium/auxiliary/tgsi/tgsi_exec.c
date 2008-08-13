@@ -1234,11 +1234,29 @@ static void
 exec_kilp(struct tgsi_exec_machine *mach,
           const struct tgsi_full_instruction *inst)
 {
-   uint kilmask = 0; /* bit 0 = pixel 0, bit 1 = pixel 1, etc */
+   if (inst->InstructionExtNv.CondFlowEnable) {
+      uint swizzle[4];
+      uint chan_index;
+      uint kilmask = 0; /* bit 0 = pixel 0, bit 1 = pixel 1, etc */
 
-   /* TODO: build kilmask from CC mask */
+      swizzle[0] = inst->InstructionExtNv.CondSwizzleX;
+      swizzle[1] = inst->InstructionExtNv.CondSwizzleY;
+      swizzle[2] = inst->InstructionExtNv.CondSwizzleZ;
+      swizzle[3] = inst->InstructionExtNv.CondSwizzleW;
 
-   mach->Temps[TEMP_KILMASK_I].xyzw[TEMP_KILMASK_C].u[0] |= kilmask;
+      for (chan_index = 0; chan_index < 4; chan_index++)
+      {
+         uint i;
+
+         for (i = 0; i < 4; i++) {
+            /* TODO: evaluate the condition code */
+            if (0)
+               kilmask |= 1 << i;
+         }
+      }
+
+      mach->Temps[TEMP_KILMASK_I].xyzw[TEMP_KILMASK_C].u[0] |= kilmask;
+   }
 }
 
 
