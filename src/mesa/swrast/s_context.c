@@ -2,7 +2,7 @@
  * Mesa 3-D graphics library
  * Version:  7.1
  *
- * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2008  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -33,6 +33,7 @@
 #include "mtypes.h"
 #include "teximage.h"
 #include "swrast.h"
+#include "shader/prog_parameter.h"
 #include "shader/prog_statevars.h"
 #include "s_blend.h"
 #include "s_context.h"
@@ -499,6 +500,13 @@ _swrast_invalidate_state( GLcontext *ctx, GLbitfield new_state )
       swrast->InvalidateState = _swrast_sleep;
       swrast->NewState = ~0;
       new_state = ~0;
+   }
+
+   {
+      const struct gl_fragment_program *fp = ctx->FragmentProgram._Current;
+      if (fp && (fp->Base.Parameters->StateFlags & new_state)) {
+         _mesa_load_state_parameters(ctx, fp->Base.Parameters);
+      }
    }
 
    if (new_state & swrast->InvalidateTriangleMask)
