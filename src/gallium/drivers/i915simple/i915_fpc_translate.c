@@ -560,18 +560,6 @@ i915_translate_instruction(struct i915_fp_compile *p,
       break;
 
    case TGSI_OPCODE_KIL:
-      /* unconditional kill */
-      assert(0); /* not tested yet */
-#if 0
-      src0 = src_vector(p, &inst->FullSrcRegisters[0]);
-      tmp = i915_get_utemp(p);
-
-      i915_emit_texld(p, tmp, A0_DEST_CHANNEL_ALL,   /* use a dummy dest reg */
-                      0, src0, T0_TEXKILL);
-#endif
-      break;
-
-   case TGSI_OPCODE_KILP:
       /* kill if src[0].x < 0 || src[0].y < 0 ... */
       src0 = src_vector(p, &inst->FullSrcRegisters[0]);
       tmp = i915_get_utemp(p);
@@ -582,6 +570,10 @@ i915_translate_instruction(struct i915_fp_compile *p,
                       0,                     /* sampler */
                       src0,                  /* coord*/
                       T0_TEXKILL);           /* opcode */
+      break;
+
+   case TGSI_OPCODE_KILP:
+      assert(0); /* not tested yet */
       break;
 
    case TGSI_OPCODE_LG2:
