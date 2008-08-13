@@ -820,7 +820,7 @@ tgsi_build_instruction_ext_nv(
    unsigned cond_swizzle_z,
    unsigned cond_swizzle_w,
    unsigned cond_dst_update,
-   unsigned cond_flow_update,
+   unsigned cond_flow_enable,
    struct tgsi_token *prev_token,
    struct tgsi_instruction *instruction,
    struct tgsi_header *header )
@@ -837,7 +837,7 @@ tgsi_build_instruction_ext_nv(
    instruction_ext_nv.CondSwizzleZ = cond_swizzle_z;
    instruction_ext_nv.CondSwizzleW = cond_swizzle_w;
    instruction_ext_nv.CondDstUpdate = cond_dst_update;
-   instruction_ext_nv.CondFlowEnable = cond_flow_update;
+   instruction_ext_nv.CondFlowEnable = cond_flow_enable;
 
    prev_token->Extended = 1;
    instruction_grow( instruction, header );
