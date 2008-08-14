@@ -105,7 +105,8 @@ member_array_factories = {
     "pipe_viewport_state": {"scale": gallium.FloatArray, "translate": gallium.FloatArray},                          
     "pipe_clip_state": {"ucp": gallium.FloatArray},
     "pipe_depth_stencil_alpha_state": {"stencil": gallium.StencilArray},
-    "pipe_blend_color": {"color": gallium.FloatArray},                         
+    "pipe_blend_color": {"color": gallium.FloatArray},
+    "pipe_sampler_state": {"border_color": gallium.FloatArray},              
 }
 
 
@@ -191,6 +192,15 @@ class Winsys(Object):
     def get_name(self):
         pass
     
+    def user_buffer_create(self, data, size):
+        # We don't really care to distinguish between user and regular buffers
+        buffer = self.real.buffer_create(size, 
+                                         4, 
+                                         gallium.PIPE_BUFFER_USAGE_CPU_READ |
+                                         gallium.PIPE_BUFFER_USAGE_CPU_WRITE )
+        buffer.write(data, size)
+        return buffer
+    
     def buffer_create(self, alignment, usage, size):
         return self.real.buffer_create(size, alignment, usage)
     
@@ -199,7 +209,15 @@ class Winsys(Object):
     
     def buffer_write(self, buffer, data, size):
         buffer.write(data, size)
-        buffer.write(data, size)
+        
+    def fence_finish(self, fence, flags):
+        pass
+    
+    def fence_reference(self, dst, src):
+        pass
+    
+    def flush_frontbuffer(self, surface):
+        pass
 
 
 class Screen(Object):
@@ -239,11 +257,9 @@ class Screen(Object):
     def tex_surface_release(self, surface):
         self.interpreter.unregister_object(surface)
 
-    def surface_map(self, surface, flags):
-        return None
-    
-    def surface_unmap(self, surface):
-        pass
+    def surface_write(self, surface, data, stride, size):
+        assert surface.nblocksy * stride == size 
+        surface.put_tile_raw(0, 0, surface.width, surface.height, data, stride)
 
 
 class Context(Object):
@@ -324,7 +340,7 @@ class Context(Object):
 
     def set_sampler_textures(self, n, textures):
         for i in range(n):
-            self.real.set_sampler_textures(textures[i])
+            self.real.set_sampler_texture(i, textures[i])
 
     def set_vertex_buffers(self, n, vbufs):
         for i in range(n):
@@ -350,8 +366,9 @@ class Context(Object):
         self.real.draw_arrays(mode, start, count)
         self._update()
         
-    def flush(self, flags, fence):
+    def flush(self, flags):
         self.real.flush(flags)
+        return None
 
     def clear(self, surface, value):
         self.real.surface_clear(surface, value)
