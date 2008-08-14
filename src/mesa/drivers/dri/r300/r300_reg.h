@@ -1458,8 +1458,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #	define R300_TX_FORMAT_X32	    	    0x1e
 
 	/* 0x16 - some 16 bit green format.. ?? */
-#	define R300_TX_FORMAT_UNK25		   (1 << 25) /* no swizzle */
-#	define R300_TX_FORMAT_CUBIC_MAP		   (1 << 26)
+#	define R300_TX_FORMAT_3D		   (1 << 25)
+#	define R300_TX_FORMAT_CUBIC_MAP		   (2 << 25)
 
 	/* gap */
 	/* Floating point formats */

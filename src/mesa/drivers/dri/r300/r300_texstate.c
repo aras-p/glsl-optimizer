@@ -392,6 +392,9 @@ static void r300SetTexImages(r300ContextPtr rmesa,
 				compute_tex_image_offset(tObj, face, i, &curOffset);
 		}
 	} else {
+		if (tObj->Target == GL_TEXTURE_3D)
+                	t->format |= R300_TX_FORMAT_3D;
+
 		for (i = 0; i < numLevels; i++)
 			compute_tex_image_offset(tObj, 0, i, &curOffset);
 	}
@@ -405,7 +408,9 @@ static void r300SetTexImages(r300ContextPtr rmesa,
 	    (((tObj->Image[0][t->base.firstLevel]->Width -
 	       1) << R300_TX_WIDTHMASK_SHIFT)
 	     | ((tObj->Image[0][t->base.firstLevel]->Height - 1) <<
-		R300_TX_HEIGHTMASK_SHIFT))
+		R300_TX_HEIGHTMASK_SHIFT)
+	     | ((tObj->Image[0][t->base.firstLevel]->DepthLog2) <<
+		R300_TX_DEPTHMASK_SHIFT))
 	    | ((numLevels - 1) << R300_TX_MAX_MIP_LEVEL_SHIFT);
 
 	t->pitch = 0;
