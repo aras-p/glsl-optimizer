@@ -455,8 +455,7 @@ static struct intel_region *
 intel_recreate_static(struct intel_context *intel,
 		      const char *name,
 		      struct intel_region *region,
-		      intelRegion *region_desc,
-		      GLuint mem_type)
+		      intelRegion *region_desc)
 {
    intelScreenPrivate *intelScreen = intel->intelScreen;
    int ret;
@@ -537,22 +536,19 @@ intel_recreate_static_regions(struct intel_context *intel)
    intel->front_region =
       intel_recreate_static(intel, "front",
 			    intel->front_region,
-			    &intelScreen->front,
-			    DRM_BO_FLAG_MEM_TT);
+			    &intelScreen->front);
 
    intel->back_region =
       intel_recreate_static(intel, "back",
 			    intel->back_region,
-			    &intelScreen->back,
-			    DRM_BO_FLAG_MEM_TT);
+			    &intelScreen->back);
 
 #ifdef I915
    if (intelScreen->third.handle) {
       intel->third_region =
 	 intel_recreate_static(intel, "third",
 			       intel->third_region,
-			       &intelScreen->third,
-			       DRM_BO_FLAG_MEM_TT);
+			       &intelScreen->third);
    }
 #endif /* I915 */
 
@@ -562,6 +558,5 @@ intel_recreate_static_regions(struct intel_context *intel)
    intel->depth_region =
       intel_recreate_static(intel, "depth",
 			    intel->depth_region,
-			    &intelScreen->depth,
-			    DRM_BO_FLAG_MEM_TT);
+			    &intelScreen->depth);
 }
