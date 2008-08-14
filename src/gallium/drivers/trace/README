@@ -12,7 +12,7 @@ To use do
 
 ensure the right libGL.so is being picked by doing
 
- ldd `which glxingo` 
+ ldd `which glxinfo` 
 
 and then try running
 
@@ -31,7 +31,9 @@ further transform it by doing
   echo '</trace>' >> gallium.??.trace
 
 
-This is still work in progress.  
+This is still work in progress, namely:
+- surface writes are not traced
+- no way to know the start/end of a frame
 
 --
 Jose Fonseca <jrfonseca@tungstengraphics.com>
