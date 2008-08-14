@@ -213,6 +213,7 @@ align_malloc(size_t bytes, uint alignment)
 {
 #if defined(HAVE_POSIX_MEMALIGN)
    void *mem;
+   alignment = (alignment + (uint)sizeof(void*) - 1) & ~((uint)sizeof(void*) - 1);
    if(posix_memalign(& mem, alignment, bytes) != 0)
       return NULL;
    return mem;
