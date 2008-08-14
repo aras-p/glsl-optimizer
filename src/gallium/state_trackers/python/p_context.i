@@ -147,7 +147,7 @@ struct st_context {
                           unsigned buffer_offset,
                           struct st_buffer *buffer)
    {
-      unsigned i, num_vertex_buffers;
+      unsigned i;
       struct pipe_vertex_buffer state;
       
       memset(&state, 0, sizeof(state));
