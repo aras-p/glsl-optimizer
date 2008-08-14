@@ -67,6 +67,7 @@
 #include "state_tracker/st_public.h"
 #include "state_tracker/st_context.h"
 #include "pipe/p_defines.h"
+#include "pipe/p_screen.h"
 #include "pipe/p_context.h"
 
 #include "xm_winsys_aub.h"
@@ -833,7 +834,7 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
  fail:
    if (c->st)
       st_destroy_context(c->st);
-   if (pipe)
+   else if (pipe)
       pipe->destroy(pipe);
    FREE(c);
    return NULL;
@@ -844,7 +845,9 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
 PUBLIC
 void XMesaDestroyContext( XMesaContext c )
 {
+   struct pipe_screen *screen = c->st->pipe->screen;
    st_destroy_context(c->st);
+   screen->destroy(screen);
    _mesa_free(c);
 }
 

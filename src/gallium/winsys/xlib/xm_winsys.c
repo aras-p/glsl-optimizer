@@ -55,7 +55,6 @@
 #endif
 
 #ifdef GALLIUM_TRACE
-#include "trace/tr_winsys.h"
 #include "trace/tr_screen.h"
 #include "trace/tr_context.h"
 #endif
@@ -651,11 +650,7 @@ xmesa_get_pipe_winsys(struct xmesa_visual *xm_vis)
       ws->base.get_name = xm_get_name;
    }
 
-#ifdef GALLIUM_TRACE
-      return trace_winsys_create(&ws->base);
-#else
-      return &ws->base;
-#endif
+   return &ws->base;
 }
 
 
@@ -684,14 +679,12 @@ xmesa_create_pipe_context(XMesaContext xmesa, uint pixelformat)
    {
       struct pipe_screen *screen = softpipe_create_screen(pws);
 
-#ifdef GALLIUM_TRACE
-      screen = trace_screen_create(screen);
-#endif
-      
       pipe = softpipe_create(screen, pws, NULL);
 
 #ifdef GALLIUM_TRACE
-      pipe = trace_context_create(pipe);
+      screen = trace_screen_create(screen);
+      
+      pipe = trace_context_create(screen, pipe);
 #endif
    }
 
