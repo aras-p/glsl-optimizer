@@ -26,6 +26,7 @@
  **************************************************************************/
 
 #include "pipe/p_util.h"
+#include "util/u_hash_table.h"
 
 #include "tr_dump.h"
 #include "tr_state.h"
@@ -33,6 +34,18 @@
 #include "tr_screen.h"
 
 
+static unsigned trace_surface_hash(void *surface)
+{
+   return (unsigned)(uintptr_t)surface;
+}
+
+
+static int trace_surface_compare(void *surface1, void *surface2)
+{
+   return (char *)surface2 - (char *)surface1;
+}
+
+                  
 static const char *
 trace_screen_get_name(struct pipe_screen *_screen)
 {
@@ -275,21 +288,17 @@ trace_screen_surface_map(struct pipe_screen *_screen,
 {
    struct trace_screen *tr_scr = trace_screen(_screen);
    struct pipe_screen *screen = tr_scr->screen;
-   struct pipe_surface *result;
+   void *map;
    
-   trace_dump_call_begin("pipe_screen", "surface_map");
+   map = screen->surface_map(screen, surface, flags);
+   if(map) {
+      if(flags & PIPE_BUFFER_USAGE_CPU_WRITE) {
+         assert(!hash_table_get(tr_scr->surface_maps, surface));
+         hash_table_set(tr_scr->surface_maps, surface, map);
+      }
+   }
    
-   trace_dump_arg(ptr, screen);
-   trace_dump_arg(ptr, surface);
-   trace_dump_arg(uint, flags);
-
-   result = screen->surface_map(screen, surface, flags);
-   
-   trace_dump_ret(ptr, result);
-   
-   trace_dump_call_end();
-   
-   return result;
+   return map;
 }
 
 
@@ -299,15 +308,36 @@ trace_screen_surface_unmap(struct pipe_screen *_screen,
 {
    struct trace_screen *tr_scr = trace_screen(_screen);
    struct pipe_screen *screen = tr_scr->screen;
+   const void *map;
    
-   trace_dump_call_begin("pipe_screen", "surface_unmap");
+   map = hash_table_get(tr_scr->surface_maps, surface);
+   if(map) {
+      size_t size = surface->nblocksy * surface->stride;
+      
+      trace_dump_call_begin("pipe_winsys", "surface_write");
+      
+      trace_dump_arg(ptr, screen);
+      
+      trace_dump_arg(ptr, surface);
+      
+      trace_dump_arg_begin("data");
+      trace_dump_bytes(map, size);
+      trace_dump_arg_end();
+
+      trace_dump_arg_begin("stride");
+      trace_dump_uint(surface->stride);
+      trace_dump_arg_end();
+
+      trace_dump_arg_begin("size");
+      trace_dump_uint(size);
+      trace_dump_arg_end();
    
-   trace_dump_arg(ptr, screen);
-   trace_dump_arg(ptr, surface);
+      trace_dump_call_end();
+
+      hash_table_remove(tr_scr->surface_maps, surface);
+   }
 
    screen->surface_unmap(screen, surface);
-   
-   trace_dump_call_end();
 }
 
 
@@ -368,6 +398,11 @@ trace_screen_create(struct pipe_screen *screen)
    
    tr_scr->screen = screen;
 
+   tr_scr->surface_maps = hash_table_create(trace_surface_hash, 
+                                            trace_surface_compare);
+   if(!tr_scr->surface_maps)
+      goto error3;
+   
    trace_dump_call_begin("", "pipe_screen_create");
    trace_dump_arg_begin("winsys");
    trace_dump_ptr(screen->winsys);

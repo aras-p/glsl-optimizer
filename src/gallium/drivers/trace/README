@@ -22,9 +22,5 @@ which should create a gallium.*.trace file, which is an XML file. You can view
 copying trace.xsl and trace.css to the same directory, and opening with a 
 XSLT capable browser like Firefox or Internet Explorer.
 
-This is still work in progress, namely:
-- surface writes are not traced
-- no way to know the start/end of a frame
-
 --
 Jose Fonseca <jrfonseca@tungstengraphics.com>
