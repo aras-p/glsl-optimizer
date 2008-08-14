@@ -74,12 +74,14 @@ trace_winsys_flush_frontbuffer(struct pipe_winsys *_winsys,
 {
    struct trace_winsys *tr_ws = trace_winsys(_winsys);
    struct pipe_winsys *winsys = tr_ws->winsys;
-   
+
    trace_dump_call_begin("pipe_winsys", "flush_frontbuffer");
    
    trace_dump_arg(ptr, winsys);
    trace_dump_arg(ptr, surface);
+   /* XXX: hide, as there is nothing we can do with this
    trace_dump_arg(ptr, context_private);
+   */
 
    winsys->flush_frontbuffer(winsys, surface, context_private);
    
@@ -203,8 +205,8 @@ trace_winsys_buffer_create(struct pipe_winsys *_winsys,
 
 static struct pipe_buffer *
 trace_winsys_user_buffer_create(struct pipe_winsys *_winsys, 
-                                void *ptr,
-                                unsigned bytes)
+                                void *data,
+                                unsigned size)
 {
    struct trace_winsys *tr_ws = trace_winsys(_winsys);
    struct pipe_winsys *winsys = tr_ws->winsys;
@@ -213,10 +215,12 @@ trace_winsys_user_buffer_create(struct pipe_winsys *_winsys,
    trace_dump_call_begin("pipe_winsys", "user_buffer_create");
    
    trace_dump_arg(ptr, winsys);
-   trace_dump_arg(ptr, ptr);
-   trace_dump_arg(uint, bytes);
+   trace_dump_arg_begin("data");
+   trace_dump_bytes(data, size);
+   trace_dump_arg_end();
+   trace_dump_arg(uint, size);
 
-   result = winsys->user_buffer_create(winsys, ptr, bytes);
+   result = winsys->user_buffer_create(winsys, data, size);
    
    trace_dump_ret(ptr, result);
    

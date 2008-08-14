@@ -318,11 +318,11 @@ trace_context_create_sampler_state(struct pipe_context *_pipe,
    trace_dump_call_begin("pipe_context", "create_sampler_state");
 
    trace_dump_arg(ptr, pipe);
-   trace_dump_arg(ptr, state);
+   trace_dump_arg(sampler_state, state);
 
    result = pipe->create_sampler_state(pipe, state);;
 
-   trace_dump_ret(sampler_state, result);
+   trace_dump_ret(ptr, result);
    
    trace_dump_call_end();
    
@@ -888,9 +888,11 @@ trace_context_flush(struct pipe_context *_pipe,
 
    trace_dump_arg(ptr, pipe);
    trace_dump_arg(uint, flags);
-   trace_dump_arg(ptr, fence);
 
    pipe->flush(pipe, flags, fence);;
+
+   if(fence)
+      trace_dump_ret(ptr, *fence);
 
    trace_dump_call_end();
 }
