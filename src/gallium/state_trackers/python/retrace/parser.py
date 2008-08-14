@@ -316,8 +316,6 @@ class TraceParser(XmlParser):
         address = self.character_data()
         self.element_end('ptr')
 
-        address = int(address, 16)
-        
         return Pointer(address)
 
 

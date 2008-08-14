@@ -89,7 +89,7 @@ class Pointer(Node):
         visitor.visit_pointer(self)
         
     def __str__(self):
-        return hex(self.address)
+        return self.address
 
 
 class Call:
