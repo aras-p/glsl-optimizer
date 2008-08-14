@@ -34,16 +34,11 @@
 #include "pipe/p_screen.h"
 
 
-struct trace_stream;
-
-
 struct trace_screen
 {
    struct pipe_screen base;
    
    struct pipe_screen *screen;
-   
-   struct trace_stream *stream;
 };
 
 

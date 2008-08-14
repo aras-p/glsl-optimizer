@@ -38,6 +38,11 @@
  * @author Jose Fonseca <jrfonseca@tungstengraphics.com>   
  */
 
+#include "pipe/p_config.h"
+
+#if defined(PIPE_OS_LINUX)
+#include <stdlib.h>
+#endif
 
 #include "pipe/p_compiler.h"
 #include "util/u_string.h"
@@ -46,318 +51,328 @@
 #include "tr_dump.h"
 
 
+static struct trace_stream *stream = NULL;
+
+
 static INLINE void 
-trace_dump_write(struct trace_stream *stream, const char *s)
+trace_dump_write(const char *buf, size_t size)
 {
-   trace_stream_write(stream, s, strlen(s));
+   if(stream)
+      trace_stream_write(stream, buf, size);
 }
 
 
 static INLINE void 
-trace_dump_writef(struct trace_stream *stream, const char *format, ...)
+trace_dump_writes(const char *s)
 {
-   char buf[1024];
+   trace_dump_write(s, strlen(s));
+}
+
+
+static INLINE void 
+trace_dump_writef(const char *format, ...)
+{
+   static char buf[1024];
+   unsigned len;
    va_list ap;
    va_start(ap, format);
-   util_vsnprintf(buf, sizeof(buf), format, ap);
+   len = util_vsnprintf(buf, sizeof(buf), format, ap);
    va_end(ap);
-   trace_dump_write(stream, buf);
+   trace_dump_write(buf, len);
 }
 
 
 static INLINE void 
-trace_dump_escape(struct trace_stream *stream, const char *str) 
+trace_dump_escape(const char *str) 
 {
    const unsigned char *p = (const unsigned char *)str;
    unsigned char c;
    while((c = *p++) != 0) {
       if(c == '<')
-         trace_dump_write(stream, "&lt;");
+         trace_dump_writes("&lt;");
       else if(c == '>')
-         trace_dump_write(stream, "&gt;");
+         trace_dump_writes("&gt;");
       else if(c == '&')
-         trace_dump_write(stream, "&amp;");
+         trace_dump_writes("&amp;");
       else if(c == '\'')
-         trace_dump_write(stream, "&apos;");
+         trace_dump_writes("&apos;");
       else if(c == '\"')
-         trace_dump_write(stream, "&quot;");
+         trace_dump_writes("&quot;");
       else if(c >= 0x20 && c <= 0x7e)
-         trace_dump_writef(stream, "%c", c);
+         trace_dump_writef("%c", c);
       else
-         trace_dump_writef(stream, "&#%u;", c);
+         trace_dump_writef("&#%u;", c);
    }
 }
 
 
 static INLINE void 
-trace_dump_indent(struct trace_stream *stream, unsigned level)
+trace_dump_indent(unsigned level)
 {
    unsigned i;
    for(i = 0; i < level; ++i)
-      trace_dump_write(stream, "\t");
+      trace_dump_writes("\t");
 }
 
 
 static INLINE void 
-trace_dump_newline(struct trace_stream *stream) 
+trace_dump_newline(void) 
 {
-   trace_dump_write(stream, "\n");
+   trace_dump_writes("\n");
 }
 
 
 static INLINE void 
-trace_dump_tag(struct trace_stream *stream, 
-               const char *name)
+trace_dump_tag(const char *name)
 {
-   trace_dump_write(stream, "<");
-   trace_dump_write(stream, name);
-   trace_dump_write(stream, "/>");
+   trace_dump_writes("<");
+   trace_dump_writes(name);
+   trace_dump_writes("/>");
 }
 
 
 static INLINE void 
-trace_dump_tag_begin(struct trace_stream *stream, 
-                     const char *name)
+trace_dump_tag_begin(const char *name)
 {
-   trace_dump_write(stream, "<");
-   trace_dump_write(stream, name);
-   trace_dump_write(stream, ">");
+   trace_dump_writes("<");
+   trace_dump_writes(name);
+   trace_dump_writes(">");
 }
 
 static INLINE void 
-trace_dump_tag_begin1(struct trace_stream *stream, 
-                      const char *name, 
+trace_dump_tag_begin1(const char *name, 
                       const char *attr1, const char *value1)
 {
-   trace_dump_write(stream, "<");
-   trace_dump_write(stream, name);
-   trace_dump_write(stream, " ");
-   trace_dump_write(stream, attr1);
-   trace_dump_write(stream, "='");
-   trace_dump_escape(stream, value1);
-   trace_dump_write(stream, "'>");
+   trace_dump_writes("<");
+   trace_dump_writes(name);
+   trace_dump_writes(" ");
+   trace_dump_writes(attr1);
+   trace_dump_writes("='");
+   trace_dump_escape(value1);
+   trace_dump_writes("'>");
 }
 
 
 static INLINE void 
-trace_dump_tag_begin2(struct trace_stream *stream, 
-                      const char *name, 
+trace_dump_tag_begin2(const char *name, 
                       const char *attr1, const char *value1,
                       const char *attr2, const char *value2)
 {
-   trace_dump_write(stream, "<");
-   trace_dump_write(stream, name);
-   trace_dump_write(stream, " ");
-   trace_dump_write(stream, attr1);
-   trace_dump_write(stream, "=\'");
-   trace_dump_escape(stream, value1);
-   trace_dump_write(stream, "\' ");
-   trace_dump_write(stream, attr2);
-   trace_dump_write(stream, "=\'");
-   trace_dump_escape(stream, value2);
-   trace_dump_write(stream, "\'>");
+   trace_dump_writes("<");
+   trace_dump_writes(name);
+   trace_dump_writes(" ");
+   trace_dump_writes(attr1);
+   trace_dump_writes("=\'");
+   trace_dump_escape(value1);
+   trace_dump_writes("\' ");
+   trace_dump_writes(attr2);
+   trace_dump_writes("=\'");
+   trace_dump_escape(value2);
+   trace_dump_writes("\'>");
 }
 
 
 static INLINE void 
-trace_dump_tag_begin3(struct trace_stream *stream, 
-                      const char *name, 
+trace_dump_tag_begin3(const char *name, 
                       const char *attr1, const char *value1,
                       const char *attr2, const char *value2,
                       const char *attr3, const char *value3)
 {
-   trace_dump_write(stream, "<");
-   trace_dump_write(stream, name);
-   trace_dump_write(stream, " ");
-   trace_dump_write(stream, attr1);
-   trace_dump_write(stream, "=\'");
-   trace_dump_escape(stream, value1);
-   trace_dump_write(stream, "\' ");
-   trace_dump_write(stream, attr2);
-   trace_dump_write(stream, "=\'");
-   trace_dump_escape(stream, value2);
-   trace_dump_write(stream, "\' ");
-   trace_dump_write(stream, attr3);
-   trace_dump_write(stream, "=\'");
-   trace_dump_escape(stream, value3);
-   trace_dump_write(stream, "\'>");
+   trace_dump_writes("<");
+   trace_dump_writes(name);
+   trace_dump_writes(" ");
+   trace_dump_writes(attr1);
+   trace_dump_writes("=\'");
+   trace_dump_escape(value1);
+   trace_dump_writes("\' ");
+   trace_dump_writes(attr2);
+   trace_dump_writes("=\'");
+   trace_dump_escape(value2);
+   trace_dump_writes("\' ");
+   trace_dump_writes(attr3);
+   trace_dump_writes("=\'");
+   trace_dump_escape(value3);
+   trace_dump_writes("\'>");
 }
 
 
 static INLINE void
-trace_dump_tag_end(struct trace_stream *stream, 
-                   const char *name)
+trace_dump_tag_end(const char *name)
 {
-   trace_dump_write(stream, "</");
-   trace_dump_write(stream, name);
-   trace_dump_write(stream, ">");
+   trace_dump_writes("</");
+   trace_dump_writes(name);
+   trace_dump_writes(">");
 }
 
-
-void  trace_dump_trace_begin(struct trace_stream *stream,
-                             unsigned version)
+boolean trace_dump_trace_begin()
 {
-   trace_dump_write(stream, "<?xml version='1.0' encoding='UTF-8'?>\n");
-   trace_dump_write(stream, "<?xml-stylesheet type='text/xsl' href='trace.xsl'?>\n");
-   trace_dump_writef(stream, "<trace version='%u'>\n", version);
+   if(!debug_get_bool_option("GALLIUM_TRACE", FALSE))
+      return FALSE;
+   
+   stream = trace_stream_create("gallium", "trace");
+   if(!stream)
+      return FALSE;
+   
+   trace_dump_writes("<?xml version='1.0' encoding='UTF-8'?>\n");
+   trace_dump_writes("<?xml-stylesheet type='text/xsl' href='trace.xsl'?>\n");
+   trace_dump_writes("<trace version='0.1'>\n");
+   
+#if defined(PIPE_OS_LINUX)
+   /* Linux applications rarely cleanup GL / Gallium resources so catch 
+    * application exit here */ 
+   atexit(trace_dump_trace_end);
+#endif
+   
+   return TRUE;
 }
 
-
-void trace_dump_trace_end(struct trace_stream *stream)
+void trace_dump_trace_end(void)
 {
-   trace_dump_write(stream, "</trace>\n");
+   if(stream) {
+      trace_dump_writes("</trace>\n");
+      trace_stream_close(stream);
+      stream = NULL;
+   }
 }
 
-void trace_dump_call_begin(struct trace_stream *stream,
-                           const char *klass, const char *method)
+void trace_dump_call_begin(const char *klass, const char *method)
 {
-   trace_dump_indent(stream, 1);
-   trace_dump_tag_begin2(stream, "call", "class", klass, "method", method);
-   trace_dump_newline(stream);
+   trace_dump_indent(1);
+   trace_dump_tag_begin2("call", "class", klass, "method", method);
+   trace_dump_newline();
 }
 
-void trace_dump_call_end(struct trace_stream *stream)
+void trace_dump_call_end(void)
 {
-   trace_dump_indent(stream, 1);
-   trace_dump_tag_end(stream, "call");
-   trace_dump_newline(stream);
+   trace_dump_indent(1);
+   trace_dump_tag_end("call");
+   trace_dump_newline();
 }
 
-void trace_dump_arg_begin(struct trace_stream *stream,
-                          const char *name)
+void trace_dump_arg_begin(const char *name)
 {
-   trace_dump_indent(stream, 2);
-   trace_dump_tag_begin1(stream, "arg", "name", name);
+   trace_dump_indent(2);
+   trace_dump_tag_begin1("arg", "name", name);
 }
 
-void trace_dump_arg_end(struct trace_stream *stream)
+void trace_dump_arg_end(void)
 {
-   trace_dump_tag_end(stream, "arg");
-   trace_dump_newline(stream);
+   trace_dump_tag_end("arg");
+   trace_dump_newline();
 }
 
-void trace_dump_ret_begin(struct trace_stream *stream)
+void trace_dump_ret_begin(void)
 {
-   trace_dump_indent(stream, 2);
-   trace_dump_tag_begin(stream, "ret");
+   trace_dump_indent(2);
+   trace_dump_tag_begin("ret");
 }
 
-void trace_dump_ret_end(struct trace_stream *stream)
+void trace_dump_ret_end(void)
 {
-   trace_dump_tag_end(stream, "ret");
-   trace_dump_newline(stream);
+   trace_dump_tag_end("ret");
+   trace_dump_newline();
 }
 
-void trace_dump_bool(struct trace_stream *stream, 
-                     int value)
+void trace_dump_bool(int value)
 {
-   trace_dump_writef(stream, "<bool>%c</bool>", value ? '1' : '0');
+   trace_dump_writef("<bool>%c</bool>", value ? '1' : '0');
 }
 
-void trace_dump_int(struct trace_stream *stream, 
-                    long int value)
+void trace_dump_int(long int value)
 {
-   trace_dump_writef(stream, "<int>%li</int>", value);
+   trace_dump_writef("<int>%li</int>", value);
 }
 
-void trace_dump_uint(struct trace_stream *stream, 
-                     long unsigned value)
+void trace_dump_uint(long unsigned value)
 {
-   trace_dump_writef(stream, "<uint>%lu</uint>", value);
+   trace_dump_writef("<uint>%lu</uint>", value);
 }
 
-void trace_dump_float(struct trace_stream *stream, 
-                      double value)
+void trace_dump_float(double value)
 {
-   trace_dump_writef(stream, "<float>%g</float>", value);
+   trace_dump_writef("<float>%g</float>", value);
 }
 
-void trace_dump_bytes(struct trace_stream *stream, 
-                      const void *data,
+void trace_dump_bytes(const void *data,
                       long unsigned size)
 {
    static const char hex_table[16] = "0123456789ABCDEF";
    const uint8_t *p = data;
    long unsigned i;
-   trace_dump_write(stream, "<bytes>");
+   trace_dump_writes("<bytes>");
    for(i = 0; i < size; ++i) {
       uint8_t byte = *p++;
       char hex[2];
       hex[0] = hex_table[byte >> 4];
       hex[1] = hex_table[byte & 0xf];
-      trace_stream_write(stream, hex, 2);
+      trace_dump_write(hex, 2);
    }
-   trace_dump_write(stream, "</bytes>");
+   trace_dump_writes("</bytes>");
 }
 
-void trace_dump_string(struct trace_stream *stream, 
-                       const char *str)
+void trace_dump_string(const char *str)
 {
-   trace_dump_write(stream, "<string>");
-   trace_dump_escape(stream, str);
-   trace_dump_write(stream, "</string>");
+   trace_dump_writes("<string>");
+   trace_dump_escape(str);
+   trace_dump_writes("</string>");
 }
 
-void trace_dump_enum(struct trace_stream *stream, 
-                     const char *value)
+void trace_dump_enum(const char *value)
 {
-   trace_dump_write(stream, "<enum>");
-   trace_dump_escape(stream, value);
-   trace_dump_write(stream, "</enum>");
+   trace_dump_writes("<enum>");
+   trace_dump_escape(value);
+   trace_dump_writes("</enum>");
 }
 
-void trace_dump_array_begin(struct trace_stream *stream)
+void trace_dump_array_begin(void)
 {
-   trace_dump_write(stream, "<array>");
+   trace_dump_writes("<array>");
 }
 
-void trace_dump_array_end(struct trace_stream *stream)
+void trace_dump_array_end(void)
 {
-   trace_dump_write(stream, "</array>");
+   trace_dump_writes("</array>");
 }
 
-void trace_dump_elem_begin(struct trace_stream *stream)
+void trace_dump_elem_begin(void)
 {
-   trace_dump_write(stream, "<elem>");
+   trace_dump_writes("<elem>");
 }
 
-void trace_dump_elem_end(struct trace_stream *stream)
+void trace_dump_elem_end(void)
 {
-   trace_dump_write(stream, "</elem>");
+   trace_dump_writes("</elem>");
 }
 
-void trace_dump_struct_begin(struct trace_stream *stream, 
-                             const char *name)
+void trace_dump_struct_begin(const char *name)
 {
-   trace_dump_writef(stream, "<struct name='%s'>", name);
+   trace_dump_writef("<struct name='%s'>", name);
 }
 
-void trace_dump_struct_end(struct trace_stream *stream)
+void trace_dump_struct_end(void)
 {
-   trace_dump_write(stream, "</struct>");
+   trace_dump_writes("</struct>");
 }
 
-void trace_dump_member_begin(struct trace_stream *stream, 
-                             const char *name)
+void trace_dump_member_begin(const char *name)
 {
-   trace_dump_writef(stream, "<member name='%s'>", name);
+   trace_dump_writef("<member name='%s'>", name);
 }
 
-void trace_dump_member_end(struct trace_stream *stream)
+void trace_dump_member_end(void)
 {
-   trace_dump_write(stream, "</member>");
+   trace_dump_writes("</member>");
 }
 
-void trace_dump_null(struct trace_stream *stream)
+void trace_dump_null(void)
 {
-   trace_dump_write(stream, "<null/>");
+   trace_dump_writes("<null/>");
 }
 
-void trace_dump_ptr(struct trace_stream *stream, 
-                    const void *value)
+void trace_dump_ptr(const void *value)
 {
    if(value)
-      trace_dump_writef(stream, "<ptr>%p</ptr>", value);
+      trace_dump_writef("<ptr>%p</ptr>", value);
    else
-      trace_dump_null(stream);
+      trace_dump_null();
 }

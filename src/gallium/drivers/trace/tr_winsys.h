@@ -35,7 +35,6 @@
 
 
 struct hash_table;
-struct trace_stream;
 
 
 struct trace_winsys
@@ -43,8 +42,6 @@ struct trace_winsys
    struct pipe_winsys base;
    
    struct pipe_winsys *winsys;
-   
-   struct trace_stream *stream;
    
    struct hash_table *buffer_maps;
 };
@@ -60,8 +57,7 @@ trace_winsys(struct pipe_winsys *winsys)
 
 
 struct pipe_winsys *
-trace_winsys_create(struct trace_stream *stream,
-                    struct pipe_winsys *winsys);
+trace_winsys_create(struct pipe_winsys *winsys);
 
 
 #endif /* TR_WINSYS_H_ */

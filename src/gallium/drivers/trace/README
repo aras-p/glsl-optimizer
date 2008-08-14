@@ -20,16 +20,7 @@ and then try running
 
 which should create a gallium.*.trace file, which is an XML file. You can view 
 copying trace.xsl and trace.css to the same directory, and opening with a 
-XSLT capable browser like Firefox or Internet Explorer. It often happens that 
-the trace file was not properly terminated, and a
-
- </trace>
- 
-closing tag is missing from the file end. Add it before try to open or 
-further transform it by doing
-
-  echo '</trace>' >> gallium.??.trace
-
+XSLT capable browser like Firefox or Internet Explorer.
 
 This is still work in progress, namely:
 - surface writes are not traced
