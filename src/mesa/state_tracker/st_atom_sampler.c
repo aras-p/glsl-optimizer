@@ -35,6 +35,7 @@
 #include "main/macros.h"
 
 #include "st_context.h"
+#include "st_cb_texture.h"
 #include "st_atom.h"
 #include "st_program.h"
 #include "pipe/p_context.h"
@@ -125,6 +126,8 @@ update_samplers(struct st_context *st)
 
    st->state.num_samplers = 0;
 
+   /*printf("%s samplers used = 0x%x\n", __FUNCTION__, fs->Base.Base.SamplersUsed);*/
+
    /* loop over sampler units (aka tex image units) */
    for (su = 0; su < st->ctx->Const.MaxTextureImageUnits; su++) {
       struct pipe_sampler_state *sampler = st->state.samplers + su;
@@ -136,8 +139,9 @@ update_samplers(struct st_context *st)
          const struct gl_texture_object *texobj
             = st->ctx->Texture.Unit[texUnit]._Current;
 
-         if (!texobj)
-            continue;
+         if (!texobj) {
+            texobj = st_get_default_texture(st);
+         }
 
          sampler->wrap_s = gl_wrap_to_sp(texobj->WrapS);
          sampler->wrap_t = gl_wrap_to_sp(texobj->WrapT);
@@ -184,11 +188,11 @@ update_samplers(struct st_context *st)
 
          st->state.num_samplers = su + 1;
 
-         /* XXX more sampler state here */
-
+         /*printf("%s su=%u non-null\n", __FUNCTION__, su);*/
          cso_single_sampler(st->cso_context, su, sampler);
       }
       else {
+         /*printf("%s su=%u null\n", __FUNCTION__, su);*/
          cso_single_sampler(st->cso_context, su, NULL);
       }
    }

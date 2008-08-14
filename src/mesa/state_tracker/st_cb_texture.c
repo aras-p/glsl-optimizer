@@ -1461,6 +1461,46 @@ st_finalize_texture(GLcontext *ctx,
 }
 
 
+/**
+ * Returns pointer to a default/dummy texture.
+ * This is typically used when the current shader has tex/sample instructions
+ * but the user has not provided a (any) texture(s).
+ */
+struct gl_texture_object *
+st_get_default_texture(struct st_context *st)
+{
+   if (!st->default_texture) {
+      static const GLenum target = GL_TEXTURE_2D;
+      GLubyte pixels[16][16][4];
+      struct gl_texture_object *texObj;
+      struct gl_texture_image *texImg;
+
+      texObj = st->ctx->Driver.NewTextureObject(st->ctx, 0, target);
+
+      texImg = _mesa_get_tex_image(st->ctx, texObj, target, 0);
+
+      _mesa_init_teximage_fields(st->ctx, target, texImg,
+                                 16, 16, 1, 0,  /* w, h, d, border */
+                                 GL_RGBA);
+
+      st_TexImage(st->ctx, 2, target,
+                  0, GL_RGBA,    /* level, intformat */
+                  16, 16, 1, 0,  /* w, h, d, border */
+                  GL_RGBA, GL_UNSIGNED_BYTE, pixels,
+                  &st->ctx->DefaultPacking,
+                  texObj, texImg,
+                  0, 0);
+
+      texObj->MinFilter = GL_NEAREST;
+      texObj->MagFilter = GL_NEAREST;
+      texObj->_Complete = GL_TRUE;
+
+      st->default_texture = texObj;
+   }
+   return st->default_texture;
+}
+
+
 void
 st_init_texture_functions(struct dd_function_table *functions)
 {

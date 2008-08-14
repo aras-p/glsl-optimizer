@@ -49,6 +49,8 @@ update_textures(struct st_context *st)
 
    st->state.num_textures = 0;
 
+   /*printf("%s samplers used = 0x%x\n", __FUNCTION__, fprog->Base.SamplersUsed);*/
+
    for (su = 0; su < st->ctx->Const.MaxTextureCoordUnits; su++) {
       struct pipe_texture *pt = NULL;
 
@@ -56,23 +58,33 @@ update_textures(struct st_context *st)
          const GLuint texUnit = fprog->Base.SamplerUnits[su];
          struct gl_texture_object *texObj
             = st->ctx->Texture.Unit[texUnit]._Current;
-         struct st_texture_object *stObj = st_texture_object(texObj);
+         struct st_texture_object *stObj;
+         GLboolean flush, retval;
 
-         if (texObj) {
-            GLboolean flush, retval;
-
-            retval = st_finalize_texture(st->ctx, st->pipe, texObj, &flush);
-            if (!retval) {
-               /* out of mem */
-               /* missing texture */
-               continue;
-            }
-
-            st->state.num_textures = su + 1;
+         if (!texObj) {
+            texObj = st_get_default_texture(st);
          }
+         stObj = st_texture_object(texObj);
+
+         retval = st_finalize_texture(st->ctx, st->pipe, texObj, &flush);
+         if (!retval) {
+            /* out of mem */
+            continue;
+         }
+
+         st->state.num_textures = su + 1;
 
          pt = st_get_stobj_texture(stObj);
       }
+
+      /*
+      if (pt) {
+         printf("%s su=%u non-null\n", __FUNCTION__, su);
+      }
+      else {
+         printf("%s su=%u null\n", __FUNCTION__, su);
+      }
+      */
 
       pipe_texture_reference(&st->state.sampler_texture[su], pt);
    }

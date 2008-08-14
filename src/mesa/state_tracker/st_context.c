@@ -199,6 +199,11 @@ static void st_destroy_context_priv( struct st_context *st )
       }
    }
 
+   if (st->default_texture) {
+      st->ctx->Driver.DeleteTexture(st->ctx, st->default_texture);
+      st->default_texture = NULL;
+   }
+
    free( st );
 }
 

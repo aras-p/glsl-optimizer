@@ -132,6 +132,8 @@ struct st_context
    struct st_vertex_program *vp;    /**< Currently bound vertex program */
    struct st_fragment_program *fp;  /**< Currently bound fragment program */
 
+   struct gl_texture_object *default_texture;
+
    struct {
       struct gl_program_cache *cache;
       struct st_fragment_program *program;  /**< cur pixel transfer prog */
