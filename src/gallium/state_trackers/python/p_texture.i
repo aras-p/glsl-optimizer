@@ -102,12 +102,12 @@
    void unmap( void );
 
    void
-   get_tile_raw(unsigned x, unsigned y, unsigned w, unsigned h, unsigned char *raw, unsigned stride) {
+   get_tile_raw(unsigned x, unsigned y, unsigned w, unsigned h, char *raw, unsigned stride) {
       pipe_get_tile_raw($self, x, y, w, h, raw, stride);
    }
 
    void
-   put_tile_raw(unsigned x, unsigned y, unsigned w, unsigned h, const unsigned char *raw, unsigned stride) {
+   put_tile_raw(unsigned x, unsigned y, unsigned w, unsigned h, const char *raw, unsigned stride) {
       pipe_put_tile_raw($self, x, y, w, h, raw, stride);
    }
 
