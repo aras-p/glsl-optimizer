@@ -1475,6 +1475,9 @@ st_get_default_texture(struct st_context *st)
       struct gl_texture_object *texObj;
       struct gl_texture_image *texImg;
 
+      /* init image to gray */
+      memset(pixels, 127, sizeof(pixels));
+
       texObj = st->ctx->Driver.NewTextureObject(st->ctx, 0, target);
 
       texImg = _mesa_get_tex_image(st->ctx, texObj, target, 0);
