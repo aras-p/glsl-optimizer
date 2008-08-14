@@ -60,7 +60,8 @@ trace_winsys(struct pipe_winsys *winsys)
 
 
 struct pipe_winsys *
-trace_winsys_create(struct pipe_winsys *winsys);
+trace_winsys_create(struct trace_stream *stream,
+                    struct pipe_winsys *winsys);
 
 
 #endif /* TR_WINSYS_H_ */

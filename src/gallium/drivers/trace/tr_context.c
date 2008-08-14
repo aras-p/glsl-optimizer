@@ -959,7 +959,8 @@ trace_context_destroy(struct pipe_context *_pipe)
 
 
 struct pipe_context *
-trace_context_create(struct pipe_context *pipe)
+trace_context_create(struct pipe_screen *screen, 
+                     struct pipe_context *pipe)
 {
    struct trace_stream *stream;
    struct trace_context *tr_ctx;
@@ -971,8 +972,8 @@ trace_context_create(struct pipe_context *pipe)
    if(!tr_ctx)
       return NULL;
 
-   tr_ctx->base.winsys = pipe->winsys;
-   tr_ctx->base.screen = pipe->screen;
+   tr_ctx->base.winsys = screen->winsys;
+   tr_ctx->base.screen = screen;
    tr_ctx->base.destroy = trace_context_destroy;
    tr_ctx->base.set_edgeflags = trace_context_set_edgeflags;
    tr_ctx->base.draw_arrays = trace_context_draw_arrays;
@@ -1017,11 +1018,7 @@ trace_context_create(struct pipe_context *pipe)
    tr_ctx->base.flush = trace_context_flush;
 
    tr_ctx->pipe = pipe;
-   tr_ctx->stream = stream = trace_winsys(pipe->winsys)->stream;
-   
-   /* We don't want to trace the internal pipe calls */
-   pipe->winsys = trace_winsys(pipe->winsys)->winsys;
-   pipe->screen = trace_screen(pipe->screen)->screen;
+   tr_ctx->stream = stream = trace_screen(screen)->stream;
    
    trace_dump_call_begin(stream, "", "pipe_context_create");
    trace_dump_arg_begin(stream, "screen");

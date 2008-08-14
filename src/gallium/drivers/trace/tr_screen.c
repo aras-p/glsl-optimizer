@@ -338,7 +338,11 @@ trace_screen_destroy(struct pipe_screen *_screen)
    screen->destroy(screen);
    
    trace_dump_call_end(stream);
-   
+
+   trace_dump_trace_end(stream);
+
+   trace_stream_close(stream);
+
    FREE(tr_scr);
 }
 
@@ -348,6 +352,7 @@ trace_screen_create(struct pipe_screen *screen)
 {
    struct trace_stream *stream;
    struct trace_screen *tr_scr;
+   struct pipe_winsys *winsys;
    
    if(!debug_get_bool_option("GALLIUM_TRACE", FALSE))
       return screen;
@@ -356,7 +361,17 @@ trace_screen_create(struct pipe_screen *screen)
    if(!tr_scr)
       return NULL;
 
-   tr_scr->base.winsys = screen->winsys;
+   tr_scr->stream = stream = trace_stream_create("gallium", "trace");
+   if(!tr_scr->stream)
+      return NULL;
+
+   trace_dump_trace_begin(stream, 0);
+
+   winsys = trace_winsys_create(stream, screen->winsys);
+   if(!winsys)
+      return NULL;
+   
+   tr_scr->base.winsys = winsys;
    tr_scr->base.destroy = trace_screen_destroy;
    tr_scr->base.get_name = trace_screen_get_name;
    tr_scr->base.get_vendor = trace_screen_get_vendor;
@@ -372,10 +387,7 @@ trace_screen_create(struct pipe_screen *screen)
    tr_scr->base.surface_unmap = trace_screen_surface_unmap;
    
    tr_scr->screen = screen;
-   tr_scr->stream = stream = trace_winsys(screen->winsys)->stream;
-
-   /* We don't want to trace the internal pipe calls */
-   screen->winsys = trace_winsys(screen->winsys)->winsys;
+   tr_scr->stream = stream = trace_winsys(winsys)->stream;
 
    trace_dump_call_begin(stream, "", "pipe_screen_create");
    trace_dump_arg_begin(stream, "winsys");

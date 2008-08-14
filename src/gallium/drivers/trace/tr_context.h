@@ -57,7 +57,8 @@ trace_context(struct pipe_context *pipe)
 
 
 struct pipe_context *
-trace_context_create(struct pipe_context *pipe);
+trace_context_create(struct pipe_screen *screen,
+                     struct pipe_context *pipe);
 
 
 #endif /* TR_CONTEXT_H_ */
