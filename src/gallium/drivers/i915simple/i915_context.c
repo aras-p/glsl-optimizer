@@ -45,7 +45,7 @@ static void i915_destroy( struct pipe_context *pipe )
 
    draw_destroy( i915->draw );
    
-   if(i915->winsys)
+   if(i915->winsys->destroy)
       i915->winsys->destroy(i915->winsys);
 
    FREE( i915 );
