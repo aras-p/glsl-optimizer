@@ -127,8 +127,10 @@ nv30_sampler_state_create(struct pipe_context *pipe,
 	   in sampler state structure, and set appropriate format in
 	   nvxx_fragtex_build()
 	 */
-	if (!cso->normalized_coords)
-		ps->fmt |= (1<<14) /*NV34TCL_TX_FORMAT_RECT*/;
+	/*NV34TCL_TX_FORMAT_RECT*/
+	/*if (!cso->normalized_coords) {
+		ps->fmt |= (1<<14) ;
+	}*/
 
 	ps->wrap = ((wrap_mode(cso->wrap_s) << NV34TCL_TX_WRAP_S_SHIFT) |
 		    (wrap_mode(cso->wrap_t) << NV34TCL_TX_WRAP_T_SHIFT) |
