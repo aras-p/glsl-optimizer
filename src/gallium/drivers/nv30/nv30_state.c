@@ -199,10 +199,10 @@ nv30_sampler_state_create(struct pipe_context *pipe,
 		ps->filt |= (int)(cso->lod_bias * 256.0) & 0x1fff;
 
 		limit = CLAMP(cso->max_lod, 0.0, 15.0);
-		ps->en |= (int)(limit * 256.0) << 7;
+		ps->en |= (int)(limit) << 14 /*NV34TCL_TX_ENABLE_MIPMAP_MAX_LOD_SHIFT*/;
 
 		limit = CLAMP(cso->min_lod, 0.0, 15.0);
-		ps->en |= (int)(limit * 256.0) << 19;
+		ps->en |= (int)(limit) << 26 /*NV34TCL_TX_ENABLE_MIPMAP_MIN_LOD_SHIFT*/;
 	}
 
 	if (cso->compare_mode == PIPE_TEX_COMPARE_R_TO_TEXTURE) {
