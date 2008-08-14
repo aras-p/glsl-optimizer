@@ -33,6 +33,9 @@
 #include "pipe/p_inlines.h"
 #include "cso_cache/cso_context.h"
 #include "util/u_simple_shaders.h"
+#include "trace/tr_screen.h"
+#include "trace/tr_context.h"
+
 #include "st_device.h"
 #include "st_winsys.h"
 
@@ -71,9 +74,17 @@ st_device_create_from_st_winsys(const struct st_winsys *st_ws)
    st_dev->refcount = 1;
    st_dev->st_ws = st_ws;
    
-   st_dev->screen = st_ws->screen_create();
-   if(!st_dev->screen)
+   st_dev->real_screen = st_ws->screen_create();
+   if(!st_dev->real_screen) {
       st_device_destroy(st_dev);
+      return NULL;
+   }
+
+   st_dev->screen = trace_screen_create(st_dev->real_screen);
+   if(!st_dev->screen) {
+      st_device_destroy(st_dev);
+      return NULL;
+   }
    
    return st_dev;
 }
@@ -130,13 +141,23 @@ st_context_create(struct st_device *st_dev)
    st_ctx->st_dev = st_dev;
    ++st_dev->refcount;
    
-   st_ctx->pipe = st_dev->st_ws->context_create(st_dev->screen);
-   if(!st_ctx->pipe)
+   st_ctx->real_pipe = st_dev->st_ws->context_create(st_dev->real_screen);
+   if(!st_ctx->real_pipe) {
       st_context_destroy(st_ctx);
+      return NULL;
+   }
    
-   st_ctx->cso = cso_create_context(st_ctx->pipe);
-   if(!st_ctx->cso)
+   st_ctx->pipe = trace_context_create(st_dev->screen, st_ctx->real_pipe);
+   if(!st_ctx->pipe) {
       st_context_destroy(st_ctx);
+      return NULL;
+   }
+
+   st_ctx->cso = cso_create_context(st_ctx->pipe);
+   if(!st_ctx->cso) {
+      st_context_destroy(st_ctx);
+      return NULL;
+   }
    
    /* disabled blending/masking */
    {
@@ -291,8 +312,10 @@ st_buffer_create(struct st_device *st_dev,
    st_buf->st_dev = st_dev;
    
    st_buf->buffer = winsys->buffer_create(winsys, alignment, usage, size);
-   if(!st_buf->buffer)
+   if(!st_buf->buffer) {
       st_buffer_destroy(st_buf);
+      return NULL;
+   }
    
    return st_buf;
 }

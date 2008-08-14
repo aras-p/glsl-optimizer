@@ -48,6 +48,7 @@ struct st_buffer {
 struct st_context {
    struct st_device *st_dev;
    
+   struct pipe_context *real_pipe;
    struct pipe_context *pipe;
    
    struct cso_context *cso;
@@ -68,7 +69,8 @@ struct st_context {
 
 struct st_device {
    const struct st_winsys *st_ws; 
-   
+
+   struct pipe_screen *real_screen;
    struct pipe_screen *screen;
    
    /* FIXME: we also need to refcount for textures and surfaces... */
