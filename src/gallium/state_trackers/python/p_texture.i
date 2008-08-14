@@ -183,8 +183,20 @@ struct st_buffer {
       struct pipe_winsys *winsys = $self->st_dev->screen->winsys;
       char *map;
       
+      assert($self->buffer->refcount);
+      
+      if(offset > $self->buffer->size) {
+         PyErr_SetString(PyExc_ValueError, "offset must be smaller than buffer size");
+         return;
+      }
+
+      if(offset + LENGTH > $self->buffer->size) {
+         PyErr_SetString(PyExc_ValueError, "data length must fit inside the buffer");
+         return;
+      }
+
       map = winsys->buffer_map(winsys, $self->buffer, PIPE_BUFFER_USAGE_CPU_WRITE);
-      if(!map) {
+      if(map) {
          memcpy(map + offset, STRING, LENGTH);
          winsys->buffer_unmap(winsys, $self->buffer);
       }
