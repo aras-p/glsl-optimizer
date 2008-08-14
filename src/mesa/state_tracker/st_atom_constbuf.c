@@ -74,7 +74,7 @@ void st_upload_constants( struct st_context *st,
        * avoid gratuitous rendering synchronization.
        */
       pipe_reference_buffer(pipe, &cbuf->buffer, NULL );
-      cbuf->buffer = pipe_buffer_create(pipe, 1, PIPE_BUFFER_USAGE_CONSTANT,
+      cbuf->buffer = pipe_buffer_create(pipe, 16, PIPE_BUFFER_USAGE_CONSTANT,
 					paramBytes );
 
       if (0)
