@@ -3727,6 +3727,8 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
       if (dbg) printf("UNIFORM (sz %d) ", totalSize);
    }
    else if (var->type.qualifier == SLANG_QUAL_VARYING) {
+      const GLint totalSize = array_size(size, var->array_len);
+
       /* varyings must be float, vec or mat */
       if (!_slang_type_is_float_vec_mat(var->type.specifier.type) &&
           var->type.specifier.type != SLANG_SPEC_ARRAY) {
@@ -3744,10 +3746,10 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
 
       if (prog) {
          /* user-defined varying */
-         GLint varyingLoc = _mesa_add_varying(prog->Varying, varName, size);
+         GLint varyingLoc = _mesa_add_varying(prog->Varying, varName, totalSize);
          GLuint swizzle = _slang_var_swizzle(size, 0);
          store = _slang_new_ir_storage_swz(PROGRAM_VARYING, varyingLoc,
-                                           size, swizzle);
+                                           totalSize, swizzle);
       }
       else {
          /* pre-defined varying, like gl_Color or gl_TexCoord */

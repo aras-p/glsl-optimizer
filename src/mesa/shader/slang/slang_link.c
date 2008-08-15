@@ -42,6 +42,20 @@
 #include "slang_link.h"
 
 
+/**
+ * Record a linking error.
+ */
+static void
+link_error(struct gl_shader_program *shProg, const char *msg)
+{
+   if (shProg->InfoLog) {
+      _mesa_free(shProg->InfoLog);
+   }
+   shProg->InfoLog = _mesa_strdup(msg);
+   shProg->LinkStatus = GL_FALSE;
+}
+
+
 
 /**
  * Linking varying vars involves rearranging varying vars so that the
@@ -52,7 +66,6 @@ static GLboolean
 link_varying_vars(struct gl_shader_program *shProg, struct gl_program *prog)
 {
    GLuint *map, i, firstVarying, newFile;
-   GLbitfield varsWritten, varsRead;
 
    map = (GLuint *) malloc(prog->Varying->NumParameters * sizeof(GLuint));
    if (!map)
@@ -60,14 +73,13 @@ link_varying_vars(struct gl_shader_program *shProg, struct gl_program *prog)
 
    for (i = 0; i < prog->Varying->NumParameters; i++) {
       /* see if this varying is in the linked varying list */
-      const struct gl_program_parameter *var
-         = prog->Varying->Parameters + i;
-
+      const struct gl_program_parameter *var = prog->Varying->Parameters + i;
       GLint j = _mesa_lookup_parameter_index(shProg->Varying, -1, var->Name);
       if (j >= 0) {
          /* already in list, check size */
          if (var->Size != shProg->Varying->Parameters[j].Size) {
             /* error */
+            link_error(shProg, "mismatched varying variable types");
             return GL_FALSE;
          }
       }
@@ -75,9 +87,19 @@ link_varying_vars(struct gl_shader_program *shProg, struct gl_program *prog)
          /* not already in linked list */
          j = _mesa_add_varying(shProg->Varying, var->Name, var->Size);
       }
-      ASSERT(j >= 0);
 
-      map[i] = j;
+      /* map varying[i] to varying[j].
+       * Note: the loop here takes care of arrays or large (sz>4) vars.
+       */
+      {
+         GLint sz = var->Size;
+         while (sz > 0) {
+            /*printf("Link varying from %d to %d\n", i, j);*/
+            map[i++] = j++;
+            sz -= 4;
+         }
+         i--; /* go back one */
+      }
    }
 
 
@@ -96,9 +118,6 @@ link_varying_vars(struct gl_shader_program *shProg, struct gl_program *prog)
       newFile = PROGRAM_INPUT;
    }
 
-   /* keep track of which varying vars we read and write */
-   varsWritten = varsRead = 0x0;
-
    /* OK, now scan the program/shader instructions looking for varying vars,
     * replacing the old index with the new index.
     */
@@ -109,29 +128,21 @@ link_varying_vars(struct gl_shader_program *shProg, struct gl_program *prog)
       if (inst->DstReg.File == PROGRAM_VARYING) {
          inst->DstReg.File = newFile;
          inst->DstReg.Index = map[ inst->DstReg.Index ] + firstVarying;
-         varsWritten |= (1 << inst->DstReg.Index);
       }
 
       for (j = 0; j < 3; j++) {
          if (inst->SrcReg[j].File == PROGRAM_VARYING) {
             inst->SrcReg[j].File = newFile;
             inst->SrcReg[j].Index = map[ inst->SrcReg[j].Index ] + firstVarying;
-            varsRead |= (1 << inst->SrcReg[j].Index);
          }
       }
    }
 
-   if (prog->Target == GL_VERTEX_PROGRAM_ARB) {
-      prog->OutputsWritten |= varsWritten;
-      /*printf("VERT OUTPUTS: 0x%x \n", varsWritten);*/
-   }
-   else {
-      assert(prog->Target == GL_FRAGMENT_PROGRAM_ARB);
-      prog->InputsRead |= varsRead;
-      /*printf("FRAG INPUTS: 0x%x\n", varsRead);*/
-   }
-
    free(map);
+
+   /* these will get recomputed before linking is completed */
+   prog->InputsRead = 0x0;
+   prog->OutputsWritten = 0x0;
 
    return GL_TRUE;
 }
@@ -382,21 +393,6 @@ fragment_program(struct gl_program *prog)
 
 
 /**
- * Record a linking error.
- */
-static void
-link_error(struct gl_shader_program *shProg, const char *msg)
-{
-   if (shProg->InfoLog) {
-      _mesa_free(shProg->InfoLog);
-   }
-   shProg->InfoLog = _mesa_strdup(msg);
-   shProg->LinkStatus = GL_FALSE;
-}
-
-
-
-/**
  * Shader linker.  Currently:
  *
  * 1. The last attached vertex shader and fragment shader are linked.
@@ -478,10 +474,14 @@ _slang_link(GLcontext *ctx,
    }
 
    /* link varying vars */
-   if (shProg->VertexProgram)
-      link_varying_vars(shProg, &shProg->VertexProgram->Base);
-   if (shProg->FragmentProgram)
-      link_varying_vars(shProg, &shProg->FragmentProgram->Base);
+   if (shProg->VertexProgram) {
+      if (!link_varying_vars(shProg, &shProg->VertexProgram->Base))
+         return;
+   }
+   if (shProg->FragmentProgram) {
+      if (!link_varying_vars(shProg, &shProg->FragmentProgram->Base))
+         return;
+   }
 
    /* link uniform vars */
    if (shProg->VertexProgram)
