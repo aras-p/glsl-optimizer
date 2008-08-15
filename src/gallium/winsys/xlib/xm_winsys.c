@@ -82,18 +82,6 @@ struct xm_buffer
 
 
 /**
- * Subclass of pipe_surface for Xlib winsys
- */
-struct xmesa_surface
-{
-   struct pipe_surface surface;
-
-   int tileSize;
-   boolean no_swap;
-};
-
-
-/**
  * Subclass of pipe_winsys for Xlib winsys
  */
 struct xmesa_pipe_winsys
@@ -103,14 +91,6 @@ struct xmesa_pipe_winsys
    int shm;
 };
 
-
-
-/** Cast wrapper */
-static INLINE struct xmesa_surface *
-xmesa_surface(struct pipe_surface *ps)
-{
-   return (struct xmesa_surface *) ps;
-}
 
 
 /** Cast wrapper */
@@ -358,13 +338,24 @@ xmesa_display_surface(XMesaBuffer b, const struct pipe_surface *surf)
 {
    XImage *ximage;
    struct xm_buffer *xm_buf = xm_buffer(surf->buffer);
-   const struct xmesa_surface *xm_surf
-      = xmesa_surface((struct pipe_surface *) surf);
+   static boolean no_swap = 0;
+   static boolean firsttime = 1;
+   static int tileSize = 0;
 
-   if (xm_surf->no_swap)
+   if (firsttime) {
+      no_swap = getenv("SP_NO_RAST") != NULL;
+#ifdef GALLIUM_CELL
+      if (!getenv("GALLIUM_NOCELL")) {
+         tileSize = 32; /** probably temporary */
+      }
+#endif
+      firsttime = 0;
+   }
+
+   if (no_swap)
       return;
 
-   if (xm_surf->tileSize) {
+   if (tileSize) {
       xmesa_display_surface_tiled(b, surf);
       return;
    }
@@ -531,29 +522,14 @@ xm_surface_alloc_storage(struct pipe_winsys *winsys,
 static struct pipe_surface *
 xm_surface_alloc(struct pipe_winsys *ws)
 {
-   struct xmesa_surface *xms = CALLOC_STRUCT(xmesa_surface);
-   static boolean no_swap = 0;
-   static boolean firsttime = 1;
-
-   if (firsttime) {
-      no_swap = getenv("SP_NO_RAST") != NULL;
-      firsttime = 0;
-   }
+   struct pipe_surface *surface = CALLOC_STRUCT(pipe_surface);
 
    assert(ws);
 
-   xms->surface.refcount = 1;
-   xms->surface.winsys = ws;
+   surface->refcount = 1;
+   surface->winsys = ws;
 
-#ifdef GALLIUM_CELL
-   if (!getenv("GALLIUM_NOCELL")) {
-      xms->tileSize = 32; /** probably temporary */
-   }
-#endif
-   
-   xms->no_swap = no_swap;
-   
-   return &xms->surface;
+   return surface;
 }
 
 
