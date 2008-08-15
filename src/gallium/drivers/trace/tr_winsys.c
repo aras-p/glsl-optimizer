@@ -31,6 +31,8 @@
 
 #include "tr_dump.h"
 #include "tr_state.h"
+#include "tr_screen.h"
+#include "tr_texture.h"
 #include "tr_winsys.h"
 
 
@@ -75,6 +77,14 @@ trace_winsys_flush_frontbuffer(struct pipe_winsys *_winsys,
    struct trace_winsys *tr_ws = trace_winsys(_winsys);
    struct pipe_winsys *winsys = tr_ws->winsys;
 
+   assert(surface);
+   if(surface->texture) {
+      struct trace_screen *tr_scr = trace_screen(surface->texture->screen);
+      struct trace_screen *tr_tex = trace_texture(tr_scr, surface->texture);
+      struct trace_surface *tr_surf = trace_surface(tr_tex, surface);
+      surface = tr_surf->surface;
+   }
+   
    trace_dump_call_begin("pipe_winsys", "flush_frontbuffer");
    
    trace_dump_arg(ptr, winsys);
@@ -106,6 +116,8 @@ trace_winsys_surface_alloc(struct pipe_winsys *_winsys)
    
    trace_dump_call_end();
    
+   assert(!result || !result->texture);
+
    return result;
 }
 
@@ -122,6 +134,8 @@ trace_winsys_surface_alloc_storage(struct pipe_winsys *_winsys,
    struct pipe_winsys *winsys = tr_ws->winsys;
    int result;
    
+   assert(surface && !surface->texture);
+
    trace_dump_call_begin("pipe_winsys", "surface_alloc_storage");
    
    trace_dump_arg(ptr, winsys);
@@ -154,6 +168,8 @@ trace_winsys_surface_release(struct pipe_winsys *_winsys,
    struct trace_winsys *tr_ws = trace_winsys(_winsys);
    struct pipe_winsys *winsys = tr_ws->winsys;
    struct pipe_surface *surface = *psurface;
+   
+   assert(psurface && *psurface && !(*psurface)->texture);
    
    trace_dump_call_begin("pipe_winsys", "surface_release");
    

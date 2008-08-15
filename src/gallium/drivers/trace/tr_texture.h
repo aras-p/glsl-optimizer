@@ -25,27 +25,71 @@
  *
  **************************************************************************/
 
-#ifndef TR_SCREEN_H_
-#define TR_SCREEN_H_
+#ifndef TR_TEXTURE_H_
+#define TR_TEXTURE_H_
 
 
-#include "pipe/p_screen.h"
+#include "pipe/p_compiler.h"
+#include "pipe/p_state.h"
+
+#include "tr_screen.h"
 
 
-struct trace_screen
+struct trace_texture
 {
-   struct pipe_screen base;
-   
-   struct pipe_screen *screen;
+   struct pipe_texture base;
+
+   struct pipe_texture *texture;
 };
 
 
-struct trace_screen *
-trace_screen(struct pipe_screen *screen);
+struct trace_surface
+{
+   struct pipe_surface base;
+
+   struct pipe_surface *surface;
+   
+   void *map;
+};
 
 
-struct pipe_screen *
-trace_screen_create(struct pipe_screen *screen);
+static INLINE struct trace_texture *
+trace_texture(struct trace_screen *tr_scr, 
+              struct pipe_texture *texture)
+{
+   if(!texture)
+      return NULL;
+   assert(texture->screen == &tr_scr->base);
+   return (struct trace_texture *)texture;
+}
 
 
-#endif /* TR_SCREEN_H_ */
+static INLINE struct trace_surface *
+trace_surface(struct trace_texture *tr_tex, 
+              struct pipe_surface *surface)
+{
+   if(!surface)
+      return NULL;
+   assert(surface->texture == &tr_tex->base);
+   return (struct trace_surface *)surface;
+}
+
+
+struct pipe_texture *
+trace_texture_create(struct trace_screen *tr_scr, 
+                     struct pipe_texture *texture);
+
+void
+trace_texture_destroy(struct trace_screen *tr_scr, 
+                      struct pipe_texture *texture);
+
+struct pipe_surface *
+trace_surface_create(struct trace_texture *tr_tex, 
+                     struct pipe_surface *surface);
+
+void
+trace_surface_destroy(struct trace_texture *tr_tex,
+                      struct pipe_surface *surface);
+
+
+#endif /* TR_TEXTURE_H_ */
