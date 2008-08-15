@@ -289,6 +289,7 @@ st_draw_vbo(GLcontext *ctx,
    for (attr = 0; attr < vp->num_inputs; attr++) {
       const GLuint mesaAttr = vp->index_to_input[attr];
       struct gl_buffer_object *bufobj = arrays[mesaAttr]->BufferObj;
+      GLsizei stride = arrays[mesaAttr]->StrideB;
 
       if (bufobj && bufobj->Name) {
          /* Attribute data is in a VBO.
@@ -307,17 +308,27 @@ st_draw_vbo(GLcontext *ctx,
          /* attribute data is in user-space memory, not a VBO */
          uint bytes;
 	
-         if (!arrays[mesaAttr]->StrideB) {
-            bytes = arrays[mesaAttr]->Size
-                    * _mesa_sizeof_type(arrays[mesaAttr]->Type);
-         } else {
-            bytes = arrays[mesaAttr]->StrideB * (max_index + 1);
+         /* wrap user data */
+         if (arrays[mesaAttr]->Ptr) {
+            /* user's vertex array */
+            if (arrays[mesaAttr]->StrideB) {
+               bytes = arrays[mesaAttr]->StrideB * (max_index + 1);
+            }
+            else {
+               bytes = arrays[mesaAttr]->Size
+                  * _mesa_sizeof_type(arrays[mesaAttr]->Type);
+            }
+            vbuffer[attr].buffer = pipe_user_buffer_create(pipe,
+                           (void *) arrays[mesaAttr]->Ptr, bytes);
+         }
+         else {
+            /* no array, use ctx->Current.Attrib[] value */
+            bytes = sizeof(ctx->Current.Attrib[0]);
+            vbuffer[attr].buffer = pipe_user_buffer_create(pipe,
+                           (void *) ctx->Current.Attrib[mesaAttr], bytes);
+            stride = 0;
          }
 
-         /* wrap user data */
-         vbuffer[attr].buffer
-            = pipe_user_buffer_create(pipe, (void *) arrays[mesaAttr]->Ptr,
-                                      bytes);
          vbuffer[attr].buffer_offset = 0;
          velements[attr].src_offset = 0;
       }
@@ -325,7 +336,7 @@ st_draw_vbo(GLcontext *ctx,
       assert(velements[attr].src_offset <= 2048); /* 11-bit field */
 
       /* common-case setup */
-      vbuffer[attr].pitch = arrays[mesaAttr]->StrideB; /* in bytes */
+      vbuffer[attr].pitch = stride; /* in bytes */
       vbuffer[attr].max_index = max_index;
       velements[attr].vertex_buffer_index = attr;
       velements[attr].nr_components = arrays[mesaAttr]->Size;
