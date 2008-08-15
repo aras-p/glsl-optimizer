@@ -14,8 +14,8 @@ default: $(TOP)/configs/current
 	done
 
 install:
-	$(INSTALL) -d $(INSTALL_DIR)/$(LIB_DIR)
-	$(INSTALL) $(TOP)/$(LIB_DIR)/libGLU.* $(INSTALL_DIR)/$(LIB_DIR)
+	$(INSTALL) -d $(DESTDIR)$(INSTALL_DIR)/$(LIB_DIR)
+	$(INSTALL) $(TOP)/$(LIB_DIR)/libGLU.* $(DESTDIR)$(INSTALL_DIR)/$(LIB_DIR)
 
 clean:
 	@for dir in $(SUBDIRS) ; do \
