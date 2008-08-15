@@ -87,6 +87,18 @@ trace_stream_write(struct trace_stream *stream, const void *data, size_t size)
 
 
 void
+trace_stream_flush(struct trace_stream *stream) 
+{
+   if(!stream)
+      return;
+   
+#if defined(PIPE_OS_LINUX)
+   fflush(stream->file);
+#endif
+}
+
+
+void
 trace_stream_close(struct trace_stream *stream) 
 {
    if(!stream)

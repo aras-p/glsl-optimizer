@@ -49,6 +49,9 @@ boolean
 trace_stream_write(struct trace_stream *stream, const void *data, size_t size);
 
 void
+trace_stream_flush(struct trace_stream *stream);
+
+void
 trace_stream_close(struct trace_stream *stream);
 
 

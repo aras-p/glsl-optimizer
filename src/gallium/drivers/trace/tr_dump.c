@@ -52,6 +52,7 @@
 
 
 static struct trace_stream *stream = NULL;
+static unsigned refcount = 0;
 
 
 static INLINE void 
@@ -204,35 +205,54 @@ trace_dump_tag_end(const char *name)
    trace_dump_writes(">");
 }
 
-boolean trace_dump_trace_begin()
-{
-   if(!debug_get_bool_option("GALLIUM_TRACE", FALSE))
-      return FALSE;
-   
-   stream = trace_stream_create("gallium", "trace");
-   if(!stream)
-      return FALSE;
-   
-   trace_dump_writes("<?xml version='1.0' encoding='UTF-8'?>\n");
-   trace_dump_writes("<?xml-stylesheet type='text/xsl' href='trace.xsl'?>\n");
-   trace_dump_writes("<trace version='0.1'>\n");
-   
-#if defined(PIPE_OS_LINUX)
-   /* Linux applications rarely cleanup GL / Gallium resources so catch 
-    * application exit here */ 
-   atexit(trace_dump_trace_end);
-#endif
-   
-   return TRUE;
-}
-
-void trace_dump_trace_end(void)
+static void 
+trace_dump_trace_close(void)
 {
    if(stream) {
       trace_dump_writes("</trace>\n");
       trace_stream_close(stream);
       stream = NULL;
+      refcount = 0;
    }
+}
+
+boolean trace_dump_trace_begin()
+{
+   if(!debug_get_bool_option("GALLIUM_TRACE", FALSE))
+      return FALSE;
+   
+   if(!stream) {
+   
+      stream = trace_stream_create("gallium", "trace");
+      if(!stream)
+         return FALSE;
+      
+      trace_dump_writes("<?xml version='1.0' encoding='UTF-8'?>\n");
+      trace_dump_writes("<?xml-stylesheet type='text/xsl' href='trace.xsl'?>\n");
+      trace_dump_writes("<trace version='0.1'>\n");
+      
+#if defined(PIPE_OS_LINUX)
+      /* Linux applications rarely cleanup GL / Gallium resources so catch 
+       * application exit here */ 
+      atexit(trace_dump_trace_close);
+#endif
+   }
+   
+   ++refcount;
+   
+   return TRUE;
+}
+
+boolean trace_dump_enabled(void)
+{
+   return stream ? TRUE : FALSE;
+}
+
+void trace_dump_trace_end(void)
+{
+   if(stream)
+      if(!--refcount)
+         trace_dump_trace_close();
 }
 
 void trace_dump_call_begin(const char *klass, const char *method)
@@ -247,6 +267,7 @@ void trace_dump_call_end(void)
    trace_dump_indent(1);
    trace_dump_tag_end("call");
    trace_dump_newline();
+   trace_stream_flush(stream);
 }
 
 void trace_dump_arg_begin(const char *name)
@@ -372,7 +393,7 @@ void trace_dump_null(void)
 void trace_dump_ptr(const void *value)
 {
    if(value)
-      trace_dump_writef("<ptr>%p</ptr>", value);
+      trace_dump_writef("<ptr>0x%08lx</ptr>", (unsigned long)(uintptr_t)value);
    else
       trace_dump_null();
 }

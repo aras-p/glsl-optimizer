@@ -39,6 +39,7 @@
 
 
 boolean trace_dump_trace_begin(void);
+boolean trace_dump_enabled(void);
 void trace_dump_trace_end(void);
 void trace_dump_call_begin(const char *klass, const char *method);
 void trace_dump_call_end(void);
