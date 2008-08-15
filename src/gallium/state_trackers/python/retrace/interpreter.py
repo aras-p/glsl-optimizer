@@ -364,10 +364,11 @@ class Context(Object):
     
     def draw_arrays(self, mode, start, count):
         self.real.draw_arrays(mode, start, count)
-        self._update()
         
     def flush(self, flags):
         self.real.flush(flags)
+        if flags & gallium.PIPE_FLUSH_FRAME:
+            self._update()
         return None
 
     def clear(self, surface, value):
