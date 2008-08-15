@@ -28,7 +28,7 @@ static GLuint program;
 static GLint win = 0;
 static GLboolean anim = 0*GL_TRUE;
 static GLboolean DetermineInFragProg = GL_TRUE;
-static GLfloat Yrot = 0.0f;
+static GLfloat Xrot = 30.0f;
 static GLint u_fragface;
 static GLenum FrontWinding = GL_CCW;
 static int prevTime = 0;
@@ -41,7 +41,8 @@ static const GLfloat Green[4] = {0, 1, 0, 0};
 static void
 Redisplay(void)
 {
-   float xmin = -1, xmax = 1, ymin = -1, ymax = 1;
+   int i;
+   float radius = 2;
 
    glFrontFace(FrontWinding);
 
@@ -54,18 +55,22 @@ Redisplay(void)
       glEnable(GL_VERTEX_PROGRAM_TWO_SIDE);
    }
 
-   glClear(GL_COLOR_BUFFER_BIT);
+   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
    glPushMatrix();
-   glRotatef(Yrot, 0, 1, 0);
+   glRotatef(Xrot, 1, 0, 0);
 
-   glBegin(GL_POLYGON);
+   /* Draw a tristrip ring */
+   glBegin(GL_TRIANGLE_STRIP);
    glColor4fv(Red);
    glSecondaryColor3fv_func(Green);
-   glVertex2f(xmin, ymin);
-   glVertex2f(xmax, ymin);
-   glVertex2f(xmax, ymax);
-   glVertex2f(xmin, ymax);
+   for (i = 0; i < 20; i++) {
+      float a = i / 19.0 * M_PI * 2.0;
+      float x = radius * cos(a);
+      float y = radius * sin(a);
+      glVertex3f(x, -1, y);
+      glVertex3f(x, +1, y);
+   }
    glEnd();
 
    glPopMatrix();
@@ -86,7 +91,7 @@ Idle(void)
    }
    prevTime = curTime;
 
-   Yrot += dt * 0.1;
+   Xrot += dt * 0.1;
    glutPostRedisplay();
 }
 
@@ -98,7 +103,7 @@ Reshape(int width, int height)
    glViewport(0, 0, width, height);
    glMatrixMode(GL_PROJECTION);
    glLoadIdentity();
-   glFrustum(-ar, ar, -1, 1, 5, 15);
+   glFrustum(-ar, ar, -1, 1, 3, 25);
    glMatrixMode(GL_MODELVIEW);
    glLoadIdentity();
    glTranslatef(0, 0, -10);
@@ -141,12 +146,16 @@ Key(unsigned char key, int x, int y)
       DetermineInFragProg = GL_FALSE;
       break;
    case 'r':
-      Yrot = 0;
+      /* reset */
+      Xrot = 30;
       anim = 0;
       glutIdleFunc(NULL);
       break;
    case 's':
-      Yrot += 5;
+      Xrot += 5;
+      break;
+   case 'S':
+      Xrot -= 5;
       break;
    case 'w':
       if (FrontWinding == GL_CCW) {
@@ -173,12 +182,24 @@ Init(void)
    static const char *fragShaderText =
       "uniform bool fragface; \n"
       "void main() { \n"
+#if 0
       "   if (!fragface || gl_FrontFacing) { \n"
       "      gl_FragColor = gl_Color; \n"
       "   } \n"
       "   else { \n"
       "      gl_FragColor = 0.8 * gl_SecondaryColor; \n"
       "   } \n"
+#else
+      "   bool f = gl_FrontFacing; \n"
+      "   if (f) { \n"
+      "      gl_FragColor = vec4(1.0, 0.0, 0.0, 0.0); \n"
+      "   } \n"
+      "   else { \n"
+      "      gl_FragColor = vec4(0.0, 1.0, 0.0, 0.0); \n"
+      "   } \n"
+      "   //float g = float(gl_FrontFacing) * 0.5 + 0.5; \n"
+      "   //gl_FragColor = vec4(g); \n"
+#endif
       "} \n";
    static const char *vertShaderText =
       "uniform bool fragface; \n"
@@ -218,6 +239,8 @@ Init(void)
    assert(glIsProgram_func(program));
    assert(glIsShader_func(fragShader));
    assert(glIsShader_func(vertShader));
+
+   glEnable(GL_DEPTH_TEST);
 }
 
 
@@ -246,6 +269,7 @@ Usage(void)
    printf("   a - toggle animation\n");
    printf("   s - step rotation\n");
    printf("   w - toggle CW, CCW front-face winding\n");
+   printf("NOTE: red = front face, green = back face.\n");
 }
 
 
@@ -255,7 +279,7 @@ main(int argc, char *argv[])
    glutInit(&argc, argv);
    glutInitWindowPosition( 0, 0);
    glutInitWindowSize(WinWidth, WinHeight);
-   glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE);
+   glutInitDisplayMode(GLUT_RGB | GLUT_DEPTH | GLUT_DOUBLE);
    win = glutCreateWindow(argv[0]);
    glutReshapeFunc(Reshape);
    glutKeyboardFunc(Key);
