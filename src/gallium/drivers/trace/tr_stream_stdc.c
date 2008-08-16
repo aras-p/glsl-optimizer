@@ -25,13 +25,16 @@
  *
  **************************************************************************/
 
+/**
+ * @file
+ * Stream implementation based on the Standard C Library.
+ */
+
 #include "pipe/p_config.h"
 
 #if defined(PIPE_OS_LINUX)
+
 #include <stdio.h>
-#else
-#error Unsupported platform 
-#endif
 
 #include "pipe/p_util.h"
 
@@ -40,9 +43,7 @@
 
 struct trace_stream 
 {
-#if defined(PIPE_OS_LINUX)
    FILE *file;
-#endif
 };
 
 
@@ -55,11 +56,9 @@ trace_stream_create(const char *filename)
    if(!stream)
       goto error1;
    
-#if defined(PIPE_OS_LINUX)
    stream->file = fopen(filename, "w");
    if(!stream->file)
       goto error2;
-#endif
    
    return stream;
    
@@ -76,9 +75,7 @@ trace_stream_write(struct trace_stream *stream, const void *data, size_t size)
    if(!stream)
       return FALSE;
    
-#if defined(PIPE_OS_LINUX)
    return fwrite(data, size, 1, stream->file) == size ? TRUE : FALSE;
-#endif
 }
 
 
@@ -88,9 +85,7 @@ trace_stream_flush(struct trace_stream *stream)
    if(!stream)
       return;
    
-#if defined(PIPE_OS_LINUX)
    fflush(stream->file);
-#endif
 }
 
 
@@ -100,9 +95,10 @@ trace_stream_close(struct trace_stream *stream)
    if(!stream)
       return;
    
-#if defined(PIPE_OS_LINUX)
    fclose(stream->file);
-#endif
 
    FREE(stream);
 }
+
+
+#endif

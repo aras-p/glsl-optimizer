@@ -9,7 +9,8 @@ trace = env.ConvenienceLibrary(
         'tr_dump.c',
         'tr_screen.c',
         'tr_state.c',
-        'tr_stream.c',
+        'tr_stream_stdc.c',
+        'tr_stream_wd.c',
         'tr_texture.c',
         'tr_winsys.c',
     ])
