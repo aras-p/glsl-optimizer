@@ -302,14 +302,14 @@ void trace_dump_bool(int value)
    trace_dump_writef("<bool>%c</bool>", value ? '1' : '0');
 }
 
-void trace_dump_int(long int value)
+void trace_dump_int(long long int value)
 {
-   trace_dump_writef("<int>%li</int>", value);
+   trace_dump_writef("<int>%lli</int>", value);
 }
 
-void trace_dump_uint(long unsigned value)
+void trace_dump_uint(long long unsigned value)
 {
-   trace_dump_writef("<uint>%lu</uint>", value);
+   trace_dump_writef("<uint>%llu</uint>", value);
 }
 
 void trace_dump_float(double value)
