@@ -27,12 +27,15 @@ Init(void)
 GLboolean
 ShadersSupported(void)
 {
-   const char *version;
-
-   version = (const char *) glGetString(GL_VERSION);
-   if (version[0] != '2' || version[1] != '.') {
-      printf("GL_RENDERER = %s\n",(const char *) glGetString(GL_RENDERER));
-      return GL_FALSE;
+   const char *version = (const char *) glGetString(GL_VERSION);
+   if (version[0] == '2' && version[1] == '.') {
+      return GL_TRUE;
+   }
+   else if (glutExtensionSupported("GL_ARB_vertex_shader")
+            && glutExtensionSupported("GL_ARB_fragment_shader")
+            && glutExtensionSupported("GL_ARB_shader_objects")) {
+      fprintf(stderr, "Warning: Trying ARB GLSL instead of OpenGL 2.x.  This may not work.\n");
+      return GL_TRUE;
    }
    return GL_TRUE;
 }
