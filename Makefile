@@ -340,6 +340,8 @@ SGI_GLU_FILES = \
 	$(DIRECTORY)/src/glu/sgi/glu.def				\
 	$(DIRECTORY)/src/glu/sgi/dummy.cc				\
 	$(DIRECTORY)/src/glu/sgi/descrip.mms				\
+	$(DIRECTORY)/src/glu/sgi/glu.exports				\
+	$(DIRECTORY)/src/glu/sgi/glu.exports.darwin			\
 	$(DIRECTORY)/src/glu/sgi/mesaglu.opt				\
 	$(DIRECTORY)/src/glu/sgi/include/gluos.h			\
 	$(DIRECTORY)/src/glu/sgi/libnurbs/interface/*.h			\
