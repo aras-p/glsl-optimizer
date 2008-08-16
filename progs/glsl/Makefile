@@ -13,6 +13,7 @@ PROGS = \
 	bitmap \
 	brick \
 	bump \
+	convolutions \
 	deriv \
 	mandelbrot \
 	multitex \
@@ -88,6 +89,13 @@ bump.o: bump.c extfuncs.h shaderutil.h
 
 bump: bump.o shaderutil.o
 	$(CC) -I$(INCDIR) $(CFLAGS) $(LDFLAGS) bump.o shaderutil.o $(LIBS) -o $@
+
+
+convolutions.o: convolutions.c readtex.h
+	$(CC) -c -I$(INCDIR) $(CFLAGS) convolutions.c
+
+convolutions: convolutions.o readtex.o
+	$(CC) -I$(INCDIR) $(CFLAGS) $(LDFLAGS) convolutions.o readtex.o $(LIBS) -o $@
 
 
 deriv.o: deriv.c extfuncs.h shaderutil.h
