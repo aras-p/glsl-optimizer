@@ -174,10 +174,10 @@ ultrix-gcc:
 
 # Rules for making release tarballs
 
-DIRECTORY = Mesa-7.1-rc3
-LIB_NAME = MesaLib-7.1-rc3
-DEMO_NAME = MesaDemos-7.1-rc3
-GLUT_NAME = MesaGLUT-7.1-rc3
+DIRECTORY = Mesa-7.1-rc4
+LIB_NAME = MesaLib-7.1-rc4
+DEMO_NAME = MesaDemos-7.1-rc4
+GLUT_NAME = MesaGLUT-7.1-rc4
 
 MAIN_FILES = \
 	$(DIRECTORY)/Makefile*						\
@@ -395,7 +395,8 @@ DEMO_FILES = \
 	$(DIRECTORY)/progs/samples/*.c			\
 	$(DIRECTORY)/progs/glsl/Makefile*		\
 	$(DIRECTORY)/progs/glsl/*.c			\
-	$(DIRECTORY)/progs/glsl/*.txt			\
+	$(DIRECTORY)/progs/glsl/*.frag			\
+	$(DIRECTORY)/progs/glsl/*.vert			\
 	$(DIRECTORY)/progs/windml/Makefile.ugl		\
 	$(DIRECTORY)/progs/windml/*.c			\
 	$(DIRECTORY)/progs/windml/*.bmp			\
