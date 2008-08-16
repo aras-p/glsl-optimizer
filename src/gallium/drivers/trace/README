@@ -8,7 +8,6 @@ To use do
 
  ln -s libGL.so build/linux-x86-debug/gallium/winsys/xlib/libGL.so.1
  export LD_LIBRARY_PATH=$PWD/build/linux-x86-debug/gallium/winsys/xlib
- export GALLIUM_TRACE=y
 
 ensure the right libGL.so is being picked by doing
 
@@ -16,11 +15,11 @@ ensure the right libGL.so is being picked by doing
 
 and then try running
 
- glxinfo
+ GALLIUM_TRACE=tri.trace ./progs/trivial/tri
 
-which should create a gallium.*.trace file, which is an XML file. You can view 
-copying trace.xsl and trace.css to the same directory, and opening with a 
-XSLT capable browser like Firefox or Internet Explorer.
+which should create a tri.trace file, which is an XML file. You can view copying 
+trace.xsl to the same directory, and opening with a XSLT capable browser like 
+Firefox or Internet Explorer.
 
 --
 Jose Fonseca <jrfonseca@tungstengraphics.com>

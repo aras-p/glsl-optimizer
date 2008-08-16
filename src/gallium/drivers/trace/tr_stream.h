@@ -39,11 +39,12 @@
 
 #include "pipe/p_compiler.h"
 
+
 struct trace_stream;
 
 
 struct trace_stream *
-trace_stream_create(const char *name, const char *ext);
+trace_stream_create(const char *filename);
 
 boolean
 trace_stream_write(struct trace_stream *stream, const void *data, size_t size);

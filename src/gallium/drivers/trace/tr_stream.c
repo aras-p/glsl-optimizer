@@ -47,17 +47,13 @@ struct trace_stream
 
 
 struct trace_stream *
-trace_stream_create(const char *name, const char *ext)
+trace_stream_create(const char *filename)
 {
    struct trace_stream *stream;
-   static unsigned file_no = 0; 
-   char filename[1024];
    
    stream = CALLOC_STRUCT(trace_stream);
    if(!stream)
       goto error1;
-   
-   snprintf(filename, sizeof(filename), "%s.%u.%s", name, file_no, ext);
    
 #if defined(PIPE_OS_LINUX)
    stream->file = fopen(filename, "w");

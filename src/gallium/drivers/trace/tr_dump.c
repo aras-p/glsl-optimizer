@@ -218,12 +218,15 @@ trace_dump_trace_close(void)
 
 boolean trace_dump_trace_begin()
 {
-   if(!debug_get_bool_option("GALLIUM_TRACE", FALSE))
+   const char *filename;
+   
+   filename = debug_get_option("GALLIUM_TRACE", NULL);
+   if(!filename)
       return FALSE;
    
    if(!stream) {
    
-      stream = trace_stream_create("gallium", "trace");
+      stream = trace_stream_create(filename);
       if(!stream)
          return FALSE;
       
