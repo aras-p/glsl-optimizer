@@ -16,8 +16,8 @@
 #include "shaderutil.h"
 
 
-static char *FragProgFile = "CH11-bumpmap.frag.txt";
-static char *VertProgFile = "CH11-bumpmap.vert.txt";
+static char *FragProgFile = "CH11-bumpmap.frag";
+static char *VertProgFile = "CH11-bumpmap.vert";
 
 /* program/shader objects */
 static GLuint fragShader;

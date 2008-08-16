@@ -35,8 +35,8 @@
 
 static const char *Demo = "multitex";
 
-static const char *VertFile = "multitex.vert.txt";
-static const char *FragFile = "multitex.frag.txt";
+static const char *VertFile = "multitex.vert";
+static const char *FragFile = "multitex.frag";
 
 static const char *TexFiles[2] = 
    {

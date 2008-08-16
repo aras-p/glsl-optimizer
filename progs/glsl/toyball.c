@@ -16,8 +16,8 @@
 #include "shaderutil.h"
 
 
-static char *FragProgFile = "CH11-toyball.frag.txt";
-static char *VertProgFile = "CH11-toyball.vert.txt";
+static char *FragProgFile = "CH11-toyball.frag";
+static char *VertProgFile = "CH11-toyball.vert";
 
 /* program/shader objects */
 static GLuint fragShader;
