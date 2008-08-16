@@ -33,10 +33,10 @@
 #define SLANG_IR_H
 
 
-#include "imports.h"
+#include "main/imports.h"
 #include "slang_compile.h"
 #include "slang_label.h"
-#include "mtypes.h"
+#include "main/mtypes.h"
 
 
 /**
@@ -70,14 +70,14 @@ typedef enum
                  /* n->Parent = ptr to parent IR_LOOP Node */
    IR_BREAK,     /* break loop */
 
-   IR_BREAK_IF_TRUE,
+   IR_BREAK_IF_TRUE, /**< Children[0] = the condition expression */
    IR_CONT_IF_TRUE,
-                 /* Children[0] = the condition expression */
 
-   IR_MOVE,
+   IR_COPY,       /**< assignment/copy */
+   IR_MOVE,       /**< assembly MOV instruction */
 
    /* vector ops: */
-   IR_ADD,
+   IR_ADD,        /**< assembly ADD instruction */
    IR_SUB,
    IR_MUL,
    IR_DIV,

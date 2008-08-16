@@ -25,8 +25,8 @@
 #ifndef SLANG_TYPEINFO_H
 #define SLANG_TYPEINFO_H 1
 
-#include "imports.h"
-#include "mtypes.h"
+#include "main/imports.h"
+#include "main/mtypes.h"
 #include "slang_log.h"
 #include "slang_utility.h"
 #include "slang_vartable.h"
@@ -190,6 +190,9 @@ _slang_type_is_matrix(slang_type_specifier_type);
 
 extern GLboolean
 _slang_type_is_vector(slang_type_specifier_type);
+
+extern GLboolean
+_slang_type_is_float_vec_mat(slang_type_specifier_type);
 
 extern slang_type_specifier_type
 _slang_type_base(slang_type_specifier_type);

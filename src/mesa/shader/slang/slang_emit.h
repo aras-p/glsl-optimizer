@@ -26,10 +26,10 @@
 #define SLANG_EMIT_H
 
 
-#include "imports.h"
+#include "main/imports.h"
 #include "slang_compile.h"
 #include "slang_ir.h"
-#include "mtypes.h"
+#include "main/mtypes.h"
 
 
 extern void

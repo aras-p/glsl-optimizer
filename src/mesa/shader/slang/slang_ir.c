@@ -23,8 +23,8 @@
  */
 
 
-#include "imports.h"
-#include "context.h"
+#include "main/imports.h"
+#include "main/context.h"
 #include "slang_ir.h"
 #include "slang_mem.h"
 #include "shader/prog_print.h"
@@ -54,7 +54,8 @@ static const slang_ir_info IrInfo[] = {
    { IR_NOTEQUAL, "IR_NOTEQUAL", OPCODE_NOP, 1, 2 },
 
    /* unary ops */
-   { IR_I_TO_F, "IR_I_TO_F", OPCODE_NOP, 1, 1 },
+   { IR_MOVE, "IR_MOVE", OPCODE_MOV, 4, 1 },
+   { IR_I_TO_F, "IR_I_TO_F", OPCODE_MOV, 4, 1 },  /* int[4] to float[4] */
    { IR_F_TO_I, "IR_F_TO_I", OPCODE_INT, 4, 1 }, /* 4 floats to 4 ints */
    { IR_EXP, "IR_EXP", OPCODE_EXP, 1, 1 },
    { IR_EXP2, "IR_EXP2", OPCODE_EX2, 1, 1 },
@@ -82,7 +83,7 @@ static const slang_ir_info IrInfo[] = {
    { IR_KILL, "IR_KILL", OPCODE_NOP, 0, 0 },
    { IR_COND, "IR_COND", OPCODE_NOP, 0, 0 },
    { IR_CALL, "IR_CALL", OPCODE_NOP, 0, 0 },
-   { IR_MOVE, "IR_MOVE", OPCODE_NOP, 0, 1 },
+   { IR_COPY, "IR_COPY", OPCODE_NOP, 0, 1 },
    { IR_NOT, "IR_NOT", OPCODE_NOP, 1, 1 },
    { IR_VAR, "IR_VAR", OPCODE_NOP, 0, 0 },
    { IR_VAR_DECL, "IR_VAR_DECL", OPCODE_NOP, 0, 0 },
@@ -326,8 +327,8 @@ _slang_print_ir_tree(const slang_ir_node *n, int indent)
       assert(!n->Children[1]);
       _slang_print_ir_tree(n->Children[0], indent + 3);
       break;
-   case IR_MOVE:
-      printf("MOVE (writemask = %s)\n", writemask_string(n->Writemask));
+   case IR_COPY:
+      printf("COPY (writemask = %s)\n", writemask_string(n->Writemask));
       _slang_print_ir_tree(n->Children[0], indent+3);
       _slang_print_ir_tree(n->Children[1], indent+3);
       break;

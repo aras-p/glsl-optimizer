@@ -31,8 +31,8 @@
  */
 
 
-#include "glheader.h"
-#include "context.h"
+#include "main/glheader.h"
+#include "main/context.h"
 #include "prog_parameter.h"
 #include "prog_statevars.h"
 #include "program.h"
@@ -368,9 +368,9 @@ _mesa_count_texture_instructions(struct gl_program *prog)
 
 /**
  * Scan/rewrite program to remove reads of custom (output) registers.
- * The passed type has to be either PROGRAM_VARYING or PROGRAM_OUTPUT.
- * In GLSL vertex shaders, varying vars can be read and written.
- * Normally, vertex varying vars are implemented as output registers.
+ * The passed type has to be either PROGRAM_OUTPUT or PROGRAM_VARYING
+ * (for vertex shaders).
+ * In GLSL shaders, varying vars can be read and written.
  * On some hardware, trying to read an output register causes trouble.
  * So, rewrite the program to use a temporary register in this case.
  */
@@ -381,8 +381,8 @@ _mesa_remove_output_reads(struct gl_program *prog, enum register_file type)
    GLint outputMap[VERT_RESULT_MAX];
    GLuint numVaryingReads = 0;
 
-   assert(prog->Target == GL_VERTEX_PROGRAM_ARB);
    assert(type == PROGRAM_VARYING || type == PROGRAM_OUTPUT);
+   assert(prog->Target == GL_VERTEX_PROGRAM_ARB || type != PROGRAM_VARYING);
 
    for (i = 0; i < VERT_RESULT_MAX; i++)
       outputMap[i] = -1;

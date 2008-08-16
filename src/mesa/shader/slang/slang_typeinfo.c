@@ -273,7 +273,7 @@ slang_type_specifier_compatible(const slang_type_specifier * x,
 GLboolean
 slang_typeinfo_construct(slang_typeinfo * ti)
 {
-   /*_mesa_bzero(ti, sizeof(*ti));*/
+   _mesa_bzero(ti, sizeof(*ti));
    slang_type_specifier_ctr(&ti->spec);
    ti->array_len = 0;
    return GL_TRUE;
@@ -392,7 +392,6 @@ _slang_typeof_operation_(slang_operation * op,
    switch (op->type) {
    case SLANG_OPER_BLOCK_NO_NEW_SCOPE:
    case SLANG_OPER_BLOCK_NEW_SCOPE:
-   case SLANG_OPER_VARIABLE_DECL:
    case SLANG_OPER_ASM:
    case SLANG_OPER_BREAK:
    case SLANG_OPER_CONTINUE:
@@ -477,6 +476,7 @@ _slang_typeof_operation_(slang_operation * op,
       }
       break;
    case SLANG_OPER_IDENTIFIER:
+   case SLANG_OPER_VARIABLE_DECL:
       {
          slang_variable *var;
          var = _slang_locate_variable(op->locals, op->a_id, GL_TRUE);
@@ -867,6 +867,34 @@ _slang_type_is_vector(slang_type_specifier_type ty)
    case SLANG_SPEC_BVEC2:
    case SLANG_SPEC_BVEC3:
    case SLANG_SPEC_BVEC4:
+      return GL_TRUE;
+   default:
+      return GL_FALSE;
+   }
+}
+
+
+/**
+ * Determine if a type is a float, float vector or float matrix.
+ * \return GL_TRUE if so, GL_FALSE otherwise
+ */
+GLboolean
+_slang_type_is_float_vec_mat(slang_type_specifier_type ty)
+{
+   switch (ty) {
+   case SLANG_SPEC_FLOAT:
+   case SLANG_SPEC_VEC2:
+   case SLANG_SPEC_VEC3:
+   case SLANG_SPEC_VEC4:
+   case SLANG_SPEC_MAT2:
+   case SLANG_SPEC_MAT3:
+   case SLANG_SPEC_MAT4:
+   case SLANG_SPEC_MAT23:
+   case SLANG_SPEC_MAT32:
+   case SLANG_SPEC_MAT24:
+   case SLANG_SPEC_MAT42:
+   case SLANG_SPEC_MAT34:
+   case SLANG_SPEC_MAT43:
       return GL_TRUE;
    default:
       return GL_FALSE;

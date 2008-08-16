@@ -28,7 +28,7 @@
  * \author Michal Krol
  */
 
-#include "imports.h"
+#include "main/imports.h"
 #include "slang_mem.h"
 #include "slang_compile.h"
 
@@ -124,8 +124,7 @@ slang_struct_destruct(slang_struct * stru)
 {
    slang_variable_scope_destruct(stru->fields);
    _slang_free(stru->fields);
-   if (stru->structs)
-      slang_struct_scope_destruct(stru->structs);
+   slang_struct_scope_destruct(stru->structs);
    _slang_free(stru->structs);
 }
 

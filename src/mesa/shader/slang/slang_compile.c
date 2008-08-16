@@ -61,6 +61,20 @@
 
 
 /**
+ * Check if the given identifier is legal.
+ */
+static GLboolean
+legal_identifier(slang_atom name)
+{
+   /* "gl_" is a reserved prefix */
+   if (_mesa_strncmp((char *) name, "gl_", 3) == 0) {
+      return GL_FALSE;
+   }
+   return GL_TRUE;
+}
+
+
+/**
  * Allocate storage for a variable of 'size' bytes from given pool.
  * Return the allocated address for the variable.
  */
@@ -223,7 +237,7 @@ parse_float(slang_parse_ctx * C, float *number)
 }
 
 /* revision number - increment after each change affecting emitted output */
-#define REVISION 3
+#define REVISION 4
 
 static int
 check_revision(slang_parse_ctx * C)
@@ -677,14 +691,49 @@ parse_type_specifier(slang_parse_ctx * C, slang_output_ctx * O,
    return 1;
 }
 
+#define PRECISION_DEFAULT 0
+#define PRECISION_LOW     1
+#define PRECISION_MEDIUM  2
+#define PRECISION_HIGH    3
+
 static int
 parse_fully_specified_type(slang_parse_ctx * C, slang_output_ctx * O,
                            slang_fully_specified_type * type)
 {
+   GLuint precision;
+
    if (!parse_type_qualifier(C, &type->qualifier))
       return 0;
+   precision = *C->I++;
    if (!parse_type_specifier(C, O, &type->specifier))
       return 0;
+
+   switch (precision) {
+   case PRECISION_DEFAULT:
+      assert(type->specifier.type < TYPE_SPECIFIER_COUNT);
+      if (type->specifier.type < TYPE_SPECIFIER_COUNT)
+         type->precision = O->default_precision[type->specifier.type];
+      break;
+   case PRECISION_LOW:
+      type->precision = SLANG_PREC_LOW;
+      break;
+   case PRECISION_MEDIUM:
+      type->precision = SLANG_PREC_MEDIUM;
+      break;
+   case PRECISION_HIGH:
+      type->precision = SLANG_PREC_HIGH;
+      break;
+   default:
+      return 0;
+   }
+
+#if !FEATURE_es2_glsl
+   if (precision != PRECISION_DEFAULT) {
+      slang_info_log_error(C->L, "precision qualifiers not allowed");
+      return 0;
+   }
+#endif
+
    return 1;
 }
 
@@ -835,6 +884,12 @@ parse_statement(slang_parse_ctx * C, slang_output_ctx * O,
                o->type = SLANG_OPER_VARIABLE_DECL;
                o->locals->outer_scope = O->vars;
                o->a_id = O->vars->variables[i]->a_name;
+
+               if (!legal_identifier(o->a_id)) {
+                  slang_info_log_error(C->L, "illegal variable name '%s'",
+                                       (char *) o->a_id);
+                  return 0;
+               }
             }
          }
       }
@@ -1404,6 +1459,7 @@ parse_operator_name(slang_parse_ctx * C)
    return 0;
 }
 
+
 static int
 parse_function_prototype(slang_parse_ctx * C, slang_output_ctx * O,
                          slang_function * func)
@@ -1438,6 +1494,12 @@ parse_function_prototype(slang_parse_ctx * C, slang_output_ctx * O,
          return 0;
       break;
    default:
+      return 0;
+   }
+
+   if (!legal_identifier(func->header.a_name)) {
+      slang_info_log_error(C->L, "illegal function name '%s'",
+                           (char *) func->header.a_name);
       return 0;
    }
 
@@ -1842,11 +1904,6 @@ parse_declaration(slang_parse_ctx * C, slang_output_ctx * O)
    return 1;
 }
 
-
-#define PRECISION_LOW    0
-#define PRECISION_MEDIUM 1
-#define PRECISION_HIGH   2
-
 static int
 parse_default_precision(slang_parse_ctx * C, slang_output_ctx * O)
 {
@@ -2024,6 +2081,12 @@ parse_code_unit(slang_parse_ctx * C, slang_code_unit * unit,
       A.program = o.program;
       A.vartable = o.vartable;
       A.log = C->L;
+
+      /* main() takes no parameters */
+      if (mainFunc->param_count > 0) {
+         slang_info_log_error(A.log, "main() takes no arguments");
+         return GL_FALSE;
+      }
 
       _slang_codegen_function(&A, mainFunc);
 
@@ -2368,19 +2431,20 @@ _slang_compile(GLcontext *ctx, struct gl_shader *shader)
    _slang_delete_mempool((slang_mempool *) ctx->Shader.MemPool);
    ctx->Shader.MemPool = NULL;
 
+   /* remove any reads of output registers */
+#if 0
+   printf("Pre-remove output reads:\n");
+   _mesa_print_program(shader->Program);
+#endif
+   _mesa_remove_output_reads(shader->Program, PROGRAM_OUTPUT);
    if (shader->Type == GL_VERTEX_SHADER) {
-      /* remove any reads of varying (output) registers */
-#if 0
-      printf("Pre-remove output reads:\n");
-      _mesa_print_program(shader->Programs);
-#endif
+      /* and remove writes to varying vars in vertex programs */
       _mesa_remove_output_reads(shader->Program, PROGRAM_VARYING);
-      _mesa_remove_output_reads(shader->Program, PROGRAM_OUTPUT);
-#if 0
-      printf("Post-remove output reads:\n");
-      _mesa_print_program(shader->Programs);
-#endif
    }
+#if 0
+   printf("Post-remove output reads:\n");
+   _mesa_print_program(shader->Program);
+#endif
 
    return success;
 }
