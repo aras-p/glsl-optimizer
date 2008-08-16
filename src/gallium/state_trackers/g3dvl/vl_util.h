@@ -4,4 +4,3 @@
 unsigned int vlRoundUpPOT(unsigned int x);
 
 #endif
-

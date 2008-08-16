@@ -59,4 +59,3 @@ struct tgsi_full_instruction vl_inst4
 struct tgsi_full_instruction vl_end(void);
 
 #endif
-

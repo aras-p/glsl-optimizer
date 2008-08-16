@@ -13,7 +13,7 @@ struct tgsi_full_declaration vl_decl_input(unsigned int name, unsigned int index
 	decl.Semantic.SemanticIndex = index;
 	decl.DeclarationRange.First = first;
 	decl.DeclarationRange.Last = last;
-	
+
 	return decl;
 }
 
@@ -27,7 +27,7 @@ struct tgsi_full_declaration vl_decl_interpolated_input
 )
 {
 	struct tgsi_full_declaration decl = tgsi_default_full_declaration();
-	
+
 	assert
 	(
 		interpolation == TGSI_INTERPOLATE_CONSTANT ||
@@ -42,21 +42,21 @@ struct tgsi_full_declaration vl_decl_interpolated_input
 	decl.Declaration.Interpolate = interpolation;;
 	decl.DeclarationRange.First = first;
 	decl.DeclarationRange.Last = last;
-	
+
 	return decl;
 }
 
 struct tgsi_full_declaration vl_decl_constants(unsigned int name, unsigned int index, unsigned int first, unsigned int last)
 {
 	struct tgsi_full_declaration decl = tgsi_default_full_declaration();
-	
+
 	decl.Declaration.File = TGSI_FILE_CONSTANT;
 	decl.Declaration.Semantic = 1;
 	decl.Semantic.SemanticName = name;
 	decl.Semantic.SemanticIndex = index;
 	decl.DeclarationRange.First = first;
 	decl.DeclarationRange.Last = last;
-	
+
 	return decl;
 }
 
@@ -70,7 +70,7 @@ struct tgsi_full_declaration vl_decl_output(unsigned int name, unsigned int inde
 	decl.Semantic.SemanticIndex = index;
 	decl.DeclarationRange.First = first;
 	decl.DeclarationRange.Last = last;
-	
+
 	return decl;
 }
 
@@ -82,7 +82,7 @@ struct tgsi_full_declaration vl_decl_temps(unsigned int first, unsigned int last
 	decl.Declaration.File = TGSI_FILE_TEMPORARY;
 	decl.DeclarationRange.First = first;
 	decl.DeclarationRange.Last = last;
-	
+
 	return decl;
 }
 
@@ -94,7 +94,7 @@ struct tgsi_full_declaration vl_decl_samplers(unsigned int first, unsigned int l
 	decl.Declaration.File = TGSI_FILE_SAMPLER;
 	decl.DeclarationRange.First = first;
 	decl.DeclarationRange.Last = last;
-	
+
 	return decl;
 }
 
@@ -108,7 +108,7 @@ struct tgsi_full_instruction vl_inst2
 )
 {
 	struct tgsi_full_instruction inst = tgsi_default_full_instruction();
-	
+
 	inst.Instruction.Opcode = opcode;
 	inst.Instruction.NumDstRegs = 1;
 	inst.FullDstRegisters[0].DstRegister.File = dst_file;
@@ -116,7 +116,7 @@ struct tgsi_full_instruction vl_inst2
 	inst.Instruction.NumSrcRegs = 1;
 	inst.FullSrcRegisters[0].SrcRegister.File = src_file;
 	inst.FullSrcRegisters[0].SrcRegister.Index = src_index;
-	
+
 	return inst;
 }
 
@@ -132,7 +132,7 @@ struct tgsi_full_instruction vl_inst3
 )
 {
 	struct tgsi_full_instruction inst = tgsi_default_full_instruction();
-	
+
 	inst.Instruction.Opcode = opcode;
 	inst.Instruction.NumDstRegs = 1;
 	inst.FullDstRegisters[0].DstRegister.File = dst_file;
@@ -142,7 +142,7 @@ struct tgsi_full_instruction vl_inst3
 	inst.FullSrcRegisters[0].SrcRegister.Index = src1_index;
 	inst.FullSrcRegisters[1].SrcRegister.File = src2_file;
 	inst.FullSrcRegisters[1].SrcRegister.Index = src2_index;
-	
+
 	return inst;
 }
 
@@ -158,7 +158,7 @@ struct tgsi_full_instruction vl_tex
 )
 {
 	struct tgsi_full_instruction inst = tgsi_default_full_instruction();
-	
+
 	inst.Instruction.Opcode = TGSI_OPCODE_TEX;
 	inst.Instruction.NumDstRegs = 1;
 	inst.FullDstRegisters[0].DstRegister.File = dst_file;
@@ -169,7 +169,7 @@ struct tgsi_full_instruction vl_tex
 	inst.FullSrcRegisters[0].SrcRegister.Index = src1_index;
 	inst.FullSrcRegisters[1].SrcRegister.File = src2_file;
 	inst.FullSrcRegisters[1].SrcRegister.Index = src2_index;
-	
+
 	return inst;
 }
 
@@ -187,7 +187,7 @@ struct tgsi_full_instruction vl_inst4
 )
 {
 	struct tgsi_full_instruction inst = tgsi_default_full_instruction();
-	
+
 	inst.Instruction.Opcode = opcode;
 	inst.Instruction.NumDstRegs = 1;
 	inst.FullDstRegisters[0].DstRegister.File = dst_file;
@@ -199,18 +199,17 @@ struct tgsi_full_instruction vl_inst4
 	inst.FullSrcRegisters[1].SrcRegister.Index = src2_index;
 	inst.FullSrcRegisters[2].SrcRegister.File = src3_file;
 	inst.FullSrcRegisters[2].SrcRegister.Index = src3_index;
-	
+
 	return inst;
 }
 
 struct tgsi_full_instruction vl_end(void)
 {
 	struct tgsi_full_instruction inst = tgsi_default_full_instruction();
-	
+
 	inst.Instruction.Opcode = TGSI_OPCODE_END;
 	inst.Instruction.NumDstRegs = 0;
 	inst.Instruction.NumSrcRegs = 0;
-	
+
 	return inst;
 }
-

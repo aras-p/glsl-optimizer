@@ -1,102 +1,106 @@
 #ifndef vl_types_h
 #define vl_types_h
 
-enum VL_FORMAT
+#if 1 /*#ifdef X11*/
+#include <X11/Xlib.h>
+
+typedef Display* vlNativeDisplay;
+typedef Drawable vlNativeDrawable;
+#endif
+
+struct vlDisplay;
+struct vlScreen;
+struct vlContext;
+struct vlSurface;
+
+enum vlProfile
 {
-	VL_FORMAT_YCBCR_420,
-	VL_FORMAT_YCBCR_422,
-	VL_FORMAT_YCBCR_444
+	vlProfileMpeg2Simple,
+	vlProfileMpeg2Main,
+
+	vlProfileCount
 };
 
-enum VL_PICTURE
+enum vlEntryPoint
 {
-	VL_TOP_FIELD,
-	VL_BOTTOM_FIELD,
-	VL_FRAME_PICTURE
+	vlEntryPointIDCT,
+	vlEntryPointMC,
+	vlEntryPointCSC,
+
+	vlEntryPointCount
 };
 
-enum VL_FIELD_ORDER
+enum vlFormat
 {
-	VL_FIELD_FIRST,
-	VL_FIELD_SECOND
+	vlFormatYCbCr420,
+	vlFormatYCbCr422,
+	vlFormatYCbCr444
 };
 
-enum VL_DCT_TYPE
+enum vlPictureType
 {
-	VL_DCT_FIELD_CODED,
-	VL_DCT_FRAME_CODED
+	vlPictureTypeTopField,
+	vlPictureTypeBottomField,
+	vlPictureTypeFrame
 };
 
-enum VL_SAMPLE_TYPE
+enum vlMotionType
 {
-	VL_FULL_SAMPLE,
-	VL_DIFFERENCE_SAMPLE
+	vlMotionTypeField,
+	vlMotionTypeFrame,
+	vlMotionTypeDualPrime,
+	vlMotionType16x8
 };
 
-enum VL_MC_TYPE
+enum vlFieldOrder
 {
-	VL_FIELD_MC,
-	VL_FRAME_MC,
-	VL_DUAL_PRIME_MC,
-	VL_16x8_MC = VL_FRAME_MC
+	vlFieldOrderFirst,
+	vlFieldOrderSecond
 };
 
-struct VL_VERTEX4F
+enum vlDCTType
 {
-	float x, y, z, w;
+	vlDCTTypeFrameCoded,
+	vlDCTTypeFieldCoded
 };
 
-struct VL_VERTEX2F
+struct vlVertex2f
 {
 	float x, y;
 };
 
-struct VL_TEXCOORD2F
+struct vlVertex4f
 {
-	float s, t;
+	float x, y, z, w;
 };
 
-struct VL_MC_VS_CONSTS
+enum vlMacroBlockType
 {
-	struct VL_VERTEX4F	scale;
-	struct VL_VERTEX4F	mb_pos_trans;
-	struct VL_VERTEX4F	denorm;
-	struct
-	{
-		struct VL_VERTEX4F	top_field;
-		struct VL_VERTEX4F	bottom_field;
-	} mb_tc_trans[2];
+	vlMacroBlockTypeIntra,
+	vlMacroBlockTypeFwdPredicted,
+	vlMacroBlockTypeBkwdPredicted,
+	vlMacroBlockTypeBiPredicted
 };
 
-struct VL_MC_FS_CONSTS
+struct vlMpeg2MacroBlock
 {
-	struct VL_VERTEX4F	multiplier;
-	struct VL_VERTEX4F	bias;
-	struct VL_VERTEX4F	y_divider;
+	unsigned int		mbx, mby;
+	enum vlMacroBlockType	mb_type;
+	enum vlMotionType	mo_type;
+	enum vlDCTType		dct_type;
+	int			PMV[2][2][2];
+	unsigned int		cbp;
+	short			*blocks;
 };
 
-struct VL_CSC_VS_CONSTS
+struct vlMpeg2MacroBlockBatch
 {
-	struct VL_VERTEX4F	src_scale;
-	struct VL_VERTEX4F	src_trans;
+	struct vlSurface		*past_surface;
+	struct vlSurface		*future_surface;
+	enum vlPictureType		picture_type;
+	enum vlFieldOrder		field_order;
+	unsigned int			num_macroblocks;
+	struct vlMpeg2MacroBlock	*macroblocks;
 };
-
-struct VL_CSC_FS_CONSTS
-{
-	struct VL_VERTEX4F	bias;
-	float			matrix[16];
-};
-
-struct VL_MOTION_VECTOR
-{
-	struct
-	{
-		int x, y;
-	} top_field, bottom_field;
-};
-
-struct VL_CONTEXT;
-struct VL_SURFACE;
 
 #endif
-

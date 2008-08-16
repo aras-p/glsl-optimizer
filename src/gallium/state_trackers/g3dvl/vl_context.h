@@ -1,83 +1,73 @@
 #ifndef vl_context_h
 #define vl_context_h
 
-#include <X11/Xlib.h>
-#include <pipe/p_state.h>
 #include "vl_types.h"
 
 struct pipe_context;
 
-struct VL_CONTEXT
+#ifdef VL_INTERNAL
+struct vlRender;
+struct vlCSC;
+
+struct vlContext
 {
-	Display			*display;
+	struct vlScreen		*screen;
 	struct pipe_context	*pipe;
-	unsigned int		video_width;
-	unsigned int		video_height;
-	enum VL_FORMAT		video_format;
-	
-	struct
-	{
-		struct
-		{
-			struct pipe_rasterizer_state		*raster;
-			struct pipe_depth_stencil_alpha_state	*dsa;
-			struct pipe_blend_state			*blend;
-		} common;
-		
-		struct
-		{
-			struct pipe_viewport_state		viewport;
-			struct pipe_framebuffer_state		render_target;
-			struct pipe_sampler_state		*sampler;
-			struct pipe_texture			*texture;
-			struct pipe_texture			*basis;
-			struct pipe_shader_state		*frame_vs;
-			struct pipe_shader_state		*frame_fs;
-			struct pipe_vertex_buffer 		*vertex_bufs[2];
-			struct pipe_vertex_element		*vertex_buf_elems[2];
-			//struct pipe_constant_buffer		vs_const_buf, fs_const_buf;
-		} idct;
-		
-		struct
-		{
-			struct pipe_viewport_state		viewport;
-			struct pipe_framebuffer_state		render_target;
-			struct pipe_sampler_state		*samplers[5];
-			struct pipe_texture			*textures[5];
-			struct pipe_shader_state		*i_vs, *p_vs[2], *b_vs[2];
-			struct pipe_shader_state		*i_fs, *p_fs[2], *b_fs[2];
-			struct pipe_vertex_buffer 		vertex_bufs[3];
-			struct pipe_vertex_element		vertex_buf_elems[3];
-			struct pipe_constant_buffer		vs_const_buf, fs_const_buf;
-		} mc;
-		
-		struct
-		{
-			struct pipe_viewport_state		viewport;
-			struct pipe_framebuffer_state		framebuffer;
-			struct pipe_sampler_state		*sampler;
-			struct pipe_shader_state		*vertex_shader, *fragment_shader;
-			struct pipe_vertex_buffer 		vertex_bufs[2];
-			struct pipe_vertex_element		vertex_buf_elems[2];
-			struct pipe_constant_buffer		vs_const_buf, fs_const_buf;
-		} csc;
-	} states;
+	unsigned int		picture_width;
+	unsigned int		picture_height;
+	enum vlFormat		picture_format;
+	enum vlProfile		profile;
+	enum vlEntryPoint	entry_point;
+
+	void			*raster;
+	void			*dsa;
+	void			*blend;
+
+	struct vlRender		*render;
+	struct vlCSC		*csc;
 };
+#endif
 
 int vlCreateContext
 (
-	Display *display,
+	struct vlScreen *screen,
 	struct pipe_context *pipe,
-	unsigned int video_width,
-	unsigned int video_height,
-	enum VL_FORMAT video_format,
-	struct VL_CONTEXT **context
+	unsigned int picture_width,
+	unsigned int picture_height,
+	enum vlFormat picture_format,
+	enum vlProfile profile,
+	enum vlEntryPoint entry_point,
+	struct vlContext **context
 );
 
-int vlDestroyContext(struct VL_CONTEXT *context);
+int vlDestroyContext
+(
+	struct vlContext *context
+);
 
-int vlBeginRender(struct VL_CONTEXT *context);
-int vlEndRender(struct VL_CONTEXT *context);
+struct vlScreen* vlContextGetScreen
+(
+	struct vlContext *context
+);
+
+struct pipe_context* vlGetPipeContext
+(
+	struct vlContext *context
+);
+
+unsigned int vlGetPictureWidth
+(
+	struct vlContext *context
+);
+
+unsigned int vlGetPictureHeight
+(
+	struct vlContext *context
+);
+
+enum vlFormat vlGetPictureFormat
+(
+	struct vlContext *context
+);
 
 #endif
-

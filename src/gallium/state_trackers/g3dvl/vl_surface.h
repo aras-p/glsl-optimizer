@@ -1,81 +1,66 @@
 #ifndef vl_surface_h
 #define vl_surface_h
 
-#include <X11/Xlib.h>
 #include "vl_types.h"
 
+#ifdef VL_INTERNAL
 struct pipe_texture;
 
-struct VL_SURFACE
+struct vlSurface
 {
-	struct VL_CONTEXT	*context;
+	struct vlScreen		*screen;
+	struct vlContext	*context;
 	unsigned int		width;
 	unsigned int		height;
-	enum VL_FORMAT		format;
+	enum vlFormat		format;
 	struct pipe_texture	*texture;
 };
+#endif
 
-int vlCreateSurface(struct VL_CONTEXT *context, struct VL_SURFACE **surface);
-
-int vlDestroySurface(struct VL_SURFACE *surface);
-
-int vlRenderIMacroBlock
+int vlCreateSurface
 (
-	enum VL_PICTURE picture_type,
-	enum VL_FIELD_ORDER field_order,
-	unsigned int mbx,
-	unsigned int mby,
-	unsigned int coded_block_pattern,
-	enum VL_DCT_TYPE dct_type,
-	short *blocks,
-	struct VL_SURFACE *surface
+	struct vlScreen *screen,
+	unsigned int width,
+	unsigned int height,
+	enum vlFormat format,
+	struct vlSurface **surface
 );
 
-int vlRenderPMacroBlock
+int vlDestroySurface
 (
-	enum VL_PICTURE picture_type,
-	enum VL_FIELD_ORDER field_order,
-	unsigned int mbx,
-	unsigned int mby,
-	enum VL_MC_TYPE mc_type,
-	struct VL_MOTION_VECTOR *motion_vector,
-	unsigned int coded_block_pattern,
-	enum VL_DCT_TYPE dct_type,
-	short *blocks,
-	struct VL_SURFACE *ref_surface,
-	struct VL_SURFACE *surface
+	struct vlSurface *surface
 );
 
-int vlRenderBMacroBlock
+int vlRenderMacroBlocksMpeg2
 (
-	enum VL_PICTURE picture_type,
-	enum VL_FIELD_ORDER field_order,
-	unsigned int mbx,
-	unsigned int mby,
-	enum VL_MC_TYPE mc_type,
-	struct VL_MOTION_VECTOR *motion_vector,
-	unsigned int coded_block_pattern,
-	enum VL_DCT_TYPE dct_type,
-	short *blocks,
-	struct VL_SURFACE *past_surface,
-	struct VL_SURFACE *future_surface,
-	struct VL_SURFACE *surface
+	struct vlMpeg2MacroBlockBatch *batch,
+	struct vlSurface *surface
 );
 
-int vlPutSurface
+int vlPutPicture
 (
-	struct VL_SURFACE *surface,
-	Drawable drawable,
-	unsigned int srcx,
-	unsigned int srcy,
-	unsigned int srcw,
-	unsigned int srch,
-	unsigned int destx,
-	unsigned int desty,
-	unsigned int destw,
-	unsigned int desth,
-	enum VL_PICTURE picture_type
+	struct vlSurface *surface,
+	vlNativeDrawable drawable,
+	int srcx,
+	int srcy,
+	int srcw,
+	int srch,
+	int destx,
+	int desty,
+	int destw,
+	int desth,
+	enum vlPictureType picture_type
+);
+
+struct vlScreen* vlSurfaceGetScreen
+(
+	struct vlSurface *surface
+);
+
+struct vlContext* vlBindToContext
+(
+	struct vlSurface *surface,
+	struct vlContext *context
 );
 
 #endif
-
