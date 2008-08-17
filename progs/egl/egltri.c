@@ -201,7 +201,7 @@ int main(int argc, char *argv[])
 		eglGetModeAttribMESA(d, mode[i], EGL_WIDTH, &w);
 		eglGetModeAttribMESA(d, mode[i], EGL_HEIGHT, &h);
 		printf("%3d: %d x %d\n", i, w, h);
-		if (w > width && h > height && w <= 1280 && h <= 1024) {
+		if (w > width && h > height && w <= 1024 && h <= 768) {
 			width = w;
 			height = h;
 			chosenMode = i;
