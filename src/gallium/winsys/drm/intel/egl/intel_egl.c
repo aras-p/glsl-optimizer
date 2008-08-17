@@ -571,7 +571,7 @@ drm_find_mode(drmModeConnectorPtr connector, _EGLMode *mode)
 		m = &connector->modes[i];
 		if (m->hdisplay == mode->Width && m->vdisplay == mode->Height && m->vrefresh == mode->RefreshRate)
 			break;
-		m = NULL;
+		m = &connector->modes[0]; /* if we can't find one, return first */
 	}
 
 	return m;
@@ -654,12 +654,12 @@ drm_show_screen_surface_mesa(_EGLDriver *drv, EGLDisplay dpy,
 	if (!scrn->fb)
 		goto err_bo;
 
-	scrn->mode = drm_find_mode(scrn->connector, mode);
-	if (!scrn->mode)
-		goto err_fb;
-
 	for (j = 0; j < drm_drv->res->count_connectors; j++) {
 		drmModeConnector *con = drmModeGetConnector(drm_drv->device->drmFD, drm_drv->res->connectors[j]);
+		scrn->mode = drm_find_mode(con, mode);
+		if (!scrn->mode)
+			goto err_fb;
+
 		for (k = 0; k < con->count_encoders; k++) {
 			drmModeEncoder *enc = drmModeGetEncoder(drm_drv->device->drmFD, con->encoders[k]);
 			for (i = 0; i < drm_drv->res->count_crtcs; i++) {
