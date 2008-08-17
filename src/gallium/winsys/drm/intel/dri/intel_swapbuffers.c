@@ -36,7 +36,7 @@
 #include "state_tracker/st_context.h"
 #include "state_tracker/st_cb_fbo.h"
 
-#include "intel_drm/ws_dri_bufmgr.h"
+#include "ws_dri_bufmgr.h"
 #include "intel_batchbuffer.h"
 
 /**

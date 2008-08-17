@@ -31,11 +31,11 @@
 #include "dri_util.h"
 #include "i830_common.h"
 #include "xmlconfig.h"
-#include "intel_drm/ws_dri_bufpool.h"
+#include "ws_dri_bufpool.h"
 
 #include "pipe/p_compiler.h"
 
-#include "intel_drm/intel_be_device.h"
+#include "intel_be_device.h"
 
 struct intel_screen
 {

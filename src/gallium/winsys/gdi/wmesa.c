@@ -118,48 +118,6 @@ static void wmSetPixelFormat(WMesaFramebuffer pwfb, HDC hDC)
     }
 }
 
-
-/**
- * Create DIB for back buffer.
- * We write into this memory with the span routines and then blit it
- * to the window on a buffer swap.
- */
-BOOL wmCreateBackingStore(WMesaFramebuffer pwfb, long lxSize, long lySize)
-{
-    HDC          hdc = pwfb->hDC;
-    BITMAPINFO   bmi;
-    LPBITMAPINFO pbmi = &bmi;
-    HDC          hic;
-
-    pbmi->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-    pbmi->bmiHeader.biWidth = lxSize;
-    pbmi->bmiHeader.biHeight= -lySize;
-    pbmi->bmiHeader.biPlanes = 1;
-    pbmi->bmiHeader.biBitCount = pwfb->cColorBits;
-    pbmi->bmiHeader.biCompression = BI_RGB;
-    pbmi->bmiHeader.biSizeImage = 0;
-    pbmi->bmiHeader.biXPelsPerMeter = 0;
-    pbmi->bmiHeader.biYPelsPerMeter = 0;
-    pbmi->bmiHeader.biClrUsed = 0;
-    pbmi->bmiHeader.biClrImportant = 0;
-    
-    hic = CreateIC("display", NULL, NULL, NULL);
-    pwfb->dib_hDC = CreateCompatibleDC(hic);
-    
-    pwfb->hbmDIB = CreateDIBSection(hic,
-				   pbmi,
-				   DIB_RGB_COLORS,
-				   (void **)&(pwfb->pbPixels),
-				   0,
-				   0);
-    pwfb->hOldBitmap = SelectObject(pwfb->dib_hDC, pwfb->hbmDIB);
-    
-    DeleteDC(hic);
-
-    wmSetPixelFormat(pwfb, pwfb->hDC);
-    return TRUE;
-}
-
 /**
  * Create a new WMesaFramebuffer object which will correspond to the
  * given HDC (Window handle).
@@ -200,10 +158,6 @@ wmesa_new_framebuffer(HDC hdc, GLvisual *visual, GLuint width, GLuint height)
                                    (void *) pwfb);
 
         pwfb->cColorBits = GetDeviceCaps(hdc, BITSPIXEL);
-
-#if 0
-	wmCreateBackingStore(pwfb, width, height);
-#endif
 
         pwfb->hDC = hdc;
         /* insert at head of list */
@@ -265,16 +219,6 @@ static WMesaContext wmesa_context(const GLcontext *ctx)
 {
     return (WMesaContext) ctx;
 }
-
-static wmDeleteBackingStore(WMesaFramebuffer pwfb)
-{
-    if (pwfb->hbmDIB) {
-	SelectObject(pwfb->dib_hDC, pwfb->hOldBitmap);
-	DeleteDC(pwfb->dib_hDC);
-	DeleteObject(pwfb->hbmDIB);
-    }
-}
-
 
 /**
  * Find the width and height of the window named by hdc.
@@ -383,11 +327,6 @@ wm_flush_frontbuffer(struct pipe_winsys *pws,
    struct wm_buffer *wm_buf;
     BITMAPINFO bmi, *pbmi;
 
-#if 0
-    if (pwfb)
-	BitBlt(pwfb->hDC, 0, 0, pwfb->stfb->Base.Width, pwfb->stfb->Base.Height,
-	       pwfb->dib_hDC, 0, 0, SRCCOPY);
-#else
     wm_buf = wm_buffer(surf->buffer);
 
     pbmi = &bmi;
@@ -405,7 +344,6 @@ wm_flush_frontbuffer(struct pipe_winsys *pws,
     pbmi->bmiHeader.biClrImportant = 0;
 
     StretchDIBits(pwfb->hDC, 0, 0, pwfb->stfb->Base.Width, pwfb->stfb->Base.Height, 0, 0, pwfb->stfb->Base.Width, pwfb->stfb->Base.Height, wm_buf->data, pbmi, 0, SRCCOPY);
-#endif
 }
 
 
@@ -706,9 +644,6 @@ void WMesaDestroyContext( WMesaContext pwc )
     /* clean up frame buffer resources */
     pwfb = wmesa_lookup_framebuffer(pwc->hDC);
     if (pwfb) {
-#if 0
-	wmDeleteBackingStore(pwfb);
-#endif
 	wmesa_free_framebuffer(pwc->hDC);
     }
 
@@ -779,10 +714,6 @@ void WMesaSwapBuffers( HDC hdc )
      */
     st_notify_swapbuffers(pwfb->stfb);
 
-#if 0
-    BitBlt(pwfb->hDC, 0, 0, pwfb->stfb->Base.Width, pwfb->stfb->Base.Height,
-	       pwfb->dib_hDC, 0, 0, SRCCOPY);
-#else
     surf = st_get_framebuffer_surface(pwfb->stfb, ST_SURFACE_BACK_LEFT);
     wm_buf = wm_buffer(surf->buffer);
 
@@ -809,7 +740,6 @@ void WMesaSwapBuffers( HDC hdc )
 
 	st_resize_framebuffer(pwfb->stfb, width, height);
     }
-#endif
 }
 
 /* This is hopefully a temporary hack to define some needed dispatch

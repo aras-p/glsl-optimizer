@@ -1,5 +1,4 @@
-
-TOP = ../../../../..
+TOP = ../../../../../..
 include $(TOP)/configs/current
 
 LIBNAME = i915_dri.so
@@ -7,7 +6,7 @@ LIBNAME_EGL = egl_i915_dri.so
 
 PIPE_DRIVERS = \
 	$(TOP)/src/gallium/drivers/softpipe/libsoftpipe.a \
-	$(TOP)/src/gallium/winsys/common/intel_drm/libinteldrm.a \
+	../common/libinteldrm.a \
 	$(TOP)/src/gallium/drivers/i915simple/libi915simple.a
 
 
@@ -24,10 +23,10 @@ C_SOURCES = \
 
 ASM_SOURCES = 
 
-DRIVER_DEFINES = -I$(TOP)/src/mesa/drivers/dri/intel $(shell pkg-config libdrm --atleast-version=2.3.1 \
+DRIVER_DEFINES = -I../common $(shell pkg-config libdrm --atleast-version=2.3.1 \
 				&& echo "-DDRM_VBLANK_FLIP=DRM_VBLANK_FLIP")
 
-include ../Makefile.template
+include ../../Makefile.template
 
 #intel_tex_layout.o: $(TOP)/src/mesa/drivers/dri/intel/intel_tex_layout.c
 

@@ -28,31 +28,60 @@
 #ifndef INTEL_CONTEXT_H
 #define INTEL_CONTEXT_H
 
+#include <stdint.h>
+#include "drm.h"
+
 #include "pipe/p_debug.h"
-#include "intel_drm/intel_be_context.h"
+
+#include "intel_screen.h"
+#include "i915_drm.h"
+
+#include "intel_be_context.h"
 
 
+struct pipe_context;
+struct intel_context;
+struct _DriBufferObject;
 struct st_context;
-struct egl_drm_device;
-struct egl_drm_context;
-struct egl_drm_frontbuffer;
 
+
+#define INTEL_MAX_FIXUP 64
 
 /**
  * Intel rendering context, contains a state tracker and intel-specific info.
  */
 struct intel_context
 {
-	struct intel_be_context base;
+   struct intel_be_context base;
+   struct st_context *st;
 
-	struct st_context *st;
+   struct _DriFenceObject *last_swap_fence;
+   struct _DriFenceObject *first_swap_fence;
 
-	struct intel_device *intel_device;
+//   struct intel_batchbuffer *batch;
 
-	/* new egl stuff */
-	struct egl_drm_device *egl_device;
-	struct egl_drm_context *egl_context;
-	struct egl_drm_drawable *egl_drawable;
+   boolean locked;
+   char *prevLockFile;
+   int prevLockLine;
+
+   uint irqsEmitted;
+   drm_i915_irq_wait_t iw;
+
+   drm_context_t hHWContext;
+   drmLock *driHwLock;
+   int driFd;
+
+   __DRIdrawablePrivate *driDrawable;
+   __DRIscreenPrivate *driScreen;
+   struct intel_screen *intelScreen;
+   drmI830Sarea *sarea;
+
+   uint lastStamp;
+
+   /**
+    * Configuration cache
+    */
+   driOptionCache optionCache;
 };
 
 
@@ -62,11 +91,10 @@ struct intel_context
  */
 struct intel_framebuffer
 {
-	struct st_framebuffer *stfb;
+   struct st_framebuffer *stfb;
 
-	struct intel_device *device;
-	struct _DriBufferObject *front_buffer;
-	struct egl_drm_frontbuffer *front;
+   /* other fields TBD */
+   int other;
 };
 
 
@@ -102,6 +130,7 @@ extern int __intel_debug;
 #endif
 
 
+
 #define PCI_CHIP_845_G			0x2562
 #define PCI_CHIP_I830_M			0x3577
 #define PCI_CHIP_I855_GM		0x3582
@@ -114,5 +143,22 @@ extern int __intel_debug;
 #define PCI_CHIP_G33_G			0x29C2
 #define PCI_CHIP_Q35_G			0x29B2
 #define PCI_CHIP_Q33_G			0x29D2
+
+
+/** Cast wrapper */
+static INLINE struct intel_context *
+intel_context(__DRIcontextPrivate *driContextPriv)
+{
+   return (struct intel_context *) driContextPriv->driverPrivate;
+}
+
+
+/** Cast wrapper */
+static INLINE struct intel_framebuffer *
+intel_framebuffer(__DRIdrawablePrivate * driDrawPriv)
+{
+   return (struct intel_framebuffer *) driDrawPriv->driverPrivate;
+}
+
 
 #endif

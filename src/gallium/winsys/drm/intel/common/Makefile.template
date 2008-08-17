@@ -39,7 +39,7 @@ INCLUDES = \
 default: depend symlinks $(LIBNAME)
 
 
-$(LIBNAME): $(OBJECTS) Makefile $(TOP)/src/gallium/winsys/common/Makefile.template
+$(LIBNAME): $(OBJECTS) Makefile Makefile.template
 	$(TOP)/bin/mklib -o $@ -static $(OBJECTS) $(DRIVER_LIBS)
 
 

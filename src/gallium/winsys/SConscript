@@ -1,8 +1,8 @@
 Import('*')
 
-if env['dri']:
+if env['drm']:
 	SConscript([
-		'dri/SConscript',
+		'drm/SConscript',
 	])
 	
 if 'xlib' in env['winsys']:

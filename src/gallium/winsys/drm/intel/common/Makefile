@@ -1,4 +1,4 @@
-TOP = ../../../../..
+TOP = ../../../../../..
 include $(TOP)/configs/current
 
 LIBNAME = inteldrm
@@ -14,7 +14,7 @@ C_SOURCES = \
 	ws_dri_slabpool.c
 
 
-include ../Makefile.template
+include ./Makefile.template
 
 DRIVER_DEFINES = $(shell pkg-config libdrm --cflags \
                 && pkg-config libdrm --atleast-version=2.3.1 \

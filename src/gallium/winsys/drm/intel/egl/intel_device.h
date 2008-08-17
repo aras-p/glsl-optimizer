@@ -28,7 +28,7 @@
 #ifndef _INTEL_SCREEN_H_
 #define _INTEL_SCREEN_H_
 
-#include "intel_drm/intel_be_device.h"
+#include "intel_be_device.h"
 
 #include "pipe/p_compiler.h"
 

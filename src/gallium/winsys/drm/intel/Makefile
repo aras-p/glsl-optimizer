@@ -1,8 +1,8 @@
-TOP = ../../../..
+TOP = ../../../../..
 include $(TOP)/configs/current
 
 
-SUBDIRS = $(GALLIUM_WINSYS_COMMON_DIRS)
+SUBDIRS = common dri egl
 
 
 default: subdirs
@@ -18,3 +18,8 @@ subdirs:
 
 clean:
 	rm -f `find . -name \*.[oa]`
+	rm -f `find . -name depend`
+
+
+# Dummy install target
+install:

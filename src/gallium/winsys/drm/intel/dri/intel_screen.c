@@ -35,7 +35,7 @@
 #include "intel_swapbuffers.h"
 
 #include "i830_dri.h"
-#include "intel_drm/ws_dri_bufpool.h"
+#include "ws_dri_bufpool.h"
 
 #include "pipe/p_context.h"
 #include "pipe/p_screen.h"

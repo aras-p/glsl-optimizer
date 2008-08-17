@@ -367,7 +367,7 @@ visual_from_config(_EGLConfig *conf)
 	__GLcontextModes *visual;
 	(void)conf;
 
-	visual = _gl_context_modes_create(1, sizeof(*visual));
+	visual = _egl_context_modes_create(1, sizeof(*visual));
 	visual->redBits = 8;
 	visual->greenBits = 8;
 	visual->blueBits = 8;

@@ -1,7 +1,7 @@
 #ifndef INTEL_BATCHBUFFER_H
 #define INTEL_BATCHBUFFER_H
 
-#include "intel_drm/intel_be_batchbuffer.h"
+#include "intel_be_batchbuffer.h"
 
 /*
  * Need to redefine the BATCH defines
