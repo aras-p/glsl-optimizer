@@ -317,6 +317,14 @@ static GLboolean is_native_swizzle(GLuint opcode, struct prog_src_register reg)
 			return GL_FALSE;
 
 		return GL_TRUE;
+	} else if (opcode == OPCODE_DDX || opcode == OPCODE_DDY) {
+		/* DDX/MDH and DDY/MDV explicitly ignore incoming swizzles;
+		 * if it doesn't fit perfectly into a .xyzw case... */
+		if (reg.Swizzle == SWIZZLE_NOOP && !reg.Abs
+				&& !reg.NegateBase && !reg.NegateAbs)
+			return GL_TRUE;
+
+		return GL_FALSE;
 	} else {
 		/* ALU instructions support almost everything */
 		if (reg.Abs)
@@ -439,13 +447,14 @@ void r500TranslateFragmentShader(r300ContextPtr r300,
 
 		insert_WPOS_trailer(&compiler);
 
-		struct radeon_program_transformation transformations[3] = {
+		struct radeon_program_transformation transformations[] = {
 			{ &transform_TEX, &compiler },
 			{ &radeonTransformALU, 0 },
+			{ &radeonTransformDeriv, 0 },
 			{ &radeonTransformTrigScale, 0 }
 		};
 		radeonLocalTransform(r300->radeon.glCtx, compiler.program,
-			3, transformations);
+			4, transformations);
 
 		if (RADEON_DEBUG & DEBUG_PIXEL) {
 			_mesa_printf("Compiler: after native rewrite:\n");

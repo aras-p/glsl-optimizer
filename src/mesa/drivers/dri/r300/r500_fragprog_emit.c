@@ -89,6 +89,8 @@ static GLuint translate_rgb_op(GLuint opcode)
 {
 	switch(opcode) {
 	case OPCODE_CMP: return R500_ALU_RGBA_OP_CMP;
+	case OPCODE_DDX: return R500_ALU_RGBA_OP_MDH;
+	case OPCODE_DDY: return R500_ALU_RGBA_OP_MDV;
 	case OPCODE_DP3: return R500_ALU_RGBA_OP_DP3;
 	case OPCODE_DP4: return R500_ALU_RGBA_OP_DP4;
 	case OPCODE_FRC: return R500_ALU_RGBA_OP_FRC;
@@ -109,6 +111,8 @@ static GLuint translate_alpha_op(GLuint opcode)
 	switch(opcode) {
 	case OPCODE_CMP: return R500_ALPHA_OP_CMP;
 	case OPCODE_COS: return R500_ALPHA_OP_COS;
+	case OPCODE_DDX: return R500_ALPHA_OP_MDH;
+	case OPCODE_DDY: return R500_ALPHA_OP_MDV;
 	case OPCODE_DP3: return R500_ALPHA_OP_DP;
 	case OPCODE_DP4: return R500_ALPHA_OP_DP;
 	case OPCODE_EX2: return R500_ALPHA_OP_EX2;

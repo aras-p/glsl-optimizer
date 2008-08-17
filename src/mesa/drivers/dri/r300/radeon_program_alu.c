@@ -629,3 +629,30 @@ GLboolean radeonTransformTrigScale(struct radeon_transform_context* t,
 
 	return GL_TRUE;
 }
+
+/**
+ * Rewrite DDX/DDY instructions to properly work with r5xx shaders.
+ * The r5xx MDH/MDV instruction provides per-quad partial derivatives.
+ * It takes the form A*B+C. A and C are set by setting src0. B should be -1.
+ *
+ * @warning This explicitly changes the form of DDX and DDY!
+ */
+
+GLboolean radeonTransformDeriv(struct radeon_transform_context* t,
+	struct prog_instruction* inst,
+	void* unused)
+{
+	if (inst->Opcode != OPCODE_DDX && inst->Opcode != OPCODE_DDY)
+		return GL_FALSE;
+
+	struct prog_src_register B = inst->SrcReg[1];
+
+	B.Swizzle = MAKE_SWIZZLE4(SWIZZLE_ONE, SWIZZLE_ONE,
+						SWIZZLE_ONE, SWIZZLE_ONE);
+	B.NegateBase = NEGATE_XYZW;
+
+	emit2(t->Program, inst->Opcode, inst->SaturateMode, inst->DstReg,
+		inst->SrcReg[0], B);
+
+	return GL_TRUE;
+}

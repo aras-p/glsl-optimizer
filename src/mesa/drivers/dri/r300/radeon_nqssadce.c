@@ -218,6 +218,8 @@ static void process_instruction(struct nqssadce_state* s)
 	 * might change the instruction stream under us, so we have
 	 * to be careful with the inst pointer. */
 	switch (inst->Opcode) {
+	case OPCODE_DDX:
+	case OPCODE_DDY:
 	case OPCODE_FRC:
 	case OPCODE_MOV:
 		inst = track_used_srcreg(s, inst, 0, inst->DstReg.WriteMask);
