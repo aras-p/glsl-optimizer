@@ -66,7 +66,67 @@ egl_drm_create_device(int drmFD)
 	return device;
 }
 
-__GLcontextModes* _gl_context_modes_create( unsigned count, size_t minimum_size );
+static void
+_egl_context_modes_destroy(__GLcontextModes *modes)
+{
+   _eglLog(_EGL_DEBUG, "%s", __FUNCTION__);
+
+   while (modes) {
+      __GLcontextModes * const next = modes->next;
+      free(modes);
+      modes = next;
+   }
+}
+/**
+ * Create a linked list of 'count' GLcontextModes.
+ * These are used during the client/server visual negotiation phase,
+ * then discarded.
+ */
+static __GLcontextModes *
+_egl_context_modes_create(unsigned count, size_t minimum_size)
+{
+   /* This code copied from libGLX, and modified */
+   const size_t size = (minimum_size > sizeof(__GLcontextModes))
+       ? minimum_size : sizeof(__GLcontextModes);
+   __GLcontextModes * head = NULL;
+   __GLcontextModes ** next;
+   unsigned   i;
+
+   _eglLog(_EGL_DEBUG, "%s %d %d", __FUNCTION__, count, minimum_size);
+
+   next = & head;
+   for (i = 0 ; i < count ; i++) {
+      *next = (__GLcontextModes *) calloc(1, size);
+      if (*next == NULL) {
+	 _egl_context_modes_destroy(head);
+	 head = NULL;
+	 break;
+      }
+      
+      (*next)->doubleBufferMode = 1;
+      (*next)->visualID = GLX_DONT_CARE;
+      (*next)->visualType = GLX_DONT_CARE;
+      (*next)->visualRating = GLX_NONE;
+      (*next)->transparentPixel = GLX_NONE;
+      (*next)->transparentRed = GLX_DONT_CARE;
+      (*next)->transparentGreen = GLX_DONT_CARE;
+      (*next)->transparentBlue = GLX_DONT_CARE;
+      (*next)->transparentAlpha = GLX_DONT_CARE;
+      (*next)->transparentIndex = GLX_DONT_CARE;
+      (*next)->xRenderable = GLX_DONT_CARE;
+      (*next)->fbconfigID = GLX_DONT_CARE;
+      (*next)->swapMethod = GLX_SWAP_UNDEFINED_OML;
+      (*next)->bindToTextureRgb = GLX_DONT_CARE;
+      (*next)->bindToTextureRgba = GLX_DONT_CARE;
+      (*next)->bindToMipmapTexture = GLX_DONT_CARE;
+      (*next)->bindToTextureTargets = 0;
+      (*next)->yInverted = GLX_DONT_CARE;
+
+      next = & ((*next)->next);
+   }
+
+   return head;
+}
 
 struct drm_screen;
 
@@ -102,7 +162,6 @@ struct drm_screen
 
 	/* currently only support one connector */
 	drmModeConnectorPtr connector;
-	uint32_t connectorID;
 
 	/* Has this screen been shown */
 	int shown;
@@ -190,7 +249,6 @@ drm_initialize(_EGLDriver *drv, EGLDisplay dpy, EGLint *major, EGLint *minor)
 
 		screen = malloc(sizeof(struct drm_screen));
 		memset(screen, 0, sizeof(*screen));
-		screen->connectorID = res->connectors[i];
 		screen->connector = connector;
 		_eglInitScreen(&screen->base);
 		_eglAddScreen(disp, &screen->base);
@@ -225,17 +283,20 @@ static void
 drm_takedown_shown_screen(_EGLDriver *drv, struct drm_screen *screen)
 {
 	struct drm_driver *drm_drv = (struct drm_driver *)drv;
+	unsigned int i;
 
 	intel_bind_frontbuffer(screen->surf->drawable, NULL);
 	screen->surf = NULL;
 
-	drmModeSetCrtc(
-		drm_drv->device->drmFD,
-		drm_drv->res->crtcs[1],
-		0, // FD
-		0, 0,
-		NULL, 0, // List of output ids
-		NULL);
+	for (i = 0; i < drm_drv->res->count_crtcs; i++) {
+		drmModeSetCrtc(
+			drm_drv->device->drmFD,
+			drm_drv->res->crtcs[i],
+			0, // FD
+			0, 0,
+			NULL, 0, // List of output ids
+			NULL);
+	}
 
 	drmModeRmFB(drm_drv->device->drmFD, screen->fbID);
 	drmModeFreeFB(screen->fb);
@@ -560,9 +621,10 @@ drm_show_screen_surface_mesa(_EGLDriver *drv, EGLDisplay dpy,
 	struct drm_surface *surf = lookup_drm_surface(surface);
 	struct drm_screen *scrn = lookup_drm_screen(dpy, screen);
 	_EGLMode *mode = _eglLookupMode(dpy, m);
-	size_t pitch = 2048 * 4;
+	size_t pitch = mode->Width * 4;
 	size_t size = mode->Height * pitch;
 	int ret;
+	unsigned int i,j,k;
 
 	if (scrn->shown)
 		drm_takedown_shown_screen(drv, scrn);
@@ -596,14 +658,25 @@ drm_show_screen_surface_mesa(_EGLDriver *drv, EGLDisplay dpy,
 	if (!scrn->mode)
 		goto err_fb;
 
-	ret = drmModeSetCrtc(
-			drm_drv->device->drmFD,
-			drm_drv->res->crtcs[1],
-			scrn->fbID,
-			0, 0,
-			&scrn->connectorID, 1,
-			scrn->mode);
-
+	for (j = 0; j < drm_drv->res->count_connectors; j++) {
+		drmModeConnector *con = drmModeGetConnector(drm_drv->device->drmFD, drm_drv->res->connectors[j]);
+		for (k = 0; k < con->count_encoders; k++) {
+			drmModeEncoder *enc = drmModeGetEncoder(drm_drv->device->drmFD, con->encoders[k]);
+			for (i = 0; i < drm_drv->res->count_crtcs; i++) {
+				if (enc->possible_crtcs & (1<<i)) {
+					ret = drmModeSetCrtc(
+						drm_drv->device->drmFD,
+						drm_drv->res->crtcs[i],
+						scrn->fbID,
+						0, 0,
+						&drm_drv->res->connectors[j], 1,
+						scrn->mode);	
+					/* skip the other crtcs now */
+					i = drm_drv->res->count_crtcs;
+				}
+			}
+		}
+	}
 
 	scrn->front.handle = scrn->buffer.handle;
 	scrn->front.pitch = pitch;
