@@ -5,10 +5,22 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#define GL_GLEXT_PROTOTYPES
 #include <GL/glut.h>
+
+#ifndef WIN32
 #include <unistd.h>
 #include <signal.h>
+#define GL_GLEXT_PROTOTYPES
+#else
+#include <GL/glext.h>
+#endif
+
+#ifdef WIN32
+static PFNGLBINDPROGRAMARBPROC glBindProgramARB = NULL;
+static PFNGLGENPROGRAMSARBPROC glGenProgramsARB = NULL;
+static PFNGLPROGRAMSTRINGARBPROC glProgramStringARB = NULL;
+static PFNGLISPROGRAMARBPROC glIsProgramARB = NULL;
+#endif
 
 static const char *filename = NULL;
 static GLuint nr_steps = 4;
@@ -25,6 +37,9 @@ static void usage( char *name )
 
 unsigned show_fps = 0;
 unsigned int frame_cnt = 0;
+
+#ifndef WIN32
+
 void alarmhandler(int);
 
 void alarmhandler (int sig)
@@ -38,6 +53,8 @@ void alarmhandler (int sig)
    signal(SIGALRM, alarmhandler);
    alarm(5);
 }
+
+#endif
 
 static void args(int argc, char *argv[])
 {
@@ -83,7 +100,7 @@ static void Init( void )
       exit(1);
    }
 
-   sz = fread(buf, 1, sizeof(buf), f);
+   sz = (GLuint) fread(buf, 1, sizeof(buf), f);
    if (!feof(f)) {
       fprintf(stderr, "file too long\n");
       exit(1);
@@ -91,7 +108,14 @@ static void Init( void )
 
    fprintf(stderr, "%.*s\n", sz, buf);
 
-   glEnable(GL_VERTEX_PROGRAM_NV);
+#ifdef WIN32
+   glBindProgramARB = (PFNGLBINDPROGRAMARBPROC) wglGetProcAddress( "glBindProgramARB" );
+   glGenProgramsARB = (PFNGLGENPROGRAMSARBPROC) wglGetProcAddress( "glGenProgramsARB" );
+   glProgramStringARB = (PFNGLPROGRAMSTRINGARBPROC) wglGetProcAddress( "glProgramStringARB" );
+   glIsProgramARB = (PFNGLISPROGRAMARBPROC) wglGetProcAddress( "glIsProgramARB" );
+#endif
+
+   glEnable(GL_VERTEX_PROGRAM_ARB);
 
    glGenProgramsARB(1, &prognum);
 
@@ -236,10 +260,12 @@ int main( int argc, char *argv[] )
    glutDisplayFunc( Display );
    args( argc, argv );
    Init();
+#ifndef WIN32
    if (show_fps) {
       signal(SIGALRM, alarmhandler);
       alarm(5);
    }
+#endif
    glutMainLoop();
    return 0;
 }
