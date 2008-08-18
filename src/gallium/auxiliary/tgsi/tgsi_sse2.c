@@ -62,6 +62,7 @@
 #define CHAN_W 3
 
 #define TEMP_R0   TGSI_EXEC_TEMP_R0
+#define TEMP_ADDR TGSI_EXEC_TEMP_ADDR
 
 /**
  * X86 utility functions.
@@ -215,19 +216,61 @@ emit_ret(
 static void
 emit_const(
    struct x86_function *func,
-   unsigned xmm,
-   unsigned vec,
-   unsigned chan )
+   uint xmm,
+   int vec,
+   uint chan,
+   uint indirect,
+   uint indirectFile,
+   int indirectIndex )
 {
-   sse_movss(
-      func,
-      make_xmm( xmm ),
-      get_const( vec, chan ) );
-   sse_shufps(
-      func,
-      make_xmm( xmm ),
-      make_xmm( xmm ),
-      SHUF( 0, 0, 0, 0 ) );
+   if (indirect) {
+      struct x86_reg r0 = get_input_base();
+      struct x86_reg r1 = get_output_base();
+      uint i;
+
+      assert( indirectFile == TGSI_FILE_ADDRESS );
+      assert( indirectIndex == 0 );
+
+      x86_push( func, r0 );
+      x86_push( func, r1 );
+
+      for (i = 0; i < QUAD_SIZE; i++) {
+         x86_lea( func, r0, get_const( vec, chan ) );
+         x86_mov( func, r1, x86_make_disp( get_temp( TEMP_ADDR, CHAN_X ), i * 4 ) );
+
+         /* Quick hack to multiply by 16 -- need to add SHL to rtasm.
+          */
+         x86_add( func, r1, r1 );
+         x86_add( func, r1, r1 );
+         x86_add( func, r1, r1 );
+         x86_add( func, r1, r1 );
+
+         x86_add( func, r0, r1 );
+         x86_mov( func, r1, x86_deref( r0 ) );
+         x86_mov( func, x86_make_disp( get_temp( TEMP_R0, CHAN_X ), i * 4 ), r1 );
+      }
+
+      x86_pop( func, r1 );
+      x86_pop( func, r0 );
+
+      sse_movaps(
+         func,
+         make_xmm( xmm ),
+         get_temp( TEMP_R0, CHAN_X ) );
+   }
+   else {
+      assert( vec >= 0 );
+
+      sse_movss(
+         func,
+         make_xmm( xmm ),
+         get_const( vec, chan ) );
+      sse_shufps(
+         func,
+         make_xmm( xmm ),
+         make_xmm( xmm ),
+         SHUF( 0, 0, 0, 0 ) );
+   }
 }
 
 static void
@@ -369,10 +412,12 @@ emit_addrs(
    unsigned vec,
    unsigned chan )
 {
+   assert( vec == 0 );
+
    emit_temps(
       func,
       xmm,
-      vec + TGSI_EXEC_NUM_TEMPS,
+      vec + TGSI_EXEC_TEMP_ADDR,
       chan );
 }
 
@@ -855,18 +900,21 @@ emit_fetch(
 {
    unsigned swizzle = tgsi_util_get_full_src_register_extswizzle( reg, chan_index );
 
-   switch( swizzle ) {
+   switch (swizzle) {
    case TGSI_EXTSWIZZLE_X:
    case TGSI_EXTSWIZZLE_Y:
    case TGSI_EXTSWIZZLE_Z:
    case TGSI_EXTSWIZZLE_W:
-      switch( reg->SrcRegister.File ) {
+      switch (reg->SrcRegister.File) {
       case TGSI_FILE_CONSTANT:
          emit_const(
             func,
             xmm,
             reg->SrcRegister.Index,
-            swizzle );
+            swizzle,
+            reg->SrcRegister.Indirect,
+            reg->SrcRegisterInd.File,
+            reg->SrcRegisterInd.Index );
          break;
 
       case TGSI_FILE_IMMEDIATE:
@@ -1174,16 +1222,11 @@ emit_instruction(
 
    switch (inst->Instruction.Opcode) {
    case TGSI_OPCODE_ARL:
-#if 0
-      /* XXX this isn't working properly (see glean vertProg1 test) */
       FOR_EACH_DST0_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH( func, *inst, 0, 0, chan_index );
          emit_f2it( func, 0 );
          STORE( func, *inst, 0, 0, chan_index );
       }
-#else
-      return 0;
-#endif
       break;
 
    case TGSI_OPCODE_MOV:

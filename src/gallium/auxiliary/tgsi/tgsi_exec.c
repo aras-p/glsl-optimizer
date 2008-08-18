@@ -1688,9 +1688,9 @@ exec_instruction(
    switch (inst->Instruction.Opcode) {
    case TGSI_OPCODE_ARL:
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
-	 FETCH( &r[0], 0, chan_index );
-	 micro_f2it( &r[0], &r[0] );
-	 STORE( &r[0], 0, chan_index );
+         FETCH( &r[0], 0, chan_index );
+         micro_f2it( &r[0], &r[0] );
+         STORE( &r[0], 0, chan_index );
       }
       break;
 
