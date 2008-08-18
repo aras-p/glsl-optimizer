@@ -63,6 +63,11 @@
 #define TILE_BOTTOM_LEFT  2
 #define TILE_BOTTOM_RIGHT 3
 
+#define CHAN_X  0
+#define CHAN_Y  1
+#define CHAN_Z  2
+#define CHAN_W  3
+
 /*
  * Shorthand locations of various utility registers (_I = Index, _C = Channel)
  */
@@ -96,9 +101,6 @@
 #define TEMP_HALF_C        TGSI_EXEC_TEMP_HALF_C
 #define TEMP_R0            TGSI_EXEC_TEMP_R0
 
-#define FOR_EACH_CHANNEL(CHAN)\
-   for (CHAN = 0; CHAN < 4; CHAN++)
-
 #define IS_CHANNEL_ENABLED(INST, CHAN)\
    ((INST).FullDstRegisters[0].DstRegister.WriteMask & (1 << (CHAN)))
 
@@ -106,25 +108,17 @@
    ((INST).FullDstRegisters[1].DstRegister.WriteMask & (1 << (CHAN)))
 
 #define FOR_EACH_ENABLED_CHANNEL(INST, CHAN)\
-   FOR_EACH_CHANNEL( CHAN )\
+   for (CHAN = 0; CHAN < NUM_CHANNELS; CHAN++)\
       if (IS_CHANNEL_ENABLED( INST, CHAN ))
 
 #define FOR_EACH_ENABLED_CHANNEL2(INST, CHAN)\
-   FOR_EACH_CHANNEL( CHAN )\
+   for (CHAN = 0; CHAN < NUM_CHANNELS; CHAN++)\
       if (IS_CHANNEL_ENABLED2( INST, CHAN ))
 
 
 /** The execution mask depends on the conditional mask and the loop mask */
 #define UPDATE_EXEC_MASK(MACH) \
       MACH->ExecMask = MACH->CondMask & MACH->LoopMask & MACH->ContMask & MACH->FuncMask
-
-
-#define CHAN_X  0
-#define CHAN_Y  1
-#define CHAN_Z  2
-#define CHAN_W  3
-
-
 
 /**
  * Initialize machine state by expanding tokens to full instructions,
@@ -1128,7 +1122,7 @@ store_dest(
 {
    union tgsi_exec_channel *dst;
 
-   switch( reg->DstRegister.File ) {
+   switch (reg->DstRegister.File) {
    case TGSI_FILE_NULL:
       return;
 
@@ -1138,7 +1132,7 @@ store_dest(
       break;
 
    case TGSI_FILE_TEMPORARY:
-      assert(reg->DstRegister.Index < TGSI_EXEC_NUM_TEMPS);
+      assert( reg->DstRegister.Index < TGSI_EXEC_NUM_TEMPS );
       dst = &mach->Temps[reg->DstRegister.Index].xyzw[chan_index];
       break;
 
@@ -1151,8 +1145,7 @@ store_dest(
       return;
    }
 
-   switch (inst->Instruction.Saturate)
-   {
+   switch (inst->Instruction.Saturate) {
    case TGSI_SAT_NONE:
       if (mach->ExecMask & 0x1)
          dst->i[0] = chan->i[0];
@@ -1166,8 +1159,8 @@ store_dest(
 
    case TGSI_SAT_ZERO_ONE:
       /* XXX need to obey ExecMask here */
-      micro_max(dst, chan, &mach->Temps[TEMP_0_I].xyzw[TEMP_0_C]);
-      micro_min(dst, dst, &mach->Temps[TEMP_1_I].xyzw[TEMP_1_C]);
+      micro_max( dst, chan, &mach->Temps[TEMP_0_I].xyzw[TEMP_0_C] );
+      micro_min( dst, dst, &mach->Temps[TEMP_1_I].xyzw[TEMP_1_C] );
       break;
 
    case TGSI_SAT_MINUS_PLUS_ONE:
