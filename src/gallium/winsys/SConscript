@@ -1,6 +1,6 @@
 Import('*')
 
-if env['drm']:
+if env['dri']:
 	SConscript([
 		'drm/SConscript',
 	])
