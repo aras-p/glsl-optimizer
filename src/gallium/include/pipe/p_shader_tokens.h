@@ -469,12 +469,11 @@ struct tgsi_instruction_ext
 #define TGSI_CC_GT      0
 #define TGSI_CC_EQ      1
 #define TGSI_CC_LT      2
-#define TGSI_CC_UN      3
-#define TGSI_CC_GE      4
-#define TGSI_CC_LE      5
-#define TGSI_CC_NE      6
-#define TGSI_CC_TR      7
-#define TGSI_CC_FL      8
+#define TGSI_CC_GE      3
+#define TGSI_CC_LE      4
+#define TGSI_CC_NE      5
+#define TGSI_CC_TR      6
+#define TGSI_CC_FL      7
 
 #define TGSI_SWIZZLE_X      0
 #define TGSI_SWIZZLE_Y      1
