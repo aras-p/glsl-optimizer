@@ -526,6 +526,12 @@ nv30_fragprog_parse_instruction(struct nv30_fpc *fpc,
 	case TGSI_OPCODE_MUL:
 		arith(fpc, sat, MUL, dst, mask, src[0], src[1], none);
 		break;
+	case TGSI_OPCODE_NOISE1:
+	case TGSI_OPCODE_NOISE2:
+	case TGSI_OPCODE_NOISE3:
+	case TGSI_OPCODE_NOISE4:
+		arith(fpc, sat, SFL, dst, mask, none, none, none);
+		break;
 	case TGSI_OPCODE_POW:
 		arith(fpc, sat, POW, dst, mask, src[0], src[1], none);
 		break;
@@ -556,6 +562,9 @@ nv30_fragprog_parse_instruction(struct nv30_fpc *fpc,
 		break;
 	case TGSI_OPCODE_SGE:
 		arith(fpc, sat, SGE, dst, mask, src[0], src[1], none);
+		break;
+	case TGSI_OPCODE_SGT:
+		arith(fpc, sat, SGT, dst, mask, src[0], src[1], none);
 		break;
 	case TGSI_OPCODE_SLT:
 		arith(fpc, sat, SLT, dst, mask, src[0], src[1], none);
@@ -729,6 +738,8 @@ nv30_fragprog_translate(struct nv30_context *nv30,
 {
 	struct tgsi_parse_context parse;
 	struct nv30_fpc *fpc = NULL;
+
+	tgsi_dump(fp->pipe.tokens,0);
 
 	fpc = CALLOC(1, sizeof(struct nv30_fpc));
 	if (!fpc)

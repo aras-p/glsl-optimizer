@@ -4,6 +4,7 @@
 
 #include "pipe/p_shader_tokens.h"
 #include "tgsi/tgsi_parse.h"
+#include "tgsi/tgsi_dump.h"
 
 #include "nv30_context.h"
 #include "nv30_state.h"
@@ -457,6 +458,9 @@ nv30_vertprog_parse_instruction(struct nv30_vpc *vpc,
 	case TGSI_OPCODE_SGE:
 		arith(vpc, 0, OP_SGE, dst, mask, src[0], src[1], none);
 		break;
+	case TGSI_OPCODE_SGT:
+		arith(vpc, 0, OP_SGT, dst, mask, src[0], src[1], none);
+		break;
 	case TGSI_OPCODE_SLT:
 		arith(vpc, 0, OP_SLT, dst, mask, src[0], src[1], none);
 		break;
@@ -569,6 +573,8 @@ nv30_vertprog_translate(struct nv30_context *nv30,
 {
 	struct tgsi_parse_context parse;
 	struct nv30_vpc *vpc = NULL;
+
+	tgsi_dump(vp->pipe.tokens,0);
 
 	vpc = CALLOC(1, sizeof(struct nv30_vpc));
 	if (!vpc)
