@@ -1,6 +1,6 @@
 /**************************************************************************
  * 
- * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2007-2008 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -26,7 +26,7 @@
  **************************************************************************/
 
 /**
- * TGSI interpretor/executor.
+ * TGSI interpreter/executor.
  *
  * Flow control information:
  *
@@ -88,6 +88,8 @@
 #define TEMP_OUTPUT_C      TGSI_EXEC_TEMP_OUTPUT_C
 #define TEMP_PRIMITIVE_I   TGSI_EXEC_TEMP_PRIMITIVE_I
 #define TEMP_PRIMITIVE_C   TGSI_EXEC_TEMP_PRIMITIVE_C
+#define TEMP_CC_I          TGSI_EXEC_TEMP_CC_I
+#define TEMP_CC_C          TGSI_EXEC_TEMP_CC_C
 #define TEMP_3_I           TGSI_EXEC_TEMP_THREE_I
 #define TEMP_3_C           TGSI_EXEC_TEMP_THREE_C
 #define TEMP_HALF_I        TGSI_EXEC_TEMP_HALF_I
@@ -2539,6 +2541,13 @@ tgsi_exec_machine_run( struct tgsi_exec_machine *mach )
       mach->Primitives[0] = 0;
    }
 
+   for (i = 0; i < QUAD_SIZE; i++) {
+      mach->Temps[TEMP_CC_I].xyzw[TEMP_CC_C].u[i] =
+         (TGSI_EXEC_CC_EQ << TGSI_EXEC_CC_X_SHIFT) |
+         (TGSI_EXEC_CC_EQ << TGSI_EXEC_CC_Y_SHIFT) |
+         (TGSI_EXEC_CC_EQ << TGSI_EXEC_CC_Z_SHIFT) |
+         (TGSI_EXEC_CC_EQ << TGSI_EXEC_CC_W_SHIFT);
+   }
 
    /* execute declarations (interpolants) */
    for (i = 0; i < mach->NumDeclarations; i++) {
