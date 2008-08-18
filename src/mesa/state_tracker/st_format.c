@@ -342,6 +342,9 @@ default_depth_format(struct pipe_screen *screen,
 /**
  * Given an OpenGL internalFormat value for a texture or surface, return
  * the best matching PIPE_FORMAT_x, or PIPE_FORMAT_NONE if there's no match.
+ * \param target  one of PIPE_TEXTURE_x
+ * \param tex_usage  either PIPE_TEXTURE_USAGE_RENDER_TARGET
+ *                   or PIPE_TEXTURE_USAGE_SAMPLER
  */
 enum pipe_format
 st_choose_format(struct pipe_context *pipe, GLint internalFormat,
@@ -515,14 +518,35 @@ st_choose_format(struct pipe_context *pipe, GLint internalFormat,
 }
 
 
+static GLboolean
+is_stencil_format(GLenum format)
+{
+   switch (format) {
+   case GL_STENCIL_INDEX:
+   case GL_STENCIL_INDEX1_EXT:
+   case GL_STENCIL_INDEX4_EXT:
+   case GL_STENCIL_INDEX8_EXT:
+   case GL_STENCIL_INDEX16_EXT:
+   case GL_DEPTH_STENCIL_EXT:
+   case GL_DEPTH24_STENCIL8_EXT:
+      return GL_TRUE;
+   default:
+      return GL_FALSE;
+   }
+}
+
 /**
  * Called by FBO code to choose a PIPE_FORMAT_ for drawing surfaces.
  */
 enum pipe_format
 st_choose_renderbuffer_format(struct pipe_context *pipe, GLint internalFormat)
 {
-   return st_choose_format(pipe, internalFormat, PIPE_TEXTURE_2D, 
-                           PIPE_TEXTURE_USAGE_RENDER_TARGET);
+   uint usage;
+   if (is_stencil_format(internalFormat))
+      usage = PIPE_TEXTURE_USAGE_DEPTH_STENCIL;
+   else
+      usage = PIPE_TEXTURE_USAGE_RENDER_TARGET;
+   return st_choose_format(pipe, internalFormat, PIPE_TEXTURE_2D, usage);
 }
 
 
