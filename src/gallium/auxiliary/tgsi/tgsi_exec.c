@@ -1263,13 +1263,27 @@ store_dest(
       break;
 
    case TGSI_SAT_ZERO_ONE:
-      /* XXX need to obey ExecMask here */
-      micro_max( dst, chan, &mach->Temps[TEMP_0_I].xyzw[TEMP_0_C] );
-      micro_min( dst, dst, &mach->Temps[TEMP_1_I].xyzw[TEMP_1_C] );
+      for (i = 0; i < QUAD_SIZE; i++)
+         if (execmask & (1 << i)) {
+            if (chan->f[i] < 0.0f)
+               dst->f[i] = 0.0f;
+            else if (chan->f[i] > 1.0f)
+               dst->f[i] = 1.0f;
+            else
+               dst->i[i] = chan->i[i];
+         }
       break;
 
    case TGSI_SAT_MINUS_PLUS_ONE:
-      assert( 0 );
+      for (i = 0; i < QUAD_SIZE; i++)
+         if (execmask & (1 << i)) {
+            if (chan->f[i] < -1.0f)
+               dst->f[i] = -1.0f;
+            else if (chan->f[i] > 1.0f)
+               dst->f[i] = 1.0f;
+            else
+               dst->i[i] = chan->i[i];
+         }
       break;
 
    default:
