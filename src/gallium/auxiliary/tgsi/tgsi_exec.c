@@ -1120,7 +1120,9 @@ store_dest(
    const struct tgsi_full_instruction *inst,
    uint chan_index )
 {
+   uint i;
    union tgsi_exec_channel *dst;
+   uint execmask = mach->ExecMask;
 
    switch (reg->DstRegister.File) {
    case TGSI_FILE_NULL:
@@ -1145,16 +1147,119 @@ store_dest(
       return;
    }
 
+   if (inst->InstructionExtNv.CondFlowEnable) {
+      union tgsi_exec_channel *cc = &mach->Temps[TEMP_CC_I].xyzw[TEMP_CC_C];
+      uint swizzle;
+      uint shift;
+      uint mask;
+      uint test;
+
+      /* Only CC0 supported.
+       */
+      assert( inst->InstructionExtNv.CondFlowIndex < 1 );
+
+      switch (chan_index) {
+      case CHAN_X:
+         swizzle = inst->InstructionExtNv.CondSwizzleX;
+         break;
+      case CHAN_Y:
+         swizzle = inst->InstructionExtNv.CondSwizzleY;
+         break;
+      case CHAN_Z:
+         swizzle = inst->InstructionExtNv.CondSwizzleZ;
+         break;
+      case CHAN_W:
+         swizzle = inst->InstructionExtNv.CondSwizzleW;
+         break;
+      default:
+         assert( 0 );
+         return;
+      }
+
+      switch (swizzle) {
+      case TGSI_SWIZZLE_X:
+         shift = TGSI_EXEC_CC_X_SHIFT;
+         mask = TGSI_EXEC_CC_X_MASK;
+         break;
+      case TGSI_SWIZZLE_Y:
+         shift = TGSI_EXEC_CC_Y_SHIFT;
+         mask = TGSI_EXEC_CC_Y_MASK;
+         break;
+      case TGSI_SWIZZLE_Z:
+         shift = TGSI_EXEC_CC_Z_SHIFT;
+         mask = TGSI_EXEC_CC_Z_MASK;
+         break;
+      case TGSI_SWIZZLE_W:
+         shift = TGSI_EXEC_CC_W_SHIFT;
+         mask = TGSI_EXEC_CC_W_MASK;
+         break;
+      default:
+         assert( 0 );
+         return;
+      }
+
+      switch (inst->InstructionExtNv.CondMask) {
+      case TGSI_CC_GT:
+         test = ~(TGSI_EXEC_CC_GT << shift) & mask;
+         for (i = 0; i < QUAD_SIZE; i++)
+            if (cc->u[i] & test)
+               execmask &= ~(1 << i);
+         break;
+
+      case TGSI_CC_EQ:
+         test = ~(TGSI_EXEC_CC_EQ << shift) & mask;
+         for (i = 0; i < QUAD_SIZE; i++)
+            if (cc->u[i] & test)
+               execmask &= ~(1 << i);
+         break;
+
+      case TGSI_CC_LT:
+         test = ~(TGSI_EXEC_CC_LT << shift) & mask;
+         for (i = 0; i < QUAD_SIZE; i++)
+            if (cc->u[i] & test)
+               execmask &= ~(1 << i);
+         break;
+
+      case TGSI_CC_GE:
+         test = ~((TGSI_EXEC_CC_GT | TGSI_EXEC_CC_EQ) << shift) & mask;
+         for (i = 0; i < QUAD_SIZE; i++)
+            if (cc->u[i] & test)
+               execmask &= ~(1 << i);
+         break;
+
+      case TGSI_CC_LE:
+         test = ~((TGSI_EXEC_CC_LT | TGSI_EXEC_CC_EQ) << shift) & mask;
+         for (i = 0; i < QUAD_SIZE; i++)
+            if (cc->u[i] & test)
+               execmask &= ~(1 << i);
+         break;
+
+      case TGSI_CC_NE:
+         test = ~((TGSI_EXEC_CC_GT | TGSI_EXEC_CC_LT | TGSI_EXEC_CC_UN) << shift) & mask;
+         for (i = 0; i < QUAD_SIZE; i++)
+            if (cc->u[i] & test)
+               execmask &= ~(1 << i);
+         break;
+
+      case TGSI_CC_TR:
+         break;
+
+      case TGSI_CC_FL:
+         for (i = 0; i < QUAD_SIZE; i++)
+            execmask &= ~(1 << i);
+         break;
+
+      default:
+         assert( 0 );
+         return;
+      }
+   }
+
    switch (inst->Instruction.Saturate) {
    case TGSI_SAT_NONE:
-      if (mach->ExecMask & 0x1)
-         dst->i[0] = chan->i[0];
-      if (mach->ExecMask & 0x2)
-         dst->i[1] = chan->i[1];
-      if (mach->ExecMask & 0x4)
-         dst->i[2] = chan->i[2];
-      if (mach->ExecMask & 0x8)
-         dst->i[3] = chan->i[3];
+      for (i = 0; i < QUAD_SIZE; i++)
+         if (execmask & (1 << i))
+            dst->i[i] = chan->i[i];
       break;
 
    case TGSI_SAT_ZERO_ONE:
