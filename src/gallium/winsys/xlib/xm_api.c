@@ -847,7 +847,10 @@ void XMesaDestroyContext( XMesaContext c )
 {
    struct pipe_screen *screen = c->st->pipe->screen;
    st_destroy_context(c->st);
+   /* FIXME: We should destroy the screen here, but if we do so, surfaces may 
+    * outlive it, causing segfaults
    screen->destroy(screen);
+   */
    _mesa_free(c);
 }
 
