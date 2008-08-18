@@ -21,8 +21,7 @@ default: $(TOP)/$(LIB_DIR)/demodriver.so
 
 
 $(TOP)/$(LIB_DIR)/demodriver.so: $(OBJECTS)
-	$(TOP)/bin/mklib -o demodriver.so -noprefix \
-		-install $(TOP)/$(LIB_DIR) $(OBJECTS)
+	$(TOP)/bin/mklib -o demodriver.so -noprefix $(OBJECTS)
 
 
 
