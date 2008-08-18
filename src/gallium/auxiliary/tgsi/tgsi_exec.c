@@ -1121,12 +1121,14 @@ store_dest(
    uint chan_index )
 {
    uint i;
+   union tgsi_exec_channel null;
    union tgsi_exec_channel *dst;
    uint execmask = mach->ExecMask;
 
    switch (reg->DstRegister.File) {
    case TGSI_FILE_NULL:
-      return;
+      dst = &null;
+      break;
 
    case TGSI_FILE_OUTPUT:
       dst = &mach->Outputs[mach->Temps[TEMP_OUTPUT_I].xyzw[TEMP_OUTPUT_C].u[0]
@@ -1288,6 +1290,51 @@ store_dest(
 
    default:
       assert( 0 );
+   }
+
+   if (inst->InstructionExtNv.CondDstUpdate) {
+      union tgsi_exec_channel *cc = &mach->Temps[TEMP_CC_I].xyzw[TEMP_CC_C];
+      uint shift;
+      uint mask;
+
+      /* Only CC0 supported.
+       */
+      assert( inst->InstructionExtNv.CondDstIndex < 1 );
+
+      switch (chan_index) {
+      case CHAN_X:
+         shift = TGSI_EXEC_CC_X_SHIFT;
+         mask = ~TGSI_EXEC_CC_X_MASK;
+         break;
+      case CHAN_Y:
+         shift = TGSI_EXEC_CC_Y_SHIFT;
+         mask = ~TGSI_EXEC_CC_Y_MASK;
+         break;
+      case CHAN_Z:
+         shift = TGSI_EXEC_CC_Z_SHIFT;
+         mask = ~TGSI_EXEC_CC_Z_MASK;
+         break;
+      case CHAN_W:
+         shift = TGSI_EXEC_CC_W_SHIFT;
+         mask = ~TGSI_EXEC_CC_W_MASK;
+         break;
+      default:
+         assert( 0 );
+         return;
+      }
+
+      for (i = 0; i < QUAD_SIZE; i++)
+         if (execmask & (1 << i)) {
+            cc->u[i] &= mask;
+            if (dst->f[i] < 0.0f)
+               cc->u[i] |= TGSI_EXEC_CC_LT << shift;
+            else if (dst->f[i] > 0.0f)
+               cc->u[i] |= TGSI_EXEC_CC_GT << shift;
+            else if (dst->f[i] == 0.0f)
+               cc->u[i] |= TGSI_EXEC_CC_EQ << shift;
+            else
+               cc->u[i] |= TGSI_EXEC_CC_UN << shift;
+         }
    }
 }
 
