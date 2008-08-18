@@ -58,6 +58,9 @@ struct st_fragment_program
    /** map FP input back to VP output */
    GLuint input_map[PIPE_MAX_SHADER_INPUTS];
 
+   ubyte input_semantic_name[PIPE_MAX_SHADER_INPUTS];
+   ubyte input_semantic_index[PIPE_MAX_SHADER_INPUTS];
+
    struct pipe_shader_state state;
    void *driver_shader;
 
@@ -143,6 +146,9 @@ st_translate_fragment_program(struct st_context *st,
 extern void
 st_translate_vertex_program(struct st_context *st,
                             struct st_vertex_program *vp,
-                            const GLuint vert_output_to_slot[]);
+                            const GLuint vert_output_to_slot[],
+                            const ubyte *fs_input_semantic_name,
+                            const ubyte *fs_input_semantic_index);
+
 
 #endif

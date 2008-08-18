@@ -294,7 +294,7 @@ st_make_passthrough_vertex_shader(struct st_context *st, GLboolean passColor)
    }
 
    stvp = (struct st_vertex_program *) p;
-   st_translate_vertex_program(st, stvp, NULL);
+   st_translate_vertex_program(st, stvp, NULL, NULL, NULL);
 
    st->drawpix.vert_shaders[passColor] = stvp;
 
