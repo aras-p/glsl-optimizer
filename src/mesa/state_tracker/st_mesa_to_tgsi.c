@@ -1,6 +1,6 @@
 /**************************************************************************
  * 
- * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2007-2008 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -175,10 +175,11 @@ static struct tgsi_full_immediate
 make_immediate(const float *value, uint size)
 {
    struct tgsi_full_immediate imm;
-   imm.Immediate.Type = TGSI_TOKEN_TYPE_IMMEDIATE;
-   imm.Immediate.Size = 1 + size; /* one for the token itself */
+
+   imm = tgsi_default_full_immediate();
+   imm.Immediate.Size += size;
    imm.Immediate.DataType = TGSI_IMM_FLOAT32;
-   imm.u.ImmediateFloat32 = (struct tgsi_immediate_float32 *) value;
+   imm.u.Pointer = value;
    return imm;
 }
 
