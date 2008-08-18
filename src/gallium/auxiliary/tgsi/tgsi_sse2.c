@@ -1,6 +1,6 @@
 /**************************************************************************
  * 
- * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2007-2008 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -44,13 +44,13 @@
 
 
 #define FOR_EACH_CHANNEL( CHAN )\
-   for( CHAN = 0; CHAN < 4; CHAN++ )
+   for (CHAN = 0; CHAN < NUM_CHANNELS; CHAN++)
 
 #define IS_DST0_CHANNEL_ENABLED( INST, CHAN )\
    ((INST).FullDstRegisters[0].DstRegister.WriteMask & (1 << (CHAN)))
 
 #define IF_IS_DST0_CHANNEL_ENABLED( INST, CHAN )\
-   if( IS_DST0_CHANNEL_ENABLED( INST, CHAN ))
+   if (IS_DST0_CHANNEL_ENABLED( INST, CHAN ))
 
 #define FOR_EACH_DST0_ENABLED_CHANNEL( INST, CHAN )\
    FOR_EACH_CHANNEL( CHAN )\
@@ -1172,7 +1172,7 @@ emit_instruction(
 {
    unsigned chan_index;
 
-   switch( inst->Instruction.Opcode ) {
+   switch (inst->Instruction.Opcode) {
    case TGSI_OPCODE_ARL:
 #if 0
       /* XXX this isn't working properly (see glean vertProg1 test) */
