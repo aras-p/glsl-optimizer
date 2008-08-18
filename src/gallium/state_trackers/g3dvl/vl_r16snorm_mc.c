@@ -15,6 +15,8 @@
 #include "vl_types.h"
 #include "vl_defs.h"
 
+#define NUM_BUFS 4	/* Number of rotating buffers to use */
+
 struct vlVertexShaderConsts
 {
 	/*struct vlVertex4f scale;
@@ -41,12 +43,13 @@ struct vlR16SnormMC
 
 	unsigned int				video_width, video_height;
 	enum vlFormat				video_format;
+	unsigned int				cur_buf;
 
 	struct pipe_context			*pipe;
 	struct pipe_viewport_state		viewport;
 	struct pipe_framebuffer_state		render_target;
 	struct pipe_sampler_state		*samplers[5];
-	struct pipe_texture			*textures[5];
+	struct pipe_texture			*textures[NUM_BUFS][5];
 	void					*i_vs, *p_vs[2], *b_vs[2];
 	void					*i_fs, *p_fs[2], *b_fs[2];
 	struct pipe_vertex_buffer 		vertex_bufs[3];
@@ -230,7 +233,7 @@ static int vlGrabBlocks
 	tex_surface = mc->pipe->screen->get_tex_surface
 	(
 		mc->pipe->screen,
-		mc->textures[0],
+		mc->textures[mc->cur_buf % NUM_BUFS][0],
 		0, 0, 0, PIPE_BUFFER_USAGE_CPU_WRITE
 	);
 
@@ -276,7 +279,7 @@ static int vlGrabBlocks
 		tex_surface = mc->pipe->screen->get_tex_surface
 		(
 			mc->pipe->screen,
-			mc->textures[tb + 1],
+			mc->textures[mc->cur_buf % NUM_BUFS][tb + 1],
 			0, 0, 0, PIPE_BUFFER_USAGE_CPU_WRITE
 		);
 
@@ -361,12 +364,14 @@ int vlRenderIMacroBlock
 		0, 0, 0, PIPE_BUFFER_USAGE_GPU_READ | PIPE_BUFFER_USAGE_GPU_WRITE
 	);
 	pipe->set_framebuffer_state(pipe, &mc->render_target);
-	pipe->set_sampler_textures(pipe, 3, mc->textures);
+	pipe->set_sampler_textures(pipe, 3, mc->textures[mc->cur_buf % NUM_BUFS]);
 	pipe->bind_sampler_states(pipe, 3, (void**)mc->samplers);
 	pipe->bind_vs_state(pipe, mc->i_vs);
 	pipe->bind_fs_state(pipe, mc->i_fs);
 
 	pipe->draw_arrays(pipe, PIPE_PRIM_TRIANGLES, 0, 24);
+	
+	mc->cur_buf++;
 
 	return 0;
 }
@@ -458,11 +463,13 @@ int vlRenderPMacroBlock
 	);
 	pipe->set_framebuffer_state(pipe, &mc->render_target);
 
-	mc->textures[3] = ref_surface->texture;
-	pipe->set_sampler_textures(pipe, 4, mc->textures);
+	mc->textures[mc->cur_buf % NUM_BUFS][3] = ref_surface->texture;
+	pipe->set_sampler_textures(pipe, 4, mc->textures[mc->cur_buf % NUM_BUFS]);
 	pipe->bind_sampler_states(pipe, 4, (void**)mc->samplers);
 
 	pipe->draw_arrays(pipe, PIPE_PRIM_TRIANGLES, 0, 24);
+	
+	mc->cur_buf++;
 
 	return 0;
 }
@@ -567,12 +574,14 @@ int vlRenderBMacroBlock
 	);
 	pipe->set_framebuffer_state(pipe, &mc->render_target);
 
-	mc->textures[3] = past_surface->texture;
-	mc->textures[4] = future_surface->texture;
-	pipe->set_sampler_textures(pipe, 5, mc->textures);
+	mc->textures[mc->cur_buf % NUM_BUFS][3] = past_surface->texture;
+	mc->textures[mc->cur_buf % NUM_BUFS][4] = future_surface->texture;
+	pipe->set_sampler_textures(pipe, 5, mc->textures[mc->cur_buf % NUM_BUFS]);
 	pipe->bind_sampler_states(pipe, 5, (void**)mc->samplers);
 
 	pipe->draw_arrays(pipe, PIPE_PRIM_TRIANGLES, 0, 24);
+	
+	mc->cur_buf++;
 
 	return 0;
 }
@@ -724,8 +733,12 @@ int vlDestroy
 		pipe->winsys->buffer_destroy(pipe->winsys, mc->vertex_bufs[i].buffer);
 
 	/* Textures 3 & 4 are not created directly, no need to release them here */
-	for (i = 0; i < 3; ++i)
-		pipe_texture_release(&mc->textures[i]);
+	for (i = 0; i < NUM_BUFS; ++i)
+	{
+		pipe_texture_release(&mc->textures[i][0]);
+		pipe_texture_release(&mc->textures[i][1]);
+		pipe_texture_release(&mc->textures[i][2]);
+	}
 
 	pipe->delete_vs_state(pipe, mc->i_vs);
 	pipe->delete_fs_state(pipe, mc->i_fs);
@@ -2252,7 +2265,8 @@ static int vlInit
 	template.compressed = 0;
 	pf_get_block(template.format, &template.block);
 
-	mc->textures[0] = pipe->screen->texture_create(pipe->screen, &template);
+	for (i = 0; i < NUM_BUFS; ++i)
+		mc->textures[i][0] = pipe->screen->texture_create(pipe->screen, &template);
 
 	if (mc->video_format == vlFormatYCbCr420)
 		template.height[0] = 8;
@@ -2263,8 +2277,11 @@ static int vlInit
 	else
 		assert(0);
 
-	mc->textures[1] = pipe->screen->texture_create(pipe->screen, &template);
-	mc->textures[2] = pipe->screen->texture_create(pipe->screen, &template);
+	for (i = 0; i < NUM_BUFS; ++i)
+	{
+		mc->textures[i][1] = pipe->screen->texture_create(pipe->screen, &template);
+		mc->textures[i][2] = pipe->screen->texture_create(pipe->screen, &template);
+	}
 
 	/* textures[3] & textures[4] are assigned from vlSurfaces for P and B macroblocks at render time */
 
@@ -2306,6 +2323,7 @@ int vlCreateR16SNormMC
 	mc->pipe = pipe;
 	mc->video_width = video_width;
 	mc->video_height = video_height;
+	mc->cur_buf = 0;
 
 	vlInit(mc);
 

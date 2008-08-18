@@ -2,7 +2,7 @@ TARGET		= libdriclient.a
 OBJECTS		= driclient.o XF86dri.o
 DRMDIR		?= /usr
 
-CFLAGS		+= -g -Wall -fPIC -Werror -I../include -I${DRMDIR}/include -I${DRMDIR}/include/drm
+CFLAGS		+= -g -Wall -fPIC -I../include -I${DRMDIR}/include -I${DRMDIR}/include/drm
 
 #############################################
 

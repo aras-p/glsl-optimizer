@@ -8,7 +8,7 @@ ifeq (${DRIVER}, softpipe)
 OBJECTS         += ${GALLIUMDIR}/winsys/g3dvl/xsp_winsys.o
 endif
 
-CFLAGS	+= -g -fPIC -Wall -Werror			\
+CFLAGS	+= -g -fPIC -Wall				\
 	   -I${GALLIUMDIR}/state_trackers/g3dvl		\
 	   -I${GALLIUMDIR}/winsys/g3dvl			\
 	   -I${GALLIUMDIR}/include			\

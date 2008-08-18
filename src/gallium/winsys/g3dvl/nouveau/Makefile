@@ -9,7 +9,7 @@ OBJECTS		= nouveau_bo.o nouveau_fence.o nouveau_swapbuffers.o nouveau_channel.o	
 		  nouveau_pushbuf.o nouveau_resource.o nouveau_screen.o nv04_surface.o		\
 		  nv50_surface.o #nouveau_winsys_softpipe.o
 
-CFLAGS		+= -g -Wall -Werror -fPIC		\
+CFLAGS		+= -g -Wall -fPIC			\
 		   -I${GALLIUMDIR}/include		\
 		   -I${GALLIUMDIR}/winsys/g3dvl		\
 		   -I${DRMDIR}/include			\
