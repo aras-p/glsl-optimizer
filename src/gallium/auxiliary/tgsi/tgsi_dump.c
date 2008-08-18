@@ -518,8 +518,23 @@ tgsi_dump(
    uint flags )
 {
    static char str[4096];
-   
+   uint len;
+   char *p = str;
+
    tgsi_dump_str(tokens, flags, str, sizeof(str));
-   
-   debug_printf("%s", str);
+
+   /* Workaround output buffer size limitations.
+    */
+   len = strlen( str );
+   while (len > 256) {
+      char piggy_bank;
+
+      piggy_bank = p[256];
+      p[256] = '\0';
+      debug_printf( "%s", p );
+      p[256] = piggy_bank;
+      p += 256;
+      len -= 256;
+   }
+   debug_printf( "%s", p );
 }
