@@ -140,6 +140,34 @@ _mesa_initialize_texture_object( struct gl_texture_object *obj,
 
 
 /**
+ * Some texture initialization can't be finished until we know which
+ * target it's getting bound to (GL_TEXTURE_1D/2D/etc).
+ */
+static void
+finish_texture_init(GLcontext *ctx, GLenum target,
+                    struct gl_texture_object *obj)
+{
+   assert(obj->Target == 0);
+
+   if (target == GL_TEXTURE_RECTANGLE_NV) {
+      /* have to init wrap and filter state here - kind of klunky */
+      obj->WrapS = GL_CLAMP_TO_EDGE;
+      obj->WrapT = GL_CLAMP_TO_EDGE;
+      obj->WrapR = GL_CLAMP_TO_EDGE;
+      obj->MinFilter = GL_LINEAR;
+      if (ctx->Driver.TexParameter) {
+         static const GLfloat fparam_wrap[1] = {(GLfloat) GL_CLAMP_TO_EDGE};
+         static const GLfloat fparam_filter[1] = {(GLfloat) GL_LINEAR};
+         ctx->Driver.TexParameter(ctx, target, obj, GL_TEXTURE_WRAP_S, fparam_wrap);
+         ctx->Driver.TexParameter(ctx, target, obj, GL_TEXTURE_WRAP_T, fparam_wrap);
+         ctx->Driver.TexParameter(ctx, target, obj, GL_TEXTURE_WRAP_R, fparam_wrap);
+         ctx->Driver.TexParameter(ctx, target, obj, GL_TEXTURE_MIN_FILTER, fparam_filter);
+      }
+   }
+}
+
+
+/**
  * Deallocate a texture object struct.  It should have already been
  * removed from the texture object pool.
  * Called via ctx->Driver.DeleteTexture() if not overriden by a driver.
@@ -826,44 +854,45 @@ _mesa_BindTexture( GLenum target, GLuint texName )
    GET_CURRENT_CONTEXT(ctx);
    const GLuint unit = ctx->Texture.CurrentUnit;
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
-   struct gl_texture_object *newTexObj = NULL;
+   struct gl_texture_object *newTexObj = NULL, *defaultTexObj = NULL;
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE & (VERBOSE_API|VERBOSE_TEXTURE))
       _mesa_debug(ctx, "glBindTexture %s %d\n",
                   _mesa_lookup_enum_by_nr(target), (GLint) texName);
 
+   switch (target) {
+   case GL_TEXTURE_1D:
+      defaultTexObj = ctx->Shared->Default1D;
+      break;
+   case GL_TEXTURE_2D:
+      defaultTexObj = ctx->Shared->Default2D;
+      break;
+   case GL_TEXTURE_3D:
+      defaultTexObj = ctx->Shared->Default3D;
+      break;
+   case GL_TEXTURE_CUBE_MAP_ARB:
+      defaultTexObj = ctx->Shared->DefaultCubeMap;
+      break;
+   case GL_TEXTURE_RECTANGLE_NV:
+      defaultTexObj = ctx->Shared->DefaultRect;
+      break;
+   case GL_TEXTURE_1D_ARRAY_EXT:
+      defaultTexObj = ctx->Shared->Default1DArray;
+      break;
+   case GL_TEXTURE_2D_ARRAY_EXT:
+      defaultTexObj = ctx->Shared->Default2DArray;
+      break;
+   default:
+      _mesa_error(ctx, GL_INVALID_ENUM, "glBindTexture(target)");
+      return;
+   }
+
    /*
     * Get pointer to new texture object (newTexObj)
     */
    if (texName == 0) {
-      /* newTexObj = a default texture object */
-      switch (target) {
-         case GL_TEXTURE_1D:
-            newTexObj = ctx->Shared->Default1D;
-            break;
-         case GL_TEXTURE_2D:
-            newTexObj = ctx->Shared->Default2D;
-            break;
-         case GL_TEXTURE_3D:
-            newTexObj = ctx->Shared->Default3D;
-            break;
-         case GL_TEXTURE_CUBE_MAP_ARB:
-            newTexObj = ctx->Shared->DefaultCubeMap;
-            break;
-         case GL_TEXTURE_RECTANGLE_NV:
-            newTexObj = ctx->Shared->DefaultRect;
-            break;
-         case GL_TEXTURE_1D_ARRAY_EXT:
-            newTexObj = ctx->Shared->Default1DArray;
-            break;
-         case GL_TEXTURE_2D_ARRAY_EXT:
-            newTexObj = ctx->Shared->Default2DArray;
-            break;
-         default:
-            _mesa_error(ctx, GL_INVALID_ENUM, "glBindTexture(target)");
-            return;
-      }
+      newTexObj = defaultTexObj;
    }
    else {
       /* non-default texture object */
@@ -876,20 +905,8 @@ _mesa_BindTexture( GLenum target, GLuint texName )
                          "glBindTexture(target mismatch)" );
             return;
          }
-         if (newTexObj->Target == 0 && target == GL_TEXTURE_RECTANGLE_NV) {
-            /* have to init wrap and filter state here - kind of klunky */
-            newTexObj->WrapS = GL_CLAMP_TO_EDGE;
-            newTexObj->WrapT = GL_CLAMP_TO_EDGE;
-            newTexObj->WrapR = GL_CLAMP_TO_EDGE;
-            newTexObj->MinFilter = GL_LINEAR;
-            if (ctx->Driver.TexParameter) {
-               static const GLfloat fparam_wrap[1] = {(GLfloat) GL_CLAMP_TO_EDGE};
-               static const GLfloat fparam_filter[1] = {(GLfloat) GL_LINEAR};
-               (*ctx->Driver.TexParameter)( ctx, target, newTexObj, GL_TEXTURE_WRAP_S, fparam_wrap );
-               (*ctx->Driver.TexParameter)( ctx, target, newTexObj, GL_TEXTURE_WRAP_T, fparam_wrap );
-               (*ctx->Driver.TexParameter)( ctx, target, newTexObj, GL_TEXTURE_WRAP_R, fparam_wrap );
-               (*ctx->Driver.TexParameter)( ctx, target, newTexObj, GL_TEXTURE_MIN_FILTER, fparam_filter );
-            }
+         if (newTexObj->Target == 0) {
+            finish_texture_init(ctx, target, newTexObj);
          }
       }
       else {
