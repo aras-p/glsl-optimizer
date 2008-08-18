@@ -1098,6 +1098,10 @@ st_copy_texsubimage(GLcontext *ctx,
                                                 stImage->face, stImage->level,
                                                 destZ,
                                                 PIPE_BUFFER_USAGE_GPU_WRITE);
+         if (do_flip)
+            srcY = strb->surface->height - srcY - height;
+
+         /* for surface_copy(), y=0=top, always */
          pipe->surface_copy(pipe,
                             do_flip,
                             /* dest */
