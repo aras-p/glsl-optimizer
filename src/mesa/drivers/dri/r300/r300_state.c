@@ -2622,6 +2622,14 @@ static void r500SetupPixelShader(r300ContextPtr rmesa)
 	}
 	code = &fp->code;
 
+	if (fp->mesa_program.FogOption != GL_NONE) {
+		/* Enable HW fog.
+		 * (Anybody sane remembered to set glFog() opts first! */
+		ctx->Fog.Enabled = GL_TRUE;
+		ctx->Fog.Mode = fp->mesa_program.FogOption;
+		r300SetFogState(ctx, GL_TRUE);
+	}
+
 	r300SetupTextures(ctx);
 
 	R300_STATECHANGE(rmesa, fp);
