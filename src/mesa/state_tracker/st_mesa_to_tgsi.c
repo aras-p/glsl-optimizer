@@ -610,6 +610,19 @@ make_temp_decl(
    return decl;
 }
 
+static struct tgsi_full_declaration
+make_addr_decl(
+   GLuint start_index,
+   GLuint end_index )
+{
+   struct tgsi_full_declaration decl;
+
+   decl = tgsi_default_full_declaration();
+   decl.Declaration.File = TGSI_FILE_ADDRESS;
+   decl.DeclarationRange.First = start_index;
+   decl.DeclarationRange.Last = end_index;
+   return decl;
+}
 
 static struct tgsi_full_declaration
 make_sampler_decl(GLuint index)
@@ -826,6 +839,21 @@ tgsi_translate_mesa_program(
                                               maxTokens - ti );
          }
       }
+   }
+
+   /* Address register.
+   */
+   if (program->NumAddressRegs > 0) {
+      struct tgsi_full_declaration fulldecl;
+
+      assert( program->NumAddressRegs == 1 );
+
+      fulldecl = make_addr_decl( 0, 0 );
+      ti += tgsi_build_full_declaration(
+         &fulldecl,
+         &tokens[ti],
+         header,
+         maxTokens - ti );
    }
 
    /* immediates/literals */
