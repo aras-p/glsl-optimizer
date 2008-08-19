@@ -382,6 +382,7 @@ struct tgsi_immediate_float32
  */
 #define TGSI_OPCODE_SGN                 TGSI_OPCODE_SSG
 #define TGSI_OPCODE_MOVA                TGSI_OPCODE_ARR
+/* EXPP - use TGSI_OPCODE_EX2 */
 
 /*
  * vs_2_x
