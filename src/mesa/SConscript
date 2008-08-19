@@ -153,6 +153,7 @@ if env['platform'] != 'winddk':
 		'state_tracker/st_cb_flush.c',
 		'state_tracker/st_cb_drawpixels.c',
 		'state_tracker/st_cb_fbo.c',
+		'state_tracker/st_cb_get.c',
 		'state_tracker/st_cb_feedback.c',
 		'state_tracker/st_cb_program.c',
 		'state_tracker/st_cb_queryobj.c',
