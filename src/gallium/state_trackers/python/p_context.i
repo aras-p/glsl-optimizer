@@ -68,6 +68,11 @@ struct st_context {
    void set_fragment_shader( const struct pipe_shader_state *state ) {
       void *fs;
       
+      if(!state) {
+         cso_set_fragment_shader_handle($self->cso, NULL);
+         return;
+      }
+      
       fs = $self->pipe->create_fs_state($self->pipe, state);
       if(!fs)
          return;
@@ -81,6 +86,11 @@ struct st_context {
 
    void set_vertex_shader( const struct pipe_shader_state *state ) {
       void *vs;
+      
+      if(!state) {
+         cso_set_vertex_shader_handle($self->cso, NULL);
+         return;
+      }
       
       vs = $self->pipe->create_vs_state($self->pipe, state);
       if(!vs)
