@@ -163,6 +163,124 @@ st_get_color_read_renderbuffer(GLcontext *ctx)
 
 
 /**
+ * Try to do glReadPixels in a fast manner for common cases.
+ * \return GL_TRUE for success, GL_FALSE for failure
+ */
+static GLboolean
+st_fast_readpixels(GLcontext *ctx, struct st_renderbuffer *strb,
+                   GLint x, GLint y, GLsizei width, GLsizei height,
+                   GLenum format, GLenum type,
+                   const struct gl_pixelstore_attrib *pack,
+                   GLvoid *dest)
+{
+   enum combination {
+      A8R8G8B8_UNORM_TO_RGBA_UBYTE,
+      A8R8G8B8_UNORM_TO_RGB_UBYTE,
+      A8R8G8B8_UNORM_TO_BGRA_UINT
+   } combo;
+
+   if (ctx->_ImageTransferState)
+      return GL_FALSE;
+
+   if (strb->format == PIPE_FORMAT_A8R8G8B8_UNORM &&
+       format == GL_RGBA && type == GL_UNSIGNED_BYTE) {
+      combo = A8R8G8B8_UNORM_TO_RGBA_UBYTE;
+   }
+   else if (strb->format == PIPE_FORMAT_A8R8G8B8_UNORM &&
+            format == GL_RGB && type == GL_UNSIGNED_BYTE) {
+      combo = A8R8G8B8_UNORM_TO_RGB_UBYTE;
+   }
+   else if (strb->format == PIPE_FORMAT_A8R8G8B8_UNORM &&
+            format == GL_BGRA && type == GL_UNSIGNED_INT_8_8_8_8_REV) {
+      combo = A8R8G8B8_UNORM_TO_BGRA_UINT;
+   }
+   else {
+      return GL_FALSE;
+   }
+
+   /*printf("st_fast_readpixels combo %d\n", (GLint) combo);*/
+
+   {
+      struct pipe_context *pipe = ctx->st->pipe;
+      struct pipe_screen *screen = pipe->screen;
+      struct pipe_surface *surf;
+      const GLubyte *map;
+      GLubyte *dst;
+      GLint row, col, dy, dstStride;
+
+      surf = screen->get_tex_surface(screen, strb->texture,  0, 0, 0,
+                                     PIPE_BUFFER_USAGE_CPU_READ);
+      if (!surf) {
+         return GL_FALSE;
+      }
+
+      map = screen->surface_map(screen, surf, PIPE_BUFFER_USAGE_CPU_READ);
+      if (!map) {
+         pipe_surface_reference(&surf, NULL);
+         return GL_FALSE;
+      }
+
+      if (st_fb_orientation(ctx->ReadBuffer) == Y_0_TOP) {
+         y = surf->height - y - 1;
+         dy = -1;
+      }
+      else {
+         dy = 1;
+      }
+
+      dst = _mesa_image_address2d(pack, dest, width, height,
+                                  format, type, 0, 0);
+      dstStride = _mesa_image_row_stride(pack, width, format, type);
+
+      switch (combo) {
+      case A8R8G8B8_UNORM_TO_RGBA_UBYTE:
+         for (row = 0; row < height; row++) {
+            const GLubyte *src = map + y * surf->stride + x * 4;
+            for (col = 0; col < width; col++) {
+               GLuint pixel = ((GLuint *) src)[col];
+               dst[col*4+0] = (pixel >> 16) & 0xff;
+               dst[col*4+1] = (pixel >>  8) & 0xff;
+               dst[col*4+2] = (pixel >>  0) & 0xff;
+               dst[col*4+3] = (pixel >> 24) & 0xff;
+            }
+            dst += dstStride;
+            y += dy;
+         }
+         break;
+      case A8R8G8B8_UNORM_TO_RGB_UBYTE:
+         for (row = 0; row < height; row++) {
+            const GLubyte *src = map + y * surf->stride + x * 4;
+            for (col = 0; col < width; col++) {
+               GLuint pixel = ((GLuint *) src)[col];
+               dst[col*3+0] = (pixel >> 16) & 0xff;
+               dst[col*3+1] = (pixel >>  8) & 0xff;
+               dst[col*3+2] = (pixel >>  0) & 0xff;
+            }
+            dst += dstStride;
+            y += dy;
+         }
+         break;
+      case A8R8G8B8_UNORM_TO_BGRA_UINT:
+         for (row = 0; row < height; row++) {
+            const GLubyte *src = map + y * surf->stride + x * 4;
+            memcpy(dst, src, 4 * width);
+            dst += dstStride;
+            y += dy;
+         }
+         break;
+      default:
+         ; /* nothing */
+      }
+
+      screen->surface_unmap(screen, surf);
+      pipe_surface_reference(&surf, NULL);
+   }
+
+   return GL_TRUE;
+}
+
+
+/**
  * Do glReadPixels by getting rows from the framebuffer surface with
  * get_tile().  Convert to requested format/type with Mesa image routines.
  * Image transfer ops are done in software too.
@@ -218,6 +336,14 @@ st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
 
    if (!strb)
       return;
+
+   /* try a fast-path readpixels before anything else */
+   if (st_fast_readpixels(ctx, strb, x, y, width, height,
+                          format, type, pack, dest)) {
+      /* success! */
+      _mesa_unmap_readpix_pbo(ctx, &clippedPacking);
+      return;
+   }
 
    if (format == GL_RGBA && type == GL_FLOAT) {
       /* write tile(row) directly into user's buffer */
