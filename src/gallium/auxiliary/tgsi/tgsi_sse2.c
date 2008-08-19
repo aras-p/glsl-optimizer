@@ -1367,7 +1367,38 @@ emit_instruction(
       break;
 
    case TGSI_OPCODE_LOG:
-      return 0;
+      if (IS_DST0_CHANNEL_ENABLED( *inst, CHAN_X ) ||
+          IS_DST0_CHANNEL_ENABLED( *inst, CHAN_Y ) ||
+          IS_DST0_CHANNEL_ENABLED( *inst, CHAN_Z )) {
+         FETCH( func, *inst, 0, 0, CHAN_X );
+         emit_abs( func, 0 );
+         emit_MOV( func, 1, 0 );
+         emit_lg2( func, 1 );
+         /* dst.z = lg2(abs(src.x)) */
+         if (IS_DST0_CHANNEL_ENABLED( *inst, CHAN_Z )) {
+            STORE( func, *inst, 1, 0, CHAN_Z );
+         }
+         if (IS_DST0_CHANNEL_ENABLED( *inst, CHAN_X ) ||
+             IS_DST0_CHANNEL_ENABLED( *inst, CHAN_Y )) {
+            emit_flr( func, 1 );
+            /* dst.x = floor(lg2(abs(src.x))) */
+            if (IS_DST0_CHANNEL_ENABLED( *inst, CHAN_X )) {
+               STORE( func, *inst, 1, 0, CHAN_X );
+            }
+            /* dst.x = abs(src)/ex2(floor(lg2(abs(src.x)))) */
+            if (IS_DST0_CHANNEL_ENABLED( *inst, CHAN_Y )) {
+               emit_ex2( func, 1 );
+               emit_rcp( func, 1, 1 );
+               emit_mul( func, 0, 1 );
+               STORE( func, *inst, 0, 0, CHAN_Y );
+            }
+         }
+      }
+      /* dst.w = 1.0 */
+      if (IS_DST0_CHANNEL_ENABLED( *inst, CHAN_W )) {
+         emit_tempf( func, 0, TEMP_ONE_I, TEMP_ONE_C );
+         STORE( func, *inst, 0, 0, CHAN_W );
+      }
       break;
 
    case TGSI_OPCODE_MUL:

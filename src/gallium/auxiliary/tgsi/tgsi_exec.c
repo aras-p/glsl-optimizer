@@ -1777,18 +1777,18 @@ exec_instruction(
       micro_lg2( &r[1], &r[2] );  /* r1 = lg2(r2) */
       micro_flr( &r[0], &r[1] );  /* r0 = floor(r1) */
       if (IS_CHANNEL_ENABLED( *inst, CHAN_X )) {
-	 STORE( &r[0], 0, CHAN_X );
+         STORE( &r[0], 0, CHAN_X );
       }
       if (IS_CHANNEL_ENABLED( *inst, CHAN_Y )) {
          micro_exp2( &r[0], &r[0] );       /* r0 = 2 ^ r0 */
          micro_div( &r[0], &r[2], &r[0] ); /* r0 = r2 / r0 */
-	 STORE( &r[0], 0, CHAN_Y );
+         STORE( &r[0], 0, CHAN_Y );
       }
       if (IS_CHANNEL_ENABLED( *inst, CHAN_Z )) {
-	 STORE( &r[1], 0, CHAN_Z );
+         STORE( &r[1], 0, CHAN_Z );
       }
       if (IS_CHANNEL_ENABLED( *inst, CHAN_W )) {
-	 STORE( &mach->Temps[TEMP_1_I].xyzw[TEMP_1_C], 0, CHAN_W );
+         STORE( &mach->Temps[TEMP_1_I].xyzw[TEMP_1_C], 0, CHAN_W );
       }
       break;
 
