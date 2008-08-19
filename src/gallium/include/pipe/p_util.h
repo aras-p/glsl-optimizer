@@ -99,6 +99,12 @@ __inline double __cdecl atan2(double val)
 #include <stdarg.h>
 #endif
 
+ /* Define ENOMEM for WINCE */ 
+#if (_WIN32_WCE < 600)
+#ifndef ENOMEM
+#define ENOMEM 12
+#endif
+#endif
 
 #ifdef __cplusplus
 extern "C" {
