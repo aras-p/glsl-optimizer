@@ -1756,18 +1756,18 @@ exec_instruction(
       micro_flr( &r[1], &r[0] );  /* r1 = floor(r0) */
       if (IS_CHANNEL_ENABLED( *inst, CHAN_X )) {
          micro_exp2( &r[2], &r[1] );       /* r2 = 2 ^ r1 */
-	 STORE( &r[2], 0, CHAN_X );        /* store r2 */
+         STORE( &r[2], 0, CHAN_X );        /* store r2 */
       }
       if (IS_CHANNEL_ENABLED( *inst, CHAN_Y )) {
          micro_sub( &r[2], &r[0], &r[1] ); /* r2 = r0 - r1 */
-	 STORE( &r[2], 0, CHAN_Y );        /* store r2 */
+         STORE( &r[2], 0, CHAN_Y );        /* store r2 */
       }
       if (IS_CHANNEL_ENABLED( *inst, CHAN_Z )) {
          micro_exp2( &r[2], &r[0] );       /* r2 = 2 ^ r0 */
-	 STORE( &r[2], 0, CHAN_Z );        /* store r2 */
+         STORE( &r[2], 0, CHAN_Z );        /* store r2 */
       }
       if (IS_CHANNEL_ENABLED( *inst, CHAN_W )) {
-	 STORE( &mach->Temps[TEMP_1_I].xyzw[TEMP_1_C], 0, CHAN_W );
+         STORE( &mach->Temps[TEMP_1_I].xyzw[TEMP_1_C], 0, CHAN_W );
       }
       break;
 

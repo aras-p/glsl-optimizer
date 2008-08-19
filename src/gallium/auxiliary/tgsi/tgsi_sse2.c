@@ -61,6 +61,9 @@
 #define CHAN_Z 2
 #define CHAN_W 3
 
+#define TEMP_ONE_I   TGSI_EXEC_TEMP_ONE_I
+#define TEMP_ONE_C   TGSI_EXEC_TEMP_ONE_C
+
 #define TEMP_R0   TGSI_EXEC_TEMP_R0
 #define TEMP_ADDR TGSI_EXEC_TEMP_ADDR
 
@@ -958,8 +961,8 @@ emit_fetch(
       emit_tempf(
          func,
          xmm,
-         TGSI_EXEC_TEMP_ONE_I,
-         TGSI_EXEC_TEMP_ONE_C );
+         TEMP_ONE_I,
+         TEMP_ONE_C );
       break;
 
    default:
@@ -1173,8 +1176,8 @@ emit_setcc(
          func,
          make_xmm( 0 ),
          get_temp(
-            TGSI_EXEC_TEMP_ONE_I,
-            TGSI_EXEC_TEMP_ONE_C ) );
+            TEMP_ONE_I,
+            TEMP_ONE_C ) );
       STORE( func, *inst, 0, 0, chan_index );
    }
 }
@@ -1243,8 +1246,8 @@ emit_instruction(
          emit_tempf(
             func,
             0,
-            TGSI_EXEC_TEMP_ONE_I,
-            TGSI_EXEC_TEMP_ONE_C);
+            TEMP_ONE_I,
+            TEMP_ONE_C);
          if( IS_DST0_CHANNEL_ENABLED( *inst, CHAN_X ) ) {
             STORE( func, *inst, 0, 0, CHAN_X );
          }
@@ -1329,7 +1332,38 @@ emit_instruction(
       break;
 
    case TGSI_OPCODE_EXP:
-      return 0;
+      if (IS_DST0_CHANNEL_ENABLED( *inst, CHAN_X ) ||
+          IS_DST0_CHANNEL_ENABLED( *inst, CHAN_Y ) ||
+          IS_DST0_CHANNEL_ENABLED( *inst, CHAN_Z )) {
+         FETCH( func, *inst, 0, 0, CHAN_X );
+         if (IS_DST0_CHANNEL_ENABLED( *inst, CHAN_X ) ||
+             IS_DST0_CHANNEL_ENABLED( *inst, CHAN_Y )) {
+            emit_MOV( func, 1, 0 );
+            emit_flr( func, 1 );
+            /* dst.x = ex2(floor(src.x)) */
+            if (IS_DST0_CHANNEL_ENABLED( *inst, CHAN_X )) {
+               emit_MOV( func, 2, 1 );
+               emit_ex2( func, 2 );
+               STORE( func, *inst, 2, 0, CHAN_X );
+            }
+            /* dst.y = src.x - floor(src.x) */
+            if (IS_DST0_CHANNEL_ENABLED( *inst, CHAN_Y )) {
+               emit_MOV( func, 2, 0 );
+               emit_sub( func, 2, 1 );
+               STORE( func, *inst, 2, 0, CHAN_Y );
+            }
+         }
+         /* dst.z = ex2(src.x) */
+         if (IS_DST0_CHANNEL_ENABLED( *inst, CHAN_Z )) {
+            emit_ex2( func, 0 );
+            STORE( func, *inst, 0, 0, CHAN_Z );
+         }
+      }
+      /* dst.w = 1.0 */
+      if (IS_DST0_CHANNEL_ENABLED( *inst, CHAN_W )) {
+         emit_tempf( func, 0, TEMP_ONE_I, TEMP_ONE_C );
+         STORE( func, *inst, 0, 0, CHAN_W );
+      }
       break;
 
    case TGSI_OPCODE_LOG:
@@ -1399,8 +1433,8 @@ emit_instruction(
          emit_tempf(
             func,
             0,
-            TGSI_EXEC_TEMP_ONE_I,
-            TGSI_EXEC_TEMP_ONE_C );
+            TEMP_ONE_I,
+            TEMP_ONE_C );
          STORE( func, *inst, 0, 0, CHAN_X );
       }
       IF_IS_DST0_CHANNEL_ENABLED( *inst, CHAN_Y ) {
@@ -1603,8 +1637,8 @@ emit_instruction(
 	 emit_tempf(
 	    func,
 	    0,
-	    TGSI_EXEC_TEMP_ONE_I,
-	    TGSI_EXEC_TEMP_ONE_C );
+	    TEMP_ONE_I,
+	    TEMP_ONE_C );
          STORE( func, *inst, 0, 0, CHAN_W );
       }
       break;
@@ -1731,8 +1765,8 @@ emit_instruction(
 	 emit_tempf(
 	    func,
 	    0,
-	    TGSI_EXEC_TEMP_ONE_I,
-	    TGSI_EXEC_TEMP_ONE_C );
+	    TEMP_ONE_I,
+	    TEMP_ONE_C );
 	 FOR_EACH_DST0_ENABLED_CHANNEL( *inst, chan_index ) {
 	    STORE( func, *inst, 0, 0, chan_index );
 	 }
@@ -1820,8 +1854,8 @@ emit_instruction(
 	 emit_tempf(
 	    func,
 	    0,
-	    TGSI_EXEC_TEMP_ONE_I,
-	    TGSI_EXEC_TEMP_ONE_C );
+	    TEMP_ONE_I,
+	    TEMP_ONE_C );
          STORE( func, *inst, 0, 0, CHAN_W );
       }
       break;
