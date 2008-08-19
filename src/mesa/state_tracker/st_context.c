@@ -228,10 +228,7 @@ void st_destroy_context( struct st_context *st )
 
    cso_destroy_context(cso);
 
-   /* Temporary workaround for mismatched pipe create and pipe destroy */
-#if !defined(PIPE_SUBSYSTEM_WINDOWS_USER) && !defined(PIPE_SUBSYSTEM_WINDOWS_CE)
    pipe->destroy( pipe );
-#endif
 
    free(ctx);
 }
