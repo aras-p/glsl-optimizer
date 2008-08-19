@@ -34,6 +34,11 @@
 #include "pipe/p_context.h"
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+   
 struct trace_context
 {
    struct pipe_context base;
@@ -55,5 +60,9 @@ struct pipe_context *
 trace_context_create(struct pipe_screen *screen,
                      struct pipe_context *pipe);
 
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* TR_CONTEXT_H_ */

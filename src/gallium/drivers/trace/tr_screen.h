@@ -32,6 +32,11 @@
 #include "pipe/p_screen.h"
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+   
 struct trace_screen
 {
    struct pipe_screen base;
@@ -47,5 +52,9 @@ trace_screen(struct pipe_screen *screen);
 struct pipe_screen *
 trace_screen_create(struct pipe_screen *screen);
 
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* TR_SCREEN_H_ */
