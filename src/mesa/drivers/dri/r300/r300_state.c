@@ -747,8 +747,6 @@ static void r300Fogfv(GLcontext * ctx, GLenum pname, const GLfloat * param)
 
 	switch (pname) {
 	case GL_FOG_MODE:
-		if (!ctx->Fog.Enabled)
-			return;
 		switch (ctx->Fog.Mode) {
 		case GL_LINEAR:
 			R300_STATECHANGE(r300, fogs);
@@ -2623,10 +2621,10 @@ static void r500SetupPixelShader(r300ContextPtr rmesa)
 	code = &fp->code;
 
 	if (fp->mesa_program.FogOption != GL_NONE) {
-		/* Enable HW fog.
-		 * (Anybody sane remembered to set glFog() opts first! */
-		ctx->Fog.Enabled = GL_TRUE;
+		/* Enable HW fog. Try not to squish GL context.
+		 * (Anybody sane remembered to set glFog() opts first!) */
 		ctx->Fog.Mode = fp->mesa_program.FogOption;
+		r300Fogfv(ctx, GL_FOG_MODE, NULL);
 		r300SetFogState(ctx, GL_TRUE);
 	}
 
