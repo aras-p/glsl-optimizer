@@ -51,7 +51,6 @@ void trace_dump_block(const struct pipe_format_block *block)
 
 void trace_dump_template(const struct pipe_texture *templat)
 {
-   assert(templat);
    if(!templat) {
       trace_dump_null();
       return;
@@ -87,7 +86,6 @@ void trace_dump_template(const struct pipe_texture *templat)
 
 void trace_dump_rasterizer_state(const struct pipe_rasterizer_state *state)
 {
-   assert(state);
    if(!state) {
       trace_dump_null();
       return;
@@ -136,7 +134,6 @@ void trace_dump_rasterizer_state(const struct pipe_rasterizer_state *state)
 
 void trace_dump_poly_stipple(const struct pipe_poly_stipple *state)
 {
-   assert(state);
    if(!state) {
       trace_dump_null();
       return;
@@ -156,7 +153,6 @@ void trace_dump_poly_stipple(const struct pipe_poly_stipple *state)
 
 void trace_dump_viewport_state(const struct pipe_viewport_state *state)
 {
-   assert(state);
    if(!state) {
       trace_dump_null();
       return;
@@ -173,7 +169,6 @@ void trace_dump_viewport_state(const struct pipe_viewport_state *state)
 
 void trace_dump_scissor_state(const struct pipe_scissor_state *state)
 {
-   assert(state);
    if(!state) {
       trace_dump_null();
       return;
@@ -194,18 +189,20 @@ void trace_dump_clip_state(const struct pipe_clip_state *state)
 {
    unsigned i;
    
-   assert(state);
    if(!state) {
       trace_dump_null();
       return;
    }
 
-   trace_dump_struct_begin("pipe_scissor_state");
+   trace_dump_struct_begin("pipe_clip_state");
 
    trace_dump_member_begin("ucp");
    trace_dump_array_begin();
-   for(i = 0; i < PIPE_MAX_CLIP_PLANES; ++i)
+   for(i = 0; i < PIPE_MAX_CLIP_PLANES; ++i) {
+      trace_dump_elem_begin();
       trace_dump_array(float, state->ucp[i], 4);
+      trace_dump_elem_end();
+   }
    trace_dump_array_end();
    trace_dump_member_end();
 
@@ -217,7 +214,6 @@ void trace_dump_clip_state(const struct pipe_clip_state *state)
 
 void trace_dump_constant_buffer(const struct pipe_constant_buffer *state)
 {
-   assert(state);
    if(!state) {
       trace_dump_null();
       return;
@@ -235,7 +231,7 @@ void trace_dump_constant_buffer(const struct pipe_constant_buffer *state)
 void trace_dump_shader_state(const struct pipe_shader_state *state)
 {
    static char str[8192];
-   assert(state);
+
    if(!state) {
       trace_dump_null();
       return;
@@ -257,7 +253,6 @@ void trace_dump_depth_stencil_alpha_state(const struct pipe_depth_stencil_alpha_
 {
    unsigned i;
    
-   assert(state);
    if(!state) {
       trace_dump_null();
       return;
@@ -307,7 +302,6 @@ void trace_dump_depth_stencil_alpha_state(const struct pipe_depth_stencil_alpha_
 
 void trace_dump_blend_state(const struct pipe_blend_state *state)
 {
-   assert(state);
    if(!state) {
       trace_dump_null();
       return;
@@ -337,7 +331,6 @@ void trace_dump_blend_state(const struct pipe_blend_state *state)
 
 void trace_dump_blend_color(const struct pipe_blend_color *state)
 {
-   assert(state);
    if(!state) {
       trace_dump_null();
       return;
@@ -367,7 +360,6 @@ void trace_dump_framebuffer_state(const struct pipe_framebuffer_state *state)
 
 void trace_dump_sampler_state(const struct pipe_sampler_state *state)
 {
-   assert(state);
    if(!state) {
       trace_dump_null();
       return;
@@ -398,7 +390,6 @@ void trace_dump_sampler_state(const struct pipe_sampler_state *state)
 
 void trace_dump_surface(const struct pipe_surface *state)
 {
-   assert(state);
    if(!state) {
       trace_dump_null();
       return;
@@ -436,7 +427,6 @@ void trace_dump_surface(const struct pipe_surface *state)
 
 void trace_dump_vertex_buffer(const struct pipe_vertex_buffer *state)
 {
-   assert(state);
    if(!state) {
       trace_dump_null();
       return;
@@ -455,7 +445,6 @@ void trace_dump_vertex_buffer(const struct pipe_vertex_buffer *state)
 
 void trace_dump_vertex_element(const struct pipe_vertex_element *state)
 {
-   assert(state);
    if(!state) {
       trace_dump_null();
       return;
