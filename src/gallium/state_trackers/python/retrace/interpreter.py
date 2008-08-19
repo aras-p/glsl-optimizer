@@ -79,7 +79,7 @@ class Struct:
 struct_factories = {
     "pipe_blend_color": gallium.BlendColor,
     "pipe_blend_state": gallium.Blend,
-    "pipe_clip_state": gallium.Clip,
+    #"pipe_clip_state": gallium.Clip,
     #"pipe_constant_buffer": gallium.ConstantBuffer,
     "pipe_depth_state": gallium.Depth,
     "pipe_stencil_state": gallium.Stencil,
@@ -103,7 +103,7 @@ member_array_factories = {
     "pipe_rasterizer_state": {"sprite_coord_mode": gallium.ByteArray},                          
     "pipe_poly_stipple": {"stipple": gallium.UnsignedArray},                          
     "pipe_viewport_state": {"scale": gallium.FloatArray, "translate": gallium.FloatArray},                          
-    "pipe_clip_state": {"ucp": gallium.FloatArray},
+    #"pipe_clip_state": {"ucp": gallium.FloatArray},
     "pipe_depth_stencil_alpha_state": {"stencil": gallium.StencilArray},
     "pipe_blend_color": {"color": gallium.FloatArray},
     "pipe_sampler_state": {"border_color": gallium.FloatArray},              
@@ -219,6 +219,12 @@ class Winsys(Object):
     def flush_frontbuffer(self, surface):
         pass
 
+    def surface_alloc(self):
+        return None
+    
+    def surface_release(self, surface):
+        pass
+
 
 class Screen(Object):
     
@@ -269,14 +275,24 @@ class Context(Object):
         self.cbufs = []
         self.zsbuf = None
 
+    def destroy(self):
+        pass
+    
     def create_blend_state(self, state):
         return state
 
     def bind_blend_state(self, state):
-        self.real.set_blend(state)
-        
+        if state is not None:
+            self.real.set_blend(state)
+
+    def delete_blend_state(self, state):
+        pass
+    
     def create_sampler_state(self, state):
         return state
+
+    def delete_sampler_state(self, state):
+        pass
 
     def bind_sampler_states(self, n, states):
         for i in range(n):
@@ -286,14 +302,22 @@ class Context(Object):
         return state
 
     def bind_rasterizer_state(self, state):
-        self.real.set_rasterizer(state)
+        if state is not None:
+            self.real.set_rasterizer(state)
         
+    def delete_rasterizer_state(self, state):
+        pass
+    
     def create_depth_stencil_alpha_state(self, state):
         return state
 
     def bind_depth_stencil_alpha_state(self, state):
-        self.real.set_depth_stencil_alpha(state)
-    
+        if state is not None:
+            self.real.set_depth_stencil_alpha(state)
+            
+    def delete_depth_stencil_alpha_state(self, state):
+        pass
+
     def create_fs_state(self, state):
         tokens = str(state.tokens)
         shader = gallium.Shader(tokens)
@@ -307,14 +331,29 @@ class Context(Object):
     def bind_vs_state(self, state):
         self.real.set_vertex_shader(state)
 
+    def delete_fs_state(self, state):
+        pass
+    
+    delete_vs_state = delete_fs_state
+    
     def set_blend_color(self, state):
         self.real.set_blend_color(state)
 
     def set_clip_state(self, state):
-        self.real.set_clip(state)
+        _state = gallium.Clip()
+        _state.nr = state.nr
+        if state.nr:
+            # FIXME
+            ucp = gallium.FloatArray(gallium.PIPE_MAX_CLIP_PLANES*4)
+            for i in range(len(state.ucp)):
+                for j in range(len(state.ucp[i])):
+                    ucp[i*4 + j] = state.ucp[i][j]
+            _state.ucp = ucp
+        self.real.set_clip(_state)
 
     def set_constant_buffer(self, shader, index, state):
-        self.real.set_constant_buffer(shader, index, state.buffer)
+        if state is not None:
+            self.real.set_constant_buffer(shader, index, state.buffer)
 
     def set_framebuffer_state(self, state):
         _state = gallium.Framebuffer()
