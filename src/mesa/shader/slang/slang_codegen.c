@@ -2729,7 +2729,11 @@ _slang_assignment_compatible(slang_assemble_ctx *A,
    slang_typeinfo t0, t1;
    GLuint sz0, sz1;
 
-   
+   if (op0->type == SLANG_OPER_POSTINCREMENT ||
+       op0->type == SLANG_OPER_POSTDECREMENT) {
+      return GL_FALSE;
+   }
+
    slang_typeinfo_construct(&t0);
    _slang_typeof_operation(A, op0, &t0);
 
