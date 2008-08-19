@@ -173,7 +173,7 @@ link_uniform_vars(struct gl_shader_program *shProg,
        * Furthermore, we'll need to fix the state-var's size/datatype info.
        */
 
-      if (p->Type == PROGRAM_UNIFORM ||
+      if ((p->Type == PROGRAM_UNIFORM && p->Used) ||
           p->Type == PROGRAM_SAMPLER) {
          _mesa_append_uniform(shProg->Uniforms, p->Name, prog->Target, i);
       }

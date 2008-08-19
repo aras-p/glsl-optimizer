@@ -1703,6 +1703,10 @@ emit_var_ref(slang_emit_info *emitInfo, slang_ir_node *n)
    if (n->Store->File == PROGRAM_STATE_VAR && n->Store->Index < 0) {
       n->Store->Index = _slang_alloc_statevar(n, emitInfo->prog->Parameters);
    }
+   else if (n->Store->File == PROGRAM_UNIFORM) {
+      /* mark var as used */
+      _mesa_use_uniform(emitInfo->prog->Parameters, (char *) n->Var->a_name);
+   }
 
    if (n->Store->Index < 0) {
       /* probably ran out of registers */
