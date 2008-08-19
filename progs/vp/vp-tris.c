@@ -20,6 +20,11 @@ static PFNGLBINDPROGRAMARBPROC glBindProgramARB = NULL;
 static PFNGLGENPROGRAMSARBPROC glGenProgramsARB = NULL;
 static PFNGLPROGRAMSTRINGARBPROC glProgramStringARB = NULL;
 static PFNGLISPROGRAMARBPROC glIsProgramARB = NULL;
+
+static PFNGLBINDPROGRAMNVPROC glBindProgramNV = NULL;
+static PFNGLGENPROGRAMSNVPROC glGenProgramsNV = NULL;
+static PFNGLLOADPROGRAMNVPROC glLoadProgramNV = NULL;
+static PFNGLISPROGRAMNVPROC glIsProgramNV = NULL;
 #endif
 
 static const char *filename = NULL;
@@ -108,20 +113,37 @@ static void Init( void )
 
    fprintf(stderr, "%.*s\n", sz, buf);
 
+   if (strncmp( buf, "!!VP", 4 ) == 0) {
 #ifdef WIN32
-   glBindProgramARB = (PFNGLBINDPROGRAMARBPROC) wglGetProcAddress( "glBindProgramARB" );
-   glGenProgramsARB = (PFNGLGENPROGRAMSARBPROC) wglGetProcAddress( "glGenProgramsARB" );
-   glProgramStringARB = (PFNGLPROGRAMSTRINGARBPROC) wglGetProcAddress( "glProgramStringARB" );
-   glIsProgramARB = (PFNGLISPROGRAMARBPROC) wglGetProcAddress( "glIsProgramARB" );
+      glBindProgramNV = (PFNGLBINDPROGRAMNVPROC) wglGetProcAddress( "glBindProgramNV" );
+      glGenProgramsNV = (PFNGLGENPROGRAMSNVPROC) wglGetProcAddress( "glGenProgramsNV" );
+      glLoadProgramNV = (PFNGLLOADPROGRAMNVPROC) wglGetProcAddress( "glLoadProgramNV" );
+      glIsProgramNV = (PFNGLISPROGRAMNVPROC) wglGetProcAddress( "glIsProgramNV" );
 #endif
 
-   glEnable(GL_VERTEX_PROGRAM_ARB);
+      glEnable( GL_VERTEX_PROGRAM_NV );
+      glGenProgramsNV( 1, &prognum );
+      glBindProgramNV( GL_VERTEX_PROGRAM_NV, prognum );
+      glLoadProgramNV( GL_VERTEX_PROGRAM_NV, prognum, sz, (const GLubyte *) buf );
+      assert( glIsProgramNV( prognum ) );
+   }
+   else {
+#ifdef WIN32
+      glBindProgramARB = (PFNGLBINDPROGRAMARBPROC) wglGetProcAddress( "glBindProgramARB" );
+      glGenProgramsARB = (PFNGLGENPROGRAMSARBPROC) wglGetProcAddress( "glGenProgramsARB" );
+      glProgramStringARB = (PFNGLPROGRAMSTRINGARBPROC) wglGetProcAddress( "glProgramStringARB" );
+      glIsProgramARB = (PFNGLISPROGRAMARBPROC) wglGetProcAddress( "glIsProgramARB" );
+#endif
 
-   glGenProgramsARB(1, &prognum);
+      glEnable(GL_VERTEX_PROGRAM_ARB);
 
-   glBindProgramARB(GL_VERTEX_PROGRAM_ARB, prognum);
-   glProgramStringARB(GL_VERTEX_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB,
-		      sz, (const GLubyte *) buf);
+      glGenProgramsARB(1, &prognum);
+
+      glBindProgramARB(GL_VERTEX_PROGRAM_ARB, prognum);
+      glProgramStringARB(GL_VERTEX_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB,
+		        sz, (const GLubyte *) buf);
+      assert(glIsProgramARB(prognum));
+   }
 
    errno = glGetError();
    printf("glGetError = %d\n", errno);
@@ -133,7 +155,6 @@ static void Init( void )
       printf("errorpos: %d\n", errorpos);
       printf("%s\n", (char *)glGetString(GL_PROGRAM_ERROR_STRING_ARB));
    }
-   assert(glIsProgramARB(prognum));
 }
 
 
