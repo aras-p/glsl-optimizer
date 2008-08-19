@@ -101,6 +101,7 @@ class XmlTokenizer:
             self.index = 0
             data = self.fp.read(size)
             self.final = len(data) < size
+            data = data.rstrip('\0')
             try:
                 self.parser.Parse(data, self.final)
             except xml.parsers.expat.ExpatError, e:
