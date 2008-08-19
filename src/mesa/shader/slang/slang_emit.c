@@ -1636,6 +1636,84 @@ emit_struct_field(slang_emit_info *emitInfo, slang_ir_node *n)
 }
 
 
+/**
+ * Emit code for a variable declaration.
+ * This usually doesn't result in any code generation, but just
+ * memory allocation.
+ */
+static struct prog_instruction *
+emit_var_decl(slang_emit_info *emitInfo, slang_ir_node *n)
+{
+   struct prog_instruction *inst;
+
+   assert(n->Store);
+   assert(n->Store->File != PROGRAM_UNDEFINED);
+   assert(n->Store->Size > 0);
+   /*assert(n->Store->Index < 0);*/
+
+   if (!n->Var || n->Var->isTemp) {
+      /* a nameless/temporary variable, will be freed after first use */
+      /*NEW*/
+      if (n->Store->Index < 0 && !_slang_alloc_temp(emitInfo->vt, n->Store)) {
+         slang_info_log_error(emitInfo->log,
+                              "Ran out of registers, too many temporaries");
+         return NULL;
+      }
+   }
+   else {
+      /* a regular variable */
+      _slang_add_variable(emitInfo->vt, n->Var);
+      if (!_slang_alloc_var(emitInfo->vt, n->Store)) {
+         slang_info_log_error(emitInfo->log,
+                              "Ran out of registers, too many variables");
+         return NULL;
+      }
+      /*
+        printf("IR_VAR_DECL %s %d store %p\n",
+        (char*) n->Var->a_name, n->Store->Index, (void*) n->Store);
+      */
+      assert(n->Var->aux == n->Store);
+   }
+   if (emitInfo->EmitComments) {
+      /* emit NOP with comment describing the variable's storage location */
+      char s[1000];
+      sprintf(s, "TEMP[%d]%s = variable %s (size %d)",
+              n->Store->Index,
+              _mesa_swizzle_string(n->Store->Swizzle, 0, GL_FALSE), 
+              (n->Var ? (char *) n->Var->a_name : "anonymous"),
+              n->Store->Size);
+      inst = emit_comment(emitInfo, s);
+      return inst;
+   }
+   return NULL;
+}
+
+
+/**
+ * Emit code for a reference to a variable.
+ * Actually, no code is generated but we may do some memory alloation.
+ * In particular, state vars (uniforms) are allocated on an as-needed basis.
+ */
+static struct prog_instruction *
+emit_var_ref(slang_emit_info *emitInfo, slang_ir_node *n)
+{
+   assert(n->Store);
+   assert(n->Store->File != PROGRAM_UNDEFINED);
+
+   if (n->Store->File == PROGRAM_STATE_VAR && n->Store->Index < 0) {
+      n->Store->Index = _slang_alloc_statevar(n, emitInfo->prog->Parameters);
+   }
+
+   if (n->Store->Index < 0) {
+      /* probably ran out of registers */
+      return NULL;
+   }
+   assert(n->Store->Size > 0);
+
+   return NULL;
+}
+
+
 static struct prog_instruction *
 emit(slang_emit_info *emitInfo, slang_ir_node *n)
 {
@@ -1671,64 +1749,14 @@ emit(slang_emit_info *emitInfo, slang_ir_node *n)
 
    case IR_VAR_DECL:
       /* Variable declaration - allocate a register for it */
-      assert(n->Store);
-      assert(n->Store->File != PROGRAM_UNDEFINED);
-      assert(n->Store->Size > 0);
-      /*assert(n->Store->Index < 0);*/
-      if (!n->Var || n->Var->isTemp) {
-         /* a nameless/temporary variable, will be freed after first use */
-         /*NEW*/
-         if (n->Store->Index < 0 && !_slang_alloc_temp(emitInfo->vt, n->Store)) {
-            slang_info_log_error(emitInfo->log,
-                                 "Ran out of registers, too many temporaries");
-            return NULL;
-         }
-      }
-      else {
-         /* a regular variable */
-         _slang_add_variable(emitInfo->vt, n->Var);
-         if (!_slang_alloc_var(emitInfo->vt, n->Store)) {
-            slang_info_log_error(emitInfo->log,
-                                 "Ran out of registers, too many variables");
-            return NULL;
-         }
-         /*
-         printf("IR_VAR_DECL %s %d store %p\n",
-                (char*) n->Var->a_name, n->Store->Index, (void*) n->Store);
-         */
-         assert(n->Var->aux == n->Store);
-      }
-      if (emitInfo->EmitComments) {
-         /* emit NOP with comment describing the variable's storage location */
-         char s[1000];
-         sprintf(s, "TEMP[%d]%s = variable %s (size %d)",
-                 n->Store->Index,
-                 _mesa_swizzle_string(n->Store->Swizzle, 0, GL_FALSE), 
-                 (n->Var ? (char *) n->Var->a_name : "anonymous"),
-                 n->Store->Size);
-         inst = emit_comment(emitInfo, s);
-         return inst;
-      }
-      return NULL;
+      inst = emit_var_decl(emitInfo, n);
+      return inst;
 
    case IR_VAR:
       /* Reference to a variable
        * Storage should have already been resolved/allocated.
        */
-      assert(n->Store);
-      assert(n->Store->File != PROGRAM_UNDEFINED);
-
-      if (n->Store->File == PROGRAM_STATE_VAR &&
-          n->Store->Index < 0) {
-         n->Store->Index = _slang_alloc_statevar(n, emitInfo->prog->Parameters);
-      }
-
-      if (n->Store->Index < 0) {
-         /* probably ran out of registers */
-         return NULL;
-      }
-      assert(n->Store->Size > 0);
-      break;
+      return emit_var_ref(emitInfo, n);
 
    case IR_ELEMENT:
       return emit_array_element(emitInfo, n);
