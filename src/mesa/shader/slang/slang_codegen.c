@@ -1980,6 +1980,12 @@ _slang_gen_function_call_name(slang_assemble_ctx *A, const char *name,
       fun = _slang_locate_struct_constructor(A, name);
    }
 
+   /*
+    * At this point, some heuristics are used to try to find a function
+    * that matches the calling signature by means of casting or "unrolling"
+    * of constructors.
+    */
+
    if (!fun && _slang_is_vec_mat_type(name)) {
       /* Next, if this call looks like a vec() or mat() constructor call,
        * try "unwinding" the args to satisfy a constructor.
@@ -1995,7 +2001,7 @@ _slang_gen_function_call_name(slang_assemble_ctx *A, const char *name,
       }
    }
 
-   if (!fun) {
+   if (!fun && _slang_is_vec_mat_type(name)) {
       /* Next, try casting args to the types of the formal parameters */
       int numArgs = oper->num_children;
       fun = _slang_find_function_by_argc(A->space.funcs, name, numArgs);
@@ -2006,6 +2012,13 @@ _slang_gen_function_call_name(slang_assemble_ctx *A, const char *name,
          return NULL;
       }
       assert(fun);
+   }
+
+   if (!fun) {
+      slang_info_log_error(A->log,
+                           "Function '%s' not found (check argument types)",
+                           name);
+      return NULL;
    }
 
    n = _slang_gen_function_call(A, fun, oper, dest);
