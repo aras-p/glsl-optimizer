@@ -39,6 +39,9 @@
  * Copy a rectangular region from one surface to another.
  * Surfaces must have same bpp.
  *
+ * Note that it's always the case that Y=0=top of the raster.
+ * If do_flip is non-zero, the region being copied will be flipped vertically.
+ *
  * Assumes all values are within bounds -- no checking at this level -
  * do it higher up if required.
  */
@@ -72,7 +75,7 @@ sp_surface_copy(struct pipe_context *pipe,
                   width, height,
                   src_map,
                   do_flip ? -(int) src->stride : src->stride,
-                  srcx, do_flip ? src->height - 1 - srcy : srcy);
+                  srcx, srcy);
 
    pipe->screen->surface_unmap(pipe->screen, src);
    pipe->screen->surface_unmap(pipe->screen, dst);
