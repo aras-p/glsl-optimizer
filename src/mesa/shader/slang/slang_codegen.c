@@ -1481,7 +1481,7 @@ _slang_simple_writemask(GLuint writemask, GLuint swizzle)
  * \return GL_FALSE for simple writemasks, GL_TRUE for non-simple
  */
 static GLboolean
-swizzle_to_writemask(GLuint swizzle,
+swizzle_to_writemask(slang_assemble_ctx *A, GLuint swizzle,
                      GLuint *writemaskOut, GLuint *swizzleOut)
 {
    GLuint mask = 0x0, newSwizzle[4];
@@ -1495,6 +1495,18 @@ swizzle_to_writemask(GLuint swizzle,
          break;
       }
       assert(swz >= 0 && swz <= 3);
+
+      if (swizzle != SWIZZLE_XXXX &&
+          swizzle != SWIZZLE_YYYY &&
+          swizzle != SWIZZLE_ZZZZ &&
+          swizzle != SWIZZLE_WWWW &&
+          (mask & (1 << swz))) {
+         /* a channel can't be specified twice (ex: ".xyyz") */
+         slang_info_log_error(A->log, "Invalid writemask '%s'",
+                              _mesa_swizzle_string(swizzle, 0, 0));
+         return GL_FALSE;
+      }
+
       mask |= (1 << swz);
    }
    assert(mask <= 0xf);
@@ -1590,11 +1602,11 @@ resolve_swizzle(const slang_operation *oper)
  * As above, but produce a writemask.
  */
 static GLuint
-resolve_writemask(const slang_operation *oper)
+resolve_writemask(slang_assemble_ctx *A, const slang_operation *oper)
 {
    GLuint swizzle = resolve_swizzle(oper);
    GLuint writemask, swizzleOut;
-   swizzle_to_writemask(swizzle, &writemask, &swizzleOut);
+   swizzle_to_writemask(A, swizzle, &writemask, &swizzleOut);
    return writemask;
 }
 
@@ -1668,7 +1680,7 @@ _slang_gen_asm(slang_assemble_ctx *A, slang_operation *oper,
 
       dest_oper = &oper->children[0];
 
-      writemask = resolve_writemask(dest_oper);
+      writemask = resolve_writemask(A, dest_oper);
 
       n0 = _slang_gen_operation(A, dest_oper);
       if (!n0)
@@ -3037,7 +3049,7 @@ _slang_gen_assignment(slang_assemble_ctx * A, slang_operation *oper)
       if (lhs && rhs) {
          /* convert lhs swizzle into writemask */
          GLuint writemask, newSwizzle;
-         if (!swizzle_to_writemask(lhs->Store->Swizzle,
+         if (!swizzle_to_writemask(A, lhs->Store->Swizzle,
                                    &writemask, &newSwizzle)) {
             /* Non-simple writemask, need to swizzle right hand side in
              * order to put components into the right place.
