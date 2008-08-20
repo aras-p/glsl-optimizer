@@ -532,6 +532,8 @@ DestroyContext(Display *dpy, GLXContext gc)
     }
 #endif
 
+    __glXFreeVertexArrayState(gc);
+
     if (gc->currentDpy) {
 	/* Have to free later cuz it's in use now */
 	__glXUnlock();

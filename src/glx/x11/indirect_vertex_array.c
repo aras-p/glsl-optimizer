@@ -101,6 +101,31 @@ const GLuint __glXTypeSize_table[16] = {
 };
 
 
+/**
+ * Free the per-context array state that was allocated with
+ * __glXInitVertexArrayState().
+ */
+void
+__glXFreeVertexArrayState( __GLXcontext * gc )
+{
+    __GLXattribute * state = (__GLXattribute *)(gc->client_state_private);
+    struct array_state_vector* arrays = state->array_state;
+
+    if (arrays) {
+        if (arrays->stack) {
+            free(arrays->stack);
+            arrays->stack = NULL;
+        }
+        if (arrays->arrays) {
+            free(arrays->arrays);
+            arrays->arrays = NULL;
+        }
+        free(arrays);
+        arrays = NULL;
+        state->array_state = NULL;
+    }
+}
+
 
 /**
  * Initialize vertex array state of a GLX context.
