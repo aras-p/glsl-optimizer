@@ -279,12 +279,6 @@ static void brw_wm_populate_key( struct brw_context *brw,
       const struct gl_texture_object *t = unit->_Current;
 
       if (unit->_ReallyEnabled) {
-
-	 if (t->CompareMode == GL_COMPARE_R_TO_TEXTURE_ARB &&
-	     t->Image[0][t->BaseLevel]->_BaseFormat == GL_DEPTH_COMPONENT) {
-	    key->shadowtex_mask |= 1<<i;
-	 }
-
 	 if (t->Image[0][t->BaseLevel]->InternalFormat == GL_YCBCR_MESA) {
 	    key->yuvtex_mask |= 1<<i;
 	    if (t->Image[0][t->BaseLevel]->TexFormat->MesaFormat == 
@@ -293,6 +287,9 @@ static void brw_wm_populate_key( struct brw_context *brw,
 	 }
       }
    }
+
+   /* Shadow */
+   key->shadowtex_mask = fp->program.Base.ShadowSamplers;
 
    /* _NEW_BUFFERS */
    /*

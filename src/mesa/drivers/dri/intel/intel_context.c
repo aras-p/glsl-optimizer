@@ -266,6 +266,7 @@ static const struct dri_extension brw_extensions[] = {
    { "GL_ARB_fragment_program",           NULL },
    { "GL_ARB_shadow",                     NULL },
    { "GL_EXT_shadow_funcs",               NULL },
+   { "GL_ARB_fragment_program_shadow",    NULL },
    /* ARB extn won't work if not enabled */
    { "GL_SGIX_depth_texture",             NULL },
    { "GL_EXT_texture_sRGB",		  NULL},
