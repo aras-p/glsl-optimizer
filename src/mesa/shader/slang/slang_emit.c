@@ -1971,6 +1971,7 @@ _slang_emit_code(slang_ir_node *n, slang_var_table *vt,
    GET_CURRENT_CONTEXT(ctx);
    GLboolean success;
    slang_emit_info emitInfo;
+   GLuint maxUniforms;
 
    emitInfo.log = log;
    emitInfo.vt = vt;
@@ -1986,6 +1987,19 @@ _slang_emit_code(slang_ir_node *n, slang_var_table *vt,
    if (!emitInfo.EmitCondCodes) {
       emitInfo.EmitHighLevelInstructions = GL_TRUE;
    }      
+
+   /* Check uniform/constant limits */
+   if (prog->Target == GL_FRAGMENT_PROGRAM_ARB) {
+      maxUniforms = ctx->Const.FragmentProgram.MaxUniformComponents / 4;
+   }
+   else {
+      assert(prog->Target == GL_VERTEX_PROGRAM_ARB);
+      maxUniforms = ctx->Const.VertexProgram.MaxUniformComponents / 4;
+   }
+   if (prog->Parameters->NumParameters > maxUniforms) {
+      slang_info_log_error(log, "Constant/uniform register limit exceeded");
+      return GL_FALSE;
+   }
 
    (void) emit(&emitInfo, n);
 
