@@ -104,6 +104,16 @@ struct setup_context {
 
 
 
+/**
+ * Test if x is NaN or +/- infinity.
+ */
+static INLINE boolean
+is_inf_or_nan(float x)
+{
+   union fi tmp;
+   tmp.f = x;
+   return !(int)((unsigned int)((tmp.i & 0x7fffffff)-0x7f800000) >> 31);
+}
 
 
 static boolean cull_tri( struct setup_context *setup,
@@ -293,6 +303,9 @@ static void print_vertex(const struct setup_context *setup,
 }
 #endif
 
+/**
+ * \return FALSE if coords are inf/nan (cull the tri), TRUE otherwise
+ */
 static boolean setup_sort_vertices( struct setup_context *setup,
                                     float det,
                                     const float (*v0)[4],
@@ -370,10 +383,13 @@ static boolean setup_sort_vertices( struct setup_context *setup,
 			    setup->ebot.dx * setup->emaj.dy);
 
       setup->oneoverarea = 1.0f / area;
+
       /*
       debug_printf("%s one-over-area %f  area %f  det %f\n",
                    __FUNCTION__, setup->oneoverarea, area, det );
       */
+      if (is_inf_or_nan(setup->oneoverarea))
+         return FALSE;
    }
 
    /* We need to know if this is a front or back-facing triangle for:
@@ -742,7 +758,8 @@ void setup_tri( struct setup_context *setup,
    if (cull_tri( setup, det ))
       return;
 
-   setup_sort_vertices( setup, det, v0, v1, v2 );
+   if (!setup_sort_vertices( setup, det, v0, v1, v2 ))
+      return;
    setup_tri_coefficients( setup );
    setup_tri_edges( setup );
 
@@ -827,7 +844,7 @@ line_persp_coeff(struct setup_context *setup,
  * Compute the setup->coef[] array dadx, dady, a0 values.
  * Must be called after setup->vmin,vmax are initialized.
  */
-static INLINE void
+static INLINE boolean
 setup_line_coefficients(struct setup_context *setup,
                         const float (*v0)[4],
                         const float (*v1)[4])
@@ -836,6 +853,7 @@ setup_line_coefficients(struct setup_context *setup,
    const struct sp_fragment_shader *spfs = softpipe->fs;
    const struct vertex_info *vinfo = softpipe_get_vertex_info(softpipe);
    uint fragSlot;
+   float area;
 
    /* use setup->vmin, vmax to point to vertices */
    setup->vprovoke = v1;
@@ -844,9 +862,12 @@ setup_line_coefficients(struct setup_context *setup,
 
    setup->emaj.dx = setup->vmax[0][0] - setup->vmin[0][0];
    setup->emaj.dy = setup->vmax[0][1] - setup->vmin[0][1];
-   /* NOTE: this is not really 1/area */
-   setup->oneoverarea = 1.0f / (setup->emaj.dx * setup->emaj.dx +
-                                setup->emaj.dy * setup->emaj.dy);
+
+   /* NOTE: this is not really area but something proportional to it */
+   area = setup->emaj.dx * setup->emaj.dx + setup->emaj.dy * setup->emaj.dy;
+   if (area == 0.0f || is_inf_or_nan(area))
+      return FALSE;
+   setup->oneoverarea = 1.0f / area;
 
    /* z and w are done by linear interpolation:
     */
@@ -886,6 +907,7 @@ setup_line_coefficients(struct setup_context *setup,
          setup->coef[fragSlot].dady[1] = 0.0;
       }
    }
+   return TRUE;
 }
 
 
@@ -942,18 +964,19 @@ setup_line(struct setup_context *setup,
    print_vertex(setup, v1);
 #endif
 
-   assert(v0[0][0] < 1.0e9);
-   assert(v0[0][1] < 1.0e9);
-   assert(v1[0][0] < 1.0e9);
-   assert(v1[0][1] < 1.0e9);
-
    if (setup->softpipe->no_rast)
       return;
 
    if (dx == 0 && dy == 0)
       return;
 
-   setup_line_coefficients(setup, v0, v1);
+   if (!setup_line_coefficients(setup, v0, v1))
+      return;
+
+   assert(v0[0][0] < 1.0e9);
+   assert(v0[0][1] < 1.0e9);
+   assert(v1[0][0] < 1.0e9);
+   assert(v1[0][1] < 1.0e9);
 
    if (dx < 0) {
       dx = -dx;   /* make positive */
