@@ -403,6 +403,12 @@ class Context(Object):
     
     def draw_arrays(self, mode, start, count):
         self.real.draw_arrays(mode, start, count)
+    
+    def draw_elements(self, indexBuffer, indexSize, mode, start, count):
+        self.real.draw_elements(indexBuffer, indexSize, mode, start, count)
+        
+    def draw_range_elements(self, indexBuffer, indexSize, minIndex, maxIndex, mode, start, count):
+        self.real.draw_range_elements(indexBuffer, indexSize, minIndex, maxIndex, mode, start, count)
         
     def flush(self, flags):
         self.real.flush(flags)
