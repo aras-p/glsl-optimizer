@@ -238,7 +238,7 @@ void draw_pipeline_run( struct draw_context *draw,
    do_line( draw,                                           \
             flags,                                          \
             verts + stride * ((i0) & ~DRAW_PIPE_FLAG_MASK), \
-            verts + stride * (i+1))
+            verts + stride * (i1))
 
 #define POINT(i0)                               \
    do_point( draw,                              \
