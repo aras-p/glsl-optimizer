@@ -445,6 +445,7 @@ static void driDestroyContext(__GLXDRIcontext *context,
     (*psc->core->destroyContext)(pcp->driContext);
 
     XF86DRIDestroyContext(psc->dpy, psc->scr, pcp->hwContextID);
+    Xfree(pcp);
 }
 
 static Bool driBindContext(__GLXDRIcontext *context,
