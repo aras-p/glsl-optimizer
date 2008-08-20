@@ -254,11 +254,7 @@ _mesa_init_point(GLcontext *ctx)
    ctx->Point.MaxSize
       = MAX2(ctx->Const.MaxPointSize, ctx->Const.MaxPointSizeAA);
    ctx->Point.Threshold = 1.0;
-#if FEATURE_es2_glsl
-   ctx->Point.PointSprite = GL_TRUE; /* GL_ARB/NV_point_sprite */
-#else
    ctx->Point.PointSprite = GL_FALSE; /* GL_ARB/NV_point_sprite */
-#endif
    ctx->Point.SpriteRMode = GL_ZERO; /* GL_NV_point_sprite (only!) */
    ctx->Point.SpriteOrigin = GL_UPPER_LEFT; /* GL_ARB_point_sprite */
    for (i = 0; i < MAX_TEXTURE_UNITS; i++) {
