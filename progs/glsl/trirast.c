@@ -190,7 +190,7 @@ Init(void)
       "}\n";
    static const char *vertShaderText =
       "void main() {\n"
-      "   gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;\n"
+      "   gl_Position = ftransform(); \n"
       "}\n";
 
    if (!ShadersSupported())
