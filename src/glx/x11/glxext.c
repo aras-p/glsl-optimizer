@@ -170,10 +170,13 @@ static void FreeScreenConfigs(__GLXdisplayPrivate *priv)
 	if (psc->driScreen) {
 	    psc->driScreen->destroyScreen(psc);
 	    __glxHashDestroy(psc->drawHash);
+            XFree(psc->driScreen);
+            psc->driScreen = NULL;
 	}
 #endif
     }
     XFree((char*) priv->screenConfigs);
+    priv->screenConfigs = NULL;
 }
 
 /*
