@@ -108,7 +108,9 @@ writemask_to_swizzle(GLuint writemask)
 
 
 /**
- * Swizzle a swizzle.  That is, return swz2(swz1)
+ * Swizzle a swizzle (function composition).
+ * That is, return swz2(swz1), or said another way: swz1.szw2
+ * Example: swizzle_swizzle(".zwxx", ".xxyw") yields ".zzwx"
  */
 GLuint
 _slang_swizzle_swizzle(GLuint swz1, GLuint swz2)
@@ -279,7 +281,7 @@ storage_to_src_reg(struct prog_src_register *src, const slang_ir_storage *st)
    while (st->Parent) {
       st = st->Parent;
       index += st->Index;
-      swizzle = _slang_swizzle_swizzle(st->Swizzle, swizzle);
+      swizzle = _slang_swizzle_swizzle(fix_swizzle(st->Swizzle), swizzle);
    }
 
    assert(st->File >= 0);
