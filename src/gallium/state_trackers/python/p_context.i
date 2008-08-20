@@ -209,6 +209,16 @@ struct st_context {
                                  mode, start, count);
    }
 
+   void draw_range_elements( struct st_buffer *indexBuffer,
+                             unsigned indexSize, unsigned minIndex, unsigned maxIndex,
+                             unsigned mode, unsigned start, unsigned count)
+   {
+      $self->pipe->draw_range_elements($self->pipe, 
+                                       indexBuffer->buffer, 
+                                       indexSize, minIndex, maxIndex,
+                                       mode, start, count);
+   }
+
    void draw_vertices(unsigned prim,
                       unsigned num_verts,
                       unsigned num_attribs,
