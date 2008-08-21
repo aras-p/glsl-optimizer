@@ -58,10 +58,30 @@ static void compute_tri_direction( struct brw_clip_compile *c )
    struct brw_reg v2 = byte_offset(c->reg.vertex[2], c->offset[VERT_RESULT_HPOS]); 
 
 
+   struct brw_reg v0n = get_tmp(c);
+   struct brw_reg v1n = get_tmp(c);
+   struct brw_reg v2n = get_tmp(c);
+
+   /* Convert to NDC.
+    * NOTE: We can't modify the original vertex coordinates,
+    * as it may impact further operations.
+    * So, we have to keep normalized coordinates in temp registers.
+    *
+    * TBD-KC
+    * Try to optimize unnecessary MOV's.
+    */
+   brw_MOV(p, v0n, v0);
+   brw_MOV(p, v1n, v1);
+   brw_MOV(p, v2n, v2);
+
+   brw_clip_project_position(c, v0n);
+   brw_clip_project_position(c, v1n);
+   brw_clip_project_position(c, v2n);
+
    /* Calculate the vectors of two edges of the triangle:
     */
-   brw_ADD(p, e, v0, negate(v2)); 
-   brw_ADD(p, f, v1, negate(v2)); 
+   brw_ADD(p, e, v0n, negate(v2n)); 
+   brw_ADD(p, f, v1n, negate(v2n)); 
 
    /* Take their crossproduct:
     */

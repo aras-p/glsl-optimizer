@@ -46,8 +46,7 @@
 
 
 
-
-static struct brw_reg get_tmp( struct brw_clip_compile *c )
+struct brw_reg get_tmp( struct brw_clip_compile *c )
 {
    struct brw_reg tmp = brw_vec4_grf(c->last_tmp, 0);
 
@@ -90,7 +89,7 @@ void brw_clip_init_planes( struct brw_clip_compile *c )
 
 /* Project 'pos' to screen space (or back again), overwrite with results:
  */
-static void brw_clip_project_position(struct brw_clip_compile *c, struct brw_reg pos )
+void brw_clip_project_position(struct brw_clip_compile *c, struct brw_reg pos )
 {
    struct brw_compile *p = &c->func;
 

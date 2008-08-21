@@ -42,16 +42,6 @@
 #include "brw_util.h"
 #include "brw_clip.h"
 
-static struct brw_reg get_tmp( struct brw_clip_compile *c )
-{
-   struct brw_reg tmp = brw_vec4_grf(c->last_tmp, 0);
-
-   if (++c->last_tmp > c->prog_data.total_grf)
-      c->prog_data.total_grf = c->last_tmp;
-
-   return tmp;
-}
-
 static void release_tmps( struct brw_clip_compile *c )
 {
    c->last_tmp = c->first_tmp;
