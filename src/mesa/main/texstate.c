@@ -1406,6 +1406,7 @@ _mesa_TexParameterfv( GLenum target, GLenum pname, const GLfloat *params )
          break;
       case GL_GENERATE_MIPMAP_SGIS:
          if (ctx->Extensions.SGIS_generate_mipmap) {
+            FLUSH_VERTICES(ctx, _NEW_TEXTURE);
             texObj->GenerateMipmap = params[0] ? GL_TRUE : GL_FALSE;
          }
          else {
