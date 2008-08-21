@@ -32,6 +32,7 @@
 #include "tr_state.h"
 #include "tr_screen.h"
 #include "tr_texture.h"
+#include "tr_winsys.h"
 #include "tr_context.h"
 
 
@@ -131,6 +132,8 @@ trace_context_draw_elements(struct pipe_context *_pipe,
    struct pipe_context *pipe = tr_ctx->pipe;
    boolean result;
 
+   trace_winsys_user_buffer_update(_pipe->winsys, indexBuffer);
+
    trace_dump_call_begin("pipe_context", "draw_elements");
 
    trace_dump_arg(ptr, pipe);
@@ -163,6 +166,8 @@ trace_context_draw_range_elements(struct pipe_context *_pipe,
    struct trace_context *tr_ctx = trace_context(_pipe);
    struct pipe_context *pipe = tr_ctx->pipe;
    boolean result;
+
+   trace_winsys_user_buffer_update(_pipe->winsys, indexBuffer);
 
    trace_dump_call_begin("pipe_context", "draw_range_elements");
 
@@ -691,6 +696,8 @@ trace_context_set_constant_buffer(struct pipe_context *_pipe,
    struct trace_context *tr_ctx = trace_context(_pipe);
    struct pipe_context *pipe = tr_ctx->pipe;
 
+   trace_winsys_user_buffer_update(_pipe->winsys, (struct pipe_buffer *)buffer);
+   
    trace_dump_call_begin("pipe_context", "set_constant_buffer");
 
    trace_dump_arg(ptr, pipe);
@@ -820,6 +827,10 @@ trace_context_set_vertex_buffers(struct pipe_context *_pipe,
 {
    struct trace_context *tr_ctx = trace_context(_pipe);
    struct pipe_context *pipe = tr_ctx->pipe;
+   unsigned i;
+
+   for(i = 0; i < num_buffers; ++i)
+      trace_winsys_user_buffer_update(_pipe->winsys, buffers[i].buffer);
 
    trace_dump_call_begin("pipe_context", "set_vertex_buffers");
 

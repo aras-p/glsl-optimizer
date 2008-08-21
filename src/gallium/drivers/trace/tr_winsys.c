@@ -242,7 +242,47 @@ trace_winsys_user_buffer_create(struct pipe_winsys *_winsys,
    
    trace_dump_call_end();
    
+   /* XXX: Mark the user buffers. (we should wrap pipe_buffers, but is is 
+    * impossible to do so while texture-less surfaces are still around */
+   if(result) {
+      assert(!(result->usage & TRACE_BUFFER_USAGE_USER));
+      result->usage |= TRACE_BUFFER_USAGE_USER;
+   }
+   
    return result;
+}
+
+
+void
+trace_winsys_user_buffer_update(struct pipe_winsys *_winsys, 
+                                struct pipe_buffer *buffer)
+{
+   struct trace_winsys *tr_ws = trace_winsys(_winsys);
+   struct pipe_winsys *winsys = tr_ws->winsys;
+   const void *map;
+   
+   if(buffer && buffer->usage & TRACE_BUFFER_USAGE_USER) {
+      map = winsys->buffer_map(winsys, buffer, PIPE_BUFFER_USAGE_CPU_READ);
+      if(map) {
+         trace_dump_call_begin("pipe_winsys", "buffer_write");
+         
+         trace_dump_arg(ptr, winsys);
+         
+         trace_dump_arg(ptr, buffer);
+         
+         trace_dump_arg_begin("data");
+         trace_dump_bytes(map, buffer->size);
+         trace_dump_arg_end();
+      
+         trace_dump_arg_begin("size");
+         trace_dump_uint(buffer->size);
+         trace_dump_arg_end();
+      
+         trace_dump_call_end();
+         
+         winsys->buffer_unmap(winsys, buffer);
+      }
+   }
 }
 
 
