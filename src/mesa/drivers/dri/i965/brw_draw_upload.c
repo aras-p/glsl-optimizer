@@ -217,25 +217,6 @@ static GLuint get_index_type(GLenum type)
    }
 }
 
-static void copy_strided_array( GLubyte *dest, 
-				const GLubyte *src, 
-				GLuint size, 
-				GLuint stride,
-				GLuint count )
-{
-   if (size == stride) 
-      memcpy(dest, src, count * size);
-   else {
-      GLuint i;
-   
-      for (i = 0; i < count; i++) {
-	 memcpy(dest, src, size);
-	 src += stride;
-	 dest += size;
-      }
-   }
-}
-
 static void wrap_buffers( struct brw_context *brw,
 			  GLuint size )
 {
@@ -293,13 +274,31 @@ copy_array_to_vbo_array( struct brw_context *brw,
       element->stride = dst_stride;
    }
 
-   dri_bo_map(element->bo, GL_TRUE);
-   copy_strided_array((unsigned char *)element->bo->virtual + element->offset,
-		       element->glarray->Ptr,
-		       dst_stride,
-		       element->glarray->StrideB,
-		       element->count);
-   dri_bo_unmap(element->bo);
+   if (dst_stride == element->glarray->StrideB) {
+      dri_bo_subdata(element->bo,
+		     element->offset,
+		     size,
+		     element->glarray->Ptr);
+   } else {
+      void *data;
+      char *dest;
+      const char *src = element->glarray->Ptr;
+      int i;
+
+      data = _mesa_malloc(dst_stride * element->count);
+      dest = data;
+      for (i = 0; i < element->count; i++) {
+	 memcpy(dest, src, dst_stride);
+	 src += element->glarray->StrideB;
+	 dest += dst_stride;
+      }
+
+      dri_bo_subdata(element->bo,
+		     element->offset,
+		     size,
+		     data);
+      _mesa_free(data);
+   }
 }
 
 static void brw_prepare_vertices(struct brw_context *brw)
