@@ -174,6 +174,7 @@ void
 intel_generate_mipmap(GLcontext *ctx, GLenum target,
                       struct gl_texture_object *texObj)
 {
+   struct intel_context *intel = intel_context(ctx);
    struct intel_texture_object *intelObj = intel_texture_object(texObj);
    GLuint nr_faces = (intelObj->base.Target == GL_TEXTURE_CUBE_MAP) ? 6 : 1;
    int face, i;
@@ -193,6 +194,10 @@ intel_generate_mipmap(GLcontext *ctx, GLenum target,
 
 	 intelImage->level = i;
 	 intelImage->face = face;
+	 /* Unreference the miptree to signal that the new Data is a bare
+	  * pointer from mesa.
+	  */
+	 intel_miptree_release(intel, &intelImage->mt);
       }
    }
 }
@@ -202,9 +207,9 @@ static void intelGenerateMipmap(GLcontext *ctx, GLenum target, struct gl_texture
    struct intel_context *intel = intel_context(ctx);
    struct intel_texture_object *intelObj = intel_texture_object(texObj);
 
-   intel_tex_map_images(intel, intelObj);
+   intel_tex_map_level_images(intel, intelObj, texObj->BaseLevel);
    intel_generate_mipmap(ctx, target, texObj);
-   intel_tex_unmap_images(intel, intelObj);
+   intel_tex_unmap_level_images(intel, intelObj, texObj->BaseLevel);
 }
 
 void
