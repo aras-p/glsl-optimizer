@@ -13,7 +13,7 @@ DRIVER_NAME = egl_xdri.so
 INCLUDE_DIRS = \
 	-I. \
 	-I/usr/include \
-	-I/usr/include/drm \
+	$(shell pkg-config --cflags-only-I libdrm) \
 	-I$(TOP)/include \
 	-I$(TOP)/include/GL/internal \
 	-I$(TOP)/src/mesa/glapi \
