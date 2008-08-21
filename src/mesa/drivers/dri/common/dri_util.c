@@ -512,13 +512,13 @@ static void driCopySubBuffer(__DRIdrawable *dPriv,
 {
     drm_clip_rect_t rect;
 
-    dPriv->driScreenPriv->DriverAPI.CopySubBuffer(dPriv, x, y, w, h);
-
     rect.x1 = x;
     rect.y1 = dPriv->h - y - h;
     rect.x2 = x + w;
     rect.y2 = rect.y1 + h;
     driReportDamage(dPriv, &rect, 1);
+
+    dPriv->driScreenPriv->DriverAPI.CopySubBuffer(dPriv, x, y, w, h);
 }
 
 const __DRIcopySubBufferExtension driCopySubBufferExtension = {
