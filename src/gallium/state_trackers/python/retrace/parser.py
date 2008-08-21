@@ -322,9 +322,15 @@ class TraceParser(XmlParser):
 
 def main():
     for arg in sys.argv[1:]:
-        parser = TraceParser(open(arg, 'rt'))
+        if arg.endswith('.gz'):
+            import gzip
+            stream = gzip.GzipFile(arg, 'rt')
+        else:
+            stream = open(arg, 'rt')
+        parser = TraceParser(stream)
         trace = parser.parse()
-        print trace
+        for call in trace.calls:
+            print call
 
 
 if __name__ == '__main__':

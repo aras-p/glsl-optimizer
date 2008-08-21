@@ -471,7 +471,12 @@ class Interpreter:
 
 def main():
     for arg in sys.argv[1:]:
-        parser = TraceParser(open(arg, 'rt'))
+        if arg.endswith('.gz'):
+            import gzip
+            stream = gzip.GzipFile(arg, 'rt')
+        else:
+            stream = open(arg, 'rt')
+        parser = TraceParser(stream)
         trace = parser.parse()
         interpreter = Interpreter()
         interpreter.interpret(trace)
