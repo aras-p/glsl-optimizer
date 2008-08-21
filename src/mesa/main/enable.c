@@ -38,6 +38,7 @@
 #include "enums.h"
 #include "math/m_matrix.h"
 #include "math/m_xform.h"
+#include "api_arrayelt.h"
 
 
 
@@ -129,6 +130,9 @@ client_state(GLcontext *ctx, GLenum cap, GLboolean state)
 
    FLUSH_VERTICES(ctx, _NEW_ARRAY);
    ctx->Array.NewState |= flag;
+
+   _ae_invalidate_state(ctx, _NEW_ARRAY);
+
    *var = state;
 
    if (state)
