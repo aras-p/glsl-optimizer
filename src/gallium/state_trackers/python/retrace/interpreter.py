@@ -254,14 +254,20 @@ class Screen(Object):
             tex_usage = template.tex_usage,
         )
 
-    def texture_release(self, texture):
+    def texture_destroy(self, texture):
         self.interpreter.unregister_object(texture)
+
+    def texture_release(self, surface):
+        pass
 
     def get_tex_surface(self, texture, face, level, zslice, usage):
         return texture.get_surface(face, level, zslice, usage)
     
-    def tex_surface_release(self, surface):
+    def tex_surface_destroy(self, surface):
         self.interpreter.unregister_object(surface)
+
+    def tex_surface_release(self, surface):
+        pass
 
     def surface_write(self, surface, data, stride, size):
         assert surface.nblocksy * stride == size 
