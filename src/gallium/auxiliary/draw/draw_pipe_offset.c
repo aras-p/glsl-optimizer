@@ -84,8 +84,8 @@ static void do_offset_tri( struct draw_stage *stage,
    float a = ey*fz - ez*fy;
    float b = ez*fx - ex*fz;
 
-   float dzdx = FABSF(a * inv_det);
-   float dzdy = FABSF(b * inv_det);
+   float dzdx = fabsf(a * inv_det);
+   float dzdy = fabsf(b * inv_det);
 
    float zoffset = offset->units + MAX2(dzdx, dzdy) * offset->scale;
 
