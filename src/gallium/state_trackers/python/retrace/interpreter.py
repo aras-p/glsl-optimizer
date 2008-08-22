@@ -22,7 +22,7 @@
 import sys
 import gallium
 import model
-from parser import TraceParser
+import parser
 
 
 def make_image(surface):
@@ -426,9 +426,10 @@ class Context(Object):
             show_image(self.cbufs[0])
     
 
-class Interpreter:
+class Interpreter(parser.TraceParser):
     
-    def __init__(self):
+    def __init__(self, stream):
+        parser.TraceParser.__init__(self, stream)
         self.objects = {}
         self.result = None
         self.globl = Global(self, None)
@@ -447,7 +448,7 @@ class Interpreter:
         for call in trace.calls:
             self.interpret_call(call)
 
-    def interpret_call(self, call):
+    def handle_call(self, call):
         sys.stderr.write("%s\n" % call)
         
         args = [self.interpret_arg(arg) for name, arg in call.args] 
@@ -469,18 +470,5 @@ class Interpreter:
         return translator.visit(node)
     
 
-def main():
-    for arg in sys.argv[1:]:
-        if arg.endswith('.gz'):
-            import gzip
-            stream = gzip.GzipFile(arg, 'rt')
-        else:
-            stream = open(arg, 'rt')
-        parser = TraceParser(stream)
-        trace = parser.parse()
-        interpreter = Interpreter()
-        interpreter.interpret(trace)
-
-
 if __name__ == '__main__':
-    main()
+    parser.main(Interpreter)

@@ -183,12 +183,11 @@ class TraceParser(XmlParser):
 
     def parse(self):
         self.element_start('trace')
-        calls = []
         while self.token.type not in (ELEMENT_END, EOF):
-            calls.append(self.parse_call())
+            call = self.parse_call()
+            self.handle_call(call)
         if self.token.type != EOF:
             self.element_end('trace')
-        return Trace(calls)
 
     def parse_call(self):
         attrs = self.element_start('call')
@@ -319,19 +318,28 @@ class TraceParser(XmlParser):
 
         return Pointer(address)
 
+    def handle_call(self, call):
+        
+        pass
+    
+    
+class TraceDumper(TraceParser):
+    
 
-def main():
+    def handle_call(self, call):
+        print call
+        
+
+def main(ParserFactory):
     for arg in sys.argv[1:]:
         if arg.endswith('.gz'):
             import gzip
             stream = gzip.GzipFile(arg, 'rt')
         else:
             stream = open(arg, 'rt')
-        parser = TraceParser(stream)
-        trace = parser.parse()
-        for call in trace.calls:
-            print call
+        parser = ParserFactory(stream)
+        parser.parse()
 
 
 if __name__ == '__main__':
-    main()
+    main(TraceDumper)
