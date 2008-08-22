@@ -224,19 +224,20 @@ trace_screen_texture_release(struct pipe_screen *_screen,
    else
       texture = NULL;
    
-   trace_dump_call_begin("pipe_screen", "texture_release");
-   
-   trace_dump_arg(ptr, screen);
-   trace_dump_arg(ptr, texture);
-
    if (*ptexture) {
-      if (!--(*ptexture)->refcount)
+      if (!--(*ptexture)->refcount) {
+         trace_dump_call_begin("pipe_screen", "texture_destroy");
+         
+         trace_dump_arg(ptr, screen);
+         trace_dump_arg(ptr, texture);
+         
          trace_texture_destroy(tr_scr, *ptexture);
+         
+         trace_dump_call_end();
+      }
    
       *ptexture = NULL;
    }
-   
-   trace_dump_call_end();
 }
 
 
@@ -297,19 +298,20 @@ trace_screen_tex_surface_release(struct pipe_screen *_screen,
    else
       surface = NULL;
    
-   trace_dump_call_begin("pipe_screen", "tex_surface_release");
-   
-   trace_dump_arg(ptr, screen);
-   trace_dump_arg(ptr, surface);
-
    if (*psurface) {
-      if (!--(*psurface)->refcount)
+      if (!--(*psurface)->refcount) {
+         trace_dump_call_begin("pipe_screen", "tex_surface_destroy");
+         
+         trace_dump_arg(ptr, screen);
+         trace_dump_arg(ptr, surface);
+
          trace_surface_destroy(tr_tex, *psurface);
+
+         trace_dump_call_end();
+      }
    
       *psurface = NULL;
    }
-   
-   trace_dump_call_end();
 }
 
 
