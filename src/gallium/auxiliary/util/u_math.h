@@ -29,6 +29,9 @@
 /**
  * Math utilities and approximations for common math functions.
  * Reduced precision is usually acceptable in shaders...
+ *
+ * "fast" is used in the names of functions which are low-precision,
+ * or at least lower-precision than the normal C lib functions.
  */
 
 
@@ -36,6 +39,7 @@
 #define U_MATH_H
 
 
+#include "pipe/p_compiler.h"
 #include "pipe/p_util.h"
 #include "util/u_math.h"
 
@@ -139,6 +143,51 @@ util_fast_pow(float x, float y)
       return 0.0f;
    return util_fast_exp2(util_fast_log2(x) * y);
 }
+
+
+
+/**
+ * Floor(x), returned as int.
+ */
+static INLINE int
+util_ifloor(float f)
+{
+   int ai, bi;
+   double af, bf;
+   union fi u;
+   af = (3 << 22) + 0.5 + (double)f;
+   bf = (3 << 22) + 0.5 - (double)f;
+   u.f = (float) af;  ai = u.i;
+   u.f = (float) bf;  bi = u.i;
+   return (ai - bi) >> 1;
+}
+
+
+/**
+ * Round float to nearest int.
+ */
+static INLINE int
+util_iround(float f)
+{
+#if defined(PIPE_CC_GCC) && defined(PIPE_ARCH_X86) 
+   int r;
+   __asm__ ("fistpl %0" : "=m" (r) : "t" (f) : "st");
+   return r;
+#elif defined(PIPE_CC_MSVC) && defined(PIPE_ARCH_X86)
+   int r;
+   _asm {
+	 fld f
+	 fistp r
+	}
+   return r;
+#else
+   if (f >= 0.0f)
+      return (int) (f + 0.5f);
+   else
+      return (int) (f - 0.5f);
+#endif
+}
+
 
 
 #endif /* U_MATH_H */

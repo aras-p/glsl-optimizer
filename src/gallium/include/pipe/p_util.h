@@ -399,57 +399,6 @@ do {                                     \
 } while (0)
 
 
-static INLINE int ifloor(float f)
-{
-   int ai, bi;
-   double af, bf;
-   union fi u;
-
-   af = (3 << 22) + 0.5 + (double)f;
-   bf = (3 << 22) + 0.5 - (double)f;
-   u.f = (float) af;  ai = u.i;
-   u.f = (float) bf;  bi = u.i;
-   return (ai - bi) >> 1;
-}
-
-
-#if defined(PIPE_CC_GCC) && defined(PIPE_ARCH_X86) 
-static INLINE int iround(float f)
-{
-   int r;
-   __asm__ ("fistpl %0" : "=m" (r) : "t" (f) : "st");
-   return r;
-}
-#elif defined(PIPE_CC_MSVC) && defined(PIPE_ARCH_X86)
-static INLINE int iround(float f)
-{
-   int r;
-   _asm {
-	 fld f
-	 fistp r
-	}
-   return r;
-}
-#else
-#define IROUND(f)  ((int) (((f) >= 0.0F) ? ((f) + 0.5F) : ((f) - 0.5F)))
-#endif
-
-
-/* Could maybe have an inline version of this?
- */
-#if defined(__GNUC__)
-#define FABSF(x)   fabsf(x)
-#else
-#define FABSF(x)   ((float) fabs(x))
-#endif
-
-
-#if defined(__GNUC__)
-#define CEILF(x)   ceilf(x)
-#else
-#define CEILF(x)   ((float) ceil(x))
-#endif
-
 static INLINE int align(int value, int alignment)
 {
    return (value + alignment - 1) & ~(alignment - 1);
