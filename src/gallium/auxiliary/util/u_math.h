@@ -44,10 +44,15 @@
 #include "util/u_math.h"
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 #define POW2_TABLE_SIZE 256
 #define POW2_TABLE_SCALE ((float) (POW2_TABLE_SIZE-1))
 extern float pow2_table[POW2_TABLE_SIZE];
+
 
 
 extern void
@@ -189,5 +194,9 @@ util_iround(float f)
 }
 
 
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* U_MATH_H */
