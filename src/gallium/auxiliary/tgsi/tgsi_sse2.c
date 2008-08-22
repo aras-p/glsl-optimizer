@@ -27,6 +27,7 @@
 
 #include "pipe/p_util.h"
 #include "pipe/p_shader_tokens.h"
+#include "util/u_math.h"
 #include "tgsi/tgsi_parse.h"
 #include "tgsi/tgsi_util.h"
 #include "tgsi_exec.h"
@@ -41,6 +42,8 @@
  * This costs about 100fps (close to 10%) in gears:
  */
 #define HIGH_PRECISION 1
+
+#define FAST_MATH 1
 
 
 #define FOR_EACH_CHANNEL( CHAN )\
@@ -623,10 +626,17 @@ ex24f(
 {
    const unsigned X = 0;
 
+#if FAST_MATH
+   store[X + 0] = util_fast_exp2( store[X + 0] );
+   store[X + 1] = util_fast_exp2( store[X + 1] );
+   store[X + 2] = util_fast_exp2( store[X + 2] );
+   store[X + 3] = util_fast_exp2( store[X + 3] );
+#else
    store[X + 0] = powf( 2.0f, store[X + 0] );
    store[X + 1] = powf( 2.0f, store[X + 1] );
    store[X + 2] = powf( 2.0f, store[X + 2] );
    store[X + 3] = powf( 2.0f, store[X + 3] );
+#endif
 }
 
 static void
@@ -762,10 +772,17 @@ pow4f(
 {
    const unsigned X = 0;
 
+#if FAST_MATH
+   store[X + 0] = util_fast_pow( store[X + 0], store[X + 4] );
+   store[X + 1] = util_fast_pow( store[X + 1], store[X + 5] );
+   store[X + 2] = util_fast_pow( store[X + 2], store[X + 6] );
+   store[X + 3] = util_fast_pow( store[X + 3], store[X + 7] );
+#else
    store[X + 0] = powf( store[X + 0], store[X + 4] );
    store[X + 1] = powf( store[X + 1], store[X + 5] );
    store[X + 2] = powf( store[X + 2], store[X + 6] );
    store[X + 3] = powf( store[X + 3], store[X + 7] );
+#endif
 }
 
 static void
@@ -2234,6 +2251,8 @@ tgsi_emit_sse2(
    boolean instruction_phase = FALSE;
    unsigned ok = 1;
    uint num_immediates = 0;
+
+   util_init_math();
 
    func->csr = func->store;
 

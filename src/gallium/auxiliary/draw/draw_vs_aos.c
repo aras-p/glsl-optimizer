@@ -31,6 +31,7 @@
 
 #include "pipe/p_util.h"
 #include "pipe/p_shader_tokens.h"
+#include "util/u_math.h"
 #include "tgsi/tgsi_parse.h"
 #include "tgsi/tgsi_util.h"
 #include "tgsi/tgsi_exec.h"
@@ -43,6 +44,7 @@
 
 #ifdef PIPE_ARCH_X86
 #define DISASSEM 0
+#define FAST_MATH 1
 
 static const char *files[] =
 {
@@ -1380,13 +1382,27 @@ static boolean emit_MAD( struct aos_compilation *cp, const struct tgsi_full_inst
    return TRUE;
 }
 
+
+
 /* A wrapper for powf().
  * Makes sure it is cdecl and operates on floats.
  */
 static float PIPE_CDECL _powerf( float x, float y )
 {
+#if FAST_MATH
+   return util_fast_pow(x, y);
+#else
    return powf( x, y );
+#endif
 }
+
+#if FAST_MATH
+static float PIPE_CDECL _exp2(float x)
+{
+   return util_fast_exp2(x);
+}
+#endif
+
 
 /* Really not sufficient -- need to check for conditions that could
  * generate inf/nan values, which will slow things down hugely.
@@ -1440,6 +1456,48 @@ static boolean emit_POW( struct aos_compilation *cp, const struct tgsi_full_inst
 #endif
    return TRUE;
 }
+
+
+#if FAST_MATH
+static boolean emit_EXPBASE2( struct aos_compilation *cp, const struct tgsi_full_instruction *op ) 
+{
+   uint i;
+
+   /* For absolute correctness, need to spill/invalidate all XMM regs
+    * too.  
+    */
+   for (i = 0; i < 8; i++) {
+      if (cp->xmm[i].dirty) 
+         spill(cp, i);
+      aos_release_xmm_reg(cp, i);
+   }
+
+   /* Push caller-save (ie scratch) regs.  
+    */
+   x86_cdecl_caller_push_regs( cp->func );
+
+   x86_lea( cp->func, cp->stack_ESP, x86_make_disp(cp->stack_ESP, -4) );
+
+   x87_fld_src( cp, &op->FullSrcRegisters[0], 0 );
+   x87_fstp( cp->func, x86_make_disp( cp->stack_ESP, 0 ) );
+
+   /* tmp_EAX has been pushed & will be restored below */
+   x86_mov_reg_imm( cp->func, cp->tmp_EAX, (unsigned long) _exp2 );
+   x86_call( cp->func, cp->tmp_EAX );
+
+   x86_lea( cp->func, cp->stack_ESP, x86_make_disp(cp->stack_ESP, 4) );
+
+   x86_cdecl_caller_pop_regs( cp->func );
+
+   /* Note retval on x87 stack:
+    */
+   cp->func->x87_stack++;
+
+   x87_fstp_dest4( cp, &op->FullDstRegisters[0] );
+
+   return TRUE;
+}
+#endif
 
 
 static boolean emit_RCP( struct aos_compilation *cp, const struct tgsi_full_instruction *op )
@@ -1662,7 +1720,9 @@ emit_instruction( struct aos_compilation *cp,
       return emit_RND(cp, inst);
 
    case TGSI_OPCODE_EXPBASE2:
-#if 0
+#if FAST_MATH
+      return emit_EXPBASE2(cp, inst);
+#elif 0
       /* this seems to fail for "larger" exponents.
        * See glean tvertProg1's EX2 test.
        */
@@ -1826,6 +1886,8 @@ static boolean build_vertex_program( struct draw_vs_varient_aos_sse *varient,
    struct tgsi_parse_context parse;
    struct aos_compilation cp;
    unsigned fixup, label;
+
+   util_init_math();
 
    tgsi_parse_init( &parse, varient->base.vs->state.tokens );
 
@@ -2135,4 +2197,4 @@ struct draw_vs_varient *draw_vs_varient_aos_sse( struct draw_vertex_shader *vs,
 
 
 
-#endif
+#endif /* PIPE_ARCH_X86 */
