@@ -33,6 +33,7 @@
 #include "pipe/p_defines.h"
 #include "pipe/p_inlines.h"
 #include "pipe/p_util.h"
+#include "util/u_math.h"
 #include "sp_clear.h"
 #include "sp_context.h"
 #include "sp_flush.h"
@@ -127,6 +128,8 @@ softpipe_create( struct pipe_screen *screen,
 {
    struct softpipe_context *softpipe = CALLOC_STRUCT(softpipe_context);
    uint i;
+
+   util_init_math();
 
 #ifdef PIPE_ARCH_X86
    softpipe->use_sse = !debug_get_bool_option( "GALLIUM_NOSSE", FALSE );

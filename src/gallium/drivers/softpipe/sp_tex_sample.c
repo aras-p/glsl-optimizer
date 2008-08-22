@@ -41,6 +41,7 @@
 #include "pipe/p_defines.h"
 #include "pipe/p_util.h"
 #include "tgsi/tgsi_exec.h"
+#include "util/u_math.h"
 
 
 /*
@@ -499,7 +500,7 @@ compute_lambda(struct tgsi_sampler *sampler,
       rho = MAX2(rho, max);
    }
 
-   lambda = LOG2(rho);
+   lambda = util_fast_log2(rho);
    lambda += lodbias + sampler->state->lod_bias;
    lambda = CLAMP(lambda, sampler->state->min_lod, sampler->state->max_lod);
 

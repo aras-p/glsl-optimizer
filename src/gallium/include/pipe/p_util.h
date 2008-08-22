@@ -443,21 +443,6 @@ static INLINE int iround(float f)
 #define FABSF(x)   ((float) fabs(x))
 #endif
 
-/* Pretty fast, and accurate.
- * Based on code from http://www.flipcode.com/totd/
- */
-static INLINE float LOG2(float val)
-{
-   union fi num;
-   int log_2;
-
-   num.f = val;
-   log_2 = ((num.i >> 23) & 255) - 128;
-   num.i &= ~(255 << 23);
-   num.i += 127 << 23;
-   num.f = ((-1.0f/3) * num.f + 2) * num.f - 2.0f/3;
-   return num.f + log_2;
-}
 
 #if defined(__GNUC__)
 #define CEILF(x)   ceilf(x)

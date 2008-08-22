@@ -713,10 +713,10 @@ lg24f(
 {
    const unsigned X = 0;
 
-   store[X + 0] = LOG2( store[X + 0] );
-   store[X + 1] = LOG2( store[X + 1] );
-   store[X + 2] = LOG2( store[X + 2] );
-   store[X + 3] = LOG2( store[X + 3] );
+   store[X + 0] = util_fast_log2( store[X + 0] );
+   store[X + 1] = util_fast_log2( store[X + 1] );
+   store[X + 2] = util_fast_log2( store[X + 2] );
+   store[X + 3] = util_fast_log2( store[X + 3] );
 }
 
 static void
