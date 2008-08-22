@@ -289,10 +289,11 @@ align16( void *unaligned )
 }
 
 
-static INLINE int align_int(int x, int align)
+static INLINE int align(int value, int alignment)
 {
-   return (x + align - 1) & ~(align - 1);
+   return (value + alignment - 1) & ~(alignment - 1);
 }
+
 
 
 
@@ -397,12 +398,6 @@ do {                                     \
    (DST)[2] = (V2);                      \
    (DST)[3] = (V3);                      \
 } while (0)
-
-
-static INLINE int align(int value, int alignment)
-{
-   return (value + alignment - 1) & ~(alignment - 1);
-}
 
 
 /* util/p_util.c

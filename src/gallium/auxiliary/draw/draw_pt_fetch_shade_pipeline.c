@@ -119,7 +119,7 @@ static void fetch_pipeline_run( struct draw_pt_middle_end *middle,
    struct draw_context *draw = fpme->draw;
    struct draw_vertex_shader *shader = draw->vs.vertex_shader;
    unsigned opt = fpme->opt;
-   unsigned alloc_count = align_int( fetch_count, 4 );
+   unsigned alloc_count = align( fetch_count, 4 );
 
    struct vertex_header *pipeline_verts = 
       (struct vertex_header *)MALLOC(fpme->vertex_size * alloc_count);
@@ -195,7 +195,7 @@ static void fetch_pipeline_linear_run( struct draw_pt_middle_end *middle,
    struct draw_context *draw = fpme->draw;
    struct draw_vertex_shader *shader = draw->vs.vertex_shader;
    unsigned opt = fpme->opt;
-   unsigned alloc_count = align_int( count, 4 );
+   unsigned alloc_count = align( count, 4 );
 
    struct vertex_header *pipeline_verts =
       (struct vertex_header *)MALLOC(fpme->vertex_size * alloc_count);
@@ -271,7 +271,7 @@ static void fetch_pipeline_linear_run_elts( struct draw_pt_middle_end *middle,
    struct draw_context *draw = fpme->draw;
    struct draw_vertex_shader *shader = draw->vs.vertex_shader;
    unsigned opt = fpme->opt;
-   unsigned alloc_count = align_int( count, 4 );
+   unsigned alloc_count = align( count, 4 );
 
    struct vertex_header *pipeline_verts =
       (struct vertex_header *)MALLOC(fpme->vertex_size * alloc_count);

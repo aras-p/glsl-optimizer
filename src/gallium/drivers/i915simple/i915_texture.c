@@ -220,7 +220,7 @@ i945_miptree_layout_2d( struct i915_texture *tex )
     */
    if (pt->last_level > 0) {
       unsigned mip1_nblocksx 
-	 = align_int(pf_get_nblocksx(&pt->block, minify(width)), align_x)
+	 = align(pf_get_nblocksx(&pt->block, minify(width)), align_x)
          + pf_get_nblocksx(&pt->block, minify(minify(width)));
 
       if (mip1_nblocksx > nblocksx)
@@ -229,14 +229,14 @@ i945_miptree_layout_2d( struct i915_texture *tex )
 
    /* Pitch must be a whole number of dwords
     */
-   tex->stride = align_int(tex->stride, 64);
+   tex->stride = align(tex->stride, 64);
    tex->total_nblocksy = 0;
 
    for (level = 0; level <= pt->last_level; level++) {
       i915_miptree_set_level_info(tex, level, 1, width, height, 1);
       i915_miptree_set_image_offset(tex, level, 0, x, y);
 
-      nblocksy = align_int(nblocksy, align_y);
+      nblocksy = align(nblocksy, align_y);
 
       /* Because the images are packed better, the final offset
        * might not be the maximal one:
@@ -246,7 +246,7 @@ i945_miptree_layout_2d( struct i915_texture *tex )
       /* Layout_below: step right after second mipmap level.
        */
       if (level == 1) {
-	 x += align_int(nblocksx, align_x);
+	 x += align(nblocksx, align_x);
       }
       else {
 	 y += nblocksy;
