@@ -26,7 +26,7 @@
  **************************************************************************/
 
 /**
- * Miscellaneous utility functions.
+ * Rectangle-related helper functions.
  */
 
 
