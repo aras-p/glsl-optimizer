@@ -44,6 +44,8 @@
 #include "draw/draw_vertex.h"
 #include "pipe/p_util.h"
 #include "pipe/p_shader_tokens.h"
+#include "util/u_math.h"
+
 
 #define DEBUG_VERTS 0
 #define DEBUG_FRAGS 0
@@ -611,18 +613,18 @@ static void setup_tri_edges( struct setup_context *setup )
    float vmid_y = setup->vmid[0][1] - 0.5f;
    float vmax_y = setup->vmax[0][1] - 0.5f;
 
-   setup->emaj.sy = CEILF(vmin_y);
-   setup->emaj.lines = (int) CEILF(vmax_y - setup->emaj.sy);
+   setup->emaj.sy = ceilf(vmin_y);
+   setup->emaj.lines = (int) ceilf(vmax_y - setup->emaj.sy);
    setup->emaj.dxdy = setup->emaj.dx / setup->emaj.dy;
    setup->emaj.sx = vmin_x + (setup->emaj.sy - vmin_y) * setup->emaj.dxdy;
 
-   setup->etop.sy = CEILF(vmid_y);
-   setup->etop.lines = (int) CEILF(vmax_y - setup->etop.sy);
+   setup->etop.sy = ceilf(vmid_y);
+   setup->etop.lines = (int) ceilf(vmax_y - setup->etop.sy);
    setup->etop.dxdy = setup->etop.dx / setup->etop.dy;
    setup->etop.sx = vmid_x + (setup->etop.sy - vmid_y) * setup->etop.dxdy;
 
-   setup->ebot.sy = CEILF(vmin_y);
-   setup->ebot.lines = (int) CEILF(vmid_y - setup->ebot.sy);
+   setup->ebot.sy = ceilf(vmin_y);
+   setup->ebot.lines = (int) ceilf(vmid_y - setup->ebot.sy);
    setup->ebot.dxdy = setup->ebot.dx / setup->ebot.dy;
    setup->ebot.sx = vmin_x + (setup->ebot.sy - vmin_y) * setup->ebot.dxdy;
 }

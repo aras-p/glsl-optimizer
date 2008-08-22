@@ -51,7 +51,7 @@
  * Also note, FRAC(x) doesn't truly return the fractional part of x for x < 0.
  * Instead, if x < 0 then FRAC(x) = 1 - true_frac(x).
  */
-#define FRAC(f)  ((f) - ifloor(f))
+#define FRAC(f)  ((f) - util_ifloor(f))
 
 
 /**
@@ -100,7 +100,7 @@ nearest_texcoord(unsigned wrapMode, float s, unsigned size)
    case PIPE_TEX_WRAP_REPEAT:
       /* s limited to [0,1) */
       /* i limited to [0,size-1] */
-      i = ifloor(s * size);
+      i = util_ifloor(s * size);
       i = REMAINDER(i, size);
       return i;
    case PIPE_TEX_WRAP_CLAMP:
@@ -111,7 +111,7 @@ nearest_texcoord(unsigned wrapMode, float s, unsigned size)
       else if (s >= 1.0F)
          i = size - 1;
       else
-         i = ifloor(s * size);
+         i = util_ifloor(s * size);
       return i;
    case PIPE_TEX_WRAP_CLAMP_TO_EDGE:
       {
@@ -124,7 +124,7 @@ nearest_texcoord(unsigned wrapMode, float s, unsigned size)
          else if (s > max)
             i = size - 1;
          else
-            i = ifloor(s * size);
+            i = util_ifloor(s * size);
       }
       return i;
    case PIPE_TEX_WRAP_CLAMP_TO_BORDER:
@@ -138,14 +138,14 @@ nearest_texcoord(unsigned wrapMode, float s, unsigned size)
          else if (s >= max)
             i = size;
          else
-            i = ifloor(s * size);
+            i = util_ifloor(s * size);
       }
       return i;
    case PIPE_TEX_WRAP_MIRROR_REPEAT:
       {
          const float min = 1.0F / (2.0F * size);
          const float max = 1.0F - min;
-         const int flr = ifloor(s);
+         const int flr = util_ifloor(s);
          float u;
          if (flr & 1)
             u = 1.0F - (s - (float) flr);
@@ -156,20 +156,20 @@ nearest_texcoord(unsigned wrapMode, float s, unsigned size)
          else if (u > max)
             i = size - 1;
          else
-            i = ifloor(u * size);
+            i = util_ifloor(u * size);
       }
       return i;
    case PIPE_TEX_WRAP_MIRROR_CLAMP:
       {
          /* s limited to [0,1] */
          /* i limited to [0,size-1] */
-         const float u = FABSF(s);
+         const float u = fabsf(s);
          if (u <= 0.0F)
             i = 0;
          else if (u >= 1.0F)
             i = size - 1;
          else
-            i = ifloor(u * size);
+            i = util_ifloor(u * size);
       }
       return i;
    case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_EDGE:
@@ -178,13 +178,13 @@ nearest_texcoord(unsigned wrapMode, float s, unsigned size)
          /* i limited to [0, size-1] */
          const float min = 1.0F / (2.0F * size);
          const float max = 1.0F - min;
-         const float u = FABSF(s);
+         const float u = fabsf(s);
          if (u < min)
             i = 0;
          else if (u > max)
             i = size - 1;
          else
-            i = ifloor(u * size);
+            i = util_ifloor(u * size);
       }
       return i;
    case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_BORDER:
@@ -193,13 +193,13 @@ nearest_texcoord(unsigned wrapMode, float s, unsigned size)
          /* i limited to [0, size-1] */
          const float min = -1.0F / (2.0F * size);
          const float max = 1.0F - min;
-         const float u = FABSF(s);
+         const float u = fabsf(s);
          if (u < min)
             i = -1;
          else if (u > max)
             i = size;
          else
-            i = ifloor(u * size);
+            i = util_ifloor(u * size);
       }
       return i;
    default:
@@ -226,7 +226,7 @@ linear_texcoord(unsigned wrapMode, float s, unsigned size,
    switch (wrapMode) {
    case PIPE_TEX_WRAP_REPEAT:
       u = s * size - 0.5F;
-      *i0 = REMAINDER(ifloor(u), size);
+      *i0 = REMAINDER(util_ifloor(u), size);
       *i1 = REMAINDER(*i0 + 1, size);
       break;
    case PIPE_TEX_WRAP_CLAMP:
@@ -237,7 +237,7 @@ linear_texcoord(unsigned wrapMode, float s, unsigned size,
       else
          u = s * size;
       u -= 0.5F;
-      *i0 = ifloor(u);
+      *i0 = util_ifloor(u);
       *i1 = *i0 + 1;
       break;
    case PIPE_TEX_WRAP_CLAMP_TO_EDGE:
@@ -248,7 +248,7 @@ linear_texcoord(unsigned wrapMode, float s, unsigned size,
       else
          u = s * size;
       u -= 0.5F;
-      *i0 = ifloor(u);
+      *i0 = util_ifloor(u);
       *i1 = *i0 + 1;
       if (*i0 < 0)
          *i0 = 0;
@@ -266,19 +266,19 @@ linear_texcoord(unsigned wrapMode, float s, unsigned size,
          else
             u = s * size;
          u -= 0.5F;
-         *i0 = ifloor(u);
+         *i0 = util_ifloor(u);
          *i1 = *i0 + 1;
       }
       break;
    case PIPE_TEX_WRAP_MIRROR_REPEAT:
       {
-         const int flr = ifloor(s);
+         const int flr = util_ifloor(s);
          if (flr & 1)
             u = 1.0F - (s - (float) flr);
          else
             u = s - (float) flr;
          u = (u * size) - 0.5F;
-         *i0 = ifloor(u);
+         *i0 = util_ifloor(u);
          *i1 = *i0 + 1;
          if (*i0 < 0)
             *i0 = 0;
@@ -287,23 +287,23 @@ linear_texcoord(unsigned wrapMode, float s, unsigned size,
       }
       break;
    case PIPE_TEX_WRAP_MIRROR_CLAMP:
-      u = FABSF(s);
+      u = fabsf(s);
       if (u >= 1.0F)
          u = (float) size;
       else
          u *= size;
       u -= 0.5F;
-      *i0 = ifloor(u);
+      *i0 = util_ifloor(u);
       *i1 = *i0 + 1;
       break;
    case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_EDGE:
-      u = FABSF(s);
+      u = fabsf(s);
       if (u >= 1.0F)
          u = (float) size;
       else
          u *= size;
       u -= 0.5F;
-      *i0 = ifloor(u);
+      *i0 = util_ifloor(u);
       *i1 = *i0 + 1;
       if (*i0 < 0)
          *i0 = 0;
@@ -314,7 +314,7 @@ linear_texcoord(unsigned wrapMode, float s, unsigned size,
       {
          const float min = -1.0F / (2.0F * size);
          const float max = 1.0F - min;
-         u = FABSF(s);
+         u = fabsf(s);
          if (u <= min)
             u = min * size;
          else if (u >= max)
@@ -322,7 +322,7 @@ linear_texcoord(unsigned wrapMode, float s, unsigned size,
          else
             u *= size;
          u -= 0.5F;
-         *i0 = ifloor(u);
+         *i0 = util_ifloor(u);
          *i1 = *i0 + 1;
       }
       break;
@@ -343,12 +343,12 @@ nearest_texcoord_unnorm(unsigned wrapMode, float s, unsigned size)
    int i;
    switch (wrapMode) {
    case PIPE_TEX_WRAP_CLAMP:
-      i = ifloor(s);
+      i = util_ifloor(s);
       return CLAMP(i, 0, (int) size-1);
    case PIPE_TEX_WRAP_CLAMP_TO_EDGE:
       /* fall-through */
    case PIPE_TEX_WRAP_CLAMP_TO_BORDER:
-      return ifloor( CLAMP(s, 0.5F, (float) size - 0.5F) );
+      return util_ifloor( CLAMP(s, 0.5F, (float) size - 0.5F) );
    default:
       assert(0);
       return 0;
@@ -368,7 +368,7 @@ linear_texcoord_unnorm(unsigned wrapMode, float s, unsigned size,
    case PIPE_TEX_WRAP_CLAMP:
       /* Not exactly what the spec says, but it matches NVIDIA output */
       s = CLAMP(s - 0.5F, 0.0f, (float) size - 1.0f);
-      *i0 = ifloor(s);
+      *i0 = util_ifloor(s);
       *i1 = *i0 + 1;
       break;
    case PIPE_TEX_WRAP_CLAMP_TO_EDGE:
@@ -376,7 +376,7 @@ linear_texcoord_unnorm(unsigned wrapMode, float s, unsigned size,
    case PIPE_TEX_WRAP_CLAMP_TO_BORDER:
       s = CLAMP(s, 0.5F, (float) size - 0.5F);
       s -= 0.5F;
-      *i0 = ifloor(s);
+      *i0 = util_ifloor(s);
       *i1 = *i0 + 1;
       if (*i1 > (int) size - 1)
          *i1 = size - 1;
@@ -402,7 +402,7 @@ choose_cube_face(float rx, float ry, float rz, float *newS, float *newT)
        +rz          TEXTURE_CUBE_MAP_POSITIVE_Z_EXT    +rx    -ry   rz
        -rz          TEXTURE_CUBE_MAP_NEGATIVE_Z_EXT    -rx    -ry   rz
    */
-   const float arx = FABSF(rx), ary = FABSF(ry), arz = FABSF(rz);
+   const float arx = fabsf(rx), ary = fabsf(ry), arz = fabsf(rz);
    unsigned face;
    float sc, tc, ma;
 
@@ -477,16 +477,16 @@ compute_lambda(struct tgsi_sampler *sampler,
    {
       float dsdx = s[QUAD_BOTTOM_RIGHT] - s[QUAD_BOTTOM_LEFT];
       float dsdy = s[QUAD_TOP_LEFT]     - s[QUAD_BOTTOM_LEFT];
-      dsdx = FABSF(dsdx);
-      dsdy = FABSF(dsdy);
+      dsdx = fabsf(dsdx);
+      dsdy = fabsf(dsdy);
       rho = MAX2(dsdx, dsdy) * sampler->texture->width[0];
    }
    if (t) {
       float dtdx = t[QUAD_BOTTOM_RIGHT] - t[QUAD_BOTTOM_LEFT];
       float dtdy = t[QUAD_TOP_LEFT]     - t[QUAD_BOTTOM_LEFT];
       float max;
-      dtdx = FABSF(dtdx);
-      dtdy = FABSF(dtdy);
+      dtdx = fabsf(dtdx);
+      dtdy = fabsf(dtdy);
       max = MAX2(dtdx, dtdy) * sampler->texture->height[0];
       rho = MAX2(rho, max);
    }
@@ -494,8 +494,8 @@ compute_lambda(struct tgsi_sampler *sampler,
       float dpdx = p[QUAD_BOTTOM_RIGHT] - p[QUAD_BOTTOM_LEFT];
       float dpdy = p[QUAD_TOP_LEFT]     - p[QUAD_BOTTOM_LEFT];
       float max;
-      dpdx = FABSF(dpdx);
-      dpdy = FABSF(dpdy);
+      dpdx = fabsf(dpdx);
+      dpdy = fabsf(dpdy);
       max = MAX2(dpdx, dpdy) * sampler->texture->depth[0];
       rho = MAX2(rho, max);
    }
