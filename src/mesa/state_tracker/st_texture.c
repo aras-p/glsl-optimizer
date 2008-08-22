@@ -38,6 +38,7 @@
 #include "pipe/p_inlines.h"
 #include "pipe/p_util.h"
 #include "pipe/p_inlines.h"
+#include "util/u_rect.h"
 
 
 #define DBG if(0) printf

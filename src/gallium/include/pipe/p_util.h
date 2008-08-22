@@ -31,7 +31,6 @@
 #include "p_config.h"
 #include "p_compiler.h"
 #include "p_debug.h"
-#include "p_format.h"
 #include "p_pointer.h"
 
 #if defined(PIPE_SUBSYSTEM_WINDOWS_MINIPORT)
@@ -399,18 +398,6 @@ do {                                     \
    (DST)[3] = (V3);                      \
 } while (0)
 
-
-/* util/p_util.c
- */
-extern void pipe_copy_rect(ubyte * dst, const struct pipe_format_block *block,
-                           unsigned dst_stride, unsigned dst_x, unsigned dst_y,
-                           unsigned width, unsigned height, const ubyte * src,
-                           int src_stride, unsigned src_x, int src_y);
-
-extern void
-pipe_fill_rect(ubyte * dst, const struct pipe_format_block *block,
-               unsigned dst_stride, unsigned dst_x, unsigned dst_y,
-               unsigned width, unsigned height, uint32_t value);
 
 
 #if defined(_MSC_VER) 

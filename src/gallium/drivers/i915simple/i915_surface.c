@@ -34,6 +34,7 @@
 #include "pipe/p_inlines.h"
 #include "pipe/p_winsys.h"
 #include "util/p_tile.h"
+#include "util/u_rect.h"
 
 
 /* Assumes all values are within bounds -- no checking at this level -
