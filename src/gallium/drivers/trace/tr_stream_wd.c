@@ -65,7 +65,7 @@ trace_stream_map(struct trace_stream *stream)
 
    filename_len = util_snprintf(filename,
                                 sizeof(filename),
-                                "\\??\\%s.%03u",
+                                "\\??\\%s.%04x",
                                 stream->filename,
                                 stream->suffix++);
 
