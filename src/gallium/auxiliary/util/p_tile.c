@@ -37,7 +37,7 @@
 #include "pipe/p_inlines.h"
 
 #include "p_tile.h"
-
+#include "u_rect.h"
 
 
 /**
