@@ -38,6 +38,7 @@
 #include <winddi.h>
 
 #include "pipe/p_util.h"
+#include "util/u_string.h"
 
 #include "tr_stream.h"
 
