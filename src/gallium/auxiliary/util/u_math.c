@@ -39,7 +39,7 @@ init_pow2_table(void)
 {
    int i;
    for (i = 0; i < POW2_TABLE_SIZE; i++) {
-      pow2_table[i] = pow(2.0, i / POW2_TABLE_SCALE);
+      pow2_table[i] = (float) pow(2.0, i / POW2_TABLE_SCALE);
    }
 }
 
