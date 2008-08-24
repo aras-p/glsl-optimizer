@@ -80,7 +80,6 @@ const struct brw_tracked_state *atoms[] =
     */
    &brw_invarient_state,
    &brw_state_base_address,
-   &brw_pipe_control,
 
    &brw_binding_table_pointers,
    &brw_blend_constant_color,
@@ -102,6 +101,8 @@ const struct brw_tracked_state *atoms[] =
    &brw_psp_urb_cbs,
 #endif
 
+   &brw_indices,
+   &brw_vertices,
 
    NULL,			/* brw_constant_buffer */
 };
@@ -173,10 +174,12 @@ static void xor_states( struct brw_state_flags *result,
 /***********************************************************************
  * Emit all state:
  */
-int brw_validate_state( struct brw_context *brw )
+void brw_validate_state( struct brw_context *brw )
 {
+   struct intel_context *intel = &brw->intel;
    struct brw_state_flags *state = &brw->state.dirty;
-   GLuint i, ret, count;
+   GLuint i, count, pass = 0;
+   dri_bo *last_batch_bo = NULL;
 
    state->mesa |= brw->intel.NewGLState;
    brw->intel.NewGLState = 0;
@@ -202,7 +205,7 @@ int brw_validate_state( struct brw_context *brw )
    if (state->mesa == 0 &&
        state->cache == 0 &&
        state->brw == 0)
-      return 0;
+      return;
 
    if (brw->state.dirty.brw & BRW_NEW_CONTEXT)
       brw_clear_batch_cache_flush(brw);
@@ -220,15 +223,23 @@ int brw_validate_state( struct brw_context *brw )
 
       if (check_state(state, &atom->dirty)) {
          if (atom->prepare) {
-            ret = atom->prepare(brw);
-            if (ret)
-               return ret;
+            atom->prepare(brw);
         }
       }
    }
 
    if (brw->intel.Fallback)
-      return 0;
+      return;
+
+   /* We're about to try to set up a coherent state in the batchbuffer for
+    * the emission of primitives.  If we exceed the aperture size in any of the
+    * emit() calls, we need to go back to square 1 and try setting up again.
+    */
+got_flushed:
+   dri_bo_unreference(last_batch_bo);
+   last_batch_bo = intel->batch->buf;
+   dri_bo_reference(last_batch_bo);
+   assert(pass++ <= 2);
 
    if (INTEL_DEBUG) {
       /* Debug version which enforces various sanity checks on the
@@ -251,8 +262,11 @@ int brw_validate_state( struct brw_context *brw )
 	    break;
 
 	 if (check_state(state, &atom->dirty)) {
-	    if (atom->emit)
+	    if (atom->emit) {
 	       atom->emit( brw );
+	       if (intel->batch->buf != last_batch_bo)
+		  goto got_flushed;
+	    }
 	 }
 
 	 accumulate_state(&examined, &atom->dirty);
@@ -274,13 +288,17 @@ int brw_validate_state( struct brw_context *brw )
 	    break;
 
 	 if (check_state(state, &atom->dirty)) {
-	    if (atom->emit)
+	    if (atom->emit) {
 	       atom->emit( brw );
+	       if (intel->batch->buf != last_batch_bo)
+		  goto got_flushed;
+	    }
 	 }
       }
    }
 
+   dri_bo_unreference(last_batch_bo);
+
    if (!brw->intel.Fallback)
       memset(state, 0, sizeof(*state));
-   return 0;
 }

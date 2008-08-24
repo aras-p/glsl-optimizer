@@ -238,8 +238,6 @@ try_pbo_upload(struct intel_context *intel,
                         dst_stride, dst_buffer, dst_offset, GL_FALSE,
                         0, 0, 0, 0, width, height,
 			GL_COPY);
-
-      intel_batchbuffer_flush(intel->batch);
    }
    UNLOCK_HARDWARE(intel);
 
@@ -400,10 +398,25 @@ intelTexImage(GLcontext * ctx,
 
       intel_miptree_reference(&intelImage->mt, intelObj->mt);
       assert(intelImage->mt);
-   }
+   } else if (intelImage->base.Border == 0) {
+      int comp_byte = 0;
 
-   if (!intelImage->mt)
-      DBG("XXX: Image did not fit into tree - storing in local memory!\n");
+      if (intelImage->base.IsCompressed) {
+	 comp_byte =
+	    intel_compressed_num_bytes(intelImage->base.TexFormat->MesaFormat);
+      }
+
+      /* Didn't fit in the object miptree, but it's suitable for inclusion in
+       * a miptree, so create one just for our level and store it in the image.
+       * It'll get moved into the object miptree at validate time.
+       */
+      intelImage->mt = intel_miptree_create(intel, target, internalFormat,
+					    level, level,
+					    width, height, depth,
+					    intelImage->base.TexFormat->TexelBytes,
+					    comp_byte);
+
+   }
 
    /* PBO fastpaths:
     */

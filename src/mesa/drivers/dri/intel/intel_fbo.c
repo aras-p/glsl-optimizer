@@ -153,6 +153,9 @@ intel_delete_renderbuffer(struct gl_renderbuffer *rb)
       intel_unpair_depth_stencil(ctx, irb);
    }
 
+   if (irb->span_cache != NULL)
+      _mesa_free(irb->span_cache);
+
    if (intel && irb->region) {
       intel_region_release(&irb->region);
    }
@@ -209,6 +212,14 @@ intel_alloc_renderbuffer_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
    case GL_RGB10:
    case GL_RGB12:
    case GL_RGB16:
+      rb->_ActualFormat = GL_RGB8;
+      rb->DataType = GL_UNSIGNED_BYTE;
+      rb->RedBits = 8;
+      rb->GreenBits = 8;
+      rb->BlueBits = 8;
+      rb->AlphaBits = 0;
+      cpp = 4;
+      break;
    case GL_RGBA:
    case GL_RGBA2:
    case GL_RGBA4:
@@ -294,9 +305,6 @@ intel_alloc_renderbuffer_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
       rb->Width = width;
       rb->Height = height;
 
-      /* This sets the Get/PutRow/Value functions */
-      intel_set_span_functions(&irb->Base);
-
       return GL_TRUE;
    }
 }
@@ -366,7 +374,6 @@ intel_renderbuffer_set_region(struct intel_renderbuffer *rb,
    intel_region_reference(&rb->region, region);
    intel_region_release(&old);
 
-   rb->pfMap = region->map;
    rb->pfPitch = region->pitch;
 }
 
@@ -446,8 +453,6 @@ intel_create_renderbuffer(GLenum intFormat)
    irb->Base.Delete = intel_delete_renderbuffer;
    irb->Base.AllocStorage = intel_alloc_window_storage;
    irb->Base.GetPointer = intel_get_pointer;
-   /* This sets the Get/PutRow/Value functions */
-   intel_set_span_functions(&irb->Base);
 
    return irb;
 }
@@ -519,7 +524,7 @@ intel_framebuffer_renderbuffer(GLcontext * ctx,
 
 static GLboolean
 intel_update_wrapper(GLcontext *ctx, struct intel_renderbuffer *irb, 
-                          struct gl_texture_image *texImage)
+		     struct gl_texture_image *texImage)
 {
    if (texImage->TexFormat == &_mesa_texformat_argb8888) {
       irb->Base._ActualFormat = GL_RGBA8;
@@ -558,7 +563,6 @@ intel_update_wrapper(GLcontext *ctx, struct intel_renderbuffer *irb,
 
    irb->Base.Delete = intel_delete_renderbuffer;
    irb->Base.AllocStorage = intel_nop_alloc_storage;
-   intel_set_span_functions(&irb->Base);
 
    irb->RenderToTexture = GL_TRUE;
 

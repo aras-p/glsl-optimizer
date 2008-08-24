@@ -67,7 +67,7 @@
 
 #define HAVE_ELTS        0
 
-static GLuint hw_prim[GL_POLYGON + 1] = {
+static uint32_t hw_prim[GL_POLYGON + 1] = {
    0,
    PRIM3D_LINELIST,
    PRIM3D_LINESTRIP,
@@ -114,7 +114,7 @@ intelDmaPrimitive(struct intel_context *intel, GLenum prim)
       fprintf(stderr, "%s %s\n", __FUNCTION__, _mesa_lookup_enum_by_nr(prim));
    INTEL_FIREVERTICES(intel);
    intel->vtbl.reduced_primitive_state(intel, reduced_prim[prim]);
-   intelStartInlinePrimitive(intel, hw_prim[prim], LOOP_CLIPRECTS);
+   intel_set_prim(intel, hw_prim[prim]);
 }
 
 
@@ -126,12 +126,11 @@ do {						\
 
 #define FLUSH() INTEL_FIREVERTICES(intel)
 
-#define GET_SUBSEQUENT_VB_MAX_VERTS() \
-  ((intel->batch->size - 1500) / (intel->vertex_size*4))
-#define GET_CURRENT_VB_MAX_VERTS() GET_SUBSEQUENT_VB_MAX_VERTS()
+#define GET_SUBSEQUENT_VB_MAX_VERTS() (INTEL_VB_SIZE / (intel->vertex_size * 4))
+#define GET_CURRENT_VB_MAX_VERTS() \
+   ((INTEL_VB_SIZE - intel->prim.current_offset) / (intel->vertex_size * 4))
 
-#define ALLOC_VERTS( nr ) \
-   intelExtendInlinePrimitive( intel, (nr) * intel->vertex_size )
+#define ALLOC_VERTS(nr) intel_get_prim_space(intel, nr)
 
 #define EMIT_VERTS( ctx, j, nr, buf ) \
   _tnl_emit_vertices_to_buffer(ctx, j, (j)+(nr), buf )

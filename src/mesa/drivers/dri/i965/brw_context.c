@@ -134,7 +134,6 @@ GLboolean brwCreateContext( const __GLcontextModes *mesaVis,
    ctx->Const.Max3DTextureLevels = 9;
    ctx->Const.MaxCubeTextureLevels = 12;
    ctx->Const.MaxTextureRectSize = (1<<11);
-   ctx->Const.MaxTextureUnits = BRW_MAX_TEX_UNIT;
    
 /*    ctx->Const.MaxNativeVertexProgramTemps = 32; */
 

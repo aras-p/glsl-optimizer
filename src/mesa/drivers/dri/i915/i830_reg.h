@@ -494,10 +494,6 @@
 #define VFT1_TEX0_FMT(x)	(x)
 #define VFT1_TEX0_MASK          3
 #define VFT1_TEX1_SHIFT         2
-#define TEXCOORDFMT_2D		0
-#define TEXCOORDFMT_3D		1
-#define TEXCOORDFMT_4D		2
-#define TEXCOORDFMT_1D		3
 
 /*New stuff picked up along the way */
 
@@ -634,9 +630,5 @@
 #define TEX_STREAM_COORD_SET(x) 	((x)<<4)
 #define ENABLE_TEX_STREAM_MAP_IDX	(1<<3)
 #define TEX_STREAM_MAP_IDX(x)		(x)
-
-
-#define MI_FLUSH           ((0<<29)|(4<<23))
-#define FLUSH_MAP_CACHE    (1<<0)
 
 #endif

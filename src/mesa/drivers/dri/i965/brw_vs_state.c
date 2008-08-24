@@ -115,16 +115,16 @@ vs_unit_create_from_key(struct brw_context *brw, struct brw_vs_unit_key *key)
 			 NULL, NULL);
 
    /* Emit VS program relocation */
-   dri_emit_reloc(bo,
-		  DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ,
-		  vs.thread0.grf_reg_count << 1,
-		  offsetof(struct brw_vs_unit_state, thread0),
-		  brw->vs.prog_bo);
+   intel_bo_emit_reloc(bo,
+		       I915_GEM_DOMAIN_INSTRUCTION, 0,
+		       vs.thread0.grf_reg_count << 1,
+		       offsetof(struct brw_vs_unit_state, thread0),
+		       brw->vs.prog_bo);
 
    return bo;
 }
 
-static int prepare_vs_unit( struct brw_context *brw )
+static void prepare_vs_unit(struct brw_context *brw)
 {
    struct brw_vs_unit_key key;
 
@@ -138,7 +138,6 @@ static int prepare_vs_unit( struct brw_context *brw )
    if (brw->vs.state_bo == NULL) {
       brw->vs.state_bo = vs_unit_create_from_key(brw, &key);
    }
-   return dri_bufmgr_check_aperture_space(brw->vs.state_bo);
 }
 
 const struct brw_tracked_state brw_vs_unit = {

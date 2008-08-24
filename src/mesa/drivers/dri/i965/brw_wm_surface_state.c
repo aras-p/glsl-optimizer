@@ -154,9 +154,28 @@ struct brw_wm_surface_key {
    GLint first_level, last_level;
    GLint width, height, depth;
    GLint pitch, cpp;
-   GLboolean tiled;
+   uint32_t tiling;
    GLuint offset;
 };
+
+static void
+brw_set_surface_tiling(struct brw_surface_state *surf, uint32_t tiling)
+{
+   switch (tiling) {
+   case I915_TILING_NONE:
+      surf->ss3.tiled_surface = 0;
+      surf->ss3.tile_walk = 0;
+      break;
+   case I915_TILING_X:
+      surf->ss3.tiled_surface = 1;
+      surf->ss3.tile_walk = BRW_TILEWALK_XMAJOR;
+      break;
+   case I915_TILING_Y:
+      surf->ss3.tiled_surface = 1;
+      surf->ss3.tile_walk = BRW_TILEWALK_YMAJOR;
+      break;
+   }
+}
 
 static dri_bo *
 brw_create_texture_surface( struct brw_context *brw,
@@ -192,9 +211,7 @@ brw_create_texture_surface( struct brw_context *brw,
    surf.ss2.mip_count = key->last_level - key->first_level;
    surf.ss2.width = key->width - 1;
    surf.ss2.height = key->height - 1;
-
-   surf.ss3.tile_walk = BRW_TILEWALK_XMAJOR;
-   surf.ss3.tiled_surface = key->tiled;
+   brw_set_surface_tiling(&surf, key->tiling);
    surf.ss3.pitch = (key->pitch * key->cpp) - 1;
    surf.ss3.depth = key->depth - 1;
 
@@ -214,18 +231,19 @@ brw_create_texture_surface( struct brw_context *brw,
 			 &key->bo, key->bo ? 1 : 0,
 			 &surf, sizeof(surf),
 			 NULL, NULL);
+
    if (key->bo) {
       /* Emit relocation to surface contents */
-      dri_emit_reloc(bo,
-		     DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ,
-		     0,
-		     offsetof(struct brw_surface_state, ss1),
-		     key->bo);
+      intel_bo_emit_reloc(bo,
+			  I915_GEM_DOMAIN_SAMPLER, 0,
+			  0,
+			  offsetof(struct brw_surface_state, ss1),
+			  key->bo);
    }
    return bo;
 }
 
-static int
+static void
 brw_update_texture_surface( GLcontext *ctx, GLuint unit )
 {
    struct brw_context *brw = brw_context(ctx);
@@ -233,7 +251,6 @@ brw_update_texture_surface( GLcontext *ctx, GLuint unit )
    struct intel_texture_object *intelObj = intel_texture_object(tObj);
    struct gl_texture_image *firstImage = tObj->Image[0][intelObj->firstLevel];
    struct brw_wm_surface_key key;
-   int ret = 0;
 
    memset(&key, 0, sizeof(key));
 
@@ -248,7 +265,6 @@ brw_update_texture_surface( GLcontext *ctx, GLuint unit )
       key.depth = firstImage->Depth;
       key.bo = intelObj->mt->region->buffer;
       key.offset = 0;
-      ret |= dri_bufmgr_check_aperture_space(key.bo);
    }
 
    key.target = tObj->Target;
@@ -258,7 +274,8 @@ brw_update_texture_surface( GLcontext *ctx, GLuint unit )
    key.width = firstImage->Width;
    key.height = firstImage->Height;
    key.cpp = intelObj->mt->cpp;
-   key.tiled = intelObj->mt->region->tiled;
+   key.depth = firstImage->Depth;
+   key.tiling = intelObj->mt->region->tiling;
 
    dri_bo_unreference(brw->wm.surf_bo[unit + MAX_DRAW_BUFFERS]);
    brw->wm.surf_bo[unit + MAX_DRAW_BUFFERS] = brw_search_cache(&brw->cache, BRW_SS_SURFACE,
@@ -268,9 +285,6 @@ brw_update_texture_surface( GLcontext *ctx, GLuint unit )
    if (brw->wm.surf_bo[unit + MAX_DRAW_BUFFERS] == NULL) {
       brw->wm.surf_bo[unit + MAX_DRAW_BUFFERS] = brw_create_texture_surface(brw, &key);
    }
-
-   ret |= dri_bufmgr_check_aperture_space(brw->wm.surf_bo[unit + MAX_DRAW_BUFFERS]);
-   return ret;
 }
 
 /**
@@ -278,18 +292,18 @@ brw_update_texture_surface( GLcontext *ctx, GLuint unit )
  * While it is only used for the front/back buffer currently, it should be
  * usable for further buffers when doing ARB_draw_buffer support.
  */
-static int
+static void
 brw_update_region_surface(struct brw_context *brw, struct intel_region *region,
 			  unsigned int unit, GLboolean cached)
 {
    dri_bo *region_bo = NULL;
-   int ret = 0;
    struct {
       unsigned int surface_type;
       unsigned int surface_format;
       unsigned int width, height, cpp;
       GLubyte color_mask[4];
-      GLboolean tiled, color_blend;
+      GLboolean color_blend;
+      uint32_t tiling;
    } key;
 
    memset(&key, 0, sizeof(key));
@@ -302,16 +316,14 @@ brw_update_region_surface(struct brw_context *brw, struct intel_region *region,
 	 key.surface_format = BRW_SURFACEFORMAT_B8G8R8A8_UNORM;
       else
 	 key.surface_format = BRW_SURFACEFORMAT_B5G6R5_UNORM;
-      key.tiled = region->tiled;
+      key.tiling = region->tiling;
       key.width = region->pitch; /* XXX: not really! */
       key.height = region->height;
       key.cpp = region->cpp;
-
-      ret |= dri_bufmgr_check_aperture_space(region->buffer);
    } else {
       key.surface_type = BRW_SURFACE_NULL;
       key.surface_format = BRW_SURFACEFORMAT_B8G8R8A8_UNORM;
-      key.tiled = 0;
+      key.tiling = 0;
       key.width = 1;
       key.height = 1;
       key.cpp = 4;
@@ -341,8 +353,7 @@ brw_update_region_surface(struct brw_context *brw, struct intel_region *region,
 
       surf.ss2.width = key.width - 1;
       surf.ss2.height = key.height - 1;
-      surf.ss3.tile_walk = BRW_TILEWALK_XMAJOR;
-      surf.ss3.tiled_surface = key.tiled;
+      brw_set_surface_tiling(&surf, key.tiling);
       surf.ss3.pitch = (key.width * key.cpp) - 1;
 
       /* _NEW_COLOR */
@@ -359,19 +370,19 @@ brw_update_region_surface(struct brw_context *brw, struct intel_region *region,
 					       &surf, sizeof(surf),
 					       NULL, NULL);
       if (region_bo != NULL) {
-	 dri_emit_reloc(brw->wm.surf_bo[unit],
-			DRM_BO_FLAG_MEM_TT |
-			DRM_BO_FLAG_READ |
-			DRM_BO_FLAG_WRITE,
-			0,
-			offsetof(struct brw_surface_state, ss1),
-			region_bo);
+	 /* We might sample from it, and we might render to it, so flag
+	  * them both.  We might be able to figure out from other state
+	  * a more restrictive relocation to emit.
+	  */
+	 intel_bo_emit_reloc(brw->wm.surf_bo[unit],
+			     I915_GEM_DOMAIN_RENDER |
+			     I915_GEM_DOMAIN_SAMPLER,
+			     I915_GEM_DOMAIN_RENDER,
+			     0,
+			     offsetof(struct brw_surface_state, ss1),
+			     region_bo);
       }
    }
-
-   ret |= dri_bufmgr_check_aperture_space(brw->wm.surf_bo[unit]);
-
-   return ret;
 }
 
 
@@ -409,13 +420,11 @@ brw_wm_get_binding_table(struct brw_context *brw)
       /* Emit binding table relocations to surface state */
       for (i = 0; i < BRW_WM_MAX_SURF; i++) {
 	 if (brw->wm.surf_bo[i] != NULL) {
-	    dri_emit_reloc(bind_bo,
-			   DRM_BO_FLAG_MEM_TT |
-			   DRM_BO_FLAG_READ |
-			   DRM_BO_FLAG_WRITE,
-			   0,
-			   i * sizeof(GLuint),
-			   brw->wm.surf_bo[i]);
+	    intel_bo_emit_reloc(bind_bo,
+				I915_GEM_DOMAIN_INSTRUCTION, 0,
+				0,
+				i * sizeof(GLuint),
+				brw->wm.surf_bo[i]);
 	 }
       }
 
@@ -425,23 +434,19 @@ brw_wm_get_binding_table(struct brw_context *brw)
    return bind_bo;
 }
 
-static int prepare_wm_surfaces(struct brw_context *brw )
+static void prepare_wm_surfaces(struct brw_context *brw )
 {
    GLcontext *ctx = &brw->intel.ctx;
    struct intel_context *intel = &brw->intel;
-   GLuint i, ret;
+   GLuint i;
 
    if (brw->state.nr_draw_regions  > 1) {
       for (i = 0; i < brw->state.nr_draw_regions; i++) {
-         ret = brw_update_region_surface(brw, brw->state.draw_regions[i], i,
-                                         GL_FALSE);
-         if (ret)
-            return ret;
+         brw_update_region_surface(brw, brw->state.draw_regions[i], i,
+				   GL_FALSE);
       }
    }else {
-      ret = brw_update_region_surface(brw, brw->state.draw_regions[0], 0, GL_TRUE);
-      if (ret)
-         return ret;
+      brw_update_region_surface(brw, brw->state.draw_regions[0], 0, GL_TRUE);
    }
 
    brw->wm.nr_surfaces = MAX_DRAW_BUFFERS;
@@ -457,11 +462,8 @@ static int prepare_wm_surfaces(struct brw_context *brw )
             dri_bo_reference(brw->wm.surf_bo[i+MAX_DRAW_BUFFERS]);
             brw->wm.nr_surfaces = i + MAX_DRAW_BUFFERS + 1;
          } else {
-            ret = brw_update_texture_surface(ctx, i);
+            brw_update_texture_surface(ctx, i);
             brw->wm.nr_surfaces = i + MAX_DRAW_BUFFERS + 1;
-
-            if (ret)
-               return ret;
          }
       } else {
          dri_bo_unreference(brw->wm.surf_bo[i+MAX_DRAW_BUFFERS]);
@@ -472,8 +474,6 @@ static int prepare_wm_surfaces(struct brw_context *brw )
 
    dri_bo_unreference(brw->wm.bind_bo);
    brw->wm.bind_bo = brw_wm_get_binding_table(brw);
-
-   return dri_bufmgr_check_aperture_space(brw->wm.bind_bo);
 }
 
 

@@ -30,8 +30,8 @@ DRIVER_SOURCES = \
 	intel_pixel.c \
 	intel_pixel_bitmap.c \
 	intel_pixel_copy.c \
-	intel_pixel_read.c \
 	intel_pixel_draw.c \
+	intel_pixel_read.c \
 	intel_buffers.c \
 	intel_blit.c \
 	i915_tex.c \
@@ -52,12 +52,10 @@ DRIVER_SOURCES = \
 	intel_state.c \
 	intel_tris.c \
 	intel_fbo.c \
-	intel_depthstencil.c \
-	intel_bufmgr_ttm.c
+	intel_depthstencil.c
 
 C_SOURCES = \
 	$(COMMON_SOURCES) \
-	$(COMMON_BM_SOURCES) \
 	$(DRIVER_SOURCES)
 
 ASM_SOURCES = 
@@ -69,6 +67,7 @@ DRIVER_DEFINES = -I../intel -I../intel/server -DI915 \
 include ../Makefile.template
 
 intel_decode.o: ../intel/intel_decode.c
+
 intel_tex_layout.o: ../intel/intel_tex_layout.c
 
 symlinks:

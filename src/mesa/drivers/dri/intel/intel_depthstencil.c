@@ -39,7 +39,7 @@
 #include "intel_fbo.h"
 #include "intel_depthstencil.h"
 #include "intel_regions.h"
-
+#include "intel_span.h"
 
 /**
  * The GL_EXT_framebuffer_object allows the user to create their own
@@ -86,68 +86,33 @@
  *
  */
 
-
-
-static void
-map_regions(GLcontext * ctx,
-            struct intel_renderbuffer *depthRb,
-            struct intel_renderbuffer *stencilRb)
-{
-   struct intel_context *intel = intel_context(ctx);
-   if (depthRb && depthRb->region) {
-      intel_region_map(intel, depthRb->region);
-      depthRb->pfMap = depthRb->region->map;
-      depthRb->pfPitch = depthRb->region->pitch;
-   }
-   if (stencilRb && stencilRb->region) {
-      intel_region_map(intel, stencilRb->region);
-      stencilRb->pfMap = stencilRb->region->map;
-      stencilRb->pfPitch = stencilRb->region->pitch;
-   }
-}
-
-static void
-unmap_regions(GLcontext * ctx,
-              struct intel_renderbuffer *depthRb,
-              struct intel_renderbuffer *stencilRb)
-{
-   struct intel_context *intel = intel_context(ctx);
-   if (depthRb && depthRb->region) {
-      intel_region_unmap(intel, depthRb->region);
-      depthRb->pfMap = NULL;
-      depthRb->pfPitch = 0;
-   }
-   if (stencilRb && stencilRb->region) {
-      intel_region_unmap(intel, stencilRb->region);
-      stencilRb->pfMap = NULL;
-      stencilRb->pfPitch = 0;
-   }
-}
-
-
-
 /**
  * Undo the pairing/interleaving between depth and stencil buffers.
  * irb should be a depth/stencil or stencil renderbuffer.
  */
 void
-intel_unpair_depth_stencil(GLcontext * ctx, struct intel_renderbuffer *irb)
+intel_unpair_depth_stencil(GLcontext *ctx, struct intel_renderbuffer *irb)
 {
+   struct intel_context *intel = intel_context(ctx);
+   struct gl_renderbuffer *rb = &irb->Base;
+
    if (irb->PairedStencil) {
       /* irb is a depth/stencil buffer */
       struct gl_renderbuffer *stencilRb;
       struct intel_renderbuffer *stencilIrb;
 
-      ASSERT(irb->Base._ActualFormat == GL_DEPTH24_STENCIL8_EXT);
+      ASSERT(rb->_ActualFormat == GL_DEPTH24_STENCIL8_EXT);
 
       stencilRb = _mesa_lookup_renderbuffer(ctx, irb->PairedStencil);
       stencilIrb = intel_renderbuffer(stencilRb);
       if (stencilIrb) {
          /* need to extract stencil values from the depth buffer */
-         ASSERT(stencilIrb->PairedDepth == irb->Base.Name);
-         map_regions(ctx, irb, stencilIrb);
-         _mesa_extract_stencil(ctx, &irb->Base, &stencilIrb->Base);
-         unmap_regions(ctx, irb, stencilIrb);
+	 ASSERT(stencilIrb->PairedDepth == rb->Name);
+	 intel_renderbuffer_map(intel, rb);
+	 intel_renderbuffer_map(intel, stencilRb);
+	 _mesa_extract_stencil(ctx, rb, stencilRb);
+	 intel_renderbuffer_unmap(intel, stencilRb);
+	 intel_renderbuffer_unmap(intel, rb);
          stencilIrb->PairedDepth = 0;
       }
       irb->PairedStencil = 0;
@@ -157,17 +122,19 @@ intel_unpair_depth_stencil(GLcontext * ctx, struct intel_renderbuffer *irb)
       struct gl_renderbuffer *depthRb;
       struct intel_renderbuffer *depthIrb;
 
-      ASSERT(irb->Base._ActualFormat == GL_STENCIL_INDEX8_EXT ||
-             irb->Base._ActualFormat == GL_DEPTH24_STENCIL8_EXT);
+      ASSERT(rb->_ActualFormat == GL_STENCIL_INDEX8_EXT ||
+             rb->_ActualFormat == GL_DEPTH24_STENCIL8_EXT);
 
       depthRb = _mesa_lookup_renderbuffer(ctx, irb->PairedDepth);
       depthIrb = intel_renderbuffer(depthRb);
       if (depthIrb) {
          /* need to extract stencil values from the depth buffer */
-         ASSERT(depthIrb->PairedStencil == irb->Base.Name);
-         map_regions(ctx, depthIrb, irb);
-         _mesa_extract_stencil(ctx, &depthIrb->Base, &irb->Base);
-         unmap_regions(ctx, depthIrb, irb);
+	 ASSERT(depthIrb->PairedStencil == rb->Name);
+	 intel_renderbuffer_map(intel, rb);
+	 intel_renderbuffer_map(intel, depthRb);
+	 _mesa_extract_stencil(ctx, depthRb, rb);
+	 intel_renderbuffer_unmap(intel, depthRb);
+	 intel_renderbuffer_unmap(intel, rb);
          depthIrb->PairedStencil = 0;
       }
       irb->PairedDepth = 0;
@@ -194,6 +161,7 @@ void
 intel_validate_paired_depth_stencil(GLcontext * ctx,
                                     struct gl_framebuffer *fb)
 {
+   struct intel_context *intel = intel_context(ctx);
    struct intel_renderbuffer *depthRb, *stencilRb;
 
    depthRb = intel_get_renderbuffer(fb, BUFFER_DEPTH);
@@ -230,9 +198,11 @@ intel_validate_paired_depth_stencil(GLcontext * ctx,
                    stencilRb->Base._ActualFormat == GL_DEPTH24_STENCIL8_EXT);
 
             /* establish new pairing: interleave stencil into depth buffer */
-            map_regions(ctx, depthRb, stencilRb);
+	    intel_renderbuffer_map(intel, &depthRb->Base);
+	    intel_renderbuffer_map(intel, &stencilRb->Base);
             _mesa_insert_stencil(ctx, &depthRb->Base, &stencilRb->Base);
-            unmap_regions(ctx, depthRb, stencilRb);
+	    intel_renderbuffer_unmap(intel, &stencilRb->Base);
+	    intel_renderbuffer_unmap(intel, &depthRb->Base);
             depthRb->PairedStencil = stencilRb->Base.Name;
             stencilRb->PairedDepth = depthRb->Base.Name;
          }

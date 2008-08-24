@@ -81,6 +81,13 @@ const struct brw_tracked_state brw_blend_constant_color = {
 static void upload_binding_table_pointers(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
+   dri_bo *aper_array[] = {
+      intel->batch->buf,
+      brw->wm.bind_bo,
+   };
+
+   if (dri_bufmgr_check_aperture_space(aper_array, ARRAY_SIZE(aper_array)))
+      intel_batchbuffer_flush(intel->batch);
 
    BEGIN_BATCH(6, IGNORE_CLIPRECTS);
    OUT_BATCH(CMD_BINDING_TABLE_PTRS << 16 | (6 - 2));
@@ -88,7 +95,9 @@ static void upload_binding_table_pointers(struct brw_context *brw)
    OUT_BATCH(0); /* gs */
    OUT_BATCH(0); /* clip */
    OUT_BATCH(0); /* sf */
-   OUT_RELOC(brw->wm.bind_bo, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ, 0);
+   OUT_RELOC(brw->wm.bind_bo,
+	     I915_GEM_DOMAIN_SAMPLER, 0,
+	     0);
    ADVANCE_BATCH();
 }
 
@@ -114,48 +123,42 @@ static void upload_pipelined_state_pointers(struct brw_context *brw )
 
    BEGIN_BATCH(7, IGNORE_CLIPRECTS);
    OUT_BATCH(CMD_PIPELINED_STATE_POINTERS << 16 | (7 - 2));
-   OUT_RELOC(brw->vs.state_bo, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ, 0);
+   OUT_RELOC(brw->vs.state_bo, I915_GEM_DOMAIN_INSTRUCTION, 0, 0);
    if (brw->gs.prog_active)
-      OUT_RELOC(brw->gs.state_bo, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ, 1);
+      OUT_RELOC(brw->gs.state_bo, I915_GEM_DOMAIN_INSTRUCTION, 0, 1);
    else
       OUT_BATCH(0);
    if (!brw->metaops.active)
-      OUT_RELOC(brw->clip.state_bo, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ, 1);
+      OUT_RELOC(brw->clip.state_bo, I915_GEM_DOMAIN_INSTRUCTION, 0, 1);
    else
       OUT_BATCH(0);
-   OUT_RELOC(brw->sf.state_bo, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ, 0);
-   OUT_RELOC(brw->wm.state_bo, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ, 0);
-   OUT_RELOC(brw->cc.state_bo, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ, 0);
+   OUT_RELOC(brw->sf.state_bo, I915_GEM_DOMAIN_INSTRUCTION, 0, 0);
+   OUT_RELOC(brw->wm.state_bo, I915_GEM_DOMAIN_INSTRUCTION, 0, 0);
+   OUT_RELOC(brw->cc.state_bo, I915_GEM_DOMAIN_INSTRUCTION, 0, 0);
    ADVANCE_BATCH();
 
    brw->state.dirty.brw |= BRW_NEW_PSP;
 }
 
-#if 0
-/* Combined into brw_psp_urb_cbs */
-const struct brw_tracked_state brw_pipelined_state_pointers = {
-   .dirty = {
-      .mesa = 0,
-      .brw = BRW_NEW_METAOPS | BRW_NEW_BATCH,
-      .cache = (CACHE_NEW_VS_UNIT | 
-		CACHE_NEW_GS_UNIT | 
-		CACHE_NEW_GS_PROG | 
-		CACHE_NEW_CLIP_UNIT | 
-		CACHE_NEW_SF_UNIT | 
-		CACHE_NEW_WM_UNIT | 
-		CACHE_NEW_CC_UNIT)
-   },
-   .emit = upload_pipelined_state_pointers
-};
-#endif
-
 static void upload_psp_urb_cbs(struct brw_context *brw )
 {
+   struct intel_context *intel = &brw->intel;
+   dri_bo *aper_array[] = {
+      intel->batch->buf,
+      brw->vs.state_bo,
+      brw->gs.state_bo,
+      brw->clip.state_bo,
+      brw->wm.state_bo,
+      brw->cc.state_bo,
+   };
+
+   if (dri_bufmgr_check_aperture_space(aper_array, ARRAY_SIZE(aper_array)))
+      intel_batchbuffer_flush(intel->batch);
+
    upload_pipelined_state_pointers(brw);
    brw_upload_urb_fence(brw);
    brw_upload_constant_buffer_state(brw);
 }
-
 
 const struct brw_tracked_state brw_psp_urb_cbs = {
    .dirty = {
@@ -171,22 +174,6 @@ const struct brw_tracked_state brw_psp_urb_cbs = {
    },
    .emit = upload_psp_urb_cbs,
 };
-
-/**
- * Upload the depthbuffer offset and format.
- *
- * We have to do this per state validation as we need to emit the relocation
- * in the batch buffer.
- */
-
-static int prepare_depthbuffer(struct brw_context *brw)
-{
-   struct intel_region *region = brw->state.depth_region;
-
-   if (!region || !region->buffer)
-      return 0;
-   return dri_bufmgr_check_aperture_space(region->buffer);
-}
 
 static void emit_depthbuffer(struct brw_context *brw)
 {
@@ -209,6 +196,10 @@ static void emit_depthbuffer(struct brw_context *brw)
       ADVANCE_BATCH();
    } else {
       unsigned int format;
+      dri_bo *aper_array[] = {
+	 intel->batch->buf,
+	 region->buffer
+      };
 
       switch (region->cpp) {
       case 2:
@@ -225,15 +216,19 @@ static void emit_depthbuffer(struct brw_context *brw)
 	 return;
       }
 
+      if (dri_bufmgr_check_aperture_space(aper_array, ARRAY_SIZE(aper_array)))
+	 intel_batchbuffer_flush(intel->batch);
+
       BEGIN_BATCH(len, IGNORE_CLIPRECTS);
       OUT_BATCH(CMD_DEPTH_BUFFER << 16 | (len - 2));
       OUT_BATCH(((region->pitch * region->cpp) - 1) |
 		(format << 18) |
 		(BRW_TILEWALK_YMAJOR << 26) |
-		(region->tiled << 27) |
+		((region->tiling != I915_TILING_NONE) << 27) |
 		(BRW_SURFACE_2D << 29));
       OUT_RELOC(region->buffer,
-		DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ | DRM_BO_FLAG_WRITE, 0);
+		I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
+		0);
       OUT_BATCH((BRW_SURFACE_MIPMAPLAYOUT_BELOW << 1) |
 		((region->pitch - 1) << 6) |
 		((region->height - 1) << 19));
@@ -252,7 +247,6 @@ const struct brw_tracked_state brw_depthbuffer = {
       .brw = BRW_NEW_DEPTH_BUFFER | BRW_NEW_BATCH,
       .cache = 0,
    },
-   .prepare = prepare_depthbuffer,
    .emit = emit_depthbuffer,
 };
 
@@ -377,40 +371,6 @@ const struct brw_tracked_state brw_line_stipple = {
       .cache = 0
    },
    .emit = upload_line_stipple
-};
-
-
-
-/***********************************************************************
- * Misc constant state packets
- */
-
-static void upload_pipe_control(struct brw_context *brw)
-{
-   struct brw_pipe_control pc;
-
-   return;
-
-   memset(&pc, 0, sizeof(pc));
-
-   pc.header.opcode = CMD_PIPE_CONTROL;
-   pc.header.length = sizeof(pc)/4 - 2;
-   pc.header.post_sync_operation = PIPE_CONTROL_NOWRITE;
-
-   pc.header.instruction_state_cache_flush_enable = 1;
-
-   pc.bits1.dest_addr_type = PIPE_CONTROL_GTTWRITE_GLOBAL;
-
-   BRW_BATCH_STRUCT(brw, &pc);
-}
-
-const struct brw_tracked_state brw_pipe_control = {
-   .dirty = {
-      .mesa = 0,
-      .brw = BRW_NEW_BATCH,
-      .cache = 0
-   },
-   .emit = upload_pipe_control
 };
 
 
