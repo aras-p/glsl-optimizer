@@ -214,7 +214,10 @@ brw_upload_cache( struct brw_cache *cache,
 
    /* Create the buffer object to contain the data */
    bo = dri_bo_alloc(cache->brw->intel.bufmgr,
-		     cache->name[cache_id], data_size, 1 << 6);
+		     cache->name[cache_id], data_size, 1 << 6,
+		     DRM_BO_FLAG_MEM_LOCAL |
+		     DRM_BO_FLAG_CACHED |
+		     DRM_BO_FLAG_CACHED_MAPPED);
 
 
    /* Set up the memory containing the key, aux_data, and reloc_bufs */

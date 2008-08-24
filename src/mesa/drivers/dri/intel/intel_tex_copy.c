@@ -144,13 +144,15 @@ do_copy_texsubimage(struct intel_context *intel,
                            -src->pitch,
                            src->buffer,
                            src->height * src->pitch * src->cpp,
-			   src->tiling,
+			   GL_FALSE,
                            intelImage->mt->pitch,
                            intelImage->mt->region->buffer,
                            image_offset,
-			   intelImage->mt->region->tiling,
+			   intelImage->mt->region->tiled,
                            x, y + height, dstx, dsty, width, height,
 			   GL_COPY); /* ? */
+
+         intel_batchbuffer_flush(intel->batch);
       }
    }
 

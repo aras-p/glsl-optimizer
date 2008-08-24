@@ -31,7 +31,6 @@
 #include "i830_reg.h"
 #include "intel_batchbuffer.h"
 #include "intel_regions.h"
-#include "intel_tris.h"
 #include "tnl/t_context.h"
 #include "tnl/t_vertex.h"
 
@@ -420,12 +419,10 @@ i830_emit_state(struct intel_context *intel)
 {
    struct i830_context *i830 = i830_context(&intel->ctx);
    struct i830_hw_state *state = i830->current;
-   int i, count;
+   int i, ret, count;
    GLuint dirty;
    GET_CURRENT_CONTEXT(ctx);
    BATCH_LOCALS;
-   dri_bo *aper_array[3 + I830_TEX_UNITS];
-   int aper_count;
 
    /* We don't hold the lock at this point, so want to make sure that
     * there won't be a buffer wrap between the state emits and the primitive
@@ -438,28 +435,26 @@ i830_emit_state(struct intel_context *intel)
     * Set the space as LOOP_CLIPRECTS now, since that's what our primitives
     * will be emitted under.
     */
-   intel_batchbuffer_require_space(intel->batch,
-				   get_state_size(state) + INTEL_PRIM_EMIT_SIZE,
+   intel_batchbuffer_require_space(intel->batch, get_state_size(state) + 8,
 				   LOOP_CLIPRECTS);
    count = 0;
  again:
-   aper_count = 0;
    dirty = get_dirty(state);
 
-   aper_array[aper_count++] = intel->batch->buf;
+   ret = 0;
    if (dirty & I830_UPLOAD_BUFFERS) {
-      aper_array[aper_count++] = state->draw_region->buffer;
-      aper_array[aper_count++] = state->depth_region->buffer;
+     ret |= dri_bufmgr_check_aperture_space(state->draw_region->buffer);
+     ret |= dri_bufmgr_check_aperture_space(state->depth_region->buffer);
    }
-
+   
    for (i = 0; i < I830_TEX_UNITS; i++)
      if (dirty & I830_UPLOAD_TEX(i)) {
 	if (state->tex_buffer[i]) {
-	   aper_array[aper_count++] = state->tex_buffer[i];
+	  ret |= dri_bufmgr_check_aperture_space(state->tex_buffer[i]);
 	}
      }
 
-   if (dri_bufmgr_check_aperture_space(aper_array, aper_count)) {
+   if (ret) {
        if (count == 0) {
 	   count++;
 	   intel_batchbuffer_flush(intel->batch);
@@ -495,14 +490,14 @@ i830_emit_state(struct intel_context *intel)
       OUT_BATCH(state->Buffer[I830_DESTREG_CBUFADDR0]);
       OUT_BATCH(state->Buffer[I830_DESTREG_CBUFADDR1]);
       OUT_RELOC(state->draw_region->buffer,
-		I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
+                DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_WRITE,
                 state->draw_region->draw_offset);
 
       if (state->depth_region) {
          OUT_BATCH(state->Buffer[I830_DESTREG_DBUFADDR0]);
          OUT_BATCH(state->Buffer[I830_DESTREG_DBUFADDR1]);
          OUT_RELOC(state->depth_region->buffer,
-		   I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
+                   DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_WRITE,
                    state->depth_region->draw_offset);
       }
 
@@ -529,7 +524,7 @@ i830_emit_state(struct intel_context *intel)
 
          if (state->tex_buffer[i]) {
             OUT_RELOC(state->tex_buffer[i],
-		      I915_GEM_DOMAIN_SAMPLER, 0,
+                      DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ,
                       state->tex_offset[i] | TM0S0_USE_FENCE);
          }
 	 else if (state == &i830->meta) {
@@ -722,5 +717,4 @@ i830InitVtbl(struct i830_context *i830)
    i830->intel.vtbl.render_prevalidate = i830_render_prevalidate;
    i830->intel.vtbl.assert_not_dirty = i830_assert_not_dirty;
    i830->intel.vtbl.note_unlock = i830_note_unlock; 
-   i830->intel.vtbl.finish_batch = intel_finish_vb;
 }

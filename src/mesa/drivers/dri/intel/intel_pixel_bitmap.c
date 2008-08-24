@@ -43,7 +43,7 @@
 #include "intel_buffer_objects.h"
 #include "intel_buffers.h"
 #include "intel_pixel.h"
-#include "intel_reg.h"
+
 
 
 #define FILE_DEBUG_FLAG DEBUG_PIXEL
@@ -293,7 +293,7 @@ do_blit_bitmap( GLcontext *ctx,
 						  dst->pitch,
 						  dst->buffer,
 						  0,
-						  dst->tiling,
+						  dst->tiled,
 						  rect.x1 + px,
 						  rect.y2 - (py + h),
 						  w, h,
@@ -301,8 +301,9 @@ do_blit_bitmap( GLcontext *ctx,
 	    } 
 	 } 
       }
+   out:
+      intel_batchbuffer_flush(intel->batch);
    }
-out:
    UNLOCK_HARDWARE(intel);
 
 

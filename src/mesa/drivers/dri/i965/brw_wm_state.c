@@ -199,39 +199,40 @@ wm_unit_create_from_key(struct brw_context *brw, struct brw_wm_unit_key *key,
 			 NULL, NULL);
 
    /* Emit WM program relocation */
-   intel_bo_emit_reloc(bo,
-		       I915_GEM_DOMAIN_INSTRUCTION, 0,
-		       wm.thread0.grf_reg_count << 1,
-		       offsetof(struct brw_wm_unit_state, thread0),
-		       brw->wm.prog_bo);
+   dri_emit_reloc(bo,
+		  DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ,
+		  wm.thread0.grf_reg_count << 1,
+		  offsetof(struct brw_wm_unit_state, thread0),
+		  brw->wm.prog_bo);
 
    /* Emit scratch space relocation */
    if (key->total_scratch != 0) {
-      intel_bo_emit_reloc(bo,
-			  0, 0,
-			  wm.thread2.per_thread_scratch_space,
-			  offsetof(struct brw_wm_unit_state, thread2),
-			  brw->wm.scratch_buffer);
+      dri_emit_reloc(bo,
+		     DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ | DRM_BO_FLAG_WRITE,
+		     wm.thread2.per_thread_scratch_space,
+		     offsetof(struct brw_wm_unit_state, thread2),
+		     brw->wm.scratch_buffer);
    }
 
    /* Emit sampler state relocation */
    if (key->sampler_count != 0) {
-      intel_bo_emit_reloc(bo,
-			  I915_GEM_DOMAIN_INSTRUCTION, 0,
-			  wm.wm4.stats_enable | (wm.wm4.sampler_count << 2),
-			  offsetof(struct brw_wm_unit_state, wm4),
-			  brw->wm.sampler_bo);
+      dri_emit_reloc(bo,
+		     DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ,
+		     wm.wm4.stats_enable | (wm.wm4.sampler_count << 2),
+		     offsetof(struct brw_wm_unit_state, wm4),
+		     brw->wm.sampler_bo);
    }
 
    return bo;
 }
 
 
-static void upload_wm_unit( struct brw_context *brw )
+static int upload_wm_unit( struct brw_context *brw )
 {
    struct intel_context *intel = &brw->intel;
    struct brw_wm_unit_key key;
    dri_bo *reloc_bufs[3];
+   int ret = 0, i;
    wm_unit_populate_key(brw, &key);
 
    /* Allocate the necessary scratch space if we haven't already.  Don't
@@ -250,7 +251,7 @@ static void upload_wm_unit( struct brw_context *brw )
 	 brw->wm.scratch_buffer = dri_bo_alloc(intel->bufmgr,
 					       "wm scratch",
 					       total,
-					       4096);
+					       4096, DRM_BO_FLAG_MEM_TT);
       }
    }
 
@@ -266,6 +267,12 @@ static void upload_wm_unit( struct brw_context *brw )
    if (brw->wm.state_bo == NULL) {
       brw->wm.state_bo = wm_unit_create_from_key(brw, &key, reloc_bufs);
    }
+
+   for (i = 0; i < 3; i++)
+     if (reloc_bufs[i])
+       ret |= dri_bufmgr_check_aperture_space(reloc_bufs[i]);
+   ret |= dri_bufmgr_check_aperture_space(brw->wm.state_bo);
+   return ret;
 }
 
 const struct brw_tracked_state brw_wm_unit = {

@@ -32,9 +32,7 @@ extern void intelInitSpanFuncs(GLcontext * ctx);
 
 extern void intelSpanRenderFinish(GLcontext * ctx);
 extern void intelSpanRenderStart(GLcontext * ctx);
-void intel_renderbuffer_map(struct intel_context *intel,
-			    struct gl_renderbuffer *rb);
-void intel_renderbuffer_unmap(struct intel_context *intel,
-			      struct gl_renderbuffer *rb);
+
+extern void intel_set_span_functions(struct gl_renderbuffer *rb);
 
 #endif

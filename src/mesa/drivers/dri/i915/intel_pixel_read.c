@@ -173,6 +173,7 @@ do_blit_readpixels(GLcontext * ctx,
    struct intel_buffer_object *dst = intel_buffer_object(pack->BufferObj);
    GLuint dst_offset;
    GLuint rowLength;
+   dri_fence *fence = NULL;
 
    if (INTEL_DEBUG & DEBUG_PIXEL)
       _mesa_printf("%s\n", __FUNCTION__);
@@ -263,7 +264,7 @@ do_blit_readpixels(GLcontext * ctx,
 
          intelEmitCopyBlit(intel,
                            src->cpp,
-                           src->pitch, src->buffer, 0, src->tiling,
+                           src->pitch, src->buffer, 0, src->tiled,
                            rowLength, dst_buffer, dst_offset, GL_FALSE,
                            rect.x1,
                            rect.y1,
@@ -272,8 +273,18 @@ do_blit_readpixels(GLcontext * ctx,
                            rect.x2 - rect.x1, rect.y2 - rect.y1,
 			   GL_COPY);
       }
+
+      intel_batchbuffer_flush(intel->batch);
+      fence = intel->batch->last_fence;
+      dri_fence_reference(fence);
+
    }
    UNLOCK_HARDWARE(intel);
+
+   if (fence) {
+      dri_fence_wait(fence);
+      dri_fence_unreference(fence);
+   }
 
    if (INTEL_DEBUG & DEBUG_PIXEL)
       _mesa_printf("%s - DONE\n", __FUNCTION__);

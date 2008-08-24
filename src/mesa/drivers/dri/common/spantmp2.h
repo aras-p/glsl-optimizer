@@ -48,34 +48,36 @@
 #define HW_WRITE_CLIPLOOP()	HW_CLIPLOOP()
 #endif
 
+
 #if (SPANTMP_PIXEL_FMT == GL_RGB)  && (SPANTMP_PIXEL_TYPE == GL_UNSIGNED_SHORT_5_6_5)
 
 /**
  ** GL_RGB, GL_UNSIGNED_SHORT_5_6_5
  **/
 
-#ifndef GET_VALUE
 #ifndef GET_PTR
 #define GET_PTR(_x, _y) (buf + (_x) * 2 + (_y) * pitch)
 #endif
-
-#define GET_VALUE(_x, _y) *(volatile GLushort *)(GET_PTR(_x, _y))
-#define PUT_VALUE(_x, _y, _v) *(volatile GLushort *)(GET_PTR(_x, _y)) = (_v)
-#endif /* GET_VALUE */
 
 #define INIT_MONO_PIXEL(p, color) \
   p = PACK_COLOR_565( color[0], color[1], color[2] )
 
 #define WRITE_RGBA( _x, _y, r, g, b, a )				\
-   PUT_VALUE(_x, _y, ((((int)r & 0xf8) << 8) |				\
-		      (((int)g & 0xfc) << 3) |				\
-		      (((int)b & 0xf8) >> 3)))				\
+    do {                                                                \
+       GLshort * _p = (GLshort *) GET_PTR(_x, _y);                      \
+       _p[0] = ((((int)r & 0xf8) << 8) | (((int)g & 0xfc) << 3) |	\
+		   (((int)b & 0xf8) >> 3));                             \
+   } while(0)
 
-#define WRITE_PIXEL( _x, _y, p ) PUT_VALUE(_x, _y, p)
+#define WRITE_PIXEL( _x, _y, p )					\
+   do {                                                                 \
+      GLushort * _p = (GLushort *) GET_PTR(_x, _y);                     \
+      _p[0] = p;                                                        \
+   } while(0)
 
 #define READ_RGBA( rgba, _x, _y )					\
    do {									\
-      GLushort p = GET_VALUE(_x, _y);					\
+      GLushort p = *(volatile GLshort *) GET_PTR(_x, _y);               \
       rgba[0] = ((p >> 8) & 0xf8) * 255 / 0xf8;				\
       rgba[1] = ((p >> 3) & 0xfc) * 255 / 0xfc;				\
       rgba[2] = ((p << 3) & 0xf8) * 255 / 0xf8;				\
@@ -88,30 +90,29 @@
  ** GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV
  **/
 
-#ifndef GET_VALUE
 #ifndef GET_PTR
 #define GET_PTR(_x, _y) (     buf + (_x) * 4 + (_y) * pitch)
 #endif
-
-#define GET_VALUE(_x, _y) *(volatile GLuint *)(GET_PTR(_x, _y))
-#define PUT_VALUE(_x, _y, _v) *(volatile GLuint *)(GET_PTR(_x, _y)) = (_v)
-#endif /* GET_VALUE */
 
 # define INIT_MONO_PIXEL(p, color)                       \
      p = PACK_COLOR_8888(color[3], color[0], color[1], color[2]) 
 
 # define WRITE_RGBA(_x, _y, r, g, b, a)                                 \
-   PUT_VALUE(_x, _y, ((r << 16) |					\
-		      (g << 8) |					\
-		      (b << 0) |					\
-		      (a << 24)))
+    do {                                                                \
+       GLuint * _p = (GLuint *) GET_PTR(_x, _y);                        \
+       _p[0] = ((r << 16) | (g << 8) | (b << 0) | (a << 24));           \
+    } while(0)
 
-#define WRITE_PIXEL(_x, _y, p) PUT_VALUE(_x, _y, p)
+#define WRITE_PIXEL(_x, _y, p)                                          \
+    do {                                                                \
+       GLuint * _p = (GLuint *) GET_PTR(_x, _y);                        \
+       _p[0] = p;                                                       \
+    } while(0)
 
 # if defined( USE_X86_ASM )
 #  define READ_RGBA(rgba, _x, _y)                                       \
     do {                                                                \
-       GLuint p = GET_VALUE(_x, _y);					\
+        GLuint p = *(volatile GLuint *) GET_PTR(_x, _y);                \
        __asm__ __volatile__( "bswap	%0; rorl $8, %0"                \
 				: "=r" (p) : "0" (p) );                 \
        ((GLuint *)rgba)[0] = p;                                         \
@@ -122,14 +123,14 @@
      */
 #  define READ_RGBA( rgba, _x, _y )				        \
      do {								\
-        GLuint p = GET_VALUE(_x, _y);					\
+        GLuint p = *(volatile GLuint *) GET_PTR(_x, _y);                \
         GLuint t = p;                                                   \
         *((uint32_t *) rgba) = (t >> 24) | (p << 8);                    \
      } while (0)
 # else
 #  define READ_RGBA( rgba, _x, _y )				        \
      do {								\
-        GLuint p = GET_VALUE(_x, _y);					\
+        GLuint p = *(volatile GLuint *) GET_PTR(_x, _y);                \
 	rgba[0] = (p >> 16) & 0xff;					\
 	rgba[1] = (p >>  8) & 0xff;					\
 	rgba[2] = (p >>  0) & 0xff;					\
@@ -388,8 +389,7 @@ static void TAG(ReadRGBASpan)( GLcontext *ctx,
 }
 
 
-#if defined(GET_PTR) && \
-   defined(USE_MMX_ASM) && \
+#if defined(USE_MMX_ASM) && \
    (((SPANTMP_PIXEL_FMT == GL_BGRA) && \
 	(SPANTMP_PIXEL_TYPE == GL_UNSIGNED_INT_8_8_8_8_REV)) || \
     ((SPANTMP_PIXEL_FMT == GL_RGB) && \
@@ -440,8 +440,7 @@ static void TAG2(ReadRGBASpan,_MMX)( GLcontext *ctx,
 #endif
 
 
-#if defined(GET_PTR) &&	\
-   defined(USE_SSE_ASM) && \
+#if defined(USE_SSE_ASM) && \
    (SPANTMP_PIXEL_FMT == GL_BGRA) && \
      (SPANTMP_PIXEL_TYPE == GL_UNSIGNED_INT_8_8_8_8_REV)
 static void TAG2(ReadRGBASpan,_SSE2)( GLcontext *ctx,
@@ -475,8 +474,7 @@ static void TAG2(ReadRGBASpan,_SSE2)( GLcontext *ctx,
 }
 #endif
 
-#if defined(GET_PTR) &&	\
-   defined(USE_SSE_ASM) && \
+#if defined(USE_SSE_ASM) && \
    (SPANTMP_PIXEL_FMT == GL_BGRA) && \
      (SPANTMP_PIXEL_TYPE == GL_UNSIGNED_INT_8_8_8_8_REV)
 static void TAG2(ReadRGBASpan,_SSE)( GLcontext *ctx,
@@ -569,7 +567,6 @@ static void TAG(InitPointers)(struct gl_renderbuffer *rb)
    rb->PutMonoValues = TAG(WriteMonoRGBAPixels);
    rb->GetValues = TAG(ReadRGBAPixels);
 
-#if defined(GET_PTR)
 #if defined(USE_SSE_ASM) && \
    (SPANTMP_PIXEL_FMT == GL_BGRA) && \
      (SPANTMP_PIXEL_TYPE == GL_UNSIGNED_INT_8_8_8_8_REV)
@@ -599,7 +596,6 @@ static void TAG(InitPointers)(struct gl_renderbuffer *rb)
    }
    else
 #endif
-#endif /* GET_PTR */
    {
       if (DBG) fprintf( stderr, "Using %s version of GetRow\n", "C" );
       rb->GetRow = TAG(ReadRGBASpan);
@@ -614,8 +610,6 @@ static void TAG(InitPointers)(struct gl_renderbuffer *rb)
 #undef READ_RGBA
 #undef TAG
 #undef TAG2
-#undef GET_VALUE
-#undef PUT_VALUE
 #undef GET_PTR
 #undef SPANTMP_PIXEL_FMT
 #undef SPANTMP_PIXEL_TYPE

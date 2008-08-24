@@ -1581,7 +1581,7 @@ static GLuint hash_key( struct state_key *key )
    return hash;
 }
 
-static void prepare_tnl_program( struct brw_context *brw )
+static int prepare_tnl_program( struct brw_context *brw )
 {
    GLcontext *ctx = &brw->intel.ctx;
    struct state_key key;
@@ -1590,7 +1590,7 @@ static void prepare_tnl_program( struct brw_context *brw )
 
    /* _NEW_PROGRAM */
    if (brw->attribs.VertexProgram->_Current) 
-      return;
+      return 0;
       
    /* Grab all the relevent state and put it in a single structure:
     */
@@ -1623,7 +1623,7 @@ static void prepare_tnl_program( struct brw_context *brw )
 
    if (old != brw->tnl_program)
       brw->state.dirty.brw |= BRW_NEW_TNL_PROGRAM;
-   return;
+   return 0;
 }
 
 /* Note: See brw_draw.c - the vertex program must not rely on
@@ -1649,7 +1649,7 @@ const struct brw_tracked_state brw_tnl_vertprog = {
 
 
 
-static void prepare_active_vertprog( struct brw_context *brw )
+static int prepare_active_vertprog( struct brw_context *brw )
 {
    const struct gl_vertex_program *prev = brw->vertex_program;
 
@@ -1664,6 +1664,8 @@ static void prepare_active_vertprog( struct brw_context *brw )
 
    if (brw->vertex_program != prev) 
       brw->state.dirty.brw |= BRW_NEW_VERTEX_PROGRAM;
+
+   return 0;
 }
 
 

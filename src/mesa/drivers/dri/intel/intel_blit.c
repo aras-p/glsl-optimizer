@@ -54,6 +54,7 @@ intelCopyBuffer(const __DRIdrawablePrivate * dPriv,
 
    struct intel_context *intel;
    const intelScreenPrivate *intelScreen;
+   int ret;
 
    DBG("%s\n", __FUNCTION__);
 
@@ -64,6 +65,14 @@ intelCopyBuffer(const __DRIdrawablePrivate * dPriv,
       return;
 
    intelScreen = intel->intelScreen;
+
+   if (intel->last_swap_fence) {
+      dri_fence_wait(intel->last_swap_fence);
+      dri_fence_unreference(intel->last_swap_fence);
+      intel->last_swap_fence = NULL;
+   }
+   intel->last_swap_fence = intel->first_swap_fence;
+   intel->first_swap_fence = NULL;
 
    /* The LOCK_HARDWARE is required for the cliprects.  Buffer offsets
     * should work regardless.
@@ -80,7 +89,6 @@ intelCopyBuffer(const __DRIdrawablePrivate * dPriv,
       unsigned short src_x, src_y;
       int BR13, CMD;
       int i;
-      dri_bo *aper_array[3];
 
       src = intel_get_rb_region(&intel_fb->Base, BUFFER_BACK_LEFT);
       dst = intel_get_rb_region(&intel_fb->Base, BUFFER_FRONT_LEFT);
@@ -106,28 +114,26 @@ intelCopyBuffer(const __DRIdrawablePrivate * dPriv,
       }
 
 #ifndef I915
-      if (src->tiling != I915_TILING_NONE) {
+      if (src->tiled) {
 	 CMD |= XY_SRC_TILED;
 	 src_pitch /= 4;
       }
-      if (dst->tiling != I915_TILING_NONE) {
+      if (dst->tiled) {
 	 CMD |= XY_DST_TILED;
 	 dst_pitch /= 4;
       }
 #endif
       /* do space/cliprects check before going any further */
-      intel_batchbuffer_require_space(intel->batch, 8 * 4,
-				      REFERENCES_CLIPRECTS);
+      intel_batchbuffer_require_space(intel->batch, 8 * 4, REFERENCES_CLIPRECTS);
    again:
-      aper_array[0] = intel->batch->buf;
-      aper_array[1] = dst->buffer;
-      aper_array[2] = src->buffer;
-
-      if (dri_bufmgr_check_aperture_space(aper_array, 3) != 0) {
+      ret = dri_bufmgr_check_aperture_space(dst->buffer);
+      ret |= dri_bufmgr_check_aperture_space(src->buffer);
+      
+      if (ret) {
 	intel_batchbuffer_flush(intel->batch);
 	goto again;
       }
-
+      
       for (i = 0; i < nbox; i++, pbox++) {
 	 drm_clip_rect_t box = *pbox;
 
@@ -151,22 +157,19 @@ intelCopyBuffer(const __DRIdrawablePrivate * dPriv,
 	 OUT_BATCH((box.y1 << 16) | box.x1);
 	 OUT_BATCH((box.y2 << 16) | box.x2);
 
-	 OUT_RELOC(dst->buffer,
-		   I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
-		   0);
+	 OUT_RELOC(dst->buffer, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_WRITE, 0);
 	 OUT_BATCH((src_y << 16) | src_x);
 	 OUT_BATCH(src_pitch);
-	 OUT_RELOC(src->buffer,
-		   I915_GEM_DOMAIN_RENDER, 0,
-		   0);
+	 OUT_RELOC(src->buffer, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ, 0);
 	 ADVANCE_BATCH();
       }
 
-      /* Flush the rendering and the batch so that the results all land on the
-       * screen in a timely fashion.
-       */
-      intel_batchbuffer_emit_mi_flush(intel->batch);
+      if (intel->first_swap_fence)
+	 dri_fence_unreference(intel->first_swap_fence);
       intel_batchbuffer_flush(intel->batch);
+      intel->first_swap_fence = intel->batch->last_fence;
+      if (intel->first_swap_fence)
+	 dri_fence_reference(intel->first_swap_fence);
    }
 
    UNLOCK_HARDWARE(intel);
@@ -181,7 +184,7 @@ intelEmitFillBlit(struct intel_context *intel,
 		  GLshort dst_pitch,
 		  dri_bo *dst_buffer,
 		  GLuint dst_offset,
-		  uint32_t dst_tiling,
+		  GLboolean dst_tiled,
 		  GLshort x, GLshort y,
 		  GLshort w, GLshort h,
 		  GLuint color)
@@ -206,7 +209,7 @@ intelEmitFillBlit(struct intel_context *intel,
       return;
    }
 #ifndef I915
-   if (dst_tiling != I915_TILING_NONE) {
+   if (dst_tiled) {
       CMD |= XY_DST_TILED;
       dst_pitch /= 4;
    }
@@ -223,9 +226,7 @@ intelEmitFillBlit(struct intel_context *intel,
    OUT_BATCH(BR13 | dst_pitch);
    OUT_BATCH((y << 16) | x);
    OUT_BATCH(((y + h) << 16) | (x + w));
-   OUT_RELOC(dst_buffer,
-	     I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
-	     dst_offset);
+   OUT_RELOC(dst_buffer, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_WRITE, dst_offset);
    OUT_BATCH(color);
    ADVANCE_BATCH();
 }
@@ -262,11 +263,11 @@ intelEmitCopyBlit(struct intel_context *intel,
 		  GLshort src_pitch,
 		  dri_bo *src_buffer,
 		  GLuint src_offset,
-		  uint32_t src_tiling,
+		  GLboolean src_tiled,
 		  GLshort dst_pitch,
 		  dri_bo *dst_buffer,
 		  GLuint dst_offset,
-		  uint32_t dst_tiling,
+		  GLboolean dst_tiled,
 		  GLshort src_x, GLshort src_y,
 		  GLshort dst_x, GLshort dst_y,
 		  GLshort w, GLshort h,
@@ -275,19 +276,17 @@ intelEmitCopyBlit(struct intel_context *intel,
    GLuint CMD, BR13;
    int dst_y2 = dst_y + h;
    int dst_x2 = dst_x + w;
-   dri_bo *aper_array[3];
+   int ret;
    BATCH_LOCALS;
 
    /* do space/cliprects check before going any further */
    intel_batchbuffer_require_space(intel->batch, 8 * 4, NO_LOOP_CLIPRECTS);
  again:
-   aper_array[0] = intel->batch->buf;
-   aper_array[1] = dst_buffer;
-   aper_array[2] = src_buffer;
-
-   if (dri_bufmgr_check_aperture_space(aper_array, 3) != 0) {
-      intel_batchbuffer_flush(intel->batch);
-      goto again;
+   ret = dri_bufmgr_check_aperture_space(dst_buffer);
+   ret |= dri_bufmgr_check_aperture_space(src_buffer);
+   if (ret) {
+     intel_batchbuffer_flush(intel->batch);
+     goto again;
    }
 
    DBG("%s src:buf(%p)/%d+%d %d,%d dst:buf(%p)/%d+%d %d,%d sz:%dx%d\n",
@@ -316,11 +315,11 @@ intelEmitCopyBlit(struct intel_context *intel,
    }
 
 #ifndef I915
-   if (dst_tiling != I915_TILING_NONE) {
+   if (dst_tiled) {
       CMD |= XY_DST_TILED;
       dst_pitch /= 4;
    }
-   if (src_tiling != I915_TILING_NONE) {
+   if (src_tiled) {
       CMD |= XY_SRC_TILED;
       src_pitch /= 4;
    }
@@ -346,13 +345,11 @@ intelEmitCopyBlit(struct intel_context *intel,
       OUT_BATCH(BR13 | dst_pitch);
       OUT_BATCH((dst_y << 16) | dst_x);
       OUT_BATCH((dst_y2 << 16) | dst_x2);
-      OUT_RELOC(dst_buffer,
-		I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
+      OUT_RELOC(dst_buffer, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_WRITE,
 		dst_offset);
       OUT_BATCH((src_y << 16) | src_x);
       OUT_BATCH(src_pitch);
-      OUT_RELOC(src_buffer,
-		I915_GEM_DOMAIN_RENDER, 0,
+      OUT_RELOC(src_buffer, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ,
 		src_offset);
       ADVANCE_BATCH();
    }
@@ -365,17 +362,14 @@ intelEmitCopyBlit(struct intel_context *intel,
       OUT_BATCH(BR13 | ((uint16_t)dst_pitch));
       OUT_BATCH((0 << 16) | dst_x);
       OUT_BATCH((h << 16) | dst_x2);
-      OUT_RELOC(dst_buffer,
-		I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
+      OUT_RELOC(dst_buffer, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_WRITE,
 		dst_offset + dst_y * dst_pitch);
       OUT_BATCH((0 << 16) | src_x);
       OUT_BATCH(src_pitch);
-      OUT_RELOC(src_buffer,
-		I915_GEM_DOMAIN_RENDER, 0,
+      OUT_RELOC(src_buffer, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ,
 		src_offset + src_y * src_pitch);
       ADVANCE_BATCH();
    }
-   intel_batchbuffer_emit_mi_flush(intel->batch);
 }
 
 
@@ -519,7 +513,7 @@ intelClearWithBlit(GLcontext *ctx, GLbitfield mask)
                }
 
 #ifndef I915
-	       if (irb_region->tiling != I915_TILING_NONE) {
+	       if (irb_region->tiled) {
 		  CMD |= XY_DST_TILED;
 		  pitch /= 4;
 	       }
@@ -547,8 +541,7 @@ intelClearWithBlit(GLcontext *ctx, GLbitfield mask)
                OUT_BATCH(BR13);
                OUT_BATCH((b.y1 << 16) | b.x1);
                OUT_BATCH((b.y2 << 16) | b.x2);
-               OUT_RELOC(write_buffer,
-			 I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
+               OUT_RELOC(write_buffer, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_WRITE,
                          irb_region->draw_offset);
                OUT_BATCH(clearVal);
                ADVANCE_BATCH();
@@ -556,7 +549,7 @@ intelClearWithBlit(GLcontext *ctx, GLbitfield mask)
             }
          }
       }
-      intel_batchbuffer_emit_mi_flush(intel->batch);
+      intel_batchbuffer_flush(intel->batch);
    }
 
    UNLOCK_HARDWARE(intel);
@@ -570,7 +563,7 @@ intelEmitImmediateColorExpandBlit(struct intel_context *intel,
 				  GLshort dst_pitch,
 				  dri_bo *dst_buffer,
 				  GLuint dst_offset,
-				  uint32_t dst_tiling,
+				  GLboolean dst_tiled,
 				  GLshort x, GLshort y,
 				  GLshort w, GLshort h,
 				  GLenum logic_op)
@@ -594,13 +587,13 @@ intelEmitImmediateColorExpandBlit(struct intel_context *intel,
 				    (8 * 4) +
 				    (3 * 4) +
 				    dwords,
-				    REFERENCES_CLIPRECTS );
+				    NO_LOOP_CLIPRECTS );
 
    opcode = XY_SETUP_BLT_CMD;
    if (cpp == 4)
       opcode |= XY_BLT_WRITE_ALPHA | XY_BLT_WRITE_RGB;
 #ifndef I915
-   if (dst_tiling != I915_TILING_NONE) {
+   if (dst_tiled) {
       opcode |= XY_DST_TILED;
       dst_pitch /= 4;
    }
@@ -613,17 +606,15 @@ intelEmitImmediateColorExpandBlit(struct intel_context *intel,
       br13 |= BR13_8888;
 
    blit_cmd = XY_TEXT_IMMEDIATE_BLIT_CMD | XY_TEXT_BYTE_PACKED; /* packing? */
-   if (dst_tiling != I915_TILING_NONE)
+   if (dst_tiled)
       blit_cmd |= XY_DST_TILED;
 
-   BEGIN_BATCH(8 + 3, REFERENCES_CLIPRECTS);
+   BEGIN_BATCH(8 + 3, NO_LOOP_CLIPRECTS);
    OUT_BATCH(opcode);
    OUT_BATCH(br13);
    OUT_BATCH((0 << 16) | 0); /* clip x1, y1 */
    OUT_BATCH((100 << 16) | 100); /* clip x2, y2 */
-   OUT_RELOC(dst_buffer,
-	     I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
-	     dst_offset);
+   OUT_RELOC(dst_buffer, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_WRITE, dst_offset);
    OUT_BATCH(0); /* bg */
    OUT_BATCH(fg_color); /* fg */
    OUT_BATCH(0); /* pattern base addr */
@@ -636,7 +627,5 @@ intelEmitImmediateColorExpandBlit(struct intel_context *intel,
    intel_batchbuffer_data( intel->batch,
 			   src_bits,
 			   dwords * 4,
-			   REFERENCES_CLIPRECTS );
-
-   intel_batchbuffer_emit_mi_flush(intel->batch);
+			   NO_LOOP_CLIPRECTS );
 }
