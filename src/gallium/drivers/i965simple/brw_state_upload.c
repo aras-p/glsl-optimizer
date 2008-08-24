@@ -33,7 +33,7 @@
 #include "brw_context.h"
 #include "brw_state.h"
 
-#include "pipe/p_util.h"
+#include "util/u_memory.h"
 
 /* This is used to initialize brw->state.atoms[].  We could use this
  * list directly except for a single atom, brw_constant_buffer, which

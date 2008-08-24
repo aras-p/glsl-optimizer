@@ -33,6 +33,8 @@
 #include "i915_fpc.h"
 
 #include "pipe/p_shader_tokens.h"
+#include "util/u_math.h"
+#include "util/u_memory.h"
 #include "util/u_string.h"
 #include "tgsi/tgsi_parse.h"
 #include "tgsi/tgsi_dump.h"

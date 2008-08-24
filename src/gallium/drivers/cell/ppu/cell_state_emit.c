@@ -25,7 +25,7 @@
  * 
  **************************************************************************/
 
-#include "pipe/p_util.h"
+#include "util/u_memory.h"
 #include "cell_context.h"
 #include "cell_state.h"
 #include "cell_state_emit.h"

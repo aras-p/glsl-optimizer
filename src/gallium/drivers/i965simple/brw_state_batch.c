@@ -32,7 +32,7 @@
 #include "brw_state.h"
 #include "brw_winsys.h"
 
-#include "pipe/p_util.h"
+#include "util/u_memory.h"
 
 /* A facility similar to the data caching code above, which aims to
  * prevent identical commands being issued repeatedly.

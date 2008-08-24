@@ -37,8 +37,6 @@
 #define DRAW_VBUF_H_
 
 
-#include "pipe/p_util.h"
-
 
 struct draw_context;
 struct vertex_info;

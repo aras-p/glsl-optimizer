@@ -38,7 +38,7 @@
 #include "brw_sf.h"
 #include "brw_gs.h"
 
-#include "pipe/p_util.h"
+#include "util/u_memory.h"
 
 
 

@@ -55,7 +55,7 @@
 #define TGSI_DEBUG 0
 
 
-/** XXX we should use the version of this from p_util.h but including
+/** XXX we should use the version of this from u_memory.h but including
  * that header causes symbol collisions.
  */
 static INLINE void *

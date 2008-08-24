@@ -40,10 +40,11 @@
 
 #include "pipe/p_compiler.h"
 #include "pipe/p_debug.h"
-#include "pipe/p_util.h"
 
 #include "cso_cache/cso_hash.h"
-#include "u_hash_table.h"
+
+#include "util/u_memory.h"
+#include "util/u_hash_table.h"
 
 
 struct hash_table

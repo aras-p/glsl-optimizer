@@ -37,6 +37,7 @@
 
 #include "pipe/p_compiler.h"
 #include "pipe/p_format.h"
+#include "util/u_math.h"
 
 
 /**
@@ -150,10 +151,10 @@ util_pack_color(const float rgba[4], enum pipe_format format, void *dest)
 
    if (pf_size_x(format) <= 8) {
       /* format uses 8-bit components or less */
-      UNCLAMPED_FLOAT_TO_UBYTE(r, rgba[0]);
-      UNCLAMPED_FLOAT_TO_UBYTE(g, rgba[1]);
-      UNCLAMPED_FLOAT_TO_UBYTE(b, rgba[2]);
-      UNCLAMPED_FLOAT_TO_UBYTE(a, rgba[3]);
+      r = float_to_ubyte(rgba[0]);
+      g = float_to_ubyte(rgba[1]);
+      b = float_to_ubyte(rgba[2]);
+      a = float_to_ubyte(rgba[3]);
    }
 
    switch (format) {
@@ -284,6 +285,33 @@ util_pack_z(enum pipe_format format, double z)
       return 0;
    }
 }
+
+
+/**
+ * Pack 4 ubytes into a 4-byte word
+ */
+static INLINE unsigned
+pack_ub4(ubyte b0, ubyte b1, ubyte b2, ubyte b3)
+{
+   return ((((unsigned int)b0) << 0) |
+	   (((unsigned int)b1) << 8) |
+	   (((unsigned int)b2) << 16) |
+	   (((unsigned int)b3) << 24));
+}
+
+
+/**
+ * Pack/convert 4 floats into one 4-byte word.
+ */
+static INLINE unsigned
+pack_ui32_float4(float a, float b, float c, float d)
+{
+   return pack_ub4( float_to_ubyte(a),
+		    float_to_ubyte(b),
+		    float_to_ubyte(c),
+		    float_to_ubyte(d) );
+}
+
 
 
 #endif /* U_PACK_COLOR_H */

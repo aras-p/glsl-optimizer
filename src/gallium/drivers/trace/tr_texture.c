@@ -25,9 +25,9 @@
  *
  **************************************************************************/
 
-#include "pipe/p_util.h"
 #include "pipe/p_inlines.h"
 #include "util/u_hash_table.h"
+#include "util/u_memory.h"
 
 #include "tr_screen.h"
 #include "tr_texture.h"

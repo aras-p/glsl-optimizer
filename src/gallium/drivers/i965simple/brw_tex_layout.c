@@ -33,16 +33,16 @@
 /* Code to layout images in a mipmap tree for i965.
  */
 
-#include "brw_tex_layout.h"
-
 #include "pipe/p_state.h"
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
-#include "pipe/p_util.h"
 #include "pipe/p_inlines.h"
 #include "pipe/p_winsys.h"
-
+#include "util/u_math.h"
+#include "util/u_memory.h"
 #include "brw_context.h"
+#include "brw_tex_layout.h"
+
 
 #define FILE_DEBUG_FLAG DEBUG_TEXTURE
 

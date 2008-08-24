@@ -38,7 +38,6 @@
  */
 
 
-#include "pipe/p_util.h"
 #include "pipe/p_inlines.h"
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
@@ -46,6 +45,9 @@
 
 #include "tgsi/tgsi_transform.h"
 #include "tgsi/tgsi_dump.h"
+
+#include "util/u_math.h"
+#include "util/u_memory.h"
 
 #include "draw_context.h"
 #include "draw_vs.h"

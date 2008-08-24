@@ -32,7 +32,6 @@
   *   Ian Romanick <idr@us.ibm.com>
   */
 
-#include "pipe/p_util.h"
 #include "pipe/p_state.h"
 #include "pipe/p_shader_tokens.h"
 #include "spu_exec.h"

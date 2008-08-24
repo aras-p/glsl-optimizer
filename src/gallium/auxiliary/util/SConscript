@@ -6,7 +6,6 @@ util = env.ConvenienceLibrary(
 		'p_debug.c',
 		'p_debug_mem.c',
 		'p_debug_prof.c',
-		'p_tile.c',
 		'u_blit.c',
 		'u_draw_quad.c',
 		'u_gen_mipmap.c',
@@ -17,6 +16,7 @@ util = env.ConvenienceLibrary(
 		'u_rect.c',
 		'u_simple_shaders.c',
 		'u_snprintf.c',
+		'u_tile.c',
 		'u_time.c',
 	])
 

@@ -30,7 +30,7 @@
   *   Keith Whitwell <keith@tungstengraphics.com>
   */
 
-#include "pipe/p_util.h"
+#include "util/u_memory.h"
 #include "pipe/p_state.h"
 #include "translate.h"
 

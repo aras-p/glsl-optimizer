@@ -55,7 +55,7 @@
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_inlines.h"
-#include "util/p_tile.h"
+#include "util/u_tile.h"
 #include "util/u_draw_quad.h"
 #include "shader/prog_instruction.h"
 #include "cso_cache/cso_context.h"

@@ -35,8 +35,8 @@ not available in Windows Kernel Mode. Use the appropriate p_*.h include.
 
 * Use MALLOC, CALLOC, FREE instead of the malloc, calloc, free functions.
 
-* Use align_pointer() function defined in p_util.h for aligning pointers in a
-portable way.
+* Use align_pointer() function defined in u_memory.h for aligning pointers
+ in a portable way.
 
 == Debugging ==
 

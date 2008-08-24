@@ -25,7 +25,7 @@
  * 
  **************************************************************************/
 
-#include "pipe/p_util.h"
+#include "pipe/p_debug.h"
 #include "pipe/p_shader_tokens.h"
 #include "util/u_math.h"
 #include "tgsi/tgsi_parse.h"

@@ -30,7 +30,6 @@
   *   Keith Whitwell <keith@tungstengraphics.com>
   */
 
-#include "pipe/p_util.h"
 #include "draw/draw_context.h"
 #include "draw/draw_private.h"
 #include "draw/draw_pt.h"

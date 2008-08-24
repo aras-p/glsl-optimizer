@@ -43,7 +43,8 @@
  */
 
 #include "pipe/p_winsys.h"
-#include "pipe/p_util.h"
+#include "util/u_math.h"
+#include "util/u_memory.h"
 #include "pipe/p_inlines.h"
 #include "brw_context.h"
 #include "brw_state.h"

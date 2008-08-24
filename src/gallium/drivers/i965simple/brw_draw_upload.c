@@ -33,6 +33,7 @@
 #include "brw_context.h"
 #include "brw_state.h"
 
+
 struct brw_array_state {
    union header_union header;
 

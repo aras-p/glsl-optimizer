@@ -33,7 +33,7 @@
 #include "pipe/p_compiler.h"
 #include "pipe/p_debug.h"
 #include "pipe/p_thread.h"
-#include "pipe/p_util.h"
+#include "util/u_memory.h"
 
 #include "rtasm_execmem.h"
 

@@ -35,7 +35,7 @@
 #include "brw_wm.h"
 #include "brw_eu.h"
 #include "brw_state.h"
-#include "pipe/p_util.h"
+#include "util/u_memory.h"
 
 
 

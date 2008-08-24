@@ -35,7 +35,6 @@
 
 
 #include "pipe/p_compiler.h"
-#include "pipe/p_util.h"
 
 
 boolean trace_dump_trace_begin(void);

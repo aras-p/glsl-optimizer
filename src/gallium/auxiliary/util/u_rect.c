@@ -31,7 +31,6 @@
 
 
 #include "pipe/p_defines.h"
-#include "pipe/p_util.h"
 #include "pipe/p_format.h"
 #include "util/u_rect.h"
 

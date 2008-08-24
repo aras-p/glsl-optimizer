@@ -35,7 +35,7 @@
 
 #include "pipe/p_compiler.h"
 #include "pipe/p_error.h"
-#include "pipe/p_util.h"
+#include "util/u_memory.h"
 #include "pipe/p_debug.h"
 
 #include "pb_buffer.h"

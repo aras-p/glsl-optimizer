@@ -30,7 +30,7 @@
 #include "sp_fs.h"
 
 #include "pipe/p_defines.h"
-#include "pipe/p_util.h"
+#include "util/u_memory.h"
 #include "pipe/p_inlines.h"
 #include "pipe/p_winsys.h"
 #include "pipe/p_shader_tokens.h"

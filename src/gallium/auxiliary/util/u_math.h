@@ -40,13 +40,137 @@
 
 
 #include "pipe/p_compiler.h"
-#include "pipe/p_util.h"
-#include "util/u_math.h"
 
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+
+#if defined(PIPE_SUBSYSTEM_WINDOWS_MINIPORT)
+__inline double ceil(double val)
+{
+   double ceil_val;
+
+   if((val - (long) val) == 0) {
+      ceil_val = val;
+   }
+   else {
+      if(val > 0) {
+         ceil_val = (long) val + 1;
+      }
+      else {
+         ceil_val = (long) val;
+      }
+   }
+
+   return ceil_val;
+}
+
+#ifndef PIPE_SUBSYSTEM_WINDOWS_CE
+__inline double floor(double val)
+{
+   double floor_val;
+
+   if((val - (long) val) == 0) {
+      floor_val = val;
+   }
+   else {
+      if(val > 0) {
+         floor_val = (long) val;
+      }
+      else {
+         floor_val = (long) val - 1;
+      }
+   }
+
+   return floor_val;
+}
+#endif
+
+#pragma function(pow)
+__inline double __cdecl pow(double val, double exponent)
+{
+   /* XXX */
+   assert(0);
+   return 0;
+}
+
+#pragma function(log)
+__inline double __cdecl log(double val)
+{
+   /* XXX */
+   assert(0);
+   return 0;
+}
+
+#pragma function(atan2)
+__inline double __cdecl atan2(double val)
+{
+   /* XXX */
+   assert(0);
+   return 0;
+}
+#else
+#include <math.h>
+#include <stdarg.h>
+#endif
+
+
+#if defined(_MSC_VER) 
+#if _MSC_VER < 1400 && !defined(__cplusplus) || defined(PIPE_SUBSYSTEM_WINDOWS_CE)
+ 
+static INLINE float cosf( float f ) 
+{
+   return (float) cos( (double) f );
+}
+
+static INLINE float sinf( float f ) 
+{
+   return (float) sin( (double) f );
+}
+
+static INLINE float ceilf( float f ) 
+{
+   return (float) ceil( (double) f );
+}
+
+static INLINE float floorf( float f ) 
+{
+   return (float) floor( (double) f );
+}
+
+static INLINE float powf( float f, float g ) 
+{
+   return (float) pow( (double) f, (double) g );
+}
+
+static INLINE float sqrtf( float f ) 
+{
+   return (float) sqrt( (double) f );
+}
+
+static INLINE float fabsf( float f ) 
+{
+   return (float) fabs( (double) f );
+}
+
+static INLINE float logf( float f ) 
+{
+   return (float) log( (double) f );
+}
+
+#else
+/* Work-around an extra semi-colon in VS 2005 logf definition */
+#ifdef logf
+#undef logf
+#define logf(x) ((float)log((double)(x)))
+#endif /* logf */
+#endif
+#endif /* _MSC_VER */
+
+
+
 
 
 #define POW2_TABLE_SIZE 256
@@ -59,6 +183,11 @@ extern void
 util_init_math(void);
 
 
+union fi {
+   float f;
+   int i;
+   unsigned ui;
+};
 
 
 /**
@@ -193,6 +322,113 @@ util_iround(float f)
 #endif
 }
 
+
+
+#if defined(PIPE_CC_MSVC) && defined(PIPE_ARCH_X86)
+/**
+ * Find first bit set in word.  Least significant bit is 1.
+ * Return 0 if no bits set.
+ */
+static INLINE
+unsigned ffs( unsigned u )
+{
+   unsigned i;
+
+   if( u == 0 ) {
+      return 0;
+   }
+
+   __asm bsf eax, [u]
+   __asm inc eax
+   __asm mov [i], eax
+
+   return i;
+}
+#endif
+
+
+/**
+ * Return float bits.
+ */
+static INLINE unsigned
+fui( float f )
+{
+   union fi fi;
+   fi.f = f;
+   return fi.ui;
+}
+
+
+
+static INLINE float
+ubyte_to_float(ubyte ub)
+{
+   return (float) ub * (1.0f / 255.0f);
+}
+
+
+/**
+ * Convert float in [0,1] to ubyte in [0,255] with clamping.
+ */
+static INLINE ubyte
+float_to_ubyte(float f)
+{
+   const int ieee_0996 = 0x3f7f0000;   /* 0.996 or so */
+   union fi tmp;
+
+   tmp.f = f;
+   if (tmp.i < 0) {
+      return (ubyte) 0;
+   }
+   else if (tmp.i >= ieee_0996) {
+      return (ubyte) 255;
+   }
+   else {
+      tmp.f = tmp.f * (255.0f/256.0f) + 32768.0f;
+      return (ubyte) tmp.i;
+   }
+}
+
+
+
+#define CLAMP( X, MIN, MAX )  ( (X)<(MIN) ? (MIN) : ((X)>(MAX) ? (MAX) : (X)) )
+
+#define MIN2( A, B )   ( (A)<(B) ? (A) : (B) )
+#define MAX2( A, B )   ( (A)>(B) ? (A) : (B) )
+
+
+static INLINE int
+align(int value, int alignment)
+{
+   return (value + alignment - 1) & ~(alignment - 1);
+}
+
+
+#ifndef COPY_4V
+#define COPY_4V( DST, SRC )         \
+do {                                \
+   (DST)[0] = (SRC)[0];             \
+   (DST)[1] = (SRC)[1];             \
+   (DST)[2] = (SRC)[2];             \
+   (DST)[3] = (SRC)[3];             \
+} while (0)
+#endif
+
+
+#ifndef COPY_4FV
+#define COPY_4FV( DST, SRC )  COPY_4V(DST, SRC)
+#endif
+
+
+#ifndef ASSIGN_4V
+#define ASSIGN_4V( DST, V0, V1, V2, V3 ) \
+do {                                     \
+   (DST)[0] = (V0);                      \
+   (DST)[1] = (V1);                      \
+   (DST)[2] = (V2);                      \
+   (DST)[3] = (V3);                      \
+} while (0)
+#endif
 
 
 #ifdef __cplusplus

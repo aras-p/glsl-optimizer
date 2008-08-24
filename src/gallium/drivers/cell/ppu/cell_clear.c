@@ -34,7 +34,7 @@
 #include <assert.h>
 #include <stdint.h>
 #include "pipe/p_inlines.h"
-#include "pipe/p_util.h"
+#include "util/u_memory.h"
 #include "cell/common.h"
 #include "cell_clear.h"
 #include "cell_context.h"

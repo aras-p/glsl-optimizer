@@ -39,7 +39,8 @@
 #include "brw_wm.h"
 #include "pipe/p_state.h"
 #include "pipe/p_winsys.h"
-#include "pipe/p_util.h"
+#include "util/u_math.h"
+#include "util/u_memory.h"
 
 #define FILE_DEBUG_FLAG DEBUG_FALLBACKS
 

@@ -33,7 +33,7 @@
 #include "i915_context.h"
 #include "i915_state.h"
 #include "i915_reg.h"
-#include "pipe/p_util.h"
+#include "util/u_memory.h"
 
 
 /* All state expressable with the LOAD_STATE_IMMEDIATE_1 packet.

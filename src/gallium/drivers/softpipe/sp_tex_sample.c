@@ -39,9 +39,9 @@
 #include "sp_tile_cache.h"
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
-#include "pipe/p_util.h"
 #include "tgsi/tgsi_exec.h"
 #include "util/u_math.h"
+#include "util/u_memory.h"
 
 
 /*

@@ -30,10 +30,9 @@
 #include "i915_state.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_inlines.h"
-#include "pipe/p_util.h"
 #include "pipe/p_inlines.h"
 #include "pipe/p_winsys.h"
-#include "util/p_tile.h"
+#include "util/u_tile.h"
 #include "util/u_rect.h"
 
 

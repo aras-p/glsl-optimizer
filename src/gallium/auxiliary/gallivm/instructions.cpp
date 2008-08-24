@@ -35,7 +35,7 @@
 
 #include "storage.h"
 
-#include "pipe/p_util.h"
+#include "util/u_memory.h"
 
 #include <llvm/CallingConv.h>
 #include <llvm/Constants.h>

@@ -41,9 +41,10 @@
 #include "draw/draw_context.h"
 #include "draw/draw_vbuf.h"
 #include "pipe/p_debug.h"
-#include "pipe/p_util.h"
 #include "pipe/p_inlines.h"
 #include "pipe/p_winsys.h"
+#include "util/u_math.h"
+#include "util/u_memory.h"
 
 #include "i915_context.h"
 #include "i915_reg.h"

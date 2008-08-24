@@ -7,7 +7,7 @@
 #include "sp_headers.h"
 #include "sp_quad.h"
 #include "pipe/p_defines.h"
-#include "pipe/p_util.h"
+#include "util/u_memory.h"
 
 
 /**

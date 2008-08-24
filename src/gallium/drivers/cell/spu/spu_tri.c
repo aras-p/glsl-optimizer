@@ -32,7 +32,6 @@
 #include <transpose_matrix4x4.h>
 #include "pipe/p_compiler.h"
 #include "pipe/p_format.h"
-#include "pipe/p_util.h"
 #include "spu_colorpack.h"
 #include "spu_main.h"
 #include "spu_texture.h"

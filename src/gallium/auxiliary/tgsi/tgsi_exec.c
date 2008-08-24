@@ -52,11 +52,11 @@
 
 #include "pipe/p_compiler.h"
 #include "pipe/p_state.h"
-#include "pipe/p_util.h"
 #include "pipe/p_shader_tokens.h"
 #include "tgsi/tgsi_parse.h"
 #include "tgsi/tgsi_util.h"
 #include "tgsi_exec.h"
+#include "util/u_memory.h"
 #include "util/u_math.h"
 
 #define FAST_MATH 1

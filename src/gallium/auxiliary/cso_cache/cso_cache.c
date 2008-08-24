@@ -28,8 +28,9 @@
 /* Authors:  Zack Rusin <zack@tungstengraphics.com>
  */
 
-#include "pipe/p_util.h"
 #include "pipe/p_debug.h"
+
+#include "util/u_memory.h"
 
 #include "cso_cache.h"
 #include "cso_hash.h"

@@ -42,9 +42,9 @@
 #include "draw/draw_context.h"
 #include "draw/draw_private.h"
 #include "draw/draw_vertex.h"
-#include "pipe/p_util.h"
 #include "pipe/p_shader_tokens.h"
 #include "util/u_math.h"
+#include "util/u_memory.h"
 
 
 #define DEBUG_VERTS 0

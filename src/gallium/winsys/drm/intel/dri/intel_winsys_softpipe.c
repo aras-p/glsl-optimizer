@@ -32,8 +32,8 @@
 #include "intel_context.h"
 #include "intel_winsys_softpipe.h"
 #include "pipe/p_defines.h"
-#include "pipe/p_util.h"
 #include "pipe/p_format.h"
+#include "util/u_memory.h"
 #include "softpipe/sp_winsys.h"
 
 

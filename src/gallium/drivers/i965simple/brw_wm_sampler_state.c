@@ -34,7 +34,8 @@
 #include "brw_state.h"
 #include "brw_defines.h"
 
-#include "pipe/p_util.h"
+#include "util/u_math.h"
+#include "util/u_memory.h"
 
 
 #define COMPAREFUNC_ALWAYS		0

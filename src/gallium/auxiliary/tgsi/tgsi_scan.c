@@ -33,11 +33,11 @@
  */
 
 
-#include "tgsi_scan.h"
-#include "tgsi/tgsi_parse.h"
+#include "util/u_math.h"
 #include "tgsi/tgsi_build.h"
+#include "tgsi/tgsi_parse.h"
+#include "tgsi/tgsi_scan.h"
 
-#include "pipe/p_util.h"
 
 
 

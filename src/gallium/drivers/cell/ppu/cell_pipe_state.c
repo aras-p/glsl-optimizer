@@ -30,7 +30,7 @@
  *  Brian Paul
  */
 
-#include "pipe/p_util.h"
+#include "util/u_memory.h"
 #include "pipe/p_inlines.h"
 #include "draw/draw_context.h"
 #include "cell_context.h"

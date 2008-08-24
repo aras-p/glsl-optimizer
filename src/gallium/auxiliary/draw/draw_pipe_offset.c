@@ -32,7 +32,8 @@
  * \author  Brian Paul
  */
 
-#include "pipe/p_util.h"
+#include "util/u_math.h"
+#include "util/u_memory.h"
 #include "draw_pipe.h"
 
 

@@ -26,7 +26,7 @@
  **************************************************************************/
 
 
-#include "pipe/p_util.h"
+#include "util/u_memory.h"
 #include "cell_winsys.h"
 
 

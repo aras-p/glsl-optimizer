@@ -33,7 +33,7 @@
 #include "cell_context.h"
 #include "cell_render.h"
 #include "cell_spu.h"
-#include "pipe/p_util.h"
+#include "util/u_memory.h"
 #include "draw/draw_private.h"
 
 

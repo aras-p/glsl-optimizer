@@ -26,12 +26,13 @@
  **************************************************************************/
 
 
-#include "pipe/p_util.h"
 #include "pipe/p_winsys.h"
 #include "pipe/p_context.h"
 #include "pipe/p_shader_tokens.h"
 #include "pipe/p_inlines.h"
 #include "cso_cache/cso_context.h"
+#include "util/u_math.h"
+#include "util/u_memory.h"
 #include "util/u_simple_shaders.h"
 #include "trace/tr_screen.h"
 #include "trace/tr_context.h"

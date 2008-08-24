@@ -31,7 +31,8 @@
   */
 
 
-#include "pipe/p_util.h"
+#include "util/u_memory.h"
+#include "util/u_math.h"
 #include "draw_context.h"
 #include "draw_vbuf.h"
 #include "draw_vs.h"

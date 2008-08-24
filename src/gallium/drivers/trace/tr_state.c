@@ -27,6 +27,7 @@
 
 
 #include "pipe/p_compiler.h"
+#include "util/u_memory.h"
 #include "tgsi/tgsi_dump.h"
 
 #include "tr_dump.h"

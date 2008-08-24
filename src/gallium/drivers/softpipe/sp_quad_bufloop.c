@@ -1,5 +1,5 @@
 
-#include "pipe/p_util.h"
+#include "util/u_memory.h"
 #include "sp_context.h"
 #include "sp_headers.h"
 #include "sp_surface.h"

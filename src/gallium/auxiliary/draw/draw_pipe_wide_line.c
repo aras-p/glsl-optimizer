@@ -28,9 +28,10 @@
 /* Authors:  Keith Whitwell <keith@tungstengraphics.com>
  */
 
-#include "pipe/p_util.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_shader_tokens.h"
+#include "util/u_math.h"
+#include "util/u_memory.h"
 #include "draw_private.h"
 #include "draw_pipe.h"
 

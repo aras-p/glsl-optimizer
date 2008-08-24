@@ -37,8 +37,9 @@
 
 #include "pipe/p_winsys.h"
 #include "pipe/p_state.h"
-#include "pipe/p_util.h"
 #include "pipe/p_inlines.h"
+#include "util/u_math.h"
+#include "util/u_memory.h"
 
 #include "sw_winsys.h"
 

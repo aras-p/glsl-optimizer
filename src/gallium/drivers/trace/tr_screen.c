@@ -25,7 +25,7 @@
  *
  **************************************************************************/
 
-#include "pipe/p_util.h"
+#include "util/u_memory.h"
 
 #include "tr_dump.h"
 #include "tr_state.h"

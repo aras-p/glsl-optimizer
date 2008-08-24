@@ -37,12 +37,13 @@
 #include "pipe/p_debug.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_inlines.h"
-#include "pipe/p_util.h"
 #include "pipe/p_winsys.h"
 #include "pipe/p_shader_tokens.h"
 
-#include "util/u_draw_quad.h"
 #include "util/u_blit.h"
+#include "util/u_draw_quad.h"
+#include "util/u_math.h"
+#include "util/u_memory.h"
 #include "util/u_simple_shaders.h"
 
 #include "cso_cache/cso_context.h"

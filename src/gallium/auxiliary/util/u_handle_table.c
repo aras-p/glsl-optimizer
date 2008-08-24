@@ -35,9 +35,9 @@
 
 #include "pipe/p_compiler.h"
 #include "pipe/p_debug.h"
-#include "pipe/p_util.h"
 
-#include "u_handle_table.h"
+#include "util/u_memory.h"
+#include "util/u_handle_table.h"
 
 
 #define HANDLE_TABLE_INITIAL_SIZE 16  

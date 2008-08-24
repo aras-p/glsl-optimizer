@@ -42,8 +42,9 @@
 #include "pipe/p_winsys.h"
 #include "pipe/p_format.h"
 #include "pipe/p_context.h"
-#include "pipe/p_util.h"
 #include "pipe/p_inlines.h"
+#include "util/u_math.h"
+#include "util/u_memory.h"
 #include "softpipe/sp_winsys.h"
 
 #ifdef GALLIUM_CELL

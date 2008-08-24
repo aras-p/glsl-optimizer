@@ -34,7 +34,6 @@
 #include "brw_aub.h"
 #include "pipe/p_context.h"
 #include "pipe/p_state.h"
-#include "pipe/p_util.h"
 #include "pipe/p_debug.h"
 
 

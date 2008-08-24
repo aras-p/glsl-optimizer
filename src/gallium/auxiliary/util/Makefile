@@ -5,7 +5,6 @@ LIBNAME = util
 
 C_SOURCES = \
 	p_debug.c \
-	p_tile.c \
 	u_blit.c \
 	u_draw_quad.c \
 	u_gen_mipmap.c \
@@ -16,6 +15,7 @@ C_SOURCES = \
 	u_rect.c \
 	u_simple_shaders.c \
 	u_snprintf.c \
+	u_tile.c \
 	u_time.c
 
 include ../../Makefile.template

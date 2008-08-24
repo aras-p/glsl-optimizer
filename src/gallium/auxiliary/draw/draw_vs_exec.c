@@ -31,7 +31,8 @@
   *   Brian Paul
   */
 
-#include "pipe/p_util.h"
+#include "util/u_math.h"
+#include "util/u_memory.h"
 #include "pipe/p_shader_tokens.h"
 
 #include "draw_private.h"

@@ -28,6 +28,10 @@
 #ifndef TGSI_BUILD_H
 #define TGSI_BUILD_H
 
+
+struct tgsi_token;
+
+
 #if defined __cplusplus
 extern "C" {
 #endif

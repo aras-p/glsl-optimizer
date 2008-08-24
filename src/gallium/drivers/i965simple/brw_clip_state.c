@@ -32,7 +32,8 @@
 #include "brw_context.h"
 #include "brw_state.h"
 #include "brw_defines.h"
-#include "pipe/p_util.h"
+#include "util/u_math.h"
+#include "util/u_memory.h"
 
 
 static void upload_clip_unit( struct brw_context *brw )

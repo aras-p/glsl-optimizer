@@ -33,7 +33,7 @@
 
 
 #include "pipe/p_defines.h"
-#include "pipe/p_util.h"
+#include "util/u_memory.h"
 #include "sp_context.h"
 #include "sp_headers.h"
 #include "sp_quad.h"

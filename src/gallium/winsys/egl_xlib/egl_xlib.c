@@ -38,8 +38,8 @@
 #include "pipe/p_compiler.h"
 #include "pipe/p_format.h"
 #include "pipe/p_state.h"
-#include "pipe/p_util.h"
 #include "pipe/p_winsys.h"
+#include "util/u_memory.h"
 #include "softpipe/sp_winsys.h"
 
 #include "eglconfig.h"
