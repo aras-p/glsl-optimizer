@@ -37,8 +37,9 @@
 #include "xmesaP.h"
 
 #include "pipe/p_winsys.h"
-#include "util/u_memory.h"
 #include "pipe/p_inlines.h"
+#include "util/u_math.h"
+#include "util/u_memory.h"
 #include "i965simple/brw_winsys.h"
 #include "i965simple/brw_screen.h"
 #include "brw_aub.h"
