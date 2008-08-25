@@ -36,6 +36,7 @@
 
 
 #include "util/u_pointer.h"
+#include "pipe/p_debug.h"
 
 
  /* Define ENOMEM for WINCE */ 
