@@ -473,32 +473,33 @@ vec4 pow(const vec4 a, const vec4 b)
 
 float exp(const float a)
 {
-   const float e = 2.71828;
-   __asm float_power __retVal, e, a;
+   // NOTE: log2(e) = 1.44269502
+   float t = a * 1.44269502;
+   __asm float_exp2 __retVal, t;
 }
 
 vec2 exp(const vec2 a)
 {
-   const float e = 2.71828;
-   __asm float_power __retVal.x, e, a.x;
-   __asm float_power __retVal.y, e, a.y;
+   vec2 t = a * 1.44269502;
+   __asm float_exp2 __retVal.x, t.x;
+   __asm float_exp2 __retVal.y, t.y;
 }
 
 vec3 exp(const vec3 a)
 {
-   const float e = 2.71828;
-   __asm float_power __retVal.x, e, a.x;
-   __asm float_power __retVal.y, e, a.y;
-   __asm float_power __retVal.z, e, a.z;
+   vec3 t = a * 1.44269502;
+   __asm float_exp2 __retVal.x, t.x;
+   __asm float_exp2 __retVal.y, t.y;
+   __asm float_exp2 __retVal.z, t.z;
 }
 
 vec4 exp(const vec4 a)
 {
-   const float e = 2.71828;
-   __asm float_power __retVal.x, e, a.x;
-   __asm float_power __retVal.y, e, a.y;
-   __asm float_power __retVal.z, e, a.z;
-   __asm float_power __retVal.w, e, a.w;
+   vec4 t = a * 1.44269502;
+   __asm float_exp2 __retVal.x, t.x;
+   __asm float_exp2 __retVal.y, t.y;
+   __asm float_exp2 __retVal.z, t.z;
+   __asm float_exp2 __retVal.w, t.w;
 }
 
 

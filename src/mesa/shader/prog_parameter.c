@@ -29,9 +29,9 @@
  */
 
 
-#include "glheader.h"
-#include "imports.h"
-#include "macros.h"
+#include "main/glheader.h"
+#include "main/imports.h"
+#include "main/macros.h"
 #include "prog_instruction.h"
 #include "prog_parameter.h"
 #include "prog_statevars.h"
@@ -273,6 +273,26 @@ _mesa_add_uniform(struct gl_program_parameter_list *paramList,
       i = _mesa_add_parameter(paramList, PROGRAM_UNIFORM, name,
                               size, datatype, NULL, NULL);
       return i;
+   }
+}
+
+
+/**
+ * Mark the named uniform as 'used'.
+ */
+void
+_mesa_use_uniform(struct gl_program_parameter_list *paramList,
+                  const char *name)
+{
+   GLuint i;
+   for (i = 0; i < paramList->NumParameters; i++) {
+      struct gl_program_parameter *p = paramList->Parameters + i;
+      if (p->Type == PROGRAM_UNIFORM && _mesa_strcmp(p->Name, name) == 0) {
+         p->Used = GL_TRUE;
+         /* Note that large uniforms may occupy several slots so we're
+          * not done searching yet.
+          */
+      }
    }
 }
 
@@ -591,21 +611,24 @@ _mesa_clone_parameter_list(const struct gl_program_parameter_list *list)
    /** Not too efficient, but correct */
    for (i = 0; i < list->NumParameters; i++) {
       struct gl_program_parameter *p = list->Parameters + i;
+      struct gl_program_parameter *pCopy;
       GLuint size = MIN2(p->Size, 4);
       GLint j = _mesa_add_parameter(clone, p->Type, p->Name, size, p->DataType,
                                     list->ParameterValues[i], NULL);
       ASSERT(j >= 0);
+      pCopy = clone->Parameters + j;
+      pCopy->Used = p->Used;
       /* copy state indexes */
       if (p->Type == PROGRAM_STATE_VAR) {
          GLint k;
-         struct gl_program_parameter *q = clone->Parameters + j;
          for (k = 0; k < STATE_LENGTH; k++) {
-            q->StateIndexes[k] = p->StateIndexes[k];
+            pCopy->StateIndexes[k] = p->StateIndexes[k];
          }
       }
       else {
          clone->Parameters[j].Size = p->Size;
       }
+      
    }
 
    clone->StateFlags = list->StateFlags;

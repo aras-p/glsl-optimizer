@@ -31,7 +31,7 @@
 #ifndef PROG_PARAMETER_H
 #define PROG_PARAMETER_H
 
-#include "mtypes.h"
+#include "main/mtypes.h"
 #include "prog_statevars.h"
 
 
@@ -48,6 +48,7 @@ struct gl_program_parameter
    enum register_file Type; /**< PROGRAM_NAMED_PARAM, CONSTANT or STATE_VAR */
    GLenum DataType;         /**< GL_FLOAT, GL_FLOAT_VEC2, etc */
    GLuint Size;             /**< Number of components (1..4) */
+   GLboolean Used;          /**< Helper flag for GLSL uniform tracking */
    /**
     * A sequence of STATE_* tokens and integers to identify GL state.
     */
@@ -111,6 +112,10 @@ _mesa_add_unnamed_constant(struct gl_program_parameter_list *paramList,
 extern GLint
 _mesa_add_uniform(struct gl_program_parameter_list *paramList,
                   const char *name, GLuint size, GLenum datatype);
+
+extern void
+_mesa_use_uniform(struct gl_program_parameter_list *paramList,
+                  const char *name);
 
 extern GLint
 _mesa_add_sampler(struct gl_program_parameter_list *paramList,
