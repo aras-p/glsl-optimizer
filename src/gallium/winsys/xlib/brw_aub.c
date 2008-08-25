@@ -35,6 +35,7 @@
 #include "pipe/p_context.h"
 #include "pipe/p_state.h"
 #include "pipe/p_debug.h"
+#include "util/u_memory.h"
 
 
 struct brw_aubfile {
