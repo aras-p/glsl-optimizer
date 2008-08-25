@@ -29,14 +29,26 @@
 #define CELL_DRAW_ARRAYS_H
 
 
-boolean cell_draw_arrays(struct pipe_context *pipe, unsigned mode,
-                         unsigned start, unsigned count);
+extern boolean
+cell_draw_arrays(struct pipe_context *pipe, unsigned mode,
+                 unsigned start, unsigned count);
 
-boolean cell_draw_elements(struct pipe_context *pipe,
-                           struct pipe_buffer *indexBuffer,
-                           unsigned indexSize,
-                           unsigned mode, unsigned start, unsigned count);
+extern boolean
+cell_draw_elements(struct pipe_context *pipe,
+                   struct pipe_buffer *indexBuffer,
+                   unsigned indexSize,
+                   unsigned mode, unsigned start, unsigned count);
 
+extern boolean
+cell_draw_range_elements(struct pipe_context *pipe,
+                         struct pipe_buffer *indexBuffer,
+                         unsigned indexSize,
+                         unsigned min_index,
+                         unsigned max_index,
+                         unsigned mode, unsigned start, unsigned count);
+
+extern void
+cell_set_edgeflags(struct pipe_context *pipe, const unsigned *edgeflags);
 
 
 #endif /* CELL_DRAW_ARRAYS_H */

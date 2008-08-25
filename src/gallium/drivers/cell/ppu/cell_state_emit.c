@@ -162,13 +162,13 @@ cell_emit_state(struct cell_context *cell)
       const struct draw_context *const draw = cell->draw;
       struct cell_shader_info info;
 
-      info.num_outputs = draw->num_vs_outputs;
-      info.declarations = (uintptr_t) draw->machine.Declarations;
-      info.num_declarations = draw->machine.NumDeclarations;
-      info.instructions = (uintptr_t) draw->machine.Instructions;
-      info.num_instructions = draw->machine.NumInstructions;
-      info.immediates = (uintptr_t) draw->machine.Imms;
-      info.num_immediates = draw->machine.ImmLimit / 4;
+      info.num_outputs = draw_num_vs_outputs(draw);
+      info.declarations = (uintptr_t) draw->vs.machine.Declarations;
+      info.num_declarations = draw->vs.machine.NumDeclarations;
+      info.instructions = (uintptr_t) draw->vs.machine.Instructions;
+      info.num_instructions = draw->vs.machine.NumInstructions;
+      info.immediates = (uintptr_t) draw->vs.machine.Imms;
+      info.num_immediates = draw->vs.machine.ImmLimit / 4;
 
       emit_state_cmd(cell, CELL_CMD_STATE_BIND_VS,
 		     & info, sizeof(info));

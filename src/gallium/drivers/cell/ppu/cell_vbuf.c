@@ -37,6 +37,7 @@
 #include "cell_spu.h"
 #include "cell_vbuf.h"
 #include "draw/draw_vbuf.h"
+#include "util/u_memory.h"
 
 
 /** Allow vertex data to be inlined after RENDER command */

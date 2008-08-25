@@ -33,8 +33,9 @@
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_inlines.h"
-#include "util/u_memory.h"
 #include "pipe/p_winsys.h"
+#include "util/u_math.h"
+#include "util/u_memory.h"
 
 #include "cell_context.h"
 #include "cell_state.h"
@@ -68,11 +69,13 @@ cell_texture_layout(struct cell_texture * spt)
       pt->nblocksx[level] = pf_get_nblocksx(&pt->block, width);  
       pt->nblocksy[level] = pf_get_nblocksy(&pt->block, height);  
 
+      spt->stride[level] = pt->nblocksx[level] * pt->block.size;
+
       spt->level_offset[level] = spt->buffer_size;
 
       spt->buffer_size += (pt->nblocksy[level] *
 			  ((pt->target == PIPE_TEXTURE_CUBE) ? 6 : depth) *
-			  pt->nblocksx[level] * pt->block.size;
+                           pt->nblocksx[level] * pt->block.size);
 
       width  = minify(width);
       height = minify(height);
@@ -147,7 +150,8 @@ cell_texture_update(struct pipe_context *pipe, struct pipe_texture *texture,
 static struct pipe_surface *
 cell_get_tex_surface_screen(struct pipe_screen *screen,
                             struct pipe_texture *pt,
-                            unsigned face, unsigned level, unsigned zslice)
+                            unsigned face, unsigned level, unsigned zslice,
+                            unsigned usage)
 {
    struct pipe_winsys *ws = screen->winsys;
    struct cell_texture *spt = cell_texture(pt);
@@ -166,6 +170,10 @@ cell_get_tex_surface_screen(struct pipe_screen *screen,
       ps->nblocksy = pt->nblocksy[level];
       ps->stride = spt->stride[level];
       ps->offset = spt->level_offset[level];
+      ps->usage = usage;
+
+      /* XXX may need to override usage flags (see sp_texture.c) */
+
 
       if (pt->target == PIPE_TEXTURE_CUBE || pt->target == PIPE_TEXTURE_3D) {
 	 ps->offset += ((pt->target == PIPE_TEXTURE_CUBE) ? face : zslice) *
@@ -228,10 +236,11 @@ cell_tile_texture(struct cell_context *cell,
    assert(w % TILE_SIZE == 0);
    assert(h % TILE_SIZE == 0);
 
-   surf = screen->get_tex_surface(screen, &texture->base, face, level, zslice);
+   surf = screen->get_tex_surface(screen, &texture->base, face, level, zslice,
+                                  PIPE_BUFFER_USAGE_CPU_WRITE);
    ASSERT(surf);
 
-   src = (const uint *) pipe_surface_map(surf);
+   src = (const uint *) pipe_surface_map(surf, PIPE_BUFFER_USAGE_CPU_WRITE);
 
    if (texture->tiled_data) {
       align_free(texture->tiled_data);
@@ -246,11 +255,12 @@ cell_tile_texture(struct cell_context *cell,
 }
 
 
-
 void
 cell_update_texture_mapping(struct cell_context *cell)
 {
+#if 0
    uint face = 0, level = 0, zslice = 0;
+#endif
    uint i;
 
    for (i = 0; i < CELL_MAX_SAMPLERS; i++) {
@@ -275,10 +285,52 @@ cell_update_texture_mapping(struct cell_context *cell)
 }
 
 
+static void *
+cell_surface_map( struct pipe_screen *screen,
+                  struct pipe_surface *surface,
+                  unsigned flags )
+{
+   ubyte *map;
+
+   if (flags & ~surface->usage) {
+      assert(0);
+      return NULL;
+   }
+
+   map = screen->winsys->buffer_map( screen->winsys, surface->buffer, flags );
+   if (map == NULL)
+      return NULL;
+
+   /* May want to different things here depending on read/write nature
+    * of the map:
+    */
+   if (surface->texture &&
+       (flags & PIPE_BUFFER_USAGE_CPU_WRITE)) 
+   {
+      /* Do something to notify sharing contexts of a texture change.
+       * In softpipe, that would mean flushing the texture cache.
+       */
+#if 0
+      cell_screen(screen)->timestamp++;
+#endif
+   }
+   
+   return map + surface->offset;
+}
+
+
+static void
+cell_surface_unmap(struct pipe_screen *screen,
+                   struct pipe_surface *surface)
+{
+   screen->winsys->buffer_unmap( screen->winsys, surface->buffer );
+}
+
+
 void
 cell_init_texture_functions(struct cell_context *cell)
 {
-   cell->pipe.texture_update = cell_texture_update;
+   /*cell->pipe.texture_update = cell_texture_update;*/
 }
 
 void
@@ -287,4 +339,7 @@ cell_init_screen_texture_funcs(struct pipe_screen *screen)
    screen->texture_create = cell_texture_create_screen;
    screen->texture_release = cell_texture_release_screen;
    screen->get_tex_surface = cell_get_tex_surface_screen;
+
+   screen->surface_map = cell_surface_map;
+   screen->surface_unmap = cell_surface_unmap;
 }

@@ -26,11 +26,12 @@
  **************************************************************************/
 
 #include "pipe/p_defines.h"
-#include "util/u_memory.h"
 #include "pipe/p_inlines.h"
 #include "pipe/p_winsys.h"
-#include "util/p_tile.h"
+#include "util/u_memory.h"
 #include "util/u_rect.h"
+#include "util/u_tile.h"
+
 #include "cell_context.h"
 #include "cell_surface.h"
 
@@ -46,12 +47,12 @@ cell_surface_copy(struct pipe_context *pipe,
 {
    assert( dst->cpp == src->cpp );
 
-   pipe_copy_rect(pipe_surface_map(dst),
+   pipe_copy_rect(pipe_surface_map(dst, PIPE_BUFFER_USAGE_CPU_WRITE),
                   &dst->block,
                   dst->stride,
                   dstx, dsty,
                   width, height,
-                  pipe_surface_map(src),
+                  pipe_surface_map(src, PIPE_BUFFER_USAGE_CPU_READ),
                   do_flip ? -src->stride : src->stride,
                   srcx, do_flip ? height - 1 - srcy : srcy);
 
@@ -81,7 +82,7 @@ cell_surface_fill(struct pipe_context *pipe,
                   unsigned width, unsigned height, unsigned value)
 {
    unsigned i, j;
-   void *dst_map = pipe_surface_map(dst);
+   void *dst_map = pipe_surface_map(dst, PIPE_BUFFER_USAGE_CPU_WRITE);
 
    assert(dst->stride > 0);
 

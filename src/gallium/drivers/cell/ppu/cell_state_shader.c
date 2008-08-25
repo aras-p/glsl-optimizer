@@ -41,7 +41,7 @@
 static INLINE struct cell_fragment_shader_state *
 cell_fragment_shader_state(void *shader)
 {
-   return (struct pipe_shader_state *) shader;
+   return (struct cell_fragment_shader_state *) shader;
 }
 
 
@@ -49,7 +49,7 @@ cell_fragment_shader_state(void *shader)
 static INLINE struct cell_vertex_shader_state *
 cell_vertex_shader_state(void *shader)
 {
-   return (struct pipe_shader_state *) shader;
+   return (struct cell_vertex_shader_state *) shader;
 }
 
 

@@ -294,6 +294,8 @@ cell_set_framebuffer_state(struct pipe_context *pipe,
       struct pipe_surface *csurf = fb->cbufs[0];
       struct pipe_surface *zsurf = fb->zsbuf;
       uint i;
+      uint flags = (PIPE_BUFFER_USAGE_GPU_WRITE |
+                    PIPE_BUFFER_USAGE_GPU_READ);
 
       /* unmap old surfaces */
       for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++) {
@@ -313,10 +315,10 @@ cell_set_framebuffer_state(struct pipe_context *pipe,
 
       /* map new surfaces */
       if (csurf)
-         cell->cbuf_map[0] = pipe_surface_map(csurf);
+         cell->cbuf_map[0] = pipe_surface_map(csurf, flags);
 
       if (zsurf)
-         cell->zsbuf_map = pipe_surface_map(zsurf);
+         cell->zsbuf_map = pipe_surface_map(zsurf, flags);
 
       cell->dirty |= CELL_NEW_FRAMEBUFFER;
    }

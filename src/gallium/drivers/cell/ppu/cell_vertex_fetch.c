@@ -260,6 +260,7 @@ emit_fetch(struct spe_function *p,
 
 void cell_update_vertex_fetch(struct draw_context *draw)
 {
+#if 0
    struct cell_context *const cell =
        (struct cell_context *) draw->driver_private;
    struct spe_function *p = &cell->attrib_fetch;
@@ -337,4 +338,7 @@ void cell_update_vertex_fetch(struct draw_context *draw)
 	     cell->attrib_fetch_offsets[function_index[i]];
       }
    }
+#else
+   assert(0);
+#endif
 }

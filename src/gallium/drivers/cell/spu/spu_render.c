@@ -35,7 +35,7 @@
 #include "spu_tri.h"
 #include "spu_tile.h"
 #include "cell/common.h"
-
+#include "util/u_memory.h"
 
 
 /**

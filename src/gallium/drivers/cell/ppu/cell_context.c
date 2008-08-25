@@ -73,11 +73,13 @@ cell_draw_create(struct cell_context *cell)
 {
    struct draw_context *draw = draw_create();
 
+#if 0 /* broken */
    if (getenv("GALLIUM_CELL_VS")) {
       /* plug in SPU-based vertex transformation code */
       draw->shader_queue_flush = cell_vertex_shader_queue_flush;
       draw->driver_private = cell;
    }
+#endif
 
    return draw;
 }
@@ -108,6 +110,8 @@ cell_create_context(struct pipe_screen *screen,
 
    cell->pipe.draw_arrays = cell_draw_arrays;
    cell->pipe.draw_elements = cell_draw_elements;
+   cell->pipe.draw_range_elements = cell_draw_range_elements;
+   cell->pipe.set_edgeflags = cell_set_edgeflags;
 
    cell->pipe.clear = cell_clear_surface;
    cell->pipe.flush = cell_flush;

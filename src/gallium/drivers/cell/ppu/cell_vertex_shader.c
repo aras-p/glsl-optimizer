@@ -32,6 +32,7 @@
 #include "pipe/p_defines.h"
 #include "pipe/p_context.h"
 #include "pipe/p_winsys.h"
+#include "util/u_math.h"
 
 #include "cell_context.h"
 #include "cell_draw_arrays.h"
@@ -50,6 +51,7 @@
 void
 cell_vertex_shader_queue_flush(struct draw_context *draw)
 {
+#if 0
    struct cell_context *const cell =
        (struct cell_context *) draw->driver_private;
    struct cell_command_vs *const vs = &cell_global.command[0].vs;
@@ -138,4 +140,7 @@ cell_vertex_shader_queue_flush(struct draw_context *draw)
 
    draw->vs.post_nr = draw->vs.queue_nr;
    draw->vs.queue_nr = 0;
+#else
+   assert(0);
+#endif
 }
