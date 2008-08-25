@@ -38,6 +38,7 @@
 
 #if defined(PIPE_OS_LINUX)
 #include <unistd.h>
+#include <sched.h>
 #endif
 
 #include "pipe/p_compiler.h"
