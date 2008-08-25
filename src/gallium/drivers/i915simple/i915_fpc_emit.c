@@ -28,6 +28,7 @@
 #include "i915_reg.h"
 #include "i915_context.h"
 #include "i915_fpc.h"
+#include "util/u_math.h"
 
 
 #define A0_DEST( reg ) (((reg)&UREG_TYPE_NR_MASK)>>UREG_A0_DEST_SHIFT_LEFT)
