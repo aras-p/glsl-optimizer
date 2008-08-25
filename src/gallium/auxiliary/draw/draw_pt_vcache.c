@@ -306,6 +306,7 @@ static void vcache_check_run( struct draw_pt_front_end *frontend,
    unsigned fetch_count = max_index + 1 - min_index;
    const ushort *transformed_elts;
    ushort *storage = NULL;
+   boolean ok;
 
 
    if (0) debug_printf("fetch_count %d fetch_max %d draw_count %d\n", fetch_count, 
@@ -313,7 +314,6 @@ static void vcache_check_run( struct draw_pt_front_end *frontend,
                        draw_count);
       
    if (max_index == 0xffffffff ||
-       fetch_count >= vcache->fetch_max ||
        fetch_count > draw_count) {
       if (0) debug_printf("fail\n");
       goto fail;
@@ -395,14 +395,19 @@ static void vcache_check_run( struct draw_pt_front_end *frontend,
       transformed_elts = storage;
    }
 
-   vcache->middle->run_linear_elts( vcache->middle,
-                                    min_index, /* start */
-                                    fetch_count,
-                                    transformed_elts,
-                                    draw_count );
-
+   ok = vcache->middle->run_linear_elts( vcache->middle,
+                                         min_index, /* start */
+                                         fetch_count,
+                                         transformed_elts,
+                                         draw_count );
+   
    FREE(storage);
-   return;
+
+   if (ok)
+      return;
+
+   debug_printf("failed to execute atomic draw elts for %d/%d, splitting up\n",
+                fetch_count, draw_count);
 
  fail:
    vcache_run( frontend, get_elt, elts, draw_count );

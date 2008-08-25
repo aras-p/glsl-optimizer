@@ -262,7 +262,7 @@ static void fetch_pipeline_linear_run( struct draw_pt_middle_end *middle,
 
 
 
-static void fetch_pipeline_linear_run_elts( struct draw_pt_middle_end *middle,
+static boolean fetch_pipeline_linear_run_elts( struct draw_pt_middle_end *middle,
                                             unsigned start,
                                             unsigned count,
                                             const ushort *draw_elts,
@@ -277,12 +277,8 @@ static void fetch_pipeline_linear_run_elts( struct draw_pt_middle_end *middle,
    struct vertex_header *pipeline_verts =
       (struct vertex_header *)MALLOC(fpme->vertex_size * alloc_count);
 
-   if (!pipeline_verts) {
-      /* Not much we can do here - just skip the rendering.
-       */
-      assert(0);
-      return;
-   }
+   if (!pipeline_verts) 
+      return FALSE;
 
    /* Fetch into our vertex buffer
     */
@@ -336,6 +332,7 @@ static void fetch_pipeline_linear_run_elts( struct draw_pt_middle_end *middle,
    }
 
    FREE(pipeline_verts);
+   return TRUE;
 }
 
 

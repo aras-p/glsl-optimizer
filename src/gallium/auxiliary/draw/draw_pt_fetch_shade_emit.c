@@ -332,7 +332,7 @@ fse_run(struct draw_pt_middle_end *middle,
 
 
 
-static void fse_run_linear_elts( struct draw_pt_middle_end *middle, 
+static boolean fse_run_linear_elts( struct draw_pt_middle_end *middle, 
                                  unsigned start, 
                                  unsigned count,
                                  const ushort *draw_elts,
@@ -351,8 +351,7 @@ static void fse_run_linear_elts( struct draw_pt_middle_end *middle,
                                                (ushort)count );
 
    if (!hw_verts) {
-      assert(0);
-      return;
+      return FALSE;
    }
 
    /* Single routine to fetch vertices, run shader and emit HW verts.
@@ -374,6 +373,8 @@ static void fse_run_linear_elts( struct draw_pt_middle_end *middle,
 				   hw_verts, 
 				   fse->key.output_stride, 
 				   count );
+
+   return TRUE;
 }
 
 
