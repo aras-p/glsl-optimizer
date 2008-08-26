@@ -85,7 +85,7 @@ compute_version(const GLcontext *ctx)
                               ctx->Extensions.ARB_texture_non_power_of_two &&
                               ctx->Extensions.EXT_blend_equation_separate);
    const GLboolean ver_2_1 = (ver_2_0 &&
-                              ctx->Extensions.ARB_shading_language_120 &&
+                              /*ctx->Extensions.ARB_shading_language_120 &&*/
                               ctx->Extensions.EXT_pixel_buffer_object &&
                               ctx->Extensions.EXT_texture_sRGB);
    if (ver_2_1)
@@ -121,12 +121,6 @@ _mesa_GetString( GLenum name )
    static const char *vendor = "Brian Paul";
    static const char *renderer = "Mesa";
 
-#if FEATURE_ARB_shading_language_120_foo /* support not complete! */
-   static const char *sl_version = "1.20";
-#elif FEATURE_ARB_shading_language_100
-   static const char *sl_version = "1.10";
-#endif
-
    if (!ctx)
       return NULL;
 
@@ -154,8 +148,10 @@ _mesa_GetString( GLenum name )
          return (const GLubyte *) ctx->Extensions.String;
 #if FEATURE_ARB_shading_language_100
       case GL_SHADING_LANGUAGE_VERSION_ARB:
-         if (ctx->Extensions.ARB_shading_language_100)
-            return (const GLubyte *) sl_version;
+         if (ctx->Extensions.ARB_shading_language_120)
+            return (const GLubyte *) "1.20";
+         else if (ctx->Extensions.ARB_shading_language_100)
+            return (const GLubyte *) "1.10";
          goto error;
 #endif
 #if FEATURE_NV_fragment_program || FEATURE_ARB_fragment_program || \
