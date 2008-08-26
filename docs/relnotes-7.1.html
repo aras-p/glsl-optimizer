@@ -8,13 +8,21 @@
 
 <body bgcolor="#eeeeee">
 
-<H1>Mesa 7.1 Release Notes / May XX, 2008</H1>
+<H1>Mesa 7.1 Release Notes / August 26, 2008</H1>
 
 <p>
 Mesa 7.1 is a new development release.
 There have been many internal code changes since Mesa 7.0.x.
 It should be relatively stable, but those who are especially concerned about
-stability should wait for Mesa 7.2.
+stability should wait for Mesa 7.2 or use Mesa 7.0.4 (the previous stable
+release).
+</p>
+</>
+Note that this version of Mesa does not use the GEM memory manager.
+The master branch of git uses GEM.
+</p>
+<p>
+DRM version 2.3.1 should be used with Mesa 7.1
 </p>
 
 
@@ -27,9 +35,11 @@ TBD
 <h2>New features</h2>
 <ul>
 <li>autoconf-based configuration (and clean-up of Makefiles)
+<li>Assorted DRI driver enhancements
 <li>Reduced dependencies between X server and Mesa
 <li>GL_EXT_texture_from_pixmap extension for Xlib driver
 <li>Support for the GL shading language with i965 driver (implemented by Intel)
+<li>ATI R500 series support (Radeon X1300&#8211;X1950) in r300 DRI driver
 </ul>
 
 
@@ -37,6 +47,7 @@ TBD
 <ul>
 <li>Numerous GLSL fixes
 <li>Fixed some error code/detection bugs in the GLSL-related API functions
+<li>Lots of DRI driver fixes.
 </ul>
 
 
