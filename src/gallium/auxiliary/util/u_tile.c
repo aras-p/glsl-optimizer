@@ -460,7 +460,7 @@ l8_put_tile_rgba(ubyte *dst,
       for (j = 0; j < w; j++, pRow += 4) {
          unsigned r;
          r = float_to_ubyte(pRow[0]);
-         *dst++ = r;
+         *dst++ = (ubyte) r;
       }
       p += src_stride;
    }
@@ -634,7 +634,7 @@ i8_put_tile_rgba(ubyte *dst,
       for (j = 0; j < w; j++, pRow += 4) {
          unsigned r;
          r = float_to_ubyte(pRow[0]);
-         *dst++ = r;
+         *dst++ = (ubyte) r;
       }
       p += src_stride;
    }
