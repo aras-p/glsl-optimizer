@@ -57,7 +57,7 @@ struct pb_slab_buffer
    struct list_head head;
    unsigned mapCount;
    size_t start;
-   _glthread_Cond event;
+   pipe_condvar event;
 };
 
 struct pb_slab
@@ -85,7 +85,7 @@ struct pb_slab_manager
    struct list_head slabs;
    struct list_head freeSlabs;
    
-   _glthread_Mutex mutex;
+   pipe_mutex mutex;
 };
 
 /**
@@ -143,7 +143,7 @@ pb_slab_buffer_destroy(struct pb_buffer *_buf)
    struct pb_slab_manager *mgr = slab->mgr;
    struct list_head *list = &buf->head;
 
-   _glthread_LOCK_MUTEX(mgr->mutex);
+   pipe_mutex_lock(mgr->mutex);
    
    assert(buf->base.base.refcount == 0);
    
@@ -179,7 +179,7 @@ pb_slab_buffer_destroy(struct pb_buffer *_buf)
       }
    }
    
-   _glthread_UNLOCK_MUTEX(mgr->mutex);
+   pipe_mutex_unlock(mgr->mutex);
 }
 
 
@@ -201,7 +201,7 @@ pb_slab_buffer_unmap(struct pb_buffer *_buf)
 
    --buf->mapCount;
    if (buf->mapCount == 0) 
-       _glthread_COND_BROADCAST(buf->event);
+       pipe_condvar_broadcast(buf->event);
 }
 
 
@@ -283,7 +283,7 @@ pb_slab_create(struct pb_slab_manager *mgr)
       buf->slab = slab;
       buf->start = i* mgr->bufSize;
       buf->mapCount = 0;
-      _glthread_INIT_COND(buf->event);
+      pipe_condvar_init(buf->event);
       LIST_ADDTAIL(&buf->head, &slab->freeBuffers);
       slab->numFree++;
       buf++;
@@ -328,11 +328,11 @@ pb_slab_manager_create_buffer(struct pb_manager *_mgr,
    if(!pb_check_usage(desc->usage, mgr->desc.usage))
       return NULL;
 
-   _glthread_LOCK_MUTEX(mgr->mutex);
+   pipe_mutex_lock(mgr->mutex);
    if (mgr->slabs.next == &mgr->slabs) {
       (void) pb_slab_create(mgr);
       if (mgr->slabs.next == &mgr->slabs) {
-	 _glthread_UNLOCK_MUTEX(mgr->mutex);
+	 pipe_mutex_unlock(mgr->mutex);
 	 return NULL;
       }
    }
@@ -344,7 +344,7 @@ pb_slab_manager_create_buffer(struct pb_manager *_mgr,
    list = slab->freeBuffers.next;
    LIST_DELINIT(list);
 
-   _glthread_UNLOCK_MUTEX(mgr->mutex);
+   pipe_mutex_unlock(mgr->mutex);
    buf = LIST_ENTRY(struct pb_slab_buffer, list, head);
    
    ++buf->base.base.refcount;
@@ -388,7 +388,7 @@ pb_slab_manager_create(struct pb_manager *provider,
    LIST_INITHEAD(&mgr->slabs);
    LIST_INITHEAD(&mgr->freeSlabs);
    
-   _glthread_INIT_MUTEX(mgr->mutex);
+   pipe_mutex_init(mgr->mutex);
 
    return &mgr->base;
 }

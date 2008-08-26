@@ -37,6 +37,7 @@
 #include "main/glheader.h"
 #include "glapi/glapi.h"
 #include "glxapi.h"
+#include "pipe/p_thread.h"
 
 
 extern struct _glxapi_table *_real_GetGLXDispatchTable(void);
@@ -127,26 +128,13 @@ get_dispatch(Display *dpy)
 /**
  * GLX API current context.
  */
-#if defined(GLX_USE_TLS)
-PUBLIC __thread void * CurrentContext
-    __attribute__((tls_model("initial-exec")));
-#elif defined(THREADS)
-static _glthread_TSD ContextTSD;         /**< Per-thread context pointer */
-#else
-static GLXContext CurrentContext = 0;
-#endif
+pipe_tsd ContextTSD;
 
 
 static void
 SetCurrentContext(GLXContext c)
 {
-#if defined(GLX_USE_TLS)
-   CurrentContext = c;
-#elif defined(THREADS)
-   _glthread_SetTSD(&ContextTSD, c);
-#else
-   CurrentContext = c;
-#endif
+   pipe_tsd_set(&ContextTSD, c);
 }
 
 
@@ -238,13 +226,7 @@ glXGetConfig(Display *dpy, XVisualInfo *visinfo, int attrib, int *value)
 GLXContext PUBLIC
 glXGetCurrentContext(void)
 {
-#if defined(GLX_USE_TLS)
-   return CurrentContext;
-#elif defined(THREADS)
-   return (GLXContext) _glthread_GetTSD(&ContextTSD);
-#else
-   return CurrentContext;
-#endif
+   return (GLXContext) pipe_tsd_get(&ContextTSD);
 }
 
 

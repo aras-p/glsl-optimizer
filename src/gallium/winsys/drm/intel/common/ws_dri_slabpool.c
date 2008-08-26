@@ -37,7 +37,7 @@
 #include "ws_dri_bufpool.h"
 #include "ws_dri_fencemgr.h"
 #include "ws_dri_bufmgr.h"
-#include "glthread.h"
+#include "pipe/p_thread.h"
 
 #define DRI_SLABPOOL_ALLOC_RETRIES 100
 
@@ -53,7 +53,7 @@ struct _DriSlabBuffer {
     uint32_t start;
     uint32_t fenceType;
     int unFenced;
-    _glthread_Cond event;
+    pipe_condvar event;
 };
 
 struct _DriKernelBO {
@@ -84,7 +84,7 @@ struct _DriSlabSizeHeader {
     uint32_t numDelayed;
     struct _DriSlabPool *slabPool;
     uint32_t bufSize;
-    _glthread_Mutex mutex;
+    pipe_mutex mutex;
 };
 
 struct _DriFreeSlabManager {
@@ -94,7 +94,7 @@ struct _DriFreeSlabManager {
     drmMMListHead timeoutList;
     drmMMListHead unCached;
     drmMMListHead cached;
-    _glthread_Mutex mutex;
+    pipe_mutex mutex;
 };
 
 
@@ -196,7 +196,7 @@ driSetKernelBOFree(struct _DriFreeSlabManager *fMan,
 {
     struct timeval time;
 
-    _glthread_LOCK_MUTEX(fMan->mutex);
+    pipe_mutex_lock(fMan->mutex);
     gettimeofday(&time, NULL);
     driTimeAdd(&time, &fMan->slabTimeout);
 
@@ -210,7 +210,7 @@ driSetKernelBOFree(struct _DriFreeSlabManager *fMan,
     DRMLISTADDTAIL(&kbo->timeoutHead, &fMan->timeoutList);
     driFreeTimeoutKBOsLocked(fMan, &time);
 
-    _glthread_UNLOCK_MUTEX(fMan->mutex);
+    pipe_mutex_unlock(fMan->mutex);
 }
 
 /*
@@ -237,7 +237,7 @@ driAllocKernelBO(struct _DriSlabSizeHeader *header)
 
     size = (size <= slabPool->maxSlabSize) ? size : slabPool->maxSlabSize;
     size = (size + slabPool->pageSize - 1) & ~(slabPool->pageSize - 1);
-    _glthread_LOCK_MUTEX(fMan->mutex);
+    pipe_mutex_lock(fMan->mutex);
 
     kbo = NULL;
 
@@ -269,7 +269,7 @@ driAllocKernelBO(struct _DriSlabSizeHeader *header)
 	DRMLISTDELINIT(&kbo->timeoutHead);
     }
 
-    _glthread_UNLOCK_MUTEX(fMan->mutex);
+    pipe_mutex_unlock(fMan->mutex);
 
     if (kbo) {
         uint64_t new_mask = kbo->bo.proposedFlags ^ slabPool->proposedFlags;
@@ -360,7 +360,7 @@ driAllocSlab(struct _DriSlabSizeHeader *header)
 	buf->start = i* header->bufSize;
 	buf->mapCount = 0;
 	buf->isSlabBuffer = 1;
-	_glthread_INIT_COND(buf->event);
+	pipe_condvar_init(buf->event);
 	DRMLISTADDTAIL(&buf->head, &slab->freeBuffers);
 	slab->numFree++;
 	buf++;
@@ -494,23 +494,23 @@ driSlabAllocBuffer(struct _DriSlabSizeHeader *header)
     drmMMListHead *list;
     int count = DRI_SLABPOOL_ALLOC_RETRIES;
 
-    _glthread_LOCK_MUTEX(header->mutex);
+    pipe_mutex_lock(header->mutex);
     while(header->slabs.next == &header->slabs && count > 0) {
         driSlabCheckFreeLocked(header, 0);
 	if (header->slabs.next != &header->slabs)
 	  break;
 
-	_glthread_UNLOCK_MUTEX(header->mutex);
+	pipe_mutex_unlock(header->mutex);
 	if (count != DRI_SLABPOOL_ALLOC_RETRIES)
 	    usleep(1);
-	_glthread_LOCK_MUTEX(header->mutex);
+	pipe_mutex_lock(header->mutex);
 	(void) driAllocSlab(header);
 	count--;
     }
 
     list = header->slabs.next;
     if (list == &header->slabs) {
-	_glthread_UNLOCK_MUTEX(header->mutex);
+	pipe_mutex_unlock(header->mutex);
 	return NULL;
     }
     slab = DRMLISTENTRY(struct _DriSlab, list, head);
@@ -520,7 +520,7 @@ driSlabAllocBuffer(struct _DriSlabSizeHeader *header)
     list = slab->freeBuffers.next;
     DRMLISTDELINIT(list);
 
-    _glthread_UNLOCK_MUTEX(header->mutex);
+    pipe_mutex_unlock(header->mutex);
     buf = DRMLISTENTRY(struct _DriSlabBuffer, list, head);
     return buf;
 }
@@ -618,7 +618,7 @@ pool_destroy(struct _DriBufferPool *driPool, void *private)
     slab = buf->parent;
     header = slab->header;
 
-    _glthread_LOCK_MUTEX(header->mutex);
+    pipe_mutex_lock(header->mutex);
     buf->unFenced = 0;
     buf->mapCount = 0;
 
@@ -631,18 +631,18 @@ pool_destroy(struct _DriBufferPool *driPool, void *private)
 	driSlabFreeBufferLocked(buf);
     }
 
-    _glthread_UNLOCK_MUTEX(header->mutex);
+    pipe_mutex_unlock(header->mutex);
     return 0;
 }
 
 static int
 pool_waitIdle(struct _DriBufferPool *driPool, void *private,
-	      _glthread_Mutex *mutex, int lazy)
+	      pipe_mutex *mutex, int lazy)
 {
    struct _DriSlabBuffer *buf = (struct _DriSlabBuffer *) private;
 
    while(buf->unFenced)
-       _glthread_COND_WAIT(buf->event, *mutex);
+       pipe_condvar_wait(buf->event, *mutex);
 
    if (!buf->fence)
      return 0;
@@ -655,7 +655,7 @@ pool_waitIdle(struct _DriBufferPool *driPool, void *private,
 
 static int
 pool_map(struct _DriBufferPool *pool, void *private, unsigned flags,
-         int hint, _glthread_Mutex *mutex, void **virtual)
+         int hint, pipe_mutex *mutex, void **virtual)
 {
    struct _DriSlabBuffer *buf = (struct _DriSlabBuffer *) private;
    int busy;
@@ -689,7 +689,7 @@ pool_unmap(struct _DriBufferPool *pool, void *private)
 
    --buf->mapCount;
    if (buf->mapCount == 0 && buf->isSlabBuffer)
-       _glthread_COND_BROADCAST(buf->event);
+      pipe_condvar_broadcast(buf->event);
 
    return 0;
 }
@@ -760,7 +760,7 @@ pool_fence(struct _DriBufferPool *pool, void *private,
    buf->fenceType = bo->fenceFlags;
 
    buf->unFenced = 0;
-   _glthread_COND_BROADCAST(buf->event);
+   pipe_condvar_broadcast(buf->event);
 
    return 0;
 }
@@ -775,7 +775,7 @@ pool_kernel(struct _DriBufferPool *pool, void *private)
 
 static int
 pool_validate(struct _DriBufferPool *pool, void *private,
-	      _glthread_Mutex *mutex)
+	      pipe_mutex *mutex)
 {
    struct _DriSlabBuffer *buf = (struct _DriSlabBuffer *) private;
 
@@ -783,7 +783,7 @@ pool_validate(struct _DriBufferPool *pool, void *private,
        return 0;
 
    while(buf->mapCount != 0)
-       _glthread_COND_WAIT(buf->event, *mutex);
+      pipe_condvar_wait(buf->event, *mutex);
 
    buf->unFenced = 1;
    return 0;
@@ -799,8 +799,8 @@ driInitFreeSlabManager(uint32_t checkIntervalMsec, uint32_t slabTimeoutMsec)
     if (!tmp)
 	return NULL;
 
-    _glthread_INIT_MUTEX(tmp->mutex);
-    _glthread_LOCK_MUTEX(tmp->mutex);
+    pipe_mutex_init(tmp->mutex);
+    pipe_mutex_lock(tmp->mutex);
     tmp->slabTimeout.tv_usec = slabTimeoutMsec*1000;
     tmp->slabTimeout.tv_sec = tmp->slabTimeout.tv_usec / 1000000;
     tmp->slabTimeout.tv_usec -=  tmp->slabTimeout.tv_sec*1000000;
@@ -814,7 +814,7 @@ driInitFreeSlabManager(uint32_t checkIntervalMsec, uint32_t slabTimeoutMsec)
     DRMINITLISTHEAD(&tmp->timeoutList);
     DRMINITLISTHEAD(&tmp->unCached);
     DRMINITLISTHEAD(&tmp->cached);
-    _glthread_UNLOCK_MUTEX(tmp->mutex);
+    pipe_mutex_unlock(tmp->mutex);
 
     return tmp;
 }
@@ -827,9 +827,9 @@ driFinishFreeSlabManager(struct _DriFreeSlabManager *fMan)
     time = fMan->nextCheck;
     driTimeAdd(&time, &fMan->checkInterval);
 
-    _glthread_LOCK_MUTEX(fMan->mutex);
+    pipe_mutex_lock(fMan->mutex);
     driFreeTimeoutKBOsLocked(fMan, &time);
-    _glthread_UNLOCK_MUTEX(fMan->mutex);
+    pipe_mutex_unlock(fMan->mutex);
 
     assert(fMan->timeoutList.next == &fMan->timeoutList);
     assert(fMan->unCached.next == &fMan->unCached);
@@ -842,8 +842,8 @@ static void
 driInitSizeHeader(struct _DriSlabPool *pool, uint32_t size,
 		  struct _DriSlabSizeHeader *header)
 {
-    _glthread_INIT_MUTEX(header->mutex);
-    _glthread_LOCK_MUTEX(header->mutex);
+    pipe_mutex_init(header->mutex);
+    pipe_mutex_lock(header->mutex);
 
     DRMINITLISTHEAD(&header->slabs);
     DRMINITLISTHEAD(&header->freeSlabs);
@@ -853,7 +853,7 @@ driInitSizeHeader(struct _DriSlabPool *pool, uint32_t size,
     header->slabPool = pool;
     header->bufSize = size;
 
-    _glthread_UNLOCK_MUTEX(header->mutex);
+    pipe_mutex_unlock(header->mutex);
 }
 
 static void
@@ -862,7 +862,7 @@ driFinishSizeHeader(struct _DriSlabSizeHeader *header)
     drmMMListHead *list, *next;
     struct _DriSlabBuffer *buf;
 
-    _glthread_LOCK_MUTEX(header->mutex);
+    pipe_mutex_lock(header->mutex);
     for (list = header->delayedBuffers.next, next = list->next;
 	 list != &header->delayedBuffers;
 	 list = next, next = list->next) {
@@ -875,7 +875,7 @@ driFinishSizeHeader(struct _DriSlabSizeHeader *header)
 	header->numDelayed--;
 	driSlabFreeBufferLocked(buf);
     }
-    _glthread_UNLOCK_MUTEX(header->mutex);
+    pipe_mutex_unlock(header->mutex);
 }
 
 static void

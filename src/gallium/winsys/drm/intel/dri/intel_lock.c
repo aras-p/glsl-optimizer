@@ -27,7 +27,7 @@
 
 
 #include "main/glheader.h"
-#include "glapi/glthread.h"
+#include "pipe/p_lthread.h"
 #include <GL/internal/glcore.h>
 #include "state_tracker/st_public.h"
 #include "intel_context.h"
@@ -35,7 +35,7 @@
 
 
 
-_glthread_DECLARE_STATIC_MUTEX( lockMutex );
+pipe_static_mutex( lockMutex );
 
 
 static void
@@ -72,7 +72,7 @@ void LOCK_HARDWARE( struct intel_context *intel )
 {
     char __ret = 0;
 
-    _glthread_LOCK_MUTEX(lockMutex);
+    pipe_mutex_lock(lockMutex);
     assert(!intel->locked);
 
     DRM_CAS(intel->driHwLock, intel->hHWContext,
@@ -96,7 +96,7 @@ void UNLOCK_HARDWARE( struct intel_context *intel )
 
    DRM_UNLOCK(intel->driFd, intel->driHwLock, intel->hHWContext);
 
-   _glthread_UNLOCK_MUTEX(lockMutex);
+   pipe_mutex_unlock(lockMutex);
 
    DBG(LOCK, "%s - unlocked\n", __progname);
 }

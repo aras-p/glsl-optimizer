@@ -113,7 +113,7 @@ pool_unreference(struct _DriBufferPool *pool, void *private)
 
 static int
 pool_map(struct _DriBufferPool *pool, void *private, unsigned flags,
-         int hint, _glthread_Mutex *mutex, void **virtual)
+         int hint, pipe_mutex *mutex, void **virtual)
 {
    drmBO *buf = (drmBO *) private;
    int ret;
@@ -202,7 +202,7 @@ pool_kernel(struct _DriBufferPool *pool, void *private)
 }
 
 static int
-pool_waitIdle(struct _DriBufferPool *pool, void *private, _glthread_Mutex *mutex,
+pool_waitIdle(struct _DriBufferPool *pool, void *private, pipe_mutex *mutex,
 	      int lazy)
 {
    drmBO *buf = (drmBO *) private;

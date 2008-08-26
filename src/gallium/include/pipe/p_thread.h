@@ -23,307 +23,199 @@
  * 
  **************************************************************************/
 
+
 /**
- * @file
- * Thread
- *
- * Initial version by John Stone (j.stone@acm.org) (johns@cs.umr.edu)
- *                and Christoph Poliwoda (poliwoda@volumegraphics.com)
- * Revised by Keith Whitwell
- * Adapted for new gl dispatcher by Brian Paul
- *
- *
- *
- * DOCUMENTATION
- *
- * This thread module exports the following types:
- *   _glthread_TSD     Thread-specific data area
- *   _glthread_Thread  Thread datatype
- *   _glthread_Mutex   Mutual exclusion lock
- *
- * Macros:
- *   _glthread_DECLARE_STATIC_MUTEX(name)   Declare a non-local mutex
- *   _glthread_INIT_MUTEX(name)             Initialize a mutex
- *   _glthread_LOCK_MUTEX(name)             Lock a mutex
- *   _glthread_UNLOCK_MUTEX(name)           Unlock a mutex
- *
- * Functions:
- *   _glthread_GetID(v)      Get integer thread ID
- *   _glthread_InitTSD()     Initialize thread-specific data
- *   _glthread_GetTSD()      Get thread-specific data
- *   _glthread_SetTSD()      Set thread-specific data
- *
- * If this file is accidentally included by a non-threaded build,
- * it should not cause the build to fail, or otherwise cause problems.
- * In general, it should only be included when needed however.
+ * Thread, mutex, condition var and thread-specific data functions.
  */
 
-#ifndef _P_THREAD_H_
-#define _P_THREAD_H_
+
+#ifndef _P_THREAD2_H_
+#define _P_THREAD2_H_
 
 
-#if (defined(PTHREADS) || defined(SOLARIS_THREADS) ||\
-     defined(WIN32_THREADS) || defined(USE_XTHREADS) || defined(BEOS_THREADS)) \
-    && !defined(THREADS)
-# define THREADS
-#endif
+#include "pipe/p_compiler.h"
 
-#ifdef VMS
-#include <GL/vms_x_fix.h>
-#endif
 
-/*
- * POSIX threads. This should be your choice in the Unix world
- * whenever possible.  When building with POSIX threads, be sure
- * to enable any compiler flags which will cause the MT-safe
- * libc (if one exists) to be used when linking, as well as any
- * header macros for MT-safe errno, etc.  For Solaris, this is the -mt
- * compiler flag.  On Solaris with gcc, use -D_REENTRANT to enable
- * proper compiling for MT-safe libc etc.
- */
-#if defined(PTHREADS)
+#if defined(PIPE_OS_LINUX)
+
 #include <pthread.h> /* POSIX threads headers */
+#include <stdio.h> /* for perror() */
 
-typedef struct {
-   pthread_key_t  key;
-   int initMagic;
-} _glthread_TSD;
 
-typedef pthread_t _glthread_Thread;
+typedef pthread_t pipe_thread;
+typedef pthread_mutex_t pipe_mutex;
+typedef pthread_cond_t pipe_condvar;
 
-typedef pthread_mutex_t _glthread_Mutex;
+#define pipe_static_mutex(mutex) \
+   static pipe_mutex mutex = PTHREAD_MUTEX_INITIALIZER
 
-#define _glthread_DECLARE_STATIC_MUTEX(name) \
-   static _glthread_Mutex name = PTHREAD_MUTEX_INITIALIZER
+#define pipe_mutex_init(mutex) \
+   pthread_mutex_init(&(mutex), NULL)
 
-#define _glthread_INIT_MUTEX(name) \
-   pthread_mutex_init(&(name), NULL)
+#define pipe_mutex_destroy(mutex) \
+   pthread_mutex_destroy(&(mutex))
 
-#define _glthread_DESTROY_MUTEX(name) \
-   pthread_mutex_destroy(&(name))
+#define pipe_mutex_lock(mutex) \
+   (void) pthread_mutex_lock(&(mutex))
 
-#define _glthread_LOCK_MUTEX(name) \
-   (void) pthread_mutex_lock(&(name))
+#define pipe_mutex_unlock(mutex) \
+   (void) pthread_mutex_unlock(&(mutex))
 
-#define _glthread_UNLOCK_MUTEX(name) \
-   (void) pthread_mutex_unlock(&(name))
+#define pipe_static_condvar(mutex) \
+   static pipe_condvar mutex = PTHREAD_COND_INITIALIZER
 
-typedef pthread_cond_t _glthread_Cond;
-
-#define _glthread_DECLARE_STATIC_COND(name) \
-   static _glthread_Cond name = PTHREAD_COND_INITIALIZER
-
-#define _glthread_INIT_COND(cond)			\
+#define pipe_condvar_init(cond)	\
    pthread_cond_init(&(cond), NULL)
 
-#define _glthread_DESTROY_COND(name) \
-   pthread_cond_destroy(&(name))
+#define pipe_condvar_destroy(cond) \
+   pthread_cond_destroy(&(cond))
 
-#define _glthread_COND_WAIT(cond, mutex) \
+#define pipe_condvar_wait(cond, mutex) \
   pthread_cond_wait(&(cond), &(mutex))
 
-#define _glthread_COND_SIGNAL(cond) \
+#define pipe_condvar_signal(cond) \
   pthread_cond_signal(&(cond))
 
-#define _glthread_COND_BROADCAST(cond) \
+#define pipe_condvar_broadcast(cond) \
   pthread_cond_broadcast(&(cond))
 
-#endif /* PTHREADS */
 
+#elif defined(PIPE_OS_WINDOWS)
 
-
-
-/*
- * Solaris threads. Use only up to Solaris 2.4.
- * Solaris 2.5 and higher provide POSIX threads.
- * Be sure to compile with -mt on the Solaris compilers, or
- * use -D_REENTRANT if using gcc.
- */
-#ifdef SOLARIS_THREADS
-#include <thread.h>
-
-typedef struct {
-   thread_key_t key;
-   mutex_t      keylock;
-   int          initMagic;
-} _glthread_TSD;
-
-typedef thread_t _glthread_Thread;
-
-typedef mutex_t _glthread_Mutex;
-
-/* XXX need to really implement mutex-related macros */
-#define _glthread_DECLARE_STATIC_MUTEX(name)  static _glthread_Mutex name = 0
-#define _glthread_INIT_MUTEX(name)  (void) name
-#define _glthread_DESTROY_MUTEX(name) (void) name
-#define _glthread_LOCK_MUTEX(name)  (void) name
-#define _glthread_UNLOCK_MUTEX(name)  (void) name
-
-#endif /* SOLARIS_THREADS */
-
-
-
-
-/*
- * Windows threads. Should work with Windows NT and 95.
- * IMPORTANT: Link with multithreaded runtime library when THREADS are
- * used!
- */
-#ifdef WIN32_THREADS
 #include <windows.h>
 
-typedef struct {
-   DWORD key;
-   int   initMagic;
-} _glthread_TSD;
+typedef HANDLE pipe_thread;
+typedef CRITICAL_SECTION pipe_mutex;
 
-typedef HANDLE _glthread_Thread;
+#define pipe_static_mutex(name) \
+   /*static*/ pipe_mutex name = {0,0,0,0,0,0}
 
-typedef CRITICAL_SECTION _glthread_Mutex;
+#define pipe_mutex_init(name) \
+   InitializeCriticalSection(&name)
 
-#define _glthread_DECLARE_STATIC_MUTEX(name)  /*static*/ _glthread_Mutex name = {0,0,0,0,0,0}
-#define _glthread_INIT_MUTEX(name)  InitializeCriticalSection(&name)
-#define _glthread_DESTROY_MUTEX(name)  DeleteCriticalSection(&name)
-#define _glthread_LOCK_MUTEX(name)  EnterCriticalSection(&name)
-#define _glthread_UNLOCK_MUTEX(name)  LeaveCriticalSection(&name)
+#define pipe_mutex_destroy(name) \
+   DeleteCriticalSection(&name)
 
-#endif /* WIN32_THREADS */
+#define pipe_mutex_lock(name) \
+   EnterCriticalSection(&name)
+
+#define pipe_mutex_unlock(name) \
+   LeaveCriticalSection(&name)
 
 
-
-
-/*
- * XFree86 has its own thread wrapper, Xthreads.h
- * We wrap it again for GL.
- */
-#ifdef USE_XTHREADS
-#include <X11/Xthreads.h>
-
-typedef struct {
-   xthread_key_t key;
-   int initMagic;
-} _glthread_TSD;
-
-typedef xthread_t _glthread_Thread;
-
-typedef xmutex_rec _glthread_Mutex;
-
-#ifdef XMUTEX_INITIALIZER
-#define _glthread_DECLARE_STATIC_MUTEX(name) \
-   static _glthread_Mutex name = XMUTEX_INITIALIZER
 #else
-#define _glthread_DECLARE_STATIC_MUTEX(name) \
-   static _glthread_Mutex name
+
+/** Dummy definitions */
+
+typedef unsigned pipe_thread;
+typedef unsigned pipe_mutex;
+typedef unsigned pipe_condvar;
+typedef unsigned pipe_tsd;
+
+#define pipe_static_mutex(mutex) \
+   static pipe_mutex mutex = 0
+
+#define pipe_mutex_init(mutex) \
+   (void) mutex
+
+#define pipe_mutex_destroy(mutex) \
+   (void) mutex
+
+#define pipe_mutex_lock(mutex) \
+   (void) mutex
+
+#define pipe_mutex_unlock(mutex) \
+   (void) mutex
+
+#define pipe_static_condvar(condvar) \
+   static _glthread_Cond condvar = 0
+
+#define pipe_condvar_init(condvar) \
+   (void) condvar
+
+#define pipe_condvar_destroy(condvar) \
+   (void) condvar
+
+#define pipe_condvar_wait(condvar, mutex) \
+   (void) condvar
+
+#define pipe_condvar_signal(condvar) \
+   (void) condvar
+
+#define pipe_condvar_broadcast(condvar) \
+   (void) condvar
+
+
+#endif  /* PIPE_OS_? */
+
+
+
+/*
+ * Thread-specific data.
+ */
+
+typedef struct {
+#if defined(PIPE_OS_LINUX)
+   pthread_key_t key;
+#elif defined(PIPE_OS_WINDOWS)
+   DWORD key;
 #endif
-
-#define _glthread_INIT_MUTEX(name) \
-   xmutex_init(&(name))
-
-#define _glthread_DESTROY_MUTEX(name) \
-   xmutex_clear(&(name))
-
-#define _glthread_LOCK_MUTEX(name) \
-   (void) xmutex_lock(&(name))
-
-#define _glthread_UNLOCK_MUTEX(name) \
-   (void) xmutex_unlock(&(name))
-
-#endif /* USE_XTHREADS */
+   int initMagic;
+} pipe_tsd;
 
 
-
-/*
- * BeOS threads. R5.x required.
- */
-#ifdef BEOS_THREADS
-
-#include <kernel/OS.h>
-#include <support/TLS.h>
-
-typedef struct {
-   int32        key;
-   int          initMagic;
-} _glthread_TSD;
-
-typedef thread_id _glthread_Thread;
-
-/* Use Benaphore, aka speeder semaphore */
-typedef struct {
-    int32   lock;
-    sem_id  sem;
-} benaphore;
-typedef benaphore _glthread_Mutex;
-
-#define _glthread_DECLARE_STATIC_MUTEX(name)  static _glthread_Mutex name = { 0, 0 }
-#define _glthread_INIT_MUTEX(name)    	name.sem = create_sem(0, #name"_benaphore"), name.lock = 0
-#define _glthread_DESTROY_MUTEX(name) 	delete_sem(name.sem), name.lock = 0
-#define _glthread_LOCK_MUTEX(name)    	if (name.sem == 0) _glthread_INIT_MUTEX(name); \
-									  	if (atomic_add(&(name.lock), 1) >= 1) acquire_sem(name.sem)
-#define _glthread_UNLOCK_MUTEX(name)  	if (atomic_add(&(name.lock), -1) > 1) release_sem(name.sem)
-
-#endif /* BEOS_THREADS */
+#define PIPE_TSD_INIT_MAGIC 0xff8adc98
 
 
+static INLINE void
+pipe_tsd_init(pipe_tsd *tsd)
+{
+#if defined(PIPE_OS_LINUX)
+   if (pthread_key_create(&tsd->key, NULL/*free*/) != 0) {
+      perror("pthread_key_create(): failed to allocate key for thread specific data");
+      exit(-1);
+   }
+#elif defined(PIPE_OS_WINDOWS)
+   assert(0);
+#endif
+   tsd->initMagic = PIPE_TSD_INIT_MAGIC;
+}
 
-#ifndef THREADS
+static INLINE void *
+pipe_tsd_get(pipe_tsd *tsd)
+{
+   if (tsd->initMagic != (int) PIPE_TSD_INIT_MAGIC) {
+      pipe_tsd_init(tsd);
+   }
+#if defined(PIPE_OS_LINUX)
+   return pthread_getspecific(tsd->key);
+#elif defined(PIPE_OS_WINDOWS)
+   assert(0);
+   return NULL;
+#else
+   assert(0);
+   return NULL;
+#endif
+}
 
-/*
- * THREADS not defined
- */
-
-typedef unsigned _glthread_TSD;
-
-typedef unsigned _glthread_Thread;
-
-typedef unsigned _glthread_Mutex;
-
-#define _glthread_DECLARE_STATIC_MUTEX(name)  static _glthread_Mutex name = 0
-
-#define _glthread_INIT_MUTEX(name)  (void) name
-
-#define _glthread_DESTROY_MUTEX(name)  (void) name
-
-#define _glthread_LOCK_MUTEX(name)  (void) name
-
-#define _glthread_UNLOCK_MUTEX(name)  (void) name
-
-typedef unsigned _glthread_Cond;
-
-#define _glthread_DECLARE_STATIC_COND(name) static _glthread_Cond name = 0
-
-#define _glthread_INIT_COND(name)  (void) name
-
-#define _glthread_DESTROY_COND(name)  (void) name
-
-#define _glthread_COND_WAIT(name, mutex)  (void) name
-
-#define _glthread_COND_SIGNAL(name)  (void) name
-
-#define _glthread_COND_BROADCAST(name)  (void) name
-
-#endif /* THREADS */
+static INLINE void
+pipe_tsd_set(pipe_tsd *tsd, void *value)
+{
+   if (tsd->initMagic != (int) PIPE_TSD_INIT_MAGIC) {
+      pipe_tsd_init(tsd);
+   }
+#if defined(PIPE_OS_LINUX)
+   if (pthread_setspecific(tsd->key, value) != 0) {
+      perror("pthread_set_specific() failed");
+      exit(-1);
+   }
+#elif defined(PIPE_OS_WINDOWS)
+   assert(0);
+#else
+   assert(0);
+#endif
+}
 
 
 
-/*
- * Platform independent thread specific data API.
- */
-
-extern unsigned long
-_glthread_GetID(void);
-
-
-extern void
-_glthread_InitTSD(_glthread_TSD *);
-
-
-extern void *
-_glthread_GetTSD(_glthread_TSD *);
-
-
-extern void
-_glthread_SetTSD(_glthread_TSD *, void *);
-
-
-
-#endif /* _P_THREAD_H_ */
+#endif /* _P_THREAD2_H_ */

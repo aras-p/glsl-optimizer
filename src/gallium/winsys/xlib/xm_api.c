@@ -62,7 +62,6 @@
 #include "xmesaP.h"
 #include "main/context.h"
 #include "main/framebuffer.h"
-#include "glapi/glthread.h"
 
 #include "state_tracker/st_public.h"
 #include "state_tracker/st_context.h"
@@ -75,7 +74,7 @@
 /**
  * Global X driver lock
  */
-_glthread_Mutex _xmesa_lock;
+pipe_mutex _xmesa_lock;
 
 
 int xmesa_mode;
@@ -245,10 +244,10 @@ xmesa_get_window_size(XMesaDisplay *dpy, XMesaBuffer b,
 #else
    Status stat;
 
-   _glthread_LOCK_MUTEX(_xmesa_lock);
+   pipe_mutex_lock(_xmesa_lock);
    XSync(b->xm_visual->display, 0); /* added for Chromium */
    stat = get_drawable_size(dpy, b->drawable, width, height);
-   _glthread_UNLOCK_MUTEX(_xmesa_lock);
+   pipe_mutex_unlock(_xmesa_lock);
 
    if (!stat) {
       /* probably querying a window that's recently been destroyed */
@@ -779,7 +778,7 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
    uint pf;
 
    if (firstTime) {
-      _glthread_INIT_MUTEX(_xmesa_lock);
+      pipe_mutex_init(_xmesa_lock);
       firstTime = GL_FALSE;
    }
 
