@@ -16,7 +16,10 @@ HOST_CC = gcc
 OPT_FLAGS = -g
 
 # Cell SDK location
-SDK = /opt/ibm/cell-sdk/prototype/sysroot/usr
+## For SDK 2.1: (plus, remove -DSPU_MAIN_PARAM_LONG_LONG below)
+#SDK = /opt/ibm/cell-sdk/prototype/sysroot/usr
+## For SDK 3.0:
+SDK = /opt/cell/sdk/usr/
 
 
 CFLAGS = $(OPT_FLAGS) -Wall -Winline -fPIC -m32 -mabi=altivec -maltivec \
@@ -43,6 +46,7 @@ SPU_CC = spu-gcc
 
 SPU_CFLAGS = $(OPT_FLAGS) -W -Wall -Winline -Wmissing-prototypes -Wno-main \
 	-I. -I$(SDK)/spu/include -I$(TOP)/src/mesa/ $(INCLUDE_DIRS) \
+	-DSPU_MAIN_PARAM_LONG_LONG \
 	-include spu_intrinsics.h
 
 SPU_LFLAGS = -L$(SDK)/spu/lib -Wl,-N -lmisc
