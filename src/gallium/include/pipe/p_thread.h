@@ -137,7 +137,7 @@ typedef unsigned pipe_tsd;
    (void) mutex
 
 #define pipe_static_condvar(condvar) \
-   static _glthread_Cond condvar = 0
+   static unsigned condvar = 0
 
 #define pipe_condvar_init(condvar) \
    (void) condvar
