@@ -80,7 +80,7 @@ typedef pthread_cond_t pipe_condvar;
   pthread_cond_broadcast(&(cond))
 
 
-#elif defined(PIPE_OS_WINDOWS)
+#elif defined(PIPE_SUBSYSTEM_WINDOWS_USER)
 
 #include <windows.h>
 
@@ -119,7 +119,6 @@ typedef unsigned pipe_condvar;
 typedef unsigned pipe_thread;
 typedef unsigned pipe_mutex;
 typedef unsigned pipe_condvar;
-typedef unsigned pipe_tsd;
 
 #define pipe_static_mutex(mutex) \
    static pipe_mutex mutex = 0
@@ -166,7 +165,7 @@ typedef unsigned pipe_tsd;
 typedef struct {
 #if defined(PIPE_OS_LINUX)
    pthread_key_t key;
-#elif defined(PIPE_OS_WINDOWS)
+#elif defined(PIPE_SUBSYSTEM_WINDOWS_USER)
    DWORD key;
 #endif
    int initMagic;
@@ -184,7 +183,7 @@ pipe_tsd_init(pipe_tsd *tsd)
       perror("pthread_key_create(): failed to allocate key for thread specific data");
       exit(-1);
    }
-#elif defined(PIPE_OS_WINDOWS)
+#elif defined(PIPE_SUBSYSTEM_WINDOWS_USER)
    assert(0);
 #endif
    tsd->initMagic = PIPE_TSD_INIT_MAGIC;
@@ -198,7 +197,7 @@ pipe_tsd_get(pipe_tsd *tsd)
    }
 #if defined(PIPE_OS_LINUX)
    return pthread_getspecific(tsd->key);
-#elif defined(PIPE_OS_WINDOWS)
+#elif defined(PIPE_SUBSYSTEM_WINDOWS_USER)
    assert(0);
    return NULL;
 #else
@@ -218,7 +217,7 @@ pipe_tsd_set(pipe_tsd *tsd, void *value)
       perror("pthread_set_specific() failed");
       exit(-1);
    }
-#elif defined(PIPE_OS_WINDOWS)
+#elif defined(PIPE_SUBSYSTEM_WINDOWS_USER)
    assert(0);
 #else
    assert(0);
