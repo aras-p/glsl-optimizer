@@ -102,6 +102,15 @@ typedef CRITICAL_SECTION pipe_mutex;
 #define pipe_mutex_unlock(name) \
    LeaveCriticalSection(&name)
 
+/* XXX: dummy definitions, make it compile */
+
+typedef unsigned pipe_condvar;
+
+#define pipe_condvar_init(condvar) \
+   (void) condvar
+
+#define pipe_condvar_broadcast(condvar) \
+   (void) condvar
 
 #else
 
