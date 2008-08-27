@@ -85,8 +85,8 @@ cell_texture_layout(struct cell_texture * spt)
 
 
 static struct pipe_texture *
-cell_texture_create_screen(struct pipe_screen *screen,
-                           const struct pipe_texture *templat)
+cell_texture_create(struct pipe_screen *screen,
+                    const struct pipe_texture *templat)
 {
    struct pipe_winsys *ws = screen->winsys;
    struct cell_texture *spt = CALLOC_STRUCT(cell_texture);
@@ -113,8 +113,8 @@ cell_texture_create_screen(struct pipe_screen *screen,
 
 
 static void
-cell_texture_release_screen(struct pipe_screen *screen,
-                            struct pipe_texture **pt)
+cell_texture_release(struct pipe_screen *screen,
+                     struct pipe_texture **pt)
 {
    if (!*pt)
       return;
@@ -148,10 +148,10 @@ cell_texture_update(struct pipe_context *pipe, struct pipe_texture *texture,
 
 
 static struct pipe_surface *
-cell_get_tex_surface_screen(struct pipe_screen *screen,
-                            struct pipe_texture *pt,
-                            unsigned face, unsigned level, unsigned zslice,
-                            unsigned usage)
+cell_get_tex_surface(struct pipe_screen *screen,
+                     struct pipe_texture *pt,
+                     unsigned face, unsigned level, unsigned zslice,
+                     unsigned usage)
 {
    struct pipe_winsys *ws = screen->winsys;
    struct cell_texture *spt = cell_texture(pt);
@@ -285,6 +285,21 @@ cell_update_texture_mapping(struct cell_context *cell)
 }
 
 
+static void 
+cell_tex_surface_release(struct pipe_screen *screen, 
+                         struct pipe_surface **s)
+{
+   /* Effectively do the texture_update work here - if texture images
+    * needed post-processing to put them into hardware layout, this is
+    * where it would happen.  For softpipe, nothing to do.
+    */
+   assert ((*s)->texture);
+   pipe_texture_reference(&(*s)->texture, NULL); 
+
+   screen->winsys->surface_release(screen->winsys, s);
+}
+
+
 static void *
 cell_surface_map( struct pipe_screen *screen,
                   struct pipe_surface *surface,
@@ -336,9 +351,11 @@ cell_init_texture_functions(struct cell_context *cell)
 void
 cell_init_screen_texture_funcs(struct pipe_screen *screen)
 {
-   screen->texture_create = cell_texture_create_screen;
-   screen->texture_release = cell_texture_release_screen;
-   screen->get_tex_surface = cell_get_tex_surface_screen;
+   screen->texture_create = cell_texture_create;
+   screen->texture_release = cell_texture_release;
+
+   screen->get_tex_surface = cell_get_tex_surface;
+   screen->tex_surface_release = cell_tex_surface_release;
 
    screen->surface_map = cell_surface_map;
    screen->surface_unmap = cell_surface_unmap;
