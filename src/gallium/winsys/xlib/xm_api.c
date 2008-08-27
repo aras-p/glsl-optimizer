@@ -1298,6 +1298,7 @@ void XMesaFlush( XMesaContext c )
 #ifdef XFree86Server
       /* NOT_NEEDED */
 #else
+      st_finish(c->st);
       XSync( c->xm_visual->display, False );
 #endif
    }
