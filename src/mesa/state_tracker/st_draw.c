@@ -252,36 +252,103 @@ setup_edgeflags(GLcontext *ctx, GLenum primMode, GLint start, GLint count,
 }
 
 
+/**
+ * Examine the active arrays to determine if we have interleaved
+ * vertex arrays living in one VBO.
+ */
+static GLboolean
+is_interleaved_arrays(const struct st_vertex_program *vp,
+                      const struct gl_client_array **arrays)
+{
+   GLuint attr;
+   struct gl_buffer_object *firstBufObj = NULL;
+   GLint firstStride = -1;
+
+   for (attr = 0; attr < vp->num_inputs; attr++) {
+      const GLuint mesaAttr = vp->index_to_input[attr];
+      struct gl_buffer_object *bufObj = arrays[mesaAttr]->BufferObj;
+      GLsizei stride = arrays[mesaAttr]->StrideB;
+
+      if (!bufObj || !bufObj->Name)
+         return GL_FALSE;
+
+      if (!firstBufObj) {
+         firstBufObj = bufObj;
+         firstStride = stride;
+      }
+      else if (bufObj != firstBufObj ||
+               stride != firstStride) {
+         return GL_FALSE;
+      }
+   }
+   return GL_TRUE;
+}
+
 
 /**
- * This function gets plugged into the VBO module and is called when
- * we have something to render.
- * Basically, translate the information into the format expected by pipe.
+ * Set up for drawing interleaved arrays that all live in one VBO.
  */
-void
-st_draw_vbo(GLcontext *ctx,
-            const struct gl_client_array **arrays,
-            const struct _mesa_prim *prims,
-            GLuint nr_prims,
-            const struct _mesa_index_buffer *ib,
-            GLuint min_index,
-            GLuint max_index)
+static void
+setup_interleaved_attribs(GLcontext *ctx,
+                          const struct st_vertex_program *vp,
+                          const struct gl_client_array **arrays,
+                          GLuint max_index,
+                          struct pipe_vertex_buffer *vbuffer,
+                          struct pipe_vertex_element velements[])
 {
    struct pipe_context *pipe = ctx->st->pipe;
-   const struct st_vertex_program *vp;
-   const struct pipe_shader_state *vs;
-   struct pipe_vertex_buffer vbuffer[PIPE_MAX_SHADER_INPUTS];
+   GLboolean buffer_init = GL_FALSE;
    GLuint attr;
-   struct pipe_vertex_element velements[PIPE_MAX_ATTRIBS];
 
-   /* sanity check for pointer arithmetic below */
-   assert(sizeof(arrays[0]->Ptr[0]) == 1);
+   /* loop over TGSI shader inputs to determine vertex buffer
+    * and attribute info
+    */
+   for (attr = 0; attr < vp->num_inputs; attr++) {
+      const GLuint mesaAttr = vp->index_to_input[attr];
+      struct gl_buffer_object *bufobj = arrays[mesaAttr]->BufferObj;
+      struct st_buffer_object *stobj = st_buffer_object(bufobj);
+      GLsizei stride = arrays[mesaAttr]->StrideB;
 
-   st_validate_state(ctx->st);
+      assert(stobj->buffer);
 
-   /* must get these after state validation! */
-   vp = ctx->st->vp;
-   vs = &ctx->st->vp->state;
+      /*printf("stobj %u = %p\n", attr, (void*)stobj);*/
+
+      if (!buffer_init) {
+         vbuffer->buffer = NULL;
+         pipe_reference_buffer(pipe, &vbuffer->buffer, stobj->buffer);
+         vbuffer->buffer_offset = (unsigned) arrays[mesaAttr]->Ptr;
+         vbuffer->pitch = stride; /* in bytes */
+         vbuffer->max_index = max_index;
+         buffer_init = GL_TRUE;
+      }
+
+      velements[attr].src_offset =
+         (unsigned) arrays[mesaAttr]->Ptr - vbuffer->buffer_offset;
+      velements[attr].vertex_buffer_index = 0;
+      velements[attr].nr_components = arrays[mesaAttr]->Size;
+      velements[attr].src_format
+         = pipe_vertex_format(arrays[mesaAttr]->Type,
+                              arrays[mesaAttr]->Size,
+                              arrays[mesaAttr]->Normalized);
+      assert(velements[attr].src_format);
+   }
+}
+
+
+/**
+ * Set up a separate pipe_vertex_buffer and pipe_vertex_element for each
+ * vertex attribute.
+ */
+static void
+setup_non_interleaved_attribs(GLcontext *ctx,
+                              const struct st_vertex_program *vp,
+                              const struct gl_client_array **arrays,
+                              GLuint max_index,
+                              struct pipe_vertex_buffer vbuffer[],
+                              struct pipe_vertex_element velements[])
+{
+   struct pipe_context *pipe = ctx->st->pipe;
+   GLuint attr;
 
    /* loop over TGSI shader inputs to determine vertex buffer
     * and attribute info
@@ -298,6 +365,7 @@ st_draw_vbo(GLcontext *ctx,
           */
          struct st_buffer_object *stobj = st_buffer_object(bufobj);
          assert(stobj->buffer);
+         /*printf("stobj %u = %p\n", attr, (void*) stobj);*/
 
          vbuffer[attr].buffer = NULL;
          pipe_reference_buffer(pipe, &vbuffer[attr].buffer, stobj->buffer);
@@ -307,6 +375,7 @@ st_draw_vbo(GLcontext *ctx,
       else {
          /* attribute data is in user-space memory, not a VBO */
          uint bytes;
+         /*printf("user-space array %d\n", attr);*/
 	
          /* wrap user data */
          if (arrays[mesaAttr]->Ptr) {
@@ -346,27 +415,80 @@ st_draw_vbo(GLcontext *ctx,
                               arrays[mesaAttr]->Normalized);
       assert(velements[attr].src_format);
    }
+}
+
+
+
+
+/**
+ * This function gets plugged into the VBO module and is called when
+ * we have something to render.
+ * Basically, translate the information into the format expected by pipe.
+ */
+void
+st_draw_vbo(GLcontext *ctx,
+            const struct gl_client_array **arrays,
+            const struct _mesa_prim *prims,
+            GLuint nr_prims,
+            const struct _mesa_index_buffer *ib,
+            GLuint min_index,
+            GLuint max_index)
+{
+   struct pipe_context *pipe = ctx->st->pipe;
+   const struct st_vertex_program *vp;
+   const struct pipe_shader_state *vs;
+   struct pipe_vertex_buffer vbuffer[PIPE_MAX_SHADER_INPUTS];
+   GLuint attr;
+   struct pipe_vertex_element velements[PIPE_MAX_ATTRIBS];
+   unsigned num_vbuffers, num_velements;
+
+   /* sanity check for pointer arithmetic below */
+   assert(sizeof(arrays[0]->Ptr[0]) == 1);
+
+   st_validate_state(ctx->st);
+
+   /* must get these after state validation! */
+   vp = ctx->st->vp;
+   vs = &ctx->st->vp->state;
+
+   /*
+    * Setup the vbuffer[] and velements[] arrays.
+    */
+   if (is_interleaved_arrays(vp, arrays)) {
+      /*printf("Draw interleaved\n");*/
+      setup_interleaved_attribs(ctx, vp, arrays, max_index,
+                                vbuffer, velements);
+      num_vbuffers = 1;
+      num_velements = vp->num_inputs;
+   }
+   else {
+      /*printf("Draw non-interleaved\n");*/
+      setup_non_interleaved_attribs(ctx, vp, arrays, max_index,
+                                    vbuffer, velements);
+      num_vbuffers = vp->num_inputs;
+      num_velements = vp->num_inputs;
+   }
 
 #if 0
    {
       GLuint i;
-      for (i = 0; i < vp->num_inputs; i++) {
+      for (i = 0; i < num_vbuffers; i++) {
          printf("buffers[%d].pitch = %u\n", i, vbuffer[i].pitch);
          printf("buffers[%d].max_index = %u\n", i, vbuffer[i].max_index);
          printf("buffers[%d].buffer_offset = %u\n", i, vbuffer[i].buffer_offset);
          printf("buffers[%d].buffer = %p\n", i, (void*) vbuffer[i].buffer);
       }
-      for (i = 0; i < vp->num_inputs; i++) {
-         printf("vlements[%d].src_offset = %u\n", i, velements[i].src_offset);
+      for (i = 0; i < num_velements; i++) {
          printf("vlements[%d].vbuffer_index = %u\n", i, velements[i].vertex_buffer_index);
+         printf("vlements[%d].src_offset = %u\n", i, velements[i].src_offset);
          printf("vlements[%d].nr_comps = %u\n", i, velements[i].nr_components);
          printf("vlements[%d].format = %s\n", i, pf_name(velements[i].src_format));
       }
    }
 #endif
 
-   pipe->set_vertex_buffers(pipe, vp->num_inputs, vbuffer);
-   pipe->set_vertex_elements(pipe, vp->num_inputs, velements);
+   pipe->set_vertex_buffers(pipe, num_vbuffers, vbuffer);
+   pipe->set_vertex_elements(pipe, num_velements, velements);
 
    /* do actual drawing */
    if (ib) {
@@ -449,7 +571,7 @@ st_draw_vbo(GLcontext *ctx,
    }
 
    /* unreference buffers (frees wrapped user-space buffer objects) */
-   for (attr = 0; attr < vp->num_inputs; attr++) {
+   for (attr = 0; attr < num_vbuffers; attr++) {
       pipe_reference_buffer(pipe, &vbuffer[attr].buffer, NULL);
       assert(!vbuffer[attr].buffer);
    }
