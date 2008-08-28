@@ -41,6 +41,7 @@ SOURCES = \
 	linestrip-stipple-wide.c \
 	linestrip-stipple.c \
 	linestrip.c \
+	long-fixed-func.c \
 	pgon-mode.c \
 	point-clip.c \
 	point-param.c \
