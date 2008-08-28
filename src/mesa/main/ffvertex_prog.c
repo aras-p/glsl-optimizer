@@ -1657,8 +1657,6 @@ static void build_tnl_program( struct tnl_program *p )
     */
    emit_op1(p, OPCODE_END, undef, 0, undef);
 
-   _mesa_print_program(&p->program->Base);
-
    /* Disassemble:
     */
    if (DISASSEM) {
