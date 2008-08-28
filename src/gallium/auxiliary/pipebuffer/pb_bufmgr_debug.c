@@ -129,7 +129,7 @@ check_random_pattern(const uint8_t *dst, size_t size,
    for(i = 0; i < size; ++i) {
       if(*dst++ != random_pattern[i % sizeof(random_pattern)]) {
          *min_ofs = MIN2(*min_ofs, i);
-         *max_ofs = MIN2(*max_ofs, i);
+         *max_ofs = MAX2(*max_ofs, i);
 	 result = FALSE;
       }
    }
@@ -172,18 +172,21 @@ pb_debug_buffer_check(struct pb_debug_buffer *buf)
       underflow = !check_random_pattern(map, buf->underflow_size, 
                                         &min_ofs, &max_ofs);
       if(underflow) {
-         debug_printf("buffer underflow (%u of %u bytes) detected\n",
+         debug_printf("buffer underflow (offset -%u%s to -%u bytes) detected\n",
                       buf->underflow_size - min_ofs,
-                      buf->underflow_size);
+                      min_ofs == 0 ? "+" : "",
+                      buf->underflow_size - max_ofs);
       }
       
       overflow = !check_random_pattern(map + buf->underflow_size + buf->base.base.size, 
                                        buf->overflow_size, 
                                        &min_ofs, &max_ofs);
       if(overflow) {
-         debug_printf("buffer overflow (%u of %u bytes) detected\n",
+         debug_printf("buffer overflow (size %u plus offset %u to %u%s bytes) detected\n",
+                      buf->base.base.size,
+                      min_ofs,
                       max_ofs,
-                      buf->overflow_size);
+                      max_ofs == buf->overflow_size - 1 ? "+" : "");
       }
       
       debug_assert(!underflow && !overflow);
