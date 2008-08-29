@@ -617,7 +617,7 @@ struct brw_instruction *brw_BREAK(struct brw_compile *p)
    brw_set_src1(insn, brw_imm_d(0x0));
    insn->header.compression_control = BRW_COMPRESSION_NONE;
    insn->header.execution_size = BRW_EXECUTE_8;
-   insn->header.mask_control = BRW_MASK_DISABLE;
+   /* insn->header.mask_control = BRW_MASK_DISABLE; */
    insn->bits3.if_else.pad0 = 0;
    return insn;
 }
@@ -631,7 +631,7 @@ struct brw_instruction *brw_CONT(struct brw_compile *p)
    brw_set_src1(insn, brw_imm_d(0x0));
    insn->header.compression_control = BRW_COMPRESSION_NONE;
    insn->header.execution_size = BRW_EXECUTE_8;
-   insn->header.mask_control = BRW_MASK_DISABLE;
+   /* insn->header.mask_control = BRW_MASK_DISABLE; */
    insn->bits3.if_else.pad0 = 0;
    return insn;
 }
@@ -655,7 +655,7 @@ struct brw_instruction *brw_DO(struct brw_compile *p, GLuint execute_size)
       insn->header.execution_size = execute_size;
       insn->header.predicate_control = BRW_PREDICATE_NONE;
       /* insn->header.mask_control = BRW_MASK_ENABLE; */
-      insn->header.mask_control = BRW_MASK_DISABLE;
+      /* insn->header.mask_control = BRW_MASK_DISABLE; */
 
       return insn;
    }
@@ -694,7 +694,7 @@ struct brw_instruction *brw_WHILE(struct brw_compile *p,
 
 /*    insn->header.mask_control = BRW_MASK_ENABLE; */
 
-   insn->header.mask_control = BRW_MASK_DISABLE;
+   /* insn->header.mask_control = BRW_MASK_DISABLE; */
    p->current->header.predicate_control = BRW_PREDICATE_NONE;   
    return insn;
 }
