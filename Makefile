@@ -34,6 +34,7 @@ realclean:
 	-rm -f `find . -name \*.a`
 	-rm -f `find . -name \*.so`
 	-rm -f `find . -name depend`
+	-rm -f `find . -name depend.bak`
 	-rm -rf lib*
 	$(MAKE) clean
 	-rm -f $(TOP)/configs/current
