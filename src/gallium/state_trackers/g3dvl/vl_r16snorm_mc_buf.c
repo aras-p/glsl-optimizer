@@ -241,7 +241,6 @@ static int vlGrabBlocks
 	return 0;
 }
 
-#if 0
 static int vlGrabMacroBlock
 (
 	struct vlR16SnormBufferedMC *mc,
@@ -456,237 +455,6 @@ static int vlGrabMacroBlock
 
 	return 0;
 }
-#else
-static int vlGrabMacroBlock
-(
-	struct vlR16SnormBufferedMC *mc,
-	struct vlMpeg2MacroBlock *macroblock
-)
-{
-	const struct vlVertex2f	unit =
-	{
-		mc->surface_tex_inv_size.x * VL_MACROBLOCK_WIDTH,
-		mc->surface_tex_inv_size.y * VL_MACROBLOCK_HEIGHT
-	};
-	const struct vlVertex2f half =
-	{
-		mc->surface_tex_inv_size.x * (VL_MACROBLOCK_WIDTH / 2),
-		mc->surface_tex_inv_size.y * (VL_MACROBLOCK_HEIGHT / 2)
-	};
-
-	struct vlVertex2f	*vb;
-	unsigned int		mb_buf_id;
-	struct vlVertex2f	mo_vec[2];
-	unsigned int		i;
-
-	assert(mc);
-	assert(macroblock);
-
-	switch (macroblock->mb_type)
-	{
-		case vlMacroBlockTypeIntra:
-		{
-			mb_buf_id = vlMacroBlockExTypeIntra;
-			break;
-		}
-		case vlMacroBlockTypeFwdPredicted:
-		{
-			mb_buf_id = macroblock->mo_type == vlMotionTypeFrame ?
-				vlMacroBlockExTypeFwdPredictedFrame : vlMacroBlockExTypeFwdPredictedField;
-			break;
-		}
-		case vlMacroBlockTypeBkwdPredicted:
-		{
-			mb_buf_id = macroblock->mo_type == vlMotionTypeFrame ?
-				vlMacroBlockExTypeBkwdPredictedFrame : vlMacroBlockExTypeBkwdPredictedField;
-			break;
-		}
-		case vlMacroBlockTypeBiPredicted:
-		{
-			mb_buf_id = macroblock->mo_type == vlMotionTypeFrame ?
-				vlMacroBlockExTypeBiPredictedFrame : vlMacroBlockExTypeBiPredictedField;
-			break;
-		}
-		default:
-			assert(0);
-	}
-
-	vb = (struct vlVertex2f*)mc->pipe->winsys->buffer_map
-	(
-		mc->pipe->winsys,
-		mc->vertex_bufs[mc->cur_buf % NUM_BUF_SETS][mb_buf_id][0].buffer,
-		PIPE_BUFFER_USAGE_CPU_WRITE
-	) + mc->num_macroblocks[mb_buf_id] * 24;
-
-	vb[0].x = macroblock->mbx * unit.x;		vb[0].y = macroblock->mby * unit.y;
-	vb[1].x = macroblock->mbx * unit.x;		vb[1].y = macroblock->mby * unit.y + half.y;
-	vb[2].x = macroblock->mbx * unit.x + half.x;	vb[2].y = macroblock->mby * unit.y;
-
-	vb[3].x = macroblock->mbx * unit.x + half.x;	vb[3].y = macroblock->mby * unit.y;
-	vb[4].x = macroblock->mbx * unit.x;		vb[4].y = macroblock->mby * unit.y + half.y;
-	vb[5].x = macroblock->mbx * unit.x + half.x;	vb[5].y = macroblock->mby * unit.y + half.y;
-
-	vb[6].x = macroblock->mbx * unit.x + half.x;	vb[6].y = macroblock->mby * unit.y;
-	vb[7].x = macroblock->mbx * unit.x + half.x;	vb[7].y = macroblock->mby * unit.y + half.y;
-	vb[8].x = macroblock->mbx * unit.x + unit.x;	vb[8].y = macroblock->mby * unit.y;
-
-	vb[9].x = macroblock->mbx * unit.x + unit.x;	vb[9].y = macroblock->mby * unit.y;
-	vb[10].x = macroblock->mbx * unit.x + half.x;	vb[10].y = macroblock->mby * unit.y + half.y;
-	vb[11].x = macroblock->mbx * unit.x + unit.x;	vb[11].y = macroblock->mby * unit.y + half.y;
-
-	vb[12].x = macroblock->mbx * unit.x;		vb[12].y = macroblock->mby * unit.y + half.y;
-	vb[13].x = macroblock->mbx * unit.x;		vb[13].y = macroblock->mby * unit.y + unit.y;
-	vb[14].x = macroblock->mbx * unit.x + half.x;	vb[14].y = macroblock->mby * unit.y + half.y;
-
-	vb[15].x = macroblock->mbx * unit.x + half.x;	vb[15].y = macroblock->mby * unit.y + half.y;
-	vb[16].x = macroblock->mbx * unit.x;		vb[16].y = macroblock->mby * unit.y + unit.y;
-	vb[17].x = macroblock->mbx * unit.x + half.x;	vb[17].y = macroblock->mby * unit.y + unit.y;
-
-	vb[18].x = macroblock->mbx * unit.x + half.x;	vb[18].y = macroblock->mby * unit.y + half.y;
-	vb[19].x = macroblock->mbx * unit.x + half.x;	vb[19].y = macroblock->mby * unit.y + unit.y;
-	vb[20].x = macroblock->mbx * unit.x + unit.x;	vb[20].y = macroblock->mby * unit.y + half.y;
-
-	vb[21].x = macroblock->mbx * unit.x + unit.x;	vb[21].y = macroblock->mby * unit.y + half.y;
-	vb[22].x = macroblock->mbx * unit.x + half.x;	vb[22].y = macroblock->mby * unit.y + unit.y;
-	vb[23].x = macroblock->mbx * unit.x + unit.x;	vb[23].y = macroblock->mby * unit.y + unit.y;
-
-	mc->pipe->winsys->buffer_unmap(mc->pipe->winsys, mc->vertex_bufs[mc->cur_buf % NUM_BUF_SETS][mb_buf_id][0].buffer);
-
-	if (macroblock->mb_type == vlMacroBlockTypeIntra)
-	{
-		vlGrabBlocks
-		(
-			mc,
-			macroblock->mbx,
-			macroblock->mby,
-			macroblock->dct_type,
-			macroblock->cbp,
-			macroblock->blocks
-		);
-
-		mc->num_macroblocks[mb_buf_id]++;
-		mc->total_num_macroblocks++;
-		return 0;
-	}
-
-	vb = (struct vlVertex2f*)mc->pipe->winsys->buffer_map
-	(
-		mc->pipe->winsys,
-		mc->vertex_bufs[mc->cur_buf % NUM_BUF_SETS][mb_buf_id][1].buffer,
-		PIPE_BUFFER_USAGE_CPU_WRITE
-	) + mc->num_macroblocks[mb_buf_id] * 2 * 24;
-
-	if (macroblock->mb_type == vlMacroBlockTypeFwdPredicted || macroblock->mb_type == vlMacroBlockTypeBiPredicted)
-	{
-		mo_vec[0].x = macroblock->PMV[0][0][0] * 0.5f * mc->surface_tex_inv_size.x;
-		mo_vec[0].y = macroblock->PMV[0][0][1] * 0.5f * mc->surface_tex_inv_size.y;
-
-		if (macroblock->mo_type == vlMotionTypeField)
-		{
-			mo_vec[1].x = macroblock->PMV[1][0][0] * 0.5f * mc->surface_tex_inv_size.x;
-			mo_vec[1].y = macroblock->PMV[1][0][1] * 0.5f * mc->surface_tex_inv_size.y;
-		}
-	}
-	else
-	{
-		mo_vec[0].x = macroblock->PMV[0][1][0] * 0.5f * mc->surface_tex_inv_size.x;
-		mo_vec[0].y = macroblock->PMV[0][1][1] * 0.5f * mc->surface_tex_inv_size.y;
-
-		if (macroblock->mo_type == vlMotionTypeField)
-		{
-			mo_vec[1].x = macroblock->PMV[1][1][0] * 0.5f * mc->surface_tex_inv_size.x;
-			mo_vec[1].y = macroblock->PMV[1][1][1] * 0.5f * mc->surface_tex_inv_size.y;
-		}
-	}
-
-	if (macroblock->mo_type == vlMotionTypeFrame)
-	{
-		for (i = 0; i < 24 * 2; i += 2)
-		{
-			vb[i].x = mo_vec[0].x;
-			vb[i].y = mo_vec[0].y;
-		}
-	}
-	else
-	{
-		for (i = 0; i < 24 * 2; i += 2)
-		{
-			vb[i].x = mo_vec[0].x;
-			vb[i].y = mo_vec[0].y;
-			vb[i + 1].x = mo_vec[1].x;
-			vb[i + 1].y = mo_vec[1].y;
-		}
-	}
-
-	mc->pipe->winsys->buffer_unmap(mc->pipe->winsys, mc->vertex_bufs[mc->cur_buf % NUM_BUF_SETS][mb_buf_id][1].buffer);
-
-	if (macroblock->mb_type != vlMacroBlockTypeBiPredicted)
-	{
-		vlGrabBlocks
-		(
-			mc,
-			macroblock->mbx,
-			macroblock->mby,
-			macroblock->dct_type,
-			macroblock->cbp,
-			macroblock->blocks
-		);
-
-		mc->num_macroblocks[mb_buf_id]++;
-		mc->total_num_macroblocks++;
-		return 0;
-	}
-
-	vb = (struct vlVertex2f*)mc->pipe->winsys->buffer_map
-	(
-		mc->pipe->winsys,
-		mc->vertex_bufs[mc->cur_buf % NUM_BUF_SETS][mb_buf_id][2].buffer,
-		PIPE_BUFFER_USAGE_CPU_WRITE
-	) + mc->num_macroblocks[mb_buf_id] * 2 * 24;
-
-	mo_vec[0].x = macroblock->PMV[0][1][0] * 0.5f * mc->surface_tex_inv_size.x;
-	mo_vec[0].y = macroblock->PMV[0][1][1] * 0.5f * mc->surface_tex_inv_size.y;
-
-	if (macroblock->mo_type == vlMotionTypeFrame)
-	{
-		for (i = 0; i < 24 * 2; i += 2)
-		{
-			vb[i].x = mo_vec[0].x;
-			vb[i].y = mo_vec[0].y;
-		}
-	}
-	else
-	{
-		mo_vec[1].x = macroblock->PMV[1][1][0] * 0.5f * mc->surface_tex_inv_size.x;
-		mo_vec[1].y = macroblock->PMV[1][1][1] * 0.5f * mc->surface_tex_inv_size.y;
-
-		for (i = 0; i < 24 * 2; i += 2)
-		{
-			vb[i].x = mo_vec[0].x;
-			vb[i].y = mo_vec[0].y;
-			vb[i + 1].x = mo_vec[1].x;
-			vb[i + 1].y = mo_vec[1].y;
-		}
-	}
-
-	mc->pipe->winsys->buffer_unmap(mc->pipe->winsys, mc->vertex_bufs[mc->cur_buf % NUM_BUF_SETS][mb_buf_id][2].buffer);
-
-	vlGrabBlocks
-	(
-		mc,
-		macroblock->mbx,
-		macroblock->mby,
-		macroblock->dct_type,
-		macroblock->cbp,
-		macroblock->blocks
-	);
-
-	mc->num_macroblocks[mb_buf_id]++;
-	mc->total_num_macroblocks++;
-
-	return 0;
-}
-#endif
 
 static int vlFlush
 (
@@ -818,6 +586,7 @@ static int vlFlush
 
 	memset(mc->num_macroblocks, 0, sizeof(unsigned int) * 7);
 	mc->total_num_macroblocks = 0;
+	mc->cur_buf++;
 
 	return 0;
 }
@@ -2231,8 +2000,9 @@ static int vlInit
 	mc->render_target.zsbuf = NULL;
 
 	filters[0] = PIPE_TEX_FILTER_NEAREST;
-	filters[1] = mc->video_format == vlFormatYCbCr444 ? PIPE_TEX_FILTER_NEAREST : PIPE_TEX_FILTER_LINEAR;
-	filters[2] = mc->video_format == vlFormatYCbCr444 ? PIPE_TEX_FILTER_NEAREST : PIPE_TEX_FILTER_LINEAR;
+	/* FIXME: Linear causes discoloration around block edges */
+	filters[1] = /*mc->video_format == vlFormatYCbCr444 ?*/ PIPE_TEX_FILTER_NEAREST /*: PIPE_TEX_FILTER_LINEAR*/;
+	filters[2] = /*mc->video_format == vlFormatYCbCr444 ?*/ PIPE_TEX_FILTER_NEAREST /*: PIPE_TEX_FILTER_LINEAR*/;
 	filters[3] = PIPE_TEX_FILTER_LINEAR;
 	filters[4] = PIPE_TEX_FILTER_LINEAR;
 
