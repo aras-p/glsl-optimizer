@@ -1,12 +1,12 @@
-#ifndef vl_r16snorm_mc_h
-#define vl_r16snorm_mc_h
+#ifndef vl_r16snorm_mc_buf_h
+#define vl_r16snorm_mc_buf_h
 
 #include "vl_types.h"
 
 struct pipe_context;
 struct vlRender;
 
-int vlCreateR16SNormMC
+int vlCreateR16SNormBufferedMC
 (
 	struct pipe_context *pipe,
 	unsigned int video_width,

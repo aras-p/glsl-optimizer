@@ -24,6 +24,11 @@ struct vlRender
 		struct vlRender *render
 	);
 
+	int (*vlFlush)
+	(
+		struct vlRender *render
+	);
+
 	int (*vlDestroy)
 	(
 		struct vlRender *render

@@ -113,6 +113,8 @@ int vlPutPicture
 	assert(surface);
 	assert(surface->context);
 
+	surface->context->render->vlFlush(surface->context->render);
+
 	csc = surface->context->csc;
 	pipe = surface->context->pipe;
 
