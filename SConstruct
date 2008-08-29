@@ -50,6 +50,8 @@ opts.Add(ListOption('drivers', 'pipe drivers to build', default_drivers,
 opts.Add(ListOption('winsys', 'winsys drivers to build', default_winsys,
                      ['xlib', 'intel', 'gdi'])) 
 
+opts.Add(EnumOption('MSVS_VERSION', 'MS Visual C++ version', None, allowed_values=('7.1', '8.0', '9.0')))
+
 env = Environment(
 	options = opts,
 	tools = ['gallium'],
