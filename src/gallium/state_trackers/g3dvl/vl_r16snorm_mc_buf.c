@@ -79,7 +79,7 @@ static int vlBegin
 	return 0;
 }
 
-static int vlGrabFrameCodedBlock(short *src, short *dst, unsigned int dst_pitch)
+static inline int vlGrabFrameCodedBlock(short *src, short *dst, unsigned int dst_pitch)
 {
 	unsigned int y;
 
@@ -94,7 +94,7 @@ static int vlGrabFrameCodedBlock(short *src, short *dst, unsigned int dst_pitch)
 	return 0;
 }
 
-static int vlGrabFieldCodedBlock(short *src, short *dst, unsigned int dst_pitch)
+static inline int vlGrabFieldCodedBlock(short *src, short *dst, unsigned int dst_pitch)
 {
 	unsigned int y;
 
@@ -119,7 +119,7 @@ static int vlGrabFieldCodedBlock(short *src, short *dst, unsigned int dst_pitch)
 	return 0;
 }
 
-static int vlGrabNoBlock(short *dst, unsigned int dst_pitch)
+static inline int vlGrabNoBlock(short *dst, unsigned int dst_pitch)
 {
 	unsigned int y;
 
@@ -130,11 +130,11 @@ static int vlGrabNoBlock(short *dst, unsigned int dst_pitch)
 			0,
 			VL_BLOCK_WIDTH * 2
 		);
-
+	
 	return 0;
 }
 
-static int vlGrabBlocks
+static inline int vlGrabBlocks
 (
 	struct vlR16SnormBufferedMC *mc,
 	unsigned int mbx,
@@ -164,7 +164,7 @@ static int vlGrabBlocks
 	tex_pitch = tex_surface->stride / tex_surface->block.size;
 
 	texels += mbpy * tex_pitch + mbpx;
-
+	
 	for (y = 0; y < 2; ++y)
 	{
 		for (x = 0; x < 2; ++x, ++tb)
@@ -241,7 +241,7 @@ static int vlGrabBlocks
 	return 0;
 }
 
-static int vlGrabMacroBlock
+static inline int vlGrabMacroBlock
 (
 	struct vlR16SnormBufferedMC *mc,
 	struct vlMpeg2MacroBlock *macroblock
