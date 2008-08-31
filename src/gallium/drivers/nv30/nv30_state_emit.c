@@ -71,10 +71,6 @@ nv30_state_emit(struct nv30_context *nv30)
 
 	state->dirty = 0;
 
-	/* FIXME/TODO: Try to find a way to reemit only when changed */
-	BEGIN_RING(rankine, NV34TCL_TX_UNITS_ENABLE, 1);
-	OUT_RING(state->fp_samplers);
-
 	so_emit_reloc_markers(nv30->nvws, state->hw[NV30_STATE_FB]);
 	for (i = 0, samplers = state->fp_samplers; i < 16 && samplers; i++) {
 		if (!(samplers & (1 << i)))

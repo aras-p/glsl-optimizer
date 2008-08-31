@@ -852,7 +852,7 @@ nv30_fragprog_validate(struct nv30_context *nv30)
 	fp->buffer = ws->buffer_create(ws, 0x100, 0, fp->insn_len * 4);
 	nv30_fragprog_upload(nv30, fp);
 
-	so = so_new(6, 1);
+	so = so_new(8, 1);
 	so_method(so, nv30->screen->rankine, NV34TCL_FP_ACTIVE_PROGRAM, 1);
 	so_reloc (so, fp->buffer, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_GART |
 		  NOUVEAU_BO_RD | NOUVEAU_BO_LOW | NOUVEAU_BO_OR,
@@ -861,6 +861,8 @@ nv30_fragprog_validate(struct nv30_context *nv30)
 	so_data  (so, fp->fp_control);
 	so_method(so, nv30->screen->rankine, NV34TCL_FP_REG_CONTROL, 1);
 	so_data  (so, fp->fp_reg_control);
+	so_method(so, nv30->screen->rankine, NV34TCL_TX_UNITS_ENABLE, 1);
+	so_data  (so, fp->samplers);
 	so_ref(so, &fp->so);
 
 update_constants:
