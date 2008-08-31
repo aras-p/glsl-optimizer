@@ -17,6 +17,15 @@
 #include "vl_types.h"
 #include "vl_defs.h"
 
+/*
+ * TODO: Dynamically determine number of buf sets to use, based on
+ * video size and available mem, since we can easily run out of memory
+ * for high res videos.
+ * Note: Destroying previous frame's buffers and creating new ones
+ * doesn't work, since the buffer are not actually destroyed until their
+ * fence is signalled, and if we render fast enough we will create faster
+ * than we destroy.
+ */
 #define NUM_BUF_SETS 4	/* Number of rotating buffer sets to use */
 
 enum vlMacroBlockTypeEx
@@ -55,7 +64,6 @@ struct vlR16SnormBufferedMC
 	struct vlSurface			*past_surface, *future_surface;
 	struct vlVertex2f			surface_tex_inv_size;
 	unsigned int				num_macroblocks[vlNumMacroBlockExTypes];
-	unsigned int				total_num_macroblocks;
 
 	struct pipe_context			*pipe;
 	struct pipe_viewport_state		viewport;
@@ -130,7 +138,7 @@ static inline int vlGrabNoBlock(short *dst, unsigned int dst_pitch)
 			0,
 			VL_BLOCK_WIDTH * 2
 		);
-	
+
 	return 0;
 }
 
@@ -164,7 +172,7 @@ static inline int vlGrabBlocks
 	tex_pitch = tex_surface->stride / tex_surface->block.size;
 
 	texels += mbpy * tex_pitch + mbpx;
-	
+
 	for (y = 0; y < 2; ++y)
 	{
 		for (x = 0; x < 2; ++x, ++tb)
@@ -451,7 +459,6 @@ static inline int vlGrabMacroBlock
 	);
 
 	mc->num_macroblocks[mb_type_ex]++;
-	mc->total_num_macroblocks++;
 
 	return 0;
 }
@@ -584,8 +591,7 @@ static int vlFlush
 		pipe->draw_arrays(pipe, PIPE_PRIM_TRIANGLES, 0, mc->num_macroblocks[vlMacroBlockExTypeBiPredictedField] * 24);
 	}
 
-	memset(mc->num_macroblocks, 0, sizeof(unsigned int) * 7);
-	mc->total_num_macroblocks = 0;
+	memset(mc->num_macroblocks, 0, sizeof(unsigned int) * vlNumMacroBlockExTypes);
 	mc->cur_buf++;
 
 	return 0;
@@ -665,7 +671,7 @@ static int vlDestroy
 		pipe->delete_sampler_state(pipe, mc->samplers[i]);
 
 	for (g = 0; g < NUM_BUF_SETS; ++g)
-		for (h = 0; h < 7; ++h)
+		for (h = 0; h < vlNumMacroBlockExTypes; ++h)
 			for (i = 0; i < 3; ++i)
 				pipe->winsys->buffer_destroy(pipe->winsys, mc->vertex_bufs[g][h][i].buffer);
 
@@ -1871,7 +1877,7 @@ static int vlCreateDataBufs
 
 	for (g = 0; g < NUM_BUF_SETS; ++g)
 	{
-		for (h = 0; h < 7; ++h)
+		for (h = 0; h < vlNumMacroBlockExTypes; ++h)
 		{
 			/* Create our vertex buffer and vertex buffer element */
 			mc->vertex_bufs[g][h][0].pitch = sizeof(struct vlVertex2f);
@@ -1895,7 +1901,7 @@ static int vlCreateDataBufs
 
 	for (g = 0; g < NUM_BUF_SETS; ++g)
 	{
-		for (h = 0; h < 7; ++h)
+		for (h = 0; h < vlNumMacroBlockExTypes; ++h)
 		{
 			for (i = 1; i < 3; ++i)
 			{
@@ -2100,8 +2106,7 @@ int vlCreateR16SNormBufferedMC
 	mc->buffered_surface = NULL;
 	mc->past_surface = NULL;
 	mc->future_surface = NULL;
-	memset(mc->num_macroblocks, 0, sizeof(unsigned int) * 7);
-	mc->total_num_macroblocks = 0;
+	memset(mc->num_macroblocks, 0, sizeof(unsigned int) * vlNumMacroBlockExTypes);
 
 	vlInit(mc);
 

@@ -79,7 +79,9 @@ enum vlMacroBlockType
 	vlMacroBlockTypeIntra,
 	vlMacroBlockTypeFwdPredicted,
 	vlMacroBlockTypeBkwdPredicted,
-	vlMacroBlockTypeBiPredicted
+	vlMacroBlockTypeBiPredicted,
+
+	vlNumMacroBlockTypes
 };
 
 struct vlMpeg2MacroBlock
