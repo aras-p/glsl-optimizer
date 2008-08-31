@@ -1,7 +1,6 @@
 #ifndef __gl_h_
 #define __gl_h_
 
-/* $Id: gl.h 4533 2007-11-26 11:19:35Z markc $ */
 
 #include <GLES/glplatform.h>
 

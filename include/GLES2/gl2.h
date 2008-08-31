@@ -1,7 +1,6 @@
 #ifndef __gl2_h_
 #define __gl2_h_
 
-/* $Id: gl2.h 5418 2008-03-26 19:57:12Z oddhack $ */
 
 #include <GLES2/gl2platform.h>
 

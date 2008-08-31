@@ -1,7 +1,6 @@
 #ifndef __gl2ext_h_
 #define __gl2ext_h_
 
-/* $Id: gl2ext.h 5767 2008-06-02 17:44:20Z benj $ */
 
 #ifdef __cplusplus
 extern "C" {
