@@ -39,13 +39,17 @@
 #include "pipe/p_debug.h"
 
 
- /* Define ENOMEM for WINCE */ 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
+/* Define ENOMEM for WINCE */ 
 #if (_WIN32_WCE < 600)
 #ifndef ENOMEM
 #define ENOMEM 12
 #endif
 #endif
-
 
 
 #if defined(PIPE_SUBSYSTEM_WINDOWS_DISPLAY) && defined(DEBUG) 
@@ -218,6 +222,11 @@ mem_dup(const void *src, uint size)
  */
 #define Offset(TYPE, MEMBER) ((unsigned)&(((TYPE *)NULL)->MEMBER))
 
+
+
+#ifdef __cplusplus
+}
+#endif
 
 
 #endif /* U_MEMORY_H */
