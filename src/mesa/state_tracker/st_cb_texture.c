@@ -58,13 +58,6 @@
 #define DBG if (0) printf
 
 
-static INLINE struct st_texture_image *
-st_texture_image(struct gl_texture_image *img)
-{
-   return (struct st_texture_image *) img;
-}
-
-
 static enum pipe_texture_target
 gl_target_to_pipe(GLenum target)
 {
