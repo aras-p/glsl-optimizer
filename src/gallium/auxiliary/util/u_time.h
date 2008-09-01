@@ -74,6 +74,9 @@ util_time_add(const struct util_time *t1,
               int64_t usecs,
               struct util_time *t2);
 
+uint64_t
+util_time_micros( void );
+
 int64_t
 util_time_diff(const struct util_time *t1, 
                const struct util_time *t2);
