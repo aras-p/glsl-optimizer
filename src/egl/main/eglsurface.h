@@ -16,6 +16,7 @@ struct _egl_surface
    /* May need reference counting here */
    EGLBoolean IsBound;
    EGLBoolean DeletePending;
+   EGLBoolean BoundToTexture;
 
    EGLint Type; /* one of EGL_WINDOW_BIT, EGL_PIXMAP_BIT or EGL_PBUFFER_BIT */
    EGLint Width, Height;
