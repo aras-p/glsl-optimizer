@@ -32,14 +32,13 @@
 #include "pipe/p_winsys.h"
 #include "u_timed_winsys.h"
 #include "util/u_memory.h"
-#include <sys/time.h>
-
+#include "util/u_time.h"
 
 
 struct timed_winsys {
    struct pipe_winsys base;
    struct pipe_winsys *backend;
-   unsigned long long last_dump;
+   uint64_t last_dump;
    struct {
       const char *name_key;
       double total;
@@ -54,17 +53,9 @@ static struct timed_winsys *timed_winsys( struct pipe_winsys *winsys )
 }
 
 
-static unsigned long long get_time( void )
+static uint64_t time_start( void )
 {
-  struct timeval systime;
-  gettimeofday( &systime, NULL );
-  return (((unsigned long long) systime.tv_sec) * 1000000LL)  + systime.tv_usec;
-}
-
-
-static unsigned long long time_start( void )
-{
-   return get_time();
+   return util_time_micros();
 }
 
 
@@ -98,7 +89,7 @@ static void time_finish( struct pipe_winsys *winsys,
                          const char *name ) 
 {
    struct timed_winsys *tws = timed_winsys(winsys);
-   unsigned long long endval = get_time();
+   uint64_t endval = util_time_micros();
    double elapsed = (endval - startval)/1000.0;
 
    if (endval - startval > 1000LL) 
@@ -128,7 +119,7 @@ timed_buffer_create(struct pipe_winsys *winsys,
                     unsigned size )
 {
    struct pipe_winsys *backend = timed_winsys(winsys)->backend;
-   unsigned long long start = time_start();
+   uint64_t start = time_start();
 
    struct pipe_buffer *buf = backend->buffer_create( backend, alignment, usage, size );
 
@@ -146,7 +137,7 @@ timed_user_buffer_create(struct pipe_winsys *winsys,
                              unsigned bytes) 
 {
    struct pipe_winsys *backend = timed_winsys(winsys)->backend;
-   unsigned long long start = time_start();
+   uint64_t start = time_start();
 
    struct pipe_buffer *buf = backend->user_buffer_create( backend, data, bytes );
 
@@ -162,7 +153,7 @@ timed_buffer_map(struct pipe_winsys *winsys,
                      unsigned flags)
 {
    struct pipe_winsys *backend = timed_winsys(winsys)->backend;
-   unsigned long long start = time_start();
+   uint64_t start = time_start();
 
    void *map = backend->buffer_map( backend, buf, flags );
 
@@ -177,7 +168,7 @@ timed_buffer_unmap(struct pipe_winsys *winsys,
                        struct pipe_buffer *buf)
 {
    struct pipe_winsys *backend = timed_winsys(winsys)->backend;
-   unsigned long long start = time_start();
+   uint64_t start = time_start();
 
    backend->buffer_unmap( backend, buf );
 
@@ -190,7 +181,7 @@ timed_buffer_destroy(struct pipe_winsys *winsys,
                          struct pipe_buffer *buf)
 {
    struct pipe_winsys *backend = timed_winsys(winsys)->backend;
-   unsigned long long start = time_start();
+   uint64_t start = time_start();
 
    backend->buffer_destroy( backend, buf );
 
@@ -204,7 +195,7 @@ timed_flush_frontbuffer( struct pipe_winsys *winsys,
                          void *context_private)
 {
    struct pipe_winsys *backend = timed_winsys(winsys)->backend;
-   unsigned long long start = time_start();
+   uint64_t start = time_start();
 
    backend->flush_frontbuffer( backend, surf, context_private );
 
@@ -218,7 +209,7 @@ static struct pipe_surface *
 timed_surface_alloc(struct pipe_winsys *winsys)
 {
    struct pipe_winsys *backend = timed_winsys(winsys)->backend;
-   unsigned long long start = time_start();
+   uint64_t start = time_start();
 
    struct pipe_surface *surf = backend->surface_alloc( backend );
 
@@ -238,7 +229,7 @@ timed_surface_alloc_storage(struct pipe_winsys *winsys,
                               unsigned tex_usage)
 {
    struct pipe_winsys *backend = timed_winsys(winsys)->backend;
-   unsigned long long start = time_start();
+   uint64_t start = time_start();
 
    int ret = backend->surface_alloc_storage( backend, surf, width, height, 
                                              format, flags, tex_usage );
@@ -253,7 +244,7 @@ static void
 timed_surface_release(struct pipe_winsys *winsys, struct pipe_surface **s)
 {
    struct pipe_winsys *backend = timed_winsys(winsys)->backend;
-   unsigned long long start = time_start();
+   uint64_t start = time_start();
 
    backend->surface_release( backend, s );
 
@@ -266,7 +257,7 @@ static const char *
 timed_get_name( struct pipe_winsys *winsys )
 {
    struct pipe_winsys *backend = timed_winsys(winsys)->backend;
-   unsigned long long start = time_start();
+   uint64_t start = time_start();
 
    const char *ret = backend->get_name( backend );
 
@@ -281,7 +272,7 @@ timed_fence_reference(struct pipe_winsys *winsys,
                     struct pipe_fence_handle *fence)
 {
    struct pipe_winsys *backend = timed_winsys(winsys)->backend;
-   unsigned long long start = time_start();
+   uint64_t start = time_start();
 
    backend->fence_reference( backend, ptr, fence );
 
@@ -295,7 +286,7 @@ timed_fence_signalled( struct pipe_winsys *winsys,
                        unsigned flag )
 {
    struct pipe_winsys *backend = timed_winsys(winsys)->backend;
-   unsigned long long start = time_start();
+   uint64_t start = time_start();
 
    int ret = backend->fence_signalled( backend, fence, flag );
 
@@ -310,7 +301,7 @@ timed_fence_finish( struct pipe_winsys *winsys,
                      unsigned flag )
 {
    struct pipe_winsys *backend = timed_winsys(winsys)->backend;
-   unsigned long long start = time_start();
+   uint64_t start = time_start();
 
    int ret = backend->fence_finish( backend, fence, flag );
 
