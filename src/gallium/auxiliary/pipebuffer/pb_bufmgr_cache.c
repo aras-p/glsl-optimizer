@@ -249,17 +249,25 @@ pb_cache_manager_create_buffer(struct pb_manager *_mgr,
 	 buf = curr_buf;
       else if(util_time_timeout(&curr_buf->start, &curr_buf->end, &now))
 	 _pb_cache_buffer_destroy(curr_buf);
+      else
+         /* This buffer (and all hereafter) are still hot in cache */
+         break;
       curr = next; 
       next = curr->next;
    }
 
    /* keep searching in the hot buffers */
-   while(!buf && curr != &mgr->delayed) {
-      curr_buf = LIST_ENTRY(struct pb_cache_buffer, curr, head);
-      if(pb_cache_is_buffer_compat(curr_buf, size, desc))
-	 buf = curr_buf;
-      curr = next; 
-      next = curr->next;
+   if(!buf) {
+      while(curr != &mgr->delayed) {
+         curr_buf = LIST_ENTRY(struct pb_cache_buffer, curr, head);
+         if(pb_cache_is_buffer_compat(curr_buf, size, desc)) {
+            buf = curr_buf;
+            break;
+         }
+         /* no need to check the timeout here */
+         curr = next;
+         next = curr->next;
+      }
    }
    
    if(buf) {
