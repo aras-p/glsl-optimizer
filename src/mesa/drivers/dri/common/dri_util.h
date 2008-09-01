@@ -56,7 +56,6 @@
 #include "glheader.h"
 #include "GL/internal/glcore.h"
 #include "GL/internal/dri_interface.h"
-#include "GL/internal/dri_sarea.h"
 
 #define GLX_BAD_CONTEXT                    5
 
