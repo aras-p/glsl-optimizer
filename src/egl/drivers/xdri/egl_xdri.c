@@ -64,6 +64,12 @@
 #include "egllog.h"
 #include "eglsurface.h"
 
+#include <GL/gl.h>
+
+typedef void (*glGetIntegerv_t)(GLenum, GLint *);
+typedef void (*glBindTexture_t)(GLenum, GLuint);
+typedef void (*glCopyTexImage2D_t)(GLenum, GLint, GLenum, GLint, GLint,
+                                   GLint, GLint, GLint);
 
 
 #define CALLOC_STRUCT(T)   (struct T *) calloc(1, sizeof(struct T))
@@ -99,6 +105,8 @@ struct xdri_egl_context
    _EGLContext Base;   /**< base class */
 
    __DRIcontext driContext;
+
+   GLint bound_tex_object;
 };
 
 
@@ -147,6 +155,11 @@ lookup_context(EGLContext c)
    return (struct xdri_egl_context *) context;
 }
 
+static struct xdri_egl_context *
+current_context(void)
+{
+   return (struct xdri_egl_context *) _eglGetCurrentContext();
+}
 
 /** Map EGLConfig handle to xdri_egl_config object */
 static struct xdri_egl_config *
@@ -210,7 +223,8 @@ create_configs(_EGLDisplay *disp, __GLXdisplayPrivate *glx_priv)
          SET_CONFIG_ATTRIB(&config->Base, EGL_CONFORMANT, all_apis);
          SET_CONFIG_ATTRIB(&config->Base, EGL_RENDERABLE_TYPE, all_apis);
          /* XXX only window rendering allowed ATM */
-         SET_CONFIG_ATTRIB(&config->Base, EGL_SURFACE_TYPE, EGL_WINDOW_BIT);
+         SET_CONFIG_ATTRIB(&config->Base, EGL_SURFACE_TYPE,
+                           (EGL_WINDOW_BIT | EGL_PBUFFER_BIT));
 
          /* XXX possibly other things to init... */
 
@@ -854,6 +868,86 @@ xdri_eglCreateWindowSurface(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
 }
 
 
+/**
+ * Called via eglCreatePbufferSurface(), drv->API.CreatePbufferSurface().
+ */
+static EGLSurface
+xdri_eglCreatePbufferSurface(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
+                             const EGLint *attrib_list)
+{
+   _EGLDisplay *disp = _eglLookupDisplay(dpy);
+   struct xdri_egl_surface *xdri_surf;
+   struct xdri_egl_config *xdri_config = lookup_config(drv, dpy, config);
+   int scrn = DefaultScreen(disp->Xdpy);
+   Window window;
+
+   xdri_surf = CALLOC_STRUCT(xdri_egl_surface);
+   if (!xdri_surf)
+      return EGL_NO_SURFACE;
+
+   if (!_eglInitSurface(drv, dpy, &xdri_surf->Base, EGL_PBUFFER_BIT,
+                        config, attrib_list)) {
+      free(xdri_surf);
+      return EGL_FALSE;
+   }
+
+   /* Create a dummy X window */
+   {
+      Window root = RootWindow(disp->Xdpy, scrn);
+      XSetWindowAttributes attr;
+      XVisualInfo *visInfo, visTemplate;
+      unsigned mask;
+      int nvis;
+
+      visTemplate.visualid = xdri_config->mode->visualID;
+      visInfo = XGetVisualInfo(disp->Xdpy, VisualIDMask, &visTemplate, &nvis);
+      if (!visInfo) {
+         return EGL_NO_SURFACE;
+      }
+
+      attr.background_pixel = 0;
+      attr.border_pixel = 0;
+      attr.colormap = XCreateColormap(disp->Xdpy, root,
+                                      visInfo->visual, AllocNone);
+      attr.event_mask = StructureNotifyMask | ExposureMask | KeyPressMask;
+      mask = CWBackPixel | CWBorderPixel | CWColormap | CWEventMask;
+      
+      window = XCreateWindow(disp->Xdpy, root, 0, 0,
+                             xdri_surf->Base.Width, xdri_surf->Base.Height,
+                             0, visInfo->depth, InputOutput,
+                             visInfo->visual, mask, &attr);
+
+      /*XMapWindow(disp->Xdpy, window);*/
+      XFree(visInfo);
+
+      /* set hints and properties */
+      /*
+      sizehints.width = xdri_surf->Base.Width;
+      sizehints.height = xdri_surf->Base.Height;
+      sizehints.flags = USPosition;
+      XSetNormalHints(disp->Xdpy, window, &sizehints);
+      */
+   }
+
+   if (!XF86DRICreateDrawable(disp->Xdpy, scrn, window, &xdri_surf->hDrawable)) {
+      free(xdri_surf);
+      return EGL_FALSE;
+   }
+
+   xdri_surf->driDrawable = window;
+
+   _eglSaveSurface(&xdri_surf->Base);
+
+   _eglLog(_EGL_DEBUG,
+           "XDRI: CreatePbufferSurface handle %d  hDrawable %d",
+           _eglGetSurfaceHandle(&xdri_surf->Base),
+           (int) xdri_surf->hDrawable);
+
+   return _eglGetSurfaceHandle(&xdri_surf->Base);
+}
+
+
+
 static EGLBoolean
 xdri_eglDestroySurface(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surface)
 {
@@ -875,6 +969,137 @@ xdri_eglDestroySurface(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surface)
       _eglError(EGL_BAD_SURFACE, "eglDestroySurface");
       return EGL_FALSE;
    }
+}
+
+
+static EGLBoolean
+xdri_eglBindTexImage(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surface,
+                     EGLint buffer)
+{
+   typedef int (*bind_teximage)(__DRInativeDisplay *dpy,
+                                __DRIid surface, __DRIscreen *psc,
+                                int buffer, int target, int format,
+                                int level, int mipmap);
+
+   bind_teximage egl_dri_bind_teximage;
+
+   _EGLDisplay *disp = _eglLookupDisplay(dpy);
+
+   struct xdri_egl_context *xdri_ctx = current_context();
+   struct xdri_egl_driver *xdri_drv = xdri_egl_driver(drv);
+   struct xdri_egl_surface *xdri_surf = lookup_surface(surface);
+
+   __DRIid dri_surf = xdri_surf ? xdri_surf->driDrawable : 0;
+
+   __GLXscreenConfigs *scrnConf = xdri_drv->glx_priv->screenConfigs;
+   __DRIscreen *psc = &scrnConf->driScreen;
+
+   /* this call just does error checking */
+   if (!_eglBindTexImage(drv, dpy, surface, buffer)) {
+      return EGL_FALSE;
+   }
+
+   egl_dri_bind_teximage =
+      (bind_teximage) dlsym(NULL, "egl_dri_bind_teximage");
+   if (egl_dri_bind_teximage) {
+      return egl_dri_bind_teximage(disp->Xdpy, dri_surf, psc,
+                                   buffer,
+                                   xdri_surf->Base.TextureTarget,
+                                   xdri_surf->Base.TextureFormat,
+                                   xdri_surf->Base.MipmapLevel,
+                                   xdri_surf->Base.MipmapTexture);
+   }
+   else {
+      /* fallback path based on glCopyTexImage() */
+      /* Get/save currently bound 2D texobj name */
+      glGetIntegerv_t glGetIntegerv_func = 
+         (glGetIntegerv_t) dlsym(NULL, "glGetIntegerv");
+      GLint curTexObj = 0;
+      if (glGetIntegerv_func) {
+         (*glGetIntegerv_func)(GL_TEXTURE_BINDING_2D, &curTexObj);
+      }
+      xdri_ctx->bound_tex_object = curTexObj;
+   }
+
+   return EGL_FALSE;
+}
+
+
+static EGLBoolean
+xdri_eglReleaseTexImage(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surface,
+                        EGLint buffer)
+{
+   typedef int (*release_teximage)(__DRInativeDisplay *dpy,
+                                   __DRIid surface, __DRIscreen *psc,
+                                   int buffer, int target, int format,
+                                   int level, int mipmap);
+   release_teximage egl_dri_release_teximage;
+
+   _EGLDisplay *disp = _eglLookupDisplay(dpy);
+
+   struct xdri_egl_context *xdri_ctx = current_context();
+   struct xdri_egl_driver *xdri_drv = xdri_egl_driver(drv);
+   struct xdri_egl_surface *xdri_surf = lookup_surface(surface);
+
+   __DRIid dri_surf = xdri_surf ? xdri_surf->driDrawable : 0;
+
+   __GLXscreenConfigs *scrnConf = xdri_drv->glx_priv->screenConfigs;
+   __DRIscreen *psc = &scrnConf->driScreen;
+
+   /* this call just does error checking */
+   if (!_eglReleaseTexImage(drv, dpy, surface, buffer)) {
+      return EGL_FALSE;
+   }
+
+   egl_dri_release_teximage =
+      (release_teximage) dlsym(NULL, "egl_dri_release_teximage");
+   if (egl_dri_release_teximage) {
+      return egl_dri_release_teximage(disp->Xdpy, dri_surf, psc,
+                                      buffer,
+                                      xdri_surf->Base.TextureTarget,
+                                      xdri_surf->Base.TextureFormat,
+                                      xdri_surf->Base.MipmapLevel,
+                                      xdri_surf->Base.MipmapTexture);
+   }
+   else {
+      /* fallback path based on glCopyTexImage() */
+      glGetIntegerv_t glGetIntegerv_func = 
+         (glGetIntegerv_t) dlsym(NULL, "glGetIntegerv");
+      glBindTexture_t glBindTexture_func = 
+         (glBindTexture_t) dlsym(NULL, "glBindTexture");
+      glCopyTexImage2D_t glCopyTexImage2D_func = 
+         (glCopyTexImage2D_t) dlsym(NULL, "glCopyTexImage2D");
+      GLint curTexObj;
+      GLenum intFormat;
+      GLint level, width, height;
+
+      if (xdri_surf->Base.TextureFormat == EGL_TEXTURE_RGBA)
+         intFormat = GL_RGBA;
+      else
+         intFormat = GL_RGB;
+      level = xdri_surf->Base.MipmapLevel;
+      width = xdri_surf->Base.Width >> level;
+      height = xdri_surf->Base.Height >> level;
+
+      if (width > 0 && height > 0 &&
+          glGetIntegerv_func && glBindTexture_func && glCopyTexImage2D_func) {
+         glGetIntegerv_func(GL_TEXTURE_BINDING_2D, &curTexObj);
+         /* restore texobj from time of eglBindTexImage() call */
+         if (curTexObj != xdri_ctx->bound_tex_object)
+            glBindTexture_func(GL_TEXTURE_2D, xdri_ctx->bound_tex_object);
+         /* copy pbuffer image to texture */
+         glCopyTexImage2D_func(GL_TEXTURE_2D,
+                               level,
+                               intFormat,
+                               0, 0, width, height, 0);
+         /* restore current texture */
+         if (curTexObj != xdri_ctx->bound_tex_object)
+            glBindTexture_func(GL_TEXTURE_2D, curTexObj);
+      }
+      xdri_ctx->bound_tex_object = -1;
+   }
+
+   return EGL_FALSE;
 }
 
 
@@ -931,7 +1156,10 @@ _eglMain(_EGLDisplay *disp, const char *args)
    xdri_drv->Base.API.CreateContext = xdri_eglCreateContext;
    xdri_drv->Base.API.MakeCurrent = xdri_eglMakeCurrent;
    xdri_drv->Base.API.CreateWindowSurface = xdri_eglCreateWindowSurface;
+   xdri_drv->Base.API.CreatePbufferSurface = xdri_eglCreatePbufferSurface;
    xdri_drv->Base.API.DestroySurface = xdri_eglDestroySurface;
+   xdri_drv->Base.API.BindTexImage = xdri_eglBindTexImage;
+   xdri_drv->Base.API.ReleaseTexImage = xdri_eglReleaseTexImage;
    xdri_drv->Base.API.SwapBuffers = xdri_eglSwapBuffers;
 
    xdri_drv->Base.ClientAPIsMask = (EGL_OPENGL_BIT |
