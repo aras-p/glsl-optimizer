@@ -276,6 +276,10 @@ nouveau_surface_channel_create_nv04(struct nouveau_channel_context *nvc)
 	}
 
 	BIND_RING (chan, nvc->NvSwzSurf, nvc->next_subchannel++);
+	BEGIN_RING(chan, nvc->NvSwzSurf, NV04_SWIZZLED_SURFACE_DMA_NOTIFY, 1);
+	OUT_RING  (chan, nvc->sync_notifier->handle);
+	BEGIN_RING(chan, nvc->NvSwzSurf, NV04_SWIZZLED_SURFACE_DMA_IMAGE, 1);
+	OUT_RING  (chan, nvc->channel->vram->handle);
 
 	if (chipset < 0x10) {
 		class = NV04_SCALED_IMAGE_FROM_MEMORY;
