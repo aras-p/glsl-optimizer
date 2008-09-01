@@ -27,8 +27,11 @@
 
 #include "st_context.h"
 #include "st_format.h"
+#include "st_public.h"
 #include "st_texture.h"
+#include "st_cb_fbo.h"
 #include "main/enums.h"
+#include "main/teximage.h"
 
 #undef Elements  /* fix re-defined macro warning */
 
@@ -350,4 +353,93 @@ st_texture_image_copy(struct pipe_context *pipe,
       screen->tex_surface_release(screen, &src_surface);
       screen->tex_surface_release(screen, &dst_surface);
    }
+}
+
+
+/** Redirect rendering into stfb's surface to a texture image */
+int
+st_bind_teximage(struct st_framebuffer *stfb, uint surfIndex,
+                 int target, int format, int level)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   struct st_context *st = ctx->st;
+   struct pipe_context *pipe = st->pipe;
+   struct pipe_screen *screen = pipe->screen;
+   const GLuint unit = ctx->Texture.CurrentUnit;
+   struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
+   struct gl_texture_object *texObj;
+   struct gl_texture_image *texImage;
+   struct st_texture_image *stImage;
+   struct st_renderbuffer *strb;
+   GLint face = 0, slice = 0;
+
+   assert(surfIndex <= ST_SURFACE_DEPTH);
+
+   strb = st_renderbuffer(stfb->Base.Attachment[surfIndex].Renderbuffer);
+
+   if (strb->texture_save || strb->surface_save) {
+      /* Error! */
+      return 0;
+   }
+
+   if (target == ST_TEXTURE_2D) {
+      texObj = texUnit->Current2D;
+      texImage = _mesa_get_tex_image(ctx, texObj, GL_TEXTURE_2D, level);
+      stImage = st_texture_image(texImage);
+   }
+   else {
+      /* unsupported target */
+      return 0;
+   }
+
+   st_flush(ctx->st, PIPE_FLUSH_RENDER_CACHE, NULL);
+
+   /* save the renderbuffer's surface/texture info */
+   pipe_texture_reference(&strb->texture_save, strb->texture);
+   pipe_surface_reference(&strb->surface_save, strb->surface);
+
+   /* plug in new surface/texture info */
+   pipe_texture_reference(&strb->texture, stImage->pt);
+   strb->surface = screen->get_tex_surface(screen, strb->texture,
+                                           face, level, slice,
+                                           (PIPE_BUFFER_USAGE_GPU_READ |
+                                            PIPE_BUFFER_USAGE_GPU_WRITE));
+
+   st->dirty.st |= ST_NEW_FRAMEBUFFER;
+
+   return 1;
+}
+
+
+/** Undo surface-to-texture binding */
+int
+st_release_teximage(struct st_framebuffer *stfb, uint surfIndex,
+                    int target, int format, int level)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   struct st_context *st = ctx->st;
+   struct pipe_context *pipe = st->pipe;
+   struct st_renderbuffer *strb;
+
+   assert(surfIndex <= ST_SURFACE_DEPTH);
+
+   strb = st_renderbuffer(stfb->Base.Attachment[surfIndex].Renderbuffer);
+
+   if (!strb->texture_save || !strb->surface_save) {
+      /* Error! */
+      return 0;
+   }
+
+   st_flush(ctx->st, PIPE_FLUSH_RENDER_CACHE, NULL);
+
+   /* free tex surface, restore original */
+   pipe_surface_reference(&strb->surface, strb->surface_save);
+   pipe_texture_reference(&strb->texture, strb->texture_save);
+
+   pipe_surface_reference(&strb->surface_save, NULL);
+   pipe_texture_reference(&strb->texture_save, NULL);
+
+   st->dirty.st |= ST_NEW_FRAMEBUFFER;
+
+   return 1;
 }
