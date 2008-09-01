@@ -290,7 +290,7 @@ def generate(env):
         ]
     if msvc:
         # See also:
-        # - http://msdn2.microsoft.com/en-us/library/y0zzbyt4.aspx
+        # - http://msdn.microsoft.com/en-us/library/19z1t1wy.aspx
         # - cl /?
         if debug:
             cflags += [
@@ -302,7 +302,8 @@ def generate(env):
             cflags += [
               '/Ox', # maximum optimizations
               '/Oi', # enable intrinsic functions
-              '/Os', # favor code space
+              '/Ot', # favor code speed
+              #'/fp:fast', # fast floating point 
             ]
         if env['profile']:
             cflags += [
@@ -313,6 +314,11 @@ def generate(env):
             '/W3', # warning level
             #'/Wp64', # enable 64 bit porting warnings
         ]
+        if env['machine'] == 'x86':
+            cflags += [
+                #'/QIfist', # Suppress _ftol
+                #'/arch:SSE2', # use the SSE2 instructions
+            ]
         if platform == 'windows':
             cflags += [
                 # TODO
