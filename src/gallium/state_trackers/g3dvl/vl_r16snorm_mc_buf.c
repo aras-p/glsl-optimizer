@@ -56,8 +56,8 @@ struct vlR16SnormBufferedMC
 {
 	struct vlRender				base;
 
-	unsigned int				video_width, video_height;
-	enum vlFormat				video_format;
+	unsigned int				picture_width, picture_height;
+	enum vlFormat				picture_format;
 
 	unsigned int				cur_buf;
 	struct vlSurface			*buffered_surface;
@@ -1922,8 +1922,8 @@ static int vlCreateDataBufs
 	struct vlR16SnormBufferedMC *mc
 )
 {
-	const unsigned int	mbw = align(mc->video_width, VL_MACROBLOCK_WIDTH) / VL_MACROBLOCK_WIDTH;
-	const unsigned int	mbh = align(mc->video_height, VL_MACROBLOCK_HEIGHT) / VL_MACROBLOCK_HEIGHT;
+	const unsigned int	mbw = align(mc->picture_width, VL_MACROBLOCK_WIDTH) / VL_MACROBLOCK_WIDTH;
+	const unsigned int	mbh = align(mc->picture_height, VL_MACROBLOCK_HEIGHT) / VL_MACROBLOCK_HEIGHT;
 	const unsigned int	num_mb_per_frame = mbw * mbh;
 
 	struct pipe_context	*pipe;
@@ -2044,8 +2044,8 @@ static int vlInit
 	pipe = mc->pipe;
 
 	/* For MC we render to textures, which are rounded up to nearest POT */
-	mc->viewport.scale[0] = vlRoundUpPOT(mc->video_width);
-	mc->viewport.scale[1] = vlRoundUpPOT(mc->video_height);
+	mc->viewport.scale[0] = vlRoundUpPOT(mc->picture_width);
+	mc->viewport.scale[1] = vlRoundUpPOT(mc->picture_height);
 	mc->viewport.scale[2] = 1;
 	mc->viewport.scale[3] = 1;
 	mc->viewport.translate[0] = 0;
@@ -2053,16 +2053,16 @@ static int vlInit
 	mc->viewport.translate[2] = 0;
 	mc->viewport.translate[3] = 0;
 
-	mc->render_target.width = vlRoundUpPOT(mc->video_width);
-	mc->render_target.height = vlRoundUpPOT(mc->video_height);
+	mc->render_target.width = vlRoundUpPOT(mc->picture_width);
+	mc->render_target.height = vlRoundUpPOT(mc->picture_height);
 	mc->render_target.num_cbufs = 1;
 	/* FB for MC stage is a vlSurface created by the user, set at render time */
 	mc->render_target.zsbuf = NULL;
 
 	filters[0] = PIPE_TEX_FILTER_NEAREST;
 	/* FIXME: Linear causes discoloration around block edges */
-	filters[1] = /*mc->video_format == vlFormatYCbCr444 ?*/ PIPE_TEX_FILTER_NEAREST /*: PIPE_TEX_FILTER_LINEAR*/;
-	filters[2] = /*mc->video_format == vlFormatYCbCr444 ?*/ PIPE_TEX_FILTER_NEAREST /*: PIPE_TEX_FILTER_LINEAR*/;
+	filters[1] = /*mc->picture_format == vlFormatYCbCr444 ?*/ PIPE_TEX_FILTER_NEAREST /*: PIPE_TEX_FILTER_LINEAR*/;
+	filters[2] = /*mc->picture_format == vlFormatYCbCr444 ?*/ PIPE_TEX_FILTER_NEAREST /*: PIPE_TEX_FILTER_LINEAR*/;
 	filters[3] = PIPE_TEX_FILTER_LINEAR;
 	filters[4] = PIPE_TEX_FILTER_LINEAR;
 
@@ -2091,8 +2091,8 @@ static int vlInit
 	template.target = PIPE_TEXTURE_2D;
 	template.format = PIPE_FORMAT_R16_SNORM;
 	template.last_level = 0;
-	template.width[0] = vlRoundUpPOT(mc->video_width);
-	template.height[0] = vlRoundUpPOT(mc->video_height);
+	template.width[0] = vlRoundUpPOT(mc->picture_width);
+	template.height[0] = vlRoundUpPOT(mc->picture_height);
 	template.depth[0] = 1;
 	template.compressed = 0;
 	pf_get_block(template.format, &template.block);
@@ -2100,13 +2100,13 @@ static int vlInit
 	for (i = 0; i < NUM_BUF_SETS; ++i)
 		mc->textures[i][0] = pipe->screen->texture_create(pipe->screen, &template);
 
-	if (mc->video_format == vlFormatYCbCr420)
+	if (mc->picture_format == vlFormatYCbCr420)
 	{
-		template.width[0] = vlRoundUpPOT(mc->video_width / 2);
-		template.height[0] = vlRoundUpPOT(mc->video_height / 2);
+		template.width[0] = vlRoundUpPOT(mc->picture_width / 2);
+		template.height[0] = vlRoundUpPOT(mc->picture_height / 2);
 	}
-	else if (mc->video_format == vlFormatYCbCr422)
-		template.height[0] = vlRoundUpPOT(mc->video_height / 2);
+	else if (mc->picture_format == vlFormatYCbCr422)
+		template.height[0] = vlRoundUpPOT(mc->picture_height / 2);
 
 	for (i = 0; i < NUM_BUF_SETS; ++i)
 	{
@@ -2134,9 +2134,9 @@ static int vlInit
 int vlCreateR16SNormBufferedMC
 (
 	struct pipe_context *pipe,
-	unsigned int video_width,
-	unsigned int video_height,
-	enum vlFormat video_format,
+	unsigned int picture_width,
+	unsigned int picture_height,
+	enum vlFormat picture_format,
 	struct vlRender **render
 )
 {
@@ -2153,8 +2153,8 @@ int vlCreateR16SNormBufferedMC
 	mc->base.vlFlush = &vlFlush;
 	mc->base.vlDestroy = &vlDestroy;
 	mc->pipe = pipe;
-	mc->video_width = video_width;
-	mc->video_height = video_height;
+	mc->picture_width = picture_width;
+	mc->picture_height = picture_height;
 
 	mc->cur_buf = 0;
 	mc->buffered_surface = NULL;

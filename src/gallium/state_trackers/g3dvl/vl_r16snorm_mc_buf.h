@@ -9,9 +9,9 @@ struct vlRender;
 int vlCreateR16SNormBufferedMC
 (
 	struct pipe_context *pipe,
-	unsigned int video_width,
-	unsigned int video_height,
-	enum vlFormat video_format,
+	unsigned int picture_width,
+	unsigned int picture_height,
+	enum vlFormat picture_format,
 	struct vlRender **render
 );
 
