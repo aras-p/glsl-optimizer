@@ -63,7 +63,8 @@ struct vlR16SnormBufferedMC
 	struct vlSurface			*buffered_surface;
 	struct vlSurface			*past_surface, *future_surface;
 	struct vlVertex2f			surface_tex_inv_size;
-	unsigned int				num_macroblocks[vlNumMacroBlockExTypes];
+	unsigned int				num_macroblocks;
+	struct vlMpeg2MacroBlock		*macroblocks;
 
 	struct pipe_context			*pipe;
 	struct pipe_viewport_state		viewport;
@@ -72,7 +73,7 @@ struct vlR16SnormBufferedMC
 	struct pipe_texture			*textures[NUM_BUF_SETS][5];
 	void					*i_vs, *p_vs[2], *b_vs[2];
 	void					*i_fs, *p_fs[2], *b_fs[2];
-	struct pipe_vertex_buffer 		vertex_bufs[NUM_BUF_SETS][vlNumMacroBlockExTypes][3];
+	struct pipe_vertex_buffer 		vertex_bufs[NUM_BUF_SETS][3];
 	struct pipe_vertex_element		vertex_elems[5];
 	struct pipe_constant_buffer		vs_const_buf, fs_const_buf;
 };
@@ -249,10 +250,76 @@ static inline int vlGrabBlocks
 	return 0;
 }
 
+static inline enum vlMacroBlockTypeEx vlGetMacroBlockTypeEx(struct vlMpeg2MacroBlock *mb)
+{
+	assert(mb);
+
+	switch (mb->mb_type)
+	{
+		case vlMacroBlockTypeIntra:
+			return vlMacroBlockExTypeIntra;
+		case vlMacroBlockTypeFwdPredicted:
+			return mb->mo_type == vlMotionTypeFrame ?
+				vlMacroBlockExTypeFwdPredictedFrame : vlMacroBlockExTypeFwdPredictedField;
+		case vlMacroBlockTypeBkwdPredicted:
+			return mb->mo_type == vlMotionTypeFrame ?
+				vlMacroBlockExTypeBkwdPredictedFrame : vlMacroBlockExTypeBkwdPredictedField;
+		case vlMacroBlockTypeBiPredicted:
+			return mb->mo_type == vlMotionTypeFrame ?
+				vlMacroBlockExTypeBiPredictedFrame : vlMacroBlockExTypeBiPredictedField;
+		default:
+			assert(0);
+	}
+
+	/* Unreachable */
+	return -1;
+}
+
 static inline int vlGrabMacroBlock
 (
 	struct vlR16SnormBufferedMC *mc,
 	struct vlMpeg2MacroBlock *macroblock
+)
+{
+	assert(mc);
+	assert(macroblock);
+
+	mc->macroblocks[mc->num_macroblocks].mbx = macroblock->mbx;
+	mc->macroblocks[mc->num_macroblocks].mby = macroblock->mby;
+	mc->macroblocks[mc->num_macroblocks].mb_type = macroblock->mb_type;
+	mc->macroblocks[mc->num_macroblocks].mo_type = macroblock->mo_type;
+	mc->macroblocks[mc->num_macroblocks].dct_type = macroblock->dct_type;
+	mc->macroblocks[mc->num_macroblocks].PMV[0][0][0] = macroblock->PMV[0][0][0];
+	mc->macroblocks[mc->num_macroblocks].PMV[0][0][1] = macroblock->PMV[0][0][1];
+	mc->macroblocks[mc->num_macroblocks].PMV[0][1][0] = macroblock->PMV[0][1][0];
+	mc->macroblocks[mc->num_macroblocks].PMV[0][1][1] = macroblock->PMV[0][1][1];
+	mc->macroblocks[mc->num_macroblocks].PMV[1][0][0] = macroblock->PMV[1][0][0];
+	mc->macroblocks[mc->num_macroblocks].PMV[1][0][1] = macroblock->PMV[1][0][1];
+	mc->macroblocks[mc->num_macroblocks].PMV[1][1][0] = macroblock->PMV[1][1][0];
+	mc->macroblocks[mc->num_macroblocks].PMV[1][1][1] = macroblock->PMV[1][1][1];
+	mc->macroblocks[mc->num_macroblocks].cbp = macroblock->cbp;
+	mc->macroblocks[mc->num_macroblocks].blocks = macroblock->blocks;
+
+	vlGrabBlocks
+	(
+		mc,
+		macroblock->mbx,
+		macroblock->mby,
+		macroblock->dct_type,
+		macroblock->cbp,
+		macroblock->blocks
+	);
+
+	mc->num_macroblocks++;
+
+	return 0;
+}
+
+static inline int vlGrabMacroBlockVB
+(
+	struct vlR16SnormBufferedMC *mc,
+	struct vlMpeg2MacroBlock *macroblock,
+	unsigned int pos
 )
 {
 	const struct vlVertex2f	unit =
@@ -267,7 +334,6 @@ static inline int vlGrabMacroBlock
 	};
 
 	struct vlVertex2f	*vb;
-	enum vlMacroBlockTypeEx	mb_type_ex;
 	struct vlVertex2f	mo_vec[2];
 	unsigned int		i;
 
@@ -276,43 +342,14 @@ static inline int vlGrabMacroBlock
 
 	switch (macroblock->mb_type)
 	{
-		case vlMacroBlockTypeIntra:
-		{
-			mb_type_ex = vlMacroBlockExTypeIntra;
-			break;
-		}
-		case vlMacroBlockTypeFwdPredicted:
-		{
-			mb_type_ex = macroblock->mo_type == vlMotionTypeFrame ?
-				vlMacroBlockExTypeFwdPredictedFrame : vlMacroBlockExTypeFwdPredictedField;
-			break;
-		}
-		case vlMacroBlockTypeBkwdPredicted:
-		{
-			mb_type_ex = macroblock->mo_type == vlMotionTypeFrame ?
-				vlMacroBlockExTypeBkwdPredictedFrame : vlMacroBlockExTypeBkwdPredictedField;
-			break;
-		}
-		case vlMacroBlockTypeBiPredicted:
-		{
-			mb_type_ex = macroblock->mo_type == vlMotionTypeFrame ?
-				vlMacroBlockExTypeBiPredictedFrame : vlMacroBlockExTypeBiPredictedField;
-			break;
-		}
-		default:
-			assert(0);
-	}
-
-	switch (macroblock->mb_type)
-	{
 		case vlMacroBlockTypeBiPredicted:
 		{
 			vb = (struct vlVertex2f*)mc->pipe->winsys->buffer_map
 			(
 				mc->pipe->winsys,
-				mc->vertex_bufs[mc->cur_buf % NUM_BUF_SETS][mb_type_ex][2].buffer,
+				mc->vertex_bufs[mc->cur_buf % NUM_BUF_SETS][2].buffer,
 				PIPE_BUFFER_USAGE_CPU_WRITE
-			) + mc->num_macroblocks[mb_type_ex] * 2 * 24;
+			) + pos * 2 * 24;
 
 			mo_vec[0].x = macroblock->PMV[0][1][0] * 0.5f * mc->surface_tex_inv_size.x;
 			mo_vec[0].y = macroblock->PMV[0][1][1] * 0.5f * mc->surface_tex_inv_size.y;
@@ -339,7 +376,7 @@ static inline int vlGrabMacroBlock
 				}
 			}
 
-			mc->pipe->winsys->buffer_unmap(mc->pipe->winsys, mc->vertex_bufs[mc->cur_buf % NUM_BUF_SETS][mb_type_ex][2].buffer);
+			mc->pipe->winsys->buffer_unmap(mc->pipe->winsys, mc->vertex_bufs[mc->cur_buf % NUM_BUF_SETS][2].buffer);
 
 			/* fall-through */
 		}
@@ -349,9 +386,9 @@ static inline int vlGrabMacroBlock
 			vb = (struct vlVertex2f*)mc->pipe->winsys->buffer_map
 			(
 				mc->pipe->winsys,
-				mc->vertex_bufs[mc->cur_buf % NUM_BUF_SETS][mb_type_ex][1].buffer,
+				mc->vertex_bufs[mc->cur_buf % NUM_BUF_SETS][1].buffer,
 				PIPE_BUFFER_USAGE_CPU_WRITE
-			) + mc->num_macroblocks[mb_type_ex] * 2 * 24;
+			) + pos * 2 * 24;
 
 			if (macroblock->mb_type == vlMacroBlockTypeBkwdPredicted)
 			{
@@ -395,7 +432,7 @@ static inline int vlGrabMacroBlock
 				}
 			}
 
-			mc->pipe->winsys->buffer_unmap(mc->pipe->winsys, mc->vertex_bufs[mc->cur_buf % NUM_BUF_SETS][mb_type_ex][1].buffer);
+			mc->pipe->winsys->buffer_unmap(mc->pipe->winsys, mc->vertex_bufs[mc->cur_buf % NUM_BUF_SETS][1].buffer);
 
 			/* fall-through */
 		}
@@ -404,9 +441,9 @@ static inline int vlGrabMacroBlock
 			vb = (struct vlVertex2f*)mc->pipe->winsys->buffer_map
 			(
 				mc->pipe->winsys,
-				mc->vertex_bufs[mc->cur_buf % NUM_BUF_SETS][mb_type_ex][0].buffer,
+				mc->vertex_bufs[mc->cur_buf % NUM_BUF_SETS][0].buffer,
 				PIPE_BUFFER_USAGE_CPU_WRITE
-			) + mc->num_macroblocks[mb_type_ex] * 24;
+			) + pos * 24;
 
 			vb[0].x = macroblock->mbx * unit.x;		vb[0].y = macroblock->mby * unit.y;
 			vb[1].x = macroblock->mbx * unit.x;		vb[1].y = macroblock->mby * unit.y + half.y;
@@ -440,25 +477,13 @@ static inline int vlGrabMacroBlock
 			vb[22].x = macroblock->mbx * unit.x + half.x;	vb[22].y = macroblock->mby * unit.y + unit.y;
 			vb[23].x = macroblock->mbx * unit.x + unit.x;	vb[23].y = macroblock->mby * unit.y + unit.y;
 
-			mc->pipe->winsys->buffer_unmap(mc->pipe->winsys, mc->vertex_bufs[mc->cur_buf % NUM_BUF_SETS][mb_type_ex][0].buffer);
+			mc->pipe->winsys->buffer_unmap(mc->pipe->winsys, mc->vertex_bufs[mc->cur_buf % NUM_BUF_SETS][0].buffer);
 
 			break;
 		}
 		default:
 			assert(0);
 	}
-
-	vlGrabBlocks
-	(
-		mc,
-		macroblock->mbx,
-		macroblock->mby,
-		macroblock->dct_type,
-		macroblock->cbp,
-		macroblock->blocks
-	);
-
-	mc->num_macroblocks[mb_type_ex]++;
 
 	return 0;
 }
@@ -471,11 +496,36 @@ static int vlFlush
 	struct vlR16SnormBufferedMC	*mc;
 	struct pipe_context		*pipe;
 	struct vlVertexShaderConsts	*vs_consts;
+	unsigned int			num_macroblocks[vlNumMacroBlockExTypes] = {0};
+	unsigned int			offset[vlNumMacroBlockExTypes];
+	unsigned int			vb_start = 0;
+	unsigned int			i;
 
-	assert(mc);
+	assert(render);
 
 	mc = (struct vlR16SnormBufferedMC*)render;
 	pipe = mc->pipe;
+
+	for (i = 0; i < mc->num_macroblocks; ++i)
+	{
+		enum vlMacroBlockTypeEx mb_type_ex = vlGetMacroBlockTypeEx(&mc->macroblocks[i]);
+
+		num_macroblocks[mb_type_ex]++;
+	}
+
+	offset[0] = 0;
+
+	for (i = 1; i < vlNumMacroBlockExTypes; ++i)
+		offset[i] = offset[i - 1] + num_macroblocks[i - 1];
+
+	for (i = 0; i < mc->num_macroblocks; ++i)
+	{
+		enum vlMacroBlockTypeEx mb_type_ex = vlGetMacroBlockTypeEx(&mc->macroblocks[i]);
+
+		vlGrabMacroBlockVB(mc, &mc->macroblocks[i], offset[mb_type_ex]);
+
+		offset[mb_type_ex]++;
+	}
 
 	mc->render_target.cbufs[0] = pipe->screen->get_tex_surface
 	(
@@ -497,23 +547,25 @@ static int vlFlush
 	vs_consts->denorm.y = mc->buffered_surface->texture->height[0];
 
 	pipe->winsys->buffer_unmap(pipe->winsys, mc->vs_const_buf.buffer);
+	pipe->set_constant_buffer(pipe, PIPE_SHADER_VERTEX, 0, &mc->vs_const_buf);
 	pipe->set_constant_buffer(pipe, PIPE_SHADER_FRAGMENT, 0, &mc->fs_const_buf);
 
-	if (mc->num_macroblocks[vlMacroBlockExTypeIntra] > 0)
+	if (num_macroblocks[vlMacroBlockExTypeIntra] > 0)
 	{
-		pipe->set_vertex_buffers(pipe, 1, mc->vertex_bufs[mc->cur_buf % NUM_BUF_SETS][vlMacroBlockExTypeIntra]);
+		pipe->set_vertex_buffers(pipe, 1, mc->vertex_bufs[mc->cur_buf % NUM_BUF_SETS]);
 		pipe->set_vertex_elements(pipe, 1, mc->vertex_elems);
 		pipe->set_sampler_textures(pipe, 3, mc->textures[mc->cur_buf % NUM_BUF_SETS]);
 		pipe->bind_sampler_states(pipe, 3, (void**)mc->samplers);
 		pipe->bind_vs_state(pipe, mc->i_vs);
 		pipe->bind_fs_state(pipe, mc->i_fs);
 
-		pipe->draw_arrays(pipe, PIPE_PRIM_TRIANGLES, 0, mc->num_macroblocks[vlMacroBlockExTypeIntra] * 24);
+		pipe->draw_arrays(pipe, PIPE_PRIM_TRIANGLES, vb_start, num_macroblocks[vlMacroBlockExTypeIntra] * 24);
+		vb_start += num_macroblocks[vlMacroBlockExTypeIntra] * 24;
 	}
 
-	if (mc->num_macroblocks[vlMacroBlockExTypeFwdPredictedFrame] > 0)
+	if (num_macroblocks[vlMacroBlockExTypeFwdPredictedFrame] > 0)
 	{
-		pipe->set_vertex_buffers(pipe, 2, mc->vertex_bufs[mc->cur_buf % NUM_BUF_SETS][vlMacroBlockExTypeFwdPredictedFrame]);
+		pipe->set_vertex_buffers(pipe, 2, mc->vertex_bufs[mc->cur_buf % NUM_BUF_SETS]);
 		pipe->set_vertex_elements(pipe, 3, mc->vertex_elems);
 		mc->textures[mc->cur_buf % NUM_BUF_SETS][3] = mc->past_surface->texture;
 		pipe->set_sampler_textures(pipe, 4, mc->textures[mc->cur_buf % NUM_BUF_SETS]);
@@ -521,12 +573,13 @@ static int vlFlush
 		pipe->bind_vs_state(pipe, mc->p_vs[0]);
 		pipe->bind_fs_state(pipe, mc->p_fs[0]);
 
-		pipe->draw_arrays(pipe, PIPE_PRIM_TRIANGLES, 0, mc->num_macroblocks[vlMacroBlockExTypeFwdPredictedFrame] * 24);
+		pipe->draw_arrays(pipe, PIPE_PRIM_TRIANGLES, vb_start, num_macroblocks[vlMacroBlockExTypeFwdPredictedFrame] * 24);
+		vb_start += num_macroblocks[vlMacroBlockExTypeFwdPredictedFrame] * 24;
 	}
 
-	if (mc->num_macroblocks[vlMacroBlockExTypeFwdPredictedField] > 0)
+	if (num_macroblocks[vlMacroBlockExTypeFwdPredictedField] > 0)
 	{
-		pipe->set_vertex_buffers(pipe, 2, mc->vertex_bufs[mc->cur_buf % NUM_BUF_SETS][vlMacroBlockExTypeFwdPredictedField]);
+		pipe->set_vertex_buffers(pipe, 2, mc->vertex_bufs[mc->cur_buf % NUM_BUF_SETS]);
 		pipe->set_vertex_elements(pipe, 3, mc->vertex_elems);
 		mc->textures[mc->cur_buf % NUM_BUF_SETS][3] = mc->past_surface->texture;
 		pipe->set_sampler_textures(pipe, 4, mc->textures[mc->cur_buf % NUM_BUF_SETS]);
@@ -534,12 +587,13 @@ static int vlFlush
 		pipe->bind_vs_state(pipe, mc->p_vs[1]);
 		pipe->bind_fs_state(pipe, mc->p_fs[1]);
 
-		pipe->draw_arrays(pipe, PIPE_PRIM_TRIANGLES, 0, mc->num_macroblocks[vlMacroBlockExTypeFwdPredictedField] * 24);
+		pipe->draw_arrays(pipe, PIPE_PRIM_TRIANGLES, vb_start, num_macroblocks[vlMacroBlockExTypeFwdPredictedField] * 24);
+		vb_start += num_macroblocks[vlMacroBlockExTypeFwdPredictedField] * 24;
 	}
 
-	if (mc->num_macroblocks[vlMacroBlockExTypeBkwdPredictedFrame] > 0)
+	if (num_macroblocks[vlMacroBlockExTypeBkwdPredictedFrame] > 0)
 	{
-		pipe->set_vertex_buffers(pipe, 2, mc->vertex_bufs[mc->cur_buf % NUM_BUF_SETS][vlMacroBlockExTypeBkwdPredictedFrame]);
+		pipe->set_vertex_buffers(pipe, 2, mc->vertex_bufs[mc->cur_buf % NUM_BUF_SETS]);
 		pipe->set_vertex_elements(pipe, 3, mc->vertex_elems);
 		mc->textures[mc->cur_buf % NUM_BUF_SETS][3] = mc->future_surface->texture;
 		pipe->set_sampler_textures(pipe, 4, mc->textures[mc->cur_buf % NUM_BUF_SETS]);
@@ -547,12 +601,13 @@ static int vlFlush
 		pipe->bind_vs_state(pipe, mc->p_vs[0]);
 		pipe->bind_fs_state(pipe, mc->p_fs[0]);
 
-		pipe->draw_arrays(pipe, PIPE_PRIM_TRIANGLES, 0, mc->num_macroblocks[vlMacroBlockExTypeBkwdPredictedFrame] * 24);
+		pipe->draw_arrays(pipe, PIPE_PRIM_TRIANGLES, vb_start, num_macroblocks[vlMacroBlockExTypeBkwdPredictedFrame] * 24);
+		vb_start += num_macroblocks[vlMacroBlockExTypeBkwdPredictedFrame] * 24;
 	}
 
-	if (mc->num_macroblocks[vlMacroBlockExTypeBkwdPredictedField] > 0)
+	if (num_macroblocks[vlMacroBlockExTypeBkwdPredictedField] > 0)
 	{
-		pipe->set_vertex_buffers(pipe, 2, mc->vertex_bufs[mc->cur_buf % NUM_BUF_SETS][vlMacroBlockExTypeBkwdPredictedField]);
+		pipe->set_vertex_buffers(pipe, 2, mc->vertex_bufs[mc->cur_buf % NUM_BUF_SETS]);
 		pipe->set_vertex_elements(pipe, 3, mc->vertex_elems);
 		mc->textures[mc->cur_buf % NUM_BUF_SETS][3] = mc->future_surface->texture;
 		pipe->set_sampler_textures(pipe, 4, mc->textures[mc->cur_buf % NUM_BUF_SETS]);
@@ -560,12 +615,13 @@ static int vlFlush
 		pipe->bind_vs_state(pipe, mc->p_vs[1]);
 		pipe->bind_fs_state(pipe, mc->p_fs[1]);
 
-		pipe->draw_arrays(pipe, PIPE_PRIM_TRIANGLES, 0, mc->num_macroblocks[vlMacroBlockExTypeBkwdPredictedField] * 24);
+		pipe->draw_arrays(pipe, PIPE_PRIM_TRIANGLES, vb_start, num_macroblocks[vlMacroBlockExTypeBkwdPredictedField] * 24);
+		vb_start += num_macroblocks[vlMacroBlockExTypeBkwdPredictedField] * 24;
 	}
 
-	if (mc->num_macroblocks[vlMacroBlockExTypeBiPredictedFrame] > 0)
+	if (num_macroblocks[vlMacroBlockExTypeBiPredictedFrame] > 0)
 	{
-		pipe->set_vertex_buffers(pipe, 3, mc->vertex_bufs[mc->cur_buf % NUM_BUF_SETS][vlMacroBlockExTypeBiPredictedFrame]);
+		pipe->set_vertex_buffers(pipe, 3, mc->vertex_bufs[mc->cur_buf % NUM_BUF_SETS]);
 		pipe->set_vertex_elements(pipe, 5, mc->vertex_elems);
 		mc->textures[mc->cur_buf % NUM_BUF_SETS][3] = mc->past_surface->texture;
 		mc->textures[mc->cur_buf % NUM_BUF_SETS][4] = mc->future_surface->texture;
@@ -574,12 +630,13 @@ static int vlFlush
 		pipe->bind_vs_state(pipe, mc->b_vs[0]);
 		pipe->bind_fs_state(pipe, mc->b_fs[0]);
 
-		pipe->draw_arrays(pipe, PIPE_PRIM_TRIANGLES, 0, mc->num_macroblocks[vlMacroBlockExTypeBiPredictedFrame] * 24);
+		pipe->draw_arrays(pipe, PIPE_PRIM_TRIANGLES, vb_start, num_macroblocks[vlMacroBlockExTypeBiPredictedFrame] * 24);
+		vb_start += num_macroblocks[vlMacroBlockExTypeBiPredictedFrame] * 24;
 	}
 
-	if (mc->num_macroblocks[vlMacroBlockExTypeBiPredictedField] > 0)
+	if (num_macroblocks[vlMacroBlockExTypeBiPredictedField] > 0)
 	{
-		pipe->set_vertex_buffers(pipe, 3, mc->vertex_bufs[mc->cur_buf % NUM_BUF_SETS][vlMacroBlockExTypeBiPredictedField]);
+		pipe->set_vertex_buffers(pipe, 3, mc->vertex_bufs[mc->cur_buf % NUM_BUF_SETS]);
 		pipe->set_vertex_elements(pipe, 5, mc->vertex_elems);
 		mc->textures[mc->cur_buf % NUM_BUF_SETS][3] = mc->past_surface->texture;
 		mc->textures[mc->cur_buf % NUM_BUF_SETS][4] = mc->future_surface->texture;
@@ -588,10 +645,11 @@ static int vlFlush
 		pipe->bind_vs_state(pipe, mc->b_vs[1]);
 		pipe->bind_fs_state(pipe, mc->b_fs[1]);
 
-		pipe->draw_arrays(pipe, PIPE_PRIM_TRIANGLES, 0, mc->num_macroblocks[vlMacroBlockExTypeBiPredictedField] * 24);
+		pipe->draw_arrays(pipe, PIPE_PRIM_TRIANGLES, vb_start, num_macroblocks[vlMacroBlockExTypeBiPredictedField] * 24);
+		vb_start += num_macroblocks[vlMacroBlockExTypeBiPredictedField] * 24;
 	}
 
-	memset(mc->num_macroblocks, 0, sizeof(unsigned int) * vlNumMacroBlockExTypes);
+	mc->num_macroblocks = 0;
 	mc->cur_buf++;
 
 	return 0;
@@ -660,7 +718,7 @@ static int vlDestroy
 {
 	struct vlR16SnormBufferedMC	*mc;
 	struct pipe_context		*pipe;
-	unsigned int			g, h, i;
+	unsigned int			h, i;
 
 	assert(render);
 
@@ -670,10 +728,9 @@ static int vlDestroy
 	for (i = 0; i < 5; ++i)
 		pipe->delete_sampler_state(pipe, mc->samplers[i]);
 
-	for (g = 0; g < NUM_BUF_SETS; ++g)
-		for (h = 0; h < vlNumMacroBlockExTypes; ++h)
+	for (h = 0; h < NUM_BUF_SETS; ++h)
 			for (i = 0; i < 3; ++i)
-				pipe->winsys->buffer_destroy(pipe->winsys, mc->vertex_bufs[g][h][i].buffer);
+				pipe->winsys->buffer_destroy(pipe->winsys, mc->vertex_bufs[h][i].buffer);
 
 	/* Textures 3 & 4 are not created directly, no need to release them here */
 	for (i = 0; i < NUM_BUF_SETS; ++i)
@@ -697,6 +754,7 @@ static int vlDestroy
 	pipe->winsys->buffer_destroy(pipe->winsys, mc->vs_const_buf.buffer);
 	pipe->winsys->buffer_destroy(pipe->winsys, mc->fs_const_buf.buffer);
 
+	free(mc->macroblocks);
 	free(mc);
 
 	return 0;
@@ -1869,28 +1927,25 @@ static int vlCreateDataBufs
 	const unsigned int	num_mb_per_frame = mbw * mbh;
 
 	struct pipe_context	*pipe;
-	unsigned int		g, h, i;
+	unsigned int		h, i;
 
 	assert(mc);
 
 	pipe = mc->pipe;
 
-	for (g = 0; g < NUM_BUF_SETS; ++g)
+	for (h = 0; h < NUM_BUF_SETS; ++h)
 	{
-		for (h = 0; h < vlNumMacroBlockExTypes; ++h)
-		{
-			/* Create our vertex buffer and vertex buffer element */
-			mc->vertex_bufs[g][h][0].pitch = sizeof(struct vlVertex2f);
-			mc->vertex_bufs[g][h][0].max_index = 24 * num_mb_per_frame - 1;
-			mc->vertex_bufs[g][h][0].buffer_offset = 0;
-			mc->vertex_bufs[g][h][0].buffer = pipe->winsys->buffer_create
-			(
-				pipe->winsys,
-				1,
-				PIPE_BUFFER_USAGE_VERTEX,
-				sizeof(struct vlVertex2f) * 24 * num_mb_per_frame
-			);
-		}
+		/* Create our vertex buffer and vertex buffer element */
+		mc->vertex_bufs[h][0].pitch = sizeof(struct vlVertex2f);
+		mc->vertex_bufs[h][0].max_index = 24 * num_mb_per_frame - 1;
+		mc->vertex_bufs[h][0].buffer_offset = 0;
+		mc->vertex_bufs[h][0].buffer = pipe->winsys->buffer_create
+		(
+			pipe->winsys,
+			1,
+			PIPE_BUFFER_USAGE_VERTEX,
+			sizeof(struct vlVertex2f) * 24 * num_mb_per_frame
+		);
 	}
 
 	/* Position & block luma, block chroma texcoord element */
@@ -1899,23 +1954,20 @@ static int vlCreateDataBufs
 	mc->vertex_elems[0].nr_components = 2;
 	mc->vertex_elems[0].src_format = PIPE_FORMAT_R32G32_FLOAT;
 
-	for (g = 0; g < NUM_BUF_SETS; ++g)
+	for (h = 0; h < NUM_BUF_SETS; ++h)
 	{
-		for (h = 0; h < vlNumMacroBlockExTypes; ++h)
+		for (i = 1; i < 3; ++i)
 		{
-			for (i = 1; i < 3; ++i)
-			{
-				mc->vertex_bufs[g][h][i].pitch = sizeof(struct vlVertex2f) * 2;
-				mc->vertex_bufs[g][h][i].max_index = 24 * num_mb_per_frame - 1;
-				mc->vertex_bufs[g][h][i].buffer_offset = 0;
-				mc->vertex_bufs[g][h][i].buffer = pipe->winsys->buffer_create
-				(
-					pipe->winsys,
-					1,
-					PIPE_BUFFER_USAGE_VERTEX,
-					sizeof(struct vlVertex2f) * 2 * 24 * num_mb_per_frame
-				);
-			}
+			mc->vertex_bufs[h][i].pitch = sizeof(struct vlVertex2f) * 2;
+			mc->vertex_bufs[h][i].max_index = 24 * num_mb_per_frame - 1;
+			mc->vertex_bufs[h][i].buffer_offset = 0;
+			mc->vertex_bufs[h][i].buffer = pipe->winsys->buffer_create
+			(
+				pipe->winsys,
+				1,
+				PIPE_BUFFER_USAGE_VERTEX,
+				sizeof(struct vlVertex2f) * 2 * 24 * num_mb_per_frame
+			);
 		}
 	}
 
@@ -1970,6 +2022,8 @@ static int vlCreateDataBufs
 	);
 
 	pipe->winsys->buffer_unmap(pipe->winsys, mc->fs_const_buf.buffer);
+
+	mc->macroblocks = malloc(sizeof(struct vlMpeg2MacroBlock) * num_mb_per_frame);
 
 	return 0;
 }
@@ -2106,7 +2160,7 @@ int vlCreateR16SNormBufferedMC
 	mc->buffered_surface = NULL;
 	mc->past_surface = NULL;
 	mc->future_surface = NULL;
-	memset(mc->num_macroblocks, 0, sizeof(unsigned int) * vlNumMacroBlockExTypes);
+	mc->num_macroblocks = 0;
 
 	vlInit(mc);
 
