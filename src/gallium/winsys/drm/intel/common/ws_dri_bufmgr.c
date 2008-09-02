@@ -277,7 +277,7 @@ void driReadUnlockKernelBO(void)
 typedef struct _DriBufferObject
 {
    DriBufferPool *pool;
-   pipe_mutx mutex;
+   pipe_mutex mutex;
    int refCount;
    const char *name;
    uint64_t flags;
