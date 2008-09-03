@@ -292,7 +292,7 @@ intel_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
        if (buffers[i].attachment == __DRI_BUFFER_STENCIL && depth_region) {
 	  if (INTEL_DEBUG & DEBUG_DRI)
 	     fprintf(stderr, "(reusing depth buffer as stencil)\n");
-          region = depth_region;
+	  intel_region_reference(&region, depth_region);
        }
        else
           region = intel_region_alloc_for_handle(intel, buffers[i].cpp,

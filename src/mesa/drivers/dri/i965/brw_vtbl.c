@@ -75,27 +75,15 @@ static void brw_set_draw_region( struct intel_context *intel,
 				GLuint num_regions)
 {
    struct brw_context *brw = brw_context(&intel->ctx);
-   struct intel_region *old_depth_region, *old_draw_regions[MAX_DRAW_BUFFERS];
    int i;
-
    if (brw->state.depth_region != depth_region)
       brw->state.dirty.brw |= BRW_NEW_DEPTH_BUFFER;
-
-   for (i = 0; i < brw->state.nr_draw_regions; i++) {
-	   old_draw_regions[i] = brw->state.draw_regions[i];
-	   brw->state.draw_regions[i] = NULL;
-   }
-   old_depth_region = brw->state.depth_region;
-   brw->state.depth_region = NULL;
-
+   for (i = 0; i < brw->state.nr_draw_regions; i++)
+       intel_region_release(&brw->state.draw_regions[i]);
+   intel_region_release(&brw->state.depth_region);
    for (i = 0; i < num_regions; i++)
        intel_region_reference(&brw->state.draw_regions[i], draw_regions[i]);
    intel_region_reference(&brw->state.depth_region, depth_region);
-
-   for (i = 0; i < brw->state.nr_draw_regions; i++)
-       intel_region_release(&old_draw_regions[i]);
-   intel_region_release(&old_depth_region);
-
    brw->state.nr_draw_regions = num_regions;
 }
 
