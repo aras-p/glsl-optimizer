@@ -921,14 +921,14 @@ intelMakeCurrent(__DRIcontextPrivate * driContextPriv,
       struct intel_framebuffer *intel_fb =
 	 (struct intel_framebuffer *) driDrawPriv->driverPrivate;
       GLframebuffer *readFb = (GLframebuffer *) driReadPriv->driverPrivate;
-
-    intel_update_renderbuffers(driContextPriv, driDrawPriv);
-    if (driDrawPriv != driReadPriv)
-	intel_update_renderbuffers(driContextPriv, driReadPriv);
-
-      /* XXX FBO temporary fix-ups! */
-      /* if the renderbuffers don't have regions, init them from the context */
-      if (!driContextPriv->driScreenPriv->dri2.enabled) {
+ 
+      if (driContextPriv->driScreenPriv->dri2.enabled) {     
+          intel_update_renderbuffers(driContextPriv, driDrawPriv);
+          if (driDrawPriv != driReadPriv)
+              intel_update_renderbuffers(driContextPriv, driReadPriv);
+      } else {
+          /* XXX FBO temporary fix-ups! */
+          /* if the renderbuffers don't have regions, init them from the context */
          struct intel_renderbuffer *irbDepth
             = intel_get_renderbuffer(&intel_fb->Base, BUFFER_DEPTH);
          struct intel_renderbuffer *irbStencil
