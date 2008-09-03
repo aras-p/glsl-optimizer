@@ -113,7 +113,7 @@ cell_vbuf_release_vertices(struct vbuf_render *vbr, void *vertices,
    }
 
    cvbr->vertex_buf = ~0;
-   cell_flush_int(&cell->pipe, 0x0);
+   cell_flush_int(cell, 0x0);
 
    assert(vertices == cvbr->vertex_buffer);
    cvbr->vertex_buffer = NULL;
@@ -121,12 +121,13 @@ cell_vbuf_release_vertices(struct vbuf_render *vbr, void *vertices,
 
 
 
-static void
+static boolean
 cell_vbuf_set_primitive(struct vbuf_render *vbr, unsigned prim)
 {
    struct cell_vbuf_render *cvbr = cell_vbuf_render(vbr);
    cvbr->prim = prim;
    /*printf("cell_set_prim %u\n", prim);*/
+   return TRUE;
 }
 
 
@@ -244,7 +245,7 @@ cell_vbuf_draw(struct vbuf_render *vbr,
 
 #if 0
    /* helpful for debug */
-   cell_flush_int(&cell->pipe, CELL_FLUSH_WAIT);
+   cell_flush_int(cell, CELL_FLUSH_WAIT);
 #endif
 }
 

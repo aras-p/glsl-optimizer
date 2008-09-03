@@ -50,16 +50,15 @@ cell_flush(struct pipe_context *pipe, unsigned flags,
       flags |= CELL_FLUSH_WAIT;
 
    draw_flush( cell->draw );
-   cell_flush_int(pipe, flags);
+   cell_flush_int(cell, flags);
 }
 
 
 /** internal flush */
 void
-cell_flush_int(struct pipe_context *pipe, unsigned flags)
+cell_flush_int(struct cell_context *cell, unsigned flags)
 {
    static boolean flushing = FALSE;  /* recursion catcher */
-   struct cell_context *cell = cell_context(pipe);
    uint i;
 
    ASSERT(!flushing);
