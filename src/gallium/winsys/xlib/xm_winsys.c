@@ -306,11 +306,16 @@ xmesa_display_surface_tiled(XMesaBuffer b, const struct pipe_surface *surf)
 
    for (y = 0; y < surf->height; y += TILE_SIZE) {
       for (x = 0; x < surf->width; x += TILE_SIZE) {
-         int dx = x;
-         int dy = y;
          int tx = x / TILE_SIZE;
          int ty = y / TILE_SIZE;
          int offset = ty * tilesPerRow + tx;
+         int w = TILE_SIZE;
+         int h = TILE_SIZE;
+
+         if (y + h > surf->height)
+            h = surf->height - y;
+         if (x + w > surf->width)
+            w = surf->width - x;
 
          offset *= 4 * TILE_SIZE * TILE_SIZE;
 
@@ -319,11 +324,12 @@ xmesa_display_surface_tiled(XMesaBuffer b, const struct pipe_surface *surf)
          if (XSHM_ENABLED(xm_buf)) {
 #if defined(USE_XSHM) && !defined(XFree86Server)
             XShmPutImage(b->xm_visual->display, b->drawable, b->gc,
-                         ximage, 0, 0, x, y, TILE_SIZE, TILE_SIZE, False);
+                         ximage, 0, 0, x, y, w, h, False);
 #endif
-         } else {
+         }
+         else {
             XPutImage(b->xm_visual->display, b->drawable, b->gc,
-                      ximage, 0, 0, dx, dy, TILE_SIZE, TILE_SIZE);
+                      ximage, 0, 0, x, y, w, h);
          }
       }
    }
