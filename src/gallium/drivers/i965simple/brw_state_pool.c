@@ -103,7 +103,7 @@ static void brw_destroy_pool( struct brw_context *brw,
 {
    struct brw_mem_pool *pool = &brw->pool[pool_id];
 
-   pipe_buffer_reference( pool->brw->pipe.winsys,
+   winsys_buffer_reference( pool->brw->pipe.winsys,
 			  &pool->buffer,
 			  NULL );
 }

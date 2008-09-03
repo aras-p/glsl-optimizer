@@ -83,7 +83,7 @@ intelCreateSurface(struct intel_screen *intelScreen, struct pipe_winsys *winsys,
                                      buffer);
 
    /* Unref the buffer we don't need it anyways */
-   pipe_buffer_reference(screen->winsys, &buffer, NULL);
+   pipe_buffer_reference(screen, &buffer, NULL);
 
    surface = screen->get_tex_surface(screen,
                                      texture,

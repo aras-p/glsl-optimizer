@@ -109,7 +109,7 @@ pipe_surface_reference(struct pipe_surface **ptr, struct pipe_surface *surf)
 /* XXX: thread safety issues!
  */
 static INLINE void
-pipe_buffer_reference(struct pipe_winsys *winsys,
+winsys_buffer_reference(struct pipe_winsys *winsys,
 		      struct pipe_buffer **ptr,
 		      struct pipe_buffer *buf)
 {
@@ -164,48 +164,48 @@ pipe_texture_release(struct pipe_texture **ptr)
  */
 
 static INLINE struct pipe_buffer *
-pipe_buffer_create( struct pipe_context *pipe,
+pipe_buffer_create( struct pipe_screen *screen,
                     unsigned alignment, unsigned usage, unsigned size )
 {
-   return pipe->winsys->buffer_create(pipe->winsys, alignment, usage, size);
+   return screen->winsys->buffer_create(screen->winsys, alignment, usage, size);
 }
 
 static INLINE struct pipe_buffer *
-pipe_user_buffer_create( struct pipe_context *pipe, void *ptr, unsigned size )
+pipe_user_buffer_create( struct pipe_screen *screen, void *ptr, unsigned size )
 {
-   return pipe->winsys->user_buffer_create(pipe->winsys, ptr, size);
+   return screen->winsys->user_buffer_create(screen->winsys, ptr, size);
 }
 
 static INLINE void
-pipe_buffer_destroy( struct pipe_context *pipe, struct pipe_buffer *buf )
+pipe_buffer_destroy( struct pipe_screen *screen, struct pipe_buffer *buf )
 {
-   pipe->winsys->buffer_destroy(pipe->winsys, buf);
+   screen->winsys->buffer_destroy(screen->winsys, buf);
 }
 
 static INLINE void *
-pipe_buffer_map(struct pipe_context *pipe,
+pipe_buffer_map(struct pipe_screen *screen,
                 struct pipe_buffer *buf,
                 unsigned usage)
 {
-   return pipe->winsys->buffer_map(pipe->winsys, buf, usage);
+   return screen->winsys->buffer_map(screen->winsys, buf, usage);
 }
 
 static INLINE void
-pipe_buffer_unmap(struct pipe_context *pipe,
+pipe_buffer_unmap(struct pipe_screen *screen,
                   struct pipe_buffer *buf)
 {
-   pipe->winsys->buffer_unmap(pipe->winsys, buf);
+   screen->winsys->buffer_unmap(screen->winsys, buf);
 }
 
 /* XXX when we're using this everywhere, get rid of
- * pipe_buffer_reference() above.
+ * winsys_buffer_reference() above.
  */
 static INLINE void
-pipe_reference_buffer(struct pipe_context *pipe,
+pipe_buffer_reference(struct pipe_screen *screen,
 		      struct pipe_buffer **ptr,
 		      struct pipe_buffer *buf)
 {
-   pipe_buffer_reference(pipe->winsys, ptr, buf);
+   winsys_buffer_reference(screen->winsys, ptr, buf);
 }
 
 

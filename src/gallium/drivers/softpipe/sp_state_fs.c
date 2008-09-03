@@ -152,7 +152,7 @@ softpipe_set_constant_buffer(struct pipe_context *pipe,
    assert(index == 0);
 
    /* note: reference counting */
-   pipe_buffer_reference(ws,
+   winsys_buffer_reference(ws,
 			 &softpipe->constants[shader].buffer,
 			 buf ? buf->buffer : NULL);
    softpipe->constants[shader].size = buf ? buf->size : 0;

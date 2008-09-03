@@ -116,7 +116,7 @@ st_destroy_clear(struct st_context *st)
       st->clear.vs = NULL;
    }
    if (st->clear.vbuf) {
-      pipe_buffer_destroy(pipe, st->clear.vbuf);
+      pipe_buffer_destroy(pipe->screen, st->clear.vbuf);
       st->clear.vbuf = NULL;
    }
 }
@@ -152,7 +152,7 @@ draw_quad(GLcontext *ctx,
    void *buf;
 
    if (!st->clear.vbuf) {
-      st->clear.vbuf = pipe_buffer_create(pipe, 32, PIPE_BUFFER_USAGE_VERTEX,
+      st->clear.vbuf = pipe_buffer_create(pipe->screen, 32, PIPE_BUFFER_USAGE_VERTEX,
                                           sizeof(st->clear.vertices));
    }
 
@@ -180,9 +180,9 @@ draw_quad(GLcontext *ctx,
    }
 
    /* put vertex data into vbuf */
-   buf = pipe_buffer_map(pipe, st->clear.vbuf, PIPE_BUFFER_USAGE_CPU_WRITE);
+   buf = pipe_buffer_map(pipe->screen, st->clear.vbuf, PIPE_BUFFER_USAGE_CPU_WRITE);
    memcpy(buf, st->clear.vertices, sizeof(st->clear.vertices));
-   pipe_buffer_unmap(pipe, st->clear.vbuf);
+   pipe_buffer_unmap(pipe->screen, st->clear.vbuf);
 
    /* draw */
    util_draw_vertex_buffer(pipe, st->clear.vbuf,

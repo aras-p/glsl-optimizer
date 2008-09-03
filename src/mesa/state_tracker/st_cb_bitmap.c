@@ -378,7 +378,7 @@ setup_bitmap_vertex_data(struct st_context *st,
    void *buf;
 
    if (!st->bitmap.vbuf) {
-      st->bitmap.vbuf = pipe_buffer_create(pipe, 32, PIPE_BUFFER_USAGE_VERTEX,
+      st->bitmap.vbuf = pipe_buffer_create(pipe->screen, 32, PIPE_BUFFER_USAGE_VERTEX,
                                            sizeof(st->bitmap.vertices));
    }
 
@@ -418,9 +418,9 @@ setup_bitmap_vertex_data(struct st_context *st,
    }
 
    /* put vertex data into vbuf */
-   buf = pipe_buffer_map(pipe, st->bitmap.vbuf, PIPE_BUFFER_USAGE_CPU_WRITE);
+   buf = pipe_buffer_map(pipe->screen, st->bitmap.vbuf, PIPE_BUFFER_USAGE_CPU_WRITE);
    memcpy(buf, st->bitmap.vertices, sizeof(st->bitmap.vertices));
-   pipe_buffer_unmap(pipe, st->bitmap.vbuf);
+   pipe_buffer_unmap(pipe->screen, st->bitmap.vbuf);
 }
 
 
@@ -779,7 +779,7 @@ st_destroy_bitmap(struct st_context *st)
    }
 
    if (st->bitmap.vbuf) {
-      pipe_buffer_destroy(pipe, st->bitmap.vbuf);
+      pipe_buffer_destroy(pipe->screen, st->bitmap.vbuf);
       st->bitmap.vbuf = NULL;
    }
 

@@ -248,7 +248,7 @@ struct st_context {
       util_draw_vertex_buffer(pipe, vbuf, prim, num_verts, num_attribs);
       
 error2:
-      pipe_buffer_reference(pipe->winsys, &vbuf, NULL);
+      pipe_buffer_reference(pipe->screen, &vbuf, NULL);
 error1:
       ;
    }

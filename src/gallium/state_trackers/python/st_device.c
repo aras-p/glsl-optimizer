@@ -293,7 +293,7 @@ st_buffer_destroy(struct st_buffer *st_buf)
 {
    if(st_buf) {
       struct pipe_winsys *winsys = st_buf->st_dev->screen->winsys;
-      pipe_buffer_reference(winsys, &st_buf->buffer, NULL);
+      pipe_buffer_reference(pipe->screen, &st_buf->buffer, NULL);
       FREE(st_buf);
    }
 }

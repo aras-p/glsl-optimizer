@@ -645,7 +645,7 @@ i915_texture_release(struct pipe_screen *screen,
       DBG("%s deleting %p\n", __FUNCTION__, (void *) tex);
       */
 
-      pipe_buffer_reference(screen->winsys, &tex->buffer, NULL);
+      pipe_buffer_reference(screen, &tex->buffer, NULL);
 
       for (i = 0; i < PIPE_MAX_TEXTURE_LEVELS; i++)
          if (tex->image_offset[i])
@@ -684,7 +684,7 @@ i915_get_tex_surface(struct pipe_screen *screen,
       ps->refcount = 1;
       ps->winsys = ws;
       pipe_texture_reference(&ps->texture, pt);
-      pipe_buffer_reference(ws, &ps->buffer, tex->buffer);
+      pipe_buffer_reference(screen, &ps->buffer, tex->buffer);
       ps->format = pt->format;
       ps->width = pt->width[level];
       ps->height = pt->height[level];
@@ -728,7 +728,7 @@ i915_texture_blanket(struct pipe_screen * screen,
    i915_miptree_set_level_info(tex, 0, 1, base->width[0], base->height[0], 1);
    i915_miptree_set_image_offset(tex, 0, 0, 0, 0);
 
-   pipe_buffer_reference(screen->winsys, &tex->buffer, buffer);
+   pipe_buffer_reference(screen, &tex->buffer, buffer);
 
    return &tex->base;
 }
@@ -756,7 +756,7 @@ i915_tex_surface_release(struct pipe_screen *screen,
       }
 
       pipe_texture_reference(&surf->texture, NULL);
-      pipe_buffer_reference(screen->winsys, &surf->buffer, NULL);
+      pipe_buffer_reference(screen, &surf->buffer, NULL);
       FREE(surf);
    }
 

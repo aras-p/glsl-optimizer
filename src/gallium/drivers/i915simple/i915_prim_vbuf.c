@@ -124,7 +124,7 @@ i915_vbuf_render_allocate_vertices( struct vbuf_render *render,
    if (i915_render->vbo_size > size + i915_render->vbo_offset && !i915->vbo_flushed) {
    } else {
       i915->vbo_flushed = 0;
-      pipe_buffer_reference(winsys, &i915_render->vbo, NULL);
+      winsys_buffer_reference(winsys, &i915_render->vbo, NULL);
    }
 
    if (!i915_render->vbo) {

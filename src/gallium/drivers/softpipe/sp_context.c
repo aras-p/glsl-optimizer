@@ -113,7 +113,7 @@ static void softpipe_destroy( struct pipe_context *pipe )
 
    for (i = 0; i < Elements(softpipe->constants); i++) {
       if (softpipe->constants[i].buffer) {
-         pipe_buffer_reference(ws, &softpipe->constants[i].buffer, NULL);
+         winsys_buffer_reference(ws, &softpipe->constants[i].buffer, NULL);
       }
    }
 

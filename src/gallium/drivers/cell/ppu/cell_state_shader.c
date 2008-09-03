@@ -166,7 +166,7 @@ cell_set_constant_buffer(struct pipe_context *pipe,
    assert(index == 0);
 
    /* note: reference counting */
-   pipe_buffer_reference(ws,
+   winsys_buffer_reference(ws,
                         &cell->constants[shader].buffer,
                         buf->buffer);
    cell->constants[shader].size = buf->size;

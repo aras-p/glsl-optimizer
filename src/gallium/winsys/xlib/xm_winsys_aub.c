@@ -308,7 +308,7 @@ aub_i915_surface_release(struct pipe_winsys *winsys, struct pipe_surface **s)
    surf->refcount--;
    if (surf->refcount == 0) {
       if (surf->buffer)
-         pipe_buffer_reference(winsys, &surf->buffer, NULL);
+         winsys_buffer_reference(winsys, &surf->buffer, NULL);
       free(surf);
    }
    *s = NULL;

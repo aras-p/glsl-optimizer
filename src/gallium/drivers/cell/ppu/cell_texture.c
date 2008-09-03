@@ -130,7 +130,7 @@ cell_texture_release_screen(struct pipe_screen *screen,
       DBG("%s deleting %p\n", __FUNCTION__, (void *) spt);
       */
 
-      pipe_buffer_reference(screen->winsys, &spt->buffer, NULL);
+      pipe_buffer_reference(screen, &spt->buffer, NULL);
 
       FREE(spt);
    }
@@ -161,7 +161,7 @@ cell_get_tex_surface_screen(struct pipe_screen *screen,
    if (ps) {
       assert(ps->refcount);
       assert(ps->winsys);
-      pipe_buffer_reference(ws, &ps->buffer, spt->buffer);
+      winsys_buffer_reference(ws, &ps->buffer, spt->buffer);
       ps->format = pt->format;
       ps->block = pt->block;
       ps->width = pt->width[level];
