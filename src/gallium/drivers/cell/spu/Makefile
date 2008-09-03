@@ -5,7 +5,7 @@
 
 
 TOP = ../../../../..
-include $(TOP)/configs/linux-cell
+include $(TOP)/configs/current
 
 
 PROG = g3d

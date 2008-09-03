@@ -6,5 +6,5 @@ include $(TOP)/configs/linux-cell
 
 CONFIG_NAME = linux-cell-debug
 
-OPT_FLAGS = -g
+OPT_FLAGS = -g -DDEBUG
 

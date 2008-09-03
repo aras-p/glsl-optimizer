@@ -5,7 +5,7 @@
 
 
 TOP = ../../../../..
-include $(TOP)/configs/linux-cell
+include $(TOP)/configs/current
 
 
 # This is the "top-level" cell PPU driver code, will get pulled into libGL.so
