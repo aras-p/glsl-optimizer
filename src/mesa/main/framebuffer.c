@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.1
+ * Version:  7.2
  *
- * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2008  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -491,13 +491,13 @@ _mesa_update_framebuffer_visual(struct gl_framebuffer *fb)
    if (fb->Attachment[BUFFER_ACCUM].Renderbuffer) {
       fb->Visual.haveAccumBuffer = GL_TRUE;
       fb->Visual.accumRedBits
-         = fb->Attachment[BUFFER_DEPTH].Renderbuffer->RedBits;
+         = fb->Attachment[BUFFER_ACCUM].Renderbuffer->RedBits;
       fb->Visual.accumGreenBits
-         = fb->Attachment[BUFFER_DEPTH].Renderbuffer->GreenBits;
+         = fb->Attachment[BUFFER_ACCUM].Renderbuffer->GreenBits;
       fb->Visual.accumBlueBits
-         = fb->Attachment[BUFFER_DEPTH].Renderbuffer->BlueBits;
+         = fb->Attachment[BUFFER_ACCUM].Renderbuffer->BlueBits;
       fb->Visual.accumAlphaBits
-         = fb->Attachment[BUFFER_DEPTH].Renderbuffer->AlphaBits;
+         = fb->Attachment[BUFFER_ACCUM].Renderbuffer->AlphaBits;
    }
 
    compute_depth_max(fb);
