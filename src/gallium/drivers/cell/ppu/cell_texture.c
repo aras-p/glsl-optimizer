@@ -63,19 +63,30 @@ cell_texture_layout(struct cell_texture * spt)
    spt->buffer_size = 0;
 
    for ( level = 0 ; level <= pt->last_level ; level++ ) {
+      unsigned size;
+      unsigned w_tile, h_tile;
+
+      /* width, height, rounded up to tile size */
+      w_tile = align(width, TILE_SIZE);
+      h_tile = align(height, TILE_SIZE);
+
       pt->width[level] = width;
       pt->height[level] = height;
       pt->depth[level] = depth;
-      pt->nblocksx[level] = pf_get_nblocksx(&pt->block, width);  
-      pt->nblocksy[level] = pf_get_nblocksy(&pt->block, height);  
+      pt->nblocksx[level] = pf_get_nblocksx(&pt->block, w_tile);  
+      pt->nblocksy[level] = pf_get_nblocksy(&pt->block, h_tile);  
 
       spt->stride[level] = pt->nblocksx[level] * pt->block.size;
 
       spt->level_offset[level] = spt->buffer_size;
 
-      spt->buffer_size += (pt->nblocksy[level] *
-			  ((pt->target == PIPE_TEXTURE_CUBE) ? 6 : depth) *
-                           pt->nblocksx[level] * pt->block.size);
+      size = pt->nblocksx[level] * pt->nblocksy[level] * pt->block.size;
+      if (pt->target == PIPE_TEXTURE_CUBE)
+         size *= 6;
+      else
+         size *= depth;
+
+      spt->buffer_size += size;
 
       width  = minify(width);
       height = minify(height);
@@ -138,6 +149,7 @@ cell_texture_release(struct pipe_screen *screen,
 }
 
 
+#if 0
 static void
 cell_texture_update(struct pipe_context *pipe, struct pipe_texture *texture,
                     uint face, uint levelsMask)
@@ -145,6 +157,7 @@ cell_texture_update(struct pipe_context *pipe, struct pipe_texture *texture,
    /* XXX TO DO:  re-tile the texture data ... */
 
 }
+#endif
 
 
 static struct pipe_surface *
@@ -179,7 +192,8 @@ cell_get_tex_surface(struct pipe_screen *screen,
 	 ps->offset += ((pt->target == PIPE_TEXTURE_CUBE) ? face : zslice) *
 		       ps->nblocksy *
 		       ps->stride;
-      } else {
+      }
+      else {
 	 assert(face == 0);
 	 assert(zslice == 0);
       }
@@ -189,6 +203,11 @@ cell_get_tex_surface(struct pipe_screen *screen,
 
 
 
+/**
+ * Copy tile data from linear layout to tiled layout.
+ * XXX this should be rolled into the future surface-creation code.
+ * XXX also need "untile" code...
+ */
 static void
 tile_copy_data(uint w, uint h, uint tile_size, uint *dst, const uint *src)
 {
@@ -219,6 +238,7 @@ tile_copy_data(uint w, uint h, uint tile_size, uint *dst, const uint *src)
 
 /**
  * Convert linear texture image data to tiled format for SPU usage.
+ * XXX recast this in terms of pipe_surfaces (aka texture views).
  */
 static void
 cell_tile_texture(struct cell_context *cell,
