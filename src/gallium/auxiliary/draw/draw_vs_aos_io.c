@@ -55,9 +55,13 @@ static void emit_load_R32G32B32( struct aos_compilation *cp,
 				 struct x86_reg src_ptr )
 {
    sse_movss(cp->func, data, x86_make_disp(src_ptr, 8));
+   /* data = z ? ? ? */
    sse_shufps(cp->func, data, aos_get_internal_xmm( cp, IMM_IDENTITY ), SHUF(X,Y,Z,W) );
+   /* data = z ? 0 1 */
    sse_shufps(cp->func, data, data, SHUF(Y,Z,X,W) );
+   /* data = ? 0 z 1 */
    sse_movlps(cp->func, data, src_ptr);
+   /* data = x y z 1 */
 }
 
 static void emit_load_R32G32( struct aos_compilation *cp, 
