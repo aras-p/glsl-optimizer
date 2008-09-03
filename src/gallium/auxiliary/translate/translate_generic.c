@@ -415,6 +415,12 @@ static fetch_func get_fetch_func( enum pipe_format format )
 
 static emit_func get_emit_func( enum pipe_format format )
 {
+   /* silence warnings */
+   (void) emit_R32G32B32A32_FIXED;
+   (void) emit_R32G32B32_FIXED;
+   (void) emit_R32G32_FIXED;
+   (void) emit_R32_FIXED;
+
    switch (format) {
    case PIPE_FORMAT_R64_FLOAT:
       return &emit_R64_FLOAT;
