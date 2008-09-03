@@ -517,7 +517,7 @@ tgsi_dump(
    const struct tgsi_token *tokens,
    uint flags )
 {
-   static char str[4096];
+   static char str[16000];
    uint len;
    char *p = str;
 
