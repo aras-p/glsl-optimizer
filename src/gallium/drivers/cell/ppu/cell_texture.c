@@ -187,6 +187,10 @@ cell_get_tex_surface(struct pipe_screen *screen,
 
       /* XXX may need to override usage flags (see sp_texture.c) */
 
+      pipe_texture_reference(&ps->texture, pt); 
+      ps->face = face;
+      ps->level = level;
+      ps->zslice = zslice;
 
       if (pt->target == PIPE_TEXTURE_CUBE || pt->target == PIPE_TEXTURE_3D) {
 	 ps->offset += ((pt->target == PIPE_TEXTURE_CUBE) ? face : zslice) *
