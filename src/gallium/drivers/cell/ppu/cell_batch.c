@@ -93,11 +93,11 @@ cell_batch_flush(struct cell_context *cell)
 
    /*
    printf("cell_batch_dispatch: buf %u at %p, size %u\n",
-          batch, &cell->batch_buffer[batch][0], size);
+          batch, &cell->buffer[batch][0], size);
    */
      
    /*
-    * Build "BATCH" command and sent to all SPUs.
+    * Build "BATCH" command and send to all SPUs.
     */
    cmd_word = CELL_CMD_BATCH | (batch << 8) | (size << 16);
 
@@ -130,6 +130,8 @@ cell_batch_free_space(const struct cell_context *cell)
 
 /**
  * Append data to current batch.
+ * \param data  address of block of bytes to append
+ * \param bytes  size of block of bytes
  */
 void
 cell_batch_append(struct cell_context *cell, const void *data, uint bytes)
@@ -165,6 +167,10 @@ cell_batch_append(struct cell_context *cell, const void *data, uint bytes)
 }
 
 
+/**
+ * Allocate space in the current batch buffer for 'bytes' space.
+ * \return address in batch buffer to put data
+ */
 void *
 cell_batch_alloc(struct cell_context *cell, uint bytes)
 {
@@ -172,6 +178,10 @@ cell_batch_alloc(struct cell_context *cell, uint bytes)
 }
 
 
+/**
+ * Same as \sa cell_batch_alloc, but return an address at a particular
+ * alignment.
+ */
 void *
 cell_batch_alloc_aligned(struct cell_context *cell, uint bytes,
                          uint alignment)
