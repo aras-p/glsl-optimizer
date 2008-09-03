@@ -1,4 +1,4 @@
-# linux-cell
+# linux-cell  (non-debug build)
 
 include $(TOP)/configs/default
 
@@ -13,7 +13,7 @@ CC = ppu32-gcc
 CXX = ppu32-g++
 HOST_CC = gcc
 
-OPT_FLAGS = -g
+OPT_FLAGS = -O3
 
 # Cell SDK location
 ## For SDK 2.1: (plus, remove -DSPU_MAIN_PARAM_LONG_LONG below)
@@ -38,6 +38,8 @@ MKDEP_OPTIONS = -fdepend -Y
 GL_LIB_DEPS = $(EXTRA_LIB_PATH) -lX11 -lXext -lm -lpthread \
 	-L$(SDK)/lib -m32 -Wl,-m,elf32ppc -R$(SDK)/lib -lspe2
 
+
+CELL_SPU_LIB = $(TOP)/src/gallium/drivers/cell/spu/g3d_spu.a
 
 
 ### SPU stuff

@@ -101,6 +101,7 @@ linux \
 linux-alpha \
 linux-alpha-static \
 linux-cell \
+linux-cell-debug \
 linux-debug \
 linux-directfb \
 linux-dri \
