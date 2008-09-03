@@ -74,7 +74,7 @@ struct vlR16SnormBufferedMC
 	void					*i_vs, *p_vs[2], *b_vs[2];
 	void					*i_fs, *p_fs[2], *b_fs[2];
 	struct pipe_vertex_buffer 		vertex_bufs[NUM_BUF_SETS][3];
-	struct pipe_vertex_element		vertex_elems[5];
+	struct pipe_vertex_element		vertex_elems[6];
 	struct pipe_constant_buffer		vs_const_buf, fs_const_buf;
 };
 
@@ -443,39 +443,63 @@ static inline int vlGrabMacroBlockVB
 				mc->pipe->winsys,
 				mc->vertex_bufs[mc->cur_buf % NUM_BUF_SETS][0].buffer,
 				PIPE_BUFFER_USAGE_CPU_WRITE
-			) + pos * 24;
+			) + pos * 2 * 24;
 
 			vb[0].x = macroblock->mbx * unit.x;		vb[0].y = macroblock->mby * unit.y;
-			vb[1].x = macroblock->mbx * unit.x;		vb[1].y = macroblock->mby * unit.y + half.y;
-			vb[2].x = macroblock->mbx * unit.x + half.x;	vb[2].y = macroblock->mby * unit.y;
-
-			vb[3].x = macroblock->mbx * unit.x + half.x;	vb[3].y = macroblock->mby * unit.y;
-			vb[4].x = macroblock->mbx * unit.x;		vb[4].y = macroblock->mby * unit.y + half.y;
-			vb[5].x = macroblock->mbx * unit.x + half.x;	vb[5].y = macroblock->mby * unit.y + half.y;
+			vb[1].x = macroblock->mbx * unit.x;		vb[1].y = macroblock->mby * unit.y;
+			vb[2].x = macroblock->mbx * unit.x;		vb[2].y = macroblock->mby * unit.y + half.y;
+			vb[3].x = macroblock->mbx * unit.x;		vb[3].y = macroblock->mby * unit.y + half.y;
+			vb[4].x = macroblock->mbx * unit.x + half.x;	vb[4].y = macroblock->mby * unit.y;
+			vb[5].x = macroblock->mbx * unit.x + half.x;	vb[5].y = macroblock->mby * unit.y;
 
 			vb[6].x = macroblock->mbx * unit.x + half.x;	vb[6].y = macroblock->mby * unit.y;
-			vb[7].x = macroblock->mbx * unit.x + half.x;	vb[7].y = macroblock->mby * unit.y + half.y;
-			vb[8].x = macroblock->mbx * unit.x + unit.x;	vb[8].y = macroblock->mby * unit.y;
-
-			vb[9].x = macroblock->mbx * unit.x + unit.x;	vb[9].y = macroblock->mby * unit.y;
+			vb[7].x = macroblock->mbx * unit.x + half.x;	vb[7].y = macroblock->mby * unit.y;
+			vb[8].x = macroblock->mbx * unit.x;		vb[8].y = macroblock->mby * unit.y + half.y;
+			vb[9].x = macroblock->mbx * unit.x;		vb[9].y = macroblock->mby * unit.y + half.y;
 			vb[10].x = macroblock->mbx * unit.x + half.x;	vb[10].y = macroblock->mby * unit.y + half.y;
-			vb[11].x = macroblock->mbx * unit.x + unit.x;	vb[11].y = macroblock->mby * unit.y + half.y;
+			vb[11].x = macroblock->mbx * unit.x + half.x;	vb[11].y = macroblock->mby * unit.y + half.y;
 
-			vb[12].x = macroblock->mbx * unit.x;		vb[12].y = macroblock->mby * unit.y + half.y;
-			vb[13].x = macroblock->mbx * unit.x;		vb[13].y = macroblock->mby * unit.y + unit.y;
+			vb[12].x = macroblock->mbx * unit.x + half.x;	vb[12].y = macroblock->mby * unit.y;
+			vb[13].x = macroblock->mbx * unit.x + half.x;	vb[13].y = macroblock->mby * unit.y;
 			vb[14].x = macroblock->mbx * unit.x + half.x;	vb[14].y = macroblock->mby * unit.y + half.y;
-
 			vb[15].x = macroblock->mbx * unit.x + half.x;	vb[15].y = macroblock->mby * unit.y + half.y;
-			vb[16].x = macroblock->mbx * unit.x;		vb[16].y = macroblock->mby * unit.y + unit.y;
-			vb[17].x = macroblock->mbx * unit.x + half.x;	vb[17].y = macroblock->mby * unit.y + unit.y;
+			vb[16].x = macroblock->mbx * unit.x + unit.x;	vb[16].y = macroblock->mby * unit.y;
+			vb[17].x = macroblock->mbx * unit.x + unit.x;	vb[17].y = macroblock->mby * unit.y;
 
-			vb[18].x = macroblock->mbx * unit.x + half.x;	vb[18].y = macroblock->mby * unit.y + half.y;
-			vb[19].x = macroblock->mbx * unit.x + half.x;	vb[19].y = macroblock->mby * unit.y + unit.y;
-			vb[20].x = macroblock->mbx * unit.x + unit.x;	vb[20].y = macroblock->mby * unit.y + half.y;
+			vb[18].x = macroblock->mbx * unit.x + unit.x;	vb[18].y = macroblock->mby * unit.y;
+			vb[19].x = macroblock->mbx * unit.x + unit.x;	vb[19].y = macroblock->mby * unit.y;
+			vb[20].x = macroblock->mbx * unit.x + half.x;	vb[20].y = macroblock->mby * unit.y + half.y;
+			vb[21].x = macroblock->mbx * unit.x + half.x;	vb[21].y = macroblock->mby * unit.y + half.y;
+			vb[22].x = macroblock->mbx * unit.x + unit.x;	vb[22].y = macroblock->mby * unit.y + half.y;
+			vb[23].x = macroblock->mbx * unit.x + unit.x;	vb[23].y = macroblock->mby * unit.y + half.y;
 
-			vb[21].x = macroblock->mbx * unit.x + unit.x;	vb[21].y = macroblock->mby * unit.y + half.y;
-			vb[22].x = macroblock->mbx * unit.x + half.x;	vb[22].y = macroblock->mby * unit.y + unit.y;
-			vb[23].x = macroblock->mbx * unit.x + unit.x;	vb[23].y = macroblock->mby * unit.y + unit.y;
+			vb[24].x = macroblock->mbx * unit.x;		vb[24].y = macroblock->mby * unit.y + half.y;
+			vb[25].x = macroblock->mbx * unit.x;		vb[25].y = macroblock->mby * unit.y + half.y;
+			vb[26].x = macroblock->mbx * unit.x;		vb[26].y = macroblock->mby * unit.y + unit.y;
+			vb[27].x = macroblock->mbx * unit.x;		vb[27].y = macroblock->mby * unit.y + unit.y;
+			vb[28].x = macroblock->mbx * unit.x + half.x;	vb[28].y = macroblock->mby * unit.y + half.y;
+			vb[29].x = macroblock->mbx * unit.x + half.x;	vb[29].y = macroblock->mby * unit.y + half.y;
+
+			vb[30].x = macroblock->mbx * unit.x + half.x;	vb[30].y = macroblock->mby * unit.y + half.y;
+			vb[31].x = macroblock->mbx * unit.x + half.x;	vb[31].y = macroblock->mby * unit.y + half.y;
+			vb[32].x = macroblock->mbx * unit.x;		vb[32].y = macroblock->mby * unit.y + unit.y;
+			vb[33].x = macroblock->mbx * unit.x;		vb[33].y = macroblock->mby * unit.y + unit.y;
+			vb[34].x = macroblock->mbx * unit.x + half.x;	vb[34].y = macroblock->mby * unit.y + unit.y;
+			vb[35].x = macroblock->mbx * unit.x + half.x;	vb[35].y = macroblock->mby * unit.y + unit.y;
+
+			vb[36].x = macroblock->mbx * unit.x + half.x;	vb[36].y = macroblock->mby * unit.y + half.y;
+			vb[37].x = macroblock->mbx * unit.x + half.x;	vb[37].y = macroblock->mby * unit.y + half.y;
+			vb[38].x = macroblock->mbx * unit.x + half.x;	vb[38].y = macroblock->mby * unit.y + unit.y;
+			vb[39].x = macroblock->mbx * unit.x + half.x;	vb[39].y = macroblock->mby * unit.y + unit.y;
+			vb[40].x = macroblock->mbx * unit.x + unit.x;	vb[40].y = macroblock->mby * unit.y + half.y;
+			vb[41].x = macroblock->mbx * unit.x + unit.x;	vb[41].y = macroblock->mby * unit.y + half.y;
+
+			vb[42].x = macroblock->mbx * unit.x + unit.x;	vb[42].y = macroblock->mby * unit.y + half.y;
+			vb[43].x = macroblock->mbx * unit.x + unit.x;	vb[43].y = macroblock->mby * unit.y + half.y;
+			vb[44].x = macroblock->mbx * unit.x + half.x;	vb[44].y = macroblock->mby * unit.y + unit.y;
+			vb[45].x = macroblock->mbx * unit.x + half.x;	vb[45].y = macroblock->mby * unit.y + unit.y;
+			vb[46].x = macroblock->mbx * unit.x + unit.x;	vb[46].y = macroblock->mby * unit.y + unit.y;
+			vb[47].x = macroblock->mbx * unit.x + unit.x;	vb[47].y = macroblock->mby * unit.y + unit.y;
 
 			mc->pipe->winsys->buffer_unmap(mc->pipe->winsys, mc->vertex_bufs[mc->cur_buf % NUM_BUF_SETS][0].buffer);
 
@@ -553,7 +577,7 @@ static int vlFlush
 	if (num_macroblocks[vlMacroBlockExTypeIntra] > 0)
 	{
 		pipe->set_vertex_buffers(pipe, 1, mc->vertex_bufs[mc->cur_buf % NUM_BUF_SETS]);
-		pipe->set_vertex_elements(pipe, 1, mc->vertex_elems);
+		pipe->set_vertex_elements(pipe, 2, mc->vertex_elems);
 		pipe->set_sampler_textures(pipe, 3, mc->textures[mc->cur_buf % NUM_BUF_SETS]);
 		pipe->bind_sampler_states(pipe, 3, (void**)mc->samplers);
 		pipe->bind_vs_state(pipe, mc->i_vs);
@@ -566,7 +590,7 @@ static int vlFlush
 	if (num_macroblocks[vlMacroBlockExTypeFwdPredictedFrame] > 0)
 	{
 		pipe->set_vertex_buffers(pipe, 2, mc->vertex_bufs[mc->cur_buf % NUM_BUF_SETS]);
-		pipe->set_vertex_elements(pipe, 3, mc->vertex_elems);
+		pipe->set_vertex_elements(pipe, 4, mc->vertex_elems);
 		mc->textures[mc->cur_buf % NUM_BUF_SETS][3] = mc->past_surface->texture;
 		pipe->set_sampler_textures(pipe, 4, mc->textures[mc->cur_buf % NUM_BUF_SETS]);
 		pipe->bind_sampler_states(pipe, 4, (void**)mc->samplers);
@@ -580,7 +604,7 @@ static int vlFlush
 	if (num_macroblocks[vlMacroBlockExTypeFwdPredictedField] > 0)
 	{
 		pipe->set_vertex_buffers(pipe, 2, mc->vertex_bufs[mc->cur_buf % NUM_BUF_SETS]);
-		pipe->set_vertex_elements(pipe, 3, mc->vertex_elems);
+		pipe->set_vertex_elements(pipe, 4, mc->vertex_elems);
 		mc->textures[mc->cur_buf % NUM_BUF_SETS][3] = mc->past_surface->texture;
 		pipe->set_sampler_textures(pipe, 4, mc->textures[mc->cur_buf % NUM_BUF_SETS]);
 		pipe->bind_sampler_states(pipe, 4, (void**)mc->samplers);
@@ -594,7 +618,7 @@ static int vlFlush
 	if (num_macroblocks[vlMacroBlockExTypeBkwdPredictedFrame] > 0)
 	{
 		pipe->set_vertex_buffers(pipe, 2, mc->vertex_bufs[mc->cur_buf % NUM_BUF_SETS]);
-		pipe->set_vertex_elements(pipe, 3, mc->vertex_elems);
+		pipe->set_vertex_elements(pipe, 4, mc->vertex_elems);
 		mc->textures[mc->cur_buf % NUM_BUF_SETS][3] = mc->future_surface->texture;
 		pipe->set_sampler_textures(pipe, 4, mc->textures[mc->cur_buf % NUM_BUF_SETS]);
 		pipe->bind_sampler_states(pipe, 4, (void**)mc->samplers);
@@ -608,7 +632,7 @@ static int vlFlush
 	if (num_macroblocks[vlMacroBlockExTypeBkwdPredictedField] > 0)
 	{
 		pipe->set_vertex_buffers(pipe, 2, mc->vertex_bufs[mc->cur_buf % NUM_BUF_SETS]);
-		pipe->set_vertex_elements(pipe, 3, mc->vertex_elems);
+		pipe->set_vertex_elements(pipe, 4, mc->vertex_elems);
 		mc->textures[mc->cur_buf % NUM_BUF_SETS][3] = mc->future_surface->texture;
 		pipe->set_sampler_textures(pipe, 4, mc->textures[mc->cur_buf % NUM_BUF_SETS]);
 		pipe->bind_sampler_states(pipe, 4, (void**)mc->samplers);
@@ -622,7 +646,7 @@ static int vlFlush
 	if (num_macroblocks[vlMacroBlockExTypeBiPredictedFrame] > 0)
 	{
 		pipe->set_vertex_buffers(pipe, 3, mc->vertex_bufs[mc->cur_buf % NUM_BUF_SETS]);
-		pipe->set_vertex_elements(pipe, 5, mc->vertex_elems);
+		pipe->set_vertex_elements(pipe, 6, mc->vertex_elems);
 		mc->textures[mc->cur_buf % NUM_BUF_SETS][3] = mc->past_surface->texture;
 		mc->textures[mc->cur_buf % NUM_BUF_SETS][4] = mc->future_surface->texture;
 		pipe->set_sampler_textures(pipe, 5, mc->textures[mc->cur_buf % NUM_BUF_SETS]);
@@ -637,7 +661,7 @@ static int vlFlush
 	if (num_macroblocks[vlMacroBlockExTypeBiPredictedField] > 0)
 	{
 		pipe->set_vertex_buffers(pipe, 3, mc->vertex_bufs[mc->cur_buf % NUM_BUF_SETS]);
-		pipe->set_vertex_elements(pipe, 5, mc->vertex_elems);
+		pipe->set_vertex_elements(pipe, 6, mc->vertex_elems);
 		mc->textures[mc->cur_buf % NUM_BUF_SETS][3] = mc->past_surface->texture;
 		mc->textures[mc->cur_buf % NUM_BUF_SETS][4] = mc->future_surface->texture;
 		pipe->set_sampler_textures(pipe, 5, mc->textures[mc->cur_buf % NUM_BUF_SETS]);
@@ -806,9 +830,10 @@ static int vlCreateVertexShaderIMB
 	ti = 3;
 
 	/*
-	 * decl i0		; Vertex pos, luma & chroma texcoords
+	 * decl i0		; Vertex pos
+	 * decl i1		; Luma/chroma texcoords
 	 */
-	for (i = 0; i < 3; i++)
+	for (i = 0; i < 2; i++)
 	{
 		decl = vl_decl_input(i == 0 ? TGSI_SEMANTIC_POSITION : TGSI_SEMANTIC_GENERIC, i, i, i);
 		ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
@@ -826,11 +851,11 @@ static int vlCreateVertexShaderIMB
 
 	/*
 	 * mov o0, i0		; Move input vertex pos to output
-	 * mov o1, i0		; Move input luma/chroma texcoords to output
+	 * mov o1, i1		; Move input luma/chroma texcoords to output
 	 */
 	for (i = 0; i < 2; ++i)
 	{
-		inst = vl_inst2(TGSI_OPCODE_MOV, TGSI_FILE_OUTPUT, i, TGSI_FILE_INPUT, 0);
+		inst = vl_inst2(TGSI_OPCODE_MOV, TGSI_FILE_OUTPUT, i, TGSI_FILE_INPUT, i);
 		ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
 	}
 
@@ -976,11 +1001,12 @@ static int vlCreateVertexShaderFramePMB
 	ti = 3;
 
 	/*
-	 * decl i0		; Vertex pos, luma/chroma texcoords
-	 * decl i1		; Ref surface top field texcoords
-	 * decl i2		; Ref surface bottom field texcoords (unused, packed in the same stream)
+	 * decl i0		; Vertex pos
+	 * decl i1		; Luma/chroma texcoords
+	 * decl i2		; Ref surface top field texcoords
+	 * decl i3		; Ref surface bottom field texcoords (unused, packed in the same stream)
 	 */
-	for (i = 0; i < 3; i++)
+	for (i = 0; i < 4; i++)
 	{
 		decl = vl_decl_input(i == 0 ? TGSI_SEMANTIC_POSITION : TGSI_SEMANTIC_GENERIC, i, i, i);
 		ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
@@ -999,16 +1025,16 @@ static int vlCreateVertexShaderFramePMB
 
 	/*
 	 * mov o0, i0		; Move input vertex pos to output
-	 * mov o1, i0		; Move input luma/chroma texcoords to output
+	 * mov o1, i1		; Move input luma/chroma texcoords to output
 	 */
 	for (i = 0; i < 2; ++i)
 	{
-		inst = vl_inst2(TGSI_OPCODE_MOV, TGSI_FILE_OUTPUT, i, TGSI_FILE_INPUT, 0);
+		inst = vl_inst2(TGSI_OPCODE_MOV, TGSI_FILE_OUTPUT, i, TGSI_FILE_INPUT, i);
 		ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
 	}
 
-	/* add o2, i0, i1	; Translate vertex pos by motion vec to form ref macroblock texcoords */
-	inst = vl_inst3(TGSI_OPCODE_ADD, TGSI_FILE_OUTPUT, 2, TGSI_FILE_INPUT, 0, TGSI_FILE_INPUT, 1);
+	/* add o2, i0, i2	; Translate vertex pos by motion vec to form ref macroblock texcoords */
+	inst = vl_inst3(TGSI_OPCODE_ADD, TGSI_FILE_OUTPUT, 2, TGSI_FILE_INPUT, 0, TGSI_FILE_INPUT, 2);
 	ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
 
 	/* end */
@@ -1057,10 +1083,11 @@ static int vlCreateVertexShaderFieldPMB
 
 	/*
 	 * decl i0		; Vertex pos, luma/chroma texcoords
-	 * decl i1              ; Ref surface top field texcoords
-	 * decl i2              ; Ref surface bottom field texcoords
+	 * decl i1		; Texcoord denorm coefficients
+	 * decl i2              ; Ref surface top field texcoords
+	 * decl i3              ; Ref surface bottom field texcoords
 	 */
-	for (i = 0; i < 3; i++)
+	for (i = 0; i < 4; i++)
 	{
 		decl = vl_decl_input(i == 0 ? TGSI_SEMANTIC_POSITION : TGSI_SEMANTIC_GENERIC, i, i, i);
 		ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
@@ -1085,21 +1112,21 @@ static int vlCreateVertexShaderFieldPMB
 
 	/*
 	 * mov o0, i0		; Move input vertex pos to output
-	 * mov o1, i0		; Move input luma/chroma texcoords to output
+	 * mov o1, i1		; Move input luma/chroma texcoords to output
 	 */
-	for (i = 0; i < 3; ++i)
+	for (i = 0; i < 2; ++i)
 	{
-		inst = vl_inst2(TGSI_OPCODE_MOV, TGSI_FILE_OUTPUT, i, TGSI_FILE_INPUT, i == 0 ? 0 : i - 1);
+		inst = vl_inst2(TGSI_OPCODE_MOV, TGSI_FILE_OUTPUT, i, TGSI_FILE_INPUT, i);
 		ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
 	}
 
 	/*
-	 * add o2, i0, i1	; Translate vertex pos by motion vec to form top field macroblock texcoords
-	 * add o3, i0, i2	; Translate vertex pos by motion vec to form bottom field macroblock texcoords
+	 * add o2, i0, i2	; Translate vertex pos by motion vec to form top field macroblock texcoords
+	 * add o3, i0, i3	; Translate vertex pos by motion vec to form bottom field macroblock texcoords
 	 */
 	for (i = 0; i < 2; ++i)
 	{
-		inst = vl_inst3(TGSI_OPCODE_ADD, TGSI_FILE_OUTPUT, i + 2, TGSI_FILE_INPUT, 0, TGSI_FILE_INPUT, i + 1);
+		inst = vl_inst3(TGSI_OPCODE_ADD, TGSI_FILE_OUTPUT, i + 2, TGSI_FILE_INPUT, 0, TGSI_FILE_INPUT, i + 2);
 		ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
 	}
 
@@ -1430,12 +1457,13 @@ static int vlCreateVertexShaderFrameBMB
 
 	/*
 	 * decl i0		; Vertex pos, luma/chroma texcoords
-	 * decl i1              ; First ref surface top field texcoords
-	 * decl i2              ; First ref surface bottom field texcoords (unused, packed in the same stream)
-	 * decl i3		; Second ref surface top field texcoords
-	 * decl i4		; Second ref surface bottom field texcoords (unused, packed in the same stream)
+	 * decl i1		; Luma/chroma texcoords
+	 * decl i2              ; First ref surface top field texcoords
+	 * decl i3              ; First ref surface bottom field texcoords (unused, packed in the same stream)
+	 * decl i4		; Second ref surface top field texcoords
+	 * decl i5		; Second ref surface bottom field texcoords (unused, packed in the same stream)
 	 */
-	for (i = 0; i < 5; i++)
+	for (i = 0; i < 6; i++)
 	{
 		decl = vl_decl_input(i == 0 ? TGSI_SEMANTIC_POSITION : TGSI_SEMANTIC_GENERIC, i, i, i);
 		ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
@@ -1455,21 +1483,21 @@ static int vlCreateVertexShaderFrameBMB
 
 	/*
 	 * mov o0, i0		; Move input vertex pos to output
-	 * mov o1, i0		; Move input luma/chroma texcoords to output
+	 * mov o1, i1		; Move input luma/chroma texcoords to output
 	 */
 	for (i = 0; i < 2; ++i)
 	{
-		inst = vl_inst2(TGSI_OPCODE_MOV, TGSI_FILE_OUTPUT, i, TGSI_FILE_INPUT, 0);
+		inst = vl_inst2(TGSI_OPCODE_MOV, TGSI_FILE_OUTPUT, i, TGSI_FILE_INPUT, i);
 		ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
 	}
 
 	/*
-	 * add o2, i0, i1	; Translate vertex pos by motion vec to form first ref macroblock texcoords
-	 * add o3, i0, i3	; Translate vertex pos by motion vec to form second ref macroblock texcoords
+	 * add o2, i0, i2	; Translate vertex pos by motion vec to form first ref macroblock texcoords
+	 * add o3, i0, i4	; Translate vertex pos by motion vec to form second ref macroblock texcoords
 	 */
 	for (i = 0; i < 2; ++i)
 	{
-		inst = vl_inst3(TGSI_OPCODE_ADD, TGSI_FILE_OUTPUT, i + 2, TGSI_FILE_INPUT, 0, TGSI_FILE_INPUT, i * 2 + 1);
+		inst = vl_inst3(TGSI_OPCODE_ADD, TGSI_FILE_OUTPUT, i + 2, TGSI_FILE_INPUT, 0, TGSI_FILE_INPUT, (i + 1) * 2);
 		ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
 	}
 
@@ -1519,12 +1547,13 @@ static int vlCreateVertexShaderFieldBMB
 
 	/*
 	 * decl i0		; Vertex pos, Luma/chroma texcoords
-	 * decl i1              ; First ref surface top field texcoords
-	 * decl i2              ; First ref surface bottom field texcoords
-	 * decl i3              ; Second ref surface top field texcoords
-	 * decl i4              ; Second ref surface bottom field texcoords
+	 * decl i1		; Luma/chroma texcoords
+	 * decl i2              ; First ref surface top field texcoords
+	 * decl i3              ; First ref surface bottom field texcoords
+	 * decl i4              ; Second ref surface top field texcoords
+	 * decl i5              ; Second ref surface bottom field texcoords
 	 */
-	for (i = 0; i < 5; i++)
+	for (i = 0; i < 6; i++)
 	{
 		decl = vl_decl_input(i == 0 ? TGSI_SEMANTIC_POSITION : TGSI_SEMANTIC_GENERIC, i, i, i);
 		ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
@@ -1555,27 +1584,23 @@ static int vlCreateVertexShaderFieldBMB
 
 	/*
 	 * mov o0, i0		; Move input vertex pos to output
-	 * mov o1, i0		; Move input luma/chroma texcoords to output
-	 * mov o2, i1		; Move past top field texcoords to output
-	 * mov o3, i2		; Move past bottom field texcoords to output
-	 * mov o4, i3		; Move future top field texcoords to output
-	 * mov o5, i4		; Move future bottom field texcoords to output
+	 * mov o1, i1		; Move input luma/chroma texcoords to output
 	 */
-	for (i = 0; i < 6; ++i)
+	for (i = 0; i < 2; ++i)
 	{
-		inst = vl_inst2(TGSI_OPCODE_MOV, TGSI_FILE_OUTPUT, i, TGSI_FILE_INPUT, 0);
+		inst = vl_inst2(TGSI_OPCODE_MOV, TGSI_FILE_OUTPUT, i, TGSI_FILE_INPUT, i);
 		ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
 	}
 
 	/*
-	 * add o2, i0, i1	; Translate vertex pos by motion vec to form first top field macroblock texcoords
-	 * add o3, i0, i2	; Translate vertex pos by motion vec to form first bottom field macroblock texcoords
-	 * add o4, i0, i3	; Translate vertex pos by motion vec to form second top field macroblock texcoords
-	 * add o5, i0, i4	; Translate vertex pos by motion vec to form second bottom field macroblock texcoords
+	 * add o2, i0, i2	; Translate vertex pos by motion vec to form first top field macroblock texcoords
+	 * add o3, i0, i3	; Translate vertex pos by motion vec to form first bottom field macroblock texcoords
+	 * add o4, i0, i4	; Translate vertex pos by motion vec to form second top field macroblock texcoords
+	 * add o5, i0, i5	; Translate vertex pos by motion vec to form second bottom field macroblock texcoords
 	 */
 	for (i = 0; i < 4; ++i)
 	{
-		inst = vl_inst3(TGSI_OPCODE_ADD, TGSI_FILE_OUTPUT, i + 2, TGSI_FILE_INPUT, 0, TGSI_FILE_INPUT, i + 1);
+		inst = vl_inst3(TGSI_OPCODE_ADD, TGSI_FILE_OUTPUT, i + 2, TGSI_FILE_INPUT, 0, TGSI_FILE_INPUT, i + 2);
 		ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
 	}
 
@@ -1933,30 +1958,10 @@ static int vlCreateDataBufs
 
 	pipe = mc->pipe;
 
+	/* Create our vertex buffers */
 	for (h = 0; h < NUM_BUF_SETS; ++h)
 	{
-		/* Create our vertex buffer and vertex buffer element */
-		mc->vertex_bufs[h][0].pitch = sizeof(struct vlVertex2f);
-		mc->vertex_bufs[h][0].max_index = 24 * num_mb_per_frame - 1;
-		mc->vertex_bufs[h][0].buffer_offset = 0;
-		mc->vertex_bufs[h][0].buffer = pipe->winsys->buffer_create
-		(
-			pipe->winsys,
-			1,
-			PIPE_BUFFER_USAGE_VERTEX,
-			sizeof(struct vlVertex2f) * 24 * num_mb_per_frame
-		);
-	}
-
-	/* Position & block luma, block chroma texcoord element */
-	mc->vertex_elems[0].src_offset = 0;
-	mc->vertex_elems[0].vertex_buffer_index = 0;
-	mc->vertex_elems[0].nr_components = 2;
-	mc->vertex_elems[0].src_format = PIPE_FORMAT_R32G32_FLOAT;
-
-	for (h = 0; h < NUM_BUF_SETS; ++h)
-	{
-		for (i = 1; i < 3; ++i)
+		for (i = 0; i < 3; ++i)
 		{
 			mc->vertex_bufs[h][i].pitch = sizeof(struct vlVertex2f) * 2;
 			mc->vertex_bufs[h][i].max_index = 24 * num_mb_per_frame - 1;
@@ -1971,29 +1976,41 @@ static int vlCreateDataBufs
 		}
 	}
 
-	/* First ref surface top field texcoord element */
-	mc->vertex_elems[1].src_offset = 0;
-	mc->vertex_elems[1].vertex_buffer_index = 1;
+	/* Position element */
+	mc->vertex_elems[0].src_offset = 0;
+	mc->vertex_elems[0].vertex_buffer_index = 0;
+	mc->vertex_elems[0].nr_components = 2;
+	mc->vertex_elems[0].src_format = PIPE_FORMAT_R32G32_FLOAT;
+
+	/* Block luma, block chroma texcoord element */
+	mc->vertex_elems[1].src_offset = sizeof(struct vlVertex2f);
+	mc->vertex_elems[1].vertex_buffer_index = 0;
 	mc->vertex_elems[1].nr_components = 2;
 	mc->vertex_elems[1].src_format = PIPE_FORMAT_R32G32_FLOAT;
 
-	/* First ref surface bottom field texcoord element */
-	mc->vertex_elems[2].src_offset = sizeof(struct vlVertex2f);
+	/* First ref surface top field texcoord element */
+	mc->vertex_elems[2].src_offset = 0;
 	mc->vertex_elems[2].vertex_buffer_index = 1;
 	mc->vertex_elems[2].nr_components = 2;
 	mc->vertex_elems[2].src_format = PIPE_FORMAT_R32G32_FLOAT;
 
-	/* Second ref surface top field texcoord element */
-	mc->vertex_elems[3].src_offset = 0;
-	mc->vertex_elems[3].vertex_buffer_index = 2;
+	/* First ref surface bottom field texcoord element */
+	mc->vertex_elems[3].src_offset = sizeof(struct vlVertex2f);
+	mc->vertex_elems[3].vertex_buffer_index = 1;
 	mc->vertex_elems[3].nr_components = 2;
 	mc->vertex_elems[3].src_format = PIPE_FORMAT_R32G32_FLOAT;
 
-	/* Second ref surface bottom field texcoord element */
-	mc->vertex_elems[4].src_offset = sizeof(struct vlVertex2f);
+	/* Second ref surface top field texcoord element */
+	mc->vertex_elems[4].src_offset = 0;
 	mc->vertex_elems[4].vertex_buffer_index = 2;
 	mc->vertex_elems[4].nr_components = 2;
 	mc->vertex_elems[4].src_format = PIPE_FORMAT_R32G32_FLOAT;
+
+	/* Second ref surface bottom field texcoord element */
+	mc->vertex_elems[5].src_offset = sizeof(struct vlVertex2f);
+	mc->vertex_elems[5].vertex_buffer_index = 2;
+	mc->vertex_elems[5].nr_components = 2;
+	mc->vertex_elems[5].src_format = PIPE_FORMAT_R32G32_FLOAT;
 
 	/* Create our constant buffer */
 	mc->vs_const_buf.size = sizeof(struct vlVertexShaderConsts);
