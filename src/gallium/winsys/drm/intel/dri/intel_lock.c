@@ -27,7 +27,7 @@
 
 
 #include "main/glheader.h"
-#include "pipe/p_lthread.h"
+#include "pipe/p_thread.h"
 #include <GL/internal/glcore.h>
 #include "state_tracker/st_public.h"
 #include "intel_context.h"
