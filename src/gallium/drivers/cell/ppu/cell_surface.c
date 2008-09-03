@@ -45,7 +45,7 @@ cell_surface_copy(struct pipe_context *pipe,
                   unsigned srcx, unsigned srcy,
                   unsigned width, unsigned height)
 {
-   assert( dst->cpp == src->cpp );
+   assert( dst->format == src->format );
 
    pipe_copy_rect(pipe_surface_map(dst, PIPE_BUFFER_USAGE_CPU_WRITE),
                   &dst->block,
