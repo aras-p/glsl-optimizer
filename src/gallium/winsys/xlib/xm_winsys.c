@@ -287,15 +287,15 @@ xmesa_display_surface_tiled(XMesaBuffer b, const struct pipe_surface *surf)
    const uint tilesPerRow = (surf->width + TILE_SIZE - 1) / TILE_SIZE;
    uint x, y;
 
-   /* check that the XImage has been previously initialized */
-   assert(ximage->format);
-   assert(ximage->bitmap_unit);
-
    if (XSHM_ENABLED(xm_buf) && (xm_buf->tempImage == NULL)) {
       alloc_shm_ximage(xm_buf, b, TILE_SIZE, TILE_SIZE);
    }
 
    ximage = (XSHM_ENABLED(xm_buf)) ? xm_buf->tempImage : b->tempImage;
+
+   /* check that the XImage has been previously initialized */
+   assert(ximage->format);
+   assert(ximage->bitmap_unit);
 
    if (!XSHM_ENABLED(xm_buf)) {
       /* update XImage's fields */
