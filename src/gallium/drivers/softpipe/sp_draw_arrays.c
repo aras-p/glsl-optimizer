@@ -34,6 +34,7 @@
 #include "pipe/p_defines.h"
 #include "pipe/p_context.h"
 #include "pipe/p_winsys.h"
+#include "pipe/p_inlines.h"
 
 #include "sp_context.h"
 #include "sp_state.h"
