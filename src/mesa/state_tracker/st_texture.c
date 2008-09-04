@@ -304,9 +304,6 @@ st_texture_image_copy(struct pipe_context *pipe,
    struct pipe_surface *dst_surface;
    GLuint i;
 
-   /* XXX this is a hack */
-   const GLuint copyHeight = dst->compressed ? height / 4 : height;
-
    for (i = 0; i < depth; i++) {
       GLuint srcLevel;
 
@@ -348,7 +345,7 @@ st_texture_image_copy(struct pipe_context *pipe,
 			 0, 0, /* destX, Y */
 			 src_surface,
 			 0, 0, /* srcX, Y */
-			 width, copyHeight);
+			 width, height);
 
       screen->tex_surface_release(screen, &src_surface);
       screen->tex_surface_release(screen, &dst_surface);
