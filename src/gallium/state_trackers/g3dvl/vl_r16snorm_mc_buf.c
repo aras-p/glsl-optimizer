@@ -63,6 +63,7 @@ struct vlR16SnormBufferedMC
 	struct vlSurface			*buffered_surface;
 	struct vlSurface			*past_surface, *future_surface;
 	struct vlVertex2f			surface_tex_inv_size;
+	struct vlVertex2f			zero_block[3];
 	unsigned int				num_macroblocks;
 	struct vlMpeg2MacroBlock		*macroblocks;
 
@@ -203,8 +204,13 @@ static inline int vlGrabBlocks
 
 				++sb;
 			}
-			else
+			else if (mc->zero_block[0].x < 0.0f)
+			{
 				vlGrabNoBlock(texels + y * tex_pitch * VL_BLOCK_HEIGHT + x * VL_BLOCK_WIDTH, tex_pitch);
+
+				mc->zero_block[0].x = (mbpx + x * 8) * mc->surface_tex_inv_size.x;
+				mc->zero_block[0].y = (mbpy + y * 8) * mc->surface_tex_inv_size.y;
+			}
 		}
 	}
 
@@ -241,8 +247,13 @@ static inline int vlGrabBlocks
 
 			++sb;
 		}
-		else
+		else if (mc->zero_block[tb + 1].x < 0.0f)
+		{
 			vlGrabNoBlock(texels, tex_pitch);
+
+			mc->zero_block[tb + 1].x = (mbpx << 1) * mc->surface_tex_inv_size.x;
+			mc->zero_block[tb + 1].y = (mbpy << 1) * mc->surface_tex_inv_size.y;
+		}
 
 		pipe_surface_unmap(tex_surface);
 	}
@@ -315,7 +326,7 @@ static inline int vlGrabMacroBlock
 	return 0;
 }
 
-#define SET_BLOCK(vb, cbp, mbx, mby, unitx, unity, ofsx, ofsy, hx, hy, lm, cbm, crm, zx, zy)					\
+#define SET_BLOCK(vb, cbp, mbx, mby, unitx, unity, ofsx, ofsy, hx, hy, lm, cbm, crm, zb)					\
 	(vb)[0].pos.x = (mbx) * (unitx) + (ofsx);		(vb)[0].pos.y = (mby) * (unity) + (ofsy);			\
 	(vb)[1].pos.x = (mbx) * (unitx) + (ofsx);		(vb)[1].pos.y = (mby) * (unity) + (ofsy) + (hy);		\
 	(vb)[2].pos.x = (mbx) * (unitx) + (ofsx) + (hx);	(vb)[2].pos.y = (mby) * (unity) + (ofsy);			\
@@ -323,62 +334,62 @@ static inline int vlGrabMacroBlock
 	(vb)[4].pos.x = (mbx) * (unitx) + (ofsx);		(vb)[4].pos.y = (mby) * (unity) + (ofsy) + (hy);		\
 	(vb)[5].pos.x = (mbx) * (unitx) + (ofsx) + (hx);	(vb)[5].pos.y = (mby) * (unity) + (ofsy) + (hy);		\
 																\
-	/*if ((cbp) & (lm))													\
-	{*/															\
+	if ((cbp) & (lm))													\
+	{															\
 		(vb)[0].luma_tc.x = (mbx) * (unitx) + (ofsx);		(vb)[0].luma_tc.y = (mby) * (unity) + (ofsy);		\
 		(vb)[1].luma_tc.x = (mbx) * (unitx) + (ofsx);		(vb)[1].luma_tc.y = (mby) * (unity) + (ofsy) + (hy);	\
 		(vb)[2].luma_tc.x = (mbx) * (unitx) + (ofsx) + (hx);	(vb)[2].luma_tc.y = (mby) * (unity) + (ofsy);		\
 		(vb)[3].luma_tc.x = (mbx) * (unitx) + (ofsx) + (hx);	(vb)[3].luma_tc.y = (mby) * (unity) + (ofsy);		\
 		(vb)[4].luma_tc.x = (mbx) * (unitx) + (ofsx);		(vb)[4].luma_tc.y = (mby) * (unity) + (ofsy) + (hy);	\
 		(vb)[5].luma_tc.x = (mbx) * (unitx) + (ofsx) + (hx);	(vb)[5].luma_tc.y = (mby) * (unity) + (ofsy) + (hy);	\
-	/*}															\
+	}															\
 	else															\
 	{															\
-		(vb)[0].luma_tc.x = (zx);		(vb)[0].luma_tc.y = (zy);						\
-		(vb)[1].luma_tc.x = (zx);		(vb)[1].luma_tc.y = (zy) + (hy);					\
-		(vb)[2].luma_tc.x = (zx) + (hx);	(vb)[2].luma_tc.y = (zy);						\
-		(vb)[3].luma_tc.x = (zx) + (hx);	(vb)[3].luma_tc.y = (zy);						\
-		(vb)[4].luma_tc.x = (zx);		(vb)[4].luma_tc.y = (zy) + (hy);					\
-		(vb)[5].luma_tc.x = ((zx) + (hx);	(vb)[5].luma_tc.y = (zy) + (hy);					\
-	}*/															\
+		(vb)[0].luma_tc.x = (zb)[0].x;		(vb)[0].luma_tc.y = (zb)[0].y;						\
+		(vb)[1].luma_tc.x = (zb)[0].x;		(vb)[1].luma_tc.y = (zb)[0].y + (hy);					\
+		(vb)[2].luma_tc.x = (zb)[0].x + (hx);	(vb)[2].luma_tc.y = (zb)[0].y;						\
+		(vb)[3].luma_tc.x = (zb)[0].x + (hx);	(vb)[3].luma_tc.y = (zb)[0].y;						\
+		(vb)[4].luma_tc.x = (zb)[0].x;		(vb)[4].luma_tc.y = (zb)[0].y + (hy);					\
+		(vb)[5].luma_tc.x = (zb)[0].x + (hx);	(vb)[5].luma_tc.y = (zb)[0].y + (hy);					\
+	}															\
 																\
-	/*if ((cbp) & (cbm))													\
-	{*/															\
+	if ((cbp) & (cbm))													\
+	{															\
 		(vb)[0].cb_tc.x = (mbx) * (unitx) + (ofsx);		(vb)[0].cb_tc.y = (mby) * (unity) + (ofsy);		\
 		(vb)[1].cb_tc.x = (mbx) * (unitx) + (ofsx);		(vb)[1].cb_tc.y = (mby) * (unity) + (ofsy) + (hy);	\
 		(vb)[2].cb_tc.x = (mbx) * (unitx) + (ofsx) + (hx);	(vb)[2].cb_tc.y = (mby) * (unity) + (ofsy);		\
 		(vb)[3].cb_tc.x = (mbx) * (unitx) + (ofsx) + (hx);	(vb)[3].cb_tc.y = (mby) * (unity) + (ofsy);		\
 		(vb)[4].cb_tc.x = (mbx) * (unitx) + (ofsx);		(vb)[4].cb_tc.y = (mby) * (unity) + (ofsy) + (hy);	\
 		(vb)[5].cb_tc.x = (mbx) * (unitx) + (ofsx) + (hx);	(vb)[5].cb_tc.y = (mby) * (unity) + (ofsy) + (hy);	\
-	/*}															\
+	}															\
 	else															\
 	{															\
-		(vb)[0].cb_tc.x = (zx);		(vb)[0].cb_tc.y = (zy);								\
-		(vb)[1].cb_tc.x = (zx);		(vb)[1].cb_tc.y = (zy) + (hy);							\
-		(vb)[2].cb_tc.x = (zx) + (hx);	(vb)[2].cb_tc.y = (zy);								\
-		(vb)[3].cb_tc.x = (zx) + (hx);	(vb)[3].cb_tc.y = (zy);								\
-		(vb)[4].cb_tc.x = (zx);		(vb)[4].cb_tc.y = (zy) + (hy);							\
-		(vb)[5].cb_tc.x = ((zx) + (hx);	(vb)[5].cb_tc.y = (zy) + (hy);							\
-	}*/															\
+		(vb)[0].cb_tc.x = (zb)[1].x;		(vb)[0].cb_tc.y = (zb)[1].y;						\
+		(vb)[1].cb_tc.x = (zb)[1].x;		(vb)[1].cb_tc.y = (zb)[1].y + (hy);					\
+		(vb)[2].cb_tc.x = (zb)[1].x + (hx);	(vb)[2].cb_tc.y = (zb)[1].y;						\
+		(vb)[3].cb_tc.x = (zb)[1].x + (hx);	(vb)[3].cb_tc.y = (zb)[1].y;						\
+		(vb)[4].cb_tc.x = (zb)[1].x;		(vb)[4].cb_tc.y = (zb)[1].y + (hy);					\
+		(vb)[5].cb_tc.x = (zb)[1].x + (hx);	(vb)[5].cb_tc.y = (zb)[1].y + (hy);					\
+	}															\
 																\
-	/*if ((cbp) & (crm))													\
-	{*/															\
+	if ((cbp) & (crm))													\
+	{															\
 		(vb)[0].cr_tc.x = (mbx) * (unitx) + (ofsx);		(vb)[0].cr_tc.y = (mby) * (unity) + (ofsy);		\
 		(vb)[1].cr_tc.x = (mbx) * (unitx) + (ofsx);		(vb)[1].cr_tc.y = (mby) * (unity) + (ofsy) + (hy);	\
 		(vb)[2].cr_tc.x = (mbx) * (unitx) + (ofsx) + (hx);	(vb)[2].cr_tc.y = (mby) * (unity) + (ofsy);		\
 		(vb)[3].cr_tc.x = (mbx) * (unitx) + (ofsx) + (hx);	(vb)[3].cr_tc.y = (mby) * (unity) + (ofsy);		\
 		(vb)[4].cr_tc.x = (mbx) * (unitx) + (ofsx);		(vb)[4].cr_tc.y = (mby) * (unity) + (ofsy) + (hy);	\
 		(vb)[5].cr_tc.x = (mbx) * (unitx) + (ofsx) + (hx);	(vb)[5].cr_tc.y = (mby) * (unity) + (ofsy) + (hy);	\
-	/*}															\
+	}															\
 	else															\
 	{															\
-		(vb)[0].cr_tc.x = (zx);		(vb)[0].cb_tc.y = (zy);								\
-		(vb)[1].cr_tc.x = (zx);		(vb)[1].cb_tc.y = (zy) + (hy);							\
-		(vb)[2].cr_tc.x = (zx) + (hx);	(vb)[2].cb_tc.y = (zy);								\
-		(vb)[3].cr_tc.x = (zx) + (hx);	(vb)[3].cb_tc.y = (zy);								\
-		(vb)[4].cr_tc.x = (zx);		(vb)[4].cb_tc.y = (zy) + (hy);							\
-		(vb)[5].cr_tc.x = ((zx) + (hx);	(vb)[5].cb_tc.y = (zy) + (hy);							\
-	}*/
+		(vb)[0].cr_tc.x = (zb)[2].x;		(vb)[0].cr_tc.y = (zb)[2].y;						\
+		(vb)[1].cr_tc.x = (zb)[2].x;		(vb)[1].cr_tc.y = (zb)[2].y + (hy);					\
+		(vb)[2].cr_tc.x = (zb)[2].x + (hx);	(vb)[2].cr_tc.y = (zb)[2].y;						\
+		(vb)[3].cr_tc.x = (zb)[2].x + (hx);	(vb)[3].cr_tc.y = (zb)[2].y;						\
+		(vb)[4].cr_tc.x = (zb)[2].x;		(vb)[4].cr_tc.y = (zb)[2].y + (hy);					\
+		(vb)[5].cr_tc.x = (zb)[2].x + (hx);	(vb)[5].cr_tc.y = (zb)[2].y + (hy);					\
+	}
 
 static inline int vlGrabMacroBlockVB
 (
@@ -526,7 +537,7 @@ static inline int vlGrabMacroBlockVB
 				vb,
 				macroblock->cbp, macroblock->mbx, macroblock->mby,
 				unit.x, unit.y, 0, 0, half.x, half.y,
-				32, 2, 1, mc->zero_block.x, mc->zero_block.y
+				32, 2, 1, mc->zero_block
 			);
 
 			SET_BLOCK
@@ -534,7 +545,7 @@ static inline int vlGrabMacroBlockVB
 				vb + 6,
 				macroblock->cbp, macroblock->mbx, macroblock->mby,
 				unit.x, unit.y, half.x, 0, half.x, half.y,
-				16, 2, 1, mc->zero_block.x, mc->zero_block.y
+				16, 2, 1, mc->zero_block
 			);
 
 			SET_BLOCK
@@ -542,7 +553,7 @@ static inline int vlGrabMacroBlockVB
 				vb + 12,
 				macroblock->cbp, macroblock->mbx, macroblock->mby,
 				unit.x, unit.y, 0, half.y, half.x, half.y,
-				8, 2, 1, mc->zero_block.x, mc->zero_block.y
+				8, 2, 1, mc->zero_block
 			);
 
 			SET_BLOCK
@@ -550,7 +561,7 @@ static inline int vlGrabMacroBlockVB
 				vb + 18,
 				macroblock->cbp, macroblock->mbx, macroblock->mby,
 				unit.x, unit.y, half.x, half.y, half.x, half.y,
-				4, 2, 1, mc->zero_block.x, mc->zero_block.y
+				4, 2, 1, mc->zero_block
 			);
 
 			mc->pipe->winsys->buffer_unmap(mc->pipe->winsys, mc->vertex_bufs[mc->cur_buf % NUM_BUF_SETS][0].buffer);
@@ -725,6 +736,8 @@ static int vlFlush
 		vb_start += num_macroblocks[vlMacroBlockExTypeBiPredictedField] * 24;
 	}
 
+	for (i = 0; i < 3; ++i)
+		mc->zero_block[i].x = -1.0f;
 	mc->num_macroblocks = 0;
 	mc->cur_buf++;
 
@@ -2277,7 +2290,8 @@ int vlCreateR16SNormBufferedMC
 	struct vlRender **render
 )
 {
-	struct vlR16SnormBufferedMC *mc;
+	struct vlR16SnormBufferedMC	*mc;
+	unsigned int			i;
 
 	assert(pipe);
 	assert(render);
@@ -2297,6 +2311,8 @@ int vlCreateR16SNormBufferedMC
 	mc->buffered_surface = NULL;
 	mc->past_surface = NULL;
 	mc->future_surface = NULL;
+	for (i = 0; i < 3; ++i)
+		mc->zero_block[i].x = -1.0f;
 	mc->num_macroblocks = 0;
 
 	vlInit(mc);
