@@ -418,7 +418,6 @@ st_release_teximage(struct st_framebuffer *stfb, uint surfIndex,
 {
    GET_CURRENT_CONTEXT(ctx);
    struct st_context *st = ctx->st;
-   struct pipe_context *pipe = st->pipe;
    struct st_renderbuffer *strb;
 
    assert(surfIndex <= ST_SURFACE_DEPTH);
