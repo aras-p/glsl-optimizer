@@ -30,6 +30,7 @@
 
 #include <sys/time.h>
 #include "dri_util.h"
+#include "dri_bufmgr.h"
 #include "i915_drm.h"
 #include "xmlconfig.h"
 
@@ -74,7 +75,10 @@ typedef struct
    int irq_active;
    int allow_batchbuffer;
 
+   GLboolean no_hw;
+
    int ttm;
+   dri_bufmgr *bufmgr;
 
    /**
    * Configuration cache with default values for all contexts

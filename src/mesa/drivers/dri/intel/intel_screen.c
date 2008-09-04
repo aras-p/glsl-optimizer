@@ -552,6 +552,96 @@ intelFillInModes(__DRIscreenPrivate *psp,
 }
 
 
+/** Driver-specific fence emit implementation for the fake memory manager. */
+static unsigned int
+intel_fence_emit(void *private)
+{
+   intelScreenPrivate *intelScreen = (intelScreenPrivate *)private;
+   unsigned int fence;
+
+   /* XXX: Need to emit a flush, if we haven't already (at least with the
+    * current batchbuffer implementation, we have).
+    */
+
+   fence = intelEmitIrqLocked(intelScreen);
+
+   return fence;
+}
+
+/** Driver-specific fence wait implementation for the fake memory manager. */
+static int
+intel_fence_wait(void *private, unsigned int cookie)
+{
+   intelScreenPrivate *intelScreen = (intelScreenPrivate *)private;
+
+   intelWaitIrq(intelScreen, cookie);
+
+   return 0;
+}
+
+static GLboolean
+intel_init_bufmgr(intelScreenPrivate *intelScreen)
+{
+   GLboolean gem_disable = getenv("INTEL_NO_GEM") != NULL;
+   int gem_kernel = 0;
+   GLboolean gem_supported;
+   struct drm_i915_getparam gp;
+   __DRIscreenPrivate *spriv = intelScreen->driScrnPriv;
+
+   intelScreen->no_hw = getenv("INTEL_NO_HW") != NULL;
+
+   gp.param = I915_PARAM_HAS_GEM;
+   gp.value = &gem_kernel;
+
+   (void) drmCommandWriteRead(spriv->fd, DRM_I915_GETPARAM, &gp, sizeof(gp));
+
+   /* If we've got a new enough DDX that's initializing GEM and giving us
+    * object handles for the shared buffers, use that.
+    */
+   intelScreen->ttm = GL_FALSE;
+   if (intelScreen->driScrnPriv->dri2.enabled)
+       gem_supported = GL_TRUE;
+   else if (intelScreen->driScrnPriv->ddx_version.minor >= 9 &&
+	    gem_kernel &&
+	    intelScreen->front.bo_handle != -1)
+       gem_supported = GL_TRUE;
+   else
+       gem_supported = GL_FALSE;
+
+   if (!gem_disable && gem_supported) {
+      intelScreen->bufmgr = intel_bufmgr_gem_init(spriv->fd, BATCH_SZ);
+      if (intelScreen->bufmgr != NULL)
+	 intelScreen->ttm = GL_TRUE;
+   }
+   /* Otherwise, use the classic buffer manager. */
+   if (intelScreen->bufmgr == NULL) {
+      if (gem_disable) {
+	 fprintf(stderr, "GEM disabled.  Using classic.\n");
+      } else {
+	 fprintf(stderr, "Failed to initialize GEM.  "
+		 "Falling back to classic.\n");
+      }
+
+      if (intelScreen->tex.size == 0) {
+	 fprintf(stderr, "[%s:%u] Error initializing buffer manager.\n",
+		 __func__, __LINE__);
+	 return GL_FALSE;
+      }
+
+      intelScreen->bufmgr = intel_bufmgr_fake_init(intelScreen->tex.offset,
+						   intelScreen->tex.map,
+						   intelScreen->tex.size,
+						   intel_fence_emit,
+						   intel_fence_wait,
+						   intelScreen);
+   }
+
+   /* XXX bufmgr should be per-screen, not per-context */
+   intelScreen->ttm = intelScreen->ttm;
+
+   return GL_TRUE;
+}
+
 /**
  * This is the driver specific part of the createNewScreen entry point.
  * Called when using legacy DRI.
@@ -562,6 +652,7 @@ intelFillInModes(__DRIscreenPrivate *psp,
  */
 static const __DRIconfig **intelInitScreen(__DRIscreenPrivate *psp)
 {
+   intelScreenPrivate *intelScreen;
 #ifdef I915
    static const __DRIversion ddx_expected = { 1, 5, 0 };
 #else
@@ -594,6 +685,10 @@ static const __DRIconfig **intelInitScreen(__DRIscreenPrivate *psp)
        return NULL;
 
    psp->extensions = intelScreenExtensions;
+
+   intelScreen = psp->private;
+   if (!intel_init_bufmgr(intelScreen))
+       return GL_FALSE;
 
    return (const __DRIconfig **)
        intelFillInModes(psp, dri_priv->cpp * 8,
@@ -658,6 +753,9 @@ __DRIconfig **intelInitScreen2(__DRIscreenPrivate *psp)
    if (!intel_get_param(psp, I915_PARAM_CHIPSET_ID,
 			&intelScreen->deviceID))
       return GL_FALSE;
+
+   if (!intel_init_bufmgr(intelScreen))
+       return GL_FALSE;
 
    intelScreen->irq_active = 1;
    psp->extensions = intelScreenExtensions;

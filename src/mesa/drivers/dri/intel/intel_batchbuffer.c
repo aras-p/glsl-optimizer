@@ -265,9 +265,9 @@ _intel_batchbuffer_flush(struct intel_batchbuffer *batch, const char *file,
 
       fprintf(stderr, "waiting for idle\n");
       LOCK_HARDWARE(intel);
-      irq = intelEmitIrqLocked(intel);
+      irq = intelEmitIrqLocked(intel->intelScreen);
       UNLOCK_HARDWARE(intel);
-      intelWaitIrq(intel, irq);
+      intelWaitIrq(intel->intelScreen, irq);
    }
 
    /* Reset the buffer:

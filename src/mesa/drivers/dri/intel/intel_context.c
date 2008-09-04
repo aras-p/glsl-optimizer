@@ -575,105 +575,6 @@ intelEndQuery(GLcontext *ctx, GLenum target, struct gl_query_object *q)
 }
 #endif
 
-/** Driver-specific fence emit implementation for the fake memory manager. */
-static unsigned int
-intel_fence_emit(void *private)
-{
-   struct intel_context *intel = (struct intel_context *)private;
-   unsigned int fence;
-
-   /* XXX: Need to emit a flush, if we haven't already (at least with the
-    * current batchbuffer implementation, we have).
-    */
-
-   fence = intelEmitIrqLocked(intel);
-
-   return fence;
-}
-
-/** Driver-specific fence wait implementation for the fake memory manager. */
-static int
-intel_fence_wait(void *private, unsigned int cookie)
-{
-   struct intel_context *intel = (struct intel_context *)private;
-
-   intelWaitIrq(intel, cookie);
-
-   return 0;
-}
-
-static GLboolean
-intel_init_bufmgr(struct intel_context *intel)
-{
-   intelScreenPrivate *intelScreen = intel->intelScreen;
-   GLboolean gem_disable = getenv("INTEL_NO_GEM") != NULL;
-   int gem_kernel = 0;
-   GLboolean gem_supported;
-   struct drm_i915_getparam gp;
-
-   gp.param = I915_PARAM_HAS_GEM;
-   gp.value = &gem_kernel;
-
-   (void) drmCommandWriteRead(intel->driFd, DRM_I915_GETPARAM, &gp, sizeof(gp));
-
-   /* If we've got a new enough DDX that's initializing GEM and giving us
-    * object handles for the shared buffers, use that.
-    */
-   intel->ttm = GL_FALSE;
-   if (intel->intelScreen->driScrnPriv->dri2.enabled)
-       gem_supported = GL_TRUE;
-   else if (intel->intelScreen->driScrnPriv->ddx_version.minor >= 9 &&
-	    gem_kernel &&
-	    intel->intelScreen->front.bo_handle != -1)
-       gem_supported = GL_TRUE;
-   else
-       gem_supported = GL_FALSE;
-
-   if (!gem_disable && gem_supported) {
-      int bo_reuse_mode;
-      intel->bufmgr = intel_bufmgr_gem_init(intel->driFd,
-					    BATCH_SZ);
-      if (intel->bufmgr != NULL)
-	 intel->ttm = GL_TRUE;
-
-      bo_reuse_mode = driQueryOptioni(&intel->optionCache, "bo_reuse");
-      switch (bo_reuse_mode) {
-      case DRI_CONF_BO_REUSE_DISABLED:
-	 break;
-      case DRI_CONF_BO_REUSE_ALL:
-	 intel_bufmgr_gem_enable_reuse(intel->bufmgr);
-	 break;
-      }
-   }
-   /* Otherwise, use the classic buffer manager. */
-   if (intel->bufmgr == NULL) {
-      if (gem_disable) {
-	 fprintf(stderr, "GEM disabled.  Using classic.\n");
-      } else {
-	 fprintf(stderr, "Failed to initialize GEM.  "
-		 "Falling back to classic.\n");
-      }
-
-      if (intelScreen->tex.size == 0) {
-	 fprintf(stderr, "[%s:%u] Error initializing buffer manager.\n",
-		 __func__, __LINE__);
-	 return GL_FALSE;
-      }
-
-      intel->bufmgr = intel_bufmgr_fake_init(intelScreen->tex.offset,
-					     intelScreen->tex.map,
-					     intelScreen->tex.size,
-					     intel_fence_emit,
-					     intel_fence_wait,
-					     intel);
-   }
-
-   /* XXX bufmgr should be per-screen, not per-context */
-   intelScreen->ttm = intel->ttm;
-
-   return GL_TRUE;
-}
-
 void
 intelInitDriverFunctions(struct dd_function_table *functions)
 {
@@ -745,8 +646,20 @@ intelInitContext(struct intel_context *intel,
    else
       intel->maxBatchSize = BATCH_SZ;
 
-   if (!intel_init_bufmgr(intel))
-      return GL_FALSE;
+   intel->bufmgr = intelScreen->bufmgr;
+   intel->ttm = intelScreen->ttm;
+   if (intel->ttm) {
+      int bo_reuse_mode;
+
+      bo_reuse_mode = driQueryOptioni(&intel->optionCache, "bo_reuse");
+      switch (bo_reuse_mode) {
+      case DRI_CONF_BO_REUSE_DISABLED:
+	 break;
+      case DRI_CONF_BO_REUSE_ALL:
+	 intel_bufmgr_gem_enable_reuse(intel->bufmgr);
+	 break;
+      }
+   }
 
    ctx->Const.MaxTextureMaxAnisotropy = 2.0;
 
