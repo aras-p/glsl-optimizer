@@ -608,7 +608,7 @@ static void emit_op3fn(struct tnl_program *p,
    GLuint nr;
    struct prog_instruction *inst;
       
-   assert(p->program->Base.NumInstructions <= p->max_inst);
+   assert((GLint) p->program->Base.NumInstructions <= p->max_inst);
 
    if (p->program->Base.NumInstructions == p->max_inst) {
       /* need to extend the program's instruction array */
