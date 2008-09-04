@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  7.1
+ * Version:  7.2
  *
  * Copyright (C) 1999-2008  Brian Paul   All Rights Reserved.
  *
@@ -166,22 +166,75 @@ _mesa_delete_buffer_object( GLcontext *ctx, struct gl_buffer_object *bufObj )
 
    if (bufObj->Data)
       _mesa_free(bufObj->Data);
+
+   /* assign strange values here to help w/ debugging */
+   bufObj->RefCount = -1000;
+   bufObj->Name = ~0;
+
    _mesa_free(bufObj);
 }
 
 
+
+/**
+ * Set ptr to bufObj w/ reference counting.
+ */
 void
-_mesa_unbind_buffer_object( GLcontext *ctx, struct gl_buffer_object *bufObj )
+_mesa_reference_buffer_object(GLcontext *ctx,
+                              struct gl_buffer_object **ptr,
+                              struct gl_buffer_object *bufObj)
 {
-   if (bufObj != ctx->Array.NullBufferObj) {
-      bufObj->RefCount--;
-      if (bufObj->RefCount <= 0) {
+   if (*ptr == bufObj)
+      return;
+
+   if (*ptr) {
+      /* Unreference the old texture */
+      GLboolean deleteFlag = GL_FALSE;
+      struct gl_buffer_object *oldObj = *ptr;
+
+      /*_glthread_LOCK_MUTEX(oldObj->Mutex);*/
+      ASSERT(oldObj->RefCount > 0);
+      oldObj->RefCount--;
+#if 0
+      printf("BufferObj %p %d DECR to %d\n",
+             (void *) oldObj, oldObj->Name, oldObj->RefCount);
+#endif
+      deleteFlag = (oldObj->RefCount == 0);
+      /*_glthread_UNLOCK_MUTEX(oldObj->Mutex);*/
+
+      if (deleteFlag) {
+
+         /* some sanity checking: don't delete a buffer still in use */
 	 ASSERT(ctx->Array.ArrayBufferObj != bufObj);
 	 ASSERT(ctx->Array.ElementArrayBufferObj != bufObj);
 	 ASSERT(ctx->Array.ArrayObj->Vertex.BufferObj != bufObj);
 	 ASSERT(ctx->Driver.DeleteBuffer);
-	 ctx->Driver.DeleteBuffer(ctx, bufObj);
+
+         ctx->Driver.DeleteBuffer(ctx, oldObj);
       }
+
+      *ptr = NULL;
+   }
+   ASSERT(!*ptr);
+
+   if (bufObj) {
+      /* reference new texture */
+      /*_glthread_LOCK_MUTEX(tex->Mutex);*/
+      if (bufObj->RefCount == 0) {
+         /* this buffer's being deleted (look just above) */
+         /* Not sure this can every really happen.  Warn if it does. */
+         _mesa_problem(NULL, "referencing deleted buffer object");
+         *ptr = NULL;
+      }
+      else {
+         bufObj->RefCount++;
+#if 0
+         printf("BufferObj %p %d INCR to %d\n",
+                (void *) bufObj, bufObj->Name, bufObj->RefCount);
+#endif
+         *ptr = bufObj;
+      }
+      /*_glthread_UNLOCK_MUTEX(tex->Mutex);*/
    }
 }
 
@@ -200,33 +253,6 @@ _mesa_initialize_buffer_object( struct gl_buffer_object *obj,
    obj->Name = name;
    obj->Usage = GL_STATIC_DRAW_ARB;
    obj->Access = GL_READ_WRITE_ARB;
-}
-
-
-/**
- * Add the given buffer object to the buffer object pool.
- */
-void
-_mesa_save_buffer_object( GLcontext *ctx, struct gl_buffer_object *obj )
-{
-   if (obj->Name > 0) {
-      /* insert into hash table */
-      _mesa_HashInsert(ctx->Shared->BufferObjects, obj->Name, obj);
-   }
-}
-
-
-/**
- * Remove the given buffer object from the buffer object pool.
- * Do not deallocate the buffer object though.
- */
-void
-_mesa_remove_buffer_object( GLcontext *ctx, struct gl_buffer_object *bufObj )
-{
-   if (bufObj->Name > 0) {
-      /* remove from hash table */
-      _mesa_HashRemove(ctx->Shared->BufferObjects, bufObj->Name);
-   }
 }
 
 
@@ -400,6 +426,7 @@ _mesa_init_buffer_objects( GLcontext *ctx )
 {
    /* Allocate the default buffer object and set refcount so high that
     * it never gets deleted.
+    * XXX with recent/improved refcounting this may not longer be needed.
     */
    ctx->Array.NullBufferObj = _mesa_new_buffer_object(ctx, 0, 0);
    if (ctx->Array.NullBufferObj)
@@ -462,28 +489,16 @@ bind_buffer_object(GLcontext *ctx, GLenum target, GLuint buffer)
             _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBindBufferARB");
             return;
          }
-         _mesa_save_buffer_object(ctx, newBufObj);
+         _mesa_HashInsert(ctx->Shared->BufferObjects, buffer, newBufObj);
       }
    }
    
-   /* Make new binding */
-   *bindTarget = newBufObj;
-   newBufObj->RefCount++;
+   /* bind new buffer */
+   _mesa_reference_buffer_object(ctx, bindTarget, newBufObj);
 
    /* Pass BindBuffer call to device driver */
    if (ctx->Driver.BindBuffer && newBufObj)
       ctx->Driver.BindBuffer( ctx, target, newBufObj );
-
-   /* decr ref count on old buffer obj, delete if needed */
-   if (oldBufObj) {
-      oldBufObj->RefCount--;
-      assert(oldBufObj->RefCount >= 0);
-      if (oldBufObj->RefCount == 0) {
-         assert(oldBufObj->Name != 0);
-         ASSERT(ctx->Driver.DeleteBuffer);
-         ctx->Driver.DeleteBuffer( ctx, oldBufObj );
-      }
-   }
 }
 
 
@@ -716,6 +731,23 @@ _mesa_lookup_bufferobj(GLcontext *ctx, GLuint buffer)
 }
 
 
+/**
+ * If *ptr points to obj, set ptr = the Null/default buffer object.
+ * This is a helper for buffer object deletion.
+ * The GL spec says that deleting a buffer object causes it to get
+ * unbound from all arrays in the current context.
+ */
+static void
+unbind(GLcontext *ctx,
+       struct gl_buffer_object **ptr,
+       struct gl_buffer_object *obj)
+{
+   if (*ptr == obj) {
+      _mesa_reference_buffer_object(ctx, ptr, ctx->Array.NullBufferObj);
+   }
+}
+
+
 
 /**********************************************************************/
 /* API Functions                                                      */
@@ -759,54 +791,18 @@ _mesa_DeleteBuffersARB(GLsizei n, const GLuint *ids)
 
          ASSERT(bufObj->Name == ids[i]);
 
-         if (ctx->Array.ArrayObj->Vertex.BufferObj == bufObj) {
-            bufObj->RefCount--;
-            ctx->Array.ArrayObj->Vertex.BufferObj = ctx->Array.NullBufferObj;
-            ctx->Array.NullBufferObj->RefCount++;
-         }
-         if (ctx->Array.ArrayObj->Normal.BufferObj == bufObj) {
-            bufObj->RefCount--;
-            ctx->Array.ArrayObj->Normal.BufferObj = ctx->Array.NullBufferObj;
-            ctx->Array.NullBufferObj->RefCount++;
-         }
-         if (ctx->Array.ArrayObj->Color.BufferObj == bufObj) {
-            bufObj->RefCount--;
-            ctx->Array.ArrayObj->Color.BufferObj = ctx->Array.NullBufferObj;
-            ctx->Array.NullBufferObj->RefCount++;
-         }
-         if (ctx->Array.ArrayObj->SecondaryColor.BufferObj == bufObj) {
-            bufObj->RefCount--;
-            ctx->Array.ArrayObj->SecondaryColor.BufferObj = ctx->Array.NullBufferObj;
-            ctx->Array.NullBufferObj->RefCount++;
-         }
-         if (ctx->Array.ArrayObj->FogCoord.BufferObj == bufObj) {
-            bufObj->RefCount--;
-            ctx->Array.ArrayObj->FogCoord.BufferObj = ctx->Array.NullBufferObj;
-            ctx->Array.NullBufferObj->RefCount++;
-         }
-         if (ctx->Array.ArrayObj->Index.BufferObj == bufObj) {
-            bufObj->RefCount--;
-            ctx->Array.ArrayObj->Index.BufferObj = ctx->Array.NullBufferObj;
-            ctx->Array.NullBufferObj->RefCount++;
-         }
-         if (ctx->Array.ArrayObj->EdgeFlag.BufferObj == bufObj) {
-            bufObj->RefCount--;
-            ctx->Array.ArrayObj->EdgeFlag.BufferObj = ctx->Array.NullBufferObj;
-            ctx->Array.NullBufferObj->RefCount++;
-         }
+         unbind(ctx, &ctx->Array.ArrayObj->Vertex.BufferObj, bufObj);
+         unbind(ctx, &ctx->Array.ArrayObj->Normal.BufferObj, bufObj);
+         unbind(ctx, &ctx->Array.ArrayObj->Color.BufferObj, bufObj);
+         unbind(ctx, &ctx->Array.ArrayObj->SecondaryColor.BufferObj, bufObj);
+         unbind(ctx, &ctx->Array.ArrayObj->FogCoord.BufferObj, bufObj);
+         unbind(ctx, &ctx->Array.ArrayObj->Index.BufferObj, bufObj);
+         unbind(ctx, &ctx->Array.ArrayObj->EdgeFlag.BufferObj, bufObj);
          for (j = 0; j < MAX_TEXTURE_UNITS; j++) {
-            if (ctx->Array.ArrayObj->TexCoord[j].BufferObj == bufObj) {
-               bufObj->RefCount--;
-               ctx->Array.ArrayObj->TexCoord[j].BufferObj = ctx->Array.NullBufferObj;
-               ctx->Array.NullBufferObj->RefCount++;
-            }
+            unbind(ctx, &ctx->Array.ArrayObj->TexCoord[j].BufferObj, bufObj);
          }
          for (j = 0; j < VERT_ATTRIB_MAX; j++) {
-            if (ctx->Array.ArrayObj->VertexAttrib[j].BufferObj == bufObj) {
-               bufObj->RefCount--;
-               ctx->Array.ArrayObj->VertexAttrib[j].BufferObj = ctx->Array.NullBufferObj;
-               ctx->Array.NullBufferObj->RefCount++;
-            }
+            unbind(ctx, &ctx->Array.ArrayObj->VertexAttrib[j].BufferObj, bufObj);
          }
 
          if (ctx->Array.ArrayBufferObj == bufObj) {
@@ -824,8 +820,8 @@ _mesa_DeleteBuffersARB(GLsizei n, const GLuint *ids)
          }
 
          /* The ID is immediately freed for re-use */
-         _mesa_remove_buffer_object(ctx, bufObj);
-         _mesa_unbind_buffer_object(ctx, bufObj);
+         _mesa_HashRemove(ctx->Shared->BufferObjects, bufObj->Name);
+         _mesa_reference_buffer_object(ctx, &bufObj, NULL);
       }
    }
 
@@ -874,7 +870,7 @@ _mesa_GenBuffersARB(GLsizei n, GLuint *buffer)
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glGenBuffersARB");
          return;
       }
-      _mesa_save_buffer_object(ctx, bufObj);
+      _mesa_HashInsert(ctx->Shared->BufferObjects, first + i, bufObj);
       buffer[i] = first + i;
    }
 

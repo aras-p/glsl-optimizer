@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  7.1
+ * Version:  7.2
  *
- * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2008  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -1274,6 +1274,29 @@ adjust_buffer_object_ref_counts(struct gl_array_attrib *array, GLint step)
 }
 
 
+/**
+ * Copy gl_pixelstore_attrib from src to dst, updating buffer
+ * object refcounts.
+ */
+static void
+copy_pixelstore(GLcontext *ctx,
+                struct gl_pixelstore_attrib *dst,
+                const struct gl_pixelstore_attrib *src)
+{
+   dst->Alignment = src->Alignment;
+   dst->RowLength = src->RowLength;
+   dst->SkipPixels = src->SkipPixels;
+   dst->SkipRows = src->SkipRows;
+   dst->ImageHeight = src->ImageHeight;
+   dst->SkipImages = src->SkipImages;
+   dst->SwapBytes = src->SwapBytes;
+   dst->LsbFirst = src->LsbFirst;
+   dst->ClientStorage = src->ClientStorage;
+   dst->Invert = src->Invert;
+   _mesa_reference_buffer_object(ctx, &dst->BufferObj, src->BufferObj);
+}
+
+
 #define GL_CLIENT_PACK_BIT (1<<20)
 #define GL_CLIENT_UNPACK_BIT (1<<21)
 
@@ -1292,31 +1315,29 @@ _mesa_PushClientAttrib(GLbitfield mask)
       return;
    }
 
-   /* Build linked list of attribute nodes which save all attribute */
-   /* groups specified by the mask. */
+   /* Build linked list of attribute nodes which save all attribute
+    * groups specified by the mask.
+    */
    head = NULL;
 
    if (mask & GL_CLIENT_PIXEL_STORE_BIT) {
       struct gl_pixelstore_attrib *attr;
-#if FEATURE_EXT_pixel_buffer_object
-      ctx->Pack.BufferObj->RefCount++;
-      ctx->Unpack.BufferObj->RefCount++;
-#endif
       /* packing attribs */
-      attr = MALLOC_STRUCT( gl_pixelstore_attrib );
-      MEMCPY( attr, &ctx->Pack, sizeof(struct gl_pixelstore_attrib) );
+      attr = CALLOC_STRUCT( gl_pixelstore_attrib );
+      copy_pixelstore(ctx, attr, &ctx->Pack);
       newnode = new_attrib_node( GL_CLIENT_PACK_BIT );
       newnode->data = attr;
       newnode->next = head;
       head = newnode;
       /* unpacking attribs */
       attr = MALLOC_STRUCT( gl_pixelstore_attrib );
-      MEMCPY( attr, &ctx->Unpack, sizeof(struct gl_pixelstore_attrib) );
+      copy_pixelstore(ctx, attr, &ctx->Unpack);
       newnode = new_attrib_node( GL_CLIENT_UNPACK_BIT );
       newnode->data = attr;
       newnode->next = head;
       head = newnode;
    }
+
    if (mask & GL_CLIENT_VERTEX_ARRAY_BIT) {
       struct gl_array_attrib *attr;
       struct gl_array_object *obj;
@@ -1353,7 +1374,7 @@ _mesa_PushClientAttrib(GLbitfield mask)
 void GLAPIENTRY
 _mesa_PopClientAttrib(void)
 {
-   struct gl_attrib_node *attr, *next;
+   struct gl_attrib_node *node, *next;
 
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
@@ -1364,37 +1385,31 @@ _mesa_PopClientAttrib(void)
    }
 
    ctx->ClientAttribStackDepth--;
-   attr = ctx->ClientAttribStack[ctx->ClientAttribStackDepth];
+   node = ctx->ClientAttribStack[ctx->ClientAttribStackDepth];
 
-   while (attr) {
-      switch (attr->kind) {
+   while (node) {
+      switch (node->kind) {
          case GL_CLIENT_PACK_BIT:
-#if FEATURE_EXT_pixel_buffer_object
-            ctx->Pack.BufferObj->RefCount--;
-            if (ctx->Pack.BufferObj->RefCount <= 0) {
-               _mesa_remove_buffer_object( ctx, ctx->Pack.BufferObj );
-               (*ctx->Driver.DeleteBuffer)( ctx, ctx->Pack.BufferObj );
+            {
+               struct gl_pixelstore_attrib *store =
+                  (struct gl_pixelstore_attrib *) node->data;
+               copy_pixelstore(ctx, &ctx->Pack, store);
+               _mesa_reference_buffer_object(ctx, &store->BufferObj, NULL);
             }
-#endif
-            MEMCPY( &ctx->Pack, attr->data,
-                    sizeof(struct gl_pixelstore_attrib) );
 	    ctx->NewState |= _NEW_PACKUNPACK;
             break;
          case GL_CLIENT_UNPACK_BIT:
-#if FEATURE_EXT_pixel_buffer_object
-            ctx->Unpack.BufferObj->RefCount--;
-            if (ctx->Unpack.BufferObj->RefCount <= 0) {
-               _mesa_remove_buffer_object( ctx, ctx->Unpack.BufferObj );
-               (*ctx->Driver.DeleteBuffer)( ctx, ctx->Unpack.BufferObj );
+            {
+               struct gl_pixelstore_attrib *store =
+                  (struct gl_pixelstore_attrib *) node->data;
+               copy_pixelstore(ctx, &ctx->Unpack, store);
+               _mesa_reference_buffer_object(ctx, &store->BufferObj, NULL);
             }
-#endif
-            MEMCPY( &ctx->Unpack, attr->data,
-                    sizeof(struct gl_pixelstore_attrib) );
 	    ctx->NewState |= _NEW_PACKUNPACK;
             break;
          case GL_CLIENT_VERTEX_ARRAY_BIT: {
 	    struct gl_array_attrib * data =
-	      (struct gl_array_attrib *) attr->data;
+	      (struct gl_array_attrib *) node->data;
 
             adjust_buffer_object_ref_counts(&ctx->Array, -1);
 	 
@@ -1431,10 +1446,10 @@ _mesa_PopClientAttrib(void)
             break;
       }
 
-      next = attr->next;
-      FREE( attr->data );
-      FREE( attr );
-      attr = next;
+      next = node->next;
+      FREE( node->data );
+      FREE( node );
+      node = next;
    }
 }
 

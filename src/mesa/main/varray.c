@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.1
+ * Version:  7.2
  *
- * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2008  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -62,14 +62,9 @@ update_array(GLcontext *ctx, struct gl_client_array *array,
    array->Normalized = normalized;
    array->Ptr = (const GLubyte *) ptr;
 #if FEATURE_ARB_vertex_buffer_object
-   array->BufferObj->RefCount--;
-   if (array->BufferObj->RefCount <= 0) {
-      ASSERT(array->BufferObj->Name);
-      _mesa_remove_buffer_object( ctx, array->BufferObj );
-      (*ctx->Driver.DeleteBuffer)( ctx, array->BufferObj );
-   }
-   array->BufferObj = ctx->Array.ArrayBufferObj;
-   array->BufferObj->RefCount++;
+   _mesa_reference_buffer_object(ctx, &array->BufferObj,
+                                 ctx->Array.ArrayBufferObj);
+
    /* Compute the index of the last array element that's inside the buffer.
     * Later in glDrawArrays we'll check if start + count > _MaxElement to
     * be sure we won't go out of bounds.
