@@ -12,40 +12,40 @@ int driCreateScreen(Display *display, int screen, dri_screen_t **dri_screen, dri
 	drm_handle_t	sarea_handle;
 	char		*bus_id;
 	dri_screen_t	*dri_scrn;
-	
+
 	assert(display);
 	assert(dri_screen);
-	
+
 	if (!XF86DRIQueryExtension(display, &evbase, &errbase))
 		return 1;
-	
+
 	dri_scrn = calloc(1, sizeof(dri_screen_t));
-	
+
 	if (!dri_scrn)
 		return 1;
 
 	if (!XF86DRIQueryVersion(display, &dri_scrn->dri.major, &dri_scrn->dri.minor, &dri_scrn->dri.patch))
 		goto free_screen;
-	
+
 	dri_scrn->display = display;
 	dri_scrn->num = screen;
 	dri_scrn->draw_lock_id = 1;
-	
+
 	if (!XF86DRIOpenConnection(display, screen, &sarea_handle, &bus_id))
 		goto free_screen;
-	
+
 	dri_scrn->fd = -1;
 	dri_scrn->fd = drmOpenOnce(NULL, bus_id, &newly_opened);
 	XFree(bus_id);
 
 	if (dri_scrn->fd < 0)
 		goto close_connection;
-	
+
 	if (drmGetMagic(dri_scrn->fd, &magic))
 		goto close_drm;
-	
+
 	drm_version = drmGetVersion(dri_scrn->fd);
-	
+
 	if (!drm_version)
 		goto close_drm;
 
@@ -53,10 +53,10 @@ int driCreateScreen(Display *display, int screen, dri_screen_t **dri_screen, dri
 	dri_scrn->drm.minor = drm_version->version_minor;
 	dri_scrn->drm.patch = drm_version->version_patchlevel;
 	drmFreeVersion(drm_version);
-				
+
 	if (!XF86DRIAuthConnection(display, screen, magic))
 		goto close_drm;
-	
+
 	if (!XF86DRIGetClientDriverName
 	(
 		display,
@@ -67,15 +67,15 @@ int driCreateScreen(Display *display, int screen, dri_screen_t **dri_screen, dri
 		&driver_name
 	))
 		goto close_drm;
-	
+
 	if (drmMap(dri_scrn->fd, sarea_handle, SAREA_MAX, (drmAddress)&dri_scrn->sarea))
 		goto close_drm;
-	
+
 	dri_scrn->drawable_hash = drmHashCreate();
-	
+
 	if (!dri_scrn->drawable_hash)
 		goto unmap_sarea;
-	
+
 	if (dri_framebuf)
 	{
 		if (!XF86DRIGetDeviceInfo
@@ -90,9 +90,9 @@ int driCreateScreen(Display *display, int screen, dri_screen_t **dri_screen, dri
 		))
 			goto destroy_hash;
 	}
-	
+
 	*dri_screen = dri_scrn;
-	
+
 	return 0;
 
 destroy_hash:
@@ -105,20 +105,20 @@ close_connection:
 	XF86DRICloseConnection(display, screen);
 free_screen:
 	free(dri_scrn);
-	
+
 	return 1;
 }
 
 int driDestroyScreen(dri_screen_t *dri_screen)
 {
 	assert(dri_screen);
-	
+
 	drmHashDestroy(dri_screen->drawable_hash);
 	drmUnmap(dri_screen->sarea, SAREA_MAX);
 	drmCloseOnce(dri_screen->fd);
 	XF86DRICloseConnection(dri_screen->display, dri_screen->num);
 	free(dri_screen);
-	
+
 	return 0;
 }
 
@@ -126,73 +126,82 @@ int driCreateDrawable(dri_screen_t *dri_screen, Drawable drawable, dri_drawable_
 {
 	int		evbase, errbase;
 	dri_drawable_t	*dri_draw;
-	
+
 	assert(dri_screen);
 	assert(dri_drawable);
-	
+
 	if (!XF86DRIQueryExtension(dri_screen->display, &evbase, &errbase))
 		return 1;
-	
+
 	if (!drmHashLookup(dri_screen->drawable_hash, drawable, (void**)dri_drawable))
 	{
 		/* Found */
 		(*dri_drawable)->refcount++;
 		return 0;
 	}
-	
+
 	dri_draw = calloc(1, sizeof(dri_drawable_t));
-	
+
 	if (!dri_draw)
 		return 1;
-	
+
 	if (!XF86DRICreateDrawable(dri_screen->display, 0, drawable, &dri_draw->drm_drawable))
 	{
 		free(dri_draw);
 		return 1;
 	}
-	
+
 	dri_draw->x_drawable = drawable;
 	dri_draw->sarea_index = 0;
 	dri_draw->sarea_stamp = NULL;
 	dri_draw->last_sarea_stamp = 0;
 	dri_draw->dri_screen = dri_screen;
 	dri_draw->refcount = 1;
-	
+
 	if (drmHashInsert(dri_screen->drawable_hash, drawable, dri_draw))
 	{
 		XF86DRIDestroyDrawable(dri_screen->display, dri_screen->num, drawable);
 		free(dri_draw);
 		return 1;
 	}
-	
-	/*
-	 * XXX: Need this to initialize sarea pointer and other stuff in dri_drawable_t
-	 * to be able to use the DRI_VALIDATE_DRAWABLE_INFO macro, but is it safe to
-	 * call without any sync?
-	 */
-	if (driUpdateDrawableInfo(dri_draw))
+
+	if (!dri_draw->sarea_stamp || *dri_draw->sarea_stamp != dri_draw->last_sarea_stamp)
 	{
-		XF86DRIDestroyDrawable(dri_screen->display, dri_screen->num, drawable);
-		free(dri_draw);
-		return 1;
+		DRM_SPINLOCK(&dri_screen->sarea->drawable_lock, dri_screen->draw_lock_id);
+
+		if (driUpdateDrawableInfo(dri_draw))
+		{
+			XF86DRIDestroyDrawable(dri_screen->display, dri_screen->num, drawable);
+			free(dri_draw);
+			DRM_SPINUNLOCK(&dri_screen->sarea->drawable_lock, dri_screen->draw_lock_id);
+			return 1;
+		}
+
+		DRM_SPINUNLOCK(&dri_screen->sarea->drawable_lock, dri_screen->draw_lock_id);
 	}
-	
+
 	*dri_drawable = dri_draw;
-	
+
 	return 0;
 }
 
 int driUpdateDrawableInfo(dri_drawable_t *dri_drawable)
 {
 	assert(dri_drawable);
-	
+
 	if (dri_drawable->cliprects)
+	{
 		XFree(dri_drawable->cliprects);
+		dri_drawable->cliprects = NULL;
+	}
 	if (dri_drawable->back_cliprects)
+	{
 		XFree(dri_drawable->back_cliprects);
-	
+		dri_drawable->back_cliprects = NULL;
+	}
+
 	DRM_SPINUNLOCK(&dri_drawable->dri_screen->sarea->drawable_lock, dri_drawable->dri_screen->draw_lock_id);
-	
+
 	if (!XF86DRIGetDrawableInfo
 	(
 		dri_drawable->dri_screen->display,
@@ -217,21 +226,21 @@ int driUpdateDrawableInfo(dri_drawable_t *dri_drawable)
 		dri_drawable->cliprects = NULL;
 		dri_drawable->num_back_cliprects = 0;
 		dri_drawable->back_cliprects = 0;
-		
+
 		return 1;
 	}
 	else
 		dri_drawable->sarea_stamp = &dri_drawable->dri_screen->sarea->drawableTable[dri_drawable->sarea_index].stamp;
-	
+
 	DRM_SPINLOCK(&dri_drawable->dri_screen->sarea->drawable_lock, dri_drawable->dri_screen->draw_lock_id);
-	
+
 	return 0;
 }
 
 int driDestroyDrawable(dri_drawable_t *dri_drawable)
 {
 	assert(dri_drawable);
-	
+
 	if (--dri_drawable->refcount == 0)
 	{
 		if (dri_drawable->cliprects)
@@ -242,7 +251,7 @@ int driDestroyDrawable(dri_drawable_t *dri_drawable)
 		XF86DRIDestroyDrawable(dri_drawable->dri_screen->display, dri_drawable->dri_screen->num, dri_drawable->x_drawable);
 		free(dri_drawable);
 	}
-	
+
 	return 0;
 }
 
@@ -250,38 +259,37 @@ int driCreateContext(dri_screen_t *dri_screen, Visual *visual, dri_context_t **d
 {
 	int		evbase, errbase;
 	dri_context_t	*dri_ctx;
-	
+
 	assert(dri_screen);
 	assert(visual);
 	assert(dri_context);
-	
+
 	if (!XF86DRIQueryExtension(dri_screen->display, &evbase, &errbase))
 		return 1;
-	
+
 	dri_ctx = calloc(1, sizeof(dri_context_t));
-	
+
 	if (!dri_ctx)
 		return 1;
-	
+
 	if (!XF86DRICreateContext(dri_screen->display, dri_screen->num, visual, &dri_ctx->id, &dri_ctx->drm_context))
 	{
 		free(dri_ctx);
 		return 1;
 	}
-	
-	dri_ctx->dri_screen = dri_screen;	
+
+	dri_ctx->dri_screen = dri_screen;
 	*dri_context = dri_ctx;
-	
+
 	return 0;
 }
 
 int driDestroyContext(dri_context_t *dri_context)
 {
 	assert(dri_context);
-	
+
 	XF86DRIDestroyContext(dri_context->dri_screen->display, dri_context->dri_screen->num, dri_context->id);
 	free(dri_context);
-	
+
 	return 0;
 }
-
