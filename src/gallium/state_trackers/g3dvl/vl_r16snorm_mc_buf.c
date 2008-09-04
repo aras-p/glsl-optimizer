@@ -74,7 +74,7 @@ struct vlR16SnormBufferedMC
 	void					*i_vs, *p_vs[2], *b_vs[2];
 	void					*i_fs, *p_fs[2], *b_fs[2];
 	struct pipe_vertex_buffer 		vertex_bufs[NUM_BUF_SETS][3];
-	struct pipe_vertex_element		vertex_elems[6];
+	struct pipe_vertex_element		vertex_elems[8];
 	struct pipe_constant_buffer		vs_const_buf, fs_const_buf;
 };
 
@@ -315,6 +315,71 @@ static inline int vlGrabMacroBlock
 	return 0;
 }
 
+#define SET_BLOCK(vb, cbp, mbx, mby, unitx, unity, ofsx, ofsy, hx, hy, lm, cbm, crm, zx, zy)					\
+	(vb)[0].pos.x = (mbx) * (unitx) + (ofsx);		(vb)[0].pos.y = (mby) * (unity) + (ofsy);			\
+	(vb)[1].pos.x = (mbx) * (unitx) + (ofsx);		(vb)[1].pos.y = (mby) * (unity) + (ofsy) + (hy);		\
+	(vb)[2].pos.x = (mbx) * (unitx) + (ofsx) + (hx);	(vb)[2].pos.y = (mby) * (unity) + (ofsy);			\
+	(vb)[3].pos.x = (mbx) * (unitx) + (ofsx) + (hx);	(vb)[3].pos.y = (mby) * (unity) + (ofsy);			\
+	(vb)[4].pos.x = (mbx) * (unitx) + (ofsx);		(vb)[4].pos.y = (mby) * (unity) + (ofsy) + (hy);		\
+	(vb)[5].pos.x = (mbx) * (unitx) + (ofsx) + (hx);	(vb)[5].pos.y = (mby) * (unity) + (ofsy) + (hy);		\
+																\
+	/*if ((cbp) & (lm))													\
+	{*/															\
+		(vb)[0].luma_tc.x = (mbx) * (unitx) + (ofsx);		(vb)[0].luma_tc.y = (mby) * (unity) + (ofsy);		\
+		(vb)[1].luma_tc.x = (mbx) * (unitx) + (ofsx);		(vb)[1].luma_tc.y = (mby) * (unity) + (ofsy) + (hy);	\
+		(vb)[2].luma_tc.x = (mbx) * (unitx) + (ofsx) + (hx);	(vb)[2].luma_tc.y = (mby) * (unity) + (ofsy);		\
+		(vb)[3].luma_tc.x = (mbx) * (unitx) + (ofsx) + (hx);	(vb)[3].luma_tc.y = (mby) * (unity) + (ofsy);		\
+		(vb)[4].luma_tc.x = (mbx) * (unitx) + (ofsx);		(vb)[4].luma_tc.y = (mby) * (unity) + (ofsy) + (hy);	\
+		(vb)[5].luma_tc.x = (mbx) * (unitx) + (ofsx) + (hx);	(vb)[5].luma_tc.y = (mby) * (unity) + (ofsy) + (hy);	\
+	/*}															\
+	else															\
+	{															\
+		(vb)[0].luma_tc.x = (zx);		(vb)[0].luma_tc.y = (zy);						\
+		(vb)[1].luma_tc.x = (zx);		(vb)[1].luma_tc.y = (zy) + (hy);					\
+		(vb)[2].luma_tc.x = (zx) + (hx);	(vb)[2].luma_tc.y = (zy);						\
+		(vb)[3].luma_tc.x = (zx) + (hx);	(vb)[3].luma_tc.y = (zy);						\
+		(vb)[4].luma_tc.x = (zx);		(vb)[4].luma_tc.y = (zy) + (hy);					\
+		(vb)[5].luma_tc.x = ((zx) + (hx);	(vb)[5].luma_tc.y = (zy) + (hy);					\
+	}*/															\
+																\
+	/*if ((cbp) & (cbm))													\
+	{*/															\
+		(vb)[0].cb_tc.x = (mbx) * (unitx) + (ofsx);		(vb)[0].cb_tc.y = (mby) * (unity) + (ofsy);		\
+		(vb)[1].cb_tc.x = (mbx) * (unitx) + (ofsx);		(vb)[1].cb_tc.y = (mby) * (unity) + (ofsy) + (hy);	\
+		(vb)[2].cb_tc.x = (mbx) * (unitx) + (ofsx) + (hx);	(vb)[2].cb_tc.y = (mby) * (unity) + (ofsy);		\
+		(vb)[3].cb_tc.x = (mbx) * (unitx) + (ofsx) + (hx);	(vb)[3].cb_tc.y = (mby) * (unity) + (ofsy);		\
+		(vb)[4].cb_tc.x = (mbx) * (unitx) + (ofsx);		(vb)[4].cb_tc.y = (mby) * (unity) + (ofsy) + (hy);	\
+		(vb)[5].cb_tc.x = (mbx) * (unitx) + (ofsx) + (hx);	(vb)[5].cb_tc.y = (mby) * (unity) + (ofsy) + (hy);	\
+	/*}															\
+	else															\
+	{															\
+		(vb)[0].cb_tc.x = (zx);		(vb)[0].cb_tc.y = (zy);								\
+		(vb)[1].cb_tc.x = (zx);		(vb)[1].cb_tc.y = (zy) + (hy);							\
+		(vb)[2].cb_tc.x = (zx) + (hx);	(vb)[2].cb_tc.y = (zy);								\
+		(vb)[3].cb_tc.x = (zx) + (hx);	(vb)[3].cb_tc.y = (zy);								\
+		(vb)[4].cb_tc.x = (zx);		(vb)[4].cb_tc.y = (zy) + (hy);							\
+		(vb)[5].cb_tc.x = ((zx) + (hx);	(vb)[5].cb_tc.y = (zy) + (hy);							\
+	}*/															\
+																\
+	/*if ((cbp) & (crm))													\
+	{*/															\
+		(vb)[0].cr_tc.x = (mbx) * (unitx) + (ofsx);		(vb)[0].cr_tc.y = (mby) * (unity) + (ofsy);		\
+		(vb)[1].cr_tc.x = (mbx) * (unitx) + (ofsx);		(vb)[1].cr_tc.y = (mby) * (unity) + (ofsy) + (hy);	\
+		(vb)[2].cr_tc.x = (mbx) * (unitx) + (ofsx) + (hx);	(vb)[2].cr_tc.y = (mby) * (unity) + (ofsy);		\
+		(vb)[3].cr_tc.x = (mbx) * (unitx) + (ofsx) + (hx);	(vb)[3].cr_tc.y = (mby) * (unity) + (ofsy);		\
+		(vb)[4].cr_tc.x = (mbx) * (unitx) + (ofsx);		(vb)[4].cr_tc.y = (mby) * (unity) + (ofsy) + (hy);	\
+		(vb)[5].cr_tc.x = (mbx) * (unitx) + (ofsx) + (hx);	(vb)[5].cr_tc.y = (mby) * (unity) + (ofsy) + (hy);	\
+	/*}															\
+	else															\
+	{															\
+		(vb)[0].cr_tc.x = (zx);		(vb)[0].cb_tc.y = (zy);								\
+		(vb)[1].cr_tc.x = (zx);		(vb)[1].cb_tc.y = (zy) + (hy);							\
+		(vb)[2].cr_tc.x = (zx) + (hx);	(vb)[2].cb_tc.y = (zy);								\
+		(vb)[3].cr_tc.x = (zx) + (hx);	(vb)[3].cb_tc.y = (zy);								\
+		(vb)[4].cr_tc.x = (zx);		(vb)[4].cb_tc.y = (zy) + (hy);							\
+		(vb)[5].cr_tc.x = ((zx) + (hx);	(vb)[5].cb_tc.y = (zy) + (hy);							\
+	}*/
+
 static inline int vlGrabMacroBlockVB
 (
 	struct vlR16SnormBufferedMC *mc,
@@ -322,18 +387,6 @@ static inline int vlGrabMacroBlockVB
 	unsigned int pos
 )
 {
-	const struct vlVertex2f	unit =
-	{
-		mc->surface_tex_inv_size.x * VL_MACROBLOCK_WIDTH,
-		mc->surface_tex_inv_size.y * VL_MACROBLOCK_HEIGHT
-	};
-	const struct vlVertex2f half =
-	{
-		mc->surface_tex_inv_size.x * (VL_MACROBLOCK_WIDTH / 2),
-		mc->surface_tex_inv_size.y * (VL_MACROBLOCK_HEIGHT / 2)
-	};
-
-	struct vlVertex2f	*vb;
 	struct vlVertex2f	mo_vec[2];
 	unsigned int		i;
 
@@ -344,6 +397,8 @@ static inline int vlGrabMacroBlockVB
 	{
 		case vlMacroBlockTypeBiPredicted:
 		{
+			struct vlVertex2f *vb;
+
 			vb = (struct vlVertex2f*)mc->pipe->winsys->buffer_map
 			(
 				mc->pipe->winsys,
@@ -383,6 +438,8 @@ static inline int vlGrabMacroBlockVB
 		case vlMacroBlockTypeFwdPredicted:
 		case vlMacroBlockTypeBkwdPredicted:
 		{
+			struct vlVertex2f *vb;
+
 			vb = (struct vlVertex2f*)mc->pipe->winsys->buffer_map
 			(
 				mc->pipe->winsys,
@@ -438,68 +495,63 @@ static inline int vlGrabMacroBlockVB
 		}
 		case vlMacroBlockTypeIntra:
 		{
-			vb = (struct vlVertex2f*)mc->pipe->winsys->buffer_map
+			const struct vlVertex2f	unit =
+			{
+				mc->surface_tex_inv_size.x * VL_MACROBLOCK_WIDTH,
+				mc->surface_tex_inv_size.y * VL_MACROBLOCK_HEIGHT
+			};
+			const struct vlVertex2f half =
+			{
+				mc->surface_tex_inv_size.x * (VL_MACROBLOCK_WIDTH / 2),
+				mc->surface_tex_inv_size.y * (VL_MACROBLOCK_HEIGHT / 2)
+			};
+
+			struct vlMacroBlockVertexStream0
+			{
+				struct vlVertex2f pos;
+				struct vlVertex2f luma_tc;
+				struct vlVertex2f cb_tc;
+				struct vlVertex2f cr_tc;
+			} *vb;
+
+			vb = (struct vlMacroBlockVertexStream0*)mc->pipe->winsys->buffer_map
 			(
 				mc->pipe->winsys,
 				mc->vertex_bufs[mc->cur_buf % NUM_BUF_SETS][0].buffer,
 				PIPE_BUFFER_USAGE_CPU_WRITE
-			) + pos * 2 * 24;
+			) + pos * 24;
 
-			vb[0].x = macroblock->mbx * unit.x;		vb[0].y = macroblock->mby * unit.y;
-			vb[1].x = macroblock->mbx * unit.x;		vb[1].y = macroblock->mby * unit.y;
-			vb[2].x = macroblock->mbx * unit.x;		vb[2].y = macroblock->mby * unit.y + half.y;
-			vb[3].x = macroblock->mbx * unit.x;		vb[3].y = macroblock->mby * unit.y + half.y;
-			vb[4].x = macroblock->mbx * unit.x + half.x;	vb[4].y = macroblock->mby * unit.y;
-			vb[5].x = macroblock->mbx * unit.x + half.x;	vb[5].y = macroblock->mby * unit.y;
+			SET_BLOCK
+			(
+				vb,
+				macroblock->cbp, macroblock->mbx, macroblock->mby,
+				unit.x, unit.y, 0, 0, half.x, half.y,
+				32, 2, 1, mc->zero_block.x, mc->zero_block.y
+			);
 
-			vb[6].x = macroblock->mbx * unit.x + half.x;	vb[6].y = macroblock->mby * unit.y;
-			vb[7].x = macroblock->mbx * unit.x + half.x;	vb[7].y = macroblock->mby * unit.y;
-			vb[8].x = macroblock->mbx * unit.x;		vb[8].y = macroblock->mby * unit.y + half.y;
-			vb[9].x = macroblock->mbx * unit.x;		vb[9].y = macroblock->mby * unit.y + half.y;
-			vb[10].x = macroblock->mbx * unit.x + half.x;	vb[10].y = macroblock->mby * unit.y + half.y;
-			vb[11].x = macroblock->mbx * unit.x + half.x;	vb[11].y = macroblock->mby * unit.y + half.y;
+			SET_BLOCK
+			(
+				vb + 6,
+				macroblock->cbp, macroblock->mbx, macroblock->mby,
+				unit.x, unit.y, half.x, 0, half.x, half.y,
+				16, 2, 1, mc->zero_block.x, mc->zero_block.y
+			);
 
-			vb[12].x = macroblock->mbx * unit.x + half.x;	vb[12].y = macroblock->mby * unit.y;
-			vb[13].x = macroblock->mbx * unit.x + half.x;	vb[13].y = macroblock->mby * unit.y;
-			vb[14].x = macroblock->mbx * unit.x + half.x;	vb[14].y = macroblock->mby * unit.y + half.y;
-			vb[15].x = macroblock->mbx * unit.x + half.x;	vb[15].y = macroblock->mby * unit.y + half.y;
-			vb[16].x = macroblock->mbx * unit.x + unit.x;	vb[16].y = macroblock->mby * unit.y;
-			vb[17].x = macroblock->mbx * unit.x + unit.x;	vb[17].y = macroblock->mby * unit.y;
+			SET_BLOCK
+			(
+				vb + 12,
+				macroblock->cbp, macroblock->mbx, macroblock->mby,
+				unit.x, unit.y, 0, half.y, half.x, half.y,
+				8, 2, 1, mc->zero_block.x, mc->zero_block.y
+			);
 
-			vb[18].x = macroblock->mbx * unit.x + unit.x;	vb[18].y = macroblock->mby * unit.y;
-			vb[19].x = macroblock->mbx * unit.x + unit.x;	vb[19].y = macroblock->mby * unit.y;
-			vb[20].x = macroblock->mbx * unit.x + half.x;	vb[20].y = macroblock->mby * unit.y + half.y;
-			vb[21].x = macroblock->mbx * unit.x + half.x;	vb[21].y = macroblock->mby * unit.y + half.y;
-			vb[22].x = macroblock->mbx * unit.x + unit.x;	vb[22].y = macroblock->mby * unit.y + half.y;
-			vb[23].x = macroblock->mbx * unit.x + unit.x;	vb[23].y = macroblock->mby * unit.y + half.y;
-
-			vb[24].x = macroblock->mbx * unit.x;		vb[24].y = macroblock->mby * unit.y + half.y;
-			vb[25].x = macroblock->mbx * unit.x;		vb[25].y = macroblock->mby * unit.y + half.y;
-			vb[26].x = macroblock->mbx * unit.x;		vb[26].y = macroblock->mby * unit.y + unit.y;
-			vb[27].x = macroblock->mbx * unit.x;		vb[27].y = macroblock->mby * unit.y + unit.y;
-			vb[28].x = macroblock->mbx * unit.x + half.x;	vb[28].y = macroblock->mby * unit.y + half.y;
-			vb[29].x = macroblock->mbx * unit.x + half.x;	vb[29].y = macroblock->mby * unit.y + half.y;
-
-			vb[30].x = macroblock->mbx * unit.x + half.x;	vb[30].y = macroblock->mby * unit.y + half.y;
-			vb[31].x = macroblock->mbx * unit.x + half.x;	vb[31].y = macroblock->mby * unit.y + half.y;
-			vb[32].x = macroblock->mbx * unit.x;		vb[32].y = macroblock->mby * unit.y + unit.y;
-			vb[33].x = macroblock->mbx * unit.x;		vb[33].y = macroblock->mby * unit.y + unit.y;
-			vb[34].x = macroblock->mbx * unit.x + half.x;	vb[34].y = macroblock->mby * unit.y + unit.y;
-			vb[35].x = macroblock->mbx * unit.x + half.x;	vb[35].y = macroblock->mby * unit.y + unit.y;
-
-			vb[36].x = macroblock->mbx * unit.x + half.x;	vb[36].y = macroblock->mby * unit.y + half.y;
-			vb[37].x = macroblock->mbx * unit.x + half.x;	vb[37].y = macroblock->mby * unit.y + half.y;
-			vb[38].x = macroblock->mbx * unit.x + half.x;	vb[38].y = macroblock->mby * unit.y + unit.y;
-			vb[39].x = macroblock->mbx * unit.x + half.x;	vb[39].y = macroblock->mby * unit.y + unit.y;
-			vb[40].x = macroblock->mbx * unit.x + unit.x;	vb[40].y = macroblock->mby * unit.y + half.y;
-			vb[41].x = macroblock->mbx * unit.x + unit.x;	vb[41].y = macroblock->mby * unit.y + half.y;
-
-			vb[42].x = macroblock->mbx * unit.x + unit.x;	vb[42].y = macroblock->mby * unit.y + half.y;
-			vb[43].x = macroblock->mbx * unit.x + unit.x;	vb[43].y = macroblock->mby * unit.y + half.y;
-			vb[44].x = macroblock->mbx * unit.x + half.x;	vb[44].y = macroblock->mby * unit.y + unit.y;
-			vb[45].x = macroblock->mbx * unit.x + half.x;	vb[45].y = macroblock->mby * unit.y + unit.y;
-			vb[46].x = macroblock->mbx * unit.x + unit.x;	vb[46].y = macroblock->mby * unit.y + unit.y;
-			vb[47].x = macroblock->mbx * unit.x + unit.x;	vb[47].y = macroblock->mby * unit.y + unit.y;
+			SET_BLOCK
+			(
+				vb + 18,
+				macroblock->cbp, macroblock->mbx, macroblock->mby,
+				unit.x, unit.y, half.x, half.y, half.x, half.y,
+				4, 2, 1, mc->zero_block.x, mc->zero_block.y
+			);
 
 			mc->pipe->winsys->buffer_unmap(mc->pipe->winsys, mc->vertex_bufs[mc->cur_buf % NUM_BUF_SETS][0].buffer);
 
@@ -577,7 +629,7 @@ static int vlFlush
 	if (num_macroblocks[vlMacroBlockExTypeIntra] > 0)
 	{
 		pipe->set_vertex_buffers(pipe, 1, mc->vertex_bufs[mc->cur_buf % NUM_BUF_SETS]);
-		pipe->set_vertex_elements(pipe, 2, mc->vertex_elems);
+		pipe->set_vertex_elements(pipe, 4, mc->vertex_elems);
 		pipe->set_sampler_textures(pipe, 3, mc->textures[mc->cur_buf % NUM_BUF_SETS]);
 		pipe->bind_sampler_states(pipe, 3, (void**)mc->samplers);
 		pipe->bind_vs_state(pipe, mc->i_vs);
@@ -590,7 +642,7 @@ static int vlFlush
 	if (num_macroblocks[vlMacroBlockExTypeFwdPredictedFrame] > 0)
 	{
 		pipe->set_vertex_buffers(pipe, 2, mc->vertex_bufs[mc->cur_buf % NUM_BUF_SETS]);
-		pipe->set_vertex_elements(pipe, 4, mc->vertex_elems);
+		pipe->set_vertex_elements(pipe, 6, mc->vertex_elems);
 		mc->textures[mc->cur_buf % NUM_BUF_SETS][3] = mc->past_surface->texture;
 		pipe->set_sampler_textures(pipe, 4, mc->textures[mc->cur_buf % NUM_BUF_SETS]);
 		pipe->bind_sampler_states(pipe, 4, (void**)mc->samplers);
@@ -604,7 +656,7 @@ static int vlFlush
 	if (num_macroblocks[vlMacroBlockExTypeFwdPredictedField] > 0)
 	{
 		pipe->set_vertex_buffers(pipe, 2, mc->vertex_bufs[mc->cur_buf % NUM_BUF_SETS]);
-		pipe->set_vertex_elements(pipe, 4, mc->vertex_elems);
+		pipe->set_vertex_elements(pipe, 6, mc->vertex_elems);
 		mc->textures[mc->cur_buf % NUM_BUF_SETS][3] = mc->past_surface->texture;
 		pipe->set_sampler_textures(pipe, 4, mc->textures[mc->cur_buf % NUM_BUF_SETS]);
 		pipe->bind_sampler_states(pipe, 4, (void**)mc->samplers);
@@ -618,7 +670,7 @@ static int vlFlush
 	if (num_macroblocks[vlMacroBlockExTypeBkwdPredictedFrame] > 0)
 	{
 		pipe->set_vertex_buffers(pipe, 2, mc->vertex_bufs[mc->cur_buf % NUM_BUF_SETS]);
-		pipe->set_vertex_elements(pipe, 4, mc->vertex_elems);
+		pipe->set_vertex_elements(pipe, 6, mc->vertex_elems);
 		mc->textures[mc->cur_buf % NUM_BUF_SETS][3] = mc->future_surface->texture;
 		pipe->set_sampler_textures(pipe, 4, mc->textures[mc->cur_buf % NUM_BUF_SETS]);
 		pipe->bind_sampler_states(pipe, 4, (void**)mc->samplers);
@@ -632,7 +684,7 @@ static int vlFlush
 	if (num_macroblocks[vlMacroBlockExTypeBkwdPredictedField] > 0)
 	{
 		pipe->set_vertex_buffers(pipe, 2, mc->vertex_bufs[mc->cur_buf % NUM_BUF_SETS]);
-		pipe->set_vertex_elements(pipe, 4, mc->vertex_elems);
+		pipe->set_vertex_elements(pipe, 6, mc->vertex_elems);
 		mc->textures[mc->cur_buf % NUM_BUF_SETS][3] = mc->future_surface->texture;
 		pipe->set_sampler_textures(pipe, 4, mc->textures[mc->cur_buf % NUM_BUF_SETS]);
 		pipe->bind_sampler_states(pipe, 4, (void**)mc->samplers);
@@ -646,7 +698,7 @@ static int vlFlush
 	if (num_macroblocks[vlMacroBlockExTypeBiPredictedFrame] > 0)
 	{
 		pipe->set_vertex_buffers(pipe, 3, mc->vertex_bufs[mc->cur_buf % NUM_BUF_SETS]);
-		pipe->set_vertex_elements(pipe, 6, mc->vertex_elems);
+		pipe->set_vertex_elements(pipe, 8, mc->vertex_elems);
 		mc->textures[mc->cur_buf % NUM_BUF_SETS][3] = mc->past_surface->texture;
 		mc->textures[mc->cur_buf % NUM_BUF_SETS][4] = mc->future_surface->texture;
 		pipe->set_sampler_textures(pipe, 5, mc->textures[mc->cur_buf % NUM_BUF_SETS]);
@@ -661,7 +713,7 @@ static int vlFlush
 	if (num_macroblocks[vlMacroBlockExTypeBiPredictedField] > 0)
 	{
 		pipe->set_vertex_buffers(pipe, 3, mc->vertex_bufs[mc->cur_buf % NUM_BUF_SETS]);
-		pipe->set_vertex_elements(pipe, 6, mc->vertex_elems);
+		pipe->set_vertex_elements(pipe, 8, mc->vertex_elems);
 		mc->textures[mc->cur_buf % NUM_BUF_SETS][3] = mc->past_surface->texture;
 		mc->textures[mc->cur_buf % NUM_BUF_SETS][4] = mc->future_surface->texture;
 		pipe->set_sampler_textures(pipe, 5, mc->textures[mc->cur_buf % NUM_BUF_SETS]);
@@ -831,9 +883,11 @@ static int vlCreateVertexShaderIMB
 
 	/*
 	 * decl i0		; Vertex pos
-	 * decl i1		; Luma/chroma texcoords
+	 * decl i1		; Luma texcoords
+	 * decl i2		; Chroma Cb texcoords
+	 * decl i3		; Chroma Cr texcoords
 	 */
-	for (i = 0; i < 2; i++)
+	for (i = 0; i < 4; i++)
 	{
 		decl = vl_decl_input(i == 0 ? TGSI_SEMANTIC_POSITION : TGSI_SEMANTIC_GENERIC, i, i, i);
 		ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
@@ -841,9 +895,11 @@ static int vlCreateVertexShaderIMB
 
 	/*
 	 * decl o0		; Vertex pos
-	 * decl o1		; Luma/chroma texcoords
+	 * decl o1		; Luma texcoords
+	 * decl o2		; Chroma Cb texcoords
+	 * decl o3		; Chroma Cr texcoords
 	 */
-	for (i = 0; i < 2; i++)
+	for (i = 0; i < 4; i++)
 	{
 		decl = vl_decl_output(i == 0 ? TGSI_SEMANTIC_POSITION : TGSI_SEMANTIC_GENERIC, i, i, i);
 		ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
@@ -851,9 +907,11 @@ static int vlCreateVertexShaderIMB
 
 	/*
 	 * mov o0, i0		; Move input vertex pos to output
-	 * mov o1, i1		; Move input luma/chroma texcoords to output
+	 * mov o1, i1		; Move input luma texcoords to output
+	 * mov o2, i2		; Move input chroma Cb texcoords to output
+	 * mov o3, i3		; Move input chroma Cr texcoords to output
 	 */
-	for (i = 0; i < 2; ++i)
+	for (i = 0; i < 4; ++i)
 	{
 		inst = vl_inst2(TGSI_OPCODE_MOV, TGSI_FILE_OUTPUT, i, TGSI_FILE_INPUT, i);
 		ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
@@ -903,9 +961,16 @@ static int vlCreateFragmentShaderIMB
 
 	ti = 3;
 
-	/* decl i0			; Luma/chroma texcoords */
-	decl = vl_decl_interpolated_input(TGSI_SEMANTIC_GENERIC, 1, 0, 0, TGSI_INTERPOLATE_LINEAR);
-	ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
+	/*
+	 * decl i0			; Luma texcoords
+	 * decl i1			; Chroma Cb texcoords
+	 * decl i2			; Chroma Cr texcoords
+	 */
+	for (i = 0; i < 3; ++i)
+	{
+		decl = vl_decl_interpolated_input(TGSI_SEMANTIC_GENERIC, 1, i, i, TGSI_INTERPOLATE_LINEAR);
+		ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
+	}
 
 	/* decl c0			; Scaling factor, rescales 16-bit snorm to 9-bit snorm */
 	decl = vl_decl_constants(TGSI_SEMANTIC_GENERIC, 0, 0, 0);
@@ -933,14 +998,14 @@ static int vlCreateFragmentShaderIMB
 	/*
 	 * tex2d t1, i0, s0		; Read texel from luma texture
 	 * mov t0.x, t1.x		; Move luma sample into .x component
-	 * tex2d t1, i0, s1		; Read texel from chroma Cb texture
+	 * tex2d t1, i1, s1		; Read texel from chroma Cb texture
 	 * mov t0.y, t1.x		; Move Cb sample into .y component
-	 * tex2d t1, i0, s2		; Read texel from chroma Cr texture
+	 * tex2d t1, i2, s2		; Read texel from chroma Cr texture
 	 * mov t0.z, t1.x		; Move Cr sample into .z component
 	 */
 	for (i = 0; i < 3; ++i)
 	{
-		inst = vl_tex(TGSI_TEXTURE_2D, TGSI_FILE_TEMPORARY, 1, TGSI_FILE_INPUT, 0, TGSI_FILE_SAMPLER, i);
+		inst = vl_tex(TGSI_TEXTURE_2D, TGSI_FILE_TEMPORARY, 1, TGSI_FILE_INPUT, i, TGSI_FILE_SAMPLER, i);
 		ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
 
 		inst = vl_inst2(TGSI_OPCODE_MOV, TGSI_FILE_TEMPORARY, 0, TGSI_FILE_TEMPORARY, 1);
@@ -1002,11 +1067,13 @@ static int vlCreateVertexShaderFramePMB
 
 	/*
 	 * decl i0		; Vertex pos
-	 * decl i1		; Luma/chroma texcoords
-	 * decl i2		; Ref surface top field texcoords
-	 * decl i3		; Ref surface bottom field texcoords (unused, packed in the same stream)
+	 * decl i1		; Luma texcoords
+	 * decl i2		; Chroma Cb texcoords
+	 * decl i3		; Chroma Cr texcoords
+	 * decl i4		; Ref surface top field texcoords
+	 * decl i5		; Ref surface bottom field texcoords (unused, packed in the same stream)
 	 */
-	for (i = 0; i < 4; i++)
+	for (i = 0; i < 6; i++)
 	{
 		decl = vl_decl_input(i == 0 ? TGSI_SEMANTIC_POSITION : TGSI_SEMANTIC_GENERIC, i, i, i);
 		ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
@@ -1014,10 +1081,12 @@ static int vlCreateVertexShaderFramePMB
 
 	/*
 	 * decl o0		; Vertex pos
-	 * decl o1		; Luma/chroma texcoords
-	 * decl o2		; Ref macroblock texcoords
+	 * decl o1		; Luma texcoords
+	 * decl o2		; Chroma Cb texcoords
+	 * decl o3		; Chroma Cr texcoords
+	 * decl o4		; Ref macroblock texcoords
 	 */
-	for (i = 0; i < 3; i++)
+	for (i = 0; i < 5; i++)
 	{
 		decl = vl_decl_output(i == 0 ? TGSI_SEMANTIC_POSITION : TGSI_SEMANTIC_GENERIC, i, i, i);
 		ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
@@ -1025,16 +1094,18 @@ static int vlCreateVertexShaderFramePMB
 
 	/*
 	 * mov o0, i0		; Move input vertex pos to output
-	 * mov o1, i1		; Move input luma/chroma texcoords to output
+	 * mov o1, i1		; Move input luma texcoords to output
+	 * mov o2, i2		; Move input chroma Cb texcoords to output
+	 * mov o3, i3		; Move input chroma Cr texcoords to output
 	 */
-	for (i = 0; i < 2; ++i)
+	for (i = 0; i < 4; ++i)
 	{
 		inst = vl_inst2(TGSI_OPCODE_MOV, TGSI_FILE_OUTPUT, i, TGSI_FILE_INPUT, i);
 		ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
 	}
 
-	/* add o2, i0, i2	; Translate vertex pos by motion vec to form ref macroblock texcoords */
-	inst = vl_inst3(TGSI_OPCODE_ADD, TGSI_FILE_OUTPUT, 2, TGSI_FILE_INPUT, 0, TGSI_FILE_INPUT, 2);
+	/* add o4, i0, i4	; Translate vertex pos by motion vec to form ref macroblock texcoords */
+	inst = vl_inst3(TGSI_OPCODE_ADD, TGSI_FILE_OUTPUT, 4, TGSI_FILE_INPUT, 0, TGSI_FILE_INPUT, 4);
 	ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
 
 	/* end */
@@ -1082,12 +1153,14 @@ static int vlCreateVertexShaderFieldPMB
 	ti = 3;
 
 	/*
-	 * decl i0		; Vertex pos, luma/chroma texcoords
-	 * decl i1		; Texcoord denorm coefficients
-	 * decl i2              ; Ref surface top field texcoords
-	 * decl i3              ; Ref surface bottom field texcoords
+	 * decl i0		; Vertex pos
+	 * decl i1		; Luma texcoords
+	 * decl i2		; Chroma Cb texcoords
+	 * decl i3		; Chroma Cr texcoords
+	 * decl i4              ; Ref macroblock top field texcoords
+	 * decl i5              ; Ref macroblock bottom field texcoords
 	 */
-	for (i = 0; i < 4; i++)
+	for (i = 0; i < 6; i++)
 	{
 		decl = vl_decl_input(i == 0 ? TGSI_SEMANTIC_POSITION : TGSI_SEMANTIC_GENERIC, i, i, i);
 		ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
@@ -1099,39 +1172,43 @@ static int vlCreateVertexShaderFieldPMB
 
 	/*
 	 * decl o0		; Vertex pos
-	 * decl o1		; Luma/chroma texcoords
-	 * decl o2		; Top field ref macroblock texcoords
-	 * decl o3		; Bottom field ref macroblock texcoords
-	 * decl o4		; Denormalized vertex pos
+	 * decl o1		; Luma texcoords
+	 * decl o2		; Chroma Cb texcoords
+	 * decl o3		; Chroma Cr texcoords
+	 * decl o4		; Ref macroblock top field texcoords
+	 * decl o5		; Ref macroblock bottom field texcoords
+	 * decl o6		; Denormalized vertex pos
 	 */
-	for (i = 0; i < 5; i++)
+	for (i = 0; i < 7; i++)
 	{
-		decl = vl_decl_output((i == 0 || i == 5) ? TGSI_SEMANTIC_POSITION : TGSI_SEMANTIC_GENERIC, i, i, i);
+		decl = vl_decl_output((i == 0 || i == 6) ? TGSI_SEMANTIC_POSITION : TGSI_SEMANTIC_GENERIC, i, i, i);
 		ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
 	}
 
 	/*
 	 * mov o0, i0		; Move input vertex pos to output
-	 * mov o1, i1		; Move input luma/chroma texcoords to output
+	 * mov o1, i1		; Move input luma texcoords to output
+	 * mov o2, i2		; Move input chroma Cb texcoords to output
+	 * mov o3, i3		; Move input chroma Cr texcoords to output
 	 */
-	for (i = 0; i < 2; ++i)
+	for (i = 0; i < 4; ++i)
 	{
 		inst = vl_inst2(TGSI_OPCODE_MOV, TGSI_FILE_OUTPUT, i, TGSI_FILE_INPUT, i);
 		ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
 	}
 
 	/*
-	 * add o2, i0, i2	; Translate vertex pos by motion vec to form top field macroblock texcoords
-	 * add o3, i0, i3	; Translate vertex pos by motion vec to form bottom field macroblock texcoords
+	 * add o4, i0, i4	; Translate vertex pos by motion vec to form top field macroblock texcoords
+	 * add o5, i0, i5	; Translate vertex pos by motion vec to form bottom field macroblock texcoords
 	 */
 	for (i = 0; i < 2; ++i)
 	{
-		inst = vl_inst3(TGSI_OPCODE_ADD, TGSI_FILE_OUTPUT, i + 2, TGSI_FILE_INPUT, 0, TGSI_FILE_INPUT, i + 2);
+		inst = vl_inst3(TGSI_OPCODE_ADD, TGSI_FILE_OUTPUT, i + 4, TGSI_FILE_INPUT, 0, TGSI_FILE_INPUT, i + 4);
 		ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
 	}
 
-	/* mul o4, i0, c0	; Denorm vertex pos */
-	inst = vl_inst3(TGSI_OPCODE_MUL, TGSI_FILE_OUTPUT, 5, TGSI_FILE_INPUT, 0, TGSI_FILE_CONSTANT, 0);
+	/* mul o6, i0, c0	; Denorm vertex pos */
+	inst = vl_inst3(TGSI_OPCODE_MUL, TGSI_FILE_OUTPUT, 6, TGSI_FILE_INPUT, 0, TGSI_FILE_CONSTANT, 0);
 	ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
 
 	/* end */
@@ -1179,10 +1256,12 @@ static int vlCreateFragmentShaderFramePMB
 	ti = 3;
 
 	/*
-	 * decl i0			; Texcoords for s0, s1, s2
-	 * decl i1			; Texcoords for s3
+	 * decl i0			; Luma texcoords
+	 * decl i1			; Chroma Cb texcoords
+	 * decl i2			; Chroma Cr texcoords
+	 * decl i3			; Ref macroblock texcoords
 	 */
-	for (i = 0; i < 2; ++i)
+	for (i = 0; i < 4; ++i)
 	{
 		decl = vl_decl_interpolated_input(TGSI_SEMANTIC_GENERIC, i + 1, i, i, TGSI_INTERPOLATE_LINEAR);
 		ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
@@ -1215,14 +1294,14 @@ static int vlCreateFragmentShaderFramePMB
 	/*
 	 * tex2d t1, i0, s0		; Read texel from luma texture
 	 * mov t0.x, t1.x		; Move luma sample into .x component
-	 * tex2d t1, i0, s1		; Read texel from chroma Cb texture
+	 * tex2d t1, i1, s1		; Read texel from chroma Cb texture
 	 * mov t0.y, t1.x		; Move Cb sample into .y component
-	 * tex2d t1, i0, s2		; Read texel from chroma Cr texture
+	 * tex2d t1, i2, s2		; Read texel from chroma Cr texture
 	 * mov t0.z, t1.x		; Move Cr sample into .z component
 	 */
 	for (i = 0; i < 3; ++i)
 	{
-		inst = vl_tex(TGSI_TEXTURE_2D, TGSI_FILE_TEMPORARY, 1, TGSI_FILE_INPUT, 0, TGSI_FILE_SAMPLER, i);
+		inst = vl_tex(TGSI_TEXTURE_2D, TGSI_FILE_TEMPORARY, 1, TGSI_FILE_INPUT, i, TGSI_FILE_SAMPLER, i);
 		ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
 
 		inst = vl_inst2(TGSI_OPCODE_MOV, TGSI_FILE_TEMPORARY, 0, TGSI_FILE_TEMPORARY, 1);
@@ -1238,8 +1317,8 @@ static int vlCreateFragmentShaderFramePMB
 	inst = vl_inst3(TGSI_OPCODE_MUL, TGSI_FILE_TEMPORARY, 0, TGSI_FILE_TEMPORARY, 0, TGSI_FILE_CONSTANT, 0);
 	ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
 
-	/* tex2d t1, i1, s3		; Read texel from ref macroblock */
-	inst = vl_tex(TGSI_TEXTURE_2D, TGSI_FILE_TEMPORARY, 1, TGSI_FILE_INPUT, 1, TGSI_FILE_SAMPLER, 3);
+	/* tex2d t1, i3, s3		; Read texel from ref macroblock */
+	inst = vl_tex(TGSI_TEXTURE_2D, TGSI_FILE_TEMPORARY, 1, TGSI_FILE_INPUT, 3, TGSI_FILE_SAMPLER, 3);
 	ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
 
 	/* add o0, t0, t1		; Add ref and differential to form final output */
@@ -1291,12 +1370,14 @@ static int vlCreateFragmentShaderFieldPMB
 	ti = 3;
 
 	/*
-	 * decl i0			; Texcoords for s0, s1, s2
-	 * decl i1			; Texcoords for s3
-	 * decl i2			; Texcoords for s3
-	 * decl i3			; Denormalized vertex pos
+	 * decl i0			; Luma texcoords
+	 * decl i1			; Chroma Cb texcoords
+	 * decl i2			; Chroma Cr texcoords
+	 * decl i3			; Ref macroblock top field texcoords
+	 * decl i4			; Ref macroblock bottom field texcoords
+	 * decl i5			; Denormalized vertex pos
 	 */
-	for (i = 0; i < 4; ++i)
+	for (i = 0; i < 6; ++i)
 	{
 		decl = vl_decl_interpolated_input(TGSI_SEMANTIC_GENERIC, i + 1, i, i, TGSI_INTERPOLATE_LINEAR);
 		ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
@@ -1332,14 +1413,14 @@ static int vlCreateFragmentShaderFieldPMB
 	/*
 	 * tex2d t1, i0, s0		; Read texel from luma texture
 	 * mov t0.x, t1.x		; Move luma sample into .x component
-	 * tex2d t1, i0, s1		; Read texel from chroma Cb texture
+	 * tex2d t1, i1, s1		; Read texel from chroma Cb texture
 	 * mov t0.y, t1.x		; Move Cb sample into .y component
-	 * tex2d t1, i0, s2		; Read texel from chroma Cr texture
+	 * tex2d t1, i2, s2		; Read texel from chroma Cr texture
 	 * mov t0.z, t1.x		; Move Cr sample into .z component
 	 */
 	for (i = 0; i < 3; ++i)
 	{
-		inst = vl_tex(TGSI_TEXTURE_2D, TGSI_FILE_TEMPORARY, 1, TGSI_FILE_INPUT, 0, TGSI_FILE_SAMPLER, i);
+		inst = vl_tex(TGSI_TEXTURE_2D, TGSI_FILE_TEMPORARY, 1, TGSI_FILE_INPUT, i, TGSI_FILE_SAMPLER, i);
 		ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
 
 		inst = vl_inst2(TGSI_OPCODE_MOV, TGSI_FILE_TEMPORARY, 0, TGSI_FILE_TEMPORARY, 1);
@@ -1356,18 +1437,18 @@ static int vlCreateFragmentShaderFieldPMB
 	ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
 
 	/*
-	 * tex2d t1, i1, s3		; Read texel from ref macroblock top field
-	 * tex2d t2, i2, s3		; Read texel from ref macroblock bottom field
+	 * tex2d t1, i3, s3		; Read texel from ref macroblock top field
+	 * tex2d t2, i4, s3		; Read texel from ref macroblock bottom field
 	 */
 	for (i = 0; i < 2; ++i)
 	{
-		inst = vl_tex(TGSI_TEXTURE_2D, TGSI_FILE_TEMPORARY, i + 1, TGSI_FILE_INPUT, i + 1, TGSI_FILE_SAMPLER, 3);
+		inst = vl_tex(TGSI_TEXTURE_2D, TGSI_FILE_TEMPORARY, i + 1, TGSI_FILE_INPUT, i + 3, TGSI_FILE_SAMPLER, 3);
 		ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
 	}
 
 	/* XXX: Pos values off by 0.5? */
-	/* sub t4, i3.y, c1.x		; Sub 0.5 from denormalized pos */
-	inst = vl_inst3(TGSI_OPCODE_SUB, TGSI_FILE_TEMPORARY, 4, TGSI_FILE_INPUT, 3, TGSI_FILE_CONSTANT, 1);
+	/* sub t4, i5.y, c1.x		; Sub 0.5 from denormalized pos */
+	inst = vl_inst3(TGSI_OPCODE_SUB, TGSI_FILE_TEMPORARY, 4, TGSI_FILE_INPUT, 5, TGSI_FILE_CONSTANT, 1);
 	inst.FullSrcRegisters[0].SrcRegister.SwizzleX = TGSI_SWIZZLE_Y;
 	inst.FullSrcRegisters[0].SrcRegister.SwizzleY = TGSI_SWIZZLE_Y;
 	inst.FullSrcRegisters[0].SrcRegister.SwizzleZ = TGSI_SWIZZLE_Y;
@@ -1456,14 +1537,16 @@ static int vlCreateVertexShaderFrameBMB
 	ti = 3;
 
 	/*
-	 * decl i0		; Vertex pos, luma/chroma texcoords
-	 * decl i1		; Luma/chroma texcoords
-	 * decl i2              ; First ref surface top field texcoords
-	 * decl i3              ; First ref surface bottom field texcoords (unused, packed in the same stream)
-	 * decl i4		; Second ref surface top field texcoords
-	 * decl i5		; Second ref surface bottom field texcoords (unused, packed in the same stream)
+	 * decl i0		; Vertex pos
+	 * decl i1		; Luma texcoords
+	 * decl i2		; Chroma Cb texcoords
+	 * decl i3		; Chroma Cr texcoords
+	 * decl i4              ; First ref macroblock top field texcoords
+	 * decl i5              ; First ref macroblock bottom field texcoords (unused, packed in the same stream)
+	 * decl i6		; Second ref macroblock top field texcoords
+	 * decl i7		; Second ref macroblock bottom field texcoords (unused, packed in the same stream)
 	 */
-	for (i = 0; i < 6; i++)
+	for (i = 0; i < 8; i++)
 	{
 		decl = vl_decl_input(i == 0 ? TGSI_SEMANTIC_POSITION : TGSI_SEMANTIC_GENERIC, i, i, i);
 		ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
@@ -1471,11 +1554,13 @@ static int vlCreateVertexShaderFrameBMB
 
 	/*
 	 * decl o0		; Vertex pos
-	 * decl o1		; Luma/chroma texcoords
-	 * decl o2		; First ref macroblock texcoords
-	 * decl o3		; Second ref macroblock texcoords
+	 * decl o1		; Luma texcoords
+	 * decl o2		; Chroma Cb texcoords
+	 * decl o3		; Chroma Cr texcoords
+	 * decl o4		; First ref macroblock texcoords
+	 * decl o5		; Second ref macroblock texcoords
 	 */
-	for (i = 0; i < 4; i++)
+	for (i = 0; i < 6; i++)
 	{
 		decl = vl_decl_output(i == 0 ? TGSI_SEMANTIC_POSITION : TGSI_SEMANTIC_GENERIC, i, i, i);
 		ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
@@ -1483,21 +1568,23 @@ static int vlCreateVertexShaderFrameBMB
 
 	/*
 	 * mov o0, i0		; Move input vertex pos to output
-	 * mov o1, i1		; Move input luma/chroma texcoords to output
+	 * mov o1, i1		; Move input luma texcoords to output
+	 * mov o2, i2		; Move input chroma Cb texcoords to output
+	 * mov o3, i3		; Move input chroma Cr texcoords to output
 	 */
-	for (i = 0; i < 2; ++i)
+	for (i = 0; i < 4; ++i)
 	{
 		inst = vl_inst2(TGSI_OPCODE_MOV, TGSI_FILE_OUTPUT, i, TGSI_FILE_INPUT, i);
 		ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
 	}
 
 	/*
-	 * add o2, i0, i2	; Translate vertex pos by motion vec to form first ref macroblock texcoords
-	 * add o3, i0, i4	; Translate vertex pos by motion vec to form second ref macroblock texcoords
+	 * add o4, i0, i4	; Translate vertex pos by motion vec to form first ref macroblock texcoords
+	 * add o5, i0, i6	; Translate vertex pos by motion vec to form second ref macroblock texcoords
 	 */
 	for (i = 0; i < 2; ++i)
 	{
-		inst = vl_inst3(TGSI_OPCODE_ADD, TGSI_FILE_OUTPUT, i + 2, TGSI_FILE_INPUT, 0, TGSI_FILE_INPUT, (i + 1) * 2);
+		inst = vl_inst3(TGSI_OPCODE_ADD, TGSI_FILE_OUTPUT, i + 4, TGSI_FILE_INPUT, 0, TGSI_FILE_INPUT, (i + 2) * 2);
 		ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
 	}
 
@@ -1546,14 +1633,16 @@ static int vlCreateVertexShaderFieldBMB
 	ti = 3;
 
 	/*
-	 * decl i0		; Vertex pos, Luma/chroma texcoords
-	 * decl i1		; Luma/chroma texcoords
-	 * decl i2              ; First ref surface top field texcoords
-	 * decl i3              ; First ref surface bottom field texcoords
-	 * decl i4              ; Second ref surface top field texcoords
-	 * decl i5              ; Second ref surface bottom field texcoords
+	 * decl i0		; Vertex pos
+	 * decl i1		; Luma texcoords
+	 * decl i2		; Chroma Cb texcoords
+	 * decl i3		; Chroma Cr texcoords
+	 * decl i4              ; First ref macroblock top field texcoords
+	 * decl i5              ; First ref macroblock bottom field texcoords
+	 * decl i6              ; Second ref macroblock top field texcoords
+	 * decl i7              ; Second ref macroblock bottom field texcoords
 	 */
-	for (i = 0; i < 6; i++)
+	for (i = 0; i < 8; i++)
 	{
 		decl = vl_decl_input(i == 0 ? TGSI_SEMANTIC_POSITION : TGSI_SEMANTIC_GENERIC, i, i, i);
 		ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
@@ -1565,16 +1654,18 @@ static int vlCreateVertexShaderFieldBMB
 
 	/*
 	 * decl o0		; Vertex pos
-	 * decl o1		; Luma/chroma texcoords
-	 * decl o2		; Top field past ref macroblock texcoords
-	 * decl o3		; Bottom field past ref macroblock texcoords
-	 * decl o4		; Top field future ref macroblock texcoords
-	 * decl o5		; Bottom field future ref macroblock texcoords
-	 * decl o6		; Denormalized vertex pos
+	 * decl o1		; Luma texcoords
+	 * decl o2		; Chroma Cb texcoords
+	 * decl o3		; Chroma Cr texcoords
+	 * decl o4		; First ref macroblock top field texcoords
+	 * decl o5		; First ref macroblock Bottom field texcoords
+	 * decl o6		; Second ref macroblock top field texcoords
+	 * decl o7		; Second ref macroblock Bottom field texcoords
+	 * decl o8		; Denormalized vertex pos
 	 */
-	for (i = 0; i < 7; i++)
+	for (i = 0; i < 9; i++)
 	{
-		decl = vl_decl_output((i == 0 || i == 7) ? TGSI_SEMANTIC_POSITION : TGSI_SEMANTIC_GENERIC, i, i, i);
+		decl = vl_decl_output((i == 0 || i == 8) ? TGSI_SEMANTIC_POSITION : TGSI_SEMANTIC_GENERIC, i, i, i);
 		ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
 	}
 
@@ -1584,28 +1675,30 @@ static int vlCreateVertexShaderFieldBMB
 
 	/*
 	 * mov o0, i0		; Move input vertex pos to output
-	 * mov o1, i1		; Move input luma/chroma texcoords to output
+	 * mov o1, i1		; Move input luma texcoords to output
+	 * mov o2, i2		; Move input chroma Cb texcoords to output
+	 * mov o3, i3		; Move input chroma Cr texcoords to output
 	 */
-	for (i = 0; i < 2; ++i)
+	for (i = 0; i < 4; ++i)
 	{
 		inst = vl_inst2(TGSI_OPCODE_MOV, TGSI_FILE_OUTPUT, i, TGSI_FILE_INPUT, i);
 		ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
 	}
 
 	/*
-	 * add o2, i0, i2	; Translate vertex pos by motion vec to form first top field macroblock texcoords
-	 * add o3, i0, i3	; Translate vertex pos by motion vec to form first bottom field macroblock texcoords
-	 * add o4, i0, i4	; Translate vertex pos by motion vec to form second top field macroblock texcoords
-	 * add o5, i0, i5	; Translate vertex pos by motion vec to form second bottom field macroblock texcoords
+	 * add o4, i0, i4	; Translate vertex pos by motion vec to form first top field macroblock texcoords
+	 * add o5, i0, i5	; Translate vertex pos by motion vec to form first bottom field macroblock texcoords
+	 * add o6, i0, i6	; Translate vertex pos by motion vec to form second top field macroblock texcoords
+	 * add o7, i0, i7	; Translate vertex pos by motion vec to form second bottom field macroblock texcoords
 	 */
 	for (i = 0; i < 4; ++i)
 	{
-		inst = vl_inst3(TGSI_OPCODE_ADD, TGSI_FILE_OUTPUT, i + 2, TGSI_FILE_INPUT, 0, TGSI_FILE_INPUT, i + 2);
+		inst = vl_inst3(TGSI_OPCODE_ADD, TGSI_FILE_OUTPUT, i + 4, TGSI_FILE_INPUT, 0, TGSI_FILE_INPUT, i + 4);
 		ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
 	}
 
-	/* mul o6, i0, c0	; Denorm vertex pos */
-	inst = vl_inst3(TGSI_OPCODE_MUL, TGSI_FILE_OUTPUT, 6, TGSI_FILE_INPUT, 0, TGSI_FILE_CONSTANT, 0);
+	/* mul o8, i0, c0	; Denorm vertex pos */
+	inst = vl_inst3(TGSI_OPCODE_MUL, TGSI_FILE_OUTPUT, 8, TGSI_FILE_INPUT, 0, TGSI_FILE_CONSTANT, 0);
 	ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
 
 	/* end */
@@ -1653,11 +1746,13 @@ static int vlCreateFragmentShaderFrameBMB
 	ti = 3;
 
 	/*
-	 * decl i0			; Texcoords for s0, s1, s2
-	 * decl i1			; Texcoords for s3
-	 * decl i2			; Texcoords for s4
+	 * decl i0			; Luma texcoords
+	 * decl i1			; Chroma Cb texcoords
+	 * decl i2			; Chroma Cr texcoords
+	 * decl i3			; First ref macroblock texcoords
+	 * decl i4			; Second ref macroblock texcoords
 	 */
-	for (i = 0; i < 3; ++i)
+	for (i = 0; i < 5; ++i)
 	{
 		decl = vl_decl_interpolated_input(TGSI_SEMANTIC_GENERIC, i + 1, i, i, TGSI_INTERPOLATE_LINEAR);
 		ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
@@ -1682,8 +1777,8 @@ static int vlCreateFragmentShaderFrameBMB
 	 * decl s0			; Sampler for luma texture
 	 * decl s1			; Sampler for chroma Cb texture
 	 * decl s2			; Sampler for chroma Cr texture
-	 * decl s3			; Sampler for past ref surface texture
-	 * decl s4			; Sampler for future ref surface texture
+	 * decl s3			; Sampler for first ref surface texture
+	 * decl s4			; Sampler for second ref surface texture
 	 */
 	for (i = 0; i < 5; ++i)
 	{
@@ -1694,14 +1789,14 @@ static int vlCreateFragmentShaderFrameBMB
 	/*
 	 * tex2d t1, i0, s0		; Read texel from luma texture
 	 * mov t0.x, t1.x		; Move luma sample into .x component
-	 * tex2d t1, i0, s1		; Read texel from chroma Cb texture
+	 * tex2d t1, i1, s1		; Read texel from chroma Cb texture
 	 * mov t0.y, t1.x		; Move Cb sample into .y component
-	 * tex2d t1, i0, s2		; Read texel from chroma Cr texture
+	 * tex2d t1, i2, s2		; Read texel from chroma Cr texture
 	 * mov t0.z, t1.x		; Move Cr sample into .z component
 	 */
 	for (i = 0; i < 3; ++i)
 	{
-		inst = vl_tex(TGSI_TEXTURE_2D, TGSI_FILE_TEMPORARY, 1, TGSI_FILE_INPUT, 0, TGSI_FILE_SAMPLER, i);
+		inst = vl_tex(TGSI_TEXTURE_2D, TGSI_FILE_TEMPORARY, 1, TGSI_FILE_INPUT, i, TGSI_FILE_SAMPLER, i);
 		ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
 
 		inst = vl_inst2(TGSI_OPCODE_MOV, TGSI_FILE_TEMPORARY, 0, TGSI_FILE_TEMPORARY, 1);
@@ -1718,12 +1813,12 @@ static int vlCreateFragmentShaderFrameBMB
 	ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
 
 	/*
-	 * tex2d t1, i1, s3		; Read texel from past ref macroblock
-	 * tex2d t2, i2, s4		; Read texel from future ref macroblock
+	 * tex2d t1, i3, s3		; Read texel from first ref macroblock
+	 * tex2d t2, i4, s4		; Read texel from second ref macroblock
 	 */
 	for (i = 0; i < 2; ++i)
 	{
-		inst = vl_tex(TGSI_TEXTURE_2D, TGSI_FILE_TEMPORARY, i + 1, TGSI_FILE_INPUT, i + 1, TGSI_FILE_SAMPLER, i + 3);
+		inst = vl_tex(TGSI_TEXTURE_2D, TGSI_FILE_TEMPORARY, i + 1, TGSI_FILE_INPUT, i + 3, TGSI_FILE_SAMPLER, i + 3);
 		ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
 	}
 
@@ -1784,14 +1879,16 @@ static int vlCreateFragmentShaderFieldBMB
 	ti = 3;
 
 	/*
-	 * decl i0			; Texcoords for s0, s1, s2
-	 * decl i1			; Texcoords for s3
-	 * decl i2			; Texcoords for s3
-	 * decl i3			; Texcoords for s4
-	 * decl i4			; Texcoords for s4
-	 * decl i5			; Denormalized vertex pos
+	 * decl i0			; Luma texcoords
+	 * decl i1			; Chroma Cb texcoords
+	 * decl i2			; Chroma Cr texcoords
+	 * decl i3			; First ref macroblock top field texcoords
+	 * decl i4			; First ref macroblock bottom field texcoords
+	 * decl i5			; Second ref macroblock top field texcoords
+	 * decl i6			; Second ref macroblock bottom field texcoords
+	 * decl i7			; Denormalized vertex pos
 	 */
-	for (i = 0; i < 6; ++i)
+	for (i = 0; i < 8; ++i)
 	{
 		decl = vl_decl_interpolated_input(TGSI_SEMANTIC_GENERIC, i + 1, i, i, TGSI_INTERPOLATE_LINEAR);
 		ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
@@ -1817,8 +1914,8 @@ static int vlCreateFragmentShaderFieldBMB
 	 * decl s0			; Sampler for luma texture
 	 * decl s1			; Sampler for chroma Cb texture
 	 * decl s2			; Sampler for chroma Cr texture
-	 * decl s3			; Sampler for past ref surface texture
-	 * decl s4			; Sampler for future ref surface texture
+	 * decl s3			; Sampler for first ref surface texture
+	 * decl s4			; Sampler for second ref surface texture
 	 */
 	for (i = 0; i < 5; ++i)
 	{
@@ -1829,14 +1926,14 @@ static int vlCreateFragmentShaderFieldBMB
 	/*
 	 * tex2d t1, i0, s0		; Read texel from luma texture
 	 * mov t0.x, t1.x		; Move luma sample into .x component
-	 * tex2d t1, i0, s1		; Read texel from chroma Cb texture
+	 * tex2d t1, i1, s1		; Read texel from chroma Cb texture
 	 * mov t0.y, t1.x		; Move Cb sample into .y component
-	 * tex2d t1, i0, s2		; Read texel from chroma Cr texture
+	 * tex2d t1, i2, s2		; Read texel from chroma Cr texture
 	 * mov t0.z, t1.x		; Move Cr sample into .z component
 	 */
 	for (i = 0; i < 3; ++i)
 	{
-		inst = vl_tex(TGSI_TEXTURE_2D, TGSI_FILE_TEMPORARY, 1, TGSI_FILE_INPUT, 0, TGSI_FILE_SAMPLER, i);
+		inst = vl_tex(TGSI_TEXTURE_2D, TGSI_FILE_TEMPORARY, 1, TGSI_FILE_INPUT, i, TGSI_FILE_SAMPLER, i);
 		ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
 
 		inst = vl_inst2(TGSI_OPCODE_MOV, TGSI_FILE_TEMPORARY, 0, TGSI_FILE_TEMPORARY, 1);
@@ -1853,8 +1950,8 @@ static int vlCreateFragmentShaderFieldBMB
 	ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
 
 	/* XXX: Pos values off by 0.5? */
-	/* sub t4, i5.y, c1.x		; Sub 0.5 from denormalized pos */
-	inst = vl_inst3(TGSI_OPCODE_SUB, TGSI_FILE_TEMPORARY, 4, TGSI_FILE_INPUT, 5, TGSI_FILE_CONSTANT, 1);
+	/* sub t4, i7.y, c1.x		; Sub 0.5 from denormalized pos */
+	inst = vl_inst3(TGSI_OPCODE_SUB, TGSI_FILE_TEMPORARY, 4, TGSI_FILE_INPUT, 7, TGSI_FILE_CONSTANT, 1);
 	inst.FullSrcRegisters[0].SrcRegister.SwizzleX = TGSI_SWIZZLE_Y;
 	inst.FullSrcRegisters[0].SrcRegister.SwizzleY = TGSI_SWIZZLE_Y;
 	inst.FullSrcRegisters[0].SrcRegister.SwizzleZ = TGSI_SWIZZLE_Y;
@@ -1890,12 +1987,12 @@ static int vlCreateFragmentShaderFieldBMB
 	ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
 
 	/*
-	 * tex2d t1, i1, s3		; Read texel from past ref macroblock top field
-	 * tex2d t2, i2, s3		; Read texel from past ref macroblock bottom field
+	 * tex2d t1, i3, s3		; Read texel from past ref macroblock top field
+	 * tex2d t2, i4, s3		; Read texel from past ref macroblock bottom field
 	 */
 	for (i = 0; i < 2; ++i)
 	{
-		inst = vl_tex(TGSI_TEXTURE_2D, TGSI_FILE_TEMPORARY, i + 1, TGSI_FILE_INPUT, i + 1, TGSI_FILE_SAMPLER, 3);
+		inst = vl_tex(TGSI_TEXTURE_2D, TGSI_FILE_TEMPORARY, i + 1, TGSI_FILE_INPUT, i + 3, TGSI_FILE_SAMPLER, 3);
 		ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
 	}
 
@@ -1905,12 +2002,12 @@ static int vlCreateFragmentShaderFieldBMB
 	ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
 
 	/*
-	 * tex2d t4, i3, s4		; Read texel from future ref macroblock top field
-	 * tex2d t5, i4, s4		; Read texel from future ref macroblock bottom field
+	 * tex2d t4, i5, s4		; Read texel from future ref macroblock top field
+	 * tex2d t5, i6, s4		; Read texel from future ref macroblock bottom field
 	 */
 	for (i = 0; i < 2; ++i)
 	{
-		inst = vl_tex(TGSI_TEXTURE_2D, TGSI_FILE_TEMPORARY, i + 4, TGSI_FILE_INPUT, i + 3, TGSI_FILE_SAMPLER, 4);
+		inst = vl_tex(TGSI_TEXTURE_2D, TGSI_FILE_TEMPORARY, i + 4, TGSI_FILE_INPUT, i + 5, TGSI_FILE_SAMPLER, 4);
 		ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
 	}
 
@@ -1961,7 +2058,18 @@ static int vlCreateDataBufs
 	/* Create our vertex buffers */
 	for (h = 0; h < NUM_BUF_SETS; ++h)
 	{
-		for (i = 0; i < 3; ++i)
+		mc->vertex_bufs[h][0].pitch = sizeof(struct vlVertex2f) * 4;
+		mc->vertex_bufs[h][0].max_index = 24 * num_mb_per_frame - 1;
+		mc->vertex_bufs[h][0].buffer_offset = 0;
+		mc->vertex_bufs[h][0].buffer = pipe->winsys->buffer_create
+		(
+			pipe->winsys,
+			1,
+			PIPE_BUFFER_USAGE_VERTEX,
+			sizeof(struct vlVertex2f) * 4 * 24 * num_mb_per_frame
+		);
+
+		for (i = 1; i < 3; ++i)
 		{
 			mc->vertex_bufs[h][i].pitch = sizeof(struct vlVertex2f) * 2;
 			mc->vertex_bufs[h][i].max_index = 24 * num_mb_per_frame - 1;
@@ -1982,35 +2090,47 @@ static int vlCreateDataBufs
 	mc->vertex_elems[0].nr_components = 2;
 	mc->vertex_elems[0].src_format = PIPE_FORMAT_R32G32_FLOAT;
 
-	/* Block luma, block chroma texcoord element */
+	/* Luma, texcoord element */
 	mc->vertex_elems[1].src_offset = sizeof(struct vlVertex2f);
 	mc->vertex_elems[1].vertex_buffer_index = 0;
 	mc->vertex_elems[1].nr_components = 2;
 	mc->vertex_elems[1].src_format = PIPE_FORMAT_R32G32_FLOAT;
 
-	/* First ref surface top field texcoord element */
-	mc->vertex_elems[2].src_offset = 0;
-	mc->vertex_elems[2].vertex_buffer_index = 1;
+	/* Chroma Cr texcoord element */
+	mc->vertex_elems[2].src_offset = sizeof(struct vlVertex2f) * 2;
+	mc->vertex_elems[2].vertex_buffer_index = 0;
 	mc->vertex_elems[2].nr_components = 2;
 	mc->vertex_elems[2].src_format = PIPE_FORMAT_R32G32_FLOAT;
 
-	/* First ref surface bottom field texcoord element */
-	mc->vertex_elems[3].src_offset = sizeof(struct vlVertex2f);
-	mc->vertex_elems[3].vertex_buffer_index = 1;
+	/* Chroma Cb texcoord element */
+	mc->vertex_elems[3].src_offset = sizeof(struct vlVertex2f) * 3;
+	mc->vertex_elems[3].vertex_buffer_index = 0;
 	mc->vertex_elems[3].nr_components = 2;
 	mc->vertex_elems[3].src_format = PIPE_FORMAT_R32G32_FLOAT;
 
-	/* Second ref surface top field texcoord element */
+	/* First ref surface top field texcoord element */
 	mc->vertex_elems[4].src_offset = 0;
-	mc->vertex_elems[4].vertex_buffer_index = 2;
+	mc->vertex_elems[4].vertex_buffer_index = 1;
 	mc->vertex_elems[4].nr_components = 2;
 	mc->vertex_elems[4].src_format = PIPE_FORMAT_R32G32_FLOAT;
 
-	/* Second ref surface bottom field texcoord element */
+	/* First ref surface bottom field texcoord element */
 	mc->vertex_elems[5].src_offset = sizeof(struct vlVertex2f);
-	mc->vertex_elems[5].vertex_buffer_index = 2;
+	mc->vertex_elems[5].vertex_buffer_index = 1;
 	mc->vertex_elems[5].nr_components = 2;
 	mc->vertex_elems[5].src_format = PIPE_FORMAT_R32G32_FLOAT;
+
+	/* Second ref surface top field texcoord element */
+	mc->vertex_elems[6].src_offset = 0;
+	mc->vertex_elems[6].vertex_buffer_index = 2;
+	mc->vertex_elems[6].nr_components = 2;
+	mc->vertex_elems[6].src_format = PIPE_FORMAT_R32G32_FLOAT;
+
+	/* Second ref surface bottom field texcoord element */
+	mc->vertex_elems[7].src_offset = sizeof(struct vlVertex2f);
+	mc->vertex_elems[7].vertex_buffer_index = 2;
+	mc->vertex_elems[7].nr_components = 2;
+	mc->vertex_elems[7].src_format = PIPE_FORMAT_R32G32_FLOAT;
 
 	/* Create our constant buffer */
 	mc->vs_const_buf.size = sizeof(struct vlVertexShaderConsts);
