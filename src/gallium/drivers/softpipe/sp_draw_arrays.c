@@ -135,7 +135,7 @@ softpipe_draw_range_elements(struct pipe_context *pipe,
     */
    for (i = 0; i < sp->num_vertex_buffers; i++) {
       void *buf
-         = pipe->winsys->buffer_map(pipe->winsys,
+         = pipe_buffer_map(pipe->screen,
                                     sp->vertex_buffer[i].buffer,
                                     PIPE_BUFFER_USAGE_CPU_READ);
       draw_set_mapped_vertex_buffer(draw, i, buf);
@@ -143,7 +143,7 @@ softpipe_draw_range_elements(struct pipe_context *pipe,
    /* Map index buffer, if present */
    if (indexBuffer) {
       void *mapped_indexes
-         = pipe->winsys->buffer_map(pipe->winsys, indexBuffer,
+         = pipe_buffer_map(pipe->screen, indexBuffer,
                                     PIPE_BUFFER_USAGE_CPU_READ);
       draw_set_mapped_element_buffer_range(draw, indexSize,
                                            min_index,
@@ -164,11 +164,11 @@ softpipe_draw_range_elements(struct pipe_context *pipe,
     */
    for (i = 0; i < sp->num_vertex_buffers; i++) {
       draw_set_mapped_vertex_buffer(draw, i, NULL);
-      pipe->winsys->buffer_unmap(pipe->winsys, sp->vertex_buffer[i].buffer);
+      pipe_buffer_unmap(pipe->screen, sp->vertex_buffer[i].buffer);
    }
    if (indexBuffer) {
       draw_set_mapped_element_buffer(draw, 0, NULL);
-      pipe->winsys->buffer_unmap(pipe->winsys, indexBuffer);
+      pipe_buffer_unmap(pipe->screen, indexBuffer);
    }
 
 

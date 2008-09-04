@@ -307,7 +307,7 @@ softpipe_surface_map( struct pipe_screen *screen,
       return NULL;
    }
 
-   map = screen->winsys->buffer_map( screen->winsys, surface->buffer, flags );
+   map = pipe_buffer_map( screen, surface->buffer, flags );
    if (map == NULL)
       return NULL;
 
@@ -331,7 +331,7 @@ static void
 softpipe_surface_unmap(struct pipe_screen *screen,
                        struct pipe_surface *surface)
 {
-   screen->winsys->buffer_unmap( screen->winsys, surface->buffer );
+   pipe_buffer_unmap( screen, surface->buffer );
 }
 
 
