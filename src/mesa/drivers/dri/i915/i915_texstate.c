@@ -78,7 +78,7 @@ translate_texture_format(GLuint mesa_format, GLenum DepthMode)
       return (MAPSURF_COMPRESSED | MT_COMPRESS_DXT2_3);
    case MESA_FORMAT_RGBA_DXT5:
       return (MAPSURF_COMPRESSED | MT_COMPRESS_DXT4_5);
-   case MESA_FORMAT_Z24_S8:
+   case MESA_FORMAT_S8_Z24:
       return (MAPSURF_32BIT | MT_32BIT_xI824);
    default:
       fprintf(stderr, "%s: bad image format %x\n", __FUNCTION__, mesa_format);
