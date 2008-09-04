@@ -580,7 +580,6 @@ make_1d_mipmap(struct gen_mipmap_state *ctx,
 {
    struct pipe_context *pipe = ctx->pipe;
    struct pipe_screen *screen = pipe->screen;
-   struct pipe_winsys *winsys = pipe->winsys;
    const uint zslice = 0;
    uint dstLevel;
 
@@ -622,7 +621,6 @@ make_2d_mipmap(struct gen_mipmap_state *ctx,
 {
    struct pipe_context *pipe = ctx->pipe;
    struct pipe_screen *screen = pipe->screen;
-   struct pipe_winsys *winsys = pipe->winsys;
    const uint zslice = 0;
    uint dstLevel;
    
@@ -829,7 +827,7 @@ util_destroy_gen_mipmap(struct gen_mipmap_state *ctx)
    FREE((void*) ctx->vert_shader.tokens);
    FREE((void*) ctx->frag_shader.tokens);
 
-   pipe_buffer_reference(pipe->winsys, &ctx->vbuf, NULL);
+   pipe_buffer_reference(pipe->screen, &ctx->vbuf, NULL);
 
    FREE(ctx);
 }
