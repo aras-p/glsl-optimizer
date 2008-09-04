@@ -372,6 +372,7 @@ cell_init_texture_functions(struct cell_context *cell)
    /*cell->pipe.texture_update = cell_texture_update;*/
 }
 
+
 void
 cell_init_screen_texture_funcs(struct pipe_screen *screen)
 {

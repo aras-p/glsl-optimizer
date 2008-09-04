@@ -26,6 +26,11 @@
  **************************************************************************/
 
 /**
+ * Vertex buffer code.  The draw module transforms vertices to window
+ * coords, etc. and emits the vertices into buffer supplied by this module.
+ * When a vertex buffer is full, or we flush, we'll send the vertex data
+ * to the SPUs.
+ *
  * Authors
  *  Brian Paul
  */

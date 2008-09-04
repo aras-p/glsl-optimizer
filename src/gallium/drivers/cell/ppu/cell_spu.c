@@ -26,6 +26,11 @@
  **************************************************************************/
 
 
+/**
+ * Utility/wrappers for communicating with the SPUs.
+ */
+
+
 #include <pthread.h>
 
 #include "cell_spu.h"
@@ -74,7 +79,11 @@ wait_mbox_message(spe_context_ptr_t ctx)
 }
 
 
-static void *cell_thread_function(void *arg)
+/**
+ * Called by pthread_create() to spawn an SPU thread.
+ */
+static void *
+cell_thread_function(void *arg)
 {
    struct cell_init_info *init = (struct cell_init_info *) arg;
    unsigned entry = SPE_DEFAULT_ENTRY;
@@ -92,14 +101,16 @@ static void *cell_thread_function(void *arg)
 
 
 /**
- * Create the SPU threads
+ * Create the SPU threads.  This is done once during driver initialization.
+ * This involves setting the the "init" message which is sent to each SPU.
+ * The init message specifies an SPU id, total number of SPUs, location
+ * and number of batch buffers, etc.
  */
 void
 cell_start_spus(struct cell_context *cell)
 {
    static boolean one_time_init = FALSE;
    uint i, j;
-
 
    if (one_time_init) {
       fprintf(stderr, "PPU: Multiple rendering contexts not yet supported "
@@ -145,6 +156,7 @@ cell_start_spus(struct cell_context *cell)
 
 /**
  * Tell all the SPUs to stop/exit.
+ * This is done when the driver's exiting / cleaning up.
  */
 void
 cell_spu_exit(struct cell_context *cell)

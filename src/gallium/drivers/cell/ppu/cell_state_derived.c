@@ -35,21 +35,6 @@
 #include "cell_state_emit.h"
 
 
-static int
-find_vs_output(const struct cell_vertex_shader_state *vs,
-               uint semantic_name,
-               uint semantic_index)
-{
-   uint i;
-   for (i = 0; i < vs->info.num_outputs; i++) {
-      if (vs->info.output_semantic_name[i] == semantic_name &&
-          vs->info.output_semantic_index[i] == semantic_index)
-         return i;
-   }
-   return -1;
-}
-
-
 /**
  * Determine how to map vertex program outputs to fragment program inputs.
  * Basically, this will be used when computing the triangle interpolation
@@ -58,7 +43,6 @@ find_vs_output(const struct cell_vertex_shader_state *vs,
 static void
 calculate_vertex_layout( struct cell_context *cell )
 {
-   const struct cell_vertex_shader_state *vs = cell->vs;
    const struct cell_fragment_shader_state *fs = cell->fs;
    const enum interp_mode colorInterp
       = cell->rasterizer->flatshade ? INTERP_CONSTANT : INTERP_LINEAR;
@@ -82,7 +66,7 @@ calculate_vertex_layout( struct cell_context *cell )
    vinfo->num_attribs = 0;
 
    /* we always want to emit vertex pos */
-   src = find_vs_output(vs, TGSI_SEMANTIC_POSITION, 0);
+   src = draw_find_vs_output(cell->draw, TGSI_SEMANTIC_POSITION, 0);
    assert(src >= 0);
    draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_POS, src);
 
@@ -98,14 +82,14 @@ calculate_vertex_layout( struct cell_context *cell )
          break;
 
       case TGSI_SEMANTIC_COLOR:
-         src = find_vs_output(vs, TGSI_SEMANTIC_COLOR, 
-                              fs->info.input_semantic_index[i]);
+         src = draw_find_vs_output(cell->draw, TGSI_SEMANTIC_COLOR, 
+                                   fs->info.input_semantic_index[i]);
          assert(src >= 0);
          draw_emit_vertex_attr(vinfo, EMIT_4F, colorInterp, src);
          break;
 
       case TGSI_SEMANTIC_FOG:
-         src = find_vs_output(vs, TGSI_SEMANTIC_FOG, 0);
+         src = draw_find_vs_output(cell->draw, TGSI_SEMANTIC_FOG, 0);
 #if 1
          if (src < 0) /* XXX temp hack, try demos/fogcoord.c with this */
             src = 0;
@@ -116,7 +100,7 @@ calculate_vertex_layout( struct cell_context *cell )
 
       case TGSI_SEMANTIC_GENERIC:
          /* this includes texcoords and varying vars */
-         src = find_vs_output(vs, TGSI_SEMANTIC_GENERIC,
+         src = draw_find_vs_output(cell->draw, TGSI_SEMANTIC_GENERIC,
                               fs->info.input_semantic_index[i]);
          assert(src >= 0);
          draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_PERSPECTIVE, src);
@@ -163,6 +147,9 @@ compute_cliprect(struct cell_context *sp)
 
 
 
+/**
+ * Update derived state, send current state to SPUs prior to rendering.
+ */
 void cell_update_derived( struct cell_context *cell )
 {
    if (cell->dirty & (CELL_NEW_RASTERIZER |

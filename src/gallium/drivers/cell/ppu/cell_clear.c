@@ -44,6 +44,9 @@
 #include "cell_state.h"
 
 
+/**
+ * Called via pipe->clear()
+ */
 void
 cell_clear_surface(struct pipe_context *pipe, struct pipe_surface *ps,
                    unsigned clearValue)
@@ -61,13 +64,16 @@ cell_clear_surface(struct pipe_context *pipe, struct pipe_surface *ps,
                                               PIPE_BUFFER_USAGE_GPU_WRITE);
 
    if (ps == cell->framebuffer.zsbuf) {
+      /* clear z/stencil buffer */
       surfIndex = 1;
    }
    else {
+      /* clear color buffer */
       surfIndex = 0;
    }
 
 
+   /* Build a CLEAR command and place it in the current batch buffer */
    {
       struct cell_command_clear_surface *clr
          = (struct cell_command_clear_surface *)

@@ -34,6 +34,9 @@
 #include "draw/draw_context.h"
 
 
+/**
+ * Called via pipe->flush()
+ */
 void
 cell_flush(struct pipe_context *pipe, unsigned flags,
            struct pipe_fence_handle **fence)
@@ -54,7 +57,11 @@ cell_flush(struct pipe_context *pipe, unsigned flags,
 }
 
 
-/** internal flush */
+/**
+ * Cell internal flush function.  Send the current batch buffer to all SPUs.
+ * If flags & CELL_FLUSH_WAIT, do not return until the SPUs are idle.
+ * \param flags  bitmask of flags CELL_FLUSH_WAIT, or zero
+ */
 void
 cell_flush_int(struct cell_context *cell, unsigned flags)
 {

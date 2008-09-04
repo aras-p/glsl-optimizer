@@ -53,7 +53,10 @@ cell_vertex_shader_state(void *shader)
 }
 
 
-
+/**
+ * Create fragment shader state.
+ * Called via pipe->create_fs_state()
+ */
 static void *
 cell_create_fs_state(struct pipe_context *pipe,
                      const struct pipe_shader_state *templ)
@@ -77,6 +80,9 @@ cell_create_fs_state(struct pipe_context *pipe,
 }
 
 
+/**
+ * Called via pipe->bind_fs_state()
+ */
 static void
 cell_bind_fs_state(struct pipe_context *pipe, void *fs)
 {
@@ -88,6 +94,9 @@ cell_bind_fs_state(struct pipe_context *pipe, void *fs)
 }
 
 
+/**
+ * Called via pipe->delete_fs_state()
+ */
 static void
 cell_delete_fs_state(struct pipe_context *pipe, void *fs)
 {
@@ -98,6 +107,10 @@ cell_delete_fs_state(struct pipe_context *pipe, void *fs)
 }
 
 
+/**
+ * Create vertex shader state.
+ * Called via pipe->create_vs_state()
+ */
 static void *
 cell_create_vs_state(struct pipe_context *pipe,
                      const struct pipe_shader_state *templ)
@@ -128,6 +141,9 @@ cell_create_vs_state(struct pipe_context *pipe,
 }
 
 
+/**
+ * Called via pipe->bind_vs_state()
+ */
 static void
 cell_bind_vs_state(struct pipe_context *pipe, void *vs)
 {
@@ -142,6 +158,9 @@ cell_bind_vs_state(struct pipe_context *pipe, void *vs)
 }
 
 
+/**
+ * Called via pipe->delete_vs_state()
+ */
 static void
 cell_delete_vs_state(struct pipe_context *pipe, void *vs)
 {
@@ -154,6 +173,9 @@ cell_delete_vs_state(struct pipe_context *pipe, void *vs)
 }
 
 
+/**
+ * Called via pipe->set_constant_buffer()
+ */
 static void
 cell_set_constant_buffer(struct pipe_context *pipe,
                          uint shader, uint index,
