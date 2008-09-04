@@ -595,19 +595,19 @@ make_1d_mipmap(struct gen_mipmap_state *ctx,
       dstSurf = screen->get_tex_surface(screen, pt, face, dstLevel, zslice,
                                         PIPE_BUFFER_USAGE_CPU_WRITE);
 
-      srcMap = ((ubyte *) winsys->buffer_map(winsys, srcSurf->buffer,
-                                            PIPE_BUFFER_USAGE_CPU_READ)
+      srcMap = ((ubyte *) pipe_buffer_map(screen, srcSurf->buffer,
+                                          PIPE_BUFFER_USAGE_CPU_READ)
                 + srcSurf->offset);
-      dstMap = ((ubyte *) winsys->buffer_map(winsys, dstSurf->buffer,
-                                            PIPE_BUFFER_USAGE_CPU_WRITE)
+      dstMap = ((ubyte *) pipe_buffer_map(screen, dstSurf->buffer,
+                                          PIPE_BUFFER_USAGE_CPU_WRITE)
                 + dstSurf->offset);
 
       reduce_1d(pt->format,
                 srcSurf->width, srcMap,
                 dstSurf->width, dstMap);
 
-      winsys->buffer_unmap(winsys, srcSurf->buffer);
-      winsys->buffer_unmap(winsys, dstSurf->buffer);
+      pipe_buffer_unmap(screen, srcSurf->buffer);
+      pipe_buffer_unmap(screen, dstSurf->buffer);
 
       pipe_surface_reference(&srcSurf, NULL);
       pipe_surface_reference(&dstSurf, NULL);
@@ -639,11 +639,11 @@ make_2d_mipmap(struct gen_mipmap_state *ctx,
       dstSurf = screen->get_tex_surface(screen, pt, face, dstLevel, zslice,
                                         PIPE_BUFFER_USAGE_CPU_WRITE);
 
-      srcMap = ((ubyte *) winsys->buffer_map(winsys, srcSurf->buffer,
-                                            PIPE_BUFFER_USAGE_CPU_READ)
+      srcMap = ((ubyte *) pipe_buffer_map(screen, srcSurf->buffer,
+                                          PIPE_BUFFER_USAGE_CPU_READ)
                 + srcSurf->offset);
-      dstMap = ((ubyte *) winsys->buffer_map(winsys, dstSurf->buffer,
-                                            PIPE_BUFFER_USAGE_CPU_WRITE)
+      dstMap = ((ubyte *) pipe_buffer_map(screen, dstSurf->buffer,
+                                          PIPE_BUFFER_USAGE_CPU_WRITE)
                 + dstSurf->offset);
 
       reduce_2d(pt->format,
@@ -652,8 +652,8 @@ make_2d_mipmap(struct gen_mipmap_state *ctx,
                 dstSurf->width, dstSurf->height,
                 dstSurf->stride, dstMap);
 
-      winsys->buffer_unmap(winsys, srcSurf->buffer);
-      winsys->buffer_unmap(winsys, dstSurf->buffer);
+      pipe_buffer_unmap(screen, srcSurf->buffer);
+      pipe_buffer_unmap(screen, dstSurf->buffer);
 
       pipe_surface_reference(&srcSurf, NULL);
       pipe_surface_reference(&dstSurf, NULL);
@@ -759,10 +759,10 @@ util_create_gen_mipmap(struct pipe_context *pipe,
    /* fragment shader */
    ctx->fs = util_make_fragment_tex_shader(pipe, &ctx->frag_shader);
 
-   ctx->vbuf = pipe->winsys->buffer_create(pipe->winsys,
-                                           32,
-                                           PIPE_BUFFER_USAGE_VERTEX,
-                                           sizeof(ctx->vertices));
+   ctx->vbuf = pipe_buffer_create(pipe->screen,
+                                  32,
+                                  PIPE_BUFFER_USAGE_VERTEX,
+                                  sizeof(ctx->vertices));
    if (!ctx->vbuf) {
       FREE(ctx);
       return NULL;
@@ -805,12 +805,12 @@ set_vertex_data(struct gen_mipmap_state *ctx, float width, float height)
    ctx->vertices[3][1][0] = 0.0f;
    ctx->vertices[3][1][1] = 1.0f;
 
-   buf = ctx->pipe->winsys->buffer_map(ctx->pipe->winsys, ctx->vbuf,
-                                       PIPE_BUFFER_USAGE_CPU_WRITE);
+   buf = pipe_buffer_map(ctx->pipe->screen, ctx->vbuf,
+                         PIPE_BUFFER_USAGE_CPU_WRITE);
 
    memcpy(buf, ctx->vertices, sizeof(ctx->vertices));
 
-   ctx->pipe->winsys->buffer_unmap(ctx->pipe->winsys, ctx->vbuf);
+   pipe_buffer_unmap(ctx->pipe->screen, ctx->vbuf);
 }
 
 
@@ -829,7 +829,7 @@ util_destroy_gen_mipmap(struct gen_mipmap_state *ctx)
    FREE((void*) ctx->vert_shader.tokens);
    FREE((void*) ctx->frag_shader.tokens);
 
-   pipe->winsys->buffer_destroy(pipe->winsys, ctx->vbuf);
+   pipe_buffer_reference(pipe->winsys, &ctx->vbuf, NULL);
 
    FREE(ctx);
 }
