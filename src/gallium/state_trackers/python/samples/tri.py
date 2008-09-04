@@ -167,7 +167,6 @@ def test(dev):
         1:MOV OUT[1], IN[1]
         2:END
     ''')
-    #vs.dump()
     ctx.set_vertex_shader(vs)
 
     # fragment shader
@@ -178,7 +177,6 @@ def test(dev):
         0:MOV OUT[0], IN[0]
         1:END
     ''')
-    #fs.dump()
     ctx.set_fragment_shader(fs)
 
     nverts = 3
@@ -218,6 +216,7 @@ def test(dev):
     ctx.flush()
     
     show_image(cbuf.get_surface(usage = PIPE_BUFFER_USAGE_CPU_READ|PIPE_BUFFER_USAGE_CPU_WRITE))
+    #save_image('tri.png', cbuf.get_surface(usage = PIPE_BUFFER_USAGE_CPU_READ|PIPE_BUFFER_USAGE_CPU_WRITE))
 
 
 
