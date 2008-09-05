@@ -3354,11 +3354,11 @@ debug_variables (GLcontext * ctx, struct var_cache *vc_head,
                fprintf (stderr, "%s\n",
                         Program->Base.Parameters->Parameters[a + b].Name);
                if (Program->Base.Parameters->Parameters[a + b].Type == PROGRAM_STATE_VAR) {
-                  const char *s;
+                  char *s;
                   s = _mesa_program_state_string(Program->Base.Parameters->Parameters
                                                  [a + b].StateIndexes);
                   fprintf(stderr, "%s\n", s);
-                  _mesa_free((char *) s);
+                  _mesa_free(s);
                }
                else
                   fprintf (stderr, "%f %f %f %f\n",
