@@ -409,10 +409,12 @@ static const struct dri_extension brw_extensions[] = {
    { NULL,                                NULL }
 };
 
+#ifdef I915_MMIO_READ
 static const struct dri_extension arb_oc_extensions[] = {
    {"GL_ARB_occlusion_query",            GL_ARB_occlusion_query_functions},
    {NULL, NULL}
 };
+#endif
 
 static const struct dri_extension ttm_extensions[] = {
    {"GL_EXT_framebuffer_object", GL_EXT_framebuffer_object_functions},
@@ -437,10 +439,12 @@ void intelInitExtensions(GLcontext *ctx, GLboolean enable_imaging)
    if (intel == NULL || intel->ttm)
       driInitExtensions(ctx, ttm_extensions, GL_FALSE);
 
+#ifdef I915_MMIO_READ
    if (intel == NULL || 
        (IS_965(intel->intelScreen->deviceID) && 
 	intel->intelScreen->drmMinor >= 8))
       driInitExtensions(ctx, arb_oc_extensions, GL_FALSE);
+#endif
 
    if (intel == NULL || IS_965(intel->intelScreen->deviceID))
       driInitExtensions(ctx, brw_extensions, GL_FALSE);
@@ -538,6 +542,7 @@ intelFinish(GLcontext * ctx)
    }
 }
 
+#ifdef I915_MMIO_READ
 static void
 intelBeginQuery(GLcontext *ctx, GLenum target, struct gl_query_object *q)
 {
@@ -568,6 +573,7 @@ intelEndQuery(GLcontext *ctx, GLenum target, struct gl_query_object *q)
 	q->Ready = GL_TRUE;
 	intel->stats_wm--;
 }
+#endif
 
 /** Driver-specific fence emit implementation for the fake memory manager. */
 static unsigned int
@@ -684,8 +690,10 @@ intelInitDriverFunctions(struct dd_function_table *functions)
    functions->CopyConvolutionFilter1D = _swrast_CopyConvolutionFilter1D;
    functions->CopyConvolutionFilter2D = _swrast_CopyConvolutionFilter2D;
 
+#ifdef I915_MMIO_READ
    functions->BeginQuery = intelBeginQuery;
    functions->EndQuery = intelEndQuery;
+#endif
 
    intelInitTextureFuncs(functions);
    intelInitStateFuncs(functions);
