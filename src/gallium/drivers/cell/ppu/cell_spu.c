@@ -45,6 +45,9 @@ helpful headers:
 */
 
 
+/**
+ * Cell/SPU info that's not per-context.
+ */
 struct cell_global_info cell_global;
 
 
@@ -149,8 +152,10 @@ cell_start_spus(struct cell_context *cell)
          exit(1);
       }
       
-      pthread_create(&cell_global.spe_threads[i], NULL, &cell_thread_function,
-		     &cell_global.inits[i]);
+      pthread_create(&cell_global.spe_threads[i], /* returned thread handle */
+                     NULL,                        /* pthread attribs */
+                     &cell_thread_function,       /* start routine */
+		     &cell_global.inits[i]);      /* thread argument */
    }
 }
 
