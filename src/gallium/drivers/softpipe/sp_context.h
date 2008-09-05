@@ -45,6 +45,10 @@
  */
 #define USE_DRAW_STAGE_PSTIPPLE 1
 
+/* Number of threads working on individual quads.
+ * Setting to 1 disables this feature.
+ */
+#define SP_NUM_QUAD_THREADS 2
 
 struct softpipe_winsys;
 struct softpipe_vbuf_render;
@@ -133,7 +137,7 @@ struct softpipe_context {
       struct quad_stage *output;
 
       struct quad_stage *first; /**< points to one of the above stages */
-   } quad;
+   } quad[SP_NUM_QUAD_THREADS];
 
    /** The primitive drawing context */
    struct draw_context *draw;
@@ -151,13 +155,11 @@ struct softpipe_context {
 };
 
 
-
-
 static INLINE struct softpipe_context *
 softpipe_context( struct pipe_context *pipe )
 {
    return (struct softpipe_context *)pipe;
 }
 
-
 #endif /* SP_CONTEXT_H */
+

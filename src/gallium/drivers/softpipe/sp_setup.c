@@ -43,6 +43,7 @@
 #include "draw/draw_private.h"
 #include "draw/draw_vertex.h"
 #include "pipe/p_shader_tokens.h"
+#include "pipe/p_thread.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
 
@@ -61,6 +62,51 @@ struct edge {
    int lines;		/**< number of lines on this edge */
 };
 
+#if SP_NUM_QUAD_THREADS > 1
+
+struct thread_info
+{
+   struct setup_context *setup;
+   uint id;
+   pipe_thread handle;
+};
+
+struct quad_job;
+
+typedef void (* quad_job_routine)( struct setup_context *setup, uint thread, struct quad_job *job );
+
+struct quad_job
+{
+   int x, y;
+   unsigned mask;
+   struct quad_header quad;
+   quad_job_routine routine;
+};
+
+#define NUM_QUAD_JOBS 64
+
+struct quad_job_que
+{
+   struct quad_job jobs[NUM_QUAD_JOBS];
+   uint first;
+   uint last;
+   pipe_mutex mutex;
+};
+
+static void
+add_quad_job( struct quad_job_que *que, int x, int y, unsigned mask, struct quad_header *quad, quad_job_routine routine )
+{
+   while ((que->last + 1) % NUM_QUAD_JOBS == que->first)
+      usleep( 10 );
+   que->jobs[que->last].x = x;
+   que->jobs[que->last].y = y;
+   que->jobs[que->last].mask = mask;
+   que->jobs[que->last].quad = *quad;
+   que->jobs[que->last].routine = routine;
+   que->last = (que->last + 1) % NUM_QUAD_JOBS;
+}
+
+#endif
 
 /**
  * Triangle setup info (derived from draw_stage).
@@ -88,6 +134,12 @@ struct setup_context {
    struct tgsi_interp_coef posCoef;  /* For Z, W */
    struct quad_header quad;
 
+#if SP_NUM_QUAD_THREADS > 1
+   struct quad_job_que que;
+   struct thread_info threads[SP_NUM_QUAD_THREADS];
+   
+#endif
+
    struct {
       int left[2];   /**< [0] = row0, [1] = row1 */
       int right[2];
@@ -104,7 +156,36 @@ struct setup_context {
    unsigned winding;		/* which winding to cull */
 };
 
+#if SP_NUM_QUAD_THREADS > 1
 
+static PIPE_THREAD_ROUTINE( quad_thread, param )
+{
+   struct thread_info *info = (struct thread_info *) param;
+
+   for (;;) {
+      struct quad_job *job;
+
+      while (info->setup->que.last == info->setup->que.first)
+         usleep( 10 );
+      pipe_mutex_lock( info->setup->que.mutex );
+      job = &info->setup->que.jobs[info->setup->que.first];
+      info->setup->que.first = (info->setup->que.first + 1) % NUM_QUAD_JOBS;
+      job->routine( info->setup, info->id, job );
+      pipe_mutex_unlock( info->setup->que.mutex );
+   }
+}
+
+#define WAIT_FOR_COMPLETION(setup) \
+   do {\
+      while (setup->que.last != setup->que.first)\
+         usleep( 10 );\
+   } while (0)
+
+#else
+
+#define WAIT_FOR_COMPLETION(setup) ((void) 0)
+
+#endif
 
 /**
  * Test if x is NaN or +/- infinity.
@@ -143,7 +224,7 @@ static boolean cull_tri( struct setup_context *setup,
  * Clip setup->quad against the scissor/surface bounds.
  */
 static INLINE void
-quad_clip(struct setup_context *setup)
+quad_clip( struct setup_context *setup, struct quad_header *quad )
 {
    const struct pipe_scissor_state *cliprect = &setup->softpipe->cliprect;
    const int minx = (int) cliprect->minx;
@@ -151,22 +232,22 @@ quad_clip(struct setup_context *setup)
    const int miny = (int) cliprect->miny;
    const int maxy = (int) cliprect->maxy;
 
-   if (setup->quad.x0 >= maxx ||
-       setup->quad.y0 >= maxy ||
-       setup->quad.x0 + 1 < minx ||
-       setup->quad.y0 + 1 < miny) {
+   if (quad->x0 >= maxx ||
+       quad->y0 >= maxy ||
+       quad->x0 + 1 < minx ||
+       quad->y0 + 1 < miny) {
       /* totally clipped */
-      setup->quad.mask = 0x0;
+      quad->mask = 0x0;
       return;
    }
-   if (setup->quad.x0 < minx)
-      setup->quad.mask &= (MASK_BOTTOM_RIGHT | MASK_TOP_RIGHT);
-   if (setup->quad.y0 < miny)
-      setup->quad.mask &= (MASK_BOTTOM_LEFT | MASK_BOTTOM_RIGHT);
-   if (setup->quad.x0 == maxx - 1)
-      setup->quad.mask &= (MASK_BOTTOM_LEFT | MASK_TOP_LEFT);
-   if (setup->quad.y0 == maxy - 1)
-      setup->quad.mask &= (MASK_TOP_LEFT | MASK_TOP_RIGHT);
+   if (quad->x0 < minx)
+      quad->mask &= (MASK_BOTTOM_RIGHT | MASK_TOP_RIGHT);
+   if (quad->y0 < miny)
+      quad->mask &= (MASK_BOTTOM_LEFT | MASK_BOTTOM_RIGHT);
+   if (quad->x0 == maxx - 1)
+      quad->mask &= (MASK_BOTTOM_LEFT | MASK_TOP_LEFT);
+   if (quad->y0 == maxy - 1)
+      quad->mask &= (MASK_TOP_LEFT | MASK_TOP_RIGHT);
 }
 
 
@@ -174,35 +255,52 @@ quad_clip(struct setup_context *setup)
  * Emit a quad (pass to next stage) with clipping.
  */
 static INLINE void
-clip_emit_quad(struct setup_context *setup)
+clip_emit_quad( struct setup_context *setup, struct quad_header *quad, uint thread )
 {
-   quad_clip(setup);
-   if (setup->quad.mask) {
+   quad_clip( setup, quad );
+   if (quad->mask) {
       struct softpipe_context *sp = setup->softpipe;
-      sp->quad.first->run(sp->quad.first, &setup->quad);
+
+      sp->quad[thread].first->run( sp->quad[thread].first, quad );
    }
 }
 
+#if SP_NUM_QUAD_THREADS > 1
+
+static void
+clip_emit_quad_job( struct setup_context *setup, uint thread, struct quad_job *job )
+{
+   clip_emit_quad( setup, &job->quad, thread );
+}
+
+#define CLIP_EMIT_QUAD(setup) add_quad_job( &setup->que, 0, 0, 0, &setup->quad, clip_emit_quad_job )
+
+#else
+
+#define CLIP_EMIT_QUAD(setup) clip_emit_quad( setup, &setup->quad, 0 )
+
+#endif
 
 /**
  * Emit a quad (pass to next stage).  No clipping is done.
  */
 static INLINE void
-emit_quad( struct setup_context *setup, int x, int y, unsigned mask )
+emit_quad( struct setup_context *setup, int x, int y, unsigned mask, struct quad_header *quad, uint thread )
 {
    struct softpipe_context *sp = setup->softpipe;
-   setup->quad.x0 = x;
-   setup->quad.y0 = y;
-   setup->quad.mask = mask;
+
+   quad->x0 = x;
+   quad->y0 = y;
+   quad->mask = mask;
 #if DEBUG_FRAGS
    if (mask & 1) setup->numFragsEmitted++;
    if (mask & 2) setup->numFragsEmitted++;
    if (mask & 4) setup->numFragsEmitted++;
    if (mask & 8) setup->numFragsEmitted++;
 #endif
-   sp->quad.first->run(sp->quad.first, &setup->quad);
+   sp->quad[thread].first->run( sp->quad[thread].first, quad );
 #if DEBUG_FRAGS
-   mask = setup->quad.mask;
+   mask = quad->mask;
    if (mask & 1) setup->numFragsWritten++;
    if (mask & 2) setup->numFragsWritten++;
    if (mask & 4) setup->numFragsWritten++;
@@ -210,6 +308,21 @@ emit_quad( struct setup_context *setup, int x, int y, unsigned mask )
 #endif
 }
 
+#if SP_NUM_QUAD_THREADS > 1
+
+static void
+emit_quad_job( struct setup_context *setup, uint thread, struct quad_job *job )
+{
+   emit_quad( setup, job->x, job->y, job->mask, &job->quad, thread );
+}
+
+#define EMIT_QUAD(setup,x,y,mask) add_quad_job( &setup->que, x, y, mask, &setup->quad, emit_quad_job )
+
+#else
+
+#define EMIT_QUAD(setup,x,y,mask) emit_quad( setup, x, y, mask, &setup->quad, 0 )
+
+#endif
 
 /**
  * Given an X or Y coordinate, return the block/quad coordinate that it
@@ -249,7 +362,7 @@ static void flush_spans( struct setup_context *setup )
             mask |= MASK_TOP_RIGHT;
          if (x+1 >= xleft1 && x+1 < xright1)
             mask |= MASK_BOTTOM_RIGHT;
-         emit_quad( setup, x, setup->span.y, mask );
+         EMIT_QUAD( setup, x, setup->span.y, mask );
       }
       break;
 
@@ -263,7 +376,7 @@ static void flush_spans( struct setup_context *setup )
             mask |= MASK_TOP_LEFT;
          if (x+1 >= xleft0 && x+1 < xright0)
             mask |= MASK_TOP_RIGHT;
-         emit_quad( setup, x, setup->span.y, mask );
+         EMIT_QUAD( setup, x, setup->span.y, mask );
       }
       break;
 
@@ -277,7 +390,7 @@ static void flush_spans( struct setup_context *setup )
             mask |= MASK_BOTTOM_LEFT;
          if (x+1 >= xleft1 && x+1 < xright1)
             mask |= MASK_BOTTOM_RIGHT;
-         emit_quad( setup, x, setup->span.y, mask );
+         EMIT_QUAD( setup, x, setup->span.y, mask );
       }
       break;
 
@@ -790,6 +903,8 @@ void setup_tri( struct setup_context *setup,
 
    flush_spans( setup );
 
+   WAIT_FOR_COMPLETION(setup);
+
 #if DEBUG_FRAGS
    printf("Tri: %u frags emitted, %u written\n",
           setup->numFragsEmitted,
@@ -931,7 +1046,7 @@ plot(struct setup_context *setup, int x, int y)
       /* flush prev quad, start new quad */
 
       if (setup->quad.x0 != -1)
-         clip_emit_quad(setup);
+         CLIP_EMIT_QUAD(setup);
 
       setup->quad.x0 = quadX;
       setup->quad.y0 = quadY;
@@ -1053,8 +1168,10 @@ setup_line(struct setup_context *setup,
 
    /* draw final quad */
    if (setup->quad.mask) {
-      clip_emit_quad(setup);
+      CLIP_EMIT_QUAD(setup);
    }
+
+   WAIT_FOR_COMPLETION(setup);
 }
 
 
@@ -1163,7 +1280,7 @@ setup_point( struct setup_context *setup,
       setup->quad.x0 = (int) x - ix;
       setup->quad.y0 = (int) y - iy;
       setup->quad.mask = (1 << ix) << (2 * iy);
-      clip_emit_quad(setup);
+      CLIP_EMIT_QUAD(setup);
    }
    else {
       if (round) {
@@ -1224,7 +1341,7 @@ setup_point( struct setup_context *setup,
                if (setup->quad.mask) {
                   setup->quad.x0 = ix;
                   setup->quad.y0 = iy;
-                  clip_emit_quad(setup);
+                  CLIP_EMIT_QUAD(setup);
                }
             }
          }
@@ -1271,11 +1388,13 @@ setup_point( struct setup_context *setup,
                setup->quad.mask = mask;
                setup->quad.x0 = ix;
                setup->quad.y0 = iy;
-               clip_emit_quad(setup);
+               CLIP_EMIT_QUAD(setup);
             }
          }
       }
    }
+
+   WAIT_FOR_COMPLETION(setup);
 }
 
 void setup_prepare( struct setup_context *setup )
@@ -1300,7 +1419,9 @@ void setup_prepare( struct setup_context *setup )
    /* Note: nr_attrs is only used for debugging (vertex printing) */
    setup->quad.nr_attrs = draw_num_vs_outputs(sp->draw);
 
-   sp->quad.first->begin(sp->quad.first);
+   for (i = 0; i < SP_NUM_QUAD_THREADS; i++) {
+      sp->quad[i].first->begin( sp->quad[i].first );
+   }
 
    if (sp->reduced_api_prim == PIPE_PRIM_TRIANGLES &&
        sp->rasterizer->fill_cw == PIPE_POLYGON_MODE_FILL &&
@@ -1328,11 +1449,24 @@ void setup_destroy_context( struct setup_context *setup )
 struct setup_context *setup_create_context( struct softpipe_context *softpipe )
 {
    struct setup_context *setup = CALLOC_STRUCT(setup_context);
+   uint i;
 
    setup->softpipe = softpipe;
 
    setup->quad.coef = setup->coef;
    setup->quad.posCoef = &setup->posCoef;
 
+#if SP_NUM_QUAD_THREADS > 1
+   setup->que.first = 0;
+   setup->que.last = 0;
+   pipe_mutex_init( setup->que.mutex );
+   for (i = 0; i < SP_NUM_QUAD_THREADS; i++) {
+      setup->threads[i].setup = setup;
+      setup->threads[i].id = i;
+      setup->threads[i].handle = pipe_thread_create( quad_thread, &setup->threads[i] );
+   }
+#endif
+
    return setup;
 }
+
