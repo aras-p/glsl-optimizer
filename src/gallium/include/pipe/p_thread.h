@@ -85,6 +85,30 @@ typedef pthread_cond_t pipe_condvar;
 #include <windows.h>
 
 typedef HANDLE pipe_thread;
+
+#define PIPE_THREAD_ROUTINE( name, param ) \
+   void * WINAPI name( void *param )
+
+static INLINE pipe_thread pipe_thread_create( void *(WINAPI * routine)( void *), void *param )
+{
+   DWORD id;
+   return CreateThread( NULL, 0, (LPTHREAD_START_ROUTINE) routine, param, 0, &id );
+}
+
+static INLINE int pipe_thread_wait( pipe_thread thread )
+{
+   if (WaitForSingleObject( thread, INFINITE ) == WAIT_OBJECT_0)
+      return 0;
+   return -1;
+}
+
+static INLINE int pipe_thread_destroy( pipe_thread thread )
+{
+   if (CloseHandle( thread ))
+      return 0;
+   return -1;
+}
+
 typedef CRITICAL_SECTION pipe_mutex;
 
 #define pipe_static_mutex(name) \
