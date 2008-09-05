@@ -35,6 +35,7 @@
 #include <stdint.h>
 #include "pipe/p_inlines.h"
 #include "util/u_memory.h"
+#include "util/u_pack_color.h"
 #include "cell/common.h"
 #include "cell_clear.h"
 #include "cell_context.h"
@@ -42,6 +43,24 @@
 #include "cell_flush.h"
 #include "cell_spu.h"
 #include "cell_state.h"
+
+
+/**
+ * Convert packed pixel from one format to another.
+ */
+static unsigned
+convert_color(enum pipe_format srcFormat, unsigned srcColor,
+              enum pipe_format dstFormat)
+{
+   ubyte r, g, b, a;
+   unsigned dstColor;
+
+   util_unpack_color_ub(srcFormat, &srcColor, &r, &g, &b, &a);
+   util_pack_color_ub(r, g, b, a, dstFormat, &dstColor);
+
+   return dstColor;
+}
+
 
 
 /**
@@ -70,6 +89,11 @@ cell_clear_surface(struct pipe_context *pipe, struct pipe_surface *ps,
    else {
       /* clear color buffer */
       surfIndex = 0;
+
+      if (ps->format != PIPE_FORMAT_A8R8G8B8_UNORM) {
+         clearValue = convert_color(PIPE_FORMAT_A8R8G8B8_UNORM, clearValue,
+                                    ps->format);
+      }
    }
 
 
