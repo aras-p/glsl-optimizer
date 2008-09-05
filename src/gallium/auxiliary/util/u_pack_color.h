@@ -312,8 +312,6 @@ util_pack_color(const float rgba[4], enum pipe_format format, void *dest)
       a = float_to_ubyte(rgba[3]);
    }
 
-   printf("%s %s\n", __FUNCTION__, pf_name(format));
-
    switch (format) {
    case PIPE_FORMAT_R8G8B8A8_UNORM:
       {
