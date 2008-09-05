@@ -35,7 +35,7 @@
 #include "draw/draw_context.h"
 
 
-void
+static void
 cell_set_vertex_elements(struct pipe_context *pipe,
                          unsigned count,
                          const struct pipe_vertex_element *elements)
@@ -53,7 +53,7 @@ cell_set_vertex_elements(struct pipe_context *pipe,
 }
 
 
-void
+static void
 cell_set_vertex_buffers(struct pipe_context *pipe,
                         unsigned count,
                         const struct pipe_vertex_buffer *buffers)
@@ -68,4 +68,12 @@ cell_set_vertex_buffers(struct pipe_context *pipe,
    cell->dirty |= CELL_NEW_VERTEX;
 
    draw_set_vertex_buffers(cell->draw, count, buffers);
+}
+
+
+void
+cell_init_vertex_functions(struct cell_context *cell)
+{
+   cell->pipe.set_vertex_buffers = cell_set_vertex_buffers;
+   cell->pipe.set_vertex_elements = cell_set_vertex_elements;
 }

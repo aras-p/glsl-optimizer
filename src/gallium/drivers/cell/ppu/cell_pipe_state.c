@@ -131,8 +131,9 @@ cell_delete_depth_stencil_alpha_state(struct pipe_context *pipe, void *depth)
 }
 
 
-static void cell_set_clip_state( struct pipe_context *pipe,
-			     const struct pipe_clip_state *clip )
+static void
+cell_set_clip_state(struct pipe_context *pipe,
+                    const struct pipe_clip_state *clip)
 {
    struct cell_context *cell = cell_context(pipe);
 

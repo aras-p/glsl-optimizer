@@ -113,15 +113,6 @@ cell_create_context(struct pipe_screen *screen,
    cell->pipe.screen = screen;
    cell->pipe.destroy = cell_destroy_context;
 
-   /* state setters */
-   cell->pipe.set_vertex_buffers = cell_set_vertex_buffers;
-   cell->pipe.set_vertex_elements = cell_set_vertex_elements;
-
-   cell->pipe.draw_arrays = cell_draw_arrays;
-   cell->pipe.draw_elements = cell_draw_elements;
-   cell->pipe.draw_range_elements = cell_draw_range_elements;
-   cell->pipe.set_edgeflags = cell_set_edgeflags;
-
    cell->pipe.clear = cell_clear_surface;
    cell->pipe.flush = cell_flush;
 
@@ -131,10 +122,12 @@ cell_create_context(struct pipe_screen *screen,
    cell->pipe.wait_query = cell_wait_query;
 #endif
 
+   cell_init_draw_functions(cell);
    cell_init_state_functions(cell);
    cell_init_shader_functions(cell);
    cell_init_surface_functions(cell);
    cell_init_texture_functions(cell);
+   cell_init_vertex_functions(cell);
 
    cell->draw = cell_draw_create(cell);
 
