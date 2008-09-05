@@ -35,8 +35,17 @@
 
 #define ZERO 0x80
 
+
+/**
+ * Get a "quad" of four fragment Z/stencil values from the given tile.
+ * \param tile  the tile of Z/stencil values
+ * \param x, y  location of the quad in the tile, in pixels
+ * \param depth_format  format of the tile's data
+ * \param detph  returns four depth values
+ * \param stencil  returns four stencil values
+ */
 static void
-read_ds_quad(tile_t *buffer, unsigned x, unsigned y,
+read_ds_quad(tile_t *tile, unsigned x, unsigned y,
              enum pipe_format depth_format, qword *depth,
              qword *stencil)
 {
@@ -45,13 +54,12 @@ read_ds_quad(tile_t *buffer, unsigned x, unsigned y,
 
    switch (depth_format) {
    case PIPE_FORMAT_Z16_UNORM: {
-      qword *ptr = (qword *) &buffer->us8[iy][ix / 2];
+      qword *ptr = (qword *) &tile->us8[iy][ix / 2];
 
       const qword shuf_vec = (qword) {
          ZERO, ZERO, 0, 1, ZERO, ZERO, 2, 3,
          ZERO, ZERO, 4, 5, ZERO, ZERO, 6, 7
       };
-
 
       /* At even X values we want the first 4 shorts, and at odd X values we
        * want the second 4 shorts.
@@ -65,18 +73,16 @@ read_ds_quad(tile_t *buffer, unsigned x, unsigned y,
       break;
    }
 
-
    case PIPE_FORMAT_Z32_UNORM: {
-      qword *ptr = (qword *) &buffer->ui4[iy][ix];
+      qword *ptr = (qword *) &tile->ui4[iy][ix];
 
       *depth = *ptr;
       *stencil = si_il(0);
       break;
    }
-      
 
    case PIPE_FORMAT_Z24S8_UNORM: {
-      qword *ptr = (qword *) &buffer->ui4[iy][ix];
+      qword *ptr = (qword *) &tile->ui4[iy][ix];
       qword mask = si_fsmbi(0xEEEE);
 
       *depth = si_rotmai(si_and(*ptr, mask), -8);
@@ -84,15 +90,13 @@ read_ds_quad(tile_t *buffer, unsigned x, unsigned y,
       break;
    }
 
-
    case PIPE_FORMAT_S8Z24_UNORM: {
-      qword *ptr = (qword *) &buffer->ui4[iy][ix];
+      qword *ptr = (qword *) &tile->ui4[iy][ix];
 
       *depth = si_and(*ptr, si_fsmbi(0x7777));
       *stencil = si_andi(si_roti(*ptr, 8), 0x0ff);
       break;
    }
-
 
    default:
       ASSERT(0);
@@ -101,6 +105,14 @@ read_ds_quad(tile_t *buffer, unsigned x, unsigned y,
 }
 
 
+/**
+ * Put a quad of Z/stencil values into a tile.
+ * \param tile  the tile of Z/stencil values to write into
+ * \param x, y  location of the quad in the tile, in pixels
+ * \param depth_format  format of the tile's data
+ * \param detph  depth values to store
+ * \param stencil  stencil values to store
+ */
 static void
 write_ds_quad(tile_t *buffer, unsigned x, unsigned y,
               enum pipe_format depth_format,
@@ -124,13 +136,11 @@ write_ds_quad(tile_t *buffer, unsigned x, unsigned y,
       break;
    }
 
-
    case PIPE_FORMAT_Z32_UNORM: {
       qword *ptr = (qword *) &buffer->ui4[iy][ix];
       *ptr = depth;
       break;
    }
-
 
    case PIPE_FORMAT_Z24S8_UNORM: {
       qword *ptr = (qword *) &buffer->ui4[iy][ix];
@@ -141,7 +151,6 @@ write_ds_quad(tile_t *buffer, unsigned x, unsigned y,
       break;
    }
 
-
    case PIPE_FORMAT_S8Z24_UNORM: {
       qword *ptr = (qword *) &buffer->ui4[iy][ix];
       qword mask = si_fsmbi(0x7777);
@@ -151,7 +160,6 @@ write_ds_quad(tile_t *buffer, unsigned x, unsigned y,
       break;
    }
 
-
    default:
       ASSERT(0);
       break;
@@ -159,6 +167,14 @@ write_ds_quad(tile_t *buffer, unsigned x, unsigned y,
 }
 
 
+/**
+ * Do depth/stencil/alpha test for a "quad" of 4 fragments.
+ * \param x,y  location of quad within tile
+ * \param frag_mask  indicates which fragments are "alive"
+ * \param frag_depth  four fragment depth values
+ * \param frag_alpha  four fragment alpha values
+ * \param facing  front/back facing for four fragments (1=front, 0=back)
+ */
 qword
 spu_do_depth_stencil(int x, int y,
                      qword frag_mask, qword frag_depth, qword frag_alpha,
