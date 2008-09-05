@@ -240,3 +240,28 @@ cell_batch_alloc_aligned(struct cell_context *cell, uint bytes,
 
    return pos;
 }
+
+
+/**
+ * One-time init of batch buffers.
+ */
+void
+cell_init_batch_buffers(struct cell_context *cell)
+{
+   uint spu, buf;
+
+   /* init command, vertex/index buffer info */
+   for (buf = 0; buf < CELL_NUM_BUFFERS; buf++) {
+      cell->buffer_size[buf] = 0;
+
+      /* init batch buffer status values,
+       * mark 0th buffer as used, rest as free.
+       */
+      for (spu = 0; spu < cell->num_spus; spu++) {
+         if (buf == 0)
+            cell->buffer_status[spu][buf][0] = CELL_BUFFER_STATUS_USED;
+         else
+            cell->buffer_status[spu][buf][0] = CELL_BUFFER_STATUS_FREE;
+      }
+   }
+}

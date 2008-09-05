@@ -43,11 +43,11 @@
 #include "draw/draw_private.h"
 
 #include "cell/common.h"
+#include "cell_batch.h"
 #include "cell_clear.h"
 #include "cell_context.h"
 #include "cell_draw_arrays.h"
 #include "cell_flush.h"
-#include "cell_render.h"
 #include "cell_state.h"
 #include "cell_surface.h"
 #include "cell_spu.h"
@@ -99,7 +99,6 @@ cell_create_context(struct pipe_screen *screen,
                     struct cell_winsys *cws)
 {
    struct cell_context *cell;
-   uint spu, buf;
 
    /* some fields need to be 16-byte aligned, so align the whole object */
    cell = (struct cell_context*) align_malloc(sizeof(struct cell_context), 16);
@@ -132,12 +131,14 @@ cell_create_context(struct pipe_screen *screen,
    cell->draw = cell_draw_create(cell);
 
    cell_init_vbuf(cell);
+
    draw_set_rasterize_stage(cell->draw, cell->vbuf);
 
    /* convert all points/lines to tris for the time being */
    draw_wide_point_threshold(cell->draw, 0.0);
    draw_wide_line_threshold(cell->draw, 0.0);
 
+   /* get env vars or read config file to get debug flags */
    cell->debug_flags = debug_get_flags_option("CELL_DEBUG", 
                                               cell_debug_flags, 
                                               0 );
@@ -152,20 +153,7 @@ cell_create_context(struct pipe_screen *screen,
 
    cell_start_spus(cell);
 
-   /* init command, vertex/index buffer info */
-   for (buf = 0; buf < CELL_NUM_BUFFERS; buf++) {
-      cell->buffer_size[buf] = 0;
-
-      /* init batch buffer status values,
-       * mark 0th buffer as used, rest as free.
-       */
-      for (spu = 0; spu < cell->num_spus; spu++) {
-         if (buf == 0)
-            cell->buffer_status[spu][buf][0] = CELL_BUFFER_STATUS_USED;
-         else
-            cell->buffer_status[spu][buf][0] = CELL_BUFFER_STATUS_FREE;
-      }
-   }
+   cell_init_batch_buffers(cell);
 
    return &cell->pipe;
 }
