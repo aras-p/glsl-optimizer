@@ -601,12 +601,10 @@ static void PIPE_CDECL
 cos4f(
    float *store )
 {
-   const unsigned X = 0;
-
-   store[X + 0] = cosf( store[X + 0] );
-   store[X + 1] = cosf( store[X + 1] );
-   store[X + 2] = cosf( store[X + 2] );
-   store[X + 3] = cosf( store[X + 3] );
+   store[0] = cosf( store[0] );
+   store[1] = cosf( store[1] );
+   store[2] = cosf( store[2] );
+   store[3] = cosf( store[3] );
 }
 
 static void
@@ -624,18 +622,16 @@ static void PIPE_CDECL
 ex24f(
    float *store )
 {
-   const unsigned X = 0;
-
 #if FAST_MATH
-   store[X + 0] = util_fast_exp2( store[X + 0] );
-   store[X + 1] = util_fast_exp2( store[X + 1] );
-   store[X + 2] = util_fast_exp2( store[X + 2] );
-   store[X + 3] = util_fast_exp2( store[X + 3] );
+   store[0] = util_fast_exp2( store[0] );
+   store[1] = util_fast_exp2( store[1] );
+   store[2] = util_fast_exp2( store[2] );
+   store[3] = util_fast_exp2( store[3] );
 #else
-   store[X + 0] = powf( 2.0f, store[X + 0] );
-   store[X + 1] = powf( 2.0f, store[X + 1] );
-   store[X + 2] = powf( 2.0f, store[X + 2] );
-   store[X + 3] = powf( 2.0f, store[X + 3] );
+   store[0] = powf( 2.0f, store[0] );
+   store[1] = powf( 2.0f, store[1] );
+   store[2] = powf( 2.0f, store[2] );
+   store[3] = powf( 2.0f, store[3] );
 #endif
 }
 
@@ -665,12 +661,10 @@ static void PIPE_CDECL
 flr4f(
    float *store )
 {
-   const unsigned X = 0;
-
-   store[X + 0] = floorf( store[X + 0] );
-   store[X + 1] = floorf( store[X + 1] );
-   store[X + 2] = floorf( store[X + 2] );
-   store[X + 3] = floorf( store[X + 3] );
+   store[0] = floorf( store[0] );
+   store[1] = floorf( store[1] );
+   store[2] = floorf( store[2] );
+   store[3] = floorf( store[3] );
 }
 
 static void
@@ -688,12 +682,10 @@ static void PIPE_CDECL
 frc4f(
    float *store )
 {
-   const unsigned X = 0;
-
-   store[X + 0] -= floorf( store[X + 0] );
-   store[X + 1] -= floorf( store[X + 1] );
-   store[X + 2] -= floorf( store[X + 2] );
-   store[X + 3] -= floorf( store[X + 3] );
+   store[0] -= floorf( store[0] );
+   store[1] -= floorf( store[1] );
+   store[2] -= floorf( store[2] );
+   store[3] -= floorf( store[3] );
 }
 
 static void
@@ -711,12 +703,10 @@ static void PIPE_CDECL
 lg24f(
    float *store )
 {
-   const unsigned X = 0;
-
-   store[X + 0] = util_fast_log2( store[X + 0] );
-   store[X + 1] = util_fast_log2( store[X + 1] );
-   store[X + 2] = util_fast_log2( store[X + 2] );
-   store[X + 3] = util_fast_log2( store[X + 3] );
+   store[0] = util_fast_log2( store[0] );
+   store[1] = util_fast_log2( store[1] );
+   store[2] = util_fast_log2( store[2] );
+   store[3] = util_fast_log2( store[3] );
 }
 
 static void
@@ -770,18 +760,16 @@ static void PIPE_CDECL
 pow4f(
    float *store )
 {
-   const unsigned X = 0;
-
 #if FAST_MATH
-   store[X + 0] = util_fast_pow( store[X + 0], store[X + 4] );
-   store[X + 1] = util_fast_pow( store[X + 1], store[X + 5] );
-   store[X + 2] = util_fast_pow( store[X + 2], store[X + 6] );
-   store[X + 3] = util_fast_pow( store[X + 3], store[X + 7] );
+   store[0] = util_fast_pow( store[0], store[4] );
+   store[1] = util_fast_pow( store[1], store[5] );
+   store[2] = util_fast_pow( store[2], store[6] );
+   store[3] = util_fast_pow( store[3], store[7] );
 #else
-   store[X + 0] = powf( store[X + 0], store[X + 4] );
-   store[X + 1] = powf( store[X + 1], store[X + 5] );
-   store[X + 2] = powf( store[X + 2], store[X + 6] );
-   store[X + 3] = powf( store[X + 3], store[X + 7] );
+   store[0] = powf( store[0], store[4] );
+   store[1] = powf( store[1], store[5] );
+   store[2] = powf( store[2], store[6] );
+   store[3] = powf( store[3], store[7] );
 #endif
 }
 
@@ -877,12 +865,10 @@ static void PIPE_CDECL
 sin4f(
    float *store )
 {
-   const unsigned X = 0;
-
-   store[X + 0] = sinf( store[X + 0] );
-   store[X + 1] = sinf( store[X + 1] );
-   store[X + 2] = sinf( store[X + 2] );
-   store[X + 3] = sinf( store[X + 3] );
+   store[0] = sinf( store[0] );
+   store[1] = sinf( store[1] );
+   store[2] = sinf( store[2] );
+   store[3] = sinf( store[3] );
 }
 
 static void
@@ -2416,3 +2402,4 @@ tgsi_emit_sse2(
 }
 
 #endif /* PIPE_ARCH_X86 */
+
