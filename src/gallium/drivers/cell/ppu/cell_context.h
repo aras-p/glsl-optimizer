@@ -163,6 +163,8 @@ struct cell_context
 
    struct spe_function attrib_fetch;
    unsigned attrib_fetch_offsets[PIPE_MAX_ATTRIBS];
+
+   unsigned debug_flags;
 };
 
 

@@ -85,6 +85,15 @@ cell_draw_create(struct cell_context *cell)
 }
 
 
+#ifdef DEBUG
+static const struct debug_named_value cell_debug_flags[] = {
+   {"checker", CELL_DEBUG_CHECKER},/**< modulate tile clear color by SPU ID */
+   {"sync", CELL_DEBUG_SYNC},      /**< SPUs do synchronous DMA */
+   {NULL, 0}
+};
+#endif
+
+
 struct pipe_context *
 cell_create_context(struct pipe_screen *screen,
                     struct cell_winsys *cws)
@@ -135,6 +144,10 @@ cell_create_context(struct pipe_screen *screen,
    /* convert all points/lines to tris for the time being */
    draw_wide_point_threshold(cell->draw, 0.0);
    draw_wide_line_threshold(cell->draw, 0.0);
+
+   cell->debug_flags = debug_get_flags_option("CELL_DEBUG", 
+                                              cell_debug_flags, 
+                                              0 );
 
    /*
     * SPU stuff

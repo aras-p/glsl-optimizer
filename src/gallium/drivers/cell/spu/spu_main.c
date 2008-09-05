@@ -136,54 +136,75 @@ really_clear_tiles(uint surfaceIndex)
 static void
 cmd_clear_surface(const struct cell_command_clear_surface *clear)
 {
-   const uint num_tiles = spu.fb.width_tiles * spu.fb.height_tiles;
-   uint i;
-
    if (Debug)
       printf("SPU %u: CLEAR SURF %u to 0x%08x\n", spu.init.id,
              clear->surface, clear->value);
 
+   if (clear->surface == 0) {
+      spu.fb.color_clear_value = clear->value;
+      if (spu.init.debug_flags & CELL_DEBUG_CHECKER) {
+         uint x = (spu.init.id << 4) | (spu.init.id << 12) |
+            (spu.init.id << 20) | (spu.init.id << 28);
+         spu.fb.color_clear_value ^= x;
+      }
+   }
+   else {
+      spu.fb.depth_clear_value = clear->value;
+   }
+
 #define CLEAR_OPT 1
 #if CLEAR_OPT
-   /* set all tile's status to CLEAR */
+
+   /* Simply set all tiles' status to CLEAR.
+    * When we actually begin rendering into a tile, we'll initialize it to
+    * the clear value.  If any tiles go untouched during the frame,
+    * really_clear_tiles() will set them to the clear value.
+    */
    if (clear->surface == 0) {
       memset(spu.ctile_status, TILE_STATUS_CLEAR, sizeof(spu.ctile_status));
-      spu.fb.color_clear_value = clear->value;
    }
    else {
       memset(spu.ztile_status, TILE_STATUS_CLEAR, sizeof(spu.ztile_status));
-      spu.fb.depth_clear_value = clear->value;
    }
-   return;
-#endif
 
-   if (clear->surface == 0) {
-      spu.fb.color_clear_value = clear->value;
-      clear_c_tile(&spu.ctile);
-   }
-   else {
-      spu.fb.depth_clear_value = clear->value;
-      clear_z_tile(&spu.ztile);
-   }
+#else
+
+   /*
+    * This path clears the whole framebuffer to the clear color right now.
+    */
 
    /*
    printf("SPU: %s num=%d w=%d h=%d\n",
           __FUNCTION__, num_tiles, spu.fb.width_tiles, spu.fb.height_tiles);
    */
 
-   for (i = spu.init.id; i < num_tiles; i += spu.init.num_spus) {
-      uint tx = i % spu.fb.width_tiles;
-      uint ty = i / spu.fb.width_tiles;
-      if (clear->surface == 0)
-         put_tile(tx, ty, &spu.ctile, TAG_SURFACE_CLEAR, 0);
-      else
-         put_tile(tx, ty, &spu.ztile, TAG_SURFACE_CLEAR, 1);
-      /* XXX we don't want this here, but it fixes bad tile results */
+   /* init a single tile to the clear value */
+   if (clear->surface == 0) {
+      clear_c_tile(&spu.ctile);
+   }
+   else {
+      clear_z_tile(&spu.ztile);
    }
 
-#if 0
-   wait_on_mask(1 << TAG_SURFACE_CLEAR);
-#endif
+   /* walk over my tiles, writing the 'clear' tile's data */
+   {
+      const uint num_tiles = spu.fb.width_tiles * spu.fb.height_tiles;
+      uint i;
+      for (i = spu.init.id; i < num_tiles; i += spu.init.num_spus) {
+         uint tx = i % spu.fb.width_tiles;
+         uint ty = i / spu.fb.width_tiles;
+         if (clear->surface == 0)
+            put_tile(tx, ty, &spu.ctile, TAG_SURFACE_CLEAR, 0);
+         else
+            put_tile(tx, ty, &spu.ztile, TAG_SURFACE_CLEAR, 1);
+      }
+   }
+
+   if (spu.init.debug_flags & CELL_DEBUG_SYNC) {
+      wait_on_mask(1 << TAG_SURFACE_CLEAR);
+   }
+
+#endif /* CLEAR_OPT */
 
    if (Debug)
       printf("SPU %u: CLEAR SURF done\n", spu.init.id);
