@@ -37,8 +37,26 @@
 
 #include <GL/glut.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 static int leftFirst = GL_TRUE;
+
+static struct { GLenum func; const char *str; } funcs[] = 
+   {
+      { GL_LESS, "GL_LESS" },
+      { GL_LEQUAL, "GL_LEQUAL" },
+      { GL_GREATER, "GL_GREATER" },
+      { GL_GEQUAL, "GL_GEQUAL" },
+      { GL_EQUAL, "GL_EQUAL" },
+      { GL_NOTEQUAL, "GL_NOTEQUAL" },
+      { GL_ALWAYS, "GL_ALWAYS" },
+      { GL_NEVER, "GL_NEVER" },
+   };
+
+#define NUM_FUNCS (sizeof(funcs) / sizeof(funcs[0]))
+
+static int curFunc = 0;
+
 
 static void init(void)
 {
@@ -72,6 +90,9 @@ void display(void)
 {
    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+   printf("GL_DEPTH_FUNC = %s\n", funcs[curFunc].str);
+   glDepthFunc(funcs[curFunc].func);
+
    if (leftFirst) {
       drawLeftTriangle();
       drawRightTriangle();
@@ -99,6 +120,11 @@ void reshape(int w, int h)
 void keyboard(unsigned char key, int x, int y)
 {
    switch (key) {
+      case 'f':
+      case 'F':
+         curFunc = (curFunc + 1) % NUM_FUNCS;
+         glutPostRedisplay();	
+         break;
       case 't':
       case 'T':
          leftFirst = !leftFirst;
