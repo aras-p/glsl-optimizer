@@ -300,7 +300,9 @@ void _name (struct spe_function *p, int imm) \
 #include "rtasm_ppc_spe.h"
 
 
-/*
+/**
+ * Initialize an spe_function.
+ * \param code_size  size of instruction buffer to allocate, in bytes.
  */
 void spe_init_func(struct spe_function *p, unsigned code_size)
 {
@@ -324,10 +326,14 @@ void spe_release_func(struct spe_function *p)
 }
 
 
+/**
+ * Alloate a SPE register.
+ * \return register index or -1 if none left.
+ */
 int spe_allocate_available_register(struct spe_function *p)
 {
    unsigned i;
-   for (i = 0; i < 128; i++) {
+   for (i = 0; i < SPE_NUM_REGS; i++) {
       const uint64_t mask = (1ULL << (i % 64));
       const unsigned idx = i / 64;
 
@@ -341,11 +347,15 @@ int spe_allocate_available_register(struct spe_function *p)
 }
 
 
+/**
+ * Mark the given SPE register as "allocated".
+ */
 int spe_allocate_register(struct spe_function *p, int reg)
 {
    const unsigned idx = reg / 64;
    const unsigned bit = reg % 64;
 
+   assert(reg < SPE_NUM_REGS);
    assert((p->regs[idx] & (1ULL << bit)) != 0);
 
    p->regs[idx] &= ~(1ULL << bit);
@@ -353,57 +363,73 @@ int spe_allocate_register(struct spe_function *p, int reg)
 }
 
 
+/**
+ * Mark the given SPE register as "unallocated".
+ */
 void spe_release_register(struct spe_function *p, int reg)
 {
    const unsigned idx = reg / 64;
    const unsigned bit = reg % 64;
 
+   assert(reg < SPE_NUM_REGS);
    assert((p->regs[idx] & (1ULL << bit)) == 0);
 
    p->regs[idx] |= (1ULL << bit);
 }
 
 
+/**
+ * For branch instructions:
+ * \param d  if 1, disable interupts if branch is taken
+ * \param e  if 1, enable interupts if branch is taken
+ * If d and e are both zero, don't change interupt status (right?)
+ */
 
-
+/** Branch Indirect to address in rA */
 void spe_bi(struct spe_function *p, unsigned rA, int d, int e)
 {
     emit_RI7(p, 0x1a8, 0, rA, (d << 5) | (e << 4));
 }
 
+/** Interupt Return */
 void spe_iret(struct spe_function *p, unsigned rA, int d, int e)
 {
     emit_RI7(p, 0x1aa, 0, rA, (d << 5) | (e << 4));
 }
 
+/** Branch indirect and set link on external data */
 void spe_bisled(struct spe_function *p, unsigned rT, unsigned rA, int d,
 		int e)
 {
     emit_RI7(p, 0x1ab, rT, rA, (d << 5) | (e << 4));
 }
 
+/** Branch indirect and set link.  Save PC in rT, jump to rA. */
 void spe_bisl(struct spe_function *p, unsigned rT, unsigned rA, int d,
 		int e)
 {
     emit_RI7(p, 0x1a9, rT, rA, (d << 5) | (e << 4));
 }
 
-void spe_biz(struct spe_function *p, unsigned rT, unsigned rA, int d,
-		int e)
+/** Branch indirect if zero word.  If rT.word[0]==0, jump to rA. */
+void spe_biz(struct spe_function *p, unsigned rT, unsigned rA, int d, int e)
 {
     emit_RI7(p, 0x128, rT, rA, (d << 5) | (e << 4));
 }
 
+/** Branch indirect if non-zero word.  If rT.word[0]!=0, jump to rA. */
 void spe_binz(struct spe_function *p, unsigned rT, unsigned rA, int d, int e)
 {
     emit_RI7(p, 0x129, rT, rA, (d << 5) | (e << 4));
 }
 
+/** Branch indirect if zero halfword.  If rT.halfword[1]==0, jump to rA. */
 void spe_bihz(struct spe_function *p, unsigned rT, unsigned rA, int d, int e)
 {
     emit_RI7(p, 0x12a, rT, rA, (d << 5) | (e << 4));
 }
 
+/** Branch indirect if non-zero halfword.  If rT.halfword[1]!=0, jump to rA. */
 void spe_bihnz(struct spe_function *p, unsigned rT, unsigned rA, int d, int e)
 {
     emit_RI7(p, 0x12b, rT, rA, (d << 5) | (e << 4));

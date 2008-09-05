@@ -32,13 +32,17 @@
 #ifndef RTASM_PPC_SPE_H
 #define RTASM_PPC_SPE_H
 
-struct spe_function {
-    /**
-     *
-     */
-    uint32_t *store;
-    uint32_t *csr;
-    const char *fn;
+/** 4 bytes per instruction */
+#define SPE_INST_SIZE 4
+
+/** number of general-purpose SIMD registers */
+#define SPE_NUM_REGS  128
+
+struct spe_function
+{
+    uint32_t *store;  /**< instruction buffer */
+    uint32_t *csr;    /**< next free pos in instruction buffer */
+    const char *fn;   /**< unused */
 
     /**
      * Mask of used / unused registers
@@ -50,7 +54,7 @@ struct spe_function {
      * spe_allocate_register, spe_allocate_available_register,
      * spe_release_register
      */
-    uint64_t regs[2];
+    uint64_t regs[SPE_NUM_REGS / 64];
 };
 
 extern void spe_init_func(struct spe_function *p, unsigned code_size);
