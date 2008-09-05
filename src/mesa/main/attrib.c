@@ -1330,7 +1330,7 @@ _mesa_PushClientAttrib(GLbitfield mask)
       newnode->next = head;
       head = newnode;
       /* unpacking attribs */
-      attr = MALLOC_STRUCT( gl_pixelstore_attrib );
+      attr = CALLOC_STRUCT( gl_pixelstore_attrib );
       copy_pixelstore(ctx, attr, &ctx->Unpack);
       newnode = new_attrib_node( GL_CLIENT_UNPACK_BIT );
       newnode->data = attr;
