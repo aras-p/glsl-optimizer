@@ -41,8 +41,29 @@
 #include <pthread.h> /* POSIX threads headers */
 #include <stdio.h> /* for perror() */
 
-
 typedef pthread_t pipe_thread;
+
+#define PIPE_THREAD_ROUTINE( name, param ) \
+   void *name( void *param )
+
+static INLINE pipe_thread pipe_thread_create( void *(* routine)( void *), void *param )
+{
+   pipe_thread thread;
+   if (pthread_create( &thread, NULL, routine, param ))
+      return 0;
+   return thread;
+}
+
+static INLINE int pipe_thread_wait( pipe_thread thread )
+{
+   return pthread_join( thread, NULL );
+}
+
+static INLINE int pipe_thread_destroy( pipe_thread thread )
+{
+   return pthread_detach( thread );
+}
+
 typedef pthread_mutex_t pipe_mutex;
 typedef pthread_cond_t pipe_condvar;
 
