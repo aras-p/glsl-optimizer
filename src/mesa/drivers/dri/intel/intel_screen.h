@@ -30,7 +30,7 @@
 
 #include <sys/time.h>
 #include "dri_util.h"
-#include "dri_bufmgr.h"
+#include "intel_bufmgr.h"
 #include "i915_drm.h"
 #include "xmlconfig.h"
 
@@ -68,7 +68,8 @@ typedef struct
    int logTextureGranularity;
 
    __DRIscreenPrivate *driScrnPriv;
-   unsigned int sarea_priv_offset;
+
+   volatile struct drm_i915_sarea *sarea;
 
    int drmMinor;
 

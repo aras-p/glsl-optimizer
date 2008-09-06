@@ -34,8 +34,10 @@
  * the basic structure for rectangular collections of pixels stored in a dri_bo.
  */
 
+#include <xf86drm.h>
+
 #include "mtypes.h"
-#include "dri_bufmgr.h"
+#include "intel_bufmgr.h"
 
 struct intel_context;
 struct intel_buffer_object;

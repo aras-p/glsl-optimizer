@@ -46,7 +46,6 @@
 #include "intel_regions.h"
 #include "intel_blit.h"
 #include "intel_buffer_objects.h"
-#include "dri_bufmgr.h"
 #include "intel_bufmgr.h"
 #include "intel_batchbuffer.h"
 #include "intel_chipset.h"

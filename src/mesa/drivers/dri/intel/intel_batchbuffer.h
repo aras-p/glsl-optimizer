@@ -3,7 +3,7 @@
 
 #include "mtypes.h"
 
-#include "dri_bufmgr.h"
+#include "intel_bufmgr.h"
 #include "intel_reg.h"
 
 struct intel_context;

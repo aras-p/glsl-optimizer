@@ -106,11 +106,11 @@ gs_unit_create_from_key(struct brw_context *brw, struct brw_gs_unit_key *key)
 
    if (key->prog_active) {
       /* Emit GS program relocation */
-      intel_bo_emit_reloc(bo,
-			  I915_GEM_DOMAIN_INSTRUCTION, 0,
-			  gs.thread0.grf_reg_count << 1,
-			  offsetof(struct brw_gs_unit_state, thread0),
-			  brw->gs.prog_bo);
+      dri_bo_emit_reloc(bo,
+			I915_GEM_DOMAIN_INSTRUCTION, 0,
+			gs.thread0.grf_reg_count << 1,
+			offsetof(struct brw_gs_unit_state, thread0),
+			brw->gs.prog_bo);
    }
 
    return bo;

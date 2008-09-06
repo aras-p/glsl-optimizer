@@ -34,7 +34,6 @@
 #include "intel_buffer_objects.h"
 #include "intel_batchbuffer.h"
 #include "intel_regions.h"
-#include "dri_bufmgr.h"
 
 static GLboolean intel_bufferobj_unmap(GLcontext * ctx,
 				       GLenum target,

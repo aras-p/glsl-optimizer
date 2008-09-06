@@ -31,7 +31,6 @@
 #include "mtypes.h"		/* for GLcontext... */
 #include "vbo/vbo.h"
 
-#include "dri_bufmgr.h"
 struct brw_context;
 
 

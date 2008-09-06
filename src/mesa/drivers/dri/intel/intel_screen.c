@@ -274,9 +274,9 @@ static GLboolean intelInitDriver(__DRIscreenPrivate *sPriv)
 
    intelScreen->driScrnPriv = sPriv;
    sPriv->private = (void *) intelScreen;
-   intelScreen->sarea_priv_offset = gDRIPriv->sarea_priv_offset;
    sarea = (struct drm_i915_sarea *)
-      (((GLubyte *) sPriv->pSAREA) + intelScreen->sarea_priv_offset);
+      (((GLubyte *) sPriv->pSAREA) + gDRIPriv->sarea_priv_offset);
+   intelScreen->sarea = sarea;
 
    intelScreen->deviceID = gDRIPriv->deviceID;
 
@@ -288,8 +288,6 @@ static GLboolean intelInitDriver(__DRIscreenPrivate *sPriv)
       sPriv->private = NULL;
       return GL_FALSE;
    }
-
-   intelScreen->sarea_priv_offset = gDRIPriv->sarea_priv_offset;
 
    if (0)
       intelPrintDRIInfo(intelScreen, sPriv, gDRIPriv);
@@ -551,34 +549,6 @@ intelFillInModes(__DRIscreenPrivate *psp,
    return configs;
 }
 
-
-/** Driver-specific fence emit implementation for the fake memory manager. */
-static unsigned int
-intel_fence_emit(void *private)
-{
-   intelScreenPrivate *intelScreen = (intelScreenPrivate *)private;
-   unsigned int fence;
-
-   /* XXX: Need to emit a flush, if we haven't already (at least with the
-    * current batchbuffer implementation, we have).
-    */
-
-   fence = intelEmitIrqLocked(intelScreen);
-
-   return fence;
-}
-
-/** Driver-specific fence wait implementation for the fake memory manager. */
-static int
-intel_fence_wait(void *private, unsigned int cookie)
-{
-   intelScreenPrivate *intelScreen = (intelScreenPrivate *)private;
-
-   intelWaitIrq(intelScreen, cookie);
-
-   return 0;
-}
-
 static GLboolean
 intel_init_bufmgr(intelScreenPrivate *intelScreen)
 {
@@ -628,12 +598,13 @@ intel_init_bufmgr(intelScreenPrivate *intelScreen)
 	 return GL_FALSE;
       }
 
-      intelScreen->bufmgr = intel_bufmgr_fake_init(intelScreen->tex.offset,
-						   intelScreen->tex.map,
-						   intelScreen->tex.size,
-						   intel_fence_emit,
-						   intel_fence_wait,
-						   intelScreen);
+      intelScreen->bufmgr =
+	 intel_bufmgr_fake_init(spriv->fd,
+				intelScreen->tex.offset,
+				intelScreen->tex.map,
+				intelScreen->tex.size,
+				(unsigned int * volatile)
+				&intelScreen->sarea->last_dispatch);
    }
 
    /* XXX bufmgr should be per-screen, not per-context */

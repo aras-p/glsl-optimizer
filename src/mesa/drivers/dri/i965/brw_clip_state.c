@@ -119,12 +119,12 @@ clip_unit_create_from_key(struct brw_context *brw,
 
    /* Emit clip program relocation */
    assert(brw->clip.prog_bo);
-   intel_bo_emit_reloc(bo,
-		       I915_GEM_DOMAIN_INSTRUCTION,
-		       0,
-		       clip.thread0.grf_reg_count << 1,
-		       offsetof(struct brw_clip_unit_state, thread0),
-		       brw->clip.prog_bo);
+   dri_bo_emit_reloc(bo,
+		     I915_GEM_DOMAIN_INSTRUCTION,
+		     0,
+		     clip.thread0.grf_reg_count << 1,
+		     offsetof(struct brw_clip_unit_state, thread0),
+		     brw->clip.prog_bo);
 
    return bo;
 }

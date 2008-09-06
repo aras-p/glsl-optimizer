@@ -91,6 +91,8 @@ ASM_SOURCES =
 
 DRIVER_DEFINES = -I../intel -I../intel/server
 
+DRI_LIB_DEPS += -ldrm_intel
+
 include ../Makefile.template
 
 symlinks:

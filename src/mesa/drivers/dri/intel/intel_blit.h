@@ -30,7 +30,6 @@
 
 #include "intel_context.h"
 #include "intel_ioctl.h"
-#include "dri_bufmgr.h"
 
 extern void intelCopyBuffer(const __DRIdrawablePrivate * dpriv,
                             const drm_clip_rect_t * rect);

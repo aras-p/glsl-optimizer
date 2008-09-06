@@ -278,7 +278,7 @@ intel_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
        }
 
        if (rb->region) {
-	  intel_bo_flink(rb->region->buffer, &name);
+	  dri_bo_flink(rb->region->buffer, &name);
 	  if (name == buffers[i].name)
 	     continue;
        }
@@ -614,8 +614,6 @@ intelInitContext(struct intel_context *intel,
    GLcontext *shareCtx = (GLcontext *) sharedContextPrivate;
    __DRIscreenPrivate *sPriv = driContextPriv->driScreenPriv;
    intelScreenPrivate *intelScreen = (intelScreenPrivate *) sPriv->private;
-   volatile struct drm_i915_sarea *saPriv = (struct drm_i915_sarea *)
-      (((GLubyte *) sPriv->pSAREA) + intelScreen->sarea_priv_offset);
    int fthrottle_mode;
 
    if (!_mesa_initialize_context(&intel->ctx, mesaVis, shareCtx,
@@ -627,7 +625,7 @@ intelInitContext(struct intel_context *intel,
    driContextPriv->driverPrivate = intel;
    intel->intelScreen = intelScreen;
    intel->driScreen = sPriv;
-   intel->sarea = saPriv;
+   intel->sarea = intelScreen->sarea;
    intel->driContext = driContextPriv;
 
    /* Dri stuff */

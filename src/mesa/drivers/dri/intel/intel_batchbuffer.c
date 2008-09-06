@@ -261,13 +261,9 @@ _intel_batchbuffer_flush(struct intel_batchbuffer *batch, const char *file,
       UNLOCK_HARDWARE(intel);
 
    if (INTEL_DEBUG & DEBUG_SYNC) {
-      int irq;
-
       fprintf(stderr, "waiting for idle\n");
-      LOCK_HARDWARE(intel);
-      irq = intelEmitIrqLocked(intel->intelScreen);
-      UNLOCK_HARDWARE(intel);
-      intelWaitIrq(intel->intelScreen, irq);
+      dri_bo_map(batch->buf, GL_TRUE);
+      dri_bo_unmap(batch->buf);
    }
 
    /* Reset the buffer:
@@ -289,8 +285,8 @@ intel_batchbuffer_emit_reloc(struct intel_batchbuffer *batch,
    if (batch->ptr - batch->map > batch->buf->size)
     _mesa_printf ("bad relocation ptr %p map %p offset %d size %d\n",
 		  batch->ptr, batch->map, batch->ptr - batch->map, batch->buf->size);
-   ret = intel_bo_emit_reloc(batch->buf, read_domains, write_domain,
-			     delta, batch->ptr - batch->map, buffer);
+   ret = dri_bo_emit_reloc(batch->buf, read_domains, write_domain,
+			   delta, batch->ptr - batch->map, buffer);
 
    /*
     * Using the old buffer offset, write in what the right data would be, in case

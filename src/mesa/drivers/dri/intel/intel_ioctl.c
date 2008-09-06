@@ -50,66 +50,6 @@
 #define FILE_DEBUG_FLAG DEBUG_IOCTL
 
 int
-intelEmitIrqLocked(intelScreenPrivate *intelScreen)
-{
-   __DRIscreenPrivate *spriv = intelScreen->driScrnPriv;
-   struct drm_i915_irq_emit ie;
-   int ret, seq = 1;
-
-   if (intelScreen->no_hw)
-      return 1;
-
-   /*
-     assert(((*(int *)intelScreen->driHwLock) & ~DRM_LOCK_CONT) ==
-     (DRM_LOCK_HELD|intelScreen->hHWContext));
-   */
-
-   ie.irq_seq = &seq;
-
-   ret = drmCommandWriteRead(spriv->fd, DRM_I915_IRQ_EMIT, &ie, sizeof(ie));
-   if (ret) {
-      fprintf(stderr, "%s: drm_i915_irq_emit: %d\n", __FUNCTION__, ret);
-      exit(1);
-   }
-
-   DBG("%s -->  %d\n", __FUNCTION__, seq);
-
-   return seq;
-}
-
-void
-intelWaitIrq(intelScreenPrivate *intelScreen, int seq)
-{
-   __DRIscreenPrivate *spriv = intelScreen->driScrnPriv;
-   struct drm_i915_irq_wait iw;
-   int ret, lastdispatch;
-   volatile struct drm_i915_sarea *sarea = (struct drm_i915_sarea *)
-      (((GLubyte *) spriv->pSAREA) + intelScreen->sarea_priv_offset);
-
-   if (intelScreen->no_hw)
-      return;
-
-   DBG("%s %d\n", __FUNCTION__, seq);
-
-   iw.irq_seq = seq;
-
-   do {
-      lastdispatch = sarea->last_dispatch;
-      ret = drmCommandWrite(spriv->fd, DRM_I915_IRQ_WAIT, &iw, sizeof(iw));
-   } while (ret == -EAGAIN ||
-	    ret == -EINTR ||
-	    (ret == -EBUSY && lastdispatch != sarea->last_dispatch) ||
-	    (ret == 0 && seq > sarea->last_dispatch) ||
-	    (ret == 0 && sarea->last_dispatch - seq >= (1 << 24)));
-
-   if (ret) {
-      fprintf(stderr, "%s: drm_i915_irq_wait: %d\n", __FUNCTION__, ret);
-      exit(1);
-   }
-}
-
-
-int
 intel_batch_ioctl(struct intel_context *intel,
                   GLuint start_offset,
                   GLuint used,

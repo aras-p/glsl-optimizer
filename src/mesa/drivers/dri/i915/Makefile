@@ -64,6 +64,8 @@ DRIVER_DEFINES = -I../intel -I../intel/server -DI915 \
 	$(shell pkg-config libdrm --atleast-version=2.3.1 \
 				&& echo "-DDRM_VBLANK_FLIP=DRM_VBLANK_FLIP")
 
+DRI_LIB_DEPS += -ldrm_intel
+
 include ../Makefile.template
 
 intel_decode.o: ../intel/intel_decode.c
