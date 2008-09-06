@@ -64,6 +64,11 @@ struct edge {
 
 #if SP_NUM_QUAD_THREADS > 1
 
+/* Set to 1 if you want other threads to be instantly
+ * notified of pending jobs.
+ */
+#define INSTANT_NOTEMPTY_NOTIFY 0
+
 struct thread_info
 {
    struct setup_context *setup;
@@ -90,20 +95,51 @@ struct quad_job_que
    struct quad_job jobs[NUM_QUAD_JOBS];
    uint first;
    uint last;
-   pipe_mutex mutex;
+   pipe_mutex que_mutex;
+   pipe_condvar que_notfull_condvar;
+   pipe_condvar que_notempty_condvar;
+   uint jobs_added;
+   uint jobs_done;
+   pipe_condvar que_done_condvar;
 };
 
 static void
 add_quad_job( struct quad_job_que *que, int x, int y, unsigned mask, struct quad_header *quad, quad_job_routine routine )
 {
-   while ((que->last + 1) % NUM_QUAD_JOBS == que->first)
-      usleep( 10 );
+#if INSTANT_NOTEMPTY_NOTIFY
+   boolean empty;
+#endif
+
+   /* Wait for empty slot, see if the que is empty.
+    */
+   pipe_mutex_lock( que->que_mutex );
+   while ((que->last + 1) % NUM_QUAD_JOBS == que->first) {
+#if !INSTANT_NOTEMPTY_NOTIFY
+      pipe_condvar_broadcast( que->que_notempty_condvar );
+#endif
+      pipe_condvar_wait( que->que_notfull_condvar, que->que_mutex );
+   }
+#if INSTANT_NOTEMPTY_NOTIFY
+   empty = que->last == que->first;
+#endif
+   pipe_mutex_unlock( que->que_mutex );
+
+   /* Submit new job.
+    */
    que->jobs[que->last].x = x;
    que->jobs[que->last].y = y;
    que->jobs[que->last].mask = mask;
    que->jobs[que->last].quad = *quad;
    que->jobs[que->last].routine = routine;
    que->last = (que->last + 1) % NUM_QUAD_JOBS;
+   que->jobs_added++;
+
+#if INSTANT_NOTEMPTY_NOTIFY
+   /* If the que was empty, notify consumers there's a job to be done.
+    */
+   if (empty)
+      pipe_condvar_broadcast( que->que_notempty_condvar );
+#endif
 }
 
 #endif
@@ -137,7 +173,6 @@ struct setup_context {
 #if SP_NUM_QUAD_THREADS > 1
    struct quad_job_que que;
    struct thread_info threads[SP_NUM_QUAD_THREADS];
-   
 #endif
 
    struct {
@@ -161,24 +196,55 @@ struct setup_context {
 static PIPE_THREAD_ROUTINE( quad_thread, param )
 {
    struct thread_info *info = (struct thread_info *) param;
+   struct quad_job_que *que = &info->setup->que;
 
    for (;;) {
-      struct quad_job *job;
+      struct quad_job job;
+      boolean full;
 
-      while (info->setup->que.last == info->setup->que.first)
-         usleep( 10 );
-      pipe_mutex_lock( info->setup->que.mutex );
-      job = &info->setup->que.jobs[info->setup->que.first];
-      info->setup->que.first = (info->setup->que.first + 1) % NUM_QUAD_JOBS;
-      job->routine( info->setup, info->id, job );
-      pipe_mutex_unlock( info->setup->que.mutex );
+      /* Wait for an available job.
+       */
+      pipe_mutex_lock( que->que_mutex );
+      while (que->last == que->first)
+         pipe_condvar_wait( que->que_notempty_condvar, que->que_mutex );
+
+      /* See if the que is full.
+       */
+      full = (que->last + 1) % NUM_QUAD_JOBS == que->first;
+
+      /* Take a job and remove it from que.
+       */
+      job = que->jobs[que->first];
+      que->first = (que->first + 1) % NUM_QUAD_JOBS;
+      pipe_mutex_unlock( que->que_mutex );
+
+      /* Notify the producer if the que is not full.
+       */
+      if (full)
+         pipe_condvar_signal( que->que_notfull_condvar );
+
+      job.routine( info->setup, info->id, &job );
+
+      /* Notify the producer if that's the last finished job.
+       */
+      pipe_mutex_lock( que->que_mutex );
+      que->jobs_done++;
+      if (que->jobs_added == que->jobs_done)
+         pipe_condvar_signal( que->que_done_condvar );
+      pipe_mutex_unlock( que->que_mutex );
    }
+
+   return NULL;
 }
 
 #define WAIT_FOR_COMPLETION(setup) \
    do {\
-      while (setup->que.last != setup->que.first)\
-         usleep( 10 );\
+      if (!INSTANT_NOTEMPTY_NOTIFY)\
+         pipe_condvar_broadcast( setup->que.que_notempty_condvar );\
+      pipe_mutex_lock( setup->que.que_mutex );\
+      while (setup->que.jobs_added != setup->que.jobs_done)\
+         pipe_condvar_wait( setup->que.que_done_condvar, setup->que.que_mutex );\
+      pipe_mutex_unlock( setup->que.que_mutex );\
    } while (0)
 
 #else
@@ -1459,7 +1525,12 @@ struct setup_context *setup_create_context( struct softpipe_context *softpipe )
 #if SP_NUM_QUAD_THREADS > 1
    setup->que.first = 0;
    setup->que.last = 0;
-   pipe_mutex_init( setup->que.mutex );
+   pipe_mutex_init( setup->que.que_mutex );
+   pipe_condvar_init( setup->que.que_notfull_condvar );
+   pipe_condvar_init( setup->que.que_notempty_condvar );
+   setup->que.jobs_added = 0;
+   setup->que.jobs_done = 0;
+   pipe_condvar_init( setup->que.que_done_condvar );
    for (i = 0; i < SP_NUM_QUAD_THREADS; i++) {
       setup->threads[i].setup = setup;
       setup->threads[i].id = i;
