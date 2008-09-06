@@ -17,11 +17,10 @@ alpha_test_quad(struct quad_stage *qs, struct quad_header *quad)
    const float ref = softpipe->depth_stencil->alpha.ref;
    unsigned passMask = 0x0, j;
    const uint cbuf = 0; /* only output[0].alpha is tested */
-   const float *aaaa = quad->outputs.color[cbuf][3];
+   const float *aaaa = quad->output.color[cbuf][3];
 
    switch (softpipe->depth_stencil->alpha.func) {
    case PIPE_FUNC_NEVER:
-      quad->mask = 0x0;
       break;
    case PIPE_FUNC_LESS:
       /*
@@ -76,9 +75,9 @@ alpha_test_quad(struct quad_stage *qs, struct quad_header *quad)
       assert(0);
    }
 
-   quad->mask &= passMask;
+   quad->inout.mask &= passMask;
 
-   if (quad->mask)
+   if (quad->inout.mask)
       qs->next->run(qs->next, quad);
 }
 

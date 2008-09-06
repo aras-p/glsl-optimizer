@@ -59,20 +59,31 @@
  * Encodes everything we need to know about a 2x2 pixel block.  Uses
  * "Channel-Serial" or "SoA" layout.  
  */
-struct quad_header {
+struct quad_header_input
+{
    int x0;
    int y0;
-   unsigned mask:4;
+   float coverage[QUAD_SIZE];    /** fragment coverage for antialiasing */
    unsigned facing:1;   /**< Front (0) or back (1) facing? */
    unsigned prim:2;     /**< PRIM_POINT, LINE, TRI */
+};
 
-   struct {
-      /** colors in SOA format (rrrr, gggg, bbbb, aaaa) */
-      float color[PIPE_MAX_COLOR_BUFS][NUM_CHANNELS][QUAD_SIZE];
-      float depth[QUAD_SIZE];
-   } outputs;
+struct quad_header_inout
+{
+   unsigned mask:4;
+};
 
-   float coverage[QUAD_SIZE];    /** fragment coverage for antialiasing */
+struct quad_header_output
+{
+   /** colors in SOA format (rrrr, gggg, bbbb, aaaa) */
+   float color[PIPE_MAX_COLOR_BUFS][NUM_CHANNELS][QUAD_SIZE];
+   float depth[QUAD_SIZE];
+};
+
+struct quad_header {
+   struct quad_header_input input;
+   struct quad_header_inout inout;
+   struct quad_header_output output;
 
    const struct tgsi_interp_coef *coef;
    const struct tgsi_interp_coef *posCoef;
@@ -80,5 +91,5 @@ struct quad_header {
    unsigned nr_attrs;
 };
 
-
 #endif /* SP_HEADERS_H */
+

@@ -47,19 +47,19 @@ coverage_quad(struct quad_stage *qs, struct quad_header *quad)
 {
    struct softpipe_context *softpipe = qs->softpipe;
 
-   if ((softpipe->rasterizer->poly_smooth && quad->prim == PRIM_TRI) ||
-       (softpipe->rasterizer->line_smooth && quad->prim == PRIM_LINE) ||
-       (softpipe->rasterizer->point_smooth && quad->prim == PRIM_POINT)) {
+   if ((softpipe->rasterizer->poly_smooth && quad->input.prim == PRIM_TRI) ||
+       (softpipe->rasterizer->line_smooth && quad->input.prim == PRIM_LINE) ||
+       (softpipe->rasterizer->point_smooth && quad->input.prim == PRIM_POINT)) {
       uint cbuf;
 
       /* loop over colorbuffer outputs */
       for (cbuf = 0; cbuf < softpipe->framebuffer.num_cbufs; cbuf++) {
-         float (*quadColor)[4] = quad->outputs.color[cbuf];
+         float (*quadColor)[4] = quad->output.color[cbuf];
          unsigned j;
          for (j = 0; j < QUAD_SIZE; j++) {
-            assert(quad->coverage[j] >= 0.0);
-            assert(quad->coverage[j] <= 1.0);
-         quadColor[3][j] *= quad->coverage[j];
+            assert(quad->input.coverage[j] >= 0.0);
+            assert(quad->input.coverage[j] <= 1.0);
+         quadColor[3][j] *= quad->input.coverage[j];
          }
       }
    }
