@@ -82,9 +82,8 @@ typedef void (* quad_job_routine)( struct setup_context *setup, uint thread, str
 
 struct quad_job
 {
-   int x, y;
-   unsigned mask;
-   struct quad_header quad;
+   struct quad_header_input input;
+   struct quad_header_inout inout;
    quad_job_routine routine;
 };
 
@@ -104,7 +103,7 @@ struct quad_job_que
 };
 
 static void
-add_quad_job( struct quad_job_que *que, int x, int y, unsigned mask, struct quad_header *quad, quad_job_routine routine )
+add_quad_job( struct quad_job_que *que, struct quad_header *quad, quad_job_routine routine )
 {
 #if INSTANT_NOTEMPTY_NOTIFY
    boolean empty;
@@ -126,10 +125,8 @@ add_quad_job( struct quad_job_que *que, int x, int y, unsigned mask, struct quad
 
    /* Submit new job.
     */
-   que->jobs[que->last].x = x;
-   que->jobs[que->last].y = y;
-   que->jobs[que->last].mask = mask;
-   que->jobs[que->last].quad = *quad;
+   que->jobs[que->last].input = quad->input;
+   que->jobs[que->last].inout = quad->inout;
    que->jobs[que->last].routine = routine;
    que->last = (que->last + 1) % NUM_QUAD_JOBS;
    que->jobs_added++;
@@ -336,10 +333,17 @@ clip_emit_quad( struct setup_context *setup, struct quad_header *quad, uint thre
 static void
 clip_emit_quad_job( struct setup_context *setup, uint thread, struct quad_job *job )
 {
-   clip_emit_quad( setup, &job->quad, thread );
+   struct quad_header quad;
+
+   quad.input = job->input;
+   quad.inout = job->inout;
+   quad.coef = setup->quad.coef;
+   quad.posCoef = setup->quad.posCoef;
+   quad.nr_attrs = setup->quad.nr_attrs;
+   clip_emit_quad( setup, &quad, thread );
 }
 
-#define CLIP_EMIT_QUAD(setup) add_quad_job( &setup->que, 0, 0, 0, &setup->quad, clip_emit_quad_job )
+#define CLIP_EMIT_QUAD(setup) add_quad_job( &setup->que, &setup->quad, clip_emit_quad_job )
 
 #else
 
@@ -351,13 +355,13 @@ clip_emit_quad_job( struct setup_context *setup, uint thread, struct quad_job *j
  * Emit a quad (pass to next stage).  No clipping is done.
  */
 static INLINE void
-emit_quad( struct setup_context *setup, int x, int y, unsigned mask, struct quad_header *quad, uint thread )
+emit_quad( struct setup_context *setup, struct quad_header *quad, uint thread )
 {
    struct softpipe_context *sp = setup->softpipe;
+#if DEBUG_FRAGS
+   uint mask = quad->inout.mask;
+#endif
 
-   quad->input.x0 = x;
-   quad->input.y0 = y;
-   quad->inout.mask = mask;
 #if DEBUG_FRAGS
    if (mask & 1) setup->numFragsEmitted++;
    if (mask & 2) setup->numFragsEmitted++;
@@ -379,14 +383,31 @@ emit_quad( struct setup_context *setup, int x, int y, unsigned mask, struct quad
 static void
 emit_quad_job( struct setup_context *setup, uint thread, struct quad_job *job )
 {
-   emit_quad( setup, job->x, job->y, job->mask, &job->quad, thread );
+   struct quad_header quad;
+
+   quad.input = job->input;
+   quad.inout = job->inout;
+   quad.coef = setup->quad.coef;
+   quad.posCoef = setup->quad.posCoef;
+   quad.nr_attrs = setup->quad.nr_attrs;
+   emit_quad( setup, &quad, thread );
 }
 
-#define EMIT_QUAD(setup,x,y,mask) add_quad_job( &setup->que, x, y, mask, &setup->quad, emit_quad_job )
+#define EMIT_QUAD(setup,x,y,mask) do {\
+      setup->quad.input.x0 = x;\
+      setup->quad.input.y0 = y;\
+      setup->quad.inout.mask = mask;\
+      add_quad_job( &setup->que, &setup->quad, emit_quad_job );\
+   } while (0)
 
 #else
 
-#define EMIT_QUAD(setup,x,y,mask) emit_quad( setup, x, y, mask, &setup->quad, 0 )
+#define EMIT_QUAD(setup,x,y,mask) do {\
+      setup->quad.input.x0 = x;\
+      setup->quad.input.y0 = y;\
+      setup->quad.inout.mask = mask;\
+      emit_quad( setup, &setup->quad, 0 );\
+   } while (0)
 
 #endif
 
