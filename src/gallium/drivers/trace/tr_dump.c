@@ -228,7 +228,7 @@ boolean trace_dump_trace_begin()
    
    if(!stream) {
    
-      stream = util_stream_create(filename);
+      stream = util_stream_create(filename, 0);
       if(!stream)
          return FALSE;
       
