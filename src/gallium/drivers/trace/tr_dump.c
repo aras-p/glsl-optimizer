@@ -48,12 +48,12 @@
 #include "pipe/p_debug.h"
 #include "util/u_memory.h"
 #include "util/u_string.h"
+#include "util/u_stream.h"
 
-#include "tr_stream.h"
 #include "tr_dump.h"
 
 
-static struct trace_stream *stream = NULL;
+static struct util_stream *stream = NULL;
 static unsigned refcount = 0;
 
 
@@ -61,7 +61,7 @@ static INLINE void
 trace_dump_write(const char *buf, size_t size)
 {
    if(stream)
-      trace_stream_write(stream, buf, size);
+      util_stream_write(stream, buf, size);
 }
 
 
@@ -212,7 +212,7 @@ trace_dump_trace_close(void)
 {
    if(stream) {
       trace_dump_writes("</trace>\n");
-      trace_stream_close(stream);
+      util_stream_close(stream);
       stream = NULL;
       refcount = 0;
    }
@@ -228,7 +228,7 @@ boolean trace_dump_trace_begin()
    
    if(!stream) {
    
-      stream = trace_stream_create(filename);
+      stream = util_stream_create(filename);
       if(!stream)
          return FALSE;
       
@@ -272,7 +272,7 @@ void trace_dump_call_end(void)
    trace_dump_indent(1);
    trace_dump_tag_end("call");
    trace_dump_newline();
-   trace_stream_flush(stream);
+   util_stream_flush(stream);
 }
 
 void trace_dump_arg_begin(const char *name)
