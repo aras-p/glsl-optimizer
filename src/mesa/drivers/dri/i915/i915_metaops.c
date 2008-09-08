@@ -33,7 +33,6 @@
 
 #include "intel_screen.h"
 #include "intel_batchbuffer.h"
-#include "intel_ioctl.h"
 #include "intel_regions.h"
 
 #include "i915_context.h"

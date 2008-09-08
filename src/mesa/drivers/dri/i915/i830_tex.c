@@ -38,8 +38,6 @@
 
 #include "mm.h"
 
-#include "intel_ioctl.h"
-
 #include "i830_context.h"
 #include "i830_reg.h"
 

@@ -29,7 +29,6 @@
 #define INTEL_BLIT_H
 
 #include "intel_context.h"
-#include "intel_ioctl.h"
 
 extern void intelCopyBuffer(const __DRIdrawablePrivate * dpriv,
                             const drm_clip_rect_t * rect);

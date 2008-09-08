@@ -51,7 +51,6 @@
 #include "intel_chipset.h"
 #include "intel_buffers.h"
 #include "intel_tex.h"
-#include "intel_ioctl.h"
 #include "intel_batchbuffer.h"
 #include "intel_blit.h"
 #include "intel_pixel.h"

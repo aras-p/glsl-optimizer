@@ -25,8 +25,8 @@
  * 
  **************************************************************************/
 
+#include "intel_context.h"
 #include "intel_batchbuffer.h"
-#include "intel_ioctl.h"
 #include "intel_decode.h"
 #include "intel_reg.h"
 #include "intel_bufmgr.h"
@@ -148,27 +148,14 @@ do_flush_locked(struct intel_batchbuffer *batch,
     */
 
    if (!(intel->numClipRects == 0 &&
-	 batch->cliprect_mode == LOOP_CLIPRECTS)) {
-      if (intel->ttm == GL_TRUE) {
-	 struct drm_i915_gem_execbuffer *execbuf;
-
-	 execbuf = dri_process_relocs(batch->buf);
-	 ret = intel_exec_ioctl(batch->intel,
-				used,
-				batch->cliprect_mode != LOOP_CLIPRECTS,
-				allow_unlock,
-				execbuf);
-      } else {
-	 dri_process_relocs(batch->buf);
-	 ret = intel_batch_ioctl(batch->intel,
-				 batch->buf->offset,
-				 used,
-				 batch->cliprect_mode != LOOP_CLIPRECTS,
-				 allow_unlock);
-      }
+	 batch->cliprect_mode == LOOP_CLIPRECTS) || intel->no_hw) {
+      dri_bo_exec(batch->buf, used,
+		  intel->pClipRects,
+		  batch->cliprect_mode != LOOP_CLIPRECTS ?
+		  0 : intel->numClipRects,
+		  (((GLuint) intel->drawX) & 0xffff) |
+		  (((GLuint) intel->drawY) << 16));
    }
-
-   dri_post_submit(batch->buf);
 
    if (intel->numClipRects == 0 &&
        batch->cliprect_mode == LOOP_CLIPRECTS) {

@@ -39,7 +39,6 @@
 #include "brw_state.h"
 #include "brw_fallback.h"
 
-#include "intel_ioctl.h"
 #include "intel_batchbuffer.h"
 #include "intel_buffer_objects.h"
 

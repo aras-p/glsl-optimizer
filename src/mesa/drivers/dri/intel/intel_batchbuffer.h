@@ -3,10 +3,9 @@
 
 #include "mtypes.h"
 
+#include "intel_context.h"
 #include "intel_bufmgr.h"
 #include "intel_reg.h"
-
-struct intel_context;
 
 #define BATCH_SZ 16384
 #define BATCH_RESERVED 16
