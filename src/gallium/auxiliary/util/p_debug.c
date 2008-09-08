@@ -55,7 +55,11 @@
 #include "pipe/p_format.h" 
 #include "pipe/p_state.h" 
 #include "pipe/p_inlines.h" 
+#include "util/u_memory.h" 
 #include "util/u_string.h" 
+#include "util/u_stream.h" 
+#include "util/u_math.h" 
+#include "util/u_tile.h" 
 
 
 #ifdef PIPE_SUBSYSTEM_WINDOWS_DISPLAY
@@ -584,4 +588,109 @@ error2:
 error1:
    ;
 }
+
+
+#pragma pack(push,2)
+struct bmp_file_header {
+   uint16_t bfType;
+   uint32_t bfSize;
+   uint16_t bfReserved1;
+   uint16_t bfReserved2;
+   uint32_t bfOffBits;
+};
+#pragma pack(pop)
+
+struct bmp_info_header {
+   uint32_t biSize;
+   int32_t biWidth;
+   int32_t biHeight;
+   uint16_t biPlanes;
+   uint16_t biBitCount;
+   uint32_t biCompression;
+   uint32_t biSizeImage;
+   int32_t biXPelsPerMeter;
+   int32_t biYPelsPerMeter;
+   uint32_t biClrUsed;
+   uint32_t biClrImportant;
+};
+
+struct bmp_rgb_quad {
+   uint8_t rgbBlue;
+   uint8_t rgbGreen;
+   uint8_t rgbRed;
+   uint8_t rgbAlpha;
+};
+
+void 
+debug_dump_surface_bmp(const char *filename,
+                       struct pipe_surface *surface)
+{
+   struct util_stream *stream;
+   unsigned surface_usage;
+   struct bmp_file_header bmfh;
+   struct bmp_info_header bmih;
+   float *rgba;
+   unsigned x, y;
+
+   if (!surface)
+      goto error1;
+
+   rgba = MALLOC(surface->width*4*sizeof(float));
+   if(!rgba)
+      goto error1;
+   
+   bmfh.bfType = 0x4d42;
+   bmfh.bfSize = 14 + 40 + surface->height*surface->width*4;
+   bmfh.bfReserved1 = 0;
+   bmfh.bfReserved2 = 0;
+   bmfh.bfOffBits = 14 + 40;
+   
+   bmih.biSize = 40;
+   bmih.biWidth = surface->width;
+   bmih.biHeight = surface->height;
+   bmih.biPlanes = 1;
+   bmih.biBitCount = 32;
+   bmih.biCompression = 0;
+   bmih.biSizeImage = surface->height*surface->width*4;
+   bmih.biXPelsPerMeter = 0;
+   bmih.biYPelsPerMeter = 0;
+   bmih.biClrUsed = 0;
+   bmih.biClrImportant = 0;
+   
+   stream = util_stream_create(filename);
+   if(!stream)
+      goto error2;
+   
+   util_stream_write(stream, &bmfh, 14);
+   util_stream_write(stream, &bmih, 40);
+   
+   /* XXX: force mappable surface */
+   surface_usage = surface->usage;
+   surface->usage |= PIPE_BUFFER_USAGE_CPU_READ;
+
+   y = surface->height;
+   while(y--) {
+      pipe_get_tile_rgba(surface,
+                         0, y, surface->width, 1,
+                         rgba);
+      for(x = 0; x < surface->width; ++x)
+      {
+         struct bmp_rgb_quad pixel;
+         pixel.rgbRed   = float_to_ubyte(rgba[x*4 + 0]);
+         pixel.rgbGreen = float_to_ubyte(rgba[x*4 + 1]);
+         pixel.rgbBlue  = float_to_ubyte(rgba[x*4 + 2]);
+         pixel.rgbAlpha = float_to_ubyte(rgba[x*4 + 3]);
+         util_stream_write(stream, &pixel, 4);
+      }  
+   }
+   
+   surface->usage = surface_usage;
+
+   util_stream_close(stream);
+error2:
+   FREE(rgba);
+error1:
+   ;
+}
+
 #endif
