@@ -40,8 +40,13 @@
 struct util_stream;
 
 
+/**
+ * Create a stream
+ * @param filename relative or absolute path (necessary for windows)  
+ * @param optional maximum file size (0 for a growable size).
+ */
 struct util_stream *
-util_stream_create(const char *filename);
+util_stream_create(const char *filename, size_t max_size);
 
 boolean
 util_stream_write(struct util_stream *stream, const void *data, size_t size);

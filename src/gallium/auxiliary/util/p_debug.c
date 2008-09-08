@@ -657,7 +657,7 @@ debug_dump_surface_bmp(const char *filename,
    bmih.biClrUsed = 0;
    bmih.biClrImportant = 0;
    
-   stream = util_stream_create(filename);
+   stream = util_stream_create(filename, bmfh.bfSize);
    if(!stream)
       goto error2;
    

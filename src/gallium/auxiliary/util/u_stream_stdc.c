@@ -48,9 +48,11 @@ struct util_stream
 
 
 struct util_stream *
-util_stream_create(const char *filename)
+util_stream_create(const char *filename, size_t max_size)
 {
    struct util_stream *stream;
+   
+   (void)max_size;
    
    stream = CALLOC_STRUCT(util_stream);
    if(!stream)
