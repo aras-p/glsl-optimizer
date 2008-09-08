@@ -150,14 +150,13 @@ def symlink(target, source, env):
 def install_shared_library(env, source, version = ()):
     source = str(source[0])
     version = tuple(map(str, version))
-    target_dir = os.path.join(env['build'], 'lib')
+    target_dir =  os.path.join(env.Dir('#.').srcnode().abspath, env['build'], 'lib')
     target_name = '.'.join((str(source),) + version)
     last = env.InstallAs(os.path.join(target_dir, target_name), source)
     while len(version):
         version = version[:-1]
         target_name = '.'.join((str(source),) + version)
         action = SCons.Action.Action(symlink, "$TARGET -> $SOURCE")
-        print os.path.join(target_dir, target_name), last
         last = env.Command(os.path.join(target_dir, target_name), last, action) 
 
 def createInstallMethods(env):
