@@ -252,12 +252,17 @@ cmd_state_framebuffer(const struct cell_command_framebuffer *cmd)
 
    switch (spu.fb.depth_format) {
    case PIPE_FORMAT_Z32_UNORM:
+      spu.fb.zsize = 4;
+      spu.fb.zscale = (float) 0xffffffffu;
+      break;
    case PIPE_FORMAT_Z24S8_UNORM:
    case PIPE_FORMAT_S8Z24_UNORM:
       spu.fb.zsize = 4;
+      spu.fb.zscale = (float) 0x00ffffffu;
       break;
    case PIPE_FORMAT_Z16_UNORM:
       spu.fb.zsize = 2;
+      spu.fb.zscale = (float) 0xffffu;
       break;
    default:
       spu.fb.zsize = 0;

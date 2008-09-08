@@ -144,18 +144,22 @@ write_ds_quad(tile_t *buffer, unsigned x, unsigned y,
 
    case PIPE_FORMAT_Z24S8_UNORM: {
       qword *ptr = (qword *) &buffer->ui4[iy][ix];
+      /* form select mask = 1110,1110,1110,1110 */
       qword mask = si_fsmbi(0xEEEE);
-
+      /* depth[i] = depth[i] << 8 */
       depth = si_shli(depth, 8);
+      /* *ptr[i] = depth[i][31:8] | stencil[i][7:0] */
       *ptr = si_selb(stencil, depth, mask);
       break;
    }
 
    case PIPE_FORMAT_S8Z24_UNORM: {
       qword *ptr = (qword *) &buffer->ui4[iy][ix];
+      /* form select mask = 0111,0111,0111,0111 */
       qword mask = si_fsmbi(0x7777);
-
+      /* stencil[i] = stencil[i] << 24 */
       stencil = si_shli(stencil, 24);
+      /* *ptr[i] = stencil[i][31:24] | depth[i][23:0] */
       *ptr = si_selb(stencil, depth, mask);
       break;
    }
@@ -191,25 +195,13 @@ spu_do_depth_stencil(int x, int y,
       read_ds_quad(&spu.ztile, x, y, spu.fb.depth_format,
                    &pixel_depth, &pixel_stencil);
    }
-   
-   switch (spu.fb.depth_format) {
-   case PIPE_FORMAT_Z16_UNORM:
-      frag_depth = si_fm(frag_depth, (qword)spu_splats((float)(0x0000ffffu)));
-      frag_depth = si_cfltu(frag_depth, 0);
-      break;
-   case PIPE_FORMAT_Z32_UNORM:
-      frag_depth = si_fm(frag_depth, (qword)spu_splats((float)(0xffffffffu)));
-      frag_depth = si_cfltu(frag_depth, 0);
-      break;
-   case PIPE_FORMAT_Z24S8_UNORM:
-   case PIPE_FORMAT_S8Z24_UNORM:
-      frag_depth = si_fm(frag_depth, (qword)spu_splats((float)(0x00ffffffu)));
-      frag_depth = si_cfltu(frag_depth, 0);
-      break;
-   default:
-      ASSERT(0);
-      break;
-   }
+
+   /* convert floating point Z values to 32-bit uint */
+
+   /* frag_depth *= spu.fb.zscale */
+   frag_depth = si_fm(frag_depth, (qword)spu_splats(spu.fb.zscale));
+   /* frag_depth = uint(frag_depth) */
+   frag_depth = si_cfltu(frag_depth, 0);
 
    result = (*spu.frag_test)(frag_mask, pixel_depth, pixel_stencil,
                              frag_depth, frag_alpha, facing);

@@ -41,6 +41,10 @@
 #define MAX_HEIGHT 1024
 
 
+/**
+ * A tile is basically a TILE_SIZE x TILE_SIZE block of 4-byte pixels.
+ * The data may be addressed through several different types.
+ */
 typedef union {
    ushort us[TILE_SIZE][TILE_SIZE];
    uint   ui[TILE_SIZE][TILE_SIZE];
@@ -99,6 +103,7 @@ struct spu_framebuffer {
    uint depth_clear_value;
 
    uint zsize;                     /**< 0, 2 or 4 bytes per Z */
+   float zscale;                   /**< 65535.0, 2^24-1 or 2^32-1 */
 } ALIGN16_ATTRIB;
 
 
