@@ -209,7 +209,7 @@ clip_emit_quad(struct setup_stage *setup)
 /**
  * Evaluate attribute coefficients (plane equations) to compute
  * attribute values for the four fragments in a quad.
- * Eg: four colors will be compute.
+ * Eg: four colors will be computed (in AoS format).
  */
 static INLINE void
 eval_coeff(uint slot, float x, float y, vector float result[4])
@@ -356,6 +356,7 @@ emit_quad( int x, int y, mask_t mask )
 
 
       /* Convert fragment data from AoS to SoA format.
+       * I.e. (RGBA,RGBA,RGBA,RGBA) -> (RRRR,GGGG,BBBB,AAAA)
        */
       qword soa_frag[4];
       _transpose_matrix4x4((vec_float4 *) soa_frag, colors);
@@ -373,6 +374,7 @@ emit_quad( int x, int y, mask_t mask )
 
       if (spu.read_fb) {
          /* Convert pixel data from AoS to SoA format.
+          * I.e. (RGBA,RGBA,RGBA,RGBA) -> (RRRR,GGGG,BBBB,AAAA)
           */
          vec_float4 aos_pix[4] = {
             spu_unpack_A8R8G8B8(spu.ctile.ui[iy+0][ix+0]),
@@ -393,6 +395,7 @@ emit_quad( int x, int y, mask_t mask )
 
 
       /* Convert final pixel data from SoA to AoS format.
+       * I.e. (RRRR,GGGG,BBBB,AAAA) -> (RGBA,RGBA,RGBA,RGBA)
        */
       result = (*spu.logicop)(pix[0], pix[1], pix[2], pix[3],
                               result.r, result.g, result.b, result.a,
