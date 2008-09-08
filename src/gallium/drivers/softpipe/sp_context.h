@@ -48,7 +48,7 @@
 /* Number of threads working on individual quads.
  * Setting to 1 disables this feature.
  */
-#define SP_NUM_QUAD_THREADS 2
+#define SP_NUM_QUAD_THREADS 1
 
 struct softpipe_winsys;
 struct softpipe_vbuf_render;
