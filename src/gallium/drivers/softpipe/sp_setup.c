@@ -121,6 +121,7 @@ add_quad_job( struct quad_job_que *que, struct quad_header *quad, quad_job_routi
 #if INSTANT_NOTEMPTY_NOTIFY
    empty = que->last == que->first;
 #endif
+   que->jobs_added++;
    pipe_mutex_unlock( que->que_mutex );
 
    /* Submit new job.
@@ -129,13 +130,15 @@ add_quad_job( struct quad_job_que *que, struct quad_header *quad, quad_job_routi
    que->jobs[que->last].inout = quad->inout;
    que->jobs[que->last].routine = routine;
    que->last = (que->last + 1) % NUM_QUAD_JOBS;
-   que->jobs_added++;
 
 #if INSTANT_NOTEMPTY_NOTIFY
    /* If the que was empty, notify consumers there's a job to be done.
     */
-   if (empty)
+   if (empty) {
+      pipe_mutex_lock( que->que_mutex );
       pipe_condvar_broadcast( que->que_notempty_condvar );
+      pipe_mutex_unlock( que->que_mutex );
+   }
 #endif
 }
 
@@ -213,12 +216,12 @@ static PIPE_THREAD_ROUTINE( quad_thread, param )
        */
       job = que->jobs[que->first];
       que->first = (que->first + 1) % NUM_QUAD_JOBS;
-      pipe_mutex_unlock( que->que_mutex );
 
       /* Notify the producer if the que is not full.
        */
       if (full)
          pipe_condvar_signal( que->que_notfull_condvar );
+      pipe_mutex_unlock( que->que_mutex );
 
       job.routine( info->setup, info->id, &job );
 
@@ -236,9 +239,9 @@ static PIPE_THREAD_ROUTINE( quad_thread, param )
 
 #define WAIT_FOR_COMPLETION(setup) \
    do {\
+      pipe_mutex_lock( setup->que.que_mutex );\
       if (!INSTANT_NOTEMPTY_NOTIFY)\
          pipe_condvar_broadcast( setup->que.que_notempty_condvar );\
-      pipe_mutex_lock( setup->que.que_mutex );\
       while (setup->que.jobs_added != setup->que.jobs_done)\
          pipe_condvar_wait( setup->que.que_done_condvar, setup->que.que_mutex );\
       pipe_mutex_unlock( setup->que.que_mutex );\
