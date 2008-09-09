@@ -49,6 +49,8 @@ int vlPutPicture
 	int desty,
 	int destw,
 	int desth,
+	int drawable_w,
+	int drawable_h,
 	enum vlPictureType picture_type
 );
 

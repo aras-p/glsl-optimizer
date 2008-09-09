@@ -266,7 +266,7 @@ Status XvMCPutSurface
 
 	vl_sfc = surface->privData;
 
-	vlPutPicture(vl_sfc, drawable, srcx, srcy, srcw, srch, destx, desty, destw, desth, PictureToVL(flags));
+	vlPutPicture(vl_sfc, drawable, srcx, srcy, srcw, srch, destx, desty, destw, desth, width, height, PictureToVL(flags));
 
 	return Success;
 }
