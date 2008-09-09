@@ -69,13 +69,13 @@ util_stream_map(struct util_stream *stream)
    if(stream->growable)
       filename_len = util_snprintf(filename,
                                    sizeof(filename),
-                                   "\\??\\%s.%04x",
+                                   "%s.%04x",
                                    stream->filename,
                                    stream->suffix++);
    else
       filename_len = util_snprintf(filename,
                                    sizeof(filename),
-                                   "\\??\\%s",
+                                   "%s",
                                    stream->filename);
 
    EngMultiByteToUnicodeN(
@@ -111,6 +111,28 @@ util_stream_unmap(struct util_stream *stream)
 }
 
 
+static INLINE void
+util_stream_full_qualified_filename(char *dst, size_t size, const char *src)
+{
+   boolean need_drive, need_root;
+   
+   if((('A' <= src[0] && src[0] <= 'Z') || ('a' <= src[0] && src[0] <= 'z')) && src[1] == ':') {
+      need_drive = FALSE;
+      need_root = src[2] == '\\' ? FALSE : TRUE;
+   }
+   else {
+      need_drive = TRUE;
+      need_root = src[0] == '\\' ? FALSE : TRUE;
+   }
+   
+   util_snprintf(dst, size, 
+                 "\\??\\%s%s%s",
+                 need_drive ? "C:" : "",
+                 need_root ? "\\" : "",
+                 src);
+}
+
+
 struct util_stream *
 util_stream_create(const char *filename, size_t max_size)
 {
@@ -120,7 +142,9 @@ util_stream_create(const char *filename, size_t max_size)
    if(!stream)
       goto error1;
    
-   strncpy(stream->filename, filename, sizeof(stream->filename));
+   util_stream_full_qualified_filename(stream->filename,
+                                       sizeof(stream->filename),
+                                       filename);
    
    if(max_size) {
       stream->growable = FALSE;
