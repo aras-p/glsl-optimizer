@@ -1539,7 +1539,9 @@ void setup_destroy_context( struct setup_context *setup )
 struct setup_context *setup_create_context( struct softpipe_context *softpipe )
 {
    struct setup_context *setup = CALLOC_STRUCT(setup_context);
+#if SP_NUM_QUAD_THREADS > 1
    uint i;
+#endif
 
    setup->softpipe = softpipe;
 
