@@ -32,7 +32,7 @@
 
 #include "pipe/p_config.h"
 
-#if defined(PIPE_OS_LINUX)
+#if defined(PIPE_OS_LINUX) || defined(PIPE_SUBSYSTEM_WINDOWS_USER)
 
 #include <stdio.h>
 
