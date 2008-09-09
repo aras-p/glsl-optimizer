@@ -34,15 +34,16 @@ LIBS		+= -ldriclient -ldrm -lnv10 -lnv30 -lnv40 -lnv50 -ldraw -ltgsi -ltranslate
 
 #############################################
 
-.PHONY	= all clean
+.PHONY	= all clean libdriclient
 
 all: ${TARGET}
 
-${TARGET}: ${OBJECTS}
+${TARGET}: ${OBJECTS} libdriclient
+	$(CC) ${LDFLAGS} -shared -o $@ ${OBJECTS} ${LIBS}
+
+libdriclient:
 	cd ${DRIDIR}/src; ${MAKE}
-	$(CC) ${LDFLAGS} -shared -o $@ $^ ${LIBS}
 
 clean:
 	cd ${DRIDIR}/src; ${MAKE} clean
 	rm -rf ${OBJECTS} ${TARGET}
-

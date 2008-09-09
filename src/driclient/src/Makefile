@@ -8,16 +8,12 @@ CFLAGS		+= -g -Wall -fPIC -I../include -I${DRMDIR}/include -I${DRMDIR}/include/d
 
 .PHONY	= all clean
 
-all: ${TARGET} test
+all: ${TARGET}
 
 ${TARGET}: ${OBJECTS}
 	ar rcs $@ $^
 	if ! test -d ../lib; then mkdir ../lib; fi
 	cp ${TARGET} ../lib
 
-test: test.o
-	$(CC) -L../lib -L${DRMDIR}/lib ${LDFLAGS} -o $@ $^ -ldriclient -lX11 -lXext -ldrm
-
 clean:
-	rm -rf ${OBJECTS} ${TARGET} ../lib/${TARGET} test test.o
-
+	rm -rf ${OBJECTS} ${TARGET} ../lib/${TARGET}
