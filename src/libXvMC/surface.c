@@ -201,7 +201,7 @@ Status XvMCFlushSurface(Display *display, XvMCSurface *surface)
 
 	assert(display == vlGetNativeDisplay(vlGetDisplay(vlSurfaceGetScreen(vl_sfc))));
 
-	/* TODO */
+	vlSurfaceFlush(vl_sfc);
 
 	return Success;
 }
@@ -219,7 +219,7 @@ Status XvMCSyncSurface(Display *display, XvMCSurface *surface)
 
 	assert(display == vlGetNativeDisplay(vlGetDisplay(vlSurfaceGetScreen(vl_sfc))));
 
-	/* TODO */
+	vlSurfaceSync(vl_sfc);
 
 	return Success;
 }
@@ -273,7 +273,8 @@ Status XvMCPutSurface
 
 Status XvMCGetSurfaceStatus(Display *display, XvMCSurface *surface, int *status)
 {
-	struct vlSurface *vl_sfc;
+	struct vlSurface	*vl_sfc;
+	enum vlResourceStatus	res_status;
 
 	assert(display);
 
@@ -286,8 +287,28 @@ Status XvMCGetSurfaceStatus(Display *display, XvMCSurface *surface, int *status)
 
 	assert(display == vlGetNativeDisplay(vlGetDisplay(vlSurfaceGetScreen(vl_sfc))));
 
-	/* TODO */
-	*status = 0;
+	vlSurfaceGetStatus(vl_sfc, &res_status);
+
+	switch (res_status)
+	{
+		case vlResourceStatusFree:
+		{
+			*status = 0;
+			break;
+		}
+		case vlResourceStatusRendering:
+		{
+			*status = XVMC_RENDERING;
+			break;
+		}
+		case vlResourceStatusDisplaying:
+		{
+			*status = XVMC_DISPLAYING;
+			break;
+		}
+		default:
+			assert(0);
+	}
 
 	return Success;
 }

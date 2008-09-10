@@ -591,6 +591,10 @@ static int vlFlush
 	assert(render);
 
 	mc = (struct vlR16SnormBufferedMC*)render;
+
+	if (!mc->buffered_surface)
+		return 0;
+
 	pipe = mc->pipe;
 
 	for (i = 0; i < mc->num_macroblocks; ++i)
@@ -736,8 +740,12 @@ static int vlFlush
 		vb_start += num_macroblocks[vlMacroBlockExTypeBiPredictedField] * 24;
 	}
 
+	pipe->flush(pipe, PIPE_FLUSH_RENDER_CACHE, &mc->buffered_surface->render_fence);
+
 	for (i = 0; i < 3; ++i)
 		mc->zero_block[i].x = -1.0f;
+
+	mc->buffered_surface = NULL;
 	mc->num_macroblocks = 0;
 	mc->cur_buf++;
 
@@ -760,12 +768,7 @@ static int vlRenderMacroBlocksMpeg2R16SnormBuffered
 
 	if (mc->buffered_surface)
 	{
-		if
-		(
-			mc->buffered_surface != surface /*||
-			mc->past_surface != batch->past_surface ||
-			mc->future_surface != batch->future_surface*/
-		)
+		if (mc->buffered_surface != surface)
 		{
 			vlFlush(&mc->base);
 			mc->buffered_surface = surface;
@@ -1027,7 +1030,6 @@ static int vlCreateFragmentShaderIMB
 		inst.FullSrcRegisters[0].SrcRegister.SwizzleZ = TGSI_SWIZZLE_X;
 		inst.FullDstRegisters[0].DstRegister.WriteMask = TGSI_WRITEMASK_X << i;
 		ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
-
 	}
 
 	/* mul o0, t0, c0		; Rescale texel to correct range */
@@ -1323,7 +1325,6 @@ static int vlCreateFragmentShaderFramePMB
 		inst.FullSrcRegisters[0].SrcRegister.SwizzleZ = TGSI_SWIZZLE_X;
 		inst.FullDstRegisters[0].DstRegister.WriteMask = TGSI_WRITEMASK_X << i;
 		ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
-
 	}
 
 	/* mul t0, t0, c0		; Rescale texel to correct range */
@@ -1442,7 +1443,6 @@ static int vlCreateFragmentShaderFieldPMB
 		inst.FullSrcRegisters[0].SrcRegister.SwizzleZ = TGSI_SWIZZLE_X;
 		inst.FullDstRegisters[0].DstRegister.WriteMask = TGSI_WRITEMASK_X << i;
 		ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
-
 	}
 
 	/* mul t0, t0, c0		; Rescale texel to correct range */
@@ -1818,7 +1818,6 @@ static int vlCreateFragmentShaderFrameBMB
 		inst.FullSrcRegisters[0].SrcRegister.SwizzleZ = TGSI_SWIZZLE_X;
 		inst.FullDstRegisters[0].DstRegister.WriteMask = TGSI_WRITEMASK_X << i;
 		ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
-
 	}
 
 	/* mul t0, t0, c0		; Rescale texel to correct range */
@@ -1955,7 +1954,6 @@ static int vlCreateFragmentShaderFieldBMB
 		inst.FullSrcRegisters[0].SrcRegister.SwizzleZ = TGSI_SWIZZLE_X;
 		inst.FullDstRegisters[0].DstRegister.WriteMask = TGSI_WRITEMASK_X << i;
 		ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
-
 	}
 
 	/* mul t0, t0, c0		; Rescale texel to correct range */
