@@ -25,6 +25,7 @@
 /**
  * \file
  * Real-time assembly generation interface for Cell B.E. SPEs.
+ * For details, see /opt/cell/sdk/docs/arch/SPU_ISA_v1.2_27Jan2007_pub.pdf
  *
  * \author Ian Romanick <idr@us.ibm.com>
  */
@@ -38,11 +39,18 @@
 /** number of general-purpose SIMD registers */
 #define SPE_NUM_REGS  128
 
+/** Return Address register */
+#define SPE_REG_RA  0
+
+/** Stack Pointer register */
+#define SPE_REG_SP  1
+
+
 struct spe_function
 {
-    uint32_t *store;  /**< instruction buffer */
-    uint32_t *csr;    /**< next free pos in instruction buffer */
-    const char *fn;   /**< unused */
+   uint32_t *store;  /**< instruction buffer */
+   uint num_inst;
+   uint max_inst;
 
     /**
      * Mask of used / unused registers
@@ -123,7 +131,8 @@ EMIT_RI16(spe_ilhu,  0x082);
 EMIT_RI16(spe_il,    0x081);
 EMIT_RI18(spe_ila,   0x021);
 EMIT_RI16(spe_iohl,  0x0c1);
-EMIT_RI16(spe_fsmbi, 0x0c5);
+EMIT_RI16(spe_fsmbi, 0x065);
+
 
 
 /* Integer and logical instructions
@@ -273,6 +282,27 @@ extern void spe_bihz(struct spe_function *p, unsigned rT, unsigned rA,
     int d, int e);
 extern void spe_bihnz(struct spe_function *p, unsigned rT, unsigned rA,
     int d, int e);
+
+
+/** Load/splat immediate float into rT. */
+extern void
+spe_load_float(struct spe_function *p, unsigned rT, float x);
+
+/** Load/splat immediate int into rT. */
+extern void
+spe_load_int(struct spe_function *p, unsigned rT, int i);
+
+/** Complement/invert all bits in rT. */
+extern void
+spe_complement(struct spe_function *p, unsigned rT);
+
+/** rT = rA. */
+extern void
+spe_move(struct spe_function *p, unsigned rT, unsigned rA);
+
+/** rT = {0,0,0,0}. */
+extern void
+spe_zero(struct spe_function *p, unsigned rT);
 
 
 /* Floating-point instructions

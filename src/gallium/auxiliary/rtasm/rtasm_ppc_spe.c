@@ -151,8 +151,8 @@ static void emit_RR(struct spe_function *p, unsigned op, unsigned rT,
     inst.inst.rB = rB;
     inst.inst.rA = rA;
     inst.inst.rT = rT;
-    *p->csr = inst.bits;
-    p->csr++;
+    p->store[p->num_inst++] = inst.bits;
+    assert(p->num_inst <= p->max_inst);
 }
 
 
@@ -165,8 +165,8 @@ static void emit_RRR(struct spe_function *p, unsigned op, unsigned rT,
     inst.inst.rB = rB;
     inst.inst.rA = rA;
     inst.inst.rC = rC;
-    *p->csr = inst.bits;
-    p->csr++;
+    p->store[p->num_inst++] = inst.bits;
+    assert(p->num_inst <= p->max_inst);
 }
 
 
@@ -178,8 +178,8 @@ static void emit_RI7(struct spe_function *p, unsigned op, unsigned rT,
     inst.inst.i7 = imm;
     inst.inst.rA = rA;
     inst.inst.rT = rT;
-    *p->csr = inst.bits;
-    p->csr++;
+    p->store[p->num_inst++] = inst.bits;
+    assert(p->num_inst <= p->max_inst);
 }
 
 
@@ -192,8 +192,8 @@ static void emit_RI8(struct spe_function *p, unsigned op, unsigned rT,
     inst.inst.i8 = imm;
     inst.inst.rA = rA;
     inst.inst.rT = rT;
-    *p->csr = inst.bits;
-    p->csr++;
+    p->store[p->num_inst++] = inst.bits;
+    assert(p->num_inst <= p->max_inst);
 }
 
 
@@ -206,8 +206,8 @@ static void emit_RI10(struct spe_function *p, unsigned op, unsigned rT,
     inst.inst.i10 = imm;
     inst.inst.rA = rA;
     inst.inst.rT = rT;
-    *p->csr = inst.bits;
-    p->csr++;
+    p->store[p->num_inst++] = inst.bits;
+    assert(p->num_inst <= p->max_inst);
 }
 
 
@@ -218,8 +218,8 @@ static void emit_RI16(struct spe_function *p, unsigned op, unsigned rT,
     inst.inst.op = op;
     inst.inst.i16 = imm;
     inst.inst.rT = rT;
-    *p->csr = inst.bits;
-    p->csr++;
+    p->store[p->num_inst++] = inst.bits;
+    assert(p->num_inst <= p->max_inst);
 }
 
 
@@ -230,8 +230,8 @@ static void emit_RI18(struct spe_function *p, unsigned op, unsigned rT,
     inst.inst.op = op;
     inst.inst.i18 = imm;
     inst.inst.rT = rT;
-    *p->csr = inst.bits;
-    p->csr++;
+    p->store[p->num_inst++] = inst.bits;
+    assert(p->num_inst <= p->max_inst);
 }
 
 
@@ -307,8 +307,9 @@ void _name (struct spe_function *p, int imm) \
 void spe_init_func(struct spe_function *p, unsigned code_size)
 {
     p->store = align_malloc(code_size, 16);
-    p->csr = p->store;
-    
+    p->num_inst = 0;
+    p->max_inst = code_size / SPE_INST_SIZE;
+
     /* Conservatively treat R0 - R2 and R80 - R127 as non-volatile.
      */
     p->regs[0] = ~7;
@@ -318,11 +319,11 @@ void spe_init_func(struct spe_function *p, unsigned code_size)
 
 void spe_release_func(struct spe_function *p)
 {
+    assert(p->num_inst <= p->max_inst);
     if (p->store != NULL) {
         align_free(p->store);
     }
     p->store = NULL;
-    p->csr = NULL;
 }
 
 
@@ -337,6 +338,7 @@ int spe_allocate_available_register(struct spe_function *p)
       const uint64_t mask = (1ULL << (i % 64));
       const unsigned idx = i / 64;
 
+      assert(idx < 2);
       if ((p->regs[idx] & mask) != 0) {
          p->regs[idx] &= ~mask;
          return i;
@@ -370,6 +372,8 @@ void spe_release_register(struct spe_function *p, int reg)
 {
    const unsigned idx = reg / 64;
    const unsigned bit = reg % 64;
+
+   assert(idx < 2);
 
    assert(reg < SPE_NUM_REGS);
    assert((p->regs[idx] & (1ULL << bit)) == 0);
@@ -457,5 +461,55 @@ EMIT_    (spe_dsync, 0x003);
 EMIT_R   (spe_mfspr, 0x00c);
 EMIT_R   (spe_mtspr, 0x10c);
 #endif
+
+
+/**
+ ** Helper / "macro" instructions.
+ ** Use somewhat verbose names as a reminder that these aren't native
+ ** SPE instructions.
+ **/
+
+
+void
+spe_load_float(struct spe_function *p, unsigned rT, float x)
+{
+   union {
+      float f;
+      unsigned u;
+   } bits;
+   bits.f = x;
+   spe_ilhu(p, rT, bits.u >> 16);
+   spe_iohl(p, rT, bits.u & 0xffff);
+}
+
+
+void
+spe_load_int(struct spe_function *p, unsigned rT, int i)
+{
+   spe_ilhu(p, rT, i >> 16);
+   spe_iohl(p, rT, i & 0xffff);
+}
+
+
+void
+spe_complement(struct spe_function *p, unsigned rT)
+{
+   spe_nor(p, rT, rT, rT);
+}
+
+
+void
+spe_move(struct spe_function *p, unsigned rT, unsigned rA)
+{
+   spe_ori(p, rT, rA, 0);
+}
+
+
+void
+spe_zero(struct spe_function *p, unsigned rT)
+{
+   spe_xor(p, rT, rT, rT);
+}
+
 
 #endif /* GALLIUM_CELL */
