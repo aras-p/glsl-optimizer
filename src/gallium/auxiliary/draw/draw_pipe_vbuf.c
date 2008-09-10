@@ -231,9 +231,9 @@ vbuf_set_prim( struct vbuf_stage *vbuf, uint prim )
       unsigned emit_sz = 0;
       unsigned src_buffer = 0;
       unsigned output_format;
-      unsigned src_offset = (vbuf->vinfo->src_index[i] * 4 * sizeof(float) );
+      unsigned src_offset = (vbuf->vinfo->attrib[i].src_index * 4 * sizeof(float) );
 
-      switch (vbuf->vinfo->emit[i]) {
+      switch (vbuf->vinfo->attrib[i].emit) {
       case EMIT_4F:
 	 output_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
 	 emit_sz = 4 * sizeof(float);

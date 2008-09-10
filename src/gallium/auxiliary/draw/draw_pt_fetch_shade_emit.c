@@ -133,7 +133,7 @@ static void fse_prepare( struct draw_pt_middle_end *middle,
       for (i = 0; i < vinfo->num_attribs; i++) {
          unsigned emit_sz = 0;
 
-         switch (vinfo->emit[i]) {
+         switch (vinfo->attrib[i].emit) {
          case EMIT_4F:
             emit_sz = 4 * sizeof(float);
             break;
@@ -161,8 +161,8 @@ static void fse_prepare( struct draw_pt_middle_end *middle,
           * numbers, not to positions in the hw vertex description --
           * that's handled by the output_offset field.
           */
-         fse->key.element[i].out.format = vinfo->emit[i];
-         fse->key.element[i].out.vs_output = vinfo->src_index[i];
+         fse->key.element[i].out.format = vinfo->attrib[i].emit;
+         fse->key.element[i].out.vs_output = vinfo->attrib[i].src_index;
          fse->key.element[i].out.offset = dst_offset;
       
          dst_offset += emit_sz;

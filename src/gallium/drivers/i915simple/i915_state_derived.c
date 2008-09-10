@@ -88,12 +88,12 @@ static void calculate_vertex_layout( struct i915_context *i915 )
    if (needW) {
       draw_emit_vertex_attr(&vinfo, EMIT_4F, INTERP_LINEAR, src);
       vinfo.hwfmt[0] |= S4_VFMT_XYZW;
-      vinfo.emit[0] = EMIT_4F;
+      vinfo.attrib[0].emit = EMIT_4F;
    }
    else {
       draw_emit_vertex_attr(&vinfo, EMIT_3F, INTERP_LINEAR, src);
       vinfo.hwfmt[0] |= S4_VFMT_XYZ;
-      vinfo.emit[0] = EMIT_3F;
+      vinfo.attrib[0].emit = EMIT_3F;
    }
 
    /* hardware point size */

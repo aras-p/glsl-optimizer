@@ -773,10 +773,10 @@ static void setup_tri_coefficients( struct setup_context *setup )
    /* setup interpolation for all the remaining attributes:
     */
    for (fragSlot = 0; fragSlot < spfs->info.num_inputs; fragSlot++) {
-      const uint vertSlot = vinfo->src_index[fragSlot];
+      const uint vertSlot = vinfo->attrib[fragSlot].src_index;
       uint j;
 
-      switch (vinfo->interp_mode[fragSlot]) {
+      switch (vinfo->attrib[fragSlot].interp_mode) {
       case INTERP_CONSTANT:
          for (j = 0; j < NUM_CHANNELS; j++)
             const_coeff(setup, &setup->coef[fragSlot], vertSlot, j);
@@ -1084,10 +1084,10 @@ setup_line_coefficients(struct setup_context *setup,
    /* setup interpolation for all the remaining attributes:
     */
    for (fragSlot = 0; fragSlot < spfs->info.num_inputs; fragSlot++) {
-      const uint vertSlot = vinfo->src_index[fragSlot];
+      const uint vertSlot = vinfo->attrib[fragSlot].src_index;
       uint j;
 
-      switch (vinfo->interp_mode[fragSlot]) {
+      switch (vinfo->attrib[fragSlot].interp_mode) {
       case INTERP_CONSTANT:
          for (j = 0; j < NUM_CHANNELS; j++)
             const_coeff(setup, &setup->coef[fragSlot], vertSlot, j);
@@ -1331,10 +1331,10 @@ setup_point( struct setup_context *setup,
    const_coeff(setup, &setup->posCoef, 0, 3);
 
    for (fragSlot = 0; fragSlot < spfs->info.num_inputs; fragSlot++) {
-      const uint vertSlot = vinfo->src_index[fragSlot];
+      const uint vertSlot = vinfo->attrib[fragSlot].src_index;
       uint j;
 
-      switch (vinfo->interp_mode[fragSlot]) {
+      switch (vinfo->attrib[fragSlot].interp_mode) {
       case INTERP_CONSTANT:
          /* fall-through */
       case INTERP_LINEAR:
