@@ -42,24 +42,10 @@ extern void init_gallium(void);
 void (*force_init_gallium_linkage)(void) = &init_gallium;
 
 
-static void 
-st_hardpipe_screen_destroy(struct pipe_screen *screen)
-{
-   st_softpipe_winsys.screen_destroy(screen);
-}
-
-
 static struct pipe_screen *
 st_hardpipe_screen_create(void)
 {
    return st_softpipe_winsys.screen_create();
-}
-
-
-static void
-st_hardpipe_context_destroy(struct pipe_context *pipe)
-{
-   st_softpipe_winsys.context_destroy(pipe);
 }
 
 
@@ -72,7 +58,5 @@ st_hardpipe_context_create(struct pipe_screen *screen)
 
 const struct st_winsys st_hardpipe_winsys = {
    &st_hardpipe_screen_create,
-   &st_hardpipe_screen_destroy,
-   &st_hardpipe_context_create,
-   &st_hardpipe_context_destroy
+   &st_hardpipe_context_create
 };

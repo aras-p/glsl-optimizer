@@ -24,9 +24,9 @@
 
 
 #include "pipe/p_compiler.h"
-#include "pipe/p_util.h"
 #include "pipe/p_debug.h"
 
+#include "util/u_memory.h"
 #include "util/u_mm.h"
 
 

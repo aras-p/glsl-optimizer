@@ -25,7 +25,7 @@
  * 
  **************************************************************************/
 
-#include "pipe/p_util.h"
+#include "util/u_memory.h"
 #include "cell_context.h"
 #include "cell_state.h"
 #include "cell_state_emit.h"
@@ -47,7 +47,10 @@ emit_state_cmd(struct cell_context *cell, uint cmd,
 }
 
 
-
+/**
+ * For state marked as 'dirty', construct a state-update command block
+ * and insert it into the current batch buffer.
+ */
 void
 cell_emit_state(struct cell_context *cell)
 {
@@ -90,7 +93,8 @@ cell_emit_state(struct cell_context *cell)
          blend.size = (char *) cell->blend->code.csr
              - (char *) cell->blend->code.store;
          blend.read_fb = TRUE;
-      } else {
+      }
+      else {
          blend.base = 0;
          blend.size = 0;
          blend.read_fb = FALSE;
@@ -101,7 +105,6 @@ cell_emit_state(struct cell_context *cell)
 
    if (cell->dirty & CELL_NEW_DEPTH_STENCIL) {
       struct cell_command_depth_stencil_alpha_test dsat;
-      
 
       if (cell->depth_stencil != NULL) {
 	 dsat.base = (intptr_t) cell->depth_stencil->code.store;
@@ -109,15 +112,15 @@ cell_emit_state(struct cell_context *cell)
 	     - (char *) cell->depth_stencil->code.store;
 	 dsat.read_depth = TRUE;
 	 dsat.read_stencil = FALSE;
-      } else {
+      }
+      else {
 	 dsat.base = 0;
 	 dsat.size = 0;
 	 dsat.read_depth = FALSE;
 	 dsat.read_stencil = FALSE;
       }
 
-      emit_state_cmd(cell, CELL_CMD_STATE_DEPTH_STENCIL, &dsat,
-		     sizeof(dsat));
+      emit_state_cmd(cell, CELL_CMD_STATE_DEPTH_STENCIL, &dsat, sizeof(dsat));
    }
 
    if (cell->dirty & CELL_NEW_SAMPLER) {
@@ -162,15 +165,14 @@ cell_emit_state(struct cell_context *cell)
       const struct draw_context *const draw = cell->draw;
       struct cell_shader_info info;
 
-      info.num_outputs = draw->num_vs_outputs;
-      info.declarations = (uintptr_t) draw->machine.Declarations;
-      info.num_declarations = draw->machine.NumDeclarations;
-      info.instructions = (uintptr_t) draw->machine.Instructions;
-      info.num_instructions = draw->machine.NumInstructions;
-      info.immediates = (uintptr_t) draw->machine.Imms;
-      info.num_immediates = draw->machine.ImmLimit / 4;
+      info.num_outputs = draw_num_vs_outputs(draw);
+      info.declarations = (uintptr_t) draw->vs.machine.Declarations;
+      info.num_declarations = draw->vs.machine.NumDeclarations;
+      info.instructions = (uintptr_t) draw->vs.machine.Instructions;
+      info.num_instructions = draw->vs.machine.NumInstructions;
+      info.immediates = (uintptr_t) draw->vs.machine.Imms;
+      info.num_immediates = draw->vs.machine.ImmLimit / 4;
 
-      emit_state_cmd(cell, CELL_CMD_STATE_BIND_VS,
-		     & info, sizeof(info));
+      emit_state_cmd(cell, CELL_CMD_STATE_BIND_VS, &info, sizeof(info));
    }
 }

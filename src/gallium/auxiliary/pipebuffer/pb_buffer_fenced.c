@@ -38,6 +38,7 @@
 
 #if defined(PIPE_OS_LINUX)
 #include <unistd.h>
+#include <sched.h>
 #endif
 
 #include "pipe/p_compiler.h"
@@ -45,7 +46,7 @@
 #include "pipe/p_debug.h"
 #include "pipe/p_winsys.h"
 #include "pipe/p_thread.h"
-#include "pipe/p_util.h"
+#include "util/u_memory.h"
 #include "util/u_double_list.h"
 
 #include "pb_buffer.h"
@@ -68,7 +69,7 @@
 
 struct fenced_buffer_list
 {
-   _glthread_Mutex mutex;
+   pipe_mutex mutex;
    
    struct pipe_winsys *winsys;
    
@@ -239,7 +240,7 @@ fenced_buffer_destroy(struct pb_buffer *buf)
    struct fenced_buffer *fenced_buf = fenced_buffer(buf);   
    struct fenced_buffer_list *fenced_list = fenced_buf->list;
 
-   _glthread_LOCK_MUTEX(fenced_list->mutex);
+   pipe_mutex_lock(fenced_list->mutex);
    assert(fenced_buf->base.base.refcount == 0);
    if (fenced_buf->fence) {
       struct pipe_winsys *winsys = fenced_list->winsys;
@@ -262,7 +263,7 @@ fenced_buffer_destroy(struct pb_buffer *buf)
    else {
       _fenced_buffer_destroy(fenced_buf);
    }
-   _glthread_UNLOCK_MUTEX(fenced_list->mutex);
+   pipe_mutex_unlock(fenced_list->mutex);
 }
 
 
@@ -395,7 +396,7 @@ buffer_fence(struct pb_buffer *buf,
       return;
    }
    
-   _glthread_LOCK_MUTEX(fenced_list->mutex);
+   pipe_mutex_lock(fenced_list->mutex);
    if (fenced_buf->fence)
       _fenced_buffer_remove(fenced_list, fenced_buf);
    if (fence) {
@@ -403,7 +404,7 @@ buffer_fence(struct pb_buffer *buf,
       fenced_buf->flags |= flags & PIPE_BUFFER_USAGE_GPU_READ_WRITE;
       _fenced_buffer_add(fenced_buf);
    }
-   _glthread_UNLOCK_MUTEX(fenced_list->mutex);
+   pipe_mutex_unlock(fenced_list->mutex);
 }
 
 
@@ -422,7 +423,7 @@ fenced_buffer_list_create(struct pipe_winsys *winsys)
 
    fenced_list->numDelayed = 0;
    
-   _glthread_INIT_MUTEX(fenced_list->mutex);
+   pipe_mutex_init(fenced_list->mutex);
 
    return fenced_list;
 }
@@ -432,28 +433,28 @@ void
 fenced_buffer_list_check_free(struct fenced_buffer_list *fenced_list, 
                               int wait)
 {
-   _glthread_LOCK_MUTEX(fenced_list->mutex);
+   pipe_mutex_lock(fenced_list->mutex);
    _fenced_buffer_list_check_free(fenced_list, wait);
-   _glthread_UNLOCK_MUTEX(fenced_list->mutex);
+   pipe_mutex_unlock(fenced_list->mutex);
 }
 
 
 void
 fenced_buffer_list_destroy(struct fenced_buffer_list *fenced_list)
 {
-   _glthread_LOCK_MUTEX(fenced_list->mutex);
+   pipe_mutex_lock(fenced_list->mutex);
 
    /* Wait on outstanding fences */
    while (fenced_list->numDelayed) {
-      _glthread_UNLOCK_MUTEX(fenced_list->mutex);
+      pipe_mutex_unlock(fenced_list->mutex);
 #if defined(PIPE_OS_LINUX)
       sched_yield();
 #endif
       _fenced_buffer_list_check_free(fenced_list, 1);
-      _glthread_LOCK_MUTEX(fenced_list->mutex);
+      pipe_mutex_lock(fenced_list->mutex);
    }
 
-   _glthread_UNLOCK_MUTEX(fenced_list->mutex);
+   pipe_mutex_unlock(fenced_list->mutex);
    
    FREE(fenced_list);
 }

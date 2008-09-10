@@ -140,6 +140,29 @@ def createCodeGenerateMethod(env):
     env.AddMethod(code_generate, 'CodeGenerate')
 
 
+def symlink(target, source, env):
+    target = str(target[0])
+    source = str(source[0])
+    if os.path.islink(target) or os.path.exists(target):
+        os.remove(target)
+    os.symlink(os.path.basename(source), target)
+
+def install_shared_library(env, source, version = ()):
+    source = str(source[0])
+    version = tuple(map(str, version))
+    target_dir =  os.path.join(env.Dir('#.').srcnode().abspath, env['build'], 'lib')
+    target_name = '.'.join((str(source),) + version)
+    last = env.InstallAs(os.path.join(target_dir, target_name), source)
+    while len(version):
+        version = version[:-1]
+        target_name = '.'.join((str(source),) + version)
+        action = SCons.Action.Action(symlink, "$TARGET -> $SOURCE")
+        last = env.Command(os.path.join(target_dir, target_name), last, action) 
+
+def createInstallMethods(env):
+    env.AddMethod(install_shared_library, 'InstallSharedLibrary')
+
+
 def generate(env):
     """Common environment generation code"""
 
@@ -290,7 +313,7 @@ def generate(env):
         ]
     if msvc:
         # See also:
-        # - http://msdn2.microsoft.com/en-us/library/y0zzbyt4.aspx
+        # - http://msdn.microsoft.com/en-us/library/19z1t1wy.aspx
         # - cl /?
         if debug:
             cflags += [
@@ -302,7 +325,8 @@ def generate(env):
             cflags += [
               '/Ox', # maximum optimizations
               '/Oi', # enable intrinsic functions
-              '/Os', # favor code space
+              '/Ot', # favor code speed
+              #'/fp:fast', # fast floating point 
             ]
         if env['profile']:
             cflags += [
@@ -313,6 +337,11 @@ def generate(env):
             '/W3', # warning level
             #'/Wp64', # enable 64 bit porting warnings
         ]
+        if env['machine'] == 'x86':
+            cflags += [
+                #'/QIfist', # Suppress _ftol
+                #'/arch:SSE2', # use the SSE2 instructions
+            ]
         if platform == 'windows':
             cflags += [
                 # TODO
@@ -420,6 +449,7 @@ def generate(env):
     # Custom builders and methods
     createConvenienceLibBuilder(env)
     createCodeGenerateMethod(env)
+    createInstallMethods(env)
 
     # for debugging
     #print env.Dump()

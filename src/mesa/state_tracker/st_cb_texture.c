@@ -51,18 +51,11 @@
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_inlines.h"
-#include "util/p_tile.h"
+#include "util/u_tile.h"
 #include "util/u_blit.h"
 
 
 #define DBG if (0) printf
-
-
-static INLINE struct st_texture_image *
-st_texture_image(struct gl_texture_image *img)
-{
-   return (struct st_texture_image *) img;
-}
 
 
 static enum pipe_texture_target
@@ -933,7 +926,12 @@ fallback_copy_texsubimage(GLcontext *ctx,
    struct pipe_texture *pt = stImage->pt;
    struct pipe_surface *src_surf, *dest_surf;
 
-   src_surf = strb->surface;
+   /* We'd use strb->surface, here but it's created for GPU read/write only */
+   src_surf = pipe->screen->get_tex_surface( pipe->screen,
+                                             strb->texture,
+                                             0, 0, 0,
+                                             PIPE_BUFFER_USAGE_CPU_READ);
+
    dest_surf = screen->get_tex_surface(screen, pt, face, level, destZ,
                                        PIPE_BUFFER_USAGE_CPU_WRITE);
 
@@ -1016,6 +1014,7 @@ fallback_copy_texsubimage(GLcontext *ctx,
    }
 
    screen->tex_surface_release(screen, &dest_surf);
+   screen->tex_surface_release(screen, &src_surf);
 }
 
 
@@ -1092,6 +1091,10 @@ st_copy_texsubimage(GLcontext *ctx,
                                                 stImage->face, stImage->level,
                                                 destZ,
                                                 PIPE_BUFFER_USAGE_GPU_WRITE);
+         if (do_flip)
+            srcY = strb->surface->height - srcY - height;
+
+         /* for surface_copy(), y=0=top, always */
          pipe->surface_copy(pipe,
                             do_flip,
                             /* dest */
@@ -1452,6 +1455,49 @@ st_finalize_texture(GLcontext *ctx,
    }
 
    return GL_TRUE;
+}
+
+
+/**
+ * Returns pointer to a default/dummy texture.
+ * This is typically used when the current shader has tex/sample instructions
+ * but the user has not provided a (any) texture(s).
+ */
+struct gl_texture_object *
+st_get_default_texture(struct st_context *st)
+{
+   if (!st->default_texture) {
+      static const GLenum target = GL_TEXTURE_2D;
+      GLubyte pixels[16][16][4];
+      struct gl_texture_object *texObj;
+      struct gl_texture_image *texImg;
+
+      /* init image to gray */
+      memset(pixels, 127, sizeof(pixels));
+
+      texObj = st->ctx->Driver.NewTextureObject(st->ctx, 0, target);
+
+      texImg = _mesa_get_tex_image(st->ctx, texObj, target, 0);
+
+      _mesa_init_teximage_fields(st->ctx, target, texImg,
+                                 16, 16, 1, 0,  /* w, h, d, border */
+                                 GL_RGBA);
+
+      st_TexImage(st->ctx, 2, target,
+                  0, GL_RGBA,    /* level, intformat */
+                  16, 16, 1, 0,  /* w, h, d, border */
+                  GL_RGBA, GL_UNSIGNED_BYTE, pixels,
+                  &st->ctx->DefaultPacking,
+                  texObj, texImg,
+                  0, 0);
+
+      texObj->MinFilter = GL_NEAREST;
+      texObj->MagFilter = GL_NEAREST;
+      texObj->_Complete = GL_TRUE;
+
+      st->default_texture = texObj;
+   }
+   return st->default_texture;
 }
 
 

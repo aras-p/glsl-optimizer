@@ -319,7 +319,6 @@ static struct state_key *make_state_key( GLcontext *ctx )
  */
 #define PREFER_DP4 0
 
-#define MAX_INSN 256
 
 /* Use uregs to represent registers internally, translate to Mesa's
  * expected formats on emit.  
@@ -335,16 +334,18 @@ static struct state_key *make_state_key( GLcontext *ctx )
  */
 struct ureg {
    GLuint file:4;
-   GLint idx:8;      /* relative addressing may be negative */
+   GLint idx:9;      /* relative addressing may be negative */
+                     /* sizeof(idx) should == sizeof(prog_src_reg::Index) */
    GLuint negate:1;
    GLuint swz:12;
-   GLuint pad:7;
+   GLuint pad:6;
 };
 
 
 struct tnl_program {
    const struct state_key *state;
    struct gl_vertex_program *program;
+   GLint max_inst;  /** number of instructions allocated for program */
    
    GLuint temp_in_use;
    GLuint temp_reserved;
@@ -362,7 +363,7 @@ struct tnl_program {
 
 static const struct ureg undef = { 
    PROGRAM_UNDEFINED,
-   ~0,
+   0,
    0,
    0,
    0
@@ -558,6 +559,8 @@ static void emit_arg( struct prog_src_register *src,
    src->Abs = 0;
    src->NegateAbs = 0;
    src->RelAddr = 0;
+   /* Check that bitfield sizes aren't exceeded */
+   ASSERT(src->Index == reg.idx);
 }
 
 static void emit_dst( struct prog_dst_register *dst,
@@ -571,6 +574,8 @@ static void emit_dst( struct prog_dst_register *dst,
    dst->CondSwizzle = SWIZZLE_NOOP;
    dst->CondSrc = 0;
    dst->pad = 0;
+   /* Check that bitfield sizes aren't exceeded */
+   ASSERT(dst->Index == reg.idx);
 }
 
 static void debug_insn( struct prog_instruction *inst, const char *fn,
@@ -600,14 +605,37 @@ static void emit_op3fn(struct tnl_program *p,
 		       const char *fn,
 		       GLuint line)
 {
-   GLuint nr = p->program->Base.NumInstructions++;
-   struct prog_instruction *inst = &p->program->Base.Instructions[nr];
+   GLuint nr;
+   struct prog_instruction *inst;
       
-   if (p->program->Base.NumInstructions > MAX_INSN) {
-      _mesa_problem(0, "Out of instructions in emit_op3fn\n");
-      return;
+   assert((GLint) p->program->Base.NumInstructions <= p->max_inst);
+
+   if (p->program->Base.NumInstructions == p->max_inst) {
+      /* need to extend the program's instruction array */
+      struct prog_instruction *newInst;
+
+      /* double the size */
+      p->max_inst *= 2;
+
+      newInst = _mesa_alloc_instructions(p->max_inst);
+      if (!newInst) {
+         _mesa_error(NULL, GL_OUT_OF_MEMORY, "vertex program build");
+         return;
+      }
+
+      _mesa_copy_instructions(newInst,
+                              p->program->Base.Instructions,
+                              p->program->Base.NumInstructions);
+
+      _mesa_free_instructions(p->program->Base.Instructions,
+                              p->program->Base.NumInstructions);
+
+      p->program->Base.Instructions = newInst;
    }
       
+   nr = p->program->Base.NumInstructions++;
+
+   inst = &p->program->Base.Instructions[nr];
    inst->Opcode = (enum prog_opcode) op; 
    inst->StringPos = 0;
    inst->Data = 0;
@@ -1621,6 +1649,8 @@ static void build_tnl_program( struct tnl_program *p )
 #if 0
    else
       build_constant_pointsize(p);
+#else
+   (void) build_constant_pointsize;
 #endif
 
    /* Finish up:
@@ -1657,7 +1687,11 @@ create_new_program( const struct state_key *key,
    else
       p.temp_reserved = ~((1<<max_temps)-1);
 
-   p.program->Base.Instructions = _mesa_alloc_instructions(MAX_INSN);
+   /* Start by allocating 32 instructions.
+    * If we need more, we'll grow the instruction array as needed.
+    */
+   p.max_inst = 32;
+   p.program->Base.Instructions = _mesa_alloc_instructions(p.max_inst);
    p.program->Base.String = NULL;
    p.program->Base.NumInstructions =
    p.program->Base.NumTemporaries =

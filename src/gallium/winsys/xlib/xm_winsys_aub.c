@@ -37,8 +37,9 @@
 #include "xmesaP.h"
 
 #include "pipe/p_winsys.h"
-#include "pipe/p_util.h"
 #include "pipe/p_inlines.h"
+#include "util/u_math.h"
+#include "util/u_memory.h"
 #include "i965simple/brw_winsys.h"
 #include "i965simple/brw_screen.h"
 #include "brw_aub.h"
@@ -307,7 +308,7 @@ aub_i915_surface_release(struct pipe_winsys *winsys, struct pipe_surface **s)
    surf->refcount--;
    if (surf->refcount == 0) {
       if (surf->buffer)
-         pipe_buffer_reference(winsys, &surf->buffer, NULL);
+         winsys_buffer_reference(winsys, &surf->buffer, NULL);
       free(surf);
    }
    *s = NULL;

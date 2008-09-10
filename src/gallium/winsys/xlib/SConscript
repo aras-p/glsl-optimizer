@@ -36,8 +36,10 @@ if env['platform'] == 'linux' \
         drivers += [trace]
 
     # TODO: write a wrapper function http://www.scons.org/wiki/WrapperFunctions
-    env.SharedLibrary(
+    libgl = env.SharedLibrary(
         target ='GL',
         source = sources,
         LIBS = glapi + mesa + drivers + auxiliaries + env['LIBS'],
     )
+
+    env.InstallSharedLibrary(libgl, version=(1, 5))

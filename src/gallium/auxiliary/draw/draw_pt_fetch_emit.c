@@ -30,7 +30,7 @@
   *   Keith Whitwell <keith@tungstengraphics.com>
   */
 
-#include "pipe/p_util.h"
+#include "util/u_memory.h"
 #include "draw/draw_context.h"
 #include "draw/draw_private.h"
 #include "draw/draw_vbuf.h"
@@ -324,7 +324,7 @@ static void fetch_emit_run_linear( struct draw_pt_middle_end *middle,
 }
 
 
-static void fetch_emit_run_linear_elts( struct draw_pt_middle_end *middle,
+static boolean fetch_emit_run_linear_elts( struct draw_pt_middle_end *middle,
                                         unsigned start,
                                         unsigned count,
                                         const ushort *draw_elts,
@@ -341,10 +341,8 @@ static void fetch_emit_run_linear_elts( struct draw_pt_middle_end *middle,
    hw_verts = draw->render->allocate_vertices( draw->render,
                                                (ushort)feme->translate->key.output_stride,
                                                (ushort)count );
-   if (!hw_verts) {
-      assert(0);
-      return;
-   }
+   if (!hw_verts) 
+      return FALSE;
 
    /* Single routine to fetch vertices and emit HW verts.
     */
@@ -367,6 +365,7 @@ static void fetch_emit_run_linear_elts( struct draw_pt_middle_end *middle,
                                    feme->translate->key.output_stride,
                                    count );
 
+   return TRUE;
 }
 
 

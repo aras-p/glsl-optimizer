@@ -95,7 +95,7 @@ read_ds_quad(tile_t *buffer, unsigned x, unsigned y,
 
 
    default:
-      assert(0);
+      ASSERT(0);
       break;
    }
 }
@@ -153,7 +153,7 @@ write_ds_quad(tile_t *buffer, unsigned x, unsigned y,
 
 
    default:
-      assert(0);
+      ASSERT(0);
       break;
    }
 }

@@ -36,7 +36,7 @@
 #include "pipe/p_defines.h"
 #include "pipe/p_debug.h"
 #include "pipe/p_thread.h"
-#include "pipe/p_util.h"
+#include "util/u_memory.h"
 #include "util/u_double_list.h"
 #include "util/u_mm.h"
 #include "pb_buffer.h"
@@ -53,7 +53,7 @@ struct mm_pb_manager
 {
    struct pb_manager base;
    
-   _glthread_Mutex mutex;
+   pipe_mutex mutex;
    
    size_t size;
    struct mem_block *heap;
@@ -99,10 +99,10 @@ mm_buffer_destroy(struct pb_buffer *buf)
    
    assert(buf->base.refcount == 0);
    
-   _glthread_LOCK_MUTEX(mm->mutex);
+   pipe_mutex_lock(mm->mutex);
    mmFreeMem(mm_buf->block);
    FREE(buf);
-   _glthread_UNLOCK_MUTEX(mm->mutex);
+   pipe_mutex_unlock(mm->mutex);
 }
 
 
@@ -158,11 +158,11 @@ mm_bufmgr_create_buffer(struct pb_manager *mgr,
    if(desc->alignment % (1 << mm->align2))
       return NULL;
    
-   _glthread_LOCK_MUTEX(mm->mutex);
+   pipe_mutex_lock(mm->mutex);
 
    mm_buf = CALLOC_STRUCT(mm_buffer);
    if (!mm_buf) {
-      _glthread_UNLOCK_MUTEX(mm->mutex);
+      pipe_mutex_unlock(mm->mutex);
       return NULL;
    }
 
@@ -185,7 +185,7 @@ mm_bufmgr_create_buffer(struct pb_manager *mgr,
       mm_buf->block = mmAllocMem(mm->heap, size, mm->align2, 0);
       if(!mm_buf->block) {
          FREE(mm_buf);
-         _glthread_UNLOCK_MUTEX(mm->mutex);
+         pipe_mutex_unlock(mm->mutex);
          return NULL;
       }
    }
@@ -194,7 +194,7 @@ mm_bufmgr_create_buffer(struct pb_manager *mgr,
    assert(0 <= (unsigned)mm_buf->block->ofs && (unsigned)mm_buf->block->ofs < mm->size);
    assert(size <= (unsigned)mm_buf->block->size && (unsigned)mm_buf->block->ofs + (unsigned)mm_buf->block->size <= mm->size);
    
-   _glthread_UNLOCK_MUTEX(mm->mutex);
+   pipe_mutex_unlock(mm->mutex);
    return SUPER(mm_buf);
 }
 
@@ -204,14 +204,14 @@ mm_bufmgr_destroy(struct pb_manager *mgr)
 {
    struct mm_pb_manager *mm = mm_pb_manager(mgr);
    
-   _glthread_LOCK_MUTEX(mm->mutex);
+   pipe_mutex_lock(mm->mutex);
 
    mmDestroy(mm->heap);
    
    pb_unmap(mm->buffer);
    pb_reference(&mm->buffer, NULL);
    
-   _glthread_UNLOCK_MUTEX(mm->mutex);
+   pipe_mutex_unlock(mm->mutex);
    
    FREE(mgr);
 }
@@ -236,7 +236,7 @@ mm_bufmgr_create_from_buffer(struct pb_buffer *buffer,
    mm->size = size;
    mm->align2 = align2; /* 64-byte alignment */
 
-   _glthread_INIT_MUTEX(mm->mutex);
+   pipe_mutex_init(mm->mutex);
 
    mm->buffer = buffer; 
 

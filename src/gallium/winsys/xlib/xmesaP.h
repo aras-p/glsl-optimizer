@@ -35,9 +35,10 @@
 
 #include "state_tracker/st_context.h"
 #include "state_tracker/st_public.h"
+#include "pipe/p_thread.h"
 
 
-extern _glthread_Mutex _xmesa_lock;
+extern pipe_mutex _xmesa_lock;
 
 extern XMesaBuffer XMesaBufferList;
 

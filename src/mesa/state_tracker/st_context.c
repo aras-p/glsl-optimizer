@@ -49,6 +49,7 @@
 #include "st_cb_drawtex.h"
 #endif
 #include "st_cb_fbo.h"
+#include "st_cb_get.h"
 #if FEATURE_feedback
 #include "st_cb_feedback.h"
 #endif
@@ -195,8 +196,13 @@ static void st_destroy_context_priv( struct st_context *st )
 
    for (i = 0; i < Elements(st->state.constants); i++) {
       if (st->state.constants[i].buffer) {
-         pipe_reference_buffer(st->pipe, &st->state.constants[i].buffer, NULL);
+         pipe_buffer_reference(st->pipe->screen, &st->state.constants[i].buffer, NULL);
       }
+   }
+
+   if (st->default_texture) {
+      st->ctx->Driver.DeleteTexture(st->ctx, st->default_texture);
+      st->default_texture = NULL;
    }
 
    free( st );
@@ -223,10 +229,7 @@ void st_destroy_context( struct st_context *st )
 
    cso_destroy_context(cso);
 
-   /* Temporary workaround for mismatched pipe create and pipe destroy */
-#if !defined(PIPE_SUBSYSTEM_WINDOWS_USER) && !defined(PIPE_SUBSYSTEM_WINDOWS_CE)
    pipe->destroy( pipe );
-#endif
 
    free(ctx);
 }
@@ -291,6 +294,7 @@ void st_init_driver_functions(struct dd_function_table *functions)
    st_init_rasterpos_functions(functions);
 #endif
    st_init_fbo_functions(functions);
+   st_init_get_functions(functions);
 #if FEATURE_feedback
    st_init_feedback_functions(functions);
 #endif

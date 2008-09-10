@@ -340,9 +340,12 @@ void debug_dump_image(const char *prefix,
                       const void *data);
 void debug_dump_surface(const char *prefix,
                         struct pipe_surface *surface);   
+void debug_dump_surface_bmp(const char *filename,
+                            struct pipe_surface *surface);
 #else
 #define debug_dump_image(prefix, format, cpp, width, height, stride, data) ((void)0)
 #define debug_dump_surface(prefix, surface) ((void)0)
+#define debug_dump_surface_bmp(filename, surface) ((void)0)
 #endif
 
 

@@ -98,9 +98,9 @@ struct draw_pt_middle_end {
                       unsigned count);
 
    /* Transform all vertices in a linear range and then draw them with
-    * the supplied element list.
+    * the supplied element list.  May fail and return FALSE.
     */
-   void (*run_linear_elts)( struct draw_pt_middle_end *,
+   boolean (*run_linear_elts)( struct draw_pt_middle_end *,
                             unsigned fetch_start,
                             unsigned fetch_count,
                             const ushort *draw_elts,

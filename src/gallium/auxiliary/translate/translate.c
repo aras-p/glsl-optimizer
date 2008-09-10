@@ -31,7 +31,6 @@
   */
 
 #include "pipe/p_config.h"
-#include "pipe/p_util.h"
 #include "pipe/p_state.h"
 #include "translate.h"
 

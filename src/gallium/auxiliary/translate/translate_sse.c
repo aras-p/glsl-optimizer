@@ -28,7 +28,7 @@
 
 #include "pipe/p_config.h"
 #include "pipe/p_compiler.h"
-#include "pipe/p_util.h"
+#include "util/u_memory.h"
 #include "util/u_simple_list.h"
 
 #include "translate.h"

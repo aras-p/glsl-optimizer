@@ -30,7 +30,7 @@
   *   Keith Whitwell <keith@tungstengraphics.com>
   */
 
-#include "pipe/p_util.h"
+#include "util/u_memory.h"
 #include "draw/draw_context.h"
 #include "draw/draw_private.h"
 #include "draw/draw_pt.h"
@@ -63,7 +63,8 @@ struct vcache_frontend {
    unsigned opt;
 };
 
-static void vcache_flush( struct vcache_frontend *vcache )
+static INLINE void 
+vcache_flush( struct vcache_frontend *vcache )
 {
    if (vcache->middle_prim != vcache->output_prim) {
       vcache->middle_prim = vcache->output_prim;
@@ -86,7 +87,8 @@ static void vcache_flush( struct vcache_frontend *vcache )
    vcache->draw_count = 0;
 }
 
-static void vcache_check_flush( struct vcache_frontend *vcache )
+static INLINE void 
+vcache_check_flush( struct vcache_frontend *vcache )
 {
    if ( vcache->draw_count + 6 >= DRAW_MAX ||
         vcache->fetch_count + 4 >= FETCH_MAX )
@@ -96,9 +98,10 @@ static void vcache_check_flush( struct vcache_frontend *vcache )
 }
 
 
-static INLINE void vcache_elt( struct vcache_frontend *vcache,
-                               unsigned felt,
-                               ushort flags )
+static INLINE void 
+vcache_elt( struct vcache_frontend *vcache,
+            unsigned felt,
+            ushort flags )
 {
    unsigned idx = felt % CACHE_MAX;
 
@@ -115,10 +118,11 @@ static INLINE void vcache_elt( struct vcache_frontend *vcache,
 
 
                    
-static void vcache_triangle( struct vcache_frontend *vcache,
-                             unsigned i0,
-                             unsigned i1,
-                             unsigned i2 )
+static INLINE void 
+vcache_triangle( struct vcache_frontend *vcache,
+                 unsigned i0,
+                 unsigned i1,
+                 unsigned i2 )
 {
    vcache_elt(vcache, i0, 0);
    vcache_elt(vcache, i1, 0);
@@ -127,11 +131,12 @@ static void vcache_triangle( struct vcache_frontend *vcache,
 }
 
 			  
-static void vcache_triangle_flags( struct vcache_frontend *vcache,
-                                   ushort flags,
-                                   unsigned i0,
-                                   unsigned i1,
-                                   unsigned i2 )
+static INLINE void 
+vcache_triangle_flags( struct vcache_frontend *vcache,
+                       ushort flags,
+                       unsigned i0,
+                       unsigned i1,
+                       unsigned i2 )
 {
    vcache_elt(vcache, i0, flags);
    vcache_elt(vcache, i1, 0);
@@ -139,9 +144,10 @@ static void vcache_triangle_flags( struct vcache_frontend *vcache,
    vcache_check_flush(vcache);
 }
 
-static void vcache_line( struct vcache_frontend *vcache,
-                         unsigned i0,
-                         unsigned i1 )
+static INLINE void 
+vcache_line( struct vcache_frontend *vcache,
+             unsigned i0,
+             unsigned i1 )
 {
    vcache_elt(vcache, i0, 0);
    vcache_elt(vcache, i1, 0);
@@ -149,10 +155,11 @@ static void vcache_line( struct vcache_frontend *vcache,
 }
 
 
-static void vcache_line_flags( struct vcache_frontend *vcache,
-                               ushort flags,
-                               unsigned i0,
-                               unsigned i1 )
+static INLINE void 
+vcache_line_flags( struct vcache_frontend *vcache,
+                   ushort flags,
+                   unsigned i0,
+                   unsigned i1 )
 {
    vcache_elt(vcache, i0, flags);
    vcache_elt(vcache, i1, 0);
@@ -160,28 +167,31 @@ static void vcache_line_flags( struct vcache_frontend *vcache,
 }
 
 
-static void vcache_point( struct vcache_frontend *vcache,
-                          unsigned i0 )
+static INLINE void 
+vcache_point( struct vcache_frontend *vcache,
+              unsigned i0 )
 {
    vcache_elt(vcache, i0, 0);
    vcache_check_flush(vcache);
 }
 
-static void vcache_quad( struct vcache_frontend *vcache,
-                         unsigned i0,
-                         unsigned i1,
-                         unsigned i2,
-                         unsigned i3 )
+static INLINE void 
+vcache_quad( struct vcache_frontend *vcache,
+             unsigned i0,
+             unsigned i1,
+             unsigned i2,
+             unsigned i3 )
 {
    vcache_triangle( vcache, i0, i1, i3 );
    vcache_triangle( vcache, i1, i2, i3 );
 }
 
-static void vcache_ef_quad( struct vcache_frontend *vcache,
-                            unsigned i0,
-                            unsigned i1,
-                            unsigned i2,
-                            unsigned i3 )
+static INLINE void 
+vcache_ef_quad( struct vcache_frontend *vcache,
+                unsigned i0,
+                unsigned i1,
+                unsigned i2,
+                unsigned i3 )
 {
    vcache_triangle_flags( vcache,
                           ( DRAW_PIPE_RESET_STIPPLE |
@@ -213,10 +223,11 @@ static void vcache_ef_quad( struct vcache_frontend *vcache,
 #define FUNC vcache_run
 #include "draw_pt_vcache_tmp.h"
 
-static void rebase_uint_elts( const unsigned *src,
-                              unsigned count,
-                              int delta,
-                              ushort *dest )
+static INLINE void 
+rebase_uint_elts( const unsigned *src,
+                  unsigned count,
+                  int delta,
+                  ushort *dest )
 {
    unsigned i;
 
@@ -224,9 +235,10 @@ static void rebase_uint_elts( const unsigned *src,
       dest[i] = (ushort)(src[i] + delta);
 }
 
-static void rebase_ushort_elts( const ushort *src,
-                                unsigned count,
-                                int delta,
+static INLINE void 
+rebase_ushort_elts( const ushort *src,
+                    unsigned count,
+                    int delta,
                                 ushort *dest )
 {
    unsigned i;
@@ -235,10 +247,11 @@ static void rebase_ushort_elts( const ushort *src,
       dest[i] = (ushort)(src[i] + delta);
 }
 
-static void rebase_ubyte_elts( const ubyte *src,
-                               unsigned count,
-                               int delta,
-                               ushort *dest )
+static INLINE void 
+rebase_ubyte_elts( const ubyte *src,
+                   unsigned count,
+                   int delta,
+                   ushort *dest )
 {
    unsigned i;
 
@@ -248,9 +261,10 @@ static void rebase_ubyte_elts( const ubyte *src,
 
 
 
-static void translate_uint_elts( const unsigned *src,
-                                 unsigned count,
-                                 ushort *dest )
+static INLINE void 
+translate_uint_elts( const unsigned *src,
+                     unsigned count,
+                     ushort *dest )
 {
    unsigned i;
 
@@ -258,9 +272,10 @@ static void translate_uint_elts( const unsigned *src,
       dest[i] = (ushort)(src[i]);
 }
 
-static void translate_ushort_elts( const ushort *src,
-                                   unsigned count,
-                                   ushort *dest )
+static INLINE void 
+translate_ushort_elts( const ushort *src,
+                       unsigned count,
+                       ushort *dest )
 {
    unsigned i;
 
@@ -268,9 +283,10 @@ static void translate_ushort_elts( const ushort *src,
       dest[i] = (ushort)(src[i]);
 }
 
-static void translate_ubyte_elts( const ubyte *src,
-                                  unsigned count,
-                                  ushort *dest )
+static INLINE void 
+translate_ubyte_elts( const ubyte *src,
+                      unsigned count,
+                      ushort *dest )
 {
    unsigned i;
 
@@ -282,7 +298,8 @@ static void translate_ubyte_elts( const ubyte *src,
 
 
 #if 0
-static enum pipe_format format_from_get_elt( pt_elt_func get_elt )
+static INLINE enum pipe_format 
+format_from_get_elt( pt_elt_func get_elt )
 {
    switch (draw->pt.user.eltSize) {
    case 1: return PIPE_FORMAT_R8_UNORM;
@@ -293,10 +310,11 @@ static enum pipe_format format_from_get_elt( pt_elt_func get_elt )
 }
 #endif
 
-static void vcache_check_run( struct draw_pt_front_end *frontend, 
-                              pt_elt_func get_elt,
-                              const void *elts,
-                              unsigned draw_count )
+static INLINE void 
+vcache_check_run( struct draw_pt_front_end *frontend, 
+                  pt_elt_func get_elt,
+                  const void *elts,
+                  unsigned draw_count )
 {
    struct vcache_frontend *vcache = (struct vcache_frontend *)frontend; 
    struct draw_context *draw = vcache->draw;
@@ -306,6 +324,7 @@ static void vcache_check_run( struct draw_pt_front_end *frontend,
    unsigned fetch_count = max_index + 1 - min_index;
    const ushort *transformed_elts;
    ushort *storage = NULL;
+   boolean ok;
 
 
    if (0) debug_printf("fetch_count %d fetch_max %d draw_count %d\n", fetch_count, 
@@ -313,7 +332,6 @@ static void vcache_check_run( struct draw_pt_front_end *frontend,
                        draw_count);
       
    if (max_index == 0xffffffff ||
-       fetch_count >= vcache->fetch_max ||
        fetch_count > draw_count) {
       if (0) debug_printf("fail\n");
       goto fail;
@@ -395,14 +413,19 @@ static void vcache_check_run( struct draw_pt_front_end *frontend,
       transformed_elts = storage;
    }
 
-   vcache->middle->run_linear_elts( vcache->middle,
-                                    min_index, /* start */
-                                    fetch_count,
-                                    transformed_elts,
-                                    draw_count );
-
+   ok = vcache->middle->run_linear_elts( vcache->middle,
+                                         min_index, /* start */
+                                         fetch_count,
+                                         transformed_elts,
+                                         draw_count );
+   
    FREE(storage);
-   return;
+
+   if (ok)
+      return;
+
+   debug_printf("failed to execute atomic draw elts for %d/%d, splitting up\n",
+                fetch_count, draw_count);
 
  fail:
    vcache_run( frontend, get_elt, elts, draw_count );
@@ -411,10 +434,11 @@ static void vcache_check_run( struct draw_pt_front_end *frontend,
 
 
 
-static void vcache_prepare( struct draw_pt_front_end *frontend,
-                            unsigned prim,
-                            struct draw_pt_middle_end *middle,
-			    unsigned opt )
+static void 
+vcache_prepare( struct draw_pt_front_end *frontend,
+                unsigned prim,
+                struct draw_pt_middle_end *middle,
+                unsigned opt )
 {
    struct vcache_frontend *vcache = (struct vcache_frontend *)frontend;
 
@@ -443,14 +467,16 @@ static void vcache_prepare( struct draw_pt_front_end *frontend,
 
 
 
-static void vcache_finish( struct draw_pt_front_end *frontend )
+static void 
+vcache_finish( struct draw_pt_front_end *frontend )
 {
    struct vcache_frontend *vcache = (struct vcache_frontend *)frontend;
    vcache->middle->finish( vcache->middle );
    vcache->middle = NULL;
 }
 
-static void vcache_destroy( struct draw_pt_front_end *frontend )
+static void 
+vcache_destroy( struct draw_pt_front_end *frontend )
 {
    FREE(frontend);
 }

@@ -34,8 +34,9 @@
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_inlines.h"
-#include "pipe/p_util.h"
 #include "pipe/p_winsys.h"
+#include "util/u_math.h"
+#include "util/u_memory.h"
 
 #include "i915_context.h"
 #include "i915_texture.h"
@@ -79,7 +80,7 @@ static unsigned
 power_of_two(unsigned x)
 {
    unsigned value = 1;
-   while (value <= x)
+   while (value < x)
       value = value << 1;
    return value;
 }
@@ -206,7 +207,7 @@ i945_miptree_layout_2d( struct i915_texture *tex )
    unsigned nblocksy = pt->nblocksy[0];
 
 #if 0 /* used for tiled display targets */
-   if (pt->last_level == 0 && pt->cpp == 4)
+   if (pt->last_level == 0 && pt->block.size == 4)
       if (i915_displaytarget_layout(tex))
 	 return;
 #endif
@@ -220,7 +221,7 @@ i945_miptree_layout_2d( struct i915_texture *tex )
     */
    if (pt->last_level > 0) {
       unsigned mip1_nblocksx 
-	 = align_int(pf_get_nblocksx(&pt->block, minify(width)), align_x)
+	 = align(pf_get_nblocksx(&pt->block, minify(width)), align_x)
          + pf_get_nblocksx(&pt->block, minify(minify(width)));
 
       if (mip1_nblocksx > nblocksx)
@@ -229,14 +230,14 @@ i945_miptree_layout_2d( struct i915_texture *tex )
 
    /* Pitch must be a whole number of dwords
     */
-   tex->stride = align_int(tex->stride, 64);
+   tex->stride = align(tex->stride, 64);
    tex->total_nblocksy = 0;
 
    for (level = 0; level <= pt->last_level; level++) {
       i915_miptree_set_level_info(tex, level, 1, width, height, 1);
       i915_miptree_set_image_offset(tex, level, 0, x, y);
 
-      nblocksy = align_int(nblocksy, align_y);
+      nblocksy = align(nblocksy, align_y);
 
       /* Because the images are packed better, the final offset
        * might not be the maximal one:
@@ -246,7 +247,7 @@ i945_miptree_layout_2d( struct i915_texture *tex )
       /* Layout_below: step right after second mipmap level.
        */
       if (level == 1) {
-	 x += align_int(nblocksx, align_x);
+	 x += align(nblocksx, align_x);
       }
       else {
 	 y += nblocksy;
@@ -644,7 +645,7 @@ i915_texture_release(struct pipe_screen *screen,
       DBG("%s deleting %p\n", __FUNCTION__, (void *) tex);
       */
 
-      pipe_buffer_reference(screen->winsys, &tex->buffer, NULL);
+      pipe_buffer_reference(screen, &tex->buffer, NULL);
 
       for (i = 0; i < PIPE_MAX_TEXTURE_LEVELS; i++)
          if (tex->image_offset[i])
@@ -683,7 +684,7 @@ i915_get_tex_surface(struct pipe_screen *screen,
       ps->refcount = 1;
       ps->winsys = ws;
       pipe_texture_reference(&ps->texture, pt);
-      pipe_buffer_reference(ws, &ps->buffer, tex->buffer);
+      pipe_buffer_reference(screen, &ps->buffer, tex->buffer);
       ps->format = pt->format;
       ps->width = pt->width[level];
       ps->height = pt->height[level];
@@ -727,7 +728,7 @@ i915_texture_blanket(struct pipe_screen * screen,
    i915_miptree_set_level_info(tex, 0, 1, base->width[0], base->height[0], 1);
    i915_miptree_set_image_offset(tex, 0, 0, 0, 0);
 
-   pipe_buffer_reference(screen->winsys, &tex->buffer, buffer);
+   pipe_buffer_reference(screen, &tex->buffer, buffer);
 
    return &tex->base;
 }
@@ -755,7 +756,7 @@ i915_tex_surface_release(struct pipe_screen *screen,
       }
 
       pipe_texture_reference(&surf->texture, NULL);
-      pipe_buffer_reference(screen->winsys, &surf->buffer, NULL);
+      pipe_buffer_reference(screen, &surf->buffer, NULL);
       FREE(surf);
    }
 

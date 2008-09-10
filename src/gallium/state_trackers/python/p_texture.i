@@ -102,12 +102,12 @@
    void unmap( void );
 
    void
-   get_tile_raw(unsigned x, unsigned y, unsigned w, unsigned h, unsigned char *raw, unsigned stride) {
+   get_tile_raw(unsigned x, unsigned y, unsigned w, unsigned h, char *raw, unsigned stride) {
       pipe_get_tile_raw($self, x, y, w, h, raw, stride);
    }
 
    void
-   put_tile_raw(unsigned x, unsigned y, unsigned w, unsigned h, const unsigned char *raw, unsigned stride) {
+   put_tile_raw(unsigned x, unsigned y, unsigned w, unsigned h, const char *raw, unsigned stride) {
       pipe_put_tile_raw($self, x, y, w, h, raw, stride);
    }
 
@@ -180,13 +180,25 @@ struct st_buffer {
    }
    
    void write( const char *STRING, unsigned LENGTH, unsigned offset = 0) {
-      struct pipe_winsys *winsys = $self->st_dev->screen->winsys;
+      struct pipe_screen *screen = $self->st_dev->screen;
       char *map;
       
-      map = winsys->buffer_map(winsys, $self->buffer, PIPE_BUFFER_USAGE_CPU_WRITE);
-      if(!map) {
+      assert($self->buffer->refcount);
+      
+      if(offset > $self->buffer->size) {
+         PyErr_SetString(PyExc_ValueError, "offset must be smaller than buffer size");
+         return;
+      }
+
+      if(offset + LENGTH > $self->buffer->size) {
+         PyErr_SetString(PyExc_ValueError, "data length must fit inside the buffer");
+         return;
+      }
+
+      map = pipe_buffer_map(screen, $self->buffer, PIPE_BUFFER_USAGE_CPU_WRITE);
+      if(map) {
          memcpy(map + offset, STRING, LENGTH);
-         winsys->buffer_unmap(winsys, $self->buffer);
+         pipe_buffer_unmap(screen, $self->buffer);
       }
    }
 };

@@ -57,7 +57,7 @@ struct translate_element
 struct translate_key {
    unsigned output_stride;
    unsigned nr_elements;
-   struct translate_element element[PIPE_MAX_ATTRIBS];
+   struct translate_element element[PIPE_MAX_ATTRIBS + 1];
 };
 
 

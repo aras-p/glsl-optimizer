@@ -30,10 +30,11 @@
  *  Brian Paul
  */
 
-#include "pipe/p_util.h"
+#include "util/u_memory.h"
 #include "pipe/p_inlines.h"
 #include "draw/draw_context.h"
 #include "cell_context.h"
+#include "cell_flush.h"
 #include "cell_state.h"
 #include "cell_texture.h"
 #include "cell_state_per_fragment.h"
@@ -130,8 +131,9 @@ cell_delete_depth_stencil_alpha_state(struct pipe_context *pipe, void *depth)
 }
 
 
-static void cell_set_clip_state( struct pipe_context *pipe,
-			     const struct pipe_clip_state *clip )
+static void
+cell_set_clip_state(struct pipe_context *pipe,
+                    const struct pipe_clip_state *clip)
 {
    struct cell_context *cell = cell_context(pipe);
 
@@ -294,6 +296,8 @@ cell_set_framebuffer_state(struct pipe_context *pipe,
       struct pipe_surface *csurf = fb->cbufs[0];
       struct pipe_surface *zsurf = fb->zsbuf;
       uint i;
+      uint flags = (PIPE_BUFFER_USAGE_GPU_WRITE |
+                    PIPE_BUFFER_USAGE_GPU_READ);
 
       /* unmap old surfaces */
       for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++) {
@@ -308,15 +312,28 @@ cell_set_framebuffer_state(struct pipe_context *pipe,
          cell->zsbuf_map = NULL;
       }
 
-      /* update my state */
-      cell->framebuffer = *fb;
+      /* Finish any pending rendering to the current surface before
+       * installing a new surface!
+       */
+      cell_flush_int(cell, CELL_FLUSH_WAIT);
+
+      /* update my state
+       * (this is also where old surfaces will finally get freed)
+       */
+      cell->framebuffer.width = fb->width;
+      cell->framebuffer.height = fb->height;
+      cell->framebuffer.num_cbufs = fb->num_cbufs;
+      for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++) {
+         pipe_surface_reference(&cell->framebuffer.cbufs[i], fb->cbufs[i]);
+      }
+      pipe_surface_reference(&cell->framebuffer.zsbuf, fb->zsbuf);
 
       /* map new surfaces */
       if (csurf)
-         cell->cbuf_map[0] = pipe_surface_map(csurf);
+         cell->cbuf_map[0] = pipe_surface_map(csurf, flags);
 
       if (zsurf)
-         cell->zsbuf_map = pipe_surface_map(zsurf);
+         cell->zsbuf_map = pipe_surface_map(zsurf, flags);
 
       cell->dirty |= CELL_NEW_FRAMEBUFFER;
    }

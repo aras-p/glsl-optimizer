@@ -124,13 +124,13 @@ struct spu_global
    struct spu_framebuffer fb;
    boolean read_depth;
    boolean read_stencil;
-   frag_test_func frag_test;
+   frag_test_func frag_test;  /**< Current depth/stencil test code */
    
-   boolean read_fb;
-   blend_func blend;
+   boolean read_fb;   /**< Does current blend mode require framebuffer read? */
+   blend_func blend;  /**< Current blend code */
    qword const_blend_color[4] ALIGN16_ATTRIB;
 
-   logicop_func logicop;
+   logicop_func logicop;  /**< Current logicop code **/
 
    struct pipe_sampler_state sampler[PIPE_MAX_SAMPLERS];
    struct spu_texture texture[PIPE_MAX_SAMPLERS];

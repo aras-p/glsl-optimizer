@@ -218,6 +218,26 @@ void st_init_extensions(struct st_context *st)
       /*ctx->Extensions.ARB_shadow_ambient = GL_TRUE;*/
    }
 
+   /* GL_EXT_packed_depth_stencil requires both the ability to render to
+    * a depth/stencil buffer and texture from depth/stencil source.
+    */
+   if (screen->is_format_supported(screen, PIPE_FORMAT_Z24S8_UNORM,
+                                   PIPE_TEXTURE_2D, 
+                                   PIPE_TEXTURE_USAGE_DEPTH_STENCIL, 0) &&
+       screen->is_format_supported(screen, PIPE_FORMAT_Z24S8_UNORM,
+                                   PIPE_TEXTURE_2D, 
+                                   PIPE_TEXTURE_USAGE_SAMPLER, 0)) {
+      ctx->Extensions.EXT_packed_depth_stencil = GL_TRUE;
+   }
+   else if (screen->is_format_supported(screen, PIPE_FORMAT_S8Z24_UNORM,
+                                        PIPE_TEXTURE_2D, 
+                                        PIPE_TEXTURE_USAGE_DEPTH_STENCIL, 0) &&
+            screen->is_format_supported(screen, PIPE_FORMAT_S8Z24_UNORM,
+                                        PIPE_TEXTURE_2D, 
+                                        PIPE_TEXTURE_USAGE_SAMPLER, 0)) {
+      ctx->Extensions.EXT_packed_depth_stencil = GL_TRUE;
+   }
+
    if (screen->is_format_supported(screen, PIPE_FORMAT_R8G8B8A8_SRGB,
                                    PIPE_TEXTURE_2D, 
                                    PIPE_TEXTURE_USAGE_SAMPLER, 0)) {

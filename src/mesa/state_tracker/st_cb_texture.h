@@ -37,6 +37,10 @@ st_finalize_texture(GLcontext *ctx,
 		    GLboolean *needFlush);
 
 
+extern struct gl_texture_object *
+st_get_default_texture(struct st_context *st);
+
+
 extern void
 st_init_texture_functions(struct dd_function_table *functions);
 

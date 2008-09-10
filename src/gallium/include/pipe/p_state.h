@@ -276,12 +276,12 @@ struct pipe_surface
    enum pipe_format format;      /**< PIPE_FORMAT_x */
    unsigned status;              /**< PIPE_SURFACE_STATUS_x */
    unsigned clear_value;         /**< XXX may be temporary */
-   unsigned width;
-   unsigned height;
+   unsigned width;               /**< logical width in pixels */
+   unsigned height;              /**< logical height in pixels */
    struct pipe_format_block block;
-   unsigned nblocksx;
-   unsigned nblocksy;
-   unsigned stride;              /**< in bytes */
+   unsigned nblocksx;            /**< allocated width in blocks */
+   unsigned nblocksy;            /**< allocated height in blocks */
+   unsigned stride;              /**< stride in bytes between rows of blocks */
    unsigned layout;              /**< PIPE_SURFACE_LAYOUT_x */
    unsigned offset;              /**< offset from start of buffer, in bytes */
    unsigned refcount;
@@ -309,8 +309,8 @@ struct pipe_texture
    unsigned depth[PIPE_MAX_TEXTURE_LEVELS];
 
    struct pipe_format_block block;
-   unsigned nblocksx[PIPE_MAX_TEXTURE_LEVELS];
-   unsigned nblocksy[PIPE_MAX_TEXTURE_LEVELS];
+   unsigned nblocksx[PIPE_MAX_TEXTURE_LEVELS]; /**< allocated width in blocks */
+   unsigned nblocksy[PIPE_MAX_TEXTURE_LEVELS]; /**< allocated height in blocks */
 
    unsigned last_level:8;    /**< Index of last mipmap level present/defined */
    unsigned compressed:1;

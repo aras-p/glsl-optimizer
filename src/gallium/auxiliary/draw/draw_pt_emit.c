@@ -25,7 +25,7 @@
  *
  **************************************************************************/
 
-#include "pipe/p_util.h"
+#include "util/u_memory.h"
 #include "draw/draw_context.h"
 #include "draw/draw_private.h"
 #include "draw/draw_vbuf.h"

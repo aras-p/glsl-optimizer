@@ -33,7 +33,7 @@
  */
 
 
-#include "pipe/p_util.h"
+#include "util/u_memory.h"
 #include "pipe/p_defines.h"
 #include "draw_pipe.h"
 

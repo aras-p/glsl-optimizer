@@ -27,7 +27,7 @@
 
 #include "pipe/p_context.h"
 #include "pipe/p_state.h"
-#include "pipe/p_util.h"
+#include "util/u_memory.h"
 
 #include "i915_state_inlines.h"
 #include "i915_context.h"

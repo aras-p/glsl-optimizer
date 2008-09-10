@@ -26,13 +26,17 @@
  **************************************************************************/
 
 
-#include "pipe/p_util.h"
 #include "pipe/p_winsys.h"
 #include "pipe/p_context.h"
 #include "pipe/p_shader_tokens.h"
 #include "pipe/p_inlines.h"
 #include "cso_cache/cso_context.h"
+#include "util/u_math.h"
+#include "util/u_memory.h"
 #include "util/u_simple_shaders.h"
+#include "trace/tr_screen.h"
+#include "trace/tr_context.h"
+
 #include "st_device.h"
 #include "st_winsys.h"
 
@@ -41,7 +45,7 @@ static void
 st_device_really_destroy(struct st_device *st_dev) 
 {
    if(st_dev->screen)
-      st_dev->st_ws->screen_destroy(st_dev->screen);
+      st_dev->screen->destroy(st_dev->screen);
    
    FREE(st_dev);
 }
@@ -61,9 +65,7 @@ st_device_create_from_st_winsys(const struct st_winsys *st_ws)
    struct st_device *st_dev;
    
    if(!st_ws->screen_create ||
-      !st_ws->screen_destroy ||
-      !st_ws->context_create ||
-      !st_ws->context_destroy)
+      !st_ws->context_create)
       return NULL;
    
    st_dev = CALLOC_STRUCT(st_device);
@@ -73,9 +75,17 @@ st_device_create_from_st_winsys(const struct st_winsys *st_ws)
    st_dev->refcount = 1;
    st_dev->st_ws = st_ws;
    
-   st_dev->screen = st_ws->screen_create();
-   if(!st_dev->screen)
+   st_dev->real_screen = st_ws->screen_create();
+   if(!st_dev->real_screen) {
       st_device_destroy(st_dev);
+      return NULL;
+   }
+
+   st_dev->screen = trace_screen_create(st_dev->real_screen);
+   if(!st_dev->screen) {
+      st_device_destroy(st_dev);
+      return NULL;
+   }
    
    return st_dev;
 }
@@ -106,7 +116,7 @@ st_context_destroy(struct st_context *st_ctx)
       }
       
       if(st_ctx->pipe)
-         st_ctx->st_dev->st_ws->context_destroy(st_ctx->pipe);
+         st_ctx->pipe->destroy(st_ctx->pipe);
       
       for(i = 0; i < PIPE_MAX_SAMPLERS; ++i)
          pipe_texture_reference(&st_ctx->sampler_textures[i], NULL);
@@ -132,13 +142,23 @@ st_context_create(struct st_device *st_dev)
    st_ctx->st_dev = st_dev;
    ++st_dev->refcount;
    
-   st_ctx->pipe = st_dev->st_ws->context_create(st_dev->screen);
-   if(!st_ctx->pipe)
+   st_ctx->real_pipe = st_dev->st_ws->context_create(st_dev->real_screen);
+   if(!st_ctx->real_pipe) {
       st_context_destroy(st_ctx);
+      return NULL;
+   }
    
-   st_ctx->cso = cso_create_context(st_ctx->pipe);
-   if(!st_ctx->cso)
+   st_ctx->pipe = trace_context_create(st_dev->screen, st_ctx->real_pipe);
+   if(!st_ctx->pipe) {
       st_context_destroy(st_ctx);
+      return NULL;
+   }
+
+   st_ctx->cso = cso_create_context(st_ctx->pipe);
+   if(!st_ctx->cso) {
+      st_context_destroy(st_ctx);
+      return NULL;
+   }
    
    /* disabled blending/masking */
    {
@@ -272,8 +292,8 @@ void
 st_buffer_destroy(struct st_buffer *st_buf)
 {
    if(st_buf) {
-      struct pipe_winsys *winsys = st_buf->st_dev->screen->winsys;
-      pipe_buffer_reference(winsys, &st_buf->buffer, NULL);
+      struct pipe_screen *screen = st_buf->st_dev->screen;
+      pipe_buffer_reference(screen, &st_buf->buffer, NULL);
       FREE(st_buf);
    }
 }
@@ -283,7 +303,7 @@ struct st_buffer *
 st_buffer_create(struct st_device *st_dev,
                  unsigned alignment, unsigned usage, unsigned size)
 {
-   struct pipe_winsys *winsys = st_dev->screen->winsys;
+   struct pipe_screen *screen = st_dev->screen;
    struct st_buffer *st_buf;
    
    st_buf = CALLOC_STRUCT(st_buffer);
@@ -292,9 +312,11 @@ st_buffer_create(struct st_device *st_dev,
 
    st_buf->st_dev = st_dev;
    
-   st_buf->buffer = winsys->buffer_create(winsys, alignment, usage, size);
-   if(!st_buf->buffer)
+   st_buf->buffer = pipe_buffer_create(screen, alignment, usage, size);
+   if(!st_buf->buffer) {
       st_buffer_destroy(st_buf);
+      return NULL;
+   }
    
    return st_buf;
 }

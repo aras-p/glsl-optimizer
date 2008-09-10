@@ -68,6 +68,11 @@ struct st_context {
    void set_fragment_shader( const struct pipe_shader_state *state ) {
       void *fs;
       
+      if(!state) {
+         cso_set_fragment_shader_handle($self->cso, NULL);
+         return;
+      }
+      
       fs = $self->pipe->create_fs_state($self->pipe, state);
       if(!fs)
          return;
@@ -81,6 +86,11 @@ struct st_context {
 
    void set_vertex_shader( const struct pipe_shader_state *state ) {
       void *vs;
+      
+      if(!state) {
+         cso_set_vertex_shader_handle($self->cso, NULL);
+         return;
+      }
       
       vs = $self->pipe->create_vs_state($self->pipe, state);
       if(!vs)
@@ -110,7 +120,7 @@ struct st_context {
    {
       struct pipe_constant_buffer state;
       memset(&state, 0, sizeof(state));
-      state.buffer = buffer->buffer;
+      state.buffer = buffer ? buffer->buffer : NULL;
       state.size = buffer->buffer->size;
       $self->pipe->set_constant_buffer($self->pipe, shader, index, &state);
    }
@@ -147,30 +157,38 @@ struct st_context {
                           unsigned buffer_offset,
                           struct st_buffer *buffer)
    {
-      unsigned i, num_vertex_buffers;
+      unsigned i;
       struct pipe_vertex_buffer state;
       
       memset(&state, 0, sizeof(state));
       state.pitch = pitch;
       state.max_index = max_index;
       state.buffer_offset = buffer_offset;
-      state.buffer = buffer->buffer;
+      state.buffer = buffer ? buffer->buffer : NULL;
 
       memcpy(&$self->vertex_buffers[index], &state, sizeof(state));
       
       for(i = 0; i < PIPE_MAX_ATTRIBS; ++i)
          if(self->vertex_buffers[i].buffer)
-            num_vertex_buffers = i + 1;
+            $self->num_vertex_buffers = i + 1;
       
       $self->pipe->set_vertex_buffers($self->pipe, 
-                                      num_vertex_buffers, 
+                                      $self->num_vertex_buffers, 
                                       $self->vertex_buffers);
    }
 
    void set_vertex_element(unsigned index,
-                           const struct pipe_vertex_element *element) {
+                           const struct pipe_vertex_element *element) 
+   {
       memcpy(&$self->vertex_elements[index], element, sizeof(*element));
-      $self->pipe->set_vertex_elements($self->pipe, PIPE_MAX_ATTRIBS, $self->vertex_elements);
+   }
+
+   void set_vertex_elements(unsigned num) 
+   {
+      $self->num_vertex_elements = num;
+      $self->pipe->set_vertex_elements($self->pipe, 
+                                       $self->num_vertex_elements, 
+                                       $self->vertex_elements);
    }
 
    /*
@@ -183,8 +201,22 @@ struct st_context {
 
    void draw_elements( struct st_buffer *indexBuffer,
                        unsigned indexSize,
-                       unsigned mode, unsigned start, unsigned count) {
-      $self->pipe->draw_elements($self->pipe, indexBuffer->buffer, indexSize, mode, start, count);
+                       unsigned mode, unsigned start, unsigned count) 
+   {
+      $self->pipe->draw_elements($self->pipe, 
+                                 indexBuffer->buffer, 
+                                 indexSize, 
+                                 mode, start, count);
+   }
+
+   void draw_range_elements( struct st_buffer *indexBuffer,
+                             unsigned indexSize, unsigned minIndex, unsigned maxIndex,
+                             unsigned mode, unsigned start, unsigned count)
+   {
+      $self->pipe->draw_range_elements($self->pipe, 
+                                       indexBuffer->buffer, 
+                                       indexSize, minIndex, maxIndex,
+                                       mode, start, count);
    }
 
    void draw_vertices(unsigned prim,
@@ -193,38 +225,38 @@ struct st_context {
                       const float *vertices) 
    {
       struct pipe_context *pipe = $self->pipe;
-      struct pipe_winsys *winsys = pipe->winsys;
+      struct pipe_screen *screen = pipe->screen;
       struct pipe_buffer *vbuf;
       float *map;
       unsigned size;
 
       size = num_verts * num_attribs * 4 * sizeof(float);
 
-      vbuf = winsys->buffer_create(winsys,
-                                   32,
-                                   PIPE_BUFFER_USAGE_VERTEX, 
-                                   size);
+      vbuf = pipe_buffer_create(screen,
+                                32,
+                                PIPE_BUFFER_USAGE_VERTEX, 
+                                size);
       if(!vbuf)
          goto error1;
       
-      map = winsys->buffer_map(winsys, vbuf, PIPE_BUFFER_USAGE_CPU_WRITE);
+      map = pipe_buffer_map(screen, vbuf, PIPE_BUFFER_USAGE_CPU_WRITE);
       if (!map)
          goto error2;
       memcpy(map, vertices, size);
-      pipe->winsys->buffer_unmap(pipe->winsys, vbuf);
+      pipe_buffer_unmap(screen, vbuf);
       
       util_draw_vertex_buffer(pipe, vbuf, prim, num_verts, num_attribs);
       
 error2:
-      pipe_buffer_reference(pipe->winsys, &vbuf, NULL);
+      pipe_buffer_reference(screen, &vbuf, NULL);
 error1:
       ;
    }
    
    void
-   flush(void) {
+   flush(unsigned flags = 0) {
       struct pipe_fence_handle *fence = NULL; 
-      $self->pipe->flush($self->pipe, PIPE_FLUSH_RENDER_CACHE, &fence);
+      $self->pipe->flush($self->pipe, flags | PIPE_FLUSH_RENDER_CACHE, &fence);
       /* TODO: allow asynchronous operation */ 
       $self->pipe->winsys->fence_finish( $self->pipe->winsys, fence, 0 );
       $self->pipe->winsys->fence_reference( $self->pipe->winsys, &fence, NULL );

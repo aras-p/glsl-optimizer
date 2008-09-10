@@ -41,7 +41,7 @@
 #include "sp_prim_setup.h"
 #include "draw/draw_pipe.h"
 #include "draw/draw_vertex.h"
-#include "pipe/p_util.h"
+#include "util/u_memory.h"
 
 /**
  * Triangle setup info (derived from draw_stage).

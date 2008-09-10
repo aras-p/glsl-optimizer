@@ -278,6 +278,26 @@ _mesa_add_uniform(struct gl_program_parameter_list *paramList,
 
 
 /**
+ * Mark the named uniform as 'used'.
+ */
+void
+_mesa_use_uniform(struct gl_program_parameter_list *paramList,
+                  const char *name)
+{
+   GLuint i;
+   for (i = 0; i < paramList->NumParameters; i++) {
+      struct gl_program_parameter *p = paramList->Parameters + i;
+      if (p->Type == PROGRAM_UNIFORM && _mesa_strcmp(p->Name, name) == 0) {
+         p->Used = GL_TRUE;
+         /* Note that large uniforms may occupy several slots so we're
+          * not done searching yet.
+          */
+      }
+   }
+}
+
+
+/**
  * Add a sampler to the parameter list.
  * \param name  uniform's name
  * \param datatype  GL_SAMPLER_2D, GL_SAMPLER_2D_RECT_ARB, etc.
@@ -400,7 +420,7 @@ _mesa_add_state_reference(struct gl_program_parameter_list *paramList,
                           const gl_state_index stateTokens[STATE_LENGTH])
 {
    const GLuint size = 4; /* XXX fix */
-   const char *name;
+   char *name;
    GLint index;
 
    /* Check if the state reference is already in the list */
@@ -427,7 +447,7 @@ _mesa_add_state_reference(struct gl_program_parameter_list *paramList,
    paramList->StateFlags |= _mesa_program_state_flags(stateTokens);
 
    /* free name string here since we duplicated it in add_parameter() */
-   _mesa_free((void *) name);
+   _mesa_free(name);
 
    return index;
 }
@@ -591,21 +611,24 @@ _mesa_clone_parameter_list(const struct gl_program_parameter_list *list)
    /** Not too efficient, but correct */
    for (i = 0; i < list->NumParameters; i++) {
       struct gl_program_parameter *p = list->Parameters + i;
+      struct gl_program_parameter *pCopy;
       GLuint size = MIN2(p->Size, 4);
       GLint j = _mesa_add_parameter(clone, p->Type, p->Name, size, p->DataType,
                                     list->ParameterValues[i], NULL);
       ASSERT(j >= 0);
+      pCopy = clone->Parameters + j;
+      pCopy->Used = p->Used;
       /* copy state indexes */
       if (p->Type == PROGRAM_STATE_VAR) {
          GLint k;
-         struct gl_program_parameter *q = clone->Parameters + j;
          for (k = 0; k < STATE_LENGTH; k++) {
-            q->StateIndexes[k] = p->StateIndexes[k];
+            pCopy->StateIndexes[k] = p->StateIndexes[k];
          }
       }
       else {
          clone->Parameters[j].Size = p->Size;
       }
+      
    }
 
    clone->StateFlags = list->StateFlags;

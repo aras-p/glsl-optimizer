@@ -43,6 +43,7 @@
 #include "sp_setup.h"
 #include "draw/draw_context.h"
 #include "draw/draw_vbuf.h"
+#include "util/u_memory.h"
 
 
 #define SP_MAX_VBUF_INDEXES 1024

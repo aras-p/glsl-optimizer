@@ -767,7 +767,7 @@ append_index(char *dst, GLint index)
  * For example, return "state.matrix.texture[2].inverse".
  * Use _mesa_free() to deallocate the string.
  */
-const char *
+char *
 _mesa_program_state_string(const gl_state_index state[STATE_LENGTH])
 {
    char str[1000] = "";

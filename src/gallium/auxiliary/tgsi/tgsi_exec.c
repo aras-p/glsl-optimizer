@@ -1,6 +1,6 @@
 /**************************************************************************
  * 
- * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2007-2008 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -26,7 +26,7 @@
  **************************************************************************/
 
 /**
- * TGSI interpretor/executor.
+ * TGSI interpreter/executor.
  *
  * Flow control information:
  *
@@ -52,16 +52,24 @@
 
 #include "pipe/p_compiler.h"
 #include "pipe/p_state.h"
-#include "pipe/p_util.h"
 #include "pipe/p_shader_tokens.h"
 #include "tgsi/tgsi_parse.h"
 #include "tgsi/tgsi_util.h"
 #include "tgsi_exec.h"
+#include "util/u_memory.h"
+#include "util/u_math.h"
+
+#define FAST_MATH 1
 
 #define TILE_TOP_LEFT     0
 #define TILE_TOP_RIGHT    1
 #define TILE_BOTTOM_LEFT  2
 #define TILE_BOTTOM_RIGHT 3
+
+#define CHAN_X  0
+#define CHAN_Y  1
+#define CHAN_Z  2
+#define CHAN_W  3
 
 /*
  * Shorthand locations of various utility registers (_I = Index, _C = Channel)
@@ -88,14 +96,13 @@
 #define TEMP_OUTPUT_C      TGSI_EXEC_TEMP_OUTPUT_C
 #define TEMP_PRIMITIVE_I   TGSI_EXEC_TEMP_PRIMITIVE_I
 #define TEMP_PRIMITIVE_C   TGSI_EXEC_TEMP_PRIMITIVE_C
+#define TEMP_CC_I          TGSI_EXEC_TEMP_CC_I
+#define TEMP_CC_C          TGSI_EXEC_TEMP_CC_C
 #define TEMP_3_I           TGSI_EXEC_TEMP_THREE_I
 #define TEMP_3_C           TGSI_EXEC_TEMP_THREE_C
 #define TEMP_HALF_I        TGSI_EXEC_TEMP_HALF_I
 #define TEMP_HALF_C        TGSI_EXEC_TEMP_HALF_C
 #define TEMP_R0            TGSI_EXEC_TEMP_R0
-
-#define FOR_EACH_CHANNEL(CHAN)\
-   for (CHAN = 0; CHAN < 4; CHAN++)
 
 #define IS_CHANNEL_ENABLED(INST, CHAN)\
    ((INST).FullDstRegisters[0].DstRegister.WriteMask & (1 << (CHAN)))
@@ -104,25 +111,17 @@
    ((INST).FullDstRegisters[1].DstRegister.WriteMask & (1 << (CHAN)))
 
 #define FOR_EACH_ENABLED_CHANNEL(INST, CHAN)\
-   FOR_EACH_CHANNEL( CHAN )\
+   for (CHAN = 0; CHAN < NUM_CHANNELS; CHAN++)\
       if (IS_CHANNEL_ENABLED( INST, CHAN ))
 
 #define FOR_EACH_ENABLED_CHANNEL2(INST, CHAN)\
-   FOR_EACH_CHANNEL( CHAN )\
+   for (CHAN = 0; CHAN < NUM_CHANNELS; CHAN++)\
       if (IS_CHANNEL_ENABLED2( INST, CHAN ))
 
 
 /** The execution mask depends on the conditional mask and the loop mask */
 #define UPDATE_EXEC_MASK(MACH) \
       MACH->ExecMask = MACH->CondMask & MACH->LoopMask & MACH->ContMask & MACH->FuncMask
-
-
-#define CHAN_X  0
-#define CHAN_Y  1
-#define CHAN_Z  2
-#define CHAN_W  3
-
-
 
 /**
  * Initialize machine state by expanding tokens to full instructions,
@@ -148,6 +147,8 @@ tgsi_exec_machine_bind_shader(
 #if 0
    tgsi_dump(tokens, 0);
 #endif
+
+   util_init_math();
 
    mach->Tokens = tokens;
    mach->Samplers = samplers;
@@ -452,10 +453,17 @@ micro_exp2(
    union tgsi_exec_channel *dst,
    const union tgsi_exec_channel *src)
 {
+#if FAST_MATH
+   dst->f[0] = util_fast_exp2( src->f[0] );
+   dst->f[1] = util_fast_exp2( src->f[1] );
+   dst->f[2] = util_fast_exp2( src->f[2] );
+   dst->f[3] = util_fast_exp2( src->f[3] );
+#else
    dst->f[0] = powf( 2.0f, src->f[0] );
    dst->f[1] = powf( 2.0f, src->f[1] );
    dst->f[2] = powf( 2.0f, src->f[2] );
    dst->f[3] = powf( 2.0f, src->f[3] );
+#endif
 }
 
 static void
@@ -532,10 +540,17 @@ micro_lg2(
    union tgsi_exec_channel *dst,
    const union tgsi_exec_channel *src )
 {
+#if FAST_MATH
+   dst->f[0] = util_fast_log2( src->f[0] );
+   dst->f[1] = util_fast_log2( src->f[1] );
+   dst->f[2] = util_fast_log2( src->f[2] );
+   dst->f[3] = util_fast_log2( src->f[3] );
+#else
    dst->f[0] = logf( src->f[0] ) * 1.442695f;
    dst->f[1] = logf( src->f[1] ) * 1.442695f;
    dst->f[2] = logf( src->f[2] ) * 1.442695f;
    dst->f[3] = logf( src->f[3] ) * 1.442695f;
+#endif
 }
 
 static void
@@ -800,10 +815,17 @@ micro_pow(
    const union tgsi_exec_channel *src0,
    const union tgsi_exec_channel *src1 )
 {
+#if FAST_MATH
+   dst->f[0] = util_fast_pow( src0->f[0], src1->f[0] );
+   dst->f[1] = util_fast_pow( src0->f[1], src1->f[1] );
+   dst->f[2] = util_fast_pow( src0->f[2], src1->f[2] );
+   dst->f[3] = util_fast_pow( src0->f[3], src1->f[3] );
+#else
    dst->f[0] = powf( src0->f[0], src1->f[0] );
    dst->f[1] = powf( src0->f[1], src1->f[1] );
    dst->f[2] = powf( src0->f[2], src1->f[2] );
    dst->f[3] = powf( src0->f[3], src1->f[3] );
+#endif
 }
 
 static void
@@ -935,6 +957,7 @@ fetch_src_file_channel(
    case TGSI_EXTSWIZZLE_W:
       switch( file ) {
       case TGSI_FILE_CONSTANT:
+         assert(mach->Consts);
          chan->f[0] = mach->Consts[index->i[0]][swizzle];
          chan->f[1] = mach->Consts[index->i[1]][swizzle];
          chan->f[2] = mach->Consts[index->i[2]][swizzle];
@@ -1124,11 +1147,15 @@ store_dest(
    const struct tgsi_full_instruction *inst,
    uint chan_index )
 {
+   uint i;
+   union tgsi_exec_channel null;
    union tgsi_exec_channel *dst;
+   uint execmask = mach->ExecMask;
 
-   switch( reg->DstRegister.File ) {
+   switch (reg->DstRegister.File) {
    case TGSI_FILE_NULL:
-      return;
+      dst = &null;
+      break;
 
    case TGSI_FILE_OUTPUT:
       dst = &mach->Outputs[mach->Temps[TEMP_OUTPUT_I].xyzw[TEMP_OUTPUT_C].u[0]
@@ -1136,7 +1163,7 @@ store_dest(
       break;
 
    case TGSI_FILE_TEMPORARY:
-      assert(reg->DstRegister.Index < TGSI_EXEC_NUM_TEMPS);
+      assert( reg->DstRegister.Index < TGSI_EXEC_NUM_TEMPS );
       dst = &mach->Temps[reg->DstRegister.Index].xyzw[chan_index];
       break;
 
@@ -1149,31 +1176,192 @@ store_dest(
       return;
    }
 
-   switch (inst->Instruction.Saturate)
-   {
+   if (inst->InstructionExtNv.CondFlowEnable) {
+      union tgsi_exec_channel *cc = &mach->Temps[TEMP_CC_I].xyzw[TEMP_CC_C];
+      uint swizzle;
+      uint shift;
+      uint mask;
+      uint test;
+
+      /* Only CC0 supported.
+       */
+      assert( inst->InstructionExtNv.CondFlowIndex < 1 );
+
+      switch (chan_index) {
+      case CHAN_X:
+         swizzle = inst->InstructionExtNv.CondSwizzleX;
+         break;
+      case CHAN_Y:
+         swizzle = inst->InstructionExtNv.CondSwizzleY;
+         break;
+      case CHAN_Z:
+         swizzle = inst->InstructionExtNv.CondSwizzleZ;
+         break;
+      case CHAN_W:
+         swizzle = inst->InstructionExtNv.CondSwizzleW;
+         break;
+      default:
+         assert( 0 );
+         return;
+      }
+
+      switch (swizzle) {
+      case TGSI_SWIZZLE_X:
+         shift = TGSI_EXEC_CC_X_SHIFT;
+         mask = TGSI_EXEC_CC_X_MASK;
+         break;
+      case TGSI_SWIZZLE_Y:
+         shift = TGSI_EXEC_CC_Y_SHIFT;
+         mask = TGSI_EXEC_CC_Y_MASK;
+         break;
+      case TGSI_SWIZZLE_Z:
+         shift = TGSI_EXEC_CC_Z_SHIFT;
+         mask = TGSI_EXEC_CC_Z_MASK;
+         break;
+      case TGSI_SWIZZLE_W:
+         shift = TGSI_EXEC_CC_W_SHIFT;
+         mask = TGSI_EXEC_CC_W_MASK;
+         break;
+      default:
+         assert( 0 );
+         return;
+      }
+
+      switch (inst->InstructionExtNv.CondMask) {
+      case TGSI_CC_GT:
+         test = ~(TGSI_EXEC_CC_GT << shift) & mask;
+         for (i = 0; i < QUAD_SIZE; i++)
+            if (cc->u[i] & test)
+               execmask &= ~(1 << i);
+         break;
+
+      case TGSI_CC_EQ:
+         test = ~(TGSI_EXEC_CC_EQ << shift) & mask;
+         for (i = 0; i < QUAD_SIZE; i++)
+            if (cc->u[i] & test)
+               execmask &= ~(1 << i);
+         break;
+
+      case TGSI_CC_LT:
+         test = ~(TGSI_EXEC_CC_LT << shift) & mask;
+         for (i = 0; i < QUAD_SIZE; i++)
+            if (cc->u[i] & test)
+               execmask &= ~(1 << i);
+         break;
+
+      case TGSI_CC_GE:
+         test = ~((TGSI_EXEC_CC_GT | TGSI_EXEC_CC_EQ) << shift) & mask;
+         for (i = 0; i < QUAD_SIZE; i++)
+            if (cc->u[i] & test)
+               execmask &= ~(1 << i);
+         break;
+
+      case TGSI_CC_LE:
+         test = ~((TGSI_EXEC_CC_LT | TGSI_EXEC_CC_EQ) << shift) & mask;
+         for (i = 0; i < QUAD_SIZE; i++)
+            if (cc->u[i] & test)
+               execmask &= ~(1 << i);
+         break;
+
+      case TGSI_CC_NE:
+         test = ~((TGSI_EXEC_CC_GT | TGSI_EXEC_CC_LT | TGSI_EXEC_CC_UN) << shift) & mask;
+         for (i = 0; i < QUAD_SIZE; i++)
+            if (cc->u[i] & test)
+               execmask &= ~(1 << i);
+         break;
+
+      case TGSI_CC_TR:
+         break;
+
+      case TGSI_CC_FL:
+         for (i = 0; i < QUAD_SIZE; i++)
+            execmask &= ~(1 << i);
+         break;
+
+      default:
+         assert( 0 );
+         return;
+      }
+   }
+
+   switch (inst->Instruction.Saturate) {
    case TGSI_SAT_NONE:
-      if (mach->ExecMask & 0x1)
-         dst->i[0] = chan->i[0];
-      if (mach->ExecMask & 0x2)
-         dst->i[1] = chan->i[1];
-      if (mach->ExecMask & 0x4)
-         dst->i[2] = chan->i[2];
-      if (mach->ExecMask & 0x8)
-         dst->i[3] = chan->i[3];
+      for (i = 0; i < QUAD_SIZE; i++)
+         if (execmask & (1 << i))
+            dst->i[i] = chan->i[i];
       break;
 
    case TGSI_SAT_ZERO_ONE:
-      /* XXX need to obey ExecMask here */
-      micro_max(dst, chan, &mach->Temps[TEMP_0_I].xyzw[TEMP_0_C]);
-      micro_min(dst, dst, &mach->Temps[TEMP_1_I].xyzw[TEMP_1_C]);
+      for (i = 0; i < QUAD_SIZE; i++)
+         if (execmask & (1 << i)) {
+            if (chan->f[i] < 0.0f)
+               dst->f[i] = 0.0f;
+            else if (chan->f[i] > 1.0f)
+               dst->f[i] = 1.0f;
+            else
+               dst->i[i] = chan->i[i];
+         }
       break;
 
    case TGSI_SAT_MINUS_PLUS_ONE:
-      assert( 0 );
+      for (i = 0; i < QUAD_SIZE; i++)
+         if (execmask & (1 << i)) {
+            if (chan->f[i] < -1.0f)
+               dst->f[i] = -1.0f;
+            else if (chan->f[i] > 1.0f)
+               dst->f[i] = 1.0f;
+            else
+               dst->i[i] = chan->i[i];
+         }
       break;
 
    default:
       assert( 0 );
+   }
+
+   if (inst->InstructionExtNv.CondDstUpdate) {
+      union tgsi_exec_channel *cc = &mach->Temps[TEMP_CC_I].xyzw[TEMP_CC_C];
+      uint shift;
+      uint mask;
+
+      /* Only CC0 supported.
+       */
+      assert( inst->InstructionExtNv.CondDstIndex < 1 );
+
+      switch (chan_index) {
+      case CHAN_X:
+         shift = TGSI_EXEC_CC_X_SHIFT;
+         mask = ~TGSI_EXEC_CC_X_MASK;
+         break;
+      case CHAN_Y:
+         shift = TGSI_EXEC_CC_Y_SHIFT;
+         mask = ~TGSI_EXEC_CC_Y_MASK;
+         break;
+      case CHAN_Z:
+         shift = TGSI_EXEC_CC_Z_SHIFT;
+         mask = ~TGSI_EXEC_CC_Z_MASK;
+         break;
+      case CHAN_W:
+         shift = TGSI_EXEC_CC_W_SHIFT;
+         mask = ~TGSI_EXEC_CC_W_MASK;
+         break;
+      default:
+         assert( 0 );
+         return;
+      }
+
+      for (i = 0; i < QUAD_SIZE; i++)
+         if (execmask & (1 << i)) {
+            cc->u[i] &= mask;
+            if (dst->f[i] < 0.0f)
+               cc->u[i] |= TGSI_EXEC_CC_LT << shift;
+            else if (dst->f[i] > 0.0f)
+               cc->u[i] |= TGSI_EXEC_CC_GT << shift;
+            else if (dst->f[i] == 0.0f)
+               cc->u[i] |= TGSI_EXEC_CC_EQ << shift;
+            else
+               cc->u[i] |= TGSI_EXEC_CC_UN << shift;
+         }
    }
 }
 
@@ -1234,10 +1422,34 @@ static void
 exec_kilp(struct tgsi_exec_machine *mach,
           const struct tgsi_full_instruction *inst)
 {
-   uint kilmask = 0; /* bit 0 = pixel 0, bit 1 = pixel 1, etc */
+   uint kilmask; /* bit 0 = pixel 0, bit 1 = pixel 1, etc */
 
-   /* TODO: build kilmask from CC mask */
+   if (inst->InstructionExtNv.CondFlowEnable) {
+      uint swizzle[4];
+      uint chan_index;
 
+      kilmask = 0x0;
+
+      swizzle[0] = inst->InstructionExtNv.CondSwizzleX;
+      swizzle[1] = inst->InstructionExtNv.CondSwizzleY;
+      swizzle[2] = inst->InstructionExtNv.CondSwizzleZ;
+      swizzle[3] = inst->InstructionExtNv.CondSwizzleW;
+
+      for (chan_index = 0; chan_index < 4; chan_index++)
+      {
+         uint i;
+
+         for (i = 0; i < 4; i++) {
+            /* TODO: evaluate the condition code */
+            if (0)
+               kilmask |= 1 << i;
+         }
+      }
+   }
+   else {
+      /* "unconditional" kil */
+      kilmask = mach->ExecMask;
+   }
    mach->Temps[TEMP_KILMASK_I].xyzw[TEMP_KILMASK_C].u[0] |= kilmask;
 }
 
@@ -1503,9 +1715,9 @@ exec_instruction(
    switch (inst->Instruction.Opcode) {
    case TGSI_OPCODE_ARL:
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
-	 FETCH( &r[0], 0, chan_index );
-	 micro_f2it( &r[0], &r[0] );
-	 STORE( &r[0], 0, chan_index );
+         FETCH( &r[0], 0, chan_index );
+         micro_f2it( &r[0], &r[0] );
+         STORE( &r[0], 0, chan_index );
       }
       break;
 
@@ -1571,18 +1783,18 @@ exec_instruction(
       micro_flr( &r[1], &r[0] );  /* r1 = floor(r0) */
       if (IS_CHANNEL_ENABLED( *inst, CHAN_X )) {
          micro_exp2( &r[2], &r[1] );       /* r2 = 2 ^ r1 */
-	 STORE( &r[2], 0, CHAN_X );        /* store r2 */
+         STORE( &r[2], 0, CHAN_X );        /* store r2 */
       }
       if (IS_CHANNEL_ENABLED( *inst, CHAN_Y )) {
          micro_sub( &r[2], &r[0], &r[1] ); /* r2 = r0 - r1 */
-	 STORE( &r[2], 0, CHAN_Y );        /* store r2 */
+         STORE( &r[2], 0, CHAN_Y );        /* store r2 */
       }
       if (IS_CHANNEL_ENABLED( *inst, CHAN_Z )) {
          micro_exp2( &r[2], &r[0] );       /* r2 = 2 ^ r0 */
-	 STORE( &r[2], 0, CHAN_Z );        /* store r2 */
+         STORE( &r[2], 0, CHAN_Z );        /* store r2 */
       }
       if (IS_CHANNEL_ENABLED( *inst, CHAN_W )) {
-	 STORE( &mach->Temps[TEMP_1_I].xyzw[TEMP_1_C], 0, CHAN_W );
+         STORE( &mach->Temps[TEMP_1_I].xyzw[TEMP_1_C], 0, CHAN_W );
       }
       break;
 
@@ -1592,18 +1804,18 @@ exec_instruction(
       micro_lg2( &r[1], &r[2] );  /* r1 = lg2(r2) */
       micro_flr( &r[0], &r[1] );  /* r0 = floor(r1) */
       if (IS_CHANNEL_ENABLED( *inst, CHAN_X )) {
-	 STORE( &r[0], 0, CHAN_X );
+         STORE( &r[0], 0, CHAN_X );
       }
       if (IS_CHANNEL_ENABLED( *inst, CHAN_Y )) {
          micro_exp2( &r[0], &r[0] );       /* r0 = 2 ^ r0 */
          micro_div( &r[0], &r[2], &r[0] ); /* r0 = r2 / r0 */
-	 STORE( &r[0], 0, CHAN_Y );
+         STORE( &r[0], 0, CHAN_Y );
       }
       if (IS_CHANNEL_ENABLED( *inst, CHAN_Z )) {
-	 STORE( &r[1], 0, CHAN_Z );
+         STORE( &r[1], 0, CHAN_Z );
       }
       if (IS_CHANNEL_ENABLED( *inst, CHAN_W )) {
-	 STORE( &mach->Temps[TEMP_1_I].xyzw[TEMP_1_C], 0, CHAN_W );
+         STORE( &mach->Temps[TEMP_1_I].xyzw[TEMP_1_C], 0, CHAN_W );
       }
       break;
 
@@ -1839,7 +2051,11 @@ exec_instruction(
     /* TGSI_OPCODE_EX2 */
       FETCH(&r[0], 0, CHAN_X);
 
+#if FAST_MATH
+      micro_exp2( &r[0], &r[0] );
+#else
       micro_pow( &r[0], &mach->Temps[TEMP_2_I].xyzw[TEMP_2_C], &r[0] );
+#endif
 
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
 	 STORE( &r[0], 0, chan_index );
@@ -2158,7 +2374,7 @@ exec_instruction(
       mach->FuncMask &= ~mach->ExecMask;
       UPDATE_EXEC_MASK(mach);
 
-      if (mach->ExecMask == 0x0) {
+      if (mach->FuncMask == 0x0) {
          /* really return now (otherwise, keep executing */
 
          if (mach->CallStackTop == 0) {
@@ -2515,6 +2731,13 @@ tgsi_exec_machine_run( struct tgsi_exec_machine *mach )
       mach->Primitives[0] = 0;
    }
 
+   for (i = 0; i < QUAD_SIZE; i++) {
+      mach->Temps[TEMP_CC_I].xyzw[TEMP_CC_C].u[i] =
+         (TGSI_EXEC_CC_EQ << TGSI_EXEC_CC_X_SHIFT) |
+         (TGSI_EXEC_CC_EQ << TGSI_EXEC_CC_Y_SHIFT) |
+         (TGSI_EXEC_CC_EQ << TGSI_EXEC_CC_Z_SHIFT) |
+         (TGSI_EXEC_CC_EQ << TGSI_EXEC_CC_W_SHIFT);
+   }
 
    /* execute declarations (interpolants) */
    for (i = 0; i < mach->NumDeclarations; i++) {

@@ -31,7 +31,8 @@
  */
 
 #include "pipe/p_defines.h"
-#include "pipe/p_util.h"
+#include "util/u_math.h"
+#include "util/u_memory.h"
 #include "sp_context.h"
 #include "sp_headers.h"
 #include "sp_surface.h"
@@ -55,14 +56,14 @@ colormask_quad(struct quad_stage *qs, struct quad_header *quad)
       struct softpipe_cached_tile *tile
          = sp_get_cached_tile(softpipe,
                               softpipe->cbuf_cache[cbuf],
-                              quad->x0, quad->y0);
-      float (*quadColor)[4] = quad->outputs.color[cbuf];
+                              quad->input.x0, quad->input.y0);
+      float (*quadColor)[4] = quad->output.color[cbuf];
       uint i, j;
 
       /* get/swizzle dest colors */
       for (j = 0; j < QUAD_SIZE; j++) {
-         int x = (quad->x0 & (TILE_SIZE-1)) + (j & 1);
-         int y = (quad->y0 & (TILE_SIZE-1)) + (j >> 1);
+         int x = (quad->input.x0 & (TILE_SIZE-1)) + (j & 1);
+         int y = (quad->input.y0 & (TILE_SIZE-1)) + (j >> 1);
          for (i = 0; i < 4; i++) {
             dest[i][j] = tile->data.color[y][x][i];
          }

@@ -35,7 +35,8 @@
  * all the enabled attributes run contiguously.
  */
 
-#include "pipe/p_util.h"
+#include "util/u_math.h"
+#include "util/u_memory.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_shader_tokens.h"
 
@@ -84,7 +85,7 @@ shade_quad(
    machine->InterpCoefs = quad->coef;
 
    /* run shader */
-   quad->mask &= softpipe->fs->run( softpipe->fs, 
+   quad->inout.mask &= softpipe->fs->run( softpipe->fs, 
 				    &qss->machine,
 				    quad );
 
@@ -100,16 +101,16 @@ shade_quad(
          case TGSI_SEMANTIC_COLOR:
             {
                uint cbuf = sem_index[i];
-               memcpy(quad->outputs.color[cbuf],
+               memcpy(quad->output.color[cbuf],
                       &machine->Outputs[i].xyzw[0].f[0],
-                      sizeof(quad->outputs.color[0]) );
+                      sizeof(quad->output.color[0]) );
             }
             break;
          case TGSI_SEMANTIC_POSITION:
             {
                uint j;
                for (j = 0; j < 4; j++) {
-                  quad->outputs.depth[j] = machine->Outputs[0].xyzw[2].f[j];
+                  quad->output.depth[j] = machine->Outputs[0].xyzw[2].f[j];
                }
                z_written = TRUE;
             }
@@ -121,20 +122,20 @@ shade_quad(
    if (!z_written) {
       /* compute Z values now, as in the quad earlyz stage */
       /* XXX we should really only do this if the earlyz stage is not used */
-      const float fx = (float) quad->x0;
-      const float fy = (float) quad->y0;
+      const float fx = (float) quad->input.x0;
+      const float fy = (float) quad->input.y0;
       const float dzdx = quad->posCoef->dadx[2];
       const float dzdy = quad->posCoef->dady[2];
       const float z0 = quad->posCoef->a0[2] + dzdx * fx + dzdy * fy;
 
-      quad->outputs.depth[0] = z0;
-      quad->outputs.depth[1] = z0 + dzdx;
-      quad->outputs.depth[2] = z0 + dzdy;
-      quad->outputs.depth[3] = z0 + dzdx + dzdy;
+      quad->output.depth[0] = z0;
+      quad->output.depth[1] = z0 + dzdx;
+      quad->output.depth[2] = z0 + dzdy;
+      quad->output.depth[3] = z0 + dzdx + dzdy;
    }
 
    /* shader may cull fragments */
-   if( quad->mask ) {
+   if( quad->inout.mask ) {
       qs->next->run( qs->next, quad );
    }
 }

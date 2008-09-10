@@ -51,11 +51,11 @@ struct x86_function;
 #define W    3
 
 #define MAX_INPUTS     PIPE_MAX_ATTRIBS
-#define MAX_OUTPUTS    PIPE_MAX_ATTRIBS
-#define MAX_TEMPS      PIPE_MAX_ATTRIBS /* say */
-#define MAX_CONSTANTS  PIPE_MAX_ATTRIBS /* say */
-#define MAX_IMMEDIATES PIPE_MAX_ATTRIBS /* say */
-#define MAX_INTERNALS  8
+#define MAX_OUTPUTS    PIPE_MAX_SHADER_OUTPUTS
+#define MAX_TEMPS      TGSI_EXEC_NUM_TEMPS
+#define MAX_CONSTANTS  1024  /** only used for sanity checking */
+#define MAX_IMMEDIATES 1024  /** only used for sanity checking */
+#define MAX_INTERNALS  8     /** see IMM_x values below */
 
 #define AOS_FILE_INTERNAL TGSI_FILE_COUNT
 

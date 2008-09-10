@@ -34,7 +34,7 @@
 
 #include "pipe/p_state.h"
 #include "pipe/p_defines.h"
-#include "pipe/p_util.h"
+#include "util/u_memory.h"
 #include "pipe/p_inlines.h"
 #include "tgsi/tgsi_exec.h"
 #include "tgsi/tgsi_parse.h"
@@ -106,7 +106,7 @@ exec_run( const struct sp_fragment_shader *base,
 
    /* Compute X, Y, Z, W vals for this quad */
    sp_setup_pos_vector(quad->posCoef, 
-		       (float)quad->x0, (float)quad->y0, 
+		       (float)quad->input.x0, (float)quad->input.y0, 
 		       &machine->QuadPos);
    
    return tgsi_exec_machine_run( machine );

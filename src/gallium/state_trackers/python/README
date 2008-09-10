@@ -24,9 +24,10 @@ and then try running
 which should show a triangle.
 
 
-This is still in experimental phase, and there many limitations to what you can
-do with from Python. 
-
+This is still work in progress:
+- errors are not handled properly and almost always result in crash
+- state atoms with array members are awkward to set
+- there no efficient way to view images
 
 --
 Jose Fonseca <jrfonseca@tungstengraphics.com>

@@ -61,6 +61,12 @@ _eglInitSurface(_EGLDriver *drv, EGLDisplay dpy,
       return EGL_FALSE;
    }
 
+   if ((GET_CONFIG_ATTRIB(conf, EGL_SURFACE_TYPE) & type) == 0) {
+      /* The config can't be used to create a surface of this type */
+      _eglError(EGL_BAD_CONFIG, func);
+      return EGL_FALSE;
+   }
+
    /*
     * Parse attribute list.  Different kinds of surfaces support different
     * attributes.
@@ -277,12 +283,7 @@ _eglSwapBuffers(_EGLDriver *drv, EGLDisplay dpy, EGLSurface draw)
    /* Basically just do error checking here.  Drivers have to do the
     * actual buffer swap.
     */
-   _EGLContext *context = _eglGetCurrentContext();
    _EGLSurface *surface = _eglLookupSurface(draw);
-   if (context && context->DrawSurface != surface) {
-      _eglError(EGL_BAD_SURFACE, "eglSwapBuffers");
-      return EGL_FALSE;
-   }
    if (surface == NULL) {
       _eglError(EGL_BAD_SURFACE, "eglSwapBuffers");
       return EGL_FALSE;
@@ -484,7 +485,8 @@ _eglDestroySurface(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surface)
  * Default fallback routine - drivers might override this.
  */
 EGLBoolean
-_eglSurfaceAttrib(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surf, EGLint attribute, EGLint value)
+_eglSurfaceAttrib(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surf,
+                  EGLint attribute, EGLint value)
 {
    _EGLSurface *surface = _eglLookupSurface(surf);
 
@@ -506,18 +508,67 @@ _eglSurfaceAttrib(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surf, EGLint attri
 
 
 EGLBoolean
-_eglBindTexImage(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surface, EGLint buffer)
+_eglBindTexImage(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surf,
+                 EGLint buffer)
 {
-   /* XXX unfinished */
-   return EGL_FALSE;
+   /* Just do basic error checking and return success/fail.
+    * Drivers must implement the real stuff.
+    */
+   _EGLSurface *surface = _eglLookupSurface(surf);
+
+   if (!surface || surface->Type != EGL_PBUFFER_BIT) {
+      _eglError(EGL_BAD_SURFACE, "eglBindTexImage");
+      return EGL_FALSE;
+   }
+
+   if (surface->TextureFormat == EGL_NO_TEXTURE) {
+      _eglError(EGL_BAD_MATCH, "eglBindTexImage");
+      return EGL_FALSE;
+   }
+
+   if (buffer != EGL_BACK_BUFFER) {
+      _eglError(EGL_BAD_PARAMETER, "eglBindTexImage");
+      return EGL_FALSE;
+   }
+
+   surface->BoundToTexture = EGL_TRUE;
+
+   return EGL_TRUE;
 }
 
 
 EGLBoolean
-_eglReleaseTexImage(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surface, EGLint buffer)
+_eglReleaseTexImage(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surf,
+                    EGLint buffer)
 {
-   /* XXX unfinished */
-   return EGL_FALSE;
+   /* Just do basic error checking and return success/fail.
+    * Drivers must implement the real stuff.
+    */
+   _EGLSurface *surface = _eglLookupSurface(surf);
+
+   if (!surface || surface->Type != EGL_PBUFFER_BIT) {
+      _eglError(EGL_BAD_SURFACE, "eglBindTexImage");
+      return EGL_FALSE;
+   }
+
+   if (surface->TextureFormat == EGL_NO_TEXTURE) {
+      _eglError(EGL_BAD_MATCH, "eglBindTexImage");
+      return EGL_FALSE;
+   }
+
+   if (buffer != EGL_BACK_BUFFER) {
+      _eglError(EGL_BAD_PARAMETER, "eglReleaseTexImage");
+      return EGL_FALSE;
+   }
+
+   if (!surface->BoundToTexture) {
+      _eglError(EGL_BAD_SURFACE, "eglReleaseTexImage");
+      return EGL_FALSE;
+   }
+
+   surface->BoundToTexture = EGL_FALSE;
+
+   return EGL_TRUE;
 }
 
 

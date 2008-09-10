@@ -34,7 +34,6 @@
 #define CELL_COMMON_H
 
 #include "pipe/p_compiler.h"
-#include "pipe/p_util.h"
 #include "pipe/p_format.h"
 #include "pipe/p_state.h"
 
@@ -106,6 +105,9 @@
 #define CELL_BUFFER_STATUS_FREE 10
 #define CELL_BUFFER_STATUS_USED 20
 
+
+#define CELL_DEBUG_CHECKER  (1 << 0)
+#define CELL_DEBUG_SYNC     (1 << 1)
 
 
 /**
@@ -264,6 +266,7 @@ struct cell_init_info
 {
    unsigned id;
    unsigned num_spus;
+   unsigned debug_flags;  /**< mask of CELL_DEBUG_x flags */
    struct cell_command *cmd;
 
    /** Buffers for command batches, vertex/index data */

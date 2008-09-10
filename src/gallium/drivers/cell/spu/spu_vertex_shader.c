@@ -34,15 +34,36 @@
 
 #include <spu_mfcio.h>
 
-#include "pipe/p_util.h"
 #include "pipe/p_state.h"
 #include "pipe/p_shader_tokens.h"
-#include "spu_vertex_shader.h"
-#include "spu_exec.h"
+#include "util/u_math.h"
 #include "draw/draw_private.h"
 #include "draw/draw_context.h"
 #include "cell/common.h"
+#include "spu_vertex_shader.h"
+#include "spu_exec.h"
 #include "spu_main.h"
+
+
+#define MAX_VERTEX_SIZE ((2 + PIPE_MAX_SHADER_OUTPUTS) * 4 * sizeof(float))
+
+
+#define CLIP_RIGHT_BIT 0x01
+#define CLIP_LEFT_BIT 0x02
+#define CLIP_TOP_BIT 0x04
+#define CLIP_BOTTOM_BIT 0x08
+#define CLIP_FAR_BIT 0x10
+#define CLIP_NEAR_BIT 0x20
+
+
+static INLINE float
+dot4(const float *a, const float *b)
+{
+   return (a[0]*b[0] +
+           a[1]*b[1] +
+           a[2]*b[2] +
+           a[3]*b[3]);
+}
 
 static INLINE unsigned
 compute_clipmask(const float *clip, /*const*/ float plane[][4], unsigned nr)
@@ -91,7 +112,7 @@ run_vertex_program(struct spu_vs_context *draw,
    const float *scale = draw->viewport.scale;
    const float *trans = draw->viewport.translate;
 
-   assert(count <= 4);
+   ASSERT(count <= 4);
 
    machine->Processor = TGSI_PROCESSOR_VERTEX;
 

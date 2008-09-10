@@ -37,6 +37,7 @@
 
 #include "pipe/p_compiler.h"
 #include "pipe/p_format.h"
+#include "util/u_math.h"
 
 
 /**
@@ -141,6 +142,161 @@ util_pack_color_ub(ubyte r, ubyte g, ubyte b, ubyte a,
  
 
 /**
+ * Unpack RGBA from a packed pixel, returning values as ubytes in [0,255].
+ */
+static INLINE void
+util_unpack_color_ub(enum pipe_format format, const void *src,
+                     ubyte *r, ubyte *g, ubyte *b, ubyte *a)
+{
+   switch (format) {
+   case PIPE_FORMAT_R8G8B8A8_UNORM:
+      {
+         uint p = ((const uint *) src)[0];
+         *r = (ubyte) ((p >> 24) & 0xff);
+         *g = (ubyte) ((p >> 16) & 0xff);
+         *b = (ubyte) ((p >>  8) & 0xff);
+         *a = (ubyte) ((p >>  0) & 0xff);
+      }
+      return;
+   case PIPE_FORMAT_R8G8B8X8_UNORM:
+      {
+         uint p = ((const uint *) src)[0];
+         *r = (ubyte) ((p >> 24) & 0xff);
+         *g = (ubyte) ((p >> 16) & 0xff);
+         *b = (ubyte) ((p >>  8) & 0xff);
+         *a = (ubyte) 0xff;
+      }
+      return;
+   case PIPE_FORMAT_A8R8G8B8_UNORM:
+      {
+         uint p = ((const uint *) src)[0];
+         *r = (ubyte) ((p >> 16) & 0xff);
+         *g = (ubyte) ((p >>  8) & 0xff);
+         *b = (ubyte) ((p >>  0) & 0xff);
+         *a = (ubyte) ((p >> 24) & 0xff);
+      }
+      return;
+   case PIPE_FORMAT_X8R8G8B8_UNORM:
+      {
+         uint p = ((const uint *) src)[0];
+         *r = (ubyte) ((p >> 16) & 0xff);
+         *g = (ubyte) ((p >>  8) & 0xff);
+         *b = (ubyte) ((p >>  0) & 0xff);
+         *a = (ubyte) 0xff;
+      }
+      return;
+   case PIPE_FORMAT_B8G8R8A8_UNORM:
+      {
+         uint p = ((const uint *) src)[0];
+         *r = (ubyte) ((p >>  8) & 0xff);
+         *g = (ubyte) ((p >> 16) & 0xff);
+         *b = (ubyte) ((p >> 24) & 0xff);
+         *a = (ubyte) ((p >>  0) & 0xff);
+      }
+      return;
+   case PIPE_FORMAT_B8G8R8X8_UNORM:
+      {
+         uint p = ((const uint *) src)[0];
+         *r = (ubyte) ((p >>  8) & 0xff);
+         *g = (ubyte) ((p >> 16) & 0xff);
+         *b = (ubyte) ((p >> 24) & 0xff);
+         *a = (ubyte) 0xff;
+      }
+      return;
+   case PIPE_FORMAT_R5G6B5_UNORM:
+      {
+         ushort p = ((const ushort *) src)[0];
+         *r = (ubyte) (((p >> 8) & 0xf8) | ((p >> 13) & 0x7));
+         *g = (ubyte) (((p >> 3) & 0xfc) | ((p >>  9) & 0x3));
+         *b = (ubyte) (((p << 3) & 0xf8) | ((p >>  2) & 0x7));
+         *a = (ubyte) 0xff;
+      }
+      return;
+   case PIPE_FORMAT_A1R5G5B5_UNORM:
+      {
+         ushort p = ((const ushort *) src)[0];
+         *r = (ubyte) (((p >>  7) & 0xf8) | ((p >> 12) & 0x7));
+         *g = (ubyte) (((p >>  2) & 0xf8) | ((p >>  7) & 0x7));
+         *b = (ubyte) (((p <<  3) & 0xf8) | ((p >>  2) & 0x7));
+         *a = (ubyte) (0xff * (p >> 15));
+      }
+      return;
+   case PIPE_FORMAT_A4R4G4B4_UNORM:
+      {
+         ushort p = ((const ushort *) src)[0];
+         *r = (ubyte) (((p >> 4) & 0xf0) | ((p >>  8) & 0xf));
+         *g = (ubyte) (((p >> 0) & 0xf0) | ((p >>  4) & 0xf));
+         *b = (ubyte) (((p << 4) & 0xf0) | ((p >>  0) & 0xf));
+         *a = (ubyte) (((p >> 8) & 0xf0) | ((p >> 12) & 0xf));
+      }
+      return;
+   case PIPE_FORMAT_A8_UNORM:
+      {
+         ubyte p = ((const ubyte *) src)[0];
+         *r = *g = *b = (ubyte) 0xff;
+         *a = p;
+      }
+      return;
+   case PIPE_FORMAT_L8_UNORM:
+      {
+         ubyte p = ((const ubyte *) src)[0];
+         *r = *g = *b = p;
+         *a = (ubyte) 0xff;
+      }
+      return;
+   case PIPE_FORMAT_I8_UNORM:
+      {
+         ubyte p = ((const ubyte *) src)[0];
+         *r = *g = *b = *a = p;
+      }
+      return;
+   case PIPE_FORMAT_R32G32B32A32_FLOAT:
+      {
+         const float *p = (const float *) src;
+         *r = float_to_ubyte(p[0]);
+         *g = float_to_ubyte(p[1]);
+         *b = float_to_ubyte(p[2]);
+         *a = float_to_ubyte(p[3]);
+      }
+      return;
+   case PIPE_FORMAT_R32G32B32_FLOAT:
+      {
+         const float *p = (const float *) src;
+         *r = float_to_ubyte(p[0]);
+         *g = float_to_ubyte(p[1]);
+         *b = float_to_ubyte(p[2]);
+         *a = (ubyte) 0xff;
+      }
+      return;
+
+   case PIPE_FORMAT_R32G32_FLOAT:
+      {
+         const float *p = (const float *) src;
+         *r = float_to_ubyte(p[0]);
+         *g = float_to_ubyte(p[1]);
+         *b = *a = (ubyte) 0xff;
+      }
+      return;
+
+   case PIPE_FORMAT_R32_FLOAT:
+      {
+         const float *p = (const float *) src;
+         *r = float_to_ubyte(p[0]);
+         *g = *b = *a = (ubyte) 0xff;
+      }
+      return;
+
+   /* XXX lots more cases to add */
+   default:
+      debug_print_format("gallium: unhandled format in util_unpack_color_ub()",
+                         format);
+      assert(0);
+   }
+}
+ 
+
+
+/**
  * Note rgba outside [0,1] will be clamped for int pixel formats.
  */
 static INLINE void
@@ -150,10 +306,10 @@ util_pack_color(const float rgba[4], enum pipe_format format, void *dest)
 
    if (pf_size_x(format) <= 8) {
       /* format uses 8-bit components or less */
-      UNCLAMPED_FLOAT_TO_UBYTE(r, rgba[0]);
-      UNCLAMPED_FLOAT_TO_UBYTE(g, rgba[1]);
-      UNCLAMPED_FLOAT_TO_UBYTE(b, rgba[2]);
-      UNCLAMPED_FLOAT_TO_UBYTE(a, rgba[3]);
+      r = float_to_ubyte(rgba[0]);
+      g = float_to_ubyte(rgba[1]);
+      b = float_to_ubyte(rgba[2]);
+      a = float_to_ubyte(rgba[3]);
    }
 
    switch (format) {
@@ -284,6 +440,33 @@ util_pack_z(enum pipe_format format, double z)
       return 0;
    }
 }
+
+
+/**
+ * Pack 4 ubytes into a 4-byte word
+ */
+static INLINE unsigned
+pack_ub4(ubyte b0, ubyte b1, ubyte b2, ubyte b3)
+{
+   return ((((unsigned int)b0) << 0) |
+	   (((unsigned int)b1) << 8) |
+	   (((unsigned int)b2) << 16) |
+	   (((unsigned int)b3) << 24));
+}
+
+
+/**
+ * Pack/convert 4 floats into one 4-byte word.
+ */
+static INLINE unsigned
+pack_ui32_float4(float a, float b, float c, float d)
+{
+   return pack_ub4( float_to_ubyte(a),
+		    float_to_ubyte(b),
+		    float_to_ubyte(c),
+		    float_to_ubyte(d) );
+}
+
 
 
 #endif /* U_PACK_COLOR_H */

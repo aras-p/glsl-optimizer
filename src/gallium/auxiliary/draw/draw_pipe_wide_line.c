@@ -28,9 +28,10 @@
 /* Authors:  Keith Whitwell <keith@tungstengraphics.com>
  */
 
-#include "pipe/p_util.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_shader_tokens.h"
+#include "util/u_math.h"
+#include "util/u_memory.h"
 #include "draw_private.h"
 #include "draw_pipe.h"
 
@@ -73,8 +74,8 @@ static void wideline_line( struct draw_stage *stage,
    float *pos2 = v2->data[pos];
    float *pos3 = v3->data[pos];
 
-   const float dx = FABSF(pos0[0] - pos2[0]);
-   const float dy = FABSF(pos0[1] - pos2[1]);
+   const float dx = fabsf(pos0[0] - pos2[0]);
+   const float dy = fabsf(pos0[1] - pos2[1]);
 
    /* small tweak to meet GL specification */
    const float bias = 0.125f;

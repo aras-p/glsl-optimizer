@@ -1,0 +1,5 @@
+!!VP1.0
+EXP R0, v[COL0].x; 
+ADD o[COL0], R0.z, -R0.w;
+MOV o[HPOS], v[OPOS];
+END

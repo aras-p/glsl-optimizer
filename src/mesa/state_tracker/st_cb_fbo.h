@@ -47,6 +47,10 @@ struct st_renderbuffer
 
    struct st_texture_object *rtt;  /**< GL render to texture's texture */
    int rtt_level, rtt_face, rtt_slice;
+
+   /** Render to texture state */
+   struct pipe_texture *texture_save;
+   struct pipe_surface *surface_save;
 };
 
 

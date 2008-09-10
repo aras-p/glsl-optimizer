@@ -34,7 +34,13 @@
 
 %module gallium;
 
+%ignore winsys;
+%ignore pipe_vertex_buffer::buffer;
+
 %include "pipe/p_state.h";
+
+
+%array_class(struct pipe_stencil_state, StencilArray);
 
 
 %extend pipe_framebuffer_state {

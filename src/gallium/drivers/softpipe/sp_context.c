@@ -32,7 +32,8 @@
 #include "draw/draw_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_inlines.h"
-#include "pipe/p_util.h"
+#include "util/u_math.h"
+#include "util/u_memory.h"
 #include "sp_clear.h"
 #include "sp_context.h"
 #include "sp_flush.h"
@@ -91,17 +92,19 @@ static void softpipe_destroy( struct pipe_context *pipe )
    if (softpipe->draw)
       draw_destroy( softpipe->draw );
 
-   softpipe->quad.polygon_stipple->destroy( softpipe->quad.polygon_stipple );
-   softpipe->quad.earlyz->destroy( softpipe->quad.earlyz );
-   softpipe->quad.shade->destroy( softpipe->quad.shade );
-   softpipe->quad.alpha_test->destroy( softpipe->quad.alpha_test );
-   softpipe->quad.depth_test->destroy( softpipe->quad.depth_test );
-   softpipe->quad.stencil_test->destroy( softpipe->quad.stencil_test );
-   softpipe->quad.occlusion->destroy( softpipe->quad.occlusion );
-   softpipe->quad.coverage->destroy( softpipe->quad.coverage );
-   softpipe->quad.blend->destroy( softpipe->quad.blend );
-   softpipe->quad.colormask->destroy( softpipe->quad.colormask );
-   softpipe->quad.output->destroy( softpipe->quad.output );
+   for (i = 0; i < SP_NUM_QUAD_THREADS; i++) {
+      softpipe->quad[i].polygon_stipple->destroy( softpipe->quad[i].polygon_stipple );
+      softpipe->quad[i].earlyz->destroy( softpipe->quad[i].earlyz );
+      softpipe->quad[i].shade->destroy( softpipe->quad[i].shade );
+      softpipe->quad[i].alpha_test->destroy( softpipe->quad[i].alpha_test );
+      softpipe->quad[i].depth_test->destroy( softpipe->quad[i].depth_test );
+      softpipe->quad[i].stencil_test->destroy( softpipe->quad[i].stencil_test );
+      softpipe->quad[i].occlusion->destroy( softpipe->quad[i].occlusion );
+      softpipe->quad[i].coverage->destroy( softpipe->quad[i].coverage );
+      softpipe->quad[i].blend->destroy( softpipe->quad[i].blend );
+      softpipe->quad[i].colormask->destroy( softpipe->quad[i].colormask );
+      softpipe->quad[i].output->destroy( softpipe->quad[i].output );
+   }
 
    for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++)
       sp_destroy_tile_cache(softpipe->cbuf_cache[i]);
@@ -112,7 +115,7 @@ static void softpipe_destroy( struct pipe_context *pipe )
 
    for (i = 0; i < Elements(softpipe->constants); i++) {
       if (softpipe->constants[i].buffer) {
-         pipe_buffer_reference(ws, &softpipe->constants[i].buffer, NULL);
+         winsys_buffer_reference(ws, &softpipe->constants[i].buffer, NULL);
       }
    }
 
@@ -127,6 +130,8 @@ softpipe_create( struct pipe_screen *screen,
 {
    struct softpipe_context *softpipe = CALLOC_STRUCT(softpipe_context);
    uint i;
+
+   util_init_math();
 
 #ifdef PIPE_ARCH_X86
    softpipe->use_sse = !debug_get_bool_option( "GALLIUM_NOSSE", FALSE );
@@ -202,17 +207,19 @@ softpipe_create( struct pipe_screen *screen,
 
 
    /* setup quad rendering stages */
-   softpipe->quad.polygon_stipple = sp_quad_polygon_stipple_stage(softpipe);
-   softpipe->quad.earlyz = sp_quad_earlyz_stage(softpipe);
-   softpipe->quad.shade = sp_quad_shade_stage(softpipe);
-   softpipe->quad.alpha_test = sp_quad_alpha_test_stage(softpipe);
-   softpipe->quad.depth_test = sp_quad_depth_test_stage(softpipe);
-   softpipe->quad.stencil_test = sp_quad_stencil_test_stage(softpipe);
-   softpipe->quad.occlusion = sp_quad_occlusion_stage(softpipe);
-   softpipe->quad.coverage = sp_quad_coverage_stage(softpipe);
-   softpipe->quad.blend = sp_quad_blend_stage(softpipe);
-   softpipe->quad.colormask = sp_quad_colormask_stage(softpipe);
-   softpipe->quad.output = sp_quad_output_stage(softpipe);
+   for (i = 0; i < SP_NUM_QUAD_THREADS; i++) {
+      softpipe->quad[i].polygon_stipple = sp_quad_polygon_stipple_stage(softpipe);
+      softpipe->quad[i].earlyz = sp_quad_earlyz_stage(softpipe);
+      softpipe->quad[i].shade = sp_quad_shade_stage(softpipe);
+      softpipe->quad[i].alpha_test = sp_quad_alpha_test_stage(softpipe);
+      softpipe->quad[i].depth_test = sp_quad_depth_test_stage(softpipe);
+      softpipe->quad[i].stencil_test = sp_quad_stencil_test_stage(softpipe);
+      softpipe->quad[i].occlusion = sp_quad_occlusion_stage(softpipe);
+      softpipe->quad[i].coverage = sp_quad_coverage_stage(softpipe);
+      softpipe->quad[i].blend = sp_quad_blend_stage(softpipe);
+      softpipe->quad[i].colormask = sp_quad_colormask_stage(softpipe);
+      softpipe->quad[i].output = sp_quad_output_stage(softpipe);
+   }
 
    /*
     * Create drawing context and plug our rendering stage into it.
@@ -254,3 +261,4 @@ softpipe_create( struct pipe_screen *screen,
    softpipe_destroy(&softpipe->pipe);
    return NULL;
 }
+

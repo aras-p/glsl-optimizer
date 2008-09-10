@@ -48,19 +48,17 @@
 #define CELL_NEW_VERTEX_INFO   0x8000
 
 
-void cell_set_vertex_elements(struct pipe_context *,
-                              unsigned count,
-                              const struct pipe_vertex_element *);
-
-void cell_set_vertex_buffers(struct pipe_context *,
-                             unsigned count,
-                             const struct pipe_vertex_buffer *);
-
-void cell_update_derived( struct cell_context *softpipe );
+extern void
+cell_update_derived( struct cell_context *softpipe );
 
 
-void
+extern void
 cell_init_shader_functions(struct cell_context *cell);
+
+
+extern void
+cell_init_vertex_functions(struct cell_context *cell);
+
 
 #endif /* CELL_STATE_H */
 

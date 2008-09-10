@@ -41,9 +41,10 @@
 #include "draw/draw_context.h"
 #include "draw/draw_vbuf.h"
 #include "pipe/p_debug.h"
-#include "pipe/p_util.h"
 #include "pipe/p_inlines.h"
 #include "pipe/p_winsys.h"
+#include "util/u_math.h"
+#include "util/u_memory.h"
 
 #include "i915_context.h"
 #include "i915_reg.h"
@@ -114,7 +115,7 @@ i915_vbuf_render_allocate_vertices( struct vbuf_render *render,
 {
    struct i915_vbuf_render *i915_render = i915_vbuf_render(render);
    struct i915_context *i915 = i915_render->i915;
-   struct pipe_winsys *winsys = i915->pipe.winsys;
+   struct pipe_screen *screen = i915->pipe.screen;
    size_t size = (size_t)vertex_size * (size_t)nr_vertices;
 
    /* FIXME: handle failure */
@@ -123,20 +124,20 @@ i915_vbuf_render_allocate_vertices( struct vbuf_render *render,
    if (i915_render->vbo_size > size + i915_render->vbo_offset && !i915->vbo_flushed) {
    } else {
       i915->vbo_flushed = 0;
-      pipe_buffer_reference(winsys, &i915_render->vbo, NULL);
+      pipe_buffer_reference(screen, &i915_render->vbo, NULL);
    }
 
    if (!i915_render->vbo) {
       i915_render->vbo_size = MAX2(size, i915_render->vbo_alloc_size);
       i915_render->vbo_offset = 0;
-      i915_render->vbo = winsys->buffer_create(winsys,
-					       64,
-					       I915_BUFFER_USAGE_LIT_VERTEX,
-					       i915_render->vbo_size);
-      i915_render->vbo_ptr = winsys->buffer_map(winsys,
-						i915_render->vbo,
-						PIPE_BUFFER_USAGE_CPU_WRITE);
-      winsys->buffer_unmap(winsys, i915_render->vbo);
+      i915_render->vbo = pipe_buffer_create(screen,
+                                            64,
+                                            I915_BUFFER_USAGE_LIT_VERTEX,
+                                            i915_render->vbo_size);
+      i915_render->vbo_ptr = pipe_buffer_map(screen,
+                                             i915_render->vbo,
+                                             PIPE_BUFFER_USAGE_CPU_WRITE);
+      pipe_buffer_unmap(screen, i915_render->vbo);
    }
 
    i915->vbo = i915_render->vbo;
@@ -487,7 +488,7 @@ static struct vbuf_render *
 i915_vbuf_render_create( struct i915_context *i915 )
 {
    struct i915_vbuf_render *i915_render = CALLOC_STRUCT(i915_vbuf_render);
-   struct pipe_winsys *winsys = i915->pipe.winsys;
+   struct pipe_screen *screen = i915->pipe.screen;
 
    i915_render->i915 = i915;
    
@@ -509,14 +510,14 @@ i915_vbuf_render_create( struct i915_context *i915 )
    i915_render->vbo_alloc_size = 128 * 4096;
    i915_render->vbo_size = i915_render->vbo_alloc_size;
    i915_render->vbo_offset = 0;
-   i915_render->vbo = winsys->buffer_create(winsys,
-					    64,
-					    I915_BUFFER_USAGE_LIT_VERTEX,
-					    i915_render->vbo_size);
-   i915_render->vbo_ptr = winsys->buffer_map(winsys,
-					     i915_render->vbo,
-					     PIPE_BUFFER_USAGE_CPU_WRITE);
-   winsys->buffer_unmap(winsys, i915_render->vbo);
+   i915_render->vbo = pipe_buffer_create(screen,
+                                         64,
+                                         I915_BUFFER_USAGE_LIT_VERTEX,
+                                         i915_render->vbo_size);
+   i915_render->vbo_ptr = pipe_buffer_map(screen,
+                                          i915_render->vbo,
+                                          PIPE_BUFFER_USAGE_CPU_WRITE);
+   pipe_buffer_unmap(screen, i915_render->vbo);
 
    return &i915_render->base;
 }

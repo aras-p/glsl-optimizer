@@ -31,7 +31,8 @@
  */
 
 #include "pipe/p_defines.h"
-#include "pipe/p_util.h"
+#include "util/u_math.h"
+#include "util/u_memory.h"
 #include "sp_context.h"
 #include "sp_headers.h"
 #include "sp_surface.h"
@@ -113,14 +114,14 @@ logicop_quad(struct quad_stage *qs, struct quad_header *quad)
       struct softpipe_cached_tile *
          tile = sp_get_cached_tile(softpipe,
                                    softpipe->cbuf_cache[cbuf],
-                                   quad->x0, quad->y0);
-      float (*quadColor)[4] = quad->outputs.color[cbuf];
+                                   quad->input.x0, quad->input.y0);
+      float (*quadColor)[4] = quad->output.color[cbuf];
       uint i, j;
 
       /* get/swizzle dest colors */
       for (j = 0; j < QUAD_SIZE; j++) {
-         int x = (quad->x0 & (TILE_SIZE-1)) + (j & 1);
-         int y = (quad->y0 & (TILE_SIZE-1)) + (j >> 1);
+         int x = (quad->input.x0 & (TILE_SIZE-1)) + (j & 1);
+         int y = (quad->input.y0 & (TILE_SIZE-1)) + (j >> 1);
          for (i = 0; i < 4; i++) {
             dest[i][j] = tile->data.color[y][x][i];
          }
@@ -128,15 +129,15 @@ logicop_quad(struct quad_stage *qs, struct quad_header *quad)
 
       /* convert to ubyte */
       for (j = 0; j < 4; j++) { /* loop over R,G,B,A channels */
-         UNCLAMPED_FLOAT_TO_UBYTE(dst[j][0], dest[j][0]); /* P0 */
-         UNCLAMPED_FLOAT_TO_UBYTE(dst[j][1], dest[j][1]); /* P1 */
-         UNCLAMPED_FLOAT_TO_UBYTE(dst[j][2], dest[j][2]); /* P2 */
-         UNCLAMPED_FLOAT_TO_UBYTE(dst[j][3], dest[j][3]); /* P3 */
+         dst[j][0] = float_to_ubyte(dest[j][0]); /* P0 */
+         dst[j][1] = float_to_ubyte(dest[j][1]); /* P1 */
+         dst[j][2] = float_to_ubyte(dest[j][2]); /* P2 */
+         dst[j][3] = float_to_ubyte(dest[j][3]); /* P3 */
 
-         UNCLAMPED_FLOAT_TO_UBYTE(src[j][0], quadColor[j][0]); /* P0 */
-         UNCLAMPED_FLOAT_TO_UBYTE(src[j][1], quadColor[j][1]); /* P1 */
-         UNCLAMPED_FLOAT_TO_UBYTE(src[j][2], quadColor[j][2]); /* P2 */
-         UNCLAMPED_FLOAT_TO_UBYTE(src[j][3], quadColor[j][3]); /* P3 */
+         src[j][0] = float_to_ubyte(quadColor[j][0]); /* P0 */
+         src[j][1] = float_to_ubyte(quadColor[j][1]); /* P1 */
+         src[j][2] = float_to_ubyte(quadColor[j][2]); /* P2 */
+         src[j][3] = float_to_ubyte(quadColor[j][3]); /* P3 */
       }
 
       switch (softpipe->blend->logicop_func) {
@@ -209,10 +210,10 @@ logicop_quad(struct quad_stage *qs, struct quad_header *quad)
       }
 
       for (j = 0; j < 4; j++) {
-         quadColor[j][0] = UBYTE_TO_FLOAT(res[j][0]);
-         quadColor[j][1] = UBYTE_TO_FLOAT(res[j][1]);
-         quadColor[j][2] = UBYTE_TO_FLOAT(res[j][2]);
-         quadColor[j][3] = UBYTE_TO_FLOAT(res[j][3]);
+         quadColor[j][0] = ubyte_to_float(res[j][0]);
+         quadColor[j][1] = ubyte_to_float(res[j][1]);
+         quadColor[j][2] = ubyte_to_float(res[j][2]);
+         quadColor[j][3] = ubyte_to_float(res[j][3]);
       }
    }
 
@@ -243,14 +244,14 @@ blend_quad(struct quad_stage *qs, struct quad_header *quad)
       struct softpipe_cached_tile *tile
          = sp_get_cached_tile(softpipe,
                               softpipe->cbuf_cache[cbuf],
-                              quad->x0, quad->y0);
-      float (*quadColor)[4] = quad->outputs.color[cbuf];
+                              quad->input.x0, quad->input.y0);
+      float (*quadColor)[4] = quad->output.color[cbuf];
       uint i, j;
 
       /* get/swizzle dest colors */
       for (j = 0; j < QUAD_SIZE; j++) {
-         int x = (quad->x0 & (TILE_SIZE-1)) + (j & 1);
-         int y = (quad->y0 & (TILE_SIZE-1)) + (j >> 1);
+         int x = (quad->input.x0 & (TILE_SIZE-1)) + (j & 1);
+         int y = (quad->input.y0 & (TILE_SIZE-1)) + (j >> 1);
          for (i = 0; i < 4; i++) {
             dest[i][j] = tile->data.color[y][x][i];
          }

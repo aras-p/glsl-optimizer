@@ -25,7 +25,8 @@
  *
  **************************************************************************/
 
-#include "pipe/p_util.h"
+#include "util/u_math.h"
+#include "util/u_memory.h"
 #include "draw/draw_context.h"
 #include "draw/draw_vbuf.h"
 #include "draw/draw_vertex.h"
@@ -119,7 +120,7 @@ static void fetch_pipeline_run( struct draw_pt_middle_end *middle,
    struct draw_context *draw = fpme->draw;
    struct draw_vertex_shader *shader = draw->vs.vertex_shader;
    unsigned opt = fpme->opt;
-   unsigned alloc_count = align_int( fetch_count, 4 );
+   unsigned alloc_count = align( fetch_count, 4 );
 
    struct vertex_header *pipeline_verts = 
       (struct vertex_header *)MALLOC(fpme->vertex_size * alloc_count);
@@ -195,7 +196,7 @@ static void fetch_pipeline_linear_run( struct draw_pt_middle_end *middle,
    struct draw_context *draw = fpme->draw;
    struct draw_vertex_shader *shader = draw->vs.vertex_shader;
    unsigned opt = fpme->opt;
-   unsigned alloc_count = align_int( count, 4 );
+   unsigned alloc_count = align( count, 4 );
 
    struct vertex_header *pipeline_verts =
       (struct vertex_header *)MALLOC(fpme->vertex_size * alloc_count);
@@ -261,7 +262,7 @@ static void fetch_pipeline_linear_run( struct draw_pt_middle_end *middle,
 
 
 
-static void fetch_pipeline_linear_run_elts( struct draw_pt_middle_end *middle,
+static boolean fetch_pipeline_linear_run_elts( struct draw_pt_middle_end *middle,
                                             unsigned start,
                                             unsigned count,
                                             const ushort *draw_elts,
@@ -271,17 +272,13 @@ static void fetch_pipeline_linear_run_elts( struct draw_pt_middle_end *middle,
    struct draw_context *draw = fpme->draw;
    struct draw_vertex_shader *shader = draw->vs.vertex_shader;
    unsigned opt = fpme->opt;
-   unsigned alloc_count = align_int( count, 4 );
+   unsigned alloc_count = align( count, 4 );
 
    struct vertex_header *pipeline_verts =
       (struct vertex_header *)MALLOC(fpme->vertex_size * alloc_count);
 
-   if (!pipeline_verts) {
-      /* Not much we can do here - just skip the rendering.
-       */
-      assert(0);
-      return;
-   }
+   if (!pipeline_verts) 
+      return FALSE;
 
    /* Fetch into our vertex buffer
     */
@@ -335,6 +332,7 @@ static void fetch_pipeline_linear_run_elts( struct draw_pt_middle_end *middle,
    }
 
    FREE(pipeline_verts);
+   return TRUE;
 }
 
 

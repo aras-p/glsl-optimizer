@@ -42,11 +42,11 @@
 #include "pipe/p_screen.h"
 #include "pipe/p_context.h"
 #include "pipe/p_inlines.h"
-#include "pipe/p_util.h"
+#include "util/u_memory.h"
 #include "pipe/p_shader_tokens.h" 
 #include "cso_cache/cso_context.h"
 #include "util/u_draw_quad.h" 
-#include "util/p_tile.h" 
+#include "util/u_tile.h" 
 #include "tgsi/tgsi_text.h" 
 #include "tgsi/tgsi_dump.h" 
 
@@ -54,6 +54,8 @@
 #include "st_sample.h"
 
 %}
+
+%include "typemaps.i"
 
 %include "carrays.i"
 %array_class(unsigned char, ByteArray);

@@ -34,7 +34,8 @@
 #include "brw_state.h"
 #include "brw_defines.h"
 #include "brw_wm.h"
-#include "pipe/p_util.h"
+#include "util/u_math.h"
+#include "util/u_memory.h"
 
 /***********************************************************************
  * WM unit - fragment programs and rasterization

@@ -2,7 +2,7 @@ Import('*')
 
 if env['dri']:
 	SConscript([
-		'dri/SConscript',
+		'drm/SConscript',
 	])
 	
 if 'xlib' in env['winsys']:

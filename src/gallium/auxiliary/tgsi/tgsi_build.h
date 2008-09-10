@@ -28,6 +28,10 @@
 #ifndef TGSI_BUILD_H
 #define TGSI_BUILD_H
 
+
+struct tgsi_token;
+
+
 #if defined __cplusplus
 extern "C" {
 #endif
@@ -170,7 +174,7 @@ tgsi_build_instruction_ext_nv(
    unsigned cond_swizzle_z,
    unsigned cond_swizzle_w,
    unsigned cond_dst_update,
-   unsigned cond_flow_update,
+   unsigned cond_flow_enable,
    struct tgsi_token *prev_token,
    struct tgsi_instruction *instruction,
    struct tgsi_header *header );

@@ -1,6 +1,6 @@
 /**************************************************************************
  * 
- * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2007-2008 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -47,7 +47,8 @@ static GLuint
 map_register_file(
    enum register_file file,
    GLuint index,
-   const GLuint immediateMapping[] )
+   const GLuint immediateMapping[],
+   GLboolean indirectAccess )
 {
    switch( file ) {
    case PROGRAM_UNDEFINED:
@@ -66,11 +67,13 @@ map_register_file(
    case PROGRAM_STATE_VAR:
    case PROGRAM_NAMED_PARAM:
    case PROGRAM_UNIFORM:
-      if (immediateMapping && immediateMapping[index] != ~0)
+      if (!indirectAccess && immediateMapping && immediateMapping[index] != ~0)
          return TGSI_FILE_IMMEDIATE;
       else
 	 return TGSI_FILE_CONSTANT;
    case PROGRAM_CONSTANT:
+      if (indirectAccess)
+         return TGSI_FILE_CONSTANT;
       return TGSI_FILE_IMMEDIATE;
    case PROGRAM_INPUT:
       return TGSI_FILE_INPUT;
@@ -98,7 +101,8 @@ map_register_file_index(
    GLuint index,
    const GLuint inputMapping[],
    const GLuint outputMapping[],
-   const GLuint immediateMapping[])
+   const GLuint immediateMapping[],
+   GLboolean indirectAccess )
 {
    switch( file ) {
    case TGSI_FILE_INPUT:
@@ -109,6 +113,8 @@ map_register_file_index(
       return outputMapping[index];
 
    case TGSI_FILE_IMMEDIATE:
+      if (indirectAccess)
+         return index;
       return immediateMapping[index];
 
    default:
@@ -175,10 +181,11 @@ static struct tgsi_full_immediate
 make_immediate(const float *value, uint size)
 {
    struct tgsi_full_immediate imm;
-   imm.Immediate.Type = TGSI_TOKEN_TYPE_IMMEDIATE;
-   imm.Immediate.Size = 1 + size; /* one for the token itself */
+
+   imm = tgsi_default_full_immediate();
+   imm.Immediate.Size += size;
    imm.Immediate.DataType = TGSI_IMM_FLOAT32;
-   imm.u.ImmediateFloat32 = (struct tgsi_immediate_float32 *) value;
+   imm.u.Pointer = value;
    return imm;
 }
 
@@ -189,6 +196,7 @@ compile_instruction(
    const GLuint inputMapping[],
    const GLuint outputMapping[],
    const GLuint immediateMapping[],
+   GLboolean indirectAccess,
    GLuint preamble_size,
    GLuint processor,
    GLboolean *insideSubroutine)
@@ -204,29 +212,32 @@ compile_instruction(
    fullinst->Instruction.NumSrcRegs = _mesa_num_inst_src_regs( inst->Opcode );
 
    fulldst = &fullinst->FullDstRegisters[0];
-   fulldst->DstRegister.File = map_register_file( inst->DstReg.File, 0, NULL );
+   fulldst->DstRegister.File = map_register_file( inst->DstReg.File, 0, NULL, GL_FALSE );
    fulldst->DstRegister.Index = map_register_file_index(
       fulldst->DstRegister.File,
       inst->DstReg.Index,
       inputMapping,
       outputMapping,
-      NULL
-      );
+      NULL,
+      GL_FALSE );
    fulldst->DstRegister.WriteMask = convert_writemask( inst->DstReg.WriteMask );
 
-   for( i = 0; i < fullinst->Instruction.NumSrcRegs; i++ ) {
+   for (i = 0; i < fullinst->Instruction.NumSrcRegs; i++) {
       GLuint j;
 
       fullsrc = &fullinst->FullSrcRegisters[i];
-      fullsrc->SrcRegister.File = map_register_file( inst->SrcReg[i].File,
-						     inst->SrcReg[i].Index,
-						     immediateMapping );
+      fullsrc->SrcRegister.File = map_register_file(
+         inst->SrcReg[i].File,
+         inst->SrcReg[i].Index,
+         immediateMapping,
+         indirectAccess );
       fullsrc->SrcRegister.Index = map_register_file_index(
          fullsrc->SrcRegister.File,
          inst->SrcReg[i].Index,
          inputMapping,
          outputMapping,
-         immediateMapping);
+         immediateMapping,
+         indirectAccess );
 
       /* swizzle (ext swizzle also depends on negation) */
       {
@@ -609,6 +620,19 @@ make_temp_decl(
    return decl;
 }
 
+static struct tgsi_full_declaration
+make_addr_decl(
+   GLuint start_index,
+   GLuint end_index )
+{
+   struct tgsi_full_declaration decl;
+
+   decl = tgsi_default_full_declaration();
+   decl.Declaration.File = TGSI_FILE_ADDRESS;
+   decl.DeclarationRange.First = start_index;
+   decl.DeclarationRange.Last = end_index;
+   return decl;
+}
 
 static struct tgsi_full_declaration
 make_sampler_decl(GLuint index)
@@ -707,6 +731,7 @@ tgsi_translate_mesa_program(
    GLuint immediates[1000];
    GLuint numImmediates = 0;
    GLboolean insideSubroutine = GL_FALSE;
+   GLboolean indirectAccess = GL_FALSE;
 
    assert(procType == TGSI_PROCESSOR_FRAGMENT ||
           procType == TGSI_PROCESSOR_VERTEX);
@@ -819,45 +844,78 @@ tgsi_translate_mesa_program(
             inside_range = GL_FALSE;
             fulldecl = make_temp_decl( start_range, i - 1 );
             ti += tgsi_build_full_declaration(
-                                              &fulldecl,
-                                              &tokens[ti],
-                                              header,
-                                              maxTokens - ti );
+               &fulldecl,
+               &tokens[ti],
+               header,
+               maxTokens - ti );
          }
       }
+   }
+
+   /* Declare address register.
+   */
+   if (program->NumAddressRegs > 0) {
+      struct tgsi_full_declaration fulldecl;
+
+      assert( program->NumAddressRegs == 1 );
+
+      fulldecl = make_addr_decl( 0, 0 );
+      ti += tgsi_build_full_declaration(
+         &fulldecl,
+         &tokens[ti],
+         header,
+         maxTokens - ti );
+
+      indirectAccess = GL_TRUE;
    }
 
    /* immediates/literals */
    memset(immediates, ~0, sizeof(immediates));
 
-   for (i = 0; program->Parameters && i < program->Parameters->NumParameters;
-        i++) {
-      if (program->Parameters->Parameters[i].Type == PROGRAM_CONSTANT) {
-         struct tgsi_full_immediate fullimm
-            = make_immediate(program->Parameters->ParameterValues[i], 4);
-         ti += tgsi_build_full_immediate(&fullimm,
-                                         &tokens[ti],
-                                         header,
-                                         maxTokens - ti);
-         immediates[i] = numImmediates;
-         numImmediates++;
+   /* Emit immediates only when there is no address register in use.
+    * FIXME: Be smarter and recognize param arrays -- indirect addressing is
+    *        only valid within the referenced array.
+    */
+   if (program->Parameters && !indirectAccess) {
+      for (i = 0; i < program->Parameters->NumParameters; i++) {
+         if (program->Parameters->Parameters[i].Type == PROGRAM_CONSTANT) {
+            struct tgsi_full_immediate fullimm;
+
+            fullimm = make_immediate( program->Parameters->ParameterValues[i], 4 );
+            ti += tgsi_build_full_immediate(
+               &fullimm,
+               &tokens[ti],
+               header,
+               maxTokens - ti );
+            immediates[i] = numImmediates;
+            numImmediates++;
+         }
       }
    }
 
    /* constant buffer refs */
-   {
+   if (program->Parameters) {
       GLint start = -1, end = -1;
 
-      for (i = 0;
-           program->Parameters && i < program->Parameters->NumParameters;
-           i++) {
+      for (i = 0; i < program->Parameters->NumParameters; i++) {
          GLboolean emit = (i == program->Parameters->NumParameters - 1);
+         GLboolean matches;
 
          switch (program->Parameters->Parameters[i].Type) {
          case PROGRAM_ENV_PARAM:
          case PROGRAM_STATE_VAR:
          case PROGRAM_NAMED_PARAM:
          case PROGRAM_UNIFORM:
+            matches = GL_TRUE;
+            break;
+         case PROGRAM_CONSTANT:
+            matches = indirectAccess;
+            break;
+         default:
+            matches = GL_FALSE;
+         }
+
+         if (matches) {
             if (start == -1) {
                /* begin a sequence */
                start = i;
@@ -867,8 +925,8 @@ tgsi_translate_mesa_program(
                /* continue sequence */
                end = i;
             }
-            break;
-         default:
+         }
+         else {
             if (start != -1) {
                /* end of sequence */
                emit = GL_TRUE;
@@ -877,11 +935,13 @@ tgsi_translate_mesa_program(
 
          if (emit && start >= 0) {
             struct tgsi_full_declaration fulldecl;
+
             fulldecl = make_constant_decl( start, end );
-            ti += tgsi_build_full_declaration(&fulldecl,
-                                              &tokens[ti],
-                                              header,
-                                              maxTokens - ti);
+            ti += tgsi_build_full_declaration(
+               &fulldecl,
+               &tokens[ti],
+               header,
+               maxTokens - ti );
             start = end = -1;
          }
       }
@@ -891,25 +951,27 @@ tgsi_translate_mesa_program(
    for (i = 0; i < 8; i++) {
       if (program->SamplersUsed & (1 << i)) {
          struct tgsi_full_declaration fulldecl;
+
          fulldecl = make_sampler_decl( i );
-         ti += tgsi_build_full_declaration(&fulldecl,
-                                           &tokens[ti],
-                                           header,
-                                           maxTokens - ti );
+         ti += tgsi_build_full_declaration(
+            &fulldecl,
+            &tokens[ti],
+            header,
+            maxTokens - ti );
       }
    }
 
-
-   for( i = 0; i < program->NumInstructions; i++ ) {
+   for (i = 0; i < program->NumInstructions; i++) {
       compile_instruction(
-            &program->Instructions[i],
-            &fullinst,
-            inputMapping,
-            outputMapping,
-            immediates,
-            preamble_size,
-            procType,
-            &insideSubroutine);
+         &program->Instructions[i],
+         &fullinst,
+         inputMapping,
+         outputMapping,
+         immediates,
+         indirectAccess,
+         preamble_size,
+         procType,
+         &insideSubroutine );
 
       ti += tgsi_build_full_instruction(
          &fullinst,
@@ -920,4 +982,3 @@ tgsi_translate_mesa_program(
 
    return ti;
 }
-

@@ -62,11 +62,11 @@
 #include "xmesaP.h"
 #include "main/context.h"
 #include "main/framebuffer.h"
-#include "glapi/glthread.h"
 
 #include "state_tracker/st_public.h"
 #include "state_tracker/st_context.h"
 #include "pipe/p_defines.h"
+#include "pipe/p_screen.h"
 #include "pipe/p_context.h"
 
 #include "xm_winsys_aub.h"
@@ -74,7 +74,7 @@
 /**
  * Global X driver lock
  */
-_glthread_Mutex _xmesa_lock;
+pipe_mutex _xmesa_lock;
 
 
 int xmesa_mode;
@@ -244,10 +244,10 @@ xmesa_get_window_size(XMesaDisplay *dpy, XMesaBuffer b,
 #else
    Status stat;
 
-   _glthread_LOCK_MUTEX(_xmesa_lock);
+   pipe_mutex_lock(_xmesa_lock);
    XSync(b->xm_visual->display, 0); /* added for Chromium */
    stat = get_drawable_size(dpy, b->drawable, width, height);
-   _glthread_UNLOCK_MUTEX(_xmesa_lock);
+   pipe_mutex_unlock(_xmesa_lock);
 
    if (!stat) {
       /* probably querying a window that's recently been destroyed */
@@ -778,7 +778,7 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
    uint pf;
 
    if (firstTime) {
-      _glthread_INIT_MUTEX(_xmesa_lock);
+      pipe_mutex_init(_xmesa_lock);
       firstTime = GL_FALSE;
    }
 
@@ -833,7 +833,7 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
  fail:
    if (c->st)
       st_destroy_context(c->st);
-   if (pipe)
+   else if (pipe)
       pipe->destroy(pipe);
    FREE(c);
    return NULL;
@@ -844,7 +844,12 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
 PUBLIC
 void XMesaDestroyContext( XMesaContext c )
 {
+   struct pipe_screen *screen = c->st->pipe->screen;
    st_destroy_context(c->st);
+   /* FIXME: We should destroy the screen here, but if we do so, surfaces may 
+    * outlive it, causing segfaults
+   screen->destroy(screen);
+   */
    _mesa_free(c);
 }
 
@@ -1293,6 +1298,7 @@ void XMesaFlush( XMesaContext c )
 #ifdef XFree86Server
       /* NOT_NEEDED */
 #else
+      st_finish(c->st);
       XSync( c->xm_visual->display, False );
 #endif
    }

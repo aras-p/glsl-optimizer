@@ -73,7 +73,6 @@ EGL_DRIVERS_DIRS = demo
 GALLIUM_AUXILIARY_DIRS = draw translate cso_cache pipebuffer tgsi sct rtasm util
 GALLIUM_AUXILIARIES = $(foreach DIR,$(GALLIUM_AUXILIARY_DIRS),$(TOP)/src/gallium/auxiliary/$(DIR)/lib$(DIR).a)
 GALLIUM_DRIVER_DIRS = softpipe i915simple i965simple nv04 nv10 nv30 nv40 nv50 failover
-GALLIUM_WINSYS_COMMON_DIRS =
 GALLIUM_DRIVERS = $(foreach DIR,$(GALLIUM_DRIVER_DIRS),$(TOP)/src/gallium/drivers/$(DIR)/lib$(DIR).a)
 GALLIUM_WINSYS_DIRS = xlib egl_xlib
 
@@ -91,7 +90,7 @@ APP_LIB_DEPS    = $(EXTRA_LIB_PATH) -L$(TOP)/$(LIB_DIR) -l$(GLUT_LIB) -l$(GLU_LI
 
 # Installation directories (for make install)
 INSTALL_DIR = /usr/local
-DRI_DRIVER_INSTALL_DIR = /usr/X11R6/lib/modules/dri
+DRI_DRIVER_INSTALL_DIR = /usr/lib/dri
 
 # Where libGL will look for DRI hardware drivers
 DRI_DRIVER_SEARCH_DIR = $(DRI_DRIVER_INSTALL_DIR)

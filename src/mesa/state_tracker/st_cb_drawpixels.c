@@ -55,7 +55,7 @@
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_inlines.h"
-#include "util/p_tile.h"
+#include "util/u_tile.h"
 #include "util/u_draw_quad.h"
 #include "shader/prog_instruction.h"
 #include "cso_cache/cso_context.h"
@@ -294,7 +294,7 @@ st_make_passthrough_vertex_shader(struct st_context *st, GLboolean passColor)
    }
 
    stvp = (struct st_vertex_program *) p;
-   st_translate_vertex_program(st, stvp, NULL);
+   st_translate_vertex_program(st, stvp, NULL, NULL, NULL);
 
    st->drawpix.vert_shaders[passColor] = stvp;
 
@@ -487,17 +487,17 @@ draw_quad(GLcontext *ctx, GLfloat x0, GLfloat y0, GLfloat z,
       ubyte *map;
 
       /* allocate/load buffer object with vertex data */
-      buf = pipe_buffer_create(pipe, 32, PIPE_BUFFER_USAGE_VERTEX,
+      buf = pipe_buffer_create(pipe->screen, 32, PIPE_BUFFER_USAGE_VERTEX,
                                sizeof(verts));
-      map = pipe_buffer_map(pipe, buf, PIPE_BUFFER_USAGE_CPU_WRITE);
+      map = pipe_buffer_map(pipe->screen, buf, PIPE_BUFFER_USAGE_CPU_WRITE);
       memcpy(map, verts, sizeof(verts));
-      pipe_buffer_unmap(pipe, buf);
+      pipe_buffer_unmap(pipe->screen, buf);
 
       util_draw_vertex_buffer(pipe, buf,
                               PIPE_PRIM_QUADS,
                               4,  /* verts */
                               3); /* attribs/vert */
-      pipe_buffer_reference(pipe->winsys, &buf, NULL);
+      pipe_buffer_reference(pipe->screen, &buf, NULL);
    }
 }
 

@@ -2,7 +2,8 @@
 #include "brw_context.h"
 #include "brw_eu.h"
 #include "brw_wm.h"
-#include "pipe/p_util.h"
+#include "util/u_math.h"
+#include "util/u_memory.h"
 #include "pipe/p_shader_tokens.h"
 #include "tgsi/tgsi_parse.h"
 

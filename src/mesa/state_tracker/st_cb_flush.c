@@ -91,7 +91,7 @@ void st_finish( struct st_context *st )
 {
    struct pipe_fence_handle *fence = NULL;
 
-   st_flush(st, PIPE_FLUSH_RENDER_CACHE, &fence);
+   st_flush(st, PIPE_FLUSH_RENDER_CACHE | PIPE_FLUSH_FRAME, &fence);
 
    st->pipe->winsys->fence_finish(st->pipe->winsys, fence, 0);
    st->pipe->winsys->fence_reference(st->pipe->winsys, &fence, NULL);

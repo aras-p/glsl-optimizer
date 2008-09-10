@@ -74,7 +74,7 @@ st_create_framebuffer( const __GLcontextModes *visual,
          _mesa_add_renderbuffer(&stfb->Base, BUFFER_BACK_LEFT, rb);
       }
 
-      if (visual->depthBits == 24 && visual->stencilBits == 8) {
+      if (depthFormat == stencilFormat && depthFormat != PIPE_FORMAT_NONE) {
          /* combined depth/stencil buffer */
          struct gl_renderbuffer *depthStencilRb
             = st_new_renderbuffer_fb(depthFormat, samples);
@@ -265,7 +265,9 @@ st_notify_swapbuffers(struct st_framebuffer *stfb)
 
    if (ctx && ctx->DrawBuffer == &stfb->Base) {
       st_flush( ctx->st, 
-		PIPE_FLUSH_RENDER_CACHE | PIPE_FLUSH_SWAPBUFFERS,
+		PIPE_FLUSH_RENDER_CACHE | 
+		PIPE_FLUSH_SWAPBUFFERS |
+		PIPE_FLUSH_FRAME,
                 NULL );
       ctx->st->frontbuffer_status = FRONT_STATUS_COPY_OF_BACK;
    }

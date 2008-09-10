@@ -32,7 +32,6 @@
   *   Ian Romanick <idr@us.ibm.com>
   */
 
-#include "pipe/p_util.h"
 #include "pipe/p_state.h"
 #include "pipe/p_shader_tokens.h"
 #include "spu_exec.h"
@@ -93,7 +92,7 @@ static void generic_vertex_fetch(struct spu_vs_context *draw,
    unsigned nr_attrs = draw->vertex_fetch.nr_attrs;
    unsigned attr;
 
-   assert(count <= 4);
+   ASSERT(count <= 4);
 
 #if DRAW_DBG
    printf("SPU: %s count = %u, nr_attrs = %u\n", 

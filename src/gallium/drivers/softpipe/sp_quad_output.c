@@ -25,7 +25,7 @@
  * 
  **************************************************************************/
 
-#include "pipe/p_util.h"
+#include "util/u_memory.h"
 #include "sp_context.h"
 #include "sp_headers.h"
 #include "sp_surface.h"
@@ -41,8 +41,8 @@ static void
 output_quad(struct quad_stage *qs, struct quad_header *quad)
 {
    /* in-tile pos: */
-   const int itx = quad->x0 % TILE_SIZE;
-   const int ity = quad->y0 % TILE_SIZE;
+   const int itx = quad->input.x0 % TILE_SIZE;
+   const int ity = quad->input.y0 % TILE_SIZE;
 
    struct softpipe_context *softpipe = qs->softpipe;
    uint cbuf;
@@ -52,13 +52,13 @@ output_quad(struct quad_stage *qs, struct quad_header *quad)
       struct softpipe_cached_tile *tile
          = sp_get_cached_tile(softpipe,
                               softpipe->cbuf_cache[cbuf],
-                              quad->x0, quad->y0);
-      float (*quadColor)[4] = quad->outputs.color[cbuf];
+                              quad->input.x0, quad->input.y0);
+      float (*quadColor)[4] = quad->output.color[cbuf];
       int i, j;
 
       /* get/swizzle dest colors */
       for (j = 0; j < QUAD_SIZE; j++) {
-         if (quad->mask & (1 << j)) {
+         if (quad->inout.mask & (1 << j)) {
             int x = itx + (j & 1);
             int y = ity + (j >> 1);
             for (i = 0; i < 4; i++) { /* loop over color chans */

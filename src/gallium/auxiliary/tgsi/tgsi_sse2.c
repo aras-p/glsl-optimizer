@@ -1,6 +1,6 @@
 /**************************************************************************
  * 
- * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2007-2008 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -25,8 +25,9 @@
  * 
  **************************************************************************/
 
-#include "pipe/p_util.h"
+#include "pipe/p_debug.h"
 #include "pipe/p_shader_tokens.h"
+#include "util/u_math.h"
 #include "tgsi/tgsi_parse.h"
 #include "tgsi/tgsi_util.h"
 #include "tgsi_exec.h"
@@ -42,15 +43,17 @@
  */
 #define HIGH_PRECISION 1
 
+#define FAST_MATH 1
+
 
 #define FOR_EACH_CHANNEL( CHAN )\
-   for( CHAN = 0; CHAN < 4; CHAN++ )
+   for (CHAN = 0; CHAN < NUM_CHANNELS; CHAN++)
 
 #define IS_DST0_CHANNEL_ENABLED( INST, CHAN )\
    ((INST).FullDstRegisters[0].DstRegister.WriteMask & (1 << (CHAN)))
 
 #define IF_IS_DST0_CHANNEL_ENABLED( INST, CHAN )\
-   if( IS_DST0_CHANNEL_ENABLED( INST, CHAN ))
+   if (IS_DST0_CHANNEL_ENABLED( INST, CHAN ))
 
 #define FOR_EACH_DST0_ENABLED_CHANNEL( INST, CHAN )\
    FOR_EACH_CHANNEL( CHAN )\
@@ -61,7 +64,11 @@
 #define CHAN_Z 2
 #define CHAN_W 3
 
+#define TEMP_ONE_I   TGSI_EXEC_TEMP_ONE_I
+#define TEMP_ONE_C   TGSI_EXEC_TEMP_ONE_C
+
 #define TEMP_R0   TGSI_EXEC_TEMP_R0
+#define TEMP_ADDR TGSI_EXEC_TEMP_ADDR
 
 /**
  * X86 utility functions.
@@ -215,19 +222,61 @@ emit_ret(
 static void
 emit_const(
    struct x86_function *func,
-   unsigned xmm,
-   unsigned vec,
-   unsigned chan )
+   uint xmm,
+   int vec,
+   uint chan,
+   uint indirect,
+   uint indirectFile,
+   int indirectIndex )
 {
-   sse_movss(
-      func,
-      make_xmm( xmm ),
-      get_const( vec, chan ) );
-   sse_shufps(
-      func,
-      make_xmm( xmm ),
-      make_xmm( xmm ),
-      SHUF( 0, 0, 0, 0 ) );
+   if (indirect) {
+      struct x86_reg r0 = get_input_base();
+      struct x86_reg r1 = get_output_base();
+      uint i;
+
+      assert( indirectFile == TGSI_FILE_ADDRESS );
+      assert( indirectIndex == 0 );
+
+      x86_push( func, r0 );
+      x86_push( func, r1 );
+
+      for (i = 0; i < QUAD_SIZE; i++) {
+         x86_lea( func, r0, get_const( vec, chan ) );
+         x86_mov( func, r1, x86_make_disp( get_temp( TEMP_ADDR, CHAN_X ), i * 4 ) );
+
+         /* Quick hack to multiply by 16 -- need to add SHL to rtasm.
+          */
+         x86_add( func, r1, r1 );
+         x86_add( func, r1, r1 );
+         x86_add( func, r1, r1 );
+         x86_add( func, r1, r1 );
+
+         x86_add( func, r0, r1 );
+         x86_mov( func, r1, x86_deref( r0 ) );
+         x86_mov( func, x86_make_disp( get_temp( TEMP_R0, CHAN_X ), i * 4 ), r1 );
+      }
+
+      x86_pop( func, r1 );
+      x86_pop( func, r0 );
+
+      sse_movaps(
+         func,
+         make_xmm( xmm ),
+         get_temp( TEMP_R0, CHAN_X ) );
+   }
+   else {
+      assert( vec >= 0 );
+
+      sse_movss(
+         func,
+         make_xmm( xmm ),
+         get_const( vec, chan ) );
+      sse_shufps(
+         func,
+         make_xmm( xmm ),
+         make_xmm( xmm ),
+         SHUF( 0, 0, 0, 0 ) );
+   }
 }
 
 static void
@@ -369,10 +418,12 @@ emit_addrs(
    unsigned vec,
    unsigned chan )
 {
+   assert( vec == 0 );
+
    emit_temps(
       func,
       xmm,
-      vec + TGSI_EXEC_NUM_TEMPS,
+      vec + TGSI_EXEC_TEMP_ADDR,
       chan );
 }
 
@@ -550,12 +601,10 @@ static void PIPE_CDECL
 cos4f(
    float *store )
 {
-   const unsigned X = 0;
-
-   store[X + 0] = cosf( store[X + 0] );
-   store[X + 1] = cosf( store[X + 1] );
-   store[X + 2] = cosf( store[X + 2] );
-   store[X + 3] = cosf( store[X + 3] );
+   store[0] = cosf( store[0] );
+   store[1] = cosf( store[1] );
+   store[2] = cosf( store[2] );
+   store[3] = cosf( store[3] );
 }
 
 static void
@@ -573,12 +622,17 @@ static void PIPE_CDECL
 ex24f(
    float *store )
 {
-   const unsigned X = 0;
-
-   store[X + 0] = powf( 2.0f, store[X + 0] );
-   store[X + 1] = powf( 2.0f, store[X + 1] );
-   store[X + 2] = powf( 2.0f, store[X + 2] );
-   store[X + 3] = powf( 2.0f, store[X + 3] );
+#if FAST_MATH
+   store[0] = util_fast_exp2( store[0] );
+   store[1] = util_fast_exp2( store[1] );
+   store[2] = util_fast_exp2( store[2] );
+   store[3] = util_fast_exp2( store[3] );
+#else
+   store[0] = powf( 2.0f, store[0] );
+   store[1] = powf( 2.0f, store[1] );
+   store[2] = powf( 2.0f, store[2] );
+   store[3] = powf( 2.0f, store[3] );
+#endif
 }
 
 static void
@@ -607,12 +661,10 @@ static void PIPE_CDECL
 flr4f(
    float *store )
 {
-   const unsigned X = 0;
-
-   store[X + 0] = floorf( store[X + 0] );
-   store[X + 1] = floorf( store[X + 1] );
-   store[X + 2] = floorf( store[X + 2] );
-   store[X + 3] = floorf( store[X + 3] );
+   store[0] = floorf( store[0] );
+   store[1] = floorf( store[1] );
+   store[2] = floorf( store[2] );
+   store[3] = floorf( store[3] );
 }
 
 static void
@@ -630,12 +682,10 @@ static void PIPE_CDECL
 frc4f(
    float *store )
 {
-   const unsigned X = 0;
-
-   store[X + 0] -= floorf( store[X + 0] );
-   store[X + 1] -= floorf( store[X + 1] );
-   store[X + 2] -= floorf( store[X + 2] );
-   store[X + 3] -= floorf( store[X + 3] );
+   store[0] -= floorf( store[0] );
+   store[1] -= floorf( store[1] );
+   store[2] -= floorf( store[2] );
+   store[3] -= floorf( store[3] );
 }
 
 static void
@@ -653,12 +703,10 @@ static void PIPE_CDECL
 lg24f(
    float *store )
 {
-   const unsigned X = 0;
-
-   store[X + 0] = LOG2( store[X + 0] );
-   store[X + 1] = LOG2( store[X + 1] );
-   store[X + 2] = LOG2( store[X + 2] );
-   store[X + 3] = LOG2( store[X + 3] );
+   store[0] = util_fast_log2( store[0] );
+   store[1] = util_fast_log2( store[1] );
+   store[2] = util_fast_log2( store[2] );
+   store[3] = util_fast_log2( store[3] );
 }
 
 static void
@@ -712,12 +760,17 @@ static void PIPE_CDECL
 pow4f(
    float *store )
 {
-   const unsigned X = 0;
-
-   store[X + 0] = powf( store[X + 0], store[X + 4] );
-   store[X + 1] = powf( store[X + 1], store[X + 5] );
-   store[X + 2] = powf( store[X + 2], store[X + 6] );
-   store[X + 3] = powf( store[X + 3], store[X + 7] );
+#if FAST_MATH
+   store[0] = util_fast_pow( store[0], store[4] );
+   store[1] = util_fast_pow( store[1], store[5] );
+   store[2] = util_fast_pow( store[2], store[6] );
+   store[3] = util_fast_pow( store[3], store[7] );
+#else
+   store[0] = powf( store[0], store[4] );
+   store[1] = powf( store[1], store[5] );
+   store[2] = powf( store[2], store[6] );
+   store[3] = powf( store[3], store[7] );
+#endif
 }
 
 static void
@@ -812,12 +865,10 @@ static void PIPE_CDECL
 sin4f(
    float *store )
 {
-   const unsigned X = 0;
-
-   store[X + 0] = sinf( store[X + 0] );
-   store[X + 1] = sinf( store[X + 1] );
-   store[X + 2] = sinf( store[X + 2] );
-   store[X + 3] = sinf( store[X + 3] );
+   store[0] = sinf( store[0] );
+   store[1] = sinf( store[1] );
+   store[2] = sinf( store[2] );
+   store[3] = sinf( store[3] );
 }
 
 static void
@@ -855,18 +906,21 @@ emit_fetch(
 {
    unsigned swizzle = tgsi_util_get_full_src_register_extswizzle( reg, chan_index );
 
-   switch( swizzle ) {
+   switch (swizzle) {
    case TGSI_EXTSWIZZLE_X:
    case TGSI_EXTSWIZZLE_Y:
    case TGSI_EXTSWIZZLE_Z:
    case TGSI_EXTSWIZZLE_W:
-      switch( reg->SrcRegister.File ) {
+      switch (reg->SrcRegister.File) {
       case TGSI_FILE_CONSTANT:
          emit_const(
             func,
             xmm,
             reg->SrcRegister.Index,
-            swizzle );
+            swizzle,
+            reg->SrcRegister.Indirect,
+            reg->SrcRegisterInd.File,
+            reg->SrcRegisterInd.Index );
          break;
 
       case TGSI_FILE_IMMEDIATE:
@@ -910,8 +964,8 @@ emit_fetch(
       emit_tempf(
          func,
          xmm,
-         TGSI_EXEC_TEMP_ONE_I,
-         TGSI_EXEC_TEMP_ONE_C );
+         TEMP_ONE_I,
+         TEMP_ONE_C );
       break;
 
    default:
@@ -1125,8 +1179,8 @@ emit_setcc(
          func,
          make_xmm( 0 ),
          get_temp(
-            TGSI_EXEC_TEMP_ONE_I,
-            TGSI_EXEC_TEMP_ONE_C ) );
+            TEMP_ONE_I,
+            TEMP_ONE_C ) );
       STORE( func, *inst, 0, 0, chan_index );
    }
 }
@@ -1172,18 +1226,13 @@ emit_instruction(
 {
    unsigned chan_index;
 
-   switch( inst->Instruction.Opcode ) {
+   switch (inst->Instruction.Opcode) {
    case TGSI_OPCODE_ARL:
-#if 0
-      /* XXX this isn't working properly (see glean vertProg1 test) */
       FOR_EACH_DST0_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH( func, *inst, 0, 0, chan_index );
          emit_f2it( func, 0 );
          STORE( func, *inst, 0, 0, chan_index );
       }
-#else
-      return 0;
-#endif
       break;
 
    case TGSI_OPCODE_MOV:
@@ -1200,8 +1249,8 @@ emit_instruction(
          emit_tempf(
             func,
             0,
-            TGSI_EXEC_TEMP_ONE_I,
-            TGSI_EXEC_TEMP_ONE_C);
+            TEMP_ONE_I,
+            TEMP_ONE_C);
          if( IS_DST0_CHANNEL_ENABLED( *inst, CHAN_X ) ) {
             STORE( func, *inst, 0, 0, CHAN_X );
          }
@@ -1286,11 +1335,73 @@ emit_instruction(
       break;
 
    case TGSI_OPCODE_EXP:
-      return 0;
+      if (IS_DST0_CHANNEL_ENABLED( *inst, CHAN_X ) ||
+          IS_DST0_CHANNEL_ENABLED( *inst, CHAN_Y ) ||
+          IS_DST0_CHANNEL_ENABLED( *inst, CHAN_Z )) {
+         FETCH( func, *inst, 0, 0, CHAN_X );
+         if (IS_DST0_CHANNEL_ENABLED( *inst, CHAN_X ) ||
+             IS_DST0_CHANNEL_ENABLED( *inst, CHAN_Y )) {
+            emit_MOV( func, 1, 0 );
+            emit_flr( func, 1 );
+            /* dst.x = ex2(floor(src.x)) */
+            if (IS_DST0_CHANNEL_ENABLED( *inst, CHAN_X )) {
+               emit_MOV( func, 2, 1 );
+               emit_ex2( func, 2 );
+               STORE( func, *inst, 2, 0, CHAN_X );
+            }
+            /* dst.y = src.x - floor(src.x) */
+            if (IS_DST0_CHANNEL_ENABLED( *inst, CHAN_Y )) {
+               emit_MOV( func, 2, 0 );
+               emit_sub( func, 2, 1 );
+               STORE( func, *inst, 2, 0, CHAN_Y );
+            }
+         }
+         /* dst.z = ex2(src.x) */
+         if (IS_DST0_CHANNEL_ENABLED( *inst, CHAN_Z )) {
+            emit_ex2( func, 0 );
+            STORE( func, *inst, 0, 0, CHAN_Z );
+         }
+      }
+      /* dst.w = 1.0 */
+      if (IS_DST0_CHANNEL_ENABLED( *inst, CHAN_W )) {
+         emit_tempf( func, 0, TEMP_ONE_I, TEMP_ONE_C );
+         STORE( func, *inst, 0, 0, CHAN_W );
+      }
       break;
 
    case TGSI_OPCODE_LOG:
-      return 0;
+      if (IS_DST0_CHANNEL_ENABLED( *inst, CHAN_X ) ||
+          IS_DST0_CHANNEL_ENABLED( *inst, CHAN_Y ) ||
+          IS_DST0_CHANNEL_ENABLED( *inst, CHAN_Z )) {
+         FETCH( func, *inst, 0, 0, CHAN_X );
+         emit_abs( func, 0 );
+         emit_MOV( func, 1, 0 );
+         emit_lg2( func, 1 );
+         /* dst.z = lg2(abs(src.x)) */
+         if (IS_DST0_CHANNEL_ENABLED( *inst, CHAN_Z )) {
+            STORE( func, *inst, 1, 0, CHAN_Z );
+         }
+         if (IS_DST0_CHANNEL_ENABLED( *inst, CHAN_X ) ||
+             IS_DST0_CHANNEL_ENABLED( *inst, CHAN_Y )) {
+            emit_flr( func, 1 );
+            /* dst.x = floor(lg2(abs(src.x))) */
+            if (IS_DST0_CHANNEL_ENABLED( *inst, CHAN_X )) {
+               STORE( func, *inst, 1, 0, CHAN_X );
+            }
+            /* dst.x = abs(src)/ex2(floor(lg2(abs(src.x)))) */
+            if (IS_DST0_CHANNEL_ENABLED( *inst, CHAN_Y )) {
+               emit_ex2( func, 1 );
+               emit_rcp( func, 1, 1 );
+               emit_mul( func, 0, 1 );
+               STORE( func, *inst, 0, 0, CHAN_Y );
+            }
+         }
+      }
+      /* dst.w = 1.0 */
+      if (IS_DST0_CHANNEL_ENABLED( *inst, CHAN_W )) {
+         emit_tempf( func, 0, TEMP_ONE_I, TEMP_ONE_C );
+         STORE( func, *inst, 0, 0, CHAN_W );
+      }
       break;
 
    case TGSI_OPCODE_MUL:
@@ -1356,8 +1467,8 @@ emit_instruction(
          emit_tempf(
             func,
             0,
-            TGSI_EXEC_TEMP_ONE_I,
-            TGSI_EXEC_TEMP_ONE_C );
+            TEMP_ONE_I,
+            TEMP_ONE_C );
          STORE( func, *inst, 0, 0, CHAN_X );
       }
       IF_IS_DST0_CHANNEL_ENABLED( *inst, CHAN_Y ) {
@@ -1560,8 +1671,8 @@ emit_instruction(
 	 emit_tempf(
 	    func,
 	    0,
-	    TGSI_EXEC_TEMP_ONE_I,
-	    TGSI_EXEC_TEMP_ONE_C );
+	    TEMP_ONE_I,
+	    TEMP_ONE_C );
          STORE( func, *inst, 0, 0, CHAN_W );
       }
       break;
@@ -1688,8 +1799,8 @@ emit_instruction(
 	 emit_tempf(
 	    func,
 	    0,
-	    TGSI_EXEC_TEMP_ONE_I,
-	    TGSI_EXEC_TEMP_ONE_C );
+	    TEMP_ONE_I,
+	    TEMP_ONE_C );
 	 FOR_EACH_DST0_ENABLED_CHANNEL( *inst, chan_index ) {
 	    STORE( func, *inst, 0, 0, chan_index );
 	 }
@@ -1777,8 +1888,8 @@ emit_instruction(
 	 emit_tempf(
 	    func,
 	    0,
-	    TGSI_EXEC_TEMP_ONE_I,
-	    TGSI_EXEC_TEMP_ONE_C );
+	    TEMP_ONE_I,
+	    TEMP_ONE_C );
          STORE( func, *inst, 0, 0, CHAN_W );
       }
       break;
@@ -2127,6 +2238,8 @@ tgsi_emit_sse2(
    unsigned ok = 1;
    uint num_immediates = 0;
 
+   util_init_math();
+
    func->csr = func->store;
 
    tgsi_parse_init( &parse, tokens );
@@ -2289,3 +2402,4 @@ tgsi_emit_sse2(
 }
 
 #endif /* PIPE_ARCH_X86 */
+

@@ -29,35 +29,32 @@
 #define TR_SCREEN_H_
 
 
-#include "pipe/p_compiler.h"
-#include "pipe/p_debug.h"
 #include "pipe/p_screen.h"
 
 
-struct trace_stream;
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-
+   
 struct trace_screen
 {
    struct pipe_screen base;
    
    struct pipe_screen *screen;
-   
-   struct trace_stream *stream;
 };
 
 
-static INLINE struct trace_screen *
-trace_screen(struct pipe_screen *screen)
-{
-   assert(screen);
-   return (struct trace_screen *)screen;
-}
-
+struct trace_screen *
+trace_screen(struct pipe_screen *screen);
 
 
 struct pipe_screen *
 trace_screen_create(struct pipe_screen *screen);
 
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* TR_SCREEN_H_ */

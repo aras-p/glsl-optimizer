@@ -29,7 +29,6 @@
 #ifndef I915_FPC_H
 #define I915_FPC_H
 
-#include "pipe/p_util.h"
 
 #include "i915_context.h"
 #include "i915_reg.h"

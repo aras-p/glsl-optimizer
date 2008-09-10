@@ -42,8 +42,9 @@
 #include "pipe/p_winsys.h"
 #include "pipe/p_format.h"
 #include "pipe/p_context.h"
-#include "pipe/p_util.h"
 #include "pipe/p_inlines.h"
+#include "util/u_math.h"
+#include "util/u_memory.h"
 #include "softpipe/sp_winsys.h"
 
 #ifdef GALLIUM_CELL
@@ -55,7 +56,6 @@
 #endif
 
 #ifdef GALLIUM_TRACE
-#include "trace/tr_winsys.h"
 #include "trace/tr_screen.h"
 #include "trace/tr_context.h"
 #endif
@@ -83,18 +83,6 @@ struct xm_buffer
 
 
 /**
- * Subclass of pipe_surface for Xlib winsys
- */
-struct xmesa_surface
-{
-   struct pipe_surface surface;
-
-   int tileSize;
-   boolean no_swap;
-};
-
-
-/**
  * Subclass of pipe_winsys for Xlib winsys
  */
 struct xmesa_pipe_winsys
@@ -104,14 +92,6 @@ struct xmesa_pipe_winsys
    int shm;
 };
 
-
-
-/** Cast wrapper */
-static INLINE struct xmesa_surface *
-xmesa_surface(struct pipe_surface *ps)
-{
-   return (struct xmesa_surface *) ps;
-}
 
 
 /** Cast wrapper */
@@ -307,15 +287,15 @@ xmesa_display_surface_tiled(XMesaBuffer b, const struct pipe_surface *surf)
    const uint tilesPerRow = (surf->width + TILE_SIZE - 1) / TILE_SIZE;
    uint x, y;
 
-   /* check that the XImage has been previously initialized */
-   assert(ximage->format);
-   assert(ximage->bitmap_unit);
-
    if (XSHM_ENABLED(xm_buf) && (xm_buf->tempImage == NULL)) {
       alloc_shm_ximage(xm_buf, b, TILE_SIZE, TILE_SIZE);
    }
 
    ximage = (XSHM_ENABLED(xm_buf)) ? xm_buf->tempImage : b->tempImage;
+
+   /* check that the XImage has been previously initialized */
+   assert(ximage->format);
+   assert(ximage->bitmap_unit);
 
    if (!XSHM_ENABLED(xm_buf)) {
       /* update XImage's fields */
@@ -326,11 +306,16 @@ xmesa_display_surface_tiled(XMesaBuffer b, const struct pipe_surface *surf)
 
    for (y = 0; y < surf->height; y += TILE_SIZE) {
       for (x = 0; x < surf->width; x += TILE_SIZE) {
-         int dx = x;
-         int dy = y;
          int tx = x / TILE_SIZE;
          int ty = y / TILE_SIZE;
          int offset = ty * tilesPerRow + tx;
+         int w = TILE_SIZE;
+         int h = TILE_SIZE;
+
+         if (y + h > surf->height)
+            h = surf->height - y;
+         if (x + w > surf->width)
+            w = surf->width - x;
 
          offset *= 4 * TILE_SIZE * TILE_SIZE;
 
@@ -339,11 +324,12 @@ xmesa_display_surface_tiled(XMesaBuffer b, const struct pipe_surface *surf)
          if (XSHM_ENABLED(xm_buf)) {
 #if defined(USE_XSHM) && !defined(XFree86Server)
             XShmPutImage(b->xm_visual->display, b->drawable, b->gc,
-                         ximage, 0, 0, x, y, TILE_SIZE, TILE_SIZE, False);
+                         ximage, 0, 0, x, y, w, h, False);
 #endif
-         } else {
+         }
+         else {
             XPutImage(b->xm_visual->display, b->drawable, b->gc,
-                      ximage, 0, 0, dx, dy, TILE_SIZE, TILE_SIZE);
+                      ximage, 0, 0, x, y, w, h);
          }
       }
    }
@@ -359,13 +345,24 @@ xmesa_display_surface(XMesaBuffer b, const struct pipe_surface *surf)
 {
    XImage *ximage;
    struct xm_buffer *xm_buf = xm_buffer(surf->buffer);
-   const struct xmesa_surface *xm_surf
-      = xmesa_surface((struct pipe_surface *) surf);
+   static boolean no_swap = 0;
+   static boolean firsttime = 1;
+   static int tileSize = 0;
 
-   if (xm_surf->no_swap)
+   if (firsttime) {
+      no_swap = getenv("SP_NO_RAST") != NULL;
+#ifdef GALLIUM_CELL
+      if (!getenv("GALLIUM_NOCELL")) {
+         tileSize = 32; /** probably temporary */
+      }
+#endif
+      firsttime = 0;
+   }
+
+   if (no_swap)
       return;
 
-   if (xm_surf->tileSize) {
+   if (tileSize) {
       xmesa_display_surface_tiled(b, surf);
       return;
    }
@@ -532,29 +529,14 @@ xm_surface_alloc_storage(struct pipe_winsys *winsys,
 static struct pipe_surface *
 xm_surface_alloc(struct pipe_winsys *ws)
 {
-   struct xmesa_surface *xms = CALLOC_STRUCT(xmesa_surface);
-   static boolean no_swap = 0;
-   static boolean firsttime = 1;
-
-   if (firsttime) {
-      no_swap = getenv("SP_NO_RAST") != NULL;
-      firsttime = 0;
-   }
+   struct pipe_surface *surface = CALLOC_STRUCT(pipe_surface);
 
    assert(ws);
 
-   xms->surface.refcount = 1;
-   xms->surface.winsys = ws;
+   surface->refcount = 1;
+   surface->winsys = ws;
 
-#ifdef GALLIUM_CELL
-   if (!getenv("GALLIUM_NOCELL")) {
-      xms->tileSize = 32; /** probably temporary */
-   }
-#endif
-   
-   xms->no_swap = no_swap;
-   
-   return &xms->surface;
+   return surface;
 }
 
 
@@ -567,7 +549,7 @@ xm_surface_release(struct pipe_winsys *winsys, struct pipe_surface **s)
    surf->refcount--;
    if (surf->refcount == 0) {
       if (surf->buffer)
-	pipe_buffer_reference(winsys, &surf->buffer, NULL);
+	winsys_buffer_reference(winsys, &surf->buffer, NULL);
       free(surf);
    }
    *s = NULL;
@@ -651,11 +633,7 @@ xmesa_get_pipe_winsys(struct xmesa_visual *xm_vis)
       ws->base.get_name = xm_get_name;
    }
 
-#ifdef GALLIUM_TRACE
-      return trace_winsys_create(&ws->base);
-#else
-      return &ws->base;
-#endif
+   return &ws->base;
 }
 
 
@@ -684,14 +662,12 @@ xmesa_create_pipe_context(XMesaContext xmesa, uint pixelformat)
    {
       struct pipe_screen *screen = softpipe_create_screen(pws);
 
-#ifdef GALLIUM_TRACE
-      screen = trace_screen_create(screen);
-#endif
-      
       pipe = softpipe_create(screen, pws, NULL);
 
 #ifdef GALLIUM_TRACE
-      pipe = trace_context_create(pipe);
+      screen = trace_screen_create(screen);
+      
+      pipe = trace_context_create(screen, pipe);
 #endif
    }
 

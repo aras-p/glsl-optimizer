@@ -33,10 +33,7 @@ XLIB_WINSYS_SOURCES = \
 XLIB_WINSYS_OBJECTS = $(XLIB_WINSYS_SOURCES:.c=.o)
 
 
-ifeq ($(CONFIG_NAME), linux-cell)
-# The SPU code is in a separate .a file, unfortunately
-CELL_SPU_LIB = $(TOP)/src/gallium/drivers/cell/spu/g3d_spu.a
-endif
+# Note: CELL_SPU_LIB is only defined for cell configs
 
 LIBS = \
 	$(GALLIUM_DRIVERS) \

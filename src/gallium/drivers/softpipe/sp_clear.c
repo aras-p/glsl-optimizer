@@ -31,6 +31,7 @@
 
 
 #include "pipe/p_defines.h"
+#include "util/u_pack_color.h"
 #include "sp_clear.h"
 #include "sp_context.h"
 #include "sp_surface.h"
@@ -39,8 +40,28 @@
 
 
 /**
+ * Convert packed pixel from one format to another.
+ */
+static unsigned
+convert_color(enum pipe_format srcFormat, unsigned srcColor,
+              enum pipe_format dstFormat)
+{
+   ubyte r, g, b, a;
+   unsigned dstColor;
+
+   util_unpack_color_ub(srcFormat, &srcColor, &r, &g, &b, &a);
+   util_pack_color_ub(r, g, b, a, dstFormat, &dstColor);
+
+   return dstColor;
+}
+
+
+
+/**
  * Clear the given surface to the specified value.
  * No masking, no scissor (clear entire buffer).
+ * Note: when clearing a color buffer, the clearValue is always
+ * encoded as PIPE_FORMAT_A8R8G8B8_UNORM.
  */
 void
 softpipe_clear(struct pipe_context *pipe, struct pipe_surface *ps,
@@ -66,7 +87,15 @@ softpipe_clear(struct pipe_context *pipe, struct pipe_surface *ps,
 
    for (i = 0; i < softpipe->framebuffer.num_cbufs; i++) {
       if (ps == sp_tile_cache_get_surface(softpipe->cbuf_cache[i])) {
-         sp_tile_cache_clear(softpipe->cbuf_cache[i], clearValue);
+         unsigned cv;
+         if (ps->format != PIPE_FORMAT_A8R8G8B8_UNORM) {
+            cv = convert_color(PIPE_FORMAT_A8R8G8B8_UNORM, clearValue,
+                               ps->format);
+         }
+         else {
+            cv = clearValue;
+         }
+         sp_tile_cache_clear(softpipe->cbuf_cache[i], cv);
          softpipe->framebuffer.cbufs[i]->status = PIPE_SURFACE_STATUS_CLEAR;
       }
    }

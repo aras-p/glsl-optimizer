@@ -1,7 +1,6 @@
 #ifndef __glplatform_h_
 #define __glplatform_h_
 
-/* $Id: glplatform.h 4585 2007-11-30 09:49:39Z markc $ */
 
 #ifdef __cplusplus
 extern "C" {

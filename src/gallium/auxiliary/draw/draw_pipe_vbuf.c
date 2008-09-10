@@ -35,7 +35,8 @@
 
 
 #include "pipe/p_debug.h"
-#include "pipe/p_util.h"
+#include "util/u_math.h"
+#include "util/u_memory.h"
 
 #include "draw_vbuf.h"
 #include "draw_private.h"

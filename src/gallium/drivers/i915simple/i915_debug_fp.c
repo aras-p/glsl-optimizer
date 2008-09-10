@@ -29,7 +29,7 @@
 #include "i915_reg.h"
 #include "i915_debug.h"
 #include "pipe/p_winsys.h"
-#include "pipe/p_util.h"
+#include "util/u_memory.h"
 
 
 static void

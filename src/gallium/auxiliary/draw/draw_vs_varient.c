@@ -30,7 +30,8 @@
   *   Keith Whitwell <keith@tungstengraphics.com>
   */
 
-#include "pipe/p_util.h"
+#include "util/u_memory.h"
+#include "util/u_math.h"
 #include "draw/draw_context.h"
 #include "draw/draw_private.h"
 #include "draw/draw_vbuf.h"
@@ -298,7 +299,7 @@ struct draw_vs_varient *draw_vs_varient_generic( struct draw_vertex_shader *vs,
          emit.element[i].input_offset = key->element[i].out.vs_output * 4 * sizeof(float);
          emit.element[i].output_format = draw_translate_vinfo_format(key->element[i].out.format);
          emit.element[i].output_offset = key->element[i].out.offset;
-         assert(emit.element[i].input_offset < fetch.output_stride);
+         assert(emit.element[i].input_offset <= fetch.output_stride);
       }
       else {
          emit.element[i].input_format = PIPE_FORMAT_R32_FLOAT;

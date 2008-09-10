@@ -36,10 +36,12 @@
  */
 
 
-#include "pipe/p_util.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_shader_tokens.h"
-#include "draw_pipe.h"
+#include "util/u_math.h"
+#include "util/u_memory.h"
+
+#include "draw/draw_pipe.h"
 
 
 /** Subclass of draw_stage */

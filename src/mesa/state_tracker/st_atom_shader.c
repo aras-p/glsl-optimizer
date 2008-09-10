@@ -39,6 +39,7 @@
 
 #include "main/imports.h"
 #include "main/mtypes.h"
+#include "main/macros.h"
 #include "shader/program.h"
 
 #include "pipe/p_context.h"
@@ -71,6 +72,8 @@ struct translated_vertex_program
 
    /** Maps VERT_RESULT_x to slot */
    GLuint output_to_slot[VERT_RESULT_MAX];
+   ubyte output_to_semantic_name[VERT_RESULT_MAX];
+   ubyte output_to_semantic_index[VERT_RESULT_MAX];
 
    /** Pointer to the translated vertex program */
    struct st_vertex_program *vp;
@@ -176,17 +179,22 @@ find_translated_vp(struct st_context *st,
       const GLbitfield outputsWritten = stvp->Base.Base.OutputsWritten;
       GLuint numVpOuts = 0;
       GLboolean emitPntSize = GL_FALSE, emitBFC0 = GL_FALSE, emitBFC1 = GL_FALSE;
+      GLint maxGeneric;
 
       /* Compute mapping of vertex program outputs to slots, which depends
        * on the fragment program's input->slot mapping.
        */
       for (outAttr = 0; outAttr < VERT_RESULT_MAX; outAttr++) {
-         /* set default: */
+         /* set defaults: */
          xvp->output_to_slot[outAttr] = UNUSED;
+         xvp->output_to_semantic_name[outAttr] = TGSI_SEMANTIC_COUNT;
+         xvp->output_to_semantic_index[outAttr] = 99;
 
          if (outAttr == VERT_RESULT_HPOS) {
             /* always put xformed position into slot zero */
             xvp->output_to_slot[VERT_RESULT_HPOS] = 0;
+            xvp->output_to_semantic_name[outAttr] = TGSI_SEMANTIC_POSITION;
+            xvp->output_to_semantic_index[outAttr] = 0;
             numVpOuts++;
          }
          else if (outputsWritten & (1 << outAttr)) {
@@ -195,8 +203,11 @@ find_translated_vp(struct st_context *st,
             if (fpInAttrib >= 0) {
                GLuint fpInSlot = stfp->input_to_slot[fpInAttrib];
                if (fpInSlot != ~0) {
+                  /* match this vp output to the fp input */
                   GLuint vpOutSlot = stfp->input_map[fpInSlot];
                   xvp->output_to_slot[outAttr] = vpOutSlot;
+                  xvp->output_to_semantic_name[outAttr] = stfp->input_semantic_name[fpInSlot];
+                  xvp->output_to_semantic_index[outAttr] = stfp->input_semantic_index[fpInSlot];
                   numVpOuts++;
                }
             }
@@ -208,19 +219,27 @@ find_translated_vp(struct st_context *st,
                emitBFC1 = GL_TRUE;
          }
 #if 0 /*debug*/
-         printf("assign output_to_slot[%d] = %d\n", outAttr, 
+         printf("assign vp output_to_slot[%d] = %d\n", outAttr, 
                 xvp->output_to_slot[outAttr]);
 #endif
       }
 
       /* must do these last */
-      if (emitPntSize)
+      if (emitPntSize) {
          xvp->output_to_slot[VERT_RESULT_PSIZ] = numVpOuts++;
-      if (emitBFC0)
+         xvp->output_to_semantic_name[VERT_RESULT_PSIZ] = TGSI_SEMANTIC_PSIZE;
+         xvp->output_to_semantic_index[VERT_RESULT_PSIZ] = 0;
+      }
+      if (emitBFC0) {
          xvp->output_to_slot[VERT_RESULT_BFC0] = numVpOuts++;
-      if (emitBFC1)
+         xvp->output_to_semantic_name[VERT_RESULT_BFC0] = TGSI_SEMANTIC_COLOR;
+         xvp->output_to_semantic_index[VERT_RESULT_BFC0] = 0;
+      }
+      if (emitBFC1) {
          xvp->output_to_slot[VERT_RESULT_BFC1] = numVpOuts++;
-
+         xvp->output_to_semantic_name[VERT_RESULT_BFC0] = TGSI_SEMANTIC_COLOR;
+         xvp->output_to_semantic_index[VERT_RESULT_BFC0] = 1;
+      }
 
       /* Unneeded vertex program outputs will go to this slot.
        * We could use this info to do dead code elimination in the
@@ -228,22 +247,38 @@ find_translated_vp(struct st_context *st,
        */
       dummySlot = numVpOuts;
 
-      /* Map vert program outputs that aren't used to the dummy slot */
+      /* find max GENERIC slot index */
+      maxGeneric = -1;
+      for (outAttr = 0; outAttr < VERT_RESULT_MAX; outAttr++) {
+         if (xvp->output_to_semantic_name[outAttr] == TGSI_SEMANTIC_GENERIC) {
+            maxGeneric = MAX2(maxGeneric,
+                              xvp->output_to_semantic_index[outAttr]);
+         }
+      }
+
+      /* Map vert program outputs that aren't used to the dummy slot
+       * (and an unused generic attribute slot).
+       */
       for (outAttr = 0; outAttr < VERT_RESULT_MAX; outAttr++) {
          if (outputsWritten & (1 << outAttr)) {
-            if (xvp->output_to_slot[outAttr] == UNUSED)
+            if (xvp->output_to_slot[outAttr] == UNUSED) {
                xvp->output_to_slot[outAttr] = dummySlot;
+               xvp->output_to_semantic_name[outAttr] = TGSI_SEMANTIC_GENERIC;
+               xvp->output_to_semantic_index[outAttr] = maxGeneric + 1;
+            }
          }
+
 #if 0 /*debug*/
-         printf("output_to_slot[%d] = %d\n", outAttr, 
+         printf("vp output_to_slot[%d] = %d\n", outAttr, 
                 xvp->output_to_slot[outAttr]);
 #endif
-
       }
 
       assert(stvp->Base.Base.NumInstructions > 1);
 
-      st_translate_vertex_program(st, stvp, xvp->output_to_slot);
+      st_translate_vertex_program(st, stvp, xvp->output_to_slot,
+                                  xvp->output_to_semantic_name,
+                                  xvp->output_to_semantic_index);
 
       xvp->vp = stvp;
 

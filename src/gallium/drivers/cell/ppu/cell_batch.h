@@ -54,5 +54,8 @@ extern void *
 cell_batch_alloc_aligned(struct cell_context *cell, uint bytes,
                          uint alignment);
 
+extern void
+cell_init_batch_buffers(struct cell_context *cell);
+
 
 #endif /* CELL_BATCH_H */

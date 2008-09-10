@@ -41,6 +41,10 @@
 #define ST_SURFACE_BACK_RIGHT   3
 #define ST_SURFACE_DEPTH        8
 
+#define ST_TEXTURE_2D    0x2
+#define ST_TEXTURE_RGB   0x1
+#define ST_TEXTURE_RGBA  0x2
+
 
 struct st_context;
 struct st_framebuffer;
@@ -91,6 +95,15 @@ void st_finish( struct st_context *st );
 
 void st_notify_swapbuffers(struct st_framebuffer *stfb);
 void st_notify_swapbuffers_complete(struct st_framebuffer *stfb);
+
+
+/** Redirect rendering into stfb's surface to a texture image */
+int st_bind_teximage(struct st_framebuffer *stfb, uint surfIndex,
+                     int target, int format, int level);
+
+/** Undo surface-to-texture binding */
+int st_release_teximage(struct st_framebuffer *stfb, uint surfIndex,
+                        int target, int format, int level);
 
 
 /** Generic function type */

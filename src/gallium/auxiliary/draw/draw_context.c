@@ -31,7 +31,8 @@
   */
 
 
-#include "pipe/p_util.h"
+#include "util/u_memory.h"
+#include "util/u_math.h"
 #include "draw_context.h"
 #include "draw_vbuf.h"
 #include "draw_vs.h"
@@ -289,7 +290,7 @@ draw_enable_point_sprites(struct draw_context *draw, boolean enable)
  * work for the drivers.
  */
 int
-draw_find_vs_output(struct draw_context *draw,
+draw_find_vs_output(const struct draw_context *draw,
                     uint semantic_name, uint semantic_index)
 {
    const struct draw_vertex_shader *vs = draw->vs.vertex_shader;
@@ -315,7 +316,7 @@ draw_find_vs_output(struct draw_context *draw,
  * Return number of vertex shader outputs.
  */
 uint
-draw_num_vs_outputs(struct draw_context *draw)
+draw_num_vs_outputs(const struct draw_context *draw)
 {
    uint count = draw->vs.vertex_shader->info.num_outputs;
    if (draw->extra_vp_outputs.slot > 0)

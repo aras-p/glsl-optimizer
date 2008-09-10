@@ -72,6 +72,12 @@ struct st_texture_object
 };
 
 
+static INLINE struct st_texture_image *
+st_texture_image(struct gl_texture_image *img)
+{
+   return (struct st_texture_image *) img;
+}
+
 static INLINE struct st_texture_object *
 st_texture_object(struct gl_texture_object *obj)
 {

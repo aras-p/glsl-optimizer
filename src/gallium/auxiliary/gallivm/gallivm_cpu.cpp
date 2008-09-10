@@ -41,10 +41,11 @@
 
 #include "pipe/p_context.h"
 #include "pipe/p_shader_tokens.h"
-#include "pipe/p_util.h"
 
 #include "tgsi/tgsi_exec.h"
 #include "tgsi/tgsi_dump.h"
+
+#include "util/u_memory.h"
 
 #include <llvm/Module.h>
 #include <llvm/CallingConv.h>

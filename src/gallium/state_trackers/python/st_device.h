@@ -48,6 +48,7 @@ struct st_buffer {
 struct st_context {
    struct st_device *st_dev;
    
+   struct pipe_context *real_pipe;
    struct pipe_context *pipe;
    
    struct cso_context *cso;
@@ -57,14 +58,19 @@ struct st_context {
 
    struct pipe_texture *default_texture;
    struct pipe_texture *sampler_textures[PIPE_MAX_SAMPLERS];
+   
+   unsigned num_vertex_buffers;
    struct pipe_vertex_buffer vertex_buffers[PIPE_MAX_ATTRIBS];
+   
+   unsigned num_vertex_elements;
    struct pipe_vertex_element vertex_elements[PIPE_MAX_ATTRIBS];
 };
 
 
 struct st_device {
    const struct st_winsys *st_ws; 
-   
+
+   struct pipe_screen *real_screen;
    struct pipe_screen *screen;
    
    /* FIXME: we also need to refcount for textures and surfaces... */

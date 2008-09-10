@@ -30,7 +30,7 @@
  */
 
 #include "pipe/p_compiler.h"
-#include "pipe/p_util.h"
+#include "util/u_memory.h"
 #include "rtasm_ppc_spe.h"
 
 #ifdef GALLIUM_CELL

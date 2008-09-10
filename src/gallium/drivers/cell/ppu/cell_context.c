@@ -35,7 +35,7 @@
 
 #include "pipe/p_defines.h"
 #include "pipe/p_format.h"
-#include "pipe/p_util.h"
+#include "util/u_memory.h"
 #include "pipe/p_winsys.h"
 #include "pipe/p_screen.h"
 
@@ -43,11 +43,11 @@
 #include "draw/draw_private.h"
 
 #include "cell/common.h"
+#include "cell_batch.h"
 #include "cell_clear.h"
 #include "cell_context.h"
 #include "cell_draw_arrays.h"
 #include "cell_flush.h"
-#include "cell_render.h"
 #include "cell_state.h"
 #include "cell_surface.h"
 #include "cell_spu.h"
@@ -73,14 +73,25 @@ cell_draw_create(struct cell_context *cell)
 {
    struct draw_context *draw = draw_create();
 
+#if 0 /* broken */
    if (getenv("GALLIUM_CELL_VS")) {
       /* plug in SPU-based vertex transformation code */
       draw->shader_queue_flush = cell_vertex_shader_queue_flush;
       draw->driver_private = cell;
    }
+#endif
 
    return draw;
 }
+
+
+#ifdef DEBUG
+static const struct debug_named_value cell_debug_flags[] = {
+   {"checker", CELL_DEBUG_CHECKER},/**< modulate tile clear color by SPU ID */
+   {"sync", CELL_DEBUG_SYNC},      /**< SPUs do synchronous DMA */
+   {NULL, 0}
+};
+#endif
 
 
 struct pipe_context *
@@ -88,7 +99,6 @@ cell_create_context(struct pipe_screen *screen,
                     struct cell_winsys *cws)
 {
    struct cell_context *cell;
-   uint spu, buf;
 
    /* some fields need to be 16-byte aligned, so align the whole object */
    cell = (struct cell_context*) align_malloc(sizeof(struct cell_context), 16);
@@ -102,13 +112,6 @@ cell_create_context(struct pipe_screen *screen,
    cell->pipe.screen = screen;
    cell->pipe.destroy = cell_destroy_context;
 
-   /* state setters */
-   cell->pipe.set_vertex_buffers = cell_set_vertex_buffers;
-   cell->pipe.set_vertex_elements = cell_set_vertex_elements;
-
-   cell->pipe.draw_arrays = cell_draw_arrays;
-   cell->pipe.draw_elements = cell_draw_elements;
-
    cell->pipe.clear = cell_clear_surface;
    cell->pipe.flush = cell_flush;
 
@@ -118,19 +121,27 @@ cell_create_context(struct pipe_screen *screen,
    cell->pipe.wait_query = cell_wait_query;
 #endif
 
+   cell_init_draw_functions(cell);
    cell_init_state_functions(cell);
    cell_init_shader_functions(cell);
    cell_init_surface_functions(cell);
    cell_init_texture_functions(cell);
+   cell_init_vertex_functions(cell);
 
    cell->draw = cell_draw_create(cell);
 
    cell_init_vbuf(cell);
+
    draw_set_rasterize_stage(cell->draw, cell->vbuf);
 
    /* convert all points/lines to tris for the time being */
    draw_wide_point_threshold(cell->draw, 0.0);
    draw_wide_line_threshold(cell->draw, 0.0);
+
+   /* get env vars or read config file to get debug flags */
+   cell->debug_flags = debug_get_flags_option("CELL_DEBUG", 
+                                              cell_debug_flags, 
+                                              0 );
 
    /*
     * SPU stuff
@@ -142,20 +153,7 @@ cell_create_context(struct pipe_screen *screen,
 
    cell_start_spus(cell);
 
-   /* init command, vertex/index buffer info */
-   for (buf = 0; buf < CELL_NUM_BUFFERS; buf++) {
-      cell->buffer_size[buf] = 0;
-
-      /* init batch buffer status values,
-       * mark 0th buffer as used, rest as free.
-       */
-      for (spu = 0; spu < cell->num_spus; spu++) {
-         if (buf == 0)
-            cell->buffer_status[spu][buf][0] = CELL_BUFFER_STATUS_USED;
-         else
-            cell->buffer_status[spu][buf][0] = CELL_BUFFER_STATUS_FREE;
-      }
-   }
+   cell_init_batch_buffers(cell);
 
    return &cell->pipe;
 }

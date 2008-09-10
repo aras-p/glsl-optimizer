@@ -39,8 +39,9 @@
 #include "pipe/p_winsys.h"
 #include "pipe/p_format.h"
 #include "pipe/p_context.h"
-#include "pipe/p_util.h"
 #include "pipe/p_inlines.h"
+#include "util/u_math.h"
+#include "util/u_memory.h"
 #include "softpipe/sp_winsys.h"
 #include "st_winsys.h"
 
@@ -220,7 +221,7 @@ st_softpipe_surface_release(struct pipe_winsys *winsys,
    surf->refcount--;
    if (surf->refcount == 0) {
       if (surf->buffer)
-	pipe_buffer_reference(winsys, &surf->buffer, NULL);
+	winsys_buffer_reference(winsys, &surf->buffer, NULL);
       free(surf);
    }
    *s = NULL;
@@ -253,13 +254,9 @@ st_softpipe_fence_finish(struct pipe_winsys *winsys,
 }
 
 
-static void 
-st_softpipe_screen_destroy(struct pipe_screen *screen)
+static void
+st_softpipe_destroy(struct pipe_winsys *winsys)
 {
-   struct pipe_winsys *winsys = screen->winsys;
-
-   screen->destroy(screen);
-
    FREE(winsys);
 }
 
@@ -274,6 +271,8 @@ st_softpipe_screen_create(void)
    if(!winsys)
       return NULL;
 
+   winsys->destroy = st_softpipe_destroy;
+   
    winsys->buffer_create = st_softpipe_buffer_create;
    winsys->user_buffer_create = st_softpipe_user_buffer_create;
    winsys->buffer_map = st_softpipe_buffer_map;
@@ -293,16 +292,9 @@ st_softpipe_screen_create(void)
 
    screen = softpipe_create_screen(winsys);
    if(!screen)
-      FREE(winsys);
+      st_softpipe_destroy(winsys);
 
    return screen;
-}
-
-
-static void
-st_softpipe_context_destroy(struct pipe_context *pipe)
-{
-   pipe->destroy(pipe);
 }
 
 
@@ -315,7 +307,5 @@ st_softpipe_context_create(struct pipe_screen *screen)
 
 const struct st_winsys st_softpipe_winsys = {
    &st_softpipe_screen_create,
-   &st_softpipe_screen_destroy,
    &st_softpipe_context_create,
-   &st_softpipe_context_destroy
 };

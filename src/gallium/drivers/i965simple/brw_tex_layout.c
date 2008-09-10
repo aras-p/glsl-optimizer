@@ -33,16 +33,16 @@
 /* Code to layout images in a mipmap tree for i965.
  */
 
-#include "brw_tex_layout.h"
-
 #include "pipe/p_state.h"
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
-#include "pipe/p_util.h"
 #include "pipe/p_inlines.h"
 #include "pipe/p_winsys.h"
-
+#include "util/u_math.h"
+#include "util/u_memory.h"
 #include "brw_context.h"
+#include "brw_tex_layout.h"
+
 
 #define FILE_DEBUG_FLAG DEBUG_TEXTURE
 
@@ -144,7 +144,7 @@ static void i945_miptree_layout_2d(struct brw_texture *tex)
     */
    if (pt->last_level > 0) {
       unsigned mip1_nblocksx 
-	 = align_int(pf_get_nblocksx(&pt->block, minify(width)), align_x)
+	 = align(pf_get_nblocksx(&pt->block, minify(width)), align_x)
          + pf_get_nblocksx(&pt->block, minify(minify(width)));
 
       if (mip1_nblocksx > nblocksx)
@@ -153,14 +153,14 @@ static void i945_miptree_layout_2d(struct brw_texture *tex)
 
    /* Pitch must be a whole number of dwords
     */
-   tex->stride = align_int(tex->stride, 64);
+   tex->stride = align(tex->stride, 64);
    tex->total_nblocksy = 0;
 
    for (level = 0; level <= pt->last_level; level++) {
       intel_miptree_set_level_info(tex, level, 1, x, y, width,
 				   height, 1);
 
-      nblocksy = align_int(nblocksy, align_y);
+      nblocksy = align(nblocksy, align_y);
 
       /* Because the images are packed better, the final offset
        * might not be the maximal one:
@@ -170,7 +170,7 @@ static void i945_miptree_layout_2d(struct brw_texture *tex)
       /* Layout_below: step right after second mipmap level.
        */
       if (level == 1) {
-	 x += align_int(nblocksx, align_x);
+	 x += align(nblocksx, align_x);
       }
       else {
 	 y += nblocksy;
@@ -330,7 +330,7 @@ brw_texture_release_screen(struct pipe_screen *screen,
       DBG("%s deleting %p\n", __FUNCTION__, (void *) tex);
       */
 
-      pipe_buffer_reference(ws, &tex->buffer, NULL);
+      winsys_buffer_reference(ws, &tex->buffer, NULL);
 
       for (i = 0; i < PIPE_MAX_TEXTURE_LEVELS; i++)
          if (tex->image_offset[i])
@@ -369,7 +369,7 @@ brw_get_tex_surface_screen(struct pipe_screen *screen,
    if (ps) {
       assert(ps->format);
       assert(ps->refcount);
-      pipe_buffer_reference(ws, &ps->buffer, tex->buffer);
+      winsys_buffer_reference(ws, &ps->buffer, tex->buffer);
       ps->format = pt->format;
       ps->width = pt->width[level];
       ps->height = pt->height[level];

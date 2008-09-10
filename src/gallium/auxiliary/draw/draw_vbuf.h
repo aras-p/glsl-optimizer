@@ -37,8 +37,6 @@
 #define DRAW_VBUF_H_
 
 
-#include "pipe/p_util.h"
-
 
 struct draw_context;
 struct vertex_info;
@@ -81,7 +79,8 @@ struct vbuf_render {
    boolean (*set_primitive)( struct vbuf_render *, unsigned prim );
 
    /**
-    * DrawElements, note indices are ushort:
+    * DrawElements, note indices are ushort.  The driver must complete
+    * this call, if necessary splitting the index list itself.
     */
    void (*draw)( struct vbuf_render *,
 		 const ushort *indices,

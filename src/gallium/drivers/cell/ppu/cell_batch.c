@@ -32,6 +32,13 @@
 
 
 
+/**
+ * Search the buffer pool for an empty/free buffer and return its index.
+ * Buffers are used for storing vertex data, state and commands which
+ * will be sent to the SPUs.
+ * If no empty buffers are available, wait for one.
+ * \return buffer index in [0, CELL_NUM_BUFFERS-1]
+ */
 uint
 cell_get_empty_buffer(struct cell_context *cell)
 {
@@ -74,6 +81,11 @@ cell_get_empty_buffer(struct cell_context *cell)
 }
 
 
+/**
+ * Flush the current batch buffer to the SPUs.
+ * An empty buffer will be found and set as the new current batch buffer
+ * for subsequent commands/data.
+ */
 void
 cell_batch_flush(struct cell_context *cell)
 {
@@ -93,11 +105,11 @@ cell_batch_flush(struct cell_context *cell)
 
    /*
    printf("cell_batch_dispatch: buf %u at %p, size %u\n",
-          batch, &cell->batch_buffer[batch][0], size);
+          batch, &cell->buffer[batch][0], size);
    */
      
    /*
-    * Build "BATCH" command and sent to all SPUs.
+    * Build "BATCH" command and send to all SPUs.
     */
    cmd_word = CELL_CMD_BATCH | (batch << 8) | (size << 16);
 
@@ -120,6 +132,9 @@ cell_batch_flush(struct cell_context *cell)
 }
 
 
+/**
+ * Return the number of bytes free in the current batch buffer.
+ */
 uint
 cell_batch_free_space(const struct cell_context *cell)
 {
@@ -129,7 +144,9 @@ cell_batch_free_space(const struct cell_context *cell)
 
 
 /**
- * Append data to current batch.
+ * Append data to the current batch buffer.
+ * \param data  address of block of bytes to append
+ * \param bytes  size of block of bytes
  */
 void
 cell_batch_append(struct cell_context *cell, const void *data, uint bytes)
@@ -165,6 +182,10 @@ cell_batch_append(struct cell_context *cell, const void *data, uint bytes)
 }
 
 
+/**
+ * Allocate space in the current batch buffer for 'bytes' space.
+ * \return address in batch buffer to put data
+ */
 void *
 cell_batch_alloc(struct cell_context *cell, uint bytes)
 {
@@ -172,6 +193,10 @@ cell_batch_alloc(struct cell_context *cell, uint bytes)
 }
 
 
+/**
+ * Same as \sa cell_batch_alloc, but return an address at a particular
+ * alignment.
+ */
 void *
 cell_batch_alloc_aligned(struct cell_context *cell, uint bytes,
                          uint alignment)
@@ -214,4 +239,29 @@ cell_batch_alloc_aligned(struct cell_context *cell, uint bytes,
    cell->buffer_size[cell->cur_batch] = size + bytes;
 
    return pos;
+}
+
+
+/**
+ * One-time init of batch buffers.
+ */
+void
+cell_init_batch_buffers(struct cell_context *cell)
+{
+   uint spu, buf;
+
+   /* init command, vertex/index buffer info */
+   for (buf = 0; buf < CELL_NUM_BUFFERS; buf++) {
+      cell->buffer_size[buf] = 0;
+
+      /* init batch buffer status values,
+       * mark 0th buffer as used, rest as free.
+       */
+      for (spu = 0; spu < cell->num_spus; spu++) {
+         if (buf == 0)
+            cell->buffer_status[spu][buf][0] = CELL_BUFFER_STATUS_USED;
+         else
+            cell->buffer_status[spu][buf][0] = CELL_BUFFER_STATUS_FREE;
+      }
+   }
 }

@@ -30,7 +30,9 @@
 #include "i915_context.h"
 #include "i915_reg.h"
 #include "i915_state.h"
-#include "pipe/p_util.h"
+#include "util/u_math.h"
+#include "util/u_memory.h"
+#include "util/u_pack_color.h"
 
 #define FILE_DEBUG_FLAG DEBUG_STATE
 

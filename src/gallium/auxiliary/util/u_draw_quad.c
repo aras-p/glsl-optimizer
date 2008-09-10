@@ -86,11 +86,11 @@ util_draw_texquad(struct pipe_context *pipe,
    vertexBytes = 4 * (4 * numAttribs * sizeof(float));
 
    /* XXX create one-time */
-   vbuf = pipe->winsys->buffer_create(pipe->winsys, 32,
-                                      PIPE_BUFFER_USAGE_VERTEX, vertexBytes);
+   vbuf = pipe_buffer_create(pipe->screen, 32,
+                             PIPE_BUFFER_USAGE_VERTEX, vertexBytes);
    if (vbuf) {
-      float *v = (float *) pipe->winsys->buffer_map(pipe->winsys, vbuf,
-                                             PIPE_BUFFER_USAGE_CPU_WRITE);
+      float *v = (float *) pipe_buffer_map(pipe->screen, vbuf,
+                                           PIPE_BUFFER_USAGE_CPU_WRITE);
       if (v) {
          /*
           * Load vertex buffer
@@ -123,10 +123,10 @@ util_draw_texquad(struct pipe_context *pipe,
          v[28] = 0.0;
          v[29] = 1.0;
 
-         pipe->winsys->buffer_unmap(pipe->winsys, vbuf);
+         pipe_buffer_unmap(pipe->screen, vbuf);
          util_draw_vertex_buffer(pipe, vbuf, PIPE_PRIM_TRIANGLE_FAN, 4, 2);
       }
 
-      pipe_buffer_reference(pipe->winsys, &vbuf, NULL);
+      pipe_buffer_reference(pipe->screen, &vbuf, NULL);
    }
 }

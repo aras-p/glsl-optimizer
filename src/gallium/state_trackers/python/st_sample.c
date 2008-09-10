@@ -29,9 +29,10 @@
 #include "pipe/p_compiler.h"
 #include "pipe/p_format.h"
 #include "pipe/p_state.h"
-#include "pipe/p_util.h"
 #include "pipe/p_inlines.h"
-#include "util/p_tile.h"
+#include "util/u_tile.h"
+#include "util/u_math.h"
+#include "util/u_memory.h"
 
 #include "st_sample.h"
 

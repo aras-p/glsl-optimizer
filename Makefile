@@ -34,6 +34,7 @@ realclean:
 	-rm -f `find . -name \*.a`
 	-rm -f `find . -name \*.so`
 	-rm -f `find . -name depend`
+	-rm -f `find . -name depend.bak`
 	-rm -rf lib*
 	$(MAKE) clean
 	-rm -f $(TOP)/configs/current
@@ -100,6 +101,7 @@ linux \
 linux-alpha \
 linux-alpha-static \
 linux-cell \
+linux-cell-debug \
 linux-debug \
 linux-directfb \
 linux-dri \

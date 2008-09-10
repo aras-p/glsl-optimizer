@@ -26,6 +26,11 @@
  **************************************************************************/
 
 /**
+ * Vertex buffer code.  The draw module transforms vertices to window
+ * coords, etc. and emits the vertices into buffer supplied by this module.
+ * When a vertex buffer is full, or we flush, we'll send the vertex data
+ * to the SPUs.
+ *
  * Authors
  *  Brian Paul
  */
@@ -37,6 +42,7 @@
 #include "cell_spu.h"
 #include "cell_vbuf.h"
 #include "draw/draw_vbuf.h"
+#include "util/u_memory.h"
 
 
 /** Allow vertex data to be inlined after RENDER command */
@@ -112,7 +118,7 @@ cell_vbuf_release_vertices(struct vbuf_render *vbr, void *vertices,
    }
 
    cvbr->vertex_buf = ~0;
-   cell_flush_int(&cell->pipe, 0x0);
+   cell_flush_int(cell, 0x0);
 
    assert(vertices == cvbr->vertex_buffer);
    cvbr->vertex_buffer = NULL;
@@ -120,12 +126,13 @@ cell_vbuf_release_vertices(struct vbuf_render *vbr, void *vertices,
 
 
 
-static void
+static boolean
 cell_vbuf_set_primitive(struct vbuf_render *vbr, unsigned prim)
 {
    struct cell_vbuf_render *cvbr = cell_vbuf_render(vbr);
    cvbr->prim = prim;
    /*printf("cell_set_prim %u\n", prim);*/
+   return TRUE;
 }
 
 
@@ -243,7 +250,7 @@ cell_vbuf_draw(struct vbuf_render *vbr,
 
 #if 0
    /* helpful for debug */
-   cell_flush_int(&cell->pipe, CELL_FLUSH_WAIT);
+   cell_flush_int(cell, CELL_FLUSH_WAIT);
 #endif
 }
 

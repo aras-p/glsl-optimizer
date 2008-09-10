@@ -382,6 +382,7 @@ struct tgsi_immediate_float32
  */
 #define TGSI_OPCODE_SGN                 TGSI_OPCODE_SSG
 #define TGSI_OPCODE_MOVA                TGSI_OPCODE_ARR
+/* EXPP - use TGSI_OPCODE_EX2 */
 
 /*
  * vs_2_x
@@ -469,12 +470,11 @@ struct tgsi_instruction_ext
 #define TGSI_CC_GT      0
 #define TGSI_CC_EQ      1
 #define TGSI_CC_LT      2
-#define TGSI_CC_UN      3
-#define TGSI_CC_GE      4
-#define TGSI_CC_LE      5
-#define TGSI_CC_NE      6
-#define TGSI_CC_TR      7
-#define TGSI_CC_FL      8
+#define TGSI_CC_GE      3
+#define TGSI_CC_LE      4
+#define TGSI_CC_NE      5
+#define TGSI_CC_TR      6
+#define TGSI_CC_FL      7
 
 #define TGSI_SWIZZLE_X      0
 #define TGSI_SWIZZLE_Y      1
