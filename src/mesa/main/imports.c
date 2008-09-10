@@ -559,7 +559,7 @@ _mesa_pow(double x, double y)
 int
 _mesa_ffs(int i)
 {
-#if (defined(_WIN32) && !defined(__MINGW32__) ) || defined(__IBMC__) || defined(__IBMCPP__)
+#if (defined(_WIN32) ) || defined(__IBMC__) || defined(__IBMCPP__)
    register int bit = 0;
    if (i != 0) {
       if ((i & 0xffff) == 0) {
