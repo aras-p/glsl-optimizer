@@ -22,10 +22,10 @@
 
 #include "nv50_context.h"
 #include "pipe/p_defines.h"
-#include "pipe/p_util.h"
 #include "pipe/p_winsys.h"
 #include "pipe/p_inlines.h"
-#include "util/p_tile.h"
+
+#include "util/u_tile.h"
 
 static void
 nv50_surface_copy(struct pipe_context *pipe, boolean flip,
@@ -90,10 +90,10 @@ nv50_surface_map(struct pipe_screen *screen, struct pipe_surface *ps,
 }
 
 static void
-nv50_surface_unmap(struct pipe_screen *screen, struct pipe_surface *ps)
+nv50_surface_unmap(struct pipe_screen *pscreen, struct pipe_surface *ps)
 {
-	struct nouveau_winsys *nvws = nv50_screen(screen)->nvws;
-	struct pipe_winsys *ws = screen->winsys;
+	struct nouveau_winsys *nvws = nv50_screen(pscreen)->nvws;
+	struct pipe_winsys *ws = pscreen->winsys;
 	struct nv50_surface *s = nv50_surface(ps);
 	struct nv50_surface m = *s;
 
@@ -104,7 +104,7 @@ nv50_surface_unmap(struct pipe_screen *screen, struct pipe_surface *ps)
 	nvws->surface_copy(nvws, &s->base, 0, 0, &m.base, 0, 0,
 				 ps->width, ps->height);
 
-	pipe_buffer_reference(ws, &s->untiled, NULL);
+	pipe_buffer_reference(pscreen, &s->untiled, NULL);
 }
 
 void

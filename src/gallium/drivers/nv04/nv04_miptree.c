@@ -1,6 +1,5 @@
 #include "pipe/p_state.h"
 #include "pipe/p_defines.h"
-#include "pipe/p_util.h"
 #include "pipe/p_inlines.h"
 
 #include "nv04_context.h"
@@ -72,7 +71,6 @@ nv04_miptree_create(struct pipe_screen *screen, const struct pipe_texture *pt)
 static void
 nv04_miptree_release(struct pipe_screen *screen, struct pipe_texture **pt)
 {
-	struct pipe_winsys *ws = screen->winsys;
 	struct pipe_texture *mt = *pt;
 
 	*pt = NULL;
@@ -80,7 +78,7 @@ nv04_miptree_release(struct pipe_screen *screen, struct pipe_texture **pt)
 		struct nv04_miptree *nv04mt = (struct nv04_miptree *)mt;
 		int l;
 
-		pipe_buffer_reference(ws, &nv04mt->buffer, NULL);
+		pipe_buffer_reference(screen, &nv04mt->buffer, NULL);
 		for (l = 0; l <= mt->last_level; l++) {
 			if (nv04mt->level[l].image_offset)
 				FREE(nv04mt->level[l].image_offset);
@@ -101,7 +99,7 @@ nv04_miptree_surface_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 	ps = ws->surface_alloc(ws);
 	if (!ps)
 		return NULL;
-	pipe_buffer_reference(ws, &ps->buffer, nv04mt->buffer);
+	pipe_buffer_reference(pscreen, &ps->buffer, nv04mt->buffer);
 	ps->format = pt->format;
 		ps->width = pt->width[level];
 	ps->height = pt->height[level];

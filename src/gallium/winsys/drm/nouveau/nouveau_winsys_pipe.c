@@ -1,7 +1,8 @@
 #include "pipe/p_winsys.h"
 #include "pipe/p_defines.h"
-#include "pipe/p_util.h"
 #include "pipe/p_inlines.h"
+
+#include "util/u_memory.h"
 
 #include "nouveau_context.h"
 #include "nouveau_local.h"

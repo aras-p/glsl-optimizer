@@ -1,9 +1,10 @@
 
-#include "draw/draw_vbuf.h"
 #include "pipe/p_debug.h"
-#include "pipe/p_util.h"
 #include "pipe/p_inlines.h"
 #include "pipe/p_winsys.h"
+#include "pipe/p_compiler.h"
+
+#include "draw/draw_vbuf.h"
 
 #include "nv04_context.h"
 #include "nv04_state.h"

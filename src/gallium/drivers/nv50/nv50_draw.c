@@ -21,7 +21,6 @@
  */
 
 #include "draw/draw_pipe.h"
-#include "pipe/p_util.h"
 
 #include "nv50_context.h"
 

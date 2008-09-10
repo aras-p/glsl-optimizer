@@ -1,4 +1,4 @@
-#include "pipe/p_util.h"
+#include "util/u_memory.h"
 
 #include "nouveau_context.h"
 #include "nouveau_screen.h"

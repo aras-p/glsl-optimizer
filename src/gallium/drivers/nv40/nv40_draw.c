@@ -1,5 +1,6 @@
-#include "pipe/p_util.h"
 #include "pipe/p_shader_tokens.h"
+
+#include "util/u_pack_color.h"
 
 #include "draw/draw_context.h"
 #include "draw/draw_vertex.h"

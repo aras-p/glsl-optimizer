@@ -1,5 +1,4 @@
 #include "draw/draw_pipe.h"
-#include "pipe/p_util.h"
 
 #include "nv30_context.h"
 

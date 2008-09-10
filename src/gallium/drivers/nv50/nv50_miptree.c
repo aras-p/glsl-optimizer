@@ -22,7 +22,6 @@
 
 #include "pipe/p_state.h"
 #include "pipe/p_defines.h"
-#include "pipe/p_util.h"
 #include "pipe/p_inlines.h"
 
 #include "nv50_context.h"
@@ -62,7 +61,6 @@ nv50_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *pt)
 static void
 nv50_miptree_release(struct pipe_screen *pscreen, struct pipe_texture **ppt)
 {
-	struct pipe_winsys *ws = pscreen->winsys;
 	struct pipe_texture *pt = *ppt;
 
 	*ppt = NULL;
@@ -70,7 +68,7 @@ nv50_miptree_release(struct pipe_screen *pscreen, struct pipe_texture **ppt)
 	if (--pt->refcount <= 0) {
 		struct nv50_miptree *mt = nv50_miptree(pt);
 
-		pipe_buffer_reference(ws, &mt->buffer, NULL);
+		pipe_buffer_reference(pscreen, &mt->buffer, NULL);
 		FREE(mt);
 	}
 }
@@ -80,7 +78,6 @@ nv50_miptree_surface_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 			 unsigned face, unsigned level, unsigned zslice,
 			 unsigned flags)
 {
-	struct pipe_winsys *ws = pscreen->winsys;
 	struct nv50_miptree *mt = nv50_miptree(pt);
 	struct nv50_surface *s;
 	struct pipe_surface *ps;
@@ -91,7 +88,7 @@ nv50_miptree_surface_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 	ps = &s->base;
 
 	ps->refcount = 1;
-	ps->winsys = ws;
+	ps->winsys = pscreen->winsys;
 	ps->format = pt->format;
 	ps->width = pt->width[level];
 	ps->height = pt->height[level];
@@ -104,7 +101,7 @@ nv50_miptree_surface_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 	ps->status = PIPE_SURFACE_STATUS_DEFINED;
 
 	pipe_texture_reference(&ps->texture, pt);
-	pipe_buffer_reference(ws, &ps->buffer, mt->buffer);
+	pipe_buffer_reference(pscreen, &ps->buffer, mt->buffer);
 
 	return ps;
 }
@@ -113,7 +110,6 @@ static void
 nv50_miptree_surface_del(struct pipe_screen *pscreen,
 			 struct pipe_surface **psurface)
 {
-	struct pipe_winsys *ws = pscreen->winsys;
 	struct pipe_surface *ps = *psurface;
 	struct nv50_surface *s = nv50_surface(ps);
 
@@ -121,7 +117,7 @@ nv50_miptree_surface_del(struct pipe_screen *pscreen,
 
 	if (--ps->refcount <= 0) {
 		pipe_texture_reference(&ps->texture, NULL);
-		pipe_buffer_reference(ws, &ps->buffer, NULL);
+		pipe_buffer_reference(pscreen, &ps->buffer, NULL);
 		FREE(s);
 	}
 }

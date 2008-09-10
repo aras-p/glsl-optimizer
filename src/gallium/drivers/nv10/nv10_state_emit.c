@@ -1,5 +1,3 @@
-#include "pipe/p_util.h"
-
 #include "nv10_context.h"
 #include "nv10_state.h"
 

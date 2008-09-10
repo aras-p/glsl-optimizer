@@ -1,6 +1,5 @@
 #include "pipe/p_state.h"
 #include "pipe/p_defines.h"
-#include "pipe/p_util.h"
 #include "pipe/p_inlines.h"
 
 #include "nv40_context.h"
@@ -33,7 +32,7 @@ nv40_miptree_layout(struct nv40_miptree *nv40mt)
 
 		if (swizzled)
 			pitch = pt->nblocksx[l];
-		pitch = align_int(pitch, 64);
+		pitch = align(pitch, 64);
 
 		nv40mt->level[l].pitch = pitch * pt->block.size;
 		nv40mt->level[l].image_offset =
@@ -84,7 +83,6 @@ nv40_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *pt)
 static void
 nv40_miptree_release(struct pipe_screen *pscreen, struct pipe_texture **pt)
 {
-	struct pipe_winsys *ws = pscreen->winsys;
 	struct pipe_texture *mt = *pt;
 
 	*pt = NULL;
@@ -92,7 +90,7 @@ nv40_miptree_release(struct pipe_screen *pscreen, struct pipe_texture **pt)
 		struct nv40_miptree *nv40mt = (struct nv40_miptree *)mt;
 		int l;
 
-		pipe_buffer_reference(ws, &nv40mt->buffer, NULL);
+		pipe_buffer_reference(pscreen, &nv40mt->buffer, NULL);
 		for (l = 0; l <= mt->last_level; l++) {
 			if (nv40mt->level[l].image_offset)
 				FREE(nv40mt->level[l].image_offset);
@@ -106,7 +104,6 @@ nv40_miptree_surface_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 			 unsigned face, unsigned level, unsigned zslice,
 			 unsigned flags)
 {
-	struct pipe_winsys *ws = pscreen->winsys;
 	struct nv40_miptree *nv40mt = (struct nv40_miptree *)pt;
 	struct pipe_surface *ps;
 
@@ -114,7 +111,7 @@ nv40_miptree_surface_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 	if (!ps)
 		return NULL;
 	pipe_texture_reference(&ps->texture, pt);
-	pipe_buffer_reference(ws, &ps->buffer, nv40mt->buffer);
+	pipe_buffer_reference(pscreen, &ps->buffer, nv40mt->buffer);
 	ps->format = pt->format;
 	ps->width = pt->width[level];
 	ps->height = pt->height[level];
@@ -148,7 +145,7 @@ nv40_miptree_surface_del(struct pipe_screen *pscreen,
 		return;
 
 	pipe_texture_reference(&ps->texture, NULL);
-	pipe_buffer_reference(pscreen->winsys, &ps->buffer, NULL);
+	pipe_buffer_reference(pscreen, &ps->buffer, NULL);
 	FREE(ps);
 }
 

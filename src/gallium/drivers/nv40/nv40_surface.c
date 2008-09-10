@@ -28,10 +28,10 @@
 
 #include "nv40_context.h"
 #include "pipe/p_defines.h"
-#include "pipe/p_util.h"
 #include "pipe/p_winsys.h"
 #include "pipe/p_inlines.h"
-#include "util/p_tile.h"
+
+#include "util/u_tile.h"
 
 static void
 nv40_surface_copy(struct pipe_context *pipe, boolean do_flip,

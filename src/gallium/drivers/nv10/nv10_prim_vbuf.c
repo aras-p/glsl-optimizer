@@ -38,15 +38,14 @@
  */
 
 
-#include "draw/draw_vbuf.h"
 #include "pipe/p_debug.h"
-#include "pipe/p_util.h"
 #include "pipe/p_inlines.h"
 #include "pipe/p_winsys.h"
 
 #include "nv10_context.h"
 #include "nv10_state.h"
 
+#include "draw/draw_vbuf.h"
 
 /**
  * Primitive renderer for nv10.
@@ -180,10 +179,11 @@ nv10_vbuf_render_release_vertices( struct vbuf_render *render,
 	struct nv10_vbuf_render *nv10_render = nv10_vbuf_render(render);
 	struct nv10_context *nv10 = nv10_render->nv10;
 	struct pipe_winsys *winsys = nv10->pipe.winsys;
+	struct pipe_screen *pscreen = &nv10->screen->pipe;
 
 	assert(nv10_render->buffer);
 	winsys->buffer_unmap(winsys, nv10_render->buffer);
-	pipe_buffer_reference(winsys, &nv10_render->buffer, NULL);
+	pipe_buffer_reference(pscreen, &nv10_render->buffer, NULL);
 }
 
 

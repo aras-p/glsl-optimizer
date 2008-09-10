@@ -1,5 +1,4 @@
 #include "pipe/p_screen.h"
-#include "pipe/p_util.h"
 
 #include "nv40_context.h"
 #include "nv40_screen.h"

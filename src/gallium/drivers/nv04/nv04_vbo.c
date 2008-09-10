@@ -1,7 +1,6 @@
 #include "draw/draw_context.h"
 #include "pipe/p_context.h"
 #include "pipe/p_state.h"
-#include "pipe/p_util.h"
 
 #include "nv04_context.h"
 #include "nv04_state.h"

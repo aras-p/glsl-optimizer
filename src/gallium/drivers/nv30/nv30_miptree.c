@@ -1,6 +1,5 @@
 #include "pipe/p_state.h"
 #include "pipe/p_defines.h"
-#include "pipe/p_util.h"
 #include "pipe/p_inlines.h"
 
 #include "nv30_context.h"
@@ -33,7 +32,7 @@ nv30_miptree_layout(struct nv30_miptree *nv30mt)
 
 		if (swizzled)
 			pitch = pt->nblocksx[l];
-		pitch = align_int(pitch, 64);
+		pitch = align(pitch, 64);
 
 		nv30mt->level[l].pitch = pitch * pt->block.size;
 		nv30mt->level[l].image_offset =
@@ -84,7 +83,6 @@ nv30_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *pt)
 static void
 nv30_miptree_release(struct pipe_screen *pscreen, struct pipe_texture **pt)
 {
-	struct pipe_winsys *ws = pscreen->winsys;
 	struct pipe_texture *mt = *pt;
 
 	*pt = NULL;
@@ -92,7 +90,7 @@ nv30_miptree_release(struct pipe_screen *pscreen, struct pipe_texture **pt)
 		struct nv30_miptree *nv30mt = (struct nv30_miptree *)mt;
 		int l;
 
-		pipe_buffer_reference(ws, &nv30mt->buffer, NULL);
+		pipe_buffer_reference(pscreen, &nv30mt->buffer, NULL);
 		for (l = 0; l <= mt->last_level; l++) {
 			if (nv30mt->level[l].image_offset)
 				FREE(nv30mt->level[l].image_offset);
@@ -106,7 +104,6 @@ nv30_miptree_surface_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 			 unsigned face, unsigned level, unsigned zslice,
 			 unsigned flags)
 {
-	struct pipe_winsys *ws = pscreen->winsys;
 	struct nv30_miptree *nv30mt = (struct nv30_miptree *)pt;
 	struct pipe_surface *ps;
 
@@ -114,7 +111,7 @@ nv30_miptree_surface_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 	if (!ps)
 		return NULL;
 	pipe_texture_reference(&ps->texture, pt);
-	pipe_buffer_reference(ws, &ps->buffer, nv30mt->buffer);
+	pipe_buffer_reference(pscreen, &ps->buffer, nv30mt->buffer);
 	ps->format = pt->format;
 	ps->width = pt->width[level];
 	ps->height = pt->height[level];
