@@ -322,7 +322,7 @@ epilog(
    /* Print totals, if any.
     */
    if (ctx->errors || ctx->warnings)
-      debug_printf( "\n%u errors, %u warnings", ctx->errors, ctx->warnings );
+      debug_printf( "%u errors, %u warnings\n", ctx->errors, ctx->warnings );
 
    return TRUE;
 }
