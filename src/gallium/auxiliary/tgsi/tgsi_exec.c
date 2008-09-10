@@ -957,6 +957,7 @@ fetch_src_file_channel(
    case TGSI_EXTSWIZZLE_W:
       switch( file ) {
       case TGSI_FILE_CONSTANT:
+         assert(mach->Consts);
          chan->f[0] = mach->Consts[index->i[0]][swizzle];
          chan->f[1] = mach->Consts[index->i[1]][swizzle];
          chan->f[2] = mach->Consts[index->i[2]][swizzle];
