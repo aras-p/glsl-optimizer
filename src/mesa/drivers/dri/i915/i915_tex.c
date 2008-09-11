@@ -38,8 +38,6 @@
 
 #include "mm.h"
 
-#include "intel_ioctl.h"
-
 #include "i915_context.h"
 #include "i915_reg.h"
 

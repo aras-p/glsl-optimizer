@@ -25,8 +25,8 @@
  * 
  **************************************************************************/
 
+#include "intel_context.h"
 #include "intel_batchbuffer.h"
-#include "intel_ioctl.h"
 #include "intel_decode.h"
 #include "intel_reg.h"
 #include "intel_bufmgr.h"
@@ -148,27 +148,14 @@ do_flush_locked(struct intel_batchbuffer *batch,
     */
 
    if (!(intel->numClipRects == 0 &&
-	 batch->cliprect_mode == LOOP_CLIPRECTS)) {
-      if (intel->ttm == GL_TRUE) {
-	 struct drm_i915_gem_execbuffer *execbuf;
-
-	 execbuf = dri_process_relocs(batch->buf);
-	 ret = intel_exec_ioctl(batch->intel,
-				used,
-				batch->cliprect_mode != LOOP_CLIPRECTS,
-				allow_unlock,
-				execbuf);
-      } else {
-	 dri_process_relocs(batch->buf);
-	 ret = intel_batch_ioctl(batch->intel,
-				 batch->buf->offset,
-				 used,
-				 batch->cliprect_mode != LOOP_CLIPRECTS,
-				 allow_unlock);
-      }
+	 batch->cliprect_mode == LOOP_CLIPRECTS) || intel->no_hw) {
+      dri_bo_exec(batch->buf, used,
+		  intel->pClipRects,
+		  batch->cliprect_mode != LOOP_CLIPRECTS ?
+		  0 : intel->numClipRects,
+		  (((GLuint) intel->drawX) & 0xffff) |
+		  (((GLuint) intel->drawY) << 16));
    }
-
-   dri_post_submit(batch->buf);
 
    if (intel->numClipRects == 0 &&
        batch->cliprect_mode == LOOP_CLIPRECTS) {
@@ -261,13 +248,9 @@ _intel_batchbuffer_flush(struct intel_batchbuffer *batch, const char *file,
       UNLOCK_HARDWARE(intel);
 
    if (INTEL_DEBUG & DEBUG_SYNC) {
-      int irq;
-
       fprintf(stderr, "waiting for idle\n");
-      LOCK_HARDWARE(intel);
-      irq = intelEmitIrqLocked(intel);
-      UNLOCK_HARDWARE(intel);
-      intelWaitIrq(intel, irq);
+      dri_bo_map(batch->buf, GL_TRUE);
+      dri_bo_unmap(batch->buf);
    }
 
    /* Reset the buffer:
@@ -289,8 +272,8 @@ intel_batchbuffer_emit_reloc(struct intel_batchbuffer *batch,
    if (batch->ptr - batch->map > batch->buf->size)
     _mesa_printf ("bad relocation ptr %p map %p offset %d size %d\n",
 		  batch->ptr, batch->map, batch->ptr - batch->map, batch->buf->size);
-   ret = intel_bo_emit_reloc(batch->buf, read_domains, write_domain,
-			     delta, batch->ptr - batch->map, buffer);
+   ret = dri_bo_emit_reloc(batch->buf, read_domains, write_domain,
+			   delta, batch->ptr - batch->map, buffer);
 
    /*
     * Using the old buffer offset, write in what the right data would be, in case

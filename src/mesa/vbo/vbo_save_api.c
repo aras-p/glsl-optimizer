@@ -1,6 +1,6 @@
 /**************************************************************************
 
-Copyright 2002 Tungsten Graphics Inc., Cedar Park, Texas.
+Copyright 2002-2008 Tungsten Graphics Inc., Cedar Park, Texas.
 
 All Rights Reserved.
 
@@ -68,6 +68,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
 #include "main/glheader.h"
+#include "main/bufferobj.h"
 #include "main/context.h"
 #include "main/dlist.h"
 #include "main/enums.h"
@@ -83,6 +84,10 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifdef ERROR
 #undef ERROR
 #endif
+
+
+/* An interesting VBO number/name to help with debugging */
+#define VBO_BUF_ID  12345
 
 
 /*
@@ -170,7 +175,9 @@ static struct vbo_save_vertex_store *alloc_vertex_store( GLcontext *ctx )
     * user.  Perhaps there could be a special number for internal
     * buffers:
     */
-   vertex_store->bufferobj = ctx->Driver.NewBufferObject(ctx, 1, GL_ARRAY_BUFFER_ARB);
+   vertex_store->bufferobj = ctx->Driver.NewBufferObject(ctx,
+                                                         VBO_BUF_ID,
+                                                         GL_ARRAY_BUFFER_ARB);
 
    ctx->Driver.BufferData( ctx, 
 			   GL_ARRAY_BUFFER_ARB, 
@@ -190,8 +197,9 @@ static void free_vertex_store( GLcontext *ctx, struct vbo_save_vertex_store *ver
 {
    assert(!vertex_store->buffer);
 
-   if (vertex_store->bufferobj)
-      ctx->Driver.DeleteBuffer( ctx, vertex_store->bufferobj );
+   if (vertex_store->bufferobj) {
+      _mesa_reference_buffer_object(ctx, &vertex_store->bufferobj, NULL);
+   }
 
    FREE( vertex_store );
 }
@@ -1139,6 +1147,7 @@ void vbo_save_api_init( struct vbo_save_context *save )
    _save_vtxfmt_init( ctx );
    _save_current_init( ctx );
 
+   /* These will actually get set again when binding/drawing */
    for (i = 0; i < VBO_ATTRIB_MAX; i++)
       save->inputs[i] = &save->arrays[i];
 

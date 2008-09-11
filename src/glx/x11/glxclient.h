@@ -122,6 +122,8 @@ struct __GLXDRIscreenRec {
 					XID drawable,
 					GLXDrawable glxDrawable,
 					const __GLcontextModes *modes);
+
+    void (*swapBuffers)(__GLXDRIdrawable *pdraw);
 };
 
 struct __GLXDRIcontextRec {
@@ -140,8 +142,8 @@ struct __GLXDRIdrawableRec {
     XID xDrawable;
     XID drawable;
     __GLXscreenConfigs *psc;
-    __DRIdrawable *driDrawable;
     GLenum textureTarget;
+    __DRIdrawable *driDrawable;
 };
 
 /*
@@ -468,6 +470,7 @@ struct __GLXscreenConfigsRec {
     const __DRIcoreExtension *core;
     const __DRIlegacyExtension *legacy;
     const __DRIswrastExtension *swrast;
+    const __DRIdri2Extension *dri2;
     __glxHashTable *drawHash;
     Display *dpy;
     int scr, fd;

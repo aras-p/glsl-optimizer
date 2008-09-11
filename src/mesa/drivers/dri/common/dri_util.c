@@ -221,7 +221,6 @@ static int driUnbindContext(__DRIcontext *pcp)
     return GL_TRUE;
 }
 
-
 /**
  * This function takes both a read buffer and a draw buffer.  This is needed
  * for \c glXMakeCurrentReadSGI or GLX 1.3's \c glXMakeContextCurrent
@@ -255,10 +254,7 @@ static int driBindContext(__DRIcontext *pcp,
     ** initialize the drawable information if has not been done before.
     */
 
-    if (psp->dri2.enabled) {
-       __driParseEvents(pcp, pdp);
-       __driParseEvents(pcp, prp);
-    } else {
+    if (!psp->dri2.enabled) {
 	if (!pdp->pStamp || *pdp->pStamp != pdp->lastStamp) {
 	    DRM_SPINLOCK(&psp->pSAREA->drawable_lock, psp->drawLockID);
 	    __driUtilUpdateDrawableInfo(pdp);
@@ -348,139 +344,6 @@ __driUtilUpdateDrawableInfo(__DRIdrawablePrivate *pdp)
     DRM_SPINLOCK(&psp->pSAREA->drawable_lock, psp->drawLockID);
 }
 
-
-int
-__driParseEvents(__DRIcontextPrivate *pcp, __DRIdrawablePrivate *pdp)
-{
-    __DRIscreenPrivate *psp = pdp->driScreenPriv;
-    __DRIDrawableConfigEvent *dc, *last_dc;
-    __DRIBufferAttachEvent *ba, *last_ba;
-    unsigned int tail, mask, *p, end, total, size, changed;
-    unsigned char *data;
-    size_t rect_size;
-
-    /* Check for wraparound. */
-    if (pcp && psp->dri2.buffer->prealloc - pdp->dri2.tail > psp->dri2.buffer->size) {
-       /* If prealloc overlaps into what we just parsed, the
-	* server overwrote it and we have to reset our tail
-	* pointer. */
-	DRM_UNLOCK(psp->fd, psp->lock, pcp->hHWContext);
-	(*psp->dri2.loader->reemitDrawableInfo)(pdp, &pdp->dri2.tail,
-						pdp->loaderPrivate);
-	DRM_LIGHT_LOCK(psp->fd, psp->lock, pcp->hHWContext);
-    }
-
-    total = psp->dri2.buffer->head - pdp->dri2.tail;
-    mask = psp->dri2.buffer->size - 1;
-    end = psp->dri2.buffer->head;
-    data = psp->dri2.buffer->data;
-
-    changed = 0;
-    last_dc = NULL;
-    last_ba = NULL;
-
-    for (tail = pdp->dri2.tail; tail != end; tail += size) {
-       p = (unsigned int *) (data + (tail & mask));
-       size = DRI2_EVENT_SIZE(*p);
-       if (size > total || (tail & mask) + size > psp->dri2.buffer->size) {
-	  /* illegal data, bail out. */
-	  fprintf(stderr, "illegal event size\n");
-	  break;
-       }
-
-       switch (DRI2_EVENT_TYPE(*p)) {
-       case DRI2_EVENT_DRAWABLE_CONFIG:
-	  dc = (__DRIDrawableConfigEvent *) p;
-	  if (dc->drawable == pdp->dri2.drawable_id)
-	     last_dc = dc;
-	  break;
-
-       case DRI2_EVENT_BUFFER_ATTACH:
-	  ba = (__DRIBufferAttachEvent *) p;
-	  if (ba->drawable == pdp->dri2.drawable_id && 
-	      ba->buffer.attachment == DRI_DRAWABLE_BUFFER_FRONT_LEFT)
-	     last_ba = ba;
-	  break;
-       }
-    }
-	  
-    if (last_dc) {
-       if (pdp->w != last_dc->width || pdp->h != last_dc->height)
-	  changed = 1;
-
-       pdp->x = last_dc->x;
-       pdp->y = last_dc->y;
-       pdp->w = last_dc->width;
-       pdp->h = last_dc->height;
-
-       pdp->backX = 0;
-       pdp->backY = 0;
-       pdp->numBackClipRects = 1;
-       pdp->pBackClipRects[0].x1 = 0;
-       pdp->pBackClipRects[0].y1 = 0;
-       pdp->pBackClipRects[0].x2 = pdp->w;
-       pdp->pBackClipRects[0].y2 = pdp->h;
-
-       pdp->numClipRects = last_dc->num_rects;
-       _mesa_free(pdp->pClipRects);
-       rect_size = last_dc->num_rects * sizeof last_dc->rects[0];
-       pdp->pClipRects = _mesa_malloc(rect_size);
-       memcpy(pdp->pClipRects, last_dc->rects, rect_size);
-    }
-
-    /* We only care about the most recent drawable config. */
-    if (last_dc && changed)
-       (*psp->DriverAPI.HandleDrawableConfig)(pdp, pcp, last_dc);
-
-    /* Front buffer attachments are special, they typically mean that
-     * we're rendering to a redirected window (or a child window of a
-     * redirected window) and that it got resized.  Resizing the root
-     * window on randr events is a special case of this.  Other causes
-     * may be a window transitioning between redirected and
-     * non-redirected, or a window getting reparented between parents
-     * with different window pixmaps (eg two redirected windows).
-     * These events are special in that the X server allocates the
-     * buffer and that the buffer may be shared by other child
-     * windows.  When our window share the window pixmap with its
-     * parent, drawable config events doesn't affect the front buffer.
-     * We only care about the last such event in the buffer; in fact,
-     * older events will refer to invalid buffer objects.*/
-    if (last_ba)
-       (*psp->DriverAPI.HandleBufferAttach)(pdp, pcp, last_ba);
-
-    /* If there was a drawable config event in the buffer and it
-     * changed the size of the window, all buffer auxillary buffer
-     * attachments prior to that are invalid (as opposed to the front
-     * buffer case discussed above).  In that case we can start
-     * looking for buffer attachment after the last drawable config
-     * event.  If there is no drawable config event in this batch of
-     * events, we have to assume that the last batch might have had
-     * one and process all buffer attach events.*/
-    if (last_dc && changed)
-       tail = (unsigned char *) last_dc - data;
-    else
-       tail = pdp->dri2.tail;
-
-    for ( ; tail != end; tail += size) {
-       ba = (__DRIBufferAttachEvent *) (data + (tail & mask));
-       size = DRI2_EVENT_SIZE(ba->event_header);
-
-       if (DRI2_EVENT_TYPE(ba->event_header) != DRI2_EVENT_BUFFER_ATTACH)
-	  continue;
-       if (ba->drawable != pdp->dri2.drawable_id)
-	  continue;
-       if (last_ba == ba)
-	  continue;
-
-       (*psp->DriverAPI.HandleBufferAttach)(pdp, pcp, ba);
-       changed = 1;
-    }
-
-    pdp->dri2.tail = tail;
-
-    return changed || last_ba;
-}
-
 /*@}*/
 
 /*****************************************************************/
@@ -494,12 +357,7 @@ static void driReportDamage(__DRIdrawable *pdp,
     __DRIscreen *psp = pdp->driScreenPriv;
 
     /* Check that we actually have the new damage report method */
-    if (psp->dri2.enabled) {
-	(*psp->dri2.loader->postDamage)(pdp,
-					pClipRects,
-					numClipRects,
-					pdp->loaderPrivate);
-    } else if (psp->damage) {
+    if (psp->damage) {
 	/* Report the damage.  Currently, all our drivers draw
 	 * directly to the front buffer, so we report the damage there
 	 * rather than to the backing storein (if any).
@@ -528,9 +386,6 @@ static void driSwapBuffers(__DRIdrawable *dPriv)
 
     if (!dPriv->numClipRects)
         return;
-
-    if (psp->dri2.enabled)
-       __driParseEvents(NULL, dPriv);
 
     psp->DriverAPI.SwapBuffers(dPriv);
 
@@ -671,17 +526,17 @@ driCreateNewDrawable(__DRIscreen *psp, const __DRIconfig *config,
 
 
 static __DRIdrawable *
-dri2CreateNewDrawable(__DRIscreen *screen, const __DRIconfig *config,
-		      unsigned int drawable_id, unsigned int head, void *data)
+dri2CreateNewDrawable(__DRIscreen *screen,
+		      const __DRIconfig *config,
+		      void *loaderPrivate)
 {
     __DRIdrawable *pdraw;
 
-    pdraw = driCreateNewDrawable(screen, config, 0, 0, NULL, data);
+    pdraw = driCreateNewDrawable(screen, config, 0, 0, NULL, loaderPrivate);
     if (!pdraw)
     	return NULL;
 
-    pdraw->dri2.drawable_id = drawable_id;
-    pdraw->dri2.tail = head;
+    pdraw->pClipRects = _mesa_malloc(sizeof *pdraw->pBackClipRects);
     pdraw->pBackClipRects = _mesa_malloc(sizeof *pdraw->pBackClipRects);
 
     return pdraw;
@@ -792,18 +647,7 @@ static __DRIcontext *
 dri2CreateNewContext(__DRIscreen *screen, const __DRIconfig *config,
 		      __DRIcontext *shared, void *data)
 {
-    drm_context_t hwContext;
-    DRM_CAS_RESULT(ret);
-
-    /* DRI2 doesn't use kernel with context IDs, we just need an ID that's
-     * different from the kernel context ID to make drmLock() happy. */
-
-    do {
-	hwContext = screen->dri2.lock->next_id;
-	DRM_CAS(&screen->dri2.lock->next_id, hwContext, hwContext + 1, ret);
-    } while (ret);
-
-    return driCreateNewContext(screen, config, 0, shared, hwContext, data);
+    return driCreateNewContext(screen, config, 0, shared, 0, data);
 }
 
 
@@ -839,12 +683,7 @@ static void driDestroyScreen(__DRIscreen *psp)
 	if (psp->DriverAPI.DestroyScreen)
 	    (*psp->DriverAPI.DestroyScreen)(psp);
 
-	if (psp->dri2.enabled) {
-#ifdef TTM_API
-	    drmBOUnmap(psp->fd, &psp->dri2.sareaBO);
-	    drmBOUnreference(psp->fd, &psp->dri2.sareaBO);
-#endif
-	} else {
+	if (!psp->dri2.enabled) {
 	   (void)drmUnmap((drmAddress)psp->pSAREA, SAREA_MAX);
 	   (void)drmUnmap((drmAddress)psp->pFB, psp->fbSize);
 	   (void)drmCloseOnce(psp->fd);
@@ -867,8 +706,8 @@ setupLoaderExtensions(__DRIscreen *psp,
 	    psp->damage = (__DRIdamageExtension *) extensions[i];
 	if (strcmp(extensions[i]->name, __DRI_SYSTEM_TIME) == 0)
 	    psp->systemTime = (__DRIsystemTimeExtension *) extensions[i];
-	if (strcmp(extensions[i]->name, __DRI_LOADER) == 0)
-	    psp->dri2.loader = (__DRIloaderExtension *) extensions[i];
+	if (strcmp(extensions[i]->name, __DRI_DRI2_LOADER) == 0)
+	    psp->dri2.loader = (__DRIdri2LoaderExtension *) extensions[i];
     }
 }
 
@@ -964,19 +803,16 @@ driCreateNewScreen(int scrn,
     return psp;
 }
 
-
 /**
  * DRI2
  */
 static __DRIscreen *
-dri2CreateNewScreen(int scrn, int fd, unsigned int sarea_handle,
+dri2CreateNewScreen(int scrn, int fd,
 		    const __DRIextension **extensions,
 		    const __DRIconfig ***driver_configs, void *data)
 {
-#ifdef TTM_API
     static const __DRIextension *emptyExtensionList[] = { NULL };
     __DRIscreen *psp;
-    unsigned int *p;
     drmVersionPtr version;
 
     if (driDriverAPI.InitScreen2 == NULL)
@@ -1001,39 +837,9 @@ dri2CreateNewScreen(int scrn, int fd, unsigned int sarea_handle,
     psp->myNum = scrn;
     psp->dri2.enabled = GL_TRUE;
 
-    if (drmBOReference(psp->fd, sarea_handle, &psp->dri2.sareaBO)) {
-	fprintf(stderr, "Failed to reference DRI2 sarea BO\n");
-	_mesa_free(psp);
-	return NULL;
-    }
-
-    if (drmBOMap(psp->fd, &psp->dri2.sareaBO,
-		 DRM_BO_FLAG_READ | DRM_BO_FLAG_WRITE, 0, &psp->dri2.sarea)) {
-	drmBOUnreference(psp->fd, &psp->dri2.sareaBO);
-	_mesa_free(psp);
-	return NULL;
-    }
-
-    p = psp->dri2.sarea;
-    while (DRI2_SAREA_BLOCK_TYPE(*p)) {
-	switch (DRI2_SAREA_BLOCK_TYPE(*p)) {
-	case DRI2_SAREA_BLOCK_LOCK:
-	    psp->dri2.lock = (__DRILock *) p;
-	    break;
-	case DRI2_SAREA_BLOCK_EVENT_BUFFER:
-	    psp->dri2.buffer = (__DRIEventBuffer *) p;
-	    break;
-	}
-	p = DRI2_SAREA_BLOCK_NEXT(p);
-    }
-
-    psp->lock = (drmLock *) &psp->dri2.lock->lock;
-
     psp->DriverAPI = driDriverAPI;
     *driver_configs = driDriverAPI.InitScreen2(psp);
     if (*driver_configs == NULL) {
-	drmBOUnmap(psp->fd, &psp->dri2.sareaBO);
-	drmBOUnreference(psp->fd, &psp->dri2.sareaBO);
 	_mesa_free(psp);
 	return NULL;
     }
@@ -1041,9 +847,6 @@ dri2CreateNewScreen(int scrn, int fd, unsigned int sarea_handle,
     psp->DriverAPI = driDriverAPI;
 
     return psp;
-#else
-    return NULL;
-#endif
 }
 
 static const __DRIextension **driGetExtensions(__DRIscreen *psp)
@@ -1051,36 +854,45 @@ static const __DRIextension **driGetExtensions(__DRIscreen *psp)
     return psp->extensions;
 }
 
-/** Legacy DRI interface */
-const __DRIlegacyExtension driLegacyExtension = {
-    { __DRI_LEGACY, __DRI_LEGACY_VERSION },
-    driCreateNewScreen,
-    driCreateNewDrawable,
-    driCreateNewContext
-};
-
-/** DRI2 interface */
+/** Core interface */
 const __DRIcoreExtension driCoreExtension = {
     { __DRI_CORE, __DRI_CORE_VERSION },
-    dri2CreateNewScreen,
+    NULL,
     driDestroyScreen,
     driGetExtensions,
     driGetConfigAttrib,
     driIndexConfigAttrib,
-    dri2CreateNewDrawable,
+    NULL,
     driDestroyDrawable,
     driSwapBuffers,
-    dri2CreateNewContext,
+    NULL,
     driCopyContext,
     driDestroyContext,
     driBindContext,
     driUnbindContext
 };
 
+/** Legacy DRI interface */
+const __DRIlegacyExtension driLegacyExtension = {
+    { __DRI_LEGACY, __DRI_LEGACY_VERSION },
+    driCreateNewScreen,
+    driCreateNewDrawable,
+    driCreateNewContext,
+};
+
+/** Legacy DRI interface */
+const __DRIdri2Extension driDRI2Extension = {
+    { __DRI_DRI2, __DRI_DRI2_VERSION },
+    dri2CreateNewScreen,
+    dri2CreateNewDrawable,
+    dri2CreateNewContext,
+};
+
 /* This is the table of extensions that the loader will dlsym() for. */
 PUBLIC const __DRIextension *__driDriverExtensions[] = {
     &driCoreExtension.base,
     &driLegacyExtension.base,
+    &driDRI2Extension.base,
     NULL
 };
 

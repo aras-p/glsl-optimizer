@@ -13,7 +13,6 @@ DRIVER_SOURCES = \
 	intel_decode.c \
 	intel_depthstencil.c \
 	intel_fbo.c \
-	intel_ioctl.c \
 	intel_mipmap_tree.c \
 	intel_regions.c \
 	intel_screen.c \
@@ -90,6 +89,8 @@ C_SOURCES = \
 ASM_SOURCES = 
 
 DRIVER_DEFINES = -I../intel -I../intel/server
+
+DRI_LIB_DEPS += -ldrm_intel
 
 include ../Makefile.template
 

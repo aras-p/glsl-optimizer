@@ -21,7 +21,6 @@
 #include "intel_buffer_objects.h"
 #include "intel_batchbuffer.h"
 #include "intel_tex.h"
-#include "intel_ioctl.h"
 #include "intel_blit.h"
 #include "intel_fbo.h"
 
@@ -731,7 +730,7 @@ intelSetTexBuffer(__DRIcontext *pDRICtx, GLint target, __DRIdrawable *dPriv)
    if (!intelObj)
       return;
 
-   __driParseEvents(pDRICtx, dPriv);
+   intel_update_renderbuffers(pDRICtx, dPriv);
 
    rb = intel_fb->color_rb[0];
    type = GL_BGRA;

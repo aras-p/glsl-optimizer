@@ -33,7 +33,6 @@
 
 #include "brw_context.h"
 #include "brw_state.h"
-#include "dri_bufmgr.h"
 #include "intel_batchbuffer.h"
 
 /* This is used to initialize brw->state.atoms[].  We could use this

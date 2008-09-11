@@ -51,7 +51,6 @@
 #include "intel_chipset.h"
 #include "intel_buffers.h"
 #include "intel_tex.h"
-#include "intel_ioctl.h"
 #include "intel_batchbuffer.h"
 #include "intel_blit.h"
 #include "intel_pixel.h"
@@ -195,6 +194,142 @@ intelGetString(GLcontext * ctx, GLenum name)
    }
 }
 
+void
+intel_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
+{
+   struct intel_framebuffer *intel_fb = drawable->driverPrivate;
+   struct intel_renderbuffer *rb;
+   struct intel_region *region, *depth_region;
+   struct intel_context *intel = context->driverPrivate;
+   __DRIbuffer *buffers;
+   __DRIscreen *screen;
+   int i, count;
+   unsigned int attachments[10];
+   uint32_t name;
+   const char *region_name;
+
+   if (INTEL_DEBUG & DEBUG_DRI)
+      fprintf(stderr, "enter %s, drawable %p\n", __func__, drawable);
+
+   screen = intel->intelScreen->driScrnPriv;
+
+   i = 0;
+   if (intel_fb->color_rb[0])
+      attachments[i++] = __DRI_BUFFER_FRONT_LEFT;
+   if (intel_fb->color_rb[1])
+      attachments[i++] = __DRI_BUFFER_BACK_LEFT;
+   if (intel_get_renderbuffer(&intel_fb->Base, BUFFER_DEPTH))
+      attachments[i++] = __DRI_BUFFER_DEPTH;
+   if (intel_get_renderbuffer(&intel_fb->Base, BUFFER_STENCIL))
+      attachments[i++] = __DRI_BUFFER_STENCIL;
+
+   buffers = (*screen->dri2.loader->getBuffers)(drawable,
+						&drawable->w,
+						&drawable->h,
+						attachments, i,
+						&count,
+						drawable->loaderPrivate);
+
+   drawable->x = 0;
+   drawable->y = 0;
+   drawable->backX = 0;
+   drawable->backY = 0;
+   drawable->numClipRects = 1;
+   drawable->pClipRects[0].x1 = 0;
+   drawable->pClipRects[0].y1 = 0;
+   drawable->pClipRects[0].x2 = drawable->w;
+   drawable->pClipRects[0].y2 = drawable->h;
+   drawable->numBackClipRects = 1;
+   drawable->pBackClipRects[0].x1 = 0;
+   drawable->pBackClipRects[0].y1 = 0;
+   drawable->pBackClipRects[0].x2 = drawable->w;
+   drawable->pBackClipRects[0].y2 = drawable->h;
+
+   depth_region = NULL;
+   for (i = 0; i < count; i++) {
+       switch (buffers[i].attachment) {
+       case __DRI_BUFFER_FRONT_LEFT:
+	   rb = intel_fb->color_rb[0];
+	   region_name = "dri2 front buffer";
+	   break;
+
+       case __DRI_BUFFER_BACK_LEFT:
+	   rb = intel_fb->color_rb[1];
+	   region_name = "dri2 back buffer";
+	   break;
+
+       case __DRI_BUFFER_DEPTH:
+	   rb = intel_get_renderbuffer(&intel_fb->Base, BUFFER_DEPTH);
+	   region_name = "dri2 depth buffer";
+	   break;
+
+       case __DRI_BUFFER_STENCIL:
+	   rb = intel_get_renderbuffer(&intel_fb->Base, BUFFER_STENCIL);
+	   region_name = "dri2 stencil buffer";
+	   break;
+
+       case __DRI_BUFFER_ACCUM:
+       default:
+	   fprintf(stderr,
+		   "unhandled buffer attach event, attacment type %d\n",
+		   buffers[i].attachment);
+	   return;
+       }
+
+       if (rb->region) {
+	  dri_bo_flink(rb->region->buffer, &name);
+	  if (name == buffers[i].name)
+	     continue;
+       }
+
+       if (INTEL_DEBUG & DEBUG_DRI)
+	  fprintf(stderr,
+		  "attaching buffer %d, at %d, cpp %d, pitch %d\n",
+		  buffers[i].name, buffers[i].attachment,
+		  buffers[i].cpp, buffers[i].pitch);
+       
+       if (buffers[i].attachment == __DRI_BUFFER_STENCIL && depth_region) {
+	  if (INTEL_DEBUG & DEBUG_DRI)
+	     fprintf(stderr, "(reusing depth buffer as stencil)\n");
+	  intel_region_reference(&region, depth_region);
+       }
+       else
+          region = intel_region_alloc_for_handle(intel, buffers[i].cpp,
+						 buffers[i].pitch / buffers[i].cpp,
+						 drawable->h,
+						 buffers[i].name,
+						 region_name);
+
+       if (buffers[i].attachment == __DRI_BUFFER_DEPTH)
+	  depth_region = region;
+
+       intel_renderbuffer_set_region(rb, region);
+       intel_region_release(&region);
+   }
+
+   driUpdateFramebufferSize(&intel->ctx, drawable);
+}
+
+static void
+intel_viewport(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
+{
+    struct intel_context *intel = intel_context(ctx);
+    __DRIcontext *driContext = intel->driContext;
+
+    if (!driContext->driScreenPriv->dri2.enabled)
+	return;
+
+    intel_update_renderbuffers(driContext, driContext->driDrawablePriv);
+    if (driContext->driDrawablePriv != driContext->driReadablePriv)
+	intel_update_renderbuffers(driContext, driContext->driReadablePriv);
+
+    ctx->Driver.Viewport = NULL;
+    intel->driDrawable = driContext->driDrawablePriv;
+    intelWindowMoved(intel);
+    intel_draw_buffer(ctx, intel->ctx.DrawBuffer);
+    ctx->Driver.Viewport = intel_viewport;
+}
+
 /**
  * Extension strings exported by the intel driver.
  *
@@ -273,10 +408,12 @@ static const struct dri_extension brw_extensions[] = {
    { NULL,                                NULL }
 };
 
+#ifdef I915_MMIO_READ
 static const struct dri_extension arb_oc_extensions[] = {
    {"GL_ARB_occlusion_query",            GL_ARB_occlusion_query_functions},
    {NULL, NULL}
 };
+#endif
 
 static const struct dri_extension ttm_extensions[] = {
    {"GL_EXT_framebuffer_object", GL_EXT_framebuffer_object_functions},
@@ -301,10 +438,12 @@ void intelInitExtensions(GLcontext *ctx, GLboolean enable_imaging)
    if (intel == NULL || intel->ttm)
       driInitExtensions(ctx, ttm_extensions, GL_FALSE);
 
+#ifdef I915_MMIO_READ
    if (intel == NULL || 
        (IS_965(intel->intelScreen->deviceID) && 
 	intel->intelScreen->drmMinor >= 8))
       driInitExtensions(ctx, arb_oc_extensions, GL_FALSE);
+#endif
 
    if (intel == NULL || IS_965(intel->intelScreen->deviceID))
       driInitExtensions(ctx, brw_extensions, GL_FALSE);
@@ -402,6 +541,7 @@ intelFinish(GLcontext * ctx)
    }
 }
 
+#ifdef I915_MMIO_READ
 static void
 intelBeginQuery(GLcontext *ctx, GLenum target, struct gl_query_object *q)
 {
@@ -432,105 +572,7 @@ intelEndQuery(GLcontext *ctx, GLenum target, struct gl_query_object *q)
 	q->Ready = GL_TRUE;
 	intel->stats_wm--;
 }
-
-/** Driver-specific fence emit implementation for the fake memory manager. */
-static unsigned int
-intel_fence_emit(void *private)
-{
-   struct intel_context *intel = (struct intel_context *)private;
-   unsigned int fence;
-
-   /* XXX: Need to emit a flush, if we haven't already (at least with the
-    * current batchbuffer implementation, we have).
-    */
-
-   fence = intelEmitIrqLocked(intel);
-
-   return fence;
-}
-
-/** Driver-specific fence wait implementation for the fake memory manager. */
-static int
-intel_fence_wait(void *private, unsigned int cookie)
-{
-   struct intel_context *intel = (struct intel_context *)private;
-
-   intelWaitIrq(intel, cookie);
-
-   return 0;
-}
-
-static GLboolean
-intel_init_bufmgr(struct intel_context *intel)
-{
-   intelScreenPrivate *intelScreen = intel->intelScreen;
-   GLboolean gem_disable = getenv("INTEL_NO_GEM") != NULL;
-   int gem_kernel = 0;
-   GLboolean gem_supported;
-   struct drm_i915_getparam gp;
-
-   gp.param = I915_PARAM_HAS_GEM;
-   gp.value = &gem_kernel;
-
-   (void) drmCommandWriteRead(intel->driFd, DRM_I915_GETPARAM, &gp, sizeof(gp));
-
-   /* If we've got a new enough DDX that's initializing GEM and giving us
-    * object handles for the shared buffers, use that.
-    */
-   intel->ttm = GL_FALSE;
-   if (intel->intelScreen->driScrnPriv->dri2.enabled)
-       gem_supported = GL_TRUE;
-   else if (intel->intelScreen->driScrnPriv->ddx_version.minor >= 9 &&
-	    gem_kernel &&
-	    intel->intelScreen->front.bo_handle != -1)
-       gem_supported = GL_TRUE;
-   else
-       gem_supported = GL_FALSE;
-
-   if (!gem_disable && gem_supported) {
-      int bo_reuse_mode;
-      intel->bufmgr = intel_bufmgr_gem_init(intel->driFd,
-					    BATCH_SZ);
-      if (intel->bufmgr != NULL)
-	 intel->ttm = GL_TRUE;
-
-      bo_reuse_mode = driQueryOptioni(&intel->optionCache, "bo_reuse");
-      switch (bo_reuse_mode) {
-      case DRI_CONF_BO_REUSE_DISABLED:
-	 break;
-      case DRI_CONF_BO_REUSE_ALL:
-	 intel_bufmgr_gem_enable_reuse(intel->bufmgr);
-	 break;
-      }
-   }
-   /* Otherwise, use the classic buffer manager. */
-   if (intel->bufmgr == NULL) {
-      if (gem_disable) {
-	 fprintf(stderr, "GEM disabled.  Using classic.\n");
-      } else {
-	 fprintf(stderr, "Failed to initialize GEM.  "
-		 "Falling back to classic.\n");
-      }
-
-      if (intelScreen->tex.size == 0) {
-	 fprintf(stderr, "[%s:%u] Error initializing buffer manager.\n",
-		 __func__, __LINE__);
-	 return GL_FALSE;
-      }
-
-      intel->bufmgr = intel_bufmgr_fake_init(intelScreen->tex.offset,
-					     intelScreen->tex.map,
-					     intelScreen->tex.size,
-					     intel_fence_emit,
-					     intel_fence_wait,
-					     intel);
-   }
-
-   /* XXX bufmgr should be per-screen, not per-context */
-   intelScreen->ttm = intel->ttm;
-
-   return GL_TRUE;
-}
+#endif
 
 void
 intelInitDriverFunctions(struct dd_function_table *functions)
@@ -541,14 +583,17 @@ intelInitDriverFunctions(struct dd_function_table *functions)
    functions->Finish = intelFinish;
    functions->GetString = intelGetString;
    functions->UpdateState = intelInvalidateState;
+   functions->Viewport = intel_viewport;
 
    functions->CopyColorTable = _swrast_CopyColorTable;
    functions->CopyColorSubTable = _swrast_CopyColorSubTable;
    functions->CopyConvolutionFilter1D = _swrast_CopyConvolutionFilter1D;
    functions->CopyConvolutionFilter2D = _swrast_CopyConvolutionFilter2D;
 
+#ifdef I915_MMIO_READ
    functions->BeginQuery = intelBeginQuery;
    functions->EndQuery = intelEndQuery;
+#endif
 
    intelInitTextureFuncs(functions);
    intelInitStateFuncs(functions);
@@ -568,8 +613,6 @@ intelInitContext(struct intel_context *intel,
    GLcontext *shareCtx = (GLcontext *) sharedContextPrivate;
    __DRIscreenPrivate *sPriv = driContextPriv->driScreenPriv;
    intelScreenPrivate *intelScreen = (intelScreenPrivate *) sPriv->private;
-   volatile struct drm_i915_sarea *saPriv = (struct drm_i915_sarea *)
-      (((GLubyte *) sPriv->pSAREA) + intelScreen->sarea_priv_offset);
    int fthrottle_mode;
 
    if (!_mesa_initialize_context(&intel->ctx, mesaVis, shareCtx,
@@ -581,7 +624,8 @@ intelInitContext(struct intel_context *intel,
    driContextPriv->driverPrivate = intel;
    intel->intelScreen = intelScreen;
    intel->driScreen = sPriv;
-   intel->sarea = saPriv;
+   intel->sarea = intelScreen->sarea;
+   intel->driContext = driContextPriv;
 
    /* Dri stuff */
    intel->hHWContext = driContextPriv->hHWContext;
@@ -599,8 +643,20 @@ intelInitContext(struct intel_context *intel,
    else
       intel->maxBatchSize = BATCH_SZ;
 
-   if (!intel_init_bufmgr(intel))
-      return GL_FALSE;
+   intel->bufmgr = intelScreen->bufmgr;
+   intel->ttm = intelScreen->ttm;
+   if (intel->ttm) {
+      int bo_reuse_mode;
+
+      bo_reuse_mode = driQueryOptioni(&intel->optionCache, "bo_reuse");
+      switch (bo_reuse_mode) {
+      case DRI_CONF_BO_REUSE_DISABLED:
+	 break;
+      case DRI_CONF_BO_REUSE_ALL:
+	 intel_bufmgr_gem_enable_reuse(intel->bufmgr);
+	 break;
+      }
+   }
 
    ctx->Const.MaxTextureMaxAnisotropy = 2.0;
 
@@ -783,11 +839,14 @@ intelMakeCurrent(__DRIcontextPrivate * driContextPriv,
       struct intel_framebuffer *intel_fb =
 	 (struct intel_framebuffer *) driDrawPriv->driverPrivate;
       GLframebuffer *readFb = (GLframebuffer *) driReadPriv->driverPrivate;
-
-
-      /* XXX FBO temporary fix-ups! */
-      /* if the renderbuffers don't have regions, init them from the context */
-      if (!driContextPriv->driScreenPriv->dri2.enabled) {
+ 
+      if (driContextPriv->driScreenPriv->dri2.enabled) {     
+          intel_update_renderbuffers(driContextPriv, driDrawPriv);
+          if (driDrawPriv != driReadPriv)
+              intel_update_renderbuffers(driContextPriv, driReadPriv);
+      } else {
+          /* XXX FBO temporary fix-ups! */
+          /* if the renderbuffers don't have regions, init them from the context */
          struct intel_renderbuffer *irbDepth
             = intel_get_renderbuffer(&intel_fb->Base, BUFFER_DEPTH);
          struct intel_renderbuffer *irbStencil
@@ -989,18 +1048,12 @@ void LOCK_HARDWARE( struct intel_context *intel )
 	intel_fb->vbl_waited = vbl.reply.sequence;
     }
 
-    DRM_CAS(intel->driHwLock, intel->hHWContext,
-        (DRM_LOCK_HELD|intel->hHWContext), __ret);
+    if (!sPriv->dri2.enabled) {
+	DRM_CAS(intel->driHwLock, intel->hHWContext,
+		(DRM_LOCK_HELD|intel->hHWContext), __ret);
 
-    if (sPriv->dri2.enabled) {
 	if (__ret)
-	    drmGetLock(intel->driFd, intel->hHWContext, 0);
-	if (__driParseEvents(dPriv->driContextPriv, dPriv)) {
-	    intelWindowMoved(intel);
-	    intel_draw_buffer(&intel->ctx, intel->ctx.DrawBuffer);
-	}
-    } else if (__ret) {
-        intelContendedLock( intel, 0 );
+	    intelContendedLock( intel, 0 );
     }
 
 
@@ -1013,10 +1066,13 @@ void LOCK_HARDWARE( struct intel_context *intel )
  */
 void UNLOCK_HARDWARE( struct intel_context *intel )
 {
+    __DRIscreen *sPriv = intel->driScreen;
+
    intel->vtbl.note_unlock( intel );
    intel->locked = 0;
 
-   DRM_UNLOCK(intel->driFd, intel->driHwLock, intel->hHWContext);
+   if (!sPriv->dri2.enabled)
+      DRM_UNLOCK(intel->driFd, intel->driHwLock, intel->hHWContext);
 
    _glthread_UNLOCK_MUTEX(lockMutex);
 

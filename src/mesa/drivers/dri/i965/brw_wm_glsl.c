@@ -850,20 +850,20 @@ static void emit_sop(struct brw_wm_compile *c,
     struct brw_reg dst, src0, src1;
     int i;
 
-    brw_push_insn_state(p);
     for (i = 0; i < 4; i++) {
 	if (mask & (1<<i)) {
 	    dst = get_dst_reg(c, inst, i, 1);
 	    src0 = get_src_reg(c, &inst->SrcReg[0], i, 1);
 	    src1 = get_src_reg(c, &inst->SrcReg[1], i, 1);
+	    brw_push_insn_state(p);
 	    brw_CMP(p, brw_null_reg(), cond, src0, src1);
 	    brw_set_predicate_control(p, BRW_PREDICATE_NONE);
 	    brw_MOV(p, dst, brw_imm_f(0.0));
 	    brw_set_predicate_control(p, BRW_PREDICATE_NORMAL);
 	    brw_MOV(p, dst, brw_imm_f(1.0));
+	    brw_pop_insn_state(p);
 	}
     }
-    brw_pop_insn_state(p);
 }
 
 static void emit_slt(struct brw_wm_compile *c,

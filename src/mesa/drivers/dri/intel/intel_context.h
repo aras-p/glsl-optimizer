@@ -34,7 +34,6 @@
 #include "drm.h"
 #include "mm.h"
 #include "texmem.h"
-#include "dri_bufmgr.h"
 #include "intel_bufmgr.h"
 
 #include "intel_screen.h"
@@ -257,6 +256,7 @@ struct intel_context
    drmLock *driHwLock;
    int driFd;
 
+   __DRIcontextPrivate *driContext;
    __DRIdrawablePrivate *driDrawable;
    __DRIdrawablePrivate *driReadDrawable;
    __DRIscreenPrivate *driScreen;
@@ -492,6 +492,8 @@ extern int intel_translate_stencil_op(GLenum op);
 extern int intel_translate_blend_factor(GLenum factor);
 extern int intel_translate_logic_op(GLenum opcode);
 
+void intel_update_renderbuffers(__DRIcontext *context,
+				__DRIdrawable *drawable);
 
 /*======================================================================
  * Inline conversion functions.  

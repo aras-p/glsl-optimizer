@@ -54,7 +54,6 @@
 #include "glheader.h"
 #include "GL/internal/glcore.h"
 #include "GL/internal/dri_interface.h"
-#include "GL/internal/dri_sarea.h"
 
 #define GLX_BAD_CONTEXT                    5
 
@@ -202,16 +201,8 @@ struct __DriverAPIRec {
 
 
 
-    /* DRI2 Entry points */
+    /* DRI2 Entry point */
     const __DRIconfig **(*InitScreen2) (__DRIscreen * priv);
-    void (*HandleDrawableConfig)(__DRIdrawable *dPriv,
-				__DRIcontext *pcp,
-				__DRIDrawableConfigEvent *event);
-
-    void (*HandleBufferAttach)(__DRIdrawable *dPriv,
-			       __DRIcontext *pcp,
-			       __DRIBufferAttachEvent *ba);
-
 };
 
 extern const struct __DriverAPIRec driDriverAPI;
@@ -367,10 +358,6 @@ struct __DRIdrawableRec {
      * GLX_MESA_swap_control.
      */
     unsigned int swap_interval;
-    struct {
-	unsigned int tail;
-	unsigned int drawable_id;
-    } dri2;
 };
 
 /**
@@ -522,13 +509,7 @@ struct __DRIscreenRec {
 	/* Flag to indicate that this is a DRI2 screen.  Many of the above
 	 * fields will not be valid or initializaed in that case. */
 	int enabled;
-#ifdef TTM_API
-	drmBO sareaBO;
-#endif
-	void *sarea;
-	__DRIEventBuffer *buffer;
-	__DRILock *lock;
-	__DRIloaderExtension *loader;
+	__DRIdri2LoaderExtension *loader;
     } dri2;
 
     /* The lock actually in use, old sarea or DRI2 */
@@ -541,9 +522,6 @@ __driUtilMessage(const char *f, ...);
 
 extern void
 __driUtilUpdateDrawableInfo(__DRIdrawable *pdp);
-
-extern int
-__driParseEvents(__DRIcontext *psp, __DRIdrawable *pdp);
 
 extern float
 driCalculateSwapUsage( __DRIdrawable *dPriv,

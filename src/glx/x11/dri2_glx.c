@@ -49,6 +49,7 @@
 
 typedef struct __GLXDRIdisplayPrivateRec __GLXDRIdisplayPrivate;
 typedef struct __GLXDRIcontextPrivateRec __GLXDRIcontextPrivate;
+typedef struct __GLXDRIdrawablePrivateRec __GLXDRIdrawablePrivate;
 
 struct __GLXDRIdisplayPrivateRec {
     __GLXDRIdisplay base;
@@ -65,6 +66,13 @@ struct __GLXDRIcontextPrivateRec {
     __GLXDRIcontext base;
     __DRIcontext *driContext;
     __GLXscreenConfigs *psc;
+};
+
+struct __GLXDRIdrawablePrivateRec {
+    __GLXDRIdrawable base;
+    __DRIbuffer buffers[5];
+    int bufferCount;
+    int width, height;
 };
 
 static void dri2DestroyContext(__GLXDRIcontext *context,
@@ -104,7 +112,6 @@ static __GLXDRIcontext *dri2CreateContext(__GLXscreenConfigs *psc,
 {
     __GLXDRIcontextPrivate *pcp, *pcp_shared;
     __GLXDRIconfigPrivate *config = (__GLXDRIconfigPrivate *) mode;
-    const __DRIcoreExtension *core = psc->core;
     __DRIcontext *shared = NULL;
 
     if (shareList) {
@@ -118,8 +125,8 @@ static __GLXDRIcontext *dri2CreateContext(__GLXscreenConfigs *psc,
 
     pcp->psc = psc;
     pcp->driContext = 
-	(*core->createNewContext)(psc->__driScreen,
-				  config->driConfig, shared, pcp);
+	(*psc->dri2->createNewContext)(psc->__driScreen,
+				       config->driConfig, shared, pcp);
     gc->__driContext = pcp->driContext;
 
     if (pcp->driContext == NULL) {
@@ -148,45 +155,40 @@ static __GLXDRIdrawable *dri2CreateDrawable(__GLXscreenConfigs *psc,
 					    GLXDrawable drawable,
 					    const __GLcontextModes *modes)
 {
-    __GLXDRIdrawable *pdraw;
+    __GLXDRIdrawablePrivate *pdraw;
     __GLXDRIconfigPrivate *config = (__GLXDRIconfigPrivate *) modes;
-    unsigned int handle, head;
-    const __DRIcoreExtension *core = psc->core;
 
     pdraw = Xmalloc(sizeof(*pdraw));
     if (!pdraw)
 	return NULL;
 
-    pdraw->destroyDrawable = dri2DestroyDrawable;
-    pdraw->xDrawable = xDrawable;
-    pdraw->drawable = drawable;
-    pdraw->psc = psc;
+    pdraw->base.destroyDrawable = dri2DestroyDrawable;
+    pdraw->base.xDrawable = xDrawable;
+    pdraw->base.drawable = drawable;
+    pdraw->base.psc = psc;
 
-    fprintf(stderr, "calling DRI2CreateDrawable, XID 0x%lx, GLX ID 0x%lx\n",
-	    xDrawable, drawable);
-
-    if (!DRI2CreateDrawable(psc->dpy, xDrawable, &handle, &head)) {
-	Xfree(pdraw);
-	return NULL;
-    }
-
-    fprintf(stderr, "success, head 0x%x, handle 0x%x\n", head, handle);
+    DRI2CreateDrawable(psc->dpy, xDrawable);
 
     /* Create a new drawable */
-    pdraw->driDrawable =
-	(*core->createNewDrawable)(psc->__driScreen,
-				   config->driConfig,
-				   handle,
-				   head,
-				   pdraw);
+    pdraw->base.driDrawable =
+	(*psc->dri2->createNewDrawable)(psc->__driScreen,
+					config->driConfig, pdraw);
 
-    if (!pdraw->driDrawable) {
+    if (!pdraw->base.driDrawable) {
 	DRI2DestroyDrawable(psc->dpy, drawable);
 	Xfree(pdraw);
 	return NULL;
     }
 
-    return pdraw;
+    return &pdraw->base;
+}
+
+static void dri2SwapBuffers(__GLXDRIdrawable *pdraw)
+{
+    __GLXDRIdrawablePrivate *priv = (__GLXDRIdrawablePrivate *) pdraw;
+
+    DRI2SwapBuffers(pdraw->psc->dpy, pdraw->drawable,
+		    0, 0, priv->width, priv->height);
 }
 
 static void dri2DestroyScreen(__GLXscreenConfigs *psc)
@@ -197,46 +199,39 @@ static void dri2DestroyScreen(__GLXscreenConfigs *psc)
     psc->__driScreen = NULL;
 }
 
-
-static void dri2ReemitDrawableInfo(__DRIdrawable *draw, unsigned int *tail,
-				    void *loaderPrivate)
+static __DRIbuffer *
+dri2GetBuffers(__DRIdrawable *driDrawable,
+	       int *width, int *height,
+	       unsigned int *attachments, int count,
+	       int *out_count, void *loaderPrivate)
 {
-    __GLXDRIdrawable *pdraw = loaderPrivate;
-
-    DRI2ReemitDrawableInfo(pdraw->psc->dpy, pdraw->drawable, tail);
-}
-
-static void dri2PostDamage(__DRIdrawable *draw,
-			   struct drm_clip_rect *rects,
-			   int numRects, void *loaderPrivate)
-{ 
-    XRectangle *xrects;
-    XserverRegion region;
-    __GLXDRIdrawable *glxDraw = loaderPrivate;
-    __GLXscreenConfigs *psc = glxDraw->psc;
-    Display *dpy = psc->dpy;
+    __GLXDRIdrawablePrivate *pdraw = loaderPrivate;
+    DRI2Buffer *buffers;
     int i;
 
-    xrects = malloc(sizeof(XRectangle) * numRects);
-    if (xrects == NULL)
-	return;
+    buffers = DRI2GetBuffers(pdraw->base.psc->dpy, pdraw->base.xDrawable,
+			     width, height, attachments, count, out_count);
+    pdraw->width = *width;
+    pdraw->height = *height;
 
-    for (i = 0; i < numRects; i++) {
-	xrects[i].x = rects[i].x1;
-	xrects[i].y = rects[i].y1;
-	xrects[i].width = rects[i].x2 - rects[i].x1;
-	xrects[i].height = rects[i].y2 - rects[i].y1;
+    /* This assumes the DRI2 buffer attachment tokens matches the
+     * __DRIbuffer tokens. */
+    for (i = 0; i < *out_count; i++) {
+	pdraw->buffers[i].attachment = buffers[i].attachment;
+	pdraw->buffers[i].name = buffers[i].name;
+	pdraw->buffers[i].pitch = buffers[i].pitch;
+	pdraw->buffers[i].cpp = buffers[i].cpp;
+	pdraw->buffers[i].flags = buffers[i].flags;
     }
-    region = XFixesCreateRegion(dpy, xrects, numRects);
-    free(xrects);
-    XDamageAdd(dpy, glxDraw->xDrawable, region);
-    XFixesDestroyRegion(dpy, region);
+
+    Xfree(buffers);
+
+    return pdraw->buffers;
 }
 
-static const __DRIloaderExtension dri2LoaderExtension = {
-    { __DRI_LOADER, __DRI_LOADER_VERSION },
-    dri2ReemitDrawableInfo,
-    dri2PostDamage
+static const __DRIdri2LoaderExtension dri2LoaderExtension = {
+    { __DRI_DRI2_LOADER, __DRI_DRI2_LOADER_VERSION },
+    dri2GetBuffers,
 };
 
 static const __DRIextension *loader_extensions[] = {
@@ -279,10 +274,12 @@ static __GLXDRIscreen *dri2CreateScreen(__GLXscreenConfigs *psc, int screen,
     for (i = 0; extensions[i]; i++) {
 	if (strcmp(extensions[i]->name, __DRI_CORE) == 0)
 	    psc->core = (__DRIcoreExtension *) extensions[i];
+	if (strcmp(extensions[i]->name, __DRI_DRI2) == 0)
+	    psc->dri2 = (__DRIdri2Extension *) extensions[i];
     }
 
-    if (psc->core == NULL) {
-	ErrorMessageF("core dri extension not found\n");
+    if (psc->core == NULL || psc->dri2 == NULL) {
+	ErrorMessageF("core dri or dri2 extension not found\n");
 	goto handle_error;
     }
 
@@ -301,7 +298,7 @@ static __GLXDRIscreen *dri2CreateScreen(__GLXscreenConfigs *psc, int screen,
     }
 
     psc->__driScreen = 
-	psc->core->createNewScreen(screen, psc->fd, sareaHandle,
+	psc->dri2->createNewScreen(screen, psc->fd,
 				   loader_extensions, &driver_configs, psc);
     if (psc->__driScreen == NULL) {
 	ErrorMessageF("failed to create dri screen\n");
@@ -316,6 +313,7 @@ static __GLXDRIscreen *dri2CreateScreen(__GLXscreenConfigs *psc, int screen,
     psp->destroyScreen = dri2DestroyScreen;
     psp->createContext = dri2CreateContext;
     psp->createDrawable = dri2CreateDrawable;
+    psp->swapBuffers = dri2SwapBuffers;
 
     Xfree(driverName);
     Xfree(busID);

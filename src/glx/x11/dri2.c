@@ -122,7 +122,11 @@ Bool DRI2Connect(Display *dpy, int screen,
 	return False;
     }
 
-    *sareaHandle = rep.sareaHandle;
+    if (rep.driverNameLength == 0 && rep.busIdLength == 0) {
+	UnlockDisplay(dpy);
+	SyncHandle();
+	return False;
+    }
 
     *driverName = Xmalloc(rep.driverNameLength + 1);
     if (*driverName == NULL) {
@@ -150,7 +154,7 @@ Bool DRI2Connect(Display *dpy, int screen,
     UnlockDisplay(dpy);
     SyncHandle();
 
-    return rep.sareaHandle != 0;
+    return True;
 }
 
 Bool DRI2AuthConnection(Display *dpy, int screen, drm_magic_t magic)
@@ -179,32 +183,103 @@ Bool DRI2AuthConnection(Display *dpy, int screen, drm_magic_t magic)
     return rep.authenticated;
 }
 
-Bool DRI2CreateDrawable(Display *dpy, XID drawable,
-			unsigned int *handle, unsigned int *head)
+void DRI2CreateDrawable(Display *dpy, XID drawable)
 {
     XExtDisplayInfo *info = DRI2FindDisplay(dpy);
-    xDRI2CreateDrawableReply rep;
     xDRI2CreateDrawableReq *req;
 
-    XextCheckExtension (dpy, info, dri2ExtensionName, False);
+    XextSimpleCheckExtension (dpy, info, dri2ExtensionName);
 
     LockDisplay(dpy);
     GetReq(DRI2CreateDrawable, req);
     req->reqType = info->codes->major_opcode;
     req->dri2ReqType = X_DRI2CreateDrawable;
     req->drawable = drawable;
+    UnlockDisplay(dpy);
+    SyncHandle();
+}
+
+DRI2Buffer *DRI2GetBuffers(Display *dpy, XID drawable,
+			   int *width, int *height,
+			   unsigned int *attachments, int count,
+			   int *outCount)
+{
+    XExtDisplayInfo *info = DRI2FindDisplay(dpy);
+    xDRI2GetBuffersReply rep;
+    xDRI2GetBuffersReq *req;
+    DRI2Buffer *buffers;
+    xDRI2Buffer repBuffer;
+    CARD32 *p;
+    int i;
+
+    XextCheckExtension (dpy, info, dri2ExtensionName, False);
+
+    LockDisplay(dpy);
+    GetReqExtra(DRI2GetBuffers, count * 4, req);
+    req->reqType = info->codes->major_opcode;
+    req->dri2ReqType = X_DRI2GetBuffers;
+    req->drawable = drawable;
+    req->count = count;
+    p = (CARD32 *) &req[1];
+    for (i = 0; i < count; i++)
+	p[i] = attachments[i];
+
     if (!_XReply(dpy, (xReply *)&rep, 0, xFalse)) {
 	UnlockDisplay(dpy);
 	SyncHandle();
-	return False;
+	return NULL;
     }
+
+    *width = rep.width;
+    *height = rep.height;
+    *outCount = rep.count;
+
+    buffers = Xmalloc(count * sizeof buffers[0]);
+    if (buffers == NULL) {
+	_XEatData(dpy, rep.count * sizeof repBuffer);
+	UnlockDisplay(dpy);
+	SyncHandle();
+	return NULL;
+    }
+
+    for (i = 0; i < rep.count; i++) {
+	_XReadPad(dpy, (char *) &repBuffer, sizeof repBuffer);
+	buffers[i].attachment = repBuffer.attachment;
+	buffers[i].name = repBuffer.name;
+	buffers[i].pitch = repBuffer.pitch;
+	buffers[i].cpp = repBuffer.cpp;
+	buffers[i].flags = repBuffer.flags;
+    }
+
     UnlockDisplay(dpy);
     SyncHandle();
 
-    *handle = rep.handle;
-    *head = rep.head;
+    return buffers;
+}
 
-    return True;
+void DRI2SwapBuffers(Display *dpy, XID drawable,
+		     int x, int y, int width, int height)
+{
+    XExtDisplayInfo *info = DRI2FindDisplay(dpy);
+    xDRI2SwapBuffersReq *req;
+    xDRI2SwapBuffersReply rep;
+
+    XextSimpleCheckExtension (dpy, info, dri2ExtensionName);
+
+    LockDisplay(dpy);
+    GetReq(DRI2SwapBuffers, req);
+    req->reqType = info->codes->major_opcode;
+    req->dri2ReqType = X_DRI2SwapBuffers;
+    req->drawable = drawable;
+    req->x = x;
+    req->y = y;
+    req->width = width;
+    req->height = height;
+
+    _XReply(dpy, (xReply *)&rep, 0, xFalse);
+
+    UnlockDisplay(dpy);
+    SyncHandle();
 }
 
 void DRI2DestroyDrawable(Display *dpy, XID drawable)
@@ -223,30 +298,4 @@ void DRI2DestroyDrawable(Display *dpy, XID drawable)
     req->drawable = drawable;
     UnlockDisplay(dpy);
     SyncHandle();
-}
-
-Bool DRI2ReemitDrawableInfo(Display *dpy, XID drawable, unsigned int *head)
-{
-    XExtDisplayInfo *info = DRI2FindDisplay(dpy);
-    xDRI2ReemitDrawableInfoReply rep;
-    xDRI2ReemitDrawableInfoReq *req;
-
-    XextCheckExtension (dpy, info, dri2ExtensionName, False);
-
-    LockDisplay(dpy);
-    GetReq(DRI2ReemitDrawableInfo, req);
-    req->reqType = info->codes->major_opcode;
-    req->dri2ReqType = X_DRI2ReemitDrawableInfo;
-    req->drawable = drawable;
-    if (!_XReply(dpy, (xReply *)&rep, 0, xFalse)) {
-	UnlockDisplay(dpy);
-	SyncHandle();
-	return False;
-    }
-    UnlockDisplay(dpy);
-    SyncHandle();
-
-    *head = rep.head;
-
-    return True;
 }

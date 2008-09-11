@@ -854,7 +854,8 @@ PUBLIC void glXSwapBuffers(Display *dpy, GLXDrawable drawable)
     __GLXDRIdrawable *pdraw = GetGLXDRIDrawable(dpy, drawable, NULL);
 
     if (pdraw != NULL) {
-	(*pdraw->psc->core->swapBuffers)(pdraw->driDrawable);
+	glFlush();	    
+	(*pdraw->psc->driScreen->swapBuffers)(pdraw);
 	return;
     }
 #endif

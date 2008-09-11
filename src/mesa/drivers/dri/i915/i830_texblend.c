@@ -36,7 +36,6 @@
 #include "mm.h"
 
 #include "intel_screen.h"
-#include "intel_ioctl.h"
 #include "intel_tex.h"
 
 #include "i830_context.h"

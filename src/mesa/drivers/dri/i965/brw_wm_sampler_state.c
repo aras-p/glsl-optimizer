@@ -303,12 +303,12 @@ static void upload_wm_samplers( struct brw_context *brw )
 	 if (!brw->attribs.Texture->Unit[i]._ReallyEnabled)
 	    continue;
 
-	 intel_bo_emit_reloc(brw->wm.sampler_bo,
-			     I915_GEM_DOMAIN_INSTRUCTION, 0,
-			     0,
-			     i * sizeof(struct brw_sampler_state) +
-			     offsetof(struct brw_sampler_state, ss2),
-			     brw->wm.sdc_bo[i]);
+	 dri_bo_emit_reloc(brw->wm.sampler_bo,
+			   I915_GEM_DOMAIN_INSTRUCTION, 0,
+			   0,
+			   i * sizeof(struct brw_sampler_state) +
+			   offsetof(struct brw_sampler_state, ss2),
+			   brw->wm.sdc_bo[i]);
       }
    }
 }

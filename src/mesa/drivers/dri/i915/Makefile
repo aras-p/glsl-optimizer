@@ -46,7 +46,6 @@ DRIVER_SOURCES = \
 	i915_vtbl.c \
 	intel_context.c \
 	intel_decode.c \
-	intel_ioctl.c \
 	intel_screen.c \
 	intel_span.c \
 	intel_state.c \
@@ -63,6 +62,8 @@ ASM_SOURCES =
 DRIVER_DEFINES = -I../intel -I../intel/server -DI915 \
 	$(shell pkg-config libdrm --atleast-version=2.3.1 \
 				&& echo "-DDRM_VBLANK_FLIP=DRM_VBLANK_FLIP")
+
+DRI_LIB_DEPS += -ldrm_intel
 
 include ../Makefile.template
 
