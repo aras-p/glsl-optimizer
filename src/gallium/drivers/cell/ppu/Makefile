@@ -26,6 +26,7 @@ SOURCES = \
 	cell_draw_arrays.c \
 	cell_flush.c \
 	cell_gen_fragment.c \
+	cell_gen_fp.c \
 	cell_state_derived.c \
 	cell_state_emit.c \
 	cell_state_shader.c \

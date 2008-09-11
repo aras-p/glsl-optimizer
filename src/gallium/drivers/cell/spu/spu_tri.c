@@ -314,7 +314,42 @@ emit_quad( int x, int y, mask_t mask )
       }
       else {
          /* simple shading */
+#if 0
          eval_coeff(1, (float) x, (float) y, colors);
+
+#else
+         /* XXX new fragment program code */
+
+         if (spu.fragment_program) {
+            vector float inputs[4*4], outputs[2*4];
+
+            /* setup inputs */
+            eval_coeff(1, (float) x, (float) y, inputs);
+
+            /* Execute the current fragment program */
+            spu.fragment_program(inputs, outputs, spu.constants);
+
+            /* Copy outputs */
+            colors[0] = outputs[0*4+0];
+            colors[1] = outputs[0*4+1];
+            colors[2] = outputs[0*4+2];
+            colors[3] = outputs[0*4+3];
+
+            if (0 && spu.init.id==0 && y == 48) {
+               printf("colors[0] = %f %f %f %f\n",
+                      spu_extract(colors[0], 0),
+                      spu_extract(colors[0], 1),
+                      spu_extract(colors[0], 2),
+                      spu_extract(colors[0], 3));
+               printf("colors[1] = %f %f %f %f\n",
+                      spu_extract(colors[1], 0),
+                      spu_extract(colors[1], 1),
+                      spu_extract(colors[1], 2),
+                      spu_extract(colors[1], 3));
+            }
+
+         }
+#endif
       }
 
 

@@ -75,6 +75,12 @@ typedef void (*spu_fragment_ops_func)(uint x, uint y,
                                       vector float fragAlpha,
                                       vector unsigned int mask);
 
+/** Function for running fragment program */
+typedef void (*spu_fragment_program_func)(vector float *inputs,
+                                          vector float *outputs,
+                                          vector float *constants);
+
+
 struct spu_framebuffer
 {
    void *color_start;              /**< addr of color surface in main memory */
@@ -142,8 +148,17 @@ struct spu_global
    /** Current fragment ops function */
    spu_fragment_ops_func fragment_ops;
 
+   /** Current fragment program machine code */
+   uint fragment_program_code[SPU_MAX_FRAGMENT_PROGRAM_INSTS];
+   /** Current fragment ops function */
+   spu_fragment_program_func fragment_program;
+
    /** Current texture sampler function */
    spu_sample_texture_func sample_texture[CELL_MAX_SAMPLERS];
+
+   /** Fragment program constants (XXX preliminary/used) */
+#define MAX_CONSTANTS 32
+   vector float constants[MAX_CONSTANTS];
 
 } ALIGN16_ATTRIB;
 

@@ -92,6 +92,7 @@
 #define CELL_CMD_STATE_UNIFORMS      16
 #define CELL_CMD_STATE_VS_ARRAY_INFO 17
 #define CELL_CMD_STATE_BIND_VS       18
+#define CELL_CMD_STATE_FRAGMENT_PROGRAM 19
 #define CELL_CMD_STATE_ATTRIB_FETCH  20
 #define CELL_CMD_VS_EXECUTE          22
 #define CELL_CMD_FLUSH_BUFFER_RANGE  23
@@ -122,6 +123,20 @@ struct cell_command_fragment_ops
    struct pipe_depth_stencil_alpha_state dsa;
    struct pipe_blend_state blend;
    unsigned code[SPU_MAX_FRAGMENT_OPS_INSTS];
+};
+
+
+/** Max instructions for fragment programs */
+#define SPU_MAX_FRAGMENT_PROGRAM_INSTS 128
+
+/**
+ * Command to send a fragment progra to SPUs.
+ */
+struct cell_command_fragment_program
+{
+   uint64_t opcode;      /**< CELL_CMD_STATE_FRAGMENT_PROGRAM */
+   uint num_inst;        /**< Number of instructions */
+   unsigned code[SPU_MAX_FRAGMENT_PROGRAM_INSTS];
 };
 
 
