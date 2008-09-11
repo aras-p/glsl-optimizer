@@ -95,7 +95,7 @@ update_framebuffer_state( struct st_context *st )
    struct pipe_framebuffer_state *framebuffer = &st->state.framebuffer;
    struct gl_framebuffer *fb = st->ctx->DrawBuffer;
    struct st_renderbuffer *strb;
-   GLuint i, j;
+   GLuint i;
 
    memset(framebuffer, 0, sizeof(*framebuffer));
 
@@ -108,20 +108,18 @@ update_framebuffer_state( struct st_context *st )
     * to determine which surfaces to draw to
     */
    framebuffer->num_cbufs = 0;
-   for (j = 0; j < MAX_DRAW_BUFFERS; j++) {
-      for (i = 0; i < fb->_NumColorDrawBuffers[j]; i++) {
-         strb = st_renderbuffer(fb->_ColorDrawBuffers[j][i]);
+   for (i = 0; i < fb->_NumColorDrawBuffers; i++) {
+      strb = st_renderbuffer(fb->_ColorDrawBuffers[i]);
 
-         /*printf("--------- framebuffer surface rtt %p\n", strb->rtt);*/
-         if (strb->rtt) {
-            /* rendering to a GL texture, may have to update surface */
-            update_renderbuffer_surface(st, strb);
-         }
-
-         assert(strb->surface);
-         framebuffer->cbufs[framebuffer->num_cbufs] = strb->surface;
-         framebuffer->num_cbufs++;
+      /*printf("--------- framebuffer surface rtt %p\n", strb->rtt);*/
+      if (strb->rtt) {
+         /* rendering to a GL texture, may have to update surface */
+         update_renderbuffer_surface(st, strb);
       }
+      
+      assert(strb->surface);
+      framebuffer->cbufs[framebuffer->num_cbufs] = strb->surface;
+      framebuffer->num_cbufs++;
    }
 
    strb = st_renderbuffer(fb->Attachment[BUFFER_DEPTH].Renderbuffer);
@@ -146,6 +144,7 @@ update_framebuffer_state( struct st_context *st )
 
    cso_set_framebuffer(st->cso_context, framebuffer);
 
+#if 0
    if (fb->_ColorDrawBufferMask[0] & BUFFER_BIT_FRONT_LEFT) {
       if (st->frontbuffer_status == FRONT_STATUS_COPY_OF_BACK) {
          /* XXX copy back buf to front? */
@@ -153,6 +152,10 @@ update_framebuffer_state( struct st_context *st )
       /* we're assuming we'll really draw to the front buffer */
       st->frontbuffer_status = FRONT_STATUS_DIRTY;
    }
+#else
+#warning "fix me"
+   st->frontbuffer_status = FRONT_STATUS_DIRTY;
+#endif
 }
 
 

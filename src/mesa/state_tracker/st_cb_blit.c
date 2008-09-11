@@ -79,7 +79,7 @@ st_BlitFramebuffer(GLcontext *ctx,
       struct st_renderbuffer *srcRb = 
          st_renderbuffer(ctx->ReadBuffer->_ColorReadBuffer);
       struct st_renderbuffer *dstRb = 
-         st_renderbuffer(ctx->DrawBuffer->_ColorDrawBuffers[0][0]);
+         st_renderbuffer(ctx->DrawBuffer->_ColorDrawBuffers[0]);
       struct pipe_surface *srcSurf = srcRb->surface;
       struct pipe_surface *dstSurf = dstRb->surface;
 
