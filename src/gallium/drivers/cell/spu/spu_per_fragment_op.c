@@ -37,6 +37,8 @@
 #include "spu_per_fragment_op.h"
 
 
+#define LINEAR_QUAD_LAYOUT 1
+
 
 /**
  * Called by rasterizer for each quad after the shader has run.  Do
@@ -177,27 +179,28 @@ spu_fallback_fragment_ops(uint x, uint y,
    }
 
    if (spu.blend.blend_enable) {
+      /* blending terms, misc regs */
       vector float term1r, term1g, term1b, term1a;
       vector float term2r, term2g, term2b, term2a;
-
-      vector float fbRGBA[4];
-
       vector float one, tmp;
 
-      /* get colors from framebuffer */
+      vector float fbRGBA[4];  /* current framebuffer colors */
+
+      /* get colors from framebuffer/tile */
       {
          vector float fc[4];
          uint c0, c1, c2, c3;
-#if 0
-         c0 = colorTile->ui[y+0][x+0];
-         c1 = colorTile->ui[y+0][x+1];
-         c2 = colorTile->ui[y+1][x+0];
-         c3 = colorTile->ui[y+1][x+1];
-#else
+
+#if LINEAR_QUAD_LAYOUT /* See comments/diagram below */
          c0 = colorTile->ui[y][x*2+0];
          c1 = colorTile->ui[y][x*2+1];
          c2 = colorTile->ui[y][x*2+2];
          c3 = colorTile->ui[y][x*2+3];
+#else
+         c0 = colorTile->ui[y+0][x+0];
+         c1 = colorTile->ui[y+0][x+1];
+         c2 = colorTile->ui[y+1][x+0];
+         c3 = colorTile->ui[y+1][x+1];
 #endif
          switch (spu.fb.color_format) {
          case PIPE_FORMAT_B8G8R8A8_UNORM:
@@ -360,18 +363,11 @@ spu_fallback_fragment_ops(uint x, uint y,
    }
 
 
-   /* XXX do colormask test here */
-
-
-   if (spu_extract(spu_orx(mask), 0)) {
-      spu.cur_ctile_status = TILE_STATUS_DIRTY;
-   }
-   else {
-      return;
-   }
-
-   /* convert RRRR,GGGG,BBBB,AAAA to RGBA,RGBA,RGBA,RGBA */
+   /*
+    * Convert RRRR,GGGG,BBBB,AAAA to RGBA,RGBA,RGBA,RGBA.
+    */
 #if 0
+   /* original code */
    {
       vector float frag_soa[4];
       frag_soa[0] = fragR;
@@ -387,6 +383,9 @@ spu_fallback_fragment_ops(uint x, uint y,
    (void) fragB;
 #endif
 
+   /*
+    * Pack float colors into 32-bit RGBA words.
+    */
    switch (spu.fb.color_format) {
    case PIPE_FORMAT_A8R8G8B8_UNORM:
       c0 = spu_pack_A8R8G8B8(frag_aos[0]);
@@ -406,7 +405,56 @@ spu_fallback_fragment_ops(uint x, uint y,
       ASSERT(0);
    }
 
-#if 0
+
+   /*
+    * Color masking
+    */
+   if (spu.blend.colormask != 0xf) {
+      /* XXX to do */
+      /* apply color mask to 32-bit packed colors */
+   }
+
+
+   /*
+    * Logic Ops
+    */
+   if (spu.blend.logicop_enable) {
+      /* XXX to do */
+      /* apply logicop to 32-bit packed colors */
+   }
+
+
+   /*
+    * If mask is non-zero, mark tile as dirty.
+    */
+   if (spu_extract(spu_orx(mask), 0)) {
+      spu.cur_ctile_status = TILE_STATUS_DIRTY;
+   }
+   else {
+      return;
+   }
+
+
+   /*
+    * Write new quad colors to the framebuffer/tile.
+    * Only write pixels where the corresponding mask word is set.
+    */
+#if LINEAR_QUAD_LAYOUT
+   /*
+    * Quad layout:
+    *  +--+--+--+--+
+    *  |p0|p1|p2|p3|
+    *  +--+--+--+--+
+    */
+   if (spu_extract(mask, 0))
+      colorTile->ui[y][x*2] = c0;
+   if (spu_extract(mask, 1))
+      colorTile->ui[y][x*2+1] = c1;
+   if (spu_extract(mask, 2))
+      colorTile->ui[y][x*2+2] = c2;
+   if (spu_extract(mask, 3))
+      colorTile->ui[y][x*2+3] = c3;
+#else
    /*
     * Quad layout:
     *  +--+--+
@@ -423,20 +471,5 @@ spu_fallback_fragment_ops(uint x, uint y,
       colorTile->ui[y+1][x+0] = c2;
    if (spu_extract(mask, 3))
       colorTile->ui[y+1][x+1] = c3;
-#else
-   /*
-    * Quad layout:
-    *  +--+--+--+--+
-    *  |p0|p1|p2|p3|
-    *  +--+--+--+--+
-    */
-   if (spu_extract(mask, 0))
-      colorTile->ui[y][x*2] = c0;
-   if (spu_extract(mask, 1))
-      colorTile->ui[y][x*2+1] = c1;
-   if (spu_extract(mask, 2))
-      colorTile->ui[y][x*2+2] = c2;
-   if (spu_extract(mask, 3))
-      colorTile->ui[y][x*2+3] = c3;
 #endif
 }
