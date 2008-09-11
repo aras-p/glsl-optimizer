@@ -60,6 +60,7 @@ SOURCES = \
 	pbo.c \
 	prog_parameter.c \
 	projtex.c \
+	quads.c \
 	random.c \
 	readrate.c \
 	seccolor.c \
