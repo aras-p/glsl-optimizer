@@ -265,6 +265,8 @@ gen_blend(const struct pipe_blend_state *blend,
    int one_reg = spe_allocate_available_register(f);
    int tmp_reg = spe_allocate_available_register(f);
 
+   boolean one_reg_set = false; /* avoid setting one_reg more than once */
+
    ASSERT(blend->blend_enable);
 
    /* Unpack/convert framebuffer colors from four 32-bit packed colors
@@ -275,7 +277,7 @@ gen_blend(const struct pipe_blend_state *blend,
       int mask_reg = spe_allocate_available_register(f);
 
       /* mask = {0x000000ff, 0x000000ff, 0x000000ff, 0x000000ff} */
-      spe_fsmbi(f, mask_reg, 0x1111);
+      spe_load_int(f, mask_reg, 0xff);
 
       /* XXX there may be more clever ways to implement the following code */
       switch (color_format) {
@@ -418,7 +420,10 @@ gen_blend(const struct pipe_blend_state *blend,
       break;
    case PIPE_BLENDFACTOR_INV_SRC_ALPHA:
       /* one = {1.0, 1.0, 1.0, 1.0} */
-      spe_load_float(f, one_reg, 1.0f);
+      if (!one_reg_set) {
+         spe_load_float(f, one_reg, 1.0f);
+         one_reg_set = true;
+      }
       /* tmp = one - fragA */
       spe_fs(f, tmp_reg, one_reg, fragA_reg);
       /* term = fb * tmp */
@@ -446,7 +451,10 @@ gen_blend(const struct pipe_blend_state *blend,
       break;
    case PIPE_BLENDFACTOR_INV_SRC_ALPHA:
       /* one = {1.0, 1.0, 1.0, 1.0} */
-      spe_load_float(f, one_reg, 1.0f);
+      if (!one_reg_set) {
+         spe_load_float(f, one_reg, 1.0f);
+         one_reg_set = true;
+      }
       /* tmp = one - fragA */
       spe_fs(f, tmp_reg, one_reg, fragA_reg);
       /* termA = fbA * tmp */
