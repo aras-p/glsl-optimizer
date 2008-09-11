@@ -354,7 +354,7 @@ create_xmesa_buffer(XMesaDrawable d, BufferType type,
       depthFormat = PIPE_FORMAT_S8Z24_UNORM;
 #else
    else if (vis->mesa_visual.depthBits <= 16)
-      depthFormat = PIPE_FORMAT_Z16UNORM;
+      depthFormat = PIPE_FORMAT_Z16_UNORM;
    else if (vis->mesa_visual.depthBits <= 24)
       depthFormat = PIPE_FORMAT_S8Z24_UNORM;
    else
