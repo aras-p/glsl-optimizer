@@ -47,11 +47,12 @@
 
 #include <unistd.h>
 #include <sys/mman.h>
+#include "pipe/p_thread.h"
 #include "util/u_mm.h"
 
 #define EXEC_HEAP_SIZE (10*1024*1024)
 
-_glthread_DECLARE_STATIC_MUTEX(exec_mutex);
+pipe_static_mutex(exec_mutex);
 
 static struct mem_block *exec_heap = NULL;
 static unsigned char *exec_mem = NULL;
@@ -76,7 +77,7 @@ rtasm_exec_malloc(size_t size)
    struct mem_block *block = NULL;
    void *addr = NULL;
 
-   _glthread_LOCK_MUTEX(exec_mutex);
+   pipe_mutex_lock(exec_mutex);
 
    init_heap();
 
@@ -90,7 +91,7 @@ rtasm_exec_malloc(size_t size)
    else 
       debug_printf("rtasm_exec_malloc failed\n");
    
-   _glthread_UNLOCK_MUTEX(exec_mutex);
+   pipe_mutex_unlock(exec_mutex);
    
    return addr;
 }
@@ -99,7 +100,7 @@ rtasm_exec_malloc(size_t size)
 void 
 rtasm_exec_free(void *addr)
 {
-   _glthread_LOCK_MUTEX(exec_mutex);
+   pipe_mutex_lock(exec_mutex);
 
    if (exec_heap) {
       struct mem_block *block = mmFindBlock(exec_heap, (unsigned char *)addr - exec_mem);
@@ -108,7 +109,7 @@ rtasm_exec_free(void *addr)
 	 mmFreeMem(block);
    }
 
-   _glthread_UNLOCK_MUTEX(exec_mutex);
+   pipe_mutex_unlock(exec_mutex);
 }
 
 

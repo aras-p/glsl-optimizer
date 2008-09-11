@@ -60,7 +60,7 @@ sp_depth_test_quad(struct quad_stage *qs, struct quad_header *quad)
    unsigned zmask = 0;
    unsigned j;
    struct softpipe_cached_tile *tile
-      = sp_get_cached_tile(softpipe, softpipe->zsbuf_cache, quad->x0, quad->y0);
+      = sp_get_cached_tile(softpipe, softpipe->zsbuf_cache, quad->input.x0, quad->input.y0);
 
    assert(ps); /* shouldn't get here if there's no zbuffer */
 
@@ -79,12 +79,12 @@ sp_depth_test_quad(struct quad_stage *qs, struct quad_header *quad)
          float scale = 65535.0;
 
          for (j = 0; j < QUAD_SIZE; j++) {
-            qzzzz[j] = (unsigned) (quad->outputs.depth[j] * scale);
+            qzzzz[j] = (unsigned) (quad->output.depth[j] * scale);
          }
 
          for (j = 0; j < QUAD_SIZE; j++) {
-            int x = quad->x0 % TILE_SIZE + (j & 1);
-            int y = quad->y0 % TILE_SIZE + (j >> 1);
+            int x = quad->input.x0 % TILE_SIZE + (j & 1);
+            int y = quad->input.y0 % TILE_SIZE + (j >> 1);
             bzzzz[j] = tile->data.depth16[y][x];
          }
       }
@@ -94,12 +94,12 @@ sp_depth_test_quad(struct quad_stage *qs, struct quad_header *quad)
          double scale = (double) (uint) ~0UL;
 
          for (j = 0; j < QUAD_SIZE; j++) {
-            qzzzz[j] = (unsigned) (quad->outputs.depth[j] * scale);
+            qzzzz[j] = (unsigned) (quad->output.depth[j] * scale);
          }
 
          for (j = 0; j < QUAD_SIZE; j++) {
-            int x = quad->x0 % TILE_SIZE + (j & 1);
-            int y = quad->y0 % TILE_SIZE + (j >> 1);
+            int x = quad->input.x0 % TILE_SIZE + (j & 1);
+            int y = quad->input.y0 % TILE_SIZE + (j >> 1);
             bzzzz[j] = tile->data.depth32[y][x];
          }
       }
@@ -111,12 +111,12 @@ sp_depth_test_quad(struct quad_stage *qs, struct quad_header *quad)
          float scale = (float) ((1 << 24) - 1);
 
          for (j = 0; j < QUAD_SIZE; j++) {
-            qzzzz[j] = (unsigned) (quad->outputs.depth[j] * scale);
+            qzzzz[j] = (unsigned) (quad->output.depth[j] * scale);
          }
 
          for (j = 0; j < QUAD_SIZE; j++) {
-            int x = quad->x0 % TILE_SIZE + (j & 1);
-            int y = quad->y0 % TILE_SIZE + (j >> 1);
+            int x = quad->input.x0 % TILE_SIZE + (j & 1);
+            int y = quad->input.y0 % TILE_SIZE + (j >> 1);
             bzzzz[j] = tile->data.depth32[y][x] & 0xffffff;
          }
       }
@@ -128,12 +128,12 @@ sp_depth_test_quad(struct quad_stage *qs, struct quad_header *quad)
          float scale = (float) ((1 << 24) - 1);
 
          for (j = 0; j < QUAD_SIZE; j++) {
-            qzzzz[j] = (unsigned) (quad->outputs.depth[j] * scale);
+            qzzzz[j] = (unsigned) (quad->output.depth[j] * scale);
          }
 
          for (j = 0; j < QUAD_SIZE; j++) {
-            int x = quad->x0 % TILE_SIZE + (j & 1);
-            int y = quad->y0 % TILE_SIZE + (j >> 1);
+            int x = quad->input.x0 % TILE_SIZE + (j & 1);
+            int y = quad->input.y0 % TILE_SIZE + (j >> 1);
             bzzzz[j] = tile->data.depth32[y][x] >> 8;
          }
       }
@@ -192,14 +192,14 @@ sp_depth_test_quad(struct quad_stage *qs, struct quad_header *quad)
       assert(0);
    }
 
-   quad->mask &= zmask;
+   quad->inout.mask &= zmask;
 
    if (softpipe->depth_stencil->depth.writemask) {
       
       /* This is also efficient with sse / spe instructions: 
        */
       for (j = 0; j < QUAD_SIZE; j++) {
-	 if (quad->mask & (1 << j)) {
+	 if (quad->inout.mask & (1 << j)) {
 	    bzzzz[j] = qzzzz[j];
 	 }
       }
@@ -208,8 +208,8 @@ sp_depth_test_quad(struct quad_stage *qs, struct quad_header *quad)
       switch (format) {
       case PIPE_FORMAT_Z16_UNORM:
          for (j = 0; j < QUAD_SIZE; j++) {
-            int x = quad->x0 % TILE_SIZE + (j & 1);
-            int y = quad->y0 % TILE_SIZE + (j >> 1);
+            int x = quad->input.x0 % TILE_SIZE + (j & 1);
+            int y = quad->input.y0 % TILE_SIZE + (j >> 1);
             tile->data.depth16[y][x] = (ushort) bzzzz[j];
          }
          break;
@@ -218,15 +218,15 @@ sp_depth_test_quad(struct quad_stage *qs, struct quad_header *quad)
          /* (yes, this falls through to a different case than above) */
       case PIPE_FORMAT_Z32_UNORM:
          for (j = 0; j < QUAD_SIZE; j++) {
-            int x = quad->x0 % TILE_SIZE + (j & 1);
-            int y = quad->y0 % TILE_SIZE + (j >> 1);
+            int x = quad->input.x0 % TILE_SIZE + (j & 1);
+            int y = quad->input.y0 % TILE_SIZE + (j >> 1);
             tile->data.depth32[y][x] = bzzzz[j];
          }
          break;
       case PIPE_FORMAT_S8Z24_UNORM:
          for (j = 0; j < QUAD_SIZE; j++) {
-            int x = quad->x0 % TILE_SIZE + (j & 1);
-            int y = quad->y0 % TILE_SIZE + (j >> 1);
+            int x = quad->input.x0 % TILE_SIZE + (j & 1);
+            int y = quad->input.y0 % TILE_SIZE + (j >> 1);
             uint s8z24 = tile->data.depth32[y][x];
             s8z24 = (s8z24 & 0xff000000) | bzzzz[j];
             tile->data.depth32[y][x] = s8z24;
@@ -234,8 +234,8 @@ sp_depth_test_quad(struct quad_stage *qs, struct quad_header *quad)
          break;
       case PIPE_FORMAT_Z24S8_UNORM:
          for (j = 0; j < QUAD_SIZE; j++) {
-            int x = quad->x0 % TILE_SIZE + (j & 1);
-            int y = quad->y0 % TILE_SIZE + (j >> 1);
+            int x = quad->input.x0 % TILE_SIZE + (j & 1);
+            int y = quad->input.y0 % TILE_SIZE + (j >> 1);
             uint z24s8 = tile->data.depth32[y][x];
             z24s8 = (z24s8 & 0xff) | (bzzzz[j] << 8);
             tile->data.depth32[y][x] = z24s8;
@@ -243,8 +243,8 @@ sp_depth_test_quad(struct quad_stage *qs, struct quad_header *quad)
          break;
       case PIPE_FORMAT_Z24X8_UNORM:
          for (j = 0; j < QUAD_SIZE; j++) {
-            int x = quad->x0 % TILE_SIZE + (j & 1);
-            int y = quad->y0 % TILE_SIZE + (j >> 1);
+            int x = quad->input.x0 % TILE_SIZE + (j & 1);
+            int y = quad->input.y0 % TILE_SIZE + (j >> 1);
             tile->data.depth32[y][x] = bzzzz[j] << 8;
          }
          break;
@@ -260,7 +260,7 @@ depth_test_quad(struct quad_stage *qs, struct quad_header *quad)
 {
    sp_depth_test_quad(qs, quad);
 
-   if (quad->mask)
+   if (quad->inout.mask)
       qs->next->run(qs->next, quad);
 }
 

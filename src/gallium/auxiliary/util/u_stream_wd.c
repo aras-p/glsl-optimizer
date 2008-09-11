@@ -40,16 +40,18 @@
 #include "util/u_memory.h"
 #include "util/u_string.h"
 
-#include "tr_stream.h"
+#include "u_stream.h"
 
 
 #define MAP_FILE_SIZE (4*1024*1024)
 
 
-struct trace_stream 
+struct util_stream 
 {
    char filename[MAX_PATH + 1];
    WCHAR wFileName[MAX_PATH + 1];
+   boolean growable;
+   size_t map_size;
    ULONG_PTR iFile;
    char *pMap;
    size_t written;
@@ -58,17 +60,23 @@ struct trace_stream
 
 
 static INLINE boolean
-trace_stream_map(struct trace_stream *stream)
+util_stream_map(struct util_stream *stream)
 {
    ULONG BytesInUnicodeString;
    static char filename[MAX_PATH + 1];
    unsigned filename_len;
 
-   filename_len = util_snprintf(filename,
-                                sizeof(filename),
-                                "\\??\\%s.%04x",
-                                stream->filename,
-                                stream->suffix++);
+   if(stream->growable)
+      filename_len = util_snprintf(filename,
+                                   sizeof(filename),
+                                   "%s.%04x",
+                                   stream->filename,
+                                   stream->suffix++);
+   else
+      filename_len = util_snprintf(filename,
+                                   sizeof(filename),
+                                   "%s",
+                                   stream->filename);
 
    EngMultiByteToUnicodeN(
          stream->wFileName,
@@ -77,11 +85,11 @@ trace_stream_map(struct trace_stream *stream)
          filename,
          filename_len);
    
-   stream->pMap = EngMapFile(stream->wFileName, MAP_FILE_SIZE, &stream->iFile);
+   stream->pMap = EngMapFile(stream->wFileName, stream->map_size, &stream->iFile);
    if(!stream->pMap)
       return FALSE;
    
-   memset(stream->pMap, 0, MAP_FILE_SIZE);
+   memset(stream->pMap, 0, stream->map_size);
    stream->written = 0;
    
    return TRUE;
@@ -89,10 +97,10 @@ trace_stream_map(struct trace_stream *stream)
 
 
 static INLINE void
-trace_stream_unmap(struct trace_stream *stream)
+util_stream_unmap(struct util_stream *stream)
 {
    EngUnmapFile(stream->iFile);
-   if(stream->written < MAP_FILE_SIZE) {
+   if(stream->written < stream->map_size) {
       /* Truncate file size */
       stream->pMap = EngMapFile(stream->wFileName, stream->written, &stream->iFile);
       if(stream->pMap)
@@ -103,18 +111,51 @@ trace_stream_unmap(struct trace_stream *stream)
 }
 
 
-struct trace_stream *
-trace_stream_create(const char *filename)
+static INLINE void
+util_stream_full_qualified_filename(char *dst, size_t size, const char *src)
 {
-   struct trace_stream *stream;
+   boolean need_drive, need_root;
    
-   stream = CALLOC_STRUCT(trace_stream);
+   if((('A' <= src[0] && src[0] <= 'Z') || ('a' <= src[0] && src[0] <= 'z')) && src[1] == ':') {
+      need_drive = FALSE;
+      need_root = src[2] == '\\' ? FALSE : TRUE;
+   }
+   else {
+      need_drive = TRUE;
+      need_root = src[0] == '\\' ? FALSE : TRUE;
+   }
+   
+   util_snprintf(dst, size, 
+                 "\\??\\%s%s%s",
+                 need_drive ? "C:" : "",
+                 need_root ? "\\" : "",
+                 src);
+}
+
+
+struct util_stream *
+util_stream_create(const char *filename, size_t max_size)
+{
+   struct util_stream *stream;
+   
+   stream = CALLOC_STRUCT(util_stream);
    if(!stream)
       goto error1;
    
-   strncpy(stream->filename, filename, sizeof(stream->filename));
+   util_stream_full_qualified_filename(stream->filename,
+                                       sizeof(stream->filename),
+                                       filename);
    
-   if(!trace_stream_map(stream))
+   if(max_size) {
+      stream->growable = FALSE;
+      stream->map_size = max_size;
+   }
+   else {
+      stream->growable = TRUE;
+      stream->map_size = MAP_FILE_SIZE;
+   }
+   
+   if(!util_stream_map(stream))
       goto error2;
    
    return stream;
@@ -127,16 +168,16 @@ error1:
 
 
 static INLINE void
-trace_stream_copy(struct trace_stream *stream, const char *data, size_t size)
+util_stream_copy(struct util_stream *stream, const char *data, size_t size)
 {
-   assert(stream->written + size <= MAP_FILE_SIZE);
+   assert(stream->written + size <= stream->map_size);
    memcpy(stream->pMap + stream->written, data, size);
    stream->written += size;
 }
 
 
 boolean
-trace_stream_write(struct trace_stream *stream, const void *data, size_t size)
+util_stream_write(struct util_stream *stream, const void *data, size_t size)
 {
    if(!stream)
       return FALSE;
@@ -144,37 +185,37 @@ trace_stream_write(struct trace_stream *stream, const void *data, size_t size)
    if(!stream->pMap)
       return FALSE;
    
-   while(stream->written + size > MAP_FILE_SIZE) {
-      size_t step = MAP_FILE_SIZE - stream->written;
-      trace_stream_copy(stream, data, step);
+   while(stream->written + size > stream->map_size) {
+      size_t step = stream->map_size - stream->written;
+      util_stream_copy(stream, data, step);
       data = (const char *)data + step;
       size -= step;
       
-      trace_stream_unmap(stream);
-      if(!trace_stream_map(stream))
+      util_stream_unmap(stream);
+      if(!stream->growable || !util_stream_map(stream))
          return FALSE;
    }
 
-   trace_stream_copy(stream, data, size);
+   util_stream_copy(stream, data, size);
    
    return TRUE;
 }
 
 
 void
-trace_stream_flush(struct trace_stream *stream) 
+util_stream_flush(struct util_stream *stream) 
 {
    (void)stream;
 }
 
 
 void
-trace_stream_close(struct trace_stream *stream) 
+util_stream_close(struct util_stream *stream) 
 {
    if(!stream)
       return;
    
-   trace_stream_unmap(stream);
+   util_stream_unmap(stream);
 
    FREE(stream);
 }

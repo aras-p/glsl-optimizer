@@ -30,6 +30,8 @@
  * @file
  * S-lab pool implementation.
  * 
+ * @sa http://en.wikipedia.org/wiki/Slab_allocation
+ * 
  * @author Thomas Hellstrom <thomas-at-tungstengraphics-dot-com>
  * @author Jose Fonseca <jrfonseca@tungstengraphics.com>
  */
@@ -49,46 +51,96 @@
 
 struct pb_slab;
 
+
+/**
+ * Buffer in a slab.
+ * 
+ * Sub-allocation of a contiguous buffer.
+ */
 struct pb_slab_buffer
 {
    struct pb_buffer base;
    
    struct pb_slab *slab;
+   
    struct list_head head;
+   
    unsigned mapCount;
+   
+   /** Offset relative to the start of the slab buffer. */
    size_t start;
-   _glthread_Cond event;
+   
+   /** Use when validating, to signal that all mappings are finished */
+   /* TODO: Actually validation does not reach this stage yet */
+   pipe_condvar event;
 };
 
+
+/**
+ * Slab -- a contiguous piece of memory. 
+ */
 struct pb_slab
 {
    struct list_head head;
    struct list_head freeBuffers;
    size_t numBuffers;
    size_t numFree;
+   
    struct pb_slab_buffer *buffers;
    struct pb_slab_manager *mgr;
    
+   /** Buffer from the provider */
    struct pb_buffer *bo;
+   
    void *virtual;   
 };
 
+
+/**
+ * It adds/removes slabs as needed in order to meet the allocation/destruction 
+ * of individual buffers.
+ */
 struct pb_slab_manager 
 {
    struct pb_manager base;
    
+   /** From where we get our buffers */
    struct pb_manager *provider;
+   
+   /** Size of the buffers we hand on downstream */
    size_t bufSize;
+   
+   /** Size of the buffers we request upstream */
    size_t slabSize;
+   
+   /** 
+    * Alignment, usage to be used to allocate the slab buffers.
+    * 
+    * We can only provide buffers which are consistent (in alignment, usage) 
+    * with this description.   
+    */
    struct pb_desc desc;
 
+   /** 
+    * Partial slabs
+    * 
+    * Full slabs are not stored in any list. Empty slabs are destroyed 
+    * immediatly.
+    */
    struct list_head slabs;
-   struct list_head freeSlabs;
    
-   _glthread_Mutex mutex;
+   pipe_mutex mutex;
 };
 
+
 /**
+ * Wrapper around several slabs, therefore capable of handling buffers of 
+ * multiple sizes. 
+ * 
+ * This buffer manager just dispatches buffer allocations to the appropriate slab
+ * manager, according to the requested buffer size, or by passes the slab 
+ * managers altogether for even greater sizes.
+ * 
  * The data of this structure remains constant after
  * initialization and thus needs no mutex protection.
  */
@@ -97,12 +149,17 @@ struct pb_slab_range_manager
    struct pb_manager base;
 
    struct pb_manager *provider;
+   
    size_t minBufSize;
    size_t maxBufSize;
+   
+   /** @sa pb_slab_manager::desc */ 
    struct pb_desc desc;
    
    unsigned numBuckets;
    size_t *bucketSizes;
+   
+   /** Array of pb_slab_manager, one for each bucket size */
    struct pb_manager **buckets;
 };
 
@@ -143,7 +200,7 @@ pb_slab_buffer_destroy(struct pb_buffer *_buf)
    struct pb_slab_manager *mgr = slab->mgr;
    struct list_head *list = &buf->head;
 
-   _glthread_LOCK_MUTEX(mgr->mutex);
+   pipe_mutex_lock(mgr->mutex);
    
    assert(buf->base.base.refcount == 0);
    
@@ -156,30 +213,16 @@ pb_slab_buffer_destroy(struct pb_buffer *_buf)
    if (slab->head.next == &slab->head)
       LIST_ADDTAIL(&slab->head, &mgr->slabs);
 
+   /* If the slab becomes totally empty, free it */
    if (slab->numFree == slab->numBuffers) {
       list = &slab->head;
-      LIST_DEL(list);
-      LIST_ADDTAIL(list, &mgr->freeSlabs);
+      LIST_DELINIT(list);
+      pb_reference(&slab->bo, NULL);
+      FREE(slab->buffers);
+      FREE(slab);
    }
 
-   if (mgr->slabs.next == &mgr->slabs || slab->numFree
-	 != slab->numBuffers) {
-
-      struct list_head *next;
-
-      for (list = mgr->freeSlabs.next, next = list->next; list
-	    != &mgr->freeSlabs; list = next, next = list->next) {
-
-	 slab = LIST_ENTRY(struct pb_slab, list, head);
-
-	 LIST_DELINIT(list);
-	 pb_reference(&slab->bo, NULL);
-	 FREE(slab->buffers);
-	 FREE(slab);
-      }
-   }
-   
-   _glthread_UNLOCK_MUTEX(mgr->mutex);
+   pipe_mutex_unlock(mgr->mutex);
 }
 
 
@@ -201,7 +244,7 @@ pb_slab_buffer_unmap(struct pb_buffer *_buf)
 
    --buf->mapCount;
    if (buf->mapCount == 0) 
-       _glthread_COND_BROADCAST(buf->event);
+       pipe_condvar_broadcast(buf->event);
 }
 
 
@@ -225,6 +268,11 @@ pb_slab_buffer_vtbl = {
 };
 
 
+/**
+ * Create a new slab.
+ * 
+ * Called when we ran out of free slabs.
+ */
 static enum pipe_error
 pb_slab_create(struct pb_slab_manager *mgr)
 {
@@ -238,17 +286,14 @@ pb_slab_create(struct pb_slab_manager *mgr)
    if (!slab)
       return PIPE_ERROR_OUT_OF_MEMORY;
 
-   /*
-    * FIXME: We should perhaps allow some variation in slabsize in order
-    * to efficiently reuse slabs.
-    */
-
    slab->bo = mgr->provider->create_buffer(mgr->provider, mgr->slabSize, &mgr->desc);
    if(!slab->bo) {
       ret = PIPE_ERROR_OUT_OF_MEMORY;
       goto out_err0;
    }
 
+   /* Note down the slab virtual address. All mappings are accessed directly 
+    * through this address so it is required that the buffer is pinned. */
    slab->virtual = pb_map(slab->bo, 
                           PIPE_BUFFER_USAGE_CPU_READ |
                           PIPE_BUFFER_USAGE_CPU_WRITE);
@@ -256,7 +301,6 @@ pb_slab_create(struct pb_slab_manager *mgr)
       ret = PIPE_ERROR_OUT_OF_MEMORY;
       goto out_err1;
    }
-
    pb_unmap(slab->bo);
 
    numBuffers = slab->bo->base.size / mgr->bufSize;
@@ -283,12 +327,13 @@ pb_slab_create(struct pb_slab_manager *mgr)
       buf->slab = slab;
       buf->start = i* mgr->bufSize;
       buf->mapCount = 0;
-      _glthread_INIT_COND(buf->event);
+      pipe_condvar_init(buf->event);
       LIST_ADDTAIL(&buf->head, &slab->freeBuffers);
       slab->numFree++;
       buf++;
    }
 
+   /* Add this slab to the list of partial slabs */
    LIST_ADDTAIL(&slab->head, &mgr->slabs);
 
    return PIPE_OK;
@@ -328,23 +373,29 @@ pb_slab_manager_create_buffer(struct pb_manager *_mgr,
    if(!pb_check_usage(desc->usage, mgr->desc.usage))
       return NULL;
 
-   _glthread_LOCK_MUTEX(mgr->mutex);
+   pipe_mutex_lock(mgr->mutex);
+   
+   /* Create a new slab, if we run out of partial slabs */
    if (mgr->slabs.next == &mgr->slabs) {
       (void) pb_slab_create(mgr);
       if (mgr->slabs.next == &mgr->slabs) {
-	 _glthread_UNLOCK_MUTEX(mgr->mutex);
+	 pipe_mutex_unlock(mgr->mutex);
 	 return NULL;
       }
    }
+   
+   /* Allocate the buffer from a partial (or just created) slab */
    list = mgr->slabs.next;
    slab = LIST_ENTRY(struct pb_slab, list, head);
+   
+   /* If totally full remove from the partial slab list */
    if (--slab->numFree == 0)
       LIST_DELINIT(list);
 
    list = slab->freeBuffers.next;
    LIST_DELINIT(list);
 
-   _glthread_UNLOCK_MUTEX(mgr->mutex);
+   pipe_mutex_unlock(mgr->mutex);
    buf = LIST_ENTRY(struct pb_slab_buffer, list, head);
    
    ++buf->base.base.refcount;
@@ -386,9 +437,8 @@ pb_slab_manager_create(struct pb_manager *provider,
    mgr->desc = *desc;
 
    LIST_INITHEAD(&mgr->slabs);
-   LIST_INITHEAD(&mgr->freeSlabs);
    
-   _glthread_INIT_MUTEX(mgr->mutex);
+   pipe_mutex_init(mgr->mutex);
 
    return &mgr->base;
 }

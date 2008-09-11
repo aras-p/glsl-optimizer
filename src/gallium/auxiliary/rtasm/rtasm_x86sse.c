@@ -27,7 +27,7 @@
 
 #include "pipe/p_compiler.h"
 #include "pipe/p_debug.h"
-#include "pipe/p_pointer.h"
+#include "util/u_pointer.h"
 
 #include "rtasm_execmem.h"
 #include "rtasm_x86sse.h"

@@ -192,7 +192,7 @@ softpipe_texture_blanket(struct pipe_screen * screen,
    spt->base.nblocksy[0] = pf_get_nblocksy(&spt->base.block, spt->base.height[0]);  
    spt->stride[0] = stride[0];
 
-   pipe_buffer_reference(screen->winsys, &spt->buffer, buffer);
+   pipe_buffer_reference(screen, &spt->buffer, buffer);
 
    return &spt->base;
 }
@@ -208,7 +208,7 @@ softpipe_texture_release(struct pipe_screen *screen,
    if (--(*pt)->refcount <= 0) {
       struct softpipe_texture *spt = softpipe_texture(*pt);
 
-      pipe_buffer_reference(screen->winsys, &spt->buffer, NULL);
+      pipe_buffer_reference(screen, &spt->buffer, NULL);
       FREE(spt);
    }
    *pt = NULL;
@@ -231,7 +231,7 @@ softpipe_get_tex_surface(struct pipe_screen *screen,
    if (ps) {
       assert(ps->refcount);
       assert(ps->winsys);
-      pipe_buffer_reference(ws, &ps->buffer, spt->buffer);
+      pipe_buffer_reference(screen, &ps->buffer, spt->buffer);
       ps->format = pt->format;
       ps->block = pt->block;
       ps->width = pt->width[level];
@@ -307,7 +307,7 @@ softpipe_surface_map( struct pipe_screen *screen,
       return NULL;
    }
 
-   map = screen->winsys->buffer_map( screen->winsys, surface->buffer, flags );
+   map = pipe_buffer_map( screen, surface->buffer, flags );
    if (map == NULL)
       return NULL;
 
@@ -331,7 +331,7 @@ static void
 softpipe_surface_unmap(struct pipe_screen *screen,
                        struct pipe_surface *surface)
 {
-   screen->winsys->buffer_unmap( screen->winsys, surface->buffer );
+   pipe_buffer_unmap( screen, surface->buffer );
 }
 
 

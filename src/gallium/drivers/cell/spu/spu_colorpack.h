@@ -79,14 +79,14 @@ spu_pack_color_shuffle(vector float rgba, vector unsigned char shuffle)
 
 
 static INLINE vector float
-spu_unpack_color(uint color)
+spu_unpack_B8G8R8A8(uint color)
 {
    vector unsigned int color_u4 = spu_splats(color);
    color_u4 = spu_shuffle(color_u4, color_u4,
                           ((vector unsigned char) {
-                             0, 0, 0, 0,
-                             5, 5, 5, 5,
                              10, 10, 10, 10,
+                             5, 5, 5, 5,
+                             0, 0, 0, 0,
                              15, 15, 15, 15}) );
    return spu_convtf(color_u4, 32);
 }

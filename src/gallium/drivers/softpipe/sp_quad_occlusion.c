@@ -54,7 +54,7 @@ occlusion_count_quad(struct quad_stage *qs, struct quad_header *quad)
 {
    struct softpipe_context *softpipe = qs->softpipe;
 
-   softpipe->occlusion_count += count_bits(quad->mask);
+   softpipe->occlusion_count += count_bits(quad->inout.mask);
 
    qs->next->run(qs->next, quad);
 }

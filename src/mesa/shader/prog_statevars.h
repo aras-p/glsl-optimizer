@@ -130,7 +130,7 @@ extern GLbitfield
 _mesa_program_state_flags(const gl_state_index state[STATE_LENGTH]);
 
 
-extern const char *
+extern char *
 _mesa_program_state_string(const gl_state_index state[STATE_LENGTH]);
 
 

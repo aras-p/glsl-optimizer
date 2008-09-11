@@ -36,7 +36,7 @@ cell_flush(struct pipe_context *pipe, unsigned flags,
            struct pipe_fence_handle **fence);
 
 extern void
-cell_flush_int(struct pipe_context *pipe, unsigned flags);
+cell_flush_int(struct cell_context *cell, unsigned flags);
 
 extern void
 cell_flush_buffer_range(struct cell_context *cell, void *ptr,

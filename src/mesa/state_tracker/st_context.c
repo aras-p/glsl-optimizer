@@ -196,7 +196,7 @@ static void st_destroy_context_priv( struct st_context *st )
 
    for (i = 0; i < Elements(st->state.constants); i++) {
       if (st->state.constants[i].buffer) {
-         pipe_reference_buffer(st->pipe, &st->state.constants[i].buffer, NULL);
+         pipe_buffer_reference(st->pipe->screen, &st->state.constants[i].buffer, NULL);
       }
    }
 

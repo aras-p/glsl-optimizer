@@ -88,7 +88,7 @@ fs_sse_run( const struct sp_fragment_shader *base,
 
    /* Compute X, Y, Z, W vals for this quad -- place in temp[0] for now */
    sp_setup_pos_vector(quad->posCoef, 
-		       (float)quad->x0, (float)quad->y0, 
+		       (float)quad->input.x0, (float)quad->input.y0, 
 		       machine->Temps);
 
    /* init kill mask */

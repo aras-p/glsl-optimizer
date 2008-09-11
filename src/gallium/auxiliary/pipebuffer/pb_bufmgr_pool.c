@@ -56,7 +56,7 @@ struct pool_pb_manager
 {
    struct pb_manager base;
    
-   _glthread_Mutex mutex;
+   pipe_mutex mutex;
    
    size_t bufSize;
    size_t bufAlign;
@@ -110,10 +110,10 @@ pool_buffer_destroy(struct pb_buffer *buf)
    
    assert(pool_buf->base.base.refcount == 0);
 
-   _glthread_LOCK_MUTEX(pool->mutex);
+   pipe_mutex_lock(pool->mutex);
    LIST_ADD(&pool_buf->head, &pool->free);
    pool->numFree++;
-   _glthread_UNLOCK_MUTEX(pool->mutex);
+   pipe_mutex_unlock(pool->mutex);
 }
 
 
@@ -124,9 +124,9 @@ pool_buffer_map(struct pb_buffer *buf, unsigned flags)
    struct pool_pb_manager *pool = pool_buf->mgr;
    void *map;
 
-   _glthread_LOCK_MUTEX(pool->mutex);
+   pipe_mutex_lock(pool->mutex);
    map = (unsigned char *) pool->map + pool_buf->start;
-   _glthread_UNLOCK_MUTEX(pool->mutex);
+   pipe_mutex_unlock(pool->mutex);
    return map;
 }
 
@@ -171,10 +171,10 @@ pool_bufmgr_create_buffer(struct pb_manager *mgr,
    assert(size == pool->bufSize);
    assert(pool->bufAlign % desc->alignment == 0);
    
-   _glthread_LOCK_MUTEX(pool->mutex);
+   pipe_mutex_lock(pool->mutex);
 
    if (pool->numFree == 0) {
-      _glthread_UNLOCK_MUTEX(pool->mutex);
+      pipe_mutex_unlock(pool->mutex);
       debug_printf("warning: out of fixed size buffer objects\n");
       return NULL;
    }
@@ -182,7 +182,7 @@ pool_bufmgr_create_buffer(struct pb_manager *mgr,
    item = pool->free.next;
 
    if (item == &pool->free) {
-      _glthread_UNLOCK_MUTEX(pool->mutex);
+      pipe_mutex_unlock(pool->mutex);
       debug_printf("error: fixed size buffer pool corruption\n");
       return NULL;
    }
@@ -190,7 +190,7 @@ pool_bufmgr_create_buffer(struct pb_manager *mgr,
    LIST_DEL(item);
    --pool->numFree;
 
-   _glthread_UNLOCK_MUTEX(pool->mutex);
+   pipe_mutex_unlock(pool->mutex);
    
    pool_buf = LIST_ENTRY(struct pool_buffer, item, head);
    assert(pool_buf->base.base.refcount == 0);
@@ -206,14 +206,14 @@ static void
 pool_bufmgr_destroy(struct pb_manager *mgr)
 {
    struct pool_pb_manager *pool = pool_pb_manager(mgr);
-   _glthread_LOCK_MUTEX(pool->mutex);
+   pipe_mutex_lock(pool->mutex);
 
    FREE(pool->bufs);
    
    pb_unmap(pool->buffer);
    pb_reference(&pool->buffer, NULL);
    
-   _glthread_UNLOCK_MUTEX(pool->mutex);
+   pipe_mutex_unlock(pool->mutex);
    
    FREE(mgr);
 }
@@ -246,7 +246,7 @@ pool_bufmgr_create(struct pb_manager *provider,
    pool->bufSize = bufSize;
    pool->bufAlign = desc->alignment; 
    
-   _glthread_INIT_MUTEX(pool->mutex);
+   pipe_mutex_init(pool->mutex);
 
    pool->buffer = provider->create_buffer(provider, numBufs*bufSize, desc); 
    if (!pool->buffer)

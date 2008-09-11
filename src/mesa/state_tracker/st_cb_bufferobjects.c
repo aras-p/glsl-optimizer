@@ -78,7 +78,7 @@ st_bufferobj_free(GLcontext *ctx, struct gl_buffer_object *obj)
    struct st_buffer_object *st_obj = st_buffer_object(obj);
 
    if (st_obj->buffer) 
-      pipe_reference_buffer(pipe, &st_obj->buffer, NULL);
+      pipe_buffer_reference(pipe->screen, &st_obj->buffer, NULL);
 
    free(st_obj);
 }
@@ -105,9 +105,9 @@ st_bufferobj_subdata(GLcontext *ctx,
    if (offset >= st_obj->size || size > (st_obj->size - offset))
       return;
 
-   map = pipe_buffer_map(pipe, st_obj->buffer, PIPE_BUFFER_USAGE_CPU_WRITE);
+   map = pipe_buffer_map(pipe->screen, st_obj->buffer, PIPE_BUFFER_USAGE_CPU_WRITE);
    memcpy(map + offset, data, size);
-   pipe_buffer_unmap(pipe, st_obj->buffer);
+   pipe_buffer_unmap(pipe->screen, st_obj->buffer);
 }
 
 
@@ -128,9 +128,9 @@ st_bufferobj_get_subdata(GLcontext *ctx,
    if (offset >= st_obj->size || size > (st_obj->size - offset))
       return;
 
-   map = pipe_buffer_map(pipe, st_obj->buffer, PIPE_BUFFER_USAGE_CPU_READ);
+   map = pipe_buffer_map(pipe->screen, st_obj->buffer, PIPE_BUFFER_USAGE_CPU_READ);
    memcpy(data, map + offset, size);
-   pipe_buffer_unmap(pipe, st_obj->buffer);
+   pipe_buffer_unmap(pipe->screen, st_obj->buffer);
 }
 
 
@@ -171,9 +171,9 @@ st_bufferobj_data(GLcontext *ctx,
       buffer_usage = 0;
    }
 
-   pipe_reference_buffer( pipe, &st_obj->buffer, NULL );
+   pipe_buffer_reference( pipe->screen, &st_obj->buffer, NULL );
 
-   st_obj->buffer = pipe_buffer_create( pipe, 32, buffer_usage, size );
+   st_obj->buffer = pipe_buffer_create( pipe->screen, 32, buffer_usage, size );
 
    st_obj->size = size;
 
@@ -207,7 +207,7 @@ st_bufferobj_map(GLcontext *ctx, GLenum target, GLenum access,
       break;      
    }
 
-   obj->Pointer = pipe_buffer_map(pipe, st_obj->buffer, flags);
+   obj->Pointer = pipe_buffer_map(pipe->screen, st_obj->buffer, flags);
    return obj->Pointer;
 }
 
@@ -221,7 +221,7 @@ st_bufferobj_unmap(GLcontext *ctx, GLenum target, struct gl_buffer_object *obj)
    struct pipe_context *pipe = st_context(ctx)->pipe;
    struct st_buffer_object *st_obj = st_buffer_object(obj);
 
-   pipe_buffer_unmap(pipe, st_obj->buffer);
+   pipe_buffer_unmap(pipe->screen, st_obj->buffer);
    obj->Pointer = NULL;
    return GL_TRUE;
 }

@@ -1,6 +1,6 @@
 /**************************************************************************
  * 
- * Copyright 2007-2008 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2008 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -25,71 +25,14 @@
  * 
  **************************************************************************/
 
-#ifndef P_POINTER_H
-#define P_POINTER_H
 
-#include "p_compiler.h"
+#ifndef CELL_GEN_FRAGMENT_H
+#define CELL_GEN_FRAGMENT_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
-static INLINE intptr_t
-pointer_to_intptr( const void *p )
-{
-   union {
-      const void *p;
-      intptr_t i;
-   } pi;
-   pi.p = p;
-   return pi.i;
-}
+extern void
+gen_fragment_function(struct cell_context *cell, struct spe_function *f);
 
-static INLINE void *
-intptr_to_pointer( intptr_t i )
-{
-   union {
-      void *p;
-      intptr_t i;
-   } pi;
-   pi.i = i;
-   return pi.p;
-}
 
-static INLINE uintptr_t
-pointer_to_uintptr( const void *ptr )
-{
-   union {
-      const void *p;
-      uintptr_t u;
-   } pu;
-   pu.p = ptr;
-   return pu.u;
-}
+#endif /* CELL_GEN_FRAGMENT_H */
 
-static INLINE void *
-uintptr_to_pointer( uintptr_t u )
-{
-   union {
-      void *p;
-      uintptr_t u;
-   } pu;
-   pu.u = u;
-   return pu.p;
-}
-
-/**
- * Return a pointer aligned to next multiple of N bytes.
- */
-static INLINE void *
-align_pointer( const void *unaligned, uintptr_t alignment )
-{
-   uintptr_t aligned = (pointer_to_uintptr( unaligned ) + alignment - 1) & ~(alignment - 1);
-   return uintptr_to_pointer( aligned );
-}
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif /* P_POINTER_H */

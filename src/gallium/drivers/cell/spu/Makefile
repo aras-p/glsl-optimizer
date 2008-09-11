@@ -5,7 +5,7 @@
 
 
 TOP = ../../../../..
-include $(TOP)/configs/linux-cell
+include $(TOP)/configs/current
 
 
 PROG = g3d
@@ -22,11 +22,14 @@ SOURCES = \
 	spu_render.c \
 	spu_texture.c \
 	spu_tile.c \
-	spu_tri.c \
+	spu_tri.c
+
+OLD_SOURCES = \
 	spu_exec.c \
 	spu_util.c \
 	spu_vertex_fetch.c \
 	spu_vertex_shader.c
+
 
 SPU_OBJECTS = $(SOURCES:.c=.o) \
 
@@ -43,7 +46,7 @@ INCLUDE_DIRS = \
 	$(SPU_CC) $(SPU_CFLAGS) -c $<
 
 .c.s:
-	$(SPU_CC) $(SPU_CFLAGS) -S $<
+	$(SPU_CC) $(SPU_CFLAGS) -O3 -S $<
 
 
 # The .a file will be linked into the main/PPU executable

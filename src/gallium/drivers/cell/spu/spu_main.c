@@ -34,6 +34,7 @@
 
 #include "spu_main.h"
 #include "spu_render.h"
+#include "spu_per_fragment_op.h"
 #include "spu_texture.h"
 #include "spu_tile.h"
 //#include "spu_test.h"
@@ -46,7 +47,7 @@
 /*
 helpful headers:
 /usr/lib/gcc/spu/4.1.1/include/spu_mfcio.h
-/opt/ibm/cell-sdk/prototype/sysroot/usr/include/libmisc.h
+/opt/cell/sdk/usr/include/libmisc.h
 */
 
 boolean Debug = FALSE;
@@ -55,17 +56,13 @@ struct spu_global spu;
 
 struct spu_vs_context draw;
 
+
+/**
+ * Buffers containing dynamically generated SPU code:
+ */
 static unsigned char attribute_fetch_code_buffer[136 * PIPE_MAX_ATTRIBS]
     ALIGN16_ATTRIB;
 
-static unsigned char depth_stencil_code_buffer[4 * 64]
-    ALIGN16_ATTRIB;
-
-static unsigned char fb_blend_code_buffer[4 * 64]
-    ALIGN16_ATTRIB;
-
-static unsigned char logicop_code_buffer[4 * 64]
-    ALIGN16_ATTRIB;
 
 
 /**
@@ -136,54 +133,75 @@ really_clear_tiles(uint surfaceIndex)
 static void
 cmd_clear_surface(const struct cell_command_clear_surface *clear)
 {
-   const uint num_tiles = spu.fb.width_tiles * spu.fb.height_tiles;
-   uint i;
-
    if (Debug)
       printf("SPU %u: CLEAR SURF %u to 0x%08x\n", spu.init.id,
              clear->surface, clear->value);
 
+   if (clear->surface == 0) {
+      spu.fb.color_clear_value = clear->value;
+      if (spu.init.debug_flags & CELL_DEBUG_CHECKER) {
+         uint x = (spu.init.id << 4) | (spu.init.id << 12) |
+            (spu.init.id << 20) | (spu.init.id << 28);
+         spu.fb.color_clear_value ^= x;
+      }
+   }
+   else {
+      spu.fb.depth_clear_value = clear->value;
+   }
+
 #define CLEAR_OPT 1
 #if CLEAR_OPT
-   /* set all tile's status to CLEAR */
+
+   /* Simply set all tiles' status to CLEAR.
+    * When we actually begin rendering into a tile, we'll initialize it to
+    * the clear value.  If any tiles go untouched during the frame,
+    * really_clear_tiles() will set them to the clear value.
+    */
    if (clear->surface == 0) {
       memset(spu.ctile_status, TILE_STATUS_CLEAR, sizeof(spu.ctile_status));
-      spu.fb.color_clear_value = clear->value;
    }
    else {
       memset(spu.ztile_status, TILE_STATUS_CLEAR, sizeof(spu.ztile_status));
-      spu.fb.depth_clear_value = clear->value;
    }
-   return;
-#endif
 
-   if (clear->surface == 0) {
-      spu.fb.color_clear_value = clear->value;
-      clear_c_tile(&spu.ctile);
-   }
-   else {
-      spu.fb.depth_clear_value = clear->value;
-      clear_z_tile(&spu.ztile);
-   }
+#else
+
+   /*
+    * This path clears the whole framebuffer to the clear color right now.
+    */
 
    /*
    printf("SPU: %s num=%d w=%d h=%d\n",
           __FUNCTION__, num_tiles, spu.fb.width_tiles, spu.fb.height_tiles);
    */
 
-   for (i = spu.init.id; i < num_tiles; i += spu.init.num_spus) {
-      uint tx = i % spu.fb.width_tiles;
-      uint ty = i / spu.fb.width_tiles;
-      if (clear->surface == 0)
-         put_tile(tx, ty, &spu.ctile, TAG_SURFACE_CLEAR, 0);
-      else
-         put_tile(tx, ty, &spu.ztile, TAG_SURFACE_CLEAR, 1);
-      /* XXX we don't want this here, but it fixes bad tile results */
+   /* init a single tile to the clear value */
+   if (clear->surface == 0) {
+      clear_c_tile(&spu.ctile);
+   }
+   else {
+      clear_z_tile(&spu.ztile);
    }
 
-#if 0
-   wait_on_mask(1 << TAG_SURFACE_CLEAR);
-#endif
+   /* walk over my tiles, writing the 'clear' tile's data */
+   {
+      const uint num_tiles = spu.fb.width_tiles * spu.fb.height_tiles;
+      uint i;
+      for (i = spu.init.id; i < num_tiles; i += spu.init.num_spus) {
+         uint tx = i % spu.fb.width_tiles;
+         uint ty = i / spu.fb.width_tiles;
+         if (clear->surface == 0)
+            put_tile(tx, ty, &spu.ctile, TAG_SURFACE_CLEAR, 0);
+         else
+            put_tile(tx, ty, &spu.ztile, TAG_SURFACE_CLEAR, 1);
+      }
+   }
+
+   if (spu.init.debug_flags & CELL_DEBUG_SYNC) {
+      wait_on_mask(1 << TAG_SURFACE_CLEAR);
+   }
+
+#endif /* CLEAR_OPT */
 
    if (Debug)
       printf("SPU %u: CLEAR SURF done\n", spu.init.id);
@@ -198,6 +216,31 @@ cmd_release_verts(const struct cell_command_release_verts *release)
              spu.init.id, release->vertex_buf);
    ASSERT(release->vertex_buf != ~0U);
    release_buffer(release->vertex_buf);
+}
+
+
+/**
+ * Process a CELL_CMD_STATE_FRAGMENT_OPS command.
+ * This involves installing new fragment ops SPU code.
+ * If this function is never called, we'll use a regular C fallback function
+ * for fragment processing.
+ */
+static void
+cmd_state_fragment_ops(const struct cell_command_fragment_ops *fops)
+{
+   if (Debug)
+      printf("SPU %u: CMD_STATE_FRAGMENT_OPS\n", spu.init.id);
+   /* Copy SPU code from batch buffer to spu buffer */
+   memcpy(spu.fragment_ops_code, fops->code, SPU_MAX_FRAGMENT_OPS_INSTS * 4);
+   /* Copy state info */
+   memcpy(&spu.depth_stencil_alpha, &fops->dsa, sizeof(fops->dsa));
+   memcpy(&spu.blend, &fops->blend, sizeof(fops->blend));
+
+   /* Point function pointer at new code */
+   spu.fragment_ops = (spu_fragment_ops_func) spu.fragment_ops_code;
+
+   spu.read_depth = spu.depth_stencil_alpha.depth.enabled;
+   spu.read_stencil = spu.depth_stencil_alpha.stencil[0].enabled;
 }
 
 
@@ -227,87 +270,24 @@ cmd_state_framebuffer(const struct cell_command_framebuffer *cmd)
 
    switch (spu.fb.depth_format) {
    case PIPE_FORMAT_Z32_UNORM:
+      spu.fb.zsize = 4;
+      spu.fb.zscale = (float) 0xffffffffu;
+      break;
    case PIPE_FORMAT_Z24S8_UNORM:
    case PIPE_FORMAT_S8Z24_UNORM:
+   case PIPE_FORMAT_Z24X8_UNORM:
+   case PIPE_FORMAT_X8Z24_UNORM:
       spu.fb.zsize = 4;
+      spu.fb.zscale = (float) 0x00ffffffu;
       break;
    case PIPE_FORMAT_Z16_UNORM:
       spu.fb.zsize = 2;
+      spu.fb.zscale = (float) 0xffffu;
       break;
    default:
       spu.fb.zsize = 0;
       break;
    }
-
-   if (spu.fb.color_format == PIPE_FORMAT_A8R8G8B8_UNORM)
-      spu.color_shuffle = ((vector unsigned char) {
-                              12, 0, 4, 8, 0, 0, 0, 0, 
-                              0, 0, 0, 0, 0, 0, 0, 0});
-   else if (spu.fb.color_format == PIPE_FORMAT_B8G8R8A8_UNORM)
-      spu.color_shuffle = ((vector unsigned char) {
-                              8, 4, 0, 12, 0, 0, 0, 0, 
-                              0, 0, 0, 0, 0, 0, 0, 0});
-   else
-      ASSERT(0);
-}
-
-
-static void
-cmd_state_blend(const struct cell_command_blend *state)
-{
-   if (Debug)
-      printf("SPU %u: BLEND: enabled %d\n",
-             spu.init.id,
-             (state->size != 0));
-
-   ASSERT_ALIGN16(state->base);
-
-   if (state->size != 0) {
-      mfc_get(fb_blend_code_buffer,
-              (unsigned int) state->base,  /* src */
-              ROUNDUP16(state->size),
-              TAG_BATCH_BUFFER,
-              0, /* tid */
-              0  /* rid */);
-      wait_on_mask(1 << TAG_BATCH_BUFFER);
-      spu.blend = (blend_func) fb_blend_code_buffer;
-      spu.read_fb = state->read_fb;
-   } else {
-      spu.read_fb = FALSE;
-   }
-}
-
-
-static void
-cmd_state_depth_stencil(const struct cell_command_depth_stencil_alpha_test *state)
-{
-   if (Debug)
-      printf("SPU %u: DEPTH_STENCIL: ztest %d\n",
-             spu.init.id,
-             state->read_depth);
-
-   ASSERT_ALIGN16(state->base);
-
-   if (state->size != 0) {
-      mfc_get(depth_stencil_code_buffer,
-	      (unsigned int) state->base,  /* src */
-	      ROUNDUP16(state->size),
-	      TAG_BATCH_BUFFER,
-	      0, /* tid */
-	      0  /* rid */);
-      wait_on_mask(1 << TAG_BATCH_BUFFER);
-   } else {
-      /* If there is no code, emit a return instruction.
-       */
-      depth_stencil_code_buffer[0] = 0x35;
-      depth_stencil_code_buffer[1] = 0x00;
-      depth_stencil_code_buffer[2] = 0x00;
-      depth_stencil_code_buffer[3] = 0x00;
-   }
-
-   spu.frag_test = (frag_test_func) depth_stencil_code_buffer;
-   spu.read_depth = state->read_depth;
-   spu.read_stencil = state->read_stencil;
 }
 
 
@@ -381,6 +361,21 @@ cmd_state_vs_array_info(const struct cell_array_info *vs_info)
 
 
 static void
+cmd_state_attrib_fetch(const struct cell_attribute_fetch_code *code)
+{
+   mfc_get(attribute_fetch_code_buffer,
+           (unsigned int) code->base,  /* src */
+           code->size,
+           TAG_BATCH_BUFFER,
+           0, /* tid */
+           0  /* rid */);
+   wait_on_mask(1 << TAG_BATCH_BUFFER);
+
+   draw.vertex_fetch.code = attribute_fetch_code_buffer;
+}
+
+
+static void
 cmd_finish(void)
 {
    if (Debug)
@@ -395,7 +390,9 @@ cmd_finish(void)
 
 
 /**
- * Execute a batch of commands
+ * Execute a batch of commands which was sent to us by the PPU.
+ * See the cell_emit_state.c code to see where the commands come from.
+ *
  * The opcode param encodes the location of the buffer and its size.
  */
 static void
@@ -432,16 +429,14 @@ cmd_batch(uint opcode)
       printf("SPU %u: release batch buf %u\n", spu.init.id, buf);
    release_buffer(buf);
 
+   /*
+    * Loop over commands in the batch buffer
+    */
    for (pos = 0; pos < usize; /* no incr */) {
       switch (buffer[pos]) {
-      case CELL_CMD_STATE_FRAMEBUFFER:
-         {
-            struct cell_command_framebuffer *fb
-               = (struct cell_command_framebuffer *) &buffer[pos];
-            cmd_state_framebuffer(fb);
-            pos += sizeof(*fb) / 8;
-         }
-         break;
+      /*
+       * rendering commands
+       */
       case CELL_CMD_CLEAR_SURFACE:
          {
             struct cell_command_clear_surface *clr
@@ -459,26 +454,24 @@ cmd_batch(uint opcode)
             pos += pos_incr;
          }
          break;
-      case CELL_CMD_RELEASE_VERTS:
+      /*
+       * state-update commands
+       */
+      case CELL_CMD_STATE_FRAMEBUFFER:
          {
-            struct cell_command_release_verts *release
-               = (struct cell_command_release_verts *) &buffer[pos];
-            cmd_release_verts(release);
-            pos += sizeof(*release) / 8;
+            struct cell_command_framebuffer *fb
+               = (struct cell_command_framebuffer *) &buffer[pos];
+            cmd_state_framebuffer(fb);
+            pos += sizeof(*fb) / 8;
          }
          break;
-      case CELL_CMD_FINISH:
-         cmd_finish();
-         pos += 1;
-         break;
-      case CELL_CMD_STATE_BLEND:
-         cmd_state_blend((struct cell_command_blend *) &buffer[pos+1]);
-         pos += (1 + ROUNDUP8(sizeof(struct cell_command_blend)) / 8);
-         break;
-      case CELL_CMD_STATE_DEPTH_STENCIL:
-         cmd_state_depth_stencil((struct cell_command_depth_stencil_alpha_test *)
-                                 &buffer[pos+1]);
-         pos += (1 + ROUNDUP8(sizeof(struct cell_command_depth_stencil_alpha_test)) / 8);
+      case CELL_CMD_STATE_FRAGMENT_OPS:
+         {
+            struct cell_command_fragment_ops *fops
+               = (struct cell_command_fragment_ops *) &buffer[pos];
+            cmd_state_fragment_ops(fops);
+            pos += sizeof(*fops) / 8;
+         }
          break;
       case CELL_CMD_STATE_SAMPLER:
          {
@@ -514,42 +507,32 @@ cmd_batch(uint opcode)
          pos += (1 + ROUNDUP8(sizeof(struct cell_array_info)) / 8);
          break;
       case CELL_CMD_STATE_BIND_VS:
+#if 0
          spu_bind_vertex_shader(&draw,
                                 (struct cell_shader_info *) &buffer[pos+1]);
+#endif
          pos += (1 + ROUNDUP8(sizeof(struct cell_shader_info)) / 8);
          break;
-      case CELL_CMD_STATE_ATTRIB_FETCH: {
-         struct cell_attribute_fetch_code *code =
-             (struct cell_attribute_fetch_code *) &buffer[pos+1];
-
-              mfc_get(attribute_fetch_code_buffer,
-                      (unsigned int) code->base,  /* src */
-                      code->size,
-                      TAG_BATCH_BUFFER,
-                      0, /* tid */
-                      0  /* rid */);
-         wait_on_mask(1 << TAG_BATCH_BUFFER);
-
-         draw.vertex_fetch.code = attribute_fetch_code_buffer;
+      case CELL_CMD_STATE_ATTRIB_FETCH:
+         cmd_state_attrib_fetch((struct cell_attribute_fetch_code *)
+                                &buffer[pos+1]);
          pos += (1 + ROUNDUP8(sizeof(struct cell_attribute_fetch_code)) / 8);
          break;
-      }
-      case CELL_CMD_STATE_LOGICOP: {
-         struct cell_command_logicop *code =
-             (struct cell_command_logicop *) &buffer[pos+1];
-
-              mfc_get(logicop_code_buffer,
-                      (unsigned int) code->base,  /* src */
-                      code->size,
-                      TAG_BATCH_BUFFER,
-                      0, /* tid */
-                      0  /* rid */);
-         wait_on_mask(1 << TAG_BATCH_BUFFER);
-
-	 spu.logicop = (logicop_func) logicop_code_buffer;
-         pos += (1 + ROUNDUP8(sizeof(struct cell_command_logicop)) / 8);
+      /*
+       * misc commands
+       */
+      case CELL_CMD_FINISH:
+         cmd_finish();
+         pos += 1;
          break;
-      }
+      case CELL_CMD_RELEASE_VERTS:
+         {
+            struct cell_command_release_verts *release
+               = (struct cell_command_release_verts *) &buffer[pos];
+            cmd_release_verts(release);
+            pos += sizeof(*release) / 8;
+         }
+         break;
       case CELL_CMD_FLUSH_BUFFER_RANGE: {
 	 struct cell_buffer_range *br = (struct cell_buffer_range *)
 	     &buffer[pos+1];
@@ -618,7 +601,9 @@ main_loop(void)
          exitFlag = 1;
          break;
       case CELL_CMD_VS_EXECUTE:
+#if 0
          spu_execute_vertex_shader(&draw, &cmd.vs);
+#endif
          break;
       case CELL_CMD_BATCH:
          cmd_batch(opcode);
@@ -643,6 +628,11 @@ one_time_init(void)
    memset(spu.ctile_status, TILE_STATUS_DEFINED, sizeof(spu.ctile_status));
    memset(spu.ztile_status, TILE_STATUS_DEFINED, sizeof(spu.ztile_status));
    invalidate_tex_cache();
+
+   /* Install default/fallback fragment processing function.
+    * This will normally be overriden by a code-gen'd function.
+    */
+   spu.fragment_ops = spu_fallback_fragment_ops;
 }
 
 

@@ -25,6 +25,10 @@ CXXFLAGS = -O
 LDFLAGS =
 GLU_CFLAGS = 
 
+# Compiler for building demos/tests/etc
+APP_CC = $(CC)
+APP_CXX = $(CXX)
+
 # Misc tools and flags
 SHELL = /bin/sh
 MKLIB = $(SHELL) $(TOP)/bin/mklib

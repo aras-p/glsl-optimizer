@@ -35,6 +35,7 @@
 #include "draw/draw_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_winsys.h"
+#include "pipe/p_inlines.h"
 #include "util/u_memory.h"
 #include "pipe/p_screen.h"
 
@@ -72,7 +73,7 @@ i915_draw_range_elements(struct pipe_context *pipe,
     */
    for (i = 0; i < i915->num_vertex_buffers; i++) {
       void *buf
-         = pipe->winsys->buffer_map(pipe->winsys,
+         = pipe_buffer_map(pipe->screen,
                                     i915->vertex_buffer[i].buffer,
                                     PIPE_BUFFER_USAGE_CPU_READ);
       draw_set_mapped_vertex_buffer(draw, i, buf);
@@ -80,7 +81,7 @@ i915_draw_range_elements(struct pipe_context *pipe,
    /* Map index buffer, if present */
    if (indexBuffer) {
       void *mapped_indexes
-         = pipe->winsys->buffer_map(pipe->winsys, indexBuffer,
+         = pipe_buffer_map(pipe->screen, indexBuffer,
                                     PIPE_BUFFER_USAGE_CPU_READ);
       draw_set_mapped_element_buffer_range(draw, indexSize,
 					   min_index,
@@ -105,11 +106,11 @@ i915_draw_range_elements(struct pipe_context *pipe,
     * unmap vertex/index buffers
     */
    for (i = 0; i < i915->num_vertex_buffers; i++) {
-      pipe->winsys->buffer_unmap(pipe->winsys, i915->vertex_buffer[i].buffer);
+      pipe_buffer_unmap(pipe->screen, i915->vertex_buffer[i].buffer);
       draw_set_mapped_vertex_buffer(draw, i, NULL);
    }
    if (indexBuffer) {
-      pipe->winsys->buffer_unmap(pipe->winsys, indexBuffer);
+      pipe_buffer_unmap(pipe->screen, indexBuffer);
       draw_set_mapped_element_buffer_range(draw, 0, start, start + count - 1, NULL);
    }
 

@@ -225,30 +225,30 @@ struct st_context {
                       const float *vertices) 
    {
       struct pipe_context *pipe = $self->pipe;
-      struct pipe_winsys *winsys = pipe->winsys;
+      struct pipe_screen *screen = pipe->screen;
       struct pipe_buffer *vbuf;
       float *map;
       unsigned size;
 
       size = num_verts * num_attribs * 4 * sizeof(float);
 
-      vbuf = winsys->buffer_create(winsys,
-                                   32,
-                                   PIPE_BUFFER_USAGE_VERTEX, 
-                                   size);
+      vbuf = pipe_buffer_create(screen,
+                                32,
+                                PIPE_BUFFER_USAGE_VERTEX, 
+                                size);
       if(!vbuf)
          goto error1;
       
-      map = winsys->buffer_map(winsys, vbuf, PIPE_BUFFER_USAGE_CPU_WRITE);
+      map = pipe_buffer_map(screen, vbuf, PIPE_BUFFER_USAGE_CPU_WRITE);
       if (!map)
          goto error2;
       memcpy(map, vertices, size);
-      pipe->winsys->buffer_unmap(pipe->winsys, vbuf);
+      pipe_buffer_unmap(screen, vbuf);
       
       util_draw_vertex_buffer(pipe, vbuf, prim, num_verts, num_attribs);
       
 error2:
-      pipe_buffer_reference(pipe->winsys, &vbuf, NULL);
+      pipe_buffer_reference(screen, &vbuf, NULL);
 error1:
       ;
    }

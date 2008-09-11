@@ -31,6 +31,9 @@
 #include "spu_main.h"
 
 
+/**
+ * Get tile of color or Z values from main memory, put into SPU memory.
+ */
 void
 get_tile(uint tx, uint ty, tile_t *tile, int tag, int zBuf)
 {
@@ -56,6 +59,9 @@ get_tile(uint tx, uint ty, tile_t *tile, int tag, int zBuf)
 }
 
 
+/**
+ * Move tile of color or Z values from SPU memory to main memory.
+ */
 void
 put_tile(uint tx, uint ty, const tile_t *tile, int tag, int zBuf)
 {

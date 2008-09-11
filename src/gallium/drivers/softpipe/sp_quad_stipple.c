@@ -19,17 +19,17 @@ stipple_quad(struct quad_stage *qs, struct quad_header *quad)
    static const uint bit31 = 1 << 31;
    static const uint bit30 = 1 << 30;
 
-   if (quad->prim == PRIM_TRI) {
+   if (quad->input.prim == PRIM_TRI) {
       struct softpipe_context *softpipe = qs->softpipe;
       /* need to invert Y to index into OpenGL's stipple pattern */
       int y0, y1;
       uint stipple0, stipple1;
       if (softpipe->rasterizer->origin_lower_left) {
-         y0 = softpipe->framebuffer.height - 1 - quad->y0;
+         y0 = softpipe->framebuffer.height - 1 - quad->input.y0;
          y1 = y0 - 1;
       }
       else {
-         y0 = quad->y0;
+         y0 = quad->input.y0;
          y1 = y0 + 1;
       }
       stipple0 = softpipe->poly_stipple.stipple[y0 % 32];
@@ -37,18 +37,18 @@ stipple_quad(struct quad_stage *qs, struct quad_header *quad)
 
 #if 1
       {
-      const int col0 = quad->x0 % 32;
+      const int col0 = quad->input.x0 % 32;
       if ((stipple0 & (bit31 >> col0)) == 0)
-         quad->mask &= ~MASK_TOP_LEFT;
+         quad->inout.mask &= ~MASK_TOP_LEFT;
 
       if ((stipple0 & (bit30 >> col0)) == 0)
-         quad->mask &= ~MASK_TOP_RIGHT;
+         quad->inout.mask &= ~MASK_TOP_RIGHT;
 
       if ((stipple1 & (bit31 >> col0)) == 0)
-         quad->mask &= ~MASK_BOTTOM_LEFT;
+         quad->inout.mask &= ~MASK_BOTTOM_LEFT;
 
       if ((stipple1 & (bit30 >> col0)) == 0)
-         quad->mask &= ~MASK_BOTTOM_RIGHT;
+         quad->inout.mask &= ~MASK_BOTTOM_RIGHT;
       }
 #else
       /* We'd like to use this code, but we'd need to redefine
@@ -56,11 +56,11 @@ stipple_quad(struct quad_stage *qs, struct quad_header *quad)
        * and similarly for the BOTTOM bits.  But that may have undesirable
        * side effects elsewhere.
        */
-      const int col0 = 30 - (quad->x0 % 32);
-      quad->mask &= (((stipple0 >> col0) & 0x3) | 
+      const int col0 = 30 - (quad->input.x0 % 32);
+      quad->inout.mask &= (((stipple0 >> col0) & 0x3) | 
                      (((stipple1 >> col0) & 0x3) << 2));
 #endif
-      if (!quad->mask)
+      if (!quad->inout.mask)
          return;
    }
 

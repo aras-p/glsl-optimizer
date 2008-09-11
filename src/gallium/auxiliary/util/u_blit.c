@@ -138,10 +138,10 @@ util_create_blit(struct pipe_context *pipe, struct cso_context *cso)
    /* fragment shader */
    ctx->fs = util_make_fragment_tex_shader(pipe, &ctx->frag_shader);
 
-   ctx->vbuf = pipe->winsys->buffer_create(pipe->winsys,
-                                           32,
-                                           PIPE_BUFFER_USAGE_VERTEX,
-                                           sizeof(ctx->vertices));
+   ctx->vbuf = pipe_buffer_create(pipe->screen,
+                                  32,
+                                  PIPE_BUFFER_USAGE_VERTEX,
+                                  sizeof(ctx->vertices));
    if (!ctx->vbuf) {
       FREE(ctx);
       ctx->pipe->delete_fs_state(ctx->pipe, ctx->fs);
@@ -174,7 +174,7 @@ util_destroy_blit(struct blit_state *ctx)
    FREE((void*) ctx->vert_shader.tokens);
    FREE((void*) ctx->frag_shader.tokens);
 
-   pipe->winsys->buffer_destroy(pipe->winsys, ctx->vbuf);
+   pipe_buffer_reference(pipe->screen, &ctx->vbuf, NULL);
 
    FREE(ctx);
 }
@@ -214,12 +214,12 @@ setup_vertex_data(struct blit_state *ctx,
    ctx->vertices[3][1][0] = 0.0f;
    ctx->vertices[3][1][1] = 1.0f;
 
-   buf = ctx->pipe->winsys->buffer_map(ctx->pipe->winsys, ctx->vbuf,
-                                       PIPE_BUFFER_USAGE_CPU_WRITE);
+   buf = pipe_buffer_map(ctx->pipe->screen, ctx->vbuf,
+                         PIPE_BUFFER_USAGE_CPU_WRITE);
 
    memcpy(buf, ctx->vertices, sizeof(ctx->vertices));
 
-   ctx->pipe->winsys->buffer_unmap(ctx->pipe->winsys, ctx->vbuf);
+   pipe_buffer_unmap(ctx->pipe->screen, ctx->vbuf);
 }
 
 
@@ -259,12 +259,12 @@ setup_vertex_data_tex(struct blit_state *ctx,
    ctx->vertices[3][1][0] = s0;
    ctx->vertices[3][1][1] = t1;
 
-   buf = ctx->pipe->winsys->buffer_map(ctx->pipe->winsys, ctx->vbuf,
-                                       PIPE_BUFFER_USAGE_CPU_WRITE);
+   buf = pipe_buffer_map(ctx->pipe->screen, ctx->vbuf,
+                         PIPE_BUFFER_USAGE_CPU_WRITE);
 
    memcpy(buf, ctx->vertices, sizeof(ctx->vertices));
 
-   ctx->pipe->winsys->buffer_unmap(ctx->pipe->winsys, ctx->vbuf);
+   pipe_buffer_unmap(ctx->pipe->screen, ctx->vbuf);
 }
 /**
  * Copy pixel block from src surface to dst surface.

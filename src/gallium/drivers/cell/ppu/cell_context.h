@@ -39,8 +39,13 @@
 #include "rtasm/rtasm_ppc_spe.h"
 #include "tgsi/tgsi_scan.h"
 
+
 struct cell_vbuf_render;
 
+
+/**
+ * Cell vertex shader state, subclass of pipe_shader_state.
+ */
 struct cell_vertex_shader_state
 {
    struct pipe_shader_state shader;
@@ -49,6 +54,9 @@ struct cell_vertex_shader_state
 };
 
 
+/**
+ * Cell fragment shader state, subclass of pipe_shader_state.
+ */
 struct cell_fragment_shader_state
 {
    struct pipe_shader_state shader;
@@ -57,7 +65,11 @@ struct cell_fragment_shader_state
 };
 
 
-struct cell_blend_state {
+/**
+ * Cell blend state atom, subclass of pipe_blend_state.
+ */
+struct cell_blend_state
+{
    struct pipe_blend_state base;
 
    /**
@@ -67,17 +79,24 @@ struct cell_blend_state {
 };
 
 
-struct cell_depth_stencil_alpha_state {
-   struct pipe_depth_stencil_alpha_state   base;
+/**
+ * Cell depth/stencil/alpha state atom, subclass of
+ * pipe_depth_stencil_alpha_state.
+ */
+struct cell_depth_stencil_alpha_state
+{
+   struct pipe_depth_stencil_alpha_state base;
 
    /**
     * Generated code to perform alpha, stencil, and depth testing on the SPE
     */
    struct spe_function code;
-
 };
 
 
+/**
+ * Per-context state, subclass of pipe_context.
+ */
 struct cell_context
 {
    struct pipe_context pipe;
@@ -144,6 +163,8 @@ struct cell_context
 
    struct spe_function attrib_fetch;
    unsigned attrib_fetch_offsets[PIPE_MAX_ATTRIBS];
+
+   unsigned debug_flags;
 };
 
 

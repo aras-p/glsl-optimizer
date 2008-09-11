@@ -129,7 +129,7 @@ check_random_pattern(const uint8_t *dst, size_t size,
    for(i = 0; i < size; ++i) {
       if(*dst++ != random_pattern[i % sizeof(random_pattern)]) {
          *min_ofs = MIN2(*min_ofs, i);
-         *max_ofs = MIN2(*max_ofs, i);
+         *max_ofs = MAX2(*max_ofs, i);
 	 result = FALSE;
       }
    }
@@ -138,12 +138,30 @@ check_random_pattern(const uint8_t *dst, size_t size,
 
 
 static void
-pb_debug_buffer_destroy(struct pb_buffer *_buf)
+pb_debug_buffer_fill(struct pb_debug_buffer *buf)
 {
-   struct pb_debug_buffer *buf = pb_debug_buffer(_buf);  
    uint8_t *map;
    
-   assert(!buf->base.base.refcount);
+   map = pb_map(buf->buffer, PIPE_BUFFER_USAGE_CPU_WRITE);
+   assert(map);
+   if(map) {
+      fill_random_pattern(map, buf->underflow_size);
+      fill_random_pattern(map + buf->underflow_size + buf->base.base.size, 
+                          buf->overflow_size);
+      pb_unmap(buf->buffer);
+   }
+}
+
+
+/**
+ * Check for under/over flows.
+ * 
+ * Should be called with the buffer unmaped.
+ */
+static void
+pb_debug_buffer_check(struct pb_debug_buffer *buf)
+{
+   uint8_t *map;
    
    map = pb_map(buf->buffer, PIPE_BUFFER_USAGE_CPU_READ);
    assert(map);
@@ -154,24 +172,45 @@ pb_debug_buffer_destroy(struct pb_buffer *_buf)
       underflow = !check_random_pattern(map, buf->underflow_size, 
                                         &min_ofs, &max_ofs);
       if(underflow) {
-	 debug_printf("buffer underflow (%u of %u bytes) detected\n",
-	              buf->underflow_size - min_ofs,
-	              buf->underflow_size);
+         debug_printf("buffer underflow (offset -%u%s to -%u bytes) detected\n",
+                      buf->underflow_size - min_ofs,
+                      min_ofs == 0 ? "+" : "",
+                      buf->underflow_size - max_ofs);
       }
       
       overflow = !check_random_pattern(map + buf->underflow_size + buf->base.base.size, 
                                        buf->overflow_size, 
                                        &min_ofs, &max_ofs);
       if(overflow) {
-         debug_printf("buffer overflow (%u of %u bytes) detected\n",
+         debug_printf("buffer overflow (size %u plus offset %u to %u%s bytes) detected\n",
+                      buf->base.base.size,
+                      min_ofs,
                       max_ofs,
-                      buf->overflow_size);
+                      max_ofs == buf->overflow_size - 1 ? "+" : "");
       }
       
       debug_assert(!underflow && !overflow);
-      
+
+      /* re-fill if not aborted */
+      if(underflow)
+         fill_random_pattern(map, buf->underflow_size);
+      if(overflow)
+         fill_random_pattern(map + buf->underflow_size + buf->base.base.size, 
+                             buf->overflow_size);
+
       pb_unmap(buf->buffer);
    }
+}
+
+
+static void
+pb_debug_buffer_destroy(struct pb_buffer *_buf)
+{
+   struct pb_debug_buffer *buf = pb_debug_buffer(_buf);  
+   
+   assert(!buf->base.base.refcount);
+   
+   pb_debug_buffer_check(buf);
 
    pb_reference(&buf->buffer, NULL);
    FREE(buf);
@@ -183,9 +222,14 @@ pb_debug_buffer_map(struct pb_buffer *_buf,
                     unsigned flags)
 {
    struct pb_debug_buffer *buf = pb_debug_buffer(_buf);
-   void *map = pb_map(buf->buffer, flags);
+   void *map;
+   
+   pb_debug_buffer_check(buf);
+
+   map = pb_map(buf->buffer, flags);
    if(!map)
       return NULL;
+   
    return (uint8_t *)map + buf->underflow_size;
 }
 
@@ -195,6 +239,8 @@ pb_debug_buffer_unmap(struct pb_buffer *_buf)
 {
    struct pb_debug_buffer *buf = pb_debug_buffer(_buf);   
    pb_unmap(buf->buffer);
+   
+   pb_debug_buffer_check(buf);
 }
 
 
@@ -227,7 +273,6 @@ pb_debug_manager_create_buffer(struct pb_manager *_mgr,
    struct pb_debug_buffer *buf;
    struct pb_desc real_desc;
    size_t real_size;
-   uint8_t *map;
    
    buf = CALLOC_STRUCT(pb_debug_buffer);
    if(!buf)
@@ -262,13 +307,7 @@ pb_debug_manager_create_buffer(struct pb_manager *_mgr,
    buf->underflow_size = mgr->band_size;
    buf->overflow_size = buf->buffer->base.size - buf->underflow_size - size;
    
-   map = pb_map(buf->buffer, PIPE_BUFFER_USAGE_CPU_WRITE);
-   assert(map);
-   if(map) {
-      fill_random_pattern(map, buf->underflow_size);
-      fill_random_pattern(map + buf->underflow_size + size, buf->overflow_size);
-      pb_unmap(buf->buffer);
-   }
+   pb_debug_buffer_fill(buf);
    
    return &buf->base;
 }

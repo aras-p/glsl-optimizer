@@ -1,4 +1,5 @@
 
+#include "cell/common.h"
 #include "pipe/p_shader_tokens.h"
 #include "pipe/p_debug.h"
 #include "tgsi/tgsi_parse.h"
@@ -20,7 +21,7 @@ tgsi_util_get_src_register_swizzle(
    case 3:
       return reg->SwizzleW;
    default:
-      assert( 0 );
+      ASSERT( 0 );
    }
    return 0;
 }
@@ -40,7 +41,7 @@ tgsi_util_get_src_register_extswizzle(
    case 3:
       return reg->ExtSwizzleW;
    default:
-      assert( 0 );
+      ASSERT( 0 );
    }
    return 0;
 }
@@ -60,12 +61,12 @@ tgsi_util_get_full_src_register_extswizzle(
       &reg->SrcRegisterExtSwz,
       component );
 
-   assert (TGSI_SWIZZLE_X == TGSI_EXTSWIZZLE_X);
-   assert (TGSI_SWIZZLE_Y == TGSI_EXTSWIZZLE_Y);
-   assert (TGSI_SWIZZLE_Z == TGSI_EXTSWIZZLE_Z);
-   assert (TGSI_SWIZZLE_W == TGSI_EXTSWIZZLE_W);
-   assert (TGSI_EXTSWIZZLE_ZERO > TGSI_SWIZZLE_W);
-   assert (TGSI_EXTSWIZZLE_ONE > TGSI_SWIZZLE_W);
+   ASSERT (TGSI_SWIZZLE_X == TGSI_EXTSWIZZLE_X);
+   ASSERT (TGSI_SWIZZLE_Y == TGSI_EXTSWIZZLE_Y);
+   ASSERT (TGSI_SWIZZLE_Z == TGSI_EXTSWIZZLE_Z);
+   ASSERT (TGSI_SWIZZLE_W == TGSI_EXTSWIZZLE_W);
+   ASSERT (TGSI_EXTSWIZZLE_ZERO > TGSI_SWIZZLE_W);
+   ASSERT (TGSI_EXTSWIZZLE_ONE > TGSI_SWIZZLE_W);
 
    /*
     * Second, calculate the simple  swizzle  for   the   unswizzled channel index.
@@ -95,7 +96,7 @@ tgsi_util_get_src_register_extnegate(
    case 3:
       return reg->NegateW;
    default:
-      assert( 0 );
+      ASSERT( 0 );
    }
    return 0;
 }
@@ -120,7 +121,7 @@ tgsi_util_set_src_register_extnegate(
       reg->NegateW = negate;
       break;
    default:
-      assert( 0 );
+      ASSERT( 0 );
    }
 }
 

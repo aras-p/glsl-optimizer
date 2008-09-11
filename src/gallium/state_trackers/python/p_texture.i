@@ -180,7 +180,7 @@ struct st_buffer {
    }
    
    void write( const char *STRING, unsigned LENGTH, unsigned offset = 0) {
-      struct pipe_winsys *winsys = $self->st_dev->screen->winsys;
+      struct pipe_screen *screen = $self->st_dev->screen;
       char *map;
       
       assert($self->buffer->refcount);
@@ -195,10 +195,10 @@ struct st_buffer {
          return;
       }
 
-      map = winsys->buffer_map(winsys, $self->buffer, PIPE_BUFFER_USAGE_CPU_WRITE);
+      map = pipe_buffer_map(screen, $self->buffer, PIPE_BUFFER_USAGE_CPU_WRITE);
       if(map) {
          memcpy(map + offset, STRING, LENGTH);
-         winsys->buffer_unmap(winsys, $self->buffer);
+         pipe_buffer_unmap(screen, $self->buffer);
       }
    }
 };

@@ -15,8 +15,11 @@ C_SOURCES = \
 	u_rect.c \
 	u_simple_shaders.c \
 	u_snprintf.c \
+	u_stream_stdc.c \
+	u_stream_wd.c \
 	u_tile.c \
-	u_time.c
+	u_time.c \
+	u_timed_winsys.c
 
 include ../../Makefile.template
 

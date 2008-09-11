@@ -382,10 +382,10 @@ fetch_src_file_channel(
          break;
 
       case TGSI_FILE_IMMEDIATE:
-         assert( index->i[0] < (int) mach->ImmLimit );
-         assert( index->i[1] < (int) mach->ImmLimit );
-         assert( index->i[2] < (int) mach->ImmLimit );
-         assert( index->i[3] < (int) mach->ImmLimit );
+         ASSERT( index->i[0] < (int) mach->ImmLimit );
+         ASSERT( index->i[1] < (int) mach->ImmLimit );
+         ASSERT( index->i[2] < (int) mach->ImmLimit );
+         ASSERT( index->i[3] < (int) mach->ImmLimit );
 
          chan->f[0] = mach->Imms[index->i[0]][swizzle];
          chan->f[1] = mach->Imms[index->i[1]][swizzle];
@@ -409,7 +409,7 @@ fetch_src_file_channel(
          break;
 
       default:
-         assert( 0 );
+         ASSERT( 0 );
       }
       break;
 
@@ -422,7 +422,7 @@ fetch_src_file_channel(
       break;
 
    default:
-      assert( 0 );
+      ASSERT( 0 );
    }
 }
 
@@ -471,7 +471,7 @@ fetch_source(
          index.q = si_shli(index.q, 12);
          break;
       default:
-         assert( 0 );
+         ASSERT( 0 );
       }
 
       index.i[0] += reg->SrcRegisterDim.Index;
@@ -558,7 +558,7 @@ store_dest(
       break;
 
    default:
-      assert( 0 );
+      ASSERT( 0 );
       return;
    }
 
@@ -582,11 +582,11 @@ store_dest(
       break;
 
    case TGSI_SAT_MINUS_PLUS_ONE:
-      assert( 0 );
+      ASSERT( 0 );
       break;
 
    default:
-      assert( 0 );
+      ASSERT( 0 );
    }
 }
 
@@ -769,7 +769,7 @@ exec_tex(struct spu_exec_machine *mach,
       break;
 
    default:
-      assert (0);
+      ASSERT (0);
    }
 
    FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
@@ -861,7 +861,7 @@ exec_declaration(struct spu_exec_machine *mach,
             break;
 
          default:
-            assert( 0 );
+            ASSERT( 0 );
          }
 
          if( mask == TGSI_WRITEMASK_XYZW ) {
@@ -971,11 +971,11 @@ exec_instruction(
       break;
 
    case TGSI_OPCODE_EXP:
-      assert (0);
+      ASSERT (0);
       break;
 
    case TGSI_OPCODE_LOG:
-      assert (0);
+      ASSERT (0);
       break;
 
    case TGSI_OPCODE_MUL:
@@ -1151,24 +1151,24 @@ exec_instruction(
       break;
 
    case TGSI_OPCODE_CND:
-      assert (0);
+      ASSERT (0);
       break;
 
    case TGSI_OPCODE_CND0:
-      assert (0);
+      ASSERT (0);
       break;
 
    case TGSI_OPCODE_DOT2ADD:
       /* TGSI_OPCODE_DP2A */
-      assert (0);
+      ASSERT (0);
       break;
 
    case TGSI_OPCODE_INDEX:
-      assert (0);
+      ASSERT (0);
       break;
 
    case TGSI_OPCODE_NEGATE:
-      assert (0);
+      ASSERT (0);
       break;
 
    case TGSI_OPCODE_FRAC:
@@ -1181,7 +1181,7 @@ exec_instruction(
       break;
 
    case TGSI_OPCODE_CLAMP:
-      assert (0);
+      ASSERT (0);
       break;
 
    case TGSI_OPCODE_FLOOR:
@@ -1276,7 +1276,7 @@ exec_instruction(
       break;
 
     case TGSI_OPCODE_MULTIPLYMATRIX:
-       assert (0);
+       ASSERT (0);
        break;
 
     case TGSI_OPCODE_ABS:
@@ -1290,7 +1290,7 @@ exec_instruction(
        break;
 
    case TGSI_OPCODE_RCC:
-      assert (0);
+      ASSERT (0);
       break;
 
    case TGSI_OPCODE_DPH:
@@ -1353,23 +1353,23 @@ exec_instruction(
       break;
 
    case TGSI_OPCODE_PK2H:
-      assert (0);
+      ASSERT (0);
       break;
 
    case TGSI_OPCODE_PK2US:
-      assert (0);
+      ASSERT (0);
       break;
 
    case TGSI_OPCODE_PK4B:
-      assert (0);
+      ASSERT (0);
       break;
 
    case TGSI_OPCODE_PK4UB:
-      assert (0);
+      ASSERT (0);
       break;
 
    case TGSI_OPCODE_RFL:
-      assert (0);
+      ASSERT (0);
       break;
 
    case TGSI_OPCODE_SEQ:
@@ -1384,7 +1384,7 @@ exec_instruction(
       break;
 
    case TGSI_OPCODE_SFL:
-      assert (0);
+      ASSERT (0);
       break;
 
    case TGSI_OPCODE_SGT:
@@ -1429,7 +1429,7 @@ exec_instruction(
       break;
 
    case TGSI_OPCODE_STR:
-      assert (0);
+      ASSERT (0);
       break;
 
    case TGSI_OPCODE_TEX:
@@ -1452,7 +1452,7 @@ exec_instruction(
       /* src[1] = d[strq]/dx */
       /* src[2] = d[strq]/dy */
       /* src[3] = sampler unit */
-      assert (0);
+      ASSERT (0);
       break;
 
    case TGSI_OPCODE_TXL:
@@ -1470,35 +1470,35 @@ exec_instruction(
       break;
 
    case TGSI_OPCODE_UP2H:
-      assert (0);
+      ASSERT (0);
       break;
 
    case TGSI_OPCODE_UP2US:
-      assert (0);
+      ASSERT (0);
       break;
 
    case TGSI_OPCODE_UP4B:
-      assert (0);
+      ASSERT (0);
       break;
 
    case TGSI_OPCODE_UP4UB:
-      assert (0);
+      ASSERT (0);
       break;
 
    case TGSI_OPCODE_X2D:
-      assert (0);
+      ASSERT (0);
       break;
 
    case TGSI_OPCODE_ARA:
-      assert (0);
+      ASSERT (0);
       break;
 
    case TGSI_OPCODE_ARR:
-      assert (0);
+      ASSERT (0);
       break;
 
    case TGSI_OPCODE_BRA:
-      assert (0);
+      ASSERT (0);
       break;
 
    case TGSI_OPCODE_CAL:
@@ -1507,14 +1507,14 @@ exec_instruction(
          /* do the call */
 
          /* push the Cond, Loop, Cont stacks */
-         assert(mach->CondStackTop < TGSI_EXEC_MAX_COND_NESTING);
+         ASSERT(mach->CondStackTop < TGSI_EXEC_MAX_COND_NESTING);
          mach->CondStack[mach->CondStackTop++] = mach->CondMask;
-         assert(mach->LoopStackTop < TGSI_EXEC_MAX_LOOP_NESTING);
+         ASSERT(mach->LoopStackTop < TGSI_EXEC_MAX_LOOP_NESTING);
          mach->LoopStack[mach->LoopStackTop++] = mach->LoopMask;
-         assert(mach->ContStackTop < TGSI_EXEC_MAX_LOOP_NESTING);
+         ASSERT(mach->ContStackTop < TGSI_EXEC_MAX_LOOP_NESTING);
          mach->ContStack[mach->ContStackTop++] = mach->ContMask;
 
-         assert(mach->FuncStackTop < TGSI_EXEC_MAX_CALL_NESTING);
+         ASSERT(mach->FuncStackTop < TGSI_EXEC_MAX_CALL_NESTING);
          mach->FuncStack[mach->FuncStackTop++] = mach->FuncMask;
 
          /* note that PC was already incremented above */
@@ -1538,13 +1538,13 @@ exec_instruction(
          *pc = mach->CallStack[--mach->CallStackTop];
 
          /* pop the Cond, Loop, Cont stacks */
-         assert(mach->CondStackTop > 0);
+         ASSERT(mach->CondStackTop > 0);
          mach->CondMask = mach->CondStack[--mach->CondStackTop];
-         assert(mach->LoopStackTop > 0);
+         ASSERT(mach->LoopStackTop > 0);
          mach->LoopMask = mach->LoopStack[--mach->LoopStackTop];
-         assert(mach->ContStackTop > 0);
+         ASSERT(mach->ContStackTop > 0);
          mach->ContMask = mach->ContStack[--mach->ContStackTop];
-         assert(mach->FuncStackTop > 0);
+         ASSERT(mach->FuncStackTop > 0);
          mach->FuncMask = mach->FuncStack[--mach->FuncStackTop];
 
          UPDATE_EXEC_MASK(mach);
@@ -1552,7 +1552,7 @@ exec_instruction(
       break;
 
    case TGSI_OPCODE_SSG:
-      assert (0);
+      ASSERT (0);
       break;
 
    case TGSI_OPCODE_CMP:
@@ -1592,11 +1592,11 @@ exec_instruction(
       break;
 
    case TGSI_OPCODE_NRM:
-      assert (0);
+      ASSERT (0);
       break;
 
    case TGSI_OPCODE_DIV:
-      assert( 0 );
+      ASSERT( 0 );
       break;
 
    case TGSI_OPCODE_DP2:
@@ -1615,7 +1615,7 @@ exec_instruction(
 
    case TGSI_OPCODE_IF:
       /* push CondMask */
-      assert(mach->CondStackTop < TGSI_EXEC_MAX_COND_NESTING);
+      ASSERT(mach->CondStackTop < TGSI_EXEC_MAX_COND_NESTING);
       mach->CondStack[mach->CondStackTop++] = mach->CondMask;
       FETCH( &r[0], 0, CHAN_X );
       /* update CondMask */
@@ -1639,7 +1639,7 @@ exec_instruction(
       /* invert CondMask wrt previous mask */
       {
          uint prevMask;
-         assert(mach->CondStackTop > 0);
+         ASSERT(mach->CondStackTop > 0);
          prevMask = mach->CondStack[mach->CondStackTop - 1];
          mach->CondMask = ~mach->CondMask & prevMask;
          UPDATE_EXEC_MASK(mach);
@@ -1649,7 +1649,7 @@ exec_instruction(
 
    case TGSI_OPCODE_ENDIF:
       /* pop CondMask */
-      assert(mach->CondStackTop > 0);
+      ASSERT(mach->CondStackTop > 0);
       mach->CondMask = mach->CondStack[--mach->CondStackTop];
       UPDATE_EXEC_MASK(mach);
       break;
@@ -1660,19 +1660,19 @@ exec_instruction(
       break;
 
    case TGSI_OPCODE_REP:
-      assert (0);
+      ASSERT (0);
       break;
 
    case TGSI_OPCODE_ENDREP:
-       assert (0);
+       ASSERT (0);
        break;
 
    case TGSI_OPCODE_PUSHA:
-      assert (0);
+      ASSERT (0);
       break;
 
    case TGSI_OPCODE_POPA:
-      assert (0);
+      ASSERT (0);
       break;
 
    case TGSI_OPCODE_CEIL:
@@ -1746,7 +1746,7 @@ exec_instruction(
       break;
 
    case TGSI_OPCODE_MOD:
-      assert (0);
+      ASSERT (0);
       break;
 
    case TGSI_OPCODE_XOR:
@@ -1759,15 +1759,15 @@ exec_instruction(
       break;
 
    case TGSI_OPCODE_SAD:
-      assert (0);
+      ASSERT (0);
       break;
 
    case TGSI_OPCODE_TXF:
-      assert (0);
+      ASSERT (0);
       break;
 
    case TGSI_OPCODE_TXQ:
-      assert (0);
+      ASSERT (0);
       break;
 
    case TGSI_OPCODE_EMIT:
@@ -1784,9 +1784,9 @@ exec_instruction(
       /* fall-through (for now) */
    case TGSI_OPCODE_BGNLOOP2:
       /* push LoopMask and ContMasks */
-      assert(mach->LoopStackTop < TGSI_EXEC_MAX_LOOP_NESTING);
+      ASSERT(mach->LoopStackTop < TGSI_EXEC_MAX_LOOP_NESTING);
       mach->LoopStack[mach->LoopStackTop++] = mach->LoopMask;
-      assert(mach->ContStackTop < TGSI_EXEC_MAX_LOOP_NESTING);
+      ASSERT(mach->ContStackTop < TGSI_EXEC_MAX_LOOP_NESTING);
       mach->ContStack[mach->ContStackTop++] = mach->ContMask;
       break;
 
@@ -1794,7 +1794,7 @@ exec_instruction(
       /* fall-through (for now at least) */
    case TGSI_OPCODE_ENDLOOP2:
       /* Restore ContMask, but don't pop */
-      assert(mach->ContStackTop > 0);
+      ASSERT(mach->ContStackTop > 0);
       mach->ContMask = mach->ContStack[mach->ContStackTop - 1];
       if (mach->LoopMask) {
          /* repeat loop: jump to instruction just past BGNLOOP */
@@ -1802,10 +1802,10 @@ exec_instruction(
       }
       else {
          /* exit loop: pop LoopMask */
-         assert(mach->LoopStackTop > 0);
+         ASSERT(mach->LoopStackTop > 0);
          mach->LoopMask = mach->LoopStack[--mach->LoopStackTop];
          /* pop ContMask */
-         assert(mach->ContStackTop > 0);
+         ASSERT(mach->ContStackTop > 0);
          mach->ContMask = mach->ContStack[--mach->ContStackTop];
       }
       UPDATE_EXEC_MASK(mach);
@@ -1834,26 +1834,26 @@ exec_instruction(
       break;
 
    case TGSI_OPCODE_NOISE1:
-      assert( 0 );
+      ASSERT( 0 );
       break;
 
    case TGSI_OPCODE_NOISE2:
-      assert( 0 );
+      ASSERT( 0 );
       break;
 
    case TGSI_OPCODE_NOISE3:
-      assert( 0 );
+      ASSERT( 0 );
       break;
 
    case TGSI_OPCODE_NOISE4:
-      assert( 0 );
+      ASSERT( 0 );
       break;
 
    case TGSI_OPCODE_NOP:
       break;
 
    default:
-      assert( 0 );
+      ASSERT( 0 );
    }
 }
 
@@ -1874,11 +1874,11 @@ spu_exec_machine_run( struct spu_exec_machine *mach )
    mach->FuncMask = 0xf;
    mach->ExecMask = 0xf;
 
-   mach->CondStackTop = 0; /* temporarily subvert this assertion */
-   assert(mach->CondStackTop == 0);
-   assert(mach->LoopStackTop == 0);
-   assert(mach->ContStackTop == 0);
-   assert(mach->CallStackTop == 0);
+   mach->CondStackTop = 0; /* temporarily subvert this ASSERTion */
+   ASSERT(mach->CondStackTop == 0);
+   ASSERT(mach->LoopStackTop == 0);
+   ASSERT(mach->ContStackTop == 0);
+   ASSERT(mach->CallStackTop == 0);
 
    mach->Temps[TEMP_KILMASK_I].xyzw[TEMP_KILMASK_C].u[0] = 0;
    mach->Temps[TEMP_OUTPUT_I].xyzw[TEMP_OUTPUT_C].u[0] = 0;

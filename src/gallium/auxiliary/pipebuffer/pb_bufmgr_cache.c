@@ -79,7 +79,7 @@ struct pb_cache_manager
    struct pb_manager *provider;
    unsigned usecs;
    
-   _glthread_Mutex mutex;
+   pipe_mutex mutex;
    
    struct list_head delayed;
    size_t numDelayed;
@@ -153,7 +153,7 @@ pb_cache_buffer_destroy(struct pb_buffer *_buf)
    struct pb_cache_buffer *buf = pb_cache_buffer(_buf);   
    struct pb_cache_manager *mgr = buf->mgr;
 
-   _glthread_LOCK_MUTEX(mgr->mutex);
+   pipe_mutex_lock(mgr->mutex);
    assert(buf->base.base.refcount == 0);
    
    _pb_cache_buffer_list_check_free(mgr);
@@ -162,7 +162,7 @@ pb_cache_buffer_destroy(struct pb_buffer *_buf)
    util_time_add(&buf->start, mgr->usecs, &buf->end);
    LIST_ADDTAIL(&buf->head, &mgr->delayed);
    ++mgr->numDelayed;
-   _glthread_UNLOCK_MUTEX(mgr->mutex);
+   pipe_mutex_unlock(mgr->mutex);
 }
 
 
@@ -235,7 +235,7 @@ pb_cache_manager_create_buffer(struct pb_manager *_mgr,
    struct list_head *curr, *next;
    struct util_time now;
    
-   _glthread_LOCK_MUTEX(mgr->mutex);
+   pipe_mutex_lock(mgr->mutex);
 
    buf = NULL;
    curr = mgr->delayed.next;
@@ -249,27 +249,35 @@ pb_cache_manager_create_buffer(struct pb_manager *_mgr,
 	 buf = curr_buf;
       else if(util_time_timeout(&curr_buf->start, &curr_buf->end, &now))
 	 _pb_cache_buffer_destroy(curr_buf);
+      else
+         /* This buffer (and all hereafter) are still hot in cache */
+         break;
       curr = next; 
       next = curr->next;
    }
 
    /* keep searching in the hot buffers */
-   while(!buf && curr != &mgr->delayed) {
-      curr_buf = LIST_ENTRY(struct pb_cache_buffer, curr, head);
-      if(pb_cache_is_buffer_compat(curr_buf, size, desc))
-	 buf = curr_buf;
-      curr = next; 
-      next = curr->next;
+   if(!buf) {
+      while(curr != &mgr->delayed) {
+         curr_buf = LIST_ENTRY(struct pb_cache_buffer, curr, head);
+         if(pb_cache_is_buffer_compat(curr_buf, size, desc)) {
+            buf = curr_buf;
+            break;
+         }
+         /* no need to check the timeout here */
+         curr = next;
+         next = curr->next;
+      }
    }
    
    if(buf) {
       LIST_DEL(&buf->head);
-      _glthread_UNLOCK_MUTEX(mgr->mutex);
+      pipe_mutex_unlock(mgr->mutex);
       ++buf->base.base.refcount;
       return &buf->base;
    }
    
-   _glthread_UNLOCK_MUTEX(mgr->mutex);
+   pipe_mutex_unlock(mgr->mutex);
 
    buf = CALLOC_STRUCT(pb_cache_buffer);
    if(!buf)
@@ -305,7 +313,7 @@ pb_cache_flush(struct pb_manager *_mgr)
    struct list_head *curr, *next;
    struct pb_cache_buffer *buf;
 
-   _glthread_LOCK_MUTEX(mgr->mutex);
+   pipe_mutex_lock(mgr->mutex);
    curr = mgr->delayed.next;
    next = curr->next;
    while(curr != &mgr->delayed) {
@@ -314,7 +322,7 @@ pb_cache_flush(struct pb_manager *_mgr)
       curr = next; 
       next = curr->next;
    }
-   _glthread_UNLOCK_MUTEX(mgr->mutex);
+   pipe_mutex_unlock(mgr->mutex);
 }
 
 
@@ -345,7 +353,7 @@ pb_cache_manager_create(struct pb_manager *provider,
    mgr->usecs = usecs;
    LIST_INITHEAD(&mgr->delayed);
    mgr->numDelayed = 0;
-   _glthread_INIT_MUTEX(mgr->mutex);
+   pipe_mutex_init(mgr->mutex);
       
    return &mgr->base;
 }

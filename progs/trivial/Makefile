@@ -41,6 +41,7 @@ SOURCES = \
 	linestrip-stipple-wide.c \
 	linestrip-stipple.c \
 	linestrip.c \
+	long-fixed-func.c \
 	pgon-mode.c \
 	point-clip.c \
 	point-param.c \
@@ -138,13 +139,13 @@ UTIL_FILES = readtex.h readtex.c
 .SUFFIXES: .c
 
 .c:
-	$(CC) $(INCLUDES) $(CFLAGS) $(LDFLAGS) $< $(LIBS) -o $@
+	$(APP_CC) $(INCLUDES) $(CFLAGS) $(LDFLAGS) $< $(LIBS) -o $@
 
 .c.o:
-	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) $< -o $@
+	$(APP_CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) $< -o $@
 
 .S.o:
-	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES)  $< -o $@
+	$(APP_CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES)  $< -o $@
 
 
 ##### TARGETS #####
@@ -165,19 +166,19 @@ getproclist.h: $(TOP)/src/mesa/glapi/gl_API.xml getprocaddress.c getprocaddress.
 
 
 texrect: texrect.o readtex.o
-	$(CC) $(CFLAGS) $(LDFLAGS) texrect.o readtex.o $(LIBS) -o $@
+	$(APP_CC) $(CFLAGS) $(LDFLAGS) texrect.o readtex.o $(LIBS) -o $@
 
 texrect.o: texrect.c readtex.h
-	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) $< -o $@
+	$(APP_CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) $< -o $@
 
 invert: invert.o readtex.o
-	$(CC) $(CFLAGS) $(LDFLAGS) invert.o readtex.o $(LIBS) -o $@
+	$(APP_CC) $(CFLAGS) $(LDFLAGS) invert.o readtex.o $(LIBS) -o $@
 
 invert.o: invert.c readtex.h
-	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) $< -o $@
+	$(APP_CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) $< -o $@
 
 readtex.o: readtex.c
-	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) $< -o $@
+	$(APP_CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) $< -o $@
 
 
 readtex.h: $(TOP)/progs/util/readtex.h

@@ -330,7 +330,7 @@ brw_texture_release_screen(struct pipe_screen *screen,
       DBG("%s deleting %p\n", __FUNCTION__, (void *) tex);
       */
 
-      pipe_buffer_reference(ws, &tex->buffer, NULL);
+      winsys_buffer_reference(ws, &tex->buffer, NULL);
 
       for (i = 0; i < PIPE_MAX_TEXTURE_LEVELS; i++)
          if (tex->image_offset[i])
@@ -369,7 +369,7 @@ brw_get_tex_surface_screen(struct pipe_screen *screen,
    if (ps) {
       assert(ps->format);
       assert(ps->refcount);
-      pipe_buffer_reference(ws, &ps->buffer, tex->buffer);
+      winsys_buffer_reference(ws, &ps->buffer, tex->buffer);
       ps->format = pt->format;
       ps->width = pt->width[level];
       ps->height = pt->height[level];

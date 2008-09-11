@@ -62,7 +62,6 @@
 #include "xmesaP.h"
 #include "main/context.h"
 #include "main/framebuffer.h"
-#include "glapi/glthread.h"
 
 #include "state_tracker/st_public.h"
 #include "state_tracker/st_context.h"
@@ -75,7 +74,7 @@
 /**
  * Global X driver lock
  */
-_glthread_Mutex _xmesa_lock;
+pipe_mutex _xmesa_lock;
 
 
 int xmesa_mode;
@@ -245,10 +244,10 @@ xmesa_get_window_size(XMesaDisplay *dpy, XMesaBuffer b,
 #else
    Status stat;
 
-   _glthread_LOCK_MUTEX(_xmesa_lock);
+   pipe_mutex_lock(_xmesa_lock);
    XSync(b->xm_visual->display, 0); /* added for Chromium */
    stat = get_drawable_size(dpy, b->drawable, width, height);
-   _glthread_UNLOCK_MUTEX(_xmesa_lock);
+   pipe_mutex_unlock(_xmesa_lock);
 
    if (!stat) {
       /* probably querying a window that's recently been destroyed */
@@ -350,12 +349,17 @@ create_xmesa_buffer(XMesaDrawable d, BufferType type,
 
    if (vis->mesa_visual.depthBits == 0)
       depthFormat = PIPE_FORMAT_NONE;
+#ifdef GALLIUM_CELL /* XXX temporary for Cell! */
+   else
+      depthFormat = PIPE_FORMAT_S8Z24_UNORM;
+#else
    else if (vis->mesa_visual.depthBits <= 16)
-      depthFormat = PIPE_FORMAT_Z16_UNORM;
+      depthFormat = PIPE_FORMAT_Z16UNORM;
    else if (vis->mesa_visual.depthBits <= 24)
       depthFormat = PIPE_FORMAT_S8Z24_UNORM;
    else
       depthFormat = PIPE_FORMAT_Z32_UNORM;
+#endif
 
    if (vis->mesa_visual.stencilBits == 8) {
       if (depthFormat == PIPE_FORMAT_S8Z24_UNORM)
@@ -779,7 +783,7 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
    uint pf;
 
    if (firstTime) {
-      _glthread_INIT_MUTEX(_xmesa_lock);
+      pipe_mutex_init(_xmesa_lock);
       firstTime = GL_FALSE;
    }
 
@@ -1299,6 +1303,7 @@ void XMesaFlush( XMesaContext c )
 #ifdef XFree86Server
       /* NOT_NEEDED */
 #else
+      st_finish(c->st);
       XSync( c->xm_visual->display, False );
 #endif
    }

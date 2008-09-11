@@ -266,17 +266,12 @@ find_translated_vp(struct st_context *st,
                xvp->output_to_semantic_name[outAttr] = TGSI_SEMANTIC_GENERIC;
                xvp->output_to_semantic_index[outAttr] = maxGeneric + 1;
             }
-
-         assert(xvp->output_to_semantic_name[outAttr] != TGSI_SEMANTIC_COUNT);
-         assert(xvp->output_to_semantic_index[outAttr] != 99);
          }
-
 
 #if 0 /*debug*/
          printf("vp output_to_slot[%d] = %d\n", outAttr, 
                 xvp->output_to_slot[outAttr]);
 #endif
-
       }
 
       assert(stvp->Base.Base.NumInstructions > 1);

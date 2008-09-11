@@ -26,6 +26,11 @@
  **************************************************************************/
 
 
+/**
+ * Utility/wrappers for communicating with the SPUs.
+ */
+
+
 #include <pthread.h>
 
 #include "cell_spu.h"
@@ -40,6 +45,9 @@ helpful headers:
 */
 
 
+/**
+ * Cell/SPU info that's not per-context.
+ */
 struct cell_global_info cell_global;
 
 
@@ -74,7 +82,11 @@ wait_mbox_message(spe_context_ptr_t ctx)
 }
 
 
-static void *cell_thread_function(void *arg)
+/**
+ * Called by pthread_create() to spawn an SPU thread.
+ */
+static void *
+cell_thread_function(void *arg)
 {
    struct cell_init_info *init = (struct cell_init_info *) arg;
    unsigned entry = SPE_DEFAULT_ENTRY;
@@ -92,14 +104,16 @@ static void *cell_thread_function(void *arg)
 
 
 /**
- * Create the SPU threads
+ * Create the SPU threads.  This is done once during driver initialization.
+ * This involves setting the the "init" message which is sent to each SPU.
+ * The init message specifies an SPU id, total number of SPUs, location
+ * and number of batch buffers, etc.
  */
 void
 cell_start_spus(struct cell_context *cell)
 {
    static boolean one_time_init = FALSE;
    uint i, j;
-
 
    if (one_time_init) {
       fprintf(stderr, "PPU: Multiple rendering contexts not yet supported "
@@ -120,6 +134,7 @@ cell_start_spus(struct cell_context *cell)
    for (i = 0; i < cell->num_spus; i++) {
       cell_global.inits[i].id = i;
       cell_global.inits[i].num_spus = cell->num_spus;
+      cell_global.inits[i].debug_flags = cell->debug_flags;
       cell_global.inits[i].cmd = &cell_global.command[i];
       for (j = 0; j < CELL_NUM_BUFFERS; j++) {
          cell_global.inits[i].buffers[j] = cell->buffer[j];
@@ -137,14 +152,17 @@ cell_start_spus(struct cell_context *cell)
          exit(1);
       }
       
-      pthread_create(&cell_global.spe_threads[i], NULL, &cell_thread_function,
-		     &cell_global.inits[i]);
+      pthread_create(&cell_global.spe_threads[i], /* returned thread handle */
+                     NULL,                        /* pthread attribs */
+                     &cell_thread_function,       /* start routine */
+		     &cell_global.inits[i]);      /* thread argument */
    }
 }
 
 
 /**
  * Tell all the SPUs to stop/exit.
+ * This is done when the driver's exiting / cleaning up.
  */
 void
 cell_spu_exit(struct cell_context *cell)

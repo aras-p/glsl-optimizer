@@ -112,7 +112,7 @@ run_vertex_program(struct spu_vs_context *draw,
    const float *scale = draw->viewport.scale;
    const float *trans = draw->viewport.translate;
 
-   assert(count <= 4);
+   ASSERT(count <= 4);
 
    machine->Processor = TGSI_PROCESSOR_VERTEX;
 

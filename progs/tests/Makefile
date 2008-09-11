@@ -62,6 +62,7 @@ SOURCES = \
 	pbo.c \
 	prog_parameter.c \
 	projtex.c \
+	quads.c \
 	random.c \
 	readrate.c \
 	seccolor.c \
@@ -116,13 +117,13 @@ clean:
 .SUFFIXES: .c
 
 .c:
-	$(CC) $(INCLUDES) $(CFLAGS) $(LDFLAGS) $< $(LIBS) -o $@
+	$(APP_CC) $(INCLUDES) $(CFLAGS) $(LDFLAGS) $< $(LIBS) -o $@
 
 .c.o:
-	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) $< -o $@
+	$(APP_CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) $< -o $@
 
 .S.o:
-	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES)  $< -o $@
+	$(APP_CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES)  $< -o $@
 
 # auto code generation
 getprocaddress: getprocaddress.c getproclist.h
@@ -131,58 +132,58 @@ getproclist.h: $(TOP)/src/mesa/glapi/gl_API.xml getprocaddress.c getprocaddress.
 	python getprocaddress.py > getproclist.h
 
 arraytexture: arraytexture.o readtex.o
-	$(CC) $(CFLAGS) arraytexture.o readtex.o $(LIBS) -o $@
+	$(APP_CC) $(CFLAGS) arraytexture.o readtex.o $(LIBS) -o $@
 
 arraytexture.o: arraytexture.c readtex.h
-	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) arraytexture.c -o $@
+	$(APP_CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) arraytexture.c -o $@
 
 afsmultiarb: afsmultiarb.o readtex.o
-	$(CC) $(CFLAGS) $(LDFLAGS) afsmultiarb.o readtex.o $(LIBS) -o $@
+	$(APP_CC) $(CFLAGS) $(LDFLAGS) afsmultiarb.o readtex.o $(LIBS) -o $@
 
 afsmultiarb.o: afsmultiarb.c readtex.h
-	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) afsmultiarb.c -o $@
+	$(APP_CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) afsmultiarb.c -o $@
 
 drawbuffers: drawbuffers.o
-	$(CC) $(CFLAGS) $(LDFLAGS) drawbuffers.o $(LIBS) -o $@
+	$(APP_CC) $(CFLAGS) $(LDFLAGS) drawbuffers.o $(LIBS) -o $@
 
 drawbuffers.o: drawbuffers.c extfuncs.h
-	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) drawbuffers.c -o $@
+	$(APP_CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) drawbuffers.c -o $@
 
 texrect: texrect.o readtex.o
-	$(CC) $(CFLAGS) $(LDFLAGS) texrect.o readtex.o $(LIBS) -o $@
+	$(APP_CC) $(CFLAGS) $(LDFLAGS) texrect.o readtex.o $(LIBS) -o $@
 
 texrect.o: texrect.c readtex.h
-	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) texrect.c -o $@
+	$(APP_CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) texrect.c -o $@
 
 bug_3195: bug_3195.o readtex.o
-	$(CC) $(CFLAGS) $(LDFLAGS) bug_3195.o readtex.o $(LIBS) -o $@
+	$(APP_CC) $(CFLAGS) $(LDFLAGS) bug_3195.o readtex.o $(LIBS) -o $@
 
 bug_3195.o: bug_3195.c readtex.h
-	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) bug_3195.c -o $@
+	$(APP_CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) bug_3195.c -o $@
 
 invert: invert.o readtex.o
-	$(CC) $(CFLAGS) $(LDFLAGS) invert.o readtex.o $(LIBS) -o $@
+	$(APP_CC) $(CFLAGS) $(LDFLAGS) invert.o readtex.o $(LIBS) -o $@
 
 invert.o: invert.c readtex.h
-	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) invert.c -o $@
+	$(APP_CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) invert.c -o $@
 
 mipmap_view: mipmap_view.o readtex.o
-	$(CC) $(CFLAGS) mipmap_view.o readtex.o $(LIBS) -o $@
+	$(APP_CC) $(CFLAGS) mipmap_view.o readtex.o $(LIBS) -o $@
 
 mipmap_view.o: mipmap_view.c readtex.h
-	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) $< -o $@
+	$(APP_CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) $< -o $@
 
 
 fillrate: fillrate.o readtex.o
-	$(CC) $(CFLAGS) fillrate.o readtex.o $(LIBS) -o $@
+	$(APP_CC) $(CFLAGS) fillrate.o readtex.o $(LIBS) -o $@
 
 fillrate.o: fillrate.c readtex.h
-	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) $< -o $@
+	$(APP_CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) $< -o $@
 
 
 
 readtex.o: readtex.c
-	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) readtex.c -o $@
+	$(APP_CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) readtex.c -o $@
 
 
 readtex.h: $(TOP)/progs/util/readtex.h

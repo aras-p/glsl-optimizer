@@ -28,6 +28,7 @@
 
 #include "util/u_memory.h"
 #include "pipe/p_winsys.h"
+#include "pipe/p_inlines.h"
 #include "util/u_string.h"
 
 #include "i915_reg.h"
@@ -207,7 +208,7 @@ i915_surface_map( struct pipe_screen *screen,
                   struct pipe_surface *surface,
                   unsigned flags )
 {
-   char *map = screen->winsys->buffer_map( screen->winsys, surface->buffer, flags );
+   char *map = pipe_buffer_map( screen, surface->buffer, flags );
    if (map == NULL)
       return NULL;
 
@@ -226,7 +227,7 @@ static void
 i915_surface_unmap(struct pipe_screen *screen,
                    struct pipe_surface *surface)
 {
-   screen->winsys->buffer_unmap( screen->winsys, surface->buffer );
+   pipe_buffer_unmap( screen, surface->buffer );
 }
 
 

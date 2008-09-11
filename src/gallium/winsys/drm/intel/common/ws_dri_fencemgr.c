@@ -1,5 +1,5 @@
 #include "ws_dri_fencemgr.h"
-#include "glthread.h"
+#include "pipe/p_thread.h"
 #include <xf86mm.h>
 #include <string.h>
 #include <unistd.h>
@@ -20,7 +20,7 @@ struct _DriFenceMgr {
     /*
      * These members are protected by this->mutex
      */
-    _glthread_Mutex mutex;
+    pipe_mutex mutex;
     int refCount;
     drmMMListHead *heads;
     int num_fences;
@@ -44,7 +44,7 @@ struct _DriFenceObject {
     /*
      * These members are protected by this->mutex.
      */
-    _glthread_Mutex mutex;
+    pipe_mutex mutex;
     uint32_t signaled_type;
     void *private;
 };
@@ -65,8 +65,8 @@ driFenceMgrCreate(const struct _DriFenceMgrCreateInfo *info)
   if (!tmp)
       return NULL;
 
-  _glthread_INIT_MUTEX(tmp->mutex);
-  _glthread_LOCK_MUTEX(tmp->mutex);
+  pipe_mutex_init(tmp->mutex);
+  pipe_mutex_lock(tmp->mutex);
   tmp->refCount = 1;
   tmp->info = *info;
   tmp->num_fences = 0;
@@ -77,7 +77,7 @@ driFenceMgrCreate(const struct _DriFenceMgrCreateInfo *info)
   for (i=0; i<tmp->info.num_classes; ++i) {
       DRMINITLISTHEAD(&tmp->heads[i]);
   }
-  _glthread_UNLOCK_MUTEX(tmp->mutex);
+  pipe_mutex_unlock(tmp->mutex);
   return tmp;
 
   out_err:
@@ -95,13 +95,13 @@ driFenceMgrUnrefUnlock(struct _DriFenceMgr **pMgr)
     if (--mgr->refCount == 0)
 	free(mgr);
     else
-	_glthread_UNLOCK_MUTEX(mgr->mutex);
+	pipe_mutex_unlock(mgr->mutex);
 }
 
 void
 driFenceMgrUnReference(struct _DriFenceMgr **pMgr)
 {
-    _glthread_LOCK_MUTEX((*pMgr)->mutex);
+    pipe_mutex_lock((*pMgr)->mutex);
     driFenceMgrUnrefUnlock(pMgr);
 }
 
@@ -143,9 +143,9 @@ driSignalPreviousFencesLocked(struct _DriFenceMgr *mgr,
 	 */
 
 	++entry->refCount;
-	_glthread_UNLOCK_MUTEX(mgr->mutex);
-	_glthread_LOCK_MUTEX(entry->mutex);
-	_glthread_LOCK_MUTEX(mgr->mutex);
+	pipe_mutex_unlock(mgr->mutex);
+	pipe_mutex_lock(entry->mutex);
+	pipe_mutex_lock(mgr->mutex);
 
 	prev = list->prev;
 
@@ -157,7 +157,7 @@ driSignalPreviousFencesLocked(struct _DriFenceMgr *mgr,
 		 * Somebody else removed the entry from the list.
 		 */
 
-		_glthread_UNLOCK_MUTEX(entry->mutex);
+		pipe_mutex_unlock(entry->mutex);
 		driFenceUnReferenceLocked(&entry);
 		return;
 	}
@@ -167,7 +167,7 @@ driSignalPreviousFencesLocked(struct _DriFenceMgr *mgr,
 	    DRMLISTDELINIT(list);
 	    mgr->info.unreference(mgr, &entry->private);
 	}
-	_glthread_UNLOCK_MUTEX(entry->mutex);
+	pipe_mutex_unlock(entry->mutex);
 	driFenceUnReferenceLocked(&entry);
 	list = prev;
     }
@@ -181,7 +181,7 @@ driFenceFinish(struct _DriFenceObject *fence, uint32_t fence_type,
     struct _DriFenceMgr *mgr = fence->mgr;
     int ret = 0;
 
-    _glthread_LOCK_MUTEX(fence->mutex);
+    pipe_mutex_lock(fence->mutex);
 
     if ((fence->signaled_type & fence_type) == fence_type)
 	goto out0;
@@ -190,16 +190,16 @@ driFenceFinish(struct _DriFenceObject *fence, uint32_t fence_type,
     if (ret)
 	goto out0;
 
-    _glthread_LOCK_MUTEX(mgr->mutex);
-    _glthread_UNLOCK_MUTEX(fence->mutex);
+    pipe_mutex_lock(mgr->mutex);
+    pipe_mutex_unlock(fence->mutex);
 
     driSignalPreviousFencesLocked(mgr, &fence->head, fence->fence_class,
 				  fence_type);
-    _glthread_UNLOCK_MUTEX(mgr->mutex);
+    pipe_mutex_unlock(mgr->mutex);
     return 0;
 
   out0:
-    _glthread_UNLOCK_MUTEX(fence->mutex);
+    pipe_mutex_unlock(fence->mutex);
     return ret;
 }
 
@@ -207,9 +207,9 @@ uint32_t driFenceSignaledTypeCached(struct _DriFenceObject *fence)
 {
     uint32_t ret;
 
-    _glthread_LOCK_MUTEX(fence->mutex);
+    pipe_mutex_lock(fence->mutex);
     ret = fence->signaled_type;
-    _glthread_UNLOCK_MUTEX(fence->mutex);
+    pipe_mutex_unlock(fence->mutex);
 
     return ret;
 }
@@ -221,7 +221,7 @@ driFenceSignaledType(struct _DriFenceObject *fence, uint32_t flush_type,
     int ret = 0;
     struct _DriFenceMgr *mgr;
 
-    _glthread_LOCK_MUTEX(fence->mutex);
+    pipe_mutex_lock(fence->mutex);
     mgr = fence->mgr;
     *signaled = fence->signaled_type;
     if ((fence->signaled_type & flush_type) == flush_type)
@@ -236,25 +236,25 @@ driFenceSignaledType(struct _DriFenceObject *fence, uint32_t flush_type,
     if ((fence->signaled_type | *signaled) == fence->signaled_type)
 	goto out0;
 
-    _glthread_LOCK_MUTEX(mgr->mutex);
-    _glthread_UNLOCK_MUTEX(fence->mutex);
+    pipe_mutex_lock(mgr->mutex);
+    pipe_mutex_unlock(fence->mutex);
 
     driSignalPreviousFencesLocked(mgr, &fence->head, fence->fence_class,
 				  *signaled);
 
-    _glthread_UNLOCK_MUTEX(mgr->mutex);
+    pipe_mutex_unlock(mgr->mutex);
     return 0;
   out0:
-    _glthread_UNLOCK_MUTEX(fence->mutex);
+    pipe_mutex_unlock(fence->mutex);
     return ret;
 }
 
 struct _DriFenceObject *
 driFenceReference(struct _DriFenceObject *fence)
 {
-    _glthread_LOCK_MUTEX(fence->mgr->mutex);
+    pipe_mutex_lock(fence->mgr->mutex);
     ++fence->refCount;
-    _glthread_UNLOCK_MUTEX(fence->mgr->mutex);
+    pipe_mutex_unlock(fence->mgr->mutex);
     return fence;
 }
 
@@ -267,7 +267,7 @@ driFenceUnReference(struct _DriFenceObject **pFence)
 	return;
 
     mgr = (*pFence)->mgr;
-    _glthread_LOCK_MUTEX(mgr->mutex);
+    pipe_mutex_lock(mgr->mutex);
     ++mgr->refCount;
     driFenceUnReferenceLocked(pFence);
     driFenceMgrUnrefUnlock(&mgr);
@@ -294,15 +294,15 @@ struct _DriFenceObject
 	return NULL;
     }
 
-    _glthread_INIT_MUTEX(fence->mutex);
-    _glthread_LOCK_MUTEX(fence->mutex);
-    _glthread_LOCK_MUTEX(mgr->mutex);
+    pipe_mutex_init(fence->mutex);
+    pipe_mutex_lock(fence->mutex);
+    pipe_mutex_lock(mgr->mutex);
     fence->refCount = 1;
     DRMLISTADDTAIL(&fence->head, &mgr->heads[fence_class]);
     fence->mgr = mgr;
     ++mgr->refCount;
     ++mgr->num_fences;
-    _glthread_UNLOCK_MUTEX(mgr->mutex);
+    pipe_mutex_unlock(mgr->mutex);
     fence->fence_class = fence_class;
     fence->fence_type = fence_type;
     fence->signaled_type = 0;
@@ -312,7 +312,7 @@ struct _DriFenceObject
 	memcpy(fence->private, private, private_size);
     }
 
-    _glthread_UNLOCK_MUTEX(fence->mutex);
+    pipe_mutex_unlock(fence->mutex);
     return fence;
 }
 

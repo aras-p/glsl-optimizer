@@ -33,7 +33,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include "pipe/p_debug.h"
-#include "glthread.h"
+#include "pipe/p_thread.h"
 #include "ws_dri_bufpool.h"
 #include "ws_dri_bufmgr.h"
 
@@ -60,14 +60,14 @@ pool_destroy(struct _DriBufferPool *pool, void *private)
 
 static int
 pool_waitIdle(struct _DriBufferPool *pool, void *private,
-	      _glthread_Mutex *mutex, int lazy)
+	      pipe_mutex *mutex, int lazy)
 {
     return 0;
 }
 
 static int
 pool_map(struct _DriBufferPool *pool, void *private, unsigned flags,
-         int hint, _glthread_Mutex *mutex, void **virtual)
+         int hint, pipe_mutex *mutex, void **virtual)
 {
     *virtual = (void *)((unsigned long *)private + 2);
     return 0;

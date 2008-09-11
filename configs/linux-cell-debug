@@ -1,0 +1,10 @@
+# linux-cell-debug
+
+include $(TOP)/configs/linux-cell
+
+# just override name and OPT_FLAGS here:
+
+CONFIG_NAME = linux-cell-debug
+
+OPT_FLAGS = -g -DDEBUG
+

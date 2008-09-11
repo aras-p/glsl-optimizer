@@ -531,6 +531,35 @@ pf_is_ycbcr( enum pipe_format format )
    return pf_layout(format) == PIPE_FORMAT_LAYOUT_YCBCR ? TRUE : FALSE;
 }
 
+static INLINE boolean 
+pf_has_alpha( enum pipe_format format )
+{
+   switch (pf_layout(format)) {
+   case PIPE_FORMAT_LAYOUT_RGBAZS:
+   case PIPE_FORMAT_LAYOUT_MIXED:
+      /* FIXME: pf_get_component_bits( PIPE_FORMAT_A8L8_UNORM, PIPE_FORMAT_COMP_A ) should not return 0 right? */
+      if(format == PIPE_FORMAT_A8_UNORM || 
+         format == PIPE_FORMAT_A8L8_UNORM || 
+         format == PIPE_FORMAT_A8_L8_SRGB)
+         return TRUE;
+      return pf_get_component_bits( format, PIPE_FORMAT_COMP_A ) ? TRUE : FALSE;
+   case PIPE_FORMAT_LAYOUT_YCBCR:
+      return FALSE; 
+   case PIPE_FORMAT_LAYOUT_DXT:
+      switch (format) {
+      case PIPE_FORMAT_DXT1_RGBA:
+      case PIPE_FORMAT_DXT3_RGBA:
+      case PIPE_FORMAT_DXT5_RGBA:
+         return TRUE;
+      default:
+         return FALSE;
+      }
+   default:
+      assert( 0 );
+      return FALSE;
+   }
+}
+
 #ifdef __cplusplus
 }
 #endif

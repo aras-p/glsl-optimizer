@@ -1,7 +1,6 @@
 #ifndef __glext_h_
 #define __glext_h_
 
-/* $Id: glext.h 5687 2008-05-13 21:31:32Z oddhack $ */
 
 #ifdef __cplusplus
 extern "C" {

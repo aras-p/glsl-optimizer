@@ -136,6 +136,26 @@ util_time_diff(const struct util_time *t1,
 }
 
 
+
+uint64_t
+util_time_micros( void )
+{
+   struct util_time t1;
+   
+   util_time_get(&t1);
+   
+#if defined(PIPE_OS_LINUX)
+   return t1.tv.tv_usec + t1.tv.tv_sec*1000000LL;
+#elif defined(PIPE_SUBSYSTEM_WINDOWS_DISPLAY) || defined(PIPE_SUBSYSTEM_WINDOWS_USER) || defined(PIPE_SUBSYSTEM_WINDOWS_CE)
+   util_time_get_frequency();
+   return t1.counter*INT64_C(1000000)/frequency;
+#elif defined(PIPE_SUBSYSTEM_WINDOWS_MINIPORT)
+   return t1.counter/10;
+#endif
+}
+
+
+
 /**
  * Compare two time values.
  * 

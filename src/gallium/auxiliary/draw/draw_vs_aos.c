@@ -32,6 +32,7 @@
 #include "util/u_memory.h"
 #include "util/u_math.h"
 #include "pipe/p_shader_tokens.h"
+#include "pipe/p_debug.h"
 #include "tgsi/tgsi_parse.h"
 #include "tgsi/tgsi_util.h"
 #include "tgsi/tgsi_exec.h"
@@ -119,21 +120,26 @@ static struct x86_reg get_reg_ptr(struct aos_compilation *cp,
 
    switch (file) {
    case TGSI_FILE_INPUT:
+      assert(idx < MAX_INPUTS);
       return x86_make_disp(ptr, Offset(struct aos_machine, input[idx]));
 
    case TGSI_FILE_OUTPUT:
       return x86_make_disp(ptr, Offset(struct aos_machine, output[idx]));
 
    case TGSI_FILE_TEMPORARY:
+      assert(idx < MAX_TEMPS);
       return x86_make_disp(ptr, Offset(struct aos_machine, temp[idx]));
 
    case AOS_FILE_INTERNAL:
+      assert(idx < MAX_INTERNALS);
       return x86_make_disp(ptr, Offset(struct aos_machine, internal[idx]));
 
    case TGSI_FILE_IMMEDIATE: 
+      assert(idx < MAX_IMMEDIATES);  /* just a sanity check */
       return x86_make_disp(aos_get_x86(cp, 0, X86_IMMEDIATES), idx * 4 * sizeof(float));
 
    case TGSI_FILE_CONSTANT: 
+      assert(idx < MAX_CONSTANTS);  /* just a sanity check */
       return x86_make_disp(aos_get_x86(cp, 1, X86_CONSTANTS), idx * 4 * sizeof(float));
 
    default:
@@ -2108,6 +2114,11 @@ static void PIPE_CDECL vaos_run_linear( struct draw_vs_varient *varient,
                          start,
                          count,
                          output_buffer );
+
+   /* Sanity spot checks to make sure we didn't trash our constants */
+   assert(machine->internal[IMM_ONES][0] == 1.0f);
+   assert(machine->internal[IMM_IDENTITY][0] == 0.0f);
+   assert(machine->internal[IMM_NEGS][0] == -1.0f);
 }
 
 

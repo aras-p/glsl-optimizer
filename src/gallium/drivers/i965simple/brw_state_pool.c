@@ -92,10 +92,10 @@ static void brw_init_pool( struct brw_context *brw,
    pool->size = size;
    pool->brw = brw;
 
-   pool->buffer = brw->pipe.winsys->buffer_create(brw->pipe.winsys,
-						  4096,
-                                                  0 /*  DRM_BO_FLAG_MEM_TT */,
-                                                  size);
+   pool->buffer = pipe_buffer_create(brw->pipe.screen,
+                                     4096,
+                                     0 /*  DRM_BO_FLAG_MEM_TT */,
+                                     size);
 }
 
 static void brw_destroy_pool( struct brw_context *brw,
@@ -103,7 +103,7 @@ static void brw_destroy_pool( struct brw_context *brw,
 {
    struct brw_mem_pool *pool = &brw->pool[pool_id];
 
-   pipe_buffer_reference( pool->brw->pipe.winsys,
+   pipe_buffer_reference( pool->brw->pipe.screen,
 			  &pool->buffer,
 			  NULL );
 }

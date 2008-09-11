@@ -36,7 +36,7 @@ PROGS = \
 
 # make executable from .c file:
 .c: $(LIB_DEP)
-	$(CC) -I$(INCDIR) $(CFLAGS) $(LDFLAGS) $< $(LIBS) -o $@
+	$(APP_CC) -I$(INCDIR) $(CFLAGS) $(LDFLAGS) $< $(LIBS) -o $@
 
 
 ##### TARGETS #####
@@ -58,7 +58,7 @@ readtex.h: $(TOP)/progs/util/readtex.h
 	cp $< .
 
 readtex.o: readtex.c readtex.h
-	$(CC) -c -I$(INCDIR) $(CFLAGS) readtex.c
+	$(APP_CC) -c -I$(INCDIR) $(CFLAGS) readtex.c
 
 
 shaderutil.c: $(TOP)/progs/util/shaderutil.c
@@ -112,7 +112,6 @@ mandelbrot.o: mandelbrot.c extfuncs.h shaderutil.h
 
 mandelbrot: mandelbrot.o shaderutil.o
 	$(CC) -I$(INCDIR) $(CFLAGS) $(LDFLAGS) mandelbrot.o shaderutil.o $(LIBS) -o $@
-
 
 multitex.o: multitex.c extfuncs.h readtex.h shaderutil.h
 	$(CC) -c -I$(INCDIR) $(CFLAGS) multitex.c
@@ -171,10 +170,10 @@ trirast: trirast.o shaderutil.o
 
 
 convolutions: convolutions.o readtex.o
-	$(CC) -I$(INCDIR) $(CFLAGS) convolutions.o readtex.o $(APP_LIB_DEPS) -o $@
+	$(APP_CC) -I$(INCDIR) $(CFLAGS) convolutions.o readtex.o $(APP_LIB_DEPS) -o $@
 
 convolutions.o: convolutions.c readtex.h
-	$(CC) -c -I$(INCDIR) $(CFLAGS) convolutions.c
+	$(APP_CC) -c -I$(INCDIR) $(CFLAGS) convolutions.c
 
 
 clean:

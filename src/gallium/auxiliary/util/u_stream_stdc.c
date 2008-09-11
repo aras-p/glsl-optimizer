@@ -27,33 +27,80 @@
 
 /**
  * @file
- * Cross-platform sequential access stream abstraction.
- * 
- * These are really general purpose file access functions, and might one day
- * be moved into the util module.  
+ * Stream implementation based on the Standard C Library.
  */
 
-#ifndef TR_STREAM_H
-#define TR_STREAM_H
+#include "pipe/p_config.h"
+
+#if defined(PIPE_OS_LINUX) || defined(PIPE_SUBSYSTEM_WINDOWS_USER)
+
+#include <stdio.h>
+
+#include "util/u_memory.h"
+
+#include "u_stream.h"
 
 
-#include "pipe/p_compiler.h"
+struct util_stream 
+{
+   FILE *file;
+};
 
 
-struct trace_stream;
+struct util_stream *
+util_stream_create(const char *filename, size_t max_size)
+{
+   struct util_stream *stream;
+   
+   (void)max_size;
+   
+   stream = CALLOC_STRUCT(util_stream);
+   if(!stream)
+      goto error1;
+   
+   stream->file = fopen(filename, "w");
+   if(!stream->file)
+      goto error2;
+   
+   return stream;
+   
+error2:
+   FREE(stream);
+error1:
+   return NULL;
+}
 
-
-struct trace_stream *
-trace_stream_create(const char *filename);
 
 boolean
-trace_stream_write(struct trace_stream *stream, const void *data, size_t size);
+util_stream_write(struct util_stream *stream, const void *data, size_t size)
+{
+   if(!stream)
+      return FALSE;
+   
+   return fwrite(data, size, 1, stream->file) == size ? TRUE : FALSE;
+}
+
 
 void
-trace_stream_flush(struct trace_stream *stream);
+util_stream_flush(struct util_stream *stream) 
+{
+   if(!stream)
+      return;
+   
+   fflush(stream->file);
+}
+
 
 void
-trace_stream_close(struct trace_stream *stream);
+util_stream_close(struct util_stream *stream) 
+{
+   if(!stream)
+      return;
+   
+   fclose(stream->file);
+
+   FREE(stream);
+}
 
 
-#endif /* TR_STREAM_H */
+#endif

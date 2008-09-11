@@ -132,9 +132,9 @@ emit_alpha_test(struct pipe_depth_stencil_alpha_state *dsa,
 
 
 /**
+ * Generate code to perform Z testing.  Four Z values are tested at once.
  * \param dsa        Current depth-test state
  * \param f          Function to which code should be appended
- * \param m          Mask of allocated / free SPE registers
  * \param mask       Index of register to contain depth-pass mask
  * \param stored     Index of register containing values from depth buffer
  * \param calculated Index of register containing per-fragment depth values
@@ -198,6 +198,7 @@ emit_depth_test(struct pipe_depth_stencil_alpha_state *dsa,
 
 
 /**
+ * Generate code to apply the stencil operation (after testing).
  * \note Emits a maximum of 5 instructions.
  *
  * \warning
@@ -222,9 +223,13 @@ emit_stencil_op(struct spe_function *f,
       spe_il(f, result, ref);
       break;
    case PIPE_STENCIL_OP_INCR:
+      /* clamp = [0xff, 0xff, 0xff, 0xff] */
       spe_il(f, clamp, 0x0ff);
+      /* result[i] = in[i] + 1 */
       spe_ai(f, result, in, 1);
+      /* clamp_mask[i] = (result[i] > 0xff) */
       spe_clgti(f, clamp_mask, result, 0x0ff);
+      /* result[i] = clamp_mask[i] ? clamp[i] : result[i] */
       spe_selb(f, result, result, clamp, clamp_mask);
       break;
    case PIPE_STENCIL_OP_DECR:
@@ -259,10 +264,10 @@ emit_stencil_op(struct spe_function *f,
 
 
 /**
+ * Generate code to do stencil test.  Four pixels are tested at once.
  * \param dsa        Depth / stencil test state
  * \param face       0 for front face, 1 for back face
  * \param f          Function to append instructions to
- * \param reg_mask   Mask of allocated registers
  * \param mask       Register containing mask of fragments passing the
  *                   alpha test
  * \param depth_mask Register containing mask of fragments passing the
@@ -310,13 +315,14 @@ emit_stencil_test(struct pipe_depth_stencil_alpha_state *dsa,
 
    switch (dsa->stencil[face].func) {
    case PIPE_FUNC_NEVER:
-      spe_il(f, stencil_mask, 0);
+      spe_il(f, stencil_mask, 0);   /* stencil_mask[0..3] = [0,0,0,0] */
       break;
 
    case PIPE_FUNC_NOTEQUAL:
       complement = TRUE;
       /* FALLTHROUGH */
    case PIPE_FUNC_EQUAL:
+      /* stencil_mask[i] = (stored[i] == ref) */
       spe_ceqi(f, stencil_mask, stored, ref);
       break;
 
@@ -324,6 +330,8 @@ emit_stencil_test(struct pipe_depth_stencil_alpha_state *dsa,
       complement = TRUE;
       /* FALLTHROUGH */
    case PIPE_FUNC_GREATER:
+      complement = TRUE;
+      /* stencil_mask[i] = (stored[i] > ref) */
       spe_clgti(f, stencil_mask, stored, ref);
       break;
 
@@ -331,8 +339,11 @@ emit_stencil_test(struct pipe_depth_stencil_alpha_state *dsa,
       complement = TRUE;
       /* FALLTHROUGH */
    case PIPE_FUNC_GEQUAL:
+      /* stencil_mask[i] = (stored[i] > ref) */
       spe_clgti(f, stencil_mask, stored, ref);
+      /* tmp[i] = (stored[i] == ref) */
       spe_ceqi(f, tmp, stored, ref);
+      /* stencil_mask[i] = stencil_mask[i] | tmp[i] */
       spe_or(f, stencil_mask, stencil_mask, tmp);
       break;
 
@@ -461,7 +472,7 @@ cell_generate_depth_stencil_test(struct cell_depth_stencil_alpha_state *cdsa)
     * + 25 (front stencil) + 25 (back stencil) + 4 = 63 instructions.  Round
     * up to 64 to make it a happy power-of-two.
     */
-   spe_init_func(f, 4 * 64);
+   spe_init_func(f, SPE_INST_SIZE * 64);
 
 
    /* Allocate registers for the function's input parameters.  Cleverly (and
@@ -540,7 +551,7 @@ cell_generate_depth_stencil_test(struct cell_depth_stencil_alpha_state *cdsa)
          spe_selb(f, depth, depth, zvals, mask);
    }
 
-   spe_bi(f, 0, 0, 0);
+   spe_bi(f, 0, 0, 0);  /* return from function call */
 
 
 #if 0
@@ -956,7 +967,7 @@ cell_generate_alpha_blend(struct cell_blend_state *cb)
     * + 4 (fragment mask) + 1 (return) = 55 instlructions.  Round up to 64 to
     * make it a happy power-of-two.
     */
-   spe_init_func(f, 4 * 64);
+   spe_init_func(f, SPE_INST_SIZE * 64);
 
 
    const int frag[4] = {
@@ -1144,9 +1155,10 @@ cell_generate_alpha_blend(struct cell_blend_state *cb)
 }
 
 
-int PC_OFFSET(const struct spe_function *f, const void *d)
+static int
+PC_OFFSET(const struct spe_function *f, const void *d)
 {
-   const intptr_t pc = (intptr_t) f->csr;
+   const intptr_t pc = (intptr_t) &f->store[f->num_inst];
    const intptr_t ea = ~0x0f & (intptr_t) d;
 
    return (ea - pc) >> 2;
@@ -1178,7 +1190,7 @@ cell_generate_logic_op(struct spe_function *f,
     * bytes (equiv. to 8 instructions) are needed for data storage.  Round up
     * to 64 to make it a happy power-of-two.
     */
-   spe_init_func(f, 4 * 64);
+   spe_init_func(f, SPE_INST_SIZE * 64);
 
 
    /* Pixel colors in framebuffer format in AoS layout.
