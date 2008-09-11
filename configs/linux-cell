@@ -12,6 +12,8 @@ GALLIUM_DRIVER_DIRS += cell
 CC = ppu32-gcc
 CXX = ppu32-g++
 HOST_CC = gcc
+APP_CC = gcc
+APP_CXX = g++
 
 OPT_FLAGS = -O3
 
@@ -19,7 +21,7 @@ OPT_FLAGS = -O3
 ## For SDK 2.1: (plus, remove -DSPU_MAIN_PARAM_LONG_LONG below)
 #SDK = /opt/ibm/cell-sdk/prototype/sysroot/usr
 ## For SDK 3.0:
-SDK = /opt/cell/sdk/usr/
+SDK = /opt/cell/sdk/usr
 
 
 CFLAGS = $(OPT_FLAGS) -Wall -Winline -fPIC -m32 -mabi=altivec -maltivec \

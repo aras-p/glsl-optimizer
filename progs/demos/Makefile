@@ -74,7 +74,7 @@ PROGS = \
 
 # make executable from .c file:
 .c: $(LIB_DEP) readtex.o
-	$(CC) -I$(INCDIR) $(CFLAGS) $< readtex.o $(APP_LIB_DEPS) -o $@
+	$(APP_CC) -I$(INCDIR) $(CFLAGS) $< readtex.o $(APP_LIB_DEPS) -o $@
 
 
 ##### TARGETS #####
@@ -90,7 +90,7 @@ readtex.h: $(TOP)/progs/util/readtex.h
 	cp $< .
 
 readtex.o: readtex.c readtex.h
-	$(CC) -c -I$(INCDIR) $(CFLAGS) readtex.c
+	$(APP_CC) -c -I$(INCDIR) $(CFLAGS) readtex.c
 
 
 showbuffer.c: $(TOP)/progs/util/showbuffer.c
@@ -100,7 +100,7 @@ showbuffer.h: $(TOP)/progs/util/showbuffer.h
 	cp $< .
 
 showbuffer.o: showbuffer.c showbuffer.h
-	$(CC) -c -I$(INCDIR) $(CFLAGS) showbuffer.c
+	$(APP_CC) -c -I$(INCDIR) $(CFLAGS) showbuffer.c
 
 
 trackball.c: $(TOP)/progs/util/trackball.c
@@ -110,7 +110,7 @@ trackball.h: $(TOP)/progs/util/trackball.h
 	cp $< .
 
 trackball.o: trackball.c trackball.h
-	$(CC) -c -I$(INCDIR) $(CFLAGS) trackball.c
+	$(APP_CC) -c -I$(INCDIR) $(CFLAGS) trackball.c
 
 
 extfuncs.h:  $(TOP)/progs/util/extfuncs.h
@@ -118,38 +118,38 @@ extfuncs.h:  $(TOP)/progs/util/extfuncs.h
 
 
 reflect: reflect.o showbuffer.o readtex.o
-	$(CC) reflect.o showbuffer.o readtex.o $(APP_LIB_DEPS) $(ARCH_FLAGS) -o $@
+	$(APP_CC) reflect.o showbuffer.o readtex.o $(APP_LIB_DEPS) $(ARCH_FLAGS) -o $@
 
 reflect.o: reflect.c showbuffer.h
-	$(CC) -c -I$(INCDIR) $(CFLAGS) reflect.c
+	$(APP_CC) -c -I$(INCDIR) $(CFLAGS) reflect.c
 
 
 shadowtex: shadowtex.o showbuffer.o
-	$(CC) shadowtex.o showbuffer.o $(APP_LIB_DEPS) $(ARCH_FLAGS) -o $@
+	$(APP_CC) shadowtex.o showbuffer.o $(APP_LIB_DEPS) $(ARCH_FLAGS) -o $@
 
 shadowtex.o: shadowtex.c showbuffer.h
-	$(CC) -c -I$(INCDIR) $(CFLAGS) shadowtex.c
+	$(APP_CC) -c -I$(INCDIR) $(CFLAGS) shadowtex.c
 
 
 gloss: gloss.o trackball.o readtex.o
-	$(CC) gloss.o trackball.o readtex.o $(APP_LIB_DEPS) $(ARCH_FLAGS) -o $@
+	$(APP_CC) gloss.o trackball.o readtex.o $(APP_LIB_DEPS) $(ARCH_FLAGS) -o $@
 
 gloss.o: gloss.c trackball.h
-	$(CC) -c -I$(INCDIR) $(CFLAGS) gloss.c
+	$(APP_CC) -c -I$(INCDIR) $(CFLAGS) gloss.c
 
 
 engine: engine.o trackball.o readtex.o
-	$(CC) engine.o trackball.o readtex.o $(APP_LIB_DEPS) $(ARCH_FLAGS) -o $@
+	$(APP_CC) engine.o trackball.o readtex.o $(APP_LIB_DEPS) $(ARCH_FLAGS) -o $@
 
 engine.o: engine.c trackball.h
-	$(CC) -c -I$(INCDIR) $(CFLAGS) engine.c
+	$(APP_CC) -c -I$(INCDIR) $(CFLAGS) engine.c
 
 
 fslight: fslight.o
-	$(CC) fslight.o $(APP_LIB_DEPS) $(ARCH_FLAGS) -o $@
+	$(APP_CC) fslight.o $(APP_LIB_DEPS) $(ARCH_FLAGS) -o $@
 
 fslight.o: fslight.c extfuncs.h
-	$(CC) -c -I$(INCDIR) $(CFLAGS) fslight.c
+	$(APP_CC) -c -I$(INCDIR) $(CFLAGS) fslight.c
 
 
 
