@@ -133,7 +133,8 @@ cell_emit_state(struct cell_context *cell)
       emit_state_cmd(cell, CELL_CMD_STATE_VERTEX_INFO,
                      &cell->vertex_info, sizeof(struct vertex_info));
    }
-   
+
+#if 0
    if (cell->dirty & CELL_NEW_VS) {
       const struct draw_context *const draw = cell->draw;
       struct cell_shader_info info;
@@ -148,4 +149,5 @@ cell_emit_state(struct cell_context *cell)
 
       emit_state_cmd(cell, CELL_CMD_STATE_BIND_VS, &info, sizeof(info));
    }
+#endif
 }
