@@ -333,11 +333,11 @@ emit_quad( int x, int y, mask_t mask )
          /* Do all per-fragment/quad operations here, including:
           *  alpha test, z test, stencil test, blend and framebuffer writing.
           */
-         spu.fragment_ops.func(ix, iy, &spu.ctile, &spu.ztile,
-                               fragZ.v,
-                               soa_frag[0], soa_frag[1],
-                               soa_frag[2], soa_frag[3],
-                               mask);
+         spu.fragment_ops(ix, iy, &spu.ctile, &spu.ztile,
+                          fragZ.v,
+                          soa_frag[0], soa_frag[1],
+                          soa_frag[2], soa_frag[3],
+                          mask);
       }
 
    }

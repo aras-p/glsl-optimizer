@@ -60,9 +60,11 @@ typedef union {
 #define TILE_STATUS_GETTING 5  /**< mfc_get() called but not yet arrived */
 
 
-typedef vector float (*sample_texture_func)(uint unit, vector float texcoord);
+/** Function for sampling textures */
+typedef vector float (*spu_sample_texture_func)(uint unit,
+                                                vector float texcoord);
 
-
+/** Function for performing per-fragment ops */
 typedef void (*spu_fragment_ops_func)(uint x, uint y,
                                       tile_t *colorTile,
                                       tile_t *depthStencilTile,
@@ -73,14 +75,8 @@ typedef void (*spu_fragment_ops_func)(uint x, uint y,
                                       vector float fragAlpha,
                                       vector unsigned int mask);
 
-struct spu_fragment_ops
+struct spu_framebuffer
 {
-   uint code[SPU_MAX_FRAGMENT_OPS_INSTS];
-   spu_fragment_ops_func func;  /**< Current fragment ops function */
-} ALIGN16_ATTRIB;
-
-
-struct spu_framebuffer {
    void *color_start;              /**< addr of color surface in main memory */
    void *depth_start;              /**< addr of depth surface in main memory */
    enum pipe_format color_format;
@@ -109,33 +105,30 @@ struct spu_texture
 
 
 /**
- * All SPU global/context state will be in singleton object of this type:
+ * All SPU global/context state will be in a singleton object of this type:
  */
 struct spu_global
 {
+   /** One-time init/constant info */
    struct cell_init_info init;
 
+   /*
+    * Current state
+    */
    struct spu_framebuffer fb;
-
    struct pipe_depth_stencil_alpha_state depth_stencil_alpha;
    struct pipe_blend_state blend;
-
-   boolean read_depth;
-   boolean read_stencil;
-
    struct pipe_sampler_state sampler[PIPE_MAX_SAMPLERS];
    struct spu_texture texture[PIPE_MAX_SAMPLERS];
-
    struct vertex_info vertex_info;
 
-   struct spu_fragment_ops fragment_ops;
-
-   /* XXX more state to come */
-
-
-   /** current color and Z tiles */
+   /** Current color and Z tiles */
    tile_t ctile ALIGN16_ATTRIB;
    tile_t ztile ALIGN16_ATTRIB;
+
+   /** Read depth/stencil tiles? */
+   boolean read_depth;
+   boolean read_stencil;
 
    /** Current tiles' status */
    ubyte cur_ctile_status, cur_ztile_status;
@@ -144,11 +137,13 @@ struct spu_global
    ubyte ctile_status[MAX_HEIGHT/TILE_SIZE][MAX_WIDTH/TILE_SIZE] ALIGN16_ATTRIB;
    ubyte ztile_status[MAX_HEIGHT/TILE_SIZE][MAX_WIDTH/TILE_SIZE] ALIGN16_ATTRIB;
 
+   /** Current fragment ops machine code */
+   uint fragment_ops_code[SPU_MAX_FRAGMENT_OPS_INSTS];
+   /** Current fragment ops function */
+   spu_fragment_ops_func fragment_ops;
 
-   /** for converting RGBA to PIPE_FORMAT_x colors */
-   vector unsigned char color_shuffle;
-
-   sample_texture_func sample_texture[CELL_MAX_SAMPLERS];
+   /** Current texture sampler function */
+   spu_sample_texture_func sample_texture[CELL_MAX_SAMPLERS];
 
 } ALIGN16_ATTRIB;
 

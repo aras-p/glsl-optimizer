@@ -231,13 +231,13 @@ cmd_state_fragment_ops(const struct cell_command_fragment_ops *fops)
    if (Debug)
       printf("SPU %u: CMD_STATE_FRAGMENT_OPS\n", spu.init.id);
    /* Copy SPU code from batch buffer to spu buffer */
-   memcpy(spu.fragment_ops.code, fops->code, SPU_MAX_FRAGMENT_OPS_INSTS * 4);
+   memcpy(spu.fragment_ops_code, fops->code, SPU_MAX_FRAGMENT_OPS_INSTS * 4);
    /* Copy state info */
    memcpy(&spu.depth_stencil_alpha, &fops->dsa, sizeof(fops->dsa));
    memcpy(&spu.blend, &fops->blend, sizeof(fops->blend));
 
    /* Point function pointer at new code */
-   spu.fragment_ops.func = (spu_fragment_ops_func) spu.fragment_ops.code;
+   spu.fragment_ops = (spu_fragment_ops_func) spu.fragment_ops_code;
 
    spu.read_depth = spu.depth_stencil_alpha.depth.enabled;
    spu.read_stencil = spu.depth_stencil_alpha.stencil[0].enabled;
@@ -288,17 +288,6 @@ cmd_state_framebuffer(const struct cell_command_framebuffer *cmd)
       spu.fb.zsize = 0;
       break;
    }
-
-   if (spu.fb.color_format == PIPE_FORMAT_A8R8G8B8_UNORM)
-      spu.color_shuffle = ((vector unsigned char) {
-                              12, 0, 4, 8, 0, 0, 0, 0, 
-                              0, 0, 0, 0, 0, 0, 0, 0});
-   else if (spu.fb.color_format == PIPE_FORMAT_B8G8R8A8_UNORM)
-      spu.color_shuffle = ((vector unsigned char) {
-                              8, 4, 0, 12, 0, 0, 0, 0, 
-                              0, 0, 0, 0, 0, 0, 0, 0});
-   else
-      ASSERT(0);
 }
 
 
@@ -521,11 +510,11 @@ cmd_batch(uint opcode)
          pos += (1 + ROUNDUP8(sizeof(struct cell_array_info)) / 8);
          break;
       case CELL_CMD_STATE_BIND_VS:
-#if 01
+#if 0
          spu_bind_vertex_shader(&draw,
                                 (struct cell_shader_info *) &buffer[pos+1]);
-         pos += (1 + ROUNDUP8(sizeof(struct cell_shader_info)) / 8);
 #endif
+         pos += (1 + ROUNDUP8(sizeof(struct cell_shader_info)) / 8);
          break;
       case CELL_CMD_STATE_ATTRIB_FETCH:
          cmd_state_attrib_fetch((struct cell_attribute_fetch_code *)
@@ -600,7 +589,7 @@ main_loop(void)
          exitFlag = 1;
          break;
       case CELL_CMD_VS_EXECUTE:
-#if 01
+#if 0
          spu_execute_vertex_shader(&draw, &cmd.vs);
 #endif
          break;
@@ -631,7 +620,7 @@ one_time_init(void)
    /* Install default/fallback fragment processing function.
     * This will normally be overriden by a code-gen'd function.
     */
-   spu.fragment_ops.func = spu_fallback_fragment_ops;
+   spu.fragment_ops = spu_fallback_fragment_ops;
 }
 
 
