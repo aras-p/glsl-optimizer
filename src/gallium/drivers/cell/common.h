@@ -84,7 +84,7 @@
 #define CELL_CMD_BATCH                5
 #define CELL_CMD_RELEASE_VERTS        6
 #define CELL_CMD_STATE_FRAMEBUFFER   10
-#define CELL_CMD_STATE_DEPTH_STENCIL 11
+#define CELL_CMD_STATE_FRAGMENT_OPS  11
 #define CELL_CMD_STATE_SAMPLER       12
 #define CELL_CMD_STATE_TEXTURE       13
 #define CELL_CMD_STATE_VERTEX_INFO   14
@@ -92,12 +92,9 @@
 #define CELL_CMD_STATE_UNIFORMS      16
 #define CELL_CMD_STATE_VS_ARRAY_INFO 17
 #define CELL_CMD_STATE_BIND_VS       18
-#define CELL_CMD_STATE_BLEND         19
 #define CELL_CMD_STATE_ATTRIB_FETCH  20
-#define CELL_CMD_STATE_LOGICOP       21
 #define CELL_CMD_VS_EXECUTE          22
 #define CELL_CMD_FLUSH_BUFFER_RANGE  23
-#define CELL_CMD_STATE_FRAGMENT_OPS  24
 
 
 #define CELL_NUM_BUFFERS 4
@@ -112,8 +109,13 @@
 
 
 
+/** Max instructions for doing per-fragment operations */
 #define SPU_MAX_FRAGMENT_OPS_INSTS 64
 
+
+/**
+ * Command to specify per-fragment operations state and generated code.
+ */
 struct cell_command_fragment_ops
 {
    uint64_t opcode;      /**< CELL_CMD_STATE_FRAGMENT_OPS */
@@ -159,13 +161,15 @@ struct cell_array_info
 };
 
 
-struct cell_attribute_fetch_code {
+struct cell_attribute_fetch_code
+{
    uint64_t base;
    uint size;
 };
 
 
-struct cell_buffer_range {
+struct cell_buffer_range
+{
    uint64_t base;
    unsigned size;
 };
