@@ -292,6 +292,10 @@ spe_load_float(struct spe_function *p, unsigned rT, float x);
 extern void
 spe_load_int(struct spe_function *p, unsigned rT, int i);
 
+/** Replicate word 0 of rA across rT. */
+extern void
+spe_splat(struct spe_function *p, unsigned rT, unsigned rA);
+
 /** Complement/invert all bits in rT. */
 extern void
 spe_complement(struct spe_function *p, unsigned rT);
