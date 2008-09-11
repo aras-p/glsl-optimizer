@@ -232,6 +232,370 @@ gen_alpha_test(const struct pipe_depth_stencil_alpha_state *dsa,
 
 
 /**
+ * Generate SPE code to implement the given blend mode for a quad of pixels.
+ * \param f          SPE function to append instruction onto.
+ * \param fragR_reg  register with fragment red values (float) (in/out)
+ * \param fragG_reg  register with fragment green values (float) (in/out)
+ * \param fragB_reg  register with fragment blue values (float) (in/out)
+ * \param fragA_reg  register with fragment alpha values (float) (in/out)
+ * \param fbRGBA_reg register with packed framebuffer colors (integer) (in)
+ */
+static void
+gen_blend(const struct pipe_blend_state *blend,
+          struct spe_function *f,
+          enum pipe_format color_format,
+          int fragR_reg, int fragG_reg, int fragB_reg, int fragA_reg,
+          int fbRGBA_reg)
+{
+   int term1R_reg = spe_allocate_available_register(f);
+   int term1G_reg = spe_allocate_available_register(f);
+   int term1B_reg = spe_allocate_available_register(f);
+   int term1A_reg = spe_allocate_available_register(f);
+
+   int term2R_reg = spe_allocate_available_register(f);
+   int term2G_reg = spe_allocate_available_register(f);
+   int term2B_reg = spe_allocate_available_register(f);
+   int term2A_reg = spe_allocate_available_register(f);
+
+   int fbR_reg = spe_allocate_available_register(f);
+   int fbG_reg = spe_allocate_available_register(f);
+   int fbB_reg = spe_allocate_available_register(f);
+   int fbA_reg = spe_allocate_available_register(f);
+
+   int one_reg = spe_allocate_available_register(f);
+   int tmp_reg = spe_allocate_available_register(f);
+
+   ASSERT(blend->blend_enable);
+
+   /* Unpack/convert framebuffer colors from four 32-bit packed colors
+    * (fbRGBA) to four float RGBA vectors (fbR, fbG, fbB, fbA).
+    * Each 8-bit color component is expanded into a float in [0.0, 1.0].
+    */
+   {
+      int mask_reg = spe_allocate_available_register(f);
+
+      /* mask = {0x000000ff, 0x000000ff, 0x000000ff, 0x000000ff} */
+      spe_fsmbi(f, mask_reg, 0x1111);
+
+      /* XXX there may be more clever ways to implement the following code */
+      switch (color_format) {
+      case PIPE_FORMAT_A8R8G8B8_UNORM:
+         /* fbB = fbB & mask */
+         spe_and(f, fbB_reg, fbRGBA_reg, mask_reg);
+         /* mask = mask << 8 */
+         spe_roti(f, mask_reg, mask_reg, 8);
+
+         /* fbG = fbRGBA & mask */
+         spe_and(f, fbB_reg, fbRGBA_reg, mask_reg);
+         /* fbG = fbG >> 8 */
+         spe_roti(f, fbB_reg, fbB_reg, -8);
+         /* mask = mask << 8 */
+         spe_roti(f, mask_reg, mask_reg, 8);
+
+         /* fbR = fbRGBA & mask */
+         spe_and(f, fbR_reg, fbRGBA_reg, mask_reg);
+         /* fbR = fbR >> 16 */
+         spe_roti(f, fbB_reg, fbB_reg, -16);
+         /* mask = mask << 8 */
+         spe_roti(f, mask_reg, mask_reg, 8);
+
+         /* fbA = fbRGBA & mask */
+         spe_and(f, fbA_reg, fbRGBA_reg, mask_reg);
+         /* fbA = fbA >> 24 */
+         spe_roti(f, fbA_reg, fbA_reg, -24);
+         break;
+
+      case PIPE_FORMAT_B8G8R8A8_UNORM:
+         /* fbA = fbA & mask */
+         spe_and(f, fbA_reg, fbRGBA_reg, mask_reg);
+         /* mask = mask << 8 */
+         spe_roti(f, mask_reg, mask_reg, 8);
+
+         /* fbR = fbRGBA & mask */
+         spe_and(f, fbR_reg, fbRGBA_reg, mask_reg);
+         /* fbR = fbR >> 8 */
+         spe_roti(f, fbR_reg, fbR_reg, -8);
+         /* mask = mask << 8 */
+         spe_roti(f, mask_reg, mask_reg, 8);
+
+         /* fbG = fbRGBA & mask */
+         spe_and(f, fbG_reg, fbRGBA_reg, mask_reg);
+         /* fbG = fbG >> 16 */
+         spe_roti(f, fbG_reg, fbG_reg, -16);
+         /* mask = mask << 8 */
+         spe_roti(f, mask_reg, mask_reg, 8);
+
+         /* fbB = fbRGBA & mask */
+         spe_and(f, fbB_reg, fbRGBA_reg, mask_reg);
+         /* fbB = fbB >> 24 */
+         spe_roti(f, fbB_reg, fbB_reg, -24);
+         break;
+
+      default:
+         ASSERT(0);
+      }
+
+      /* convert int[4] in [0,255] to float[4] in [0.0, 1.0] */
+      spe_cuflt(f, fbR_reg, fbR_reg, 8);
+      spe_cuflt(f, fbG_reg, fbG_reg, 8);
+      spe_cuflt(f, fbB_reg, fbB_reg, 8);
+      spe_cuflt(f, fbA_reg, fbA_reg, 8);
+
+      spe_release_register(f, mask_reg);
+   }
+
+
+   /*
+    * Compute Src RGB terms
+    */
+   switch (blend->rgb_src_factor) {
+   case PIPE_BLENDFACTOR_ONE:
+      spe_move(f, term1R_reg, fragR_reg);
+      spe_move(f, term1G_reg, fragG_reg);
+      spe_move(f, term1B_reg, fragB_reg);
+      break;
+   case PIPE_BLENDFACTOR_ZERO:
+      spe_zero(f, term1R_reg);
+      spe_zero(f, term1G_reg);
+      spe_zero(f, term1B_reg);
+      break;
+   case PIPE_BLENDFACTOR_SRC_COLOR:
+      spe_fm(f, term1R_reg, fragR_reg, fragR_reg);
+      spe_fm(f, term1G_reg, fragG_reg, fragG_reg);
+      spe_fm(f, term1B_reg, fragB_reg, fragB_reg);
+      break;
+   case PIPE_BLENDFACTOR_SRC_ALPHA:
+      spe_fm(f, term1R_reg, fragR_reg, fragA_reg);
+      spe_fm(f, term1G_reg, fragG_reg, fragA_reg);
+      spe_fm(f, term1B_reg, fragB_reg, fragA_reg);
+      break;
+      /* XXX more cases */
+   default:
+      ASSERT(0);
+   }
+
+   /*
+    * Compute Src Alpha term
+    */
+   switch (blend->alpha_src_factor) {
+   case PIPE_BLENDFACTOR_ONE:
+      spe_move(f, term1A_reg, fragA_reg);
+      break;
+   case PIPE_BLENDFACTOR_SRC_COLOR:
+      spe_fm(f, term1A_reg, fragA_reg, fragA_reg);
+      break;
+   case PIPE_BLENDFACTOR_SRC_ALPHA:
+      spe_fm(f, term1A_reg, fragA_reg, fragA_reg);
+      break;
+      /* XXX more cases */
+   default:
+      ASSERT(0);
+   }
+
+   /*
+    * Compute Dest RGB terms
+    */
+   switch (blend->rgb_dst_factor) {
+   case PIPE_BLENDFACTOR_ONE:
+      spe_move(f, term2R_reg, fbR_reg);
+      spe_move(f, term2G_reg, fbG_reg);
+      spe_move(f, term2B_reg, fbB_reg);
+      break;
+   case PIPE_BLENDFACTOR_ZERO:
+      spe_zero(f, term2R_reg);
+      spe_zero(f, term2G_reg);
+      spe_zero(f, term2B_reg);
+      break;
+   case PIPE_BLENDFACTOR_SRC_COLOR:
+      spe_fm(f, term2R_reg, fbR_reg, fragR_reg);
+      spe_fm(f, term2G_reg, fbG_reg, fragG_reg);
+      spe_fm(f, term2B_reg, fbB_reg, fragB_reg);
+      break;
+   case PIPE_BLENDFACTOR_SRC_ALPHA:
+      spe_fm(f, term2R_reg, fbR_reg, fragA_reg);
+      spe_fm(f, term2G_reg, fbG_reg, fragA_reg);
+      spe_fm(f, term2B_reg, fbB_reg, fragA_reg);
+      break;
+   case PIPE_BLENDFACTOR_INV_SRC_ALPHA:
+      /* one = {1.0, 1.0, 1.0, 1.0} */
+      spe_load_float(f, one_reg, 1.0f);
+      /* tmp = one - fragA */
+      spe_fs(f, tmp_reg, one_reg, fragA_reg);
+      /* term = fb * tmp */
+      spe_fm(f, term2R_reg, fbR_reg, tmp_reg);
+      spe_fm(f, term2G_reg, fbG_reg, tmp_reg);
+      spe_fm(f, term2B_reg, fbB_reg, tmp_reg);
+      break;
+      /* XXX more cases */
+   default:
+      ASSERT(0);
+   }
+
+   /*
+    * Compute Dest Alpha term
+    */
+   switch (blend->alpha_dst_factor) {
+   case PIPE_BLENDFACTOR_ONE:
+      spe_move(f, term2A_reg, fbA_reg);
+      break;
+   case PIPE_BLENDFACTOR_ZERO:
+      spe_zero(f, term2A_reg);
+      break;
+   case PIPE_BLENDFACTOR_SRC_ALPHA:
+      spe_fm(f, term2A_reg, fbA_reg, fragA_reg);
+      break;
+   case PIPE_BLENDFACTOR_INV_SRC_ALPHA:
+      /* one = {1.0, 1.0, 1.0, 1.0} */
+      spe_load_float(f, one_reg, 1.0f);
+      /* tmp = one - fragA */
+      spe_fs(f, tmp_reg, one_reg, fragA_reg);
+      /* termA = fbA * tmp */
+      spe_fm(f, term2A_reg, fbA_reg, tmp_reg);
+      break;
+      /* XXX more cases */
+   default:
+      ASSERT(0);
+   }
+
+   /*
+    * Combine Src/Dest RGB terms
+    */
+   switch (blend->rgb_func) {
+   case PIPE_BLEND_ADD:
+      spe_fa(f, fragR_reg, term1R_reg, term2R_reg);
+      spe_fa(f, fragG_reg, term1G_reg, term2G_reg);
+      spe_fa(f, fragB_reg, term1B_reg, term2B_reg);
+      break;
+   case PIPE_BLEND_SUBTRACT:
+      spe_fs(f, fragR_reg, term1R_reg, term2R_reg);
+      spe_fs(f, fragG_reg, term1G_reg, term2G_reg);
+      spe_fs(f, fragB_reg, term1B_reg, term2B_reg);
+      break;
+      /* XXX more cases */
+   default:
+      ASSERT(0);
+   }
+
+   /*
+    * Combine Src/Dest A term
+    */
+   switch (blend->alpha_func) {
+   case PIPE_BLEND_ADD:
+      spe_fa(f, fragA_reg, term1A_reg, term2A_reg);
+      break;
+   case PIPE_BLEND_SUBTRACT:
+      spe_fs(f, fragA_reg, term1A_reg, term2A_reg);
+      break;
+      /* XXX more cases */
+   default:
+      ASSERT(0);
+   }
+
+   spe_release_register(f, term1R_reg);
+   spe_release_register(f, term1G_reg);
+   spe_release_register(f, term1B_reg);
+   spe_release_register(f, term1A_reg);
+
+   spe_release_register(f, term2R_reg);
+   spe_release_register(f, term2G_reg);
+   spe_release_register(f, term2B_reg);
+   spe_release_register(f, term2A_reg);
+
+   spe_release_register(f, fbR_reg);
+   spe_release_register(f, fbG_reg);
+   spe_release_register(f, fbB_reg);
+   spe_release_register(f, fbA_reg);
+
+   spe_release_register(f, one_reg);
+   spe_release_register(f, tmp_reg);
+}
+
+
+static void
+gen_logicop(const struct pipe_blend_state *blend,
+            struct spe_function *f,
+            int fragRGBA_reg, int fbRGBA_reg)
+{
+   /* XXX to-do */
+   /* operate on 32-bit packed pixels, not float colors */
+}
+
+
+static void
+gen_colormask(uint colormask,
+              struct spe_function *f,
+              int fragRGBA_reg, int fbRGBA_reg)
+{
+   /* XXX to-do */
+   /* operate on 32-bit packed pixels, not float colors */
+}
+
+
+
+/**
+ * Generate code to pack a quad of float colors into a four 32-bit integers.
+ *
+ * \param f             SPE function to append instruction onto.
+ * \param color_format  the dest color packing format
+ * \param r_reg         register containing four red values (in/clobbered)
+ * \param g_reg         register containing four green values (in/clobbered)
+ * \param b_reg         register containing four blue values (in/clobbered)
+ * \param a_reg         register containing four alpha values (in/clobbered)
+ * \param rgba_reg      register to store the packed RGBA colors (out)
+ */
+static void
+gen_pack_colors(struct spe_function *f,
+                enum pipe_format color_format,
+                int r_reg, int g_reg, int b_reg, int a_reg,
+                int rgba_reg)
+{
+   /* Convert float[4] in [0.0,1.0] to int[4] in [0,~0], with clamping */
+   spe_cfltu(f, r_reg, r_reg, 32);
+   spe_cfltu(f, g_reg, g_reg, 32);
+   spe_cfltu(f, b_reg, b_reg, 32);
+   spe_cfltu(f, a_reg, a_reg, 32);
+
+   /* Shift the most significant bytes to least the significant positions.
+    * I.e.: reg = reg >> 24
+    */
+   spe_rotmi(f, r_reg, r_reg, -24);
+   spe_rotmi(f, g_reg, g_reg, -24);
+   spe_rotmi(f, b_reg, b_reg, -24);
+   spe_rotmi(f, a_reg, a_reg, -24);
+
+   /* Shift the color bytes according to the surface format */
+   if (color_format == PIPE_FORMAT_A8R8G8B8_UNORM) {
+      spe_roti(f, g_reg, g_reg, 8);   /* green <<= 8 */
+      spe_roti(f, r_reg, r_reg, 16);  /* red <<= 16 */
+      spe_roti(f, a_reg, a_reg, 24);  /* alpha <<= 24 */
+   }
+   else if (color_format == PIPE_FORMAT_B8G8R8A8_UNORM) {
+      spe_roti(f, r_reg, r_reg, 8);   /* red <<= 8 */
+      spe_roti(f, g_reg, g_reg, 16);  /* green <<= 16 */
+      spe_roti(f, b_reg, b_reg, 24);  /* blue <<= 24 */
+   }
+   else {
+      ASSERT(0);
+   }
+
+   /* Merge red, green, blue, alpha registers to make packed RGBA colors.
+    * Eg: after shifting according to color_format we might have:
+    *     R = {0x00ff0000, 0x00110000, 0x00220000, 0x00330000}
+    *     G = {0x0000ff00, 0x00004400, 0x00005500, 0x00006600}
+    *     B = {0x000000ff, 0x00000077, 0x00000088, 0x00000099}
+    *     A = {0xff000000, 0xaa000000, 0xbb000000, 0xcc000000}
+    * OR-ing all those together gives us four packed colors:
+    *  RGBA = {0xffffffff, 0xaa114477, 0xbb225588, 0xcc336699}
+    */
+   spe_or(f, rgba_reg, r_reg, g_reg);
+   spe_or(f, rgba_reg, rgba_reg, b_reg);
+   spe_or(f, rgba_reg, rgba_reg, a_reg);
+}
+
+
+
+
+/**
  * Generate SPE code to implement the fragment operations (alpha test,
  * depth test, stencil test, blending, colormask, and final
  * framebuffer write) as specified by the current context state.
@@ -257,6 +621,7 @@ gen_fragment_function(struct cell_context *cell, struct spe_function *f)
    const struct pipe_depth_stencil_alpha_state *dsa =
       &cell->depth_stencil->base;
    const struct pipe_blend_state *blend = &cell->blend->base;
+   const enum pipe_format color_format = cell->framebuffer.cbufs[0]->format;
 
    /* For SPE function calls: reg $3 = first param, $4 = second param, etc. */
    const int x_reg = 3;  /* uint */
@@ -443,13 +808,9 @@ gen_fragment_function(struct cell_context *cell, struct spe_function *f)
 
 
    if (blend->blend_enable) {
-      /* convert packed tile colors in fbRGBA_reg to float[4] vectors */
-
-      // gen_blend_code(blend, f, mask_reg, ... );
-
+      gen_blend(blend, f, color_format,
+                fragR_reg, fragG_reg, fragB_reg, fragA_reg, fbRGBA_reg);
    }
-
-
 
    /*
     * Write fragment colors to framebuffer/tile.
@@ -457,50 +818,21 @@ gen_fragment_function(struct cell_context *cell, struct spe_function *f)
     * tile's specific format and obeying the quad/pixel mask.
     */
    {
-      const enum pipe_format color_format = cell->framebuffer.cbufs[0]->format;
       int rgba_reg = spe_allocate_available_register(f);
 
-      /* Convert float[4] in [0.0,1.0] to int[4] in [0,~0], with clamping */
-      spe_cfltu(f, fragR_reg, fragR_reg, 32);
-      spe_cfltu(f, fragG_reg, fragG_reg, 32);
-      spe_cfltu(f, fragB_reg, fragB_reg, 32);
-      spe_cfltu(f, fragA_reg, fragA_reg, 32);
+      /* Pack four float colors as four 32-bit int colors */
+      gen_pack_colors(f, color_format,
+                      fragR_reg, fragG_reg, fragB_reg, fragA_reg,
+                      rgba_reg);
 
-      /* Shift most the significant bytes to least the significant positions.
-       * I.e.: reg = reg >> 24
-       */
-      spe_rotmi(f, fragR_reg, fragR_reg, -24);
-      spe_rotmi(f, fragG_reg, fragG_reg, -24);
-      spe_rotmi(f, fragB_reg, fragB_reg, -24);
-      spe_rotmi(f, fragA_reg, fragA_reg, -24);
-
-      /* Shift the color bytes according to the surface format */
-      if (color_format == PIPE_FORMAT_A8R8G8B8_UNORM) {
-         spe_roti(f, fragG_reg, fragG_reg, 8);   /* green <<= 8 */
-         spe_roti(f, fragR_reg, fragR_reg, 16);  /* red <<= 16 */
-         spe_roti(f, fragA_reg, fragA_reg, 24);  /* alpha <<= 24 */
-      }
-      else if (color_format == PIPE_FORMAT_B8G8R8A8_UNORM) {
-         spe_roti(f, fragR_reg, fragR_reg, 8);   /* red <<= 8 */
-         spe_roti(f, fragG_reg, fragG_reg, 16);  /* green <<= 16 */
-         spe_roti(f, fragB_reg, fragB_reg, 24);  /* blue <<= 24 */
-      }
-      else {
-         ASSERT(0);
+      if (blend->logicop_enable) {
+         gen_logicop(blend, f, rgba_reg, fbRGBA_reg);
       }
 
-      /* Merge red, green, blue, alpha registers to make packed RGBA colors.
-       * Eg: after shifting according to color_format we might have:
-       *     R = {0x00ff0000, 0x00110000, 0x00220000, 0x00330000}
-       *     G = {0x0000ff00, 0x00004400, 0x00005500, 0x00006600}
-       *     B = {0x000000ff, 0x00000077, 0x00000088, 0x00000099}
-       *     A = {0xff000000, 0xaa000000, 0xbb000000, 0xcc000000}
-       * OR-ing all those together gives us four packed colors:
-       *  RGBA = {0xffffffff, 0xaa114477, 0xbb225588, 0xcc336699}
-       */
-      spe_or(f, rgba_reg, fragR_reg, fragG_reg);
-      spe_or(f, rgba_reg, rgba_reg, fragB_reg);
-      spe_or(f, rgba_reg, rgba_reg, fragA_reg);
+      if (blend->colormask != 0xf) {
+         gen_colormask(blend->colormask, f, rgba_reg, fbRGBA_reg);
+      }
+
 
       /* Mix fragment colors with framebuffer colors using the quad/pixel mask:
        * if (mask[i])

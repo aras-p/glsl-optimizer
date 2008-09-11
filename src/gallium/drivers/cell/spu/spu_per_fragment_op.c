@@ -39,9 +39,11 @@
 
 
 /**
- * Called by rasterizer for each quad after the shader has run.  This
- * is a fallback/debug function.  In reality we'll use a generated
- * function produced by the PPU.  But this function is useful for
+ * Called by rasterizer for each quad after the shader has run.  Do
+ * all the per-fragment operations including alpha test, z test,
+ * stencil test, blend, colormask and logicops.  This is a
+ * fallback/debug function.  In reality we'll use a generated function
+ * produced by the PPU.  But this function is useful for
  * debug/validation.
  */
 void
@@ -49,13 +51,13 @@ spu_fallback_fragment_ops(uint x, uint y,
                           tile_t *colorTile,
                           tile_t *depthStencilTile,
                           vector float fragZ,
-                          vector float fragRed,
-                          vector float fragGreen,
-                          vector float fragBlue,
-                          vector float fragAlpha,
+                          vector float fragR,
+                          vector float fragG,
+                          vector float fragB,
+                          vector float fragA,
                           vector unsigned int mask)
 {
-   vector float frag_soa[4], frag_aos[4];
+   vector float frag_aos[4];
    unsigned int c0, c1, c2, c3;
 
    /* do alpha test */
@@ -65,24 +67,24 @@ spu_fallback_fragment_ops(uint x, uint y,
 
       switch (spu.depth_stencil_alpha.alpha.func) {
       case PIPE_FUNC_LESS:
-         amask = spu_cmpgt(ref, fragAlpha);  /* mask = (fragAlpha < ref) */
+         amask = spu_cmpgt(ref, fragA);  /* mask = (fragA < ref) */
          break;
       case PIPE_FUNC_GREATER:
-         amask = spu_cmpgt(fragAlpha, ref);  /* mask = (fragAlpha > ref) */
+         amask = spu_cmpgt(fragA, ref);  /* mask = (fragA > ref) */
          break;
       case PIPE_FUNC_GEQUAL:
-         amask = spu_cmpgt(ref, fragAlpha);
+         amask = spu_cmpgt(ref, fragA);
          amask = spu_nor(amask, amask);
          break;
       case PIPE_FUNC_LEQUAL:
-         amask = spu_cmpgt(fragAlpha, ref);
+         amask = spu_cmpgt(fragA, ref);
          amask = spu_nor(amask, amask);
          break;
       case PIPE_FUNC_EQUAL:
-         amask = spu_cmpeq(ref, fragAlpha);
+         amask = spu_cmpeq(ref, fragA);
          break;
       case PIPE_FUNC_NOTEQUAL:
-         amask = spu_cmpeq(ref, fragAlpha);
+         amask = spu_cmpeq(ref, fragA);
          amask = spu_nor(amask, amask);
          break;
       case PIPE_FUNC_ALWAYS:
@@ -174,7 +176,189 @@ spu_fallback_fragment_ops(uint x, uint y,
       }
    }
 
-   /* XXX do blending here */
+   if (spu.blend.blend_enable) {
+      vector float term1r, term1g, term1b, term1a;
+      vector float term2r, term2g, term2b, term2a;
+
+      vector float fbRGBA[4];
+
+      vector float one, tmp;
+
+      /* get colors from framebuffer */
+      {
+         vector float fc[4];
+         uint c0, c1, c2, c3;
+#if 0
+         c0 = colorTile->ui[y+0][x+0];
+         c1 = colorTile->ui[y+0][x+1];
+         c2 = colorTile->ui[y+1][x+0];
+         c3 = colorTile->ui[y+1][x+1];
+#else
+         c0 = colorTile->ui[y][x*2+0];
+         c1 = colorTile->ui[y][x*2+1];
+         c2 = colorTile->ui[y][x*2+2];
+         c3 = colorTile->ui[y][x*2+3];
+#endif
+         switch (spu.fb.color_format) {
+         case PIPE_FORMAT_B8G8R8A8_UNORM:
+            fc[0] = spu_unpack_B8G8R8A8(c0);
+            fc[1] = spu_unpack_B8G8R8A8(c1);
+            fc[2] = spu_unpack_B8G8R8A8(c2);
+            fc[3] = spu_unpack_B8G8R8A8(c3);
+            break;
+         case PIPE_FORMAT_A8R8G8B8_UNORM:
+            fc[0] = spu_unpack_A8R8G8B8(c0);
+            fc[1] = spu_unpack_A8R8G8B8(c1);
+            fc[2] = spu_unpack_A8R8G8B8(c2);
+            fc[3] = spu_unpack_A8R8G8B8(c3);
+            break;
+         default:
+            ASSERT(0);
+         }
+         _transpose_matrix4x4(fbRGBA, fc);
+      }
+
+      /*
+       * Compute Src RGB terms
+       */
+      switch (spu.blend.rgb_src_factor) {
+      case PIPE_BLENDFACTOR_ONE:
+         term1r = fragR;
+         term1g = fragG;
+         term1b = fragB;
+         break;
+      case PIPE_BLENDFACTOR_ZERO:
+         term1r =
+         term1g =
+         term1b = spu_splats(0.0f);
+         break;
+      case PIPE_BLENDFACTOR_SRC_COLOR:
+         term1r = spu_mul(fragR, fragR);
+         term1g = spu_mul(fragG, fragG);
+         term1b = spu_mul(fragB, fragB);
+         break;
+      case PIPE_BLENDFACTOR_SRC_ALPHA:
+         term1r = spu_mul(fragR, fragA);
+         term1g = spu_mul(fragG, fragA);
+         term1b = spu_mul(fragB, fragA);
+         break;
+      /* XXX more cases */
+      default:
+         ASSERT(0);
+      }
+
+      /*
+       * Compute Src Alpha term
+       */
+      switch (spu.blend.alpha_src_factor) {
+      case PIPE_BLENDFACTOR_ONE:
+         term1a = fragA;
+         break;
+      case PIPE_BLENDFACTOR_SRC_COLOR:
+         term1a = spu_splats(0.0f);
+         break;
+      case PIPE_BLENDFACTOR_SRC_ALPHA:
+         term1a = spu_mul(fragA, fragA);
+         break;
+      /* XXX more cases */
+      default:
+         ASSERT(0);
+      }
+
+      /*
+       * Compute Dest RGB terms
+       */
+      switch (spu.blend.rgb_dst_factor) {
+      case PIPE_BLENDFACTOR_ONE:
+         term2r = fragR;
+         term2g = fragG;
+         term2b = fragB;
+         break;
+      case PIPE_BLENDFACTOR_ZERO:
+         term2r =
+         term2g =
+         term2b = spu_splats(0.0f);
+         break;
+      case PIPE_BLENDFACTOR_SRC_COLOR:
+         term2r = spu_mul(fbRGBA[0], fragR);
+         term2g = spu_mul(fbRGBA[1], fragG);
+         term2b = spu_mul(fbRGBA[2], fragB);
+         break;
+      case PIPE_BLENDFACTOR_SRC_ALPHA:
+         term2r = spu_mul(fbRGBA[0], fragA);
+         term2g = spu_mul(fbRGBA[1], fragA);
+         term2b = spu_mul(fbRGBA[2], fragA);
+         break;
+      case PIPE_BLENDFACTOR_INV_SRC_ALPHA:
+         one = spu_splats(1.0f);
+         tmp = spu_sub(one, fragA);
+         term2r = spu_mul(fbRGBA[0], tmp);
+         term2g = spu_mul(fbRGBA[1], tmp);
+         term2b = spu_mul(fbRGBA[2], tmp);
+         break;
+      /* XXX more cases */
+      default:
+         ASSERT(0);
+      }
+
+      /*
+       * Compute Dest Alpha term
+       */
+      switch (spu.blend.alpha_dst_factor) {
+      case PIPE_BLENDFACTOR_ONE:
+         term2a = fragA;
+         break;
+      case PIPE_BLENDFACTOR_SRC_COLOR:
+         term2a = spu_splats(0.0f);
+         break;
+      case PIPE_BLENDFACTOR_SRC_ALPHA:
+         term2a = spu_mul(fbRGBA[3], fragA);
+         break;
+      case PIPE_BLENDFACTOR_INV_SRC_ALPHA:
+         one = spu_splats(1.0f);
+         tmp = spu_sub(one, fragA);
+         term2a = spu_mul(fbRGBA[3], tmp);
+         break;
+      /* XXX more cases */
+      default:
+         ASSERT(0);
+      }
+
+      /*
+       * Combine Src/Dest RGB terms
+       */
+      switch (spu.blend.rgb_func) {
+      case PIPE_BLEND_ADD:
+         fragR = spu_add(term1r, term2r);
+         fragG = spu_add(term1g, term2g);
+         fragB = spu_add(term1b, term2b);
+         break;
+      case PIPE_BLEND_SUBTRACT:
+         fragR = spu_sub(term1r, term2r);
+         fragG = spu_sub(term1g, term2g);
+         fragB = spu_sub(term1b, term2b);
+         break;
+      /* XXX more cases */
+      default:
+         ASSERT(0);
+      }
+
+      /*
+       * Combine Src/Dest A term
+       */
+      switch (spu.blend.alpha_func) {
+      case PIPE_BLEND_ADD:
+         fragA = spu_add(term1a, term2a);
+         break;
+      case PIPE_BLEND_SUBTRACT:
+         fragA = spu_sub(term1a, term2a);
+         break;
+      /* XXX more cases */
+      default:
+         ASSERT(0);
+      }
+   }
+
 
    /* XXX do colormask test here */
 
@@ -190,17 +374,17 @@ spu_fallback_fragment_ops(uint x, uint y,
 #if 0
    {
       vector float frag_soa[4];
-      frag_soa[0] = fragRed;
-      frag_soa[1] = fragGreen;
-      frag_soa[2] = fragBlue;
-      frag_soa[3] = fragAlpha;
+      frag_soa[0] = fragR;
+      frag_soa[1] = fragG;
+      frag_soa[2] = fragB;
+      frag_soa[3] = fragA;
       _transpose_matrix4x4(frag_aos, frag_soa);
    }
 #else
    /* short-cut relying on function parameter layout: */
-   _transpose_matrix4x4(frag_aos, &fragRed);
-   (void) fragGreen;
-   (void) fragBlue;
+   _transpose_matrix4x4(frag_aos, &fragR);
+   (void) fragG;
+   (void) fragB;
 #endif
 
    switch (spu.fb.color_format) {
@@ -238,7 +422,7 @@ spu_fallback_fragment_ops(uint x, uint y,
    if (spu_extract(mask, 2))
       colorTile->ui[y+1][x+0] = c2;
    if (spu_extract(mask, 3))
-      colorTile->ui[y+1][x+1] = c3;   
+      colorTile->ui[y+1][x+1] = c3;
 #else
    /*
     * Quad layout:
@@ -253,6 +437,6 @@ spu_fallback_fragment_ops(uint x, uint y,
    if (spu_extract(mask, 2))
       colorTile->ui[y][x*2+2] = c2;
    if (spu_extract(mask, 3))
-      colorTile->ui[y][x*2+3] = c3;   
+      colorTile->ui[y][x*2+3] = c3;
 #endif
 }
