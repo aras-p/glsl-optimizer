@@ -60,10 +60,7 @@ static void Key(unsigned char key, int x, int y)
 
     switch (key) {
       case 27:
-<<<<<<< HEAD:progs/trivial/tri.c
          glutDestroyWindow(win);
-=======
->>>>>>> gallium-0.1:progs/trivial/tri.c
 	exit(0);
       default:
 	return;
