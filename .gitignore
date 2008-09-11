@@ -1,5 +1,7 @@
 *.a
 *.o
+*.pyc
+*.pyo
 *.so
 *.sw[a-z]
 *.pc
@@ -14,3 +16,6 @@ aclocal.m4
 config.log
 config.status
 cscope*
+.sconsign*
+config.py
+build

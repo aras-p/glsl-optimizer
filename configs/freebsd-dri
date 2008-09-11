@@ -27,6 +27,7 @@ CFLAGS += -fno-strict-aliasing
 CXXFLAGS += -fno-strict-aliasing
 
 ASM_SOURCES = 
+MESA_ASM_SOURCES = 
 
 # Library/program dependencies
 LIBDRM_CFLAGS = `pkg-config --cflags libdrm`
@@ -40,7 +41,7 @@ GLW_LIB_DEPS = -L$(TOP)/$(LIB_DIR) -L/usr/local/lib -lGL -lXt -lX11
 
 
 # Directories
-SRC_DIRS = glx/x11 mesa glu glut/glx glw
+SRC_DIRS = glx/x11 gallium mesa glu glut/glx glw
 DRIVER_DIRS = dri
 PROGRAM_DIRS = 
 WINDOW_SYSTEM=dri

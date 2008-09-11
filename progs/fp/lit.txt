@@ -1,0 +1,5 @@
+!!ARBfp1.0
+TEMP R0;
+SUB R0, {0.5}.x, fragment.color;
+LIT result.color, R0;
+END

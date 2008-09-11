@@ -31,6 +31,7 @@
 #include "vbo.h"
 #include "vbo_context.h"
 
+#if 0
 /* Reach out and grab this to use as the default:
  */
 extern void _tnl_draw_prims( GLcontext *ctx,
@@ -40,6 +41,7 @@ extern void _tnl_draw_prims( GLcontext *ctx,
 			     const struct _mesa_index_buffer *ib,
 			     GLuint min_index,
 			     GLuint max_index );
+#endif
 
 
 
@@ -212,16 +214,19 @@ GLboolean _vbo_CreateContext( GLcontext *ctx )
 
    /* By default: 
     */
+#if 0 /* dead - see vbo_set_draw_func() */
    vbo->draw_prims = _tnl_draw_prims;
+#endif
 
    /* Hook our functions into exec and compile dispatch tables.  These
     * will pretty much be permanently installed, which means that the
     * vtxfmt mechanism can be removed now.
     */
    vbo_exec_init( ctx );
+#if FEATURE_dlist
    vbo_save_init( ctx );
+#endif
 
-   
    return GL_TRUE;
 }
 
@@ -240,7 +245,17 @@ void _vbo_DestroyContext( GLcontext *ctx )
    }
 
    vbo_exec_destroy(ctx);
+#if FEATURE_dlist
    vbo_save_destroy(ctx);
+#endif
    FREE(vbo_context(ctx));
    ctx->swtnl_im = NULL;
 }
+
+
+void vbo_set_draw_func(GLcontext *ctx, vbo_draw_func func)
+{
+   struct vbo_context *vbo = vbo_context(ctx);
+   vbo->draw_prims = func;
+}
+

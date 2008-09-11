@@ -119,6 +119,12 @@ _mesa_validate_DrawElements(GLcontext *ctx,
       /* use indices in the buffer object */
       GLuint indexBytes;
 
+      if (!ctx->Array.ElementArrayBufferObj->Size) {
+         _mesa_warning(ctx,
+                       "glDrawElements called with empty array elements buffer");
+         return GL_FALSE;
+      }
+
       if (type == GL_UNSIGNED_INT) {
          indexBytes = count * sizeof(GLuint);
       }
@@ -131,7 +137,7 @@ _mesa_validate_DrawElements(GLcontext *ctx,
       }
 
       /* make sure count doesn't go outside buffer bounds */
-      if (indexBytes > ctx->Array.ElementArrayBufferObj->Size) {
+      if (indexBytes > (GLuint) ctx->Array.ElementArrayBufferObj->Size) {
          _mesa_warning(ctx, "glDrawElements index out of buffer bounds");
          return GL_FALSE;
       }

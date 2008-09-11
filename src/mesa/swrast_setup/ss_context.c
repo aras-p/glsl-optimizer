@@ -25,9 +25,9 @@
  *    Keith Whitwell <keith@tungstengraphics.com>
  */
 
-#include "glheader.h"
-#include "imports.h"
-#include "colormac.h"
+#include "main/glheader.h"
+#include "main/imports.h"
+#include "main/colormac.h"
 #include "ss_context.h"
 #include "ss_triangle.h"
 #include "swrast_setup.h"

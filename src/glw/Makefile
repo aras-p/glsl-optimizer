@@ -61,6 +61,7 @@ $(TOP)/$(LIB_DIR)/$(GLW_LIB_NAME): $(OBJECTS)
 # by any source file.
 # 
 depend: $(GLW_SOURCES)
+	rm -f depend
 	touch depend
 	$(MKDEP) $(MKDEP_OPTIONS) -I$(TOP)/include $(GLW_SOURCES) \
 		$(X11_INCLUDES) > /dev/null

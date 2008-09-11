@@ -1,4 +1,3 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/ffb/ffb_linetmp.h,v 1.2 2002/02/22 21:32:58 dawes Exp $ */
 
 static INLINE void TAG(ffb_line)(GLcontext *ctx, ffb_vertex *v0, 
 				   ffb_vertex *v1 )

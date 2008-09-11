@@ -64,22 +64,33 @@
 #include <stdarg.h>
 
 
-/* Get typedefs for uintptr_t and friends */
-#if defined(__MINGW32__) || defined(__NetBSD__)
-#  include <stdint.h>
-#elif defined(_WIN32)
-#  include <BaseTsd.h>
-#  if _MSC_VER == 1200
-     typedef UINT_PTR uintptr_t;
-#  endif 
-#elif defined(__INTERIX)
-/* Interix 3.x has a gcc that shadows this. */
-#  ifndef _UINTPTR_T_DEFINED
-     typedef unsigned long uintptr_t;
-#  define _UINTPTR_T_DEFINED
+/* Get standard integer types */
+#if defined(_MSC_VER)
+
+   typedef __int8             int8_t;
+   typedef unsigned __int8    uint8_t;
+   typedef __int16            int16_t;
+   typedef unsigned __int16   uint16_t;
+#  ifndef __eglplatform_h_
+     typedef __int32            int32_t;
 #  endif
+   typedef unsigned __int32   uint32_t;
+   typedef __int64            int64_t;
+   typedef unsigned __int64   uint64_t;
+
+#  if defined(_WIN64)
+     typedef __int64            intptr_t;
+     typedef unsigned __int64   uintptr_t;
+#  else
+     typedef __int32            intptr_t;
+     typedef unsigned __int32   uintptr_t;
+#  endif
+
+#  define INT64_C(__val) __val##i64
+#  define UINT64_C(__val) __val##ui64
+
 #else
-#  include <inttypes.h>
+#  include <stdint.h>
 #endif
 
 /* For platforms that have the C99 standard uint*_t,
@@ -168,6 +179,25 @@
 #define GL_GLEXT_PROTOTYPES
 #include "GL/gl.h"
 #include "GL/glext.h"
+
+
+#ifndef GL_FIXED
+#define GL_FIXED 0x140C
+#endif
+
+
+#ifndef GL_OES_point_size_array
+#define GL_POINT_SIZE_ARRAY_OES                                 0x8B9C
+#define GL_POINT_SIZE_ARRAY_TYPE_OES                            0x898A
+#define GL_POINT_SIZE_ARRAY_STRIDE_OES                          0x898B
+#define GL_POINT_SIZE_ARRAY_POINTER_OES                         0x898C
+#define GL_POINT_SIZE_ARRAY_BUFFER_BINDING_OES                  0x8B9F
+#endif
+
+
+#ifndef GL_OES_draw_texture
+#define GL_TEXTURE_CROP_RECT_OES  0x8B9D
+#endif
 
 
 #if !defined(CAPI) && defined(WIN32) && !defined(BUILD_FOR_SNAP)
@@ -259,12 +289,14 @@
 #endif
 
 
+#if !defined(_WIN32_WCE)
 #if defined(BUILD_FOR_SNAP) && defined(CHECKED)
 #  define ASSERT(X)   _CHECK(X) 
 #elif defined(DEBUG)
 #  define ASSERT(X)   assert(X)
 #else
 #  define ASSERT(X)
+#endif
 #endif
 
 

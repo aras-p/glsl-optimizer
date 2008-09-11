@@ -24,7 +24,6 @@
  * Authors:
  *    Keith Whitwell <keith@tungstengraphics.com>
  */
-/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgadd.c,v 1.14 2002/10/30 12:51:35 alanh Exp $ */
 
 
 #include "mtypes.h"

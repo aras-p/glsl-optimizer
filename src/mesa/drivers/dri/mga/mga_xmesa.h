@@ -24,7 +24,6 @@
  * Authors:
  *    Keith Whitwell <keith@tungstengraphics.com>
  */
-/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mga_xmesa.h,v 1.12 2002/12/16 16:18:52 dawes Exp $ */
 
 #ifndef _MGA_INIT_H_
 #define _MGA_INIT_H_
@@ -149,7 +148,7 @@ do {						\
 #define MGA_BASE( reg )		((unsigned long)(mmesa->mgaScreen->mmio.map))
 #define MGA_ADDR( reg )		(MGA_BASE(reg) + reg)
 
-#define MGA_DEREF( reg )	*(volatile u_int32_t *)MGA_ADDR( reg )
+#define MGA_DEREF( reg )	*(volatile uint32_t *)MGA_ADDR( reg )
 #define MGA_READ( reg )		MGA_DEREF( reg )
 
 #endif

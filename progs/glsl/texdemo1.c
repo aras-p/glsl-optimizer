@@ -49,6 +49,7 @@ static GLfloat TexXrot = 0, TexYrot = 0;
 static GLfloat Xrot = 20.0, Yrot = 20.0, Zrot = 0.0;
 static GLfloat EyeDist = 10;
 static GLboolean Anim = GL_TRUE;
+static int win = 0;
 
 
 static struct uniform_info ReflectUniforms[] = {
@@ -159,6 +160,7 @@ key(unsigned char k, int x, int y)
          EyeDist = 90;
       break;
    case 27:
+      glutDestroyWindow(win);
       exit(0);
    }
    glutPostRedisplay();
@@ -423,7 +425,7 @@ main(int argc, char *argv[])
    glutInit(&argc, argv);
    glutInitWindowSize(500, 400);
    glutInitDisplayMode(GLUT_RGB | GLUT_DEPTH | GLUT_DOUBLE);
-   glutCreateWindow(Demo);
+   win = glutCreateWindow(Demo);
    glutReshapeFunc(Reshape);
    glutKeyboardFunc(key);
    glutSpecialFunc(specialkey);

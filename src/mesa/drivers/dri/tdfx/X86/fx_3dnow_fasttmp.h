@@ -1,4 +1,3 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/X86/fx_3dnow_fasttmp.h,v 1.2 2000/09/26 15:56:51 tsi Exp $ */
 
 #if !defined(NASM_ASSEMBLER) && !defined(MASM_ASSEMBLER)
 #define TAGLLBL(a) TAG(.L##a)

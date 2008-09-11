@@ -1,4 +1,3 @@
-/* $Id: multiwindow.c,v 1.1 2001/08/21 14:25:31 brianp Exp $ */
 
 /*
  * A skeleton/template GLUT program
@@ -8,7 +7,6 @@
 
 
 /*
- * $Log: multiwindow.c,v $
  * Revision 1.1  2001/08/21 14:25:31  brianp
  * simple multi-window GLUT test prog
  *

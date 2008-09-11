@@ -1,5 +1,6 @@
 /**
- * Generic EGL driver for DRI.
+ * Generic EGL driver for DRI.  This is basically an "adaptor" driver
+ * that allows libEGL to load/use regular DRI drivers.
  *
  * This file contains all the code needed to interface DRI-based drivers
  * with libEGL.
@@ -23,6 +24,7 @@
 #include "egldisplay.h"
 #include "eglcontext.h"
 #include "eglconfig.h"
+#include "eglconfigutil.h"
 #include "eglsurface.h"
 #include "eglscreen.h"
 #include "eglglobals.h"
@@ -32,8 +34,43 @@
 #include "egldri.h"
 
 const char *sysfs = "/sys/class";
-#define None 0
+
 static const int empty_attribute_list[1] = { None };
+
+
+
+/**
+ * Given a card number, return the name of the DRI driver to use.
+ * This generally means reading the contents of
+ * /sys/class/drm/cardX/dri_library_name, where X is the card number
+ */
+static EGLBoolean
+driver_name_from_card_number(int card, char *driverName, int maxDriverName)
+{
+   char path[2000];
+   FILE *f;
+   int length;
+
+   snprintf(path, sizeof(path), "%s/drm/card%d/dri_library_name", sysfs, card);
+
+   f = fopen(path, "r");
+   if (!f)
+      return EGL_FALSE;
+
+   fgets(driverName, maxDriverName, f);
+   fclose(f);
+
+   if ((length = strlen(driverName)) > 1) {
+      /* remove the trailing newline from sysfs */
+      driverName[length - 1] = '\0';
+      strncat(driverName, "_dri", maxDriverName);
+      return EGL_TRUE;
+   }
+   else {
+      return EGL_FALSE;
+   }   
+}
+
 
 
 /**
@@ -42,8 +79,27 @@ static const int empty_attribute_list[1] = { None };
  * This function, in turn, loads a specific DRI driver (ex: r200_dri.so).
  */
 _EGLDriver *
-_eglMain(_EGLDisplay *dpy)
+_eglMain(_EGLDisplay *dpy, const char *args)
 {
+#if 1
+   const int card = args ? atoi(args) : 0;
+   _EGLDriver *driver = NULL;
+   char driverName[1000];
+
+   if (!driver_name_from_card_number(card, driverName, sizeof(driverName))) {
+      _eglLog(_EGL_WARNING,
+              "Unable to determine driver name for card %d\n", card);
+      return NULL;
+   }
+
+   _eglLog(_EGL_DEBUG, "Driver name: %s\n", driverName);
+
+   driver = _eglOpenDriver(dpy, driverName, args);
+
+   return driver;
+
+#else
+
    int length;
    char path[NAME_MAX];
    struct dirent *dirent;
@@ -58,14 +114,19 @@ _eglMain(_EGLDisplay *dpy)
       _eglLog(_EGL_WARNING, "%s DRM devices not found.", path);
       return EGL_FALSE;
    }
+
+   /* loop over dir entries looking for cardX where "X" is in the
+    * dpy->DriverName ":X" string.
+    */
    while ((dirent = readdir(dir))) {
 
       if (strncmp(&dirent->d_name[0], "card", 4) != 0)
          continue;
-      if (strcmp(&dirent->d_name[4], &dpy->Name[1]) != 0)
+      if (strcmp(&dirent->d_name[4], &driverName[1]) != 0)
          continue;
 
-      snprintf(path, sizeof(path), "%s/drm/card%s/dri_library_name", sysfs, &dpy->Name[1]);
+      snprintf(path, sizeof(path), "%s/drm/card%s/dri_library_name",
+               sysfs, &driverName[1]);
       _eglLog(_EGL_INFO, "Opening %s", path);
 #if 1
       file = fopen(path, "r");
@@ -89,6 +150,7 @@ _eglMain(_EGLDisplay *dpy)
    closedir(dir);
 
    return driver;
+#endif
 }
 
 
@@ -141,7 +203,7 @@ _eglDRICreateContext(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
    /* generate handle and insert into hash table */
    _eglSaveContext(&c->Base);
 
-   return c->Base.Handle;
+   return _eglGetContextHandle(&c->Base);
 }
 
 
@@ -152,13 +214,15 @@ _eglDRIMakeCurrent(_EGLDriver *drv, EGLDisplay dpy, EGLSurface draw,
    driDisplay *disp = Lookup_driDisplay(dpy);
    driContext *ctx = Lookup_driContext(context);
    EGLBoolean b;
+   __DRIid drawBuf = (__DRIid) draw;
+   __DRIid readBuf = (__DRIid) read;
 
    b = _eglMakeCurrent(drv, dpy, draw, read, context);
    if (!b)
       return EGL_FALSE;
 
    if (ctx) {
-      ctx->driContext.bindContext(disp, 0, read, draw, &ctx->driContext);
+      ctx->driContext.bindContext(disp, 0, drawBuf, readBuf, &ctx->driContext);
    }
    else {
       /* what's this??? */
@@ -190,7 +254,7 @@ _eglDRICreatePbufferSurface(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
 #if 0
       GLcontext *ctx = NULL; /* this _should_ be OK */
 #endif
-      GLvisual visMode;
+      __GLcontextModes visMode;
       _EGLConfig *conf = _eglLookupConfig(drv, dpy, config);
       assert(conf); /* bad config should be caught earlier */
       _eglConfigToContextModesRec(conf, &visMode);
@@ -267,7 +331,8 @@ _eglDRICreateScreenSurfaceMESA(_EGLDriver *drv, EGLDisplay dpy, EGLConfig cfg,
    _EGLConfig *config = _eglLookupConfig(drv, dpy, cfg);
    driDisplay *disp = Lookup_driDisplay(dpy);
    driSurface *surface;
-   GLvisual visMode;
+   __GLcontextModes visMode;
+   __DRIid drawBuf;
 
    surface = (driSurface *) calloc(1, sizeof(*surface));
    if (!surface) {
@@ -292,8 +357,10 @@ _eglDRICreateScreenSurfaceMESA(_EGLDriver *drv, EGLDisplay dpy, EGLConfig cfg,
    /* convert EGLConfig to GLvisual */
    _eglConfigToContextModesRec(config, &visMode);
 
+   drawBuf = (__DRIid) _eglGetSurfaceHandle(&surface->Base);
+
    /* Create a new DRI drawable */
-   if (!disp->driScreen.createNewDrawable(disp, &visMode, surface->Base.Handle,
+   if (!disp->driScreen.createNewDrawable(disp, &visMode, drawBuf,
                                           &surface->drawable, GLX_WINDOW_BIT,
                                           empty_attribute_list)) {
       _eglRemoveSurface(&surface->Base);
@@ -715,7 +782,7 @@ __eglGetDrawableInfo(__DRInativeDisplay * ndpy, int screen, __DRIid drawable,
 {
     __DRIscreen *pDRIScreen;
     __DRIscreenPrivate *psp;
-   driSurface *surf = Lookup_driSurface(drawable);
+    driSurface *surf = Lookup_driSurface((EGLSurface) drawable);
 
    pDRIScreen = __eglFindDRIScreen(ndpy, screen);
 
@@ -1019,8 +1086,10 @@ _eglDRICreateDisplay(driDisplay *dpy, __DRIframebuffer *framebuffer)
                             api_ver,
                             & interface_methods,
                             NULL);
-   if (!dpy->driScreen.private)
+   if (!dpy->driScreen.private) {
+      _eglLog(_EGL_WARNING, "egldri.c: DRI create new screen failed");
       return EGL_FALSE;
+   }
 
    DRM_UNLOCK( dpy->drmFD, dpy->pSAREA, dpy->serverContext );
 
@@ -1080,6 +1149,7 @@ _eglDRIInitialize(_EGLDriver *drv, EGLDisplay dpy,
 {
    _EGLDisplay *disp = _eglLookupDisplay(dpy);
    driDisplay *display;
+   const char *driverName = (const char *) disp->NativeDisplay;
 
    assert(disp);
 
@@ -1088,13 +1158,13 @@ _eglDRIInitialize(_EGLDriver *drv, EGLDisplay dpy,
     */
    display = calloc(1, sizeof(*display));
    display->Base = *disp;
-   _eglHashInsert(_eglGlobal.Displays, disp->Handle, display);
+   _eglSaveDisplay(&display->Base);
    free(disp);
 
    *major = 1;
    *minor = 0;
 
-   sscanf(&disp->Name[1], "%d", &display->minor);
+   sscanf(driverName + 1, "%d", &display->minor);
 
    drv->Initialized = EGL_TRUE;
    return EGL_TRUE;

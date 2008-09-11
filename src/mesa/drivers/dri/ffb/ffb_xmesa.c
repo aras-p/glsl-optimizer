@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/ffb/ffb_xmesa.c,v 1.4 2002/02/22 21:32:59 dawes Exp $
+/* 
  *
  * GLX Hardware Device Driver for Sun Creator/Creator3D
  * Copyright (C) 2000, 2001 David S. Miller
@@ -624,8 +624,8 @@ ffbFillInModes( __DRIscreenPrivate *psp,
       GLX_NONE, GLX_SWAP_UNDEFINED_OML, GLX_SWAP_COPY_OML
    };
 
-   u_int8_t depth_bits_array[3];
-   u_int8_t stencil_bits_array[3];
+   uint8_t depth_bits_array[3];
+   uint8_t stencil_bits_array[3];
 
    depth_bits_array[0] = 0;
    depth_bits_array[1] = depth_bits;

@@ -37,7 +37,7 @@ CXXFLAGS = $(WARN_FLAGS) $(OPT_FLAGS) $(PIC_FLAGS) $(ARCH_FLAGS) $(DEFINES)
 CFLAGS += -fno-strict-aliasing
 CXXFLAGS += -fno-strict-aliasing
 
-ASM_SOURCES = 
+MESA_ASM_SOURCES = 
 
 # Library/program dependencies
 EXTRA_LIB_PATH=-L/usr/X11R6/lib

@@ -1,0 +1,335 @@
+#######################################################################
+# SConscript for Mesa
+
+
+Import('*')
+
+if env['platform'] != 'winddk':
+
+	env = env.Clone()
+	
+	env.Append(CPPPATH = [
+		'#/src/mesa',
+	])
+	
+	if gcc:
+		env.Append(CFLAGS = [
+			'-std=c99',
+		])
+
+	#
+	# Source files
+	#
+	
+	main_sources = [
+		'main/api_arrayelt.c',
+		'main/api_exec.c',
+		'main/api_loopback.c',
+		'main/api_noop.c',
+		'main/api_validate.c',
+		'main/accum.c',
+		'main/attrib.c',
+		'main/arrayobj.c',
+		'main/blend.c',
+		'main/bufferobj.c',
+		'main/buffers.c',
+		'main/clear.c',
+		'main/clip.c',
+		'main/colortab.c',
+		'main/context.c',
+		'main/convolve.c',
+		'main/debug.c',
+		'main/depth.c',
+		'main/depthstencil.c',
+		'main/dlist.c',
+		'main/drawpix.c',
+		'main/enable.c',
+		'main/enums.c',
+		'main/eval.c',
+		'main/execmem.c',
+		'main/extensions.c',
+		'main/fbobject.c',
+		'main/feedback.c',
+		'main/ffvertex_prog.c',
+		'main/fog.c',
+		'main/framebuffer.c',
+		'main/get.c',
+		'main/getstring.c',
+		'main/hash.c',
+		'main/hint.c',
+		'main/histogram.c',
+		'main/image.c',
+		'main/imports.c',
+		'main/light.c',
+		'main/lines.c',
+		'main/matrix.c',
+		'main/mipmap.c',
+		'main/mm.c',
+		'main/multisample.c',
+		'main/pixel.c',
+		'main/pixelstore.c',
+		'main/points.c',
+		'main/polygon.c',
+		'main/queryobj.c',
+		'main/rastpos.c',
+		'main/rbadaptors.c',
+		'main/readpix.c',
+		'main/renderbuffer.c',
+		'main/scissor.c',
+		'main/shaders.c',
+		'main/state.c',
+		'main/stencil.c',
+		'main/texcompress.c',
+		'main/texcompress_s3tc.c',
+		'main/texcompress_fxt1.c',
+		'main/texenv.c',
+		'main/texenvprogram.c',
+		'main/texformat.c',
+		'main/texgen.c',
+		'main/teximage.c',
+		'main/texobj.c',
+		'main/texparam.c',
+		'main/texrender.c',
+		'main/texstate.c',
+		'main/texstore.c',
+		'main/varray.c',
+		'main/vtxfmt.c',
+	]
+	
+	math_sources = [
+		'math/m_debug_clip.c',
+		'math/m_debug_norm.c',
+		'math/m_debug_xform.c',
+		'math/m_eval.c',
+		'math/m_matrix.c',
+		'math/m_translate.c',
+		'math/m_vector.c',
+		'math/m_xform.c',
+	]
+	
+	vbo_sources = [
+		'vbo/vbo_context.c',
+		'vbo/vbo_exec.c',
+		'vbo/vbo_exec_api.c',
+		'vbo/vbo_exec_array.c',
+		'vbo/vbo_exec_draw.c',
+		'vbo/vbo_exec_eval.c',
+		'vbo/vbo_rebase.c',
+		'vbo/vbo_split.c',
+		'vbo/vbo_split_copy.c',
+		'vbo/vbo_split_inplace.c',
+		'vbo/vbo_save.c',
+		'vbo/vbo_save_api.c',
+		'vbo/vbo_save_draw.c',
+		'vbo/vbo_save_loopback.c',
+	]
+	
+	vf_sources = [
+		'vf/vf.c',
+		'vf/vf_generic.c',
+		'vf/vf_sse.c',
+	]
+	
+	statetracker_sources = [
+		'state_tracker/st_atom.c',
+		'state_tracker/st_atom_blend.c',
+		'state_tracker/st_atom_clip.c',
+		'state_tracker/st_atom_constbuf.c',
+		'state_tracker/st_atom_depth.c',
+		'state_tracker/st_atom_framebuffer.c',
+		'state_tracker/st_atom_pixeltransfer.c',
+		'state_tracker/st_atom_sampler.c',
+		'state_tracker/st_atom_scissor.c',
+		'state_tracker/st_atom_shader.c',
+		'state_tracker/st_atom_rasterizer.c',
+		'state_tracker/st_atom_stipple.c',
+		'state_tracker/st_atom_texture.c',
+		'state_tracker/st_atom_viewport.c',
+		'state_tracker/st_cb_accum.c',
+		'state_tracker/st_cb_bitmap.c',
+		'state_tracker/st_cb_blit.c',
+		'state_tracker/st_cb_bufferobjects.c',
+		'state_tracker/st_cb_clear.c',
+		'state_tracker/st_cb_flush.c',
+		'state_tracker/st_cb_drawpixels.c',
+		'state_tracker/st_cb_fbo.c',
+		'state_tracker/st_cb_get.c',
+		'state_tracker/st_cb_feedback.c',
+		'state_tracker/st_cb_program.c',
+		'state_tracker/st_cb_queryobj.c',
+		'state_tracker/st_cb_rasterpos.c',
+		'state_tracker/st_cb_readpixels.c',
+		'state_tracker/st_cb_strings.c',
+		'state_tracker/st_cb_texture.c',
+		'state_tracker/st_context.c',
+		'state_tracker/st_debug.c',
+		'state_tracker/st_draw.c',
+		'state_tracker/st_extensions.c',
+		'state_tracker/st_format.c',
+		'state_tracker/st_framebuffer.c',
+		'state_tracker/st_gen_mipmap.c',
+		'state_tracker/st_mesa_to_tgsi.c',
+		'state_tracker/st_program.c',
+		'state_tracker/st_texture.c',
+	]
+	
+	shader_sources = [
+		'shader/arbprogparse.c',
+		'shader/arbprogram.c',
+		'shader/atifragshader.c',
+		'shader/grammar/grammar_mesa.c',
+		'shader/nvfragparse.c',
+		'shader/nvprogram.c',
+		'shader/nvvertparse.c',
+		'shader/program.c',
+		'shader/prog_cache.c',
+		'shader/prog_debug.c',
+		'shader/prog_execute.c',
+		'shader/prog_instruction.c',
+		'shader/prog_parameter.c',
+		'shader/prog_print.c',
+		'shader/prog_statevars.c',
+		'shader/prog_uniform.c',
+		'shader/programopt.c',
+		'shader/shader_api.c',
+	]
+	
+	slang_sources = [
+		'shader/slang/slang_builtin.c',
+		'shader/slang/slang_codegen.c',
+		'shader/slang/slang_compile.c',
+		'shader/slang/slang_compile_function.c',
+		'shader/slang/slang_compile_operation.c',
+		'shader/slang/slang_compile_struct.c',
+		'shader/slang/slang_compile_variable.c',
+		'shader/slang/slang_emit.c',
+		'shader/slang/slang_ir.c',
+		'shader/slang/slang_label.c',
+		'shader/slang/slang_library_noise.c',
+		'shader/slang/slang_link.c',
+		'shader/slang/slang_log.c',
+		'shader/slang/slang_mem.c',
+		'shader/slang/slang_preprocess.c',
+		'shader/slang/slang_print.c',
+		'shader/slang/slang_simplify.c',
+		'shader/slang/slang_storage.c',
+		'shader/slang/slang_typeinfo.c',
+		'shader/slang/slang_vartable.c',
+		'shader/slang/slang_utility.c',
+	]
+	
+	mesa_sources = (
+		main_sources +
+		math_sources +
+		vbo_sources +
+		vf_sources +
+		statetracker_sources +
+		shader_sources +
+		slang_sources
+	)
+
+	glapi_sources = [
+		'main/dispatch.c',
+		'glapi/glapi.c',
+		'glapi/glapi_getproc.c',
+		'glapi/glthread.c',
+	]
+	
+	#
+	# Assembly sources
+	#
+	if gcc and env['machine'] == 'x86':
+		env.Append(CPPDEFINES = [
+			'USE_X86_ASM', 
+			'USE_MMX_ASM',
+			'USE_3DNOW_ASM',
+			'USE_SSE_ASM',
+		])
+		mesa_sources += [
+			'x86/common_x86.c',
+			'x86/x86.c',
+			'x86/3dnow.c',
+			'x86/sse.c',
+			'x86/common_x86_asm.S',
+			'x86/x86_xform2.S',
+			'x86/x86_xform3.S',
+			'x86/x86_xform4.S',
+			'x86/x86_cliptest.S',
+			'x86/mmx_blend.S',
+			'x86/3dnow_xform1.S',
+			'x86/3dnow_xform2.S',
+			'x86/3dnow_xform3.S',
+			'x86/3dnow_xform4.S',
+			'x86/3dnow_normal.S',
+			'x86/sse_xform1.S',
+			'x86/sse_xform2.S',
+			'x86/sse_xform3.S',
+			'x86/sse_xform4.S',
+			'x86/sse_normal.S',
+			'x86/read_rgba_span_x86.S',
+		]
+		glapi_sources += [
+			'x86/glapi_x86.S',
+		]
+	elif gcc and env['machine'] == 'x86_64':
+		env.Append(CPPDEFINES = [
+			'USE_X86_64_ASM', 
+		])
+		mesa_sources += [
+			'x86-64/x86-64.c',
+			'x86-64/xform4.S',
+		]
+		glapi_sources += [
+			'x86-64/glapi_x86-64.S'
+		]
+	elif gcc and env['machine'] == 'ppc':
+		mesa_sources += [
+			'ppc/common_ppc.c',
+		]
+		glapi_sources += [
+		]
+	elif gcc and env['machine'] == 'sparc':
+		mesa_sources += [
+			'sparc/sparc.c',
+			'sparc/clip.S',
+			'sparc/norm.S',
+			'sparc/xform.S',
+		]
+		glapi_sources += [
+			'sparc/glapi_sparc.S'
+		]
+	else:
+		pass
+	
+	# Generate matypes.h
+	if gcc and env['machine'] in ('x86', 'x86_64'):
+		# See http://www.scons.org/wiki/UsingCodeGenerators
+		gen_matypes = env.Program(
+			target = 'gen_matypes',
+			source = 'x86/gen_matypes.c',
+		)
+		matypes = env.Command(
+			'matypes.h',
+			gen_matypes,
+			gen_matypes[0].abspath + ' > $TARGET',
+		)
+		# Add the dir containing the generated header (somewhere inside  the
+		# build dir) to the include path  
+		env.Append(CPPPATH = [matypes[0].dir])
+	
+	#
+	# Libraries
+	# 
+
+	mesa = env.ConvenienceLibrary(
+		target = 'mesa',
+		source = mesa_sources,
+	)
+	Export('mesa')
+	
+	if not dri:
+		glapi = env.ConvenienceLibrary(
+			target = 'glapi',
+			source = glapi_sources,
+		)
+		Export('glapi')

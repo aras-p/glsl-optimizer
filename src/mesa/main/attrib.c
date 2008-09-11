@@ -30,6 +30,7 @@
 #include "blend.h"
 #include "buffers.h"
 #include "bufferobj.h"
+#include "clear.h"
 #include "colormac.h"
 #include "colortab.h"
 #include "context.h"
@@ -41,11 +42,16 @@
 #include "light.h"
 #include "lines.h"
 #include "matrix.h"
+#include "multisample.h"
 #include "points.h"
 #include "polygon.h"
+#include "scissor.h"
 #include "simple_list.h"
 #include "stencil.h"
+#include "texenv.h"
+#include "texgen.h"
 #include "texobj.h"
+#include "texparam.h"
 #include "texstate.h"
 #include "varray.h"
 #include "mtypes.h"
@@ -1085,14 +1091,14 @@ _mesa_PopAttrib(void)
                _mesa_PointSize(point->Size);
                _mesa_set_enable(ctx, GL_POINT_SMOOTH, point->SmoothFlag);
                if (ctx->Extensions.EXT_point_parameters) {
-                  _mesa_PointParameterfvEXT(GL_DISTANCE_ATTENUATION_EXT,
-                                            point->Params);
-                  _mesa_PointParameterfEXT(GL_POINT_SIZE_MIN_EXT,
-                                           point->MinSize);
-                  _mesa_PointParameterfEXT(GL_POINT_SIZE_MAX_EXT,
-                                           point->MaxSize);
-                  _mesa_PointParameterfEXT(GL_POINT_FADE_THRESHOLD_SIZE_EXT,
-                                           point->Threshold);
+                  _mesa_PointParameterfv(GL_DISTANCE_ATTENUATION_EXT,
+                                         point->Params);
+                  _mesa_PointParameterf(GL_POINT_SIZE_MIN_EXT,
+                                        point->MinSize);
+                  _mesa_PointParameterf(GL_POINT_SIZE_MAX_EXT,
+                                        point->MaxSize);
+                  _mesa_PointParameterf(GL_POINT_FADE_THRESHOLD_SIZE_EXT,
+                                        point->Threshold);
                }
                if (ctx->Extensions.NV_point_sprite
 		   || ctx->Extensions.ARB_point_sprite) {

@@ -1,4 +1,3 @@
-/* $ID$ */
 
 /*
  * Spinning gears demo for Linux SVGA/Mesa interface in 32K color mode.

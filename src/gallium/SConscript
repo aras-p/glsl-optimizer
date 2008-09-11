@@ -1,0 +1,29 @@
+import os
+
+Import('*')
+
+env = env.Clone()
+
+auxiliaries = []
+
+Export('auxiliaries')
+
+
+if llvm:
+	SConscript(['auxiliary/gallivm/SConscript'])
+
+SConscript([
+	# NOTE: order matters!
+	'auxiliary/util/SConscript',
+	'auxiliary/rtasm/SConscript',
+	'auxiliary/tgsi/SConscript',
+	'auxiliary/cso_cache/SConscript',
+	'auxiliary/translate/SConscript',
+	'auxiliary/draw/SConscript',
+	'auxiliary/pipebuffer/SConscript',
+])
+
+for driver in env['drivers']:
+	SConscript(os.path.join('drivers', driver, 'SConscript'))
+
+SConscript('state_trackers/python/SConscript')

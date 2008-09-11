@@ -35,9 +35,9 @@
  */
 
 
-#include "glheader.h"
-#include "colormac.h"
-#include "context.h"
+#include "main/glheader.h"
+#include "main/colormac.h"
+#include "main/context.h"
 #include "program.h"
 #include "prog_execute.h"
 #include "prog_instruction.h"
@@ -93,7 +93,7 @@ get_register_pointer(const struct prog_src_register *source,
                 source->File == PROGRAM_STATE_VAR ||
                 source->File == PROGRAM_UNIFORM);
          params = machine->CurProgram->Parameters;
-         if (reg < 0 || reg >= params->NumParameters)
+         if (reg < 0 || reg >= (GLint)params->NumParameters)
             return ZeroVec;
          else
             return params->ParameterValues[reg];
@@ -228,7 +228,7 @@ fetch_vector4_deriv(GLcontext * ctx,
                     const struct gl_program_machine *machine,
                     char xOrY, GLfloat result[4])
 {
-   if (source->File == PROGRAM_INPUT && source->Index < machine->NumDeriv) {
+   if (source->File == PROGRAM_INPUT && source->Index < (GLint)machine->NumDeriv) {
       const GLint col = machine->CurElement;
       const GLfloat w = machine->Attribs[FRAG_ATTRIB_WPOS][col][3];
       const GLfloat invQ = 1.0f / w;
@@ -507,7 +507,7 @@ _mesa_execute_program(GLcontext * ctx,
 {
    const GLuint numInst = program->NumInstructions;
    const GLuint maxExec = 10000;
-   GLint pc, numExec = 0;
+   GLuint pc, numExec = 0;
 
    machine->CurProgram = program;
 

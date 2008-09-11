@@ -1,4 +1,3 @@
-/* $XFree86: xc/lib/GL/glx/glxcmds.c,v 1.30 2004/01/30 20:33:06 alanh Exp $ */
 /*
 ** License Applicability. Except to the extent portions of this file are
 ** made subject to an alternative license as permitted in the SGI Free

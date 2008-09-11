@@ -1,4 +1,3 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/ffb/ffb_pointtmp.h,v 1.3 2002/02/22 21:32:59 dawes Exp $ */
 
 static INLINE void TAG(ffb_draw_point)(GLcontext *ctx, ffb_vertex *tmp )
 {

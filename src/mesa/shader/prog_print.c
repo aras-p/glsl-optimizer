@@ -28,9 +28,9 @@
  * \author Brian Paul
  */
 
-#include "glheader.h"
-#include "context.h"
-#include "imports.h"
+#include "main/glheader.h"
+#include "main/context.h"
+#include "main/imports.h"
 #include "prog_instruction.h"
 #include "prog_parameter.h"
 #include "prog_print.h"
@@ -353,6 +353,19 @@ _mesa_swizzle_string(GLuint swizzle, GLuint negateBase, GLboolean extended)
 
    s[i] = 0;
    return s;
+}
+
+
+void
+_mesa_print_swizzle(GLuint swizzle)
+{
+   if (swizzle == SWIZZLE_XYZW) {
+      _mesa_printf(".xyzw\n");
+   }
+   else {
+      const char *s = _mesa_swizzle_string(swizzle, 0, 0);
+      _mesa_printf("%s\n", s);
+   }
 }
 
 

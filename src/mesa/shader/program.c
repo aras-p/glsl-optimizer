@@ -29,10 +29,11 @@
  */
 
 
-#include "glheader.h"
-#include "context.h"
-#include "hash.h"
+#include "main/glheader.h"
+#include "main/context.h"
+#include "main/hash.h"
 #include "program.h"
+#include "prog_cache.h"
 #include "prog_parameter.h"
 #include "prog_instruction.h"
 
@@ -57,7 +58,11 @@ _mesa_init_program(GLcontext *ctx)
 
 #if FEATURE_NV_vertex_program || FEATURE_ARB_vertex_program
    ctx->VertexProgram.Enabled = GL_FALSE;
+#if FEATURE_es2_glsl
+   ctx->VertexProgram.PointSizeEnabled = GL_TRUE;
+#else
    ctx->VertexProgram.PointSizeEnabled = GL_FALSE;
+#endif
    ctx->VertexProgram.TwoSideEnabled = GL_FALSE;
    _mesa_reference_vertprog(ctx, &ctx->VertexProgram.Current,
                             ctx->Shared->DefaultVertexProgram);
@@ -66,6 +71,7 @@ _mesa_init_program(GLcontext *ctx)
       ctx->VertexProgram.TrackMatrix[i] = GL_NONE;
       ctx->VertexProgram.TrackMatrixTransform[i] = GL_IDENTITY_NV;
    }
+   ctx->VertexProgram.Cache = _mesa_new_program_cache();
 #endif
 
 #if FEATURE_NV_fragment_program || FEATURE_ARB_fragment_program
@@ -73,7 +79,9 @@ _mesa_init_program(GLcontext *ctx)
    _mesa_reference_fragprog(ctx, &ctx->FragmentProgram.Current,
                             ctx->Shared->DefaultFragmentProgram);
    assert(ctx->FragmentProgram.Current);
+   ctx->FragmentProgram.Cache = _mesa_new_program_cache();
 #endif
+
 
    /* XXX probably move this stuff */
 #if FEATURE_ATI_fragment_shader
@@ -93,9 +101,11 @@ _mesa_free_program_data(GLcontext *ctx)
 {
 #if FEATURE_NV_vertex_program || FEATURE_ARB_vertex_program
    _mesa_reference_vertprog(ctx, &ctx->VertexProgram.Current, NULL);
+   _mesa_delete_program_cache(ctx, ctx->VertexProgram.Cache);
 #endif
 #if FEATURE_NV_fragment_program || FEATURE_ARB_fragment_program
    _mesa_reference_fragprog(ctx, &ctx->FragmentProgram.Current, NULL);
+   _mesa_delete_program_cache(ctx, ctx->FragmentProgram.Cache);
 #endif
    /* XXX probably move this stuff */
 #if FEATURE_ATI_fragment_shader
@@ -539,7 +549,6 @@ _mesa_insert_instructions(struct gl_program *prog, GLuint start, GLuint count)
 
    return GL_TRUE;
 }
-
 
 /**
  * Delete 'count' instructions at 'start' in the given program.

@@ -22,7 +22,7 @@ OSMESA_LIB_NAME = libOSMesa16.a
 
 
 # Directories
-SRC_DIRS = mesa glu
+SRC_DIRS = gallium mesa glu
 DRIVER_DIRS = osmesa
 PROGRAM_DIRS = 
 

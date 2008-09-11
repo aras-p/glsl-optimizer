@@ -1,4 +1,3 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/r128_dri.c,v 1.28 2003/02/07 20:41:14 martin Exp $ */
 /*
  * Copyright 1999, 2000 ATI Technologies Inc., Markham, Ontario,
  *                      Precision Insight, Inc., Cedar Park, Texas, and
@@ -272,7 +271,7 @@ static GLboolean R128DRIPciInit(const DRIDriverContext *ctx)
 {
     R128InfoPtr info = ctx->driverPrivate;
     unsigned char *R128MMIO = ctx->MMIOAddress;
-    u_int32_t chunk;
+    uint32_t chunk;
     int ret;
     int flags;
 

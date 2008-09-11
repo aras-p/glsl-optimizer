@@ -1,4 +1,3 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sis/sis_dri.h,v 1.9 2003/08/29 08:50:54 twini Exp $ */
 
 /* modified from tdfx_dri.h */
 

@@ -58,7 +58,11 @@
 #  else /* for use with static link lib build of Win32 edition only */
 #    define GLAPI extern
 #  endif /* _STATIC_MESA support */
-#  define GLAPIENTRY __stdcall
+#  if defined(__MINGW32__) && defined(GL_NO_STDCALL) || defined(UNDER_CE)  /* The generated DLLs by MingW with STDCALL are not compatible with the ones done by Microsoft's compilers */
+#    define GLAPIENTRY 
+#  else
+#    define GLAPIENTRY __stdcall
+#  endif
 #elif defined(__CYGWIN__) && defined(USE_OPENGL32) /* use native windows opengl32 */
 #  define GLAPI extern
 #  define GLAPIENTRY __stdcall
@@ -84,8 +88,9 @@
 #include <windows.h>
 #endif
 
-#if defined(_WIN32) && !defined(_WINGDI_) && !defined(_GNU_H_WINDOWS32_DEFINES) \
-     && !defined(OPENSTEP) && !defined(__CYGWIN__) || defined(__MINGW32__)
+#if defined(_WIN32) && !defined(_WINGDI_) && !defined(_WIN32_WCE) \
+     && !defined(_GNU_H_WINDOWS32_DEFINES) && !defined(OPENSTEP) \
+     && !defined(__CYGWIN__) || defined(__MINGW32__)
 #include <GL/mesa_wgl.h>
 #endif
 

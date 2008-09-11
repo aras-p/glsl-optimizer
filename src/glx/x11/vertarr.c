@@ -1,4 +1,3 @@
-/* $XFree86: xc/lib/GL/glx/vertarr.c,v 1.4 2001/03/25 05:32:00 tsi Exp $ */
 /*
 ** License Applicability. Except to the extent portions of this file are
 ** made subject to an alternative license as permitted in the SGI Free

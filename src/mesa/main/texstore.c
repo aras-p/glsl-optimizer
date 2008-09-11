@@ -55,7 +55,9 @@
 #include "bufferobj.h"
 #include "colormac.h"
 #include "context.h"
+#if FEATURE_convolve
 #include "convolve.h"
+#endif
 #include "image.h"
 #include "macros.h"
 #include "mipmap.h"
@@ -269,6 +271,16 @@ compute_component_mapping(GLenum inFormat, GLenum outFormat,
 }
 
 
+#if !FEATURE_convolve
+static void
+_mesa_adjust_image_for_convolution(GLcontext *ctx, GLuint dims,
+                                   GLsizei *srcWidth, GLsizei *srcHeight)
+{
+   /* no-op */
+}
+#endif
+
+
 /**
  * Make a temporary (color) texture image with GLfloat components.
  * Apply all needed pixel unpacking and pixel transfer operations.
@@ -372,6 +384,7 @@ make_temp_float_image(GLcontext *ctx, GLuint dims,
          convWidth = srcWidth;
          convHeight = srcHeight;
 
+#if FEATURE_convolve
          /* do convolution */
          {
             GLfloat *src = tempImage + img * (srcWidth * srcHeight * 4);
@@ -391,7 +404,7 @@ make_temp_float_image(GLcontext *ctx, GLuint dims,
                }
             }
          }
-
+#endif
          /* do post-convolution transfer and pack into tempImage */
          {
             const GLint logComponents
@@ -548,6 +561,7 @@ _mesa_make_temp_chan_image(GLcontext *ctx, GLuint dims,
           textureBaseFormat == GL_ALPHA ||
           textureBaseFormat == GL_INTENSITY);
 
+#if FEATURE_convolve
    if ((dims == 1 && ctx->Pixel.Convolution1DEnabled) ||
        (dims >= 2 && ctx->Pixel.Convolution2DEnabled) ||
        (dims >= 2 && ctx->Pixel.Separable2DEnabled)) {
@@ -569,6 +583,7 @@ _mesa_make_temp_chan_image(GLcontext *ctx, GLuint dims,
       transferOps = 0;
       freeSrcImage = GL_TRUE;
    }
+#endif
 
    /* unpack and transfer the source image */
    tempImage = (GLchan *) _mesa_malloc(srcWidth * srcHeight * srcDepth
@@ -870,8 +885,8 @@ _mesa_swizzle_ubyte_image(GLcontext *ctx,
 
 /*    _mesa_printf("map %d %d %d %d\n", map[0], map[1], map[2], map[3]);  */
 
-   if (srcRowStride == dstRowStride &&
-       srcComponents == dstComponents &&
+   if (srcComponents == dstComponents &&
+       srcRowStride == dstRowStride &&
        srcRowStride == srcWidth * srcComponents &&
        dimensions < 3) {
       /* 1 and 2D images only */
@@ -1145,7 +1160,8 @@ _mesa_texstore_z32(TEXSTORE_PARAMS)
    ASSERT(dstFormat == &_mesa_texformat_z32);
    ASSERT(dstFormat->TexelBytes == sizeof(GLuint));
 
-   if (!ctx->_ImageTransferState &&
+   if (ctx->Pixel.DepthScale == 1.0f &&
+       ctx->Pixel.DepthBias == 0.0f &&
        !srcPacking->SwapBytes &&
        baseInternalFormat == GL_DEPTH_COMPONENT &&
        srcFormat == GL_DEPTH_COMPONENT &&
@@ -1192,7 +1208,8 @@ _mesa_texstore_z16(TEXSTORE_PARAMS)
    ASSERT(dstFormat == &_mesa_texformat_z16);
    ASSERT(dstFormat->TexelBytes == sizeof(GLushort));
 
-   if (!ctx->_ImageTransferState &&
+   if (ctx->Pixel.DepthScale == 1.0f &&
+       ctx->Pixel.DepthBias == 0.0f &&
        !srcPacking->SwapBytes &&
        baseInternalFormat == GL_DEPTH_COMPONENT &&
        srcFormat == GL_DEPTH_COMPONENT &&
@@ -2390,7 +2407,8 @@ _mesa_texstore_z24_s8(TEXSTORE_PARAMS)
    ASSERT(srcFormat == GL_DEPTH_STENCIL_EXT);
    ASSERT(srcType == GL_UNSIGNED_INT_24_8_EXT);
 
-   if (!ctx->_ImageTransferState &&
+   if (ctx->Pixel.DepthScale == 1.0f &&
+       ctx->Pixel.DepthBias == 0.0f &&
        !srcPacking->SwapBytes) {
       /* simple path */
       memcpy_texture(ctx, dims,
@@ -2424,7 +2442,7 @@ _mesa_texstore_z24_s8(TEXSTORE_PARAMS)
             _mesa_unpack_depth_span(ctx, srcWidth,
                                     GL_UNSIGNED_INT_24_8_EXT, /* dst type */
                                     dstRow, /* dst addr */
-                                    depthScale,
+                                    (GLuint) depthScale,
                                     srcType, src, srcPacking);
             /* get the 8-bit stencil values */
             _mesa_unpack_stencil_span(ctx, srcWidth,
@@ -2445,6 +2463,88 @@ _mesa_texstore_z24_s8(TEXSTORE_PARAMS)
 }
 
 
+/**
+ * Store a combined depth/stencil texture image.
+ */
+GLboolean
+_mesa_texstore_s8_z24(TEXSTORE_PARAMS)
+{
+   const GLuint depthScale = 0xffffff;
+   const GLint srcRowStride
+      = _mesa_image_row_stride(srcPacking, srcWidth, srcFormat, srcType)
+      / sizeof(GLuint);
+   GLint img, row;
+
+   ASSERT(dstFormat == &_mesa_texformat_s8_z24);
+   ASSERT(srcFormat == GL_DEPTH_STENCIL_EXT || srcFormat == GL_DEPTH_COMPONENT);
+   ASSERT(srcFormat != GL_DEPTH_STENCIL_EXT || srcType == GL_UNSIGNED_INT_24_8_EXT);
+
+   /* In case we only upload depth we need to preserve the stencil */
+   if (srcFormat == GL_DEPTH_COMPONENT) {
+      for (img = 0; img < srcDepth; img++) {
+         GLuint *dstRow = (GLuint *) dstAddr
+            + dstImageOffsets[dstZoffset + img]
+            + dstYoffset * dstRowStride / sizeof(GLuint)
+            + dstXoffset;
+         const GLuint *src
+            = (const GLuint *) _mesa_image_address(dims, srcPacking, srcAddr,
+                  srcWidth, srcHeight,
+                  srcFormat, srcType,
+                  img, 0, 0);
+         for (row = 0; row < srcHeight; row++) {
+            GLuint depth[MAX_WIDTH];
+            GLint i;
+            _mesa_unpack_depth_span(ctx, srcWidth,
+                                    GL_UNSIGNED_INT, /* dst type */
+                                    depth, /* dst addr */
+                                    depthScale,
+                                    srcType, src, srcPacking);
+
+            for (i = 0; i < srcWidth; i++)
+               dstRow[i] = depth[i] | (dstRow[i] & 0xFF000000);
+
+            src += srcRowStride;
+            dstRow += dstRowStride / sizeof(GLuint);
+         }
+      }
+   }
+   else {
+      for (img = 0; img < srcDepth; img++) {
+         GLuint *dstRow = (GLuint *) dstAddr
+            + dstImageOffsets[dstZoffset + img]
+            + dstYoffset * dstRowStride / sizeof(GLuint)
+            + dstXoffset;
+         const GLuint *src
+            = (const GLuint *) _mesa_image_address(dims, srcPacking, srcAddr,
+                  srcWidth, srcHeight,
+                  srcFormat, srcType,
+                  img, 0, 0);
+         for (row = 0; row < srcHeight; row++) {
+            GLubyte stencil[MAX_WIDTH];
+            GLint i;
+            /* the 24 depth bits will be in the high position: */
+            _mesa_unpack_depth_span(ctx, srcWidth,
+                                    GL_UNSIGNED_INT, /* dst type */
+                                    dstRow, /* dst addr */
+                                    depthScale,
+                                    srcType, src, srcPacking);
+            /* get the 8-bit stencil values */
+            _mesa_unpack_stencil_span(ctx, srcWidth,
+                                      GL_UNSIGNED_BYTE, /* dst type */
+                                      stencil, /* dst addr */
+                                      srcType, src, srcPacking,
+                                      ctx->_ImageTransferState);
+            /* merge stencil values into depth values */
+            for (i = 0; i < srcWidth; i++)
+               dstRow[i] = stencil[i] << 24;
+
+            src += srcRowStride;
+            dstRow += dstRowStride / sizeof(GLuint);
+         }
+      }
+   }
+   return GL_TRUE;
+}
 
 /**
  * Store an image in any of the formats:

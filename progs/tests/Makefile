@@ -30,6 +30,8 @@ SOURCES = \
 	bug_3050.c \
 	bug_3101.c \
 	bug_3195.c \
+	bug_texstore_i8.c \
+	calibrate_rast.c \
 	copypixrate.c \
 	crossbar.c \
 	cva.c \
@@ -40,6 +42,7 @@ SOURCES = \
 	fbotest1.c \
 	fbotest2.c \
 	fbotexture.c \
+	fillrate.c \
 	fog.c \
 	fogcoord.c \
 	fptest1.c \
@@ -52,6 +55,7 @@ SOURCES = \
 	manytex.c \
 	minmag.c \
 	mipmap_limits.c \
+	mipmap_view.c \
 	multipal.c \
 	no_s3tc.c \
 	packedpixels.c \
@@ -66,6 +70,7 @@ SOURCES = \
 	stencil_twoside.c \
 	stencilwrap.c \
 	stencil_wrap.c \
+	subtex \
 	subtexrate.c \
 	tex1d.c \
 	texcompress2.c \
@@ -85,6 +90,8 @@ SOURCES = \
 	vpwarpmesh.c \
 	yuvrect.c \
 	yuvsquare.c \
+	zcomp.c \
+	zdrawpix.c \
 	zreaddraw.c
 
 PROGS = $(SOURCES:%.c=%)
@@ -158,6 +165,21 @@ invert: invert.o readtex.o
 
 invert.o: invert.c readtex.h
 	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) invert.c -o $@
+
+mipmap_view: mipmap_view.o readtex.o
+	$(CC) $(CFLAGS) mipmap_view.o readtex.o $(LIBS) -o $@
+
+mipmap_view.o: mipmap_view.c readtex.h
+	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) $< -o $@
+
+
+fillrate: fillrate.o readtex.o
+	$(CC) $(CFLAGS) fillrate.o readtex.o $(LIBS) -o $@
+
+fillrate.o: fillrate.c readtex.h
+	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) $< -o $@
+
+
 
 readtex.o: readtex.c
 	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) readtex.c -o $@

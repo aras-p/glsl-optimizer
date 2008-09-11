@@ -173,7 +173,7 @@ _mesa_remove_attachment(GLcontext *ctx, struct gl_renderbuffer_attachment *att)
    if (att->Type == GL_TEXTURE) {
       ASSERT(att->Texture);
       if (ctx->Driver.FinishRenderTexture) {
-         /* tell driver we're done rendering to this texobj */
+         /* tell driver that we're done rendering to this texture. */
          ctx->Driver.FinishRenderTexture(ctx, att);
       }
       _mesa_reference_texobj(&att->Texture, NULL); /* unbind */
@@ -508,6 +508,7 @@ _mesa_test_framebuffer_completeness(GLcontext *ctx, struct gl_framebuffer *fb)
       }
    }
 
+#ifndef FEATURE_OES_framebuffer_object
    /* Check that all DrawBuffers are present */
    for (j = 0; j < ctx->Const.MaxDrawBuffers; j++) {
       if (fb->ColorDrawBuffer[j] != GL_NONE) {
@@ -533,6 +534,7 @@ _mesa_test_framebuffer_completeness(GLcontext *ctx, struct gl_framebuffer *fb)
          return;
       }
    }
+#endif
 
    if (numImages == 0) {
       fb->_Status = GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT_EXT;

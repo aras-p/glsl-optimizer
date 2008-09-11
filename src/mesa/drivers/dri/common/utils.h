@@ -24,7 +24,6 @@
  * Authors:
  *    Ian Romanick <idr@us.ibm.com>
  */
-/* $XFree86:$ */
 
 #ifndef DRI_DEBUG_H
 #define DRI_DEBUG_H

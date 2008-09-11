@@ -53,6 +53,10 @@
 #include "tnl/tnl.h"
 #include "tnl/t_context.h"
 
+#include "softpipe/sp_context.h"
+#include "state_tracker/st_public.h"
+#include "state_tracker/st_context.h"
+#include "state_tracker/st_draw.h"
 
 
 /*
@@ -218,7 +222,7 @@ clear_pixmap(GLcontext *ctx, struct xmesa_renderbuffer *xrb,
    assert(xmbuf->cleargc);
 
    XMesaFillRectangle( xmesa->display, xrb->pixmap, xmbuf->cleargc,
-                       x, xrb->Base.Height - y - height,
+                       x, xrb->St.Base.Height - y - height,
                        width, height );
 }
 
@@ -329,9 +333,9 @@ clear_32bit_ximage(GLcontext *ctx, struct xmesa_renderbuffer *xrb,
             | ((pixel << 24) & 0xff000000);
    }
 
-   if (width == xrb->Base.Width && height == xrb->Base.Height) {
+   if (width == xrb->St.Base.Width && height == xrb->St.Base.Height) {
       /* clearing whole buffer */
-      const GLuint n = xrb->Base.Width * xrb->Base.Height;
+      const GLuint n = xrb->St.Base.Width * xrb->St.Base.Height;
       GLuint *ptr4 = (GLuint *) xrb->ximage->data;
       if (pixel == 0) {
          /* common case */
@@ -375,8 +379,8 @@ clear_nbit_ximage(GLcontext *ctx, struct xmesa_renderbuffer *xrb,
 
 
 
-static void
-clear_buffers(GLcontext *ctx, GLbitfield buffers)
+void
+xmesa_clear_buffers(GLcontext *ctx, GLbitfield buffers)
 {
    if (ctx->DrawBuffer->Name == 0) {
       /* this is a window system framebuffer */
@@ -779,7 +783,7 @@ get_string( GLcontext *ctx, GLenum name )
 #ifdef XFree86Server
          return (const GLubyte *) "Mesa GLX Indirect";
 #else
-         return (const GLubyte *) "Mesa X11";
+         return (const GLubyte *) "Mesa X11 (softpipe)";
 #endif
       case GL_VENDOR:
 #ifdef XFree86Server
@@ -906,6 +910,9 @@ xmesa_update_state( GLcontext *ctx, GLbitfield new_state )
    _vbo_InvalidateState( ctx, new_state );
    _swsetup_InvalidateState( ctx, new_state );
 
+   st_invalidate_state( ctx, new_state );
+
+
    if (ctx->DrawBuffer->Name != 0)
       return;
 
@@ -913,7 +920,7 @@ xmesa_update_state( GLcontext *ctx, GLbitfield new_state )
     * GL_DITHER, GL_READ/DRAW_BUFFER, buffer binding state, etc. effect
     * renderbuffer span/clear funcs.
     */
-   if (new_state & (_NEW_COLOR | _NEW_PIXEL | _NEW_BUFFERS)) {
+   if (new_state & (_NEW_COLOR | _NEW_BUFFERS)) {
       XMesaBuffer xmbuf = XMESA_BUFFER(ctx->DrawBuffer);
       struct xmesa_renderbuffer *front_xrb, *back_xrb;
 
@@ -1086,9 +1093,9 @@ xmesa_new_query_object(GLcontext *ctx, GLuint id)
 
 
 static void
-xmesa_begin_query(GLcontext *ctx, GLenum target, struct gl_query_object *q)
+xmesa_begin_query(GLcontext *ctx, struct gl_query_object *q)
 {
-   if (target == GL_TIME_ELAPSED_EXT) {
+   if (q->Target == GL_TIME_ELAPSED_EXT) {
       struct xmesa_query_object *xq = (struct xmesa_query_object *) q;
       (void) gettimeofday(&xq->StartTime, NULL);
    }
@@ -1113,9 +1120,9 @@ time_diff(const struct timeval *t0, const struct timeval *t1)
 
 
 static void
-xmesa_end_query(GLcontext *ctx, GLenum target, struct gl_query_object *q)
+xmesa_end_query(GLcontext *ctx, struct gl_query_object *q)
 {
-   if (target == GL_TIME_ELAPSED_EXT) {
+   if (q->Target == GL_TIME_ELAPSED_EXT) {
       struct xmesa_query_object *xq = (struct xmesa_query_object *) q;
       struct timeval endTime;
       (void) gettimeofday(&endTime, NULL);
@@ -1146,7 +1153,7 @@ xmesa_init_driver_functions( XMesaVisual xmvisual,
    driver->IndexMask = index_mask;
    driver->ColorMask = color_mask;
    driver->Enable = enable;
-   driver->Clear = clear_buffers;
+   driver->Clear = xmesa_clear_buffers;
    driver->Viewport = xmesa_viewport;
 #ifndef XFree86Server
    driver->CopyPixels = xmesa_CopyPixels;
@@ -1171,6 +1178,7 @@ xmesa_init_driver_functions( XMesaVisual xmvisual,
    driver->BeginQuery = xmesa_begin_query;
    driver->EndQuery = xmesa_end_query;
 #endif
+
 }
 
 

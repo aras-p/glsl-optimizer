@@ -39,7 +39,7 @@
  * in there will break the build on some platforms.
  */
 
-#include "matypes.h"
+#include "assyntax.h"
 #include "common_x86_features.h"
 
 	SEG_TEXT

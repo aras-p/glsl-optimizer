@@ -1,0 +1,125 @@
+# -*-makefile-*-
+
+MESA_MODULES = \
+	$(TOP)/src/mesa/libmesa.a \
+	$(GALLIUM_AUXILIARIES)
+	
+COMMON_GALLIUM_SOURCES = \
+        $(TOP)/src/mesa/drivers/dri/common/utils.c \
+        $(TOP)/src/mesa/drivers/dri/common/vblank.c \
+        $(TOP)/src/mesa/drivers/dri/common/dri_util.c \
+        $(TOP)/src/mesa/drivers/dri/common/xmlconfig.c
+
+COMMON_SOURCES = $(COMMON_GALLIUM_SOURCES) \
+        $(TOP)/src/mesa/drivers/common/driverfuncs.c \
+        $(TOP)/src/mesa/drivers/dri/common/texmem.c \
+        $(TOP)/src/mesa/drivers/dri/common/drirenderbuffer.c
+
+COMMON_BM_SOURCES = \
+	$(TOP)/src/mesa/drivers/dri/common/dri_bufmgr.c \
+	$(TOP)/src/mesa/drivers/dri/common/dri_drmpool.c
+
+
+ifeq ($(WINDOW_SYSTEM),dri)
+WINOBJ=
+WINLIB=
+INCLUDES = $(SHARED_INCLUDES) $(EXPAT_INCLUDES)
+
+OBJECTS = \
+	$(C_SOURCES:.c=.o) \
+	$(ASM_SOURCES:.S=.o) 
+
+else
+# miniglx
+WINOBJ=
+WINLIB=-L$(MESA)/src/glx/mini
+MINIGLX_INCLUDES = -I$(TOP)/src/glx/mini
+INCLUDES = $(MINIGLX_INCLUDES) \
+	   $(SHARED_INCLUDES) \
+	   $(PCIACCESS_CFLAGS)
+
+OBJECTS = $(C_SOURCES:.c=.o) \
+	  $(MINIGLX_SOURCES:.c=.o) \
+	  $(ASM_SOURCES:.S=.o) 
+endif
+
+
+### Include directories
+SHARED_INCLUDES = \
+	-I. \
+	-I$(TOP)/src/mesa/drivers/dri/common \
+	-Iserver \
+	-I$(TOP)/include \
+	-I$(TOP)/include/GL/internal \
+	-I$(TOP)/src/gallium/include \
+	-I$(TOP)/src/gallium/auxiliary \
+	-I$(TOP)/src/gallium/drivers \
+	-I$(TOP)/src/gallium/winsys/common \
+	-I$(TOP)/src/mesa \
+	-I$(TOP)/src/mesa/main \
+	-I$(TOP)/src/mesa/glapi \
+	-I$(TOP)/src/mesa/math \
+	-I$(TOP)/src/mesa/transform \
+	-I$(TOP)/src/mesa/shader \
+	-I$(TOP)/src/mesa/swrast \
+	-I$(TOP)/src/mesa/swrast_setup \
+	-I$(TOP)/src/egl/main \
+	-I$(TOP)/src/egl/drivers/dri \
+	$(LIBDRM_CFLAGS)
+
+
+##### RULES #####
+
+.c.o:
+	$(CC) -c $(INCLUDES) $(CFLAGS) $(DRIVER_DEFINES) $< -o $@
+
+.S.o:
+	$(CC) -c $(INCLUDES) $(CFLAGS) $(DRIVER_DEFINES)  $< -o $@
+
+
+##### TARGETS #####
+
+default: depend symlinks $(LIBNAME) $(TOP)/$(LIB_DIR)/$(LIBNAME) $(LIBNAME_EGL) $(TOP)/$(LIB_DIR)/$(LIBNAME_EGL)
+
+
+$(LIBNAME): $(OBJECTS) $(MESA_MODULES) $(PIPE_DRIVERS) $(WINOBJ) Makefile $(TOP)/src/mesa/drivers/dri/Makefile.template
+	$(TOP)/bin/mklib -noprefix -o $@ \
+		$(OBJECTS) $(PIPE_DRIVERS) $(MESA_MODULES)  $(WINOBJ) $(DRI_LIB_DEPS)
+
+$(LIBNAME_EGL): $(WINSYS_OBJECTS) $(LIBS)
+	$(TOP)/bin/mklib -o $(LIBNAME_EGL) \
+		-linker "$(CC)" \
+		-noprefix \
+		$(OBJECTS) $(MKLIB_OPTIONS) $(WINSYS_OBJECTS) $(PIPE_DRIVERS) $(WINOBJ) $(DRI_LIB_DEPS) \
+		--whole-archive $(LIBS) $(GALLIUM_AUXILIARIES) --no-whole-archive
+
+$(TOP)/$(LIB_DIR)/$(LIBNAME): $(LIBNAME)
+	$(INSTALL) $(LIBNAME) $(TOP)/$(LIB_DIR) 
+
+$(TOP)/$(LIB_DIR)/$(LIBNAME_EGL): $(LIBNAME_EGL)
+	$(INSTALL) $(LIBNAME_EGL) $(TOP)/$(LIB_DIR) 
+
+depend: $(C_SOURCES) $(ASM_SOURCES) $(SYMLINKS)
+	rm -f depend
+	touch depend
+	$(MKDEP) $(MKDEP_OPTIONS) $(DRIVER_DEFINES) $(INCLUDES) $(C_SOURCES) \
+		$(ASM_SOURCES) 2> /dev/null
+
+
+# Emacs tags
+tags:
+	etags `find . -name \*.[ch]` `find ../include`
+
+
+# Remove .o and backup files
+clean:
+	-rm -f *.o */*.o *~ *.so *~ server/*.o $(SYMLINKS)
+	-rm -f depend depend.bak
+
+
+install: $(LIBNAME)
+	$(INSTALL) -d $(DRI_DRIVER_INSTALL_DIR)
+	$(INSTALL) -m 755 $(LIBNAME) $(DRI_DRIVER_INSTALL_DIR)
+
+
+include depend

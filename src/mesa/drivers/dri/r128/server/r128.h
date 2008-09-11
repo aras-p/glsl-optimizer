@@ -1,4 +1,3 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/r128.h,v 1.24 2002/12/16 16:19:10 dawes Exp $ */
 /*
  * Copyright 1999, 2000 ATI Technologies Inc., Markham, Ontario,
  *                      Precision Insight, Inc., Cedar Park, Texas, and
@@ -87,74 +86,74 @@ typedef struct {        /* All values in XCLKS    */
 
 typedef struct {
 				/* Common registers */
-    u_int32_t     ovr_clr;
-    u_int32_t     ovr_wid_left_right;
-    u_int32_t     ovr_wid_top_bottom;
-    u_int32_t     ov0_scale_cntl;
-    u_int32_t     mpp_tb_config;
-    u_int32_t     mpp_gp_config;
-    u_int32_t     subpic_cntl;
-    u_int32_t     viph_control;
-    u_int32_t     i2c_cntl_1;
-    u_int32_t     gen_int_cntl;
-    u_int32_t     cap0_trig_cntl;
-    u_int32_t     cap1_trig_cntl;
-    u_int32_t     bus_cntl;
-    u_int32_t     config_cntl;
+    uint32_t     ovr_clr;
+    uint32_t     ovr_wid_left_right;
+    uint32_t     ovr_wid_top_bottom;
+    uint32_t     ov0_scale_cntl;
+    uint32_t     mpp_tb_config;
+    uint32_t     mpp_gp_config;
+    uint32_t     subpic_cntl;
+    uint32_t     viph_control;
+    uint32_t     i2c_cntl_1;
+    uint32_t     gen_int_cntl;
+    uint32_t     cap0_trig_cntl;
+    uint32_t     cap1_trig_cntl;
+    uint32_t     bus_cntl;
+    uint32_t     config_cntl;
 
 				/* Other registers to save for VT switches */
-    u_int32_t     dp_datatype;
-    u_int32_t     gen_reset_cntl;
-    u_int32_t     clock_cntl_index;
-    u_int32_t     amcgpio_en_reg;
-    u_int32_t     amcgpio_mask;
+    uint32_t     dp_datatype;
+    uint32_t     gen_reset_cntl;
+    uint32_t     clock_cntl_index;
+    uint32_t     amcgpio_en_reg;
+    uint32_t     amcgpio_mask;
 
 				/* CRTC registers */
-    u_int32_t     crtc_gen_cntl;
-    u_int32_t     crtc_ext_cntl;
-    u_int32_t     dac_cntl;
-    u_int32_t     crtc_h_total_disp;
-    u_int32_t     crtc_h_sync_strt_wid;
-    u_int32_t     crtc_v_total_disp;
-    u_int32_t     crtc_v_sync_strt_wid;
-    u_int32_t     crtc_offset;
-    u_int32_t     crtc_offset_cntl;
-    u_int32_t     crtc_pitch;
+    uint32_t     crtc_gen_cntl;
+    uint32_t     crtc_ext_cntl;
+    uint32_t     dac_cntl;
+    uint32_t     crtc_h_total_disp;
+    uint32_t     crtc_h_sync_strt_wid;
+    uint32_t     crtc_v_total_disp;
+    uint32_t     crtc_v_sync_strt_wid;
+    uint32_t     crtc_offset;
+    uint32_t     crtc_offset_cntl;
+    uint32_t     crtc_pitch;
 
 				/* CRTC2 registers */
-    u_int32_t     crtc2_gen_cntl;
+    uint32_t     crtc2_gen_cntl;
 
 				/* Flat panel registers */
-    u_int32_t     fp_crtc_h_total_disp;
-    u_int32_t     fp_crtc_v_total_disp;
-    u_int32_t     fp_gen_cntl;
-    u_int32_t     fp_h_sync_strt_wid;
-    u_int32_t     fp_horz_stretch;
-    u_int32_t     fp_panel_cntl;
-    u_int32_t     fp_v_sync_strt_wid;
-    u_int32_t     fp_vert_stretch;
-    u_int32_t     lvds_gen_cntl;
-    u_int32_t     tmds_crc;
-    u_int32_t     tmds_transmitter_cntl;
+    uint32_t     fp_crtc_h_total_disp;
+    uint32_t     fp_crtc_v_total_disp;
+    uint32_t     fp_gen_cntl;
+    uint32_t     fp_h_sync_strt_wid;
+    uint32_t     fp_horz_stretch;
+    uint32_t     fp_panel_cntl;
+    uint32_t     fp_v_sync_strt_wid;
+    uint32_t     fp_vert_stretch;
+    uint32_t     lvds_gen_cntl;
+    uint32_t     tmds_crc;
+    uint32_t     tmds_transmitter_cntl;
 
 				/* Computed values for PLL */
-    u_int32_t     dot_clock_freq;
-    u_int32_t     pll_output_freq;
+    uint32_t     dot_clock_freq;
+    uint32_t     pll_output_freq;
     int        feedback_div;
     int        post_div;
 
 				/* PLL registers */
-    u_int32_t     ppll_ref_div;
-    u_int32_t     ppll_div_3;
-    u_int32_t     htotal_cntl;
+    uint32_t     ppll_ref_div;
+    uint32_t     ppll_div_3;
+    uint32_t     htotal_cntl;
 
 				/* DDA register */
-    u_int32_t     dda_config;
-    u_int32_t     dda_on_off;
+    uint32_t     dda_config;
+    uint32_t     dda_on_off;
 
 				/* Pallet */
     GLboolean  palette_valid;
-    u_int32_t     palette[256];
+    uint32_t     palette[256];
 } R128SaveRec, *R128SavePtr;
 
 typedef struct {
@@ -169,8 +168,8 @@ typedef struct {
     unsigned char     *MMIO;        /* Map of MMIO region                    */
     unsigned char     *FB;          /* Map of frame buffer                   */
 
-    u_int32_t            MemCntl;
-    u_int32_t            BusCntl;
+    uint32_t            MemCntl;
+    uint32_t            BusCntl;
     unsigned long     FbMapSize;    /* Size of frame buffer, in bytes        */
     int               Flags;        /* Saved copy of mode flags              */
 
@@ -201,7 +200,7 @@ typedef struct {
 				/* Computed values for Rage 128 */
     int               pitch;
     int               datatype;
-    u_int32_t            dp_gui_master_cntl;
+    uint32_t            dp_gui_master_cntl;
 
 				/* Saved values for ScreenToScreenCopy */
     int               xdir;
@@ -306,18 +305,18 @@ typedef struct {
     int               log2TexGran;
 
 				/* Saved scissor values */
-    u_int32_t            sc_left;
-    u_int32_t            sc_right;
-    u_int32_t            sc_top;
-    u_int32_t            sc_bottom;
+    uint32_t            sc_left;
+    uint32_t            sc_right;
+    uint32_t            sc_top;
+    uint32_t            sc_bottom;
 
-    u_int32_t            re_top_left;
-    u_int32_t            re_width_height;
+    uint32_t            re_top_left;
+    uint32_t            re_width_height;
 
-    u_int32_t            aux_sc_cntl;
+    uint32_t            aux_sc_cntl;
 
     int               irq;
-    u_int32_t            gen_int_cntl;
+    uint32_t            gen_int_cntl;
 
     GLboolean              DMAForXv;
 
@@ -388,7 +387,7 @@ do {									\
 
 #define R128_VERBOSE	0
 
-#define RING_LOCALS	u_int32_t *__head; int __count;
+#define RING_LOCALS	uint32_t *__head; int __count;
 
 #define R128CCE_REFRESH(pScrn, info)					\
 do {									\
@@ -429,12 +428,12 @@ do {									\
          fprintf(stderr,				\
 		  "ADVANCE_RING() used: %d+%d=%d/%d\n",			\
 		  info->indirectBuffer->used - info->indirectStart,	\
-		  __count * sizeof(u_int32_t),				\
+		  __count * sizeof(uint32_t),				\
 		  info->indirectBuffer->used - info->indirectStart +	\
-		  __count * sizeof(u_int32_t),				\
+		  __count * sizeof(uint32_t),				\
 		  info->indirectBuffer->total - info->indirectStart );	\
    }									\
-   info->indirectBuffer->used += __count * (int)sizeof(u_int32_t);		\
+   info->indirectBuffer->used += __count * (int)sizeof(uint32_t);		\
 } while (0)
 
 #define OUT_RING( x ) do {						\

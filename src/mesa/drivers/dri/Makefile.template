@@ -2,13 +2,16 @@
 
 MESA_MODULES = $(TOP)/src/mesa/libmesa.a
 
-COMMON_SOURCES = \
+COMMON_GALLIUM_SOURCES = \
         ../common/utils.c \
-        ../common/texmem.c \
         ../common/vblank.c \
         ../common/dri_util.c \
-        ../common/xmlconfig.c \
-        ../common/drirenderbuffer.c 
+        ../common/xmlconfig.c
+
+COMMON_SOURCES = $(COMMON_GALLIUM_SOURCES) \
+        ../../common/driverfuncs.c \
+        ../common/texmem.c \
+        ../common/drirenderbuffer.c
 
 ifeq ($(WINDOW_SYSTEM),dri)
 WINOBJ=
@@ -62,9 +65,9 @@ SHARED_INCLUDES = \
 default: symlinks depend $(LIBNAME) $(TOP)/$(LIB_DIR)/$(LIBNAME)
 
 
-$(LIBNAME): $(OBJECTS) $(MESA_MODULES) $(WINOBJ) Makefile $(TOP)/src/mesa/drivers/dri/Makefile.template
+$(LIBNAME): $(OBJECTS) $(MESA_MODULES) $(PIPE_DRIVERS) $(WINOBJ) Makefile $(TOP)/src/mesa/drivers/dri/Makefile.template
 	$(MKLIB) -o $@ -noprefix -linker '$(CC)' -ldflags '$(LDFLAGS)' \
-		$(OBJECTS) $(MESA_MODULES) $(WINOBJ) $(DRI_LIB_DEPS)
+		$(OBJECTS) $(PIPE_DRIVERS) $(MESA_MODULES) $(WINOBJ) $(DRI_LIB_DEPS)
 
 
 $(TOP)/$(LIB_DIR)/$(LIBNAME): $(LIBNAME)
@@ -72,6 +75,7 @@ $(TOP)/$(LIB_DIR)/$(LIBNAME): $(LIBNAME)
 
 
 depend: $(C_SOURCES) $(ASM_SOURCES) $(SYMLINKS)
+	rm -f depend
 	touch depend
 	$(MKDEP) $(MKDEP_OPTIONS) $(DRIVER_DEFINES) $(INCLUDES) $(C_SOURCES) \
 		$(ASM_SOURCES)

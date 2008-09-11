@@ -1,0 +1,4 @@
+!!ARBfp1.0
+TEMP R0;
+DP4 result.color, fragment.color.xxxx, fragment.color;
+END

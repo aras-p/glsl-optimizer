@@ -1,0 +1,43 @@
+#######################################################################
+# SConscript for xlib winsys
+
+Import('*')
+
+if env['platform'] == 'linux' \
+        and 'mesa' in env['statetrackers'] \
+        and 'softpipe' in env['drivers'] \
+        and 'i965simple' in env['drivers'] \
+        and not env['dri']:
+
+    env = env.Clone()
+
+    env.Append(CPPPATH = [
+        '#/src/mesa',
+        '#/src/mesa/main',
+    ])
+
+    sources = [
+        'glxapi.c',
+        'fakeglx.c',
+        'xfonts.c',
+        'xm_api.c',
+        'xm_winsys.c',
+        'xm_winsys_aub.c',
+        'brw_aub.c',
+    ]
+        
+    drivers = [
+        softpipe,
+        i965simple,
+    ]
+    
+    if 'trace' in env['drivers']:
+        env.Append(CPPDEFINES = 'GALLIUM_TRACE')
+        drivers += [trace]
+
+    # TODO: write a wrapper function http://www.scons.org/wiki/WrapperFunctions
+    env.SharedLibrary(
+        target ='GL',
+        source = sources,
+        LIBS = glapi + mesa + drivers + auxiliaries + env['LIBS'],
+    )

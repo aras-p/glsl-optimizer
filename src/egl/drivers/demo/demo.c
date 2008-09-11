@@ -21,7 +21,7 @@
 typedef struct demo_driver
 {
    _EGLDriver Base;  /* base class/object */
-   GLuint DemoStuff;
+   unsigned DemoStuff;
 } DemoDriver;
 
 #define DEMO_DRIVER(D) ((DemoDriver *) (D))
@@ -33,7 +33,7 @@ typedef struct demo_driver
 typedef struct demo_surface
 {
    _EGLSurface Base;  /* base class/object */
-   GLuint DemoStuff;
+   unsigned DemoStuff;
 } DemoSurface;
 
 
@@ -43,7 +43,7 @@ typedef struct demo_surface
 typedef struct demo_context
 {
    _EGLContext Base;  /* base class/object */
-   GLuint DemoStuff;
+   unsigned DemoStuff;
 } DemoContext;
 
 
@@ -67,22 +67,22 @@ demoInitialize(_EGLDriver *drv, EGLDisplay dpy, EGLint *major, EGLint *minor)
 
    /* Create the display's visual configs - silly example */
    for (i = 0; i < 4; i++) {
-      _EGLConfig config;
-      _eglInitConfig(&config, i + 1);
-      _eglSetConfigAttrib(&config, EGL_RED_SIZE, 8);
-      _eglSetConfigAttrib(&config, EGL_GREEN_SIZE, 8);
-      _eglSetConfigAttrib(&config, EGL_BLUE_SIZE, 8);
-      _eglSetConfigAttrib(&config, EGL_ALPHA_SIZE, 8);
-      _eglSetConfigAttrib(&config, EGL_BUFFER_SIZE, 32);
+      _EGLConfig *config = calloc(1, sizeof(_EGLConfig));
+      _eglInitConfig(config, i + 1);
+      _eglSetConfigAttrib(config, EGL_RED_SIZE, 8);
+      _eglSetConfigAttrib(config, EGL_GREEN_SIZE, 8);
+      _eglSetConfigAttrib(config, EGL_BLUE_SIZE, 8);
+      _eglSetConfigAttrib(config, EGL_ALPHA_SIZE, 8);
+      _eglSetConfigAttrib(config, EGL_BUFFER_SIZE, 32);
       if (i & 1) {
-         _eglSetConfigAttrib(&config, EGL_DEPTH_SIZE, 32);
+         _eglSetConfigAttrib(config, EGL_DEPTH_SIZE, 32);
       }
       if (i & 2) {
-         _eglSetConfigAttrib(&config, EGL_STENCIL_SIZE, 8);
+         _eglSetConfigAttrib(config, EGL_STENCIL_SIZE, 8);
       }
-      _eglSetConfigAttrib(&config, EGL_SURFACE_TYPE,
+      _eglSetConfigAttrib(config, EGL_SURFACE_TYPE,
                           (EGL_WINDOW_BIT | EGL_PIXMAP_BIT | EGL_PBUFFER_BIT));
-      _eglAddConfig(disp, &config);
+      _eglAddConfig(disp, config);
    }
 
    drv->Initialized = EGL_TRUE;
@@ -152,9 +152,9 @@ demoCreateContext(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config, EGLContext 
 
    /* generate handle and insert into hash table */
    _eglSaveContext(&c->Base);
-   assert(c->Base.Handle);
+   assert(_eglGetContextHandle(&c->Base));
 
-   return c->Base.Handle;
+   return _eglGetContextHandle(&c->Base);
 }
 
 
@@ -286,7 +286,7 @@ demoMakeCurrent(_EGLDriver *drv, EGLDisplay dpy, EGLSurface draw, EGLSurface rea
  * plug in API functions.
  */
 _EGLDriver *
-_eglMain(_EGLDisplay *dpy)
+_eglMain(_EGLDisplay *dpy, const char *args)
 {
    DemoDriver *demo;
 

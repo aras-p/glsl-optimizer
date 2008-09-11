@@ -1,0 +1,13 @@
+Import('*')
+
+env = env.Clone()
+
+failover = env.ConvenienceLibrary(
+	target = 'failover',
+	source = [
+		'fo_state.c',
+		'fo_state_emit.c',
+		'fo_context.c',
+	])
+
+Export('failover')

@@ -530,4 +530,3 @@ glutDetachMenu(int button)
   }
 }
 
-

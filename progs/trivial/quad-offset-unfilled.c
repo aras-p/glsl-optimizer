@@ -72,6 +72,8 @@ static void Draw(void)
    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); 
    glEnable(GL_DEPTH_TEST);
 
+   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
 
 
    glEnable(GL_POLYGON_OFFSET_FILL);
@@ -95,7 +97,7 @@ static void Draw(void)
    glVertex3f(-0.6,  -0.6, -35.0);
    glEnd();
 
-   glEnable(GL_POLYGON_OFFSET_FILL);
+   glEnable(GL_POLYGON_OFFSET_LINE);
    glPolygonOffset(-1, 0);
 
    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -149,7 +151,7 @@ int main(int argc, char **argv)
 
     glutInitWindowPosition(0, 0); glutInitWindowSize( 250, 250);
 
-    type = GLUT_RGB | GLUT_DEPTH;
+    type = GLUT_RGB | GLUT_ALPHA | GLUT_DEPTH;
     type |= (doubleBuffer) ? GLUT_DOUBLE : GLUT_SINGLE;
     glutInitDisplayMode(type);
 

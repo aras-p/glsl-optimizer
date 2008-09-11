@@ -1,0 +1,23 @@
+Import('*')
+
+util = env.ConvenienceLibrary(
+	target = 'util',
+	source = [
+		'p_debug.c',
+		'p_debug_mem.c',
+		'p_debug_prof.c',
+		'u_blit.c',
+		'u_draw_quad.c',
+		'u_gen_mipmap.c',
+		'u_handle_table.c',
+		'u_hash_table.c',
+		'u_math.c',
+		'u_mm.c',
+		'u_rect.c',
+		'u_simple_shaders.c',
+		'u_snprintf.c',
+		'u_tile.c',
+		'u_time.c',
+	])
+
+auxiliaries.insert(0, util)

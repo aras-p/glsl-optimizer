@@ -1,11 +1,9 @@
-# $Id: sampleMakefile,v 1.1 1999/08/19 00:55:42 jtg Exp $
 
 # Sample makefile for compiling OpenGL/Mesa applications on Unix.
 # This example assumes Linux with gcc.
 
 # This makefile is in the public domain
 
-# $Log: sampleMakefile,v $
 # Revision 1.1  1999/08/19 00:55:42  jtg
 # Initial revision
 #

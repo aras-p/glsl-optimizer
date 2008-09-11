@@ -1,4 +1,3 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/ffb/ffb_lines.h,v 1.2 2002/02/22 21:32:58 dawes Exp $ */
 
 #ifndef _FFB_LINES_H
 #define _FFB_LINES_H

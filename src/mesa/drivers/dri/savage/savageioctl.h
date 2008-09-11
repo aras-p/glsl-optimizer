@@ -77,10 +77,10 @@ GLboolean savageHaveIndexedVerts( savageContextPtr imesa )
 }
 
 static INLINE
-u_int32_t *savageAllocVtxBuf( savageContextPtr imesa, GLuint words )
+uint32_t *savageAllocVtxBuf( savageContextPtr imesa, GLuint words )
 {
    struct savage_vtxbuf_t *buffer = imesa->vtxBuf;
-   u_int32_t *head;
+   uint32_t *head;
 
    if (buffer == &imesa->dmaVtxBuf) {
        if (!buffer->total) {
@@ -116,9 +116,9 @@ u_int32_t *savageAllocVtxBuf( savageContextPtr imesa, GLuint words )
 }
 
 static INLINE
-u_int32_t *savageAllocIndexedVerts( savageContextPtr imesa, GLuint n )
+uint32_t *savageAllocIndexedVerts( savageContextPtr imesa, GLuint n )
 {
-    u_int32_t *ret;
+    uint32_t *ret;
     savageFlushVertices(imesa);
     ret = savageAllocVtxBuf(imesa, n*imesa->HwVertexSize);
     imesa->firstElt = imesa->vtxBuf->flushed / imesa->HwVertexSize;
@@ -172,9 +172,9 @@ drm_savage_cmd_header_t *savageAllocCmdBuf( savageContextPtr imesa, GLuint bytes
  * - increments the number of elts. Final allocation is done in savageFlushElts
  */
 static INLINE
-u_int16_t *savageAllocElts( savageContextPtr imesa, GLuint n )
+uint16_t *savageAllocElts( savageContextPtr imesa, GLuint n )
 {
-    u_int16_t *ret;
+    uint16_t *ret;
     GLuint qwords;
     assert (savageHaveIndexedVerts(imesa));
 
@@ -195,7 +195,7 @@ u_int16_t *savageAllocElts( savageContextPtr imesa, GLuint n )
 	imesa->elts.n = 0;
     }
 
-    ret = (u_int16_t *)(imesa->elts.cmd+1) + imesa->elts.n;
+    ret = (uint16_t *)(imesa->elts.cmd+1) + imesa->elts.n;
     imesa->elts.n += n;
     return ret;
 }

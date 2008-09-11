@@ -31,8 +31,8 @@
 #ifndef _M_VECTOR_H_
 #define _M_VECTOR_H_
 
-#include "glheader.h"
-#include "mtypes.h"		/* hack for GLchan */
+#include "main/glheader.h"
+#include "main/mtypes.h"		/* hack for GLchan */
 
 
 #define VEC_DIRTY_0        0x1

@@ -12,8 +12,12 @@ PROGRAMS = \
 	demo1 \
 	demo2 \
 	demo3 \
+	egltri \
 	eglinfo \
-	eglgears
+	eglgears \
+	peglgears \
+	xeglgears \
+	xegl_tri
 
 
 .c.o:
@@ -45,6 +49,13 @@ demo3.o: demo3.c $(HEADERS)
 	$(CC) -c $(CFLAGS) -I$(TOP)/include demo3.c
 
 
+egltri: egltri.o $(TOP)/$(LIB_DIR)/libEGL.so
+	$(CC) $(CFLAGS) egltri.o -L$(TOP)/$(LIB_DIR) -lEGL $(LIBDRM_LIB) -o $@
+
+egltri.o: egltri.c $(HEADERS)
+	$(CC) -c $(CFLAGS) -I$(TOP)/include egltri.c
+
+
 eglinfo: eglinfo.o $(TOP)/$(LIB_DIR)/libEGL.so
 	$(CC) $(CFLAGS) $(LDFLAGS) eglinfo.o -L$(TOP)/$(LIB_DIR) -lEGL $(LIBDRM_LIB) -o $@
 
@@ -59,7 +70,29 @@ eglgears.o: eglgears.c $(HEADERS)
 	$(CC) -c $(CFLAGS) -I$(TOP)/include eglgears.c
 
 
+peglgears: peglgears.o $(TOP)/$(LIB_DIR)/libEGL.so
+	$(CC) $(CFLAGS) peglgears.o -L$(TOP)/$(LIB_DIR) -lEGL $(LIBDRM_LIB) $(APP_LIB_DEPS) -o $@
+
+peglgears.o: peglgears.c $(HEADERS)
+	$(CC) -c $(CFLAGS) -I$(TOP)/include peglgears.c
+
+
+xeglgears: xeglgears.o $(TOP)/$(LIB_DIR)/libEGL.so
+	$(CC) $(CFLAGS) xeglgears.o -L$(TOP)/$(LIB_DIR) -lEGL $(LIBDRM_LIB) $(APP_LIB_DEPS) -o $@
+
+xeglgears.o: xeglgears.c $(HEADERS)
+	$(CC) -c $(CFLAGS) -I$(TOP)/include xeglgears.c
+
+
+xegl_tri: xegl_tri.o $(TOP)/$(LIB_DIR)/libEGL.so
+	$(CC) $(CFLAGS) xegl_tri.o -L$(TOP)/$(LIB_DIR) -lEGL $(LIBDRM_LIB) $(APP_LIB_DEPS) -o $@
+
+xegl_tri.o: xegl_tri.c $(HEADERS)
+	$(CC) -c $(CFLAGS) -I$(TOP)/include xegl_tri.c
+
+
 clean:
 	-rm -f *.o *~
 	-rm -f *.so
 	-rm -f $(PROGRAMS)
+

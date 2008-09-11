@@ -1,0 +1,8 @@
+!!ARBfp1.0
+TEMP R0;
+TEMP R1;
+SGE R0, fragment.color, fragment.color.yzxw;
+SGE R1, fragment.color, fragment.color.zxyw;
+MUL R0, R0, R1;
+MUL result.color, R0, fragment.color;
+END

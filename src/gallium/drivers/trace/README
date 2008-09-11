@@ -1,0 +1,64 @@
+                             TRACE PIPE DRIVER
+
+
+= About =
+
+This directory contains a Gallium3D pipe driver which traces all incoming calls.
+
+
+= Build Instructions =
+
+To build, invoke scons on the top dir as
+ 
+ scons statetrackers=mesa drivers=softpipe,i915simple,trace winsys=xlib
+
+
+= Usage =
+
+To use do
+
+ ln -s libGL.so build/linux-x86-debug/gallium/winsys/xlib/libGL.so.1
+ export LD_LIBRARY_PATH=$PWD/build/linux-x86-debug/gallium/winsys/xlib
+
+ensure the right libGL.so is being picked by doing
+
+ ldd progs/trivial/tri 
+
+and then try running
+
+ GALLIUM_TRACE=tri.trace progs/trivial/tri
+
+which should create a tri.trace file, which is an XML file. You can view copying 
+trace.xsl to the same directory, and opening with a XSLT capable browser such as 
+Firefox or Internet Explorer.
+
+
+= Integrating =
+
+You can integrate the trace pipe driver either inside the state tracker or the 
+winsys. The procedure on both cases is the same. Let's assume you have a 
+pipe_screen and a pipe_context pair obtained by the usual means (variable and 
+function names are just for illustration purposes):
+
+  real_screen = real_screen_create(...);
+  
+  real_context = real_context_create(...);
+  
+The trace screen and pipe_context is then created by doing
+
+  trace_screen = trace_screen_create(real_screen);
+  
+  trace_context = trace_context_create(trace_screen, real_context);
+  
+You can then simply use trace_screen and trace_context instead of real_screen
+and real_context.
+
+Do not call trace_winsys_create. Simply pass trace_screen->winsys or 
+trace_context->winsys in places you would pass winsys.
+
+You can create as many contexts you wish. Just ensure that you don't mistake 
+trace_screen with real_screen when creating them.
+
+
+--
+Jose Fonseca <jrfonseca@tungstengraphics.com>

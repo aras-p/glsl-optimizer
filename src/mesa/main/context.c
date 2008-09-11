@@ -78,37 +78,59 @@
 
 #include "glheader.h"
 #include "imports.h"
+#if FEATURE_accum
 #include "accum.h"
+#endif
+#include "api_exec.h"
 #include "arrayobj.h"
+#if FEATURE_attrib_stack
 #include "attrib.h"
+#endif
 #include "blend.h"
 #include "buffers.h"
 #include "bufferobj.h"
+#if FEATURE_colortable
 #include "colortab.h"
+#endif
 #include "context.h"
 #include "debug.h"
 #include "depth.h"
+#if FEATURE_dlist
 #include "dlist.h"
+#endif
+#if FEATURE_evaluators
 #include "eval.h"
+#endif
 #include "enums.h"
 #include "extensions.h"
 #include "fbobject.h"
+#if FEATURE_feedback
 #include "feedback.h"
+#endif
 #include "fog.h"
 #include "framebuffer.h"
 #include "get.h"
+#if FEATURE_histogram
 #include "histogram.h"
+#endif
 #include "hint.h"
 #include "hash.h"
 #include "light.h"
 #include "lines.h"
 #include "macros.h"
 #include "matrix.h"
+#include "multisample.h"
 #include "pixel.h"
+#include "pixelstore.h"
 #include "points.h"
 #include "polygon.h"
+#if FEATURE_ARB_occlusion_query
 #include "queryobj.h"
+#endif
+#if FEATURE_drawpix
 #include "rastpos.h"
+#endif
+#include "scissor.h"
 #include "simple_list.h"
 #include "state.h"
 #include "stencil.h"
@@ -121,11 +143,13 @@
 #include "version.h"
 #include "vtxfmt.h"
 #include "glapi/glthread.h"
-#if FEATURE_NV_vertex_program || FEATURE_NV_fragment_program
+#include "glapi/glapioffsets.h"
+#include "glapi/glapitable.h"
 #include "shader/program.h"
-#endif
 #include "shader/shader_api.h"
+#if FEATURE_ATI_fragment_shader
 #include "shader/atifragshader.h"
+#endif
 #if _HAVE_FULL_GL
 #include "math/m_translate.h"
 #include "math/m_matrix.h"
@@ -160,9 +184,11 @@ GLfloat _mesa_ubyte_to_float_color_tab[256];
  * We have to finish any pending rendering.
  */
 void
-_mesa_notifySwapBuffers(__GLcontext *gc)
+_mesa_notifySwapBuffers(__GLcontext *ctx)
 {
-   FLUSH_VERTICES( gc, 0 );
+   if (ctx->Driver.Flush) {
+      ctx->Driver.Flush(ctx);
+   }
 }
 
 
@@ -413,9 +439,7 @@ alloc_shared_state( GLcontext *ctx )
 
    ss->DisplayList = _mesa_NewHashTable();
    ss->TexObjects = _mesa_NewHashTable();
-#if FEATURE_NV_vertex_program || FEATURE_NV_fragment_program
    ss->Programs = _mesa_NewHashTable();
-#endif
 
 #if FEATURE_ARB_vertex_program
    ss->DefaultVertexProgram = (struct gl_vertex_program *)
@@ -497,10 +521,8 @@ cleanup:
       _mesa_DeleteHashTable(ss->DisplayList);
    if (ss->TexObjects)
       _mesa_DeleteHashTable(ss->TexObjects);
-#if FEATURE_NV_vertex_program
    if (ss->Programs)
       _mesa_DeleteHashTable(ss->Programs);
-#endif
 #if FEATURE_ARB_vertex_program
    _mesa_reference_vertprog(ctx, &ss->DefaultVertexProgram, NULL);
 #endif
@@ -558,9 +580,11 @@ cleanup:
 static void
 delete_displaylist_cb(GLuint id, void *data, void *userData)
 {
+#if FEATURE_dlist
    struct mesa_display_list *list = (struct mesa_display_list *) data;
    GLcontext *ctx = (GLcontext *) userData;
    _mesa_delete_list(ctx, list);
+#endif
 }
 
 /**
@@ -587,6 +611,7 @@ delete_program_cb(GLuint id, void *data, void *userData)
    ctx->Driver.DeleteProgram(ctx, prog);
 }
 
+#if FEATURE_ATI_fragment_shader
 /**
  * Callback for deleting an ATI fragment shader object.
  * Called by _mesa_HashDeleteAll().
@@ -598,6 +623,7 @@ delete_fragshader_cb(GLuint id, void *data, void *userData)
    GLcontext *ctx = (GLcontext *) userData;
    _mesa_delete_ati_fragment_shader(ctx, shader);
 }
+#endif
 
 /**
  * Callback for deleting a buffer object.  Called by _mesa_HashDeleteAll().
@@ -688,7 +714,6 @@ delete_renderbuffer_cb(GLuint id, void *data, void *userData)
 }
 
 
-
 /**
  * Deallocate a shared state object and all children structures.
  *
@@ -716,10 +741,9 @@ free_shared_state( GLcontext *ctx, struct gl_shared_state *ss )
    _mesa_DeleteHashTable(ss->ShaderObjects);
 #endif
 
-#if defined(FEATURE_NV_vertex_program) || defined(FEATURE_NV_fragment_program)
    _mesa_HashDeleteAll(ss->Programs, delete_program_cb, ctx);
    _mesa_DeleteHashTable(ss->Programs);
-#endif
+
 #if FEATURE_ARB_vertex_program
    _mesa_reference_vertprog(ctx, &ss->DefaultVertexProgram, NULL);
 #endif
@@ -974,31 +998,52 @@ init_attrib_groups(GLcontext *ctx)
    _mesa_init_extensions( ctx );
 
    /* Attribute Groups */
+#if FEATURE_accum
    _mesa_init_accum( ctx );
+#endif
+#if FEATURE_attrib_stack
    _mesa_init_attrib( ctx );
+#endif
    _mesa_init_buffer_objects( ctx );
    _mesa_init_color( ctx );
+#if FEATURE_colortable
    _mesa_init_colortables( ctx );
+#endif
    _mesa_init_current( ctx );
    _mesa_init_depth( ctx );
    _mesa_init_debug( ctx );
+#if FEATURE_dlist
    _mesa_init_display_list( ctx );
+#endif
+#if FEATURE_evaluators
    _mesa_init_eval( ctx );
+#endif
    _mesa_init_fbobjects( ctx );
+#if FEATURE_feedback
    _mesa_init_feedback( ctx );
+#else
+   ctx->RenderMode = GL_RENDER;
+#endif
    _mesa_init_fog( ctx );
+#if FEATURE_histogram
    _mesa_init_histogram( ctx );
+#endif
    _mesa_init_hint( ctx );
    _mesa_init_line( ctx );
    _mesa_init_lighting( ctx );
    _mesa_init_matrix( ctx );
    _mesa_init_multisample( ctx );
    _mesa_init_pixel( ctx );
+   _mesa_init_pixelstore( ctx );
    _mesa_init_point( ctx );
    _mesa_init_polygon( ctx );
    _mesa_init_program( ctx );
+#if FEATURE_ARB_occlusion_query
    _mesa_init_query( ctx );
+#endif
+#if FEATURE_drawpix
    _mesa_init_rastpos( ctx );
+#endif
    _mesa_init_scissor( ctx );
    _mesa_init_shader_state( ctx );
    _mesa_init_stencil( ctx );
@@ -1009,8 +1054,12 @@ init_attrib_groups(GLcontext *ctx)
    if (!_mesa_init_texture( ctx ))
       return GL_FALSE;
 
+#if FEATURE_texture_s3tc
    _mesa_init_texture_s3tc( ctx );
+#endif
+#if FEATURE_texture_fxt1
    _mesa_init_texture_fxt1( ctx );
+#endif
 
    /* Miscellaneous */
    ctx->NewState = _NEW_ALL;
@@ -1114,7 +1163,7 @@ _mesa_initialize_context(GLcontext *ctx,
                          const struct dd_function_table *driverFunctions,
                          void *driverContext)
 {
-   ASSERT(driverContext);
+   /*ASSERT(driverContext);*/
    assert(driverFunctions->NewTextureObject);
    assert(driverFunctions->FreeTexImageData);
 
@@ -1162,16 +1211,18 @@ _mesa_initialize_context(GLcontext *ctx,
       if (ctx->Exec)
          _mesa_free(ctx->Exec);
    }
+#if FEATURE_dispatch
    _mesa_init_exec_table(ctx->Exec);
+#endif
    ctx->CurrentDispatch = ctx->Exec;
-#if _HAVE_FULL_GL
+#if FEATURE_dlist
    _mesa_init_dlist_table(ctx->Save);
    _mesa_install_save_vtxfmt( ctx, &ctx->ListState.ListVtxfmt );
+#endif
    /* Neutral tnl module stuff */
    _mesa_init_exec_vtxfmt( ctx ); 
    ctx->TnlModule.Current = NULL;
    ctx->TnlModule.SwapCount = 0;
-#endif
 
    ctx->FragmentProgram._MaintainTexEnvProgram
       = (_mesa_getenv("MESA_TEX_PROG") != NULL);
@@ -1183,6 +1234,10 @@ _mesa_initialize_context(GLcontext *ctx,
       /* this is required... */
       ctx->FragmentProgram._MaintainTexEnvProgram = GL_TRUE;
    }
+
+#ifdef FEATURE_extra_context_init
+   _mesa_initialize_context_extra(ctx);
+#endif
 
    ctx->FirstTimeCurrent = GL_TRUE;
 
@@ -1213,7 +1268,7 @@ _mesa_create_context(const GLvisual *visual,
    GLcontext *ctx;
 
    ASSERT(visual);
-   ASSERT(driverContext);
+   /*ASSERT(driverContext);*/
 
    ctx = (GLcontext *) _mesa_calloc(sizeof(GLcontext));
    if (!ctx)
@@ -1263,14 +1318,20 @@ _mesa_free_context_data( GLcontext *ctx )
 
    _mesa_free_attrib_data(ctx);
    _mesa_free_lighting_data( ctx );
+#if FEATURE_evaluators
    _mesa_free_eval_data( ctx );
+#endif
    _mesa_free_texture_data( ctx );
    _mesa_free_matrix_data( ctx );
    _mesa_free_viewport_data( ctx );
+#if FEATURE_colortable
    _mesa_free_colortables_data( ctx );
+#endif
    _mesa_free_program_data(ctx);
    _mesa_free_shader_state(ctx);
+#if FEATURE_ARB_occlusion_query
    _mesa_free_query_data(ctx);
+#endif
 
 #if FEATURE_ARB_vertex_buffer_object
    _mesa_delete_buffer_object(ctx, ctx->Array.NullBufferObj);
@@ -1572,7 +1633,22 @@ _mesa_make_current( GLcontext *newCtx, GLframebuffer *drawBuffer,
           * or not bound to a user-created FBO.
           */
          if (!newCtx->DrawBuffer || newCtx->DrawBuffer->Name == 0) {
+            /* KW: merge conflict here, revisit. 
+             */
+            /* fix up the fb fields - these will end up wrong otherwise
+             * if the DRIdrawable changes, and everything relies on them.
+             * This is a bit messy (same as needed in _mesa_BindFramebufferEXT)
+             */
+            unsigned int i;
+            GLenum buffers[MAX_DRAW_BUFFERS];
+
             _mesa_reference_framebuffer(&newCtx->DrawBuffer, drawBuffer);
+
+            for(i = 0; i < newCtx->Const.MaxDrawBuffers; i++) {
+               buffers[i] = newCtx->Color.DrawBuffer[i];
+            }
+
+            _mesa_drawbuffers(newCtx, newCtx->Const.MaxDrawBuffers, buffers, NULL);
          }
          if (!newCtx->ReadBuffer || newCtx->ReadBuffer->Name == 0) {
             _mesa_reference_framebuffer(&newCtx->ReadBuffer, readBuffer);

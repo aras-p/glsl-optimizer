@@ -1,0 +1,12 @@
+Import('*')
+
+rtasm = env.ConvenienceLibrary(
+	target = 'rtasm',
+	source = [
+		'rtasm_cpu.c',
+		'rtasm_execmem.c',
+		'rtasm_x86sse.c',
+		'rtasm_ppc_spe.c',
+	])
+
+auxiliaries.insert(0, rtasm)

@@ -1,4 +1,3 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/via/via_dri.c,v 1.4 2003/09/24 02:43:30 dawes Exp $ */
 /*
  * Copyright 1998-2003 VIA Technologies, Inc. All Rights Reserved.
  * Copyright 2001-2003 S3 Graphics, Inc. All Rights Reserved.
@@ -53,9 +52,9 @@ static int VIADRIFinishScreenInit(DRIDriverContext * ctx);
 
 /* _SOLO : missing macros normally defined by X code */
 #define xf86DrvMsg(a, b, ...) fprintf(stderr, __VA_ARGS__)
-#define MMIO_IN8(base, addr) ((*(((volatile u_int8_t*)base)+(addr)))+0)
-#define MMIO_OUT8(base, addr, val) ((*(((volatile u_int8_t*)base)+(addr)))=((u_int8_t)val))
-#define MMIO_OUT16(base, addr, val) ((*(volatile u_int16_t*)(((u_int8_t*)base)+(addr)))=((u_int16_t)val))
+#define MMIO_IN8(base, addr) ((*(((volatile uint8_t*)base)+(addr)))+0)
+#define MMIO_OUT8(base, addr, val) ((*(((volatile uint8_t*)base)+(addr)))=((uint8_t)val))
+#define MMIO_OUT16(base, addr, val) ((*(volatile uint16_t*)(((uint8_t*)base)+(addr)))=((uint16_t)val))
 
 #define VIDEO	0 
 #define AGP		1
@@ -524,9 +523,9 @@ static int VIADRIKernelInit(DRIDriverContext * ctx, VIAPtr pVia)
     drmInfo.fb_offset           = pVia->FrameBufferBase;
     drmInfo.mmio_offset         = pVia->registerHandle;
     if (pVia->IsPCI)
-	drmInfo.agpAddr = (u_int32_t)NULL;
+	drmInfo.agpAddr = (uint32_t)NULL;
     else
-	drmInfo.agpAddr = (u_int32_t)pVia->agpAddr;
+	drmInfo.agpAddr = (uint32_t)pVia->agpAddr;
 
     if ((drmCommandWrite(pVia->drmFD, DRM_VIA_MAP_INIT,&drmInfo,
 			     sizeof(drm_via_init_t))) < 0)
@@ -632,7 +631,7 @@ static void VIADisableMMIO(DRIDriverContext * ctx)
 static void VIADisableExtendedFIFO(DRIDriverContext *ctx)
 {
     VIAPtr  pVia = VIAPTR(ctx);
-    u_int32_t  dwGE230, dwGE298;
+    uint32_t  dwGE230, dwGE298;
 
     /* Cause of exit XWindow will dump back register value, others chipset no
      * need to set extended fifo value */
@@ -654,8 +653,8 @@ static void VIADisableExtendedFIFO(DRIDriverContext *ctx)
 static void VIAEnableExtendedFIFO(DRIDriverContext *ctx)
 {
     VIAPtr  pVia = VIAPTR(ctx);
-    u_int8_t   bRegTemp;
-    u_int32_t  dwGE230, dwGE298;
+    uint8_t   bRegTemp;
+    uint32_t  dwGE230, dwGE298;
 
     switch (pVia->Chipset) {
     case VIA_CLE266:
@@ -850,7 +849,7 @@ static void VIAEnableExtendedFIFO(DRIDriverContext *ctx)
              SR1C[7:0], SR1D[1:0] (10bits) *=*/
         wRegTemp = (pBIOSInfo->offsetWidthByQWord >> 1) + 4;
         VGAOUT8(0x3c4, 0x1c);
-        VGAOUT8(0x3c5, (u_int8_t)(wRegTemp & 0xFF));
+        VGAOUT8(0x3c5, (uint8_t)(wRegTemp & 0xFF));
         VGAOUT8(0x3c4, 0x1d);
         bRegTemp = VGAIN8(0x3c5) & ~0x03;
         VGAOUT8(0x3c5, bRegTemp | ((wRegTemp & 0x300) >> 8));
@@ -896,7 +895,7 @@ static void VIAEnableExtendedFIFO(DRIDriverContext *ctx)
              SR1C[7:0], SR1D[1:0] (10bits) *=*/
         wRegTemp = (pBIOSInfo->offsetWidthByQWord >> 1) + 4;
         VGAOUT8(0x3c4, 0x1c);
-        VGAOUT8(0x3c5, (u_int8_t)(wRegTemp & 0xFF));
+        VGAOUT8(0x3c5, (uint8_t)(wRegTemp & 0xFF));
         VGAOUT8(0x3c4, 0x1d);
         bRegTemp = VGAIN8(0x3c5) & ~0x03;
         VGAOUT8(0x3c5, bRegTemp | ((wRegTemp & 0x300) >> 8));
@@ -924,9 +923,9 @@ static void VIAEnableExtendedFIFO(DRIDriverContext *ctx)
 static void VIAInitialize2DEngine(DRIDriverContext *ctx)
 {
     VIAPtr  pVia = VIAPTR(ctx);
-    u_int32_t  dwVQStartAddr, dwVQEndAddr;
-    u_int32_t  dwVQLen, dwVQStartL, dwVQEndL, dwVQStartEndH;
-    u_int32_t  dwGEMode;
+    uint32_t  dwVQStartAddr, dwVQEndAddr;
+    uint32_t  dwVQLen, dwVQStartL, dwVQEndL, dwVQStartEndH;
+    uint32_t  dwGEMode;
 
     /* init 2D engine regs to reset 2D engine */
     VIASETREG(0x04, 0x0);
@@ -1069,14 +1068,14 @@ static void VIAInitialize3DEngine(DRIDriverContext *ctx)
 
         for (i = 0; i <= 0x7D; i++)
         {
-            VIASETREG(0x440, (u_int32_t) i << 24);
+            VIASETREG(0x440, (uint32_t) i << 24);
         }
 
         VIASETREG(0x43C, 0x00020000);
 
         for (i = 0; i <= 0x94; i++)
         {
-            VIASETREG(0x440, (u_int32_t) i << 24);
+            VIASETREG(0x440, (uint32_t) i << 24);
         }
 
         VIASETREG(0x440, 0x82400000);
@@ -1086,7 +1085,7 @@ static void VIAInitialize3DEngine(DRIDriverContext *ctx)
 
         for (i = 0; i <= 0x94; i++)
         {
-            VIASETREG(0x440, (u_int32_t) i << 24);
+            VIASETREG(0x440, (uint32_t) i << 24);
         }
 
         VIASETREG(0x440, 0x82400000);
@@ -1094,7 +1093,7 @@ static void VIAInitialize3DEngine(DRIDriverContext *ctx)
 
         for (i = 0; i <= 0x03; i++)
         {
-            VIASETREG(0x440, (u_int32_t) i << 24);
+            VIASETREG(0x440, (uint32_t) i << 24);
         }
 
         VIASETREG(0x43C, 0x00030000);

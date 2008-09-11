@@ -557,7 +557,7 @@ _mesa_pow(double x, double y)
  * Find the first bit set in a word.
  */
 int
-_mesa_ffs(int i)
+_mesa_ffs(int32_t i)
 {
 #if (defined(_WIN32) && !defined(__MINGW32__) ) || defined(__IBMC__) || defined(__IBMCPP__)
    register int bit = 0;
@@ -594,11 +594,7 @@ _mesa_ffs(int i)
  *          if no bits set.
  */
 int
-#ifdef __MINGW32__
-_mesa_ffsll(long val)
-#else
-_mesa_ffsll(long long val)
-#endif
+_mesa_ffsll(int64_t val)
 {
 #ifdef ffsll
    return ffsll(val);
@@ -607,11 +603,11 @@ _mesa_ffsll(long long val)
 
    assert(sizeof(val) == 8);
 
-   bit = _mesa_ffs(val);
+   bit = _mesa_ffs((int32_t)val);
    if (bit != 0)
       return bit;
 
-   bit = _mesa_ffs(val >> 32);
+   bit = _mesa_ffs((int32_t)(val >> 32));
    if (bit != 0)
       return 32 + bit;
 
@@ -786,7 +782,24 @@ void *
 _mesa_bsearch( const void *key, const void *base, size_t nmemb, size_t size, 
                int (*compar)(const void *, const void *) )
 {
+#if defined(_WIN32_WCE)
+   void *mid;
+   int cmp;
+   while (nmemb) {
+      nmemb >>= 1;
+      mid = (char *)base + nmemb * size;
+      cmp = (*compar)(key, mid);
+      if (cmp == 0)
+	 return mid;
+      if (cmp > 0) {
+	 base = (char *)mid + size;
+	 --nmemb;
+      }
+   }
+   return NULL;
+#else
    return bsearch(key, base, nmemb, size, compar);
+#endif
 }
 
 /*@}*/
@@ -802,7 +815,7 @@ _mesa_bsearch( const void *key, const void *base, size_t nmemb, size_t size,
 char *
 _mesa_getenv( const char *var )
 {
-#if defined(_XBOX)
+#if defined(_XBOX) || defined(_WIN32_WCE)
    return NULL;
 #else
    return getenv(var);
@@ -921,12 +934,10 @@ _mesa_sprintf( char *str, const char *fmt, ... )
 void
 _mesa_printf( const char *fmtString, ... )
 {
-   char s[MAXSTRING];
    va_list args;
    va_start( args, fmtString );  
-   vsnprintf(s, MAXSTRING, fmtString, args);
+   vfprintf(stderr, fmtString, args);
    va_end( args );
-   fprintf(stderr,"%s", s);
 }
 
 /** Wrapper around vsprintf() */

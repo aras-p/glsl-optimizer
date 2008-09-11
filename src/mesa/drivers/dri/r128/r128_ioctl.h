@@ -1,4 +1,3 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/r128/r128_ioctl.h,v 1.6 2002/12/16 16:18:53 dawes Exp $ */
 /**************************************************************************
 
 Copyright 1999, 2000 ATI Technologies Inc. and Precision Insight, Inc.,
@@ -39,7 +38,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r128_reg.h"
 #include "r128_lock.h"
 
-#define R128_BUFFER_MAX_DWORDS	(R128_BUFFER_SIZE / sizeof(u_int32_t))
+#define R128_BUFFER_MAX_DWORDS	(R128_BUFFER_SIZE / sizeof(uint32_t))
 
 
 extern drmBufPtr r128GetBufferLocked( r128ContextPtr rmesa );
@@ -48,7 +47,7 @@ extern void r128FlushVerticesLocked( r128ContextPtr rmesa );
 static INLINE void *r128AllocDmaLow( r128ContextPtr rmesa, int count,
 				       int vert_size )
 {
-   u_int32_t *head;
+   uint32_t *head;
    int bytes = count * vert_size;
 
    if ( !rmesa->vert_buf ) {
@@ -62,7 +61,7 @@ static INLINE void *r128AllocDmaLow( r128ContextPtr rmesa, int count,
       UNLOCK_HARDWARE( rmesa );
    }
 
-   head = (u_int32_t *)((char *)rmesa->vert_buf->address + rmesa->vert_buf->used);
+   head = (uint32_t *)((char *)rmesa->vert_buf->address + rmesa->vert_buf->used);
    rmesa->vert_buf->used += bytes;
    rmesa->num_verts += count;
    

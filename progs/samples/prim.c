@@ -466,7 +466,7 @@ static void Draw(void)
     } else {
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     }
-
+#if 01
     Viewport(0, 0); Point();
     Viewport(0, 1); Lines();
     Viewport(0, 2); LineStrip();
@@ -479,10 +479,12 @@ static void Draw(void)
     Viewport(1, 3); TriangleStrip();
 
     Viewport(2, 0); Rect();
+#endif
     Viewport(2, 1); PolygonFunc();
+#if 01
     Viewport(2, 2); Quads();
     Viewport(2, 3); QuadStrip();
-
+#endif
     glFlush();
 
     if (doubleBuffer) {

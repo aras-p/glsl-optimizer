@@ -1,4 +1,3 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/r128/r128_tex.h,v 1.7 2002/02/22 21:44:58 dawes Exp $ */
 /**************************************************************************
 
 Copyright 1999, 2000 ATI Technologies Inc. and Precision Insight, Inc.,
@@ -68,9 +67,9 @@ extern void r128InitTextureFuncs( struct dd_function_table *functions );
 #define R128PACKCOLOR4444( r, g, b, a )					\
    ((((a) & 0xf0) << 8) | (((r) & 0xf0) << 4) | ((g) & 0xf0) | ((b) >> 4))
 
-static INLINE u_int32_t r128PackColor( GLuint cpp,
-                                       GLubyte r, GLubyte g,
-                                       GLubyte b, GLubyte a )
+static INLINE uint32_t r128PackColor( GLuint cpp,
+                                      GLubyte r, GLubyte g,
+                                      GLubyte b, GLubyte a )
 {
     switch ( cpp ) {
     case 2:

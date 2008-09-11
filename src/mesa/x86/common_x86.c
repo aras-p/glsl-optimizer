@@ -49,7 +49,7 @@
 #endif
 
 #include "common_x86_asm.h"
-#include "imports.h"
+#include "main/imports.h"
 
 
 int _mesa_x86_cpu_features = 0;

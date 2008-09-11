@@ -26,11 +26,11 @@
  *    Brian Paul
  */
 
-#include "imports.h"
+#include "main/imports.h"
 #include "bufferobj.h"
-#include "context.h"
-#include "colormac.h"
-#include "mtypes.h"
+#include "main/context.h"
+#include "main/colormac.h"
+#include "main/mtypes.h"
 #include "teximage.h"
 #include "swrast.h"
 #include "shader/prog_parameter.h"
@@ -532,6 +532,9 @@ _swrast_update_texture_samplers(GLcontext *ctx)
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    GLuint u;
+
+   if (!swrast)
+      return; /* pipe hack */
 
    for (u = 0; u < ctx->Const.MaxTextureImageUnits; u++) {
       const struct gl_texture_object *tObj = ctx->Texture.Unit[u]._Current;

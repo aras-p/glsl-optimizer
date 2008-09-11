@@ -11,46 +11,14 @@ include $(TOP)/configs/current
 LIBS = -L$(TOP)/$(LIB_DIR) -l$(GLUT_LIB) -l$(GLU_LIB) -l$(GL_LIB) $(APP_LIB_DEPS)
 
 SOURCES = \
-	tri-abs.c \
-	tri-add.c \
-	tri-cmp.c \
-	tri-cos.c \
-	tri-dp3.c \
-	tri-dp4.c \
-	tri-dph.c \
-	tri-dst.c \
-	tri-ex2.c \
-	tri-flr.c \
-	tri-frc.c \
-	tri-kil.c \
-	tri-lg2.c \
-	tri-lit.c \
-	tri-lrp.c \
-	tri-mad.c \
-	tri-max.c \
-	tri-min.c \
-	tri-mov.c \
-	tri-mul.c \
-	tri-pow.c \
-	tri-param.c \
-	tri-rcp.c \
-	tri-rsq.c \
-	tri-scs.c \
-	tri-sge.c \
-	tri-sge2.c \
-	tri-sin.c \
-	tri-slt.c \
-	tri-sub.c \
-	tri-swz.c \
-	tri-swz2.c \
 	tri-tex.c \
-	tri-xpd.c \
-	tri-position.c \
 	point-position.c \
 	tri-depth.c \
 	tri-depth2.c \
 	tri-depthwrite.c \
 	tri-depthwrite2.c \
+        tri-param.c \
+        fp-tri.c
 
 NOTDONE=\
 	tri-txb.c \

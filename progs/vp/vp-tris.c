@@ -5,8 +5,27 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#define GL_GLEXT_PROTOTYPES
 #include <GL/glut.h>
+
+#ifndef WIN32
+#include <unistd.h>
+#include <signal.h>
+#define GL_GLEXT_PROTOTYPES
+#else
+#include <GL/glext.h>
+#endif
+
+#ifdef WIN32
+static PFNGLBINDPROGRAMARBPROC glBindProgramARB = NULL;
+static PFNGLGENPROGRAMSARBPROC glGenProgramsARB = NULL;
+static PFNGLPROGRAMSTRINGARBPROC glProgramStringARB = NULL;
+static PFNGLISPROGRAMARBPROC glIsProgramARB = NULL;
+
+static PFNGLBINDPROGRAMNVPROC glBindProgramNV = NULL;
+static PFNGLGENPROGRAMSNVPROC glGenProgramsNV = NULL;
+static PFNGLLOADPROGRAMNVPROC glLoadProgramNV = NULL;
+static PFNGLISPROGRAMNVPROC glIsProgramNV = NULL;
+#endif
 
 static const char *filename = NULL;
 static GLuint nr_steps = 4;
@@ -18,8 +37,29 @@ static void usage( char *name )
    fprintf( stderr, "options:\n" );
    fprintf( stderr, "    -f     flat shaded\n" );
    fprintf( stderr, "    -nNr  subdivision steps\n" );
+   fprintf( stderr, "    -fps  show frames per second\n" );
 }
 
+unsigned show_fps = 0;
+unsigned int frame_cnt = 0;
+
+#ifndef WIN32
+
+void alarmhandler(int);
+
+void alarmhandler (int sig)
+{
+   if (sig == SIGALRM) {
+      printf("%d frames in 5.0 seconds = %.3f FPS\n", frame_cnt,
+             frame_cnt / 5.0);
+
+      frame_cnt = 0;
+   }
+   signal(SIGALRM, alarmhandler);
+   alarm(5);
+}
+
+#endif
 
 static void args(int argc, char *argv[])
 {
@@ -31,6 +71,9 @@ static void args(int argc, char *argv[])
       }
       else if (strcmp(argv[i], "-f") == 0) {
 	 glShadeModel(GL_FLAT);
+      }
+      else if (strcmp(argv[i], "-fps") == 0) {
+         show_fps = 1;
       }
       else if (i == argc - 1) {
 	 filename = argv[i];
@@ -62,19 +105,45 @@ static void Init( void )
       exit(1);
    }
 
-   sz = fread(buf, 1, sizeof(buf), f);
+   sz = (GLuint) fread(buf, 1, sizeof(buf), f);
    if (!feof(f)) {
       fprintf(stderr, "file too long\n");
       exit(1);
    }
 
    fprintf(stderr, "%.*s\n", sz, buf);
-      
-   glGenProgramsARB(1, &prognum);
 
-   glBindProgramARB(GL_VERTEX_PROGRAM_ARB, prognum);
-   glProgramStringARB(GL_VERTEX_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB,
-		      sz, (const GLubyte *) buf);
+   if (strncmp( buf, "!!VP", 4 ) == 0) {
+#ifdef WIN32
+      glBindProgramNV = (PFNGLBINDPROGRAMNVPROC) wglGetProcAddress( "glBindProgramNV" );
+      glGenProgramsNV = (PFNGLGENPROGRAMSNVPROC) wglGetProcAddress( "glGenProgramsNV" );
+      glLoadProgramNV = (PFNGLLOADPROGRAMNVPROC) wglGetProcAddress( "glLoadProgramNV" );
+      glIsProgramNV = (PFNGLISPROGRAMNVPROC) wglGetProcAddress( "glIsProgramNV" );
+#endif
+
+      glEnable( GL_VERTEX_PROGRAM_NV );
+      glGenProgramsNV( 1, &prognum );
+      glBindProgramNV( GL_VERTEX_PROGRAM_NV, prognum );
+      glLoadProgramNV( GL_VERTEX_PROGRAM_NV, prognum, sz, (const GLubyte *) buf );
+      assert( glIsProgramNV( prognum ) );
+   }
+   else {
+#ifdef WIN32
+      glBindProgramARB = (PFNGLBINDPROGRAMARBPROC) wglGetProcAddress( "glBindProgramARB" );
+      glGenProgramsARB = (PFNGLGENPROGRAMSARBPROC) wglGetProcAddress( "glGenProgramsARB" );
+      glProgramStringARB = (PFNGLPROGRAMSTRINGARBPROC) wglGetProcAddress( "glProgramStringARB" );
+      glIsProgramARB = (PFNGLISPROGRAMARBPROC) wglGetProcAddress( "glIsProgramARB" );
+#endif
+
+      glEnable(GL_VERTEX_PROGRAM_ARB);
+
+      glGenProgramsARB(1, &prognum);
+
+      glBindProgramARB(GL_VERTEX_PROGRAM_ARB, prognum);
+      glProgramStringARB(GL_VERTEX_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB,
+		        sz, (const GLubyte *) buf);
+      assert(glIsProgramARB(prognum));
+   }
 
    errno = glGetError();
    printf("glGetError = %d\n", errno);
@@ -86,7 +155,6 @@ static void Init( void )
       printf("errorpos: %d\n", errorpos);
       printf("%s\n", (char *)glGetString(GL_PROGRAM_ERROR_STRING_ARB));
    }
-   assert(glIsProgramARB(prognum));
 }
 
 
@@ -147,8 +215,6 @@ static void Display( void )
    glClearColor(0.3, 0.3, 0.3, 1);
    glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
-   glEnable(GL_VERTEX_PROGRAM_NV);
-
    glBegin(GL_TRIANGLES);
 
 
@@ -168,7 +234,11 @@ static void Display( void )
    glEnd();
 
 
-   glFlush(); 
+   glFlush();
+   if (show_fps) {
+      ++frame_cnt;
+      glutPostRedisplay();
+   }
 }
 
 
@@ -205,12 +275,18 @@ int main( int argc, char *argv[] )
    glutInitWindowPosition( 0, 0 );
    glutInitWindowSize( 250, 250 );
    glutInitDisplayMode( GLUT_RGB | GLUT_SINGLE | GLUT_DEPTH );
-   glutCreateWindow(argv[0]);
+   glutCreateWindow(argv[argc-1]);
    glutReshapeFunc( Reshape );
    glutKeyboardFunc( Key );
    glutDisplayFunc( Display );
    args( argc, argv );
    Init();
+#ifndef WIN32
+   if (show_fps) {
+      signal(SIGALRM, alarmhandler);
+      alarm(5);
+   }
+#endif
    glutMainLoop();
    return 0;
 }

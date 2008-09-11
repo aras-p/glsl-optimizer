@@ -61,7 +61,6 @@ _tnl_CreateContext( GLcontext *ctx )
    /* Initialize tnl state.
     */
    if (ctx->VertexProgram._MaintainTnlProgram) {
-      _tnl_ProgramCacheInit( ctx );
       _tnl_install_pipeline( ctx, _tnl_vp_pipeline );
    } else {
       _tnl_install_pipeline( ctx, _tnl_default_pipeline );
@@ -79,6 +78,9 @@ _tnl_CreateContext( GLcontext *ctx )
 
    tnl->nr_blocks = 0;
 
+   /* plug in the VBO drawing function */
+   vbo_set_draw_func(ctx, _tnl_draw_prims);
+
    return GL_TRUE;
 }
 
@@ -89,9 +91,6 @@ _tnl_DestroyContext( GLcontext *ctx )
    TNLcontext *tnl = TNL_CONTEXT(ctx);
 
    _tnl_destroy_pipeline( ctx );
-
-   if (ctx->VertexProgram._MaintainTnlProgram)
-      _tnl_ProgramCacheDestroy( ctx );
 
    FREE(tnl);
    ctx->swtnl_context = NULL;

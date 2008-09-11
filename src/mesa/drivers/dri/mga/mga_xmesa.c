@@ -1,4 +1,3 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mga_xmesa.c,v 1.19 2003/03/26 20:43:49 tsi Exp $ */
 /*
  * Copyright 2000-2001 VA Linux Systems, Inc.
  * All Rights Reserved.
@@ -132,8 +131,8 @@ mgaFillInModes( __DRIscreenPrivate *psp,
 	GLX_NONE, GLX_SWAP_UNDEFINED_OML, GLX_SWAP_COPY_OML
     };
 
-    u_int8_t depth_bits_array[3];
-    u_int8_t stencil_bits_array[3];
+    uint8_t depth_bits_array[3];
+    uint8_t stencil_bits_array[3];
 
 
     depth_bits_array[0] = 0;

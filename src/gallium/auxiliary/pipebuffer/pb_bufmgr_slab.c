@@ -1,0 +1,487 @@
+/**************************************************************************
+ *
+ * Copyright 2006-2008 Tungsten Graphics, Inc., Cedar Park, TX., USA
+ * All Rights Reserved.
+ *
+ * Permission is hereby granted, FREE of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sub license, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to
+ * the following conditions:
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL
+ * THE COPYRIGHT HOLDERS, AUTHORS AND/OR ITS SUPPLIERS BE LIABLE FOR ANY CLAIM,
+ * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+ * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+ * USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ * The above copyright notice and this permission notice (including the
+ * next paragraph) shall be included in all copies or substantial portions
+ * of the Software.
+ *
+ *
+ **************************************************************************/
+
+/**
+ * @file
+ * S-lab pool implementation.
+ * 
+ * @author Thomas Hellstrom <thomas-at-tungstengraphics-dot-com>
+ * @author Jose Fonseca <jrfonseca@tungstengraphics.com>
+ */
+
+#include "pipe/p_compiler.h"
+#include "pipe/p_error.h"
+#include "pipe/p_debug.h"
+#include "pipe/p_thread.h"
+#include "pipe/p_defines.h"
+#include "util/u_memory.h"
+#include "util/u_double_list.h"
+#include "util/u_time.h"
+
+#include "pb_buffer.h"
+#include "pb_bufmgr.h"
+
+
+struct pb_slab;
+
+struct pb_slab_buffer
+{
+   struct pb_buffer base;
+   
+   struct pb_slab *slab;
+   struct list_head head;
+   unsigned mapCount;
+   size_t start;
+   _glthread_Cond event;
+};
+
+struct pb_slab
+{
+   struct list_head head;
+   struct list_head freeBuffers;
+   size_t numBuffers;
+   size_t numFree;
+   struct pb_slab_buffer *buffers;
+   struct pb_slab_manager *mgr;
+   
+   struct pb_buffer *bo;
+   void *virtual;   
+};
+
+struct pb_slab_manager 
+{
+   struct pb_manager base;
+   
+   struct pb_manager *provider;
+   size_t bufSize;
+   size_t slabSize;
+   struct pb_desc desc;
+
+   struct list_head slabs;
+   struct list_head freeSlabs;
+   
+   _glthread_Mutex mutex;
+};
+
+/**
+ * The data of this structure remains constant after
+ * initialization and thus needs no mutex protection.
+ */
+struct pb_slab_range_manager 
+{
+   struct pb_manager base;
+
+   struct pb_manager *provider;
+   size_t minBufSize;
+   size_t maxBufSize;
+   struct pb_desc desc;
+   
+   unsigned numBuckets;
+   size_t *bucketSizes;
+   struct pb_manager **buckets;
+};
+
+
+static INLINE struct pb_slab_buffer *
+pb_slab_buffer(struct pb_buffer *buf)
+{
+   assert(buf);
+   return (struct pb_slab_buffer *)buf;
+}
+
+
+static INLINE struct pb_slab_manager *
+pb_slab_manager(struct pb_manager *mgr)
+{
+   assert(mgr);
+   return (struct pb_slab_manager *)mgr;
+}
+
+
+static INLINE struct pb_slab_range_manager *
+pb_slab_range_manager(struct pb_manager *mgr)
+{
+   assert(mgr);
+   return (struct pb_slab_range_manager *)mgr;
+}
+
+
+/**
+ * Delete a buffer from the slab delayed list and put
+ * it on the slab FREE list.
+ */
+static void
+pb_slab_buffer_destroy(struct pb_buffer *_buf)
+{
+   struct pb_slab_buffer *buf = pb_slab_buffer(_buf);
+   struct pb_slab *slab = buf->slab;
+   struct pb_slab_manager *mgr = slab->mgr;
+   struct list_head *list = &buf->head;
+
+   _glthread_LOCK_MUTEX(mgr->mutex);
+   
+   assert(buf->base.base.refcount == 0);
+   
+   buf->mapCount = 0;
+
+   LIST_DEL(list);
+   LIST_ADDTAIL(list, &slab->freeBuffers);
+   slab->numFree++;
+
+   if (slab->head.next == &slab->head)
+      LIST_ADDTAIL(&slab->head, &mgr->slabs);
+
+   if (slab->numFree == slab->numBuffers) {
+      list = &slab->head;
+      LIST_DEL(list);
+      LIST_ADDTAIL(list, &mgr->freeSlabs);
+   }
+
+   if (mgr->slabs.next == &mgr->slabs || slab->numFree
+	 != slab->numBuffers) {
+
+      struct list_head *next;
+
+      for (list = mgr->freeSlabs.next, next = list->next; list
+	    != &mgr->freeSlabs; list = next, next = list->next) {
+
+	 slab = LIST_ENTRY(struct pb_slab, list, head);
+
+	 LIST_DELINIT(list);
+	 pb_reference(&slab->bo, NULL);
+	 FREE(slab->buffers);
+	 FREE(slab);
+      }
+   }
+   
+   _glthread_UNLOCK_MUTEX(mgr->mutex);
+}
+
+
+static void *
+pb_slab_buffer_map(struct pb_buffer *_buf, 
+                   unsigned flags)
+{
+   struct pb_slab_buffer *buf = pb_slab_buffer(_buf);
+
+   ++buf->mapCount;
+   return (void *) ((uint8_t *) buf->slab->virtual + buf->start);
+}
+
+
+static void
+pb_slab_buffer_unmap(struct pb_buffer *_buf)
+{
+   struct pb_slab_buffer *buf = pb_slab_buffer(_buf);
+
+   --buf->mapCount;
+   if (buf->mapCount == 0) 
+       _glthread_COND_BROADCAST(buf->event);
+}
+
+
+static void
+pb_slab_buffer_get_base_buffer(struct pb_buffer *_buf,
+                               struct pb_buffer **base_buf,
+                               unsigned *offset)
+{
+   struct pb_slab_buffer *buf = pb_slab_buffer(_buf);
+   pb_get_base_buffer(buf->slab->bo, base_buf, offset);
+   *offset += buf->start;
+}
+
+
+static const struct pb_vtbl 
+pb_slab_buffer_vtbl = {
+      pb_slab_buffer_destroy,
+      pb_slab_buffer_map,
+      pb_slab_buffer_unmap,
+      pb_slab_buffer_get_base_buffer
+};
+
+
+static enum pipe_error
+pb_slab_create(struct pb_slab_manager *mgr)
+{
+   struct pb_slab *slab;
+   struct pb_slab_buffer *buf;
+   unsigned numBuffers;
+   unsigned i;
+   enum pipe_error ret;
+
+   slab = CALLOC_STRUCT(pb_slab);
+   if (!slab)
+      return PIPE_ERROR_OUT_OF_MEMORY;
+
+   /*
+    * FIXME: We should perhaps allow some variation in slabsize in order
+    * to efficiently reuse slabs.
+    */
+
+   slab->bo = mgr->provider->create_buffer(mgr->provider, mgr->slabSize, &mgr->desc);
+   if(!slab->bo) {
+      ret = PIPE_ERROR_OUT_OF_MEMORY;
+      goto out_err0;
+   }
+
+   slab->virtual = pb_map(slab->bo, 
+                          PIPE_BUFFER_USAGE_CPU_READ |
+                          PIPE_BUFFER_USAGE_CPU_WRITE);
+   if(!slab->virtual) {
+      ret = PIPE_ERROR_OUT_OF_MEMORY;
+      goto out_err1;
+   }
+
+   pb_unmap(slab->bo);
+
+   numBuffers = slab->bo->base.size / mgr->bufSize;
+
+   slab->buffers = CALLOC(numBuffers, sizeof(*slab->buffers));
+   if (!slab->buffers) {
+      ret = PIPE_ERROR_OUT_OF_MEMORY;
+      goto out_err1;
+   }
+
+   LIST_INITHEAD(&slab->head);
+   LIST_INITHEAD(&slab->freeBuffers);
+   slab->numBuffers = numBuffers;
+   slab->numFree = 0;
+   slab->mgr = mgr;
+
+   buf = slab->buffers;
+   for (i=0; i < numBuffers; ++i) {
+      buf->base.base.refcount = 0;
+      buf->base.base.size = mgr->bufSize;
+      buf->base.base.alignment = 0;
+      buf->base.base.usage = 0;
+      buf->base.vtbl = &pb_slab_buffer_vtbl;
+      buf->slab = slab;
+      buf->start = i* mgr->bufSize;
+      buf->mapCount = 0;
+      _glthread_INIT_COND(buf->event);
+      LIST_ADDTAIL(&buf->head, &slab->freeBuffers);
+      slab->numFree++;
+      buf++;
+   }
+
+   LIST_ADDTAIL(&slab->head, &mgr->slabs);
+
+   return PIPE_OK;
+
+out_err1: 
+   pb_reference(&slab->bo, NULL);
+out_err0: 
+   FREE(slab);
+   return ret;
+}
+
+
+static struct pb_buffer *
+pb_slab_manager_create_buffer(struct pb_manager *_mgr,
+                              size_t size,
+                              const struct pb_desc *desc)
+{
+   struct pb_slab_manager *mgr = pb_slab_manager(_mgr);
+   static struct pb_slab_buffer *buf;
+   struct pb_slab *slab;
+   struct list_head *list;
+
+   /* check size */
+   assert(size <= mgr->bufSize);
+   if(size > mgr->bufSize)
+      return NULL;
+   
+   /* check if we can provide the requested alignment */
+   assert(pb_check_alignment(desc->alignment, mgr->desc.alignment));
+   if(!pb_check_alignment(desc->alignment, mgr->desc.alignment))
+      return NULL;
+   assert(pb_check_alignment(desc->alignment, mgr->bufSize));
+   if(!pb_check_alignment(desc->alignment, mgr->bufSize))
+      return NULL;
+
+   assert(pb_check_usage(desc->usage, mgr->desc.usage));
+   if(!pb_check_usage(desc->usage, mgr->desc.usage))
+      return NULL;
+
+   _glthread_LOCK_MUTEX(mgr->mutex);
+   if (mgr->slabs.next == &mgr->slabs) {
+      (void) pb_slab_create(mgr);
+      if (mgr->slabs.next == &mgr->slabs) {
+	 _glthread_UNLOCK_MUTEX(mgr->mutex);
+	 return NULL;
+      }
+   }
+   list = mgr->slabs.next;
+   slab = LIST_ENTRY(struct pb_slab, list, head);
+   if (--slab->numFree == 0)
+      LIST_DELINIT(list);
+
+   list = slab->freeBuffers.next;
+   LIST_DELINIT(list);
+
+   _glthread_UNLOCK_MUTEX(mgr->mutex);
+   buf = LIST_ENTRY(struct pb_slab_buffer, list, head);
+   
+   ++buf->base.base.refcount;
+   buf->base.base.alignment = desc->alignment;
+   buf->base.base.usage = desc->usage;
+   
+   return &buf->base;
+}
+
+
+static void
+pb_slab_manager_destroy(struct pb_manager *_mgr)
+{
+   struct pb_slab_manager *mgr = pb_slab_manager(_mgr);
+
+   /* TODO: cleanup all allocated buffers */
+   FREE(mgr);
+}
+
+
+struct pb_manager *
+pb_slab_manager_create(struct pb_manager *provider,
+                       size_t bufSize,
+                       size_t slabSize,
+                       const struct pb_desc *desc)
+{
+   struct pb_slab_manager *mgr;
+
+   mgr = CALLOC_STRUCT(pb_slab_manager);
+   if (!mgr)
+      return NULL;
+
+   mgr->base.destroy = pb_slab_manager_destroy;
+   mgr->base.create_buffer = pb_slab_manager_create_buffer;
+
+   mgr->provider = provider;
+   mgr->bufSize = bufSize;
+   mgr->slabSize = slabSize;
+   mgr->desc = *desc;
+
+   LIST_INITHEAD(&mgr->slabs);
+   LIST_INITHEAD(&mgr->freeSlabs);
+   
+   _glthread_INIT_MUTEX(mgr->mutex);
+
+   return &mgr->base;
+}
+
+
+static struct pb_buffer *
+pb_slab_range_manager_create_buffer(struct pb_manager *_mgr,
+                                    size_t size,
+                                    const struct pb_desc *desc)
+{
+   struct pb_slab_range_manager *mgr = pb_slab_range_manager(_mgr);
+   size_t bufSize;
+   unsigned i;
+
+   bufSize = mgr->minBufSize;
+   for (i = 0; i < mgr->numBuckets; ++i) {
+      if(bufSize >= size)
+	 return mgr->buckets[i]->create_buffer(mgr->buckets[i], size, desc);
+      bufSize *= 2;
+   }
+
+   /* Fall back to allocate a buffer object directly from the provider. */
+   return mgr->provider->create_buffer(mgr->provider, size, desc);
+}
+
+
+static void
+pb_slab_range_manager_destroy(struct pb_manager *_mgr)
+{
+   struct pb_slab_range_manager *mgr = pb_slab_range_manager(_mgr);
+   unsigned i;
+   
+   for (i = 0; i < mgr->numBuckets; ++i)
+      mgr->buckets[i]->destroy(mgr->buckets[i]);
+   FREE(mgr->buckets);
+   FREE(mgr->bucketSizes);
+   FREE(mgr);
+}
+
+
+struct pb_manager *
+pb_slab_range_manager_create(struct pb_manager *provider,
+                             size_t minBufSize,
+                             size_t maxBufSize,
+                             size_t slabSize,
+                             const struct pb_desc *desc)
+{
+   struct pb_slab_range_manager *mgr;
+   size_t bufSize;
+   unsigned i;
+
+   if(!provider)
+      return NULL;
+   
+   mgr = CALLOC_STRUCT(pb_slab_range_manager);
+   if (!mgr)
+      goto out_err0;
+
+   mgr->base.destroy = pb_slab_range_manager_destroy;
+   mgr->base.create_buffer = pb_slab_range_manager_create_buffer;
+
+   mgr->provider = provider;
+   mgr->minBufSize = minBufSize;
+   mgr->maxBufSize = maxBufSize;
+
+   mgr->numBuckets = 1;
+   bufSize = minBufSize;
+   while(bufSize < maxBufSize) {
+      bufSize *= 2;
+      ++mgr->numBuckets;
+   }
+   
+   mgr->buckets = CALLOC(mgr->numBuckets, sizeof(*mgr->buckets));
+   if (!mgr->buckets)
+      goto out_err1;
+
+   bufSize = minBufSize;
+   for (i = 0; i < mgr->numBuckets; ++i) {
+      mgr->buckets[i] = pb_slab_manager_create(provider, bufSize, slabSize, desc);
+      if(!mgr->buckets[i])
+	 goto out_err2;
+      bufSize *= 2;
+   }
+
+   return &mgr->base;
+
+out_err2: 
+   for (i = 0; i < mgr->numBuckets; ++i)
+      if(mgr->buckets[i])
+	    mgr->buckets[i]->destroy(mgr->buckets[i]);
+   FREE(mgr->buckets);
+out_err1: 
+   FREE(mgr);
+out_err0:
+   return NULL;
+}

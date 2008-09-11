@@ -26,7 +26,6 @@
  *    Ian Romanick <idr@us.ibm.com>
  *    Keith Whitwell <keithw@tungstengraphics.com>
  */
-/* $XFree86:$ */
 
 #include <stdlib.h>
 #include "mm.h"

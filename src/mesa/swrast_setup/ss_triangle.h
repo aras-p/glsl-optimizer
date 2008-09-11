@@ -29,7 +29,7 @@
 #ifndef SS_TRIANGLE_H
 #define SS_TRIANGLE_H
 
-#include "mtypes.h"
+#include "main/mtypes.h"
 #include "ss_context.h"
 
 

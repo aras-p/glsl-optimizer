@@ -310,8 +310,10 @@ void driInitSingleExtension( GLcontext * ctx,
 	     */
 	    offset = _glapi_add_dispatch( functions, parameter_signature );
 	    if (offset == -1) {
+#if 0 /* this causes noise with egl */
 		fprintf(stderr, "DISPATCH ERROR! _glapi_add_dispatch failed "
 			"to add %s!\n", functions[0]);
+#endif
 	    }
 	    else if (ext->functions[i].remap_index != -1) {
 		driDispatchRemapTable[ ext->functions[i].remap_index ] = 
@@ -504,6 +506,9 @@ GLboolean driClipRectToFramebuffer( const GLframebuffer *buffer,
  *                      \c GLX_SWAP_UNDEFINED_OML.  See the
  *                      GLX_OML_swap_method extension spec for more details.
  * \param num_db_modes  Number of entries in \c db_modes.
+ * \param msaa_samples  Array of msaa sample count. 0 represents a visual
+ *                      without a multisample buffer.
+ * \param num_msaa_modes Number of entries in \c msaa_samples.
  * \param visType       GLX visual type.  Usually either \c GLX_TRUE_COLOR or
  *                      \c GLX_DIRECT_COLOR.
  * 
@@ -519,6 +524,10 @@ GLboolean driClipRectToFramebuffer( const GLframebuffer *buffer,
  * \c GL_UNSIGNED_3BYTE_8_8_8, \c GL_4FLOAT_32_32_32_32, 
  * \c GL_4HALF_16_16_16_16, etc.  We can cross that bridge when we come to it.
  */
+
+/* XXX: need to re-add msaa support after gallium-0.1 merge
+ */
+
 __DRIconfig **
 driCreateConfigs(GLenum fb_format, GLenum fb_type,
 		 const u_int8_t * depth_bits, const u_int8_t * stencil_bits,

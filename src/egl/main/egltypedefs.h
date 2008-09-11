@@ -1,8 +1,10 @@
 #ifndef EGLTYPEDEFS_INCLUDED
 #define EGLTYPEDEFS_INCLUDED
 
+#define EGL_EGLEXT_PROTOTYPES
 
-#include <GLES/egl.h>
+#include <EGL/egl.h>
+#include <EGL/eglext.h>
 
 
 typedef struct _egl_api _EGLAPI;
@@ -26,9 +28,7 @@ typedef struct _egl_surface _EGLSurface;
 typedef struct _egl_thread_info _EGLThreadInfo;
 
 
-typedef void (*_EGLProc)();
-
-typedef _EGLDriver *(*_EGLMain_t)(_EGLDisplay *dpy);
+typedef _EGLDriver *(*_EGLMain_t)(_EGLDisplay *dpy, const char *args);
 
 
 #endif /* EGLTYPEDEFS_INCLUDED */

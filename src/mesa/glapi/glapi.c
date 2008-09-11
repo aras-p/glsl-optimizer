@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5
+ * Version:  7.1
  *
- * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2008  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -57,7 +57,7 @@
 
 #else
 
-#include "glheader.h"
+#include "main/glheader.h"
 
 #endif
 
@@ -71,17 +71,11 @@
 #include "glapioffsets.h"
 #include "glapitable.h"
 
+
 /***** BEGIN NO-OP DISPATCH *****/
 
 static GLboolean WarnFlag = GL_FALSE;
 static _glapi_warning_func warning_func;
-
-#if defined(PTHREADS) || defined(GLX_USE_TLS)
-static void init_glapi_relocs(void);
-#endif
-
-static _glapi_proc generate_entrypoint(GLuint functionOffset);
-static void fill_in_entrypoint_offset(_glapi_proc entrypoint, GLuint offset);
 
 /*
  * Enable/disable printing of warning messages.
@@ -104,6 +98,7 @@ _glapi_set_warning_func( _glapi_warning_func func )
 static GLboolean
 warn(void)
 {
+#if !defined(_WIN32_WCE)
    if ((WarnFlag || getenv("MESA_DEBUG") || getenv("LIBGL_DEBUG"))
        && warning_func) {
       return GL_TRUE;
@@ -111,6 +106,9 @@ warn(void)
    else {
       return GL_FALSE;
    }
+#else
+   return GL_FALSE;
+#endif
 }
 
 
@@ -221,21 +219,6 @@ PUBLIC void *_glapi_Context = NULL;
 /*@}*/
 
 
-/**
- * strdup() is actually not a standard ANSI C or POSIX routine.
- * Irix will not define it if ANSI mode is in effect.
- */
-static char *
-str_dup(const char *str)
-{
-   char *copy;
-   copy = (char*) malloc(strlen(str) + 1);
-   if (!copy)
-      return NULL;
-   strcpy(copy, str);
-   return copy;
-}
-
 
 
 /**
@@ -313,6 +296,32 @@ _glapi_get_context(void)
 
 
 
+#if defined(PTHREADS) || defined(GLX_USE_TLS)
+/**
+ * Perform platform-specific GL API entry-point fixups.
+ */
+static void
+init_glapi_relocs( void )
+{
+#if defined(USE_X86_ASM) && defined(GLX_USE_TLS) && !defined(GLX_X86_READONLY_TEXT)
+    extern unsigned long _x86_get_dispatch(void);
+    char run_time_patch[] = {
+       0x65, 0xa1, 0, 0, 0, 0 /* movl %gs:0,%eax */
+    };
+    GLuint *offset = (GLuint *) &run_time_patch[2]; /* 32-bits for x86/32 */
+    const GLubyte * const get_disp = (const GLubyte *) run_time_patch;
+    GLubyte * curr_func = (GLubyte *) gl_dispatch_functions_start;
+
+    *offset = _x86_get_dispatch();
+    while ( curr_func != (GLubyte *) gl_dispatch_functions_end ) {
+	(void) memcpy( curr_func, get_disp, sizeof(run_time_patch));
+	curr_func += DISPATCH_FUNCTION_SIZE;
+    }
+#endif
+}
+#endif /* defined(PTHREADS) || defined(GLX_USE_TLS) */
+
+
 /**
  * Set the global or per-thread dispatch table pointer.
  * If the dispatch parameter is NULL we'll plug in the no-op dispatch
@@ -368,132 +377,6 @@ _glapi_get_dispatch(void)
 }
 
 
-
-/***
- *** The rest of this file is pretty much concerned with GetProcAddress
- *** functionality.
- ***/
-
-#if defined(USE_X64_64_ASM) && defined(GLX_USE_TLS)
-# define DISPATCH_FUNCTION_SIZE  16
-#elif defined(USE_X86_ASM)
-# if defined(THREADS) && !defined(GLX_USE_TLS)
-#  define DISPATCH_FUNCTION_SIZE  32
-# else
-#  define DISPATCH_FUNCTION_SIZE  16
-# endif
-#endif
-
-#if !defined(DISPATCH_FUNCTION_SIZE) && !defined(XFree86Server) && !defined(XGLServer)
-# define NEED_FUNCTION_POINTER
-#endif
-
-/* The code in this file is auto-generated with Python */
-#include "glprocs.h"
-
-
-/**
- * Search the table of static entrypoint functions for the named function
- * and return the corresponding glprocs_table_t entry.
- */
-static const glprocs_table_t *
-find_entry( const char * n )
-{
-   GLuint i;
-   for (i = 0; static_functions[i].Name_offset >= 0; i++) {
-      const char *testName = gl_string_table + static_functions[i].Name_offset;
-      if (strcmp(testName, n) == 0) {
-	 return &static_functions[i];
-      }
-   }
-   return NULL;
-}
-
-
-/**
- * Return dispatch table offset of the named static (built-in) function.
- * Return -1 if function not found.
- */
-static GLint
-get_static_proc_offset(const char *funcName)
-{
-   const glprocs_table_t * const f = find_entry( funcName );
-   if (f) {
-      return f->Offset;
-   }
-   return -1;
-}
-
-
-#if !defined(XFree86Server) && !defined(XGLServer)
-#ifdef USE_X86_ASM
-
-#if defined( GLX_USE_TLS )
-extern       GLubyte gl_dispatch_functions_start[];
-extern       GLubyte gl_dispatch_functions_end[];
-#else
-extern const GLubyte gl_dispatch_functions_start[];
-#endif
-
-#endif /* USE_X86_ASM */
-
-
-/**
- * Return dispatch function address for the named static (built-in) function.
- * Return NULL if function not found.
- */
-static _glapi_proc
-get_static_proc_address(const char *funcName)
-{
-   const glprocs_table_t * const f = find_entry( funcName );
-   if (f) {
-#if defined(DISPATCH_FUNCTION_SIZE) && defined(GLX_INDIRECT_RENDERING)
-      return (f->Address == NULL)
-	 ? (_glapi_proc) (gl_dispatch_functions_start
-			  + (DISPATCH_FUNCTION_SIZE * f->Offset))
-         : f->Address;
-#elif defined(DISPATCH_FUNCTION_SIZE)
-      return (_glapi_proc) (gl_dispatch_functions_start 
-                            + (DISPATCH_FUNCTION_SIZE * f->Offset));
-#else
-      return f->Address;
-#endif
-   }
-   else {
-      return NULL;
-   }
-}
-
-#endif /* !defined(XFree86Server) && !defined(XGLServer) */
-
-
-
-/**
- * Return the name of the function at the given offset in the dispatch
- * table.  For debugging only.
- */
-static const char *
-get_static_proc_name( GLuint offset )
-{
-   GLuint i;
-   for (i = 0; static_functions[i].Name_offset >= 0; i++) {
-      if (static_functions[i].Offset == offset) {
-	 return gl_string_table + static_functions[i].Name_offset;
-      }
-   }
-   return NULL;
-}
-
-
-
-/**********************************************************************
- * Extension function management.
- */
-
-/*
- * Number of extension functions which we can dynamically add at runtime.
- */
-#define MAX_EXTENSION_FUNCS 300
 
 
 /*
@@ -960,7 +843,6 @@ _glapi_get_dispatch_table_size(void)
 }
 
 
-
 /**
  * Make sure there are no NULL pointers in the given dispatch table.
  * Intended for debugging purposes.
@@ -968,7 +850,7 @@ _glapi_get_dispatch_table_size(void)
 void
 _glapi_check_table(const struct _glapi_table *table)
 {
-#ifdef DEBUG
+#ifdef EXTRA_DEBUG
    const GLuint entries = _glapi_get_dispatch_table_size();
    const void **tab = (const void **) table;
    GLuint i;
@@ -1039,29 +921,3 @@ _glapi_check_table(const struct _glapi_table *table)
    (void) table;
 #endif
 }
-
-
-#if defined(PTHREADS) || defined(GLX_USE_TLS)
-/**
- * Perform platform-specific GL API entry-point fixups.
- */
-static void
-init_glapi_relocs( void )
-{
-#if defined(USE_X86_ASM) && defined(GLX_USE_TLS) && !defined(GLX_X86_READONLY_TEXT)
-    extern unsigned long _x86_get_dispatch(void);
-    char run_time_patch[] = {
-       0x65, 0xa1, 0, 0, 0, 0 /* movl %gs:0,%eax */
-    };
-    GLuint *offset = (GLuint *) &run_time_patch[2]; /* 32-bits for x86/32 */
-    const GLubyte * const get_disp = (const GLubyte *) run_time_patch;
-    GLubyte * curr_func = (GLubyte *) gl_dispatch_functions_start;
-
-    *offset = _x86_get_dispatch();
-    while ( curr_func != (GLubyte *) gl_dispatch_functions_end ) {
-	(void) memcpy( curr_func, get_disp, sizeof(run_time_patch));
-	curr_func += DISPATCH_FUNCTION_SIZE;
-    }
-#endif
-}
-#endif /* defined(PTHREADS) || defined(GLX_USE_TLS) */

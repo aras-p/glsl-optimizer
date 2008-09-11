@@ -23,7 +23,9 @@ PROGS = \
 	texdemo1 \
 	toyball \
 	twoside \
-	trirast
+	trirast \
+	texdemo1 \
+        convolutions
 
 
 ##### RULES #####
@@ -168,7 +170,11 @@ trirast: trirast.o shaderutil.o
 	$(CC) -I$(INCDIR) $(CFLAGS) $(LDFLAGS) trirast.o shaderutil.o $(LIBS) -o $@
 
 
+convolutions: convolutions.o readtex.o
+	$(CC) -I$(INCDIR) $(CFLAGS) convolutions.o readtex.o $(APP_LIB_DEPS) -o $@
 
+convolutions.o: convolutions.c readtex.h
+	$(CC) -c -I$(INCDIR) $(CFLAGS) convolutions.c
 
 
 clean:

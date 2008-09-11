@@ -1,4 +1,3 @@
-/* $XFree86: xc/lib/GL/glx/single2.c,v 1.10 2004/02/11 19:48:16 dawes Exp $ */
 /*
 ** License Applicability. Except to the extent portions of this file are
 ** made subject to an alternative license as permitted in the SGI Free

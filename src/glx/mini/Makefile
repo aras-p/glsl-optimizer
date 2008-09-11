@@ -65,6 +65,7 @@ drmtest: xf86drm.o drmtest.o
 
 
 depend: $(C_SOURCES) $(ASM_SOURCES)
+	rm -f depend
 	touch depend
 	$(MKDEP) $(MKDEP_OPTIONS) $(INCLUDES) $(C_SOURCES) $(ASM_SOURCES) \
 		> /dev/null 

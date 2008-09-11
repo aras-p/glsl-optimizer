@@ -1,4 +1,3 @@
-/* $Id: multipal.c,v 1.6 2003/12/08 09:03:36 joukj Exp $ */
 
 /*
  * Test multitexture and paletted textures.

@@ -34,6 +34,7 @@
 
 GLenum doubleBuffer;
 
+
 static void Init(void)
 {
    fprintf(stderr, "GL_RENDERER   = %s\n", (char *) glGetString(GL_RENDERER));
@@ -70,6 +71,7 @@ static void Key(unsigned char key, int x, int y)
 static void Draw(void)
 {
    glClear(GL_COLOR_BUFFER_BIT); 
+   glDisable(GL_DEPTH_TEST);
 
    glPointSize(8.0);
 
@@ -122,7 +124,7 @@ int main(int argc, char **argv)
 
     glutInitWindowPosition(0, 0); glutInitWindowSize( 250, 250);
 
-    type = GLUT_RGB;
+    type = GLUT_RGB | GLUT_ALPHA;
     type |= (doubleBuffer) ? GLUT_DOUBLE : GLUT_SINGLE;
     glutInitDisplayMode(type);
 

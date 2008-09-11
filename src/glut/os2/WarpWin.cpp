@@ -417,4 +417,3 @@ void ScreenToClient( HWND hwnd,   POINTL *point)
   point->y -= swp_src.y;
 }
 
-

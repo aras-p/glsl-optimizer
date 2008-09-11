@@ -23,9 +23,9 @@
  */
 
 
-#include "glheader.h"
-#include "imports.h"
-#include "mtypes.h"
+#include "main/glheader.h"
+#include "main/imports.h"
+#include "main/mtypes.h"
 #include "prog_instruction.h"
 
 

@@ -5,7 +5,6 @@ include $(TOP)/configs/current
 
 include sources
 
-
 .SUFFIXES : .cpp
 
 .c.o:
@@ -24,6 +23,9 @@ include sources
 default: depend asm_subdirs libmesa.a libglapi.a driver_subdirs
 
 
+# Default: build dependencies, then asm_subdirs, then convenience
+# libs (.a) and finally the device drivers:
+default: depend asm_subdirs libmesa.a $(GLAPI_LIB) driver_subdirs
 
 ######################################################################
 # Helper libraries used by many drivers:
@@ -36,6 +38,13 @@ libmesa.a: $(MESA_OBJECTS)
 libglapi.a: $(GLAPI_OBJECTS)
 	@ $(MKLIB) -o glapi -static $(GLAPI_OBJECTS)
 
+# Make archive of gl* API dispatcher functions only
+$(GLAPI_LIB): $(GLAPI_OBJECTS)
+	@if [ "${WINDOW_SYSTEM}" = "dri" ] ; then \
+		touch libglapi.a ; \
+	else \
+		$(TOP)/bin/mklib -o glapi -static $(GLAPI_OBJECTS) ; \
+	fi
 
 ######################################################################
 # Device drivers

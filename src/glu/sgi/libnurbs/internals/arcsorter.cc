@@ -35,8 +35,6 @@
 /*
  * arcsorter.c++
  *
- * $Date: 2006/03/14 15:08:52 $ $Revision: 1.2 $
- * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/internals/arcsorter.cc,v 1.2 2006/03/14 15:08:52 brianp Exp $
  */
 
 #ifndef __gluarcsorter_c_

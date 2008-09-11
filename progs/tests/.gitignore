@@ -18,6 +18,8 @@ bufferobj
 bug_3050
 bug_3101
 bug_3195
+bug_texstore_i8
+calibrate_rast
 copypixrate
 crossbar
 cva
@@ -28,6 +30,7 @@ exactrast
 fbotest1
 fbotest2
 fbotexture
+fillrate
 floattex
 fog
 fogcoord
@@ -40,7 +43,9 @@ invert
 jkrahntest
 lineclip
 manytex
+minmag
 mipmap_limits
+mipmap_view
 multipal
 no_s3tc
 packedpixels
@@ -57,6 +62,8 @@ shader_api
 stencil_twoside
 stencil_wrap
 stencilwrap
+stencil_wrap
+subtex
 subtexrate
 tex1d
 texcmp
@@ -78,4 +85,6 @@ vptorus
 vpwarpmesh
 yuvrect
 yuvsquare
+zcomp
+zdrawpix
 zreaddraw

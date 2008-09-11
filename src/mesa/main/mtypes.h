@@ -38,8 +38,7 @@
 #include "glheader.h"
 #include <GL/internal/glcore.h>	/* __GLcontextModes (GLvisual) */
 #include "config.h"		/* Hardwired parameters */
-#include "glapi/glapitable.h"
-#include "glapi/glthread.h"
+#include "glapi/glapi.h"
 #include "math/m_matrix.h"	/* GLmatrix */
 #include "bitset.h"
 
@@ -123,9 +122,12 @@ typedef int GLfixed;
 /*@{*/
 struct _mesa_HashTable;
 struct gl_pixelstore_attrib;
+struct gl_program_cache;
 struct gl_texture_format;
 struct gl_texture_image;
 struct gl_texture_object;
+struct st_context;
+struct pipe_surface;
 typedef struct __GLcontextRec GLcontext;
 typedef struct __GLcontextModesRec GLvisual;
 typedef struct gl_framebuffer GLframebuffer;
@@ -149,6 +151,7 @@ enum
    VERT_ATTRIB_COLOR1 = 4,
    VERT_ATTRIB_FOG = 5,
    VERT_ATTRIB_COLOR_INDEX = 6,
+   VERT_ATTRIB_POINT_SIZE = 6,  /*alias*/
    VERT_ATTRIB_EDGEFLAG = 7,
    VERT_ATTRIB_TEX0 = 8,
    VERT_ATTRIB_TEX1 = 9,
@@ -1431,6 +1434,7 @@ struct gl_texture_object
    GLenum DepthMode;		/**< GL_ARB_depth_texture */
    GLint _MaxLevel;		/**< actual max mipmap level (q in the spec) */
    GLfloat _MaxLambda;		/**< = _MaxLevel - BaseLevel (q - b in spec) */
+   GLint CropRect[4];           /**< GL_OES_draw_texture */
    GLboolean GenerateMipmap;    /**< GL_SGIS_generate_mipmap */
    GLboolean _Complete;		/**< Is texture object complete? */
 
@@ -1439,7 +1443,6 @@ struct gl_texture_object
 
    /** GL_EXT_paletted_texture */
    struct gl_color_table Palette;
-
 
    /**
     * \name For device driver.
@@ -1546,15 +1549,6 @@ struct gl_texture_unit
 };
 
 
-struct texenvprog_cache_item;
-
-struct texenvprog_cache
-{
-   struct texenvprog_cache_item **items;
-   GLuint size, n_items;
-   GLcontext *ctx;
-};
-
 
 /**
  * Texture attribute group (GL_TEXTURE_BIT).
@@ -1575,15 +1569,11 @@ struct gl_texture_attrib
 
    struct gl_texture_unit Unit[MAX_TEXTURE_UNITS];
 
-   /** Proxy texture objects */
    struct gl_texture_object *ProxyTex[NUM_TEXTURE_TARGETS];
 
    /** GL_EXT_shared_texture_palette */
    GLboolean SharedPalette;
    struct gl_color_table Palette;
-   
-   /** Cached texenv fragment programs */
-   struct texenvprog_cache env_fp_cache;
 };
 
 
@@ -1704,6 +1694,7 @@ struct gl_array_object
    struct gl_client_array Index;
    struct gl_client_array EdgeFlag;
    struct gl_client_array TexCoord[MAX_TEXTURE_COORD_UNITS];
+   struct gl_client_array PointSize;
    /*@}*/
 
    /** Generic arrays for vertex programs/shaders */
@@ -1984,6 +1975,9 @@ struct gl_vertex_program_state
    /** Program to emulate fixed-function T&L (see above) */
    struct gl_vertex_program *_TnlProgram;
 
+   /** Cache of fixed-function programs */
+   struct gl_program_cache *Cache;
+
 #if FEATURE_MESA_program_debug
    GLprogramcallbackMESA Callback;
    GLvoid *CallbackData;
@@ -2016,6 +2010,9 @@ struct gl_fragment_program_state
 
    /** Program to emulate fixed-function texture env/combine (see above) */
    struct gl_fragment_program *_TexEnvProgram;
+
+   /** Cache of fixed-function programs */
+   struct gl_program_cache *Cache;
 
 #if FEATURE_MESA_program_debug
    GLprogramcallbackMESA Callback;
@@ -2074,10 +2071,11 @@ struct gl_ati_fragment_shader_state
  */
 struct gl_query_object
 {
-   GLuint Id;
-   GLuint64EXT Result; /* the counter */
-   GLboolean Active;   /* inside Begin/EndQuery */
-   GLboolean Ready;    /* result is ready */
+   GLenum Target;      /**< The query target, when active */
+   GLuint Id;          /**< hash table ID/name */
+   GLuint64EXT Result; /**< the counter */
+   GLboolean Active;   /**< inside Begin/EndQuery */
+   GLboolean Ready;    /**< result is ready? */
 };
 
 
@@ -2257,6 +2255,7 @@ struct gl_renderbuffer
    GLubyte IndexBits;
    GLubyte DepthBits;
    GLubyte StencilBits;
+   GLubyte Samples;     /**< Number of samples - 0 if not multisampled */
    GLvoid *Data;        /**< This may not be used by some kinds of RBs */
 
    /* Used to wrap one renderbuffer around another: */
@@ -2498,7 +2497,7 @@ struct gl_constants
    GLuint MaxRenderbufferSize;
    /* GL_ARB_vertex_shader */
    GLuint MaxVertexTextureImageUnits;
-   GLuint MaxVarying;
+   GLuint MaxVarying;  /**< Number of float[4] vectors */
 };
 
 
@@ -2736,6 +2735,7 @@ struct gl_matrix_stack
 #define _NEW_ARRAY_FOGCOORD         VERT_BIT_FOG
 #define _NEW_ARRAY_INDEX            VERT_BIT_COLOR_INDEX
 #define _NEW_ARRAY_EDGEFLAG         VERT_BIT_EDGEFLAG
+#define _NEW_ARRAY_POINT_SIZE       VERT_BIT_COLOR_INDEX  /* aliased */
 #define _NEW_ARRAY_TEXCOORD_0       VERT_BIT_TEX0
 #define _NEW_ARRAY_TEXCOORD_1       VERT_BIT_TEX1
 #define _NEW_ARRAY_TEXCOORD_2       VERT_BIT_TEX2
@@ -2751,6 +2751,7 @@ struct gl_matrix_stack
 #define _NEW_ARRAY_TEXCOORD(i) (_NEW_ARRAY_TEXCOORD_0 << (i))
 #define _NEW_ARRAY_ATTRIB(i) (_NEW_ARRAY_ATTRIB_0 << (i))
 /*@}*/
+
 
 
 /**
@@ -3088,7 +3089,7 @@ struct __GLcontextRec
    void *swsetup_context;
    void *swtnl_context;
    void *swtnl_im;
-   void *acache_context;
+   struct st_context *st;
    void *aelt_context;
    /*@}*/
 };
