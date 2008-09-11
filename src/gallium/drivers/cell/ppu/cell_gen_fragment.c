@@ -286,16 +286,16 @@ gen_blend(const struct pipe_blend_state *blend,
          spe_roti(f, mask_reg, mask_reg, 8);
 
          /* fbG = fbRGBA & mask */
-         spe_and(f, fbB_reg, fbRGBA_reg, mask_reg);
+         spe_and(f, fbG_reg, fbRGBA_reg, mask_reg);
          /* fbG = fbG >> 8 */
-         spe_roti(f, fbB_reg, fbB_reg, -8);
+         spe_roti(f, fbG_reg, fbG_reg, -8);
          /* mask = mask << 8 */
          spe_roti(f, mask_reg, mask_reg, 8);
 
          /* fbR = fbRGBA & mask */
          spe_and(f, fbR_reg, fbRGBA_reg, mask_reg);
          /* fbR = fbR >> 16 */
-         spe_roti(f, fbB_reg, fbB_reg, -16);
+         spe_roti(f, fbR_reg, fbR_reg, -16);
          /* mask = mask << 8 */
          spe_roti(f, mask_reg, mask_reg, 8);
 
