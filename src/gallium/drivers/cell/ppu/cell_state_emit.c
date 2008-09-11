@@ -27,6 +27,7 @@
 
 #include "util/u_memory.h"
 #include "cell_context.h"
+#include "cell_gen_fragment.h"
 #include "cell_state.h"
 #include "cell_state_emit.h"
 #include "cell_state_per_fragment.h"
@@ -83,6 +84,29 @@ cell_emit_state(struct cell_context *cell)
       fb->depth_format = zbuf ? zbuf->format : PIPE_FORMAT_NONE;
       fb->width = cell->framebuffer.width;
       fb->height = cell->framebuffer.height;
+#if 0
+      printf("EMIT color format %s\n", pf_name(fb->color_format));
+      printf("EMIT depth format %s\n", pf_name(fb->depth_format));
+#endif
+   }
+
+
+   if (cell->dirty & (CELL_NEW_FRAMEBUFFER | CELL_NEW_DEPTH_STENCIL)) {
+      /* XXX we don't want to always do codegen here.  We should have
+       * a hash/lookup table to cache previous results...
+       */
+      struct cell_command_fragment_ops *fops
+            = cell_batch_alloc(cell, sizeof(*fops));
+      struct spe_function spe_code;
+
+      /* generate new code */
+      gen_fragment_function(cell, &spe_code);
+      /* put the new code into the batch buffer */
+      fops->opcode = CELL_CMD_STATE_FRAGMENT_OPS;
+      memcpy(&fops->code, spe_code.store,
+             SPU_MAX_FRAGMENT_OPS_INSTS * SPE_INST_SIZE);
+      /* free codegen buffer */
+      spe_release_func(&spe_code);
    }
 
    if (cell->dirty & CELL_NEW_BLEND) {
@@ -90,8 +114,7 @@ cell_emit_state(struct cell_context *cell)
 
       if (cell->blend != NULL) {
          blend.base = (intptr_t) cell->blend->code.store;
-         blend.size = (char *) cell->blend->code.csr
-             - (char *) cell->blend->code.store;
+         blend.size = cell->blend->code.num_inst * SPE_INST_SIZE;
          blend.read_fb = TRUE;
       }
       else {
@@ -108,10 +131,10 @@ cell_emit_state(struct cell_context *cell)
 
       if (cell->depth_stencil != NULL) {
 	 dsat.base = (intptr_t) cell->depth_stencil->code.store;
-	 dsat.size = (char *) cell->depth_stencil->code.csr
-	     - (char *) cell->depth_stencil->code.store;
+	 dsat.size = cell->depth_stencil->code.num_inst * SPE_INST_SIZE;
 	 dsat.read_depth = TRUE;
 	 dsat.read_stencil = FALSE;
+         dsat.state = cell->depth_stencil->base;
       }
       else {
 	 dsat.base = 0;

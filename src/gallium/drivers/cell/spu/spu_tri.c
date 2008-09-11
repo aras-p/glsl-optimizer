@@ -297,9 +297,12 @@ emit_quad( int x, int y, mask_t mask )
    sp->quad.first->run(sp->quad.first, &setup.quad);
 #else
 
+#define NEW_FRAGMENT_FUNCTION 01
+#if !NEW_FRAGMENT_FUNCTION
    if (spu.read_depth) {
       mask = do_depth_test(x, y, mask);
    }
+#endif
 
    /* If any bits in mask are set... */
    if (spu_extract(spu_orx(mask), 0)) {
@@ -308,6 +311,7 @@ emit_quad( int x, int y, mask_t mask )
       vector float colors[4];
 
       spu.cur_ctile_status = TILE_STATUS_DIRTY;
+      spu.cur_ztile_status = TILE_STATUS_DIRTY;
 
       if (spu.texture[0].start) {
          /* texture mapping */
@@ -355,6 +359,29 @@ emit_quad( int x, int y, mask_t mask )
       }
 
 
+#if NEW_FRAGMENT_FUNCTION
+      {
+         /* Convert fragment data from AoS to SoA format.
+          * I.e. (RGBA,RGBA,RGBA,RGBA) -> (RRRR,GGGG,BBBB,AAAA)
+          * This is temporary!
+          */
+         vector float soa_frag[4];
+         _transpose_matrix4x4(soa_frag, colors);
+
+         float4 fragZ;
+
+         fragZ.v = eval_z((float) x, (float) y);
+
+         /* Do all per-fragment/quad operations here, including:
+          *  alpha test, z test, stencil test, blend and framebuffer writing.
+          */
+         spu.fragment_ops.func(ix, iy, &spu.ctile, &spu.ztile,
+                               fragZ.v,
+                               soa_frag[0], soa_frag[1],
+                               soa_frag[2], soa_frag[3],
+                               mask);
+      }
+#else
       /* Convert fragment data from AoS to SoA format.
        * I.e. (RGBA,RGBA,RGBA,RGBA) -> (RRRR,GGGG,BBBB,AAAA)
        */
@@ -405,6 +432,9 @@ emit_quad( int x, int y, mask_t mask )
       spu.ctile.ui[iy+0][ix+1] = spu_extract((vec_uint4) result.g, 0);
       spu.ctile.ui[iy+1][ix+0] = spu_extract((vec_uint4) result.b, 0);
       spu.ctile.ui[iy+1][ix+1] = spu_extract((vec_uint4) result.a, 0);
+
+#endif /* NEW_FRAGMENT_FUNCTION */
+
    }
 #endif
 }

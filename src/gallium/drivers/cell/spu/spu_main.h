@@ -91,6 +91,24 @@ typedef struct spu_blend_results (*logicop_func)(
 
 typedef vector float (*sample_texture_func)(uint unit, vector float texcoord);
 
+
+typedef void (*spu_fragment_ops_func)(uint x, uint y,
+                                      tile_t *colorTile,
+                                      tile_t *depthStencilTile,
+                                      vector float fragZ,
+                                      vector float fragRed,
+                                      vector float fragGreen,
+                                      vector float fragBlue,
+                                      vector float fragAlpha,
+                                      vector unsigned int mask);
+
+struct spu_fragment_ops
+{
+   uint code[SPU_MAX_FRAGMENT_OPS_INSTS];
+   spu_fragment_ops_func func;  /**< Current fragment ops function */
+} ALIGN16_ATTRIB;
+
+
 struct spu_framebuffer {
    void *color_start;              /**< addr of color surface in main memory */
    void *depth_start;              /**< addr of depth surface in main memory */
@@ -127,6 +145,9 @@ struct spu_global
    struct cell_init_info init;
 
    struct spu_framebuffer fb;
+
+   struct pipe_depth_stencil_alpha_state depth_stencil_alpha;
+
    boolean read_depth;
    boolean read_stencil;
    frag_test_func frag_test;  /**< Current depth/stencil test code */
@@ -141,6 +162,8 @@ struct spu_global
    struct spu_texture texture[PIPE_MAX_SAMPLERS];
 
    struct vertex_info vertex_info;
+
+   struct spu_fragment_ops fragment_ops;
 
    /* XXX more state to come */
 

@@ -34,6 +34,7 @@
 
 #include "spu_main.h"
 #include "spu_render.h"
+#include "spu_per_fragment_op.h"
 #include "spu_texture.h"
 #include "spu_tile.h"
 //#include "spu_test.h"
@@ -46,7 +47,7 @@
 /*
 helpful headers:
 /usr/lib/gcc/spu/4.1.1/include/spu_mfcio.h
-/opt/ibm/cell-sdk/prototype/sysroot/usr/include/libmisc.h
+/opt/cell/sdk/usr/include/libmisc.h
 */
 
 boolean Debug = FALSE;
@@ -226,6 +227,24 @@ cmd_release_verts(const struct cell_command_release_verts *release)
 }
 
 
+/**
+ * Process a CELL_CMD_STATE_FRAGMENT_OPS command.
+ * This involves installing new fragment ops SPU code.
+ * If this function is never called, we'll use a regular C fallback function
+ * for fragment processing.
+ */
+static void
+cmd_state_fragment_ops(const struct cell_command_fragment_ops *fops)
+{
+   if (Debug)
+      printf("SPU %u: CMD_STATE_FRAGMENT_OPS\n", spu.init.id);
+   /* Copy SPU code from batch buffer to spu buffer */
+   memcpy(spu.fragment_ops.code, fops->code, SPU_MAX_FRAGMENT_OPS_INSTS * 4);
+   /* Point function pointer at new code */
+   spu.fragment_ops.func = (spu_fragment_ops_func) spu.fragment_ops.code;
+}
+
+
 static void
 cmd_state_framebuffer(const struct cell_command_framebuffer *cmd)
 {
@@ -257,6 +276,8 @@ cmd_state_framebuffer(const struct cell_command_framebuffer *cmd)
       break;
    case PIPE_FORMAT_Z24S8_UNORM:
    case PIPE_FORMAT_S8Z24_UNORM:
+   case PIPE_FORMAT_Z24X8_UNORM:
+   case PIPE_FORMAT_X8Z24_UNORM:
       spu.fb.zsize = 4;
       spu.fb.zscale = (float) 0x00ffffffu;
       break;
@@ -282,6 +303,8 @@ cmd_state_framebuffer(const struct cell_command_framebuffer *cmd)
 }
 
 
+#define NEW_FRAGMENT_FUNCTION 01
+
 static void
 cmd_state_blend(const struct cell_command_blend *state)
 {
@@ -302,7 +325,9 @@ cmd_state_blend(const struct cell_command_blend *state)
       wait_on_mask(1 << TAG_BATCH_BUFFER);
       spu.blend = (blend_func) fb_blend_code_buffer;
       spu.read_fb = state->read_fb;
-   } else {
+   }
+   else
+   {
       spu.read_fb = FALSE;
    }
 }
@@ -326,7 +351,9 @@ cmd_state_depth_stencil(const struct cell_command_depth_stencil_alpha_test *stat
 	      0, /* tid */
 	      0  /* rid */);
       wait_on_mask(1 << TAG_BATCH_BUFFER);
-   } else {
+   }
+   else
+   {
       /* If there is no code, emit a return instruction.
        */
       depth_stencil_code_buffer[0] = 0x35;
@@ -338,12 +365,14 @@ cmd_state_depth_stencil(const struct cell_command_depth_stencil_alpha_test *stat
    spu.frag_test = (frag_test_func) depth_stencil_code_buffer;
    spu.read_depth = state->read_depth;
    spu.read_stencil = state->read_stencil;
+   spu.depth_stencil_alpha = state->state;
 }
 
 
 static void
 cmd_state_logicop(const struct cell_command_logicop * code)
 {
+#if !NEW_FRAGMENT_FUNCTION
    mfc_get(logicop_code_buffer,
            (unsigned int) code->base,  /* src */
            code->size,
@@ -353,6 +382,7 @@ cmd_state_logicop(const struct cell_command_logicop * code)
    wait_on_mask(1 << TAG_BATCH_BUFFER);
 
    spu.logicop = (logicop_func) logicop_code_buffer;
+#endif
 }
 
 
@@ -455,7 +485,9 @@ cmd_finish(void)
 
 
 /**
- * Execute a batch of commands
+ * Execute a batch of commands which was sent to us by the PPU.
+ * See the cell_emit_state.c code to see where the commands come from.
+ *
  * The opcode param encodes the location of the buffer and its size.
  */
 static void
@@ -517,6 +549,14 @@ cmd_batch(uint opcode)
             uint pos_incr;
             cmd_render(render, &pos_incr);
             pos += pos_incr;
+         }
+         break;
+      case CELL_CMD_STATE_FRAGMENT_OPS:
+         {
+            struct cell_command_fragment_ops *fops
+               = (struct cell_command_fragment_ops *) &buffer[pos];
+            cmd_state_fragment_ops(fops);
+            pos += sizeof(*fops) / 8;
          }
          break;
       case CELL_CMD_RELEASE_VERTS:
@@ -680,6 +720,11 @@ one_time_init(void)
    memset(spu.ctile_status, TILE_STATUS_DEFINED, sizeof(spu.ctile_status));
    memset(spu.ztile_status, TILE_STATUS_DEFINED, sizeof(spu.ztile_status));
    invalidate_tex_cache();
+
+   /* Install default/fallback fragment processing function.
+    * This will normally be overriden by a code-gen'd function.
+    */
+   spu.fragment_ops.func = spu_fallback_fragment_ops;
 }
 
 

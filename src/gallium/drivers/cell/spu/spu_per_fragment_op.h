@@ -29,4 +29,15 @@ extern qword
 spu_do_depth_stencil(int x, int y, qword frag_mask, qword frag_depth,
 		     qword frag_alpha, qword facing);
 
+extern void
+spu_fallback_fragment_ops(uint x, uint y,
+                          tile_t *colorTile,
+                          tile_t *depthStencilTile,
+                          vector float fragZ,
+                          vector float fragRed,
+                          vector float fragGreen,
+                          vector float fragBlue,
+                          vector float fragAlpha,
+                          vector unsigned int mask);
+
 #endif /* SPU_PER_FRAGMENT_OP */

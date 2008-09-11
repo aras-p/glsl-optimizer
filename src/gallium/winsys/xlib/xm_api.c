@@ -349,12 +349,17 @@ create_xmesa_buffer(XMesaDrawable d, BufferType type,
 
    if (vis->mesa_visual.depthBits == 0)
       depthFormat = PIPE_FORMAT_NONE;
+#ifdef GALLIUM_CELL /* XXX temporary for Cell! */
+   else
+      depthFormat = PIPE_FORMAT_S8Z24_UNORM;
+#else
    else if (vis->mesa_visual.depthBits <= 16)
-      depthFormat = PIPE_FORMAT_Z16_UNORM;
+      depthFormat = PIPE_FORMAT_Z16UNORM;
    else if (vis->mesa_visual.depthBits <= 24)
       depthFormat = PIPE_FORMAT_S8Z24_UNORM;
    else
       depthFormat = PIPE_FORMAT_Z32_UNORM;
+#endif
 
    if (vis->mesa_visual.stencilBits == 8) {
       if (depthFormat == PIPE_FORMAT_S8Z24_UNORM)

@@ -1158,7 +1158,7 @@ cell_generate_alpha_blend(struct cell_blend_state *cb)
 static int
 PC_OFFSET(const struct spe_function *f, const void *d)
 {
-   const intptr_t pc = (intptr_t) f->csr;
+   const intptr_t pc = (intptr_t) &f->store[f->num_inst];
    const intptr_t ea = ~0x0f & (intptr_t) d;
 
    return (ea - pc) >> 2;
