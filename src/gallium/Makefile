@@ -2,7 +2,7 @@ TOP = ../..
 include $(TOP)/configs/current
 
 
-SUBDIRS = auxiliary drivers winsys/common
+SUBDIRS = auxiliary drivers winsys
 
 
 default: subdirs
