@@ -429,16 +429,14 @@ cmd_batch(uint opcode)
       printf("SPU %u: release batch buf %u\n", spu.init.id, buf);
    release_buffer(buf);
 
+   /*
+    * Loop over commands in the batch buffer
+    */
    for (pos = 0; pos < usize; /* no incr */) {
       switch (buffer[pos]) {
-      case CELL_CMD_STATE_FRAMEBUFFER:
-         {
-            struct cell_command_framebuffer *fb
-               = (struct cell_command_framebuffer *) &buffer[pos];
-            cmd_state_framebuffer(fb);
-            pos += sizeof(*fb) / 8;
-         }
-         break;
+      /*
+       * rendering commands
+       */
       case CELL_CMD_CLEAR_SURFACE:
          {
             struct cell_command_clear_surface *clr
@@ -456,6 +454,17 @@ cmd_batch(uint opcode)
             pos += pos_incr;
          }
          break;
+      /*
+       * state-update commands
+       */
+      case CELL_CMD_STATE_FRAMEBUFFER:
+         {
+            struct cell_command_framebuffer *fb
+               = (struct cell_command_framebuffer *) &buffer[pos];
+            cmd_state_framebuffer(fb);
+            pos += sizeof(*fb) / 8;
+         }
+         break;
       case CELL_CMD_STATE_FRAGMENT_OPS:
          {
             struct cell_command_fragment_ops *fops
@@ -463,18 +472,6 @@ cmd_batch(uint opcode)
             cmd_state_fragment_ops(fops);
             pos += sizeof(*fops) / 8;
          }
-         break;
-      case CELL_CMD_RELEASE_VERTS:
-         {
-            struct cell_command_release_verts *release
-               = (struct cell_command_release_verts *) &buffer[pos];
-            cmd_release_verts(release);
-            pos += sizeof(*release) / 8;
-         }
-         break;
-      case CELL_CMD_FINISH:
-         cmd_finish();
-         pos += 1;
          break;
       case CELL_CMD_STATE_SAMPLER:
          {
@@ -520,6 +517,21 @@ cmd_batch(uint opcode)
          cmd_state_attrib_fetch((struct cell_attribute_fetch_code *)
                                 &buffer[pos+1]);
          pos += (1 + ROUNDUP8(sizeof(struct cell_attribute_fetch_code)) / 8);
+         break;
+      /*
+       * misc commands
+       */
+      case CELL_CMD_FINISH:
+         cmd_finish();
+         pos += 1;
+         break;
+      case CELL_CMD_RELEASE_VERTS:
+         {
+            struct cell_command_release_verts *release
+               = (struct cell_command_release_verts *) &buffer[pos];
+            cmd_release_verts(release);
+            pos += sizeof(*release) / 8;
+         }
          break;
       case CELL_CMD_FLUSH_BUFFER_RANGE: {
 	 struct cell_buffer_range *br = (struct cell_buffer_range *)
