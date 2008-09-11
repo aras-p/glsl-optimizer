@@ -616,7 +616,7 @@ gen_pack_colors(struct spe_function *f,
  * \param f     the generated function (out)
  */
 void
-gen_fragment_function(struct cell_context *cell, struct spe_function *f)
+cell_gen_fragment_function(struct cell_context *cell, struct spe_function *f)
 {
    const struct pipe_depth_stencil_alpha_state *dsa =
       &cell->depth_stencil->base;
@@ -850,7 +850,7 @@ gen_fragment_function(struct cell_context *cell, struct spe_function *f)
       spe_release_register(f, rgba_reg);
    }
 
-   printf("gen_fragment_ops nr instructions: %u\n", f->num_inst);
+   //printf("gen_fragment_ops nr instructions: %u\n", f->num_inst);
 
    spe_bi(f, SPE_REG_RA, 0, 0);  /* return from function call */
 

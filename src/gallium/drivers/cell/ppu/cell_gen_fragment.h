@@ -31,7 +31,7 @@
 
 
 extern void
-gen_fragment_function(struct cell_context *cell, struct spe_function *f);
+cell_gen_fragment_function(struct cell_context *cell, struct spe_function *f);
 
 
 #endif /* CELL_GEN_FRAGMENT_H */

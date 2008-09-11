@@ -85,7 +85,7 @@ cell_emit_state(struct cell_context *cell)
       struct spe_function spe_code;
 
       /* generate new code */
-      gen_fragment_function(cell, &spe_code);
+      cell_gen_fragment_function(cell, &spe_code);
       /* put the new code into the batch buffer */
       fops->opcode = CELL_CMD_STATE_FRAGMENT_OPS;
       memcpy(&fops->code, spe_code.store,
