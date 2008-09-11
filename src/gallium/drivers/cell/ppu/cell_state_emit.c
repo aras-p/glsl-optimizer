@@ -55,23 +55,6 @@ emit_state_cmd(struct cell_context *cell, uint cmd,
 void
 cell_emit_state(struct cell_context *cell)
 {
-   if (cell->dirty & (CELL_NEW_FRAMEBUFFER | CELL_NEW_BLEND)) {
-      struct cell_command_logicop logicop;
-
-      if (cell->logic_op.store != NULL) {
-	 spe_release_func(& cell->logic_op);
-      }
-
-      cell_generate_logic_op(& cell->logic_op,
-			     & cell->blend->base,
-			     cell->framebuffer.cbufs[0]);
-
-      logicop.base = (intptr_t) cell->logic_op.store;
-      logicop.size = 64 * 4;
-      emit_state_cmd(cell, CELL_CMD_STATE_LOGICOP, &logicop,
-		     sizeof(logicop));
-   }
-
    if (cell->dirty & CELL_NEW_FRAMEBUFFER) {
       struct pipe_surface *cbuf = cell->framebuffer.cbufs[0];
       struct pipe_surface *zbuf = cell->framebuffer.zsbuf;
@@ -91,7 +74,9 @@ cell_emit_state(struct cell_context *cell)
    }
 
 
-   if (cell->dirty & (CELL_NEW_FRAMEBUFFER | CELL_NEW_DEPTH_STENCIL)) {
+   if (cell->dirty & (CELL_NEW_FRAMEBUFFER |
+                      CELL_NEW_DEPTH_STENCIL |
+                      CELL_NEW_BLEND)) {
       /* XXX we don't want to always do codegen here.  We should have
        * a hash/lookup table to cache previous results...
        */
@@ -105,45 +90,10 @@ cell_emit_state(struct cell_context *cell)
       fops->opcode = CELL_CMD_STATE_FRAGMENT_OPS;
       memcpy(&fops->code, spe_code.store,
              SPU_MAX_FRAGMENT_OPS_INSTS * SPE_INST_SIZE);
+      fops->dsa = cell->depth_stencil->base;
+      fops->blend = cell->blend->base;
       /* free codegen buffer */
       spe_release_func(&spe_code);
-   }
-
-   if (cell->dirty & CELL_NEW_BLEND) {
-      struct cell_command_blend blend;
-
-      if (cell->blend != NULL) {
-         blend.base = (intptr_t) cell->blend->code.store;
-         blend.size = cell->blend->code.num_inst * SPE_INST_SIZE;
-         blend.read_fb = TRUE;
-      }
-      else {
-         blend.base = 0;
-         blend.size = 0;
-         blend.read_fb = FALSE;
-      }
-
-      emit_state_cmd(cell, CELL_CMD_STATE_BLEND, &blend, sizeof(blend));
-   }
-
-   if (cell->dirty & CELL_NEW_DEPTH_STENCIL) {
-      struct cell_command_depth_stencil_alpha_test dsat;
-
-      if (cell->depth_stencil != NULL) {
-	 dsat.base = (intptr_t) cell->depth_stencil->code.store;
-	 dsat.size = cell->depth_stencil->code.num_inst * SPE_INST_SIZE;
-	 dsat.read_depth = TRUE;
-	 dsat.read_stencil = FALSE;
-         dsat.state = cell->depth_stencil->base;
-      }
-      else {
-	 dsat.base = 0;
-	 dsat.size = 0;
-	 dsat.read_depth = FALSE;
-	 dsat.read_stencil = FALSE;
-      }
-
-      emit_state_cmd(cell, CELL_CMD_STATE_DEPTH_STENCIL, &dsat, sizeof(dsat));
    }
 
    if (cell->dirty & CELL_NEW_SAMPLER) {

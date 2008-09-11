@@ -60,35 +60,6 @@ typedef union {
 #define TILE_STATUS_GETTING 5  /**< mfc_get() called but not yet arrived */
 
 
-struct spu_frag_test_results {
-   qword mask;
-   qword depth;
-   qword stencil;
-};
-
-typedef struct spu_frag_test_results (*frag_test_func)(qword frag_mask,
-    qword pixel_depth, qword pixel_stencil, qword frag_depth,
-    qword frag_alpha, qword facing);
-
-
-struct spu_blend_results {
-   qword r;
-   qword g;
-   qword b;
-   qword a;
-};
-
-typedef struct spu_blend_results (*blend_func)(
-    qword frag_r, qword frag_g, qword frag_b, qword frag_a,
-    qword pixel_r, qword pixel_g, qword pixel_b, qword pixel_a,
-    qword const_r, qword const_g, qword const_b, qword const_a);
-
-typedef struct spu_blend_results (*logicop_func)(
-    qword pixel_r, qword pixel_g, qword pixel_b, qword pixel_a,
-    qword frag_r, qword frag_g, qword frag_b, qword frag_a,
-    qword frag_mask);
-
-
 typedef vector float (*sample_texture_func)(uint unit, vector float texcoord);
 
 
@@ -147,16 +118,10 @@ struct spu_global
    struct spu_framebuffer fb;
 
    struct pipe_depth_stencil_alpha_state depth_stencil_alpha;
+   struct pipe_blend_state blend;
 
    boolean read_depth;
    boolean read_stencil;
-   frag_test_func frag_test;  /**< Current depth/stencil test code */
-   
-   boolean read_fb;   /**< Does current blend mode require framebuffer read? */
-   blend_func blend;  /**< Current blend code */
-   qword const_blend_color[4] ALIGN16_ATTRIB;
-
-   logicop_func logicop;  /**< Current logicop code **/
 
    struct pipe_sampler_state sampler[PIPE_MAX_SAMPLERS];
    struct spu_texture texture[PIPE_MAX_SAMPLERS];

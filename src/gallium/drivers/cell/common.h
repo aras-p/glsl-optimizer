@@ -146,6 +146,8 @@ struct cell_command_logicop
 struct cell_command_fragment_ops
 {
    uint64_t opcode;      /**< CELL_CMD_STATE_FRAGMENT_OPS */
+   struct pipe_depth_stencil_alpha_state dsa;
+   struct pipe_blend_state blend;
    unsigned code[SPU_MAX_FRAGMENT_OPS_INSTS];
 };
 

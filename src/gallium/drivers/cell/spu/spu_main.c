@@ -63,14 +63,6 @@ struct spu_vs_context draw;
 static unsigned char attribute_fetch_code_buffer[136 * PIPE_MAX_ATTRIBS]
     ALIGN16_ATTRIB;
 
-static unsigned char depth_stencil_code_buffer[4 * 64]
-    ALIGN16_ATTRIB;
-
-static unsigned char fb_blend_code_buffer[4 * 64]
-    ALIGN16_ATTRIB;
-
-static unsigned char logicop_code_buffer[4 * 64]
-    ALIGN16_ATTRIB;
 
 
 /**
@@ -240,8 +232,15 @@ cmd_state_fragment_ops(const struct cell_command_fragment_ops *fops)
       printf("SPU %u: CMD_STATE_FRAGMENT_OPS\n", spu.init.id);
    /* Copy SPU code from batch buffer to spu buffer */
    memcpy(spu.fragment_ops.code, fops->code, SPU_MAX_FRAGMENT_OPS_INSTS * 4);
+   /* Copy state info */
+   memcpy(&spu.depth_stencil_alpha, &fops->dsa, sizeof(fops->dsa));
+   memcpy(&spu.blend, &fops->blend, sizeof(fops->blend));
+
    /* Point function pointer at new code */
    spu.fragment_ops.func = (spu_fragment_ops_func) spu.fragment_ops.code;
+
+   spu.read_depth = spu.depth_stencil_alpha.depth.enabled;
+   spu.read_stencil = spu.depth_stencil_alpha.stencil[0].enabled;
 }
 
 
@@ -300,89 +299,6 @@ cmd_state_framebuffer(const struct cell_command_framebuffer *cmd)
                               0, 0, 0, 0, 0, 0, 0, 0});
    else
       ASSERT(0);
-}
-
-
-#define NEW_FRAGMENT_FUNCTION 01
-
-static void
-cmd_state_blend(const struct cell_command_blend *state)
-{
-   if (Debug)
-      printf("SPU %u: BLEND: enabled %d\n",
-             spu.init.id,
-             (state->size != 0));
-
-   ASSERT_ALIGN16(state->base);
-
-   if (state->size != 0) {
-      mfc_get(fb_blend_code_buffer,
-              (unsigned int) state->base,  /* src */
-              ROUNDUP16(state->size),
-              TAG_BATCH_BUFFER,
-              0, /* tid */
-              0  /* rid */);
-      wait_on_mask(1 << TAG_BATCH_BUFFER);
-      spu.blend = (blend_func) fb_blend_code_buffer;
-      spu.read_fb = state->read_fb;
-   }
-   else
-   {
-      spu.read_fb = FALSE;
-   }
-}
-
-
-static void
-cmd_state_depth_stencil(const struct cell_command_depth_stencil_alpha_test *state)
-{
-   if (Debug)
-      printf("SPU %u: DEPTH_STENCIL: ztest %d\n",
-             spu.init.id,
-             state->read_depth);
-
-   ASSERT_ALIGN16(state->base);
-
-   if (state->size != 0) {
-      mfc_get(depth_stencil_code_buffer,
-	      (unsigned int) state->base,  /* src */
-	      ROUNDUP16(state->size),
-	      TAG_BATCH_BUFFER,
-	      0, /* tid */
-	      0  /* rid */);
-      wait_on_mask(1 << TAG_BATCH_BUFFER);
-   }
-   else
-   {
-      /* If there is no code, emit a return instruction.
-       */
-      depth_stencil_code_buffer[0] = 0x35;
-      depth_stencil_code_buffer[1] = 0x00;
-      depth_stencil_code_buffer[2] = 0x00;
-      depth_stencil_code_buffer[3] = 0x00;
-   }
-
-   spu.frag_test = (frag_test_func) depth_stencil_code_buffer;
-   spu.read_depth = state->read_depth;
-   spu.read_stencil = state->read_stencil;
-   spu.depth_stencil_alpha = state->state;
-}
-
-
-static void
-cmd_state_logicop(const struct cell_command_logicop * code)
-{
-#if !NEW_FRAGMENT_FUNCTION
-   mfc_get(logicop_code_buffer,
-           (unsigned int) code->base,  /* src */
-           code->size,
-           TAG_BATCH_BUFFER,
-           0, /* tid */
-           0  /* rid */);
-   wait_on_mask(1 << TAG_BATCH_BUFFER);
-
-   spu.logicop = (logicop_func) logicop_code_buffer;
-#endif
 }
 
 
@@ -571,15 +487,6 @@ cmd_batch(uint opcode)
          cmd_finish();
          pos += 1;
          break;
-      case CELL_CMD_STATE_BLEND:
-         cmd_state_blend((struct cell_command_blend *) &buffer[pos+1]);
-         pos += (1 + ROUNDUP8(sizeof(struct cell_command_blend)) / 8);
-         break;
-      case CELL_CMD_STATE_DEPTH_STENCIL:
-         cmd_state_depth_stencil((struct cell_command_depth_stencil_alpha_test *)
-                                 &buffer[pos+1]);
-         pos += (1 + ROUNDUP8(sizeof(struct cell_command_depth_stencil_alpha_test)) / 8);
-         break;
       case CELL_CMD_STATE_SAMPLER:
          {
             struct cell_command_sampler *sampler
@@ -614,18 +521,16 @@ cmd_batch(uint opcode)
          pos += (1 + ROUNDUP8(sizeof(struct cell_array_info)) / 8);
          break;
       case CELL_CMD_STATE_BIND_VS:
+#if 01
          spu_bind_vertex_shader(&draw,
                                 (struct cell_shader_info *) &buffer[pos+1]);
          pos += (1 + ROUNDUP8(sizeof(struct cell_shader_info)) / 8);
+#endif
          break;
       case CELL_CMD_STATE_ATTRIB_FETCH:
          cmd_state_attrib_fetch((struct cell_attribute_fetch_code *)
                                 &buffer[pos+1]);
          pos += (1 + ROUNDUP8(sizeof(struct cell_attribute_fetch_code)) / 8);
-         break;
-      case CELL_CMD_STATE_LOGICOP:
-         cmd_state_logicop((struct cell_command_logicop *) &buffer[pos+1]);
-         pos += (1 + ROUNDUP8(sizeof(struct cell_command_logicop)) / 8);
          break;
       case CELL_CMD_FLUSH_BUFFER_RANGE: {
 	 struct cell_buffer_range *br = (struct cell_buffer_range *)
@@ -695,7 +600,9 @@ main_loop(void)
          exitFlag = 1;
          break;
       case CELL_CMD_VS_EXECUTE:
+#if 01
          spu_execute_vertex_shader(&draw, &cmd.vs);
+#endif
          break;
       case CELL_CMD_BATCH:
          cmd_batch(opcode);
