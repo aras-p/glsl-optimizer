@@ -124,7 +124,7 @@ ifneq ($(wildcard $(addsuffix /rm,$(subst :, ,$(PATH)))),)
 UNLINK = $(RM) $(1)
 endif
 
-include sources
+include sources.mak
 
 CFLAGS += $(INCLUDE_DIRS) 
 
