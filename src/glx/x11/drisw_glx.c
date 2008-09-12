@@ -335,6 +335,11 @@ static __GLXDRIdrawable *driCreateDrawable(__GLXscreenConfigs *psc,
     return pdraw;
 }
 
+static void driSwapBuffers(__GLXDRIdrawable *pdraw)
+{
+    (*pdraw->psc->core->swapBuffers)(pdraw->driDrawable);
+}
+
 static void driDestroyScreen(__GLXscreenConfigs *psc)
 {
     /* Free the direct rendering per screen data */
@@ -398,6 +403,7 @@ static __GLXDRIscreen *driCreateScreen(__GLXscreenConfigs *psc, int screen,
     psp->destroyScreen = driDestroyScreen;
     psp->createContext = driCreateContext;
     psp->createDrawable = driCreateDrawable;
+    psp->swapBuffers = driSwapBuffers;
 
     return psp;
 
