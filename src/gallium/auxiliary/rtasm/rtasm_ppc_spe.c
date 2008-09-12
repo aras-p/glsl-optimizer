@@ -505,7 +505,8 @@ spe_load_int(struct spe_function *p, unsigned rT, int i)
    }
    else {
       spe_ilhu(p, rT, i >> 16);
-      spe_iohl(p, rT, i & 0xffff);
+      if (i & 0xffff)
+         spe_iohl(p, rT, i & 0xffff);
    }
 }
 
