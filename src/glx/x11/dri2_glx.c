@@ -211,6 +211,9 @@ dri2GetBuffers(__DRIdrawable *driDrawable,
 
     buffers = DRI2GetBuffers(pdraw->base.psc->dpy, pdraw->base.xDrawable,
 			     width, height, attachments, count, out_count);
+    if (buffers == NULL)
+       return NULL;
+
     pdraw->width = *width;
     pdraw->height = *height;
 
