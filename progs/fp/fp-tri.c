@@ -154,11 +154,11 @@ int main(int argc, char **argv)
    glutInitWindowPosition(0, 0);
    glutInitWindowSize(250, 250);
    glutInitDisplayMode(GLUT_RGB | GLUT_SINGLE | GLUT_DEPTH);
-   glutCreateWindow(argv[0]);
+   args(argc, argv);
+   glutCreateWindow(filename);
    glutReshapeFunc(Reshape);
    glutKeyboardFunc(Key);
    glutDisplayFunc(Display);
-   args(argc, argv);
    Init();
    if (show_fps) {
       signal(SIGALRM, alarmhandler);
