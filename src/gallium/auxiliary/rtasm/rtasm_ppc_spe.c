@@ -151,8 +151,8 @@ static void emit_RR(struct spe_function *p, unsigned op, unsigned rT,
     inst.inst.rB = rB;
     inst.inst.rA = rA;
     inst.inst.rT = rT;
-    *p->csr = inst.bits;
-    p->csr++;
+    p->store[p->num_inst++] = inst.bits;
+    assert(p->num_inst <= p->max_inst);
 }
 
 
@@ -165,8 +165,8 @@ static void emit_RRR(struct spe_function *p, unsigned op, unsigned rT,
     inst.inst.rB = rB;
     inst.inst.rA = rA;
     inst.inst.rC = rC;
-    *p->csr = inst.bits;
-    p->csr++;
+    p->store[p->num_inst++] = inst.bits;
+    assert(p->num_inst <= p->max_inst);
 }
 
 
@@ -178,8 +178,8 @@ static void emit_RI7(struct spe_function *p, unsigned op, unsigned rT,
     inst.inst.i7 = imm;
     inst.inst.rA = rA;
     inst.inst.rT = rT;
-    *p->csr = inst.bits;
-    p->csr++;
+    p->store[p->num_inst++] = inst.bits;
+    assert(p->num_inst <= p->max_inst);
 }
 
 
@@ -192,8 +192,8 @@ static void emit_RI8(struct spe_function *p, unsigned op, unsigned rT,
     inst.inst.i8 = imm;
     inst.inst.rA = rA;
     inst.inst.rT = rT;
-    *p->csr = inst.bits;
-    p->csr++;
+    p->store[p->num_inst++] = inst.bits;
+    assert(p->num_inst <= p->max_inst);
 }
 
 
@@ -206,8 +206,8 @@ static void emit_RI10(struct spe_function *p, unsigned op, unsigned rT,
     inst.inst.i10 = imm;
     inst.inst.rA = rA;
     inst.inst.rT = rT;
-    *p->csr = inst.bits;
-    p->csr++;
+    p->store[p->num_inst++] = inst.bits;
+    assert(p->num_inst <= p->max_inst);
 }
 
 
@@ -218,8 +218,8 @@ static void emit_RI16(struct spe_function *p, unsigned op, unsigned rT,
     inst.inst.op = op;
     inst.inst.i16 = imm;
     inst.inst.rT = rT;
-    *p->csr = inst.bits;
-    p->csr++;
+    p->store[p->num_inst++] = inst.bits;
+    assert(p->num_inst <= p->max_inst);
 }
 
 
@@ -230,8 +230,8 @@ static void emit_RI18(struct spe_function *p, unsigned op, unsigned rT,
     inst.inst.op = op;
     inst.inst.i18 = imm;
     inst.inst.rT = rT;
-    *p->csr = inst.bits;
-    p->csr++;
+    p->store[p->num_inst++] = inst.bits;
+    assert(p->num_inst <= p->max_inst);
 }
 
 
@@ -300,13 +300,16 @@ void _name (struct spe_function *p, int imm) \
 #include "rtasm_ppc_spe.h"
 
 
-/*
+/**
+ * Initialize an spe_function.
+ * \param code_size  size of instruction buffer to allocate, in bytes.
  */
 void spe_init_func(struct spe_function *p, unsigned code_size)
 {
     p->store = align_malloc(code_size, 16);
-    p->csr = p->store;
-    
+    p->num_inst = 0;
+    p->max_inst = code_size / SPE_INST_SIZE;
+
     /* Conservatively treat R0 - R2 and R80 - R127 as non-volatile.
      */
     p->regs[0] = ~7;
@@ -316,21 +319,26 @@ void spe_init_func(struct spe_function *p, unsigned code_size)
 
 void spe_release_func(struct spe_function *p)
 {
+    assert(p->num_inst <= p->max_inst);
     if (p->store != NULL) {
         align_free(p->store);
     }
     p->store = NULL;
-    p->csr = NULL;
 }
 
 
+/**
+ * Alloate a SPE register.
+ * \return register index or -1 if none left.
+ */
 int spe_allocate_available_register(struct spe_function *p)
 {
    unsigned i;
-   for (i = 0; i < 128; i++) {
+   for (i = 0; i < SPE_NUM_REGS; i++) {
       const uint64_t mask = (1ULL << (i % 64));
       const unsigned idx = i / 64;
 
+      assert(idx < 2);
       if ((p->regs[idx] & mask) != 0) {
          p->regs[idx] &= ~mask;
          return i;
@@ -341,11 +349,15 @@ int spe_allocate_available_register(struct spe_function *p)
 }
 
 
+/**
+ * Mark the given SPE register as "allocated".
+ */
 int spe_allocate_register(struct spe_function *p, int reg)
 {
    const unsigned idx = reg / 64;
    const unsigned bit = reg % 64;
 
+   assert(reg < SPE_NUM_REGS);
    assert((p->regs[idx] & (1ULL << bit)) != 0);
 
    p->regs[idx] &= ~(1ULL << bit);
@@ -353,57 +365,75 @@ int spe_allocate_register(struct spe_function *p, int reg)
 }
 
 
+/**
+ * Mark the given SPE register as "unallocated".
+ */
 void spe_release_register(struct spe_function *p, int reg)
 {
    const unsigned idx = reg / 64;
    const unsigned bit = reg % 64;
 
+   assert(idx < 2);
+
+   assert(reg < SPE_NUM_REGS);
    assert((p->regs[idx] & (1ULL << bit)) == 0);
 
    p->regs[idx] |= (1ULL << bit);
 }
 
 
+/**
+ * For branch instructions:
+ * \param d  if 1, disable interupts if branch is taken
+ * \param e  if 1, enable interupts if branch is taken
+ * If d and e are both zero, don't change interupt status (right?)
+ */
 
-
+/** Branch Indirect to address in rA */
 void spe_bi(struct spe_function *p, unsigned rA, int d, int e)
 {
     emit_RI7(p, 0x1a8, 0, rA, (d << 5) | (e << 4));
 }
 
+/** Interupt Return */
 void spe_iret(struct spe_function *p, unsigned rA, int d, int e)
 {
     emit_RI7(p, 0x1aa, 0, rA, (d << 5) | (e << 4));
 }
 
+/** Branch indirect and set link on external data */
 void spe_bisled(struct spe_function *p, unsigned rT, unsigned rA, int d,
 		int e)
 {
     emit_RI7(p, 0x1ab, rT, rA, (d << 5) | (e << 4));
 }
 
+/** Branch indirect and set link.  Save PC in rT, jump to rA. */
 void spe_bisl(struct spe_function *p, unsigned rT, unsigned rA, int d,
 		int e)
 {
     emit_RI7(p, 0x1a9, rT, rA, (d << 5) | (e << 4));
 }
 
-void spe_biz(struct spe_function *p, unsigned rT, unsigned rA, int d,
-		int e)
+/** Branch indirect if zero word.  If rT.word[0]==0, jump to rA. */
+void spe_biz(struct spe_function *p, unsigned rT, unsigned rA, int d, int e)
 {
     emit_RI7(p, 0x128, rT, rA, (d << 5) | (e << 4));
 }
 
+/** Branch indirect if non-zero word.  If rT.word[0]!=0, jump to rA. */
 void spe_binz(struct spe_function *p, unsigned rT, unsigned rA, int d, int e)
 {
     emit_RI7(p, 0x129, rT, rA, (d << 5) | (e << 4));
 }
 
+/** Branch indirect if zero halfword.  If rT.halfword[1]==0, jump to rA. */
 void spe_bihz(struct spe_function *p, unsigned rT, unsigned rA, int d, int e)
 {
     emit_RI7(p, 0x12a, rT, rA, (d << 5) | (e << 4));
 }
 
+/** Branch indirect if non-zero halfword.  If rT.halfword[1]!=0, jump to rA. */
 void spe_bihnz(struct spe_function *p, unsigned rT, unsigned rA, int d, int e)
 {
     emit_RI7(p, 0x12b, rT, rA, (d << 5) | (e << 4));
@@ -431,5 +461,82 @@ EMIT_    (spe_dsync, 0x003);
 EMIT_R   (spe_mfspr, 0x00c);
 EMIT_R   (spe_mtspr, 0x10c);
 #endif
+
+
+/**
+ ** Helper / "macro" instructions.
+ ** Use somewhat verbose names as a reminder that these aren't native
+ ** SPE instructions.
+ **/
+
+
+void
+spe_load_float(struct spe_function *p, unsigned rT, float x)
+{
+   if (x == 0.0f) {
+      spe_il(p, rT, 0x0);
+   }
+   else if (x == 0.5f) {
+      spe_ilhu(p, rT, 0x3f00);
+   }
+   else if (x == 1.0f) {
+      spe_ilhu(p, rT, 0x3f80);
+   }
+   else if (x == -1.0f) {
+      spe_ilhu(p, rT, 0xbf80);
+   }
+   else {
+      union {
+         float f;
+         unsigned u;
+      } bits;
+      bits.f = x;
+      spe_ilhu(p, rT, bits.u >> 16);
+      spe_iohl(p, rT, bits.u & 0xffff);
+   }
+}
+
+
+void
+spe_load_int(struct spe_function *p, unsigned rT, int i)
+{
+   if (-32768 <= i && i <= 32767) {
+      spe_il(p, rT, i);
+   }
+   else {
+      spe_ilhu(p, rT, i >> 16);
+      spe_iohl(p, rT, i & 0xffff);
+   }
+}
+
+
+void
+spe_splat(struct spe_function *p, unsigned rT, unsigned rA)
+{
+   spe_ila(p, rT, 66051);
+   spe_shufb(p, rT, rA, rA, rT);
+}
+
+
+void
+spe_complement(struct spe_function *p, unsigned rT)
+{
+   spe_nor(p, rT, rT, rT);
+}
+
+
+void
+spe_move(struct spe_function *p, unsigned rT, unsigned rA)
+{
+   spe_ori(p, rT, rA, 0);
+}
+
+
+void
+spe_zero(struct spe_function *p, unsigned rT)
+{
+   spe_xor(p, rT, rT, rT);
+}
+
 
 #endif /* GALLIUM_CELL */

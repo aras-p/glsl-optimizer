@@ -2,7 +2,7 @@
  * 
  * Copyright 2008 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
- *
+ * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -25,20 +25,14 @@
  * 
  **************************************************************************/
 
-#ifndef SPU_PER_FRAGMENT_OP
-#define SPU_PER_FRAGMENT_OP
+
+#ifndef CELL_GEN_FRAGMENT_H
+#define CELL_GEN_FRAGMENT_H
 
 
 extern void
-spu_fallback_fragment_ops(uint x, uint y,
-                          tile_t *colorTile,
-                          tile_t *depthStencilTile,
-                          vector float fragZ,
-                          vector float fragRed,
-                          vector float fragGreen,
-                          vector float fragBlue,
-                          vector float fragAlpha,
-                          vector unsigned int mask);
+cell_gen_fragment_function(struct cell_context *cell, struct spe_function *f);
 
 
-#endif /* SPU_PER_FRAGMENT_OP */
+#endif /* CELL_GEN_FRAGMENT_H */
+

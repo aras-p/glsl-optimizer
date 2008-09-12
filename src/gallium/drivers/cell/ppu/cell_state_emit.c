@@ -27,6 +27,7 @@
 
 #include "util/u_memory.h"
 #include "cell_context.h"
+#include "cell_gen_fragment.h"
 #include "cell_state.h"
 #include "cell_state_emit.h"
 #include "cell_state_per_fragment.h"
@@ -54,23 +55,6 @@ emit_state_cmd(struct cell_context *cell, uint cmd,
 void
 cell_emit_state(struct cell_context *cell)
 {
-   if (cell->dirty & (CELL_NEW_FRAMEBUFFER | CELL_NEW_BLEND)) {
-      struct cell_command_logicop logicop;
-
-      if (cell->logic_op.store != NULL) {
-	 spe_release_func(& cell->logic_op);
-      }
-
-      cell_generate_logic_op(& cell->logic_op,
-			     & cell->blend->base,
-			     cell->framebuffer.cbufs[0]);
-
-      logicop.base = (intptr_t) cell->logic_op.store;
-      logicop.size = 64 * 4;
-      emit_state_cmd(cell, CELL_CMD_STATE_LOGICOP, &logicop,
-		     sizeof(logicop));
-   }
-
    if (cell->dirty & CELL_NEW_FRAMEBUFFER) {
       struct pipe_surface *cbuf = cell->framebuffer.cbufs[0];
       struct pipe_surface *zbuf = cell->framebuffer.zsbuf;
@@ -83,44 +67,49 @@ cell_emit_state(struct cell_context *cell)
       fb->depth_format = zbuf ? zbuf->format : PIPE_FORMAT_NONE;
       fb->width = cell->framebuffer.width;
       fb->height = cell->framebuffer.height;
+#if 0
+      printf("EMIT color format %s\n", pf_name(fb->color_format));
+      printf("EMIT depth format %s\n", pf_name(fb->depth_format));
+#endif
    }
 
-   if (cell->dirty & CELL_NEW_BLEND) {
-      struct cell_command_blend blend;
-
-      if (cell->blend != NULL) {
-         blend.base = (intptr_t) cell->blend->code.store;
-         blend.size = (char *) cell->blend->code.csr
-             - (char *) cell->blend->code.store;
-         blend.read_fb = TRUE;
+   if (cell->dirty & (CELL_NEW_FS)) {
+      /* Send new fragment program to SPUs */
+      struct cell_command_fragment_program *fp
+            = cell_batch_alloc(cell, sizeof(*fp));
+      fp->opcode = CELL_CMD_STATE_FRAGMENT_PROGRAM;
+      fp->num_inst = cell->fs->code.num_inst;
+      memcpy(&fp->code, cell->fs->code.store,
+             SPU_MAX_FRAGMENT_PROGRAM_INSTS * SPE_INST_SIZE);
+      if (0) {
+         int i;
+         printf("PPU Emit CELL_CMD_STATE_FRAGMENT_PROGRAM:\n");
+         for (i = 0; i < fp->num_inst; i++) {
+            printf(" %3d: 0x%08x\n", i, fp->code[i]);
+         }
       }
-      else {
-         blend.base = 0;
-         blend.size = 0;
-         blend.read_fb = FALSE;
-      }
-
-      emit_state_cmd(cell, CELL_CMD_STATE_BLEND, &blend, sizeof(blend));
    }
 
-   if (cell->dirty & CELL_NEW_DEPTH_STENCIL) {
-      struct cell_command_depth_stencil_alpha_test dsat;
+   if (cell->dirty & (CELL_NEW_FRAMEBUFFER |
+                      CELL_NEW_DEPTH_STENCIL |
+                      CELL_NEW_BLEND)) {
+      /* XXX we don't want to always do codegen here.  We should have
+       * a hash/lookup table to cache previous results...
+       */
+      struct cell_command_fragment_ops *fops
+            = cell_batch_alloc(cell, sizeof(*fops));
+      struct spe_function spe_code;
 
-      if (cell->depth_stencil != NULL) {
-	 dsat.base = (intptr_t) cell->depth_stencil->code.store;
-	 dsat.size = (char *) cell->depth_stencil->code.csr
-	     - (char *) cell->depth_stencil->code.store;
-	 dsat.read_depth = TRUE;
-	 dsat.read_stencil = FALSE;
-      }
-      else {
-	 dsat.base = 0;
-	 dsat.size = 0;
-	 dsat.read_depth = FALSE;
-	 dsat.read_stencil = FALSE;
-      }
-
-      emit_state_cmd(cell, CELL_CMD_STATE_DEPTH_STENCIL, &dsat, sizeof(dsat));
+      /* generate new code */
+      cell_gen_fragment_function(cell, &spe_code);
+      /* put the new code into the batch buffer */
+      fops->opcode = CELL_CMD_STATE_FRAGMENT_OPS;
+      memcpy(&fops->code, spe_code.store,
+             SPU_MAX_FRAGMENT_OPS_INSTS * SPE_INST_SIZE);
+      fops->dsa = cell->depth_stencil->base;
+      fops->blend = cell->blend->base;
+      /* free codegen buffer */
+      spe_release_func(&spe_code);
    }
 
    if (cell->dirty & CELL_NEW_SAMPLER) {
@@ -160,7 +149,8 @@ cell_emit_state(struct cell_context *cell)
       emit_state_cmd(cell, CELL_CMD_STATE_VERTEX_INFO,
                      &cell->vertex_info, sizeof(struct vertex_info));
    }
-   
+
+#if 0
    if (cell->dirty & CELL_NEW_VS) {
       const struct draw_context *const draw = cell->draw;
       struct cell_shader_info info;
@@ -175,4 +165,5 @@ cell_emit_state(struct cell_context *cell)
 
       emit_state_cmd(cell, CELL_CMD_STATE_BIND_VS, &info, sizeof(info));
    }
+#endif
 }

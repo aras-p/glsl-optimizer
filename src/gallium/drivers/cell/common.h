@@ -84,7 +84,7 @@
 #define CELL_CMD_BATCH                5
 #define CELL_CMD_RELEASE_VERTS        6
 #define CELL_CMD_STATE_FRAMEBUFFER   10
-#define CELL_CMD_STATE_DEPTH_STENCIL 11
+#define CELL_CMD_STATE_FRAGMENT_OPS  11
 #define CELL_CMD_STATE_SAMPLER       12
 #define CELL_CMD_STATE_TEXTURE       13
 #define CELL_CMD_STATE_VERTEX_INFO   14
@@ -92,9 +92,8 @@
 #define CELL_CMD_STATE_UNIFORMS      16
 #define CELL_CMD_STATE_VS_ARRAY_INFO 17
 #define CELL_CMD_STATE_BIND_VS       18
-#define CELL_CMD_STATE_BLEND         19
+#define CELL_CMD_STATE_FRAGMENT_PROGRAM 19
 #define CELL_CMD_STATE_ATTRIB_FETCH  20
-#define CELL_CMD_STATE_LOGICOP       21
 #define CELL_CMD_VS_EXECUTE          22
 #define CELL_CMD_FLUSH_BUFFER_RANGE  23
 
@@ -110,29 +109,34 @@
 #define CELL_DEBUG_SYNC     (1 << 1)
 
 
-/**
- */
-struct cell_command_depth_stencil_alpha_test {
-   uint64_t base;               /**< Effective address of code start. */
-   unsigned size;               /**< Size in bytes of SPE code. */
-   unsigned read_depth;         /**< Flag: should depth be read? */
-   unsigned read_stencil;       /**< Flag: should stencil be read? */
-};
+
+/** Max instructions for doing per-fragment operations */
+#define SPU_MAX_FRAGMENT_OPS_INSTS 64
 
 
 /**
- * Upload code to perform framebuffer blend operation
+ * Command to specify per-fragment operations state and generated code.
  */
-struct cell_command_blend {
-   uint64_t base;               /**< Effective address of code start. */
-   unsigned size;               /**< Size in bytes of SPE code. */
-   unsigned read_fb;            /**< Flag: should framebuffer be read? */
+struct cell_command_fragment_ops
+{
+   uint64_t opcode;      /**< CELL_CMD_STATE_FRAGMENT_OPS */
+   struct pipe_depth_stencil_alpha_state dsa;
+   struct pipe_blend_state blend;
+   unsigned code[SPU_MAX_FRAGMENT_OPS_INSTS];
 };
 
 
-struct cell_command_logicop {
-   uint64_t base;               /**< Effective address of code start. */
-   unsigned size;               /**< Size in bytes of SPE code. */
+/** Max instructions for fragment programs */
+#define SPU_MAX_FRAGMENT_PROGRAM_INSTS 128
+
+/**
+ * Command to send a fragment progra to SPUs.
+ */
+struct cell_command_fragment_program
+{
+   uint64_t opcode;      /**< CELL_CMD_STATE_FRAGMENT_PROGRAM */
+   uint num_inst;        /**< Number of instructions */
+   unsigned code[SPU_MAX_FRAGMENT_PROGRAM_INSTS];
 };
 
 
@@ -172,13 +176,15 @@ struct cell_array_info
 };
 
 
-struct cell_attribute_fetch_code {
+struct cell_attribute_fetch_code
+{
    uint64_t base;
    uint size;
 };
 
 
-struct cell_buffer_range {
+struct cell_buffer_range
+{
    uint64_t base;
    unsigned size;
 };

@@ -97,7 +97,7 @@ get_four_texels(uint unit, vec_uint4 x, vec_uint4 y, vec_uint4 *texels)
    const qword offset_y = si_andi((qword) y, 0x1f);
 
    const qword tiles_per_row = (qword) spu_splats(spu.texture[unit].tiles_per_row);
-   const qword tile_size = (qword) spu_splats(sizeof(tile_t));
+   const qword tile_size = (qword) spu_splats((unsigned) sizeof(tile_t));
 
    qword tile_offset = si_mpya((qword) tile_y, tiles_per_row, (qword) tile_x);
    tile_offset = si_mpy((qword) tile_offset, tile_size);

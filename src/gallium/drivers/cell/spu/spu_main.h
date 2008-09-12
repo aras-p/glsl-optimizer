@@ -41,6 +41,10 @@
 #define MAX_HEIGHT 1024
 
 
+/**
+ * A tile is basically a TILE_SIZE x TILE_SIZE block of 4-byte pixels.
+ * The data may be addressed through several different types.
+ */
 typedef union {
    ushort us[TILE_SIZE][TILE_SIZE];
    uint   ui[TILE_SIZE][TILE_SIZE];
@@ -56,38 +60,29 @@ typedef union {
 #define TILE_STATUS_GETTING 5  /**< mfc_get() called but not yet arrived */
 
 
-struct spu_frag_test_results {
-   qword mask;
-   qword depth;
-   qword stencil;
-};
+/** Function for sampling textures */
+typedef vector float (*spu_sample_texture_func)(uint unit,
+                                                vector float texcoord);
 
-typedef struct spu_frag_test_results (*frag_test_func)(qword frag_mask,
-    qword pixel_depth, qword pixel_stencil, qword frag_depth,
-    qword frag_alpha, qword facing);
+/** Function for performing per-fragment ops */
+typedef void (*spu_fragment_ops_func)(uint x, uint y,
+                                      tile_t *colorTile,
+                                      tile_t *depthStencilTile,
+                                      vector float fragZ,
+                                      vector float fragRed,
+                                      vector float fragGreen,
+                                      vector float fragBlue,
+                                      vector float fragAlpha,
+                                      vector unsigned int mask);
 
-
-struct spu_blend_results {
-   qword r;
-   qword g;
-   qword b;
-   qword a;
-};
-
-typedef struct spu_blend_results (*blend_func)(
-    qword frag_r, qword frag_g, qword frag_b, qword frag_a,
-    qword pixel_r, qword pixel_g, qword pixel_b, qword pixel_a,
-    qword const_r, qword const_g, qword const_b, qword const_a);
-
-typedef struct spu_blend_results (*logicop_func)(
-    qword pixel_r, qword pixel_g, qword pixel_b, qword pixel_a,
-    qword frag_r, qword frag_g, qword frag_b, qword frag_a,
-    qword frag_mask);
+/** Function for running fragment program */
+typedef void (*spu_fragment_program_func)(vector float *inputs,
+                                          vector float *outputs,
+                                          vector float *constants);
 
 
-typedef vector float (*sample_texture_func)(uint unit, vector float texcoord);
-
-struct spu_framebuffer {
+struct spu_framebuffer
+{
    void *color_start;              /**< addr of color surface in main memory */
    void *depth_start;              /**< addr of depth surface in main memory */
    enum pipe_format color_format;
@@ -99,6 +94,7 @@ struct spu_framebuffer {
    uint depth_clear_value;
 
    uint zsize;                     /**< 0, 2 or 4 bytes per Z */
+   float zscale;                   /**< 65535.0, 2^24-1 or 2^32-1 */
 } ALIGN16_ATTRIB;
 
 
@@ -115,34 +111,30 @@ struct spu_texture
 
 
 /**
- * All SPU global/context state will be in singleton object of this type:
+ * All SPU global/context state will be in a singleton object of this type:
  */
 struct spu_global
 {
+   /** One-time init/constant info */
    struct cell_init_info init;
 
+   /*
+    * Current state
+    */
    struct spu_framebuffer fb;
-   boolean read_depth;
-   boolean read_stencil;
-   frag_test_func frag_test;  /**< Current depth/stencil test code */
-   
-   boolean read_fb;   /**< Does current blend mode require framebuffer read? */
-   blend_func blend;  /**< Current blend code */
-   qword const_blend_color[4] ALIGN16_ATTRIB;
-
-   logicop_func logicop;  /**< Current logicop code **/
-
+   struct pipe_depth_stencil_alpha_state depth_stencil_alpha;
+   struct pipe_blend_state blend;
    struct pipe_sampler_state sampler[PIPE_MAX_SAMPLERS];
    struct spu_texture texture[PIPE_MAX_SAMPLERS];
-
    struct vertex_info vertex_info;
 
-   /* XXX more state to come */
-
-
-   /** current color and Z tiles */
+   /** Current color and Z tiles */
    tile_t ctile ALIGN16_ATTRIB;
    tile_t ztile ALIGN16_ATTRIB;
+
+   /** Read depth/stencil tiles? */
+   boolean read_depth;
+   boolean read_stencil;
 
    /** Current tiles' status */
    ubyte cur_ctile_status, cur_ztile_status;
@@ -151,11 +143,22 @@ struct spu_global
    ubyte ctile_status[MAX_HEIGHT/TILE_SIZE][MAX_WIDTH/TILE_SIZE] ALIGN16_ATTRIB;
    ubyte ztile_status[MAX_HEIGHT/TILE_SIZE][MAX_WIDTH/TILE_SIZE] ALIGN16_ATTRIB;
 
+   /** Current fragment ops machine code */
+   uint fragment_ops_code[SPU_MAX_FRAGMENT_OPS_INSTS];
+   /** Current fragment ops function */
+   spu_fragment_ops_func fragment_ops;
 
-   /** for converting RGBA to PIPE_FORMAT_x colors */
-   vector unsigned char color_shuffle;
+   /** Current fragment program machine code */
+   uint fragment_program_code[SPU_MAX_FRAGMENT_PROGRAM_INSTS];
+   /** Current fragment ops function */
+   spu_fragment_program_func fragment_program;
 
-   sample_texture_func sample_texture[CELL_MAX_SAMPLERS];
+   /** Current texture sampler function */
+   spu_sample_texture_func sample_texture[CELL_MAX_SAMPLERS];
+
+   /** Fragment program constants (XXX preliminary/used) */
+#define MAX_CONSTANTS 32
+   vector float constants[MAX_CONSTANTS];
 
 } ALIGN16_ATTRIB;
 

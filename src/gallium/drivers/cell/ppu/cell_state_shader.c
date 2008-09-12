@@ -34,7 +34,7 @@
 
 #include "cell_context.h"
 #include "cell_state.h"
-
+#include "cell_gen_fp.h"
 
 
 /** cast wrapper */
@@ -61,7 +61,7 @@ static void *
 cell_create_fs_state(struct pipe_context *pipe,
                      const struct pipe_shader_state *templ)
 {
-   /*struct cell_context *cell = cell_context(pipe);*/
+   struct cell_context *cell = cell_context(pipe);
    struct cell_fragment_shader_state *cfs;
 
    cfs = CALLOC_STRUCT(cell_fragment_shader_state);
@@ -75,6 +75,8 @@ cell_create_fs_state(struct pipe_context *pipe,
    }
 
    tgsi_scan_shader(templ->tokens, &cfs->info);
+
+   cell_gen_fragment_program(cell, cfs->shader.tokens, &cfs->code);
 
    return cfs;
 }
@@ -101,6 +103,8 @@ static void
 cell_delete_fs_state(struct pipe_context *pipe, void *fs)
 {
    struct cell_fragment_shader_state *cfs = cell_fragment_shader_state(fs);
+
+   spe_release_func(&cfs->code);
 
    FREE((void *) cfs->shader.tokens);
    FREE(cfs);

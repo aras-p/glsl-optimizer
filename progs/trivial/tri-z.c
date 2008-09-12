@@ -37,8 +37,35 @@
 
 #include <GL/glut.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 static int leftFirst = GL_TRUE;
+
+static struct { GLenum func; const char *str; } funcs[] = 
+   {
+      { GL_LESS, "GL_LESS" },
+      { GL_LEQUAL, "GL_LEQUAL" },
+      { GL_GREATER, "GL_GREATER" },
+      { GL_GEQUAL, "GL_GEQUAL" },
+      { GL_EQUAL, "GL_EQUAL" },
+      { GL_NOTEQUAL, "GL_NOTEQUAL" },
+      { GL_ALWAYS, "GL_ALWAYS" },
+      { GL_NEVER, "GL_NEVER" },
+   };
+
+#define NUM_FUNCS (sizeof(funcs) / sizeof(funcs[0]))
+
+static int curFunc = 0;
+static double clearVal = 1.0;
+
+
+static void usage(void)
+{
+   printf("t - toggle rendering order of triangles\n");
+   printf("c - toggle Z clear value between 0, 1\n");
+   printf("f - cycle through depth test functions\n");
+}
+
 
 static void init(void)
 {
@@ -70,6 +97,11 @@ static void drawRightTriangle(void)
 
 void display(void)
 {
+   printf("GL_CLEAR_DEPTH = %f  GL_DEPTH_FUNC = %s\n",
+          clearVal, funcs[curFunc].str);
+   glClearDepth(clearVal);
+   glDepthFunc(funcs[curFunc].func);
+
    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
    if (leftFirst) {
@@ -99,6 +131,16 @@ void reshape(int w, int h)
 void keyboard(unsigned char key, int x, int y)
 {
    switch (key) {
+      case 'c':
+      case 'C':
+         clearVal = 1.0 - clearVal;
+         glutPostRedisplay();	
+         break;
+      case 'f':
+      case 'F':
+         curFunc = (curFunc + 1) % NUM_FUNCS;
+         glutPostRedisplay();	
+         break;
       case 't':
       case 'T':
          leftFirst = !leftFirst;
@@ -122,10 +164,11 @@ int main(int argc, char** argv)
    glutInitDisplayMode (GLUT_SINGLE | GLUT_RGB | GLUT_DEPTH);
    glutInitWindowSize (200, 200);
    glutCreateWindow (argv[0]);
-   init();
    glutReshapeFunc (reshape);
    glutKeyboardFunc (keyboard);
    glutDisplayFunc (display);
+   init();
+   usage();
    glutMainLoop();
    return 0;
 }

@@ -13,7 +13,7 @@ DRIVER_NAME = egl_xdri.so
 INCLUDE_DIRS = \
 	-I. \
 	-I/usr/include \
-	-I/usr/include/drm \
+	$(shell pkg-config --cflags-only-I libdrm) \
 	-I$(TOP)/include \
 	-I$(TOP)/include/GL/internal \
 	-I$(TOP)/src/mesa/glapi \
@@ -48,6 +48,7 @@ $(TOP)/$(LIB_DIR)/$(DRIVER_NAME): $(OBJECTS)
 	$(TOP)/bin/mklib -o $(DRIVER_NAME) \
 		-noprefix \
 		-major 1 -minor 0 \
+		-L $(TOP)/$(LIB_DIR) \
 		-install $(TOP)/$(LIB_DIR) \
 		$(OBJECTS) $(DRM_LIB) $(MISC_LIBS)
 

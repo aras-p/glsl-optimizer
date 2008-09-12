@@ -297,10 +297,9 @@ void cell_update_vertex_fetch(struct draw_context *draw)
 
 
    /* Each fetch function can be a maximum of 34 instructions (note: this is
-    * actually a slight over-estimate).  That means (34 * 4) = 136 bytes
-    * each maximum.
+    * actually a slight over-estimate).
     */
-   spe_init_func(p, 136 * unique_attr_formats);
+   spe_init_func(p, 34 * SPE_INST_SIZE * unique_attr_formats);
 
 
    /* Allocate registers for the function's input parameters.

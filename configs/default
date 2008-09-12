@@ -23,6 +23,10 @@ CFLAGS = -O
 CXXFLAGS = -O
 GLU_CFLAGS = 
 
+# Compiler for building demos/tests/etc
+APP_CC = $(CC)
+APP_CXX = $(CXX)
+
 # Misc tools and flags
 MKLIB_OPTIONS = 
 MKDEP = makedepend
