@@ -356,8 +356,14 @@ emit_quad( int x, int y, mask_t mask )
          vector float fragZ = eval_z((float) x, (float) y);
 
          /* setup inputs */
+#if 0
          eval_coeff_soa(1, (float) x, (float) y, inputs);
-
+#else
+         uint i;
+         for (i = 0; i < spu.vertex_info.num_attribs; i++) {
+            eval_coeff_soa(i+1, (float) x, (float) y, inputs + i * 4);
+         }
+#endif
          ASSERT(spu.fragment_program);
          ASSERT(spu.fragment_ops);
 
