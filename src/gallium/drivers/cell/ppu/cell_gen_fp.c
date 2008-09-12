@@ -52,7 +52,11 @@
 
 
 /** Set to 1 to enable debug/disassembly printfs */
-#define DISASSEM 01
+#define DISASSEM 0
+
+
+#define MAX_TEMPS 16
+#define MAX_IMMED  8
 
 
 /**
@@ -63,7 +67,10 @@ struct codegen
    int inputs_reg;      /**< 1st function parameter */
    int outputs_reg;     /**< 2nd function parameter */
    int constants_reg;   /**< 3rd function parameter */
-   int temp_regs[8][4]; /**< maps TGSI temps to SPE registers */
+   int temp_regs[MAX_TEMPS][4]; /**< maps TGSI temps to SPE registers */
+   int imm_regs[MAX_IMMED][4];  /**< maps TGSI immediates to SPE registers */
+
+   int num_imm;  /**< number of immediates */
 
    int one_reg;         /**< register containing {1.0, 1.0, 1.0, 1.0} */
 
@@ -191,7 +198,8 @@ get_src_reg(struct codegen *gen,
       }
       break;
    case TGSI_FILE_IMMEDIATE:
-      /* xxx fall-through for now / fix */
+      reg = gen->imm_regs[src->SrcRegister.Index][channel];
+      break;
    case TGSI_FILE_CONSTANT:
       /* xxx fall-through for now / fix */
    default:
@@ -559,11 +567,52 @@ emit_instruction(struct codegen *gen,
 
 
 /**
+ * Emit code for a TGSI immediate value (vector of four floats).
+ * This involves register allocation and initialization.
+ * XXX the initialization should be done by a "prepare" stage, not
+ * per quad execution!
+ */
+static boolean
+emit_immediate(struct codegen *gen, const struct tgsi_full_immediate *immed)
+{
+   int ch;
+
+   assert(gen->num_imm < MAX_TEMPS);
+
+#if DISASSEM
+   printf("IMMEDIATE %d:\n", gen->num_imm);
+#endif
+
+   for (ch = 0; ch < 4; ch++) {
+      float val = immed->u.ImmediateFloat32[ch].Float;
+      int reg = spe_allocate_available_register(gen->f);
+
+      if (reg < 0)
+         return false;
+
+      /* update immediate map */
+      gen->imm_regs[gen->num_imm][ch] = reg;
+
+      /* emit initializer instruction */
+      spe_load_float(gen->f, reg, val);
+#if DISASSEM
+      printf("\tload\tr%d, %f\n", reg, val);
+#endif
+   }
+
+   gen->num_imm++;
+
+   return true;
+}
+
+
+
+/**
  * Emit "code" for a TGSI declaration.
  * We only care about TGSI TEMPORARY register declarations at this time.
  * For each TGSI TEMPORARY we allocate four SPE registers.
  */
-static void
+static boolean
 emit_declaration(struct codegen *gen, const struct tgsi_full_declaration *decl)
 {
    int i, ch;
@@ -578,8 +627,11 @@ emit_declaration(struct codegen *gen, const struct tgsi_full_declaration *decl)
       for (i = decl->DeclarationRange.First;
            i <= decl->DeclarationRange.Last;
            i++) {
+         assert(i < MAX_TEMPS);
          for (ch = 0; ch < 4; ch++) {
             gen->temp_regs[i][ch] = spe_allocate_available_register(gen->f);
+            if (gen->temp_regs[i][ch] < 0)
+               return false; /* out of regs */
          }
 
          /* XXX if we run out of SPE registers, we need to spill
@@ -598,6 +650,8 @@ emit_declaration(struct codegen *gen, const struct tgsi_full_declaration *decl)
    default:
       ; /* ignore */
    }
+
+   return true;
 }
 
 
@@ -642,25 +696,22 @@ cell_gen_fragment_program(struct cell_context *cell,
 
       switch (parse.FullToken.Token.Type) {
       case TGSI_TOKEN_TYPE_IMMEDIATE:
-#if 0
-         if (!note_immediate(&gen, &parse.FullToken.FullImmediate ))
-            goto fail;
-#endif
+         if (!emit_immediate(&gen,  &parse.FullToken.FullImmediate))
+            gen.error = true;
          break;
 
       case TGSI_TOKEN_TYPE_DECLARATION:
-         emit_declaration(&gen, &parse.FullToken.FullDeclaration);
+         if (!emit_declaration(&gen, &parse.FullToken.FullDeclaration))
+            gen.error = true;
          break;
 
       case TGSI_TOKEN_TYPE_INSTRUCTION:
-         if (!emit_instruction(&gen, &parse.FullToken.FullInstruction )) {
+         if (!emit_instruction(&gen, &parse.FullToken.FullInstruction))
             gen.error = true;
-         }
          break;
 
       default:
          assert(0);
-
       }
    }
 
