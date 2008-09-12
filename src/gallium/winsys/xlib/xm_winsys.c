@@ -289,21 +289,19 @@ xm_buffer_destroy(struct pipe_winsys *pws,
  *  +--+--+
  */
 static void
-twiddle_tile(uint *tile)
+twiddle_tile(const uint *tileIn, uint *tileOut)
 {
-   uint tile2[TILE_SIZE * TILE_SIZE];
    int y, x;
 
    for (y = 0; y < TILE_SIZE; y+=2) {
       for (x = 0; x < TILE_SIZE; x+=2) {
          int k = 4 * (y/2 * TILE_SIZE/2 + x/2);
-         tile2[y * TILE_SIZE + (x + 0)] = tile[k];
-         tile2[y * TILE_SIZE + (x + 1)] = tile[k+1];
-         tile2[(y + 1) * TILE_SIZE + (x + 0)] = tile[k+2];
-         tile2[(y + 1) * TILE_SIZE + (x + 1)] = tile[k+3];
+         tileOut[y * TILE_SIZE + (x + 0)] = tileIn[k];
+         tileOut[y * TILE_SIZE + (x + 1)] = tileIn[k+1];
+         tileOut[(y + 1) * TILE_SIZE + (x + 0)] = tileIn[k+2];
+         tileOut[(y + 1) * TILE_SIZE + (x + 1)] = tileIn[k+3];
       }
    }
-   memcpy(tile, tile2, sizeof(tile2));
 }
 
 
@@ -339,6 +337,7 @@ xmesa_display_surface_tiled(XMesaBuffer b, const struct pipe_surface *surf)
 
    for (y = 0; y < surf->height; y += TILE_SIZE) {
       for (x = 0; x < surf->width; x += TILE_SIZE) {
+         uint tmpTile[TILE_SIZE * TILE_SIZE];
          int tx = x / TILE_SIZE;
          int ty = y / TILE_SIZE;
          int offset = ty * tilesPerRow + tx;
@@ -352,9 +351,9 @@ xmesa_display_surface_tiled(XMesaBuffer b, const struct pipe_surface *surf)
 
          offset *= 4 * TILE_SIZE * TILE_SIZE;
 
-         ximage->data = (char *) xm_buf->data + offset;
-
-         twiddle_tile((uint *) ximage->data);
+         twiddle_tile((uint *) ((char *) xm_buf->data + offset),
+                      tmpTile);
+         ximage->data = (char*) tmpTile;
 
          if (XSHM_ENABLED(xm_buf)) {
 #if defined(USE_XSHM) && !defined(XFree86Server)

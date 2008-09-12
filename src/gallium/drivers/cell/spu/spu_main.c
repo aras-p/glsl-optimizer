@@ -232,7 +232,7 @@ cmd_state_fragment_ops(const struct cell_command_fragment_ops *fops)
       printf("SPU %u: CMD_STATE_FRAGMENT_OPS\n", spu.init.id);
    /* Copy SPU code from batch buffer to spu buffer */
    memcpy(spu.fragment_ops_code, fops->code, SPU_MAX_FRAGMENT_OPS_INSTS * 4);
-   /* Copy state info */
+   /* Copy state info (for fallback case only) */
    memcpy(&spu.depth_stencil_alpha, &fops->dsa, sizeof(fops->dsa));
    memcpy(&spu.blend, &fops->blend, sizeof(fops->blend));
 
@@ -241,6 +241,21 @@ cmd_state_fragment_ops(const struct cell_command_fragment_ops *fops)
 
    spu.read_depth = spu.depth_stencil_alpha.depth.enabled;
    spu.read_stencil = spu.depth_stencil_alpha.stencil[0].enabled;
+}
+
+
+static void
+cmd_state_fragment_program(const struct cell_command_fragment_program *fp)
+{
+   if (Debug)
+      printf("SPU %u: CMD_STATE_FRAGMENT_PROGRAM\n", spu.init.id);
+   /* Copy SPU code from batch buffer to spu buffer */
+   memcpy(spu.fragment_program_code, fp->code,
+          SPU_MAX_FRAGMENT_PROGRAM_INSTS * 4);
+#if 01
+   /* Point function pointer at new code */
+   spu.fragment_program = (spu_fragment_program_func)spu.fragment_program_code;
+#endif
 }
 
 
@@ -471,6 +486,14 @@ cmd_batch(uint opcode)
                = (struct cell_command_fragment_ops *) &buffer[pos];
             cmd_state_fragment_ops(fops);
             pos += sizeof(*fops) / 8;
+         }
+         break;
+      case CELL_CMD_STATE_FRAGMENT_PROGRAM:
+         {
+            struct cell_command_fragment_program *fp
+               = (struct cell_command_fragment_program *) &buffer[pos];
+            cmd_state_fragment_program(fp);
+            pos += sizeof(*fp) / 8;
          }
          break;
       case CELL_CMD_STATE_SAMPLER:

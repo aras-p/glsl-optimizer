@@ -473,21 +473,48 @@ EMIT_R   (spe_mtspr, 0x10c);
 void
 spe_load_float(struct spe_function *p, unsigned rT, float x)
 {
-   union {
-      float f;
-      unsigned u;
-   } bits;
-   bits.f = x;
-   spe_ilhu(p, rT, bits.u >> 16);
-   spe_iohl(p, rT, bits.u & 0xffff);
+   if (x == 0.0f) {
+      spe_il(p, rT, 0x0);
+   }
+   else if (x == 0.5f) {
+      spe_ilhu(p, rT, 0x3f00);
+   }
+   else if (x == 1.0f) {
+      spe_ilhu(p, rT, 0x3f80);
+   }
+   else if (x == -1.0f) {
+      spe_ilhu(p, rT, 0xbf80);
+   }
+   else {
+      union {
+         float f;
+         unsigned u;
+      } bits;
+      bits.f = x;
+      spe_ilhu(p, rT, bits.u >> 16);
+      spe_iohl(p, rT, bits.u & 0xffff);
+   }
 }
 
 
 void
 spe_load_int(struct spe_function *p, unsigned rT, int i)
 {
-   spe_ilhu(p, rT, i >> 16);
-   spe_iohl(p, rT, i & 0xffff);
+   if (-32768 <= i && i <= 32767) {
+      spe_il(p, rT, i);
+   }
+   else {
+      spe_ilhu(p, rT, i >> 16);
+      spe_iohl(p, rT, i & 0xffff);
+   }
+}
+
+
+void
+spe_splat(struct spe_function *p, unsigned rT, unsigned rA)
+{
+   spe_ila(p, rT, 66051);
+   spe_shufb(p, rT, rA, rA, rT);
 }
 
 

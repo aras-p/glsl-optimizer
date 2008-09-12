@@ -26,13 +26,17 @@
  **************************************************************************/
 
 
-#ifndef CELL_GEN_FRAGMENT_H
-#define CELL_GEN_FRAGMENT_H
+
+#ifndef CELL_GEN_FP_H
+#define CELL_GEN_FP_H
 
 
-extern void
-cell_gen_fragment_function(struct cell_context *cell, struct spe_function *f);
+
+extern boolean
+cell_gen_fragment_program(struct cell_context *cell,
+                          const struct tgsi_token *tokens,
+                          struct spe_function *f);
 
 
-#endif /* CELL_GEN_FRAGMENT_H */
+#endif /* CELL_GEN_FP_H */
 

@@ -73,6 +73,22 @@ cell_emit_state(struct cell_context *cell)
 #endif
    }
 
+   if (cell->dirty & (CELL_NEW_FS)) {
+      /* Send new fragment program to SPUs */
+      struct cell_command_fragment_program *fp
+            = cell_batch_alloc(cell, sizeof(*fp));
+      fp->opcode = CELL_CMD_STATE_FRAGMENT_PROGRAM;
+      fp->num_inst = cell->fs->code.num_inst;
+      memcpy(&fp->code, cell->fs->code.store,
+             SPU_MAX_FRAGMENT_PROGRAM_INSTS * SPE_INST_SIZE);
+      if (0) {
+         int i;
+         printf("PPU Emit CELL_CMD_STATE_FRAGMENT_PROGRAM:\n");
+         for (i = 0; i < fp->num_inst; i++) {
+            printf(" %3d: 0x%08x\n", i, fp->code[i]);
+         }
+      }
+   }
 
    if (cell->dirty & (CELL_NEW_FRAMEBUFFER |
                       CELL_NEW_DEPTH_STENCIL |
@@ -85,7 +101,7 @@ cell_emit_state(struct cell_context *cell)
       struct spe_function spe_code;
 
       /* generate new code */
-      gen_fragment_function(cell, &spe_code);
+      cell_gen_fragment_function(cell, &spe_code);
       /* put the new code into the batch buffer */
       fops->opcode = CELL_CMD_STATE_FRAGMENT_OPS;
       memcpy(&fops->code, spe_code.store,

@@ -61,6 +61,7 @@ struct cell_fragment_shader_state
 {
    struct pipe_shader_state shader;
    struct tgsi_shader_info info;
+   struct spe_function code;
    void *data;
 };
 

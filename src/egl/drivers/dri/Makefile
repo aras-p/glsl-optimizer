@@ -8,7 +8,7 @@ include $(TOP)/configs/current
 INCLUDE_DIRS = \
 	-I. \
 	-I/usr/include \
-	-I/usr/include/drm \
+	$(shell pkg-config --cflags-only-I libdrm) \
 	-I$(TOP)/include \
 	-I$(TOP)/include/GL/internal \
 	-I$(TOP)/src/mesa \
