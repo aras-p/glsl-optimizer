@@ -72,7 +72,9 @@ cell_delete_blend_state(struct pipe_context *pipe, void *blend)
 {
    struct cell_blend_state *cb = (struct cell_blend_state *) blend;
 
+#if 0
    spe_release_func(& cb->code);
+#endif
    FREE(cb);
 }
 
@@ -128,7 +130,9 @@ cell_delete_depth_stencil_alpha_state(struct pipe_context *pipe, void *depth)
    struct cell_depth_stencil_alpha_state *cdsa =
        (struct cell_depth_stencil_alpha_state *) depth;
 
+#if 0
    spe_release_func(& cdsa->code);
+#endif
    FREE(cdsa);
 }
 
