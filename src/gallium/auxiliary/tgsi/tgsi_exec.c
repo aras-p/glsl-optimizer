@@ -1674,6 +1674,7 @@ exec_declaration(
             break;
 
          default:
+            eval = NULL;
             assert( 0 );
          }
 
