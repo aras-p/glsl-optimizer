@@ -301,8 +301,9 @@ intel_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
        }
        else
           region = intel_region_alloc_for_handle(intel, buffers[i].cpp,
-						 buffers[i].pitch / buffers[i].cpp,
+						 drawable->w,
 						 drawable->h,
+						 buffers[i].pitch / buffers[i].cpp,
 						 buffers[i].name,
 						 region_name);
 

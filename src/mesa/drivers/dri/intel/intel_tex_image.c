@@ -757,7 +757,7 @@ intelSetTexBuffer(__DRIcontext *pDRICtx, GLint target, __DRIdrawable *dPriv)
    intelObj->mt = mt;
    texImage = _mesa_get_tex_image(&intel->ctx, texObj, target, level);
    _mesa_init_teximage_fields(&intel->ctx, target, texImage,
-			      rb->region->pitch, rb->region->height, 1,
+			      rb->region->width, rb->region->height, 1,
 			      0, internalFormat);
 
    intelImage = intel_texture_image(texImage);
