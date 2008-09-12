@@ -77,7 +77,7 @@ MOTIF_CFLAGS = -I/usr/include/Motif1.2
 
 # Directories to build
 LIB_DIR = lib
-SRC_DIRS = gallium mesa egl gallium/winsys glu glut/glx glw
+SRC_DIRS = mesa gallium egl gallium/winsys glu glut/glx glw
 GLU_DIRS = sgi
 DRIVER_DIRS = 
 # Which subdirs under $(TOP)/progs/ to enter:
