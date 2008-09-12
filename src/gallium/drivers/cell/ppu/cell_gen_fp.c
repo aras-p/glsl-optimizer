@@ -137,11 +137,12 @@ get_src_reg(struct codegen *gen,
             const struct tgsi_full_src_register *src)
 {
    int reg;
+   int swizzle = tgsi_util_get_full_src_register_extswizzle(src, channel);
 
-   /* XXX need to examine src swizzle info here.
-    * That will involve changing the channel var...
-    */
+   assert(swizzle >= 0);
+   assert(swizzle <= 3);
 
+   channel = swizzle;
 
    switch (src->SrcRegister.File) {
    case TGSI_FILE_TEMPORARY:
