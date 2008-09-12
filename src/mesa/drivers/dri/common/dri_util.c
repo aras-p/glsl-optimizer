@@ -1,28 +1,4 @@
-/*
- * Copyright 1998-1999 Precision Insight, Inc., Cedar Park, Texas.
- * All Rights Reserved.
- * 
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the
- * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
- * distribute, sub license, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject to
- * the following conditions:
- * 
- * The above copyright notice and this permission notice (including the
- * next paragraph) shall be included in all copies or substantial portions
- * of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
- * IN NO EVENT SHALL PRECISION INSIGHT AND/OR ITS SUPPLIERS BE LIABLE FOR
- * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
- * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
- * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- */
-
+/* $XFree86: xc/lib/GL/dri/dri_util.c,v 1.7 2003/04/28 17:01:25 dawes Exp $ */
 /**
  * \file dri_util.c
  * DRI utility functions.
@@ -104,45 +80,6 @@ driIntersectArea( drm_clip_rect_t rect1, drm_clip_rect_t rect2 )
    return (rect1.x2 - rect1.x1) * (rect1.y2 - rect1.y1);
 }
 
-static __DRIdrawable *__driFindDrawable(void *drawHash, __DRIid draw)
-{
-    int retcode;
-    __DRIdrawable *pdraw;
-
-    retcode = drmHashLookup(drawHash, draw, (void *)&pdraw);
-    if (retcode)
-	return NULL;
-
-    return pdraw;
-}
-
-
-/**
- * Find drawables in the local hash that have been destroyed on the
- * server.
- * 
- * \param drawHash  Hash-table containing all known drawables.
- */
-static void __driGarbageCollectDrawables(void *drawHash)
-{
-    __DRIid draw;
-    __DRInativeDisplay *dpy;
-    __DRIdrawable *pdraw;
-
-    if (drmHashFirst(drawHash, &draw, (void *)&pdraw) == 1) {
-	do {
-	    __DRIdrawablePrivate *pdp = (__DRIdrawablePrivate *)pdraw->private;
-	    dpy = pdp->driScreenPriv->display;
-	    if (! (*dri_interface->windowExists)(dpy, draw)) {
-		/* Destroy the local drawable data, if the drawable no
-		   longer exists in the Xserver */
-		(*pdraw->destroyDrawable)(dpy, pdraw->private);
-		_mesa_free(pdraw);
-	    }
-	} while (drmHashNext(drawHash, &draw, (void *)&pdraw) == 1);
-    }
-}
-
 /*****************************************************************/
 /** \name Context (un)binding functions                          */
 /*****************************************************************/
@@ -201,12 +138,6 @@ static int driUnbindContext(__DRIcontext *pcp)
 	prp->refcount--;
     }
 
-   /* destroy the drawables if they no longer exist on the server */
-   if ((pdp->refcount == 0) || (prp->refcount == 0)) {
-      /* probably shouldn't need the collector here,
-         as we know the affected drawables (or could there be others?) */
-      __driGarbageCollectDrawables(pdp->driScreenPriv->drawHash);
-   }
 
     /* XXX this is disabled so that if we call SwapBuffers on an unbound
      * window we can determine the last context bound to the window and
