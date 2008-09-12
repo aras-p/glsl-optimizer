@@ -219,23 +219,6 @@ update_program(GLcontext *ctx)
                                shProg->FragmentProgram);
    }
    else {
-      if (ctx->VertexProgram._Enabled) {
-         /* use user-defined vertex program */
-         _mesa_reference_vertprog(ctx, &ctx->VertexProgram._Current,
-                                  ctx->VertexProgram.Current);
-      }
-      else if (ctx->VertexProgram._MaintainTnlProgram) {
-         /* Use vertex program generated from fixed-function state.
-          * The _Current pointer will get set in
-          * _tnl_UpdateFixedFunctionProgram() later if appropriate.
-          */
-         _mesa_reference_vertprog(ctx, &ctx->VertexProgram._Current, NULL);
-      }
-      else {
-         /* no vertex program */
-         _mesa_reference_vertprog(ctx, &ctx->VertexProgram._Current, NULL);
-      }
-
       if (ctx->FragmentProgram._Enabled) {
          /* use user-defined vertex program */
          _mesa_reference_fragprog(ctx, &ctx->FragmentProgram._Current,
@@ -243,14 +226,37 @@ update_program(GLcontext *ctx)
       }
       else if (ctx->FragmentProgram._MaintainTexEnvProgram) {
          /* Use fragment program generated from fixed-function state.
-          * The _Current pointer will get set in _mesa_UpdateTexEnvProgram()
-          * later if appropriate.
           */
-         _mesa_reference_fragprog(ctx, &ctx->FragmentProgram._Current, NULL);
+         _mesa_reference_fragprog(ctx, &ctx->FragmentProgram._Current,
+                                  _mesa_get_fixed_func_fragment_program(ctx));
+         _mesa_reference_fragprog(ctx, &ctx->FragmentProgram._TexEnvProgram,
+                                  ctx->FragmentProgram._Current);
       }
       else {
          /* no fragment program */
          _mesa_reference_fragprog(ctx, &ctx->FragmentProgram._Current, NULL);
+      }
+
+      /* Examine vertex program after fragment program as
+       * _mesa_get_fixed_func_vertex_program() needs to know active
+       * fragprog inputs.
+       */
+      if (ctx->VertexProgram._Enabled) {
+         /* use user-defined vertex program */
+         _mesa_reference_vertprog(ctx, &ctx->VertexProgram._Current,
+                                  ctx->VertexProgram.Current);
+      }
+      else if (ctx->VertexProgram._MaintainTnlProgram) {
+         /* Use vertex program generated from fixed-function state.
+          */
+         _mesa_reference_vertprog(ctx, &ctx->VertexProgram._Current,
+                                  _mesa_get_fixed_func_vertex_program(ctx));
+         _mesa_reference_vertprog(ctx, &ctx->VertexProgram._TnlProgram,
+                                  ctx->VertexProgram._Current);
+      }
+      else {
+         /* no vertex program */
+         _mesa_reference_vertprog(ctx, &ctx->VertexProgram._Current, NULL);
       }
    }
 
@@ -260,11 +266,27 @@ update_program(GLcontext *ctx)
       assert(ctx->FragmentProgram._Current->Base.Parameters);
 
 
+   /* XXX: get rid of _Active flag.
+    */
+#if 1
    ctx->FragmentProgram._Active = ctx->FragmentProgram._Enabled;
    if (ctx->FragmentProgram._MaintainTexEnvProgram &&
        !ctx->FragmentProgram._Enabled) {
       if (ctx->FragmentProgram._UseTexEnvProgram)
 	 ctx->FragmentProgram._Active = GL_TRUE;
+   }
+#endif
+
+   /* Let the driver know what's happening:
+    */
+   if (ctx->FragmentProgram._Current != prevFP && ctx->Driver.BindProgram) {
+      ctx->Driver.BindProgram(ctx, GL_FRAGMENT_PROGRAM_ARB,
+                              (struct gl_program *) ctx->FragmentProgram._Current);
+   }
+   
+   if (ctx->VertexProgram._Current != prevVP && ctx->Driver.BindProgram) {
+      ctx->Driver.BindProgram(ctx, GL_VERTEX_PROGRAM_ARB,
+                              (struct gl_program *) ctx->VertexProgram._Current);
    }
 }
 

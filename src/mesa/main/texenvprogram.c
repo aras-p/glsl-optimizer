@@ -1190,6 +1190,9 @@ _mesa_get_fixed_func_fragment_program(GLcontext *ctx)
  * If _MaintainTexEnvProgram is set we'll generate a fragment program that
  * implements the current texture env/combine mode.
  * This function generates that program and puts it into effect.
+ *
+ * XXX: remove this function.  currently only called by some drivers,
+ * not by mesa core.  We now handle this properly from inside mesa.
  */
 void
 _mesa_UpdateTexEnvProgram( GLcontext *ctx )
