@@ -85,13 +85,11 @@ cell_draw_create(struct cell_context *cell)
 }
 
 
-#ifdef DEBUG
 static const struct debug_named_value cell_debug_flags[] = {
    {"checker", CELL_DEBUG_CHECKER},/**< modulate tile clear color by SPU ID */
    {"sync", CELL_DEBUG_SYNC},      /**< SPUs do synchronous DMA */
    {NULL, 0}
 };
-#endif
 
 
 struct pipe_context *
