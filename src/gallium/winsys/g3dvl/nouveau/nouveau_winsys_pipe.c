@@ -84,7 +84,7 @@ nouveau_surface_release(struct pipe_winsys *ws, struct pipe_surface **s)
 	*s = NULL;
 	if (--surf->refcount <= 0) {
 		if (surf->buffer)
-			pipe_buffer_reference(ws, &surf->buffer, NULL);
+			winsys_buffer_reference(ws, &surf->buffer, NULL);
 		free(surf);
 	}
 }

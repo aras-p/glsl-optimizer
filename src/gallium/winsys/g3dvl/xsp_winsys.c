@@ -158,7 +158,7 @@ static void xsp_surface_release(struct pipe_winsys *pws, struct pipe_surface **s
 
 	if (s->refcount == 0)
 	{
-		pipe_buffer_reference(pws, &s->buffer, NULL);
+		winsys_buffer_reference(pws, &s->buffer, NULL);
 		free(s);
 	}
 
