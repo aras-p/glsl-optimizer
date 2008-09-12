@@ -77,21 +77,29 @@ SPU local store as needed.
 Similarly, textures are tiled and brought into local store as needed.
 </p>
 
-<p>
-More recently, vertex transformation has been parallelized across the SPUs
-as well.
-</p>
-
 
 <H2>Status</H2>
 
 <p>
-As of February 2008 the driver supports smooth/flat shaded triangle rendering
+As of September 2008, the driver supports smooth/flat shaded triangle rendering
 with Z testing and simple texture mapping.
 Simple demos like gears run successfully.
 To test texture mapping, try progs/demos/texcyl (press right mouse button for
 rendering options).
 </p>
+<p>
+Runtime/dynamic code generation is being done for per-fragment
+operations (Z test, blend, etc) and for fragment programs (though only a
+few opcodes are implemented now).
+</p>
+<p>
+In general, however, the driver is rather slow because all vertex
+transformation is being done by an interpreter running on the PPU.
+Programs with many vertices or complex vertex shaders will run especially
+slow.
+This will be addressed in the future.
+</p>
+
 
 
 <H2>Contributing</H2>
