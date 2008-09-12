@@ -58,6 +58,7 @@
 #define PCI_CHIP_IGD_E_G                0x2E02
 #define PCI_CHIP_Q45_G                  0x2E12
 #define PCI_CHIP_G45_G                  0x2E22
+#define PCI_CHIP_G41_G                  0x2E32
 
 #define IS_MOBILE(devid)	(devid == PCI_CHIP_I855_GM || \
 				 devid == PCI_CHIP_I915_GM || \
@@ -70,7 +71,8 @@
 #define IS_GM45_GM(devid)       (devid == PCI_CHIP_GM45_GM)
 #define IS_G4X(devid)           (devid == PCI_CHIP_IGD_E_G || \
                                  devid == PCI_CHIP_Q45_G || \
-                                 devid == PCI_CHIP_G45_G)
+                                 devid == PCI_CHIP_G45_G || \
+                                 devid == PCI_CHIP_G41_G)
 
 #define IS_915(devid)		(devid == PCI_CHIP_I915_G || \
 				 devid == PCI_CHIP_E7221_G || \
