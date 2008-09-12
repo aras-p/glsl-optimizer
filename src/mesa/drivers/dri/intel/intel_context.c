@@ -179,6 +179,9 @@ intelGetString(GLcontext * ctx, GLenum name)
       case PCI_CHIP_Q45_G:
          chipset = "Intel(R) Q45/Q43";
          break;
+      case PCI_CHIP_G41_G:
+         chipset = "Intel(R) G41";
+         break;
       default:
          chipset = "Unknown Intel Chipset";
          break;
