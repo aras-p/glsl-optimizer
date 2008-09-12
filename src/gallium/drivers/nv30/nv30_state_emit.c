@@ -1,0 +1,118 @@
+#include "nv30_context.h"
+#include "nv30_state.h"
+
+static struct nv30_state_entry *render_states[] = {
+	&nv30_state_framebuffer,
+	&nv30_state_rasterizer,
+	&nv30_state_scissor,
+	&nv30_state_stipple,
+	&nv30_state_fragprog,
+	&nv30_state_fragtex,
+	&nv30_state_vertprog,
+	&nv30_state_blend,
+	&nv30_state_blend_colour,
+	&nv30_state_zsa,
+	&nv30_state_viewport,
+	&nv30_state_vbo,
+	NULL
+};
+
+static void
+nv30_state_do_validate(struct nv30_context *nv30,
+		       struct nv30_state_entry **states)
+{
+	const struct pipe_framebuffer_state *fb = &nv30->framebuffer;
+	unsigned i;
+
+	for (i = 0; i < fb->num_cbufs; i++)
+		fb->cbufs[i]->status = PIPE_SURFACE_STATUS_DEFINED;
+	if (fb->zsbuf)
+		fb->zsbuf->status = PIPE_SURFACE_STATUS_DEFINED;
+
+	while (*states) {
+		struct nv30_state_entry *e = *states;
+
+		if (nv30->dirty & e->dirty.pipe) {
+			if (e->validate(nv30)) {
+				nv30->state.dirty |= (1ULL << e->dirty.hw);
+			}
+		}
+
+		states++;
+	}
+	nv30->dirty = 0;
+}
+
+void
+nv30_state_emit(struct nv30_context *nv30)
+{
+	struct nv30_state *state = &nv30->state;
+	struct nv30_screen *screen = nv30->screen;
+	unsigned i, samplers;
+	uint64 states;
+
+	if (nv30->pctx_id != screen->cur_pctx) {
+		for (i = 0; i < NV30_STATE_MAX; i++) {
+			if (state->hw[i] && screen->state[i] != state->hw[i])
+				state->dirty |= (1ULL << i);
+		}
+
+		screen->cur_pctx = nv30->pctx_id;
+	}
+
+	for (i = 0, states = state->dirty; states; i++) {
+		if (!(states & (1ULL << i)))
+			continue;
+		so_ref (state->hw[i], &nv30->screen->state[i]);
+		if (state->hw[i])
+			so_emit(nv30->nvws, nv30->screen->state[i]);
+		states &= ~(1ULL << i);
+	}
+
+	state->dirty = 0;
+
+	so_emit_reloc_markers(nv30->nvws, state->hw[NV30_STATE_FB]);
+	for (i = 0, samplers = state->fp_samplers; i < 16 && samplers; i++) {
+		if (!(samplers & (1 << i)))
+			continue;
+		so_emit_reloc_markers(nv30->nvws,
+				      state->hw[NV30_STATE_FRAGTEX0+i]);
+		samplers &= ~(1ULL << i);
+	}
+	so_emit_reloc_markers(nv30->nvws, state->hw[NV30_STATE_FRAGPROG]);
+	if (state->hw[NV30_STATE_VTXBUF] /*&& nv30->render_mode == HW*/)
+		so_emit_reloc_markers(nv30->nvws, state->hw[NV30_STATE_VTXBUF]);
+}
+
+boolean
+nv30_state_validate(struct nv30_context *nv30)
+{
+#if 0
+	boolean was_sw = nv30->fallback_swtnl ? TRUE : FALSE;
+
+	if (nv30->render_mode != HW) {
+		/* Don't even bother trying to go back to hw if none
+		 * of the states that caused swtnl previously have changed.
+		 */
+		if ((nv30->fallback_swtnl & nv30->dirty)
+				!= nv30->fallback_swtnl)
+			return FALSE;
+
+		/* Attempt to go to hwtnl again */
+		nv30->pipe.flush(&nv30->pipe, 0, NULL);
+		nv30->dirty |= (NV30_NEW_VIEWPORT |
+				NV30_NEW_VERTPROG |
+				NV30_NEW_ARRAYS);
+		nv30->render_mode = HW;
+	}
+#endif
+	nv30_state_do_validate(nv30, render_states);
+#if 0
+	if (nv30->fallback_swtnl || nv30->fallback_swrast)
+		return FALSE;
+	
+	if (was_sw)
+		NOUVEAU_ERR("swtnl->hw\n");
+#endif
+	return TRUE;
+}
