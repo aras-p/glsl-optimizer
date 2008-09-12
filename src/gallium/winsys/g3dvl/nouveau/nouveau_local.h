@@ -1,1 +1,1 @@
-../../dri/nouveau/nouveau_local.h
+../../drm/nouveau/nouveau_local.h

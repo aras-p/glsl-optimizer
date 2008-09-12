@@ -1,1 +1,1 @@
-../../dri/nouveau/nouveau_grobj.c
+../../drm/nouveau/nouveau_grobj.c

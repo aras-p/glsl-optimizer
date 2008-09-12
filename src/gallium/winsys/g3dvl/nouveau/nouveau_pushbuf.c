@@ -1,1 +1,1 @@
-../../dri/nouveau/nouveau_pushbuf.c
+../../drm/nouveau/nouveau_pushbuf.c

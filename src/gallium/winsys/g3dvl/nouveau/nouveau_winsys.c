@@ -1,1 +1,1 @@
-../../dri/nouveau/nouveau_winsys.c
+../../drm/nouveau/nouveau_winsys.c

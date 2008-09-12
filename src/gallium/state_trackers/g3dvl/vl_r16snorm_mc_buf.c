@@ -6,10 +6,10 @@
 #include <pipe/p_winsys.h>
 #include <pipe/p_screen.h>
 #include <pipe/p_state.h>
-#include <pipe/p_util.h>
 #include <pipe/p_inlines.h>
 #include <tgsi/tgsi_parse.h>
 #include <tgsi/tgsi_build.h>
+#include <util/u_math.h>
 #include "vl_render.h"
 #include "vl_shader_build.h"
 #include "vl_surface.h"

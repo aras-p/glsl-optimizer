@@ -1,1 +1,1 @@
-../../dri/nouveau/nouveau_winsys_pipe.h
+../../drm/nouveau/nouveau_winsys_pipe.h

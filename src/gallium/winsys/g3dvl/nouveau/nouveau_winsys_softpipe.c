@@ -1,1 +1,1 @@
-../../dri/nouveau/nouveau_winsys_softpipe.c
+../../drm/nouveau/nouveau_winsys_softpipe.c

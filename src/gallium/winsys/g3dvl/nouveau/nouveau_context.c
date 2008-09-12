@@ -1,7 +1,7 @@
 #include "pipe/p_defines.h"
 #include "pipe/p_context.h"
 #include "pipe/p_screen.h"
-#include "pipe/p_util.h"
+#include "util/u_memory.h"
 
 #include "nouveau_context.h"
 #include "nouveau_dri.h"
@@ -150,7 +150,7 @@ nouveau_context_create(dri_context_t *dri_context)
 		fb_bo = calloc(1, sizeof(struct nouveau_bo_priv));
 		fb_bo->drm.offset = nv_screen->front_offset;
 		fb_bo->drm.flags = NOUVEAU_MEM_FB;
-		fb_bo->drm.size = nv_screen->front_pitch * 
+		fb_bo->drm.size = nv_screen->front_pitch *
 				  nv_screen->front_height;
 		fb_bo->refcount = 1;
 		fb_bo->base.flags = NOUVEAU_BO_PIN | NOUVEAU_BO_VRAM;
@@ -280,7 +280,7 @@ nouveau_context_bind(struct nouveau_context *nv, dri_drawable_t *dri_drawable)
 {
 	assert(nv);
 	assert(dri_drawable);
-	
+
 	if (nv->dri_drawable != dri_drawable)
 	{
 		nv->dri_drawable = dri_drawable;
@@ -294,9 +294,9 @@ int
 nouveau_context_unbind(struct nouveau_context *nv)
 {
 	assert(nv);
-	
+
 	nv->dri_drawable = NULL;
-	
+
 	return 0;
 }
 
@@ -306,20 +306,20 @@ int bind_pipe_drawable(struct pipe_context *pipe, Drawable drawable)
 {
 	struct nouveau_context	*nv;
 	dri_drawable_t		*dri_drawable;
-	
+
 	nv = pipe->priv;
-	
+
 	driCreateDrawable(nv->nv_screen->dri_screen, drawable, &dri_drawable);
-	
+
 	nouveau_context_bind(nv, dri_drawable);
-	
+
 	return 0;
 }
 
 int unbind_pipe_drawable(struct pipe_context *pipe)
 {
 	nouveau_context_unbind(pipe->priv);
-	
+
 	return 0;
 }
 
@@ -329,15 +329,15 @@ struct pipe_context* create_pipe_context(Display *display, int screen)
 	dri_framebuffer_t	dri_framebuf;
 	dri_context_t		*dri_context;
 	struct nouveau_context	*nv;
-	
+
 	driCreateScreen(display, screen, &dri_screen, &dri_framebuf);
 	driCreateContext(dri_screen, XDefaultVisual(display, screen), &dri_context);
-	
+
 	nouveau_screen_create(dri_screen, &dri_framebuf);
 	nouveau_context_create(dri_context);
-	
+
 	nv = dri_context->private;
-	
+
 	return nv->nvc->pctx[nv->pctx_id];
 }
 
@@ -348,15 +348,15 @@ int destroy_pipe_context(struct pipe_context *pipe)
 	struct nouveau_context	*nv;
 	dri_screen_t		*dri_screen;
 	dri_context_t		*dri_context;
-	
+
 	assert(pipe);
-	
+
 	screen = pipe->screen;
 	winsys = pipe->winsys;
 	nv = pipe->priv;
 	dri_context = nv->dri_context;
 	dri_screen = dri_context->dri_screen;
-	
+
 	pipe->destroy(pipe);
 	screen->destroy(screen);
 	free(winsys);
@@ -365,7 +365,6 @@ int destroy_pipe_context(struct pipe_context *pipe)
 	nouveau_screen_destroy(dri_screen);
 	driDestroyContext(dri_context);
 	driDestroyScreen(dri_screen);
-	
+
 	return 0;
 }
-

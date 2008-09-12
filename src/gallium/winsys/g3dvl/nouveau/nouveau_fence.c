@@ -1,1 +1,1 @@
-../../dri/nouveau/nouveau_fence.c
+../../drm/nouveau/nouveau_fence.c

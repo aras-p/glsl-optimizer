@@ -1,1 +1,1 @@
-../../dri/nouveau/nouveau_channel.c
+../../drm/nouveau/nouveau_channel.c

@@ -47,7 +47,7 @@ endif
 all: ${TARGET}
 
 ifeq (${DRIVER}, softpipe)
-${TARGET}: g3dvl
+${TARGET}: ${OBJECTS} g3dvl
 	$(CC) ${LDFLAGS} -shared -Wl,-soname,${SONAME} -o $@ ${OBJECTS} ${LIBS}
 
 g3dvl:

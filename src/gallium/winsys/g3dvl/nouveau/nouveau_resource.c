@@ -1,1 +1,1 @@
-../../dri/nouveau/nouveau_resource.c
+../../drm/nouveau/nouveau_resource.c

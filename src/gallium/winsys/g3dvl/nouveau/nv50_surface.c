@@ -1,1 +1,1 @@
-../../dri/nouveau/nv50_surface.c
+../../drm/nouveau/nv50_surface.c

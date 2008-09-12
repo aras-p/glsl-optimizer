@@ -1,1 +1,1 @@
-../../dri/nouveau/nouveau_dma.h
+../../drm/nouveau/nouveau_dma.h

@@ -1,1 +1,1 @@
-../../dri/nouveau/nouveau_device.c
+../../drm/nouveau/nouveau_device.c

@@ -1,1 +1,1 @@
-../../dri/nouveau/nouveau_bo.c
+../../drm/nouveau/nouveau_bo.c
