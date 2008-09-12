@@ -233,6 +233,9 @@ intel_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
 						&count,
 						drawable->loaderPrivate);
 
+   if (buffers == NULL)
+      return;
+
    drawable->x = 0;
    drawable->y = 0;
    drawable->backX = 0;

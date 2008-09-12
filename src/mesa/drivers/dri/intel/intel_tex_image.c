@@ -733,6 +733,12 @@ intelSetTexBuffer(__DRIcontext *pDRICtx, GLint target, __DRIdrawable *dPriv)
    intel_update_renderbuffers(pDRICtx, dPriv);
 
    rb = intel_fb->color_rb[0];
+   /* If the region isn't set, then intel_update_renderbuffers was unable
+    * to get the buffers for the drawable.
+    */
+   if (rb->region == NULL)
+      return;
+
    type = GL_BGRA;
    format = GL_UNSIGNED_BYTE;
    internalFormat = (rb->region->cpp == 3 ? 3 : 4);
