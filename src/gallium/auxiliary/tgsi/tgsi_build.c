@@ -793,10 +793,14 @@ tgsi_default_instruction_ext_nv( void )
    return instruction_ext_nv;
 }
 
-union token_u32
+
+/** test for inequality of 32-bit values pointed to by a and b */
+static INLINE boolean
+compare32(const void *a, const void *b)
 {
-   unsigned u32;
-};
+   return *((uint32_t *) a) != *((uint32_t *) b);
+}
+
 
 unsigned
 tgsi_compare_instruction_ext_nv(
@@ -805,7 +809,7 @@ tgsi_compare_instruction_ext_nv(
 {
    a.Padding = b.Padding = 0;
    a.Extended = b.Extended = 0;
-   return ((union token_u32 *) &a)->u32 != ((union token_u32 *) &b)->u32;
+   return compare32(&a, &b);
 }
 
 struct tgsi_instruction_ext_nv
@@ -864,7 +868,7 @@ tgsi_compare_instruction_ext_label(
 {
    a.Padding = b.Padding = 0;
    a.Extended = b.Extended = 0;
-   return ((union token_u32 *) &a)->u32 != ((union token_u32 *) &b)->u32;
+   return compare32(&a, &b);
 }
 
 struct tgsi_instruction_ext_label
@@ -905,7 +909,7 @@ tgsi_compare_instruction_ext_texture(
 {
    a.Padding = b.Padding = 0;
    a.Extended = b.Extended = 0;
-   return ((union token_u32 *) &a)->u32 != ((union token_u32 *) &b)->u32;
+   return compare32(&a, &b);
 }
 
 struct tgsi_instruction_ext_texture
@@ -1027,7 +1031,7 @@ tgsi_compare_src_register_ext_swz(
 {
    a.Padding = b.Padding = 0;
    a.Extended = b.Extended = 0;
-   return ((union token_u32 *) &a)->u32 != ((union token_u32 *) &b)->u32;
+   return compare32(&a, &b);
 }
 
 struct tgsi_src_register_ext_swz
@@ -1095,7 +1099,7 @@ tgsi_compare_src_register_ext_mod(
 {
    a.Padding = b.Padding = 0;
    a.Extended = b.Extended = 0;
-   return ((union token_u32 *) &a)->u32 != ((union token_u32 *) &b)->u32;
+   return compare32(&a, &b);
 }
 
 struct tgsi_src_register_ext_mod
@@ -1241,7 +1245,7 @@ tgsi_compare_dst_register_ext_concode(
 {
    a.Padding = b.Padding = 0;
    a.Extended = b.Extended = 0;
-   return ((union token_u32 *) &a)->u32 != ((union token_u32 *) &b)->u32;
+   return compare32(&a, &b);
 }
 
 struct tgsi_dst_register_ext_concode
@@ -1299,7 +1303,7 @@ tgsi_compare_dst_register_ext_modulate(
 {
    a.Padding = b.Padding = 0;
    a.Extended = b.Extended = 0;
-   return ((union token_u32 *) &a)->u32 != ((union token_u32 *) &b)->u32;
+   return compare32(&a, &b);
 }
 
 struct tgsi_dst_register_ext_modulate
