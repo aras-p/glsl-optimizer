@@ -509,6 +509,38 @@ emit_ENDIF(struct codegen *gen, const struct tgsi_full_instruction *inst)
 }
 
 
+static boolean
+emit_DDX_DDY(struct codegen *gen, const struct tgsi_full_instruction *inst,
+             boolean ddx)
+{
+   int ch;
+
+   for (ch = 0; ch < 4; ch++) {
+      if (inst->FullDstRegisters[0].DstRegister.WriteMask & (1 << ch)) {
+         int s_reg = get_src_reg(gen, ch, &inst->FullSrcRegisters[0]);
+         int d_reg = get_dst_reg(gen, ch, &inst->FullDstRegisters[0]);
+
+         int t1_reg = get_itemp(gen);
+         int t2_reg = get_itemp(gen);
+
+         spe_splat_word(gen->f, t1_reg, s_reg, 0); /* upper-left pixel */
+         if (ddx) {
+            spe_splat_word(gen->f, t2_reg, s_reg, 1); /* upper-right pixel */
+         }
+         else {
+            spe_splat_word(gen->f, t2_reg, s_reg, 2); /* lower-left pixel */
+         }
+         spe_fs(gen->f, d_reg, t2_reg, t1_reg);
+
+         free_itemps(gen);
+      }
+   }
+
+   return true;
+}
+
+
+
 
 /**
  * Emit END instruction.
@@ -554,6 +586,11 @@ emit_instruction(struct codegen *gen,
       return emit_ELSE(gen, inst);
    case TGSI_OPCODE_ENDIF:
       return emit_ENDIF(gen, inst);
+
+   case TGSI_OPCODE_DDX:
+      return emit_DDX_DDY(gen, inst, true);
+   case TGSI_OPCODE_DDY:
+      return emit_DDX_DDY(gen, inst, false);
 
    /* XXX lots more cases to do... */
 
