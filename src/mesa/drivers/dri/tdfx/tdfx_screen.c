@@ -65,6 +65,7 @@ DRI_CONF_END;
 
 static const __DRIextension *tdfxExtensions[] = {
     &driReadDrawableExtension,
+    NULL
 };
 
 static const GLuint __driNConfigOptions = 1;
@@ -350,12 +351,7 @@ tdfxFillInModes(__DRIscreenPrivate *psp,
 		unsigned stencil_bits,
 		GLboolean have_back_buffer)
 {
-	__DRIconfig **configs, **c;
-	__GLcontextModes *m;
-	unsigned num_modes;
-	unsigned vis[2] = { GLX_TRUE_COLOR, GLX_DIRECT_COLOR };
 	unsigned deep = (depth_bits > 17);
-	unsigned i, db, depth, accum, stencil;
 
 	/* Right now GLX_SWAP_COPY_OML isn't supported, but it would be easy
 	 * enough to add support.  Basically, if a context is created with an
@@ -363,55 +359,32 @@ tdfxFillInModes(__DRIscreenPrivate *psp,
 	 * will never be used.
 	 */
 
-	num_modes = (depth_bits == 16) ? 32 : 16;
-
-	configs = _mesa_malloc(num_modes * sizeof *configs);
-	c = configs;
-
-	for (i = 0; i <= 1; i++) {
-	    for (db = 0; db <= 1; db++) {
-		for (depth = 0; depth <= 1; depth++) {
-		    for (accum = 0; accum <= 1; accum++) {
-			for (stencil = 0; stencil <= !deep; stencil++) {
-			    *c = _mesa_malloc(sizeof **c);
-			    m = &(*c++)->modes;
-			    if (deep) stencil = depth;
-			    m->redBits		= deep ? 8 : 5;
-			    m->greenBits	= deep ? 8 : 6;
-			    m->blueBits		= deep ? 8 : 5;
-			    m->alphaBits	= deep ? 8 : 0;
-			    m->redMask		= deep ?0xFF000000 :0x0000F800;
-			    m->greenMask	= deep ?0x00FF0000 :0x000007E0;
-			    m->blueMask		= deep ?0x0000FF00 :0x0000001F;
-			    m->alphaMask	= deep ? 0x000000FF : 0;
-			    m->rgbBits		= m->redBits + m->greenBits +
-			    			  m->blueBits + m->alphaBits;
-			    m->accumRedBits	= accum ? 16 : 0;
-			    m->accumGreenBits	= accum ? 16 : 0;
-			    m->accumBlueBits	= accum ? 16 : 0;
-			    m->accumAlphaBits	= (accum && deep) ? 16 : 0;
-			    m->stencilBits	= stencil ? 8 : 0;
-			    m->depthBits	= deep
-			    			  ? (depth ? 24 : 0)
-			    			  : (depth ? 0 : depth_bits);
-			    m->visualType	= vis[i];
-			    m->renderType	= GLX_RGBA_BIT;
-			    m->drawableType	= GLX_WINDOW_BIT;
-			    m->rgbMode		= GL_TRUE;
-			    m->doubleBufferMode = db ? GL_TRUE : GL_FALSE;
-			    if (db)
-			    	m->swapMethod = GLX_SWAP_UNDEFINED_OML;
-			    m->visualRating	= ((stencil && !deep) || accum)
-			    			  ? GLX_SLOW_CONFIG
-						  : GLX_NONE;
-			    if (deep) stencil = 0;
-			}
-		    }
-		}
-	    }
+	static const GLenum db_modes[2] = { GLX_NONE, GLX_SWAP_UNDEFINED_OML };
+	uint8_t depth_bits_array[4];
+	uint8_t stencil_bits_array[4];
+	if(deep) {
+		depth_bits_array[0] = 0;
+		depth_bits_array[1] = 24;
+		stencil_bits_array[0] = 0;
+		stencil_bits_array[1] = 8;
+	} else {
+		depth_bits_array[0] = depth_bits;
+		depth_bits_array[1] = 0;
+		depth_bits_array[2] = depth_bits;
+		depth_bits_array[3] = 0;
+		stencil_bits_array[0] = 0;
+		stencil_bits_array[1] = 0;
+		stencil_bits_array[2] = 8;
+		stencil_bits_array[3] = 8;
 	}
 
-	return (const __DRIconfig **) configs;
+	return driCreateConfigs(
+		deep ? GL_RGBA : GL_RGB,
+		deep ? GL_UNSIGNED_INT_8_8_8_8 : GL_UNSIGNED_SHORT_5_6_5,
+		depth_bits_array,
+		stencil_bits_array,
+		deep ? 2 : 4,
+		db_modes, 2);
 }
 
 /**
