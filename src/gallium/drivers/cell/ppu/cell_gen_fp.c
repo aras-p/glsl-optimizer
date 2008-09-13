@@ -125,11 +125,13 @@ get_const_one_reg(struct codegen *gen)
    if (gen->one_reg <= 0) {
       gen->one_reg = spe_allocate_available_register(gen->f);
 
+      spe_indent(gen->f, 4);
+      spe_comment(gen->f, -4, "INIT CONSTANT 1.0:");
+
       /* one = {1.0, 1.0, 1.0, 1.0} */
       spe_load_float(gen->f, gen->one_reg, 1.0f);
-#if DISASSEM
-      printf("\til\tr%d, 1.0f\n", gen->one_reg);
-#endif
+
+      spe_indent(gen->f, -4);
    }
 
    return gen->one_reg;
@@ -149,12 +151,13 @@ get_exec_mask_reg(struct codegen *gen)
    if (gen->exec_mask_reg <= 0) {
       gen->exec_mask_reg = spe_allocate_available_register(gen->f);
 
+      spe_indent(gen->f, 4);
+      spe_comment(gen->f, -4, "INIT EXEC MASK = ~0:");
+
       /* exec_mask = {~0, ~0, ~0, ~0} */
       spe_load_int(gen->f, gen->exec_mask_reg, ~0);
-#if DISASSEM
-      printf("INIT EXEC MASK:\n");
-      printf("\tload\tr%d, 0x%x\n", gen->exec_mask_reg, ~0);
-#endif
+
+      spe_indent(gen->f, -4);
    }
 
    return gen->exec_mask_reg;
@@ -192,9 +195,6 @@ get_src_reg(struct codegen *gen,
          reg = get_itemp(gen);
          /* Load:  reg = memory[(machine_reg) + offset] */
          spe_lqd(gen->f, reg, gen->inputs_reg, offset);
-#if DISASSEM
-         printf("\tlqd\tr%d, r%d + %d\n", reg, gen->inputs_reg, offset);
-#endif
       }
       break;
    case TGSI_FILE_IMMEDIATE:
@@ -262,10 +262,6 @@ store_dest_reg(struct codegen *gen,
           * d[i] = mask_reg[i] ? value_reg : d_reg
           */
          spe_selb(gen->f, d_reg, d_reg, value_reg, exec_reg);
-#if DISASSEM
-         printf("\tselb\tr%d, r%d, r%d, r%d  # EXEC MASK'ed\n",
-                d_reg, d_reg, value_reg, exec_reg);
-#endif
       }
       else {
          /* we're not inside a condition or loop: do nothing special */
@@ -288,22 +284,10 @@ store_dest_reg(struct codegen *gen,
             spe_selb(gen->f, curval_reg, curval_reg, value_reg, exec_reg);
             /* Store: memory[(machine_reg) + offset] = curval */
             spe_stqd(gen->f, curval_reg, gen->outputs_reg, offset);
-#if DISASSEM
-            printf("\tlqd\tr%d, r%d + %d\n",
-                   curval_reg, gen->outputs_reg, offset);
-            printf("\tselb\tr%d, r%d, r%d, r%d  # EXEC MASK'ed\n",
-                   curval_reg, curval_reg, value_reg, exec_reg);
-            printf("\tstqd\tr%d, r%d + %d\n",
-                   curval_reg, gen->outputs_reg, offset);
-#endif
          }
          else {
             /* Store: memory[(machine_reg) + offset] = reg */
             spe_stqd(gen->f, value_reg, gen->outputs_reg, offset);
-#if DISASSEM
-            printf("\tstqd\tr%d, r%d + %d\n",
-                   value_reg, gen->outputs_reg, offset);
-#endif
          }
       }
       break;
@@ -317,18 +301,13 @@ static boolean
 emit_MOV(struct codegen *gen, const struct tgsi_full_instruction *inst)
 {
    int ch;
-#if DISASSEM
-   printf("MOV:\n");
-#endif
+   spe_comment(gen->f, -4, "MOV:");
    for (ch = 0; ch < 4; ch++) {
       if (inst->FullDstRegisters[0].DstRegister.WriteMask & (1 << ch)) {
          int src_reg = get_src_reg(gen, ch, &inst->FullSrcRegisters[0]);
          int dst_reg = get_dst_reg(gen, ch, &inst->FullDstRegisters[0]);
          /* XXX we don't always need to actually emit a mov instruction here */
          spe_move(gen->f, dst_reg, src_reg);
-#if DISASSEM
-         printf("\tmov\tr%d, r%d\n", dst_reg, src_reg);
-#endif
          store_dest_reg(gen, dst_reg, ch, &inst->FullDstRegisters[0]);
          free_itemps(gen);
       }
@@ -347,9 +326,7 @@ static boolean
 emit_ADD(struct codegen *gen, const struct tgsi_full_instruction *inst)
 {
    int ch;
-#if DISASSEM
-   printf("ADD:\n");
-#endif
+   spe_comment(gen->f, -4, "ADD:");
    /* Loop over Red/Green/Blue/Alpha channels */
    for (ch = 0; ch < 4; ch++) {
       /* If the dest R, G, B or A writemask is enabled... */
@@ -361,9 +338,6 @@ emit_ADD(struct codegen *gen, const struct tgsi_full_instruction *inst)
 
          /* Emit actual SPE instruction: d = s1 + s2 */
          spe_fa(gen->f, d_reg, s1_reg, s2_reg);
-#if DISASSEM
-         printf("\tfa\tr%d, r%d, r%d\n", d_reg, s1_reg, s2_reg);
-#endif
 
          /* Store the result (a no-op for TGSI_FILE_TEMPORARY dests) */
          store_dest_reg(gen, d_reg, ch, &inst->FullDstRegisters[0]);
@@ -382,9 +356,7 @@ static boolean
 emit_MUL(struct codegen *gen, const struct tgsi_full_instruction *inst)
 {
    int ch;
-#if DISASSEM
-   printf("MUL:\n");
-#endif
+   spe_comment(gen->f, -4, "MUL:");
    for (ch = 0; ch < 4; ch++) {
       if (inst->FullDstRegisters[0].DstRegister.WriteMask & (1 << ch)) {
          int s1_reg = get_src_reg(gen, ch, &inst->FullSrcRegisters[0]);
@@ -392,9 +364,6 @@ emit_MUL(struct codegen *gen, const struct tgsi_full_instruction *inst)
          int d_reg = get_dst_reg(gen, ch, &inst->FullDstRegisters[0]);
          /* d = s1 * s2 */
          spe_fm(gen->f, d_reg, s1_reg, s2_reg);
-#if DISASSEM
-         printf("\tfm\tr%d, r%d, r%d\n", d_reg, s1_reg, s2_reg);
-#endif
          store_dest_reg(gen, d_reg, ch, &inst->FullDstRegisters[0]);
          free_itemps(gen);
       }
@@ -414,9 +383,8 @@ emit_SGT(struct codegen *gen, const struct tgsi_full_instruction *inst)
 {
    int ch;
 
-#if DISASSEM
-   printf("SGT:\n");
-#endif
+   spe_comment(gen->f, -4, "SGT:");
+
    for (ch = 0; ch < 4; ch++) {
       if (inst->FullDstRegisters[0].DstRegister.WriteMask & (1 << ch)) {
          int s1_reg = get_src_reg(gen, ch, &inst->FullSrcRegisters[0]);
@@ -425,16 +393,10 @@ emit_SGT(struct codegen *gen, const struct tgsi_full_instruction *inst)
 
          /* d = (s1 > s2) */
          spe_fcgt(gen->f, d_reg, s1_reg, s2_reg);
-#if DISASSEM
-         printf("\tfcgt\tr%d, r%d, r%d\n", d_reg, s1_reg, s2_reg);
-#endif
 
          /* convert d from 0x0/0xffffffff to 0.0/1.0 */
          /* d = d & one_reg */
          spe_and(gen->f, d_reg, d_reg, get_const_one_reg(gen));
-#if DISASSEM
-         printf("\tand\tr%d, r%d, r%d\n", d_reg, d_reg, get_const_one_reg(gen));
-#endif
 
          store_dest_reg(gen, d_reg, ch, &inst->FullDstRegisters[0]);
          free_itemps(gen);
@@ -451,6 +413,8 @@ emit_IF(struct codegen *gen, const struct tgsi_full_instruction *inst)
    const int channel = 0;
    const int exec_reg = get_exec_mask_reg(gen);
 
+   spe_comment(gen->f, -4, "IF:");
+
    /* update execution mask with the predicate register */
    int tmp_reg = spe_allocate_available_register(gen->f);
    int s1_reg = get_src_reg(gen, channel, &inst->FullSrcRegisters[0]);
@@ -461,12 +425,6 @@ emit_IF(struct codegen *gen, const struct tgsi_full_instruction *inst)
    spe_complement(gen->f, tmp_reg);
    /* exec_mask = exec_mask & tmp */
    spe_and(gen->f, exec_reg, exec_reg, tmp_reg);
-#if DISASSEM
-   printf("IF:\n");
-   printf("\tseqi\tr%d, r%d, 0;\n", tmp_reg, s1_reg);
-   printf("\tcomp\tr%d\n", tmp_reg);
-   printf("\tand\tr%d, r%d, r%d\n", exec_reg, exec_reg, tmp_reg);
-#endif
 
    gen->if_nesting++;
 
@@ -481,12 +439,11 @@ emit_ELSE(struct codegen *gen, const struct tgsi_full_instruction *inst)
 {
    const int exec_reg = get_exec_mask_reg(gen);
 
+   spe_comment(gen->f, -4, "ELSE:");
+
    /* exec_mask = !exec_mask */
    spe_complement(gen->f, exec_reg);
-#if DISASSEM
-   printf("ELSE:\n");
-   printf("\tcomp\tr%d;\n", exec_reg);
-#endif
+
    return true;
 }
 
@@ -496,13 +453,11 @@ emit_ENDIF(struct codegen *gen, const struct tgsi_full_instruction *inst)
 {
    const int exec_reg = get_exec_mask_reg(gen);
 
+   spe_comment(gen->f, -4, "ENDIF:");
+
    /* XXX todo: pop execution mask */
 
    spe_load_int(gen->f, exec_reg, ~0x0);
-#if DISASSEM
-   printf("ENDIF:\n");
-   printf("\tli\tr%d, ~0x0\n", exec_reg);
-#endif
 
    gen->if_nesting--;
    return true;
@@ -514,6 +469,8 @@ emit_DDX_DDY(struct codegen *gen, const struct tgsi_full_instruction *inst,
              boolean ddx)
 {
    int ch;
+
+   spe_comment(gen->f, -4, ddx ? "DDX:" : "DDY:");
 
    for (ch = 0; ch < 4; ch++) {
       if (inst->FullDstRegisters[0].DstRegister.WriteMask & (1 << ch)) {
@@ -552,11 +509,9 @@ emit_DDX_DDY(struct codegen *gen, const struct tgsi_full_instruction *inst,
 static boolean
 emit_END(struct codegen *gen)
 {
+   spe_comment(gen->f, -4, "END:");
    /* return from function call */
    spe_bi(gen->f, SPE_REG_RA, 0, 0);
-#if DISASSEM
-   printf("\tbi\trRA\n");
-#endif
    return true;
 }
 
@@ -616,9 +571,7 @@ emit_immediate(struct codegen *gen, const struct tgsi_full_immediate *immed)
 
    assert(gen->num_imm < MAX_TEMPS);
 
-#if DISASSEM
-   printf("IMMEDIATE %d:\n", gen->num_imm);
-#endif
+   spe_comment(gen->f, -4, "IMMEDIATE:");
 
    for (ch = 0; ch < 4; ch++) {
       float val = immed->u.ImmediateFloat32[ch].Float;
@@ -632,9 +585,6 @@ emit_immediate(struct codegen *gen, const struct tgsi_full_immediate *immed)
 
       /* emit initializer instruction */
       spe_load_float(gen->f, reg, val);
-#if DISASSEM
-      printf("\tload\tr%d, %f\n", reg, val);
-#endif
    }
 
    gen->num_imm++;
@@ -722,6 +672,8 @@ cell_gen_fragment_program(struct cell_context *cell,
    spe_allocate_register(f, gen.constants_reg);
 
 #if DISASSEM
+   spe_print_code(f, true);
+   spe_indent(f, 8);
    printf("Begin %s\n", __FUNCTION__);
    tgsi_dump(tokens, 0);
 #endif
