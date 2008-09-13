@@ -540,4 +540,29 @@ spe_zero(struct spe_function *p, unsigned rT)
 }
 
 
+void
+spe_splat_word(struct spe_function *p, unsigned rT, unsigned rA, int word)
+{
+   assert(word >= 0);
+   assert(word <= 3);
+
+   if (word == 0) {
+      int tmp1 = rT;
+      spe_ila(p, tmp1, 66051);
+      spe_shufb(p, rT, rA, rA, tmp1);
+   }
+   else {
+      /* XXX review this, we may not need the rotqbyi instruction */
+      int tmp1 = rT;
+      int tmp2 = spe_allocate_available_register(p);
+
+      spe_ila(p, tmp1, 66051);
+      spe_rotqbyi(p, tmp2, rA, 4 * word);
+      spe_shufb(p, rT, tmp2, tmp2, tmp1);
+
+      spe_release_register(p, tmp2);
+   }
+}
+
+
 #endif /* GALLIUM_CELL */

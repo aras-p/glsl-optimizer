@@ -308,6 +308,10 @@ spe_move(struct spe_function *p, unsigned rT, unsigned rA);
 extern void
 spe_zero(struct spe_function *p, unsigned rT);
 
+/** rT = splat(rA, word) */
+extern void
+spe_splat_word(struct spe_function *p, unsigned rT, unsigned rA, int word);
+
 
 /* Floating-point instructions
  */
