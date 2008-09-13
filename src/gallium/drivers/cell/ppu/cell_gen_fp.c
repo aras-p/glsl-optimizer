@@ -178,6 +178,8 @@ get_src_reg(struct codegen *gen,
 {
    int reg = -1;
    int swizzle = tgsi_util_get_full_src_register_extswizzle(src, channel);
+   boolean reg_is_itemp = FALSE;
+   uint sign_op;
 
    assert(swizzle >= 0);
    assert(swizzle <= 3);
@@ -193,6 +195,7 @@ get_src_reg(struct codegen *gen,
          /* offset is measured in quadwords, not bytes */
          int offset = src->SrcRegister.Index * 4 + channel;
          reg = get_itemp(gen);
+         reg_is_itemp = TRUE;
          /* Load:  reg = memory[(machine_reg) + offset] */
          spe_lqd(gen->f, reg, gen->inputs_reg, offset);
       }
@@ -204,6 +207,43 @@ get_src_reg(struct codegen *gen,
       /* xxx fall-through for now / fix */
    default:
       assert(0);
+   }
+
+   /*
+    * Handle absolute value, negate or set-negative of src register.
+    */
+   sign_op = tgsi_util_get_full_src_register_sign_mode(src, channel);
+   if (sign_op != TGSI_UTIL_SIGN_KEEP) {
+      /*
+       * All sign ops are done by manipulating bit 31, the IEEE float sign bit.
+       */
+      const int bit31mask_reg = get_itemp(gen);
+      int result_reg;
+
+      if (reg_is_itemp) {
+         /* re-use 'reg' for the result */
+         result_reg = reg;
+      }
+      else {
+         /* alloc a new reg for the result */
+         result_reg = get_itemp(gen);
+      }
+
+      /* mask with bit 31 set, the rest cleared */
+      spe_load_int(gen->f, bit31mask_reg, (1 << 31));
+
+      if (sign_op == TGSI_UTIL_SIGN_CLEAR) {
+         spe_andc(gen->f, result_reg, reg, bit31mask_reg);
+      }
+      else if (sign_op == TGSI_UTIL_SIGN_SET) {
+         spe_and(gen->f, result_reg, reg, bit31mask_reg);
+      }
+      else {
+         assert(sign_op == TGSI_UTIL_SIGN_TOGGLE);
+         spe_xor(gen->f, result_reg, reg, bit31mask_reg);
+      }
+
+      reg = result_reg;
    }
 
    return reg;
@@ -416,7 +456,7 @@ emit_IF(struct codegen *gen, const struct tgsi_full_instruction *inst)
    spe_comment(gen->f, -4, "IF:");
 
    /* update execution mask with the predicate register */
-   int tmp_reg = spe_allocate_available_register(gen->f);
+   int tmp_reg = get_itemp(gen);
    int s1_reg = get_src_reg(gen, channel, &inst->FullSrcRegisters[0]);
 
    /* tmp = (s1_reg == 0) */
@@ -428,7 +468,7 @@ emit_IF(struct codegen *gen, const struct tgsi_full_instruction *inst)
 
    gen->if_nesting++;
 
-   spe_release_register(gen->f, tmp_reg);
+   free_itemps(gen);
 
    return true;
 }
