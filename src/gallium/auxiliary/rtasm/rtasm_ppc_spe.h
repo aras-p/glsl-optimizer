@@ -28,6 +28,7 @@
  * For details, see /opt/cell/sdk/docs/arch/SPU_ISA_v1.2_27Jan2007_pub.pdf
  *
  * \author Ian Romanick <idr@us.ibm.com>
+ * \author Brian Paul
  */
 
 #ifndef RTASM_PPC_SPE_H
@@ -63,7 +64,11 @@ struct spe_function
      * spe_release_register
      */
     uint64_t regs[SPE_NUM_REGS / 64];
+
+    boolean print; /**< print/dump instructions as they're emitted? */
+    int indent;    /**< number of spaces to indent */
 };
+
 
 extern void spe_init_func(struct spe_function *p, unsigned code_size);
 extern void spe_release_func(struct spe_function *p);
@@ -71,6 +76,11 @@ extern void spe_release_func(struct spe_function *p);
 extern int spe_allocate_available_register(struct spe_function *p);
 extern int spe_allocate_register(struct spe_function *p, int reg);
 extern void spe_release_register(struct spe_function *p, int reg);
+
+extern void spe_print_code(struct spe_function *p, boolean enable);
+extern void spe_indent(struct spe_function *p, int spaces);
+extern void spe_comment(struct spe_function *p, int rel_indent, const char *s);
+
 
 #endif /* RTASM_PPC_SPE_H */
 
