@@ -43,7 +43,7 @@
 #define __glumystdio_h_
 
 #ifdef STANDALONE
-inline void _glu_dprintf( char *, ... ) { }
+inline void _glu_dprintf( const char *, ... ) { }
 #endif
 
 #ifdef LIBRARYBUILD
@@ -51,12 +51,12 @@ inline void _glu_dprintf( char *, ... ) { }
 #include <stdio.h>
 #define _glu_dprintf printf
 #else
-inline void _glu_dprintf( char *, ... ) { }
+inline void _glu_dprintf( const char *, ... ) { }
 #endif
 #endif
 
 #ifdef GLBUILD
-inline void _glu_dprintf( char *, ... ) { }
+inline void _glu_dprintf( const char *, ... ) { }
 #endif
 
 #ifndef NULL
