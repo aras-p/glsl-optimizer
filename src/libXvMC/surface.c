@@ -40,12 +40,12 @@ static enum vlPictureType PictureToVL(int xvmc_pic)
 	return -1;
 }
 
-static enum vlMotionType MotionToVL(int xvmc_motion_type)
+static enum vlMotionType MotionToVL(int xvmc_motion_type, int xvmc_dct_type)
 {
 	switch (xvmc_motion_type)
 	{
 		case XVMC_PREDICTION_FRAME:
-			return vlMotionTypeFrame;
+			return xvmc_dct_type == XVMC_DCT_TYPE_FIELD ? vlMotionType16x8 : vlMotionTypeFrame;
 		case XVMC_PREDICTION_FIELD:
 			return vlMotionTypeField;
 		case XVMC_PREDICTION_DUAL_PRIME:
@@ -171,8 +171,8 @@ Status XvMCRenderSurface
 		batch.macroblocks[i].mby = macroblocks->macro_blocks[j].y;
 		batch.macroblocks[i].mb_type = TypeToVL(macroblocks->macro_blocks[j].macroblock_type);
 		if (batch.macroblocks[i].mb_type != vlMacroBlockTypeIntra)
-			batch.macroblocks[i].mo_type = MotionToVL(macroblocks->macro_blocks[j].motion_type);
-		batch.macroblocks[i].dct_type = macroblocks->macro_blocks[j].dct_type & XVMC_DCT_TYPE_FIELD ? vlDCTTypeFieldCoded : vlDCTTypeFrameCoded;
+			batch.macroblocks[i].mo_type = MotionToVL(macroblocks->macro_blocks[j].motion_type, macroblocks->macro_blocks[j].dct_type);
+		batch.macroblocks[i].dct_type = macroblocks->macro_blocks[j].dct_type == XVMC_DCT_TYPE_FIELD ? vlDCTTypeFieldCoded : vlDCTTypeFrameCoded;
 
 		for (k = 0; k < 2; ++k)
 			for (l = 0; l < 2; ++l)

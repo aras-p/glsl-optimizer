@@ -108,17 +108,7 @@ static inline int vlGrabFieldCodedBlock(short *src, short *dst, unsigned int dst
 {
 	unsigned int y;
 
-	for (y = 0; y < VL_BLOCK_HEIGHT / 2; ++y)
-		memcpy
-		(
-			dst + y * dst_pitch * 2,
-			src + y * VL_BLOCK_WIDTH,
-			VL_BLOCK_WIDTH * 2
-		);
-
-	dst += VL_BLOCK_HEIGHT * dst_pitch;
-
-	for (; y < VL_BLOCK_HEIGHT; ++y)
+	for (y = 0; y < VL_BLOCK_HEIGHT; ++y)
 		memcpy
 		(
 			dst + y * dst_pitch * 2,
@@ -1181,7 +1171,7 @@ static int vlCreateVertexShaderFieldPMB
 		ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
 	}
 
-	/* decl c0		; Texcoord denorm coefficients */
+	/* decl c0		; Render target dimensions */
 	decl = vl_decl_constants(TGSI_SEMANTIC_GENERIC, 0, 0, 0);
 	ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
 
@@ -1661,8 +1651,8 @@ static int vlCreateVertexShaderFieldBMB
 		ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
 	}
 
-	/* decl c0		; Denorm coefficients */
-	decl = vl_decl_constants(TGSI_SEMANTIC_GENERIC, 0, 0, 6);
+	/* decl c0		; Render target dimensions */
+	decl = vl_decl_constants(TGSI_SEMANTIC_GENERIC, 0, 0, 0);
 	ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
 
 	/*
