@@ -114,7 +114,7 @@ static void calcposobs(void)
   rainParticle::setRainingArea(obs[0]-7.0f,-0.2f,obs[2]-7.0f,obs[0]+7.0f,8.0f,obs[2]+7.0f);
 }
 
-static void printstring(void *font, char *string)
+static void printstring(void *font, const char *string)
 {
   int len,i;
 
