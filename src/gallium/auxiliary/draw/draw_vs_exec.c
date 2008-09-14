@@ -46,7 +46,7 @@
 struct exec_vertex_shader {
    struct draw_vertex_shader base;
    struct tgsi_exec_machine *machine;
-   struct tgsi_token *machine_tokens;
+   const struct tgsi_token *machine_tokens;
 };
 
 static struct exec_vertex_shader *exec_vertex_shader( struct draw_vertex_shader *vs )
