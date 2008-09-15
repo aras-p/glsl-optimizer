@@ -6788,6 +6788,11 @@ _mesa_EndList(void)
       _mesa_error(ctx, GL_INVALID_OPERATION, "glEndList");
       return;
    }
+   
+   /* Call before emitting END_OF_LIST, in case the driver wants to
+    * emit opcodes itself.
+    */
+   ctx->Driver.EndList(ctx);
 
    (void) ALLOC_INSTRUCTION(ctx, OPCODE_END_OF_LIST, 0);
 
@@ -6800,8 +6805,6 @@ _mesa_EndList(void)
 
    if (MESA_VERBOSE & VERBOSE_DISPLAY_LIST)
       mesa_print_display_list(ctx->ListState.CurrentListNum);
-
-   ctx->Driver.EndList(ctx);
 
    ctx->ListState.CurrentList = NULL;
    ctx->ListState.CurrentListNum = 0;
