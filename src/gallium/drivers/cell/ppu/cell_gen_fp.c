@@ -424,7 +424,7 @@ static boolean
 emit_MAD(struct codegen *gen, const struct tgsi_full_instruction *inst)
 {
    int ch;
-   spe_comment(gen->f, -4, "MUL:");
+   spe_comment(gen->f, -4, "MAD:");
    for (ch = 0; ch < 4; ch++) {
       if (inst->FullDstRegisters[0].DstRegister.WriteMask & (1 << ch)) {
          int s1_reg = get_src_reg(gen, ch, &inst->FullSrcRegisters[0]);
@@ -456,6 +456,33 @@ emit_MUL(struct codegen *gen, const struct tgsi_full_instruction *inst)
          int d_reg = get_dst_reg(gen, ch, &inst->FullDstRegisters[0]);
          /* d = s1 * s2 */
          spe_fm(gen->f, d_reg, s1_reg, s2_reg);
+         store_dest_reg(gen, d_reg, ch, &inst->FullDstRegisters[0]);
+         free_itemps(gen);
+      }
+   }
+   return true;
+}
+
+/**
+ * Emit absolute value.  See emit_ADD for comments.
+ */
+static boolean
+emit_ABS(struct codegen *gen, const struct tgsi_full_instruction *inst)
+{
+   int ch;
+   spe_comment(gen->f, -4, "ABS:");
+   for (ch = 0; ch < 4; ch++) {
+      if (inst->FullDstRegisters[0].DstRegister.WriteMask & (1 << ch)) {
+         int s1_reg = get_src_reg(gen, ch, &inst->FullSrcRegisters[0]);
+         int d_reg = get_dst_reg(gen, ch, &inst->FullDstRegisters[0]);
+         const int bit31mask_reg = get_itemp(gen);
+
+         /* mask with bit 31 set, the rest cleared */  
+         spe_load_int(gen->f, bit31mask_reg, (1 << 31));
+
+         /* d = sign bit cleared in s1 */
+         spe_andc(gen->f, d_reg, s1_reg, bit31mask_reg);
+
          store_dest_reg(gen, d_reg, ch, &inst->FullDstRegisters[0]);
          free_itemps(gen);
       }
@@ -625,6 +652,8 @@ emit_instruction(struct codegen *gen,
       return emit_SUB(gen, inst);
    case TGSI_OPCODE_MAD:
       return emit_MAD(gen, inst);
+   case TGSI_OPCODE_ABS:
+      return emit_ABS(gen, inst);
    case TGSI_OPCODE_SGT:
       return emit_SGT(gen, inst);
    case TGSI_OPCODE_END:
