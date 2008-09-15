@@ -194,7 +194,7 @@ static void emit_RRR(struct spe_function *p, unsigned op, unsigned rT,
     assert(p->num_inst <= p->max_inst);
     if (p->print) {
        indent(p);
-       printf("%s\tr%d, r%d, r%d, r%d\n", rem_prefix(name), rT, rA, rB, rB);
+       printf("%s\tr%d, r%d, r%d, r%d\n", rem_prefix(name), rT, rA, rB, rC);
     }
 }
 
