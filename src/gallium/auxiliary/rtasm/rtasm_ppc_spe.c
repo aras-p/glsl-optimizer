@@ -176,7 +176,7 @@ static void emit_RR(struct spe_function *p, unsigned op, unsigned rT,
     assert(p->num_inst <= p->max_inst);
     if (p->print) {
        indent(p);
-       printf("%s\tr%d, r%d, r%d\n", rem_prefix(name), rT, rA, rB);
+       printf("%s\t$%d, $%d, $%d\n", rem_prefix(name), rT, rA, rB);
     }
 }
 
@@ -194,7 +194,7 @@ static void emit_RRR(struct spe_function *p, unsigned op, unsigned rT,
     assert(p->num_inst <= p->max_inst);
     if (p->print) {
        indent(p);
-       printf("%s\tr%d, r%d, r%d, r%d\n", rem_prefix(name), rT, rA, rB, rC);
+       printf("%s\t$%d, $%d, $%d, $%d\n", rem_prefix(name), rT, rA, rB, rC);
     }
 }
 
@@ -211,7 +211,7 @@ static void emit_RI7(struct spe_function *p, unsigned op, unsigned rT,
     assert(p->num_inst <= p->max_inst);
     if (p->print) {
        indent(p);
-       printf("%s\tr%d, r%d, 0x%x\n", rem_prefix(name), rT, rA, imm);
+       printf("%s\t$%d, $%d, 0x%x\n", rem_prefix(name), rT, rA, imm);
     }
 }
 
@@ -229,7 +229,7 @@ static void emit_RI8(struct spe_function *p, unsigned op, unsigned rT,
     assert(p->num_inst <= p->max_inst);
     if (p->print) {
        indent(p);
-       printf("%s\tr%d, r%d, 0x%x\n", rem_prefix(name), rT, rA, imm);
+       printf("%s\t$%d, $%d, 0x%x\n", rem_prefix(name), rT, rA, imm);
     }
 }
 
@@ -247,7 +247,11 @@ static void emit_RI10(struct spe_function *p, unsigned op, unsigned rT,
     assert(p->num_inst <= p->max_inst);
     if (p->print) {
        indent(p);
-       printf("%s\tr%d, r%d, 0x%x\n", rem_prefix(name), rT, rA, imm);
+       if (strcmp(name, "spe_lqd") == 0 ||
+           strcmp(name, "spe_stqd") == 0)
+          printf("%s\t$%d, 0x%x($%d)\n", rem_prefix(name), rT, imm, rA);
+       else
+          printf("%s\t$%d, $%d, 0x%x\n", rem_prefix(name), rT, rA, imm);
     }
 }
 
@@ -263,7 +267,7 @@ static void emit_RI16(struct spe_function *p, unsigned op, unsigned rT,
     assert(p->num_inst <= p->max_inst);
     if (p->print) {
        indent(p);
-       printf("%s\tr%d, 0x%x\n", rem_prefix(name), rT, imm);
+       printf("%s\t$%d, 0x%x\n", rem_prefix(name), rT, imm);
     }
 }
 
@@ -279,7 +283,7 @@ static void emit_RI18(struct spe_function *p, unsigned op, unsigned rT,
     assert(p->num_inst <= p->max_inst);
     if (p->print) {
        indent(p);
-       printf("%s\tr%d, 0x%x\n", rem_prefix(name), rT, imm);
+       printf("%s\t$%d, 0x%x\n", rem_prefix(name), rT, imm);
     }
 }
 
@@ -455,7 +459,7 @@ spe_comment(struct spe_function *p, int rel_indent, const char *s)
       p->indent += rel_indent;
       indent(p);
       p->indent -= rel_indent;
-      printf("%s\n", s);
+      printf("# %s\n", s);
    }
 }
 
