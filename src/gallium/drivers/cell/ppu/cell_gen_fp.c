@@ -52,7 +52,7 @@
 
 
 /** Set to 1 to enable debug/disassembly printfs */
-#define DISASSEM 1
+#define DISASSEM 0
 
 
 #define MAX_TEMPS 16
@@ -442,6 +442,31 @@ emit_MAD(struct codegen *gen, const struct tgsi_full_instruction *inst)
 
 
 /**
+ * Emit linear interpolate.  See emit_ADD for comments.
+ */
+static boolean
+emit_LERP(struct codegen *gen, const struct tgsi_full_instruction *inst)
+{
+   int ch;
+   spe_comment(gen->f, -4, "LERP:");
+   for (ch = 0; ch < 4; ch++) {
+      if (inst->FullDstRegisters[0].DstRegister.WriteMask & (1 << ch)) {
+         int s1_reg = get_src_reg(gen, ch, &inst->FullSrcRegisters[0]);
+         int s2_reg = get_src_reg(gen, ch, &inst->FullSrcRegisters[1]);
+         int s3_reg = get_src_reg(gen, ch, &inst->FullSrcRegisters[2]);
+         int d_reg = get_dst_reg(gen, ch, &inst->FullDstRegisters[0]);
+         /* d = s3 + s1(s2 - s3) */
+         spe_fs(gen->f, d_reg, s2_reg, s3_reg);
+         spe_fm(gen->f, d_reg, d_reg, s1_reg);
+         spe_fa(gen->f, d_reg, d_reg, s3_reg);
+         store_dest_reg(gen, d_reg, ch, &inst->FullDstRegisters[0]);
+         free_itemps(gen);
+      }
+   }
+   return true;
+}
+
+/**
  * Emit multiply.  See emit_ADD for comments.
  */
 static boolean
@@ -618,6 +643,65 @@ emit_SNE(struct codegen *gen, const struct tgsi_full_instruction *inst)
    return true;
 }
 
+/**
+ * Emit max.  See emit_SGT for comments.
+ */
+static boolean
+emit_MAX(struct codegen *gen, const struct tgsi_full_instruction *inst)
+{
+   int ch;
+
+   spe_comment(gen->f, -4, "MAX:");
+
+   for (ch = 0; ch < 4; ch++) {
+      if (inst->FullDstRegisters[0].DstRegister.WriteMask & (1 << ch)) {
+         int s1_reg = get_src_reg(gen, ch, &inst->FullSrcRegisters[0]);
+         int s2_reg = get_src_reg(gen, ch, &inst->FullSrcRegisters[1]);
+         int d_reg = get_dst_reg(gen, ch, &inst->FullDstRegisters[0]);
+
+         /* d = (s1 > s2) ? s1 : s2 */
+         spe_fcgt(gen->f, d_reg, s1_reg, s2_reg);
+         spe_and(gen->f, d_reg, d_reg, s1_reg);
+         spe_nor(gen->f, d_reg, d_reg, d_reg);
+         spe_and(gen->f, d_reg, d_reg, s2_reg);
+
+         store_dest_reg(gen, d_reg, ch, &inst->FullDstRegisters[0]);
+         free_itemps(gen);
+      }
+   }
+
+   return true;
+}
+
+/**
+ * Emit max.  See emit_SGT for comments.
+ */
+static boolean
+emit_MIN(struct codegen *gen, const struct tgsi_full_instruction *inst)
+{
+   int ch;
+
+   spe_comment(gen->f, -4, "MIN:");
+
+   for (ch = 0; ch < 4; ch++) {
+      if (inst->FullDstRegisters[0].DstRegister.WriteMask & (1 << ch)) {
+         int s1_reg = get_src_reg(gen, ch, &inst->FullSrcRegisters[0]);
+         int s2_reg = get_src_reg(gen, ch, &inst->FullSrcRegisters[1]);
+         int d_reg = get_dst_reg(gen, ch, &inst->FullDstRegisters[0]);
+
+         /* d = (s1 < s2) ? s1 : s2 */
+         spe_fcgt(gen->f, d_reg, s2_reg, s1_reg);
+         spe_and(gen->f, d_reg, d_reg, s1_reg);
+         spe_nor(gen->f, d_reg, d_reg, d_reg);
+         spe_and(gen->f, d_reg, d_reg, s2_reg);
+
+         store_dest_reg(gen, d_reg, ch, &inst->FullDstRegisters[0]);
+         free_itemps(gen);
+      }
+   }
+
+   return true;
+}
 
 static boolean
 emit_IF(struct codegen *gen, const struct tgsi_full_instruction *inst)
@@ -746,6 +830,8 @@ emit_instruction(struct codegen *gen,
       return emit_SUB(gen, inst);
    case TGSI_OPCODE_MAD:
       return emit_MAD(gen, inst);
+   case TGSI_OPCODE_LERP:
+      return emit_LERP(gen, inst);
    case TGSI_OPCODE_ABS:
       return emit_ABS(gen, inst);
    case TGSI_OPCODE_SGT:
@@ -756,6 +842,10 @@ emit_instruction(struct codegen *gen,
       return emit_SEQ(gen, inst);
    case TGSI_OPCODE_SNE:
       return emit_SNE(gen, inst);
+   case TGSI_OPCODE_MAX:
+      return emit_MAX(gen, inst);
+   case TGSI_OPCODE_MIN:
+      return emit_MIN(gen, inst);
    case TGSI_OPCODE_END:
       return emit_END(gen);
 
