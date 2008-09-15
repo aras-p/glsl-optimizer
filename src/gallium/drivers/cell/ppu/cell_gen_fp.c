@@ -524,6 +524,100 @@ emit_SGT(struct codegen *gen, const struct tgsi_full_instruction *inst)
    return true;
 }
 
+/**
+ * Emit set-if_less-then.  See emit_SGT for comments.
+ */
+static boolean
+emit_SLT(struct codegen *gen, const struct tgsi_full_instruction *inst)
+{
+   int ch;
+
+   spe_comment(gen->f, -4, "SLT:");
+
+   for (ch = 0; ch < 4; ch++) {
+      if (inst->FullDstRegisters[0].DstRegister.WriteMask & (1 << ch)) {
+         int s1_reg = get_src_reg(gen, ch, &inst->FullSrcRegisters[0]);
+         int s2_reg = get_src_reg(gen, ch, &inst->FullSrcRegisters[1]);
+         int d_reg = get_dst_reg(gen, ch, &inst->FullDstRegisters[0]);
+
+         /* d = (s1 < s2) */
+         spe_fcgt(gen->f, d_reg, s2_reg, s1_reg);
+
+         /* convert d from 0x0/0xffffffff to 0.0/1.0 */
+         /* d = d & one_reg */
+         spe_and(gen->f, d_reg, d_reg, get_const_one_reg(gen));
+
+         store_dest_reg(gen, d_reg, ch, &inst->FullDstRegisters[0]);
+         free_itemps(gen);
+      }
+   }
+
+   return true;
+}
+
+/**
+ * Emit set-if_equal.  See emit_SGT for comments.
+ */
+static boolean
+emit_SEQ(struct codegen *gen, const struct tgsi_full_instruction *inst)
+{
+   int ch;
+
+   spe_comment(gen->f, -4, "SEQ:");
+
+   for (ch = 0; ch < 4; ch++) {
+      if (inst->FullDstRegisters[0].DstRegister.WriteMask & (1 << ch)) {
+         int s1_reg = get_src_reg(gen, ch, &inst->FullSrcRegisters[0]);
+         int s2_reg = get_src_reg(gen, ch, &inst->FullSrcRegisters[1]);
+         int d_reg = get_dst_reg(gen, ch, &inst->FullDstRegisters[0]);
+
+         /* d = (s1 == s2) */
+         spe_fceq(gen->f, d_reg, s1_reg, s2_reg);
+
+         /* convert d from 0x0/0xffffffff to 0.0/1.0 */
+         /* d = d & one_reg */
+         spe_and(gen->f, d_reg, d_reg, get_const_one_reg(gen));
+
+         store_dest_reg(gen, d_reg, ch, &inst->FullDstRegisters[0]);
+         free_itemps(gen);
+      }
+   }
+
+   return true;
+}
+
+/**
+ * Emit set-if_not_equal.  See emit_SGT for comments.
+ */
+static boolean
+emit_SNE(struct codegen *gen, const struct tgsi_full_instruction *inst)
+{
+   int ch;
+
+   spe_comment(gen->f, -4, "SNE:");
+
+   for (ch = 0; ch < 4; ch++) {
+      if (inst->FullDstRegisters[0].DstRegister.WriteMask & (1 << ch)) {
+         int s1_reg = get_src_reg(gen, ch, &inst->FullSrcRegisters[0]);
+         int s2_reg = get_src_reg(gen, ch, &inst->FullSrcRegisters[1]);
+         int d_reg = get_dst_reg(gen, ch, &inst->FullDstRegisters[0]);
+
+         /* d = (s1 != s2) */
+         spe_fceq(gen->f, d_reg, s1_reg, s2_reg);
+         spe_nor(gen->f, d_reg, d_reg, d_reg);
+
+         /* convert d from 0x0/0xffffffff to 0.0/1.0 */
+         /* d = d & one_reg */
+         spe_and(gen->f, d_reg, d_reg, get_const_one_reg(gen));
+
+         store_dest_reg(gen, d_reg, ch, &inst->FullDstRegisters[0]);
+         free_itemps(gen);
+      }
+   }
+
+   return true;
+}
+
 
 static boolean
 emit_IF(struct codegen *gen, const struct tgsi_full_instruction *inst)
@@ -656,6 +750,12 @@ emit_instruction(struct codegen *gen,
       return emit_ABS(gen, inst);
    case TGSI_OPCODE_SGT:
       return emit_SGT(gen, inst);
+   case TGSI_OPCODE_SLT:
+      return emit_SLT(gen, inst);
+   case TGSI_OPCODE_SEQ:
+      return emit_SEQ(gen, inst);
+   case TGSI_OPCODE_SNE:
+      return emit_SNE(gen, inst);
    case TGSI_OPCODE_END:
       return emit_END(gen);
 
