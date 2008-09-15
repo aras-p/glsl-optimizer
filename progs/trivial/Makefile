@@ -47,6 +47,7 @@ SOURCES = \
 	dlist-edgeflag.c \
 	dlist-dangling.c \
 	dlist-edgeflag-dangling.c \
+	dlist-degenerate.c \
 	drawrange.c \
 	drawelements.c \
 	drawarrays.c \
