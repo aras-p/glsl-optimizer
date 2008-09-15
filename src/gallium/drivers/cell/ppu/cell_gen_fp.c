@@ -52,7 +52,7 @@
 
 
 /** Set to 1 to enable debug/disassembly printfs */
-#define DISASSEM 0
+#define DISASSEM 1
 
 
 #define MAX_TEMPS 16
@@ -76,7 +76,7 @@ struct codegen
 
    /** Per-instruction temps / intermediate temps */
    int num_itemps;
-   int itemps[3];
+   int itemps[4];
 
    /** Current IF/ELSE/ENDIF nesting level */
    int if_nesting;
@@ -388,6 +388,58 @@ emit_ADD(struct codegen *gen, const struct tgsi_full_instruction *inst)
    return true;
 }
 
+/**
+ * Emit subtract.  See emit_ADD for comments.
+ */
+static boolean
+emit_SUB(struct codegen *gen, const struct tgsi_full_instruction *inst)
+{
+   int ch;
+   spe_comment(gen->f, -4, "SUB:");
+   /* Loop over Red/Green/Blue/Alpha channels */
+   for (ch = 0; ch < 4; ch++) {
+      /* If the dest R, G, B or A writemask is enabled... */
+      if (inst->FullDstRegisters[0].DstRegister.WriteMask & (1 << ch)) {
+         /* get indexes of the two src, one dest SPE registers */
+         int s1_reg = get_src_reg(gen, ch, &inst->FullSrcRegisters[0]);
+         int s2_reg = get_src_reg(gen, ch, &inst->FullSrcRegisters[1]);
+         int d_reg = get_dst_reg(gen, ch, &inst->FullDstRegisters[0]);
+
+         /* Emit actual SPE instruction: d = s1 - s2 */
+         spe_fs(gen->f, d_reg, s1_reg, s2_reg);
+
+         /* Store the result (a no-op for TGSI_FILE_TEMPORARY dests) */
+         store_dest_reg(gen, d_reg, ch, &inst->FullDstRegisters[0]);
+         /* Free any intermediate temps we allocated */
+         free_itemps(gen);
+      }
+   }
+   return true;
+}
+
+/**
+ * Emit multiply add.  See emit_ADD for comments.
+ */
+static boolean
+emit_MAD(struct codegen *gen, const struct tgsi_full_instruction *inst)
+{
+   int ch;
+   spe_comment(gen->f, -4, "MUL:");
+   for (ch = 0; ch < 4; ch++) {
+      if (inst->FullDstRegisters[0].DstRegister.WriteMask & (1 << ch)) {
+         int s1_reg = get_src_reg(gen, ch, &inst->FullSrcRegisters[0]);
+         int s2_reg = get_src_reg(gen, ch, &inst->FullSrcRegisters[1]);
+         int s3_reg = get_src_reg(gen, ch, &inst->FullSrcRegisters[2]);
+         int d_reg = get_dst_reg(gen, ch, &inst->FullDstRegisters[0]);
+         /* d = s1 * s2 + s3 */
+         spe_fma(gen->f, d_reg, s1_reg, s2_reg, s3_reg);
+         store_dest_reg(gen, d_reg, ch, &inst->FullDstRegisters[0]);
+         free_itemps(gen);
+      }
+   }
+   return true;
+}
+
 
 /**
  * Emit multiply.  See emit_ADD for comments.
@@ -410,7 +462,6 @@ emit_MUL(struct codegen *gen, const struct tgsi_full_instruction *inst)
    }
    return true;
 }
-
 
 /**
  * Emit set-if-greater-than.
@@ -570,6 +621,10 @@ emit_instruction(struct codegen *gen,
       return emit_MUL(gen, inst);
    case TGSI_OPCODE_ADD:
       return emit_ADD(gen, inst);
+   case TGSI_OPCODE_SUB:
+      return emit_SUB(gen, inst);
+   case TGSI_OPCODE_MAD:
+      return emit_MAD(gen, inst);
    case TGSI_OPCODE_SGT:
       return emit_SGT(gen, inst);
    case TGSI_OPCODE_END:
