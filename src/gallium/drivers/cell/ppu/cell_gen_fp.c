@@ -657,9 +657,7 @@ emit_MAX(struct codegen *gen, const struct tgsi_full_instruction *inst)
 
          /* d = (s1 > s2) ? s1 : s2 */
          spe_fcgt(gen->f, d_reg, s1_reg, s2_reg);
-         spe_and(gen->f, d_reg, d_reg, s1_reg);
-         spe_nor(gen->f, d_reg, d_reg, d_reg);
-         spe_and(gen->f, d_reg, d_reg, s2_reg);
+         spe_selb(gen->f, d_reg, s2_reg, s1_reg, d_reg);
 
          store_dest_reg(gen, d_reg, ch, &inst->FullDstRegisters[0]);
          free_itemps(gen);
@@ -685,11 +683,9 @@ emit_MIN(struct codegen *gen, const struct tgsi_full_instruction *inst)
          int s2_reg = get_src_reg(gen, ch, &inst->FullSrcRegisters[1]);
          int d_reg = get_dst_reg(gen, ch, &inst->FullDstRegisters[0]);
 
-         /* d = (s1 < s2) ? s1 : s2 */
+         /* d = (s2 > s1) ? s1 : s2 */
          spe_fcgt(gen->f, d_reg, s2_reg, s1_reg);
-         spe_and(gen->f, d_reg, d_reg, s1_reg);
-         spe_nor(gen->f, d_reg, d_reg, d_reg);
-         spe_and(gen->f, d_reg, d_reg, s2_reg);
+         spe_selb(gen->f, d_reg, s2_reg, s1_reg, d_reg);
 
          store_dest_reg(gen, d_reg, ch, &inst->FullDstRegisters[0]);
          free_itemps(gen);
