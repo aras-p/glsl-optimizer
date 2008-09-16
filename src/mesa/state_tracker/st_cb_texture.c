@@ -455,6 +455,11 @@ st_TexImage(GLcontext * ctx,
       _mesa_align_free(texImage->Data);
    }
 
+   if (width == 0 || height == 0 || depth == 0) {
+      /* stop after freeing old image */
+      return;
+   }
+
    /* If this is the only mipmap level in the texture, could call
     * bmBufferData with NULL data to free the old block and avoid
     * waiting on any outstanding fences.
