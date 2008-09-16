@@ -10,7 +10,7 @@ This directory contains a Gallium3D pipe driver which traces all incoming calls.
 
 To build, invoke scons on the top dir as
  
- scons statetrackers=mesa drivers=softpipe,i915simple,trace winsys=xlib
+ scons statetrackers=mesa drivers=softpipe,i965simple,trace winsys=xlib
 
 
 = Usage =
