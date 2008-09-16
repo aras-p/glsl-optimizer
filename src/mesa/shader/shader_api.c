@@ -1108,7 +1108,8 @@ get_matrix_dims(GLenum type, GLint *rows, GLint *cols)
 
 /**
  * Determine the number of rows and columns occupied by a uniform
- * according to its datatype.
+ * according to its datatype.  For non-matrix types (such as GL_FLOAT_VEC4),
+ * the number of rows = 1 and cols = number of elements in the vector.
  */
 static void
 get_uniform_rows_cols(const struct gl_program_parameter *p,
@@ -1117,11 +1118,17 @@ get_uniform_rows_cols(const struct gl_program_parameter *p,
    get_matrix_dims(p->DataType, rows, cols);
    if (*rows == 0 && *cols == 0) {
       /* not a matrix type, probably a float or vector */
-      *rows = p->Size / 4 + 1;
-      if (p->Size % 4 == 0)
-         *cols = 4;
-      else
-         *cols = p->Size % 4;
+      if (p->Size <= 4) {
+         *rows = 1;
+         *cols = p->Size;
+      }
+      else {
+         *rows = p->Size / 4 + 1;
+         if (p->Size % 4 == 0)
+            *cols = 4;
+         else
+            *cols = p->Size % 4;
+      }
    }
 }
 
