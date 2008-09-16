@@ -1049,12 +1049,14 @@ void vbo_save_EndList( GLcontext *ctx )
    /* EndList called inside a (saved) Begin/End pair?
     */
    if (ctx->Driver.CurrentSavePrimitive != PRIM_OUTSIDE_BEGIN_END) {
-      GLint i = save->prim_count - 1;
 
-      ctx->Driver.CurrentSavePrimitive = PRIM_OUTSIDE_BEGIN_END;
-      save->prim[i].end = 0;
-      save->prim[i].count = (save->vert_count - 
-                             save->prim[i].start);
+      if (save->prim_count > 0) {
+         GLint i = save->prim_count - 1;
+         ctx->Driver.CurrentSavePrimitive = PRIM_OUTSIDE_BEGIN_END;
+         save->prim[i].end = 0;
+         save->prim[i].count = (save->vert_count - 
+                                save->prim[i].start);
+      }
 
       /* Make sure this vertex list gets replayed by the "loopback"
        * mechanism:
