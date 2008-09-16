@@ -153,7 +153,9 @@ update_framebuffer_state( struct st_context *st )
       st->frontbuffer_status = FRONT_STATUS_DIRTY;
    }
 #else
+#if !defined(PIPE_OS_WINDOWS)
 #warning "fix me"
+#endif
    st->frontbuffer_status = FRONT_STATUS_DIRTY;
 #endif
 }
