@@ -152,6 +152,12 @@ check_register_usage(
 {
    if (!check_file_name( ctx, file ))
       return FALSE;
+
+   if (index < 0 || index > MAX_REGISTERS) {
+      report_error( ctx, "%s[%i]: Invalid index %s", file_names[file], index, name );
+      return FALSE;
+   }
+
    if (indirect_access) {
       if (!is_any_register_declared( ctx, file ))
          report_error( ctx, "%s: Undeclared %s register", file_names[file], name );

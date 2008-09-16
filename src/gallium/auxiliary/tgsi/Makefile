@@ -4,6 +4,7 @@ include $(TOP)/configs/current
 LIBNAME = tgsi
 
 C_SOURCES = \
+	tgsi_sanity.c \
 	tgsi_build.c \
 	tgsi_dump.c \
 	tgsi_exec.c \
