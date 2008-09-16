@@ -453,8 +453,7 @@ emit_LERP(struct codegen *gen, const struct tgsi_full_instruction *inst)
          int d_reg = get_dst_reg(gen, ch, &inst->FullDstRegisters[0]);
          /* d = s3 + s1(s2 - s3) */
          spe_fs(gen->f, d_reg, s2_reg, s3_reg);
-         spe_fm(gen->f, d_reg, d_reg, s1_reg);
-         spe_fa(gen->f, d_reg, d_reg, s3_reg);
+         spe_fma(gen->f, d_reg, d_reg, s1_reg, s3_reg);
          store_dest_reg(gen, d_reg, ch, &inst->FullDstRegisters[0]);
          free_itemps(gen);
       }
