@@ -54,6 +54,10 @@
 #define MAX_TEMPS 16
 #define MAX_IMMED  8
 
+#define CHAN_X  0
+#define CHAN_Y  1
+#define CHAN_Z  2
+#define CHAN_W  3
 
 /**
  * Context needed during code generation.
@@ -511,6 +515,79 @@ emit_ABS(struct codegen *gen, const struct tgsi_full_instruction *inst)
 }
 
 /**
+ * Emit 3 component dot product.  See emit_ADD for comments.
+ */
+static boolean
+emit_DP3(struct codegen *gen, const struct tgsi_full_instruction *inst)
+{
+   int ch;
+   spe_comment(gen->f, -4, "DP3:");
+
+   int s1_reg = get_src_reg(gen, CHAN_X, &inst->FullSrcRegisters[0]);
+   int s2_reg = get_src_reg(gen, CHAN_X, &inst->FullSrcRegisters[1]);
+   int d_reg = get_dst_reg(gen, CHAN_X, &inst->FullDstRegisters[0]);
+   /* d = x * x */
+   spe_fm(gen->f, d_reg, s1_reg, s2_reg);
+
+   s1_reg = get_src_reg(gen, CHAN_Y, &inst->FullSrcRegisters[0]);
+   s2_reg = get_src_reg(gen, CHAN_Y, &inst->FullSrcRegisters[1]);
+   /* d = y * y + d */
+   spe_fma(gen->f, d_reg, s1_reg, s2_reg, d_reg);
+
+   s1_reg = get_src_reg(gen, CHAN_Z, &inst->FullSrcRegisters[0]);
+   s2_reg = get_src_reg(gen, CHAN_Z, &inst->FullSrcRegisters[1]);
+   /* d = z * z + d */
+   spe_fma(gen->f, d_reg, s1_reg, s2_reg, d_reg);
+
+   for (ch = 0; ch < 4; ch++) {
+      if (inst->FullDstRegisters[0].DstRegister.WriteMask & (1 << ch)) {
+         store_dest_reg(gen, d_reg, ch, &inst->FullDstRegisters[0]);
+         free_itemps(gen);
+      }
+   }
+   return true;
+}
+
+/**
+ * Emit 4 component dot product.  See emit_ADD for comments.
+ */
+static boolean
+emit_DP4(struct codegen *gen, const struct tgsi_full_instruction *inst)
+{
+   int ch;
+   spe_comment(gen->f, -4, "DP3:");
+
+   int s1_reg = get_src_reg(gen, CHAN_X, &inst->FullSrcRegisters[0]);
+   int s2_reg = get_src_reg(gen, CHAN_X, &inst->FullSrcRegisters[1]);
+   int d_reg = get_dst_reg(gen, CHAN_X, &inst->FullDstRegisters[0]);
+   /* d = x * x */
+   spe_fm(gen->f, d_reg, s1_reg, s2_reg);
+
+   s1_reg = get_src_reg(gen, CHAN_Y, &inst->FullSrcRegisters[0]);
+   s2_reg = get_src_reg(gen, CHAN_Y, &inst->FullSrcRegisters[1]);
+   /* d = y * y + d */
+   spe_fma(gen->f, d_reg, s1_reg, s2_reg, d_reg);
+
+   s1_reg = get_src_reg(gen, CHAN_Z, &inst->FullSrcRegisters[0]);
+   s2_reg = get_src_reg(gen, CHAN_Z, &inst->FullSrcRegisters[1]);
+   /* d = z * z + d */
+   spe_fma(gen->f, d_reg, s1_reg, s2_reg, d_reg);
+
+   s1_reg = get_src_reg(gen, CHAN_W, &inst->FullSrcRegisters[0]);
+   s2_reg = get_src_reg(gen, CHAN_W, &inst->FullSrcRegisters[1]);
+   /* d = w * w + d */
+   spe_fma(gen->f, d_reg, s1_reg, s2_reg, d_reg);
+
+   for (ch = 0; ch < 4; ch++) {
+      if (inst->FullDstRegisters[0].DstRegister.WriteMask & (1 << ch)) {
+         store_dest_reg(gen, d_reg, ch, &inst->FullDstRegisters[0]);
+         free_itemps(gen);
+      }
+   }
+   return true;
+}
+
+/**
  * Emit set-if-greater-than.
  * Note that the SPE fcgt instruction produces 0x0 and 0xffffffff as
  * the result but OpenGL/TGSI needs 0.0 and 1.0 results.
@@ -823,6 +900,10 @@ emit_instruction(struct codegen *gen,
       return emit_MAD(gen, inst);
    case TGSI_OPCODE_LERP:
       return emit_LERP(gen, inst);
+   case TGSI_OPCODE_DP3:
+      return emit_DP3(gen, inst);
+   case TGSI_OPCODE_DP4:
+      return emit_DP4(gen, inst);
    case TGSI_OPCODE_ABS:
       return emit_ABS(gen, inst);
    case TGSI_OPCODE_SGT:
