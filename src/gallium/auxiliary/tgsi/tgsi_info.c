@@ -69,7 +69,7 @@ static const struct tgsi_opcode_info opcode_info[TGSI_OPCODE_LAST] =
    { 1, 1, 0, 0, "COS" },
    { 1, 1, 0, 0, "DDX" },
    { 1, 1, 0, 0, "DDY" },
-   { 0, 1, 0, 0, "KILP" },
+   { 0, 0, 0, 0, "KILP" },
    { 1, 1, 0, 0, "PK2H" },
    { 1, 1, 0, 0, "PK2US" },
    { 1, 1, 0, 0, "PK4B" },
@@ -146,7 +146,7 @@ static const struct tgsi_opcode_info opcode_info[TGSI_OPCODE_LAST] =
    { 0, 1, 0, 0, "CALLNZ" },
    { 0, 1, 0, 0, "IFC" },
    { 0, 1, 0, 0, "BREAKC" },
-   { 0, 0, 0, 0, "KIL" },
+   { 0, 1, 0, 0, "KIL" },
    { 0, 0, 0, 0, "END" },
    { 1, 1, 0, 0, "SWZ" }
 };
