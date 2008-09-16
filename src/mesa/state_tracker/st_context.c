@@ -188,8 +188,6 @@ static void st_destroy_context_priv( struct st_context *st )
    st_destroy_drawtex(st);
 #endif
 
-   _vbo_DestroyContext(st->ctx);
-
    for (i = 0; i < Elements(st->state.sampler_texture); i++) {
       pipe_texture_reference(&st->state.sampler_texture[i], NULL);
    }
@@ -222,6 +220,8 @@ void st_destroy_context( struct st_context *st )
    st_reference_vertprog(st, &st->vp, NULL);
 
    _mesa_delete_program_cache(st->ctx, st->pixel_xfer.cache);
+
+   _vbo_DestroyContext(st->ctx);
 
    _mesa_free_context_data(ctx);
 
