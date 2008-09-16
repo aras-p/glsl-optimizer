@@ -106,7 +106,8 @@
 
 
 #define CELL_DEBUG_CHECKER  (1 << 0)
-#define CELL_DEBUG_SYNC     (1 << 1)
+#define CELL_DEBUG_ASM      (1 << 1)
+#define CELL_DEBUG_SYNC     (1 << 2)
 
 
 

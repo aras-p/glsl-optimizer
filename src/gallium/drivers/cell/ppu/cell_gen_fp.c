@@ -51,10 +51,6 @@
 #include "cell_gen_fp.h"
 
 
-/** Set to 1 to enable debug/disassembly printfs */
-#define DISASSEM 0
-
-
 #define MAX_TEMPS 16
 #define MAX_IMMED  8
 
@@ -864,6 +860,8 @@ emit_instruction(struct codegen *gen,
    /* XXX lots more cases to do... */
 
    default:
+      fprintf(stderr, "Cell: unimplemented TGSI instruction %d!\n",
+              inst->Instruction.Opcode);
       return false;
    }
 
@@ -914,17 +912,19 @@ emit_immediate(struct codegen *gen, const struct tgsi_full_immediate *immed)
  * For each TGSI TEMPORARY we allocate four SPE registers.
  */
 static boolean
-emit_declaration(struct codegen *gen, const struct tgsi_full_declaration *decl)
+emit_declaration(struct cell_context *cell,
+                 struct codegen *gen, const struct tgsi_full_declaration *decl)
 {
    int i, ch;
 
    switch (decl->Declaration.File) {
    case TGSI_FILE_TEMPORARY:
-#if DISASSEM
-      printf("Declare temp reg %d .. %d\n",
-             decl->DeclarationRange.First,
-             decl->DeclarationRange.Last);
-#endif
+      if (cell->debug_flags & CELL_DEBUG_ASM) {
+         printf("Declare temp reg %d .. %d\n",
+                decl->DeclarationRange.First,
+                decl->DeclarationRange.Last);
+      }
+
       for (i = decl->DeclarationRange.First;
            i <= decl->DeclarationRange.Last;
            i++) {
@@ -939,13 +939,13 @@ emit_declaration(struct codegen *gen, const struct tgsi_full_declaration *decl)
           * to SPU memory.  someday...
           */
 
-#if DISASSEM
-         printf("  SPE regs: %d %d %d %d\n",
-                gen->temp_regs[i][0],
-                gen->temp_regs[i][1],
-                gen->temp_regs[i][2],
-                gen->temp_regs[i][3]);
-#endif
+         if (cell->debug_flags & CELL_DEBUG_ASM) {
+            printf("  SPE regs: %d %d %d %d\n",
+                   gen->temp_regs[i][0],
+                   gen->temp_regs[i][1],
+                   gen->temp_regs[i][2],
+                   gen->temp_regs[i][3]);
+         }
       }
       break;
    default:
@@ -985,12 +985,12 @@ cell_gen_fragment_program(struct cell_context *cell,
    spe_allocate_register(f, gen.outputs_reg);
    spe_allocate_register(f, gen.constants_reg);
 
-#if DISASSEM
-   spe_print_code(f, true);
-   spe_indent(f, 8);
-   printf("Begin %s\n", __FUNCTION__);
-   tgsi_dump(tokens, 0);
-#endif
+   if (cell->debug_flags & CELL_DEBUG_ASM) {
+      spe_print_code(f, true);
+      spe_indent(f, 8);
+      printf("Begin %s\n", __FUNCTION__);
+      tgsi_dump(tokens, 0);
+   }
 
    tgsi_parse_init(&parse, tokens);
 
@@ -1004,7 +1004,7 @@ cell_gen_fragment_program(struct cell_context *cell,
          break;
 
       case TGSI_TOKEN_TYPE_DECLARATION:
-         if (!emit_declaration(&gen, &parse.FullToken.FullDeclaration))
+         if (!emit_declaration(cell, &gen, &parse.FullToken.FullDeclaration))
             gen.error = true;
          break;
 
@@ -1024,10 +1024,10 @@ cell_gen_fragment_program(struct cell_context *cell,
       return emit_END(&gen);
    }
 
-#if DISASSEM
-   printf("cell_gen_fragment_program nr instructions: %d\n", f->num_inst);
-   printf("End %s\n", __FUNCTION__);
-#endif
+   if (cell->debug_flags & CELL_DEBUG_ASM) {
+      printf("cell_gen_fragment_program nr instructions: %d\n", f->num_inst);
+      printf("End %s\n", __FUNCTION__);
+   }
 
    tgsi_parse_free( &parse );
 
