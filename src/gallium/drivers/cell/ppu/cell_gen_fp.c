@@ -488,6 +488,50 @@ emit_MUL(struct codegen *gen, const struct tgsi_full_instruction *inst)
 }
 
 /**
+ * Emit reciprocal.  See emit_ADD for comments.
+ */
+static boolean
+emit_RCP(struct codegen *gen, const struct tgsi_full_instruction *inst)
+{
+   int ch;
+   spe_comment(gen->f, -4, "RCP:");
+   for (ch = 0; ch < 4; ch++) {
+      if (inst->FullDstRegisters[0].DstRegister.WriteMask & (1 << ch)) {
+         int s1_reg = get_src_reg(gen, ch, &inst->FullSrcRegisters[0]);
+         int d_reg = get_dst_reg(gen, ch, &inst->FullDstRegisters[0]);
+         /* d = 1/s1 */
+         spe_frest(gen->f, d_reg, s1_reg);
+         spe_fi(gen->f, d_reg, s1_reg, d_reg);
+         store_dest_reg(gen, d_reg, ch, &inst->FullDstRegisters[0]);
+         free_itemps(gen);
+      }
+   }
+   return true;
+}
+
+/**
+ * Emit reciprocal sqrt.  See emit_ADD for comments.
+ */
+static boolean
+emit_RSQ(struct codegen *gen, const struct tgsi_full_instruction *inst)
+{
+   int ch;
+   spe_comment(gen->f, -4, "RSQ:");
+   for (ch = 0; ch < 4; ch++) {
+      if (inst->FullDstRegisters[0].DstRegister.WriteMask & (1 << ch)) {
+         int s1_reg = get_src_reg(gen, ch, &inst->FullSrcRegisters[0]);
+         int d_reg = get_dst_reg(gen, ch, &inst->FullDstRegisters[0]);
+         /* d = 1/s1 */
+         spe_frsqest(gen->f, d_reg, s1_reg);
+         spe_fi(gen->f, d_reg, s1_reg, d_reg);
+         store_dest_reg(gen, d_reg, ch, &inst->FullDstRegisters[0]);
+         free_itemps(gen);
+      }
+   }
+   return true;
+}
+
+/**
  * Emit absolute value.  See emit_ADD for comments.
  */
 static boolean
@@ -904,6 +948,10 @@ emit_instruction(struct codegen *gen,
       return emit_DP3(gen, inst);
    case TGSI_OPCODE_DP4:
       return emit_DP4(gen, inst);
+   case TGSI_OPCODE_RCP:
+      return emit_RCP(gen, inst);
+   case TGSI_OPCODE_RSQ:
+      return emit_RSQ(gen, inst);
    case TGSI_OPCODE_ABS:
       return emit_ABS(gen, inst);
    case TGSI_OPCODE_SGT:
