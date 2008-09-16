@@ -35,10 +35,12 @@
 #include "tgsi/tgsi_parse.h"
 #include "tgsi/tgsi_build.h"
 #include "tgsi/tgsi_util.h"
+#include "tgsi/tgsi_dump.h"
+#include "tgsi/tgsi_sanity.h"
 #include "st_mesa_to_tgsi.h"
 #include "shader/prog_instruction.h"
 #include "shader/prog_parameter.h"
-
+#include "pipe/p_debug.h"
 
 /*
  * Map mesa register file to TGSI register file.
@@ -979,6 +981,15 @@ tgsi_translate_mesa_program(
          header,
          maxTokens - ti );
    }
+
+#if DEBUG
+   if(!tgsi_sanity_check(tokens)) {
+      //debug_printf("Due to sanity check failure the following shader program is invalid\n");
+      tgsi_dump(tokens, 0);
+
+      assert(0);
+   }
+#endif
 
    return ti;
 }
