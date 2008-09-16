@@ -2125,12 +2125,14 @@ struct gl_shader_program
    GLuint NumShaders;          /**< number of attached shaders */
    struct gl_shader **Shaders; /**< List of attached the shaders */
 
+   /** User-defined attribute bindings (glBindAttribLocation) */
+   struct gl_program_parameter_list *Attributes;
+
    /* post-link info: */
    struct gl_vertex_program *VertexProgram;     /**< Linked vertex program */
    struct gl_fragment_program *FragmentProgram; /**< Linked fragment prog */
    struct gl_uniform_list *Uniforms;
    struct gl_program_parameter_list *Varying;
-   struct gl_program_parameter_list *Attributes; /**< Vertex attributes */
    GLboolean LinkStatus;   /**< GL_LINK_STATUS */
    GLboolean Validated;
    GLchar *InfoLog;

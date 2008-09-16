@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  7.1
+ * Version:  7.2
  *
  * Copyright (C) 2004-2008  Brian Paul   All Rights Reserved.
  *
@@ -492,10 +492,14 @@ _mesa_get_attrib_location(GLcontext *ctx, GLuint program,
    if (!name)
       return -1;
 
-   if (shProg->Attributes) {
-      GLint i = _mesa_lookup_parameter_index(shProg->Attributes, -1, name);
-      if (i >= 0) {
-         return shProg->Attributes->Parameters[i].StateIndexes[0];
+   if (shProg->VertexProgram) {
+      const struct gl_program_parameter_list *attribs =
+         shProg->VertexProgram->Base.Attributes;
+      if (attribs) {
+         GLint i = _mesa_lookup_parameter_index(attribs, -1, name);
+         if (i >= 0) {
+            return attribs->Parameters[i].StateIndexes[0];
+         }
       }
    }
    return -1;
@@ -508,7 +512,7 @@ _mesa_bind_attrib_location(GLcontext *ctx, GLuint program, GLuint index,
 {
    struct gl_shader_program *shProg;
    const GLint size = -1; /* unknown size */
-   GLint i, oldIndex;
+   GLint i;
    GLenum datatype = GL_FLOAT_VEC4;
 
    shProg = _mesa_lookup_shader_program_err(ctx, program,
@@ -531,14 +535,6 @@ _mesa_bind_attrib_location(GLcontext *ctx, GLuint program, GLuint index,
       return;
    }
 
-   if (shProg->LinkStatus) {
-      /* get current index/location for the attribute */
-      oldIndex = _mesa_get_attrib_location(ctx, program, name);
-   }
-   else {
-      oldIndex = -1;
-   }
-
    /* this will replace the current value if it's already in the list */
    i = _mesa_add_attribute(shProg->Attributes, name, size, datatype, index);
    if (i < 0) {
@@ -546,12 +542,10 @@ _mesa_bind_attrib_location(GLcontext *ctx, GLuint program, GLuint index,
       return;
    }
 
-   if (shProg->VertexProgram && oldIndex >= 0 && oldIndex != index) {
-      /* If the index changed, need to search/replace references to that attribute
-       * in the vertex program.
-       */
-      _slang_remap_attribute(&shProg->VertexProgram->Base, oldIndex, index);
-   }
+   /*
+    * Note that this attribute binding won't go into effect until
+    * glLinkProgram is called again.
+    */
 }
 
 
@@ -763,24 +757,29 @@ _mesa_get_active_attrib(GLcontext *ctx, GLuint program, GLuint index,
                         GLsizei maxLength, GLsizei *length, GLint *size,
                         GLenum *type, GLchar *nameOut)
 {
+   const struct gl_program_parameter_list *attribs = NULL;
    struct gl_shader_program *shProg;
 
    shProg = _mesa_lookup_shader_program_err(ctx, program, "glGetActiveAttrib");
    if (!shProg)
       return;
 
-   if (!shProg->Attributes || index >= shProg->Attributes->NumParameters) {
+   if (shProg->VertexProgram)
+      attribs = shProg->VertexProgram->Base.Attributes;
+
+   if (!attribs || index >= attribs->NumParameters) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glGetActiveAttrib(index)");
       return;
    }
 
-   copy_string(nameOut, maxLength, length,
-               shProg->Attributes->Parameters[index].Name);
+   copy_string(nameOut, maxLength, length, attribs->Parameters[index].Name);
+
    if (size)
-      *size = shProg->Attributes->Parameters[index].Size
-         / sizeof_glsl_type(shProg->Attributes->Parameters[index].DataType);
+      *size = attribs->Parameters[index].Size
+         / sizeof_glsl_type(attribs->Parameters[index].DataType);
+
    if (type)
-      *type = shProg->Attributes->Parameters[index].DataType;
+      *type = attribs->Parameters[index].DataType;
 }
 
 
@@ -878,6 +877,7 @@ static void
 _mesa_get_programiv(GLcontext *ctx, GLuint program,
                     GLenum pname, GLint *params)
 {
+   const struct gl_program_parameter_list *attribs;
    struct gl_shader_program *shProg
       = _mesa_lookup_shader_program(ctx, program);
 
@@ -885,6 +885,11 @@ _mesa_get_programiv(GLcontext *ctx, GLuint program,
       _mesa_error(ctx, GL_INVALID_VALUE, "glGetProgramiv(program)");
       return;
    }
+
+   if (shProg->VertexProgram)
+      attribs = shProg->VertexProgram->Base.Attributes;
+   else
+      attribs = NULL;
 
    switch (pname) {
    case GL_DELETE_STATUS:
@@ -903,11 +908,10 @@ _mesa_get_programiv(GLcontext *ctx, GLuint program,
       *params = shProg->NumShaders;
       break;
    case GL_ACTIVE_ATTRIBUTES:
-      *params = shProg->Attributes ? shProg->Attributes->NumParameters : 0;
+      *params = attribs ? attribs->NumParameters : 0;
       break;
    case GL_ACTIVE_ATTRIBUTE_MAX_LENGTH:
-      *params = _mesa_longest_parameter_name(shProg->Attributes,
-                                             PROGRAM_INPUT) + 1;
+      *params = _mesa_longest_parameter_name(attribs, PROGRAM_INPUT) + 1;
       break;
    case GL_ACTIVE_UNIFORMS:
       *params = shProg->Uniforms ? shProg->Uniforms->NumUniforms : 0;
