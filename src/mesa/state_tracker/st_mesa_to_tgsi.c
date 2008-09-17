@@ -40,6 +40,7 @@
 #include "st_mesa_to_tgsi.h"
 #include "shader/prog_instruction.h"
 #include "shader/prog_parameter.h"
+#include "shader/prog_print.h"
 #include "pipe/p_debug.h"
 
 /*
