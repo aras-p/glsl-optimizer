@@ -170,6 +170,7 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
                                                   0, 0, 0,
                                                   surface_usage );
 
+   assert(strb->surface->texture);
    assert(strb->surface->buffer);
    assert(strb->surface->format);
    assert(strb->surface->block.size);
