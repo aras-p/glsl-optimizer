@@ -900,6 +900,14 @@ cell_gen_fragment_function(struct cell_context *cell, struct spe_function *f)
    int fbRGBA_reg;  /**< framebuffer's RGBA colors for quad */
    int fbZS_reg;    /**< framebuffer's combined z/stencil values for quad */
 
+   spe_init_func(f, SPU_MAX_FRAGMENT_OPS_INSTS * SPE_INST_SIZE);
+
+   if (cell->debug_flags & CELL_DEBUG_ASM) {
+      spe_print_code(f, true);
+      spe_indent(f, 8);
+      spe_comment(f, -4, "Begin per-fragment ops");
+   }
+
    spe_allocate_register(f, x_reg);
    spe_allocate_register(f, y_reg);
    spe_allocate_register(f, color_tile_reg);
@@ -1114,5 +1122,8 @@ cell_gen_fragment_function(struct cell_context *cell, struct spe_function *f)
    spe_release_register(f, fbRGBA_reg);
    spe_release_register(f, fbZS_reg);
    spe_release_register(f, quad_offset_reg);
-}
 
+   if (cell->debug_flags & CELL_DEBUG_ASM) {
+      spe_comment(f, -4, "End per-fragment ops");
+   }
+}

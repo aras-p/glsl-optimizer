@@ -58,9 +58,9 @@ cell_get_param(struct pipe_screen *screen, int param)
    case PIPE_CAP_MAX_TEXTURE_IMAGE_UNITS:
       return CELL_MAX_SAMPLERS;
    case PIPE_CAP_NPOT_TEXTURES:
-      return 0;
+      return 1;
    case PIPE_CAP_TWO_SIDED_STENCIL:
-      return 0;
+      return 1;
    case PIPE_CAP_GLSL:
       return 1;
    case PIPE_CAP_S3TC:
@@ -68,13 +68,13 @@ cell_get_param(struct pipe_screen *screen, int param)
    case PIPE_CAP_ANISOTROPIC_FILTER:
       return 0;
    case PIPE_CAP_POINT_SPRITE:
-      return 0;
+      return 1;
    case PIPE_CAP_MAX_RENDER_TARGETS:
       return 1;
    case PIPE_CAP_OCCLUSION_QUERY:
-      return 0;
+      return 1;
    case PIPE_CAP_TEXTURE_SHADOW_MAP:
-      return 0;
+      return 10;
    case PIPE_CAP_MAX_TEXTURE_2D_LEVELS:
       return 12; /* max 2Kx2K */
    case PIPE_CAP_MAX_TEXTURE_3D_LEVELS:
@@ -82,7 +82,7 @@ cell_get_param(struct pipe_screen *screen, int param)
    case PIPE_CAP_MAX_TEXTURE_CUBE_LEVELS:
       return 12; /* max 2Kx2K */
    default:
-      return 0;
+      return 10;
    }
 }
 
@@ -108,7 +108,7 @@ cell_get_paramf(struct pipe_screen *screen, int param)
       return 16.0; /* arbitrary */
 
    default:
-      return 0;
+      return 10;
    }
 }
 
