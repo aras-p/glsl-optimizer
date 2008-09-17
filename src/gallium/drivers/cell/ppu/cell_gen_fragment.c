@@ -623,6 +623,7 @@ gen_blend(const struct pipe_blend_state *blend,
       spe_fm(f, term2B_reg, fbB_reg, fragA_reg);
       break;
    case PIPE_BLENDFACTOR_INV_SRC_ALPHA:
+#if 0
       /* one = {1.0, 1.0, 1.0, 1.0} */
       if (!one_reg_set) {
          one_reg = spe_allocate_available_register(f);
@@ -635,6 +636,15 @@ gen_blend(const struct pipe_blend_state *blend,
       spe_fm(f, term2R_reg, fbR_reg, tmp_reg);
       spe_fm(f, term2G_reg, fbG_reg, tmp_reg);
       spe_fm(f, term2B_reg, fbB_reg, tmp_reg);
+#else
+      /* Compute:  term2x = fbx * (1.0 - fragA)
+       * Which is:  term2x = fbx - fbx * fragA
+       * Use fnms t,a,b,c which computes t=c-a*b
+       */
+      spe_fnms(f, term2R_reg, fbR_reg, fragA_reg, fbR_reg);
+      spe_fnms(f, term2G_reg, fbG_reg, fragA_reg, fbG_reg);
+      spe_fnms(f, term2B_reg, fbB_reg, fragA_reg, fbB_reg);
+#endif
       break;
       /* XXX more cases */
       // GL_ONE_MINUS_SRC_COLOR
@@ -663,6 +673,7 @@ gen_blend(const struct pipe_blend_state *blend,
       spe_fm(f, term2A_reg, fbA_reg, fragA_reg);
       break;
    case PIPE_BLENDFACTOR_INV_SRC_ALPHA:
+#if 0
       /* one = {1.0, 1.0, 1.0, 1.0} */
       if (!one_reg_set) {
          one_reg = spe_allocate_available_register(f);
@@ -673,6 +684,13 @@ gen_blend(const struct pipe_blend_state *blend,
       spe_fs(f, tmp_reg, one_reg, fragA_reg);
       /* termA = fbA * tmp */
       spe_fm(f, term2A_reg, fbA_reg, tmp_reg);
+#else
+      /* Compute:  term2A = fbA * (1.0 - fragA)
+       * Which is:  term2A = fbA - fbA * fragA
+       * Use fnms t,a,b,c which computes t=c-a*b
+       */
+      spe_fnms(f, term2A_reg, fbA_reg, fragA_reg, fbA_reg);
+#endif
       break;
       /* XXX more cases */
       // GL_ONE_MINUS_SRC_COLOR
