@@ -88,6 +88,19 @@ void st_invalidate_state(GLcontext * ctx, GLuint new_state)
 }
 
 
+/**
+ * Check for multisample env var override.
+ */
+int
+st_get_msaa(void)
+{
+   const char *msaa = _mesa_getenv("__GL_FSAA_MODE");
+   if (msaa)
+      return atoi(msaa);
+   return 0;
+}
+
+
 static struct st_context *
 st_create_context_priv( GLcontext *ctx, struct pipe_context *pipe )
 {
@@ -140,6 +153,8 @@ st_create_context_priv( GLcontext *ctx, struct pipe_context *pipe )
    st->ctx->VertexProgram._MaintainTnlProgram = GL_TRUE;
 
    st->pixel_xfer.cache = _mesa_new_program_cache();
+
+   st->force_msaa = st_get_msaa();
 
    /* GL limits and extensions */
    st_init_limits(st);
