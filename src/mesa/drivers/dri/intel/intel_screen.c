@@ -309,6 +309,7 @@ intelDestroyScreen(__DRIscreenPrivate * sPriv)
 {
    intelScreenPrivate *intelScreen = (intelScreenPrivate *) sPriv->private;
 
+   dri_bufmgr_destroy(intelScreen->bufmgr);
    intelUnmapScreenRegions(intelScreen);
 
    FREE(intelScreen);
