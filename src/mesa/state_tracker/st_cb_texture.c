@@ -1053,7 +1053,8 @@ st_copy_texsubimage(GLcontext *ctx,
    GLboolean use_fallback = GL_TRUE;
    GLboolean matching_base_formats;
 
-   st_flush(ctx->st, PIPE_FLUSH_RENDER_CACHE, NULL);
+   /* any rendering in progress must complete before we grab the fb image */
+   st_finish(ctx->st);
 
    /* determine if copying depth or color data */
    if (texBaseFormat == GL_DEPTH_COMPONENT) {
