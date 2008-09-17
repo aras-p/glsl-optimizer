@@ -984,9 +984,12 @@ tgsi_translate_mesa_program(
 
 #if DEBUG
    if(!tgsi_sanity_check(tokens)) {
-      //debug_printf("Due to sanity check failure the following shader program is invalid\n");
+      debug_printf("Due to sanity check failure(s) above the following shader program is invalid:\n");
+      debug_printf("\nOriginal program:\n%s", program->String);
+      debug_printf("\nMesa program:\n");
+      _mesa_print_program(program);
+      debug_printf("\nTGSI program:\n");
       tgsi_dump(tokens, 0);
-
       assert(0);
    }
 #endif
