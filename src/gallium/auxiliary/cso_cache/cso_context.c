@@ -765,12 +765,30 @@ void cso_restore_vertex_shader(struct cso_context *ctx)
 }
 
 
+/**
+ * Copy framebuffer state from src to dst with refcounting of surfaces.
+ */
+static void
+copy_framebuffer_state(struct pipe_framebuffer_state *dst,
+                       const struct pipe_framebuffer_state *src)
+{
+   uint i;
+
+   dst->width = src->width;
+   dst->height = src->height;
+   dst->num_cbufs = src->num_cbufs;
+   for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++) {
+      pipe_surface_reference(&dst->cbufs[i], src->cbufs[i]);
+   }
+   pipe_surface_reference(&dst->zsbuf, src->zsbuf);
+}
+
 
 enum pipe_error cso_set_framebuffer(struct cso_context *ctx,
                                     const struct pipe_framebuffer_state *fb)
 {
    if (memcmp(&ctx->fb, fb, sizeof(*fb)) != 0) {
-      ctx->fb = *fb;
+      copy_framebuffer_state(&ctx->fb, fb);
       ctx->pipe->set_framebuffer_state(ctx->pipe, fb);
    }
    return PIPE_OK;
@@ -778,13 +796,13 @@ enum pipe_error cso_set_framebuffer(struct cso_context *ctx,
 
 void cso_save_framebuffer(struct cso_context *ctx)
 {
-   ctx->fb_saved = ctx->fb;
+   copy_framebuffer_state(&ctx->fb_saved, &ctx->fb);
 }
 
 void cso_restore_framebuffer(struct cso_context *ctx)
 {
    if (memcmp(&ctx->fb, &ctx->fb_saved, sizeof(ctx->fb))) {
-      ctx->fb = ctx->fb_saved;
+      copy_framebuffer_state(&ctx->fb, &ctx->fb_saved);
       ctx->pipe->set_framebuffer_state(ctx->pipe, &ctx->fb);
    }
 }
