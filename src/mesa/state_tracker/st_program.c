@@ -409,7 +409,10 @@ st_translate_fragment_program(struct st_context *st,
             interpMode[slot] = TGSI_INTERPOLATE_LINEAR;
             break;
          case FRAG_ATTRIB_FOGC:
-            stfp->input_semantic_name[slot] = TGSI_SEMANTIC_FOG;
+            if (stfp->Base.UsesPointCoord)
+               stfp->input_semantic_name[slot] = TGSI_SEMANTIC_GENERIC;
+            else
+               stfp->input_semantic_name[slot] = TGSI_SEMANTIC_FOG;
             stfp->input_semantic_index[slot] = 0;
             interpMode[slot] = TGSI_INTERPOLATE_PERSPECTIVE;
             break;
