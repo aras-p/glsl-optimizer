@@ -363,6 +363,7 @@ static void
 _slang_update_inputs_outputs(struct gl_program *prog)
 {
    GLuint i, j;
+   GLuint maxAddrReg = 0;
 
    prog->InputsRead = 0x0;
    prog->OutputsWritten = 0x0;
@@ -374,11 +375,19 @@ _slang_update_inputs_outputs(struct gl_program *prog)
          if (inst->SrcReg[j].File == PROGRAM_INPUT) {
             prog->InputsRead |= 1 << inst->SrcReg[j].Index;
          }
+         else if (inst->SrcReg[j].File == PROGRAM_ADDRESS) {
+            maxAddrReg = MAX2(maxAddrReg, inst->SrcReg[j].Index + 1);
+         }
       }
       if (inst->DstReg.File == PROGRAM_OUTPUT) {
          prog->OutputsWritten |= 1 << inst->DstReg.Index;
       }
+      else if (inst->DstReg.File == PROGRAM_ADDRESS) {
+         maxAddrReg = MAX2(maxAddrReg, inst->DstReg.Index + 1);
+      }
    }
+
+   prog->NumAddressRegs = maxAddrReg;
 }
 
 
