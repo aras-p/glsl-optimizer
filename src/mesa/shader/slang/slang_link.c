@@ -275,7 +275,7 @@ _slang_resolve_attributes(struct gl_shader_program *shProg,
                const char *name = origProg->Attributes->Parameters[k].Name;
                const GLint size = origProg->Attributes->Parameters[k].Size;
                const GLenum type =origProg->Attributes->Parameters[k].DataType;
-               GLint index, attr;
+               GLint index;
 
                /* See if there's a user-defined attribute binding for
                 * this name.
@@ -312,6 +312,8 @@ _slang_resolve_attributes(struct gl_shader_program *shProg,
                _mesa_add_attribute(linkedProg->Attributes, name,
                                    size, type, attr);
             }
+
+            assert(attr >= 0);
 
             /* update the instruction's src reg */
             inst->SrcReg[j].Index = VERT_ATTRIB_GENERIC0 + attr;
