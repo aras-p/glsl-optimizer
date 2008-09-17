@@ -89,6 +89,8 @@ static const struct debug_named_value cell_debug_flags[] = {
    {"checker", CELL_DEBUG_CHECKER},/**< modulate tile clear color by SPU ID */
    {"asm", CELL_DEBUG_ASM},        /**< dump SPU asm code */
    {"sync", CELL_DEBUG_SYNC},      /**< SPUs do synchronous DMA */
+   {"fragops", CELL_DEBUG_FRAGMENT_OPS}, /**< SPUs emit fragment ops debug messages*/
+   {"fragopfallback", CELL_DEBUG_FRAGMENT_OP_FALLBACK}, /**< SPUs use reference implementation for fragment ops*/
    {NULL, 0}
 };
 

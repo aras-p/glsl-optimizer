@@ -50,7 +50,31 @@ helpful headers:
 /opt/cell/sdk/usr/include/libmisc.h
 */
 
+/* Set to 0 to disable all extraneous debugging code */
+#define DEBUG 1
+
+#if DEBUG
 boolean Debug = FALSE;
+boolean force_fragment_ops_fallback = TRUE;
+
+/* These debug macros use the unusual construction ", ##__VA_ARGS__"
+ * which expands to the expected comma + args if variadic arguments
+ * are supplied, but swallows the comma if there are no variadic
+ * arguments (which avoids syntax errors that would otherwise occur).
+ */
+#define DEBUG_PRINTF(format,...) \
+   if (Debug) \
+      printf("SPU %u: " format, spu.init.id, ##__VA_ARGS__)
+#define D_PRINTF(flag, format,...) \
+   if (spu.init.debug_flags & (flag)) \
+      printf("SPU %u: " format, spu.init.id, ##__VA_ARGS__)
+
+#else
+
+#define DEBUG_PRINTF(...)
+#define D_PRINTF(...)
+
+#endif
 
 struct spu_global spu;
 
@@ -133,9 +157,7 @@ really_clear_tiles(uint surfaceIndex)
 static void
 cmd_clear_surface(const struct cell_command_clear_surface *clear)
 {
-   if (Debug)
-      printf("SPU %u: CLEAR SURF %u to 0x%08x\n", spu.init.id,
-             clear->surface, clear->value);
+   DEBUG_PRINTF("CLEAR SURF %u to 0x%08x\n", clear->surface, clear->value);
 
    if (clear->surface == 0) {
       spu.fb.color_clear_value = clear->value;
@@ -203,17 +225,14 @@ cmd_clear_surface(const struct cell_command_clear_surface *clear)
 
 #endif /* CLEAR_OPT */
 
-   if (Debug)
-      printf("SPU %u: CLEAR SURF done\n", spu.init.id);
+   DEBUG_PRINTF("CLEAR SURF done\n");
 }
 
 
 static void
 cmd_release_verts(const struct cell_command_release_verts *release)
 {
-   if (Debug)
-      printf("SPU %u: RELEASE VERTS %u\n",
-             spu.init.id, release->vertex_buf);
+   DEBUG_PRINTF("RELEASE VERTS %u\n", release->vertex_buf);
    ASSERT(release->vertex_buf != ~0U);
    release_buffer(release->vertex_buf);
 }
@@ -228,16 +247,30 @@ cmd_release_verts(const struct cell_command_release_verts *release)
 static void
 cmd_state_fragment_ops(const struct cell_command_fragment_ops *fops)
 {
-   if (Debug)
-      printf("SPU %u: CMD_STATE_FRAGMENT_OPS\n", spu.init.id);
+   DEBUG_PRINTF("CMD_STATE_FRAGMENT_OPS\n");
    /* Copy SPU code from batch buffer to spu buffer */
    memcpy(spu.fragment_ops_code, fops->code, SPU_MAX_FRAGMENT_OPS_INSTS * 4);
    /* Copy state info (for fallback case only) */
    memcpy(&spu.depth_stencil_alpha, &fops->dsa, sizeof(fops->dsa));
    memcpy(&spu.blend, &fops->blend, sizeof(fops->blend));
 
-   /* Point function pointer at new code */
-   spu.fragment_ops = (spu_fragment_ops_func) spu.fragment_ops_code;
+   /* Parity twist!  For now, always use the fallback code by default,
+    * only switching to codegen when specifically requested.  This
+    * allows us to develop freely without risking taking down the
+    * branch.
+    *
+    * Later, the parity of this check will be reversed, so that
+    * codegen is *always* used, unless we specifically indicate that
+    * we don't want it.
+    *
+    * Eventually, the option will be removed completely, because in
+    * final code we'll always use codegen and won't even provide the
+    * raw state records that the fallback code requires.
+    */
+   if (spu.init.debug_flags & CELL_DEBUG_FRAGMENT_OP_FALLBACK) {
+      spu.fragment_ops = (spu_fragment_ops_func) spu.fragment_ops_code;
+   }
+   /* otherwise, the default fallback code remains in place */
 
    spu.read_depth = spu.depth_stencil_alpha.depth.enabled;
    spu.read_stencil = spu.depth_stencil_alpha.stencil[0].enabled;
@@ -247,8 +280,7 @@ cmd_state_fragment_ops(const struct cell_command_fragment_ops *fops)
 static void
 cmd_state_fragment_program(const struct cell_command_fragment_program *fp)
 {
-   if (Debug)
-      printf("SPU %u: CMD_STATE_FRAGMENT_PROGRAM\n", spu.init.id);
+   DEBUG_PRINTF("CMD_STATE_FRAGMENT_PROGRAM\n");
    /* Copy SPU code from batch buffer to spu buffer */
    memcpy(spu.fragment_program_code, fp->code,
           SPU_MAX_FRAGMENT_PROGRAM_INSTS * 4);
@@ -262,9 +294,7 @@ cmd_state_fragment_program(const struct cell_command_fragment_program *fp)
 static void
 cmd_state_framebuffer(const struct cell_command_framebuffer *cmd)
 {
-   if (Debug)
-      printf("SPU %u: FRAMEBUFFER: %d x %d at %p, cformat 0x%x  zformat 0x%x\n",
-             spu.init.id,
+   DEBUG_PRINTF("FRAMEBUFFER: %d x %d at %p, cformat 0x%x  zformat 0x%x\n",
              cmd->width,
              cmd->height,
              cmd->color_start,
@@ -309,9 +339,7 @@ cmd_state_framebuffer(const struct cell_command_framebuffer *cmd)
 static void
 cmd_state_sampler(const struct cell_command_sampler *sampler)
 {
-   if (Debug)
-      printf("SPU %u: SAMPLER [%u]\n",
-             spu.init.id, sampler->unit);
+   DEBUG_PRINTF("SAMPLER [%u]\n", sampler->unit);
 
    spu.sampler[sampler->unit] = sampler->state;
    if (spu.sampler[sampler->unit].min_img_filter == PIPE_TEX_FILTER_LINEAR)
@@ -328,11 +356,9 @@ cmd_state_texture(const struct cell_command_texture *texture)
    const uint width = texture->width;
    const uint height = texture->height;
 
-   if (Debug) {
-      printf("SPU %u: TEXTURE [%u] at %p  size %u x %u\n", spu.init.id,
+   DEBUG_PRINTF("TEXTURE [%u] at %p  size %u x %u\n",
              texture->unit, texture->start,
              texture->width, texture->height);
-   }
 
    spu.texture[unit].start = texture->start;
    spu.texture[unit].width = width;
@@ -351,10 +377,7 @@ cmd_state_texture(const struct cell_command_texture *texture)
 static void
 cmd_state_vertex_info(const struct vertex_info *vinfo)
 {
-   if (Debug) {
-      printf("SPU %u: VERTEX_INFO num_attribs=%u\n", spu.init.id,
-             vinfo->num_attribs);
-   }
+   DEBUG_PRINTF("VERTEX_INFO num_attribs=%u\n", vinfo->num_attribs);
    ASSERT(vinfo->num_attribs >= 1);
    ASSERT(vinfo->num_attribs <= 8);
    memcpy(&spu.vertex_info, vinfo, sizeof(*vinfo));
@@ -393,8 +416,7 @@ cmd_state_attrib_fetch(const struct cell_attribute_fetch_code *code)
 static void
 cmd_finish(void)
 {
-   if (Debug)
-      printf("SPU %u: FINISH\n", spu.init.id);
+   DEBUG_PRINTF("FINISH\n");
    really_clear_tiles(0);
    /* wait for all outstanding DMAs to finish */
    mfc_write_tag_mask(~0);
@@ -419,9 +441,8 @@ cmd_batch(uint opcode)
    const unsigned usize = size / sizeof(buffer[0]);
    uint pos;
 
-   if (Debug)
-      printf("SPU %u: BATCH buffer %u, len %u, from %p\n",
-             spu.init.id, buf, size, spu.init.buffers[buf]);
+   DEBUG_PRINTF("BATCH buffer %u, len %u, from %p\n",
+             buf, size, spu.init.buffers[buf]);
 
    ASSERT((opcode & CELL_CMD_OPCODE_MASK) == CELL_CMD_BATCH);
 
@@ -440,8 +461,7 @@ cmd_batch(uint opcode)
    wait_on_mask(1 << TAG_BATCH_BUFFER);
 
    /* Tell PPU we're done copying the buffer to local store */
-   if (Debug)
-      printf("SPU %u: release batch buf %u\n", spu.init.id, buf);
+   DEBUG_PRINTF("release batch buf %u\n", buf);
    release_buffer(buf);
 
    /*
@@ -571,8 +591,7 @@ cmd_batch(uint opcode)
       }
    }
 
-   if (Debug)
-      printf("SPU %u: BATCH complete\n", spu.init.id);
+   DEBUG_PRINTF("BATCH complete\n");
 }
 
 
@@ -585,8 +604,7 @@ main_loop(void)
    struct cell_command cmd;
    int exitFlag = 0;
 
-   if (Debug)
-      printf("SPU %u: Enter main loop\n", spu.init.id);
+   DEBUG_PRINTF("Enter main loop\n");
 
    ASSERT((sizeof(struct cell_command) & 0xf) == 0);
    ASSERT_ALIGN16(&cmd);
@@ -595,14 +613,12 @@ main_loop(void)
       unsigned opcode;
       int tag = 0;
 
-      if (Debug)
-         printf("SPU %u: Wait for cmd...\n", spu.init.id);
+      DEBUG_PRINTF("Wait for cmd...\n");
 
       /* read/wait from mailbox */
       opcode = (unsigned int) spu_read_in_mbox();
 
-      if (Debug)
-         printf("SPU %u: got cmd 0x%x\n", spu.init.id, opcode);
+      DEBUG_PRINTF("got cmd 0x%x\n", opcode);
 
       /* command payload */
       mfc_get(&cmd,  /* dest */
@@ -619,8 +635,7 @@ main_loop(void)
 
       switch (opcode & CELL_CMD_OPCODE_MASK) {
       case CELL_CMD_EXIT:
-         if (Debug)
-            printf("SPU %u: EXIT\n", spu.init.id);
+         DEBUG_PRINTF("EXIT\n");
          exitFlag = 1;
          break;
       case CELL_CMD_VS_EXECUTE:
@@ -632,13 +647,12 @@ main_loop(void)
          cmd_batch(opcode);
          break;
       default:
-         printf("Bad opcode!\n");
+         printf("Bad opcode 0x%x!\n", opcode & CELL_CMD_OPCODE_MASK);
       }
 
    }
 
-   if (Debug)
-      printf("SPU %u: Exit main loop\n", spu.init.id);
+   DEBUG_PRINTF("Exit main loop\n");
 
    spu_dcache_report();
 }
@@ -653,7 +667,8 @@ one_time_init(void)
    invalidate_tex_cache();
 
    /* Install default/fallback fragment processing function.
-    * This will normally be overriden by a code-gen'd function.
+    * This will normally be overriden by a code-gen'd function
+    * unless CELL_FORCE_FRAGMENT_OPS_FALLBACK is set.
     */
    spu.fragment_ops = spu_fallback_fragment_ops;
 }
@@ -685,8 +700,8 @@ main(main_param_t speid, main_param_t argp)
 
    one_time_init();
 
-   if (Debug)
-      printf("SPU: main() speid=%lu\n", (unsigned long) speid);
+   DEBUG_PRINTF("main() speid=%lu\n", (unsigned long) speid);
+   D_PRINTF(CELL_DEBUG_FRAGMENT_OP_FALLBACK, "using fragment op fallback\n");
 
    mfc_get(&spu.init,  /* dest */
            (unsigned int) argp, /* src */

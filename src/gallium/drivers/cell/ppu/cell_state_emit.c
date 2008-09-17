@@ -100,14 +100,19 @@ cell_emit_state(struct cell_context *cell)
             = cell_batch_alloc(cell, sizeof(*fops));
       struct spe_function spe_code;
 
+      /* Prepare the buffer that will hold the generated code. */
+      spe_init_func(&spe_code, SPU_MAX_FRAGMENT_OPS_INSTS * SPE_INST_SIZE);
+
       /* generate new code */
       cell_gen_fragment_function(cell, &spe_code);
+
       /* put the new code into the batch buffer */
       fops->opcode = CELL_CMD_STATE_FRAGMENT_OPS;
       memcpy(&fops->code, spe_code.store,
              SPU_MAX_FRAGMENT_OPS_INSTS * SPE_INST_SIZE);
       fops->dsa = cell->depth_stencil->base;
       fops->blend = cell->blend->base;
+
       /* free codegen buffer */
       spe_release_func(&spe_code);
    }

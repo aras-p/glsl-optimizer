@@ -104,12 +104,11 @@
 #define CELL_BUFFER_STATUS_FREE 10
 #define CELL_BUFFER_STATUS_USED 20
 
-
-#define CELL_DEBUG_CHECKER  (1 << 0)
-#define CELL_DEBUG_ASM      (1 << 1)
-#define CELL_DEBUG_SYNC     (1 << 2)
-
-
+#define CELL_DEBUG_CHECKER              (1 << 0)
+#define CELL_DEBUG_ASM                  (1 << 1)
+#define CELL_DEBUG_SYNC                 (1 << 2)
+#define CELL_DEBUG_FRAGMENT_OPS         (1 << 3)
+#define CELL_DEBUG_FRAGMENT_OP_FALLBACK (1 << 4)
 
 /** Max instructions for doing per-fragment operations */
 #define SPU_MAX_FRAGMENT_OPS_INSTS 64
