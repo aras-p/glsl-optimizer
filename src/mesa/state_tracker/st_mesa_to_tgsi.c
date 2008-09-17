@@ -241,6 +241,15 @@ compile_instruction(
          immediateMapping,
          indirectAccess );
 
+      /**
+       * This not at all the correct solution.
+       * FIXME: Roll this up in the above map functions
+       */
+      if (fullsrc->SrcRegister.File == TGSI_FILE_IMMEDIATE && fullsrc->SrcRegister.Index == ~0) {
+         fullsrc->SrcRegister.File = TGSI_FILE_CONSTANT;
+         fullsrc->SrcRegister.Index = inst->SrcReg[i].Index;
+      }
+
       /* swizzle (ext swizzle also depends on negation) */
       {
          GLuint swz[4];
