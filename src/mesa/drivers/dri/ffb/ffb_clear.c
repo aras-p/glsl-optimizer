@@ -25,10 +25,10 @@
  *    David S. Miller <davem@redhat.com>
  */
 
-#include "mtypes.h"
-#include "extensions.h"
+#include "main/mtypes.h"
+#include "main/extensions.h"
 
-#include "mm.h"
+#include "main/mm.h"
 #include "ffb_dd.h"
 #include "ffb_span.h"
 #include "ffb_depth.h"

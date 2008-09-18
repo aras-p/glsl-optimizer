@@ -49,9 +49,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_drm.h"
 #include "texmem.h"
 
-#include "macros.h"
-#include "mtypes.h"
-#include "colormac.h"
+#include "main/macros.h"
+#include "main/mtypes.h"
+#include "main/colormac.h"
 
 struct radeon_context;
 typedef struct radeon_context radeonContextRec;
@@ -66,7 +66,7 @@ typedef union {
 
 #include "radeon_lock.h"
 #include "radeon_screen.h"
-#include "mm.h"
+#include "main/mm.h"
 
 #include "math/m_vector.h"
 

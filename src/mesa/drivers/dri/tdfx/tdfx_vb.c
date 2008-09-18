@@ -24,11 +24,11 @@
  */
 /* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/tdfx_vb.c,v 1.3 2002/10/30 12:52:01 alanh Exp $ */
  
-#include "glheader.h"
-#include "mtypes.h"
-#include "imports.h"
-#include "macros.h"
-#include "colormac.h"
+#include "main/glheader.h"
+#include "main/mtypes.h"
+#include "main/imports.h"
+#include "main/macros.h"
+#include "main/colormac.h"
 
 #include "math/m_translate.h"
 #include "swrast_setup/swrast_setup.h"

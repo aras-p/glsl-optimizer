@@ -25,8 +25,9 @@
  *    David S. Miller <davem@redhat.com>
  */
 
-#include "mtypes.h"
-#include "mm.h"
+#include "main/mtypes.h"
+#include "main/mm.h"
+#include "main/extensions.h"
 #include "ffb_dd.h"
 #include "ffb_span.h"
 #include "ffb_depth.h"
@@ -35,7 +36,6 @@
 #include "ffb_lines.h"
 #include "ffb_tris.h"
 #include "ffb_lock.h"
-#include "extensions.h"
 
 #undef FFB_LINE_TRACE
 

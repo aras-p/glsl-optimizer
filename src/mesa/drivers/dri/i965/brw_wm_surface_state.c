@@ -30,9 +30,9 @@
   */
                    
 
-#include "mtypes.h"
-#include "texformat.h"
-#include "texstore.h"
+#include "main/mtypes.h"
+#include "main/texformat.h"
+#include "main/texstore.h"
 
 #include "intel_mipmap_tree.h"
 #include "intel_batchbuffer.h"

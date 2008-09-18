@@ -34,7 +34,7 @@
 #include "brw_context.h"
 #include "brw_state.h"
 #include "brw_defines.h"
-#include "macros.h"
+#include "main/macros.h"
 #include "intel_fbo.h"
 
 static void upload_sf_vp(struct brw_context *brw)

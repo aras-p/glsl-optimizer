@@ -39,11 +39,11 @@
  *
  */
 
-#include "mtypes.h"
-#include "colormac.h"
-#include "texformat.h"
-#include "texstore.h"
-#include "teximage.h"
+#include "main/mtypes.h"
+#include "main/colormac.h"
+#include "main/texformat.h"
+#include "main/texstore.h"
+#include "main/teximage.h"
 
 #include "swrast/swrast.h"
 #include "vbo/vbo.h"

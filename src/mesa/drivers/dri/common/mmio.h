@@ -33,7 +33,7 @@
 #ifndef MMIO_H
 #define MMIO_H
 
-#include "glheader.h"
+#include "main/glheader.h"
 
 #if defined( __powerpc__ )
 

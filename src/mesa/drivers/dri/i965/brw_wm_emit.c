@@ -30,7 +30,7 @@
   */
                
 
-#include "macros.h"
+#include "main/macros.h"
 #include "brw_context.h"
 #include "brw_wm.h"
 

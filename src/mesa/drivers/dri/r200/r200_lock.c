@@ -60,7 +60,7 @@ r200UpdatePageFlipping( r200ContextPtr rmesa )
 
 
 
-/* Update the hardware state.  This is called if another context has
+/* Update the hardware state.  This is called if another main/context.has
  * grabbed the hardware lock, which includes the X server.  This
  * function also updates the driver's window state after the X server
  * moves, resizes or restacks a window -- the change will be reflected

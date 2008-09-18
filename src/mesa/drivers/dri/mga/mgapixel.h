@@ -29,7 +29,7 @@
 #ifndef MGA_PIXELS_H
 #define MGA_PIXELS_H
 
-#include "mtypes.h"
+#include "main/mtypes.h"
 
 extern void mgaDDInitPixelFuncs( GLcontext *ctx );
 

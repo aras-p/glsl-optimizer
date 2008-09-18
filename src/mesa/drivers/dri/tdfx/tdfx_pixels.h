@@ -39,7 +39,7 @@
 #ifndef __TDFX_PIXELS_H__
 #define __TDFX_PIXELS_H__
 
-#include "context.h"
+#include "main/context.h"
 
 extern void
 tdfx_bitmap_R5G6B5( GLcontext *ctx, GLint px, GLint py,

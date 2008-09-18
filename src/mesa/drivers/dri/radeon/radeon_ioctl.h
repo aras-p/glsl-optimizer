@@ -37,7 +37,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifndef __RADEON_IOCTL_H__
 #define __RADEON_IOCTL_H__
 
-#include "simple_list.h"
+#include "main/simple_list.h"
 #include "radeon_lock.h"
 
 

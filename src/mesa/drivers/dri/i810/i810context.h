@@ -21,7 +21,7 @@
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-/* $XFree86: xc/lib/GL/mesa/src/drv/i810/i810context.h,v 1.9 2002/12/16 16:18:51 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/i810/main/context.h,v 1.9 2002/12/16 16:18:51 dawes Exp $ */
 
 #ifndef I810CONTEXT_INC
 #define I810CONTEXT_INC
@@ -31,8 +31,8 @@ typedef struct i810_context_t *i810ContextPtr;
 typedef struct i810_texture_object_t *i810TextureObjectPtr;
 
 #include "drm.h"
-#include "mtypes.h"
-#include "mm.h"
+#include "main/mtypes.h"
+#include "main/mm.h"
 
 #include "i810screen.h"
 #include "i810tex.h"

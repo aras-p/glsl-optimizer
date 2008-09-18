@@ -28,7 +28,7 @@
 #ifndef INTELTEX_INC
 #define INTELTEX_INC
 
-#include "mtypes.h"
+#include "main/mtypes.h"
 #include "intel_context.h"
 #include "texmem.h"
 

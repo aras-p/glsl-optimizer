@@ -25,7 +25,7 @@
  * 
  **************************************************************************/
 
-#include "imports.h"
+#include "main/imports.h"
 
 #include "i915_reg.h"
 #include "i915_context.h"

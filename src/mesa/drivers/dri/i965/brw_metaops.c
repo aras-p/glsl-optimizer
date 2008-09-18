@@ -32,9 +32,9 @@
  
 
 
-#include "glheader.h"
-#include "context.h"
-#include "macros.h"
+#include "main/glheader.h"
+#include "main/context.h"
+#include "main/macros.h"
 
 #include "shader/arbprogparse.h"
 

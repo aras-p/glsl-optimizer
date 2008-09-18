@@ -33,14 +33,14 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *   Keith Whitwell <keith@tungstengraphics.com>
  */
 
-#include "glheader.h"
-#include "imports.h"
-#include "api_arrayelt.h"
-#include "enums.h"
-#include "light.h"
-#include "state.h"
-#include "context.h"
-#include "framebuffer.h"
+#include "main/glheader.h"
+#include "main/imports.h"
+#include "main/api_arrayelt.h"
+#include "main/enums.h"
+#include "main/light.h"
+#include "main/state.h"
+#include "main/context.h"
+#include "main/framebuffer.h"
 
 #include "vbo/vbo.h"
 #include "tnl/tnl.h"

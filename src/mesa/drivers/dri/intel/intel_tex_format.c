@@ -1,7 +1,7 @@
 #include "intel_context.h"
 #include "intel_tex.h"
-#include "texformat.h"
-#include "enums.h"
+#include "main/texformat.h"
+#include "main/enums.h"
 
 /* It works out that this function is fine for all the supported
  * hardware.  However, there is still a need to map the formats onto

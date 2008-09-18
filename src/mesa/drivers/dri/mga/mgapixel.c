@@ -36,8 +36,8 @@
  */
 /* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgapixel.c,v 1.9 2002/11/05 17:46:08 tsi Exp $ */
 
-#include "mtypes.h"
-#include "macros.h"
+#include "main/mtypes.h"
+#include "main/macros.h"
 #include "mgadd.h"
 #include "mgacontext.h"
 #include "mgaioctl.h"
@@ -45,7 +45,7 @@
 #include "mgastate.h"
 
 #include "swrast/swrast.h"
-#include "imports.h"
+#include "main/imports.h"
 
 #if 0
 #define IS_AGP_MEM( mmesa, p )						  \

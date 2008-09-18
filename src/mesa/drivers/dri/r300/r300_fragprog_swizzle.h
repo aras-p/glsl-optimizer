@@ -28,7 +28,7 @@
 #ifndef __R300_FRAGPROG_SWIZZLE_H_
 #define __R300_FRAGPROG_SWIZZLE_H_
 
-#include "glheader.h"
+#include "main/glheader.h"
 #include "shader/prog_instruction.h"
 
 struct nqssadce_state;

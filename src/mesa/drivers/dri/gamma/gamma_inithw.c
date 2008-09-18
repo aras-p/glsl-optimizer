@@ -25,7 +25,7 @@
  */
 /* $XFree86: xc/lib/GL/mesa/src/drv/gamma/gamma_inithw.c,v 1.9 2002/10/30 12:51:29 alanh Exp $ */
 
-#include "gamma_context.h"
+#include "gammacontext.h"
 #include "glint_dri.h"
 
 void gammaInitHW( gammaContextPtr gmesa )

@@ -43,9 +43,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "dri_util.h"
 #include "texmem.h"
 
-#include "macros.h"
-#include "mtypes.h"
-#include "colormac.h"
+#include "main/macros.h"
+#include "main/mtypes.h"
+#include "main/colormac.h"
 
 #define USER_BUFFERS
 
@@ -54,7 +54,7 @@ typedef struct r300_context r300ContextRec;
 typedef struct r300_context *r300ContextPtr;
 
 #include "radeon_lock.h"
-#include "mm.h"
+#include "main/mm.h"
 
 /* From http://gcc.gnu.org/onlinedocs/gcc-3.2.3/gcc/Variadic-Macros.html .
    I suppose we could inline this and use macro to fetch out __LINE__ and stuff in case we run into trouble

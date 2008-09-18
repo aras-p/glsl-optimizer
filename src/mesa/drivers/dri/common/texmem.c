@@ -44,10 +44,10 @@
  */
 
 #include "texmem.h"
-#include "simple_list.h"
-#include "imports.h"
-#include "macros.h"
-#include "texformat.h"
+#include "main/simple_list.h"
+#include "main/imports.h"
+#include "main/macros.h"
+#include "main/texformat.h"
 
 #include <assert.h>
 

@@ -35,10 +35,10 @@
 #include "mach64_vb.h"
 #include "mach64_span.h"
 
-#include "context.h"
-#include "imports.h"
-#include "framebuffer.h"
-#include "renderbuffer.h"
+#include "main/context.h"
+#include "main/imports.h"
+#include "main/framebuffer.h"
+#include "main/renderbuffer.h"
 
 #include "utils.h"
 #include "vblank.h"

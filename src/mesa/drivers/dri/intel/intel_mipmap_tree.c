@@ -29,7 +29,7 @@
 #include "intel_mipmap_tree.h"
 #include "intel_regions.h"
 #include "intel_chipset.h"
-#include "enums.h"
+#include "main/enums.h"
 
 #define FILE_DEBUG_FLAG DEBUG_MIPTREE
 

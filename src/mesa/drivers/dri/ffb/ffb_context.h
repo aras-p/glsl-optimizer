@@ -6,7 +6,7 @@
 #include "dri_util.h"
 #include "drm.h"
 
-#include "mtypes.h"
+#include "main/mtypes.h"
 
 #include "ffb_xmesa.h"
 

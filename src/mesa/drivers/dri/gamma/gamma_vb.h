@@ -28,7 +28,7 @@
 #ifndef GAMMAVB_INC
 #define GAMMAVB_INC
 
-#include "mtypes.h"
+#include "main/mtypes.h"
 #include "swrast/swrast.h"
 
 #define _GAMMA_NEW_VERTEX (_NEW_TEXTURE |		\

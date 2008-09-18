@@ -31,10 +31,10 @@
 
 #include <string.h>
 #include <stdlib.h>
-#include "mtypes.h"
-#include "extensions.h"
+#include "main/mtypes.h"
+#include "main/extensions.h"
+#include "glapi/dispatch.h"
 #include "utils.h"
-#include "dispatch.h"
 
 int driDispatchRemapTable[ driDispatchRemapTable_size ];
 

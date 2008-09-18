@@ -27,7 +27,7 @@
 #ifndef I810TRIS_INC
 #define I810TRIS_INC
 
-#include "mtypes.h"
+#include "main/mtypes.h"
 
 extern void i810PrintRenderState( const char *msg, GLuint state );
 extern void i810InitTriFuncs( GLcontext *ctx );

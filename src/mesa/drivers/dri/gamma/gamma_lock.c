@@ -1,6 +1,6 @@
 /* $XFree86: xc/lib/GL/mesa/src/drv/gamma/gamma_lock.c,v 1.4 2002/11/05 17:46:07 tsi Exp $ */
 
-#include "gamma_context.h"
+#include "gammacontext.h"
 #include "gamma_lock.h"
 #include "drirenderbuffer.h"
 

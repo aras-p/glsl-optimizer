@@ -39,14 +39,14 @@
  */
 
 
-#include "enums.h"
-#include "image.h"
-#include "mipmap.h"
-#include "texcompress.h"
-#include "texformat.h"
-#include "teximage.h"
-#include "texstore.h"
-#include "texobj.h"
+#include "main/enums.h"
+#include "main/image.h"
+#include "main/mipmap.h"
+#include "main/texcompress.h"
+#include "main/texformat.h"
+#include "main/teximage.h"
+#include "main/texstore.h"
+#include "main/texobj.h"
 #include "tdfx_context.h"
 #include "tdfx_tex.h"
 #include "tdfx_texman.h"

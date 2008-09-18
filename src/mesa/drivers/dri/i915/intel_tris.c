@@ -31,13 +31,13 @@
  * primitives into it.
  */
 
-#include "glheader.h"
-#include "context.h"
-#include "macros.h"
-#include "enums.h"
-#include "texobj.h"
-#include "state.h"
-#include "dd.h"
+#include "main/glheader.h"
+#include "main/context.h"
+#include "main/macros.h"
+#include "main/enums.h"
+#include "main/texobj.h"
+#include "main/state.h"
+#include "main/dd.h"
 
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"

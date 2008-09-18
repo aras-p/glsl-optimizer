@@ -26,24 +26,24 @@
  */
 /* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgatex.c,v 1.14 2002/10/30 12:51:36 alanh Exp $ */
 
-#include "glheader.h"
-#include "mm.h"
+#include "main/glheader.h"
+#include "main/mm.h"
 #include "mgacontext.h"
 #include "mgatex.h"
 #include "mgaregs.h"
 #include "mgatris.h"
 #include "mgaioctl.h"
 
-#include "colormac.h"
-#include "context.h"
-#include "enums.h"
-#include "simple_list.h"
-#include "imports.h"
-#include "macros.h"
-#include "texformat.h"
-#include "texstore.h"
-#include "teximage.h"
-#include "texobj.h"
+#include "main/colormac.h"
+#include "main/context.h"
+#include "main/enums.h"
+#include "main/simple_list.h"
+#include "main/imports.h"
+#include "main/macros.h"
+#include "main/texformat.h"
+#include "main/texstore.h"
+#include "main/teximage.h"
+#include "main/texobj.h"
 
 #include "swrast/swrast.h"
 

@@ -5,7 +5,7 @@
 #ifndef S3VVB_INC
 #define S3VVB_INC
 
-#include "mtypes.h"
+#include "main/mtypes.h"
 #include "swrast/swrast.h"
 
 #define _S3V_NEW_VERTEX (_NEW_TEXTURE |		\

@@ -39,9 +39,9 @@
 #include "tdfx_pixels.h"
 
 #include "utils.h"
-#include "context.h"
-#include "enums.h"
-#include "framebuffer.h"
+#include "main/context.h"
+#include "main/enums.h"
+#include "main/framebuffer.h"
 #include "swrast/swrast.h"
 #if defined(USE_X86_ASM)
 #include "x86/common_x86_asm.h"

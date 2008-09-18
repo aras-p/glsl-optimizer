@@ -25,10 +25,10 @@
  * 3DLabs Gamma driver
  */
 
-#include "gamma_context.h"
+#include "gammacontext.h"
 #include "gamma_vb.h"
-#include "context.h"
-#include "matrix.h"
+#include "main/context.h"
+#include "main/matrix.h"
 #include "glint_dri.h"
 
 #include "swrast/swrast.h"

@@ -27,7 +27,7 @@
  * \author Felix Kuehling
  */
 
-#include "glheader.h"
+#include "main/glheader.h"
 
 #include <string.h>
 #include <assert.h>
@@ -35,7 +35,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <errno.h>
-#include "imports.h"
+#include "main/imports.h"
 #include "dri_util.h"
 #include "xmlconfig.h"
 

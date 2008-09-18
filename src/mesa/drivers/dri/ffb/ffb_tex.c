@@ -25,8 +25,8 @@
  *    David S. Miller <davem@redhat.com>
  */
 
-#include "glheader.h"
-#include "mtypes.h"
+#include "main/glheader.h"
+#include "main/mtypes.h"
 #include "ffb_tex.h"
 
 /* No texture unit, all software. */

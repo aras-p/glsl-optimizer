@@ -26,17 +26,17 @@
  */
 /* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgatexmem.c,v 1.7 2002/10/30 12:51:36 alanh Exp $ */
 
-#include "glheader.h"
+#include "main/glheader.h"
 
-#include "mm.h"
+#include "main/mm.h"
 #include "mgacontext.h"
 #include "mgatex.h"
 #include "mgaregs.h"
 #include "mgaioctl.h"
 #include "mga_xmesa.h"
 
-#include "imports.h"
-#include "simple_list.h"
+#include "main/imports.h"
+#include "main/simple_list.h"
 
 /**
  * Destroy any device-dependent state associated with the texture.  This may

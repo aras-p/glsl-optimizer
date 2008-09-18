@@ -36,7 +36,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifndef __RADEON_TRIS_H__
 #define __RADEON_TRIS_H__
 
-#include "mtypes.h"
+#include "main/mtypes.h"
 #include "swrast/swrast.h"
 #include "radeon_context.h"
 

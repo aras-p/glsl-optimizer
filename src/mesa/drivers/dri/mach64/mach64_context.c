@@ -29,12 +29,12 @@
  *	Jos�Fonseca <j_r_fonseca@yahoo.co.uk>
  */
 
-#include "glheader.h"
-#include "context.h"
-#include "simple_list.h"
-#include "imports.h"
-#include "matrix.h"
-#include "extensions.h"
+#include "main/glheader.h"
+#include "main/context.h"
+#include "main/simple_list.h"
+#include "main/imports.h"
+#include "main/matrix.h"
+#include "main/extensions.h"
 
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"

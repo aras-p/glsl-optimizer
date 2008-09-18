@@ -26,12 +26,12 @@
  */
 
 #include "ffb_xmesa.h"
-#include "context.h"
-#include "framebuffer.h"
-#include "matrix.h"
-#include "renderbuffer.h"
-#include "simple_list.h"
-#include "imports.h"
+#include "main/context.h"
+#include "main/framebuffer.h"
+#include "main/matrix.h"
+#include "main/renderbuffer.h"
+#include "main/simple_list.h"
+#include "main/imports.h"
 #include "utils.h"
 
 #include "swrast/swrast.h"
@@ -226,7 +226,7 @@ ffbCreateContext(const __GLcontextModes *mesaVis,
 	fmesa->driScreen = sPriv;
 	fmesa->ffb_sarea = FFB_DRISHARE(sPriv->pSAREA);
 
-	/* Register and framebuffer hw pointers. */
+	/* Register and framebuffer pointers. */
 	fmesa->regs = ffbScreen->regs;
 	fmesa->sfb32 = ffbScreen->sfb32;
 

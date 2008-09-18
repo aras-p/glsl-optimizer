@@ -25,9 +25,18 @@
  *    David S. Miller <davem@redhat.com>
  */
 
-#include "mtypes.h"
-#include "colormac.h"
-#include "mm.h"
+#include "main/mtypes.h"
+#include "main/colormac.h"
+#include "main/mm.h"
+#include "main/extensions.h"
+#include "main/enums.h"
+
+#include "vbo/vbo.h"
+#include "tnl/tnl.h"
+#include "tnl/t_pipeline.h"
+#include "swrast/swrast.h"
+#include "swrast_setup/swrast_setup.h"
+
 #include "ffb_dd.h"
 #include "ffb_span.h"
 #include "ffb_depth.h"
@@ -36,15 +45,6 @@
 #include "ffb_tris.h"
 #include "ffb_state.h"
 #include "ffb_lock.h"
-#include "extensions.h"
-#include "enums.h"
-
-#include "swrast/swrast.h"
-#include "vbo/vbo.h"
-#include "tnl/tnl.h"
-#include "swrast_setup/swrast_setup.h"
-
-#include "tnl/t_pipeline.h"
 
 #undef STATE_TRACE
 

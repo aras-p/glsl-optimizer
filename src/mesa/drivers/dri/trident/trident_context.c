@@ -35,17 +35,17 @@
 #include "tnl/tnl.h"
 #include "tnl/t_pipeline.h"
 
-#include "context.h"
-#include "simple_list.h"
-#include "matrix.h"
-#include "extensions.h"
-#include "framebuffer.h"
-#include "renderbuffer.h"
+#include "main/context.h"
+#include "main/simple_list.h"
+#include "main/matrix.h"
+#include "main/extensions.h"
+#include "main/framebuffer.h"
+#include "main/renderbuffer.h"
 #if defined(USE_X86_ASM)
 #include "x86/common_x86_asm.h"
 #endif
-#include "simple_list.h"
-#include "mm.h"
+#include "main/simple_list.h"
+#include "main/mm.h"
 #include "drirenderbuffer.h"
 
 #include "drivers/common/driverfuncs.h"

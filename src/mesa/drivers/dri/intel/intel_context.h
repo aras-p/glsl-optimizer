@@ -30,10 +30,10 @@
 
 
 
-#include "mtypes.h"
-#include "drm.h"
-#include "mm.h"
+#include "main/mtypes.h"
+#include "main/mm.h"
 #include "texmem.h"
+#include "drm.h"
 #include "intel_bufmgr.h"
 
 #include "intel_screen.h"

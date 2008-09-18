@@ -43,11 +43,11 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "sis_tris.h"
 #include "sis_alloc.h"
 
-#include "imports.h"
-#include "matrix.h"
-#include "extensions.h"
+#include "main/imports.h"
+#include "main/matrix.h"
+#include "main/extensions.h"
 #include "utils.h"
-#include "framebuffer.h"
+#include "main/framebuffer.h"
 
 #include "drivers/common/driverfuncs.h"
 

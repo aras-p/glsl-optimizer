@@ -1,5 +1,5 @@
-#include "mtypes.h"
-#include "macros.h"
+#include "main/mtypes.h"
+#include "main/macros.h"
 
 #include "intel_context.h"
 #include "intel_batchbuffer.h"

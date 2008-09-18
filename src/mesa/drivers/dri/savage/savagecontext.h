@@ -33,13 +33,13 @@ typedef struct savage_texture_object_t *savageTextureObjectPtr;
 
 #include <X11/Xlibint.h>
 #include "dri_util.h"
-#include "mtypes.h"
+#include "main/mtypes.h"
 #include "xf86drm.h"
 #include "drm.h"
 #include "savage_drm.h"
 #include "savage_init.h"
 #include "savage_3d_reg.h"
-#include "mm.h"
+#include "main/mm.h"
 #include "tnl/t_vertex.h"
 
 #include "texmem.h"

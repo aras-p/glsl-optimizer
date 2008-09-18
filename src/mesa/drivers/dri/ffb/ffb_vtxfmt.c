@@ -25,20 +25,20 @@
  *    David S. Miller <davem@redhat.com>
  */
 
-#include "glheader.h"
+#include "main/glheader.h"
 #include "api_noop.h"
-#include "context.h"
+#include "main/context.h"
 #include "light.h"
-#include "macros.h"
-#include "imports.h"
-#include "mtypes.h"
-#include "simple_list.h"
+#include "main/macros.h"
+#include "main/imports.h"
+#include "main/mtypes.h"
+#include "main/simple_list.h"
 #include "vtxfmt.h"
 #include "ffb_xmesa.h"
 #include "ffb_context.h"
 #include "ffb_vb.h"
 #include "tnl/tnl.h"
-#include "tnl/t_context.h"
+#include "tnl/tcontext.h"
 
 #include "ffb_vtxfmt.h"
 

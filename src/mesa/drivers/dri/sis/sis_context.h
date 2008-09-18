@@ -35,7 +35,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifndef _sis_ctx_h_
 #define _sis_ctx_h_
 
-#include "context.h"
+#include "main/context.h"
 #include "dri_util.h"
 #include "drm.h"
 #include "drm_sarea.h"

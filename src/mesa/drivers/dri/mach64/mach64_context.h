@@ -36,7 +36,7 @@
 #include "drm.h"
 #include "mach64_drm.h"
 
-#include "mtypes.h"
+#include "main/mtypes.h"
 
 #include "mach64_reg.h"
 

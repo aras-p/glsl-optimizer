@@ -25,7 +25,7 @@
  *    David S. Miller <davem@redhat.com>
  */
 
-#include "mtypes.h"
+#include "main/mtypes.h"
 #include "ffb_dd.h"
 #include "ffb_context.h"
 #include "ffb_vb.h"

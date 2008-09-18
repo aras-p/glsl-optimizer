@@ -27,14 +27,14 @@
 #include <unistd.h>
 #include <sys/mman.h>
 
-#include "mtypes.h"
-#include "macros.h"
-#include "dd.h"
-#include "context.h"
+#include "main/mtypes.h"
+#include "main/macros.h"
+#include "main/dd.h"
+#include "main/context.h"
+#include "main/colormac.h"
+#include "main/mm.h"
 #include "swrast/swrast.h"
-#include "colormac.h"
 
-#include "mm.h"
 #include "savagecontext.h"
 #include "savageioctl.h"
 #include "savage_bci.h"

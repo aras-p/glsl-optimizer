@@ -25,12 +25,12 @@
  * 
  **************************************************************************/
 
-#include "glheader.h"
-#include "context.h"
-#include "framebuffer.h"
-#include "matrix.h"
-#include "renderbuffer.h"
-#include "simple_list.h"
+#include "main/glheader.h"
+#include "main/context.h"
+#include "main/framebuffer.h"
+#include "main/matrix.h"
+#include "main/renderbuffer.h"
+#include "main/simple_list.h"
 #include "utils.h"
 #include "vblank.h"
 #include "xmlpool.h"

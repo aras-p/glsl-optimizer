@@ -1,7 +1,7 @@
 #ifndef INTEL_BATCHBUFFER_H
 #define INTEL_BATCHBUFFER_H
 
-#include "mtypes.h"
+#include "main/mtypes.h"
 
 #include "intel_context.h"
 #include "intel_bufmgr.h"

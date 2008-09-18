@@ -26,15 +26,15 @@
  */
 /* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgatris.c,v 1.10 2002/10/30 12:51:36 alanh Exp $ */
 
-#include "mtypes.h"
-#include "macros.h"
-#include "colormac.h"
+#include "main/mtypes.h"
+#include "main/macros.h"
+#include "main/colormac.h"
+#include "main/mm.h"
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
 #include "tnl/t_context.h"
 #include "tnl/t_pipeline.h"
 
-#include "mm.h"
 #include "mgacontext.h"
 #include "mgaioctl.h"
 #include "mgatris.h"

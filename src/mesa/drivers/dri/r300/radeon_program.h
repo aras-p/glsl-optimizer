@@ -28,9 +28,9 @@
 #ifndef __RADEON_PROGRAM_H_
 #define __RADEON_PROGRAM_H_
 
-#include "glheader.h"
-#include "macros.h"
-#include "enums.h"
+#include "main/glheader.h"
+#include "main/macros.h"
+#include "main/enums.h"
 #include "shader/program.h"
 #include "shader/prog_instruction.h"
 

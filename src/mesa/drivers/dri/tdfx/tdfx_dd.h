@@ -23,7 +23,7 @@
  * OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-/* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/tdfx_dd.h,v 1.1 2001/03/21 16:14:27 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/tdfx_main/dd.h,v 1.1 2001/03/21 16:14:27 dawes Exp $ */
 
 /*
  * Original rewrite:
@@ -37,7 +37,7 @@
 #ifndef __TDFX_DD_H__
 #define __TDFX_DD_H__
 
-#include "context.h"
+#include "main/context.h"
 
 extern void tdfxDDInitDriverFuncs( const __GLcontextModes *visual,
                                    struct dd_function_table *functions );

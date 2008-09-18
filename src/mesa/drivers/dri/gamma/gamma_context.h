@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/gamma/gamma_context.h,v 1.6 2002/12/16 16:18:50 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/gamma/gammacontext.h,v 1.6 2002/12/16 16:18:50 dawes Exp $ */
 /*
  * Copyright 2001 by Alan Hourihane.
  *
@@ -32,12 +32,12 @@
 #include "drm_sarea.h"
 #include "colormac.h"
 #include "gamma_regs.h"
-#include "gamma_macros.h"
+#include "gamma_main/macros.h"
 #include "gamma_screen.h"
-#include "macros.h"
-#include "mtypes.h"
+#include "main/macros.h"
+#include "main/mtypes.h"
 #include "glint_dri.h"
-#include "mm.h"
+#include "main/mm.h"
 
 typedef union {
     unsigned int i;

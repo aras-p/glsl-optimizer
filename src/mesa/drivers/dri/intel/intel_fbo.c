@@ -26,14 +26,14 @@
  **************************************************************************/
 
 
-#include "imports.h"
-#include "mtypes.h"
-#include "fbobject.h"
-#include "framebuffer.h"
-#include "renderbuffer.h"
-#include "context.h"
-#include "texformat.h"
-#include "texrender.h"
+#include "main/imports.h"
+#include "main/mtypes.h"
+#include "main/fbobject.h"
+#include "main/framebuffer.h"
+#include "main/renderbuffer.h"
+#include "main/context.h"
+#include "main/texformat.h"
+#include "main/texrender.h"
 
 #include "intel_context.h"
 #include "intel_buffers.h"

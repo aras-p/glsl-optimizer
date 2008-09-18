@@ -28,11 +28,11 @@
  *    Keith Whitwell <keith@tungstengraphics.com>
  */
 
-#include "glheader.h"
-#include "imports.h"
+#include "main/glheader.h"
+#include "main/imports.h"
 #include "api_arrayelt.h"
 /* #include "mmath.h" */
-#include "enums.h"
+#include "main/enums.h"
 #include "colormac.h"
 
 

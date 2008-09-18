@@ -34,7 +34,7 @@
 #include "brw_context.h"
 #include "brw_state.h"
 #include "brw_defines.h"
-#include "macros.h"
+#include "main/macros.h"
 
 struct brw_gs_unit_key {
    unsigned int total_grf;

@@ -25,7 +25,7 @@
  *    Keith Whitwell <keith@tungstengraphics.com>
  */
 
-#include "mtypes.h"
+#include "main/mtypes.h"
 #include "mgadd.h"
 #include "mgacontext.h"
 #include "mgaspan.h"

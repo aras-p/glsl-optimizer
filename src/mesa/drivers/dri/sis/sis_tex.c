@@ -34,11 +34,11 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "sis_tex.h"
 
 #include "swrast/swrast.h"
-#include "imports.h"
-#include "texformat.h"
-#include "texstore.h"
-#include "teximage.h"
-#include "texobj.h"
+#include "main/imports.h"
+#include "main/texformat.h"
+#include "main/texstore.h"
+#include "main/teximage.h"
+#include "main/texobj.h"
 
 #include "xmlpool.h"
 

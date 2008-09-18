@@ -33,14 +33,14 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
 
-#include "glheader.h"
-#include "imports.h"
-#include "context.h"
-#include "framebuffer.h"
-#include "fbobject.h"
-#include "matrix.h"
-#include "renderbuffer.h"
-#include "simple_list.h"
+#include "main/glheader.h"
+#include "main/imports.h"
+#include "main/context.h"
+#include "main/framebuffer.h"
+#include "main/fbobject.h"
+#include "main/matrix.h"
+#include "main/renderbuffer.h"
+#include "main/simple_list.h"
 #include "utils.h"
 
 #include "i810screen.h"

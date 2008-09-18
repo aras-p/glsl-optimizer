@@ -31,15 +31,15 @@
  * The back-buffer is allocated by the driver and is private.
  */
 
-#include "context.h"
-#include "extensions.h"
-#include "framebuffer.h"
-#include "imports.h"
-#include "renderbuffer.h"
+#include "main/context.h"
+#include "main/extensions.h"
+#include "main/framebuffer.h"
+#include "main/imports.h"
+#include "main/renderbuffer.h"
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
 #include "tnl/tnl.h"
-#include "tnl/t_context.h"
+#include "tnl/tcontext.h"
 #include "tnl/t_pipeline.h"
 #include "vbo/vbo.h"
 #include "drivers/common/driverfuncs.h"

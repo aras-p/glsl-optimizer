@@ -40,7 +40,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "drm.h"
 #include "r128_drm.h"
 
-#include "mtypes.h"
+#include "main/mtypes.h"
 #include "tnl/t_vertex.h"
 
 #include "r128_reg.h"

@@ -33,11 +33,11 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  *   Brian Paul <brianp@valinux.com>
  */
 
-#include "glheader.h"
-#include "imports.h"
-#include "context.h"
-#include "macros.h"
-#include "texformat.h"
+#include "main/glheader.h"
+#include "main/imports.h"
+#include "main/context.h"
+#include "main/macros.h"
+#include "main/texformat.h"
 
 #include "r128_context.h"
 #include "r128_state.h"

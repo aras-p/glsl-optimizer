@@ -42,8 +42,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "sis_tris.h"
 
 #include "swrast/swrast.h"
-#include "framebuffer.h"
-#include "renderbuffer.h"
+#include "main/framebuffer.h"
+#include "main/renderbuffer.h"
 
 #include "utils.h"
 

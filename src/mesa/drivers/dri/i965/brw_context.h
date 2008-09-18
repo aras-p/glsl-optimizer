@@ -35,7 +35,7 @@
 
 #include "intel_context.h"
 #include "brw_structs.h"
-#include "imports.h"
+#include "main/imports.h"
 
 
 /* Glossary:

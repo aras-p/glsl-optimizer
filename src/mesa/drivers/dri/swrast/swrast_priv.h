@@ -33,7 +33,7 @@
 
 #include <GL/gl.h>
 #include <GL/internal/dri_interface.h>
-#include "mtypes.h"
+#include "main/mtypes.h"
 
 
 /**

@@ -39,10 +39,7 @@ SHARED_INCLUDES = \
 	-I$(TOP)/src/mesa/drivers/dri/common \
 	-Iserver \
 	-I$(TOP)/include \
-	-I$(TOP)/include/GL/internal \
 	-I$(TOP)/src/mesa \
-	-I$(TOP)/src/mesa/main \
-	-I$(TOP)/src/mesa/glapi \
 	-I$(TOP)/src/egl/main \
 	-I$(TOP)/src/egl/drivers/dri \
 	$(LIBDRM_CFLAGS)

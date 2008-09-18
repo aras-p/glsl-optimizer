@@ -58,7 +58,7 @@
 
 #include "brw_state.h"
 #include "intel_batchbuffer.h"
-#include "imports.h"
+#include "main/imports.h"
 
 /* XXX: Fixme - have to include these to get the sizes of the prog_key
  * structs:

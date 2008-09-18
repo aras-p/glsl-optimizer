@@ -32,7 +32,7 @@
 #include <sys/time.h>
 #include "dri_util.h"
 #include "mga_drm.h"
-#include "mtypes.h"
+#include "main/mtypes.h"
 #include "mgaregs.h"
 #include "xmlconfig.h"
 

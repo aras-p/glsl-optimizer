@@ -41,8 +41,8 @@
 #include "tdfx_span.h"
 #include "tdfx_tris.h"
 
-#include "framebuffer.h"
-#include "renderbuffer.h"
+#include "main/framebuffer.h"
+#include "main/renderbuffer.h"
 #include "xmlpool.h"
 
 #include "utils.h"

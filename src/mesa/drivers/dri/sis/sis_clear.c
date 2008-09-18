@@ -37,7 +37,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "sis_lock.h"
 
 #include "swrast/swrast.h"
-#include "macros.h"
+#include "main/macros.h"
 
 static GLbitfield sis_3D_Clear( GLcontext * ctx, GLbitfield mask,
 				GLint x, GLint y, GLint width,

@@ -33,7 +33,7 @@
  * \author Ian Romanick <idr@us.ibm.com>
  */
 
-#include "colormac.h"
+#include "main/colormac.h"
 #include "spantmp_common.h"
 
 #ifndef DBG

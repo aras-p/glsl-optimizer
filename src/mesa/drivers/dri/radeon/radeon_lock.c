@@ -39,8 +39,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *   Kevin E. Martin <martin@valinux.com>
  */
 
-#include "glheader.h"
-#include "mtypes.h"
+#include "main/glheader.h"
+#include "main/mtypes.h"
 #include "radeon_context.h"
 #include "radeon_lock.h"
 #include "radeon_tex.h"

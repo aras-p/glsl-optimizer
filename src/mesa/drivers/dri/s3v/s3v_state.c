@@ -5,9 +5,9 @@
 #include <X11/Xlibint.h>
 #include "s3v_context.h"
 #include "s3v_macros.h"
-#include "macros.h"
 #include "s3v_dri.h"
-#include "colormac.h"
+#include "main/macros.h"
+#include "main/colormac.h"
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
 #include "vbo/vbo.h"

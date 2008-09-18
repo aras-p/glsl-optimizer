@@ -26,11 +26,11 @@
  * 
  **************************************************************************/
 
-#include "mtypes.h"
-#include "texobj.h"
-#include "texstore.h"
-#include "texcompress.h"
-#include "enums.h"
+#include "main/mtypes.h"
+#include "main/texobj.h"
+#include "main/texstore.h"
+#include "main/texcompress.h"
+#include "main/enums.h"
 
 #include "intel_context.h"
 #include "intel_tex.h"
