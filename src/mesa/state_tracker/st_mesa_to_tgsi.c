@@ -35,10 +35,13 @@
 #include "tgsi/tgsi_parse.h"
 #include "tgsi/tgsi_build.h"
 #include "tgsi/tgsi_util.h"
+#include "tgsi/tgsi_dump.h"
+#include "tgsi/tgsi_sanity.h"
 #include "st_mesa_to_tgsi.h"
 #include "shader/prog_instruction.h"
 #include "shader/prog_parameter.h"
-
+#include "shader/prog_print.h"
+#include "pipe/p_debug.h"
 
 /*
  * Map mesa register file to TGSI register file.
@@ -238,6 +241,15 @@ compile_instruction(
          outputMapping,
          immediateMapping,
          indirectAccess );
+
+      /**
+       * This not at all the correct solution.
+       * FIXME: Roll this up in the above map functions
+       */
+      if (fullsrc->SrcRegister.File == TGSI_FILE_IMMEDIATE && fullsrc->SrcRegister.Index == ~0) {
+         fullsrc->SrcRegister.File = TGSI_FILE_CONSTANT;
+         fullsrc->SrcRegister.Index = inst->SrcReg[i].Index;
+      }
 
       /* swizzle (ext swizzle also depends on negation) */
       {
@@ -979,6 +991,18 @@ tgsi_translate_mesa_program(
          header,
          maxTokens - ti );
    }
+
+#if DEBUG
+   if(!tgsi_sanity_check(tokens)) {
+      debug_printf("Due to sanity check failure(s) above the following shader program is invalid:\n");
+      debug_printf("\nOriginal program:\n%s", program->String);
+      debug_printf("\nMesa program:\n");
+      _mesa_print_program(program);
+      debug_printf("\nTGSI program:\n");
+      tgsi_dump(tokens, 0);
+      assert(0);
+   }
+#endif
 
    return ti;
 }

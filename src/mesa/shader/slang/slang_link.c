@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.3
+ * Version:  7.2
  *
- * Copyright (C) 2007  Brian Paul   All Rights Reserved.
+ * Copyright (C) 2008  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -40,6 +40,24 @@
 #include "shader/prog_uniform.h"
 #include "shader/shader_api.h"
 #include "slang_link.h"
+
+
+/** cast wrapper */
+static struct gl_vertex_program *
+vertex_program(struct gl_program *prog)
+{
+   assert(prog->Target == GL_VERTEX_PROGRAM_ARB);
+   return (struct gl_vertex_program *) prog;
+}
+
+
+/** cast wrapper */
+static struct gl_fragment_program *
+fragment_program(struct gl_program *prog)
+{
+   assert(prog->Target == GL_FRAGMENT_PROGRAM_ARB);
+   return (struct gl_fragment_program *) prog;
+}
 
 
 /**
@@ -215,18 +233,30 @@ link_uniform_vars(struct gl_shader_program *shProg,
  * For example, if the vertex shader declared "attribute vec4 foobar" we'll
  * allocate a generic vertex attribute for "foobar" and plug that value into
  * the vertex program instructions.
+ * But if the user called glBindAttributeLocation(), those bindings will
+ * have priority.
  */
 static GLboolean
 _slang_resolve_attributes(struct gl_shader_program *shProg,
-                          struct gl_program *prog)
+                          const struct gl_program *origProg,
+                          struct gl_program *linkedProg)
 {
+   GLint attribMap[MAX_VERTEX_ATTRIBS];
    GLuint i, j;
    GLbitfield usedAttributes;
 
-   assert(prog->Target == GL_VERTEX_PROGRAM_ARB);
+   assert(origProg != linkedProg);
+   assert(origProg->Target == GL_VERTEX_PROGRAM_ARB);
+   assert(linkedProg->Target == GL_VERTEX_PROGRAM_ARB);
 
    if (!shProg->Attributes)
       shProg->Attributes = _mesa_new_parameter_list();
+
+   if (linkedProg->Attributes) {
+      _mesa_free_parameter_list(linkedProg->Attributes);
+   }
+   linkedProg->Attributes = _mesa_new_parameter_list();
+
 
    /* Build a bitmask indicating which attribute indexes have been
     * explicitly bound by the user with glBindAttributeLocation().
@@ -234,55 +264,81 @@ _slang_resolve_attributes(struct gl_shader_program *shProg,
    usedAttributes = 0x0;
    for (i = 0; i < shProg->Attributes->NumParameters; i++) {
       GLint attr = shProg->Attributes->Parameters[i].StateIndexes[0];
-      usedAttributes |= attr;
+      usedAttributes |= (1 << attr);
+   }
+
+   /* initialize the generic attribute map entries to -1 */
+   for (i = 0; i < MAX_VERTEX_ATTRIBS; i++) {
+      attribMap[i] = -1;
    }
 
    /*
     * Scan program for generic attribute references
     */
-   for (i = 0; i < prog->NumInstructions; i++) {
-      struct prog_instruction *inst = prog->Instructions + i;
+   for (i = 0; i < linkedProg->NumInstructions; i++) {
+      struct prog_instruction *inst = linkedProg->Instructions + i;
       for (j = 0; j < 3; j++) {
          if (inst->SrcReg[j].File == PROGRAM_INPUT &&
              inst->SrcReg[j].Index >= VERT_ATTRIB_GENERIC0) {
-            /* this is a generic attrib */
-            const GLint k = inst->SrcReg[j].Index - VERT_ATTRIB_GENERIC0;
-            const char *name = prog->Attributes->Parameters[k].Name;
-            /* See if this attrib name is in the program's attribute list
-             * (i.e. was bound by the user).
+            /*
+             * OK, we've found a generic vertex attribute reference.
              */
-            GLint index = _mesa_lookup_parameter_index(shProg->Attributes,
-                                                          -1, name);
-            GLint attr;
-            if (index >= 0) {
-               /* found, user must have specified a binding */
-               attr = shProg->Attributes->Parameters[index].StateIndexes[0];
-            }
-            else {
-               /* Not found, choose our own attribute number.
-                * Start at 1 since generic attribute 0 always aliases
-                * glVertex/position.
+            const GLint k = inst->SrcReg[j].Index - VERT_ATTRIB_GENERIC0;
+
+            GLint attr = attribMap[k];
+
+            if (attr < 0) {
+               /* Need to figure out attribute mapping now.
                 */
-               GLint size = prog->Attributes->Parameters[k].Size;
-               GLenum datatype = prog->Attributes->Parameters[k].DataType;
-               for (attr = 1; attr < MAX_VERTEX_ATTRIBS; attr++) {
-                  if (((1 << attr) & usedAttributes) == 0)
-                     break;
-               }
-               if (attr == MAX_VERTEX_ATTRIBS) {
-                  /* too many!  XXX record error log */
-                  return GL_FALSE;
-               }
-               _mesa_add_attribute(shProg->Attributes, name, size, datatype,attr);
+               const char *name = origProg->Attributes->Parameters[k].Name;
+               const GLint size = origProg->Attributes->Parameters[k].Size;
+               const GLenum type =origProg->Attributes->Parameters[k].DataType;
+               GLint index;
 
-	       /* set the attribute as used */
-	       usedAttributes |= 1<<attr;
+               /* See if there's a user-defined attribute binding for
+                * this name.
+                */
+               index = _mesa_lookup_parameter_index(shProg->Attributes,
+                                                    -1, name);
+               if (index >= 0) {
+                  /* Found a user-defined binding */
+                  attr = shProg->Attributes->Parameters[index].StateIndexes[0];
+               }
+               else {
+                  /* No user-defined binding, choose our own attribute number.
+                   * Start at 1 since generic attribute 0 always aliases
+                   * glVertex/position.
+                   */
+                  for (attr = 1; attr < MAX_VERTEX_ATTRIBS; attr++) {
+                     if (((1 << attr) & usedAttributes) == 0)
+                        break;
+                  }
+                  if (attr == MAX_VERTEX_ATTRIBS) {
+                     link_error(shProg, "Too many vertex attributes");
+                     return GL_FALSE;
+                  }
+
+                  /* mark this attribute as used */
+                  usedAttributes |= (1 << attr);
+               }
+
+               attribMap[k] = attr;
+
+               /* Save the final name->attrib binding so it can be queried
+                * with glGetAttributeLocation().
+                */
+               _mesa_add_attribute(linkedProg->Attributes, name,
+                                   size, type, attr);
             }
 
+            assert(attr >= 0);
+
+            /* update the instruction's src reg */
             inst->SrcReg[j].Index = VERT_ATTRIB_GENERIC0 + attr;
          }
       }
    }
+
    return GL_TRUE;
 }
 
@@ -325,6 +381,7 @@ static void
 _slang_update_inputs_outputs(struct gl_program *prog)
 {
    GLuint i, j;
+   GLuint maxAddrReg = 0;
 
    prog->InputsRead = 0x0;
    prog->OutputsWritten = 0x0;
@@ -335,60 +392,34 @@ _slang_update_inputs_outputs(struct gl_program *prog)
       for (j = 0; j < numSrc; j++) {
          if (inst->SrcReg[j].File == PROGRAM_INPUT) {
             prog->InputsRead |= 1 << inst->SrcReg[j].Index;
+            if (prog->Target == GL_FRAGMENT_PROGRAM_ARB &&
+                inst->SrcReg[j].Index == FRAG_ATTRIB_FOGC) {
+               /* The fragment shader FOGC input is used for fog,
+                * front-facing and sprite/point coord.
+                */
+               struct gl_fragment_program *fp = fragment_program(prog);
+               const GLint swz = GET_SWZ(inst->SrcReg[j].Swizzle, 0);
+               if (swz == SWIZZLE_X)
+                  fp->UsesFogFragCoord = GL_TRUE;
+               else if (swz == SWIZZLE_Y)
+                  fp->UsesFrontFacing = GL_TRUE;
+               else if (swz == SWIZZLE_Z || swz == SWIZZLE_W)
+                  fp->UsesPointCoord = GL_TRUE;
+            }
+         }
+         else if (inst->SrcReg[j].File == PROGRAM_ADDRESS) {
+            maxAddrReg = MAX2(maxAddrReg, inst->SrcReg[j].Index + 1);
          }
       }
       if (inst->DstReg.File == PROGRAM_OUTPUT) {
          prog->OutputsWritten |= 1 << inst->DstReg.Index;
       }
-   }
-}
-
-
-/**
- * Scan a vertex program looking for instances of
- * (PROGRAM_INPUT, VERT_ATTRIB_GENERIC0 + oldAttrib) and replace with
- * (PROGRAM_INPUT, VERT_ATTRIB_GENERIC0 + newAttrib).
- * This is used when the user calls glBindAttribLocation on an already linked
- * shader program.
- */
-void
-_slang_remap_attribute(struct gl_program *prog, GLuint oldAttrib, GLuint newAttrib)
-{
-   GLuint i, j;
-
-   assert(prog->Target == GL_VERTEX_PROGRAM_ARB);
-
-   for (i = 0; i < prog->NumInstructions; i++) {
-      struct prog_instruction *inst = prog->Instructions + i;
-      for (j = 0; j < 3; j++) {
-         if (inst->SrcReg[j].File == PROGRAM_INPUT) {
-            if (inst->SrcReg[j].Index == VERT_ATTRIB_GENERIC0 + oldAttrib) {
-               inst->SrcReg[j].Index = VERT_ATTRIB_GENERIC0 + newAttrib;
-            }
-         }
+      else if (inst->DstReg.File == PROGRAM_ADDRESS) {
+         maxAddrReg = MAX2(maxAddrReg, inst->DstReg.Index + 1);
       }
    }
 
-   _slang_update_inputs_outputs(prog);
-}
-
-
-
-/** cast wrapper */
-static struct gl_vertex_program *
-vertex_program(struct gl_program *prog)
-{
-   assert(prog->Target == GL_VERTEX_PROGRAM_ARB);
-   return (struct gl_vertex_program *) prog;
-}
-
-
-/** cast wrapper */
-static struct gl_fragment_program *
-fragment_program(struct gl_program *prog)
-{
-   assert(prog->Target == GL_FRAGMENT_PROGRAM_ARB);
-   return (struct gl_fragment_program *) prog;
+   prog->NumAddressRegs = maxAddrReg;
 }
 
 
@@ -492,9 +523,8 @@ _slang_link(GLcontext *ctx,
    /*_mesa_print_uniforms(shProg->Uniforms);*/
 
    if (shProg->VertexProgram) {
-      if (!_slang_resolve_attributes(shProg, &shProg->VertexProgram->Base)) {
-         /*goto cleanup;*/
-         _mesa_problem(ctx, "_slang_resolve_attributes() failed");
+      if (!_slang_resolve_attributes(shProg, &vertProg->Base,
+                                     &shProg->VertexProgram->Base)) {
          return;
       }
    }

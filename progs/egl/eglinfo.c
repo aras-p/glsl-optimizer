@@ -48,9 +48,9 @@ PrintConfigs(EGLDisplay d)
    eglGetConfigs(d, configs, MAX_CONFIGS, &numConfigs);
 
    printf("Configurations:\n");
-   printf("     bf lv d st colorbuffer dp st  vis   supported\n");
-   printf("  id sz  l b ro  r  g  b  a th cl   id   surfaces  \n");
-   printf("---------------------------------------------------\n");
+   printf("     bf lv d st colorbuffer dp st  ms    vis   supported\n");
+   printf("  id sz  l b ro  r  g  b  a th cl ns b    id   surfaces \n");
+   printf("--------------------------------------------------------\n");
    for (i = 0; i < numConfigs; i++) {
       EGLint id, size, level;
       EGLint red, green, blue, alpha;
@@ -58,6 +58,7 @@ PrintConfigs(EGLDisplay d)
       EGLint surfaces;
       EGLint doubleBuf = 1, stereo = 0;
       EGLint vid;
+      EGLint samples, sampleBuffers;
       char surfString[100] = "";
 
       eglGetConfigAttrib(d, configs[i], EGL_CONFIG_ID, &id);
@@ -73,6 +74,9 @@ PrintConfigs(EGLDisplay d)
       eglGetConfigAttrib(d, configs[i], EGL_NATIVE_VISUAL_ID, &vid);
       eglGetConfigAttrib(d, configs[i], EGL_SURFACE_TYPE, &surfaces);
 
+      eglGetConfigAttrib(d, configs[i], EGL_SAMPLES, &samples);
+      eglGetConfigAttrib(d, configs[i], EGL_SAMPLE_BUFFERS, &sampleBuffers);
+
       if (surfaces & EGL_WINDOW_BIT)
          strcat(surfString, "win,");
       if (surfaces & EGL_PBUFFER_BIT)
@@ -86,12 +90,13 @@ PrintConfigs(EGLDisplay d)
       if (strlen(surfString) > 0)
          surfString[strlen(surfString) - 1] = 0;
 
-      printf("0x%02x %2d %2d %c  %c %2d %2d %2d %2d %2d %2d 0x%02x   %-12s\n",
+      printf("0x%02x %2d %2d %c  %c %2d %2d %2d %2d %2d %2d %2d%2d  0x%02x   %-12s\n",
              id, size, level,
              doubleBuf ? 'y' : '.',
              stereo ? 'y' : '.',
              red, green, blue, alpha,
-             depth, stencil, vid, surfString);
+             depth, stencil,
+             samples, sampleBuffers, vid, surfString);
    }
 }
 

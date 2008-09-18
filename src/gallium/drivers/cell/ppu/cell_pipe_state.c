@@ -48,8 +48,9 @@ cell_create_blend_state(struct pipe_context *pipe,
    struct cell_blend_state *cb = MALLOC(sizeof(struct cell_blend_state));
 
    (void) memcpy(cb, blend, sizeof(*blend));
+#if 0
    cell_generate_alpha_blend(cb);
-
+#endif
    return cb;
 }
 
@@ -100,8 +101,9 @@ cell_create_depth_stencil_alpha_state(struct pipe_context *pipe,
        MALLOC(sizeof(struct cell_depth_stencil_alpha_state));
 
    (void) memcpy(cdsa, depth_stencil, sizeof(*depth_stencil));
+#if 0
    cell_generate_depth_stencil_test(cdsa);
-
+#endif
    return cdsa;
 }
 

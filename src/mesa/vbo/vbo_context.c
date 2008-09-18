@@ -246,12 +246,14 @@ void _vbo_DestroyContext( GLcontext *ctx )
       ctx->aelt_context = NULL;
    }
 
-   vbo_exec_destroy(ctx);
+   if (vbo_context(ctx)) {
+      vbo_exec_destroy(ctx);
 #if FEATURE_dlist
-   vbo_save_destroy(ctx);
+      vbo_save_destroy(ctx);
 #endif
-   FREE(vbo_context(ctx));
-   ctx->swtnl_im = NULL;
+      FREE(vbo_context(ctx));
+      ctx->swtnl_im = NULL;
+   }
 }
 
 

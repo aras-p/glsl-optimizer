@@ -181,6 +181,8 @@ struct st_context
    struct blit_state *blit;
 
    struct cso_context *cso_context;
+
+   int force_msaa;
 };
 
 
@@ -236,6 +238,10 @@ st_fb_orientation(const struct gl_framebuffer *fb)
       return Y_0_BOTTOM;
    }
 }
+
+
+extern int
+st_get_msaa(void);
 
 
 #endif
