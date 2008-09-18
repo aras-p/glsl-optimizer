@@ -32,9 +32,9 @@
 #include "glxheader.h"
 #include "GL/xmesa.h"
 #include "xmesaP.h"
-#include "imports.h"
-#include "framebuffer.h"
-#include "renderbuffer.h"
+#include "main/imports.h"
+#include "main/framebuffer.h"
+#include "main/renderbuffer.h"
 
 
 #if defined(USE_XSHM) && !defined(XFree86Server)

@@ -31,10 +31,10 @@
 
 #ifdef FX
 
-#include "imports.h"
-#include "mtypes.h"
-#include "macros.h"
-#include "colormac.h"
+#include "main/imports.h"
+#include "main/mtypes.h"
+#include "main/macros.h"
+#include "main/colormac.h"
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
 #include "tnl/t_context.h"

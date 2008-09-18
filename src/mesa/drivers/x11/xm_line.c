@@ -31,9 +31,9 @@
 
 
 #include "glxheader.h"
-#include "depth.h"
-#include "macros.h"
-#include "mtypes.h"
+#include "main/depth.h"
+#include "main/macros.h"
+#include "main/mtypes.h"
 #include "xmesaP.h"
 
 /* Internal swrast includes:

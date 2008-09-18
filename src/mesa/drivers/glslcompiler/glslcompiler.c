@@ -45,11 +45,11 @@
  */
 
 
-#include "imports.h"
-#include "context.h"
-#include "extensions.h"
-#include "framebuffer.h"
-#include "shaders.h"
+#include "main/imports.h"
+#include "main/context.h"
+#include "main/extensions.h"
+#include "main/framebuffer.h"
+#include "main/shaders.h"
 #include "shader/shader_api.h"
 #include "shader/prog_print.h"
 #include "drivers/common/driverfuncs.h"

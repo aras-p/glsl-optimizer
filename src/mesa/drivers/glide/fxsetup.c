@@ -41,11 +41,11 @@
 #if defined(FX)
 
 #include "fxdrv.h"
-#include "enums.h"
-#include "tnl.h"
+#include "main/enums.h"
+#include "main/texstore.h"
+#include "tnl/tnl.h"
 #include "tnl/t_context.h"
-#include "swrast.h"
-#include "texstore.h"
+#include "swrast/swrast.h"
 
 
 static void

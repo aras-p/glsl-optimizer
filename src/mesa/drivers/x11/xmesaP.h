@@ -28,7 +28,7 @@
 
 
 #include "GL/xmesa.h"
-#include "mtypes.h"
+#include "main/mtypes.h"
 #if defined(FX)
 #include "GL/fxmesa.h"
 #include "xm_glide.h"
