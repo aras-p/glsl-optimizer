@@ -80,6 +80,10 @@ struct cso_context {
 };
 
 
+static void
+free_framebuffer_state(struct pipe_framebuffer_state *fb);
+
+
 static boolean delete_blend_state(struct cso_context *ctx, void *state)
 {
    struct cso_blend *cso = (struct cso_blend *)state;
@@ -251,6 +255,9 @@ void cso_release_all( struct cso_context *ctx )
       pipe_texture_reference(&ctx->textures[i], NULL);
       pipe_texture_reference(&ctx->textures_saved[i], NULL);
    }
+
+   free_framebuffer_state(&ctx->fb);
+   free_framebuffer_state(&ctx->fb_saved);
 
    if (ctx->cache) {
       cso_cache_delete( ctx->cache );
@@ -784,6 +791,18 @@ copy_framebuffer_state(struct pipe_framebuffer_state *dst,
 }
 
 
+static void
+free_framebuffer_state(struct pipe_framebuffer_state *fb)
+{
+   uint i;
+
+   for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++) {
+      pipe_surface_reference(&fb->cbufs[i], NULL);
+   }
+   pipe_surface_reference(&fb->zsbuf, NULL);
+}
+
+
 enum pipe_error cso_set_framebuffer(struct cso_context *ctx,
                                     const struct pipe_framebuffer_state *fb)
 {
@@ -804,6 +823,7 @@ void cso_restore_framebuffer(struct cso_context *ctx)
    if (memcmp(&ctx->fb, &ctx->fb_saved, sizeof(ctx->fb))) {
       copy_framebuffer_state(&ctx->fb, &ctx->fb_saved);
       ctx->pipe->set_framebuffer_state(ctx->pipe, &ctx->fb);
+      free_framebuffer_state(&ctx->fb_saved);
    }
 }
 
