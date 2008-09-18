@@ -835,15 +835,15 @@ emit_CMP(struct codegen *gen, const struct tgsi_full_instruction *inst)
       if (inst->FullDstRegisters[0].DstRegister.WriteMask & (1 << ch)) {
          int s1_reg = get_src_reg(gen, ch, &inst->FullSrcRegisters[0]);
          int s2_reg = get_src_reg(gen, ch, &inst->FullSrcRegisters[1]);
+         int s3_reg = get_src_reg(gen, ch, &inst->FullSrcRegisters[2]);
          int d_reg = get_dst_reg(gen, ch, &inst->FullDstRegisters[0]);
+         int zero_reg = get_itemp(gen);
+   
+         spe_xor(gen->f, zero_reg, zero_reg, zero_reg);
 
-         /* d = (s1 != s2) */
-         spe_fceq(gen->f, d_reg, s1_reg, s2_reg);
-         spe_nor(gen->f, d_reg, d_reg, d_reg);
-
-         /* convert d from 0x0/0xffffffff to 0.0/1.0 */
-         /* d = d & one_reg */
-         spe_and(gen->f, d_reg, d_reg, get_const_one_reg(gen));
+         /* d = (s1 < 0) ? s2 : s3 */
+         spe_fcgt(gen->f, d_reg, zero_reg, s1_reg);
+         spe_selb(gen->f, d_reg, s3_reg, s2_reg, d_reg);
 
          store_dest_reg(gen, d_reg, ch, &inst->FullDstRegisters[0]);
          free_itemps(gen);
