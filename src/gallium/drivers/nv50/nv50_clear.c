@@ -30,6 +30,61 @@ void
 nv50_clear(struct pipe_context *pipe, struct pipe_surface *ps,
 	   unsigned clearValue)
 {
-	pipe->surface_fill(pipe, ps, 0, 0, ps->width, ps->height, clearValue);
+	struct nv50_context *nv50 = nv50_context(pipe);
+	struct pipe_framebuffer_state fb, s_fb = nv50->framebuffer;
+	struct pipe_scissor_state sc, s_sc = nv50->scissor;
+	unsigned dirty = nv50->dirty;
+
+	nv50->dirty = 0;
+
+	if (ps->format == PIPE_FORMAT_Z24S8_UNORM ||
+	    ps->format == PIPE_FORMAT_Z16_UNORM) {
+		fb.num_cbufs = 0;
+		fb.zsbuf = ps;
+	} else {
+		fb.num_cbufs = 1;
+		fb.cbufs[0] = ps;
+		fb.zsbuf = NULL;
+	}
+	fb.width = ps->width;
+	fb.height = ps->height;
+	pipe->set_framebuffer_state(pipe, &fb);
+
+	sc.minx = sc.miny = 0;
+	sc.maxx = fb.width;
+	sc.maxy = fb.height;
+	pipe->set_scissor_state(pipe, &sc);
+
+	nv50_state_validate(nv50);
+
+	switch (ps->format) {
+	case PIPE_FORMAT_A8R8G8B8_UNORM:
+		BEGIN_RING(tesla, 0x0d80, 4);
+		OUT_RINGf (ubyte_to_float((clearValue >> 16) & 0xff));
+		OUT_RINGf (ubyte_to_float((clearValue >>  8) & 0xff));
+		OUT_RINGf (ubyte_to_float((clearValue >>  0) & 0xff));
+		OUT_RINGf (ubyte_to_float((clearValue >> 24) & 0xff));
+		BEGIN_RING(tesla, 0x19d0, 1);
+		OUT_RING  (0x3c);
+		break;
+	case PIPE_FORMAT_Z24S8_UNORM:
+		BEGIN_RING(tesla, 0x0d90, 1);
+		OUT_RINGf ((float)(clearValue >> 8) * (1.0 / 16777215.0));
+		BEGIN_RING(tesla, 0x0da0, 1);
+		OUT_RING  (clearValue & 0xff);
+		BEGIN_RING(tesla, 0x19d0, 1);
+		OUT_RING  (0x03);
+		break;
+	default:
+		pipe->surface_fill(pipe, ps, 0, 0, ps->width, ps->height,
+				   clearValue);
+		break;
+	}
+
+	pipe->set_framebuffer_state(pipe, &s_fb);
+	pipe->set_scissor_state(pipe, &s_sc);
+	nv50->dirty |= dirty;
+
 	ps->status = PIPE_SURFACE_STATUS_CLEAR;
 }
+
