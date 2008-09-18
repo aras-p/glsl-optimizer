@@ -1020,6 +1020,10 @@ emit_instruction(struct codegen *gen,
       return emit_SGT(gen, inst);
    case TGSI_OPCODE_SLT:
       return emit_SLT(gen, inst);
+   case TGSI_OPCODE_SGE:
+      return emit_SGE(gen, inst);
+   case TGSI_OPCODE_SLE:
+      return emit_SLE(gen, inst);
    case TGSI_OPCODE_SEQ:
       return emit_SEQ(gen, inst);
    case TGSI_OPCODE_SNE:
