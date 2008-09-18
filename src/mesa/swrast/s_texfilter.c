@@ -342,6 +342,7 @@ lerp_rgba_3d(GLchan result[4], GLfloat a, GLfloat b, GLfloat c,
       break;								\
    default:								\
       _mesa_problem(ctx, "Bad wrap mode");				\
+      return;								\
    }									\
 }
 
@@ -462,6 +463,7 @@ lerp_rgba_3d(GLchan result[4], GLfloat a, GLfloat b, GLfloat c,
       break;								\
    default:								\
       _mesa_problem(ctx, "Bad wrap mode");				\
+      return;								\
    }									\
 }
 

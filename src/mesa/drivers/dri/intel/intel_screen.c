@@ -298,11 +298,6 @@ static GLboolean intelInitDriver(__DRIscreenPrivate *sPriv)
 			&intelScreen->irq_active))
       return GL_FALSE;
 
-   /* Determine if batchbuffers are allowed */
-   if (!intel_get_param(sPriv, I915_PARAM_ALLOW_BATCHBUFFER,
-			&intelScreen->allow_batchbuffer))
-      return GL_FALSE;
-
    sPriv->extensions = intelScreenExtensions;
 
    return GL_TRUE;
@@ -314,6 +309,7 @@ intelDestroyScreen(__DRIscreenPrivate * sPriv)
 {
    intelScreenPrivate *intelScreen = (intelScreenPrivate *) sPriv->private;
 
+   dri_bufmgr_destroy(intelScreen->bufmgr);
    intelUnmapScreenRegions(intelScreen);
 
    FREE(intelScreen);

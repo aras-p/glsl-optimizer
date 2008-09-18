@@ -177,7 +177,7 @@ static GLboolean debug_variable_length_prim( struct debug_stream *stream )
 
 #define BITS( dw, hi, lo, ... )				\
 do {							\
-   unsigned himask = ~0UL >> (31 - (hi));		\
+   unsigned himask = 0xffffffffU >> (31 - (hi));		\
    PRINTF("\t\t ");				\
    PRINTF(__VA_ARGS__);			\
    PRINTF(": 0x%x\n", ((dw) & himask) >> (lo));	\

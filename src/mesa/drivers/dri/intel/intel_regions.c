@@ -105,7 +105,8 @@ intel_set_region_tiling_gem(struct intel_context *intel,
 
 static struct intel_region *
 intel_region_alloc_internal(struct intel_context *intel,
-			    GLuint cpp, GLuint pitch, GLuint height,
+			    GLuint cpp,
+			    GLuint width, GLuint height, GLuint pitch,
 			    dri_bo *buffer)
 {
    struct intel_region *region;
@@ -117,8 +118,9 @@ intel_region_alloc_internal(struct intel_context *intel,
 
    region = calloc(sizeof(*region), 1);
    region->cpp = cpp;
+   region->width = width;
+   region->height = height;
    region->pitch = pitch;
-   region->height = height;     /* needed? */
    region->refcount = 1;
    region->buffer = buffer;
 
@@ -131,19 +133,20 @@ intel_region_alloc_internal(struct intel_context *intel,
 
 struct intel_region *
 intel_region_alloc(struct intel_context *intel,
-                   GLuint cpp, GLuint pitch, GLuint height)
+                   GLuint cpp, GLuint width, GLuint height, GLuint pitch)
 {
    dri_bo *buffer;
 
    buffer = dri_bo_alloc(intel->bufmgr, "region",
 			 pitch * cpp * height, 64);
 
-   return intel_region_alloc_internal(intel, cpp, pitch, height, buffer);
+   return intel_region_alloc_internal(intel, cpp, width, height, pitch, buffer);
 }
 
 struct intel_region *
 intel_region_alloc_for_handle(struct intel_context *intel,
-			      GLuint cpp, GLuint pitch, GLuint height,
+			      GLuint cpp,
+			      GLuint width, GLuint height, GLuint pitch,
 			      GLuint handle, const char *name)
 {
    struct intel_region *region;
@@ -151,7 +154,8 @@ intel_region_alloc_for_handle(struct intel_context *intel,
 
    buffer = intel_bo_gem_create_from_name(intel->bufmgr, name, handle);
 
-   region = intel_region_alloc_internal(intel, cpp, pitch, height, buffer);
+   region = intel_region_alloc_internal(intel, cpp,
+					width, height, pitch, buffer);
    if (region == NULL)
       return region;
 

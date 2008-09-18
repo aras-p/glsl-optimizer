@@ -74,7 +74,6 @@ typedef struct
    int drmMinor;
 
    int irq_active;
-   int allow_batchbuffer;
 
    GLboolean no_hw;
 

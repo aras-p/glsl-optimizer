@@ -1045,6 +1045,32 @@ void vbo_save_NewList( GLcontext *ctx, GLuint list, GLenum mode )
 void vbo_save_EndList( GLcontext *ctx )
 {
    struct vbo_save_context *save = &vbo_context(ctx)->save;
+
+   /* EndList called inside a (saved) Begin/End pair?
+    */
+   if (ctx->Driver.CurrentSavePrimitive != PRIM_OUTSIDE_BEGIN_END) {
+
+      if (save->prim_count > 0) {
+         GLint i = save->prim_count - 1;
+         ctx->Driver.CurrentSavePrimitive = PRIM_OUTSIDE_BEGIN_END;
+         save->prim[i].end = 0;
+         save->prim[i].count = (save->vert_count - 
+                                save->prim[i].start);
+      }
+
+      /* Make sure this vertex list gets replayed by the "loopback"
+       * mechanism:
+       */
+      save->dangling_attr_ref = 1;
+      vbo_save_SaveFlushVertices( ctx );
+
+      /* Swap out this vertex format while outside begin/end.  Any color,
+       * etc. received between here and the next begin will be compiled
+       * as opcodes.
+       */   
+      _mesa_install_save_vtxfmt( ctx, &ctx->ListState.ListVtxfmt );
+   }
+
    unmap_vertex_store( ctx, save->vertex_store );
 
    assert(save->vertex_size == 0);

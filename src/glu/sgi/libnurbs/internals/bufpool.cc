@@ -46,7 +46,7 @@
  * Pool - allocate a new pool of buffers
  *-----------------------------------------------------------------------------
  */
-Pool::Pool( int _buffersize, int initpoolsize, char *n )
+Pool::Pool( int _buffersize, int initpoolsize, const char *n )
 {
     if((unsigned)_buffersize < sizeof(Buffer))
         buffersize = sizeof(Buffer);

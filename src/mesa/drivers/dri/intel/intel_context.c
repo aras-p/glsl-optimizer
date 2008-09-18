@@ -233,6 +233,9 @@ intel_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
 						&count,
 						drawable->loaderPrivate);
 
+   if (buffers == NULL)
+      return;
+
    drawable->x = 0;
    drawable->y = 0;
    drawable->backX = 0;
@@ -298,8 +301,9 @@ intel_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
        }
        else
           region = intel_region_alloc_for_handle(intel, buffers[i].cpp,
-						 buffers[i].pitch / buffers[i].cpp,
+						 drawable->w,
 						 drawable->h,
+						 buffers[i].pitch / buffers[i].cpp,
 						 buffers[i].name,
 						 region_name);
 
@@ -818,8 +822,6 @@ intelDestroyContext(__DRIcontextPrivate * driContextPriv)
 
       /* free the Mesa context */
       _mesa_free_context_data(&intel->ctx);
-
-      dri_bufmgr_destroy(intel->bufmgr);
    }
 }
 
