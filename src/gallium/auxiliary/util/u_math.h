@@ -40,6 +40,7 @@
 
 
 #include "pipe/p_compiler.h"
+#include "pipe/p_debug.h"
 
 
 #ifdef __cplusplus
