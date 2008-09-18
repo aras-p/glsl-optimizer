@@ -122,8 +122,12 @@ debug_malloc(const char *file, unsigned line, const char *function,
    struct debug_memory_footer *ftr;
    
    hdr = real_malloc(sizeof(*hdr) + size + sizeof(*ftr));
-   if(!hdr)
+   if(!hdr) {
+      debug_printf("%s:%u:%s: out of memory when trying to allocate %lu bytes\n",
+                   file, line, function,
+                   (long unsigned)size);
       return NULL;
+   }
  
    hdr->no = last_no++;
    hdr->file = file;
@@ -219,8 +223,12 @@ debug_realloc(const char *file, unsigned line, const char *function,
 
    /* alloc new */
    new_hdr = real_malloc(sizeof(*new_hdr) + new_size + sizeof(*new_ftr));
-   if(!new_hdr)
+   if(!new_hdr) {
+      debug_printf("%s:%u:%s: out of memory when trying to allocate %lu bytes\n",
+                   file, line, function,
+                   (long unsigned)new_size);
       return NULL;
+   }
    new_hdr->no = old_hdr->no;
    new_hdr->file = old_hdr->file;
    new_hdr->line = old_hdr->line;
@@ -261,8 +269,19 @@ debug_memory_end(unsigned long start_no)
    for (; entry != &list; entry = entry->prev) {
       struct debug_memory_header *hdr;
       void *ptr;
+      struct debug_memory_footer *ftr;
+
       hdr = LIST_ENTRY(struct debug_memory_header, entry, head);
       ptr = data_from_header(hdr);
+      ftr = footer_from_header(hdr);
+
+      if(hdr->magic != DEBUG_MEMORY_MAGIC) {
+         debug_printf("%s:%u:%s: bad or corrupted memory %p\n",
+                      hdr->file, hdr->line, hdr->function,
+                      ptr);
+         debug_assert(0);
+      }
+
       if((start_no <= hdr->no && hdr->no < last_no) ||
 	 (last_no < start_no && (hdr->no < last_no || start_no <= hdr->no))) {
 	 debug_printf("%s:%u:%s: %u bytes at %p not freed\n",
@@ -270,7 +289,15 @@ debug_memory_end(unsigned long start_no)
 		      hdr->size, ptr);
 	 total_size += hdr->size;
       }
+
+      if(ftr->magic != DEBUG_MEMORY_MAGIC) {
+         debug_printf("%s:%u:%s: buffer overflow %p\n",
+                      hdr->file, hdr->line, hdr->function,
+                      ptr);
+         debug_assert(0);
+      }
    }
+
    if(total_size) {
       debug_printf("Total of %u KB of system memory apparently leaked\n",
 		   (total_size + 1023)/1024);
