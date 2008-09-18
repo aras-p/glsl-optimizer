@@ -28,7 +28,6 @@
 #define S_DRAWPIXELS_H
 
 
-#include "mtypes.h"
 #include "swrast.h"
 
 /* XXX kill this header? */

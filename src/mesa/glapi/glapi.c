@@ -57,7 +57,7 @@
 
 #else
 
-#include "glheader.h"
+#include "main/glheader.h"
 
 #endif
 

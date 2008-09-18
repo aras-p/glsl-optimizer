@@ -281,6 +281,9 @@ COMMON_DRIVER_OBJECTS = $(COMMON_DRIVER_SOURCES:.c=.o)
 
 
 ### Include directories
+### XXX we should be able to trim this down to just -Iinclude/ and -Isrc/mesa/
+### since most #includes have been changed from #include "mtypes.h" to
+### #include "main/mtypes.h", etc.
 
 INCLUDE_DIRS = \
 	-I$(TOP)/include \

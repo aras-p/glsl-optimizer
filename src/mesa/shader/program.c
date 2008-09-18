@@ -29,9 +29,9 @@
  */
 
 
-#include "glheader.h"
-#include "context.h"
-#include "hash.h"
+#include "main/glheader.h"
+#include "main/context.h"
+#include "main/hash.h"
 #include "program.h"
 #include "prog_parameter.h"
 #include "prog_instruction.h"

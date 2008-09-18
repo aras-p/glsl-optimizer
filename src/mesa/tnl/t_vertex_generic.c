@@ -26,12 +26,12 @@
  *    Keith Whitwell <keithw@tungstengraphics.com>
  */
 
-#include "glheader.h"
-#include "context.h"
-#include "colormac.h"
+#include "main/glheader.h"
+#include "main/context.h"
+#include "main/colormac.h"
+#include "main/simple_list.h"
 #include "t_context.h"
 #include "t_vertex.h"
-#include "simple_list.h"
 
 
 

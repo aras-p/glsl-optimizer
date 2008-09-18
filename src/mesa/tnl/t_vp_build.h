@@ -26,7 +26,7 @@
 #ifndef _T_ARB_BUILD_H
 #define _T_ARB_BUILD_H
 
-#include "mtypes.h"
+#include "main/mtypes.h"
 
 extern void _tnl_UpdateFixedFunctionProgram( GLcontext *ctx );
 

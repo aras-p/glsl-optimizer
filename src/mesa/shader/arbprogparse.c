@@ -32,14 +32,14 @@
 
 #include "main/glheader.h"
 #include "main/imports.h"
+#include "main/context.h"
+#include "main/macros.h"
+#include "main/mtypes.h"
 #include "shader/grammar/grammar_mesa.h"
 #include "arbprogparse.h"
 #include "program.h"
 #include "prog_parameter.h"
 #include "prog_statevars.h"
-#include "context.h"
-#include "macros.h"
-#include "mtypes.h"
 #include "prog_instruction.h"
 
 
