@@ -384,7 +384,7 @@ void spe_release_func(struct spe_function *p)
 
 
 /**
- * Alloate a SPE register.
+ * Allocate a SPE register.
  * \return register index or -1 if none left.
  */
 int spe_allocate_available_register(struct spe_function *p)
@@ -646,5 +646,44 @@ spe_splat_word(struct spe_function *p, unsigned rT, unsigned rA, int word)
    }
 }
 
+/* For each 32-bit float element of rA and rB, choose the smaller of the
+ * two, compositing them into the rT register.
+ * 
+ * The Float Compare Greater Than (fcgt) instruction will put 1s into
+ * compare_reg where rA > rB, and 0s where rA <= rB.
+ *
+ * Then the Select Bits (selb) instruction will take bits from rA where
+ * compare_reg is 0, and from rB where compare_reg is 1; i.e., from rA
+ * where rA <= rB and from rB where rB > rA, which is exactly the
+ * "min" operation.
+ *
+ * The compare_reg could in many cases be the same as rT, unless
+ * rT == rA || rt == rB.  But since this is common in constructions
+ * like "x = min(x, a)", we always allocate a new register to be safe.
+ */
+void 
+spe_float_min(struct spe_function *p, unsigned int rT, unsigned int rA, unsigned int rB)
+{
+   unsigned int compare_reg = spe_allocate_available_register(p);
+   spe_fcgt(p, compare_reg, rA, rB);
+   spe_selb(p, rT, rA, rB, compare_reg);
+   spe_release_register(p, compare_reg);
+}
+
+/* For each 32-bit float element of rA and rB, choose the greater of the
+ * two, compositing them into the rT register.
+ * 
+ * The logic is similar to that of spe_float_min() above; the only
+ * difference is that the registers on spe_selb() have been reversed,
+ * so that the larger of the two is selected instead of the smaller.
+ */
+void 
+spe_float_max(struct spe_function *p, unsigned int rT, unsigned int rA, unsigned int rB)
+{
+   unsigned int compare_reg = spe_allocate_available_register(p);
+   spe_fcgt(p, compare_reg, rA, rB);
+   spe_selb(p, rT, rB, rA, compare_reg);
+   spe_release_register(p, compare_reg);
+}
 
 #endif /* GALLIUM_CELL */

@@ -322,6 +322,14 @@ spe_zero(struct spe_function *p, unsigned rT);
 extern void
 spe_splat_word(struct spe_function *p, unsigned rT, unsigned rA, int word);
 
+/** rT = float min(rA, rB) */
+extern void
+spe_float_min(struct spe_function *p, unsigned rT, unsigned rA, unsigned rB);
+
+/** rT = float max(rA, rB) */
+extern void
+spe_float_max(struct spe_function *p, unsigned rT, unsigned rA, unsigned rB);
+
 
 /* Floating-point instructions
  */
