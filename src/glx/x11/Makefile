@@ -50,7 +50,7 @@ OBJECTS = $(SOURCES:.c=.o) $(MESA_GLAPI_OBJECTS)
 INCLUDES = -I. \
 	-I$(TOP)/include \
 	-I$(TOP)/include/GL/internal \
-	-I$(TOP)/src/mesa/glapi \
+	-I$(TOP)/src/mesa \
 	$(LIBDRM_CFLAGS) \
 	$(DRI2PROTO_CFLAGS) \
 	$(X11_INCLUDES)
