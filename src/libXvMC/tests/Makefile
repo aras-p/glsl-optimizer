@@ -1,4 +1,4 @@
-CFLAGS	+= -g -Wall -Werror
+CFLAGS	+= -g -Wall
 LDFLAGS	+=
 LIBS	+= -lXvMCW -lXvMC -lXv
 
@@ -6,7 +6,7 @@ LIBS	+= -lXvMCW -lXvMC -lXv
 
 .PHONY	= all clean
 
-all: test_context test_surface test_blocks test_rendering
+all: test_context test_surface test_blocks test_rendering xvmc_bench
 
 test_context: test_context.o testlib.o
 	$(CC) ${LDFLAGS} -o $@ $^ ${LIBS}
@@ -20,6 +20,8 @@ test_blocks: test_blocks.o testlib.o
 test_rendering: test_rendering.o testlib.o
 	$(CC) ${LDFLAGS} -o $@ $^ ${LIBS}
 
-clean:
-	rm -rf *.o test_context test_surface test_blocks test_rendering
+xvmc_bench: xvmc_bench.o testlib.o
+	$(CC) ${LDFLAGS} -o $@ $^ ${LIBS}
 
+clean:
+	rm -rf *.o test_context test_surface test_blocks test_rendering xvmc_bench

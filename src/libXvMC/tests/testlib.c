@@ -32,18 +32,18 @@ int GetPort
 	int		num_types;
 	int		ev_base, err_base;
 	unsigned int	i, j, k, l;
-	
+
 	if (!XvMCQueryExtension(display, &ev_base, &err_base))
 		return 0;
 	if (XvQueryAdaptors(display, XDefaultRootWindow(display), &num_adaptors, &adaptor_info) != Success)
 		return 0;
-	
+
 	for (i = 0; i < num_adaptors && !found_port; ++i)
 	{
 		if (adaptor_info[i].type & XvImageMask)
 		{
 			XvMCSurfaceInfo *surface_info = XvMCListSurfaceTypes(display, adaptor_info[i].base_id, &num_types);
-			
+
 			if (surface_info)
 			{
 				for (j = 0; j < num_types && !found_port; ++j)
@@ -74,14 +74,46 @@ int GetPort
 						}
 					}
 				}
-				
+
 				XFree(surface_info);
 			}
 		}
 	}
-	
+
 	XvFreeAdaptorInfo(adaptor_info);
-	
+
 	return found_port;
 }
 
+unsigned int align(unsigned int value, unsigned int alignment)
+{
+	return (value + alignment - 1) & ~(alignment - 1);
+}
+
+/* From the glibc manual */
+int timeval_subtract(struct timeval *result, struct timeval *x, struct timeval *y)
+{
+	/* Perform the carry for the later subtraction by updating y. */
+	if (x->tv_usec < y->tv_usec)
+	{
+		int nsec = (y->tv_usec - x->tv_usec) / 1000000 + 1;
+		y->tv_usec -= 1000000 * nsec;
+		y->tv_sec += nsec;
+	}
+	if (x->tv_usec - y->tv_usec > 1000000)
+	{
+		int nsec = (x->tv_usec - y->tv_usec) / 1000000;
+		y->tv_usec += 1000000 * nsec;
+		y->tv_sec -= nsec;
+	}
+
+	/*
+	 * Compute the time remaining to wait.
+	 * tv_usec is certainly positive.
+	 */
+	result->tv_sec = x->tv_sec - y->tv_sec;
+	result->tv_usec = x->tv_usec - y->tv_usec;
+
+	/* Return 1 if result is negative. */
+	return x->tv_sec < y->tv_sec;
+}

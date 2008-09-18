@@ -6,16 +6,16 @@ int main(int argc, char **argv)
 {
 	const unsigned int	width = 16, height = 16;
 	const unsigned int	mc_types[2] = {XVMC_MOCOMP | XVMC_MPEG_2, XVMC_IDCT | XVMC_MPEG_2};
-	
+
 	Display			*display;
 	XvPortID		port_num;
 	int			surface_type_id;
 	unsigned int		is_overlay, intra_unsigned;
 	int			colorkey;
 	XvMCContext		context = {0};
-	
+
 	display = XOpenDisplay(NULL);
-	
+
 	if (!GetPort
 	(
 		display,
@@ -33,22 +33,21 @@ int main(int argc, char **argv)
 		XCloseDisplay(display);
 		error(1, 0, "Error, unable to find a good port.\n");
 	}
-	
+
 	if (is_overlay)
 	{
 		Atom xv_colorkey = XInternAtom(display, "XV_COLORKEY", 0);
 		XvGetPortAttribute(display, port_num, xv_colorkey, &colorkey);
 	}
-	
-	/* Note: XvMCBadContext not a valid return for XvMCCreateContext in the XvMC API, but openChrome driver returns it */
-	/* Note: Nvidia binary driver segfaults on NULL context, halts with debug output on bad port */
-	
+
 	/* Test NULL context */
+	/* XXX: XvMCBadContext not a valid return for XvMCCreateContext in the XvMC API, but openChrome driver returns it */
 	assert(XvMCCreateContext(display, port_num, surface_type_id, width, height, XVMC_DIRECT, NULL) == XvMCBadContext);
 	/* Test invalid port */
-	assert(XvMCCreateContext(display, port_num + 1, surface_type_id, width, height, XVMC_DIRECT, &context) == XvBadPort);
+	/* XXX: Success and XvBadPort have the same value, if this call actually gets passed the validation step as of now we'll crash later */
+	assert(XvMCCreateContext(display, -1, surface_type_id, width, height, XVMC_DIRECT, &context) == XvBadPort);
 	/* Test invalid surface */
-	assert(XvMCCreateContext(display, port_num, surface_type_id + 1, width, height, XVMC_DIRECT, &context) == BadMatch);
+	assert(XvMCCreateContext(display, port_num, -1, width, height, XVMC_DIRECT, &context) == BadMatch);
 	/* Test invalid flags */
 	assert(XvMCCreateContext(display, port_num, surface_type_id, width, height, -1, &context) == BadValue);
 	/* Test huge width */
@@ -85,10 +84,9 @@ int main(int argc, char **argv)
 	assert(XvMCCreateContext(display, port_num, surface_type_id, width + 1, height + 1, XVMC_DIRECT, &context) == Success);
 	assert(context.width >= width + 1 && context.height >= height + 1);
 	assert(XvMCDestroyContext(display, &context) == Success);
-	
+
 	XvUngrabPort(display, port_num, CurrentTime);
 	XCloseDisplay(display);
-	
+
 	return 0;
 }
-

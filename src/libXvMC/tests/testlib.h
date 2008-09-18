@@ -7,6 +7,7 @@
 void test(int pred, const char *pred_string, const char *doc_string, const char *file, unsigned int line);
 */
 
+#include <sys/time.h>
 #include <X11/Xlib.h>
 #include <X11/extensions/XvMClib.h>
 
@@ -34,5 +35,8 @@ int GetPort
 	unsigned int *intra_unsigned
 );
 
-#endif
+unsigned int align(unsigned int value, unsigned int alignment);
 
+int timeval_subtract(struct timeval *result, struct timeval *x, struct timeval *y);
+
+#endif
