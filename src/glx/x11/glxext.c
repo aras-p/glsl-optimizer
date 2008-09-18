@@ -44,13 +44,13 @@
  * \author Kevin E. Martin <kevin@precisioninsight.com>
  */     
 
+#include <assert.h>
 #include "glxclient.h"
 #include <X11/extensions/Xext.h>
 #include <X11/extensions/extutil.h>
 #include "glapi.h"
 #include "glxextensions.h"
 #include "glcontextmodes.h"
-#include "glheader.h"
 
 #ifdef USE_XCB
 #include <X11/Xlib-xcb.h>

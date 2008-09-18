@@ -43,7 +43,6 @@
 #include "glapi.h"
 #include "glxextensions.h"
 #include "glcontextmodes.h"
-#include "glheader.h"
 
 #ifdef GLX_DIRECT_RENDERING
 #include <sys/time.h>

@@ -40,7 +40,6 @@
 
 #include "glxclient.h"
 #include "glapi.h"
-#include "glheader.h"
 #include "indirect_init.h"
 
 #ifdef GLX_DIRECT_RENDERING

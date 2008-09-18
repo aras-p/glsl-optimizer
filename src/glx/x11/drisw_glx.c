@@ -24,7 +24,6 @@
 #ifdef GLX_DIRECT_RENDERING
 
 #include <X11/Xlib.h>
-#include "glheader.h"
 #include "glxclient.h"
 #include "glcontextmodes.h"
 #include <dlfcn.h>
