@@ -43,8 +43,18 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include <X11/Xlibint.h>
 #include <X11/extensions/Xext.h>
 #include <X11/extensions/extutil.h>
-#include "glheader.h"
 #include "xf86dristr.h"
+
+
+#if defined(__GNUC__) && (__GNUC__ * 100 + __GNUC_MINOR__) >= 303
+#  define PUBLIC __attribute__((visibility("default")))
+#  define USED __attribute__((used))
+#else
+#  define PUBLIC
+#  define USED
+#endif
+
+
 
 static XExtensionInfo _xf86dri_info_data;
 static XExtensionInfo *xf86dri_info = &_xf86dri_info_data;
@@ -375,7 +385,7 @@ PUBLIC Bool XF86DRICreateContext(dpy, screen, visual, context, hHWContext)
 					   context, hHWContext );
 }
 
-PUBLIC GLboolean XF86DRIDestroyContext(Display *dpy, int screen, 
+PUBLIC Bool XF86DRIDestroyContext(Display *dpy, int screen, 
     XID context )
 {
     XExtDisplayInfo *info = find_display (dpy);
@@ -396,7 +406,7 @@ PUBLIC GLboolean XF86DRIDestroyContext(Display *dpy, int screen,
     return True;
 }
 
-PUBLIC GLboolean XF86DRICreateDrawable(Display *dpy, int screen, 
+PUBLIC Bool XF86DRICreateDrawable(Display *dpy, int screen, 
     XID drawable, drm_drawable_t * hHWDrawable )
 {
     XExtDisplayInfo *info = find_display (dpy);
@@ -430,7 +440,7 @@ static int noopErrorHandler(Display *dpy, XErrorEvent *xerr)
     return 0;
 }
 
-PUBLIC GLboolean XF86DRIDestroyDrawable(Display *dpy, int screen,
+PUBLIC Bool XF86DRIDestroyDrawable(Display *dpy, int screen,
     XID drawable )
 {
     XExtDisplayInfo *info = find_display (dpy);
@@ -452,7 +462,7 @@ PUBLIC GLboolean XF86DRIDestroyDrawable(Display *dpy, int screen,
      * the windows is gone, by wrapping the destroy call in an error
      * handler. */
 
-    XSync(dpy, GL_FALSE);
+    XSync(dpy, False);
     oldXErrorHandler = XSetErrorHandler(noopErrorHandler);
 
     LockDisplay(dpy);
