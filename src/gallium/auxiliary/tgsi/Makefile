@@ -13,6 +13,7 @@ C_SOURCES = \
 	tgsi_parse.c \
 	tgsi_scan.c \
 	tgsi_sse2.c \
+	tgsi_text.c \
 	tgsi_transform.c \
 	tgsi_util.c
 
