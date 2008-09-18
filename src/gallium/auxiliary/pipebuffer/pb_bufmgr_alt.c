@@ -76,6 +76,21 @@ pb_alt_manager_create_buffer(struct pb_manager *_mgr,
 
 
 static void
+pb_alt_manager_flush(struct pb_manager *_mgr)
+{
+   struct pb_alt_manager *mgr = pb_alt_manager(_mgr);
+   
+   assert(mgr->provider1->flush);
+   if(mgr->provider1->flush)
+      mgr->provider1->flush(mgr->provider1);
+   
+   assert(mgr->provider2->flush);
+   if(mgr->provider2->flush)
+      mgr->provider2->flush(mgr->provider2);
+}
+
+
+static void
 pb_alt_manager_destroy(struct pb_manager *mgr)
 {
    FREE(mgr);
@@ -97,6 +112,7 @@ pb_alt_manager_create(struct pb_manager *provider1,
 
    mgr->base.destroy = pb_alt_manager_destroy;
    mgr->base.create_buffer = pb_alt_manager_create_buffer;
+   mgr->base.flush = pb_alt_manager_flush;
    mgr->provider1 = provider1;
    mgr->provider2 = provider2;
       
