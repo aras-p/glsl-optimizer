@@ -42,6 +42,24 @@
 #include "slang_link.h"
 
 
+/** cast wrapper */
+static struct gl_vertex_program *
+vertex_program(struct gl_program *prog)
+{
+   assert(prog->Target == GL_VERTEX_PROGRAM_ARB);
+   return (struct gl_vertex_program *) prog;
+}
+
+
+/** cast wrapper */
+static struct gl_fragment_program *
+fragment_program(struct gl_program *prog)
+{
+   assert(prog->Target == GL_FRAGMENT_PROGRAM_ARB);
+   return (struct gl_fragment_program *) prog;
+}
+
+
 /**
  * Record a linking error.
  */
@@ -363,6 +381,7 @@ static void
 _slang_update_inputs_outputs(struct gl_program *prog)
 {
    GLuint i, j;
+   GLuint maxAddrReg = 0;
 
    prog->InputsRead = 0x0;
    prog->OutputsWritten = 0x0;
@@ -373,30 +392,33 @@ _slang_update_inputs_outputs(struct gl_program *prog)
       for (j = 0; j < numSrc; j++) {
          if (inst->SrcReg[j].File == PROGRAM_INPUT) {
             prog->InputsRead |= 1 << inst->SrcReg[j].Index;
+            if (prog->Target == GL_FRAGMENT_PROGRAM_ARB &&
+                inst->SrcReg[j].Index == FRAG_ATTRIB_FOGC) {
+               /* The fragment shader FOGC input is used for fog,
+                * front-facing and sprite/point coord.
+                */
+               struct gl_fragment_program *fp = fragment_program(prog);
+               const GLint swz = GET_SWZ(inst->SrcReg[j].Swizzle, 0);
+               if (swz == SWIZZLE_X)
+                  fp->UsesFogFragCoord = GL_TRUE;
+               else if (swz == SWIZZLE_Y)
+                  fp->UsesFrontFacing = GL_TRUE;
+               else if (swz == SWIZZLE_Z || swz == SWIZZLE_W)
+                  fp->UsesPointCoord = GL_TRUE;
+            }
+         }
+         else if (inst->SrcReg[j].File == PROGRAM_ADDRESS) {
+            maxAddrReg = MAX2(maxAddrReg, inst->SrcReg[j].Index + 1);
          }
       }
       if (inst->DstReg.File == PROGRAM_OUTPUT) {
          prog->OutputsWritten |= 1 << inst->DstReg.Index;
       }
+      else if (inst->DstReg.File == PROGRAM_ADDRESS) {
+         maxAddrReg = MAX2(maxAddrReg, inst->DstReg.Index + 1);
+      }
    }
-}
-
-
-/** cast wrapper */
-static struct gl_vertex_program *
-vertex_program(struct gl_program *prog)
-{
-   assert(prog->Target == GL_VERTEX_PROGRAM_ARB);
-   return (struct gl_vertex_program *) prog;
-}
-
-
-/** cast wrapper */
-static struct gl_fragment_program *
-fragment_program(struct gl_program *prog)
-{
-   assert(prog->Target == GL_FRAGMENT_PROGRAM_ARB);
-   return (struct gl_fragment_program *) prog;
+   prog->NumAddressRegs = maxAddrReg;
 }
 
 

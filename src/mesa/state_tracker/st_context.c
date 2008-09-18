@@ -88,6 +88,19 @@ void st_invalidate_state(GLcontext * ctx, GLuint new_state)
 }
 
 
+/**
+ * Check for multisample env var override.
+ */
+int
+st_get_msaa(void)
+{
+   const char *msaa = _mesa_getenv("__GL_FSAA_MODE");
+   if (msaa)
+      return atoi(msaa);
+   return 0;
+}
+
+
 static struct st_context *
 st_create_context_priv( GLcontext *ctx, struct pipe_context *pipe )
 {
@@ -141,6 +154,8 @@ st_create_context_priv( GLcontext *ctx, struct pipe_context *pipe )
 
    st->pixel_xfer.cache = _mesa_new_program_cache();
 
+   st->force_msaa = st_get_msaa();
+
    /* GL limits and extensions */
    st_init_limits(st);
    st_init_extensions(st);
@@ -188,8 +203,6 @@ static void st_destroy_context_priv( struct st_context *st )
    st_destroy_drawtex(st);
 #endif
 
-   _vbo_DestroyContext(st->ctx);
-
    for (i = 0; i < Elements(st->state.sampler_texture); i++) {
       pipe_texture_reference(&st->state.sampler_texture[i], NULL);
    }
@@ -222,6 +235,8 @@ void st_destroy_context( struct st_context *st )
    st_reference_vertprog(st, &st->vp, NULL);
 
    _mesa_delete_program_cache(st->ctx, st->pixel_xfer.cache);
+
+   _vbo_DestroyContext(st->ctx);
 
    _mesa_free_context_data(ctx);
 

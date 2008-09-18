@@ -69,13 +69,22 @@ struct pipe_winsys;
  */
 struct pb_manager
 {
+   void
+   (*destroy)( struct pb_manager *mgr );
+
    struct pb_buffer *
    (*create_buffer)( struct pb_manager *mgr, 
 	             size_t size,
 	             const struct pb_desc *desc);
 
+   /**
+    * Flush all temporary-held buffers.
+    * 
+    * Used mostly to aid debugging memory issues or to clean up resources when 
+    * the drivers are long lived.
+    */
    void
-   (*destroy)( struct pb_manager *mgr );
+   (*flush)( struct pb_manager *mgr );
 };
 
 
@@ -152,9 +161,6 @@ pb_slab_range_manager_create(struct pb_manager *provider,
 struct pb_manager *
 pb_cache_manager_create(struct pb_manager *provider, 
                      	unsigned usecs); 
-
-void
-pb_cache_flush(struct pb_manager *mgr);
 
 
 /** 

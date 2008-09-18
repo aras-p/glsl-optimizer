@@ -1933,7 +1933,10 @@ struct gl_fragment_program
 {
    struct gl_program Base;   /**< base class */
    GLenum FogOption;
-   GLboolean UsesKill;
+   GLboolean UsesKill;          /**< shader uses KIL instruction */
+   GLboolean UsesPointCoord;    /**< shader uses gl_PointCoord */
+   GLboolean UsesFrontFacing;   /**< shader used gl_FrontFacing */
+   GLboolean UsesFogFragCoord;  /**< shader used gl_FogFragCoord */
 };
 
 

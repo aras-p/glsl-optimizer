@@ -95,6 +95,19 @@ fenced_bufmgr_create_buffer(struct pb_manager *mgr,
 
 
 static void
+fenced_bufmgr_flush(struct pb_manager *mgr)
+{
+   struct fenced_pb_manager *fenced_mgr = fenced_pb_manager(mgr);
+
+   fenced_buffer_list_check_free(fenced_mgr->fenced_list, TRUE);
+
+   assert(fenced_mgr->provider->flush);
+   if(fenced_mgr->provider->flush)
+      fenced_mgr->provider->flush(fenced_mgr->provider);
+}
+
+
+static void
 fenced_bufmgr_destroy(struct pb_manager *mgr)
 {
    struct fenced_pb_manager *fenced_mgr = fenced_pb_manager(mgr);
@@ -123,6 +136,7 @@ fenced_bufmgr_create(struct pb_manager *provider,
 
    fenced_mgr->base.destroy = fenced_bufmgr_destroy;
    fenced_mgr->base.create_buffer = fenced_bufmgr_create_buffer;
+   fenced_mgr->base.flush = fenced_bufmgr_flush;
 
    fenced_mgr->provider = provider;
    fenced_mgr->fenced_list = fenced_buffer_list_create(winsys);

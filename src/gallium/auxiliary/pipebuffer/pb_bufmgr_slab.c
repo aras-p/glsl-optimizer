@@ -407,6 +407,17 @@ pb_slab_manager_create_buffer(struct pb_manager *_mgr,
 
 
 static void
+pb_slab_manager_flush(struct pb_manager *_mgr)
+{
+   struct pb_slab_manager *mgr = pb_slab_manager(_mgr);
+
+   assert(mgr->provider->flush);
+   if(mgr->provider->flush)
+      mgr->provider->flush(mgr->provider);
+}
+
+
+static void
 pb_slab_manager_destroy(struct pb_manager *_mgr)
 {
    struct pb_slab_manager *mgr = pb_slab_manager(_mgr);
@@ -430,6 +441,7 @@ pb_slab_manager_create(struct pb_manager *provider,
 
    mgr->base.destroy = pb_slab_manager_destroy;
    mgr->base.create_buffer = pb_slab_manager_create_buffer;
+   mgr->base.flush = pb_slab_manager_flush;
 
    mgr->provider = provider;
    mgr->bufSize = bufSize;
@@ -462,6 +474,19 @@ pb_slab_range_manager_create_buffer(struct pb_manager *_mgr,
 
    /* Fall back to allocate a buffer object directly from the provider. */
    return mgr->provider->create_buffer(mgr->provider, size, desc);
+}
+
+
+static void
+pb_slab_range_manager_flush(struct pb_manager *_mgr)
+{
+   struct pb_slab_range_manager *mgr = pb_slab_range_manager(_mgr);
+
+   /* Individual slabs don't hold any temporary buffers so no need to call them */
+   
+   assert(mgr->provider->flush);
+   if(mgr->provider->flush)
+      mgr->provider->flush(mgr->provider);
 }
 
 
@@ -499,6 +524,7 @@ pb_slab_range_manager_create(struct pb_manager *provider,
 
    mgr->base.destroy = pb_slab_range_manager_destroy;
    mgr->base.create_buffer = pb_slab_range_manager_create_buffer;
+   mgr->base.flush = pb_slab_range_manager_flush;
 
    mgr->provider = provider;
    mgr->minBufSize = minBufSize;

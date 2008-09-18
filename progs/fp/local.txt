@@ -1,0 +1,11 @@
+!!ARBfp1.0
+TEMP R0;
+PARAM c[4] = { { 0, 0, 0, 0 },
+               program.local[0..1],
+               { 1, 1, 1, 1 } };
+MOV R0, c[1];
+SUB R0, R0, c[0];
+ADD R0, R0, c[2];
+MUL R0, R0, c[3];
+MOV result.color, R0;
+END

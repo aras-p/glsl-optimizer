@@ -222,8 +222,8 @@ static void widepoint_first_point( struct draw_stage *stage,
       /* find fragment shader PointCoord/Fog input */
       wide->point_coord_fs_input = 0; /* XXX fix this! */
 
-      /* setup extra vp output */
-      draw->extra_vp_outputs.semantic_name = TGSI_SEMANTIC_FOG;
+      /* setup extra vp output (point coord implemented as a texcoord) */
+      draw->extra_vp_outputs.semantic_name = TGSI_SEMANTIC_GENERIC;
       draw->extra_vp_outputs.semantic_index = 0;
       draw->extra_vp_outputs.slot = draw->vs.num_vs_outputs;
    }

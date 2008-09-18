@@ -68,6 +68,7 @@ dump_enum(
 #define CHR(C)          ctx->printf( ctx, "%c", C )
 #define UIX(I)          ctx->printf( ctx, "0x%x", I )
 #define UID(I)          ctx->printf( ctx, "%u", I )
+#define INSTID(I)          ctx->printf( ctx, "% 3u", I )
 #define SID(I)          ctx->printf( ctx, "%d", I )
 #define FLT(F)          ctx->printf( ctx, "%10.4f", F )
 #define ENM(E,ENUMS)    dump_enum( ctx, E, ENUMS, sizeof( ENUMS ) / sizeof( *ENUMS ) )
@@ -315,8 +316,8 @@ iter_instruction(
    uint i;
    boolean first_reg = TRUE;
 
-   UID( instno );
-   CHR( ':' );
+   INSTID( instno );
+   TXT( ": " );
    TXT( tgsi_get_opcode_info( inst->Instruction.Opcode )->mnemonic );
 
    switch (inst->Instruction.Saturate) {
