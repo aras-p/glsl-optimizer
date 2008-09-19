@@ -2604,11 +2604,13 @@ parse_src_reg (GLcontext * ctx, const GLubyte ** inst,
    }
 
    if (*File == PROGRAM_STATE_VAR) {
+      enum register_file file;
+
       /* If we're referencing the Program->Parameters[] array, check if the
        * parameter is really a constant/literal.  If so, set File to CONSTANT.
        */
       assert(*Index < Program->Base.Parameters->NumParameters);
-      enum register_file file = Program->Base.Parameters->Parameters[*Index].Type;
+      file = Program->Base.Parameters->Parameters[*Index].Type;
       if (file == PROGRAM_CONSTANT)
          *File = PROGRAM_CONSTANT;
    }
