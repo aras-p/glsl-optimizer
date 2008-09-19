@@ -40,7 +40,7 @@ struct tgsi_token;
 struct gl_program;
 
 GLuint
-tgsi_translate_mesa_program(
+st_translate_mesa_program(
    uint procType,
    const struct gl_program *program,
    GLuint numInputs,
