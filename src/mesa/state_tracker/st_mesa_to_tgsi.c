@@ -713,7 +713,7 @@ find_temporaries(const struct gl_program *program,
  * \return number of tokens placed in 'tokens' buffer, or zero if error
  */
 GLuint
-tgsi_translate_mesa_program(
+st_translate_mesa_program(
    uint procType,
    const struct gl_program *program,
    GLuint numInputs,
