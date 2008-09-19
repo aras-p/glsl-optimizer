@@ -77,6 +77,7 @@ map_register_file(
    case PROGRAM_CONSTANT:
       if (indirectAccess)
          return TGSI_FILE_CONSTANT;
+      assert(immediateMapping[index] != ~0);
       return TGSI_FILE_IMMEDIATE;
    case PROGRAM_INPUT:
       return TGSI_FILE_INPUT;
@@ -118,6 +119,7 @@ map_register_file_index(
    case TGSI_FILE_IMMEDIATE:
       if (indirectAccess)
          return index;
+      assert(immediateMapping[index] != ~0);
       return immediateMapping[index];
 
    default:
@@ -242,14 +244,6 @@ compile_instruction(
          immediateMapping,
          indirectAccess );
 
-      /**
-       * This not at all the correct solution.
-       * FIXME: Roll this up in the above map functions
-       */
-      if (fullsrc->SrcRegister.File == TGSI_FILE_IMMEDIATE && fullsrc->SrcRegister.Index == ~0) {
-         fullsrc->SrcRegister.File = TGSI_FILE_CONSTANT;
-         fullsrc->SrcRegister.Index = inst->SrcReg[i].Index;
-      }
 
       /* swizzle (ext swizzle also depends on negation) */
       {
