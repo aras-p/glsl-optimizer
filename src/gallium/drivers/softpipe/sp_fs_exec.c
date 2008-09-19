@@ -42,13 +42,13 @@
 struct sp_exec_fragment_shader
 {
    struct sp_fragment_shader base;
-   struct tgsi_token *machine_tokens;
+   const struct tgsi_token *machine_tokens;
 };
 
 
 /** cast wrapper */
 static INLINE struct sp_exec_fragment_shader *
-sp_exec_fragment_shader(struct sp_fragment_shader *base)
+sp_exec_fragment_shader(const struct sp_fragment_shader *base)
 {
    return (struct sp_exec_fragment_shader *) base;
 }
