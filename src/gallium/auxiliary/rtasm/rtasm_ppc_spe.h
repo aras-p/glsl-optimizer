@@ -72,6 +72,7 @@ struct spe_function
 
 extern void spe_init_func(struct spe_function *p, unsigned code_size);
 extern void spe_release_func(struct spe_function *p);
+extern unsigned spe_code_size(const struct spe_function *p);
 
 extern int spe_allocate_available_register(struct spe_function *p);
 extern int spe_allocate_register(struct spe_function *p, int reg);

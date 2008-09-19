@@ -383,6 +383,13 @@ void spe_release_func(struct spe_function *p)
 }
 
 
+/** Return current code size in bytes. */
+unsigned spe_code_size(const struct spe_function *p)
+{
+   return p->num_inst * SPE_INST_SIZE;
+}
+
+
 /**
  * Allocate a SPE register.
  * \return register index or -1 if none left.
