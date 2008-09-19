@@ -60,6 +60,9 @@ gen_depth_test(const struct pipe_depth_stencil_alpha_state *dsa,
                struct spe_function *f,
                int mask_reg, int ifragZ_reg, int ifbZ_reg, int zmask_reg)
 {
+   /* NOTE: we use clgt below, not cgt, because we want to compare _unsigned_
+    * quantities.  This only makes a difference for 32-bit Z values though.
+    */
    ASSERT(dsa->depth.enabled);
 
    switch (dsa->depth.func) {
@@ -79,28 +82,28 @@ gen_depth_test(const struct pipe_depth_stencil_alpha_state *dsa,
 
    case PIPE_FUNC_GREATER:
       /* zmask = (ifragZ > ref) */
-      spe_cgt(f, zmask_reg, ifragZ_reg, ifbZ_reg);
+      spe_clgt(f, zmask_reg, ifragZ_reg, ifbZ_reg);
       /* mask = (mask & zmask) */
       spe_and(f, mask_reg, mask_reg, zmask_reg);
       break;
 
    case PIPE_FUNC_LESS:
       /* zmask = (ref > ifragZ) */
-      spe_cgt(f, zmask_reg, ifbZ_reg, ifragZ_reg);
+      spe_clgt(f, zmask_reg, ifbZ_reg, ifragZ_reg);
       /* mask = (mask & zmask) */
       spe_and(f, mask_reg, mask_reg, zmask_reg);
       break;
 
    case PIPE_FUNC_LEQUAL:
       /* zmask = (ifragZ > ref) */
-      spe_cgt(f, zmask_reg, ifragZ_reg, ifbZ_reg);
+      spe_clgt(f, zmask_reg, ifragZ_reg, ifbZ_reg);
       /* mask = (mask & ~zmask) */
       spe_andc(f, mask_reg, mask_reg, zmask_reg);
       break;
 
    case PIPE_FUNC_GEQUAL:
       /* zmask = (ref > ifragZ) */
-      spe_cgt(f, zmask_reg, ifbZ_reg, ifragZ_reg);
+      spe_clgt(f, zmask_reg, ifbZ_reg, ifragZ_reg);
       /* mask = (mask & ~zmask) */
       spe_andc(f, mask_reg, mask_reg, zmask_reg);
       break;
@@ -1066,13 +1069,16 @@ gen_pack_colors(struct spe_function *f,
                 int r_reg, int g_reg, int b_reg, int a_reg,
                 int rgba_reg)
 {
+   int rg_reg = spe_allocate_available_register(f);
+   int ba_reg = spe_allocate_available_register(f);
+
    /* Convert float[4] in [0.0,1.0] to int[4] in [0,~0], with clamping */
    spe_cfltu(f, r_reg, r_reg, 32);
    spe_cfltu(f, g_reg, g_reg, 32);
    spe_cfltu(f, b_reg, b_reg, 32);
    spe_cfltu(f, a_reg, a_reg, 32);
 
-   /* Shift the most significant bytes to least the significant positions.
+   /* Shift the most significant bytes to the least significant positions.
     * I.e.: reg = reg >> 24
     */
    spe_rotmi(f, r_reg, r_reg, -24);
@@ -1104,9 +1110,12 @@ gen_pack_colors(struct spe_function *f,
     * OR-ing all those together gives us four packed colors:
     *  RGBA = {0xffffffff, 0xaa114477, 0xbb225588, 0xcc336699}
     */
-   spe_or(f, rgba_reg, r_reg, g_reg);
-   spe_or(f, rgba_reg, rgba_reg, b_reg);
-   spe_or(f, rgba_reg, rgba_reg, a_reg);
+   spe_or(f, rg_reg, r_reg, g_reg);
+   spe_or(f, ba_reg, a_reg, b_reg);
+   spe_or(f, rgba_reg, rg_reg, ba_reg);
+
+   spe_release_register(f, rg_reg);
+   spe_release_register(f, ba_reg);
 }
 
 
@@ -1227,33 +1236,49 @@ cell_gen_fragment_function(struct cell_context *cell, struct spe_function *f)
             spe_release_register(f, mask_reg);
             /* OK, fbZ_reg has four 24-bit Z values now */
          }
+         else if (zs_format == PIPE_FORMAT_Z24S8_UNORM ||
+                  zs_format == PIPE_FORMAT_Z24X8_UNORM) {
+            spe_rotmi(f, fbZ_reg, fbZS_reg, -8);  /* fbZ = fbZS >> 8 */
+            /* OK, fbZ_reg has four 24-bit Z values now */
+         }
+         else if (zs_format == PIPE_FORMAT_Z32_UNORM) {
+            spe_move(f, fbZ_reg, fbZS_reg);
+            /* OK, fbZ_reg has four 32-bit Z values now */
+         }
+         else if (zs_format == PIPE_FORMAT_Z16_UNORM) {
+            spe_move(f, fbZ_reg, fbZS_reg);
+            /* OK, fbZ_reg has four 16-bit Z values now */
+         }
          else {
-            /* XXX handle other z/stencil formats */
-            ASSERT(0);
+            ASSERT(0);  /* invalid format */
          }
 
-         /* Convert fragZ values from float[4] to uint[4] */
+         /* Convert fragZ values from float[4] to 16, 24 or 32-bit uint[4] */
          if (zs_format == PIPE_FORMAT_S8Z24_UNORM ||
              zs_format == PIPE_FORMAT_X8Z24_UNORM ||
              zs_format == PIPE_FORMAT_Z24S8_UNORM ||
              zs_format == PIPE_FORMAT_Z24X8_UNORM) {
-            /* 24-bit Z values */
-            int scale_reg = spe_allocate_available_register(f);
-
-            /* scale_reg[0,1,2,3] = float(2^24-1) */
-            spe_load_float(f, scale_reg, (float) 0xffffff);
-
-            /* XXX these two instructions might be combined */
-            spe_fm(f, fragZ_reg, fragZ_reg, scale_reg); /* fragZ *= scale */
-            spe_cfltu(f, fragZ_reg, fragZ_reg, 0);  /* fragZ = (int) fragZ */
-
-            spe_release_register(f, scale_reg);
+            /* scale/convert fragZ from float in [0,1] to uint in [0, ~0] */
+            spe_cfltu(f, fragZ_reg, fragZ_reg, 32);
+            /* fragZ = fragZ >> 8 */
+            spe_rotmi(f, fragZ_reg, fragZ_reg, -8);
          }
-         else {
-            /* XXX handle 16-bit Z format */
-            ASSERT(0);
+         else if (zs_format == PIPE_FORMAT_Z32_UNORM) {
+            /* scale/convert fragZ from float in [0,1] to uint in [0, ~0] */
+            spe_cfltu(f, fragZ_reg, fragZ_reg, 32);
+         }
+         else if (zs_format == PIPE_FORMAT_Z16_UNORM) {
+            /* scale/convert fragZ from float in [0,1] to uint in [0, ~0] */
+            spe_cfltu(f, fragZ_reg, fragZ_reg, 32);
+            /* fragZ = fragZ >> 16 */
+            spe_rotmi(f, fragZ_reg, fragZ_reg, -16);
          }
       }
+      else {
+         /* no Z test, but set Z to zero so we don't OR-in garbage below */
+         spe_load_uint(f, fbZ_reg, 0); /* XXX set to zero for now */
+      }
+
 
       if (dsa->stencil[0].enabled) {
          /* Extract Stencil bit sfrom fbZS_reg into fbS_reg */
@@ -1268,7 +1293,10 @@ cell_gen_fragment_function(struct cell_context *cell, struct spe_function *f)
             ASSERT(0);
          }
       }
-
+      else {
+         /* no stencil test, but set to zero so we don't OR-in garbage below */
+         spe_load_uint(f, fbS_reg, 0); /* XXX set to zero for now */
+      }
 
       if (dsa->stencil[0].enabled) {
          /* XXX this may involve depth testing too */
@@ -1296,22 +1324,22 @@ cell_gen_fragment_function(struct cell_context *cell, struct spe_function *f)
             spe_shli(f, fbS_reg, fbS_reg, 24); /* fbS = fbS << 24 */
             spe_or(f, fbZS_reg, fbS_reg, fbZ_reg); /* fbZS = fbS | fbZ */
          }
-         else if (zs_format == PIPE_FORMAT_S8Z24_UNORM ||
-                  zs_format == PIPE_FORMAT_X8Z24_UNORM) {
-            /* XXX to do */
-            ASSERT(0);
+         else if (zs_format == PIPE_FORMAT_Z24S8_UNORM ||
+                  zs_format == PIPE_FORMAT_Z24X8_UNORM) {
+            spe_shli(f, fbZ_reg, fbZ_reg, 8); /* fbZ = fbZ << 8 */
+            spe_or(f, fbZS_reg, fbS_reg, fbZ_reg); /* fbZS = fbS | fbZ */
+         }
+         else if (zs_format == PIPE_FORMAT_Z32_UNORM) {
+            spe_move(f, fbZS_reg, fbZ_reg); /* fbZS = fbZ */
          }
          else if (zs_format == PIPE_FORMAT_Z16_UNORM) {
-            /* XXX to do */
-            ASSERT(0);
+            spe_move(f, fbZS_reg, fbZ_reg); /* fbZS = fbZ */
          }
          else if (zs_format == PIPE_FORMAT_S8_UNORM) {
-            /* XXX to do */
-            ASSERT(0);
+            ASSERT(0);   /* XXX to do */
          }
          else {
-            /* bad zs_format */
-            ASSERT(0);
+            ASSERT(0); /* bad zs_format */
          }
 
          /* Store: memory[depth_tile_reg + quad_offset_reg] = fbZS */
