@@ -310,9 +310,9 @@ spe_load_uint(struct spe_function *p, unsigned rT, unsigned int ui);
 extern void
 spe_splat(struct spe_function *p, unsigned rT, unsigned rA);
 
-/** Complement/invert all bits in rT. */
+/** rT = complement_all_bits(rA). */
 extern void
-spe_complement(struct spe_function *p, unsigned rT);
+spe_complement(struct spe_function *p, unsigned rT, unsigned rA);
 
 /** rT = rA. */
 extern void

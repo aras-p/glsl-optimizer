@@ -924,7 +924,7 @@ emit_IF(struct codegen *gen, const struct tgsi_full_instruction *inst)
    /* tmp = (s1_reg == 0) */
    spe_ceqi(gen->f, tmp_reg, s1_reg, 0);
    /* tmp = !tmp */
-   spe_complement(gen->f, tmp_reg);
+   spe_complement(gen->f, tmp_reg, tmp_reg);
    /* exec_mask = exec_mask & tmp */
    spe_and(gen->f, exec_reg, exec_reg, tmp_reg);
 
@@ -944,7 +944,7 @@ emit_ELSE(struct codegen *gen, const struct tgsi_full_instruction *inst)
    spe_comment(gen->f, -4, "ELSE:");
 
    /* exec_mask = !exec_mask */
-   spe_complement(gen->f, exec_reg);
+   spe_complement(gen->f, exec_reg, exec_reg);
 
    return true;
 }

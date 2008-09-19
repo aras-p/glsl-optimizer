@@ -623,9 +623,9 @@ spe_splat(struct spe_function *p, unsigned rT, unsigned rA)
 
 
 void
-spe_complement(struct spe_function *p, unsigned rT)
+spe_complement(struct spe_function *p, unsigned rT, unsigned rA)
 {
-   spe_nor(p, rT, rT, rT);
+   spe_nor(p, rT, rA, rA);
 }
 
 
@@ -667,7 +667,8 @@ spe_splat_word(struct spe_function *p, unsigned rT, unsigned rA, int word)
    }
 }
 
-/* For each 32-bit float element of rA and rB, choose the smaller of the
+/**
+ * For each 32-bit float element of rA and rB, choose the smaller of the
  * two, compositing them into the rT register.
  * 
  * The Float Compare Greater Than (fcgt) instruction will put 1s into
@@ -683,7 +684,7 @@ spe_splat_word(struct spe_function *p, unsigned rT, unsigned rA, int word)
  * like "x = min(x, a)", we always allocate a new register to be safe.
  */
 void 
-spe_float_min(struct spe_function *p, unsigned int rT, unsigned int rA, unsigned int rB)
+spe_float_min(struct spe_function *p, unsigned rT, unsigned rA, unsigned rB)
 {
    unsigned int compare_reg = spe_allocate_available_register(p);
    spe_fcgt(p, compare_reg, rA, rB);
@@ -691,7 +692,8 @@ spe_float_min(struct spe_function *p, unsigned int rT, unsigned int rA, unsigned
    spe_release_register(p, compare_reg);
 }
 
-/* For each 32-bit float element of rA and rB, choose the greater of the
+/**
+ * For each 32-bit float element of rA and rB, choose the greater of the
  * two, compositing them into the rT register.
  * 
  * The logic is similar to that of spe_float_min() above; the only
@@ -699,7 +701,7 @@ spe_float_min(struct spe_function *p, unsigned int rT, unsigned int rA, unsigned
  * so that the larger of the two is selected instead of the smaller.
  */
 void 
-spe_float_max(struct spe_function *p, unsigned int rT, unsigned int rA, unsigned int rB)
+spe_float_max(struct spe_function *p, unsigned rT, unsigned rA, unsigned rB)
 {
    unsigned int compare_reg = spe_allocate_available_register(p);
    spe_fcgt(p, compare_reg, rA, rB);

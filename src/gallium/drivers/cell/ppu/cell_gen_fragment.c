@@ -920,7 +920,7 @@ gen_logicop(const struct pipe_blend_state *blend,
          spe_andc(f, fragRGBA_reg, fbRGBA_reg, fragRGBA_reg);
          break;
       case PIPE_LOGICOP_COPY_INVERTED: /* ~s */
-         spe_complement(f, fragRGBA_reg);
+         spe_complement(f, fragRGBA_reg, fragRGBA_reg);
          break;
       case PIPE_LOGICOP_AND_REVERSE: /* s & ~d */
          /* andc R, A, B computes R = A & ~B */
@@ -941,7 +941,7 @@ gen_logicop(const struct pipe_blend_state *blend,
          break;
       case PIPE_LOGICOP_EQUIV: /* ~(s ^ d) */
          spe_xor(f, fragRGBA_reg, fragRGBA_reg, fbRGBA_reg);
-         spe_complement(f, fragRGBA_reg);
+         spe_complement(f, fragRGBA_reg, fragRGBA_reg);
          break;
       case PIPE_LOGICOP_NOOP: /* d */
          spe_move(f, fragRGBA_reg, fbRGBA_reg);
