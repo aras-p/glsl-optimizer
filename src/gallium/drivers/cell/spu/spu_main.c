@@ -247,6 +247,8 @@ cmd_release_verts(const struct cell_command_release_verts *release)
 static void
 cmd_state_fragment_ops(const struct cell_command_fragment_ops *fops)
 {
+   static int warned = 0;
+
    DEBUG_PRINTF("CMD_STATE_FRAGMENT_OPS\n");
    /* Copy SPU code from batch buffer to spu buffer */
    memcpy(spu.fragment_ops_code, fops->code, SPU_MAX_FRAGMENT_OPS_INSTS * 4);
@@ -270,7 +272,13 @@ cmd_state_fragment_ops(const struct cell_command_fragment_ops *fops)
    if ((spu.init.debug_flags & CELL_DEBUG_FRAGMENT_OP_FALLBACK) == 0) {
       spu.fragment_ops = (spu_fragment_ops_func) spu.fragment_ops_code;
    }
-   /* otherwise, the default fallback code remains in place */
+   else {
+      /* otherwise, the default fallback code remains in place */
+      if (!warned) {
+         fprintf(stderr, "Cell Warning: using fallback per-fragment code\n");
+         warned = 1;
+      }
+   }
 
    spu.read_depth = spu.depth_stencil_alpha.depth.enabled;
    spu.read_stencil = spu.depth_stencil_alpha.stencil[0].enabled;
