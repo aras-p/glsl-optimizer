@@ -1050,7 +1050,7 @@ gen_colormask(uint colormask,
 }
 
 /**
- * Generate code to pack a quad of float colors into a four 32-bit integers.
+ * Generate code to pack a quad of float colors into four 32-bit integers.
  *
  * \param f             SPE function to append instruction onto.
  * \param color_format  the dest color packing format
