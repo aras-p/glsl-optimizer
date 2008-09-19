@@ -705,6 +705,8 @@ main(main_param_t speid, main_param_t argp)
 
    ASSERT(sizeof(tile_t) == TILE_SIZE * TILE_SIZE * 4);
    ASSERT(sizeof(struct cell_command_render) % 8 == 0);
+   ASSERT(((unsigned long) &spu.fragment_ops_code) % 32 == 0);
+   ASSERT(((unsigned long) &spu.fragment_program_code) % 32 == 0);
 
    one_time_init();
 
@@ -721,7 +723,7 @@ main(main_param_t speid, main_param_t argp)
 
 #if 0
    if (spu.init.id==0)
-      spu_test_misc();
+      spu_test_misc(spu.init.id);
 #endif
 
    main_loop();
