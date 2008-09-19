@@ -76,7 +76,7 @@ struct codegen
 
    /** Per-instruction temps / intermediate temps */
    int num_itemps;
-   int itemps[4];
+   int itemps[10];
 
    /** Current IF/ELSE/ENDIF nesting level */
    int if_nesting;
@@ -586,9 +586,10 @@ emit_DP3(struct codegen *gen, const struct tgsi_full_instruction *inst)
    for (ch = 0; ch < 4; ch++) {
       if (inst->FullDstRegisters[0].DstRegister.WriteMask & (1 << ch)) {
          store_dest_reg(gen, d_reg, ch, &inst->FullDstRegisters[0]);
-         free_itemps(gen);
       }
    }
+
+   free_itemps(gen);
    return true;
 }
 
@@ -625,9 +626,10 @@ emit_DP4(struct codegen *gen, const struct tgsi_full_instruction *inst)
    for (ch = 0; ch < 4; ch++) {
       if (inst->FullDstRegisters[0].DstRegister.WriteMask & (1 << ch)) {
          store_dest_reg(gen, d_reg, ch, &inst->FullDstRegisters[0]);
-         free_itemps(gen);
       }
    }
+
+   free_itemps(gen);
    return true;
 }
 
@@ -830,6 +832,38 @@ emit_CMP(struct codegen *gen, const struct tgsi_full_instruction *inst)
    int ch;
 
    spe_comment(gen->f, -4, "CMP:");
+
+   for (ch = 0; ch < 4; ch++) {
+      if (inst->FullDstRegisters[0].DstRegister.WriteMask & (1 << ch)) {
+         int s1_reg = get_src_reg(gen, ch, &inst->FullSrcRegisters[0]);
+         int s2_reg = get_src_reg(gen, ch, &inst->FullSrcRegisters[1]);
+         int s3_reg = get_src_reg(gen, ch, &inst->FullSrcRegisters[2]);
+         int d_reg = get_dst_reg(gen, ch, &inst->FullDstRegisters[0]);
+         int zero_reg = get_itemp(gen);
+   
+         spe_xor(gen->f, zero_reg, zero_reg, zero_reg);
+
+         /* d = (s1 < 0) ? s2 : s3 */
+         spe_fcgt(gen->f, d_reg, zero_reg, s1_reg);
+         spe_selb(gen->f, d_reg, s3_reg, s2_reg, d_reg);
+
+         store_dest_reg(gen, d_reg, ch, &inst->FullDstRegisters[0]);
+         free_itemps(gen);
+      }
+   }
+
+   return true;
+}
+
+/**
+ * Emit floor.  See emit_SGT for comments.
+ */
+static boolean
+emit_FLR(struct codegen *gen, const struct tgsi_full_instruction *inst)
+{
+   int ch;
+
+   spe_comment(gen->f, -4, "FLR:");
 
    for (ch = 0; ch < 4; ch++) {
       if (inst->FullDstRegisters[0].DstRegister.WriteMask & (1 << ch)) {
