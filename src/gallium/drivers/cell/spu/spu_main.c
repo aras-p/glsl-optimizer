@@ -267,7 +267,7 @@ cmd_state_fragment_ops(const struct cell_command_fragment_ops *fops)
     * final code we'll always use codegen and won't even provide the
     * raw state records that the fallback code requires.
     */
-   if (spu.init.debug_flags & CELL_DEBUG_FRAGMENT_OP_FALLBACK) {
+   if ((spu.init.debug_flags & CELL_DEBUG_FRAGMENT_OP_FALLBACK) == 0) {
       spu.fragment_ops = (spu_fragment_ops_func) spu.fragment_ops_code;
    }
    /* otherwise, the default fallback code remains in place */
