@@ -619,6 +619,7 @@ static const __DRIconfig **intelInitScreen(__DRIscreenPrivate *psp)
     *
     * Hello chicken.  Hello egg.  How are you two today?
     */
+   driInitExtensions( NULL, card_extensions, GL_FALSE );
    //intelInitExtensions(NULL, GL_TRUE);
 	   
    if (!intelInitDriver(psp))
