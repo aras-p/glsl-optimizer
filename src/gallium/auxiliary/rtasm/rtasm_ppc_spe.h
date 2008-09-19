@@ -302,6 +302,10 @@ spe_load_float(struct spe_function *p, unsigned rT, float x);
 extern void
 spe_load_int(struct spe_function *p, unsigned rT, int i);
 
+/** Load/splat immediate unsigned int into rT. */
+extern void
+spe_load_uint(struct spe_function *p, unsigned rT, unsigned int ui);
+
 /** Replicate word 0 of rA across rT. */
 extern void
 spe_splat(struct spe_function *p, unsigned rT, unsigned rA);
