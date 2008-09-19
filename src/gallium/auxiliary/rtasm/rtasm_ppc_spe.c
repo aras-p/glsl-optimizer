@@ -639,7 +639,13 @@ spe_complement(struct spe_function *p, unsigned rT, unsigned rA)
 void
 spe_move(struct spe_function *p, unsigned rT, unsigned rA)
 {
-   spe_ori(p, rT, rA, 0);
+   /* Use different instructions depending on the instruction address
+    * to take advantage of the dual pipelines.
+    */
+   if (p->num_inst & 1)
+      spe_shlqbyi(p, rT, rA, 0);  /* odd pipe */
+   else
+      spe_ori(p, rT, rA, 0);  /* even pipe */
 }
 
 
