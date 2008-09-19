@@ -58,7 +58,7 @@
 #include "GL/glxint.h"
 #include "GL/glxproto.h"
 #include "GL/internal/glcore.h"
-#include "glapitable.h"
+#include "glapi/glapitable.h"
 #include "glxhash.h"
 #if defined( USE_XTHREADS )
 # include <X11/Xthreads.h>
