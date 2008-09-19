@@ -725,6 +725,7 @@ util_create_gen_mipmap(struct pipe_context *pipe,
    ctx->rasterizer.cull_mode = PIPE_WINDING_NONE;
    ctx->rasterizer.bypass_clipping = 1;
    /*ctx->rasterizer.bypass_vs = 1;*/
+   ctx->rasterizer.gl_rasterization_rules = 1;
 
    /* sampler state */
    memset(&ctx->sampler, 0, sizeof(ctx->sampler));
