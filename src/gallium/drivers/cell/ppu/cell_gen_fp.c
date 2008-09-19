@@ -886,7 +886,45 @@ emit_FLR(struct codegen *gen, const struct tgsi_full_instruction *inst)
          /* Convert int to float */
          spe_csflt(gen->f, d_reg, d_reg, 0);
 
+         store_dest_reg(gen, d_reg, ch, &inst->FullDstRegisters[0]);
+         free_itemps(gen);
+      }
+   }
 
+   return true;
+}
+
+/**
+ * Emit frac.  
+ * Input - FLR(Input)
+ */
+static boolean
+emit_FRC(struct codegen *gen, const struct tgsi_full_instruction *inst)
+{
+   int ch;
+
+   spe_comment(gen->f, -4, "FLR:");
+
+   for (ch = 0; ch < 4; ch++) {
+      if (inst->FullDstRegisters[0].DstRegister.WriteMask & (1 << ch)) {
+         int s1_reg = get_src_reg(gen, ch, &inst->FullSrcRegisters[0]);
+         int d_reg = get_dst_reg(gen, ch, &inst->FullDstRegisters[0]);
+         int tmp_reg = get_itemp(gen);
+
+         /* If negative, subtract 1.0 */
+         spe_xor(gen->f, tmp_reg, tmp_reg, tmp_reg);
+         spe_fcgt(gen->f, d_reg, tmp_reg, s1_reg);
+         spe_selb(gen->f, tmp_reg, tmp_reg, get_const_one_reg(gen), d_reg);
+         spe_fs(gen->f, d_reg, s1_reg, tmp_reg);
+
+         /* Convert float to int */
+         spe_cflts(gen->f, d_reg, d_reg, 0);
+
+         /* Convert int to float */
+         spe_csflt(gen->f, d_reg, d_reg, 0);
+
+         /* d = s1 - FLR(s1) */
+         spe_fs(gen->f, d_reg, s1_reg, d_reg);
 
          store_dest_reg(gen, d_reg, ch, &inst->FullDstRegisters[0]);
          free_itemps(gen);
@@ -895,6 +933,7 @@ emit_FLR(struct codegen *gen, const struct tgsi_full_instruction *inst)
 
    return true;
 }
+
 
 /**
  * Emit max.  See emit_SGT for comments.
@@ -1111,6 +1150,8 @@ emit_instruction(struct codegen *gen,
       return emit_MIN(gen, inst);
    case TGSI_OPCODE_FLR:
       return emit_FLR(gen, inst);
+   case TGSI_OPCODE_FRC:
+      return emit_FRC(gen, inst);
    case TGSI_OPCODE_END:
       return emit_END(gen);
 
