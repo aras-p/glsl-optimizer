@@ -856,7 +856,10 @@ emit_CMP(struct codegen *gen, const struct tgsi_full_instruction *inst)
 }
 
 /**
- * Emit floor.  See emit_SGT for comments.
+ * Emit floor.  
+ * If negative int subtract one
+ * Convert float to signed int
+ * Convert signed int to float
  */
 static boolean
 emit_FLR(struct codegen *gen, const struct tgsi_full_instruction *inst)
@@ -868,16 +871,22 @@ emit_FLR(struct codegen *gen, const struct tgsi_full_instruction *inst)
    for (ch = 0; ch < 4; ch++) {
       if (inst->FullDstRegisters[0].DstRegister.WriteMask & (1 << ch)) {
          int s1_reg = get_src_reg(gen, ch, &inst->FullSrcRegisters[0]);
-         int s2_reg = get_src_reg(gen, ch, &inst->FullSrcRegisters[1]);
-         int s3_reg = get_src_reg(gen, ch, &inst->FullSrcRegisters[2]);
          int d_reg = get_dst_reg(gen, ch, &inst->FullDstRegisters[0]);
-         int zero_reg = get_itemp(gen);
-   
-         spe_xor(gen->f, zero_reg, zero_reg, zero_reg);
+         int tmp_reg = get_itemp(gen);
 
-         /* d = (s1 < 0) ? s2 : s3 */
-         spe_fcgt(gen->f, d_reg, zero_reg, s1_reg);
-         spe_selb(gen->f, d_reg, s3_reg, s2_reg, d_reg);
+         /* If negative, subtract 1.0 */
+         spe_xor(gen->f, tmp_reg, tmp_reg, tmp_reg);
+         spe_fcgt(gen->f, d_reg, tmp_reg, s1_reg);
+         spe_selb(gen->f, tmp_reg, tmp_reg, get_const_one_reg(gen), d_reg);
+         spe_fs(gen->f, d_reg, s1_reg, tmp_reg);
+
+         /* Convert float to int */
+         spe_cflts(gen->f, d_reg, d_reg, 0);
+
+         /* Convert int to float */
+         spe_csflt(gen->f, d_reg, d_reg, 0);
+
+
 
          store_dest_reg(gen, d_reg, ch, &inst->FullDstRegisters[0]);
          free_itemps(gen);
@@ -1100,6 +1109,8 @@ emit_instruction(struct codegen *gen,
       return emit_MAX(gen, inst);
    case TGSI_OPCODE_MIN:
       return emit_MIN(gen, inst);
+   case TGSI_OPCODE_FLR:
+      return emit_FLR(gen, inst);
    case TGSI_OPCODE_END:
       return emit_END(gen);
 
