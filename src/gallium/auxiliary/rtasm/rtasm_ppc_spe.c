@@ -592,11 +592,32 @@ spe_load_int(struct spe_function *p, unsigned rT, int i)
    }
 }
 
+void spe_load_uint(struct spe_function *p, unsigned rT, unsigned int ui)
+{
+   /* If the whole value is in the lower 18 bits, use ila, which
+    * doesn't sign-extend.  Otherwise, if the two halfwords of
+    * the constant are identical, use ilh.  Otherwise, we have
+    * to use ilhu followed by iohl.
+    */
+   if ((ui & 0xfffc0000) == ui) {
+      spe_ila(p, rT, ui);
+   }
+   else if ((ui >> 16) == (ui & 0xffff)) {
+      spe_ilh(p, rT, ui & 0xffff);
+   }
+   else {
+      spe_ilhu(p, rT, ui >> 16);
+      if (ui & 0xffff)
+         spe_iohl(p, rT, ui & 0xffff);
+   }
+}
+
 
 void
 spe_splat(struct spe_function *p, unsigned rT, unsigned rA)
 {
-   spe_ila(p, rT, 66051);
+   /* Duplicate bytes 0, 1, 2, and 3 across the whole register */
+   spe_ila(p, rT, 0x00010203);
    spe_shufb(p, rT, rA, rA, rT);
 }
 

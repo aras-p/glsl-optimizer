@@ -902,8 +902,69 @@ gen_logicop(const struct pipe_blend_state *blend,
             struct spe_function *f,
             int fragRGBA_reg, int fbRGBA_reg)
 {
-   /* XXX to-do */
-   /* operate on 32-bit packed pixels, not float colors */
+   /* We've got four 32-bit RGBA packed pixels in each of
+    * fragRGBA_reg and fbRGBA_reg, not sets of floating-point
+    * reds, greens, blues, and alphas.
+    * */
+   ASSERT(blend->logicop_enable);
+
+   switch(blend->logicop_func) {
+      case PIPE_LOGICOP_CLEAR: /* 0 */
+         spe_zero(f, fragRGBA_reg);
+         break;
+      case PIPE_LOGICOP_NOR: /* ~(s | d) */
+         spe_nor(f, fragRGBA_reg, fragRGBA_reg, fbRGBA_reg);
+         break;
+      case PIPE_LOGICOP_AND_INVERTED: /* ~s & d */
+         /* andc R, A, B computes R = A & ~B */
+         spe_andc(f, fragRGBA_reg, fbRGBA_reg, fragRGBA_reg);
+         break;
+      case PIPE_LOGICOP_COPY_INVERTED: /* ~s */
+         spe_complement(f, fragRGBA_reg);
+         break;
+      case PIPE_LOGICOP_AND_REVERSE: /* s & ~d */
+         /* andc R, A, B computes R = A & ~B */
+         spe_andc(f, fragRGBA_reg, fragRGBA_reg, fbRGBA_reg);
+         break;
+      case PIPE_LOGICOP_INVERT: /* ~d */
+         /* Note that (A nor A) == ~(A|A) == ~A */
+         spe_nor(f, fragRGBA_reg, fbRGBA_reg, fbRGBA_reg);
+         break;
+      case PIPE_LOGICOP_XOR: /* s ^ d */
+         spe_xor(f, fragRGBA_reg, fragRGBA_reg, fbRGBA_reg);
+         break;
+      case PIPE_LOGICOP_NAND: /* ~(s & d) */
+         spe_nand(f, fragRGBA_reg, fragRGBA_reg, fbRGBA_reg);
+         break;
+      case PIPE_LOGICOP_AND: /* s & d */
+         spe_and(f, fragRGBA_reg, fragRGBA_reg, fbRGBA_reg);
+         break;
+      case PIPE_LOGICOP_EQUIV: /* ~(s ^ d) */
+         spe_xor(f, fragRGBA_reg, fragRGBA_reg, fbRGBA_reg);
+         spe_complement(f, fragRGBA_reg);
+         break;
+      case PIPE_LOGICOP_NOOP: /* d */
+         spe_move(f, fragRGBA_reg, fbRGBA_reg);
+         break;
+      case PIPE_LOGICOP_OR_INVERTED: /* ~s | d */
+         /* orc R, A, B computes R = A | ~B */
+         spe_orc(f, fragRGBA_reg, fbRGBA_reg, fragRGBA_reg);
+         break;
+      case PIPE_LOGICOP_COPY: /* s */
+         break;
+      case PIPE_LOGICOP_OR_REVERSE: /* s | ~d */
+         /* orc R, A, B computes R = A | ~B */
+         spe_orc(f, fragRGBA_reg, fragRGBA_reg, fbRGBA_reg);
+         break;
+      case PIPE_LOGICOP_OR: /* s | d */
+         spe_or(f, fragRGBA_reg, fragRGBA_reg, fbRGBA_reg);
+         break;
+      case PIPE_LOGICOP_SET: /* 1 */
+         spe_load_int(f, fragRGBA_reg, 0xffffffff);
+         break;
+      default:
+         ASSERT(0);
+   }
 }
 
 
@@ -912,11 +973,81 @@ gen_colormask(uint colormask,
               struct spe_function *f,
               int fragRGBA_reg, int fbRGBA_reg)
 {
-   /* XXX to-do */
-   /* operate on 32-bit packed pixels, not float colors */
+   /* We've got four 32-bit RGBA packed pixels in each of
+    * fragRGBA_reg and fbRGBA_reg, not sets of floating-point
+    * reds, greens, blues, and alphas.
+    * */
+
+   /* The color mask operation can prevent any set of color
+    * components in the incoming fragment from being written to the frame 
+    * buffer; we do this by replacing the masked components of the 
+    * fragment with the frame buffer values.
+    *
+    * There are only 16 possibilities, with a unique mask for
+    * each of the possibilities.  (Technically, there are only 15
+    * possibilities, since we shouldn't be called for the one mask
+    * that does nothing, but the complete implementation is here
+    * anyway to avoid confusion.)
+    *
+    * We implement this via a constant static array which we'll index 
+    * into to get the correct mask.
+    * 
+    * We're dependent on the mask values being low-order bits,
+    * with particular values for each bit; so we start with a
+    * few assertions, which will fail if any of the values were
+    * to change.
+    */
+   ASSERT(PIPE_MASK_R == 0x1);
+   ASSERT(PIPE_MASK_G == 0x2);
+   ASSERT(PIPE_MASK_B == 0x4);
+   ASSERT(PIPE_MASK_A == 0x8);
+
+   /* Here's the list of all possible colormasks, indexed by the
+    * value of the combined mask specifier.
+    */
+   static const unsigned int colormasks[16] = {
+      0x00000000, /* 0: all colors masked */
+      0xff000000, /* 1: PIPE_MASK_R */
+      0x00ff0000, /* 2: PIPE_MASK_G */
+      0xffff0000, /* 3: PIPE_MASK_R | PIPE_MASK_G */
+      0x0000ff00, /* 4: PIPE_MASK_B */
+      0xff00ff00, /* 5: PIPE_MASK_R | PIPE_MASK_B */
+      0x00ffff00, /* 6: PIPE_MASK_G | PIPE_MASK_B */
+      0xffffff00, /* 7: PIPE_MASK_R | PIPE_MASK_G | PIPE_MASK_B */
+      0x000000ff, /* 8: PIPE_MASK_A */
+      0xff0000ff, /* 9: PIPE_MASK_R | PIPE_MASK_A */
+      0x00ff00ff, /* 10: PIPE_MASK_G | PIPE_MASK_A */
+      0xffff00ff, /* 11: PIPE_MASK_R | PIPE_MASK_G | PIPE_MASK_A */
+      0x0000ffff, /* 12: PIPE_MASK_B | PIPE_MASK_A */
+      0xff00ffff, /* 13: PIPE_MASK_R | PIPE_MASK_B | PIPE_MASK_A */
+      0x00ffffff, /* 14: PIPE_MASK_G | PIPE_MASK_B | PIPE_MASK_A */
+      0xffffffff  /* 15: PIPE_MASK_R | PIPE_MASK_G | PIPE_MASK_B | PIPE_MASK_A */
+   };
+
+   /* Get a temporary register to hold the mask */
+   int colormask_reg = spe_allocate_available_register(f);
+
+   /* Look up the desired mask directly and load it into the mask register.
+    * This will load the same mask into each of the four words in the
+    * mask register.
+    */
+   spe_load_uint(f, colormask_reg, colormasks[colormask]);
+
+   /* Use the mask register to select between the fragment color
+    * values and the frame buffer color values.  Wherever the
+    * mask has a 0 bit, the current frame buffer color should override
+    * the fragment color.  Wherever the mask has a 1 bit, the 
+    * fragment color should persevere.  The Select Bits (selb rt, rA, rB, rM)
+    * instruction will select bits from its first operand rA wherever the
+    * the mask bits rM are 0, and from its second operand rB wherever the
+    * mask bits rM are 1.  That means that the frame buffer color is the
+    * first operand, and the fragment color the second.
+    */
+    spe_selb(f, fragRGBA_reg, fbRGBA_reg, fragRGBA_reg, colormask_reg);
+
+    /* Release the temporary register and we're done */
+    spe_release_register(f, colormask_reg);
 }
-
-
 
 /**
  * Generate code to pack a quad of float colors into a four 32-bit integers.
@@ -1223,7 +1354,7 @@ cell_gen_fragment_function(struct cell_context *cell, struct spe_function *f)
          gen_logicop(blend, f, rgba_reg, fbRGBA_reg);
       }
 
-      if (blend->colormask != 0xf) {
+      if (blend->colormask != PIPE_MASK_RGBA) {
          gen_colormask(blend->colormask, f, rgba_reg, fbRGBA_reg);
       }
 

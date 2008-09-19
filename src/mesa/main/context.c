@@ -1316,7 +1316,9 @@ _mesa_free_context_data( GLcontext *ctx )
    _mesa_reference_fragprog(ctx, &ctx->FragmentProgram._Current, NULL);
    _mesa_reference_fragprog(ctx, &ctx->FragmentProgram._TexEnvProgram, NULL);
 
+#if FEATURE_attrib_stack
    _mesa_free_attrib_data(ctx);
+#endif
    _mesa_free_lighting_data( ctx );
 #if FEATURE_evaluators
    _mesa_free_eval_data( ctx );

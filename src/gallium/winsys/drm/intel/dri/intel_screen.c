@@ -365,12 +365,10 @@ intel_flush_frontbuffer( struct pipe_winsys *winsys,
                          struct pipe_surface *surf,
                          void *context_private)
 {
-   //struct intel_context *intel = (struct intel_context *) context_private;
-   //__DRIdrawablePrivate *dPriv = intel->driDrawable;
+   struct intel_context *intel = (struct intel_context *) context_private;
+   __DRIdrawablePrivate *dPriv = intel->driDrawable;
 
-   //assert((int)"Doesn't work currently" & 0);
-
-   //intelDisplaySurface(dPriv, surf, NULL);
+   intelDisplaySurface(dPriv, surf, NULL);
 }
 
 static boolean
@@ -565,7 +563,7 @@ intelFillInModes(__DRIscreenPrivate *psp,
    configs = driCreateConfigs(fb_format, fb_type,
 			      depth_bits_array, stencil_bits_array,
 			      depth_buffer_factor, back_buffer_modes,
-			      back_buffer_factor);
+			      back_buffer_factor, msaa_samples_array, 1);
    if (configs == NULL) {
     fprintf(stderr, "[%s:%u] Error creating FBConfig!\n", __func__,
               __LINE__);
@@ -619,6 +617,7 @@ static const __DRIconfig **intelInitScreen(__DRIscreenPrivate *psp)
     *
     * Hello chicken.  Hello egg.  How are you two today?
     */
+   driInitExtensions( NULL, card_extensions, GL_FALSE );
    //intelInitExtensions(NULL, GL_TRUE);
 	   
    if (!intelInitDriver(psp))
