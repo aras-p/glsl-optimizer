@@ -662,7 +662,7 @@ driCreateConfigs(GLenum fb_format, GLenum fb_type,
 	 break;
    }
 
-   num_modes = num_depth_stencil_bits * num_db_modes * num_accum_bits;
+   num_modes = num_depth_stencil_bits * num_db_modes * num_accum_bits * num_msaa_modes;
    configs = _mesa_calloc((num_modes + 1) * sizeof *configs);
    if (configs == NULL)
        return NULL;
@@ -735,8 +735,6 @@ driCreateConfigs(GLenum fb_format, GLenum fb_type,
 		    	__DRI_ATTRIB_TEXTURE_2D_BIT |
 		    	__DRI_ATTRIB_TEXTURE_RECTANGLE_BIT :
 		    	0;
-
-		    modes = modes->next;
 		}
 	    }
 	}
