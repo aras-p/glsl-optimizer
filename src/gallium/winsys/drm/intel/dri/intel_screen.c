@@ -365,12 +365,10 @@ intel_flush_frontbuffer( struct pipe_winsys *winsys,
                          struct pipe_surface *surf,
                          void *context_private)
 {
-   //struct intel_context *intel = (struct intel_context *) context_private;
-   //__DRIdrawablePrivate *dPriv = intel->driDrawable;
+   struct intel_context *intel = (struct intel_context *) context_private;
+   __DRIdrawablePrivate *dPriv = intel->driDrawable;
 
-   //assert((int)"Doesn't work currently" & 0);
-
-   //intelDisplaySurface(dPriv, surf, NULL);
+   intelDisplaySurface(dPriv, surf, NULL);
 }
 
 static boolean
