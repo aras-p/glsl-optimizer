@@ -1,4 +1,31 @@
-#if !defined TGSI_TOKEN_H
+/**************************************************************************
+ * 
+ * Copyright 2008 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * All Rights Reserved.
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sub license, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to
+ * the following conditions:
+ * 
+ * The above copyright notice and this permission notice (including the
+ * next paragraph) shall be included in all copies or substantial portions
+ * of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
+ * IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+ * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+ * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ * 
+ **************************************************************************/
+
+#ifndef TGSI_TOKEN_H
 #define TGSI_TOKEN_H
 
 #ifdef __cplusplus
@@ -396,7 +423,7 @@ struct tgsi_immediate_float32
 #define TGSI_SAT_ZERO_ONE        1  /* clamp to [0,1] */
 #define TGSI_SAT_MINUS_PLUS_ONE  2  /* clamp to [-1,1] */
 
-/*
+/**
  * Opcode is the operation code to execute. A given operation defines the
  * semantics how the source registers (if any) are interpreted and what is
  * written to the destination registers (if any) as a result of execution.
@@ -481,7 +508,7 @@ struct tgsi_instruction_ext
 #define TGSI_SWIZZLE_Z      2
 #define TGSI_SWIZZLE_W      3
 
-/*
+/**
  * Precision controls the precision at which the operation should be executed.
  *
  * CondDstUpdate enables condition code register writes. When this field is
@@ -548,7 +575,7 @@ struct tgsi_instruction_ext_predicate
    unsigned Extended         : 1;    /* BOOL */
 };
 
-/*
+/**
  * File specifies the register array to access.
  *
  * Index specifies the element number of a register in the register file.
@@ -580,7 +607,7 @@ struct tgsi_src_register
    unsigned Extended    : 1;  /* BOOL */
 };
 
-/*
+/**
  * If tgsi_src_register::Extended is TRUE, tgsi_src_register_ext follows.
  * 
  * Then, if tgsi_src_register::Indirect is TRUE, another tgsi_src_register
@@ -599,7 +626,7 @@ struct tgsi_src_register_ext
    unsigned Extended : 1;    /* BOOL */
 };
 
-/*
+/**
  * If tgsi_src_register_ext::Type is TGSI_SRC_REGISTER_EXT_TYPE_SWZ,
  * it should be cast to tgsi_src_register_ext_swz.
  * 
@@ -617,7 +644,7 @@ struct tgsi_src_register_ext
 #define TGSI_EXTSWIZZLE_ZERO    4
 #define TGSI_EXTSWIZZLE_ONE     5
 
-/*
+/**
  * ExtSwizzleX, ExtSwizzleY, ExtSwizzleZ and ExtSwizzleW swizzle the source
  * register in an extended manner.
  *

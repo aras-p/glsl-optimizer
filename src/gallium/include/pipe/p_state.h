@@ -27,6 +27,8 @@
 
 
 /**
+ * @file
+ * 
  * Abstract graphics pipe state objects.
  *
  * Basic notes:
