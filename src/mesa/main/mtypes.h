@@ -123,6 +123,7 @@ typedef int GLfixed;
 /*@{*/
 struct _mesa_HashTable;
 struct gl_pixelstore_attrib;
+struct gl_program_cache;
 struct gl_texture_format;
 struct gl_texture_image;
 struct gl_texture_object;
@@ -149,6 +150,7 @@ enum
    VERT_ATTRIB_COLOR1 = 4,
    VERT_ATTRIB_FOG = 5,
    VERT_ATTRIB_COLOR_INDEX = 6,
+   VERT_ATTRIB_POINT_SIZE = 6,  /*alias*/
    VERT_ATTRIB_EDGEFLAG = 7,
    VERT_ATTRIB_TEX0 = 8,
    VERT_ATTRIB_TEX1 = 9,
@@ -1546,15 +1548,6 @@ struct gl_texture_unit
 };
 
 
-struct texenvprog_cache_item;
-
-struct texenvprog_cache
-{
-   struct texenvprog_cache_item **items;
-   GLuint size, n_items;
-   GLcontext *ctx;
-};
-
 
 /**
  * Texture attribute group (GL_TEXTURE_BIT).
@@ -1581,9 +1574,6 @@ struct gl_texture_attrib
    /** GL_EXT_shared_texture_palette */
    GLboolean SharedPalette;
    struct gl_color_table Palette;
-   
-   /** Cached texenv fragment programs */
-   struct texenvprog_cache env_fp_cache;
 };
 
 
@@ -1984,6 +1974,9 @@ struct gl_vertex_program_state
    /** Program to emulate fixed-function T&L (see above) */
    struct gl_vertex_program *_TnlProgram;
 
+   /** Cache of fixed-function programs */
+   struct gl_program_cache *Cache;
+
 #if FEATURE_MESA_program_debug
    GLprogramcallbackMESA Callback;
    GLvoid *CallbackData;
@@ -2016,6 +2009,9 @@ struct gl_fragment_program_state
 
    /** Program to emulate fixed-function texture env/combine (see above) */
    struct gl_fragment_program *_TexEnvProgram;
+
+   /** Cache of fixed-function programs */
+   struct gl_program_cache *Cache;
 
 #if FEATURE_MESA_program_debug
    GLprogramcallbackMESA Callback;

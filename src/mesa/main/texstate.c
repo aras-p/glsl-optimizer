@@ -3177,8 +3177,6 @@ _mesa_init_texture(GLcontext *ctx)
     */
    assert(ctx->Shared->Default1D->RefCount >= MAX_TEXTURE_UNITS + 1);
 
-   _mesa_TexEnvProgramCacheInit( ctx );
-
    /* Allocate proxy textures */
    if (!alloc_proxy_textures( ctx ))
       return GL_FALSE;
@@ -3214,7 +3212,6 @@ _mesa_free_texture_data(GLcontext *ctx)
    for (u = 0; u < MAX_TEXTURE_IMAGE_UNITS; u++)
       _mesa_free_colortable_data( &ctx->Texture.Unit[u].ColorTable );
 
-   _mesa_TexEnvProgramCacheDestroy( ctx );
 }
 
 
