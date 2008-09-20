@@ -501,12 +501,12 @@ _eglGetConfigs(_EGLDriver *drv, EGLDisplay dpy, EGLConfig *configs,
 GLboolean
 _eglFillInConfigs(_EGLConfig * configs,
                   GLenum fb_format, GLenum fb_type,
-                  const u_int8_t * depth_bits, const u_int8_t * stencil_bits,
+                  const uint8_t * depth_bits, const uint8_t * stencil_bits,
                   unsigned num_depth_stencil_bits,
                   const GLenum * db_modes, unsigned num_db_modes,
                   int visType)
 {
-   static const u_int8_t bits_table[3][4] = {
+   static const uint8_t bits_table[3][4] = {
             /* R  G  B  A */
             { 5, 6, 5, 0 },  /* Any GL_UNSIGNED_SHORT_5_6_5 */
             { 8, 8, 8, 0 },  /* Any RGB with any GL_UNSIGNED_INT_8_8_8_8 */
@@ -517,7 +517,7 @@ _eglFillInConfigs(_EGLConfig * configs,
     * Given the four supported fb_type values, this results in valid array
     * indices of 3, 4, 5, and 7.
     */
-   static const u_int32_t masks_table_rgb[8][4] = {
+   static const uint32_t masks_table_rgb[8][4] = {
             {0x00000000, 0x00000000, 0x00000000, 0x00000000},
             {0x00000000, 0x00000000, 0x00000000, 0x00000000},
             {0x00000000, 0x00000000, 0x00000000, 0x00000000},
@@ -528,7 +528,7 @@ _eglFillInConfigs(_EGLConfig * configs,
             {0x000000FF, 0x0000FF00, 0x00FF0000, 0x00000000}  /* 8_8_8_8_REV */
          };
 
-   static const u_int32_t masks_table_rgba[8][4] = {
+   static const uint32_t masks_table_rgba[8][4] = {
             {0x00000000, 0x00000000, 0x00000000, 0x00000000},
             {0x00000000, 0x00000000, 0x00000000, 0x00000000},
             {0x00000000, 0x00000000, 0x00000000, 0x00000000},
@@ -539,7 +539,7 @@ _eglFillInConfigs(_EGLConfig * configs,
             {0x000000FF, 0x0000FF00, 0x00FF0000, 0xFF000000},  /* 8_8_8_8_REV */
          };
 
-   static const u_int32_t masks_table_bgr[8][4] = {
+   static const uint32_t masks_table_bgr[8][4] = {
             {0x00000000, 0x00000000, 0x00000000, 0x00000000},
             {0x00000000, 0x00000000, 0x00000000, 0x00000000},
             {0x00000000, 0x00000000, 0x00000000, 0x00000000},
@@ -550,7 +550,7 @@ _eglFillInConfigs(_EGLConfig * configs,
             {0x00FF0000, 0x0000FF00, 0x000000FF, 0x00000000},  /* 8_8_8_8_REV */
          };
 
-   static const u_int32_t masks_table_bgra[8][4] = {
+   static const uint32_t masks_table_bgra[8][4] = {
             {0x00000000, 0x00000000, 0x00000000, 0x00000000},
             {0x00000000, 0x00000000, 0x00000000, 0x00000000},
             {0x00000000, 0x00000000, 0x00000000, 0x00000000},
@@ -561,12 +561,12 @@ _eglFillInConfigs(_EGLConfig * configs,
             {0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000},  /* 8_8_8_8_REV */
          };
 
-   static const u_int8_t bytes_per_pixel[8] = {
+   static const uint8_t bytes_per_pixel[8] = {
             0, 0, 0, 2, 2, 4, 0, 4
          };
 
-   const u_int8_t * bits;
-   const u_int32_t * masks;
+   const uint8_t * bits;
+   const uint32_t * masks;
    const int index = fb_type & 0x07;
    _EGLConfig *config;
    unsigned i;

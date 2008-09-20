@@ -521,11 +521,11 @@ GLboolean driClipRectToFramebuffer( const GLframebuffer *buffer,
  */
 __DRIconfig **
 driCreateConfigs(GLenum fb_format, GLenum fb_type,
-		 const u_int8_t * depth_bits, const u_int8_t * stencil_bits,
+		 const uint8_t * depth_bits, const uint8_t * stencil_bits,
 		 unsigned num_depth_stencil_bits,
 		 const GLenum * db_modes, unsigned num_db_modes)
 {
-   static const u_int8_t bits_table[4][4] = {
+   static const uint8_t bits_table[4][4] = {
      /* R  G  B  A */
       { 3, 3, 2, 0 }, /* Any GL_UNSIGNED_BYTE_3_3_2 */
       { 5, 6, 5, 0 }, /* Any GL_UNSIGNED_SHORT_5_6_5 */
@@ -533,7 +533,7 @@ driCreateConfigs(GLenum fb_format, GLenum fb_type,
       { 8, 8, 8, 8 }  /* Any RGBA with any GL_UNSIGNED_INT_8_8_8_8 */
    };
 
-   static const u_int32_t masks_table_rgb[6][4] = {
+   static const uint32_t masks_table_rgb[6][4] = {
       { 0x000000E0, 0x0000001C, 0x00000003, 0x00000000 }, /* 3_3_2       */
       { 0x00000007, 0x00000038, 0x000000C0, 0x00000000 }, /* 2_3_3_REV   */
       { 0x0000F800, 0x000007E0, 0x0000001F, 0x00000000 }, /* 5_6_5       */
@@ -542,7 +542,7 @@ driCreateConfigs(GLenum fb_format, GLenum fb_type,
       { 0x000000FF, 0x0000FF00, 0x00FF0000, 0x00000000 }  /* 8_8_8_8_REV */
    };
 
-   static const u_int32_t masks_table_rgba[6][4] = {
+   static const uint32_t masks_table_rgba[6][4] = {
       { 0x000000E0, 0x0000001C, 0x00000003, 0x00000000 }, /* 3_3_2       */
       { 0x00000007, 0x00000038, 0x000000C0, 0x00000000 }, /* 2_3_3_REV   */
       { 0x0000F800, 0x000007E0, 0x0000001F, 0x00000000 }, /* 5_6_5       */
@@ -551,7 +551,7 @@ driCreateConfigs(GLenum fb_format, GLenum fb_type,
       { 0x000000FF, 0x0000FF00, 0x00FF0000, 0xFF000000 }, /* 8_8_8_8_REV */
    };
 
-   static const u_int32_t masks_table_bgr[6][4] = {
+   static const uint32_t masks_table_bgr[6][4] = {
       { 0x00000007, 0x00000038, 0x000000C0, 0x00000000 }, /* 3_3_2       */
       { 0x000000E0, 0x0000001C, 0x00000003, 0x00000000 }, /* 2_3_3_REV   */
       { 0x0000001F, 0x000007E0, 0x0000F800, 0x00000000 }, /* 5_6_5       */
@@ -560,7 +560,7 @@ driCreateConfigs(GLenum fb_format, GLenum fb_type,
       { 0x00FF0000, 0x0000FF00, 0x000000FF, 0x00000000 }, /* 8_8_8_8_REV */
    };
 
-   static const u_int32_t masks_table_bgra[6][4] = {
+   static const uint32_t masks_table_bgra[6][4] = {
       { 0x00000007, 0x00000038, 0x000000C0, 0x00000000 }, /* 3_3_2       */
       { 0x000000E0, 0x0000001C, 0x00000003, 0x00000000 }, /* 2_3_3_REV   */
       { 0x0000001F, 0x000007E0, 0x0000F800, 0x00000000 }, /* 5_6_5       */
@@ -569,7 +569,7 @@ driCreateConfigs(GLenum fb_format, GLenum fb_type,
       { 0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000 }, /* 8_8_8_8_REV */
    };
 
-   static const u_int8_t bytes_per_pixel[6] = {
+   static const uint8_t bytes_per_pixel[6] = {
       1, /* 3_3_2       */
       1, /* 2_3_3_REV   */
       2, /* 5_6_5       */
@@ -578,8 +578,8 @@ driCreateConfigs(GLenum fb_format, GLenum fb_type,
       4  /* 8_8_8_8_REV */
    };
 
-   const u_int8_t  * bits;
-   const u_int32_t * masks;
+   const uint8_t  * bits;
+   const uint32_t * masks;
    int index;
    __DRIconfig **configs, **c;
    __GLcontextModes *modes;

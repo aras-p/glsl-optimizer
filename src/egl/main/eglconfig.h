@@ -55,7 +55,7 @@ _eglSetConfigAttrib(_EGLConfig *config, EGLint attr, EGLint val);
 extern GLboolean
 _eglFillInConfigs( _EGLConfig *configs,
 		GLenum fb_format, GLenum fb_type,
-		const u_int8_t * depth_bits, const u_int8_t * stencil_bits,
+		const uint8_t * depth_bits, const uint8_t * stencil_bits,
 		unsigned num_depth_stencil_bits,
 		const GLenum * db_modes, unsigned num_db_modes,
 		int visType );

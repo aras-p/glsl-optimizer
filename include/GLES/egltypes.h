@@ -13,20 +13,20 @@
 /*
 ** These opaque EGL types are implemented as unsigned 32-bit integers:
 */
-typedef u_int32_t EGLDisplay;
-typedef u_int32_t EGLConfig;
-typedef u_int32_t EGLSurface;
-typedef u_int32_t EGLContext;
+typedef uint32_t EGLDisplay;
+typedef uint32_t EGLConfig;
+typedef uint32_t EGLSurface;
+typedef uint32_t EGLContext;
 
 /* EGL_MESA_screen_surface */
-typedef u_int32_t EGLModeMESA;
-typedef u_int32_t EGLScreenMESA;
+typedef uint32_t EGLModeMESA;
+typedef uint32_t EGLScreenMESA;
 
 
 /*
 ** Other basic EGL types:
 */
-typedef u_int8_t EGLBoolean;
+typedef uint8_t EGLBoolean;
 typedef int32_t EGLint;
 
 typedef void * NativeDisplayType;

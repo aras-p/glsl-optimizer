@@ -130,7 +130,7 @@ typedef void (*savage_point_func)( savageContextPtr, savageVertex * );
 struct savage_vtxbuf_t {
     GLuint total, used, flushed; /* in 32 bit units */
     GLuint idx;		/* for DMA buffers */
-    u_int32_t *buf;
+    uint32_t *buf;
 };
 
 struct savage_cmdbuf_t {

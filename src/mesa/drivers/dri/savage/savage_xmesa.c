@@ -457,7 +457,7 @@ savageCreateContext( const __GLcontextModes *mesaVis,
    imesa->clientVtxBuf.total = imesa->bufferSize / 4;
    imesa->clientVtxBuf.used = 0;
    imesa->clientVtxBuf.flushed = 0;
-   imesa->clientVtxBuf.buf = (u_int32_t *)malloc(imesa->bufferSize);
+   imesa->clientVtxBuf.buf = (uint32_t *)malloc(imesa->bufferSize);
 
    imesa->vtxBuf = &imesa->clientVtxBuf;
 
@@ -912,8 +912,8 @@ savageFillInModes( __DRIscreenPrivate *psp,
 	GLX_NONE, GLX_SWAP_UNDEFINED_OML /*, GLX_SWAP_COPY_OML */
     };
 
-    u_int8_t depth_bits_array[2];
-    u_int8_t stencil_bits_array[2];
+    uint8_t depth_bits_array[2];
+    uint8_t stencil_bits_array[2];
 
 
     depth_bits_array[0] = depth_bits;

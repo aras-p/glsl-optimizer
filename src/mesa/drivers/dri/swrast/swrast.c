@@ -143,8 +143,8 @@ swrastFillInModes(__DRIscreen *psp,
 	GLX_NONE, GLX_SWAP_UNDEFINED_OML
     };
 
-    u_int8_t depth_bits_array[4];
-    u_int8_t stencil_bits_array[4];
+    uint8_t depth_bits_array[4];
+    uint8_t stencil_bits_array[4];
 
     depth_bits_array[0] = 0;
     depth_bits_array[1] = 0;

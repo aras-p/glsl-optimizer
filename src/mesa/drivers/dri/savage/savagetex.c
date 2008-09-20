@@ -1364,7 +1364,7 @@ static void savageUpdateTex0State_s4( GLcontext *ctx )
     if (imesa->regs.s4.texDescr.ni.tex1En)
         imesa->regs.s4.texDescr.ni.texBLoopEn = GL_TRUE;
 
-    imesa->regs.s4.texAddr[0].ui = (u_int32_t) t->setup.physAddr | 0x2;
+    imesa->regs.s4.texAddr[0].ui = (uint32_t) t->setup.physAddr | 0x2;
     if(t->base.heap->heapId == SAVAGE_AGP_HEAP)
 	imesa->regs.s4.texAddr[0].ui |= 0x1;
     
@@ -1549,7 +1549,7 @@ static void savageUpdateTex1State_s4( GLcontext *ctx )
     imesa->regs.s4.texCtrl[1].ni.dMax = t->base.lastLevel - t->base.firstLevel;
     imesa->regs.s4.texDescr.ni.texBLoopEn = GL_TRUE;
 
-    imesa->regs.s4.texAddr[1].ui = (u_int32_t) t->setup.physAddr | 2;
+    imesa->regs.s4.texAddr[1].ui = (uint32_t) t->setup.physAddr | 2;
     if(t->base.heap->heapId == SAVAGE_AGP_HEAP)
 	imesa->regs.s4.texAddr[1].ui |= 0x1;
 }
@@ -1700,7 +1700,7 @@ static void savageUpdateTexState_s3d( GLcontext *ctx )
     assert (t->hwFormat <= 7);
     imesa->regs.s3d.texDescr.ni.texFmt = t->hwFormat;
 
-    imesa->regs.s3d.texAddr.ui = (u_int32_t) t->setup.physAddr | 2;
+    imesa->regs.s3d.texAddr.ui = (uint32_t) t->setup.physAddr | 2;
     if(t->base.heap->heapId == SAVAGE_AGP_HEAP)
 	imesa->regs.s3d.texAddr.ui |= 0x1;
 }
