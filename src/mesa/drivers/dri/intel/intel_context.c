@@ -550,7 +550,7 @@ intelFinish(GLcontext * ctx)
 
 #ifdef I915_MMIO_READ
 static void
-intelBeginQuery(GLcontext *ctx, GLenum target, struct gl_query_object *q)
+intelBeginQuery(GLcontext *ctx, struct gl_query_object *q)
 {
 	struct intel_context *intel = intel_context( ctx );
 	struct drm_i915_mmio io = {
@@ -564,7 +564,7 @@ intelBeginQuery(GLcontext *ctx, GLenum target, struct gl_query_object *q)
 }
 
 static void
-intelEndQuery(GLcontext *ctx, GLenum target, struct gl_query_object *q)
+intelEndQuery(GLcontext *ctx, struct gl_query_object *q)
 {
 	struct intel_context *intel = intel_context( ctx );
 	GLuint64EXT tmp;	
