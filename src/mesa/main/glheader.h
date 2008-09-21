@@ -93,15 +93,6 @@
 #  include <stdint.h>
 #endif
 
-/* For platforms that have the C99 standard uint*_t,
-   but not the commonly used u_int*_t */
-#if defined(__sun)
-# define u_int8_t uint8_t
-# define u_int16_t uint16_t
-# define u_int32_t uint32_t
-# define u_int64_t uint64_t
-# define u_intptr_t uintptr_t
-#endif
 
 /* Sun compilers define __i386 instead of the gcc-style __i386__ */
 #ifdef __SUNPRO_C

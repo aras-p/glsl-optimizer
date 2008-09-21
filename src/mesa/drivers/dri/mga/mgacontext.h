@@ -32,12 +32,12 @@
 #include "drm.h"
 #include "mga_drm.h"
 #include "dri_util.h"
-#include "mtypes.h"
 #include "xf86drm.h"
-#include "mm.h"
-#include "colormac.h"
+#include "main/mtypes.h"
+#include "main/mm.h"
+#include "main/colormac.h"
+#include "main/macros.h"
 #include "texmem.h"
-#include "macros.h"
 #include "xmlconfig.h"
 
 #define MGA_SET_FIELD(reg,mask,val)  reg = ((reg) & (mask)) | ((val) & ~(mask))

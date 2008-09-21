@@ -35,15 +35,15 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  * \author Nicolai Haehnle <prefect_@gmx.net>
  */
 
-#include "glheader.h"
-#include "api_arrayelt.h"
-#include "context.h"
-#include "simple_list.h"
-#include "imports.h"
-#include "matrix.h"
-#include "extensions.h"
-#include "state.h"
-#include "bufferobj.h"
+#include "main/glheader.h"
+#include "main/api_arrayelt.h"
+#include "main/context.h"
+#include "main/simple_list.h"
+#include "main/imports.h"
+#include "main/matrix.h"
+#include "main/extensions.h"
+#include "main/state.h"
+#include "main/bufferobj.h"
 
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"

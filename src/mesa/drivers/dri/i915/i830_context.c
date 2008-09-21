@@ -26,7 +26,7 @@
  **************************************************************************/
 
 #include "i830_context.h"
-#include "imports.h"
+#include "main/imports.h"
 #include "texmem.h"
 #include "intel_tex.h"
 #include "tnl/tnl.h"

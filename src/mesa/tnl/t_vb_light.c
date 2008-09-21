@@ -26,10 +26,10 @@
 
 #include "main/glheader.h"
 #include "main/colormac.h"
-#include "light.h"
+#include "main/light.h"
 #include "main/macros.h"
 #include "main/imports.h"
-#include "simple_list.h"
+#include "main/simple_list.h"
 #include "main/mtypes.h"
 
 #include "math/m_translate.h"

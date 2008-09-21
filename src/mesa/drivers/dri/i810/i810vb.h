@@ -26,7 +26,7 @@
 #ifndef I810VB_INC
 #define I810VB_INC
 
-#include "mtypes.h"
+#include "main/mtypes.h"
 #include "swrast/swrast.h"
 
 #define _I810_NEW_VERTEX (_NEW_TEXTURE |			\

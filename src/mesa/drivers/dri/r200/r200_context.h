@@ -41,9 +41,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "dri_util.h"
 #include "texmem.h"
 
-#include "macros.h"
-#include "mtypes.h"
-#include "colormac.h"
+#include "main/macros.h"
+#include "main/mtypes.h"
+#include "main/colormac.h"
 #include "r200_reg.h"
 #include "r200_vertprog.h"
 
@@ -63,7 +63,7 @@ typedef union { GLfloat f; uint32_t ui32; } float_ui32_type;
 
 #include "r200_lock.h"
 #include "radeon_screen.h"
-#include "mm.h"
+#include "main/mm.h"
 
 /* Flags for software fallback cases */
 /* See correponding strings in r200_swtcl.c */

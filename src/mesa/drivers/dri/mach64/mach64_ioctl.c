@@ -35,8 +35,8 @@
 #include "mach64_ioctl.h"
 #include "mach64_tex.h"
 
-#include "imports.h"
-#include "macros.h"
+#include "main/imports.h"
+#include "main/macros.h"
 
 #include "swrast/swrast.h"
 

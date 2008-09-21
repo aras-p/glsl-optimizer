@@ -26,7 +26,7 @@
 #ifndef SAVAGEDD_INC
 #define SAVAGEDD_INC
 
-#include "context.h"
+#include "main/context.h"
 
 void savageDDInitDriverFuncs( GLcontext *ctx );
 #endif

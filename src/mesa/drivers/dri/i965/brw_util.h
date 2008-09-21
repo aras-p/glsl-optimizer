@@ -33,7 +33,7 @@
 #ifndef BRW_UTIL_H
 #define BRW_UTIL_H
 
-#include "mtypes.h"
+#include "main/mtypes.h"
 
 extern GLuint brw_count_bits( GLuint val );
 extern GLuint brw_parameter_list_state_flags(struct gl_program_parameter_list *paramList);

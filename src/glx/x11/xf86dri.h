@@ -91,13 +91,13 @@ Bool XF86DRICreateContext( Display *dpy, int screen, Visual *visual,
 Bool XF86DRICreateContextWithConfig( Display *dpy, int screen, int configID,
     XID *ptr_to_returned_context_id, drm_context_t *hHWContext );
 
-extern GLboolean XF86DRIDestroyContext( Display *dpy, int screen,
+extern Bool XF86DRIDestroyContext( Display *dpy, int screen,
     XID context_id );
 
-extern GLboolean XF86DRICreateDrawable( Display *dpy, int screen,
+extern Bool XF86DRICreateDrawable( Display *dpy, int screen,
     XID drawable, drm_drawable_t *hHWDrawable );
 
-extern GLboolean XF86DRIDestroyDrawable( Display *dpy, int screen, 
+extern Bool XF86DRIDestroyDrawable( Display *dpy, int screen, 
     XID drawable);
 
 Bool XF86DRIGetDrawableInfo( Display *dpy, int screen, Drawable drawable,

@@ -31,7 +31,7 @@
 #ifndef __MACH64_TRIS_H__
 #define __MACH64_TRIS_H__
 
-#include "mtypes.h"
+#include "main/mtypes.h"
 
 extern void mach64InitTriFuncs( GLcontext *ctx );
 

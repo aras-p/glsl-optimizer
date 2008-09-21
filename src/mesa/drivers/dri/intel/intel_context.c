@@ -26,14 +26,14 @@
  **************************************************************************/
 
 
-#include "glheader.h"
-#include "context.h"
-#include "matrix.h"
-#include "simple_list.h"
-#include "extensions.h"
-#include "framebuffer.h"
-#include "imports.h"
-#include "points.h"
+#include "main/glheader.h"
+#include "main/context.h"
+#include "main/matrix.h"
+#include "main/simple_list.h"
+#include "main/extensions.h"
+#include "main/framebuffer.h"
+#include "main/imports.h"
+#include "main/points.h"
 
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
@@ -550,7 +550,7 @@ intelFinish(GLcontext * ctx)
 
 #ifdef I915_MMIO_READ
 static void
-intelBeginQuery(GLcontext *ctx, GLenum target, struct gl_query_object *q)
+intelBeginQuery(GLcontext *ctx, struct gl_query_object *q)
 {
 	struct intel_context *intel = intel_context( ctx );
 	struct drm_i915_mmio io = {
@@ -564,7 +564,7 @@ intelBeginQuery(GLcontext *ctx, GLenum target, struct gl_query_object *q)
 }
 
 static void
-intelEndQuery(GLcontext *ctx, GLenum target, struct gl_query_object *q)
+intelEndQuery(GLcontext *ctx, struct gl_query_object *q)
 {
 	struct intel_context *intel = intel_context( ctx );
 	GLuint64EXT tmp;	

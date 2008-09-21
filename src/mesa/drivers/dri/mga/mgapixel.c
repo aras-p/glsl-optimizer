@@ -35,8 +35,8 @@
  * \author Gareth Hughes <gareth@valinux.com>
  */
 
-#include "mtypes.h"
-#include "macros.h"
+#include "main/mtypes.h"
+#include "main/macros.h"
 #include "mgadd.h"
 #include "mgacontext.h"
 #include "mgaioctl.h"
@@ -44,7 +44,7 @@
 #include "mgastate.h"
 
 #include "swrast/swrast.h"
-#include "imports.h"
+#include "main/imports.h"
 
 #if 0
 #define IS_AGP_MEM( mmesa, p )						  \

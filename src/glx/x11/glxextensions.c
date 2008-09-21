@@ -34,7 +34,7 @@
 #include <string.h>
 #include "glapi.h"
 #include "glxextensions.h"
-#include "simple_list.h"
+
 
 #define SET_BIT(m,b)   (m[ (b) / 8 ] |=  (1U << ((b) % 8)))
 #define CLR_BIT(m,b)   (m[ (b) / 8 ] &= ~(1U << ((b) % 8)))

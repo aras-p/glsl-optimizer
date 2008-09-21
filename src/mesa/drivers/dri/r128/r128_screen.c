@@ -39,10 +39,10 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r128_span.h"
 #include "r128_tris.h"
 
-#include "context.h"
-#include "imports.h"
-#include "framebuffer.h"
-#include "renderbuffer.h"
+#include "main/context.h"
+#include "main/imports.h"
+#include "main/framebuffer.h"
+#include "main/renderbuffer.h"
 
 #include "utils.h"
 #include "vblank.h"

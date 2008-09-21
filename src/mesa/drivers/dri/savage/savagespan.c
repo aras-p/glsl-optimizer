@@ -22,7 +22,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#include "mtypes.h"
+#include "main/mtypes.h"
 #include "savagedd.h"
 #include "savagespan.h"
 #include "savageioctl.h"

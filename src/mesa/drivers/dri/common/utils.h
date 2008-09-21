@@ -30,7 +30,7 @@
 
 #include <GL/gl.h>
 #include <GL/internal/dri_interface.h>
-#include "context.h"
+#include "main/context.h"
 
 typedef struct __DRIutilversionRec2    __DRIutilversion2;
 

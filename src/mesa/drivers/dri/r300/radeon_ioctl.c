@@ -35,10 +35,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include <sched.h>
 #include <errno.h>
 
-#include "glheader.h"
-#include "imports.h"
-#include "macros.h"
-#include "context.h"
+#include "main/glheader.h"
+#include "main/imports.h"
+#include "main/macros.h"
+#include "main/context.h"
 #include "swrast/swrast.h"
 #include "r300_context.h"
 #include "radeon_ioctl.h"

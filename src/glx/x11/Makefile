@@ -51,7 +51,10 @@ INCLUDES = -I. \
 	-I$(TOP)/include \
 	-I$(TOP)/include/GL/internal \
 	-I$(TOP)/src/mesa \
+<<<<<<< HEAD:src/glx/x11/Makefile
 	-I$(TOP)/src/mesa/main \
+=======
+>>>>>>> master:src/glx/x11/Makefile
 	-I$(TOP)/src/mesa/glapi \
 	$(LIBDRM_CFLAGS) \
 	$(DRI2PROTO_CFLAGS) \

@@ -29,9 +29,9 @@
 #include <stdio.h>
 #include <errno.h>
 
-#include "mtypes.h"
-#include "context.h"
-#include "enums.h"
+#include "main/mtypes.h"
+#include "main/context.h"
+#include "main/enums.h"
 
 #include "intel_blit.h"
 #include "intel_buffers.h"

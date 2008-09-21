@@ -30,7 +30,7 @@
   */
                 
 
-#include "mtypes.h"
+#include "main/mtypes.h"
 #include "brw_wm.h"
 
 

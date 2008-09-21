@@ -27,7 +27,6 @@
 #define S_BLEND_H
 
 
-#include "main/mtypes.h"
 #include "s_context.h"
 
 

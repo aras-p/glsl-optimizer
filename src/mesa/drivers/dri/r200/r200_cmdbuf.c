@@ -31,12 +31,12 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *   Keith Whitwell <keith@tungstengraphics.com>
  */
 
-#include "glheader.h"
-#include "imports.h"
-#include "macros.h"
-#include "context.h"
+#include "main/glheader.h"
+#include "main/imports.h"
+#include "main/macros.h"
+#include "main/context.h"
 #include "swrast/swrast.h"
-#include "simple_list.h"
+#include "main/simple_list.h"
 
 #include "r200_context.h"
 #include "r200_state.h"

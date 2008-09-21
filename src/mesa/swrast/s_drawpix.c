@@ -24,17 +24,16 @@
 
 
 #include "main/glheader.h"
-#include "bufferobj.h"
+#include "main/bufferobj.h"
 #include "main/context.h"
-#include "convolve.h"
-#include "image.h"
+#include "main/convolve.h"
+#include "main/image.h"
 #include "main/macros.h"
 #include "main/imports.h"
-#include "pixel.h"
-#include "state.h"
+#include "main/pixel.h"
+#include "main/state.h"
 
 #include "s_context.h"
-#include "s_drawpix.h"
 #include "s_span.h"
 #include "s_stencil.h"
 #include "s_zoom.h"

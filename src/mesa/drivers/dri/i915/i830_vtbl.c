@@ -25,7 +25,7 @@
  * 
  **************************************************************************/
 
-#include "glapi.h"
+#include "glapi/glapi.h"
 
 #include "i830_context.h"
 #include "i830_reg.h"

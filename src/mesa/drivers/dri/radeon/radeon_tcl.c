@@ -32,11 +32,11 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *   Keith Whitwell <keith@tungstengraphics.com>
  */
 
-#include "glheader.h"
-#include "imports.h"
-#include "light.h"
-#include "mtypes.h"
-#include "enums.h"
+#include "main/glheader.h"
+#include "main/imports.h"
+#include "main/light.h"
+#include "main/mtypes.h"
+#include "main/enums.h"
 
 #include "vbo/vbo.h"
 #include "tnl/tnl.h"

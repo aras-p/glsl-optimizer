@@ -43,11 +43,11 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifndef __RADEON_CONTEXT_H__
 #define __RADEON_CONTEXT_H__
 
-#include "mtypes.h"
+#include "main/mtypes.h"
+#include "main/colormac.h"
 #include "radeon_screen.h"
 #include "drm.h"
 #include "dri_util.h"
-#include "colormac.h"
 
 struct radeon_context;
 typedef struct radeon_context radeonContextRec;

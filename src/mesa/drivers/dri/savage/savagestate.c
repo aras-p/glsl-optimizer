@@ -25,12 +25,12 @@
 
 #include <stdio.h>
 
-#include "mtypes.h"
-#include "enums.h"
-#include "macros.h"
-#include "dd.h"
+#include "main/mtypes.h"
+#include "main/enums.h"
+#include "main/macros.h"
+#include "main/dd.h"
 
-#include "mm.h"
+#include "main/mm.h"
 #include "savagedd.h"
 #include "savagecontext.h"
 

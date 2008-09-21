@@ -31,11 +31,11 @@
  * The back-buffer is allocated by the driver and is private.
  */
 
-#include "context.h"
-#include "extensions.h"
-#include "framebuffer.h"
-#include "imports.h"
-#include "renderbuffer.h"
+#include "main/context.h"
+#include "main/extensions.h"
+#include "main/framebuffer.h"
+#include "main/imports.h"
+#include "main/renderbuffer.h"
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
 #include "tnl/tnl.h"
@@ -143,8 +143,8 @@ swrastFillInModes(__DRIscreen *psp,
 	GLX_NONE, GLX_SWAP_UNDEFINED_OML
     };
 
-    u_int8_t depth_bits_array[4];
-    u_int8_t stencil_bits_array[4];
+    uint8_t depth_bits_array[4];
+    uint8_t stencil_bits_array[4];
 
     depth_bits_array[0] = 0;
     depth_bits_array[1] = 0;

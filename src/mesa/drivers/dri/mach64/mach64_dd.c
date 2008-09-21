@@ -35,9 +35,10 @@
 #include "mach64_vb.h"
 #include "mach64_dd.h"
 
-#include "context.h"
+#include "main/context.h"
+#include "main/framebuffer.h"
+
 #include "utils.h"
-#include "framebuffer.h"
 
 #define DRIVER_DATE	"20051019"
 

@@ -26,11 +26,11 @@
  */
 
 
-#include "mtypes.h"
-#include "colormac.h"
-#include "dd.h"
+#include "main/mtypes.h"
+#include "main/colormac.h"
+#include "main/dd.h"
+#include "main/mm.h"
 
-#include "mm.h"
 #include "mgacontext.h"
 #include "mgadd.h"
 #include "mgastate.h"

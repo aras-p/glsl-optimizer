@@ -36,8 +36,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r128_context.h"
 #include "r128_state.h"
 #include "r128_ioctl.h"
-#include "imports.h"
-#include "macros.h"
+#include "main/imports.h"
+#include "main/macros.h"
 
 #include "swrast/swrast.h"
 

@@ -28,7 +28,7 @@
 #ifndef MGATRIS_INC
 #define MGATRIS_INC
 
-#include "mtypes.h"
+#include "main/mtypes.h"
 
 extern void mgaDDInitTriFuncs( GLcontext *ctx );
 extern void mgaChooseRenderState( GLcontext *ctx );

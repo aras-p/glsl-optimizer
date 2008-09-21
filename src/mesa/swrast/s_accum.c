@@ -27,7 +27,7 @@
 #include "main/context.h"
 #include "main/macros.h"
 #include "main/imports.h"
-#include "fbobject.h"
+#include "main/fbobject.h"
 
 #include "s_accum.h"
 #include "s_context.h"

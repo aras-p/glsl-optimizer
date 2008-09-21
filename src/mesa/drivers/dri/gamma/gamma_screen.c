@@ -23,11 +23,11 @@
  *
  */
 
-#include "gamma_context.h"
+#include "gammacontext.h"
 #include "gamma_vb.h"
 #include "glint_dri.h"
 
-#include "imports.h"
+#include "main/imports.h"
 
 gammaScreenPtr gammaCreateScreen( __DRIscreenPrivate *sPriv )
 {

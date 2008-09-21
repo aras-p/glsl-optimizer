@@ -23,7 +23,6 @@
  * SOFTWARE.
  */
 
-#include "glheader.h"
 #include <inttypes.h>
 #include <GL/gl.h>
 #include "indirect.h"

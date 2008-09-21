@@ -30,11 +30,15 @@
   */
 
 
+#include "main/imports.h"
+#include "main/api_noop.h"
+#include "main/vtxfmt.h"
+#include "shader/shader_api.h"
+
 #include "brw_context.h"
 #include "brw_defines.h"
 #include "brw_draw.h"
 #include "brw_vs.h"
-#include "imports.h"
 #include "intel_tex.h"
 #include "intel_blit.h"
 #include "intel_batchbuffer.h"
@@ -43,10 +47,7 @@
 #include "tnl/t_pipeline.h"
 
 #include "utils.h"
-#include "api_noop.h"
-#include "vtxfmt.h"
 
-#include "shader/shader_api.h"
 
 /***************************************
  * Mesa's Driver Functions

@@ -36,7 +36,6 @@
 #include <X11/extensions/Xext.h>
 #include <X11/extensions/extutil.h>
 #include <X11/extensions/dri2proto.h>
-#include "glheader.h"
 #include "xf86drm.h"
 #include "dri2.h"
 
@@ -289,7 +288,7 @@ void DRI2DestroyDrawable(Display *dpy, XID drawable)
 
     XextSimpleCheckExtension (dpy, info, dri2ExtensionName);
 
-    XSync(dpy, GL_FALSE);
+    XSync(dpy, False);
 
     LockDisplay(dpy);
     GetReq(DRI2DestroyDrawable, req);

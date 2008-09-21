@@ -31,7 +31,7 @@
 
 #include "intel_mipmap_tree.h"
 #include "intel_tex_layout.h"
-#include "macros.h"
+#include "main/macros.h"
 #include "intel_context.h"
 
 #define FILE_DEBUG_FLAG DEBUG_TEXTURE

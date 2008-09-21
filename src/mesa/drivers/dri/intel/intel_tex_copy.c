@@ -25,11 +25,11 @@
  * 
  **************************************************************************/
 
-#include "mtypes.h"
-#include "enums.h"
-#include "image.h"
-#include "teximage.h"
-#include "mipmap.h"
+#include "main/mtypes.h"
+#include "main/enums.h"
+#include "main/image.h"
+#include "main/teximage.h"
+#include "main/mipmap.h"
 #include "swrast/swrast.h"
 
 #include "intel_screen.h"

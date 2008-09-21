@@ -35,10 +35,10 @@
 #include "mach64_vb.h"
 #include "mach64_span.h"
 
-#include "context.h"
-#include "imports.h"
-#include "framebuffer.h"
-#include "renderbuffer.h"
+#include "main/context.h"
+#include "main/imports.h"
+#include "main/framebuffer.h"
+#include "main/renderbuffer.h"
 
 #include "utils.h"
 #include "vblank.h"
@@ -91,8 +91,8 @@ mach64FillInModes( __DRIscreenPrivate *psp,
 	GLX_NONE, GLX_SWAP_UNDEFINED_OML /*, GLX_SWAP_COPY_OML */
     };
 
-    u_int8_t depth_bits_array[2];
-    u_int8_t stencil_bits_array[2];
+    uint8_t depth_bits_array[2];
+    uint8_t stencil_bits_array[2];
 
     depth_bits_array[0] = depth_bits;
     depth_bits_array[1] = depth_bits;

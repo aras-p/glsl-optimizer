@@ -4,7 +4,7 @@
 
 #include <sys/time.h>
 #include "dri_util.h"
-#include "mtypes.h"
+#include "main/mtypes.h"
 #include "ffb_drishare.h"
 #include "ffb_regs.h"
 #include "ffb_dac.h"

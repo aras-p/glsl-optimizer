@@ -1,9 +1,9 @@
 
-#include "mtypes.h"
+#include "main/mtypes.h"
+#include "main/framebuffer.h"
+#include "main/renderbuffer.h"
+#include "main/imports.h"
 #include "drirenderbuffer.h"
-#include "framebuffer.h"
-#include "renderbuffer.h"
-#include "imports.h"
 
 
 /**

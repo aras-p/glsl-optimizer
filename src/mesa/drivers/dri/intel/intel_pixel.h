@@ -28,7 +28,7 @@
 #ifndef INTEL_PIXEL_H
 #define INTEL_PIXEL_H
 
-#include "mtypes.h"
+#include "main/mtypes.h"
 
 void intelInitPixelFuncs(struct dd_function_table *functions);
 

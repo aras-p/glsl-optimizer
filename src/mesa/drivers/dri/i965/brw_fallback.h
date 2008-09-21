@@ -28,7 +28,7 @@
 #ifndef BRW_FALLBACK_H
 #define BRW_FALLBACK_H
 
-#include "mtypes.h"		/* for GLcontext... */
+#include "main/mtypes.h"		/* for GLcontext... */
 
 struct brw_context;
 struct vbo_prim;

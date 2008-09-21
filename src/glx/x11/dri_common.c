@@ -37,7 +37,7 @@
 
 #include <unistd.h>
 #include <dlfcn.h>
-#include "glheader.h"
+#include <stdarg.h>
 #include "glxclient.h"
 #include "glcontextmodes.h"
 #include "dri_common.h"

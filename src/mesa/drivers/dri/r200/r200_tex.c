@@ -31,18 +31,19 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *   Keith Whitwell <keith@tungstengraphics.com>
  */
 
-#include "glheader.h"
-#include "imports.h"
-#include "colormac.h"
-#include "context.h"
-#include "enums.h"
-#include "image.h"
-#include "simple_list.h"
-#include "texformat.h"
-#include "texstore.h"
+#include "main/glheader.h"
+#include "main/imports.h"
+#include "main/colormac.h"
+#include "main/context.h"
+#include "main/enums.h"
+#include "main/image.h"
+#include "main/simple_list.h"
+#include "main/texformat.h"
+#include "main/texstore.h"
+#include "main/teximage.h"
+#include "main/texobj.h"
+
 #include "texmem.h"
-#include "teximage.h"
-#include "texobj.h"
 
 #include "r200_context.h"
 #include "r200_state.h"

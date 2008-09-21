@@ -27,11 +27,11 @@
 
 #include <stdlib.h>
 
-#include "glheader.h"
-#include "context.h"
-#include "state.h"
-#include "api_validate.h"
-#include "enums.h"
+#include "main/glheader.h"
+#include "main/context.h"
+#include "main/state.h"
+#include "main/api_validate.h"
+#include "main/enums.h"
 
 #include "brw_draw.h"
 #include "brw_defines.h"

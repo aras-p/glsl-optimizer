@@ -25,18 +25,18 @@
  * 
  **************************************************************************/
 
-#include "glheader.h"
-#include "mtypes.h"
-#include "imports.h"
-#include "simple_list.h"
-#include "enums.h"
-#include "image.h"
-#include "texstore.h"
-#include "texformat.h"
-#include "texmem.h"
+#include "main/glheader.h"
+#include "main/mtypes.h"
+#include "main/imports.h"
+#include "main/simple_list.h"
+#include "main/enums.h"
+#include "main/image.h"
+#include "main/mm.h"
+#include "main/texstore.h"
+#include "main/texformat.h"
 #include "swrast/swrast.h"
 
-#include "mm.h"
+#include "texmem.h"
 
 #include "i830_context.h"
 #include "i830_reg.h"

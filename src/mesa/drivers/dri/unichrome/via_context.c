@@ -30,14 +30,14 @@
  * \author Others at S3 Graphics?
  */
 
-#include "glheader.h"
-#include "context.h"
-#include "matrix.h"
-#include "state.h"
-#include "simple_list.h"
-#include "extensions.h"
-#include "framebuffer.h"
-#include "renderbuffer.h"
+#include "main/glheader.h"
+#include "main/context.h"
+#include "main/matrix.h"
+#include "main/state.h"
+#include "main/simple_list.h"
+#include "main/extensions.h"
+#include "main/framebuffer.h"
+#include "main/renderbuffer.h"
 
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
@@ -59,7 +59,7 @@
 #include "via_fb.h"
 
 #include <stdio.h>
-#include "macros.h"
+#include "main/macros.h"
 #include "drirenderbuffer.h"
 
 #define need_GL_ARB_multisample

@@ -27,7 +27,11 @@
 #ifndef S_POINTS_H
 #define S_POINTS_H
 
+<<<<<<< HEAD:src/mesa/swrast/s_points.h
 #include "main/mtypes.h"
+=======
+#include "swrast.h"
+>>>>>>> master:src/mesa/swrast/s_points.h
 
 extern void
 _swrast_choose_point( GLcontext *ctx );

@@ -25,12 +25,12 @@
  * 
  **************************************************************************/
 
-#include "glheader.h"
-#include "context.h"
-#include "framebuffer.h"
-#include "matrix.h"
-#include "renderbuffer.h"
-#include "simple_list.h"
+#include "main/glheader.h"
+#include "main/context.h"
+#include "main/framebuffer.h"
+#include "main/matrix.h"
+#include "main/renderbuffer.h"
+#include "main/simple_list.h"
 #include "utils.h"
 #include "vblank.h"
 #include "xmlpool.h"
@@ -492,8 +492,8 @@ intelFillInModes(__DRIscreenPrivate *psp,
       GLX_NONE, GLX_SWAP_UNDEFINED_OML, GLX_SWAP_COPY_OML
    };
 
-   u_int8_t depth_bits_array[3];
-   u_int8_t stencil_bits_array[3];
+   uint8_t depth_bits_array[3];
+   uint8_t stencil_bits_array[3];
 
    depth_bits_array[0] = 0;
    depth_bits_array[1] = depth_bits;

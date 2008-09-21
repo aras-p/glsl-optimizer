@@ -35,7 +35,7 @@
 #include "main/context.h"
 #include "main/macros.h"
 #include "main/imports.h"
-#include "image.h"
+#include "main/image.h"
 
 #include "s_atifragshader.h"
 #include "s_alpha.h"

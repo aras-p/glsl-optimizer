@@ -27,7 +27,7 @@
 #include "main/context.h"
 #include "main/colormac.h"
 #include "main/imports.h"
-#include "texformat.h"
+#include "main/texformat.h"
 
 #include "s_context.h"
 #include "s_texfilter.h"

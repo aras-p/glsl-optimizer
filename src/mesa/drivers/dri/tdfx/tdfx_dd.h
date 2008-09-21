@@ -36,7 +36,7 @@
 #ifndef __TDFX_DD_H__
 #define __TDFX_DD_H__
 
-#include "context.h"
+#include "main/context.h"
 
 extern void tdfxDDInitDriverFuncs( const __GLcontextModes *visual,
                                    struct dd_function_table *functions );

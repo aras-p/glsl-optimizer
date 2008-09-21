@@ -35,14 +35,14 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifndef __RADEON_IOCTL_H__
 #define __RADEON_IOCTL_H__
 
-#include "simple_list.h"
+#include "main/simple_list.h"
 #include "radeon_dri.h"
 #include "radeon_lock.h"
 
 #include "xf86drm.h"
 #include "drm.h"
 #if 0
-#include "r200_context.h"
+#include "r200context.h"
 #endif
 #include "radeon_drm.h"
 

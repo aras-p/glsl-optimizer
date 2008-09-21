@@ -48,11 +48,11 @@
 #include <signal.h>
 #endif
 
-#include "context.h"
-#include "imports.h"
-#include "macros.h"
-#include "matrix.h"
-#include "mtypes.h"
+#include "main/context.h"
+#include "main/imports.h"
+#include "main/macros.h"
+#include "main/matrix.h"
+#include "main/mtypes.h"
 
 #include "GL/fxmesa.h"
 #include "fxglidew.h"

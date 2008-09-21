@@ -30,9 +30,9 @@
   */
     
 
-#include "mtypes.h"
+#include "main/mtypes.h"
+#include "main/imports.h"
 #include "brw_eu.h"
-#include "imports.h"
 
 void brw_print_reg( struct brw_reg hwreg )
 {

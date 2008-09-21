@@ -25,7 +25,7 @@
  *
  */
 
-#include "mtypes.h"
+#include "main/mtypes.h"
 
 #include "brw_context.h"
 #include "brw_state.h"

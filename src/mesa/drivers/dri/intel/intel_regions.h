@@ -36,7 +36,7 @@
 
 #include <xf86drm.h>
 
-#include "mtypes.h"
+#include "main/mtypes.h"
 #include "intel_bufmgr.h"
 
 struct intel_context;

@@ -35,7 +35,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "sis_state.h"
 #include "swrast/swrast.h"
 
-#include "macros.h"
+#include "main/macros.h"
 
 static GLint convertFtToFogFt( GLfloat dwInValue );
 static GLint doFPtoFixedNoRound( GLfloat dwInValue, int nFraction );
