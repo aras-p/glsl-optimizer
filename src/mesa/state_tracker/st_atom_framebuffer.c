@@ -156,7 +156,9 @@ update_framebuffer_state( struct st_context *st )
 #if !defined(PIPE_OS_WINDOWS)
 #warning "fix me"
 #endif
-   st->frontbuffer_status = FRONT_STATUS_DIRTY;
+   if (fb->_ColorDrawBufferIndexes[0] == BUFFER_FRONT_LEFT) {
+      st->frontbuffer_status = FRONT_STATUS_DIRTY;
+   }
 #endif
 }
 
