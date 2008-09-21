@@ -26,7 +26,7 @@ static INLINE int log2i(int i)
 	return r;
 }
 
-#define _(m,tf,ts0x,ts0y,ts0z,ts0w,ts1x,ts1y,ts1z,ts1w)                        \
+#define _(m,tf,ts0x,ts0y,ts0z,ts0w,ts1x,ts1y,ts1z,ts1w,swsurf)                 \
 {                                                                              \
   TRUE,                                                                        \
   PIPE_FORMAT_##m,                                                             \
@@ -35,6 +35,7 @@ static INLINE int log2i(int i)
    NV34TCL_TX_SWIZZLE_S0_Z_##ts0z | NV34TCL_TX_SWIZZLE_S0_W_##ts0w |           \
    NV34TCL_TX_SWIZZLE_S1_X_##ts1x | NV34TCL_TX_SWIZZLE_S1_Y_##ts1y |           \
    NV34TCL_TX_SWIZZLE_S1_Z_##ts1z | NV34TCL_TX_SWIZZLE_S1_W_##ts1w),           \
+  swsurf                                                                       \
 }
 
 struct nv30_texture_format {
@@ -42,24 +43,25 @@ struct nv30_texture_format {
 	uint	pipe;
 	int     format;
 	int     swizzle;
+	int	swizzled_surface;
 };
 
 static struct nv30_texture_format
 nv30_texture_formats[] = {
-	_(A8R8G8B8_UNORM, A8R8G8B8,   S1,   S1,   S1,   S1, X, Y, Z, W),
-	_(A1R5G5B5_UNORM, A1R5G5B5,   S1,   S1,   S1,   S1, X, Y, Z, W),
-	_(A4R4G4B4_UNORM, A4R4G4B4,   S1,   S1,   S1,   S1, X, Y, Z, W),
-	_(R5G6B5_UNORM  , R5G6B5  ,   S1,   S1,   S1,  ONE, X, Y, Z, W),
-	_(L8_UNORM      , L8      ,   S1,   S1,   S1,  ONE, X, X, X, X),
-	_(A8_UNORM      , L8      , ZERO, ZERO, ZERO,   S1, X, X, X, X),
-	_(I8_UNORM      , L8      ,   S1,   S1,   S1,   S1, X, X, X, X),
-	_(A8L8_UNORM    , A8L8    ,   S1,   S1,   S1,   S1, X, X, X, Y),
-//	_(Z16_UNORM     , Z16     ,   S1,   S1,   S1,  ONE, X, X, X, X),
-//	_(Z24S8_UNORM   , Z24     ,   S1,   S1,   S1,  ONE, X, X, X, X),
-	_(DXT1_RGB      , DXT1    ,   S1,   S1,   S1,  ONE, X, Y, Z, W),
-	_(DXT1_RGBA     , DXT1    ,   S1,   S1,   S1,   S1, X, Y, Z, W),
-	_(DXT3_RGBA     , DXT3    ,   S1,   S1,   S1,   S1, X, Y, Z, W),
-	_(DXT5_RGBA     , DXT5    ,   S1,   S1,   S1,   S1, X, Y, Z, W),
+	_(A8R8G8B8_UNORM, A8R8G8B8,   S1,   S1,   S1,   S1, X, Y, Z, W, 1),
+	_(A1R5G5B5_UNORM, A1R5G5B5,   S1,   S1,   S1,   S1, X, Y, Z, W, 1),
+	_(A4R4G4B4_UNORM, A4R4G4B4,   S1,   S1,   S1,   S1, X, Y, Z, W, 1),
+	_(R5G6B5_UNORM  , R5G6B5  ,   S1,   S1,   S1,  ONE, X, Y, Z, W, 1),
+	_(L8_UNORM      , L8      ,   S1,   S1,   S1,  ONE, X, X, X, X, 1),
+	_(A8_UNORM      , L8      , ZERO, ZERO, ZERO,   S1, X, X, X, X, 1),
+	_(I8_UNORM      , L8      ,   S1,   S1,   S1,   S1, X, X, X, X, 1),
+	_(A8L8_UNORM    , A8L8    ,   S1,   S1,   S1,   S1, X, X, X, Y, 1),
+//	_(Z16_UNORM     , Z16     ,   S1,   S1,   S1,  ONE, X, X, X, X, 0),
+//	_(Z24S8_UNORM   , Z24     ,   S1,   S1,   S1,  ONE, X, X, X, X, 0),
+	_(DXT1_RGB      , DXT1    ,   S1,   S1,   S1,  ONE, X, Y, Z, W, 0),
+	_(DXT1_RGBA     , DXT1    ,   S1,   S1,   S1,   S1, X, Y, Z, W, 0),
+	_(DXT3_RGBA     , DXT3    ,   S1,   S1,   S1,   S1, X, Y, Z, W, 0),
+	_(DXT5_RGBA     , DXT5    ,   S1,   S1,   S1,   S1, X, Y, Z, W, 0),
 	{},
 };
 
@@ -95,6 +97,8 @@ nv30_fragtex_build(struct nv30_context *nv30, int unit)
 	tf = nv30_fragtex_format(pt->format);
 	if (!tf)
 		assert(0);
+
+	tex_flags |= (tf->swizzled_surface ? NOUVEAU_BO_SWIZZLED : 0);
 
 	txf  = tf->format;
 	txf |= ((pt->last_level>0) ? NV34TCL_TX_FORMAT_MIPMAP : 0);
