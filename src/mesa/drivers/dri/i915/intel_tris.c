@@ -109,6 +109,7 @@ void intel_flush_prim(struct intel_context *intel)
    BATCH_LOCALS;
    dri_bo *aper_array[2];
    dri_bo *vb_bo;
+   unsigned int offset, count;
 
    /* Must be called after an intel_start_prim. */
    assert(intel->prim.primitive != ~0);
@@ -116,11 +117,19 @@ void intel_flush_prim(struct intel_context *intel)
    if (intel->prim.count == 0)
       return;
 
-   /* Keep a reference on the BO as it may get finished as we start the
-    * batch emit.
+   /* Clear the current prims out of the context state so that a batch flush
+    * flush triggered by wait_flips or emit_state doesn't loop back to
+    * flush_prim again.
     */
    vb_bo = intel->prim.vb_bo;
    dri_bo_reference(vb_bo);
+   count = intel->prim.count;
+   intel->prim.count = 0;
+   offset = intel->prim.start_offset;
+   intel->prim.start_offset = intel->prim.current_offset;
+   if (!IS_9XX(intel->intelScreen->deviceID))
+      intel->prim.start_offset = ALIGN(intel->prim.start_offset, 128);
+   intel->prim.flush = NULL;
 
    intel_wait_flips(intel);
 
@@ -145,7 +154,7 @@ void intel_flush_prim(struct intel_context *intel)
    assert((intel->batch->dirty_state & (1<<1)) == 0);
 
 #if 0
-   printf("emitting %d..%d=%d vertices size %d\n", intel->prim.start_offset,
+   printf("emitting %d..%d=%d vertices size %d\n", offset,
 	  intel->prim.current_offset, intel->prim.count,
 	  intel->vertex_size * 4);
 #endif
@@ -154,9 +163,8 @@ void intel_flush_prim(struct intel_context *intel)
       BEGIN_BATCH(5, LOOP_CLIPRECTS);
       OUT_BATCH(_3DSTATE_LOAD_STATE_IMMEDIATE_1 |
 		I1_LOAD_S(0) | I1_LOAD_S(1) | 1);
-      assert((intel->prim.start_offset & !S0_VB_OFFSET_MASK) == 0);
-      OUT_RELOC(vb_bo, I915_GEM_DOMAIN_VERTEX, 0,
-		intel->prim.start_offset);
+      assert((offset & !S0_VB_OFFSET_MASK) == 0);
+      OUT_RELOC(vb_bo, I915_GEM_DOMAIN_VERTEX, 0, offset);
       OUT_BATCH((intel->vertex_size << S1_VERTEX_WIDTH_SHIFT) |
 		(intel->vertex_size << S1_VERTEX_PITCH_SHIFT));
 
@@ -164,7 +172,7 @@ void intel_flush_prim(struct intel_context *intel)
 		PRIM_INDIRECT |
 		PRIM_INDIRECT_SEQUENTIAL |
 		intel->prim.primitive |
-		intel->prim.count);
+		count);
       OUT_BATCH(0); /* Beginning vertex index */
       ADVANCE_BATCH();
    } else {
@@ -174,10 +182,9 @@ void intel_flush_prim(struct intel_context *intel)
       OUT_BATCH(_3DSTATE_LOAD_STATE_IMMEDIATE_1 |
 		I1_LOAD_S(0) | I1_LOAD_S(2) | 1);
       /* S0 */
-      assert((intel->prim.start_offset & !S0_VB_OFFSET_MASK_830) == 0);
+      assert((offset & !S0_VB_OFFSET_MASK_830) == 0);
       OUT_RELOC(vb_bo, I915_GEM_DOMAIN_VERTEX, 0,
-		intel->prim.start_offset |
-		(intel->vertex_size << S0_VB_PITCH_SHIFT_830) |
+		offset | (intel->vertex_size << S0_VB_PITCH_SHIFT_830) |
 		S0_VB_ENABLE_830);
       /* S1
        * This is somewhat unfortunate -- VB width is tied up with
@@ -194,18 +201,12 @@ void intel_flush_prim(struct intel_context *intel)
 		PRIM_INDIRECT |
 		PRIM_INDIRECT_SEQUENTIAL |
 		intel->prim.primitive |
-		intel->prim.count);
+		count);
       OUT_BATCH(0); /* Beginning vertex index */
       ADVANCE_BATCH();
    }
 
    intel->no_batch_wrap = GL_FALSE;
-
-   intel->prim.flush = NULL;
-   intel->prim.start_offset = intel->prim.current_offset;
-   if (!IS_9XX(intel->intelScreen->deviceID))
-      intel->prim.start_offset = ALIGN(intel->prim.start_offset, 128);
-   intel->prim.count = 0;
 
    dri_bo_unreference(vb_bo);
 }
