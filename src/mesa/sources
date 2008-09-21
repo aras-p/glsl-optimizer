@@ -299,9 +299,4 @@ COMMON_DRIVER_OBJECTS = $(COMMON_DRIVER_SOURCES:.c=.o)
 
 INCLUDE_DIRS = \
 	-I$(TOP)/include \
-<<<<<<< HEAD:src/mesa/sources
 	-I$(TOP)/src/mesa
-=======
-	-I$(TOP)/src/mesa \
-	-I$(TOP)/src/mesa/main
->>>>>>> master:src/mesa/sources
