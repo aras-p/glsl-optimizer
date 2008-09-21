@@ -36,9 +36,6 @@
 #ifdef XFree86Server
 #include "xm_image.h"
 #endif
-#include "state_tracker/st_cb_fbo.h"
-#include "softpipe/sp_context.h"
-#include "softpipe/sp_surface.h"
 
 
 extern _glthread_Mutex _xmesa_lock;
@@ -180,11 +177,7 @@ typedef enum {
  */
 struct xmesa_renderbuffer
 {
-#if 0
    struct gl_renderbuffer Base;  /* Base class */
-#else
-   struct st_renderbuffer St; /**< Base class */
-#endif
 
    XMesaBuffer Parent;  /**< The XMesaBuffer this renderbuffer belongs to */
    XMesaDrawable drawable;	/* Usually the X window ID */
@@ -203,8 +196,6 @@ struct xmesa_renderbuffer
    GLint bottom;	/* used for FLIP macro, equals height - 1 */
 
    ClearFunc clearFunc;
-
-   void *pSurface;      /** pipe surface */
 };
 
 
@@ -500,8 +491,8 @@ extern const int xmesa_kernel1[16];
  */
 
 extern struct xmesa_renderbuffer *
-xmesa_create_renderbuffer(GLcontext *ctx, GLuint name, const GLvisual *visual,
-                          GLboolean backBuffer);
+xmesa_new_renderbuffer(GLcontext *ctx, GLuint name, const GLvisual *visual,
+                       GLboolean backBuffer);
 
 extern void
 xmesa_delete_framebuffer(struct gl_framebuffer *fb);
@@ -589,42 +580,5 @@ extern void xmesa_register_swrast_functions( GLcontext *ctx );
 #else
 #define ENABLE_EXT_timer_query 0 /* may not have 64-bit GLuint64EXT */
 #endif
-
-
-struct pipe_surface;
-struct pipe_context;
-
-struct xmesa_surface
-{
-   struct pipe_surface surface;
-   struct xmesa_renderbuffer *xrb;
-};
-
-
-extern void
-xmesa_clear(struct pipe_context *pipe, struct pipe_surface *ps, GLuint value);
-
-extern void
-xmesa_clear_buffers(GLcontext *ctx, GLbitfield buffers);
-
-extern struct pipe_context *
-xmesa_create_softpipe(XMesaContext xm);
-
-extern struct pipe_surface *
-xmesa_surface_alloc(struct pipe_context *pipe, GLuint format);
-
-extern struct pipe_surface *
-xmesa_new_color_surface(struct pipe_context *pipe, GLuint format);
-
-extern boolean
-xmesa_is_format_supported(struct pipe_context *pipe, uint format);
-
-extern void
-xmesa_get_tile_rgba(struct pipe_context *pipe, struct pipe_surface *ps,
-                    uint x, uint y, uint w, uint h, float *p);
-
-extern void
-xmesa_put_tile_rgba(struct pipe_context *pipe, struct pipe_surface *ps,
-                    uint x, uint y, uint w, uint h, const float *p);
 
 #endif

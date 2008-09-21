@@ -35,10 +35,6 @@
 #include "main/imports.h"
 #include "main/framebuffer.h"
 #include "main/renderbuffer.h"
-#include "pipe/p_state.h"
-#include "pipe/p_defines.h"
-#include "pipe/p_winsys.h"
-#include "state_tracker/st_context.h"
 
 
 #if defined(USE_XSHM) && !defined(XFree86Server)
@@ -249,18 +245,6 @@ xmesa_delete_renderbuffer(struct gl_renderbuffer *rb)
 }
 
 
-static void
-finish_surface_init(GLcontext *ctx, struct xmesa_renderbuffer *xrb)
-{
-   struct pipe_context *pipe = ctx->st->pipe;
-   if (!xrb->St.surface->region) {
-      int w = 1, h = 1;
-      xrb->St.surface->region = pipe->winsys->region_alloc(pipe->winsys,
-                                                           1, w, h, 0x0);
-   }
-}
-
-
 /**
  * Reallocate renderbuffer storage for front color buffer.
  * Called via gl_renderbuffer::AllocStorage()
@@ -283,12 +267,6 @@ xmesa_alloc_front_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
    rb->Width = width;
    rb->Height = height;
    rb->InternalFormat = internalFormat;
-
-   if (!xrb->St.surface || !xrb->St.surface->region)
-      finish_surface_init(ctx, xrb);
-
-   xrb->St.surface->width = width;
-   xrb->St.surface->height = height;
 
    return GL_TRUE;
 }
@@ -339,101 +317,44 @@ xmesa_alloc_back_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
       xrb->origin4 = NULL;
    }
 
-   if (!xrb->St.surface || !xrb->St.surface->region)
-      finish_surface_init(ctx, xrb);
-
-   xrb->St.surface->width = width;
-   xrb->St.surface->height = height;
-
    return GL_TRUE;
 }
 
 
-/**
- * Called to create the front/back color renderbuffers, not user-created
- * renderbuffers.
- */
 struct xmesa_renderbuffer *
-xmesa_create_renderbuffer(GLcontext *ctx, GLuint name, const GLvisual *visual,
-                          GLboolean backBuffer)
-{
-   struct xmesa_renderbuffer *xrb = CALLOC_STRUCT(xmesa_renderbuffer);
-   struct pipe_context *pipe = NULL;/*ctx->st->pipe;*/
-   if (xrb) {
-      GLuint name = 0;
-      GLuint pipeFormat = 0;
-      struct xmesa_surface *xms;
-
-      _mesa_init_renderbuffer(&xrb->St.Base, name);
-
-      xrb->St.Base.Delete = xmesa_delete_renderbuffer;
-      if (backBuffer)
-         xrb->St.Base.AllocStorage = xmesa_alloc_back_storage;
-      else
-         xrb->St.Base.AllocStorage = xmesa_alloc_front_storage;
-
-      if (visual->rgbMode) {
-         xrb->St.Base.InternalFormat = GL_RGBA;
-         xrb->St.Base._BaseFormat = GL_RGBA;
-         xrb->St.Base.DataType = GL_UNSIGNED_BYTE;
-         xrb->St.Base.RedBits = visual->redBits;
-         xrb->St.Base.GreenBits = visual->greenBits;
-         xrb->St.Base.BlueBits = visual->blueBits;
-         xrb->St.Base.AlphaBits = visual->alphaBits;
-         pipeFormat = PIPE_FORMAT_U_A8_R8_G8_B8;
-      }
-      else {
-         xrb->St.Base.InternalFormat = GL_COLOR_INDEX;
-         xrb->St.Base._BaseFormat = GL_COLOR_INDEX;
-         xrb->St.Base.DataType = GL_UNSIGNED_INT;
-         xrb->St.Base.IndexBits = visual->indexBits;
-      }
-      /* only need to set Red/Green/EtcBits fields for user-created RBs */
-
-      xrb->St.surface = xmesa_new_color_surface(pipe, pipeFormat);
-      xms = (struct xmesa_surface *) xrb->St.surface;
-      xms->xrb = xrb;
-   }
-   return xrb;
-}
-
-
-#if 0
-struct gl_renderbuffer *
-xmesa_new_renderbuffer(GLcontext *ctx, struct gl_renderbuffer *rb,
-                       GLenum internalFormat, GLuint width, GLuint height)
+xmesa_new_renderbuffer(GLcontext *ctx, GLuint name, const GLvisual *visual,
+                       GLboolean backBuffer)
 {
    struct xmesa_renderbuffer *xrb = CALLOC_STRUCT(xmesa_renderbuffer);
    if (xrb) {
       GLuint name = 0;
-      _mesa_init_renderbuffer(&xrb->St.Base, name);
+      _mesa_init_renderbuffer(&xrb->Base, name);
 
-      xrb->St.Base.Delete = xmesa_delete_renderbuffer;
+      xrb->Base.Delete = xmesa_delete_renderbuffer;
       if (backBuffer)
-         xrb->St.Base.AllocStorage = xmesa_alloc_back_storage;
+         xrb->Base.AllocStorage = xmesa_alloc_back_storage;
       else
-         xrb->St.Base.AllocStorage = xmesa_alloc_front_storage;
+         xrb->Base.AllocStorage = xmesa_alloc_front_storage;
 
       if (visual->rgbMode) {
-         xrb->St.Base.InternalFormat = GL_RGBA;
-         xrb->St.Base._BaseFormat = GL_RGBA;
-         xrb->St.Base.DataType = GL_UNSIGNED_BYTE;
-         xrb->St.Base.RedBits = visual->redBits;
-         xrb->St.Base.GreenBits = visual->greenBits;
-         xrb->St.Base.BlueBits = visual->blueBits;
-         xrb->St.Base.AlphaBits = visual->alphaBits;
+         xrb->Base.InternalFormat = GL_RGBA;
+         xrb->Base._BaseFormat = GL_RGBA;
+         xrb->Base.DataType = GL_UNSIGNED_BYTE;
+         xrb->Base.RedBits = visual->redBits;
+         xrb->Base.GreenBits = visual->greenBits;
+         xrb->Base.BlueBits = visual->blueBits;
+         xrb->Base.AlphaBits = visual->alphaBits;
       }
       else {
-         xrb->St.Base.InternalFormat = GL_COLOR_INDEX;
-         xrb->St.Base._BaseFormat = GL_COLOR_INDEX;
-         xrb->St.Base.DataType = GL_UNSIGNED_INT;
-         xrb->St.Base.IndexBits = visual->indexBits;
+         xrb->Base.InternalFormat = GL_COLOR_INDEX;
+         xrb->Base._BaseFormat = GL_COLOR_INDEX;
+         xrb->Base.DataType = GL_UNSIGNED_INT;
+         xrb->Base.IndexBits = visual->indexBits;
       }
       /* only need to set Red/Green/EtcBits fields for user-created RBs */
    }
    return xrb;
 }
-#endif
 
 
 /**
