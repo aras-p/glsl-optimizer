@@ -1,4 +1,3 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/gamma/gamma_xmesa.c,v 1.14 2002/10/30 12:51:30 alanh Exp $ */
 /*
  * Copyright 2001 by Alan Hourihane.
  *

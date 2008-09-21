@@ -1,4 +1,3 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/common/stenciltmp.h,v 1.3 2001/03/21 16:14:20 dawes Exp $ */
 
 #include "spantmp_common.h"
 

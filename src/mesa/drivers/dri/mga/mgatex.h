@@ -1,4 +1,3 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgatex.h,v 1.7 2002/10/30 12:51:36 alanh Exp $ */
 /*
  * Copyright 2000-2001 VA Linux Systems, Inc.
  * All Rights Reserved.

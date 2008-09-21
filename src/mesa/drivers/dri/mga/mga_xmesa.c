@@ -1,4 +1,3 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mga_xmesa.c,v 1.19 2003/03/26 20:43:49 tsi Exp $ */
 /*
  * Copyright 2000-2001 VA Linux Systems, Inc.
  * All Rights Reserved.

@@ -1,4 +1,4 @@
-/* $XFree86$ */ /* -*- c-basic-offset: 3 -*- */
+/* -*- c-basic-offset: 3 -*- */
 /**************************************************************************
 
 Copyright 2000, 2001 ATI Technologies Inc., Ontario, Canada, and

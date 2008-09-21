@@ -23,7 +23,6 @@
  * OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-/* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/tdfx_tex.c,v 1.7 2002/11/05 17:46:10 tsi Exp $ */
 
 /*
  * New fixes:

@@ -20,7 +20,6 @@ Status
 
 Version
 
-    $Date: 2007/05/16$ $Revision: 0.4$
 
 Number
 

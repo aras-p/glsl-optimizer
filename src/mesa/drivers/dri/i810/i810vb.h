@@ -22,7 +22,6 @@
  *
  *
  */
-/* $XFree86: xc/lib/GL/mesa/src/drv/i810/i810vb.h,v 1.4 2002/02/22 21:33:04 dawes Exp $ */
 
 #ifndef I810VB_INC
 #define I810VB_INC

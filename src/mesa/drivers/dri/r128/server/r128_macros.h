@@ -35,7 +35,6 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/R128_reg.h,v 1.20 2002/10/12 01:38:07 martin Exp $ */
 
 #ifndef _R128_MACROS_H_
 #define _R128_MACROS_H_

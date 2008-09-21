@@ -29,7 +29,6 @@
  *	Keith Whitwell <keith@tungstengraphics.com>
  *
  */
-/* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/tdfx_tris.h,v 1.5 2002/10/30 12:52:01 alanh Exp $ */
 
 #ifndef TDFX_TRIS_INC
 #define TDFX_TRIS_INC

@@ -28,7 +28,6 @@
  * Silicon Graphics, Inc.
  */
 /*
-** $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/nurbtess/primitiveStream.h,v 1.1 2001/03/17 00:25:41 brianp Exp $
 */
 
 /*we do not use the constans GL_... so that this file is independent of 

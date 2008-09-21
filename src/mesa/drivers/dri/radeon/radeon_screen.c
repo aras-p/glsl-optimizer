@@ -1,4 +1,3 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/radeon/radeon_screen.c,v 1.7 2003/03/26 20:43:51 tsi Exp $ */
 /**************************************************************************
 
 Copyright 2000, 2001 ATI Technologies Inc., Ontario, Canada, and

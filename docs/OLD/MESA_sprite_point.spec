@@ -16,7 +16,6 @@ Status
 
 Version
 
-    $Id: MESA_sprite_point.spec,v 1.2 2003/09/19 14:58:21 brianp Exp $
 
 Number
 

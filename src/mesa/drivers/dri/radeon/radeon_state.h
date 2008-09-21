@@ -1,4 +1,3 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/radeon/radeon_state.h,v 1.5 2002/11/05 17:46:09 tsi Exp $ */
 /**************************************************************************
 
 Copyright 2000, 2001 ATI Technologies Inc., Ontario, Canada, and

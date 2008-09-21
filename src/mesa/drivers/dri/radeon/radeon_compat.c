@@ -1,4 +1,3 @@
-/* $XFree86$ */
 /**************************************************************************
 
 Copyright 2002 ATI Technologies Inc., Ontario, Canada, and

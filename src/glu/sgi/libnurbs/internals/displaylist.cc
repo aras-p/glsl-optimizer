@@ -35,8 +35,6 @@
 /*
  * displaylist.c++
  *
- * $Date: 2001/03/17 00:25:40 $ $Revision: 1.1 $
- * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/internals/displaylist.cc,v 1.1 2001/03/17 00:25:40 brianp Exp $
  */
 
 #include "glimports.h"

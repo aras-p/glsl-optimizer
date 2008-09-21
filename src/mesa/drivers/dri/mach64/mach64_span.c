@@ -1,4 +1,4 @@
-/* $XFree86$ */ /* -*- mode: c; c-basic-offset: 3 -*- */
+/* -*- mode: c; c-basic-offset: 3 -*- */
 /*
  * Copyright 2000 Gareth Hughes
  * All Rights Reserved.

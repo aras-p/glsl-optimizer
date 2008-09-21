@@ -31,7 +31,6 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/radeon.h,v 1.29 2002/10/12 01:38:07 martin Exp $ */
 
 #ifndef _RADEON_H_
 #define _RADEON_H_

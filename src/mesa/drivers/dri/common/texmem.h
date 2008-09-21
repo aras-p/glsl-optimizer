@@ -28,7 +28,6 @@
  *    Kevin E. Martin <kem@users.sourceforge.net>
  *    Gareth Hughes <gareth@nvidia.com>
  */
-/* $XFree86:$ */
 
 /** \file texmem.h
  * Public interface to the DRI texture memory management routines.

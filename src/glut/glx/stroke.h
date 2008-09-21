@@ -1,4 +1,3 @@
-/* $XConsortium: wfont.h,v 5.1 91/02/16 09:46:37 rws Exp $ */
 
 /*****************************************************************
 Copyright (c) 1989,1990, 1991 by Sun Microsystems, Inc. and the X Consortium.

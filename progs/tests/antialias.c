@@ -1,4 +1,3 @@
-/* $Id: antialias.c,v 1.2 2003/03/29 16:42:57 brianp Exp $ */
 
 /*
  * Test multisampling and polygon smoothing.

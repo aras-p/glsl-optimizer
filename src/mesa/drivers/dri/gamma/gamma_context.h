@@ -1,4 +1,3 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/gamma/gammacontext.h,v 1.6 2002/12/16 16:18:50 dawes Exp $ */
 /*
  * Copyright 2001 by Alan Hourihane.
  *

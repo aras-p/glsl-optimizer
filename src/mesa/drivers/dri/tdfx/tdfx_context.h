@@ -23,7 +23,6 @@
  * OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-/* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/tdfx_context.h,v 1.5 2002/02/24 21:51:10 dawes Exp $ */
 
 /*
  * New fixes:

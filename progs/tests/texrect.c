@@ -1,4 +1,3 @@
-/* $Id: texrect.c,v 1.5 2004/05/06 20:27:32 brianp Exp $ */
 
 /* GL_NV_texture_rectangle test
  *

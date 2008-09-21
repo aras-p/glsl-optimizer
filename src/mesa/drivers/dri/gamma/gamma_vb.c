@@ -1,4 +1,3 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/gamma/gamma_vb.c,v 1.4 2003/03/26 20:43:48 tsi Exp $ */
 /*
  * Copyright 2001 by Alan Hourihane.
  *

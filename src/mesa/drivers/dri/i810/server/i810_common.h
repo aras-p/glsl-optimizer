@@ -25,7 +25,6 @@
  * Converted to common header format:
  *   Jens Owen <jens@tungstengraphics.com>
  *
- * $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i810/i810_common.h,v 1.1 2002/09/11 00:29:31 dawes Exp $
  *
  */
 
