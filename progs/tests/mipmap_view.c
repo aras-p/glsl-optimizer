@@ -21,6 +21,8 @@ static int TexWidth = 256, TexHeight = 256;
 static int WinWidth = 1044, WinHeight = 900;
 static GLfloat Bias = 0.0;
 static GLboolean ScaleQuads = GL_FALSE;
+static GLint Win = 0;
+
 
 
 static void
@@ -145,6 +147,7 @@ Key(unsigned char key, int x, int y)
          ScaleQuads = !ScaleQuads;
          break;
       case 27:
+         glutDestroyWindow(Win);
          exit(0);
          break;
    }
@@ -238,7 +241,7 @@ main(int argc, char *argv[])
    glutInitWindowPosition(0, 0);
    glutInitWindowSize(WinWidth, WinHeight);
    glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE);
-   glutCreateWindow(argv[0]);
+   Win = glutCreateWindow(argv[0]);
    glutReshapeFunc(Reshape);
    glutKeyboardFunc(Key);
    glutDisplayFunc(Display);

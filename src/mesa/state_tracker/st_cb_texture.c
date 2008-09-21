@@ -481,8 +481,15 @@ st_TexImage(GLcontext * ctx,
    if (!stObj->pt) {
       guess_and_alloc_texture(ctx->st, stObj, stImage);
       if (!stObj->pt) {
-         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage");
-         return;
+         /* Probably out of memory.
+          * Try flushing any pending rendering, then retry.
+          */
+         st_finish(ctx->st);
+         guess_and_alloc_texture(ctx->st, stObj, stImage);
+         if (!stObj->pt) {
+            _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage");
+            return;
+         }
       }
    }
 
