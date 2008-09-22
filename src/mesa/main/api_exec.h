@@ -27,7 +27,10 @@
 #define API_EXEC_H
 
 
-void
+struct _glapi_table;
+
+
+extern void
 _mesa_init_exec_table(struct _glapi_table *exec);
 
 

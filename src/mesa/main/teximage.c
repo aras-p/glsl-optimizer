@@ -32,7 +32,9 @@
 #include "glheader.h"
 #include "bufferobj.h"
 #include "context.h"
+#if FEATURE_convolve
 #include "convolve.h"
+#endif
 #include "fbobject.h"
 #include "framebuffer.h"
 #include "image.h"
@@ -2412,9 +2414,11 @@ _mesa_TexImage1D( GLenum target, GLint level, GLint internalFormat,
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
+#if FEATURE_convolve
    if (is_color_format(internalFormat)) {
       _mesa_adjust_image_for_convolution(ctx, 1, &postConvWidth, NULL);
    }
+#endif
 
    if (target == GL_TEXTURE_1D) {
       /* non-proxy target */
@@ -2507,10 +2511,12 @@ _mesa_TexImage2D( GLenum target, GLint level, GLint internalFormat,
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
+#if FEATURE_convolve
    if (is_color_format(internalFormat)) {
       _mesa_adjust_image_for_convolution(ctx, 2, &postConvWidth,
 					 &postConvHeight);
    }
+#endif
 
    if (target == GL_TEXTURE_2D ||
        (ctx->Extensions.ARB_texture_cube_map &&
@@ -2729,10 +2735,12 @@ _mesa_TexSubImage1D( GLenum target, GLint level,
    if (ctx->NewState & _IMAGE_NEW_TRANSFER_STATE)
       _mesa_update_state(ctx);
 
+#if FEATURE_convolve
    /* XXX should test internal format */
    if (is_color_format(format)) {
       _mesa_adjust_image_for_convolution(ctx, 1, &postConvWidth, NULL);
    }
+#endif
 
    if (subtexture_error_check(ctx, 1, target, level, xoffset, 0, 0,
 			       postConvWidth, 1, 1, format, type)) {
@@ -2787,11 +2795,13 @@ _mesa_TexSubImage2D( GLenum target, GLint level,
    if (ctx->NewState & _IMAGE_NEW_TRANSFER_STATE)
       _mesa_update_state(ctx);
 
+#if FEATURE_convolve
    /* XXX should test internal format */
    if (is_color_format(format)) {
       _mesa_adjust_image_for_convolution(ctx, 2, &postConvWidth,
                                          &postConvHeight);
    }
+#endif
 
    if (subtexture_error_check(ctx, 2, target, level, xoffset, yoffset, 0,
 			      postConvWidth, postConvHeight, 1, format, type)) {
@@ -2901,9 +2911,11 @@ _mesa_CopyTexImage1D( GLenum target, GLint level,
    if (ctx->NewState & _IMAGE_NEW_TRANSFER_STATE)
       _mesa_update_state(ctx);
 
+#if FEATURE_convolve
    if (is_color_format(internalFormat)) {
       _mesa_adjust_image_for_convolution(ctx, 1, &postConvWidth, NULL);
    }
+#endif
 
    if (copytexture_error_check(ctx, 1, target, level, internalFormat,
                                postConvWidth, 1, border))
@@ -2964,11 +2976,12 @@ _mesa_CopyTexImage2D( GLenum target, GLint level, GLenum internalFormat,
    if (ctx->NewState & _IMAGE_NEW_TRANSFER_STATE)
       _mesa_update_state(ctx);
 
+#if FEATURE_convolve
    if (is_color_format(internalFormat)) {
       _mesa_adjust_image_for_convolution(ctx, 2, &postConvWidth,
                                          &postConvHeight);
    }
-
+#endif
    if (copytexture_error_check(ctx, 2, target, level, internalFormat,
                                postConvWidth, postConvHeight, border))
       return;
@@ -3027,8 +3040,10 @@ _mesa_CopyTexSubImage1D( GLenum target, GLint level,
    if (ctx->NewState & _IMAGE_NEW_TRANSFER_STATE)
       _mesa_update_state(ctx);
 
+#if FEATURE_convolve
    /* XXX should test internal format */
    _mesa_adjust_image_for_convolution(ctx, 1, &postConvWidth, NULL);
+#endif
 
    if (copytexsubimage_error_check(ctx, 1, target, level,
                                    xoffset, 0, 0, postConvWidth, 1))
@@ -3075,8 +3090,10 @@ _mesa_CopyTexSubImage2D( GLenum target, GLint level,
    if (ctx->NewState & _IMAGE_NEW_TRANSFER_STATE)
       _mesa_update_state(ctx);
 
+#if FEATURE_convolve
    /* XXX should test internal format */
    _mesa_adjust_image_for_convolution(ctx, 2, &postConvWidth, &postConvHeight);
+#endif
 
    if (copytexsubimage_error_check(ctx, 2, target, level, xoffset, yoffset, 0,
                                    postConvWidth, postConvHeight))
@@ -3123,8 +3140,10 @@ _mesa_CopyTexSubImage3D( GLenum target, GLint level,
    if (ctx->NewState & _IMAGE_NEW_TRANSFER_STATE)
       _mesa_update_state(ctx);
 
+#if FEATURE_convolve
    /* XXX should test internal format */
    _mesa_adjust_image_for_convolution(ctx, 2, &postConvWidth, &postConvHeight);
+#endif
 
    if (copytexsubimage_error_check(ctx, 3, target, level, xoffset, yoffset,
                                    zoffset, postConvWidth, postConvHeight))

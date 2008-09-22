@@ -55,7 +55,9 @@
 #include "bufferobj.h"
 #include "colormac.h"
 #include "context.h"
+#if FEATURE_convolve
 #include "convolve.h"
+#endif
 #include "image.h"
 #include "macros.h"
 #include "mipmap.h"
@@ -269,6 +271,16 @@ compute_component_mapping(GLenum inFormat, GLenum outFormat,
 }
 
 
+#if !FEATURE_convolve
+static void
+_mesa_adjust_image_for_convolution(GLcontext *ctx, GLuint dims,
+                                   GLsizei *srcWidth, GLsizei *srcHeight)
+{
+   /* no-op */
+}
+#endif
+
+
 /**
  * Make a temporary (color) texture image with GLfloat components.
  * Apply all needed pixel unpacking and pixel transfer operations.
@@ -372,6 +384,7 @@ make_temp_float_image(GLcontext *ctx, GLuint dims,
          convWidth = srcWidth;
          convHeight = srcHeight;
 
+#if FEATURE_convolve
          /* do convolution */
          {
             GLfloat *src = tempImage + img * (srcWidth * srcHeight * 4);
@@ -391,7 +404,7 @@ make_temp_float_image(GLcontext *ctx, GLuint dims,
                }
             }
          }
-
+#endif
          /* do post-convolution transfer and pack into tempImage */
          {
             const GLint logComponents
@@ -548,6 +561,7 @@ _mesa_make_temp_chan_image(GLcontext *ctx, GLuint dims,
           textureBaseFormat == GL_ALPHA ||
           textureBaseFormat == GL_INTENSITY);
 
+#if FEATURE_convolve
    if ((dims == 1 && ctx->Pixel.Convolution1DEnabled) ||
        (dims >= 2 && ctx->Pixel.Convolution2DEnabled) ||
        (dims >= 2 && ctx->Pixel.Separable2DEnabled)) {
@@ -569,6 +583,7 @@ _mesa_make_temp_chan_image(GLcontext *ctx, GLuint dims,
       transferOps = 0;
       freeSrcImage = GL_TRUE;
    }
+#endif
 
    /* unpack and transfer the source image */
    tempImage = (GLchan *) _mesa_malloc(srcWidth * srcHeight * srcDepth

@@ -30,7 +30,9 @@
 
 #include "glheader.h"
 #include "colormac.h"
+#if FEATURE_colortable
 #include "colortab.h"
+#endif
 #include "context.h"
 #include "enums.h"
 #include "macros.h"
@@ -3167,7 +3169,9 @@ _mesa_init_texture(GLcontext *ctx)
    ctx->Texture.CurrentUnit = 0;      /* multitexture */
    ctx->Texture._EnabledUnits = 0;
    ctx->Texture.SharedPalette = GL_FALSE;
+#if FEATURE_colortable
    _mesa_init_colortable(&ctx->Texture.Palette);
+#endif
 
    for (i = 0; i < MAX_TEXTURE_UNITS; i++)
       init_texture_unit( ctx, i );
@@ -3209,9 +3213,13 @@ _mesa_free_texture_data(GLcontext *ctx)
    for (tgt = 0; tgt < NUM_TEXTURE_TARGETS; tgt++)
       ctx->Driver.DeleteTexture(ctx, ctx->Texture.ProxyTex[tgt]);
 
-   for (u = 0; u < MAX_TEXTURE_IMAGE_UNITS; u++)
-      _mesa_free_colortable_data( &ctx->Texture.Unit[u].ColorTable );
-
+#if FEATURE_colortable
+   {
+      GLuint i;
+      for (i = 0; i < MAX_TEXTURE_IMAGE_UNITS; i++)
+         _mesa_free_colortable_data( &ctx->Texture.Unit[i].ColorTable );
+   }
+#endif
 }
 
 
