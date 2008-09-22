@@ -634,6 +634,45 @@ emit_DP4(struct codegen *gen, const struct tgsi_full_instruction *inst)
 }
 
 /**
+ * Emit homogeneous dot product.  See emit_ADD for comments.
+ */
+static boolean
+emit_DPH(struct codegen *gen, const struct tgsi_full_instruction *inst)
+{
+   int ch;
+   spe_comment(gen->f, -4, "DPH:");
+
+   int s1_reg = get_src_reg(gen, CHAN_X, &inst->FullSrcRegisters[0]);
+   int s2_reg = get_src_reg(gen, CHAN_X, &inst->FullSrcRegisters[1]);
+   int d_reg = get_dst_reg(gen, CHAN_X, &inst->FullDstRegisters[0]);
+   /* d = x * x */
+   spe_fm(gen->f, d_reg, s1_reg, s2_reg);
+
+   s1_reg = get_src_reg(gen, CHAN_Y, &inst->FullSrcRegisters[0]);
+   s2_reg = get_src_reg(gen, CHAN_Y, &inst->FullSrcRegisters[1]);
+   /* d = y * y + d */
+   spe_fma(gen->f, d_reg, s1_reg, s2_reg, d_reg);
+
+   s1_reg = get_src_reg(gen, CHAN_Z, &inst->FullSrcRegisters[0]);
+   s2_reg = get_src_reg(gen, CHAN_Z, &inst->FullSrcRegisters[1]);
+   /* d = z * z + d */
+   spe_fma(gen->f, d_reg, s1_reg, s2_reg, d_reg);
+
+   s2_reg = get_src_reg(gen, CHAN_W, &inst->FullSrcRegisters[1]);
+   /* d = w + d */
+   spe_fa(gen->f, d_reg, s2_reg, d_reg);
+
+   for (ch = 0; ch < 4; ch++) {
+      if (inst->FullDstRegisters[0].DstRegister.WriteMask & (1 << ch)) {
+         store_dest_reg(gen, d_reg, ch, &inst->FullDstRegisters[0]);
+      }
+   }
+
+   free_itemps(gen);
+   return true;
+}
+
+/**
  * Emit set-if-greater-than.
  * Note that the SPE fcgt instruction produces 0x0 and 0xffffffff as
  * the result but OpenGL/TGSI needs 0.0 and 1.0 results.
@@ -1124,6 +1163,8 @@ emit_instruction(struct codegen *gen,
       return emit_DP3(gen, inst);
    case TGSI_OPCODE_DP4:
       return emit_DP4(gen, inst);
+   case TGSI_OPCODE_DPH:
+      return emit_DPH(gen, inst);
    case TGSI_OPCODE_RCP:
       return emit_RCP(gen, inst);
    case TGSI_OPCODE_RSQ:
