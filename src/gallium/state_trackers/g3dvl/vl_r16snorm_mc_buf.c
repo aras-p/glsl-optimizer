@@ -576,6 +576,9 @@ static int vlFlush
 	unsigned int			num_macroblocks[vlNumMacroBlockExTypes] = {0};
 	unsigned int			offset[vlNumMacroBlockExTypes];
 	unsigned int			vb_start = 0;
+	unsigned int			mbw;
+	unsigned int			mbh;
+	unsigned int			num_mb_per_frame;
 	unsigned int			i;
 
 	assert(render);
@@ -583,6 +586,13 @@ static int vlFlush
 	mc = (struct vlR16SnormBufferedMC*)render;
 
 	if (!mc->buffered_surface)
+		return 0;
+
+	mbw = align(mc->picture_width, VL_MACROBLOCK_WIDTH) / VL_MACROBLOCK_WIDTH;
+	mbh = align(mc->picture_height, VL_MACROBLOCK_HEIGHT) / VL_MACROBLOCK_HEIGHT;
+	num_mb_per_frame = mbw * mbh;
+
+	if (mc->num_macroblocks < num_mb_per_frame)
 		return 0;
 
 	pipe = mc->pipe;

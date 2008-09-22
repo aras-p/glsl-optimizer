@@ -179,6 +179,7 @@ int vlSurfaceGetStatus
 	}
 
 	*status = vlResourceStatusFree;
+
 	return 0;
 }
 
