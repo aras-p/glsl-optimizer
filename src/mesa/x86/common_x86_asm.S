@@ -39,10 +39,7 @@
  * in there will break the build on some platforms.
  */
 
-<<<<<<< HEAD:src/mesa/x86/common_x86_asm.S
-=======
 #include "matypes.h"
->>>>>>> master:src/mesa/x86/common_x86_asm.S
 #include "assyntax.h"
 #include "common_x86_features.h"
 
