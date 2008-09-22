@@ -2507,7 +2507,8 @@ _mesa_texstore_s8_z24(TEXSTORE_PARAMS)
             dstRow += dstRowStride / sizeof(GLuint);
          }
       }
-   } else {
+   }
+   else {
       for (img = 0; img < srcDepth; img++) {
          GLuint *dstRow = (GLuint *) dstAddr
             + dstImageOffsets[dstZoffset + img]

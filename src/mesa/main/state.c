@@ -51,8 +51,6 @@
 #include "texstate.h"
 
 
-
-
 static void
 update_separate_specular(GLcontext *ctx)
 {

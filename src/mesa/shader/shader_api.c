@@ -517,7 +517,7 @@ _mesa_bind_attrib_location(GLcontext *ctx, GLuint program, GLuint index,
 {
    struct gl_shader_program *shProg;
    const GLint size = -1; /* unknown size */
-   GLint i;
+   GLint i, oldIndex;
    GLenum datatype = GL_FLOAT_VEC4;
 
    shProg = _mesa_lookup_shader_program_err(ctx, program,
@@ -538,6 +538,14 @@ _mesa_bind_attrib_location(GLcontext *ctx, GLuint program, GLuint index,
    if (index >= ctx->Const.VertexProgram.MaxAttribs) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glBindAttribLocation(index)");
       return;
+   }
+
+   if (shProg->LinkStatus) {
+      /* get current index/location for the attribute */
+      oldIndex = _mesa_get_attrib_location(ctx, program, name);
+   }
+   else {
+      oldIndex = -1;
    }
 
    /* this will replace the current value if it's already in the list */
