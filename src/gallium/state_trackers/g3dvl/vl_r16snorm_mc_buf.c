@@ -974,7 +974,7 @@ static int vlCreateFragmentShaderIMB
 	 */
 	for (i = 0; i < 3; ++i)
 	{
-		decl = vl_decl_interpolated_input(TGSI_SEMANTIC_GENERIC, 1, i, i, TGSI_INTERPOLATE_LINEAR);
+		decl = vl_decl_interpolated_input(TGSI_SEMANTIC_GENERIC, i + 1, i, i, TGSI_INTERPOLATE_LINEAR);
 		ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
 	}
 
@@ -1186,7 +1186,7 @@ static int vlCreateVertexShaderFieldPMB
 	 */
 	for (i = 0; i < 7; i++)
 	{
-		decl = vl_decl_output((i == 0 || i == 6) ? TGSI_SEMANTIC_POSITION : TGSI_SEMANTIC_GENERIC, i, i, i);
+		decl = vl_decl_output(i == 0 ? TGSI_SEMANTIC_POSITION : TGSI_SEMANTIC_GENERIC, i, i, i);
 		ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
 	}
 
@@ -1668,7 +1668,7 @@ static int vlCreateVertexShaderFieldBMB
 	 */
 	for (i = 0; i < 9; i++)
 	{
-		decl = vl_decl_output((i == 0 || i == 8) ? TGSI_SEMANTIC_POSITION : TGSI_SEMANTIC_GENERIC, i, i, i);
+		decl = vl_decl_output(i == 0 ? TGSI_SEMANTIC_POSITION : TGSI_SEMANTIC_GENERIC, i, i, i);
 		ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
 	}
 
