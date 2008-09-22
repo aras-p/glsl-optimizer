@@ -355,7 +355,7 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	ctx->Const.FragmentProgram.MaxNativeTexIndirections =
 	    PFS_MAX_TEX_INDIRECT;
 	ctx->Const.FragmentProgram.MaxNativeAddressRegs = 0;	/* and these are?? */
-	_tnl_ProgramCacheInit(ctx);
+	ctx->VertexProgram._MaintainTnlProgram = GL_TRUE;
 	ctx->FragmentProgram._MaintainTexEnvProgram = GL_TRUE;
 
 	driInitExtensions(ctx, card_extensions, GL_TRUE);
@@ -501,7 +501,6 @@ void r300DestroyContext(__DRIcontextPrivate * driContextPriv)
 		release_texture_heaps =
 		    (r300->radeon.glCtx->Shared->RefCount == 1);
 		_swsetup_DestroyContext(r300->radeon.glCtx);
-		_tnl_ProgramCacheDestroy(r300->radeon.glCtx);
 		_tnl_DestroyContext(r300->radeon.glCtx);
 		_vbo_DestroyContext(r300->radeon.glCtx);
 		_swrast_DestroyContext(r300->radeon.glCtx);
