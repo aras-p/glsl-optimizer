@@ -181,8 +181,8 @@ get_src_reg(struct codegen *gen,
    boolean reg_is_itemp = FALSE;
    uint sign_op;
 
-   assert(swizzle >= 0);
-   assert(swizzle <= 3);
+   assert(swizzle >= TGSI_SWIZZLE_X);
+   assert(swizzle <= TGSI_EXTSWIZZLE_ONE);
 
    channel = swizzle;
 
@@ -192,12 +192,28 @@ get_src_reg(struct codegen *gen,
       break;
    case TGSI_FILE_INPUT:
       {
-         /* offset is measured in quadwords, not bytes */
-         int offset = src->SrcRegister.Index * 4 + channel;
-         reg = get_itemp(gen);
-         reg_is_itemp = TRUE;
-         /* Load:  reg = memory[(machine_reg) + offset] */
-         spe_lqd(gen->f, reg, gen->inputs_reg, offset);
+         if(channel == TGSI_EXTSWIZZLE_ONE)
+         {
+            /* Load const one float and early out */
+            reg = get_const_one_reg(gen);
+            return reg;
+         }
+         else if(channel == TGSI_EXTSWIZZLE_ZERO)
+         {
+            /* Load const zero float and early out */
+            reg = get_itemp(gen);
+            spe_xor(gen->f, reg, reg, reg);
+            return reg;
+         }
+         else
+         {
+            /* offset is measured in quadwords, not bytes */
+            int offset = src->SrcRegister.Index * 4 + channel;
+            reg = get_itemp(gen);
+            reg_is_itemp = TRUE;
+            /* Load:  reg = memory[(machine_reg) + offset] */
+            spe_lqd(gen->f, reg, gen->inputs_reg, offset);
+         }
       }
       break;
    case TGSI_FILE_IMMEDIATE:
@@ -354,8 +370,6 @@ emit_MOV(struct codegen *gen, const struct tgsi_full_instruction *inst)
    }
    return true;
 }
-
-
 
 /**
  * Emit addition instructions.  Recall that a single TGSI_OPCODE_ADD
@@ -569,23 +583,23 @@ emit_DP3(struct codegen *gen, const struct tgsi_full_instruction *inst)
 
    int s1_reg = get_src_reg(gen, CHAN_X, &inst->FullSrcRegisters[0]);
    int s2_reg = get_src_reg(gen, CHAN_X, &inst->FullSrcRegisters[1]);
-   int d_reg = get_dst_reg(gen, CHAN_X, &inst->FullDstRegisters[0]);
-   /* d = x * x */
-   spe_fm(gen->f, d_reg, s1_reg, s2_reg);
+   int tmp_reg = get_itemp(gen);
+   /* t = x0 * x1 */
+   spe_fm(gen->f, tmp_reg, s1_reg, s2_reg);
 
    s1_reg = get_src_reg(gen, CHAN_Y, &inst->FullSrcRegisters[0]);
    s2_reg = get_src_reg(gen, CHAN_Y, &inst->FullSrcRegisters[1]);
-   /* d = y * y + d */
-   spe_fma(gen->f, d_reg, s1_reg, s2_reg, d_reg);
+   /* t = y0 * y1 + t */
+   spe_fma(gen->f, tmp_reg, s1_reg, s2_reg, tmp_reg);
 
    s1_reg = get_src_reg(gen, CHAN_Z, &inst->FullSrcRegisters[0]);
    s2_reg = get_src_reg(gen, CHAN_Z, &inst->FullSrcRegisters[1]);
-   /* d = z * z + d */
-   spe_fma(gen->f, d_reg, s1_reg, s2_reg, d_reg);
+   /* t = z0 * z1 + t */
+   spe_fma(gen->f, tmp_reg, s1_reg, s2_reg, tmp_reg);
 
    for (ch = 0; ch < 4; ch++) {
       if (inst->FullDstRegisters[0].DstRegister.WriteMask & (1 << ch)) {
-         store_dest_reg(gen, d_reg, ch, &inst->FullDstRegisters[0]);
+         store_dest_reg(gen, tmp_reg, ch, &inst->FullDstRegisters[0]);
       }
    }
 
@@ -600,32 +614,32 @@ static boolean
 emit_DP4(struct codegen *gen, const struct tgsi_full_instruction *inst)
 {
    int ch;
-   spe_comment(gen->f, -4, "DP3:");
+   spe_comment(gen->f, -4, "DP4:");
 
    int s1_reg = get_src_reg(gen, CHAN_X, &inst->FullSrcRegisters[0]);
    int s2_reg = get_src_reg(gen, CHAN_X, &inst->FullSrcRegisters[1]);
-   int d_reg = get_dst_reg(gen, CHAN_X, &inst->FullDstRegisters[0]);
-   /* d = x * x */
-   spe_fm(gen->f, d_reg, s1_reg, s2_reg);
+   int tmp_reg = get_itemp(gen);
+   /* t = x0 * x1 */
+   spe_fm(gen->f, tmp_reg, s1_reg, s2_reg);
 
    s1_reg = get_src_reg(gen, CHAN_Y, &inst->FullSrcRegisters[0]);
    s2_reg = get_src_reg(gen, CHAN_Y, &inst->FullSrcRegisters[1]);
-   /* d = y * y + d */
-   spe_fma(gen->f, d_reg, s1_reg, s2_reg, d_reg);
+   /* t = y0 * y1 + t */
+   spe_fma(gen->f, tmp_reg, s1_reg, s2_reg, tmp_reg);
 
    s1_reg = get_src_reg(gen, CHAN_Z, &inst->FullSrcRegisters[0]);
    s2_reg = get_src_reg(gen, CHAN_Z, &inst->FullSrcRegisters[1]);
-   /* d = z * z + d */
-   spe_fma(gen->f, d_reg, s1_reg, s2_reg, d_reg);
+   /* t = z0 * z1 + t */
+   spe_fma(gen->f, tmp_reg, s1_reg, s2_reg, tmp_reg);
 
    s1_reg = get_src_reg(gen, CHAN_W, &inst->FullSrcRegisters[0]);
    s2_reg = get_src_reg(gen, CHAN_W, &inst->FullSrcRegisters[1]);
-   /* d = w * w + d */
-   spe_fma(gen->f, d_reg, s1_reg, s2_reg, d_reg);
+   /* t = w0 * w1 + t */
+   spe_fma(gen->f, tmp_reg, s1_reg, s2_reg, tmp_reg);
 
    for (ch = 0; ch < 4; ch++) {
       if (inst->FullDstRegisters[0].DstRegister.WriteMask & (1 << ch)) {
-         store_dest_reg(gen, d_reg, ch, &inst->FullDstRegisters[0]);
+         store_dest_reg(gen, tmp_reg, ch, &inst->FullDstRegisters[0]);
       }
    }
 
@@ -644,28 +658,85 @@ emit_DPH(struct codegen *gen, const struct tgsi_full_instruction *inst)
 
    int s1_reg = get_src_reg(gen, CHAN_X, &inst->FullSrcRegisters[0]);
    int s2_reg = get_src_reg(gen, CHAN_X, &inst->FullSrcRegisters[1]);
-   int d_reg = get_dst_reg(gen, CHAN_X, &inst->FullDstRegisters[0]);
-   /* d = x * x */
-   spe_fm(gen->f, d_reg, s1_reg, s2_reg);
+   int tmp_reg = get_itemp(gen);
+
+   /* t = x0 * x1 */
+   spe_fm(gen->f, tmp_reg, s1_reg, s2_reg);
 
    s1_reg = get_src_reg(gen, CHAN_Y, &inst->FullSrcRegisters[0]);
    s2_reg = get_src_reg(gen, CHAN_Y, &inst->FullSrcRegisters[1]);
-   /* d = y * y + d */
-   spe_fma(gen->f, d_reg, s1_reg, s2_reg, d_reg);
+   /* t = y0 * y1 + t */
+   spe_fma(gen->f, tmp_reg, s1_reg, s2_reg, tmp_reg);
 
    s1_reg = get_src_reg(gen, CHAN_Z, &inst->FullSrcRegisters[0]);
    s2_reg = get_src_reg(gen, CHAN_Z, &inst->FullSrcRegisters[1]);
-   /* d = z * z + d */
-   spe_fma(gen->f, d_reg, s1_reg, s2_reg, d_reg);
+   /* t = z0 * z1 + t */
+   spe_fma(gen->f, tmp_reg, s1_reg, s2_reg, tmp_reg);
 
    s2_reg = get_src_reg(gen, CHAN_W, &inst->FullSrcRegisters[1]);
-   /* d = w + d */
-   spe_fa(gen->f, d_reg, s2_reg, d_reg);
+   /* t = w1 + t */
+   spe_fa(gen->f, tmp_reg, s2_reg, tmp_reg);
 
    for (ch = 0; ch < 4; ch++) {
       if (inst->FullDstRegisters[0].DstRegister.WriteMask & (1 << ch)) {
-         store_dest_reg(gen, d_reg, ch, &inst->FullDstRegisters[0]);
+         store_dest_reg(gen, tmp_reg, ch, &inst->FullDstRegisters[0]);
       }
+   }
+
+   free_itemps(gen);
+   return true;
+}
+
+/**
+ * Emit cross product.  See emit_ADD for comments.
+ */
+static boolean
+emit_XPD(struct codegen *gen, const struct tgsi_full_instruction *inst)
+{
+   spe_comment(gen->f, -4, "XPD:");
+
+   int s1_reg = get_src_reg(gen, CHAN_Z, &inst->FullSrcRegisters[0]);
+   int s2_reg = get_src_reg(gen, CHAN_Y, &inst->FullSrcRegisters[1]);
+   int tmp_reg = get_itemp(gen);
+
+   /* t = z0 * y1 */
+   spe_fm(gen->f, tmp_reg, s1_reg, s2_reg);
+
+   s1_reg = get_src_reg(gen, CHAN_Y, &inst->FullSrcRegisters[0]);
+   s2_reg = get_src_reg(gen, CHAN_Z, &inst->FullSrcRegisters[1]);
+   /* t = y0 * z1 - t */
+   spe_fms(gen->f, tmp_reg, s1_reg, s2_reg, tmp_reg);
+
+   if (inst->FullDstRegisters[0].DstRegister.WriteMask & (1 << CHAN_X)) {
+      store_dest_reg(gen, tmp_reg, CHAN_X, &inst->FullDstRegisters[0]);
+   }
+
+   s1_reg = get_src_reg(gen, CHAN_X, &inst->FullSrcRegisters[0]);
+   s2_reg = get_src_reg(gen, CHAN_Z, &inst->FullSrcRegisters[1]);
+   /* t = x0 * z1 */
+   spe_fm(gen->f, tmp_reg, s1_reg, s2_reg);
+
+   s1_reg = get_src_reg(gen, CHAN_Z, &inst->FullSrcRegisters[0]);
+   s2_reg = get_src_reg(gen, CHAN_X, &inst->FullSrcRegisters[1]);
+   /* t = z0 * x1 - t */
+   spe_fms(gen->f, tmp_reg, s1_reg, s2_reg, tmp_reg);
+
+   if (inst->FullDstRegisters[0].DstRegister.WriteMask & (1 << CHAN_Y)) {
+      store_dest_reg(gen, tmp_reg, CHAN_Y, &inst->FullDstRegisters[0]);
+   }
+
+   s1_reg = get_src_reg(gen, CHAN_Y, &inst->FullSrcRegisters[0]);
+   s2_reg = get_src_reg(gen, CHAN_X, &inst->FullSrcRegisters[1]);
+   /* t = y0 * x1 */
+   spe_fm(gen->f, tmp_reg, s1_reg, s2_reg);
+
+   s1_reg = get_src_reg(gen, CHAN_X, &inst->FullSrcRegisters[0]);
+   s2_reg = get_src_reg(gen, CHAN_Y, &inst->FullSrcRegisters[1]);
+   /* t = x0 * y1 - t */
+   spe_fms(gen->f, tmp_reg, s1_reg, s2_reg, tmp_reg);
+
+   if (inst->FullDstRegisters[0].DstRegister.WriteMask & (1 << CHAN_Z)) {
+      store_dest_reg(gen, tmp_reg, CHAN_Z, &inst->FullDstRegisters[0]);
    }
 
    free_itemps(gen);
@@ -895,6 +966,37 @@ emit_CMP(struct codegen *gen, const struct tgsi_full_instruction *inst)
 }
 
 /**
+ * Emit trunc.  
+ * Convert float to signed int
+ * Convert signed int to float
+ */
+static boolean
+emit_TRUNC(struct codegen *gen, const struct tgsi_full_instruction *inst)
+{
+   int ch;
+
+   spe_comment(gen->f, -4, "TRUNC:");
+
+   for (ch = 0; ch < 4; ch++) {
+      if (inst->FullDstRegisters[0].DstRegister.WriteMask & (1 << ch)) {
+         int s1_reg = get_src_reg(gen, ch, &inst->FullSrcRegisters[0]);
+         int d_reg = get_dst_reg(gen, ch, &inst->FullDstRegisters[0]);
+
+         /* Convert float to int */
+         spe_cflts(gen->f, d_reg, s1_reg, 0);
+
+         /* Convert int to float */
+         spe_csflt(gen->f, d_reg, d_reg, 0);
+
+         store_dest_reg(gen, d_reg, ch, &inst->FullDstRegisters[0]);
+         free_itemps(gen);
+      }
+   }
+
+   return true;
+}
+
+/**
  * Emit floor.  
  * If negative int subtract one
  * Convert float to signed int
@@ -907,6 +1009,9 @@ emit_FLR(struct codegen *gen, const struct tgsi_full_instruction *inst)
 
    spe_comment(gen->f, -4, "FLR:");
 
+   int zero_reg = get_itemp(gen);
+   spe_xor(gen->f, zero_reg, zero_reg, zero_reg);
+   
    for (ch = 0; ch < 4; ch++) {
       if (inst->FullDstRegisters[0].DstRegister.WriteMask & (1 << ch)) {
          int s1_reg = get_src_reg(gen, ch, &inst->FullSrcRegisters[0]);
@@ -914,9 +1019,8 @@ emit_FLR(struct codegen *gen, const struct tgsi_full_instruction *inst)
          int tmp_reg = get_itemp(gen);
 
          /* If negative, subtract 1.0 */
-         spe_xor(gen->f, tmp_reg, tmp_reg, tmp_reg);
-         spe_fcgt(gen->f, d_reg, tmp_reg, s1_reg);
-         spe_selb(gen->f, tmp_reg, tmp_reg, get_const_one_reg(gen), d_reg);
+         spe_fcgt(gen->f, d_reg, zero_reg, s1_reg);
+         spe_selb(gen->f, tmp_reg, zero_reg, get_const_one_reg(gen), d_reg);
          spe_fs(gen->f, d_reg, s1_reg, tmp_reg);
 
          /* Convert float to int */
@@ -944,6 +1048,9 @@ emit_FRC(struct codegen *gen, const struct tgsi_full_instruction *inst)
 
    spe_comment(gen->f, -4, "FLR:");
 
+   int zero_reg = get_itemp(gen);
+   spe_xor(gen->f, zero_reg, zero_reg, zero_reg);
+
    for (ch = 0; ch < 4; ch++) {
       if (inst->FullDstRegisters[0].DstRegister.WriteMask & (1 << ch)) {
          int s1_reg = get_src_reg(gen, ch, &inst->FullSrcRegisters[0]);
@@ -951,9 +1058,8 @@ emit_FRC(struct codegen *gen, const struct tgsi_full_instruction *inst)
          int tmp_reg = get_itemp(gen);
 
          /* If negative, subtract 1.0 */
-         spe_xor(gen->f, tmp_reg, tmp_reg, tmp_reg);
-         spe_fcgt(gen->f, d_reg, tmp_reg, s1_reg);
-         spe_selb(gen->f, tmp_reg, tmp_reg, get_const_one_reg(gen), d_reg);
+         spe_fcgt(gen->f, d_reg, zero_reg, s1_reg);
+         spe_selb(gen->f, tmp_reg, zero_reg, get_const_one_reg(gen), d_reg);
          spe_fs(gen->f, d_reg, s1_reg, tmp_reg);
 
          /* Convert float to int */
@@ -1148,6 +1254,7 @@ emit_instruction(struct codegen *gen,
 {
    switch (inst->Instruction.Opcode) {
    case TGSI_OPCODE_MOV:
+   case TGSI_OPCODE_SWZ:
       return emit_MOV(gen, inst);
    case TGSI_OPCODE_MUL:
       return emit_MUL(gen, inst);
@@ -1165,6 +1272,8 @@ emit_instruction(struct codegen *gen,
       return emit_DP4(gen, inst);
    case TGSI_OPCODE_DPH:
       return emit_DPH(gen, inst);
+   case TGSI_OPCODE_XPD:
+      return emit_XPD(gen, inst);
    case TGSI_OPCODE_RCP:
       return emit_RCP(gen, inst);
    case TGSI_OPCODE_RSQ:
@@ -1189,6 +1298,8 @@ emit_instruction(struct codegen *gen,
       return emit_MAX(gen, inst);
    case TGSI_OPCODE_MIN:
       return emit_MIN(gen, inst);
+   case TGSI_OPCODE_TRUNC:
+      return emit_TRUNC(gen, inst);
    case TGSI_OPCODE_FLR:
       return emit_FLR(gen, inst);
    case TGSI_OPCODE_FRC:
