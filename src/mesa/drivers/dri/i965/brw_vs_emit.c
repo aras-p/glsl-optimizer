@@ -1155,7 +1155,10 @@ void brw_vs_emit(struct brw_vs_compile *c )
       case OPCODE_ENDSUB:
 	 break;
       default:
-	 _mesa_printf("Unsupport opcode %d in vertex shader\n", inst->Opcode);
+	 _mesa_printf("Unsupported opcode %i (%s) in vertex shader\n",
+		      inst->Opcode, inst->Opcode < MAX_OPCODE ?
+				    _mesa_opcode_string(inst->Opcode) :
+				    "unknown");
 	 break;
       }
 
