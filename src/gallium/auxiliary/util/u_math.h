@@ -254,7 +254,7 @@ util_fast_exp2(float x)
 
 
 /**
- * Based on code from http://www.flipcode.com/totd/
+ * Based on code from http://www.flipcode.com/archives/Fast_log_Function.shtml
  */
 static INLINE float
 util_fast_log2(float val)
