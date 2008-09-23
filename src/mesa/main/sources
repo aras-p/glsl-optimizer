@@ -78,10 +78,6 @@ vsnprintf.c
 MESA_MAIN_HEADERS = \
 accum.h \
 api_arrayelt.h \
-<<<<<<< HEAD:src/mesa/main/sources
-=======
-api_eval.h \
->>>>>>> master:src/mesa/main/sources
 api_exec.h \
 api_loopback.h \
 api_noop.h \
