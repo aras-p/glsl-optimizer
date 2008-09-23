@@ -156,11 +156,13 @@ static void brw_emit_prim( struct brw_context *brw,
 static void brw_merge_inputs( struct brw_context *brw,
 		       const struct gl_client_array *arrays[])
 {
-   struct brw_vertex_element *inputs = brw->vb.inputs;
    struct brw_vertex_info old = brw->vb.info;
    GLuint i;
 
-   memset(inputs, 0, sizeof(*inputs));
+   for (i = 0; i < VERT_ATTRIB_MAX; i++)
+      dri_bo_unreference(brw->vb.inputs[i].bo);
+
+   memset(&brw->vb.inputs, 0, sizeof(brw->vb.inputs));
    memset(&brw->vb.info, 0, sizeof(brw->vb.info));
 
    for (i = 0; i < VERT_ATTRIB_MAX; i++) {
@@ -171,7 +173,8 @@ static void brw_merge_inputs( struct brw_context *brw,
 	 if (arrays[i]->StrideB != 0)
 	    brw->vb.info.varying |= 1 << i;
 
-	 brw->vb.info.sizes[i/16] |= (inputs[i].glarray->Size - 1) << ((i%16) * 2);
+	 brw->vb.info.sizes[i/16] |= (brw->vb.inputs[i].glarray->Size - 1) <<
+	    ((i%16) * 2);
       }
    }
 

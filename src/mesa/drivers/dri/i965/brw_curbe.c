@@ -282,7 +282,8 @@ static void prepare_constant_buffer(struct brw_context *brw)
       brw->curbe.last_bufsz = bufsz;
 
       if (brw->curbe.curbe_bo != NULL &&
-	  brw->curbe.curbe_next_offset + bufsz > brw->curbe.curbe_bo->size)
+	  (brw->curbe.need_new_bo ||
+	   brw->curbe.curbe_next_offset + bufsz > brw->curbe.curbe_bo->size))
       {
 	 dri_bo_unreference(brw->curbe.curbe_bo);
 	 brw->curbe.curbe_bo = NULL;
