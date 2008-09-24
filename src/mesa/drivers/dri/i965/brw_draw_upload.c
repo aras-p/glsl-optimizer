@@ -455,12 +455,6 @@ static void brw_emit_vertices(struct brw_context *brw)
 		input->offset);
       OUT_BATCH(brw->vb.max_index);
       OUT_BATCH(0); /* Instance data step rate */
-
-      /* Unreference the buffer so it can get freed, now that we won't
-       * touch it any more.
-       */
-      dri_bo_unreference(input->bo);
-      input->bo = NULL;
    }
    ADVANCE_BATCH();
 
