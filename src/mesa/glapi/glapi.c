@@ -290,6 +290,16 @@ _glapi_get_context(void)
 #endif
 }
 
+#ifdef USE_X86_ASM
+
+#if defined( GLX_USE_TLS )
+extern       GLubyte gl_dispatch_functions_start[];
+extern       GLubyte gl_dispatch_functions_end[];
+#else
+extern const GLubyte gl_dispatch_functions_start[];
+#endif
+
+#endif /* USE_X86_ASM */
 
 
 #if defined(PTHREADS) || defined(GLX_USE_TLS)
