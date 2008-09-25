@@ -1024,6 +1024,9 @@ void brw_vs_emit(struct brw_vs_compile *c )
       case OPCODE_ADD:
 	 brw_ADD(p, dst, args[0], args[1]);
 	 break;
+      case OPCODE_COS:
+	 emit_math1(c, BRW_MATH_FUNCTION_COS, dst, args[0], BRW_MATH_PRECISION_FULL);
+	 break;
       case OPCODE_DP3:
 	 brw_DP3(p, dst, args[0], args[1]);
 	 break;
@@ -1089,6 +1092,9 @@ void brw_vs_emit(struct brw_vs_compile *c )
       case OPCODE_SEQ:
          emit_seq(p, dst, args[0], args[1]);
          break;
+      case OPCODE_SIN:
+	 emit_math1(c, BRW_MATH_FUNCTION_SIN, dst, args[0], BRW_MATH_PRECISION_FULL);
+	 break;
       case OPCODE_SNE:
          emit_sne(p, dst, args[0], args[1]);
          break;
