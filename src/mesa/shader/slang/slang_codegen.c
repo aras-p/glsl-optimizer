@@ -2439,7 +2439,11 @@ _slang_gen_var_decl(slang_assemble_ctx *A, slang_variable *var)
    /*assert(!var->declared);*/
    var->declared = GL_TRUE;
 
-   assert(!is_sampler_type(&var->type));
+   if(is_sampler_type(&var->type)) {
+      slang_info_log_error(A->log, "redeclaration of sampler '%s'",
+			   (char*) var->a_name);
+      return NULL;
+   }
 
    n = new_node0(IR_VAR_DECL);
    if (n) {
