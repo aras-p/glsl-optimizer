@@ -699,8 +699,8 @@ void vbo_exec_vtx_init( struct vbo_exec_context *exec )
                                  &exec->vtx.bufferobj,
                                  ctx->Array.NullBufferObj);
 
+   ASSERT(!exec->vtx.buffer_map);
    exec->vtx.buffer_map = ALIGN_MALLOC(VBO_VERT_BUFFER_SIZE * sizeof(GLfloat), 64);
-
    vbo_exec_vtxfmt_init( exec );
 
    /* Hook our functions into the dispatch table.
@@ -725,9 +725,17 @@ void vbo_exec_vtx_init( struct vbo_exec_context *exec )
 
 void vbo_exec_vtx_destroy( struct vbo_exec_context *exec )
 {
-   if (exec->vtx.buffer_map) {
-      ALIGN_FREE(exec->vtx.buffer_map);
-      exec->vtx.buffer_map = NULL;
+   if (exec->vtx.bufferobj->Name) {
+      /* using a real VBO for vertex data */
+      GLcontext *ctx = exec->ctx;
+      _mesa_reference_buffer_object(ctx, &exec->vtx.bufferobj, NULL);
+   }
+   else {
+      /* just using malloc'd space for vertex data */
+      if (exec->vtx.buffer_map) {
+         ALIGN_FREE(exec->vtx.buffer_map);
+         exec->vtx.buffer_map = NULL;
+      }
    }
 }
 
