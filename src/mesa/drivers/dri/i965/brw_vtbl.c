@@ -70,7 +70,6 @@ static void brw_destroy_context( struct intel_context *intel )
    brw_destroy_state(brw);
    brw_draw_destroy( brw );
 
-   brw_ProgramCacheDestroy( ctx );
    brw_FrameBufferTexDestroy( brw );
 
    for (i = 0; i < brw->state.nr_draw_regions; i++)

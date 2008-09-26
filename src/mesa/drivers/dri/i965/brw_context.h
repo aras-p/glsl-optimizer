@@ -130,7 +130,6 @@ struct brw_context;
 #define BRW_NEW_CONTEXT                 0x80
 #define BRW_NEW_WM_INPUT_DIMENSIONS     0x100
 #define BRW_NEW_INPUT_VARYING           0x200
-#define BRW_NEW_TNL_PROGRAM             0x400
 #define BRW_NEW_PSP                     0x800
 #define BRW_NEW_METAOPS                 0x1000
 #define BRW_NEW_FENCE                   0x2000
@@ -488,10 +487,6 @@ struct brw_context
       GLboolean active;
    } metaops;
 
-   /* Track fixed function t&l in a vertex program:
-    */
-   struct gl_vertex_program *tnl_program;
-   struct brw_tnl_cache tnl_program_cache;
 
    /* Active vertex program: 
     */
