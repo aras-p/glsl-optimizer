@@ -301,3 +301,10 @@ void *st_framebuffer_private( struct st_framebuffer *stfb )
    return stfb->Private;
 }
 
+void st_get_framebuffer_dimensions( struct st_framebuffer *stfb,
+				    int *width,
+				    int *height)
+{
+   *width = stfb->Base.Width;
+   *height = stfb->Base.Height;
+}
