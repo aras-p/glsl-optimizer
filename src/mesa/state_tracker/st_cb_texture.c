@@ -749,8 +749,8 @@ st_GetTexImage(GLcontext * ctx, GLenum target, GLint level,
 static void
 st_GetCompressedTexImage(GLcontext *ctx, GLenum target, GLint level,
                          GLvoid *pixels,
-                         const struct gl_texture_object *texObj,
-                         const struct gl_texture_image *texImage)
+                         struct gl_texture_object *texObj,
+                         struct gl_texture_image *texImage)
 {
    st_get_tex_image(ctx, target, level, 0, 0, pixels,
                     (struct gl_texture_object *) texObj,
