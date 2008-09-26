@@ -49,13 +49,13 @@ cell_create_blend_state(struct pipe_context *pipe,
 
 
 static void
-cell_bind_blend_state(struct pipe_context *pipe, void *state)
+cell_bind_blend_state(struct pipe_context *pipe, void *blend)
 {
    struct cell_context *cell = cell_context(pipe);
 
    draw_flush(cell->draw);
 
-   cell->blend = (struct pipe_blend_state *) state;
+   cell->blend = (struct pipe_blend_state *) blend;
    cell->dirty |= CELL_NEW_BLEND;
 }
 
@@ -169,24 +169,23 @@ cell_set_polygon_stipple( struct pipe_context *pipe,
 
 static void *
 cell_create_rasterizer_state(struct pipe_context *pipe,
-                             const struct pipe_rasterizer_state *setup)
+                             const struct pipe_rasterizer_state *rasterizer)
 {
-   struct pipe_rasterizer_state *state
-      = MALLOC(sizeof(struct pipe_rasterizer_state));
-   memcpy(state, setup, sizeof(struct pipe_rasterizer_state));
-   return state;
+   return mem_dup(rasterizer, sizeof(*rasterizer));
 }
 
 
 static void
-cell_bind_rasterizer_state(struct pipe_context *pipe, void *setup)
+cell_bind_rasterizer_state(struct pipe_context *pipe, void *rast)
 {
+   struct pipe_rasterizer_state *rasterizer =
+      (struct pipe_rasterizer_state *) rast;
    struct cell_context *cell = cell_context(pipe);
 
    /* pass-through to draw module */
-   draw_set_rasterizer_state(cell->draw, setup);
+   draw_set_rasterizer_state(cell->draw, rasterizer);
 
-   cell->rasterizer = (struct pipe_rasterizer_state *)setup;
+   cell->rasterizer = rasterizer;
 
    cell->dirty |= CELL_NEW_RASTERIZER;
 }
