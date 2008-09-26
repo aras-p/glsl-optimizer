@@ -540,7 +540,7 @@ intel_update_wrapper(GLcontext *ctx, struct intel_renderbuffer *irb,
       irb->Base._ActualFormat = GL_DEPTH_COMPONENT16;
       irb->Base._BaseFormat = GL_DEPTH_COMPONENT;
       DBG("Render to DEPTH16 texture OK\n");
-   } else if (texImage->TexFormat == &_mesa_texformat_z24_s8) {
+   } else if (texImage->TexFormat == &_mesa_texformat_s8_z24) {
       irb->Base._ActualFormat = GL_DEPTH24_STENCIL8_EXT;
       irb->Base._BaseFormat = GL_DEPTH_STENCIL_EXT;
       DBG("Render to DEPTH_STENCIL texture OK\n");

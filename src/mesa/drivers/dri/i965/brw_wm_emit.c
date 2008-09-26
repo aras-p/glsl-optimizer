@@ -1302,8 +1302,10 @@ void brw_wm_emit( struct brw_wm_compile *c )
 	 break;
 
       default:
-	_mesa_printf("unsupport opcode %d in fragment program\n", 
-		inst->opcode);
+	 _mesa_printf("Unsupported opcode %i (%s) in fragment shader\n",
+		      inst->opcode, inst->opcode < MAX_OPCODE ?
+				    _mesa_opcode_string(inst->opcode) :
+				    "unknown");
       }
       
       for (i = 0; i < 4; i++)
