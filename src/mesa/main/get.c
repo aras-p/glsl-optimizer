@@ -1092,7 +1092,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          GLuint i, n = _mesa_get_compressed_formats(ctx, formats, GL_FALSE);
          ASSERT(n <= 100);
          for (i = 0; i < n; i++)
-            params[i] = ENUM_TO_INT(formats[i]);
+            params[i] = ENUM_TO_BOOLEAN(formats[i]);
          }
          break;
       case GL_ARRAY_ELEMENT_LOCK_FIRST_EXT:
