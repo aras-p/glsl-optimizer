@@ -398,6 +398,14 @@ static struct ureg get_tex_temp( struct texenv_fragment_program *p )
 }
 
 
+/** Mark a temp reg as being no longer allocatable. */
+static void reserve_temp( struct texenv_fragment_program *p, struct ureg r )
+{
+   if (r.file == PROGRAM_TEMPORARY)
+      p->temps_output |= (1 << r.idx);
+}
+
+
 static void release_temps(GLcontext *ctx, struct texenv_fragment_program *p )
 {
    GLuint max_temp = ctx->Const.FragmentProgram.MaxTemps;
@@ -491,10 +499,12 @@ emit_op(struct texenv_fragment_program *p,
 
    emit_dst( &inst->DstReg, dest, mask );
 
+#if 0
    /* Accounting for indirection tracking:
     */
    if (dest.file == PROGRAM_TEMPORARY)
       p->temps_output |= 1 << dest.idx;
+#endif
 
    return inst;
 }
@@ -548,6 +558,10 @@ static struct ureg emit_texld( struct texenv_fragment_program *p,
    inst->TexSrcUnit = tex_unit;
 
    p->program->Base.NumTexInstructions++;
+
+   /* Accounting for indirection tracking:
+    */
+   reserve_temp(p, dest);
 
    /* Is this a texture indirection?
     */
@@ -1062,6 +1076,7 @@ create_new_program(GLcontext *ctx, struct state_key *key,
       for (unit = 0 ; unit < ctx->Const.MaxTextureUnits; unit++)
 	 if (key->enabled_units & (1<<unit)) {
 	    p.src_previous = emit_texenv( &p, unit );
+            reserve_temp(&p, p.src_previous); /* don't re-use this temp reg */
 	    release_temps(ctx, &p);	/* release all temps */
 	 }
    }
