@@ -545,6 +545,8 @@ _EGLDriver *
 _eglMain(_EGLDisplay *disp, const char *args)
 {
    struct GLX_egl_driver *GLX_drv = CALLOC_STRUCT(GLX_egl_driver);
+   char *env;
+
    if (!GLX_drv)
       return NULL;
 
@@ -565,10 +567,17 @@ _eglMain(_EGLDisplay *disp, const char *args)
 
    _eglLog(_EGL_DEBUG, "GLX: main(%s)", args);
 
-   /* set new DRI path to pick up EGL version (no mesa code), but don't
-    * override if one is already set.
+   /* set new DRI path to pick up EGL version (which doesn't contain any mesa 
+    * code), but don't override if one is already set.
     */
-   setenv("LIBGL_DRIVERS_PATH", DEFAULT_DRIVER_DIR"/egl", 0);
+   env = getenv("LIBGL_DRIVERS_PATH");
+   if (env) {
+      if (!strstr(env, "egl")) {
+         sprintf(env, "%s/egl", env);
+         setenv("LIBGL_DRIVERS_PATH", env, 1);
+      }
+   } else
+      setenv("LIBGL_DRIVERS_PATH", DEFAULT_DRIVER_DIR"/egl", 0);
 
    return &GLX_drv->Base;
 }
