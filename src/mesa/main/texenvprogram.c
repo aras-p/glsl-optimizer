@@ -37,11 +37,9 @@
 #include "texenvprogram.h"
 
 /**
- * This MAX is probably a bit generous, but that's OK.  There can be
- * up to four instructions per texture unit (TEX + 3 for combine),
- * then there's fog and specular add.
+ * Up to nine instructions per tex unit, plus fog, specular color.
  */
-#define MAX_INSTRUCTIONS ((MAX_TEXTURE_UNITS * 4) + 12)
+#define MAX_INSTRUCTIONS ((MAX_TEXTURE_UNITS * 9) + 12)
 
 #define DISASSEM (MESA_VERBOSE & VERBOSE_DISASSEM)
 
