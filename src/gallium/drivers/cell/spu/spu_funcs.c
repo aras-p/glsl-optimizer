@@ -49,17 +49,27 @@
 static vector float
 spu_cos(vector float x)
 {
+#if 0
    static const float scale = 1.0 / (2.0 * M_PI);
    x = x * spu_splats(scale); /* normalize */
    return _cos8_v(x);
+#else
+   /* just pass-through to avoid trashing caller's stack */
+   return x;
+#endif
 }
 
 static vector float
 spu_sin(vector float x)
 {
+#if 0
    static const float scale = 1.0 / (2.0 * M_PI);
    x = x * spu_splats(scale); /* normalize */
    return _sin8_v(x);   /* 8-bit accuracy enough?? */
+#else
+   /* just pass-through to avoid trashing caller's stack */
+   return x;
+#endif
 }
 
 
