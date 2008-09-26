@@ -176,13 +176,11 @@
 /** For GL_ARB_fragment_program */
 /*@{*/
 #define MAX_FRAGMENT_PROGRAM_ADDRESS_REGS 0
-#define MAX_FRAGMENT_PROGRAM_ALU_INSTRUCTIONS 48
-#define MAX_FRAGMENT_PROGRAM_TEX_INSTRUCTIONS 24
-#define MAX_FRAGMENT_PROGRAM_TEX_INDIRECTIONS  4
 /*@}*/
 
 /** For any program target/extension */
 /*@{*/
+#define MAX_PROGRAM_INSTRUCTIONS  (16 * 1024)
 #define MAX_PROGRAM_LOCAL_PARAMS 128 /* KW: power of two */
 #define MAX_PROGRAM_ENV_PARAMS 128
 #define MAX_PROGRAM_MATRICES 8
