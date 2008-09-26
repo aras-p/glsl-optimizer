@@ -388,7 +388,7 @@ static struct ureg get_tex_temp( struct texenv_fragment_program *p )
 {
    int bit;
    
-   /* First try to find availble temp not previously used (to avoid
+   /* First try to find available temp not previously used (to avoid
     * starting a new texture indirection).  According to the spec, the
     * ~p->temps_output isn't necessary, but will keep it there for
     * now:
@@ -588,14 +588,16 @@ static struct ureg register_const4f( struct texenv_fragment_program *p,
 {
    GLfloat values[4];
    GLuint idx, swizzle;
+   struct ureg r;
    values[0] = s0;
    values[1] = s1;
    values[2] = s2;
    values[3] = s3;
    idx = _mesa_add_unnamed_constant( p->program->Base.Parameters, values, 4,
                                      &swizzle );
-   ASSERT(swizzle == SWIZZLE_NOOP);
-   return make_ureg(PROGRAM_CONSTANT, idx);
+   r = make_ureg(PROGRAM_CONSTANT, idx);
+   r.swz = swizzle;
+   return r;
 }
 
 #define register_scalar_const(p, s0)    register_const4f(p, s0, s0, s0, s0)
