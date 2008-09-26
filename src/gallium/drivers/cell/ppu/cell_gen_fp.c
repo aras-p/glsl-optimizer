@@ -1105,7 +1105,10 @@ emit_function_call(struct codegen *gen,
    uint addr;
    int ch;
 
-   assert(num_args <= 2);
+   /* XXX temporary value */
+   const int frameSize = 64; /* stack frame (activation record) size */
+
+   assert(num_args <= 3);
 
    /* lookup function address */
    {
@@ -1119,7 +1122,9 @@ emit_function_call(struct codegen *gen,
       assert(addr && "spu function not found");
    }
 
-   sprintf(comment, "CALL %s:", funcname);
+   addr /= 4; /* discard 2 least significant bits */
+
+   snprintf(comment, sizeof(comment), "CALL %s:", funcname);
    spe_comment(gen->f, -4, comment);
 
    for (ch = 0; ch < 4; ch++) {
@@ -1131,12 +1136,40 @@ emit_function_call(struct codegen *gen,
             s_regs[a] = get_src_reg(gen, ch, &inst->FullSrcRegisters[a]);
          }
 
-         /* XXX not done */
-         (void) s_regs;
-         (void) d_reg;
+         /* Basically:
+          * save registers on stack
+          * move parameters to registers 3, 4, 5...
+          * call function
+          * save return value (reg 3)
+          * restore registers from stack
+          */
 
-         spe_bisl(gen->f, SPE_REG_RA, addr, 0, 0); /* XXX untested! */
+         /* XXX hack: load first function param */
+         spe_move(gen->f, 3, s_regs[0]);
 
+         /* save $lr on stack     # stqd $lr,16($sp) */
+         spe_stqd(gen->f, SPE_REG_RA, SPE_REG_SP, 16);
+         /* save stack pointer    # stqd $sp,-frameSize($sp) */
+         spe_stqd(gen->f, SPE_REG_SP, SPE_REG_SP, -frameSize);
+
+         /* XXX save registers to stack here */
+
+         /* adjust stack pointer  # ai $sp,$sp,-frameSize */
+         spe_ai(gen->f, SPE_REG_SP, SPE_REG_SP, -frameSize);
+
+         /* branch to function, save return addr */
+         spe_brasl(gen->f, SPE_REG_RA, addr);
+
+         /* restore stack pointer # ai $sp,$sp,frameSize */
+         spe_ai(gen->f, SPE_REG_SP, SPE_REG_SP, frameSize);
+
+         /* XXX restore registers from stack here */
+
+         /* restore $lr           # lqd $lr,16($sp) */
+         spe_lqd(gen->f, SPE_REG_RA, SPE_REG_SP, 16);
+
+         /* XXX hack: save function's return value */
+         spe_move(gen->f, d_reg, 3);
 
          store_dest_reg(gen, d_reg, ch, &inst->FullDstRegisters[0]);
          free_itemps(gen);
