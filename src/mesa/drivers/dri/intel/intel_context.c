@@ -810,7 +810,12 @@ intelDestroyContext(__DRIcontextPrivate * driContextPriv)
       intel->Fallback = 0;      /* don't call _swrast_Flush later */
 
       intel_batchbuffer_free(intel->batch);
+      intel->batch = NULL;
+
       free(intel->prim.vb);
+      intel->prim.vb = NULL;
+      dri_bo_unreference(intel->prim.vb_bo);
+      intel->prim.vb_bo = NULL;
 
       if (release_texture_heaps) {
          /* This share group is about to go away, free our private
@@ -819,6 +824,13 @@ intelDestroyContext(__DRIcontextPrivate * driContextPriv)
          if (INTEL_DEBUG & DEBUG_TEXTURE)
             fprintf(stderr, "do something to free texture heaps\n");
       }
+
+      intel_region_release(&intel->front_region);
+      intel_region_release(&intel->back_region);
+      intel_region_release(&intel->third_region);
+      intel_region_release(&intel->depth_region);
+
+      driDestroyOptionCache(&intel->optionCache);
 
       /* free the Mesa context */
       _mesa_free_context_data(&intel->ctx);

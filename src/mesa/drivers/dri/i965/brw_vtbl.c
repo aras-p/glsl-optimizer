@@ -51,6 +51,12 @@
 #include "brw_vs.h"
 #include <stdarg.h>
 
+static void
+dri_bo_release(dri_bo **bo)
+{
+   dri_bo_unreference(*bo);
+   *bo = NULL;
+}
 
 /* called from intelDestroyContext()
  */
@@ -58,6 +64,7 @@ static void brw_destroy_context( struct intel_context *intel )
 {
    GLcontext *ctx = &intel->ctx;
    struct brw_context *brw = brw_context(&intel->ctx);
+   int i;
 
    brw_destroy_metaops(brw);
    brw_destroy_state(brw);
@@ -65,6 +72,33 @@ static void brw_destroy_context( struct intel_context *intel )
 
    brw_ProgramCacheDestroy( ctx );
    brw_FrameBufferTexDestroy( brw );
+
+   for (i = 0; i < brw->state.nr_draw_regions; i++)
+       intel_region_release(&brw->state.draw_regions[i]);
+   brw->state.nr_draw_regions = 0;
+   intel_region_release(&brw->state.depth_region);
+
+   dri_bo_release(&brw->curbe.curbe_bo);
+   dri_bo_release(&brw->vs.prog_bo);
+   dri_bo_release(&brw->vs.state_bo);
+   dri_bo_release(&brw->gs.prog_bo);
+   dri_bo_release(&brw->gs.state_bo);
+   dri_bo_release(&brw->clip.prog_bo);
+   dri_bo_release(&brw->clip.state_bo);
+   dri_bo_release(&brw->clip.vp_bo);
+   dri_bo_release(&brw->sf.prog_bo);
+   dri_bo_release(&brw->sf.state_bo);
+   dri_bo_release(&brw->sf.vp_bo);
+   for (i = 0; i < BRW_MAX_TEX_UNIT; i++)
+      dri_bo_release(&brw->wm.sdc_bo[i]);
+   dri_bo_release(&brw->wm.bind_bo);
+   for (i = 0; i < BRW_WM_MAX_SURF; i++)
+      dri_bo_release(&brw->wm.surf_bo[i]);
+   dri_bo_release(&brw->wm.prog_bo);
+   dri_bo_release(&brw->wm.state_bo);
+   dri_bo_release(&brw->cc.prog_bo);
+   dri_bo_release(&brw->cc.state_bo);
+   dri_bo_release(&brw->cc.vp_bo);
 }
 
 /* called from intelDrawBuffer()

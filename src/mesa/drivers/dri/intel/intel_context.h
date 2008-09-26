@@ -226,7 +226,6 @@ struct intel_context
    GLenum reduced_primitive;
    GLuint vertex_size;
    GLubyte *verts;              /* points to tnl->clipspace.vertex_buf */
-   struct intel_region *draw_region;
 
    /* Fallback rasterization functions 
     */
