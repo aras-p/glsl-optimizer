@@ -34,8 +34,8 @@
 #define DEBUG 1
 
 #if DEBUG
-boolean Debug = FALSE;
-boolean force_fragment_ops_fallback = TRUE;
+extern boolean Debug;
+extern boolean force_fragment_ops_fallback;
 
 /* These debug macros use the unusual construction ", ##__VA_ARGS__"
  * which expands to the expected comma + args if variadic arguments

@@ -58,6 +58,12 @@ struct spu_global spu;
 struct spu_vs_context draw;
 
 
+#if DEBUG
+boolean Debug = FALSE;
+boolean force_fragment_ops_fallback = TRUE;
+#endif
+
+
 /**
  * Buffers containing dynamically generated SPU code:
  */
