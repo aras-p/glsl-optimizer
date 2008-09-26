@@ -191,6 +191,9 @@ get_visual_attribs(Display *dpy, XVisualInfo *vInfo,
    attribs->render_type = GLX_RGBA_BIT;
    
    glXGetConfig(dpy, vInfo, GLX_DOUBLEBUFFER, &attribs->doubleBuffer);
+   if (!attribs->doubleBuffer)
+      return GL_FALSE;
+
    glXGetConfig(dpy, vInfo, GLX_STEREO, &attribs->stereo);
    glXGetConfig(dpy, vInfo, GLX_AUX_BUFFERS, &attribs->auxBuffers);
    glXGetConfig(dpy, vInfo, GLX_RED_SIZE, &attribs->redSize);
@@ -262,7 +265,6 @@ create_configs(_EGLDisplay *disp, struct GLX_egl_driver *GLX_drv)
       if (!get_visual_attribs(disp->Xdpy, &GLX_drv->visuals[i], &attribs))
 	 continue;
 
-      if (attribs.doubleBuffer) {
       config = CALLOC_STRUCT(GLX_egl_config);
 
       _eglInitConfig(&config->Base, i+1);
@@ -284,7 +286,6 @@ create_configs(_EGLDisplay *disp, struct GLX_egl_driver *GLX_drv)
       /* XXX possibly other things to init... */
 
       _eglAddConfig(disp, &config->Base);
-      }
    }
 
    return EGL_TRUE;
