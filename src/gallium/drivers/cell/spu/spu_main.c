@@ -32,6 +32,8 @@
 #include <stdio.h>
 #include <libmisc.h>
 
+#include "pipe/p_defines.h"
+
 #include "spu_funcs.h"
 #include "spu_main.h"
 #include "spu_render.h"
@@ -41,8 +43,8 @@
 //#include "spu_test.h"
 #include "spu_vertex_shader.h"
 #include "spu_dcache.h"
+#include "spu_debug.h"
 #include "cell/common.h"
-#include "pipe/p_defines.h"
 
 
 /*
@@ -50,32 +52,6 @@ helpful headers:
 /usr/lib/gcc/spu/4.1.1/include/spu_mfcio.h
 /opt/cell/sdk/usr/include/libmisc.h
 */
-
-/* Set to 0 to disable all extraneous debugging code */
-#define DEBUG 1
-
-#if DEBUG
-boolean Debug = FALSE;
-boolean force_fragment_ops_fallback = TRUE;
-
-/* These debug macros use the unusual construction ", ##__VA_ARGS__"
- * which expands to the expected comma + args if variadic arguments
- * are supplied, but swallows the comma if there are no variadic
- * arguments (which avoids syntax errors that would otherwise occur).
- */
-#define DEBUG_PRINTF(format,...) \
-   if (Debug) \
-      printf("SPU %u: " format, spu.init.id, ##__VA_ARGS__)
-#define D_PRINTF(flag, format,...) \
-   if (spu.init.debug_flags & (flag)) \
-      printf("SPU %u: " format, spu.init.id, ##__VA_ARGS__)
-
-#else
-
-#define DEBUG_PRINTF(...)
-#define D_PRINTF(...)
-
-#endif
 
 struct spu_global spu;
 
