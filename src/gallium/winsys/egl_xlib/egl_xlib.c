@@ -537,7 +537,7 @@ xlib_eglDestroySurface(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surface)
       }
       else {
          XFreeGC(surf->Dpy, surf->Gc);
-         st_unreference_framebuffer(&surf->Framebuffer);
+         st_unreference_framebuffer(surf->Framebuffer);
          free(surf);
       }
       return EGL_TRUE;

@@ -485,7 +485,7 @@ intelDestroyBuffer(__DRIdrawablePrivate * driDrawPriv)
 {
    struct intel_framebuffer *intelfb = intel_framebuffer(driDrawPriv);
    assert(intelfb->stfb);
-   st_unreference_framebuffer(&intelfb->stfb);
+   st_unreference_framebuffer(intelfb->stfb);
    free(intelfb);
 }
 
