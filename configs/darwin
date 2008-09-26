@@ -12,10 +12,10 @@ CXX = gcc
 PIC_FLAGS = -fPIC
 DEFINES =  -D_DARWIN_C_SOURCE -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L \
 	   -D_BSD_SOURCE -D_SVID_SOURCE -D_GNU_SOURCE -DPTHREADS \
-	   -DGLX_INDIRECT_RENDERING \
-	   -DGLX_ALIAS_UNSUPPORTED
+	   -DGLX_ALIAS_UNSUPPORTED -DGLX_INDIRECT_RENDERING
 
 # -DGLX_DIRECT_RENDERING - pulls in libdrm stuff in glx/x11
+# -DGLX_USE_APPLEGL      - supposed to be used with GLX_DIRECT_RENDERING to use AGL rather than DRM, but doesn't compile
 # -DIN_DRI_DRIVER
 
 ARCH_FLAGS += $(RC_CFLAGS)
@@ -47,7 +47,7 @@ GLW_LIB_DEPS = -L$(TOP)/$(LIB_DIR) -l$(GL_LIB) -L$(INSTALL_DIR)/$(LIB_DIR) -lX11
 APP_LIB_DEPS = -L$(TOP)/lib -l$(GLUT_LIB) -l$(GLU_LIB) -l$(GL_LIB) -L$(INSTALL_DIR)/$(LIB_DIR) -lX11 -lXmu -lXt -lXi -lm
 
 # omit glw lib for now:
-SRC_DIRS = glx/x11 mesa glu glw glut/glx
+SRC_DIRS = glx/x11 mesa glu glut/glx
 GLU_DIRS = sgi
 DRIVER_DIRS = osmesa
 #DRIVER_DIRS = dri
