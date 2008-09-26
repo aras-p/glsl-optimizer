@@ -117,44 +117,6 @@ release_buffer(uint buffer)
 }
 
 
-/**
- * For tiles whose status is TILE_STATUS_CLEAR, write solid-filled
- * tiles back to the main framebuffer.
- */
-static void
-really_clear_tiles(uint surfaceIndex)
-{
-   const uint num_tiles = spu.fb.width_tiles * spu.fb.height_tiles;
-   uint i;
-
-   if (surfaceIndex == 0) {
-      clear_c_tile(&spu.ctile);
-
-      for (i = spu.init.id; i < num_tiles; i += spu.init.num_spus) {
-         uint tx = i % spu.fb.width_tiles;
-         uint ty = i / spu.fb.width_tiles;
-         if (spu.ctile_status[ty][tx] == TILE_STATUS_CLEAR) {
-            put_tile(tx, ty, &spu.ctile, TAG_SURFACE_CLEAR, 0);
-         }
-      }
-   }
-   else {
-      clear_z_tile(&spu.ztile);
-
-      for (i = spu.init.id; i < num_tiles; i += spu.init.num_spus) {
-         uint tx = i % spu.fb.width_tiles;
-         uint ty = i / spu.fb.width_tiles;
-         if (spu.ztile_status[ty][tx] == TILE_STATUS_CLEAR)
-            put_tile(tx, ty, &spu.ctile, TAG_SURFACE_CLEAR, 1);
-      }
-   }
-
-#if 0
-   wait_on_mask(1 << TAG_SURFACE_CLEAR);
-#endif
-}
-
-
 static void
 cmd_clear_surface(const struct cell_command_clear_surface *clear)
 {
