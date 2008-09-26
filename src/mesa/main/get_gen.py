@@ -50,7 +50,8 @@ TypeStrings = {
 #  - the GL state name, such as GL_CURRENT_COLOR
 #  - the state datatype, one of GLint, GLfloat, GLboolean or GLenum
 #  - list of code fragments to get the state, such as ["ctx->Foo.Bar"]
-#  - optional extra code or empty string
+#  - optional extra code or empty string.  If present, "CONVERSION" will be
+#    replaced by ENUM_TO_FLOAT, INT_TO_FLOAT, etc.
 #  - optional extensions to check, or None
 #
 StateVars = [
@@ -532,7 +533,7 @@ StateVars = [
          GLuint i, n = _mesa_get_compressed_formats(ctx, formats, GL_FALSE);
          ASSERT(n <= 100);
          for (i = 0; i < n; i++)
-            params[i] = ENUM_TO_INT(formats[i]);""",
+            params[i] = CONVERSION(formats[i]);""",
 	  ["ARB_texture_compression"] ),
 
 	# GL_EXT_compiled_vertex_array
@@ -1083,10 +1084,11 @@ def EmitGetFunction(stateVars, returnType):
 				assert len(extensions) == 4
 				print ('         CHECK_EXT4(%s, %s, %s, %s, "%s");' %
 					   (extensions[0], extensions[1], extensions[2], extensions[3], function))
+		conversion = ConversionFunc(varType, returnType)
 		if optionalCode:
+			optionalCode = string.replace(optionalCode, "CONVERSION", conversion);	
 			print "         {"
 			print "         " + optionalCode
-		conversion = ConversionFunc(varType, returnType)
 		n = len(state)
 		for i in range(n):
 			if conversion:
