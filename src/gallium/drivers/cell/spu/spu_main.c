@@ -32,6 +32,7 @@
 #include <stdio.h>
 #include <libmisc.h>
 
+#include "spu_funcs.h"
 #include "spu_main.h"
 #include "spu_render.h"
 #include "spu_per_fragment_op.h"
@@ -720,6 +721,10 @@ main(main_param_t speid, main_param_t argp)
            0, /* tid */
            0  /* rid */);
    wait_on_mask( 1 << tag );
+
+   if (spu.init.id == 0) {
+      return_function_info();
+   }
 
 #if 0
    if (spu.init.id==0)

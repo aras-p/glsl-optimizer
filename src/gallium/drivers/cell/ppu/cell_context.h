@@ -149,6 +149,7 @@ struct cell_context
    /** Mapped constant buffers */
    void *mapped_constants[PIPE_SHADER_TYPES];
 
+   struct cell_spu_function_info spu_functions ALIGN16_ATTRIB;
 
    uint num_spus;
 

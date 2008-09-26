@@ -36,6 +36,7 @@
 #include "cell_spu.h"
 #include "pipe/p_format.h"
 #include "pipe/p_state.h"
+#include "util/u_memory.h"
 #include "cell/common.h"
 
 
@@ -131,6 +132,11 @@ cell_start_spus(struct cell_context *cell)
    ASSERT_ALIGN16(&cell_global.inits[0]);
    ASSERT_ALIGN16(&cell_global.inits[1]);
 
+   /*
+    * Initialize the global 'inits' structure for each SPU.
+    * A pointer to the init struct will be passed to each SPU.
+    * The SPUs will then each grab their init info with mfc_get().
+    */
    for (i = 0; i < cell->num_spus; i++) {
       cell_global.inits[i].id = i;
       cell_global.inits[i].num_spus = cell->num_spus;
@@ -140,6 +146,8 @@ cell_start_spus(struct cell_context *cell)
          cell_global.inits[i].buffers[j] = cell->buffer[j];
       }
       cell_global.inits[i].buffer_status = &cell->buffer_status[0][0][0];
+
+      cell_global.inits[i].spu_functions = &cell->spu_functions;
 
       cell_global.spe_contexts[i] = spe_context_create(0, NULL);
       if (!cell_global.spe_contexts[i]) {

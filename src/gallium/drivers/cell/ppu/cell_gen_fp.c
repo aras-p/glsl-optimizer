@@ -37,7 +37,7 @@
  * \author Brian Paul
  */
 
-
+#include <math.h>
 #include "pipe/p_defines.h"
 #include "pipe/p_state.h"
 #include "pipe/p_shader_tokens.h"
@@ -64,6 +64,7 @@
  */
 struct codegen
 {
+   struct cell_context *cell;
    int inputs_reg;      /**< 1st function parameter */
    int outputs_reg;     /**< 2nd function parameter */
    int constants_reg;   /**< 3rd function parameter */
@@ -1076,6 +1077,76 @@ emit_FRC(struct codegen *gen, const struct tgsi_full_instruction *inst)
 }
 
 
+#if 0
+static void
+print_functions(struct cell_context *cell)
+{
+   struct cell_spu_function_info *funcs = &cell->spu_functions;
+   uint i;
+   for (i = 0; i < funcs->num; i++) {
+      printf("SPU func %u: %s at %u\n",
+             i, funcs->names[i], funcs->addrs[i]);
+   }
+}
+#endif
+
+
+/**
+ * Emit code to call a SPU function.
+ * Used to implement instructions like SIN/COS/POW/TEX/etc.
+ */
+static boolean
+emit_function_call(struct codegen *gen,
+                   const struct tgsi_full_instruction *inst,
+                   char *funcname, uint num_args)
+{
+   const struct cell_spu_function_info *funcs = &gen->cell->spu_functions;
+   char comment[100];
+   uint addr;
+   int ch;
+
+   assert(num_args <= 2);
+
+   /* lookup function address */
+   {
+      uint i;
+      addr = 0;
+      for (i = 0; i < funcs->num; i++) {
+         if (strcmp(funcs->names[i], funcname) == 0) {
+            addr = funcs->addrs[i];
+         }
+      }
+      assert(addr && "spu function not found");
+   }
+
+   sprintf(comment, "CALL %s:", funcname);
+   spe_comment(gen->f, -4, comment);
+
+   for (ch = 0; ch < 4; ch++) {
+      if (inst->FullDstRegisters[0].DstRegister.WriteMask & (1 << ch)) {
+         int d_reg = get_dst_reg(gen, ch, &inst->FullDstRegisters[0]);
+         int s_regs[3];
+         uint a;
+         for (a = 0; a < num_args; a++) {
+            s_regs[a] = get_src_reg(gen, ch, &inst->FullSrcRegisters[a]);
+         }
+
+         /* XXX not done */
+         (void) s_regs;
+         (void) d_reg;
+
+         spe_bisl(gen->f, SPE_REG_RA, addr, 0, 0); /* XXX untested! */
+
+
+         store_dest_reg(gen, d_reg, ch, &inst->FullDstRegisters[0]);
+         free_itemps(gen);
+      }
+   }
+
+   return true;
+}
+
+
 /**
  * Emit max.  See emit_SGT for comments.
  */
@@ -1303,6 +1374,13 @@ emit_instruction(struct codegen *gen,
    case TGSI_OPCODE_END:
       return emit_END(gen);
 
+   case TGSI_OPCODE_COS:
+      return emit_function_call(gen, inst, "spu_cos", 1);
+   case TGSI_OPCODE_SIN:
+      return emit_function_call(gen, inst, "spu_sin", 1);
+   case TGSI_OPCODE_POW:
+      return emit_function_call(gen, inst, "spu_pow", 2);
+
    case TGSI_OPCODE_IF:
       return emit_IF(gen, inst);
    case TGSI_OPCODE_ELSE:
@@ -1431,6 +1509,7 @@ cell_gen_fragment_program(struct cell_context *cell,
    struct codegen gen;
 
    memset(&gen, 0, sizeof(gen));
+   gen.cell = cell;
    gen.f = f;
 
    /* For SPE function calls: reg $3 = first param, $4 = second param, etc. */
