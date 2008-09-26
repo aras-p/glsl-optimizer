@@ -1196,8 +1196,8 @@ cell_gen_fragment_function(struct cell_context *cell, struct spe_function *f)
 
       ASSERT(TILE_SIZE == 32);
 
-      spe_rotmi(f, x2_reg, x_reg, -1);  /* x2 = x / 2 */
       spe_rotmi(f, y2_reg, y_reg, -1);  /* y2 = y / 2 */
+      spe_rotmi(f, x2_reg, x_reg, -1);  /* x2 = x / 2 */
       spe_shli(f, y2_reg, y2_reg, 4);   /* y2 *= 16 */
       spe_a(f, quad_offset_reg, y2_reg, x2_reg);  /* offset = y2 + x2 */
       spe_shli(f, quad_offset_reg, quad_offset_reg, 4);   /* offset *= 16 */
