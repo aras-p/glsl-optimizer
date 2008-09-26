@@ -30,7 +30,6 @@
 #include "cell_gen_fragment.h"
 #include "cell_state.h"
 #include "cell_state_emit.h"
-#include "cell_state_per_fragment.h"
 #include "cell_batch.h"
 #include "cell_texture.h"
 #include "draw/draw_context.h"
@@ -110,8 +109,8 @@ cell_emit_state(struct cell_context *cell)
       fops->opcode = CELL_CMD_STATE_FRAGMENT_OPS;
       memcpy(&fops->code, spe_code.store,
              SPU_MAX_FRAGMENT_OPS_INSTS * SPE_INST_SIZE);
-      fops->dsa = cell->depth_stencil->base;
-      fops->blend = cell->blend->base;
+      fops->dsa = *cell->depth_stencil;
+      fops->blend = *cell->blend;
 
       /* free codegen buffer */
       spe_release_func(&spe_code);

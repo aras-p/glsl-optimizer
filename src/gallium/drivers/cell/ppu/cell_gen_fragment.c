@@ -1140,9 +1140,8 @@ gen_colormask(struct spe_function *f,
 void
 cell_gen_fragment_function(struct cell_context *cell, struct spe_function *f)
 {
-   const struct pipe_depth_stencil_alpha_state *dsa =
-      &cell->depth_stencil->base;
-   const struct pipe_blend_state *blend = &cell->blend->base;
+   const struct pipe_depth_stencil_alpha_state *dsa = cell->depth_stencil;
+   const struct pipe_blend_state *blend = cell->blend;
    const struct pipe_blend_color *blend_color = &cell->blend_color;
    const enum pipe_format color_format = cell->framebuffer.cbufs[0]->format;
 
