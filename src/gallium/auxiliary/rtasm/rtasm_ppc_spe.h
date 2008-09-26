@@ -40,10 +40,10 @@
 /** number of general-purpose SIMD registers */
 #define SPE_NUM_REGS  128
 
-/** Return Address register */
+/** Return Address register (aka $lr / Link Register) */
 #define SPE_REG_RA  0
 
-/** Stack Pointer register */
+/** Stack Pointer register (aka $sp) */
 #define SPE_REG_SP  1
 
 
