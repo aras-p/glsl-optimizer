@@ -903,9 +903,9 @@ _mesa_GetTexParameterfv( GLenum target, GLenum pname, GLfloat *params )
 #ifdef FEATURE_OES_draw_texture
       case GL_TEXTURE_CROP_RECT_OES:
          params[0] = obj->CropRect[0];
-         params[0] = obj->CropRect[1];
-         params[0] = obj->CropRect[2];
-         params[0] = obj->CropRect[3];
+         params[1] = obj->CropRect[1];
+         params[2] = obj->CropRect[2];
+         params[3] = obj->CropRect[3];
          break;
 #endif
       default:
@@ -1053,9 +1053,9 @@ _mesa_GetTexParameteriv( GLenum target, GLenum pname, GLint *params )
 #ifdef FEATURE_OES_draw_texture
       case GL_TEXTURE_CROP_RECT_OES:
          params[0] = obj->CropRect[0];
-         params[0] = obj->CropRect[1];
-         params[0] = obj->CropRect[2];
-         params[0] = obj->CropRect[3];
+         params[1] = obj->CropRect[1];
+         params[2] = obj->CropRect[2];
+         params[3] = obj->CropRect[3];
          break;
 #endif
       default:
