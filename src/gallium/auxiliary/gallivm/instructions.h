@@ -63,6 +63,7 @@ public:
    void         bgnSub(unsigned);
    void         brk();
    void         cal(int label, llvm::Value *input);
+   llvm::Value *ceil(llvm::Value *in);
    llvm::Value *clamp(llvm::Value *in);
    llvm::Value *cmp(llvm::Value *in1, llvm::Value *in2, llvm::Value *in3);
    llvm::Value *cnd(llvm::Value *in1, llvm::Value *in2, llvm::Value *in3);
@@ -73,6 +74,7 @@ public:
    llvm::Value *ddy(llvm::Value *in);
    llvm::Value *div(llvm::Value *in1, llvm::Value *in2);
    llvm::Value *dot2add(llvm::Value *in, llvm::Value *in2, llvm::Value *in3);
+   llvm::Value *dp2(llvm::Value *in1, llvm::Value *in2);
    llvm::Value *dp3(llvm::Value *in1, llvm::Value *in2);
    llvm::Value *dp4(llvm::Value *in1, llvm::Value *in2);
    llvm::Value *dph(llvm::Value *in1, llvm::Value *in2);
@@ -99,6 +101,7 @@ public:
    llvm::Value *min(llvm::Value *in1, llvm::Value *in2);
    llvm::Value *mul(llvm::Value *in1, llvm::Value *in2);
    llvm::Value *neg(llvm::Value *in);
+   llvm::Value *nrm(llvm::Value *in);
    llvm::Value *pow(llvm::Value *in1, llvm::Value *in2);
    llvm::Value *rcp(llvm::Value *in);
    llvm::Value *rsq(llvm::Value *in);
@@ -120,6 +123,7 @@ public:
 private:
    const char *name(const char *prefix);
 
+   llvm::Value *callCeil(llvm::Value *val);
    llvm::Value *callFAbs(llvm::Value *val);
    llvm::Value *callFExp(llvm::Value *val);
    llvm::Value *callFLog(llvm::Value *val);
@@ -147,6 +151,7 @@ private:
 
    llvm::VectorType *m_floatVecType;
 
+   llvm::Function   *m_llvmCeil;
    llvm::Function   *m_llvmFSqrt;
    llvm::Function   *m_llvmFAbs;
    llvm::Function   *m_llvmPow;

@@ -498,11 +498,18 @@ translate_instruction(llvm::Module *module,
       break;
    case TGSI_OPCODE_TXB:
       break;
-   case TGSI_OPCODE_NRM:
+   case TGSI_OPCODE_NRM4:
+   case TGSI_OPCODE_NRM: {
+      out = instr->nrm(inputs[0]);
+   }
       break;
-   case TGSI_OPCODE_DIV:
+   case TGSI_OPCODE_DIV: {
+      out = instr->div(inputs[0], inputs[1]);
+   }
       break;
-   case TGSI_OPCODE_DP2:
+   case TGSI_OPCODE_DP2: {
+      out = instr->dp2(inputs[0], inputs[1]);
+   }
       break;
    case TGSI_OPCODE_TXL:
       break;
@@ -619,8 +626,6 @@ translate_instruction(llvm::Module *module,
    case TGSI_OPCODE_M3X3:
       break;
    case TGSI_OPCODE_M3X2:
-      break;
-   case TGSI_OPCODE_NRM4:
       break;
    case TGSI_OPCODE_CALLNZ:
       break;

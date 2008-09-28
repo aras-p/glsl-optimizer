@@ -163,9 +163,18 @@ void Instructions::cal(int label, llvm::Value *input)
    m_builder.CreateCall(func, params.begin(), params.end());
 }
 
+llvm::Value * Instructions::ceil(llvm::Value *in)
+{
+   std::vector<llvm::Value*> vec = extractVector(in);
+   return vectorFromVals(callCeil(vec[0]), callCeil(vec[1]),
+                         callCeil(vec[2]), callCeil(vec[3]));
+}
+
 llvm::Value * Instructions::clamp(llvm::Value *in1)
 {
-	// FIXME
+   llvm::Value *zero = constVector(0.0f, 0.0f, 0.0f, 0.0f);
+   llvm::Value *one = constVector(1.0f, 1.0f, 1.0f, 1.0f);
+   return min( max(zero, in1), one);
 }
 
 llvm::Value * Instructions::cmp(llvm::Value *in1, llvm::Value *in2, llvm::Value *in3)
@@ -289,12 +298,14 @@ llvm::Value * Instructions::cross(llvm::Value *in1, llvm::Value *in2)
 
 llvm::Value * Instructions::ddx(llvm::Value *in)
 {
-	// FIXME
+   // FIXME
+   assert(0);
 }
 
 llvm::Value * Instructions::ddy(llvm::Value *in)
 {
-	// FIXME
+   // FIXME
+   assert(0);
 }
 
 llvm::Value * Instructions::div(llvm::Value *in1, llvm::Value *in2)
@@ -317,6 +328,19 @@ llvm::Value * Instructions::dot2add(llvm::Value *in1, llvm::Value *in2, llvm::Va
    Value *xy = m_builder.CreateAdd(x, y,name("xy"));
    Value *dot2add = m_builder.CreateAdd(xy, z, name("dot2add"));
    return vectorFromVals(dot2add, dot2add, dot2add, dot2add);
+}
+
+llvm::Value * Instructions::dp2(llvm::Value *in1, llvm::Value *in2)
+{
+   Value *mulRes = mul(in1, in2);
+   Value *x = m_builder.CreateExtractElement(mulRes,
+                                                          m_storage->constantInt(0),
+                                                          name("extractx"));
+   Value *y = m_builder.CreateExtractElement(mulRes,
+                                                          m_storage->constantInt(1),
+                                                          name("extracty"));
+   Value *xy = m_builder.CreateAdd(x, y,name("xy"));
+   return vectorFromVals(xy, xy, xy, xy);
 }
 
 llvm::Value * Instructions::dp3(llvm::Value *in1, llvm::Value *in2)
@@ -579,6 +603,12 @@ llvm::Value * Instructions::neg(llvm::Value *in)
 {
    Value *neg = m_builder.CreateNeg(in, name("neg"));
    return neg;
+}
+
+llvm::Value * Instructions::nrm(llvm::Value *in)
+{
+   llvm::Value *v = rsq(in);
+   return mul(v, in);
 }
 
 llvm::Value * Instructions::pow(llvm::Value *in1, llvm::Value *in2)
@@ -885,6 +915,31 @@ const char * Instructions::name(const char *prefix)
    ++m_idx;
    snprintf(m_name, 32, "%s%d", prefix, m_idx);
    return m_name;
+}
+
+llvm::Value * Instructions::callCeil(llvm::Value *val)
+{
+   if (!m_llvmCeil) {
+      // predeclare the intrinsic
+      std::vector<const Type*> ceilArgs;
+      ceilArgs.push_back(Type::FloatTy);
+      PAListPtr ceilPal;
+      FunctionType* ceilType = FunctionType::get(
+         /*Result=*/Type::FloatTy,
+         /*Params=*/ceilArgs,
+         /*isVarArg=*/false);
+      m_llvmCeil = Function::Create(
+         /*Type=*/ceilType,
+         /*Linkage=*/GlobalValue::ExternalLinkage,
+         /*Name=*/"ceilf", m_mod);
+      m_llvmCeil->setCallingConv(CallingConv::C);
+      m_llvmCeil->setParamAttrs(ceilPal);
+   }
+   CallInst *call =  m_builder.CreateCall(m_llvmCeil, val,
+                                          name("ceilf"));
+   call->setCallingConv(CallingConv::C);
+   call->setTailCall(false);
+   return call;
 }
 
 llvm::Value *Instructions::callFAbs(llvm::Value *val)
