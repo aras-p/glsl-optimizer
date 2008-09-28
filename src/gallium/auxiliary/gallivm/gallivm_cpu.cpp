@@ -46,6 +46,7 @@
 #include "tgsi/tgsi_dump.h"
 
 #include "util/u_memory.h"
+#include "util/u_math.h"
 
 #include <llvm/Module.h>
 #include <llvm/CallingConv.h>
