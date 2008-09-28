@@ -259,7 +259,7 @@ void InstructionsSoa::createBuiltins()
 {
    MemoryBuffer *buffer = MemoryBuffer::getMemBuffer(
       (const char*)&soabuiltins_data[0],
-      (const char*)&soabuiltins_data[Elements(soabuiltins_data)]);
+      (const char*)&soabuiltins_data[Elements(soabuiltins_data)-1]);
    m_builtins = ParseBitcodeFile(buffer);
    std::cout<<"Builtins created at "<<m_builtins<<std::endl;
    assert(m_builtins);
