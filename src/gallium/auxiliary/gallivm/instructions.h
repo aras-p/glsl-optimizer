@@ -57,15 +57,22 @@ public:
    llvm::BasicBlock *currentBlock() const;
 
    llvm::Value *abs(llvm::Value *in1);
-   llvm::Value *arl(llvm::Value *in1);
    llvm::Value *add(llvm::Value *in1, llvm::Value *in2);
+   llvm::Value *arl(llvm::Value *in1);
    void         beginLoop();
    void         bgnSub(unsigned);
    void         brk();
    void         cal(int label, llvm::Value *input);
+   llvm::Value *clamp(llvm::Value *in);
    llvm::Value *cmp(llvm::Value *in1, llvm::Value *in2, llvm::Value *in3);
+   llvm::Value *cnd(llvm::Value *in1, llvm::Value *in2, llvm::Value *in3);
+   llvm::Value *cnd0(llvm::Value *in1, llvm::Value *in2, llvm::Value *in3);
    llvm::Value *cos(llvm::Value *in);
    llvm::Value *cross(llvm::Value *in1, llvm::Value *in2);
+   llvm::Value *ddx(llvm::Value *in);
+   llvm::Value *ddy(llvm::Value *in);
+   llvm::Value *div(llvm::Value *in1, llvm::Value *in2);
+   llvm::Value *dot2add(llvm::Value *in, llvm::Value *in2, llvm::Value *in3);
    llvm::Value *dp3(llvm::Value *in1, llvm::Value *in2);
    llvm::Value *dp4(llvm::Value *in1, llvm::Value *in2);
    llvm::Value *dph(llvm::Value *in1, llvm::Value *in2);
@@ -75,6 +82,7 @@ public:
    void         endLoop();
    void         end();
    void         endSub();
+   llvm::Value *exp(llvm::Value *in);
    llvm::Value *ex2(llvm::Value *in);
    llvm::Value *floor(llvm::Value *in);
    llvm::Value *frc(llvm::Value *in);
@@ -82,32 +90,41 @@ public:
    llvm::Value *kil(llvm::Value *in);
    llvm::Value *lerp(llvm::Value *in1, llvm::Value *in2,
                      llvm::Value *in3);
-   llvm::Value *lit(llvm::Value *in);
    llvm::Value *lg2(llvm::Value *in);
+   llvm::Value *lit(llvm::Value *in);
+   llvm::Value *log(llvm::Value *in);
    llvm::Value *madd(llvm::Value *in1, llvm::Value *in2,
                      llvm::Value *in3);
-   llvm::Value *min(llvm::Value *in1, llvm::Value *in2);
    llvm::Value *max(llvm::Value *in1, llvm::Value *in2);
+   llvm::Value *min(llvm::Value *in1, llvm::Value *in2);
    llvm::Value *mul(llvm::Value *in1, llvm::Value *in2);
+   llvm::Value *neg(llvm::Value *in);
    llvm::Value *pow(llvm::Value *in1, llvm::Value *in2);
    llvm::Value *rcp(llvm::Value *in);
    llvm::Value *rsq(llvm::Value *in);
    llvm::Value *scs(llvm::Value *in);
+   llvm::Value *seq(llvm::Value *in1, llvm::Value *in2);
+   llvm::Value *sfl(llvm::Value *in1, llvm::Value *in2);
    llvm::Value *sge(llvm::Value *in1, llvm::Value *in2);
    llvm::Value *sgt(llvm::Value *in1, llvm::Value *in2);
    llvm::Value *sin(llvm::Value *in);
+   llvm::Value *sle(llvm::Value *in1, llvm::Value *in2);
    llvm::Value *slt(llvm::Value *in1, llvm::Value *in2);
+   llvm::Value *sne(llvm::Value *in1, llvm::Value *in2);
+   llvm::Value *str(llvm::Value *in1, llvm::Value *in2);
    llvm::Value *sub(llvm::Value *in1, llvm::Value *in2);
    llvm::Value *trunc(llvm::Value *in);
+   llvm::Value *x2d(llvm::Value *in1, llvm::Value *in2, llvm::Value *in3);
 
    void printVector(llvm::Value *val);
 private:
    const char *name(const char *prefix);
 
    llvm::Value *callFAbs(llvm::Value *val);
+   llvm::Value *callFExp(llvm::Value *val);
+   llvm::Value *callFLog(llvm::Value *val);
    llvm::Value *callFloor(llvm::Value *val);
    llvm::Value *callFSqrt(llvm::Value *val);
-   llvm::Value *callFLog(llvm::Value *val);
    llvm::Value *callPow(llvm::Value *val1, llvm::Value *val2);
 
    llvm::Value *vectorFromVals(llvm::Value *x, llvm::Value *y,
@@ -135,6 +152,7 @@ private:
    llvm::Function   *m_llvmPow;
    llvm::Function   *m_llvmFloor;
    llvm::Function   *m_llvmFlog;
+   llvm::Function   *m_llvmFexp;
    llvm::Function   *m_llvmLit;
 
    llvm::Constant   *m_fmtPtr;
