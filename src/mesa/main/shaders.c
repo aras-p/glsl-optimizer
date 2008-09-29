@@ -233,10 +233,18 @@ _mesa_GetObjectParameterivARB(GLhandleARB object, GLenum pname, GLint *params)
    GET_CURRENT_CONTEXT(ctx);
    /* Implement in terms of GetProgramiv, GetShaderiv */
    if (ctx->Driver.IsProgram(ctx, object)) {
-      ctx->Driver.GetProgramiv(ctx, object, pname, params);
+      if (pname == GL_OBJECT_TYPE_ARB) {
+	 *params = GL_PROGRAM_OBJECT_ARB;
+      } else {
+	 ctx->Driver.GetProgramiv(ctx, object, pname, params);
+      }
    }
    else if (ctx->Driver.IsShader(ctx, object)) {
-      ctx->Driver.GetShaderiv(ctx, object, pname, params);
+      if (pname == GL_OBJECT_TYPE_ARB) {
+	 *params = GL_SHADER_OBJECT_ARB;
+      } else {
+	 ctx->Driver.GetShaderiv(ctx, object, pname, params);
+      }
    }
    else {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glGetObjectParameterivARB");
