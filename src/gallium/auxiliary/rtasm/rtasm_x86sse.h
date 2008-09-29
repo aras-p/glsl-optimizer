@@ -152,12 +152,13 @@ void x86_jmp( struct x86_function *p, int label );
 /* void x86_call( struct x86_function *p, void (*label)() ); */
 void x86_call( struct x86_function *p, struct x86_reg reg);
 
-/* michal:
- * Temporary. As I need immediate operands, and dont want to mess with the codegen,
- * I load the immediate into general purpose register and use it.
- */
 void x86_mov_reg_imm( struct x86_function *p, struct x86_reg dst, int imm );
-void x86_add_reg_imm8( struct x86_function *p, struct x86_reg dst, ubyte imm );
+void x86_add_imm( struct x86_function *p, struct x86_reg dst, int imm );
+void x86_or_imm( struct x86_function *p, struct x86_reg dst, int imm );
+void x86_and_imm( struct x86_function *p, struct x86_reg dst, int imm );
+void x86_sub_imm( struct x86_function *p, struct x86_reg dst, int imm );
+void x86_xor_imm( struct x86_function *p, struct x86_reg dst, int imm );
+void x86_cmp_imm( struct x86_function *p, struct x86_reg dst, int imm );
 
 
 /* Macro for sse_shufps() and sse2_pshufd():

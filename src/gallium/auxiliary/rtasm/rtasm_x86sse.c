@@ -240,7 +240,8 @@ static void emit_modrm( struct x86_function *p,
    /* Oh-oh we've stumbled into the SIB thing.
     */
    if (regmem.file == file_REG32 &&
-       regmem.idx == reg_SP) {
+       regmem.idx == reg_SP &&
+       regmem.mod != mod_REG) {
       emit_1ub(p, 0x24);		/* simplistic! */
    }
 
@@ -435,25 +436,70 @@ void x86_call( struct x86_function *p, struct x86_reg reg)
 }
 
 
-/* michal:
- * Temporary. As I need immediate operands, and dont want to mess with the codegen,
- * I load the immediate into general purpose register and use it.
- */
 void x86_mov_reg_imm( struct x86_function *p, struct x86_reg dst, int imm )
 {
    DUMP_RI( dst, imm );
+   assert(dst.file == file_REG32);
    assert(dst.mod == mod_REG);
    emit_1ub(p, 0xb8 + dst.idx);
    emit_1i(p, imm);
 }
 
-void x86_add_reg_imm8( struct x86_function *p, struct x86_reg dst, ubyte imm )
+/**
+ * Immediate group 1 instructions.
+ */
+static INLINE void 
+x86_group1_imm( struct x86_function *p, 
+                unsigned op, struct x86_reg dst, int imm )
+{
+   assert(dst.file == file_REG32);
+   assert(dst.mod == mod_REG);
+   if(-0x80 <= imm && imm < 0x80) {
+      emit_1ub(p, 0x83);
+      emit_modrm_noreg(p, op, dst);
+      emit_1b(p, (char)imm);
+   }
+   else {
+      emit_1ub(p, 0x81);
+      emit_modrm_noreg(p, op, dst);
+      emit_1i(p, imm);
+   }
+}
+
+void x86_add_imm( struct x86_function *p, struct x86_reg dst, int imm )
 {
    DUMP_RI( dst, imm );
-   assert(dst.mod == mod_REG);
-   emit_1ub(p, 0x80);
-   emit_modrm_noreg(p, 0, dst);
-   emit_1ub(p, imm);
+   x86_group1_imm(p, 0, dst, imm);
+}
+
+void x86_or_imm( struct x86_function *p, struct x86_reg dst, int imm )
+{
+   DUMP_RI( dst, imm );
+   x86_group1_imm(p, 1, dst, imm);
+}
+
+void x86_and_imm( struct x86_function *p, struct x86_reg dst, int imm )
+{
+   DUMP_RI( dst, imm );
+   x86_group1_imm(p, 4, dst, imm);
+}
+
+void x86_sub_imm( struct x86_function *p, struct x86_reg dst, int imm )
+{
+   DUMP_RI( dst, imm );
+   x86_group1_imm(p, 5, dst, imm);
+}
+
+void x86_xor_imm( struct x86_function *p, struct x86_reg dst, int imm )
+{
+   DUMP_RI( dst, imm );
+   x86_group1_imm(p, 6, dst, imm);
+}
+
+void x86_cmp_imm( struct x86_function *p, struct x86_reg dst, int imm )
+{
+   DUMP_RI( dst, imm );
+   x86_group1_imm(p, 7, dst, imm);
 }
 
 
