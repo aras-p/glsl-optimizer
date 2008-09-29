@@ -47,7 +47,7 @@
 #include "shader/shader_api.h"
 #include "shader/slang/slang_compile.h"
 #include "shader/slang/slang_link.h"
-
+#include "glapi/dispatch.h"
 
 
 #ifndef GL_PROGRAM_BINARY_LENGTH_OES
@@ -925,24 +925,15 @@ _mesa_get_attached_shaders(GLcontext *ctx, GLuint program, GLsizei maxCount,
 static GLuint
 _mesa_get_handle(GLcontext *ctx, GLenum pname)
 {
-#if 0
-   GET_CURRENT_CONTEXT(ctx);
-
-   switch (pname) {
-   case GL_PROGRAM_OBJECT_ARB:
-      {
-         struct gl2_program_intf **pro = ctx->Shader.CurrentProgram;
-
-         if (pro != NULL)
-            return (**pro)._container._generic.
-               GetName((struct gl2_generic_intf **) (pro));
-      }
-      break;
-   default:
+   GLint handle = 0;
+   
+   if (pname == GL_PROGRAM_OBJECT_ARB) {
+      CALL_GetIntegerv(ctx->Exec, (GL_CURRENT_PROGRAM, &handle));
+   } else {
       _mesa_error(ctx, GL_INVALID_ENUM, "glGetHandleARB");
    }
-#endif
-   return 0;
+
+   return handle;
 }
 
 
