@@ -259,7 +259,7 @@ void InstructionsSoa::createBuiltins()
 {
    MemoryBuffer *buffer = MemoryBuffer::getMemBuffer(
       (const char*)&soabuiltins_data[0],
-      (const char*)&soabuiltins_data[Elements(soabuiltins_data)-1]);
+      (const char*)&soabuiltins_data[Elements(soabuiltins_data)]);
    m_builtins = ParseBitcodeFile(buffer);
    std::cout<<"Builtins created at "<<m_builtins<<std::endl;
    assert(m_builtins);
@@ -458,8 +458,8 @@ void InstructionsSoa::injectFunction(llvm::Function *originalFunc, int op)
       func = Function::Create(originalFunc->getFunctionType(), GlobalValue::ExternalLinkage,
                               originalFunc->getName(), currentModule());
       func->setCallingConv(CallingConv::C);
-      const PAListPtr pal;
-      func->setParamAttrs(pal);
+      const AttrListPtr pal;
+      func->setAttributes(pal);
       currentModule()->dump();
    } else {
       DenseMap<const Value*, Value *> val;
