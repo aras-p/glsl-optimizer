@@ -25,6 +25,8 @@
  * 
  **************************************************************************/
 
+#include "pipe/p_config.h"
+
 #ifdef PIPE_ARCH_X86
 
 #include "pipe/p_debug.h"
