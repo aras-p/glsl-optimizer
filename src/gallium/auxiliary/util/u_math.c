@@ -30,7 +30,7 @@
 #include "util/u_math.h"
 
 
-
+/** 2^x, for x in [-1.0, 1.0[ */
 float pow2_table[POW2_TABLE_SIZE];
 
 
@@ -38,9 +38,21 @@ static void
 init_pow2_table(void)
 {
    int i;
-   for (i = 0; i < POW2_TABLE_SIZE; i++) {
-      pow2_table[i] = (float) pow(2.0, i / POW2_TABLE_SCALE);
-   }
+   for (i = 0; i < POW2_TABLE_SIZE; i++)
+      pow2_table[i] = (float) pow(2.0, (i - POW2_TABLE_OFFSET) / POW2_TABLE_SCALE);
+}
+
+
+/** log2(x), for x in [1.0, 2.0[ */
+float log2_table[LOG2_TABLE_SIZE];
+
+
+static void 
+init_log2_table(void)
+{
+   unsigned i;
+   for (i = 0; i < LOG2_TABLE_SIZE; i++)
+      log2_table[i] = (float) log2(1.0 + i * (1.0 / LOG2_TABLE_SIZE));
 }
 
 
@@ -53,6 +65,7 @@ util_init_math(void)
    static boolean initialized = FALSE;
    if (!initialized) {
       init_pow2_table();
+      init_log2_table();
       initialized = TRUE;
    }
 }
