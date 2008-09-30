@@ -96,7 +96,7 @@ private:
                                          const std::vector<llvm::Value*> in3);
    void injectFunction(llvm::Function *originalFunc, int op = TGSI_OPCODE_LAST);
 private:
-   llvm::IRBuilder  m_builder;
+   llvm::IRBuilder<>  m_builder;
    StorageSoa *m_storage;
 
    std::map<int, std::string> m_functionsMap;

@@ -146,7 +146,7 @@ private:
    llvm::Module             *m_mod;
    llvm::Function           *m_func;
    char                      m_name[32];
-   llvm::IRBuilder           m_builder;
+   llvm::IRBuilder<>         m_builder;
    int                       m_idx;
 
    llvm::VectorType *m_floatVecType;

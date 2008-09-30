@@ -923,7 +923,7 @@ llvm::Value * Instructions::callCeil(llvm::Value *val)
       // predeclare the intrinsic
       std::vector<const Type*> ceilArgs;
       ceilArgs.push_back(Type::FloatTy);
-      PAListPtr ceilPal;
+      AttrListPtr ceilPal;
       FunctionType* ceilType = FunctionType::get(
          /*Result=*/Type::FloatTy,
          /*Params=*/ceilArgs,
@@ -933,7 +933,7 @@ llvm::Value * Instructions::callCeil(llvm::Value *val)
          /*Linkage=*/GlobalValue::ExternalLinkage,
          /*Name=*/"ceilf", m_mod);
       m_llvmCeil->setCallingConv(CallingConv::C);
-      m_llvmCeil->setParamAttrs(ceilPal);
+      m_llvmCeil->setAttributes(ceilPal);
    }
    CallInst *call =  m_builder.CreateCall(m_llvmCeil, val,
                                           name("ceilf"));
@@ -948,7 +948,7 @@ llvm::Value *Instructions::callFAbs(llvm::Value *val)
       // predeclare the intrinsic
       std::vector<const Type*> fabsArgs;
       fabsArgs.push_back(Type::FloatTy);
-      PAListPtr fabsPal;
+      AttrListPtr fabsPal;
       FunctionType* fabsType = FunctionType::get(
          /*Result=*/Type::FloatTy,
          /*Params=*/fabsArgs,
@@ -958,7 +958,7 @@ llvm::Value *Instructions::callFAbs(llvm::Value *val)
          /*Linkage=*/GlobalValue::ExternalLinkage,
          /*Name=*/"fabs", m_mod);
       m_llvmFAbs->setCallingConv(CallingConv::C);
-      m_llvmFAbs->setParamAttrs(fabsPal);
+      m_llvmFAbs->setAttributes(fabsPal);
    }
    CallInst *call = m_builder.CreateCall(m_llvmFAbs, val,
                                          name("fabs"));
@@ -973,7 +973,7 @@ llvm::Value * Instructions::callFExp(llvm::Value *val)
       // predeclare the intrinsic
       std::vector<const Type*> fexpArgs;
       fexpArgs.push_back(Type::FloatTy);
-      PAListPtr fexpPal;
+      AttrListPtr fexpPal;
       FunctionType* fexpType = FunctionType::get(
          /*Result=*/Type::FloatTy,
          /*Params=*/fexpArgs,
@@ -983,7 +983,7 @@ llvm::Value * Instructions::callFExp(llvm::Value *val)
          /*Linkage=*/GlobalValue::ExternalLinkage,
          /*Name=*/"expf", m_mod);
       m_llvmFexp->setCallingConv(CallingConv::C);
-      m_llvmFexp->setParamAttrs(fexpPal);
+      m_llvmFexp->setAttributes(fexpPal);
    }
    CallInst *call = m_builder.CreateCall(m_llvmFexp, val,
                                          name("expf"));
@@ -998,7 +998,7 @@ llvm::Value * Instructions::callFLog(llvm::Value *val)
       // predeclare the intrinsic
       std::vector<const Type*> flogArgs;
       flogArgs.push_back(Type::FloatTy);
-      PAListPtr flogPal;
+      AttrListPtr flogPal;
       FunctionType* flogType = FunctionType::get(
          /*Result=*/Type::FloatTy,
          /*Params=*/flogArgs,
@@ -1008,7 +1008,7 @@ llvm::Value * Instructions::callFLog(llvm::Value *val)
          /*Linkage=*/GlobalValue::ExternalLinkage,
          /*Name=*/"logf", m_mod);
       m_llvmFlog->setCallingConv(CallingConv::C);
-      m_llvmFlog->setParamAttrs(flogPal);
+      m_llvmFlog->setAttributes(flogPal);
    }
    CallInst *call = m_builder.CreateCall(m_llvmFlog, val,
                                          name("logf"));
@@ -1023,7 +1023,7 @@ llvm::Value * Instructions::callFloor(llvm::Value *val)
       // predeclare the intrinsic
       std::vector<const Type*> floorArgs;
       floorArgs.push_back(Type::FloatTy);
-      PAListPtr floorPal;
+      AttrListPtr floorPal;
       FunctionType* floorType = FunctionType::get(
          /*Result=*/Type::FloatTy,
          /*Params=*/floorArgs,
@@ -1033,7 +1033,7 @@ llvm::Value * Instructions::callFloor(llvm::Value *val)
          /*Linkage=*/GlobalValue::ExternalLinkage,
          /*Name=*/"floorf", m_mod);
       m_llvmFloor->setCallingConv(CallingConv::C);
-      m_llvmFloor->setParamAttrs(floorPal);
+      m_llvmFloor->setAttributes(floorPal);
    }
    CallInst *call =  m_builder.CreateCall(m_llvmFloor, val,
                                           name("floorf"));
@@ -1048,7 +1048,7 @@ llvm::Value *Instructions::callFSqrt(llvm::Value *val)
       // predeclare the intrinsic
       std::vector<const Type*> fsqrtArgs;
       fsqrtArgs.push_back(Type::FloatTy);
-      PAListPtr fsqrtPal;
+      AttrListPtr fsqrtPal;
       FunctionType* fsqrtType = FunctionType::get(
          /*Result=*/Type::FloatTy,
          /*Params=*/fsqrtArgs,
@@ -1058,7 +1058,7 @@ llvm::Value *Instructions::callFSqrt(llvm::Value *val)
          /*Linkage=*/GlobalValue::ExternalLinkage,
          /*Name=*/"llvm.sqrt.f32", m_mod);
       m_llvmFSqrt->setCallingConv(CallingConv::C);
-      m_llvmFSqrt->setParamAttrs(fsqrtPal);
+      m_llvmFSqrt->setAttributes(fsqrtPal);
    }
    CallInst *call = m_builder.CreateCall(m_llvmFSqrt, val,
                                          name("sqrt"));
@@ -1074,7 +1074,7 @@ llvm::Value * Instructions::callPow(llvm::Value *val1, llvm::Value *val2)
       std::vector<const Type*> powArgs;
       powArgs.push_back(Type::FloatTy);
       powArgs.push_back(Type::FloatTy);
-      PAListPtr powPal;
+      AttrListPtr powPal;
       FunctionType* powType = FunctionType::get(
          /*Result=*/Type::FloatTy,
          /*Params=*/powArgs,
@@ -1084,7 +1084,7 @@ llvm::Value * Instructions::callPow(llvm::Value *val1, llvm::Value *val2)
          /*Linkage=*/GlobalValue::ExternalLinkage,
          /*Name=*/"llvm.pow.f32", m_mod);
       m_llvmPow->setCallingConv(CallingConv::C);
-      m_llvmPow->setParamAttrs(powPal);
+      m_llvmPow->setAttributes(powPal);
    }
    std::vector<Value*> params;
    params.push_back(val1);
@@ -1126,7 +1126,7 @@ llvm::Value * Instructions::constVector(float x, float y, float z, float w)
 llvm::Function * Instructions::declarePrintf()
 {
    std::vector<const Type*> args;
-   PAListPtr params;
+   AttrListPtr params;
    FunctionType* funcTy = FunctionType::get(
       /*Result=*/IntegerType::get(32),
       /*Params=*/args,
@@ -1136,7 +1136,7 @@ llvm::Function * Instructions::declarePrintf()
       /*Linkage=*/GlobalValue::ExternalLinkage,
       /*Name=*/"printf", m_mod);
    func_printf->setCallingConv(CallingConv::C);
-   func_printf->setParamAttrs(params);
+   func_printf->setAttributes(params);
    return func_printf;
 }
 
@@ -1148,7 +1148,7 @@ llvm::Function * Instructions::declareFunc(int label)
    args.push_back(vecPtr);
    args.push_back(vecPtr);
    args.push_back(vecPtr);
-   PAListPtr params;
+   AttrListPtr params;
    FunctionType *funcType = FunctionType::get(
       /*Result=*/Type::VoidTy,
       /*Params=*/args,
@@ -1159,7 +1159,7 @@ llvm::Function * Instructions::declareFunc(int label)
       /*Linkage=*/GlobalValue::ExternalLinkage,
       /*Name=*/name.c_str(), m_mod);
    func->setCallingConv(CallingConv::C);
-   func->setParamAttrs(params);
+   func->setAttributes(params);
    return func;
 }
 
