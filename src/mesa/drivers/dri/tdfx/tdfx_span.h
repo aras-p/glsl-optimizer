@@ -37,7 +37,7 @@
 #ifndef __TDFX_SPAN_H__
 #define __TDFX_SPAN_H__
 
-#include "context.h"
+#include "main/context.h"
 #include "drirenderbuffer.h"
 
 extern void tdfxDDInitSpanFuncs( GLcontext *ctx );

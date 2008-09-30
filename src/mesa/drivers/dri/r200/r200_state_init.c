@@ -31,11 +31,11 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *   Keith Whitwell <keith@tungstengraphics.com>
  */
 
-#include "glheader.h"
-#include "imports.h"
-#include "enums.h"
-#include "colormac.h"
-#include "api_arrayelt.h"
+#include "main/glheader.h"
+#include "main/imports.h"
+#include "main/enums.h"
+#include "main/colormac.h"
+#include "main/api_arrayelt.h"
 
 #include "swrast/swrast.h"
 #include "vbo/vbo.h"

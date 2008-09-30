@@ -35,11 +35,11 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  * \author  Gareth Hughes <gareth@valinux.com>
  */
 
-#include "glheader.h"
-#include "imports.h"
-#include "mtypes.h"
-#include "framebuffer.h"
-#include "renderbuffer.h"
+#include "main/glheader.h"
+#include "main/imports.h"
+#include "main/mtypes.h"
+#include "main/framebuffer.h"
+#include "main/renderbuffer.h"
 
 #define STANDALONE_MMIO
 #include "radeon_chipset.h"
@@ -62,7 +62,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #endif
 
 #include "utils.h"
-#include "context.h"
 #include "vblank.h"
 #include "drirenderbuffer.h"
 

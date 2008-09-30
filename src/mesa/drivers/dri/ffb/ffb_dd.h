@@ -28,7 +28,7 @@
 #ifndef _FFB_DD_H
 #define _FFB_DD_H
 
-#include "context.h"
+#include "main/context.h"
 
 void ffbDDInitDriverFuncs(GLcontext *ctx);
 void ffbDDExtensionsInit(GLcontext *ctx);

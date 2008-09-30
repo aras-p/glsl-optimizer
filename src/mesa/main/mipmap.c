@@ -446,29 +446,22 @@ make_1d_mipmap(GLenum datatype, GLuint comps, GLint border,
 }
 
 
-/**
- * Strides are in bytes.  If zero, it'll be computed as width * bpp.
- */
 static void
 make_2d_mipmap(GLenum datatype, GLuint comps, GLint border,
                GLint srcWidth, GLint srcHeight,
-               GLint srcRowBytes, const GLubyte *srcPtr,
+	       const GLubyte *srcPtr, GLint srcRowStride,
                GLint dstWidth, GLint dstHeight,
-               GLint dstRowBytes, GLubyte *dstPtr)
+	       GLubyte *dstPtr, GLint dstRowStride)
 {
    const GLint bpt = bytes_per_pixel(datatype, comps);
    const GLint srcWidthNB = srcWidth - 2 * border;  /* sizes w/out border */
    const GLint dstWidthNB = dstWidth - 2 * border;
    const GLint dstHeightNB = dstHeight - 2 * border;
+   const GLint srcRowBytes = bpt * srcRowStride;
+   const GLint dstRowBytes = bpt * dstRowStride;
    const GLubyte *srcA, *srcB;
    GLubyte *dst;
    GLint row;
-
-   if (!srcRowBytes)
-      srcRowBytes = bpt * srcWidth;
-
-   if (!dstRowBytes)
-      dstRowBytes = bpt * dstWidth;
 
    /* Compute src and dst pointers, skipping any border */
    srcA = srcPtr + border * ((srcWidth + 1) * bpt);
@@ -541,11 +534,9 @@ make_2d_mipmap(GLenum datatype, GLuint comps, GLint border,
 static void
 make_3d_mipmap(GLenum datatype, GLuint comps, GLint border,
                GLint srcWidth, GLint srcHeight, GLint srcDepth,
-               GLint srcRowBytes,
-               const GLubyte *srcPtr,
+               const GLubyte *srcPtr, GLint srcRowStride,
                GLint dstWidth, GLint dstHeight, GLint dstDepth,
-               GLint dstRowBytes,
-               GLubyte *dstPtr)
+               GLubyte *dstPtr, GLint dstRowStride)
 {
    const GLint bpt = bytes_per_pixel(datatype, comps);
    const GLint srcWidthNB = srcWidth - 2 * border;  /* sizes w/out border */
@@ -556,6 +547,7 @@ make_3d_mipmap(GLenum datatype, GLuint comps, GLint border,
    GLvoid *tmpRowA, *tmpRowB;
    GLint img, row;
    GLint bytesPerSrcImage, bytesPerDstImage;
+   GLint bytesPerSrcRow, bytesPerDstRow;
    GLint srcImageOffset, srcRowOffset;
 
    (void) srcDepthNB; /* silence warnings */
@@ -573,10 +565,8 @@ make_3d_mipmap(GLenum datatype, GLuint comps, GLint border,
    bytesPerSrcImage = srcWidth * srcHeight * bpt;
    bytesPerDstImage = dstWidth * dstHeight * bpt;
 
-   if (!srcRowBytes)
-      srcRowBytes = srcWidth * bpt;
-   if (!dstRowBytes)
-      dstRowBytes = dstWidth * bpt;
+   bytesPerSrcRow = srcWidth * bpt;
+   bytesPerDstRow = dstWidth * bpt;
 
    /* Offset between adjacent src images to be averaged together */
    srcImageOffset = (srcDepth == dstDepth) ? 0 : bytesPerSrcImage;
@@ -600,13 +590,13 @@ make_3d_mipmap(GLenum datatype, GLuint comps, GLint border,
    for (img = 0; img < dstDepthNB; img++) {
       /* first source image pointer, skipping border */
       const GLubyte *imgSrcA = srcPtr
-         + (bytesPerSrcImage + srcRowBytes + border) * bpt * border
+         + (bytesPerSrcImage + bytesPerSrcRow + border) * bpt * border
          + img * (bytesPerSrcImage + srcImageOffset);
       /* second source image pointer, skipping border */
       const GLubyte *imgSrcB = imgSrcA + srcImageOffset;
       /* address of the dest image, skipping border */
       GLubyte *imgDst = dstPtr
-         + (bytesPerDstImage + dstRowBytes + border) * bpt * border
+         + (bytesPerDstImage + bytesPerDstRow + border) * bpt * border
          + img * bytesPerDstImage;
 
       /* setup the four source row pointers and the dest row pointer */
@@ -627,11 +617,11 @@ make_3d_mipmap(GLenum datatype, GLuint comps, GLint border,
          do_row(datatype, comps, srcWidthNB, tmpRowA, tmpRowB,
                 dstWidthNB, dstImgRow);
          /* advance to next rows */
-         srcImgARowA += srcRowBytes + srcRowOffset;
-         srcImgARowB += srcRowBytes + srcRowOffset;
-         srcImgBRowA += srcRowBytes + srcRowOffset;
-         srcImgBRowB += srcRowBytes + srcRowOffset;
-         dstImgRow += dstRowBytes;
+         srcImgARowA += bytesPerSrcRow + srcRowOffset;
+         srcImgARowB += bytesPerSrcRow + srcRowOffset;
+         srcImgBRowA += bytesPerSrcRow + srcRowOffset;
+         srcImgBRowB += bytesPerSrcRow + srcRowOffset;
+         dstImgRow += bytesPerDstRow;
       }
    }
 
@@ -641,15 +631,13 @@ make_3d_mipmap(GLenum datatype, GLuint comps, GLint border,
    /* Luckily we can leverage the make_2d_mipmap() function here! */
    if (border > 0) {
       /* do front border image */
-      make_2d_mipmap(datatype, comps, 1, srcWidth, srcHeight, 0, srcPtr,
-                     dstWidth, dstHeight, 0, dstPtr);
+      make_2d_mipmap(datatype, comps, 1, srcWidth, srcHeight, srcPtr, srcRowStride,
+                     dstWidth, dstHeight, dstPtr, dstRowStride);
       /* do back border image */
       make_2d_mipmap(datatype, comps, 1, srcWidth, srcHeight,
-                     0, 
-                     srcPtr + bytesPerSrcImage * (srcDepth - 1),
+                     srcPtr + bytesPerSrcImage * (srcDepth - 1), srcRowStride,
                      dstWidth, dstHeight,
-                     0,
-                     dstPtr + bytesPerDstImage * (dstDepth - 1));
+                     dstPtr + bytesPerDstImage * (dstDepth - 1), dstRowStride);
       /* do four remaining border edges that span the image slices */
       if (srcDepth == dstDepth) {
          /* just copy border pixels from src to dst */
@@ -664,9 +652,9 @@ make_3d_mipmap(GLenum datatype, GLuint comps, GLint border,
 
             /* do border along [img][row=dstHeight-1][col=0] */
             src = srcPtr + (img * 2 + 1) * bytesPerSrcImage
-                         + (srcHeight - 1) * srcRowBytes;
+                         + (srcHeight - 1) * bytesPerSrcRow;
             dst = dstPtr + (img + 1) * bytesPerDstImage
-                         + (dstHeight - 1) * dstRowBytes;
+                         + (dstHeight - 1) * bytesPerDstRow;
             MEMCPY(dst, src, bpt);
 
             /* do border along [img][row=0][col=dstWidth-1] */
@@ -698,9 +686,9 @@ make_3d_mipmap(GLenum datatype, GLuint comps, GLint border,
 
             /* do border along [img][row=dstHeight-1][col=0] */
             src = srcPtr + (img * 2 + 1) * bytesPerSrcImage
-                         + (srcHeight - 1) * srcRowBytes;
+                         + (srcHeight - 1) * bytesPerSrcRow;
             dst = dstPtr + (img + 1) * bytesPerDstImage
-                         + (dstHeight - 1) * dstRowBytes;
+                         + (dstHeight - 1) * bytesPerDstRow;
             do_row(datatype, comps, 1, src, src + srcImageOffset, 1, dst);
 
             /* do border along [img][row=0][col=dstWidth-1] */
@@ -724,15 +712,16 @@ make_3d_mipmap(GLenum datatype, GLuint comps, GLint border,
 
 static void
 make_1d_stack_mipmap(GLenum datatype, GLuint comps, GLint border,
-                     GLint srcWidth, const GLubyte *srcPtr,
-                     GLint dstWidth, GLint dstHeight, GLubyte *dstPtr)
+                     GLint srcWidth, const GLubyte *srcPtr, GLuint srcRowStride,
+                     GLint dstWidth, GLint dstHeight,
+		     GLubyte *dstPtr, GLuint dstRowStride )
 {
    const GLint bpt = bytes_per_pixel(datatype, comps);
    const GLint srcWidthNB = srcWidth - 2 * border;  /* sizes w/out border */
    const GLint dstWidthNB = dstWidth - 2 * border;
    const GLint dstHeightNB = dstHeight - 2 * border;
-   const GLint srcRowBytes = bpt * srcRowBytes;
-   const GLint dstRowBytes = bpt * dstRowBytes;
+   const GLint srcRowBytes = bpt * srcRowStride;
+   const GLint dstRowBytes = bpt * dstRowStride;
    const GLubyte *src;
    GLubyte *dst;
    GLint row;
@@ -767,27 +756,21 @@ make_1d_stack_mipmap(GLenum datatype, GLuint comps, GLint border,
 static void
 make_2d_stack_mipmap(GLenum datatype, GLuint comps, GLint border,
                      GLint srcWidth, GLint srcHeight,
-                     GLint srcRowBytes,
-                     const GLubyte *srcPtr,
+		     const GLubyte *srcPtr, GLint srcRowStride,
                      GLint dstWidth, GLint dstHeight, GLint dstDepth,
-                     GLint dstRowBytes,
-                     GLubyte *dstPtr)
+                     GLubyte *dstPtr, GLint dstRowStride)
 {
    const GLint bpt = bytes_per_pixel(datatype, comps);
    const GLint srcWidthNB = srcWidth - 2 * border;  /* sizes w/out border */
    const GLint dstWidthNB = dstWidth - 2 * border;
    const GLint dstHeightNB = dstHeight - 2 * border;
    const GLint dstDepthNB = dstDepth - 2 * border;
+   const GLint srcRowBytes = bpt * srcRowStride;
+   const GLint dstRowBytes = bpt * dstRowStride;
    const GLubyte *srcA, *srcB;
    GLubyte *dst;
    GLint layer;
    GLint row;
-
-   if (!srcRowBytes)
-      srcRowBytes = bpt * srcWidth;
-
-   if (!dstRowBytes)
-      dstRowBytes = bpt * dstWidth;
 
    /* Compute src and dst pointers, skipping any border */
    srcA = srcPtr + border * ((srcWidth + 1) * bpt);
@@ -867,12 +850,15 @@ _mesa_generate_mipmap_level(GLenum target,
                             GLenum datatype, GLuint comps,
                             GLint border,
                             GLint srcWidth, GLint srcHeight, GLint srcDepth,
-                            GLint srcRowBytes,
                             const GLubyte *srcData,
+                            GLint srcRowStride,
                             GLint dstWidth, GLint dstHeight, GLint dstDepth,
-                            GLint dstRowBytes,
-                            GLubyte *dstData)
+                            GLubyte *dstData,
+                            GLint dstRowStride)
 {
+   /*
+    * We use simple 2x2 averaging to compute the next mipmap level.
+    */
    switch (target) {
    case GL_TEXTURE_1D:
       make_1d_mipmap(datatype, comps, border,
@@ -887,29 +873,35 @@ _mesa_generate_mipmap_level(GLenum target,
    case GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB:
    case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB:
       make_2d_mipmap(datatype, comps, border,
-                     srcWidth, srcHeight, srcRowBytes, srcData,
-                     dstWidth, dstHeight, dstRowBytes, dstData);
+                     srcWidth, srcHeight, srcData, srcRowStride,
+                     dstWidth, dstHeight, dstData, dstRowStride);
       break;
    case GL_TEXTURE_3D:
       make_3d_mipmap(datatype, comps, border,
-                     srcWidth, srcHeight, srcDepth, srcRowBytes, srcData,
-                     dstWidth, dstHeight, dstDepth, dstRowBytes, dstData);
+                     srcWidth, srcHeight, srcDepth,
+                     srcData, srcRowStride,
+                     dstWidth, dstHeight, dstDepth,
+                     dstData, dstRowStride);
       break;
    case GL_TEXTURE_1D_ARRAY_EXT:
       make_1d_stack_mipmap(datatype, comps, border,
-                           srcWidth, srcData,
-                           dstWidth, dstHeight, dstData);
+                           srcWidth, srcData, srcRowStride,
+                           dstWidth, dstHeight,
+                           dstData, dstRowStride);
       break;
    case GL_TEXTURE_2D_ARRAY_EXT:
       make_2d_stack_mipmap(datatype, comps, border,
-                           srcWidth, srcHeight, srcRowBytes, srcData,
-                           dstWidth, dstHeight, dstDepth, dstRowBytes, dstData);
+                           srcWidth, srcHeight,
+                           srcData, srcRowStride,
+                           dstWidth, dstHeight,
+                           dstDepth, dstData, dstRowStride);
       break;
    case GL_TEXTURE_RECTANGLE_NV:
       /* no mipmaps, do nothing */
       break;
    default:
-      _mesa_problem(NULL, "bad target in _mesa_generate_mipmap_level");
+      _mesa_problem(NULL, "bad dimensions in _mesa_generate_mipmaps");
+      return;
    }
 }
 
@@ -1131,23 +1123,25 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
          dstData = (GLubyte *) dstImage->Data;
       }
 
-      /* Note, 0 indicates default row strides */
       _mesa_generate_mipmap_level(target, datatype, comps, border,
-                                  srcWidth, srcHeight, srcDepth, 0, srcData,
-                                  dstWidth, dstHeight, dstDepth, 0, dstData);
+                                  srcWidth, srcHeight, srcDepth, 
+                                  srcData, srcImage->RowStride,
+                                  dstWidth, dstHeight, dstDepth, 
+                                  dstData, dstImage->RowStride);
+
 
       if (dstImage->IsCompressed) {
          GLubyte *temp;
          /* compress image from dstData into dstImage->Data */
          const GLenum srcFormat = convertFormat->BaseFormat;
-         GLint dstRowBytes
+         GLint dstRowStride
             = _mesa_compressed_row_stride(dstImage->TexFormat->MesaFormat, dstWidth);
          ASSERT(srcFormat == GL_RGB || srcFormat == GL_RGBA);
          dstImage->TexFormat->StoreImage(ctx, 2, dstImage->_BaseFormat,
                                          dstImage->TexFormat,
                                          dstImage->Data,
                                          0, 0, 0, /* dstX/Y/Zoffset */
-                                         dstRowBytes, 0, /* strides */
+                                         dstRowStride, 0, /* strides */
                                          dstWidth, dstHeight, 1, /* size */
                                          srcFormat, CHAN_TYPE,
                                          dstData, /* src data, actually */
@@ -1172,7 +1166,7 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
 void
 _mesa_rescale_teximage2d(GLuint bytesPerPixel,
 			 GLuint srcStrideInPixels,
-			 GLuint dstRowBytes,
+			 GLuint dstRowStride,
 			 GLint srcWidth, GLint srcHeight,
 			 GLint dstWidth, GLint dstHeight,
 			 const GLvoid *srcImage, GLvoid *dstImage)
@@ -1186,7 +1180,7 @@ _mesa_rescale_teximage2d(GLuint bytesPerPixel,
 	 GLint srcCol = col WOP wScale;					\
 	 dst[col] = src[srcRow * srcStrideInPixels + srcCol];		\
       }									\
-      dst = (TYPE *) ((GLubyte *) dst + dstRowBytes);			\
+      dst = (TYPE *) ((GLubyte *) dst + dstRowStride);			\
    }									\
 
 #define RESCALE_IMAGE( TYPE )						\
@@ -1244,7 +1238,7 @@ do {									\
 void
 _mesa_upscale_teximage2d(GLsizei inWidth, GLsizei inHeight,
                          GLsizei outWidth, GLsizei outHeight,
-                         GLint comps, const GLchan *src, GLint srcRowBytes,
+                         GLint comps, const GLchan *src, GLint srcRowStride,
                          GLchan *dest )
 {
    GLint i, j, k;
@@ -1263,7 +1257,7 @@ _mesa_upscale_teximage2d(GLsizei inWidth, GLsizei inHeight,
          const GLint jj = j % inWidth;
          for (k = 0; k < comps; k++) {
             dest[(i * outWidth + j) * comps + k]
-               = src[ii * srcRowBytes + jj * comps + k];
+               = src[ii * srcRowStride + jj * comps + k];
          }
       }
    }

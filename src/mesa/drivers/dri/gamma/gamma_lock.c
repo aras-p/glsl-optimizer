@@ -1,5 +1,5 @@
 
-#include "gamma_context.h"
+#include "gammacontext.h"
 #include "gamma_lock.h"
 #include "drirenderbuffer.h"
 

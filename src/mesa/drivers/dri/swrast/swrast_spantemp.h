@@ -110,7 +110,7 @@ GET_ROW( GLcontext *glCtx, GLint x, GLint y, GLuint n, char *row )
  * ignored otherwise.
  */
 
-#include "macros.h"
+#include "main/macros.h"
 
 
 #ifdef CI_MODE

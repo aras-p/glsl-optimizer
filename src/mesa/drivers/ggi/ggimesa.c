@@ -29,20 +29,20 @@
 
 #include <ggi/mesa/ggimesa_int.h>
 #include <ggi/mesa/debug.h>
-#include "extensions.h"
-#include "buffers.h"
-#include "colormac.h"
-#include "imports.h"
-#include "matrix.h"
+#include "main/extensions.h"
+#include "main/buffers.h"
+#include "main/colormac.h"
+#include "main/imports.h"
+#include "main/matrix.h"
+#include "main/teximage.h"
+#include "main/texformat.h"
+#include "main/texstore.h"
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
 #include "tnl/tnl.h"
 #include "tnl/t_context.h"
 #include "tnl/t_pipeline.h"
 #include "vbo/vbo.h"
-#include "teximage.h"
-#include "texformat.h"
-#include "texstore.h"
 
 /* We use LibGG to manage config files */
 #include <ggi/gg.h>

@@ -44,7 +44,7 @@
 
 #include "swrast/swrast.h"
 
-#include "image.h"
+#include "main/image.h"
 
 
 #define FX_grLfbWriteRegion(fxMesa,dst_buffer,dst_x,dst_y,src_format,src_width,src_height,src_stride,src_data)		\

@@ -30,7 +30,7 @@
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
 #include "tnl/tnl.h"
-#include "framebuffer.h"
+#include "main/framebuffer.h"
 
 #define TRIDENTPACKCOLOR332(r, g, b)					\
    (((r) & 0xe0) | (((g) & 0xe0) >> 3) | (((b) & 0xc0) >> 6))

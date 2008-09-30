@@ -28,9 +28,10 @@
 
 #include "dri_util.h"
 
-#include "mtypes.h"
 #include "drm.h"
-#include "mm.h"
+
+#include "main/mtypes.h"
+#include "main/mm.h"
 #include "tnl/t_vertex.h"
 
 #include "via_screen.h"

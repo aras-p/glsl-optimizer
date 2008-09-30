@@ -26,8 +26,8 @@
 #ifndef I810TEX_INC
 #define I810TEX_INC
 
-#include "mtypes.h"
-#include "mm.h"
+#include "main/mtypes.h"
+#include "main/mm.h"
 
 #include "i810context.h"
 #include "i810_3d_reg.h"

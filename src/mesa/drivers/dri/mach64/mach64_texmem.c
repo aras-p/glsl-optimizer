@@ -38,11 +38,11 @@
 #include "mach64_tris.h"
 #include "mach64_tex.h"
 
-#include "context.h"
-#include "macros.h"
-#include "simple_list.h"
-#include "texformat.h"
-#include "imports.h"
+#include "main/context.h"
+#include "main/macros.h"
+#include "main/simple_list.h"
+#include "main/texformat.h"
+#include "main/imports.h"
 
 
 /* Destroy hardware state associated with texture `t'.

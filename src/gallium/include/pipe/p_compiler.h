@@ -144,10 +144,12 @@ typedef unsigned char boolean;
 #define ALIGN16_DECL(TYPE, NAME, SIZE)  TYPE NAME##___aligned[SIZE] __attribute__(( aligned( 16 ) ))
 #define ALIGN16_ASSIGN(NAME) NAME##___aligned
 #define ALIGN16_ATTRIB  __attribute__(( aligned( 16 ) ))
+#define ALIGN8_ATTRIB  __attribute__(( aligned( 8 ) ))
 #else
 #define ALIGN16_DECL(TYPE, NAME, SIZE)  TYPE NAME##___unaligned[SIZE + 1]
 #define ALIGN16_ASSIGN(NAME) align16(NAME##___unaligned)
 #define ALIGN16_ATTRIB
+#define ALIGN8_ATTRIB
 #endif
 
 

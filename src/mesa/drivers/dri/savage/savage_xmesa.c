@@ -26,16 +26,16 @@
 #include <X11/Xlibint.h>
 #include <stdio.h>
 
-#include "savagecontext.h"
-#include "context.h"
-#include "matrix.h"
-#include "framebuffer.h"
-#include "renderbuffer.h"
-#include "simple_list.h"
+#include "main/context.h"
+#include "main/context.h"
+#include "main/matrix.h"
+#include "main/framebuffer.h"
+#include "main/renderbuffer.h"
+#include "main/simple_list.h"
 
 #include "utils.h"
 
-#include "extensions.h"
+#include "main/extensions.h"
 
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"

@@ -51,7 +51,7 @@
 #include <drm.h>
 #include <drm_sarea.h>
 #include <xf86drm.h>
-#include "glheader.h"
+#include "main/glheader.h"
 #include "GL/internal/glcore.h"
 #include "GL/internal/dri_interface.h"
 

@@ -35,7 +35,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifndef __R200_IOCTL_H__
 #define __R200_IOCTL_H__
 
-#include "simple_list.h"
+#include "main/simple_list.h"
 #include "radeon_dri.h"
 #include "r200_lock.h"
 

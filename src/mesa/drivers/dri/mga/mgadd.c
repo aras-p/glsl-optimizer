@@ -26,10 +26,10 @@
  */
 
 
-#include "mtypes.h"
-#include "framebuffer.h"
+#include "main/mtypes.h"
+#include "main/framebuffer.h"
+#include "main/mm.h"
 
-#include "mm.h"
 #include "mgacontext.h"
 #include "mgadd.h"
 #include "mgastate.h"

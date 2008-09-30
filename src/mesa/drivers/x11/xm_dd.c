@@ -29,34 +29,30 @@
  */
 
 #include "glxheader.h"
-#include "bufferobj.h"
-#include "buffers.h"
-#include "context.h"
-#include "colormac.h"
-#include "depth.h"
-#include "drawpix.h"
-#include "extensions.h"
-#include "framebuffer.h"
-#include "macros.h"
-#include "image.h"
-#include "imports.h"
-#include "mtypes.h"
-#include "state.h"
-#include "texobj.h"
-#include "teximage.h"
-#include "texstore.h"
-#include "texformat.h"
-#include "xmesaP.h"
+#include "main/bufferobj.h"
+#include "main/buffers.h"
+#include "main/context.h"
+#include "main/colormac.h"
+#include "main/depth.h"
+#include "main/drawpix.h"
+#include "main/extensions.h"
+#include "main/framebuffer.h"
+#include "main/macros.h"
+#include "main/image.h"
+#include "main/imports.h"
+#include "main/mtypes.h"
+#include "main/state.h"
+#include "main/texobj.h"
+#include "main/teximage.h"
+#include "main/texstore.h"
+#include "main/texformat.h"
 #include "swrast/swrast.h"
 #include "swrast/s_context.h"
 #include "swrast_setup/swrast_setup.h"
 #include "tnl/tnl.h"
 #include "tnl/t_context.h"
+#include "xmesaP.h"
 
-#include "softpipe/sp_context.h"
-#include "state_tracker/st_public.h"
-#include "state_tracker/st_context.h"
-#include "state_tracker/st_draw.h"
 
 
 /*
@@ -222,7 +218,7 @@ clear_pixmap(GLcontext *ctx, struct xmesa_renderbuffer *xrb,
    assert(xmbuf->cleargc);
 
    XMesaFillRectangle( xmesa->display, xrb->pixmap, xmbuf->cleargc,
-                       x, xrb->St.Base.Height - y - height,
+                       x, xrb->Base.Height - y - height,
                        width, height );
 }
 
@@ -333,9 +329,9 @@ clear_32bit_ximage(GLcontext *ctx, struct xmesa_renderbuffer *xrb,
             | ((pixel << 24) & 0xff000000);
    }
 
-   if (width == xrb->St.Base.Width && height == xrb->St.Base.Height) {
+   if (width == xrb->Base.Width && height == xrb->Base.Height) {
       /* clearing whole buffer */
-      const GLuint n = xrb->St.Base.Width * xrb->St.Base.Height;
+      const GLuint n = xrb->Base.Width * xrb->Base.Height;
       GLuint *ptr4 = (GLuint *) xrb->ximage->data;
       if (pixel == 0) {
          /* common case */
@@ -379,8 +375,8 @@ clear_nbit_ximage(GLcontext *ctx, struct xmesa_renderbuffer *xrb,
 
 
 
-void
-xmesa_clear_buffers(GLcontext *ctx, GLbitfield buffers)
+static void
+clear_buffers(GLcontext *ctx, GLbitfield buffers)
 {
    if (ctx->DrawBuffer->Name == 0) {
       /* this is a window system framebuffer */
@@ -783,7 +779,7 @@ get_string( GLcontext *ctx, GLenum name )
 #ifdef XFree86Server
          return (const GLubyte *) "Mesa GLX Indirect";
 #else
-         return (const GLubyte *) "Mesa X11 (softpipe)";
+         return (const GLubyte *) "Mesa X11";
 #endif
       case GL_VENDOR:
 #ifdef XFree86Server
@@ -910,9 +906,6 @@ xmesa_update_state( GLcontext *ctx, GLbitfield new_state )
    _vbo_InvalidateState( ctx, new_state );
    _swsetup_InvalidateState( ctx, new_state );
 
-   st_invalidate_state( ctx, new_state );
-
-
    if (ctx->DrawBuffer->Name != 0)
       return;
 
@@ -920,7 +913,7 @@ xmesa_update_state( GLcontext *ctx, GLbitfield new_state )
     * GL_DITHER, GL_READ/DRAW_BUFFER, buffer binding state, etc. effect
     * renderbuffer span/clear funcs.
     */
-   if (new_state & (_NEW_COLOR | _NEW_BUFFERS)) {
+   if (new_state & (_NEW_COLOR | _NEW_PIXEL | _NEW_BUFFERS)) {
       XMesaBuffer xmbuf = XMESA_BUFFER(ctx->DrawBuffer);
       struct xmesa_renderbuffer *front_xrb, *back_xrb;
 
@@ -1153,7 +1146,7 @@ xmesa_init_driver_functions( XMesaVisual xmvisual,
    driver->IndexMask = index_mask;
    driver->ColorMask = color_mask;
    driver->Enable = enable;
-   driver->Clear = xmesa_clear_buffers;
+   driver->Clear = clear_buffers;
    driver->Viewport = xmesa_viewport;
 #ifndef XFree86Server
    driver->CopyPixels = xmesa_CopyPixels;
@@ -1178,7 +1171,6 @@ xmesa_init_driver_functions( XMesaVisual xmvisual,
    driver->BeginQuery = xmesa_begin_query;
    driver->EndQuery = xmesa_end_query;
 #endif
-
 }
 
 

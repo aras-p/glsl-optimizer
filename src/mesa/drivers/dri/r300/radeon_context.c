@@ -36,12 +36,12 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include <dlfcn.h>
 
-#include "glheader.h"
-#include "imports.h"
-#include "context.h"
-#include "state.h"
-#include "matrix.h"
-#include "framebuffer.h"
+#include "main/glheader.h"
+#include "main/imports.h"
+#include "main/context.h"
+#include "main/state.h"
+#include "main/matrix.h"
+#include "main/framebuffer.h"
 
 #include "drivers/common/driverfuncs.h"
 #include "swrast/swrast.h"

@@ -28,10 +28,10 @@
 #define _TRIDENT_CONTEXT_H_
 
 #include "dri_util.h"
-#include "macros.h"
-#include "mtypes.h"
+#include "main/macros.h"
+#include "main/mtypes.h"
 #include "drm.h"
-#include "mm.h"
+#include "main/mm.h"
 
 #define SUBPIXEL_X (0.0F)
 #define SUBPIXEL_Y (0.125F)

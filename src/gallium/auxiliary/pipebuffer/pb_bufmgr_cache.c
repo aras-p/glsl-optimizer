@@ -306,8 +306,8 @@ pb_cache_manager_create_buffer(struct pb_manager *_mgr,
 }
 
 
-void
-pb_cache_flush(struct pb_manager *_mgr)
+static void
+pb_cache_manager_flush(struct pb_manager *_mgr)
 {
    struct pb_cache_manager *mgr = pb_cache_manager(_mgr);
    struct list_head *curr, *next;
@@ -323,13 +323,17 @@ pb_cache_flush(struct pb_manager *_mgr)
       next = curr->next;
    }
    pipe_mutex_unlock(mgr->mutex);
+   
+   assert(mgr->provider->flush);
+   if(mgr->provider->flush)
+      mgr->provider->flush(mgr->provider);
 }
 
 
 static void
 pb_cache_manager_destroy(struct pb_manager *mgr)
 {
-   pb_cache_flush(mgr);
+   pb_cache_manager_flush(mgr);
    FREE(mgr);
 }
 
@@ -349,6 +353,7 @@ pb_cache_manager_create(struct pb_manager *provider,
 
    mgr->base.destroy = pb_cache_manager_destroy;
    mgr->base.create_buffer = pb_cache_manager_create_buffer;
+   mgr->base.flush = pb_cache_manager_flush;
    mgr->provider = provider;
    mgr->usecs = usecs;
    LIST_INITHEAD(&mgr->delayed);

@@ -26,12 +26,12 @@
 
 #include "dri_util.h"
 #include "utils.h"
-#include "glheader.h"
-#include "context.h"
-#include "framebuffer.h"
-#include "renderbuffer.h"
-#include "matrix.h"
-#include "simple_list.h"
+#include "main/glheader.h"
+#include "main/context.h"
+#include "main/framebuffer.h"
+#include "main/renderbuffer.h"
+#include "main/matrix.h"
+#include "main/simple_list.h"
 #include "vblank.h"
 
 #include "via_state.h"

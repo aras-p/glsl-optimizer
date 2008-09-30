@@ -26,7 +26,7 @@
 #define MAP_FAILED ((void *)-1)
 #endif
 
-#include "imports.h"
+#include "main/imports.h"
 #define None 0
 
 #include "dri_util.h"

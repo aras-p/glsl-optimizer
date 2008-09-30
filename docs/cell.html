@@ -6,7 +6,7 @@
 
 <BODY>
 
-<H1>Mesa Cell Driver</H1>
+<H1>Mesa/Gallium Cell Driver</H1>
 
 <p>
 The Mesa
@@ -23,6 +23,7 @@ Two phases are planned.
 First, to implement the framework for parallel rasterization using the Cell
 SPEs, including texture mapping.
 Second, to implement a full-featured OpenGL driver with support for GLSL, etc.
+The second phase is now underway.
 </p>
 
 
@@ -43,12 +44,13 @@ or the Cell Simulator (untested, though).
 </p>
 
 <p>
-If using Cell SDK 3.0, first edit configs/linux-cell and add
-<code>-DSPU_MAIN_PARAM_LONG_LONG</code> to the SPU_CFLAGS.
+If using Cell SDK 2.1, see the configs/linux-cell file for some
+special changes.
 </p>
 
 <p>
 To compile the code, run <code>make linux-cell</code>.
+To build in debug mode, run <code>make linux-cell-debug</code>.
 </p>
 
 <p>
@@ -77,21 +79,49 @@ SPU local store as needed.
 Similarly, textures are tiled and brought into local store as needed.
 </p>
 
-<p>
-More recently, vertex transformation has been parallelized across the SPUs
-as well.
-</p>
-
 
 <H2>Status</H2>
 
 <p>
-As of February 2008 the driver supports smooth/flat shaded triangle rendering
+As of September 2008, the driver supports smooth/flat shaded triangle rendering
 with Z testing and simple texture mapping.
 Simple demos like gears run successfully.
 To test texture mapping, try progs/demos/texcyl (press right mouse button for
 rendering options).
 </p>
+<p>
+Runtime/dynamic code generation is being done for per-fragment
+operations (Z test, blend, etc) and for fragment programs (though only a
+few opcodes are implemented now).
+</p>
+<p>
+In general, however, the driver is rather slow because all vertex
+transformation is being done by an interpreter running on the PPU.
+Programs with many vertices or complex vertex shaders will run especially
+slow.
+This will be addressed in the future.
+</p>
+
+
+
+<H2>Debug Options</H2>
+
+<p>
+The CELL_DEBUG env var can be set to a comma-separated list of one or
+more of the following debug options:
+</p>
+<ul>
+<li><b>checker</b> - use a different background clear color for each SPU.
+   This lets you see which SPU is rendering which screen tiles.
+<li><b>sync</b> - wait/synchronize after each DMA transfer
+</ul>
+
+<p>
+If the GALLIUM_NOCELL env var is set, the softpipe driver will be used
+intead of the Cell driver.
+This is useful for comparison/validation.
+</p>
+
 
 
 <H2>Contributing</H2>

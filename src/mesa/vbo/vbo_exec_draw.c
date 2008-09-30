@@ -200,7 +200,6 @@ static void vbo_exec_bind_arrays( GLcontext *ctx )
             /* Ptr into ordinary app memory */
             arrays[attr].Ptr = (void *) data;
          }
-
 	 arrays[attr].Size = exec->vtx.attrsz[src];
 	 arrays[attr].StrideB = exec->vtx.vertex_size * sizeof(GLfloat);
 	 arrays[attr].Stride = exec->vtx.vertex_size * sizeof(GLfloat);
@@ -243,8 +242,11 @@ void vbo_exec_vtx_flush( struct vbo_exec_context *exec )
 	  */
 	 vbo_exec_bind_arrays( ctx );
 
-	 ctx->Driver.UnmapBuffer(ctx, target, exec->vtx.bufferobj);
-	 exec->vtx.buffer_map = NULL;
+         /* if using a real VBO, unmap it before drawing */
+         if (exec->vtx.bufferobj->Name) {
+            ctx->Driver.UnmapBuffer(ctx, target, exec->vtx.bufferobj);
+            exec->vtx.buffer_map = NULL;
+         }
 
 	 vbo_context(ctx)->draw_prims( ctx, 
 				       exec->vtx.inputs, 
@@ -254,11 +256,12 @@ void vbo_exec_vtx_flush( struct vbo_exec_context *exec )
 				       0,
 				       exec->vtx.vert_count - 1);
 
-	 /* Get new data:
-	  */
-	 ctx->Driver.BufferData(ctx, target, size, NULL, usage, exec->vtx.bufferobj);
-	 exec->vtx.buffer_map
-	    = ctx->Driver.MapBuffer(ctx, target, access, exec->vtx.bufferobj);
+	 /* If using a real VBO, get new storage */
+         if (exec->vtx.bufferobj->Name) {
+            ctx->Driver.BufferData(ctx, target, size, NULL, usage, exec->vtx.bufferobj);
+            exec->vtx.buffer_map = 
+               ctx->Driver.MapBuffer(ctx, target, access, exec->vtx.bufferobj);
+         }
       }
    }
 

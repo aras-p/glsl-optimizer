@@ -167,7 +167,7 @@ mmAllocMem(struct mem_block *heap, unsigned size, unsigned align2, unsigned star
    unsigned startofs = 0;
    unsigned endofs;
 
-   if (!heap || !align2 || !size)
+   if (!heap || !size)
       return NULL;
 
    for (p = heap->next_free; p != heap; p = p->next_free) {

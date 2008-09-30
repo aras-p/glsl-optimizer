@@ -104,11 +104,11 @@
 #define CELL_BUFFER_STATUS_FREE 10
 #define CELL_BUFFER_STATUS_USED 20
 
-
-#define CELL_DEBUG_CHECKER  (1 << 0)
-#define CELL_DEBUG_SYNC     (1 << 1)
-
-
+#define CELL_DEBUG_CHECKER              (1 << 0)
+#define CELL_DEBUG_ASM                  (1 << 1)
+#define CELL_DEBUG_SYNC                 (1 << 2)
+#define CELL_DEBUG_FRAGMENT_OPS         (1 << 3)
+#define CELL_DEBUG_FRAGMENT_OP_FALLBACK (1 << 4)
 
 /** Max instructions for doing per-fragment operations */
 #define SPU_MAX_FRAGMENT_OPS_INSTS 64
@@ -130,7 +130,7 @@ struct cell_command_fragment_ops
 #define SPU_MAX_FRAGMENT_PROGRAM_INSTS 128
 
 /**
- * Command to send a fragment progra to SPUs.
+ * Command to send a fragment program to SPUs.
  */
 struct cell_command_fragment_program
 {
@@ -267,6 +267,20 @@ struct cell_command
 } ALIGN16_ATTRIB;
 
 
+#define MAX_SPU_FUNCTIONS 12
+/**
+ * Used to tell the PPU about the address of particular functions in the
+ * SPU's address space.
+ */
+struct cell_spu_function_info
+{
+   uint num;
+   char names[MAX_SPU_FUNCTIONS][16];
+   uint addrs[MAX_SPU_FUNCTIONS];
+   char pad[12];   /**< Pad struct to multiple of 16 bytes (256 currently) */
+};
+
+
 /** This is the object passed to spe_create_thread() */
 struct cell_init_info
 {
@@ -278,6 +292,8 @@ struct cell_init_info
    /** Buffers for command batches, vertex/index data */
    ubyte *buffers[CELL_NUM_BUFFERS];
    uint *buffer_status;  /**< points at cell_context->buffer_status */
+
+   struct cell_spu_function_info *spu_functions;
 } ALIGN16_ATTRIB;
 
 

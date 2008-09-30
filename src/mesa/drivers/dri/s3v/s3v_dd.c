@@ -9,8 +9,8 @@
 #include "x86/common_x86_asm.h"
 #endif
 
-#include "context.h"
-#include "framebuffer.h"
+#include "main/context.h"
+#include "main/framebuffer.h"
 #include "swrast/swrast.h"
 
 #define S3V_DATE "20020207"

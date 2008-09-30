@@ -32,11 +32,11 @@
 
 
 
-#include "glheader.h"
-#include "mtypes.h"
-#include "imports.h"
-#include "macros.h"
-#include "colormac.h"
+#include "main/glheader.h"
+#include "main/mtypes.h"
+#include "main/imports.h"
+#include "main/macros.h"
+#include "main/colormac.h"
 
 #include "intel_batchbuffer.h" 
 #include "intel_regions.h" 
@@ -97,8 +97,7 @@ static void brw_new_batch( struct intel_context *intel )
    /* Check that we didn't just wrap our batchbuffer at a bad time. */
    assert(!brw->no_batch_wrap);
 
-   dri_bo_unreference(brw->curbe.curbe_bo);
-   brw->curbe.curbe_bo = NULL;
+   brw->curbe.need_new_bo = GL_TRUE;
 
    /* Mark all context state as needing to be re-emitted.
     * This is probably not as severe as on 915, since almost all of our state

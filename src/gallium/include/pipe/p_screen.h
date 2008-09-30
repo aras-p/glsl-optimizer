@@ -26,6 +26,8 @@
  **************************************************************************/
 
 /**
+ * @file
+ * 
  * Screen, Adapter or GPU
  *
  * These are driver functions/facilities that are context independent.

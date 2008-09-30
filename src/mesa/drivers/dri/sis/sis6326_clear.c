@@ -32,7 +32,7 @@
 #include "sis_reg.h"
 
 #include "swrast/swrast.h"
-#include "macros.h"
+#include "main/macros.h"
 
 static void sis_clear_front_buffer(GLcontext *ctx, GLenum mask, GLint x,
 				   GLint y, GLint width, GLint height);

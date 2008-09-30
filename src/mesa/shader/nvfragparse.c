@@ -41,10 +41,10 @@
 #include "main/context.h"
 #include "main/imports.h"
 #include "main/macros.h"
+#include "program.h"
 #include "prog_parameter.h"
 #include "prog_instruction.h"
 #include "nvfragparse.h"
-#include "program.h"
 
 
 #define INPUT_1V     1

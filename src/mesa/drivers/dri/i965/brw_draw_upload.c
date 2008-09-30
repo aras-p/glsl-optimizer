@@ -27,11 +27,11 @@
 
 #include <stdlib.h>
 
-#include "glheader.h"
-#include "context.h"
-#include "state.h"
-#include "api_validate.h"
-#include "enums.h"
+#include "main/glheader.h"
+#include "main/context.h"
+#include "main/state.h"
+#include "main/api_validate.h"
+#include "main/enums.h"
 
 #include "brw_draw.h"
 #include "brw_defines.h"
@@ -455,12 +455,6 @@ static void brw_emit_vertices(struct brw_context *brw)
 		input->offset);
       OUT_BATCH(brw->vb.max_index);
       OUT_BATCH(0); /* Instance data step rate */
-
-      /* Unreference the buffer so it can get freed, now that we won't
-       * touch it any more.
-       */
-      dri_bo_unreference(input->bo);
-      input->bo = NULL;
    }
    ADVANCE_BATCH();
 

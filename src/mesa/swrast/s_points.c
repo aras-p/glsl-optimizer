@@ -27,7 +27,7 @@
 #include "main/colormac.h"
 #include "main/context.h"
 #include "main/macros.h"
-#include "texstate.h"
+#include "main/texstate.h"
 #include "s_context.h"
 #include "s_feedback.h"
 #include "s_points.h"

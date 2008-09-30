@@ -39,7 +39,7 @@
 #ifndef __R300_EMIT_H__
 #define __R300_EMIT_H__
 
-#include "glheader.h"
+#include "main/glheader.h"
 #include "r300_context.h"
 #include "r300_cmdbuf.h"
 #include "radeon_reg.h"

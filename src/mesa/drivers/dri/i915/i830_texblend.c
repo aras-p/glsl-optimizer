@@ -25,15 +25,14 @@
  * 
  **************************************************************************/
 
-#include "glheader.h"
-#include "macros.h"
-#include "mtypes.h"
-#include "simple_list.h"
-#include "enums.h"
-#include "texformat.h"
-#include "texstore.h"
-
-#include "mm.h"
+#include "main/glheader.h"
+#include "main/macros.h"
+#include "main/mtypes.h"
+#include "main/simple_list.h"
+#include "main/enums.h"
+#include "main/texformat.h"
+#include "main/texstore.h"
+#include "main/mm.h"
 
 #include "intel_screen.h"
 #include "intel_tex.h"

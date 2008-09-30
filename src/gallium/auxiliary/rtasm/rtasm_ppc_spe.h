@@ -28,6 +28,7 @@
  * For details, see /opt/cell/sdk/docs/arch/SPU_ISA_v1.2_27Jan2007_pub.pdf
  *
  * \author Ian Romanick <idr@us.ibm.com>
+ * \author Brian Paul
  */
 
 #ifndef RTASM_PPC_SPE_H
@@ -39,10 +40,10 @@
 /** number of general-purpose SIMD registers */
 #define SPE_NUM_REGS  128
 
-/** Return Address register */
+/** Return Address register (aka $lr / Link Register) */
 #define SPE_REG_RA  0
 
-/** Stack Pointer register */
+/** Stack Pointer register (aka $sp) */
 #define SPE_REG_SP  1
 
 
@@ -63,14 +64,24 @@ struct spe_function
      * spe_release_register
      */
     uint64_t regs[SPE_NUM_REGS / 64];
+
+    boolean print; /**< print/dump instructions as they're emitted? */
+    int indent;    /**< number of spaces to indent */
 };
+
 
 extern void spe_init_func(struct spe_function *p, unsigned code_size);
 extern void spe_release_func(struct spe_function *p);
+extern unsigned spe_code_size(const struct spe_function *p);
 
 extern int spe_allocate_available_register(struct spe_function *p);
 extern int spe_allocate_register(struct spe_function *p, int reg);
 extern void spe_release_register(struct spe_function *p, int reg);
+
+extern void spe_print_code(struct spe_function *p, boolean enable);
+extern void spe_indent(struct spe_function *p, int spaces);
+extern void spe_comment(struct spe_function *p, int rel_indent, const char *s);
+
 
 #endif /* RTASM_PPC_SPE_H */
 
@@ -292,13 +303,17 @@ spe_load_float(struct spe_function *p, unsigned rT, float x);
 extern void
 spe_load_int(struct spe_function *p, unsigned rT, int i);
 
+/** Load/splat immediate unsigned int into rT. */
+extern void
+spe_load_uint(struct spe_function *p, unsigned rT, unsigned int ui);
+
 /** Replicate word 0 of rA across rT. */
 extern void
 spe_splat(struct spe_function *p, unsigned rT, unsigned rA);
 
-/** Complement/invert all bits in rT. */
+/** rT = complement_all_bits(rA). */
 extern void
-spe_complement(struct spe_function *p, unsigned rT);
+spe_complement(struct spe_function *p, unsigned rT, unsigned rA);
 
 /** rT = rA. */
 extern void
@@ -307,6 +322,18 @@ spe_move(struct spe_function *p, unsigned rT, unsigned rA);
 /** rT = {0,0,0,0}. */
 extern void
 spe_zero(struct spe_function *p, unsigned rT);
+
+/** rT = splat(rA, word) */
+extern void
+spe_splat_word(struct spe_function *p, unsigned rT, unsigned rA, int word);
+
+/** rT = float min(rA, rB) */
+extern void
+spe_float_min(struct spe_function *p, unsigned rT, unsigned rA, unsigned rB);
+
+/** rT = float max(rA, rB) */
+extern void
+spe_float_max(struct spe_function *p, unsigned rT, unsigned rA, unsigned rB);
 
 
 /* Floating-point instructions

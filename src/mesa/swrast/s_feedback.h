@@ -28,7 +28,6 @@
 #define S_FEEDBACK_H
 
 
-#include "main/mtypes.h"
 #include "swrast.h"
 
 

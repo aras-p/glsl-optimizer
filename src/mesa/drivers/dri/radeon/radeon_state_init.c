@@ -27,9 +27,9 @@
  *    Keith Whitwell <keith@tungstengraphics.com>
  */
 
-#include "glheader.h"
-#include "imports.h"
-#include "api_arrayelt.h"
+#include "main/glheader.h"
+#include "main/imports.h"
+#include "main/api_arrayelt.h"
 
 #include "swrast/swrast.h"
 #include "vbo/vbo.h"

@@ -40,15 +40,15 @@
 
 #if defined(FX)
 
-#include "image.h"
-#include "mtypes.h"
+#include "main/image.h"
+#include "main/mtypes.h"
 #include "fxdrv.h"
-#include "buffers.h"
-#include "enums.h"
-#include "extensions.h"
-#include "macros.h"
-#include "texstore.h"
-#include "teximage.h"
+#include "main/buffers.h"
+#include "main/enums.h"
+#include "main/extensions.h"
+#include "main/macros.h"
+#include "main/texstore.h"
+#include "main/teximage.h"
 #include "swrast/swrast.h"
 #include "swrast/s_context.h"
 #include "swrast_setup/swrast_setup.h"

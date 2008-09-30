@@ -33,12 +33,13 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *   Keith Whitwell <keith@tungstengraphics.com>
  */
 
-#include "glheader.h"
-#include "imports.h"
-#include "api_arrayelt.h"
-#include "enums.h"
-#include "colormac.h"
-#include "light.h"
+#include "main/glheader.h"
+#include "main/imports.h"
+#include "main/api_arrayelt.h"
+#include "main/enums.h"
+#include "main/framebuffer.h"
+#include "main/colormac.h"
+#include "main/light.h"
 
 #include "swrast/swrast.h"
 #include "vbo/vbo.h"
@@ -49,7 +50,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_ioctl.h"
 #include "radeon_state.h"
 #include "r300_ioctl.h"
-#include "framebuffer.h"
+
 
 /* =============================================================
  * Scissoring

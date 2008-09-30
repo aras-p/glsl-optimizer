@@ -23,7 +23,7 @@
  *    Ville Syrjala <syrjala@sci.fi>
  */
 
-#include "glheader.h"
+#include "main/glheader.h"
 
 #include "mgacontext.h"
 #include "mgatex.h"

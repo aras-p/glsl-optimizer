@@ -51,13 +51,12 @@ st_create_framebuffer( const __GLcontextModes *visual,
 {
    struct st_framebuffer *stfb = CALLOC_STRUCT(st_framebuffer);
    if (stfb) {
-      int samples = 0;
-      const char *msaa_override = _mesa_getenv("__GL_FSAA_MODE");
+      int samples = st_get_msaa();
+
+      if (visual->sampleBuffers)
+         samples = visual->samples;
+
       _mesa_initialize_framebuffer(&stfb->Base, visual);
-      if (visual->sampleBuffers) samples = visual->samples;
-      if (msaa_override) {
-         samples = _mesa_atoi(msaa_override);
-      }
 
       {
          /* fake frontbuffer */
@@ -154,9 +153,9 @@ void st_resize_framebuffer( struct st_framebuffer *stfb,
 }
 
 
-void st_unreference_framebuffer( struct st_framebuffer **stfb )
+void st_unreference_framebuffer( struct st_framebuffer *stfb )
 {
-   _mesa_unreference_framebuffer((struct gl_framebuffer **) stfb);
+   _mesa_unreference_framebuffer((struct gl_framebuffer **) &stfb);
 }
 
 
@@ -302,3 +301,10 @@ void *st_framebuffer_private( struct st_framebuffer *stfb )
    return stfb->Private;
 }
 
+void st_get_framebuffer_dimensions( struct st_framebuffer *stfb,
+				    uint *width,
+				    uint *height)
+{
+   *width = stfb->Base.Width;
+   *height = stfb->Base.Height;
+}

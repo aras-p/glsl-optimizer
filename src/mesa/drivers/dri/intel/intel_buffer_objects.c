@@ -26,9 +26,9 @@
  **************************************************************************/
 
 
-#include "imports.h"
-#include "mtypes.h"
-#include "bufferobj.h"
+#include "main/imports.h"
+#include "main/mtypes.h"
+#include "main/bufferobj.h"
 
 #include "intel_context.h"
 #include "intel_buffer_objects.h"

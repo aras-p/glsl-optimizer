@@ -28,7 +28,7 @@
 #ifndef BRW_DRAW_H
 #define BRW_DRAW_H
 
-#include "mtypes.h"		/* for GLcontext... */
+#include "main/mtypes.h"		/* for GLcontext... */
 #include "vbo/vbo.h"
 
 struct brw_context;

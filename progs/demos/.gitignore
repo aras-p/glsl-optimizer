@@ -8,6 +8,7 @@ cubemap
 drawpix
 engine
 extfuncs.h
+fbo_firecube
 fire
 fogcoord
 fplight

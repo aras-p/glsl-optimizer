@@ -25,7 +25,7 @@
 #ifndef _VIATRIS_H
 #define _VIATRIS_H
 
-#include "mtypes.h"
+#include "main/mtypes.h"
 
 extern void viaPrintRenderState(const char *msg, GLuint state);
 extern void viaInitTriFuncs(GLcontext *ctx);

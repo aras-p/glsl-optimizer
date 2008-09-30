@@ -29,10 +29,10 @@
  */
 
 #include "main/glheader.h"
-#include "bufferobj.h"
-#include "image.h"
+#include "main/bufferobj.h"
+#include "main/image.h"
 #include "main/macros.h"
-#include "pixel.h"
+#include "main/pixel.h"
 
 #include "s_context.h"
 #include "s_span.h"

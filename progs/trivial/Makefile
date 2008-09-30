@@ -19,6 +19,7 @@ SOURCES = \
 	dlist-dangling.c \
 	dlist-edgeflag-dangling.c \
 	dlist-edgeflag.c \
+	dlist-degenerate.c \
 	drawarrays.c \
 	drawelements.c \
 	drawrange.c \
@@ -74,7 +75,6 @@ SOURCES = \
 	quadstrip-cont.c \
 	quadstrip-flat.c \
 	quadstrip.c \
-	tri-orig.c \
 	tri-alpha.c \
 	tri-blend-color.c \
 	tri-blend-max.c \
@@ -93,6 +93,7 @@ SOURCES = \
 	tri-flat.c \
 	tri-fog.c \
 	tri-mask-tri.c \
+	tri-orig.c \
 	tri-query.c \
 	tri-scissor-tri.c \
 	tri-stencil.c \

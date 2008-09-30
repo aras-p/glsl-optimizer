@@ -33,7 +33,7 @@
 #include "intel_mipmap_tree.h"
 #include "intel_tex_layout.h"
 #include "intel_context.h"
-#include "macros.h"
+#include "main/macros.h"
 
 GLuint intel_compressed_alignment(GLenum internalFormat)
 {

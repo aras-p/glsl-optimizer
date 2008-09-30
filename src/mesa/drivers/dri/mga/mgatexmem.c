@@ -25,17 +25,17 @@
  *    Keith Whitwell <keith@tungstengraphics.com>
  */
 
-#include "glheader.h"
+#include "main/glheader.h"
 
-#include "mm.h"
+#include "main/mm.h"
 #include "mgacontext.h"
 #include "mgatex.h"
 #include "mgaregs.h"
 #include "mgaioctl.h"
 #include "mga_xmesa.h"
 
-#include "imports.h"
-#include "simple_list.h"
+#include "main/imports.h"
+#include "main/simple_list.h"
 
 /**
  * Destroy any device-dependent state associated with the texture.  This may

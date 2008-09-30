@@ -38,6 +38,13 @@
 #include "bufferobj.h"
 
 
+#ifdef FEATURE_OES_mapbuffer
+#define DEFAULT_ACCESS GL_WRITE_ONLY;
+#else
+#define DEFAULT_ACCESS GL_READ_WRITE;
+#endif
+
+
 /**
  * Get the buffer object bound to the specified target in a GL context.
  *
@@ -205,11 +212,14 @@ _mesa_reference_buffer_object(GLcontext *ctx,
       if (deleteFlag) {
 
          /* some sanity checking: don't delete a buffer still in use */
+#if 0
+         /* unfortunately, these tests are invalid during context tear-down */
 	 ASSERT(ctx->Array.ArrayBufferObj != bufObj);
 	 ASSERT(ctx->Array.ElementArrayBufferObj != bufObj);
 	 ASSERT(ctx->Array.ArrayObj->Vertex.BufferObj != bufObj);
-	 ASSERT(ctx->Driver.DeleteBuffer);
+#endif
 
+	 ASSERT(ctx->Driver.DeleteBuffer);
          ctx->Driver.DeleteBuffer(ctx, oldObj);
       }
 
@@ -252,7 +262,7 @@ _mesa_initialize_buffer_object( struct gl_buffer_object *obj,
    obj->RefCount = 1;
    obj->Name = name;
    obj->Usage = GL_STATIC_DRAW_ARB;
-   obj->Access = GL_READ_WRITE_ARB;
+   obj->Access = DEFAULT_ACCESS;
 }
 
 
@@ -1062,7 +1072,7 @@ _mesa_UnmapBufferARB(GLenum target)
       status = ctx->Driver.UnmapBuffer( ctx, target, bufObj );
    }
 
-   bufObj->Access = GL_READ_WRITE_ARB; /* initial value, OK? */
+   bufObj->Access = DEFAULT_ACCESS;
    bufObj->Pointer = NULL;
 
    return status;

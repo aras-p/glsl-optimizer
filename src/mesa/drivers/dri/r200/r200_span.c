@@ -32,10 +32,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *   Keith Whitwell <keith@tungstengraphics.com>
  */
 
-#include "glheader.h"
-#include "imports.h"
+#include "main/glheader.h"
+#include "main/imports.h"
+#include "main/colormac.h"
 #include "swrast/swrast.h"
-#include "colormac.h"
 
 #include "r200_context.h"
 #include "r200_ioctl.h"

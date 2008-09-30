@@ -60,6 +60,9 @@ gen_depth_test(const struct pipe_depth_stencil_alpha_state *dsa,
                struct spe_function *f,
                int mask_reg, int ifragZ_reg, int ifbZ_reg, int zmask_reg)
 {
+   /* NOTE: we use clgt below, not cgt, because we want to compare _unsigned_
+    * quantities.  This only makes a difference for 32-bit Z values though.
+    */
    ASSERT(dsa->depth.enabled);
 
    switch (dsa->depth.func) {
@@ -79,28 +82,28 @@ gen_depth_test(const struct pipe_depth_stencil_alpha_state *dsa,
 
    case PIPE_FUNC_GREATER:
       /* zmask = (ifragZ > ref) */
-      spe_cgt(f, zmask_reg, ifragZ_reg, ifbZ_reg);
+      spe_clgt(f, zmask_reg, ifragZ_reg, ifbZ_reg);
       /* mask = (mask & zmask) */
       spe_and(f, mask_reg, mask_reg, zmask_reg);
       break;
 
    case PIPE_FUNC_LESS:
       /* zmask = (ref > ifragZ) */
-      spe_cgt(f, zmask_reg, ifbZ_reg, ifragZ_reg);
+      spe_clgt(f, zmask_reg, ifbZ_reg, ifragZ_reg);
       /* mask = (mask & zmask) */
       spe_and(f, mask_reg, mask_reg, zmask_reg);
       break;
 
    case PIPE_FUNC_LEQUAL:
       /* zmask = (ifragZ > ref) */
-      spe_cgt(f, zmask_reg, ifragZ_reg, ifbZ_reg);
+      spe_clgt(f, zmask_reg, ifragZ_reg, ifbZ_reg);
       /* mask = (mask & ~zmask) */
       spe_andc(f, mask_reg, mask_reg, zmask_reg);
       break;
 
    case PIPE_FUNC_GEQUAL:
       /* zmask = (ref > ifragZ) */
-      spe_cgt(f, zmask_reg, ifbZ_reg, ifragZ_reg);
+      spe_clgt(f, zmask_reg, ifbZ_reg, ifragZ_reg);
       /* mask = (mask & ~zmask) */
       spe_andc(f, mask_reg, mask_reg, zmask_reg);
       break;
@@ -229,7 +232,27 @@ gen_alpha_test(const struct pipe_depth_stencil_alpha_state *dsa,
    spe_release_register(f, amask_reg);
 }
 
+/* This pair of functions is used inline to allocate and deallocate
+ * optional constant registers.  Once a constant is discovered to be 
+ * needed, we will likely need it again, so we don't want to deallocate
+ * it and have to allocate and load it again unnecessarily.
+ */
+static inline void
+setup_const_register(struct spe_function *f, boolean *is_already_set, unsigned int *r, float value)
+{
+   if (*is_already_set) return;
+   *r = spe_allocate_available_register(f);
+   spe_load_float(f, *r, value);
+   *is_already_set = true;
+}
 
+static inline void
+release_const_register(struct spe_function *f, boolean *is_already_set, unsigned int r)
+{
+    if (!*is_already_set) return;
+    spe_release_register(f, r);
+    *is_already_set = false;
+}
 
 /**
  * Generate SPE code to implement the given blend mode for a quad of pixels.
@@ -242,6 +265,7 @@ gen_alpha_test(const struct pipe_depth_stencil_alpha_state *dsa,
  */
 static void
 gen_blend(const struct pipe_blend_state *blend,
+          const struct pipe_blend_color *blend_color,
           struct spe_function *f,
           enum pipe_format color_format,
           int fragR_reg, int fragG_reg, int fragB_reg, int fragA_reg,
@@ -262,10 +286,17 @@ gen_blend(const struct pipe_blend_state *blend,
    int fbB_reg = spe_allocate_available_register(f);
    int fbA_reg = spe_allocate_available_register(f);
 
-   int one_reg = spe_allocate_available_register(f);
    int tmp_reg = spe_allocate_available_register(f);
 
-   boolean one_reg_set = false; /* avoid setting one_reg more than once */
+   /* Optional constant registers we might or might not end up using;
+    * if we do use them, make sure we only allocate them once by
+    * keeping a flag on each one.
+    */
+   boolean one_reg_set = false;
+   unsigned int one_reg;
+   boolean constR_reg_set = false, constG_reg_set = false, 
+      constB_reg_set = false, constA_reg_set = false;
+   unsigned int constR_reg, constG_reg, constB_reg, constA_reg;
 
    ASSERT(blend->blend_enable);
 
@@ -346,127 +377,449 @@ gen_blend(const struct pipe_blend_state *blend,
       spe_release_register(f, mask_reg);
    }
 
-
    /*
-    * Compute Src RGB terms
+    * Compute Src RGB terms.  We're actually looking for the value
+    * of (the appropriate RGB factors) * (the incoming source RGB color),
+    * because in some cases (like PIPE_BLENDFACTOR_ONE and 
+    * PIPE_BLENDFACTOR_ZERO) we can avoid doing unnecessary math.
     */
    switch (blend->rgb_src_factor) {
    case PIPE_BLENDFACTOR_ONE:
+      /* factors = (1,1,1), so term = (R,G,B) */
       spe_move(f, term1R_reg, fragR_reg);
       spe_move(f, term1G_reg, fragG_reg);
       spe_move(f, term1B_reg, fragB_reg);
       break;
    case PIPE_BLENDFACTOR_ZERO:
-      spe_zero(f, term1R_reg);
-      spe_zero(f, term1G_reg);
-      spe_zero(f, term1B_reg);
+      /* factors = (0,0,0), so term = (0,0,0) */
+      spe_load_float(f, term1R_reg, 0.0f);
+      spe_load_float(f, term1G_reg, 0.0f);
+      spe_load_float(f, term1B_reg, 0.0f);
       break;
    case PIPE_BLENDFACTOR_SRC_COLOR:
+      /* factors = (R,G,B), so term = (R*R, G*G, B*B) */
       spe_fm(f, term1R_reg, fragR_reg, fragR_reg);
       spe_fm(f, term1G_reg, fragG_reg, fragG_reg);
       spe_fm(f, term1B_reg, fragB_reg, fragB_reg);
       break;
    case PIPE_BLENDFACTOR_SRC_ALPHA:
+      /* factors = (A,A,A), so term = (R*A, G*A, B*A) */
       spe_fm(f, term1R_reg, fragR_reg, fragA_reg);
       spe_fm(f, term1G_reg, fragG_reg, fragA_reg);
       spe_fm(f, term1B_reg, fragB_reg, fragA_reg);
       break;
-      /* XXX more cases */
+   case PIPE_BLENDFACTOR_INV_SRC_COLOR:
+      /* factors = (1-R,1-G,1-B), so term = (R*(1-R), G*(1-G), B*(1-B)) 
+       * or in other words term = (R-R*R, G-G*G, B-B*B)
+       * fnms(a,b,c,d) computes a = d - b*c
+       */
+      spe_fnms(f, term1R_reg, fragR_reg, fragR_reg, fragR_reg);
+      spe_fnms(f, term1G_reg, fragG_reg, fragG_reg, fragG_reg);
+      spe_fnms(f, term1B_reg, fragB_reg, fragB_reg, fragB_reg);
+      break;
+   case PIPE_BLENDFACTOR_DST_COLOR:
+      /* factors = (Rfb,Gfb,Bfb), so term = (R*Rfb, G*Gfb, B*Bfb) */
+      spe_fm(f, term1R_reg, fragR_reg, fbR_reg);
+      spe_fm(f, term1G_reg, fragG_reg, fbG_reg);
+      spe_fm(f, term1B_reg, fragB_reg, fbB_reg);
+      break;
+   case PIPE_BLENDFACTOR_INV_DST_COLOR:
+      /* factors = (1-Rfb,1-Gfb,1-Bfb), so term = (R*(1-Rfb),G*(1-Gfb),B*(1-Bfb))
+       * or term = (R-R*Rfb, G-G*Gfb, B-B*Bfb)
+       * fnms(a,b,c,d) computes a = d - b*c
+       */
+      spe_fnms(f, term1R_reg, fragR_reg, fbR_reg, fragR_reg);
+      spe_fnms(f, term1G_reg, fragG_reg, fbG_reg, fragG_reg);
+      spe_fnms(f, term1B_reg, fragB_reg, fbB_reg, fragB_reg);
+      break;
+   case PIPE_BLENDFACTOR_INV_SRC_ALPHA:
+      /* factors = (1-A,1-A,1-A), so term = (R*(1-A),G*(1-A),B*(1-A))
+       * or term = (R-R*A,G-G*A,B-B*A)
+       * fnms(a,b,c,d) computes a = d - b*c
+       */
+      spe_fnms(f, term1R_reg, fragR_reg, fragA_reg, fragR_reg);
+      spe_fnms(f, term1G_reg, fragG_reg, fragA_reg, fragG_reg);
+      spe_fnms(f, term1B_reg, fragB_reg, fragA_reg, fragB_reg);
+      break;
+   case PIPE_BLENDFACTOR_DST_ALPHA:
+      /* factors = (Afb, Afb, Afb), so term = (R*Afb, G*Afb, B*Afb) */
+      spe_fm(f, term1R_reg, fragR_reg, fbA_reg);
+      spe_fm(f, term1G_reg, fragG_reg, fbA_reg);
+      spe_fm(f, term1B_reg, fragB_reg, fbA_reg);
+      break;
+   case PIPE_BLENDFACTOR_INV_DST_ALPHA:
+      /* factors = (1-Afb, 1-Afb, 1-Afb), so term = (R*(1-Afb),G*(1-Afb),B*(1-Afb)) 
+       * or term = (R-R*Afb,G-G*Afb,b-B*Afb)
+       * fnms(a,b,c,d) computes a = d - b*c
+       */
+      spe_fnms(f, term1R_reg, fragR_reg, fbA_reg, fragR_reg);
+      spe_fnms(f, term1G_reg, fragG_reg, fbA_reg, fragG_reg);
+      spe_fnms(f, term1B_reg, fragB_reg, fbA_reg, fragB_reg);
+      break;
+   case PIPE_BLENDFACTOR_CONST_COLOR:
+      /* We need the optional constant color registers */
+      setup_const_register(f, &constR_reg_set, &constR_reg, blend_color->color[0]);
+      setup_const_register(f, &constG_reg_set, &constG_reg, blend_color->color[1]);
+      setup_const_register(f, &constB_reg_set, &constB_reg, blend_color->color[2]);
+      /* now, factor = (Rc,Gc,Bc), so term = (R*Rc,G*Gc,B*Bc) */
+      spe_fm(f, term1R_reg, fragR_reg, constR_reg);
+      spe_fm(f, term1G_reg, fragG_reg, constG_reg);
+      spe_fm(f, term1B_reg, fragB_reg, constB_reg);
+      break;
+   case PIPE_BLENDFACTOR_CONST_ALPHA:
+      /* we'll need the optional constant alpha register */
+      setup_const_register(f, &constA_reg_set, &constA_reg, blend_color->color[3]);
+      /* factor = (Ac,Ac,Ac), so term = (R*Ac,G*Ac,B*Ac) */
+      spe_fm(f, term1R_reg, fragR_reg, constA_reg);
+      spe_fm(f, term1G_reg, fragG_reg, constA_reg);
+      spe_fm(f, term1B_reg, fragB_reg, constA_reg);
+      break;
+   case PIPE_BLENDFACTOR_INV_CONST_COLOR:
+      /* We need the optional constant color registers */
+      setup_const_register(f, &constR_reg_set, &constR_reg, blend_color->color[0]);
+      setup_const_register(f, &constG_reg_set, &constG_reg, blend_color->color[1]);
+      setup_const_register(f, &constB_reg_set, &constB_reg, blend_color->color[2]);
+      /* factor = (1-Rc,1-Gc,1-Bc), so term = (R*(1-Rc),G*(1-Gc),B*(1-Bc)) 
+       * or term = (R-R*Rc, G-G*Gc, B-B*Bc)
+       * fnms(a,b,c,d) computes a = d - b*c
+       */
+      spe_fnms(f, term1R_reg, fragR_reg, constR_reg, fragR_reg);
+      spe_fnms(f, term1G_reg, fragG_reg, constG_reg, fragG_reg);
+      spe_fnms(f, term1B_reg, fragB_reg, constB_reg, fragB_reg);
+      break;
+   case PIPE_BLENDFACTOR_INV_CONST_ALPHA:
+      /* We need the optional constant color registers */
+      setup_const_register(f, &constR_reg_set, &constR_reg, blend_color->color[0]);
+      setup_const_register(f, &constG_reg_set, &constG_reg, blend_color->color[1]);
+      setup_const_register(f, &constB_reg_set, &constB_reg, blend_color->color[2]);
+      /* factor = (1-Ac,1-Ac,1-Ac), so term = (R*(1-Ac),G*(1-Ac),B*(1-Ac))
+       * or term = (R-R*Ac,G-G*Ac,B-B*Ac)
+       * fnms(a,b,c,d) computes a = d - b*c
+       */
+      spe_fnms(f, term1R_reg, fragR_reg, constA_reg, fragR_reg);
+      spe_fnms(f, term1G_reg, fragG_reg, constA_reg, fragG_reg);
+      spe_fnms(f, term1B_reg, fragB_reg, constA_reg, fragB_reg);
+      break;
+   case PIPE_BLENDFACTOR_SRC_ALPHA_SATURATE:
+      /* We'll need the optional {1,1,1,1} register */
+      setup_const_register(f, &one_reg_set, &one_reg, 1.0f);
+      /* factor = (min(A,1-Afb),min(A,1-Afb),min(A,1-Afb)), so 
+       * term = (R*min(A,1-Afb), G*min(A,1-Afb), B*min(A,1-Afb))
+       * We could expand the term (as a*min(b,c) == min(a*b,a*c)
+       * as long as a is positive), but then we'd have to do three
+       * spe_float_min() functions instead of one, so this is simpler.
+       */
+      /* tmp = 1 - Afb */
+      spe_fs(f, tmp_reg, one_reg, fbA_reg);
+      /* tmp = min(A,tmp) */
+      spe_float_min(f, tmp_reg, fragA_reg, tmp_reg);
+      /* term = R*tmp */
+      spe_fm(f, term1R_reg, fragR_reg, tmp_reg);
+      spe_fm(f, term1G_reg, fragG_reg, tmp_reg);
+      spe_fm(f, term1B_reg, fragB_reg, tmp_reg);
+      break;
+
+      /* These are special D3D cases involving a second color output
+       * from the fragment shader.  I'm not sure we can support them
+       * yet... XXX
+       */
+   case PIPE_BLENDFACTOR_SRC1_COLOR:
+   case PIPE_BLENDFACTOR_SRC1_ALPHA:
+   case PIPE_BLENDFACTOR_INV_SRC1_COLOR:
+   case PIPE_BLENDFACTOR_INV_SRC1_ALPHA:
+
    default:
       ASSERT(0);
    }
 
    /*
-    * Compute Src Alpha term
+    * Compute Src Alpha term.  Like the above, we're looking for
+    * the full term A*factor, not just the factor itself, because
+    * in many cases we can avoid doing unnecessary multiplies.
     */
    switch (blend->alpha_src_factor) {
+   case PIPE_BLENDFACTOR_ZERO:
+      /* factor = 0, so term = 0 */
+      spe_load_float(f, term1A_reg, 0.0f);
+      break;
+
+   case PIPE_BLENDFACTOR_SRC_ALPHA_SATURATE: /* fall through */
    case PIPE_BLENDFACTOR_ONE:
+      /* factor = 1, so term = A */
       spe_move(f, term1A_reg, fragA_reg);
       break;
+
    case PIPE_BLENDFACTOR_SRC_COLOR:
+      /* factor = A, so term = A*A */
       spe_fm(f, term1A_reg, fragA_reg, fragA_reg);
       break;
    case PIPE_BLENDFACTOR_SRC_ALPHA:
       spe_fm(f, term1A_reg, fragA_reg, fragA_reg);
       break;
-      /* XXX more cases */
+
+   case PIPE_BLENDFACTOR_INV_SRC_ALPHA: /* fall through */
+   case PIPE_BLENDFACTOR_INV_SRC_COLOR:
+      /* factor = 1-A, so term = A*(1-A) = A-A*A */
+      /* fnms(a,b,c,d) computes a = d - b*c */
+      spe_fnms(f, term1A_reg, fragA_reg, fragA_reg, fragA_reg);
+      break;
+
+   case PIPE_BLENDFACTOR_DST_ALPHA: /* fall through */
+   case PIPE_BLENDFACTOR_DST_COLOR:
+      /* factor = Afb, so term = A*Afb */
+      spe_fm(f, term1A_reg, fragA_reg, fbA_reg);
+      break;
+
+   case PIPE_BLENDFACTOR_INV_DST_ALPHA: /* fall through */
+   case PIPE_BLENDFACTOR_INV_DST_COLOR:
+      /* factor = 1-Afb, so term = A*(1-Afb) = A - A*Afb */
+      /* fnms(a,b,c,d) computes a = d - b*c */
+      spe_fnms(f, term1A_reg, fragA_reg, fbA_reg, fragA_reg);
+      break;
+
+   case PIPE_BLENDFACTOR_CONST_ALPHA: /* fall through */
+   case PIPE_BLENDFACTOR_CONST_COLOR:
+      /* We need the optional constA_reg register */
+      setup_const_register(f, &constA_reg_set, &constA_reg, blend_color->color[3]);
+      /* factor = Ac, so term = A*Ac */
+      spe_fm(f, term1A_reg, fragA_reg, constA_reg);
+      break;
+
+   case PIPE_BLENDFACTOR_INV_CONST_ALPHA: /* fall through */
+   case PIPE_BLENDFACTOR_INV_CONST_COLOR:
+      /* We need the optional constA_reg register */
+      setup_const_register(f, &constA_reg_set, &constA_reg, blend_color->color[3]);
+      /* factor = 1-Ac, so term = A*(1-Ac) = A-A*Ac */
+      /* fnms(a,b,c,d) computes a = d - b*c */
+      spe_fnms(f, term1A_reg, fragA_reg, constA_reg, fragA_reg);
+      break;
+
+      /* These are special D3D cases involving a second color output
+       * from the fragment shader.  I'm not sure we can support them
+       * yet... XXX
+       */
+   case PIPE_BLENDFACTOR_SRC1_COLOR:
+   case PIPE_BLENDFACTOR_SRC1_ALPHA:
+   case PIPE_BLENDFACTOR_INV_SRC1_COLOR:
+   case PIPE_BLENDFACTOR_INV_SRC1_ALPHA:
    default:
       ASSERT(0);
    }
 
    /*
-    * Compute Dest RGB terms
+    * Compute Dest RGB term.  Like the above, we're looking for
+    * the full term (Rfb,Gfb,Bfb)*(factor), not just the factor itself, because
+    * in many cases we can avoid doing unnecessary multiplies.
     */
    switch (blend->rgb_dst_factor) {
    case PIPE_BLENDFACTOR_ONE:
+      /* factors = (1,1,1), so term = (Rfb,Gfb,Bfb) */
       spe_move(f, term2R_reg, fbR_reg);
       spe_move(f, term2G_reg, fbG_reg);
       spe_move(f, term2B_reg, fbB_reg);
       break;
    case PIPE_BLENDFACTOR_ZERO:
-      spe_zero(f, term2R_reg);
-      spe_zero(f, term2G_reg);
-      spe_zero(f, term2B_reg);
+      /* factor s= (0,0,0), so term = (0,0,0) */
+      spe_load_float(f, term2R_reg, 0.0f);
+      spe_load_float(f, term2G_reg, 0.0f);
+      spe_load_float(f, term2B_reg, 0.0f);
       break;
    case PIPE_BLENDFACTOR_SRC_COLOR:
+      /* factors = (R,G,B), so term = (R*Rfb, G*Gfb, B*Bfb) */
       spe_fm(f, term2R_reg, fbR_reg, fragR_reg);
       spe_fm(f, term2G_reg, fbG_reg, fragG_reg);
       spe_fm(f, term2B_reg, fbB_reg, fragB_reg);
       break;
+   case PIPE_BLENDFACTOR_INV_SRC_COLOR:
+      /* factors = (1-R,1-G,1-B), so term = (Rfb*(1-R), Gfb*(1-G), Bfb*(1-B)) 
+       * or in other words term = (Rfb-Rfb*R, Gfb-Gfb*G, Bfb-Bfb*B)
+       * fnms(a,b,c,d) computes a = d - b*c
+       */
+      spe_fnms(f, term2R_reg, fragR_reg, fbR_reg, fbR_reg);
+      spe_fnms(f, term2G_reg, fragG_reg, fbG_reg, fbG_reg);
+      spe_fnms(f, term2B_reg, fragB_reg, fbB_reg, fbB_reg);
+      break;
    case PIPE_BLENDFACTOR_SRC_ALPHA:
+      /* factors = (A,A,A), so term = (Rfb*A, Gfb*A, Bfb*A) */
       spe_fm(f, term2R_reg, fbR_reg, fragA_reg);
       spe_fm(f, term2G_reg, fbG_reg, fragA_reg);
       spe_fm(f, term2B_reg, fbB_reg, fragA_reg);
       break;
    case PIPE_BLENDFACTOR_INV_SRC_ALPHA:
-      /* one = {1.0, 1.0, 1.0, 1.0} */
-      if (!one_reg_set) {
-         spe_load_float(f, one_reg, 1.0f);
-         one_reg_set = true;
-      }
-      /* tmp = one - fragA */
-      spe_fs(f, tmp_reg, one_reg, fragA_reg);
-      /* term = fb * tmp */
-      spe_fm(f, term2R_reg, fbR_reg, tmp_reg);
-      spe_fm(f, term2G_reg, fbG_reg, tmp_reg);
-      spe_fm(f, term2B_reg, fbB_reg, tmp_reg);
+      /* factors = (1-A,1-A,1-A) so term = (Rfb-Rfb*A,Gfb-Gfb*A,Bfb-Bfb*A) */
+      /* fnms(a,b,c,d) computes a = d - b*c */
+      spe_fnms(f, term2R_reg, fbR_reg, fragA_reg, fbR_reg);
+      spe_fnms(f, term2G_reg, fbG_reg, fragA_reg, fbG_reg);
+      spe_fnms(f, term2B_reg, fbB_reg, fragA_reg, fbB_reg);
       break;
-      /* XXX more cases */
+   case PIPE_BLENDFACTOR_DST_COLOR:
+      /* factors = (Rfb,Gfb,Bfb), so term = (Rfb*Rfb, Gfb*Gfb, Bfb*Bfb) */
+      spe_fm(f, term2R_reg, fbR_reg, fbR_reg);
+      spe_fm(f, term2G_reg, fbG_reg, fbG_reg);
+      spe_fm(f, term2B_reg, fbB_reg, fbB_reg);
+      break;
+   case PIPE_BLENDFACTOR_INV_DST_COLOR:
+      /* factors = (1-Rfb,1-Gfb,1-Bfb), so term = (Rfb*(1-Rfb),Gfb*(1-Gfb),Bfb*(1-Bfb))
+       * or term = (Rfb-Rfb*Rfb, Gfb-Gfb*Gfb, Bfb-Bfb*Bfb)
+       * fnms(a,b,c,d) computes a = d - b*c
+       */
+      spe_fnms(f, term2R_reg, fbR_reg, fbR_reg, fbR_reg);
+      spe_fnms(f, term2G_reg, fbG_reg, fbG_reg, fbG_reg);
+      spe_fnms(f, term2B_reg, fbB_reg, fbB_reg, fbB_reg);
+      break;
+
+   case PIPE_BLENDFACTOR_DST_ALPHA:
+      /* factors = (Afb, Afb, Afb), so term = (Rfb*Afb, Gfb*Afb, Bfb*Afb) */
+      spe_fm(f, term2R_reg, fbR_reg, fbA_reg);
+      spe_fm(f, term2G_reg, fbG_reg, fbA_reg);
+      spe_fm(f, term2B_reg, fbB_reg, fbA_reg);
+      break;
+   case PIPE_BLENDFACTOR_INV_DST_ALPHA:
+      /* factors = (1-Afb, 1-Afb, 1-Afb), so term = (Rfb*(1-Afb),Gfb*(1-Afb),Bfb*(1-Afb)) 
+       * or term = (Rfb-Rfb*Afb,Gfb-Gfb*Afb,Bfb-Bfb*Afb)
+       * fnms(a,b,c,d) computes a = d - b*c
+       */
+      spe_fnms(f, term2R_reg, fbR_reg, fbA_reg, fbR_reg);
+      spe_fnms(f, term2G_reg, fbG_reg, fbA_reg, fbG_reg);
+      spe_fnms(f, term2B_reg, fbB_reg, fbA_reg, fbB_reg);
+      break;
+   case PIPE_BLENDFACTOR_CONST_COLOR:
+      /* We need the optional constant color registers */
+      setup_const_register(f, &constR_reg_set, &constR_reg, blend_color->color[0]);
+      setup_const_register(f, &constG_reg_set, &constG_reg, blend_color->color[1]);
+      setup_const_register(f, &constB_reg_set, &constB_reg, blend_color->color[2]);
+      /* now, factor = (Rc,Gc,Bc), so term = (Rfb*Rc,Gfb*Gc,Bfb*Bc) */
+      spe_fm(f, term2R_reg, fbR_reg, constR_reg);
+      spe_fm(f, term2G_reg, fbG_reg, constG_reg);
+      spe_fm(f, term2B_reg, fbB_reg, constB_reg);
+      break;
+   case PIPE_BLENDFACTOR_CONST_ALPHA:
+      /* we'll need the optional constant alpha register */
+      setup_const_register(f, &constA_reg_set, &constA_reg, blend_color->color[3]);
+      /* factor = (Ac,Ac,Ac), so term = (Rfb*Ac,Gfb*Ac,Bfb*Ac) */
+      spe_fm(f, term2R_reg, fbR_reg, constA_reg);
+      spe_fm(f, term2G_reg, fbG_reg, constA_reg);
+      spe_fm(f, term2B_reg, fbB_reg, constA_reg);
+      break;
+   case PIPE_BLENDFACTOR_INV_CONST_COLOR:
+      /* We need the optional constant color registers */
+      setup_const_register(f, &constR_reg_set, &constR_reg, blend_color->color[0]);
+      setup_const_register(f, &constG_reg_set, &constG_reg, blend_color->color[1]);
+      setup_const_register(f, &constB_reg_set, &constB_reg, blend_color->color[2]);
+      /* factor = (1-Rc,1-Gc,1-Bc), so term = (Rfb*(1-Rc),Gfb*(1-Gc),Bfb*(1-Bc)) 
+       * or term = (Rfb-Rfb*Rc, Gfb-Gfb*Gc, Bfb-Bfb*Bc)
+       * fnms(a,b,c,d) computes a = d - b*c
+       */
+      spe_fnms(f, term2R_reg, fbR_reg, constR_reg, fbR_reg);
+      spe_fnms(f, term2G_reg, fbG_reg, constG_reg, fbG_reg);
+      spe_fnms(f, term2B_reg, fbB_reg, constB_reg, fbB_reg);
+      break;
+   case PIPE_BLENDFACTOR_INV_CONST_ALPHA:
+      /* We need the optional constant color registers */
+      setup_const_register(f, &constR_reg_set, &constR_reg, blend_color->color[0]);
+      setup_const_register(f, &constG_reg_set, &constG_reg, blend_color->color[1]);
+      setup_const_register(f, &constB_reg_set, &constB_reg, blend_color->color[2]);
+      /* factor = (1-Ac,1-Ac,1-Ac), so term = (Rfb*(1-Ac),Gfb*(1-Ac),Bfb*(1-Ac))
+       * or term = (Rfb-Rfb*Ac,Gfb-Gfb*Ac,Bfb-Bfb*Ac)
+       * fnms(a,b,c,d) computes a = d - b*c
+       */
+      spe_fnms(f, term2R_reg, fbR_reg, constA_reg, fbR_reg);
+      spe_fnms(f, term2G_reg, fbG_reg, constA_reg, fbG_reg);
+      spe_fnms(f, term2B_reg, fbB_reg, constA_reg, fbB_reg);
+      break;
+   case PIPE_BLENDFACTOR_SRC_ALPHA_SATURATE: /* not supported for dest RGB */
+      ASSERT(0);
+      break;
+
+      /* These are special D3D cases involving a second color output
+       * from the fragment shader.  I'm not sure we can support them
+       * yet... XXX
+       */
+   case PIPE_BLENDFACTOR_SRC1_COLOR:
+   case PIPE_BLENDFACTOR_SRC1_ALPHA:
+   case PIPE_BLENDFACTOR_INV_SRC1_COLOR:
+   case PIPE_BLENDFACTOR_INV_SRC1_ALPHA:
+
    default:
       ASSERT(0);
    }
 
    /*
-    * Compute Dest Alpha term
+    * Compute Dest Alpha term.  Like the above, we're looking for
+    * the full term Afb*factor, not just the factor itself, because
+    * in many cases we can avoid doing unnecessary multiplies.
     */
    switch (blend->alpha_dst_factor) {
    case PIPE_BLENDFACTOR_ONE:
+      /* factor = 1, so term = Afb */
       spe_move(f, term2A_reg, fbA_reg);
       break;
    case PIPE_BLENDFACTOR_ZERO:
-      spe_zero(f, term2A_reg);
+      /* factor = 0, so term = 0 */
+      spe_load_float(f, term2A_reg, 0.0f);
       break;
-   case PIPE_BLENDFACTOR_SRC_ALPHA:
+
+   case PIPE_BLENDFACTOR_SRC_ALPHA: /* fall through */
+   case PIPE_BLENDFACTOR_SRC_COLOR:
+      /* factor = A, so term = Afb*A */
       spe_fm(f, term2A_reg, fbA_reg, fragA_reg);
       break;
-   case PIPE_BLENDFACTOR_INV_SRC_ALPHA:
-      /* one = {1.0, 1.0, 1.0, 1.0} */
-      if (!one_reg_set) {
-         spe_load_float(f, one_reg, 1.0f);
-         one_reg_set = true;
-      }
-      /* tmp = one - fragA */
-      spe_fs(f, tmp_reg, one_reg, fragA_reg);
-      /* termA = fbA * tmp */
-      spe_fm(f, term2A_reg, fbA_reg, tmp_reg);
+
+   case PIPE_BLENDFACTOR_INV_SRC_ALPHA: /* fall through */
+   case PIPE_BLENDFACTOR_INV_SRC_COLOR:
+      /* factor = 1-A, so term = Afb*(1-A) = Afb-Afb*A */
+      /* fnms(a,b,c,d) computes a = d - b*c */
+      spe_fnms(f, term2A_reg, fbA_reg, fragA_reg, fbA_reg);
       break;
-      /* XXX more cases */
+
+   case PIPE_BLENDFACTOR_DST_ALPHA: /* fall through */
+   case PIPE_BLENDFACTOR_DST_COLOR:
+      /* factor = Afb, so term = Afb*Afb */
+      spe_fm(f, term2A_reg, fbA_reg, fbA_reg);
+      break;
+
+   case PIPE_BLENDFACTOR_INV_DST_ALPHA: /* fall through */
+   case PIPE_BLENDFACTOR_INV_DST_COLOR:
+      /* factor = 1-Afb, so term = Afb*(1-Afb) = Afb - Afb*Afb */
+      /* fnms(a,b,c,d) computes a = d - b*c */
+      spe_fnms(f, term2A_reg, fbA_reg, fbA_reg, fbA_reg);
+      break;
+
+   case PIPE_BLENDFACTOR_CONST_ALPHA: /* fall through */
+   case PIPE_BLENDFACTOR_CONST_COLOR:
+      /* We need the optional constA_reg register */
+      setup_const_register(f, &constA_reg_set, &constA_reg, blend_color->color[3]);
+      /* factor = Ac, so term = Afb*Ac */
+      spe_fm(f, term2A_reg, fbA_reg, constA_reg);
+      break;
+
+   case PIPE_BLENDFACTOR_INV_CONST_ALPHA: /* fall through */
+   case PIPE_BLENDFACTOR_INV_CONST_COLOR:
+      /* We need the optional constA_reg register */
+      setup_const_register(f, &constA_reg_set, &constA_reg, blend_color->color[3]);
+      /* factor = 1-Ac, so term = Afb*(1-Ac) = Afb-Afb*Ac */
+      /* fnms(a,b,c,d) computes a = d - b*c */
+      spe_fnms(f, term2A_reg, fbA_reg, constA_reg, fbA_reg);
+      break;
+
+   case PIPE_BLENDFACTOR_SRC_ALPHA_SATURATE: /* not supported for dest alpha */
+      ASSERT(0);
+      break;
+
+      /* These are special D3D cases involving a second color output
+       * from the fragment shader.  I'm not sure we can support them
+       * yet... XXX
+       */
+   case PIPE_BLENDFACTOR_SRC1_COLOR:
+   case PIPE_BLENDFACTOR_SRC1_ALPHA:
+   case PIPE_BLENDFACTOR_INV_SRC1_COLOR:
+   case PIPE_BLENDFACTOR_INV_SRC1_ALPHA:
    default:
       ASSERT(0);
    }
 
    /*
-    * Combine Src/Dest RGB terms
+    * Combine Src/Dest RGB terms as per the blend equation.
     */
    switch (blend->rgb_func) {
    case PIPE_BLEND_ADD:
@@ -479,7 +832,21 @@ gen_blend(const struct pipe_blend_state *blend,
       spe_fs(f, fragG_reg, term1G_reg, term2G_reg);
       spe_fs(f, fragB_reg, term1B_reg, term2B_reg);
       break;
-      /* XXX more cases */
+   case PIPE_BLEND_REVERSE_SUBTRACT:
+      spe_fs(f, fragR_reg, term2R_reg, term1R_reg);
+      spe_fs(f, fragG_reg, term2G_reg, term1G_reg);
+      spe_fs(f, fragB_reg, term2B_reg, term1B_reg);
+      break;
+   case PIPE_BLEND_MIN:
+      spe_float_min(f, fragR_reg, term1R_reg, term2R_reg);
+      spe_float_min(f, fragG_reg, term1G_reg, term2G_reg);
+      spe_float_min(f, fragB_reg, term1B_reg, term2B_reg);
+      break;
+   case PIPE_BLEND_MAX:
+      spe_float_max(f, fragR_reg, term1R_reg, term2R_reg);
+      spe_float_max(f, fragG_reg, term1G_reg, term2G_reg);
+      spe_float_max(f, fragB_reg, term1B_reg, term2B_reg);
+      break;
    default:
       ASSERT(0);
    }
@@ -494,7 +861,15 @@ gen_blend(const struct pipe_blend_state *blend,
    case PIPE_BLEND_SUBTRACT:
       spe_fs(f, fragA_reg, term1A_reg, term2A_reg);
       break;
-      /* XXX more cases */
+   case PIPE_BLEND_REVERSE_SUBTRACT:
+      spe_fs(f, fragA_reg, term2A_reg, term1A_reg);
+      break;
+   case PIPE_BLEND_MIN:
+      spe_float_min(f, fragA_reg, term1A_reg, term2A_reg);
+      break;
+   case PIPE_BLEND_MAX:
+      spe_float_max(f, fragA_reg, term1A_reg, term2A_reg);
+      break;
    default:
       ASSERT(0);
    }
@@ -514,8 +889,14 @@ gen_blend(const struct pipe_blend_state *blend,
    spe_release_register(f, fbB_reg);
    spe_release_register(f, fbA_reg);
 
-   spe_release_register(f, one_reg);
    spe_release_register(f, tmp_reg);
+
+   /* Free any optional registers that actually got used */
+   release_const_register(f, &one_reg_set, one_reg);
+   release_const_register(f, &constR_reg_set, constR_reg);
+   release_const_register(f, &constG_reg_set, constG_reg);
+   release_const_register(f, &constB_reg_set, constB_reg);
+   release_const_register(f, &constA_reg_set, constA_reg);
 }
 
 
@@ -524,24 +905,74 @@ gen_logicop(const struct pipe_blend_state *blend,
             struct spe_function *f,
             int fragRGBA_reg, int fbRGBA_reg)
 {
-   /* XXX to-do */
-   /* operate on 32-bit packed pixels, not float colors */
+   /* We've got four 32-bit RGBA packed pixels in each of
+    * fragRGBA_reg and fbRGBA_reg, not sets of floating-point
+    * reds, greens, blues, and alphas.
+    * */
+   ASSERT(blend->logicop_enable);
+
+   switch(blend->logicop_func) {
+      case PIPE_LOGICOP_CLEAR: /* 0 */
+         spe_zero(f, fragRGBA_reg);
+         break;
+      case PIPE_LOGICOP_NOR: /* ~(s | d) */
+         spe_nor(f, fragRGBA_reg, fragRGBA_reg, fbRGBA_reg);
+         break;
+      case PIPE_LOGICOP_AND_INVERTED: /* ~s & d */
+         /* andc R, A, B computes R = A & ~B */
+         spe_andc(f, fragRGBA_reg, fbRGBA_reg, fragRGBA_reg);
+         break;
+      case PIPE_LOGICOP_COPY_INVERTED: /* ~s */
+         spe_complement(f, fragRGBA_reg, fragRGBA_reg);
+         break;
+      case PIPE_LOGICOP_AND_REVERSE: /* s & ~d */
+         /* andc R, A, B computes R = A & ~B */
+         spe_andc(f, fragRGBA_reg, fragRGBA_reg, fbRGBA_reg);
+         break;
+      case PIPE_LOGICOP_INVERT: /* ~d */
+         /* Note that (A nor A) == ~(A|A) == ~A */
+         spe_nor(f, fragRGBA_reg, fbRGBA_reg, fbRGBA_reg);
+         break;
+      case PIPE_LOGICOP_XOR: /* s ^ d */
+         spe_xor(f, fragRGBA_reg, fragRGBA_reg, fbRGBA_reg);
+         break;
+      case PIPE_LOGICOP_NAND: /* ~(s & d) */
+         spe_nand(f, fragRGBA_reg, fragRGBA_reg, fbRGBA_reg);
+         break;
+      case PIPE_LOGICOP_AND: /* s & d */
+         spe_and(f, fragRGBA_reg, fragRGBA_reg, fbRGBA_reg);
+         break;
+      case PIPE_LOGICOP_EQUIV: /* ~(s ^ d) */
+         spe_xor(f, fragRGBA_reg, fragRGBA_reg, fbRGBA_reg);
+         spe_complement(f, fragRGBA_reg, fragRGBA_reg);
+         break;
+      case PIPE_LOGICOP_NOOP: /* d */
+         spe_move(f, fragRGBA_reg, fbRGBA_reg);
+         break;
+      case PIPE_LOGICOP_OR_INVERTED: /* ~s | d */
+         /* orc R, A, B computes R = A | ~B */
+         spe_orc(f, fragRGBA_reg, fbRGBA_reg, fragRGBA_reg);
+         break;
+      case PIPE_LOGICOP_COPY: /* s */
+         break;
+      case PIPE_LOGICOP_OR_REVERSE: /* s | ~d */
+         /* orc R, A, B computes R = A | ~B */
+         spe_orc(f, fragRGBA_reg, fragRGBA_reg, fbRGBA_reg);
+         break;
+      case PIPE_LOGICOP_OR: /* s | d */
+         spe_or(f, fragRGBA_reg, fragRGBA_reg, fbRGBA_reg);
+         break;
+      case PIPE_LOGICOP_SET: /* 1 */
+         spe_load_int(f, fragRGBA_reg, 0xffffffff);
+         break;
+      default:
+         ASSERT(0);
+   }
 }
-
-
-static void
-gen_colormask(uint colormask,
-              struct spe_function *f,
-              int fragRGBA_reg, int fbRGBA_reg)
-{
-   /* XXX to-do */
-   /* operate on 32-bit packed pixels, not float colors */
-}
-
 
 
 /**
- * Generate code to pack a quad of float colors into a four 32-bit integers.
+ * Generate code to pack a quad of float colors into four 32-bit integers.
  *
  * \param f             SPE function to append instruction onto.
  * \param color_format  the dest color packing format
@@ -557,13 +988,16 @@ gen_pack_colors(struct spe_function *f,
                 int r_reg, int g_reg, int b_reg, int a_reg,
                 int rgba_reg)
 {
+   int rg_reg = spe_allocate_available_register(f);
+   int ba_reg = spe_allocate_available_register(f);
+
    /* Convert float[4] in [0.0,1.0] to int[4] in [0,~0], with clamping */
    spe_cfltu(f, r_reg, r_reg, 32);
    spe_cfltu(f, g_reg, g_reg, 32);
    spe_cfltu(f, b_reg, b_reg, 32);
    spe_cfltu(f, a_reg, a_reg, 32);
 
-   /* Shift the most significant bytes to least the significant positions.
+   /* Shift the most significant bytes to the least significant positions.
     * I.e.: reg = reg >> 24
     */
    spe_rotmi(f, r_reg, r_reg, -24);
@@ -595,13 +1029,93 @@ gen_pack_colors(struct spe_function *f,
     * OR-ing all those together gives us four packed colors:
     *  RGBA = {0xffffffff, 0xaa114477, 0xbb225588, 0xcc336699}
     */
-   spe_or(f, rgba_reg, r_reg, g_reg);
-   spe_or(f, rgba_reg, rgba_reg, b_reg);
-   spe_or(f, rgba_reg, rgba_reg, a_reg);
+   spe_or(f, rg_reg, r_reg, g_reg);
+   spe_or(f, ba_reg, a_reg, b_reg);
+   spe_or(f, rgba_reg, rg_reg, ba_reg);
+
+   spe_release_register(f, rg_reg);
+   spe_release_register(f, ba_reg);
 }
 
+static void
+gen_colormask(struct spe_function *f,
+              uint colormask,
+              enum pipe_format color_format,
+              int fragRGBA_reg, int fbRGBA_reg)
+{
+   /* We've got four 32-bit RGBA packed pixels in each of
+    * fragRGBA_reg and fbRGBA_reg, not sets of floating-point
+    * reds, greens, blues, and alphas.  Further, the pixels
+    * are packed according to the given color format, not
+    * necessarily RGBA...
+    */
+   unsigned int r_mask;
+   unsigned int g_mask;
+   unsigned int b_mask;
+   unsigned int a_mask;
 
+   /* Calculate exactly where the bits for any particular color
+    * end up, so we can mask them correctly.
+    */
+   switch(color_format) {
+      case PIPE_FORMAT_A8R8G8B8_UNORM:
+         /* ARGB */
+         a_mask = 0xff000000;
+         r_mask = 0x00ff0000;
+         g_mask = 0x0000ff00;
+         b_mask = 0x000000ff;
+         break;
+      case PIPE_FORMAT_B8G8R8A8_UNORM:
+         /* BGRA */
+         b_mask = 0xff000000;
+         g_mask = 0x00ff0000;
+         r_mask = 0x0000ff00;
+         a_mask = 0x000000ff;
+         break;
+      default:
+         ASSERT(0);
+   }
 
+   /* For each R, G, B, and A component we're supposed to mask out, 
+    * clear its bits.   Then our mask operation later will work 
+    * as expected.
+    */
+   if (!(colormask & PIPE_MASK_R)) {
+      r_mask = 0;
+   }
+   if (!(colormask & PIPE_MASK_G)) {
+      g_mask = 0;
+   }
+   if (!(colormask & PIPE_MASK_B)) {
+      b_mask = 0;
+   }
+   if (!(colormask & PIPE_MASK_A)) {
+      a_mask = 0;
+   }
+
+   /* Get a temporary register to hold the mask that will be applied to the fragment */
+   int colormask_reg = spe_allocate_available_register(f);
+
+   /* The actual mask we're going to use is an OR of the remaining R, G, B, and A
+    * masks.  Load the result value into our temporary register.
+    */
+   spe_load_uint(f, colormask_reg, r_mask | g_mask | b_mask | a_mask);
+
+   /* Use the mask register to select between the fragment color
+    * values and the frame buffer color values.  Wherever the
+    * mask has a 0 bit, the current frame buffer color should override
+    * the fragment color.  Wherever the mask has a 1 bit, the 
+    * fragment color should persevere.  The Select Bits (selb rt, rA, rB, rM)
+    * instruction will select bits from its first operand rA wherever the
+    * the mask bits rM are 0, and from its second operand rB wherever the
+    * mask bits rM are 1.  That means that the frame buffer color is the
+    * first operand, and the fragment color the second.
+    */
+    spe_selb(f, fragRGBA_reg, fbRGBA_reg, fragRGBA_reg, colormask_reg);
+
+    /* Release the temporary register and we're done */
+    spe_release_register(f, colormask_reg);
+}
 
 /**
  * Generate SPE code to implement the fragment operations (alpha test,
@@ -626,9 +1140,9 @@ gen_pack_colors(struct spe_function *f,
 void
 cell_gen_fragment_function(struct cell_context *cell, struct spe_function *f)
 {
-   const struct pipe_depth_stencil_alpha_state *dsa =
-      &cell->depth_stencil->base;
-   const struct pipe_blend_state *blend = &cell->blend->base;
+   const struct pipe_depth_stencil_alpha_state *dsa = cell->depth_stencil;
+   const struct pipe_blend_state *blend = cell->blend;
+   const struct pipe_blend_color *blend_color = &cell->blend_color;
    const enum pipe_format color_format = cell->framebuffer.cbufs[0]->format;
 
    /* For SPE function calls: reg $3 = first param, $4 = second param, etc. */
@@ -652,6 +1166,13 @@ cell_gen_fragment_function(struct cell_context *cell, struct spe_function *f)
    int fbZS_reg;    /**< framebuffer's combined z/stencil values for quad */
 
    spe_init_func(f, SPU_MAX_FRAGMENT_OPS_INSTS * SPE_INST_SIZE);
+
+   if (cell->debug_flags & CELL_DEBUG_ASM) {
+      spe_print_code(f, true);
+      spe_indent(f, 8);
+      spe_comment(f, -4, "Begin per-fragment ops");
+   }
+
    spe_allocate_register(f, x_reg);
    spe_allocate_register(f, y_reg);
    spe_allocate_register(f, color_tile_reg);
@@ -674,8 +1195,8 @@ cell_gen_fragment_function(struct cell_context *cell, struct spe_function *f)
 
       ASSERT(TILE_SIZE == 32);
 
-      spe_rotmi(f, x2_reg, x_reg, -1);  /* x2 = x / 2 */
       spe_rotmi(f, y2_reg, y_reg, -1);  /* y2 = y / 2 */
+      spe_rotmi(f, x2_reg, x_reg, -1);  /* x2 = x / 2 */
       spe_shli(f, y2_reg, y2_reg, 4);   /* y2 *= 16 */
       spe_a(f, quad_offset_reg, y2_reg, x2_reg);  /* offset = y2 + x2 */
       spe_shli(f, quad_offset_reg, quad_offset_reg, 4);   /* offset *= 16 */
@@ -710,33 +1231,49 @@ cell_gen_fragment_function(struct cell_context *cell, struct spe_function *f)
             spe_release_register(f, mask_reg);
             /* OK, fbZ_reg has four 24-bit Z values now */
          }
+         else if (zs_format == PIPE_FORMAT_Z24S8_UNORM ||
+                  zs_format == PIPE_FORMAT_Z24X8_UNORM) {
+            spe_rotmi(f, fbZ_reg, fbZS_reg, -8);  /* fbZ = fbZS >> 8 */
+            /* OK, fbZ_reg has four 24-bit Z values now */
+         }
+         else if (zs_format == PIPE_FORMAT_Z32_UNORM) {
+            spe_move(f, fbZ_reg, fbZS_reg);
+            /* OK, fbZ_reg has four 32-bit Z values now */
+         }
+         else if (zs_format == PIPE_FORMAT_Z16_UNORM) {
+            spe_move(f, fbZ_reg, fbZS_reg);
+            /* OK, fbZ_reg has four 16-bit Z values now */
+         }
          else {
-            /* XXX handle other z/stencil formats */
-            ASSERT(0);
+            ASSERT(0);  /* invalid format */
          }
 
-         /* Convert fragZ values from float[4] to uint[4] */
+         /* Convert fragZ values from float[4] to 16, 24 or 32-bit uint[4] */
          if (zs_format == PIPE_FORMAT_S8Z24_UNORM ||
              zs_format == PIPE_FORMAT_X8Z24_UNORM ||
              zs_format == PIPE_FORMAT_Z24S8_UNORM ||
              zs_format == PIPE_FORMAT_Z24X8_UNORM) {
-            /* 24-bit Z values */
-            int scale_reg = spe_allocate_available_register(f);
-
-            /* scale_reg[0,1,2,3] = float(2^24-1) */
-            spe_load_float(f, scale_reg, (float) 0xffffff);
-
-            /* XXX these two instructions might be combined */
-            spe_fm(f, fragZ_reg, fragZ_reg, scale_reg); /* fragZ *= scale */
-            spe_cfltu(f, fragZ_reg, fragZ_reg, 0);  /* fragZ = (int) fragZ */
-
-            spe_release_register(f, scale_reg);
+            /* scale/convert fragZ from float in [0,1] to uint in [0, ~0] */
+            spe_cfltu(f, fragZ_reg, fragZ_reg, 32);
+            /* fragZ = fragZ >> 8 */
+            spe_rotmi(f, fragZ_reg, fragZ_reg, -8);
          }
-         else {
-            /* XXX handle 16-bit Z format */
-            ASSERT(0);
+         else if (zs_format == PIPE_FORMAT_Z32_UNORM) {
+            /* scale/convert fragZ from float in [0,1] to uint in [0, ~0] */
+            spe_cfltu(f, fragZ_reg, fragZ_reg, 32);
+         }
+         else if (zs_format == PIPE_FORMAT_Z16_UNORM) {
+            /* scale/convert fragZ from float in [0,1] to uint in [0, ~0] */
+            spe_cfltu(f, fragZ_reg, fragZ_reg, 32);
+            /* fragZ = fragZ >> 16 */
+            spe_rotmi(f, fragZ_reg, fragZ_reg, -16);
          }
       }
+      else {
+         /* no Z test, but set Z to zero so we don't OR-in garbage below */
+         spe_load_uint(f, fbZ_reg, 0); /* XXX set to zero for now */
+      }
+
 
       if (dsa->stencil[0].enabled) {
          /* Extract Stencil bit sfrom fbZS_reg into fbS_reg */
@@ -751,7 +1288,10 @@ cell_gen_fragment_function(struct cell_context *cell, struct spe_function *f)
             ASSERT(0);
          }
       }
-
+      else {
+         /* no stencil test, but set to zero so we don't OR-in garbage below */
+         spe_load_uint(f, fbS_reg, 0); /* XXX set to zero for now */
+      }
 
       if (dsa->stencil[0].enabled) {
          /* XXX this may involve depth testing too */
@@ -779,22 +1319,22 @@ cell_gen_fragment_function(struct cell_context *cell, struct spe_function *f)
             spe_shli(f, fbS_reg, fbS_reg, 24); /* fbS = fbS << 24 */
             spe_or(f, fbZS_reg, fbS_reg, fbZ_reg); /* fbZS = fbS | fbZ */
          }
-         else if (zs_format == PIPE_FORMAT_S8Z24_UNORM ||
-                  zs_format == PIPE_FORMAT_X8Z24_UNORM) {
-            /* XXX to do */
-            ASSERT(0);
+         else if (zs_format == PIPE_FORMAT_Z24S8_UNORM ||
+                  zs_format == PIPE_FORMAT_Z24X8_UNORM) {
+            spe_shli(f, fbZ_reg, fbZ_reg, 8); /* fbZ = fbZ << 8 */
+            spe_or(f, fbZS_reg, fbS_reg, fbZ_reg); /* fbZS = fbS | fbZ */
+         }
+         else if (zs_format == PIPE_FORMAT_Z32_UNORM) {
+            spe_move(f, fbZS_reg, fbZ_reg); /* fbZS = fbZ */
          }
          else if (zs_format == PIPE_FORMAT_Z16_UNORM) {
-            /* XXX to do */
-            ASSERT(0);
+            spe_move(f, fbZS_reg, fbZ_reg); /* fbZS = fbZ */
          }
          else if (zs_format == PIPE_FORMAT_S8_UNORM) {
-            /* XXX to do */
-            ASSERT(0);
+            ASSERT(0);   /* XXX to do */
          }
          else {
-            /* bad zs_format */
-            ASSERT(0);
+            ASSERT(0); /* bad zs_format */
          }
 
          /* Store: memory[depth_tile_reg + quad_offset_reg] = fbZS */
@@ -816,7 +1356,7 @@ cell_gen_fragment_function(struct cell_context *cell, struct spe_function *f)
 
 
    if (blend->blend_enable) {
-      gen_blend(blend, f, color_format,
+      gen_blend(blend, blend_color, f, color_format,
                 fragR_reg, fragG_reg, fragB_reg, fragA_reg, fbRGBA_reg);
    }
 
@@ -837,8 +1377,8 @@ cell_gen_fragment_function(struct cell_context *cell, struct spe_function *f)
          gen_logicop(blend, f, rgba_reg, fbRGBA_reg);
       }
 
-      if (blend->colormask != 0xf) {
-         gen_colormask(blend->colormask, f, rgba_reg, fbRGBA_reg);
+      if (blend->colormask != PIPE_MASK_RGBA) {
+         gen_colormask(f, blend->colormask, color_format, rgba_reg, fbRGBA_reg);
       }
 
 
@@ -862,9 +1402,11 @@ cell_gen_fragment_function(struct cell_context *cell, struct spe_function *f)
 
    spe_bi(f, SPE_REG_RA, 0, 0);  /* return from function call */
 
-
    spe_release_register(f, fbRGBA_reg);
    spe_release_register(f, fbZS_reg);
    spe_release_register(f, quad_offset_reg);
-}
 
+   if (cell->debug_flags & CELL_DEBUG_ASM) {
+      spe_comment(f, -4, "End per-fragment ops");
+   }
+}

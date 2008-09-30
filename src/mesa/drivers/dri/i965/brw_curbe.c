@@ -31,10 +31,10 @@
 
 
 
-#include "glheader.h"
-#include "context.h"
-#include "macros.h"
-#include "enums.h"
+#include "main/glheader.h"
+#include "main/context.h"
+#include "main/macros.h"
+#include "main/enums.h"
 #include "shader/prog_parameter.h"
 #include "shader/prog_statevars.h"
 #include "intel_batchbuffer.h"
@@ -282,7 +282,8 @@ static void prepare_constant_buffer(struct brw_context *brw)
       brw->curbe.last_bufsz = bufsz;
 
       if (brw->curbe.curbe_bo != NULL &&
-	  brw->curbe.curbe_next_offset + bufsz > brw->curbe.curbe_bo->size)
+	  (brw->curbe.need_new_bo ||
+	   brw->curbe.curbe_next_offset + bufsz > brw->curbe.curbe_bo->size))
       {
 	 dri_bo_unreference(brw->curbe.curbe_bo);
 	 brw->curbe.curbe_bo = NULL;

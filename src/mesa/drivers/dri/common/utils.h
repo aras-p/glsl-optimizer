@@ -30,7 +30,7 @@
 
 #include <GL/gl.h>
 #include <GL/internal/dri_interface.h>
-#include "context.h"
+#include "main/context.h"
 
 typedef struct __DRIutilversionRec2    __DRIutilversion2;
 
@@ -129,9 +129,10 @@ struct __DRIconfigRec {
 
 extern __DRIconfig **
 driCreateConfigs(GLenum fb_format, GLenum fb_type,
-		 const u_int8_t * depth_bits, const u_int8_t * stencil_bits,
+		 const uint8_t * depth_bits, const uint8_t * stencil_bits,
 		 unsigned num_depth_stencil_bits,
-		 const GLenum * db_modes, unsigned num_db_modes);
+		 const GLenum * db_modes, unsigned num_db_modes,
+    		 const uint8_t * msaa_samples, unsigned num_msaa_modes);
 
 const __DRIconfig **driConcatConfigs(__DRIconfig **a, __DRIconfig **b);
 

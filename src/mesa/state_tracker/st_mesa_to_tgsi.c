@@ -35,10 +35,13 @@
 #include "tgsi/tgsi_parse.h"
 #include "tgsi/tgsi_build.h"
 #include "tgsi/tgsi_util.h"
+#include "tgsi/tgsi_dump.h"
+#include "tgsi/tgsi_sanity.h"
 #include "st_mesa_to_tgsi.h"
 #include "shader/prog_instruction.h"
 #include "shader/prog_parameter.h"
-
+#include "shader/prog_print.h"
+#include "pipe/p_debug.h"
 
 /*
  * Map mesa register file to TGSI register file.
@@ -74,6 +77,7 @@ map_register_file(
    case PROGRAM_CONSTANT:
       if (indirectAccess)
          return TGSI_FILE_CONSTANT;
+      assert(immediateMapping[index] != ~0);
       return TGSI_FILE_IMMEDIATE;
    case PROGRAM_INPUT:
       return TGSI_FILE_INPUT;
@@ -115,6 +119,7 @@ map_register_file_index(
    case TGSI_FILE_IMMEDIATE:
       if (indirectAccess)
          return index;
+      assert(immediateMapping[index] != ~0);
       return immediateMapping[index];
 
    default:
@@ -238,6 +243,7 @@ compile_instruction(
          outputMapping,
          immediateMapping,
          indirectAccess );
+
 
       /* swizzle (ext swizzle also depends on negation) */
       {
@@ -707,7 +713,7 @@ find_temporaries(const struct gl_program *program,
  * \return number of tokens placed in 'tokens' buffer, or zero if error
  */
 GLuint
-tgsi_translate_mesa_program(
+st_translate_mesa_program(
    uint procType,
    const struct gl_program *program,
    GLuint numInputs,
@@ -979,6 +985,18 @@ tgsi_translate_mesa_program(
          header,
          maxTokens - ti );
    }
+
+#if DEBUG
+   if(!tgsi_sanity_check(tokens)) {
+      debug_printf("Due to sanity check failure(s) above the following shader program is invalid:\n");
+      debug_printf("\nOriginal program:\n%s", program->String);
+      debug_printf("\nMesa program:\n");
+      _mesa_print_program(program);
+      debug_printf("\nTGSI program:\n");
+      tgsi_dump(tokens, 0);
+      assert(0);
+   }
+#endif
 
    return ti;
 }

@@ -88,15 +88,32 @@ tgsi_parse_end_of_tokens(
       1 + ctx->FullHeader.Header.HeaderSize + ctx->FullHeader.Header.BodySize;
 }
 
+
+/**
+ * This function is used to avoid and work-around type punning/aliasing
+ * warnings.  The warnings seem harmless on x86 but on PPC they cause
+ * real failures.
+ */
+static INLINE void
+copy_token(void *dst, const void *src)
+{
+   memcpy(dst, src, 4);
+}
+
+
+/**
+ * Get next 4-byte token, return it at address specified by 'token'
+ */
 static void
 next_token(
    struct tgsi_parse_context *ctx,
    void *token )
 {
    assert( !tgsi_parse_end_of_tokens( ctx ) );
-
-   *(struct tgsi_token *) token = ctx->Tokens[ctx->Position++];
+   copy_token(token, &ctx->Tokens[ctx->Position]);
+   ctx->Position++;
 }
+
 
 void
 tgsi_parse_token(
@@ -116,7 +133,7 @@ tgsi_parse_token(
       struct tgsi_full_declaration *decl = &ctx->FullToken.FullDeclaration;
 
       *decl = tgsi_default_full_declaration();
-      decl->Declaration = *(struct tgsi_declaration *) &token;
+      copy_token(&decl->Declaration, &token);
 
       next_token( ctx, &decl->DeclarationRange );
 
@@ -132,8 +149,7 @@ tgsi_parse_token(
       struct tgsi_full_immediate *imm = &ctx->FullToken.FullImmediate;
 
       *imm = tgsi_default_full_immediate();
-      imm->Immediate = *(struct tgsi_immediate *) &token;
-
+      copy_token(&imm->Immediate, &token);
       assert( !imm->Immediate.Extended );
 
       switch (imm->Immediate.DataType) {
@@ -158,8 +174,7 @@ tgsi_parse_token(
       unsigned extended;
 
       *inst = tgsi_default_full_instruction();
-      inst->Instruction = *(struct tgsi_instruction *) &token;
-
+      copy_token(&inst->Instruction, &token);
       extended = inst->Instruction.Extended;
 
       while( extended ) {
@@ -169,18 +184,15 @@ tgsi_parse_token(
 
          switch( token.Type ) {
          case TGSI_INSTRUCTION_EXT_TYPE_NV:
-            inst->InstructionExtNv =
-               *(struct tgsi_instruction_ext_nv *) &token;
+            copy_token(&inst->InstructionExtNv, &token);
             break;
 
          case TGSI_INSTRUCTION_EXT_TYPE_LABEL:
-            inst->InstructionExtLabel =
-               *(struct tgsi_instruction_ext_label *) &token;
+            copy_token(&inst->InstructionExtLabel, &token);
             break;
 
          case TGSI_INSTRUCTION_EXT_TYPE_TEXTURE:
-            inst->InstructionExtTexture =
-               *(struct tgsi_instruction_ext_texture *) &token;
+            copy_token(&inst->InstructionExtTexture, &token);
             break;
 
          default:
@@ -212,13 +224,13 @@ tgsi_parse_token(
 
             switch( token.Type ) {
             case TGSI_DST_REGISTER_EXT_TYPE_CONDCODE:
-               inst->FullDstRegisters[i].DstRegisterExtConcode =
-                  *(struct tgsi_dst_register_ext_concode *) &token;
+               copy_token(&inst->FullDstRegisters[i].DstRegisterExtConcode,
+                          &token);
                break;
 
             case TGSI_DST_REGISTER_EXT_TYPE_MODULATE:
-               inst->FullDstRegisters[i].DstRegisterExtModulate =
-                  *(struct tgsi_dst_register_ext_modulate *) &token;
+               copy_token(&inst->FullDstRegisters[i].DstRegisterExtModulate,
+                          &token);
                break;
 
             default:
@@ -245,13 +257,13 @@ tgsi_parse_token(
 
             switch( token.Type ) {
             case TGSI_SRC_REGISTER_EXT_TYPE_SWZ:
-               inst->FullSrcRegisters[i].SrcRegisterExtSwz =
-                  *(struct tgsi_src_register_ext_swz *) &token;
+               copy_token(&inst->FullSrcRegisters[i].SrcRegisterExtSwz,
+                          &token);
                break;
 
             case TGSI_SRC_REGISTER_EXT_TYPE_MOD:
-               inst->FullSrcRegisters[i].SrcRegisterExtMod =
-                  *(struct tgsi_src_register_ext_mod *) &token;
+               copy_token(&inst->FullSrcRegisters[i].SrcRegisterExtMod,
+                          &token);
                break;
 
             default:

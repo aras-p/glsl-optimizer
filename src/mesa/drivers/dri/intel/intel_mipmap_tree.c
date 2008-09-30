@@ -29,7 +29,7 @@
 #include "intel_mipmap_tree.h"
 #include "intel_regions.h"
 #include "intel_chipset.h"
-#include "enums.h"
+#include "main/enums.h"
 
 #define FILE_DEBUG_FLAG DEBUG_MIPTREE
 
@@ -117,7 +117,10 @@ intel_miptree_create(struct intel_context *intel,
       return NULL;
 
    mt->region = intel_region_alloc(intel,
-				   mt->cpp, mt->pitch, mt->total_height);
+				   mt->cpp,
+				   mt->pitch,
+				   mt->total_height,
+				   mt->pitch);
 
    if (!mt->region) {
        free(mt);
@@ -141,7 +144,7 @@ intel_miptree_create_for_region(struct intel_context *intel,
 
    mt = intel_miptree_create_internal(intel, target, internal_format,
 				      first_level, last_level,
-				      region->pitch, region->height, depth0,
+				      region->width, region->height, 1,
 				      region->cpp, compress_byte);
    if (!mt)
       return mt;

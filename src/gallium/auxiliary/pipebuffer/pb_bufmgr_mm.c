@@ -200,6 +200,13 @@ mm_bufmgr_create_buffer(struct pb_manager *mgr,
 
 
 static void
+mm_bufmgr_flush(struct pb_manager *mgr)
+{
+   /* No-op */
+}
+
+
+static void
 mm_bufmgr_destroy(struct pb_manager *mgr)
 {
    struct mm_pb_manager *mm = mm_pb_manager(mgr);
@@ -230,8 +237,9 @@ mm_bufmgr_create_from_buffer(struct pb_buffer *buffer,
    if (!mm)
       return NULL;
 
-   mm->base.create_buffer = mm_bufmgr_create_buffer;
    mm->base.destroy = mm_bufmgr_destroy;
+   mm->base.create_buffer = mm_bufmgr_create_buffer;
+   mm->base.flush = mm_bufmgr_flush;
 
    mm->size = size;
    mm->align2 = align2; /* 64-byte alignment */

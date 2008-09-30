@@ -26,14 +26,14 @@
  **************************************************************************/
 
 
-#include "imports.h"
-#include "mtypes.h"
-#include "fbobject.h"
-#include "framebuffer.h"
-#include "renderbuffer.h"
-#include "context.h"
-#include "texformat.h"
-#include "texrender.h"
+#include "main/imports.h"
+#include "main/mtypes.h"
+#include "main/fbobject.h"
+#include "main/framebuffer.h"
+#include "main/renderbuffer.h"
+#include "main/context.h"
+#include "main/texformat.h"
+#include "main/texrender.h"
 
 #include "intel_context.h"
 #include "intel_buffers.h"
@@ -296,7 +296,7 @@ intel_alloc_renderbuffer_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
       DBG("Allocating %d x %d Intel RBO (pitch %d)\n", width,
 	  height, pitch);
 
-      irb->region = intel_region_alloc(intel, cpp, pitch, height);
+      irb->region = intel_region_alloc(intel, cpp, width, height, pitch);
       if (!irb->region)
          return GL_FALSE;       /* out of memory? */
 
@@ -540,7 +540,7 @@ intel_update_wrapper(GLcontext *ctx, struct intel_renderbuffer *irb,
       irb->Base._ActualFormat = GL_DEPTH_COMPONENT16;
       irb->Base._BaseFormat = GL_DEPTH_COMPONENT;
       DBG("Render to DEPTH16 texture OK\n");
-   } else if (texImage->TexFormat == &_mesa_texformat_z24_s8) {
+   } else if (texImage->TexFormat == &_mesa_texformat_s8_z24) {
       irb->Base._ActualFormat = GL_DEPTH24_STENCIL8_EXT;
       irb->Base._BaseFormat = GL_DEPTH_STENCIL_EXT;
       DBG("Render to DEPTH_STENCIL texture OK\n");

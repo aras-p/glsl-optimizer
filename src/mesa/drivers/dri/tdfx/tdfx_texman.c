@@ -37,8 +37,8 @@
 #include "tdfx_context.h"
 #include "tdfx_tex.h"
 #include "tdfx_texman.h"
-#include "texobj.h"
-#include "hash.h"
+#include "main/texobj.h"
+#include "main/hash.h"
 
 
 #define BAD_ADDRESS ((FxU32) -1)

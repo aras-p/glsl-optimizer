@@ -31,10 +31,10 @@
 
 #include <string.h>
 #include <stdlib.h>
-#include "mtypes.h"
-#include "extensions.h"
+#include "main/mtypes.h"
+#include "main/extensions.h"
+#include "glapi/dispatch.h"
 #include "utils.h"
-#include "dispatch.h"
 
 int driDispatchRemapTable[ driDispatchRemapTable_size ];
 
@@ -524,17 +524,14 @@ GLboolean driClipRectToFramebuffer( const GLframebuffer *buffer,
  * \c GL_UNSIGNED_3BYTE_8_8_8, \c GL_4FLOAT_32_32_32_32, 
  * \c GL_4HALF_16_16_16_16, etc.  We can cross that bridge when we come to it.
  */
-
-/* XXX: need to re-add msaa support after gallium-0.1 merge
- */
-
 __DRIconfig **
 driCreateConfigs(GLenum fb_format, GLenum fb_type,
-		 const u_int8_t * depth_bits, const u_int8_t * stencil_bits,
+		 const uint8_t * depth_bits, const uint8_t * stencil_bits,
 		 unsigned num_depth_stencil_bits,
-		 const GLenum * db_modes, unsigned num_db_modes)
+		 const GLenum * db_modes, unsigned num_db_modes,
+	 	 const u_int8_t * msaa_samples, unsigned num_msaa_modes)
 {
-   static const u_int8_t bits_table[4][4] = {
+   static const uint8_t bits_table[4][4] = {
      /* R  G  B  A */
       { 3, 3, 2, 0 }, /* Any GL_UNSIGNED_BYTE_3_3_2 */
       { 5, 6, 5, 0 }, /* Any GL_UNSIGNED_SHORT_5_6_5 */
@@ -542,7 +539,7 @@ driCreateConfigs(GLenum fb_format, GLenum fb_type,
       { 8, 8, 8, 8 }  /* Any RGBA with any GL_UNSIGNED_INT_8_8_8_8 */
    };
 
-   static const u_int32_t masks_table_rgb[6][4] = {
+   static const uint32_t masks_table_rgb[6][4] = {
       { 0x000000E0, 0x0000001C, 0x00000003, 0x00000000 }, /* 3_3_2       */
       { 0x00000007, 0x00000038, 0x000000C0, 0x00000000 }, /* 2_3_3_REV   */
       { 0x0000F800, 0x000007E0, 0x0000001F, 0x00000000 }, /* 5_6_5       */
@@ -551,7 +548,7 @@ driCreateConfigs(GLenum fb_format, GLenum fb_type,
       { 0x000000FF, 0x0000FF00, 0x00FF0000, 0x00000000 }  /* 8_8_8_8_REV */
    };
 
-   static const u_int32_t masks_table_rgba[6][4] = {
+   static const uint32_t masks_table_rgba[6][4] = {
       { 0x000000E0, 0x0000001C, 0x00000003, 0x00000000 }, /* 3_3_2       */
       { 0x00000007, 0x00000038, 0x000000C0, 0x00000000 }, /* 2_3_3_REV   */
       { 0x0000F800, 0x000007E0, 0x0000001F, 0x00000000 }, /* 5_6_5       */
@@ -560,7 +557,7 @@ driCreateConfigs(GLenum fb_format, GLenum fb_type,
       { 0x000000FF, 0x0000FF00, 0x00FF0000, 0xFF000000 }, /* 8_8_8_8_REV */
    };
 
-   static const u_int32_t masks_table_bgr[6][4] = {
+   static const uint32_t masks_table_bgr[6][4] = {
       { 0x00000007, 0x00000038, 0x000000C0, 0x00000000 }, /* 3_3_2       */
       { 0x000000E0, 0x0000001C, 0x00000003, 0x00000000 }, /* 2_3_3_REV   */
       { 0x0000001F, 0x000007E0, 0x0000F800, 0x00000000 }, /* 5_6_5       */
@@ -569,7 +566,7 @@ driCreateConfigs(GLenum fb_format, GLenum fb_type,
       { 0x00FF0000, 0x0000FF00, 0x000000FF, 0x00000000 }, /* 8_8_8_8_REV */
    };
 
-   static const u_int32_t masks_table_bgra[6][4] = {
+   static const uint32_t masks_table_bgra[6][4] = {
       { 0x00000007, 0x00000038, 0x000000C0, 0x00000000 }, /* 3_3_2       */
       { 0x000000E0, 0x0000001C, 0x00000003, 0x00000000 }, /* 2_3_3_REV   */
       { 0x0000001F, 0x000007E0, 0x0000F800, 0x00000000 }, /* 5_6_5       */
@@ -578,7 +575,7 @@ driCreateConfigs(GLenum fb_format, GLenum fb_type,
       { 0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000 }, /* 8_8_8_8_REV */
    };
 
-   static const u_int8_t bytes_per_pixel[6] = {
+   static const uint8_t bytes_per_pixel[6] = {
       1, /* 3_3_2       */
       1, /* 2_3_3_REV   */
       2, /* 5_6_5       */
@@ -587,14 +584,12 @@ driCreateConfigs(GLenum fb_format, GLenum fb_type,
       4  /* 8_8_8_8_REV */
    };
 
-   const u_int8_t  * bits;
-   const u_int32_t * masks;
+   const uint8_t  * bits;
+   const uint32_t * masks;
    int index;
    __DRIconfig **configs, **c;
    __GLcontextModes *modes;
-   unsigned i;
-   unsigned j;
-   unsigned k;
+   unsigned i, j, k, h;
    unsigned num_modes;
    unsigned num_accum_bits = 2;
 
@@ -667,7 +662,7 @@ driCreateConfigs(GLenum fb_format, GLenum fb_type,
 	 break;
    }
 
-   num_modes = num_depth_stencil_bits * num_db_modes * num_accum_bits;
+   num_modes = num_depth_stencil_bits * num_db_modes * num_accum_bits * num_msaa_modes;
    configs = _mesa_calloc((num_modes + 1) * sizeof *configs);
    if (configs == NULL)
        return NULL;
@@ -675,66 +670,72 @@ driCreateConfigs(GLenum fb_format, GLenum fb_type,
     c = configs;
     for ( k = 0 ; k < num_depth_stencil_bits ; k++ ) {
 	for ( i = 0 ; i < num_db_modes ; i++ ) {
-	    for ( j = 0 ; j < num_accum_bits ; j++ ) {
-		*c = _mesa_malloc (sizeof **c);
-		modes = &(*c)->modes;
-		c++;
+	    for ( h = 0 ; h < num_msaa_modes; h++ ) {
+	    	for ( j = 0 ; j < num_accum_bits ; j++ ) {
+		    *c = _mesa_malloc (sizeof **c);
+		    modes = &(*c)->modes;
+		    c++;
 
-		memset(modes, 0, sizeof *modes);
-		modes->redBits   = bits[0];
-		modes->greenBits = bits[1];
-		modes->blueBits  = bits[2];
-		modes->alphaBits = bits[3];
-		modes->redMask   = masks[0];
-		modes->greenMask = masks[1];
-		modes->blueMask  = masks[2];
-		modes->alphaMask = masks[3];
-		modes->rgbBits   = modes->redBits + modes->greenBits
-		    + modes->blueBits + modes->alphaBits;
+		    memset(modes, 0, sizeof *modes);
+		    modes->redBits   = bits[0];
+		    modes->greenBits = bits[1];
+		    modes->blueBits  = bits[2];
+		    modes->alphaBits = bits[3];
+		    modes->redMask   = masks[0];
+		    modes->greenMask = masks[1];
+		    modes->blueMask  = masks[2];
+		    modes->alphaMask = masks[3];
+		    modes->rgbBits   = modes->redBits + modes->greenBits
+		    	+ modes->blueBits + modes->alphaBits;
 
-		modes->accumRedBits   = 16 * j;
-		modes->accumGreenBits = 16 * j;
-		modes->accumBlueBits  = 16 * j;
-		modes->accumAlphaBits = (masks[3] != 0) ? 16 * j : 0;
-		modes->visualRating = (j == 0) ? GLX_NONE : GLX_SLOW_CONFIG;
+		    modes->accumRedBits   = 16 * j;
+		    modes->accumGreenBits = 16 * j;
+		    modes->accumBlueBits  = 16 * j;
+		    modes->accumAlphaBits = (masks[3] != 0) ? 16 * j : 0;
+		    modes->visualRating = (j == 0) ? GLX_NONE : GLX_SLOW_CONFIG;
 
-		modes->stencilBits = stencil_bits[k];
-		modes->depthBits = depth_bits[k];
+		    modes->stencilBits = stencil_bits[k];
+		    modes->depthBits = depth_bits[k];
 
-		modes->transparentPixel = GLX_NONE;
-		modes->transparentRed = GLX_DONT_CARE;
-		modes->transparentGreen = GLX_DONT_CARE;
-		modes->transparentBlue = GLX_DONT_CARE;
-		modes->transparentAlpha = GLX_DONT_CARE;
-		modes->transparentIndex = GLX_DONT_CARE;
-		modes->visualType = GLX_DONT_CARE;
-		modes->renderType = GLX_RGBA_BIT;
-		modes->drawableType = GLX_WINDOW_BIT;
-		modes->rgbMode = GL_TRUE;
+		    modes->transparentPixel = GLX_NONE;
+		    modes->transparentRed = GLX_DONT_CARE;
+		    modes->transparentGreen = GLX_DONT_CARE;
+		    modes->transparentBlue = GLX_DONT_CARE;
+		    modes->transparentAlpha = GLX_DONT_CARE;
+		    modes->transparentIndex = GLX_DONT_CARE;
+		    modes->visualType = GLX_DONT_CARE;
+		    modes->renderType = GLX_RGBA_BIT;
+		    modes->drawableType = GLX_WINDOW_BIT;
+		    modes->rgbMode = GL_TRUE;
 
-		if ( db_modes[i] == GLX_NONE ) {
-		    modes->doubleBufferMode = GL_FALSE;
-		}
-		else {
-		    modes->doubleBufferMode = GL_TRUE;
-		    modes->swapMethod = db_modes[i];
-		}
+		    if ( db_modes[i] == GLX_NONE ) {
+		    	modes->doubleBufferMode = GL_FALSE;
+		    }
+		    else {
+		    	modes->doubleBufferMode = GL_TRUE;
+		    	modes->swapMethod = db_modes[i];
+		    }
 
-		modes->haveAccumBuffer = ((modes->accumRedBits +
+		    modes->samples = msaa_samples[h];
+		    modes->sampleBuffers = modes->samples ? 1 : 0;
+
+
+		    modes->haveAccumBuffer = ((modes->accumRedBits +
 					   modes->accumGreenBits +
 					   modes->accumBlueBits +
 					   modes->accumAlphaBits) > 0);
-		modes->haveDepthBuffer = (modes->depthBits > 0);
-		modes->haveStencilBuffer = (modes->stencilBits > 0);
+		    modes->haveDepthBuffer = (modes->depthBits > 0);
+		    modes->haveStencilBuffer = (modes->stencilBits > 0);
 
-		modes->bindToTextureRgb = GL_TRUE;
-		modes->bindToTextureRgba = GL_TRUE;
-		modes->bindToMipmapTexture = GL_FALSE;
-		modes->bindToTextureTargets = modes->rgbMode ?
-		    __DRI_ATTRIB_TEXTURE_1D_BIT |
-		    __DRI_ATTRIB_TEXTURE_2D_BIT |
-		    __DRI_ATTRIB_TEXTURE_RECTANGLE_BIT :
-		    0;
+		    modes->bindToTextureRgb = GL_TRUE;
+		    modes->bindToTextureRgba = GL_TRUE;
+		    modes->bindToMipmapTexture = GL_FALSE;
+		    modes->bindToTextureTargets = modes->rgbMode ?
+		    	__DRI_ATTRIB_TEXTURE_1D_BIT |
+		    	__DRI_ATTRIB_TEXTURE_2D_BIT |
+		    	__DRI_ATTRIB_TEXTURE_RECTANGLE_BIT :
+		    	0;
+		}
 	    }
 	}
     }

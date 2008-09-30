@@ -152,6 +152,12 @@ check_register_usage(
 {
    if (!check_file_name( ctx, file ))
       return FALSE;
+
+   if (index < 0 || index > MAX_REGISTERS) {
+      report_error( ctx, "%s[%i]: Invalid index %s", file_names[file], index, name );
+      return FALSE;
+   }
+
    if (indirect_access) {
       if (!is_any_register_declared( ctx, file ))
          report_error( ctx, "%s: Undeclared %s register", file_names[file], name );
@@ -174,12 +180,10 @@ iter_instruction(
    const struct tgsi_opcode_info *info;
    uint i;
 
-   /* There must be no other instructions after END.
-    */
-   if (ctx->index_of_END != ~0) {
-      report_error( ctx, "Unexpected instruction after END" );
-   }
-   else if (inst->Instruction.Opcode == TGSI_OPCODE_END) {
+   if (inst->Instruction.Opcode == TGSI_OPCODE_END) {
+      if (ctx->index_of_END != ~0) {
+         report_error( ctx, "Too many END instructions" );
+      }
       ctx->index_of_END = ctx->num_instructions;
    }
 
@@ -301,10 +305,10 @@ epilog(
    struct sanity_check_ctx *ctx = (struct sanity_check_ctx *) iter;
    uint file;
 
-   /* There must be an END instruction at the end.
+   /* There must be an END instruction somewhere.
     */
-   if (ctx->index_of_END == ~0 || ctx->index_of_END != ctx->num_instructions - 1) {
-      report_error( ctx, "Expected END at end of instruction sequence" );
+   if (ctx->index_of_END == ~0) {
+      report_error( ctx, "Missing END instruction" );
    }
 
    /* Check if all declared registers were used.

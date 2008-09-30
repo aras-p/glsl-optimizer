@@ -26,7 +26,7 @@
 #ifndef _VIATEX_H
 #define _VIATEX_H
 
-#include "mtypes.h"
+#include "main/mtypes.h"
 
 struct via_context;
 

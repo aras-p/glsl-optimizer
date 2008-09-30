@@ -38,7 +38,6 @@
 #include "glapi.h"
 #include "glxextensions.h"
 #include "glcontextmodes.h"
-#include "glheader.h"
 
 
 /**

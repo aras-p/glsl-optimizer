@@ -28,8 +28,8 @@
 #include "via_ioctl.h"
 #include "via_fb.h"
 #include "xf86drm.h"
-#include "imports.h"
-#include "simple_list.h"
+#include "main/imports.h"
+#include "main/simple_list.h"
 #include <sys/ioctl.h>
 
 GLboolean

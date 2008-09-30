@@ -26,7 +26,7 @@
 #ifndef TDFXVB_INC
 #define TDFXVB_INC
 
-#include "mtypes.h"
+#include "main/mtypes.h"
 
 #include "tnl/tnl.h"
 #include "tnl/t_context.h"

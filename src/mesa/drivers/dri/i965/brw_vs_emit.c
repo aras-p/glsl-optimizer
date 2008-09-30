@@ -1024,6 +1024,9 @@ void brw_vs_emit(struct brw_vs_compile *c )
       case OPCODE_ADD:
 	 brw_ADD(p, dst, args[0], args[1]);
 	 break;
+      case OPCODE_COS:
+	 emit_math1(c, BRW_MATH_FUNCTION_COS, dst, args[0], BRW_MATH_PRECISION_FULL);
+	 break;
       case OPCODE_DP3:
 	 brw_DP3(p, dst, args[0], args[1]);
 	 break;
@@ -1089,6 +1092,9 @@ void brw_vs_emit(struct brw_vs_compile *c )
       case OPCODE_SEQ:
          emit_seq(p, dst, args[0], args[1]);
          break;
+      case OPCODE_SIN:
+	 emit_math1(c, BRW_MATH_FUNCTION_SIN, dst, args[0], BRW_MATH_PRECISION_FULL);
+	 break;
       case OPCODE_SNE:
          emit_sne(p, dst, args[0], args[1]);
          break;
@@ -1155,7 +1161,10 @@ void brw_vs_emit(struct brw_vs_compile *c )
       case OPCODE_ENDSUB:
 	 break;
       default:
-	 _mesa_printf("Unsupport opcode %d in vertex shader\n", inst->Opcode);
+	 _mesa_printf("Unsupported opcode %i (%s) in vertex shader\n",
+		      inst->Opcode, inst->Opcode < MAX_OPCODE ?
+				    _mesa_opcode_string(inst->Opcode) :
+				    "unknown");
 	 break;
       }
 

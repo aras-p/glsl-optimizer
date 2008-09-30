@@ -25,15 +25,15 @@
  * 
  **************************************************************************/
 
-#include "glheader.h"
-#include "imports.h"
-#include "context.h"
-#include "depthstencil.h"
-#include "fbobject.h"
-#include "framebuffer.h"
-#include "hash.h"
-#include "mtypes.h"
-#include "renderbuffer.h"
+#include "main/glheader.h"
+#include "main/imports.h"
+#include "main/context.h"
+#include "main/depthstencil.h"
+#include "main/fbobject.h"
+#include "main/framebuffer.h"
+#include "main/hash.h"
+#include "main/mtypes.h"
+#include "main/renderbuffer.h"
 
 #include "intel_context.h"
 #include "intel_fbo.h"

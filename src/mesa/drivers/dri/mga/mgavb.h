@@ -28,7 +28,7 @@
 #ifndef MGAVB_INC
 #define MGAVB_INC
 
-#include "mtypes.h"
+#include "main/mtypes.h"
 #include "mgacontext.h"
 #include "swrast/swrast.h"
 

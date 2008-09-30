@@ -143,13 +143,13 @@ struct spu_global
    ubyte ctile_status[MAX_HEIGHT/TILE_SIZE][MAX_WIDTH/TILE_SIZE] ALIGN16_ATTRIB;
    ubyte ztile_status[MAX_HEIGHT/TILE_SIZE][MAX_WIDTH/TILE_SIZE] ALIGN16_ATTRIB;
 
-   /** Current fragment ops machine code */
-   uint fragment_ops_code[SPU_MAX_FRAGMENT_OPS_INSTS];
+   /** Current fragment ops machine code, at 8-byte boundary */
+   uint fragment_ops_code[SPU_MAX_FRAGMENT_OPS_INSTS] ALIGN8_ATTRIB;
    /** Current fragment ops function */
    spu_fragment_ops_func fragment_ops;
 
-   /** Current fragment program machine code */
-   uint fragment_program_code[SPU_MAX_FRAGMENT_PROGRAM_INSTS];
+   /** Current fragment program machine code, at 8-byte boundary */
+   uint fragment_program_code[SPU_MAX_FRAGMENT_PROGRAM_INSTS] ALIGN8_ATTRIB;
    /** Current fragment ops function */
    spu_fragment_program_func fragment_program;
 

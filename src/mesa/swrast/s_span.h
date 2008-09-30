@@ -27,7 +27,6 @@
 #define S_SPAN_H
 
 
-#include "main/mtypes.h"
 #include "swrast.h"
 
 

@@ -67,21 +67,15 @@ getproclist.h: $(TOP)/src/mesa/glapi/gl_API.xml getprocaddress.c getprocaddress.
 
 
 texrect: texrect.o readtex.o
-<<<<<<< HEAD:progs/fp/Makefile
 	$(CC) $(CFLAGS) $(LDFLAGS) texrect.o readtex.o $(LIBS) -o $@
-=======
-	$(APP_CC) texrect.o readtex.o $(LIBS) -o $@
->>>>>>> origin/gallium-0.1:progs/fp/Makefile
+#	$(APP_CC) texrect.o readtex.o $(LIBS) -o $@
 
 texrect.o: texrect.c readtex.h
 	$(APP_CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) $< -o $@
 
 invert: invert.o readtex.o
-<<<<<<< HEAD:progs/fp/Makefile
 	$(CC) $(CFLAGS) $(LDFLAGS) invert.o readtex.o $(LIBS) -o $@
-=======
-	$(APP_CC) invert.o readtex.o $(LIBS) -o $@
->>>>>>> origin/gallium-0.1:progs/fp/Makefile
+#	$(APP_CC) invert.o readtex.o $(LIBS) -o $@
 
 invert.o: invert.c readtex.h
 	$(APP_CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) $< -o $@

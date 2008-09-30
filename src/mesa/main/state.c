@@ -51,8 +51,6 @@
 #include "texstate.h"
 
 
-
-
 static void
 update_separate_specular(GLcontext *ctx)
 {
@@ -317,10 +315,10 @@ static void
 update_multisample(GLcontext *ctx)
 {
    ctx->Multisample._Enabled = GL_FALSE;
-   if (ctx->DrawBuffer) {
-      if (ctx->DrawBuffer->Visual.sampleBuffers)
-         ctx->Multisample._Enabled = GL_TRUE;
-   }
+   if (ctx->Multisample.Enabled &&
+       ctx->DrawBuffer &&
+       ctx->DrawBuffer->Visual.sampleBuffers)
+      ctx->Multisample._Enabled = GL_TRUE;
 }
 
 

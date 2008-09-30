@@ -44,6 +44,7 @@
 #ifndef CSO_HASH_H
 #define CSO_HASH_H
 
+#include "pipe/p_compiler.h"
 
 #ifdef	__cplusplus
 extern "C" {
@@ -94,6 +95,11 @@ struct cso_hash_iter cso_hash_first_node(struct cso_hash *hash);
  * Return an iterator pointing to the first entry in the collision list.
  */
 struct cso_hash_iter cso_hash_find(struct cso_hash *hash, unsigned key);
+
+/**
+ * Returns true if a value with the given key exists in the hash
+ */
+boolean   cso_hash_contains(struct cso_hash *hash, unsigned key);
 
 
 int       cso_hash_iter_is_null(struct cso_hash_iter iter);

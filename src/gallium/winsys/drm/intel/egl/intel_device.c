@@ -131,7 +131,7 @@ intel_destroy_drawable(struct egl_drm_drawable *drawable)
 	drawable->priv = NULL;
 
 	assert(intelfb->stfb);
-	st_unreference_framebuffer(&intelfb->stfb);
+	st_unreference_framebuffer(intelfb->stfb);
 	free(intelfb);
 	return TRUE;
 }

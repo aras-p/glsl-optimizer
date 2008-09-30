@@ -26,14 +26,14 @@
  **************************************************************************/
 
 
-#include "glheader.h"
-#include "context.h"
-#include "matrix.h"
-#include "simple_list.h"
-#include "extensions.h"
-#include "framebuffer.h"
-#include "imports.h"
-#include "points.h"
+#include "main/glheader.h"
+#include "main/context.h"
+#include "main/matrix.h"
+#include "main/simple_list.h"
+#include "main/extensions.h"
+#include "main/framebuffer.h"
+#include "main/imports.h"
+#include "main/points.h"
 
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
@@ -179,6 +179,9 @@ intelGetString(GLcontext * ctx, GLenum name)
       case PCI_CHIP_Q45_G:
          chipset = "Intel(R) Q45/Q43";
          break;
+      case PCI_CHIP_G41_G:
+         chipset = "Intel(R) G41";
+         break;
       default:
          chipset = "Unknown Intel Chipset";
          break;
@@ -229,6 +232,9 @@ intel_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
 						attachments, i,
 						&count,
 						drawable->loaderPrivate);
+
+   if (buffers == NULL)
+      return;
 
    drawable->x = 0;
    drawable->y = 0;
@@ -295,8 +301,9 @@ intel_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
        }
        else
           region = intel_region_alloc_for_handle(intel, buffers[i].cpp,
-						 buffers[i].pitch / buffers[i].cpp,
+						 drawable->w,
 						 drawable->h,
+						 buffers[i].pitch / buffers[i].cpp,
 						 buffers[i].name,
 						 region_name);
 
@@ -543,7 +550,7 @@ intelFinish(GLcontext * ctx)
 
 #ifdef I915_MMIO_READ
 static void
-intelBeginQuery(GLcontext *ctx, GLenum target, struct gl_query_object *q)
+intelBeginQuery(GLcontext *ctx, struct gl_query_object *q)
 {
 	struct intel_context *intel = intel_context( ctx );
 	struct drm_i915_mmio io = {
@@ -557,7 +564,7 @@ intelBeginQuery(GLcontext *ctx, GLenum target, struct gl_query_object *q)
 }
 
 static void
-intelEndQuery(GLcontext *ctx, GLenum target, struct gl_query_object *q)
+intelEndQuery(GLcontext *ctx, struct gl_query_object *q)
 {
 	struct intel_context *intel = intel_context( ctx );
 	GLuint64EXT tmp;	
@@ -815,8 +822,6 @@ intelDestroyContext(__DRIcontextPrivate * driContextPriv)
 
       /* free the Mesa context */
       _mesa_free_context_data(&intel->ctx);
-
-      dri_bufmgr_destroy(intel->bufmgr);
    }
 }
 

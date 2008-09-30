@@ -2,19 +2,19 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "glheader.h"
-#include "macros.h"
-#include "mtypes.h"
-#include "enums.h"
-#include "colortab.h"
-#include "convolve.h"
-#include "context.h"
-#include "simple_list.h"
-#include "texcompress.h"
-#include "texformat.h"
-#include "texobj.h"
-#include "texstore.h"
-#include "teximage.h"
+#include "main/glheader.h"
+#include "main/macros.h"
+#include "main/mtypes.h"
+#include "main/enums.h"
+#include "main/colortab.h"
+#include "main/convolve.h"
+#include "main/context.h"
+#include "main/simple_list.h"
+#include "main/texcompress.h"
+#include "main/texformat.h"
+#include "main/texobj.h"
+#include "main/texstore.h"
+#include "main/teximage.h"
 
 #include "intel_context.h"
 #include "intel_mipmap_tree.h"
@@ -733,6 +733,12 @@ intelSetTexBuffer(__DRIcontext *pDRICtx, GLint target, __DRIdrawable *dPriv)
    intel_update_renderbuffers(pDRICtx, dPriv);
 
    rb = intel_fb->color_rb[0];
+   /* If the region isn't set, then intel_update_renderbuffers was unable
+    * to get the buffers for the drawable.
+    */
+   if (rb->region == NULL)
+      return;
+
    type = GL_BGRA;
    format = GL_UNSIGNED_BYTE;
    internalFormat = (rb->region->cpp == 3 ? 3 : 4);
@@ -751,7 +757,7 @@ intelSetTexBuffer(__DRIcontext *pDRICtx, GLint target, __DRIdrawable *dPriv)
    intelObj->mt = mt;
    texImage = _mesa_get_tex_image(&intel->ctx, texObj, target, level);
    _mesa_init_teximage_fields(&intel->ctx, target, texImage,
-			      rb->region->pitch, rb->region->height, 1,
+			      rb->region->width, rb->region->height, 1,
 			      0, internalFormat);
 
    intelImage = intel_texture_image(texImage);

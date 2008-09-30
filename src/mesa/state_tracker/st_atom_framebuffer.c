@@ -144,18 +144,13 @@ update_framebuffer_state( struct st_context *st )
 
    cso_set_framebuffer(st->cso_context, framebuffer);
 
-#if 0
-   if (fb->_ColorDrawBufferMask[0] & BUFFER_BIT_FRONT_LEFT) {
+   if (fb->_ColorDrawBufferIndexes[0] == BUFFER_FRONT_LEFT) {
       if (st->frontbuffer_status == FRONT_STATUS_COPY_OF_BACK) {
          /* XXX copy back buf to front? */
       }
       /* we're assuming we'll really draw to the front buffer */
       st->frontbuffer_status = FRONT_STATUS_DIRTY;
    }
-#else
-#warning "fix me"
-   st->frontbuffer_status = FRONT_STATUS_DIRTY;
-#endif
 }
 
 

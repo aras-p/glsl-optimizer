@@ -44,7 +44,6 @@
 #define FEATURE_dlist  _HAVE_FULL_GL
 #define FEATURE_draw_read_buffer  _HAVE_FULL_GL
 #define FEATURE_drawpix  _HAVE_FULL_GL
-#define FEATURE_es2_glsl 0
 #define FEATURE_evaluators  _HAVE_FULL_GL
 #define FEATURE_feedback  _HAVE_FULL_GL
 #define FEATURE_fixedpt 0
@@ -56,6 +55,8 @@
 #define FEATURE_texture_s3tc  _HAVE_FULL_GL
 #define FEATURE_userclip  _HAVE_FULL_GL
 #define FEATURE_vertex_array_byte 0
+#define FEATURE_windowpos  _HAVE_FULL_GL
+#define FEATURE_es2_glsl 0
 
 #define FEATURE_ARB_occlusion_query  _HAVE_FULL_GL
 #define FEATURE_ARB_fragment_program  _HAVE_FULL_GL

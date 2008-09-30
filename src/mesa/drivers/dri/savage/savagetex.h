@@ -26,7 +26,7 @@
 #ifndef SAVAGETEX_INC
 #define SAVAGETEX_INC
 
-#include "mtypes.h"
+#include "main/mtypes.h"
 
 #include "savagecontext.h"
 #include "texmem.h"

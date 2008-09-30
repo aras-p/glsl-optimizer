@@ -203,6 +203,13 @@ pool_bufmgr_create_buffer(struct pb_manager *mgr,
 
 
 static void
+pool_bufmgr_flush(struct pb_manager *mgr)
+{
+   /* No-op */
+}
+
+
+static void
 pool_bufmgr_destroy(struct pb_manager *mgr)
 {
    struct pool_pb_manager *pool = pool_pb_manager(mgr);
@@ -238,6 +245,7 @@ pool_bufmgr_create(struct pb_manager *provider,
 
    pool->base.destroy = pool_bufmgr_destroy;
    pool->base.create_buffer = pool_bufmgr_create_buffer;
+   pool->base.flush = pool_bufmgr_flush;
 
    LIST_INITHEAD(&pool->free);
 

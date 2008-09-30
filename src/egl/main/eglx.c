@@ -44,7 +44,7 @@
 #include "eglx.h"
 
 
-static const char *DefaultDRIDriver = "egl_xdri";
+static const char *DefaultGLXDriver = "egl_glx";
 static const char *DefaultSoftDriver = "egl_softpipe";
 
 
@@ -52,7 +52,7 @@ static const char *DefaultSoftDriver = "egl_softpipe";
  * Given an X Display ptr (at dpy->Xdpy) try to determine the appropriate
  * device driver.  Return its name.
  *
- * This boils down to whether to use the egl_xdri.so driver which will
+ * This boils down to whether to use the egl_glx.so driver which will
  * load a DRI driver or the egl_softpipe.so driver that'll do software
  * rendering on Xlib.
  */
@@ -82,9 +82,8 @@ _xeglChooseDriver(_EGLDisplay *dpy)
    /* See if we can choose a DRI/DRM driver */
    driverName = _eglChooseDRMDriver(screen);
    if (driverName) {
-      /* DRI is available */
       free((void *) driverName);
-      driverName = _eglstrdup(DefaultDRIDriver);
+      driverName = _eglstrdup(DefaultGLXDriver);
    }
    else {
       driverName = _eglstrdup(DefaultSoftDriver);

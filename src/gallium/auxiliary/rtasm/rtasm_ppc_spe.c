@@ -27,11 +27,15 @@
  * Real-time assembly generation interface for Cell B.E. SPEs.
  *
  * \author Ian Romanick <idr@us.ibm.com>
+ * \author Brian Paul
  */
 
+
+#include <stdio.h>
 #include "pipe/p_compiler.h"
 #include "util/u_memory.h"
 #include "rtasm_ppc_spe.h"
+
 
 #ifdef GALLIUM_CELL
 /**
@@ -143,8 +147,25 @@ union spe_inst_RI18 {
 /*@}*/
 
 
+static void
+indent(const struct spe_function *p)
+{
+   int i;
+   for (i = 0; i < p->indent; i++) {
+      putchar(' ');
+   }
+}
+
+
+static const char *
+rem_prefix(const char *longname)
+{
+   return longname + 4;
+}
+
+
 static void emit_RR(struct spe_function *p, unsigned op, unsigned rT,
-		    unsigned rA, unsigned rB)
+		    unsigned rA, unsigned rB, const char *name)
 {
     union spe_inst_RR inst;
     inst.inst.op = op;
@@ -153,11 +174,15 @@ static void emit_RR(struct spe_function *p, unsigned op, unsigned rT,
     inst.inst.rT = rT;
     p->store[p->num_inst++] = inst.bits;
     assert(p->num_inst <= p->max_inst);
+    if (p->print) {
+       indent(p);
+       printf("%s\t$%d, $%d, $%d\n", rem_prefix(name), rT, rA, rB);
+    }
 }
 
 
 static void emit_RRR(struct spe_function *p, unsigned op, unsigned rT,
-		    unsigned rA, unsigned rB, unsigned rC)
+                     unsigned rA, unsigned rB, unsigned rC, const char *name)
 {
     union spe_inst_RRR inst;
     inst.inst.op = op;
@@ -167,11 +192,15 @@ static void emit_RRR(struct spe_function *p, unsigned op, unsigned rT,
     inst.inst.rC = rC;
     p->store[p->num_inst++] = inst.bits;
     assert(p->num_inst <= p->max_inst);
+    if (p->print) {
+       indent(p);
+       printf("%s\t$%d, $%d, $%d, $%d\n", rem_prefix(name), rT, rA, rB, rC);
+    }
 }
 
 
 static void emit_RI7(struct spe_function *p, unsigned op, unsigned rT,
-		     unsigned rA, int imm)
+		     unsigned rA, int imm, const char *name)
 {
     union spe_inst_RI7 inst;
     inst.inst.op = op;
@@ -180,12 +209,16 @@ static void emit_RI7(struct spe_function *p, unsigned op, unsigned rT,
     inst.inst.rT = rT;
     p->store[p->num_inst++] = inst.bits;
     assert(p->num_inst <= p->max_inst);
+    if (p->print) {
+       indent(p);
+       printf("%s\t$%d, $%d, 0x%x\n", rem_prefix(name), rT, rA, imm);
+    }
 }
 
 
 
 static void emit_RI8(struct spe_function *p, unsigned op, unsigned rT,
-		     unsigned rA, int imm)
+		     unsigned rA, int imm, const char *name)
 {
     union spe_inst_RI8 inst;
     inst.inst.op = op;
@@ -194,12 +227,16 @@ static void emit_RI8(struct spe_function *p, unsigned op, unsigned rT,
     inst.inst.rT = rT;
     p->store[p->num_inst++] = inst.bits;
     assert(p->num_inst <= p->max_inst);
+    if (p->print) {
+       indent(p);
+       printf("%s\t$%d, $%d, 0x%x\n", rem_prefix(name), rT, rA, imm);
+    }
 }
 
 
 
 static void emit_RI10(struct spe_function *p, unsigned op, unsigned rT,
-		      unsigned rA, int imm)
+		      unsigned rA, int imm, const char *name)
 {
     union spe_inst_RI10 inst;
     inst.inst.op = op;
@@ -208,11 +245,19 @@ static void emit_RI10(struct spe_function *p, unsigned op, unsigned rT,
     inst.inst.rT = rT;
     p->store[p->num_inst++] = inst.bits;
     assert(p->num_inst <= p->max_inst);
+    if (p->print) {
+       indent(p);
+       if (strcmp(name, "spe_lqd") == 0 ||
+           strcmp(name, "spe_stqd") == 0)
+          printf("%s\t$%d, 0x%x($%d)\n", rem_prefix(name), rT, imm, rA);
+       else
+          printf("%s\t$%d, $%d, 0x%x\n", rem_prefix(name), rT, rA, imm);
+    }
 }
 
 
 static void emit_RI16(struct spe_function *p, unsigned op, unsigned rT,
-		      int imm)
+		      int imm, const char *name)
 {
     union spe_inst_RI16 inst;
     inst.inst.op = op;
@@ -220,11 +265,15 @@ static void emit_RI16(struct spe_function *p, unsigned op, unsigned rT,
     inst.inst.rT = rT;
     p->store[p->num_inst++] = inst.bits;
     assert(p->num_inst <= p->max_inst);
+    if (p->print) {
+       indent(p);
+       printf("%s\t$%d, 0x%x\n", rem_prefix(name), rT, imm);
+    }
 }
 
 
 static void emit_RI18(struct spe_function *p, unsigned op, unsigned rT,
-		      int imm)
+		      int imm, const char *name)
 {
     union spe_inst_RI18 inst;
     inst.inst.op = op;
@@ -232,6 +281,10 @@ static void emit_RI18(struct spe_function *p, unsigned op, unsigned rT,
     inst.inst.rT = rT;
     p->store[p->num_inst++] = inst.bits;
     assert(p->num_inst <= p->max_inst);
+    if (p->print) {
+       indent(p);
+       printf("%s\t$%d, 0x%x\n", rem_prefix(name), rT, imm);
+    }
 }
 
 
@@ -240,61 +293,61 @@ static void emit_RI18(struct spe_function *p, unsigned op, unsigned rT,
 #define EMIT_(_name, _op) \
 void _name (struct spe_function *p, unsigned rT) \
 { \
-    emit_RR(p, _op, rT, 0, 0); \
+   emit_RR(p, _op, rT, 0, 0, __FUNCTION__); \
 }
 
 #define EMIT_R(_name, _op) \
 void _name (struct spe_function *p, unsigned rT, unsigned rA) \
 { \
-    emit_RR(p, _op, rT, rA, 0); \
+   emit_RR(p, _op, rT, rA, 0, __FUNCTION__);                 \
 }
 
 #define EMIT_RR(_name, _op) \
 void _name (struct spe_function *p, unsigned rT, unsigned rA, unsigned rB) \
 { \
-    emit_RR(p, _op, rT, rA, rB); \
+   emit_RR(p, _op, rT, rA, rB, __FUNCTION__);                \
 }
 
 #define EMIT_RRR(_name, _op) \
 void _name (struct spe_function *p, unsigned rT, unsigned rA, unsigned rB, unsigned rC) \
 { \
-    emit_RRR(p, _op, rT, rA, rB, rC); \
+   emit_RRR(p, _op, rT, rA, rB, rC, __FUNCTION__);           \
 }
 
 #define EMIT_RI7(_name, _op) \
 void _name (struct spe_function *p, unsigned rT, unsigned rA, int imm) \
 { \
-    emit_RI7(p, _op, rT, rA, imm); \
+   emit_RI7(p, _op, rT, rA, imm, __FUNCTION__);              \
 }
 
 #define EMIT_RI8(_name, _op, bias) \
 void _name (struct spe_function *p, unsigned rT, unsigned rA, int imm) \
 { \
-    emit_RI8(p, _op, rT, rA, bias - imm); \
+   emit_RI8(p, _op, rT, rA, bias - imm, __FUNCTION__);       \
 }
 
 #define EMIT_RI10(_name, _op) \
 void _name (struct spe_function *p, unsigned rT, unsigned rA, int imm) \
 { \
-    emit_RI10(p, _op, rT, rA, imm); \
+   emit_RI10(p, _op, rT, rA, imm, __FUNCTION__);             \
 }
 
 #define EMIT_RI16(_name, _op) \
 void _name (struct spe_function *p, unsigned rT, int imm) \
 { \
-    emit_RI16(p, _op, rT, imm); \
+   emit_RI16(p, _op, rT, imm, __FUNCTION__);                 \
 }
 
 #define EMIT_RI18(_name, _op) \
 void _name (struct spe_function *p, unsigned rT, int imm) \
 { \
-    emit_RI18(p, _op, rT, imm); \
+   emit_RI18(p, _op, rT, imm, __FUNCTION__);                 \
 }
 
 #define EMIT_I16(_name, _op) \
 void _name (struct spe_function *p, int imm) \
 { \
-    emit_RI16(p, _op, 0, imm); \
+   emit_RI16(p, _op, 0, imm, __FUNCTION__);                  \
 }
 
 #include "rtasm_ppc_spe.h"
@@ -314,6 +367,9 @@ void spe_init_func(struct spe_function *p, unsigned code_size)
      */
     p->regs[0] = ~7;
     p->regs[1] = (1U << (80 - 64)) - 1;
+
+    p->print = false;
+    p->indent = 0;
 }
 
 
@@ -327,8 +383,15 @@ void spe_release_func(struct spe_function *p)
 }
 
 
+/** Return current code size in bytes. */
+unsigned spe_code_size(const struct spe_function *p)
+{
+   return p->num_inst * SPE_INST_SIZE;
+}
+
+
 /**
- * Alloate a SPE register.
+ * Allocate a SPE register.
  * \return register index or -1 if none left.
  */
 int spe_allocate_available_register(struct spe_function *p)
@@ -382,6 +445,32 @@ void spe_release_register(struct spe_function *p, int reg)
 }
 
 
+void
+spe_print_code(struct spe_function *p, boolean enable)
+{
+   p->print = enable;
+}
+
+
+void
+spe_indent(struct spe_function *p, int spaces)
+{
+   p->indent += spaces;
+}
+
+
+extern void
+spe_comment(struct spe_function *p, int rel_indent, const char *s)
+{
+   if (p->print) {
+      p->indent += rel_indent;
+      indent(p);
+      p->indent -= rel_indent;
+      printf("# %s\n", s);
+   }
+}
+
+
 /**
  * For branch instructions:
  * \param d  if 1, disable interupts if branch is taken
@@ -392,51 +481,51 @@ void spe_release_register(struct spe_function *p, int reg)
 /** Branch Indirect to address in rA */
 void spe_bi(struct spe_function *p, unsigned rA, int d, int e)
 {
-    emit_RI7(p, 0x1a8, 0, rA, (d << 5) | (e << 4));
+   emit_RI7(p, 0x1a8, 0, rA, (d << 5) | (e << 4), __FUNCTION__);
 }
 
 /** Interupt Return */
 void spe_iret(struct spe_function *p, unsigned rA, int d, int e)
 {
-    emit_RI7(p, 0x1aa, 0, rA, (d << 5) | (e << 4));
+   emit_RI7(p, 0x1aa, 0, rA, (d << 5) | (e << 4), __FUNCTION__);
 }
 
 /** Branch indirect and set link on external data */
 void spe_bisled(struct spe_function *p, unsigned rT, unsigned rA, int d,
 		int e)
 {
-    emit_RI7(p, 0x1ab, rT, rA, (d << 5) | (e << 4));
+   emit_RI7(p, 0x1ab, rT, rA, (d << 5) | (e << 4), __FUNCTION__);
 }
 
 /** Branch indirect and set link.  Save PC in rT, jump to rA. */
 void spe_bisl(struct spe_function *p, unsigned rT, unsigned rA, int d,
 		int e)
 {
-    emit_RI7(p, 0x1a9, rT, rA, (d << 5) | (e << 4));
+   emit_RI7(p, 0x1a9, rT, rA, (d << 5) | (e << 4), __FUNCTION__);
 }
 
 /** Branch indirect if zero word.  If rT.word[0]==0, jump to rA. */
 void spe_biz(struct spe_function *p, unsigned rT, unsigned rA, int d, int e)
 {
-    emit_RI7(p, 0x128, rT, rA, (d << 5) | (e << 4));
+   emit_RI7(p, 0x128, rT, rA, (d << 5) | (e << 4), __FUNCTION__);
 }
 
 /** Branch indirect if non-zero word.  If rT.word[0]!=0, jump to rA. */
 void spe_binz(struct spe_function *p, unsigned rT, unsigned rA, int d, int e)
 {
-    emit_RI7(p, 0x129, rT, rA, (d << 5) | (e << 4));
+   emit_RI7(p, 0x129, rT, rA, (d << 5) | (e << 4), __FUNCTION__);
 }
 
 /** Branch indirect if zero halfword.  If rT.halfword[1]==0, jump to rA. */
 void spe_bihz(struct spe_function *p, unsigned rT, unsigned rA, int d, int e)
 {
-    emit_RI7(p, 0x12a, rT, rA, (d << 5) | (e << 4));
+   emit_RI7(p, 0x12a, rT, rA, (d << 5) | (e << 4), __FUNCTION__);
 }
 
 /** Branch indirect if non-zero halfword.  If rT.halfword[1]!=0, jump to rA. */
 void spe_bihnz(struct spe_function *p, unsigned rT, unsigned rA, int d, int e)
 {
-    emit_RI7(p, 0x12b, rT, rA, (d << 5) | (e << 4));
+   emit_RI7(p, 0x12b, rT, rA, (d << 5) | (e << 4), __FUNCTION__);
 }
 
 
@@ -505,7 +594,28 @@ spe_load_int(struct spe_function *p, unsigned rT, int i)
    }
    else {
       spe_ilhu(p, rT, i >> 16);
-      spe_iohl(p, rT, i & 0xffff);
+      if (i & 0xffff)
+         spe_iohl(p, rT, i & 0xffff);
+   }
+}
+
+void spe_load_uint(struct spe_function *p, unsigned rT, unsigned int ui)
+{
+   /* If the whole value is in the lower 18 bits, use ila, which
+    * doesn't sign-extend.  Otherwise, if the two halfwords of
+    * the constant are identical, use ilh.  Otherwise, we have
+    * to use ilhu followed by iohl.
+    */
+   if ((ui & 0xfffc0000) == ui) {
+      spe_ila(p, rT, ui);
+   }
+   else if ((ui >> 16) == (ui & 0xffff)) {
+      spe_ilh(p, rT, ui & 0xffff);
+   }
+   else {
+      spe_ilhu(p, rT, ui >> 16);
+      if (ui & 0xffff)
+         spe_iohl(p, rT, ui & 0xffff);
    }
 }
 
@@ -513,22 +623,29 @@ spe_load_int(struct spe_function *p, unsigned rT, int i)
 void
 spe_splat(struct spe_function *p, unsigned rT, unsigned rA)
 {
-   spe_ila(p, rT, 66051);
+   /* Duplicate bytes 0, 1, 2, and 3 across the whole register */
+   spe_ila(p, rT, 0x00010203);
    spe_shufb(p, rT, rA, rA, rT);
 }
 
 
 void
-spe_complement(struct spe_function *p, unsigned rT)
+spe_complement(struct spe_function *p, unsigned rT, unsigned rA)
 {
-   spe_nor(p, rT, rT, rT);
+   spe_nor(p, rT, rA, rA);
 }
 
 
 void
 spe_move(struct spe_function *p, unsigned rT, unsigned rA)
 {
-   spe_ori(p, rT, rA, 0);
+   /* Use different instructions depending on the instruction address
+    * to take advantage of the dual pipelines.
+    */
+   if (p->num_inst & 1)
+      spe_shlqbyi(p, rT, rA, 0);  /* odd pipe */
+   else
+      spe_ori(p, rT, rA, 0);  /* even pipe */
 }
 
 
@@ -538,5 +655,71 @@ spe_zero(struct spe_function *p, unsigned rT)
    spe_xor(p, rT, rT, rT);
 }
 
+
+void
+spe_splat_word(struct spe_function *p, unsigned rT, unsigned rA, int word)
+{
+   assert(word >= 0);
+   assert(word <= 3);
+
+   if (word == 0) {
+      int tmp1 = rT;
+      spe_ila(p, tmp1, 66051);
+      spe_shufb(p, rT, rA, rA, tmp1);
+   }
+   else {
+      /* XXX review this, we may not need the rotqbyi instruction */
+      int tmp1 = rT;
+      int tmp2 = spe_allocate_available_register(p);
+
+      spe_ila(p, tmp1, 66051);
+      spe_rotqbyi(p, tmp2, rA, 4 * word);
+      spe_shufb(p, rT, tmp2, tmp2, tmp1);
+
+      spe_release_register(p, tmp2);
+   }
+}
+
+/**
+ * For each 32-bit float element of rA and rB, choose the smaller of the
+ * two, compositing them into the rT register.
+ * 
+ * The Float Compare Greater Than (fcgt) instruction will put 1s into
+ * compare_reg where rA > rB, and 0s where rA <= rB.
+ *
+ * Then the Select Bits (selb) instruction will take bits from rA where
+ * compare_reg is 0, and from rB where compare_reg is 1; i.e., from rA
+ * where rA <= rB and from rB where rB > rA, which is exactly the
+ * "min" operation.
+ *
+ * The compare_reg could in many cases be the same as rT, unless
+ * rT == rA || rt == rB.  But since this is common in constructions
+ * like "x = min(x, a)", we always allocate a new register to be safe.
+ */
+void 
+spe_float_min(struct spe_function *p, unsigned rT, unsigned rA, unsigned rB)
+{
+   unsigned int compare_reg = spe_allocate_available_register(p);
+   spe_fcgt(p, compare_reg, rA, rB);
+   spe_selb(p, rT, rA, rB, compare_reg);
+   spe_release_register(p, compare_reg);
+}
+
+/**
+ * For each 32-bit float element of rA and rB, choose the greater of the
+ * two, compositing them into the rT register.
+ * 
+ * The logic is similar to that of spe_float_min() above; the only
+ * difference is that the registers on spe_selb() have been reversed,
+ * so that the larger of the two is selected instead of the smaller.
+ */
+void 
+spe_float_max(struct spe_function *p, unsigned rT, unsigned rA, unsigned rB)
+{
+   unsigned int compare_reg = spe_allocate_available_register(p);
+   spe_fcgt(p, compare_reg, rA, rB);
+   spe_selb(p, rT, rB, rA, compare_reg);
+   spe_release_register(p, compare_reg);
+}
 
 #endif /* GALLIUM_CELL */

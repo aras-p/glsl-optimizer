@@ -37,9 +37,9 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "sis_lock.h"
 #include "sis_tex.h"
 
-#include "context.h"
-#include "enums.h"
-#include "colormac.h"
+#include "main/context.h"
+#include "main/enums.h"
+#include "main/colormac.h"
 #include "swrast/swrast.h"
 #include "vbo/vbo.h"
 #include "tnl/tnl.h"

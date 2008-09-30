@@ -39,13 +39,13 @@
 #if defined(FX)
 
 #include "fxdrv.h"
-#include "enums.h"
-#include "image.h"
-#include "teximage.h"
-#include "texformat.h"
-#include "texcompress.h"
-#include "texobj.h"
-#include "texstore.h"
+#include "main/enums.h"
+#include "main/image.h"
+#include "main/teximage.h"
+#include "main/texformat.h"
+#include "main/texcompress.h"
+#include "main/texobj.h"
+#include "main/texstore.h"
 
 
 /* no borders! can't halve 1x1! (stride > width * comp) not allowed */

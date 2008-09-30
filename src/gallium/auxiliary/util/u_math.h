@@ -40,6 +40,7 @@
 
 
 #include "pipe/p_compiler.h"
+#include "pipe/p_debug.h"
 
 
 #ifdef __cplusplus
@@ -253,7 +254,7 @@ util_fast_exp2(float x)
 
 
 /**
- * Based on code from http://www.flipcode.com/totd/
+ * Based on code from http://www.flipcode.com/archives/Fast_log_Function.shtml
  */
 static INLINE float
 util_fast_log2(float val)
@@ -272,8 +273,10 @@ util_fast_log2(float val)
 static INLINE float
 util_fast_pow(float x, float y)
 {
-   /* XXX this test may need adjustment */
-   if (y >= 3.0 && -0.02f <= x && x <= 0.02f)
+   /* XXX these tests may need adjustment */
+   if (y >= 3.0f && (-0.02f <= x && x <= 0.02f))
+      return 0.0f;
+   if (y >= 50.0f && (-0.9f <= x && x <= 0.9f))
       return 0.0f;
    return util_fast_exp2(util_fast_log2(x) * y);
 }

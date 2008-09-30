@@ -455,6 +455,11 @@ st_TexImage(GLcontext * ctx,
       _mesa_align_free(texImage->Data);
    }
 
+   if (width == 0 || height == 0 || depth == 0) {
+      /* stop after freeing old image */
+      return;
+   }
+
    /* If this is the only mipmap level in the texture, could call
     * bmBufferData with NULL data to free the old block and avoid
     * waiting on any outstanding fences.
@@ -476,8 +481,15 @@ st_TexImage(GLcontext * ctx,
    if (!stObj->pt) {
       guess_and_alloc_texture(ctx->st, stObj, stImage);
       if (!stObj->pt) {
-         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage");
-         return;
+         /* Probably out of memory.
+          * Try flushing any pending rendering, then retry.
+          */
+         st_finish(ctx->st);
+         guess_and_alloc_texture(ctx->st, stObj, stImage);
+         if (!stObj->pt) {
+            _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage");
+            return;
+         }
       }
    }
 
@@ -737,8 +749,8 @@ st_GetTexImage(GLcontext * ctx, GLenum target, GLint level,
 static void
 st_GetCompressedTexImage(GLcontext *ctx, GLenum target, GLint level,
                          GLvoid *pixels,
-                         const struct gl_texture_object *texObj,
-                         const struct gl_texture_image *texImage)
+                         struct gl_texture_object *texObj,
+                         struct gl_texture_image *texImage)
 {
    st_get_tex_image(ctx, target, level, 0, 0, pixels,
                     (struct gl_texture_object *) texObj,
@@ -1048,7 +1060,8 @@ st_copy_texsubimage(GLcontext *ctx,
    GLboolean use_fallback = GL_TRUE;
    GLboolean matching_base_formats;
 
-   st_flush(ctx->st, PIPE_FLUSH_RENDER_CACHE, NULL);
+   /* any rendering in progress must complete before we grab the fb image */
+   st_finish(ctx->st);
 
    /* determine if copying depth or color data */
    if (texBaseFormat == GL_DEPTH_COMPONENT) {

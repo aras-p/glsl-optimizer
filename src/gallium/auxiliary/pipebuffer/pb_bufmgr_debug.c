@@ -314,6 +314,16 @@ pb_debug_manager_create_buffer(struct pb_manager *_mgr,
 
 
 static void
+pb_debug_manager_flush(struct pb_manager *_mgr)
+{
+   struct pb_debug_manager *mgr = pb_debug_manager(_mgr);
+   assert(mgr->provider->flush);
+   if(mgr->provider->flush)
+      mgr->provider->flush(mgr->provider);
+}
+
+
+static void
 pb_debug_manager_destroy(struct pb_manager *_mgr)
 {
    struct pb_debug_manager *mgr = pb_debug_manager(_mgr);
@@ -336,6 +346,7 @@ pb_debug_manager_create(struct pb_manager *provider, size_t band_size)
 
    mgr->base.destroy = pb_debug_manager_destroy;
    mgr->base.create_buffer = pb_debug_manager_create_buffer;
+   mgr->base.flush = pb_debug_manager_flush;
    mgr->provider = provider;
    mgr->band_size = band_size;
       

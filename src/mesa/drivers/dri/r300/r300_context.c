@@ -35,15 +35,15 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  * \author Nicolai Haehnle <prefect_@gmx.net>
  */
 
-#include "glheader.h"
-#include "api_arrayelt.h"
-#include "context.h"
-#include "simple_list.h"
-#include "imports.h"
-#include "matrix.h"
-#include "extensions.h"
-#include "state.h"
-#include "bufferobj.h"
+#include "main/glheader.h"
+#include "main/api_arrayelt.h"
+#include "main/context.h"
+#include "main/simple_list.h"
+#include "main/imports.h"
+#include "main/matrix.h"
+#include "main/extensions.h"
+#include "main/state.h"
+#include "main/bufferobj.h"
 
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
@@ -355,7 +355,7 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	ctx->Const.FragmentProgram.MaxNativeTexIndirections =
 	    PFS_MAX_TEX_INDIRECT;
 	ctx->Const.FragmentProgram.MaxNativeAddressRegs = 0;	/* and these are?? */
-	_tnl_ProgramCacheInit(ctx);
+	ctx->VertexProgram._MaintainTnlProgram = GL_TRUE;
 	ctx->FragmentProgram._MaintainTexEnvProgram = GL_TRUE;
 
 	driInitExtensions(ctx, card_extensions, GL_TRUE);
@@ -501,7 +501,6 @@ void r300DestroyContext(__DRIcontextPrivate * driContextPriv)
 		release_texture_heaps =
 		    (r300->radeon.glCtx->Shared->RefCount == 1);
 		_swsetup_DestroyContext(r300->radeon.glCtx);
-		_tnl_ProgramCacheDestroy(r300->radeon.glCtx);
 		_tnl_DestroyContext(r300->radeon.glCtx);
 		_vbo_DestroyContext(r300->radeon.glCtx);
 		_swrast_DestroyContext(r300->radeon.glCtx);

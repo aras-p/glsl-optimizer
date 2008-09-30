@@ -32,7 +32,7 @@
 #ifndef __MACH64_VB_H__
 #define __MACH64_VB_H__
 
-#include "mtypes.h"
+#include "main/mtypes.h"
 #include "swrast/swrast.h"
 #include "mach64_context.h"
 

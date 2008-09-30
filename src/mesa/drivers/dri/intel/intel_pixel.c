@@ -25,8 +25,8 @@
  * 
  **************************************************************************/
 
-#include "enums.h"
-#include "state.h"
+#include "main/enums.h"
+#include "main/state.h"
 #include "swrast/swrast.h"
 
 #include "intel_context.h"

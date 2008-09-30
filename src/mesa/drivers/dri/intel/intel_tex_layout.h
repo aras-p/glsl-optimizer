@@ -30,7 +30,7 @@
   *   Michel Dänzer <michel@tungstengraphics.com>
   */
 
-#include "macros.h"
+#include "main/macros.h"
 
 
 static GLuint minify( GLuint d )

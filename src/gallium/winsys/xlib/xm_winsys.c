@@ -349,19 +349,26 @@ xmesa_display_surface_tiled(XMesaBuffer b, const struct pipe_surface *surf)
          if (x + w > surf->width)
             w = surf->width - x;
 
-         offset *= 4 * TILE_SIZE * TILE_SIZE;
+         /* offset in pixels */
+         offset *= TILE_SIZE * TILE_SIZE;
 
-         twiddle_tile((uint *) ((char *) xm_buf->data + offset),
-                      tmpTile);
-         ximage->data = (char*) tmpTile;
-
-         if (XSHM_ENABLED(xm_buf)) {
+         if (0 && XSHM_ENABLED(xm_buf)) {
+            ximage->data = (char *) xm_buf->data + 4 * offset;
+            /* make copy of tile data */
+            memcpy(tmpTile, (uint *) ximage->data, sizeof(tmpTile));
+            /* twiddle from temp to ximage in shared memory */
+            twiddle_tile(tmpTile, (uint *) ximage->data);
+            /* display image in shared memory */
 #if defined(USE_XSHM) && !defined(XFree86Server)
             XShmPutImage(b->xm_visual->display, b->drawable, b->gc,
                          ximage, 0, 0, x, y, w, h, False);
 #endif
          }
          else {
+            /* twiddle from ximage buffer to temp tile */
+            twiddle_tile((uint *) xm_buf->data + offset, tmpTile);
+            /* display temp tile data */
+            ximage->data = (char *) tmpTile;
             XPutImage(b->xm_visual->display, b->drawable, b->gc,
                       ximage, 0, 0, x, y, w, h);
          }

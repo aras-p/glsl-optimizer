@@ -11,11 +11,11 @@
 #include "s3v_regs.h"
 #include "s3v_macros.h"
 #include "s3v_screen.h"
-#include "colormac.h"
-#include "macros.h"
-#include "mtypes.h"
+#include "main/colormac.h"
+#include "main/macros.h"
+#include "main/mtypes.h"
 #include "drm.h"
-#include "mm.h"
+#include "main/mm.h"
 #include "drirenderbuffer.h"
 
 /* Flags for context */

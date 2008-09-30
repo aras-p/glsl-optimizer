@@ -123,7 +123,6 @@ _eglFillInConfigs(_EGLConfig * configs,
                   const GLenum * db_modes, unsigned num_db_modes,
                   int visType)
 {
-#if 0
    static const uint8_t bits_table[3][4] = {
             /* R  G  B  A */
             { 5, 6, 5, 0 },  /* Any GL_UNSIGNED_SHORT_5_6_5 */
@@ -214,6 +213,7 @@ _eglFillInConfigs(_EGLConfig * configs,
       masks = masks_table_rgba[index];
       break;
 
+#if 0
    case GL_BGR:
       bits = (bytes_per_pixel[index] == 2) ? bits_table[0] : bits_table[1];
       masks = masks_table_bgr[index];
@@ -223,6 +223,7 @@ _eglFillInConfigs(_EGLConfig * configs,
       bits = (bytes_per_pixel[index] == 2) ? bits_table[0] : bits_table[2];
       masks = masks_table_bgra[index];
       break;
+#endif
 
    default:
       _eglLog(_EGL_WARNING,
@@ -253,8 +254,5 @@ _eglFillInConfigs(_EGLConfig * configs,
       }
    }
    return GL_TRUE;
-#else
-   return GL_FALSE;
-#endif
 }
 

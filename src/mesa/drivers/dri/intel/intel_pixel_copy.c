@@ -25,12 +25,12 @@
  * 
  **************************************************************************/
 
-#include "glheader.h"
-#include "enums.h"
-#include "image.h"
-#include "state.h"
-#include "mtypes.h"
-#include "macros.h"
+#include "main/glheader.h"
+#include "main/enums.h"
+#include "main/image.h"
+#include "main/state.h"
+#include "main/mtypes.h"
+#include "main/macros.h"
 #include "swrast/swrast.h"
 
 #include "intel_screen.h"
@@ -135,10 +135,20 @@ do_texture_copypixels(GLcontext * ctx,
       srcbox.x2 = srcx + width;
       srcbox.y2 = srcy + height;
 
-      dstbox.x1 = dstx;
-      dstbox.y1 = dsty;
-      dstbox.x2 = dstx + width * ctx->Pixel.ZoomX;
-      dstbox.y2 = dsty + height * ctx->Pixel.ZoomY;
+      if (ctx->Pixel.ZoomX > 0) {
+	 dstbox.x1 = dstx;
+	 dstbox.x2 = dstx + width * ctx->Pixel.ZoomX;
+      } else {
+	 dstbox.x1 = dstx + width * ctx->Pixel.ZoomX;
+	 dstbox.x2 = dstx;
+      }
+      if (ctx->Pixel.ZoomY > 0) {
+	 dstbox.y1 = dsty;
+	 dstbox.y2 = dsty + height * ctx->Pixel.ZoomY;
+      } else {
+	 dstbox.y1 = dsty + height * ctx->Pixel.ZoomY;
+	 dstbox.y2 = dsty;
+      }
 
       DBG("src %d,%d %d,%d\n", srcbox.x1, srcbox.y1, srcbox.x2, srcbox.y2);
       DBG("dst %d,%d %d,%d (%dx%d) (%f,%f)\n", dstbox.x1, dstbox.y1, dstbox.x2, dstbox.y2,

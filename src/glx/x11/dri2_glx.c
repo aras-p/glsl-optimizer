@@ -35,7 +35,6 @@
 #include <X11/Xlib.h>
 #include <X11/extensions/Xfixes.h>
 #include <X11/extensions/Xdamage.h>
-#include "glheader.h"
 #include "glxclient.h"
 #include "glcontextmodes.h"
 #include "xf86dri.h"
@@ -211,6 +210,9 @@ dri2GetBuffers(__DRIdrawable *driDrawable,
 
     buffers = DRI2GetBuffers(pdraw->base.psc->dpy, pdraw->base.xDrawable,
 			     width, height, attachments, count, out_count);
+    if (buffers == NULL)
+       return NULL;
+
     pdraw->width = *width;
     pdraw->height = *height;
 

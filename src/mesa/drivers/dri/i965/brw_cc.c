@@ -34,8 +34,8 @@
 #include "brw_state.h"
 #include "brw_defines.h"
 #include "brw_util.h"
-#include "macros.h"
-#include "enums.h"
+#include "main/macros.h"
+#include "main/enums.h"
 
 static void prepare_cc_vp( struct brw_context *brw )
 {

@@ -35,23 +35,23 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  * \author Nicolai Haehnle <prefect_@gmx.net>
  */
 
-#include "glheader.h"
-#include "state.h"
-#include "imports.h"
-#include "enums.h"
-#include "macros.h"
-#include "context.h"
-#include "dd.h"
-#include "simple_list.h"
+#include "main/glheader.h"
+#include "main/state.h"
+#include "main/imports.h"
+#include "main/enums.h"
+#include "main/macros.h"
+#include "main/context.h"
+#include "main/dd.h"
+#include "main/simple_list.h"
+#include "main/api_arrayelt.h"
+#include "main/texformat.h"
 
-#include "api_arrayelt.h"
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
 #include "shader/prog_parameter.h"
 #include "shader/prog_statevars.h"
 #include "vbo/vbo.h"
 #include "tnl/tnl.h"
-#include "texformat.h"
 
 #include "radeon_ioctl.h"
 #include "radeon_state.h"

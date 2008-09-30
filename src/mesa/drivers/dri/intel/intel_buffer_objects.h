@@ -28,7 +28,7 @@
 #ifndef INTEL_BUFFEROBJ_H
 #define INTEL_BUFFEROBJ_H
 
-#include "mtypes.h"
+#include "main/mtypes.h"
 
 struct intel_context;
 struct intel_region;

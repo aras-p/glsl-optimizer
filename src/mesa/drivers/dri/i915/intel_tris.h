@@ -28,7 +28,7 @@
 #ifndef INTELTRIS_INC
 #define INTELTRIS_INC
 
-#include "mtypes.h"
+#include "main/mtypes.h"
 
 #define INTEL_VB_SIZE		(32 * 1024)
 /** 3 dwords of state_immediate and 2 of 3dprim, in intel_flush_prim */
