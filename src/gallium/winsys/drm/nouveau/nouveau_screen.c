@@ -114,7 +114,7 @@ nouveau_destroy_buffer(__DRIdrawablePrivate * driDrawPriv)
 	struct nouveau_framebuffer *nvfb;
 	
 	nvfb = (struct nouveau_framebuffer *)driDrawPriv->driverPrivate;
-	st_unreference_framebuffer(&nvfb->stfb);
+	st_unreference_framebuffer(nvfb->stfb);
 	free(nvfb);
 }
 
@@ -133,8 +133,9 @@ nouveau_fill_in_modes(__DRIscreenPrivate *psp,
 		GLX_NONE, GLX_SWAP_UNDEFINED_OML,
 	};
 
-	u_int8_t depth_bits_array[3];
-	u_int8_t stencil_bits_array[3];
+	uint8_t depth_bits_array[3];
+	uint8_t stencil_bits_array[3];
+	uint8_t msaa_samples_array[1];
 
 	depth_bits_array[0] = 0;
 	depth_bits_array[1] = depth_bits;
@@ -148,8 +149,9 @@ nouveau_fill_in_modes(__DRIscreenPrivate *psp,
 	stencil_bits_array[1] = 0;
 	if (depth_bits == 24)
 		stencil_bits_array[1] = (stencil_bits == 0) ? 8 : stencil_bits;
-
 	stencil_bits_array[2] = (stencil_bits == 0) ? 8 : stencil_bits;
+
+	msaa_samples_array[0] = 0;
 
 	depth_buffer_factor =
 		((depth_bits != 0) || (stencil_bits != 0)) ? 3 : 1;
@@ -167,7 +169,7 @@ nouveau_fill_in_modes(__DRIscreenPrivate *psp,
 	configs = driCreateConfigs(fb_format, fb_type,
 				   depth_bits_array, stencil_bits_array,
 				   depth_buffer_factor, back_buffer_modes,
-				   back_buffer_factor);
+				   back_buffer_factor, msaa_samples_array, 1);
 	if (configs == NULL) {
 	 fprintf(stderr, "[%s:%u] Error creating FBConfig!\n",
 			 __func__, __LINE__);
