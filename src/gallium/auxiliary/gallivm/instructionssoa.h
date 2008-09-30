@@ -69,6 +69,8 @@ public:
    std::vector<llvm::Value*> pow(const std::vector<llvm::Value*> in1,
                                  const std::vector<llvm::Value*> in2);
    std::vector<llvm::Value*> rsq(const std::vector<llvm::Value*> in1);
+   std::vector<llvm::Value*> slt(const std::vector<llvm::Value*> in1,
+                                 const std::vector<llvm::Value*> in2);
    std::vector<llvm::Value*> sub(const std::vector<llvm::Value*> in1,
                                  const std::vector<llvm::Value*> in2);
    void         end();

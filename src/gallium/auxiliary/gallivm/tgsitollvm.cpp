@@ -767,6 +767,7 @@ translate_instructionir(llvm::Module *module,
    }
       break;
    case TGSI_OPCODE_SLT: {
+      out = instr->slt(inputs[0], inputs[1]);
    }
       break;
    case TGSI_OPCODE_SGE: {

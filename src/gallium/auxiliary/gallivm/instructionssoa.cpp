@@ -181,6 +181,7 @@ void InstructionsSoa::createFunctionMap()
    m_functionsMap[TGSI_OPCODE_POWER] = "pow";
    m_functionsMap[TGSI_OPCODE_LIT]   = "lit";
    m_functionsMap[TGSI_OPCODE_RSQ]   = "rsq";
+   m_functionsMap[TGSI_OPCODE_SLT]   = "slt";
 }
 
 void InstructionsSoa::createDependencies()
@@ -277,6 +278,14 @@ std::vector<llvm::Value*> InstructionsSoa::dp3(const std::vector<llvm::Value*> i
                                                const std::vector<llvm::Value*> in2)
 {
    llvm::Function *func = function(TGSI_OPCODE_DP3);
+   return callBuiltin(func, in1, in2);
+}
+
+
+std::vector<llvm::Value*> InstructionsSoa::slt(const std::vector<llvm::Value*> in1,
+                                               const std::vector<llvm::Value*> in2)
+{
+   llvm::Function *func = function(TGSI_OPCODE_SLT);
    return callBuiltin(func, in1, in2);
 }
 
