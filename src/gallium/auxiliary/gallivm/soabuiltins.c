@@ -36,6 +36,8 @@ typedef __attribute__(( ext_vector_type(4) )) float float4;
 
 extern float fabsf(float val);
 
+/* helpers */
+
 float4 absvec(float4 vec)
 {
    float4 res;
@@ -46,6 +48,58 @@ float4 absvec(float4 vec)
 
    return res;
 }
+
+float4 maxvec(float4 a, float4 b)
+{
+   return (float4){(a.x > b.x) ? a.x : b.x,
+         (a.y > b.y) ? a.y : b.y,
+         (a.z > b.z) ? a.z : b.z,
+         (a.w > b.w) ? a.w : b.w};
+}
+
+float4 minvec(float4 a, float4 b)
+{
+   return (float4){(a.x < b.x) ? a.x : b.x,
+         (a.y < b.y) ? a.y : b.y,
+         (a.z < b.z) ? a.z : b.z,
+         (a.w < b.w) ? a.w : b.w};
+}
+
+extern float powf(float num, float p);
+extern float sqrtf(float x);
+
+float4 powvec(float4 vec, float4 q)
+{
+   float4 p;
+   p.x = powf(vec.x, q.x);
+   p.y = powf(vec.y, q.y);
+   p.z = powf(vec.z, q.z);
+   p.w = powf(vec.w, q.w);
+   return p;
+}
+
+float4 sqrtvec(float4 vec)
+{
+   float4 p;
+   p.x = sqrtf(vec.x);
+   p.y = sqrtf(vec.y);
+   p.z = sqrtf(vec.z);
+   p.w = sqrtf(vec.w);
+   return p;
+}
+
+float4 sltvec(float4 v1, float4 v2)
+{
+   float4 p;
+   p.x = (v1.x < v2.x) ? 1.0 : 0.0;
+   p.y = (v1.y < v2.y) ? 1.0 : 0.0;
+   p.z = (v1.z < v2.z) ? 1.0 : 0.0;
+   p.w = (v1.w < v2.w) ? 1.0 : 0.0;
+   return p;
+}
+
+
+/* instructions */
 
 void abs(float4 *res,
          float4 tmp0x, float4 tmp0y, float4 tmp0z, float4 tmp0w)
@@ -69,7 +123,6 @@ void dp3(float4 *res,
    res[3] = dot;
 }
 
-
 void dp4(float4 *res,
          float4 tmp0x, float4 tmp0y, float4 tmp0z, float4 tmp0w,
          float4 tmp1x, float4 tmp1y, float4 tmp1z, float4 tmp1w)
@@ -82,67 +135,6 @@ void dp4(float4 *res,
    res[2] = dot;
    res[3] = dot;
 }
-
-extern float powf(float num, float p);
-extern float sqrtf(float x);
-
-float4 powvec(float4 vec, float4 q)
-{
-   float4 p;
-   p.x = powf(vec.x, q.x);
-   p.y = powf(vec.y, q.y);
-   p.z = powf(vec.z, q.z);
-   p.w = powf(vec.w, q.w);
-   return p;
-}
-
-void pow(float4 *res,
-         float4 tmp0x, float4 tmp0y, float4 tmp0z, float4 tmp0w,
-         float4 tmp1x, float4 tmp1y, float4 tmp1z, float4 tmp1w)
-{
-   res[0] = powvec(tmp0x, tmp1x);
-   res[1] = res[0];
-   res[2] = res[0];
-   res[3] = res[0];
-}
-
-float4 minvec(float4 a, float4 b)
-{
-   return (float4){(a.x < b.x) ? a.x : b.x,
-         (a.y < b.y) ? a.y : b.y,
-         (a.z < b.z) ? a.z : b.z,
-         (a.w < b.w) ? a.w : b.w};
-}
-
-void min(float4 *res,
-         float4 tmp0x, float4 tmp0y, float4 tmp0z, float4 tmp0w,
-         float4 tmp1x, float4 tmp1y, float4 tmp1z, float4 tmp1w)
-{
-   res[0] = minvec(tmp0x, tmp1x);
-   res[1] = minvec(tmp0y, tmp1y);
-   res[2] = minvec(tmp0z, tmp1z);
-   res[3] = minvec(tmp0w, tmp1w);
-}
-
-
-float4 maxvec(float4 a, float4 b)
-{
-   return (float4){(a.x > b.x) ? a.x : b.x,
-         (a.y > b.y) ? a.y : b.y,
-         (a.z > b.z) ? a.z : b.z,
-         (a.w > b.w) ? a.w : b.w};
-}
-
-void max(float4 *res,
-         float4 tmp0x, float4 tmp0y, float4 tmp0z, float4 tmp0w,
-         float4 tmp1x, float4 tmp1y, float4 tmp1z, float4 tmp1w)
-{
-   res[0] = maxvec(tmp0x, tmp1x);
-   res[1] = maxvec(tmp0y, tmp1y);
-   res[2] = maxvec(tmp0z, tmp1z);
-   res[3] = maxvec(tmp0w, tmp1w);
-}
-
 
 void lit(float4 *res,
          float4 tmp0x, float4 tmp0y, float4 tmp0z, float4 tmp0w)
@@ -165,15 +157,35 @@ void lit(float4 *res,
    res[3] = (float4){1.0, 1.0, 1.0, 1.0};
 }
 
-
-float4 sqrtvec(float4 vec)
+void min(float4 *res,
+         float4 tmp0x, float4 tmp0y, float4 tmp0z, float4 tmp0w,
+         float4 tmp1x, float4 tmp1y, float4 tmp1z, float4 tmp1w)
 {
-   float4 p;
-   p.x = sqrtf(vec.x);
-   p.y = sqrtf(vec.y);
-   p.z = sqrtf(vec.z);
-   p.w = sqrtf(vec.w);
-   return p;
+   res[0] = minvec(tmp0x, tmp1x);
+   res[1] = minvec(tmp0y, tmp1y);
+   res[2] = minvec(tmp0z, tmp1z);
+   res[3] = minvec(tmp0w, tmp1w);
+}
+
+
+void max(float4 *res,
+         float4 tmp0x, float4 tmp0y, float4 tmp0z, float4 tmp0w,
+         float4 tmp1x, float4 tmp1y, float4 tmp1z, float4 tmp1w)
+{
+   res[0] = maxvec(tmp0x, tmp1x);
+   res[1] = maxvec(tmp0y, tmp1y);
+   res[2] = maxvec(tmp0z, tmp1z);
+   res[3] = maxvec(tmp0w, tmp1w);
+}
+
+void pow(float4 *res,
+         float4 tmp0x, float4 tmp0y, float4 tmp0z, float4 tmp0w,
+         float4 tmp1x, float4 tmp1y, float4 tmp1z, float4 tmp1w)
+{
+   res[0] = powvec(tmp0x, tmp1x);
+   res[1] = res[0];
+   res[2] = res[0];
+   res[3] = res[0];
 }
 
 void rsq(float4 *res,
@@ -185,3 +197,14 @@ void rsq(float4 *res,
    res[2] = onevec/sqrtvec(absvec(tmp0z));
    res[3] = onevec/sqrtvec(absvec(tmp0w));
 }
+
+void slt(float4 *res,
+         float4 tmp0x, float4 tmp0y, float4 tmp0z, float4 tmp0w,
+         float4 tmp1x, float4 tmp1y, float4 tmp1z, float4 tmp1w)
+{
+   res[0] = sltvec(tmp0x, tmp1x);
+   res[1] = sltvec(tmp0y, tmp1y);
+   res[2] = sltvec(tmp0z, tmp1z);
+   res[3] = sltvec(tmp0w, tmp1w);
+}
+
