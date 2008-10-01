@@ -408,7 +408,7 @@ _slang_update_inputs_outputs(struct gl_program *prog)
             }
          }
          else if (inst->SrcReg[j].File == PROGRAM_ADDRESS) {
-            maxAddrReg = MAX2(maxAddrReg, inst->SrcReg[j].Index + 1);
+            maxAddrReg = MAX2(maxAddrReg, (GLuint) (inst->SrcReg[j].Index + 1));
          }
       }
       if (inst->DstReg.File == PROGRAM_OUTPUT) {
