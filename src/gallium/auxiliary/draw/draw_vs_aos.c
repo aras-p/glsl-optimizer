@@ -92,9 +92,9 @@ struct x86_reg aos_get_x86( struct aos_compilation *cp,
          assert(which_reg == 1);
          offset = Offset(struct aos_machine, constants);
          break;
-      case X86_ATTRIBS:
+      case X86_BUFFERS:
          assert(which_reg == 0);
-         offset = Offset(struct aos_machine, attrib);
+         offset = Offset(struct aos_machine, buffer);
          break;
       default:
          assert(0);
@@ -1939,6 +1939,8 @@ static boolean build_vertex_program( struct draw_vs_varient_aos_sse *varient,
    save_fpu_state( &cp );
    set_fpu_round_nearest( &cp );
 
+   aos_init_inputs( &cp, linear );
+
    /* Note address for loop jump 
     */
    label = x86_get_label(cp.func);
@@ -2018,13 +2020,7 @@ static boolean build_vertex_program( struct draw_vs_varient_aos_sse *varient,
 
       /* Incr index
        */   
-      if (linear) {
-         x86_inc(cp.func, cp.idx_EBX);
-      } 
-      else {
-         x86_lea(cp.func, cp.idx_EBX, x86_make_disp(cp.idx_EBX, 4));
-      }
-
+      aos_incr_inputs( &cp, linear );
    }
    /* decr count, loop if not zero
     */
@@ -2065,14 +2061,10 @@ static void vaos_set_buffer( struct draw_vs_varient *varient,
                              unsigned stride )
 {
    struct draw_vs_varient_aos_sse *vaos = (struct draw_vs_varient_aos_sse *)varient;
-   unsigned i;
 
-   for (i = 0; i < vaos->base.key.nr_inputs; i++) {
-      if (vaos->base.key.element[i].in.buffer == buf) {
-         vaos->attrib[i].input_ptr = ((char *)ptr +
-                                      vaos->base.key.element[i].in.offset);
-         vaos->attrib[i].input_stride = stride;
-      }
+   if (buf < vaos->nr_vb) {
+      vaos->buffer[buf].base_ptr = (char *)ptr;
+      vaos->buffer[buf].stride = stride;
    }
 }
 
@@ -2089,7 +2081,7 @@ static void PIPE_CDECL vaos_run_elts( struct draw_vs_varient *varient,
    machine->internal[IMM_PSIZE][0] = vaos->draw->rasterizer->point_size;
    machine->constants = vaos->draw->vs.aligned_constants;
    machine->immediates = vaos->base.vs->immediates;
-   machine->attrib = vaos->attrib;
+   machine->buffer = vaos->buffer;
 
    vaos->gen_run_elts( machine,
                        elts,
@@ -2108,7 +2100,7 @@ static void PIPE_CDECL vaos_run_linear( struct draw_vs_varient *varient,
    machine->internal[IMM_PSIZE][0] = vaos->draw->rasterizer->point_size;
    machine->constants = vaos->draw->vs.aligned_constants;
    machine->immediates = vaos->base.vs->immediates;
-   machine->attrib = vaos->attrib;
+   machine->buffer = vaos->buffer;
 
    vaos->gen_run_linear( machine,
                          start,
@@ -2127,7 +2119,7 @@ static void vaos_destroy( struct draw_vs_varient *varient )
 {
    struct draw_vs_varient_aos_sse *vaos = (struct draw_vs_varient_aos_sse *)varient;
 
-   FREE( vaos->attrib );
+   FREE( vaos->buffer );
 
    x86_release_func( &vaos->func[0] );
    x86_release_func( &vaos->func[1] );
@@ -2140,6 +2132,7 @@ static void vaos_destroy( struct draw_vs_varient *varient )
 static struct draw_vs_varient *varient_aos_sse( struct draw_vertex_shader *vs,
                                                  const struct draw_vs_varient_key *key )
 {
+   unsigned i;
    struct draw_vs_varient_aos_sse *vaos = CALLOC_STRUCT(draw_vs_varient_aos_sse);
 
    if (!vaos)
@@ -2154,9 +2147,14 @@ static struct draw_vs_varient *varient_aos_sse( struct draw_vertex_shader *vs,
 
    vaos->draw = vs->draw;
 
-   vaos->attrib = MALLOC( key->nr_inputs * sizeof(vaos->attrib[0]) );
-   if (!vaos->attrib)
+   for (i = 0; i < key->nr_inputs; i++) 
+      vaos->nr_vb = MAX2( vaos->nr_vb, key->element[i].in.buffer + 1 );
+
+   vaos->buffer = MALLOC( vaos->nr_vb * sizeof(vaos->buffer[0]) );
+   if (!vaos->buffer)
       goto fail;
+
+   debug_printf("nr_vb: %d\n", vaos->nr_vb);
 
 #if 0
    tgsi_dump(vs->state.tokens, 0);
@@ -2179,8 +2177,8 @@ static struct draw_vs_varient *varient_aos_sse( struct draw_vertex_shader *vs,
    return &vaos->base;
 
  fail:
-   if (vaos && vaos->attrib)
-      FREE(vaos->attrib);
+   if (vaos && vaos->buffer)
+      FREE(vaos->buffer);
 
    if (vaos)
       x86_release_func( &vaos->func[0] );

@@ -95,28 +95,6 @@ static void emit_load_R8G8B8A8_UNORM( struct aos_compilation *cp,
 
 
 
-static void get_src_ptr( struct aos_compilation *cp,
-                         struct x86_reg src,
-                         struct x86_reg elt,
-                         unsigned a )
-{
-   struct x86_reg attrib = x86_make_disp(aos_get_x86( cp, 0, X86_ATTRIBS ), 
-                                         a * sizeof(struct aos_attrib));
-
-   struct x86_reg input_ptr = x86_make_disp(attrib, 
-                                            Offset(struct aos_attrib, input_ptr));
-
-   struct x86_reg input_stride = x86_make_disp(attrib, 
-                                               Offset(struct aos_attrib, input_stride));
-
-   /* Calculate pointer to current attrib:
-    */
-   x86_mov(cp->func, src, input_stride);
-   x86_imul(cp->func, src, elt);
-   x86_add(cp->func, src, input_ptr);
-}
-
-
 /* Extended swizzles?  Maybe later.
  */  
 static void emit_swizzle( struct aos_compilation *cp,
@@ -128,22 +106,44 @@ static void emit_swizzle( struct aos_compilation *cp,
 }
 
 
+
+static boolean get_buffer_ptr( struct aos_compilation *cp,
+                            unsigned buf_idx,
+                            struct x86_reg elt,
+                            struct x86_reg ptr)
+{
+   struct x86_reg buf = x86_make_disp(aos_get_x86( cp, 0, X86_BUFFERS ), 
+                                      buf_idx * sizeof(struct aos_buffer));
+
+   struct x86_reg buf_base_ptr = x86_make_disp(buf, 
+                                               Offset(struct aos_buffer, base_ptr));
+
+   struct x86_reg buf_stride = x86_make_disp(buf, 
+                                             Offset(struct aos_buffer, stride));
+
+   /* Calculate pointer to current attrib:
+    */
+   x86_mov(cp->func, ptr, buf_stride);
+   x86_imul(cp->func, ptr, elt);
+   x86_add(cp->func, ptr, buf_base_ptr);
+
+   return TRUE;
+}
+
+
+
+
 static boolean load_input( struct aos_compilation *cp,
                            unsigned idx,
-                           boolean linear )
+                           struct x86_reg bufptr )
 {
    unsigned format = cp->vaos->base.key.element[idx].in.format;
-   struct x86_reg src = cp->tmp_EAX;
+   unsigned offset = cp->vaos->base.key.element[idx].in.offset;
    struct x86_reg dataXMM = aos_get_xmm_reg(cp);
 
    /* Figure out source pointer address:
     */
-   get_src_ptr(cp, 
-               src, 
-               linear ? cp->idx_EBX : x86_deref(cp->idx_EBX),
-               idx);
-
-   src = x86_deref(src);
+   struct x86_reg src = x86_make_disp(bufptr, offset);
 
    aos_adopt_xmm_reg( cp,
                       dataXMM,
@@ -179,20 +179,87 @@ static boolean load_input( struct aos_compilation *cp,
    return TRUE;
 }
 
-
-boolean aos_fetch_inputs( struct aos_compilation *cp, boolean linear )
+static boolean load_inputs( struct aos_compilation *cp,
+                            unsigned buffer,
+                            struct x86_reg ptr )
 {
    unsigned i;
-   
+
    for (i = 0; i < cp->vaos->base.key.nr_inputs; i++) {
-      if (!load_input( cp, i, linear ))
+      if (cp->vaos->base.key.element[i].in.buffer == buffer) {
+
+         if (!load_input( cp, i, ptr ))
+            return FALSE;
+
+         cp->insn_counter++;
+      }
+   }
+   
+   return TRUE;
+}
+
+boolean aos_init_inputs( struct aos_compilation *cp, boolean linear )
+{
+   if (linear && cp->vaos->nr_vb == 1) {
+
+      struct x86_reg elt = cp->idx_EBX;
+      struct x86_reg ptr = cp->tmp_EAX;
+
+      if (!get_buffer_ptr( cp, 0, elt, ptr ))
          return FALSE;
-      cp->insn_counter++;
+
+      /* In the linear, single buffer case, keep the buffer pointer
+       * instead of the index number.
+       */
+      x86_mov( cp->func, elt, ptr );
    }
 
    return TRUE;
 }
 
+boolean aos_fetch_inputs( struct aos_compilation *cp, boolean linear )
+{
+   if (linear && cp->vaos->nr_vb == 1) {
+      
+      load_inputs( cp, 0, cp->idx_EBX );
+
+   }
+   else {
+      struct x86_reg elt = linear ? cp->idx_EBX : x86_deref(cp->idx_EBX);
+      unsigned j;
+   
+      for (j = 0; j < cp->vaos->nr_vb; j++) {
+         struct x86_reg ptr = cp->tmp_EAX;
+
+         if (!get_buffer_ptr( cp, j, elt, ptr ))
+            return FALSE;
+
+         cp->insn_counter++;
+
+         if (!load_inputs( cp, j, ptr ))
+            return FALSE;
+      }
+   }
+
+   return TRUE;
+}
+
+boolean aos_incr_inputs( struct aos_compilation *cp, boolean linear )
+{
+   if (linear && cp->vaos->nr_vb == 1) {
+      struct x86_reg stride = x86_make_disp(aos_get_x86( cp, 0, X86_BUFFERS ), 
+                                            (0 * sizeof(struct aos_buffer) + 
+                                             Offset(struct aos_buffer, stride)));
+
+      x86_add(cp->func, cp->idx_EBX, stride);
+   }
+   else if (linear) {
+      x86_inc(cp->func, cp->idx_EBX);
+   } 
+   else {
+      x86_lea(cp->func, cp->idx_EBX, x86_make_disp(cp->idx_EBX, 4));
+   }
+}
 
 
 
