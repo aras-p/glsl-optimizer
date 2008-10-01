@@ -196,6 +196,18 @@ static void spill( struct aos_compilation *cp, unsigned idx )
 }
 
 
+void aos_spill_all( struct aos_compilation *cp )
+{
+   unsigned i;
+
+   for (i = 0; i < 8; i++) {
+      if (cp->xmm[i].dirty) 
+         spill(cp, i);
+      aos_release_xmm_reg(cp, i);
+   }
+}
+
+
 static struct x86_reg get_xmm_writable( struct aos_compilation *cp,
                                         struct x86_reg reg )
 {
@@ -1941,6 +1953,9 @@ static boolean build_vertex_program( struct draw_vs_varient_aos_sse *varient,
 
    aos_init_inputs( &cp, linear );
 
+   cp.x86_reg[0] = 0;
+   cp.x86_reg[1] = 0;
+   
    /* Note address for loop jump 
     */
    label = x86_get_label(cp.func);
@@ -2066,6 +2081,8 @@ static void vaos_set_buffer( struct draw_vs_varient *varient,
       vaos->buffer[buf].base_ptr = (char *)ptr;
       vaos->buffer[buf].stride = stride;
    }
+
+   if (0) debug_printf("%s %d/%d: %p %d\n", __FUNCTION__, buf, vaos->nr_vb, ptr, stride);
 }
 
 
@@ -2077,6 +2094,8 @@ static void PIPE_CDECL vaos_run_elts( struct draw_vs_varient *varient,
 {
    struct draw_vs_varient_aos_sse *vaos = (struct draw_vs_varient_aos_sse *)varient;
    struct aos_machine *machine = vaos->draw->vs.aos_machine;
+
+   if (0) debug_printf("%s %d\n", __FUNCTION__, count);
 
    machine->internal[IMM_PSIZE][0] = vaos->draw->rasterizer->point_size;
    machine->constants = vaos->draw->vs.aligned_constants;
@@ -2096,6 +2115,9 @@ static void PIPE_CDECL vaos_run_linear( struct draw_vs_varient *varient,
 {
    struct draw_vs_varient_aos_sse *vaos = (struct draw_vs_varient_aos_sse *)varient;
    struct aos_machine *machine = vaos->draw->vs.aos_machine;
+
+   if (0) debug_printf("%s %d %d const: %x\n", __FUNCTION__, start, count, 
+                       vaos->base.key.const_vbuffers);
 
    machine->internal[IMM_PSIZE][0] = vaos->draw->rasterizer->point_size;
    machine->constants = vaos->draw->vs.aligned_constants;
@@ -2140,7 +2162,7 @@ static struct draw_vs_varient *varient_aos_sse( struct draw_vertex_shader *vs,
    
    vaos->base.key = *key;
    vaos->base.vs = vs;
-   vaos->base.set_input = vaos_set_buffer;
+   vaos->base.set_buffer = vaos_set_buffer;
    vaos->base.destroy = vaos_destroy;
    vaos->base.run_linear = vaos_run_linear;
    vaos->base.run_elts = vaos_run_elts;
@@ -2154,7 +2176,7 @@ static struct draw_vs_varient *varient_aos_sse( struct draw_vertex_shader *vs,
    if (!vaos->buffer)
       goto fail;
 
-   debug_printf("nr_vb: %d\n", vaos->nr_vb);
+   debug_printf("nr_vb: %d const: %x\n", vaos->nr_vb, vaos->base.key.const_vbuffers);
 
 #if 0
    tgsi_dump(vs->state.tokens, 0);
