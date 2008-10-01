@@ -2603,7 +2603,7 @@ parse_src_reg (GLcontext * ctx, const GLubyte ** inst,
       /* If we're referencing the Program->Parameters[] array, check if the
        * parameter is really a constant/literal.  If so, set File to CONSTANT.
        */
-      assert(*Index < Program->Base.Parameters->NumParameters);
+      assert(*Index < (GLint) Program->Base.Parameters->NumParameters);
       file = Program->Base.Parameters->Parameters[*Index].Type;
       if (file == PROGRAM_CONSTANT)
          *File = PROGRAM_CONSTANT;
