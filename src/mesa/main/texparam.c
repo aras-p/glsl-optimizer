@@ -642,8 +642,7 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
             *params = 0;
          break;
       case GL_TEXTURE_DEPTH_SIZE_ARB:
-         if (ctx->Extensions.SGIX_depth_texture ||
-             ctx->Extensions.ARB_depth_texture)
+         if (ctx->Extensions.ARB_depth_texture)
             *params = img->TexFormat->DepthBits;
          else
             _mesa_error(ctx, GL_INVALID_ENUM,

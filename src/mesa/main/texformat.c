@@ -1420,14 +1420,13 @@ _mesa_choose_tex_format( GLcontext *ctx, GLint internalFormat,
          ; /* fallthrough */
    }
 
-   if (ctx->Extensions.SGIX_depth_texture ||
-       ctx->Extensions.ARB_depth_texture) {
+   if (ctx->Extensions.ARB_depth_texture) {
       switch (internalFormat) {
          case GL_DEPTH_COMPONENT:
-         case GL_DEPTH_COMPONENT24_SGIX:
-         case GL_DEPTH_COMPONENT32_SGIX:
+         case GL_DEPTH_COMPONENT24:
+         case GL_DEPTH_COMPONENT32:
             return &_mesa_texformat_z32;
-         case GL_DEPTH_COMPONENT16_SGIX:
+         case GL_DEPTH_COMPONENT16:
             return &_mesa_texformat_z16;
          default:
             ; /* fallthrough */

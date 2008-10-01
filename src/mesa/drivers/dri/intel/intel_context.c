@@ -404,8 +404,6 @@ static const struct dri_extension brw_extensions[] = {
    { "GL_ARB_vertex_shader",              GL_ARB_vertex_shader_functions },
    { "GL_EXT_shadow_funcs",               NULL },
    { "GL_EXT_texture_sRGB",		  NULL },
-   /* ARB extn won't work if not enabled */
-   { "GL_SGIX_depth_texture",             NULL },
    { NULL,                                NULL }
 };
 
