@@ -176,6 +176,8 @@ void aos_adopt_xmm_reg( struct aos_compilation *cp,
                         unsigned idx,
                         unsigned dirty );
 
+void aos_spill_all( struct aos_compilation *cp );
+
 struct x86_reg aos_get_shader_reg( struct aos_compilation *cp, 
                                    unsigned file,
                                    unsigned idx );

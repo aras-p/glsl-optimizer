@@ -64,10 +64,10 @@ struct draw_vs_varient_generic {
 
 
 
-static void vsvg_set_input( struct draw_vs_varient *varient,
-                            unsigned buffer,
-                            const void *ptr,
-                            unsigned stride )
+static void vsvg_set_buffer( struct draw_vs_varient *varient,
+                             unsigned buffer,
+                             const void *ptr,
+                             unsigned stride )
 {
    struct draw_vs_varient_generic *vsvg = (struct draw_vs_varient_generic *)varient;
 
@@ -265,7 +265,7 @@ struct draw_vs_varient *draw_vs_varient_generic( struct draw_vertex_shader *vs,
 
    vsvg->base.key = *key;
    vsvg->base.vs = vs;
-   vsvg->base.set_input     = vsvg_set_input;
+   vsvg->base.set_buffer    = vsvg_set_buffer;
    vsvg->base.run_elts      = vsvg_run_elts;
    vsvg->base.run_linear    = vsvg_run_linear;
    vsvg->base.destroy       = vsvg_destroy;
