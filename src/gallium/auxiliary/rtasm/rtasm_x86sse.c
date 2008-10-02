@@ -675,6 +675,32 @@ void x86_and( struct x86_function *p,
  * SSE instructions
  */
 
+void sse_prefetchnta( struct x86_function *p, struct x86_reg ptr)
+{
+   DUMP_R( ptr );
+   assert(ptr.mod != mod_REG);
+   emit_2ub(p, 0x0f, 0x18);
+   emit_modrm_noreg(p, 0, ptr);
+}
+
+void sse_prefetch0( struct x86_function *p, struct x86_reg ptr)
+{
+   DUMP_R( ptr );
+   assert(ptr.mod != mod_REG);
+   emit_2ub(p, 0x0f, 0x18);
+   emit_modrm_noreg(p, 1, ptr);
+}
+
+void sse_prefetch1( struct x86_function *p, struct x86_reg ptr)
+{
+   DUMP_R( ptr );
+   assert(ptr.mod != mod_REG);
+   emit_2ub(p, 0x0f, 0x18);
+   emit_modrm_noreg(p, 2, ptr);
+}
+
+
+
 
 void sse_movss( struct x86_function *p,
 		struct x86_reg dst,
