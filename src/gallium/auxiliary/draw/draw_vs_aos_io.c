@@ -54,6 +54,7 @@ static void emit_load_R32G32B32( struct aos_compilation *cp,
 				 struct x86_reg data,
 				 struct x86_reg src_ptr )
 {
+#if 1
    sse_movss(cp->func, data, x86_make_disp(src_ptr, 8));
    /* data = z ? ? ? */
    sse_shufps(cp->func, data, aos_get_internal_xmm( cp, IMM_IDENTITY ), SHUF(X,Y,Z,W) );
@@ -62,6 +63,16 @@ static void emit_load_R32G32B32( struct aos_compilation *cp,
    /* data = ? 0 z 1 */
    sse_movlps(cp->func, data, src_ptr);
    /* data = x y z 1 */
+#else
+   sse_movups(cp->func, data, src_ptr);
+   /* data = x y z ? */
+   sse2_pshufd(cp->func, data, data, SHUF(W,X,Y,Z) );
+   /* data = ? x y z */
+   sse_movss(cp->func, data, aos_get_internal_xmm( cp, IMM_ONES ) );
+   /* data = 1 x y z */
+   sse2_pshufd(cp->func, data, data, SHUF(Y,Z,W,X) );
+   /* data = x y z 1 */
+#endif
 }
 
 static void emit_load_R32G32( struct aos_compilation *cp, 
@@ -128,7 +139,7 @@ static boolean get_buffer_ptr( struct aos_compilation *cp,
       x86_mov(cp->func, ptr, buf_ptr);
       x86_mov(cp->func, elt, buf_stride);
       x86_add(cp->func, elt, ptr);
-      sse_prefetchnta(cp->func, x86_deref(elt));
+      if (buf_idx == 0) sse_prefetchnta(cp->func, x86_make_disp(elt, 192));
       x86_mov(cp->func, buf_ptr, elt);
    }
    else {
@@ -306,7 +317,7 @@ boolean aos_incr_inputs( struct aos_compilation *cp, boolean linear )
                                              Offset(struct aos_buffer, stride)));
 
       x86_add(cp->func, cp->idx_EBX, stride);
-      sse_prefetchnta(cp->func, x86_deref(cp->idx_EBX));
+      sse_prefetchnta(cp->func, x86_make_disp(cp->idx_EBX, 192));
    }
    else if (linear) {
       /* Nothing to do */
@@ -327,7 +338,7 @@ static void emit_store_R32G32B32A32( struct aos_compilation *cp,
 				     struct x86_reg dst_ptr,
 				     struct x86_reg dataXMM )
 {
-   sse_movups(cp->func, dst_ptr, dataXMM);
+   sse_movaps(cp->func, dst_ptr, dataXMM);
 }
 
 static void emit_store_R32G32B32( struct aos_compilation *cp, 
@@ -430,7 +441,7 @@ boolean aos_emit_outputs( struct aos_compilation *cp )
 
       if (data.file != file_XMM) {
          struct x86_reg tmp = aos_get_xmm_reg( cp );
-         sse_movups(cp->func, tmp, data);
+         sse_movaps(cp->func, tmp, data);
          data = tmp;
       }
       
