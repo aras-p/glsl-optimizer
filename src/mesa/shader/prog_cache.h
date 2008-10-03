@@ -42,7 +42,7 @@ _mesa_delete_program_cache(GLcontext *ctx, struct gl_program_cache *pc);
 
 
 extern struct gl_program *
-_mesa_search_program_cache(const struct gl_program_cache *cache,
+_mesa_search_program_cache(struct gl_program_cache *cache,
                            const void *key, GLuint keysize);
 
 extern void
