@@ -355,7 +355,6 @@ static const struct dri_extension card_extensions[] = {
    { "GL_ARB_texture_env_crossbar",       NULL },
    { "GL_ARB_texture_env_dot3",           NULL },
    { "GL_ARB_texture_mirrored_repeat",    NULL },
-   { "GL_ARB_texture_non_power_of_two",   NULL },
    { "GL_ARB_texture_rectangle",          NULL },
    { "GL_ARB_vertex_buffer_object",       GL_ARB_vertex_buffer_object_functions },
    { "GL_ARB_vertex_program",             GL_ARB_vertex_program_functions },
@@ -379,7 +378,6 @@ static const struct dri_extension card_extensions[] = {
    { "GL_EXT_texture_lod_bias",           NULL },
    { "GL_3DFX_texture_compression_FXT1",  NULL },
    { "GL_APPLE_client_storage",           NULL },
-   { "GL_ATI_separate_stencil",           GL_ATI_separate_stencil_functions },
    { "GL_MESA_pack_invert",               NULL },
    { "GL_MESA_ycbcr_texture",             NULL },
    { "GL_NV_blend_square",                NULL },
@@ -401,9 +399,11 @@ static const struct dri_extension brw_extensions[] = {
    { "GL_ARB_shading_language_100",       GL_VERSION_2_0_functions },
    { "GL_ARB_shading_language_120",       GL_VERSION_2_1_functions },
    { "GL_ARB_shadow",                     NULL },
+   { "GL_ARB_texture_non_power_of_two",   NULL },
    { "GL_ARB_vertex_shader",              GL_ARB_vertex_shader_functions },
    { "GL_EXT_shadow_funcs",               NULL },
    { "GL_EXT_texture_sRGB",		  NULL },
+   { "GL_ATI_separate_stencil",           GL_ATI_separate_stencil_functions },
    { NULL,                                NULL }
 };
 
