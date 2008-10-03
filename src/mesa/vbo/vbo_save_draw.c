@@ -118,6 +118,7 @@ static void vbo_bind_vertex_list( GLcontext *ctx,
    GLuint data = node->buffer_offset;
    const GLuint *map;
    GLuint attr;
+   GLuint varying_inputs = 0;
 
    /* Install the default (ie Current) attributes first, then overlay
     * all active ones.
@@ -167,8 +168,11 @@ static void vbo_bind_vertex_list( GLcontext *ctx,
 	 assert(arrays[attr].BufferObj->Name);
 
 	 data += node->attrsz[src] * sizeof(GLfloat);
+         varying_inputs |= 1<<attr;
       }
    }
+
+   _mesa_set_varying_vp_inputs( ctx, varying_inputs );
 }
 
 static void vbo_save_loopback_vertex_list( GLcontext *ctx,

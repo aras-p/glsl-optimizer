@@ -189,6 +189,63 @@ static GLuint translate_tex_src_bit( GLbitfield bit )
    }
 }
 
+#define VERT_BIT_TEX_ANY    (0xff << VERT_ATTRIB_TEX0)
+#define VERT_RESULT_TEX_ANY (0xff << VERT_RESULT_TEX0)
+
+/* Identify all possible varying inputs.  The fragment program will
+ * never reference non-varying inputs, but will track them via state
+ * constants instead.
+ *
+ * This function figures out all the inputs that the fragment program
+ * has access to.  The bitmask is later reduced to just those which
+ * are actually referenced.
+ */
+static GLuint get_fp_input_mask( GLcontext *ctx )
+{
+   GLuint fp_inputs = 0;
+
+   if (1) {
+      GLuint varying_inputs = ctx->varying_vp_inputs;
+
+      /* First look at what values may be computed by the generated
+       * vertex program:
+       */
+      if (ctx->Light.Enabled) {
+         fp_inputs |= FRAG_BIT_COL0;
+
+         if (ctx->_TriangleCaps & DD_SEPARATE_SPECULAR)
+            fp_inputs |= FRAG_BIT_COL1;
+      }
+
+      fp_inputs |= (ctx->Texture._TexGenEnabled |
+                    ctx->Texture._TexMatEnabled) << FRAG_ATTRIB_TEX0;
+
+      /* Then look at what might be varying as a result of enabled
+       * arrays, etc:
+       */
+      if (varying_inputs & VERT_BIT_COLOR0) fp_inputs |= FRAG_BIT_COL0;
+      if (varying_inputs & VERT_BIT_COLOR1) fp_inputs |= FRAG_BIT_COL1;
+
+      fp_inputs |= (((varying_inputs & VERT_BIT_TEX_ANY) >> VERT_ATTRIB_TEX0) 
+                    << FRAG_ATTRIB_TEX0);
+
+   }
+   else {
+      /* calculate from vp->outputs */
+      GLuint vp_outputs = 0;
+
+      if (vp_outputs & (1 << VERT_RESULT_COL0)) fp_inputs |= FRAG_BIT_COL0;
+      if (vp_outputs & (1 << VERT_RESULT_COL1)) fp_inputs |= FRAG_BIT_COL1;
+
+      fp_inputs |= (((vp_outputs & VERT_RESULT_TEX_ANY) 
+                   << VERT_RESULT_TEX0) 
+                  >> FRAG_ATTRIB_TEX0);
+   }
+   
+   return fp_inputs;
+}
+
+
 /**
  * Examine current texture environment state and generate a unique
  * key to identify it.
@@ -196,17 +253,21 @@ static GLuint translate_tex_src_bit( GLbitfield bit )
 static void make_state_key( GLcontext *ctx,  struct state_key *key )
 {
    GLuint i, j;
-	
+   GLuint inputs_referenced = FRAG_BIT_COL0;
+   GLuint inputs_available = get_fp_input_mask( ctx );
+
    memset(key, 0, sizeof(*key));
 
    for (i=0;i<MAX_TEXTURE_UNITS;i++) {
       const struct gl_texture_unit *texUnit = &ctx->Texture.Unit[i];
 		
-      if (!texUnit->_ReallyEnabled)
+      if (!texUnit->_ReallyEnabled) 
          continue;
 
       key->unit[i].enabled = 1;
       key->enabled_units |= (1<<i);
+      key->nr_enabled_units = i+1;
+      inputs_referenced |= FRAG_BIT_TEX(i);
 
       key->unit[i].source_index = 
 	 translate_tex_src_bit(texUnit->_ReallyEnabled);		
@@ -234,13 +295,18 @@ static void make_state_key( GLcontext *ctx,  struct state_key *key )
       }
    }
 	
-   if (ctx->_TriangleCaps & DD_SEPARATE_SPECULAR)
+   if (ctx->_TriangleCaps & DD_SEPARATE_SPECULAR) {
       key->separate_specular = 1;
+      inputs_referenced |= FRAG_BIT_COL1;
+   }
 
    if (ctx->Fog.Enabled) {
       key->fog_enabled = 1;
       key->fog_mode = translate_fog_mode(ctx->Fog.Mode);
+      inputs_referenced |= FRAG_BIT_FOGC; /* maybe */
    }
+
+   key->inputs_available = (inputs_available & inputs_referenced);
 }
 
 /* Use uregs to represent registers internally, translate to Mesa's
@@ -446,11 +512,29 @@ static struct ureg register_param5( struct texenv_fragment_program *p,
 #define register_param3(p,s0,s1,s2)    register_param5(p,s0,s1,s2,0,0)
 #define register_param4(p,s0,s1,s2,s3) register_param5(p,s0,s1,s2,s3,0)
 
+static GLuint frag_to_vert_attrib( GLuint attrib )
+{
+   switch (attrib) {
+   case FRAG_ATTRIB_COL0: return VERT_ATTRIB_COLOR0;
+   case FRAG_ATTRIB_COL1: return VERT_ATTRIB_COLOR1;
+   default:
+      assert(attrib >= FRAG_ATTRIB_TEX0);
+      assert(attrib <= FRAG_ATTRIB_TEX7);
+      return attrib - FRAG_ATTRIB_TEX0 + VERT_ATTRIB_TEX0;
+   }
+}
+
 
 static struct ureg register_input( struct texenv_fragment_program *p, GLuint input )
 {
-   p->program->Base.InputsRead |= (1 << input);
-   return make_ureg(PROGRAM_INPUT, input);
+   if (p->state->inputs_available & (1<<input)) {
+      p->program->Base.InputsRead |= (1 << input);
+      return make_ureg(PROGRAM_INPUT, input);
+   }
+   else {
+      GLuint idx = frag_to_vert_attrib( input );
+      return register_param3( p, STATE_INTERNAL, STATE_CURRENT_ATTRIB, idx );
+   }
 }
 
 
