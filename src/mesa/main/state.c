@@ -407,6 +407,9 @@ _mesa_update_state_locked( GLcontext *ctx )
    GLbitfield new_state = ctx->NewState;
    GLbitfield prog_flags = _NEW_PROGRAM;
 
+   if (new_state == _NEW_CURRENT_ATTRIB) 
+      goto out;
+
    if (MESA_VERBOSE & VERBOSE_STATE)
       _mesa_print_state("_mesa_update_state", new_state);
 
@@ -484,6 +487,7 @@ _mesa_update_state_locked( GLcontext *ctx )
     * Set ctx->NewState to zero to avoid recursion if
     * Driver.UpdateState() has to call FLUSH_VERTICES().  (fixed?)
     */
+ out:
    new_state = ctx->NewState;
    ctx->NewState = 0;
    ctx->Driver.UpdateState(ctx, new_state);

@@ -395,6 +395,12 @@ _mesa_fetch_state(GLcontext *ctx, const gl_state_index state[],
 
    case STATE_INTERNAL:
       switch (state[1]) {
+      case STATE_CURRENT_ATTRIB: {
+         const GLuint idx = (GLuint) state[2];
+         COPY_4V(value, ctx->Current.Attrib[idx]);
+         return;
+      }						  
+
       case STATE_NORMAL_SCALE:
          ASSIGN_4V(value, 
                    ctx->_ModelViewInvScale, 
@@ -565,6 +571,8 @@ _mesa_program_state_flags(const gl_state_index state[STATE_LENGTH])
 
    case STATE_INTERNAL:
       switch (state[1]) {
+      case STATE_CURRENT_ATTRIB:
+         return _NEW_CURRENT_ATTRIB;
 
       case STATE_NORMAL_SCALE:
          return _NEW_MODELVIEW;

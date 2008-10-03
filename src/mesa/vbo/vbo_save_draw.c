@@ -64,18 +64,26 @@ static void _playback_copy_to_current( GLcontext *ctx,
    for (i = VBO_ATTRIB_POS+1 ; i < VBO_ATTRIB_MAX ; i++) {
       if (node->attrsz[i]) {
 	 GLfloat *current = (GLfloat *)vbo->currval[i].Ptr;
+         GLfloat tmp[4];
 
-	 COPY_CLEAN_4V(current, 
-		       node->attrsz[i], 
-		       data);
+         COPY_CLEAN_4V(tmp, 
+                       node->attrsz[i], 
+                       data);
+         
+         if (memcmp(current, tmp, 4 * sizeof(GLfloat)) != 0)
+         {
+            memcpy(current, tmp, 4 * sizeof(GLfloat));
 
-	 vbo->currval[i].Size = node->attrsz[i];
+            vbo->currval[i].Size = node->attrsz[i];
+
+            if (i >= VBO_ATTRIB_FIRST_MATERIAL &&
+                i <= VBO_ATTRIB_LAST_MATERIAL)
+               ctx->NewState |= _NEW_LIGHT;
+
+            ctx->NewState |= _NEW_CURRENT_ATTRIB;
+         }
 
 	 data += node->attrsz[i];
-
-	 if (i >= VBO_ATTRIB_FIRST_MATERIAL &&
-	     i <= VBO_ATTRIB_LAST_MATERIAL)
-	    ctx->NewState |= _NEW_LIGHT;
       }
    }
 
