@@ -653,6 +653,18 @@ void sse_prefetch1( struct x86_function *p, struct x86_reg ptr)
    emit_modrm_noreg(p, 2, ptr);
 }
 
+void sse_movntps( struct x86_function *p, 
+                  struct x86_reg dst,
+                  struct x86_reg src)
+{
+   DUMP_RR( dst, reg );
+
+   assert(dst.mod != mod_REG);
+   assert(src.mod == mod_REG);
+   emit_2ub(p, 0x0f, 0x2b);
+   emit_modrm(p, src, dst);
+}
+
 
 
 
