@@ -44,15 +44,17 @@
 #define DISASSEM (MESA_VERBOSE & VERBOSE_DISASSEM)
 
 struct mode_opt {
-   GLuint Source:4;
-   GLuint Operand:3;
+   GLubyte Source:4;
+   GLubyte Operand:3;
 };
 
 struct state_key {
-   GLbitfield enabled_units;
+   GLuint nr_enabled_units:8;
+   GLuint enabled_units:8;
    GLuint separate_specular:1;
    GLuint fog_enabled:1;
    GLuint fog_mode:2;
+   GLuint inputs_available:12;
 
    struct {
       GLuint enabled:1;
@@ -62,10 +64,10 @@ struct state_key {
 
       GLuint NumArgsRGB:2;
       GLuint ModeRGB:4;
-      struct mode_opt OptRGB[3];
-
       GLuint NumArgsA:2;
       GLuint ModeA:4;
+
+      struct mode_opt OptRGB[3];
       struct mode_opt OptA[3];
    } unit[8];
 };
