@@ -197,7 +197,7 @@ int main(int argc, char **argv)
 	root = XDefaultRootWindow(display);
 	window = XCreateSimpleWindow(display, root, 0, 0, config.output_width, config.output_height, 0, 0, colorkey);
 
-	assert(XvMCCreateContext(display, port_num, surface_type_id, config.input_width, config.input_width, XVMC_DIRECT, &context) == Success);
+	assert(XvMCCreateContext(display, port_num, surface_type_id, config.input_width, config.input_height, XVMC_DIRECT, &context) == Success);
 	assert(XvMCCreateSurface(display, &context, &surface) == Success);
 	assert(XvMCCreateBlocks(display, &context, mbw * mbh * BLOCKS_PER_MACROBLOCK, &block_array) == Success);
 	assert(XvMCCreateMacroBlocks(display, &context, mbw * mbh, &mb_array) == Success);
