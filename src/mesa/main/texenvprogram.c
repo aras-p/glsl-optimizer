@@ -204,7 +204,7 @@ static GLuint get_fp_input_mask( GLcontext *ctx )
 {
    GLuint fp_inputs = 0;
 
-   if (1) {
+   if (!ctx->VertexProgram._Enabled) {
       GLuint varying_inputs = ctx->varying_vp_inputs;
 
       /* First look at what values may be computed by the generated
@@ -232,14 +232,13 @@ static GLuint get_fp_input_mask( GLcontext *ctx )
    }
    else {
       /* calculate from vp->outputs */
-      GLuint vp_outputs = 0;
+      GLuint vp_outputs = ctx->VertexProgram._Current->Base.OutputsWritten;
 
       if (vp_outputs & (1 << VERT_RESULT_COL0)) fp_inputs |= FRAG_BIT_COL0;
       if (vp_outputs & (1 << VERT_RESULT_COL1)) fp_inputs |= FRAG_BIT_COL1;
 
-      fp_inputs |= (((vp_outputs & VERT_RESULT_TEX_ANY) 
-                   << VERT_RESULT_TEX0) 
-                  >> FRAG_ATTRIB_TEX0);
+      fp_inputs |= (((vp_outputs & VERT_RESULT_TEX_ANY) >> VERT_RESULT_TEX0) 
+                    << FRAG_ATTRIB_TEX0);
    }
    
    return fp_inputs;
