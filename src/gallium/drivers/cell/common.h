@@ -227,6 +227,7 @@ struct cell_command_render
    float xmin, ymin, xmax, ymax;  /* XXX another dummy field */
    uint min_index;
    boolean inline_verts;
+   uint front_winding; /* the rasterizer needs to be able to determine facing to apply front/back-facing stencil */
 };
 
 

@@ -53,17 +53,26 @@ struct spe_function
    uint num_inst;
    uint max_inst;
 
-    /**
-     * Mask of used / unused registers
-     *
-     * Each set bit corresponds to an available register.  Each cleared bit
-     * corresponds to an allocated register.
+   /**
+    * The "set count" reflects the number of nested register sets
+    * are allowed.  In the unlikely case that we exceed the set count,
+    * register allocation will start to be confused, which is critical
+    * enough that we check for it.
+    */
+   unsigned char set_count;
+
+   /** 
+    * Flags for used and unused registers.  Each byte corresponds to a
+    * register; a 0 in that byte means that the register is available.
+    * A value of 1 means that the register was allocated in the current
+    * register set.  Any other value N means that the register was allocated
+    * N register sets ago.
      *
      * \sa
      * spe_allocate_register, spe_allocate_available_register,
-     * spe_release_register
+     * spe_allocate_register_set, spe_release_register_set, spe_release_register, 
      */
-    uint64_t regs[SPE_NUM_REGS / 64];
+    unsigned char regs[SPE_NUM_REGS];
 
     boolean print; /**< print/dump instructions as they're emitted? */
     int indent;    /**< number of spaces to indent */
@@ -77,6 +86,8 @@ extern unsigned spe_code_size(const struct spe_function *p);
 extern int spe_allocate_available_register(struct spe_function *p);
 extern int spe_allocate_register(struct spe_function *p, int reg);
 extern void spe_release_register(struct spe_function *p, int reg);
+extern void spe_allocate_register_set(struct spe_function *p);
+extern void spe_release_register_set(struct spe_function *p);
 
 extern void spe_print_code(struct spe_function *p, boolean enable);
 extern void spe_indent(struct spe_function *p, int spaces);
@@ -306,6 +317,22 @@ spe_load_int(struct spe_function *p, unsigned rT, int i);
 /** Load/splat immediate unsigned int into rT. */
 extern void
 spe_load_uint(struct spe_function *p, unsigned rT, unsigned int ui);
+
+/** And immediate value into rT. */
+extern void
+spe_and_uint(struct spe_function *p, unsigned rT, unsigned rA, unsigned int ui);
+
+/** Xor immediate value into rT. */
+extern void
+spe_xor_uint(struct spe_function *p, unsigned rT, unsigned rA, unsigned int ui);
+
+/** Compare equal with immediate value. */
+extern void
+spe_compare_equal_uint(struct spe_function *p, unsigned rT, unsigned rA, unsigned int ui);
+
+/** Compare greater with immediate value. */
+extern void
+spe_compare_greater_uint(struct spe_function *p, unsigned rT, unsigned rA, unsigned int ui);
 
 /** Replicate word 0 of rA across rT. */
 extern void

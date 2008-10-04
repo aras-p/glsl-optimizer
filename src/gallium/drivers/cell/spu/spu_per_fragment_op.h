@@ -38,7 +38,8 @@ spu_fallback_fragment_ops(uint x, uint y,
                           vector float fragGreen,
                           vector float fragBlue,
                           vector float fragAlpha,
-                          vector unsigned int mask);
+                          vector unsigned int mask,
+                          uint facing);
 
 
 #endif /* SPU_PER_FRAGMENT_OP */

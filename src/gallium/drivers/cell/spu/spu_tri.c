@@ -118,6 +118,8 @@ struct setup_stage {
 
    float oneoverarea;
 
+   uint facing;
+
    uint tx, ty;
 
    int cliprect_minx, cliprect_maxx, cliprect_miny, cliprect_maxy;
@@ -274,7 +276,7 @@ eval_z(float x, float y)
  * overall.
  */
 static INLINE void
-emit_quad( int x, int y, mask_t mask )
+emit_quad( int x, int y, mask_t mask)
 {
    /* If any bits in mask are set... */
    if (spu_extract(spu_orx(mask), 0)) {
@@ -344,7 +346,8 @@ emit_quad( int x, int y, mask_t mask )
                              fragZ,
                              soa_frag[0], soa_frag[1],
                              soa_frag[2], soa_frag[3],
-                             mask);
+                             mask,
+                             setup.facing);
          }
 
       }
@@ -379,7 +382,8 @@ emit_quad( int x, int y, mask_t mask )
                           outputs[0*4+1],
                           outputs[0*4+2],
                           outputs[0*4+3],
-                          mask);
+                          mask,
+                          setup.facing);
       }
    }
 }
@@ -483,7 +487,7 @@ static void flush_spans( void )
     */
    for (x = block(minleft); x <= block(maxright); x += 2) {
 #if 1
-      emit_quad( x, setup.span.y, calculate_mask( x ) );
+      emit_quad( x, setup.span.y, calculate_mask( x ));
 #endif
    }
 
@@ -902,13 +906,28 @@ static void subtriangle( struct edge *eleft,
    eright->sy += lines;
 }
 
+static float
+determinant( const float *v0,
+             const float *v1,
+             const float *v2 )
+{
+   /* edge vectors e = v0 - v2, f = v1 - v2 */
+   const float ex = v0[0] - v2[0];
+   const float ey = v0[1] - v2[1];
+   const float fx = v1[0] - v2[0];
+   const float fy = v1[1] - v2[1];
+
+   /* det = cross(e,f).z */
+   return ex * fy - ey * fx;
+}
+
 
 /**
  * Draw triangle into tile at (tx, ty) (tile coords)
  * The tile data should have already been fetched.
  */
 boolean
-tri_draw(const float *v0, const float *v1, const float *v2, uint tx, uint ty)
+tri_draw(const float *v0, const float *v1, const float *v2, uint tx, uint ty, uint front_winding)
 {
    setup.tx = tx;
    setup.ty = ty;
@@ -918,6 +937,12 @@ tri_draw(const float *v0, const float *v1, const float *v2, uint tx, uint ty)
    setup.cliprect_miny = ty * TILE_SIZE;
    setup.cliprect_maxx = (tx + 1) * TILE_SIZE;
    setup.cliprect_maxy = (ty + 1) * TILE_SIZE;
+
+   /* Before we sort vertices, determine the facing of the triangle,
+    * which will be needed for front/back-face stencil application
+    */
+   float det = determinant(v0, v1, v2);
+   setup.facing = (det > 0.0) ^ (front_winding == PIPE_WINDING_CW);
 
    if (!setup_sort_vertices((struct vertex_header *) v0,
                             (struct vertex_header *) v1,

@@ -73,7 +73,8 @@ typedef void (*spu_fragment_ops_func)(uint x, uint y,
                                       vector float fragGreen,
                                       vector float fragBlue,
                                       vector float fragAlpha,
-                                      vector unsigned int mask);
+                                      vector unsigned int mask,
+                                      uint facing);
 
 /** Function for running fragment program */
 typedef void (*spu_fragment_program_func)(vector float *inputs,
