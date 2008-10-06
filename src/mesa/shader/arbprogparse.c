@@ -3863,6 +3863,9 @@ _mesa_parse_arb_fragment_program(GLcontext* ctx, GLenum target,
    program->FogOption          = ap.FogOption;
    program->UsesKill          = ap.UsesKill;
 
+   if (program->FogOption)
+      program->Base.InputsRead |= FRAG_BIT_FOGC;
+      
    if (program->Base.Instructions)
       _mesa_free(program->Base.Instructions);
    program->Base.Instructions = ap.Base.Instructions;
