@@ -87,14 +87,14 @@ struct vertex_info
    } attrib[PIPE_MAX_SHADER_INPUTS];
 };
 
-static inline int
+static INLINE int
 draw_vinfo_size( const struct vertex_info *a )
 {
    return ((const char *)&a->attrib[a->num_attribs] -
            (const char *)a);
 }
 
-static inline int
+static INLINE int
 draw_vinfo_compare( const struct vertex_info *a,
                     const struct vertex_info *b )
 {
@@ -102,7 +102,7 @@ draw_vinfo_compare( const struct vertex_info *a,
    return memcmp( a, b, sizea );
 }
 
-static inline void
+static INLINE void
 draw_vinfo_copy( struct vertex_info *dst,
                  const struct vertex_info *src )
 {
