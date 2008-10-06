@@ -58,7 +58,7 @@
 #include "colortab.h"
 #endif
 #include "context.h"
-#if FEATURE_convolution
+#if FEATURE_convolve
 #include "convolve.h"
 #endif
 #include "depth.h"
@@ -402,7 +402,7 @@ _mesa_init_exec_table(struct _glapi_table *exec)
    SET_GetColorTableParameteriv(exec, _mesa_GetColorTableParameteriv);
 #endif
 
-#if FEATURE_convolution
+#if FEATURE_convolve
    SET_ConvolutionFilter1D(exec, _mesa_ConvolutionFilter1D);
    SET_ConvolutionFilter2D(exec, _mesa_ConvolutionFilter2D);
    SET_ConvolutionParameterf(exec, _mesa_ConvolutionParameterf);
