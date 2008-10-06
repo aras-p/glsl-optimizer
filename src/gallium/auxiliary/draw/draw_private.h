@@ -163,11 +163,14 @@ struct draw_context
 
    struct {
       boolean bypass_clipping;
+      boolean bypass_vs;
    } driver;
 
    boolean flushing;         /**< debugging/sanity */
    boolean suspend_flushing; /**< internally set */
    boolean bypass_clipping;  /**< set if either api or driver bypass_clipping true */
+
+   boolean force_passthrough; /**< never clip or shade */
 
    /* pipe state that we need: */
    const struct pipe_rasterizer_state *rasterizer;
