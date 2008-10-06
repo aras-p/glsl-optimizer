@@ -260,9 +260,31 @@ case $ARCH in
                 OPTS=${ALTOPTS}
             fi
             rm -f ${LIBNAME}
+
+	    # expand any .a objects into constituent .o files.
+	    NEWOBJECTS=""
+	    DELETIA=""
+	    for OBJ in ${OBJECTS} ; do
+		if [ `expr match $OBJ '.*\.a'` -gt 0 ] ; then
+		    # extract the .o files from this .a archive
+		    FILES=`ar t $OBJ`
+		    ar x $OBJ
+		    NEWOBJECTS="$NEWOBJECTS $FILES"
+		    # keep track of temporary .o files and delete them below
+		    DELETIA="$DELETIA $FILES"
+		else
+		    # ordinary .o file
+		    NEWOBJECTS="$NEWOBJECTS $OBJ"
+		fi
+	    done
+
             # make lib
-            ${LINK} ${OPTS} ${LIBNAME} ${OBJECTS}
+            ${LINK} ${OPTS} ${LIBNAME} ${NEWOBJECTS}
             ranlib ${LIBNAME}
+
+	    # remove temporary extracted .o files
+	    rm -f ${DELETIA}
+
             # finish up
             FINAL_LIBS=${LIBNAME}
         else
