@@ -657,7 +657,7 @@ void sse_movntps( struct x86_function *p,
                   struct x86_reg dst,
                   struct x86_reg src)
 {
-   DUMP_RR( dst, reg );
+   DUMP_RR( dst, src );
 
    assert(dst.mod != mod_REG);
    assert(src.mod == mod_REG);
