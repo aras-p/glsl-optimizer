@@ -37,7 +37,7 @@ extern void
 _mesa_free_query_data(GLcontext *ctx);
 
 extern void
-_mesa_delete_query(struct gl_query_object *q);
+_mesa_delete_query(GLcontext *ctx, struct gl_query_object *q);
 
 extern void
 _mesa_begin_query(GLcontext *ctx, struct gl_query_object *q);
