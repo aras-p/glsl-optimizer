@@ -370,7 +370,11 @@ void x86_jcc( struct x86_function *p,
    DUMP_I(cc);
    
    if (offset < 0) {
-      assert(p->csr - p->store > -offset);
+      /*assert(p->csr - p->store > -offset);*/
+      if (p->csr - p->store <= -offset) {
+         /* probably out of memory (using the error_overflow buffer) */
+         return;
+      }
    }
 
    if (offset <= 127 && offset >= -128) {
