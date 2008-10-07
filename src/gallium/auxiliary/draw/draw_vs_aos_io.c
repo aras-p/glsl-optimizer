@@ -338,7 +338,7 @@ static void emit_store_R32G32B32A32( struct aos_compilation *cp,
 				     struct x86_reg dst_ptr,
 				     struct x86_reg dataXMM )
 {
-   sse_movaps(cp->func, dst_ptr, dataXMM);
+   sse_movups(cp->func, dst_ptr, dataXMM);
 }
 
 static void emit_store_R32G32B32( struct aos_compilation *cp, 
