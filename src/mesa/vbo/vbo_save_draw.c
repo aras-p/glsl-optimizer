@@ -118,7 +118,7 @@ static void vbo_bind_vertex_list( GLcontext *ctx,
    GLuint data = node->buffer_offset;
    const GLuint *map;
    GLuint attr;
-   GLuint varying_inputs = 0;
+   GLbitfield varying_inputs = 0x0;
 
    /* Install the default (ie Current) attributes first, then overlay
     * all active ones.

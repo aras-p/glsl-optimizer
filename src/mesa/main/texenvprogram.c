@@ -192,7 +192,8 @@ static GLuint translate_tex_src_bit( GLbitfield bit )
 #define VERT_BIT_TEX_ANY    (0xff << VERT_ATTRIB_TEX0)
 #define VERT_RESULT_TEX_ANY (0xff << VERT_RESULT_TEX0)
 
-/* Identify all possible varying inputs.  The fragment program will
+/**
+ * Identify all possible varying inputs.  The fragment program will
  * never reference non-varying inputs, but will track them via state
  * constants instead.
  *
@@ -200,15 +201,15 @@ static GLuint translate_tex_src_bit( GLbitfield bit )
  * has access to.  The bitmask is later reduced to just those which
  * are actually referenced.
  */
-static GLuint get_fp_input_mask( GLcontext *ctx )
+static GLbitfield get_fp_input_mask( GLcontext *ctx )
 {
-   GLuint fp_inputs = 0;
+   GLbitfield fp_inputs = 0x0;
 
    if (!ctx->VertexProgram._Enabled ||
        !ctx->VertexProgram._Current) {
 
       /* Fixed function logic */
-      GLuint varying_inputs = ctx->varying_vp_inputs;
+      GLbitfield varying_inputs = ctx->varying_vp_inputs;
 
       /* First look at what values may be computed by the generated
        * vertex program:
@@ -235,7 +236,7 @@ static GLuint get_fp_input_mask( GLcontext *ctx )
    }
    else {
       /* calculate from vp->outputs */
-      GLuint vp_outputs = ctx->VertexProgram._Current->Base.OutputsWritten;
+      GLbitfield vp_outputs = ctx->VertexProgram._Current->Base.OutputsWritten;
 
       if (vp_outputs & (1 << VERT_RESULT_COL0)) fp_inputs |= FRAG_BIT_COL0;
       if (vp_outputs & (1 << VERT_RESULT_COL1)) fp_inputs |= FRAG_BIT_COL1;
@@ -255,8 +256,8 @@ static GLuint get_fp_input_mask( GLcontext *ctx )
 static void make_state_key( GLcontext *ctx,  struct state_key *key )
 {
    GLuint i, j;
-   GLuint inputs_referenced = FRAG_BIT_COL0;
-   GLuint inputs_available = get_fp_input_mask( ctx );
+   GLbitfield inputs_referenced = FRAG_BIT_COL0;
+   GLbitfield inputs_available = get_fp_input_mask( ctx );
 
    memset(key, 0, sizeof(*key));
 
@@ -311,7 +312,8 @@ static void make_state_key( GLcontext *ctx,  struct state_key *key )
    key->inputs_available = (inputs_available & inputs_referenced);
 }
 
-/* Use uregs to represent registers internally, translate to Mesa's
+/**
+ * Use uregs to represent registers internally, translate to Mesa's
  * expected formats on emit.  
  *
  * NOTE: These are passed by value extensively in this file rather
@@ -344,16 +346,16 @@ static const struct ureg undef = {
 };
 
 
-/* State used to build the fragment program:
+/** State used to build the fragment program:
  */
 struct texenv_fragment_program {
    struct gl_fragment_program *program;
    GLcontext *ctx;
    struct state_key *state;
 
-   GLbitfield alu_temps;	/* Track texture indirections, see spec. */
-   GLbitfield temps_output;	/* Track texture indirections, see spec. */
-   GLbitfield temp_in_use;	/* Tracks temporary regs which are in use. */
+   GLbitfield alu_temps;	/**< Track texture indirections, see spec. */
+   GLbitfield temps_output;	/**< Track texture indirections, see spec. */
+   GLbitfield temp_in_use;	/**< Tracks temporary regs which are in use. */
    GLboolean error;
 
    struct ureg src_texture[MAX_TEXTURE_UNITS];   
@@ -361,11 +363,11 @@ struct texenv_fragment_program {
     * else undef.
     */
 
-   struct ureg src_previous;	/* Reg containing color from previous 
+   struct ureg src_previous;	/**< Reg containing color from previous 
 				 * stage.  May need to be decl'd.
 				 */
 
-   GLuint last_tex_stage;	/* Number of last enabled texture unit */
+   GLuint last_tex_stage;	/**< Number of last enabled texture unit */
 
    struct ureg half;
    struct ureg one;

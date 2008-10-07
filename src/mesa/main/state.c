@@ -532,7 +532,7 @@ _mesa_update_state( GLcontext *ctx )
  */
 void
 _mesa_set_varying_vp_inputs( GLcontext *ctx,
-                             unsigned varying_inputs )
+                             GLbitfield varying_inputs )
 {
    if (ctx->varying_vp_inputs != varying_inputs) {
       ctx->varying_vp_inputs = varying_inputs;

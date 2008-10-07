@@ -150,7 +150,7 @@ static void vbo_exec_bind_arrays( GLcontext *ctx )
    GLubyte *data = exec->vtx.buffer_map;
    const GLuint *map;
    GLuint attr;
-   GLuint varying_inputs = 0;
+   GLbitfield varying_inputs = 0x0;
 
    /* Install the default (ie Current) attributes first, then overlay
     * all active ones.

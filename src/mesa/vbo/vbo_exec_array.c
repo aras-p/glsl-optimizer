@@ -127,7 +127,7 @@ static void recalculate_input_bindings( GLcontext *ctx )
    struct vbo_context *vbo = vbo_context(ctx);
    struct vbo_exec_context *exec = &vbo->exec;
    const struct gl_client_array **inputs = &exec->array.inputs[0];
-   GLuint const_inputs = 0;
+   GLbitfield const_inputs = 0x0;
    GLuint i;
 
    exec->array.program_mode = get_program_mode(ctx);

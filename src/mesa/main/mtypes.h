@@ -3073,7 +3073,7 @@ struct __GLcontextRec
    GLenum RenderMode;        /**< either GL_RENDER, GL_SELECT, GL_FEEDBACK */
    GLbitfield NewState;      /**< bitwise-or of _NEW_* flags */
 
-   GLuint varying_vp_inputs;
+   GLbitfield varying_vp_inputs;  /**< mask of VERT_BIT_* flags */
 
    /** \name Derived state */
    /*@{*/
