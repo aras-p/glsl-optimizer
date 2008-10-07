@@ -231,6 +231,25 @@ cmd_state_fragment_program(const struct cell_command_fragment_program *fp)
 }
 
 
+static uint
+cmd_state_fs_constants(const uint64_t *buffer, uint pos)
+{
+   const uint num_const = buffer[pos + 1];
+   const float *constants = (const float *) &buffer[pos + 2];
+   uint i;
+
+   DEBUG_PRINTF("CMD_STATE_FS_CONSTANTS (%u)\n", num_const);
+
+   /* Expand each float to float[4] for SOA execution */
+   for (i = 0; i < num_const; i++) {
+      spu.constants[i] = spu_splats(constants[i]);
+   }
+
+   /* return new buffer pos (in 8-byte words) */
+   return pos + 2 + num_const / 2;
+}
+
+
 static void
 cmd_state_framebuffer(const struct cell_command_framebuffer *cmd)
 {
@@ -455,6 +474,9 @@ cmd_batch(uint opcode)
             cmd_state_fragment_program(fp);
             pos += sizeof(*fp) / 8;
          }
+         break;
+      case CELL_CMD_STATE_FS_CONSTANTS:
+         pos = cmd_state_fs_constants(buffer, pos);
          break;
       case CELL_CMD_STATE_SAMPLER:
          {

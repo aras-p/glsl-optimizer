@@ -215,7 +215,15 @@ get_src_reg(struct codegen *gen,
          reg = gen->imm_regs[src->SrcRegister.Index][swizzle];
          break;
       case TGSI_FILE_CONSTANT:
-         /* xxx fall-through for now / fix */
+         {
+            /* offset is measured in quadwords, not bytes */
+            int offset = src->SrcRegister.Index * 4 + swizzle;
+            reg = get_itemp(gen);
+            reg_is_itemp = TRUE;
+            /* Load:  reg = memory[(machine_reg) + offset] */
+            spe_lqd(gen->f, reg, gen->constants_reg, offset);
+         }
+         break;
       default:
          assert(0);
       }

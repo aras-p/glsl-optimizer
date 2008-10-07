@@ -41,6 +41,9 @@
 #define MAX_HEIGHT 1024
 
 
+#define CELL_MAX_CONSTANTS 32  /**< number of float[4] constants */
+
+
 /**
  * A tile is basically a TILE_SIZE x TILE_SIZE block of 4-byte pixels.
  * The data may be addressed through several different types.
@@ -157,9 +160,8 @@ struct spu_global
    /** Current texture sampler function */
    spu_sample_texture_func sample_texture[CELL_MAX_SAMPLERS];
 
-   /** Fragment program constants (XXX preliminary/used) */
-#define MAX_CONSTANTS 32
-   vector float constants[MAX_CONSTANTS];
+   /** Fragment program constants */
+   vector float constants[4 * CELL_MAX_CONSTANTS];
 
 } ALIGN16_ATTRIB;
 

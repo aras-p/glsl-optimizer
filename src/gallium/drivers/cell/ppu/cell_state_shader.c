@@ -197,7 +197,10 @@ cell_set_constant_buffer(struct pipe_context *pipe,
                         buf->buffer);
    cell->constants[shader].size = buf->size;
 
-   cell->dirty |= CELL_NEW_CONSTANTS;
+   if (shader == PIPE_SHADER_VERTEX)
+      cell->dirty |= CELL_NEW_VS_CONSTANTS;
+   else if (shader == PIPE_SHADER_FRAGMENT)
+      cell->dirty |= CELL_NEW_FS_CONSTANTS;
 }
 
 

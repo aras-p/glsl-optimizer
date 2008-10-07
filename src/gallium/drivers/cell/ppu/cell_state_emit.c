@@ -25,6 +25,7 @@
  * 
  **************************************************************************/
 
+#include "pipe/p_inlines.h"
 #include "util/u_memory.h"
 #include "cell_context.h"
 #include "cell_gen_fragment.h"
@@ -160,6 +161,24 @@ cell_emit_state(struct cell_context *cell)
             printf(" %3d: 0x%08x\n", i, fp->code[i]);
          }
       }
+   }
+
+   if (cell->dirty & (CELL_NEW_FS_CONSTANTS)) {
+      const uint shader = PIPE_SHADER_FRAGMENT;
+      const uint num_const = cell->constants[shader].size / sizeof(float);
+      uint i, j;
+      float *buf = cell_batch_alloc(cell, 16 + num_const * sizeof(float));
+      uint64_t *ibuf = (uint64_t *) buf;
+      const float *constants = pipe_buffer_map(cell->pipe.screen,
+                                               cell->constants[shader].buffer,
+                                               PIPE_BUFFER_USAGE_CPU_READ);
+      ibuf[0] = CELL_CMD_STATE_FS_CONSTANTS;
+      ibuf[1] = num_const;
+      j = 4;
+      for (i = 0; i < num_const; i++) {
+         buf[j++] = constants[i];
+      }
+      pipe_buffer_unmap(cell->pipe.screen, cell->constants[shader].buffer);
    }
 
    if (cell->dirty & (CELL_NEW_FRAMEBUFFER |
