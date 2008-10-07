@@ -37,7 +37,7 @@
 
 #include "draw_vs.h"
 
-#if defined(PIPE_ARCH_X86)
+#if defined(PIPE_ARCH_X86) && defined(PIPE_ARCH_SSE)
 
 #include "pipe/p_shader_tokens.h"
 
