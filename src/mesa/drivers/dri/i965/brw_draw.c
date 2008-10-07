@@ -382,7 +382,6 @@ void brw_draw_prims( GLcontext *ctx,
       return;
    }
 
-
    /* Make a first attempt at drawing:
     */
    retval = brw_try_draw_prims(ctx, arrays, prim, nr_prims, ib, min_index, max_index);
@@ -395,6 +394,7 @@ void brw_draw_prims( GLcontext *ctx,
        _swsetup_Wakeup(ctx);
       _tnl_draw_prims(ctx, arrays, prim, nr_prims, ib, min_index, max_index);
    }
+
 }
 
 void brw_draw_init( struct brw_context *brw )

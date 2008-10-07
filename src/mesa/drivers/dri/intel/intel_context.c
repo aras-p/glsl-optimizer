@@ -394,6 +394,7 @@ static const struct dri_extension brw_extensions[] = {
    { "GL_ARB_fragment_program",           NULL },
    { "GL_ARB_fragment_program_shadow",    NULL },
    { "GL_ARB_fragment_shader",            NULL },
+   { "GL_ARB_occlusion_query",            GL_ARB_occlusion_query_functions },
    { "GL_ARB_point_sprite", 		  NULL },
    { "GL_ARB_shader_objects",             GL_ARB_shader_objects_functions },
    { "GL_ARB_shading_language_100",       GL_VERSION_2_0_functions },
@@ -407,12 +408,9 @@ static const struct dri_extension brw_extensions[] = {
    { NULL,                                NULL }
 };
 
-#ifdef I915_MMIO_READ
-static const struct dri_extension arb_oc_extensions[] = {
-   { "GL_ARB_occlusion_query",            GL_ARB_occlusion_query_functions },
+static const struct dri_extension arb_oq_extensions[] = {
    { NULL, NULL }
 };
-#endif
 
 static const struct dri_extension ttm_extensions[] = {
    { "GL_ARB_pixel_buffer_object",        NULL },
@@ -436,13 +434,6 @@ void intelInitExtensions(GLcontext *ctx, GLboolean enable_imaging)
 
    if (intel == NULL || intel->ttm)
       driInitExtensions(ctx, ttm_extensions, GL_FALSE);
-
-#ifdef I915_MMIO_READ
-   if (intel == NULL || 
-       (IS_965(intel->intelScreen->deviceID) && 
-	intel->intelScreen->drmMinor >= 8))
-      driInitExtensions(ctx, arb_oc_extensions, GL_FALSE);
-#endif
 
    if (intel == NULL || IS_965(intel->intelScreen->deviceID))
       driInitExtensions(ctx, brw_extensions, GL_FALSE);
@@ -540,39 +531,6 @@ intelFinish(GLcontext * ctx)
    }
 }
 
-#ifdef I915_MMIO_READ
-static void
-intelBeginQuery(GLcontext *ctx, struct gl_query_object *q)
-{
-	struct intel_context *intel = intel_context( ctx );
-	struct drm_i915_mmio io = {
-		.read_write = I915_MMIO_READ,
-		.reg = MMIO_REGS_PS_DEPTH_COUNT,
-		.data = &q->Result 
-	};
-	intel->stats_wm++;
-	intelFinish(&intel->ctx);
-	drmCommandWrite(intel->driFd, DRM_I915_MMIO, &io, sizeof(io));
-}
-
-static void
-intelEndQuery(GLcontext *ctx, struct gl_query_object *q)
-{
-	struct intel_context *intel = intel_context( ctx );
-	GLuint64EXT tmp;	
-	struct drm_i915_mmio io = {
-		.read_write = I915_MMIO_READ,
-		.reg = MMIO_REGS_PS_DEPTH_COUNT,
-		.data = &tmp
-	};
-	intelFinish(&intel->ctx);
-	drmCommandWrite(intel->driFd, DRM_I915_MMIO, &io, sizeof(io));
-	q->Result = tmp - q->Result;
-	q->Ready = GL_TRUE;
-	intel->stats_wm--;
-}
-#endif
-
 void
 intelInitDriverFunctions(struct dd_function_table *functions)
 {
@@ -588,11 +546,6 @@ intelInitDriverFunctions(struct dd_function_table *functions)
    functions->CopyColorSubTable = _swrast_CopyColorSubTable;
    functions->CopyConvolutionFilter1D = _swrast_CopyConvolutionFilter1D;
    functions->CopyConvolutionFilter2D = _swrast_CopyConvolutionFilter2D;
-
-#ifdef I915_MMIO_READ
-   functions->BeginQuery = intelBeginQuery;
-   functions->EndQuery = intelEndQuery;
-#endif
 
    intelInitTextureFuncs(functions);
    intelInitStateFuncs(functions);

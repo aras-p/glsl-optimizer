@@ -33,6 +33,7 @@
 #include "main/imports.h"
 #include "main/api_noop.h"
 #include "main/vtxfmt.h"
+#include "main/simple_list.h"
 #include "shader/shader_api.h"
 
 #include "brw_context.h"
@@ -68,6 +69,7 @@ static void brwInitDriverFunctions( struct dd_function_table *functions )
 
    brwInitFragProgFuncs( functions );
    brwInitProgFuncs( functions );
+   brw_init_queryobj_functions(functions);
 }
 
 
@@ -149,6 +151,8 @@ GLboolean brwCreateContext( const __GLcontextModes *mesaVis,
 
    ctx->VertexProgram._MaintainTnlProgram = GL_TRUE;
    ctx->FragmentProgram._MaintainTexEnvProgram = GL_TRUE;
+
+   make_empty_list(&brw->query.active_head);
 
    brw_draw_init( brw );
 

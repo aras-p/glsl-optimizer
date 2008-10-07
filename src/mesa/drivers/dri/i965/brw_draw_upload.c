@@ -415,6 +415,8 @@ static void brw_prepare_vertices(struct brw_context *brw)
           copy_array_to_vbo_array(brw, upload[i], upload[i]->element_size);
       }
    }
+
+   brw_prepare_query_begin(brw);
 }
 
 static void brw_emit_vertices(struct brw_context *brw)
@@ -435,6 +437,7 @@ static void brw_emit_vertices(struct brw_context *brw)
       enabled[nr_enabled++] = input;
    }
 
+   brw_emit_query_begin(brw);
 
    /* Now emit VB and VEP state packets.
     *

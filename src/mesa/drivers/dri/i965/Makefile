@@ -51,6 +51,7 @@ DRIVER_SOURCES = \
 	brw_metaops.c \
 	brw_misc_state.c \
 	brw_program.c \
+	brw_queryobj.c \
 	brw_sf.c \
 	brw_sf_emit.c \
 	brw_sf_state.c \

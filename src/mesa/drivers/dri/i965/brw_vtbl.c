@@ -120,6 +120,15 @@ static void brw_set_draw_region( struct intel_context *intel,
    brw->state.nr_draw_regions = num_regions;
 }
 
+/* called from intel_batchbuffer_flush and children before sending a
+ * batchbuffer off.
+ */
+static void brw_finish_batch(struct intel_context *intel)
+{
+   struct brw_context *brw = brw_context(&intel->ctx);
+
+   brw_emit_query_end(brw);
+}
 
 /* called from intelFlushBatchLocked
  */
@@ -218,6 +227,7 @@ void brwInitVtbl( struct brw_context *brw )
    brw->intel.vtbl.note_fence = brw_note_fence; 
    brw->intel.vtbl.note_unlock = brw_note_unlock; 
    brw->intel.vtbl.new_batch = brw_new_batch;
+   brw->intel.vtbl.finish_batch = brw_finish_batch;
    brw->intel.vtbl.destroy = brw_destroy_context;
    brw->intel.vtbl.set_draw_region = brw_set_draw_region;
    brw->intel.vtbl.flush_cmd = brw_flush_cmd;

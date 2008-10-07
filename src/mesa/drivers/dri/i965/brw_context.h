@@ -410,7 +410,22 @@ struct brw_tnl_cache {
    GLuint size, n_items;
 };
 
+struct brw_query_object {
+   struct gl_query_object Base;
 
+   /** Doubly linked list of active query objects in the context. */
+   struct brw_query_object *prev, *next;
+
+   /** Last query BO associated with this query. */
+   dri_bo *bo;
+   /** First index in bo with query data for this object. */
+   int first_index;
+   /** Last index in bo with query data for this object. */
+   int last_index;
+
+   /* Total count of pixels from previous BOs */
+   unsigned int count;
+};
 
 struct brw_context 
 {
@@ -626,7 +641,12 @@ struct brw_context
       dri_bo *vp_bo;
    } cc;
 
-   
+   struct {
+      struct brw_query_object active_head;
+      dri_bo *bo;
+      int index;
+      GLboolean active;
+   } query;
    /* Used to give every program string a unique id
     */
    GLuint program_id;
@@ -651,7 +671,13 @@ GLboolean brwCreateContext( const __GLcontextModes *mesaVis,
 			    __DRIcontextPrivate *driContextPriv,
 			    void *sharedContextPrivate);
 
-
+/*======================================================================
+ * brw_queryobj.c
+ */
+void brw_init_queryobj_functions(struct dd_function_table *functions);
+void brw_prepare_query_begin(struct brw_context *brw);
+void brw_emit_query_begin(struct brw_context *brw);
+void brw_emit_query_end(struct brw_context *brw);
 
 /*======================================================================
  * brw_state.c
