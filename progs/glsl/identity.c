@@ -1,10 +1,6 @@
 /**
  * Test very basic glsl functionality (identity vertex and fragment shaders).
- * Brian Paul
- * 2 May 2007
- *
- * NOTE: resize the window to observe how the partial derivatives of
- * the texcoords change.
+ * Brian Paul & Stephane Marchesin
  */
 
 
@@ -17,6 +13,7 @@
 #include <GL/glut.h>
 #include <GL/glext.h>
 #include "extfuncs.h"
+#include "shaderutil.h"
 
 
 static char *FragProgFile = NULL;
@@ -28,6 +25,7 @@ static GLint win = 0;
 static GLboolean anim = GL_TRUE;
 static GLfloat xRot = 0.0f, yRot = 0.0f;
 static int w,h;
+
 
 static void
 Redisplay(void)
@@ -128,69 +126,6 @@ SpecialKey(int key, int x, int y)
 }
 
 
-
-
-static void
-LoadAndCompileShader(GLuint shader, const char *text)
-{
-   GLint stat;
-
-   glShaderSource_func(shader, 1, (const GLchar **) &text, NULL);
-
-   glCompileShader_func(shader);
-
-   glGetShaderiv_func(shader, GL_COMPILE_STATUS, &stat);
-   if (!stat) {
-      GLchar log[1000];
-      GLsizei len;
-      glGetShaderInfoLog_func(shader, 1000, &len, log);
-      fprintf(stderr, "fslight: problem compiling shader:\n%s\n", log);
-      exit(1);
-   }
-}
-
-
-/**
- * Read a shader from a file.
- */
-static void
-ReadShader(GLuint shader, const char *filename)
-{
-   const int max = 100*1000;
-   int n;
-   char *buffer = (char*) malloc(max);
-   FILE *f = fopen(filename, "r");
-   if (!f) {
-      fprintf(stderr, "fslight: Unable to open shader file %s\n", filename);
-      exit(1);
-   }
-
-   n = fread(buffer, 1, max, f);
-   printf("fslight: read %d bytes from shader file %s\n", n, filename);
-   if (n > 0) {
-      buffer[n] = 0;
-      LoadAndCompileShader(shader, buffer);
-   }
-
-   fclose(f);
-   free(buffer);
-}
-
-
-static void
-CheckLink(GLuint prog)
-{
-   GLint stat;
-   glGetProgramiv_func(prog, GL_LINK_STATUS, &stat);
-   if (!stat) {
-      GLchar log[1000];
-      GLsizei len;
-      glGetProgramInfoLog_func(prog, 1000, &len, log);
-      fprintf(stderr, "Linker error:\n%s\n", log);
-   }
-}
-
-
 static void
 Init(void)
 {
@@ -202,33 +137,24 @@ Init(void)
       "void main() {\n"
       "   gl_Position = gl_Vertex;\n"
       "}\n";
-   const char *version;
 
-   version = (const char *) glGetString(GL_VERSION);
-   if (version[0] != '2' || version[1] != '.') {
-      printf("This program requires OpenGL 2.x, found %s\n", version);
+   if (!ShadersSupported())
       exit(1);
-   }
 
    GetExtensionFuncs();
 
-   fragShader = glCreateShader_func(GL_FRAGMENT_SHADER);
    if (FragProgFile)
-      ReadShader(fragShader, FragProgFile);
+      fragShader = CompileShaderFile(GL_FRAGMENT_SHADER, FragProgFile);
    else
-      LoadAndCompileShader(fragShader, fragShaderText);
+      fragShader = CompileShaderText(GL_FRAGMENT_SHADER, fragShaderText);
 
-   vertShader = glCreateShader_func(GL_VERTEX_SHADER);
    if (VertProgFile)
-      ReadShader(vertShader, VertProgFile);
+      vertShader = CompileShaderFile(GL_VERTEX_SHADER, VertProgFile);
    else
-      LoadAndCompileShader(vertShader, vertShaderText);
+      vertShader = CompileShaderText(GL_VERTEX_SHADER, vertShaderText);
 
-   program = glCreateProgram_func();
-   glAttachShader_func(program, fragShader);
-   glAttachShader_func(program, vertShader);
-   glLinkProgram_func(program);
-   CheckLink(program);
+   program = LinkShaders(vertShader, fragShader);
+
    glUseProgram_func(program);
 
    /*assert(glGetError() == 0);*/

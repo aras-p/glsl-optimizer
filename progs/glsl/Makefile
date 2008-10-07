@@ -107,6 +107,13 @@ deriv: deriv.o shaderutil.o
 	$(APP_CC) -I$(INCDIR) $(CFLAGS) $(LDFLAGS) deriv.o shaderutil.o $(LIBS) -o $@
 
 
+identity.o: identity.c extfuncs.h shaderutil.h
+	$(APP_CC) -c -I$(INCDIR) $(CFLAGS) identity.c
+
+identity: identity.o shaderutil.o
+	$(APP_CC) -I$(INCDIR) $(CFLAGS) $(LDFLAGS) identity.o shaderutil.o $(LIBS) -o $@
+
+
 mandelbrot.o: mandelbrot.c extfuncs.h shaderutil.h
 	$(APP_CC) -c -I$(INCDIR) $(CFLAGS) mandelbrot.c
 
