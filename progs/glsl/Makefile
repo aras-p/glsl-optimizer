@@ -15,6 +15,7 @@ PROGS = \
 	bump \
 	convolutions \
 	deriv \
+	identity \
 	mandelbrot \
 	multitex \
 	noise \
