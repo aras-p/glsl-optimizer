@@ -165,36 +165,10 @@ cell_emit_state(struct cell_context *cell)
    if (cell->dirty & (CELL_NEW_FRAMEBUFFER |
                       CELL_NEW_DEPTH_STENCIL |
                       CELL_NEW_BLEND)) {
-#if 0
-      /* XXX we don't want to always do codegen here.  We should have
-       * a hash/lookup table to cache previous results...
-       */
-      struct cell_command_fragment_ops *fops
-            = cell_batch_alloc(cell, sizeof(*fops));
-      struct spe_function spe_code;
-
-      /* Prepare the buffer that will hold the generated code. */
-      spe_init_func(&spe_code, SPU_MAX_FRAGMENT_OPS_INSTS * SPE_INST_SIZE);
-
-      /* generate new code */
-      cell_gen_fragment_function(cell, &spe_code);
-
-      /* put the new code into the batch buffer */
-      fops->opcode = CELL_CMD_STATE_FRAGMENT_OPS;
-      memcpy(&fops->code, spe_code.store,
-             SPU_MAX_FRAGMENT_OPS_INSTS * SPE_INST_SIZE);
-      fops->dsa = *cell->depth_stencil;
-      fops->blend = *cell->blend;
-
-      /* free codegen buffer */
-      spe_release_func(&spe_code);
-#else
       struct cell_command_fragment_ops *fops, *fops_cmd;
       fops_cmd = cell_batch_alloc(cell, sizeof(*fops_cmd));
       fops = lookup_fragment_ops(cell);
       memcpy(fops_cmd, fops, sizeof(*fops));
-#endif
-
    }
 
    if (cell->dirty & CELL_NEW_SAMPLER) {
