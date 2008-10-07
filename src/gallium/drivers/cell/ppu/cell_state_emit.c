@@ -36,6 +36,79 @@
 #include "draw/draw_private.h"
 
 
+/**
+ * Find/create a cell_command_fragment_ops object corresponding to the
+ * current blend/stencil/z/colormask/etc. state.
+ */
+static struct cell_command_fragment_ops *
+lookup_fragment_ops(struct cell_context *cell)
+{
+   struct cell_fragment_ops_key key;
+   struct cell_command_fragment_ops *ops;
+
+   /*
+    * Build key
+    */
+   memset(&key, 0, sizeof(key));
+   key.blend = *cell->blend;
+   key.dsa = *cell->depth_stencil;
+
+   if (cell->framebuffer.cbufs[0])
+      key.color_format = cell->framebuffer.cbufs[0]->format;
+   else
+      key.color_format = PIPE_FORMAT_NONE;
+
+   if (cell->framebuffer.zsbuf)
+      key.zs_format = cell->framebuffer.zsbuf->format;
+   else
+      key.zs_format = PIPE_FORMAT_NONE;
+
+   /*
+    * Look up key in cache.
+    */
+   ops = (struct cell_command_fragment_ops *)
+      util_keymap_lookup(cell->fragment_ops_cache, &key);
+
+   /*
+    * If not found, create/save new fragment ops command.
+    */
+   if (!ops) {
+      struct spe_function spe_code;
+
+      if (0)
+         debug_printf("**** Create New Fragment Ops\n");
+
+      /* Prepare the buffer that will hold the generated code. */
+      spe_init_func(&spe_code, SPU_MAX_FRAGMENT_OPS_INSTS * SPE_INST_SIZE);
+
+      /* generate new code */
+      cell_gen_fragment_function(cell, &spe_code);
+
+      /* alloc new fragment ops command */
+      ops = CALLOC_STRUCT(cell_command_fragment_ops);
+
+      /* populate the new cell_command_fragment_ops object */
+      ops->opcode = CELL_CMD_STATE_FRAGMENT_OPS;
+      memcpy(ops->code, spe_code.store, spe_code_size(&spe_code));
+      ops->dsa = *cell->depth_stencil;
+      ops->blend = *cell->blend;
+
+      /* insert cell_command_fragment_ops object into keymap/cache */
+      util_keymap_insert(cell->fragment_ops_cache, &key, ops, NULL);
+
+      /* release rtasm buffer */
+      spe_release_func(&spe_code);
+   }
+   else {
+      if (0)
+         debug_printf("**** Re-use Fragment Ops\n");
+   }
+
+   return ops;
+}
+
+
+
 static void
 emit_state_cmd(struct cell_context *cell, uint cmd,
                const void *state, uint state_size)
@@ -92,6 +165,7 @@ cell_emit_state(struct cell_context *cell)
    if (cell->dirty & (CELL_NEW_FRAMEBUFFER |
                       CELL_NEW_DEPTH_STENCIL |
                       CELL_NEW_BLEND)) {
+#if 0
       /* XXX we don't want to always do codegen here.  We should have
        * a hash/lookup table to cache previous results...
        */
@@ -114,6 +188,13 @@ cell_emit_state(struct cell_context *cell)
 
       /* free codegen buffer */
       spe_release_func(&spe_code);
+#else
+      struct cell_command_fragment_ops *fops, *fops_cmd;
+      fops_cmd = cell_batch_alloc(cell, sizeof(*fops_cmd));
+      fops = lookup_fragment_ops(cell);
+      memcpy(fops_cmd, fops, sizeof(*fops));
+#endif
+
    }
 
    if (cell->dirty & CELL_NEW_SAMPLER) {
