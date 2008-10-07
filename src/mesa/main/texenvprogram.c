@@ -204,7 +204,10 @@ static GLuint get_fp_input_mask( GLcontext *ctx )
 {
    GLuint fp_inputs = 0;
 
-   if (!ctx->VertexProgram._Enabled) {
+   if (!ctx->VertexProgram._Enabled ||
+       !ctx->VertexProgram._Current) {
+
+      /* Fixed function logic */
       GLuint varying_inputs = ctx->varying_vp_inputs;
 
       /* First look at what values may be computed by the generated
