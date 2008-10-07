@@ -3443,8 +3443,6 @@ parse_instructions(GLcontext * ctx, const GLubyte * inst,
       : ctx->Const.VertexProgram.MaxInstructions;
    GLint err = 0;
 
-   ASSERT(MAX_INSTRUCTIONS >= maxInst);
-
    Program->MajorVersion = (GLuint) * inst++;
    Program->MinorVersion = (GLuint) * inst++;
 
