@@ -49,6 +49,7 @@ lookup_fragment_ops(struct cell_context *cell)
    /*
     * Build key
     */
+   memset(&key, 0, sizeof(key));
    key.blend = *cell->blend;
    key.dsa = *cell->depth_stencil;
 
