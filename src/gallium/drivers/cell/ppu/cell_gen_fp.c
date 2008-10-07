@@ -191,19 +191,16 @@ get_src_reg(struct codegen *gen,
       break;
    case TGSI_FILE_INPUT:
       {
-         if(swizzle == TGSI_EXTSWIZZLE_ONE)
-         {
+         if (swizzle == TGSI_EXTSWIZZLE_ONE) {
             /* Load const one float and early out */
             reg = get_const_one_reg(gen);
          }
-         else if(swizzle == TGSI_EXTSWIZZLE_ZERO)
-         {
+         else if (swizzle == TGSI_EXTSWIZZLE_ZERO) {
             /* Load const zero float and early out */
             reg = get_itemp(gen);
             spe_xor(gen->f, reg, reg, reg);
          }
-         else
-         {
+         else {
             /* offset is measured in quadwords, not bytes */
             int offset = src->SrcRegister.Index * 4 + swizzle;
             reg = get_itemp(gen);
