@@ -351,7 +351,6 @@ std::vector<llvm::Value*> StorageSoa::load(enum tgsi_file_type type, int idx, in
       break;
    case TGSI_FILE_CONSTANT:
       val = constElement(m_builder, realIndex);
-      printf("constant COUCOU index %d\n",realIndex);
       break;
    case TGSI_FILE_IMMEDIATE:
       val = immediateElement(realIndex);
