@@ -76,6 +76,7 @@ public:
    void         end();
 
    std::vector<llvm::Value*> extractVector(llvm::Value *vector);
+   llvm::IRBuilder<>*  getIRBuilder();
 private:
    const char * name(const char *prefix) const;
    llvm::Value *vectorFromVals(llvm::Value *x, llvm::Value *y,

@@ -52,7 +52,7 @@ static inline FunctionType *vertexShaderFunctionType()
    // pass are castable to the following:
    // [4 x <4 x float>] inputs,
    // [4 x <4 x float>] output,
-   // [4 x [4 x float]] consts,
+   // [4 x [1 x float]] consts,
    // [4 x <4 x float>] temps
 
    std::vector<const Type*> funcArgs;
@@ -61,7 +61,7 @@ static inline FunctionType *vertexShaderFunctionType()
    PointerType *vectorArrayPtr = PointerType::get(vectorArray, 0);
 
    ArrayType   *floatArray     = ArrayType::get(Type::FloatTy, 4);
-   ArrayType   *constsArray    = ArrayType::get(floatArray, 4);
+   ArrayType   *constsArray    = ArrayType::get(floatArray, 1);
    PointerType *constsArrayPtr = PointerType::get(constsArray, 0);
 
    funcArgs.push_back(vectorArrayPtr);//inputs
@@ -246,6 +246,7 @@ translate_instruction(llvm::Module *module,
          val = storage->constElement(src->SrcRegister.Index, indIdx);
       } else if (src->SrcRegister.File == TGSI_FILE_INPUT) {
          val = storage->inputElement(src->SrcRegister.Index, indIdx);
+      // FIXME we should not be generating elements for temporaries, this creates useless memory writes
       } else if (src->SrcRegister.File == TGSI_FILE_TEMPORARY) {
          val = storage->tempElement(src->SrcRegister.Index);
       } else if (src->SrcRegister.File == TGSI_FILE_OUTPUT) {
@@ -676,6 +677,7 @@ translate_instruction(llvm::Module *module,
 
       if (dst->DstRegister.File == TGSI_FILE_OUTPUT) {
          storage->setOutputElement(dst->DstRegister.Index, out, dst->DstRegister.WriteMask);
+      // FIXME we should not be generating elements for temporaries, this creates useless memory writes
       } else if (dst->DstRegister.File == TGSI_FILE_TEMPORARY) {
          storage->setTempElement(dst->DstRegister.Index, out, dst->DstRegister.WriteMask);
       } else if (dst->DstRegister.File == TGSI_FILE_ADDRESS) {
@@ -707,9 +709,8 @@ translate_instructionir(llvm::Module *module,
       if (src->SrcRegister.Indirect) {
          indIdx = storage->addrElement(src->SrcRegisterInd.Index);
       }
-
       val = storage->load((enum tgsi_file_type)src->SrcRegister.File,
-                          src->SrcRegister.Index, swizzle, indIdx);
+                          src->SrcRegister.Index, swizzle, instr->getIRBuilder(), indIdx);
 
       inputs[i] = val;
    }
@@ -1025,7 +1026,6 @@ translate_instructionir(llvm::Module *module,
    /* store results  */
    for (int i = 0; i < inst->Instruction.NumDstRegs; ++i) {
       struct tgsi_full_dst_register *dst = &inst->FullDstRegisters[i];
-
       storage->store((enum tgsi_file_type)dst->DstRegister.File,
                      dst->DstRegister.Index, out, dst->DstRegister.WriteMask);
    }

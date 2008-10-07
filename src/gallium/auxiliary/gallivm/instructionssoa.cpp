@@ -171,6 +171,11 @@ std::vector<llvm::Value*> InstructionsSoa::extractVector(llvm::Value *vector)
    return res;
 }
 
+llvm::IRBuilder<>* InstructionsSoa::getIRBuilder()
+{
+   return &m_builder;
+}
+
 void InstructionsSoa::createFunctionMap()
 {
    m_functionsMap[TGSI_OPCODE_ABS]   = "abs";
