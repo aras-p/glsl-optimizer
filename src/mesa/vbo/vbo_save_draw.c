@@ -241,6 +241,11 @@ void vbo_save_playback_vertex_list( GLcontext *ctx, void *data )
 
       vbo_bind_vertex_list( ctx, node );
 
+      /* Again...
+       */
+      if (ctx->NewState)
+	 _mesa_update_state( ctx );
+
       vbo_context(ctx)->draw_prims( ctx, 
 				    save->inputs, 
 				    node->prim, 
