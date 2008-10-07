@@ -185,22 +185,24 @@ get_src_reg(struct codegen *gen,
    assert(swizzle >= TGSI_SWIZZLE_X);
    assert(swizzle <= TGSI_EXTSWIZZLE_ONE);
 
-   switch (src->SrcRegister.File) {
-   case TGSI_FILE_TEMPORARY:
-      reg = gen->temp_regs[src->SrcRegister.Index][swizzle];
-      break;
-   case TGSI_FILE_INPUT:
-      {
-         if (swizzle == TGSI_EXTSWIZZLE_ONE) {
-            /* Load const one float and early out */
-            reg = get_const_one_reg(gen);
-         }
-         else if (swizzle == TGSI_EXTSWIZZLE_ZERO) {
-            /* Load const zero float and early out */
-            reg = get_itemp(gen);
-            spe_xor(gen->f, reg, reg, reg);
-         }
-         else {
+   if (swizzle == TGSI_EXTSWIZZLE_ONE) {
+      /* Load const one float and early out */
+      reg = get_const_one_reg(gen);
+   }
+   else if (swizzle == TGSI_EXTSWIZZLE_ZERO) {
+      /* Load const zero float and early out */
+      reg = get_itemp(gen);
+      spe_xor(gen->f, reg, reg, reg);
+   }
+   else {
+      assert(swizzle < 4);
+
+      switch (src->SrcRegister.File) {
+      case TGSI_FILE_TEMPORARY:
+         reg = gen->temp_regs[src->SrcRegister.Index][swizzle];
+         break;
+      case TGSI_FILE_INPUT:
+         {
             /* offset is measured in quadwords, not bytes */
             int offset = src->SrcRegister.Index * 4 + swizzle;
             reg = get_itemp(gen);
@@ -208,15 +210,15 @@ get_src_reg(struct codegen *gen,
             /* Load:  reg = memory[(machine_reg) + offset] */
             spe_lqd(gen->f, reg, gen->inputs_reg, offset);
          }
+         break;
+      case TGSI_FILE_IMMEDIATE:
+         reg = gen->imm_regs[src->SrcRegister.Index][swizzle];
+         break;
+      case TGSI_FILE_CONSTANT:
+         /* xxx fall-through for now / fix */
+      default:
+         assert(0);
       }
-      break;
-   case TGSI_FILE_IMMEDIATE:
-      reg = gen->imm_regs[src->SrcRegister.Index][swizzle];
-      break;
-   case TGSI_FILE_CONSTANT:
-      /* xxx fall-through for now / fix */
-   default:
-      assert(0);
    }
 
    /*
