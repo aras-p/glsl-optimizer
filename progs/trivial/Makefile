@@ -124,6 +124,7 @@ SOURCES = \
 	vp-clip.c \
 	vp-line-clip.c \
 	vp-tri.c \
+	vp-tri-swap.c \
 	vp-unfilled.c 
 
 PROGS = $(SOURCES:%.c=%)
