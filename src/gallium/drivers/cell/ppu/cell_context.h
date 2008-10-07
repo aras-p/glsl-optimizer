@@ -38,6 +38,7 @@
 #include "cell/common.h"
 #include "rtasm/rtasm_ppc_spe.h"
 #include "tgsi/tgsi_scan.h"
+#include "util/u_keymap.h"
 
 
 struct cell_vbuf_render;
@@ -63,6 +64,19 @@ struct cell_fragment_shader_state
    struct tgsi_shader_info info;
    struct spe_function code;
    void *data;
+};
+
+
+/**
+ * Key for mapping per-fragment state to cached SPU machine code.
+ *  keymap(cell_fragment_ops_key) => cell_command_fragment_ops
+ */
+struct cell_fragment_ops_key
+{
+   struct pipe_blend_state blend;
+   struct pipe_depth_stencil_alpha_state dsa;
+   enum pipe_format color_format;
+   enum pipe_format zs_format;
 };
 
 
@@ -106,6 +120,9 @@ struct cell_context
    uint *tex_map;
 
    uint dirty;
+
+   /** Cache of code generated for per-fragment ops */
+   struct keymap *fragment_ops_cache;
 
    /** The primitive drawing context */
    struct draw_context *draw;

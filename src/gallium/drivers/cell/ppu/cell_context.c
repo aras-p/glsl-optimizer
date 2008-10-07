@@ -62,6 +62,8 @@ cell_destroy_context( struct pipe_context *pipe )
 {
    struct cell_context *cell = cell_context(pipe);
 
+   util_delete_keymap(cell->fragment_ops_cache, NULL);
+
    cell_spu_exit(cell);
 
    align_free(cell);
@@ -130,6 +132,10 @@ cell_create_context(struct pipe_screen *screen,
    cell_init_vertex_functions(cell);
 
    cell->draw = cell_draw_create(cell);
+
+   /* Create cache of fragment ops generated code */
+   cell->fragment_ops_cache =
+      util_new_keymap(sizeof(struct cell_fragment_ops_key), ~0, NULL);
 
    cell_init_vbuf(cell);
 
