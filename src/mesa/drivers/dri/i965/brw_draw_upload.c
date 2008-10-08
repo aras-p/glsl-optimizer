@@ -365,8 +365,10 @@ static void brw_prepare_vertices(struct brw_context *brw)
 	 if (i == 0) {
 	    /* Position array not properly enabled:
 	     */
-	    if (input->glarray->StrideB == 0)
-	      return;
+            if (input->glarray->StrideB == 0) {
+               intel->Fallback = 1;
+               return;
+            }
 
 	    interleave = input->glarray->StrideB;
 	    ptr = input->glarray->Ptr;
