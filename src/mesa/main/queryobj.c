@@ -545,6 +545,6 @@ delete_queryobj_cb(GLuint id, void *data, void *userData)
 void
 _mesa_free_query_data(GLcontext *ctx)
 {
-   _mesa_HashDeleteAll(ctx->Query.QueryObjects, delete_queryobj_cb, NULL);
+   _mesa_HashDeleteAll(ctx->Query.QueryObjects, delete_queryobj_cb, ctx);
    _mesa_DeleteHashTable(ctx->Query.QueryObjects);
 }
