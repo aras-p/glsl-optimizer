@@ -385,7 +385,7 @@ void _name (struct spe_function *p, int imm) \
  */
 void spe_init_func(struct spe_function *p, unsigned code_size)
 {
-    register unsigned int i;
+    unsigned int i;
 
     p->store = align_malloc(code_size, 16);
     p->num_inst = 0;
@@ -475,7 +475,7 @@ void spe_release_register(struct spe_function *p, int reg)
  */
 void spe_allocate_register_set(struct spe_function *p)
 {
-   register unsigned int i;
+   unsigned int i;
 
    /* Keep track of the set count.  If it ever wraps around to 0, 
     * we're in trouble.
@@ -489,7 +489,8 @@ void spe_allocate_register_set(struct spe_function *p)
     * when the register set is released.
     */
    for (i = 0; i < SPE_NUM_REGS; i++) {
-      if (p->regs[i] > 0) p->regs[i]++;
+      if (p->regs[i] > 0)
+         p->regs[i]++;
    }
 }
 
@@ -506,7 +507,8 @@ void spe_release_register_set(struct spe_function *p)
     * available.
     */
    for (i = 0; i < SPE_NUM_REGS; i++) {
-      if (p->regs[i] > 0) p->regs[i]--;
+      if (p->regs[i] > 0)
+         p->regs[i]--;
    }
 }
 
@@ -525,7 +527,7 @@ spe_indent(struct spe_function *p, int spaces)
 }
 
 
-extern void
+void
 spe_comment(struct spe_function *p, int rel_indent, const char *s)
 {
    if (p->print) {
@@ -710,10 +712,12 @@ void spe_load_uint(struct spe_function *p, unsigned rT, unsigned int ui)
    }
 }
 
-/* This function is constructed identically to spe_sor_uint() below.
+/**
+ * This function is constructed identically to spe_sor_uint() below.
  * Changes to one should be made in the other.
  */
-void spe_and_uint(struct spe_function *p, unsigned rT, unsigned rA, unsigned int ui)
+void
+spe_and_uint(struct spe_function *p, unsigned rT, unsigned rA, unsigned int ui)
 {
    /* If we can, emit a single instruction, either And Byte Immediate
     * (which uses the same constant across each byte), And Halfword Immediate
@@ -723,7 +727,7 @@ void spe_and_uint(struct spe_function *p, unsigned rT, unsigned rA, unsigned int
     *
     * Otherwise, we'll need to use a temporary register.
     */
-   register unsigned int tmp;
+   unsigned int tmp;
 
    /* If the upper 23 bits are all 0s or all 1s, sign extension
     * will work and we can use And Word Immediate
@@ -760,10 +764,12 @@ void spe_and_uint(struct spe_function *p, unsigned rT, unsigned rA, unsigned int
    spe_release_register(p, tmp_reg);
 }
 
-/* This function is constructed identically to spe_and_uint() above.
+/**
+ * This function is constructed identically to spe_and_uint() above.
  * Changes to one should be made in the other.
  */
-void spe_xor_uint(struct spe_function *p, unsigned rT, unsigned rA, unsigned int ui)
+void
+spe_xor_uint(struct spe_function *p, unsigned rT, unsigned rA, unsigned int ui)
 {
    /* If we can, emit a single instruction, either Exclusive Or Byte 
     * Immediate (which uses the same constant across each byte), Exclusive 
@@ -773,7 +779,7 @@ void spe_xor_uint(struct spe_function *p, unsigned rT, unsigned rA, unsigned int
     *
     * Otherwise, we'll need to use a temporary register.
     */
-   register unsigned int tmp;
+   unsigned int tmp;
 
    /* If the upper 23 bits are all 0s or all 1s, sign extension
     * will work and we can use Exclusive Or Word Immediate
