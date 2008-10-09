@@ -167,7 +167,6 @@ void min(float4 *res,
    res[3] = minvec(tmp0w, tmp1w);
 }
 
-
 void max(float4 *res,
          float4 tmp0x, float4 tmp0y, float4 tmp0z, float4 tmp0w,
          float4 tmp1x, float4 tmp1y, float4 tmp1z, float4 tmp1w)

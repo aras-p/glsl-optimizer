@@ -91,29 +91,19 @@ void StorageSoa::declareImmediates()
    for (unsigned int i = 0; i < m_immediatesToFlush.size(); ++i) {
       std::vector<float> vec = m_immediatesToFlush[i];
       std::vector<float> vals(4);
-      float val;
       std::vector<Constant*> channelArray;
 
-      val = vec[0];
-      llvm::Constant *xChannel = createConstGlobalFloat(val);
-      val = vec[1];
-      llvm::Constant *yChannel = createConstGlobalFloat(val);
-      val = vec[2];
-      llvm::Constant *zChannel = createConstGlobalFloat(val);
-      val = vec[3];
-      llvm::Constant *wChannel = createConstGlobalFloat(val);
+      vals[0] = vec[0]; vals[1] = vec[1]; vals[2] = vec[2]; vals[3] = vec[3];
+      llvm::Constant *xChannel = createConstGlobalVector(vals);
 
-//      vals[0] = vec[0]; vals[1] = vec[1]; vals[2] = vec[2]; vals[3] = vec[3];
-//      llvm::Constant *xChannel = createConstGlobalVector(vec[0]);
-
-/*      vals[0] = vec[1]; vals[1] = vec[1]; vals[2] = vec[1]; vals[3] = vec[1];
+      vals[0] = vec[1]; vals[1] = vec[1]; vals[2] = vec[1]; vals[3] = vec[1];
       llvm::Constant *yChannel = createConstGlobalVector(vals);
 
       vals[0] = vec[2]; vals[1] = vec[2]; vals[2] = vec[2]; vals[3] = vec[2];
       llvm::Constant *zChannel = createConstGlobalVector(vals);
 
       vals[0] = vec[3]; vals[1] = vec[3]; vals[2] = vec[3]; vals[3] = vec[3];
-      llvm::Constant *wChannel = createConstGlobalVector(vals);*/
+      llvm::Constant *wChannel = createConstGlobalVector(vals);
       channelArray.push_back(xChannel);
       channelArray.push_back(yChannel);
       channelArray.push_back(zChannel);
@@ -177,29 +167,18 @@ llvm::Value* StorageSoa::unpackConstElement(llvm::IRBuilder<>* m_builder, llvm::
 
 std::vector<llvm::Value*> StorageSoa::constElement(llvm::IRBuilder<>* m_builder, llvm::Value *idx)
 {
-   std::vector<llvm::Value*> res(4);
+   llvm::Value* res;
    std::vector<llvm::Value*> res2(4);
    llvm::Value *xChannel, *yChannel, *zChannel, *wChannel;
 
    xChannel = elementPointer(m_consts, idx, 0);
-/*   yChannel = elementPointer(m_consts, idx, 1);
-   zChannel = elementPointer(m_consts, idx, 2);
-   wChannel = elementPointer(m_consts, idx, 3);*/
 
-   res[0] = alignedArrayLoad(xChannel);
-/* res[1] = alignedArrayLoad(xChannel);
-   res[2] = alignedArrayLoad(xChannel);
-   res[3] = alignedArrayLoad(xChannel);*/
+   res = alignedArrayLoad(xChannel);
 
-
-   res2[0]=unpackConstElement(m_builder, res[0],0);
-   res2[1]=unpackConstElement(m_builder, res[0],1);
-   res2[2]=unpackConstElement(m_builder, res[0],2);
-   res2[3]=unpackConstElement(m_builder, res[0],3);
-/*res[0] = alignedArrayLoad(xChannel);
-   res[1] = alignedArrayLoad(yChannel);
-   res[2] = alignedArrayLoad(zChannel);
-   res[3] = alignedArrayLoad(wChannel);*/
+   res2[0]=unpackConstElement(m_builder, res,0);
+   res2[1]=unpackConstElement(m_builder, res,1);
+   res2[2]=unpackConstElement(m_builder, res,2);
+   res2[3]=unpackConstElement(m_builder, res,3);
 
    return res2;
 }
