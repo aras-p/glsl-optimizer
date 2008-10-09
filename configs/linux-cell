@@ -53,7 +53,7 @@ SPU_CFLAGS = $(OPT_FLAGS) -W -Wall -Winline -Wmissing-prototypes -Wno-main \
 	-DSPU_MAIN_PARAM_LONG_LONG \
 	-include spu_intrinsics.h
 
-SPU_LFLAGS = -L$(SDK)/spu/lib -Wl,-N -lmisc
+SPU_LFLAGS = -L$(SDK)/spu/lib -Wl,-N -lmisc -lm
 
 SPU_AR = ppu-ar
 SPU_AR_FLAGS = -qcs
