@@ -128,7 +128,7 @@ struct cell_command_fragment_ops
 
 
 /** Max instructions for fragment programs */
-#define SPU_MAX_FRAGMENT_PROGRAM_INSTS 128
+#define SPU_MAX_FRAGMENT_PROGRAM_INSTS 512
 
 /**
  * Command to send a fragment program to SPUs.
