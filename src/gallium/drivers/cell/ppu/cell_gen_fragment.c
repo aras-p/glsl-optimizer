@@ -1841,7 +1841,7 @@ cell_gen_fragment_function(struct cell_context *cell, struct spe_function *f)
 
       ASSERT(TILE_SIZE == 32);
 
-      spe_comment(f, 0, "Computing tile location in memory");
+      spe_comment(f, 0, "Compute quad offset within tile");
       spe_rotmi(f, y2_reg, y_reg, -1);  /* y2 = y / 2 */
       spe_rotmi(f, x2_reg, x_reg, -1);  /* x2 = x / 2 */
       spe_shli(f, y2_reg, y2_reg, 4);   /* y2 *= 16 */
@@ -1869,7 +1869,7 @@ cell_gen_fragment_function(struct cell_context *cell, struct spe_function *f)
       boolean fbS_reg_set = false, fbZ_reg_set = false;
       unsigned int fbS_reg, fbZ_reg = 0;
 
-      spe_comment(f, 0, "Loading Z/stencil tile");
+      spe_comment(f, 0, "Fetch quad's Z/stencil values from tile");
 
       /* fetch quad of depth/stencil values from tile at (x,y) */
       /* Load: fbZS_reg = memory[depth_tile_reg + offset_reg] */
@@ -1993,7 +1993,7 @@ cell_gen_fragment_function(struct cell_context *cell, struct spe_function *f)
           * fbZ_reg has four Z vals in bits [23..0] or bits [15..0].
           * fbS_reg has four 8-bit Z values in bits [7..0].
           */
-         spe_comment(f, 0, "Storing depth/stencil values");
+         spe_comment(f, 0, "Store quad's depth/stencil values in tile");
          if (zs_format == PIPE_FORMAT_S8Z24_UNORM ||
              zs_format == PIPE_FORMAT_X8Z24_UNORM) {
             if (fbS_reg_set) {
@@ -2038,6 +2038,7 @@ cell_gen_fragment_function(struct cell_context *cell, struct spe_function *f)
     * Note: if mask={~0,~0,~0,~0} and we're not blending or colormasking
     * we could skip this load.
     */
+   spe_comment(f, 0, "Fetch quad colors from tile");
    spe_lqx(f, fbRGBA_reg, color_tile_reg, quad_offset_reg);
 
    if (blend->blend_enable) {
@@ -2055,7 +2056,7 @@ cell_gen_fragment_function(struct cell_context *cell, struct spe_function *f)
       int rgba_reg = spe_allocate_available_register(f);
 
       /* Pack four float colors as four 32-bit int colors */
-      spe_comment(f, 0, "Convert fragment colors to framebuffer colors");
+      spe_comment(f, 0, "Convert float quad colors to packed int framebuffer colors");
       gen_pack_colors(f, color_format,
                       fragR_reg, fragG_reg, fragB_reg, fragA_reg,
                       rgba_reg);
@@ -2081,7 +2082,7 @@ cell_gen_fragment_function(struct cell_context *cell, struct spe_function *f)
       /* Store updated quad in tile:
        * memory[color_tile + quad_offset] = rgba_reg;
        */
-      spe_comment(f, 0, "Store framebuffer colors");
+      spe_comment(f, 0, "Store quad colors into color tile");
       spe_stqx(f, rgba_reg, color_tile_reg, quad_offset_reg);
 
       spe_release_register(f, rgba_reg);
