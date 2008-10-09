@@ -73,8 +73,8 @@ emit_matrix_transpose(struct spe_function *p,
    int col3;
 
 
-   spe_lqd(p, shuf_hi, shuf_ptr, 3);
-   spe_lqd(p, shuf_lo, shuf_ptr, 4);
+   spe_lqd(p, shuf_hi, shuf_ptr, 3*16);
+   spe_lqd(p, shuf_lo, shuf_ptr, 4*16);
    spe_shufb(p, t1, row0, row2, shuf_hi);
    spe_shufb(p, t2, row0, row2, shuf_lo);
 
@@ -122,13 +122,13 @@ emit_matrix_transpose(struct spe_function *p,
     */
    switch (count) {
    case 4:
-      spe_stqd(p, col3, dest_ptr, 3);
+      spe_stqd(p, col3, dest_ptr, 3 * 16);
    case 3:
-      spe_stqd(p, col2, dest_ptr, 2);
+      spe_stqd(p, col2, dest_ptr, 2 * 16);
    case 2:
-      spe_stqd(p, col1, dest_ptr, 1);
+      spe_stqd(p, col1, dest_ptr, 1 * 16);
    case 1:
-      spe_stqd(p, col0, dest_ptr, 0);
+      spe_stqd(p, col0, dest_ptr, 0 * 16);
    }
 
 
@@ -166,17 +166,17 @@ emit_fetch(struct spe_function *p,
    float scale_signed = 0.0;
    float scale_unsigned = 0.0;
 
-   spe_lqd(p, v0, in_ptr, 0 + offset[0]);
-   spe_lqd(p, v1, in_ptr, 1 + offset[0]);
-   spe_lqd(p, v2, in_ptr, 2 + offset[0]);
-   spe_lqd(p, v3, in_ptr, 3 + offset[0]);
+   spe_lqd(p, v0, in_ptr, (0 + offset[0]) * 16);
+   spe_lqd(p, v1, in_ptr, (1 + offset[0]) * 16);
+   spe_lqd(p, v2, in_ptr, (2 + offset[0]) * 16);
+   spe_lqd(p, v3, in_ptr, (3 + offset[0]) * 16);
    offset[0] += 4;
    
    switch (bytes) {
    case 1:
       scale_signed = 1.0f / 127.0f;
       scale_unsigned = 1.0f / 255.0f;
-      spe_lqd(p, tmp, shuf_ptr, 1);
+      spe_lqd(p, tmp, shuf_ptr, 1 * 16);
       spe_shufb(p, v0, v0, v0, tmp);
       spe_shufb(p, v1, v1, v1, tmp);
       spe_shufb(p, v2, v2, v2, tmp);
@@ -185,7 +185,7 @@ emit_fetch(struct spe_function *p,
    case 2:
       scale_signed = 1.0f / 32767.0f;
       scale_unsigned = 1.0f / 65535.0f;
-      spe_lqd(p, tmp, shuf_ptr, 2);
+      spe_lqd(p, tmp, shuf_ptr, 2 * 16);
       spe_shufb(p, v0, v0, v0, tmp);
       spe_shufb(p, v1, v1, v1, tmp);
       spe_shufb(p, v2, v2, v2, tmp);
@@ -241,11 +241,11 @@ emit_fetch(struct spe_function *p,
 
    switch (count) {
    case 1:
-      spe_stqd(p, float_zero, out_ptr, 1);
+      spe_stqd(p, float_zero, out_ptr, 1 * 16);
    case 2:
-      spe_stqd(p, float_zero, out_ptr, 2);
+      spe_stqd(p, float_zero, out_ptr, 2 * 16);
    case 3:
-      spe_stqd(p, float_one, out_ptr, 3);
+      spe_stqd(p, float_one, out_ptr, 3 * 16);
    }
 
    if (float_zero != -1) {

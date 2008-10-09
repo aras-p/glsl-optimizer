@@ -174,9 +174,12 @@ reg_name(int reg)
       return "$lr";
    default:
       {
-         static char buf[10];
-         sprintf(buf, "$%d", reg);
-         return buf;
+         /* cycle through four buffers to handle multiple calls per printf */
+         static char buf[4][10];
+         static int b = 0;
+         b = (b + 1) % 4;
+         sprintf(buf[b], "$%d", reg);
+         return buf[b];
       }
    }
 }
@@ -269,15 +272,8 @@ static void emit_RI10(struct spe_function *p, unsigned op, unsigned rT,
     assert(p->num_inst <= p->max_inst);
     if (p->print) {
        indent(p);
-       if (strcmp(name, "spe_lqd") == 0 ||
-           strcmp(name, "spe_stqd") == 0) {
-          printf("%s\t%s, %d(%s)\n",
-                 rem_prefix(name), reg_name(rT), imm, reg_name(rA));
-       }
-       else {
-          printf("%s\t%s, %s, 0x%x\n",
-                 rem_prefix(name), reg_name(rT), reg_name(rA), imm);
-       }
+       printf("%s\t%s, %s, 0x%x\n",
+              rem_prefix(name), reg_name(rT), reg_name(rA), imm);
     }
 }
 
@@ -377,6 +373,7 @@ void _name (struct spe_function *p, int imm) \
 }
 
 #include "rtasm_ppc_spe.h"
+
 
 
 /**
@@ -513,6 +510,20 @@ void spe_release_register_set(struct spe_function *p)
 }
 
 
+unsigned
+spe_get_registers_used(const struct spe_function *p, ubyte used[])
+{
+   unsigned i, num = 0;
+   /* only count registers in the range available to callers */
+   for (i = 2; i < 80; i++) {
+      if (p->regs[i]) {
+         used[num++] = i;
+      }
+   }
+   return num;
+}
+
+
 void
 spe_print_code(struct spe_function *p, boolean enable)
 {
@@ -535,6 +546,46 @@ spe_comment(struct spe_function *p, int rel_indent, const char *s)
       indent(p);
       p->indent -= rel_indent;
       printf("# %s\n", s);
+   }
+}
+
+
+/**
+ * Load quad word.
+ * NOTE: imm is in bytes and the least significant 4 bits must be zero!
+ */
+void spe_lqd(struct spe_function *p, unsigned rT, unsigned rA, int offset)
+{
+   const boolean pSave = p->print;
+
+   p->print = FALSE;
+   assert(offset % 4 == 0);
+   emit_RI10(p, 0x034, rT, rA, offset >> 4, "spe_lqd");
+   p->print = pSave;
+
+   if (p->print) {
+      indent(p);
+      printf("lqd\t%s, %d(%s)\n", reg_name(rT), offset, reg_name(rA));
+   }
+}
+
+
+/**
+ * Store quad word.
+ * NOTE: imm is in bytes and the least significant 4 bits must be zero!
+ */
+void spe_stqd(struct spe_function *p, unsigned rT, unsigned rA, int offset)
+{
+   const boolean pSave = p->print;
+
+   p->print = FALSE;
+   assert(offset % 4 == 0);
+   emit_RI10(p, 0x024, rT, rA, offset >> 4, "spe_stqd");
+   p->print = pSave;
+
+   if (p->print) {
+      indent(p);
+      printf("stqd\t%s, %d(%s)\n", reg_name(rT), offset, reg_name(rA));
    }
 }
 
@@ -763,6 +814,7 @@ spe_and_uint(struct spe_function *p, unsigned rT, unsigned rA, unsigned int ui)
    spe_and(p, rT, rA, tmp_reg);
    spe_release_register(p, tmp_reg);
 }
+
 
 /**
  * This function is constructed identically to spe_and_uint() above.

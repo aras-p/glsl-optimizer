@@ -84,6 +84,8 @@ struct codegen
    /** Index of execution mask register */
    int exec_mask_reg;
 
+   int frame_size;  /**< Stack frame size, in words */
+
    struct spe_function *f;
    boolean error;
 };
@@ -208,7 +210,7 @@ get_src_reg(struct codegen *gen,
             reg = get_itemp(gen);
             reg_is_itemp = TRUE;
             /* Load:  reg = memory[(machine_reg) + offset] */
-            spe_lqd(gen->f, reg, gen->inputs_reg, offset);
+            spe_lqd(gen->f, reg, gen->inputs_reg, offset * 16);
          }
          break;
       case TGSI_FILE_IMMEDIATE:
@@ -221,7 +223,7 @@ get_src_reg(struct codegen *gen,
             reg = get_itemp(gen);
             reg_is_itemp = TRUE;
             /* Load:  reg = memory[(machine_reg) + offset] */
-            spe_lqd(gen->f, reg, gen->constants_reg, offset);
+            spe_lqd(gen->f, reg, gen->constants_reg, offset * 16);
          }
          break;
       default:
@@ -325,6 +327,7 @@ store_dest_reg(struct codegen *gen,
       }
       else {
          /* we're not inside a condition or loop: do nothing special */
+
       }
       break;
    case TGSI_FILE_OUTPUT:
@@ -337,23 +340,58 @@ store_dest_reg(struct codegen *gen,
             /* First read the current value from memory:
              * Load:  curval = memory[(machine_reg) + offset]
              */
-            spe_lqd(gen->f, curval_reg, gen->outputs_reg, offset);
+            spe_lqd(gen->f, curval_reg, gen->outputs_reg, offset * 16);
             /* Mix curval with newvalue according to exec mask:
              * d[i] = mask_reg[i] ? value_reg : d_reg
              */
             spe_selb(gen->f, curval_reg, curval_reg, value_reg, exec_reg);
             /* Store: memory[(machine_reg) + offset] = curval */
-            spe_stqd(gen->f, curval_reg, gen->outputs_reg, offset);
+            spe_stqd(gen->f, curval_reg, gen->outputs_reg, offset * 16);
          }
          else {
             /* Store: memory[(machine_reg) + offset] = reg */
-            spe_stqd(gen->f, value_reg, gen->outputs_reg, offset);
+            spe_stqd(gen->f, value_reg, gen->outputs_reg, offset * 16);
          }
       }
       break;
    default:
       assert(0);
    }
+}
+
+
+
+static void
+emit_prologue(struct codegen *gen)
+{
+   gen->frame_size = 256+128; /* XXX temporary */
+
+   spe_comment(gen->f, -4, "Function prologue:");
+
+   /* save $lr on stack     # stqd $lr,16($sp) */
+   spe_stqd(gen->f, SPE_REG_RA, SPE_REG_SP, 16);
+
+   /* save stack pointer    # stqd $sp,-frameSize($sp) */
+   spe_stqd(gen->f, SPE_REG_SP, SPE_REG_SP, -gen->frame_size);
+
+   /* adjust stack pointer  # ai $sp,$sp,-frameSize */
+   spe_ai(gen->f, SPE_REG_SP, SPE_REG_SP, -gen->frame_size);
+}
+
+
+static void
+emit_epilogue(struct codegen *gen)
+{
+   spe_comment(gen->f, -4, "Function epilogue:");
+
+   /* restore stack pointer    # ai $sp,$sp,frameSize */
+   spe_ai(gen->f, SPE_REG_SP, SPE_REG_SP, gen->frame_size);
+
+   /* restore $lr              # lqd $lr,16($sp) */
+   spe_lqd(gen->f, SPE_REG_RA, SPE_REG_SP, 16);
+
+   /* return from function call */
+   spe_bi(gen->f, SPE_REG_RA, 0, 0);
 }
 
 
@@ -588,6 +626,7 @@ emit_DP3(struct codegen *gen, const struct tgsi_full_instruction *inst)
    int s1_reg = get_src_reg(gen, CHAN_X, &inst->FullSrcRegisters[0]);
    int s2_reg = get_src_reg(gen, CHAN_X, &inst->FullSrcRegisters[1]);
    int tmp_reg = get_itemp(gen);
+
    /* t = x0 * x1 */
    spe_fm(gen->f, tmp_reg, s1_reg, s2_reg);
 
@@ -603,7 +642,9 @@ emit_DP3(struct codegen *gen, const struct tgsi_full_instruction *inst)
 
    for (ch = 0; ch < 4; ch++) {
       if (inst->FullDstRegisters[0].DstRegister.WriteMask & (1 << ch)) {
-         store_dest_reg(gen, tmp_reg, ch, &inst->FullDstRegisters[0]);
+         int d_reg = get_dst_reg(gen, ch, &inst->FullDstRegisters[0]);
+         spe_move(gen->f, d_reg, tmp_reg);
+         store_dest_reg(gen, d_reg, ch, &inst->FullDstRegisters[0]);
       }
    }
 
@@ -623,6 +664,7 @@ emit_DP4(struct codegen *gen, const struct tgsi_full_instruction *inst)
    int s1_reg = get_src_reg(gen, CHAN_X, &inst->FullSrcRegisters[0]);
    int s2_reg = get_src_reg(gen, CHAN_X, &inst->FullSrcRegisters[1]);
    int tmp_reg = get_itemp(gen);
+
    /* t = x0 * x1 */
    spe_fm(gen->f, tmp_reg, s1_reg, s2_reg);
 
@@ -643,6 +685,8 @@ emit_DP4(struct codegen *gen, const struct tgsi_full_instruction *inst)
 
    for (ch = 0; ch < 4; ch++) {
       if (inst->FullDstRegisters[0].DstRegister.WriteMask & (1 << ch)) {
+         int d_reg = get_dst_reg(gen, ch, &inst->FullDstRegisters[0]);
+         spe_move(gen->f, d_reg, tmp_reg);
          store_dest_reg(gen, tmp_reg, ch, &inst->FullDstRegisters[0]);
       }
    }
@@ -683,6 +727,8 @@ emit_DPH(struct codegen *gen, const struct tgsi_full_instruction *inst)
 
    for (ch = 0; ch < 4; ch++) {
       if (inst->FullDstRegisters[0].DstRegister.WriteMask & (1 << ch)) {
+         int d_reg = get_dst_reg(gen, ch, &inst->FullDstRegisters[0]);
+         spe_move(gen->f, d_reg, tmp_reg);
          store_dest_reg(gen, tmp_reg, ch, &inst->FullDstRegisters[0]);
       }
    }
@@ -1112,9 +1158,6 @@ emit_function_call(struct codegen *gen,
    uint addr;
    int ch;
 
-   /* XXX temporary value */
-   const int frameSize = 64; /* stack frame (activation record) size */
-
    assert(num_args <= 3);
 
    /* lookup function address */
@@ -1136,47 +1179,44 @@ emit_function_call(struct codegen *gen,
 
    for (ch = 0; ch < 4; ch++) {
       if (inst->FullDstRegisters[0].DstRegister.WriteMask & (1 << ch)) {
-         int d_reg = get_dst_reg(gen, ch, &inst->FullDstRegisters[0]);
-         int s_regs[3];
-         uint a;
+         int s_regs[3], d_reg;
+         ubyte usedRegs[SPE_NUM_REGS];
+         uint a, i, numUsed;
+
          for (a = 0; a < num_args; a++) {
             s_regs[a] = get_src_reg(gen, ch, &inst->FullSrcRegisters[a]);
          }
+         d_reg = get_dst_reg(gen, ch, &inst->FullDstRegisters[0]);
 
-         /* Basically:
-          * save registers on stack
-          * move parameters to registers 3, 4, 5...
-          * call function
-          * save return value (reg 3)
-          * restore registers from stack
-          */
+         numUsed = spe_get_registers_used(gen->f, usedRegs);
+         assert(numUsed < gen->frame_size / 16 - 32);
 
-         /* XXX hack: load first function param */
-         spe_move(gen->f, 3, s_regs[0]);
+         /* save registers to stack */
+         for (i = 0; i < numUsed; i++) {
+            uint reg = usedRegs[i];
+            int offset = 2 + i;
+            spe_stqd(gen->f, reg, SPE_REG_SP, 16 * offset);
+         }
 
-         /* save $lr on stack     # stqd $lr,16($sp) */
-         spe_stqd(gen->f, SPE_REG_RA, SPE_REG_SP, 16);
-         /* save stack pointer    # stqd $sp,-frameSize($sp) */
-         spe_stqd(gen->f, SPE_REG_SP, SPE_REG_SP, -frameSize);
-
-         /* XXX save registers to stack here */
-
-         /* adjust stack pointer  # ai $sp,$sp,-frameSize */
-         spe_ai(gen->f, SPE_REG_SP, SPE_REG_SP, -frameSize);
+         /* setup function arguments */
+         for (a = 0; a < num_args; a++) {
+            spe_move(gen->f, 3 + a, s_regs[a]);
+         }
 
          /* branch to function, save return addr */
          spe_brasl(gen->f, SPE_REG_RA, addr);
 
-         /* restore stack pointer # ai $sp,$sp,frameSize */
-         spe_ai(gen->f, SPE_REG_SP, SPE_REG_SP, frameSize);
-
-         /* XXX restore registers from stack here */
-
-         /* restore $lr           # lqd $lr,16($sp) */
-         spe_lqd(gen->f, SPE_REG_RA, SPE_REG_SP, 16);
-
-         /* XXX hack: save function's return value */
+         /* save function's return value */
          spe_move(gen->f, d_reg, 3);
+
+         /* restore registers from stack */
+         for (i = 0; i < numUsed; i++) {
+            uint reg = usedRegs[i];
+            if (reg != d_reg) {
+               int offset = 2 + i;
+               spe_lqd(gen->f, reg, SPE_REG_SP, 16 * offset);
+            }
+         }
 
          store_dest_reg(gen, d_reg, ch, &inst->FullDstRegisters[0]);
          free_itemps(gen);
@@ -1202,10 +1242,11 @@ emit_MAX(struct codegen *gen, const struct tgsi_full_instruction *inst)
          int s1_reg = get_src_reg(gen, ch, &inst->FullSrcRegisters[0]);
          int s2_reg = get_src_reg(gen, ch, &inst->FullSrcRegisters[1]);
          int d_reg = get_dst_reg(gen, ch, &inst->FullDstRegisters[0]);
+         int tmp_reg = get_itemp(gen);
 
          /* d = (s1 > s2) ? s1 : s2 */
-         spe_fcgt(gen->f, d_reg, s1_reg, s2_reg);
-         spe_selb(gen->f, d_reg, s2_reg, s1_reg, d_reg);
+         spe_fcgt(gen->f, tmp_reg, s1_reg, s2_reg);
+         spe_selb(gen->f, d_reg, s2_reg, s1_reg, tmp_reg);
 
          store_dest_reg(gen, d_reg, ch, &inst->FullDstRegisters[0]);
          free_itemps(gen);
@@ -1230,10 +1271,11 @@ emit_MIN(struct codegen *gen, const struct tgsi_full_instruction *inst)
          int s1_reg = get_src_reg(gen, ch, &inst->FullSrcRegisters[0]);
          int s2_reg = get_src_reg(gen, ch, &inst->FullSrcRegisters[1]);
          int d_reg = get_dst_reg(gen, ch, &inst->FullDstRegisters[0]);
+         int tmp_reg = get_itemp(gen);
 
          /* d = (s2 > s1) ? s1 : s2 */
-         spe_fcgt(gen->f, d_reg, s2_reg, s1_reg);
-         spe_selb(gen->f, d_reg, s2_reg, s1_reg, d_reg);
+         spe_fcgt(gen->f, tmp_reg, s2_reg, s1_reg);
+         spe_selb(gen->f, d_reg, s2_reg, s1_reg, tmp_reg);
 
          store_dest_reg(gen, d_reg, ch, &inst->FullDstRegisters[0]);
          free_itemps(gen);
@@ -1346,8 +1388,7 @@ static boolean
 emit_END(struct codegen *gen)
 {
    spe_comment(gen->f, -4, "END:");
-   /* return from function call */
-   spe_bi(gen->f, SPE_REG_RA, 0, 0);
+   emit_epilogue(gen);
    return true;
 }
 
@@ -1420,6 +1461,10 @@ emit_instruction(struct codegen *gen,
       return emit_function_call(gen, inst, "spu_sin", 1);
    case TGSI_OPCODE_POW:
       return emit_function_call(gen, inst, "spu_pow", 2);
+   case TGSI_OPCODE_EXPBASE2:
+      return emit_function_call(gen, inst, "spu_exp2", 1);
+   case TGSI_OPCODE_LOGBASE2:
+      return emit_function_call(gen, inst, "spu_log2", 1);
 
    case TGSI_OPCODE_IF:
       return emit_IF(gen, inst);
@@ -1532,6 +1577,7 @@ emit_declaration(struct cell_context *cell,
 }
 
 
+
 /**
  * Translate TGSI shader code to SPE instructions.  This is done when
  * the state tracker gives us a new shader (via pipe->create_fs_state()).
@@ -1571,12 +1617,14 @@ cell_gen_fragment_program(struct cell_context *cell,
 
    tgsi_parse_init(&parse, tokens);
 
+   emit_prologue(&gen);
+
    while (!tgsi_parse_end_of_tokens(&parse) && !gen.error) {
       tgsi_parse_token(&parse);
 
       switch (parse.FullToken.Token.Type) {
       case TGSI_TOKEN_TYPE_IMMEDIATE:
-         if (!emit_immediate(&gen,  &parse.FullToken.FullImmediate))
+         if (!emit_immediate(&gen, &parse.FullToken.FullImmediate))
             gen.error = true;
          break;
 
@@ -1594,7 +1642,6 @@ cell_gen_fragment_program(struct cell_context *cell,
          assert(0);
       }
    }
-
 
    if (gen.error) {
       /* terminate the SPE code */

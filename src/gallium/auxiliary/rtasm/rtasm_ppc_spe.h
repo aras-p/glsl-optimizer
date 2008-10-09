@@ -89,6 +89,9 @@ extern void spe_release_register(struct spe_function *p, int reg);
 extern void spe_allocate_register_set(struct spe_function *p);
 extern void spe_release_register_set(struct spe_function *p);
 
+extern unsigned
+spe_get_registers_used(const struct spe_function *p, ubyte used[]);
+
 extern void spe_print_code(struct spe_function *p, boolean enable);
 extern void spe_indent(struct spe_function *p, int spaces);
 extern void spe_comment(struct spe_function *p, int rel_indent, const char *s);
@@ -128,11 +131,9 @@ extern void spe_comment(struct spe_function *p, int rel_indent, const char *s);
 
 /* Memory load / store instructions
  */
-EMIT_RI10(spe_lqd,  0x034);
 EMIT_RR  (spe_lqx,  0x1c4);
 EMIT_RI16(spe_lqa,  0x061);
 EMIT_RI16(spe_lqr,  0x067);
-EMIT_RI10(spe_stqd, 0x024);
 EMIT_RR  (spe_stqx, 0x144);
 EMIT_RI16(spe_stqa, 0x041);
 EMIT_RI16(spe_stqr, 0x047);
@@ -289,6 +290,12 @@ EMIT_RI16(spe_brnz,      0x042);
 EMIT_RI16(spe_brz,       0x040);
 EMIT_RI16(spe_brhnz,     0x046);
 EMIT_RI16(spe_brhz,      0x044);
+
+extern void
+spe_lqd(struct spe_function *p, unsigned rT, unsigned rA, int offset);
+
+extern void
+spe_stqd(struct spe_function *p, unsigned rT, unsigned rA, int offset);
 
 extern void spe_bi(struct spe_function *p, unsigned rA, int d, int e);
 extern void spe_iret(struct spe_function *p, unsigned rA, int d, int e);
