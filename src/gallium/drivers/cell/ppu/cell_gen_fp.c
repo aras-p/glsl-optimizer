@@ -1526,16 +1526,23 @@ emit_immediate(struct codegen *gen, const struct tgsi_full_immediate *immed)
 
    for (ch = 0; ch < 4; ch++) {
       float val = immed->u.ImmediateFloat32[ch].Float;
-      int reg = spe_allocate_available_register(gen->f);
 
-      if (reg < 0)
-         return false;
+      if (ch > 0 && val == immed->u.ImmediateFloat32[ch - 1].Float) {
+         /* re-use previous register */
+         gen->imm_regs[gen->num_imm][ch] = gen->imm_regs[gen->num_imm][ch - 1];
+      }
+      else {
+         int reg = spe_allocate_available_register(gen->f);
 
-      /* update immediate map */
-      gen->imm_regs[gen->num_imm][ch] = reg;
+         if (reg < 0)
+            return false;
 
-      /* emit initializer instruction */
-      spe_load_float(gen->f, reg, val);
+         /* update immediate map */
+         gen->imm_regs[gen->num_imm][ch] = reg;
+
+         /* emit initializer instruction */
+         spe_load_float(gen->f, reg, val);
+      }
    }
 
    gen->num_imm++;
@@ -1558,12 +1565,6 @@ emit_declaration(struct cell_context *cell,
 
    switch (decl->Declaration.File) {
    case TGSI_FILE_TEMPORARY:
-      if (cell->debug_flags & CELL_DEBUG_ASM) {
-         printf("Declare temp reg %d .. %d\n",
-                decl->DeclarationRange.First,
-                decl->DeclarationRange.Last);
-      }
-
       for (i = decl->DeclarationRange.First;
            i <= decl->DeclarationRange.Last;
            i++) {
@@ -1578,12 +1579,12 @@ emit_declaration(struct cell_context *cell,
           * to SPU memory.  someday...
           */
 
-         if (cell->debug_flags & CELL_DEBUG_ASM) {
-            printf("  SPE regs: %d %d %d %d\n",
-                   gen->temp_regs[i][0],
-                   gen->temp_regs[i][1],
-                   gen->temp_regs[i][2],
-                   gen->temp_regs[i][3]);
+         {
+            char buf[100];
+            sprintf(buf, "TGSI temp[%d] maps to SPU regs [$%d $%d $%d $%d]", i,
+                    gen->temp_regs[i][0], gen->temp_regs[i][1],
+                    gen->temp_regs[i][2], gen->temp_regs[i][3]);
+            spe_comment(gen->f, -4, buf);
          }
       }
       break;
