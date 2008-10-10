@@ -226,6 +226,11 @@ get_src_reg(struct codegen *gen,
             spe_lqd(gen->f, reg, gen->constants_reg, offset * 16);
          }
          break;
+      case TGSI_FILE_SAMPLER:
+         {
+            reg = 3; /* XXX total hack */
+         }
+         break;
       default:
          assert(0);
       }
@@ -1162,6 +1167,21 @@ print_functions(struct cell_context *cell)
 #endif
 
 
+static uint
+lookup_function(struct cell_context *cell, const char *funcname)
+{
+   const struct cell_spu_function_info *funcs = &cell->spu_functions;
+   uint i, addr = 0;
+   for (i = 0; i < funcs->num; i++) {
+      if (strcmp(funcs->names[i], funcname) == 0) {
+         addr = funcs->addrs[i];
+      }
+   }
+   assert(addr && "spu function not found");
+   return addr / 4;  /* discard 2 least significant bits */
+}
+
+
 /**
  * Emit code to call a SPU function.
  * Used to implement instructions like SIN/COS/POW/TEX/etc.
@@ -1171,26 +1191,11 @@ emit_function_call(struct codegen *gen,
                    const struct tgsi_full_instruction *inst,
                    char *funcname, uint num_args)
 {
-   const struct cell_spu_function_info *funcs = &gen->cell->spu_functions;
+   const uint addr = lookup_function(gen->cell, funcname);
    char comment[100];
-   uint addr;
    int ch;
 
    assert(num_args <= 3);
-
-   /* lookup function address */
-   {
-      uint i;
-      addr = 0;
-      for (i = 0; i < funcs->num; i++) {
-         if (strcmp(funcs->names[i], funcname) == 0) {
-            addr = funcs->addrs[i];
-         }
-      }
-      assert(addr && "spu function not found");
-   }
-
-   addr /= 4; /* discard 2 least significant bits */
 
    snprintf(comment, sizeof(comment), "CALL %s:", funcname);
    spe_comment(gen->f, -4, comment);
@@ -1242,6 +1247,72 @@ emit_function_call(struct codegen *gen,
    }
 
    return true;
+}
+
+
+static boolean
+emit_TXP(struct codegen *gen, const struct tgsi_full_instruction *inst)
+{
+   const uint addr = lookup_function(gen->cell, "spu_txp");
+   int ch;
+   int coord_regs[4], d_regs[4];
+
+   spe_comment(gen->f, -4, "CALL txp:");
+
+   /* get src/dst reg info */
+   for (ch = 0; ch < 4; ch++) {
+      coord_regs[ch] = get_src_reg(gen, ch, &inst->FullSrcRegisters[0]);
+      d_regs[ch] = get_dst_reg(gen, ch, &inst->FullDstRegisters[0]);
+   }
+
+   {
+      ubyte usedRegs[SPE_NUM_REGS];
+      uint i, numUsed;
+
+      numUsed = spe_get_registers_used(gen->f, usedRegs);
+      assert(numUsed < gen->frame_size / 16 - 32);
+
+      /* save registers to stack */
+      for (i = 0; i < numUsed; i++) {
+         uint reg = usedRegs[i];
+         int offset = 2 + i;
+         spe_stqd(gen->f, reg, SPE_REG_SP, 16 * offset);
+      }
+
+      /* setup function arguments */
+      for (i = 0; i < 4; i++) {
+         spe_move(gen->f, 3 + i, coord_regs[i]);
+      }
+
+      /* branch to function, save return addr */
+      spe_brasl(gen->f, SPE_REG_RA, addr);
+
+      /* save function's return values (four pixel's colors) */
+      for (i = 0; i < 4; i++) {
+         spe_move(gen->f, d_regs[i], 3 + i);
+      }
+
+      /* restore registers from stack */
+      for (i = 0; i < numUsed; i++) {
+         uint reg = usedRegs[i];
+         if (reg != d_regs[0] &&
+             reg != d_regs[1] &&
+             reg != d_regs[2] &&
+             reg != d_regs[3]) {
+            int offset = 2 + i;
+            spe_lqd(gen->f, reg, SPE_REG_SP, 16 * offset);
+         }
+      }
+   }
+
+   for (ch = 0; ch < 4; ch++) {
+      if (inst->FullDstRegisters[0].DstRegister.WriteMask & (1 << ch)) {
+         store_dest_reg(gen, d_regs[ch], ch, &inst->FullDstRegisters[0]);
+         free_itemps(gen);
+      }
+   }
+
+   return TRUE;
 }
 
 
@@ -1483,6 +1554,12 @@ emit_instruction(struct codegen *gen,
       return emit_function_call(gen, inst, "spu_exp2", 1);
    case TGSI_OPCODE_LOGBASE2:
       return emit_function_call(gen, inst, "spu_log2", 1);
+   case TGSI_OPCODE_TEX:
+      /* fall-through for now */
+   case TGSI_OPCODE_TXD:
+      /* fall-through for now */
+   case TGSI_OPCODE_TXP:
+      return emit_TXP(gen, inst);
 
    case TGSI_OPCODE_IF:
       return emit_IF(gen, inst);

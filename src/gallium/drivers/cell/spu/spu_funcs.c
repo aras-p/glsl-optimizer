@@ -38,10 +38,18 @@
 #include <math.h>
 #include <cos14_v.h>
 #include <sin14_v.h>
+#include <transpose_matrix4x4.h>
 
 #include "cell/common.h"
 #include "spu_main.h"
 #include "spu_funcs.h"
+
+
+/** For "return"-ing four vectors */
+struct vec_4x4
+{
+   vector float v[4];
+};
 
 
 static vector float
@@ -92,16 +100,44 @@ spu_log2(vector float x)
    return spu_mul(v, k);
 }
 
+static struct vec_4x4
+spu_txp(vector float s, vector float t, vector float r, vector float q)
+{
+   const uint unit = 0;
+   struct vec_4x4 colors;
+   vector float coords[4];
 
+   coords[0] = s;
+   coords[1] = t;
+   coords[2] = r;
+   coords[3] = q;
+   _transpose_matrix4x4(coords, coords);
+
+   /* get four texture samples */
+   colors.v[0] = spu.sample_texture[unit](unit, coords[0]);
+   colors.v[1] = spu.sample_texture[unit](unit, coords[1]);
+   colors.v[2] = spu.sample_texture[unit](unit, coords[2]);
+   colors.v[3] = spu.sample_texture[unit](unit, coords[3]);
+
+   _transpose_matrix4x4(colors.v, colors.v);
+   return colors;
+}
+
+
+/**
+ * Add named function to list of "exported" functions that will be
+ * made available to the PPU-hosted code generator.
+ */
 static void
-add_func(struct cell_spu_function_info *spu_functions,
-             const char *name, void *addr)
+export_func(struct cell_spu_function_info *spu_functions,
+            const char *name, void *addr)
 {
    uint n = spu_functions->num;
    ASSERT(strlen(name) < 16);
    strcpy(spu_functions->names[n], name);
    spu_functions->addrs[n] = (uint) addr;
    spu_functions->num++;
+   ASSERT(spu_functions->num <= 16);
 }
 
 
@@ -119,11 +155,12 @@ return_function_info(void)
    ASSERT(sizeof(funcs) == 256); /* must be multiple of 16 bytes */
 
    funcs.num = 0;
-   add_func(&funcs, "spu_cos", &spu_cos);
-   add_func(&funcs, "spu_sin", &spu_sin);
-   add_func(&funcs, "spu_pow", &spu_pow);
-   add_func(&funcs, "spu_exp2", &spu_exp2);
-   add_func(&funcs, "spu_log2", &spu_log2);
+   export_func(&funcs, "spu_cos", &spu_cos);
+   export_func(&funcs, "spu_sin", &spu_sin);
+   export_func(&funcs, "spu_pow", &spu_pow);
+   export_func(&funcs, "spu_exp2", &spu_exp2);
+   export_func(&funcs, "spu_log2", &spu_log2);
+   export_func(&funcs, "spu_txp", &spu_txp);
 
    /* Send the function info back to the PPU / main memory */
    mfc_put((void *) &funcs,  /* src in local store */

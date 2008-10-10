@@ -286,7 +286,7 @@ emit_quad( int x, int y, mask_t mask)
       spu.cur_ctile_status = TILE_STATUS_DIRTY;
       spu.cur_ztile_status = TILE_STATUS_DIRTY;
 
-      if (spu.texture[0].start) {
+      if (0/*spu.texture[0].start*/) {
          /*
           * Temporary texture mapping path
           * This will go away when fragment programs support TEX inst.
