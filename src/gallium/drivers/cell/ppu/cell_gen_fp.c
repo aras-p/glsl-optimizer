@@ -1119,7 +1119,7 @@ emit_FRC(struct codegen *gen, const struct tgsi_full_instruction *inst)
 {
    int ch;
 
-   spe_comment(gen->f, -4, "FLR:");
+   spe_comment(gen->f, -4, "FRC:");
 
    int zero_reg = get_itemp(gen);
    spe_xor(gen->f, zero_reg, zero_reg, zero_reg);
@@ -1131,18 +1131,18 @@ emit_FRC(struct codegen *gen, const struct tgsi_full_instruction *inst)
          int tmp_reg = get_itemp(gen);
 
          /* If negative, subtract 1.0 */
-         spe_fcgt(gen->f, d_reg, zero_reg, s1_reg);
-         spe_selb(gen->f, tmp_reg, zero_reg, get_const_one_reg(gen), d_reg);
-         spe_fs(gen->f, d_reg, s1_reg, tmp_reg);
+         spe_fcgt(gen->f, tmp_reg, zero_reg, s1_reg);
+         spe_selb(gen->f, tmp_reg, zero_reg, get_const_one_reg(gen), tmp_reg);
+         spe_fs(gen->f, tmp_reg, s1_reg, tmp_reg);
 
          /* Convert float to int */
-         spe_cflts(gen->f, d_reg, d_reg, 0);
+         spe_cflts(gen->f, tmp_reg, tmp_reg, 0);
 
          /* Convert int to float */
-         spe_csflt(gen->f, d_reg, d_reg, 0);
+         spe_csflt(gen->f, tmp_reg, tmp_reg, 0);
 
          /* d = s1 - FLR(s1) */
-         spe_fs(gen->f, d_reg, s1_reg, d_reg);
+         spe_fs(gen->f, d_reg, s1_reg, tmp_reg);
 
          store_dest_reg(gen, d_reg, ch, &inst->FullDstRegisters[0]);
          free_itemps(gen);
