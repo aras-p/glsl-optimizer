@@ -162,5 +162,8 @@ cell_create_context(struct pipe_screen *screen,
 
    cell_init_batch_buffers(cell);
 
+   /* make sure SPU initializations are done before proceeding */
+   cell_flush_int(cell, CELL_FLUSH_WAIT);
+
    return &cell->pipe;
 }
