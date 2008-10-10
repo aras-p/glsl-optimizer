@@ -2007,6 +2007,8 @@ struct gl_vertex_program_state
    GLboolean CallbackEnabled;
    GLuint CurrentPosition;
 #endif
+
+   GLboolean _Overriden;
 };
 
 
