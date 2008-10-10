@@ -101,9 +101,10 @@ spu_log2(vector float x)
 }
 
 static struct vec_4x4
-spu_txp(vector float s, vector float t, vector float r, vector float q)
+spu_txp(vector float s, vector float t, vector float r, vector float q,
+        unsigned unit)
 {
-   const uint unit = 0;
+   //const uint unit = 0;
    struct vec_4x4 colors;
    vector float coords[4];
 

@@ -1285,8 +1285,11 @@ static boolean
 emit_TXP(struct codegen *gen, const struct tgsi_full_instruction *inst)
 {
    const uint addr = lookup_function(gen->cell, "spu_txp");
+   const uint unit = inst->FullSrcRegisters[1].SrcRegister.Index;
    int ch;
    int coord_regs[4], d_regs[4];
+
+   assert(inst->FullSrcRegisters[1].SrcRegister.File == TGSI_FILE_SAMPLER);
 
    spe_comment(gen->f, -4, "CALL txp:");
 
@@ -1314,6 +1317,7 @@ emit_TXP(struct codegen *gen, const struct tgsi_full_instruction *inst)
       for (i = 0; i < 4; i++) {
          spe_move(gen->f, 3 + i, coord_regs[i]);
       }
+      spe_load_uint(gen->f, 7, unit); /* sampler unit */
 
       /* branch to function, save return addr */
       spe_brasl(gen->f, SPE_REG_RA, addr);
