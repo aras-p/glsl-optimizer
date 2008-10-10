@@ -474,7 +474,7 @@ emit_SUB(struct codegen *gen, const struct tgsi_full_instruction *inst)
    for (ch = 0; ch < 4; ch++) {
       if (inst->FullDstRegisters[0].DstRegister.WriteMask & (1 << ch)) {
          /* d = s1 - s2 */
-         spe_fm(gen->f, d_reg[ch], s1_reg[ch], s2_reg[ch]);
+         spe_fs(gen->f, d_reg[ch], s1_reg[ch], s2_reg[ch]);
          store_dest_reg(gen, d_reg[ch], ch, &inst->FullDstRegisters[0]);
          free_itemps(gen);
       }
