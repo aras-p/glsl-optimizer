@@ -119,6 +119,9 @@ extern void spe_comment(struct spe_function *p, int rel_indent, const char *s);
 #define EMIT_RI10(_name, _op) \
     extern void _name (struct spe_function *p, unsigned rT, unsigned rA, \
 			   int imm)
+#define EMIT_RI10s(_name, _op) \
+    extern void _name (struct spe_function *p, unsigned rT, unsigned rA, \
+			   int imm)
 #define EMIT_RI16(_name, _op) \
     extern void _name (struct spe_function *p, unsigned rT, int imm)
 #define EMIT_RI18(_name, _op) \
@@ -163,7 +166,7 @@ EMIT_RI16(spe_fsmbi, 0x065);
 EMIT_RR  (spe_ah,      0x0c8);
 EMIT_RI10(spe_ahi,     0x01d);
 EMIT_RR  (spe_a,       0x0c0);
-EMIT_RI10(spe_ai,      0x01c);
+EMIT_RI10s(spe_ai,      0x01c);
 EMIT_RR  (spe_sfh,     0x048);
 EMIT_RI10(spe_sfhi,    0x00d);
 EMIT_RR  (spe_sf,      0x040);
@@ -201,19 +204,19 @@ EMIT_R   (spe_xshw,    0x2ae);
 EMIT_R   (spe_xswd,    0x2a6);
 EMIT_RR  (spe_and,     0x0c1);
 EMIT_RR  (spe_andc,    0x2c1);
-EMIT_RI10(spe_andbi,   0x016);
-EMIT_RI10(spe_andhi,   0x015);
-EMIT_RI10(spe_andi,    0x014);
+EMIT_RI10s(spe_andbi,   0x016);
+EMIT_RI10s(spe_andhi,   0x015);
+EMIT_RI10s(spe_andi,    0x014);
 EMIT_RR  (spe_or,      0x041);
 EMIT_RR  (spe_orc,     0x2c9);
-EMIT_RI10(spe_orbi,    0x006);
-EMIT_RI10(spe_orhi,    0x005);
-EMIT_RI10(spe_ori,     0x004);
+EMIT_RI10s(spe_orbi,    0x006);
+EMIT_RI10s(spe_orhi,    0x005);
+EMIT_RI10s(spe_ori,     0x004);
 EMIT_R   (spe_orx,     0x1f0);
 EMIT_RR  (spe_xor,     0x241);
-EMIT_RI10(spe_xorbi,   0x026);
-EMIT_RI10(spe_xorhi,   0x025);
-EMIT_RI10(spe_xori,    0x024);
+EMIT_RI10s(spe_xorbi,   0x026);
+EMIT_RI10s(spe_xorhi,   0x025);
+EMIT_RI10s(spe_xori,    0x024);
 EMIT_RR  (spe_nand,    0x0c9);
 EMIT_RR  (spe_nor,     0x049);
 EMIT_RR  (spe_eqv,     0x249);
@@ -422,6 +425,7 @@ EMIT_R   (spe_wrch,       0x10d);
 #undef EMIT_RI7
 #undef EMIT_RI8
 #undef EMIT_RI10
+#undef EMIT_RI10s
 #undef EMIT_RI16
 #undef EMIT_RI18
 #undef EMIT_I16

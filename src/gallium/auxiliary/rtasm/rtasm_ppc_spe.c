@@ -278,6 +278,16 @@ static void emit_RI10(struct spe_function *p, unsigned op, unsigned rT,
 }
 
 
+/** As above, but do range checking on signed immediate value */
+static void emit_RI10s(struct spe_function *p, unsigned op, unsigned rT,
+                       unsigned rA, int imm, const char *name)
+{
+    assert(imm <= 511);
+    assert(imm >= -512);
+    emit_RI10(p, op, rT, rA, imm, name);
+}
+
+
 static void emit_RI16(struct spe_function *p, unsigned op, unsigned rT,
 		      int imm, const char *name)
 {
@@ -352,6 +362,12 @@ void _name (struct spe_function *p, unsigned rT, unsigned rA, int imm) \
 void _name (struct spe_function *p, unsigned rT, unsigned rA, int imm) \
 { \
    emit_RI10(p, _op, rT, rA, imm, __FUNCTION__);             \
+}
+
+#define EMIT_RI10s(_name, _op) \
+void _name (struct spe_function *p, unsigned rT, unsigned rA, int imm) \
+{ \
+   emit_RI10s(p, _op, rT, rA, imm, __FUNCTION__);             \
 }
 
 #define EMIT_RI16(_name, _op) \
