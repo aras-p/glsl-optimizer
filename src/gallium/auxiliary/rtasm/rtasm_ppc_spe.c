@@ -727,7 +727,7 @@ void spe_load_uint(struct spe_function *p, unsigned rT, unsigned int ui)
     * Bytes Immediate (fsmbi) to load the value in a single instruction.
     * Otherwise, in the general case, we have to use ilhu followed by iohl.
     */
-   if ((ui & 0xfffc0000) == ui) {
+   if ((ui & 0x3ffff) == ui) {
       spe_ila(p, rT, ui);
    }
    else if ((ui >> 16) == (ui & 0xffff)) {
