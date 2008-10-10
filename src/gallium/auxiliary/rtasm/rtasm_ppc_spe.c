@@ -552,14 +552,19 @@ spe_comment(struct spe_function *p, int rel_indent, const char *s)
 
 /**
  * Load quad word.
- * NOTE: imm is in bytes and the least significant 4 bits must be zero!
+ * NOTE: offset is in bytes and the least significant 4 bits must be zero!
  */
 void spe_lqd(struct spe_function *p, unsigned rT, unsigned rA, int offset)
 {
    const boolean pSave = p->print;
 
-   p->print = FALSE;
+   /* offset must be a multiple of 16 */
    assert(offset % 16 == 0);
+   /* offset must fit in 10-bit signed int field, after shifting */
+   assert((offset >> 4) <= 511);
+   assert((offset >> 4) >= -512);
+
+   p->print = FALSE;
    emit_RI10(p, 0x034, rT, rA, offset >> 4, "spe_lqd");
    p->print = pSave;
 
@@ -572,14 +577,19 @@ void spe_lqd(struct spe_function *p, unsigned rT, unsigned rA, int offset)
 
 /**
  * Store quad word.
- * NOTE: imm is in bytes and the least significant 4 bits must be zero!
+ * NOTE: offset is in bytes and the least significant 4 bits must be zero!
  */
 void spe_stqd(struct spe_function *p, unsigned rT, unsigned rA, int offset)
 {
    const boolean pSave = p->print;
 
-   p->print = FALSE;
+   /* offset must be a multiple of 16 */
    assert(offset % 16 == 0);
+   /* offset must fit in 10-bit signed int field, after shifting */
+   assert((offset >> 4) <= 511);
+   assert((offset >> 4) >= -512);
+
+   p->print = FALSE;
    emit_RI10(p, 0x024, rT, rA, offset >> 4, "spe_stqd");
    p->print = pSave;
 
