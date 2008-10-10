@@ -41,7 +41,6 @@
 #endif
 #include "arrayobj.h"
 #include "clip.h"
-#include "colormac.h"
 #include "colortab.h"
 #include "context.h"
 #include "convolve.h"
