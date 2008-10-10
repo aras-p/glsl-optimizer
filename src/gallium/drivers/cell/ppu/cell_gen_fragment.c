@@ -247,6 +247,7 @@ setup_optional_register(struct spe_function *f, boolean *is_already_set, unsigne
 {
    if (*is_already_set) return;
    *r = spe_allocate_available_register(f);
+   *is_already_set = true;
 }
 
 static inline void
@@ -1157,7 +1158,6 @@ gen_stencil_test(struct spe_function *f, const struct pipe_stencil_state *state,
       /* stencil_pass = mask & (s == reference) */
       spe_compare_equal_uint(f, stencil_pass_reg, fbS_reg, state->ref_value);
       spe_and(f, stencil_pass_reg, mask_reg, stencil_pass_reg);
-      /* stencil_fail = mask & ~stencil_pass */
       break;
 
    case PIPE_FUNC_NOTEQUAL:
@@ -1207,7 +1207,6 @@ gen_stencil_test(struct spe_function *f, const struct pipe_stencil_state *state,
    case PIPE_FUNC_NEVER:
       /* stencil_pass = mask & 0 = 0 */
       spe_load_uint(f, stencil_pass_reg, 0);
-      spe_move(f, stencil_pass_reg, mask_reg);  /* zmask = mask */
       break;
 
    case PIPE_FUNC_ALWAYS:
@@ -1483,6 +1482,10 @@ gen_get_stencil_values(struct spe_function *f, const struct pipe_depth_stencil_a
    } /* End of calculations for back-facing stencil */
 }
 
+/* Note that fbZ_reg may *not* be set on entry, if in fact
+ * the depth test is not enabled.  This function must not use
+ * the register if depth is not enabled.
+ */
 static boolean
 gen_stencil_depth_test(struct spe_function *f, 
                        const struct pipe_depth_stencil_alpha_state *dsa, 
@@ -1522,6 +1525,7 @@ gen_stencil_depth_test(struct spe_function *f,
     * have to spend the complexity to track the more difficult variant
     * register usage scenarios.
     */
+   spe_comment(f, 0, "Allocating stencil register set");
    spe_allocate_register_set(f);
 
    /* Calculate the writemask.  If the writemask is trivial (either
@@ -1538,7 +1542,7 @@ gen_stencil_depth_test(struct spe_function *f,
       need_to_calculate_stencil_values = false;
       need_to_writemask_stencil_values = false;
    }
-   else if (dsa->stencil[0].write_mask == 0xff && (!dsa->stencil[1].enabled || dsa->stencil[1].write_mask == 0x00)) {
+   else if (dsa->stencil[0].write_mask == 0xff && (!dsa->stencil[1].enabled || dsa->stencil[1].write_mask == 0xff)) {
       /* Still trivial, but a little less so.  We need to write the stencil
        * values, but we don't need to mask them.
        */
@@ -1556,10 +1560,12 @@ gen_stencil_depth_test(struct spe_function *f,
        * writemask, we'll have to generate code that merges the
        * two masks into a single effective mask based on fragment facing.
        */
+      spe_comment(f, 0, "Computing stencil writemask");
       stencil_writemask_reg = spe_allocate_available_register(f);
       spe_load_uint(f, stencil_writemask_reg, dsa->stencil[0].write_mask);
       if (dsa->stencil[1].enabled && dsa->stencil[0].write_mask != dsa->stencil[1].write_mask) {
          unsigned int back_write_mask_reg = spe_allocate_available_register(f);
+         spe_comment(f, 0, "Resolving two-sided stencil writemask");
          spe_load_uint(f, back_write_mask_reg, dsa->stencil[1].write_mask);
          spe_selb(f, stencil_writemask_reg, stencil_writemask_reg, back_write_mask_reg, facing_reg);
          spe_release_register(f, back_write_mask_reg);
@@ -1575,6 +1581,7 @@ gen_stencil_depth_test(struct spe_function *f,
     * This test will *not* change the value in mask_reg (because we don't
     * yet know whether to apply the two-sided stencil or one-sided stencil).
     */
+   spe_comment(f, 0, "Running basic stencil test");
    stencil_pass_reg = spe_allocate_available_register(f);
    gen_stencil_test(f, &dsa->stencil[0], mask_reg, fbS_reg, stencil_pass_reg);
 
@@ -1584,6 +1591,7 @@ gen_stencil_depth_test(struct spe_function *f,
     */
    if (dsa->stencil[1].enabled) {
       unsigned int temp_reg = spe_allocate_available_register(f);
+      spe_comment(f, 0, "Running backface stencil test");
       gen_stencil_test(f, &dsa->stencil[1], mask_reg, fbS_reg, temp_reg);
       spe_selb(f, stencil_pass_reg, stencil_pass_reg, temp_reg, facing_reg);
       spe_release_register(f, temp_reg);
@@ -1597,6 +1605,7 @@ gen_stencil_depth_test(struct spe_function *f,
     * stencil test, and because the depth test will update the 
     * mask of valid fragments based on the results of the depth test).
     */
+   spe_comment(f, 0, "Computing stencil fail mask and updating fragment mask");
    stencil_fail_reg = spe_allocate_available_register(f);
    spe_andc(f, stencil_fail_reg, mask_reg, stencil_pass_reg);
    /* Now remove the stenciled-out pixels from the valid fragment mask,
@@ -1623,6 +1632,7 @@ gen_stencil_depth_test(struct spe_function *f,
        * This function will allocate a variant number of registers that
        * will be released as part of the register set.
        */
+      spe_comment(f, 0, "Computing stencil values");
       gen_get_stencil_values(f, dsa, fbS_reg, 
          &front_stencil_fail_values, &front_stencil_pass_depth_fail_values, 
          &front_stencil_pass_depth_pass_values, &back_stencil_fail_values, 
@@ -1652,6 +1662,7 @@ gen_stencil_depth_test(struct spe_function *f,
          stencil_pass_depth_pass_values = front_stencil_pass_depth_pass_values;
       }
       else { /* two-sided stencil enabled */
+         spe_comment(f, 0, "Resolving backface stencil values");
          /* Allocate new registers for the needed merged values */
          stencil_fail_values = spe_allocate_available_register(f);
          spe_selb(f, stencil_fail_values, front_stencil_fail_values, back_stencil_fail_values, facing_reg);
@@ -1678,11 +1689,13 @@ gen_stencil_depth_test(struct spe_function *f,
     * on the results of the test.
     */
    if (dsa->depth.enabled) {
+      spe_comment(f, 0, "Running stencil depth test");
       zmask_reg = spe_allocate_available_register(f);
       modified_buffers |= gen_depth_test(f, dsa, mask_reg, fragZ_reg, fbZ_reg, zmask_reg);
    }
 
    if (need_to_calculate_stencil_values) {
+
       /* If we need to writemask the stencil values before going into
        * the stencil buffer, we'll have to use a new register to
        * hold the new values.  If not, we can just keep using the
@@ -1690,8 +1703,8 @@ gen_stencil_depth_test(struct spe_function *f,
        */
       if (need_to_writemask_stencil_values) {
          newS_reg = spe_allocate_available_register(f);
+         spe_comment(f, 0, "Saving current stencil values for writemasking");
          spe_move(f, newS_reg, fbS_reg);
-         modified_buffers = true;
       }
       else {
          newS_reg = fbS_reg;
@@ -1699,7 +1712,9 @@ gen_stencil_depth_test(struct spe_function *f,
 
       /* Merge in the selected stencil fail values */
       if (stencil_fail_values != fbS_reg) {
+         spe_comment(f, 0, "Loading stencil fail values");
          spe_selb(f, newS_reg, newS_reg, stencil_fail_values, stencil_fail_reg);
+         modified_buffers = true;
       }
 
       /* Same for the stencil pass/depth fail values.  If this calculation
@@ -1714,20 +1729,36 @@ gen_stencil_depth_test(struct spe_function *f,
           * set above if we're here.
           */
          unsigned int stencil_pass_depth_fail_mask = spe_allocate_available_register(f);
+         spe_comment(f, 0, "Loading stencil pass/depth fail values");
          spe_andc(f, stencil_pass_depth_fail_mask, stencil_pass_reg, zmask_reg);
 
          spe_selb(f, newS_reg, newS_reg, stencil_pass_depth_fail_values, stencil_pass_depth_fail_mask);
 
          spe_release_register(f, stencil_pass_depth_fail_mask);
+         modified_buffers = true;
       }
 
-      /* Same for the stencil pass/depth pass mask */
+      /* Same for the stencil pass/depth pass mask.  Note that we
+       * *can* get here with zmask_reg being unset (if the depth
+       * test is off but the stencil test is on).  In this case,
+       * we assume the depth test passes, and don't need to mask
+       * the stencil pass mask with the Z mask.
+       */
       if (stencil_pass_depth_pass_values != fbS_reg) {
-         unsigned int stencil_pass_depth_pass_mask = spe_allocate_available_register(f);
-         spe_and(f, stencil_pass_depth_pass_mask, stencil_pass_reg, zmask_reg);
-
-         spe_selb(f, newS_reg, newS_reg, stencil_pass_depth_pass_values, stencil_pass_depth_pass_mask);
-         spe_release_register(f, stencil_pass_depth_pass_mask);
+         if (dsa->depth.enabled) {
+            unsigned int stencil_pass_depth_pass_mask = spe_allocate_available_register(f);
+            /* We'll need a separate register */
+            spe_comment(f, 0, "Loading stencil pass/depth pass values");
+            spe_and(f, stencil_pass_depth_pass_mask, stencil_pass_reg, zmask_reg);
+            spe_selb(f, newS_reg, newS_reg, stencil_pass_depth_pass_values, stencil_pass_depth_pass_mask);
+            spe_release_register(f, stencil_pass_depth_pass_mask);
+         }
+         else {
+            /* We can use the same stencil-pass register */
+            spe_comment(f, 0, "Loading stencil pass values");
+            spe_selb(f, newS_reg, newS_reg, stencil_pass_depth_pass_values, stencil_pass_reg);
+         }
+         modified_buffers = true;
       }
 
       /* Almost done.  If we need to writemask, do it now, leaving the
@@ -1736,14 +1767,16 @@ gen_stencil_depth_test(struct spe_function *f,
        * so there's nothing more to do.
        */
 
-      if (need_to_writemask_stencil_values) {
+      if (need_to_writemask_stencil_values && modified_buffers) {
          /* The Select Bytes command makes a fine writemask.  Where
           * the mask is 0, the first (original) values are retained,
           * effectively masking out changes.  Where the mask is 1, the
           * second (new) values are retained, incorporating changes.
           */
+         spe_comment(f, 0, "Writemasking new stencil values");
          spe_selb(f, fbS_reg, fbS_reg, newS_reg, stencil_writemask_reg);
       }
+
    } /* done calculating stencil values */
 
    /* The stencil and/or depth values have been applied, and the
@@ -1752,6 +1785,7 @@ gen_stencil_depth_test(struct spe_function *f,
     * of registers that we didn't bother tracking.  Release all
     * those registers as part of the register set, and go home.
     */
+   spe_comment(f, 0, "Releasing stencil register set");
    spe_release_register_set(f);
 
    /* Return true if we could have modified the stencil and/or
@@ -1869,7 +1903,7 @@ cell_gen_fragment_function(struct cell_context *cell, struct spe_function *f)
       boolean fbS_reg_set = false, fbZ_reg_set = false;
       unsigned int fbS_reg, fbZ_reg = 0;
 
-      spe_comment(f, 0, "Fetch quad's Z/stencil values from tile");
+      spe_comment(f, 0, "Fetching Z/stencil quad from tile");
 
       /* fetch quad of depth/stencil values from tile at (x,y) */
       /* Load: fbZS_reg = memory[depth_tile_reg + offset_reg] */
@@ -1973,13 +2007,18 @@ cell_gen_fragment_function(struct cell_context *cell, struct spe_function *f)
           * tests.
           */
          ASSERT(fbS_reg_set);
-         ASSERT(fbZ_reg_set);
          spe_comment(f, 0, "Perform stencil test");
 
+         /* Note that fbZ_reg may not be set on entry, if stenciling
+          * is enabled but there's no Z-buffer.  The 
+          * gen_stencil_depth_test() function must ignore the
+          * fbZ_reg register if depth is not enabled.
+          */
          write_depth_stencil = gen_stencil_depth_test(f, dsa, facing_reg, mask_reg, fragZ_reg, fbZ_reg, fbS_reg);
       }
       else if (dsa->depth.enabled) {
          int zmask_reg = spe_allocate_available_register(f);
+         ASSERT(fbZ_reg_set);
          spe_comment(f, 0, "Perform depth test");
          write_depth_stencil = gen_depth_test(f, dsa, mask_reg, fragZ_reg, fbZ_reg, zmask_reg);
          spe_release_register(f, zmask_reg);
@@ -1996,9 +2035,12 @@ cell_gen_fragment_function(struct cell_context *cell, struct spe_function *f)
          spe_comment(f, 0, "Store quad's depth/stencil values in tile");
          if (zs_format == PIPE_FORMAT_S8Z24_UNORM ||
              zs_format == PIPE_FORMAT_X8Z24_UNORM) {
-            if (fbS_reg_set) {
+            if (fbS_reg_set && fbZ_reg_set) {
                spe_shli(f, fbS_reg, fbS_reg, 24); /* fbS = fbS << 24 */
                spe_or(f, fbZS_reg, fbS_reg, fbZ_reg); /* fbZS = fbS | fbZ */
+            }
+            else if (fbS_reg_set) {
+               spe_shli(f, fbZS_reg, fbS_reg, 24); /* fbS = fbS << 24 */
             }
             else {
                spe_move(f, fbZS_reg, fbZ_reg);
@@ -2006,16 +2048,26 @@ cell_gen_fragment_function(struct cell_context *cell, struct spe_function *f)
          }
          else if (zs_format == PIPE_FORMAT_Z24S8_UNORM ||
                   zs_format == PIPE_FORMAT_Z24X8_UNORM) {
-            spe_shli(f, fbZ_reg, fbZ_reg, 8); /* fbZ = fbZ << 8 */
-            if (fbS_reg_set) {
+            if (fbS_reg_set && fbZ_reg_set) {
+               spe_shli(f, fbZ_reg, fbZ_reg, 8); /* fbZ = fbZ << 8 */
                spe_or(f, fbZS_reg, fbS_reg, fbZ_reg); /* fbZS = fbS | fbZ */
+            }
+            else if (fbS_reg_set) {
+               spe_move(f, fbZS_reg, fbS_reg);
+            }
+            else {
+               spe_shli(f, fbZ_reg, fbZ_reg, 8); /* fbZ = fbZ << 8 */
             }
          }
          else if (zs_format == PIPE_FORMAT_Z32_UNORM) {
-            spe_move(f, fbZS_reg, fbZ_reg); /* fbZS = fbZ */
+            if (fbZ_reg_set) {
+               spe_move(f, fbZS_reg, fbZ_reg); /* fbZS = fbZ */
+            }
          }
          else if (zs_format == PIPE_FORMAT_Z16_UNORM) {
-            spe_move(f, fbZS_reg, fbZ_reg); /* fbZS = fbZ */
+            if (fbZ_reg_set) {
+               spe_move(f, fbZS_reg, fbZ_reg); /* fbZS = fbZ */
+            }
          }
          else if (zs_format == PIPE_FORMAT_S8_UNORM) {
             ASSERT(0);   /* XXX to do */
