@@ -247,7 +247,18 @@ _mesa_GetObjectParameterivARB(GLhandleARB object, GLenum pname, GLint *params)
       }
    }
    else {
-      _mesa_error(ctx, GL_INVALID_OPERATION, "glGetObjectParameterivARB");
+      /* error code depends on pname */
+      GLenum err;
+      switch (pname) {
+      case GL_OBJECT_TYPE_ARB:
+      case GL_OBJECT_DELETE_STATUS_ARB:
+      case GL_OBJECT_INFO_LOG_LENGTH_ARB:
+         err = GL_INVALID_OPERATION;
+         break;
+      default:
+         err = GL_INVALID_VALUE;
+      }
+      _mesa_error(ctx, err, "glGetObjectParameterivARB");
    }
 }
 
