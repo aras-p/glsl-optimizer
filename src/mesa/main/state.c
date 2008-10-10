@@ -258,12 +258,6 @@ update_program(GLcontext *ctx)
       }
    }
 
-   if (ctx->VertexProgram._Current)
-      assert(ctx->VertexProgram._Current->Base.Parameters);
-   if (ctx->FragmentProgram._Current)
-      assert(ctx->FragmentProgram._Current->Base.Parameters);
-
-
    /* XXX: get rid of _Active flag.
     */
 #if 1

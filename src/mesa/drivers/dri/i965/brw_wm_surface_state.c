@@ -274,7 +274,6 @@ brw_update_texture_surface( GLcontext *ctx, GLuint unit )
    key.width = firstImage->Width;
    key.height = firstImage->Height;
    key.cpp = intelObj->mt->cpp;
-   key.depth = firstImage->Depth;
    key.tiling = intelObj->mt->region->tiling;
 
    dri_bo_unreference(brw->wm.surf_bo[unit + MAX_DRAW_BUFFERS]);

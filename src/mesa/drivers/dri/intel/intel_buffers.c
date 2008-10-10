@@ -135,6 +135,14 @@ intel_readbuf_region(struct intel_context *intel)
 static void
 intelSetRenderbufferClipRects(struct intel_context *intel)
 {
+   /* If the batch contents require looping over cliprects, flush them before
+    * we go changing which cliprects get referenced when that happens.
+    */
+   if (intel->batch->cliprect_mode == LOOP_CLIPRECTS &&
+       (intel->fboRect.x2 != intel->ctx.DrawBuffer->Width ||
+	intel->fboRect.x2 != intel->ctx.DrawBuffer->Height))
+      intel_batchbuffer_flush(intel->batch);
+
    assert(intel->ctx.DrawBuffer->Width > 0);
    assert(intel->ctx.DrawBuffer->Height > 0);
    intel->fboRect.x1 = 0;
@@ -160,6 +168,12 @@ intelSetFrontClipRects(struct intel_context *intel)
    if (!dPriv)
       return;
 
+   /* If the batch contents require looping over cliprects, flush them before
+    * we go changing which cliprects get referenced when that happens.
+    */
+   if (intel->batch->cliprect_mode == LOOP_CLIPRECTS &&
+       intel->pClipRects != dPriv->pClipRects)
+      intel_batchbuffer_flush(intel->batch);
    intel->numClipRects = dPriv->numClipRects;
    intel->pClipRects = dPriv->pClipRects;
    intel->drawX = dPriv->x;
@@ -183,6 +197,10 @@ intelSetBackClipRects(struct intel_context *intel)
 
    if (intel_fb->pf_active || dPriv->numBackClipRects == 0) {
       /* use the front clip rects */
+      if (intel->batch->cliprect_mode == LOOP_CLIPRECTS &&
+	  intel->pClipRects != dPriv->pClipRects)
+	 intel_batchbuffer_flush(intel->batch);
+
       intel->numClipRects = dPriv->numClipRects;
       intel->pClipRects = dPriv->pClipRects;
       intel->drawX = dPriv->x;
@@ -190,6 +208,10 @@ intelSetBackClipRects(struct intel_context *intel)
    }
    else {
       /* use the back clip rects */
+      if (intel->batch->cliprect_mode == LOOP_CLIPRECTS &&
+	  intel->pClipRects != dPriv->pBackClipRects)
+	 intel_batchbuffer_flush(intel->batch);
+
       intel->numClipRects = dPriv->numBackClipRects;
       intel->pClipRects = dPriv->pBackClipRects;
       intel->drawX = dPriv->backX;
@@ -899,12 +921,6 @@ intel_draw_buffer(GLcontext * ctx, struct gl_framebuffer *fb)
 
    if (fb->Name)
       intel_validate_paired_depth_stencil(ctx, fb);
-
-   /* If the batch contents require looping over cliprects, flush them before
-    * we go changing which cliprects get referenced when that happens.
-    */
-   if (intel->batch->cliprect_mode == LOOP_CLIPRECTS)
-      intel_batchbuffer_flush(intel->batch);
 
    /*
     * How many color buffers are we drawing into?

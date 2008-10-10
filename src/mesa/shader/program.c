@@ -372,7 +372,11 @@ _mesa_reference_program(GLcontext *ctx,
    assert(ptr);
    if (*ptr && prog) {
       /* sanity check */
-      ASSERT((*ptr)->Target == prog->Target);
+      if ((*ptr)->Target == GL_VERTEX_PROGRAM_ARB)
+         ASSERT(prog->Target == GL_VERTEX_PROGRAM_ARB);
+      else if ((*ptr)->Target == GL_FRAGMENT_PROGRAM_ARB)
+         ASSERT(prog->Target == GL_FRAGMENT_PROGRAM_ARB ||
+                prog->Target == GL_FRAGMENT_PROGRAM_NV);
    }
    if (*ptr == prog) {
       return;  /* no change */

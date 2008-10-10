@@ -18,8 +18,9 @@ DRIVER_SOURCES = \
 	intel_screen.c \
 	intel_span.c \
 	intel_pixel.c \
-	intel_pixel_copy.c \
 	intel_pixel_bitmap.c \
+	intel_pixel_copy.c \
+	intel_pixel_draw.c \
 	intel_state.c \
 	intel_tex.c \
 	intel_tex_copy.c \
@@ -51,6 +52,7 @@ DRIVER_SOURCES = \
 	brw_metaops.c \
 	brw_misc_state.c \
 	brw_program.c \
+	brw_queryobj.c \
 	brw_sf.c \
 	brw_sf_emit.c \
 	brw_sf_state.c \

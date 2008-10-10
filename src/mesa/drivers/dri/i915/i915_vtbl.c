@@ -490,6 +490,13 @@ i915_destroy_context(struct intel_context *intel)
    GLuint i;
    struct i915_context *i915 = i915_context(&intel->ctx);
 
+   intel_region_release(&i915->state.draw_region);
+   intel_region_release(&i915->state.depth_region);
+   intel_region_release(&i915->meta.draw_region);
+   intel_region_release(&i915->meta.depth_region);
+   intel_region_release(&i915->initial.draw_region);
+   intel_region_release(&i915->initial.depth_region);
+
    for (i = 0; i < I915_TEX_UNITS; i++) {
       if (i915->state.tex_buffer[i] != NULL) {
 	 dri_bo_unreference(i915->state.tex_buffer[i]);

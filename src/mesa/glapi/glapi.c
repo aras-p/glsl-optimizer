@@ -294,7 +294,31 @@ _glapi_get_context(void)
 #endif
 }
 
+#ifdef USE_X86_ASM
 
+#if defined( GLX_USE_TLS )
+extern       GLubyte gl_dispatch_functions_start[];
+extern       GLubyte gl_dispatch_functions_end[];
+#else
+extern const GLubyte gl_dispatch_functions_start[];
+#endif
+
+#endif /* USE_X86_ASM */
+
+
+#if defined(USE_X64_64_ASM) && defined(GLX_USE_TLS)
+# define DISPATCH_FUNCTION_SIZE  16
+#elif defined(USE_X86_ASM)
+# if defined(THREADS) && !defined(GLX_USE_TLS)
+#  define DISPATCH_FUNCTION_SIZE  32
+# else
+#  define DISPATCH_FUNCTION_SIZE  16
+# endif
+#endif
+
+#if !defined(DISPATCH_FUNCTION_SIZE) && !defined(XFree86Server) && !defined(XGLServer)
+# define NEED_FUNCTION_POINTER
+#endif
 
 #if defined(PTHREADS) || defined(GLX_USE_TLS)
 /**

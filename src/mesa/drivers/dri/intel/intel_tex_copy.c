@@ -60,7 +60,7 @@ get_teximage_source(struct intel_context *intel, GLenum internalFormat)
 
    switch (internalFormat) {
    case GL_DEPTH_COMPONENT:
-   case GL_DEPTH_COMPONENT16_ARB:
+   case GL_DEPTH_COMPONENT16:
       irb = intel_get_renderbuffer(intel->ctx.ReadBuffer, BUFFER_DEPTH);
       if (irb && irb->region && irb->region->cpp == 2)
          return irb->region;

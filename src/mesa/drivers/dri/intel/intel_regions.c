@@ -478,6 +478,11 @@ intel_recreate_static(struct intel_context *intel,
    region->pitch = intelScreen->pitch;
    region->height = intelScreen->height;     /* needed? */
 
+   if (region->buffer != NULL) {
+      dri_bo_unreference(region->buffer);
+      region->buffer = NULL;
+   }
+
    if (intel->ttm) {
       assert(region_desc->bo_handle != -1);
       region->buffer = intel_bo_gem_create_from_name(intel->bufmgr,
@@ -486,6 +491,11 @@ intel_recreate_static(struct intel_context *intel,
 
       intel_set_region_tiling_gem(intel, region, region_desc->bo_handle);
    } else {
+      if (region->classic_map != NULL) {
+	 drmUnmap(region->classic_map,
+		  region->pitch * region->cpp * region->height);
+	 region->classic_map = NULL;
+      }
       ret = drmMap(intel->driFd, region_desc->handle,
 		   region->pitch * region->cpp * region->height,
 		   &region->classic_map);

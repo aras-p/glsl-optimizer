@@ -125,6 +125,9 @@ struct i915_fragment_program
    GLboolean on_hardware;
    GLboolean error;             /* If program is malformed for any reason. */
 
+   /** Record of which phases R registers were last written in. */
+   GLuint register_phases[16];
+   GLuint indirections;
    GLuint nr_tex_indirect;
    GLuint nr_tex_insn;
    GLuint nr_alu_insn;

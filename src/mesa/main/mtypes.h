@@ -2628,7 +2628,6 @@ struct gl_extensions
    GLboolean SGIS_generate_mipmap;
    GLboolean SGIS_texture_edge_clamp;
    GLboolean SGIS_texture_lod;
-   GLboolean SGIX_depth_texture;
    GLboolean SGIX_shadow;
    GLboolean SGIX_shadow_ambient; /* or GL_ARB_shadow_ambient */
    GLboolean TDFX_texture_compression_FXT1;

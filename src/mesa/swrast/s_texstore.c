@@ -216,9 +216,9 @@ is_depth_format(GLenum format)
 {
    switch (format) {
       case GL_DEPTH_COMPONENT:
-      case GL_DEPTH_COMPONENT16_SGIX:
-      case GL_DEPTH_COMPONENT24_SGIX:
-      case GL_DEPTH_COMPONENT32_SGIX:
+      case GL_DEPTH_COMPONENT16:
+      case GL_DEPTH_COMPONENT24:
+      case GL_DEPTH_COMPONENT32:
          return GL_TRUE;
       default:
          return GL_FALSE;

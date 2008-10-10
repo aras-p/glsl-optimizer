@@ -129,13 +129,13 @@ sprite_point(GLcontext *ctx, const SWvertex *vert)
       s = 0.0;
       dsdx = 1.0 / size;
       if (ctx->Point.SpriteOrigin == GL_LOWER_LEFT) {
-         t0 = 0.0;
          dtdy = 1.0 / size;
+         t0 = 0.5 * dtdy;
       }
       else {
          /* GL_UPPER_LEFT */
-         t0 = 1.0;
          dtdy = -1.0 / size;
+         t0 = 1.0 + 0.5 * dtdy;
       }
 
       ATTRIB_LOOP_BEGIN

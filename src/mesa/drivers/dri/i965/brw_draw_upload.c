@@ -365,8 +365,10 @@ static void brw_prepare_vertices(struct brw_context *brw)
 	 if (i == 0) {
 	    /* Position array not properly enabled:
 	     */
-	    if (input->glarray->StrideB == 0)
-	      return;
+            if (input->glarray->StrideB == 0) {
+               intel->Fallback = 1;
+               return;
+            }
 
 	    interleave = input->glarray->StrideB;
 	    ptr = input->glarray->Ptr;
@@ -413,6 +415,8 @@ static void brw_prepare_vertices(struct brw_context *brw)
           copy_array_to_vbo_array(brw, upload[i], upload[i]->element_size);
       }
    }
+
+   brw_prepare_query_begin(brw);
 }
 
 static void brw_emit_vertices(struct brw_context *brw)
@@ -433,6 +437,7 @@ static void brw_emit_vertices(struct brw_context *brw)
       enabled[nr_enabled++] = input;
    }
 
+   brw_emit_query_begin(brw);
 
    /* Now emit VB and VEP state packets.
     *
