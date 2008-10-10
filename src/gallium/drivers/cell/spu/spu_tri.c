@@ -215,7 +215,7 @@ clip_emit_quad(struct setup_stage *setup)
 static INLINE void
 eval_coeff(uint slot, float x, float y, vector float result[4])
 {
-   switch (spu.vertex_info.interp_mode[slot]) {
+   switch (spu.vertex_info.attrib[slot].interp_mode) {
    case INTERP_CONSTANT:
       result[QUAD_TOP_LEFT] =
       result[QUAD_TOP_RIGHT] =
@@ -776,7 +776,7 @@ static void setup_tri_coefficients(void)
    uint i;
 
    for (i = 0; i < spu.vertex_info.num_attribs; i++) {
-      switch (spu.vertex_info.interp_mode[i]) {
+      switch (spu.vertex_info.attrib[i].interp_mode) {
       case INTERP_NONE:
          break;
       case INTERP_POS:
