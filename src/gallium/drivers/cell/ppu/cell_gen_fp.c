@@ -369,18 +369,36 @@ store_dest_reg(struct codegen *gen,
 static void
 emit_prologue(struct codegen *gen)
 {
-   gen->frame_size = 1024; /* XXX temporary */
+   gen->frame_size = 1024; /* XXX temporary, should be dynamic */
 
    spe_comment(gen->f, -4, "Function prologue:");
 
    /* save $lr on stack     # stqd $lr,16($sp) */
    spe_stqd(gen->f, SPE_REG_RA, SPE_REG_SP, 16);
 
-   /* save stack pointer    # stqd $sp,-frameSize($sp) */
-   spe_stqd(gen->f, SPE_REG_SP, SPE_REG_SP, -gen->frame_size);
+   if (gen->frame_size >= 512) {
+      /* offset is too large for ai instruction */
+      int offset_reg = spe_allocate_available_register(gen->f);
+      int sp_reg = spe_allocate_available_register(gen->f);
+      /* offset = -framesize */
+      spe_load_int(gen->f, offset_reg, -gen->frame_size);
+      /* sp = $sp */
+      spe_move(gen->f, sp_reg, SPE_REG_SP);
+      /* $sp = $sp + offset_reg */
+      spe_a(gen->f, SPE_REG_SP, SPE_REG_SP, offset_reg);
+      /* save $sp in stack frame */
+      spe_stqd(gen->f, sp_reg, SPE_REG_SP, 0);
+      /* clean up */
+      spe_release_register(gen->f, offset_reg);
+      spe_release_register(gen->f, sp_reg);
+   }
+   else {
+      /* save stack pointer    # stqd $sp,-frameSize($sp) */
+      spe_stqd(gen->f, SPE_REG_SP, SPE_REG_SP, -gen->frame_size);
 
-   /* adjust stack pointer  # ai $sp,$sp,-frameSize */
-   spe_ai(gen->f, SPE_REG_SP, SPE_REG_SP, -gen->frame_size);
+      /* adjust stack pointer  # ai $sp,$sp,-frameSize */
+      spe_ai(gen->f, SPE_REG_SP, SPE_REG_SP, -gen->frame_size);
+   }
 }
 
 
@@ -389,8 +407,20 @@ emit_epilogue(struct codegen *gen)
 {
    spe_comment(gen->f, -4, "Function epilogue:");
 
-   /* restore stack pointer    # ai $sp,$sp,frameSize */
-   spe_ai(gen->f, SPE_REG_SP, SPE_REG_SP, gen->frame_size);
+   if (gen->frame_size >= 512) {
+      /* offset is too large for ai instruction */
+      int offset_reg = spe_allocate_available_register(gen->f);
+      /* offset = framesize */
+      spe_load_int(gen->f, offset_reg, gen->frame_size);
+      /* $sp = $sp + offset */
+      spe_a(gen->f, SPE_REG_SP, SPE_REG_SP, offset_reg);
+      /* clean up */
+      spe_release_register(gen->f, offset_reg);
+   }
+   else {
+      /* restore stack pointer    # ai $sp,$sp,frameSize */
+      spe_ai(gen->f, SPE_REG_SP, SPE_REG_SP, gen->frame_size);
+   }
 
    /* restore $lr              # lqd $lr,16($sp) */
    spe_lqd(gen->f, SPE_REG_RA, SPE_REG_SP, 16);
