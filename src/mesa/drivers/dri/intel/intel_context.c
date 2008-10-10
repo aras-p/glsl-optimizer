@@ -398,7 +398,11 @@ static const struct dri_extension brw_extensions[] = {
    { "GL_ARB_point_sprite", 		  NULL },
    { "GL_ARB_shader_objects",             GL_ARB_shader_objects_functions },
    { "GL_ARB_shading_language_100",       GL_VERSION_2_0_functions },
+#if 0
+   /* Support for GLSL 1.20 is currently broken in core Mesa.
+    */
    { "GL_ARB_shading_language_120",       GL_VERSION_2_1_functions },
+#endif
    { "GL_ARB_shadow",                     NULL },
    { "GL_ARB_texture_non_power_of_two",   NULL },
    { "GL_ARB_vertex_shader",              GL_ARB_vertex_shader_functions },
