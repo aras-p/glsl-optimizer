@@ -49,7 +49,7 @@ draw_compute_vertex_size(struct vertex_info *vinfo)
 
    vinfo->size = 0;
    for (i = 0; i < vinfo->num_attribs; i++) {
-      switch (vinfo->emit[i]) {
+      switch (vinfo->attrib[i].emit) {
       case EMIT_OMIT:
          break;
       case EMIT_4UB:
@@ -81,8 +81,8 @@ draw_dump_emitted_vertex(const struct vertex_info *vinfo, const uint8_t *data)
    unsigned i, j;
 
    for (i = 0; i < vinfo->num_attribs; i++) {
-      j = vinfo->src_index[i];
-      switch (vinfo->emit[i]) {
+      j = vinfo->attrib[i].src_index;
+      switch (vinfo->attrib[i].emit) {
       case EMIT_OMIT:
          debug_printf("EMIT_OMIT:");
          break;

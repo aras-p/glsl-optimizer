@@ -371,7 +371,11 @@ void x86_jcc( struct x86_function *p,
    DUMP_I(cc);
    
    if (offset < 0) {
-      assert(p->csr - p->store > -offset);
+      /*assert(p->csr - p->store > -offset);*/
+      if (p->csr - p->store <= -offset) {
+         /* probably out of memory (using the error_overflow buffer) */
+         return;
+      }
    }
 
    if (offset <= 127 && offset >= -128) {
@@ -697,6 +701,18 @@ void sse_prefetch1( struct x86_function *p, struct x86_reg ptr)
    assert(ptr.mod != mod_REG);
    emit_2ub(p, 0x0f, 0x18);
    emit_modrm_noreg(p, 2, ptr);
+}
+
+void sse_movntps( struct x86_function *p, 
+                  struct x86_reg dst,
+                  struct x86_reg src)
+{
+   DUMP_RR( dst, src );
+
+   assert(dst.mod != mod_REG);
+   assert(src.mod == mod_REG);
+   emit_2ub(p, 0x0f, 0x2b);
+   emit_modrm(p, src, dst);
 }
 
 

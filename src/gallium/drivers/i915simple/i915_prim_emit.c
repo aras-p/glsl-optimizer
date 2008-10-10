@@ -77,9 +77,9 @@ emit_hw_vertex( struct i915_context *i915,
    assert(!i915->dirty);
 
    for (i = 0; i < vinfo->num_attribs; i++) {
-      const uint j = vinfo->src_index[i];
+      const uint j = vinfo->attrib[i].src_index;
       const float *attrib = vertex->data[j];
-      switch (vinfo->emit[i]) {
+      switch (vinfo->attrib[i].emit) {
       case EMIT_1F:
          OUT_BATCH( fui(attrib[0]) );
          count++;

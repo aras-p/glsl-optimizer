@@ -69,26 +69,26 @@ draw_pt_arrays(struct draw_context *draw,
          return TRUE;
    }
 
+   if (!draw->force_passthrough) {
+      if (!draw->render) {
+         opt |= PT_PIPELINE;
+      }
+      
+      if (draw_need_pipeline(draw,
+                             draw->rasterizer,
+                             prim)) {
+         opt |= PT_PIPELINE;
+      }
 
-   if (!draw->render) {
-      opt |= PT_PIPELINE;
+      if (!draw->bypass_clipping && !draw->pt.test_fse) {
+         opt |= PT_CLIPTEST;
+      }
+      
+      if (!draw->rasterizer->bypass_vs) {
+         opt |= PT_SHADE;
+      }
    }
-
-   if (draw_need_pipeline(draw,
-                          draw->rasterizer,
-                          prim)) {
-      opt |= PT_PIPELINE;
-   }
-
-   if (!draw->bypass_clipping && !draw->pt.test_fse) {
-      opt |= PT_CLIPTEST;
-   }
-
-   if (!draw->rasterizer->bypass_vs) {
-      opt |= PT_SHADE;
-   }
-
-
+      
    if (opt == 0) 
       middle = draw->pt.middle.fetch_emit;
    else if (opt == PT_SHADE && !draw->pt.no_fse)

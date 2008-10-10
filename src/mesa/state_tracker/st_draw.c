@@ -526,7 +526,7 @@ st_draw_vbo(GLcontext *ctx,
       num_vbuffers = 1;
       num_velements = vp->num_inputs;
       if (num_velements == 0)
-	      num_vbuffers = 0;
+         num_vbuffers = 0;
    }
    else {
       /*printf("Draw non-interleaved\n");*/

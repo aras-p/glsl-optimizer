@@ -39,7 +39,7 @@
 #define FEATURE_accum  _HAVE_FULL_GL
 #define FEATURE_attrib_stack  _HAVE_FULL_GL
 #define FEATURE_colortable  _HAVE_FULL_GL
-#define FEATURE_convolution  _HAVE_FULL_GL
+#define FEATURE_convolve  _HAVE_FULL_GL
 #define FEATURE_dispatch  _HAVE_FULL_GL
 #define FEATURE_dlist  _HAVE_FULL_GL
 #define FEATURE_draw_read_buffer  _HAVE_FULL_GL

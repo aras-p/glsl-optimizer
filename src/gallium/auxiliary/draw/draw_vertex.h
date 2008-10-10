@@ -75,11 +75,40 @@ struct vertex_info
 {
    uint num_attribs;
    uint hwfmt[4];      /**< hardware format info for this format */
-   enum interp_mode interp_mode[PIPE_MAX_SHADER_INPUTS];
-   enum attrib_emit emit[PIPE_MAX_SHADER_INPUTS];   /**< EMIT_x */
-   uint src_index[PIPE_MAX_SHADER_INPUTS]; /**< map to post-xform attribs */
    uint size;          /**< total vertex size in dwords */
+   
+   /* Keep this small and at the end of the struct to allow quick
+    * memcmp() comparisons.
+    */
+   struct {
+      ubyte interp_mode:4;      /**< INTERP_x */
+      ubyte emit:4;             /**< EMIT_x */
+      ubyte src_index;          /**< map to post-xform attribs */
+   } attrib[PIPE_MAX_SHADER_INPUTS];
 };
+
+static INLINE int
+draw_vinfo_size( const struct vertex_info *a )
+{
+   return ((const char *)&a->attrib[a->num_attribs] -
+           (const char *)a);
+}
+
+static INLINE int
+draw_vinfo_compare( const struct vertex_info *a,
+                    const struct vertex_info *b )
+{
+   unsigned sizea = draw_vinfo_size( a );
+   return memcmp( a, b, sizea );
+}
+
+static INLINE void
+draw_vinfo_copy( struct vertex_info *dst,
+                 const struct vertex_info *src )
+{
+   unsigned size = draw_vinfo_size( src );
+   memcpy( dst, src, size );
+}
 
 
 
@@ -91,14 +120,15 @@ struct vertex_info
  */
 static INLINE uint
 draw_emit_vertex_attr(struct vertex_info *vinfo,
-                      enum attrib_emit emit, enum interp_mode interp,
+                      enum attrib_emit emit, 
+                      enum interp_mode interp, /* only used by softpipe??? */
                       uint src_index)
 {
    const uint n = vinfo->num_attribs;
    assert(n < PIPE_MAX_SHADER_INPUTS);
-   vinfo->emit[n] = emit;
-   vinfo->interp_mode[n] = interp;
-   vinfo->src_index[n] = src_index;
+   vinfo->attrib[n].emit = emit;
+   vinfo->attrib[n].interp_mode = interp;
+   vinfo->attrib[n].src_index = src_index;
    vinfo->num_attribs++;
    return n;
 }

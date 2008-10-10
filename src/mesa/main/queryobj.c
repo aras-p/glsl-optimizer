@@ -95,7 +95,7 @@ _mesa_wait_query(GLcontext *ctx, struct gl_query_object *q)
  * XXX maybe add Delete() method to gl_query_object class and call that instead
  */
 void
-_mesa_delete_query(struct gl_query_object *q)
+_mesa_delete_query(GLcontext *ctx, struct gl_query_object *q)
 {
    _mesa_free(q);
 }

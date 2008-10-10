@@ -37,5 +37,8 @@ _mesa_update_state( GLcontext *ctx );
 extern void
 _mesa_update_state_locked( GLcontext *ctx );
 
+void
+_mesa_set_varying_vp_inputs( GLcontext *ctx,
+                             GLbitfield varying_inputs );
 
 #endif

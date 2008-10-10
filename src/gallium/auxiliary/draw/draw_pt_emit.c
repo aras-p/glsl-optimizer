@@ -84,11 +84,11 @@ void draw_pt_emit_prepare( struct pt_emit *emit,
       unsigned emit_sz = 0;
       unsigned src_buffer = 0;
       unsigned output_format;
-      unsigned src_offset = (vinfo->src_index[i] * 4 * sizeof(float) );
+      unsigned src_offset = (vinfo->attrib[i].src_index * 4 * sizeof(float) );
 
 
          
-      switch (vinfo->emit[i]) {
+      switch (vinfo->attrib[i].emit) {
       case EMIT_4F:
 	 output_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
 	 emit_sz = 4 * sizeof(float);

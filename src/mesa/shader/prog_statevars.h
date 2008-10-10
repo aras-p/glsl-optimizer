@@ -104,6 +104,7 @@ typedef enum gl_state_index_ {
    STATE_LOCAL,
 
    STATE_INTERNAL,		/* Mesa additions */
+   STATE_CURRENT_ATTRIB,        /* ctx->Current vertex attrib value */
    STATE_NORMAL_SCALE,
    STATE_TEXRECT_SCALE,
    STATE_FOG_PARAMS_OPTIMIZED,  /* for faster fog calc */
