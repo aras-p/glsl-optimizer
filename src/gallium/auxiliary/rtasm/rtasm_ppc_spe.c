@@ -559,7 +559,7 @@ void spe_lqd(struct spe_function *p, unsigned rT, unsigned rA, int offset)
    const boolean pSave = p->print;
 
    p->print = FALSE;
-   assert(offset % 4 == 0);
+   assert(offset % 16 == 0);
    emit_RI10(p, 0x034, rT, rA, offset >> 4, "spe_lqd");
    p->print = pSave;
 
@@ -579,7 +579,7 @@ void spe_stqd(struct spe_function *p, unsigned rT, unsigned rA, int offset)
    const boolean pSave = p->print;
 
    p->print = FALSE;
-   assert(offset % 4 == 0);
+   assert(offset % 16 == 0);
    emit_RI10(p, 0x024, rT, rA, offset >> 4, "spe_stqd");
    p->print = pSave;
 
