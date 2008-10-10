@@ -369,7 +369,7 @@ store_dest_reg(struct codegen *gen,
 static void
 emit_prologue(struct codegen *gen)
 {
-   gen->frame_size = 256+128; /* XXX temporary */
+   gen->frame_size = 1024; /* XXX temporary */
 
    spe_comment(gen->f, -4, "Function prologue:");
 
@@ -517,6 +517,7 @@ static boolean
 emit_LERP(struct codegen *gen, const struct tgsi_full_instruction *inst)
 {
    int ch;
+   int tmp_reg = get_itemp(gen);
    spe_comment(gen->f, -4, "LERP:");
    for (ch = 0; ch < 4; ch++) {
       if (inst->FullDstRegisters[0].DstRegister.WriteMask & (1 << ch)) {
@@ -524,9 +525,10 @@ emit_LERP(struct codegen *gen, const struct tgsi_full_instruction *inst)
          int s2_reg = get_src_reg(gen, ch, &inst->FullSrcRegisters[1]);
          int s3_reg = get_src_reg(gen, ch, &inst->FullSrcRegisters[2]);
          int d_reg = get_dst_reg(gen, ch, &inst->FullDstRegisters[0]);
+
          /* d = s3 + s1(s2 - s3) */
-         spe_fs(gen->f, d_reg, s2_reg, s3_reg);
-         spe_fma(gen->f, d_reg, d_reg, s1_reg, s3_reg);
+         spe_fs(gen->f, tmp_reg, s2_reg, s3_reg);
+         spe_fma(gen->f, d_reg, tmp_reg, s1_reg, s3_reg);
          store_dest_reg(gen, d_reg, ch, &inst->FullDstRegisters[0]);
          free_itemps(gen);
       }
@@ -1211,7 +1213,7 @@ emit_function_call(struct codegen *gen,
          d_reg = get_dst_reg(gen, ch, &inst->FullDstRegisters[0]);
 
          numUsed = spe_get_registers_used(gen->f, usedRegs);
-         assert(numUsed < gen->frame_size / 16 - 32);
+         assert(numUsed < gen->frame_size / 16 - 2);
 
          /* save registers to stack */
          for (i = 0; i < numUsed; i++) {
@@ -1269,7 +1271,7 @@ emit_TXP(struct codegen *gen, const struct tgsi_full_instruction *inst)
       uint i, numUsed;
 
       numUsed = spe_get_registers_used(gen->f, usedRegs);
-      assert(numUsed < gen->frame_size / 16 - 32);
+      assert(numUsed < gen->frame_size / 16 - 2);
 
       /* save registers to stack */
       for (i = 0; i < numUsed; i++) {
