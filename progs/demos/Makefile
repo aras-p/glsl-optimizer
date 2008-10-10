@@ -66,6 +66,7 @@ PROGS = \
 	texdown \
 	texenv \
 	texobj \
+	textures \
 	trispd \
 	tunnel \
 	tunnel2 \
