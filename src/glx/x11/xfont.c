@@ -1,3 +1,4 @@
+/* -*- mode: c; tab-width: 3; indent-tabs-mode: nil; c-basic-offset: 3; coding: utf-8-unix -*- */
 /*
  * Mesa 3-D graphics library
  * Version:  3.1
