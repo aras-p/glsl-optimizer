@@ -146,7 +146,8 @@
 #include <byteswap.h>
 #define CPU_TO_LE32( x )	bswap_32( x )
 #else /*__linux__*/
-#define CPU_TO_LE32( x )	( x )  /* fix me for non-Linux big-endian! */
+#include <sys/endian.h>
+#define CPU_TO_LE32( x )	bswap32( x )
 #endif /*__linux__*/
 #define MESA_BIG_ENDIAN 1
 #else
