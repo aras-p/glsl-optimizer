@@ -121,7 +121,6 @@ __glXFreeVertexArrayState( __GLXcontext * gc )
             arrays->arrays = NULL;
         }
         free(arrays);
-        arrays = NULL;
         state->array_state = NULL;
     }
 }
