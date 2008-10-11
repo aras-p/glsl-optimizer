@@ -59,14 +59,14 @@ void __glXDumpDrawBuffer(__GLXcontext *ctx);
 #ifdef USE_SPARC_ASM
 static void _glx_mesa_init_sparc_glapi_relocs(void);
 static int _mesa_sparc_needs_init = 1;
-#define INIT_MESA_SPARC { \
-    if(_mesa_sparc_needs_init) { \
+#define INIT_MESA_SPARC do {               \
+   if (_mesa_sparc_needs_init) {           \
       _glx_mesa_init_sparc_glapi_relocs(); \
-      _mesa_sparc_needs_init = 0; \
-  } \
-}
+      _mesa_sparc_needs_init = 0;          \
+   }                                       \
+  } while(0)
 #else
-#define INIT_MESA_SPARC
+#define INIT_MESA_SPARC do { } while(0)
 #endif
 
 /*
@@ -645,7 +645,7 @@ _X_HIDDEN __GLXdisplayPrivate *__glXInitialize(Display* dpy)
     }
 #endif
 
-    INIT_MESA_SPARC
+    INIT_MESA_SPARC;
     /* The one and only long long lock */
     __glXLock();
 
@@ -759,7 +759,7 @@ _X_HIDDEN CARD8 __glXSetupForCommand(Display *dpy)
 
 	if (gc->currentDpy == dpy) {
 	    /* Use opcode from gc because its right */
-	    INIT_MESA_SPARC
+	    INIT_MESA_SPARC;
 	    return gc->majorOpcode;
 	} else {
 	    /*
