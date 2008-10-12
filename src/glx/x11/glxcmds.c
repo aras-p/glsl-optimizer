@@ -2499,10 +2499,9 @@ static void __glXCopySubBufferMESA(Display *dpy, GLXDrawable drawable,
     int screen;
     __GLXDRIdrawable *pdraw = GetGLXDRIDrawable(dpy, drawable, &screen);
     if ( pdraw != NULL ) {
-	__GLXscreenConfigs * const psc = GetGLXScreenConfigs( dpy, screen );
-	if (psc->copySubBuffer != NULL) {
-	    (*psc->copySubBuffer->copySubBuffer)(pdraw->driDrawable,
-						 x, y, width, height);
+	__GLXscreenConfigs * const psc = GetGLXScreenConfigs(dpy, screen);
+	if (psc->driScreen->copySubBuffer != NULL) {
+	    (*psc->driScreen->copySubBuffer)(pdraw, x, y, width, height);
 	}
 
 	return;
