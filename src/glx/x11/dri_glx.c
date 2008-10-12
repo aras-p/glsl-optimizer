@@ -575,6 +575,13 @@ static void driSwapBuffers(__GLXDRIdrawable *pdraw)
    (*pdraw->psc->core->swapBuffers)(pdraw->driDrawable);
 }
 
+static void driCopySubBuffer(__GLXDRIdrawable *pdraw,
+			     int x, int y, int width, int height)
+{
+    (*pdraw->psc->driCopySubBuffer->copySubBuffer)(pdraw->driDrawable,
+						   x, y, width, height);
+}
+
 static void driDestroyScreen(__GLXscreenConfigs *psc)
 {
     /* Free the direct rendering per screen data */
@@ -642,6 +649,8 @@ static __GLXDRIscreen *driCreateScreen(__GLXscreenConfigs *psc, int screen,
     }
 
     driBindExtensions(psc, 0);
+    if (psc->driCopySubBuffer)
+	psp->copySubBuffer = driCopySubBuffer;
 
     psp->destroyScreen = driDestroyScreen;
     psp->createContext = driCreateContext;
