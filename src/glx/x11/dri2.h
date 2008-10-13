@@ -34,34 +34,31 @@
 #ifndef _DRI2_H_
 #define _DRI2_H_
 
-typedef struct {
-    unsigned int attachment;
-    unsigned int name;
-    unsigned int pitch;
-    unsigned int cpp;
-    unsigned int flags;
+typedef struct
+{
+   unsigned int attachment;
+   unsigned int name;
+   unsigned int pitch;
+   unsigned int cpp;
+   unsigned int flags;
 } DRI2Buffer;
 
 extern Bool
-DRI2QueryExtension(Display *display, int *eventBase, int *errorBase);
+DRI2QueryExtension(Display * display, int *eventBase, int *errorBase);
+extern Bool DRI2QueryVersion(Display * display, int *major, int *minor);
 extern Bool
-DRI2QueryVersion(Display *display, int *major, int *minor);
+DRI2Connect(Display * display, int screen,
+            char **driverName, char **busId, unsigned int *sareaHandle);
 extern Bool
-DRI2Connect(Display *display, int screen,
-	    char **driverName, char **busId, unsigned int *sareaHandle);
-extern Bool
-DRI2AuthConnection(Display *display, int screen, drm_magic_t magic);
+DRI2AuthConnection(Display * display, int screen, drm_magic_t magic);
+extern void DRI2CreateDrawable(Display * display, XID drawable);
+extern void DRI2DestroyDrawable(Display * display, XID handle);
+extern DRI2Buffer *DRI2GetBuffers(Display * dpy, XID drawable,
+                                  int *width, int *height,
+                                  unsigned int *attachments, int count,
+                                  int *outCount);
 extern void
-DRI2CreateDrawable(Display *display, XID drawable);
-extern void
-DRI2DestroyDrawable(Display *display, XID handle);
-extern DRI2Buffer *
-DRI2GetBuffers(Display *dpy, XID drawable,
-	       int *width, int *height,
-	       unsigned int *attachments, int count,
-	       int *outCount);
-extern void
-DRI2SwapBuffers(Display *dpy, XID drawable,
-		int x, int y, int width, int height);
+DRI2SwapBuffers(Display * dpy, XID drawable,
+                int x, int y, int width, int height);
 
 #endif
