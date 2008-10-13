@@ -1579,13 +1579,17 @@ emit_array_element(slang_emit_info *emitInfo, slang_ir_node *n)
    else {
       /* Variable array index */
       struct prog_instruction *inst;
+      slang_ir_storage dstStore = *n->Store;
 
       /* do codegen for array index expression */
       emit(emitInfo, n->Children[1]);
 
       inst = new_instruction(emitInfo, OPCODE_ARL);
 
-      storage_to_dst_reg(&inst->DstReg, n->Store, n->Writemask);
+      if (dstStore.Size > 4)
+         dstStore.Size = 4; /* only emit one instruction */
+
+      storage_to_dst_reg(&inst->DstReg, &dstStore, n->Writemask);
       storage_to_src_reg(&inst->SrcReg[0], n->Children[1]->Store);
 
       inst->DstReg.File = PROGRAM_ADDRESS;
