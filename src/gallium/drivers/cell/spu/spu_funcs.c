@@ -106,6 +106,7 @@ spu_txp(vector float s, vector float t, vector float r, vector float q,
 {
    //const uint unit = 0;
    struct vec_4x4 colors;
+#if 0
    vector float coords[4];
 
    coords[0] = s;
@@ -121,6 +122,9 @@ spu_txp(vector float s, vector float t, vector float r, vector float q,
    colors.v[3] = spu.sample_texture[unit](unit, coords[3]);
 
    _transpose_matrix4x4(colors.v, colors.v);
+#else
+   spu.sample_texture4[unit](s, t, r, q, unit, colors.v);
+#endif
    return colors;
 }
 

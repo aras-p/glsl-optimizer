@@ -26,6 +26,8 @@
  **************************************************************************/
 
 
+#include <transpose_matrix4x4.h>
+
 #include "pipe/p_compiler.h"
 #include "spu_main.h"
 #include "spu_texture.h"
@@ -91,10 +93,10 @@ static void
 get_four_texels(uint unit, vec_uint4 x, vec_uint4 y, vec_uint4 *texels)
 {
    const unsigned texture_ea = (uintptr_t) spu.texture[unit].start;
-   vec_uint4 tile_x = spu_rlmask(x, -5);
-   vec_uint4 tile_y = spu_rlmask(y, -5);
-   const qword offset_x = si_andi((qword) x, 0x1f);
-   const qword offset_y = si_andi((qword) y, 0x1f);
+   vec_uint4 tile_x = spu_rlmask(x, -5);  /* tile_x = x / 32 */
+   vec_uint4 tile_y = spu_rlmask(y, -5);  /* tile_y = y / 32 */
+   const qword offset_x = si_andi((qword) x, 0x1f); /* offset_x = x & 0x1f */
+   const qword offset_y = si_andi((qword) y, 0x1f); /* offset_y = y & 0x1f */
 
    const qword tiles_per_row = (qword) spu_splats(spu.texture[unit].tiles_per_row);
    const qword tile_size = (qword) spu_splats((unsigned) sizeof(tile_t));
@@ -129,6 +131,31 @@ sample_texture_nearest(uint unit, vector float texcoord)
    itc = spu_and(itc, spu.texture[unit].tex_size_mask); /* mask (GL_REPEAT) */
    uint texel = get_texel(unit, itc);
    return spu_unpack_A8R8G8B8(texel);
+}
+
+
+/**
+ * \param colors  returned colors in SOA format (rrrr, gggg, bbbb, aaaa).
+ */
+void
+sample_texture4_nearest(vector float s, vector float t,
+                        vector float r, vector float q,
+                        uint unit, vector float colors[4])
+{
+   vector float ss = spu_mul(s, spu.texture[unit].width4);
+   vector float tt = spu_mul(t, spu.texture[unit].height4);
+   vector unsigned int is = spu_convtu(ss, 0);
+   vector unsigned int it = spu_convtu(tt, 0);
+   vec_uint4 texels[4];
+
+   /* GL_REPEAT wrap mode: */
+   is = spu_and(is, spu.texture[unit].tex_size_x_mask);
+   it = spu_and(it, spu.texture[unit].tex_size_y_mask);
+
+   get_four_texels(unit, is, it, texels);
+
+   /* convert four packed ARGBA pixels to float RRRR,GGGG,BBBB,AAAA */
+   spu_unpack_A8R8G8B8_transpose4(texels, colors);
 }
 
 
@@ -197,4 +224,94 @@ sample_texture_bilinear(uint unit, vector float texcoord)
    texel_sum = spu_add(texel_sum, texel11);
 
    return texel_sum;
+}
+
+
+void
+sample_texture4_bilinear(vector float s, vector float t,
+                         vector float r, vector float q,
+                         uint unit, vector float colors[4])
+{
+   vector float ss = spu_madd(s, spu.texture[unit].width4,  spu_splats(-0.5f));
+   vector float tt = spu_madd(t, spu.texture[unit].height4, spu_splats(-0.5f));
+
+   vector unsigned int is0 = spu_convtu(ss, 0);
+   vector unsigned int it0 = spu_convtu(tt, 0);
+
+   /* is + 1, it + 1 */
+   vector unsigned int is1 = spu_add(is0, 1);
+   vector unsigned int it1 = spu_add(it0, 1);
+
+   /* PIPE_TEX_WRAP_REPEAT */
+   is0 = spu_and(is0, spu.texture[unit].tex_size_x_mask);
+   it0 = spu_and(it0, spu.texture[unit].tex_size_y_mask);
+   is1 = spu_and(is1, spu.texture[unit].tex_size_x_mask);
+   it1 = spu_and(it1, spu.texture[unit].tex_size_y_mask);
+
+   /* get packed int texels */
+   vector unsigned int texels[16];
+   get_four_texels(unit, is0, it0, texels + 0);  /* upper-left */
+   get_four_texels(unit, is1, it0, texels + 4);  /* upper-right */
+   get_four_texels(unit, is0, it1, texels + 8);  /* lower-left */
+   get_four_texels(unit, is1, it1, texels + 12); /* lower-right */
+
+   /* XXX possibly rework following code to compute the weighted sample
+    * colors with integer arithmetic for fewer int->float conversions.
+    */
+
+   /* convert packed int texels to float colors */
+   vector float ftexels[16];
+   spu_unpack_A8R8G8B8_transpose4(texels + 0, ftexels + 0);
+   spu_unpack_A8R8G8B8_transpose4(texels + 4, ftexels + 4);
+   spu_unpack_A8R8G8B8_transpose4(texels + 8, ftexels + 8);
+   spu_unpack_A8R8G8B8_transpose4(texels + 12, ftexels + 12);
+
+   /* Compute weighting factors in [0,1]
+    * Multiply texcoord by 1024, AND with 1023, convert back to float.
+    */
+   vector float ss1024 = spu_mul(ss, spu_splats(1024.0f));
+   vector signed int iss1024 = spu_convts(ss1024, 0);
+   iss1024 = spu_and(iss1024, 1023);
+   vector float sWeights0 = spu_convtf(iss1024, 10);
+
+   vector float tt1024 = spu_mul(tt, spu_splats(1024.0f));
+   vector signed int itt1024 = spu_convts(tt1024, 0);
+   itt1024 = spu_and(itt1024, 1023);
+   vector float tWeights0 = spu_convtf(itt1024, 10);
+
+   /* 1 - sWeight and 1 - tWeight */
+   vector float sWeights1 = spu_sub(spu_splats(1.0f), sWeights0);
+   vector float tWeights1 = spu_sub(spu_splats(1.0f), tWeights0);
+
+   /* reds, for four pixels */
+   ftexels[ 0] = spu_mul(ftexels[ 0], spu_mul(sWeights1, tWeights1)); /*ul*/
+   ftexels[ 4] = spu_mul(ftexels[ 4], spu_mul(sWeights0, tWeights1)); /*ur*/
+   ftexels[ 8] = spu_mul(ftexels[ 8], spu_mul(sWeights1, tWeights0)); /*ll*/
+   ftexels[12] = spu_mul(ftexels[12], spu_mul(sWeights0, tWeights0)); /*lr*/
+   colors[0] = spu_add(spu_add(ftexels[0], ftexels[4]),
+                       spu_add(ftexels[8], ftexels[12]));
+
+   /* greens, for four pixels */
+   ftexels[ 1] = spu_mul(ftexels[ 1], spu_mul(sWeights1, tWeights1)); /*ul*/
+   ftexels[ 5] = spu_mul(ftexels[ 5], spu_mul(sWeights0, tWeights1)); /*ur*/
+   ftexels[ 9] = spu_mul(ftexels[ 9], spu_mul(sWeights1, tWeights0)); /*ll*/
+   ftexels[13] = spu_mul(ftexels[13], spu_mul(sWeights0, tWeights0)); /*lr*/
+   colors[1] = spu_add(spu_add(ftexels[1], ftexels[5]),
+                       spu_add(ftexels[9], ftexels[13]));
+
+   /* blues, for four pixels */
+   ftexels[ 2] = spu_mul(ftexels[ 2], spu_mul(sWeights1, tWeights1)); /*ul*/
+   ftexels[ 6] = spu_mul(ftexels[ 6], spu_mul(sWeights0, tWeights1)); /*ur*/
+   ftexels[10] = spu_mul(ftexels[10], spu_mul(sWeights1, tWeights0)); /*ll*/
+   ftexels[14] = spu_mul(ftexels[14], spu_mul(sWeights0, tWeights0)); /*lr*/
+   colors[2] = spu_add(spu_add(ftexels[2], ftexels[6]),
+                       spu_add(ftexels[10], ftexels[14]));
+
+   /* alphas, for four pixels */
+   ftexels[ 3] = spu_mul(ftexels[ 3], spu_mul(sWeights1, tWeights1)); /*ul*/
+   ftexels[ 7] = spu_mul(ftexels[ 7], spu_mul(sWeights0, tWeights1)); /*ur*/
+   ftexels[11] = spu_mul(ftexels[11], spu_mul(sWeights1, tWeights0)); /*ll*/
+   ftexels[15] = spu_mul(ftexels[15], spu_mul(sWeights0, tWeights0)); /*lr*/
+   colors[3] = spu_add(spu_add(ftexels[3], ftexels[7]),
+                       spu_add(ftexels[11], ftexels[15]));
 }

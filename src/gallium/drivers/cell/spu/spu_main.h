@@ -67,6 +67,14 @@ typedef union {
 typedef vector float (*spu_sample_texture_func)(uint unit,
                                                 vector float texcoord);
 
+typedef void (*spu_sample_texture4_func)(vector float s,
+                                         vector float t,
+                                         vector float r,
+                                         vector float q,
+                                         uint unit,
+                                         vector float colors[4]);
+
+
 /** Function for performing per-fragment ops */
 typedef void (*spu_fragment_ops_func)(uint x, uint y,
                                       tile_t *colorTile,
@@ -107,10 +115,12 @@ struct spu_texture
    void *start;
    ushort width, height;
    ushort tiles_per_row;
-   vector float tex_size;
-   vector unsigned int tex_size_mask; /**< == int(size - 1) */
-   vector unsigned int tex_size_x_mask; /**< == int(size - 1) */
-   vector unsigned int tex_size_y_mask; /**< == int(size - 1) */
+   vector float tex_size; /**< == {width, height, 0, 0} */
+   vector float width4;   /**< == {width, width, width, width} */
+   vector float height4;  /**< == {height, height, height, height} */
+   vector unsigned int tex_size_mask; /**< == {width-1, height-1, 0, 0 } */
+   vector unsigned int tex_size_x_mask; /**< splat(width-1) */
+   vector unsigned int tex_size_y_mask; /**< splat(height-1) */
 } ALIGN16_ATTRIB;
 
 
@@ -159,6 +169,7 @@ struct spu_global
 
    /** Current texture sampler function */
    spu_sample_texture_func sample_texture[CELL_MAX_SAMPLERS];
+   spu_sample_texture4_func sample_texture4[CELL_MAX_SAMPLERS];
 
    /** Fragment program constants */
    vector float constants[4 * CELL_MAX_CONSTANTS];

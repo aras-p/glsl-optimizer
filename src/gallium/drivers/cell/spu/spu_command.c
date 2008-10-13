@@ -301,10 +301,14 @@ cmd_state_sampler(const struct cell_command_sampler *sampler)
    DEBUG_PRINTF("SAMPLER [%u]\n", sampler->unit);
 
    spu.sampler[sampler->unit] = sampler->state;
-   if (spu.sampler[sampler->unit].min_img_filter == PIPE_TEX_FILTER_LINEAR)
+   if (spu.sampler[sampler->unit].min_img_filter == PIPE_TEX_FILTER_LINEAR) {
       spu.sample_texture[sampler->unit] = sample_texture_bilinear;
-   else
+      spu.sample_texture4[sampler->unit] = sample_texture4_bilinear;
+   }
+   else {
       spu.sample_texture[sampler->unit] = sample_texture_nearest;
+      spu.sample_texture4[sampler->unit] = sample_texture4_nearest;
+   }
 }
 
 
@@ -322,6 +326,9 @@ cmd_state_texture(const struct cell_command_texture *texture)
    spu.texture[unit].start = texture->start;
    spu.texture[unit].width = width;
    spu.texture[unit].height = height;
+
+   spu.texture[unit].width4 = spu_splats((float) width);
+   spu.texture[unit].height4 = spu_splats((float) height);
 
    spu.texture[unit].tiles_per_row = width / TILE_SIZE;
 
