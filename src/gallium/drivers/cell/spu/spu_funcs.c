@@ -104,27 +104,8 @@ static struct vec_4x4
 spu_txp(vector float s, vector float t, vector float r, vector float q,
         unsigned unit)
 {
-   //const uint unit = 0;
    struct vec_4x4 colors;
-#if 0
-   vector float coords[4];
-
-   coords[0] = s;
-   coords[1] = t;
-   coords[2] = r;
-   coords[3] = q;
-   _transpose_matrix4x4(coords, coords);
-
-   /* get four texture samples */
-   colors.v[0] = spu.sample_texture[unit](unit, coords[0]);
-   colors.v[1] = spu.sample_texture[unit](unit, coords[1]);
-   colors.v[2] = spu.sample_texture[unit](unit, coords[2]);
-   colors.v[3] = spu.sample_texture[unit](unit, coords[3]);
-
-   _transpose_matrix4x4(colors.v, colors.v);
-#else
    spu.sample_texture4[unit](s, t, r, q, unit, colors.v);
-#endif
    return colors;
 }
 

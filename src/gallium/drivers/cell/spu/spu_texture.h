@@ -36,18 +36,10 @@ extern void
 invalidate_tex_cache(void);
 
 
-extern vector float
-sample_texture_nearest(uint unit, vector float texcoord);
-
-
 extern void
 sample_texture4_nearest(vector float s, vector float t,
                         vector float r, vector float q,
                         uint unit, vector float colors[4]);
-
-
-extern vector float
-sample_texture_bilinear(uint unit, vector float texcoord);
 
 
 extern void
