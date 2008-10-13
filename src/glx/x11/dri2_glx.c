@@ -51,292 +51,302 @@ typedef struct __GLXDRIdisplayPrivateRec __GLXDRIdisplayPrivate;
 typedef struct __GLXDRIcontextPrivateRec __GLXDRIcontextPrivate;
 typedef struct __GLXDRIdrawablePrivateRec __GLXDRIdrawablePrivate;
 
-struct __GLXDRIdisplayPrivateRec {
-    __GLXDRIdisplay base;
+struct __GLXDRIdisplayPrivateRec
+{
+   __GLXDRIdisplay base;
 
-    /*
+   /*
     ** XFree86-DRI version information
     */
-    int driMajor;
-    int driMinor;
-    int driPatch;
+   int driMajor;
+   int driMinor;
+   int driPatch;
 };
 
-struct __GLXDRIcontextPrivateRec {
-    __GLXDRIcontext base;
-    __DRIcontext *driContext;
-    __GLXscreenConfigs *psc;
+struct __GLXDRIcontextPrivateRec
+{
+   __GLXDRIcontext base;
+   __DRIcontext *driContext;
+   __GLXscreenConfigs *psc;
 };
 
-struct __GLXDRIdrawablePrivateRec {
-    __GLXDRIdrawable base;
-    __DRIbuffer buffers[5];
-    int bufferCount;
-    int width, height;
+struct __GLXDRIdrawablePrivateRec
+{
+   __GLXDRIdrawable base;
+   __DRIbuffer buffers[5];
+   int bufferCount;
+   int width, height;
 };
 
-static void dri2DestroyContext(__GLXDRIcontext *context,
-			      __GLXscreenConfigs *psc, Display *dpy)
+static void
+dri2DestroyContext(__GLXDRIcontext * context,
+                   __GLXscreenConfigs * psc, Display * dpy)
 {
-    __GLXDRIcontextPrivate *pcp = (__GLXDRIcontextPrivate *) context;
-    const __DRIcoreExtension *core = pcp->psc->core;
+   __GLXDRIcontextPrivate *pcp = (__GLXDRIcontextPrivate *) context;
+   const __DRIcoreExtension *core = pcp->psc->core;
 
-    (*core->destroyContext)(pcp->driContext);
+   (*core->destroyContext) (pcp->driContext);
 
-    Xfree(pcp);
+   Xfree(pcp);
 }
 
-static Bool dri2BindContext(__GLXDRIcontext *context,
-			   __GLXDRIdrawable *draw, __GLXDRIdrawable *read)
+static Bool
+dri2BindContext(__GLXDRIcontext * context,
+                __GLXDRIdrawable * draw, __GLXDRIdrawable * read)
 {
-    __GLXDRIcontextPrivate *pcp = (__GLXDRIcontextPrivate *) context;
-    const __DRIcoreExtension *core = pcp->psc->core;
+   __GLXDRIcontextPrivate *pcp = (__GLXDRIcontextPrivate *) context;
+   const __DRIcoreExtension *core = pcp->psc->core;
 
-    return (*core->bindContext)(pcp->driContext,
-				draw->driDrawable,
-				read->driDrawable);
+   return (*core->bindContext) (pcp->driContext,
+                                draw->driDrawable, read->driDrawable);
 }
 
-static void dri2UnbindContext(__GLXDRIcontext *context)
+static void
+dri2UnbindContext(__GLXDRIcontext * context)
 {
-    __GLXDRIcontextPrivate *pcp = (__GLXDRIcontextPrivate *) context;
-    const __DRIcoreExtension *core = pcp->psc->core;
+   __GLXDRIcontextPrivate *pcp = (__GLXDRIcontextPrivate *) context;
+   const __DRIcoreExtension *core = pcp->psc->core;
 
-    (*core->unbindContext)(pcp->driContext);
+   (*core->unbindContext) (pcp->driContext);
 }
 
-static __GLXDRIcontext *dri2CreateContext(__GLXscreenConfigs *psc,
-					 const __GLcontextModes *mode,
-					 GLXContext gc,
-					 GLXContext shareList, int renderType)
+static __GLXDRIcontext *
+dri2CreateContext(__GLXscreenConfigs * psc,
+                  const __GLcontextModes * mode,
+                  GLXContext gc, GLXContext shareList, int renderType)
 {
-    __GLXDRIcontextPrivate *pcp, *pcp_shared;
-    __GLXDRIconfigPrivate *config = (__GLXDRIconfigPrivate *) mode;
-    __DRIcontext *shared = NULL;
+   __GLXDRIcontextPrivate *pcp, *pcp_shared;
+   __GLXDRIconfigPrivate *config = (__GLXDRIconfigPrivate *) mode;
+   __DRIcontext *shared = NULL;
 
-    if (shareList) {
-	pcp_shared = (__GLXDRIcontextPrivate *) shareList->driContext;
-	shared = pcp_shared->driContext;
-    }
+   if (shareList) {
+      pcp_shared = (__GLXDRIcontextPrivate *) shareList->driContext;
+      shared = pcp_shared->driContext;
+   }
 
-    pcp = Xmalloc(sizeof *pcp);
-    if (pcp == NULL)
-	return NULL;
+   pcp = Xmalloc(sizeof *pcp);
+   if (pcp == NULL)
+      return NULL;
 
-    pcp->psc = psc;
-    pcp->driContext = 
-	(*psc->dri2->createNewContext)(psc->__driScreen,
-				       config->driConfig, shared, pcp);
-    gc->__driContext = pcp->driContext;
+   pcp->psc = psc;
+   pcp->driContext =
+      (*psc->dri2->createNewContext) (psc->__driScreen,
+                                      config->driConfig, shared, pcp);
+   gc->__driContext = pcp->driContext;
 
-    if (pcp->driContext == NULL) {
-	Xfree(pcp);
-	return NULL;
-    }
+   if (pcp->driContext == NULL) {
+      Xfree(pcp);
+      return NULL;
+   }
 
-    pcp->base.destroyContext = dri2DestroyContext;
-    pcp->base.bindContext = dri2BindContext;
-    pcp->base.unbindContext = dri2UnbindContext;
+   pcp->base.destroyContext = dri2DestroyContext;
+   pcp->base.bindContext = dri2BindContext;
+   pcp->base.unbindContext = dri2UnbindContext;
 
-    return &pcp->base;
+   return &pcp->base;
 }
 
-static void dri2DestroyDrawable(__GLXDRIdrawable *pdraw)
+static void
+dri2DestroyDrawable(__GLXDRIdrawable * pdraw)
 {
-    const __DRIcoreExtension *core = pdraw->psc->core;
+   const __DRIcoreExtension *core = pdraw->psc->core;
 
-    (*core->destroyDrawable)(pdraw->driDrawable);
-    DRI2DestroyDrawable(pdraw->psc->dpy, pdraw->drawable);
-    Xfree(pdraw);
+   (*core->destroyDrawable) (pdraw->driDrawable);
+   DRI2DestroyDrawable(pdraw->psc->dpy, pdraw->drawable);
+   Xfree(pdraw);
 }
 
-static __GLXDRIdrawable *dri2CreateDrawable(__GLXscreenConfigs *psc,
-					    XID xDrawable,
-					    GLXDrawable drawable,
-					    const __GLcontextModes *modes)
+static __GLXDRIdrawable *
+dri2CreateDrawable(__GLXscreenConfigs * psc,
+                   XID xDrawable,
+                   GLXDrawable drawable, const __GLcontextModes * modes)
 {
-    __GLXDRIdrawablePrivate *pdraw;
-    __GLXDRIconfigPrivate *config = (__GLXDRIconfigPrivate *) modes;
+   __GLXDRIdrawablePrivate *pdraw;
+   __GLXDRIconfigPrivate *config = (__GLXDRIconfigPrivate *) modes;
 
-    pdraw = Xmalloc(sizeof(*pdraw));
-    if (!pdraw)
-	return NULL;
+   pdraw = Xmalloc(sizeof(*pdraw));
+   if (!pdraw)
+      return NULL;
 
-    pdraw->base.destroyDrawable = dri2DestroyDrawable;
-    pdraw->base.xDrawable = xDrawable;
-    pdraw->base.drawable = drawable;
-    pdraw->base.psc = psc;
+   pdraw->base.destroyDrawable = dri2DestroyDrawable;
+   pdraw->base.xDrawable = xDrawable;
+   pdraw->base.drawable = drawable;
+   pdraw->base.psc = psc;
 
-    DRI2CreateDrawable(psc->dpy, xDrawable);
+   DRI2CreateDrawable(psc->dpy, xDrawable);
 
-    /* Create a new drawable */
-    pdraw->base.driDrawable =
-	(*psc->dri2->createNewDrawable)(psc->__driScreen,
-					config->driConfig, pdraw);
+   /* Create a new drawable */
+   pdraw->base.driDrawable =
+      (*psc->dri2->createNewDrawable) (psc->__driScreen,
+                                       config->driConfig, pdraw);
 
-    if (!pdraw->base.driDrawable) {
-	DRI2DestroyDrawable(psc->dpy, drawable);
-	Xfree(pdraw);
-	return NULL;
-    }
+   if (!pdraw->base.driDrawable) {
+      DRI2DestroyDrawable(psc->dpy, drawable);
+      Xfree(pdraw);
+      return NULL;
+   }
 
-    return &pdraw->base;
+   return &pdraw->base;
 }
 
-static void dri2SwapBuffers(__GLXDRIdrawable *pdraw)
+static void
+dri2SwapBuffers(__GLXDRIdrawable * pdraw)
 {
-    __GLXDRIdrawablePrivate *priv = (__GLXDRIdrawablePrivate *) pdraw;
+   __GLXDRIdrawablePrivate *priv = (__GLXDRIdrawablePrivate *) pdraw;
 
-    DRI2SwapBuffers(pdraw->psc->dpy, pdraw->drawable,
-		    0, 0, priv->width, priv->height);
+   DRI2SwapBuffers(pdraw->psc->dpy, pdraw->drawable,
+                   0, 0, priv->width, priv->height);
 }
 
-static void dri2DestroyScreen(__GLXscreenConfigs *psc)
+static void
+dri2DestroyScreen(__GLXscreenConfigs * psc)
 {
-    /* Free the direct rendering per screen data */
-    (*psc->core->destroyScreen)(psc->__driScreen);
-    drmClose(psc->fd);
-    psc->__driScreen = NULL;
+   /* Free the direct rendering per screen data */
+   (*psc->core->destroyScreen) (psc->__driScreen);
+   drmClose(psc->fd);
+   psc->__driScreen = NULL;
 }
 
 static __DRIbuffer *
-dri2GetBuffers(__DRIdrawable *driDrawable,
-	       int *width, int *height,
-	       unsigned int *attachments, int count,
-	       int *out_count, void *loaderPrivate)
+dri2GetBuffers(__DRIdrawable * driDrawable,
+               int *width, int *height,
+               unsigned int *attachments, int count,
+               int *out_count, void *loaderPrivate)
 {
-    __GLXDRIdrawablePrivate *pdraw = loaderPrivate;
-    DRI2Buffer *buffers;
-    int i;
+   __GLXDRIdrawablePrivate *pdraw = loaderPrivate;
+   DRI2Buffer *buffers;
+   int i;
 
-    buffers = DRI2GetBuffers(pdraw->base.psc->dpy, pdraw->base.xDrawable,
-			     width, height, attachments, count, out_count);
-    if (buffers == NULL)
-       return NULL;
+   buffers = DRI2GetBuffers(pdraw->base.psc->dpy, pdraw->base.xDrawable,
+                            width, height, attachments, count, out_count);
+   if (buffers == NULL)
+      return NULL;
 
-    pdraw->width = *width;
-    pdraw->height = *height;
+   pdraw->width = *width;
+   pdraw->height = *height;
 
-    /* This assumes the DRI2 buffer attachment tokens matches the
-     * __DRIbuffer tokens. */
-    for (i = 0; i < *out_count; i++) {
-	pdraw->buffers[i].attachment = buffers[i].attachment;
-	pdraw->buffers[i].name = buffers[i].name;
-	pdraw->buffers[i].pitch = buffers[i].pitch;
-	pdraw->buffers[i].cpp = buffers[i].cpp;
-	pdraw->buffers[i].flags = buffers[i].flags;
-    }
+   /* This assumes the DRI2 buffer attachment tokens matches the
+    * __DRIbuffer tokens. */
+   for (i = 0; i < *out_count; i++) {
+      pdraw->buffers[i].attachment = buffers[i].attachment;
+      pdraw->buffers[i].name = buffers[i].name;
+      pdraw->buffers[i].pitch = buffers[i].pitch;
+      pdraw->buffers[i].cpp = buffers[i].cpp;
+      pdraw->buffers[i].flags = buffers[i].flags;
+   }
 
-    Xfree(buffers);
+   Xfree(buffers);
 
-    return pdraw->buffers;
+   return pdraw->buffers;
 }
 
 static const __DRIdri2LoaderExtension dri2LoaderExtension = {
-    { __DRI_DRI2_LOADER, __DRI_DRI2_LOADER_VERSION },
-    dri2GetBuffers,
+   {__DRI_DRI2_LOADER, __DRI_DRI2_LOADER_VERSION},
+   dri2GetBuffers,
 };
 
 static const __DRIextension *loader_extensions[] = {
-    &dri2LoaderExtension.base,
-    &systemTimeExtension.base,
-    NULL
+   &dri2LoaderExtension.base,
+   &systemTimeExtension.base,
+   NULL
 };
 
-static __GLXDRIscreen *dri2CreateScreen(__GLXscreenConfigs *psc, int screen,
-					__GLXdisplayPrivate *priv)
+static __GLXDRIscreen *
+dri2CreateScreen(__GLXscreenConfigs * psc, int screen,
+                 __GLXdisplayPrivate * priv)
 {
-    const __DRIconfig **driver_configs;
-    const __DRIextension **extensions;
-    __GLXDRIscreen *psp;
-    unsigned int sareaHandle;
-    char *driverName, *busID;
-    drm_magic_t magic;
-    int i;
+   const __DRIconfig **driver_configs;
+   const __DRIextension **extensions;
+   __GLXDRIscreen *psp;
+   unsigned int sareaHandle;
+   char *driverName, *busID;
+   drm_magic_t magic;
+   int i;
 
-    psp = Xmalloc(sizeof *psp);
-    if (psp == NULL)
-	return NULL;
+   psp = Xmalloc(sizeof *psp);
+   if (psp == NULL)
+      return NULL;
 
-    /* Initialize per screen dynamic client GLX extensions */
-    psc->ext_list_first_time = GL_TRUE;
+   /* Initialize per screen dynamic client GLX extensions */
+   psc->ext_list_first_time = GL_TRUE;
 
-    if (!DRI2Connect(psc->dpy, screen, &driverName, &busID, &sareaHandle))
-	return NULL;
+   if (!DRI2Connect(psc->dpy, screen, &driverName, &busID, &sareaHandle))
+      return NULL;
 
-    psc->driver = driOpenDriver(driverName);
-    if (psc->driver == NULL)
-	goto handle_error;
+   psc->driver = driOpenDriver(driverName);
+   if (psc->driver == NULL)
+      goto handle_error;
 
-    extensions = dlsym(psc->driver, __DRI_DRIVER_EXTENSIONS);
-    if (extensions == NULL) {
-	ErrorMessageF("driver exports no extensions (%s)\n", dlerror());
-	goto handle_error;
-    }
-    
-    for (i = 0; extensions[i]; i++) {
-	if (strcmp(extensions[i]->name, __DRI_CORE) == 0)
-	    psc->core = (__DRIcoreExtension *) extensions[i];
-	if (strcmp(extensions[i]->name, __DRI_DRI2) == 0)
-	    psc->dri2 = (__DRIdri2Extension *) extensions[i];
-    }
+   extensions = dlsym(psc->driver, __DRI_DRIVER_EXTENSIONS);
+   if (extensions == NULL) {
+      ErrorMessageF("driver exports no extensions (%s)\n", dlerror());
+      goto handle_error;
+   }
 
-    if (psc->core == NULL || psc->dri2 == NULL) {
-	ErrorMessageF("core dri or dri2 extension not found\n");
-	goto handle_error;
-    }
+   for (i = 0; extensions[i]; i++) {
+      if (strcmp(extensions[i]->name, __DRI_CORE) == 0)
+         psc->core = (__DRIcoreExtension *) extensions[i];
+      if (strcmp(extensions[i]->name, __DRI_DRI2) == 0)
+         psc->dri2 = (__DRIdri2Extension *) extensions[i];
+   }
 
-    psc->fd = drmOpen(NULL, busID);
-    if (psc->fd < 0) {
-	ErrorMessageF("failed to open drm device: %s\n", strerror(errno));
-	return NULL;
-    }
+   if (psc->core == NULL || psc->dri2 == NULL) {
+      ErrorMessageF("core dri or dri2 extension not found\n");
+      goto handle_error;
+   }
 
-    if (drmGetMagic(psc->fd, &magic))
-	return NULL;
+   psc->fd = drmOpen(NULL, busID);
+   if (psc->fd < 0) {
+      ErrorMessageF("failed to open drm device: %s\n", strerror(errno));
+      return NULL;
+   }
 
-    if (!DRI2AuthConnection(psc->dpy, screen, magic)) {
-	ErrorMessageF("failed to authenticate drm access\n");
-	return NULL;
-    }
+   if (drmGetMagic(psc->fd, &magic))
+      return NULL;
 
-    psc->__driScreen = 
-	psc->dri2->createNewScreen(screen, psc->fd,
-				   loader_extensions, &driver_configs, psc);
-    if (psc->__driScreen == NULL) {
-	ErrorMessageF("failed to create dri screen\n");
-	return NULL;
-    }
+   if (!DRI2AuthConnection(psc->dpy, screen, magic)) {
+      ErrorMessageF("failed to authenticate drm access\n");
+      return NULL;
+   }
 
-    driBindExtensions(psc, 1);
+   psc->__driScreen =
+      psc->dri2->createNewScreen(screen, psc->fd,
+                                 loader_extensions, &driver_configs, psc);
+   if (psc->__driScreen == NULL) {
+      ErrorMessageF("failed to create dri screen\n");
+      return NULL;
+   }
 
-    psc->configs = driConvertConfigs(psc->core, psc->configs, driver_configs);
-    psc->visuals = driConvertConfigs(psc->core, psc->visuals, driver_configs);
+   driBindExtensions(psc, 1);
 
-    psp->destroyScreen = dri2DestroyScreen;
-    psp->createContext = dri2CreateContext;
-    psp->createDrawable = dri2CreateDrawable;
-    psp->swapBuffers = dri2SwapBuffers;
+   psc->configs = driConvertConfigs(psc->core, psc->configs, driver_configs);
+   psc->visuals = driConvertConfigs(psc->core, psc->visuals, driver_configs);
 
-    Xfree(driverName);
-    Xfree(busID);
+   psp->destroyScreen = dri2DestroyScreen;
+   psp->createContext = dri2CreateContext;
+   psp->createDrawable = dri2CreateDrawable;
+   psp->swapBuffers = dri2SwapBuffers;
 
-    return psp;
+   Xfree(driverName);
+   Xfree(busID);
+
+   return psp;
 
  handle_error:
-    Xfree(driverName);
-    Xfree(busID);
+   Xfree(driverName);
+   Xfree(busID);
 
-    /* FIXME: clean up here */
+   /* FIXME: clean up here */
 
-    return NULL;
+   return NULL;
 }
 
 /* Called from __glXFreeDisplayPrivate.
  */
-static void dri2DestroyDisplay(__GLXDRIdisplay *dpy)
+static void
+dri2DestroyDisplay(__GLXDRIdisplay * dpy)
 {
-    Xfree(dpy);
+   Xfree(dpy);
 }
 
 /*
@@ -344,29 +354,30 @@ static void dri2DestroyDisplay(__GLXDRIdisplay *dpy)
  * This is called from __glXInitialize() when we are given a new
  * display pointer.
  */
-_X_HIDDEN __GLXDRIdisplay *dri2CreateDisplay(Display *dpy)
+_X_HIDDEN __GLXDRIdisplay *
+dri2CreateDisplay(Display * dpy)
 {
-    __GLXDRIdisplayPrivate *pdp;
-    int eventBase, errorBase;
+   __GLXDRIdisplayPrivate *pdp;
+   int eventBase, errorBase;
 
-    if (!DRI2QueryExtension(dpy, &eventBase, &errorBase))
-	return NULL;
+   if (!DRI2QueryExtension(dpy, &eventBase, &errorBase))
+      return NULL;
 
-    pdp = Xmalloc(sizeof *pdp);
-    if (pdp == NULL)
-	return NULL;
+   pdp = Xmalloc(sizeof *pdp);
+   if (pdp == NULL)
+      return NULL;
 
-    if (!DRI2QueryVersion(dpy, &pdp->driMajor, &pdp->driMinor)) {
-	Xfree(pdp);
-	return NULL;
-    }
+   if (!DRI2QueryVersion(dpy, &pdp->driMajor, &pdp->driMinor)) {
+      Xfree(pdp);
+      return NULL;
+   }
 
-    pdp->driPatch = 0;
+   pdp->driPatch = 0;
 
-    pdp->base.destroyDisplay = dri2DestroyDisplay;
-    pdp->base.createScreen = dri2CreateScreen;
+   pdp->base.destroyDisplay = dri2DestroyDisplay;
+   pdp->base.createScreen = dri2CreateScreen;
 
-    return &pdp->base;
+   return &pdp->base;
 }
 
 #endif /* GLX_DIRECT_RENDERING */
