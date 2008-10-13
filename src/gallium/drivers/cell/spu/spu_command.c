@@ -301,6 +301,12 @@ cmd_state_sampler(const struct cell_command_sampler *sampler)
    DEBUG_PRINTF("SAMPLER [%u]\n", sampler->unit);
 
    spu.sampler[sampler->unit] = sampler->state;
+#if 0
+   if (spu.sampler[sampler->unit].min_mip_filter != PIPE_TEX_MIPFILTER_NONE) {
+      spu.sample_texture4[sampler->unit] = sample_texture4_lod;
+   }
+   else
+#endif
    if (spu.sampler[sampler->unit].min_img_filter == PIPE_TEX_FILTER_LINEAR) {
       spu.sample_texture4[sampler->unit] = sample_texture4_bilinear;
    }
@@ -314,24 +320,29 @@ static void
 cmd_state_texture(const struct cell_command_texture *texture)
 {
    const uint unit = texture->unit;
-   const uint width = texture->width;
-   const uint height = texture->height;
+   uint i;
 
-   DEBUG_PRINTF("TEXTURE [%u] at %p  size %u x %u\n",
-             texture->unit, texture->start,
-             texture->width, texture->height);
+   DEBUG_PRINTF("TEXTURE [%u]\n", texture->unit);
 
-   spu.texture[unit].start = texture->start;
-   spu.texture[unit].width = width;
-   spu.texture[unit].height = height;
+   for (i = 0; i < CELL_MAX_TEXTURE_LEVELS; i++) {
+      uint width = texture->width[i];
+      uint height = texture->height[i];
 
-   spu.texture[unit].width4 = spu_splats((float) width);
-   spu.texture[unit].height4 = spu_splats((float) height);
+      DEBUG_PRINTF("  LEVEL %u: at %p  size[0] %u x %u\n", i,
+             texture->start[i], texture->width[i], texture->height[i]);
 
-   spu.texture[unit].tiles_per_row = width / TILE_SIZE;
+      spu.texture[unit].level[i].start = texture->start[i];
+      spu.texture[unit].level[i].width = width;
+      spu.texture[unit].level[i].height = height;
 
-   spu.texture[unit].tex_size_x_mask = spu_splats(width - 1);
-   spu.texture[unit].tex_size_y_mask = spu_splats(height - 1);
+      spu.texture[unit].level[i].tiles_per_row = width / TILE_SIZE;
+
+      spu.texture[unit].level[i].width4 = spu_splats((float) width);
+      spu.texture[unit].level[i].height4 = spu_splats((float) height);
+
+      spu.texture[unit].level[i].tex_size_x_mask = spu_splats(width - 1);
+      spu.texture[unit].level[i].tex_size_y_mask = spu_splats(height - 1);
+   }
 }
 
 

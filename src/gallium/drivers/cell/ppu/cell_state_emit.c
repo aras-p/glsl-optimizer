@@ -211,14 +211,20 @@ cell_emit_state(struct cell_context *cell)
          texture->opcode = CELL_CMD_STATE_TEXTURE;
          texture->unit = i;
          if (cell->texture[i]) {
-            texture->start = cell->texture[i]->tiled_data;
-            texture->width = cell->texture[i]->base.width[0];
-            texture->height = cell->texture[i]->base.height[0];
+            uint level;
+            for (level = 0; level < CELL_MAX_TEXTURE_LEVELS; level++) {
+               texture->start[level] = cell->texture[i]->tiled_data[level];
+               texture->width[level] = cell->texture[i]->base.width[level];
+               texture->height[level] = cell->texture[i]->base.height[level];
+            }
          }
          else {
-            texture->start = NULL;
-            texture->width = 1;
-            texture->height = 1;
+            uint level;
+            for (level = 0; level < CELL_MAX_TEXTURE_LEVELS; level++) {
+               texture->start[level] = NULL;
+               texture->width[level] = 1;
+               texture->height[level] = 1;
+            }
          }
       }
    }

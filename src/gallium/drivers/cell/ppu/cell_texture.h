@@ -40,15 +40,15 @@ struct cell_texture
 {
    struct pipe_texture base;
 
-   unsigned long level_offset[PIPE_MAX_TEXTURE_LEVELS];
-   unsigned long stride[PIPE_MAX_TEXTURE_LEVELS];
+   unsigned long level_offset[CELL_MAX_TEXTURE_LEVELS];
+   unsigned long stride[CELL_MAX_TEXTURE_LEVELS];
 
    /* The data is held here:
     */
    struct pipe_buffer *buffer;
    unsigned long buffer_size;
 
-   void *tiled_data;  /* XXX this may be temporary */ /*ALIGN16*/
+   void *tiled_data[CELL_MAX_TEXTURE_LEVELS];  /* XXX this may be temporary */ /*ALIGN16*/
 };
 
 

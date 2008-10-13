@@ -66,6 +66,8 @@ cell_texture_layout(struct cell_texture * spt)
       unsigned size;
       unsigned w_tile, h_tile;
 
+      assert(level < CELL_MAX_TEXTURE_LEVELS);
+
       /* width, height, rounded up to tile size */
       w_tile = align(width, TILE_SIZE);
       h_tile = align(height, TILE_SIZE);
@@ -249,33 +251,41 @@ cell_tile_texture(struct cell_context *cell,
                   struct cell_texture *texture)
 {
    struct pipe_screen *screen = cell->pipe.screen;
-   uint face = 0, level = 0, zslice = 0;
-   struct pipe_surface *surf;
-   const uint w = texture->base.width[0], h = texture->base.height[0];
+   uint face = 0, level, zslice = 0;
    const uint *src;
 
-   /* temporary restrictions: */
-   assert(w >= TILE_SIZE);
-   assert(h >= TILE_SIZE);
-   assert(w % TILE_SIZE == 0);
-   assert(h % TILE_SIZE == 0);
+   for (level = 0; level <= texture->base.last_level; level++) {
+      if (!texture->tiled_data[level]) {
+         struct pipe_surface *surf;
 
-   surf = screen->get_tex_surface(screen, &texture->base, face, level, zslice,
-                                  PIPE_BUFFER_USAGE_CPU_WRITE);
-   ASSERT(surf);
+         const uint w = texture->base.width[level], h = texture->base.height[level];
 
-   src = (const uint *) pipe_surface_map(surf, PIPE_BUFFER_USAGE_CPU_WRITE);
+         if (w < 32 || h < 32)
+            continue;
+         /* temporary restrictions: */
+         assert(w >= TILE_SIZE);
+         assert(h >= TILE_SIZE);
+         assert(w % TILE_SIZE == 0);
+         assert(h % TILE_SIZE == 0);
 
-   if (texture->tiled_data) {
-      align_free(texture->tiled_data);
+         surf = screen->get_tex_surface(screen, &texture->base, face, level, zslice,
+                                        PIPE_BUFFER_USAGE_CPU_WRITE);
+         ASSERT(surf);
+         
+         src = (const uint *) pipe_surface_map(surf, PIPE_BUFFER_USAGE_CPU_WRITE);
+
+         if (texture->tiled_data[level]) {
+            align_free(texture->tiled_data[level]);
+         }
+         texture->tiled_data[level] = align_malloc(w * h * 4, 16);
+
+         tile_copy_data(w, h, TILE_SIZE, texture->tiled_data[level], src);
+
+         pipe_surface_unmap(surf);
+
+         pipe_surface_reference(&surf, NULL);
+      }
    }
-   texture->tiled_data = align_malloc(w * h * 4, 16);
-
-   tile_copy_data(w, h, TILE_SIZE, texture->tiled_data, src);
-
-   pipe_surface_unmap(surf);
-
-   pipe_surface_reference(&surf, NULL);
 }
 
 

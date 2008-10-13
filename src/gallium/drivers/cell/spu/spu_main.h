@@ -107,7 +107,7 @@ struct spu_framebuffer
 } ALIGN16_ATTRIB;
 
 
-struct spu_texture
+struct spu_texture_level
 {
    void *start;
    ushort width, height;
@@ -116,6 +116,11 @@ struct spu_texture
    vector float height4;  /**< == {height, height, height, height} */
    vector unsigned int tex_size_x_mask; /**< splat(width-1) */
    vector unsigned int tex_size_y_mask; /**< splat(height-1) */
+} ALIGN16_ATTRIB;
+
+struct spu_texture
+{
+   struct spu_texture_level level[CELL_MAX_TEXTURE_LEVELS];
 } ALIGN16_ATTRIB;
 
 

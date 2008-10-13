@@ -67,6 +67,7 @@
 #define CELL_MAX_SPUS 6
 
 #define CELL_MAX_SAMPLERS 4
+#define CELL_MAX_TEXTURE_LEVELS 12  /* 2k x 2k */
 
 #define TILE_SIZE 32
 
@@ -251,8 +252,9 @@ struct cell_command_texture
 {
    uint64_t opcode;     /**< CELL_CMD_STATE_TEXTURE */
    uint unit;
-   void *start;         /**< Address in main memory */
-   ushort width, height;
+   void *start[CELL_MAX_TEXTURE_LEVELS];   /**< Address in main memory */
+   ushort width[CELL_MAX_TEXTURE_LEVELS];
+   ushort height[CELL_MAX_TEXTURE_LEVELS];
 };
 
 

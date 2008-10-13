@@ -76,11 +76,11 @@ cell_get_param(struct pipe_screen *screen, int param)
    case PIPE_CAP_TEXTURE_SHADOW_MAP:
       return 10;
    case PIPE_CAP_MAX_TEXTURE_2D_LEVELS:
-      return 12; /* max 2Kx2K */
+      return CELL_MAX_TEXTURE_LEVELS;
    case PIPE_CAP_MAX_TEXTURE_3D_LEVELS:
       return 8;  /* max 128x128x128 */
    case PIPE_CAP_MAX_TEXTURE_CUBE_LEVELS:
-      return 12; /* max 2Kx2K */
+      return CELL_MAX_TEXTURE_LEVELS;
    default:
       return 10;
    }

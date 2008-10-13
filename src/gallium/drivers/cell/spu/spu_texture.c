@@ -27,6 +27,7 @@
 
 
 #include <transpose_matrix4x4.h>
+#include <math.h>
 
 #include "pipe/p_compiler.h"
 #include "spu_main.h"
@@ -42,11 +43,12 @@
 void
 invalidate_tex_cache(void)
 {
+   uint lvl = 0;
    uint unit = 0;
-   uint bytes = 4 * spu.texture[unit].width
-      * spu.texture[unit].height;
+   uint bytes = 4 * spu.texture[unit].level[lvl].width
+      * spu.texture[unit].level[lvl].height;
 
-   spu_dcache_mark_dirty((unsigned) spu.texture[unit].start, bytes);
+   spu_dcache_mark_dirty((unsigned) spu.texture[unit].level[lvl].start, bytes);
 }
 
 
@@ -64,15 +66,17 @@ invalidate_tex_cache(void)
  * a time.
  */
 static void
-get_four_texels(uint unit, vec_uint4 x, vec_uint4 y, vec_uint4 *texels)
+get_four_texels(uint unit, uint level, vec_uint4 x, vec_uint4 y,
+                vec_uint4 *texels)
 {
-   const unsigned texture_ea = (uintptr_t) spu.texture[unit].start;
+   const struct spu_texture_level *tlevel = &spu.texture[unit].level[level];
+   const unsigned texture_ea = (uintptr_t) tlevel->start;
    vec_uint4 tile_x = spu_rlmask(x, -5);  /* tile_x = x / 32 */
    vec_uint4 tile_y = spu_rlmask(y, -5);  /* tile_y = y / 32 */
    const qword offset_x = si_andi((qword) x, 0x1f); /* offset_x = x & 0x1f */
    const qword offset_y = si_andi((qword) y, 0x1f); /* offset_y = y & 0x1f */
 
-   const qword tiles_per_row = (qword) spu_splats(spu.texture[unit].tiles_per_row);
+   const qword tiles_per_row = (qword) spu_splats(tlevel->tiles_per_row);
    const qword tile_size = (qword) spu_splats((unsigned) sizeof(tile_t));
 
    qword tile_offset = si_mpya((qword) tile_y, tiles_per_row, (qword) tile_x);
@@ -104,17 +108,18 @@ sample_texture4_nearest(vector float s, vector float t,
                         vector float r, vector float q,
                         uint unit, vector float colors[4])
 {
-   vector float ss = spu_mul(s, spu.texture[unit].width4);
-   vector float tt = spu_mul(t, spu.texture[unit].height4);
+   const uint lvl = 0;
+   vector float ss = spu_mul(s, spu.texture[unit].level[lvl].width4);
+   vector float tt = spu_mul(t, spu.texture[unit].level[lvl].height4);
    vector unsigned int is = spu_convtu(ss, 0);
    vector unsigned int it = spu_convtu(tt, 0);
    vec_uint4 texels[4];
 
    /* PIPE_TEX_WRAP_REPEAT */
-   is = spu_and(is, spu.texture[unit].tex_size_x_mask);
-   it = spu_and(it, spu.texture[unit].tex_size_y_mask);
+   is = spu_and(is, spu.texture[unit].level[lvl].tex_size_x_mask);
+   it = spu_and(it, spu.texture[unit].level[lvl].tex_size_y_mask);
 
-   get_four_texels(unit, is, it, texels);
+   get_four_texels(unit, lvl, is, it, texels);
 
    /* convert four packed ARGBA pixels to float RRRR,GGGG,BBBB,AAAA */
    spu_unpack_A8R8G8B8_transpose4(texels, colors);
@@ -130,8 +135,9 @@ sample_texture4_bilinear(vector float s, vector float t,
                          vector float r, vector float q,
                          uint unit, vector float colors[4])
 {
-   vector float ss = spu_madd(s, spu.texture[unit].width4,  spu_splats(-0.5f));
-   vector float tt = spu_madd(t, spu.texture[unit].height4, spu_splats(-0.5f));
+   const uint lvl = 0;
+   vector float ss = spu_madd(s, spu.texture[unit].level[lvl].width4,  spu_splats(-0.5f));
+   vector float tt = spu_madd(t, spu.texture[unit].level[lvl].height4, spu_splats(-0.5f));
 
    vector unsigned int is0 = spu_convtu(ss, 0);
    vector unsigned int it0 = spu_convtu(tt, 0);
@@ -141,17 +147,17 @@ sample_texture4_bilinear(vector float s, vector float t,
    vector unsigned int it1 = spu_add(it0, 1);
 
    /* PIPE_TEX_WRAP_REPEAT */
-   is0 = spu_and(is0, spu.texture[unit].tex_size_x_mask);
-   it0 = spu_and(it0, spu.texture[unit].tex_size_y_mask);
-   is1 = spu_and(is1, spu.texture[unit].tex_size_x_mask);
-   it1 = spu_and(it1, spu.texture[unit].tex_size_y_mask);
+   is0 = spu_and(is0, spu.texture[unit].level[lvl].tex_size_x_mask);
+   it0 = spu_and(it0, spu.texture[unit].level[lvl].tex_size_y_mask);
+   is1 = spu_and(is1, spu.texture[unit].level[lvl].tex_size_x_mask);
+   it1 = spu_and(it1, spu.texture[unit].level[lvl].tex_size_y_mask);
 
    /* get packed int texels */
    vector unsigned int texels[16];
-   get_four_texels(unit, is0, it0, texels + 0);  /* upper-left */
-   get_four_texels(unit, is1, it0, texels + 4);  /* upper-right */
-   get_four_texels(unit, is0, it1, texels + 8);  /* lower-left */
-   get_four_texels(unit, is1, it1, texels + 12); /* lower-right */
+   get_four_texels(unit, lvl, is0, it0, texels + 0);  /* upper-left */
+   get_four_texels(unit, lvl, is1, it0, texels + 4);  /* upper-right */
+   get_four_texels(unit, lvl, is0, it1, texels + 8);  /* lower-left */
+   get_four_texels(unit, lvl, is1, it1, texels + 12); /* lower-right */
 
    /* XXX possibly rework following code to compute the weighted sample
     * colors with integer arithmetic for fewer int->float conversions.
@@ -270,10 +276,11 @@ sample_texture4_bilinear_2(vector float s, vector float t,
                          vector float r, vector float q,
                          uint unit, vector float colors[4])
 {
+   const uint lvl = 0;
    static const vector float half = {-0.5f, -0.5f, -0.5f, -0.5f};
    /* Scale texcoords by size of texture, and add half pixel bias */
-   vector float ss = spu_madd(s, spu.texture[unit].width4, half);
-   vector float tt = spu_madd(t, spu.texture[unit].height4, half);
+   vector float ss = spu_madd(s, spu.texture[unit].level[lvl].width4, half);
+   vector float tt = spu_madd(t, spu.texture[unit].level[lvl].height4, half);
 
    /* convert float coords to fixed-pt coords with 8 fraction bits */
    vector unsigned int is = spu_convtu(ss, 8);
@@ -294,17 +301,17 @@ sample_texture4_bilinear_2(vector float s, vector float t,
    vector unsigned int it1 = spu_add(it0, 1);
 
    /* PIPE_TEX_WRAP_REPEAT */
-   is0 = spu_and(is0, spu.texture[unit].tex_size_x_mask);
-   it0 = spu_and(it0, spu.texture[unit].tex_size_y_mask);
-   is1 = spu_and(is1, spu.texture[unit].tex_size_x_mask);
-   it1 = spu_and(it1, spu.texture[unit].tex_size_y_mask);
+   is0 = spu_and(is0, spu.texture[unit].level[lvl].tex_size_x_mask);
+   it0 = spu_and(it0, spu.texture[unit].level[lvl].tex_size_y_mask);
+   is1 = spu_and(is1, spu.texture[unit].level[lvl].tex_size_x_mask);
+   it1 = spu_and(it1, spu.texture[unit].level[lvl].tex_size_y_mask);
 
    /* get packed int texels */
    vector unsigned int texels[16];
-   get_four_texels(unit, is0, it0, texels + 0);  /* upper-left */
-   get_four_texels(unit, is1, it0, texels + 4);  /* upper-right */
-   get_four_texels(unit, is0, it1, texels + 8);  /* lower-left */
-   get_four_texels(unit, is1, it1, texels + 12); /* lower-right */
+   get_four_texels(unit, lvl, is0, it0, texels + 0);  /* upper-left */
+   get_four_texels(unit, lvl, is1, it0, texels + 4);  /* upper-right */
+   get_four_texels(unit, lvl, is0, it1, texels + 8);  /* lower-left */
+   get_four_texels(unit, lvl, is1, it1, texels + 12); /* lower-right */
 
    /* twiddle packed 32-bit BGRA pixels into RGBA as four unsigned ints */
    {
@@ -363,3 +370,54 @@ sample_texture4_bilinear_2(vector float s, vector float t,
    cSum = spu_add(spu_add(c0, c1), spu_add(c2, c3));
    colors[3] = spu_convtf(cSum, 24);
 }
+
+
+
+/**
+ * Compute level of detail factor from texcoords.
+ */
+static float
+compute_lambda(uint unit, vector float s, vector float t)
+{
+   uint lvl = 0;
+   float width = spu.texture[unit].level[lvl].width;
+   float height = spu.texture[unit].level[lvl].width;
+   float dsdx = width * (spu_extract(s, 1) - spu_extract(s, 0));
+   float dsdy = width * (spu_extract(s, 2) - spu_extract(s, 0));
+   float dtdx = height * (spu_extract(t, 1) - spu_extract(t, 0));
+   float dtdy = height * (spu_extract(t, 2) - spu_extract(t, 0));
+   float x = dsdx * dsdx + dtdx * dtdx;
+   float y = dsdy * dsdy + dtdy * dtdy;
+   float rho = x > y ? x : y;
+   rho = sqrtf(rho);
+   float lambda = logf(rho) * 1.442695f;
+   return lambda;
+}
+
+
+
+/**
+ * Texture sampling with level of detail selection.
+ */
+void
+sample_texture4_lod(vector float s, vector float t,
+                    vector float r, vector float q,
+                    uint unit, vector float colors[4])
+{
+   float lambda = compute_lambda(unit, s, t);
+
+   if (lambda < spu.sampler[unit].min_lod)
+      lambda = spu.sampler[unit].min_lod;
+   else if (lambda > spu.sampler[unit].max_lod)
+      lambda = spu.sampler[unit].max_lod;
+
+   /* hack for now */
+   int level = (int) lambda;
+   if (level > 3)
+      level = 3;
+
+   /*
+   sample_texture4_bilinear_2(s, t, r, q, unit, level, colors);
+   */
+}
+

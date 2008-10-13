@@ -100,6 +100,7 @@ spu_log2(vector float x)
    return spu_mul(v, k);
 }
 
+
 static struct vec_4x4
 spu_txp(vector float s, vector float t, vector float r, vector float q,
         unsigned unit)
