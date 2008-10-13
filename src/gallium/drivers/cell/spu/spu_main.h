@@ -112,10 +112,8 @@ struct spu_texture
    void *start;
    ushort width, height;
    ushort tiles_per_row;
-   vector float tex_size; /**< == {width, height, 0, 0} */
    vector float width4;   /**< == {width, width, width, width} */
    vector float height4;  /**< == {height, height, height, height} */
-   vector unsigned int tex_size_mask; /**< == {width-1, height-1, 0, 0 } */
    vector unsigned int tex_size_x_mask; /**< splat(width-1) */
    vector unsigned int tex_size_y_mask; /**< splat(height-1) */
 } ALIGN16_ATTRIB;

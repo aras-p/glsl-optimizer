@@ -330,9 +330,6 @@ cmd_state_texture(const struct cell_command_texture *texture)
 
    spu.texture[unit].tiles_per_row = width / TILE_SIZE;
 
-   spu.texture[unit].tex_size = (vector float) { width, height, 0.0, 0.0};
-   spu.texture[unit].tex_size_mask = (vector unsigned int)
-         { width - 1, height - 1, 0, 0 };
    spu.texture[unit].tex_size_x_mask = spu_splats(width - 1);
    spu.texture[unit].tex_size_y_mask = spu_splats(height - 1);
 }
