@@ -106,9 +106,7 @@ static XEXT_GENERATE_CLOSE_DISPLAY (close_display, xf86dri_info)
 #endif
 
 
-PUBLIC Bool XF86DRIQueryExtension (dpy, event_basep, error_basep)
-    Display *dpy;
-    int *event_basep, *error_basep;
+PUBLIC Bool XF86DRIQueryExtension (Display* dpy, int* event_basep, int* error_basep)
 {
     XExtDisplayInfo *info = find_display (dpy);
 
@@ -124,11 +122,7 @@ PUBLIC Bool XF86DRIQueryExtension (dpy, event_basep, error_basep)
     }
 }
 
-PUBLIC Bool XF86DRIQueryVersion(dpy, majorVersion, minorVersion, patchVersion)
-    Display* dpy;
-    int* majorVersion; 
-    int* minorVersion;
-    int* patchVersion;
+PUBLIC Bool XF86DRIQueryVersion(Display* dpy, int* majorVersion, int* minorVersion, int* patchVersion)
 {
     XExtDisplayInfo *info = find_display (dpy);
     xXF86DRIQueryVersionReply rep;
@@ -156,10 +150,7 @@ PUBLIC Bool XF86DRIQueryVersion(dpy, majorVersion, minorVersion, patchVersion)
     return True;
 }
 
-PUBLIC Bool XF86DRIQueryDirectRenderingCapable(dpy, screen, isCapable)
-    Display* dpy;
-    int screen;
-    Bool* isCapable;
+PUBLIC Bool XF86DRIQueryDirectRenderingCapable(Display* dpy, int screen, Bool* isCapable)
 {
     XExtDisplayInfo *info = find_display (dpy);
     xXF86DRIQueryDirectRenderingCapableReply rep;
@@ -186,11 +177,7 @@ PUBLIC Bool XF86DRIQueryDirectRenderingCapable(dpy, screen, isCapable)
     return True;
 }
 
-PUBLIC Bool XF86DRIOpenConnection(dpy, screen, hSAREA, busIdString)
-    Display* dpy;
-    int screen;
-    drm_handle_t * hSAREA;
-    char **busIdString;
+PUBLIC Bool XF86DRIOpenConnection(Display* dpy, int screen, drm_handle_t* hSAREA, char** busIdString)
 {
     XExtDisplayInfo *info = find_display (dpy);
     xXF86DRIOpenConnectionReply rep;
@@ -235,10 +222,7 @@ PUBLIC Bool XF86DRIOpenConnection(dpy, screen, hSAREA, busIdString)
     return True;
 }
 
-PUBLIC Bool XF86DRIAuthConnection(dpy, screen, magic)
-    Display* dpy;
-    int screen;
-    drm_magic_t magic;
+PUBLIC Bool XF86DRIAuthConnection(Display* dpy, int screen, drm_magic_t magic)
 {
     XExtDisplayInfo *info = find_display (dpy);
     xXF86DRIAuthConnectionReq *req;
@@ -266,9 +250,7 @@ PUBLIC Bool XF86DRIAuthConnection(dpy, screen, magic)
     return True;
 }
 
-PUBLIC Bool XF86DRICloseConnection(dpy, screen)
-    Display* dpy;
-    int screen;
+PUBLIC Bool XF86DRICloseConnection(Display* dpy, int screen)
 {
     XExtDisplayInfo *info = find_display (dpy);
     xXF86DRICloseConnectionReq *req;
@@ -288,14 +270,8 @@ PUBLIC Bool XF86DRICloseConnection(dpy, screen)
     return True;
 }
 
-PUBLIC Bool XF86DRIGetClientDriverName(dpy, screen, ddxDriverMajorVersion, 
-	ddxDriverMinorVersion, ddxDriverPatchVersion, clientDriverName)
-    Display* dpy;
-    int screen;
-    int* ddxDriverMajorVersion;
-    int* ddxDriverMinorVersion;
-    int* ddxDriverPatchVersion;
-    char** clientDriverName;
+PUBLIC Bool XF86DRIGetClientDriverName(Display* dpy, int screen, int* ddxDriverMajorVersion, 
+	int* ddxDriverMinorVersion, int* ddxDriverPatchVersion, char** clientDriverName)
 {
     XExtDisplayInfo *info = find_display (dpy);
     xXF86DRIGetClientDriverNameReply rep;
@@ -338,13 +314,8 @@ PUBLIC Bool XF86DRIGetClientDriverName(dpy, screen, ddxDriverMajorVersion,
     return True;
 }
 
-PUBLIC Bool XF86DRICreateContextWithConfig(dpy, screen, configID, context,
-	hHWContext)
-    Display* dpy;
-    int screen;
-    int configID;
-    XID* context;
-    drm_context_t * hHWContext;
+PUBLIC Bool XF86DRICreateContextWithConfig(Display* dpy, int screen, int configID, XID* context,
+	drm_context_t* hHWContext)
 {
     XExtDisplayInfo *info = find_display (dpy);
     xXF86DRICreateContextReply rep;
@@ -374,12 +345,7 @@ PUBLIC Bool XF86DRICreateContextWithConfig(dpy, screen, configID, context,
     return True;
 }
 
-PUBLIC Bool XF86DRICreateContext(dpy, screen, visual, context, hHWContext)
-    Display* dpy;
-    int screen;
-    Visual* visual;
-    XID* context;
-    drm_context_t * hHWContext;
+PUBLIC Bool XF86DRICreateContext(Display* dpy, int screen, Visual* visual, XID* context, drm_context_t* hHWContext)
 {
     return XF86DRICreateContextWithConfig( dpy, screen, visual->visualid,
 					   context, hHWContext );
@@ -565,16 +531,8 @@ PUBLIC Bool XF86DRIGetDrawableInfo(Display* dpy, int screen, Drawable drawable,
     return True;
 }
 
-PUBLIC Bool XF86DRIGetDeviceInfo(dpy, screen, hFrameBuffer, 
-	fbOrigin, fbSize, fbStride, devPrivateSize, pDevPrivate)
-    Display* dpy;
-    int screen;
-    drm_handle_t * hFrameBuffer;
-    int* fbOrigin;
-    int* fbSize;
-    int* fbStride;
-    int* devPrivateSize;
-    void** pDevPrivate;
+PUBLIC Bool XF86DRIGetDeviceInfo(Display* dpy, int screen, drm_handle_t* hFrameBuffer, 
+	int* fbOrigin, int* fbSize, int* fbStride, int* devPrivateSize, void** pDevPrivate)
 {
     XExtDisplayInfo *info = find_display (dpy);
     xXF86DRIGetDeviceInfoReply rep;
@@ -625,10 +583,7 @@ PUBLIC Bool XF86DRIGetDeviceInfo(dpy, screen, hFrameBuffer,
     return True;
 }
 
-PUBLIC Bool XF86DRIOpenFullScreen(dpy, screen, drawable)
-    Display* dpy;
-    int screen;
-    Drawable drawable;
+PUBLIC Bool XF86DRIOpenFullScreen(Display* dpy, int screen, Drawable drawable)
 {
     /* This function and the underlying X protocol are deprecated.
      */
@@ -638,10 +593,7 @@ PUBLIC Bool XF86DRIOpenFullScreen(dpy, screen, drawable)
     return False;
 }
 
-PUBLIC Bool XF86DRICloseFullScreen(dpy, screen, drawable)
-    Display* dpy;
-    int screen;
-    Drawable drawable;
+PUBLIC Bool XF86DRICloseFullScreen(Display* dpy, int screen, Drawable drawable)
 {
     /* This function and the underlying X protocol are deprecated.
      */
