@@ -47,5 +47,10 @@ sample_texture4_bilinear(vector float s, vector float t,
                          vector float r, vector float q,
                          uint unit, vector float colors[4]);
 
+extern void
+sample_texture4_bilinear_2(vector float s, vector float t,
+                         vector float r, vector float q,
+                         uint unit, vector float colors[4]);
+
 
 #endif /* SPU_TEXTURE_H */
