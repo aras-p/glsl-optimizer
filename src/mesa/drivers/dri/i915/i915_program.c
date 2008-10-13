@@ -245,6 +245,19 @@ GLuint i915_emit_texld( struct i915_fragment_program *p,
        */
       assert(GET_UREG_TYPE(coord) != REG_TYPE_U);
 
+      if ((GET_UREG_TYPE(coord) != REG_TYPE_R) &&
+          (GET_UREG_TYPE(coord) != REG_TYPE_OC) &&
+          (GET_UREG_TYPE(coord) != REG_TYPE_OD) &&
+          (GET_UREG_TYPE(coord) != REG_TYPE_T)) {
+          GLuint  tmpCoord = get_free_rreg(p, live_regs);
+          
+          if (tmpCoord == UREG_BAD) 
+              return 0;
+
+          i915_emit_arith(p, A0_MOV, tmpCoord, A0_DEST_CHANNEL_ALL, 0, coord, 0, 0);
+          coord = tmpCoord;
+      }
+
       /* Output register being oC or oD defines a phase boundary */
       if (GET_UREG_TYPE(dest) == REG_TYPE_OC ||
 	  GET_UREG_TYPE(dest) == REG_TYPE_OD)
