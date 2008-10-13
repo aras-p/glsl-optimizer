@@ -220,7 +220,11 @@ sample_texture4_bilinear(vector float s, vector float t,
  * Adapted from /opt/cell/sdk/usr/spu/include/transpose_matrix4x4.h
  */
 static INLINE void
-transpose(vector unsigned int *mOut, vector unsigned int *mIn)
+transpose(vector unsigned int *mOut0,
+          vector unsigned int *mOut1,
+          vector unsigned int *mOut2,
+          vector unsigned int *mOut3,
+          vector unsigned int *mIn)
 {
   vector unsigned int abcd, efgh, ijkl, mnop;	/* input vectors */
   vector unsigned int aeim, bfjn, cgko, dhlp;	/* output vectors */
@@ -251,10 +255,10 @@ transpose(vector unsigned int *mOut, vector unsigned int *mIn)
   cgko = spu_shuffle(ckdl, gohp, shufflehi);
   dhlp = spu_shuffle(ckdl, gohp, shufflelo);
 
-  *(mOut+0) = aeim;
-  *(mOut+1) = bfjn;
-  *(mOut+2) = cgko;
-  *(mOut+3) = dhlp;
+  *mOut0 = aeim;
+  *mOut1 = bfjn;
+  *mOut2 = cgko;
+  *mOut3 = dhlp;
 }
 
 
@@ -317,43 +321,45 @@ sample_texture4_bilinear_2(vector float s, vector float t,
    }
 
    /* convert RGBA,RGBA,RGBA,RGBA to RRRR,GGGG,BBBB,AAAA */
-   transpose(texels + 0, texels + 0);
-   transpose(texels + 4, texels + 4);
-   transpose(texels + 8, texels + 8);
-   transpose(texels + 12, texels + 12);
+   vector unsigned int texel0, texel1, texel2, texel3, texel4, texel5, texel6, texel7,
+      texel8, texel9, texel10, texel11, texel12, texel13, texel14, texel15;
+   transpose(&texel0, &texel1, &texel2, &texel3, texels + 0);
+   transpose(&texel4, &texel5, &texel6, &texel7, texels + 4);
+   transpose(&texel8, &texel9, &texel10, &texel11, texels + 8);
+   transpose(&texel12, &texel13, &texel14, &texel15, texels + 12);
 
    /* computed weighted colors */
    vector unsigned int c0, c1, c2, c3, cSum;
 
    /* red */
-   c0 = (vector unsigned int) si_mpyu((qword) texels[ 0], si_mpyu((qword) sWeights1, (qword) tWeights1)); /*ul*/
-   c1 = (vector unsigned int) si_mpyu((qword) texels[ 4], si_mpyu((qword) sWeights0, (qword) tWeights1)); /*ur*/
-   c2 = (vector unsigned int) si_mpyu((qword) texels[ 8], si_mpyu((qword) sWeights1, (qword) tWeights0)); /*ll*/
-   c3 = (vector unsigned int) si_mpyu((qword) texels[12], si_mpyu((qword) sWeights0, (qword) tWeights0)); /*lr*/
+   c0 = (vector unsigned int) si_mpyu((qword) texel0, si_mpyu((qword) sWeights1, (qword) tWeights1)); /*ul*/
+   c1 = (vector unsigned int) si_mpyu((qword) texel4, si_mpyu((qword) sWeights0, (qword) tWeights1)); /*ur*/
+   c2 = (vector unsigned int) si_mpyu((qword) texel8, si_mpyu((qword) sWeights1, (qword) tWeights0)); /*ll*/
+   c3 = (vector unsigned int) si_mpyu((qword) texel12, si_mpyu((qword) sWeights0, (qword) tWeights0)); /*lr*/
    cSum = spu_add(spu_add(c0, c1), spu_add(c2, c3));
    colors[0] = spu_convtf(cSum, 24);
 
    /* green */
-   c0 = (vector unsigned int) si_mpyu((qword) texels[ 1], si_mpyu((qword) sWeights1, (qword) tWeights1)); /*ul*/
-   c1 = (vector unsigned int) si_mpyu((qword) texels[ 5], si_mpyu((qword) sWeights0, (qword) tWeights1)); /*ur*/
-   c2 = (vector unsigned int) si_mpyu((qword) texels[ 9], si_mpyu((qword) sWeights1, (qword) tWeights0)); /*ll*/
-   c3 = (vector unsigned int) si_mpyu((qword) texels[13], si_mpyu((qword) sWeights0, (qword) tWeights0)); /*lr*/
+   c0 = (vector unsigned int) si_mpyu((qword) texel1, si_mpyu((qword) sWeights1, (qword) tWeights1)); /*ul*/
+   c1 = (vector unsigned int) si_mpyu((qword) texel5, si_mpyu((qword) sWeights0, (qword) tWeights1)); /*ur*/
+   c2 = (vector unsigned int) si_mpyu((qword) texel9, si_mpyu((qword) sWeights1, (qword) tWeights0)); /*ll*/
+   c3 = (vector unsigned int) si_mpyu((qword) texel13, si_mpyu((qword) sWeights0, (qword) tWeights0)); /*lr*/
    cSum = spu_add(spu_add(c0, c1), spu_add(c2, c3));
    colors[1] = spu_convtf(cSum, 24);
 
    /* blue */
-   c0 = (vector unsigned int) si_mpyu((qword) texels[ 2], si_mpyu((qword) sWeights1, (qword) tWeights1)); /*ul*/
-   c1 = (vector unsigned int) si_mpyu((qword) texels[ 6], si_mpyu((qword) sWeights0, (qword) tWeights1)); /*ur*/
-   c2 = (vector unsigned int) si_mpyu((qword) texels[10], si_mpyu((qword) sWeights1, (qword) tWeights0)); /*ll*/
-   c3 = (vector unsigned int) si_mpyu((qword) texels[14], si_mpyu((qword) sWeights0, (qword) tWeights0)); /*lr*/
+   c0 = (vector unsigned int) si_mpyu((qword) texel2, si_mpyu((qword) sWeights1, (qword) tWeights1)); /*ul*/
+   c1 = (vector unsigned int) si_mpyu((qword) texel6, si_mpyu((qword) sWeights0, (qword) tWeights1)); /*ur*/
+   c2 = (vector unsigned int) si_mpyu((qword) texel10, si_mpyu((qword) sWeights1, (qword) tWeights0)); /*ll*/
+   c3 = (vector unsigned int) si_mpyu((qword) texel14, si_mpyu((qword) sWeights0, (qword) tWeights0)); /*lr*/
    cSum = spu_add(spu_add(c0, c1), spu_add(c2, c3));
    colors[2] = spu_convtf(cSum, 24);
 
    /* alpha */
-   c0 = (vector unsigned int) si_mpyu((qword) texels[ 3], si_mpyu((qword) sWeights1, (qword) tWeights1)); /*ul*/
-   c1 = (vector unsigned int) si_mpyu((qword) texels[ 7], si_mpyu((qword) sWeights0, (qword) tWeights1)); /*ur*/
-   c2 = (vector unsigned int) si_mpyu((qword) texels[11], si_mpyu((qword) sWeights1, (qword) tWeights0)); /*ll*/
-   c3 = (vector unsigned int) si_mpyu((qword) texels[15], si_mpyu((qword) sWeights0, (qword) tWeights0)); /*lr*/
+   c0 = (vector unsigned int) si_mpyu((qword) texel3, si_mpyu((qword) sWeights1, (qword) tWeights1)); /*ul*/
+   c1 = (vector unsigned int) si_mpyu((qword) texel7, si_mpyu((qword) sWeights0, (qword) tWeights1)); /*ur*/
+   c2 = (vector unsigned int) si_mpyu((qword) texel11, si_mpyu((qword) sWeights1, (qword) tWeights0)); /*ll*/
+   c3 = (vector unsigned int) si_mpyu((qword) texel15, si_mpyu((qword) sWeights0, (qword) tWeights0)); /*lr*/
    cSum = spu_add(spu_add(c0, c1), spu_add(c2, c3));
    colors[3] = spu_convtf(cSum, 24);
 }
