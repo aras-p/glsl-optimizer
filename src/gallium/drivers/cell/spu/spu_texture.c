@@ -51,32 +51,6 @@ invalidate_tex_cache(void)
 
 
 /**
- * XXX look into getting texels for all four pixels in a quad at once.
- */
-static uint
-get_texel(uint unit, vec_uint4 coordinate)
-{
-   /*
-    * XXX we could do the "/ TILE_SIZE" and "% TILE_SIZE" operations as
-    * SIMD since X and Y are already in a SIMD register.
-    */
-   const unsigned texture_ea = (uintptr_t) spu.texture[unit].start;
-   ushort x = spu_extract(coordinate, 0);
-   ushort y = spu_extract(coordinate, 1);
-   unsigned tile_offset = sizeof(tile_t)
-      * ((y / TILE_SIZE * spu.texture[unit].tiles_per_row) + (x / TILE_SIZE));
-   ushort texel_offset = (ushort) 4
-      * (ushort) (((ushort) (y % TILE_SIZE) * (ushort) TILE_SIZE) + (x % TILE_SIZE));
-   vec_uint4 tmp;
-
-   spu_dcache_fetch_unaligned((qword *) & tmp,
-                              texture_ea + tile_offset + texel_offset,
-                              4);
-   return spu_extract(tmp, 0);
-}
-
-
-/**
  * Get four texels from locations (x[0], y[0]), (x[1], y[1]) ...
  *
  * NOTE: in the typical case of bilinear filtering, the four texels
