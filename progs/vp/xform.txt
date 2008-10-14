@@ -1,0 +1,11 @@
+!!ARBvp1.0
+PARAM Emission = state.material.emission; 
+PARAM Ambient = state.material.ambient; 
+PARAM Diffuse = state.material.diffuse; 
+PARAM Specular = state.material.specular; 
+DP4  result.position.x, Ambient, vertex.position;
+DP4  result.position.y, Diffuse, vertex.position;
+DP4  result.position.z, Specular, vertex.position;
+DP4  result.position.w, Emission, vertex.position;
+MOV  result.color, vertex.color;
+END
