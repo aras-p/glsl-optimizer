@@ -52,15 +52,15 @@ static unsigned minify( unsigned d )
 
 
 static void
-cell_texture_layout(struct cell_texture * spt)
+cell_texture_layout(struct cell_texture *ct)
 {
-   struct pipe_texture *pt = &spt->base;
+   struct pipe_texture *pt = &ct->base;
    unsigned level;
    unsigned width = pt->width[0];
    unsigned height = pt->height[0];
    unsigned depth = pt->depth[0];
 
-   spt->buffer_size = 0;
+   ct->buffer_size = 0;
 
    for ( level = 0 ; level <= pt->last_level ; level++ ) {
       unsigned size;
@@ -78,9 +78,9 @@ cell_texture_layout(struct cell_texture * spt)
       pt->nblocksx[level] = pf_get_nblocksx(&pt->block, w_tile);  
       pt->nblocksy[level] = pf_get_nblocksy(&pt->block, h_tile);  
 
-      spt->stride[level] = pt->nblocksx[level] * pt->block.size;
+      ct->stride[level] = pt->nblocksx[level] * pt->block.size;
 
-      spt->level_offset[level] = spt->buffer_size;
+      ct->level_offset[level] = ct->buffer_size;
 
       size = pt->nblocksx[level] * pt->nblocksy[level] * pt->block.size;
       if (pt->target == PIPE_TEXTURE_CUBE)
@@ -88,7 +88,7 @@ cell_texture_layout(struct cell_texture * spt)
       else
          size *= depth;
 
-      spt->buffer_size += size;
+      ct->buffer_size += size;
 
       width  = minify(width);
       height = minify(height);
@@ -102,26 +102,25 @@ cell_texture_create(struct pipe_screen *screen,
                     const struct pipe_texture *templat)
 {
    struct pipe_winsys *ws = screen->winsys;
-   struct cell_texture *spt = CALLOC_STRUCT(cell_texture);
-   if (!spt)
+   struct cell_texture *ct = CALLOC_STRUCT(cell_texture);
+   if (!ct)
       return NULL;
 
-   spt->base = *templat;
-   spt->base.refcount = 1;
-   spt->base.screen = screen;
+   ct->base = *templat;
+   ct->base.refcount = 1;
+   ct->base.screen = screen;
 
-   cell_texture_layout(spt);
+   cell_texture_layout(ct);
 
-   spt->buffer = ws->buffer_create(ws, 32,
-                                   PIPE_BUFFER_USAGE_PIXEL,
-                                   spt->buffer_size);
+   ct->buffer = ws->buffer_create(ws, 32, PIPE_BUFFER_USAGE_PIXEL,
+                                  ct->buffer_size);
 
-   if (!spt->buffer) {
-      FREE(spt);
+   if (!ct->buffer) {
+      FREE(ct);
       return NULL;
    }
 
-   return &spt->base;
+   return &ct->base;
 }
 
 
@@ -137,15 +136,15 @@ cell_texture_release(struct pipe_screen *screen,
        __FUNCTION__, (void *) *pt, (*pt)->refcount - 1);
    */
    if (--(*pt)->refcount <= 0) {
-      struct cell_texture *spt = cell_texture(*pt);
+      struct cell_texture *ct = cell_texture(*pt);
 
       /*
-      DBG("%s deleting %p\n", __FUNCTION__, (void *) spt);
+      DBG("%s deleting %p\n", __FUNCTION__, (void *) ct);
       */
 
-      pipe_buffer_reference(screen, &spt->buffer, NULL);
+      pipe_buffer_reference(screen, &ct->buffer, NULL);
 
-      FREE(spt);
+      FREE(ct);
    }
    *pt = NULL;
 }
@@ -169,22 +168,22 @@ cell_get_tex_surface(struct pipe_screen *screen,
                      unsigned usage)
 {
    struct pipe_winsys *ws = screen->winsys;
-   struct cell_texture *spt = cell_texture(pt);
+   struct cell_texture *ct = cell_texture(pt);
    struct pipe_surface *ps;
 
    ps = ws->surface_alloc(ws);
    if (ps) {
       assert(ps->refcount);
       assert(ps->winsys);
-      winsys_buffer_reference(ws, &ps->buffer, spt->buffer);
+      winsys_buffer_reference(ws, &ps->buffer, ct->buffer);
       ps->format = pt->format;
       ps->block = pt->block;
       ps->width = pt->width[level];
       ps->height = pt->height[level];
       ps->nblocksx = pt->nblocksx[level];
       ps->nblocksy = pt->nblocksy[level];
-      ps->stride = spt->stride[level];
-      ps->offset = spt->level_offset[level];
+      ps->stride = ct->stride[level];
+      ps->offset = ct->level_offset[level];
       ps->usage = usage;
 
       /* XXX may need to override usage flags (see sp_texture.c) */
@@ -268,11 +267,13 @@ cell_tile_texture(struct cell_context *cell,
          assert(w % TILE_SIZE == 0);
          assert(h % TILE_SIZE == 0);
 
-         surf = screen->get_tex_surface(screen, &texture->base, face, level, zslice,
+         surf = screen->get_tex_surface(screen, &texture->base, face,
+                                        level, zslice,
                                         PIPE_BUFFER_USAGE_CPU_WRITE);
          ASSERT(surf);
          
-         src = (const uint *) pipe_surface_map(surf, PIPE_BUFFER_USAGE_CPU_WRITE);
+         src = (const uint *) pipe_surface_map(surf,
+                                               PIPE_BUFFER_USAGE_CPU_WRITE);
 
          if (texture->tiled_data[level]) {
             align_free(texture->tiled_data[level]);
@@ -289,6 +290,7 @@ cell_tile_texture(struct cell_context *cell,
 }
 
 
+/** XXX temporary hack */
 void
 cell_update_texture_mapping(struct cell_context *cell)
 {
@@ -335,9 +337,9 @@ cell_tex_surface_release(struct pipe_screen *screen,
 
 
 static void *
-cell_surface_map( struct pipe_screen *screen,
-                  struct pipe_surface *surface,
-                  unsigned flags )
+cell_surface_map(struct pipe_screen *screen,
+                 struct pipe_surface *surface,
+                 unsigned flags)
 {
    ubyte *map;
 
@@ -364,7 +366,7 @@ cell_surface_map( struct pipe_screen *screen,
 #endif
    }
    
-   return map + surface->offset;
+   return (void *) (map + surface->offset);
 }
 
 
@@ -375,12 +377,6 @@ cell_surface_unmap(struct pipe_screen *screen,
    pipe_buffer_unmap( screen, surface->buffer );
 }
 
-
-void
-cell_init_texture_functions(struct cell_context *cell)
-{
-   /*cell->pipe.texture_update = cell_texture_update;*/
-}
 
 
 void
