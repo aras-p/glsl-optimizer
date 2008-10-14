@@ -1672,6 +1672,8 @@ emit_instruction(struct codegen *gen,
       /* fall-through for now */
    case TGSI_OPCODE_TXD:
       /* fall-through for now */
+   case TGSI_OPCODE_TXB:
+      /* fall-through for now */
    case TGSI_OPCODE_TXP:
       return emit_TXP(gen, inst);
 
