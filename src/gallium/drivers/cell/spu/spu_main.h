@@ -107,16 +107,20 @@ struct spu_framebuffer
 } ALIGN16_ATTRIB;
 
 
+/** per-texture level info */
 struct spu_texture_level
 {
    void *start;
    ushort width, height;
    ushort tiles_per_row;
-   vector float width4;   /**< == {width, width, width, width} */
-   vector float height4;  /**< == {height, height, height, height} */
-   vector unsigned int tex_size_x_mask; /**< splat(width-1) */
-   vector unsigned int tex_size_y_mask; /**< splat(height-1) */
+   /** texcoord scale factors */
+   vector float scale_s, scale_t;
+   /** texcoord masks (if REPEAT then size-1, else ~0) */
+   vector signed int mask_s, mask_t;
+   /** texcoord clamp limits */
+   vector signed int max_s, max_t;
 } ALIGN16_ATTRIB;
+
 
 struct spu_texture
 {

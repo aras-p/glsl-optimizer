@@ -67,13 +67,13 @@ invalidate_tex_cache(void)
  * a time.
  */
 static void
-get_four_texels(uint unit, uint level, vec_uint4 x, vec_uint4 y,
+get_four_texels(uint unit, uint level, vec_int4 x, vec_int4 y,
                 vec_uint4 *texels)
 {
    const struct spu_texture_level *tlevel = &spu.texture[unit].level[level];
    const unsigned texture_ea = (uintptr_t) tlevel->start;
-   const vec_uint4 tile_x = spu_rlmask(x, -5);  /* tile_x = x / 32 */
-   const vec_uint4 tile_y = spu_rlmask(y, -5);  /* tile_y = y / 32 */
+   const vec_int4 tile_x = spu_rlmask(x, -5);  /* tile_x = x / 32 */
+   const vec_int4 tile_y = spu_rlmask(y, -5);  /* tile_y = y / 32 */
    const qword offset_x = si_andi((qword) x, 0x1f); /* offset_x = x & 0x1f */
    const qword offset_y = si_andi((qword) y, 0x1f); /* offset_y = y & 0x1f */
 
@@ -99,6 +99,20 @@ get_four_texels(uint unit, uint level, vec_uint4 x, vec_uint4 y,
 }
 
 
+/** clamp vec to [0, max] */
+static INLINE vector signed int
+spu_clamp(vector signed int vec, vector signed int max)
+{
+   static const vector signed int zero = {0,0,0,0};
+   vector unsigned int c;
+   c = spu_cmpgt(vec, zero);    /* c = vec > zero ? ~0 : 0 */
+   vec = spu_sel(zero, vec, c);
+   c = spu_cmpgt(vec, max);    /* c = vec > max ? ~0 : 0 */
+   vec = spu_sel(vec, max, c);
+   return vec;
+}
+
+
 
 /**
  * Do nearest texture sampling for four pixels.
@@ -109,15 +123,20 @@ sample_texture4_nearest(vector float s, vector float t,
                         vector float r, vector float q,
                         uint unit, uint level, vector float colors[4])
 {
-   vector float ss = spu_mul(s, spu.texture[unit].level[level].width4);
-   vector float tt = spu_mul(t, spu.texture[unit].level[level].height4);
-   vector unsigned int is = spu_convtu(ss, 0);
-   vector unsigned int it = spu_convtu(tt, 0);
+   const struct spu_texture_level *tlevel = &spu.texture[unit].level[level];
+   vector float ss = spu_mul(s, tlevel->scale_s);
+   vector float tt = spu_mul(t, tlevel->scale_t);
+   vector signed int is = spu_convts(ss, 0);
+   vector signed int it = spu_convts(tt, 0);
    vec_uint4 texels[4];
 
    /* PIPE_TEX_WRAP_REPEAT */
-   is = spu_and(is, spu.texture[unit].level[level].tex_size_x_mask);
-   it = spu_and(it, spu.texture[unit].level[level].tex_size_y_mask);
+   is = spu_and(is, tlevel->mask_s);
+   it = spu_and(it, tlevel->mask_t);
+
+   /* PIPE_TEX_WRAP_CLAMP */
+   is = spu_clamp(is, tlevel->max_s);
+   it = spu_clamp(it, tlevel->max_t);
 
    get_four_texels(unit, level, is, it, texels);
 
@@ -135,21 +154,28 @@ sample_texture4_bilinear(vector float s, vector float t,
                          vector float r, vector float q,
                          uint unit, uint level, vector float colors[4])
 {
-   vector float ss = spu_madd(s, spu.texture[unit].level[level].width4,  spu_splats(-0.5f));
-   vector float tt = spu_madd(t, spu.texture[unit].level[level].height4, spu_splats(-0.5f));
+   const struct spu_texture_level *tlevel = &spu.texture[unit].level[level];
+   vector float ss = spu_madd(s, tlevel->scale_s,  spu_splats(-0.5f));
+   vector float tt = spu_madd(t, tlevel->scale_t, spu_splats(-0.5f));
 
-   vector unsigned int is0 = (vector unsigned int) spu_convts(ss, 0);
-   vector unsigned int it0 = (vector unsigned int) spu_convts(tt, 0);
+   vector signed int is0 = spu_convts(ss, 0);
+   vector signed int it0 = spu_convts(tt, 0);
 
    /* is + 1, it + 1 */
-   vector unsigned int is1 = spu_add(is0, 1);
-   vector unsigned int it1 = spu_add(it0, 1);
+   vector signed int is1 = spu_add(is0, 1);
+   vector signed int it1 = spu_add(it0, 1);
 
    /* PIPE_TEX_WRAP_REPEAT */
-   is0 = spu_and(is0, spu.texture[unit].level[level].tex_size_x_mask);
-   it0 = spu_and(it0, spu.texture[unit].level[level].tex_size_y_mask);
-   is1 = spu_and(is1, spu.texture[unit].level[level].tex_size_x_mask);
-   it1 = spu_and(it1, spu.texture[unit].level[level].tex_size_y_mask);
+   is0 = spu_and(is0, tlevel->mask_s);
+   it0 = spu_and(it0, tlevel->mask_t);
+   is1 = spu_and(is1, tlevel->mask_s);
+   it1 = spu_and(it1, tlevel->mask_t);
+
+   /* PIPE_TEX_WRAP_CLAMP */
+   is0 = spu_clamp(is0, tlevel->max_s);
+   it0 = spu_clamp(it0, tlevel->max_t);
+   is1 = spu_clamp(is1, tlevel->max_s);
+   it1 = spu_clamp(it1, tlevel->max_t);
 
    /* get packed int texels */
    vector unsigned int texels[16];
@@ -275,34 +301,41 @@ sample_texture4_bilinear_2(vector float s, vector float t,
                            vector float r, vector float q,
                            uint unit, uint level, vector float colors[4])
 {
+   const struct spu_texture_level *tlevel = &spu.texture[unit].level[level];
    static const vector float half = {-0.5f, -0.5f, -0.5f, -0.5f};
    /* Scale texcoords by size of texture, and add half pixel bias */
-   vector float ss = spu_madd(s, spu.texture[unit].level[level].width4, half);
-   vector float tt = spu_madd(t, spu.texture[unit].level[level].height4, half);
+   vector float ss = spu_madd(s, tlevel->scale_s, half);
+   vector float tt = spu_madd(t, tlevel->scale_t, half);
 
    /* convert float coords to fixed-pt coords with 8 fraction bits */
-   vector unsigned int is = (vector unsigned int) spu_convts(ss, 8);
-   vector unsigned int it = (vector unsigned int) spu_convts(tt, 8);
+   vector signed int is = spu_convts(ss, 8);
+   vector signed int it = spu_convts(tt, 8);
 
    /* compute integer texel weights in [0, 255] */
-   vector signed int sWeights0 = spu_and((vector signed int) is, 255);
-   vector signed int tWeights0 = spu_and((vector signed int) it, 255);
+   vector signed int sWeights0 = spu_and(is, 255);
+   vector signed int tWeights0 = spu_and(it, 255);
    vector signed int sWeights1 = spu_sub(255, sWeights0);
    vector signed int tWeights1 = spu_sub(255, tWeights0);
 
    /* texel coords: is0 = is / 256, it0 = is / 256 */
-   vector unsigned int is0 = spu_rlmask(is, -8);
-   vector unsigned int it0 = spu_rlmask(it, -8);
+   vector signed int is0 = spu_rlmask(is, -8);
+   vector signed int it0 = spu_rlmask(it, -8);
 
    /* texel coords: i1 = is0 + 1, it1 = it0 + 1 */
-   vector unsigned int is1 = spu_add(is0, 1);
-   vector unsigned int it1 = spu_add(it0, 1);
+   vector signed int is1 = spu_add(is0, 1);
+   vector signed int it1 = spu_add(it0, 1);
 
    /* PIPE_TEX_WRAP_REPEAT */
-   is0 = spu_and(is0, spu.texture[unit].level[level].tex_size_x_mask);
-   it0 = spu_and(it0, spu.texture[unit].level[level].tex_size_y_mask);
-   is1 = spu_and(is1, spu.texture[unit].level[level].tex_size_x_mask);
-   it1 = spu_and(it1, spu.texture[unit].level[level].tex_size_y_mask);
+   is0 = spu_and(is0, tlevel->mask_s);
+   it0 = spu_and(it0, tlevel->mask_t);
+   is1 = spu_and(is1, tlevel->mask_s);
+   it1 = spu_and(it1, tlevel->mask_t);
+
+   /* PIPE_TEX_WRAP_CLAMP */
+   is0 = spu_clamp(is0, tlevel->max_s);
+   it0 = spu_clamp(it0, tlevel->max_t);
+   is1 = spu_clamp(is1, tlevel->max_s);
+   it1 = spu_clamp(it1, tlevel->max_t);
 
    /* get packed int texels */
    vector unsigned int texels[16];

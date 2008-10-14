@@ -295,6 +295,42 @@ cmd_state_framebuffer(const struct cell_command_framebuffer *cmd)
 }
 
 
+/**
+ * Tex texture mask_s/t and scale_s/t fields depend on the texture size and
+ * sampler wrap modes.
+ */
+static void
+update_tex_masks(struct spu_texture *texture,
+                 const struct pipe_sampler_state *sampler)
+{
+   uint i;
+
+   for (i = 0; i < CELL_MAX_TEXTURE_LEVELS; i++) {
+      int width = texture->level[i].width;
+      int height = texture->level[i].height;
+
+      if (sampler->wrap_s == PIPE_TEX_WRAP_REPEAT)
+         texture->level[i].mask_s = spu_splats(width - 1);
+      else
+         texture->level[i].mask_s = spu_splats(~0);
+
+      if (sampler->wrap_t == PIPE_TEX_WRAP_REPEAT)
+         texture->level[i].mask_t = spu_splats(height - 1);
+      else
+         texture->level[i].mask_t = spu_splats(~0);
+
+      if (sampler->normalized_coords) {
+         texture->level[i].scale_s = spu_splats((float) width);
+         texture->level[i].scale_t = spu_splats((float) height);
+      }
+      else {
+         texture->level[i].scale_s = spu_splats(1.0f);
+         texture->level[i].scale_t = spu_splats(1.0f);
+      }
+   }
+}
+
+
 static void
 cmd_state_sampler(const struct cell_command_sampler *sampler)
 {
@@ -341,6 +377,8 @@ cmd_state_sampler(const struct cell_command_sampler *sampler)
    default:
       ASSERT(0);
    }
+
+   update_tex_masks(&spu.texture[unit], &spu.sampler[unit]);
 }
 
 
@@ -370,15 +408,15 @@ cmd_state_texture(const struct cell_command_texture *texture)
       spu.texture[unit].level[i].tiles_per_row =
          (width + TILE_SIZE - 1) / TILE_SIZE;
 
-      spu.texture[unit].level[i].width4 = spu_splats((float) width);
-      spu.texture[unit].level[i].height4 = spu_splats((float) height);
-
-      spu.texture[unit].level[i].tex_size_x_mask = spu_splats(width - 1);
-      spu.texture[unit].level[i].tex_size_y_mask = spu_splats(height - 1);
+      spu.texture[unit].level[i].max_s = spu_splats((int) width - 1);
+      spu.texture[unit].level[i].max_t = spu_splats((int) height - 1);
 
       if (texture->start[i])
          spu.texture[unit].max_level = i;
    }
+
+   update_tex_masks(&spu.texture[unit], &spu.sampler[unit]);
+
    //Debug=0;
 }
 
