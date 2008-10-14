@@ -213,7 +213,7 @@ clip_emit_quad(struct setup_stage *setup)
  * Eg: four colors will be computed (in AoS format).
  */
 static INLINE void
-eval_coeff(uint slot, float x, float y, vector float result[4])
+eval_coeff(uint slot, float x, float y, vector float w, vector float result[4])
 {
    switch (spu.vertex_info.attrib[slot].interp_mode) {
    case INTERP_CONSTANT:
@@ -222,23 +222,43 @@ eval_coeff(uint slot, float x, float y, vector float result[4])
       result[QUAD_BOTTOM_LEFT] =
       result[QUAD_BOTTOM_RIGHT] = setup.coef[slot].a0.v;
       break;
-
    case INTERP_LINEAR:
-      /* fall-through, for now */
-   default:
       {
-         register vector float dadx = setup.coef[slot].dadx.v;
-         register vector float dady = setup.coef[slot].dady.v;
-         register vector float topLeft
-            = spu_add(setup.coef[slot].a0.v,
-                      spu_add(spu_mul(spu_splats(x), dadx),
-                              spu_mul(spu_splats(y), dady)));
+         vector float dadx = setup.coef[slot].dadx.v;
+         vector float dady = setup.coef[slot].dady.v;
+         vector float topLeft =
+            spu_add(setup.coef[slot].a0.v,
+                    spu_add(spu_mul(spu_splats(x), dadx),
+                            spu_mul(spu_splats(y), dady)));
 
          result[QUAD_TOP_LEFT] = topLeft;
          result[QUAD_TOP_RIGHT] = spu_add(topLeft, dadx);
          result[QUAD_BOTTOM_LEFT] = spu_add(topLeft, dady);
          result[QUAD_BOTTOM_RIGHT] = spu_add(spu_add(topLeft, dadx), dady);
       }
+      break;
+   case INTERP_PERSPECTIVE:
+      {
+         vector float dadx = setup.coef[slot].dadx.v;
+         vector float dady = setup.coef[slot].dady.v;
+         vector float topLeft =
+            spu_add(setup.coef[slot].a0.v,
+                    spu_add(spu_mul(spu_splats(x), dadx),
+                            spu_mul(spu_splats(y), dady)));
+
+         vector float wInv = spu_re(w);  /* 1.0 / w */
+
+         result[QUAD_TOP_LEFT] = spu_mul(topLeft, wInv);
+         result[QUAD_TOP_RIGHT] = spu_mul(spu_add(topLeft, dadx), wInv);
+         result[QUAD_BOTTOM_LEFT] = spu_mul(spu_add(topLeft, dady), wInv);
+         result[QUAD_BOTTOM_RIGHT] = spu_mul(spu_add(spu_add(topLeft, dadx), dady), wInv);
+      }
+      break;
+   case INTERP_POS:
+   case INTERP_NONE:
+      break;
+   default:
+      ASSERT(0);
    }
 }
 
@@ -248,14 +268,14 @@ eval_coeff(uint slot, float x, float y, vector float result[4])
  * XXX this will all be re-written someday.
  */
 static INLINE void
-eval_coeff_soa(uint slot, float x, float y, vector float result[4])
+eval_coeff_soa(uint slot, float x, float y, vector float w, vector float result[4])
 {
-   eval_coeff(slot, x, y, result);
+   eval_coeff(slot, x, y, w, result);
    _transpose_matrix4x4(result, result);
 }
 
 
-
+/** Evalute coefficients to get Z for four pixels in a quad */
 static INLINE vector float
 eval_z(float x, float y)
 {
@@ -265,6 +285,20 @@ eval_z(float x, float y)
    const float topLeft = setup.coef[slot].a0.f[2] + x * dzdx + y * dzdy;
    const vector float topLeftv = spu_splats(topLeft);
    const vector float derivs = (vector float) { 0.0, dzdx, dzdy, dzdx + dzdy };
+   return spu_add(topLeftv, derivs);
+}
+
+
+/** Evalute coefficients to get W for four pixels in a quad */
+static INLINE vector float
+eval_w(float x, float y)
+{
+   const uint slot = 0;
+   const float dwdx = setup.coef[slot].dadx.f[3];
+   const float dwdy = setup.coef[slot].dady.f[3];
+   const float topLeft = setup.coef[slot].a0.f[3] + x * dwdx + y * dwdy;
+   const vector float topLeftv = spu_splats(topLeft);
+   const vector float derivs = (vector float) { 0.0, dwdx, dwdy, dwdx + dwdy };
    return spu_add(topLeftv, derivs);
 }
 
@@ -292,14 +326,15 @@ emit_quad( int x, int y, mask_t mask)
           */
          vector float inputs[4*4], outputs[2*4];
          vector float fragZ = eval_z((float) x, (float) y);
+         vector float fragW = eval_w((float) x, (float) y);
 
          /* setup inputs */
 #if 0
-         eval_coeff_soa(1, (float) x, (float) y, inputs);
+         eval_coeff_soa(1, (float) x, (float) y, fragW, inputs);
 #else
          uint i;
          for (i = 0; i < spu.vertex_info.num_attribs; i++) {
-            eval_coeff_soa(i+1, (float) x, (float) y, inputs + i * 4);
+            eval_coeff_soa(i+1, (float) x, (float) y, fragW, inputs + i * 4);
          }
 #endif
          ASSERT(spu.fragment_program);
@@ -658,7 +693,6 @@ tri_linear_coeff4(uint slot)
 
 
 
-#if 0
 /**
  * Compute a0, dadx and dady for a perspective-corrected interpolant,
  * for a triangle.
@@ -667,38 +701,41 @@ tri_linear_coeff4(uint slot)
  * Later, when we compute the value at a particular fragment position we'll
  * divide the interpolated value by the interpolated W at that fragment.
  */
-static void tri_persp_coeff( unsigned slot,
-                             unsigned i )
+static void
+tri_persp_coeff4(uint slot)
 {
-   /* premultiply by 1/w:
-    */
-   float mina = setup.vmin->data[slot][i] * setup.vmin->data[0][3];
-   float mida = setup.vmid->data[slot][i] * setup.vmid->data[0][3];
-   float maxa = setup.vmax->data[slot][i] * setup.vmax->data[0][3];
+   const vector float xxxx = spu_splats(spu_extract(setup.vmin->data[0], 0) - 0.5f);
+   const vector float yyyy = spu_splats(spu_extract(setup.vmin->data[0], 1) - 0.5f);
 
-   float botda = mida - mina;
-   float majda = maxa - mina;
-   float a = setup.ebot.dy * majda - botda * setup.emaj.dy;
-   float b = setup.emaj.dx * botda - majda * setup.ebot.dx;
-      
-   /*
-   printf("tri persp %d,%d: %f %f %f\n", slot, i,
-          setup.vmin->data[slot][i],
-          setup.vmid->data[slot][i],
-          setup.vmax->data[slot][i]
-          );
-   */
+   const vector float vmin_w = spu_splats(spu_extract(setup.vmin->data[0], 3));
+   const vector float vmid_w = spu_splats(spu_extract(setup.vmid->data[0], 3));
+   const vector float vmax_w = spu_splats(spu_extract(setup.vmax->data[0], 3));
 
-   assert(slot < PIPE_MAX_SHADER_INPUTS);
-   assert(i <= 3);
+   vector float vmin_d = setup.vmin->data[slot];
+   vector float vmid_d = setup.vmid->data[slot];
+   vector float vmax_d = setup.vmax->data[slot];
 
-   setup.coef[slot].dadx.f[i] = a * setup.oneoverarea;
-   setup.coef[slot].dady.f[i] = b * setup.oneoverarea;
-   setup.coef[slot].a0.f[i] = (mina - 
-			    (setup.coef[slot].dadx.f[i] * (setup.vmin->data[0][0] - 0.5f) + 
-			     setup.coef[slot].dady.f[i] * (setup.vmin->data[0][1] - 0.5f)));
+   vmin_d = spu_mul(vmin_d, vmin_w);
+   vmid_d = spu_mul(vmid_d, vmid_w);
+   vmax_d = spu_mul(vmax_d, vmax_w);
+
+   vector float botda = vmid_d - vmin_d;
+   vector float majda = vmax_d - vmin_d;
+
+   vector float a = spu_sub(spu_mul(spu_splats(setup.ebot.dy), majda),
+                            spu_mul(botda, spu_splats(setup.emaj.dy)));
+   vector float b = spu_sub(spu_mul(spu_splats(setup.emaj.dx), botda),
+                            spu_mul(majda, spu_splats(setup.ebot.dx)));
+
+   setup.coef[slot].dadx.v = spu_mul(a, spu_splats(setup.oneoverarea));
+   setup.coef[slot].dady.v = spu_mul(b, spu_splats(setup.oneoverarea));
+
+   vector float tempx = spu_mul(setup.coef[slot].dadx.v, xxxx);
+   vector float tempy = spu_mul(setup.coef[slot].dady.v, yyyy);
+                         
+   setup.coef[slot].a0.v = spu_sub(vmin_d, spu_add(tempx, tempy));
 }
-#endif
+
 
 
 /**
@@ -726,7 +763,7 @@ static void setup_tri_coefficients(void)
          tri_linear_coeff4(i);
          break;
       case INTERP_PERSPECTIVE:
-         tri_linear_coeff4(i);  /* temporary */
+         tri_persp_coeff4(i);
          break;
       default:
          ASSERT(0);
