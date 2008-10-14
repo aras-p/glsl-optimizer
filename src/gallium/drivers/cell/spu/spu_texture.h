@@ -66,7 +66,7 @@ sample_texture4_lod(vector float s, vector float t,
 extern void
 sample_texture4_cube(vector float s, vector float t,
                      vector float r, vector float q,
-                     uint unit, uint level_ignored, int face_ignored,
+                     uint unit, uint level_ignored, uint face_ignored,
                      vector float colors[4]);
 
 

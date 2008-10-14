@@ -552,7 +552,7 @@ choose_cube_face(float rx, float ry, float rz, float *newS, float *newT)
 void
 sample_texture4_cube(vector float s, vector float t,
                      vector float r, vector float q,
-                     uint unit, uint level, int face_ignored,
+                     uint unit, uint level, uint face_ignored,
                      vector float colors[4])
 {
    static const vector float zero = {0.0f, 0.0f, 0.0f, 0.0f};
