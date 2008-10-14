@@ -111,15 +111,15 @@ struct spu_framebuffer
 struct spu_texture_level
 {
    void *start;
-   ushort width, height;
+   ushort width, height, depth;
    ushort tiles_per_row;
    uint bytes_per_image;
    /** texcoord scale factors */
-   vector float scale_s, scale_t;
+   vector float scale_s, scale_t, scale_r;
    /** texcoord masks (if REPEAT then size-1, else ~0) */
-   vector signed int mask_s, mask_t;
+   vector signed int mask_s, mask_t, mask_r;
    /** texcoord clamp limits */
-   vector signed int max_s, max_t;
+   vector signed int max_s, max_t, max_r;
 } ALIGN16_ATTRIB;
 
 

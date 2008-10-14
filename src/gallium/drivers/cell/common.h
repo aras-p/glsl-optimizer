@@ -256,6 +256,7 @@ struct cell_command_texture
    void *start[CELL_MAX_TEXTURE_LEVELS];   /**< Address in main memory */
    ushort width[CELL_MAX_TEXTURE_LEVELS];
    ushort height[CELL_MAX_TEXTURE_LEVELS];
+   ushort depth[CELL_MAX_TEXTURE_LEVELS];
 };
 
 

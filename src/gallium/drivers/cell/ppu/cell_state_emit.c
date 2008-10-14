@@ -216,6 +216,7 @@ cell_emit_state(struct cell_context *cell)
                texture->start[level] = cell->texture[i]->tiled_data[level];
                texture->width[level] = cell->texture[i]->base.width[level];
                texture->height[level] = cell->texture[i]->base.height[level];
+               texture->depth[level] = cell->texture[i]->base.depth[level];
             }
             texture->target = cell->texture[i]->base.target;
          }
@@ -225,6 +226,7 @@ cell_emit_state(struct cell_context *cell)
                texture->start[level] = NULL;
                texture->width[level] = 0;
                texture->height[level] = 0;
+               texture->depth[level] = 0;
             }
             texture->target = 0;
          }

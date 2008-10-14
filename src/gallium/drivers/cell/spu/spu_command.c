@@ -59,6 +59,14 @@ static unsigned char attribute_fetch_code_buffer[136 * PIPE_MAX_ATTRIBS]
 
 
 
+static INLINE int
+align(int value, int alignment)
+{
+   return (value + alignment - 1) & ~(alignment - 1);
+}
+
+
+
 /**
  * Tell the PPU that this SPU has finished copying a buffer to
  * local store and that it may be reused by the PPU.
@@ -404,6 +412,7 @@ cmd_state_texture(const struct cell_command_texture *texture)
    for (i = 0; i < CELL_MAX_TEXTURE_LEVELS; i++) {
       uint width = texture->width[i];
       uint height = texture->height[i];
+      uint depth = texture->depth[i];
 
       DEBUG_PRINTF("  LEVEL %u: at %p  size[0] %u x %u\n", i,
              texture->start[i], texture->width[i], texture->height[i]);
@@ -411,13 +420,13 @@ cmd_state_texture(const struct cell_command_texture *texture)
       spu.texture[unit].level[i].start = texture->start[i];
       spu.texture[unit].level[i].width = width;
       spu.texture[unit].level[i].height = height;
+      spu.texture[unit].level[i].depth = depth;
 
       spu.texture[unit].level[i].tiles_per_row =
          (width + TILE_SIZE - 1) / TILE_SIZE;
 
       spu.texture[unit].level[i].bytes_per_image =
-         4 * ((width + TILE_SIZE - 1) & ~(TILE_SIZE-1))
-         * ((height + TILE_SIZE - 1) & ~(TILE_SIZE-1));
+         4 * align(width, TILE_SIZE) * align(height, TILE_SIZE) * depth;
 
       spu.texture[unit].level[i].max_s = spu_splats((int) width - 1);
       spu.texture[unit].level[i].max_t = spu_splats((int) height - 1);

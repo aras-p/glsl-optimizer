@@ -50,6 +50,8 @@ invalidate_tex_cache(void)
 
       if (spu.texture[unit].target == PIPE_TEXTURE_CUBE)
          bytes *= 6;
+      else if (spu.texture[unit].target == PIPE_TEXTURE_3D)
+         bytes *= spu.texture[unit].level[lvl].depth;
 
       spu_dcache_mark_dirty((unsigned) spu.texture[unit].level[lvl].start, bytes);
    }
