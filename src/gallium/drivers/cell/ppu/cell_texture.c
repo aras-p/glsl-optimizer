@@ -147,7 +147,7 @@ cell_texture_release(struct pipe_screen *screen,
 
       for (i = 0; i < CELL_MAX_TEXTURE_LEVELS; i++) {
          if (ct->tiled_data[i]) {
-            FREE(ct->tiled_data[i]);
+            align_free(ct->tiled_data[i]);
          }
       }
 
