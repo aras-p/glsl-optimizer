@@ -222,8 +222,8 @@ cell_emit_state(struct cell_context *cell)
             uint level;
             for (level = 0; level < CELL_MAX_TEXTURE_LEVELS; level++) {
                texture->start[level] = NULL;
-               texture->width[level] = 1;
-               texture->height[level] = 1;
+               texture->width[level] = 0;
+               texture->height[level] = 0;
             }
          }
       }

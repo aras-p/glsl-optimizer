@@ -62,10 +62,6 @@ cell_texture(struct pipe_texture *pt)
 
 
 extern void
-cell_update_texture_mapping(struct cell_context *cell);
-
-
-extern void
 cell_init_screen_texture_funcs(struct pipe_screen *screen);
 
 
