@@ -120,19 +120,11 @@ struct setup_stage {
 
    uint facing;
 
-   uint tx, ty;
+   uint tx, ty;  /**< position of current tile (x, y) */
 
    int cliprect_minx, cliprect_maxx, cliprect_miny, cliprect_maxy;
 
-#if 0
-   struct tgsi_interp_coef coef[PIPE_MAX_SHADER_INPUTS];
-#else
    struct interp_coef coef[PIPE_MAX_SHADER_INPUTS];
-#endif
-
-#if 0
-   struct quad_header quad; 
-#endif
 
    struct {
       int left[2];   /**< [0] = row0, [1] = row1 */
@@ -144,68 +136,8 @@ struct setup_stage {
 };
 
 
-
 static struct setup_stage setup;
 
-
-
-
-#if 0
-/**
- * Basically a cast wrapper.
- */
-static INLINE struct setup_stage *setup_stage( struct draw_stage *stage )
-{
-   return (struct setup_stage *)stage;
-}
-#endif
-
-#if 0
-/**
- * Clip setup.quad against the scissor/surface bounds.
- */
-static INLINE void
-quad_clip(struct setup_stage *setup)
-{
-   const struct pipe_scissor_state *cliprect = &setup.softpipe->cliprect;
-   const int minx = (int) cliprect->minx;
-   const int maxx = (int) cliprect->maxx;
-   const int miny = (int) cliprect->miny;
-   const int maxy = (int) cliprect->maxy;
-
-   if (setup.quad.x0 >= maxx ||
-       setup.quad.y0 >= maxy ||
-       setup.quad.x0 + 1 < minx ||
-       setup.quad.y0 + 1 < miny) {
-      /* totally clipped */
-      setup.quad.mask = 0x0;
-      return;
-   }
-   if (setup.quad.x0 < minx)
-      setup.quad.mask &= (MASK_BOTTOM_RIGHT | MASK_TOP_RIGHT);
-   if (setup.quad.y0 < miny)
-      setup.quad.mask &= (MASK_BOTTOM_LEFT | MASK_BOTTOM_RIGHT);
-   if (setup.quad.x0 == maxx - 1)
-      setup.quad.mask &= (MASK_BOTTOM_LEFT | MASK_TOP_LEFT);
-   if (setup.quad.y0 == maxy - 1)
-      setup.quad.mask &= (MASK_TOP_LEFT | MASK_TOP_RIGHT);
-}
-#endif
-
-#if 0
-/**
- * Emit a quad (pass to next stage) with clipping.
- */
-static INLINE void
-clip_emit_quad(struct setup_stage *setup)
-{
-   quad_clip(setup);
-   if (setup.quad.mask) {
-      struct softpipe_context *sp = setup.softpipe;
-      sp->quad.first->run(sp->quad.first, &setup.quad);
-   }
-}
-#endif
 
 /**
  * Evaluate attribute coefficients (plane equations) to compute
@@ -363,7 +295,8 @@ emit_quad( int x, int y, mask_t mask)
  * Given an X or Y coordinate, return the block/quad coordinate that it
  * belongs to.
  */
-static INLINE int block( int x )
+static INLINE int
+block(int x)
 {
    return x & ~1;
 }
@@ -374,7 +307,8 @@ static INLINE int block( int x )
  * the triangle's bounds.
  * The mask is a uint4 vector and each element will be 0 or 0xffffffff.
  */
-static INLINE mask_t calculate_mask( int x )
+static INLINE mask_t
+calculate_mask(int x)
 {
    /* This is a little tricky.
     * Use & instead of && to avoid branches.
@@ -392,7 +326,8 @@ static INLINE mask_t calculate_mask( int x )
 /**
  * Render a horizontal span of quads
  */
-static void flush_spans( void )
+static void
+flush_spans(void)
 {
    int minleft, maxright;
    int x;
@@ -419,7 +354,6 @@ static void flush_spans( void )
    default:
       return;
    }
-
 
    /* OK, we're very likely to need the tile data now.
     * clear or finish waiting if needed.
@@ -456,9 +390,7 @@ static void flush_spans( void )
     * calculate_mask() could be simplified a bit...
     */
    for (x = block(minleft); x <= block(maxright); x += 2) {
-#if 1
       emit_quad( x, setup.span.y, calculate_mask( x ));
-#endif
    }
 
    setup.span.y = 0;
@@ -467,8 +399,10 @@ static void flush_spans( void )
    setup.span.right[1] = 0;
 }
 
+
 #if DEBUG_VERTS
-static void print_vertex(const struct vertex_header *v)
+static void
+print_vertex(const struct vertex_header *v)
 {
    int i;
    fprintf(stderr, "Vertex: (%p)\n", v);
@@ -480,11 +414,11 @@ static void print_vertex(const struct vertex_header *v)
 #endif
 
 
-static boolean setup_sort_vertices(const struct vertex_header *v0,
-                                   const struct vertex_header *v1,
-                                   const struct vertex_header *v2)
+static boolean
+setup_sort_vertices(const struct vertex_header *v0,
+                    const struct vertex_header *v1,
+                    const struct vertex_header *v2)
 {
-
 #if DEBUG_VERTS
    fprintf(stderr, "Triangle:\n");
    print_vertex(v0);
@@ -692,7 +626,6 @@ tri_linear_coeff4(uint slot)
 }
 
 
-
 /**
  * Compute a0, dadx and dady for a perspective-corrected interpolant,
  * for a triangle.
@@ -742,7 +675,8 @@ tri_persp_coeff4(uint slot)
  * Compute the setup.coef[] array dadx, dady, a0 values.
  * Must be called after setup.vmin,vmid,vmax,vprovoke are initialized.
  */
-static void setup_tri_coefficients(void)
+static void
+setup_tri_coefficients(void)
 {
 #if 1
    uint i;
@@ -779,7 +713,8 @@ static void setup_tri_coefficients(void)
 }
 
 
-static void setup_tri_edges(void)
+static void
+setup_tri_edges(void)
 {
    float vmin_x = spu_extract(setup.vmin->data[0], 0) + 0.5f;
    float vmid_x = spu_extract(setup.vmid->data[0], 0) + 0.5f;
@@ -809,9 +744,8 @@ static void setup_tri_edges(void)
  * Render the upper or lower half of a triangle.
  * Scissoring/cliprect is applied here too.
  */
-static void subtriangle( struct edge *eleft,
-			 struct edge *eright,
-			 unsigned lines )
+static void
+subtriangle(struct edge *eleft, struct edge *eright, unsigned lines)
 {
    const int minx = setup.cliprect_minx;
    const int maxx = setup.cliprect_maxx;
@@ -878,10 +812,9 @@ static void subtriangle( struct edge *eleft,
    eright->sy += lines;
 }
 
+
 static float
-determinant( const float *v0,
-             const float *v1,
-             const float *v2 )
+determinant(const float *v0, const float *v1, const float *v2)
 {
    /* edge vectors e = v0 - v2, f = v1 - v2 */
    const float ex = v0[0] - v2[0];
@@ -899,7 +832,8 @@ determinant( const float *v0,
  * The tile data should have already been fetched.
  */
 boolean
-tri_draw(const float *v0, const float *v1, const float *v2, uint tx, uint ty, uint front_winding)
+tri_draw(const float *v0, const float *v1, const float *v2,
+         uint tx, uint ty, uint front_winding)
 {
    setup.tx = tx;
    setup.ty = ty;
