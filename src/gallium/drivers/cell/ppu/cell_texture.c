@@ -155,7 +155,8 @@ cell_texture_release(struct pipe_screen *screen,
  * Convert image from linear layout to tiled layout.  4-byte pixels.
  */
 static void
-swizzle_image_uint(uint w, uint h, uint tile_size, uint *dst, const uint *src)
+swizzle_image_uint(uint w, uint h, uint tile_size, uint *dst,
+                   uint src_stride, const uint *src)
 {
    const uint tile_size2 = tile_size * tile_size;
    const uint h_t = (h + tile_size - 1) / tile_size;
@@ -163,6 +164,8 @@ swizzle_image_uint(uint w, uint h, uint tile_size, uint *dst, const uint *src)
 
    uint it, jt;  /* tile counters */
    uint i, j;    /* intra-tile counters */
+
+   src_stride /= 4; /* convert from bytes to pixels */
 
    /* loop over dest tiles */
    for (it = 0; it < h_t; it++) {
@@ -178,7 +181,7 @@ swizzle_image_uint(uint w, uint h, uint tile_size, uint *dst, const uint *src)
                const uint srcj = jt * tile_size + j;
                ASSERT(srci < w);
                ASSERT(srcj < h);
-               tdst[i * TILE_SIZE + j] = src[srci * w + srcj];
+               tdst[i * tile_size + j] = src[srci * src_stride + srcj];
             }
          }
       }
@@ -199,9 +202,9 @@ cell_twiddle_texture(struct pipe_screen *screen,
    const uint texHeight = texture->base.height[level];
    const uint bufWidth = MAX2(texWidth, TILE_SIZE);
    const uint bufHeight = MAX2(texHeight, TILE_SIZE);
-   const uint *src =
-      (const uint *) pipe_buffer_map(screen, surface->buffer,
+   const void *map = pipe_buffer_map(screen, surface->buffer,
                                      PIPE_BUFFER_USAGE_CPU_READ);
+   const uint *src = (const uint *) ((const ubyte *) map + surface->offset);
 
    switch (texture->base.format) {
    case PIPE_FORMAT_A8R8G8B8_UNORM:
@@ -212,7 +215,8 @@ cell_twiddle_texture(struct pipe_screen *screen,
       /* alloc new tiled data */
       texture->tiled_data[level] = align_malloc(bufWidth * bufHeight * 4, 16);
       swizzle_image_uint(texWidth, texHeight, TILE_SIZE,
-                         texture->tiled_data[level], src);
+                         texture->tiled_data[level],
+                         surface->stride, src);
       break;
    default:
       printf("Unsupported texture format\n");
