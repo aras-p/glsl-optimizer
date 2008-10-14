@@ -79,30 +79,6 @@ intel_region_unmap(struct intel_context *intel, struct intel_region *region)
    }
 }
 
-static int
-intel_set_region_tiling_gem(struct intel_context *intel,
-			    struct intel_region *region,
-			    uint32_t bo_handle)
-{
-   struct drm_i915_gem_get_tiling get_tiling;
-   int ret;
-
-   memset(&get_tiling, 0, sizeof(get_tiling));
-
-   get_tiling.handle = bo_handle;
-   ret = ioctl(intel->driFd, DRM_IOCTL_I915_GEM_GET_TILING, &get_tiling);
-   if (ret != 0) {
-      fprintf(stderr, "Failed to get tiling state for region: %s\n",
-	      strerror(errno));
-      return ret;
-   }
-
-   region->tiling = get_tiling.tiling_mode;
-   region->bit_6_swizzle = get_tiling.swizzle_mode;
-
-   return 0;
-}
-
 static struct intel_region *
 intel_region_alloc_internal(struct intel_context *intel,
 			    GLuint cpp,
@@ -151,6 +127,7 @@ intel_region_alloc_for_handle(struct intel_context *intel,
 {
    struct intel_region *region;
    dri_bo *buffer;
+   int ret;
 
    buffer = intel_bo_gem_create_from_name(intel->bufmgr, name, handle);
 
@@ -159,7 +136,14 @@ intel_region_alloc_for_handle(struct intel_context *intel,
    if (region == NULL)
       return region;
 
-   intel_set_region_tiling_gem(intel, region, handle);
+   ret = dri_bo_get_tiling(region->buffer, &region->tiling,
+			   &region->bit_6_swizzle);
+   if (ret != 0) {
+      fprintf(stderr, "Couldn't get tiling of buffer %d (%s): %s\n",
+	      handle, name, strerror(-ret));
+      intel_region_release(&region);
+      return NULL;
+   }
 
    return region;
 }
@@ -489,7 +473,14 @@ intel_recreate_static(struct intel_context *intel,
 						     name,
 						     region_desc->bo_handle);
 
-      intel_set_region_tiling_gem(intel, region, region_desc->bo_handle);
+      ret = dri_bo_get_tiling(region->buffer, &region->tiling,
+			      &region->bit_6_swizzle);
+      if (ret != 0) {
+	 fprintf(stderr, "Couldn't get tiling of buffer %d (%s): %s\n",
+		 region_desc->bo_handle, name, strerror(-ret));
+	 intel_region_release(&region);
+	 return NULL;
+      }
    } else {
       if (region->classic_map != NULL) {
 	 drmUnmap(region->classic_map,
