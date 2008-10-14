@@ -172,9 +172,17 @@ twiddle_image_uint(uint w, uint h, uint tile_size, uint *dst,
       for (jt = 0; jt < w_t; jt++) {
          /* start of dest tile: */
          uint *tdst = dst + (it * w_t + jt) * tile_size2;
+
+         /* compute size of this tile (may be smaller than tile_size) */
+         /* XXX note: a compiler bug was found here. That's why the code
+          * looks as it does.
+          */
+         uint tile_width = w - jt * tile_size;
+         tile_width = MIN2(tile_width, tile_size);
+         uint tile_height = h - it * tile_size;
+         tile_height = MIN2(tile_height, tile_size);
+
          /* loop over texels in the tile */
-         uint tile_width = MIN2(tile_size, w);
-         uint tile_height = MIN2(tile_size, h);
          for (i = 0; i < tile_height; i++) {
             for (j = 0; j < tile_width; j++) {
                const uint srci = it * tile_size + i;
@@ -200,8 +208,8 @@ cell_twiddle_texture(struct pipe_screen *screen,
    const uint level = surface->level;
    const uint texWidth = texture->base.width[level];
    const uint texHeight = texture->base.height[level];
-   const uint bufWidth = MAX2(texWidth, TILE_SIZE);
-   const uint bufHeight = MAX2(texHeight, TILE_SIZE);
+   const uint bufWidth = align(texWidth, TILE_SIZE);
+   const uint bufHeight = align(texHeight, TILE_SIZE);
    const void *map = pipe_buffer_map(screen, surface->buffer,
                                      PIPE_BUFFER_USAGE_CPU_READ);
    const uint *src = (const uint *) ((const ubyte *) map + surface->offset);
