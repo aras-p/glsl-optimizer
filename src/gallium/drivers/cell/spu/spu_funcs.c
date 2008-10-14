@@ -106,7 +106,7 @@ spu_txp(vector float s, vector float t, vector float r, vector float q,
         unsigned unit)
 {
    struct vec_4x4 colors;
-   spu.sample_texture4[unit](s, t, r, q, unit, 0, colors.v);
+   spu.sample_texture4[unit](s, t, r, q, unit, 0, 0, colors.v);
    return colors;
 }
 

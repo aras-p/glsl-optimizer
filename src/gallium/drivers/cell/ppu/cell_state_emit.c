@@ -217,6 +217,7 @@ cell_emit_state(struct cell_context *cell)
                texture->width[level] = cell->texture[i]->base.width[level];
                texture->height[level] = cell->texture[i]->base.height[level];
             }
+            texture->target = cell->texture[i]->base.target;
          }
          else {
             uint level;
@@ -225,6 +226,7 @@ cell_emit_state(struct cell_context *cell)
                texture->width[level] = 0;
                texture->height[level] = 0;
             }
+            texture->target = 0;
          }
       }
    }

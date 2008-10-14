@@ -39,24 +39,35 @@ invalidate_tex_cache(void);
 extern void
 sample_texture4_nearest(vector float s, vector float t,
                         vector float r, vector float q,
-                        uint unit, uint level, vector float colors[4]);
+                        uint unit, uint level, uint face,
+                        vector float colors[4]);
 
 
 extern void
 sample_texture4_bilinear(vector float s, vector float t,
                          vector float r, vector float q,
-                         uint unit, uint level, vector float colors[4]);
+                         uint unit, uint level, uint face,
+                         vector float colors[4]);
 
 extern void
 sample_texture4_bilinear_2(vector float s, vector float t,
-                         vector float r, vector float q,
-                           uint unit, uint level, vector float colors[4]);
+                           vector float r, vector float q,
+                           uint unit, uint level, uint face,
+                           vector float colors[4]);
 
 
 extern void
 sample_texture4_lod(vector float s, vector float t,
                     vector float r, vector float q,
-                    uint unit, uint level, vector float colors[4]);
+                    uint unit, uint level, uint face,
+                    vector float colors[4]);
+
+
+extern void
+sample_texture4_cube(vector float s, vector float t,
+                     vector float r, vector float q,
+                     uint unit, uint level_ignored, int face_ignored,
+                     vector float colors[4]);
 
 
 #endif /* SPU_TEXTURE_H */

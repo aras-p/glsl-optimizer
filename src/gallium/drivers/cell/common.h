@@ -251,6 +251,7 @@ struct cell_command_sampler
 struct cell_command_texture
 {
    uint64_t opcode;     /**< CELL_CMD_STATE_TEXTURE */
+   uint target;         /**< PIPE_TEXTURE_x */
    uint unit;
    void *start[CELL_MAX_TEXTURE_LEVELS];   /**< Address in main memory */
    ushort width[CELL_MAX_TEXTURE_LEVELS];

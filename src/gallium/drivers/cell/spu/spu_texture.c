@@ -48,6 +48,9 @@ invalidate_tex_cache(void)
       uint bytes = 4 * spu.texture[unit].level[lvl].width
          * spu.texture[unit].level[lvl].height;
 
+      if (spu.texture[unit].target == PIPE_TEXTURE_CUBE)
+         bytes *= 6;
+
       spu_dcache_mark_dirty((unsigned) spu.texture[unit].level[lvl].start, bytes);
    }
 }
@@ -67,11 +70,11 @@ invalidate_tex_cache(void)
  * a time.
  */
 static void
-get_four_texels(uint unit, uint level, vec_int4 x, vec_int4 y,
+get_four_texels(uint unit, uint level, uint face, vec_int4 x, vec_int4 y,
                 vec_uint4 *texels)
 {
    const struct spu_texture_level *tlevel = &spu.texture[unit].level[level];
-   const unsigned texture_ea = (uintptr_t) tlevel->start;
+   unsigned texture_ea = (uintptr_t) tlevel->start;
    const vec_int4 tile_x = spu_rlmask(x, -5);  /* tile_x = x / 32 */
    const vec_int4 tile_y = spu_rlmask(y, -5);  /* tile_y = y / 32 */
    const qword offset_x = si_andi((qword) x, 0x1f); /* offset_x = x & 0x1f */
@@ -88,6 +91,8 @@ get_four_texels(uint unit, uint level, vec_int4 x, vec_int4 y,
    
    vec_uint4 offset = (vec_uint4) si_a(tile_offset, texel_offset);
    
+   texture_ea = texture_ea + face * tlevel->bytes_per_image;
+
    spu_dcache_fetch_unaligned((qword *) & texels[0],
                               texture_ea + spu_extract(offset, 0), 4);
    spu_dcache_fetch_unaligned((qword *) & texels[1],
@@ -121,7 +126,8 @@ spu_clamp(vector signed int vec, vector signed int max)
 void
 sample_texture4_nearest(vector float s, vector float t,
                         vector float r, vector float q,
-                        uint unit, uint level, vector float colors[4])
+                        uint unit, uint level, uint face,
+                        vector float colors[4])
 {
    const struct spu_texture_level *tlevel = &spu.texture[unit].level[level];
    vector float ss = spu_mul(s, tlevel->scale_s);
@@ -138,7 +144,7 @@ sample_texture4_nearest(vector float s, vector float t,
    is = spu_clamp(is, tlevel->max_s);
    it = spu_clamp(it, tlevel->max_t);
 
-   get_four_texels(unit, level, is, it, texels);
+   get_four_texels(unit, level, face, is, it, texels);
 
    /* convert four packed ARGBA pixels to float RRRR,GGGG,BBBB,AAAA */
    spu_unpack_A8R8G8B8_transpose4(texels, colors);
@@ -152,11 +158,14 @@ sample_texture4_nearest(vector float s, vector float t,
 void
 sample_texture4_bilinear(vector float s, vector float t,
                          vector float r, vector float q,
-                         uint unit, uint level, vector float colors[4])
+                         uint unit, uint level, uint face,
+                         vector float colors[4])
 {
    const struct spu_texture_level *tlevel = &spu.texture[unit].level[level];
-   vector float ss = spu_madd(s, tlevel->scale_s,  spu_splats(-0.5f));
-   vector float tt = spu_madd(t, tlevel->scale_t, spu_splats(-0.5f));
+   static const vector float half = {-0.5f, -0.5f, -0.5f, -0.5f};
+
+   vector float ss = spu_madd(s, tlevel->scale_s, half);
+   vector float tt = spu_madd(t, tlevel->scale_t, half);
 
    vector signed int is0 = spu_convts(ss, 0);
    vector signed int it0 = spu_convts(tt, 0);
@@ -179,10 +188,10 @@ sample_texture4_bilinear(vector float s, vector float t,
 
    /* get packed int texels */
    vector unsigned int texels[16];
-   get_four_texels(unit, level, is0, it0, texels + 0);  /* upper-left */
-   get_four_texels(unit, level, is1, it0, texels + 4);  /* upper-right */
-   get_four_texels(unit, level, is0, it1, texels + 8);  /* lower-left */
-   get_four_texels(unit, level, is1, it1, texels + 12); /* lower-right */
+   get_four_texels(unit, level, face, is0, it0, texels + 0);  /* upper-left */
+   get_four_texels(unit, level, face, is1, it0, texels + 4);  /* upper-right */
+   get_four_texels(unit, level, face, is0, it1, texels + 8);  /* lower-left */
+   get_four_texels(unit, level, face, is1, it1, texels + 12); /* lower-right */
 
    /* XXX possibly rework following code to compute the weighted sample
     * colors with integer arithmetic for fewer int->float conversions.
@@ -299,10 +308,12 @@ transpose(vector unsigned int *mOut0,
 void
 sample_texture4_bilinear_2(vector float s, vector float t,
                            vector float r, vector float q,
-                           uint unit, uint level, vector float colors[4])
+                           uint unit, uint level, uint face,
+                           vector float colors[4])
 {
    const struct spu_texture_level *tlevel = &spu.texture[unit].level[level];
    static const vector float half = {-0.5f, -0.5f, -0.5f, -0.5f};
+
    /* Scale texcoords by size of texture, and add half pixel bias */
    vector float ss = spu_madd(s, tlevel->scale_s, half);
    vector float tt = spu_madd(t, tlevel->scale_t, half);
@@ -339,10 +350,10 @@ sample_texture4_bilinear_2(vector float s, vector float t,
 
    /* get packed int texels */
    vector unsigned int texels[16];
-   get_four_texels(unit, level, is0, it0, texels + 0);  /* upper-left */
-   get_four_texels(unit, level, is1, it0, texels + 4);  /* upper-right */
-   get_four_texels(unit, level, is0, it1, texels + 8);  /* lower-left */
-   get_four_texels(unit, level, is1, it1, texels + 12); /* lower-right */
+   get_four_texels(unit, level, face, is0, it0, texels + 0);  /* upper-left */
+   get_four_texels(unit, level, face, is1, it0, texels + 4);  /* upper-right */
+   get_four_texels(unit, level, face, is0, it1, texels + 8);  /* lower-left */
+   get_four_texels(unit, level, face, is1, it1, texels + 12); /* lower-right */
 
    /* twiddle packed 32-bit BGRA pixels into RGBA as four unsigned ints */
    {
@@ -433,7 +444,8 @@ compute_lambda(uint unit, vector float s, vector float t)
 void
 sample_texture4_lod(vector float s, vector float t,
                     vector float r, vector float q,
-                    uint unit, uint level_ignored, vector float colors[4])
+                    uint unit, uint level_ignored, uint face,
+                    vector float colors[4])
 {
    /*
     * Note that we're computing a lambda/lod here that's used for all
@@ -452,15 +464,136 @@ sample_texture4_lod(vector float s, vector float t,
 
    if (lambda <= 0.0f) {
       /* magnify */
-      spu.mag_sample_texture4[unit](s, t, r, q, unit, 0, colors);
+      spu.mag_sample_texture4[unit](s, t, r, q, unit, 0, 0, colors);
    }
    else {
       /* minify */
       int level = (int) (lambda + 0.5f);
       if (level > (int) spu.texture[unit].max_level)
          level = spu.texture[unit].max_level;
-      spu.min_sample_texture4[unit](s, t, r, q, unit, level, colors);
+      spu.min_sample_texture4[unit](s, t, r, q, unit, level, 0, colors);
       /* XXX to do: mipmap level interpolation */
    }
 }
 
+
+/** XXX need a SIMD version of this */
+static unsigned
+choose_cube_face(float rx, float ry, float rz, float *newS, float *newT)
+{
+   /*
+      major axis
+      direction     target                             sc     tc    ma
+      ----------    -------------------------------    ---    ---   ---
+       +rx          TEXTURE_CUBE_MAP_POSITIVE_X_EXT    -rz    -ry   rx
+       -rx          TEXTURE_CUBE_MAP_NEGATIVE_X_EXT    +rz    -ry   rx
+       +ry          TEXTURE_CUBE_MAP_POSITIVE_Y_EXT    +rx    +rz   ry
+       -ry          TEXTURE_CUBE_MAP_NEGATIVE_Y_EXT    +rx    -rz   ry
+       +rz          TEXTURE_CUBE_MAP_POSITIVE_Z_EXT    +rx    -ry   rz
+       -rz          TEXTURE_CUBE_MAP_NEGATIVE_Z_EXT    -rx    -ry   rz
+   */
+   const float arx = fabsf(rx);
+   const float ary = fabsf(ry);
+   const float arz = fabsf(rz);
+   unsigned face;
+   float sc, tc, ma;
+
+   if (arx > ary && arx > arz) {
+      if (rx >= 0.0F) {
+         face = PIPE_TEX_FACE_POS_X;
+         sc = -rz;
+         tc = -ry;
+         ma = arx;
+      }
+      else {
+         face = PIPE_TEX_FACE_NEG_X;
+         sc = rz;
+         tc = -ry;
+         ma = arx;
+      }
+   }
+   else if (ary > arx && ary > arz) {
+      if (ry >= 0.0F) {
+         face = PIPE_TEX_FACE_POS_Y;
+         sc = rx;
+         tc = rz;
+         ma = ary;
+      }
+      else {
+         face = PIPE_TEX_FACE_NEG_Y;
+         sc = rx;
+         tc = -rz;
+         ma = ary;
+      }
+   }
+   else {
+      if (rz > 0.0F) {
+         face = PIPE_TEX_FACE_POS_Z;
+         sc = rx;
+         tc = -ry;
+         ma = arz;
+      }
+      else {
+         face = PIPE_TEX_FACE_NEG_Z;
+         sc = -rx;
+         tc = -ry;
+         ma = arz;
+      }
+   }
+
+   *newS = (sc / ma + 1.0F) * 0.5F;
+   *newT = (tc / ma + 1.0F) * 0.5F;
+
+   return face;
+}
+
+
+
+void
+sample_texture4_cube(vector float s, vector float t,
+                     vector float r, vector float q,
+                     uint unit, uint level, int face_ignored,
+                     vector float colors[4])
+{
+   static const vector float zero = {0.0f, 0.0f, 0.0f, 0.0f};
+   uint p, faces[4];
+   float newS[4], newT[4];
+
+   /* Compute cube face referenced by the four sets of texcoords.
+    * XXX we should SIMD-ize this.
+    */
+   for (p = 0; p < 4; p++) {      
+      float rx = spu_extract(s, p);
+      float ry = spu_extract(t, p);
+      float rz = spu_extract(r, p);
+      faces[p] = choose_cube_face(rx, ry, rz, &newS[p], &newT[p]);
+   }
+
+   if (faces[0] == faces[1] &&
+       faces[0] == faces[2] &&
+       faces[0] == faces[3]) {
+      /* GOOD!  All four texcoords refer to the same cube face */
+      s = (vector float) {newS[0], newS[1], newS[2], newS[3]};
+      t = (vector float) {newT[0], newT[1], newT[2], newT[3]};
+      sample_texture4_nearest(s, t, zero, zero, unit, level, faces[0], colors);
+   }
+   else {
+      /* BAD!  The four texcoords refer to different faces */
+      for (p = 0; p < 4; p++) {      
+         vector float c[4];
+
+         sample_texture4_nearest(spu_splats(newS[p]), spu_splats(newT[p]),
+                                 zero, zero, unit, level, faces[p], c);
+
+         float red = spu_extract(c[0], p);
+         float green = spu_extract(c[1], p);
+         float blue = spu_extract(c[2], p);
+         float alpha = spu_extract(c[3], p);
+
+         colors[0] = spu_insert(red,   colors[0], p);
+         colors[1] = spu_insert(green, colors[1], p);
+         colors[2] = spu_insert(blue,  colors[2], p);
+         colors[3] = spu_insert(alpha, colors[3], p);
+      }
+   }
+}

@@ -137,12 +137,19 @@ cell_texture_release(struct pipe_screen *screen,
    */
    if (--(*pt)->refcount <= 0) {
       struct cell_texture *ct = cell_texture(*pt);
+      uint i;
 
       /*
       DBG("%s deleting %p\n", __FUNCTION__, (void *) ct);
       */
 
       pipe_buffer_reference(screen, &ct->buffer, NULL);
+
+      for (i = 0; i < CELL_MAX_TEXTURE_LEVELS; i++) {
+         if (ct->tiled_data[i]) {
+            FREE(ct->tiled_data[i]);
+         }
+      }
 
       FREE(ct);
    }
@@ -204,27 +211,33 @@ static void
 cell_twiddle_texture(struct pipe_screen *screen,
                      struct pipe_surface *surface)
 {
-   struct cell_texture *texture = cell_texture(surface->texture);
+   struct cell_texture *ct = cell_texture(surface->texture);
    const uint level = surface->level;
-   const uint texWidth = texture->base.width[level];
-   const uint texHeight = texture->base.height[level];
+   const uint texWidth = ct->base.width[level];
+   const uint texHeight = ct->base.height[level];
    const uint bufWidth = align(texWidth, TILE_SIZE);
    const uint bufHeight = align(texHeight, TILE_SIZE);
    const void *map = pipe_buffer_map(screen, surface->buffer,
                                      PIPE_BUFFER_USAGE_CPU_READ);
    const uint *src = (const uint *) ((const ubyte *) map + surface->offset);
 
-   switch (texture->base.format) {
+   switch (ct->base.format) {
    case PIPE_FORMAT_A8R8G8B8_UNORM:
-      /* free old tiled data */
-      if (texture->tiled_data[level]) {
-         align_free(texture->tiled_data[level]);
+      {
+         int numFaces = ct->base.target == PIPE_TEXTURE_CUBE ? 6 : 1;
+         int offset = bufWidth * bufHeight * 4 * surface->face;
+         uint *dst;
+
+         if (!ct->tiled_data[level]) {
+            ct->tiled_data[level] =
+               align_malloc(bufWidth * bufHeight * 4 * numFaces, 16);
+         }
+
+         dst = (uint *) ((ubyte *) ct->tiled_data[level] + offset);
+
+         twiddle_image_uint(texWidth, texHeight, TILE_SIZE, dst,
+                            surface->stride, src);
       }
-      /* alloc new tiled data */
-      texture->tiled_data[level] = align_malloc(bufWidth * bufHeight * 4, 16);
-      twiddle_image_uint(texWidth, texHeight, TILE_SIZE,
-                         texture->tiled_data[level],
-                         surface->stride, src);
       break;
    default:
       printf("Cell: twiddle unsupported texture format\n");

@@ -301,7 +301,8 @@ cmd_state_framebuffer(const struct cell_command_framebuffer *cmd)
  */
 static void
 update_tex_masks(struct spu_texture *texture,
-                 const struct pipe_sampler_state *sampler)
+                 const struct pipe_sampler_state *sampler,
+                 uint unit)
 {
    uint i;
 
@@ -327,6 +328,11 @@ update_tex_masks(struct spu_texture *texture,
          texture->level[i].scale_s = spu_splats(1.0f);
          texture->level[i].scale_t = spu_splats(1.0f);
       }
+   }
+
+   /* XXX temporary hack */
+   if (texture->target == PIPE_TEXTURE_CUBE) {
+      spu.sample_texture4[unit] = sample_texture4_cube;
    }
 }
 
@@ -378,7 +384,7 @@ cmd_state_sampler(const struct cell_command_sampler *sampler)
       ASSERT(0);
    }
 
-   update_tex_masks(&spu.texture[unit], &spu.sampler[unit]);
+   update_tex_masks(&spu.texture[unit], &spu.sampler[unit], unit);
 }
 
 
@@ -393,6 +399,7 @@ cmd_state_texture(const struct cell_command_texture *texture)
    DEBUG_PRINTF("TEXTURE [%u]\n", texture->unit);
 
    spu.texture[unit].max_level = 0;
+   spu.texture[unit].target = texture->target;
 
    for (i = 0; i < CELL_MAX_TEXTURE_LEVELS; i++) {
       uint width = texture->width[i];
@@ -408,6 +415,10 @@ cmd_state_texture(const struct cell_command_texture *texture)
       spu.texture[unit].level[i].tiles_per_row =
          (width + TILE_SIZE - 1) / TILE_SIZE;
 
+      spu.texture[unit].level[i].bytes_per_image =
+         4 * ((width + TILE_SIZE - 1) & ~(TILE_SIZE-1))
+         * ((height + TILE_SIZE - 1) & ~(TILE_SIZE-1));
+
       spu.texture[unit].level[i].max_s = spu_splats((int) width - 1);
       spu.texture[unit].level[i].max_t = spu_splats((int) height - 1);
 
@@ -415,7 +426,7 @@ cmd_state_texture(const struct cell_command_texture *texture)
          spu.texture[unit].max_level = i;
    }
 
-   update_tex_masks(&spu.texture[unit], &spu.sampler[unit]);
+   update_tex_masks(&spu.texture[unit], &spu.sampler[unit], unit);
 
    //Debug=0;
 }

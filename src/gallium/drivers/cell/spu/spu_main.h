@@ -68,7 +68,7 @@ typedef void (*spu_sample_texture4_func)(vector float s,
                                          vector float t,
                                          vector float r,
                                          vector float q,
-                                         uint unit, uint level,
+                                         uint unit, uint level, uint face,
                                          vector float colors[4]);
 
 
@@ -113,6 +113,7 @@ struct spu_texture_level
    void *start;
    ushort width, height;
    ushort tiles_per_row;
+   uint bytes_per_image;
    /** texcoord scale factors */
    vector float scale_s, scale_t;
    /** texcoord masks (if REPEAT then size-1, else ~0) */
@@ -126,6 +127,7 @@ struct spu_texture
 {
    struct spu_texture_level level[CELL_MAX_TEXTURE_LEVELS];
    uint max_level;
+   uint target;  /**< PIPE_TEXTURE_x */
 } ALIGN16_ATTRIB;
 
 
