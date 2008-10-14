@@ -116,7 +116,7 @@ struct setup_stage {
    struct edge etop;
    struct edge emaj;
 
-   float oneoverarea;
+   float oneOverArea;
 
    uint facing;
 
@@ -507,13 +507,13 @@ setup_sort_vertices(const struct vertex_header *v0,
     * use the prim->det value because its sign is correct.
     */
    {
-      const float area = (setup.emaj.dx * setup.ebot.dy - 
-			    setup.ebot.dx * setup.emaj.dy);
+      const float area = (setup.emaj.dx * setup.ebot.dy -
+                          setup.ebot.dx * setup.emaj.dy);
 
-      setup.oneoverarea = 1.0f / area;
+      setup.oneOverArea = 1.0f / area;
       /*
       _mesa_printf("%s one-over-area %f  area %f  det %f\n",
-                   __FUNCTION__, setup.oneoverarea, area, prim->det );
+                   __FUNCTION__, setup.oneOverArea, area, prim->det );
       */
    }
 
@@ -536,63 +536,11 @@ setup_sort_vertices(const struct vertex_header *v0,
  * \param slot  which attribute slot 
  */
 static INLINE void
-const_coeff(uint slot)
+const_coeff4(uint slot)
 {
    setup.coef[slot].dadx.v = (vector float) {0.0, 0.0, 0.0, 0.0};
    setup.coef[slot].dady.v = (vector float) {0.0, 0.0, 0.0, 0.0};
    setup.coef[slot].a0.v = setup.vprovoke->data[slot];
-}
-
-
-/**
- * Compute a0, dadx and dady for a linearly interpolated coefficient,
- * for a triangle.
- */
-static INLINE void
-tri_linear_coeff(uint slot, uint firstComp, uint lastComp)
-{
-   uint i;
-   const float *vmin_d = (float *) &setup.vmin->data[slot];
-   const float *vmid_d = (float *) &setup.vmid->data[slot];
-   const float *vmax_d = (float *) &setup.vmax->data[slot];
-   const float x = spu_extract(setup.vmin->data[0], 0) - 0.5f;
-   const float y = spu_extract(setup.vmin->data[0], 1) - 0.5f;
-
-   for (i = firstComp; i < lastComp; i++) {
-      float botda = vmid_d[i] - vmin_d[i];
-      float majda = vmax_d[i] - vmin_d[i];
-      float a = setup.ebot.dy * majda - botda * setup.emaj.dy;
-      float b = setup.emaj.dx * botda - majda * setup.ebot.dx;
-   
-      ASSERT(slot < PIPE_MAX_SHADER_INPUTS);
-
-      setup.coef[slot].dadx.f[i] = a * setup.oneoverarea;
-      setup.coef[slot].dady.f[i] = b * setup.oneoverarea;
-
-      /* calculate a0 as the value which would be sampled for the
-       * fragment at (0,0), taking into account that we want to sample at
-       * pixel centers, in other words (0.5, 0.5).
-       *
-       * this is neat but unfortunately not a good way to do things for
-       * triangles with very large values of dadx or dady as it will
-       * result in the subtraction and re-addition from a0 of a very
-       * large number, which means we'll end up loosing a lot of the
-       * fractional bits and precision from a0.  the way to fix this is
-       * to define a0 as the sample at a pixel center somewhere near vmin
-       * instead - i'll switch to this later.
-       */
-      setup.coef[slot].a0.f[i] = (vmin_d[i] - 
-                                 (setup.coef[slot].dadx.f[i] * x + 
-                                  setup.coef[slot].dady.f[i] * y));
-   }
-
-   /*
-   _mesa_printf("attr[%d].%c: %f dx:%f dy:%f\n",
-		slot, "xyzw"[i], 
-		setup.coef[slot].a0[i],
-		setup.coef[slot].dadx.f[i],
-		setup.coef[slot].dady.f[i]);
-   */
 }
 
 
@@ -616,8 +564,8 @@ tri_linear_coeff4(uint slot)
    vector float b = spu_sub(spu_mul(spu_splats(setup.emaj.dx), botda),
                             spu_mul(majda, spu_splats(setup.ebot.dx)));
 
-   setup.coef[slot].dadx.v = spu_mul(a, spu_splats(setup.oneoverarea));
-   setup.coef[slot].dady.v = spu_mul(b, spu_splats(setup.oneoverarea));
+   setup.coef[slot].dadx.v = spu_mul(a, spu_splats(setup.oneOverArea));
+   setup.coef[slot].dady.v = spu_mul(b, spu_splats(setup.oneOverArea));
 
    vector float tempx = spu_mul(setup.coef[slot].dadx.v, xxxx);
    vector float tempy = spu_mul(setup.coef[slot].dady.v, yyyy);
@@ -660,8 +608,8 @@ tri_persp_coeff4(uint slot)
    vector float b = spu_sub(spu_mul(spu_splats(setup.emaj.dx), botda),
                             spu_mul(majda, spu_splats(setup.ebot.dx)));
 
-   setup.coef[slot].dadx.v = spu_mul(a, spu_splats(setup.oneoverarea));
-   setup.coef[slot].dady.v = spu_mul(b, spu_splats(setup.oneoverarea));
+   setup.coef[slot].dadx.v = spu_mul(a, spu_splats(setup.oneOverArea));
+   setup.coef[slot].dady.v = spu_mul(b, spu_splats(setup.oneOverArea));
 
    vector float tempx = spu_mul(setup.coef[slot].dadx.v, xxxx);
    vector float tempy = spu_mul(setup.coef[slot].dady.v, yyyy);
@@ -678,21 +626,17 @@ tri_persp_coeff4(uint slot)
 static void
 setup_tri_coefficients(void)
 {
-#if 1
    uint i;
 
    for (i = 0; i < spu.vertex_info.num_attribs; i++) {
       switch (spu.vertex_info.attrib[i].interp_mode) {
       case INTERP_NONE:
          break;
-      case INTERP_POS:
-         /*tri_linear_coeff(i, 2, 3);*/
-         /* XXX interp W if PERSPECTIVE... */
-         tri_linear_coeff4(i);
-         break;
       case INTERP_CONSTANT:
-         const_coeff(i);
+         const_coeff4(i);
          break;
+      case INTERP_POS:
+         /* fall-through */
       case INTERP_LINEAR:
          tri_linear_coeff4(i);
          break;
@@ -703,13 +647,6 @@ setup_tri_coefficients(void)
          ASSERT(0);
       }
    }
-#else
-   ASSERT(spu.vertex_info.interp_mode[0] == INTERP_POS);
-   ASSERT(spu.vertex_info.interp_mode[1] == INTERP_LINEAR ||
-          spu.vertex_info.interp_mode[1] == INTERP_CONSTANT);
-   tri_linear_coeff(0, 2, 3);  /* slot 0, z */
-   tri_linear_coeff(1, 0, 4);  /* slot 1, color */
-#endif
 }
 
 
@@ -863,19 +800,14 @@ tri_draw(const float *v0, const float *v1, const float *v2,
    setup.span.y_flags = 0;
    setup.span.right[0] = 0;
    setup.span.right[1] = 0;
-   /*   setup.span.z_mode = tri_z_mode( setup.ctx ); */
 
-   /*   init_constant_attribs( setup ); */
-      
-   if (setup.oneoverarea < 0.0) {
-      /* emaj on left:
-       */
+   if (setup.oneOverArea < 0.0) {
+      /* emaj on left */
       subtriangle( &setup.emaj, &setup.ebot, setup.ebot.lines );
       subtriangle( &setup.emaj, &setup.etop, setup.etop.lines );
    }
    else {
-      /* emaj on right:
-       */
+      /* emaj on right */
       subtriangle( &setup.ebot, &setup.emaj, setup.ebot.lines );
       subtriangle( &setup.etop, &setup.emaj, setup.etop.lines );
    }
