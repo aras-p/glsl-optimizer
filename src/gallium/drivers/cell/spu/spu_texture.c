@@ -138,8 +138,8 @@ sample_texture4_bilinear(vector float s, vector float t,
    vector float ss = spu_madd(s, spu.texture[unit].level[level].width4,  spu_splats(-0.5f));
    vector float tt = spu_madd(t, spu.texture[unit].level[level].height4, spu_splats(-0.5f));
 
-   vector unsigned int is0 = spu_convtu(ss, 0);
-   vector unsigned int it0 = spu_convtu(tt, 0);
+   vector unsigned int is0 = (vector unsigned int) spu_convts(ss, 0);
+   vector unsigned int it0 = (vector unsigned int) spu_convts(tt, 0);
 
    /* is + 1, it + 1 */
    vector unsigned int is1 = spu_add(is0, 1);
@@ -281,8 +281,8 @@ sample_texture4_bilinear_2(vector float s, vector float t,
    vector float tt = spu_madd(t, spu.texture[unit].level[level].height4, half);
 
    /* convert float coords to fixed-pt coords with 8 fraction bits */
-   vector unsigned int is = spu_convtu(ss, 8);
-   vector unsigned int it = spu_convtu(tt, 8);
+   vector unsigned int is = (vector unsigned int) spu_convts(ss, 8);
+   vector unsigned int it = (vector unsigned int) spu_convts(tt, 8);
 
    /* compute integer texel weights in [0, 255] */
    vector signed int sWeights0 = spu_and((vector signed int) is, 255);
