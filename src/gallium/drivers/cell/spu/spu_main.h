@@ -68,7 +68,7 @@ typedef void (*spu_sample_texture4_func)(vector float s,
                                          vector float t,
                                          vector float r,
                                          vector float q,
-                                         uint unit,
+                                         uint unit, uint level,
                                          vector float colors[4]);
 
 
@@ -121,6 +121,7 @@ struct spu_texture_level
 struct spu_texture
 {
    struct spu_texture_level level[CELL_MAX_TEXTURE_LEVELS];
+   uint max_level;
 } ALIGN16_ATTRIB;
 
 

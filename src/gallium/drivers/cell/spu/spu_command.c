@@ -301,16 +301,18 @@ cmd_state_sampler(const struct cell_command_sampler *sampler)
    DEBUG_PRINTF("SAMPLER [%u]\n", sampler->unit);
 
    spu.sampler[sampler->unit] = sampler->state;
-#if 0
+
    if (spu.sampler[sampler->unit].min_mip_filter != PIPE_TEX_MIPFILTER_NONE) {
+      /* use lambda/lod to determine min vs. mag filter */
       spu.sample_texture4[sampler->unit] = sample_texture4_lod;
    }
-   else
-#endif
-   if (spu.sampler[sampler->unit].min_img_filter == PIPE_TEX_FILTER_LINEAR) {
+   else if (spu.sampler[sampler->unit].min_img_filter
+            == PIPE_TEX_FILTER_LINEAR) {
+      /* min = mag = bilinear */
       spu.sample_texture4[sampler->unit] = sample_texture4_bilinear;
    }
    else {
+      /* min = mag = inearest */
       spu.sample_texture4[sampler->unit] = sample_texture4_nearest;
    }
 }
@@ -322,7 +324,11 @@ cmd_state_texture(const struct cell_command_texture *texture)
    const uint unit = texture->unit;
    uint i;
 
+   //if (spu.init.id==0) Debug=1;
+
    DEBUG_PRINTF("TEXTURE [%u]\n", texture->unit);
+
+   spu.texture[unit].max_level = 0;
 
    for (i = 0; i < CELL_MAX_TEXTURE_LEVELS; i++) {
       uint width = texture->width[i];
@@ -335,14 +341,19 @@ cmd_state_texture(const struct cell_command_texture *texture)
       spu.texture[unit].level[i].width = width;
       spu.texture[unit].level[i].height = height;
 
-      spu.texture[unit].level[i].tiles_per_row = width / TILE_SIZE;
+      spu.texture[unit].level[i].tiles_per_row =
+         (width + TILE_SIZE - 1) / TILE_SIZE;
 
       spu.texture[unit].level[i].width4 = spu_splats((float) width);
       spu.texture[unit].level[i].height4 = spu_splats((float) height);
 
       spu.texture[unit].level[i].tex_size_x_mask = spu_splats(width - 1);
       spu.texture[unit].level[i].tex_size_y_mask = spu_splats(height - 1);
+
+      if (texture->start[i])
+         spu.texture[unit].max_level = i;
    }
+   //Debug=0;
 }
 
 
