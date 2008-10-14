@@ -298,22 +298,48 @@ cmd_state_framebuffer(const struct cell_command_framebuffer *cmd)
 static void
 cmd_state_sampler(const struct cell_command_sampler *sampler)
 {
-   DEBUG_PRINTF("SAMPLER [%u]\n", sampler->unit);
+   uint unit = sampler->unit;
 
-   spu.sampler[sampler->unit] = sampler->state;
+   DEBUG_PRINTF("SAMPLER [%u]\n", unit);
 
-   if (spu.sampler[sampler->unit].min_mip_filter != PIPE_TEX_MIPFILTER_NONE) {
-      /* use lambda/lod to determine min vs. mag filter */
-      spu.sample_texture4[sampler->unit] = sample_texture4_lod;
+   spu.sampler[unit] = sampler->state;
+
+   switch (spu.sampler[unit].min_img_filter) {
+   case PIPE_TEX_FILTER_LINEAR:
+      spu.min_sample_texture4[unit] = sample_texture4_bilinear;
+      break;
+   case PIPE_TEX_FILTER_ANISO:
+      /* fall-through, for now */
+   case PIPE_TEX_FILTER_NEAREST:
+      spu.min_sample_texture4[unit] = sample_texture4_nearest;
+      break;
+   default:
+      ASSERT(0);
    }
-   else if (spu.sampler[sampler->unit].min_img_filter
-            == PIPE_TEX_FILTER_LINEAR) {
-      /* min = mag = bilinear */
-      spu.sample_texture4[sampler->unit] = sample_texture4_bilinear;
+
+   switch (spu.sampler[sampler->unit].mag_img_filter) {
+   case PIPE_TEX_FILTER_LINEAR:
+      spu.mag_sample_texture4[unit] = sample_texture4_bilinear;
+      break;
+   case PIPE_TEX_FILTER_ANISO:
+      /* fall-through, for now */
+   case PIPE_TEX_FILTER_NEAREST:
+      spu.mag_sample_texture4[unit] = sample_texture4_nearest;
+      break;
+   default:
+      ASSERT(0);
    }
-   else {
-      /* min = mag = inearest */
-      spu.sample_texture4[sampler->unit] = sample_texture4_nearest;
+
+   switch (spu.sampler[sampler->unit].min_mip_filter) {
+   case PIPE_TEX_MIPFILTER_NEAREST:
+   case PIPE_TEX_MIPFILTER_LINEAR:
+      spu.sample_texture4[unit] = sample_texture4_lod;
+      break;
+   case PIPE_TEX_MIPFILTER_NONE:
+      spu.sample_texture4[unit] = spu.mag_sample_texture4[unit];
+      break;
+   default:
+      ASSERT(0);
    }
 }
 

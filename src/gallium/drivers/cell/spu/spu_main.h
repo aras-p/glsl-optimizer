@@ -170,6 +170,8 @@ struct spu_global
 
    /** Current texture sampler function */
    spu_sample_texture4_func sample_texture4[CELL_MAX_SAMPLERS];
+   spu_sample_texture4_func min_sample_texture4[CELL_MAX_SAMPLERS];
+   spu_sample_texture4_func mag_sample_texture4[CELL_MAX_SAMPLERS];
 
    /** Fragment program constants */
    vector float constants[4 * CELL_MAX_CONSTANTS];

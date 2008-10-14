@@ -400,7 +400,7 @@ compute_lambda(uint unit, vector float s, vector float t)
 void
 sample_texture4_lod(vector float s, vector float t,
                     vector float r, vector float q,
-                    uint unit, uint level, vector float colors[4])
+                    uint unit, uint level_ignored, vector float colors[4])
 {
    /*
     * Note that we're computing a lambda/lod here that's used for all
@@ -417,13 +417,17 @@ sample_texture4_lod(vector float s, vector float t,
    else if (lambda > spu.sampler[unit].max_lod)
       lambda = spu.sampler[unit].max_lod;
 
-   /* convert to int level */
-   level = (int) (lambda + 0.5f);
-   ASSERT(level >= 0);
-
-   if (level > spu.texture[unit].max_level)
-      level = spu.texture[unit].max_level;
-
-   sample_texture4_bilinear_2(s, t, r, q, unit, level, colors);
+   if (lambda <= 0.0f) {
+      /* magnify */
+      spu.mag_sample_texture4[unit](s, t, r, q, unit, 0, colors);
+   }
+   else {
+      /* minify */
+      int level = (int) (lambda + 0.5f);
+      if (level > (int) spu.texture[unit].max_level)
+         level = spu.texture[unit].max_level;
+      spu.min_sample_texture4[unit](s, t, r, q, unit, level, colors);
+      /* XXX to do: mipmap level interpolation */
+   }
 }
 
