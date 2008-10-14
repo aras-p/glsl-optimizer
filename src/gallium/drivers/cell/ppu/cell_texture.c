@@ -155,7 +155,7 @@ cell_texture_release(struct pipe_screen *screen,
  * Convert image from linear layout to tiled layout.  4-byte pixels.
  */
 static void
-swizzle_image_uint(uint w, uint h, uint tile_size, uint *dst,
+twiddle_image_uint(uint w, uint h, uint tile_size, uint *dst,
                    uint src_stride, const uint *src)
 {
    const uint tile_size2 = tile_size * tile_size;
@@ -179,8 +179,8 @@ swizzle_image_uint(uint w, uint h, uint tile_size, uint *dst,
             for (j = 0; j < tile_width; j++) {
                const uint srci = it * tile_size + i;
                const uint srcj = jt * tile_size + j;
-               ASSERT(srci < w);
-               ASSERT(srcj < h);
+               ASSERT(srci < h);
+               ASSERT(srcj < w);
                tdst[i * tile_size + j] = src[srci * src_stride + srcj];
             }
          }
@@ -214,12 +214,12 @@ cell_twiddle_texture(struct pipe_screen *screen,
       }
       /* alloc new tiled data */
       texture->tiled_data[level] = align_malloc(bufWidth * bufHeight * 4, 16);
-      swizzle_image_uint(texWidth, texHeight, TILE_SIZE,
+      twiddle_image_uint(texWidth, texHeight, TILE_SIZE,
                          texture->tiled_data[level],
                          surface->stride, src);
       break;
    default:
-      printf("Unsupported texture format\n");
+      printf("Cell: twiddle unsupported texture format\n");
       ;
    }
 
