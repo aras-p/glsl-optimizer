@@ -64,7 +64,7 @@
 #define ROUNDUP16(k)  (((k) + 0xf) & ~0xf)
 
 
-#define CELL_MAX_SPUS 6
+#define CELL_MAX_SPUS 8
 
 #define CELL_MAX_SAMPLERS 4
 #define CELL_MAX_TEXTURE_LEVELS 12  /* 2k x 2k */

@@ -124,7 +124,7 @@ cell_start_spus(struct cell_context *cell)
 
    one_time_init = TRUE;
 
-   assert(cell->num_spus <= MAX_SPUS);
+   assert(cell->num_spus <= CELL_MAX_SPUS);
 
    ASSERT_ALIGN16(&cell_global.inits[0]);
    ASSERT_ALIGN16(&cell_global.inits[1]);
