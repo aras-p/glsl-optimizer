@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  7.1
+ * Version:  7.3
  *
  * Copyright (C) 1999-2008  Brian Paul   All Rights Reserved.
  *
@@ -508,10 +508,12 @@ _mesa_update_state_locked( GLcontext *ctx )
 
    if (ctx->FragmentProgram._MaintainTexEnvProgram) {
       prog_flags |= (_NEW_ARRAY | _NEW_TEXTURE_MATRIX | _NEW_LIGHT |
+                     _NEW_RENDERMODE |
                      _NEW_TEXTURE | _NEW_FOG | _DD_NEW_SEPARATE_SPECULAR);
    }
    if (ctx->VertexProgram._MaintainTnlProgram) {
       prog_flags |= (_NEW_ARRAY | _NEW_TEXTURE | _NEW_TEXTURE_MATRIX |
+                     _NEW_RENDERMODE |
                      _NEW_TRANSFORM | _NEW_POINT |
                      _NEW_FOG | _NEW_LIGHT |
                      _MESA_NEW_NEED_EYE_COORDS);
@@ -551,7 +553,8 @@ _mesa_update_state( GLcontext *ctx )
 
 
 
-/* Want to figure out which fragment program inputs are actually
+/**
+ * Want to figure out which fragment program inputs are actually
  * constant/current values from ctx->Current.  These should be
  * referenced as a tracked state variable rather than a fragment
  * program input, to save the overhead of putting a constant value in
@@ -579,6 +582,26 @@ _mesa_set_varying_vp_inputs( GLcontext *ctx,
    if (ctx->varying_vp_inputs != varying_inputs) {
       ctx->varying_vp_inputs = varying_inputs;
       ctx->NewState |= _NEW_ARRAY;
-      //_mesa_printf("%s %x\n", __FUNCTION__, varying_inputs);
+      /*_mesa_printf("%s %x\n", __FUNCTION__, varying_inputs);*/
+   }
+}
+
+
+/**
+ * Used by drivers to tell core Mesa that the driver is going to
+ * install/ use its own vertex program.  In particular, this will
+ * prevent generated fragment programs from using state vars instead
+ * of ordinary varyings/inputs.
+ */
+void
+_mesa_set_vp_override(GLcontext *ctx, GLboolean flag)
+{
+   if (ctx->VertexProgram._Overriden != flag) {
+      ctx->VertexProgram._Overriden = flag;
+
+      /* Set one of the bits which will trigger fragment program
+       * regeneration:
+       */
+      ctx->NewState |= _NEW_ARRAY; 
    }
 }

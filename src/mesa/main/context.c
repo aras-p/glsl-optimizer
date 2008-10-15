@@ -1063,6 +1063,7 @@ init_attrib_groups(GLcontext *ctx)
    /* Miscellaneous */
    ctx->NewState = _NEW_ALL;
    ctx->ErrorValue = (GLenum) GL_NO_ERROR;
+   ctx->varying_vp_inputs = ~0;
 
    return GL_TRUE;
 }

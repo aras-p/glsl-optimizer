@@ -47,17 +47,17 @@
 
 
 struct state_key {
+   unsigned light_color_material_mask:12;
+   unsigned light_material_mask:12;
    unsigned light_global_enabled:1;
    unsigned light_local_viewer:1;
    unsigned light_twoside:1;
    unsigned light_color_material:1;
-   unsigned light_color_material_mask:12;
-   unsigned light_material_mask:12;
    unsigned material_shininess_is_zero:1;
-
    unsigned need_eye_coords:1;
    unsigned normalize:1;
    unsigned rescale_normals:1;
+
    unsigned fog_source_is_depth:1;
    unsigned tnl_do_vertex_fog:1;
    unsigned separate_specular:1;
@@ -66,6 +66,8 @@ struct state_key {
    unsigned point_array:1;
    unsigned texture_enabled_global:1;
    unsigned fragprog_inputs_read:12;
+
+   unsigned varying_vp_inputs;
 
    struct {
       unsigned light_enabled:1;
@@ -193,6 +195,7 @@ static void make_state_key( GLcontext *ctx, struct state_key *key )
    key->need_eye_coords = ctx->_NeedEyeCoords;
 
    key->fragprog_inputs_read = fp->Base.InputsRead;
+   key->varying_vp_inputs = ctx->varying_vp_inputs;
 
    if (ctx->RenderMode == GL_FEEDBACK) {
       /* make sure the vertprog emits color and tex0 */
@@ -448,14 +451,46 @@ static void release_temps( struct tnl_program *p )
 }
 
 
+static struct ureg register_param5(struct tnl_program *p, 
+				   GLint s0,
+				   GLint s1,
+				   GLint s2,
+				   GLint s3,
+                                   GLint s4)
+{
+   gl_state_index tokens[STATE_LENGTH];
+   GLint idx;
+   tokens[0] = s0;
+   tokens[1] = s1;
+   tokens[2] = s2;
+   tokens[3] = s3;
+   tokens[4] = s4;
+   idx = _mesa_add_state_reference( p->program->Base.Parameters, tokens );
+   return make_ureg(PROGRAM_STATE_VAR, idx);
+}
+
+
+#define register_param1(p,s0)          register_param5(p,s0,0,0,0,0)
+#define register_param2(p,s0,s1)       register_param5(p,s0,s1,0,0,0)
+#define register_param3(p,s0,s1,s2)    register_param5(p,s0,s1,s2,0,0)
+#define register_param4(p,s0,s1,s2,s3) register_param5(p,s0,s1,s2,s3,0)
+
+
 
 /**
  * \param input  one of VERT_ATTRIB_x tokens.
  */
 static struct ureg register_input( struct tnl_program *p, GLuint input )
 {
-   p->program->Base.InputsRead |= (1<<input);
-   return make_ureg(PROGRAM_INPUT, input);
+   /* Material attribs are passed here as inputs >= 32
+    */
+   if (input >= 32 || (p->state->varying_vp_inputs & (1<<input))) {
+      p->program->Base.InputsRead |= (1<<input);
+      return make_ureg(PROGRAM_INPUT, input);
+   }
+   else {
+      return register_param3( p, STATE_INTERNAL, STATE_CURRENT_ATTRIB, input );
+   }
 }
 
 /**
@@ -503,31 +538,6 @@ static struct ureg get_identity_param( struct tnl_program *p )
 
    return p->identity;
 }
-
-static struct ureg register_param5(struct tnl_program *p, 
-				   GLint s0,
-				   GLint s1,
-				   GLint s2,
-				   GLint s3,
-                                   GLint s4)
-{
-   gl_state_index tokens[STATE_LENGTH];
-   GLint idx;
-   tokens[0] = s0;
-   tokens[1] = s1;
-   tokens[2] = s2;
-   tokens[3] = s3;
-   tokens[4] = s4;
-   idx = _mesa_add_state_reference( p->program->Base.Parameters, tokens );
-   return make_ureg(PROGRAM_STATE_VAR, idx);
-}
-
-
-#define register_param1(p,s0)          register_param5(p,s0,0,0,0,0)
-#define register_param2(p,s0,s1)       register_param5(p,s0,s1,0,0,0)
-#define register_param3(p,s0,s1,s2)    register_param5(p,s0,s1,s2,0,0)
-#define register_param4(p,s0,s1,s2,s3) register_param5(p,s0,s1,s2,s3,0)
-
 
 static void register_matrix_param5( struct tnl_program *p,
 				    GLint s0, /* modelview, projection, etc */
