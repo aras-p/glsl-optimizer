@@ -250,6 +250,7 @@ cmd_state_fs_constants(const uint64_t *buffer, uint pos)
 
    /* Expand each float to float[4] for SOA execution */
    for (i = 0; i < num_const; i++) {
+      DEBUG_PRINTF("  const[%u] = %f\n", i, constants[i]);
       spu.constants[i] = spu_splats(constants[i]);
    }
 
