@@ -404,11 +404,14 @@ flush_spans(void)
 static void
 print_vertex(const struct vertex_header *v)
 {
-   int i;
-   fprintf(stderr, "Vertex: (%p)\n", v);
-   for (i = 0; i < setup.quad.nr_attrs; i++) {
-      fprintf(stderr, "  %d: %f %f %f %f\n",  i, 
-              v->data[i][0], v->data[i][1], v->data[i][2], v->data[i][3]);
+   uint i;
+   fprintf(stderr, "  Vertex: (%p)\n", v);
+   for (i = 0; i < spu.vertex_info.num_attribs; i++) {
+      fprintf(stderr, "    %d: %f %f %f %f\n",  i, 
+              spu_extract(v->data[i], 0),
+              spu_extract(v->data[i], 1),
+              spu_extract(v->data[i], 2),
+              spu_extract(v->data[i], 3));
    }
 }
 #endif
@@ -420,10 +423,12 @@ setup_sort_vertices(const struct vertex_header *v0,
                     const struct vertex_header *v2)
 {
 #if DEBUG_VERTS
-   fprintf(stderr, "Triangle:\n");
-   print_vertex(v0);
-   print_vertex(v1);
-   print_vertex(v2);
+   if (spu.init.id==0) {
+      fprintf(stderr, "SPU %u: Triangle:\n", spu.init.id);
+      print_vertex(v0);
+      print_vertex(v1);
+      print_vertex(v2);
+   }
 #endif
 
    setup.vprovoke = v2;
