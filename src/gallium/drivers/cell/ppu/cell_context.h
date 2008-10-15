@@ -74,6 +74,7 @@ struct cell_fragment_shader_state
 struct cell_fragment_ops_key
 {
    struct pipe_blend_state blend;
+   struct pipe_blend_color blend_color;
    struct pipe_depth_stencil_alpha_state dsa;
    enum pipe_format color_format;
    enum pipe_format zs_format;

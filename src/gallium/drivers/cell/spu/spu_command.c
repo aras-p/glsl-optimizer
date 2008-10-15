@@ -195,6 +195,7 @@ cmd_state_fragment_ops(const struct cell_command_fragment_ops *fops)
    /* Copy state info (for fallback case only) */
    memcpy(&spu.depth_stencil_alpha, &fops->dsa, sizeof(fops->dsa));
    memcpy(&spu.blend, &fops->blend, sizeof(fops->blend));
+   memcpy(&spu.blend_color, &fops->blend_color, sizeof(fops->blend_color));
 
    /* Parity twist!  For now, always use the fallback code by default,
     * only switching to codegen when specifically requested.  This

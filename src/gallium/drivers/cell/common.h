@@ -118,12 +118,16 @@
 
 /**
  * Command to specify per-fragment operations state and generated code.
+ * Note that the dsa, blend, blend_color fields are really only needed
+ * for the fallback/C per-pixel code.  They're not used when we generate
+ * dynamic SPU fragment code (which is the normal case).
  */
 struct cell_command_fragment_ops
 {
    uint64_t opcode;      /**< CELL_CMD_STATE_FRAGMENT_OPS */
    struct pipe_depth_stencil_alpha_state dsa;
    struct pipe_blend_state blend;
+   struct pipe_blend_color blend_color;
    unsigned code[SPU_MAX_FRAGMENT_OPS_INSTS];
 };
 

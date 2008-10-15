@@ -52,6 +52,7 @@ lookup_fragment_ops(struct cell_context *cell)
     */
    memset(&key, 0, sizeof(key));
    key.blend = *cell->blend;
+   key.blend_color = cell->blend_color;
    key.dsa = *cell->depth_stencil;
 
    if (cell->framebuffer.cbufs[0])
