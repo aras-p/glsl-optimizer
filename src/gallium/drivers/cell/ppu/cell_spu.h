@@ -50,10 +50,9 @@ struct cell_global_info
    pthread_t spe_threads[MAX_SPUS];
 
    /**
-    * Data sent to SPUs
+    * Data sent to SPUs at start-up
     */
    struct cell_init_info inits[MAX_SPUS];
-   struct cell_command command[MAX_SPUS];
 };
 
 

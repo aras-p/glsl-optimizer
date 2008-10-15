@@ -669,37 +669,18 @@ cmd_batch(uint opcode)
 void
 command_loop(void)
 {
-   struct cell_command cmd;
    int exitFlag = 0;
 
    D_PRINTF(CELL_DEBUG_CMD, "Enter command loop\n");
 
-   ASSERT((sizeof(struct cell_command) & 0xf) == 0);
-   ASSERT_ALIGN16(&cmd);
-
    while (!exitFlag) {
       unsigned opcode;
-      int tag = 0;
 
       D_PRINTF(CELL_DEBUG_CMD, "Wait for cmd...\n");
 
       /* read/wait from mailbox */
       opcode = (unsigned int) spu_read_in_mbox();
-
       D_PRINTF(CELL_DEBUG_CMD, "got cmd 0x%x\n", opcode);
-
-      /* command payload */
-      mfc_get(&cmd,  /* dest */
-              (unsigned int) spu.init.cmd, /* src */
-              sizeof(struct cell_command), /* bytes */
-              tag,
-              0, /* tid */
-              0  /* rid */);
-      wait_on_mask( 1 << tag );
-
-      /*
-       * NOTE: most commands should be contained in a batch buffer
-       */
 
       switch (opcode & CELL_CMD_OPCODE_MASK) {
       case CELL_CMD_EXIT:

@@ -126,9 +126,6 @@ cell_start_spus(struct cell_context *cell)
 
    assert(cell->num_spus <= MAX_SPUS);
 
-   ASSERT_ALIGN16(&cell_global.command[0]);
-   ASSERT_ALIGN16(&cell_global.command[1]);
-
    ASSERT_ALIGN16(&cell_global.inits[0]);
    ASSERT_ALIGN16(&cell_global.inits[1]);
 
@@ -141,7 +138,7 @@ cell_start_spus(struct cell_context *cell)
       cell_global.inits[i].id = i;
       cell_global.inits[i].num_spus = cell->num_spus;
       cell_global.inits[i].debug_flags = cell->debug_flags;
-      cell_global.inits[i].cmd = &cell_global.command[i];
+
       for (j = 0; j < CELL_NUM_BUFFERS; j++) {
          cell_global.inits[i].buffers[j] = cell->buffer[j];
       }

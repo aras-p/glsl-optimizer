@@ -269,19 +269,6 @@ struct cell_command_texture
 };
 
 
-/** XXX unions don't seem to work */
-/* XXX this should go away; all commands should be placed in batch buffers */
-struct cell_command
-{
-#if 0
-   struct cell_command_framebuffer fb;
-   struct cell_command_clear_surface clear;
-   struct cell_command_render render;
-#endif
-   struct cell_command_vs vs;
-} ALIGN16_ATTRIB;
-
-
 #define MAX_SPU_FUNCTIONS 12
 /**
  * Used to tell the PPU about the address of particular functions in the
@@ -302,7 +289,6 @@ struct cell_init_info
    unsigned id;
    unsigned num_spus;
    unsigned debug_flags;  /**< mask of CELL_DEBUG_x flags */
-   struct cell_command *cmd;
 
    /** Buffers for command batches, vertex/index data */
    ubyte *buffers[CELL_NUM_BUFFERS];
