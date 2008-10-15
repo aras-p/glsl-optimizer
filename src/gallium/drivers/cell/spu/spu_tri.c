@@ -116,7 +116,7 @@ struct setup_stage {
    struct edge etop;
    struct edge emaj;
 
-   float oneOverArea;
+   float oneOverArea;  /* XXX maybe make into vector? */
 
    uint facing;
 
@@ -417,11 +417,19 @@ print_vertex(const struct vertex_header *v)
 #endif
 
 
+/**
+ * Sort vertices from top to bottom.
+ * Compute area and determine front vs. back facing.
+ * Do coarse clip test against tile bounds
+ * \return  FALSE if tri is totally outside tile, TRUE otherwise
+ */
 static boolean
 setup_sort_vertices(const struct vertex_header *v0,
                     const struct vertex_header *v1,
                     const struct vertex_header *v2)
 {
+   float area, sign;
+
 #if DEBUG_VERTS
    if (spu.init.id==0) {
       fprintf(stderr, "SPU %u: Triangle:\n", spu.init.id);
@@ -430,8 +438,6 @@ setup_sort_vertices(const struct vertex_header *v0,
       print_vertex(v2);
    }
 #endif
-
-   setup.vprovoke = v2;
 
    /* determine bottom to top order of vertices */
    {
@@ -444,18 +450,21 @@ setup_sort_vertices(const struct vertex_header *v0,
 	    setup.vmin = v0;   
 	    setup.vmid = v1;   
 	    setup.vmax = v2;
+            sign = -1.0f;
 	 }
 	 else if (y2 <= y0) {
 	    /* y2<=y0<=y1 */
 	    setup.vmin = v2;   
 	    setup.vmid = v0;   
 	    setup.vmax = v1;   
+            sign = -1.0f;
 	 }
 	 else {
 	    /* y0<=y2<=y1 */
 	    setup.vmin = v0;   
 	    setup.vmid = v2;   
 	    setup.vmax = v1;  
+            sign = 1.0f;
 	 }
       }
       else {
@@ -464,18 +473,21 @@ setup_sort_vertices(const struct vertex_header *v0,
 	    setup.vmin = v1;   
 	    setup.vmid = v0;   
 	    setup.vmax = v2;  
+            sign = 1.0f;
 	 }
 	 else if (y2 <= y1) {
 	    /* y2<=y1<=y0 */
 	    setup.vmin = v2;   
 	    setup.vmid = v1;   
 	    setup.vmax = v0;  
+            sign = 1.0f;
 	 }
 	 else {
 	    /* y1<=y2<=y0 */
 	    setup.vmin = v1;   
 	    setup.vmid = v2;   
 	    setup.vmax = v0;
+            sign = -1.0f;
 	 }
       }
    }
@@ -504,31 +516,16 @@ setup_sort_vertices(const struct vertex_header *v0,
    /*
     * Compute triangle's area.  Use 1/area to compute partial
     * derivatives of attributes later.
-    *
-    * The area will be the same as prim->det, but the sign may be
-    * different depending on how the vertices get sorted above.
-    *
-    * To determine whether the primitive is front or back facing we
-    * use the prim->det value because its sign is correct.
     */
-   {
-      const float area = (setup.emaj.dx * setup.ebot.dy -
-                          setup.ebot.dx * setup.emaj.dy);
+   area = setup.emaj.dx * setup.ebot.dy - setup.ebot.dx * setup.emaj.dy;
 
-      setup.oneOverArea = 1.0f / area;
-      /*
-      _mesa_printf("%s one-over-area %f  area %f  det %f\n",
-                   __FUNCTION__, setup.oneOverArea, area, prim->det );
-      */
-   }
+   setup.oneOverArea = 1.0f / area;
 
-#if 0
-   /* We need to know if this is a front or back-facing triangle for:
-    *  - the GLSL gl_FrontFacing fragment attribute (bool)
-    *  - two-sided stencil test
-    */
-   setup.quad.facing = (prim->det > 0.0) ^ (setup.softpipe->rasterizer->front_winding == PIPE_WINDING_CW);
-#endif
+   /* The product of area * sign indicates front/back orientation (0/1) */
+   setup.facing = (area * sign > 0.0f)
+      ^ (spu.rasterizer.front_winding == PIPE_WINDING_CW);
+
+   setup.vprovoke = v2;
 
    return TRUE;
 }
@@ -755,20 +752,6 @@ subtriangle(struct edge *eleft, struct edge *eright, unsigned lines)
 }
 
 
-static float
-determinant(const float *v0, const float *v1, const float *v2)
-{
-   /* edge vectors e = v0 - v2, f = v1 - v2 */
-   const float ex = v0[0] - v2[0];
-   const float ey = v0[1] - v2[1];
-   const float fx = v1[0] - v2[0];
-   const float fy = v1[1] - v2[1];
-
-   /* det = cross(e,f).z */
-   return ex * fy - ey * fx;
-}
-
-
 /**
  * Draw triangle into tile at (tx, ty) (tile coords)
  * The tile data should have already been fetched.
@@ -785,12 +768,6 @@ tri_draw(const float *v0, const float *v1, const float *v2,
    setup.cliprect_miny = ty * TILE_SIZE;
    setup.cliprect_maxx = (tx + 1) * TILE_SIZE;
    setup.cliprect_maxy = (ty + 1) * TILE_SIZE;
-
-   /* Before we sort vertices, determine the facing of the triangle,
-    * which will be needed for front/back-face stencil application
-    */
-   float det = determinant(v0, v1, v2);
-   setup.facing = (det > 0.0) ^ (spu.rasterizer.front_winding == PIPE_WINDING_CW);
 
    if (!setup_sort_vertices((struct vertex_header *) v0,
                             (struct vertex_header *) v1,
