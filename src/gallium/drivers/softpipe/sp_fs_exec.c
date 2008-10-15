@@ -102,7 +102,8 @@ exec_prepare( const struct sp_fragment_shader *base,
     * Bind tokens/shader to the interpreter's machine state.
     * Avoid redundant binding.
     */
-   if (spefs->machine_tokens != base->shader.tokens) {
+   /* XXX revisit this */
+   if (1 /* spefs->machine_tokens != base->shader.tokens*/) {
       tgsi_exec_machine_bind_shader( machine,
                                      base->shader.tokens,
                                      PIPE_MAX_SAMPLERS,
