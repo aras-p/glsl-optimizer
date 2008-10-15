@@ -80,8 +80,4 @@ struct brw_vs_compile {
 
 void brw_vs_emit( struct brw_vs_compile *c );
 
-
-void brw_ProgramCacheDestroy( GLcontext *ctx );
-void brw_ProgramCacheInit( GLcontext *ctx );
-
 #endif

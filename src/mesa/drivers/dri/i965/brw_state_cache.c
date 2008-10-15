@@ -497,9 +497,10 @@ void brw_destroy_cache( struct brw_context *brw )
    GLuint i;
 
    brw_clear_cache(brw);
-   for (i = 0; i < BRW_MAX_CACHE; i++)
+   for (i = 0; i < BRW_MAX_CACHE; i++) {
+      dri_bo_unreference(brw->cache.last_bo[i]);
       free(brw->cache.name[i]);
-
+   }
    free(brw->cache.items);
    brw->cache.items = NULL;
    brw->cache.size = 0;

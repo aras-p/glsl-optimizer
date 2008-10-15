@@ -112,22 +112,25 @@ setup_vertex_format(GLcontext *ctx)
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    SScontext *swsetup = SWSETUP_CONTEXT(ctx);
+   GLboolean intColors = !ctx->FragmentProgram._Current
+                      && !ctx->ATIFragmentShader._Enabled
+                      && ctx->RenderMode == GL_RENDER
+                      && CHAN_TYPE == GL_UNSIGNED_BYTE;
 
-   if (!RENDERINPUTS_EQUAL(tnl->render_inputs_bitset,
+   if (intColors != swsetup->intColors ||
+       !RENDERINPUTS_EQUAL(tnl->render_inputs_bitset,
                            swsetup->last_index_bitset)) {
       DECLARE_RENDERINPUTS(index_bitset);
       struct tnl_attr_map map[_TNL_ATTRIB_MAX];
       int i, e = 0;
+
+      swsetup->intColors = intColors;
 
       RENDERINPUTS_COPY( index_bitset, tnl->render_inputs_bitset );
 
       EMIT_ATTR( _TNL_ATTRIB_POS, EMIT_4F_VIEWPORT, attrib[FRAG_ATTRIB_WPOS] );
 
       if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_COLOR0 )) {
-         swsetup->intColors = !ctx->FragmentProgram._Current
-                           && !ctx->ATIFragmentShader._Enabled
-                           && ctx->RenderMode == GL_RENDER
-                           && CHAN_TYPE == GL_UNSIGNED_BYTE;
          if (swsetup->intColors)
             EMIT_ATTR( _TNL_ATTRIB_COLOR0, EMIT_4CHAN_4F_RGBA, color );
          else

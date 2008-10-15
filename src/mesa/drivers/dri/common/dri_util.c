@@ -315,9 +315,6 @@ static void driSwapBuffers(__DRIdrawable *dPriv)
 {
     __DRIscreen *psp = dPriv->driScreenPriv;
 
-    if (!dPriv->numClipRects)
-        return;
-
     psp->DriverAPI.SwapBuffers(dPriv);
 
     driReportDamage(dPriv, dPriv->pClipRects, dPriv->numClipRects);

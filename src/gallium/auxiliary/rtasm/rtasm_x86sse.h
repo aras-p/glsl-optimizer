@@ -185,6 +185,13 @@ void sse2_pshufd( struct x86_function *p, struct x86_reg dest, struct x86_reg ar
 void sse2_rcpps( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 void sse2_rcpss( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 
+
+void sse_prefetchnta( struct x86_function *p, struct x86_reg ptr);
+void sse_prefetch0( struct x86_function *p, struct x86_reg ptr);
+void sse_prefetch1( struct x86_function *p, struct x86_reg ptr);
+
+void sse_movntps( struct x86_function *p, struct x86_reg dst, struct x86_reg src);
+
 void sse_addps( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 void sse_addss( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 void sse_cvtps2pi( struct x86_function *p, struct x86_reg dst, struct x86_reg src );

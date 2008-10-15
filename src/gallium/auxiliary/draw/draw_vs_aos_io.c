@@ -54,6 +54,7 @@ static void emit_load_R32G32B32( struct aos_compilation *cp,
 				 struct x86_reg data,
 				 struct x86_reg src_ptr )
 {
+#if 1
    sse_movss(cp->func, data, x86_make_disp(src_ptr, 8));
    /* data = z ? ? ? */
    sse_shufps(cp->func, data, aos_get_internal_xmm( cp, IMM_IDENTITY ), SHUF(X,Y,Z,W) );
@@ -62,6 +63,16 @@ static void emit_load_R32G32B32( struct aos_compilation *cp,
    /* data = ? 0 z 1 */
    sse_movlps(cp->func, data, src_ptr);
    /* data = x y z 1 */
+#else
+   sse_movups(cp->func, data, src_ptr);
+   /* data = x y z ? */
+   sse2_pshufd(cp->func, data, data, SHUF(W,X,Y,Z) );
+   /* data = ? x y z */
+   sse_movss(cp->func, data, aos_get_internal_xmm( cp, IMM_ONES ) );
+   /* data = 1 x y z */
+   sse2_pshufd(cp->func, data, data, SHUF(Y,Z,W,X) );
+   /* data = x y z 1 */
+#endif
 }
 
 static void emit_load_R32G32( struct aos_compilation *cp, 
@@ -95,28 +106,6 @@ static void emit_load_R8G8B8A8_UNORM( struct aos_compilation *cp,
 
 
 
-static void get_src_ptr( struct aos_compilation *cp,
-                         struct x86_reg src,
-                         struct x86_reg elt,
-                         unsigned a )
-{
-   struct x86_reg attrib = x86_make_disp(aos_get_x86( cp, 0, X86_ATTRIBS ), 
-                                         a * sizeof(struct aos_attrib));
-
-   struct x86_reg input_ptr = x86_make_disp(attrib, 
-                                            Offset(struct aos_attrib, input_ptr));
-
-   struct x86_reg input_stride = x86_make_disp(attrib, 
-                                               Offset(struct aos_attrib, input_stride));
-
-   /* Calculate pointer to current attrib:
-    */
-   x86_mov(cp->func, src, input_stride);
-   x86_imul(cp->func, src, elt);
-   x86_add(cp->func, src, input_ptr);
-}
-
-
 /* Extended swizzles?  Maybe later.
  */  
 static void emit_swizzle( struct aos_compilation *cp,
@@ -128,22 +117,60 @@ static void emit_swizzle( struct aos_compilation *cp,
 }
 
 
+
+static boolean get_buffer_ptr( struct aos_compilation *cp,
+                               boolean linear,
+                               unsigned buf_idx,
+                               struct x86_reg elt,
+                               struct x86_reg ptr)
+{
+   struct x86_reg buf = x86_make_disp(aos_get_x86( cp, 0, X86_BUFFERS ), 
+                                      buf_idx * sizeof(struct aos_buffer));
+
+   struct x86_reg buf_stride = x86_make_disp(buf, 
+                                             Offset(struct aos_buffer, stride));
+   if (linear) {
+      struct x86_reg buf_ptr = x86_make_disp(buf, 
+                                             Offset(struct aos_buffer, ptr));
+
+
+      /* Calculate pointer to current attrib:
+       */
+      x86_mov(cp->func, ptr, buf_ptr);
+      x86_mov(cp->func, elt, buf_stride);
+      x86_add(cp->func, elt, ptr);
+      if (buf_idx == 0) sse_prefetchnta(cp->func, x86_make_disp(elt, 192));
+      x86_mov(cp->func, buf_ptr, elt);
+   }
+   else {
+      struct x86_reg buf_base_ptr = x86_make_disp(buf, 
+                                                  Offset(struct aos_buffer, base_ptr));
+
+
+      /* Calculate pointer to current attrib:
+       */
+      x86_mov(cp->func, ptr, buf_stride);
+      x86_imul(cp->func, ptr, elt);
+      x86_add(cp->func, ptr, buf_base_ptr);
+   }
+
+   cp->insn_counter++;
+
+   return TRUE;
+}
+
+
 static boolean load_input( struct aos_compilation *cp,
                            unsigned idx,
-                           boolean linear )
+                           struct x86_reg bufptr )
 {
    unsigned format = cp->vaos->base.key.element[idx].in.format;
-   struct x86_reg src = cp->tmp_EAX;
+   unsigned offset = cp->vaos->base.key.element[idx].in.offset;
    struct x86_reg dataXMM = aos_get_xmm_reg(cp);
 
    /* Figure out source pointer address:
     */
-   get_src_ptr(cp, 
-               src, 
-               linear ? cp->idx_EBX : x86_deref(cp->idx_EBX),
-               idx);
-
-   src = x86_deref(src);
+   struct x86_reg src = x86_make_disp(bufptr, offset);
 
    aos_adopt_xmm_reg( cp,
                       dataXMM,
@@ -179,15 +206,124 @@ static boolean load_input( struct aos_compilation *cp,
    return TRUE;
 }
 
+static boolean load_inputs( struct aos_compilation *cp,
+                            unsigned buffer,
+                            struct x86_reg ptr )
+{
+   unsigned i;
+
+   for (i = 0; i < cp->vaos->base.key.nr_inputs; i++) {
+      if (cp->vaos->base.key.element[i].in.buffer == buffer) {
+
+         if (!load_input( cp, i, ptr ))
+            return FALSE;
+
+         cp->insn_counter++;
+      }
+   }
+   
+   return TRUE;
+}
+
+boolean aos_init_inputs( struct aos_compilation *cp, boolean linear )
+{
+   unsigned i;
+   for (i = 0; i < cp->vaos->nr_vb; i++) {
+      struct x86_reg buf = x86_make_disp(aos_get_x86( cp, 0, X86_BUFFERS ), 
+                                         i * sizeof(struct aos_buffer));
+
+      struct x86_reg buf_base_ptr = x86_make_disp(buf, 
+                                                  Offset(struct aos_buffer, base_ptr));
+
+      if (cp->vaos->base.key.const_vbuffers & (1<<i)) {
+         struct x86_reg ptr = cp->tmp_EAX;
+
+         x86_mov(cp->func, ptr, buf_base_ptr);
+
+         /* Load all inputs for this constant vertex buffer
+          */
+         load_inputs( cp, i, x86_deref(ptr) );
+         
+         /* Then just force them out to aos_machine.input[]
+          */
+         aos_spill_all( cp );
+
+      }
+      else if (linear) {
+
+         struct x86_reg elt = cp->idx_EBX;
+         struct x86_reg ptr = cp->tmp_EAX;
+
+         struct x86_reg buf_stride = x86_make_disp(buf, 
+                                                   Offset(struct aos_buffer, stride));
+
+         struct x86_reg buf_ptr = x86_make_disp(buf, 
+                                                Offset(struct aos_buffer, ptr));
+
+
+         /* Calculate pointer to current attrib:
+          */
+         x86_mov(cp->func, ptr, buf_stride);
+         x86_imul(cp->func, ptr, elt);
+         x86_add(cp->func, ptr, buf_base_ptr);
+
+
+         /* In the linear case, keep the buffer pointer instead of the
+          * index number.
+          */
+         if (cp->vaos->nr_vb == 1) 
+            x86_mov( cp->func, elt, ptr );
+         else
+            x86_mov( cp->func, buf_ptr, ptr );
+
+         cp->insn_counter++;
+      }
+   }
+
+   return TRUE;
+}
 
 boolean aos_fetch_inputs( struct aos_compilation *cp, boolean linear )
 {
-   unsigned i;
-   
-   for (i = 0; i < cp->vaos->base.key.nr_inputs; i++) {
-      if (!load_input( cp, i, linear ))
-         return FALSE;
-      cp->insn_counter++;
+   unsigned j;
+
+   for (j = 0; j < cp->vaos->nr_vb; j++) {
+      if (cp->vaos->base.key.const_vbuffers & (1<<j)) {
+         /* just retreive pre-transformed input */
+      }
+      else if (linear && cp->vaos->nr_vb == 1) {
+         load_inputs( cp, 0, cp->idx_EBX );
+      }
+      else {
+         struct x86_reg elt = linear ? cp->idx_EBX : x86_deref(cp->idx_EBX);
+         struct x86_reg ptr = cp->tmp_EAX;
+
+         if (!get_buffer_ptr( cp, linear, j, elt, ptr ))
+            return FALSE;
+
+         if (!load_inputs( cp, j, ptr ))
+            return FALSE;
+      }
+   }
+
+   return TRUE;
+}
+
+boolean aos_incr_inputs( struct aos_compilation *cp, boolean linear )
+{
+   if (linear && cp->vaos->nr_vb == 1) {
+      struct x86_reg stride = x86_make_disp(aos_get_x86( cp, 0, X86_BUFFERS ), 
+                                            (0 * sizeof(struct aos_buffer) + 
+                                             Offset(struct aos_buffer, stride)));
+
+      x86_add(cp->func, cp->idx_EBX, stride);
+      sse_prefetchnta(cp->func, x86_make_disp(cp->idx_EBX, 192));
+   }
+   else if (linear) {
+      /* Nothing to do */
+   } 
+   else {
+      x86_lea(cp->func, cp->idx_EBX, x86_make_disp(cp->idx_EBX, 4));
    }
 
    return TRUE;
@@ -198,12 +334,11 @@ boolean aos_fetch_inputs( struct aos_compilation *cp, boolean linear )
 
 
 
-
 static void emit_store_R32G32B32A32( struct aos_compilation *cp, 			   
 				     struct x86_reg dst_ptr,
 				     struct x86_reg dataXMM )
 {
-   sse_movups(cp->func, dst_ptr, dataXMM);
+   sse_movaps(cp->func, dst_ptr, dataXMM);
 }
 
 static void emit_store_R32G32B32( struct aos_compilation *cp, 
@@ -306,7 +441,7 @@ boolean aos_emit_outputs( struct aos_compilation *cp )
 
       if (data.file != file_XMM) {
          struct x86_reg tmp = aos_get_xmm_reg( cp );
-         sse_movups(cp->func, tmp, data);
+         sse_movaps(cp->func, tmp, data);
          data = tmp;
       }
       

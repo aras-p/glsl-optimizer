@@ -35,53 +35,96 @@
 
 #include <string.h>
 #include <libmisc.h>
-#include <cos8_v.h>
-#include <sin8_v.h>
+#include <math.h>
+#include <cos14_v.h>
+#include <sin14_v.h>
+#include <transpose_matrix4x4.h>
 
 #include "cell/common.h"
 #include "spu_main.h"
 #include "spu_funcs.h"
 
 
-#define M_PI 3.1415926
+/** For "return"-ing four vectors */
+struct vec_4x4
+{
+   vector float v[4];
+};
 
 
 static vector float
 spu_cos(vector float x)
 {
-#if 0
-   static const float scale = 1.0 / (2.0 * M_PI);
-   x = x * spu_splats(scale); /* normalize */
-   return _cos8_v(x);
-#else
-   /* just pass-through to avoid trashing caller's stack */
-   return x;
-#endif
+   return _cos14_v(x);
 }
 
 static vector float
 spu_sin(vector float x)
 {
-#if 0
-   static const float scale = 1.0 / (2.0 * M_PI);
-   x = x * spu_splats(scale); /* normalize */
-   return _sin8_v(x);   /* 8-bit accuracy enough?? */
-#else
-   /* just pass-through to avoid trashing caller's stack */
-   return x;
-#endif
+   return _sin14_v(x);
+}
+
+static vector float
+spu_pow(vector float x, vector float y)
+{
+   float z0 = powf(spu_extract(x,0), spu_extract(y,0));
+   float z1 = powf(spu_extract(x,1), spu_extract(y,1));
+   float z2 = powf(spu_extract(x,2), spu_extract(y,2));
+   float z3 = powf(spu_extract(x,3), spu_extract(y,3));
+   return (vector float) {z0, z1, z2, z3};
+}
+
+static vector float
+spu_exp2(vector float x)
+{
+   float z0 = powf(2.0f, spu_extract(x,0));
+   float z1 = powf(2.0f, spu_extract(x,1));
+   float z2 = powf(2.0f, spu_extract(x,2));
+   float z3 = powf(2.0f, spu_extract(x,3));
+   return (vector float) {z0, z1, z2, z3};
+}
+
+static vector float
+spu_log2(vector float x)
+{
+   /*
+    * log_base_2(x) = log(x) / log(2)
+    * 1.442695 = 1/log(2).
+    */
+   static const vector float k = {1.442695F, 1.442695F, 1.442695F, 1.442695F};
+   float z0 = logf(spu_extract(x,0));
+   float z1 = logf(spu_extract(x,1));
+   float z2 = logf(spu_extract(x,2));
+   float z3 = logf(spu_extract(x,3));
+   vector float v = (vector float) {z0, z1, z2, z3};
+   return spu_mul(v, k);
 }
 
 
+static struct vec_4x4
+spu_txp(vector float s, vector float t, vector float r, vector float q,
+        unsigned unit)
+{
+   struct vec_4x4 colors;
+   spu.sample_texture4[unit](s, t, r, q, unit, 0, 0, colors.v);
+   return colors;
+}
+
+
+/**
+ * Add named function to list of "exported" functions that will be
+ * made available to the PPU-hosted code generator.
+ */
 static void
-add_func(struct cell_spu_function_info *spu_functions,
-             const char *name, void *addr)
+export_func(struct cell_spu_function_info *spu_functions,
+            const char *name, void *addr)
 {
    uint n = spu_functions->num;
    ASSERT(strlen(name) < 16);
    strcpy(spu_functions->names[n], name);
    spu_functions->addrs[n] = (uint) addr;
    spu_functions->num++;
+   ASSERT(spu_functions->num <= 16);
 }
 
 
@@ -99,8 +142,12 @@ return_function_info(void)
    ASSERT(sizeof(funcs) == 256); /* must be multiple of 16 bytes */
 
    funcs.num = 0;
-   add_func(&funcs, "spu_cos", &spu_cos);
-   add_func(&funcs, "spu_sin", &spu_sin);
+   export_func(&funcs, "spu_cos", &spu_cos);
+   export_func(&funcs, "spu_sin", &spu_sin);
+   export_func(&funcs, "spu_pow", &spu_pow);
+   export_func(&funcs, "spu_exp2", &spu_exp2);
+   export_func(&funcs, "spu_log2", &spu_log2);
+   export_func(&funcs, "spu_txp", &spu_txp);
 
    /* Send the function info back to the PPU / main memory */
    mfc_put((void *) &funcs,  /* src in local store */

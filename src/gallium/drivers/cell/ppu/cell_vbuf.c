@@ -214,6 +214,7 @@ cell_vbuf_draw(struct vbuf_render *vbr,
 
       render->opcode = CELL_CMD_RENDER;
       render->prim_type = cvbr->prim;
+      render->front_winding = cell->rasterizer->front_winding;
 
       render->num_indexes = nr_indices;
       render->min_index = min_index;

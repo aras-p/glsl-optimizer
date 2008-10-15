@@ -45,6 +45,25 @@
 #define I1_LOAD_S(n)                      (1<<(4+n))
 
 /** @{
+ *
+ * PIPE_CONTROL operation, a combination MI_FLUSH and register write with
+ * additional flushing control.
+ */
+#define _3DSTATE_PIPE_CONTROL		(CMD_3D | (3 << 27) | (2 << 24) | 2)
+#define PIPE_CONTROL_NO_WRITE		(0 << 14)
+#define PIPE_CONTROL_WRITE_IMMEDIATE	(1 << 14)
+#define PIPE_CONTROL_WRITE_DEPTH_COUNT	(2 << 14)
+#define PIPE_CONTROL_WRITE_TIMESTAMP	(3 << 14)
+#define PIPE_CONTROL_DEPTH_STALL	(1 << 13)
+#define PIPE_CONTROL_WRITE_FLUSH	(1 << 12)
+#define PIPE_CONTROL_INSTRUCTION_FLUSH	(1 << 11)
+#define PIPE_CONTROL_INTERRUPT_ENABLE	(1 << 8)
+#define PIPE_CONTROL_PPGTT_WRITE	(0 << 2)
+#define PIPE_CONTROL_GLOBAL_GTT_WRITE	(1 << 2)
+
+/** @} */
+
+/** @{
  * 915 definitions
  */
 #define S0_VB_OFFSET_MASK		0xffffffc

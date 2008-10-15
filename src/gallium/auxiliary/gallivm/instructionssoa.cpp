@@ -90,66 +90,9 @@ llvm::Value * InstructionsSoa::vectorFromVals(llvm::Value *x, llvm::Value *y,
    return res;
 }
 
-std::vector<llvm::Value*> InstructionsSoa::arl(const std::vector<llvm::Value*> in)
-{
-   std::vector<llvm::Value*> res(4);
-
-   //Extract x's
-   llvm::Value *x1 = m_builder.CreateExtractElement(in[0],
-                                                    m_storage->constantInt(0),
-                                                    name("extractX"));
-   //cast it to an unsigned int
-   x1 = m_builder.CreateFPToUI(x1, IntegerType::get(32), name("x1IntCast"));
-
-   res[0] = x1;//vectorFromVals(x1, x2, x3, x4);
-   //only x is valid. the others shouldn't be necessary
-   /*
-   res[1] = Constant::getNullValue(m_floatVecType);
-   res[2] = Constant::getNullValue(m_floatVecType);
-   res[3] = Constant::getNullValue(m_floatVecType);
-   */
-
-   return res;
-}
-
-
-std::vector<llvm::Value*> InstructionsSoa::add(const std::vector<llvm::Value*> in1,
-                                               const std::vector<llvm::Value*> in2)
-{
-   std::vector<llvm::Value*> res(4);
-
-   res[0] = m_builder.CreateAdd(in1[0], in2[0], name("addx"));
-   res[1] = m_builder.CreateAdd(in1[1], in2[1], name("addy"));
-   res[2] = m_builder.CreateAdd(in1[2], in2[2], name("addz"));
-   res[3] = m_builder.CreateAdd(in1[3], in2[3], name("addw"));
-
-   return res;
-}
-
-std::vector<llvm::Value*> InstructionsSoa::mul(const std::vector<llvm::Value*> in1,
-                                               const std::vector<llvm::Value*> in2)
-{
-   std::vector<llvm::Value*> res(4);
-
-   res[0] = m_builder.CreateMul(in1[0], in2[0], name("mulx"));
-   res[1] = m_builder.CreateMul(in1[1], in2[1], name("muly"));
-   res[2] = m_builder.CreateMul(in1[2], in2[2], name("mulz"));
-   res[3] = m_builder.CreateMul(in1[3], in2[3], name("mulw"));
-
-   return res;
-}
-
 void InstructionsSoa::end()
 {
    m_builder.CreateRetVoid();
-}
-
-std::vector<llvm::Value*> InstructionsSoa::madd(const std::vector<llvm::Value*> in1,
-                                                const std::vector<llvm::Value*> in2,
-                                                const std::vector<llvm::Value*> in3)
-{
-   std::vector<llvm::Value*> res = mul(in1, in2);
-   return add(res, in3);
 }
 
 std::vector<llvm::Value*> InstructionsSoa::extractVector(llvm::Value *vector)
@@ -171,6 +114,11 @@ std::vector<llvm::Value*> InstructionsSoa::extractVector(llvm::Value *vector)
    return res;
 }
 
+llvm::IRBuilder<>* InstructionsSoa::getIRBuilder()
+{
+   return &m_builder;
+}
+
 void InstructionsSoa::createFunctionMap()
 {
    m_functionsMap[TGSI_OPCODE_ABS]   = "abs";
@@ -181,6 +129,7 @@ void InstructionsSoa::createFunctionMap()
    m_functionsMap[TGSI_OPCODE_POWER] = "pow";
    m_functionsMap[TGSI_OPCODE_LIT]   = "lit";
    m_functionsMap[TGSI_OPCODE_RSQ]   = "rsq";
+   m_functionsMap[TGSI_OPCODE_SLT]   = "slt";
 }
 
 void InstructionsSoa::createDependencies()
@@ -273,11 +222,138 @@ std::vector<llvm::Value*> InstructionsSoa::abs(const std::vector<llvm::Value*> i
    return callBuiltin(func, in1);
 }
 
+std::vector<llvm::Value*> InstructionsSoa::add(const std::vector<llvm::Value*> in1,
+                                               const std::vector<llvm::Value*> in2)
+{
+   std::vector<llvm::Value*> res(4);
+
+   res[0] = m_builder.CreateAdd(in1[0], in2[0], name("addx"));
+   res[1] = m_builder.CreateAdd(in1[1], in2[1], name("addy"));
+   res[2] = m_builder.CreateAdd(in1[2], in2[2], name("addz"));
+   res[3] = m_builder.CreateAdd(in1[3], in2[3], name("addw"));
+
+   return res;
+}
+
+std::vector<llvm::Value*> InstructionsSoa::arl(const std::vector<llvm::Value*> in)
+{
+   std::vector<llvm::Value*> res(4);
+
+   //Extract x's
+   llvm::Value *x1 = m_builder.CreateExtractElement(in[0],
+                                                    m_storage->constantInt(0),
+                                                    name("extractX"));
+   //cast it to an unsigned int
+   x1 = m_builder.CreateFPToUI(x1, IntegerType::get(32), name("x1IntCast"));
+
+   res[0] = x1;//vectorFromVals(x1, x2, x3, x4);
+   //only x is valid. the others shouldn't be necessary
+   /*
+   res[1] = Constant::getNullValue(m_floatVecType);
+   res[2] = Constant::getNullValue(m_floatVecType);
+   res[3] = Constant::getNullValue(m_floatVecType);
+   */
+
+   return res;
+}
+
 std::vector<llvm::Value*> InstructionsSoa::dp3(const std::vector<llvm::Value*> in1,
                                                const std::vector<llvm::Value*> in2)
 {
    llvm::Function *func = function(TGSI_OPCODE_DP3);
    return callBuiltin(func, in1, in2);
+}
+
+std::vector<llvm::Value*> InstructionsSoa::lit(const std::vector<llvm::Value*> in)
+{
+   llvm::Function *func = function(TGSI_OPCODE_LIT);
+   return callBuiltin(func, in);
+}
+
+std::vector<llvm::Value*> InstructionsSoa::madd(const std::vector<llvm::Value*> in1,
+                                                const std::vector<llvm::Value*> in2,
+                                                const std::vector<llvm::Value*> in3)
+{
+   std::vector<llvm::Value*> res = mul(in1, in2);
+   return add(res, in3);
+}
+
+std::vector<llvm::Value*> InstructionsSoa::max(const std::vector<llvm::Value*> in1,
+                                               const std::vector<llvm::Value*> in2)
+{
+   llvm::Function *func = function(TGSI_OPCODE_MAX);
+   return callBuiltin(func, in1, in2);
+}
+
+std::vector<llvm::Value*> InstructionsSoa::min(const std::vector<llvm::Value*> in1,
+                                               const std::vector<llvm::Value*> in2)
+{
+   llvm::Function *func = function(TGSI_OPCODE_MIN);
+   return callBuiltin(func, in1, in2);
+}
+
+std::vector<llvm::Value*> InstructionsSoa::mul(const std::vector<llvm::Value*> in1,
+                                               const std::vector<llvm::Value*> in2)
+{
+   std::vector<llvm::Value*> res(4);
+
+   res[0] = m_builder.CreateMul(in1[0], in2[0], name("mulx"));
+   res[1] = m_builder.CreateMul(in1[1], in2[1], name("muly"));
+   res[2] = m_builder.CreateMul(in1[2], in2[2], name("mulz"));
+   res[3] = m_builder.CreateMul(in1[3], in2[3], name("mulw"));
+
+   return res;
+}
+
+std::vector<llvm::Value*> InstructionsSoa::pow(const std::vector<llvm::Value*> in1,
+                                               const std::vector<llvm::Value*> in2)
+{
+   llvm::Function *func = function(TGSI_OPCODE_POWER);
+   return callBuiltin(func, in1, in2);
+}
+
+std::vector<llvm::Value*> InstructionsSoa::rsq(const std::vector<llvm::Value*> in)
+{
+   llvm::Function *func = function(TGSI_OPCODE_RSQ);
+   return callBuiltin(func, in);
+}
+
+std::vector<llvm::Value*> InstructionsSoa::slt(const std::vector<llvm::Value*> in1,
+                                               const std::vector<llvm::Value*> in2)
+{
+   llvm::Function *func = function(TGSI_OPCODE_SLT);
+   return callBuiltin(func, in1, in2);
+}
+
+std::vector<llvm::Value*> InstructionsSoa::sub(const std::vector<llvm::Value*> in1,
+                                               const std::vector<llvm::Value*> in2)
+{
+   std::vector<llvm::Value*> res(4);
+
+   res[0] = m_builder.CreateSub(in1[0], in2[0], name("subx"));
+   res[1] = m_builder.CreateSub(in1[1], in2[1], name("suby"));
+   res[2] = m_builder.CreateSub(in1[2], in2[2], name("subz"));
+   res[3] = m_builder.CreateSub(in1[3], in2[3], name("subw"));
+
+   return res;
+}
+
+void checkFunction(Function *func)
+{
+   for (Function::const_iterator BI = func->begin(), BE = func->end();
+        BI != BE; ++BI) {
+      const BasicBlock &BB = *BI;
+      for (BasicBlock::const_iterator II = BB.begin(), IE = BB.end();
+           II != IE; ++II) {
+         const Instruction &I = *II;
+         std::cout<< "Instr = "<<I;
+         for (unsigned op = 0, E = I.getNumOperands(); op != E; ++op) {
+            const Value *Op = I.getOperand(op);
+            std::cout<< "\top = "<<Op<<"("<<op<<")"<<std::endl;
+            //I->setOperand(op, V);
+  }
+      }
+   }
 }
 
 llvm::Value * InstructionsSoa::allocaTemp()
@@ -399,46 +475,6 @@ std::vector<Value*> InstructionsSoa::callBuiltin(llvm::Function *func, const std
    return allocaToResult(allocaPtr);
 }
 
-std::vector<llvm::Value*> InstructionsSoa::pow(const std::vector<llvm::Value*> in1,
-                                               const std::vector<llvm::Value*> in2)
-{
-   llvm::Function *func = function(TGSI_OPCODE_POWER);
-   return callBuiltin(func, in1, in2);
-}
-
-std::vector<llvm::Value*> InstructionsSoa::min(const std::vector<llvm::Value*> in1,
-                                               const std::vector<llvm::Value*> in2)
-{
-   llvm::Function *func = function(TGSI_OPCODE_MIN);
-   return callBuiltin(func, in1, in2);
-}
-
-
-std::vector<llvm::Value*> InstructionsSoa::max(const std::vector<llvm::Value*> in1,
-                                               const std::vector<llvm::Value*> in2)
-{
-   llvm::Function *func = function(TGSI_OPCODE_MAX);
-   return callBuiltin(func, in1, in2);
-}
-
-void checkFunction(Function *func)
-{
-   for (Function::const_iterator BI = func->begin(), BE = func->end();
-        BI != BE; ++BI) {
-      const BasicBlock &BB = *BI;
-      for (BasicBlock::const_iterator II = BB.begin(), IE = BB.end();
-           II != IE; ++II) {
-         const Instruction &I = *II;
-         std::cout<< "Instr = "<<I;
-         for (unsigned op = 0, E = I.getNumOperands(); op != E; ++op) {
-            const Value *Op = I.getOperand(op);
-            std::cout<< "\top = "<<Op<<"("<<op<<")"<<std::endl;
-            //I->setOperand(op, V);
-  }
-      }
-   }
-}
-
 void InstructionsSoa::injectFunction(llvm::Function *originalFunc, int op)
 {
    assert(originalFunc);
@@ -458,8 +494,8 @@ void InstructionsSoa::injectFunction(llvm::Function *originalFunc, int op)
       func = Function::Create(originalFunc->getFunctionType(), GlobalValue::ExternalLinkage,
                               originalFunc->getName(), currentModule());
       func->setCallingConv(CallingConv::C);
-      const PAListPtr pal;
-      func->setParamAttrs(pal);
+      const AttrListPtr pal;
+      func->setAttributes(pal);
       currentModule()->dump();
    } else {
       DenseMap<const Value*, Value *> val;
@@ -483,28 +519,4 @@ void InstructionsSoa::injectFunction(llvm::Function *originalFunc, int op)
    }
 }
 
-std::vector<llvm::Value*> InstructionsSoa::sub(const std::vector<llvm::Value*> in1,
-                                               const std::vector<llvm::Value*> in2)
-{
-   std::vector<llvm::Value*> res(4);
-
-   res[0] = m_builder.CreateSub(in1[0], in2[0], name("subx"));
-   res[1] = m_builder.CreateSub(in1[1], in2[1], name("suby"));
-   res[2] = m_builder.CreateSub(in1[2], in2[2], name("subz"));
-   res[3] = m_builder.CreateSub(in1[3], in2[3], name("subw"));
-
-   return res;
-}
-
-std::vector<llvm::Value*> InstructionsSoa::lit(const std::vector<llvm::Value*> in)
-{
-   llvm::Function *func = function(TGSI_OPCODE_LIT);
-   return callBuiltin(func, in);
-}
-
-std::vector<llvm::Value*> InstructionsSoa::rsq(const std::vector<llvm::Value*> in)
-{
-   llvm::Function *func = function(TGSI_OPCODE_RSQ);
-   return callBuiltin(func, in);
-}
 

@@ -31,6 +31,7 @@
 #define SPU_COLORPACK_H
 
 
+#include <transpose_matrix4x4.h>
 #include <spu_intrinsics.h>
 
 
@@ -84,10 +85,10 @@ spu_unpack_B8G8R8A8(uint color)
    vector unsigned int color_u4 = spu_splats(color);
    color_u4 = spu_shuffle(color_u4, color_u4,
                           ((vector unsigned char) {
-                             10, 10, 10, 10,
-                             5, 5, 5, 5,
+                             2, 2, 2, 2,
+                             1, 1, 1, 1,
                              0, 0, 0, 0,
-                             15, 15, 15, 15}) );
+                             3, 3, 3, 3}) );
    return spu_convtf(color_u4, 32);
 }
 
@@ -98,13 +99,47 @@ spu_unpack_A8R8G8B8(uint color)
    vector unsigned int color_u4 = spu_splats(color);
    color_u4 = spu_shuffle(color_u4, color_u4,
                           ((vector unsigned char) {
-                             5, 5, 5, 5,
-                             10, 10, 10, 10,
-                             15, 15, 15, 15,
+                             1, 1, 1, 1,
+                             2, 2, 2, 2,
+                             3, 3, 3, 3,
                              0, 0, 0, 0}) );
-
    return spu_convtf(color_u4, 32);
 }
+
+
+/**
+ * \param color_in - array of 32-bit packed ARGB colors
+ * \param color_out - returns float colors in RRRR, GGGG, BBBB, AAAA order
+ */
+static INLINE void
+spu_unpack_A8R8G8B8_transpose4(const vector unsigned int color_in[4],
+                               vector float color_out[4])
+{
+   vector unsigned int c0;
+
+   c0 = spu_shuffle(color_in[0], color_in[0],
+                    ((vector unsigned char) {
+                       1, 1, 1, 1,  2, 2, 2, 2,  3, 3, 3, 3,  0, 0, 0, 0}) );
+   color_out[0] = spu_convtf(c0, 32);
+
+   c0 = spu_shuffle(color_in[1], color_in[1],
+                    ((vector unsigned char) {
+                       1, 1, 1, 1,  2, 2, 2, 2,  3, 3, 3, 3,  0, 0, 0, 0}) );
+   color_out[1] = spu_convtf(c0, 32);
+
+   c0 = spu_shuffle(color_in[2], color_in[2],
+                    ((vector unsigned char) {
+                       1, 1, 1, 1,  2, 2, 2, 2,  3, 3, 3, 3,  0, 0, 0, 0}) );
+   color_out[2] = spu_convtf(c0, 32);
+
+   c0 = spu_shuffle(color_in[3], color_in[3],
+                    ((vector unsigned char) {
+                       1, 1, 1, 1,  2, 2, 2, 2,  3, 3, 3, 3,  0, 0, 0, 0}) );
+   color_out[3] = spu_convtf(c0, 32);
+
+   _transpose_matrix4x4(color_out, color_out);
+}
+
 
 
 #endif /* SPU_COLORPACK_H */

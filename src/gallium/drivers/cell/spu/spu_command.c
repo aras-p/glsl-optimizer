@@ -59,6 +59,14 @@ static unsigned char attribute_fetch_code_buffer[136 * PIPE_MAX_ATTRIBS]
 
 
 
+static INLINE int
+align(int value, int alignment)
+{
+   return (value + alignment - 1) & ~(alignment - 1);
+}
+
+
+
 /**
  * Tell the PPU that this SPU has finished copying a buffer to
  * local store and that it may be reused by the PPU.
@@ -231,6 +239,25 @@ cmd_state_fragment_program(const struct cell_command_fragment_program *fp)
 }
 
 
+static uint
+cmd_state_fs_constants(const uint64_t *buffer, uint pos)
+{
+   const uint num_const = buffer[pos + 1];
+   const float *constants = (const float *) &buffer[pos + 2];
+   uint i;
+
+   DEBUG_PRINTF("CMD_STATE_FS_CONSTANTS (%u)\n", num_const);
+
+   /* Expand each float to float[4] for SOA execution */
+   for (i = 0; i < num_const; i++) {
+      spu.constants[i] = spu_splats(constants[i]);
+   }
+
+   /* return new buffer pos (in 8-byte words) */
+   return pos + 2 + num_const / 2;
+}
+
+
 static void
 cmd_state_framebuffer(const struct cell_command_framebuffer *cmd)
 {
@@ -276,16 +303,96 @@ cmd_state_framebuffer(const struct cell_command_framebuffer *cmd)
 }
 
 
+/**
+ * Tex texture mask_s/t and scale_s/t fields depend on the texture size and
+ * sampler wrap modes.
+ */
+static void
+update_tex_masks(struct spu_texture *texture,
+                 const struct pipe_sampler_state *sampler,
+                 uint unit)
+{
+   uint i;
+
+   for (i = 0; i < CELL_MAX_TEXTURE_LEVELS; i++) {
+      int width = texture->level[i].width;
+      int height = texture->level[i].height;
+
+      if (sampler->wrap_s == PIPE_TEX_WRAP_REPEAT)
+         texture->level[i].mask_s = spu_splats(width - 1);
+      else
+         texture->level[i].mask_s = spu_splats(~0);
+
+      if (sampler->wrap_t == PIPE_TEX_WRAP_REPEAT)
+         texture->level[i].mask_t = spu_splats(height - 1);
+      else
+         texture->level[i].mask_t = spu_splats(~0);
+
+      if (sampler->normalized_coords) {
+         texture->level[i].scale_s = spu_splats((float) width);
+         texture->level[i].scale_t = spu_splats((float) height);
+      }
+      else {
+         texture->level[i].scale_s = spu_splats(1.0f);
+         texture->level[i].scale_t = spu_splats(1.0f);
+      }
+   }
+
+   /* XXX temporary hack */
+   if (texture->target == PIPE_TEXTURE_CUBE) {
+      spu.sample_texture4[unit] = sample_texture4_cube;
+   }
+}
+
+
 static void
 cmd_state_sampler(const struct cell_command_sampler *sampler)
 {
-   DEBUG_PRINTF("SAMPLER [%u]\n", sampler->unit);
+   uint unit = sampler->unit;
 
-   spu.sampler[sampler->unit] = sampler->state;
-   if (spu.sampler[sampler->unit].min_img_filter == PIPE_TEX_FILTER_LINEAR)
-      spu.sample_texture[sampler->unit] = sample_texture_bilinear;
-   else
-      spu.sample_texture[sampler->unit] = sample_texture_nearest;
+   DEBUG_PRINTF("SAMPLER [%u]\n", unit);
+
+   spu.sampler[unit] = sampler->state;
+
+   switch (spu.sampler[unit].min_img_filter) {
+   case PIPE_TEX_FILTER_LINEAR:
+      spu.min_sample_texture4[unit] = sample_texture4_bilinear;
+      break;
+   case PIPE_TEX_FILTER_ANISO:
+      /* fall-through, for now */
+   case PIPE_TEX_FILTER_NEAREST:
+      spu.min_sample_texture4[unit] = sample_texture4_nearest;
+      break;
+   default:
+      ASSERT(0);
+   }
+
+   switch (spu.sampler[sampler->unit].mag_img_filter) {
+   case PIPE_TEX_FILTER_LINEAR:
+      spu.mag_sample_texture4[unit] = sample_texture4_bilinear;
+      break;
+   case PIPE_TEX_FILTER_ANISO:
+      /* fall-through, for now */
+   case PIPE_TEX_FILTER_NEAREST:
+      spu.mag_sample_texture4[unit] = sample_texture4_nearest;
+      break;
+   default:
+      ASSERT(0);
+   }
+
+   switch (spu.sampler[sampler->unit].min_mip_filter) {
+   case PIPE_TEX_MIPFILTER_NEAREST:
+   case PIPE_TEX_MIPFILTER_LINEAR:
+      spu.sample_texture4[unit] = sample_texture4_lod;
+      break;
+   case PIPE_TEX_MIPFILTER_NONE:
+      spu.sample_texture4[unit] = spu.mag_sample_texture4[unit];
+      break;
+   default:
+      ASSERT(0);
+   }
+
+   update_tex_masks(&spu.texture[unit], &spu.sampler[unit], unit);
 }
 
 
@@ -293,24 +400,44 @@ static void
 cmd_state_texture(const struct cell_command_texture *texture)
 {
    const uint unit = texture->unit;
-   const uint width = texture->width;
-   const uint height = texture->height;
+   uint i;
 
-   DEBUG_PRINTF("TEXTURE [%u] at %p  size %u x %u\n",
-             texture->unit, texture->start,
-             texture->width, texture->height);
+   //if (spu.init.id==0) Debug=1;
 
-   spu.texture[unit].start = texture->start;
-   spu.texture[unit].width = width;
-   spu.texture[unit].height = height;
+   DEBUG_PRINTF("TEXTURE [%u]\n", texture->unit);
 
-   spu.texture[unit].tiles_per_row = width / TILE_SIZE;
+   spu.texture[unit].max_level = 0;
+   spu.texture[unit].target = texture->target;
 
-   spu.texture[unit].tex_size = (vector float) { width, height, 0.0, 0.0};
-   spu.texture[unit].tex_size_mask = (vector unsigned int)
-         { width - 1, height - 1, 0, 0 };
-   spu.texture[unit].tex_size_x_mask = spu_splats(width - 1);
-   spu.texture[unit].tex_size_y_mask = spu_splats(height - 1);
+   for (i = 0; i < CELL_MAX_TEXTURE_LEVELS; i++) {
+      uint width = texture->width[i];
+      uint height = texture->height[i];
+      uint depth = texture->depth[i];
+
+      DEBUG_PRINTF("  LEVEL %u: at %p  size[0] %u x %u\n", i,
+             texture->start[i], texture->width[i], texture->height[i]);
+
+      spu.texture[unit].level[i].start = texture->start[i];
+      spu.texture[unit].level[i].width = width;
+      spu.texture[unit].level[i].height = height;
+      spu.texture[unit].level[i].depth = depth;
+
+      spu.texture[unit].level[i].tiles_per_row =
+         (width + TILE_SIZE - 1) / TILE_SIZE;
+
+      spu.texture[unit].level[i].bytes_per_image =
+         4 * align(width, TILE_SIZE) * align(height, TILE_SIZE) * depth;
+
+      spu.texture[unit].level[i].max_s = spu_splats((int) width - 1);
+      spu.texture[unit].level[i].max_t = spu_splats((int) height - 1);
+
+      if (texture->start[i])
+         spu.texture[unit].max_level = i;
+   }
+
+   update_tex_masks(&spu.texture[unit], &spu.sampler[unit], unit);
+
+   //Debug=0;
 }
 
 
@@ -455,6 +582,9 @@ cmd_batch(uint opcode)
             cmd_state_fragment_program(fp);
             pos += sizeof(*fp) / 8;
          }
+         break;
+      case CELL_CMD_STATE_FS_CONSTANTS:
+         pos = cmd_state_fs_constants(buffer, pos);
          break;
       case CELL_CMD_STATE_SAMPLER:
          {

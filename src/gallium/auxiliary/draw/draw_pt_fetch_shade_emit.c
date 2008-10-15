@@ -79,6 +79,7 @@ static void fse_prepare( struct draw_pt_middle_end *middle,
    unsigned num_vs_inputs = draw->vs.vertex_shader->info.num_inputs;
    const struct vertex_info *vinfo;
    unsigned i;
+   unsigned nr_vbs = 0;
    
 
    if (!draw->render->set_primitive( draw->render, 
@@ -102,7 +103,7 @@ static void fse_prepare( struct draw_pt_middle_end *middle,
 
    fse->key.viewport = !draw->identity_viewport;
    fse->key.clip = !draw->bypass_clipping;
-   fse->key.pad = 0;
+   fse->key.const_vbuffers = 0;
 
    memset(fse->key.element, 0, 
           fse->key.nr_elements * sizeof(fse->key.element[0]));
@@ -116,16 +117,23 @@ static void fse_prepare( struct draw_pt_middle_end *middle,
        */
       fse->key.element[i].in.buffer = src->vertex_buffer_index;
       fse->key.element[i].in.offset = src->src_offset;
+      nr_vbs = MAX2(nr_vbs, src->vertex_buffer_index + 1);
    }
    
+   for (i = 0; i < 5 && i < nr_vbs; i++) {
+      if (draw->pt.vertex_buffer[i].pitch == 0)
+         fse->key.const_vbuffers |= (1<<i);
+   }
 
+   if (0) debug_printf("%s: lookup const_vbuffers: %x\n", __FUNCTION__, fse->key.const_vbuffers);
+   
    {
       unsigned dst_offset = 0;
 
       for (i = 0; i < vinfo->num_attribs; i++) {
          unsigned emit_sz = 0;
 
-         switch (vinfo->emit[i]) {
+         switch (vinfo->attrib[i].emit) {
          case EMIT_4F:
             emit_sz = 4 * sizeof(float);
             break;
@@ -153,8 +161,8 @@ static void fse_prepare( struct draw_pt_middle_end *middle,
           * numbers, not to positions in the hw vertex description --
           * that's handled by the output_offset field.
           */
-         fse->key.element[i].out.format = vinfo->emit[i];
-         fse->key.element[i].out.vs_output = vinfo->src_index[i];
+         fse->key.element[i].out.format = vinfo->attrib[i].emit;
+         fse->key.element[i].out.vs_output = vinfo->attrib[i].src_index;
          fse->key.element[i].out.offset = dst_offset;
       
          dst_offset += emit_sz;
@@ -162,13 +170,7 @@ static void fse_prepare( struct draw_pt_middle_end *middle,
       }
    }
 
-
-   /* Would normally look up a vertex shader and peruse its list of
-    * varients somehow.  We omitted that step and put all the
-    * hardcoded "shaders" into an array.  We're just making the
-    * assumption that this happens to be a matching shader...  ie
-    * you're running isosurf, aren't you?
-    */
+   
    fse->active = draw_vs_lookup_varient( draw->vs.vertex_shader, 
                                          &fse->key );
 
@@ -177,18 +179,17 @@ static void fse_prepare( struct draw_pt_middle_end *middle,
       return ;
    }
 
+   if (0) debug_printf("%s: found const_vbuffers: %x\n", __FUNCTION__, 
+                       fse->active->key.const_vbuffers);
+
    /* Now set buffer pointers:
     */
-   for (i = 0; i < num_vs_inputs; i++) {
-      unsigned buf = draw->pt.vertex_element[i].vertex_buffer_index;
-
-      fse->active->set_input( fse->active, 
-                              i, 
-                              
-                              ((const ubyte *) draw->pt.user.vbuffer[buf] + 
-                               draw->pt.vertex_buffer[buf].buffer_offset),
-                              
-                              draw->pt.vertex_buffer[buf].pitch );
+   for (i = 0; i < draw->pt.nr_vertex_buffers; i++) {
+      fse->active->set_buffer( fse->active, 
+                               i, 
+                               ((const ubyte *) draw->pt.user.vbuffer[i] + 
+                                draw->pt.vertex_buffer[i].buffer_offset),
+                              draw->pt.vertex_buffer[i].pitch );
    }
 
    *max_vertices = (draw->render->max_vertex_buffer_bytes / 

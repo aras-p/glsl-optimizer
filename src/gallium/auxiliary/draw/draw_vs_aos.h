@@ -87,9 +87,10 @@ struct lit_info {
 #define MAX_SHINE_TAB    4
 #define MAX_LIT_INFO     16
 
-struct aos_attrib {
-   const void *input_ptr;
-   unsigned input_stride;
+struct aos_buffer {
+   const void *base_ptr;
+   unsigned stride;
+   void *ptr;                   /* updated per vertex */
 };
 
 
@@ -123,7 +124,7 @@ struct aos_machine {
    const float (*immediates)[4];     /* points to shader data */
    const float (*constants)[4];      /* points to draw data */
 
-   const struct aos_attrib *attrib; /* points to ? */
+   const struct aos_buffer *buffer; /* points to ? */
 };
 
 
@@ -175,12 +176,15 @@ void aos_adopt_xmm_reg( struct aos_compilation *cp,
                         unsigned idx,
                         unsigned dirty );
 
+void aos_spill_all( struct aos_compilation *cp );
+
 struct x86_reg aos_get_shader_reg( struct aos_compilation *cp, 
                                    unsigned file,
                                    unsigned idx );
 
-boolean aos_fetch_inputs( struct aos_compilation *cp,
-                          boolean linear );
+boolean aos_init_inputs( struct aos_compilation *cp, boolean linear );
+boolean aos_fetch_inputs( struct aos_compilation *cp, boolean linear );
+boolean aos_incr_inputs( struct aos_compilation *cp, boolean linear );
 
 boolean aos_emit_outputs( struct aos_compilation *cp );
 
@@ -210,7 +214,7 @@ do {                                                                    \
 #define X86_NULL       0
 #define X86_IMMEDIATES 1
 #define X86_CONSTANTS  2
-#define X86_ATTRIBS    3
+#define X86_BUFFERS    3
 
 struct x86_reg aos_get_x86( struct aos_compilation *cp,
                             unsigned which_reg,
@@ -232,7 +236,8 @@ struct draw_vs_varient_aos_sse {
    struct draw_vs_varient base;
    struct draw_context *draw;
 
-   struct aos_attrib *attrib;
+   struct aos_buffer *buffer;
+   unsigned nr_vb;
 
    vaos_run_linear_func gen_run_linear;
    vaos_run_elts_func gen_run_elts;

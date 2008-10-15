@@ -127,6 +127,7 @@ static void recalculate_input_bindings( GLcontext *ctx )
    struct vbo_context *vbo = vbo_context(ctx);
    struct vbo_exec_context *exec = &vbo->exec;
    const struct gl_client_array **inputs = &exec->array.inputs[0];
+   GLbitfield const_inputs = 0x0;
    GLuint i;
 
    exec->array.program_mode = get_program_mode(ctx);
@@ -141,19 +142,24 @@ static void recalculate_input_bindings( GLcontext *ctx )
       for (i = 0; i <= VERT_ATTRIB_TEX7; i++) {
 	 if (exec->array.legacy_array[i]->Enabled)
 	    inputs[i] = exec->array.legacy_array[i];
-	 else
+	 else {
 	    inputs[i] = &vbo->legacy_currval[i];
+            const_inputs |= 1 << i;
+         }
       }
 
       for (i = 0; i < MAT_ATTRIB_MAX; i++) {
 	 inputs[VERT_ATTRIB_GENERIC0 + i] = &vbo->mat_currval[i];
+         const_inputs |= 1 << (VERT_ATTRIB_GENERIC0 + i);
       }
 
       /* Could use just about anything, just to fill in the empty
        * slots:
        */
-      for (i = MAT_ATTRIB_MAX; i < VERT_ATTRIB_MAX - VERT_ATTRIB_GENERIC0; i++)
+      for (i = MAT_ATTRIB_MAX; i < VERT_ATTRIB_MAX - VERT_ATTRIB_GENERIC0; i++) {
 	 inputs[VERT_ATTRIB_GENERIC0 + i] = &vbo->generic_currval[i];
+         const_inputs |= 1 << (VERT_ATTRIB_GENERIC0 + i);
+      }
 
       break;
    case VP_NV:
@@ -166,15 +172,19 @@ static void recalculate_input_bindings( GLcontext *ctx )
 	    inputs[i] = exec->array.generic_array[i];
 	 else if (exec->array.legacy_array[i]->Enabled)
 	    inputs[i] = exec->array.legacy_array[i];
-	 else
+	 else {
 	    inputs[i] = &vbo->legacy_currval[i];
+            const_inputs |= 1 << i;
+         }
       }
 
       /* Could use just about anything, just to fill in the empty
        * slots:
        */
-      for (i = VERT_ATTRIB_GENERIC0; i < VERT_ATTRIB_MAX; i++)
+      for (i = VERT_ATTRIB_GENERIC0; i < VERT_ATTRIB_MAX; i++) {
 	 inputs[i] = &vbo->generic_currval[i - VERT_ATTRIB_GENERIC0];
+         const_inputs |= 1 << i;
+      }
 
       break;
    case VP_ARB:
@@ -189,25 +199,34 @@ static void recalculate_input_bindings( GLcontext *ctx )
 	 inputs[0] = exec->array.generic_array[0];
       else if (exec->array.legacy_array[0]->Enabled)
 	 inputs[0] = exec->array.legacy_array[0];
-      else
+      else {
 	 inputs[0] = &vbo->legacy_currval[0];
+         const_inputs |= 1 << 0;
+      }
 
 
       for (i = 1; i <= VERT_ATTRIB_TEX7; i++) {
 	 if (exec->array.legacy_array[i]->Enabled)
 	    inputs[i] = exec->array.legacy_array[i];
-	 else
+	 else {
 	    inputs[i] = &vbo->legacy_currval[i];
+            const_inputs |= 1 << i;
+         }
       }
 
       for (i = 0; i < 16; i++) {
 	 if (exec->array.generic_array[i]->Enabled)
 	    inputs[VERT_ATTRIB_GENERIC0 + i] = exec->array.generic_array[i];
-	 else
+	 else {
 	    inputs[VERT_ATTRIB_GENERIC0 + i] = &vbo->generic_currval[i];
+            const_inputs |= 1 << (VERT_ATTRIB_GENERIC0 + i);
+         }
+
       }
       break;
    }
+
+   _mesa_set_varying_vp_inputs( ctx, ~const_inputs );
 }
 
 static void bind_arrays( GLcontext *ctx )
@@ -257,6 +276,11 @@ vbo_exec_DrawArrays(GLenum mode, GLint start, GLsizei count)
 
    bind_arrays( ctx );
 
+   /* Again...
+    */
+   if (ctx->NewState)
+      _mesa_update_state( ctx );
+
    prim[0].begin = 1;
    prim[0].end = 1;
    prim[0].weak = 0;
@@ -296,6 +320,9 @@ vbo_exec_DrawRangeElements(GLenum mode,
    }
 
    bind_arrays( ctx );
+
+   if (ctx->NewState)
+      _mesa_update_state( ctx );
 
    ib.count = count;
    ib.type = type; 

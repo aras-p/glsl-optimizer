@@ -37,6 +37,10 @@
 #ifndef U_SSE_H_
 #define U_SSE_H_
 
+#include "pipe/p_config.h"
+
+#if defined(PIPE_ARCH_SSE)
+
 #include <xmmintrin.h>
 #include <emmintrin.h>
 
@@ -66,7 +70,8 @@ _mm_castps_si128(__m128 a)
    return u.m128i;
 }
 
-#endif
+#endif /* defined(_MSC_VER) && _MSC_VER < 1500 */
 
+#endif /* PIPE_ARCH_X86 || PIPE_ARCH_X86_64 */
 
 #endif /* U_SSE_H_ */

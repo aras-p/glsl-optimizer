@@ -46,6 +46,7 @@
 #include "tgsi/tgsi_dump.h"
 
 #include "util/u_memory.h"
+#include "util/u_math.h"
 
 #include <llvm/Module.h>
 #include <llvm/CallingConv.h>
@@ -157,8 +158,8 @@ void gallivm_cpu_jit_compile(struct gallivm_cpu_engine *cpu, struct gallivm_prog
    llvm::ExistingModuleProvider *mp = new llvm::ExistingModuleProvider(mod);
    llvm::ExecutionEngine *ee = cpu->engine;
    assert(ee);
-   /*FIXME : remove */
-   ee->DisableLazyCompilation();
+   /*FIXME : why was this disabled ? we need it for pow/sqrt/... */
+   ee->DisableLazyCompilation(false);
    ee->addModuleProvider(mp);
 
    llvm::Function *func = func_for_shader(prog);
@@ -201,7 +202,6 @@ int gallivm_cpu_vs_exec(struct gallivm_prog *prog,
    unsigned int i, j;
    unsigned slot;
    vertex_shader_runner runner = reinterpret_cast<vertex_shader_runner>(prog->function);
-
    assert(runner);
 
    for (i = 0; i < count; i += MAX_TGSI_VERTICES) {

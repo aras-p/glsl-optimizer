@@ -41,6 +41,9 @@
 #define MAX_HEIGHT 1024
 
 
+#define CELL_MAX_CONSTANTS 32  /**< number of float[4] constants */
+
+
 /**
  * A tile is basically a TILE_SIZE x TILE_SIZE block of 4-byte pixels.
  * The data may be addressed through several different types.
@@ -61,8 +64,13 @@ typedef union {
 
 
 /** Function for sampling textures */
-typedef vector float (*spu_sample_texture_func)(uint unit,
-                                                vector float texcoord);
+typedef void (*spu_sample_texture4_func)(vector float s,
+                                         vector float t,
+                                         vector float r,
+                                         vector float q,
+                                         uint unit, uint level, uint face,
+                                         vector float colors[4]);
+
 
 /** Function for performing per-fragment ops */
 typedef void (*spu_fragment_ops_func)(uint x, uint y,
@@ -73,7 +81,8 @@ typedef void (*spu_fragment_ops_func)(uint x, uint y,
                                       vector float fragGreen,
                                       vector float fragBlue,
                                       vector float fragAlpha,
-                                      vector unsigned int mask);
+                                      vector unsigned int mask,
+                                      uint facing);
 
 /** Function for running fragment program */
 typedef void (*spu_fragment_program_func)(vector float *inputs,
@@ -98,15 +107,27 @@ struct spu_framebuffer
 } ALIGN16_ATTRIB;
 
 
-struct spu_texture
+/** per-texture level info */
+struct spu_texture_level
 {
    void *start;
-   ushort width, height;
+   ushort width, height, depth;
    ushort tiles_per_row;
-   vector float tex_size;
-   vector unsigned int tex_size_mask; /**< == int(size - 1) */
-   vector unsigned int tex_size_x_mask; /**< == int(size - 1) */
-   vector unsigned int tex_size_y_mask; /**< == int(size - 1) */
+   uint bytes_per_image;
+   /** texcoord scale factors */
+   vector float scale_s, scale_t, scale_r;
+   /** texcoord masks (if REPEAT then size-1, else ~0) */
+   vector signed int mask_s, mask_t, mask_r;
+   /** texcoord clamp limits */
+   vector signed int max_s, max_t, max_r;
+} ALIGN16_ATTRIB;
+
+
+struct spu_texture
+{
+   struct spu_texture_level level[CELL_MAX_TEXTURE_LEVELS];
+   uint max_level;
+   uint target;  /**< PIPE_TEXTURE_x */
 } ALIGN16_ATTRIB;
 
 
@@ -154,11 +175,12 @@ struct spu_global
    spu_fragment_program_func fragment_program;
 
    /** Current texture sampler function */
-   spu_sample_texture_func sample_texture[CELL_MAX_SAMPLERS];
+   spu_sample_texture4_func sample_texture4[CELL_MAX_SAMPLERS];
+   spu_sample_texture4_func min_sample_texture4[CELL_MAX_SAMPLERS];
+   spu_sample_texture4_func mag_sample_texture4[CELL_MAX_SAMPLERS];
 
-   /** Fragment program constants (XXX preliminary/used) */
-#define MAX_CONSTANTS 32
-   vector float constants[MAX_CONSTANTS];
+   /** Fragment program constants */
+   vector float constants[4 * CELL_MAX_CONSTANTS];
 
 } ALIGN16_ATTRIB;
 

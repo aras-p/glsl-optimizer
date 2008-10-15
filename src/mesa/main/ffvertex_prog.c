@@ -178,12 +178,12 @@ static GLboolean check_active_shininess( GLcontext *ctx,
 
 
 
-static struct state_key *make_state_key( GLcontext *ctx )
+static void make_state_key( GLcontext *ctx, struct state_key *key )
 {
    const struct gl_fragment_program *fp;
-   struct state_key *key = CALLOC_STRUCT(state_key);
    GLuint i;
 
+   memset(key, 0, sizeof(struct state_key));
    fp = ctx->FragmentProgram._Current;
 
    /* This now relies on texenvprogram.c being active:
@@ -301,8 +301,6 @@ static struct state_key *make_state_key( GLcontext *ctx )
 			      texUnit->GenModeQ );
       }
    }
-   
-   return key;
 }
 
 
@@ -1714,16 +1712,16 @@ struct gl_vertex_program *
 _mesa_get_fixed_func_vertex_program(GLcontext *ctx)
 {
    struct gl_vertex_program *prog;
-   struct state_key *key;
+   struct state_key key;
 
    /* Grab all the relevent state and put it in a single structure:
     */
-   key = make_state_key(ctx);
+   make_state_key(ctx, &key);
 
    /* Look for an already-prepared program for this state:
     */
    prog = (struct gl_vertex_program *)
-      _mesa_search_program_cache(ctx->VertexProgram.Cache, key, sizeof(*key));
+      _mesa_search_program_cache(ctx->VertexProgram.Cache, &key, sizeof(key));
    
    if (!prog) {
       /* OK, we'll have to build a new one */
@@ -1735,7 +1733,7 @@ _mesa_get_fixed_func_vertex_program(GLcontext *ctx)
       if (!prog)
          return NULL;
 
-      create_new_program( key, prog,
+      create_new_program( &key, prog,
                           ctx->Const.VertexProgram.MaxTemps );
 
 #if 0
@@ -1744,10 +1742,8 @@ _mesa_get_fixed_func_vertex_program(GLcontext *ctx)
                                           &prog->Base );
 #endif
       _mesa_program_cache_insert(ctx, ctx->VertexProgram.Cache,
-                                 key, sizeof(*key), &prog->Base);
+                                 &key, sizeof(key), &prog->Base);
    }
-
-   _mesa_free(key);
 
    return prog;
 }

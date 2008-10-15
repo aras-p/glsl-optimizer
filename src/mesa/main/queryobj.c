@@ -90,12 +90,11 @@ _mesa_wait_query(GLcontext *ctx, struct gl_query_object *q)
 
 
 /**
- * Delete an occlusion query object.
+ * Delete a query object.  Called via ctx->Driver.DeleteQuery().
  * Not removed from hash table here.
- * XXX maybe add Delete() method to gl_query_object class and call that instead
  */
 void
-_mesa_delete_query(struct gl_query_object *q)
+_mesa_delete_query(GLcontext *ctx, struct gl_query_object *q)
 {
    _mesa_free(q);
 }
@@ -546,6 +545,6 @@ delete_queryobj_cb(GLuint id, void *data, void *userData)
 void
 _mesa_free_query_data(GLcontext *ctx)
 {
-   _mesa_HashDeleteAll(ctx->Query.QueryObjects, delete_queryobj_cb, NULL);
+   _mesa_HashDeleteAll(ctx->Query.QueryObjects, delete_queryobj_cb, ctx);
    _mesa_DeleteHashTable(ctx->Query.QueryObjects);
 }

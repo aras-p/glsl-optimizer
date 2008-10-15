@@ -395,6 +395,12 @@ _mesa_fetch_state(GLcontext *ctx, const gl_state_index state[],
 
    case STATE_INTERNAL:
       switch (state[1]) {
+      case STATE_CURRENT_ATTRIB: {
+         const GLuint idx = (GLuint) state[2];
+         COPY_4V(value, ctx->Current.Attrib[idx]);
+         return;
+      }						  
+
       case STATE_NORMAL_SCALE:
          ASSIGN_4V(value, 
                    ctx->_ModelViewInvScale, 
@@ -501,6 +507,9 @@ _mesa_fetch_state(GLcontext *ctx, const gl_state_index state[],
          }
          return;
 
+         /* XXX: make sure new tokens added here are also handled in the 
+          * _mesa_program_state_flags() switch, below.
+          */
       default:
          /* unknown state indexes are silently ignored
           *  should be handled by the driver.
@@ -574,11 +583,29 @@ _mesa_program_state_flags(const gl_state_index state[STATE_LENGTH])
 
    case STATE_INTERNAL:
       switch (state[1]) {
+      case STATE_CURRENT_ATTRIB:
+         return _NEW_CURRENT_ATTRIB;
+
+      case STATE_NORMAL_SCALE:
+         return _NEW_MODELVIEW;
+
       case STATE_TEXRECT_SCALE:
       case STATE_SHADOW_AMBIENT:
 	 return _NEW_TEXTURE;
       case STATE_FOG_PARAMS_OPTIMIZED:
 	 return _NEW_FOG;
+      case STATE_LIGHT_SPOT_DIR_NORMALIZED:
+      case STATE_LIGHT_POSITION:
+      case STATE_LIGHT_POSITION_NORMALIZED:
+      case STATE_LIGHT_HALF_VECTOR:
+         return _NEW_LIGHT;
+
+      case STATE_PT_SCALE:
+      case STATE_PT_BIAS:
+      case STATE_PCM_SCALE:
+      case STATE_PCM_BIAS:
+         return _NEW_PIXEL;
+
       default:
          /* unknown state indexes are silently ignored and
          *  no flag set, since it is handled by the driver.

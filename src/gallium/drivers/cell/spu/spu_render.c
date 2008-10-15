@@ -279,7 +279,7 @@ cmd_render(const struct cell_command_render *render, uint *pos_incr)
          v1 = (const float *) (vertices + indexes[j+1] * vertex_size);
          v2 = (const float *) (vertices + indexes[j+2] * vertex_size);
 
-         drawn += tri_draw(v0, v1, v2, tx, ty);
+         drawn += tri_draw(v0, v1, v2, tx, ty, render->front_winding);
       }
 
       //printf("SPU %u: drew %u of %u\n", spu.init.id, drawn, render->num_indexes/3);
@@ -297,5 +297,3 @@ cmd_render(const struct cell_command_render *render, uint *pos_incr)
       printf("SPU %u: RENDER done\n",
              spu.init.id);
 }
-
-

@@ -45,7 +45,6 @@ const struct brw_tracked_state *atoms[] =
 {
    &brw_check_fallback,
 
-   &brw_tnl_vertprog,
    &brw_active_vertprog,
    &brw_wm_input_sizes,
    &brw_vs_prog,

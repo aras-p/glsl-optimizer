@@ -68,14 +68,15 @@
 int INTEL_DEBUG = (0);
 #endif
 
-#define need_GL_NV_point_sprite
 #define need_GL_ARB_multisample
+#define need_GL_ARB_occlusion_query
 #define need_GL_ARB_point_parameters
+#define need_GL_ARB_shader_objects
 #define need_GL_ARB_texture_compression
 #define need_GL_ARB_vertex_buffer_object
 #define need_GL_ARB_vertex_program
+#define need_GL_ARB_vertex_shader
 #define need_GL_ARB_window_pos
-#define need_GL_ARB_occlusion_query
 #define need_GL_EXT_blend_color
 #define need_GL_EXT_blend_equation_separate
 #define need_GL_EXT_blend_func_separate
@@ -84,14 +85,13 @@ int INTEL_DEBUG = (0);
 #define need_GL_EXT_fog_coord
 #define need_GL_EXT_framebuffer_object
 #define need_GL_EXT_multi_draw_arrays
-#define need_GL_EXT_secondary_color
-#define need_GL_NV_vertex_program
-#define need_GL_ATI_separate_stencil
 #define need_GL_EXT_point_parameters
+#define need_GL_EXT_secondary_color
+#define need_GL_ATI_separate_stencil
+#define need_GL_NV_point_sprite
+#define need_GL_NV_vertex_program
 #define need_GL_VERSION_2_0
 #define need_GL_VERSION_2_1
-#define need_GL_ARB_shader_objects
-#define need_GL_ARB_vertex_shader
 
 #include "extension_helper.h"
 
@@ -344,88 +344,82 @@ intel_viewport(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
  * i965_dri.
  */
 static const struct dri_extension card_extensions[] = {
-   {"GL_ARB_multisample", GL_ARB_multisample_functions},
-   {"GL_ARB_multitexture", NULL},
-   {"GL_ARB_point_parameters", GL_ARB_point_parameters_functions},
-   {"GL_NV_point_sprite", GL_NV_point_sprite_functions},
-   {"GL_ARB_texture_border_clamp", NULL},
-   {"GL_ARB_texture_compression", GL_ARB_texture_compression_functions},
-   {"GL_ARB_texture_cube_map", NULL},
-   {"GL_ARB_texture_env_add", NULL},
-   {"GL_ARB_texture_env_combine", NULL},
-   {"GL_ARB_texture_env_crossbar", NULL},
-   {"GL_ARB_texture_env_dot3", NULL},
-   {"GL_ARB_texture_mirrored_repeat", NULL},
-   {"GL_ARB_texture_non_power_of_two",   NULL },
-   {"GL_ARB_texture_rectangle", NULL},
-   {"GL_NV_texture_rectangle", NULL},
-   {"GL_EXT_texture_rectangle", NULL},
-   {"GL_ARB_point_parameters", NULL}, 
-   {"GL_ARB_vertex_buffer_object", GL_ARB_vertex_buffer_object_functions},
-   {"GL_ARB_vertex_program", GL_ARB_vertex_program_functions},
-   {"GL_ARB_window_pos", GL_ARB_window_pos_functions},
-   {"GL_EXT_blend_color", GL_EXT_blend_color_functions},
-   {"GL_EXT_blend_equation_separate",
-    GL_EXT_blend_equation_separate_functions},
-   {"GL_EXT_blend_func_separate", GL_EXT_blend_func_separate_functions},
-   {"GL_EXT_blend_minmax", GL_EXT_blend_minmax_functions},
-   {"GL_EXT_blend_logic_op", NULL},
-   {"GL_EXT_blend_subtract", NULL},
-   {"GL_EXT_cull_vertex", GL_EXT_cull_vertex_functions},
-   {"GL_EXT_fog_coord", GL_EXT_fog_coord_functions},
-   {"GL_EXT_multi_draw_arrays", GL_EXT_multi_draw_arrays_functions},
-   {"GL_ATI_separate_stencil", GL_ATI_separate_stencil_functions},
-#if 1                           /* XXX FBO temporary? */
-   {"GL_EXT_packed_depth_stencil", NULL},
-#endif
-   {"GL_EXT_secondary_color", GL_EXT_secondary_color_functions},
-   {"GL_EXT_stencil_wrap", NULL},
-   {"GL_EXT_texture_edge_clamp", NULL},
-   {"GL_EXT_texture_env_combine", NULL},
-   {"GL_EXT_texture_env_dot3", NULL},
-   {"GL_EXT_texture_filter_anisotropic", NULL},
-   {"GL_EXT_texture_lod_bias", NULL},
-   {"GL_3DFX_texture_compression_FXT1", NULL},
-   {"GL_APPLE_client_storage", NULL},
-   {"GL_MESA_pack_invert", NULL},
-   {"GL_MESA_ycbcr_texture", NULL},
-   {"GL_NV_blend_square", NULL},
-   {"GL_NV_vertex_program", GL_NV_vertex_program_functions},
-   {"GL_NV_vertex_program1_1", NULL},
-   { "GL_SGIS_generate_mipmap", NULL },
-   {NULL, NULL}
+   { "GL_ARB_multisample",                GL_ARB_multisample_functions },
+   { "GL_ARB_multitexture",               NULL },
+   { "GL_ARB_point_parameters",           GL_ARB_point_parameters_functions },
+   { "GL_ARB_texture_border_clamp",       NULL },
+   { "GL_ARB_texture_compression",        GL_ARB_texture_compression_functions },
+   { "GL_ARB_texture_cube_map",           NULL },
+   { "GL_ARB_texture_env_add",            NULL },
+   { "GL_ARB_texture_env_combine",        NULL },
+   { "GL_ARB_texture_env_crossbar",       NULL },
+   { "GL_ARB_texture_env_dot3",           NULL },
+   { "GL_ARB_texture_mirrored_repeat",    NULL },
+   { "GL_ARB_texture_rectangle",          NULL },
+   { "GL_ARB_vertex_buffer_object",       GL_ARB_vertex_buffer_object_functions },
+   { "GL_ARB_vertex_program",             GL_ARB_vertex_program_functions },
+   { "GL_ARB_window_pos",                 GL_ARB_window_pos_functions },
+   { "GL_EXT_blend_color",                GL_EXT_blend_color_functions },
+   { "GL_EXT_blend_equation_separate",    GL_EXT_blend_equation_separate_functions },
+   { "GL_EXT_blend_func_separate",        GL_EXT_blend_func_separate_functions },
+   { "GL_EXT_blend_minmax",               GL_EXT_blend_minmax_functions },
+   { "GL_EXT_blend_logic_op",             NULL },
+   { "GL_EXT_blend_subtract",             NULL },
+   { "GL_EXT_cull_vertex",                GL_EXT_cull_vertex_functions },
+   { "GL_EXT_fog_coord",                  GL_EXT_fog_coord_functions },
+   { "GL_EXT_multi_draw_arrays",          GL_EXT_multi_draw_arrays_functions },
+   { "GL_EXT_packed_depth_stencil",       NULL },
+   { "GL_EXT_secondary_color",            GL_EXT_secondary_color_functions },
+   { "GL_EXT_stencil_wrap",               NULL },
+   { "GL_EXT_texture_edge_clamp",         NULL },
+   { "GL_EXT_texture_env_combine",        NULL },
+   { "GL_EXT_texture_env_dot3",           NULL },
+   { "GL_EXT_texture_filter_anisotropic", NULL },
+   { "GL_EXT_texture_lod_bias",           NULL },
+   { "GL_3DFX_texture_compression_FXT1",  NULL },
+   { "GL_APPLE_client_storage",           NULL },
+   { "GL_MESA_pack_invert",               NULL },
+   { "GL_MESA_ycbcr_texture",             NULL },
+   { "GL_NV_blend_square",                NULL },
+   { "GL_NV_point_sprite",                GL_NV_point_sprite_functions },
+   { "GL_NV_vertex_program",              GL_NV_vertex_program_functions },
+   { "GL_NV_vertex_program1_1",           NULL },
+   { "GL_SGIS_generate_mipmap",           NULL },
+   { NULL, NULL }
 };
 
 static const struct dri_extension brw_extensions[] = {
-   { "GL_ARB_shading_language_100",       GL_VERSION_2_0_functions},
-   { "GL_ARB_shading_language_120",       GL_VERSION_2_1_functions},
-   { "GL_ARB_shader_objects",             GL_ARB_shader_objects_functions},
-   { "GL_ARB_vertex_shader",              GL_ARB_vertex_shader_functions},
-   { "GL_ARB_point_sprite", 		  NULL},
-   { "GL_ARB_fragment_shader",            NULL },
-   { "GL_ARB_draw_buffers",               NULL },
    { "GL_ARB_depth_texture",              NULL },
+   { "GL_ARB_draw_buffers",               NULL },
    { "GL_ARB_fragment_program",           NULL },
-   { "GL_ARB_shadow",                     NULL },
-   { "GL_EXT_shadow_funcs",               NULL },
    { "GL_ARB_fragment_program_shadow",    NULL },
-   /* ARB extn won't work if not enabled */
-   { "GL_SGIX_depth_texture",             NULL },
-   { "GL_EXT_texture_sRGB",		  NULL},
+   { "GL_ARB_fragment_shader",            NULL },
+   { "GL_ARB_occlusion_query",            GL_ARB_occlusion_query_functions },
+   { "GL_ARB_point_sprite", 		  NULL },
+   { "GL_ARB_shader_objects",             GL_ARB_shader_objects_functions },
+   { "GL_ARB_shading_language_100",       GL_VERSION_2_0_functions },
+#if 0
+   /* Support for GLSL 1.20 is currently broken in core Mesa.
+    */
+   { "GL_ARB_shading_language_120",       GL_VERSION_2_1_functions },
+#endif
+   { "GL_ARB_shadow",                     NULL },
+   { "GL_ARB_texture_non_power_of_two",   NULL },
+   { "GL_ARB_vertex_shader",              GL_ARB_vertex_shader_functions },
+   { "GL_EXT_shadow_funcs",               NULL },
+   { "GL_EXT_texture_sRGB",		  NULL },
+   { "GL_ATI_separate_stencil",           GL_ATI_separate_stencil_functions },
    { NULL,                                NULL }
 };
 
-#ifdef I915_MMIO_READ
-static const struct dri_extension arb_oc_extensions[] = {
-   {"GL_ARB_occlusion_query",            GL_ARB_occlusion_query_functions},
-   {NULL, NULL}
+static const struct dri_extension arb_oq_extensions[] = {
+   { NULL, NULL }
 };
-#endif
 
 static const struct dri_extension ttm_extensions[] = {
-   {"GL_EXT_framebuffer_object", GL_EXT_framebuffer_object_functions},
-   {"GL_ARB_pixel_buffer_object", NULL},
-   {NULL, NULL}
+   { "GL_ARB_pixel_buffer_object",        NULL },
+   { "GL_EXT_framebuffer_object",         GL_EXT_framebuffer_object_functions },
+   { NULL, NULL }
 };
 
 /**
@@ -444,13 +438,6 @@ void intelInitExtensions(GLcontext *ctx, GLboolean enable_imaging)
 
    if (intel == NULL || intel->ttm)
       driInitExtensions(ctx, ttm_extensions, GL_FALSE);
-
-#ifdef I915_MMIO_READ
-   if (intel == NULL || 
-       (IS_965(intel->intelScreen->deviceID) && 
-	intel->intelScreen->drmMinor >= 8))
-      driInitExtensions(ctx, arb_oc_extensions, GL_FALSE);
-#endif
 
    if (intel == NULL || IS_965(intel->intelScreen->deviceID))
       driInitExtensions(ctx, brw_extensions, GL_FALSE);
@@ -548,39 +535,6 @@ intelFinish(GLcontext * ctx)
    }
 }
 
-#ifdef I915_MMIO_READ
-static void
-intelBeginQuery(GLcontext *ctx, struct gl_query_object *q)
-{
-	struct intel_context *intel = intel_context( ctx );
-	struct drm_i915_mmio io = {
-		.read_write = I915_MMIO_READ,
-		.reg = MMIO_REGS_PS_DEPTH_COUNT,
-		.data = &q->Result 
-	};
-	intel->stats_wm++;
-	intelFinish(&intel->ctx);
-	drmCommandWrite(intel->driFd, DRM_I915_MMIO, &io, sizeof(io));
-}
-
-static void
-intelEndQuery(GLcontext *ctx, struct gl_query_object *q)
-{
-	struct intel_context *intel = intel_context( ctx );
-	GLuint64EXT tmp;	
-	struct drm_i915_mmio io = {
-		.read_write = I915_MMIO_READ,
-		.reg = MMIO_REGS_PS_DEPTH_COUNT,
-		.data = &tmp
-	};
-	intelFinish(&intel->ctx);
-	drmCommandWrite(intel->driFd, DRM_I915_MMIO, &io, sizeof(io));
-	q->Result = tmp - q->Result;
-	q->Ready = GL_TRUE;
-	intel->stats_wm--;
-}
-#endif
-
 void
 intelInitDriverFunctions(struct dd_function_table *functions)
 {
@@ -596,11 +550,6 @@ intelInitDriverFunctions(struct dd_function_table *functions)
    functions->CopyColorSubTable = _swrast_CopyColorSubTable;
    functions->CopyConvolutionFilter1D = _swrast_CopyConvolutionFilter1D;
    functions->CopyConvolutionFilter2D = _swrast_CopyConvolutionFilter2D;
-
-#ifdef I915_MMIO_READ
-   functions->BeginQuery = intelBeginQuery;
-   functions->EndQuery = intelEndQuery;
-#endif
 
    intelInitTextureFuncs(functions);
    intelInitStateFuncs(functions);
@@ -810,7 +759,12 @@ intelDestroyContext(__DRIcontextPrivate * driContextPriv)
       intel->Fallback = 0;      /* don't call _swrast_Flush later */
 
       intel_batchbuffer_free(intel->batch);
+      intel->batch = NULL;
+
       free(intel->prim.vb);
+      intel->prim.vb = NULL;
+      dri_bo_unreference(intel->prim.vb_bo);
+      intel->prim.vb_bo = NULL;
 
       if (release_texture_heaps) {
          /* This share group is about to go away, free our private
@@ -819,6 +773,13 @@ intelDestroyContext(__DRIcontextPrivate * driContextPriv)
          if (INTEL_DEBUG & DEBUG_TEXTURE)
             fprintf(stderr, "do something to free texture heaps\n");
       }
+
+      intel_region_release(&intel->front_region);
+      intel_region_release(&intel->back_region);
+      intel_region_release(&intel->third_region);
+      intel_region_release(&intel->depth_region);
+
+      driDestroyOptionCache(&intel->optionCache);
 
       /* free the Mesa context */
       _mesa_free_context_data(&intel->ctx);

@@ -130,7 +130,6 @@ struct brw_context;
 #define BRW_NEW_CONTEXT                 0x80
 #define BRW_NEW_WM_INPUT_DIMENSIONS     0x100
 #define BRW_NEW_INPUT_VARYING           0x200
-#define BRW_NEW_TNL_PROGRAM             0x400
 #define BRW_NEW_PSP                     0x800
 #define BRW_NEW_METAOPS                 0x1000
 #define BRW_NEW_FENCE                   0x2000
@@ -411,7 +410,22 @@ struct brw_tnl_cache {
    GLuint size, n_items;
 };
 
+struct brw_query_object {
+   struct gl_query_object Base;
 
+   /** Doubly linked list of active query objects in the context. */
+   struct brw_query_object *prev, *next;
+
+   /** Last query BO associated with this query. */
+   dri_bo *bo;
+   /** First index in bo with query data for this object. */
+   int first_index;
+   /** Last index in bo with query data for this object. */
+   int last_index;
+
+   /* Total count of pixels from previous BOs */
+   unsigned int count;
+};
 
 struct brw_context 
 {
@@ -488,10 +502,6 @@ struct brw_context
       GLboolean active;
    } metaops;
 
-   /* Track fixed function t&l in a vertex program:
-    */
-   struct gl_vertex_program *tnl_program;
-   struct brw_tnl_cache tnl_program_cache;
 
    /* Active vertex program: 
     */
@@ -631,7 +641,12 @@ struct brw_context
       dri_bo *vp_bo;
    } cc;
 
-   
+   struct {
+      struct brw_query_object active_head;
+      dri_bo *bo;
+      int index;
+      GLboolean active;
+   } query;
    /* Used to give every program string a unique id
     */
    GLuint program_id;
@@ -656,7 +671,13 @@ GLboolean brwCreateContext( const __GLcontextModes *mesaVis,
 			    __DRIcontextPrivate *driContextPriv,
 			    void *sharedContextPrivate);
 
-
+/*======================================================================
+ * brw_queryobj.c
+ */
+void brw_init_queryobj_functions(struct dd_function_table *functions);
+void brw_prepare_query_begin(struct brw_context *brw);
+void brw_emit_query_begin(struct brw_context *brw);
+void brw_emit_query_end(struct brw_context *brw);
 
 /*======================================================================
  * brw_state.c

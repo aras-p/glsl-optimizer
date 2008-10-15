@@ -181,9 +181,9 @@ intelInitPixelFuncs(struct dd_function_table *functions)
    if (!getenv("INTEL_NO_BLIT")) {
       functions->Bitmap = intelBitmap;
       functions->CopyPixels = intelCopyPixels;
+      functions->DrawPixels = intelDrawPixels;
 #ifdef I915
       functions->ReadPixels = intelReadPixels;
-      functions->DrawPixels = intelDrawPixels;
 #endif
    }
 }

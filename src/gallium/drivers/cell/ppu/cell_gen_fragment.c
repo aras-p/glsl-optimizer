@@ -54,10 +54,12 @@
  * \param ifragZ_reg  register containing integer fragment Z values (in)
  * \param ifbZ_reg    register containing integer frame buffer Z values (in/out)
  * \param zmask_reg   register containing result of Z test/comparison (out)
+ *
+ * Returns true if the Z-buffer needs to be updated.
  */
-static void
-gen_depth_test(const struct pipe_depth_stencil_alpha_state *dsa,
-               struct spe_function *f,
+static boolean
+gen_depth_test(struct spe_function *f,
+               const struct pipe_depth_stencil_alpha_state *dsa,
                int mask_reg, int ifragZ_reg, int ifbZ_reg, int zmask_reg)
 {
    /* NOTE: we use clgt below, not cgt, because we want to compare _unsigned_
@@ -132,7 +134,10 @@ gen_depth_test(const struct pipe_depth_stencil_alpha_state *dsa,
        * framebufferZ = (ztest_passed ? fragmentZ : framebufferZ;
        */
       spe_selb(f, ifbZ_reg, ifbZ_reg, ifragZ_reg, mask_reg);
+      return true;
    }
+
+   return false;
 }
 
 
@@ -238,20 +243,33 @@ gen_alpha_test(const struct pipe_depth_stencil_alpha_state *dsa,
  * it and have to allocate and load it again unnecessarily.
  */
 static inline void
-setup_const_register(struct spe_function *f, boolean *is_already_set, unsigned int *r, float value)
+setup_optional_register(struct spe_function *f, boolean *is_already_set, unsigned int *r)
 {
    if (*is_already_set) return;
    *r = spe_allocate_available_register(f);
-   spe_load_float(f, *r, value);
    *is_already_set = true;
+}
+
+static inline void
+release_optional_register(struct spe_function *f, boolean *is_already_set, unsigned int r)
+{
+    if (!*is_already_set) return;
+    spe_release_register(f, r);
+    *is_already_set = false;
+}
+
+static inline void
+setup_const_register(struct spe_function *f, boolean *is_already_set, unsigned int *r, float value)
+{
+   if (*is_already_set) return;
+   setup_optional_register(f, is_already_set, r);
+   spe_load_float(f, *r, value);
 }
 
 static inline void
 release_const_register(struct spe_function *f, boolean *is_already_set, unsigned int r)
 {
-    if (!*is_already_set) return;
-    spe_release_register(f, r);
-    *is_already_set = false;
+    release_optional_register(f, is_already_set, r);
 }
 
 /**
@@ -1117,6 +1135,666 @@ gen_colormask(struct spe_function *f,
     spe_release_register(f, colormask_reg);
 }
 
+/* This function is annoyingly similar to gen_depth_test(), above, except
+ * that instead of comparing two varying values (i.e. fragment and buffer),
+ * we're comparing a varying value with a static value.  As such, we have
+ * access to the Compare Immediate instructions where we don't in 
+ * gen_depth_test(), which is what makes us very different.
+ *
+ * The return value in the stencil_pass_reg is a bitmask of valid
+ * fragments that also passed the stencil test.  The bitmask of valid
+ * fragments that failed would be found in (mask_reg & ~stencil_pass_reg).
+ */
+static void
+gen_stencil_test(struct spe_function *f, const struct pipe_stencil_state *state, 
+                 unsigned int mask_reg, unsigned int fbS_reg, 
+                 unsigned int stencil_pass_reg)
+{
+   /* Generate code that puts the set of passing fragments into the stencil_pass_reg
+    * register, taking into account whether each fragment was active to begin with.
+    */
+   switch (state->func) {
+   case PIPE_FUNC_EQUAL:
+      /* stencil_pass = mask & (s == reference) */
+      spe_compare_equal_uint(f, stencil_pass_reg, fbS_reg, state->ref_value);
+      spe_and(f, stencil_pass_reg, mask_reg, stencil_pass_reg);
+      break;
+
+   case PIPE_FUNC_NOTEQUAL:
+      /* stencil_pass = mask & ~(s == reference) */
+      spe_compare_equal_uint(f, stencil_pass_reg, fbS_reg, state->ref_value);
+      spe_andc(f, stencil_pass_reg, mask_reg, stencil_pass_reg);
+      break;
+
+   case PIPE_FUNC_GREATER:
+      /* stencil_pass = mask & (s > reference) */
+      spe_compare_greater_uint(f, stencil_pass_reg, fbS_reg, state->ref_value);
+      spe_and(f, stencil_pass_reg, mask_reg, stencil_pass_reg);
+      break;
+
+   case PIPE_FUNC_LESS: {
+      /* stencil_pass = mask & (reference > s) */
+      /* There's no convenient Compare Less Than Immediate instruction, so
+       * we'll have to do this one the harder way, by loading a register and 
+       * comparing directly.  Compare Logical Greater Than Word (clgt) 
+       * treats its operands as unsigned - no sign extension.
+       */
+      unsigned int tmp_reg = spe_allocate_available_register(f);
+      spe_load_uint(f, tmp_reg, state->ref_value);
+      spe_clgt(f, stencil_pass_reg, tmp_reg, fbS_reg);
+      spe_and(f, stencil_pass_reg, mask_reg, stencil_pass_reg);
+      spe_release_register(f, tmp_reg);
+      break;
+   }
+
+   case PIPE_FUNC_LEQUAL:
+      /* stencil_pass = mask & (s <= reference) = mask & ~(s > reference) */
+      spe_compare_greater_uint(f, stencil_pass_reg, fbS_reg, state->ref_value);
+      spe_andc(f, stencil_pass_reg, mask_reg, stencil_pass_reg);
+      break;
+
+   case PIPE_FUNC_GEQUAL: {
+      /* stencil_pass = mask & (s >= reference) = mask & ~(reference > s) */
+      /* As above, we have to do this by loading a register */
+      unsigned int tmp_reg = spe_allocate_available_register(f);
+      spe_load_uint(f, tmp_reg, state->ref_value);
+      spe_clgt(f, stencil_pass_reg, tmp_reg, fbS_reg);
+      spe_andc(f, stencil_pass_reg, mask_reg, stencil_pass_reg);
+      spe_release_register(f, tmp_reg);
+      break;
+   }
+
+   case PIPE_FUNC_NEVER:
+      /* stencil_pass = mask & 0 = 0 */
+      spe_load_uint(f, stencil_pass_reg, 0);
+      break;
+
+   case PIPE_FUNC_ALWAYS:
+      /* stencil_pass = mask & 1 = mask */
+      spe_move(f, stencil_pass_reg, mask_reg);
+      break;
+   }
+
+   /* The fragments that passed the stencil test are now in stencil_pass_reg.
+    * The fragments that failed would be (mask_reg & ~stencil_pass_reg).
+    */
+}
+
+/* This function generates code that calculates a set of new stencil values
+ * given the earlier values and the operation to apply.  It does not
+ * apply any tests.  It is intended to be called up to 3 times
+ * (for the stencil fail operation, for the stencil pass-z fail operation,
+ * and for the stencil pass-z pass operation) to collect up to three
+ * possible sets of values, and for the caller to combine them based
+ * on the result of the tests.
+ *
+ * stencil_max_value should be (2^n - 1) where n is the number of bits
+ * in the stencil buffer - in other words, it should be usable as a mask.
+ */
+static void
+gen_stencil_values(struct spe_function *f, unsigned int stencil_op,
+                   unsigned int stencil_ref_value, unsigned int stencil_max_value,
+                   unsigned int fbS_reg, unsigned int newS_reg)
+{
+   /* The code below assumes that newS_reg and fbS_reg are not the same
+    * register; if they can be, the calculations below will have to use
+    * an additional temporary register.  For now, mark the assumption
+    * with an assertion that will fail if they are the same.
+    */
+   ASSERT(fbS_reg != newS_reg);
+
+   /* The code also assumes the the stencil_max_value is of the form 
+    * 2^n-1 and can therefore be used as a mask for the valid bits in 
+    * addition to a maximum.  Make sure this is the case as well.
+    * The clever math below exploits the fact that incrementing a 
+    * binary number serves to flip all the bits of a number starting at
+    * the LSB and continuing to (and including) the first zero bit
+    * found.  That means that a number and its increment will always
+    * have at least one bit in common (the high order bit, if nothing
+    * else) *unless* the number is zero, *or* the number is of a form
+    * consisting of some number of 1s in the low-order bits followed
+    * by nothing but 0s in the high-order bits.  The latter case
+    * implies it's of the form 2^n-1.
+    */
+   ASSERT(stencil_max_value > 0 && ((stencil_max_value + 1) & stencil_max_value) == 0);
+
+   switch(stencil_op) {
+   case PIPE_STENCIL_OP_KEEP:
+      /* newS = S */
+      spe_move(f, newS_reg, fbS_reg);
+      break;
+
+   case PIPE_STENCIL_OP_ZERO:
+      /* newS = 0 */
+      spe_zero(f, newS_reg);
+      break;
+
+   case PIPE_STENCIL_OP_REPLACE:
+      /* newS = stencil reference value */
+      spe_load_uint(f, newS_reg, stencil_ref_value);
+      break;
+
+   case PIPE_STENCIL_OP_INCR: {
+      /* newS = (s == max ? max : s + 1) */
+      unsigned int equals_reg = spe_allocate_available_register(f);
+
+      spe_compare_equal_uint(f, equals_reg, fbS_reg, stencil_max_value);
+      /* Add Word Immediate computes rT = rA + 10-bit signed immediate */
+      spe_ai(f, newS_reg, fbS_reg, 1);
+      /* Select from the current value or the new value based on the equality test */
+      spe_selb(f, newS_reg, fbS_reg, newS_reg, equals_reg);
+
+      spe_release_register(f, equals_reg);
+      break;
+   }
+   case PIPE_STENCIL_OP_DECR: {
+      /* newS = (s == 0 ? 0 : s - 1) */
+      unsigned int equals_reg = spe_allocate_available_register(f);
+
+      spe_compare_equal_uint(f, equals_reg, fbS_reg, 0);
+      /* Add Word Immediate with a (-1) value works */
+      spe_ai(f, newS_reg, fbS_reg, -1);
+      /* Select from the current value or the new value based on the equality test */
+      spe_selb(f, newS_reg, fbS_reg, newS_reg, equals_reg);
+
+      spe_release_register(f, equals_reg);
+      break;
+   }
+   case PIPE_STENCIL_OP_INCR_WRAP:
+      /* newS = (s == max ? 0 : s + 1), but since max is 2^n-1, we can
+       * do a normal add and mask off the correct bits 
+       */
+      spe_ai(f, newS_reg, fbS_reg, 1);
+      spe_and_uint(f, newS_reg, newS_reg, stencil_max_value);
+      break;
+
+   case PIPE_STENCIL_OP_DECR_WRAP:
+      /* newS = (s == 0 ? max : s - 1), but we'll pull the same mask trick as above */
+      spe_ai(f, newS_reg, fbS_reg, -1);
+      spe_and_uint(f, newS_reg, newS_reg, stencil_max_value);
+      break;
+
+   case PIPE_STENCIL_OP_INVERT:
+      /* newS = ~s.  We take advantage of the mask/max value to invert only
+       * the valid bits for the field so we don't have to do an extra "and".
+       */
+      spe_xor_uint(f, newS_reg, fbS_reg, stencil_max_value);
+      break;
+
+   default:
+      ASSERT(0);
+   }
+}
+
+
+/* This function generates code to get all the necessary possible
+ * stencil values.  For each of the output registers (fail_reg,
+ * zfail_reg, and zpass_reg), it either allocates a new register
+ * and calculates a new set of values based on the stencil operation,
+ * or it reuses a register allocation and calculation done for an
+ * earlier (matching) operation, or it reuses the fbS_reg register
+ * (if the stencil operation is KEEP, which doesn't change the 
+ * stencil buffer).
+ *
+ * Since this function allocates a variable number of registers,
+ * to avoid incurring complex logic to free them, they should
+ * be allocated after a spe_allocate_register_set() call
+ * and released by the corresponding spe_release_register_set() call.
+ */
+static void
+gen_get_stencil_values(struct spe_function *f, const struct pipe_depth_stencil_alpha_state *dsa,
+                       unsigned int fbS_reg, 
+                       unsigned int *fail_reg, unsigned int *zfail_reg, 
+                       unsigned int *zpass_reg, unsigned int *back_fail_reg, 
+                       unsigned int *back_zfail_reg, unsigned int *back_zpass_reg)
+{
+   unsigned zfail_op, back_zfail_op;
+
+   /* Stenciling had better be enabled here */
+   ASSERT(dsa->stencil[0].enabled);
+
+   /* If the depth test is not enabled, it is treated as though it always
+    * passes.  In particular, that means that the "zfail_op" (and the backfacing
+    * counterpart, if active) are not considered - a failing stencil test will
+    * trigger the "fail_op", and a passing stencil test will trigger the
+    * "zpass_op".
+    *
+    * By overriding the operations in this case to be PIPE_STENCIL_OP_KEEP,
+    * we keep them from being calculated.
+    */
+   if (dsa->depth.enabled) {
+      zfail_op = dsa->stencil[0].zfail_op;
+      back_zfail_op = dsa->stencil[1].zfail_op;
+   }
+   else {
+      zfail_op = PIPE_STENCIL_OP_KEEP;
+      back_zfail_op = PIPE_STENCIL_OP_KEEP;
+   }
+
+   /* One-sided or front-facing stencil */
+   if (dsa->stencil[0].fail_op == PIPE_STENCIL_OP_KEEP) {
+      *fail_reg = fbS_reg;
+   }
+   else {
+      *fail_reg = spe_allocate_available_register(f);
+      gen_stencil_values(f, dsa->stencil[0].fail_op, dsa->stencil[0].ref_value, 
+         0xff, fbS_reg, *fail_reg);
+   }
+
+   if (zfail_op == PIPE_STENCIL_OP_KEEP) {
+      *zfail_reg = fbS_reg;
+   }
+   else if (zfail_op == dsa->stencil[0].fail_op) {
+      *zfail_reg = *fail_reg;
+   }
+   else {
+      *zfail_reg = spe_allocate_available_register(f);
+      gen_stencil_values(f, dsa->stencil[0].zfail_op, dsa->stencil[0].ref_value, 
+         0xff, fbS_reg, *zfail_reg);
+   }
+
+   if (dsa->stencil[0].zpass_op == PIPE_STENCIL_OP_KEEP) {
+      *zpass_reg = fbS_reg;
+   }
+   else if (dsa->stencil[0].zpass_op == dsa->stencil[0].fail_op) {
+      *zpass_reg = *fail_reg;
+   }
+   else if (dsa->stencil[0].zpass_op == zfail_op) {
+      *zpass_reg = *zfail_reg;
+   }
+   else {
+      *zpass_reg = spe_allocate_available_register(f);
+      gen_stencil_values(f, dsa->stencil[0].zpass_op, dsa->stencil[0].ref_value, 
+         0xff, fbS_reg, *zpass_reg);
+   }
+
+   /* If two-sided stencil is enabled, we have more work to do. */
+   if (!dsa->stencil[1].enabled) {
+      /* This just flags that the registers need not be deallocated later */
+      *back_fail_reg = fbS_reg;
+      *back_zfail_reg = fbS_reg;
+      *back_zpass_reg = fbS_reg;
+   }
+   else {
+      /* Same calculations as above, but for the back stencil */
+      if (dsa->stencil[1].fail_op == PIPE_STENCIL_OP_KEEP) {
+         *back_fail_reg = fbS_reg;
+      }
+      else if (dsa->stencil[1].fail_op == dsa->stencil[0].fail_op) {
+         *back_fail_reg = *fail_reg;
+      }
+      else if (dsa->stencil[1].fail_op == zfail_op) {
+         *back_fail_reg = *zfail_reg;
+      }
+      else if (dsa->stencil[1].fail_op == dsa->stencil[0].zpass_op) {
+         *back_fail_reg = *zpass_reg;
+      }
+      else {
+         *back_fail_reg = spe_allocate_available_register(f);
+         gen_stencil_values(f, dsa->stencil[1].fail_op, dsa->stencil[1].ref_value, 
+            0xff, fbS_reg, *back_fail_reg);
+      }
+
+      if (back_zfail_op == PIPE_STENCIL_OP_KEEP) {
+         *back_zfail_reg = fbS_reg;
+      }
+      else if (back_zfail_op == dsa->stencil[0].fail_op) {
+         *back_zfail_reg = *fail_reg;
+      }
+      else if (back_zfail_op == zfail_op) {
+         *back_zfail_reg = *zfail_reg;
+      }
+      else if (back_zfail_op == dsa->stencil[0].zpass_op) {
+         *back_zfail_reg = *zpass_reg;
+      }
+      else if (back_zfail_op == dsa->stencil[1].fail_op) {
+         *back_zfail_reg = *back_fail_reg;
+      }
+      else {
+         *back_zfail_reg = spe_allocate_available_register(f);
+         gen_stencil_values(f, dsa->stencil[1].zfail_op, dsa->stencil[1].ref_value, 
+            0xff, fbS_reg, *back_zfail_reg);
+      }
+
+      if (dsa->stencil[1].zpass_op == PIPE_STENCIL_OP_KEEP) {
+         *back_zpass_reg = fbS_reg;
+      }
+      else if (dsa->stencil[1].zpass_op == dsa->stencil[0].fail_op) {
+         *back_zpass_reg = *fail_reg;
+      }
+      else if (dsa->stencil[1].zpass_op == zfail_op) {
+         *back_zpass_reg = *zfail_reg;
+      }
+      else if (dsa->stencil[1].zpass_op == dsa->stencil[0].zpass_op) {
+         *back_zpass_reg = *zpass_reg;
+      }
+      else if (dsa->stencil[1].zpass_op == dsa->stencil[1].fail_op) {
+         *back_zpass_reg = *back_fail_reg;
+      }
+      else if (dsa->stencil[1].zpass_op == back_zfail_op) {
+         *back_zpass_reg = *back_zfail_reg;
+      }
+      else {
+         *back_zfail_reg = spe_allocate_available_register(f);
+         gen_stencil_values(f, dsa->stencil[1].zpass_op, dsa->stencil[1].ref_value, 
+            0xff, fbS_reg, *back_zpass_reg);
+      }
+   } /* End of calculations for back-facing stencil */
+}
+
+/* Note that fbZ_reg may *not* be set on entry, if in fact
+ * the depth test is not enabled.  This function must not use
+ * the register if depth is not enabled.
+ */
+static boolean
+gen_stencil_depth_test(struct spe_function *f, 
+                       const struct pipe_depth_stencil_alpha_state *dsa, 
+                       const int const facing_reg,
+                       const int mask_reg, const int fragZ_reg, 
+                       const int fbZ_reg, const int fbS_reg)
+{
+   /* True if we've generated code that could require writeback to the
+    * depth and/or stencil buffers
+    */
+   boolean modified_buffers = false;
+
+   boolean need_to_calculate_stencil_values;
+   boolean need_to_writemask_stencil_values;
+
+   /* Registers.  We may or may not actually allocate these, depending
+    * on whether the state values indicate that we need them.
+    */
+   unsigned int stencil_pass_reg, stencil_fail_reg;
+   unsigned int stencil_fail_values, stencil_pass_depth_fail_values, stencil_pass_depth_pass_values;
+   unsigned int stencil_writemask_reg;
+   unsigned int zmask_reg;
+   unsigned int newS_reg;
+
+   /* Stenciling is quite complex: up to six different configurable stencil 
+    * operations/calculations can be required (three each for front-facing
+    * and back-facing fragments).  Many of those operations will likely 
+    * be identical, so there's good reason to try to avoid calculating 
+    * the same values more than once (which unfortunately makes the code less 
+    * straightforward).
+    *
+    * To make register management easier, we start a new 
+    * register set; we can release all the registers in the set at
+    * once, and avoid having to keep track of exactly which registers
+    * we allocate.  We can still allocate and free registers as 
+    * desired (if we know we no longer need a register), but we don't
+    * have to spend the complexity to track the more difficult variant
+    * register usage scenarios.
+    */
+   spe_comment(f, 0, "Allocating stencil register set");
+   spe_allocate_register_set(f);
+
+   /* Calculate the writemask.  If the writemask is trivial (either
+    * all 0s, meaning that we don't need to calculate any stencil values
+    * because they're not going to change the stencil anyway, or all 1s,
+    * meaning that we have to calculate the stencil values but do not
+    * need to mask them), we can avoid generating code.  Don't forget
+    * that we need to consider backfacing stencil, if enabled.
+    */
+   if (dsa->stencil[0].write_mask == 0x0 && (!dsa->stencil[1].enabled || dsa->stencil[1].write_mask == 0x00)) {
+      /* Trivial: don't need to calculate stencil values, and don't need to 
+       * write them back to the framebuffer.
+       */
+      need_to_calculate_stencil_values = false;
+      need_to_writemask_stencil_values = false;
+   }
+   else if (dsa->stencil[0].write_mask == 0xff && (!dsa->stencil[1].enabled || dsa->stencil[1].write_mask == 0xff)) {
+      /* Still trivial, but a little less so.  We need to write the stencil
+       * values, but we don't need to mask them.
+       */
+      need_to_calculate_stencil_values = true;
+      need_to_writemask_stencil_values = false;
+   }
+   else {
+      /* The general case: calculate, mask, and write */
+      need_to_calculate_stencil_values = true;
+      need_to_writemask_stencil_values = true;
+
+      /* While we're here, generate code that calculates what the
+       * writemask should be.  If backface stenciling is enabled,
+       * and the backface writemask is not the same as the frontface
+       * writemask, we'll have to generate code that merges the
+       * two masks into a single effective mask based on fragment facing.
+       */
+      spe_comment(f, 0, "Computing stencil writemask");
+      stencil_writemask_reg = spe_allocate_available_register(f);
+      spe_load_uint(f, stencil_writemask_reg, dsa->stencil[0].write_mask);
+      if (dsa->stencil[1].enabled && dsa->stencil[0].write_mask != dsa->stencil[1].write_mask) {
+         unsigned int back_write_mask_reg = spe_allocate_available_register(f);
+         spe_comment(f, 0, "Resolving two-sided stencil writemask");
+         spe_load_uint(f, back_write_mask_reg, dsa->stencil[1].write_mask);
+         spe_selb(f, stencil_writemask_reg, stencil_writemask_reg, back_write_mask_reg, facing_reg);
+         spe_release_register(f, back_write_mask_reg);
+      }
+   }
+
+   /* At least one-sided stenciling must be on.  Generate code that
+    * runs the stencil test on the basic/front-facing stencil, leaving
+    * the mask of passing stencil bits in stencil_pass_reg.  This mask will
+    * be used both to mask the set of active pixels, and also to
+    * determine how the stencil buffer changes.
+    *
+    * This test will *not* change the value in mask_reg (because we don't
+    * yet know whether to apply the two-sided stencil or one-sided stencil).
+    */
+   spe_comment(f, 0, "Running basic stencil test");
+   stencil_pass_reg = spe_allocate_available_register(f);
+   gen_stencil_test(f, &dsa->stencil[0], mask_reg, fbS_reg, stencil_pass_reg);
+
+   /* If two-sided stenciling is on, generate code to run the stencil
+    * test on the backfacing stencil as well, and combine the two results
+    * into the one correct result based on facing.
+    */
+   if (dsa->stencil[1].enabled) {
+      unsigned int temp_reg = spe_allocate_available_register(f);
+      spe_comment(f, 0, "Running backface stencil test");
+      gen_stencil_test(f, &dsa->stencil[1], mask_reg, fbS_reg, temp_reg);
+      spe_selb(f, stencil_pass_reg, stencil_pass_reg, temp_reg, facing_reg);
+      spe_release_register(f, temp_reg);
+   }
+
+   /* Generate code that, given the mask of valid fragments and the
+    * mask of valid fragments that passed the stencil test, computes
+    * the mask of valid fragments that failed the stencil test.  We
+    * have to do this before we run a depth test (because the
+    * depth test should not be performed on fragments that failed the
+    * stencil test, and because the depth test will update the 
+    * mask of valid fragments based on the results of the depth test).
+    */
+   spe_comment(f, 0, "Computing stencil fail mask and updating fragment mask");
+   stencil_fail_reg = spe_allocate_available_register(f);
+   spe_andc(f, stencil_fail_reg, mask_reg, stencil_pass_reg);
+   /* Now remove the stenciled-out pixels from the valid fragment mask,
+    * so we can later use the valid fragment mask in the depth test.
+    */
+   spe_and(f, mask_reg, mask_reg, stencil_pass_reg);
+
+   /* We may not need to calculate stencil values, if the writemask is off */
+   if (need_to_calculate_stencil_values) {
+      unsigned int back_stencil_fail_values, back_stencil_pass_depth_fail_values, back_stencil_pass_depth_pass_values;
+      unsigned int front_stencil_fail_values, front_stencil_pass_depth_fail_values, front_stencil_pass_depth_pass_values;
+
+      /* Generate code that calculates exactly which stencil values we need,
+       * without calculating the same value twice (say, if two different
+       * stencil ops have the same value).  This code will work for one-sided
+       * and two-sided stenciling (so that we take into account that operations
+       * may match between front and back stencils), and will also take into
+       * account whether the depth test is enabled (if the depth test is off,
+       * we don't need any of the zfail results, because the depth test always
+       * is considered to pass if it is disabled).  Any register value that
+       * does not need to be calculated will come back with the same value
+       * that's in fbS_reg.
+       *
+       * This function will allocate a variant number of registers that
+       * will be released as part of the register set.
+       */
+      spe_comment(f, 0, "Computing stencil values");
+      gen_get_stencil_values(f, dsa, fbS_reg, 
+         &front_stencil_fail_values, &front_stencil_pass_depth_fail_values, 
+         &front_stencil_pass_depth_pass_values, &back_stencil_fail_values, 
+         &back_stencil_pass_depth_fail_values, &back_stencil_pass_depth_pass_values);
+
+      /* Tricky, tricky, tricky - the things we do to create optimal
+       * code...
+       *
+       * The various stencil values registers may overlap with each other
+       * and with fbS_reg arbitrarily (as any particular operation is
+       * only calculated once and stored in one register, no matter
+       * how many times it is used).  So we can't change the values 
+       * within those registers directly - if we change a value in a
+       * register that's being referenced by two different calculations,
+       * we've just unwittingly changed the second value as well...
+       *
+       * Avoid this by allocating new registers to hold the results
+       * (there may be 2, if the depth test is off, or 3, if it is on).
+       * These will be released as part of the register set.
+       */
+      if (!dsa->stencil[1].enabled) {
+         /* The easy case: if two-sided stenciling is *not* enabled, we
+          * just use the front-sided values.
+          */
+         stencil_fail_values = front_stencil_fail_values;
+         stencil_pass_depth_fail_values = front_stencil_pass_depth_fail_values;
+         stencil_pass_depth_pass_values = front_stencil_pass_depth_pass_values;
+      }
+      else { /* two-sided stencil enabled */
+         spe_comment(f, 0, "Resolving backface stencil values");
+         /* Allocate new registers for the needed merged values */
+         stencil_fail_values = spe_allocate_available_register(f);
+         spe_selb(f, stencil_fail_values, front_stencil_fail_values, back_stencil_fail_values, facing_reg);
+         if (dsa->depth.enabled) {
+            stencil_pass_depth_fail_values = spe_allocate_available_register(f);
+            spe_selb(f, stencil_pass_depth_fail_values, front_stencil_pass_depth_fail_values, back_stencil_pass_depth_fail_values, facing_reg);
+         }
+         else {
+            stencil_pass_depth_fail_values = fbS_reg;
+         }
+         stencil_pass_depth_pass_values = spe_allocate_available_register(f);
+         spe_selb(f, stencil_pass_depth_pass_values, front_stencil_pass_depth_pass_values, back_stencil_pass_depth_pass_values, facing_reg);
+      }
+   }
+
+   /* We now have all the stencil values we need.  We also need 
+    * the results of the depth test to figure out which
+    * stencil values will become the new stencil values.  (Even if
+    * we aren't actually calculating stencil values, we need to apply
+    * the depth test if it's enabled.)
+    *
+    * The code generated by gen_depth_test() returns the results of the
+    * test in the given register, but also alters the mask_reg based
+    * on the results of the test.
+    */
+   if (dsa->depth.enabled) {
+      spe_comment(f, 0, "Running stencil depth test");
+      zmask_reg = spe_allocate_available_register(f);
+      modified_buffers |= gen_depth_test(f, dsa, mask_reg, fragZ_reg, fbZ_reg, zmask_reg);
+   }
+
+   if (need_to_calculate_stencil_values) {
+
+      /* If we need to writemask the stencil values before going into
+       * the stencil buffer, we'll have to use a new register to
+       * hold the new values.  If not, we can just keep using the
+       * current register.
+       */
+      if (need_to_writemask_stencil_values) {
+         newS_reg = spe_allocate_available_register(f);
+         spe_comment(f, 0, "Saving current stencil values for writemasking");
+         spe_move(f, newS_reg, fbS_reg);
+      }
+      else {
+         newS_reg = fbS_reg;
+      }
+
+      /* Merge in the selected stencil fail values */
+      if (stencil_fail_values != fbS_reg) {
+         spe_comment(f, 0, "Loading stencil fail values");
+         spe_selb(f, newS_reg, newS_reg, stencil_fail_values, stencil_fail_reg);
+         modified_buffers = true;
+      }
+
+      /* Same for the stencil pass/depth fail values.  If this calculation
+       * is not needed (say, if depth test is off), then the
+       * stencil_pass_depth_fail_values register will be equal to fbS_reg
+       * and we'll skip the calculation.
+       */
+      if (stencil_pass_depth_fail_values != fbS_reg) {
+         /* We don't actually have a stencil pass/depth fail mask yet.
+          * Calculate it here from the stencil passing mask and the
+          * depth passing mask.  Note that zmask_reg *must* have been
+          * set above if we're here.
+          */
+         unsigned int stencil_pass_depth_fail_mask = spe_allocate_available_register(f);
+         spe_comment(f, 0, "Loading stencil pass/depth fail values");
+         spe_andc(f, stencil_pass_depth_fail_mask, stencil_pass_reg, zmask_reg);
+
+         spe_selb(f, newS_reg, newS_reg, stencil_pass_depth_fail_values, stencil_pass_depth_fail_mask);
+
+         spe_release_register(f, stencil_pass_depth_fail_mask);
+         modified_buffers = true;
+      }
+
+      /* Same for the stencil pass/depth pass mask.  Note that we
+       * *can* get here with zmask_reg being unset (if the depth
+       * test is off but the stencil test is on).  In this case,
+       * we assume the depth test passes, and don't need to mask
+       * the stencil pass mask with the Z mask.
+       */
+      if (stencil_pass_depth_pass_values != fbS_reg) {
+         if (dsa->depth.enabled) {
+            unsigned int stencil_pass_depth_pass_mask = spe_allocate_available_register(f);
+            /* We'll need a separate register */
+            spe_comment(f, 0, "Loading stencil pass/depth pass values");
+            spe_and(f, stencil_pass_depth_pass_mask, stencil_pass_reg, zmask_reg);
+            spe_selb(f, newS_reg, newS_reg, stencil_pass_depth_pass_values, stencil_pass_depth_pass_mask);
+            spe_release_register(f, stencil_pass_depth_pass_mask);
+         }
+         else {
+            /* We can use the same stencil-pass register */
+            spe_comment(f, 0, "Loading stencil pass values");
+            spe_selb(f, newS_reg, newS_reg, stencil_pass_depth_pass_values, stencil_pass_reg);
+         }
+         modified_buffers = true;
+      }
+
+      /* Almost done.  If we need to writemask, do it now, leaving the
+       * results in the fbS_reg register passed in.  If we don't need
+       * to writemask, then the results are *already* in the fbS_reg,
+       * so there's nothing more to do.
+       */
+
+      if (need_to_writemask_stencil_values && modified_buffers) {
+         /* The Select Bytes command makes a fine writemask.  Where
+          * the mask is 0, the first (original) values are retained,
+          * effectively masking out changes.  Where the mask is 1, the
+          * second (new) values are retained, incorporating changes.
+          */
+         spe_comment(f, 0, "Writemasking new stencil values");
+         spe_selb(f, fbS_reg, fbS_reg, newS_reg, stencil_writemask_reg);
+      }
+
+   } /* done calculating stencil values */
+
+   /* The stencil and/or depth values have been applied, and the
+    * mask_reg, fbS_reg, and fbZ_reg values have been updated.
+    * We're all done, except that we've allocated a fair number
+    * of registers that we didn't bother tracking.  Release all
+    * those registers as part of the register set, and go home.
+    */
+   spe_comment(f, 0, "Releasing stencil register set");
+   spe_release_register_set(f);
+
+   /* Return true if we could have modified the stencil and/or
+    * depth buffers.
+    */
+   return modified_buffers;
+}
+
+
 /**
  * Generate SPE code to implement the fragment operations (alpha test,
  * depth test, stencil test, blending, colormask, and final
@@ -1156,6 +1834,7 @@ cell_gen_fragment_function(struct cell_context *cell, struct spe_function *f)
    const int fragB_reg = 10;  /* vector float */
    const int fragA_reg = 11;  /* vector float */
    const int mask_reg = 12;   /* vector uint */
+   const int facing_reg = 13; /* uint */
 
    /* offset of quad from start of tile
     * XXX assuming 4-byte pixels for color AND Z/stencil!!!!
@@ -1183,6 +1862,7 @@ cell_gen_fragment_function(struct cell_context *cell, struct spe_function *f)
    spe_allocate_register(f, fragB_reg);
    spe_allocate_register(f, fragA_reg);
    spe_allocate_register(f, mask_reg);
+   spe_allocate_register(f, facing_reg);
 
    quad_offset_reg = spe_allocate_available_register(f);
    fbRGBA_reg = spe_allocate_available_register(f);
@@ -1195,6 +1875,7 @@ cell_gen_fragment_function(struct cell_context *cell, struct spe_function *f)
 
       ASSERT(TILE_SIZE == 32);
 
+      spe_comment(f, 0, "Compute quad offset within tile");
       spe_rotmi(f, y2_reg, y_reg, -1);  /* y2 = y / 2 */
       spe_rotmi(f, x2_reg, x_reg, -1);  /* x2 = x / 2 */
       spe_shli(f, y2_reg, y2_reg, 4);   /* y2 *= 16 */
@@ -1205,130 +1886,188 @@ cell_gen_fragment_function(struct cell_context *cell, struct spe_function *f)
       spe_release_register(f, y2_reg);
    }
 
-
    if (dsa->alpha.enabled) {
       gen_alpha_test(dsa, f, mask_reg, fragA_reg);
    }
 
+   /* If we need the stencil buffers (because one- or two-sided stencil is
+    * enabled) or the depth buffer (because the depth test is enabled),
+    * go grab them.  Note that if either one- or two-sided stencil is
+    * enabled, dsa->stencil[0].enabled will be true.
+    */
    if (dsa->depth.enabled || dsa->stencil[0].enabled) {
       const enum pipe_format zs_format = cell->framebuffer.zsbuf->format;
       boolean write_depth_stencil;
 
-      int fbZ_reg = spe_allocate_available_register(f); /* Z values */
-      int fbS_reg = spe_allocate_available_register(f); /* Stencil values */
+      /* We may or may not need to allocate a register for Z or stencil values */
+      boolean fbS_reg_set = false, fbZ_reg_set = false;
+      unsigned int fbS_reg, fbZ_reg = 0;
+
+      spe_comment(f, 0, "Fetching Z/stencil quad from tile");
 
       /* fetch quad of depth/stencil values from tile at (x,y) */
       /* Load: fbZS_reg = memory[depth_tile_reg + offset_reg] */
+      /* XXX Not sure this is allowed if we've only got a 16-bit Z buffer... */
       spe_lqx(f, fbZS_reg, depth_tile_reg, quad_offset_reg);
 
-      if (dsa->depth.enabled) {
-         /* Extract Z bits from fbZS_reg into fbZ_reg */
-         if (zs_format == PIPE_FORMAT_S8Z24_UNORM ||
-             zs_format == PIPE_FORMAT_X8Z24_UNORM) {
-            int mask_reg = spe_allocate_available_register(f);
-            spe_fsmbi(f, mask_reg, 0x7777);  /* mask[0,1,2,3] = 0x00ffffff */
-            spe_and(f, fbZ_reg, fbZS_reg, mask_reg);  /* fbZ = fbZS & mask */
-            spe_release_register(f, mask_reg);
-            /* OK, fbZ_reg has four 24-bit Z values now */
-         }
-         else if (zs_format == PIPE_FORMAT_Z24S8_UNORM ||
-                  zs_format == PIPE_FORMAT_Z24X8_UNORM) {
-            spe_rotmi(f, fbZ_reg, fbZS_reg, -8);  /* fbZ = fbZS >> 8 */
-            /* OK, fbZ_reg has four 24-bit Z values now */
-         }
-         else if (zs_format == PIPE_FORMAT_Z32_UNORM) {
-            spe_move(f, fbZ_reg, fbZS_reg);
-            /* OK, fbZ_reg has four 32-bit Z values now */
-         }
-         else if (zs_format == PIPE_FORMAT_Z16_UNORM) {
-            spe_move(f, fbZ_reg, fbZS_reg);
-            /* OK, fbZ_reg has four 16-bit Z values now */
-         }
-         else {
-            ASSERT(0);  /* invalid format */
-         }
+      /* From the Z/stencil buffer format, pull out the bits we need for
+       * Z and/or stencil.  We'll also convert the incoming fragment Z
+       * value in fragZ_reg from a floating point value in [0.0..1.0] to
+       * an unsigned integer value with the appropriate resolution.
+       */
+      switch(zs_format) {
 
-         /* Convert fragZ values from float[4] to 16, 24 or 32-bit uint[4] */
-         if (zs_format == PIPE_FORMAT_S8Z24_UNORM ||
-             zs_format == PIPE_FORMAT_X8Z24_UNORM ||
-             zs_format == PIPE_FORMAT_Z24S8_UNORM ||
-             zs_format == PIPE_FORMAT_Z24X8_UNORM) {
-            /* scale/convert fragZ from float in [0,1] to uint in [0, ~0] */
-            spe_cfltu(f, fragZ_reg, fragZ_reg, 32);
-            /* fragZ = fragZ >> 8 */
-            spe_rotmi(f, fragZ_reg, fragZ_reg, -8);
-         }
-         else if (zs_format == PIPE_FORMAT_Z32_UNORM) {
-            /* scale/convert fragZ from float in [0,1] to uint in [0, ~0] */
-            spe_cfltu(f, fragZ_reg, fragZ_reg, 32);
-         }
-         else if (zs_format == PIPE_FORMAT_Z16_UNORM) {
-            /* scale/convert fragZ from float in [0,1] to uint in [0, ~0] */
-            spe_cfltu(f, fragZ_reg, fragZ_reg, 32);
-            /* fragZ = fragZ >> 16 */
-            spe_rotmi(f, fragZ_reg, fragZ_reg, -16);
-         }
+         case PIPE_FORMAT_S8Z24_UNORM: /* fall through */
+         case PIPE_FORMAT_X8Z24_UNORM:
+            if (dsa->depth.enabled) {
+               /* We need the Z part at least */
+               setup_optional_register(f, &fbZ_reg_set, &fbZ_reg);
+               /* four 24-bit Z values in the low-order bits */
+               spe_and_uint(f, fbZ_reg, fbZS_reg, 0x00ffffff);
+
+               /* Incoming fragZ_reg value is a float in 0.0...1.0; convert
+                * to a 24-bit unsigned integer
+                */
+               spe_cfltu(f, fragZ_reg, fragZ_reg, 32);
+               spe_rotmi(f, fragZ_reg, fragZ_reg, -8);
+            }
+            if (dsa->stencil[0].enabled) {
+               setup_optional_register(f, &fbS_reg_set, &fbS_reg);
+               /* four 8-bit Z values in the high-order bits */
+               spe_rotmi(f, fbS_reg, fbZS_reg, -24);
+            }
+            break;
+
+         case PIPE_FORMAT_Z24S8_UNORM: /* fall through */
+         case PIPE_FORMAT_Z24X8_UNORM:
+            if (dsa->depth.enabled) {
+               setup_optional_register(f, &fbZ_reg_set, &fbZ_reg);
+               /* shift by 8 to get the upper 24-bit values */
+               spe_rotmi(f, fbS_reg, fbZS_reg, -8);
+
+               /* Incoming fragZ_reg value is a float in 0.0...1.0; convert
+                * to a 24-bit unsigned integer
+                */
+               spe_cfltu(f, fragZ_reg, fragZ_reg, 32);
+               spe_rotmi(f, fragZ_reg, fragZ_reg, -8);
+            }
+            if (dsa->stencil[0].enabled) {
+               setup_optional_register(f, &fbS_reg_set, &fbS_reg);
+               /* 8-bit stencil in the low-order bits - mask them out */
+               spe_and_uint(f, fbS_reg, fbZS_reg, 0x000000ff);
+            }
+            break;
+
+         case PIPE_FORMAT_Z32_UNORM:
+            if (dsa->depth.enabled) {
+               setup_optional_register(f, &fbZ_reg_set, &fbZ_reg);
+               /* Copy over 4 32-bit values */
+               spe_move(f, fbZ_reg, fbZS_reg);
+
+               /* Incoming fragZ_reg value is a float in 0.0...1.0; convert
+                * to a 32-bit unsigned integer
+                */
+               spe_cfltu(f, fragZ_reg, fragZ_reg, 32);
+            }
+            /* No stencil, so can't do anything there */
+            break;
+
+         case PIPE_FORMAT_Z16_UNORM:
+            if (dsa->depth.enabled) {
+               /* XXX Not sure this is correct, but it was here before, so we're
+                * going with it for now
+                */
+               setup_optional_register(f, &fbZ_reg_set, &fbZ_reg);
+               /* Copy over 4 32-bit values */
+               spe_move(f, fbZ_reg, fbZS_reg);
+
+               /* Incoming fragZ_reg value is a float in 0.0...1.0; convert
+                * to a 16-bit unsigned integer
+                */
+               spe_cfltu(f, fragZ_reg, fragZ_reg, 32);
+               spe_rotmi(f, fragZ_reg, fragZ_reg, -16);
+            }
+            /* No stencil */
+            break;
+
+         default:
+            ASSERT(0); /* invalid format */
       }
-      else {
-         /* no Z test, but set Z to zero so we don't OR-in garbage below */
-         spe_load_uint(f, fbZ_reg, 0); /* XXX set to zero for now */
-      }
 
-
+      /* If stencil is enabled, use the stencil-specific code
+       * generator to generate both the stencil and depth (if needed)
+       * tests.  Otherwise, if only depth is enabled, generate
+       * a quick depth test.  The test generators themselves will
+       * report back whether the depth/stencil buffer has to be
+       * written back.
+       */
       if (dsa->stencil[0].enabled) {
-         /* Extract Stencil bit sfrom fbZS_reg into fbS_reg */
-         if (zs_format == PIPE_FORMAT_S8Z24_UNORM ||
-             zs_format == PIPE_FORMAT_X8Z24_UNORM) {
-            /* XXX extract with a shift */
-            ASSERT(0);
-         }
-         else if (zs_format == PIPE_FORMAT_Z24S8_UNORM ||
-                  zs_format == PIPE_FORMAT_Z24X8_UNORM) {
-            /* XXX extract with a mask */
-            ASSERT(0);
-         }
-      }
-      else {
-         /* no stencil test, but set to zero so we don't OR-in garbage below */
-         spe_load_uint(f, fbS_reg, 0); /* XXX set to zero for now */
-      }
+         /* This will perform the stencil and depth tests, and update
+          * the mask_reg, fbZ_reg, and fbS_reg as required by the
+          * tests.
+          */
+         ASSERT(fbS_reg_set);
+         spe_comment(f, 0, "Perform stencil test");
 
-      if (dsa->stencil[0].enabled) {
-         /* XXX this may involve depth testing too */
-         // gen_stencil_test(dsa, f, ... );
-         ASSERT(0);
+         /* Note that fbZ_reg may not be set on entry, if stenciling
+          * is enabled but there's no Z-buffer.  The 
+          * gen_stencil_depth_test() function must ignore the
+          * fbZ_reg register if depth is not enabled.
+          */
+         write_depth_stencil = gen_stencil_depth_test(f, dsa, facing_reg, mask_reg, fragZ_reg, fbZ_reg, fbS_reg);
       }
       else if (dsa->depth.enabled) {
          int zmask_reg = spe_allocate_available_register(f);
-         gen_depth_test(dsa, f, mask_reg, fragZ_reg, fbZ_reg, zmask_reg);
+         ASSERT(fbZ_reg_set);
+         spe_comment(f, 0, "Perform depth test");
+         write_depth_stencil = gen_depth_test(f, dsa, mask_reg, fragZ_reg, fbZ_reg, zmask_reg);
          spe_release_register(f, zmask_reg);
       }
-
-      /* do we need to write Z and/or Stencil back into framebuffer? */
-      write_depth_stencil = (dsa->depth.writemask |
-                             dsa->stencil[0].write_mask |
-                             dsa->stencil[1].write_mask);
+      else {
+         write_depth_stencil = false;
+      }
 
       if (write_depth_stencil) {
          /* Merge latest Z and Stencil values into fbZS_reg.
           * fbZ_reg has four Z vals in bits [23..0] or bits [15..0].
           * fbS_reg has four 8-bit Z values in bits [7..0].
           */
+         spe_comment(f, 0, "Store quad's depth/stencil values in tile");
          if (zs_format == PIPE_FORMAT_S8Z24_UNORM ||
              zs_format == PIPE_FORMAT_X8Z24_UNORM) {
-            spe_shli(f, fbS_reg, fbS_reg, 24); /* fbS = fbS << 24 */
-            spe_or(f, fbZS_reg, fbS_reg, fbZ_reg); /* fbZS = fbS | fbZ */
+            if (fbS_reg_set && fbZ_reg_set) {
+               spe_shli(f, fbS_reg, fbS_reg, 24); /* fbS = fbS << 24 */
+               spe_or(f, fbZS_reg, fbS_reg, fbZ_reg); /* fbZS = fbS | fbZ */
+            }
+            else if (fbS_reg_set) {
+               spe_shli(f, fbZS_reg, fbS_reg, 24); /* fbS = fbS << 24 */
+            }
+            else {
+               spe_move(f, fbZS_reg, fbZ_reg);
+            }
          }
          else if (zs_format == PIPE_FORMAT_Z24S8_UNORM ||
                   zs_format == PIPE_FORMAT_Z24X8_UNORM) {
-            spe_shli(f, fbZ_reg, fbZ_reg, 8); /* fbZ = fbZ << 8 */
-            spe_or(f, fbZS_reg, fbS_reg, fbZ_reg); /* fbZS = fbS | fbZ */
+            if (fbS_reg_set && fbZ_reg_set) {
+               spe_shli(f, fbZ_reg, fbZ_reg, 8); /* fbZ = fbZ << 8 */
+               spe_or(f, fbZS_reg, fbS_reg, fbZ_reg); /* fbZS = fbS | fbZ */
+            }
+            else if (fbS_reg_set) {
+               spe_move(f, fbZS_reg, fbS_reg);
+            }
+            else {
+               spe_shli(f, fbZ_reg, fbZ_reg, 8); /* fbZ = fbZ << 8 */
+            }
          }
          else if (zs_format == PIPE_FORMAT_Z32_UNORM) {
-            spe_move(f, fbZS_reg, fbZ_reg); /* fbZS = fbZ */
+            if (fbZ_reg_set) {
+               spe_move(f, fbZS_reg, fbZ_reg); /* fbZS = fbZ */
+            }
          }
          else if (zs_format == PIPE_FORMAT_Z16_UNORM) {
-            spe_move(f, fbZS_reg, fbZ_reg); /* fbZS = fbZ */
+            if (fbZ_reg_set) {
+               spe_move(f, fbZS_reg, fbZ_reg); /* fbZS = fbZ */
+            }
          }
          else if (zs_format == PIPE_FORMAT_S8_UNORM) {
             ASSERT(0);   /* XXX to do */
@@ -1341,10 +2080,9 @@ cell_gen_fragment_function(struct cell_context *cell, struct spe_function *f)
          spe_stqx(f, fbZS_reg, depth_tile_reg, quad_offset_reg);
       }
 
-      spe_release_register(f, fbZ_reg);
-      spe_release_register(f, fbS_reg);
+      release_optional_register(f, &fbZ_reg_set, fbZ_reg);
+      release_optional_register(f, &fbS_reg_set, fbS_reg);
    }
-
 
    /* Get framebuffer quad/colors.  We'll need these for blending,
     * color masking, and to obey the quad/pixel mask.
@@ -1352,10 +2090,11 @@ cell_gen_fragment_function(struct cell_context *cell, struct spe_function *f)
     * Note: if mask={~0,~0,~0,~0} and we're not blending or colormasking
     * we could skip this load.
     */
+   spe_comment(f, 0, "Fetch quad colors from tile");
    spe_lqx(f, fbRGBA_reg, color_tile_reg, quad_offset_reg);
 
-
    if (blend->blend_enable) {
+      spe_comment(f, 0, "Perform blending");
       gen_blend(blend, blend_color, f, color_format,
                 fragR_reg, fragG_reg, fragB_reg, fragA_reg, fbRGBA_reg);
    }
@@ -1369,18 +2108,20 @@ cell_gen_fragment_function(struct cell_context *cell, struct spe_function *f)
       int rgba_reg = spe_allocate_available_register(f);
 
       /* Pack four float colors as four 32-bit int colors */
+      spe_comment(f, 0, "Convert float quad colors to packed int framebuffer colors");
       gen_pack_colors(f, color_format,
                       fragR_reg, fragG_reg, fragB_reg, fragA_reg,
                       rgba_reg);
 
       if (blend->logicop_enable) {
+         spe_comment(f, 0, "Compute logic op");
          gen_logicop(blend, f, rgba_reg, fbRGBA_reg);
       }
 
       if (blend->colormask != PIPE_MASK_RGBA) {
+         spe_comment(f, 0, "Compute color mask");
          gen_colormask(f, blend->colormask, color_format, rgba_reg, fbRGBA_reg);
       }
-
 
       /* Mix fragment colors with framebuffer colors using the quad/pixel mask:
        * if (mask[i])
@@ -1393,6 +2134,7 @@ cell_gen_fragment_function(struct cell_context *cell, struct spe_function *f)
       /* Store updated quad in tile:
        * memory[color_tile + quad_offset] = rgba_reg;
        */
+      spe_comment(f, 0, "Store quad colors into color tile");
       spe_stqx(f, rgba_reg, color_tile_reg, quad_offset_reg);
 
       spe_release_register(f, rgba_reg);

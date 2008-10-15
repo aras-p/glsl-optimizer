@@ -29,6 +29,7 @@
 #define STORAGESOA_H
 
 #include <pipe/p_shader_tokens.h>
+#include <llvm/Support/IRBuilder.h>
 
 #include <vector>
 #include <list>
@@ -56,7 +57,7 @@ public:
 
 
    std::vector<llvm::Value*> load(enum tgsi_file_type type, int idx, int swizzle, 
-                                  llvm::Value *indIdx =0);
+                                  llvm::IRBuilder<>* m_builder, llvm::Value *indIdx =0);
    void store(enum tgsi_file_type type, int idx, const std::vector<llvm::Value*> &val,
               int mask);
 
@@ -76,10 +77,12 @@ private:
    const char *name(const char *prefix) const;
    llvm::Value  *alignedArrayLoad(llvm::Value *val);
    llvm::Module *currentModule() const;
+   llvm::Constant  *createConstGlobalFloat(const float val);
    llvm::Constant  *createConstGlobalVector(const std::vector<float> &vec);
 
    std::vector<llvm::Value*> inputElement(llvm::Value *indIdx);
-   std::vector<llvm::Value*> constElement(llvm::Value *indIdx);
+   llvm::Value* unpackConstElement(llvm::IRBuilder<>* m_builder, llvm::Value *indIdx, int cc);
+   std::vector<llvm::Value*> constElement(llvm::IRBuilder<>* m_builder, llvm::Value *indIdx);
    std::vector<llvm::Value*> outputElement(llvm::Value *indIdx);
    std::vector<llvm::Value*> tempElement(llvm::Value *indIdx);
    std::vector<llvm::Value*> immediateElement(llvm::Value *indIdx);

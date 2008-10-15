@@ -53,17 +53,26 @@ struct spe_function
    uint num_inst;
    uint max_inst;
 
-    /**
-     * Mask of used / unused registers
-     *
-     * Each set bit corresponds to an available register.  Each cleared bit
-     * corresponds to an allocated register.
+   /**
+    * The "set count" reflects the number of nested register sets
+    * are allowed.  In the unlikely case that we exceed the set count,
+    * register allocation will start to be confused, which is critical
+    * enough that we check for it.
+    */
+   unsigned char set_count;
+
+   /** 
+    * Flags for used and unused registers.  Each byte corresponds to a
+    * register; a 0 in that byte means that the register is available.
+    * A value of 1 means that the register was allocated in the current
+    * register set.  Any other value N means that the register was allocated
+    * N register sets ago.
      *
      * \sa
      * spe_allocate_register, spe_allocate_available_register,
-     * spe_release_register
+     * spe_allocate_register_set, spe_release_register_set, spe_release_register, 
      */
-    uint64_t regs[SPE_NUM_REGS / 64];
+    unsigned char regs[SPE_NUM_REGS];
 
     boolean print; /**< print/dump instructions as they're emitted? */
     int indent;    /**< number of spaces to indent */
@@ -77,6 +86,11 @@ extern unsigned spe_code_size(const struct spe_function *p);
 extern int spe_allocate_available_register(struct spe_function *p);
 extern int spe_allocate_register(struct spe_function *p, int reg);
 extern void spe_release_register(struct spe_function *p, int reg);
+extern void spe_allocate_register_set(struct spe_function *p);
+extern void spe_release_register_set(struct spe_function *p);
+
+extern unsigned
+spe_get_registers_used(const struct spe_function *p, ubyte used[]);
 
 extern void spe_print_code(struct spe_function *p, boolean enable);
 extern void spe_indent(struct spe_function *p, int spaces);
@@ -105,6 +119,9 @@ extern void spe_comment(struct spe_function *p, int rel_indent, const char *s);
 #define EMIT_RI10(_name, _op) \
     extern void _name (struct spe_function *p, unsigned rT, unsigned rA, \
 			   int imm)
+#define EMIT_RI10s(_name, _op) \
+    extern void _name (struct spe_function *p, unsigned rT, unsigned rA, \
+			   int imm)
 #define EMIT_RI16(_name, _op) \
     extern void _name (struct spe_function *p, unsigned rT, int imm)
 #define EMIT_RI18(_name, _op) \
@@ -117,11 +134,9 @@ extern void spe_comment(struct spe_function *p, int rel_indent, const char *s);
 
 /* Memory load / store instructions
  */
-EMIT_RI10(spe_lqd,  0x034);
 EMIT_RR  (spe_lqx,  0x1c4);
 EMIT_RI16(spe_lqa,  0x061);
 EMIT_RI16(spe_lqr,  0x067);
-EMIT_RI10(spe_stqd, 0x024);
 EMIT_RR  (spe_stqx, 0x144);
 EMIT_RI16(spe_stqa, 0x041);
 EMIT_RI16(spe_stqr, 0x047);
@@ -151,7 +166,7 @@ EMIT_RI16(spe_fsmbi, 0x065);
 EMIT_RR  (spe_ah,      0x0c8);
 EMIT_RI10(spe_ahi,     0x01d);
 EMIT_RR  (spe_a,       0x0c0);
-EMIT_RI10(spe_ai,      0x01c);
+EMIT_RI10s(spe_ai,      0x01c);
 EMIT_RR  (spe_sfh,     0x048);
 EMIT_RI10(spe_sfhi,    0x00d);
 EMIT_RR  (spe_sf,      0x040);
@@ -189,19 +204,19 @@ EMIT_R   (spe_xshw,    0x2ae);
 EMIT_R   (spe_xswd,    0x2a6);
 EMIT_RR  (spe_and,     0x0c1);
 EMIT_RR  (spe_andc,    0x2c1);
-EMIT_RI10(spe_andbi,   0x016);
-EMIT_RI10(spe_andhi,   0x015);
-EMIT_RI10(spe_andi,    0x014);
+EMIT_RI10s(spe_andbi,   0x016);
+EMIT_RI10s(spe_andhi,   0x015);
+EMIT_RI10s(spe_andi,    0x014);
 EMIT_RR  (spe_or,      0x041);
 EMIT_RR  (spe_orc,     0x2c9);
-EMIT_RI10(spe_orbi,    0x006);
-EMIT_RI10(spe_orhi,    0x005);
-EMIT_RI10(spe_ori,     0x004);
+EMIT_RI10s(spe_orbi,    0x006);
+EMIT_RI10s(spe_orhi,    0x005);
+EMIT_RI10s(spe_ori,     0x004);
 EMIT_R   (spe_orx,     0x1f0);
 EMIT_RR  (spe_xor,     0x241);
-EMIT_RI10(spe_xorbi,   0x026);
-EMIT_RI10(spe_xorhi,   0x025);
-EMIT_RI10(spe_xori,    0x024);
+EMIT_RI10s(spe_xorbi,   0x026);
+EMIT_RI10s(spe_xorhi,   0x025);
+EMIT_RI10s(spe_xori,    0x024);
 EMIT_RR  (spe_nand,    0x0c9);
 EMIT_RR  (spe_nor,     0x049);
 EMIT_RR  (spe_eqv,     0x249);
@@ -279,6 +294,12 @@ EMIT_RI16(spe_brz,       0x040);
 EMIT_RI16(spe_brhnz,     0x046);
 EMIT_RI16(spe_brhz,      0x044);
 
+extern void
+spe_lqd(struct spe_function *p, unsigned rT, unsigned rA, int offset);
+
+extern void
+spe_stqd(struct spe_function *p, unsigned rT, unsigned rA, int offset);
+
 extern void spe_bi(struct spe_function *p, unsigned rA, int d, int e);
 extern void spe_iret(struct spe_function *p, unsigned rA, int d, int e);
 extern void spe_bisled(struct spe_function *p, unsigned rT, unsigned rA,
@@ -306,6 +327,22 @@ spe_load_int(struct spe_function *p, unsigned rT, int i);
 /** Load/splat immediate unsigned int into rT. */
 extern void
 spe_load_uint(struct spe_function *p, unsigned rT, unsigned int ui);
+
+/** And immediate value into rT. */
+extern void
+spe_and_uint(struct spe_function *p, unsigned rT, unsigned rA, unsigned int ui);
+
+/** Xor immediate value into rT. */
+extern void
+spe_xor_uint(struct spe_function *p, unsigned rT, unsigned rA, unsigned int ui);
+
+/** Compare equal with immediate value. */
+extern void
+spe_compare_equal_uint(struct spe_function *p, unsigned rT, unsigned rA, unsigned int ui);
+
+/** Compare greater with immediate value. */
+extern void
+spe_compare_greater_uint(struct spe_function *p, unsigned rT, unsigned rA, unsigned int ui);
 
 /** Replicate word 0 of rA across rT. */
 extern void
@@ -388,6 +425,7 @@ EMIT_R   (spe_wrch,       0x10d);
 #undef EMIT_RI7
 #undef EMIT_RI8
 #undef EMIT_RI10
+#undef EMIT_RI10s
 #undef EMIT_RI16
 #undef EMIT_RI18
 #undef EMIT_I16

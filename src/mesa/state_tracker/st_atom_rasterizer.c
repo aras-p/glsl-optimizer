@@ -215,6 +215,9 @@ static void update_raster_state( struct st_context *st )
          raster->sprite_coord_mode[i] = PIPE_SPRITE_COORD_NONE;
       }
    }
+
+   /* ST_NEW_VERTEX_PROGRAM
+    */
    if (vertProg) {
       if (vertProg->Base.Id == 0) {
          if (vertProg->Base.OutputsWritten & (1 << VERT_RESULT_PSIZ)) {
@@ -277,7 +280,7 @@ const struct st_tracked_state st_update_rasterizer = {
        _NEW_POLYGON |
        _NEW_PROGRAM |
        _NEW_SCISSOR),      /* mesa state dependencies*/
-      0,                   /* state tracker dependencies */
+      ST_NEW_VERTEX_PROGRAM,  /* state tracker dependencies */
    },
    update_raster_state     /* update function */
 };

@@ -2628,7 +2628,6 @@ struct gl_extensions
    GLboolean SGIS_generate_mipmap;
    GLboolean SGIS_texture_edge_clamp;
    GLboolean SGIS_texture_lod;
-   GLboolean SGIX_depth_texture;
    GLboolean SGIX_shadow;
    GLboolean SGIX_shadow_ambient; /* or GL_ARB_shadow_ambient */
    GLboolean TDFX_texture_compression_FXT1;
@@ -2722,6 +2721,7 @@ struct gl_matrix_stack
 #define _NEW_MULTISAMPLE        0x2000000  /**< __GLcontextRec::Multisample */
 #define _NEW_TRACK_MATRIX       0x4000000  /**< __GLcontextRec::VertexProgram */
 #define _NEW_PROGRAM            0x8000000  /**< __GLcontextRec::VertexProgram */
+#define _NEW_CURRENT_ATTRIB     0x10000000  /**< __GLcontextRec::Current */
 #define _NEW_ALL ~0
 /*@}*/
 
@@ -3048,6 +3048,8 @@ struct __GLcontextRec
    GLenum ErrorValue;        /**< Last error code */
    GLenum RenderMode;        /**< either GL_RENDER, GL_SELECT, GL_FEEDBACK */
    GLbitfield NewState;      /**< bitwise-or of _NEW_* flags */
+
+   GLbitfield varying_vp_inputs;  /**< mask of VERT_BIT_* flags */
 
    /** \name Derived state */
    /*@{*/

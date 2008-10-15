@@ -372,7 +372,11 @@ _mesa_reference_program(GLcontext *ctx,
    assert(ptr);
    if (*ptr && prog) {
       /* sanity check */
-      ASSERT((*ptr)->Target == prog->Target);
+      if ((*ptr)->Target == GL_VERTEX_PROGRAM_ARB)
+         ASSERT(prog->Target == GL_VERTEX_PROGRAM_ARB);
+      else if ((*ptr)->Target == GL_FRAGMENT_PROGRAM_ARB)
+         ASSERT(prog->Target == GL_FRAGMENT_PROGRAM_ARB ||
+                prog->Target == GL_FRAGMENT_PROGRAM_NV);
    }
    if (*ptr == prog) {
       return;  /* no change */
@@ -686,17 +690,47 @@ _mesa_combine_programs(GLcontext *ctx,
 
    if (newProg->Target == GL_FRAGMENT_PROGRAM_ARB) {
       struct gl_fragment_program *fprogA, *fprogB, *newFprog;
+      GLbitfield progB_inputsRead = progB->InputsRead;
+      GLint progB_colorFile, progB_colorIndex;
+
       fprogA = (struct gl_fragment_program *) progA;
       fprogB = (struct gl_fragment_program *) progB;
       newFprog = (struct gl_fragment_program *) newProg;
 
       newFprog->UsesKill = fprogA->UsesKill || fprogB->UsesKill;
 
+      /* We'll do a search and replace for instances
+       * of progB_colorFile/progB_colorIndex below...
+       */
+      progB_colorFile = PROGRAM_INPUT;
+      progB_colorIndex = FRAG_ATTRIB_COL0;
+
+      /*
+       * The fragment program may get color from a state var rather than
+       * a fragment input (vertex output) if it's constant.
+       * See the texenvprogram.c code.
+       * So, search the program's parameter list now to see if the program
+       * gets color from a state var instead of a conventional fragment
+       * input register.
+       */
+      for (i = 0; i < progB->Parameters->NumParameters; i++) {
+         struct gl_program_parameter *p = &progB->Parameters->Parameters[i];
+         if (p->Type == PROGRAM_STATE_VAR &&
+             p->StateIndexes[0] == STATE_INTERNAL &&
+             p->StateIndexes[1] == STATE_CURRENT_ATTRIB &&
+             p->StateIndexes[2] == VERT_ATTRIB_COLOR0) {
+            progB_inputsRead |= FRAG_BIT_COL0;
+            progB_colorFile = PROGRAM_STATE_VAR;
+            progB_colorIndex = i;
+            break;
+         }
+      }
+
       /* Connect color outputs of fprogA to color inputs of fprogB, via a
        * new temporary register.
        */
       if ((progA->OutputsWritten & (1 << FRAG_RESULT_COLR)) &&
-          (progB->InputsRead & (1 << FRAG_ATTRIB_COL0))) {
+          (progB_inputsRead & FRAG_BIT_COL0)) {
          GLint tempReg = _mesa_find_free_register(newProg, PROGRAM_TEMPORARY);
          if (tempReg < 0) {
             _mesa_problem(ctx, "No free temp regs found in "
@@ -707,13 +741,14 @@ _mesa_combine_programs(GLcontext *ctx,
          replace_registers(newInst, lenA,
                            PROGRAM_OUTPUT, FRAG_RESULT_COLR,
                            PROGRAM_TEMPORARY, tempReg);
-         /* replace reads from input.color[0] with tempReg */
+         /* replace reads from the input color with tempReg */
          replace_registers(newInst + lenA, lenB,
-                           PROGRAM_INPUT, FRAG_ATTRIB_COL0,
-                           PROGRAM_TEMPORARY, tempReg);
+                           progB_colorFile, progB_colorIndex, /* search for */
+                           PROGRAM_TEMPORARY, tempReg  /* replace with */ );
       }
 
-      inputsB = progB->InputsRead;
+      /* compute combined program's InputsRead */
+      inputsB = progB_inputsRead;
       if (progA->OutputsWritten & (1 << FRAG_RESULT_COLR)) {
          inputsB &= ~(1 << FRAG_ATTRIB_COL0);
       }

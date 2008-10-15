@@ -57,7 +57,8 @@ spu_fallback_fragment_ops(uint x, uint y,
                           vector float fragG,
                           vector float fragB,
                           vector float fragA,
-                          vector unsigned int mask)
+                          vector unsigned int mask,
+                          uint facing)
 {
    vector float frag_aos[4];
    unsigned int fbc0, fbc1, fbc2, fbc3 ; /* framebuffer/tile colors */
@@ -433,23 +434,23 @@ spu_fallback_fragment_ops(uint x, uint y,
       /* Form bitmask depending on color buffer format and colormask bits */
       switch (spu.fb.color_format) {
       case PIPE_FORMAT_A8R8G8B8_UNORM:
-         if (spu.blend.colormask & (1<<0))
+         if (spu.blend.colormask & PIPE_MASK_R)
             cmask |= 0x00ff0000; /* red */
-         if (spu.blend.colormask & (1<<1))
+         if (spu.blend.colormask & PIPE_MASK_G)
             cmask |= 0x0000ff00; /* green */
-         if (spu.blend.colormask & (1<<2))
+         if (spu.blend.colormask & PIPE_MASK_B)
             cmask |= 0x000000ff; /* blue */
-         if (spu.blend.colormask & (1<<3))
+         if (spu.blend.colormask & PIPE_MASK_A)
             cmask |= 0xff000000; /* alpha */
          break;
       case PIPE_FORMAT_B8G8R8A8_UNORM:
-         if (spu.blend.colormask & (1<<0))
+         if (spu.blend.colormask & PIPE_MASK_R)
             cmask |= 0x0000ff00; /* red */
-         if (spu.blend.colormask & (1<<1))
+         if (spu.blend.colormask & PIPE_MASK_G)
             cmask |= 0x00ff0000; /* green */
-         if (spu.blend.colormask & (1<<2))
+         if (spu.blend.colormask & PIPE_MASK_B)
             cmask |= 0xff000000; /* blue */
-         if (spu.blend.colormask & (1<<3))
+         if (spu.blend.colormask & PIPE_MASK_A)
             cmask |= 0x000000ff; /* alpha */
          break;
       default:

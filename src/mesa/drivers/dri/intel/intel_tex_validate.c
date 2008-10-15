@@ -141,10 +141,7 @@ intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit)
 
    /* Fallback case:
     */
-   if (firstImage->base.Border ||
-       ((firstImage->base._BaseFormat == GL_DEPTH_COMPONENT) &&
-        ((tObj->WrapS == GL_CLAMP_TO_BORDER) ||
-         (tObj->WrapT == GL_CLAMP_TO_BORDER)))) {
+   if (firstImage->base.Border) {
       if (intelObj->mt) {
          intel_miptree_release(intel, &intelObj->mt);
       }

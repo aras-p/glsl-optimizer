@@ -25,6 +25,10 @@
  * 
  **************************************************************************/
 
+#include "pipe/p_config.h"
+
+#if defined(PIPE_ARCH_X86) && defined(PIPE_ARCH_SSE)
+
 #include "pipe/p_debug.h"
 #include "pipe/p_shader_tokens.h"
 #include "util/u_math.h"
@@ -35,8 +39,6 @@
 #include "tgsi_sse2.h"
 
 #include "rtasm/rtasm_x86sse.h"
-
-#ifdef PIPE_ARCH_X86
 
 /* for 1/sqrt()
  *

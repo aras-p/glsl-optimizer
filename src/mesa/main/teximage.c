@@ -241,13 +241,12 @@ _mesa_base_tex_format( GLcontext *ctx, GLint internalFormat )
       }
    }
 
-   if (ctx->Extensions.SGIX_depth_texture ||
-       ctx->Extensions.ARB_depth_texture) {
+   if (ctx->Extensions.ARB_depth_texture) {
       switch (internalFormat) {
          case GL_DEPTH_COMPONENT:
-         case GL_DEPTH_COMPONENT16_SGIX:
-         case GL_DEPTH_COMPONENT24_SGIX:
-         case GL_DEPTH_COMPONENT32_SGIX:
+         case GL_DEPTH_COMPONENT16:
+         case GL_DEPTH_COMPONENT24:
+         case GL_DEPTH_COMPONENT32:
             return GL_DEPTH_COMPONENT;
          default:
             ; /* fallthrough */
@@ -526,9 +525,9 @@ static GLboolean
 is_depth_format(GLenum format)
 {
    switch (format) {
-      case GL_DEPTH_COMPONENT16_ARB:
-      case GL_DEPTH_COMPONENT24_ARB:
-      case GL_DEPTH_COMPONENT32_ARB:
+      case GL_DEPTH_COMPONENT16:
+      case GL_DEPTH_COMPONENT24:
+      case GL_DEPTH_COMPONENT32:
       case GL_DEPTH_COMPONENT:
          return GL_TRUE;
       default:
@@ -2308,8 +2307,7 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
       return;
    }
 
-   if (!ctx->Extensions.SGIX_depth_texture &&
-       !ctx->Extensions.ARB_depth_texture && is_depth_format(format)) {
+   if (!ctx->Extensions.ARB_depth_texture && is_depth_format(format)) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glGetTexImage(format)");
       return;
    }

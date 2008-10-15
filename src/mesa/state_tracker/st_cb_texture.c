@@ -26,7 +26,7 @@
  **************************************************************************/
 
 #include "main/imports.h"
-#if FEATURE_convolution
+#if FEATURE_convolve
 #include "main/convolve.h"
 #endif
 #include "main/enums.h"
@@ -409,7 +409,7 @@ st_TexImage(GLcontext * ctx,
    stImage->face = _mesa_tex_target_to_face(target);
    stImage->level = level;
 
-#if FEATURE_convolution
+#if FEATURE_convolve
    if (ctx->_ImageTransferState & IMAGE_CONVOLUTION_BIT) {
       _mesa_adjust_image_for_convolution(ctx, dims, &postConvWidth,
                                          &postConvHeight);

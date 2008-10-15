@@ -67,6 +67,7 @@
 #define CELL_MAX_SPUS 6
 
 #define CELL_MAX_SAMPLERS 4
+#define CELL_MAX_TEXTURE_LEVELS 12  /* 2k x 2k */
 
 #define TILE_SIZE 32
 
@@ -94,6 +95,7 @@
 #define CELL_CMD_STATE_BIND_VS       18
 #define CELL_CMD_STATE_FRAGMENT_PROGRAM 19
 #define CELL_CMD_STATE_ATTRIB_FETCH  20
+#define CELL_CMD_STATE_FS_CONSTANTS  21
 #define CELL_CMD_VS_EXECUTE          22
 #define CELL_CMD_FLUSH_BUFFER_RANGE  23
 
@@ -127,7 +129,7 @@ struct cell_command_fragment_ops
 
 
 /** Max instructions for fragment programs */
-#define SPU_MAX_FRAGMENT_PROGRAM_INSTS 128
+#define SPU_MAX_FRAGMENT_PROGRAM_INSTS 512
 
 /**
  * Command to send a fragment program to SPUs.
@@ -227,6 +229,7 @@ struct cell_command_render
    float xmin, ymin, xmax, ymax;  /* XXX another dummy field */
    uint min_index;
    boolean inline_verts;
+   uint front_winding; /* the rasterizer needs to be able to determine facing to apply front/back-facing stencil */
 };
 
 
@@ -248,9 +251,12 @@ struct cell_command_sampler
 struct cell_command_texture
 {
    uint64_t opcode;     /**< CELL_CMD_STATE_TEXTURE */
+   uint target;         /**< PIPE_TEXTURE_x */
    uint unit;
-   void *start;         /**< Address in main memory */
-   ushort width, height;
+   void *start[CELL_MAX_TEXTURE_LEVELS];   /**< Address in main memory */
+   ushort width[CELL_MAX_TEXTURE_LEVELS];
+   ushort height[CELL_MAX_TEXTURE_LEVELS];
+   ushort depth[CELL_MAX_TEXTURE_LEVELS];
 };
 
 

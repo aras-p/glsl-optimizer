@@ -69,11 +69,14 @@ public:
    std::vector<llvm::Value*> pow(const std::vector<llvm::Value*> in1,
                                  const std::vector<llvm::Value*> in2);
    std::vector<llvm::Value*> rsq(const std::vector<llvm::Value*> in1);
+   std::vector<llvm::Value*> slt(const std::vector<llvm::Value*> in1,
+                                 const std::vector<llvm::Value*> in2);
    std::vector<llvm::Value*> sub(const std::vector<llvm::Value*> in1,
                                  const std::vector<llvm::Value*> in2);
    void         end();
 
    std::vector<llvm::Value*> extractVector(llvm::Value *vector);
+   llvm::IRBuilder<>*  getIRBuilder();
 private:
    const char * name(const char *prefix) const;
    llvm::Value *vectorFromVals(llvm::Value *x, llvm::Value *y,
@@ -96,7 +99,7 @@ private:
                                          const std::vector<llvm::Value*> in3);
    void injectFunction(llvm::Function *originalFunc, int op = TGSI_OPCODE_LAST);
 private:
-   llvm::IRBuilder  m_builder;
+   llvm::IRBuilder<>  m_builder;
    StorageSoa *m_storage;
 
    std::map<int, std::string> m_functionsMap;

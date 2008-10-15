@@ -164,6 +164,27 @@ rem_prefix(const char *longname)
 }
 
 
+static const char *
+reg_name(int reg)
+{
+   switch (reg) {
+   case SPE_REG_SP:
+      return "$sp";
+   case SPE_REG_RA:
+      return "$lr";
+   default:
+      {
+         /* cycle through four buffers to handle multiple calls per printf */
+         static char buf[4][10];
+         static int b = 0;
+         b = (b + 1) % 4;
+         sprintf(buf[b], "$%d", reg);
+         return buf[b];
+      }
+   }
+}
+
+
 static void emit_RR(struct spe_function *p, unsigned op, unsigned rT,
 		    unsigned rA, unsigned rB, const char *name)
 {
@@ -176,7 +197,8 @@ static void emit_RR(struct spe_function *p, unsigned op, unsigned rT,
     assert(p->num_inst <= p->max_inst);
     if (p->print) {
        indent(p);
-       printf("%s\t$%d, $%d, $%d\n", rem_prefix(name), rT, rA, rB);
+       printf("%s\t%s, %s, %s\n",
+              rem_prefix(name), reg_name(rT), reg_name(rA), reg_name(rB));
     }
 }
 
@@ -194,7 +216,8 @@ static void emit_RRR(struct spe_function *p, unsigned op, unsigned rT,
     assert(p->num_inst <= p->max_inst);
     if (p->print) {
        indent(p);
-       printf("%s\t$%d, $%d, $%d, $%d\n", rem_prefix(name), rT, rA, rB, rC);
+       printf("%s\t%s, %s, %s, %s\n", rem_prefix(name), reg_name(rT),
+              reg_name(rA), reg_name(rB), reg_name(rC));
     }
 }
 
@@ -211,7 +234,8 @@ static void emit_RI7(struct spe_function *p, unsigned op, unsigned rT,
     assert(p->num_inst <= p->max_inst);
     if (p->print) {
        indent(p);
-       printf("%s\t$%d, $%d, 0x%x\n", rem_prefix(name), rT, rA, imm);
+       printf("%s\t%s, %s, 0x%x\n",
+              rem_prefix(name), reg_name(rT), reg_name(rA), imm);
     }
 }
 
@@ -229,7 +253,8 @@ static void emit_RI8(struct spe_function *p, unsigned op, unsigned rT,
     assert(p->num_inst <= p->max_inst);
     if (p->print) {
        indent(p);
-       printf("%s\t$%d, $%d, 0x%x\n", rem_prefix(name), rT, rA, imm);
+       printf("%s\t%s, %s, 0x%x\n",
+              rem_prefix(name), reg_name(rT), reg_name(rA), imm);
     }
 }
 
@@ -247,12 +272,19 @@ static void emit_RI10(struct spe_function *p, unsigned op, unsigned rT,
     assert(p->num_inst <= p->max_inst);
     if (p->print) {
        indent(p);
-       if (strcmp(name, "spe_lqd") == 0 ||
-           strcmp(name, "spe_stqd") == 0)
-          printf("%s\t$%d, 0x%x($%d)\n", rem_prefix(name), rT, imm, rA);
-       else
-          printf("%s\t$%d, $%d, 0x%x\n", rem_prefix(name), rT, rA, imm);
+       printf("%s\t%s, %s, 0x%x\n",
+              rem_prefix(name), reg_name(rT), reg_name(rA), imm);
     }
+}
+
+
+/** As above, but do range checking on signed immediate value */
+static void emit_RI10s(struct spe_function *p, unsigned op, unsigned rT,
+                       unsigned rA, int imm, const char *name)
+{
+    assert(imm <= 511);
+    assert(imm >= -512);
+    emit_RI10(p, op, rT, rA, imm, name);
 }
 
 
@@ -267,7 +299,7 @@ static void emit_RI16(struct spe_function *p, unsigned op, unsigned rT,
     assert(p->num_inst <= p->max_inst);
     if (p->print) {
        indent(p);
-       printf("%s\t$%d, 0x%x\n", rem_prefix(name), rT, imm);
+       printf("%s\t%s, 0x%x\n", rem_prefix(name), reg_name(rT), imm);
     }
 }
 
@@ -283,7 +315,7 @@ static void emit_RI18(struct spe_function *p, unsigned op, unsigned rT,
     assert(p->num_inst <= p->max_inst);
     if (p->print) {
        indent(p);
-       printf("%s\t$%d, 0x%x\n", rem_prefix(name), rT, imm);
+       printf("%s\t%s, 0x%x\n", rem_prefix(name), reg_name(rT), imm);
     }
 }
 
@@ -332,6 +364,12 @@ void _name (struct spe_function *p, unsigned rT, unsigned rA, int imm) \
    emit_RI10(p, _op, rT, rA, imm, __FUNCTION__);             \
 }
 
+#define EMIT_RI10s(_name, _op) \
+void _name (struct spe_function *p, unsigned rT, unsigned rA, int imm) \
+{ \
+   emit_RI10s(p, _op, rT, rA, imm, __FUNCTION__);             \
+}
+
 #define EMIT_RI16(_name, _op) \
 void _name (struct spe_function *p, unsigned rT, int imm) \
 { \
@@ -353,20 +391,28 @@ void _name (struct spe_function *p, int imm) \
 #include "rtasm_ppc_spe.h"
 
 
+
 /**
  * Initialize an spe_function.
  * \param code_size  size of instruction buffer to allocate, in bytes.
  */
 void spe_init_func(struct spe_function *p, unsigned code_size)
 {
+    unsigned int i;
+
     p->store = align_malloc(code_size, 16);
     p->num_inst = 0;
     p->max_inst = code_size / SPE_INST_SIZE;
 
+    p->set_count = 0;
+    memset(p->regs, 0, SPE_NUM_REGS * sizeof(p->regs[0]));
+
     /* Conservatively treat R0 - R2 and R80 - R127 as non-volatile.
      */
-    p->regs[0] = ~7;
-    p->regs[1] = (1U << (80 - 64)) - 1;
+    p->regs[0] = p->regs[1] = p->regs[2] = 1;
+    for (i = 80; i <= 127; i++) {
+      p->regs[i] = 1;
+    }
 
     p->print = false;
     p->indent = 0;
@@ -398,12 +444,8 @@ int spe_allocate_available_register(struct spe_function *p)
 {
    unsigned i;
    for (i = 0; i < SPE_NUM_REGS; i++) {
-      const uint64_t mask = (1ULL << (i % 64));
-      const unsigned idx = i / 64;
-
-      assert(idx < 2);
-      if ((p->regs[idx] & mask) != 0) {
-         p->regs[idx] &= ~mask;
+      if (p->regs[i] == 0) {
+         p->regs[i] = 1;
          return i;
       }
    }
@@ -417,31 +459,84 @@ int spe_allocate_available_register(struct spe_function *p)
  */
 int spe_allocate_register(struct spe_function *p, int reg)
 {
-   const unsigned idx = reg / 64;
-   const unsigned bit = reg % 64;
-
    assert(reg < SPE_NUM_REGS);
-   assert((p->regs[idx] & (1ULL << bit)) != 0);
-
-   p->regs[idx] &= ~(1ULL << bit);
+   assert(p->regs[reg] == 0);
+   p->regs[reg] = 1;
    return reg;
 }
 
 
 /**
- * Mark the given SPE register as "unallocated".
+ * Mark the given SPE register as "unallocated".  Note that this should
+ * only be used on registers allocated in the current register set; an
+ * assertion will fail if an attempt is made to deallocate a register
+ * allocated in an earlier register set.
  */
 void spe_release_register(struct spe_function *p, int reg)
 {
-   const unsigned idx = reg / 64;
-   const unsigned bit = reg % 64;
-
-   assert(idx < 2);
-
    assert(reg < SPE_NUM_REGS);
-   assert((p->regs[idx] & (1ULL << bit)) == 0);
+   assert(p->regs[reg] == 1);
 
-   p->regs[idx] |= (1ULL << bit);
+   p->regs[reg] = 0;
+}
+
+/**
+ * Start a new set of registers.  This can be called if
+ * it will be difficult later to determine exactly what
+ * registers were actually allocated during a code generation
+ * sequence, and you really just want to deallocate all of them.
+ */
+void spe_allocate_register_set(struct spe_function *p)
+{
+   unsigned int i;
+
+   /* Keep track of the set count.  If it ever wraps around to 0, 
+    * we're in trouble.
+    */
+   p->set_count++;
+   assert(p->set_count > 0);
+
+   /* Increment the allocation count of all registers currently
+    * allocated.  Then any registers that are allocated in this set
+    * will be the only ones with a count of 1; they'll all be released
+    * when the register set is released.
+    */
+   for (i = 0; i < SPE_NUM_REGS; i++) {
+      if (p->regs[i] > 0)
+         p->regs[i]++;
+   }
+}
+
+void spe_release_register_set(struct spe_function *p)
+{
+   unsigned int i;
+
+   /* If the set count drops below zero, we're in trouble. */
+   assert(p->set_count > 0);
+   p->set_count--;
+
+   /* Drop the allocation level of all registers.  Any allocated
+    * during this register set will drop to 0 and then become
+    * available.
+    */
+   for (i = 0; i < SPE_NUM_REGS; i++) {
+      if (p->regs[i] > 0)
+         p->regs[i]--;
+   }
+}
+
+
+unsigned
+spe_get_registers_used(const struct spe_function *p, ubyte used[])
+{
+   unsigned i, num = 0;
+   /* only count registers in the range available to callers */
+   for (i = 2; i < 80; i++) {
+      if (p->regs[i]) {
+         used[num++] = i;
+      }
+   }
+   return num;
 }
 
 
@@ -459,7 +554,7 @@ spe_indent(struct spe_function *p, int spaces)
 }
 
 
-extern void
+void
 spe_comment(struct spe_function *p, int rel_indent, const char *s)
 {
    if (p->print) {
@@ -467,6 +562,56 @@ spe_comment(struct spe_function *p, int rel_indent, const char *s)
       indent(p);
       p->indent -= rel_indent;
       printf("# %s\n", s);
+   }
+}
+
+
+/**
+ * Load quad word.
+ * NOTE: offset is in bytes and the least significant 4 bits must be zero!
+ */
+void spe_lqd(struct spe_function *p, unsigned rT, unsigned rA, int offset)
+{
+   const boolean pSave = p->print;
+
+   /* offset must be a multiple of 16 */
+   assert(offset % 16 == 0);
+   /* offset must fit in 10-bit signed int field, after shifting */
+   assert((offset >> 4) <= 511);
+   assert((offset >> 4) >= -512);
+
+   p->print = FALSE;
+   emit_RI10(p, 0x034, rT, rA, offset >> 4, "spe_lqd");
+   p->print = pSave;
+
+   if (p->print) {
+      indent(p);
+      printf("lqd\t%s, %d(%s)\n", reg_name(rT), offset, reg_name(rA));
+   }
+}
+
+
+/**
+ * Store quad word.
+ * NOTE: offset is in bytes and the least significant 4 bits must be zero!
+ */
+void spe_stqd(struct spe_function *p, unsigned rT, unsigned rA, int offset)
+{
+   const boolean pSave = p->print;
+
+   /* offset must be a multiple of 16 */
+   assert(offset % 16 == 0);
+   /* offset must fit in 10-bit signed int field, after shifting */
+   assert((offset >> 4) <= 511);
+   assert((offset >> 4) >= -512);
+
+   p->print = FALSE;
+   emit_RI10(p, 0x024, rT, rA, offset >> 4, "spe_stqd");
+   p->print = pSave;
+
+   if (p->print) {
+      indent(p);
+      printf("stqd\t%s, %d(%s)\n", reg_name(rT), offset, reg_name(rA));
    }
 }
 
@@ -603,22 +748,187 @@ void spe_load_uint(struct spe_function *p, unsigned rT, unsigned int ui)
 {
    /* If the whole value is in the lower 18 bits, use ila, which
     * doesn't sign-extend.  Otherwise, if the two halfwords of
-    * the constant are identical, use ilh.  Otherwise, we have
-    * to use ilhu followed by iohl.
+    * the constant are identical, use ilh.  Otherwise, if every byte of
+    * the desired value is 0x00 or 0xff, we can use Form Select Mask for
+    * Bytes Immediate (fsmbi) to load the value in a single instruction.
+    * Otherwise, in the general case, we have to use ilhu followed by iohl.
     */
-   if ((ui & 0xfffc0000) == ui) {
+   if ((ui & 0x0003ffff) == ui) {
       spe_ila(p, rT, ui);
    }
    else if ((ui >> 16) == (ui & 0xffff)) {
       spe_ilh(p, rT, ui & 0xffff);
    }
+   else if (
+      ((ui & 0x000000ff) == 0 || (ui & 0x000000ff) == 0x000000ff) &&
+      ((ui & 0x0000ff00) == 0 || (ui & 0x0000ff00) == 0x0000ff00) &&
+      ((ui & 0x00ff0000) == 0 || (ui & 0x00ff0000) == 0x00ff0000) &&
+      ((ui & 0xff000000) == 0 || (ui & 0xff000000) == 0xff000000)
+   ) {
+      unsigned int mask = 0;
+      /* fsmbi duplicates each bit in the given mask eight times,
+       * using a 16-bit value to initialize a 16-byte quadword.
+       * Each 4-bit nybble of the mask corresponds to a full word
+       * of the result; look at the value and figure out the mask
+       * (replicated for each word in the quadword), and then
+       * form the "select mask" to get the value.
+       */
+      if ((ui & 0x000000ff) == 0x000000ff) mask |= 0x1111;
+      if ((ui & 0x0000ff00) == 0x0000ff00) mask |= 0x2222;
+      if ((ui & 0x00ff0000) == 0x00ff0000) mask |= 0x4444;
+      if ((ui & 0xff000000) == 0xff000000) mask |= 0x8888;
+      spe_fsmbi(p, rT, mask);
+   }
    else {
+      /* The general case: this usually uses two instructions, but
+       * may use only one if the low-order 16 bits of each word are 0.
+       */
       spe_ilhu(p, rT, ui >> 16);
       if (ui & 0xffff)
          spe_iohl(p, rT, ui & 0xffff);
    }
 }
 
+/**
+ * This function is constructed identically to spe_xor_uint() below.
+ * Changes to one should be made in the other.
+ */
+void
+spe_and_uint(struct spe_function *p, unsigned rT, unsigned rA, unsigned int ui)
+{
+   /* If we can, emit a single instruction, either And Byte Immediate
+    * (which uses the same constant across each byte), And Halfword Immediate
+    * (which sign-extends a 10-bit immediate to 16 bits and uses that
+    * across each halfword), or And Word Immediate (which sign-extends
+    * a 10-bit immediate to 32 bits).
+    *
+    * Otherwise, we'll need to use a temporary register.
+    */
+   unsigned int tmp;
+
+   /* If the upper 23 bits are all 0s or all 1s, sign extension
+    * will work and we can use And Word Immediate
+    */
+   tmp = ui & 0xfffffe00;
+   if (tmp == 0xfffffe00 || tmp  == 0) {
+      spe_andi(p, rT, rA, ui & 0x000003ff);
+      return;
+   }
+   
+   /* If the ui field is symmetric along halfword boundaries and
+    * the upper 7 bits of each halfword are all 0s or 1s, we
+    * can use And Halfword Immediate
+    */
+   tmp = ui & 0xfe00fe00;
+   if ((tmp == 0xfe00fe00 || tmp == 0) && ((ui >> 16) == (ui & 0x0000ffff))) {
+      spe_andhi(p, rT, rA, ui & 0x000003ff);
+      return;
+   }
+
+   /* If the ui field is symmetric in each byte, then we can use
+    * the And Byte Immediate instruction.
+    */
+   tmp = ui & 0x000000ff;
+   if ((ui >> 24) == tmp && ((ui >> 16) & 0xff) == tmp && ((ui >> 8) & 0xff) == tmp) {
+      spe_andbi(p, rT, rA, tmp);
+      return;
+   }
+
+   /* Otherwise, we'll have to use a temporary register. */
+   unsigned int tmp_reg = spe_allocate_available_register(p);
+   spe_load_uint(p, tmp_reg, ui);
+   spe_and(p, rT, rA, tmp_reg);
+   spe_release_register(p, tmp_reg);
+}
+
+
+/**
+ * This function is constructed identically to spe_and_uint() above.
+ * Changes to one should be made in the other.
+ */
+void
+spe_xor_uint(struct spe_function *p, unsigned rT, unsigned rA, unsigned int ui)
+{
+   /* If we can, emit a single instruction, either Exclusive Or Byte 
+    * Immediate (which uses the same constant across each byte), Exclusive 
+    * Or Halfword Immediate (which sign-extends a 10-bit immediate to 
+    * 16 bits and uses that across each halfword), or Exclusive Or Word 
+    * Immediate (which sign-extends a 10-bit immediate to 32 bits).
+    *
+    * Otherwise, we'll need to use a temporary register.
+    */
+   unsigned int tmp;
+
+   /* If the upper 23 bits are all 0s or all 1s, sign extension
+    * will work and we can use Exclusive Or Word Immediate
+    */
+   tmp = ui & 0xfffffe00;
+   if (tmp == 0xfffffe00 || tmp  == 0) {
+      spe_xori(p, rT, rA, ui & 0x000003ff);
+      return;
+   }
+   
+   /* If the ui field is symmetric along halfword boundaries and
+    * the upper 7 bits of each halfword are all 0s or 1s, we
+    * can use Exclusive Or Halfword Immediate
+    */
+   tmp = ui & 0xfe00fe00;
+   if ((tmp == 0xfe00fe00 || tmp == 0) && ((ui >> 16) == (ui & 0x0000ffff))) {
+      spe_xorhi(p, rT, rA, ui & 0x000003ff);
+      return;
+   }
+
+   /* If the ui field is symmetric in each byte, then we can use
+    * the Exclusive Or Byte Immediate instruction.
+    */
+   tmp = ui & 0x000000ff;
+   if ((ui >> 24) == tmp && ((ui >> 16) & 0xff) == tmp && ((ui >> 8) & 0xff) == tmp) {
+      spe_xorbi(p, rT, rA, tmp);
+      return;
+   }
+
+   /* Otherwise, we'll have to use a temporary register. */
+   unsigned int tmp_reg = spe_allocate_available_register(p);
+   spe_load_uint(p, tmp_reg, ui);
+   spe_xor(p, rT, rA, tmp_reg);
+   spe_release_register(p, tmp_reg);
+}
+
+void
+spe_compare_equal_uint(struct spe_function *p, unsigned rT, unsigned rA, unsigned int ui)
+{
+   /* If the comparison value is 9 bits or less, it fits inside a
+    * Compare Equal Word Immediate instruction.
+    */
+   if ((ui & 0x000001ff) == ui) {
+      spe_ceqi(p, rT, rA, ui);
+   }
+   /* Otherwise, we're going to have to load a word first. */
+   else {
+      unsigned int tmp_reg = spe_allocate_available_register(p);
+      spe_load_uint(p, tmp_reg, ui);
+      spe_ceq(p, rT, rA, tmp_reg);
+      spe_release_register(p, tmp_reg);
+   }
+}
+
+void
+spe_compare_greater_uint(struct spe_function *p, unsigned rT, unsigned rA, unsigned int ui)
+{
+   /* If the comparison value is 10 bits or less, it fits inside a
+    * Compare Logical Greater Than Word Immediate instruction.
+    */
+   if ((ui & 0x000003ff) == ui) {
+      spe_clgti(p, rT, rA, ui);
+   }
+   /* Otherwise, we're going to have to load a word first. */
+   else {
+      unsigned int tmp_reg = spe_allocate_available_register(p);
+      spe_load_uint(p, tmp_reg, ui);
+      spe_clgt(p, rT, rA, tmp_reg);
+      spe_release_register(p, tmp_reg);
+   }
+}
 
 void
 spe_splat(struct spe_function *p, unsigned rT, unsigned rA)

@@ -64,12 +64,6 @@ having three separate program parameter arrays.
 #include "prog_statevars.h"
 #include "prog_instruction.h"
 
-
-/* For ARB programs, use the NV instruction limits */
-#define MAX_INSTRUCTIONS MAX2(MAX_NV_FRAGMENT_PROGRAM_INSTRUCTIONS, \
-                              MAX_NV_VERTEX_PROGRAM_INSTRUCTIONS)
-
-
 /**
  * This is basically a union of the vertex_program and fragment_program
  * structs that we can use to parse the program into
@@ -2609,7 +2603,7 @@ parse_src_reg (GLcontext * ctx, const GLubyte ** inst,
       /* If we're referencing the Program->Parameters[] array, check if the
        * parameter is really a constant/literal.  If so, set File to CONSTANT.
        */
-      assert(*Index < Program->Base.Parameters->NumParameters);
+      assert(*Index < (GLint) Program->Base.Parameters->NumParameters);
       file = Program->Base.Parameters->Parameters[*Index].Type;
       if (file == PROGRAM_CONSTANT)
          *File = PROGRAM_CONSTANT;
@@ -3443,7 +3437,7 @@ parse_instructions(GLcontext * ctx, const GLubyte * inst,
       : ctx->Const.VertexProgram.MaxInstructions;
    GLint err = 0;
 
-   ASSERT(MAX_INSTRUCTIONS >= maxInst);
+   ASSERT(MAX_PROGRAM_INSTRUCTIONS >= maxInst);
 
    Program->MajorVersion = (GLuint) * inst++;
    Program->MinorVersion = (GLuint) * inst++;
@@ -3798,7 +3792,7 @@ _mesa_parse_arb_program(GLcontext *ctx, GLenum target,
 
    /* Initialize the arb_program struct */
    program->Base.String = strz;
-   program->Base.Instructions = _mesa_alloc_instructions(MAX_INSTRUCTIONS);
+   program->Base.Instructions = _mesa_alloc_instructions(MAX_PROGRAM_INSTRUCTIONS);
    program->Base.NumInstructions =
    program->Base.NumTemporaries =
    program->Base.NumParameters =
@@ -3843,12 +3837,12 @@ _mesa_parse_arb_program(GLcontext *ctx, GLenum target,
 
    _mesa_free (parsed);
 
-   /* Reallocate the instruction array from size [MAX_INSTRUCTIONS]
+   /* Reallocate the instruction array from size [MAX_PROGRAM_INSTRUCTIONS]
     * to size [ap.Base.NumInstructions].
     */
    program->Base.Instructions
       = _mesa_realloc_instructions(program->Base.Instructions,
-                                   MAX_INSTRUCTIONS,
+                                   MAX_PROGRAM_INSTRUCTIONS,
                                    program->Base.NumInstructions);
 
    return !err;
@@ -3901,6 +3895,9 @@ _mesa_parse_arb_fragment_program(GLcontext* ctx, GLenum target,
    program->FogOption          = ap.FogOption;
    program->UsesKill          = ap.UsesKill;
 
+   if (program->FogOption)
+      program->Base.InputsRead |= FRAG_BIT_FOGC;
+      
    if (program->Base.Instructions)
       _mesa_free(program->Base.Instructions);
    program->Base.Instructions = ap.Base.Instructions;

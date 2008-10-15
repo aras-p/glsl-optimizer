@@ -64,7 +64,7 @@ struct draw_vs_varient_key {
    unsigned nr_outputs:8;
    unsigned viewport:1;
    unsigned clip:1;
-   unsigned pad:5;
+   unsigned const_vbuffers:5;
    struct draw_varient_element element[PIPE_MAX_ATTRIBS];
 };
 
@@ -76,7 +76,7 @@ struct draw_vs_varient {
 
    struct draw_vertex_shader *vs;
 
-   void (*set_input)( struct draw_vs_varient *,
+   void (*set_buffer)( struct draw_vs_varient *,
                       unsigned i,
                       const void *ptr,
                       unsigned stride );

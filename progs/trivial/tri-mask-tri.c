@@ -28,48 +28,53 @@
 #include <GL/glut.h>
 
 
-#define CI_OFFSET_1 16
-#define CI_OFFSET_2 32
-
 GLint Width = 250, Height = 250;
-
 GLenum doubleBuffer;
+GLint Win;
+GLboolean Rmask = GL_TRUE, Gmask = GL_FALSE, Bmask = GL_TRUE;
+
 
 static void Init(void)
 {
    fprintf(stderr, "GL_RENDERER   = %s\n", (char *) glGetString(GL_RENDERER));
    fprintf(stderr, "GL_VERSION    = %s\n", (char *) glGetString(GL_VERSION));
    fprintf(stderr, "GL_VENDOR     = %s\n", (char *) glGetString(GL_VENDOR));
-
-    glClearColor(0.0, 0.0, 1.0, 0.0);
+   glClearColor(0.0, 0.0, 1.0, 0.0);
 }
 
 static void Reshape(int width, int height)
 {
-
-    glViewport(0, 0, (GLint)width, (GLint)height);
-
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    glOrtho(-1.0, 1.0, -1.0, 1.0, -0.5, 1000.0);
-    glMatrixMode(GL_MODELVIEW);
+   glViewport(0, 0, (GLint)width, (GLint)height);
+   glMatrixMode(GL_PROJECTION);
+   glLoadIdentity();
+   glOrtho(-1.0, 1.0, -1.0, 1.0, -0.5, 1000.0);
+   glMatrixMode(GL_MODELVIEW);
 }
 
 static void Key(unsigned char key, int x, int y)
 {
-
-    switch (key) {
-      case 27:
-	exit(1);
-      default:
-	return;
-    }
-
-    glutPostRedisplay();
+   switch (key) {
+   case 'r':
+      Rmask = !Rmask;
+      break;
+   case 'g':
+      Gmask = !Gmask;
+      break;
+   case 'b':
+      Bmask = !Bmask;
+      break;
+   case 27:
+      glutDestroyWindow(Win);
+      exit(1);
+   default:
+      return;
+   }
+   glutPostRedisplay();
 }
 
 static void Draw(void)
 {
+   printf("ColorMask = %d, %d, %d\n", Rmask, Gmask, Bmask);
    glColorMask(1,1,1,1);
 
    glClear(GL_COLOR_BUFFER_BIT); 
@@ -82,7 +87,7 @@ static void Draw(void)
    glVertex3f(-0.9,  0.0, -30.0);
    glEnd();
 
-   glColorMask(1,0,1,0);
+   glColorMask(Rmask, Gmask, Bmask, 0);
 
    /* left triangle: white&mask: purple   middle region: white */
    glBegin(GL_TRIANGLES);
@@ -103,48 +108,46 @@ static void Draw(void)
 
 static GLenum Args(int argc, char **argv)
 {
-    GLint i;
+   GLint i;
 
-    doubleBuffer = GL_FALSE;
+   doubleBuffer = GL_FALSE;
 
-    for (i = 1; i < argc; i++) {
-        if (strcmp(argv[i], "-sb") == 0) {
-	    doubleBuffer = GL_FALSE;
-	} else if (strcmp(argv[i], "-db") == 0) {
-	    doubleBuffer = GL_TRUE;
-	} else {
-	    fprintf(stderr, "%s (Bad option).\n", argv[i]);
-	    return GL_FALSE;
-	}
-    }
-    return GL_TRUE;
+   for (i = 1; i < argc; i++) {
+      if (strcmp(argv[i], "-sb") == 0) {
+         doubleBuffer = GL_FALSE;
+      }
+      else if (strcmp(argv[i], "-db") == 0) {
+         doubleBuffer = GL_TRUE;
+      }
+      else {
+         fprintf(stderr, "%s (Bad option).\n", argv[i]);
+         return GL_FALSE;
+      }
+   }
+   return GL_TRUE;
 }
+
 
 int main(int argc, char **argv)
 {
-    GLenum type;
+   GLenum type;
 
-    glutInit(&argc, argv);
+   glutInit(&argc, argv);
 
-    if (Args(argc, argv) == GL_FALSE) {
-	exit(1);
-    }
+   if (Args(argc, argv) == GL_FALSE) {
+      exit(1);
+   }
 
-    glutInitWindowPosition(100, 0); glutInitWindowSize(Width, Height);
+   type = GLUT_RGB;
+   type |= (doubleBuffer) ? GLUT_DOUBLE : GLUT_SINGLE;
 
-    type = GLUT_RGB;
-    type |= (doubleBuffer) ? GLUT_DOUBLE : GLUT_SINGLE;
-    glutInitDisplayMode(type);
-
-    if (glutCreateWindow("First Tri") == GL_FALSE) {
-	exit(1);
-    }
-
-    Init();
-
-    glutReshapeFunc(Reshape);
-    glutKeyboardFunc(Key);
-    glutDisplayFunc(Draw);
-    glutMainLoop();
-	return 0;
+   glutInitWindowPosition(100, 0); glutInitWindowSize(Width, Height);
+   glutInitDisplayMode(type);
+   Win = glutCreateWindow("First Tri");
+   Init();
+   glutReshapeFunc(Reshape);
+   glutKeyboardFunc(Key);
+   glutDisplayFunc(Draw);
+   glutMainLoop();
+   return 0;
 }

@@ -116,21 +116,15 @@ struct setup_stage {
    struct edge etop;
    struct edge emaj;
 
-   float oneoverarea;
+   float oneOverArea;
 
-   uint tx, ty;
+   uint facing;
+
+   uint tx, ty;  /**< position of current tile (x, y) */
 
    int cliprect_minx, cliprect_maxx, cliprect_miny, cliprect_maxy;
 
-#if 0
-   struct tgsi_interp_coef coef[PIPE_MAX_SHADER_INPUTS];
-#else
    struct interp_coef coef[PIPE_MAX_SHADER_INPUTS];
-#endif
-
-#if 0
-   struct quad_header quad; 
-#endif
 
    struct {
       int left[2];   /**< [0] = row0, [1] = row1 */
@@ -142,68 +136,8 @@ struct setup_stage {
 };
 
 
-
 static struct setup_stage setup;
 
-
-
-
-#if 0
-/**
- * Basically a cast wrapper.
- */
-static INLINE struct setup_stage *setup_stage( struct draw_stage *stage )
-{
-   return (struct setup_stage *)stage;
-}
-#endif
-
-#if 0
-/**
- * Clip setup.quad against the scissor/surface bounds.
- */
-static INLINE void
-quad_clip(struct setup_stage *setup)
-{
-   const struct pipe_scissor_state *cliprect = &setup.softpipe->cliprect;
-   const int minx = (int) cliprect->minx;
-   const int maxx = (int) cliprect->maxx;
-   const int miny = (int) cliprect->miny;
-   const int maxy = (int) cliprect->maxy;
-
-   if (setup.quad.x0 >= maxx ||
-       setup.quad.y0 >= maxy ||
-       setup.quad.x0 + 1 < minx ||
-       setup.quad.y0 + 1 < miny) {
-      /* totally clipped */
-      setup.quad.mask = 0x0;
-      return;
-   }
-   if (setup.quad.x0 < minx)
-      setup.quad.mask &= (MASK_BOTTOM_RIGHT | MASK_TOP_RIGHT);
-   if (setup.quad.y0 < miny)
-      setup.quad.mask &= (MASK_BOTTOM_LEFT | MASK_BOTTOM_RIGHT);
-   if (setup.quad.x0 == maxx - 1)
-      setup.quad.mask &= (MASK_BOTTOM_LEFT | MASK_TOP_LEFT);
-   if (setup.quad.y0 == maxy - 1)
-      setup.quad.mask &= (MASK_TOP_LEFT | MASK_TOP_RIGHT);
-}
-#endif
-
-#if 0
-/**
- * Emit a quad (pass to next stage) with clipping.
- */
-static INLINE void
-clip_emit_quad(struct setup_stage *setup)
-{
-   quad_clip(setup);
-   if (setup.quad.mask) {
-      struct softpipe_context *sp = setup.softpipe;
-      sp->quad.first->run(sp->quad.first, &setup.quad);
-   }
-}
-#endif
 
 /**
  * Evaluate attribute coefficients (plane equations) to compute
@@ -211,32 +145,52 @@ clip_emit_quad(struct setup_stage *setup)
  * Eg: four colors will be computed (in AoS format).
  */
 static INLINE void
-eval_coeff(uint slot, float x, float y, vector float result[4])
+eval_coeff(uint slot, float x, float y, vector float w, vector float result[4])
 {
-   switch (spu.vertex_info.interp_mode[slot]) {
+   switch (spu.vertex_info.attrib[slot].interp_mode) {
    case INTERP_CONSTANT:
       result[QUAD_TOP_LEFT] =
       result[QUAD_TOP_RIGHT] =
       result[QUAD_BOTTOM_LEFT] =
       result[QUAD_BOTTOM_RIGHT] = setup.coef[slot].a0.v;
       break;
-
    case INTERP_LINEAR:
-      /* fall-through, for now */
-   default:
       {
-         register vector float dadx = setup.coef[slot].dadx.v;
-         register vector float dady = setup.coef[slot].dady.v;
-         register vector float topLeft
-            = spu_add(setup.coef[slot].a0.v,
-                      spu_add(spu_mul(spu_splats(x), dadx),
-                              spu_mul(spu_splats(y), dady)));
+         vector float dadx = setup.coef[slot].dadx.v;
+         vector float dady = setup.coef[slot].dady.v;
+         vector float topLeft =
+            spu_add(setup.coef[slot].a0.v,
+                    spu_add(spu_mul(spu_splats(x), dadx),
+                            spu_mul(spu_splats(y), dady)));
 
          result[QUAD_TOP_LEFT] = topLeft;
          result[QUAD_TOP_RIGHT] = spu_add(topLeft, dadx);
          result[QUAD_BOTTOM_LEFT] = spu_add(topLeft, dady);
          result[QUAD_BOTTOM_RIGHT] = spu_add(spu_add(topLeft, dadx), dady);
       }
+      break;
+   case INTERP_PERSPECTIVE:
+      {
+         vector float dadx = setup.coef[slot].dadx.v;
+         vector float dady = setup.coef[slot].dady.v;
+         vector float topLeft =
+            spu_add(setup.coef[slot].a0.v,
+                    spu_add(spu_mul(spu_splats(x), dadx),
+                            spu_mul(spu_splats(y), dady)));
+
+         vector float wInv = spu_re(w);  /* 1.0 / w */
+
+         result[QUAD_TOP_LEFT] = spu_mul(topLeft, wInv);
+         result[QUAD_TOP_RIGHT] = spu_mul(spu_add(topLeft, dadx), wInv);
+         result[QUAD_BOTTOM_LEFT] = spu_mul(spu_add(topLeft, dady), wInv);
+         result[QUAD_BOTTOM_RIGHT] = spu_mul(spu_add(spu_add(topLeft, dadx), dady), wInv);
+      }
+      break;
+   case INTERP_POS:
+   case INTERP_NONE:
+      break;
+   default:
+      ASSERT(0);
    }
 }
 
@@ -246,14 +200,14 @@ eval_coeff(uint slot, float x, float y, vector float result[4])
  * XXX this will all be re-written someday.
  */
 static INLINE void
-eval_coeff_soa(uint slot, float x, float y, vector float result[4])
+eval_coeff_soa(uint slot, float x, float y, vector float w, vector float result[4])
 {
-   eval_coeff(slot, x, y, result);
+   eval_coeff(slot, x, y, w, result);
    _transpose_matrix4x4(result, result);
 }
 
 
-
+/** Evalute coefficients to get Z for four pixels in a quad */
 static INLINE vector float
 eval_z(float x, float y)
 {
@@ -267,6 +221,20 @@ eval_z(float x, float y)
 }
 
 
+/** Evalute coefficients to get W for four pixels in a quad */
+static INLINE vector float
+eval_w(float x, float y)
+{
+   const uint slot = 0;
+   const float dwdx = setup.coef[slot].dadx.f[3];
+   const float dwdy = setup.coef[slot].dady.f[3];
+   const float topLeft = setup.coef[slot].a0.f[3] + x * dwdx + y * dwdy;
+   const vector float topLeftv = spu_splats(topLeft);
+   const vector float derivs = (vector float) { 0.0, dwdx, dwdy, dwdx + dwdy };
+   return spu_add(topLeftv, derivs);
+}
+
+
 /**
  * Emit a quad (pass to next stage).  No clipping is done.
  * Note: about 1/5 to 1/7 of the time, mask is zero and this function
@@ -274,7 +242,7 @@ eval_z(float x, float y)
  * overall.
  */
 static INLINE void
-emit_quad( int x, int y, mask_t mask )
+emit_quad( int x, int y, mask_t mask)
 {
    /* If any bits in mask are set... */
    if (spu_extract(spu_orx(mask), 0)) {
@@ -284,84 +252,21 @@ emit_quad( int x, int y, mask_t mask )
       spu.cur_ctile_status = TILE_STATUS_DIRTY;
       spu.cur_ztile_status = TILE_STATUS_DIRTY;
 
-      if (spu.texture[0].start) {
-         /*
-          * Temporary texture mapping path
-          * This will go away when fragment programs support TEX inst.
-          */
-         const uint unit = 0;
-         vector float colors[4];
-         vector float texcoords[4];
-         eval_coeff(2, (float) x, (float) y, texcoords);
-
-         if (spu_extract(mask, 0))
-            colors[0] = spu.sample_texture[unit](unit, texcoords[0]);
-         if (spu_extract(mask, 1))
-            colors[1] = spu.sample_texture[unit](unit, texcoords[1]);
-         if (spu_extract(mask, 2))
-            colors[2] = spu.sample_texture[unit](unit, texcoords[2]);
-         if (spu_extract(mask, 3))
-            colors[3] = spu.sample_texture[unit](unit, texcoords[3]);
-
-
-         if (spu.texture[1].start) {
-            /* multi-texture mapping */
-            const uint unit = 1;
-            vector float colors1[4];
-
-            eval_coeff(2, (float) x, (float) y, texcoords);
-
-            if (spu_extract(mask, 0))
-               colors1[0] = spu.sample_texture[unit](unit, texcoords[0]);
-            if (spu_extract(mask, 1))
-               colors1[1] = spu.sample_texture[unit](unit, texcoords[1]);
-            if (spu_extract(mask, 2))
-               colors1[2] = spu.sample_texture[unit](unit, texcoords[2]);
-            if (spu_extract(mask, 3))
-               colors1[3] = spu.sample_texture[unit](unit, texcoords[3]);
-
-            /* hack: modulate first texture by second */
-            colors[0] = spu_mul(colors[0], colors1[0]);
-            colors[1] = spu_mul(colors[1], colors1[1]);
-            colors[2] = spu_mul(colors[2], colors1[2]);
-            colors[3] = spu_mul(colors[3], colors1[3]);
-         }
-
-         {
-            /* Convert fragment data from AoS to SoA format.
-             * I.e. (RGBA,RGBA,RGBA,RGBA) -> (RRRR,GGGG,BBBB,AAAA)
-             * This is temporary!
-             */
-            vector float soa_frag[4];
-            _transpose_matrix4x4(soa_frag, colors);
-
-            vector float fragZ = eval_z((float) x, (float) y);
-
-            /* Do all per-fragment/quad operations here, including:
-             * alpha test, z test, stencil test, blend and framebuffer writing.
-             */
-            spu.fragment_ops(ix, iy, &spu.ctile, &spu.ztile,
-                             fragZ,
-                             soa_frag[0], soa_frag[1],
-                             soa_frag[2], soa_frag[3],
-                             mask);
-         }
-
-      }
-      else {
+      {
          /*
           * Run fragment shader, execute per-fragment ops, update fb/tile.
           */
          vector float inputs[4*4], outputs[2*4];
          vector float fragZ = eval_z((float) x, (float) y);
+         vector float fragW = eval_w((float) x, (float) y);
 
          /* setup inputs */
 #if 0
-         eval_coeff_soa(1, (float) x, (float) y, inputs);
+         eval_coeff_soa(1, (float) x, (float) y, fragW, inputs);
 #else
          uint i;
          for (i = 0; i < spu.vertex_info.num_attribs; i++) {
-            eval_coeff_soa(i+1, (float) x, (float) y, inputs + i * 4);
+            eval_coeff_soa(i+1, (float) x, (float) y, fragW, inputs + i * 4);
          }
 #endif
          ASSERT(spu.fragment_program);
@@ -379,7 +284,8 @@ emit_quad( int x, int y, mask_t mask )
                           outputs[0*4+1],
                           outputs[0*4+2],
                           outputs[0*4+3],
-                          mask);
+                          mask,
+                          setup.facing);
       }
    }
 }
@@ -389,7 +295,8 @@ emit_quad( int x, int y, mask_t mask )
  * Given an X or Y coordinate, return the block/quad coordinate that it
  * belongs to.
  */
-static INLINE int block( int x )
+static INLINE int
+block(int x)
 {
    return x & ~1;
 }
@@ -400,7 +307,8 @@ static INLINE int block( int x )
  * the triangle's bounds.
  * The mask is a uint4 vector and each element will be 0 or 0xffffffff.
  */
-static INLINE mask_t calculate_mask( int x )
+static INLINE mask_t
+calculate_mask(int x)
 {
    /* This is a little tricky.
     * Use & instead of && to avoid branches.
@@ -418,7 +326,8 @@ static INLINE mask_t calculate_mask( int x )
 /**
  * Render a horizontal span of quads
  */
-static void flush_spans( void )
+static void
+flush_spans(void)
 {
    int minleft, maxright;
    int x;
@@ -445,7 +354,6 @@ static void flush_spans( void )
    default:
       return;
    }
-
 
    /* OK, we're very likely to need the tile data now.
     * clear or finish waiting if needed.
@@ -482,9 +390,7 @@ static void flush_spans( void )
     * calculate_mask() could be simplified a bit...
     */
    for (x = block(minleft); x <= block(maxright); x += 2) {
-#if 1
-      emit_quad( x, setup.span.y, calculate_mask( x ) );
-#endif
+      emit_quad( x, setup.span.y, calculate_mask( x ));
    }
 
    setup.span.y = 0;
@@ -493,8 +399,10 @@ static void flush_spans( void )
    setup.span.right[1] = 0;
 }
 
+
 #if DEBUG_VERTS
-static void print_vertex(const struct vertex_header *v)
+static void
+print_vertex(const struct vertex_header *v)
 {
    int i;
    fprintf(stderr, "Vertex: (%p)\n", v);
@@ -506,11 +414,11 @@ static void print_vertex(const struct vertex_header *v)
 #endif
 
 
-static boolean setup_sort_vertices(const struct vertex_header *v0,
-                                   const struct vertex_header *v1,
-                                   const struct vertex_header *v2)
+static boolean
+setup_sort_vertices(const struct vertex_header *v0,
+                    const struct vertex_header *v1,
+                    const struct vertex_header *v2)
 {
-
 #if DEBUG_VERTS
    fprintf(stderr, "Triangle:\n");
    print_vertex(v0);
@@ -599,13 +507,13 @@ static boolean setup_sort_vertices(const struct vertex_header *v0,
     * use the prim->det value because its sign is correct.
     */
    {
-      const float area = (setup.emaj.dx * setup.ebot.dy - 
-			    setup.ebot.dx * setup.emaj.dy);
+      const float area = (setup.emaj.dx * setup.ebot.dy -
+                          setup.ebot.dx * setup.emaj.dy);
 
-      setup.oneoverarea = 1.0f / area;
+      setup.oneOverArea = 1.0f / area;
       /*
       _mesa_printf("%s one-over-area %f  area %f  det %f\n",
-                   __FUNCTION__, setup.oneoverarea, area, prim->det );
+                   __FUNCTION__, setup.oneOverArea, area, prim->det );
       */
    }
 
@@ -628,63 +536,11 @@ static boolean setup_sort_vertices(const struct vertex_header *v0,
  * \param slot  which attribute slot 
  */
 static INLINE void
-const_coeff(uint slot)
+const_coeff4(uint slot)
 {
    setup.coef[slot].dadx.v = (vector float) {0.0, 0.0, 0.0, 0.0};
    setup.coef[slot].dady.v = (vector float) {0.0, 0.0, 0.0, 0.0};
    setup.coef[slot].a0.v = setup.vprovoke->data[slot];
-}
-
-
-/**
- * Compute a0, dadx and dady for a linearly interpolated coefficient,
- * for a triangle.
- */
-static INLINE void
-tri_linear_coeff(uint slot, uint firstComp, uint lastComp)
-{
-   uint i;
-   const float *vmin_d = (float *) &setup.vmin->data[slot];
-   const float *vmid_d = (float *) &setup.vmid->data[slot];
-   const float *vmax_d = (float *) &setup.vmax->data[slot];
-   const float x = spu_extract(setup.vmin->data[0], 0) - 0.5f;
-   const float y = spu_extract(setup.vmin->data[0], 1) - 0.5f;
-
-   for (i = firstComp; i < lastComp; i++) {
-      float botda = vmid_d[i] - vmin_d[i];
-      float majda = vmax_d[i] - vmin_d[i];
-      float a = setup.ebot.dy * majda - botda * setup.emaj.dy;
-      float b = setup.emaj.dx * botda - majda * setup.ebot.dx;
-   
-      ASSERT(slot < PIPE_MAX_SHADER_INPUTS);
-
-      setup.coef[slot].dadx.f[i] = a * setup.oneoverarea;
-      setup.coef[slot].dady.f[i] = b * setup.oneoverarea;
-
-      /* calculate a0 as the value which would be sampled for the
-       * fragment at (0,0), taking into account that we want to sample at
-       * pixel centers, in other words (0.5, 0.5).
-       *
-       * this is neat but unfortunately not a good way to do things for
-       * triangles with very large values of dadx or dady as it will
-       * result in the subtraction and re-addition from a0 of a very
-       * large number, which means we'll end up loosing a lot of the
-       * fractional bits and precision from a0.  the way to fix this is
-       * to define a0 as the sample at a pixel center somewhere near vmin
-       * instead - i'll switch to this later.
-       */
-      setup.coef[slot].a0.f[i] = (vmin_d[i] - 
-                                 (setup.coef[slot].dadx.f[i] * x + 
-                                  setup.coef[slot].dady.f[i] * y));
-   }
-
-   /*
-   _mesa_printf("attr[%d].%c: %f dx:%f dy:%f\n",
-		slot, "xyzw"[i], 
-		setup.coef[slot].a0[i],
-		setup.coef[slot].dadx.f[i],
-		setup.coef[slot].dady.f[i]);
-   */
 }
 
 
@@ -708,8 +564,52 @@ tri_linear_coeff4(uint slot)
    vector float b = spu_sub(spu_mul(spu_splats(setup.emaj.dx), botda),
                             spu_mul(majda, spu_splats(setup.ebot.dx)));
 
-   setup.coef[slot].dadx.v = spu_mul(a, spu_splats(setup.oneoverarea));
-   setup.coef[slot].dady.v = spu_mul(b, spu_splats(setup.oneoverarea));
+   setup.coef[slot].dadx.v = spu_mul(a, spu_splats(setup.oneOverArea));
+   setup.coef[slot].dady.v = spu_mul(b, spu_splats(setup.oneOverArea));
+
+   vector float tempx = spu_mul(setup.coef[slot].dadx.v, xxxx);
+   vector float tempy = spu_mul(setup.coef[slot].dady.v, yyyy);
+                         
+   setup.coef[slot].a0.v = spu_sub(vmin_d, spu_add(tempx, tempy));
+}
+
+
+/**
+ * Compute a0, dadx and dady for a perspective-corrected interpolant,
+ * for a triangle.
+ * We basically multiply the vertex value by 1/w before computing
+ * the plane coefficients (a0, dadx, dady).
+ * Later, when we compute the value at a particular fragment position we'll
+ * divide the interpolated value by the interpolated W at that fragment.
+ */
+static void
+tri_persp_coeff4(uint slot)
+{
+   const vector float xxxx = spu_splats(spu_extract(setup.vmin->data[0], 0) - 0.5f);
+   const vector float yyyy = spu_splats(spu_extract(setup.vmin->data[0], 1) - 0.5f);
+
+   const vector float vmin_w = spu_splats(spu_extract(setup.vmin->data[0], 3));
+   const vector float vmid_w = spu_splats(spu_extract(setup.vmid->data[0], 3));
+   const vector float vmax_w = spu_splats(spu_extract(setup.vmax->data[0], 3));
+
+   vector float vmin_d = setup.vmin->data[slot];
+   vector float vmid_d = setup.vmid->data[slot];
+   vector float vmax_d = setup.vmax->data[slot];
+
+   vmin_d = spu_mul(vmin_d, vmin_w);
+   vmid_d = spu_mul(vmid_d, vmid_w);
+   vmax_d = spu_mul(vmax_d, vmax_w);
+
+   vector float botda = vmid_d - vmin_d;
+   vector float majda = vmax_d - vmin_d;
+
+   vector float a = spu_sub(spu_mul(spu_splats(setup.ebot.dy), majda),
+                            spu_mul(botda, spu_splats(setup.emaj.dy)));
+   vector float b = spu_sub(spu_mul(spu_splats(setup.emaj.dx), botda),
+                            spu_mul(majda, spu_splats(setup.ebot.dx)));
+
+   setup.coef[slot].dadx.v = spu_mul(a, spu_splats(setup.oneOverArea));
+   setup.coef[slot].dady.v = spu_mul(b, spu_splats(setup.oneOverArea));
 
    vector float tempx = spu_mul(setup.coef[slot].dadx.v, xxxx);
    vector float tempy = spu_mul(setup.coef[slot].dady.v, yyyy);
@@ -719,91 +619,39 @@ tri_linear_coeff4(uint slot)
 
 
 
-#if 0
-/**
- * Compute a0, dadx and dady for a perspective-corrected interpolant,
- * for a triangle.
- * We basically multiply the vertex value by 1/w before computing
- * the plane coefficients (a0, dadx, dady).
- * Later, when we compute the value at a particular fragment position we'll
- * divide the interpolated value by the interpolated W at that fragment.
- */
-static void tri_persp_coeff( unsigned slot,
-                             unsigned i )
-{
-   /* premultiply by 1/w:
-    */
-   float mina = setup.vmin->data[slot][i] * setup.vmin->data[0][3];
-   float mida = setup.vmid->data[slot][i] * setup.vmid->data[0][3];
-   float maxa = setup.vmax->data[slot][i] * setup.vmax->data[0][3];
-
-   float botda = mida - mina;
-   float majda = maxa - mina;
-   float a = setup.ebot.dy * majda - botda * setup.emaj.dy;
-   float b = setup.emaj.dx * botda - majda * setup.ebot.dx;
-      
-   /*
-   printf("tri persp %d,%d: %f %f %f\n", slot, i,
-          setup.vmin->data[slot][i],
-          setup.vmid->data[slot][i],
-          setup.vmax->data[slot][i]
-          );
-   */
-
-   assert(slot < PIPE_MAX_SHADER_INPUTS);
-   assert(i <= 3);
-
-   setup.coef[slot].dadx.f[i] = a * setup.oneoverarea;
-   setup.coef[slot].dady.f[i] = b * setup.oneoverarea;
-   setup.coef[slot].a0.f[i] = (mina - 
-			    (setup.coef[slot].dadx.f[i] * (setup.vmin->data[0][0] - 0.5f) + 
-			     setup.coef[slot].dady.f[i] * (setup.vmin->data[0][1] - 0.5f)));
-}
-#endif
-
-
 /**
  * Compute the setup.coef[] array dadx, dady, a0 values.
  * Must be called after setup.vmin,vmid,vmax,vprovoke are initialized.
  */
-static void setup_tri_coefficients(void)
+static void
+setup_tri_coefficients(void)
 {
-#if 1
    uint i;
 
    for (i = 0; i < spu.vertex_info.num_attribs; i++) {
-      switch (spu.vertex_info.interp_mode[i]) {
+      switch (spu.vertex_info.attrib[i].interp_mode) {
       case INTERP_NONE:
          break;
-      case INTERP_POS:
-         /*tri_linear_coeff(i, 2, 3);*/
-         /* XXX interp W if PERSPECTIVE... */
-         tri_linear_coeff4(i);
-         break;
       case INTERP_CONSTANT:
-         const_coeff(i);
+         const_coeff4(i);
          break;
+      case INTERP_POS:
+         /* fall-through */
       case INTERP_LINEAR:
          tri_linear_coeff4(i);
          break;
       case INTERP_PERSPECTIVE:
-         tri_linear_coeff4(i);  /* temporary */
+         tri_persp_coeff4(i);
          break;
       default:
          ASSERT(0);
       }
    }
-#else
-   ASSERT(spu.vertex_info.interp_mode[0] == INTERP_POS);
-   ASSERT(spu.vertex_info.interp_mode[1] == INTERP_LINEAR ||
-          spu.vertex_info.interp_mode[1] == INTERP_CONSTANT);
-   tri_linear_coeff(0, 2, 3);  /* slot 0, z */
-   tri_linear_coeff(1, 0, 4);  /* slot 1, color */
-#endif
 }
 
 
-static void setup_tri_edges(void)
+static void
+setup_tri_edges(void)
 {
    float vmin_x = spu_extract(setup.vmin->data[0], 0) + 0.5f;
    float vmid_x = spu_extract(setup.vmid->data[0], 0) + 0.5f;
@@ -833,9 +681,8 @@ static void setup_tri_edges(void)
  * Render the upper or lower half of a triangle.
  * Scissoring/cliprect is applied here too.
  */
-static void subtriangle( struct edge *eleft,
-			 struct edge *eright,
-			 unsigned lines )
+static void
+subtriangle(struct edge *eleft, struct edge *eright, unsigned lines)
 {
    const int minx = setup.cliprect_minx;
    const int maxx = setup.cliprect_maxx;
@@ -903,12 +750,27 @@ static void subtriangle( struct edge *eleft,
 }
 
 
+static float
+determinant(const float *v0, const float *v1, const float *v2)
+{
+   /* edge vectors e = v0 - v2, f = v1 - v2 */
+   const float ex = v0[0] - v2[0];
+   const float ey = v0[1] - v2[1];
+   const float fx = v1[0] - v2[0];
+   const float fy = v1[1] - v2[1];
+
+   /* det = cross(e,f).z */
+   return ex * fy - ey * fx;
+}
+
+
 /**
  * Draw triangle into tile at (tx, ty) (tile coords)
  * The tile data should have already been fetched.
  */
 boolean
-tri_draw(const float *v0, const float *v1, const float *v2, uint tx, uint ty)
+tri_draw(const float *v0, const float *v1, const float *v2,
+         uint tx, uint ty, uint front_winding)
 {
    setup.tx = tx;
    setup.ty = ty;
@@ -918,6 +780,12 @@ tri_draw(const float *v0, const float *v1, const float *v2, uint tx, uint ty)
    setup.cliprect_miny = ty * TILE_SIZE;
    setup.cliprect_maxx = (tx + 1) * TILE_SIZE;
    setup.cliprect_maxy = (ty + 1) * TILE_SIZE;
+
+   /* Before we sort vertices, determine the facing of the triangle,
+    * which will be needed for front/back-face stencil application
+    */
+   float det = determinant(v0, v1, v2);
+   setup.facing = (det > 0.0) ^ (front_winding == PIPE_WINDING_CW);
 
    if (!setup_sort_vertices((struct vertex_header *) v0,
                             (struct vertex_header *) v1,
@@ -932,19 +800,14 @@ tri_draw(const float *v0, const float *v1, const float *v2, uint tx, uint ty)
    setup.span.y_flags = 0;
    setup.span.right[0] = 0;
    setup.span.right[1] = 0;
-   /*   setup.span.z_mode = tri_z_mode( setup.ctx ); */
 
-   /*   init_constant_attribs( setup ); */
-      
-   if (setup.oneoverarea < 0.0) {
-      /* emaj on left:
-       */
+   if (setup.oneOverArea < 0.0) {
+      /* emaj on left */
       subtriangle( &setup.emaj, &setup.ebot, setup.ebot.lines );
       subtriangle( &setup.emaj, &setup.etop, setup.etop.lines );
    }
    else {
-      /* emaj on right:
-       */
+      /* emaj on right */
       subtriangle( &setup.ebot, &setup.emaj, setup.ebot.lines );
       subtriangle( &setup.etop, &setup.emaj, setup.etop.lines );
    }

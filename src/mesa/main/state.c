@@ -258,12 +258,6 @@ update_program(GLcontext *ctx)
       }
    }
 
-   if (ctx->VertexProgram._Current)
-      assert(ctx->VertexProgram._Current->Base.Parameters);
-   if (ctx->FragmentProgram._Current)
-      assert(ctx->FragmentProgram._Current->Base.Parameters);
-
-
    /* XXX: get rid of _Active flag.
     */
 #if 1
@@ -447,6 +441,9 @@ _mesa_update_state_locked( GLcontext *ctx )
    GLbitfield new_state = ctx->NewState;
    GLbitfield prog_flags = _NEW_PROGRAM;
 
+   if (new_state == _NEW_CURRENT_ATTRIB) 
+      goto out;
+
    if (MESA_VERBOSE & VERBOSE_STATE)
       _mesa_print_state("_mesa_update_state", new_state);
 
@@ -510,7 +507,8 @@ _mesa_update_state_locked( GLcontext *ctx )
       _mesa_update_tnl_spaces( ctx, new_state );
 
    if (ctx->FragmentProgram._MaintainTexEnvProgram) {
-      prog_flags |= (_NEW_TEXTURE | _NEW_FOG | _DD_NEW_SEPARATE_SPECULAR);
+      prog_flags |= (_NEW_ARRAY | _NEW_TEXTURE_MATRIX | _NEW_LIGHT |
+                     _NEW_TEXTURE | _NEW_FOG | _DD_NEW_SEPARATE_SPECULAR);
    }
    if (ctx->VertexProgram._MaintainTnlProgram) {
       prog_flags |= (_NEW_ARRAY | _NEW_TEXTURE | _NEW_TEXTURE_MATRIX |
@@ -532,6 +530,7 @@ _mesa_update_state_locked( GLcontext *ctx )
     * Set ctx->NewState to zero to avoid recursion if
     * Driver.UpdateState() has to call FLUSH_VERTICES().  (fixed?)
     */
+ out:
    new_state = ctx->NewState;
    ctx->NewState = 0;
    ctx->Driver.UpdateState(ctx, new_state);
@@ -547,4 +546,39 @@ _mesa_update_state( GLcontext *ctx )
    _mesa_lock_context_textures(ctx);
    _mesa_update_state_locked(ctx);
    _mesa_unlock_context_textures(ctx);
+}
+
+
+
+
+/* Want to figure out which fragment program inputs are actually
+ * constant/current values from ctx->Current.  These should be
+ * referenced as a tracked state variable rather than a fragment
+ * program input, to save the overhead of putting a constant value in
+ * every submitted vertex, transferring it to hardware, interpolating
+ * it across the triangle, etc...
+ *
+ * When there is a VP bound, just use vp->outputs.  But when we're
+ * generating vp from fixed function state, basically want to
+ * calculate:
+ *
+ * vp_out_2_fp_in( vp_in_2_vp_out( varying_inputs ) | 
+ *                 potential_vp_outputs )
+ *
+ * Where potential_vp_outputs is calculated by looking at enabled
+ * texgen, etc.
+ * 
+ * The generated fragment program should then only declare inputs that
+ * may vary or otherwise differ from the ctx->Current values.
+ * Otherwise, the fp should track them as state values instead.
+ */
+void
+_mesa_set_varying_vp_inputs( GLcontext *ctx,
+                             GLbitfield varying_inputs )
+{
+   if (ctx->varying_vp_inputs != varying_inputs) {
+      ctx->varying_vp_inputs = varying_inputs;
+      ctx->NewState |= _NEW_ARRAY;
+      //_mesa_printf("%s %x\n", __FUNCTION__, varying_inputs);
+   }
 }

@@ -52,7 +52,7 @@ static inline FunctionType *vertexShaderFunctionType()
    // pass are castable to the following:
    // [4 x <4 x float>] inputs,
    // [4 x <4 x float>] output,
-   // [4 x [4 x float]] consts,
+   // [4 x [1 x float]] consts,
    // [4 x <4 x float>] temps
 
    std::vector<const Type*> funcArgs;
@@ -61,7 +61,7 @@ static inline FunctionType *vertexShaderFunctionType()
    PointerType *vectorArrayPtr = PointerType::get(vectorArray, 0);
 
    ArrayType   *floatArray     = ArrayType::get(Type::FloatTy, 4);
-   ArrayType   *constsArray    = ArrayType::get(floatArray, 4);
+   ArrayType   *constsArray    = ArrayType::get(floatArray, 1);
    PointerType *constsArrayPtr = PointerType::get(constsArray, 0);
 
    funcArgs.push_back(vectorArrayPtr);//inputs
@@ -246,6 +246,7 @@ translate_instruction(llvm::Module *module,
          val = storage->constElement(src->SrcRegister.Index, indIdx);
       } else if (src->SrcRegister.File == TGSI_FILE_INPUT) {
          val = storage->inputElement(src->SrcRegister.Index, indIdx);
+      // FIXME we should not be generating elements for temporaries, this creates useless memory writes
       } else if (src->SrcRegister.File == TGSI_FILE_TEMPORARY) {
          val = storage->tempElement(src->SrcRegister.Index);
       } else if (src->SrcRegister.File == TGSI_FILE_OUTPUT) {
@@ -286,9 +287,13 @@ translate_instruction(llvm::Module *module,
       out = instr->rsq(inputs[0]);
    }
       break;
-   case TGSI_OPCODE_EXP:
+   case TGSI_OPCODE_EXP: {
+      out = instr->exp(inputs[0]);
+   }
       break;
-   case TGSI_OPCODE_LOG:
+   case TGSI_OPCODE_LOG: {
+      out = instr->log(inputs[0]);
+   }
       break;
    case TGSI_OPCODE_MUL: {
       out = instr->mul(inputs[0], inputs[1]);
@@ -338,21 +343,31 @@ translate_instruction(llvm::Module *module,
       out = instr->lerp(inputs[0], inputs[1], inputs[2]);
    }
       break;
-   case TGSI_OPCODE_CND:
+   case TGSI_OPCODE_CND: {
+      out = instr->cnd(inputs[0], inputs[1], inputs[2]);
+   }
       break;
-   case TGSI_OPCODE_CND0:
+   case TGSI_OPCODE_CND0: {
+      out = instr->cnd0(inputs[0], inputs[1], inputs[2]);
+   }
       break;
-   case TGSI_OPCODE_DOT2ADD:
+   case TGSI_OPCODE_DOT2ADD: {
+      out = instr->dot2add(inputs[0], inputs[1], inputs[2]);
+   }
       break;
    case TGSI_OPCODE_INDEX:
       break;
-   case TGSI_OPCODE_NEGATE:
+   case TGSI_OPCODE_NEGATE: {
+      out = instr->neg(inputs[0]);
+   }
       break;
    case TGSI_OPCODE_FRAC: {
       out = instr->frc(inputs[0]);
    }
       break;
-   case TGSI_OPCODE_CLAMP:
+   case TGSI_OPCODE_CLAMP: {
+      out = instr->clamp(inputs[0]);
+   }
       break;
    case TGSI_OPCODE_FLOOR: {
       out = instr->floor(inputs[0]);
@@ -392,9 +407,13 @@ translate_instruction(llvm::Module *module,
       out = instr->cos(inputs[0]);
    }
       break;
-   case TGSI_OPCODE_DDX:
+   case TGSI_OPCODE_DDX: {
+      out = instr->ddx(inputs[0]);
+   }
       break;
-   case TGSI_OPCODE_DDY:
+   case TGSI_OPCODE_DDY: {
+      out = instr->ddy(inputs[0]);
+   }
       break;
    case TGSI_OPCODE_KILP:
       break;
@@ -408,9 +427,13 @@ translate_instruction(llvm::Module *module,
       break;
    case TGSI_OPCODE_RFL:
       break;
-   case TGSI_OPCODE_SEQ:
+   case TGSI_OPCODE_SEQ: {
+      out = instr->seq(inputs[0], inputs[1]);
+   }
       break;
-   case TGSI_OPCODE_SFL:
+   case TGSI_OPCODE_SFL: {
+      out = instr->sfl(inputs[0], inputs[1]);
+   }
       break;
    case TGSI_OPCODE_SGT: {
       out = instr->sgt(inputs[0], inputs[1]);
@@ -420,11 +443,17 @@ translate_instruction(llvm::Module *module,
       out = instr->sin(inputs[0]);
    }
       break;
-   case TGSI_OPCODE_SLE:
+   case TGSI_OPCODE_SLE: {
+      out = instr->sle(inputs[0], inputs[1]);
+   }
       break;
-   case TGSI_OPCODE_SNE:
+   case TGSI_OPCODE_SNE: {
+      out = instr->sne(inputs[0], inputs[1]);
+   }
       break;
-   case TGSI_OPCODE_STR:
+   case TGSI_OPCODE_STR: {
+      out = instr->str(inputs[0], inputs[1]);
+   }
       break;
    case TGSI_OPCODE_TEX:
       break;
@@ -438,7 +467,9 @@ translate_instruction(llvm::Module *module,
       break;
    case TGSI_OPCODE_UP4UB:
       break;
-   case TGSI_OPCODE_X2D:
+   case TGSI_OPCODE_X2D: {
+      out = instr->x2d(inputs[0], inputs[1], inputs[2]);
+   }
       break;
    case TGSI_OPCODE_ARA:
       break;
@@ -468,11 +499,18 @@ translate_instruction(llvm::Module *module,
       break;
    case TGSI_OPCODE_TXB:
       break;
-   case TGSI_OPCODE_NRM:
+   case TGSI_OPCODE_NRM4:
+   case TGSI_OPCODE_NRM: {
+      out = instr->nrm(inputs[0]);
+   }
       break;
-   case TGSI_OPCODE_DIV:
+   case TGSI_OPCODE_DIV: {
+      out = instr->div(inputs[0], inputs[1]);
+   }
       break;
-   case TGSI_OPCODE_DP2:
+   case TGSI_OPCODE_DP2: {
+      out = instr->dp2(inputs[0], inputs[1]);
+   }
       break;
    case TGSI_OPCODE_TXL:
       break;
@@ -590,8 +628,6 @@ translate_instruction(llvm::Module *module,
       break;
    case TGSI_OPCODE_M3X2:
       break;
-   case TGSI_OPCODE_NRM4:
-      break;
    case TGSI_OPCODE_CALLNZ:
       break;
    case TGSI_OPCODE_IFC:
@@ -641,6 +677,7 @@ translate_instruction(llvm::Module *module,
 
       if (dst->DstRegister.File == TGSI_FILE_OUTPUT) {
          storage->setOutputElement(dst->DstRegister.Index, out, dst->DstRegister.WriteMask);
+      // FIXME we should not be generating elements for temporaries, this creates useless memory writes
       } else if (dst->DstRegister.File == TGSI_FILE_TEMPORARY) {
          storage->setTempElement(dst->DstRegister.Index, out, dst->DstRegister.WriteMask);
       } else if (dst->DstRegister.File == TGSI_FILE_ADDRESS) {
@@ -672,9 +709,8 @@ translate_instructionir(llvm::Module *module,
       if (src->SrcRegister.Indirect) {
          indIdx = storage->addrElement(src->SrcRegisterInd.Index);
       }
-
       val = storage->load((enum tgsi_file_type)src->SrcRegister.File,
-                          src->SrcRegister.Index, swizzle, indIdx);
+                          src->SrcRegister.Index, swizzle, instr->getIRBuilder(), indIdx);
 
       inputs[i] = val;
    }
@@ -732,6 +768,7 @@ translate_instructionir(llvm::Module *module,
    }
       break;
    case TGSI_OPCODE_SLT: {
+      out = instr->slt(inputs[0], inputs[1]);
    }
       break;
    case TGSI_OPCODE_SGE: {
@@ -989,7 +1026,6 @@ translate_instructionir(llvm::Module *module,
    /* store results  */
    for (int i = 0; i < inst->Instruction.NumDstRegs; ++i) {
       struct tgsi_full_dst_register *dst = &inst->FullDstRegisters[i];
-
       storage->store((enum tgsi_file_type)dst->DstRegister.File,
                      dst->DstRegister.Index, out, dst->DstRegister.WriteMask);
    }

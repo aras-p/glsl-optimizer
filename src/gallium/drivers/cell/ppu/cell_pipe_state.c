@@ -258,8 +258,6 @@ cell_set_sampler_textures(struct pipe_context *pipe,
    }
    cell->num_textures = num;
 
-   cell_update_texture_mapping(cell);
-
    cell->dirty |= CELL_NEW_TEXTURE;
 }
 

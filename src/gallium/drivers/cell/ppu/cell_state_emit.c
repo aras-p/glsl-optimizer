@@ -25,6 +25,7 @@
  * 
  **************************************************************************/
 
+#include "pipe/p_inlines.h"
 #include "util/u_memory.h"
 #include "cell_context.h"
 #include "cell_gen_fragment.h"
@@ -34,6 +35,79 @@
 #include "cell_texture.h"
 #include "draw/draw_context.h"
 #include "draw/draw_private.h"
+
+
+/**
+ * Find/create a cell_command_fragment_ops object corresponding to the
+ * current blend/stencil/z/colormask/etc. state.
+ */
+static struct cell_command_fragment_ops *
+lookup_fragment_ops(struct cell_context *cell)
+{
+   struct cell_fragment_ops_key key;
+   struct cell_command_fragment_ops *ops;
+
+   /*
+    * Build key
+    */
+   memset(&key, 0, sizeof(key));
+   key.blend = *cell->blend;
+   key.dsa = *cell->depth_stencil;
+
+   if (cell->framebuffer.cbufs[0])
+      key.color_format = cell->framebuffer.cbufs[0]->format;
+   else
+      key.color_format = PIPE_FORMAT_NONE;
+
+   if (cell->framebuffer.zsbuf)
+      key.zs_format = cell->framebuffer.zsbuf->format;
+   else
+      key.zs_format = PIPE_FORMAT_NONE;
+
+   /*
+    * Look up key in cache.
+    */
+   ops = (struct cell_command_fragment_ops *)
+      util_keymap_lookup(cell->fragment_ops_cache, &key);
+
+   /*
+    * If not found, create/save new fragment ops command.
+    */
+   if (!ops) {
+      struct spe_function spe_code;
+
+      if (0)
+         debug_printf("**** Create New Fragment Ops\n");
+
+      /* Prepare the buffer that will hold the generated code. */
+      spe_init_func(&spe_code, SPU_MAX_FRAGMENT_OPS_INSTS * SPE_INST_SIZE);
+
+      /* generate new code */
+      cell_gen_fragment_function(cell, &spe_code);
+
+      /* alloc new fragment ops command */
+      ops = CALLOC_STRUCT(cell_command_fragment_ops);
+
+      /* populate the new cell_command_fragment_ops object */
+      ops->opcode = CELL_CMD_STATE_FRAGMENT_OPS;
+      memcpy(ops->code, spe_code.store, spe_code_size(&spe_code));
+      ops->dsa = *cell->depth_stencil;
+      ops->blend = *cell->blend;
+
+      /* insert cell_command_fragment_ops object into keymap/cache */
+      util_keymap_insert(cell->fragment_ops_cache, &key, ops, NULL);
+
+      /* release rtasm buffer */
+      spe_release_func(&spe_code);
+   }
+   else {
+      if (0)
+         debug_printf("**** Re-use Fragment Ops\n");
+   }
+
+   return ops;
+}
+
 
 
 static void
@@ -89,31 +163,31 @@ cell_emit_state(struct cell_context *cell)
       }
    }
 
+   if (cell->dirty & (CELL_NEW_FS_CONSTANTS)) {
+      const uint shader = PIPE_SHADER_FRAGMENT;
+      const uint num_const = cell->constants[shader].size / sizeof(float);
+      uint i, j;
+      float *buf = cell_batch_alloc(cell, 16 + num_const * sizeof(float));
+      uint64_t *ibuf = (uint64_t *) buf;
+      const float *constants = pipe_buffer_map(cell->pipe.screen,
+                                               cell->constants[shader].buffer,
+                                               PIPE_BUFFER_USAGE_CPU_READ);
+      ibuf[0] = CELL_CMD_STATE_FS_CONSTANTS;
+      ibuf[1] = num_const;
+      j = 4;
+      for (i = 0; i < num_const; i++) {
+         buf[j++] = constants[i];
+      }
+      pipe_buffer_unmap(cell->pipe.screen, cell->constants[shader].buffer);
+   }
+
    if (cell->dirty & (CELL_NEW_FRAMEBUFFER |
                       CELL_NEW_DEPTH_STENCIL |
                       CELL_NEW_BLEND)) {
-      /* XXX we don't want to always do codegen here.  We should have
-       * a hash/lookup table to cache previous results...
-       */
-      struct cell_command_fragment_ops *fops
-            = cell_batch_alloc(cell, sizeof(*fops));
-      struct spe_function spe_code;
-
-      /* Prepare the buffer that will hold the generated code. */
-      spe_init_func(&spe_code, SPU_MAX_FRAGMENT_OPS_INSTS * SPE_INST_SIZE);
-
-      /* generate new code */
-      cell_gen_fragment_function(cell, &spe_code);
-
-      /* put the new code into the batch buffer */
-      fops->opcode = CELL_CMD_STATE_FRAGMENT_OPS;
-      memcpy(&fops->code, spe_code.store,
-             SPU_MAX_FRAGMENT_OPS_INSTS * SPE_INST_SIZE);
-      fops->dsa = *cell->depth_stencil;
-      fops->blend = *cell->blend;
-
-      /* free codegen buffer */
-      spe_release_func(&spe_code);
+      struct cell_command_fragment_ops *fops, *fops_cmd;
+      fops_cmd = cell_batch_alloc(cell, sizeof(*fops_cmd));
+      fops = lookup_fragment_ops(cell);
+      memcpy(fops_cmd, fops, sizeof(*fops));
    }
 
    if (cell->dirty & CELL_NEW_SAMPLER) {
@@ -137,14 +211,24 @@ cell_emit_state(struct cell_context *cell)
          texture->opcode = CELL_CMD_STATE_TEXTURE;
          texture->unit = i;
          if (cell->texture[i]) {
-            texture->start = cell->texture[i]->tiled_data;
-            texture->width = cell->texture[i]->base.width[0];
-            texture->height = cell->texture[i]->base.height[0];
+            uint level;
+            for (level = 0; level < CELL_MAX_TEXTURE_LEVELS; level++) {
+               texture->start[level] = cell->texture[i]->tiled_data[level];
+               texture->width[level] = cell->texture[i]->base.width[level];
+               texture->height[level] = cell->texture[i]->base.height[level];
+               texture->depth[level] = cell->texture[i]->base.depth[level];
+            }
+            texture->target = cell->texture[i]->base.target;
          }
          else {
-            texture->start = NULL;
-            texture->width = 1;
-            texture->height = 1;
+            uint level;
+            for (level = 0; level < CELL_MAX_TEXTURE_LEVELS; level++) {
+               texture->start[level] = NULL;
+               texture->width[level] = 0;
+               texture->height[level] = 0;
+               texture->depth[level] = 0;
+            }
+            texture->target = 0;
          }
       }
    }
