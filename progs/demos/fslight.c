@@ -45,7 +45,7 @@ static GLint uTexture;
 
 static GLuint SphereList, RectList, CurList;
 static GLint win = 0;
-static GLboolean anim = 0*GL_TRUE;
+static GLboolean anim = GL_TRUE;
 static GLboolean wire = GL_FALSE;
 static GLboolean pixelLight = GL_TRUE;
 
