@@ -42,7 +42,6 @@
 struct sp_exec_fragment_shader
 {
    struct sp_fragment_shader base;
-   const struct tgsi_token *machine_tokens;
 };
 
 
@@ -102,13 +101,11 @@ exec_prepare( const struct sp_fragment_shader *base,
     * Bind tokens/shader to the interpreter's machine state.
     * Avoid redundant binding.
     */
-   /* XXX revisit this */
-   if (1 /* spefs->machine_tokens != base->shader.tokens*/) {
+   if (machine->Tokens != base->shader.tokens) {
       tgsi_exec_machine_bind_shader( machine,
                                      base->shader.tokens,
                                      PIPE_MAX_SAMPLERS,
                                      samplers );
-      spefs->machine_tokens = base->shader.tokens;
    }
 }
 
