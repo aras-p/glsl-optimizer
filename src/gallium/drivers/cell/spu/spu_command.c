@@ -583,6 +583,14 @@ cmd_batch(uint opcode)
       case CELL_CMD_STATE_FS_CONSTANTS:
          pos = cmd_state_fs_constants(buffer, pos);
          break;
+      case CELL_CMD_STATE_RASTERIZER:
+         {
+            struct cell_command_rasterizer *rast =
+               (struct cell_command_rasterizer *) &buffer[pos];
+            spu.rasterizer = rast->rasterizer;
+            pos += sizeof(*rast) / 8;
+         }
+         break;
       case CELL_CMD_STATE_SAMPLER:
          {
             struct cell_command_sampler *sampler

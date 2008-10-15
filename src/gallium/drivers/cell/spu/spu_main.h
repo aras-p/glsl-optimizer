@@ -153,6 +153,7 @@ struct spu_global
    struct pipe_blend_state blend;
    struct pipe_blend_color blend_color;
    struct pipe_sampler_state sampler[PIPE_MAX_SAMPLERS];
+   struct pipe_rasterizer_state rasterizer;
    struct spu_texture texture[PIPE_MAX_SAMPLERS];
    struct vertex_info vertex_info;
 

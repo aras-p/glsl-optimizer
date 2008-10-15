@@ -775,7 +775,7 @@ determinant(const float *v0, const float *v1, const float *v2)
  */
 boolean
 tri_draw(const float *v0, const float *v1, const float *v2,
-         uint tx, uint ty, uint front_winding)
+         uint tx, uint ty)
 {
    setup.tx = tx;
    setup.ty = ty;
@@ -790,7 +790,7 @@ tri_draw(const float *v0, const float *v1, const float *v2,
     * which will be needed for front/back-face stencil application
     */
    float det = determinant(v0, v1, v2);
-   setup.facing = (det > 0.0) ^ (front_winding == PIPE_WINDING_CW);
+   setup.facing = (det > 0.0) ^ (spu.rasterizer.front_winding == PIPE_WINDING_CW);
 
    if (!setup_sort_vertices((struct vertex_header *) v0,
                             (struct vertex_header *) v1,

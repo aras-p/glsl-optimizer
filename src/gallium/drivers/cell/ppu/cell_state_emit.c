@@ -147,6 +147,13 @@ cell_emit_state(struct cell_context *cell)
 #endif
    }
 
+   if (cell->dirty & (CELL_NEW_RASTERIZER)) {
+      struct cell_command_rasterizer *rast =
+         cell_batch_alloc(cell, sizeof(*rast));
+      rast->opcode = CELL_CMD_STATE_RASTERIZER;
+      rast->rasterizer = *cell->rasterizer;
+   }
+
    if (cell->dirty & (CELL_NEW_FS)) {
       /* Send new fragment program to SPUs */
       struct cell_command_fragment_program *fp

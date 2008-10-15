@@ -99,8 +99,9 @@
 #define CELL_CMD_STATE_FRAGMENT_PROGRAM 19
 #define CELL_CMD_STATE_ATTRIB_FETCH  20
 #define CELL_CMD_STATE_FS_CONSTANTS  21
-#define CELL_CMD_VS_EXECUTE          22
-#define CELL_CMD_FLUSH_BUFFER_RANGE  23
+#define CELL_CMD_STATE_RASTERIZER    22
+#define CELL_CMD_VS_EXECUTE          23
+#define CELL_CMD_FLUSH_BUFFER_RANGE  24
 
 /** Command/batch buffers */
 #define CELL_NUM_BUFFERS 4
@@ -156,10 +157,20 @@ struct cell_command_fragment_program
  */
 struct cell_command_framebuffer
 {
-   uint64_t opcode;     /**< CELL_CMD_FRAMEBUFFER */
+   uint64_t opcode;     /**< CELL_CMD_STATE_FRAMEBUFFER */
    int width, height;
    void *color_start, *depth_start;
    enum pipe_format color_format, depth_format;
+};
+
+
+/**
+ * Tell SPUs about rasterizer state.
+ */
+struct cell_command_rasterizer
+{
+   uint64_t opcode;    /**< CELL_CMD_STATE_RASTERIZER */
+   struct pipe_rasterizer_state rasterizer;
 };
 
 
@@ -238,7 +249,6 @@ struct cell_command_render
    float xmin, ymin, xmax, ymax;  /* XXX another dummy field */
    uint min_index;
    boolean inline_verts;
-   uint front_winding; /* the rasterizer needs to be able to determine facing to apply front/back-facing stencil */
 };
 
 
