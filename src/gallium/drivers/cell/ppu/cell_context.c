@@ -154,9 +154,11 @@ cell_create_context(struct pipe_screen *screen,
     * SPU stuff
     */
    /* This call only works with SDK 3.0.  Anyone still using 2.1??? */
-   cell->num_spus = spe_cpu_info_get(SPE_COUNT_PHYSICAL_SPES, -1);
+   cell->num_cells = spe_cpu_info_get(SPE_COUNT_PHYSICAL_CPU_NODES, -1);
+   cell->num_spus = spe_cpu_info_get(SPE_COUNT_USABLE_SPES, 0);
    if (cell->debug_flags) {
-      printf("PPU: found %u SPUs\n", cell->num_spus);
+      printf("Cell: found %d Cell(s) with %u SPUs\n",
+             cell->num_cells, cell->num_spus);
    }
 
    cell_start_spus(cell);

@@ -140,7 +140,7 @@ struct cell_context
 
    struct cell_spu_function_info spu_functions ALIGN16_ATTRIB;
 
-   uint num_spus;
+   uint num_cells, num_spus;
 
    /** Buffers for command batches, vertex/index data */
    uint buffer_size[CELL_NUM_BUFFERS];
