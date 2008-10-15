@@ -43,11 +43,6 @@
 /** Masks are uint[4] vectors with each element being 0 or 0xffffffff */
 typedef vector unsigned int mask_t;
 
-typedef union
-{
-   vector float v;
-   float f[4];
-} float4;
 
 
 /**
@@ -91,9 +86,9 @@ struct edge {
 
 struct interp_coef
 {
-   float4 a0;
-   float4 dadx;
-   float4 dady;
+   vector float a0;
+   vector float dadx;
+   vector float dady;
 };
 
 
@@ -152,14 +147,14 @@ eval_coeff(uint slot, float x, float y, vector float w, vector float result[4])
       result[QUAD_TOP_LEFT] =
       result[QUAD_TOP_RIGHT] =
       result[QUAD_BOTTOM_LEFT] =
-      result[QUAD_BOTTOM_RIGHT] = setup.coef[slot].a0.v;
+      result[QUAD_BOTTOM_RIGHT] = setup.coef[slot].a0;
       break;
    case INTERP_LINEAR:
       {
-         vector float dadx = setup.coef[slot].dadx.v;
-         vector float dady = setup.coef[slot].dady.v;
+         vector float dadx = setup.coef[slot].dadx;
+         vector float dady = setup.coef[slot].dady;
          vector float topLeft =
-            spu_add(setup.coef[slot].a0.v,
+            spu_add(setup.coef[slot].a0,
                     spu_add(spu_mul(spu_splats(x), dadx),
                             spu_mul(spu_splats(y), dady)));
 
@@ -171,10 +166,10 @@ eval_coeff(uint slot, float x, float y, vector float w, vector float result[4])
       break;
    case INTERP_PERSPECTIVE:
       {
-         vector float dadx = setup.coef[slot].dadx.v;
-         vector float dady = setup.coef[slot].dady.v;
+         vector float dadx = setup.coef[slot].dadx;
+         vector float dady = setup.coef[slot].dady;
          vector float topLeft =
-            spu_add(setup.coef[slot].a0.v,
+            spu_add(setup.coef[slot].a0,
                     spu_add(spu_mul(spu_splats(x), dadx),
                             spu_mul(spu_splats(y), dady)));
 
@@ -212,9 +207,9 @@ static INLINE vector float
 eval_z(float x, float y)
 {
    const uint slot = 0;
-   const float dzdx = setup.coef[slot].dadx.f[2];
-   const float dzdy = setup.coef[slot].dady.f[2];
-   const float topLeft = setup.coef[slot].a0.f[2] + x * dzdx + y * dzdy;
+   const float dzdx = spu_extract(setup.coef[slot].dadx, 2);
+   const float dzdy = spu_extract(setup.coef[slot].dady, 2);
+   const float topLeft = spu_extract(setup.coef[slot].a0, 2) + x * dzdx + y * dzdy;
    const vector float topLeftv = spu_splats(topLeft);
    const vector float derivs = (vector float) { 0.0, dzdx, dzdy, dzdx + dzdy };
    return spu_add(topLeftv, derivs);
@@ -226,9 +221,9 @@ static INLINE vector float
 eval_w(float x, float y)
 {
    const uint slot = 0;
-   const float dwdx = setup.coef[slot].dadx.f[3];
-   const float dwdy = setup.coef[slot].dady.f[3];
-   const float topLeft = setup.coef[slot].a0.f[3] + x * dwdx + y * dwdy;
+   const float dwdx = spu_extract(setup.coef[slot].dadx, 3);
+   const float dwdy = spu_extract(setup.coef[slot].dady, 3);
+   const float topLeft = spu_extract(setup.coef[slot].a0, 3) + x * dwdx + y * dwdy;
    const vector float topLeftv = spu_splats(topLeft);
    const vector float derivs = (vector float) { 0.0, dwdx, dwdy, dwdx + dwdy };
    return spu_add(topLeftv, derivs);
@@ -540,9 +535,9 @@ setup_sort_vertices(const struct vertex_header *v0,
 static INLINE void
 const_coeff4(uint slot)
 {
-   setup.coef[slot].dadx.v = (vector float) {0.0, 0.0, 0.0, 0.0};
-   setup.coef[slot].dady.v = (vector float) {0.0, 0.0, 0.0, 0.0};
-   setup.coef[slot].a0.v = setup.vprovoke->data[slot];
+   setup.coef[slot].dadx = (vector float) {0.0, 0.0, 0.0, 0.0};
+   setup.coef[slot].dady = (vector float) {0.0, 0.0, 0.0, 0.0};
+   setup.coef[slot].a0 = setup.vprovoke->data[slot];
 }
 
 
@@ -566,13 +561,13 @@ tri_linear_coeff4(uint slot)
    vector float b = spu_sub(spu_mul(spu_splats(setup.emaj.dx), botda),
                             spu_mul(majda, spu_splats(setup.ebot.dx)));
 
-   setup.coef[slot].dadx.v = spu_mul(a, spu_splats(setup.oneOverArea));
-   setup.coef[slot].dady.v = spu_mul(b, spu_splats(setup.oneOverArea));
+   setup.coef[slot].dadx = spu_mul(a, spu_splats(setup.oneOverArea));
+   setup.coef[slot].dady = spu_mul(b, spu_splats(setup.oneOverArea));
 
-   vector float tempx = spu_mul(setup.coef[slot].dadx.v, xxxx);
-   vector float tempy = spu_mul(setup.coef[slot].dady.v, yyyy);
+   vector float tempx = spu_mul(setup.coef[slot].dadx, xxxx);
+   vector float tempy = spu_mul(setup.coef[slot].dady, yyyy);
                          
-   setup.coef[slot].a0.v = spu_sub(vmin_d, spu_add(tempx, tempy));
+   setup.coef[slot].a0 = spu_sub(vmin_d, spu_add(tempx, tempy));
 }
 
 
@@ -610,13 +605,13 @@ tri_persp_coeff4(uint slot)
    vector float b = spu_sub(spu_mul(spu_splats(setup.emaj.dx), botda),
                             spu_mul(majda, spu_splats(setup.ebot.dx)));
 
-   setup.coef[slot].dadx.v = spu_mul(a, spu_splats(setup.oneOverArea));
-   setup.coef[slot].dady.v = spu_mul(b, spu_splats(setup.oneOverArea));
+   setup.coef[slot].dadx = spu_mul(a, spu_splats(setup.oneOverArea));
+   setup.coef[slot].dady = spu_mul(b, spu_splats(setup.oneOverArea));
 
-   vector float tempx = spu_mul(setup.coef[slot].dadx.v, xxxx);
-   vector float tempy = spu_mul(setup.coef[slot].dady.v, yyyy);
+   vector float tempx = spu_mul(setup.coef[slot].dadx, xxxx);
+   vector float tempy = spu_mul(setup.coef[slot].dady, yyyy);
                          
-   setup.coef[slot].a0.v = spu_sub(vmin_d, spu_add(tempx, tempy));
+   setup.coef[slot].a0 = spu_sub(vmin_d, spu_add(tempx, tempy));
 }
 
 
