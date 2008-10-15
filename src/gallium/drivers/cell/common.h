@@ -68,6 +68,9 @@
 
 #define CELL_MAX_SAMPLERS 4
 #define CELL_MAX_TEXTURE_LEVELS 12  /* 2k x 2k */
+#define CELL_MAX_CONSTANTS 32  /**< number of float[4] constants */
+#define CELL_MAX_WIDTH 1024    /**< max framebuffer width */
+#define CELL_MAX_HEIGHT 1024   /**< max framebuffer width */
 
 #define TILE_SIZE 32
 
@@ -99,13 +102,14 @@
 #define CELL_CMD_VS_EXECUTE          22
 #define CELL_CMD_FLUSH_BUFFER_RANGE  23
 
-
+/** Command/batch buffers */
 #define CELL_NUM_BUFFERS 4
 #define CELL_BUFFER_SIZE (4*1024)  /**< 16KB would be the max */
 
 #define CELL_BUFFER_STATUS_FREE 10
 #define CELL_BUFFER_STATUS_USED 20
 
+/** Debug flags */
 #define CELL_DEBUG_CHECKER              (1 << 0)
 #define CELL_DEBUG_ASM                  (1 << 1)
 #define CELL_DEBUG_SYNC                 (1 << 2)

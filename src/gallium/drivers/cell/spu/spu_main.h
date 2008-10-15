@@ -50,13 +50,6 @@
 #endif
 
 
-#define MAX_WIDTH 1024
-#define MAX_HEIGHT 1024
-
-
-#define CELL_MAX_CONSTANTS 32  /**< number of float[4] constants */
-
-
 /**
  * A tile is basically a TILE_SIZE x TILE_SIZE block of 4-byte pixels.
  * The data may be addressed through several different types.
@@ -175,8 +168,8 @@ struct spu_global
    ubyte cur_ctile_status, cur_ztile_status;
 
    /** Status of all tiles in framebuffer */
-   ubyte ctile_status[MAX_HEIGHT/TILE_SIZE][MAX_WIDTH/TILE_SIZE] ALIGN16_ATTRIB;
-   ubyte ztile_status[MAX_HEIGHT/TILE_SIZE][MAX_WIDTH/TILE_SIZE] ALIGN16_ATTRIB;
+   ubyte ctile_status[CELL_MAX_HEIGHT/TILE_SIZE][CELL_MAX_WIDTH/TILE_SIZE] ALIGN16_ATTRIB;
+   ubyte ztile_status[CELL_MAX_HEIGHT/TILE_SIZE][CELL_MAX_WIDTH/TILE_SIZE] ALIGN16_ATTRIB;
 
    /** Current fragment ops machine code, at 8-byte boundary */
    uint fragment_ops_code[SPU_MAX_FRAGMENT_OPS_INSTS] ALIGN8_ATTRIB;
