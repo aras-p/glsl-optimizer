@@ -111,6 +111,7 @@
 #define CELL_DEBUG_SYNC                 (1 << 2)
 #define CELL_DEBUG_FRAGMENT_OPS         (1 << 3)
 #define CELL_DEBUG_FRAGMENT_OP_FALLBACK (1 << 4)
+#define CELL_DEBUG_CMD                  (1 << 5)
 
 /** Max instructions for doing per-fragment operations */
 #define SPU_MAX_FRAGMENT_OPS_INSTS 64

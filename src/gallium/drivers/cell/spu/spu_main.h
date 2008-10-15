@@ -36,6 +36,19 @@
 #include "pipe/p_state.h"
 
 
+#if DEBUG
+/* These debug macros use the unusual construction ", ##__VA_ARGS__"
+ * which expands to the expected comma + args if variadic arguments
+ * are supplied, but swallows the comma if there are no variadic
+ * arguments (which avoids syntax errors that would otherwise occur).
+ */
+#define D_PRINTF(flag, format,...) \
+   if (spu.init.debug_flags & (flag)) \
+      printf("SPU %u: " format, spu.init.id, ##__VA_ARGS__)
+#else
+#define D_PRINTF(...)
+#endif
+
 
 #define MAX_WIDTH 1024
 #define MAX_HEIGHT 1024
@@ -187,8 +200,6 @@ struct spu_global
 
 
 extern struct spu_global spu;
-extern boolean Debug;
-
 
 
 

@@ -44,7 +44,6 @@
 #include "spu_tile.h"
 #include "spu_vertex_shader.h"
 #include "spu_dcache.h"
-#include "spu_debug.h"
 #include "cell/common.h"
 
 
@@ -97,7 +96,7 @@ release_buffer(uint buffer)
 static void
 cmd_clear_surface(const struct cell_command_clear_surface *clear)
 {
-   DEBUG_PRINTF("CLEAR SURF %u to 0x%08x\n", clear->surface, clear->value);
+   D_PRINTF(CELL_DEBUG_CMD, "CLEAR SURF %u to 0x%08x\n", clear->surface, clear->value);
 
    if (clear->surface == 0) {
       spu.fb.color_clear_value = clear->value;
@@ -165,14 +164,14 @@ cmd_clear_surface(const struct cell_command_clear_surface *clear)
 
 #endif /* CLEAR_OPT */
 
-   DEBUG_PRINTF("CLEAR SURF done\n");
+   D_PRINTF(CELL_DEBUG_CMD, "CLEAR SURF done\n");
 }
 
 
 static void
 cmd_release_verts(const struct cell_command_release_verts *release)
 {
-   DEBUG_PRINTF("RELEASE VERTS %u\n", release->vertex_buf);
+   D_PRINTF(CELL_DEBUG_CMD, "RELEASE VERTS %u\n", release->vertex_buf);
    ASSERT(release->vertex_buf != ~0U);
    release_buffer(release->vertex_buf);
 }
@@ -189,7 +188,7 @@ cmd_state_fragment_ops(const struct cell_command_fragment_ops *fops)
 {
    static int warned = 0;
 
-   DEBUG_PRINTF("CMD_STATE_FRAGMENT_OPS\n");
+   D_PRINTF(CELL_DEBUG_CMD, "CMD_STATE_FRAGMENT_OPS\n");
    /* Copy SPU code from batch buffer to spu buffer */
    memcpy(spu.fragment_ops_code, fops->code, SPU_MAX_FRAGMENT_OPS_INSTS * 4);
    /* Copy state info (for fallback case only) */
@@ -229,7 +228,7 @@ cmd_state_fragment_ops(const struct cell_command_fragment_ops *fops)
 static void
 cmd_state_fragment_program(const struct cell_command_fragment_program *fp)
 {
-   DEBUG_PRINTF("CMD_STATE_FRAGMENT_PROGRAM\n");
+   D_PRINTF(CELL_DEBUG_CMD, "CMD_STATE_FRAGMENT_PROGRAM\n");
    /* Copy SPU code from batch buffer to spu buffer */
    memcpy(spu.fragment_program_code, fp->code,
           SPU_MAX_FRAGMENT_PROGRAM_INSTS * 4);
@@ -247,11 +246,11 @@ cmd_state_fs_constants(const uint64_t *buffer, uint pos)
    const float *constants = (const float *) &buffer[pos + 2];
    uint i;
 
-   DEBUG_PRINTF("CMD_STATE_FS_CONSTANTS (%u)\n", num_const);
+   D_PRINTF(CELL_DEBUG_CMD, "CMD_STATE_FS_CONSTANTS (%u)\n", num_const);
 
    /* Expand each float to float[4] for SOA execution */
    for (i = 0; i < num_const; i++) {
-      DEBUG_PRINTF("  const[%u] = %f\n", i, constants[i]);
+      D_PRINTF(CELL_DEBUG_CMD, "  const[%u] = %f\n", i, constants[i]);
       spu.constants[i] = spu_splats(constants[i]);
    }
 
@@ -263,7 +262,7 @@ cmd_state_fs_constants(const uint64_t *buffer, uint pos)
 static void
 cmd_state_framebuffer(const struct cell_command_framebuffer *cmd)
 {
-   DEBUG_PRINTF("FRAMEBUFFER: %d x %d at %p, cformat 0x%x  zformat 0x%x\n",
+   D_PRINTF(CELL_DEBUG_CMD, "FRAMEBUFFER: %d x %d at %p, cformat 0x%x  zformat 0x%x\n",
              cmd->width,
              cmd->height,
              cmd->color_start,
@@ -352,7 +351,7 @@ cmd_state_sampler(const struct cell_command_sampler *sampler)
 {
    uint unit = sampler->unit;
 
-   DEBUG_PRINTF("SAMPLER [%u]\n", unit);
+   D_PRINTF(CELL_DEBUG_CMD, "SAMPLER [%u]\n", unit);
 
    spu.sampler[unit] = sampler->state;
 
@@ -404,9 +403,7 @@ cmd_state_texture(const struct cell_command_texture *texture)
    const uint unit = texture->unit;
    uint i;
 
-   //if (spu.init.id==0) Debug=1;
-
-   DEBUG_PRINTF("TEXTURE [%u]\n", texture->unit);
+   D_PRINTF(CELL_DEBUG_CMD, "TEXTURE [%u]\n", texture->unit);
 
    spu.texture[unit].max_level = 0;
    spu.texture[unit].target = texture->target;
@@ -416,7 +413,7 @@ cmd_state_texture(const struct cell_command_texture *texture)
       uint height = texture->height[i];
       uint depth = texture->depth[i];
 
-      DEBUG_PRINTF("  LEVEL %u: at %p  size[0] %u x %u\n", i,
+      D_PRINTF(CELL_DEBUG_CMD, "  LEVEL %u: at %p  size[0] %u x %u\n", i,
              texture->start[i], texture->width[i], texture->height[i]);
 
       spu.texture[unit].level[i].start = texture->start[i];
@@ -438,15 +435,13 @@ cmd_state_texture(const struct cell_command_texture *texture)
    }
 
    update_tex_masks(&spu.texture[unit], &spu.sampler[unit], unit);
-
-   //Debug=0;
 }
 
 
 static void
 cmd_state_vertex_info(const struct vertex_info *vinfo)
 {
-   DEBUG_PRINTF("VERTEX_INFO num_attribs=%u\n", vinfo->num_attribs);
+   D_PRINTF(CELL_DEBUG_CMD, "VERTEX_INFO num_attribs=%u\n", vinfo->num_attribs);
    ASSERT(vinfo->num_attribs >= 1);
    ASSERT(vinfo->num_attribs <= 8);
    memcpy(&spu.vertex_info, vinfo, sizeof(*vinfo));
@@ -485,7 +480,7 @@ cmd_state_attrib_fetch(const struct cell_attribute_fetch_code *code)
 static void
 cmd_finish(void)
 {
-   DEBUG_PRINTF("FINISH\n");
+   D_PRINTF(CELL_DEBUG_CMD, "FINISH\n");
    really_clear_tiles(0);
    /* wait for all outstanding DMAs to finish */
    mfc_write_tag_mask(~0);
@@ -510,7 +505,7 @@ cmd_batch(uint opcode)
    const unsigned usize = size / sizeof(buffer[0]);
    uint pos;
 
-   DEBUG_PRINTF("BATCH buffer %u, len %u, from %p\n",
+   D_PRINTF(CELL_DEBUG_CMD, "BATCH buffer %u, len %u, from %p\n",
              buf, size, spu.init.buffers[buf]);
 
    ASSERT((opcode & CELL_CMD_OPCODE_MASK) == CELL_CMD_BATCH);
@@ -530,7 +525,7 @@ cmd_batch(uint opcode)
    wait_on_mask(1 << TAG_BATCH_BUFFER);
 
    /* Tell PPU we're done copying the buffer to local store */
-   DEBUG_PRINTF("release batch buf %u\n", buf);
+   D_PRINTF(CELL_DEBUG_CMD, "release batch buf %u\n", buf);
    release_buffer(buf);
 
    /*
@@ -663,7 +658,7 @@ cmd_batch(uint opcode)
       }
    }
 
-   DEBUG_PRINTF("BATCH complete\n");
+   D_PRINTF(CELL_DEBUG_CMD, "BATCH complete\n");
 }
 
 
@@ -677,7 +672,7 @@ command_loop(void)
    struct cell_command cmd;
    int exitFlag = 0;
 
-   DEBUG_PRINTF("Enter command loop\n");
+   D_PRINTF(CELL_DEBUG_CMD, "Enter command loop\n");
 
    ASSERT((sizeof(struct cell_command) & 0xf) == 0);
    ASSERT_ALIGN16(&cmd);
@@ -686,12 +681,12 @@ command_loop(void)
       unsigned opcode;
       int tag = 0;
 
-      DEBUG_PRINTF("Wait for cmd...\n");
+      D_PRINTF(CELL_DEBUG_CMD, "Wait for cmd...\n");
 
       /* read/wait from mailbox */
       opcode = (unsigned int) spu_read_in_mbox();
 
-      DEBUG_PRINTF("got cmd 0x%x\n", opcode);
+      D_PRINTF(CELL_DEBUG_CMD, "got cmd 0x%x\n", opcode);
 
       /* command payload */
       mfc_get(&cmd,  /* dest */
@@ -708,7 +703,7 @@ command_loop(void)
 
       switch (opcode & CELL_CMD_OPCODE_MASK) {
       case CELL_CMD_EXIT:
-         DEBUG_PRINTF("EXIT\n");
+         D_PRINTF(CELL_DEBUG_CMD, "EXIT\n");
          exitFlag = 1;
          break;
       case CELL_CMD_VS_EXECUTE:
@@ -725,7 +720,7 @@ command_loop(void)
 
    }
 
-   DEBUG_PRINTF("Exit command loop\n");
+   D_PRINTF(CELL_DEBUG_CMD, "Exit command loop\n");
 
    spu_dcache_report();
 }
