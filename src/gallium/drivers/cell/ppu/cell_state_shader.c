@@ -191,6 +191,8 @@ cell_set_constant_buffer(struct pipe_context *pipe,
    assert(shader < PIPE_SHADER_TYPES);
    assert(index == 0);
 
+   draw_flush(cell->draw);
+
    /* note: reference counting */
    winsys_buffer_reference(ws,
                         &cell->constants[shader].buffer,
