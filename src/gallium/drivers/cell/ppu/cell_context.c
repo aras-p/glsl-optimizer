@@ -160,6 +160,10 @@ cell_create_context(struct pipe_screen *screen,
       printf("Cell: found %d Cell(s) with %u SPUs\n",
              cell->num_cells, cell->num_spus);
    }
+   if (getenv("CELL_NUM_SPUS")) {
+      cell->num_spus = atoi(getenv("CELL_NUM_SPUS"));
+      assert(cell->num_spus > 0);
+   }
 
    cell_start_spus(cell);
 
