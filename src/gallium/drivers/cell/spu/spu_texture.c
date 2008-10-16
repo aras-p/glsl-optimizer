@@ -557,7 +557,7 @@ sample_texture_cube(vector float s, vector float t, vector float r,
    uint p, faces[4], level = 0;
    float newS[4], newT[4];
 
-   /* Compute cube face referenced by the four sets of texcoords.
+   /* Compute cube faces referenced by the four sets of texcoords.
     * XXX we should SIMD-ize this.
     */
    for (p = 0; p < 4; p++) {      
@@ -573,15 +573,15 @@ sample_texture_cube(vector float s, vector float t, vector float r,
       /* GOOD!  All four texcoords refer to the same cube face */
       s = (vector float) {newS[0], newS[1], newS[2], newS[3]};
       t = (vector float) {newT[0], newT[1], newT[2], newT[3]};
-      sample_texture_2d_nearest(s, t, unit, level, faces[0], colors);
+      spu.sample_texture_2d[unit](s, t, unit, level, faces[0], colors);
    }
    else {
       /* BAD!  The four texcoords refer to different faces */
       for (p = 0; p < 4; p++) {      
          vector float c[4];
 
-         sample_texture_2d_nearest(spu_splats(newS[p]), spu_splats(newT[p]),
-                                   unit, level, faces[p], c);
+         spu.sample_texture_2d[unit](spu_splats(newS[p]), spu_splats(newT[p]),
+                                     unit, level, faces[p], c);
 
          float red = spu_extract(c[0], p);
          float green = spu_extract(c[1], p);
