@@ -310,8 +310,7 @@ cmd_state_framebuffer(const struct cell_command_framebuffer *cmd)
  */
 static void
 update_tex_masks(struct spu_texture *texture,
-                 const struct pipe_sampler_state *sampler,
-                 uint unit)
+                 const struct pipe_sampler_state *sampler)
 {
    uint i;
 
@@ -338,11 +337,6 @@ update_tex_masks(struct spu_texture *texture,
          texture->level[i].scale_t = spu_splats(1.0f);
       }
    }
-
-   /* XXX temporary hack */
-   if (texture->target == PIPE_TEXTURE_CUBE) {
-      spu.sample_texture4[unit] = sample_texture4_cube;
-   }
 }
 
 
@@ -357,12 +351,12 @@ cmd_state_sampler(const struct cell_command_sampler *sampler)
 
    switch (spu.sampler[unit].min_img_filter) {
    case PIPE_TEX_FILTER_LINEAR:
-      spu.min_sample_texture4[unit] = sample_texture4_bilinear;
+      spu.min_sample_texture_2d[unit] = sample_texture_2d_bilinear;
       break;
    case PIPE_TEX_FILTER_ANISO:
       /* fall-through, for now */
    case PIPE_TEX_FILTER_NEAREST:
-      spu.min_sample_texture4[unit] = sample_texture4_nearest;
+      spu.min_sample_texture_2d[unit] = sample_texture_2d_nearest;
       break;
    default:
       ASSERT(0);
@@ -370,12 +364,12 @@ cmd_state_sampler(const struct cell_command_sampler *sampler)
 
    switch (spu.sampler[sampler->unit].mag_img_filter) {
    case PIPE_TEX_FILTER_LINEAR:
-      spu.mag_sample_texture4[unit] = sample_texture4_bilinear;
+      spu.mag_sample_texture_2d[unit] = sample_texture_2d_bilinear;
       break;
    case PIPE_TEX_FILTER_ANISO:
       /* fall-through, for now */
    case PIPE_TEX_FILTER_NEAREST:
-      spu.mag_sample_texture4[unit] = sample_texture4_nearest;
+      spu.mag_sample_texture_2d[unit] = sample_texture_2d_nearest;
       break;
    default:
       ASSERT(0);
@@ -384,16 +378,16 @@ cmd_state_sampler(const struct cell_command_sampler *sampler)
    switch (spu.sampler[sampler->unit].min_mip_filter) {
    case PIPE_TEX_MIPFILTER_NEAREST:
    case PIPE_TEX_MIPFILTER_LINEAR:
-      spu.sample_texture4[unit] = sample_texture4_lod;
+      spu.sample_texture_2d[unit] = sample_texture_2d_lod;
       break;
    case PIPE_TEX_MIPFILTER_NONE:
-      spu.sample_texture4[unit] = spu.mag_sample_texture4[unit];
+      spu.sample_texture_2d[unit] = spu.mag_sample_texture_2d[unit];
       break;
    default:
       ASSERT(0);
    }
 
-   update_tex_masks(&spu.texture[unit], &spu.sampler[unit], unit);
+   update_tex_masks(&spu.texture[unit], &spu.sampler[unit]);
 }
 
 
@@ -434,7 +428,7 @@ cmd_state_texture(const struct cell_command_texture *texture)
          spu.texture[unit].max_level = i;
    }
 
-   update_tex_masks(&spu.texture[unit], &spu.sampler[unit], unit);
+   update_tex_masks(&spu.texture[unit], &spu.sampler[unit]);
 }
 
 

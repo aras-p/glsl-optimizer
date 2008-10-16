@@ -70,12 +70,10 @@ typedef union {
 
 
 /** Function for sampling textures */
-typedef void (*spu_sample_texture4_func)(vector float s,
-                                         vector float t,
-                                         vector float r,
-                                         vector float q,
-                                         uint unit, uint level, uint face,
-                                         vector float colors[4]);
+typedef void (*spu_sample_texture_2d_func)(vector float s,
+                                           vector float t,
+                                           uint unit, uint level, uint face,
+                                           vector float colors[4]);
 
 
 /** Function for performing per-fragment ops */
@@ -183,9 +181,9 @@ struct spu_global
    spu_fragment_program_func fragment_program;
 
    /** Current texture sampler function */
-   spu_sample_texture4_func sample_texture4[CELL_MAX_SAMPLERS];
-   spu_sample_texture4_func min_sample_texture4[CELL_MAX_SAMPLERS];
-   spu_sample_texture4_func mag_sample_texture4[CELL_MAX_SAMPLERS];
+   spu_sample_texture_2d_func sample_texture_2d[CELL_MAX_SAMPLERS];
+   spu_sample_texture_2d_func min_sample_texture_2d[CELL_MAX_SAMPLERS];
+   spu_sample_texture_2d_func mag_sample_texture_2d[CELL_MAX_SAMPLERS];
 
    /** Fragment program constants */
    vector float constants[4 * CELL_MAX_CONSTANTS];

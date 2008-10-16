@@ -43,6 +43,7 @@
 #include "cell/common.h"
 #include "spu_main.h"
 #include "spu_funcs.h"
+#include "spu_texture.h"
 
 
 /** For "return"-ing four vectors */
@@ -102,11 +103,34 @@ spu_log2(vector float x)
 
 
 static struct vec_4x4
-spu_txp(vector float s, vector float t, vector float r, vector float q,
-        unsigned unit)
+spu_tex_2d(vector float s, vector float t, vector float r, vector float q,
+           unsigned unit)
 {
    struct vec_4x4 colors;
-   spu.sample_texture4[unit](s, t, r, q, unit, 0, 0, colors.v);
+   (void) r;
+   (void) q;
+   spu.sample_texture_2d[unit](s, t, unit, 0, 0, colors.v);
+   return colors;
+}
+
+static struct vec_4x4
+spu_tex_3d(vector float s, vector float t, vector float r, vector float q,
+           unsigned unit)
+{
+   struct vec_4x4 colors;
+   (void) r;
+   (void) q;
+   spu.sample_texture_2d[unit](s, t, unit, 0, 0, colors.v);
+   return colors;
+}
+
+static struct vec_4x4
+spu_tex_cube(vector float s, vector float t, vector float r, vector float q,
+           unsigned unit)
+{
+   struct vec_4x4 colors;
+   (void) q;
+   sample_texture_cube(s, t, r, unit, colors.v);
    return colors;
 }
 
@@ -147,7 +171,9 @@ return_function_info(void)
    export_func(&funcs, "spu_pow", &spu_pow);
    export_func(&funcs, "spu_exp2", &spu_exp2);
    export_func(&funcs, "spu_log2", &spu_log2);
-   export_func(&funcs, "spu_txp", &spu_txp);
+   export_func(&funcs, "spu_tex_2d", &spu_tex_2d);
+   export_func(&funcs, "spu_tex_3d", &spu_tex_3d);
+   export_func(&funcs, "spu_tex_cube", &spu_tex_cube);
 
    /* Send the function info back to the PPU / main memory */
    mfc_put((void *) &funcs,  /* src in local store */

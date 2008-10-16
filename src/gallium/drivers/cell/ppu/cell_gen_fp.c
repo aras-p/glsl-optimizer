@@ -1337,16 +1337,33 @@ emit_function_call(struct codegen *gen,
 
 
 static boolean
-emit_TXP(struct codegen *gen, const struct tgsi_full_instruction *inst)
+emit_TEX(struct codegen *gen, const struct tgsi_full_instruction *inst)
 {
-   const uint addr = lookup_function(gen->cell, "spu_txp");
+   const uint target = inst->InstructionExtTexture.Texture;
    const uint unit = inst->FullSrcRegisters[1].SrcRegister.Index;
+   uint addr;
    int ch;
    int coord_regs[4], d_regs[4];
 
+   switch (target) {
+   case TGSI_TEXTURE_1D:
+   case TGSI_TEXTURE_2D:
+      addr = lookup_function(gen->cell, "spu_tex_2d");
+      break;
+   case TGSI_TEXTURE_3D:
+      addr = lookup_function(gen->cell, "spu_tex_3d");
+      break;
+   case TGSI_TEXTURE_CUBE:
+      addr = lookup_function(gen->cell, "spu_tex_cube");
+      break;
+   default:
+      ASSERT(0 && "unsupported texture target");
+      return FALSE;
+   }
+
    assert(inst->FullSrcRegisters[1].SrcRegister.File == TGSI_FILE_SAMPLER);
 
-   spe_comment(gen->f, -4, "CALL txp:");
+   spe_comment(gen->f, -4, "CALL tex:");
 
    /* get src/dst reg info */
    for (ch = 0; ch < 4; ch++) {
@@ -1368,7 +1385,7 @@ emit_TXP(struct codegen *gen, const struct tgsi_full_instruction *inst)
          spe_stqd(gen->f, reg, SPE_REG_SP, 16 * offset);
       }
 
-      /* setup function arguments */
+      /* setup function arguments (XXX depends on target) */
       for (i = 0; i < 4; i++) {
          spe_move(gen->f, 3 + i, coord_regs[i]);
       }
@@ -1674,8 +1691,10 @@ emit_instruction(struct codegen *gen,
       /* fall-through for now */
    case TGSI_OPCODE_TXB:
       /* fall-through for now */
+   case TGSI_OPCODE_TXL:
+      /* fall-through for now */
    case TGSI_OPCODE_TXP:
-      return emit_TXP(gen, inst);
+      return emit_TEX(gen, inst);
 
    case TGSI_OPCODE_IF:
       return emit_IF(gen, inst);

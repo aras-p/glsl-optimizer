@@ -126,10 +126,9 @@ spu_clamp(vector signed int vec, vector signed int max)
  * \param colors  returned colors in SOA format (rrrr, gggg, bbbb, aaaa).
  */
 void
-sample_texture4_nearest(vector float s, vector float t,
-                        vector float r, vector float q,
-                        uint unit, uint level, uint face,
-                        vector float colors[4])
+sample_texture_2d_nearest(vector float s, vector float t,
+                          uint unit, uint level, uint face,
+                          vector float colors[4])
 {
    const struct spu_texture_level *tlevel = &spu.texture[unit].level[level];
    vector float ss = spu_mul(s, tlevel->scale_s);
@@ -158,10 +157,9 @@ sample_texture4_nearest(vector float s, vector float t,
  * \param colors  returned colors in SOA format (rrrr, gggg, bbbb, aaaa).
  */
 void
-sample_texture4_bilinear(vector float s, vector float t,
-                         vector float r, vector float q,
-                         uint unit, uint level, uint face,
-                         vector float colors[4])
+sample_texture_2d_bilinear(vector float s, vector float t,
+                           uint unit, uint level, uint face,
+                           vector float colors[4])
 {
    const struct spu_texture_level *tlevel = &spu.texture[unit].level[level];
    static const vector float half = {-0.5f, -0.5f, -0.5f, -0.5f};
@@ -308,10 +306,9 @@ transpose(vector unsigned int *mOut0,
  * Bilinear filtering, using int intead of float arithmetic
  */
 void
-sample_texture4_bilinear_2(vector float s, vector float t,
-                           vector float r, vector float q,
-                           uint unit, uint level, uint face,
-                           vector float colors[4])
+sample_texture_2d_bilinear_int(vector float s, vector float t,
+                               uint unit, uint level, uint face,
+                               vector float colors[4])
 {
    const struct spu_texture_level *tlevel = &spu.texture[unit].level[level];
    static const vector float half = {-0.5f, -0.5f, -0.5f, -0.5f};
@@ -444,16 +441,18 @@ compute_lambda(uint unit, vector float s, vector float t)
  * Texture sampling with level of detail selection.
  */
 void
-sample_texture4_lod(vector float s, vector float t,
-                    vector float r, vector float q,
-                    uint unit, uint level_ignored, uint face,
-                    vector float colors[4])
+sample_texture_2d_lod(vector float s, vector float t,
+                      uint unit, uint level_ignored, uint face,
+                      vector float colors[4])
 {
    /*
     * Note that we're computing a lambda/lod here that's used for all
     * four pixels in the quad.
     */
    float lambda = compute_lambda(unit, s, t);
+
+   (void) face;
+   (void) level_ignored;
 
    /* apply lod bias */
    lambda += spu.sampler[unit].lod_bias;
@@ -466,14 +465,14 @@ sample_texture4_lod(vector float s, vector float t,
 
    if (lambda <= 0.0f) {
       /* magnify */
-      spu.mag_sample_texture4[unit](s, t, r, q, unit, 0, 0, colors);
+      spu.mag_sample_texture_2d[unit](s, t, unit, 0, 0, colors);
    }
    else {
       /* minify */
       int level = (int) (lambda + 0.5f);
       if (level > (int) spu.texture[unit].max_level)
          level = spu.texture[unit].max_level;
-      spu.min_sample_texture4[unit](s, t, r, q, unit, level, 0, colors);
+      spu.min_sample_texture_2d[unit](s, t, unit, level, 0, colors);
       /* XXX to do: mipmap level interpolation */
    }
 }
@@ -552,13 +551,10 @@ choose_cube_face(float rx, float ry, float rz, float *newS, float *newT)
 
 
 void
-sample_texture4_cube(vector float s, vector float t,
-                     vector float r, vector float q,
-                     uint unit, uint level, uint face_ignored,
-                     vector float colors[4])
+sample_texture_cube(vector float s, vector float t, vector float r,
+                    uint unit, vector float colors[4])
 {
-   static const vector float zero = {0.0f, 0.0f, 0.0f, 0.0f};
-   uint p, faces[4];
+   uint p, faces[4], level = 0;
    float newS[4], newT[4];
 
    /* Compute cube face referenced by the four sets of texcoords.
@@ -577,15 +573,15 @@ sample_texture4_cube(vector float s, vector float t,
       /* GOOD!  All four texcoords refer to the same cube face */
       s = (vector float) {newS[0], newS[1], newS[2], newS[3]};
       t = (vector float) {newT[0], newT[1], newT[2], newT[3]};
-      sample_texture4_nearest(s, t, zero, zero, unit, level, faces[0], colors);
+      sample_texture_2d_nearest(s, t, unit, level, faces[0], colors);
    }
    else {
       /* BAD!  The four texcoords refer to different faces */
       for (p = 0; p < 4; p++) {      
          vector float c[4];
 
-         sample_texture4_nearest(spu_splats(newS[p]), spu_splats(newT[p]),
-                                 zero, zero, unit, level, faces[p], c);
+         sample_texture_2d_nearest(spu_splats(newS[p]), spu_splats(newT[p]),
+                                   unit, level, faces[p], c);
 
          float red = spu_extract(c[0], p);
          float green = spu_extract(c[1], p);
