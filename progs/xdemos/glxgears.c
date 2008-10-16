@@ -419,6 +419,52 @@ init(void)
 }
 
 
+/**
+ * Remove window border/decorations.
+ */
+static void
+no_border( Display *dpy, Window w)
+{
+   static const unsigned MWM_HINTS_DECORATIONS = (1 << 1);
+   static const int PROP_MOTIF_WM_HINTS_ELEMENTS = 5;
+
+   typedef struct
+   {
+      unsigned long       flags;
+      unsigned long       functions;
+      unsigned long       decorations;
+      long                inputMode;
+      unsigned long       status;
+   } PropMotifWmHints;
+
+   PropMotifWmHints motif_hints;
+   Atom prop, proptype;
+   unsigned long flags = 0;
+
+   /* setup the property */
+   motif_hints.flags = MWM_HINTS_DECORATIONS;
+   motif_hints.decorations = flags;
+
+   /* get the atom for the property */
+   prop = XInternAtom( dpy, "_MOTIF_WM_HINTS", True );
+   if (!prop) {
+      /* something went wrong! */
+      return;
+   }
+
+   /* not sure this is correct, seems to work, XA_WM_HINTS didn't work */
+   proptype = prop;
+
+   XChangeProperty( dpy, w,                         /* display, window */
+                    prop, proptype,                 /* property, type */
+                    32,                             /* format: 32-bit datums */
+                    PropModeReplace,                /* mode */
+                    (unsigned char *) &motif_hints, /* data */
+                    PROP_MOTIF_WM_HINTS_ELEMENTS    /* nelements */
+                  );
+}
+
+
 /*
  * Create an RGB, double-buffered window.
  * Return the window and context handles.
@@ -479,12 +525,14 @@ make_window( Display *dpy, const char *name,
    attr.colormap = XCreateColormap( dpy, root, visinfo->visual, AllocNone);
    attr.event_mask = StructureNotifyMask | ExposureMask | KeyPressMask;
    /* XXX this is a bad way to get a borderless window! */
-   attr.override_redirect = fullscreen;
-   mask = CWBackPixel | CWBorderPixel | CWColormap | CWEventMask | CWOverrideRedirect;
+   mask = CWBackPixel | CWBorderPixel | CWColormap | CWEventMask;
 
    win = XCreateWindow( dpy, root, x, y, width, height,
 		        0, visinfo->depth, InputOutput,
 		        visinfo->visual, mask, &attr );
+
+   if (fullscreen)
+      no_border(dpy, win);
 
    /* set hints and properties */
    {
