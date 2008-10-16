@@ -72,10 +72,10 @@ invalidate_tex_cache(void)
  * a time.
  */
 static void
-get_four_texels(uint unit, uint level, uint face, vec_int4 x, vec_int4 y,
+get_four_texels(const struct spu_texture_level *tlevel, uint face,
+                vec_int4 x, vec_int4 y,
                 vec_uint4 *texels)
 {
-   const struct spu_texture_level *tlevel = &spu.texture[unit].level[level];
    unsigned texture_ea = (uintptr_t) tlevel->start;
    const vec_int4 tile_x = spu_rlmask(x, -5);  /* tile_x = x / 32 */
    const vec_int4 tile_y = spu_rlmask(y, -5);  /* tile_y = y / 32 */
@@ -145,7 +145,7 @@ sample_texture_2d_nearest(vector float s, vector float t,
    is = spu_clamp(is, tlevel->max_s);
    it = spu_clamp(it, tlevel->max_t);
 
-   get_four_texels(unit, level, face, is, it, texels);
+   get_four_texels(tlevel, face, is, it, texels);
 
    /* convert four packed ARGBA pixels to float RRRR,GGGG,BBBB,AAAA */
    spu_unpack_A8R8G8B8_transpose4(texels, colors);
@@ -188,10 +188,10 @@ sample_texture_2d_bilinear(vector float s, vector float t,
 
    /* get packed int texels */
    vector unsigned int texels[16];
-   get_four_texels(unit, level, face, is0, it0, texels + 0);  /* upper-left */
-   get_four_texels(unit, level, face, is1, it0, texels + 4);  /* upper-right */
-   get_four_texels(unit, level, face, is0, it1, texels + 8);  /* lower-left */
-   get_four_texels(unit, level, face, is1, it1, texels + 12); /* lower-right */
+   get_four_texels(tlevel, face, is0, it0, texels + 0);  /* upper-left */
+   get_four_texels(tlevel, face, is1, it0, texels + 4);  /* upper-right */
+   get_four_texels(tlevel, face, is0, it1, texels + 8);  /* lower-left */
+   get_four_texels(tlevel, face, is1, it1, texels + 12); /* lower-right */
 
    /* convert packed int texels to float colors */
    vector float ftexels[16];
@@ -346,10 +346,10 @@ sample_texture_2d_bilinear_int(vector float s, vector float t,
 
    /* get packed int texels */
    vector unsigned int texels[16];
-   get_four_texels(unit, level, face, is0, it0, texels + 0);  /* upper-left */
-   get_four_texels(unit, level, face, is1, it0, texels + 4);  /* upper-right */
-   get_four_texels(unit, level, face, is0, it1, texels + 8);  /* lower-left */
-   get_four_texels(unit, level, face, is1, it1, texels + 12); /* lower-right */
+   get_four_texels(tlevel, face, is0, it0, texels + 0);  /* upper-left */
+   get_four_texels(tlevel, face, is1, it0, texels + 4);  /* upper-right */
+   get_four_texels(tlevel, face, is0, it1, texels + 8);  /* lower-left */
+   get_four_texels(tlevel, face, is1, it1, texels + 12); /* lower-right */
 
    /* twiddle packed 32-bit BGRA pixels into RGBA as four unsigned ints */
    {
