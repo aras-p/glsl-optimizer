@@ -175,6 +175,7 @@ cmd_render(const struct cell_command_render *render, uint *pos_incr)
    const ubyte *vertices;
    const ushort *indexes;
    uint i, j;
+   uint num_tiles;
 
    D_PRINTF(CELL_DEBUG_CMD,
             "RENDER prim=%u num_vert=%u num_ind=%u inline_vert=%u\n",
@@ -242,6 +243,8 @@ cmd_render(const struct cell_command_render *render, uint *pos_incr)
    wait_on_mask(1 << TAG_SURFACE_CLEAR); /* XXX temporary */
 
 
+   num_tiles = 0;
+
    /**
     ** loop over tiles, rendering tris
     **/
@@ -254,6 +257,8 @@ cmd_render(const struct cell_command_render *render, uint *pos_incr)
 
       if (!my_tile(tx, ty))
          continue;
+
+      num_tiles++;
 
       spu.cur_ctile_status = spu.ctile_status[ty][tx];
       spu.cur_ztile_status = spu.ztile_status[ty][tx];
@@ -284,5 +289,7 @@ cmd_render(const struct cell_command_render *render, uint *pos_incr)
       spu.ztile_status[ty][tx] = spu.cur_ztile_status;
    }
 
-   D_PRINTF(CELL_DEBUG_CMD, "RENDER done\n");
+   D_PRINTF(CELL_DEBUG_CMD,
+            "RENDER done (%u tiles hit)\n",
+            num_tiles);
 }

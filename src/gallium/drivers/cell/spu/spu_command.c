@@ -670,6 +670,8 @@ cmd_batch(uint opcode)
 }
 
 
+#define PERF 0
+
 
 /**
  * Main loop for SPEs: Get a command, execute it, repeat.
@@ -678,6 +680,7 @@ void
 command_loop(void)
 {
    int exitFlag = 0;
+   uint t0, t1;
 
    D_PRINTF(CELL_DEBUG_CMD, "Enter command loop\n");
 
@@ -686,9 +689,15 @@ command_loop(void)
 
       D_PRINTF(CELL_DEBUG_CMD, "Wait for cmd...\n");
 
+      if (PERF)
+         spu_write_decrementer(~0);
+
       /* read/wait from mailbox */
       opcode = (unsigned int) spu_read_in_mbox();
       D_PRINTF(CELL_DEBUG_CMD, "got cmd 0x%x\n", opcode);
+
+      if (PERF)
+         t0 = spu_read_decrementer();
 
       switch (opcode & CELL_CMD_OPCODE_MASK) {
       case CELL_CMD_EXIT:
@@ -707,6 +716,12 @@ command_loop(void)
          printf("Bad opcode 0x%x!\n", opcode & CELL_CMD_OPCODE_MASK);
       }
 
+      if (PERF) {
+         t1 = spu_read_decrementer();
+         printf("wait mbox time: %gms   batch time: %gms\n",
+                (~0u - t0) * spu.init.inv_timebase,
+                (t0 - t1) * spu.init.inv_timebase);
+      }
    }
 
    D_PRINTF(CELL_DEBUG_CMD, "Exit command loop\n");

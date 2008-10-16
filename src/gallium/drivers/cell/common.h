@@ -299,6 +299,7 @@ struct cell_init_info
    unsigned id;
    unsigned num_spus;
    unsigned debug_flags;  /**< mask of CELL_DEBUG_x flags */
+   float inv_timebase;    /**< 1.0/timebase, for perf measurement */
 
    /** Buffers for command batches, vertex/index data */
    ubyte *buffers[CELL_NUM_BUFFERS];
