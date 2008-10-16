@@ -415,7 +415,7 @@ sample_texture_2d_bilinear_int(vector float s, vector float t,
  * Compute level of detail factor from texcoords.
  */
 static float
-compute_lambda(uint unit, vector float s, vector float t)
+compute_lambda_2d(uint unit, vector float s, vector float t)
 {
    uint baseLevel = 0;
    float width = spu.texture[unit].level[baseLevel].width;
@@ -433,9 +433,27 @@ compute_lambda(uint unit, vector float s, vector float t)
 }
 
 
+/**
+ * Blend two sets of colors according to weight.
+ */
+static void
+blend_colors(vector float c0[4], const vector float c1[4], float weight)
+{
+   vector float t = spu_splats(weight);
+   vector float dc0 = spu_sub(c1[0], c0[0]);
+   vector float dc1 = spu_sub(c1[1], c0[1]);
+   vector float dc2 = spu_sub(c1[2], c0[2]);
+   vector float dc3 = spu_sub(c1[3], c0[3]);
+   c0[0] = spu_madd(dc0, t, c0[0]);
+   c0[1] = spu_madd(dc1, t, c0[1]);
+   c0[2] = spu_madd(dc2, t, c0[2]);
+   c0[3] = spu_madd(dc3, t, c0[3]);
+}
+
 
 /**
- * Texture sampling with level of detail selection.
+ * Texture sampling with level of detail selection and possibly mipmap
+ * interpolation.
  */
 void
 sample_texture_2d_lod(vector float s, vector float t,
@@ -446,7 +464,7 @@ sample_texture_2d_lod(vector float s, vector float t,
     * Note that we're computing a lambda/lod here that's used for all
     * four pixels in the quad.
     */
-   float lambda = compute_lambda(unit, s, t);
+   float lambda = compute_lambda_2d(unit, s, t);
 
    (void) face;
    (void) level_ignored;
@@ -462,15 +480,34 @@ sample_texture_2d_lod(vector float s, vector float t,
 
    if (lambda <= 0.0f) {
       /* magnify */
-      spu.mag_sample_texture_2d[unit](s, t, unit, 0, 0, colors);
+      spu.mag_sample_texture_2d[unit](s, t, unit, 0, face, colors);
    }
    else {
       /* minify */
-      int level = (int) (lambda + 0.5f);
-      if (level > (int) spu.texture[unit].max_level)
-         level = spu.texture[unit].max_level;
-      spu.min_sample_texture_2d[unit](s, t, unit, level, 0, colors);
-      /* XXX to do: mipmap level interpolation */
+      if (spu.sampler[unit].min_img_filter == PIPE_TEX_FILTER_LINEAR) {
+         /* sample two mipmap levels and interpolate */
+         int level = (int) lambda;
+         if (level > (int) spu.texture[unit].max_level)
+            level = spu.texture[unit].max_level;
+         spu.min_sample_texture_2d[unit](s, t, unit, level, face, colors);
+         if (spu.sampler[unit].min_img_filter == PIPE_TEX_FILTER_LINEAR) {
+            /* sample second mipmap level */
+            float weight = lambda - (float) level;
+            level++;
+            if (level <= (int) spu.texture[unit].max_level) {
+               vector float colors2[4];
+               spu.min_sample_texture_2d[unit](s, t, unit, level, face, colors2);
+               blend_colors(colors, colors2, weight);
+            }
+         }
+      }
+      else {
+         /* sample one mipmap level */
+         int level = (int) (lambda + 0.5f);
+         if (level > (int) spu.texture[unit].max_level)
+            level = spu.texture[unit].max_level;
+         spu.min_sample_texture_2d[unit](s, t, unit, level, face, colors);
+      }
    }
 }
 
