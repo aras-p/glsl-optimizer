@@ -193,10 +193,6 @@ sample_texture_2d_bilinear(vector float s, vector float t,
    get_four_texels(unit, level, face, is0, it1, texels + 8);  /* lower-left */
    get_four_texels(unit, level, face, is1, it1, texels + 12); /* lower-right */
 
-   /* XXX possibly rework following code to compute the weighted sample
-    * colors with integer arithmetic for fewer int->float conversions.
-    */
-
    /* convert packed int texels to float colors */
    vector float ftexels[16];
    spu_unpack_A8R8G8B8_transpose4(texels + 0, ftexels + 0);
@@ -303,7 +299,8 @@ transpose(vector unsigned int *mOut0,
 
 
 /**
- * Bilinear filtering, using int intead of float arithmetic
+ * Bilinear filtering, using int instead of float arithmetic for computing
+ * sample weights.
  */
 void
 sample_texture_2d_bilinear_int(vector float s, vector float t,
