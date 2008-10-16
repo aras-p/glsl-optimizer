@@ -121,6 +121,8 @@ struct cell_context
    uint *tex_map;
 
    uint dirty;
+   uint dirty_textures;  /* bitmask of texture units */
+   uint dirty_samplers;  /* bitmask of sampler units */
 
    /** Cache of code generated for per-fragment ops */
    struct keymap *fragment_ops_cache;
