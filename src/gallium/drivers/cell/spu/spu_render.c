@@ -176,21 +176,12 @@ cmd_render(const struct cell_command_render *render, uint *pos_incr)
    const ushort *indexes;
    uint i, j;
 
-
-#if 0
-      printf("SPU %u: RENDER prim %u, num_vert=%u  num_ind=%u  "
-             "inline_vert=%u\n",
-             spu.init.id,
-             render->prim_type,
-             render->num_verts,
-             render->num_indexes,
-             render->inline_verts);
-
-      /*
-      printf("       bound: %g, %g .. %g, %g\n",
-             render->xmin, render->ymin, render->xmax, render->ymax);
-      */
-#endif
+   D_PRINTF(CELL_DEBUG_CMD,
+            "RENDER prim=%u num_vert=%u num_ind=%u inline_vert=%u\n",
+            render->prim_type,
+            render->num_verts,
+            render->num_indexes,
+            render->inline_verts);
 
    ASSERT(sizeof(*render) % 4 == 0);
    ASSERT(total_vertex_bytes % 16 == 0);
@@ -293,8 +284,5 @@ cmd_render(const struct cell_command_render *render, uint *pos_incr)
       spu.ztile_status[ty][tx] = spu.cur_ztile_status;
    }
 
-#if 0
-      printf("SPU %u: RENDER done\n",
-             spu.init.id);
-#endif
+   D_PRINTF(CELL_DEBUG_CMD, "RENDER done\n");
 }
