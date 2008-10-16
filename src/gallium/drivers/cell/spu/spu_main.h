@@ -89,9 +89,9 @@ typedef void (*spu_fragment_ops_func)(uint x, uint y,
                                       uint facing);
 
 /** Function for running fragment program */
-typedef void (*spu_fragment_program_func)(vector float *inputs,
-                                          vector float *outputs,
-                                          vector float *constants);
+typedef vector unsigned int (*spu_fragment_program_func)(vector float *inputs,
+                                                         vector float *outputs,
+                                                         vector float *constants);
 
 
 struct spu_framebuffer

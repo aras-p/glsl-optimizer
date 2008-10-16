@@ -254,6 +254,7 @@ emit_quad( int x, int y, mask_t mask)
          vector float inputs[4*4], outputs[2*4];
          vector float fragZ = eval_z((float) x, (float) y);
          vector float fragW = eval_w((float) x, (float) y);
+         vector unsigned int kill_mask;
 
          /* setup inputs */
 #if 0
@@ -268,7 +269,9 @@ emit_quad( int x, int y, mask_t mask)
          ASSERT(spu.fragment_ops);
 
          /* Execute the current fragment program */
-         spu.fragment_program(inputs, outputs, spu.constants);
+         kill_mask = spu.fragment_program(inputs, outputs, spu.constants);
+
+         mask = spu_andc(mask, kill_mask);
 
          /* Execute per-fragment/quad operations, including:
           * alpha test, z test, stencil test, blend and framebuffer writing.
