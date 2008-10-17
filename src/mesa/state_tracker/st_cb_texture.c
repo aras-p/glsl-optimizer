@@ -156,7 +156,7 @@ st_FreeTextureImageData(GLcontext * ctx, struct gl_texture_image *texImage)
    }
 
    if (texImage->Data) {
-      free(texImage->Data);
+      _mesa_align_free(texImage->Data);
       texImage->Data = NULL;
    }
 }
@@ -541,7 +541,7 @@ st_TexImage(GLcontext * ctx,
          sizeInBytes = depth * dstRowStride * postConvHeight;
       }
 
-      texImage->Data = malloc(sizeInBytes);
+      texImage->Data = _mesa_align_malloc(sizeInBytes, 16);
    }
 
    if (!texImage->Data) {
