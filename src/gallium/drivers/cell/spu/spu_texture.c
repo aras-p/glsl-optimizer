@@ -414,7 +414,7 @@ sample_texture_2d_bilinear_int(vector float s, vector float t,
 /**
  * Compute level of detail factor from texcoords.
  */
-static float
+static INLINE float
 compute_lambda_2d(uint unit, vector float s, vector float t)
 {
    uint baseLevel = 0;
@@ -424,11 +424,21 @@ compute_lambda_2d(uint unit, vector float s, vector float t)
    float dsdy = width * (spu_extract(s, 2) - spu_extract(s, 0));
    float dtdx = height * (spu_extract(t, 1) - spu_extract(t, 0));
    float dtdy = height * (spu_extract(t, 2) - spu_extract(t, 0));
+#if 0
+   /* ideal value */
    float x = dsdx * dsdx + dtdx * dtdx;
    float y = dsdy * dsdy + dtdy * dtdy;
    float rho = x > y ? x : y;
    rho = sqrtf(rho);
-   float lambda = logf(rho) * 1.442695f;
+#else
+   /* approximation */
+   dsdx = fabsf(dsdx);
+   dsdy = fabsf(dsdy);
+   dtdx = fabsf(dtdx);
+   dtdy = fabsf(dtdy);
+   float rho = (dsdx + dsdy + dtdx + dtdy) * 0.5;
+#endif
+   float lambda = logf(rho) * 1.442695f; /* compute logbase2(rho) */
    return lambda;
 }
 
