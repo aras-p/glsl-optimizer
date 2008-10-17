@@ -720,5 +720,6 @@ command_loop(void)
 
    D_PRINTF(CELL_DEBUG_CMD, "Exit command loop\n");
 
-   spu_dcache_report();
+   if (spu.init.debug_flags & CELL_DEBUG_CACHE)
+      spu_dcache_report();
 }

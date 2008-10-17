@@ -94,6 +94,7 @@ static const struct debug_named_value cell_debug_flags[] = {
    {"fragops", CELL_DEBUG_FRAGMENT_OPS}, /**< SPUs emit fragment ops debug messages*/
    {"fragopfallback", CELL_DEBUG_FRAGMENT_OP_FALLBACK}, /**< SPUs use reference implementation for fragment ops*/
    {"cmd", CELL_DEBUG_CMD},       /**< SPUs dump command buffer info */
+   {"cache", CELL_DEBUG_CACHE},   /**< report texture cache stats on exit */
    {NULL, 0}
 };
 
