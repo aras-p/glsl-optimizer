@@ -139,7 +139,8 @@ XEXT_GENERATE_FIND_DISPLAY(__glXFindDisplay, __glXExtensionInfo,
 ** Free the per screen configs data as well as the array of
 ** __glXScreenConfigs.
 */
-     static void FreeScreenConfigs(__GLXdisplayPrivate * priv)
+static void
+FreeScreenConfigs(__GLXdisplayPrivate * priv)
 {
    __GLXscreenConfigs *psc;
    GLint i, screens;
@@ -221,6 +222,25 @@ __glXFreeDisplayPrivate(XExtData * extension)
 static Bool
 QueryVersion(Display * dpy, int opcode, int *major, int *minor)
 {
+#ifdef USE_XCB
+   xcb_connection_t *c = XGetXCBConnection(dpy);
+   xcb_glx_query_version_reply_t* reply =
+      xcb_glx_query_version_reply(c,
+                                  xcb_glx_query_version(c,
+                                                        GLX_MAJOR_VERSION,
+                                                        GLX_MINOR_VERSION),
+                                  NULL);
+
+   if(reply->major_version != GLX_MAJOR_VERSION)
+   {
+      free(reply);
+      return GL_FALSE;
+   }
+   *major = reply->major_version;
+   *minor = min(reply->minor_version, GLX_MINOR_VERSION);
+   free(reply);
+   return GL_TRUE;
+#else
    xGLXQueryVersionReq *req;
    xGLXQueryVersionReply reply;
 
@@ -245,6 +265,7 @@ QueryVersion(Display * dpy, int opcode, int *major, int *minor)
    *major = reply.majorVersion;
    *minor = min(reply.minorVersion, GLX_MINOR_VERSION);
    return GL_TRUE;
+#endif /* USE_XCB */
 }
 
 
