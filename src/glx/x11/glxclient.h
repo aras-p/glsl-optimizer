@@ -742,6 +742,10 @@ extern void __glXInitializeVisualConfigFromTags( __GLcontextModes *config,
 extern char * __glXGetStringFromServer( Display * dpy, int opcode,
     CARD32 glxCode, CARD32 for_whom, CARD32 name );
 
+#ifdef USE_XCB
+extern char * __glXQueryServerString(Display* dpy, CARD32 screen, CARD32 name);
+#endif
+
 extern char *__glXstrdup(const char *str);
 
 

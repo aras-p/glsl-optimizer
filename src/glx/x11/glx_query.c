@@ -31,6 +31,12 @@
 
 #include "glxclient.h"
 
+#if defined(USE_XCB)
+# include <X11/Xlib-xcb.h>
+# include <xcb/xcb.h>
+# include <xcb/glx.h>
+#endif
+
 /**
  * GLX protocol structure for the ficticious "GXLGenericGetString" request.
  * 
@@ -101,3 +107,28 @@ __glXGetStringFromServer(Display * dpy, int opcode, CARD32 glxCode,
 
    return buf;
 }
+
+#ifdef USE_XCB
+char *
+__glXQueryServerString(Display* dpy,
+                       CARD32 screen,
+                       CARD32 name)
+{
+   xcb_connection_t *c = XGetXCBConnection(dpy);
+   xcb_glx_query_server_string_reply_t* reply =
+      xcb_glx_query_server_string_reply(c,
+                                        xcb_glx_query_server_string(c,
+                                                                    screen,
+                                                                    name),
+                                        NULL);
+
+   /* The spec doesn't mention this, but the Xorg server replies with
+    * a string already terminated with '\0'. */
+   uint32_t len = xcb_glx_query_server_string_string_length(reply);
+   char* buf = Xmalloc(len);
+   memcpy(buf, xcb_glx_query_server_string_string(reply), len);
+   free(reply);
+
+   return buf;
+}
+#endif /* USE_XCB */
