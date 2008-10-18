@@ -504,7 +504,7 @@ a8_put_tile_rgba(ubyte *dst,
       for (j = 0; j < w; j++, pRow += 4) {
          unsigned a;
          a = float_to_ubyte(pRow[3]);
-         *dst++ = a;
+         *dst++ = (ubyte) a;
       }
       p += src_stride;
    }
