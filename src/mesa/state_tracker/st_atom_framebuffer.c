@@ -118,9 +118,10 @@ update_framebuffer_state( struct st_context *st )
             update_renderbuffer_surface(st, strb);
          }
 
-         assert(strb->surface);
-         framebuffer->cbufs[framebuffer->num_cbufs] = strb->surface;
-         framebuffer->num_cbufs++;
+         if (strb->surface) {
+            framebuffer->cbufs[framebuffer->num_cbufs] = strb->surface;
+            framebuffer->num_cbufs++;
+         }
       }
    }
 
@@ -132,7 +133,6 @@ update_framebuffer_state( struct st_context *st )
          update_renderbuffer_surface(st, strb);
       }
 
-      assert(strb->surface);
       framebuffer->zsbuf = strb->surface;
    }
    else {
