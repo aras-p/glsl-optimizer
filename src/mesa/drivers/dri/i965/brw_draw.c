@@ -282,24 +282,21 @@ static GLboolean brw_try_draw_prims( GLcontext *ctx,
 
    LOCK_HARDWARE(intel);
 
-   if (brw->intel.numClipRects == 0) {
+   if (!intel->constant_cliprect && intel->driDrawable->numClipRects == 0) {
       UNLOCK_HARDWARE(intel);
       return GL_TRUE;
    }
 
+   /* Flush the batch if it's approaching full, so that we don't wrap while
+    * we've got validated state that needs to be in the same batch as the
+    * primitives.  This fraction is just a guess (minimal full state plus
+    * a primitive is around 512 bytes), and would be better if we had
+    * an upper bound of how much we might emit in a single
+    * brw_try_draw_prims().
+    */
+   intel_batchbuffer_require_space(intel->batch, intel->batch->size / 4,
+				   LOOP_CLIPRECTS);
    {
-      /* Flush the batch if it's approaching full, so that we don't wrap while
-       * we've got validated state that needs to be in the same batch as the
-       * primitives.  This fraction is just a guess (minimal full state plus
-       * a primitive is around 512 bytes), and would be better if we had
-       * an upper bound of how much we might emit in a single
-       * brw_try_draw_prims().
-       */
-      if (intel->batch->ptr - intel->batch->map > intel->batch->size * 3 / 4
-	/* brw_emit_prim may change the cliprect_mode to LOOP_CLIPRECTS */
-	  || intel->batch->cliprect_mode != LOOP_CLIPRECTS)
-	      intel_batchbuffer_flush(intel->batch);
-
       /* Set the first primitive early, ahead of validate_state:
        */
       brw_set_prim(brw, prim[0].mode);

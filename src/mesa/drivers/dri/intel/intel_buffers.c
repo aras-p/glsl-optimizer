@@ -123,99 +123,40 @@ intel_readbuf_region(struct intel_context *intel)
       return NULL;
 }
 
-
-
-/**
- * Update the following fields for rendering to a user-created FBO:
- *   intel->numClipRects
- *   intel->pClipRects
- *   intel->drawX
- *   intel->drawY
- */
-static void
-intelSetRenderbufferClipRects(struct intel_context *intel)
-{
-   /* If the batch contents require looping over cliprects, flush them before
-    * we go changing which cliprects get referenced when that happens.
-    */
-   if (intel->batch->cliprect_mode == LOOP_CLIPRECTS &&
-       (intel->fboRect.x2 != intel->ctx.DrawBuffer->Width ||
-	intel->fboRect.x2 != intel->ctx.DrawBuffer->Height))
-      intel_batchbuffer_flush(intel->batch);
-
-   assert(intel->ctx.DrawBuffer->Width > 0);
-   assert(intel->ctx.DrawBuffer->Height > 0);
-   intel->fboRect.x1 = 0;
-   intel->fboRect.y1 = 0;
-   intel->fboRect.x2 = intel->ctx.DrawBuffer->Width;
-   intel->fboRect.y2 = intel->ctx.DrawBuffer->Height;
-   intel->numClipRects = 1;
-   intel->pClipRects = &intel->fboRect;
-   intel->drawX = 0;
-   intel->drawY = 0;
-}
-
-
-/**
- * As above, but for rendering to front buffer of a window.
- * \sa intelSetRenderbufferClipRects
- */
-static void
-intelSetFrontClipRects(struct intel_context *intel)
+void
+intel_get_cliprects(struct intel_context *intel,
+		    struct drm_clip_rect **cliprects,
+		    unsigned int *num_cliprects,
+		    int *x_off, int *y_off)
 {
    __DRIdrawablePrivate *dPriv = intel->driDrawable;
+   struct intel_framebuffer *intel_fb = dPriv->driverPrivate;
 
-   if (!dPriv)
-      return;
+   if (intel->constant_cliprect) {
+      /* FBO or DRI2 rendering, which can just use the fb's size. */
+      intel->fboRect.x1 = 0;
+      intel->fboRect.y1 = 0;
+      intel->fboRect.x2 = intel->ctx.DrawBuffer->Width;
+      intel->fboRect.y2 = intel->ctx.DrawBuffer->Height;
 
-   /* If the batch contents require looping over cliprects, flush them before
-    * we go changing which cliprects get referenced when that happens.
-    */
-   if (intel->batch->cliprect_mode == LOOP_CLIPRECTS &&
-       intel->pClipRects != dPriv->pClipRects)
-      intel_batchbuffer_flush(intel->batch);
-   intel->numClipRects = dPriv->numClipRects;
-   intel->pClipRects = dPriv->pClipRects;
-   intel->drawX = dPriv->x;
-   intel->drawY = dPriv->y;
-}
-
-
-/**
- * As above, but for rendering to back buffer of a window.
- */
-static void
-intelSetBackClipRects(struct intel_context *intel)
-{
-   __DRIdrawablePrivate *dPriv = intel->driDrawable;
-   struct intel_framebuffer *intel_fb;
-
-   if (!dPriv)
-      return;
-
-   intel_fb = dPriv->driverPrivate;
-
-   if (intel_fb->pf_active || dPriv->numBackClipRects == 0) {
+      *cliprects = &intel->fboRect;
+      *num_cliprects = 1;
+      *x_off = 0;
+      *y_off = 0;
+   } else if (intel->front_cliprects ||
+       intel_fb->pf_active || dPriv->numBackClipRects == 0) {
       /* use the front clip rects */
-      if (intel->batch->cliprect_mode == LOOP_CLIPRECTS &&
-	  intel->pClipRects != dPriv->pClipRects)
-	 intel_batchbuffer_flush(intel->batch);
-
-      intel->numClipRects = dPriv->numClipRects;
-      intel->pClipRects = dPriv->pClipRects;
-      intel->drawX = dPriv->x;
-      intel->drawY = dPriv->y;
+      *cliprects = dPriv->pClipRects;
+      *num_cliprects = dPriv->numClipRects;
+      *x_off = dPriv->x;
+      *y_off = dPriv->y;
    }
    else {
       /* use the back clip rects */
-      if (intel->batch->cliprect_mode == LOOP_CLIPRECTS &&
-	  intel->pClipRects != dPriv->pBackClipRects)
-	 intel_batchbuffer_flush(intel->batch);
-
-      intel->numClipRects = dPriv->numBackClipRects;
-      intel->pClipRects = dPriv->pBackClipRects;
-      intel->drawX = dPriv->backX;
-      intel->drawY = dPriv->backY;
+      *num_cliprects = dPriv->numBackClipRects;
+      *cliprects = dPriv->pBackClipRects;
+      *x_off = dPriv->backX;
+      *y_off = dPriv->backY;
    }
 }
 
@@ -299,29 +240,6 @@ intelWindowMoved(struct intel_context *intel)
    GLcontext *ctx = &intel->ctx;
    __DRIdrawablePrivate *dPriv = intel->driDrawable;
    struct intel_framebuffer *intel_fb = dPriv->driverPrivate;
-
-   if (!intel->ctx.DrawBuffer) {
-      /* when would this happen? -BP */
-      intelSetFrontClipRects(intel);
-   }
-   else if (intel->ctx.DrawBuffer->Name != 0) {
-      /* drawing to user-created FBO - do nothing */
-      /* Cliprects would be set from intelDrawBuffer() */
-   }
-   else {
-      /* drawing to a window */
-      switch (intel_fb->Base._ColorDrawBufferIndexes[0]) {
-      case BUFFER_FRONT_LEFT:
-         intelSetFrontClipRects(intel);
-         break;
-      case BUFFER_BACK_LEFT:
-         intelSetBackClipRects(intel);
-         break;
-      default:
-         intelSetFrontClipRects(intel);
-      }
-	
-   }
 
    if (!intel->intelScreen->driScrnPriv->dri2.enabled &&
        intel->intelScreen->driScrnPriv->ddx_version.minor >= 7) {
@@ -894,7 +812,6 @@ intel_draw_buffer(GLcontext * ctx, struct gl_framebuffer *fb)
    struct intel_context *intel = intel_context(ctx);
    struct intel_region *colorRegions[MAX_DRAW_BUFFERS], *depthRegion = NULL;
    struct intel_renderbuffer *irbDepth = NULL, *irbStencil = NULL;
-   int front = 0;               /* drawing to front color buffer? */
 
    if (!fb) {
       /* this can happen during the initial context initialization */
@@ -927,52 +844,44 @@ intel_draw_buffer(GLcontext * ctx, struct gl_framebuffer *fb)
     */
    if (fb->_NumColorDrawBuffers == 0) {
       /* writing to 0  */
-      FALLBACK(intel, INTEL_FALLBACK_DRAW_BUFFER, GL_TRUE);
       colorRegions[0] = NULL;
-
-      if (fb->Name != 0)
-	 intelSetRenderbufferClipRects(intel);
+      intel->constant_cliprect = GL_TRUE;
    } else if (fb->_NumColorDrawBuffers > 1) {
        int i;
        struct intel_renderbuffer *irb;
-       FALLBACK(intel, INTEL_FALLBACK_DRAW_BUFFER, GL_FALSE);
 
-       if (fb->Name != 0)
-           intelSetRenderbufferClipRects(intel);
        for (i = 0; i < fb->_NumColorDrawBuffers; i++) {
            irb = intel_renderbuffer(fb->_ColorDrawBuffers[i]);
-           colorRegions[i] = (irb && irb->region) ? irb->region : NULL;
+           colorRegions[i] = irb ? irb->region : NULL;
        }
+       intel->constant_cliprect = GL_TRUE;
    }
    else {
-      /* draw to exactly one color buffer */
-      /*_mesa_debug(ctx, "Hardware rendering\n");*/
-      FALLBACK(intel, INTEL_FALLBACK_DRAW_BUFFER, GL_FALSE);
-      if (fb->_ColorDrawBufferIndexes[0] == BUFFER_FRONT_LEFT) {
-         front = 1;
-      }
-
-      /*
-       * Get the intel_renderbuffer for the colorbuffer we're drawing into.
-       * And set up cliprects.
+      /* Get the intel_renderbuffer for the single colorbuffer we're drawing
+       * into, and set up cliprects if it's .
        */
       if (fb->Name == 0) {
+	 intel->constant_cliprect = intel->driScreen->dri2.enabled;
 	 /* drawing to window system buffer */
-	 if (front) {
-	    intelSetFrontClipRects(intel);
+	 if (fb->_ColorDrawBufferIndexes[0] == BUFFER_FRONT_LEFT) {
+	    if (!intel->constant_cliprect && !intel->front_cliprects)
+	       intel_batchbuffer_flush(intel->batch);
+	    intel->front_cliprects = GL_TRUE;
 	    colorRegions[0] = intel_get_rb_region(fb, BUFFER_FRONT_LEFT);
 	 }
 	 else {
-	    intelSetBackClipRects(intel);
+	    if (!intel->constant_cliprect && intel->front_cliprects)
+	       intel_batchbuffer_flush(intel->batch);
+	    intel->front_cliprects = GL_FALSE;
 	    colorRegions[0]= intel_get_rb_region(fb, BUFFER_BACK_LEFT);
 	 }
       }
       else {
 	 /* drawing to user-created FBO */
 	 struct intel_renderbuffer *irb;
-	 intelSetRenderbufferClipRects(intel);
 	 irb = intel_renderbuffer(fb->_ColorDrawBuffers[0]);
 	 colorRegions[0] = (irb && irb->region) ? irb->region : NULL;
+	 intel->constant_cliprect = GL_TRUE;
       }
    }
 

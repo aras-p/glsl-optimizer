@@ -71,6 +71,33 @@ const struct brw_tracked_state brw_blend_constant_color = {
    .emit = upload_blend_constant_color
 };
 
+/* Constant single cliprect for framebuffer object or DRI2 drawing */
+static void upload_drawing_rect(struct brw_context *brw)
+{
+   struct intel_context *intel = &brw->intel;
+   GLcontext *ctx = &intel->ctx;
+
+   if (!intel->constant_cliprect)
+      return;
+
+   BEGIN_BATCH(4, NO_LOOP_CLIPRECTS);
+   OUT_BATCH(_3DSTATE_DRAWRECT_INFO_I965);
+   OUT_BATCH(0); /* xmin, ymin */
+   OUT_BATCH(((ctx->DrawBuffer->Width - 1) & 0xffff) |
+	    ((ctx->DrawBuffer->Height - 1) << 16));
+   OUT_BATCH(0);
+   ADVANCE_BATCH();
+}
+
+const struct brw_tracked_state brw_drawing_rect = {
+   .dirty = {
+      .mesa = _NEW_BUFFERS,
+      .brw = 0,
+      .cache = 0
+   },
+   .emit = upload_drawing_rect
+};
+
 /**
  * Upload the binding table pointers, which point each stage's array of surface
  * state pointers.

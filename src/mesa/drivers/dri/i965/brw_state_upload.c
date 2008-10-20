@@ -99,6 +99,7 @@ const struct brw_tracked_state *atoms[] =
    &brw_psp_urb_cbs,
 #endif
 
+   &brw_drawing_rect,
    &brw_indices,
    &brw_vertices,
 
