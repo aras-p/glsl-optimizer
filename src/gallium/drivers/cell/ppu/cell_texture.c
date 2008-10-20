@@ -147,7 +147,13 @@ cell_texture_release(struct pipe_screen *screen,
 
       for (i = 0; i < CELL_MAX_TEXTURE_LEVELS; i++) {
          if (ct->tiled_data[i]) {
+            /* XXX need to use a fenced buffer for tiled data so that
+             * it's properly freed after rendering has completed.
+             * Disabling this free() allows glDrawPixels to work for now.
+             */
+#if 0
             align_free(ct->tiled_data[i]);
+#endif
          }
       }
 
