@@ -42,7 +42,9 @@
 uint
 cell_get_empty_buffer(struct cell_context *cell)
 {
-   uint buf = 0, tries = 0;
+   static uint prev_buffer = 0;
+   uint buf = (prev_buffer + 1) % CELL_NUM_BUFFERS;
+   uint tries = 0;
 
    /* Find a buffer that's marked as free by all SPUs */
    while (1) {
@@ -58,8 +60,9 @@ cell_get_empty_buffer(struct cell_context *cell)
                   cell->buffer_status[spu][buf][0] = CELL_BUFFER_STATUS_USED;
                }
                /*
-               printf("PPU: ALLOC BUFFER %u\n", buf);
+               printf("PPU: ALLOC BUFFER %u, %u tries\n", buf, tries);
                */
+               prev_buffer = buf;
                return buf;
             }
          }
@@ -169,7 +172,7 @@ cell_batch_append(struct cell_context *cell, const void *data, uint bytes)
 
    size = cell->buffer_size[cell->cur_batch];
 
-   if (size + bytes > CELL_BUFFER_SIZE) {
+   if (bytes > cell_batch_free_space(cell)) {
       cell_batch_flush(cell);
       size = 0;
    }
@@ -223,7 +226,7 @@ cell_batch_alloc_aligned(struct cell_context *cell, uint bytes,
 
    padbytes = (alignment - (size % alignment)) % alignment;
 
-   if (padbytes + size + bytes > CELL_BUFFER_SIZE) {
+   if (padbytes + bytes > cell_batch_free_space(cell)) {
       cell_batch_flush(cell);
       size = 0;
    }
