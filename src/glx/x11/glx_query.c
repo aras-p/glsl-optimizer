@@ -55,7 +55,7 @@ typedef struct GLXGenericGetString
 #define X_GLXGenericGetString 0
 
 /**
- * Query the Server GLX string and cache it in the display private.
+ * Query the Server GLX string.
  * This routine will allocate the necessay space for the string.
  */
 char *
