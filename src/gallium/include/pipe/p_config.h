@@ -93,8 +93,11 @@
 #endif
 #endif
 
-#if 0 /* FIXME */
+#if defined(__PPC__)
 #define PIPE_ARCH_PPC
+#if defined(__PPC64__)
+#define PIPE_ARCH_PPC_64
+#endif
 #endif
 
 
