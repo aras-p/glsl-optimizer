@@ -94,9 +94,6 @@ exec_prepare( const struct sp_fragment_shader *base,
 	      struct tgsi_exec_machine *machine,
 	      struct tgsi_sampler *samplers )
 {
-   struct sp_exec_fragment_shader *spefs =
-      sp_exec_fragment_shader(base);
-
    /*
     * Bind tokens/shader to the interpreter's machine state.
     * Avoid redundant binding.
