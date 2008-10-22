@@ -1495,6 +1495,68 @@ emit_binop(struct gen_context *gen, struct tgsi_full_instruction *inst)
 }
 
 
+/**
+ * Vector comparisons, resulting in 1.0 or 0.0 values.
+ */
+static void
+emit_inequality(struct gen_context *gen, struct tgsi_full_instruction *inst)
+{
+   int v0 = ppc_allocate_vec_register(gen->f);
+   int v1 = ppc_allocate_vec_register(gen->f);
+   int v2 = ppc_allocate_vec_register(gen->f);
+   int v_one = ppc_allocate_vec_register(gen->f);
+   uint chan_index;
+   boolean complement = FALSE;
+
+   /* v_one = splat(1.0) */
+   ppc_vload_float(gen->f, v_one, 1.0f);
+
+   FOR_EACH_DST0_ENABLED_CHANNEL(*inst, chan_index) {
+      FETCH(gen, *inst, v0, 0, chan_index);   /* v0 = srcreg[0] */
+      FETCH(gen, *inst, v1, 1, chan_index);   /* v1 = srcreg[1] */
+
+      switch (inst->Instruction.Opcode) {
+      case TGSI_OPCODE_SNE:
+         complement = TRUE;
+         /* fall-through */
+      case TGSI_OPCODE_SEQ:
+         ppc_vcmpeqfpx(gen->f, v2, v0, v1); /* v2 = v0 == v1 ? ~0 : 0 */
+         break;
+
+      case TGSI_OPCODE_SGE:
+         complement = TRUE;
+         /* fall-through */
+      case TGSI_OPCODE_SLT:
+         ppc_vcmpgtfpx(gen->f, v2, v1, v0); /* v2 = v1 > v0 ? ~0 : 0 */
+         break;
+
+      case TGSI_OPCODE_SLE:
+         complement = TRUE;
+         /* fall-through */
+      case TGSI_OPCODE_SGT:
+         ppc_vcmpgtfpx(gen->f, v2, v0, v1); /* v2 = v0 > v1 ? ~0 : 0 */
+         break;
+      default:
+         assert(0);
+      }
+
+      /* v2 is now {0,0,0,0} or {~0,~0,~0,~0} */
+
+      if (complement)
+         ppc_vandc(gen->f, v2, v_one, v2);    /* v2 = v_one & ~v2 */
+      else
+         ppc_vand(gen->f, v2, v_one, v2);     /* v2 = v_one & v2 */
+
+      STORE(gen, *inst, v2, 0, chan_index);   /* store v2 */
+   }
+
+   ppc_release_vec_register(gen->f, v0);
+   ppc_release_vec_register(gen->f, v1);
+   ppc_release_vec_register(gen->f, v2);
+   ppc_release_vec_register(gen->f, v_one);
+}
+
+
 static void
 emit_dotprod(struct gen_context *gen, struct tgsi_full_instruction *inst)
 {
@@ -1587,6 +1649,14 @@ emit_instruction(struct gen_context *gen,
    case TGSI_OPCODE_MIN:
    case TGSI_OPCODE_MAX:
       emit_binop(gen, inst);
+      break;
+   case TGSI_OPCODE_SEQ:
+   case TGSI_OPCODE_SNE:
+   case TGSI_OPCODE_SLT:
+   case TGSI_OPCODE_SGT:
+   case TGSI_OPCODE_SLE:
+   case TGSI_OPCODE_SGE:
+      emit_inequality(gen, inst);
       break;
    case TGSI_OPCODE_MAD:
    case TGSI_OPCODE_LRP:
