@@ -229,7 +229,7 @@ emit_fetch(struct gen_context *gen,
    case TGSI_EXTSWIZZLE_ONE:
       {
          int one_vec = gen_one_vec(gen);
-         ppc_vecmove(gen->f, dst_vec, one_vec);
+         ppc_vmove(gen->f, dst_vec, one_vec);
       }
       break;
    default:
