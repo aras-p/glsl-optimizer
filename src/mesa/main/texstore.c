@@ -3006,7 +3006,7 @@ _mesa_store_teximage1d(GLcontext *ctx, GLenum target, GLint level,
    GLint sizeInBytes;
    (void) border;
 
-   if (ctx->_ImageTransferState & IMAGE_CONVOLUTION_BIT) {
+   if (_mesa_is_color_format(internalFormat)) {
       _mesa_adjust_image_for_convolution(ctx, 1, &postConvWidth, NULL);
    }
 
@@ -3080,7 +3080,7 @@ _mesa_store_teximage2d(GLcontext *ctx, GLenum target, GLint level,
    GLint texelBytes, sizeInBytes;
    (void) border;
 
-   if (ctx->_ImageTransferState & IMAGE_CONVOLUTION_BIT) {
+   if (_mesa_is_color_format(internalFormat)) {
       _mesa_adjust_image_for_convolution(ctx, 2, &postConvWidth,
                                          &postConvHeight);
    }
