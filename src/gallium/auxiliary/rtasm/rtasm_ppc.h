@@ -153,6 +153,10 @@ ppc_stvx(struct ppc_function *p, uint vR, uint vA, uint vB);
 extern void
 ppc_lvx(struct ppc_function *p, uint vR, uint vA, uint vB);
 
+/** load vector element word: vR = mem_word[vA+vB] */
+extern void
+ppc_lvewx(struct ppc_function *p, uint vR, uint vA, uint vB);
+
 
 
 /**

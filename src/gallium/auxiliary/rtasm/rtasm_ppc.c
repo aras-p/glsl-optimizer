@@ -582,6 +582,13 @@ ppc_lvx(struct ppc_function *p, uint vR, uint vA, uint vB)
    emit_x(p, 31, vR, vA, vB, 103);
 }
 
+/** load vector element word: vR = mem_word[vA+vB] */
+void
+ppc_lvewx(struct ppc_function *p, uint vR, uint vA, uint vB)
+{
+   emit_x(p, 31, vR, vA, vB, 71);
+}
+
 
 
 /**
