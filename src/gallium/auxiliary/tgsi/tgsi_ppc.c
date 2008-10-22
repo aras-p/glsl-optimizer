@@ -1108,10 +1108,15 @@ emit_fetch(struct gen_context *gen,
             int offset_reg = ppc_allocate_register(gen->f);
             int offset = (reg->SrcRegister.Index * 4 + swizzle) * 4;
             ppc_li(gen->f, offset_reg, offset);
-            /* load vector word */
+            /* Load 4-byte word into vector register.
+             * The vector slot depends on the effective address we load from.
+             * We know that our constants start at a 16-byte boundary so we
+             * know that 'swizzle' tells us which vector slot will have the
+             * loaded word.  The other vector slots will be undefined.
+             */
             ppc_lvewx(gen->f, vec_reg, gen->const_reg, offset_reg);
-            /* splat word[0] across vector */
-            ppc_vspltw(gen->f, vec_reg, vec_reg, 0);
+            /* splat word[swizzle] across the vector reg */
+            ppc_vspltw(gen->f, vec_reg, vec_reg, swizzle);
             ppc_release_register(gen->f, offset_reg);
          }
          break;
@@ -2635,11 +2640,11 @@ tgsi_emit_ppc(const struct tgsi_token *tokens,
    tgsi_parse_init( &parse, tokens );
 
    gen.f = func;
-   gen.inputs_reg = 3;   /* first function param */
-   gen.outputs_reg = 4;  /* second function param */
-   gen.temps_reg = 5;    /* ... */
-   gen.immed_reg = 6;
-   gen.const_reg = 7;
+   gen.inputs_reg = ppc_reserve_register(func, 3);   /* first function param */
+   gen.outputs_reg = ppc_reserve_register(func, 4);  /* second function param */
+   gen.temps_reg = ppc_reserve_register(func, 5);    /* ... */
+   gen.immed_reg = ppc_reserve_register(func, 6);
+   gen.const_reg = ppc_reserve_register(func, 7);
 
    emit_prologue(func);
 
