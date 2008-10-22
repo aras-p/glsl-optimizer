@@ -203,9 +203,6 @@ draw_create_vs_ppc(struct draw_context *draw,
 {
    struct draw_ppc_vertex_shader *vs;
 
-   /* XXX temporary short-circuit */
-   return NULL;
-
    vs = CALLOC_STRUCT( draw_ppc_vertex_shader );
    if (vs == NULL) 
       return NULL;
@@ -233,7 +230,7 @@ draw_create_vs_ppc(struct draw_context *draw,
 
    vs->machine = &draw->vs.machine;
    
-   ppc_init_func( &vs->ppc_program, 1000 ); /* XXX fix limit */
+   ppc_init_func( &vs->ppc_program, 2000 ); /* XXX fix limit */
 
    if (!tgsi_emit_ppc( (struct tgsi_token *) vs->base.state.tokens,
 			&vs->ppc_program, 
