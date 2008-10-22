@@ -158,6 +158,10 @@ ppc_lvx(struct ppc_function *p, uint vR, uint vA, uint vB);
 extern void
 ppc_lvewx(struct ppc_function *p, uint vR, uint vA, uint vB);
 
+/** vector load float: vr = splats(imm) */
+extern void
+ppc_vload_float(struct ppc_function *p, uint vr, float imm);
+
 
 
 /**

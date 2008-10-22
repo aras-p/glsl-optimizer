@@ -603,6 +603,24 @@ ppc_lvewx(struct ppc_function *p, uint vr, uint ra, uint rb)
    emit_x(p, 31, vr, ra, rb, 71);
 }
 
+/** vector load float: vr = splats(imm) */
+void
+ppc_vload_float(struct ppc_function *p, uint vr, float imm)
+{
+   if (imm == 0.0f) {
+      ppc_vxor(p, vr, vr, vr);
+   }
+   else if (imm == 1.0f) {
+      /* use 2^0=1 to get 1.0 */
+      ppc_vxor(p, vr, vr, vr);  /* vr = {0,0,0,0} */
+      ppc_vexptefp(p, vr, vr);  /* vr = 0^0 */
+   }
+   else {
+      assert(0);
+   }
+}
+
+
 
 
 /**
