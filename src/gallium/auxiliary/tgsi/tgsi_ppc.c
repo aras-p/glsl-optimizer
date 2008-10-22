@@ -117,11 +117,11 @@ gen_get_bit31_vec(struct gen_context *gen)
 
 
 /**
- * Register fetch.
+ * Register fetch, put result in 'dst_vec'.
  */
 static void
 emit_fetch(struct gen_context *gen,
-           unsigned vec_reg,
+           unsigned dst_vec,
            const struct tgsi_full_src_register *reg,
            const unsigned chan_index)
 {
@@ -138,7 +138,7 @@ emit_fetch(struct gen_context *gen,
             int offset_reg = ppc_allocate_register(gen->f);
             int offset = (reg->SrcRegister.Index * 4 + swizzle) * 16;
             ppc_li(gen->f, offset_reg, offset);
-            ppc_lvx(gen->f, vec_reg, gen->inputs_reg, offset_reg);
+            ppc_lvx(gen->f, dst_vec, gen->inputs_reg, offset_reg);
             ppc_release_register(gen->f, offset_reg);
          }
          break;
@@ -147,7 +147,7 @@ emit_fetch(struct gen_context *gen,
             int offset_reg = ppc_allocate_register(gen->f);
             int offset = (reg->SrcRegister.Index * 4 + swizzle) * 16;
             ppc_li(gen->f, offset_reg, offset);
-            ppc_lvx(gen->f, vec_reg, gen->temps_reg, offset_reg);
+            ppc_lvx(gen->f, dst_vec, gen->temps_reg, offset_reg);
             ppc_release_register(gen->f, offset_reg);
          }
          break;
@@ -156,7 +156,7 @@ emit_fetch(struct gen_context *gen,
             int offset_reg = ppc_allocate_register(gen->f);
             int offset = (reg->SrcRegister.Index * 4 + swizzle) * 16;
             ppc_li(gen->f, offset_reg, offset);
-            ppc_lvx(gen->f, vec_reg, gen->immed_reg, offset_reg);
+            ppc_lvx(gen->f, dst_vec, gen->immed_reg, offset_reg);
             ppc_release_register(gen->f, offset_reg);
          }
          break;
@@ -171,9 +171,9 @@ emit_fetch(struct gen_context *gen,
              * know that 'swizzle' tells us which vector slot will have the
              * loaded word.  The other vector slots will be undefined.
              */
-            ppc_lvewx(gen->f, vec_reg, gen->const_reg, offset_reg);
+            ppc_lvewx(gen->f, dst_vec, gen->const_reg, offset_reg);
             /* splat word[swizzle] across the vector reg */
-            ppc_vspltw(gen->f, vec_reg, vec_reg, swizzle);
+            ppc_vspltw(gen->f, dst_vec, dst_vec, swizzle);
             ppc_release_register(gen->f, offset_reg);
          }
          break;
@@ -182,12 +182,12 @@ emit_fetch(struct gen_context *gen,
       }
       break;
    case TGSI_EXTSWIZZLE_ZERO:
-      ppc_vload_float(gen->f, vec_reg, 0.0f);
+      ppc_vload_float(gen->f, dst_vec, 0.0f);
       break;
    case TGSI_EXTSWIZZLE_ONE:
       {
          int one_vec = gen_one_vec(gen);
-         ppc_vecmove(gen->f, vec_reg, one_vec);
+         ppc_vecmove(gen->f, dst_vec, one_vec);
       }
       break;
    default:
@@ -202,15 +202,15 @@ emit_fetch(struct gen_context *gen,
          switch (sign_op) {
          case TGSI_UTIL_SIGN_CLEAR:
             /* vec = vec & ~bit31 */
-            ppc_vandc(gen->f, vec_reg, vec_reg, bit31_vec);
+            ppc_vandc(gen->f, dst_vec, dst_vec, bit31_vec);
             break;
          case TGSI_UTIL_SIGN_SET:
             /* vec = vec | bit31 */
-            ppc_vor(gen->f, vec_reg, vec_reg, bit31_vec);
+            ppc_vor(gen->f, dst_vec, dst_vec, bit31_vec);
             break;
          case TGSI_UTIL_SIGN_TOGGLE:
             /* vec = vec ^ bit31 */
-            ppc_vxor(gen->f, vec_reg, vec_reg, bit31_vec);
+            ppc_vxor(gen->f, dst_vec, dst_vec, bit31_vec);
             break;
          default:
             assert(0);
@@ -219,17 +219,17 @@ emit_fetch(struct gen_context *gen,
    }
 }
 
-#define FETCH( GEN, INST, VEC_REG, SRC_REG, CHAN ) \
-   emit_fetch( GEN, VEC_REG, &(INST).FullSrcRegisters[SRC_REG], CHAN )
+#define FETCH( GEN, INST, DST_VEC, SRC_REG, CHAN ) \
+   emit_fetch( GEN, DST_VEC, &(INST).FullSrcRegisters[SRC_REG], CHAN )
 
 
 
 /**
- * Register store.
+ * Register store.  Store 'src_vec' at location indicated by 'reg'.
  */
 static void
 emit_store(struct gen_context *gen,
-           unsigned vec_reg,
+           unsigned src_vec,
            const struct tgsi_full_dst_register *reg,
            const struct tgsi_full_instruction *inst,
            unsigned chan_index)
@@ -240,7 +240,7 @@ emit_store(struct gen_context *gen,
          int offset_reg = ppc_allocate_register(gen->f);
          int offset = (reg->DstRegister.Index * 4 + chan_index) * 16;
          ppc_li(gen->f, offset_reg, offset);
-         ppc_stvx(gen->f, vec_reg, gen->outputs_reg, offset_reg);
+         ppc_stvx(gen->f, src_vec, gen->outputs_reg, offset_reg);
          ppc_release_register(gen->f, offset_reg);
       }
       break;
@@ -249,7 +249,7 @@ emit_store(struct gen_context *gen,
          int offset_reg = ppc_allocate_register(gen->f);
          int offset = (reg->DstRegister.Index * 4 + chan_index) * 16;
          ppc_li(gen->f, offset_reg, offset);
-         ppc_stvx(gen->f, vec_reg, gen->temps_reg, offset_reg);
+         ppc_stvx(gen->f, src_vec, gen->temps_reg, offset_reg);
          ppc_release_register(gen->f, offset_reg);
       }
       break;
