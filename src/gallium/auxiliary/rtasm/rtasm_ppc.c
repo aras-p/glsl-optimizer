@@ -49,13 +49,15 @@ ppc_init_func(struct ppc_function *p, unsigned max_inst)
    p->store = align_malloc(max_inst * PPC_INST_SIZE, 16);
    p->num_inst = 0;
    p->max_inst = max_inst;
-   p->fp_used = ~0x0;
-   p->vec_used = ~0x0;
-
-   /* only allow using gp registers 7..12 for now */
    p->reg_used = 0x0;
-   for (i = 7; i < 13; i++)
-      p->reg_used |= (1 << i);
+   p->fp_used = 0x0;
+   p->vec_used = 0x0;
+
+   /* only allow using gp registers 3..12 for now */
+   for (i = 0; i < 3; i++)
+      ppc_reserve_register(p, i);
+   for (i = 12; i < PPC_NUM_REGS; i++)
+      ppc_reserve_register(p, i);
 }
 
 
@@ -96,6 +98,18 @@ ppc_dump_func(const struct ppc_function *p)
 
 
 /**
+ * Mark a register as being unavailable.
+ */
+int
+ppc_reserve_register(struct ppc_function *p, int reg)
+{
+   assert(reg < PPC_NUM_REGS);
+   p->reg_used |= (1 << reg);
+   return reg;
+}
+
+
+/**
  * Allocate a general purpose register.
  * \return register index or -1 if none left.
  */
@@ -105,8 +119,8 @@ ppc_allocate_register(struct ppc_function *p)
    unsigned i;
    for (i = 0; i < PPC_NUM_REGS; i++) {
       const uint64_t mask = 1 << i;
-      if ((p->reg_used & mask) != 0) {
-         p->reg_used &= ~mask;
+      if ((p->reg_used & mask) == 0) {
+         p->reg_used |= mask;
          return i;
       }
    }
@@ -121,8 +135,8 @@ void
 ppc_release_register(struct ppc_function *p, int reg)
 {
    assert(reg < PPC_NUM_REGS);
-   assert((p->reg_used & (1 << reg)) == 0);
-   p->reg_used |= (1 << reg);
+   assert(p->reg_used & (1 << reg));
+   p->reg_used &= ~(1 << reg);
 }
 
 
@@ -136,8 +150,8 @@ ppc_allocate_fp_register(struct ppc_function *p)
    unsigned i;
    for (i = 0; i < PPC_NUM_FP_REGS; i++) {
       const uint64_t mask = 1 << i;
-      if ((p->fp_used & mask) != 0) {
-         p->fp_used &= ~mask;
+      if ((p->fp_used & mask) == 0) {
+         p->fp_used |= mask;
          return i;
       }
    }
@@ -152,8 +166,8 @@ void
 ppc_release_fp_register(struct ppc_function *p, int reg)
 {
    assert(reg < PPC_NUM_FP_REGS);
-   assert((p->fp_used & (1 << reg)) == 0);
-   p->fp_used |= (1 << reg);
+   assert(p->fp_used & (1 << reg));
+   p->fp_used &= ~(1 << reg);
 }
 
 
@@ -167,8 +181,8 @@ ppc_allocate_vec_register(struct ppc_function *p)
    unsigned i;
    for (i = 0; i < PPC_NUM_VEC_REGS; i++) {
       const uint64_t mask = 1 << i;
-      if ((p->vec_used & mask) != 0) {
-         p->vec_used &= ~mask;
+      if ((p->vec_used & mask) == 0) {
+         p->vec_used |= mask;
          return i;
       }
    }
@@ -183,8 +197,8 @@ void
 ppc_release_vec_register(struct ppc_function *p, int reg)
 {
    assert(reg < PPC_NUM_VEC_REGS);
-   assert((p->vec_used & (1 << reg)) == 0);
-   p->vec_used |= (1 << reg);
+   assert(p->vec_used & (1 << reg));
+   p->vec_used &= ~(1 << reg);
 }
 
 
@@ -582,11 +596,11 @@ ppc_lvx(struct ppc_function *p, uint vR, uint vA, uint vB)
    emit_x(p, 31, vR, vA, vB, 103);
 }
 
-/** load vector element word: vR = mem_word[vA+vB] */
+/** load vector element word: vR = mem_word[ra+rb] */
 void
-ppc_lvewx(struct ppc_function *p, uint vR, uint vA, uint vB)
+ppc_lvewx(struct ppc_function *p, uint vr, uint ra, uint rb)
 {
-   emit_x(p, 31, vR, vA, vB, 71);
+   emit_x(p, 31, vr, ra, rb, 71);
 }
 
 

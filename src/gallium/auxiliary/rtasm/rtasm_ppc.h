@@ -67,6 +67,7 @@ extern void ppc_release_func(struct ppc_function *p);
 extern void (*ppc_get_func( struct ppc_function *p ))( void );
 extern void ppc_dump_func(const struct ppc_function *p);
 
+extern int ppc_reserve_register(struct ppc_function *p, int reg);
 extern int ppc_allocate_register(struct ppc_function *p);
 extern void ppc_release_register(struct ppc_function *p, int reg);
 extern int ppc_allocate_fp_register(struct ppc_function *p);
