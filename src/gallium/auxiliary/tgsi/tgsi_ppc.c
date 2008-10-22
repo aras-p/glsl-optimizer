@@ -535,12 +535,95 @@ emit_triop(struct gen_context *gen, struct tgsi_full_instruction *inst)
 }
 
 
-/*
+
+/** Approximation for vr = pow(va, vb) */
+static void
+ppc_vec_pow(struct ppc_function *f, int vr, int va, int vb)
+{
+   /* pow(a,b) ~= exp2(log2(a) * b) */
+   int t_vec = ppc_allocate_vec_register(f);
+   int zero_vec = ppc_allocate_vec_register(f);
+
+   ppc_vload_float(f, zero_vec, 0.0f);
+
+   ppc_vlogefp(f, t_vec, va);                   /* t = log2(va) */
+   ppc_vmaddfp(f, t_vec, t_vec, vb, zero_vec);  /* t = t * vb */
+   ppc_vexptefp(f, vr, t_vec);                  /* vr = 2^t */
+
+   ppc_release_vec_register(f, t_vec);
+   ppc_release_vec_register(f, zero_vec);
+}
+
+
 static void
 emit_lit(struct gen_context *gen, struct tgsi_full_instruction *inst)
 {
+   int one_vec = gen_one_vec(gen);
+
+   /* Compute X */
+   if (IS_DST0_CHANNEL_ENABLED(*inst, CHAN_X)) {
+      STORE(gen, *inst, one_vec, 0, CHAN_X);
+   }
+
+   /* Compute Y, Z */
+   if (IS_DST0_CHANNEL_ENABLED(*inst, CHAN_Y) ||
+       IS_DST0_CHANNEL_ENABLED(*inst, CHAN_Z)) {
+      int x_vec = ppc_allocate_vec_register(gen->f);
+      int zero_vec = ppc_allocate_vec_register(gen->f);
+
+      FETCH(gen, *inst, x_vec, 0, CHAN_X);        /* x_vec = src[0].x */
+
+      ppc_vload_float(gen->f, zero_vec, 0.0f);    /* zero = {0,0,0,0} */
+      ppc_vmaxfp(gen->f, x_vec, x_vec, zero_vec); /* x_vec = max(x_vec, 0) */
+
+      if (IS_DST0_CHANNEL_ENABLED(*inst, CHAN_Y)) {
+         STORE(gen, *inst, x_vec, 0, CHAN_Y);        /* store Y */
+      }
+
+      if (IS_DST0_CHANNEL_ENABLED(*inst, CHAN_Z)) {
+         int y_vec = ppc_allocate_vec_register(gen->f);
+         int z_vec = ppc_allocate_vec_register(gen->f);
+         int w_vec = ppc_allocate_vec_register(gen->f);
+         int pow_vec = ppc_allocate_vec_register(gen->f);
+         int pos_vec = ppc_allocate_vec_register(gen->f);
+         int c128_vec = ppc_allocate_vec_register(gen->f);
+
+         FETCH(gen, *inst, y_vec, 0, CHAN_Y);        /* y_vec = src[0].y */
+         ppc_vmaxfp(gen->f, y_vec, y_vec, zero_vec); /* y_vec = max(y_vec, 0) */
+
+         FETCH(gen, *inst, w_vec, 0, CHAN_W);        /* w_vec = src[0].w */
+
+         /* XXX clamp Y to [-128, 128] */
+         ppc_vload_float(gen->f, c128_vec, 128.0f);
+
+         /* if temp.x > 0
+          *    pow(tmp.y, tmp.w)
+          * else
+          *   0.0
+          */
+
+         ppc_vec_pow(gen->f, pow_vec, y_vec, w_vec);      /* pow = pow(y, w) */
+         ppc_vcmpgtfpx(gen->f, pos_vec, x_vec, zero_vec); /* pos = x > 0 */
+         ppc_vand(gen->f, z_vec, pow_vec, pos_vec);       /* z = pow & pos */
+
+         STORE(gen, *inst, z_vec, 0, CHAN_Z);             /* store Z */
+
+         ppc_release_vec_register(gen->f, y_vec);
+         ppc_release_vec_register(gen->f, z_vec);
+         ppc_release_vec_register(gen->f, w_vec);
+         ppc_release_vec_register(gen->f, pow_vec);
+         ppc_release_vec_register(gen->f, pos_vec);
+      }
+
+      ppc_release_vec_register(gen->f, x_vec);
+      ppc_release_vec_register(gen->f, zero_vec);
+   }
+
+   /* Compute W */
+   if (IS_DST0_CHANNEL_ENABLED(*inst, CHAN_W)) {
+      STORE(gen, *inst, one_vec, 0, CHAN_W);
+   }
 }
-*/
 
 
 static int
@@ -584,11 +667,9 @@ emit_instruction(struct gen_context *gen,
    case TGSI_OPCODE_DPH:
       emit_dotprod(gen, inst);
       break;
-      /*
    case TGSI_OPCODE_LIT:
       emit_lit(gen, inst);
       break;
-      */
    case TGSI_OPCODE_END:
       /* normal end */
       return 1;
