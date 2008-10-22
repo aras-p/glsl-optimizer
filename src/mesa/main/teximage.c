@@ -2042,30 +2042,20 @@ copytexture_error_check( GLcontext *ctx, GLuint dimensions,
 
 /**
  * Test glCopyTexSubImage[12]D() parameters for errors.
+ * Note that this is the first part of error checking.
+ * See also copytexsubimage_error_check2() below for the second part.
  * 
  * \param ctx GL context.
  * \param dimensions texture image dimensions (must be 1, 2 or 3).
  * \param target texture target given by the user.
  * \param level image level given by the user.
- * \param xoffset sub-image x offset given by the user.
- * \param yoffset sub-image y offset given by the user.
- * \param zoffset sub-image z offset given by the user.
- * \param width image width given by the user.
- * \param height image height given by the user.
  * 
  * \return GL_TRUE if an error was detected, or GL_FALSE if no errors.
- * 
- * Verifies each of the parameters against the constants specified in
- * __GLcontextRec::Const and the supported extensions, and according to the
- * OpenGL specification.
  */
 static GLboolean
-copytexsubimage_error_check( GLcontext *ctx, GLuint dimensions,
-                             GLenum target, GLint level,
-                             GLint xoffset, GLint yoffset, GLint zoffset,
-                             GLsizei width, GLsizei height)
+copytexsubimage_error_check1( GLcontext *ctx, GLuint dimensions,
+                              GLenum target, GLint level)
 {
-   /* Check target */
    /* Check that the source buffer is complete */
    if (ctx->ReadBuffer->Name) {
       _mesa_test_framebuffer_completeness(ctx, ctx->ReadBuffer);
@@ -2076,6 +2066,7 @@ copytexsubimage_error_check( GLcontext *ctx, GLuint dimensions,
       }
    }
 
+   /* Check target */
    if (dimensions == 1) {
       if (target != GL_TEXTURE_1D) {
          _mesa_error( ctx, GL_INVALID_ENUM, "glCopyTexSubImage1D(target)" );
@@ -2123,6 +2114,33 @@ copytexsubimage_error_check( GLcontext *ctx, GLuint dimensions,
       return GL_TRUE;
    }
 
+   return GL_FALSE;
+}
+
+
+/**
+ * Second part of error checking for glCopyTexSubImage[12]D().
+ * \param xoffset sub-image x offset given by the user.
+ * \param yoffset sub-image y offset given by the user.
+ * \param zoffset sub-image z offset given by the user.
+ * \param width image width given by the user.
+ * \param height image height given by the user.
+ */
+static GLboolean
+copytexsubimage_error_check2( GLcontext *ctx, GLuint dimensions,
+			      GLenum target, GLint level,
+			      GLint xoffset, GLint yoffset, GLint zoffset,
+			      GLsizei width, GLsizei height,
+			      const struct gl_texture_image *teximage )
+{
+   /* check that dest tex image exists */
+   if (!teximage) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glCopyTexSubImage%dD(undefined texture level: %d)",
+                  dimensions, level);
+      return GL_TRUE;
+   }
+
    /* Check size */
    if (width < 0) {
       _mesa_error(ctx, GL_INVALID_VALUE,
@@ -2135,23 +2153,7 @@ copytexsubimage_error_check( GLcontext *ctx, GLuint dimensions,
       return GL_TRUE;
    }
 
-   return GL_FALSE;
-}
-
-static GLboolean
-copytexsubimage_error_check2( GLcontext *ctx, GLuint dimensions,
-			      GLenum target, GLint level,
-			      GLint xoffset, GLint yoffset, GLint zoffset,
-			      GLsizei width, GLsizei height,
-			      const struct gl_texture_image *teximage )
-{
-   if (!teximage) {
-      _mesa_error(ctx, GL_INVALID_OPERATION,
-                  "glCopyTexSubImage%dD(undefined texture level: %d)",
-                  dimensions, level);
-      return GL_TRUE;
-   }
-
+   /* check x/y offsets */
    if (xoffset < -((GLint)teximage->Border)) {
       _mesa_error(ctx, GL_INVALID_VALUE,
                   "glCopyTexSubImage%dD(xoffset=%d)", dimensions, xoffset);
@@ -2176,6 +2178,7 @@ copytexsubimage_error_check2( GLcontext *ctx, GLuint dimensions,
       }
    }
 
+   /* check z offset */
    if (dimensions > 2) {
       if (zoffset < -((GLint)teximage->Border)) {
          _mesa_error(ctx, GL_INVALID_VALUE,
@@ -3050,13 +3053,11 @@ _mesa_CopyTexSubImage1D( GLenum target, GLint level,
       _mesa_update_state(ctx);
 
 #if FEATURE_convolve
-
    /* XXX should test internal format */
    _mesa_adjust_image_for_convolution(ctx, 1, &postConvWidth, NULL);
 #endif
 
-   if (copytexsubimage_error_check(ctx, 1, target, level,
-                                   xoffset, 0, 0, postConvWidth, 1))
+   if (copytexsubimage_error_check1(ctx, 1, target, level))
       return;
 
    texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
@@ -3110,8 +3111,7 @@ _mesa_CopyTexSubImage2D( GLenum target, GLint level,
    _mesa_adjust_image_for_convolution(ctx, 2, &postConvWidth, &postConvHeight);
 #endif
 
-   if (copytexsubimage_error_check(ctx, 2, target, level, xoffset, yoffset, 0,
-                                   postConvWidth, postConvHeight))
+   if (copytexsubimage_error_check1(ctx, 2, target, level))
       return;
 
    texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
@@ -3164,8 +3164,7 @@ _mesa_CopyTexSubImage3D( GLenum target, GLint level,
    _mesa_adjust_image_for_convolution(ctx, 2, &postConvWidth, &postConvHeight);
 #endif
 
-   if (copytexsubimage_error_check(ctx, 3, target, level, xoffset, yoffset,
-                                   zoffset, postConvWidth, postConvHeight))
+   if (copytexsubimage_error_check1(ctx, 3, target, level))
       return;
 
    texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
