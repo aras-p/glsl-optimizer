@@ -7,6 +7,7 @@ C_SOURCES = \
 	rtasm_cpu.c \
 	rtasm_execmem.c \
 	rtasm_x86sse.c \
+	rtasm_ppc.c \
 	rtasm_ppc_spe.c
 
 include ../../Makefile.template
