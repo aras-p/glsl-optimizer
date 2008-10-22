@@ -349,6 +349,22 @@ store_dest_reg(struct codegen *gen,
                int value_reg, int channel,
                const struct tgsi_full_dst_register *dest)
 {
+   /*
+    * XXX need to implement dst reg clamping/saturation
+    */
+#if 0
+   switch (inst->Instruction.Saturate) {
+   case TGSI_SAT_NONE:
+      break;
+   case TGSI_SAT_ZERO_ONE:
+      break;
+   case TGSI_SAT_MINUS_PLUS_ONE:
+      break;
+   default:
+      assert( 0 );
+   }
+#endif
+
    switch (dest->DstRegister.File) {
    case TGSI_FILE_TEMPORARY:
       if (gen->if_nesting > 0) {
