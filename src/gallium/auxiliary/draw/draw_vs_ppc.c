@@ -203,6 +203,9 @@ draw_create_vs_ppc(struct draw_context *draw,
 {
    struct draw_ppc_vertex_shader *vs;
 
+   /* XXX temporary short-circuit */
+   return NULL;
+
    vs = CALLOC_STRUCT( draw_ppc_vertex_shader );
    if (vs == NULL) 
       return NULL;
