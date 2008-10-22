@@ -11,6 +11,7 @@ C_SOURCES = \
 	tgsi_info.c \
 	tgsi_iterate.c \
 	tgsi_parse.c \
+	tgsi_ppc.c \
 	tgsi_scan.c \
 	tgsi_sse2.c \
 	tgsi_text.c \
