@@ -669,6 +669,14 @@ ppc_vecmove(struct ppc_function *p, uint vD, uint vA)
    ppc_vor(p, vD, vA, vA);
 }
 
+/** Set vector register to {0,0,0,0} */
+void
+ppc_vzero(struct ppc_function *p, uint vr)
+{
+   ppc_vxor(p, vr, vr, vr);
+}
+
+
 
 
 /**

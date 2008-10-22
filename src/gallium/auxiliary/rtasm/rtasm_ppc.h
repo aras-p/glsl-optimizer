@@ -193,6 +193,11 @@ ppc_vxor(struct ppc_function *p, uint vD, uint vA, uint vB);
 extern void
 ppc_vecmove(struct ppc_function *p, uint vD, uint vA);
 
+/** Set vector register to {0,0,0,0} */
+extern void
+ppc_vzero(struct ppc_function *p, uint vr);
+
+
 
 /**
  ** Vector shuffle / select / splat / etc
