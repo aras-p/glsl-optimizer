@@ -76,9 +76,10 @@ static void
 release_buffer(uint buffer)
 {
    /* Evidently, using less than a 16-byte status doesn't work reliably */
-   static const uint status[4] ALIGN16_ATTRIB
-      = {CELL_BUFFER_STATUS_FREE, 0, 0, 0};
-
+   static const vector unsigned int status = {CELL_BUFFER_STATUS_FREE,
+                                              CELL_BUFFER_STATUS_FREE,
+                                              CELL_BUFFER_STATUS_FREE,
+                                              CELL_BUFFER_STATUS_FREE};
    const uint index = 4 * (spu.init.id * CELL_NUM_BUFFERS + buffer);
    uint *dst = spu.init.buffer_status + index;
 
@@ -88,6 +89,29 @@ release_buffer(uint buffer)
            (unsigned int) dst,  /* dst in main memory */
            sizeof(status),      /* size */
            TAG_MISC,            /* tag is unimportant */
+           0, /* tid */
+           0  /* rid */);
+}
+
+
+/**
+ * Write CELL_FENCE_SIGNALLED back to the fence status qword in main memory.
+ * There's a qword of status per SPU.
+ */
+static void
+cmd_fence(struct cell_command_fence *fence_cmd)
+{
+   static const vector unsigned int status = {CELL_FENCE_SIGNALLED,
+                                              CELL_FENCE_SIGNALLED,
+                                              CELL_FENCE_SIGNALLED,
+                                              CELL_FENCE_SIGNALLED};
+   uint *dst = (uint *) fence_cmd->fence;
+   dst += 4 * spu.init.id;  /* main store/memory address, not local store */
+
+   mfc_put((void *) &status,    /* src in local memory */
+           (unsigned int) dst,  /* dst in main memory */
+           sizeof(status),      /* size */
+           TAG_FENCE,           /* tag */
            0, /* tid */
            0  /* rid */);
 }
@@ -636,6 +660,14 @@ cmd_batch(uint opcode)
       case CELL_CMD_FINISH:
          cmd_finish();
          pos += 1;
+         break;
+      case CELL_CMD_FENCE:
+         {
+            struct cell_command_fence *fence_cmd =
+               (struct cell_command_fence *) &buffer[pos];
+            cmd_fence(fence_cmd);
+            pos += sizeof(*fence_cmd) / 8;
+         }
          break;
       case CELL_CMD_RELEASE_VERTS:
          {

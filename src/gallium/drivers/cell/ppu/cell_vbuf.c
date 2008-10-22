@@ -38,6 +38,7 @@
 
 #include "cell_batch.h"
 #include "cell_context.h"
+#include "cell_fence.h"
 #include "cell_flush.h"
 #include "cell_spu.h"
 #include "cell_vbuf.h"
@@ -107,6 +108,11 @@ cell_vbuf_release_vertices(struct vbuf_render *vbr, void *vertices,
    printf("%s vertex_buf = %u  count = %u\n",
           __FUNCTION__, cvbr->vertex_buf, vertices_used);
    */
+
+   /* Make sure texture buffers aren't released until we're done rendering
+    * with them.
+    */
+   cell_add_fenced_textures(cell);
 
    /* Tell SPUs they can release the vert buf */
    if (cvbr->vertex_buf != ~0U) {

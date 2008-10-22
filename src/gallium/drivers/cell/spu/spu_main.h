@@ -210,7 +210,7 @@ extern struct spu_global spu;
 #define TAG_DCACHE1           21
 #define TAG_DCACHE2           22
 #define TAG_DCACHE3           23
-
+#define TAG_FENCE             24
 
 
 static INLINE void

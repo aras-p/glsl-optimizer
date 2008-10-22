@@ -225,7 +225,7 @@ cell_emit_state(struct cell_context *cell)
             if (cell->texture[i]) {
                uint level;
                for (level = 0; level < CELL_MAX_TEXTURE_LEVELS; level++) {
-                  texture->start[level] = cell->texture[i]->tiled_data[level];
+                  texture->start[level] = cell->texture[i]->tiled_mapped[level];
                   texture->width[level] = cell->texture[i]->base.width[level];
                   texture->height[level] = cell->texture[i]->base.height[level];
                   texture->depth[level] = cell->texture[i]->base.depth[level];

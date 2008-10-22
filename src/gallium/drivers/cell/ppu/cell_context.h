@@ -81,6 +81,19 @@ struct cell_fragment_ops_key
 };
 
 
+struct cell_buffer_node;
+
+/**
+ * Fenced buffer list.  List of buffers which can be unreferenced after
+ * the fence has been executed/signalled.
+ */
+struct cell_buffer_list
+{
+   struct cell_fence fence;
+   struct cell_buffer_node *head;
+};
+
+
 /**
  * Per-context state, subclass of pipe_context.
  */
@@ -152,6 +165,14 @@ struct cell_context
 
    /** [4] to ensure 16-byte alignment for each status word */
    uint buffer_status[CELL_MAX_SPUS][CELL_NUM_BUFFERS][4] ALIGN16_ATTRIB;
+
+
+   /** Associated with each command/batch buffer is a list of pipe_buffers
+    * that are fenced.  When the last command in a buffer is executed, the
+    * fence will be signalled, indicating that any pipe_buffers preceeding
+    * that fence can be unreferenced (and probably freed).
+    */
+   struct cell_buffer_list fenced_buffers[CELL_NUM_BUFFERS];
 
 
    struct spe_function attrib_fetch;

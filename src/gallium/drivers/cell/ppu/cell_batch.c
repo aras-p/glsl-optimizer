@@ -28,6 +28,7 @@
 
 #include "cell_context.h"
 #include "cell_batch.h"
+#include "cell_fence.h"
 #include "cell_spu.h"
 
 
@@ -63,6 +64,10 @@ cell_get_empty_buffer(struct cell_context *cell)
                printf("PPU: ALLOC BUFFER %u, %u tries\n", buf, tries);
                */
                prev_buffer = buf;
+
+               /* release tex buffer associated w/ prev use of this batch buf */
+               cell_free_fenced_buffers(cell, &cell->fenced_buffers[buf]);
+
                return buf;
             }
          }
@@ -85,6 +90,26 @@ cell_get_empty_buffer(struct cell_context *cell)
 
 
 /**
+ * Append a fence command to the current batch buffer.
+ * Note that we're sure there's always room for this because of the
+ * adjusted size check in cell_batch_free_space().
+ */
+static void
+emit_fence(struct cell_context *cell)
+{
+   const uint batch = cell->cur_batch;
+   const uint size = cell->buffer_size[batch];
+   struct cell_command_fence *fence_cmd;
+
+   ASSERT(size + sizeof(struct cell_command_fence) <= CELL_BUFFER_SIZE);
+
+   fence_cmd = (struct cell_command_fence *) (cell->buffer[batch] + size);
+   fence_cmd->opcode = CELL_CMD_FENCE;
+   fence_cmd->fence = &cell->fenced_buffers[batch].fence;
+}
+
+
+/**
  * Flush the current batch buffer to the SPUs.
  * An empty buffer will be found and set as the new current batch buffer
  * for subsequent commands/data.
@@ -101,6 +126,12 @@ cell_batch_flush(struct cell_context *cell)
 
    if (size == 0)
       return;
+
+   /* Before we use this batch buffer, make sure any fenced texture buffers
+    * are released.
+    */
+   if (cell->fenced_buffers[batch].head)
+      emit_fence(cell);
 
    flushing = TRUE;
 
@@ -142,6 +173,7 @@ uint
 cell_batch_free_space(const struct cell_context *cell)
 {
    uint free = CELL_BUFFER_SIZE - cell->buffer_size[cell->cur_batch];
+   free -= sizeof(struct cell_command_fence);
    return free;
 }
 

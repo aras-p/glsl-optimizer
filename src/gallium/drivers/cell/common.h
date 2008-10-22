@@ -102,6 +102,8 @@
 #define CELL_CMD_STATE_RASTERIZER    22
 #define CELL_CMD_VS_EXECUTE          23
 #define CELL_CMD_FLUSH_BUFFER_RANGE  24
+#define CELL_CMD_FENCE               25
+
 
 /** Command/batch buffers */
 #define CELL_NUM_BUFFERS 4
@@ -121,6 +123,29 @@
 
 /** Max instructions for doing per-fragment operations */
 #define SPU_MAX_FRAGMENT_OPS_INSTS 64
+
+
+
+#define CELL_FENCE_IDLE      0
+#define CELL_FENCE_EMITTED   1
+#define CELL_FENCE_SIGNALLED 2
+
+struct cell_fence
+{
+   /** There's a 16-byte status qword per SPU */
+   volatile uint status[CELL_MAX_SPUS][4];
+};
+
+
+/**
+ * Fence command sent to SPUs.  In response, the SPUs will write
+ * CELL_FENCE_STATUS_SIGNALLED back to the fence status word in main memory.
+ */
+struct cell_command_fence
+{
+   uint64_t opcode;      /**< CELL_CMD_FENCE */
+   struct cell_fence *fence;
+};
 
 
 /**

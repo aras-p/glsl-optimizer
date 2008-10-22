@@ -47,6 +47,7 @@
 #include "cell_clear.h"
 #include "cell_context.h"
 #include "cell_draw_arrays.h"
+#include "cell_fence.h"
 #include "cell_flush.h"
 #include "cell_state.h"
 #include "cell_surface.h"
@@ -104,6 +105,7 @@ cell_create_context(struct pipe_screen *screen,
                     struct cell_winsys *cws)
 {
    struct cell_context *cell;
+   uint i;
 
    /* some fields need to be 16-byte aligned, so align the whole object */
    cell = (struct cell_context*) align_malloc(sizeof(struct cell_context), 16);
@@ -150,6 +152,10 @@ cell_create_context(struct pipe_screen *screen,
    cell->debug_flags = debug_get_flags_option("CELL_DEBUG", 
                                               cell_debug_flags, 
                                               0 );
+
+   for (i = 0; i < CELL_NUM_BUFFERS; i++)
+      cell_fence_init(&cell->fenced_buffers[i].fence);
+
 
    /*
     * SPU stuff

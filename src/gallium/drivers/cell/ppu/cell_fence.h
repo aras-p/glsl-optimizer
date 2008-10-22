@@ -1,6 +1,6 @@
 /**************************************************************************
  * 
- * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2008 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -25,47 +25,33 @@
  * 
  **************************************************************************/
 
-#ifndef CELL_TEXTURE_H
-#define CELL_TEXTURE_H
+
+#ifndef CELL_FENCE_H
+#define CELL_FENCE_H
 
 
-struct cell_context;
-struct pipe_texture;
+extern void
+cell_fence_init(struct cell_fence *fence);
 
 
-/**
- * Subclass of pipe_texture
- */
-struct cell_texture
-{
-   struct pipe_texture base;
-
-   unsigned long level_offset[CELL_MAX_TEXTURE_LEVELS];
-   unsigned long stride[CELL_MAX_TEXTURE_LEVELS];
-
-   /* The data is held here:
-    */
-   struct pipe_buffer *buffer;
-   unsigned long buffer_size;
-
-   /** Texture data in tiled layout is held here */
-   struct pipe_buffer *tiled_buffer[CELL_MAX_TEXTURE_LEVELS];
-   /** Mapped, tiled texture data */
-   void *tiled_mapped[CELL_MAX_TEXTURE_LEVELS];
-};
+extern boolean
+cell_fence_signalled(const struct cell_context *cell,
+                     const struct cell_fence *fence);
 
 
-/** cast wrapper */
-static INLINE struct cell_texture *
-cell_texture(struct pipe_texture *pt)
-{
-   return (struct cell_texture *) pt;
-}
+extern void
+cell_fence_finish(const struct cell_context *cell,
+                  const struct cell_fence *fence);
 
 
 
 extern void
-cell_init_screen_texture_funcs(struct pipe_screen *screen);
+cell_free_fenced_buffers(struct cell_context *cell,
+                         struct cell_buffer_list *list);
 
 
-#endif /* CELL_TEXTURE_H */
+extern void
+cell_add_fenced_textures(struct cell_context *cell);
+
+
+#endif /* CELL_FENCE_H */
