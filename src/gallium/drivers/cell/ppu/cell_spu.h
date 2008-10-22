@@ -31,6 +31,7 @@
 
 #include <libspe2.h>
 #include <libmisc.h>
+#include <pthread.h>
 #include "cell/common.h"
 
 #include "cell_context.h"
