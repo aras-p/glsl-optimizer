@@ -84,11 +84,14 @@
 struct gen_context
 {
    struct ppc_function *f;
-   int inputs_reg;    /**< register pointing to input params */
-   int outputs_reg;   /**< register pointing to output params */
-   int temps_reg;     /**< register pointing to temporary "registers" */
-   int immed_reg;     /**< register pointing to immediates buffer */
-   int const_reg;     /**< register pointing to constants buffer */
+   int inputs_reg;    /**< GP register pointing to input params */
+   int outputs_reg;   /**< GP register pointing to output params */
+   int temps_reg;     /**< GP register pointing to temporary "registers" */
+   int immed_reg;     /**< GP register pointing to immediates buffer */
+   int const_reg;     /**< GP register pointing to constants buffer */
+
+   int one_vec;       /**< vector register with {1.0, 1.0, 1.0, 1.0} */
+   int bit31_vec;     /**< vector register with {1<<31, 1<<31, 1<<31, 1<<31} */
 };
 
 
@@ -1060,6 +1063,35 @@ emit_sub(
 
 
 /**
+ * Return index of vector register containing {1.0, 1.0, 1.0, 1.0}.
+ */
+static int
+gen_one_vec(struct gen_context *gen)
+{
+   if (gen->one_vec < 0) {
+      gen->one_vec = ppc_allocate_vec_register(gen->f);
+      ppc_vload_float(gen->f, gen->one_vec, 1.0f);
+   }
+   return gen->one_vec;
+}
+
+/**
+ * Return index of vector register containing {1<<31, 1<<31, 1<<31, 1<<31}.
+ */
+static int
+gen_get_bit31_vec(struct gen_context *gen)
+{
+   if (gen->bit31_vec < 0) {
+      gen->bit31_vec = ppc_allocate_vec_register(gen->f);
+      ppc_vspltisw(gen->f, gen->bit31_vec, -1);
+      ppc_vslw(gen->f, gen->bit31_vec, gen->bit31_vec, gen->bit31_vec);
+   }
+   return gen->bit31_vec;
+}
+
+
+
+/**
  * Register fetch.
  */
 static void
@@ -1124,49 +1156,42 @@ emit_fetch(struct gen_context *gen,
          assert( 0 );
       }
       break;
-
    case TGSI_EXTSWIZZLE_ZERO:
-#if 0
-      emit_tempf(
-         func,
-         xmm,
-         TGSI_EXEC_TEMP_00000000_I,
-         TGSI_EXEC_TEMP_00000000_C );
-#endif
+      ppc_vload_float(gen->f, vec_reg, 0.0f);
       break;
-
    case TGSI_EXTSWIZZLE_ONE:
-#if 0
-      emit_tempf(
-         func,
-         xmm,
-         TEMP_ONE_I,
-         TEMP_ONE_C );
-#endif
+      {
+         int one_vec = gen_one_vec(gen);
+         ppc_vecmove(gen->f, vec_reg, one_vec);
+      }
       break;
-
    default:
       assert( 0 );
    }
 
-#if 0
-   switch( tgsi_util_get_full_src_register_sign_mode( reg, chan_index ) ) {
-   case TGSI_UTIL_SIGN_CLEAR:
-      emit_abs( func, xmm );
-      break;
+   {
+      uint sign_op = tgsi_util_get_full_src_register_sign_mode(reg, chan_index);
+      if (sign_op != TGSI_UTIL_SIGN_KEEP) {
+         int bit31_vec = gen_get_bit31_vec(gen);
 
-   case TGSI_UTIL_SIGN_SET:
-      emit_setsign( func, xmm );
-      break;
-
-   case TGSI_UTIL_SIGN_TOGGLE:
-      emit_neg( func, xmm );
-      break;
-
-   case TGSI_UTIL_SIGN_KEEP:
-      break;
+         switch (sign_op) {
+         case TGSI_UTIL_SIGN_CLEAR:
+            /* vec = vec & ~bit31 */
+            ppc_vandc(gen->f, vec_reg, vec_reg, bit31_vec);
+            break;
+         case TGSI_UTIL_SIGN_SET:
+            /* vec = vec | bit31 */
+            ppc_vor(gen->f, vec_reg, vec_reg, bit31_vec);
+            break;
+         case TGSI_UTIL_SIGN_TOGGLE:
+            /* vec = vec ^ bit31 */
+            ppc_vxor(gen->f, vec_reg, vec_reg, bit31_vec);
+            break;
+         default:
+            assert(0);
+         }
+      }
    }
-#endif
 }
 
 #define FETCH( GEN, INST, VEC_REG, SRC_REG, CHAN ) \
@@ -1410,6 +1435,36 @@ emit_cmp(
 
 
 static void
+emit_scalar_unaryop(struct gen_context *gen, struct tgsi_full_instruction *inst)
+{
+   int v0 = ppc_allocate_vec_register(gen->f);
+   int v1 = ppc_allocate_vec_register(gen->f);
+   uint chan_index;
+
+   FETCH(gen, *inst, v0, 0, CHAN_X);
+
+   switch (inst->Instruction.Opcode) {
+   case TGSI_OPCODE_RSQ:
+      /* v1 = 1.0 / sqrt(v0) */
+      ppc_vrsqrtefp(gen->f, v1, v0);
+      break;
+   case TGSI_OPCODE_RCP:
+      /* v1 = 1.0 / v0 */
+      ppc_vrefp(gen->f, v1, v0);
+      break;
+   default:
+      assert(0);
+   }
+
+   FOR_EACH_DST0_ENABLED_CHANNEL( *inst, chan_index ) {
+      STORE(gen, *inst, v1, 0, chan_index);
+   }
+   ppc_release_vec_register(gen->f, v0);
+   ppc_release_vec_register(gen->f, v1);
+}
+
+
+static void
 emit_unaryop(struct gen_context *gen, struct tgsi_full_instruction *inst)
 {
    int v0 = ppc_allocate_vec_register(gen->f);
@@ -1504,12 +1559,9 @@ emit_inequality(struct gen_context *gen, struct tgsi_full_instruction *inst)
    int v0 = ppc_allocate_vec_register(gen->f);
    int v1 = ppc_allocate_vec_register(gen->f);
    int v2 = ppc_allocate_vec_register(gen->f);
-   int v_one = ppc_allocate_vec_register(gen->f);
    uint chan_index;
    boolean complement = FALSE;
-
-   /* v_one = splat(1.0) */
-   ppc_vload_float(gen->f, v_one, 1.0f);
+   int one_vec = gen_one_vec(gen);
 
    FOR_EACH_DST0_ENABLED_CHANNEL(*inst, chan_index) {
       FETCH(gen, *inst, v0, 0, chan_index);   /* v0 = srcreg[0] */
@@ -1543,9 +1595,9 @@ emit_inequality(struct gen_context *gen, struct tgsi_full_instruction *inst)
       /* v2 is now {0,0,0,0} or {~0,~0,~0,~0} */
 
       if (complement)
-         ppc_vandc(gen->f, v2, v_one, v2);    /* v2 = v_one & ~v2 */
+         ppc_vandc(gen->f, v2, one_vec, v2);    /* v2 = one_vec & ~v2 */
       else
-         ppc_vand(gen->f, v2, v_one, v2);     /* v2 = v_one & v2 */
+         ppc_vand(gen->f, v2, one_vec, v2);     /* v2 = one_vec & v2 */
 
       STORE(gen, *inst, v2, 0, chan_index);   /* store v2 */
    }
@@ -1553,7 +1605,6 @@ emit_inequality(struct gen_context *gen, struct tgsi_full_instruction *inst)
    ppc_release_vec_register(gen->f, v0);
    ppc_release_vec_register(gen->f, v1);
    ppc_release_vec_register(gen->f, v2);
-   ppc_release_vec_register(gen->f, v_one);
 }
 
 
@@ -1630,6 +1681,14 @@ emit_triop(struct gen_context *gen, struct tgsi_full_instruction *inst)
 }
 
 
+/*
+static void
+emit_lit(struct gen_context *gen, struct tgsi_full_instruction *inst)
+{
+}
+*/
+
+
 static int
 emit_instruction(struct gen_context *gen,
                  struct tgsi_full_instruction *inst)
@@ -1642,6 +1701,10 @@ emit_instruction(struct gen_context *gen,
    case TGSI_OPCODE_EXPBASE2:
    case TGSI_OPCODE_LOGBASE2:
       emit_unaryop(gen, inst);
+      break;
+   case TGSI_OPCODE_RSQ:
+   case TGSI_OPCODE_RCP:
+      emit_scalar_unaryop(gen, inst);
       break;
    case TGSI_OPCODE_ADD:
    case TGSI_OPCODE_SUB:
@@ -1667,6 +1730,11 @@ emit_instruction(struct gen_context *gen,
    case TGSI_OPCODE_DPH:
       emit_dotprod(gen, inst);
       break;
+      /*
+   case TGSI_OPCODE_LIT:
+      emit_lit(gen, inst);
+      break;
+      */
    case TGSI_OPCODE_END:
       /* normal end */
       return 1;
@@ -2715,6 +2783,8 @@ tgsi_emit_ppc(const struct tgsi_token *tokens,
    gen.temps_reg = ppc_reserve_register(func, 5);    /* ... */
    gen.immed_reg = ppc_reserve_register(func, 6);
    gen.const_reg = ppc_reserve_register(func, 7);
+   gen.one_vec = -1;
+   gen.bit31_vec = -1;
 
    emit_prologue(func);
 
