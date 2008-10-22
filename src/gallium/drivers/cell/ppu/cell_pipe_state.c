@@ -260,6 +260,8 @@ cell_set_sampler_textures(struct pipe_context *pipe,
       }
    }
 
+   cell->num_textures = num;
+
    if (changed) {
       cell->dirty |= CELL_NEW_TEXTURE;
       cell->dirty_textures |= changed;
