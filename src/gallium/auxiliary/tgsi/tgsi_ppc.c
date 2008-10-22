@@ -36,6 +36,7 @@
 #include "pipe/p_debug.h"
 #include "pipe/p_shader_tokens.h"
 #include "util/u_math.h"
+#include "util/u_memory.h"
 #include "util/u_sse.h"
 #include "tgsi/tgsi_parse.h"
 #include "tgsi/tgsi_util.h"
@@ -43,6 +44,14 @@
 #include "tgsi_ppc.h"
 #include "rtasm/rtasm_ppc.h"
 
+
+/**
+ * Since it's pretty much impossible to form PPC vector immediates, load
+ * them from memory here:
+ */
+const float ppc_builtin_constants[] ALIGN16_ATTRIB = {
+   1.0f, -128.0f, 128.0, 0.0
+};
 
 
 #define FOR_EACH_CHANNEL( CHAN )\
@@ -81,10 +90,44 @@ struct gen_context
    int temps_reg;     /**< GP register pointing to temporary "registers" */
    int immed_reg;     /**< GP register pointing to immediates buffer */
    int const_reg;     /**< GP register pointing to constants buffer */
+   int builtins_reg;  /**< GP register pointint to built-in constants */
 
    int one_vec;       /**< vector register with {1.0, 1.0, 1.0, 1.0} */
    int bit31_vec;     /**< vector register with {1<<31, 1<<31, 1<<31, 1<<31} */
 };
+
+
+/**
+ * Load the given vector register with {value, value, value, value}.
+ * The value must be in the ppu_builtin_constants[] array.
+ * We wouldn't need this if there was a simple way to load PPC vector
+ * registers with immediate values!
+ */
+static void
+load_constant_vec(struct gen_context *gen, int dst_vec, float value)
+{
+   uint pos;
+   for (pos = 0; pos < Elements(ppc_builtin_constants); pos++) {
+      if (ppc_builtin_constants[pos] == value) {
+         int offset_reg = ppc_allocate_register(gen->f);
+         int offset = pos * 4;
+
+         ppc_li(gen->f, offset_reg, offset);
+         /* Load 4-byte word into vector register.
+          * The vector slot depends on the effective address we load from.
+          * We know that our builtins start at a 16-byte boundary so we
+          * know that 'swizzle' tells us which vector slot will have the
+          * loaded word.  The other vector slots will be undefined.
+          */
+         ppc_lvewx(gen->f, dst_vec, gen->builtins_reg, offset_reg);
+         /* splat word[pos % 4] across the vector reg */
+         ppc_vspltw(gen->f, dst_vec, dst_vec, pos % 4);
+         ppc_release_register(gen->f, offset_reg);
+         return;
+      }
+   }
+   assert(0 && "Need to add new constant to ppc_builtin_constants array");
+}
 
 
 /**
@@ -95,7 +138,7 @@ gen_one_vec(struct gen_context *gen)
 {
    if (gen->one_vec < 0) {
       gen->one_vec = ppc_allocate_vec_register(gen->f);
-      ppc_vload_float(gen->f, gen->one_vec, 1.0f);
+      load_constant_vec(gen, gen->one_vec, 1.0f);
    }
    return gen->one_vec;
 }
@@ -113,7 +156,6 @@ gen_get_bit31_vec(struct gen_context *gen)
    }
    return gen->bit31_vec;
 }
-
 
 
 /**
@@ -182,7 +224,7 @@ emit_fetch(struct gen_context *gen,
       }
       break;
    case TGSI_EXTSWIZZLE_ZERO:
-      ppc_vload_float(gen->f, dst_vec, 0.0f);
+      ppc_vzero(gen->f, dst_vec);
       break;
    case TGSI_EXTSWIZZLE_ONE:
       {
@@ -544,7 +586,7 @@ ppc_vec_pow(struct ppc_function *f, int vr, int va, int vb)
    int t_vec = ppc_allocate_vec_register(f);
    int zero_vec = ppc_allocate_vec_register(f);
 
-   ppc_vload_float(f, zero_vec, 0.0f);
+   ppc_vzero(f, zero_vec);
 
    ppc_vlogefp(f, t_vec, va);                   /* t = log2(va) */
    ppc_vmaddfp(f, t_vec, t_vec, vb, zero_vec);  /* t = t * vb */
@@ -573,7 +615,7 @@ emit_lit(struct gen_context *gen, struct tgsi_full_instruction *inst)
 
       FETCH(gen, *inst, x_vec, 0, CHAN_X);        /* x_vec = src[0].x */
 
-      ppc_vload_float(gen->f, zero_vec, 0.0f);    /* zero = {0,0,0,0} */
+      ppc_vzero(gen->f, zero_vec);                /* zero = {0,0,0,0} */
       ppc_vmaxfp(gen->f, x_vec, x_vec, zero_vec); /* x_vec = max(x_vec, 0) */
 
       if (IS_DST0_CHANNEL_ENABLED(*inst, CHAN_Y)) {
@@ -586,7 +628,8 @@ emit_lit(struct gen_context *gen, struct tgsi_full_instruction *inst)
          int w_vec = ppc_allocate_vec_register(gen->f);
          int pow_vec = ppc_allocate_vec_register(gen->f);
          int pos_vec = ppc_allocate_vec_register(gen->f);
-         int c128_vec = ppc_allocate_vec_register(gen->f);
+         int p128_vec = ppc_allocate_vec_register(gen->f);
+         int n128_vec = ppc_allocate_vec_register(gen->f);
 
          FETCH(gen, *inst, y_vec, 0, CHAN_Y);        /* y_vec = src[0].y */
          ppc_vmaxfp(gen->f, y_vec, y_vec, zero_vec); /* y_vec = max(y_vec, 0) */
@@ -594,7 +637,8 @@ emit_lit(struct gen_context *gen, struct tgsi_full_instruction *inst)
          FETCH(gen, *inst, w_vec, 0, CHAN_W);        /* w_vec = src[0].w */
 
          /* XXX clamp Y to [-128, 128] */
-         ppc_vload_float(gen->f, c128_vec, 128.0f);
+         load_constant_vec(gen, p128_vec, 128.0f);
+         load_constant_vec(gen, n128_vec, -128.0f);
 
          /* if temp.x > 0
           *    pow(tmp.y, tmp.w)
@@ -613,6 +657,8 @@ emit_lit(struct gen_context *gen, struct tgsi_full_instruction *inst)
          ppc_release_vec_register(gen->f, w_vec);
          ppc_release_vec_register(gen->f, pow_vec);
          ppc_release_vec_register(gen->f, pos_vec);
+         ppc_release_vec_register(gen->f, p128_vec);
+         ppc_release_vec_register(gen->f, n128_vec);
       }
 
       ppc_release_vec_register(gen->f, x_vec);
@@ -798,6 +844,7 @@ tgsi_emit_ppc(const struct tgsi_token *tokens,
    gen.temps_reg = ppc_reserve_register(func, 5);    /* ... */
    gen.immed_reg = ppc_reserve_register(func, 6);
    gen.const_reg = ppc_reserve_register(func, 7);
+   gen.builtins_reg = ppc_reserve_register(func, 8);
    gen.one_vec = -1;
    gen.bit31_vec = -1;
 

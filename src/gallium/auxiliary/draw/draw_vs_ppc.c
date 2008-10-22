@@ -55,7 +55,8 @@ typedef void (PIPE_CDECL *codegen_function) (float (*inputs)[4][4],
                                              float (*outputs)[4][4],
                                              float (*temps)[4][4],
                                              float (*immeds)[4][4],
-                                             float (*consts)[4]);
+                                             float (*consts)[4],
+                                             const float *builtins);
 
 #if 0
    const struct tgsi_exec_vector *input,
@@ -151,7 +152,8 @@ vs_ppc_run_linear( struct draw_vertex_shader *base,
 #else
       shader->func(inputs_soa, outputs_soa, temps_soa,
 		   (float (*)[4][4]) shader->base.immediates,
-		   (float (*)[4]) constants);
+		   (float (*)[4]) constants,
+                   ppc_builtin_constants);
 
       /*output[0][0] = input[0][0] * 0.5;*/
 #endif
@@ -246,7 +248,9 @@ draw_create_vs_ppc(struct draw_context *draw,
    return &vs->base;
 
 fail:
+   /*
    debug_error("tgsi_emit_ppc() failed, falling back to interpreter\n");
+   */
 
    ppc_release_func( &vs->ppc_program );
    

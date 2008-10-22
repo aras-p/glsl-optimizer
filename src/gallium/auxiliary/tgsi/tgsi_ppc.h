@@ -35,6 +35,9 @@ extern "C" {
 struct tgsi_token;
 struct ppc_function;
 
+extern const float ppc_builtin_constants[];
+
+
 boolean
 tgsi_emit_ppc(const struct tgsi_token *tokens,
               struct ppc_function *function,
