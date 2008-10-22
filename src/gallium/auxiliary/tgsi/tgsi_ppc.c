@@ -636,16 +636,17 @@ emit_lit(struct gen_context *gen, struct tgsi_full_instruction *inst)
 
          FETCH(gen, *inst, w_vec, 0, CHAN_W);        /* w_vec = src[0].w */
 
-         /* XXX clamp Y to [-128, 128] */
+         /* clamp Y to [-128, 128] */
          load_constant_vec(gen, p128_vec, 128.0f);
          load_constant_vec(gen, n128_vec, -128.0f);
+         ppc_vmaxfp(gen->f, y_vec, y_vec, n128_vec); /* y = max(y, -128) */
+         ppc_vminfp(gen->f, y_vec, y_vec, p128_vec); /* y = min(y, 128) */
 
          /* if temp.x > 0
-          *    pow(tmp.y, tmp.w)
+          *    z = pow(tmp.y, tmp.w)
           * else
-          *   0.0
+          *    z = 0.0
           */
-
          ppc_vec_pow(gen->f, pow_vec, y_vec, w_vec);      /* pow = pow(y, w) */
          ppc_vcmpgtfpx(gen->f, pos_vec, x_vec, zero_vec); /* pos = x > 0 */
          ppc_vand(gen->f, z_vec, pow_vec, pos_vec);       /* z = pow & pos */
