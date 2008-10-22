@@ -776,15 +776,21 @@ tgsi_emit_ppc(const struct tgsi_token *tokens,
               float (*immediates)[4],
               boolean do_swizzles )
 {
+   static int use_ppc_asm = -1;
    struct tgsi_parse_context parse;
    /*boolean instruction_phase = FALSE;*/
    unsigned ok = 1;
    uint num_immediates = 0;
    struct gen_context gen;
 
-   util_init_math();
+   if (use_ppc_asm < 0) {
+      /* If GALLIUM_NOPPC is set, don't use PPC codegen */
+      use_ppc_asm = !debug_get_bool_option("GALLIUM_NOPPC", FALSE);
+   }
+   if (!use_ppc_asm)
+      return FALSE;
 
-   tgsi_parse_init( &parse, tokens );
+   util_init_math();
 
    gen.f = func;
    gen.inputs_reg = ppc_reserve_register(func, 3);   /* first function param */
@@ -796,6 +802,8 @@ tgsi_emit_ppc(const struct tgsi_token *tokens,
    gen.bit31_vec = -1;
 
    emit_prologue(func);
+
+   tgsi_parse_init( &parse, tokens );
 
    while (!tgsi_parse_end_of_tokens(&parse) && ok) {
       tgsi_parse_token(&parse);
