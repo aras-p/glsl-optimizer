@@ -5,8 +5,7 @@ Import('*')
 
 if env['platform'] == 'linux' \
         and 'mesa' in env['statetrackers'] \
-        and 'softpipe' in env['drivers'] \
-        and 'i965simple' in env['drivers'] \
+        and ('softpipe' or 'i915simple' or 'trace') in env['drivers'] \
         and not env['dri']:
 
     env = env.Clone()
@@ -22,15 +21,20 @@ if env['platform'] == 'linux' \
         'xfonts.c',
         'xm_api.c',
         'xm_winsys.c',
-        'xm_winsys_aub.c',
-        'brw_aub.c',
     ]
+
+    drivers = [];
         
-    drivers = [
-        softpipe,
-        i965simple,
-    ]
-    
+    if 'softpipe' in env['drivers']:
+        drivers += [softpipe]
+
+    if 'i965simple' in env['drivers']:
+        drivers += [i965simple]
+        sources += [
+            'brw_aub.c',
+            'xm_winsys_aub.c',
+            ]
+        
     if 'trace' in env['drivers']:
         env.Append(CPPDEFINES = 'GALLIUM_TRACE')
         drivers += [trace]
