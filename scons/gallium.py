@@ -175,6 +175,7 @@ def generate(env):
     machine = env['machine']
     platform = env['platform']
     x86 = env['machine'] == 'x86'
+    ppc = env['machine'] == 'ppc'
     gcc = env['platform'] in ('linux', 'freebsd', 'darwin')
     msvc = env['platform'] in ('windows', 'winddk', 'wince')
 

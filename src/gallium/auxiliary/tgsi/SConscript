@@ -12,6 +12,7 @@ tgsi = env.ConvenienceLibrary(
 		'tgsi_parse.c',
 		'tgsi_sanity.c',
 		'tgsi_scan.c',
+		'tgsi_ppc.c',
 		'tgsi_sse2.c',
 		'tgsi_text.c',
 		'tgsi_transform.c',

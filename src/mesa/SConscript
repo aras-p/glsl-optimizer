@@ -283,6 +283,10 @@ if env['platform'] != 'winddk':
 			'x86-64/glapi_x86-64.S'
 		]
 	elif gcc and env['machine'] == 'ppc':
+		env.Append(CPPDEFINES = [
+			'USE_PPC_ASM', 
+			'USE_VMX_ASM', 
+		])
 		mesa_sources += [
 			'ppc/common_ppc.c',
 		]
