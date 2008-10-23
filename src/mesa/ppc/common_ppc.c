@@ -85,7 +85,7 @@ void _mesa_init_all_ppc_transform_asm( void )
    }
    
 # ifndef USE_VMX_ASM
-   _mesa_ppc_cpu_features &= ~PPC_FEATURES_HAS_ALTIVEC;
+   _mesa_ppc_cpu_features &= ~PPC_FEATURE_HAS_ALTIVEC;
 # endif
 #endif
 }
