@@ -272,24 +272,53 @@ intelEmitCopyBlit(struct intel_context *intel,
 		  GLshort w, GLshort h,
 		  GLenum logic_op)
 {
-   GLuint CMD, BR13;
+   GLuint CMD, BR13, pass = 0;
    int dst_y2 = dst_y + h;
    int dst_x2 = dst_x + w;
    dri_bo *aper_array[3];
    BATCH_LOCALS;
 
    /* do space/cliprects check before going any further */
-   intel_batchbuffer_require_space(intel->batch, 8 * 4, NO_LOOP_CLIPRECTS);
- again:
-   aper_array[0] = intel->batch->buf;
-   aper_array[1] = dst_buffer;
-   aper_array[2] = src_buffer;
+   do {
+       aper_array[0] = intel->batch->buf;
+       aper_array[1] = dst_buffer;
+       aper_array[2] = src_buffer;
 
-   if (dri_bufmgr_check_aperture_space(aper_array, 3) != 0) {
-      intel_batchbuffer_flush(intel->batch);
-      goto again;
+       if (dri_bufmgr_check_aperture_space(aper_array, 3) != 0) {
+           intel_batchbuffer_flush(intel->batch);
+           pass++;
+       } else
+           break;
+   } while (pass < 2);
+
+   if (pass >= 2) {
+       GLboolean locked = GL_FALSE;       
+       if (!intel->locked) {
+           LOCK_HARDWARE(intel);
+           locked = GL_TRUE;
+       }
+
+       dri_bo_map(dst_buffer, GL_TRUE);
+       dri_bo_map(src_buffer, GL_TRUE);
+       _mesa_copy_rect((GLubyte *)dst_buffer->virtual + dst_offset,
+                       cpp,
+                       dst_pitch,
+                       dst_x, dst_y, 
+                       w, h, 
+                       (GLubyte *)src_buffer->virtual + src_offset, 
+                       src_pitch,
+                       src_x, src_y);
+       
+       dri_bo_unmap(src_buffer);
+       dri_bo_unmap(dst_buffer);
+       
+       if (locked)
+           UNLOCK_HARDWARE(intel);
+
+       return;
    }
 
+   intel_batchbuffer_require_space(intel->batch, 8 * 4, NO_LOOP_CLIPRECTS);
    DBG("%s src:buf(%p)/%d+%d %d,%d dst:buf(%p)/%d+%d %d,%d sz:%dx%d\n",
        __FUNCTION__,
        src_buffer, src_pitch, src_offset, src_x, src_y,
