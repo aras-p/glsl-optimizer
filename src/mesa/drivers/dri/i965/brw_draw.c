@@ -256,6 +256,7 @@ static GLboolean brw_try_draw_prims( GLcontext *ctx,
    struct intel_context *intel = intel_context(ctx);
    struct brw_context *brw = brw_context(ctx);
    GLboolean retval = GL_FALSE;
+   GLboolean warn = GL_FALSE;
    GLuint i;
 
    if (ctx->NewState)
@@ -301,8 +302,6 @@ static GLboolean brw_try_draw_prims( GLcontext *ctx,
        */
       brw_set_prim(brw, prim[0].mode);
 
-      /* XXX:  Need to separate validate and upload of state.  
-       */
       brw_validate_state( brw );
 
       /* Various fallback checks:
@@ -313,6 +312,31 @@ static GLboolean brw_try_draw_prims( GLcontext *ctx,
       if (check_fallbacks( brw, prim, nr_prims ))
 	 goto out;
 
+      /* Check that we can fit our state in with our existing batchbuffer, or
+       * flush otherwise.
+       */
+      if (dri_bufmgr_check_aperture_space(brw->state.validated_bos,
+					  brw->state.validated_bo_count)) {
+	 static GLboolean warned;
+	 intel_batchbuffer_flush(intel->batch);
+
+	 /* Validate the state after we flushed the batch (which would have
+	  * changed the set of dirty state).  If we still fail to
+	  * check_aperture, warn of what's happening, but attempt to continue
+	  * on since it may succeed anyway, and the user would probably rather
+	  * see a failure and a warning than a fallback.
+	  */
+	 brw_validate_state(brw);
+	 if (!warned &&
+	     dri_bufmgr_check_aperture_space(brw->state.validated_bos,
+					     brw->state.validated_bo_count)) {
+	    warn = GL_TRUE;
+	    warned = GL_TRUE;
+	 }
+      }
+
+      brw_upload_state(brw);
+
       for (i = 0; i < nr_prims; i++) {
 	 brw_emit_prim(brw, &prim[i]);
       }
@@ -322,6 +346,10 @@ static GLboolean brw_try_draw_prims( GLcontext *ctx,
 
  out:
    UNLOCK_HARDWARE(intel);
+
+   if (warn)
+      fprintf(stderr, "i965: Single primitive emit potentially exceeded "
+	      "available aperture space\n");
 
    if (!retval)
       DBG("%s failed\n", __FUNCTION__);

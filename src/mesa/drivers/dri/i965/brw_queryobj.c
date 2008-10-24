@@ -42,6 +42,7 @@
 #include "main/imports.h"
 
 #include "brw_context.h"
+#include "brw_state.h"
 #include "intel_batchbuffer.h"
 #include "intel_reg.h"
 
@@ -163,10 +164,6 @@ void
 brw_prepare_query_begin(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
-   dri_bo *aper_array[] = {
-      intel->batch->buf,
-      brw->query.bo,
-   };
 
    /* Skip if we're not doing any queries. */
    if (is_empty_list(&brw->query.active_head))
@@ -182,8 +179,7 @@ brw_prepare_query_begin(struct brw_context *brw)
       brw->query.index = 0;
    }
 
-   if (dri_bufmgr_check_aperture_space(aper_array, ARRAY_SIZE(aper_array)))
-      intel_batchbuffer_flush(intel->batch);
+   brw_add_validated_bo(brw, brw->query.bo);
 }
 
 /** Called just before primitive drawing to get a beginning PS_DEPTH_COUNT. */
