@@ -433,7 +433,6 @@ struct brw_context
    GLuint primitive;
 
    GLboolean emit_state_always;
-   GLboolean wrap;
    GLboolean tmp_fallback;
    GLboolean no_batch_wrap;
 

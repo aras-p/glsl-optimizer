@@ -182,9 +182,6 @@ void brw_validate_state( struct brw_context *brw )
    state->mesa |= brw->intel.NewGLState;
    brw->intel.NewGLState = 0;
 
-   if (brw->wrap)
-      state->brw |= BRW_NEW_CONTEXT;
-
    if (brw->emit_state_always) {
       state->mesa |= ~0;
       state->brw |= ~0;
