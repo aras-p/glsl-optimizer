@@ -299,7 +299,7 @@ intelEmitCopyBlit(struct intel_context *intel,
        }
 
        dri_bo_map(dst_buffer, GL_TRUE);
-       dri_bo_map(src_buffer, GL_TRUE);
+       dri_bo_map(src_buffer, GL_FALSE);
        _mesa_copy_rect((GLubyte *)dst_buffer->virtual + dst_offset,
                        cpp,
                        dst_pitch,
