@@ -1,7 +1,7 @@
 #include "pipe/p_winsys.h"
 #include "pipe/p_defines.h"
-#include "pipe/p_util.h"
 #include "pipe/p_inlines.h"
+#include "util/u_memory.h"
 
 #include "nouveau_context.h"
 #include "nouveau_local.h"
@@ -29,7 +29,7 @@ static struct pipe_surface *
 nouveau_surface_alloc(struct pipe_winsys *ws)
 {
 	struct pipe_surface *surf;
-	
+
 	surf = CALLOC_STRUCT(pipe_surface);
 	if (!surf)
 		return NULL;
@@ -59,10 +59,10 @@ nouveau_surface_alloc_storage
 )
 {
 	const unsigned int ALIGNMENT = 256;
-	
+
 	assert(pws);
 	assert(surface);
-	
+
 	surface->width = width;
 	surface->height = height;
 	surface->format = format;
@@ -72,7 +72,7 @@ nouveau_surface_alloc_storage
 	surface->stride = round_up(surface->nblocksx * surface->block.size, ALIGNMENT);
 	surface->usage = flags;
 	surface->buffer = pws->buffer_create(pws, ALIGNMENT, PIPE_BUFFER_USAGE_PIXEL, surface->stride * surface->nblocksy);
-	
+
 	return 0;
 }
 
@@ -84,7 +84,7 @@ nouveau_surface_release(struct pipe_winsys *ws, struct pipe_surface **s)
 	*s = NULL;
 	if (--surf->refcount <= 0) {
 		if (surf->buffer)
-			pipe_buffer_reference(ws, &surf->buffer, NULL);
+			winsys_buffer_reference(ws, &surf->buffer, NULL);
 		free(surf);
 	}
 }
@@ -258,4 +258,3 @@ nouveau_create_pipe_winsys(struct nouveau_context *nv)
 
 	return &nvpws->pws;
 }
-

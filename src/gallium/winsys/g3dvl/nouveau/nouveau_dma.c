@@ -1,1 +1,1 @@
-../../dri/nouveau/nouveau_dma.c
+../../drm/nouveau/nouveau_dma.c

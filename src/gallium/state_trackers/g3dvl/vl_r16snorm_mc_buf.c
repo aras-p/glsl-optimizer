@@ -6,10 +6,10 @@
 #include <pipe/p_winsys.h>
 #include <pipe/p_screen.h>
 #include <pipe/p_state.h>
-#include <pipe/p_util.h>
 #include <pipe/p_inlines.h>
 #include <tgsi/tgsi_parse.h>
 #include <tgsi/tgsi_build.h>
+#include <util/u_math.h>
 #include "vl_render.h"
 #include "vl_shader_build.h"
 #include "vl_surface.h"
@@ -108,17 +108,7 @@ static inline int vlGrabFieldCodedBlock(short *src, short *dst, unsigned int dst
 {
 	unsigned int y;
 
-	for (y = 0; y < VL_BLOCK_HEIGHT / 2; ++y)
-		memcpy
-		(
-			dst + y * dst_pitch * 2,
-			src + y * VL_BLOCK_WIDTH,
-			VL_BLOCK_WIDTH * 2
-		);
-
-	dst += VL_BLOCK_HEIGHT * dst_pitch;
-
-	for (; y < VL_BLOCK_HEIGHT; ++y)
+	for (y = 0; y < VL_BLOCK_HEIGHT; ++y)
 		memcpy
 		(
 			dst + y * dst_pitch * 2,
@@ -586,11 +576,25 @@ static int vlFlush
 	unsigned int			num_macroblocks[vlNumMacroBlockExTypes] = {0};
 	unsigned int			offset[vlNumMacroBlockExTypes];
 	unsigned int			vb_start = 0;
+	unsigned int			mbw;
+	unsigned int			mbh;
+	unsigned int			num_mb_per_frame;
 	unsigned int			i;
 
 	assert(render);
 
 	mc = (struct vlR16SnormBufferedMC*)render;
+
+	if (!mc->buffered_surface)
+		return 0;
+
+	mbw = align(mc->picture_width, VL_MACROBLOCK_WIDTH) / VL_MACROBLOCK_WIDTH;
+	mbh = align(mc->picture_height, VL_MACROBLOCK_HEIGHT) / VL_MACROBLOCK_HEIGHT;
+	num_mb_per_frame = mbw * mbh;
+
+	if (mc->num_macroblocks < num_mb_per_frame)
+		return 0;
+
 	pipe = mc->pipe;
 
 	for (i = 0; i < mc->num_macroblocks; ++i)
@@ -736,8 +740,12 @@ static int vlFlush
 		vb_start += num_macroblocks[vlMacroBlockExTypeBiPredictedField] * 24;
 	}
 
+	pipe->flush(pipe, PIPE_FLUSH_RENDER_CACHE, &mc->buffered_surface->render_fence);
+
 	for (i = 0; i < 3; ++i)
 		mc->zero_block[i].x = -1.0f;
+
+	mc->buffered_surface = NULL;
 	mc->num_macroblocks = 0;
 	mc->cur_buf++;
 
@@ -760,12 +768,7 @@ static int vlRenderMacroBlocksMpeg2R16SnormBuffered
 
 	if (mc->buffered_surface)
 	{
-		if
-		(
-			mc->buffered_surface != surface /*||
-			mc->past_surface != batch->past_surface ||
-			mc->future_surface != batch->future_surface*/
-		)
+		if (mc->buffered_surface != surface)
 		{
 			vlFlush(&mc->base);
 			mc->buffered_surface = surface;
@@ -981,7 +984,7 @@ static int vlCreateFragmentShaderIMB
 	 */
 	for (i = 0; i < 3; ++i)
 	{
-		decl = vl_decl_interpolated_input(TGSI_SEMANTIC_GENERIC, 1, i, i, TGSI_INTERPOLATE_LINEAR);
+		decl = vl_decl_interpolated_input(TGSI_SEMANTIC_GENERIC, i + 1, i, i, TGSI_INTERPOLATE_LINEAR);
 		ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
 	}
 
@@ -1027,7 +1030,6 @@ static int vlCreateFragmentShaderIMB
 		inst.FullSrcRegisters[0].SrcRegister.SwizzleZ = TGSI_SWIZZLE_X;
 		inst.FullDstRegisters[0].DstRegister.WriteMask = TGSI_WRITEMASK_X << i;
 		ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
-
 	}
 
 	/* mul o0, t0, c0		; Rescale texel to correct range */
@@ -1179,7 +1181,7 @@ static int vlCreateVertexShaderFieldPMB
 		ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
 	}
 
-	/* decl c0		; Texcoord denorm coefficients */
+	/* decl c0		; Render target dimensions */
 	decl = vl_decl_constants(TGSI_SEMANTIC_GENERIC, 0, 0, 0);
 	ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
 
@@ -1194,7 +1196,7 @@ static int vlCreateVertexShaderFieldPMB
 	 */
 	for (i = 0; i < 7; i++)
 	{
-		decl = vl_decl_output((i == 0 || i == 6) ? TGSI_SEMANTIC_POSITION : TGSI_SEMANTIC_GENERIC, i, i, i);
+		decl = vl_decl_output(i == 0 ? TGSI_SEMANTIC_POSITION : TGSI_SEMANTIC_GENERIC, i, i, i);
 		ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
 	}
 
@@ -1323,7 +1325,6 @@ static int vlCreateFragmentShaderFramePMB
 		inst.FullSrcRegisters[0].SrcRegister.SwizzleZ = TGSI_SWIZZLE_X;
 		inst.FullDstRegisters[0].DstRegister.WriteMask = TGSI_WRITEMASK_X << i;
 		ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
-
 	}
 
 	/* mul t0, t0, c0		; Rescale texel to correct range */
@@ -1442,7 +1443,6 @@ static int vlCreateFragmentShaderFieldPMB
 		inst.FullSrcRegisters[0].SrcRegister.SwizzleZ = TGSI_SWIZZLE_X;
 		inst.FullDstRegisters[0].DstRegister.WriteMask = TGSI_WRITEMASK_X << i;
 		ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
-
 	}
 
 	/* mul t0, t0, c0		; Rescale texel to correct range */
@@ -1661,8 +1661,8 @@ static int vlCreateVertexShaderFieldBMB
 		ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
 	}
 
-	/* decl c0		; Denorm coefficients */
-	decl = vl_decl_constants(TGSI_SEMANTIC_GENERIC, 0, 0, 6);
+	/* decl c0		; Render target dimensions */
+	decl = vl_decl_constants(TGSI_SEMANTIC_GENERIC, 0, 0, 0);
 	ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
 
 	/*
@@ -1678,7 +1678,7 @@ static int vlCreateVertexShaderFieldBMB
 	 */
 	for (i = 0; i < 9; i++)
 	{
-		decl = vl_decl_output((i == 0 || i == 8) ? TGSI_SEMANTIC_POSITION : TGSI_SEMANTIC_GENERIC, i, i, i);
+		decl = vl_decl_output(i == 0 ? TGSI_SEMANTIC_POSITION : TGSI_SEMANTIC_GENERIC, i, i, i);
 		ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
 	}
 
@@ -1818,7 +1818,6 @@ static int vlCreateFragmentShaderFrameBMB
 		inst.FullSrcRegisters[0].SrcRegister.SwizzleZ = TGSI_SWIZZLE_X;
 		inst.FullDstRegisters[0].DstRegister.WriteMask = TGSI_WRITEMASK_X << i;
 		ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
-
 	}
 
 	/* mul t0, t0, c0		; Rescale texel to correct range */
@@ -1955,7 +1954,6 @@ static int vlCreateFragmentShaderFieldBMB
 		inst.FullSrcRegisters[0].SrcRegister.SwizzleZ = TGSI_SWIZZLE_X;
 		inst.FullDstRegisters[0].DstRegister.WriteMask = TGSI_WRITEMASK_X << i;
 		ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
-
 	}
 
 	/* mul t0, t0, c0		; Rescale texel to correct range */

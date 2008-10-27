@@ -8,12 +8,14 @@ struct pipe_texture;
 
 struct vlSurface
 {
-	struct vlScreen		*screen;
-	struct vlContext	*context;
-	unsigned int		width;
-	unsigned int		height;
-	enum vlFormat		format;
-	struct pipe_texture	*texture;
+	struct vlScreen			*screen;
+	struct vlContext		*context;
+	unsigned int			width;
+	unsigned int			height;
+	enum vlFormat			format;
+	struct pipe_texture		*texture;
+	struct pipe_fence_handle	*render_fence;
+	struct pipe_fence_handle	*disp_fence;
 };
 #endif
 
@@ -49,7 +51,25 @@ int vlPutPicture
 	int desty,
 	int destw,
 	int desth,
+	int drawable_w,
+	int drawable_h,
 	enum vlPictureType picture_type
+);
+
+int vlSurfaceGetStatus
+(
+	struct vlSurface *surface,
+	enum vlResourceStatus *status
+);
+
+int vlSurfaceFlush
+(
+	struct vlSurface *surface
+);
+
+int vlSurfaceSync
+(
+	struct vlSurface *surface
 );
 
 struct vlScreen* vlSurfaceGetScreen

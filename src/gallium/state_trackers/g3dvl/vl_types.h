@@ -13,6 +13,13 @@ struct vlScreen;
 struct vlContext;
 struct vlSurface;
 
+enum vlResourceStatus
+{
+	vlResourceStatusFree,
+	vlResourceStatusRendering,
+	vlResourceStatusDisplaying
+};
+
 enum vlProfile
 {
 	vlProfileMpeg2Simple,

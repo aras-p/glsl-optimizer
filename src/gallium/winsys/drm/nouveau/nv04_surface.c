@@ -3,6 +3,32 @@
 
 #include "nouveau_context.h"
 
+static INLINE int log2i(int i)
+{
+	int r = 0;
+
+	if (i & 0xffff0000) {
+		i >>= 16;
+		r += 16;
+	}
+	if (i & 0x0000ff00) {
+		i >>= 8;
+		r += 8;
+	}
+	if (i & 0x000000f0) {
+		i >>= 4;
+		r += 4;
+	}
+	if (i & 0x0000000c) {
+		i >>= 2;
+		r += 2;
+	}
+	if (i & 0x00000002) {
+		r += 1;
+	}
+	return r;
+}
+
 static INLINE int
 nv04_surface_format(enum pipe_format format)
 {
@@ -82,6 +108,56 @@ nv04_surface_copy_blit(struct nouveau_context *nv, unsigned dx, unsigned dy,
 }
 
 static int
+nv04_surface_copy_prep_swizzled(struct nouveau_context *nv,
+				struct pipe_surface *dst,
+				struct pipe_surface *src)
+{
+	struct nouveau_channel *chan = nv->nvc->channel;
+
+	BEGIN_RING(chan, nv->nvc->NvSwzSurf,
+		   NV04_SWIZZLED_SURFACE_FORMAT, 2);
+	/* FIXME: read destination format from somewhere */
+	OUT_RING  (chan,
+		NV04_SWIZZLED_SURFACE_FORMAT_COLOR_A8R8G8B8
+		| (log2i(dst->width)<<NV04_SWIZZLED_SURFACE_FORMAT_BASE_SIZE_U_SHIFT)
+		| (log2i(dst->height)<<NV04_SWIZZLED_SURFACE_FORMAT_BASE_SIZE_V_SHIFT) );
+	OUT_RELOCo(chan, nouveau_buffer(dst->buffer)->bo,
+		   NOUVEAU_BO_GART | NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
+
+	BEGIN_RING(chan, nv->nvc->NvSIFM, NV04_SCALED_IMAGE_FROM_MEMORY_COLOR_CONVERSION, 13);
+	OUT_RING  (chan, NV04_SCALED_IMAGE_FROM_MEMORY_COLOR_CONVERSION_TRUNCATE);
+	/* FIXME: read source format from somewhere */
+	OUT_RING  (chan, NV04_SCALED_IMAGE_FROM_MEMORY_COLOR_FORMAT_A8R8G8B8);
+	OUT_RING  (chan, NV04_SCALED_IMAGE_FROM_MEMORY_OPERATION_SRCCOPY);
+	OUT_RING  (chan, 0);
+	OUT_RING  (chan, (src->height<<16) | src->width);
+	OUT_RING  (chan, 0);
+	OUT_RING  (chan, (src->height<<16) | src->width);
+	OUT_RING  (chan, 1<<20);
+	OUT_RING  (chan, 1<<20);
+	OUT_RING  (chan, (src->height<<16) | src->width);
+	OUT_RING  (chan,
+		src->stride
+		| NV04_SCALED_IMAGE_FROM_MEMORY_FORMAT_ORIGIN_CENTER
+		| NV04_SCALED_IMAGE_FROM_MEMORY_FORMAT_FILTER_POINT_SAMPLE);
+	OUT_RELOCo(chan, nouveau_buffer(src->buffer)->bo,
+		   NOUVEAU_BO_GART | NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
+	OUT_RING  (chan, 0);
+
+	BEGIN_RING(chan, nv->nvc->NvM2MF,
+		   NV04_MEMORY_TO_MEMORY_FORMAT_DMA_BUFFER_IN, 2);
+	OUT_RELOCo(chan, nouveau_buffer(src->buffer)->bo,
+		   NOUVEAU_BO_GART | NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
+	OUT_RELOCo(chan, nouveau_buffer(dst->buffer)->bo,
+		   NOUVEAU_BO_GART | NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
+
+	nv->surface_copy = nv04_surface_copy_m2mf;
+	nv->surf_dst = dst;
+	nv->surf_src = src;
+	return 0;
+}
+
+static int
 nv04_surface_copy_prep(struct nouveau_context *nv, struct pipe_surface *dst,
 		       struct pipe_surface *src)
 {
@@ -90,6 +166,13 @@ nv04_surface_copy_prep(struct nouveau_context *nv, struct pipe_surface *dst,
 
 	if (src->format != dst->format)
 		return 1;
+
+	/* Setup transfer to swizzle the texture to vram if needed */
+	/* FIXME/TODO: check proper limits of this operation */
+	if (nouveau_buffer(dst->buffer)->bo->flags & NOUVEAU_BO_SWIZZLED) {
+		/* FIXME: Disable it for the moment */
+		/*return nv04_surface_copy_prep_swizzled(nv, dst, src);*/
+	}
 
 	/* NV_CONTEXT_SURFACES_2D has buffer alignment restrictions, fallback
 	 * to NV_MEMORY_TO_MEMORY_FORMAT in this case.
@@ -298,6 +381,22 @@ nouveau_surface_channel_create_nv04(struct nouveau_channel_context *nvc)
 	}
 
 	BIND_RING (chan, nvc->NvSIFM, nvc->next_subchannel++);
+	BEGIN_RING(chan, nvc->NvSIFM, NV04_SCALED_IMAGE_FROM_MEMORY_DMA_NOTIFY, 1);
+	OUT_RING  (chan, 0);
+	BEGIN_RING(chan, nvc->NvSIFM, NV04_SCALED_IMAGE_FROM_MEMORY_DMA_IMAGE, 1);
+	OUT_RING  (chan, nvc->channel->vram->handle);
+	BEGIN_RING(chan, nvc->NvSIFM, NV04_SCALED_IMAGE_FROM_MEMORY_SURFACE, 1);
+	OUT_RING  (chan, nvc->NvSwzSurf);
+	BEGIN_RING(chan, nvc->NvSIFM, NV04_SCALED_IMAGE_FROM_MEMORY_PATTERN, 1);
+	OUT_RING  (chan, 0);
+	BEGIN_RING(chan, nvc->NvSIFM, NV04_SCALED_IMAGE_FROM_MEMORY_ROP, 1);
+	OUT_RING  (chan, 0);
+	BEGIN_RING(chan, nvc->NvSIFM, NV04_SCALED_IMAGE_FROM_MEMORY_BETA1, 1);
+	OUT_RING  (chan, 0);
+	BEGIN_RING(chan, nvc->NvSIFM, NV04_SCALED_IMAGE_FROM_MEMORY_BETA4, 1);
+	OUT_RING  (chan, 0);
+	BEGIN_RING(chan, nvc->NvSIFM, NV04_SCALED_IMAGE_FROM_MEMORY_OPERATION, 1);
+	OUT_RING  (chan, NV04_SCALED_IMAGE_FROM_MEMORY_OPERATION_SRCCOPY);
 
 	return 0;
 }

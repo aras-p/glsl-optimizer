@@ -1,5 +1,5 @@
 #include "pipe/p_context.h"
-#include "pipe/p_util.h"
+#include "util/u_memory.h"
 #include "nouveau_context.h"
 #include <nouveau_drm.h>
 #include "nouveau_dri.h"
@@ -23,11 +23,11 @@ int nouveau_check_dri_drm_ddx(dri_version_t *dri, dri_version_t *drm, dri_versio
 	static const dri_version_t ddx_expected = {0, 0, NOUVEAU_DRM_HEADER_PATCHLEVEL};
 	static const dri_version_t dri_expected = {4, 0, 0};
 	static const dri_version_t drm_expected = {0, 0, NOUVEAU_DRM_HEADER_PATCHLEVEL};
-	
+
 	assert(dri);
 	assert(drm);
 	assert(ddx);
-	
+
 	if (dri->major != dri_expected.major || dri->minor < dri_expected.minor)
 	{
 		NOUVEAU_ERR("Unexpected DRI version.\n");
@@ -43,17 +43,17 @@ int nouveau_check_dri_drm_ddx(dri_version_t *dri, dri_version_t *drm, dri_versio
 		NOUVEAU_ERR("Unexpected DDX version.\n");
 		return 1;
 	}
-	
+
 	return 0;
 }
 
 int
 nouveau_screen_create(dri_screen_t *dri_screen, dri_framebuffer_t *dri_framebuf)
-{	
+{
 	struct nouveau_dri	*nv_dri = dri_framebuf->private;
 	struct nouveau_screen	*nv_screen;
 	int			ret;
-	
+
 	if (nouveau_check_dri_drm_ddx(&dri_screen->dri, &dri_screen->drm, &dri_screen->ddx))
 		return 1;
 
@@ -89,4 +89,3 @@ nouveau_screen_destroy(dri_screen_t *dri_screen)
 
 	FREE(nv_screen);
 }
-

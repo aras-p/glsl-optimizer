@@ -14,6 +14,8 @@
 
 struct vlVertexShaderConsts
 {
+	struct vlVertex4f	dst_scale;
+	struct vlVertex4f	dst_trans;
 	struct vlVertex4f	src_scale;
 	struct vlVertex4f	src_trans;
 };
@@ -87,6 +89,9 @@ static int vlResizeFrameBuffer
 		0
 	);
 
+	/* Clear to black, in case video doesn't fill the entire window */
+	pipe->clear(pipe, basic_csc->framebuffer.cbufs[0], 0);
+
 	return 0;
 }
 
@@ -148,6 +153,15 @@ static int vlPutPictureCSC
 		basic_csc->vs_const_buf.buffer,
 		PIPE_BUFFER_USAGE_CPU_WRITE
 	);
+
+	vs_consts->dst_scale.x = destw / (float)basic_csc->framebuffer.cbufs[0]->width;
+	vs_consts->dst_scale.y = desth / (float)basic_csc->framebuffer.cbufs[0]->height;
+	vs_consts->dst_scale.z = 1;
+	vs_consts->dst_scale.w = 1;
+	vs_consts->dst_trans.x = destx / (float)basic_csc->framebuffer.cbufs[0]->width;
+	vs_consts->dst_trans.y = desty / (float)basic_csc->framebuffer.cbufs[0]->height;
+	vs_consts->dst_trans.z = 0;
+	vs_consts->dst_trans.w = 0;
 
 	vs_consts->src_scale.x = srcw / (float)surface->texture->width[0];
 	vs_consts->src_scale.y = srch / (float)surface->texture->height[0];
@@ -376,10 +390,12 @@ static int vlCreateVertexShader
 	}
 
 	/*
-	 * decl c0		; Scaling vector to scale texcoord rect to source size
-	 * decl c1		; Translation vector to move texcoord rect into position
+	 * decl c0		; Scaling vector to scale vertex pos rect to destination size
+	 * decl c1		; Translation vector to move vertex pos rect into position
+	 * decl c2		; Scaling vector to scale texcoord rect to source size
+	 * decl c3		; Translation vector to move texcoord rect into position
 	 */
-	decl = vl_decl_constants(TGSI_SEMANTIC_GENERIC, 0, 0, 1);
+	decl = vl_decl_constants(TGSI_SEMANTIC_GENERIC, 0, 0, 3);
 	ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
 
 	/*
@@ -392,21 +408,19 @@ static int vlCreateVertexShader
 		ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
 	}
 
-	/* decl t0 */
-	decl = vl_decl_temps(0, 0);
+	/* decl t0, t1 */
+	decl = vl_decl_temps(0, 1);
 	ti += tgsi_build_full_declaration(&decl, &tokens[ti], header, max_tokens - ti);
 
-	/* mov o0, i0		; Move pos in to pos out */
-	inst = vl_inst2(TGSI_OPCODE_MOV, TGSI_FILE_OUTPUT, 0, TGSI_FILE_INPUT, 0);
-	ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
-
-	/* mul t0, i1, c0	; Scale unit texcoord rect to source size */
-	inst = vl_inst3(TGSI_OPCODE_MUL, TGSI_FILE_TEMPORARY, 0, TGSI_FILE_INPUT, 1, TGSI_FILE_CONSTANT, 0);
-	ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
-
-	/* add o1, t0, c1	; Translate texcoord rect into position */
-	inst = vl_inst3(TGSI_OPCODE_ADD, TGSI_FILE_OUTPUT, 1, TGSI_FILE_TEMPORARY, 0, TGSI_FILE_CONSTANT, 1);
-	ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
+	/*
+	 * madd o0, i0, c0, c1	; Scale and translate unit output rect to destination size and pos
+	 * madd o1, i1, c2, c3	; Scale and translate unit texcoord rect to source size and pos
+	 */
+	for (i = 0; i < 2; ++i)
+	{
+		inst = vl_inst4(TGSI_OPCODE_MADD, TGSI_FILE_OUTPUT, i, TGSI_FILE_INPUT, i, TGSI_FILE_CONSTANT, i * 2, TGSI_FILE_CONSTANT, i * 2 + 1);
+		ti += tgsi_build_full_instruction(&inst, &tokens[ti], header, max_tokens - ti);
+	}
 
 	/* end */
 	inst = vl_end();
@@ -487,9 +501,8 @@ static int vlCreateFragmentShader
 	 * dp4 o0.x, t0, c1	; Multiply pixel by the color conversion matrix
 	 * dp4 o0.y, t0, c2
 	 * dp4 o0.z, t0, c3
-	 * dp4 o0.w, t0, c4	; XXX: Don't need 4th coefficient
 	 */
-	for (i = 0; i < 4; ++i)
+	for (i = 0; i < 3; ++i)
 	{
 		inst = vl_inst3(TGSI_OPCODE_DP4, TGSI_FILE_OUTPUT, 0, TGSI_FILE_TEMPORARY, 0, TGSI_FILE_CONSTANT, i + 1);
 		inst.FullDstRegisters[0].DstRegister.WriteMask = TGSI_WRITEMASK_X << i;
@@ -519,11 +532,11 @@ static int vlCreateDataBufs
 	pipe = csc->pipe;
 
 	/*
-	Create our vertex buffer and vertex buffer element
-	VB contains 4 vertices that render a quad covering the entire window
-	to display a rendered surface
-	Quad is rendered as a tri strip
-	*/
+	 * Create our vertex buffer and vertex buffer element
+	 * VB contains 4 vertices that render a quad covering the entire window
+	 * to display a rendered surface
+	 * Quad is rendered as a tri strip
+	 */
 	csc->vertex_bufs[0].pitch = sizeof(struct vlVertex2f);
 	csc->vertex_bufs[0].max_index = 3;
 	csc->vertex_bufs[0].buffer_offset = 0;
@@ -550,9 +563,9 @@ static int vlCreateDataBufs
 	csc->vertex_elems[0].src_format = PIPE_FORMAT_R32G32_FLOAT;
 
 	/*
-	Create our texcoord buffer and texcoord buffer element
-	Texcoord buffer contains the TCs for mapping the rendered surface to the 4 vertices
-	*/
+	 * Create our texcoord buffer and texcoord buffer element
+	 * Texcoord buffer contains the TCs for mapping the rendered surface to the 4 vertices
+	 */
 	csc->vertex_bufs[1].pitch = sizeof(struct vlVertex2f);
 	csc->vertex_bufs[1].max_index = 3;
 	csc->vertex_bufs[1].buffer_offset = 0;
@@ -579,9 +592,9 @@ static int vlCreateDataBufs
 	csc->vertex_elems[1].src_format = PIPE_FORMAT_R32G32_FLOAT;
 
 	/*
-	Create our vertex shader's constant buffer
-	Const buffer contains scaling and translation vectors
-	*/
+	 * Create our vertex shader's constant buffer
+	 * Const buffer contains scaling and translation vectors
+	 */
 	csc->vs_const_buf.size = sizeof(struct vlVertexShaderConsts);
 	csc->vs_const_buf.buffer = pipe->winsys->buffer_create
 	(
@@ -592,9 +605,9 @@ static int vlCreateDataBufs
 	);
 
 	/*
-	Create our fragment shader's constant buffer
-	Const buffer contains the color conversion matrix and bias vectors
-	*/
+	 * Create our fragment shader's constant buffer
+	 * Const buffer contains the color conversion matrix and bias vectors
+	 */
 	csc->fs_const_buf.size = sizeof(struct vlFragmentShaderConsts);
 	csc->fs_const_buf.buffer = pipe->winsys->buffer_create
 	(
@@ -605,9 +618,9 @@ static int vlCreateDataBufs
 	);
 
 	/*
-	TODO: Refactor this into a seperate function,
-	allow changing the CSC matrix at runtime to switch between regular & full versions
-	*/
+	 * TODO: Refactor this into a seperate function,
+	 * allow changing the CSC matrix at runtime to switch between regular & full versions
+	 */
 	memcpy
 	(
 		pipe->winsys->buffer_map(pipe->winsys, csc->fs_const_buf.buffer, PIPE_BUFFER_USAGE_CPU_WRITE),

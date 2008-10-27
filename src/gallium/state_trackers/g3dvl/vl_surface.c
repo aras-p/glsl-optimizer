@@ -77,6 +77,7 @@ int vlRenderMacroBlocksMpeg2
 {
 	assert(batch);
 	assert(surface);
+	assert(surface->context);
 
 	surface->context->render->vlBegin(surface->context->render);
 
@@ -104,6 +105,8 @@ int vlPutPicture
 	int desty,
 	int destw,
 	int desth,
+	int drawable_w,
+	int drawable_h,
 	enum vlPictureType picture_type
 )
 {
@@ -118,7 +121,7 @@ int vlPutPicture
 	csc = surface->context->csc;
 	pipe = surface->context->pipe;
 
-	csc->vlResizeFrameBuffer(csc, destw, desth);
+	csc->vlResizeFrameBuffer(csc, drawable_w, drawable_h);
 
 	csc->vlBegin(csc);
 
@@ -139,15 +142,70 @@ int vlPutPicture
 
 	csc->vlEnd(csc);
 
-	pipe->flush(pipe, PIPE_FLUSH_RENDER_CACHE, NULL);
+	pipe->flush(pipe, PIPE_FLUSH_RENDER_CACHE, &surface->disp_fence);
+
 	bind_pipe_drawable(pipe, drawable);
-	/* TODO: Need to take destx, desty into consideration */
+
 	pipe->winsys->flush_frontbuffer
 	(
 		pipe->winsys,
 		csc->vlGetFrameBuffer(csc),
 		pipe->priv
 	);
+
+	return 0;
+}
+
+int vlSurfaceGetStatus
+(
+	struct vlSurface *surface,
+	enum vlResourceStatus *status
+)
+{
+	assert(surface);
+	assert(surface->context);
+	assert(status);
+
+	if (surface->render_fence && !surface->context->pipe->winsys->fence_signalled(surface->context->pipe->winsys, surface->render_fence, 0))
+	{
+		*status = vlResourceStatusRendering;
+		return 0;
+	}
+
+	if (surface->disp_fence && !surface->context->pipe->winsys->fence_signalled(surface->context->pipe->winsys, surface->disp_fence, 0))
+	{
+		*status = vlResourceStatusDisplaying;
+		return 0;
+	}
+
+	*status = vlResourceStatusFree;
+
+	return 0;
+}
+
+int vlSurfaceFlush
+(
+	struct vlSurface *surface
+)
+{
+	assert(surface);
+	assert(surface->context);
+
+	surface->context->render->vlFlush(surface->context->render);
+
+	return 0;
+}
+
+int vlSurfaceSync
+(
+	struct vlSurface *surface
+)
+{
+	assert(surface);
+	assert(surface->context);
+	assert(surface->render_fence);
+
+	surface->context->pipe->winsys->fence_finish(surface->context->pipe->winsys, surface->render_fence, 0);
 
 	return 0;
 }

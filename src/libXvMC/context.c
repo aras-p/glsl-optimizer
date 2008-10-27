@@ -15,11 +15,11 @@ static Status Validate
 	unsigned int width,
 	unsigned int height,
 	int flags,
+	int *found_port,
 	int *chroma_format,
 	int *mc_type
 )
 {
-	unsigned int	found_port = 0;
 	unsigned int	found_surface = 0;
 	XvAdaptorInfo	*adaptor_info;
 	unsigned int	num_adaptors;
@@ -30,22 +30,24 @@ static Status Validate
 
 	assert(display && chroma_format);
 
+	*found_port = 0;
+
 	ret = XvQueryAdaptors(display, XDefaultRootWindow(display), &num_adaptors, &adaptor_info);
 	if (ret != Success)
 		return ret;
 
 	/* Scan through all adaptors looking for this port and surface */
-	for (i = 0; i < num_adaptors && !found_port; ++i)
+	for (i = 0; i < num_adaptors && !*found_port; ++i)
 	{
 		/* Scan through all ports of this adaptor looking for our port */
-		for (j = 0; j < adaptor_info[i].num_ports && !found_port; ++j)
+		for (j = 0; j < adaptor_info[i].num_ports && !*found_port; ++j)
 		{
 			/* If this is our port, scan through all its surfaces looking for our surface */
 			if (adaptor_info[i].base_id + j == port)
 			{
 				XvMCSurfaceInfo *surface_info;
 
-				found_port = 1;
+				*found_port = 1;
 				surface_info = XvMCListSurfaceTypes(display, adaptor_info[i].base_id, &num_types);
 
 				if (surface_info)
@@ -75,7 +77,7 @@ static Status Validate
 
 	XvFreeAdaptorInfo(adaptor_info);
 
-	if (!found_port)
+	if (!*found_port)
 		return XvBadPort;
 	if (!found_surface)
 		return BadMatch;
@@ -127,6 +129,7 @@ static enum vlFormat FormatToVL(int xvmc_format)
 
 Status XvMCCreateContext(Display *display, XvPortID port, int surface_type_id, int width, int height, int flags, XvMCContext *context)
 {
+	int			found_port;
 	int			chroma_format;
 	int			mc_type;
 	Status			ret;
@@ -140,8 +143,10 @@ Status XvMCCreateContext(Display *display, XvPortID port, int surface_type_id, i
 	if (!context)
 		return XvMCBadContext;
 
-	ret = Validate(display, port, surface_type_id, width, height, flags, &chroma_format, &mc_type);
-	if (ret != Success)
+	ret = Validate(display, port, surface_type_id, width, height, flags, &found_port, &chroma_format, &mc_type);
+
+	/* XXX: Success and XvBadPort have the same value */
+	if (ret != Success || !found_port)
 		return ret;
 
 	/* XXX: Assumes default screen, should check which screen port is on */

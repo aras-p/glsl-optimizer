@@ -1,1 +1,1 @@
-../../dri/nouveau/nv04_surface.c
+../../drm/nouveau/nv04_surface.c

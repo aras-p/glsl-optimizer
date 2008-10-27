@@ -1,1 +1,1 @@
-../../dri/nouveau/nouveau_notifier.c
+../../drm/nouveau/nouveau_notifier.c

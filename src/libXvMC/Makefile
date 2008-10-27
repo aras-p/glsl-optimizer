@@ -38,27 +38,36 @@ endif
 
 #############################################
 
-.PHONY	= all clean
+ifeq (${DRIVER}, softpipe)
+.PHONY	= all clean g3dvl
+else
+.PHONY	= all clean g3dvl nouveau_winsys
+endif
 
 all: ${TARGET}
 
 ifeq (${DRIVER}, softpipe)
-${TARGET}: ${OBJECTS}
+${TARGET}: ${OBJECTS} g3dvl
+	$(CC) ${LDFLAGS} -shared -Wl,-soname,${SONAME} -o $@ ${OBJECTS} ${LIBS}
+
+g3dvl:
 	cd ${GALLIUMDIR}/state_trackers/g3dvl; ${MAKE}
-	$(CC) ${LDFLAGS} -shared -Wl,-soname,${SONAME} -o $@ $^ ${LIBS}
 
 clean:
 	cd ${GALLIUMDIR}/state_trackers/g3dvl; ${MAKE} clean
 	rm -rf ${OBJECTS} ${TARGET}
 else
-${TARGET}: ${OBJECTS}
+${TARGET}: ${OBJECTS} g3dvl nouveau_winsys
+	$(CC) ${LDFLAGS} -shared -Wl,-soname,${SONAME} -o $@ ${OBJECTS} ${LIBS}
+
+g3dvl:
 	cd ${GALLIUMDIR}/state_trackers/g3dvl; ${MAKE}
+
+nouveau_winsys:
 	cd ${GALLIUMDIR}/winsys/g3dvl/nouveau; ${MAKE}
-	$(CC) ${LDFLAGS} -shared -Wl,-soname,${SONAME} -o $@ $^ ${LIBS}
 
 clean:
 	cd ${GALLIUMDIR}/state_trackers/g3dvl; ${MAKE} clean
 	cd ${GALLIUMDIR}/winsys/g3dvl/nouveau; ${MAKE} clean
 	rm -rf ${OBJECTS} ${TARGET}
 endif
-
