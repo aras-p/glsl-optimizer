@@ -86,8 +86,10 @@ static void upload_binding_table_pointers(struct brw_context *brw)
       brw->wm.bind_bo,
    };
 
-   if (dri_bufmgr_check_aperture_space(aper_array, ARRAY_SIZE(aper_array)))
+   if (dri_bufmgr_check_aperture_space(aper_array, ARRAY_SIZE(aper_array))) {
       intel_batchbuffer_flush(intel->batch);
+      return;
+   }
 
    BEGIN_BATCH(6, IGNORE_CLIPRECTS);
    OUT_BATCH(CMD_BINDING_TABLE_PTRS << 16 | (6 - 2));
@@ -152,8 +154,10 @@ static void upload_psp_urb_cbs(struct brw_context *brw )
       brw->cc.state_bo,
    };
 
-   if (dri_bufmgr_check_aperture_space(aper_array, ARRAY_SIZE(aper_array)))
+   if (dri_bufmgr_check_aperture_space(aper_array, ARRAY_SIZE(aper_array))) {
       intel_batchbuffer_flush(intel->batch);
+      return;
+   }
 
    upload_pipelined_state_pointers(brw);
    brw_upload_urb_fence(brw);
@@ -216,8 +220,10 @@ static void emit_depthbuffer(struct brw_context *brw)
 	 return;
       }
 
-      if (dri_bufmgr_check_aperture_space(aper_array, ARRAY_SIZE(aper_array)))
+      if (dri_bufmgr_check_aperture_space(aper_array, ARRAY_SIZE(aper_array))) {
 	 intel_batchbuffer_flush(intel->batch);
+	 return;
+      }
 
       BEGIN_BATCH(len, IGNORE_CLIPRECTS);
       OUT_BATCH(CMD_DEPTH_BUFFER << 16 | (len - 2));

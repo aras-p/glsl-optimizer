@@ -449,7 +449,8 @@ i830_emit_state(struct intel_context *intel)
    aper_array[aper_count++] = intel->batch->buf;
    if (dirty & I830_UPLOAD_BUFFERS) {
       aper_array[aper_count++] = state->draw_region->buffer;
-      aper_array[aper_count++] = state->depth_region->buffer;
+      if (state->depth_region)
+         aper_array[aper_count++] = state->depth_region->buffer;
    }
 
    for (i = 0; i < I830_TEX_UNITS; i++)

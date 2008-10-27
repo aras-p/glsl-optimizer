@@ -2988,10 +2988,13 @@ choose_texture_format(GLcontext *ctx, struct gl_texture_image *texImage,
 
 
 
-/*
+/**
  * This is the software fallback for Driver.TexImage1D()
  * and Driver.CopyTexImage1D().
  * \sa _mesa_store_teximage2d()
+ * Note that the width may not be the actual texture width since it may
+ * be changed by convolution w/ GL_REDUCE.  The texImage->Width field will
+ * have the actual texture size.
  */
 void
 _mesa_store_teximage1d(GLcontext *ctx, GLenum target, GLint level,
@@ -3002,13 +3005,8 @@ _mesa_store_teximage1d(GLcontext *ctx, GLenum target, GLint level,
                        struct gl_texture_object *texObj,
                        struct gl_texture_image *texImage)
 {
-   GLint postConvWidth = width;
    GLint sizeInBytes;
    (void) border;
-
-   if (ctx->_ImageTransferState & IMAGE_CONVOLUTION_BIT) {
-      _mesa_adjust_image_for_convolution(ctx, 1, &postConvWidth, NULL);
-   }
 
    choose_texture_format(ctx, texImage, 1, format, type, internalFormat);
 
@@ -3016,7 +3014,7 @@ _mesa_store_teximage1d(GLcontext *ctx, GLenum target, GLint level,
    if (texImage->IsCompressed)
       sizeInBytes = texImage->CompressedSize;
    else
-      sizeInBytes = postConvWidth * texImage->TexFormat->TexelBytes;
+      sizeInBytes = texImage->Width * texImage->TexFormat->TexelBytes;
    texImage->Data = _mesa_alloc_texmemory(sizeInBytes);
    if (!texImage->Data) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage1D");
@@ -3076,14 +3074,8 @@ _mesa_store_teximage2d(GLcontext *ctx, GLenum target, GLint level,
                        struct gl_texture_object *texObj,
                        struct gl_texture_image *texImage)
 {
-   GLint postConvWidth = width, postConvHeight = height;
    GLint texelBytes, sizeInBytes;
    (void) border;
-
-   if (ctx->_ImageTransferState & IMAGE_CONVOLUTION_BIT) {
-      _mesa_adjust_image_for_convolution(ctx, 2, &postConvWidth,
-                                         &postConvHeight);
-   }
 
    choose_texture_format(ctx, texImage, 2, format, type, internalFormat);
 
@@ -3093,7 +3085,7 @@ _mesa_store_teximage2d(GLcontext *ctx, GLenum target, GLint level,
    if (texImage->IsCompressed)
       sizeInBytes = texImage->CompressedSize;
    else
-      sizeInBytes = postConvWidth * postConvHeight * texelBytes;
+      sizeInBytes = texImage->Width * texImage->Height * texelBytes;
    texImage->Data = _mesa_alloc_texmemory(sizeInBytes);
    if (!texImage->Data) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage2D");

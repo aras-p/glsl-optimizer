@@ -333,8 +333,10 @@ static void emit_constant_buffer(struct brw_context *brw)
       brw->curbe.curbe_bo,
    };
 
-   if (dri_bufmgr_check_aperture_space(aper_array, ARRAY_SIZE(aper_array)))
+   if (dri_bufmgr_check_aperture_space(aper_array, ARRAY_SIZE(aper_array))) {
       intel_batchbuffer_flush(intel->batch);
+      return;
+   }
 
    BEGIN_BATCH(2, IGNORE_CLIPRECTS);
    if (sz == 0) {
