@@ -95,6 +95,9 @@ struct gen_context
    int const_reg;     /**< GP register pointing to constants buffer */
    int builtins_reg;  /**< GP register pointint to built-in constants */
 
+   int offset_reg;    /**< used to reduce redundant li instructions */
+   int offset_value;
+
    int one_vec;       /**< vector register with {1.0, 1.0, 1.0, 1.0} */
    int bit31_vec;     /**< vector register with {1<<31, 1<<31, 1<<31, 1<<31} */
 
@@ -113,6 +116,70 @@ struct gen_context
 
 
 /**
+ * Initialize code generation context.
+ */
+static void
+init_gen_context(struct gen_context *gen, struct ppc_function *func)
+{
+   memset(gen, 0, sizeof(*gen));
+   gen->f = func;
+   gen->inputs_reg = ppc_reserve_register(func, 3);   /* first function param */
+   gen->outputs_reg = ppc_reserve_register(func, 4);  /* second function param */
+   gen->temps_reg = ppc_reserve_register(func, 5);    /* ... */
+   gen->immed_reg = ppc_reserve_register(func, 6);
+   gen->const_reg = ppc_reserve_register(func, 7);
+   gen->builtins_reg = ppc_reserve_register(func, 8);
+   gen->one_vec = -1;
+   gen->bit31_vec = -1;
+   gen->offset_reg = -1;
+   gen->offset_value = -9999999;
+}
+
+
+/**
+ * All PPC vector load/store instructions form an effective address
+ * by adding the contents of two registers.  For example:
+ *    lvx v2,r8,r9   # v2 = memory[r8 + r9]
+ *    stvx v2,r8,r9  # memory[r8 + r9] = v2;
+ * So our lvx/stvx instructions are typically preceded by an 'li' instruction
+ * to load r9 (above) with an immediate (an offset).
+ * This code emits that 'li' instruction, but only if the offset value is
+ * different than the previous 'li'.
+ * This optimization seems to save about 10% in the instruction count.
+ * Note that we need to unconditionally emit an 'li' inside basic blocks
+ * (such as inside loops).
+ */
+static int
+emit_li_offset(struct gen_context *gen, int offset)
+{
+   if (gen->offset_reg <= 0) {
+      /* allocate a GP register for storing load/store offset */
+      gen->offset_reg = ppc_allocate_register(gen->f);
+   }
+
+   /* emit new 'li' if offset is changing */
+   if (gen->offset_value < 0 || gen->offset_value != offset) {
+      gen->offset_value = offset;
+      ppc_li(gen->f, gen->offset_reg, offset);
+   }
+
+   return gen->offset_reg;
+}
+
+
+/**
+ * Forces subsequent emit_li_offset() calls to emit an 'li'.
+ * To be called at the top of basic blocks.
+ */
+static int
+reset_li_offset(struct gen_context *gen)
+{
+   gen->offset_value = -9999999;
+}
+
+
+
+/**
  * Load the given vector register with {value, value, value, value}.
  * The value must be in the ppu_builtin_constants[] array.
  * We wouldn't need this if there was a simple way to load PPC vector
@@ -124,10 +191,9 @@ load_constant_vec(struct gen_context *gen, int dst_vec, float value)
    uint pos;
    for (pos = 0; pos < Elements(ppc_builtin_constants); pos++) {
       if (ppc_builtin_constants[pos] == value) {
-         int offset_reg = ppc_allocate_register(gen->f);
          int offset = pos * 4;
+         int offset_reg = emit_li_offset(gen, offset);
 
-         ppc_li(gen->f, offset_reg, offset);
          /* Load 4-byte word into vector register.
           * The vector slot depends on the effective address we load from.
           * We know that our builtins start at a 16-byte boundary so we
@@ -137,7 +203,6 @@ load_constant_vec(struct gen_context *gen, int dst_vec, float value)
          ppc_lvewx(gen->f, dst_vec, gen->builtins_reg, offset_reg);
          /* splat word[pos % 4] across the vector reg */
          ppc_vspltw(gen->f, dst_vec, dst_vec, pos % 4);
-         ppc_release_register(gen->f, offset_reg);
          return;
       }
    }
@@ -192,36 +257,29 @@ emit_fetch(struct gen_context *gen,
       switch (reg->SrcRegister.File) {
       case TGSI_FILE_INPUT:
          {
-            int offset_reg = ppc_allocate_register(gen->f);
             int offset = (reg->SrcRegister.Index * 4 + swizzle) * 16;
-            ppc_li(gen->f, offset_reg, offset);
+            int offset_reg = emit_li_offset(gen, offset);
             ppc_lvx(gen->f, dst_vec, gen->inputs_reg, offset_reg);
-            ppc_release_register(gen->f, offset_reg);
          }
          break;
       case TGSI_FILE_TEMPORARY:
          {
-            int offset_reg = ppc_allocate_register(gen->f);
             int offset = (reg->SrcRegister.Index * 4 + swizzle) * 16;
-            ppc_li(gen->f, offset_reg, offset);
+            int offset_reg = emit_li_offset(gen, offset);
             ppc_lvx(gen->f, dst_vec, gen->temps_reg, offset_reg);
-            ppc_release_register(gen->f, offset_reg);
          }
          break;
       case TGSI_FILE_IMMEDIATE:
          {
-            int offset_reg = ppc_allocate_register(gen->f);
             int offset = (reg->SrcRegister.Index * 4 + swizzle) * 16;
-            ppc_li(gen->f, offset_reg, offset);
+            int offset_reg = emit_li_offset(gen, offset);
             ppc_lvx(gen->f, dst_vec, gen->immed_reg, offset_reg);
-            ppc_release_register(gen->f, offset_reg);
          }
          break;
       case TGSI_FILE_CONSTANT:
          {
-            int offset_reg = ppc_allocate_register(gen->f);
             int offset = (reg->SrcRegister.Index * 4 + swizzle) * 4;
-            ppc_li(gen->f, offset_reg, offset);
+            int offset_reg = emit_li_offset(gen, offset);
             /* Load 4-byte word into vector register.
              * The vector slot depends on the effective address we load from.
              * We know that our constants start at a 16-byte boundary so we
@@ -231,7 +289,6 @@ emit_fetch(struct gen_context *gen,
             ppc_lvewx(gen->f, dst_vec, gen->const_reg, offset_reg);
             /* splat word[swizzle] across the vector reg */
             ppc_vspltw(gen->f, dst_vec, dst_vec, swizzle);
-            ppc_release_register(gen->f, offset_reg);
          }
          break;
       default:
@@ -369,20 +426,16 @@ emit_store(struct gen_context *gen,
    switch (reg->DstRegister.File) {
    case TGSI_FILE_OUTPUT:
       {
-         int offset_reg = ppc_allocate_register(gen->f);
          int offset = (reg->DstRegister.Index * 4 + chan_index) * 16;
-         ppc_li(gen->f, offset_reg, offset);
+         int offset_reg = emit_li_offset(gen, offset);
          ppc_stvx(gen->f, src_vec, gen->outputs_reg, offset_reg);
-         ppc_release_register(gen->f, offset_reg);
       }
       break;
    case TGSI_FILE_TEMPORARY:
       {
-         int offset_reg = ppc_allocate_register(gen->f);
          int offset = (reg->DstRegister.Index * 4 + chan_index) * 16;
-         ppc_li(gen->f, offset_reg, offset);
+         int offset_reg = emit_li_offset(gen, offset);
          ppc_stvx(gen->f, src_vec, gen->temps_reg, offset_reg);
-         ppc_release_register(gen->f, offset_reg);
       }
       break;
 #if 0
@@ -946,16 +999,7 @@ tgsi_emit_ppc(const struct tgsi_token *tokens,
 
    util_init_math();
 
-   memset(&gen, 0, sizeof(gen));
-   gen.f = func;
-   gen.inputs_reg = ppc_reserve_register(func, 3);   /* first function param */
-   gen.outputs_reg = ppc_reserve_register(func, 4);  /* second function param */
-   gen.temps_reg = ppc_reserve_register(func, 5);    /* ... */
-   gen.immed_reg = ppc_reserve_register(func, 6);
-   gen.const_reg = ppc_reserve_register(func, 7);
-   gen.builtins_reg = ppc_reserve_register(func, 8);
-   gen.one_vec = -1;
-   gen.bit31_vec = -1;
+   init_gen_context(&gen, func);
 
    emit_prologue(func);
 
