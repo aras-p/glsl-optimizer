@@ -72,11 +72,14 @@ const float ppc_builtin_constants[] ALIGN16_ATTRIB = {
 #define CHAN_Z 2
 #define CHAN_W 3
 
-#define TEMP_ONE_I   TGSI_EXEC_TEMP_ONE_I
-#define TEMP_ONE_C   TGSI_EXEC_TEMP_ONE_C
 
-#define TEMP_R0   TGSI_EXEC_TEMP_R0
-#define TEMP_ADDR TGSI_EXEC_TEMP_ADDR
+
+struct reg_chan_vec
+{
+   struct tgsi_full_src_register src;
+   uint chan;
+   uint vec;
+};
 
 
 /**
@@ -94,6 +97,18 @@ struct gen_context
 
    int one_vec;       /**< vector register with {1.0, 1.0, 1.0, 1.0} */
    int bit31_vec;     /**< vector register with {1<<31, 1<<31, 1<<31, 1<<31} */
+
+
+   /**
+    * Cache of src registers.
+    * This is used to avoid redundant load instructions.
+    */
+   struct {
+      struct tgsi_full_src_register src;
+      uint chan;
+      uint vec;
+   } regs[12];  /* 3 src regs, 4 channels */
+   uint num_regs;
 };
 
 
@@ -261,8 +276,83 @@ emit_fetch(struct gen_context *gen,
    }
 }
 
-#define FETCH( GEN, INST, DST_VEC, SRC_REG, CHAN ) \
-   emit_fetch( GEN, DST_VEC, &(INST).FullSrcRegisters[SRC_REG], CHAN )
+
+
+/**
+ * Test if two TGSI src registers refer to the same memory location.
+ * We use this to avoid redundant register loads.
+ */
+static boolean
+equal_src_locs(const struct tgsi_full_src_register *a, uint chan_a,
+               const struct tgsi_full_src_register *b, uint chan_b)
+{
+   int swz_a, swz_b;
+   int sign_a, sign_b;
+   if (a->SrcRegister.File != b->SrcRegister.File)
+      return FALSE;
+   if (a->SrcRegister.Index != b->SrcRegister.Index)
+      return FALSE;
+   swz_a = tgsi_util_get_full_src_register_extswizzle(a, chan_a);
+   swz_b = tgsi_util_get_full_src_register_extswizzle(b, chan_b);
+   if (swz_a != swz_b)
+      return FALSE;
+   sign_a = tgsi_util_get_full_src_register_sign_mode(a, chan_a);
+   sign_b = tgsi_util_get_full_src_register_sign_mode(b, chan_b);
+   if (sign_a != sign_b)
+      return FALSE;
+   return TRUE;
+}
+
+
+/**
+ * Given a TGSI src register and channel index, return the PPC vector
+ * register containing the value.  We use a cache to prevent re-loading
+ * the same register multiple times.
+ * \return index of PPC vector register with the desired src operand
+ */
+static int
+get_src_vec(struct gen_context *gen,
+            struct tgsi_full_instruction *inst, int src_reg, uint chan)
+{
+   const const struct tgsi_full_src_register *src = 
+      &inst->FullSrcRegisters[src_reg];
+   int vec;
+   uint i;
+
+   /* check the cache */
+   for (i = 0; i < gen->num_regs; i++) {
+      if (equal_src_locs(&gen->regs[i].src, gen->regs[i].chan, src, chan)) {
+         /* cache hit */
+         return gen->regs[i].vec;
+      }
+   }
+
+   /* cache miss: allocate new vec reg and emit fetch/load code */
+   vec = ppc_allocate_vec_register(gen->f);
+   gen->regs[gen->num_regs].src = *src;
+   gen->regs[gen->num_regs].chan = chan;
+   gen->regs[gen->num_regs].vec = vec;
+   gen->num_regs++;
+   emit_fetch(gen, vec, src, chan);
+
+   assert(gen->num_regs <= Elements(gen->regs));
+
+   return vec;
+}
+
+
+/**
+ * Clear the src operand cache.  To be called at the end of each emit function.
+ */
+static void
+release_src_vecs(struct gen_context *gen)
+{
+   uint i;
+   for (i = 0; i < gen->num_regs; i++) {
+      ppc_release_vec_register(gen->f, gen->regs[i].vec);
+   }
+   gen->num_regs = 0;
+}
 
 
 
@@ -333,11 +423,10 @@ emit_store(struct gen_context *gen,
 static void
 emit_scalar_unaryop(struct gen_context *gen, struct tgsi_full_instruction *inst)
 {
-   int v0 = ppc_allocate_vec_register(gen->f);
-   int v1 = ppc_allocate_vec_register(gen->f);
+   int v0, v1 = ppc_allocate_vec_register(gen->f);
    uint chan_index;
 
-   FETCH(gen, *inst, v0, 0, CHAN_X);
+   v0 = get_src_vec(gen, inst, 0, CHAN_X);
 
    switch (inst->Instruction.Opcode) {
    case TGSI_OPCODE_RSQ:
@@ -355,7 +444,8 @@ emit_scalar_unaryop(struct gen_context *gen, struct tgsi_full_instruction *inst)
    FOR_EACH_DST0_ENABLED_CHANNEL( *inst, chan_index ) {
       STORE(gen, *inst, v1, 0, chan_index);
    }
-   ppc_release_vec_register(gen->f, v0);
+
+   release_src_vecs(gen);
    ppc_release_vec_register(gen->f, v1);
 }
 
@@ -363,10 +453,9 @@ emit_scalar_unaryop(struct gen_context *gen, struct tgsi_full_instruction *inst)
 static void
 emit_unaryop(struct gen_context *gen, struct tgsi_full_instruction *inst)
 {
-   int v0 = ppc_allocate_vec_register(gen->f);
    uint chan_index;
    FOR_EACH_DST0_ENABLED_CHANNEL(*inst, chan_index) {
-      FETCH(gen, *inst, 0, 0, chan_index);   /* v0 = srcreg[0] */
+      int v0 = get_src_vec(gen, inst, 0, chan_index);   /* v0 = srcreg[0] */
       switch (inst->Instruction.Opcode) {
       case TGSI_OPCODE_ABS:
          /* turn off the most significant bit of each vector float word */
@@ -404,20 +493,30 @@ emit_unaryop(struct gen_context *gen, struct tgsi_full_instruction *inst)
       }
       STORE(gen, *inst, v0, 0, chan_index);   /* store v0 */
    }
-   ppc_release_vec_register(gen->f, v0);
+
+   release_src_vecs(gen);
 }
 
 
 static void
 emit_binop(struct gen_context *gen, struct tgsi_full_instruction *inst)
 {
-   int v0 = ppc_allocate_vec_register(gen->f);
-   int v1 = ppc_allocate_vec_register(gen->f);
-   int v2 = ppc_allocate_vec_register(gen->f);
-   uint chan_index;
-   FOR_EACH_DST0_ENABLED_CHANNEL(*inst, chan_index) {
-      FETCH(gen, *inst, v0, 0, chan_index);   /* v0 = srcreg[0] */
-      FETCH(gen, *inst, v1, 1, chan_index);   /* v1 = srcreg[1] */
+   int v2, zero_vec = -1;
+   uint chan;
+
+   if (inst->Instruction.Opcode == TGSI_OPCODE_MUL) {
+      zero_vec = ppc_allocate_vec_register(gen->f);
+      ppc_vzero(gen->f, zero_vec);
+   }
+
+   v2 = ppc_allocate_vec_register(gen->f);
+
+   FOR_EACH_DST0_ENABLED_CHANNEL(*inst, chan) {
+      /* fetch src operands */
+      int v0 = get_src_vec(gen, inst, 0, chan);
+      int v1 = get_src_vec(gen, inst, 1, chan);
+
+      /* emit binop */
       switch (inst->Instruction.Opcode) {
       case TGSI_OPCODE_ADD:
          ppc_vaddfp(gen->f, v2, v0, v1);
@@ -426,8 +525,7 @@ emit_binop(struct gen_context *gen, struct tgsi_full_instruction *inst)
          ppc_vsubfp(gen->f, v2, v0, v1);
          break;
       case TGSI_OPCODE_MUL:
-         ppc_vxor(gen->f, v2, v2, v2);        /* v2 = {0, 0, 0, 0} */
-         ppc_vmaddfp(gen->f, v2, v0, v1, v2); /* v2 = v0 * v1 + v0 */
+         ppc_vmaddfp(gen->f, v2, v0, v1, zero_vec);
          break;
       case TGSI_OPCODE_MIN:
          ppc_vminfp(gen->f, v2, v0, v1);
@@ -438,11 +536,54 @@ emit_binop(struct gen_context *gen, struct tgsi_full_instruction *inst)
       default:
          assert(0);
       }
-      STORE(gen, *inst, v2, 0, chan_index);   /* store v2 */
+
+      /* store v2 */
+      STORE(gen, *inst, v2, 0, chan);
    }
-   ppc_release_vec_register(gen->f, v0);
-   ppc_release_vec_register(gen->f, v1);
+
    ppc_release_vec_register(gen->f, v2);
+
+   if (inst->Instruction.Opcode == TGSI_OPCODE_MUL)
+      ppc_release_vec_register(gen->f, zero_vec);
+
+   release_src_vecs(gen);
+}
+
+
+static void
+emit_triop(struct gen_context *gen, struct tgsi_full_instruction *inst)
+{
+   int v3;
+   uint chan;
+
+   v3 = ppc_allocate_vec_register(gen->f);
+
+   FOR_EACH_DST0_ENABLED_CHANNEL(*inst, chan) {
+      /* fetch src operands */
+      int v0 = get_src_vec(gen, inst, 0, chan);
+      int v1 = get_src_vec(gen, inst, 1, chan);
+      int v2 = get_src_vec(gen, inst, 2, chan);
+
+      /* emit ALU */
+      switch (inst->Instruction.Opcode) {
+      case TGSI_OPCODE_MAD:
+         ppc_vmaddfp(gen->f, v3, v0, v1, v2);   /* v3 = v0 * v1 + v2 */
+         break;
+      case TGSI_OPCODE_LRP:
+         ppc_vsubfp(gen->f, v3, v1, v2);        /* v3 = v1 - v2 */
+         ppc_vmaddfp(gen->f, v3, v0, v3, v2);   /* v3 = v0 * v3 + v2 */
+         break;
+      default:
+         assert(0);
+      }
+
+      /* store v3 */
+      STORE(gen, *inst, v3, 0, chan);
+   }
+
+   ppc_release_vec_register(gen->f, v3);
+
+   release_src_vecs(gen);
 }
 
 
@@ -452,16 +593,17 @@ emit_binop(struct gen_context *gen, struct tgsi_full_instruction *inst)
 static void
 emit_inequality(struct gen_context *gen, struct tgsi_full_instruction *inst)
 {
-   int v0 = ppc_allocate_vec_register(gen->f);
-   int v1 = ppc_allocate_vec_register(gen->f);
-   int v2 = ppc_allocate_vec_register(gen->f);
-   uint chan_index;
-   boolean complement = FALSE;
+   int v2;
+   uint chan;
    int one_vec = gen_one_vec(gen);
 
-   FOR_EACH_DST0_ENABLED_CHANNEL(*inst, chan_index) {
-      FETCH(gen, *inst, v0, 0, chan_index);   /* v0 = srcreg[0] */
-      FETCH(gen, *inst, v1, 1, chan_index);   /* v1 = srcreg[1] */
+   v2 = ppc_allocate_vec_register(gen->f);
+
+   FOR_EACH_DST0_ENABLED_CHANNEL(*inst, chan) {
+      /* fetch src operands */
+      int v0 = get_src_vec(gen, inst, 0, chan);
+      int v1 = get_src_vec(gen, inst, 1, chan);
+      boolean complement = FALSE;
 
       switch (inst->Instruction.Opcode) {
       case TGSI_OPCODE_SNE:
@@ -495,87 +637,56 @@ emit_inequality(struct gen_context *gen, struct tgsi_full_instruction *inst)
       else
          ppc_vand(gen->f, v2, one_vec, v2);     /* v2 = one_vec & v2 */
 
-      STORE(gen, *inst, v2, 0, chan_index);   /* store v2 */
+      /* store v2 */
+      STORE(gen, *inst, v2, 0, chan);
    }
 
-   ppc_release_vec_register(gen->f, v0);
-   ppc_release_vec_register(gen->f, v1);
    ppc_release_vec_register(gen->f, v2);
+
+   release_src_vecs(gen);
 }
 
 
 static void
 emit_dotprod(struct gen_context *gen, struct tgsi_full_instruction *inst)
 {
-   int v0 = ppc_allocate_vec_register(gen->f);
-   int v1 = ppc_allocate_vec_register(gen->f);
-   int v2 = ppc_allocate_vec_register(gen->f);
+   int v0, v1, v2;
    uint chan_index;
+
+   v2 = ppc_allocate_vec_register(gen->f);
 
    ppc_vxor(gen->f, v2, v2, v2);           /* v2 = {0, 0, 0, 0} */
 
-   FETCH(gen, *inst, v0, 0, CHAN_X);       /* v0 = src0.XXXX */
-   FETCH(gen, *inst, v1, 1, CHAN_X);       /* v1 = src1.XXXX */
+   v0 = get_src_vec(gen, inst, 0, CHAN_X); /* v0 = src0.XXXX */
+   v1 = get_src_vec(gen, inst, 1, CHAN_X); /* v1 = src1.XXXX */
    ppc_vmaddfp(gen->f, v2, v0, v1, v2);    /* v2 = v0 * v1 + v2 */
 
-   FETCH(gen, *inst, v0, 0, CHAN_Y);       /* v0 = src0.YYYY */
-   FETCH(gen, *inst, v1, 1, CHAN_Y);       /* v1 = src1.YYYY */
+   v0 = get_src_vec(gen, inst, 0, CHAN_Y); /* v0 = src0.YYYY */
+   v1 = get_src_vec(gen, inst, 1, CHAN_Y); /* v1 = src1.YYYY */
    ppc_vmaddfp(gen->f, v2, v0, v1, v2);    /* v2 = v0 * v1 + v2 */
 
-   FETCH(gen, *inst, v0, 0, CHAN_Z);       /* v0 = src0.ZZZZ */
-   FETCH(gen, *inst, v1, 1, CHAN_Z);       /* v1 = src1.ZZZZ */
+   v0 = get_src_vec(gen, inst, 0, CHAN_Z); /* v0 = src0.ZZZZ */
+   v1 = get_src_vec(gen, inst, 1, CHAN_Z); /* v1 = src1.ZZZZ */
    ppc_vmaddfp(gen->f, v2, v0, v1, v2);    /* v2 = v0 * v1 + v2 */
 
    if (inst->Instruction.Opcode == TGSI_OPCODE_DP4) {
-      FETCH(gen, *inst, v0, 0, CHAN_W);    /* v0 = src0.WWWW */
-      FETCH(gen, *inst, v1, 1, CHAN_W);    /* v1 = src1.WWWW */
-      ppc_vmaddfp(gen->f, v2, v0, v1, v2); /* v2 = v0 * v1 + v2 */
+      v0 = get_src_vec(gen, inst, 0, CHAN_W); /* v0 = src0.WWWW */
+      v1 = get_src_vec(gen, inst, 1, CHAN_W); /* v1 = src1.WWWW */
+      ppc_vmaddfp(gen->f, v2, v0, v1, v2);    /* v2 = v0 * v1 + v2 */
    }
    else if (inst->Instruction.Opcode == TGSI_OPCODE_DPH) {
-      FETCH(gen, *inst, v1, 1, CHAN_W);    /* v1 = src1.WWWW */
-      ppc_vaddfp(gen->f, v2, v2, v1);      /* v2 = v2 + v1 */
+      v1 = get_src_vec(gen, inst, 1, CHAN_W); /* v1 = src1.WWWW */
+      ppc_vaddfp(gen->f, v2, v2, v1);         /* v2 = v2 + v1 */
    }
 
    FOR_EACH_DST0_ENABLED_CHANNEL(*inst, chan_index) {
       STORE(gen, *inst, v2, 0, chan_index);  /* store v2 */
    }
-   ppc_release_vec_register(gen->f, v0);
-   ppc_release_vec_register(gen->f, v1);
+
+   release_src_vecs(gen);
+
    ppc_release_vec_register(gen->f, v2);
 }
-
-
-static void
-emit_triop(struct gen_context *gen, struct tgsi_full_instruction *inst)
-{
-   int v0 = ppc_allocate_vec_register(gen->f);
-   int v1 = ppc_allocate_vec_register(gen->f);
-   int v2 = ppc_allocate_vec_register(gen->f);
-   int v3 = ppc_allocate_vec_register(gen->f);
-   uint chan_index;
-   FOR_EACH_DST0_ENABLED_CHANNEL(*inst, chan_index) {
-      FETCH(gen, *inst, v0, 0, chan_index);   /* v0 = srcreg[0] */
-      FETCH(gen, *inst, v1, 1, chan_index);   /* v1 = srcreg[1] */
-      FETCH(gen, *inst, v2, 2, chan_index);   /* v2 = srcreg[2] */
-      switch (inst->Instruction.Opcode) {
-      case TGSI_OPCODE_MAD:
-         ppc_vmaddfp(gen->f, v3, v0, v1, v2);   /* v3 = v0 * v1 + v2 */
-         break;
-      case TGSI_OPCODE_LRP:
-         ppc_vsubfp(gen->f, v3, v1, v2);        /* v3 = v1 - v2 */
-         ppc_vmaddfp(gen->f, v3, v0, v3, v2);   /* v3 = v0 * v3 + v2 */
-         break;
-      default:
-         assert(0);
-      }
-      STORE(gen, *inst, v3, 0, chan_index);   /* store v3 */
-   }
-   ppc_release_vec_register(gen->f, v0);
-   ppc_release_vec_register(gen->f, v1);
-   ppc_release_vec_register(gen->f, v2);
-   ppc_release_vec_register(gen->f, v3);
-}
-
 
 
 /** Approximation for vr = pow(va, vb) */
@@ -610,10 +721,10 @@ emit_lit(struct gen_context *gen, struct tgsi_full_instruction *inst)
    /* Compute Y, Z */
    if (IS_DST0_CHANNEL_ENABLED(*inst, CHAN_Y) ||
        IS_DST0_CHANNEL_ENABLED(*inst, CHAN_Z)) {
-      int x_vec = ppc_allocate_vec_register(gen->f);
+      int x_vec;
       int zero_vec = ppc_allocate_vec_register(gen->f);
 
-      FETCH(gen, *inst, x_vec, 0, CHAN_X);        /* x_vec = src[0].x */
+      x_vec = get_src_vec(gen, inst, 0, CHAN_X);  /* x_vec = src[0].x */
 
       ppc_vzero(gen->f, zero_vec);                /* zero = {0,0,0,0} */
       ppc_vmaxfp(gen->f, x_vec, x_vec, zero_vec); /* x_vec = max(x_vec, 0) */
@@ -623,18 +734,16 @@ emit_lit(struct gen_context *gen, struct tgsi_full_instruction *inst)
       }
 
       if (IS_DST0_CHANNEL_ENABLED(*inst, CHAN_Z)) {
-         int y_vec = ppc_allocate_vec_register(gen->f);
-         int z_vec = ppc_allocate_vec_register(gen->f);
-         int w_vec = ppc_allocate_vec_register(gen->f);
+         int y_vec, z_vec, w_vec;
          int pow_vec = ppc_allocate_vec_register(gen->f);
          int pos_vec = ppc_allocate_vec_register(gen->f);
          int p128_vec = ppc_allocate_vec_register(gen->f);
          int n128_vec = ppc_allocate_vec_register(gen->f);
 
-         FETCH(gen, *inst, y_vec, 0, CHAN_Y);        /* y_vec = src[0].y */
+         y_vec = get_src_vec(gen, inst, 0, CHAN_Y);  /* y_vec = src[0].y */
          ppc_vmaxfp(gen->f, y_vec, y_vec, zero_vec); /* y_vec = max(y_vec, 0) */
 
-         FETCH(gen, *inst, w_vec, 0, CHAN_W);        /* w_vec = src[0].w */
+         w_vec = get_src_vec(gen, inst, 0, CHAN_W);  /* w_vec = src[0].w */
 
          /* clamp Y to [-128, 128] */
          load_constant_vec(gen, p128_vec, 128.0f);
@@ -653,16 +762,12 @@ emit_lit(struct gen_context *gen, struct tgsi_full_instruction *inst)
 
          STORE(gen, *inst, z_vec, 0, CHAN_Z);             /* store Z */
 
-         ppc_release_vec_register(gen->f, y_vec);
-         ppc_release_vec_register(gen->f, z_vec);
-         ppc_release_vec_register(gen->f, w_vec);
          ppc_release_vec_register(gen->f, pow_vec);
          ppc_release_vec_register(gen->f, pos_vec);
          ppc_release_vec_register(gen->f, p128_vec);
          ppc_release_vec_register(gen->f, n128_vec);
       }
 
-      ppc_release_vec_register(gen->f, x_vec);
       ppc_release_vec_register(gen->f, zero_vec);
    }
 
@@ -670,6 +775,8 @@ emit_lit(struct gen_context *gen, struct tgsi_full_instruction *inst)
    if (IS_DST0_CHANNEL_ENABLED(*inst, CHAN_W)) {
       STORE(gen, *inst, one_vec, 0, CHAN_W);
    }
+
+   release_src_vecs(gen);
 }
 
 
@@ -723,10 +830,9 @@ emit_instruction(struct gen_context *gen,
    default:
       return 0;
    }
-
-   
    return 1;
 }
+
 
 static void
 emit_declaration(
@@ -805,6 +911,7 @@ emit_epilogue(struct ppc_function *func)
 {
    ppc_return(func);
    /* XXX restore prev stack frame */
+   debug_printf("PPC: Emitted %u instructions\n", func->num_inst);
 }
 
 
@@ -839,6 +946,7 @@ tgsi_emit_ppc(const struct tgsi_token *tokens,
 
    util_init_math();
 
+   memset(&gen, 0, sizeof(gen));
    gen.f = func;
    gen.inputs_reg = ppc_reserve_register(func, 3);   /* first function param */
    gen.outputs_reg = ppc_reserve_register(func, 4);  /* second function param */
