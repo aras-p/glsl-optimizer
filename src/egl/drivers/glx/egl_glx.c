@@ -67,10 +67,10 @@
 
 #define CALLOC_STRUCT(T)   (struct T *) calloc(1, sizeof(struct T))
 
-static const EGLint all_apis = (EGL_OPENGL_ES_BIT |
-                                EGL_OPENGL_ES2_BIT |
-                                EGL_OPENVG_BIT |
-                                EGL_OPENGL_BIT);
+static const EGLint all_apis = (EGL_OPENGL_ES_BIT
+                                | EGL_OPENGL_ES2_BIT
+                                | EGL_OPENVG_BIT
+                                /* | EGL_OPENGL_BIT */); /* can't do */
 
 struct visual_attribs
 {
