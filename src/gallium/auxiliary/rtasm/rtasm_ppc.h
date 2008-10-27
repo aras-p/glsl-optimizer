@@ -36,7 +36,18 @@
 
 #define PPC_INST_SIZE 4  /**< 4 bytes / instruction */
 
+#define PPC_NUM_REGS 32
+#define PPC_NUM_FP_REGS 32
 #define PPC_NUM_VEC_REGS 32
+
+/** Stack pointer register */
+#define PPC_REG_SP 1
+
+/** Branch conditions */
+#define BRANCH_COND_ALWAYS       0x14  /* binary 1z1zz (z=ignored) */
+
+/** Branch hints */
+#define BRANCH_HINT_SUB_RETURN   0x0   /* binary 00 */
 
 
 struct ppc_function
@@ -44,17 +55,26 @@ struct ppc_function
    uint32_t *store;  /**< instruction buffer */
    uint num_inst;
    uint max_inst;
-   uint32_t vec_used;   /** used/free vector registers bitmask */
    uint32_t reg_used;   /** used/free general-purpose registers bitmask */
+   uint32_t fp_used;   /** used/free floating point registers bitmask */
+   uint32_t vec_used;   /** used/free vector registers bitmask */
 };
 
 
 
 extern void ppc_init_func(struct ppc_function *p, unsigned max_inst);
 extern void ppc_release_func(struct ppc_function *p);
+extern void (*ppc_get_func( struct ppc_function *p ))( void );
+extern void ppc_dump_func(const struct ppc_function *p);
 
-extern int ppc_allocate_vec_register(struct ppc_function *p, int reg);
+extern int ppc_reserve_register(struct ppc_function *p, int reg);
+extern int ppc_allocate_register(struct ppc_function *p);
+extern void ppc_release_register(struct ppc_function *p, int reg);
+extern int ppc_allocate_fp_register(struct ppc_function *p);
+extern void ppc_release_fp_register(struct ppc_function *p, int reg);
+extern int ppc_allocate_vec_register(struct ppc_function *p);
 extern void ppc_release_vec_register(struct ppc_function *p, int reg);
+
 
 
 /**
@@ -126,9 +146,22 @@ extern void
 ppc_vrfiz(struct ppc_function *p, uint vD, uint vB);
 
 
+/** vector store: store vR at mem[vA+vB] */
+extern void
+ppc_stvx(struct ppc_function *p, uint vR, uint vA, uint vB);
+
+/** vector load: vR = mem[vA+vB] */
+extern void
+ppc_lvx(struct ppc_function *p, uint vR, uint vA, uint vB);
+
+/** load vector element word: vR = mem_word[vA+vB] */
+extern void
+ppc_lvewx(struct ppc_function *p, uint vR, uint vA, uint vB);
+
+
 
 /**
- ** bitwise operations
+ ** vector bitwise operations
  **/
 
 
@@ -151,6 +184,15 @@ ppc_vnor(struct ppc_function *p, uint vD, uint vA, uint vB);
 /** vector xor */
 extern void
 ppc_vxor(struct ppc_function *p, uint vD, uint vA, uint vB);
+
+/** Pseudo-instruction: vector move */
+extern void
+ppc_vmove(struct ppc_function *p, uint vD, uint vA);
+
+/** Set vector register to {0,0,0,0} */
+extern void
+ppc_vzero(struct ppc_function *p, uint vr);
+
 
 
 /**
@@ -176,6 +218,107 @@ ppc_vsplthw(struct ppc_function *p, uint vD, uint vB, uint imm);
 /** vector splat word */
 extern void
 ppc_vspltw(struct ppc_function *p, uint vD, uint vB, uint imm);
+
+/** vector splat signed immediate word */
+extern void
+ppc_vspltisw(struct ppc_function *p, uint vD, int imm);
+
+/** vector shift left word: vD[word] = vA[word] << (vB[word] & 0x1f) */
+extern void
+ppc_vslw(struct ppc_function *p, uint vD, uint vA, uint vB);
+
+
+
+/**
+ ** scalar arithmetic
+ **/
+
+extern void
+ppc_add(struct ppc_function *p, uint rt, uint ra, uint rb);
+
+extern void
+ppc_addi(struct ppc_function *p, uint rt, uint ra, int imm);
+
+extern void
+ppc_and(struct ppc_function *p, uint rt, uint ra, uint rb);
+
+extern void
+ppc_andi(struct ppc_function *p, uint rt, uint ra, int imm);
+
+extern void
+ppc_or(struct ppc_function *p, uint rt, uint ra, uint rb);
+
+extern void
+ppc_ori(struct ppc_function *p, uint rt, uint ra, int imm);
+
+extern void
+ppc_xor(struct ppc_function *p, uint rt, uint ra, uint rb);
+
+extern void
+ppc_xori(struct ppc_function *p, uint rt, uint ra, int imm);
+
+extern void
+ppc_mr(struct ppc_function *p, uint rt, uint ra);
+
+extern void
+ppc_li(struct ppc_function *p, uint rt, int imm);
+
+extern void
+ppc_lis(struct ppc_function *p, uint rt, int imm);
+
+extern void
+ppc_load_int(struct ppc_function *p, uint rt, int imm);
+
+
+
+/**
+ ** scalar load/store
+ **/
+
+extern void
+ppc_stwu(struct ppc_function *p, uint rs, uint ra, int d);
+
+extern void
+ppc_stw(struct ppc_function *p, uint rs, uint ra, int d);
+
+extern void
+ppc_lwz(struct ppc_function *p, uint rs, uint ra, int d);
+
+
+
+/**
+ ** Float (non-vector) arithmetic
+ **/
+
+extern void
+ppc_fadd(struct ppc_function *p, uint frt, uint fra, uint frb);
+
+extern void
+ppc_fsub(struct ppc_function *p, uint frt, uint fra, uint frb);
+
+extern void
+ppc_fctiwz(struct ppc_function *p, uint rt, uint ra);
+
+extern void
+ppc_stfs(struct ppc_function *p, uint frs, uint ra, int offset);
+
+extern void
+ppc_stfiwx(struct ppc_function *p, uint frs, uint ra, uint rb);
+
+
+
+/**
+ ** branch instructions
+ **/
+
+extern void
+ppc_blr(struct ppc_function *p);
+
+void
+ppc_bclr(struct ppc_function *p, uint condOp, uint branchHint, uint condReg);
+
+extern void
+ppc_return(struct ppc_function *p);
 
 
 #endif /* RTASM_PPC_H */

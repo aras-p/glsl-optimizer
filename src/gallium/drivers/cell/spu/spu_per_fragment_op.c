@@ -40,6 +40,24 @@
 #define LINEAR_QUAD_LAYOUT 1
 
 
+static INLINE vector float
+spu_min(vector float a, vector float b)
+{
+   vector unsigned int m;
+   m = spu_cmpgt(a, b);    /* m = a > b ? ~0 : 0 */
+   return spu_sel(a, b, m);
+}
+
+
+static INLINE vector float
+spu_max(vector float a, vector float b)
+{
+   vector unsigned int m;
+   m = spu_cmpgt(a, b);    /* m = a > b ? ~0 : 0 */
+   return spu_sel(b, a, m);
+}
+
+
 /**
  * Called by rasterizer for each quad after the shader has run.  Do
  * all the per-fragment operations including alpha test, z test,
@@ -242,7 +260,7 @@ spu_fallback_fragment_ops(uint x, uint y,
       }
 
       /*
-       * Compute Src RGB terms
+       * Compute Src RGB terms (fragment color * factor)
        */
       switch (spu.blend.rgb_src_factor) {
       case PIPE_BLENDFACTOR_ONE:
@@ -265,13 +283,33 @@ spu_fallback_fragment_ops(uint x, uint y,
          term1g = spu_mul(fragG, fragA);
          term1b = spu_mul(fragB, fragA);
          break;
+      case PIPE_BLENDFACTOR_DST_COLOR:
+         term1r = spu_mul(fragR, fbRGBA[0]);
+         term1g = spu_mul(fragG, fbRGBA[1]);
+         term1b = spu_mul(fragB, fbRGBA[1]);
+         break;
+      case PIPE_BLENDFACTOR_DST_ALPHA:
+         term1r = spu_mul(fragR, fbRGBA[3]);
+         term1g = spu_mul(fragG, fbRGBA[3]);
+         term1b = spu_mul(fragB, fbRGBA[3]);
+         break;
+      case PIPE_BLENDFACTOR_CONST_COLOR:
+         term1r = spu_mul(fragR, spu_splats(spu.blend_color.color[0]));
+         term1g = spu_mul(fragG, spu_splats(spu.blend_color.color[1]));
+         term1b = spu_mul(fragB, spu_splats(spu.blend_color.color[2]));
+         break;
+      case PIPE_BLENDFACTOR_CONST_ALPHA:
+         term1r = spu_mul(fragR, spu_splats(spu.blend_color.color[3]));
+         term1g = spu_mul(fragG, spu_splats(spu.blend_color.color[3]));
+         term1b = spu_mul(fragB, spu_splats(spu.blend_color.color[3]));
+         break;
       /* XXX more cases */
       default:
          ASSERT(0);
       }
 
       /*
-       * Compute Src Alpha term
+       * Compute Src Alpha term (fragment alpha * factor)
        */
       switch (spu.blend.alpha_src_factor) {
       case PIPE_BLENDFACTOR_ONE:
@@ -283,19 +321,29 @@ spu_fallback_fragment_ops(uint x, uint y,
       case PIPE_BLENDFACTOR_SRC_ALPHA:
          term1a = spu_mul(fragA, fragA);
          break;
+      case PIPE_BLENDFACTOR_DST_COLOR:
+         /* fall-through */
+      case PIPE_BLENDFACTOR_DST_ALPHA:
+         term1a = spu_mul(fragA, fbRGBA[3]);
+         break;
+      case PIPE_BLENDFACTOR_CONST_COLOR:
+         /* fall-through */
+      case PIPE_BLENDFACTOR_CONST_ALPHA:
+         term1a = spu_mul(fragR, spu_splats(spu.blend_color.color[3]));
+         break;
       /* XXX more cases */
       default:
          ASSERT(0);
       }
 
       /*
-       * Compute Dest RGB terms
+       * Compute Dest RGB terms (framebuffer color * factor)
        */
       switch (spu.blend.rgb_dst_factor) {
       case PIPE_BLENDFACTOR_ONE:
-         term2r = fragR;
-         term2g = fragG;
-         term2b = fragB;
+         term2r = fbRGBA[0];
+         term2g = fbRGBA[1];
+         term2b = fbRGBA[2];
          break;
       case PIPE_BLENDFACTOR_ZERO:
          term2r =
@@ -319,17 +367,37 @@ spu_fallback_fragment_ops(uint x, uint y,
          term2g = spu_mul(fbRGBA[1], tmp);
          term2b = spu_mul(fbRGBA[2], tmp);
          break;
-      /* XXX more cases */
+      case PIPE_BLENDFACTOR_DST_COLOR:
+         term2r = spu_mul(fbRGBA[0], fbRGBA[0]);
+         term2g = spu_mul(fbRGBA[1], fbRGBA[1]);
+         term2b = spu_mul(fbRGBA[2], fbRGBA[2]);
+         break;
+      case PIPE_BLENDFACTOR_DST_ALPHA:
+         term2r = spu_mul(fbRGBA[0], fbRGBA[3]);
+         term2g = spu_mul(fbRGBA[1], fbRGBA[3]);
+         term2b = spu_mul(fbRGBA[2], fbRGBA[3]);
+         break;
+      case PIPE_BLENDFACTOR_CONST_COLOR:
+         term2r = spu_mul(fbRGBA[0], spu_splats(spu.blend_color.color[0]));
+         term2g = spu_mul(fbRGBA[1], spu_splats(spu.blend_color.color[1]));
+         term2b = spu_mul(fbRGBA[2], spu_splats(spu.blend_color.color[2]));
+         break;
+      case PIPE_BLENDFACTOR_CONST_ALPHA:
+         term2r = spu_mul(fbRGBA[0], spu_splats(spu.blend_color.color[3]));
+         term2g = spu_mul(fbRGBA[1], spu_splats(spu.blend_color.color[3]));
+         term2b = spu_mul(fbRGBA[2], spu_splats(spu.blend_color.color[3]));
+         break;
+       /* XXX more cases */
       default:
          ASSERT(0);
       }
 
       /*
-       * Compute Dest Alpha term
+       * Compute Dest Alpha term (framebuffer alpha * factor)
        */
       switch (spu.blend.alpha_dst_factor) {
       case PIPE_BLENDFACTOR_ONE:
-         term2a = fragA;
+         term2a = fbRGBA[3];
          break;
       case PIPE_BLENDFACTOR_SRC_COLOR:
          term2a = spu_splats(0.0f);
@@ -341,6 +409,16 @@ spu_fallback_fragment_ops(uint x, uint y,
          one = spu_splats(1.0f);
          tmp = spu_sub(one, fragA);
          term2a = spu_mul(fbRGBA[3], tmp);
+         break;
+      case PIPE_BLENDFACTOR_DST_COLOR:
+         /* fall-through */
+      case PIPE_BLENDFACTOR_DST_ALPHA:
+         term2a = spu_mul(fbRGBA[3], fbRGBA[3]);
+         break;
+      case PIPE_BLENDFACTOR_CONST_COLOR:
+         /* fall-through */
+      case PIPE_BLENDFACTOR_CONST_ALPHA:
+         term2a = spu_mul(fbRGBA[3], spu_splats(spu.blend_color.color[3]));
          break;
       /* XXX more cases */
       default:
@@ -361,7 +439,21 @@ spu_fallback_fragment_ops(uint x, uint y,
          fragG = spu_sub(term1g, term2g);
          fragB = spu_sub(term1b, term2b);
          break;
-      /* XXX more cases */
+      case PIPE_BLEND_REVERSE_SUBTRACT:
+         fragR = spu_sub(term2r, term1r);
+         fragG = spu_sub(term2g, term1g);
+         fragB = spu_sub(term2b, term1b);
+         break;
+      case PIPE_BLEND_MIN:
+         fragR = spu_min(term1r, term2r);
+         fragG = spu_min(term1g, term2g);
+         fragB = spu_min(term1b, term2b);
+         break;
+      case PIPE_BLEND_MAX:
+         fragR = spu_max(term1r, term2r);
+         fragG = spu_max(term1g, term2g);
+         fragB = spu_max(term1b, term2b);
+         break;
       default:
          ASSERT(0);
       }
@@ -376,7 +468,15 @@ spu_fallback_fragment_ops(uint x, uint y,
       case PIPE_BLEND_SUBTRACT:
          fragA = spu_sub(term1a, term2a);
          break;
-      /* XXX more cases */
+      case PIPE_BLEND_REVERSE_SUBTRACT:
+         fragA = spu_sub(term2a, term1a);
+         break;
+      case PIPE_BLEND_MIN:
+         fragA = spu_min(term1a, term2a);
+         break;
+      case PIPE_BLEND_MAX:
+         fragA = spu_max(term1a, term2a);
+         break;
       default:
          ASSERT(0);
       }

@@ -1,3 +1,4 @@
+/* -*- mode: c; tab-width: 3; indent-tabs-mode: nil; c-basic-offset: 3; coding: utf-8-unix -*- */
 /*
  * (C) Copyright IBM Corporation 2002, 2004
  * All Rights Reserved.
@@ -48,27 +49,29 @@
 #define EXT_ENABLED(bit,supported) (IS_SET( supported, bit ))
 
 
-struct extension_info {
-   const char * const name;
-   unsigned   name_len;
+struct extension_info
+{
+   const char *const name;
+   unsigned name_len;
 
-   unsigned char  bit;
+   unsigned char bit;
 
    /* This is the lowest version of GLX that "requires" this extension.
     * For example, GLX 1.3 requires SGIX_fbconfig, SGIX_pbuffer, and
     * SGI_make_current_read.  If the extension is not required by any known
     * version of GLX, use 0, 0.
     */
-   unsigned char  version_major;
-   unsigned char  version_minor;
-   unsigned char  client_support;
-   unsigned char  direct_support;
-   unsigned char  client_only;       /** Is the extension client-side only? */
-   unsigned char  direct_only;       /** Is the extension for direct
+   unsigned char version_major;
+   unsigned char version_minor;
+   unsigned char client_support;
+   unsigned char direct_support;
+   unsigned char client_only;        /** Is the extension client-side only? */
+   unsigned char direct_only;        /** Is the extension for direct
 				      * contexts only?
 				      */
 };
 
+/* *INDENT-OFF* */
 static const struct extension_info known_glx_extensions[] = {
    { GLX(ARB_get_proc_address),        VER(1,4), Y, N, Y, N },
    { GLX(ARB_multisample),             VER(1,4), Y, Y, N, N },
@@ -245,14 +248,15 @@ static const struct extension_info known_gl_extensions[] = {
    { GL(SUN_slice_accum),                VER(0,0), Y, N, N, N },
    { NULL }
 };
+/* *INDENT-ON* */
 
 
 /* global bit-fields of available extensions and their characteristics */
 static unsigned char client_glx_support[8];
 static unsigned char client_glx_only[8];
 static unsigned char direct_glx_only[8];
-static unsigned char client_gl_support[ __GL_EXT_BYTES ];
-static unsigned char client_gl_only[ __GL_EXT_BYTES ];
+static unsigned char client_gl_support[__GL_EXT_BYTES];
+static unsigned char client_gl_only[__GL_EXT_BYTES];
 
 /**
  * Bits representing the set of extensions that are enabled by default in all
@@ -267,12 +271,13 @@ static const unsigned gl_major = 1;
 static const unsigned gl_minor = 4;
 
 /* client extensions string */
-static const char * __glXGLXClientExtensions = NULL;
+static const char *__glXGLXClientExtensions = NULL;
 
-static void __glXExtensionsCtr( void );
-static void __glXExtensionsCtrScreen( __GLXscreenConfigs *psc );
-static void __glXProcessServerString( const struct extension_info * ext,
-    const char * server_string, unsigned char * server_support );
+static void __glXExtensionsCtr(void);
+static void __glXExtensionsCtrScreen(__GLXscreenConfigs * psc);
+static void __glXProcessServerString(const struct extension_info *ext,
+                                     const char *server_string,
+                                     unsigned char *server_support);
 
 /**
  * Set the state of a GLX extension.
@@ -283,24 +288,24 @@ static void __glXProcessServerString( const struct extension_info * ext,
  * \param supported Table in which the state of the extension is to be set.
  */
 static void
-set_glx_extension( const struct extension_info * ext,
-		   const char * name, unsigned name_len, GLboolean state,
-		   unsigned char * supported )
+set_glx_extension(const struct extension_info *ext,
+                  const char *name, unsigned name_len, GLboolean state,
+                  unsigned char *supported)
 {
-   unsigned   i;
+   unsigned i;
 
 
-   for ( i = 0 ; ext[i].name != NULL ; i++ ) {
-      if ( (name_len == ext[i].name_len)
-	   && (strncmp( ext[i].name, name, name_len ) == 0) ) {
-	 if ( state ) {
-	    SET_BIT( supported, ext[i].bit );
-	 }
-	 else {
-	    CLR_BIT( supported, ext[i].bit );
-	 }
+   for (i = 0; ext[i].name != NULL; i++) {
+      if ((name_len == ext[i].name_len)
+          && (strncmp(ext[i].name, name, name_len) == 0)) {
+         if (state) {
+            SET_BIT(supported, ext[i].bit);
+         }
+         else {
+            CLR_BIT(supported, ext[i].bit);
+         }
 
-	 return;
+         return;
       }
    }
 }
@@ -321,49 +326,47 @@ set_glx_extension( const struct extension_info * ext,
  * the data pointed by \c server_support must be preinitialized to zero.
  */
 static void
-__glXProcessServerString( const struct extension_info * ext,
-			  const char * server_string,
-			  unsigned char * server_support )
+__glXProcessServerString(const struct extension_info *ext,
+                         const char *server_string,
+                         unsigned char *server_support)
 {
-   unsigned  base;
-   unsigned  len;
+   unsigned base;
+   unsigned len;
 
-   for ( base = 0 ; server_string[ base ] != NUL ; /* empty */ ) {
+   for (base = 0; server_string[base] != NUL; /* empty */ ) {
       /* Determine the length of the next extension name.
        */
-      for ( len = 0
-	    ; (server_string[ base + len ] != SEPARATOR)
-	    && (server_string[ base + len ] != NUL)
-	    ; len++ ) {
-	 /* empty */
+      for (len = 0; (server_string[base + len] != SEPARATOR)
+           && (server_string[base + len] != NUL);
+           len++) {
+         /* empty */
       }
 
       /* Set the bit for the extension in the server_support table.
        */
-      set_glx_extension( ext, & server_string[ base ], len, GL_TRUE,
-			 server_support );
+      set_glx_extension(ext, &server_string[base], len, GL_TRUE,
+                        server_support);
 
- 
+
       /* Advance to the next extension string.  This means that we skip
        * over the previous string and any trialing white-space.
        */
-      for ( base += len ;
-	    (server_string[ base ] == SEPARATOR)
-	    && (server_string[ base ] != NUL)
-	    ; base++ ) {
-	 /* empty */
+      for (base += len; (server_string[base] == SEPARATOR)
+           && (server_string[base] != NUL);
+           base++) {
+         /* empty */
       }
    }
 }
 
 void
-__glXEnableDirectExtension(__GLXscreenConfigs *psc, const char *name)
+__glXEnableDirectExtension(__GLXscreenConfigs * psc, const char *name)
 {
-    __glXExtensionsCtr();
-    __glXExtensionsCtrScreen(psc);
+   __glXExtensionsCtr();
+   __glXExtensionsCtrScreen(psc);
 
-    set_glx_extension(known_glx_extensions,
-		      name, strlen(name), GL_TRUE, psc->direct_support);
+   set_glx_extension(known_glx_extensions,
+                     name, strlen(name), GL_TRUE, psc->direct_support);
 }
 
 /**
@@ -371,58 +374,58 @@ __glXEnableDirectExtension(__GLXscreenConfigs *psc, const char *name)
  */
 
 static void
-__glXExtensionsCtr( void )
+__glXExtensionsCtr(void)
 {
-   unsigned   i;
+   unsigned i;
    static GLboolean ext_list_first_time = GL_TRUE;
 
 
-   if ( ext_list_first_time ) {
+   if (ext_list_first_time) {
       ext_list_first_time = GL_FALSE;
 
-      (void) memset( client_glx_support, 0, sizeof( client_glx_support ) );
-      (void) memset( direct_glx_support, 0, sizeof( direct_glx_support ) );
-      (void) memset( client_glx_only,    0, sizeof( client_glx_only ) );
-      (void) memset( direct_glx_only,    0, sizeof( direct_glx_only ) );
+      (void) memset(client_glx_support, 0, sizeof(client_glx_support));
+      (void) memset(direct_glx_support, 0, sizeof(direct_glx_support));
+      (void) memset(client_glx_only, 0, sizeof(client_glx_only));
+      (void) memset(direct_glx_only, 0, sizeof(direct_glx_only));
 
-      (void) memset( client_gl_support,  0, sizeof( client_gl_support ) );
-      (void) memset( client_gl_only,     0, sizeof( client_gl_only ) );
+      (void) memset(client_gl_support, 0, sizeof(client_gl_support));
+      (void) memset(client_gl_only, 0, sizeof(client_gl_only));
 
-      for ( i = 0 ; known_glx_extensions[i].name != NULL ; i++ ) {
-	 const unsigned  bit = known_glx_extensions[i].bit;
+      for (i = 0; known_glx_extensions[i].name != NULL; i++) {
+         const unsigned bit = known_glx_extensions[i].bit;
 
-	 if ( known_glx_extensions[i].client_support ) {
-	    SET_BIT( client_glx_support, bit );
-	 }
+         if (known_glx_extensions[i].client_support) {
+            SET_BIT(client_glx_support, bit);
+         }
 
-	 if ( known_glx_extensions[i].direct_support ) {
-	    SET_BIT( direct_glx_support, bit );
-	 }
+         if (known_glx_extensions[i].direct_support) {
+            SET_BIT(direct_glx_support, bit);
+         }
 
-	 if ( known_glx_extensions[i].client_only ) {
-	    SET_BIT( client_glx_only, bit );
-	 }
+         if (known_glx_extensions[i].client_only) {
+            SET_BIT(client_glx_only, bit);
+         }
 
-	 if ( known_glx_extensions[i].direct_only ) {
-	    SET_BIT( direct_glx_only, bit );
-	 }
+         if (known_glx_extensions[i].direct_only) {
+            SET_BIT(direct_glx_only, bit);
+         }
       }
 
-      for ( i = 0 ; known_gl_extensions[i].name != NULL ; i++ ) {
-	 const unsigned  bit = known_gl_extensions[i].bit;
+      for (i = 0; known_gl_extensions[i].name != NULL; i++) {
+         const unsigned bit = known_gl_extensions[i].bit;
 
-	 if ( known_gl_extensions[i].client_support ) {
-	    SET_BIT( client_gl_support, bit );
-	 }
+         if (known_gl_extensions[i].client_support) {
+            SET_BIT(client_gl_support, bit);
+         }
 
-	 if ( known_gl_extensions[i].client_only ) {
-	    SET_BIT( client_gl_only, bit );
-	 }
+         if (known_gl_extensions[i].client_only) {
+            SET_BIT(client_gl_only, bit);
+         }
       }
-      
+
 #if 0
-      fprintf( stderr, "[%s:%u] Maximum client library version: %u.%u\n",
-	       __func__, __LINE__, gl_major, gl_minor );
+      fprintf(stderr, "[%s:%u] Maximum client library version: %u.%u\n",
+              __func__, __LINE__, gl_major, gl_minor);
 #endif
    }
 }
@@ -435,13 +438,13 @@ __glXExtensionsCtr( void )
  */
 
 static void
-__glXExtensionsCtrScreen( __GLXscreenConfigs *psc )
+__glXExtensionsCtrScreen(__GLXscreenConfigs * psc)
 {
-    if (psc->ext_list_first_time) {
-	psc->ext_list_first_time = GL_FALSE;
-	(void) memcpy( psc->direct_support, direct_glx_support,
-		       sizeof( direct_glx_support ) );
-    }
+   if (psc->ext_list_first_time) {
+      psc->ext_list_first_time = GL_FALSE;
+      (void) memcpy(psc->direct_support, direct_glx_support,
+                    sizeof(direct_glx_support));
+   }
 }
 
 
@@ -455,14 +458,14 @@ __glXExtensionsCtrScreen( __GLXscreenConfigs *psc )
  *          \c NULL, then \c GL_FALSE is returned.
  */
 GLboolean
-__glXExtensionBitIsEnabled( __GLXscreenConfigs *psc, unsigned bit )
+__glXExtensionBitIsEnabled(__GLXscreenConfigs * psc, unsigned bit)
 {
    GLboolean enabled = GL_FALSE;
 
-   if ( psc != NULL ) {
+   if (psc != NULL) {
       __glXExtensionsCtr();
-      __glXExtensionsCtrScreen( psc );
-      enabled = EXT_ENABLED( bit, psc->direct_support );
+      __glXExtensionsCtrScreen(psc);
+      enabled = EXT_ENABLED(bit, psc->direct_support);
    }
 
    return enabled;
@@ -474,12 +477,12 @@ __glXExtensionBitIsEnabled( __GLXscreenConfigs *psc, unsigned bit )
  *
  */
 GLboolean
-__glExtensionBitIsEnabled( const __GLXcontext * gc, unsigned bit )
+__glExtensionBitIsEnabled(const __GLXcontext * gc, unsigned bit)
 {
    GLboolean enabled = GL_FALSE;
 
-   if ( gc != NULL ) {
-      enabled = EXT_ENABLED( bit, gc->gl_extension_bits );
+   if (gc != NULL) {
+      enabled = EXT_ENABLED(bit, gc->gl_extension_bits);
    }
 
    return enabled;
@@ -491,34 +494,34 @@ __glExtensionBitIsEnabled( const __GLXcontext * gc, unsigned bit )
  * Convert a bit-field to a string of supported extensions.
  */
 static char *
-__glXGetStringFromTable( const struct extension_info * ext,
-			 const unsigned char * supported )
+__glXGetStringFromTable(const struct extension_info *ext,
+                        const unsigned char *supported)
 {
-   unsigned   i;
-   unsigned   ext_str_len;
-   char * ext_str;
-   char * point;
+   unsigned i;
+   unsigned ext_str_len;
+   char *ext_str;
+   char *point;
 
 
    ext_str_len = 0;
-   for ( i = 0 ; ext[i].name != NULL ; i++ ) {
-      if ( EXT_ENABLED( ext[i].bit, supported ) ) {
-	 ext_str_len += ext[i].name_len + 1;
+   for (i = 0; ext[i].name != NULL; i++) {
+      if (EXT_ENABLED(ext[i].bit, supported)) {
+         ext_str_len += ext[i].name_len + 1;
       }
    }
 
-   ext_str = Xmalloc( ext_str_len + 1 );
-   if ( ext_str != NULL ) {
+   ext_str = Xmalloc(ext_str_len + 1);
+   if (ext_str != NULL) {
       point = ext_str;
 
-      for ( i = 0 ; ext[i].name != NULL ; i++ ) {
-	 if ( EXT_ENABLED( ext[i].bit, supported ) ) {
-	    (void) memcpy( point, ext[i].name, ext[i].name_len );
-	    point += ext[i].name_len;
+      for (i = 0; ext[i].name != NULL; i++) {
+         if (EXT_ENABLED(ext[i].bit, supported)) {
+            (void) memcpy(point, ext[i].name, ext[i].name_len);
+            point += ext[i].name_len;
 
-	    *point = ' ';
-	    point++;
-	 }
+            *point = ' ';
+            point++;
+         }
       }
 
       *point = '\0';
@@ -532,12 +535,12 @@ __glXGetStringFromTable( const struct extension_info * ext,
  * Get the string of client library supported extensions.
  */
 const char *
-__glXGetClientExtensions( void )
+__glXGetClientExtensions(void)
 {
-   if ( __glXGLXClientExtensions == NULL ) {
+   if (__glXGLXClientExtensions == NULL) {
       __glXExtensionsCtr();
-      __glXGLXClientExtensions = __glXGetStringFromTable( known_glx_extensions,
-							  client_glx_support );
+      __glXGLXClientExtensions = __glXGetStringFromTable(known_glx_extensions,
+                                                         client_glx_support);
    }
 
    return __glXGLXClientExtensions;
@@ -555,20 +558,20 @@ __glXGetClientExtensions( void )
  */
 
 void
-__glXCalculateUsableExtensions( __GLXscreenConfigs *psc,
-				GLboolean display_is_direct_capable,
-				int minor_version )
+__glXCalculateUsableExtensions(__GLXscreenConfigs * psc,
+                               GLboolean display_is_direct_capable,
+                               int minor_version)
 {
    unsigned char server_support[8];
    unsigned char usable[8];
-   unsigned      i;
+   unsigned i;
 
    __glXExtensionsCtr();
-   __glXExtensionsCtrScreen( psc );
+   __glXExtensionsCtrScreen(psc);
 
-   (void) memset( server_support, 0, sizeof( server_support ) );
-   __glXProcessServerString( known_glx_extensions,
-			     psc->serverGLXexts, server_support );
+   (void) memset(server_support, 0, sizeof(server_support));
+   __glXProcessServerString(known_glx_extensions,
+                            psc->serverGLXexts, server_support);
 
 
    /* This is a hack.  Some servers support GLX 1.3 but don't export
@@ -577,20 +580,20 @@ __glXCalculateUsableExtensions( __GLXscreenConfigs *psc,
     * "emulated" as well.
     */
 
-   if ( minor_version >= 3 ) {
-      SET_BIT( server_support, EXT_visual_info_bit );
-      SET_BIT( server_support, EXT_visual_rating_bit );
-      SET_BIT( server_support, SGI_make_current_read_bit );
-      SET_BIT( server_support, SGIX_fbconfig_bit );
-      SET_BIT( server_support, SGIX_pbuffer_bit );
-       
+   if (minor_version >= 3) {
+      SET_BIT(server_support, EXT_visual_info_bit);
+      SET_BIT(server_support, EXT_visual_rating_bit);
+      SET_BIT(server_support, SGI_make_current_read_bit);
+      SET_BIT(server_support, SGIX_fbconfig_bit);
+      SET_BIT(server_support, SGIX_pbuffer_bit);
+
       /* This one is a little iffy.  GLX 1.3 doesn't incorporate all of this
        * extension.  However, the only part that is not strictly client-side
        * is shared.  That's the glXQueryContext / glXQueryContextInfoEXT
        * function.
        */
 
-      SET_BIT( server_support, EXT_import_context_bit );
+      SET_BIT(server_support, EXT_import_context_bit);
    }
 
 
@@ -604,22 +607,24 @@ __glXCalculateUsableExtensions( __GLXscreenConfigs *psc,
     * support it.
     */
 
-   if ( display_is_direct_capable ) {
-      for ( i = 0 ; i < 8 ; i++ ) {
-	 usable[i] = (client_glx_support[i] & client_glx_only[i])
-	     | (client_glx_support[i] & psc->direct_support[i] & server_support[i])
-	     | (client_glx_support[i] & psc->direct_support[i] & direct_glx_only[i]);
+   if (display_is_direct_capable) {
+      for (i = 0; i < 8; i++) {
+         usable[i] = (client_glx_support[i] & client_glx_only[i])
+            | (client_glx_support[i] & psc->
+               direct_support[i] & server_support[i])
+            | (client_glx_support[i] & psc->
+               direct_support[i] & direct_glx_only[i]);
       }
    }
    else {
-      for ( i = 0 ; i < 8 ; i++ ) {
-	 usable[i] = (client_glx_support[i] & client_glx_only[i])
-	     | (client_glx_support[i] & server_support[i]);
+      for (i = 0; i < 8; i++) {
+         usable[i] = (client_glx_support[i] & client_glx_only[i])
+            | (client_glx_support[i] & server_support[i]);
       }
    }
 
-   psc->effectiveGLXexts = __glXGetStringFromTable( known_glx_extensions,
-						    usable );
+   psc->effectiveGLXexts = __glXGetStringFromTable(known_glx_extensions,
+                                                   usable);
 }
 
 
@@ -634,32 +639,33 @@ __glXCalculateUsableExtensions( __GLXscreenConfigs *psc,
  */
 
 void
-__glXCalculateUsableGLExtensions( __GLXcontext * gc,
-				  const char * server_string,
-				  int major_version, int minor_version )
+__glXCalculateUsableGLExtensions(__GLXcontext * gc,
+                                 const char *server_string,
+                                 int major_version, int minor_version)
 {
-   unsigned char server_support[ __GL_EXT_BYTES ];
-   unsigned char usable[ __GL_EXT_BYTES ];
-   unsigned      i;
+   unsigned char server_support[__GL_EXT_BYTES];
+   unsigned char usable[__GL_EXT_BYTES];
+   unsigned i;
 
 
    __glXExtensionsCtr();
 
-   (void) memset( server_support, 0, sizeof( server_support ) );
-   __glXProcessServerString( known_gl_extensions, server_string,
-			     server_support );
+   (void) memset(server_support, 0, sizeof(server_support));
+   __glXProcessServerString(known_gl_extensions, server_string,
+                            server_support);
 
 
    /* Handle lazy servers that don't export all the extensions strings that
     * are part of the GL core version that they support.
     */
 
-   for ( i = 0 ; i < __GL_EXT_BYTES ; i++ ) {
-      if ( (known_gl_extensions[i].version_major != 0)
-	   && ((major_version > known_gl_extensions[i].version_major)
-	       || ((major_version == known_gl_extensions[i].version_major)
-		   && (minor_version >= known_gl_extensions[i].version_minor))) ) {
-	 SET_BIT( server_support, known_gl_extensions[i].bit );
+   for (i = 0; i < __GL_EXT_BYTES; i++) {
+      if ((known_gl_extensions[i].version_major != 0)
+          && ((major_version > known_gl_extensions[i].version_major)
+              || ((major_version == known_gl_extensions[i].version_major)
+                  && (minor_version >=
+                      known_gl_extensions[i].version_minor)))) {
+         SET_BIT(server_support, known_gl_extensions[i].bit);
       }
    }
 
@@ -669,14 +675,14 @@ __glXCalculateUsableGLExtensions( __GLXcontext * gc,
     * and it only needs client-side support.
     */
 
-   for ( i = 0 ; i < __GL_EXT_BYTES ; i++ ) {
+   for (i = 0; i < __GL_EXT_BYTES; i++) {
       usable[i] = (client_gl_support[i] & client_gl_only[i])
-	| (client_gl_support[i] & server_support[i]);
+         | (client_gl_support[i] & server_support[i]);
    }
 
-   gc->extensions = (unsigned char *) 
-     __glXGetStringFromTable( known_gl_extensions, usable );
-   (void) memcpy( gc->gl_extension_bits, usable, sizeof( usable ) );
+   gc->extensions = (unsigned char *)
+      __glXGetStringFromTable(known_gl_extensions, usable);
+   (void) memcpy(gc->gl_extension_bits, usable, sizeof(usable));
 }
 
 
@@ -685,11 +691,11 @@ __glXCalculateUsableGLExtensions( __GLXcontext * gc,
  * rendering.
  */
 void
-__glXGetGLVersion( int * major_version, int * minor_version )
-{		   
-    __glXExtensionsCtr();
-    *major_version = gl_major;
-    *minor_version = gl_minor;
+__glXGetGLVersion(int *major_version, int *minor_version)
+{
+   __glXExtensionsCtr();
+   *major_version = gl_major;
+   *minor_version = gl_minor;
 }
 
 
@@ -699,8 +705,8 @@ __glXGetGLVersion( int * major_version, int * minor_version )
  * supported by the client to the server.
  */
 char *
-__glXGetClientGLExtensionString( void )
+__glXGetClientGLExtensionString(void)
 {
-    __glXExtensionsCtr();
-    return __glXGetStringFromTable( known_gl_extensions, client_gl_support );
+   __glXExtensionsCtr();
+   return __glXGetStringFromTable(known_gl_extensions, client_gl_support);
 }

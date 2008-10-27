@@ -55,20 +55,15 @@ SRC_DIRS := glx/x11 egl $(SRC_DIRS)
 
 
 # Directories
-ifeq ($(USING_EGL), 1)
-SRC_DIRS = egl glx/x11 gallium mesa glu glut/glx glw
+SRC_DIRS = egl glx/x11 gallium mesa glu glut/glx glw 
 PROGRAM_DIRS = egl xdemos
-else
-SRC_DIRS = glx/x11 gallium mesa glu glut/glx glw
-PROGRAM_DIRS = xdemos
-endif
 
 # EGL directories
-EGL_DRIVERS_DIRS = demo dri xdri
+EGL_DRIVERS_DIRS = demo glx
 
 DRIVER_DIRS =
 WINDOW_SYSTEM = dri
-GALLIUM_WINSYS_DIRS = drm egl_xlib
+GALLIUM_WINSYS_DIRS = drm 
 
 # gamma are missing because they have not been converted to use the new
 # interface.

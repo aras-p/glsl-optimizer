@@ -84,6 +84,9 @@ struct codegen
    /** Index of execution mask register */
    int exec_mask_reg;
 
+   /** KIL mask: indicates which fragments have been killed */
+   int kill_mask_reg;
+
    int frame_size;  /**< Stack frame size, in words */
 
    struct spe_function *f;
@@ -346,6 +349,22 @@ store_dest_reg(struct codegen *gen,
                int value_reg, int channel,
                const struct tgsi_full_dst_register *dest)
 {
+   /*
+    * XXX need to implement dst reg clamping/saturation
+    */
+#if 0
+   switch (inst->Instruction.Saturate) {
+   case TGSI_SAT_NONE:
+      break;
+   case TGSI_SAT_ZERO_ONE:
+      break;
+   case TGSI_SAT_MINUS_PLUS_ONE:
+      break;
+   default:
+      assert( 0 );
+   }
+#endif
+
    switch (dest->DstRegister.File) {
    case TGSI_FILE_TEMPORARY:
       if (gen->if_nesting > 0) {
@@ -431,8 +450,21 @@ emit_prologue(struct codegen *gen)
 static void
 emit_epilogue(struct codegen *gen)
 {
+   const int return_reg = 3;
+
    spe_comment(gen->f, -4, "Function epilogue:");
 
+   spe_comment(gen->f, 0, "return the killed mask");
+   if (gen->kill_mask_reg > 0) {
+      /* shader called KIL, return the "alive" mask */
+      spe_move(gen->f, return_reg, gen->kill_mask_reg);
+   }
+   else {
+      /* return {0,0,0,0} */
+      spe_load_uint(gen->f, return_reg, 0);
+   }
+
+   spe_comment(gen->f, 0, "restore stack and return");
    if (gen->frame_size >= 512) {
       /* offset is too large for ai instruction */
       int offset_reg = spe_allocate_available_register(gen->f);
@@ -1337,16 +1369,33 @@ emit_function_call(struct codegen *gen,
 
 
 static boolean
-emit_TXP(struct codegen *gen, const struct tgsi_full_instruction *inst)
+emit_TEX(struct codegen *gen, const struct tgsi_full_instruction *inst)
 {
-   const uint addr = lookup_function(gen->cell, "spu_txp");
+   const uint target = inst->InstructionExtTexture.Texture;
    const uint unit = inst->FullSrcRegisters[1].SrcRegister.Index;
+   uint addr;
    int ch;
    int coord_regs[4], d_regs[4];
 
+   switch (target) {
+   case TGSI_TEXTURE_1D:
+   case TGSI_TEXTURE_2D:
+      addr = lookup_function(gen->cell, "spu_tex_2d");
+      break;
+   case TGSI_TEXTURE_3D:
+      addr = lookup_function(gen->cell, "spu_tex_3d");
+      break;
+   case TGSI_TEXTURE_CUBE:
+      addr = lookup_function(gen->cell, "spu_tex_cube");
+      break;
+   default:
+      ASSERT(0 && "unsupported texture target");
+      return FALSE;
+   }
+
    assert(inst->FullSrcRegisters[1].SrcRegister.File == TGSI_FILE_SAMPLER);
 
-   spe_comment(gen->f, -4, "CALL txp:");
+   spe_comment(gen->f, -4, "CALL tex:");
 
    /* get src/dst reg info */
    for (ch = 0; ch < 4; ch++) {
@@ -1368,7 +1417,7 @@ emit_TXP(struct codegen *gen, const struct tgsi_full_instruction *inst)
          spe_stqd(gen->f, reg, SPE_REG_SP, 16 * offset);
       }
 
-      /* setup function arguments */
+      /* setup function arguments (XXX depends on target) */
       for (i = 0; i < 4; i++) {
          spe_move(gen->f, 3 + i, coord_regs[i]);
       }
@@ -1404,6 +1453,68 @@ emit_TXP(struct codegen *gen, const struct tgsi_full_instruction *inst)
 
    return TRUE;
 }
+
+
+/**
+ * KILL if any of src reg values are less than zero.
+ */
+static boolean
+emit_KIL(struct codegen *gen, const struct tgsi_full_instruction *inst)
+{
+   int ch;
+   int s_regs[4], kil_reg = -1, cmp_reg, zero_reg;
+
+   spe_comment(gen->f, -4, "CALL kil:");
+
+   /* zero = {0,0,0,0} */
+   zero_reg = get_itemp(gen);
+   spe_load_uint(gen->f, zero_reg, 0);
+
+   cmp_reg = get_itemp(gen);
+
+   /* get src regs */
+   for (ch = 0; ch < 4; ch++) {
+      if (inst->FullDstRegisters[0].DstRegister.WriteMask & (1 << ch)) {
+         s_regs[ch] = get_src_reg(gen, ch, &inst->FullSrcRegisters[0]);
+      }
+   }
+
+   /* test if any src regs are < 0 */
+   for (ch = 0; ch < 4; ch++) {
+      if (inst->FullDstRegisters[0].DstRegister.WriteMask & (1 << ch)) {
+         if (kil_reg >= 0) {
+            /* cmp = 0 > src ? : ~0 : 0 */
+            spe_fcgt(gen->f, cmp_reg, zero_reg, s_regs[ch]);
+            /* kil = kil | cmp */
+            spe_or(gen->f, kil_reg, kil_reg, cmp_reg);
+         }
+         else {
+            kil_reg = get_itemp(gen);
+            /* kil = 0 > src ? : ~0 : 0 */
+            spe_fcgt(gen->f, kil_reg, zero_reg, s_regs[ch]);
+         }
+      }
+   }
+
+   if (gen->if_nesting) {
+      /* may have been a conditional kil */
+      spe_and(gen->f, kil_reg, kil_reg, gen->exec_mask_reg);
+   }
+
+   /* allocate the kill mask reg if needed */
+   if (gen->kill_mask_reg <= 0) {
+      gen->kill_mask_reg = spe_allocate_available_register(gen->f);
+      spe_move(gen->f, gen->kill_mask_reg, kil_reg);
+   }
+   else {
+      spe_or(gen->f, gen->kill_mask_reg, gen->kill_mask_reg, kil_reg);
+   }
+
+   free_itemps(gen);
+
+   return TRUE;
+}
+
 
 
 /**
@@ -1674,8 +1785,12 @@ emit_instruction(struct codegen *gen,
       /* fall-through for now */
    case TGSI_OPCODE_TXB:
       /* fall-through for now */
+   case TGSI_OPCODE_TXL:
+      /* fall-through for now */
    case TGSI_OPCODE_TXP:
-      return emit_TXP(gen, inst);
+      return emit_TEX(gen, inst);
+   case TGSI_OPCODE_KIL:
+      return emit_KIL(gen, inst);
 
    case TGSI_OPCODE_IF:
       return emit_IF(gen, inst);

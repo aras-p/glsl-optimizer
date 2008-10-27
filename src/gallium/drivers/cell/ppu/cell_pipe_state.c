@@ -212,17 +212,24 @@ cell_bind_sampler_states(struct pipe_context *pipe,
                          unsigned num, void **samplers)
 {
    struct cell_context *cell = cell_context(pipe);
+   uint i, changed = 0x0;
 
    assert(num <= CELL_MAX_SAMPLERS);
 
    draw_flush(cell->draw);
 
-   memcpy(cell->sampler, samplers, num * sizeof(void *));
-   memset(&cell->sampler[num], 0, (CELL_MAX_SAMPLERS - num) *
-          sizeof(void *));
-   cell->num_samplers = num;
+   for (i = 0; i < CELL_MAX_SAMPLERS; i++) {
+      struct pipe_sampler_state *new_samp = i < num ? samplers[i] : NULL;
+      if (cell->sampler[i] != new_samp) {
+         cell->sampler[i] = new_samp;
+         changed |= (1 << i);
+      }
+   }
 
-   cell->dirty |= CELL_NEW_SAMPLER;
+   if (changed) {
+      cell->dirty |= CELL_NEW_SAMPLER;
+      cell->dirty_samplers |= changed;
+   }
 }
 
 
@@ -240,25 +247,25 @@ cell_set_sampler_textures(struct pipe_context *pipe,
                           unsigned num, struct pipe_texture **texture)
 {
    struct cell_context *cell = cell_context(pipe);
-   uint i;
+   uint i, changed = 0x0;
 
    assert(num <= CELL_MAX_SAMPLERS);
 
-   /* Check for no-op */
-   if (num == cell->num_textures &&
-       !memcmp(cell->texture, texture, num * sizeof(struct pipe_texture *)))
-      return;
-
-   draw_flush(cell->draw);
-
    for (i = 0; i < CELL_MAX_SAMPLERS; i++) {
-      struct pipe_texture *tex = i < num ? texture[i] : NULL;
-
-      pipe_texture_reference((struct pipe_texture **) &cell->texture[i], tex);
+      struct pipe_texture *new_tex = i < num ? texture[i] : NULL;
+      if ((struct pipe_texture *) cell->texture[i] != new_tex) {
+         pipe_texture_reference((struct pipe_texture **) &cell->texture[i],
+                                new_tex);
+         changed |= (1 << i);
+      }
    }
+
    cell->num_textures = num;
 
-   cell->dirty |= CELL_NEW_TEXTURE;
+   if (changed) {
+      cell->dirty |= CELL_NEW_TEXTURE;
+      cell->dirty_textures |= changed;
+   }
 }
 
 

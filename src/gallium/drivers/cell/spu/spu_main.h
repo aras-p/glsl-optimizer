@@ -36,12 +36,18 @@
 #include "pipe/p_state.h"
 
 
-
-#define MAX_WIDTH 1024
-#define MAX_HEIGHT 1024
-
-
-#define CELL_MAX_CONSTANTS 32  /**< number of float[4] constants */
+#if DEBUG
+/* These debug macros use the unusual construction ", ##__VA_ARGS__"
+ * which expands to the expected comma + args if variadic arguments
+ * are supplied, but swallows the comma if there are no variadic
+ * arguments (which avoids syntax errors that would otherwise occur).
+ */
+#define D_PRINTF(flag, format,...) \
+   if (spu.init.debug_flags & (flag)) \
+      printf("SPU %u: " format, spu.init.id, ##__VA_ARGS__)
+#else
+#define D_PRINTF(...)
+#endif
 
 
 /**
@@ -64,12 +70,10 @@ typedef union {
 
 
 /** Function for sampling textures */
-typedef void (*spu_sample_texture4_func)(vector float s,
-                                         vector float t,
-                                         vector float r,
-                                         vector float q,
-                                         uint unit, uint level, uint face,
-                                         vector float colors[4]);
+typedef void (*spu_sample_texture_2d_func)(vector float s,
+                                           vector float t,
+                                           uint unit, uint level, uint face,
+                                           vector float colors[4]);
 
 
 /** Function for performing per-fragment ops */
@@ -85,9 +89,9 @@ typedef void (*spu_fragment_ops_func)(uint x, uint y,
                                       uint facing);
 
 /** Function for running fragment program */
-typedef void (*spu_fragment_program_func)(vector float *inputs,
-                                          vector float *outputs,
-                                          vector float *constants);
+typedef vector unsigned int (*spu_fragment_program_func)(vector float *inputs,
+                                                         vector float *outputs,
+                                                         vector float *constants);
 
 
 struct spu_framebuffer
@@ -145,7 +149,9 @@ struct spu_global
    struct spu_framebuffer fb;
    struct pipe_depth_stencil_alpha_state depth_stencil_alpha;
    struct pipe_blend_state blend;
+   struct pipe_blend_color blend_color;
    struct pipe_sampler_state sampler[PIPE_MAX_SAMPLERS];
+   struct pipe_rasterizer_state rasterizer;
    struct spu_texture texture[PIPE_MAX_SAMPLERS];
    struct vertex_info vertex_info;
 
@@ -161,8 +167,8 @@ struct spu_global
    ubyte cur_ctile_status, cur_ztile_status;
 
    /** Status of all tiles in framebuffer */
-   ubyte ctile_status[MAX_HEIGHT/TILE_SIZE][MAX_WIDTH/TILE_SIZE] ALIGN16_ATTRIB;
-   ubyte ztile_status[MAX_HEIGHT/TILE_SIZE][MAX_WIDTH/TILE_SIZE] ALIGN16_ATTRIB;
+   ubyte ctile_status[CELL_MAX_HEIGHT/TILE_SIZE][CELL_MAX_WIDTH/TILE_SIZE] ALIGN16_ATTRIB;
+   ubyte ztile_status[CELL_MAX_HEIGHT/TILE_SIZE][CELL_MAX_WIDTH/TILE_SIZE] ALIGN16_ATTRIB;
 
    /** Current fragment ops machine code, at 8-byte boundary */
    uint fragment_ops_code[SPU_MAX_FRAGMENT_OPS_INSTS] ALIGN8_ATTRIB;
@@ -175,9 +181,9 @@ struct spu_global
    spu_fragment_program_func fragment_program;
 
    /** Current texture sampler function */
-   spu_sample_texture4_func sample_texture4[CELL_MAX_SAMPLERS];
-   spu_sample_texture4_func min_sample_texture4[CELL_MAX_SAMPLERS];
-   spu_sample_texture4_func mag_sample_texture4[CELL_MAX_SAMPLERS];
+   spu_sample_texture_2d_func sample_texture_2d[CELL_MAX_SAMPLERS];
+   spu_sample_texture_2d_func min_sample_texture_2d[CELL_MAX_SAMPLERS];
+   spu_sample_texture_2d_func mag_sample_texture_2d[CELL_MAX_SAMPLERS];
 
    /** Fragment program constants */
    vector float constants[4 * CELL_MAX_CONSTANTS];
@@ -186,8 +192,6 @@ struct spu_global
 
 
 extern struct spu_global spu;
-extern boolean Debug;
-
 
 
 
@@ -206,7 +210,7 @@ extern boolean Debug;
 #define TAG_DCACHE1           21
 #define TAG_DCACHE2           22
 #define TAG_DCACHE3           23
-
+#define TAG_FENCE             24
 
 
 static INLINE void

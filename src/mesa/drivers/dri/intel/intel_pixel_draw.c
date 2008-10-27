@@ -40,6 +40,12 @@
 #include "main/varray.h"
 #include "main/attrib.h"
 #include "main/enable.h"
+#include "main/buffers.h"
+#include "main/fbobject.h"
+#include "main/renderbuffer.h"
+#include "main/depth.h"
+#include "main/hash.h"
+#include "main/blend.h"
 #include "glapi/dispatch.h"
 #include "swrast/swrast.h"
 
@@ -51,7 +57,7 @@
 #include "intel_regions.h"
 #include "intel_pixel.h"
 #include "intel_buffer_objects.h"
-
+#include "intel_fbo.h"
 
 static GLboolean
 intel_texture_drawpixels(GLcontext * ctx,
@@ -88,6 +94,15 @@ intel_texture_drawpixels(GLcontext * ctx,
     */
    if (format == GL_STENCIL_INDEX)
       return GL_FALSE;
+
+   /* Check that we can load in a texture this big. */
+   if (width > (1 << (ctx->Const.MaxTextureLevels - 1)) ||
+       height > (1 << (ctx->Const.MaxTextureLevels - 1))) {
+      if (INTEL_DEBUG & DEBUG_FALLBACKS)
+	 fprintf(stderr, "glDrawPixels() fallback: bitmap too large (%dx%d)\n",
+		 width, height);
+      return GL_FALSE;
+   }
 
    /* To do DEPTH_COMPONENT, we would need to change our setup to not draw to
     * the color buffer, and sample the texture values into the fragment depth
@@ -170,6 +185,182 @@ intel_texture_drawpixels(GLcontext * ctx,
    return GL_TRUE;
 }
 
+static GLboolean
+intel_stencil_drawpixels(GLcontext * ctx,
+			 GLint x, GLint y,
+			 GLsizei width, GLsizei height,
+			 GLenum format,
+			 GLenum type,
+			 const struct gl_pixelstore_attrib *unpack,
+			 const GLvoid *pixels)
+{
+   GLuint texname, rb_name, fb_name, old_fb_name;
+   GLfloat vertices[4][2];
+   GLfloat texcoords[4][2];
+   struct intel_renderbuffer *irb;
+   struct intel_renderbuffer *depth_irb;
+   struct gl_renderbuffer *rb;
+   struct gl_pixelstore_attrib old_unpack;
+   GLstencil *stencil_pixels;
+   int row;
+
+   if (format != GL_STENCIL_INDEX)
+      return GL_FALSE;
+
+   /* If there's nothing to write, we're done. */
+   if (ctx->Stencil.WriteMask[0] == 0)
+      return GL_TRUE;
+
+   /* Can't do a per-bit writemask while treating stencil as rgba data. */
+   if ((ctx->Stencil.WriteMask[0] & 0xff) != 0xff)
+      return GL_FALSE;
+
+   /* We use FBOs for our wrapping of the depthbuffer into a color
+    * destination.
+    */
+   if (!ctx->Extensions.EXT_framebuffer_object)
+      return GL_FALSE;
+
+   /* We're going to mess with texturing with no regard to existing texture
+    * state, so if there is some set up we have to bail.
+    */
+   if (ctx->Texture._EnabledUnits != 0)
+      return GL_FALSE;
+
+   /* Can't do textured DrawPixels with a fragment program, unless we were
+    * to generate a new program that sampled our texture and put the results
+    * in the fragment color before the user's program started.
+    */
+   if (ctx->FragmentProgram.Enabled)
+      return GL_FALSE;
+
+   /* Check that we can load in a texture this big. */
+   if (width > (1 << (ctx->Const.MaxTextureLevels - 1)) ||
+       height > (1 << (ctx->Const.MaxTextureLevels - 1))) {
+      if (INTEL_DEBUG & DEBUG_FALLBACKS)
+	 fprintf(stderr, "glDrawPixels(STENCIL_IDNEX) fallback: "
+		 "bitmap too large (%dx%d)\n",
+		 width, height);
+      return GL_FALSE;
+   }
+
+   _mesa_PushAttrib(GL_ENABLE_BIT | GL_TRANSFORM_BIT | GL_TEXTURE_BIT |
+		    GL_CURRENT_BIT | GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+   _mesa_PushClientAttrib(GL_CLIENT_VERTEX_ARRAY_BIT);
+   old_fb_name = ctx->DrawBuffer->Name;
+
+   _mesa_Disable(GL_POLYGON_STIPPLE);
+   _mesa_Disable(GL_DEPTH_TEST);
+   _mesa_Disable(GL_STENCIL_TEST);
+
+   /* Unpack the supplied stencil values into a ubyte buffer. */
+   assert(sizeof(GLstencil) == sizeof(GLubyte));
+   stencil_pixels = _mesa_malloc(width * height * sizeof(GLstencil));
+   for (row = 0; row < height; row++) {
+      GLvoid *source = _mesa_image_address2d(unpack, pixels,
+					     width, height,
+					     GL_COLOR_INDEX, type,
+					     row, 0);
+      _mesa_unpack_stencil_span(ctx, width, GL_UNSIGNED_BYTE,
+				stencil_pixels +
+				row * width * sizeof(GLstencil),
+				type, source, unpack, ctx->_ImageTransferState);
+   }
+
+   /* Take the current depth/stencil renderbuffer, and make a new one wrapping
+    * it which will be treated as GL_RGBA8 so we can render to it as a color
+    * buffer.
+    */
+   depth_irb = intel_get_renderbuffer(ctx->DrawBuffer, BUFFER_DEPTH);
+   irb = intel_create_renderbuffer(GL_RGBA8);
+   rb = &irb->Base;
+   irb->Base.Width = depth_irb->Base.Width;
+   irb->Base.Height = depth_irb->Base.Height;
+   intel_renderbuffer_set_region(irb, depth_irb->region);
+
+   /* Create a name for our renderbuffer, which lets us use other mesa
+    * rb functions for convenience.
+    */
+   _mesa_GenRenderbuffersEXT(1, &rb_name);
+   irb->Base.RefCount++;
+   _mesa_HashInsert(ctx->Shared->RenderBuffers, rb_name, &irb->Base);
+
+   /* Bind the new renderbuffer to the color attachment point. */
+   _mesa_GenFramebuffersEXT(1, &fb_name);
+   _mesa_BindFramebufferEXT(GL_FRAMEBUFFER_EXT, fb_name);
+   _mesa_FramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT,
+				    GL_COLOR_ATTACHMENT0_EXT,
+				    GL_RENDERBUFFER_EXT,
+				    rb_name);
+   /* Choose to render to the color attachment. */
+   _mesa_DrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
+
+   _mesa_DepthMask(GL_FALSE);
+   _mesa_ColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_TRUE);
+
+   _mesa_ActiveTextureARB(GL_TEXTURE0_ARB);
+   _mesa_Enable(GL_TEXTURE_2D);
+   _mesa_GenTextures(1, &texname);
+   _mesa_BindTexture(GL_TEXTURE_2D, texname);
+   _mesa_TexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+   _mesa_TexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+   _mesa_TexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+   old_unpack = ctx->Unpack;
+   ctx->Unpack = ctx->DefaultPacking;
+   _mesa_TexImage2D(GL_TEXTURE_2D, 0, GL_INTENSITY, width, height, 0,
+		    GL_RED, GL_UNSIGNED_BYTE, stencil_pixels);
+   ctx->Unpack = old_unpack;
+   _mesa_free(stencil_pixels);
+
+   _mesa_MatrixMode(GL_PROJECTION);
+   _mesa_PushMatrix();
+   _mesa_LoadIdentity();
+   _mesa_Ortho(0, ctx->DrawBuffer->Width, 0, ctx->DrawBuffer->Height, 1, -1);
+
+   _mesa_MatrixMode(GL_MODELVIEW);
+   _mesa_PushMatrix();
+   _mesa_LoadIdentity();
+
+   vertices[0][0] = x;
+   vertices[0][1] = y;
+   vertices[1][0] = x + width * ctx->Pixel.ZoomX;
+   vertices[1][1] = y;
+   vertices[2][0] = x + width * ctx->Pixel.ZoomX;
+   vertices[2][1] = y + height * ctx->Pixel.ZoomY;
+   vertices[3][0] = x;
+   vertices[3][1] = y + height * ctx->Pixel.ZoomY;
+
+   texcoords[0][0] = 0.0;
+   texcoords[0][1] = 0.0;
+   texcoords[1][0] = 1.0;
+   texcoords[1][1] = 0.0;
+   texcoords[2][0] = 1.0;
+   texcoords[2][1] = 1.0;
+   texcoords[3][0] = 0.0;
+   texcoords[3][1] = 1.0;
+
+   _mesa_VertexPointer(2, GL_FLOAT, 2 * sizeof(GLfloat), &vertices);
+   _mesa_TexCoordPointer(2, GL_FLOAT, 2 * sizeof(GLfloat), &texcoords);
+   _mesa_Enable(GL_VERTEX_ARRAY);
+   _mesa_Enable(GL_TEXTURE_COORD_ARRAY);
+   CALL_DrawArrays(ctx->Exec, (GL_TRIANGLE_FAN, 0, 4));
+
+   _mesa_BindFramebufferEXT(GL_FRAMEBUFFER_EXT, old_fb_name);
+
+   _mesa_MatrixMode(GL_PROJECTION);
+   _mesa_PopMatrix();
+   _mesa_MatrixMode(GL_MODELVIEW);
+   _mesa_PopMatrix();
+   _mesa_PopClientAttrib();
+   _mesa_PopAttrib();
+
+   _mesa_DeleteTextures(1, &texname);
+   _mesa_DeleteFramebuffersEXT(1, &fb_name);
+   _mesa_DeleteRenderbuffersEXT(1, &rb_name);
+
+   return GL_TRUE;
+}
+
 void
 intelDrawPixels(GLcontext * ctx,
                 GLint x, GLint y,
@@ -180,6 +371,10 @@ intelDrawPixels(GLcontext * ctx,
                 const GLvoid * pixels)
 {
    if (intel_texture_drawpixels(ctx, x, y, width, height, format, type,
+				unpack, pixels))
+      return;
+
+   if (intel_stencil_drawpixels(ctx, x, y, width, height, format, type,
 				unpack, pixels))
       return;
 

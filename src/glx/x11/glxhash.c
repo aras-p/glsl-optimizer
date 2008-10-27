@@ -1,3 +1,4 @@
+/* -*- mode: c; tab-width: 3; indent-tabs-mode: nil; c-basic-offset: 3; coding: utf-8-unix -*- */
 /* glxhash.c -- Small hash table support for integer -> integer mapping
  * Taken from libdrm.
  *
@@ -80,8 +81,8 @@
 
 #define HASH_MAGIC 0xdeadbeef
 #define HASH_DEBUG 0
-#define HASH_SIZE  512		/* Good for about 100 entries */
-				/* If you change this value, you probably
+#define HASH_SIZE  512          /* Good for about 100 entries */
+                                /* If you change this value, you probably
                                    have to change the HashHash hashing
                                    function! */
 
@@ -92,323 +93,370 @@
 #define HASH_RANDOM             random()
 #define HASH_RANDOM_DESTROY
 
-typedef struct __glxHashBucket {
-    unsigned long     key;
-    void              *value;
-    struct __glxHashBucket *next;
+typedef struct __glxHashBucket
+{
+   unsigned long key;
+   void *value;
+   struct __glxHashBucket *next;
 } __glxHashBucket, *__glxHashBucketPtr;
 
 typedef struct __glxHashTable *__glxHashTablePtr;
-struct __glxHashTable {
-    unsigned long    magic;
-    unsigned long    hits;	/* At top of linked list */
-    unsigned long    partials;	/* Not at top of linked list */
-    unsigned long    misses;	/* Not in table */
-    __glxHashBucketPtr    buckets[HASH_SIZE];
-    int              p0;
-    __glxHashBucketPtr    p1;
+struct __glxHashTable
+{
+   unsigned long magic;
+   unsigned long hits;          /* At top of linked list */
+   unsigned long partials;      /* Not at top of linked list */
+   unsigned long misses;        /* Not in table */
+   __glxHashBucketPtr buckets[HASH_SIZE];
+   int p0;
+   __glxHashBucketPtr p1;
 };
 
-static unsigned long HashHash(unsigned long key)
+static unsigned long
+HashHash(unsigned long key)
 {
-    unsigned long        hash = 0;
-    unsigned long        tmp  = key;
-    static int           init = 0;
-    static unsigned long scatter[256];
-    int                  i;
+   unsigned long hash = 0;
+   unsigned long tmp = key;
+   static int init = 0;
+   static unsigned long scatter[256];
+   int i;
 
-    if (!init) {
-	HASH_RANDOM_DECL;
-	HASH_RANDOM_INIT(37);
-	for (i = 0; i < 256; i++) scatter[i] = HASH_RANDOM;
-	HASH_RANDOM_DESTROY;
-	++init;
-    }
+   if (!init) {
+      HASH_RANDOM_DECL;
+      HASH_RANDOM_INIT(37);
+      for (i = 0; i < 256; i++)
+         scatter[i] = HASH_RANDOM;
+      HASH_RANDOM_DESTROY;
+      ++init;
+   }
 
-    while (tmp) {
-	hash = (hash << 1) + scatter[tmp & 0xff];
-	tmp >>= 8;
-    }
+   while (tmp) {
+      hash = (hash << 1) + scatter[tmp & 0xff];
+      tmp >>= 8;
+   }
 
-    hash %= HASH_SIZE;
+   hash %= HASH_SIZE;
 #if HASH_DEBUG
-    printf( "Hash(%d) = %d\n", key, hash);
+   printf("Hash(%d) = %d\n", key, hash);
 #endif
-    return hash;
+   return hash;
 }
 
-_X_HIDDEN __glxHashTable *__glxHashCreate(void)
+_X_HIDDEN __glxHashTable *
+__glxHashCreate(void)
 {
-    __glxHashTablePtr table;
-    int          i;
+   __glxHashTablePtr table;
+   int i;
 
-    table           = HASH_ALLOC(sizeof(*table));
-    if (!table) return NULL;
-    table->magic    = HASH_MAGIC;
-    table->hits     = 0;
-    table->partials = 0;
-    table->misses   = 0;
+   table = HASH_ALLOC(sizeof(*table));
+   if (!table)
+      return NULL;
+   table->magic = HASH_MAGIC;
+   table->hits = 0;
+   table->partials = 0;
+   table->misses = 0;
 
-    for (i = 0; i < HASH_SIZE; i++) table->buckets[i] = NULL;
-    return table;
+   for (i = 0; i < HASH_SIZE; i++)
+      table->buckets[i] = NULL;
+   return table;
 }
 
-_X_HIDDEN int __glxHashDestroy(__glxHashTable *t)
+_X_HIDDEN int
+__glxHashDestroy(__glxHashTable * t)
 {
-    __glxHashTablePtr  table = (__glxHashTablePtr)t;
-    __glxHashBucketPtr bucket;
-    __glxHashBucketPtr next;
-    int           i;
+   __glxHashTablePtr table = (__glxHashTablePtr) t;
+   __glxHashBucketPtr bucket;
+   __glxHashBucketPtr next;
+   int i;
 
-    if (table->magic != HASH_MAGIC) return -1; /* Bad magic */
+   if (table->magic != HASH_MAGIC)
+      return -1;                /* Bad magic */
 
-    for (i = 0; i < HASH_SIZE; i++) {
-	for (bucket = table->buckets[i]; bucket;) {
-	    next = bucket->next;
-	    HASH_FREE(bucket);
-	    bucket = next;
-	}
-    }
-    HASH_FREE(table);
-    return 0;
+   for (i = 0; i < HASH_SIZE; i++) {
+      for (bucket = table->buckets[i]; bucket;) {
+         next = bucket->next;
+         HASH_FREE(bucket);
+         bucket = next;
+      }
+   }
+   HASH_FREE(table);
+   return 0;
 }
 
 /* Find the bucket and organize the list so that this bucket is at the
    top. */
 
-static __glxHashBucketPtr HashFind(__glxHashTablePtr table,
-			      unsigned long key, unsigned long *h)
+static __glxHashBucketPtr
+HashFind(__glxHashTablePtr table, unsigned long key, unsigned long *h)
 {
-    unsigned long hash = HashHash(key);
-    __glxHashBucketPtr prev = NULL;
-    __glxHashBucketPtr bucket;
+   unsigned long hash = HashHash(key);
+   __glxHashBucketPtr prev = NULL;
+   __glxHashBucketPtr bucket;
 
-    if (h) *h = hash;
+   if (h)
+      *h = hash;
 
-    for (bucket = table->buckets[hash]; bucket; bucket = bucket->next) {
-	if (bucket->key == key) {
-	    if (prev) {
-				/* Organize */
-		prev->next           = bucket->next;
-		bucket->next         = table->buckets[hash];
-		table->buckets[hash] = bucket;
-		++table->partials;
-	    } else {
-		++table->hits;
-	    }
-	    return bucket;
-	}
-	prev = bucket;
-    }
-    ++table->misses;
-    return NULL;
+   for (bucket = table->buckets[hash]; bucket; bucket = bucket->next) {
+      if (bucket->key == key) {
+         if (prev) {
+            /* Organize */
+            prev->next = bucket->next;
+            bucket->next = table->buckets[hash];
+            table->buckets[hash] = bucket;
+            ++table->partials;
+         }
+         else {
+            ++table->hits;
+         }
+         return bucket;
+      }
+      prev = bucket;
+   }
+   ++table->misses;
+   return NULL;
 }
 
-_X_HIDDEN int __glxHashLookup(__glxHashTable *t,
-			      unsigned long key, void **value)
+_X_HIDDEN int
+__glxHashLookup(__glxHashTable * t, unsigned long key, void **value)
 {
-    __glxHashTablePtr  table = (__glxHashTablePtr)t;
-    __glxHashBucketPtr bucket;
+   __glxHashTablePtr table = (__glxHashTablePtr) t;
+   __glxHashBucketPtr bucket;
 
-    if (!table || table->magic != HASH_MAGIC) return -1; /* Bad magic */
+   if (!table || table->magic != HASH_MAGIC)
+      return -1;                /* Bad magic */
 
-    bucket = HashFind(table, key, NULL);
-    if (!bucket) return 1;	/* Not found */
-    *value = bucket->value;
-    return 0;			/* Found */
+   bucket = HashFind(table, key, NULL);
+   if (!bucket)
+      return 1;                 /* Not found */
+   *value = bucket->value;
+   return 0;                    /* Found */
 }
 
-_X_HIDDEN int __glxHashInsert(__glxHashTable *t,
-			      unsigned long key, void *value)
+_X_HIDDEN int
+__glxHashInsert(__glxHashTable * t, unsigned long key, void *value)
 {
-    __glxHashTablePtr  table = (__glxHashTablePtr)t;
-    __glxHashBucketPtr bucket;
-    unsigned long hash;
+   __glxHashTablePtr table = (__glxHashTablePtr) t;
+   __glxHashBucketPtr bucket;
+   unsigned long hash;
 
-    if (table->magic != HASH_MAGIC) return -1; /* Bad magic */
+   if (table->magic != HASH_MAGIC)
+      return -1;                /* Bad magic */
 
-    if (HashFind(table, key, &hash)) return 1; /* Already in table */
+   if (HashFind(table, key, &hash))
+      return 1;                 /* Already in table */
 
-    bucket               = HASH_ALLOC(sizeof(*bucket));
-    if (!bucket) return -1;	/* Error */
-    bucket->key          = key;
-    bucket->value        = value;
-    bucket->next         = table->buckets[hash];
-    table->buckets[hash] = bucket;
+   bucket = HASH_ALLOC(sizeof(*bucket));
+   if (!bucket)
+      return -1;                /* Error */
+   bucket->key = key;
+   bucket->value = value;
+   bucket->next = table->buckets[hash];
+   table->buckets[hash] = bucket;
 #if HASH_DEBUG
-    printf("Inserted %d at %d/%p\n", key, hash, bucket);
+   printf("Inserted %d at %d/%p\n", key, hash, bucket);
 #endif
-    return 0;			/* Added to table */
+   return 0;                    /* Added to table */
 }
 
-_X_HIDDEN int __glxHashDelete(__glxHashTable *t, unsigned long key)
+_X_HIDDEN int
+__glxHashDelete(__glxHashTable * t, unsigned long key)
 {
-    __glxHashTablePtr  table = (__glxHashTablePtr)t;
-    unsigned long hash;
-    __glxHashBucketPtr bucket;
+   __glxHashTablePtr table = (__glxHashTablePtr) t;
+   unsigned long hash;
+   __glxHashBucketPtr bucket;
 
-    if (table->magic != HASH_MAGIC) return -1; /* Bad magic */
+   if (table->magic != HASH_MAGIC)
+      return -1;                /* Bad magic */
 
-    bucket = HashFind(table, key, &hash);
+   bucket = HashFind(table, key, &hash);
 
-    if (!bucket) return 1;	/* Not found */
+   if (!bucket)
+      return 1;                 /* Not found */
 
-    table->buckets[hash] = bucket->next;
-    HASH_FREE(bucket);
-    return 0;
+   table->buckets[hash] = bucket->next;
+   HASH_FREE(bucket);
+   return 0;
 }
 
-_X_HIDDEN int __glxHashNext(__glxHashTable *t,
-			    unsigned long *key, void **value)
+_X_HIDDEN int
+__glxHashNext(__glxHashTable * t, unsigned long *key, void **value)
 {
-    __glxHashTablePtr  table = (__glxHashTablePtr)t;
+   __glxHashTablePtr table = (__glxHashTablePtr) t;
 
-    while (table->p0 < HASH_SIZE) {
-	if (table->p1) {
-	    *key       = table->p1->key;
-	    *value     = table->p1->value;
-	    table->p1  = table->p1->next;
-	    return 1;
-	}
-	table->p1 = table->buckets[table->p0];
-	++table->p0;
-    }
-    return 0;
+   while (table->p0 < HASH_SIZE) {
+      if (table->p1) {
+         *key = table->p1->key;
+         *value = table->p1->value;
+         table->p1 = table->p1->next;
+         return 1;
+      }
+      table->p1 = table->buckets[table->p0];
+      ++table->p0;
+   }
+   return 0;
 }
 
-_X_HIDDEN int __glxHashFirst(__glxHashTable *t,
-			     unsigned long *key, void **value)
+_X_HIDDEN int
+__glxHashFirst(__glxHashTable * t, unsigned long *key, void **value)
 {
-    __glxHashTablePtr  table = (__glxHashTablePtr)t;
+   __glxHashTablePtr table = (__glxHashTablePtr) t;
 
-    if (table->magic != HASH_MAGIC) return -1; /* Bad magic */
+   if (table->magic != HASH_MAGIC)
+      return -1;                /* Bad magic */
 
-    table->p0 = 0;
-    table->p1 = table->buckets[0];
-    return __glxHashNext(table, key, value);
+   table->p0 = 0;
+   table->p1 = table->buckets[0];
+   return __glxHashNext(table, key, value);
 }
 
 #if HASH_MAIN
 #define DIST_LIMIT 10
 static int dist[DIST_LIMIT];
 
-static void clear_dist(void) {
-    int i;
+static void
+clear_dist(void)
+{
+   int i;
 
-    for (i = 0; i < DIST_LIMIT; i++) dist[i] = 0;
+   for (i = 0; i < DIST_LIMIT; i++)
+      dist[i] = 0;
 }
 
-static int count_entries(__glxHashBucketPtr bucket)
+static int
+count_entries(__glxHashBucketPtr bucket)
 {
-    int count = 0;
+   int count = 0;
 
-    for (; bucket; bucket = bucket->next) ++count;
-    return count;
+   for (; bucket; bucket = bucket->next)
+      ++count;
+   return count;
 }
 
-static void update_dist(int count)
+static void
+update_dist(int count)
 {
-    if (count >= DIST_LIMIT) ++dist[DIST_LIMIT-1];
-    else                     ++dist[count];
+   if (count >= DIST_LIMIT)
+      ++dist[DIST_LIMIT - 1];
+   else
+      ++dist[count];
 }
 
-static void compute_dist(__glxHashTablePtr table)
+static void
+compute_dist(__glxHashTablePtr table)
 {
-    int           i;
-    __glxHashBucketPtr bucket;
+   int i;
+   __glxHashBucketPtr bucket;
 
-    printf("Hits = %ld, partials = %ld, misses = %ld\n",
-	   table->hits, table->partials, table->misses);
-    clear_dist();
-    for (i = 0; i < HASH_SIZE; i++) {
-	bucket = table->buckets[i];
-	update_dist(count_entries(bucket));
-    }
-    for (i = 0; i < DIST_LIMIT; i++) {
-	if (i != DIST_LIMIT-1) printf("%5d %10d\n", i, dist[i]);
-	else                   printf("other %10d\n", dist[i]);
-    }
+   printf("Hits = %ld, partials = %ld, misses = %ld\n",
+          table->hits, table->partials, table->misses);
+   clear_dist();
+   for (i = 0; i < HASH_SIZE; i++) {
+      bucket = table->buckets[i];
+      update_dist(count_entries(bucket));
+   }
+   for (i = 0; i < DIST_LIMIT; i++) {
+      if (i != DIST_LIMIT - 1)
+         printf("%5d %10d\n", i, dist[i]);
+      else
+         printf("other %10d\n", dist[i]);
+   }
 }
 
-static void check_table(__glxHashTablePtr table,
-			unsigned long key, unsigned long value)
+static void
+check_table(__glxHashTablePtr table, unsigned long key, unsigned long value)
 {
-    unsigned long retval  = 0;
-    int           retcode = __glxHashLookup(table, key, &retval);
+   unsigned long retval = 0;
+   int retcode = __glxHashLookup(table, key, &retval);
 
-    switch (retcode) {
-    case -1:
-	printf("Bad magic = 0x%08lx:"
-	       " key = %lu, expected = %lu, returned = %lu\n",
-	       table->magic, key, value, retval);
-	break;
-    case 1:
-	printf("Not found: key = %lu, expected = %lu returned = %lu\n",
-	       key, value, retval);
-	break;
-    case 0:
-	if (value != retval)
-	    printf("Bad value: key = %lu, expected = %lu, returned = %lu\n",
-		   key, value, retval);
-	break;
-    default:
-	printf("Bad retcode = %d: key = %lu, expected = %lu, returned = %lu\n",
-	       retcode, key, value, retval);
-	break;
-    }
+   switch (retcode) {
+   case -1:
+      printf("Bad magic = 0x%08lx:"
+             " key = %lu, expected = %lu, returned = %lu\n",
+             table->magic, key, value, retval);
+      break;
+   case 1:
+      printf("Not found: key = %lu, expected = %lu returned = %lu\n",
+             key, value, retval);
+      break;
+   case 0:
+      if (value != retval)
+         printf("Bad value: key = %lu, expected = %lu, returned = %lu\n",
+                key, value, retval);
+      break;
+   default:
+      printf("Bad retcode = %d: key = %lu, expected = %lu, returned = %lu\n",
+             retcode, key, value, retval);
+      break;
+   }
 }
 
-int main(void)
+int
+main(void)
 {
-    __glxHashTablePtr table;
-    int          i;
+   __glxHashTablePtr table;
+   int i;
 
-    printf("\n***** 256 consecutive integers ****\n");
-    table = __glxHashCreate();
-    for (i = 0; i < 256; i++) __glxHashInsert(table, i, i);
-    for (i = 0; i < 256; i++) check_table(table, i, i);
-    for (i = 256; i >= 0; i--) check_table(table, i, i);
-    compute_dist(table);
-    __glxHashDestroy(table);
+   printf("\n***** 256 consecutive integers ****\n");
+   table = __glxHashCreate();
+   for (i = 0; i < 256; i++)
+      __glxHashInsert(table, i, i);
+   for (i = 0; i < 256; i++)
+      check_table(table, i, i);
+   for (i = 256; i >= 0; i--)
+      check_table(table, i, i);
+   compute_dist(table);
+   __glxHashDestroy(table);
 
-    printf("\n***** 1024 consecutive integers ****\n");
-    table = __glxHashCreate();
-    for (i = 0; i < 1024; i++) __glxHashInsert(table, i, i);
-    for (i = 0; i < 1024; i++) check_table(table, i, i);
-    for (i = 1024; i >= 0; i--) check_table(table, i, i);
-    compute_dist(table);
-    __glxHashDestroy(table);
+   printf("\n***** 1024 consecutive integers ****\n");
+   table = __glxHashCreate();
+   for (i = 0; i < 1024; i++)
+      __glxHashInsert(table, i, i);
+   for (i = 0; i < 1024; i++)
+      check_table(table, i, i);
+   for (i = 1024; i >= 0; i--)
+      check_table(table, i, i);
+   compute_dist(table);
+   __glxHashDestroy(table);
 
-    printf("\n***** 1024 consecutive page addresses (4k pages) ****\n");
-    table = __glxHashCreate();
-    for (i = 0; i < 1024; i++) __glxHashInsert(table, i*4096, i);
-    for (i = 0; i < 1024; i++) check_table(table, i*4096, i);
-    for (i = 1024; i >= 0; i--) check_table(table, i*4096, i);
-    compute_dist(table);
-    __glxHashDestroy(table);
+   printf("\n***** 1024 consecutive page addresses (4k pages) ****\n");
+   table = __glxHashCreate();
+   for (i = 0; i < 1024; i++)
+      __glxHashInsert(table, i * 4096, i);
+   for (i = 0; i < 1024; i++)
+      check_table(table, i * 4096, i);
+   for (i = 1024; i >= 0; i--)
+      check_table(table, i * 4096, i);
+   compute_dist(table);
+   __glxHashDestroy(table);
 
-    printf("\n***** 1024 random integers ****\n");
-    table = __glxHashCreate();
-    srandom(0xbeefbeef);
-    for (i = 0; i < 1024; i++) __glxHashInsert(table, random(), i);
-    srandom(0xbeefbeef);
-    for (i = 0; i < 1024; i++) check_table(table, random(), i);
-    srandom(0xbeefbeef);
-    for (i = 0; i < 1024; i++) check_table(table, random(), i);
-    compute_dist(table);
-    __glxHashDestroy(table);
+   printf("\n***** 1024 random integers ****\n");
+   table = __glxHashCreate();
+   srandom(0xbeefbeef);
+   for (i = 0; i < 1024; i++)
+      __glxHashInsert(table, random(), i);
+   srandom(0xbeefbeef);
+   for (i = 0; i < 1024; i++)
+      check_table(table, random(), i);
+   srandom(0xbeefbeef);
+   for (i = 0; i < 1024; i++)
+      check_table(table, random(), i);
+   compute_dist(table);
+   __glxHashDestroy(table);
 
-    printf("\n***** 5000 random integers ****\n");
-    table = __glxHashCreate();
-    srandom(0xbeefbeef);
-    for (i = 0; i < 5000; i++) __glxHashInsert(table, random(), i);
-    srandom(0xbeefbeef);
-    for (i = 0; i < 5000; i++) check_table(table, random(), i);
-    srandom(0xbeefbeef);
-    for (i = 0; i < 5000; i++) check_table(table, random(), i);
-    compute_dist(table);
-    __glxHashDestroy(table);
+   printf("\n***** 5000 random integers ****\n");
+   table = __glxHashCreate();
+   srandom(0xbeefbeef);
+   for (i = 0; i < 5000; i++)
+      __glxHashInsert(table, random(), i);
+   srandom(0xbeefbeef);
+   for (i = 0; i < 5000; i++)
+      check_table(table, random(), i);
+   srandom(0xbeefbeef);
+   for (i = 0; i < 5000; i++)
+      check_table(table, random(), i);
+   compute_dist(table);
+   __glxHashDestroy(table);
 
-    return 0;
+   return 0;
 }
 #endif

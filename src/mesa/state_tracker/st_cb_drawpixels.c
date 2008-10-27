@@ -35,6 +35,7 @@
 #include "main/bufferobj.h"
 #include "main/macros.h"
 #include "main/texformat.h"
+#include "main/state.h"
 #include "shader/program.h"
 #include "shader/prog_parameter.h"
 #include "shader/prog_print.h"
@@ -835,6 +836,9 @@ st_DrawPixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
       return;
    }
 
+   _mesa_set_vp_override( ctx, TRUE );
+   _mesa_update_state( ctx );
+
    st_validate_state(st);
 
    if (format == GL_DEPTH_COMPONENT) {
@@ -874,6 +878,8 @@ st_DrawPixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
       /* blit */
       draw_blit(st, width, height, format, type, pixels);
    }
+
+   _mesa_set_vp_override( ctx, FALSE );
 }
 
 

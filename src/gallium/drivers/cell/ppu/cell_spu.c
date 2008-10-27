@@ -53,6 +53,35 @@ struct cell_global_info cell_global;
 
 
 /**
+ * Scan /proc/cpuinfo to determine the timebase for the system.
+ * This is used by the SPUs to convert 'decrementer' ticks to seconds.
+ * There may be a better way to get this value...
+ */
+static unsigned
+get_timebase(void)
+{
+   FILE *f = fopen("/proc/cpuinfo", "r");
+   unsigned timebase;
+
+   assert(f);
+   while (!feof(f)) {
+      char line[80];
+      fgets(line, sizeof(line), f);
+      if (strncmp(line, "timebase", 8) == 0) {
+         char *colon = strchr(line, ':');
+         if (colon) {
+            timebase = atoi(colon + 2);
+            break;
+         }
+      }
+   }
+   fclose(f);
+
+   return timebase;
+}
+
+
+/**
  * Write a 1-word message to the given SPE mailbox.
  */
 void
@@ -115,6 +144,7 @@ cell_start_spus(struct cell_context *cell)
 {
    static boolean one_time_init = FALSE;
    uint i, j;
+   uint timebase = get_timebase();
 
    if (one_time_init) {
       fprintf(stderr, "PPU: Multiple rendering contexts not yet supported "
@@ -124,10 +154,7 @@ cell_start_spus(struct cell_context *cell)
 
    one_time_init = TRUE;
 
-   assert(cell->num_spus <= MAX_SPUS);
-
-   ASSERT_ALIGN16(&cell_global.command[0]);
-   ASSERT_ALIGN16(&cell_global.command[1]);
+   assert(cell->num_spus <= CELL_MAX_SPUS);
 
    ASSERT_ALIGN16(&cell_global.inits[0]);
    ASSERT_ALIGN16(&cell_global.inits[1]);
@@ -141,7 +168,8 @@ cell_start_spus(struct cell_context *cell)
       cell_global.inits[i].id = i;
       cell_global.inits[i].num_spus = cell->num_spus;
       cell_global.inits[i].debug_flags = cell->debug_flags;
-      cell_global.inits[i].cmd = &cell_global.command[i];
+      cell_global.inits[i].inv_timebase = 1000.0f / timebase;
+
       for (j = 0; j < CELL_NUM_BUFFERS; j++) {
          cell_global.inits[i].buffers[j] = cell->buffer[j];
       }

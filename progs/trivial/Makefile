@@ -97,6 +97,7 @@ SOURCES = \
 	tri-query.c \
 	tri-scissor-tri.c \
 	tri-stencil.c \
+	tri-tex.c \
 	tri-tex-3d.c \
 	tri-tri.c \
 	tri-unfilled-edgeflag.c \
@@ -126,8 +127,11 @@ SOURCES = \
 	vp-line-clip.c \
 	vp-tri.c \
 	vp-tri-swap.c \
+	vp-tri-tex.c \
 	vp-tri-imm.c \
 	vp-tri-cb.c \
+	vp-tri-cb-pos.c \
+	vp-tri-cb-tex.c \
 	vp-unfilled.c 
 
 PROGS = $(SOURCES:%.c=%)

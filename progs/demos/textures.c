@@ -9,6 +9,9 @@
 #include <GL/glut.h>
 #include "readtex.h"
 
+#define TEST_CLAMP 0
+#define TEST_MIPMAPS 0
+
 #define MAX_TEXTURES 8
 
 
@@ -16,7 +19,8 @@ static int Win;
 static GLfloat Xrot = 0, Yrot = 0, Zrot = 0;
 static GLboolean Anim = GL_TRUE;
 static GLboolean Blend = GL_FALSE;
-static GLboolean MipMap = 1+GL_FALSE;
+static GLuint Filter = 0;
+static GLboolean Clamp = GL_FALSE;
 
 static GLuint NumTextures;
 static GLuint Textures[MAX_TEXTURES];
@@ -30,6 +34,22 @@ static const char *DefaultFiles[] = {
    "../images/tree2.rgba",
    "../images/tile.rgb"
 };
+
+
+#define NUM_FILTERS 5
+static
+struct filter {
+   GLenum min, mag;
+   const char *name;
+} FilterModes[NUM_FILTERS] = {
+   { GL_NEAREST, GL_NEAREST, "Nearest,Nearest" },
+   { GL_LINEAR, GL_LINEAR, "Linear,Linear" },
+   { GL_NEAREST_MIPMAP_NEAREST, GL_NEAREST, "NearestMipmapNearest,Nearest" },
+   { GL_LINEAR_MIPMAP_NEAREST, GL_LINEAR, "LinearMipmapNearest,Linear" },
+   { GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR, "LinearMipmapLinear,Linear" }
+};
+
+
 
 
 static void
@@ -58,10 +78,17 @@ DrawTextures(void)
 
       glBindTexture(GL_TEXTURE_2D, Textures[i]);
       glBegin(GL_POLYGON);
+#if TEST_CLAMP
+      glTexCoord2f( -0.5, -0.5 );   glVertex2f( -ar, -1.0 );
+      glTexCoord2f(  1.5, -0.5 );   glVertex2f(  ar, -1.0 );
+      glTexCoord2f(  1.5,  1.5 );   glVertex2f(  ar,  1.0 );
+      glTexCoord2f( -0.5,  1.5 );   glVertex2f( -ar,  1.0 );
+#else
       glTexCoord2f( 0.0, 0.0 );   glVertex2f( -ar, -1.0 );
       glTexCoord2f( 1.0, 0.0 );   glVertex2f(  ar, -1.0 );
       glTexCoord2f( 1.0, 1.0 );   glVertex2f(  ar,  1.0 );
       glTexCoord2f( 0.0, 1.0 );   glVertex2f( -ar,  1.0 );
+#endif
       glEnd();
 
       glPopMatrix();
@@ -137,19 +164,23 @@ Randomize(void)
 
 
 static void
-SetTexFilters(void)
+SetTexParams(void)
 {
    GLuint i;
    for (i = 0; i < NumTextures; i++) {
       glBindTexture(GL_TEXTURE_2D, Textures[i]);
-      if (MipMap) {
-         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
-                         GL_LINEAR_MIPMAP_LINEAR);
-         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
+                      FilterModes[Filter].min);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,
+                      FilterModes[Filter].mag);
+
+      if (Clamp) {
+         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
       }
       else {
-         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
       }
    }
 }
@@ -163,6 +194,7 @@ Key(unsigned char key, int x, int y)
    (void) y;
    switch (key) {
    case 'a':
+   case ' ':
       Anim = !Anim;
       if (Anim)
          glutIdleFunc(Idle);
@@ -172,12 +204,19 @@ Key(unsigned char key, int x, int y)
    case 'b':
       Blend = !Blend;
       break;
-   case 'm':
-      MipMap = !MipMap;
-      SetTexFilters();
+   case 'f':
+      Filter = (Filter + 1) % NUM_FILTERS;
+      SetTexParams();
       break;      
    case 'r':
       Randomize();
+      break;
+#if TEST_CLAMP
+   case 'c':
+      Clamp = !Clamp;
+      SetTexParams();
+      break;
+#endif
    case 'z':
       Zrot -= step;
       break;
@@ -190,9 +229,9 @@ Key(unsigned char key, int x, int y)
       break;
    }
 
-   printf("Blend=%s MipMap=%s\n",
+   printf("Blend=%s Filter=%s\n",
           Blend ? "Y" : "n",
-          MipMap ? "Y" : "n");
+          FilterModes[Filter].name);
 
    glutPostRedisplay();
 }
@@ -231,15 +270,46 @@ LoadTextures(GLuint n, const char *files[])
 
    glGenTextures(n, Textures);
 
+   SetTexParams();
+
    for (i = 0; i < n; i++) {
       GLint w, h;
       glBindTexture(GL_TEXTURE_2D, Textures[i]);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+#if TEST_MIPMAPS
+      {
+         static const GLubyte color[9][4] = {
+            {255, 0, 0},
+            {0, 255, 0},
+            {0, 0, 255},
+            {0, 255, 255},
+            {255, 0, 255},
+            {255, 255, 0},
+            {255, 128, 255},
+            {128, 128, 128},
+            {64, 64, 64}
+         };
+
+         GLubyte image[256*256*4];
+         int i, level;
+         w = h = 256;
+         for (level = 0; level <= 8; level++) {
+            for (i = 0; i < w * h; i++) {
+               image[i*4+0] = color[level][0];
+               image[i*4+1] = color[level][1];
+               image[i*4+2] = color[level][2];
+               image[i*4+3] = color[level][3];
+            }
+            printf("Load level %d: %d x %d\n", level, w>>level, h>>level);
+            glTexImage2D(GL_TEXTURE_2D, level, GL_RGBA, w>>level, h>>level, 0,
+                         GL_RGBA, GL_UNSIGNED_BYTE, image);
+         }
+      }
+#else
       if (!LoadRGBMipmaps2(files[i], GL_TEXTURE_2D, GL_RGB, &w, &h)) {
          printf("Error: couldn't load %s\n", files[i]);
          exit(1);
       }
+#endif
       TexAspect[i] = (float) w / (float) h;
       printf("Loaded %s\n", files[i]);
    }
@@ -277,7 +347,7 @@ Usage(void)
    printf("Keys:\n");
    printf("  a - toggle animation\n");
    printf("  b - toggle blending\n");
-   printf("  m - toggle mipmapping\n");
+   printf("  f - change texture filter mode\n");
    printf("  r - randomize\n");
    printf("  ESC - exit\n");
 }
@@ -288,7 +358,7 @@ main(int argc, char *argv[])
 {
    glutInit(&argc, argv);
    glutInitWindowPosition(0, 0);
-   glutInitWindowSize(400, 400);
+   glutInitWindowSize(700, 700);
    glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
    Win = glutCreateWindow(argv[0]);
    glutReshapeFunc(Reshape);

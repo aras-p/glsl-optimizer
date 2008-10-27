@@ -1,3 +1,4 @@
+/* -*- mode: c; tab-width: 3; indent-tabs-mode: nil; c-basic-offset: 3; coding: utf-8-unix -*- */
 /*
  * SGI FREE SOFTWARE LICENSE B (Version 2.0, Sept. 18, 2008)
  * Copyright (C) 1991-2000 Silicon Graphics, Inc. All Rights Reserved.
@@ -137,6 +138,8 @@ struct __GLXDRIscreenRec {
 					const __GLcontextModes *modes);
 
     void (*swapBuffers)(__GLXDRIdrawable *pdraw);
+    void (*copySubBuffer)(__GLXDRIdrawable *pdraw,
+			  int x, int y, int width, int height);
 };
 
 struct __GLXDRIcontextRec {
@@ -492,7 +495,7 @@ struct __GLXscreenConfigsRec {
     __GLXDRIscreen *driScreen;
 
 #ifdef __DRI_COPY_SUB_BUFFER
-    const __DRIcopySubBufferExtension *copySubBuffer;
+    const __DRIcopySubBufferExtension *driCopySubBuffer;
 #endif
 
 #ifdef __DRI_SWAP_CONTROL

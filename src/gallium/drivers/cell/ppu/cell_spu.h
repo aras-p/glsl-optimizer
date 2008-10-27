@@ -31,12 +31,11 @@
 
 #include <libspe2.h>
 #include <libmisc.h>
+#include <pthread.h>
 #include "cell/common.h"
 
 #include "cell_context.h"
 
-
-#define MAX_SPUS 8
 
 /**
  * Global vars, for now anyway.
@@ -46,14 +45,13 @@ struct cell_global_info
    /**
     * SPU/SPE handles, etc
     */
-   spe_context_ptr_t spe_contexts[MAX_SPUS];
-   pthread_t spe_threads[MAX_SPUS];
+   spe_context_ptr_t spe_contexts[CELL_MAX_SPUS];
+   pthread_t spe_threads[CELL_MAX_SPUS];
 
    /**
-    * Data sent to SPUs
+    * Data sent to SPUs at start-up
     */
-   struct cell_init_info inits[MAX_SPUS];
-   struct cell_command command[MAX_SPUS];
+   struct cell_init_info inits[CELL_MAX_SPUS];
 };
 
 

@@ -85,7 +85,10 @@ draw_create_vertex_shader(struct draw_context *draw,
    if (!vs) {
       vs = draw_create_vs_sse( draw, shader );
       if (!vs) {
-         vs = draw_create_vs_exec( draw, shader );
+         vs = draw_create_vs_ppc( draw, shader );
+         if (!vs) {
+            vs = draw_create_vs_exec( draw, shader );
+         }
       }
    }
 

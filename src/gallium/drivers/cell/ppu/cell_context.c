@@ -47,6 +47,7 @@
 #include "cell_clear.h"
 #include "cell_context.h"
 #include "cell_draw_arrays.h"
+#include "cell_fence.h"
 #include "cell_flush.h"
 #include "cell_state.h"
 #include "cell_surface.h"
@@ -93,6 +94,8 @@ static const struct debug_named_value cell_debug_flags[] = {
    {"sync", CELL_DEBUG_SYNC},      /**< SPUs do synchronous DMA */
    {"fragops", CELL_DEBUG_FRAGMENT_OPS}, /**< SPUs emit fragment ops debug messages*/
    {"fragopfallback", CELL_DEBUG_FRAGMENT_OP_FALLBACK}, /**< SPUs use reference implementation for fragment ops*/
+   {"cmd", CELL_DEBUG_CMD},       /**< SPUs dump command buffer info */
+   {"cache", CELL_DEBUG_CACHE},   /**< report texture cache stats on exit */
    {NULL, 0}
 };
 
@@ -102,6 +105,7 @@ cell_create_context(struct pipe_screen *screen,
                     struct cell_winsys *cws)
 {
    struct cell_context *cell;
+   uint i;
 
    /* some fields need to be 16-byte aligned, so align the whole object */
    cell = (struct cell_context*) align_malloc(sizeof(struct cell_context), 16);
@@ -149,13 +153,24 @@ cell_create_context(struct pipe_screen *screen,
                                               cell_debug_flags, 
                                               0 );
 
+   for (i = 0; i < CELL_NUM_BUFFERS; i++)
+      cell_fence_init(&cell->fenced_buffers[i].fence);
+
+
    /*
     * SPU stuff
     */
-   cell->num_spus = 6;
-   /* XXX is this in SDK 3.0 only?
-   cell->num_spus = spe_cpu_info_get(SPE_COUNT_PHYSICAL_SPES, -1);
-   */
+   /* This call only works with SDK 3.0.  Anyone still using 2.1??? */
+   cell->num_cells = spe_cpu_info_get(SPE_COUNT_PHYSICAL_CPU_NODES, -1);
+   cell->num_spus = spe_cpu_info_get(SPE_COUNT_USABLE_SPES, 0);
+   if (cell->debug_flags) {
+      printf("Cell: found %d Cell(s) with %u SPUs\n",
+             cell->num_cells, cell->num_spus);
+   }
+   if (getenv("CELL_NUM_SPUS")) {
+      cell->num_spus = atoi(getenv("CELL_NUM_SPUS"));
+      assert(cell->num_spus > 0);
+   }
 
    cell_start_spus(cell);
 

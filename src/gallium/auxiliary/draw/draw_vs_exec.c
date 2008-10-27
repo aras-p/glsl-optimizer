@@ -46,7 +46,6 @@
 struct exec_vertex_shader {
    struct draw_vertex_shader base;
    struct tgsi_exec_machine *machine;
-   const struct tgsi_token *machine_tokens;
 };
 
 static struct exec_vertex_shader *exec_vertex_shader( struct draw_vertex_shader *vs )
@@ -66,12 +65,11 @@ vs_exec_prepare( struct draw_vertex_shader *shader,
    /* Specify the vertex program to interpret/execute.
     * Avoid rebinding when possible.
     */
-   if (evs->machine_tokens != shader->state.tokens) {
+   if (evs->machine->Tokens != shader->state.tokens) {
       tgsi_exec_machine_bind_shader(evs->machine,
                                     shader->state.tokens,
                                     PIPE_MAX_SAMPLERS,
                                     NULL /*samplers*/ );
-      evs->machine_tokens = shader->state.tokens;
    }
 }
 

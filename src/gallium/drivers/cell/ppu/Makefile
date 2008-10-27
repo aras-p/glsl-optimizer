@@ -24,6 +24,7 @@ SOURCES = \
 	cell_clear.c \
 	cell_context.c \
 	cell_draw_arrays.c \
+	cell_fence.c \
 	cell_flush.c \
 	cell_gen_fragment.c \
 	cell_gen_fp.c \

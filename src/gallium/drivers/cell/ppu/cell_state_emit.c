@@ -52,6 +52,7 @@ lookup_fragment_ops(struct cell_context *cell)
     */
    memset(&key, 0, sizeof(key));
    key.blend = *cell->blend;
+   key.blend_color = cell->blend_color;
    key.dsa = *cell->depth_stencil;
 
    if (cell->framebuffer.cbufs[0])
@@ -146,6 +147,13 @@ cell_emit_state(struct cell_context *cell)
 #endif
    }
 
+   if (cell->dirty & (CELL_NEW_RASTERIZER)) {
+      struct cell_command_rasterizer *rast =
+         cell_batch_alloc(cell, sizeof(*rast));
+      rast->opcode = CELL_CMD_STATE_RASTERIZER;
+      rast->rasterizer = *cell->rasterizer;
+   }
+
    if (cell->dirty & (CELL_NEW_FS)) {
       /* Send new fragment program to SPUs */
       struct cell_command_fragment_program *fp
@@ -193,44 +201,50 @@ cell_emit_state(struct cell_context *cell)
    if (cell->dirty & CELL_NEW_SAMPLER) {
       uint i;
       for (i = 0; i < CELL_MAX_SAMPLERS; i++) {
-         if (cell->sampler[i]) {
-            struct cell_command_sampler *sampler
-               = cell_batch_alloc(cell, sizeof(*sampler));
-            sampler->opcode = CELL_CMD_STATE_SAMPLER;
-            sampler->unit = i;
-            sampler->state = *cell->sampler[i];
+         if (cell->dirty_samplers & (1 << i)) {
+            if (cell->sampler[i]) {
+               struct cell_command_sampler *sampler
+                  = cell_batch_alloc(cell, sizeof(*sampler));
+               sampler->opcode = CELL_CMD_STATE_SAMPLER;
+               sampler->unit = i;
+               sampler->state = *cell->sampler[i];
+            }
          }
       }
+      cell->dirty_samplers = 0x0;
    }
 
    if (cell->dirty & CELL_NEW_TEXTURE) {
       uint i;
       for (i = 0;i < CELL_MAX_SAMPLERS; i++) {
-         struct cell_command_texture *texture
-            =  cell_batch_alloc(cell, sizeof(*texture));
-         texture->opcode = CELL_CMD_STATE_TEXTURE;
-         texture->unit = i;
-         if (cell->texture[i]) {
-            uint level;
-            for (level = 0; level < CELL_MAX_TEXTURE_LEVELS; level++) {
-               texture->start[level] = cell->texture[i]->tiled_data[level];
-               texture->width[level] = cell->texture[i]->base.width[level];
-               texture->height[level] = cell->texture[i]->base.height[level];
-               texture->depth[level] = cell->texture[i]->base.depth[level];
+         if (cell->dirty_textures & (1 << i)) {
+            struct cell_command_texture *texture
+               =  cell_batch_alloc(cell, sizeof(*texture));
+            texture->opcode = CELL_CMD_STATE_TEXTURE;
+            texture->unit = i;
+            if (cell->texture[i]) {
+               uint level;
+               for (level = 0; level < CELL_MAX_TEXTURE_LEVELS; level++) {
+                  texture->start[level] = cell->texture[i]->tiled_mapped[level];
+                  texture->width[level] = cell->texture[i]->base.width[level];
+                  texture->height[level] = cell->texture[i]->base.height[level];
+                  texture->depth[level] = cell->texture[i]->base.depth[level];
+               }
+               texture->target = cell->texture[i]->base.target;
             }
-            texture->target = cell->texture[i]->base.target;
-         }
-         else {
-            uint level;
-            for (level = 0; level < CELL_MAX_TEXTURE_LEVELS; level++) {
-               texture->start[level] = NULL;
-               texture->width[level] = 0;
-               texture->height[level] = 0;
-               texture->depth[level] = 0;
+            else {
+               uint level;
+               for (level = 0; level < CELL_MAX_TEXTURE_LEVELS; level++) {
+                  texture->start[level] = NULL;
+                  texture->width[level] = 0;
+                  texture->height[level] = 0;
+                  texture->depth[level] = 0;
+               }
+               texture->target = 0;
             }
-            texture->target = 0;
          }
       }
+      cell->dirty_textures = 0x0;
    }
 
    if (cell->dirty & CELL_NEW_VERTEX_INFO) {

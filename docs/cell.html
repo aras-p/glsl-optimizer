@@ -83,23 +83,23 @@ Similarly, textures are tiled and brought into local store as needed.
 <H2>Status</H2>
 
 <p>
-As of September 2008, the driver supports smooth/flat shaded triangle rendering
-with Z testing and simple texture mapping.
-Simple demos like gears run successfully.
-To test texture mapping, try progs/demos/texcyl (press right mouse button for
-rendering options).
+As of October 2008, the driver runs quite a few OpenGL demos.
+Features that work include:
+</p>
+<ul>
+<li>Point/line/triangle rendering, glDrawPixels
+<li>2D, NPOT and cube texture maps with nearest/linear/mipmap filtering
+<li>Dynamic SPU code generation for fragment shaders, but not complete
+<li>Dynamic SPU code generation for fragment ops (blend, Z-test, etc), but not complete
+<li>Dynamic PPU/PPC code generation for vertex shaders, but not complete
+</ul>
+<p>
+Performance has recently improved with the addition of PPC code generation
+for vertex shaders, but the code quality isn't too great yet.
 </p>
 <p>
-Runtime/dynamic code generation is being done for per-fragment
-operations (Z test, blend, etc) and for fragment programs (though only a
-few opcodes are implemented now).
-</p>
-<p>
-In general, however, the driver is rather slow because all vertex
-transformation is being done by an interpreter running on the PPU.
-Programs with many vertices or complex vertex shaders will run especially
-slow.
-This will be addressed in the future.
+Another bottleneck is SwapBuffers.  It may be the limiting factor for
+many simple GL tests.
 </p>
 
 
@@ -114,8 +114,20 @@ more of the following debug options:
 <li><b>checker</b> - use a different background clear color for each SPU.
    This lets you see which SPU is rendering which screen tiles.
 <li><b>sync</b> - wait/synchronize after each DMA transfer
+<li><b>asm</b> - print generated SPU assembly code to stdout
+<li><b>fragops</b> - emit fragment ops debug messages
+<li><b>fragopfallback</b> - don't use codegen for fragment ops
+<li><b>cmd</b> - print SPU commands as their received
+<li><b>cache</b> - print texture cache statistics when program exits
 </ul>
+<p>
+Note that some of these options may only work for linux-cell-debug builds.
+</p>
 
+<p>
+If the GALLIUM_NOPPC env var is set, PPC code generation will not be used
+and vertex shaders will be run with the TGSI interpreter.
+</p>
 <p>
 If the GALLIUM_NOCELL env var is set, the softpipe driver will be used
 intead of the Cell driver.

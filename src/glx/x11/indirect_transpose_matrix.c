@@ -1,3 +1,4 @@
+/* -*- mode: c; tab-width: 3; indent-tabs-mode: nil; c-basic-offset: 3; coding: utf-8-unix -*- */
 /*
  * (C) Copyright IBM Corporation 2004
  * All Rights Reserved.
@@ -25,59 +26,61 @@
 #include <GL/gl.h>
 #include "indirect.h"
 
-static void TransposeMatrixf(const GLfloat s[16], GLfloat d[16])
+static void
+TransposeMatrixf(const GLfloat s[16], GLfloat d[16])
 {
-    int i, j;
-    for (i = 0; i < 4; i++) {
-        for (j = 0; j < 4; j++) {
-            d[i*4+j] = s[j*4+i];
-        }
-    }
+   int i, j;
+   for (i = 0; i < 4; i++) {
+      for (j = 0; j < 4; j++) {
+         d[i * 4 + j] = s[j * 4 + i];
+      }
+   }
 }
 
-static void TransposeMatrixd(const GLdouble s[16], GLdouble d[16])
+static void
+TransposeMatrixd(const GLdouble s[16], GLdouble d[16])
 {
-    int i, j;
-    for (i = 0; i < 4; i++) {
-        for (j = 0; j < 4; j++) {
-            d[i*4+j] = s[j*4+i];
-        }
-    }
+   int i, j;
+   for (i = 0; i < 4; i++) {
+      for (j = 0; j < 4; j++) {
+         d[i * 4 + j] = s[j * 4 + i];
+      }
+   }
 }
 
 
 void
-__indirect_glLoadTransposeMatrixdARB( const GLdouble * m )
+__indirect_glLoadTransposeMatrixdARB(const GLdouble * m)
 {
    GLdouble mt[16];
-   
-   TransposeMatrixd( m, mt );
-   __indirect_glLoadMatrixd( mt );
+
+   TransposeMatrixd(m, mt);
+   __indirect_glLoadMatrixd(mt);
 }
 
 void
-__indirect_glLoadTransposeMatrixfARB( const GLfloat * m )
+__indirect_glLoadTransposeMatrixfARB(const GLfloat * m)
 {
    GLfloat mt[16];
 
-   TransposeMatrixf( m, mt );
-   __indirect_glLoadMatrixf( mt );
+   TransposeMatrixf(m, mt);
+   __indirect_glLoadMatrixf(mt);
 }
 
 void
-__indirect_glMultTransposeMatrixdARB( const GLdouble * m )
+__indirect_glMultTransposeMatrixdARB(const GLdouble * m)
 {
    GLdouble mt[16];
-   
-   TransposeMatrixd( m, mt );
-   __indirect_glMultMatrixd( mt );
+
+   TransposeMatrixd(m, mt);
+   __indirect_glMultMatrixd(mt);
 }
 
 void
-__indirect_glMultTransposeMatrixfARB( const GLfloat * m )
+__indirect_glMultTransposeMatrixfARB(const GLfloat * m)
 {
    GLfloat mt[16];
 
-   TransposeMatrixf( m, mt );
-   __indirect_glMultMatrixf( mt );
+   TransposeMatrixf(m, mt);
+   __indirect_glMultMatrixf(mt);
 }

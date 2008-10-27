@@ -1,3 +1,4 @@
+/* -*- mode: c; tab-width: 3; indent-tabs-mode: nil; c-basic-offset: 3; coding: utf-8-unix -*- */
 /*
  * (C) Copyright IBM Corporation 2004, 2005
  * All Rights Reserved.
@@ -31,27 +32,34 @@ extern const GLuint __glXTypeSize_table[16];
 #define __glXTypeSize(e) ((((e) & ~0x0f) != 0x1400) \
     ? 0 : __glXTypeSize_table[ (e) & 0x0f ])
 
-extern void __glXArrayDisableAll( __GLXattribute * state );
+extern void __glXArrayDisableAll(__GLXattribute * state);
 
-extern GLboolean __glXSetArrayEnable( __GLXattribute * state,
-    GLenum key, unsigned index, GLboolean enable );
+extern GLboolean __glXSetArrayEnable(__GLXattribute * state,
+                                     GLenum key, unsigned index,
+                                     GLboolean enable);
 
-extern GLboolean __glXGetArrayEnable( const __GLXattribute * const state,
-    GLenum key, unsigned index, GLintptr * dest );
-extern GLboolean __glXGetArraySize( const __GLXattribute * const state,
-    GLenum key, unsigned index, GLintptr * dest );
-extern GLboolean __glXGetArrayType( const __GLXattribute * const state,
-    GLenum key, unsigned index, GLintptr * dest );
-extern GLboolean __glXGetArrayStride( const __GLXattribute * const state,
-    GLenum key, unsigned index, GLintptr * dest );
-extern GLboolean __glXGetArrayPointer( const __GLXattribute * const state,
-    GLenum key, unsigned index, void ** dest );
-extern GLboolean __glXGetArrayNormalized( const __GLXattribute * const state,
-    GLenum key, unsigned index, GLintptr * dest );
+extern GLboolean __glXGetArrayEnable(const __GLXattribute * const state,
+                                     GLenum key, unsigned index,
+                                     GLintptr * dest);
+extern GLboolean __glXGetArraySize(const __GLXattribute * const state,
+                                   GLenum key, unsigned index,
+                                   GLintptr * dest);
+extern GLboolean __glXGetArrayType(const __GLXattribute * const state,
+                                   GLenum key, unsigned index,
+                                   GLintptr * dest);
+extern GLboolean __glXGetArrayStride(const __GLXattribute * const state,
+                                     GLenum key, unsigned index,
+                                     GLintptr * dest);
+extern GLboolean __glXGetArrayPointer(const __GLXattribute * const state,
+                                      GLenum key, unsigned index,
+                                      void **dest);
+extern GLboolean __glXGetArrayNormalized(const __GLXattribute * const state,
+                                         GLenum key, unsigned index,
+                                         GLintptr * dest);
 
-extern void __glXPushArrayState( __GLXattribute * state );
-extern void __glXPopArrayState( __GLXattribute * state );
+extern void __glXPushArrayState(__GLXattribute * state);
+extern void __glXPopArrayState(__GLXattribute * state);
 
-extern GLuint __glXGetActiveTextureUnit( const __GLXattribute * const state );
+extern GLuint __glXGetActiveTextureUnit(const __GLXattribute * const state);
 
 #endif /* INDIRECT_VERTEX_ARRAY_H */

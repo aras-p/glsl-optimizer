@@ -1,3 +1,4 @@
+/* -*- mode: c; tab-width: 3; indent-tabs-mode: nil; c-basic-offset: 3; coding: utf-8-unix -*- */
 /*
  * Copyright © 2007,2008 Red Hat, Inc.
  *
@@ -33,6 +34,9 @@
 #ifndef _DRI2_H_
 #define _DRI2_H_
 
+#include <X11/extensions/Xfixes.h>
+#include <X11/extensions/dri2tokens.h>
+
 typedef struct {
     unsigned int attachment;
     unsigned int name;
@@ -46,10 +50,10 @@ DRI2QueryExtension(Display *display, int *eventBase, int *errorBase);
 extern Bool
 DRI2QueryVersion(Display *display, int *major, int *minor);
 extern Bool
-DRI2Connect(Display *display, int screen,
-	    char **driverName, char **busId, unsigned int *sareaHandle);
+DRI2Connect(Display *display, XID window,
+	    char **driverName, char **deviceName);
 extern Bool
-DRI2AuthConnection(Display *display, int screen, drm_magic_t magic);
+DRI2Authenticate(Display *display, XID window, drm_magic_t magic);
 extern void
 DRI2CreateDrawable(Display *display, XID drawable);
 extern void
@@ -59,8 +63,9 @@ DRI2GetBuffers(Display *dpy, XID drawable,
 	       int *width, int *height,
 	       unsigned int *attachments, int count,
 	       int *outCount);
+
 extern void
-DRI2SwapBuffers(Display *dpy, XID drawable,
-		int x, int y, int width, int height);
+DRI2CopyRegion(Display *dpy, XID drawable, XserverRegion region,
+	       CARD32 dest, CARD32 src);
 
 #endif

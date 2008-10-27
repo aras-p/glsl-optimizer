@@ -64,10 +64,13 @@
 #define ROUNDUP16(k)  (((k) + 0xf) & ~0xf)
 
 
-#define CELL_MAX_SPUS 6
+#define CELL_MAX_SPUS 8
 
 #define CELL_MAX_SAMPLERS 4
 #define CELL_MAX_TEXTURE_LEVELS 12  /* 2k x 2k */
+#define CELL_MAX_CONSTANTS 32  /**< number of float[4] constants */
+#define CELL_MAX_WIDTH 1024    /**< max framebuffer width */
+#define CELL_MAX_HEIGHT 1024   /**< max framebuffer width */
 
 #define TILE_SIZE 32
 
@@ -96,34 +99,67 @@
 #define CELL_CMD_STATE_FRAGMENT_PROGRAM 19
 #define CELL_CMD_STATE_ATTRIB_FETCH  20
 #define CELL_CMD_STATE_FS_CONSTANTS  21
-#define CELL_CMD_VS_EXECUTE          22
-#define CELL_CMD_FLUSH_BUFFER_RANGE  23
+#define CELL_CMD_STATE_RASTERIZER    22
+#define CELL_CMD_VS_EXECUTE          23
+#define CELL_CMD_FLUSH_BUFFER_RANGE  24
+#define CELL_CMD_FENCE               25
 
 
+/** Command/batch buffers */
 #define CELL_NUM_BUFFERS 4
 #define CELL_BUFFER_SIZE (4*1024)  /**< 16KB would be the max */
 
 #define CELL_BUFFER_STATUS_FREE 10
 #define CELL_BUFFER_STATUS_USED 20
 
+/** Debug flags */
 #define CELL_DEBUG_CHECKER              (1 << 0)
 #define CELL_DEBUG_ASM                  (1 << 1)
 #define CELL_DEBUG_SYNC                 (1 << 2)
 #define CELL_DEBUG_FRAGMENT_OPS         (1 << 3)
 #define CELL_DEBUG_FRAGMENT_OP_FALLBACK (1 << 4)
+#define CELL_DEBUG_CMD                  (1 << 5)
+#define CELL_DEBUG_CACHE                (1 << 6)
 
 /** Max instructions for doing per-fragment operations */
 #define SPU_MAX_FRAGMENT_OPS_INSTS 64
 
 
+
+#define CELL_FENCE_IDLE      0
+#define CELL_FENCE_EMITTED   1
+#define CELL_FENCE_SIGNALLED 2
+
+struct cell_fence
+{
+   /** There's a 16-byte status qword per SPU */
+   volatile uint status[CELL_MAX_SPUS][4];
+};
+
+
+/**
+ * Fence command sent to SPUs.  In response, the SPUs will write
+ * CELL_FENCE_STATUS_SIGNALLED back to the fence status word in main memory.
+ */
+struct cell_command_fence
+{
+   uint64_t opcode;      /**< CELL_CMD_FENCE */
+   struct cell_fence *fence;
+};
+
+
 /**
  * Command to specify per-fragment operations state and generated code.
+ * Note that the dsa, blend, blend_color fields are really only needed
+ * for the fallback/C per-pixel code.  They're not used when we generate
+ * dynamic SPU fragment code (which is the normal case).
  */
 struct cell_command_fragment_ops
 {
    uint64_t opcode;      /**< CELL_CMD_STATE_FRAGMENT_OPS */
    struct pipe_depth_stencil_alpha_state dsa;
    struct pipe_blend_state blend;
+   struct pipe_blend_color blend_color;
    unsigned code[SPU_MAX_FRAGMENT_OPS_INSTS];
 };
 
@@ -147,10 +183,20 @@ struct cell_command_fragment_program
  */
 struct cell_command_framebuffer
 {
-   uint64_t opcode;     /**< CELL_CMD_FRAMEBUFFER */
+   uint64_t opcode;     /**< CELL_CMD_STATE_FRAMEBUFFER */
    int width, height;
    void *color_start, *depth_start;
    enum pipe_format color_format, depth_format;
+};
+
+
+/**
+ * Tell SPUs about rasterizer state.
+ */
+struct cell_command_rasterizer
+{
+   uint64_t opcode;    /**< CELL_CMD_STATE_RASTERIZER */
+   struct pipe_rasterizer_state rasterizer;
 };
 
 
@@ -229,7 +275,6 @@ struct cell_command_render
    float xmin, ymin, xmax, ymax;  /* XXX another dummy field */
    uint min_index;
    boolean inline_verts;
-   uint front_winding; /* the rasterizer needs to be able to determine facing to apply front/back-facing stencil */
 };
 
 
@@ -260,19 +305,6 @@ struct cell_command_texture
 };
 
 
-/** XXX unions don't seem to work */
-/* XXX this should go away; all commands should be placed in batch buffers */
-struct cell_command
-{
-#if 0
-   struct cell_command_framebuffer fb;
-   struct cell_command_clear_surface clear;
-   struct cell_command_render render;
-#endif
-   struct cell_command_vs vs;
-} ALIGN16_ATTRIB;
-
-
 #define MAX_SPU_FUNCTIONS 12
 /**
  * Used to tell the PPU about the address of particular functions in the
@@ -293,7 +325,7 @@ struct cell_init_info
    unsigned id;
    unsigned num_spus;
    unsigned debug_flags;  /**< mask of CELL_DEBUG_x flags */
-   struct cell_command *cmd;
+   float inv_timebase;    /**< 1.0/timebase, for perf measurement */
 
    /** Buffers for command batches, vertex/index data */
    ubyte *buffers[CELL_NUM_BUFFERS];

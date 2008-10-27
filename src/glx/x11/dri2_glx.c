@@ -1,3 +1,4 @@
+/* -*- mode: c; tab-width: 3; indent-tabs-mode: nil; c-basic-offset: 3; coding: utf-8-unix -*- */
 /*
  * Copyright © 2008 Red Hat, Inc.
  *
@@ -38,8 +39,9 @@
 #include "glxclient.h"
 #include "glcontextmodes.h"
 #include "xf86dri.h"
-#include "sarea.h"
 #include <dlfcn.h>
+#include <fcntl.h>
+#include <unistd.h>
 #include <sys/types.h>
 #include <sys/mman.h>
 #include "xf86drm.h"
@@ -182,19 +184,35 @@ static __GLXDRIdrawable *dri2CreateDrawable(__GLXscreenConfigs *psc,
     return &pdraw->base;
 }
 
+static void dri2CopySubBuffer(__GLXDRIdrawable *pdraw,
+			      int x, int y, int width, int height)
+{
+    XRectangle xrect;
+    XserverRegion region;
+
+    xrect.x = x;
+    xrect.y = y;
+    xrect.width = width;
+    xrect.height = height;
+
+    region = XFixesCreateRegion(pdraw->psc->dpy, &xrect, 1);
+    DRI2CopyRegion(pdraw->psc->dpy, pdraw->drawable, region,
+		   DRI2BufferFrontLeft, DRI2BufferBackLeft);
+    XFixesDestroyRegion(pdraw->psc->dpy, region);
+}
+
 static void dri2SwapBuffers(__GLXDRIdrawable *pdraw)
 {
     __GLXDRIdrawablePrivate *priv = (__GLXDRIdrawablePrivate *) pdraw;
 
-    DRI2SwapBuffers(pdraw->psc->dpy, pdraw->drawable,
-		    0, 0, priv->width, priv->height);
+    dri2CopySubBuffer(pdraw, 0, 0, priv->width, priv->height);
 }
 
 static void dri2DestroyScreen(__GLXscreenConfigs *psc)
 {
     /* Free the direct rendering per screen data */
     (*psc->core->destroyScreen)(psc->__driScreen);
-    drmClose(psc->fd);
+    close(psc->fd);
     psc->__driScreen = NULL;
 }
 
@@ -248,8 +266,7 @@ static __GLXDRIscreen *dri2CreateScreen(__GLXscreenConfigs *psc, int screen,
     const __DRIconfig **driver_configs;
     const __DRIextension **extensions;
     __GLXDRIscreen *psp;
-    unsigned int sareaHandle;
-    char *driverName, *busID;
+    char *driverName, *deviceName;
     drm_magic_t magic;
     int i;
 
@@ -260,7 +277,8 @@ static __GLXDRIscreen *dri2CreateScreen(__GLXscreenConfigs *psc, int screen,
     /* Initialize per screen dynamic client GLX extensions */
     psc->ext_list_first_time = GL_TRUE;
 
-    if (!DRI2Connect(psc->dpy, screen, &driverName, &busID, &sareaHandle))
+    if (!DRI2Connect(psc->dpy, RootWindow(psc->dpy, screen),
+		     &driverName, &deviceName))
 	return NULL;
 
     psc->driver = driOpenDriver(driverName);
@@ -285,7 +303,7 @@ static __GLXDRIscreen *dri2CreateScreen(__GLXscreenConfigs *psc, int screen,
 	goto handle_error;
     }
 
-    psc->fd = drmOpen(NULL, busID);
+    psc->fd = open(deviceName, O_RDWR);
     if (psc->fd < 0) {
 	ErrorMessageF("failed to open drm device: %s\n", strerror(errno));
 	return NULL;
@@ -294,10 +312,8 @@ static __GLXDRIscreen *dri2CreateScreen(__GLXscreenConfigs *psc, int screen,
     if (drmGetMagic(psc->fd, &magic))
 	return NULL;
 
-    if (!DRI2AuthConnection(psc->dpy, screen, magic)) {
-	ErrorMessageF("failed to authenticate drm access\n");
+    if (!DRI2Authenticate(psc->dpy, RootWindow(psc->dpy, screen), magic))
 	return NULL;
-    }
 
     psc->__driScreen = 
 	psc->dri2->createNewScreen(screen, psc->fd,
@@ -316,15 +332,16 @@ static __GLXDRIscreen *dri2CreateScreen(__GLXscreenConfigs *psc, int screen,
     psp->createContext = dri2CreateContext;
     psp->createDrawable = dri2CreateDrawable;
     psp->swapBuffers = dri2SwapBuffers;
+    psp->copySubBuffer = dri2CopySubBuffer;
 
     Xfree(driverName);
-    Xfree(busID);
+    Xfree(deviceName);
 
     return psp;
 
  handle_error:
     Xfree(driverName);
-    Xfree(busID);
+    Xfree(deviceName);
 
     /* FIXME: clean up here */
 

@@ -1,3 +1,4 @@
+/* -*- mode: c; tab-width: 3; indent-tabs-mode: nil; c-basic-offset: 3; coding: utf-8-unix -*- */
 /*
  * Copyright 1998-1999 Precision Insight, Inc., Cedar Park, Texas.
  * Copyright © 2008 Red Hat, Inc.
@@ -36,16 +37,17 @@
 #ifndef _DRI_COMMON_H
 #define _DRI_COMMON_H
 
-typedef struct __GLXDRIconfigPrivateRec  __GLXDRIconfigPrivate;
+typedef struct __GLXDRIconfigPrivateRec __GLXDRIconfigPrivate;
 
-struct __GLXDRIconfigPrivateRec {
-    __GLcontextModes modes;
-    const __DRIconfig *driConfig;
+struct __GLXDRIconfigPrivateRec
+{
+   __GLcontextModes modes;
+   const __DRIconfig *driConfig;
 };
 
-extern __GLcontextModes *
-driConvertConfigs(const __DRIcoreExtension *core,
-		  __GLcontextModes *modes, const __DRIconfig **configs);
+extern __GLcontextModes *driConvertConfigs(const __DRIcoreExtension * core,
+                                           __GLcontextModes * modes,
+                                           const __DRIconfig ** configs);
 
 extern const __DRIsystemTimeExtension systemTimeExtension;
 
@@ -55,6 +57,6 @@ extern void ErrorMessageF(const char *f, ...);
 
 extern void *driOpenDriver(const char *driverName);
 
-extern void driBindExtensions(__GLXscreenConfigs *psc, int dri2);
+extern void driBindExtensions(__GLXscreenConfigs * psc, int dri2);
 
 #endif /* _DRI_COMMON_H */

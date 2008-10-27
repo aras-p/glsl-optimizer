@@ -26,35 +26,32 @@
  **************************************************************************/
 
 
-#ifndef SPU_DEBUG_H
-#define SPU_DEBUG_H
+#ifndef CELL_FENCE_H
+#define CELL_FENCE_H
 
 
-/* Set to 0 to disable all extraneous debugging code */
-#define DEBUG 1
-
-#if DEBUG
-extern boolean Debug;
-extern boolean force_fragment_ops_fallback;
-
-/* These debug macros use the unusual construction ", ##__VA_ARGS__"
- * which expands to the expected comma + args if variadic arguments
- * are supplied, but swallows the comma if there are no variadic
- * arguments (which avoids syntax errors that would otherwise occur).
- */
-#define DEBUG_PRINTF(format,...) \
-   if (Debug) \
-      printf("SPU %u: " format, spu.init.id, ##__VA_ARGS__)
-#define D_PRINTF(flag, format,...) \
-   if (spu.init.debug_flags & (flag)) \
-      printf("SPU %u: " format, spu.init.id, ##__VA_ARGS__)
-
-#else
-
-#define DEBUG_PRINTF(...)
-#define D_PRINTF(...)
-
-#endif
+extern void
+cell_fence_init(struct cell_fence *fence);
 
 
-#endif /* SPU_DEBUG_H */
+extern boolean
+cell_fence_signalled(const struct cell_context *cell,
+                     const struct cell_fence *fence);
+
+
+extern void
+cell_fence_finish(const struct cell_context *cell,
+                  const struct cell_fence *fence);
+
+
+
+extern void
+cell_free_fenced_buffers(struct cell_context *cell,
+                         struct cell_buffer_list *list);
+
+
+extern void
+cell_add_fenced_textures(struct cell_context *cell);
+
+
+#endif /* CELL_FENCE_H */

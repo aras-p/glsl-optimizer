@@ -1,3 +1,4 @@
+/* -*- mode: c; tab-width: 3; indent-tabs-mode: nil; c-basic-offset: 3; coding: utf-8-unix -*- */
 /*
  * Copyright 1998-1999 Precision Insight, Inc., Cedar Park, Texas.
  * Copyright © 2008 Red Hat, Inc.
@@ -339,7 +340,7 @@ driBindExtensions(__GLXscreenConfigs *psc, int dri2)
     for (i = 0; extensions[i]; i++) {
 #ifdef __DRI_COPY_SUB_BUFFER
 	if (strcmp(extensions[i]->name, __DRI_COPY_SUB_BUFFER) == 0) {
-	    psc->copySubBuffer = (__DRIcopySubBufferExtension *) extensions[i];
+	    psc->driCopySubBuffer = (__DRIcopySubBufferExtension *) extensions[i];
 	    __glXEnableDirectExtension(psc, "GLX_MESA_copy_sub_buffer_bit");
 	}
 #endif

@@ -1,3 +1,4 @@
+/* -*- mode: c; tab-width: 3; indent-tabs-mode: nil; c-basic-offset: 3; coding: utf-8-unix -*- */
 /*
  * SGI FREE SOFTWARE LICENSE B (Version 2.0, Sept. 18, 2008)
  * Copyright (C) 1991-2000 Silicon Graphics, Inc. All Rights Reserved.
@@ -2498,10 +2499,9 @@ static void __glXCopySubBufferMESA(Display *dpy, GLXDrawable drawable,
     int screen;
     __GLXDRIdrawable *pdraw = GetGLXDRIDrawable(dpy, drawable, &screen);
     if ( pdraw != NULL ) {
-	__GLXscreenConfigs * const psc = GetGLXScreenConfigs( dpy, screen );
-	if (psc->copySubBuffer != NULL) {
-	    (*psc->copySubBuffer->copySubBuffer)(pdraw->driDrawable,
-						 x, y, width, height);
+	__GLXscreenConfigs * const psc = GetGLXScreenConfigs(dpy, screen);
+	if (psc->driScreen->copySubBuffer != NULL) {
+	    (*psc->driScreen->copySubBuffer)(pdraw, x, y, width, height);
 	}
 
 	return;

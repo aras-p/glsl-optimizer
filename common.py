@@ -24,6 +24,7 @@ _machine_map = {
 	'i486': 'x86',
 	'i586': 'x86',
 	'i686': 'x86',
+	'ppc' : 'ppc',
 	'x86_64': 'x86_64',
 }
 if 'PROCESSOR_ARCHITECTURE' in os.environ:
@@ -56,7 +57,7 @@ def AddOptions(opts):
 	opts.Add(BoolOption('profile', 'profile build', 'no'))
 	#opts.Add(BoolOption('quiet', 'quiet command lines', 'no'))
 	opts.Add(EnumOption('machine', 'use machine-specific assembly code', default_machine,
-											 allowed_values=('generic', 'x86', 'x86_64')))
+											 allowed_values=('generic', 'ppc', 'x86', 'x86_64')))
 	opts.Add(EnumOption('platform', 'target platform', default_platform,
 											 allowed_values=('linux', 'cell', 'windows', 'winddk', 'wince')))
 	opts.Add(BoolOption('llvm', 'use LLVM', 'no'))

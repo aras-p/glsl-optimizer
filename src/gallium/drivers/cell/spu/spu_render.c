@@ -175,22 +175,14 @@ cmd_render(const struct cell_command_render *render, uint *pos_incr)
    const ubyte *vertices;
    const ushort *indexes;
    uint i, j;
+   uint num_tiles;
 
-
-   if (Debug) {
-      printf("SPU %u: RENDER prim %u, num_vert=%u  num_ind=%u  "
-             "inline_vert=%u\n",
-             spu.init.id,
-             render->prim_type,
-             render->num_verts,
-             render->num_indexes,
-             render->inline_verts);
-
-      /*
-      printf("       bound: %g, %g .. %g, %g\n",
-             render->xmin, render->ymin, render->xmax, render->ymax);
-      */
-   }
+   D_PRINTF(CELL_DEBUG_CMD,
+            "RENDER prim=%u num_vert=%u num_ind=%u inline_vert=%u\n",
+            render->prim_type,
+            render->num_verts,
+            render->num_indexes,
+            render->inline_verts);
 
    ASSERT(sizeof(*render) % 4 == 0);
    ASSERT(total_vertex_bytes % 16 == 0);
@@ -251,6 +243,8 @@ cmd_render(const struct cell_command_render *render, uint *pos_incr)
    wait_on_mask(1 << TAG_SURFACE_CLEAR); /* XXX temporary */
 
 
+   num_tiles = 0;
+
    /**
     ** loop over tiles, rendering tris
     **/
@@ -263,6 +257,8 @@ cmd_render(const struct cell_command_render *render, uint *pos_incr)
 
       if (!my_tile(tx, ty))
          continue;
+
+      num_tiles++;
 
       spu.cur_ctile_status = spu.ctile_status[ty][tx];
       spu.cur_ztile_status = spu.ztile_status[ty][tx];
@@ -279,7 +275,7 @@ cmd_render(const struct cell_command_render *render, uint *pos_incr)
          v1 = (const float *) (vertices + indexes[j+1] * vertex_size);
          v2 = (const float *) (vertices + indexes[j+2] * vertex_size);
 
-         drawn += tri_draw(v0, v1, v2, tx, ty, render->front_winding);
+         drawn += tri_draw(v0, v1, v2, tx, ty);
       }
 
       //printf("SPU %u: drew %u of %u\n", spu.init.id, drawn, render->num_indexes/3);
@@ -293,7 +289,7 @@ cmd_render(const struct cell_command_render *render, uint *pos_incr)
       spu.ztile_status[ty][tx] = spu.cur_ztile_status;
    }
 
-   if (Debug)
-      printf("SPU %u: RENDER done\n",
-             spu.init.id);
+   D_PRINTF(CELL_DEBUG_CMD,
+            "RENDER done (%u tiles hit)\n",
+            num_tiles);
 }

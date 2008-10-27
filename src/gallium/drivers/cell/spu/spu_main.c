@@ -40,7 +40,6 @@
 #include "spu_per_fragment_op.h"
 #include "spu_texture.h"
 //#include "spu_test.h"
-#include "spu_debug.h"
 #include "cell/common.h"
 
 
@@ -51,12 +50,6 @@ helpful headers:
 */
 
 struct spu_global spu;
-
-
-#if DEBUG
-boolean Debug = FALSE;
-boolean force_fragment_ops_fallback = TRUE;
-#endif
 
 
 static void
@@ -102,7 +95,7 @@ main(main_param_t speid, main_param_t argp)
 
    one_time_init();
 
-   DEBUG_PRINTF("main() speid=%lu\n", (unsigned long) speid);
+   D_PRINTF(CELL_DEBUG_CMD, "main() speid=%lu\n", (unsigned long) speid);
    D_PRINTF(CELL_DEBUG_FRAGMENT_OP_FALLBACK, "using fragment op fallback\n");
 
    /* get initialization data */

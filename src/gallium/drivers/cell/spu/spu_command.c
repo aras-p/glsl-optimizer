@@ -44,7 +44,6 @@
 #include "spu_tile.h"
 #include "spu_vertex_shader.h"
 #include "spu_dcache.h"
-#include "spu_debug.h"
 #include "cell/common.h"
 
 
@@ -77,9 +76,10 @@ static void
 release_buffer(uint buffer)
 {
    /* Evidently, using less than a 16-byte status doesn't work reliably */
-   static const uint status[4] ALIGN16_ATTRIB
-      = {CELL_BUFFER_STATUS_FREE, 0, 0, 0};
-
+   static const vector unsigned int status = {CELL_BUFFER_STATUS_FREE,
+                                              CELL_BUFFER_STATUS_FREE,
+                                              CELL_BUFFER_STATUS_FREE,
+                                              CELL_BUFFER_STATUS_FREE};
    const uint index = 4 * (spu.init.id * CELL_NUM_BUFFERS + buffer);
    uint *dst = spu.init.buffer_status + index;
 
@@ -94,10 +94,33 @@ release_buffer(uint buffer)
 }
 
 
+/**
+ * Write CELL_FENCE_SIGNALLED back to the fence status qword in main memory.
+ * There's a qword of status per SPU.
+ */
+static void
+cmd_fence(struct cell_command_fence *fence_cmd)
+{
+   static const vector unsigned int status = {CELL_FENCE_SIGNALLED,
+                                              CELL_FENCE_SIGNALLED,
+                                              CELL_FENCE_SIGNALLED,
+                                              CELL_FENCE_SIGNALLED};
+   uint *dst = (uint *) fence_cmd->fence;
+   dst += 4 * spu.init.id;  /* main store/memory address, not local store */
+
+   mfc_put((void *) &status,    /* src in local memory */
+           (unsigned int) dst,  /* dst in main memory */
+           sizeof(status),      /* size */
+           TAG_FENCE,           /* tag */
+           0, /* tid */
+           0  /* rid */);
+}
+
+
 static void
 cmd_clear_surface(const struct cell_command_clear_surface *clear)
 {
-   DEBUG_PRINTF("CLEAR SURF %u to 0x%08x\n", clear->surface, clear->value);
+   D_PRINTF(CELL_DEBUG_CMD, "CLEAR SURF %u to 0x%08x\n", clear->surface, clear->value);
 
    if (clear->surface == 0) {
       spu.fb.color_clear_value = clear->value;
@@ -165,14 +188,14 @@ cmd_clear_surface(const struct cell_command_clear_surface *clear)
 
 #endif /* CLEAR_OPT */
 
-   DEBUG_PRINTF("CLEAR SURF done\n");
+   D_PRINTF(CELL_DEBUG_CMD, "CLEAR SURF done\n");
 }
 
 
 static void
 cmd_release_verts(const struct cell_command_release_verts *release)
 {
-   DEBUG_PRINTF("RELEASE VERTS %u\n", release->vertex_buf);
+   D_PRINTF(CELL_DEBUG_CMD, "RELEASE VERTS %u\n", release->vertex_buf);
    ASSERT(release->vertex_buf != ~0U);
    release_buffer(release->vertex_buf);
 }
@@ -189,12 +212,13 @@ cmd_state_fragment_ops(const struct cell_command_fragment_ops *fops)
 {
    static int warned = 0;
 
-   DEBUG_PRINTF("CMD_STATE_FRAGMENT_OPS\n");
+   D_PRINTF(CELL_DEBUG_CMD, "CMD_STATE_FRAGMENT_OPS\n");
    /* Copy SPU code from batch buffer to spu buffer */
    memcpy(spu.fragment_ops_code, fops->code, SPU_MAX_FRAGMENT_OPS_INSTS * 4);
    /* Copy state info (for fallback case only) */
    memcpy(&spu.depth_stencil_alpha, &fops->dsa, sizeof(fops->dsa));
    memcpy(&spu.blend, &fops->blend, sizeof(fops->blend));
+   memcpy(&spu.blend_color, &fops->blend_color, sizeof(fops->blend_color));
 
    /* Parity twist!  For now, always use the fallback code by default,
     * only switching to codegen when specifically requested.  This
@@ -228,7 +252,7 @@ cmd_state_fragment_ops(const struct cell_command_fragment_ops *fops)
 static void
 cmd_state_fragment_program(const struct cell_command_fragment_program *fp)
 {
-   DEBUG_PRINTF("CMD_STATE_FRAGMENT_PROGRAM\n");
+   D_PRINTF(CELL_DEBUG_CMD, "CMD_STATE_FRAGMENT_PROGRAM\n");
    /* Copy SPU code from batch buffer to spu buffer */
    memcpy(spu.fragment_program_code, fp->code,
           SPU_MAX_FRAGMENT_PROGRAM_INSTS * 4);
@@ -246,10 +270,11 @@ cmd_state_fs_constants(const uint64_t *buffer, uint pos)
    const float *constants = (const float *) &buffer[pos + 2];
    uint i;
 
-   DEBUG_PRINTF("CMD_STATE_FS_CONSTANTS (%u)\n", num_const);
+   D_PRINTF(CELL_DEBUG_CMD, "CMD_STATE_FS_CONSTANTS (%u)\n", num_const);
 
    /* Expand each float to float[4] for SOA execution */
    for (i = 0; i < num_const; i++) {
+      D_PRINTF(CELL_DEBUG_CMD, "  const[%u] = %f\n", i, constants[i]);
       spu.constants[i] = spu_splats(constants[i]);
    }
 
@@ -261,7 +286,7 @@ cmd_state_fs_constants(const uint64_t *buffer, uint pos)
 static void
 cmd_state_framebuffer(const struct cell_command_framebuffer *cmd)
 {
-   DEBUG_PRINTF("FRAMEBUFFER: %d x %d at %p, cformat 0x%x  zformat 0x%x\n",
+   D_PRINTF(CELL_DEBUG_CMD, "FRAMEBUFFER: %d x %d at %p, cformat 0x%x  zformat 0x%x\n",
              cmd->width,
              cmd->height,
              cmd->color_start,
@@ -309,8 +334,7 @@ cmd_state_framebuffer(const struct cell_command_framebuffer *cmd)
  */
 static void
 update_tex_masks(struct spu_texture *texture,
-                 const struct pipe_sampler_state *sampler,
-                 uint unit)
+                 const struct pipe_sampler_state *sampler)
 {
    uint i;
 
@@ -337,11 +361,6 @@ update_tex_masks(struct spu_texture *texture,
          texture->level[i].scale_t = spu_splats(1.0f);
       }
    }
-
-   /* XXX temporary hack */
-   if (texture->target == PIPE_TEXTURE_CUBE) {
-      spu.sample_texture4[unit] = sample_texture4_cube;
-   }
 }
 
 
@@ -350,18 +369,18 @@ cmd_state_sampler(const struct cell_command_sampler *sampler)
 {
    uint unit = sampler->unit;
 
-   DEBUG_PRINTF("SAMPLER [%u]\n", unit);
+   D_PRINTF(CELL_DEBUG_CMD, "SAMPLER [%u]\n", unit);
 
    spu.sampler[unit] = sampler->state;
 
    switch (spu.sampler[unit].min_img_filter) {
    case PIPE_TEX_FILTER_LINEAR:
-      spu.min_sample_texture4[unit] = sample_texture4_bilinear;
+      spu.min_sample_texture_2d[unit] = sample_texture_2d_bilinear;
       break;
    case PIPE_TEX_FILTER_ANISO:
       /* fall-through, for now */
    case PIPE_TEX_FILTER_NEAREST:
-      spu.min_sample_texture4[unit] = sample_texture4_nearest;
+      spu.min_sample_texture_2d[unit] = sample_texture_2d_nearest;
       break;
    default:
       ASSERT(0);
@@ -369,12 +388,12 @@ cmd_state_sampler(const struct cell_command_sampler *sampler)
 
    switch (spu.sampler[sampler->unit].mag_img_filter) {
    case PIPE_TEX_FILTER_LINEAR:
-      spu.mag_sample_texture4[unit] = sample_texture4_bilinear;
+      spu.mag_sample_texture_2d[unit] = sample_texture_2d_bilinear;
       break;
    case PIPE_TEX_FILTER_ANISO:
       /* fall-through, for now */
    case PIPE_TEX_FILTER_NEAREST:
-      spu.mag_sample_texture4[unit] = sample_texture4_nearest;
+      spu.mag_sample_texture_2d[unit] = sample_texture_2d_nearest;
       break;
    default:
       ASSERT(0);
@@ -383,16 +402,16 @@ cmd_state_sampler(const struct cell_command_sampler *sampler)
    switch (spu.sampler[sampler->unit].min_mip_filter) {
    case PIPE_TEX_MIPFILTER_NEAREST:
    case PIPE_TEX_MIPFILTER_LINEAR:
-      spu.sample_texture4[unit] = sample_texture4_lod;
+      spu.sample_texture_2d[unit] = sample_texture_2d_lod;
       break;
    case PIPE_TEX_MIPFILTER_NONE:
-      spu.sample_texture4[unit] = spu.mag_sample_texture4[unit];
+      spu.sample_texture_2d[unit] = spu.mag_sample_texture_2d[unit];
       break;
    default:
       ASSERT(0);
    }
 
-   update_tex_masks(&spu.texture[unit], &spu.sampler[unit], unit);
+   update_tex_masks(&spu.texture[unit], &spu.sampler[unit]);
 }
 
 
@@ -402,9 +421,7 @@ cmd_state_texture(const struct cell_command_texture *texture)
    const uint unit = texture->unit;
    uint i;
 
-   //if (spu.init.id==0) Debug=1;
-
-   DEBUG_PRINTF("TEXTURE [%u]\n", texture->unit);
+   D_PRINTF(CELL_DEBUG_CMD, "TEXTURE [%u]\n", texture->unit);
 
    spu.texture[unit].max_level = 0;
    spu.texture[unit].target = texture->target;
@@ -414,7 +431,7 @@ cmd_state_texture(const struct cell_command_texture *texture)
       uint height = texture->height[i];
       uint depth = texture->depth[i];
 
-      DEBUG_PRINTF("  LEVEL %u: at %p  size[0] %u x %u\n", i,
+      D_PRINTF(CELL_DEBUG_CMD, "  LEVEL %u: at %p  size[0] %u x %u\n", i,
              texture->start[i], texture->width[i], texture->height[i]);
 
       spu.texture[unit].level[i].start = texture->start[i];
@@ -435,16 +452,14 @@ cmd_state_texture(const struct cell_command_texture *texture)
          spu.texture[unit].max_level = i;
    }
 
-   update_tex_masks(&spu.texture[unit], &spu.sampler[unit], unit);
-
-   //Debug=0;
+   update_tex_masks(&spu.texture[unit], &spu.sampler[unit]);
 }
 
 
 static void
 cmd_state_vertex_info(const struct vertex_info *vinfo)
 {
-   DEBUG_PRINTF("VERTEX_INFO num_attribs=%u\n", vinfo->num_attribs);
+   D_PRINTF(CELL_DEBUG_CMD, "VERTEX_INFO num_attribs=%u\n", vinfo->num_attribs);
    ASSERT(vinfo->num_attribs >= 1);
    ASSERT(vinfo->num_attribs <= 8);
    memcpy(&spu.vertex_info, vinfo, sizeof(*vinfo));
@@ -483,7 +498,7 @@ cmd_state_attrib_fetch(const struct cell_attribute_fetch_code *code)
 static void
 cmd_finish(void)
 {
-   DEBUG_PRINTF("FINISH\n");
+   D_PRINTF(CELL_DEBUG_CMD, "FINISH\n");
    really_clear_tiles(0);
    /* wait for all outstanding DMAs to finish */
    mfc_write_tag_mask(~0);
@@ -508,7 +523,7 @@ cmd_batch(uint opcode)
    const unsigned usize = size / sizeof(buffer[0]);
    uint pos;
 
-   DEBUG_PRINTF("BATCH buffer %u, len %u, from %p\n",
+   D_PRINTF(CELL_DEBUG_CMD, "BATCH buffer %u, len %u, from %p\n",
              buf, size, spu.init.buffers[buf]);
 
    ASSERT((opcode & CELL_CMD_OPCODE_MASK) == CELL_CMD_BATCH);
@@ -528,7 +543,7 @@ cmd_batch(uint opcode)
    wait_on_mask(1 << TAG_BATCH_BUFFER);
 
    /* Tell PPU we're done copying the buffer to local store */
-   DEBUG_PRINTF("release batch buf %u\n", buf);
+   D_PRINTF(CELL_DEBUG_CMD, "release batch buf %u\n", buf);
    release_buffer(buf);
 
    /*
@@ -586,6 +601,14 @@ cmd_batch(uint opcode)
       case CELL_CMD_STATE_FS_CONSTANTS:
          pos = cmd_state_fs_constants(buffer, pos);
          break;
+      case CELL_CMD_STATE_RASTERIZER:
+         {
+            struct cell_command_rasterizer *rast =
+               (struct cell_command_rasterizer *) &buffer[pos];
+            spu.rasterizer = rast->rasterizer;
+            pos += sizeof(*rast) / 8;
+         }
+         break;
       case CELL_CMD_STATE_SAMPLER:
          {
             struct cell_command_sampler *sampler
@@ -638,6 +661,14 @@ cmd_batch(uint opcode)
          cmd_finish();
          pos += 1;
          break;
+      case CELL_CMD_FENCE:
+         {
+            struct cell_command_fence *fence_cmd =
+               (struct cell_command_fence *) &buffer[pos];
+            cmd_fence(fence_cmd);
+            pos += sizeof(*fence_cmd) / 8;
+         }
+         break;
       case CELL_CMD_RELEASE_VERTS:
          {
             struct cell_command_release_verts *release
@@ -661,9 +692,11 @@ cmd_batch(uint opcode)
       }
    }
 
-   DEBUG_PRINTF("BATCH complete\n");
+   D_PRINTF(CELL_DEBUG_CMD, "BATCH complete\n");
 }
 
+
+#define PERF 0
 
 
 /**
@@ -672,41 +705,29 @@ cmd_batch(uint opcode)
 void
 command_loop(void)
 {
-   struct cell_command cmd;
    int exitFlag = 0;
+   uint t0, t1;
 
-   DEBUG_PRINTF("Enter command loop\n");
-
-   ASSERT((sizeof(struct cell_command) & 0xf) == 0);
-   ASSERT_ALIGN16(&cmd);
+   D_PRINTF(CELL_DEBUG_CMD, "Enter command loop\n");
 
    while (!exitFlag) {
       unsigned opcode;
-      int tag = 0;
 
-      DEBUG_PRINTF("Wait for cmd...\n");
+      D_PRINTF(CELL_DEBUG_CMD, "Wait for cmd...\n");
+
+      if (PERF)
+         spu_write_decrementer(~0);
 
       /* read/wait from mailbox */
       opcode = (unsigned int) spu_read_in_mbox();
+      D_PRINTF(CELL_DEBUG_CMD, "got cmd 0x%x\n", opcode);
 
-      DEBUG_PRINTF("got cmd 0x%x\n", opcode);
-
-      /* command payload */
-      mfc_get(&cmd,  /* dest */
-              (unsigned int) spu.init.cmd, /* src */
-              sizeof(struct cell_command), /* bytes */
-              tag,
-              0, /* tid */
-              0  /* rid */);
-      wait_on_mask( 1 << tag );
-
-      /*
-       * NOTE: most commands should be contained in a batch buffer
-       */
+      if (PERF)
+         t0 = spu_read_decrementer();
 
       switch (opcode & CELL_CMD_OPCODE_MASK) {
       case CELL_CMD_EXIT:
-         DEBUG_PRINTF("EXIT\n");
+         D_PRINTF(CELL_DEBUG_CMD, "EXIT\n");
          exitFlag = 1;
          break;
       case CELL_CMD_VS_EXECUTE:
@@ -721,9 +742,16 @@ command_loop(void)
          printf("Bad opcode 0x%x!\n", opcode & CELL_CMD_OPCODE_MASK);
       }
 
+      if (PERF) {
+         t1 = spu_read_decrementer();
+         printf("wait mbox time: %gms   batch time: %gms\n",
+                (~0u - t0) * spu.init.inv_timebase,
+                (t0 - t1) * spu.init.inv_timebase);
+      }
    }
 
-   DEBUG_PRINTF("Exit command loop\n");
+   D_PRINTF(CELL_DEBUG_CMD, "Exit command loop\n");
 
-   spu_dcache_report();
+   if (spu.init.debug_flags & CELL_DEBUG_CACHE)
+      spu_dcache_report();
 }

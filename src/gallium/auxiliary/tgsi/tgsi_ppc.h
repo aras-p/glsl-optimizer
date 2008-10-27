@@ -1,6 +1,6 @@
 /**************************************************************************
  * 
- * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2008 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -25,47 +25,27 @@
  * 
  **************************************************************************/
 
-#ifndef CELL_TEXTURE_H
-#define CELL_TEXTURE_H
+#ifndef TGSI_PPC_H
+#define TGSI_PPC_H
+
+#if defined __cplusplus
+extern "C" {
+#endif
+
+struct tgsi_token;
+struct ppc_function;
+
+extern const float ppc_builtin_constants[];
 
 
-struct cell_context;
-struct pipe_texture;
+boolean
+tgsi_emit_ppc(const struct tgsi_token *tokens,
+              struct ppc_function *function,
+              float (*immediates)[4],
+              boolean do_swizzles);
 
-
-/**
- * Subclass of pipe_texture
- */
-struct cell_texture
-{
-   struct pipe_texture base;
-
-   unsigned long level_offset[CELL_MAX_TEXTURE_LEVELS];
-   unsigned long stride[CELL_MAX_TEXTURE_LEVELS];
-
-   /* The data is held here:
-    */
-   struct pipe_buffer *buffer;
-   unsigned long buffer_size;
-
-   /** Texture data in tiled layout is held here */
-   struct pipe_buffer *tiled_buffer[CELL_MAX_TEXTURE_LEVELS];
-   /** Mapped, tiled texture data */
-   void *tiled_mapped[CELL_MAX_TEXTURE_LEVELS];
-};
-
-
-/** cast wrapper */
-static INLINE struct cell_texture *
-cell_texture(struct pipe_texture *pt)
-{
-   return (struct cell_texture *) pt;
+#if defined __cplusplus
 }
+#endif
 
-
-
-extern void
-cell_init_screen_texture_funcs(struct pipe_screen *screen);
-
-
-#endif /* CELL_TEXTURE_H */
+#endif /* TGSI_PPC_H */

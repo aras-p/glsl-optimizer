@@ -70,12 +70,14 @@ platform = env['platform']
 
 # derived options
 x86 = machine == 'x86'
+ppc = machine == 'ppc'
 gcc = platform in ('linux', 'freebsd', 'darwin')
 msvc = platform in ('windows', 'winddk')
 
 Export([
 	'debug', 
 	'x86', 
+	'ppc', 
 	'dri', 
 	'llvm',
 	'platform',

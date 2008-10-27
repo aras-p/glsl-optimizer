@@ -43,11 +43,6 @@
 /** Masks are uint[4] vectors with each element being 0 or 0xffffffff */
 typedef vector unsigned int mask_t;
 
-typedef union
-{
-   vector float v;
-   float f[4];
-} float4;
 
 
 /**
@@ -91,9 +86,9 @@ struct edge {
 
 struct interp_coef
 {
-   float4 a0;
-   float4 dadx;
-   float4 dady;
+   vector float a0;
+   vector float dadx;
+   vector float dady;
 };
 
 
@@ -116,7 +111,7 @@ struct setup_stage {
    struct edge etop;
    struct edge emaj;
 
-   float oneOverArea;
+   float oneOverArea;  /* XXX maybe make into vector? */
 
    uint facing;
 
@@ -152,14 +147,14 @@ eval_coeff(uint slot, float x, float y, vector float w, vector float result[4])
       result[QUAD_TOP_LEFT] =
       result[QUAD_TOP_RIGHT] =
       result[QUAD_BOTTOM_LEFT] =
-      result[QUAD_BOTTOM_RIGHT] = setup.coef[slot].a0.v;
+      result[QUAD_BOTTOM_RIGHT] = setup.coef[slot].a0;
       break;
    case INTERP_LINEAR:
       {
-         vector float dadx = setup.coef[slot].dadx.v;
-         vector float dady = setup.coef[slot].dady.v;
+         vector float dadx = setup.coef[slot].dadx;
+         vector float dady = setup.coef[slot].dady;
          vector float topLeft =
-            spu_add(setup.coef[slot].a0.v,
+            spu_add(setup.coef[slot].a0,
                     spu_add(spu_mul(spu_splats(x), dadx),
                             spu_mul(spu_splats(y), dady)));
 
@@ -171,10 +166,10 @@ eval_coeff(uint slot, float x, float y, vector float w, vector float result[4])
       break;
    case INTERP_PERSPECTIVE:
       {
-         vector float dadx = setup.coef[slot].dadx.v;
-         vector float dady = setup.coef[slot].dady.v;
+         vector float dadx = setup.coef[slot].dadx;
+         vector float dady = setup.coef[slot].dady;
          vector float topLeft =
-            spu_add(setup.coef[slot].a0.v,
+            spu_add(setup.coef[slot].a0,
                     spu_add(spu_mul(spu_splats(x), dadx),
                             spu_mul(spu_splats(y), dady)));
 
@@ -212,9 +207,9 @@ static INLINE vector float
 eval_z(float x, float y)
 {
    const uint slot = 0;
-   const float dzdx = setup.coef[slot].dadx.f[2];
-   const float dzdy = setup.coef[slot].dady.f[2];
-   const float topLeft = setup.coef[slot].a0.f[2] + x * dzdx + y * dzdy;
+   const float dzdx = spu_extract(setup.coef[slot].dadx, 2);
+   const float dzdy = spu_extract(setup.coef[slot].dady, 2);
+   const float topLeft = spu_extract(setup.coef[slot].a0, 2) + x * dzdx + y * dzdy;
    const vector float topLeftv = spu_splats(topLeft);
    const vector float derivs = (vector float) { 0.0, dzdx, dzdy, dzdx + dzdy };
    return spu_add(topLeftv, derivs);
@@ -226,9 +221,9 @@ static INLINE vector float
 eval_w(float x, float y)
 {
    const uint slot = 0;
-   const float dwdx = setup.coef[slot].dadx.f[3];
-   const float dwdy = setup.coef[slot].dady.f[3];
-   const float topLeft = setup.coef[slot].a0.f[3] + x * dwdx + y * dwdy;
+   const float dwdx = spu_extract(setup.coef[slot].dadx, 3);
+   const float dwdy = spu_extract(setup.coef[slot].dady, 3);
+   const float topLeft = spu_extract(setup.coef[slot].a0, 3) + x * dwdx + y * dwdy;
    const vector float topLeftv = spu_splats(topLeft);
    const vector float derivs = (vector float) { 0.0, dwdx, dwdy, dwdx + dwdy };
    return spu_add(topLeftv, derivs);
@@ -259,6 +254,7 @@ emit_quad( int x, int y, mask_t mask)
          vector float inputs[4*4], outputs[2*4];
          vector float fragZ = eval_z((float) x, (float) y);
          vector float fragW = eval_w((float) x, (float) y);
+         vector unsigned int kill_mask;
 
          /* setup inputs */
 #if 0
@@ -273,7 +269,9 @@ emit_quad( int x, int y, mask_t mask)
          ASSERT(spu.fragment_ops);
 
          /* Execute the current fragment program */
-         spu.fragment_program(inputs, outputs, spu.constants);
+         kill_mask = spu.fragment_program(inputs, outputs, spu.constants);
+
+         mask = spu_andc(mask, kill_mask);
 
          /* Execute per-fragment/quad operations, including:
           * alpha test, z test, stencil test, blend and framebuffer writing.
@@ -404,29 +402,40 @@ flush_spans(void)
 static void
 print_vertex(const struct vertex_header *v)
 {
-   int i;
-   fprintf(stderr, "Vertex: (%p)\n", v);
-   for (i = 0; i < setup.quad.nr_attrs; i++) {
-      fprintf(stderr, "  %d: %f %f %f %f\n",  i, 
-              v->data[i][0], v->data[i][1], v->data[i][2], v->data[i][3]);
+   uint i;
+   fprintf(stderr, "  Vertex: (%p)\n", v);
+   for (i = 0; i < spu.vertex_info.num_attribs; i++) {
+      fprintf(stderr, "    %d: %f %f %f %f\n",  i, 
+              spu_extract(v->data[i], 0),
+              spu_extract(v->data[i], 1),
+              spu_extract(v->data[i], 2),
+              spu_extract(v->data[i], 3));
    }
 }
 #endif
 
 
+/**
+ * Sort vertices from top to bottom.
+ * Compute area and determine front vs. back facing.
+ * Do coarse clip test against tile bounds
+ * \return  FALSE if tri is totally outside tile, TRUE otherwise
+ */
 static boolean
 setup_sort_vertices(const struct vertex_header *v0,
                     const struct vertex_header *v1,
                     const struct vertex_header *v2)
 {
-#if DEBUG_VERTS
-   fprintf(stderr, "Triangle:\n");
-   print_vertex(v0);
-   print_vertex(v1);
-   print_vertex(v2);
-#endif
+   float area, sign;
 
-   setup.vprovoke = v2;
+#if DEBUG_VERTS
+   if (spu.init.id==0) {
+      fprintf(stderr, "SPU %u: Triangle:\n", spu.init.id);
+      print_vertex(v0);
+      print_vertex(v1);
+      print_vertex(v2);
+   }
+#endif
 
    /* determine bottom to top order of vertices */
    {
@@ -439,18 +448,21 @@ setup_sort_vertices(const struct vertex_header *v0,
 	    setup.vmin = v0;   
 	    setup.vmid = v1;   
 	    setup.vmax = v2;
+            sign = -1.0f;
 	 }
 	 else if (y2 <= y0) {
 	    /* y2<=y0<=y1 */
 	    setup.vmin = v2;   
 	    setup.vmid = v0;   
 	    setup.vmax = v1;   
+            sign = -1.0f;
 	 }
 	 else {
 	    /* y0<=y2<=y1 */
 	    setup.vmin = v0;   
 	    setup.vmid = v2;   
 	    setup.vmax = v1;  
+            sign = 1.0f;
 	 }
       }
       else {
@@ -459,18 +471,21 @@ setup_sort_vertices(const struct vertex_header *v0,
 	    setup.vmin = v1;   
 	    setup.vmid = v0;   
 	    setup.vmax = v2;  
+            sign = 1.0f;
 	 }
 	 else if (y2 <= y1) {
 	    /* y2<=y1<=y0 */
 	    setup.vmin = v2;   
 	    setup.vmid = v1;   
 	    setup.vmax = v0;  
+            sign = 1.0f;
 	 }
 	 else {
 	    /* y1<=y2<=y0 */
 	    setup.vmin = v1;   
 	    setup.vmid = v2;   
 	    setup.vmax = v0;
+            sign = -1.0f;
 	 }
       }
    }
@@ -499,31 +514,16 @@ setup_sort_vertices(const struct vertex_header *v0,
    /*
     * Compute triangle's area.  Use 1/area to compute partial
     * derivatives of attributes later.
-    *
-    * The area will be the same as prim->det, but the sign may be
-    * different depending on how the vertices get sorted above.
-    *
-    * To determine whether the primitive is front or back facing we
-    * use the prim->det value because its sign is correct.
     */
-   {
-      const float area = (setup.emaj.dx * setup.ebot.dy -
-                          setup.ebot.dx * setup.emaj.dy);
+   area = setup.emaj.dx * setup.ebot.dy - setup.ebot.dx * setup.emaj.dy;
 
-      setup.oneOverArea = 1.0f / area;
-      /*
-      _mesa_printf("%s one-over-area %f  area %f  det %f\n",
-                   __FUNCTION__, setup.oneOverArea, area, prim->det );
-      */
-   }
+   setup.oneOverArea = 1.0f / area;
 
-#if 0
-   /* We need to know if this is a front or back-facing triangle for:
-    *  - the GLSL gl_FrontFacing fragment attribute (bool)
-    *  - two-sided stencil test
-    */
-   setup.quad.facing = (prim->det > 0.0) ^ (setup.softpipe->rasterizer->front_winding == PIPE_WINDING_CW);
-#endif
+   /* The product of area * sign indicates front/back orientation (0/1) */
+   setup.facing = (area * sign > 0.0f)
+      ^ (spu.rasterizer.front_winding == PIPE_WINDING_CW);
+
+   setup.vprovoke = v2;
 
    return TRUE;
 }
@@ -538,9 +538,9 @@ setup_sort_vertices(const struct vertex_header *v0,
 static INLINE void
 const_coeff4(uint slot)
 {
-   setup.coef[slot].dadx.v = (vector float) {0.0, 0.0, 0.0, 0.0};
-   setup.coef[slot].dady.v = (vector float) {0.0, 0.0, 0.0, 0.0};
-   setup.coef[slot].a0.v = setup.vprovoke->data[slot];
+   setup.coef[slot].dadx = (vector float) {0.0, 0.0, 0.0, 0.0};
+   setup.coef[slot].dady = (vector float) {0.0, 0.0, 0.0, 0.0};
+   setup.coef[slot].a0 = setup.vprovoke->data[slot];
 }
 
 
@@ -564,13 +564,13 @@ tri_linear_coeff4(uint slot)
    vector float b = spu_sub(spu_mul(spu_splats(setup.emaj.dx), botda),
                             spu_mul(majda, spu_splats(setup.ebot.dx)));
 
-   setup.coef[slot].dadx.v = spu_mul(a, spu_splats(setup.oneOverArea));
-   setup.coef[slot].dady.v = spu_mul(b, spu_splats(setup.oneOverArea));
+   setup.coef[slot].dadx = spu_mul(a, spu_splats(setup.oneOverArea));
+   setup.coef[slot].dady = spu_mul(b, spu_splats(setup.oneOverArea));
 
-   vector float tempx = spu_mul(setup.coef[slot].dadx.v, xxxx);
-   vector float tempy = spu_mul(setup.coef[slot].dady.v, yyyy);
+   vector float tempx = spu_mul(setup.coef[slot].dadx, xxxx);
+   vector float tempy = spu_mul(setup.coef[slot].dady, yyyy);
                          
-   setup.coef[slot].a0.v = spu_sub(vmin_d, spu_add(tempx, tempy));
+   setup.coef[slot].a0 = spu_sub(vmin_d, spu_add(tempx, tempy));
 }
 
 
@@ -608,13 +608,13 @@ tri_persp_coeff4(uint slot)
    vector float b = spu_sub(spu_mul(spu_splats(setup.emaj.dx), botda),
                             spu_mul(majda, spu_splats(setup.ebot.dx)));
 
-   setup.coef[slot].dadx.v = spu_mul(a, spu_splats(setup.oneOverArea));
-   setup.coef[slot].dady.v = spu_mul(b, spu_splats(setup.oneOverArea));
+   setup.coef[slot].dadx = spu_mul(a, spu_splats(setup.oneOverArea));
+   setup.coef[slot].dady = spu_mul(b, spu_splats(setup.oneOverArea));
 
-   vector float tempx = spu_mul(setup.coef[slot].dadx.v, xxxx);
-   vector float tempy = spu_mul(setup.coef[slot].dady.v, yyyy);
+   vector float tempx = spu_mul(setup.coef[slot].dadx, xxxx);
+   vector float tempy = spu_mul(setup.coef[slot].dady, yyyy);
                          
-   setup.coef[slot].a0.v = spu_sub(vmin_d, spu_add(tempx, tempy));
+   setup.coef[slot].a0 = spu_sub(vmin_d, spu_add(tempx, tempy));
 }
 
 
@@ -750,27 +750,13 @@ subtriangle(struct edge *eleft, struct edge *eright, unsigned lines)
 }
 
 
-static float
-determinant(const float *v0, const float *v1, const float *v2)
-{
-   /* edge vectors e = v0 - v2, f = v1 - v2 */
-   const float ex = v0[0] - v2[0];
-   const float ey = v0[1] - v2[1];
-   const float fx = v1[0] - v2[0];
-   const float fy = v1[1] - v2[1];
-
-   /* det = cross(e,f).z */
-   return ex * fy - ey * fx;
-}
-
-
 /**
  * Draw triangle into tile at (tx, ty) (tile coords)
  * The tile data should have already been fetched.
  */
 boolean
 tri_draw(const float *v0, const float *v1, const float *v2,
-         uint tx, uint ty, uint front_winding)
+         uint tx, uint ty)
 {
    setup.tx = tx;
    setup.ty = ty;
@@ -780,12 +766,6 @@ tri_draw(const float *v0, const float *v1, const float *v2,
    setup.cliprect_miny = ty * TILE_SIZE;
    setup.cliprect_maxx = (tx + 1) * TILE_SIZE;
    setup.cliprect_maxy = (ty + 1) * TILE_SIZE;
-
-   /* Before we sort vertices, determine the facing of the triangle,
-    * which will be needed for front/back-face stencil application
-    */
-   float det = determinant(v0, v1, v2);
-   setup.facing = (det > 0.0) ^ (front_winding == PIPE_WINDING_CW);
 
    if (!setup_sort_vertices((struct vertex_header *) v0,
                             (struct vertex_header *) v1,

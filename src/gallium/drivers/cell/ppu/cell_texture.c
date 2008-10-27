@@ -136,6 +136,9 @@ cell_texture_release(struct pipe_screen *screen,
        __FUNCTION__, (void *) *pt, (*pt)->refcount - 1);
    */
    if (--(*pt)->refcount <= 0) {
+      /* Delete this texture now.
+       * But note that the underlying pipe_buffer may linger...
+       */
       struct cell_texture *ct = cell_texture(*pt);
       uint i;
 
@@ -146,8 +149,12 @@ cell_texture_release(struct pipe_screen *screen,
       pipe_buffer_reference(screen, &ct->buffer, NULL);
 
       for (i = 0; i < CELL_MAX_TEXTURE_LEVELS; i++) {
-         if (ct->tiled_data[i]) {
-            align_free(ct->tiled_data[i]);
+         /* Unreference the tiled image buffer.
+          * It may not actually be deleted until a fence is hit.
+          */
+         if (ct->tiled_buffer[i]) {
+            ct->tiled_mapped[i] = NULL;
+            winsys_buffer_reference(screen->winsys, &ct->tiled_buffer[i], NULL);
          }
       }
 
@@ -228,12 +235,18 @@ cell_twiddle_texture(struct pipe_screen *screen,
          int offset = bufWidth * bufHeight * 4 * surface->face;
          uint *dst;
 
-         if (!ct->tiled_data[level]) {
-            ct->tiled_data[level] =
-               align_malloc(bufWidth * bufHeight * 4 * numFaces, 16);
+         if (!ct->tiled_buffer[level]) {
+            /* allocate buffer for tiled data now */
+            struct pipe_winsys *ws = screen->winsys;
+            uint bytes = bufWidth * bufHeight * 4 * numFaces;
+            ct->tiled_buffer[level] = ws->buffer_create(ws, 16,
+                                                        PIPE_BUFFER_USAGE_PIXEL,
+                                                        bytes);
+            /* and map it */
+            ct->tiled_mapped[level] = ws->buffer_map(ws, ct->tiled_buffer[level],
+                                                     PIPE_BUFFER_USAGE_GPU_READ);
          }
-
-         dst = (uint *) ((ubyte *) ct->tiled_data[level] + offset);
+         dst = (uint *) ((ubyte *) ct->tiled_mapped[level] + offset);
 
          twiddle_image_uint(texWidth, texHeight, TILE_SIZE, dst,
                             surface->stride, src);

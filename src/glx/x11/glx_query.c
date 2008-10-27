@@ -1,3 +1,4 @@
+/* -*- mode: c; tab-width: 3; indent-tabs-mode: nil; c-basic-offset: 3; coding: utf-8-unix -*- */
 /*
  * (C) Copyright IBM Corporation 2004
  * All Rights Reserved.
@@ -39,12 +40,13 @@
  * an identical binary layout.  The only difference between them is the
  * meaning of the \c for_whom field and the value of the \c glxCode.
  */
-typedef struct GLXGenericGetString {
-    CARD8 reqType;
-    CARD8 glxCode;
-    CARD16 length B16;
-    CARD32 for_whom B32;
-    CARD32 name B32;
+typedef struct GLXGenericGetString
+{
+   CARD8 reqType;
+   CARD8 glxCode;
+   CARD16 length B16;
+   CARD32 for_whom B32;
+   CARD32 name B32;
 } xGLXGenericGetStringReq;
 
 /* These defines are only needed to make the GetReq macro happy.
@@ -57,46 +59,46 @@ typedef struct GLXGenericGetString {
  * This routine will allocate the necessay space for the string.
  */
 char *
-__glXGetStringFromServer( Display * dpy, int opcode, CARD32 glxCode,
-			  CARD32 for_whom, CARD32 name )
+__glXGetStringFromServer(Display * dpy, int opcode, CARD32 glxCode,
+                         CARD32 for_whom, CARD32 name)
 {
-    xGLXGenericGetStringReq *req;
-    xGLXSingleReply reply;
-    int length;
-    int numbytes;
-    char * buf;
+   xGLXGenericGetStringReq *req;
+   xGLXSingleReply reply;
+   int length;
+   int numbytes;
+   char *buf;
 
 
-    LockDisplay( dpy );
+   LockDisplay(dpy);
 
 
-    /* All of the GLX protocol requests for getting a string from the server
-     * look the same.  The exact meaning of the for_whom field is usually
-     * either the screen number (for glXQueryServerString) or the context tag
-     * (for GLXSingle).
-     */
+   /* All of the GLX protocol requests for getting a string from the server
+    * look the same.  The exact meaning of the for_whom field is usually
+    * either the screen number (for glXQueryServerString) or the context tag
+    * (for GLXSingle).
+    */
 
-    GetReq( GLXGenericGetString, req );
-    req->reqType = opcode;
-    req->glxCode = glxCode;
-    req->for_whom = for_whom;
-    req->name = name;
+   GetReq(GLXGenericGetString, req);
+   req->reqType = opcode;
+   req->glxCode = glxCode;
+   req->for_whom = for_whom;
+   req->name = name;
 
-    _XReply( dpy, (xReply *) & reply, 0, False );
+   _XReply(dpy, (xReply *) & reply, 0, False);
 
-    length = reply.length * 4;
-    numbytes = reply.size;
+   length = reply.length * 4;
+   numbytes = reply.size;
 
-    buf = (char *) Xmalloc( numbytes );
-    if ( buf != NULL ) {
-        _XRead( dpy, buf, numbytes );
-	length -= numbytes;
-    }
+   buf = (char *) Xmalloc(numbytes);
+   if (buf != NULL) {
+      _XRead(dpy, buf, numbytes);
+      length -= numbytes;
+   }
 
-    _XEatData( dpy, length );
+   _XEatData(dpy, length);
 
-    UnlockDisplay( dpy );
-    SyncHandle();
+   UnlockDisplay(dpy);
+   SyncHandle();
 
-    return buf;
+   return buf;
 }
