@@ -52,6 +52,7 @@ struct cell_texture
    struct pipe_buffer *tiled_buffer[CELL_MAX_TEXTURE_LEVELS];
    /** Mapped, tiled texture data */
    void *tiled_mapped[CELL_MAX_TEXTURE_LEVELS];
+   void *untiled_data[CELL_MAX_TEXTURE_LEVELS];
 };
 
 
