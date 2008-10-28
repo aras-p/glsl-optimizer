@@ -107,7 +107,7 @@ cmd_fence(struct cell_command_fence *fence_cmd)
                                               CELL_FENCE_SIGNALLED};
    uint *dst = (uint *) fence_cmd->fence;
    dst += 4 * spu.init.id;  /* main store/memory address, not local store */
-
+   ASSERT_ALIGN16(dst);
    mfc_put((void *) &status,    /* src in local memory */
            (unsigned int) dst,  /* dst in main memory */
            sizeof(status),      /* size */
