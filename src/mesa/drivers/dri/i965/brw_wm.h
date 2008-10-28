@@ -246,7 +246,9 @@ struct brw_wm_compile {
    struct brw_reg stack;
    struct brw_reg emit_mask_reg;
    GLuint reg_index;
+   GLuint tmp_regs[BRW_WM_MAX_GRF];
    GLuint tmp_index;
+   GLuint tmp_max;
 };
 
 

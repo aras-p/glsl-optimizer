@@ -47,13 +47,16 @@ static int get_scalar_dst_index(struct prog_instruction *inst)
 static struct brw_reg alloc_tmp(struct brw_wm_compile *c)
 {
     struct brw_reg reg;
-    reg = brw_vec8_grf(c->tmp_index--, 0);
+    if(c->tmp_index == c->tmp_max)
+	c->tmp_regs[ c->tmp_max++ ] = c->reg_index++;
+    
+    reg = brw_vec8_grf(c->tmp_regs[ c->tmp_index++ ], 0);
     return reg;
 }
 
 static void release_tmps(struct brw_wm_compile *c)
 {
-    c->tmp_index = 127;
+    c->tmp_index = 0;
 }
 
 static struct brw_reg 
@@ -1368,7 +1371,6 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
 void brw_wm_glsl_emit(struct brw_context *brw, struct brw_wm_compile *c)
 {
     brw_wm_pass_fp(c);
-    c->tmp_index = 127;
     brw_wm_emit_glsl(brw, c);
     c->prog_data.total_grf = c->reg_index;
     c->prog_data.total_scratch = 0;
