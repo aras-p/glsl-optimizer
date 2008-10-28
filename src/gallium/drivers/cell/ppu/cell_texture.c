@@ -310,6 +310,7 @@ cell_twiddle_texture(struct pipe_screen *screen,
 
    switch (ct->base.format) {
    case PIPE_FORMAT_A8R8G8B8_UNORM:
+   case PIPE_FORMAT_B8G8R8A8_UNORM:
       {
          int numFaces = ct->base.target == PIPE_TEXTURE_CUBE ? 6 : 1;
          int offset = bufWidth * bufHeight * 4 * surface->face;
@@ -357,6 +358,7 @@ cell_untwiddle_texture(struct pipe_screen *screen,
 
    switch (ct->base.format) {
    case PIPE_FORMAT_A8R8G8B8_UNORM:
+   case PIPE_FORMAT_B8G8R8A8_UNORM:
       {
          int numFaces = ct->base.target == PIPE_TEXTURE_CUBE ? 6 : 1;
          int offset = surface->stride * texHeight * 4 * surface->face;
@@ -442,6 +444,7 @@ cell_tex_surface_release(struct pipe_screen *screen,
 
    if ((*s)->usage & PIPE_BUFFER_USAGE_CPU_READ) {
       align_free(ct->untiled_data[level]);
+      ct->untiled_data[level] = NULL;
    }
 
    /* XXX if done rendering to teximage, re-tile */
