@@ -38,12 +38,13 @@
 #include "rtasm_execmem.h"
 
 
-#if defined(__linux__)
+#if defined(PIPE_OS_LINUX)
+
 
 /*
  * Allocate a large block of memory which can hold code then dole it out
  * in pieces by means of the generic memory manager code.
-*/
+ */
 
 #include <unistd.h>
 #include <sys/mman.h>
@@ -113,7 +114,7 @@ rtasm_exec_free(void *addr)
 }
 
 
-#else
+#else /* PIPE_OS_LINUX */
 
 /*
  * Just use regular memory.
@@ -133,4 +134,4 @@ rtasm_exec_free(void *addr)
 }
 
 
-#endif
+#endif /* PIPE_OS_LINUX */
