@@ -38,7 +38,9 @@
 #include <math.h>
 #include <cos14_v.h>
 #include <sin14_v.h>
-#include <transpose_matrix4x4.h>
+#include <simdmath/exp2f4.h>
+#include <simdmath/log2f4.h>
+#include <simdmath/powf4.h>
 
 #include "cell/common.h"
 #include "spu_main.h"
@@ -68,37 +70,19 @@ spu_sin(vector float x)
 static vector float
 spu_pow(vector float x, vector float y)
 {
-   float z0 = powf(spu_extract(x,0), spu_extract(y,0));
-   float z1 = powf(spu_extract(x,1), spu_extract(y,1));
-   float z2 = powf(spu_extract(x,2), spu_extract(y,2));
-   float z3 = powf(spu_extract(x,3), spu_extract(y,3));
-   return (vector float) {z0, z1, z2, z3};
+   return _powf4(x, y);
 }
 
 static vector float
 spu_exp2(vector float x)
 {
-   float z0 = powf(2.0f, spu_extract(x,0));
-   float z1 = powf(2.0f, spu_extract(x,1));
-   float z2 = powf(2.0f, spu_extract(x,2));
-   float z3 = powf(2.0f, spu_extract(x,3));
-   return (vector float) {z0, z1, z2, z3};
+   return _exp2f4(x);
 }
 
 static vector float
 spu_log2(vector float x)
 {
-   /*
-    * log_base_2(x) = log(x) / log(2)
-    * 1.442695 = 1/log(2).
-    */
-   static const vector float k = {1.442695F, 1.442695F, 1.442695F, 1.442695F};
-   float z0 = logf(spu_extract(x,0));
-   float z1 = logf(spu_extract(x,1));
-   float z2 = logf(spu_extract(x,2));
-   float z3 = logf(spu_extract(x,3));
-   vector float v = (vector float) {z0, z1, z2, z3};
-   return spu_mul(v, k);
+   return _log2f4(x);
 }
 
 
