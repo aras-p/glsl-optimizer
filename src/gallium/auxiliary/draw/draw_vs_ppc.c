@@ -54,7 +54,7 @@
 typedef void (PIPE_CDECL *codegen_function) (float (*inputs)[4][4],
                                              float (*outputs)[4][4],
                                              float (*temps)[4][4],
-                                             float (*immeds)[4][4],
+                                             float (*immeds)[4],
                                              float (*consts)[4],
                                              const float *builtins);
 
@@ -151,7 +151,7 @@ vs_ppc_run_linear( struct draw_vertex_shader *base,
                    output_stride );
 #else
       shader->func(inputs_soa, outputs_soa, temps_soa,
-		   (float (*)[4][4]) shader->base.immediates,
+		   (float (*)[4]) shader->base.immediates,
 		   (float (*)[4]) constants,
                    ppc_builtin_constants);
 
@@ -227,7 +227,7 @@ draw_create_vs_ppc(struct draw_context *draw,
    vs->base.run_linear = vs_ppc_run_linear;
    vs->base.delete = vs_ppc_delete;
    
-   vs->base.immediates = align_malloc(TGSI_EXEC_NUM_IMMEDIATES * 4 * 4 *
+   vs->base.immediates = align_malloc(TGSI_EXEC_NUM_IMMEDIATES * 4 *
                                       sizeof(float), 16);
 
    vs->machine = &draw->vs.machine;
@@ -236,7 +236,7 @@ draw_create_vs_ppc(struct draw_context *draw,
 
    if (!tgsi_emit_ppc( (struct tgsi_token *) vs->base.state.tokens,
 			&vs->ppc_program, 
-                        (float (*)[4])vs->base.immediates, 
+                       (float (*)[4]) vs->base.immediates, 
                         TRUE )) 
       goto fail;
       

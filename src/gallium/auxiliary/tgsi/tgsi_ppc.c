@@ -299,10 +299,18 @@ emit_fetch(struct gen_context *gen,
          break;
       case TGSI_FILE_IMMEDIATE:
          {
-            int offset = (reg->SrcRegister.Index * 4 + swizzle) * 16;
+            int offset = (reg->SrcRegister.Index * 4 + swizzle) * 4;
             int offset_reg = emit_li_offset(gen, offset);
             dst_vec = ppc_allocate_vec_register(gen->f);
-            ppc_lvx(gen->f, dst_vec, gen->immed_reg, offset_reg);
+            /* Load 4-byte word into vector register.
+             * The vector slot depends on the effective address we load from.
+             * We know that our immediates start at a 16-byte boundary so we
+             * know that 'swizzle' tells us which vector slot will have the
+             * loaded word.  The other vector slots will be undefined.
+             */
+            ppc_lvewx(gen->f, dst_vec, gen->immed_reg, offset_reg);
+            /* splat word[swizzle] across the vector reg */
+            ppc_vspltw(gen->f, dst_vec, dst_vec, swizzle);
          }
          break;
       case TGSI_FILE_CONSTANT:
@@ -1095,14 +1103,10 @@ tgsi_emit_ppc(const struct tgsi_token *tokens,
             assert(size <= 4);
             assert(num_immediates < TGSI_EXEC_NUM_IMMEDIATES);
             for (i = 0; i < size; i++) {
-               const float value =
-                  parse.FullToken.FullImmediate.u.ImmediateFloat32[i].Float;
-               imm[num_immediates * 4 + 0] = 
-               imm[num_immediates * 4 + 1] = 
-               imm[num_immediates * 4 + 2] = 
-               imm[num_immediates * 4 + 3] = value;
-               num_immediates++;
+               immediates[num_immediates][i] =
+		  parse.FullToken.FullImmediate.u.ImmediateFloat32[i].Float;
             }
+            num_immediates++;
          }
          break;
 
