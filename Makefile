@@ -287,6 +287,8 @@ MAIN_FILES = \
 	$(DIRECTORY)/src/mesa/drivers/x11/Makefile			\
 	$(DIRECTORY)/src/mesa/drivers/x11/descrip.mms			\
 	$(DIRECTORY)/src/mesa/drivers/x11/*.[ch]			\
+	$(DIRECTORY)/src/mesa/drivers/glslcompiler/Makefile		\
+	$(DIRECTORY)/src/mesa/drivers/glslcompiler/glslcompiler.c	\
 	$(DIRECTORY)/src/mesa/ppc/*.[ch]				\
 	$(DIRECTORY)/src/mesa/sparc/*.[chS]				\
 	$(DIRECTORY)/src/mesa/x86/Makefile				\
