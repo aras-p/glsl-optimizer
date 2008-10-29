@@ -64,7 +64,7 @@ static void brw_set_dest( struct brw_instruction *insn,
 
       if (insn->header.access_mode == BRW_ALIGN_1) {
 	 insn->bits1.da1.dest_subreg_nr = dest.subnr;
-	 insn->bits1.da1.dest_horiz_stride = BRW_HORIZONTAL_STRIDE_1;
+	 insn->bits1.da1.dest_horiz_stride = dest.hstride;
       }
       else {
 	 insn->bits1.da16.dest_subreg_nr = dest.subnr / 16;
@@ -78,7 +78,7 @@ static void brw_set_dest( struct brw_instruction *insn,
        */
       if (insn->header.access_mode == BRW_ALIGN_1) {
 	 insn->bits1.ia1.dest_indirect_offset = dest.dw1.bits.indirect_offset;
-	 insn->bits1.ia1.dest_horiz_stride = BRW_HORIZONTAL_STRIDE_1;
+	 insn->bits1.ia1.dest_horiz_stride = dest.hstride;
       }
       else {
 	 insn->bits1.ia16.dest_indirect_offset = dest.dw1.bits.indirect_offset;
