@@ -97,9 +97,13 @@ ppc_vminfp(struct ppc_function *p, uint vD, uint vA, uint vB);
 extern void
 ppc_vmaxfp(struct ppc_function *p, uint vD, uint vA, uint vB);
 
-/** vector float mult add */
+/** vector float mult add: vD = vA * vB + vC */
 extern void
 ppc_vmaddfp(struct ppc_function *p, uint vD, uint vA, uint vB, uint vC);
+
+/** vector float negative mult subtract: vD = vA - vB * vC */
+extern void
+ppc_vnmsubfp(struct ppc_function *p, uint vD, uint vA, uint vB, uint vC);
 
 /** vector float compare greater than */
 extern void

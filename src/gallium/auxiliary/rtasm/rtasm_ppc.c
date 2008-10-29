@@ -505,6 +505,13 @@ ppc_vmaddfp(struct ppc_function *p, uint vD, uint vA, uint vB, uint vC)
    emit_va(p, 46, vD, vA, vC, vB); /* note arg order */
 }
 
+/** vector float negative mult subtract: vD = vA - vB * vC */
+void
+ppc_vnmsubfp(struct ppc_function *p, uint vD, uint vA, uint vB, uint vC)
+{
+   emit_va(p, 47, vD, vB, vA, vC); /* note arg order */
+}
+
 /** vector float compare greater than */
 void
 ppc_vcmpgtfpx(struct ppc_function *p, uint vD, uint vA, uint vB)
