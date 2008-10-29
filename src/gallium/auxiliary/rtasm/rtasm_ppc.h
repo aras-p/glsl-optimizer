@@ -64,6 +64,7 @@ struct ppc_function
 
 extern void ppc_init_func(struct ppc_function *p, unsigned max_inst);
 extern void ppc_release_func(struct ppc_function *p);
+extern uint ppc_num_instructions(const struct ppc_function *p);
 extern void (*ppc_get_func( struct ppc_function *p ))( void );
 extern void ppc_dump_func(const struct ppc_function *p);
 

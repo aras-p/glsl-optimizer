@@ -1315,6 +1315,14 @@ tgsi_emit_ppc(const struct tgsi_token *tokens,
 
    tgsi_parse_free( &parse );
 
+   if (ppc_num_instructions(func) == 0) {
+      /* ran out of memory for instructions */
+      ok = FALSE;
+   }
+
+   if (!ok)
+      debug_printf("TGSI->PPC translation failed\n");
+
    return ok;
 }
 
