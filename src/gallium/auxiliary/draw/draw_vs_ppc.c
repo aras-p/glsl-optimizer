@@ -197,7 +197,7 @@ draw_create_vs_ppc(struct draw_context *draw,
    vs->base.immediates = align_malloc(TGSI_EXEC_NUM_IMMEDIATES * 4 *
                                       sizeof(float), 16);
 
-   ppc_init_func( &vs->ppc_program, 2000 ); /* XXX fix limit */
+   ppc_init_func( &vs->ppc_program );
 
    if (!tgsi_emit_ppc( (struct tgsi_token *) vs->base.state.tokens,
 			&vs->ppc_program, 

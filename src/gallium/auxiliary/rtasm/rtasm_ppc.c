@@ -43,7 +43,7 @@
 
 
 void
-ppc_init_func(struct ppc_function *p, unsigned max_inst)
+ppc_init_func(struct ppc_function *p)
 {
    uint i;
 
