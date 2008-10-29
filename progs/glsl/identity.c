@@ -22,7 +22,7 @@ static GLuint fragShader;
 static GLuint vertShader;
 static GLuint program;
 static GLint win = 0;
-static GLboolean anim = GL_TRUE;
+static GLboolean anim = GL_FALSE;
 static GLfloat xRot = 0.0f, yRot = 0.0f;
 static int w,h;
 
