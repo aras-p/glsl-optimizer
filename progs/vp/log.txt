@@ -1,6 +1,7 @@
-!!VP1.0
-ADD R0, v[COL0], v[COL0];
+!!ARBvp1.0
+TEMP R0;
+ADD R0, vertex.color, vertex.color;
 ADD R0, R0, R0;
-LOG o[COL0], R0.x; 
-MOV o[HPOS], v[OPOS];
+LOG result.color, R0.x; 
+MOV result.position, vertex.position;
 END
