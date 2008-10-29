@@ -63,7 +63,7 @@ static void
 init_heap(void)
 {
    if (!exec_heap)
-      exec_heap = mmInit( 0, EXEC_HEAP_SIZE );
+      exec_heap = u_mmInit( 0, EXEC_HEAP_SIZE );
    
    if (!exec_mem)
       exec_mem = (unsigned char *) mmap(0, EXEC_HEAP_SIZE, 
@@ -84,7 +84,7 @@ rtasm_exec_malloc(size_t size)
 
    if (exec_heap) {
       size = (size + 31) & ~31;
-      block = mmAllocMem( exec_heap, size, 32, 0 );
+      block = u_mmAllocMem( exec_heap, size, 32, 0 );
    }
 
    if (block)
@@ -104,10 +104,10 @@ rtasm_exec_free(void *addr)
    pipe_mutex_lock(exec_mutex);
 
    if (exec_heap) {
-      struct mem_block *block = mmFindBlock(exec_heap, (unsigned char *)addr - exec_mem);
+      struct mem_block *block = u_mmFindBlock(exec_heap, (unsigned char *)addr - exec_mem);
    
       if (block)
-	 mmFreeMem(block);
+	 u_mmFreeMem(block);
    }
 
    pipe_mutex_unlock(exec_mutex);
