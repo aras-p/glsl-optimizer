@@ -185,6 +185,34 @@ reg_name(int reg)
 }
 
 
+static void
+emit_instruction(struct spe_function *p, uint32_t inst_bits)
+{
+   if (!p->store)
+      return;  /* out of memory, drop the instruction */
+
+   if (p->num_inst == p->max_inst) {
+      /* allocate larger buffer */
+      uint32_t *newbuf;
+      p->max_inst *= 2;  /* 2x larger */
+      newbuf = align_malloc(p->max_inst * SPE_INST_SIZE, 16);
+      if (newbuf) {
+         memcpy(newbuf, p->store, p->num_inst * SPE_INST_SIZE);
+      }
+      align_free(p->store);
+      p->store = newbuf;
+      if (!p->store) {
+         /* out of memory */
+         p->num_inst = 0;
+         return;
+      }
+   }
+
+   p->store[p->num_inst++] = inst_bits;
+}
+
+
+
 static void emit_RR(struct spe_function *p, unsigned op, unsigned rT,
 		    unsigned rA, unsigned rB, const char *name)
 {
@@ -193,8 +221,7 @@ static void emit_RR(struct spe_function *p, unsigned op, unsigned rT,
     inst.inst.rB = rB;
     inst.inst.rA = rA;
     inst.inst.rT = rT;
-    p->store[p->num_inst++] = inst.bits;
-    assert(p->num_inst <= p->max_inst);
+    emit_instruction(p, inst.bits);
     if (p->print) {
        indent(p);
        printf("%s\t%s, %s, %s\n",
@@ -212,8 +239,7 @@ static void emit_RRR(struct spe_function *p, unsigned op, unsigned rT,
     inst.inst.rB = rB;
     inst.inst.rA = rA;
     inst.inst.rC = rC;
-    p->store[p->num_inst++] = inst.bits;
-    assert(p->num_inst <= p->max_inst);
+    emit_instruction(p, inst.bits);
     if (p->print) {
        indent(p);
        printf("%s\t%s, %s, %s, %s\n", rem_prefix(name), reg_name(rT),
@@ -230,8 +256,7 @@ static void emit_RI7(struct spe_function *p, unsigned op, unsigned rT,
     inst.inst.i7 = imm;
     inst.inst.rA = rA;
     inst.inst.rT = rT;
-    p->store[p->num_inst++] = inst.bits;
-    assert(p->num_inst <= p->max_inst);
+    emit_instruction(p, inst.bits);
     if (p->print) {
        indent(p);
        printf("%s\t%s, %s, 0x%x\n",
@@ -249,8 +274,7 @@ static void emit_RI8(struct spe_function *p, unsigned op, unsigned rT,
     inst.inst.i8 = imm;
     inst.inst.rA = rA;
     inst.inst.rT = rT;
-    p->store[p->num_inst++] = inst.bits;
-    assert(p->num_inst <= p->max_inst);
+    emit_instruction(p, inst.bits);
     if (p->print) {
        indent(p);
        printf("%s\t%s, %s, 0x%x\n",
@@ -268,8 +292,7 @@ static void emit_RI10(struct spe_function *p, unsigned op, unsigned rT,
     inst.inst.i10 = imm;
     inst.inst.rA = rA;
     inst.inst.rT = rT;
-    p->store[p->num_inst++] = inst.bits;
-    assert(p->num_inst <= p->max_inst);
+    emit_instruction(p, inst.bits);
     if (p->print) {
        indent(p);
        printf("%s\t%s, %s, 0x%x\n",
@@ -295,8 +318,7 @@ static void emit_RI16(struct spe_function *p, unsigned op, unsigned rT,
     inst.inst.op = op;
     inst.inst.i16 = imm;
     inst.inst.rT = rT;
-    p->store[p->num_inst++] = inst.bits;
-    assert(p->num_inst <= p->max_inst);
+    emit_instruction(p, inst.bits);
     if (p->print) {
        indent(p);
        printf("%s\t%s, 0x%x\n", rem_prefix(name), reg_name(rT), imm);
@@ -311,8 +333,7 @@ static void emit_RI18(struct spe_function *p, unsigned op, unsigned rT,
     inst.inst.op = op;
     inst.inst.i18 = imm;
     inst.inst.rT = rT;
-    p->store[p->num_inst++] = inst.bits;
-    assert(p->num_inst <= p->max_inst);
+    emit_instruction(p, inst.bits);
     if (p->print) {
        indent(p);
        printf("%s\t%s, 0x%x\n", rem_prefix(name), reg_name(rT), imm);
@@ -394,15 +415,19 @@ void _name (struct spe_function *p, int imm) \
 
 /**
  * Initialize an spe_function.
- * \param code_size  size of instruction buffer to allocate, in bytes.
+ * \param code_size  initial size of instruction buffer to allocate, in bytes.
+ *                   If zero, use a default.
  */
 void spe_init_func(struct spe_function *p, unsigned code_size)
 {
     unsigned int i;
 
-    p->store = align_malloc(code_size, 16);
+    if (!code_size)
+       code_size = 64;
+
     p->num_inst = 0;
     p->max_inst = code_size / SPE_INST_SIZE;
+    p->store = align_malloc(code_size, 16);
 
     p->set_count = 0;
     memset(p->regs, 0, SPE_NUM_REGS * sizeof(p->regs[0]));
