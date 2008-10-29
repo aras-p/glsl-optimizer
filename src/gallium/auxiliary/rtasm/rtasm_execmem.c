@@ -83,8 +83,8 @@ rtasm_exec_malloc(size_t size)
    init_heap();
 
    if (exec_heap) {
-      size = (size + 31) & ~31;
-      block = u_mmAllocMem( exec_heap, size, 32, 0 );
+      size = (size + 31) & ~31;  /* next multiple of 32 bytes */
+      block = u_mmAllocMem( exec_heap, size, 5, 0 ); /* 5 -> 32-byte alignment */
    }
 
    if (block)
