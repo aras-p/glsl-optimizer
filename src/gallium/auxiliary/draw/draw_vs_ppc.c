@@ -58,19 +58,6 @@ typedef void (PIPE_CDECL *codegen_function) (float (*inputs)[4][4],
                                              float (*consts)[4],
                                              const float *builtins);
 
-#if 0
-   const struct tgsi_exec_vector *input,
-   struct tgsi_exec_vector *output,
-   float (*constant)[4],        /* 3 */
-   struct tgsi_exec_vector *temporary, /* 4 */
-   float (*immediates)[4],      /* 5 */
-   const float (*aos_input)[4], /* 6 */
-   uint num_inputs,             /* 7 */
-   uint input_stride,           /* 8 */
-   float (*aos_output)[4],      /* 9 */
-   uint num_outputs,            /* 10 */
-   uint output_stride );        /* 11 */
-#endif
 
 struct draw_ppc_vertex_shader {
    struct draw_vertex_shader base;
@@ -137,26 +124,10 @@ vs_ppc_run_linear( struct draw_vertex_shader *base,
 
       /* run compiled shader
        */
-#if 0
-      shader->func(machine->Inputs,
-		   machine->Outputs,
-		   (float (*)[4])constants,
-		   machine->Temps,
-		   (float (*)[4])shader->base.immediates,
-                   input,
-                   base->info.num_inputs,
-                   input_stride,
-                   output,
-                   base->info.num_outputs,
-                   output_stride );
-#else
       shader->func(inputs_soa, outputs_soa, temps_soa,
 		   (float (*)[4]) shader->base.immediates,
 		   (float (*)[4]) constants,
                    ppc_builtin_constants);
-
-      /*output[0][0] = input[0][0] * 0.5;*/
-#endif
 
       /* convert (up to) four output verts from SoA back to AoS format */
       for (attr = 0; attr < base->info.num_outputs; attr++) {
