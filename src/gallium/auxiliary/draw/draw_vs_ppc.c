@@ -64,8 +64,6 @@ struct draw_ppc_vertex_shader {
    struct ppc_function ppc_program;
 
    codegen_function func;
-   
-   struct tgsi_exec_machine *machine;
 };
 
 
@@ -73,11 +71,12 @@ static void
 vs_ppc_prepare( struct draw_vertex_shader *base,
 		struct draw_context *draw )
 {
+   /* nothing */
 }
 
 
-
-/* Simplified vertex shader interface for the pt paths.  Given the
+/**
+ * Simplified vertex shader interface for the pt paths.  Given the
  * complexity of code-generating all the above operations together,
  * it's time to try doing all the other stuff separately.
  */
@@ -91,7 +90,6 @@ vs_ppc_run_linear( struct draw_vertex_shader *base,
 		   unsigned output_stride )
 {
    struct draw_ppc_vertex_shader *shader = (struct draw_ppc_vertex_shader *)base;
-   struct tgsi_exec_machine *machine = shader->machine;
    unsigned int i;
 
 #define MAX_VERTICES 4
@@ -154,8 +152,6 @@ vs_ppc_run_linear( struct draw_vertex_shader *base,
 }
 
 
-
-
 static void
 vs_ppc_delete( struct draw_vertex_shader *base )
 {
@@ -172,7 +168,7 @@ vs_ppc_delete( struct draw_vertex_shader *base )
 
 struct draw_vertex_shader *
 draw_create_vs_ppc(struct draw_context *draw,
-                          const struct pipe_shader_state *templ)
+                   const struct pipe_shader_state *templ)
 {
    struct draw_ppc_vertex_shader *vs;
 
@@ -201,8 +197,6 @@ draw_create_vs_ppc(struct draw_context *draw,
    vs->base.immediates = align_malloc(TGSI_EXEC_NUM_IMMEDIATES * 4 *
                                       sizeof(float), 16);
 
-   vs->machine = &draw->vs.machine;
-   
    ppc_init_func( &vs->ppc_program, 2000 ); /* XXX fix limit */
 
    if (!tgsi_emit_ppc( (struct tgsi_token *) vs->base.state.tokens,
