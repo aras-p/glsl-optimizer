@@ -896,6 +896,110 @@ emit_lit(struct gen_context *gen, struct tgsi_full_instruction *inst)
 }
 
 
+static void
+emit_exp(struct gen_context *gen, struct tgsi_full_instruction *inst)
+{
+   const int one_vec = gen_one_vec(gen);
+   int src_vec;
+
+   /* get src arg */
+   src_vec = get_src_vec(gen, inst, 0, CHAN_X);
+
+   /* Compute X = 2^floor(src) */
+   if (IS_DST0_CHANNEL_ENABLED(*inst, CHAN_X)) {
+      int dst_vec = get_dst_vec(gen, inst, CHAN_X);
+      int tmp_vec = ppc_allocate_vec_register(gen->f);
+      ppc_vrfim(gen->f, tmp_vec, src_vec);             /* tmp = floor(src); */
+      ppc_vexptefp(gen->f, dst_vec, tmp_vec);          /* dst = 2 ^ tmp */
+      emit_store(gen, dst_vec, inst, CHAN_X, TRUE);
+      ppc_release_vec_register(gen->f, tmp_vec);
+   }
+
+   /* Compute Y = src - floor(src) */
+   if (IS_DST0_CHANNEL_ENABLED(*inst, CHAN_Y)) {
+      int dst_vec = get_dst_vec(gen, inst, CHAN_Y);
+      int tmp_vec = ppc_allocate_vec_register(gen->f);
+      ppc_vrfim(gen->f, tmp_vec, src_vec);             /* tmp = floor(src); */
+      ppc_vsubfp(gen->f, dst_vec, src_vec, tmp_vec);   /* dst = src - tmp */
+      emit_store(gen, dst_vec, inst, CHAN_Y, TRUE);
+      ppc_release_vec_register(gen->f, tmp_vec);
+   }
+
+   /* Compute Z = RoughApprox2ToX(src) */
+   if (IS_DST0_CHANNEL_ENABLED(*inst, CHAN_Z)) {
+      int dst_vec = get_dst_vec(gen, inst, CHAN_Z);
+      ppc_vexptefp(gen->f, dst_vec, src_vec);          /* dst = 2 ^ src */
+      emit_store(gen, dst_vec, inst, CHAN_Z, TRUE);
+   }
+
+   /* Compute W = 1.0 */
+   if (IS_DST0_CHANNEL_ENABLED(*inst, CHAN_W)) {
+      emit_store(gen, one_vec, inst, CHAN_W, FALSE);
+   }
+
+   release_src_vecs(gen);
+}
+
+
+static void
+emit_log(struct gen_context *gen, struct tgsi_full_instruction *inst)
+{
+   const int bit31_vec = gen_get_bit31_vec(gen);
+   const int one_vec = gen_one_vec(gen);
+   int src_vec, abs_vec;
+
+   /* get src arg */
+   src_vec = get_src_vec(gen, inst, 0, CHAN_X);
+
+   /* compute abs(src) */
+   abs_vec = ppc_allocate_vec_register(gen->f);
+   ppc_vandc(gen->f, abs_vec, src_vec, bit31_vec);     /* abs = src & ~bit31 */
+
+   if (IS_DST0_CHANNEL_ENABLED(*inst, CHAN_X) &&
+       IS_DST0_CHANNEL_ENABLED(*inst, CHAN_Y)) {
+
+      /* compute tmp = floor(log2(abs)) */
+      int tmp_vec = ppc_allocate_vec_register(gen->f);
+      ppc_vlogefp(gen->f, tmp_vec, abs_vec);           /* tmp = log2(abs) */
+      ppc_vrfim(gen->f, tmp_vec, tmp_vec);             /* tmp = floor(tmp); */
+
+      /* Compute X = tmp */
+      if (IS_DST0_CHANNEL_ENABLED(*inst, CHAN_X)) {
+         emit_store(gen, tmp_vec, inst, CHAN_X, FALSE);
+      }
+      
+      /* Compute Y = abs / 2^tmp */
+      if (IS_DST0_CHANNEL_ENABLED(*inst, CHAN_Y)) {
+         const int zero_vec = ppc_allocate_vec_register(gen->f);
+         ppc_vzero(gen->f, zero_vec);
+         ppc_vexptefp(gen->f, tmp_vec, tmp_vec);       /* tmp = 2 ^ tmp */
+         ppc_vrefp(gen->f, tmp_vec, tmp_vec);          /* tmp = 1 / tmp */
+         /* tmp = abs * tmp + zero */
+         ppc_vmaddfp(gen->f, tmp_vec, abs_vec, tmp_vec, zero_vec);
+         emit_store(gen, tmp_vec, inst, CHAN_Y, FALSE);
+         ppc_release_vec_register(gen->f, zero_vec);
+      }
+
+      ppc_release_vec_register(gen->f, tmp_vec);
+   }
+
+   /* Compute Z = RoughApproxLog2(abs) */
+   if (IS_DST0_CHANNEL_ENABLED(*inst, CHAN_Z)) {
+      int dst_vec = get_dst_vec(gen, inst, CHAN_Z);
+      ppc_vlogefp(gen->f, dst_vec, abs_vec);           /* dst = log2(abs) */
+      emit_store(gen, dst_vec, inst, CHAN_Z, TRUE);
+   }
+
+   /* Compute W = 1.0 */
+   if (IS_DST0_CHANNEL_ENABLED(*inst, CHAN_W)) {
+      emit_store(gen, one_vec, inst, CHAN_W, FALSE);
+   }
+
+   ppc_release_vec_register(gen->f, abs_vec);
+   release_src_vecs(gen);
+}
+
+
 static int
 emit_instruction(struct gen_context *gen,
                  struct tgsi_full_instruction *inst)
@@ -939,6 +1043,12 @@ emit_instruction(struct gen_context *gen,
       break;
    case TGSI_OPCODE_LIT:
       emit_lit(gen, inst);
+      break;
+   case TGSI_OPCODE_LOG:
+      emit_log(gen, inst);
+      break;
+   case TGSI_OPCODE_EXP:
+      emit_exp(gen, inst);
       break;
    case TGSI_OPCODE_END:
       /* normal end */
@@ -1098,7 +1208,6 @@ tgsi_emit_ppc(const struct tgsi_token *tokens,
          /* splat each immediate component into a float[4] vector for SoA */
          {
             const uint size = parse.FullToken.FullImmediate.Immediate.Size - 1;
-            float *imm = (float *) immediates;
             uint i;
             assert(size <= 4);
             assert(num_immediates < TGSI_EXEC_NUM_IMMEDIATES);
