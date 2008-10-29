@@ -141,22 +141,27 @@ intel_texture_drawpixels(GLcontext * ctx,
    _mesa_PushMatrix();
    _mesa_LoadIdentity();
 
+   /* Create the vertex buffer based on the current raster pos.  The x and y
+    * we're handed are ctx->Current.RasterPos[0,1] rounded to integers.
+    * We also apply the depth.  However, the W component is already multiplied
+    * into ctx->Current.RasterPos[0,1,2] and we can ignore it at this point.
+    */
    vertices[0][0] = x;
    vertices[0][1] = y;
    vertices[0][2] = ctx->Current.RasterPos[2];
-   vertices[0][3] = ctx->Current.RasterPos[3];
+   vertices[0][3] = 1.0;
    vertices[1][0] = x + width * ctx->Pixel.ZoomX;
    vertices[1][1] = y;
    vertices[1][2] = ctx->Current.RasterPos[2];
-   vertices[1][3] = ctx->Current.RasterPos[3];
+   vertices[1][3] = 1.0;
    vertices[2][0] = x + width * ctx->Pixel.ZoomX;
    vertices[2][1] = y + height * ctx->Pixel.ZoomY;
    vertices[2][2] = ctx->Current.RasterPos[2];
-   vertices[2][3] = ctx->Current.RasterPos[3];
+   vertices[2][3] = 1.0;
    vertices[3][0] = x;
    vertices[3][1] = y + height * ctx->Pixel.ZoomY;
    vertices[3][2] = ctx->Current.RasterPos[2];
-   vertices[3][3] = ctx->Current.RasterPos[3];
+   vertices[3][3] = 1.0;
 
    texcoords[0][0] = 0.0;
    texcoords[0][1] = 0.0;
