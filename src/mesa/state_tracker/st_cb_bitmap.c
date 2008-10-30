@@ -779,7 +779,7 @@ st_destroy_bitmap(struct st_context *st)
    }
 
    if (st->bitmap.vbuf) {
-      pipe_buffer_destroy(pipe->screen, st->bitmap.vbuf);
+      pipe_buffer_reference(pipe->screen, &st->bitmap.vbuf, NULL);
       st->bitmap.vbuf = NULL;
    }
 

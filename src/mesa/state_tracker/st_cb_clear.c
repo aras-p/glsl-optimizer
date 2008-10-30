@@ -116,7 +116,7 @@ st_destroy_clear(struct st_context *st)
       st->clear.vs = NULL;
    }
    if (st->clear.vbuf) {
-      pipe_buffer_destroy(pipe->screen, st->clear.vbuf);
+      pipe_buffer_reference(pipe->screen, &st->clear.vbuf, NULL);
       st->clear.vbuf = NULL;
    }
 }
