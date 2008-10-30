@@ -376,8 +376,10 @@ cell_untwiddle_texture(struct pipe_screen *screen,
       }
       break;
    default:
-      printf("Cell: untwiddle unsupported texture format\n");
-      ;
+      {
+         ct->untiled_data[level] = NULL;
+         printf("Cell: untwiddle unsupported texture format\n");
+      }
    }
 
    pipe_buffer_unmap(screen, surface->buffer);
@@ -442,7 +444,8 @@ cell_tex_surface_release(struct pipe_screen *screen,
    struct cell_texture *ct = cell_texture((*s)->texture);
    const uint level = (*s)->level;
 
-   if ((*s)->usage & PIPE_BUFFER_USAGE_CPU_READ) {
+   if (((*s)->usage & PIPE_BUFFER_USAGE_CPU_READ) && (ct->untiled_data[level]))
+   {
       align_free(ct->untiled_data[level]);
       ct->untiled_data[level] = NULL;
    }
@@ -476,7 +479,7 @@ cell_surface_map(struct pipe_screen *screen,
       return NULL;
    else
    {
-      if (surface->usage & PIPE_BUFFER_USAGE_CPU_READ) {
+      if ((surface->usage & PIPE_BUFFER_USAGE_CPU_READ) && (ct->untiled_data[level])) {
          return (void *) ((ubyte *) ct->untiled_data[level] + surface->offset);
       }
       else {
