@@ -369,7 +369,7 @@ flush_spans(void)
    }
    ASSERT(spu.cur_ctile_status != TILE_STATUS_DEFINED);
 
-   if (spu.read_depth) {
+   if (spu.read_depth_stencil) {
       if (spu.cur_ztile_status == TILE_STATUS_GETTING) {
          /* wait for mfc_get() to complete */
          //printf("SPU: %u: waiting for ztile\n", spu.init.id);

@@ -1282,7 +1282,7 @@ gen_stencil_values(struct spe_function *f, unsigned int stencil_op,
       /* Add Word Immediate computes rT = rA + 10-bit signed immediate */
       spe_ai(f, newS_reg, fbS_reg, 1);
       /* Select from the current value or the new value based on the equality test */
-      spe_selb(f, newS_reg, fbS_reg, newS_reg, equals_reg);
+      spe_selb(f, newS_reg, newS_reg, fbS_reg, equals_reg);
 
       spe_release_register(f, equals_reg);
       break;
@@ -1295,7 +1295,7 @@ gen_stencil_values(struct spe_function *f, unsigned int stencil_op,
       /* Add Word Immediate with a (-1) value works */
       spe_ai(f, newS_reg, fbS_reg, -1);
       /* Select from the current value or the new value based on the equality test */
-      spe_selb(f, newS_reg, fbS_reg, newS_reg, equals_reg);
+      spe_selb(f, newS_reg, newS_reg, fbS_reg, equals_reg);
 
       spe_release_register(f, equals_reg);
       break;
@@ -1534,15 +1534,28 @@ gen_stencil_depth_test(struct spe_function *f,
     * meaning that we have to calculate the stencil values but do not
     * need to mask them), we can avoid generating code.  Don't forget
     * that we need to consider backfacing stencil, if enabled.
+    *
+    * Note that if the backface stencil is *not* enabled, the backface
+    * stencil will have the same values as the frontface stencil.
     */
-   if (dsa->stencil[0].write_mask == 0x0 && (!dsa->stencil[1].enabled || dsa->stencil[1].write_mask == 0x00)) {
-      /* Trivial: don't need to calculate stencil values, and don't need to 
-       * write them back to the framebuffer.
+   if (dsa->stencil[0].fail_op == PIPE_STENCIL_OP_KEEP &&
+       dsa->stencil[0].zfail_op == PIPE_STENCIL_OP_KEEP &&
+       dsa->stencil[0].zpass_op == PIPE_STENCIL_OP_KEEP &&
+       dsa->stencil[1].fail_op == PIPE_STENCIL_OP_KEEP &&
+       dsa->stencil[1].zfail_op == PIPE_STENCIL_OP_KEEP &&
+       dsa->stencil[1].zpass_op == PIPE_STENCIL_OP_KEEP) {
+       /* No changes to any stencil values */
+       need_to_calculate_stencil_values = false;
+       need_to_writemask_stencil_values = false;
+    }
+    else if (dsa->stencil[0].write_mask == 0x0 && dsa->stencil[1].write_mask == 0x0) {
+      /* All changes are writemasked out, so no need to calculate
+       * what those changes might be, and no need to write anything back.
        */
       need_to_calculate_stencil_values = false;
       need_to_writemask_stencil_values = false;
    }
-   else if (dsa->stencil[0].write_mask == 0xff && (!dsa->stencil[1].enabled || dsa->stencil[1].write_mask == 0xff)) {
+   else if (dsa->stencil[0].write_mask == 0xff && dsa->stencil[1].write_mask == 0xff) {
       /* Still trivial, but a little less so.  We need to write the stencil
        * values, but we don't need to mask them.
        */
