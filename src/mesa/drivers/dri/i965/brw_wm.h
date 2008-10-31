@@ -157,6 +157,7 @@ struct brw_wm_instruction {
 #define BRW_WM_MAX_PARAM 256
 #define BRW_WM_MAX_CONST 256
 #define BRW_WM_MAX_KILLS MAX_NV_FRAGMENT_PROGRAM_INSTRUCTIONS
+#define BRW_WM_MAX_SUBROUTINE 16
 
 
 
@@ -249,6 +250,7 @@ struct brw_wm_compile {
    GLuint tmp_regs[BRW_WM_MAX_GRF];
    GLuint tmp_index;
    GLuint tmp_max;
+   GLuint subroutines[BRW_WM_MAX_SUBROUTINE];
 };
 
 
