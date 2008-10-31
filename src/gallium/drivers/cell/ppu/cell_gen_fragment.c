@@ -1141,13 +1141,17 @@ gen_colormask(struct spe_function *f,
  * access to the Compare Immediate instructions where we don't in 
  * gen_depth_test(), which is what makes us very different.
  *
+ * There's some added complexity if there's a non-trivial state->mask
+ * value; then stencil and reference both must be masked
+ *
  * The return value in the stencil_pass_reg is a bitmask of valid
  * fragments that also passed the stencil test.  The bitmask of valid
- * fragments that failed would be found in (mask_reg & ~stencil_pass_reg).
+ * fragments that failed would be found in (fragment_mask_reg & ~stencil_pass_reg).
  */
 static void
 gen_stencil_test(struct spe_function *f, const struct pipe_stencil_state *state, 
-                 unsigned int mask_reg, unsigned int fbS_reg, 
+                 unsigned int stencil_max_value,
+                 unsigned int fragment_mask_reg, unsigned int fbS_reg, 
                  unsigned int stencil_pass_reg)
 {
    /* Generate code that puts the set of passing fragments into the stencil_pass_reg
@@ -1155,68 +1159,134 @@ gen_stencil_test(struct spe_function *f, const struct pipe_stencil_state *state,
     */
    switch (state->func) {
    case PIPE_FUNC_EQUAL:
-      /* stencil_pass = mask & (s == reference) */
-      spe_compare_equal_uint(f, stencil_pass_reg, fbS_reg, state->ref_value);
-      spe_and(f, stencil_pass_reg, mask_reg, stencil_pass_reg);
+      if (state->value_mask == stencil_max_value) {
+         /* stencil_pass = fragment_mask & (s == reference) */
+         spe_compare_equal_uint(f, stencil_pass_reg, fbS_reg, state->ref_value);
+         spe_and(f, stencil_pass_reg, fragment_mask_reg, stencil_pass_reg);
+      }
+      else {
+         /* stencil_pass = fragment_mask & ((s&mask) == (reference&mask)) */
+         unsigned int tmp_masked_stencil = spe_allocate_available_register(f);
+         spe_and_uint(f, tmp_masked_stencil, fbS_reg, state->value_mask);
+         spe_compare_equal_uint(f, stencil_pass_reg, tmp_masked_stencil, state->value_mask & state->ref_value);
+         spe_and(f, stencil_pass_reg, fragment_mask_reg, stencil_pass_reg);
+         spe_release_register(f, tmp_masked_stencil);
+      }
       break;
 
    case PIPE_FUNC_NOTEQUAL:
-      /* stencil_pass = mask & ~(s == reference) */
-      spe_compare_equal_uint(f, stencil_pass_reg, fbS_reg, state->ref_value);
-      spe_andc(f, stencil_pass_reg, mask_reg, stencil_pass_reg);
+      if (state->value_mask == stencil_max_value) {
+         /* stencil_pass = fragment_mask & ~(s == reference) */
+         spe_compare_equal_uint(f, stencil_pass_reg, fbS_reg, state->ref_value);
+         spe_andc(f, stencil_pass_reg, fragment_mask_reg, stencil_pass_reg);
+      }
+      else {
+         /* stencil_pass = fragment_mask & ~((s&mask) == (reference&mask)) */
+         unsigned int tmp_masked_stencil = spe_allocate_available_register(f);
+         spe_and_uint(f, tmp_masked_stencil, fbS_reg, state->value_mask);
+         spe_compare_equal_uint(f, stencil_pass_reg, tmp_masked_stencil, state->value_mask & state->ref_value);
+         spe_andc(f, stencil_pass_reg, fragment_mask_reg, stencil_pass_reg);
+         spe_release_register(f, tmp_masked_stencil);
+      }
       break;
 
    case PIPE_FUNC_GREATER:
-      /* stencil_pass = mask & (s > reference) */
-      spe_compare_greater_uint(f, stencil_pass_reg, fbS_reg, state->ref_value);
-      spe_and(f, stencil_pass_reg, mask_reg, stencil_pass_reg);
+      if (state->value_mask == stencil_max_value) {
+         /* stencil_pass = fragment_mask & (s > reference) */
+         spe_compare_greater_uint(f, stencil_pass_reg, fbS_reg, state->ref_value);
+         spe_and(f, stencil_pass_reg, fragment_mask_reg, stencil_pass_reg);
+      }
+      else {
+         /* stencil_pass = fragment_mask & ((s&mask) > (reference&mask)) */
+         unsigned int tmp_masked_stencil = spe_allocate_available_register(f);
+         spe_and_uint(f, tmp_masked_stencil, fbS_reg, state->value_mask);
+         spe_compare_greater_uint(f, stencil_pass_reg, tmp_masked_stencil, state->value_mask & state->ref_value);
+         spe_and(f, stencil_pass_reg, fragment_mask_reg, stencil_pass_reg);
+         spe_release_register(f, tmp_masked_stencil);
+      }
       break;
 
-   case PIPE_FUNC_LESS: {
-      /* stencil_pass = mask & (reference > s) */
-      /* There's no convenient Compare Less Than Immediate instruction, so
-       * we'll have to do this one the harder way, by loading a register and 
-       * comparing directly.  Compare Logical Greater Than Word (clgt) 
-       * treats its operands as unsigned - no sign extension.
-       */
-      unsigned int tmp_reg = spe_allocate_available_register(f);
-      spe_load_uint(f, tmp_reg, state->ref_value);
-      spe_clgt(f, stencil_pass_reg, tmp_reg, fbS_reg);
-      spe_and(f, stencil_pass_reg, mask_reg, stencil_pass_reg);
-      spe_release_register(f, tmp_reg);
+   case PIPE_FUNC_LESS:
+      if (state->value_mask == stencil_max_value) {
+         /* stencil_pass = fragment_mask & (reference > s) */
+         /* There's no convenient Compare Less Than Immediate instruction, so
+          * we'll have to do this one the harder way, by loading a register and 
+          * comparing directly.  Compare Logical Greater Than Word (clgt) 
+          * treats its operands as unsigned - no sign extension.
+          */
+         unsigned int tmp_reg = spe_allocate_available_register(f);
+         spe_load_uint(f, tmp_reg, state->ref_value);
+         spe_clgt(f, stencil_pass_reg, tmp_reg, fbS_reg);
+         spe_and(f, stencil_pass_reg, fragment_mask_reg, stencil_pass_reg);
+         spe_release_register(f, tmp_reg);
+      }
+      else {
+         /* stencil_pass = fragment_mask & ((reference&mask) > (s&mask)) */
+         unsigned int tmp_reg = spe_allocate_available_register(f);
+         unsigned int tmp_masked_stencil = spe_allocate_available_register(f);
+         spe_load_uint(f, tmp_reg, state->value_mask & state->ref_value);
+         spe_and_uint(f, tmp_masked_stencil, fbS_reg, state->value_mask);
+         spe_clgt(f, stencil_pass_reg, tmp_reg, tmp_masked_stencil);
+         spe_and(f, stencil_pass_reg, fragment_mask_reg, stencil_pass_reg);
+         spe_release_register(f, tmp_reg);
+         spe_release_register(f, tmp_masked_stencil);
+      }
       break;
-   }
 
    case PIPE_FUNC_LEQUAL:
-      /* stencil_pass = mask & (s <= reference) = mask & ~(s > reference) */
-      spe_compare_greater_uint(f, stencil_pass_reg, fbS_reg, state->ref_value);
-      spe_andc(f, stencil_pass_reg, mask_reg, stencil_pass_reg);
+      if (state->value_mask == stencil_max_value) {
+         /* stencil_pass = fragment_mask & (s <= reference) 
+          *              = fragment_mask & ~(s > reference) */
+         spe_compare_greater_uint(f, stencil_pass_reg, fbS_reg, state->ref_value);
+         spe_andc(f, stencil_pass_reg, fragment_mask_reg, stencil_pass_reg);
+      }
+      else {
+         /* stencil_pass = fragment_mask & ~((s&mask) > (reference&mask)) */
+         unsigned int tmp_masked_stencil = spe_allocate_available_register(f);
+         spe_and_uint(f, tmp_masked_stencil, fbS_reg, state->value_mask);
+         spe_compare_greater_uint(f, stencil_pass_reg, tmp_masked_stencil, state->value_mask & state->ref_value);
+         spe_andc(f, stencil_pass_reg, fragment_mask_reg, stencil_pass_reg);
+         spe_release_register(f, tmp_masked_stencil);
+      }
       break;
 
-   case PIPE_FUNC_GEQUAL: {
-      /* stencil_pass = mask & (s >= reference) = mask & ~(reference > s) */
-      /* As above, we have to do this by loading a register */
-      unsigned int tmp_reg = spe_allocate_available_register(f);
-      spe_load_uint(f, tmp_reg, state->ref_value);
-      spe_clgt(f, stencil_pass_reg, tmp_reg, fbS_reg);
-      spe_andc(f, stencil_pass_reg, mask_reg, stencil_pass_reg);
-      spe_release_register(f, tmp_reg);
+   case PIPE_FUNC_GEQUAL:
+      if (state->value_mask == stencil_max_value) {
+         /* stencil_pass = fragment_mask & (s >= reference) ]
+          *               = fragment_mask & ~(reference > s) */
+         /* As above, we have to do this by loading a register */
+         unsigned int tmp_reg = spe_allocate_available_register(f);
+         spe_load_uint(f, tmp_reg, state->ref_value);
+         spe_clgt(f, stencil_pass_reg, tmp_reg, fbS_reg);
+         spe_andc(f, stencil_pass_reg, fragment_mask_reg, stencil_pass_reg);
+         spe_release_register(f, tmp_reg);
+      }
+      else {
+         /* stencil_pass = fragment_mask & ~((reference&mask) > (s&mask)) */
+         unsigned int tmp_reg = spe_allocate_available_register(f);
+         unsigned int tmp_masked_stencil = spe_allocate_available_register(f);
+         spe_load_uint(f, tmp_reg, state->ref_value & state->value_mask);
+         spe_and_uint(f, tmp_masked_stencil, fbS_reg, state->value_mask);
+         spe_clgt(f, stencil_pass_reg, tmp_reg, tmp_masked_stencil);
+         spe_andc(f, stencil_pass_reg, fragment_mask_reg, stencil_pass_reg);
+         spe_release_register(f, tmp_reg);
+         spe_release_register(f, tmp_masked_stencil);
+      }
       break;
-   }
 
    case PIPE_FUNC_NEVER:
-      /* stencil_pass = mask & 0 = 0 */
+      /* stencil_pass = fragment_mask & 0 = 0 */
       spe_load_uint(f, stencil_pass_reg, 0);
       break;
 
    case PIPE_FUNC_ALWAYS:
-      /* stencil_pass = mask & 1 = mask */
-      spe_move(f, stencil_pass_reg, mask_reg);
+      /* stencil_pass = fragment_mask & 1 = fragment_mask */
+      spe_move(f, stencil_pass_reg, fragment_mask_reg);
       break;
    }
 
    /* The fragments that passed the stencil test are now in stencil_pass_reg.
-    * The fragments that failed would be (mask_reg & ~stencil_pass_reg).
+    * The fragments that failed would be (fragment_mask_reg & ~stencil_pass_reg).
     */
 }
 
@@ -1596,7 +1666,7 @@ gen_stencil_depth_test(struct spe_function *f,
     */
    spe_comment(f, 0, "Running basic stencil test");
    stencil_pass_reg = spe_allocate_available_register(f);
-   gen_stencil_test(f, &dsa->stencil[0], mask_reg, fbS_reg, stencil_pass_reg);
+   gen_stencil_test(f, &dsa->stencil[0], 0xff, mask_reg, fbS_reg, stencil_pass_reg);
 
    /* If two-sided stenciling is on, generate code to run the stencil
     * test on the backfacing stencil as well, and combine the two results
@@ -1605,7 +1675,7 @@ gen_stencil_depth_test(struct spe_function *f,
    if (dsa->stencil[1].enabled) {
       unsigned int temp_reg = spe_allocate_available_register(f);
       spe_comment(f, 0, "Running backface stencil test");
-      gen_stencil_test(f, &dsa->stencil[1], mask_reg, fbS_reg, temp_reg);
+      gen_stencil_test(f, &dsa->stencil[1], 0xff, mask_reg, fbS_reg, temp_reg);
       spe_selb(f, stencil_pass_reg, stencil_pass_reg, temp_reg, facing_reg);
       spe_release_register(f, temp_reg);
    }
