@@ -2309,7 +2309,7 @@ _slang_gen_if(slang_assemble_ctx * A, const slang_operation *oper)
 
    /* type-check expression */
    if (!_slang_is_boolean(A, &oper->children[0])) {
-      slang_info_log_error(A->log, "boolean expression expected for 'while'");
+      slang_info_log_error(A->log, "boolean expression expected for 'if'");
       return NULL;
    }
 
