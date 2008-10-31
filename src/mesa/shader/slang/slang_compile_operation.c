@@ -84,6 +84,17 @@ slang_replace_scope(slang_operation *oper,
        oper->locals->outer_scope == oldScope) {
       oper->locals->outer_scope = newScope;
    }
+
+   if (oper->type == SLANG_OPER_VARIABLE_DECL) {
+      slang_variable *var;
+      var = _slang_locate_variable(oper->locals, oper->a_id, GL_TRUE);
+      if (var && var->initializer) {
+         printf("replace scope for %s initializer\n",
+                (char *) var->a_name);
+         slang_replace_scope(var->initializer, oldScope, newScope);
+      }
+   }
+
    for (i = 0; i < oper->num_children; i++) {
       slang_replace_scope(&oper->children[i], oldScope, newScope);
    }
