@@ -200,7 +200,7 @@ util_time_timeout(const struct util_time *start,
 }
 
 
-#if defined(PIPE_SUBSYSYEM_WINDOWS_DISPLAY)
+#if defined(PIPE_SUBSYSTEM_WINDOWS_DISPLAY)
 void util_time_sleep(unsigned usecs)
 {
    LONGLONG start, curr, end;
