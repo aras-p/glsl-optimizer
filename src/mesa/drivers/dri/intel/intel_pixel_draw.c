@@ -91,13 +91,6 @@ intel_texture_drawpixels(GLcontext * ctx,
       return GL_FALSE;
    }
 
-   /* Don't even want to think about it */
-   if (format == GL_COLOR_INDEX) {
-      if (INTEL_DEBUG & DEBUG_FALLBACKS)
-	 fprintf(stderr, "glDrawPixels() fallback: format == GL_COLOR_INDEX\n");
-      return GL_FALSE;
-   }
-
    /* We don't have a way to generate fragments with stencil values which *
     * will set the resulting stencil value.
     */
