@@ -2439,8 +2439,6 @@ _slang_gen_var_decl(slang_assemble_ctx *A, slang_variable *var)
    /*assert(!var->declared);*/
    var->declared = GL_TRUE;
 
-   assert(!is_sampler_type(&var->type));
-
    n = new_node0(IR_VAR_DECL);
    if (n) {
       _slang_attach_storage(n, var);
@@ -2449,7 +2447,13 @@ _slang_gen_var_decl(slang_assemble_ctx *A, slang_variable *var)
       assert(n->Store);
       assert(n->Store->Index < 0);
 
-      n->Store->File = PROGRAM_TEMPORARY;
+      if (is_sampler_type(&var->type)) {
+         n->Store->File = PROGRAM_SAMPLER;
+      }
+      else {
+         n->Store->File = PROGRAM_TEMPORARY;
+      }
+
       n->Store->Size = _slang_sizeof_type_specifier(&n->Var->type.specifier);
 
       if (n->Store->Size <= 0) {
