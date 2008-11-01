@@ -115,6 +115,11 @@ _slang_pop_var_table(slang_var_table *vt)
                       store->Index,
                       _mesa_swizzle_string(store->Swizzle, 0, 0));
 
+      if (store->File == PROGRAM_SAMPLER) {
+         /* samplers have no storage */
+         continue;
+      }
+
       if (store->Size == 1)
          comp = GET_SWZ(store->Swizzle, 0);
       else
@@ -241,7 +246,15 @@ GLboolean
 _slang_alloc_var(slang_var_table *vt, slang_ir_storage *store)
 {
    struct table *t = vt->Top;
-   const int i = alloc_reg(vt, store->Size, GL_FALSE);
+   int i;
+
+   if (store->File == PROGRAM_SAMPLER) {
+      /* don't really allocate storage */
+      store->Index = 0;
+      return GL_TRUE;
+   }
+
+   i = alloc_reg(vt, store->Size, GL_FALSE);
    if (i < 0)
       return GL_FALSE;
 
