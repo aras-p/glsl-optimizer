@@ -422,6 +422,9 @@ intelClearWithBlit(GLcontext *ctx, GLbitfield mask)
    struct gl_framebuffer *fb = ctx->DrawBuffer;
    GLuint clear_depth;
    GLbitfield skipBuffers = 0;
+   unsigned int num_cliprects;
+   struct drm_clip_rect *cliprects;
+   int x_off, y_off;
    BATCH_LOCALS;
 
    /*
@@ -446,7 +449,8 @@ intelClearWithBlit(GLcontext *ctx, GLbitfield mask)
    intelFlush(&intel->ctx);
    LOCK_HARDWARE(intel);
 
-   if (intel->numClipRects) {
+   intel_get_cliprects(intel, &cliprects, &num_cliprects, &x_off, &y_off);
+   if (num_cliprects) {
       GLint cx, cy, cw, ch;
       drm_clip_rect_t clear;
       int i;
@@ -461,15 +465,15 @@ intelClearWithBlit(GLcontext *ctx, GLbitfield mask)
          /* clearing a window */
 
          /* flip top to bottom */
-         clear.x1 = cx + intel->drawX;
+         clear.x1 = cx + x_off;
          clear.y1 = intel->driDrawable->y + intel->driDrawable->h - cy - ch;
          clear.x2 = clear.x1 + cw;
          clear.y2 = clear.y1 + ch;
       }
       else {
          /* clearing FBO */
-         assert(intel->numClipRects == 1);
-         assert(intel->pClipRects == &intel->fboRect);
+         assert(num_cliprects == 1);
+         assert(cliprects == &intel->fboRect);
          clear.x1 = cx;
          clear.y1 = cy;
          clear.x2 = clear.x1 + cw;
@@ -477,8 +481,8 @@ intelClearWithBlit(GLcontext *ctx, GLbitfield mask)
          /* no change to mask */
       }
 
-      for (i = 0; i < intel->numClipRects; i++) {
-         const drm_clip_rect_t *box = &intel->pClipRects[i];
+      for (i = 0; i < num_cliprects; i++) {
+         const drm_clip_rect_t *box = &cliprects[i];
          drm_clip_rect_t b;
          GLuint buf;
          GLuint clearMask = mask;      /* use copy, since we modify it below */

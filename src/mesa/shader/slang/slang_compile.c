@@ -800,6 +800,7 @@ parse_fully_specified_type(slang_parse_ctx * C, slang_output_ctx * O,
 #define OP_FIELD 59
 #define OP_POSTINCREMENT 60
 #define OP_POSTDECREMENT 61
+#define OP_PRECISION 62
 
 
 /**
@@ -969,6 +970,16 @@ parse_statement(slang_parse_ctx * C, slang_output_ctx * O,
             return 0;
          if (!parse_child_operation(C, &o, oper, 1))
             return 0;
+      }
+      break;
+   case OP_PRECISION:
+      {
+         /* set default precision for a type in this scope */
+         /* ignored at this time */
+         int prec_qual = *C->I++;
+         int datatype = *C->I++;
+         (void) prec_qual;
+         (void) datatype;
       }
       break;
    default:
@@ -1295,12 +1306,16 @@ static int
 parse_parameter_declaration(slang_parse_ctx * C, slang_output_ctx * O,
                             slang_variable * param)
 {
+   int param_qual, precision_qual;
+
    /* parse and validate the parameter's type qualifiers (there can be
     * two at most) because not all combinations are valid
     */
    if (!parse_type_qualifier(C, &param->type.qualifier))
       return 0;
-   switch (*C->I++) {
+
+   param_qual = *C->I++;
+   switch (param_qual) {
    case PARAM_QUALIFIER_IN:
       if (param->type.qualifier != SLANG_QUAL_CONST
           && param->type.qualifier != SLANG_QUAL_NONE) {
@@ -1327,6 +1342,11 @@ parse_parameter_declaration(slang_parse_ctx * C, slang_output_ctx * O,
    default:
       return 0;
    }
+
+   /* parse precision qualifier (lowp, mediump, highp */
+   precision_qual = *C->I++;
+   /* ignored at this time */
+   (void) precision_qual;
 
    /* parse parameter's type specifier and name */
    if (!parse_type_specifier(C, O, &param->type.specifier))

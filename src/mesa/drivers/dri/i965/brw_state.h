@@ -35,6 +35,16 @@
 
 #include "brw_context.h"
 
+static inline void
+brw_add_validated_bo(struct brw_context *brw, dri_bo *bo)
+{
+   assert(brw->state.validated_bo_count < ARRAY_SIZE(brw->state.validated_bos));
+
+   if (bo != NULL) {
+      dri_bo_reference(bo);
+      brw->state.validated_bos[brw->state.validated_bo_count++] = bo;
+   }
+};
 
 const struct brw_tracked_state brw_blend_constant_color;
 const struct brw_tracked_state brw_cc_unit;
@@ -79,8 +89,17 @@ const struct brw_tracked_state brw_pipe_control;
 const struct brw_tracked_state brw_clear_surface_cache;
 const struct brw_tracked_state brw_clear_batch_cache;
 
+const struct brw_tracked_state brw_drawing_rect;
 const struct brw_tracked_state brw_indices;
 const struct brw_tracked_state brw_vertices;
+
+/***********************************************************************
+ * brw_state.c
+ */
+void brw_validate_state(struct brw_context *brw);
+void brw_upload_state(struct brw_context *brw);
+void brw_init_state(struct brw_context *brw);
+void brw_destroy_state(struct brw_context *brw);
 
 /***********************************************************************
  * brw_state_cache.c

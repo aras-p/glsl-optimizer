@@ -65,7 +65,7 @@ struct brw_reg
    GLuint abs:1;		/* source only */
    GLuint vstride:4;		/* source only */
    GLuint width:3;		/* src only, align1 only */
-   GLuint hstride:2;   		/* src only, align1 only */
+   GLuint hstride:2;   		/* align1 only */
    GLuint address_mode:1;	/* relative addressing, hopefully! */
    GLuint pad0:1;
 

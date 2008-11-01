@@ -191,11 +191,7 @@ do_blit_bitmap( GLcontext *ctx,
    color8888 = INTEL_PACKCOLOR8888(ubcolor[0], ubcolor[1], ubcolor[2], ubcolor[3]);
    color565 = INTEL_PACKCOLOR565(ubcolor[0], ubcolor[1], ubcolor[2]);
 
-   /* Does zoom apply to bitmaps?
-    */
-   if (!intel_check_blit_fragment_ops(ctx, tmpColor[3] == 1.0F) ||
-       ctx->Pixel.ZoomX != 1.0F || 
-       ctx->Pixel.ZoomY != 1.0F)
+   if (!intel_check_blit_fragment_ops(ctx, tmpColor[3] == 1.0F))
       return GL_FALSE;
 
    LOCK_HARDWARE(intel);

@@ -399,6 +399,17 @@ i915_emit_state(struct intel_context *intel)
       OUT_BATCH(state->Buffer[I915_DESTREG_SR0]);
       OUT_BATCH(state->Buffer[I915_DESTREG_SR1]);
       OUT_BATCH(state->Buffer[I915_DESTREG_SR2]);
+
+      if (intel->constant_cliprect) {
+	 assert(state->Buffer[I915_DESTREG_DRAWRECT0] != MI_NOOP);
+	 OUT_BATCH(state->Buffer[I915_DESTREG_DRAWRECT0]);
+	 OUT_BATCH(state->Buffer[I915_DESTREG_DRAWRECT1]);
+	 OUT_BATCH(state->Buffer[I915_DESTREG_DRAWRECT2]);
+	 OUT_BATCH(state->Buffer[I915_DESTREG_DRAWRECT3]);
+	 OUT_BATCH(state->Buffer[I915_DESTREG_DRAWRECT4]);
+	 OUT_BATCH(state->Buffer[I915_DESTREG_DRAWRECT5]);
+      }
+
       ADVANCE_BATCH();
    }
 
@@ -521,6 +532,7 @@ i915_state_draw_region(struct intel_context *intel,
                        struct intel_region *depth_region)
 {
    struct i915_context *i915 = i915_context(&intel->ctx);
+   GLcontext *ctx = &intel->ctx;
    GLuint value;
 
    ASSERT(state == &i915->state || state == &i915->meta);
@@ -572,6 +584,24 @@ i915_state_draw_region(struct intel_context *intel,
       value |= DEPTH_FRMT_16_FIXED;
    }
    state->Buffer[I915_DESTREG_DV1] = value;
+
+   if (intel->constant_cliprect) {
+      state->Buffer[I915_DESTREG_DRAWRECT0] = _3DSTATE_DRAWRECT_INFO;
+      state->Buffer[I915_DESTREG_DRAWRECT1] = 0;
+      state->Buffer[I915_DESTREG_DRAWRECT2] = 0; /* xmin, ymin */
+      state->Buffer[I915_DESTREG_DRAWRECT3] =
+	 (ctx->DrawBuffer->Width & 0xffff) |
+	 (ctx->DrawBuffer->Height << 16);
+      state->Buffer[I915_DESTREG_DRAWRECT4] = 0; /* xoff, yoff */
+      state->Buffer[I915_DESTREG_DRAWRECT5] = 0;
+   } else {
+      state->Buffer[I915_DESTREG_DRAWRECT0] = MI_NOOP;
+      state->Buffer[I915_DESTREG_DRAWRECT1] = MI_NOOP;
+      state->Buffer[I915_DESTREG_DRAWRECT2] = MI_NOOP;
+      state->Buffer[I915_DESTREG_DRAWRECT3] = MI_NOOP;
+      state->Buffer[I915_DESTREG_DRAWRECT4] = MI_NOOP;
+      state->Buffer[I915_DESTREG_DRAWRECT5] = MI_NOOP;
+   }
 
    I915_STATECHANGE(i915, I915_UPLOAD_BUFFERS);
 }

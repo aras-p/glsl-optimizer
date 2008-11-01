@@ -433,7 +433,6 @@ struct brw_context
    GLuint primitive;
 
    GLboolean emit_state_always;
-   GLboolean wrap;
    GLboolean tmp_fallback;
    GLboolean no_batch_wrap;
 
@@ -445,6 +444,19 @@ struct brw_context
       GLuint nr_draw_regions;
       struct intel_region *draw_regions[MAX_DRAW_BUFFERS];
       struct intel_region *depth_region;
+
+      /**
+       * List of buffers accumulated in brw_validate_state to receive
+       * dri_bo_check_aperture treatment before exec, so we can know if we
+       * should flush the batch and try again before emitting primitives.
+       *
+       * This can be a fixed number as we only have a limited number of
+       * objects referenced from the batchbuffer in a primitive emit,
+       * consisting of the vertex buffers, pipelined state pointers,
+       * the CURBE, the depth buffer, and a query BO.
+       */
+      dri_bo *validated_bos[VERT_ATTRIB_MAX + 16];
+      int validated_bo_count;
    } state;
 
    struct brw_state_pointers attribs;
@@ -678,14 +690,6 @@ void brw_init_queryobj_functions(struct dd_function_table *functions);
 void brw_prepare_query_begin(struct brw_context *brw);
 void brw_emit_query_begin(struct brw_context *brw);
 void brw_emit_query_end(struct brw_context *brw);
-
-/*======================================================================
- * brw_state.c
- */
-void brw_validate_state( struct brw_context *brw );
-void brw_init_state( struct brw_context *brw );
-void brw_destroy_state( struct brw_context *brw );
-
 
 /*======================================================================
  * brw_state_dump.c

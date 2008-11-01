@@ -29,6 +29,8 @@
 #ifndef INTEL_BUFFERS_H
 #define INTEL_BUFFERS_H
 
+#include "dri_util.h"
+#include "drm.h"
 
 struct intel_context;
 struct intel_framebuffer;
@@ -52,5 +54,10 @@ extern void intelWindowMoved(struct intel_context *intel);
 extern void intel_draw_buffer(GLcontext * ctx, struct gl_framebuffer *fb);
 
 extern void intelInitBufferFuncs(struct dd_function_table *functions);
+
+void intel_get_cliprects(struct intel_context *intel,
+			 struct drm_clip_rect **cliprects,
+			 unsigned int *num_cliprects,
+			 int *x_off, int *y_off);
 
 #endif /* INTEL_BUFFERS_H */
