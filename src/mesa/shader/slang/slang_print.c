@@ -379,28 +379,43 @@ slang_print_tree(const slang_operation *op, int indent)
    case SLANG_OPER_WHILE:
       assert(op->num_children == 2);
       spaces(indent);
+      printf("WHILE LOOP: locals = %p\n", op->locals);
+      indent += 3;
+      spaces(indent);
       printf("WHILE cond:\n");
       slang_print_tree(&op->children[0], indent + 3);
       spaces(indent);
       printf("WHILE body:\n");
       slang_print_tree(&op->children[1], indent + 3);
+      indent -= 3;
+      spaces(indent);
+      printf("END WHILE LOOP\n");
       break;
 
    case SLANG_OPER_DO:
+      spaces(indent);
+      printf("DO LOOP: locals = %p\n", op->locals);
+      indent += 3;
       spaces(indent);
       printf("DO body:\n");
       slang_print_tree(&op->children[0], indent + 3);
       spaces(indent);
       printf("DO cond:\n");
       slang_print_tree(&op->children[1], indent + 3);
+      indent -= 3;
+      spaces(indent);
+      printf("END DO LOOP\n");
       break;
 
    case SLANG_OPER_FOR:
       spaces(indent);
+      printf("FOR LOOP: locals = %p\n", op->locals);
+      indent += 3;
+      spaces(indent);
       printf("FOR init:\n");
       slang_print_tree(&op->children[0], indent + 3);
       spaces(indent);
-      printf("FOR while:\n");
+      printf("FOR condition:\n");
       slang_print_tree(&op->children[1], indent + 3);
       spaces(indent);
       printf("FOR step:\n");
@@ -408,6 +423,7 @@ slang_print_tree(const slang_operation *op, int indent)
       spaces(indent);
       printf("FOR body:\n");
       slang_print_tree(&op->children[3], indent + 3);
+      indent -= 3;
       spaces(indent);
       printf("ENDFOR\n");
       /*
