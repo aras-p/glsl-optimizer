@@ -798,10 +798,9 @@
 
 #include "intel_chipset.h"
 
-#define BRW_IS_GM45(brw)        (IS_GM45_GM((brw)->intel.intelScreen->deviceID))
 #define BRW_IS_G4X(brw)         (IS_G4X((brw)->intel.intelScreen->deviceID))
-#define CMD_PIPELINE_SELECT(brw)        ((BRW_IS_GM45(brw) || BRW_IS_G4X(brw)) ? CMD_PIPELINE_SELECT_GM45 : CMD_PIPELINE_SELECT_965)
-#define CMD_VF_STATISTICS(brw)          ((BRW_IS_GM45(brw) || BRW_IS_G4X(brw)) ? CMD_VF_STATISTICS_GM45 : CMD_VF_STATISTICS_965)
-#define URB_SIZES(brw)                  ((BRW_IS_GM45(brw) || BRW_IS_G4X(brw)) ? 384 : 256)  /* 512 bit unit */
+#define CMD_PIPELINE_SELECT(brw)        (BRW_IS_G4X(brw) ? CMD_PIPELINE_SELECT_GM45 : CMD_PIPELINE_SELECT_965)
+#define CMD_VF_STATISTICS(brw)          (BRW_IS_G4X(brw) ? CMD_VF_STATISTICS_GM45 : CMD_VF_STATISTICS_965)
+#define URB_SIZES(brw)                  (BRW_IS_G4X(brw) ? 384 : 256)  /* 512 bit units */
 
 #endif
