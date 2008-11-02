@@ -818,8 +818,7 @@ static void emit_vertex_write( struct brw_vs_compile *c)
    }
 
 
-   /* Build ndc coords?   TODO: Shortcircuit when w is known to be one.
-    */
+   /* Build ndc coords */
    if (!c->key.know_w_is_one) {
       ndc = get_tmp(c);
       emit_math1(c, BRW_MATH_FUNCTION_INV, ndc, brw_swizzle1(pos, 3), BRW_MATH_PRECISION_FULL);
