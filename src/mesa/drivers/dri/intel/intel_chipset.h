@@ -68,11 +68,12 @@
 				 devid == PCI_CHIP_I965_GME || \
 				 devid == PCI_CHIP_GM45_GM)
 
-#define IS_GM45_GM(devid)       (devid == PCI_CHIP_GM45_GM)
-#define IS_G4X(devid)           (devid == PCI_CHIP_IGD_E_G || \
+#define IS_G45(devid)           (devid == PCI_CHIP_IGD_E_G || \
                                  devid == PCI_CHIP_Q45_G || \
                                  devid == PCI_CHIP_G45_G || \
                                  devid == PCI_CHIP_G41_G)
+#define IS_GM45(devid)          (devid == PCI_CHIP_GM45_GM)
+#define IS_G4X(devid)		(IS_G45(devid) || IS_GM45(devid))
 
 #define IS_915(devid)		(devid == PCI_CHIP_I915_G || \
 				 devid == PCI_CHIP_E7221_G || \
@@ -91,7 +92,6 @@
 				 devid == PCI_CHIP_I965_GM || \
 				 devid == PCI_CHIP_I965_GME || \
 				 devid == PCI_CHIP_I946_GZ || \
-				 IS_GM45_GM(devid) || \
 				 IS_G4X(devid))
 
 #define IS_9XX(devid)		(IS_915(devid) || \
