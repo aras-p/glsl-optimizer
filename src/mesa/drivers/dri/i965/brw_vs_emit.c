@@ -829,12 +829,12 @@ static void emit_vertex_write( struct brw_vs_compile *c)
       ndc = pos;
    }
 
-   /* This includes the workaround for -ve rhw, so is no longer an
-    * optional step:
+   /* Update the header for point size, user clipping flags, and -ve rhw
+    * workaround.
     */
    if ((c->prog_data.outputs_written & (1<<VERT_RESULT_PSIZ)) ||
        c->key.nr_userclip ||
-       !c->key.know_w_is_one)
+       (!BRW_IS_G4X(p->brw) && !c->key.know_w_is_one))
    {
       struct brw_reg header1 = retype(get_tmp(c), BRW_REGISTER_TYPE_UD);
       GLuint i;
