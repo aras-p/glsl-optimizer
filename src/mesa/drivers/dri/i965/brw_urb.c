@@ -92,9 +92,9 @@ static void recalculate_urb_fence( struct brw_context *brw )
    if (brw->urb.vsize < vsize ||
        brw->urb.sfsize < sfsize ||
        brw->urb.csize < csize ||
-       (brw->urb.constrained && (brw->urb.vsize > brw->urb.vsize ||
-				 brw->urb.sfsize > brw->urb.sfsize ||
-				 brw->urb.csize > brw->urb.csize))) {
+       (brw->urb.constrained && (brw->urb.vsize > vsize ||
+				 brw->urb.sfsize > sfsize ||
+				 brw->urb.csize > csize))) {
       
 
       brw->urb.csize = csize;
@@ -114,6 +114,10 @@ static void recalculate_urb_fence( struct brw_context *brw )
 	 brw->urb.nr_sf_entries = limits[SF].min_nr_entries;	
 	 brw->urb.nr_cs_entries = limits[CS].min_nr_entries;	
 
+	 /* Mark us as operating with constrained nr_entries, so that next
+	  * time we recalculate we'll resize the fences in the hope of
+	  * escaping constrained mode and getting back to normal performance.
+	  */
 	 brw->urb.constrained = 1;
 	 
 	 if (!check_urb_layout(brw)) {
