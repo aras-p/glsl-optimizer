@@ -550,9 +550,7 @@ getFBConfigs(Display * dpy, __GLXdisplayPrivate * priv, int screen)
    __GLXscreenConfigs *psc;
 
    psc = priv->screenConfigs + screen;
-   psc->serverGLXexts = __glXGetStringFromServer(dpy, priv->majorOpcode,
-                                                 X_GLXQueryServerString,
-                                                 screen, GLX_EXTENSIONS);
+   psc->serverGLXexts = __glXQueryServerString(dpy, screen, GLX_EXTENSIONS);
 
    LockDisplay(dpy);
 
@@ -610,9 +608,7 @@ AllocAndFetchScreenConfigs(Display * dpy, __GLXdisplayPrivate * priv)
    memset(psc, 0, screens * sizeof(__GLXscreenConfigs));
    priv->screenConfigs = psc;
 
-   priv->serverGLXversion = __glXGetStringFromServer(dpy, priv->majorOpcode,
-                                                     X_GLXQueryServerString,
-                                                     0, GLX_VERSION);
+   priv->serverGLXversion = __glXQueryServerString(dpy, 0, GLX_VERSION);
    if (priv->serverGLXversion == NULL) {
       FreeScreenConfigs(priv);
       return GL_FALSE;
