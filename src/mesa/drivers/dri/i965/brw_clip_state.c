@@ -88,7 +88,21 @@ clip_unit_create_from_key(struct brw_context *brw,
 
    clip.thread4.nr_urb_entries = key->nr_urb_entries;
    clip.thread4.urb_entry_allocation_size = key->urb_size - 1;
-   clip.thread4.max_threads = 1; /* 2 threads */
+   /* If we have enough clip URB entries to run two threads, do so.
+    */
+   if (key->nr_urb_entries >= 10) {
+      /* Half of the URB entries go to each thread, and it has to be an
+       * even number.
+       */
+      assert(key->nr_urb_entries % 2 == 0);
+      clip.thread4.max_threads = 2 - 1;
+   } else {
+      assert(key->nr_urb_entries >= 5);
+      clip.thread4.max_threads = 1 - 1;
+   }
+
+   if (INTEL_DEBUG & DEBUG_SINGLE_THREAD)
+      clip.thread4.max_threads = 0;
 
    if (INTEL_DEBUG & DEBUG_STATS)
       clip.thread4.stats_enable = 1;
