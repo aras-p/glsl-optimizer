@@ -68,7 +68,7 @@ __inline double ceil(double val)
    return ceil_val;
 }
 
-#ifndef PIPE_SUBSYSTEM_WINDOWS_CE
+#ifndef PIPE_SUBSYSTEM_WINDOWS_CE_OGL
 __inline double floor(double val)
 {
    double floor_val;

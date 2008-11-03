@@ -36,6 +36,13 @@
 #include <windows.h>
 #include <winddi.h>
 
+#elif defined(PIPE_SUBSYSTEM_WINDOWS_CE)
+
+#include <stdio.h> 
+#include <stdlib.h> 
+#include <windows.h> 
+#include <types.h> 
+
 #elif defined(PIPE_SUBSYSTEM_WINDOWS_USER)
 
 #ifndef WIN32_LEAN_AND_MEAN
@@ -98,7 +105,35 @@ void _debug_vprintf(const char *format, va_list ap)
       OutputDebugStringA(buf);
       buf[0] = '\0';
    }
-#elif defined(PIPE_SUBSYSTEM_WINDOWS_CE) || defined(PIPE_SUBSYSTEM_WINDOWS_MINIPORT) 
+#elif defined(PIPE_SUBSYSTEM_WINDOWS_CE)
+   wchar_t *wide_format;
+   long wide_str_len;   
+   char buf[512];   
+   int ret;   
+#if (_WIN32_WCE < 600)
+   ret = vsprintf(buf, format, ap);   
+   if(ret < 0){   
+       sprintf(buf, "Cant handle debug print!");   
+       ret = 25;
+   }
+#else
+   ret = vsprintf_s(buf, 512, format, ap);   
+   if(ret < 0){   
+       sprintf_s(buf, 512, "Cant handle debug print!");   
+       ret = 25;
+   }
+#endif
+   buf[ret] = '\0';   
+   /* Format is ascii - needs to be converted to wchar_t for printing */   
+   wide_str_len = MultiByteToWideChar(CP_ACP, 0, (const char *) buf, -1, NULL, 0);   
+   wide_format = (wchar_t *) malloc((wide_str_len+1) * sizeof(wchar_t));   
+   if (wide_format) {   
+      MultiByteToWideChar(CP_ACP, 0, (const char *) buf, -1,   
+            wide_format, wide_str_len);   
+      NKDbgPrintfW(wide_format, wide_format);   
+      free(wide_format);   
+   } 
+#elif defined(PIPE_SUBSYSTEM_WINDOWS_MINIPORT)
    /* TODO */
 #else /* !PIPE_SUBSYSTEM_WINDOWS */
    vfprintf(stderr, format, ap);
@@ -637,6 +672,7 @@ void
 debug_dump_surface_bmp(const char *filename,
                        struct pipe_surface *surface)
 {
+#ifndef PIPE_SUBSYSTEM_WINDOWS_MINIPORT
    struct util_stream *stream;
    unsigned surface_usage;
    struct bmp_file_header bmfh;
@@ -703,6 +739,7 @@ error2:
    FREE(rgba);
 error1:
    ;
+#endif
 }
 
 #endif
