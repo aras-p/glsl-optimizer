@@ -679,7 +679,7 @@ __indirect_glGetString(GLenum name)
     */
 
    (void) __glXFlushRenderBuffer(gc, gc->pc);
-   s = (GLubyte *) __glXGetString(dpy, gc->currentContextTag, name);
+   s = (GLubyte *) __glXGetString(dpy, gc->majorOpcode, gc->currentContextTag, name);
    if (!s) {
       /* Throw data on the floor */
       __glXSetError(gc, GL_OUT_OF_MEMORY);

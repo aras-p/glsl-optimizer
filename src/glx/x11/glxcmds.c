@@ -1336,7 +1336,7 @@ PUBLIC const char *glXQueryExtensionsString( Display *dpy, int screen )
     if (!psc->effectiveGLXexts) {
         if (!psc->serverGLXexts) {
            psc->serverGLXexts =
-              __glXQueryServerString(dpy, screen, GLX_EXTENSIONS);
+              __glXQueryServerString(dpy, priv->majorOpcode, screen, GLX_EXTENSIONS);
 	}
 
 	__glXCalculateUsableExtensions(psc,
@@ -1391,7 +1391,7 @@ PUBLIC const char *glXQueryServerString( Display *dpy, int screen, int name )
     }
 
     if ( *str == NULL ) {
-       *str = __glXQueryServerString(dpy, screen, name);
+       *str = __glXQueryServerString(dpy, priv->majorOpcode, screen, name);
     }
     
     return *str;

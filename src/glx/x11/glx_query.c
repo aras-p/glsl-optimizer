@@ -44,6 +44,7 @@
  */
 char *
 __glXQueryServerString(Display* dpy,
+                       int opcode,
                        CARD32 screen,
                        CARD32 name)
 {
@@ -70,6 +71,7 @@ __glXQueryServerString(Display* dpy,
  */
 char *
 __glXGetString(Display* dpy,
+               int opcode,
                CARD32 contextTag,
                CARD32 name)
 {
@@ -166,22 +168,22 @@ __glXGetStringFromServer(Display * dpy, int opcode, CARD32 glxCode,
 
 char *
 __glXQueryServerString(Display* dpy,
+                       int opcode,
                        CARD32 screen,
                        CARD32 name)
 {
-   GLXContext gc = __glXGetCurrentContext();
-   return __glXGetStringFromServer(dpy, gc->majorOpcode,
+   return __glXGetStringFromServer(dpy, opcode,
                                    X_GLXQueryServerString,
                                    screen, name);
 }
 
 char *
 __glXGetString(Display* dpy,
+               int opcode,
                CARD32 contextTag,
                CARD32 name)
 {
-   GLXContext gc = __glXGetCurrentContext();
-   return __glXGetStringFromServer(dpy, gc->majorOpcode, X_GLsop_GetString,
+   return __glXGetStringFromServer(dpy, opcode, X_GLsop_GetString,
                                    contextTag, name);
 }
 
