@@ -141,9 +141,6 @@ Redisplay(void)
 
    glPopMatrix();
 
-   glFinish();
-   glFlush();
-
    CheckError(__LINE__);
 
    glutSwapBuffers();
