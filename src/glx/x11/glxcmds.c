@@ -865,7 +865,6 @@ PUBLIC void glXDestroyGLXPixmap(Display *dpy, GLXPixmap glxpixmap)
 
 PUBLIC void glXSwapBuffers(Display *dpy, GLXDrawable drawable)
 {
-    xGLXSwapBuffersReq *req;
     GLXContext gc;
     GLXContextTag tag;
     CARD8 opcode;
@@ -896,6 +895,13 @@ PUBLIC void glXSwapBuffers(Display *dpy, GLXDrawable drawable)
 	tag = 0;
     }
 
+#ifdef USE_XCB
+    xcb_connection_t* c = XGetXCBConnection(dpy);
+    xcb_glx_swap_buffers(c, tag, drawable);
+    xcb_flush(c);
+#else
+    xGLXSwapBuffersReq *req;
+
     /* Send the glXSwapBuffers request */
     LockDisplay(dpy);
     GetReq(GLXSwapBuffers,req);
@@ -906,6 +912,7 @@ PUBLIC void glXSwapBuffers(Display *dpy, GLXDrawable drawable)
     UnlockDisplay(dpy);
     SyncHandle();
     XFlush(dpy);
+#endif /* USE_XCB */
 }
 
 
