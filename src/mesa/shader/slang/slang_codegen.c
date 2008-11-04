@@ -3811,6 +3811,8 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
       if (dbg) printf("VARYING ");
    }
    else if (var->type.qualifier == SLANG_QUAL_ATTRIBUTE) {
+      GLuint swizzle;
+      GLint index;
       /* attributes must be float, vec or mat */
       if (!_slang_type_is_float_vec_mat(var->type.specifier.type)) {
          slang_info_log_error(A->log,
@@ -3822,20 +3824,18 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
       if (prog) {
          /* user-defined vertex attribute */
          const GLint attr = -1; /* unknown */
-         GLint index = _mesa_add_attribute(prog->Attributes, varName,
-                                           size, datatype, attr);
+         swizzle = _slang_var_swizzle(size, 0);
+         index = _mesa_add_attribute(prog->Attributes, varName,
+                                     size, datatype, attr);
          assert(index >= 0);
-         store = _slang_new_ir_storage(PROGRAM_INPUT,
-                                       VERT_ATTRIB_GENERIC0 + index, size);
+         index = VERT_ATTRIB_GENERIC0 + index;
       }
       else {
          /* pre-defined vertex attrib */
-         GLuint swizzle;
-         GLint index = _slang_input_index(varName, GL_VERTEX_PROGRAM_ARB,
-                                          &swizzle);
+         index = _slang_input_index(varName, GL_VERTEX_PROGRAM_ARB, &swizzle);
          assert(index >= 0);
-         store = _slang_new_ir_storage_swz(PROGRAM_INPUT, index, size, swizzle);
       }
+      store = _slang_new_ir_storage_swz(PROGRAM_INPUT, index, size, swizzle);
       if (dbg) printf("ATTRIB ");
    }
    else if (var->type.qualifier == SLANG_QUAL_FIXEDINPUT) {
