@@ -12,6 +12,7 @@ LIBS = -L$(TOP)/$(LIB_DIR) -l$(GL_LIB) $(APP_LIB_DEPS)
 
 PROGS = \
 	corender \
+	glsync \
 	glthreads \
 	glxdemo \
 	glxgears \
