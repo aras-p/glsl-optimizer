@@ -80,6 +80,7 @@ CompileShaderFile(GLenum shaderType, const char *filename)
 
    FILE *f = fopen(filename, "r");
    if (!f) {
+      fprintf(stderr, "Unable to open shader file %s\n", filename);
       return 0;
    }
 
