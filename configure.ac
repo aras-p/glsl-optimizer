@@ -1033,6 +1033,7 @@ else
 fi
     echo "        DRI driver dir:  $DRI_DRIVER_INSTALL_DIR"
 fi
+echo "        Use XCB:         $enable_xcb"
 
 dnl Libraries
 echo ""
