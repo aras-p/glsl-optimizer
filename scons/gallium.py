@@ -275,6 +275,7 @@ def generate(env):
         cppdefines += ['PIPE_SUBSYSTEM_WINDOWS_DISPLAY']
     if platform == 'wince':
         cppdefines += ['PIPE_SUBSYSTEM_WINDOWS_CE']
+        cppdefines += ['PIPE_SUBSYSTEM_WINDOWS_CE_OGL']
     env.Append(CPPDEFINES = cppdefines)
 
     # C preprocessor includes
