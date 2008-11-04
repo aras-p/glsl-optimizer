@@ -254,6 +254,10 @@ GLXContext AllocateGLXContext( Display *dpy )
      CARD8 opcode;
     __GLXattribute *state;
 
+#ifdef USE_XCB
+    printf("USE_XCB\n");
+#endif
+
     if (!dpy)
         return NULL;
 
@@ -1399,9 +1403,18 @@ PUBLIC const char *glXQueryServerString( Display *dpy, int screen, int name )
 
 void __glXClientInfo (  Display *dpy, int opcode  )
 {
-    xGLXClientInfoReq *req;
-    int size;
     char * ext_str = __glXGetClientGLExtensionString();
+    int size = strlen( ext_str ) + 1;
+
+#ifdef USE_XCB
+   xcb_connection_t *c = XGetXCBConnection(dpy);
+   xcb_glx_client_info(c,
+                       GLX_MAJOR_VERSION,
+                       GLX_MINOR_VERSION,
+                       size,
+                       (const uint8_t *)ext_str);
+#else
+    xGLXClientInfoReq *req;
 
     /* Send the glXClientInfo request */
     LockDisplay(dpy);
@@ -1411,14 +1424,14 @@ void __glXClientInfo (  Display *dpy, int opcode  )
     req->major = GLX_MAJOR_VERSION;
     req->minor = GLX_MINOR_VERSION;
 
-    size = strlen( ext_str ) + 1;
     req->length += (size + 3) >> 2;
     req->numbytes = size;
     Data(dpy, ext_str, size);
 
     UnlockDisplay(dpy);
     SyncHandle();
-    
+#endif /* USE_XCB */
+
     Xfree( ext_str );
 }
 
