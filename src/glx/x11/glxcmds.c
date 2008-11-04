@@ -44,6 +44,12 @@
 #include "xf86dri.h"
 #endif
 
+#if defined(USE_XCB)
+#include <X11/Xlib-xcb.h>
+#include <xcb/xcb.h>
+#include <xcb/glx.h>
+#endif
+
 static const char __glXGLXClientVendorName[] = "SGI";
 static const char __glXGLXClientVersion[] = "1.4";
 
@@ -749,8 +755,10 @@ PUBLIC void glXCopyContext(Display *dpy, GLXContext source,
  */
 static Bool __glXIsDirect(Display *dpy, GLXContextID contextID)
 {
+#if !defined(USE_XCB)
     xGLXIsDirectReq *req;
     xGLXIsDirectReply reply;
+#endif
     CARD8 opcode;
 
     opcode = __glXSetupForCommand(dpy);
@@ -758,6 +766,18 @@ static Bool __glXIsDirect(Display *dpy, GLXContextID contextID)
 	return GL_FALSE;
     }
 
+#ifdef USE_XCB
+   xcb_connection_t* c = XGetXCBConnection(dpy);
+   xcb_glx_is_direct_reply_t* reply =
+      xcb_glx_is_direct_reply(c,
+                              xcb_glx_is_direct(c, contextID),
+                              NULL);
+
+   const Bool is_direct = reply->is_direct ? True : False;
+   free(reply);
+
+   return is_direct;
+#else
     /* Send the glXIsDirect request */
     LockDisplay(dpy);
     GetReq(GLXIsDirect,req);
@@ -769,6 +789,7 @@ static Bool __glXIsDirect(Display *dpy, GLXContextID contextID)
     SyncHandle();
 
     return reply.isDirect;
+#endif /* USE_XCB */
 }
 
 /**
