@@ -15,6 +15,7 @@ SOURCES = \
 	clear-fbo.c \
 	clear-scissor.c \
 	clear-undefined.c \
+	clear-repeat.c \
 	clear.c \
 	dlist-dangling.c \
 	dlist-edgeflag-dangling.c \
@@ -92,8 +93,12 @@ SOURCES = \
 	tri-flat-clip.c \
 	tri-flat.c \
 	tri-fog.c \
+	tri-fp.c \
+	tri-fp-const-imm.c \
+	tri-lit.c \
 	tri-mask-tri.c \
 	tri-query.c \
+	tri-repeat.c \
 	tri-scissor-tri.c \
 	tri-stencil.c \
 	tri-tex.c \
@@ -102,6 +107,8 @@ SOURCES = \
 	tri-unfilled-edgeflag.c \
 	tri-unfilled-clip.c \
 	tri-unfilled-smooth.c \
+	tri-unfilled-tri.c \
+	tri-unfilled-tri-lit.c \
 	tri-unfilled-userclip-stip.c \
 	tri-unfilled-userclip.c \
 	tri-unfilled.c \
