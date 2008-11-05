@@ -45,6 +45,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_chipset.h"
 #include "radeon_macros.h"
 #include "radeon_screen.h"
+#include "radeon_buffer.h"
 #if !RADEON_COMMON
 #include "radeon_context.h"
 #include "radeon_span.h"
@@ -70,6 +71,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 /* Radeon configuration
  */
 #include "xmlpool.h"
+#include "radeon_bo_legacy.h"
 
 #if !RADEON_COMMON	/* R100 */
 PUBLIC const char __driConfigOptions[] =
@@ -960,6 +962,13 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
 
    screen->driScreen = sPriv;
    screen->sarea_priv_offset = dri_priv->sarea_priv_offset;
+   screen->sarea = (drm_radeon_sarea_t *) ((GLubyte *) sPriv->pSAREA +
+					       screen->sarea_priv_offset);
+   screen->bom = radeon_bo_manager_legacy(screen);
+   if (screen->bom == NULL) {
+    free(screen);
+    return NULL;
+   }
    return screen;
 }
 
@@ -972,6 +981,8 @@ radeonDestroyScreen( __DRIscreenPrivate *sPriv )
 
    if (!screen)
       return;
+
+    radeon_bo_manager_legacy_shutdown(screen->bom);
 
    if ( screen->gartTextures.map ) {
       drmUnmap( screen->gartTextures.map, screen->gartTextures.size );
@@ -1002,6 +1013,160 @@ radeonInitDriver( __DRIscreenPrivate *sPriv )
    return GL_TRUE;
 }
 
+#if RADEON_COMMON && defined(RADEON_COMMON_FOR_R300)
+static GLboolean
+radeon_alloc_window_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
+			    GLenum intFormat, GLuint w, GLuint h)
+{
+    rb->Width = w;
+    rb->Height = h;
+    rb->_ActualFormat = intFormat;
+
+    return GL_TRUE;
+}
+
+
+static struct radeon_renderbuffer *
+radeon_create_renderbuffer(GLenum format, __DRIdrawablePrivate *driDrawPriv)
+{
+    struct radeon_renderbuffer *ret;
+
+    ret = CALLOC_STRUCT(radeon_renderbuffer);
+    if (!ret)
+	return NULL;
+
+    _mesa_init_renderbuffer(&ret->base, 0);
+
+    /* XXX format junk */
+    switch (format) {
+	case GL_RGB5:
+	    ret->base._ActualFormat = GL_RGB5;
+	    ret->base._BaseFormat = GL_RGBA;
+	    ret->base.RedBits = 5;
+	    ret->base.GreenBits = 6;
+	    ret->base.BlueBits = 5;
+	    ret->base.DataType = GL_UNSIGNED_BYTE;
+	    break;
+	case GL_RGBA8:
+	    ret->base._ActualFormat = GL_RGBA8;
+	    ret->base._BaseFormat = GL_RGBA;
+	    ret->base.RedBits = 8;
+	    ret->base.GreenBits = 8;
+	    ret->base.BlueBits = 8;
+	    ret->base.AlphaBits = 8;
+	    ret->base.DataType = GL_UNSIGNED_BYTE;
+	    break;
+	case GL_STENCIL_INDEX8_EXT:
+	    ret->base._ActualFormat = GL_STENCIL_INDEX8_EXT;
+	    ret->base._BaseFormat = GL_STENCIL_INDEX;
+	    ret->base.StencilBits = 8;
+	    ret->base.DataType = GL_UNSIGNED_BYTE;
+	    break;
+	case GL_DEPTH_COMPONENT16:
+	    ret->base._ActualFormat = GL_DEPTH_COMPONENT16;
+	    ret->base._BaseFormat = GL_DEPTH_COMPONENT;
+	    ret->base.DepthBits = 16;
+	    ret->base.DataType = GL_UNSIGNED_SHORT;
+	    break;
+	case GL_DEPTH_COMPONENT24:
+	    ret->base._ActualFormat = GL_DEPTH24_STENCIL8_EXT;
+	    ret->base._BaseFormat = GL_DEPTH_COMPONENT;
+	    ret->base.DepthBits = 24;
+	    ret->base.DataType = GL_UNSIGNED_INT;
+	    break;
+	case GL_DEPTH24_STENCIL8_EXT:
+	    ret->base._ActualFormat = GL_DEPTH24_STENCIL8_EXT;
+	    ret->base._BaseFormat = GL_DEPTH_STENCIL_EXT;
+	    ret->base.DepthBits = 24;
+	    ret->base.StencilBits = 8;
+	    ret->base.DataType = GL_UNSIGNED_INT_24_8_EXT;
+	    break;
+	default:
+	    fprintf(stderr, "%s: Unknown format 0x%04x\n", __FUNCTION__, format);
+	    _mesa_delete_renderbuffer(&ret->base);
+	    return NULL;
+    }
+
+    ret->dPriv = driDrawPriv;
+    ret->base.InternalFormat = format;
+
+    ret->base.AllocStorage = radeon_alloc_window_storage;
+
+    radeonSetSpanFunctions(ret);
+
+    return ret;
+}
+
+/**
+ * Create the Mesa framebuffer and renderbuffers for a given window/drawable.
+ *
+ * \todo This function (and its interface) will need to be updated to support
+ * pbuffers.
+ */
+static GLboolean
+radeonCreateBuffer( __DRIscreenPrivate *driScrnPriv,
+                    __DRIdrawablePrivate *driDrawPriv,
+                    const __GLcontextModes *mesaVis,
+                    GLboolean isPixmap )
+{
+   radeonScreenPtr screen = (radeonScreenPtr) driScrnPriv->private;
+
+    const GLboolean swDepth = GL_FALSE;
+    const GLboolean swAlpha = GL_FALSE;
+    const GLboolean swAccum = mesaVis->accumRedBits > 0;
+    const GLboolean swStencil = mesaVis->stencilBits > 0 &&
+	mesaVis->depthBits != 24;
+    GLenum rgbFormat = (mesaVis->redBits == 5 ? GL_RGB5 : GL_RGBA8);
+    GLenum depthFormat = GL_NONE;
+    struct gl_framebuffer *fb = _mesa_create_framebuffer(mesaVis);
+
+    if (mesaVis->depthBits == 16)
+	depthFormat = GL_DEPTH_COMPONENT16;
+    else if (mesaVis->depthBits == 24)
+	depthFormat = GL_DEPTH_COMPONENT24;
+
+    /* front color renderbuffer */
+    {
+	struct radeon_renderbuffer *front =
+	    radeon_create_renderbuffer(rgbFormat, driDrawPriv);
+	_mesa_add_renderbuffer(fb, BUFFER_FRONT_LEFT, &front->base);
+    }
+
+    /* back color renderbuffer */
+    if (mesaVis->doubleBufferMode) {
+	struct radeon_renderbuffer *back =
+	    radeon_create_renderbuffer(rgbFormat, driDrawPriv);
+	_mesa_add_renderbuffer(fb, BUFFER_BACK_LEFT, &back->base);
+    }
+
+    /* depth renderbuffer */
+    if (depthFormat != GL_NONE) {
+	struct radeon_renderbuffer *depth =
+	    radeon_create_renderbuffer(depthFormat, driDrawPriv);
+	_mesa_add_renderbuffer(fb, BUFFER_DEPTH, &depth->base);
+	depth->depthHasSurface = screen->depthHasSurface;
+    }
+
+    /* stencil renderbuffer */
+    if (mesaVis->stencilBits > 0 && !swStencil) {
+	struct radeon_renderbuffer *stencil =
+	    radeon_create_renderbuffer(GL_STENCIL_INDEX8_EXT, driDrawPriv);
+	_mesa_add_renderbuffer(fb, BUFFER_STENCIL, &stencil->base);
+	stencil->depthHasSurface = screen->depthHasSurface;
+    }
+
+    _mesa_add_soft_renderbuffers(fb,
+	    GL_FALSE, /* color */
+	    swDepth,
+	    swStencil,
+	    swAccum,
+	    swAlpha,
+	    GL_FALSE /* aux */);
+    driDrawPriv->driverPrivate = (void *) fb;
+
+    return (driDrawPriv->driverPrivate != NULL);
+}
+#else
 
 /**
  * Create the Mesa framebuffer and renderbuffers for a given window/drawable.
@@ -1101,7 +1266,7 @@ radeonCreateBuffer( __DRIscreenPrivate *driScrnPriv,
       return (driDrawPriv->driverPrivate != NULL);
    }
 }
-
+#endif
 
 static void
 radeonDestroyBuffer(__DRIdrawablePrivate *driDrawPriv)
@@ -1197,11 +1362,11 @@ radeonInitScreen(__DRIscreenPrivate *psp)
    if (!radeonInitDriver(psp))
        return NULL;
 
+   /* for now fill in all modes */
    return radeonFillInModes( psp,
 			     dri_priv->bpp,
 			     (dri_priv->bpp == 16) ? 16 : 24,
-			     (dri_priv->bpp == 16) ? 0  : 8,
-			     (dri_priv->backOffset != dri_priv->depthOffset) );
+			     (dri_priv->bpp == 16) ? 0  : 8, 1);
 }
 
 

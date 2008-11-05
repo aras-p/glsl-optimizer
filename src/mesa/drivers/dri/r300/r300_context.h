@@ -42,12 +42,11 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_drm.h"
 #include "dri_util.h"
 #include "texmem.h"
+#include "radeon_bo.h"
 
 #include "main/macros.h"
 #include "main/mtypes.h"
 #include "main/colormac.h"
-
-#define USER_BUFFERS
 
 struct r300_context;
 typedef struct r300_context r300ContextRec;
@@ -122,68 +121,50 @@ static INLINE uint32_t r300PackFloat24(float f)
 
 /************ DMA BUFFERS **************/
 
-/* Need refcounting on dma buffers:
- */
-struct r300_dma_buffer {
-	int refcount;		/**< the number of retained regions in buf */
-	drmBufPtr buf;
-	int id;
-};
-#undef GET_START
-#ifdef USER_BUFFERS
-#define GET_START(rvb) (r300GartOffsetFromVirtual(rmesa, (rvb)->address+(rvb)->start))
-#else
-#define GET_START(rvb) (rmesa->radeon.radeonScreen->gart_buffer_offset +		\
-			(rvb)->address - rmesa->dma.buf0_address +	\
-			(rvb)->start)
-#endif
-/* A retained region, eg vertices for indexed vertices.
- */
-struct r300_dma_region {
-	struct r300_dma_buffer *buf;
-	char *address;		/* == buf->address */
-	int start, end, ptr;	/* offsets from start of buf */
 
-	int aos_offset;		/* address in GART memory */
-	int aos_stride;		/* distance between elements, in dwords */
-	int aos_size;		/* number of components (1-4) */
-};
-
-struct r300_dma {
-	/* Active dma region.  Allocations for vertices and retained
-	 * regions come from here.  Also used for emitting random vertices,
-	 * these may be flushed by calling flush_current();
-	 */
-	struct r300_dma_region current;
-
-	void (*flush) (r300ContextPtr);
-
-	char *buf0_address;	/* start of buf[0], for index calcs */
-
-	/* Number of "in-flight" DMA buffers, i.e. the number of buffers
-	 * for which a DISCARD command is currently queued in the command buffer.
-	 */
-	GLuint nr_released_bufs;
-};
-
-       /* Texture related */
-
+/* Texture related */
 typedef struct r300_tex_obj r300TexObj, *r300TexObjPtr;
+typedef struct _r300_texture_image r300_texture_image;
+
+
+struct _r300_texture_image {
+	struct gl_texture_image base;
+
+	/**
+	 * If mt != 0, the image is stored in hardware format in the
+	 * given mipmap tree. In this case, base.Data may point into the
+	 * mapping of the buffer object that contains the mipmap tree.
+	 *
+	 * If mt == 0, the image is stored in normal memory pointed to
+	 * by base.Data.
+	 */
+	struct _r300_mipmap_tree *mt;
+
+	int mtlevel; /** if mt != 0, this is the image's level in the mipmap tree */
+	int mtface; /** if mt != 0, this is the image's face in the mipmap tree */
+};
+
+static INLINE r300_texture_image *get_r300_texture_image(struct gl_texture_image *image)
+{
+	return (r300_texture_image*)image;
+}
+
 
 /* Texture object in locally shared texture space.
  */
 struct r300_tex_obj {
-	driTextureObject base;
+	struct gl_texture_object base;
+	struct _r300_mipmap_tree *mt;
 
-	GLuint bufAddr;		/* Offset to start of locally
-				   shared texture block */
-
-	drm_radeon_tex_image_t image[6][RADEON_MAX_TEXTURE_LEVELS];
-	/* Six, for the cube faces */
+	/**
+	 * This is true if we've verified that the mipmap tree above is complete
+	 * and so on.
+	 */
+	GLboolean validated;
 
 	GLboolean image_override;	/* Image overridden by GLX_EXT_tfp */
+	GLuint override_offset;
 
-	GLuint pitch;		/* this isn't sent to hardware just used in calculations */
 	/* hardware register values */
 	/* Note that R200 has 8 registers per texture and R300 only 7 */
 	GLuint filter;
@@ -191,30 +172,16 @@ struct r300_tex_obj {
 	GLuint pitch_reg;
 	GLuint size;		/* npot only */
 	GLuint format;
-	GLuint offset;		/* Image location in the card's address space.
-				   All cube faces follow. */
-	GLuint unknown4;
-	GLuint unknown5;
-	/* end hardware registers */
-
-	/* registers computed by r200 code - keep them here to
-	   compare against what is actually written.
-
-	   to be removed later.. */
 	GLuint pp_border_color;
-	GLuint pp_cubic_faces;	/* cube face 1,2,3,4 log2 sizes */
-	GLuint format_x;
-
-	GLboolean border_fallback;
+	/* end hardware registers */
 
 	GLuint tile_bits;	/* hw texture tile bits used on this texture */
 };
 
-struct r300_texture_env_state {
-	r300TexObjPtr texobj;
-	GLenum format;
-	GLenum envMode;
-};
+static INLINE r300TexObj* r300_tex_obj(struct gl_texture_object *texObj)
+{
+	return (r300TexObj*)texObj;
+}
 
 /* The blit width for texture uploads
  */
@@ -222,7 +189,6 @@ struct r300_texture_env_state {
 #define R300_MAX_TEXTURE_UNITS 8
 
 struct r300_texture_state {
-	struct r300_texture_env_state unit[R300_MAX_TEXTURE_UNITS];
 	int tc_count;		/* number of incoming texture coordinates from VAP */
 };
 
@@ -242,6 +208,7 @@ struct r300_state_atom {
 	GLboolean dirty;
 
 	int (*check) (r300ContextPtr, struct r300_state_atom * atom);
+	void (*emit) (r300ContextPtr);
 };
 
 #define R300_VPT_CMD_0		0
@@ -549,6 +516,8 @@ struct r300_hw_state {
 		struct r300_state_atom border_color;
 	} tex;
 	struct r300_state_atom txe;	/* tex enable (4104) */
+
+	r300TexObj *textures[R300_MAX_TEXTURE_UNITS];
 };
 
 /**
@@ -559,10 +528,10 @@ struct r300_hw_state {
  * otherwise.
  */
 struct r300_cmdbuf {
-	int size;		/* DWORDs allocated for buffer */
-	uint32_t *cmd_buf;
-	int count_used;		/* DWORDs filled so far */
-	int count_reemit;	/* size of re-emission batch */
+    struct radeon_cs_manager    *csm;
+    struct radeon_cs            *cs;
+	int size; /** # of dwords total */
+	unsigned int flushing:1; /** whether we're currently in FlushCmdBufLocked */
 };
 
 /**
@@ -811,18 +780,25 @@ struct r500_fragment_program {
 #define REG_COLOR0	1
 #define REG_TEX0	2
 
+struct r300_aos {
+	struct radeon_bo *bo; /** Buffer object where vertex data is stored */
+	int offset; /** Offset into buffer object, in bytes */
+	int components; /** Number of components per vertex */
+	int stride; /** Stride in dwords (may be 0 for repeating) */
+	int count; /** Number of vertices */
+};
+
 struct r300_state {
 	struct r300_depthbuffer_state depth;
 	struct r300_texture_state texture;
 	int sw_tcl_inputs[VERT_ATTRIB_MAX];
 	struct r300_vertex_shader_state vertex_shader;
-	struct r300_dma_region aos[R300_MAX_AOS_ARRAYS];
+	struct r300_aos aos[R300_MAX_AOS_ARRAYS];
 	int aos_count;
 
-	GLuint *Elts;
-	struct r300_dma_region elt_dma;
+	struct radeon_bo *elt_dma_bo; /** Buffer object that contains element indices */
+	int elt_dma_offset; /** Offset into this buffer object, in bytes */
 
-	struct r300_dma_region swtcl_dma;
 	DECLARE_RENDERINPUTS(render_inputs_bitset);	/* actual render inputs that R300 was configured for.
 							   They are the same as tnl->render_inputs for fixed pipeline */
 
@@ -881,12 +857,8 @@ struct r300_swtcl_info {
     */
    GLuint specoffset;
 
-   /**
-    * Should Mesa project vertex data or will the hardware do it?
-    */
-   GLboolean needproj;
-
-   struct r300_dma_region indexed_verts;
+   struct radeon_bo *bo;
+   void (*flush) (r300ContextPtr);
 };
 
 
@@ -904,25 +876,10 @@ struct r300_context {
 
 	/* Vertex buffers
 	 */
-	struct r300_dma dma;
-	GLboolean save_on_next_unlock;
 	GLuint NewGLState;
 
-	/* Texture object bookkeeping
-	 */
-	unsigned nr_heaps;
-	driTexHeap *texture_heaps[RADEON_NR_TEX_HEAPS];
-	driTextureObject swapped;
 	int texture_depth;
 	float initialMaxAnisotropy;
-
-	/* Clientdata textures;
-	 */
-	GLuint prefer_gart_client_texturing;
-
-#ifdef USER_BUFFERS
-	struct r300_memory_manager *rmm;
-#endif
 
 	GLvector4f dummy_attrib[_TNL_ATTRIB_MAX];
 	GLvector4f *temp_attrib[_TNL_ATTRIB_MAX];

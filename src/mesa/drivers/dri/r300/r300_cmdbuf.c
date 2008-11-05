@@ -44,6 +44,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "drm.h"
 #include "radeon_drm.h"
 
+#include "radeon_buffer.h"
 #include "radeon_ioctl.h"
 #include "r300_context.h"
 #include "r300_ioctl.h"
@@ -51,10 +52,17 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r300_reg.h"
 #include "r300_cmdbuf.h"
 #include "r300_emit.h"
+#include "r300_mipmap_tree.h"
 #include "r300_state.h"
+#include "radeon_cs_legacy.h"
 
 // Set this to 1 for extremely verbose debugging of command buffers
 #define DEBUG_CMDBUF		0
+
+/** # of dwords reserved for additional instructions that may need to be written
+ * during flushing.
+ */
+#define SPACE_FOR_FLUSHING	4
 
 /**
  * Send the current command buffer via ioctl to the hardware.
@@ -62,51 +70,15 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 int r300FlushCmdBufLocked(r300ContextPtr r300, const char *caller)
 {
 	int ret;
-	int i;
-	drm_radeon_cmd_buffer_t cmd;
-	int start;
 
-	if (r300->radeon.lost_context) {
-		start = 0;
-		r300->radeon.lost_context = GL_FALSE;
-	} else
-		start = r300->cmdbuf.count_reemit;
-
-	if (RADEON_DEBUG & DEBUG_IOCTL) {
-		fprintf(stderr, "%s from %s - %i cliprects\n",
-			__FUNCTION__, caller, r300->radeon.numClipRects);
-
-		if (DEBUG_CMDBUF && RADEON_DEBUG & DEBUG_VERBOSE)
-			for (i = start; i < r300->cmdbuf.count_used; ++i)
-				fprintf(stderr, "%d: %08x\n", i,
-					r300->cmdbuf.cmd_buf[i]);
+	if (r300->cmdbuf.flushing) {
+		fprintf(stderr, "Recursive call into r300FlushCmdBufLocked!\n");
+		exit(-1);
 	}
-
-	cmd.buf = (char *)(r300->cmdbuf.cmd_buf + start);
-	cmd.bufsz = (r300->cmdbuf.count_used - start) * 4;
-
-	if (r300->radeon.state.scissor.enabled) {
-		cmd.nbox = r300->radeon.state.scissor.numClipRects;
-		cmd.boxes =
-		    (drm_clip_rect_t *) r300->radeon.state.scissor.pClipRects;
-	} else {
-		cmd.nbox = r300->radeon.numClipRects;
-		cmd.boxes = (drm_clip_rect_t *) r300->radeon.pClipRects;
-	}
-
-	ret = drmCommandWrite(r300->radeon.dri.fd,
-			      DRM_RADEON_CMDBUF, &cmd, sizeof(cmd));
-
-	if (RADEON_DEBUG & DEBUG_SYNC) {
-		fprintf(stderr, "Syncing in %s (from %s)\n\n",
-			__FUNCTION__, caller);
-		radeonWaitForIdleLocked(&r300->radeon);
-	}
-
-	r300->dma.nr_released_bufs = 0;
-	r300->cmdbuf.count_used = 0;
-	r300->cmdbuf.count_reemit = 0;
-
+	r300->cmdbuf.flushing = 1;
+    ret = radeon_cs_emit(r300->cmdbuf.cs);
+    radeon_cs_erase(r300->cmdbuf.cs);
+	r300->cmdbuf.flushing = 0;
 	return ret;
 }
 
@@ -115,9 +87,7 @@ int r300FlushCmdBuf(r300ContextPtr r300, const char *caller)
 	int ret;
 
 	LOCK_HARDWARE(&r300->radeon);
-
 	ret = r300FlushCmdBufLocked(r300, caller);
-
 	UNLOCK_HARDWARE(&r300->radeon);
 
 	if (ret) {
@@ -128,13 +98,44 @@ int r300FlushCmdBuf(r300ContextPtr r300, const char *caller)
 	return ret;
 }
 
-static void r300PrintStateAtom(r300ContextPtr r300, struct r300_state_atom *state)
+/**
+ * Make sure that enough space is available in the command buffer
+ * by flushing if necessary.
+ *
+ * \param dwords The number of dwords we need to be free on the command buffer
+ */
+void r300EnsureCmdBufSpace(r300ContextPtr r300, int dwords, const char *caller)
+{
+	assert(dwords < r300->cmdbuf.size);
+
+	if ((r300->cmdbuf.cs->cdw + dwords + 128) > r300->cmdbuf.size ||
+        radeon_cs_need_flush(r300->cmdbuf.cs)) {
+		r300FlushCmdBuf(r300, caller);
+    }
+}
+
+void r300BeginBatch(r300ContextPtr r300, int n,
+		    int dostate,
+                    const char *file,
+                    const char *function,
+                    int line)
+{
+	r300EnsureCmdBufSpace(r300, n, function);
+	if (!r300->cmdbuf.cs->cdw && dostate) {
+		if (RADEON_DEBUG & DEBUG_IOCTL)
+			fprintf(stderr, "Reemit state after flush (from %s)\n", function);
+		r300EmitState(r300);
+	}
+    radeon_cs_begin(r300->cmdbuf.cs, n, file, function, line);
+}
+
+static void r300PrintStateAtom(r300ContextPtr r300,
+                               struct r300_state_atom *state)
 {
 	int i;
 	int dwords = (*state->check) (r300, state);
 
-	fprintf(stderr, "  emit %s %d/%d\n", state->name, dwords,
-		state->cmd_size);
+	fprintf(stderr, "  emit %s %d/%d\n", state->name, dwords, state->cmd_size);
 
 	if (RADEON_DEBUG & DEBUG_VERBOSE) {
 		for (i = 0; i < dwords; i++) {
@@ -152,33 +153,18 @@ static void r300PrintStateAtom(r300ContextPtr r300, struct r300_state_atom *stat
  */
 static INLINE void r300EmitAtoms(r300ContextPtr r300, GLboolean dirty)
 {
+	BATCH_LOCALS(r300);
 	struct r300_state_atom *atom;
-	uint32_t *dest;
 	int dwords;
 
-	dest = r300->cmdbuf.cmd_buf + r300->cmdbuf.count_used;
-
-	/* Emit WAIT */
-	*dest = cmdwait(R300_WAIT_3D | R300_WAIT_3D_CLEAN);
-	dest++;
-	r300->cmdbuf.count_used++;
-
-	/* Emit cache flush */
-	*dest = cmdpacket0(R300_TX_INVALTAGS, 1);
-	dest++;
-	r300->cmdbuf.count_used++;
-
-	*dest = R300_TX_FLUSH;
-	dest++;
-	r300->cmdbuf.count_used++;
-
-	/* Emit END3D */
-	*dest = cmdpacify();
-	dest++;
-	r300->cmdbuf.count_used++;
+	BEGIN_BATCH_NO_AUTOSTATE(4);
+	OUT_BATCH(cmdwait(R300_WAIT_3D | R300_WAIT_3D_CLEAN));
+	OUT_BATCH(cmdpacket0(R300_TX_INVALTAGS, 1));
+	OUT_BATCH(R300_TX_FLUSH);
+	OUT_BATCH(cmdpacify());
+	END_BATCH();
 
 	/* Emit actual atoms */
-
 	foreach(atom, &r300->hw.atomlist) {
 		if ((atom->dirty || r300->hw.all_dirty) == dirty) {
 			dwords = (*atom->check) (r300, atom);
@@ -186,9 +172,13 @@ static INLINE void r300EmitAtoms(r300ContextPtr r300, GLboolean dirty)
 				if (DEBUG_CMDBUF && RADEON_DEBUG & DEBUG_STATE) {
 					r300PrintStateAtom(r300, atom);
 				}
-				memcpy(dest, atom->cmd, dwords * 4);
-				dest += dwords;
-				r300->cmdbuf.count_used += dwords;
+				if (atom->emit) {
+					(*atom->emit)(r300);
+				} else {
+					BEGIN_BATCH_NO_AUTOSTATE(dwords);
+					OUT_BATCH_TABLE(atom->cmd, dwords);
+					END_BATCH();
+				}
 				atom->dirty = GL_FALSE;
 			} else {
 				if (DEBUG_CMDBUF && RADEON_DEBUG & DEBUG_STATE) {
@@ -198,6 +188,8 @@ static INLINE void r300EmitAtoms(r300ContextPtr r300, GLboolean dirty)
 			}
 		}
 	}
+
+	COMMIT_BATCH();
 }
 
 /**
@@ -211,31 +203,26 @@ void r300EmitState(r300ContextPtr r300)
 	if (RADEON_DEBUG & (DEBUG_STATE | DEBUG_PRIMS))
 		fprintf(stderr, "%s\n", __FUNCTION__);
 
-	if (r300->cmdbuf.count_used && !r300->hw.is_dirty
+	if (r300->cmdbuf.cs->cdw && !r300->hw.is_dirty
 	    && !r300->hw.all_dirty)
 		return;
 
 	/* To avoid going across the entire set of states multiple times, just check
-	 * for enough space for the case of emitting all state, and inline the
-	 * r300AllocCmdBuf code here without all the checks.
+	 * for enough space for the case of emitting all state.
 	 */
 	r300EnsureCmdBufSpace(r300, r300->hw.max_state_size, __FUNCTION__);
 
-	if (!r300->cmdbuf.count_used) {
+	if (!r300->cmdbuf.cs->cdw) {
 		if (RADEON_DEBUG & DEBUG_STATE)
 			fprintf(stderr, "Begin reemit state\n");
 
 		r300EmitAtoms(r300, GL_FALSE);
-		r300->cmdbuf.count_reemit = r300->cmdbuf.count_used;
 	}
 
 	if (RADEON_DEBUG & DEBUG_STATE)
 		fprintf(stderr, "Begin dirty state\n");
 
 	r300EmitAtoms(r300, GL_TRUE);
-
-	assert(r300->cmdbuf.count_used < r300->cmdbuf.size);
-
 	r300->hw.is_dirty = GL_FALSE;
 	r300->hw.all_dirty = GL_FALSE;
 }
@@ -243,6 +230,84 @@ void r300EmitState(r300ContextPtr r300)
 #define packet0_count(ptr) (((drm_r300_cmd_header_t*)(ptr))->packet0.count)
 #define vpu_count(ptr) (((drm_r300_cmd_header_t*)(ptr))->vpu.count)
 #define r500fp_count(ptr) (((drm_r300_cmd_header_t*)(ptr))->r500fp.count)
+
+static void emit_tex_offsets(r300ContextPtr r300)
+{
+	BATCH_LOCALS(r300);
+	int numtmus = packet0_count(r300->hw.tex.offset.cmd);
+
+	if (numtmus) {
+		int i;
+
+		for(i = 0; i < numtmus; ++i) {
+		    BEGIN_BATCH(2);
+    		OUT_BATCH_REGSEQ(R300_TX_OFFSET_0 + (i * 4), 1);
+			r300TexObj *t = r300->hw.textures[i];
+			if (t && !t->image_override) {
+				OUT_BATCH_RELOC(t->tile_bits, t->mt->bo, 0, 0);
+			} else if (!t) {
+				OUT_BATCH(r300->radeon.radeonScreen->texOffset[0]);
+			} else {
+				OUT_BATCH(t->override_offset);
+			}
+            END_BATCH();
+		}
+	}
+}
+
+static void emit_cb_offset(r300ContextPtr r300)
+{
+	BATCH_LOCALS(r300);
+	struct radeon_renderbuffer *rrb;
+	uint32_t cbpitch;
+
+	rrb = r300->radeon.state.color.rrb;
+	if (!rrb) {
+		fprintf(stderr, "no rrb\n");
+		return;
+	}
+
+	cbpitch = rrb->pitch;
+	if (rrb->cpp == 4)
+		cbpitch |= R300_COLOR_FORMAT_ARGB8888;
+	else
+		cbpitch |= R300_COLOR_FORMAT_RGB565;
+
+	if (rrb->bo->flags & RADEON_BO_FLAGS_MACRO_TILE)
+		cbpitch |= R300_COLOR_TILE_ENABLE;
+
+	BEGIN_BATCH(4);
+	OUT_BATCH_REGSEQ(R300_RB3D_COLOROFFSET0, 1);
+	OUT_BATCH_RELOC(0, rrb->bo, 0, 0);
+	OUT_BATCH_REGSEQ(R300_RB3D_COLORPITCH0, 1);
+	OUT_BATCH(cbpitch);
+	END_BATCH();
+}
+
+static void emit_zb_offset(r300ContextPtr r300)
+{
+	BATCH_LOCALS(r300);
+	struct radeon_renderbuffer *rrb;
+	uint32_t zbpitch;
+
+	rrb = r300->radeon.state.depth_buffer;
+	if (!rrb)
+		return;
+
+	zbpitch = rrb->pitch;
+    if (rrb->bo->flags & RADEON_BO_FLAGS_MACRO_TILE) {
+        zbpitch |= R300_DEPTHMACROTILE_ENABLE;
+    }
+    if (r300->radeon.glCtx->Visual.depthBits == 24) {
+        zbpitch |= R300_DEPTHMICROTILE_TILED;
+    }
+
+	BEGIN_BATCH(4);
+	OUT_BATCH_REGSEQ(R300_ZB_DEPTHOFFSET, 1);
+	OUT_BATCH_RELOC(0, rrb->bo, 0, 0);
+	OUT_BATCH_REGVAL(R300_ZB_DEPTHPITCH, zbpitch);
+	END_BATCH();
+}
 
 static int check_always(r300ContextPtr r300, struct r300_state_atom *atom)
 {
@@ -480,8 +545,7 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	ALLOC_STATE(rop, always, 2, 0);
 	r300->hw.rop.cmd[0] = cmdpacket0(R300_RB3D_ROPCNTL, 1);
 	ALLOC_STATE(cb, always, R300_CB_CMDSIZE, 0);
-	r300->hw.cb.cmd[R300_CB_CMD_0] = cmdpacket0(R300_RB3D_COLOROFFSET0, 1);
-	r300->hw.cb.cmd[R300_CB_CMD_1] = cmdpacket0(R300_RB3D_COLORPITCH0, 1);
+	r300->hw.cb.emit = &emit_cb_offset;
 	ALLOC_STATE(rb3d_dither_ctl, always, 10, 0);
 	r300->hw.rb3d_dither_ctl.cmd[0] = cmdpacket0(R300_RB3D_DITHER_CTL, 9);
 	ALLOC_STATE(rb3d_aaresolve_ctl, always, 2, 0);
@@ -495,7 +559,7 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	r300->hw.zstencil_format.cmd[0] =
 	    cmdpacket0(R300_ZB_FORMAT, 4);
 	ALLOC_STATE(zb, always, R300_ZB_CMDSIZE, 0);
-	r300->hw.zb.cmd[R300_ZB_CMD_0] = cmdpacket0(R300_ZB_DEPTHOFFSET, 2);
+	r300->hw.zb.emit = emit_zb_offset;
 	ALLOC_STATE(zb_depthclearvalue, always, 2, 0);
 	r300->hw.zb_depthclearvalue.cmd[0] = cmdpacket0(R300_ZB_DEPTHCLEARVALUE, 1);
 	ALLOC_STATE(unk4F30, always, 3, 0);
@@ -562,9 +626,10 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	ALLOC_STATE(tex.pitch, variable, mtu + 1, 0);
 	r300->hw.tex.pitch.cmd[R300_TEX_CMD_0] = cmdpacket0(R300_TX_FORMAT2_0, 0);
 
-	ALLOC_STATE(tex.offset, variable, mtu + 1, 0);
+	ALLOC_STATE(tex.offset, variable, 1, 0);
 	r300->hw.tex.offset.cmd[R300_TEX_CMD_0] =
 	    cmdpacket0(R300_TX_OFFSET_0, 0);
+	r300->hw.tex.offset.emit = &emit_tex_offsets;
 
 	ALLOC_STATE(tex.chroma_key, variable, mtu + 1, 0);
 	r300->hw.tex.chroma_key.cmd[R300_TEX_CMD_0] =
@@ -587,6 +652,7 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	if (size > 64 * 256)
 		size = 64 * 256;
 
+    size = 64 * 1024 / 4;
 	if (RADEON_DEBUG & (DEBUG_IOCTL | DEBUG_DMA)) {
 		fprintf(stderr, "sizeof(drm_r300_cmd_header_t)=%zd\n",
 			sizeof(drm_r300_cmd_header_t));
@@ -597,10 +663,14 @@ void r300InitCmdBuf(r300ContextPtr r300)
 			size * 4, r300->hw.max_state_size * 4);
 	}
 
+    r300->cmdbuf.csm = radeon_cs_manager_legacy(&r300->radeon);
+    if (r300->cmdbuf.csm == NULL) {
+        /* FIXME: fatal error */
+        return;
+    }
+    r300->cmdbuf.cs = radeon_cs_create(r300->cmdbuf.csm, size);
+    assert(r300->cmdbuf.cs != NULL);
 	r300->cmdbuf.size = size;
-	r300->cmdbuf.cmd_buf = (uint32_t *) CALLOC(size * 4);
-	r300->cmdbuf.count_used = 0;
-	r300->cmdbuf.count_reemit = 0;
 }
 
 /**
@@ -610,66 +680,8 @@ void r300DestroyCmdBuf(r300ContextPtr r300)
 {
 	struct r300_state_atom *atom;
 
-	FREE(r300->cmdbuf.cmd_buf);
-
+    radeon_cs_destroy(r300->cmdbuf.cs);
 	foreach(atom, &r300->hw.atomlist) {
 		FREE(atom->cmd);
 	}
-}
-
-void r300EmitBlit(r300ContextPtr rmesa,
-		  GLuint color_fmt,
-		  GLuint src_pitch,
-		  GLuint src_offset,
-		  GLuint dst_pitch,
-		  GLuint dst_offset,
-		  GLint srcx, GLint srcy,
-		  GLint dstx, GLint dsty, GLuint w, GLuint h)
-{
-	drm_r300_cmd_header_t *cmd;
-
-	if (RADEON_DEBUG & DEBUG_IOCTL)
-		fprintf(stderr,
-			"%s src %x/%x %d,%d dst: %x/%x %d,%d sz: %dx%d\n",
-			__FUNCTION__, src_pitch, src_offset, srcx, srcy,
-			dst_pitch, dst_offset, dstx, dsty, w, h);
-
-	assert((src_pitch & 63) == 0);
-	assert((dst_pitch & 63) == 0);
-	assert((src_offset & 1023) == 0);
-	assert((dst_offset & 1023) == 0);
-	assert(w < (1 << 16));
-	assert(h < (1 << 16));
-
-	cmd = (drm_r300_cmd_header_t *) r300AllocCmdBuf(rmesa, 8, __FUNCTION__);
-
-	cmd[0].header.cmd_type = R300_CMD_PACKET3;
-	cmd[0].header.pad0 = R300_CMD_PACKET3_RAW;
-	cmd[1].u = R300_CP_CMD_BITBLT_MULTI | (5 << 16);
-	cmd[2].u = (RADEON_GMC_SRC_PITCH_OFFSET_CNTL |
-		    RADEON_GMC_DST_PITCH_OFFSET_CNTL |
-		    RADEON_GMC_BRUSH_NONE |
-		    (color_fmt << 8) |
-		    RADEON_GMC_SRC_DATATYPE_COLOR |
-		    RADEON_ROP3_S |
-		    RADEON_DP_SRC_SOURCE_MEMORY |
-		    RADEON_GMC_CLR_CMP_CNTL_DIS | RADEON_GMC_WR_MSK_DIS);
-
-	cmd[3].u = ((src_pitch / 64) << 22) | (src_offset >> 10);
-	cmd[4].u = ((dst_pitch / 64) << 22) | (dst_offset >> 10);
-	cmd[5].u = (srcx << 16) | srcy;
-	cmd[6].u = (dstx << 16) | dsty;	/* dst */
-	cmd[7].u = (w << 16) | h;
-}
-
-void r300EmitWait(r300ContextPtr rmesa, GLuint flags)
-{
-	drm_r300_cmd_header_t *cmd;
-
-	assert(!(flags & ~(R300_WAIT_2D | R300_WAIT_3D)));
-
-	cmd = (drm_r300_cmd_header_t *) r300AllocCmdBuf(rmesa, 1, __FUNCTION__);
-	cmd[0].u = 0;
-	cmd[0].wait.cmd_type = R300_CMD_WAIT;
-	cmd[0].wait.flags = flags;
 }

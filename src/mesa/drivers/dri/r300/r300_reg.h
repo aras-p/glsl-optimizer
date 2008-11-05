@@ -1525,6 +1525,13 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #	define R500_SEL_FILTER4_TC3		 (3 << 18)
 
 #define R300_TX_OFFSET_0                    0x4540
+#define R300_TX_OFFSET_1                    0x4544
+#define R300_TX_OFFSET_2                    0x4548
+#define R300_TX_OFFSET_3                    0x454C
+#define R300_TX_OFFSET_4                    0x4550
+#define R300_TX_OFFSET_5                    0x4554
+#define R300_TX_OFFSET_6                    0x4558
+#define R300_TX_OFFSET_7                    0x455C
 	/* BEGIN: Guess from R200 */
 #       define R300_TXO_ENDIAN_NO_SWAP           (0 << 0)
 #       define R300_TXO_ENDIAN_BYTE_SWAP         (1 << 0)

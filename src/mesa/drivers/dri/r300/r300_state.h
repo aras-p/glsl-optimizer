@@ -39,8 +39,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #define R300_NEWPRIM( rmesa )			\
   do {						\
-    if ( rmesa->dma.flush )			\
-      rmesa->dma.flush( rmesa );		\
   } while (0)
 
 #define R300_STATECHANGE(r300, atom) \
@@ -57,13 +55,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
    TODO: This has not been implemented yet
  */
 #define R300_FIREVERTICES( r300 )			\
-do {							\
-    \
-   if ( (r300)->cmdbuf.count_used || (r300)->dma.flush ) {	\
-      r300Flush( (r300)->radeon.glCtx );		\
-   }							\
-    \
-} while (0)
+    do {							\
+        r300Flush( (r300)->radeon.glCtx );		\
+    } while (0)
 
 // r300_state.c
 extern int future_hw_tcl_on;

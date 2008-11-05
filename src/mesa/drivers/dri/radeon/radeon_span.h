@@ -44,7 +44,13 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "drirenderbuffer.h"
 
-extern void radeonInitSpanFuncs(GLcontext * ctx);
-extern void radeonSetSpanFunctions(driRenderbuffer * rb, const GLvisual * vis);
+#include "radeon_buffer.h"
 
+extern void radeonInitSpanFuncs(GLcontext * ctx);
+
+#if COMPILE_R300
+extern void radeonSetSpanFunctions(struct radeon_renderbuffer *rrb);
+#else
+extern void radeonSetSpanFunctions(driRenderbuffer * rb, const GLvisual * vis);
+#endif
 #endif

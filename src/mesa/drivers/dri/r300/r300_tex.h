@@ -41,12 +41,7 @@ extern void r300SetTexOffset(__DRIcontext *pDRICtx, GLint texname,
 			     unsigned long long offset, GLint depth,
 			     GLuint pitch);
 
-extern void r300UpdateTextureState(GLcontext * ctx);
-
-extern int r300UploadTexImages(r300ContextPtr rmesa, r300TexObjPtr t,
-			       GLuint face);
-
-extern void r300DestroyTexObj(r300ContextPtr rmesa, r300TexObjPtr t);
+extern void r300ValidateTextures(GLcontext * ctx);
 
 extern void r300InitTextureFuncs(struct dd_function_table *functions);
 

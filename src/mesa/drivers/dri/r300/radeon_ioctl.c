@@ -42,6 +42,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "swrast/swrast.h"
 #include "r300_context.h"
 #include "radeon_ioctl.h"
+#include "radeon_buffer.h"
 #include "r300_ioctl.h"
 #include "r300_state.h"
 #include "radeon_reg.h"
@@ -171,7 +172,7 @@ void radeonCopyBuffer(__DRIdrawablePrivate * dPriv,
 	assert(dPriv->driContextPriv->driverPrivate);
 
 	radeon = (radeonContextPtr) dPriv->driContextPriv->driverPrivate;
-
+	
 	if (RADEON_DEBUG & DEBUG_IOCTL) {
 		fprintf(stderr, "\n%s( %p )\n\n", __FUNCTION__,
 			(void *)radeon->glCtx);
@@ -261,12 +262,16 @@ void radeonPageFlip(__DRIdrawablePrivate * dPriv)
 	GLint ret;
 	GLboolean missed_target;
 	__DRIscreenPrivate *psp = dPriv->driScreenPriv;
+	GLframebuffer *fb = dPriv->driverPrivate;
+	struct radeon_renderbuffer *rrb;
 
 	assert(dPriv);
 	assert(dPriv->driContextPriv);
 	assert(dPriv->driContextPriv->driverPrivate);
 
 	radeon = (radeonContextPtr) dPriv->driContextPriv->driverPrivate;
+
+	rrb = (void *)fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer;
 
 	if (RADEON_DEBUG & DEBUG_IOCTL) {
 		fprintf(stderr, "%s: pfCurrentPage: %d\n", __FUNCTION__,
@@ -315,32 +320,10 @@ void radeonPageFlip(__DRIdrawablePrivate * dPriv)
 	radeon->swap_count++;
 	(void)(*psp->systemTime->getUST) (&radeon->swap_ust);
 
-        driFlipRenderbuffers(radeon->glCtx->WinSysDrawBuffer, 
+        driFlipRenderbuffers(radeon->glCtx->WinSysDrawBuffer,
                              radeon->sarea->pfCurrentPage);
 
-	if (radeon->sarea->pfCurrentPage == 1) {
-		radeon->state.color.drawOffset = radeon->radeonScreen->frontOffset;
-		radeon->state.color.drawPitch = radeon->radeonScreen->frontPitch;
-	} else {
-		radeon->state.color.drawOffset = radeon->radeonScreen->backOffset;
-		radeon->state.color.drawPitch = radeon->radeonScreen->backPitch;
-	}
-
-	if (IS_R300_CLASS(radeon->radeonScreen)) {
-		r300ContextPtr r300 = (r300ContextPtr)radeon;
-		R300_STATECHANGE(r300, cb);
-		r300->hw.cb.cmd[R300_CB_OFFSET] = r300->radeon.state.color.drawOffset + 
-						r300->radeon.radeonScreen->fbLocation;
-		r300->hw.cb.cmd[R300_CB_PITCH] = r300->radeon.state.color.drawPitch;
-		
-		if (r300->radeon.radeonScreen->cpp == 4)
-			r300->hw.cb.cmd[R300_CB_PITCH] |= R300_COLOR_FORMAT_ARGB8888;
-		else
-			r300->hw.cb.cmd[R300_CB_PITCH] |= R300_COLOR_FORMAT_RGB565;
-	
-		if (r300->radeon.sarea->tiling_enabled)
-			r300->hw.cb.cmd[R300_CB_PITCH] |= R300_COLOR_TILE_ENABLE;
-	}
+	radeon->state.color.rrb = rrb;
 }
 
 void radeonWaitForIdleLocked(radeonContextPtr radeon)
@@ -391,6 +374,7 @@ void radeonFinish(GLcontext * ctx)
 		radeonEmitIrqLocked(radeon);
 		UNLOCK_HARDWARE(radeon);
 		radeonWaitIrq(radeon);
-	} else
+	} else {
 		radeonWaitForIdle(radeon);
+	}
 }

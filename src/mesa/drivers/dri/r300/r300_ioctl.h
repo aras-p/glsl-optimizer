@@ -39,20 +39,11 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r300_context.h"
 #include "radeon_drm.h"
 
-extern GLboolean r300IsGartMemory(r300ContextPtr rmesa,
-				  const GLvoid * pointer, GLint size);
-
-extern GLuint r300GartOffsetFromVirtual(r300ContextPtr rmesa,
-					const GLvoid * pointer);
-
 extern void r300Flush(GLcontext * ctx);
 
-extern void r300ReleaseDmaRegion(r300ContextPtr rmesa,
-				 struct r300_dma_region *region,
-				 const char *caller);
 extern void r300AllocDmaRegion(r300ContextPtr rmesa,
-			       struct r300_dma_region *region, int bytes,
-			       int alignment);
+			       struct radeon_bo **pbo, int *poffset,
+			       int bytes, int alignment);
 
 extern void r300InitIoctlFuncs(struct dd_function_table *functions);
 

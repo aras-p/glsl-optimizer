@@ -59,15 +59,13 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_span.h"
 #include "r300_context.h"
 #include "r300_cmdbuf.h"
+#include "r300_mipmap_tree.h"
 #include "r300_state.h"
 #include "r300_ioctl.h"
 #include "r300_tex.h"
 #include "r300_emit.h"
 #include "r300_swtcl.h"
 
-#ifdef USER_BUFFERS
-#include "r300_mem.h"
-#endif
 
 #include "vblank.h"
 #include "utils.h"
@@ -189,7 +187,7 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	struct dd_function_table functions;
 	r300ContextPtr r300;
 	GLcontext *ctx;
-	int tcl_mode, i;
+	int tcl_mode;
 
 	assert(glVisual);
 	assert(driContextPriv);
@@ -221,10 +219,6 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	r300InitTextureFuncs(&functions);
 	r300InitShaderFuncs(&functions);
 
-#ifdef USER_BUFFERS
-	r300_mem_init(r300);
-#endif
-
 	if (!radeonInitContext(&r300->radeon, &functions,
 			       glVisual, driContextPriv,
 			       sharedContextPrivate)) {
@@ -233,33 +227,6 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	}
 
 	/* Init r300 context data */
-	r300->dma.buf0_address =
-	    r300->radeon.radeonScreen->buffers->list[0].address;
-
-	(void)memset(r300->texture_heaps, 0, sizeof(r300->texture_heaps));
-	make_empty_list(&r300->swapped);
-
-	r300->nr_heaps = 1 /* screen->numTexHeaps */ ;
-	assert(r300->nr_heaps < RADEON_NR_TEX_HEAPS);
-	for (i = 0; i < r300->nr_heaps; i++) {
-		/* *INDENT-OFF* */
-		r300->texture_heaps[i] = driCreateTextureHeap(i, r300,
-							       screen->
-							       texSize[i], 12,
-							       RADEON_NR_TEX_REGIONS,
-							       (drmTextureRegionPtr)
-							       r300->radeon.sarea->
-							       tex_list[i],
-							       &r300->radeon.sarea->
-							       tex_age[i],
-							       &r300->swapped,
-							       sizeof
-							       (r300TexObj),
-							       (destroy_texture_object_t
-								*)
-							       r300DestroyTexObj);
-		/* *INDENT-ON* */
-	}
 	r300->texture_depth = driQueryOptioni(&r300->radeon.optionCache,
 					      "texture_depth");
 	if (r300->texture_depth == DRI_CONF_TEXTURE_DEPTH_FB)
@@ -298,12 +265,10 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	ctx->Const.MaxLineWidth = R300_LINESIZE_MAX;
 	ctx->Const.MaxLineWidthAA = R300_LINESIZE_MAX;
 
-#ifdef USER_BUFFERS
 	/* Needs further modifications */
 #if 0
 	ctx->Const.MaxArrayLockSize =
 	    ( /*512 */ RADEON_BUFFER_SIZE * 16 * 1024) / (4 * 4);
-#endif
 #endif
 
 	/* Initialize the software rasterizer and helper modules.
@@ -406,72 +371,6 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	return GL_TRUE;
 }
 
-static void r300FreeGartAllocations(r300ContextPtr r300)
-{
-	int i, ret, tries = 0, done_age, in_use = 0;
-	drm_radeon_mem_free_t memfree;
-
-	memfree.region = RADEON_MEM_REGION_GART;
-
-#ifdef USER_BUFFERS
-	for (i = r300->rmm->u_last; i > 0; i--) {
-		if (r300->rmm->u_list[i].ptr == NULL) {
-			continue;
-		}
-
-		/* check whether this buffer is still in use */
-		if (r300->rmm->u_list[i].pending) {
-			in_use++;
-		}
-	}
-	/* Cannot flush/lock if no context exists. */
-	if (in_use)
-		r300FlushCmdBuf(r300, __FUNCTION__);
-
-	done_age = radeonGetAge((radeonContextPtr) r300);
-
-	for (i = r300->rmm->u_last; i > 0; i--) {
-		if (r300->rmm->u_list[i].ptr == NULL) {
-			continue;
-		}
-
-		/* check whether this buffer is still in use */
-		if (!r300->rmm->u_list[i].pending) {
-			continue;
-		}
-
-		assert(r300->rmm->u_list[i].h_pending == 0);
-
-		tries = 0;
-		while (r300->rmm->u_list[i].age > done_age && tries++ < 1000) {
-			usleep(10);
-			done_age = radeonGetAge((radeonContextPtr) r300);
-		}
-		if (tries >= 1000) {
-			WARN_ONCE("Failed to idle region!");
-		}
-
-		memfree.region_offset = (char *)r300->rmm->u_list[i].ptr -
-		    (char *)r300->radeon.radeonScreen->gartTextures.map;
-
-		ret = drmCommandWrite(r300->radeon.radeonScreen->driScreen->fd,
-				      DRM_RADEON_FREE, &memfree,
-				      sizeof(memfree));
-		if (ret) {
-			fprintf(stderr, "Failed to free at %p\nret = %s\n",
-				r300->rmm->u_list[i].ptr, strerror(-ret));
-		} else {
-			if (i == r300->rmm->u_last)
-				r300->rmm->u_last--;
-
-			r300->rmm->u_list[i].pending = 0;
-			r300->rmm->u_list[i].ptr = NULL;
-		}
-	}
-	r300->rmm->u_head = i;
-#endif				/* USER_BUFFERS */
-}
-
 /* Destroy the device specific context.
  */
 void r300DestroyContext(__DRIcontextPrivate * driContextPriv)
@@ -495,23 +394,12 @@ void r300DestroyContext(__DRIcontextPrivate * driContextPriv)
 	assert(r300);		/* should never be null */
 
 	if (r300) {
-		GLboolean release_texture_heaps;
-
-		release_texture_heaps =
-		    (r300->radeon.glCtx->Shared->RefCount == 1);
 		_swsetup_DestroyContext(r300->radeon.glCtx);
 		_tnl_DestroyContext(r300->radeon.glCtx);
 		_vbo_DestroyContext(r300->radeon.glCtx);
 		_swrast_DestroyContext(r300->radeon.glCtx);
 
-		if (r300->dma.current.buf) {
-			r300ReleaseDmaRegion(r300, &r300->dma.current,
-					     __FUNCTION__);
-#ifndef USER_BUFFERS
-			r300FlushCmdBuf(r300, __FUNCTION__);
-#endif
-		}
-		r300FreeGartAllocations(r300);
+		r300FlushCmdBuf(r300, __FUNCTION__);
 		r300DestroyCmdBuf(r300);
 
 		if (radeon->state.scissor.pClipRects) {
@@ -519,28 +407,11 @@ void r300DestroyContext(__DRIcontextPrivate * driContextPriv)
 			radeon->state.scissor.pClipRects = NULL;
 		}
 
-		if (release_texture_heaps) {
-			/* This share group is about to go away, free our private
-			 * texture object data.
-			 */
-			int i;
-
-			for (i = 0; i < r300->nr_heaps; i++) {
-				driDestroyTextureHeap(r300->texture_heaps[i]);
-				r300->texture_heaps[i] = NULL;
-			}
-
-			assert(is_empty_list(&r300->swapped));
-		}
-
 		radeonCleanupContext(&r300->radeon);
 
-#ifdef USER_BUFFERS
 		/* the memory manager might be accessed when Mesa frees the shared
 		 * state, so don't destroy it earlier
 		 */
-		r300_mem_destroy(r300);
-#endif
 
 		/* free the option cache */
 		driDestroyOptionCache(&r300->radeon.optionCache);

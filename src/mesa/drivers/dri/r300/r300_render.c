@@ -175,89 +175,91 @@ int r300NumVerts(r300ContextPtr rmesa, int num_verts, int prim)
 static void r300EmitElts(GLcontext * ctx, void *elts, unsigned long n_elts)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
-	struct r300_dma_region *rvb = &rmesa->state.elt_dma;
 	void *out;
 
-	if (r300IsGartMemory(rmesa, elts, n_elts * 4)) {
-		rvb->address = rmesa->radeon.radeonScreen->gartTextures.map;
-		rvb->start = ((char *)elts) - rvb->address;
-		rvb->aos_offset =
-		    rmesa->radeon.radeonScreen->gart_texture_offset +
-		    rvb->start;
-		return;
-	} else if (r300IsGartMemory(rmesa, elts, 1)) {
-		WARN_ONCE("Pointer not within GART memory!\n");
-		_mesa_exit(-1);
-	}
-
-	r300AllocDmaRegion(rmesa, rvb, n_elts * 4, 4);
-	rvb->aos_offset = GET_START(rvb);
-
-	out = rvb->address + rvb->start;
+	rmesa->state.elt_dma_bo = radeon_bo_open(rmesa->radeon.radeonScreen->bom,
+                                             0, n_elts * 4, 4,
+                                             RADEON_GEM_DOMAIN_GTT);
+    rmesa->state.elt_dma_offset = 0;
+    radeon_bo_map(rmesa->state.elt_dma_bo, 1);
+	out = rmesa->state.elt_dma_bo->ptr + rmesa->state.elt_dma_offset;
 	memcpy(out, elts, n_elts * 4);
+    radeon_bo_unmap(rmesa->state.elt_dma_bo);
 }
 
-static void r300FireEB(r300ContextPtr rmesa, unsigned long addr,
-		       int vertex_count, int type)
+static void r300FireEB(r300ContextPtr rmesa, int vertex_count, int type)
 {
-	int cmd_reserved = 0;
-	int cmd_written = 0;
-	drm_radeon_cmd_header_t *cmd = NULL;
+	BATCH_LOCALS(rmesa);
 
-	start_packet3(CP_PACKET3(R300_PACKET3_3D_DRAW_INDX_2, 0), 0);
-	e32(R300_VAP_VF_CNTL__PRIM_WALK_INDICES | (vertex_count << 16) | type | R300_VAP_VF_CNTL__INDEX_SIZE_32bit);
+    if (vertex_count > 0) {
+    	BEGIN_BATCH(8);
+    	OUT_BATCH_PACKET3(R300_PACKET3_3D_DRAW_INDX_2, 0);
+    	OUT_BATCH(R300_VAP_VF_CNTL__PRIM_WALK_INDICES |
+                  ((vertex_count + 0) << 16) |
+                  type |
+                  R300_VAP_VF_CNTL__INDEX_SIZE_32bit);
 
-	start_packet3(CP_PACKET3(R300_PACKET3_INDX_BUFFER, 2), 2);
-	e32(R300_EB_UNK1 | (0 << 16) | R300_EB_UNK2);
-	e32(addr);
-	e32(vertex_count);
+    	OUT_BATCH_PACKET3(R300_PACKET3_INDX_BUFFER, 2);
+	    OUT_BATCH(R300_EB_UNK1 | (0 << 16) | R300_EB_UNK2);
+    	OUT_BATCH_RELOC(0, rmesa->state.elt_dma_bo,
+                        rmesa->state.elt_dma_offset, 0);
+        OUT_BATCH(vertex_count);
+    	END_BATCH();
+    }
 }
 
 static void r300EmitAOS(r300ContextPtr rmesa, GLuint nr, GLuint offset)
 {
+	BATCH_LOCALS(rmesa);
+    uint32_t voffset;
 	int sz = 1 + (nr >> 1) * 3 + (nr & 1) * 2;
 	int i;
-	int cmd_reserved = 0;
-	int cmd_written = 0;
-	drm_radeon_cmd_header_t *cmd = NULL;
 
 	if (RADEON_DEBUG & DEBUG_VERTS)
 		fprintf(stderr, "%s: nr=%d, ofs=0x%08x\n", __FUNCTION__, nr,
 			offset);
 
-	start_packet3(CP_PACKET3(R300_PACKET3_3D_LOAD_VBPNTR, sz - 1), sz - 1);
-	e32(nr);
+	BEGIN_BATCH(sz+2);
+	OUT_BATCH_PACKET3(R300_PACKET3_3D_LOAD_VBPNTR, sz - 1);
+	OUT_BATCH(nr);
 
 	for (i = 0; i + 1 < nr; i += 2) {
-		e32((rmesa->state.aos[i].aos_size << 0) |
-		    (rmesa->state.aos[i].aos_stride << 8) |
-		    (rmesa->state.aos[i + 1].aos_size << 16) |
-		    (rmesa->state.aos[i + 1].aos_stride << 24));
+		OUT_BATCH((rmesa->state.aos[i].components << 0) |
+			  (rmesa->state.aos[i].stride << 8) |
+			  (rmesa->state.aos[i + 1].components << 16) |
+			  (rmesa->state.aos[i + 1].stride << 24));
 
-		e32(rmesa->state.aos[i].aos_offset + offset * 4 * rmesa->state.aos[i].aos_stride);
-		e32(rmesa->state.aos[i + 1].aos_offset + offset * 4 * rmesa->state.aos[i + 1].aos_stride);
+        voffset =  rmesa->state.aos[i + 0].offset +
+                   offset * 4 * rmesa->state.aos[i + 0].stride;
+		OUT_BATCH_RELOC(0, rmesa->state.aos[i].bo, voffset, 0);
+        voffset =  rmesa->state.aos[i + 1].offset +
+                   offset * 4 * rmesa->state.aos[i + 1].stride;
+		OUT_BATCH_RELOC(0, rmesa->state.aos[i+1].bo, voffset, 0);
 	}
 
 	if (nr & 1) {
-		e32((rmesa->state.aos[nr - 1].aos_size << 0) |
-		    (rmesa->state.aos[nr - 1].aos_stride << 8));
-		e32(rmesa->state.aos[nr - 1].aos_offset + offset * 4 * rmesa->state.aos[nr - 1].aos_stride);
+		OUT_BATCH((rmesa->state.aos[nr - 1].components << 0) |
+			  (rmesa->state.aos[nr - 1].stride << 8));
+		OUT_BATCH_RELOC(0, rmesa->state.aos[nr - 1].bo,
+			rmesa->state.aos[nr - 1].offset + offset * 4 * rmesa->state.aos[nr - 1].stride, 0);
 	}
+	END_BATCH();
 }
 
 static void r300FireAOS(r300ContextPtr rmesa, int vertex_count, int type)
 {
-	int cmd_reserved = 0;
-	int cmd_written = 0;
-	drm_radeon_cmd_header_t *cmd = NULL;
+	BATCH_LOCALS(rmesa);
 
-	start_packet3(CP_PACKET3(R300_PACKET3_3D_DRAW_VBUF_2, 0), 0);
-	e32(R300_VAP_VF_CNTL__PRIM_WALK_VERTEX_LIST | (vertex_count << 16) | type);
+	BEGIN_BATCH(3);
+	OUT_BATCH_PACKET3(R300_PACKET3_3D_DRAW_VBUF_2, 0);
+	OUT_BATCH(R300_VAP_VF_CNTL__PRIM_WALK_VERTEX_LIST | (vertex_count << 16) | type);
+	END_BATCH();
 }
 
 static void r300RunRenderPrimitive(r300ContextPtr rmesa, GLcontext * ctx,
 				   int start, int end, int prim)
 {
+	BATCH_LOCALS(rmesa);
 	int type, num_verts;
 	TNLcontext *tnl = TNL_CONTEXT(ctx);
 	struct vertex_buffer *vb = &tnl->vb;
@@ -267,6 +269,12 @@ static void r300RunRenderPrimitive(r300ContextPtr rmesa, GLcontext * ctx,
 
 	if (type < 0 || num_verts <= 0)
 		return;
+
+	/* Make space for at least 64 dwords.
+	 * This is supposed to ensure that we can get all rendering
+	 * commands into a single command buffer.
+	 */
+	r300EnsureCmdBufSpace(rmesa, 64, __FUNCTION__);
 
 	if (vb->Elts) {
 		if (num_verts > 65535) {
@@ -287,11 +295,12 @@ static void r300RunRenderPrimitive(r300ContextPtr rmesa, GLcontext * ctx,
 		 */
 		r300EmitElts(ctx, vb->Elts, num_verts);
 		r300EmitAOS(rmesa, rmesa->state.aos_count, start);
-		r300FireEB(rmesa, rmesa->state.elt_dma.aos_offset, num_verts, type);
+		r300FireEB(rmesa, num_verts, type);
 	} else {
 		r300EmitAOS(rmesa, rmesa->state.aos_count, start);
 		r300FireAOS(rmesa, num_verts, type);
 	}
+	COMMIT_BATCH();
 }
 
 static GLboolean r300RunRender(GLcontext * ctx,
@@ -301,7 +310,6 @@ static GLboolean r300RunRender(GLcontext * ctx,
 	int i;
 	TNLcontext *tnl = TNL_CONTEXT(ctx);
 	struct vertex_buffer *vb = &tnl->vb;
-
 
 	if (RADEON_DEBUG & DEBUG_PRIMS)
 		fprintf(stderr, "%s\n", __FUNCTION__);
@@ -323,10 +331,6 @@ static GLboolean r300RunRender(GLcontext * ctx,
 	}
 
 	r300EmitCacheFlush(rmesa);
-
-#ifdef USER_BUFFERS
-	r300UseArrays(ctx);
-#endif
 
 	r300ReleaseArrays(ctx);
 

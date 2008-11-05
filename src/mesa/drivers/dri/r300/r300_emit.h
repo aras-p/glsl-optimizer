@@ -127,129 +127,61 @@ static INLINE uint32_t cmdpacify(void)
 	return cmd.u;
 }
 
-/**
- * Prepare to write a register value to register at address reg.
- * If num_extra > 0 then the following extra values are written
- * to registers with address +4, +8 and so on..
- */
-#define reg_start(reg, num_extra)					\
-	do {								\
-		int _n;							\
-		_n=(num_extra);						\
-		cmd = (drm_radeon_cmd_header_t*)			\
-			r300AllocCmdBuf(rmesa,				\
-					(_n+2),				\
-					__FUNCTION__);			\
-		cmd_reserved=_n+2;					\
-		cmd_written=1;						\
-		cmd[0].i=cmdpacket0((reg), _n+1);			\
-	} while (0);
+
+/** Single register write to command buffer; requires 2 dwords. */
+#define OUT_BATCH_REGVAL(reg, val) \
+	OUT_BATCH(cmdpacket0((reg), 1)); \
+	OUT_BATCH((val))
+
+/** Continuous register range write to command buffer; requires 1 dword,
+ * expects count dwords afterwards for register contents. */
+#define OUT_BATCH_REGSEQ(reg, count) \
+	OUT_BATCH(cmdpacket0((reg), (count)));
+
+/** Write a 32 bit float to the ring; requires 1 dword. */
+#define OUT_BATCH_FLOAT32(f) \
+	OUT_BATCH(r300PackFloat32((f)));
 
 /**
- * Emit GLuint freestyle
+ * Write the header of a packet3 to the command buffer.
+ * Outputs 2 dwords and expects (num_extra+1) additional dwords afterwards.
  */
-#define e32(dword)							\
-	do {								\
-		if(cmd_written<cmd_reserved) {				\
-			cmd[cmd_written].i=(dword);			\
-			cmd_written++;					\
-		} else {						\
-			fprintf(stderr,					\
-				"e32 but no previous packet "		\
-				"declaration.\n"			\
-				"Aborting! in %s::%s at line %d, "	\
-				"cmd_written=%d cmd_reserved=%d\n",	\
-				__FILE__, __FUNCTION__, __LINE__,	\
-				cmd_written, cmd_reserved);		\
-			_mesa_exit(-1);					\
-		}							\
+#define OUT_BATCH_PACKET3(packet, num_extra) do {\
+	OUT_BATCH(cmdpacket3(R300_CMD_PACKET3_RAW)); \
+	OUT_BATCH(CP_PACKET3((packet), (num_extra))); \
 	} while(0)
-
-#define	efloat(f) e32(r300PackFloat32(f))
-
-#define vsf_start_fragment(dest, length)				\
-	do {								\
-		int _n;							\
-		_n = (length);						\
-		cmd = (drm_radeon_cmd_header_t*)			\
-			r300AllocCmdBuf(rmesa,				\
-					(_n+1),				\
-					__FUNCTION__);			\
-		cmd_reserved = _n+2;					\
-		cmd_written =1;						\
-		cmd[0].i = cmdvpu((dest), _n/4);			\
-	} while (0);
-
-#define r500fp_start_fragment(dest, length)				\
-	do {								\
-		int _n;							\
-		_n = (length);						\
-		cmd = (drm_radeon_cmd_header_t*)			\
-			r300AllocCmdBuf(rmesa,				\
-					(_n+1),				\
-					__FUNCTION__);			\
-		cmd_reserved = _n+1;					\
-		cmd_written =1;						\
-		cmd[0].i = cmdr500fp((dest), _n/6, 0, 0);		\
-	} while (0);
-
-#define start_packet3(packet, count)					\
-	{								\
-		int _n;							\
-		GLuint _p;						\
-		_n = (count);						\
-		_p = (packet);						\
-		cmd = (drm_radeon_cmd_header_t*)			\
-			r300AllocCmdBuf(rmesa,				\
-					(_n+3),				\
-					__FUNCTION__);			\
-		cmd_reserved = _n+3;					\
-		cmd_written = 2;					\
-		if(_n > 0x3fff) {					\
-			fprintf(stderr,"Too big packet3 %08x: cannot "	\
-				"store %d dwords\n",			\
-				_p, _n);				\
-			_mesa_exit(-1);					\
-		}							\
-		cmd[0].i = cmdpacket3(R300_CMD_PACKET3_RAW);		\
-		cmd[1].i = _p | ((_n & 0x3fff)<<16);			\
-	}
 
 /**
  * Must be sent to switch to 2d commands
  */
 void static INLINE end_3d(r300ContextPtr rmesa)
 {
-	drm_radeon_cmd_header_t *cmd = NULL;
+	BATCH_LOCALS(rmesa);
 
-	cmd =
-	    (drm_radeon_cmd_header_t *) r300AllocCmdBuf(rmesa, 1, __FUNCTION__);
-	cmd[0].header.cmd_type = R300_CMD_END3D;
+	BEGIN_BATCH(1);
+	OUT_BATCH(cmdpacify());
+	END_BATCH();
 }
 
 void static INLINE cp_delay(r300ContextPtr rmesa, unsigned short count)
 {
-	drm_radeon_cmd_header_t *cmd = NULL;
+	BATCH_LOCALS(rmesa);
 
-	cmd =
-	    (drm_radeon_cmd_header_t *) r300AllocCmdBuf(rmesa, 1, __FUNCTION__);
-	cmd[0].i = cmdcpdelay(count);
+	BEGIN_BATCH(1);
+	OUT_BATCH(cmdcpdelay(count));
+	END_BATCH();
 }
 
 void static INLINE cp_wait(r300ContextPtr rmesa, unsigned char flags)
 {
-	drm_radeon_cmd_header_t *cmd = NULL;
+	BATCH_LOCALS(rmesa);
 
-	cmd =
-	    (drm_radeon_cmd_header_t *) r300AllocCmdBuf(rmesa, 1, __FUNCTION__);
-	cmd[0].i = cmdwait(flags);
+	BEGIN_BATCH(1);
+	OUT_BATCH(cmdwait(flags));
+	END_BATCH();
 }
 
 extern int r300EmitArrays(GLcontext * ctx);
-
-#ifdef USER_BUFFERS
-void r300UseArrays(GLcontext * ctx);
-#endif
 
 extern void r300ReleaseArrays(GLcontext * ctx);
 extern int r300PrimitiveType(r300ContextPtr rmesa, int prim);

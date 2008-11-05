@@ -21,13 +21,14 @@ COMMON_SOURCES = \
 	../common/dri_util.c
 
 DRIVER_SOURCES = \
+		 radeon_bo_legacy.c \
+		 radeon_cs_legacy.c \
 		 radeon_screen.c \
 		 radeon_context.c \
 		 radeon_ioctl.c \
 		 radeon_lock.c \
 		 radeon_span.c \
 		 radeon_state.c \
-		 r300_mem.c \
 		 r300_context.c \
 		 r300_ioctl.c \
 		 r300_cmdbuf.c \
@@ -36,6 +37,7 @@ DRIVER_SOURCES = \
 		 r300_texmem.c \
 		 r300_tex.c \
 		 r300_texstate.c \
+		 r300_mipmap_tree.c \
 		 radeon_program.c \
 		 radeon_program_alu.c \
 		 radeon_program_pair.c \
@@ -54,7 +56,10 @@ DRIVER_SOURCES = \
 C_SOURCES = $(COMMON_SOURCES) $(DRIVER_SOURCES)
 
 DRIVER_DEFINES = -DCOMPILE_R300 -DR200_MERGED=0 \
-	-DRADEON_COMMON=1 -DRADEON_COMMON_FOR_R300
+	-DRADEON_COMMON=1 -DRADEON_COMMON_FOR_R300 \
+#	-DRADEON_BO_TRACK_OPEN \
+#	-DRADEON_BO_TRACK_REF \
+	-Wall
 
 SYMLINKS = \
 	server/radeon_dri.c \
@@ -68,7 +73,12 @@ COMMON_SYMLINKS = \
 	radeon_chipset.h \
 	radeon_screen.c \
 	radeon_screen.h \
-	radeon_span.h
+	radeon_span.h \
+	radeon_buffer.h \
+	radeon_bo_legacy.c \
+	radeon_cs_legacy.c \
+	radeon_bo_legacy.h \
+	radeon_cs_legacy.h
 
 ##### TARGETS #####
 

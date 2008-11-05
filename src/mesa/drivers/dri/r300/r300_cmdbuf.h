@@ -37,6 +37,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define __R300_CMDBUF_H__
 
 #include "r300_context.h"
+#include "radeon_cs.h"
 
 extern int r300FlushCmdBufLocked(r300ContextPtr r300, const char *caller);
 extern int r300FlushCmdBuf(r300ContextPtr r300, const char *caller);
@@ -45,72 +46,77 @@ extern void r300EmitState(r300ContextPtr r300);
 
 extern void r300InitCmdBuf(r300ContextPtr r300);
 extern void r300DestroyCmdBuf(r300ContextPtr r300);
+extern void r300EnsureCmdBufSpace(r300ContextPtr r300, int dwords, const char *caller);
+
+void r300BeginBatch(r300ContextPtr r300,
+		    int n,
+		    int dostate,
+                    const char *file,
+                    const char *function,
+                    int line);
 
 /**
- * Make sure that enough space is available in the command buffer
- * by flushing if necessary.
- *
- * \param dwords The number of dwords we need to be free on the command buffer
+ * Every function writing to the command buffer needs to declare this
+ * to get the necessary local variables.
  */
-static INLINE void r300EnsureCmdBufSpace(r300ContextPtr r300,
-					     int dwords, const char *caller)
-{
-	assert(dwords < r300->cmdbuf.size);
-
-	if (r300->cmdbuf.count_used + dwords > r300->cmdbuf.size)
-		r300FlushCmdBuf(r300, caller);
-}
+#define BATCH_LOCALS(r300) \
+	const r300ContextPtr b_l_r300 = r300
 
 /**
- * Allocate the given number of dwords in the command buffer and return
- * a pointer to the allocated area.
- * When necessary, these functions cause a flush. r300AllocCmdBuf() also
- * causes state reemission after a flush. This is necessary to ensure
- * correct hardware state after an unlock.
+ * Prepare writing n dwords to the command buffer,
+ * including producing any necessary state emits on buffer wraparound.
  */
-static INLINE uint32_t *r300RawAllocCmdBuf(r300ContextPtr r300,
-					       int dwords, const char *caller)
-{
-	uint32_t *ptr;
+#define BEGIN_BATCH(n) r300BeginBatch(b_l_r300, n, 1, __FILE__, __FUNCTION__, __LINE__)
 
-	r300EnsureCmdBufSpace(r300, dwords, caller);
+/**
+ * Same as BEGIN_BATCH, but do not cause automatic state emits.
+ */
+#define BEGIN_BATCH_NO_AUTOSTATE(n) r300BeginBatch(b_l_r300, n, 0, __FILE__, __FUNCTION__, __LINE__)
 
-	ptr = &r300->cmdbuf.cmd_buf[r300->cmdbuf.count_used];
-	r300->cmdbuf.count_used += dwords;
-	return ptr;
-}
+/**
+ * Write one dword to the command buffer.
+ */
+#define OUT_BATCH(data) \
+	do { \
+        radeon_cs_write_dword(b_l_r300->cmdbuf.cs, data);\
+	} while(0)
 
-static INLINE uint32_t *r300AllocCmdBuf(r300ContextPtr r300,
-					    int dwords, const char *caller)
-{
-	uint32_t *ptr;
+/**
+ * Write a relocated dword to the command buffer.
+ */
+#define OUT_BATCH_RELOC(data, bo, offset, flags) \
+	do { \
+        radeon_cs_write_dword(b_l_r300->cmdbuf.cs, offset);\
+        radeon_cs_write_reloc(b_l_r300->cmdbuf.cs,bo,0,(bo)->size,flags);\
+	} while(0)
 
-	r300EnsureCmdBufSpace(r300, dwords, caller);
+/**
+ * Write n dwords from ptr to the command buffer.
+ */
+#define OUT_BATCH_TABLE(ptr,n) \
+	do { \
+		int _i; \
+        for (_i=0; _i < n; _i++) {\
+            radeon_cs_write_dword(b_l_r300->cmdbuf.cs, ptr[_i]);\
+        }\
+	} while(0)
 
-	if (!r300->cmdbuf.count_used) {
-		if (RADEON_DEBUG & DEBUG_IOCTL)
-			fprintf(stderr,
-				"Reemit state after flush (from %s)\n", caller);
-		r300EmitState(r300);
-	}
+/**
+ * Finish writing dwords to the command buffer.
+ * The number of (direct or indirect) OUT_BATCH calls between the previous
+ * BEGIN_BATCH and END_BATCH must match the number specified at BEGIN_BATCH time.
+ */
+#define END_BATCH() \
+	do { \
+        radeon_cs_end(b_l_r300->cmdbuf.cs, __FILE__, __FUNCTION__, __LINE__);\
+	} while(0)
 
-	ptr = &r300->cmdbuf.cmd_buf[r300->cmdbuf.count_used];
-	r300->cmdbuf.count_used += dwords;
-	return ptr;
-}
-
-extern void r300EmitBlit(r300ContextPtr rmesa,
-			 GLuint color_fmt,
-			 GLuint src_pitch,
-			 GLuint src_offset,
-			 GLuint dst_pitch,
-			 GLuint dst_offset,
-			 GLint srcx, GLint srcy,
-			 GLint dstx, GLint dsty, GLuint w, GLuint h);
-
-extern void r300EmitWait(r300ContextPtr rmesa, GLuint flags);
-extern void r300EmitLOAD_VBPNTR(r300ContextPtr rmesa, int start);
-extern void r300EmitVertexShader(r300ContextPtr rmesa);
-extern void r300EmitPixelShader(r300ContextPtr rmesa);
+/**
+ * After the last END_BATCH() of rendering, this indicates that flushing
+ * the command buffer now is okay.
+ */
+#define COMMIT_BATCH() \
+	do { \
+	} while(0)
 
 #endif				/* __R300_CMDBUF_H__ */

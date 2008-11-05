@@ -46,6 +46,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_reg.h"
 #include "drm_sarea.h"
 #include "xmlconfig.h"
+#include "radeon_bo.h"
 
 
 typedef struct {
@@ -54,7 +55,7 @@ typedef struct {
    drmAddress map;			/* Mapping of the DRM region */
 } radeonRegionRec, *radeonRegionPtr;
 
-typedef struct {
+typedef struct radeon_screen {
    int chip_family;
    int chip_flags;
    int cpp;
@@ -106,6 +107,8 @@ typedef struct {
    const __DRIextension *extensions[8];
 
    int num_gb_pipes;
+	drm_radeon_sarea_t *sarea;	/* Private SAREA data */
+   struct radeon_bo_manager *bom;
 } radeonScreenRec, *radeonScreenPtr;
 
 #define IS_R100_CLASS(screen) \

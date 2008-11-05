@@ -223,14 +223,6 @@ void radeonEnable(GLcontext* ctx, GLenum cap, GLboolean state)
 void radeonInitState(radeonContextPtr radeon)
 {
 	radeon->Fallback = 0;
-
-	if (radeon->glCtx->Visual.doubleBufferMode && radeon->sarea->pfCurrentPage == 0) {
-		radeon->state.color.drawOffset = radeon->radeonScreen->backOffset;
-		radeon->state.color.drawPitch = radeon->radeonScreen->backPitch;
-	} else {
-		radeon->state.color.drawOffset = radeon->radeonScreen->frontOffset;
-		radeon->state.color.drawPitch = radeon->radeonScreen->frontPitch;
-	}
 }
 
 

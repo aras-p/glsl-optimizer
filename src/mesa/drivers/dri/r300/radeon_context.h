@@ -132,12 +132,13 @@ struct radeon_scissor_state {
 
 struct radeon_colorbuffer_state {
 	GLuint clear;
-	GLint drawOffset, drawPitch;
+	struct radeon_renderbuffer *rrb;
 };
 
 struct radeon_state {
 	struct radeon_colorbuffer_state color;
 	struct radeon_scissor_state scissor;
+	struct radeon_renderbuffer *depth_buffer;
 };
 
 /**

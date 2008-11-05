@@ -51,9 +51,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r300_emit.h"
 #include "r300_ioctl.h"
 
-#ifdef USER_BUFFERS
-#include "r300_mem.h"
-#endif
 
 #if SWIZZLE_X != R300_INPUT_ROUTE_SELECT_X || \
     SWIZZLE_Y != R300_INPUT_ROUTE_SELECT_Y || \
@@ -86,11 +83,9 @@ do {						\
 } while (0)
 #endif
 
-static void r300EmitVec4(GLcontext * ctx, struct r300_dma_region *rvb,
-			 GLvoid * data, int stride, int count)
+static void r300EmitVec4(uint32_t *out, GLvoid * data, int stride, int count)
 {
 	int i;
-	int *out = (int *)(rvb->address + rvb->start);
 
 	if (RADEON_DEBUG & DEBUG_VERTS)
 		fprintf(stderr, "%s count %d stride %d out %p data %p\n",
@@ -106,11 +101,9 @@ static void r300EmitVec4(GLcontext * ctx, struct r300_dma_region *rvb,
 		}
 }
 
-static void r300EmitVec8(GLcontext * ctx, struct r300_dma_region *rvb,
-			 GLvoid * data, int stride, int count)
+static void r300EmitVec8(uint32_t *out, GLvoid * data, int stride, int count)
 {
 	int i;
-	int *out = (int *)(rvb->address + rvb->start);
 
 	if (RADEON_DEBUG & DEBUG_VERTS)
 		fprintf(stderr, "%s count %d stride %d out %p data %p\n",
@@ -127,18 +120,17 @@ static void r300EmitVec8(GLcontext * ctx, struct r300_dma_region *rvb,
 		}
 }
 
-static void r300EmitVec12(GLcontext * ctx, struct r300_dma_region *rvb,
-			  GLvoid * data, int stride, int count)
+static void r300EmitVec12(uint32_t *out, GLvoid * data, int stride, int count)
 {
 	int i;
-	int *out = (int *)(rvb->address + rvb->start);
 
 	if (RADEON_DEBUG & DEBUG_VERTS)
 		fprintf(stderr, "%s count %d stride %d out %p data %p\n",
 			__FUNCTION__, count, stride, (void *)out, (void *)data);
 
-	if (stride == 12)
+	if (stride == 12) {
 		COPY_DWORDS(out, data, count * 3);
+    }
 	else
 		for (i = 0; i < count; i++) {
 			out[0] = *(int *)data;
@@ -149,11 +141,9 @@ static void r300EmitVec12(GLcontext * ctx, struct r300_dma_region *rvb,
 		}
 }
 
-static void r300EmitVec16(GLcontext * ctx, struct r300_dma_region *rvb,
-			  GLvoid * data, int stride, int count)
+static void r300EmitVec16(uint32_t *out, GLvoid * data, int stride, int count)
 {
 	int i;
-	int *out = (int *)(rvb->address + rvb->start);
 
 	if (RADEON_DEBUG & DEBUG_VERTS)
 		fprintf(stderr, "%s count %d stride %d out %p data %p\n",
@@ -172,39 +162,39 @@ static void r300EmitVec16(GLcontext * ctx, struct r300_dma_region *rvb,
 		}
 }
 
-static void r300EmitVec(GLcontext * ctx, struct r300_dma_region *rvb,
+static void r300EmitVec(GLcontext * ctx, struct r300_aos *aos,
 			GLvoid * data, int size, int stride, int count)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
+	uint32_t *out;
+    uint32_t bo_size;
 
 	if (stride == 0) {
-		r300AllocDmaRegion(rmesa, rvb, size * 4, 4);
+        bo_size = size * 4;
 		count = 1;
-		rvb->aos_offset = GET_START(rvb);
-		rvb->aos_stride = 0;
+		aos->stride = 0;
 	} else {
-		r300AllocDmaRegion(rmesa, rvb, size * count * 4, 4);
-		rvb->aos_offset = GET_START(rvb);
-		rvb->aos_stride = size;
+        bo_size = size * count * 4;
+		aos->stride = size;
 	}
+	aos->bo = radeon_bo_open(rmesa->radeon.radeonScreen->bom,
+                             0, bo_size, 32, RADEON_GEM_DOMAIN_GTT);
+    aos->offset = 0;
+	aos->components = size;
+	aos->count = count;
 
+	radeon_bo_map(aos->bo, 1);
+	out = (uint32_t*)((char*)aos->bo->ptr + aos->offset);
 	switch (size) {
-	case 1:
-		r300EmitVec4(ctx, rvb, data, stride, count);
-		break;
-	case 2:
-		r300EmitVec8(ctx, rvb, data, stride, count);
-		break;
-	case 3:
-		r300EmitVec12(ctx, rvb, data, stride, count);
-		break;
-	case 4:
-		r300EmitVec16(ctx, rvb, data, stride, count);
-		break;
+	case 1: r300EmitVec4(out, data, stride, count); break;
+	case 2: r300EmitVec8(out, data, stride, count); break;
+	case 3: r300EmitVec12(out, data, stride, count); break;
+	case 4: r300EmitVec16(out, data, stride, count); break;
 	default:
 		assert(0);
 		break;
 	}
+	radeon_bo_unmap(aos->bo);
 }
 
 #define DW_SIZE(x) ((inputs[tab[(x)]] << R300_DST_VEC_LOC_SHIFT) |	\
@@ -314,10 +304,6 @@ GLuint r300VAPOutputCntl0(GLcontext * ctx, GLuint OutputsWritten)
 		    R300_VAP_OUTPUT_VTX_FMT_0__COLOR_2_PRESENT |
 		    R300_VAP_OUTPUT_VTX_FMT_0__COLOR_3_PRESENT;
 
-#if 0
-	if (OutputsWritten & (1 << VERT_RESULT_FOGC)) ;
-#endif
-
 	if (OutputsWritten & (1 << VERT_RESULT_PSIZ))
 		ret |= R300_VAP_OUTPUT_VTX_FMT_0__PT_SIZE_PRESENT;
 
@@ -371,7 +357,6 @@ int r300EmitArrays(GLcontext * ctx)
 
 		assert(RENDERINPUTS_TEST(render_inputs_bitset, _TNL_ATTRIB_POS));
 		assert(RENDERINPUTS_TEST(render_inputs_bitset, _TNL_ATTRIB_NORMAL) == 0);
-		//assert(RENDERINPUTS_TEST(render_inputs_bitset, _TNL_ATTRIB_COLOR0));
 
 		if (RENDERINPUTS_TEST(render_inputs_bitset, _TNL_ATTRIB_POS)) {
 			InputsRead |= 1 << VERT_ATTRIB_POS;
@@ -433,7 +418,7 @@ int r300EmitArrays(GLcontext * ctx)
 	}
 
 	for (i = 0; i < nr; i++) {
-		int ci, fix, found = 0;
+		int ci;
 
 		swizzle[i][0] = SWIZZLE_ZERO;
 		swizzle[i][1] = SWIZZLE_ZERO;
@@ -444,48 +429,10 @@ int r300EmitArrays(GLcontext * ctx)
 			swizzle[i][ci] = ci;
 		}
 
-		if (r300IsGartMemory(rmesa, vb->AttribPtr[tab[i]]->data, 4)) {
-			if (vb->AttribPtr[tab[i]]->stride % 4) {
-				return R300_FALLBACK_TCL;
-			}
-			rmesa->state.aos[i].address = (void *)(vb->AttribPtr[tab[i]]->data);
-			rmesa->state.aos[i].start = 0;
-			rmesa->state.aos[i].aos_offset = r300GartOffsetFromVirtual(rmesa, vb->AttribPtr[tab[i]]->data);
-			rmesa->state.aos[i].aos_stride = vb->AttribPtr[tab[i]]->stride / 4;
-			rmesa->state.aos[i].aos_size = vb->AttribPtr[tab[i]]->size;
-		} else {
-			r300EmitVec(ctx, &rmesa->state.aos[i],
-				    vb->AttribPtr[tab[i]]->data,
-				    vb->AttribPtr[tab[i]]->size,
-				    vb->AttribPtr[tab[i]]->stride, count);
-		}
-
-		rmesa->state.aos[i].aos_size = vb->AttribPtr[tab[i]]->size;
-
-		for (fix = 0; fix <= 4 - vb->AttribPtr[tab[i]]->size; fix++) {
-			if ((rmesa->state.aos[i].aos_offset - _mesa_sizeof_type(GL_FLOAT) * fix) % 4) {
-				continue;
-			}
-			found = 1;
-			break;
-		}
-
-		if (found) {
-			if (fix > 0) {
-				WARN_ONCE("Feeling lucky?\n");
-			}
-			rmesa->state.aos[i].aos_offset -= _mesa_sizeof_type(GL_FLOAT) * fix;
-			for (ci = 0; ci < vb->AttribPtr[tab[i]]->size; ci++) {
-				swizzle[i][ci] += fix;
-			}
-		} else {
-			WARN_ONCE
-			    ("Cannot handle offset %x with stride %d, comp %d\n",
-			     rmesa->state.aos[i].aos_offset,
-			     rmesa->state.aos[i].aos_stride,
-			     vb->AttribPtr[tab[i]]->size);
-			return R300_FALLBACK_TCL;
-		}
+		r300EmitVec(ctx, &rmesa->state.aos[i],
+				vb->AttribPtr[tab[i]]->data,
+				vb->AttribPtr[tab[i]]->size,
+				vb->AttribPtr[tab[i]]->stride, count);
 	}
 
 	/* Setup INPUT_ROUTE. */
@@ -515,45 +462,34 @@ int r300EmitArrays(GLcontext * ctx)
 	return R300_FALLBACK_NONE;
 }
 
-#ifdef USER_BUFFERS
-void r300UseArrays(GLcontext * ctx)
-{
-	r300ContextPtr rmesa = R300_CONTEXT(ctx);
-	int i;
-
-	if (rmesa->state.elt_dma.buf)
-		r300_mem_use(rmesa, rmesa->state.elt_dma.buf->id);
-
-	for (i = 0; i < rmesa->state.aos_count; i++) {
-		if (rmesa->state.aos[i].buf)
-			r300_mem_use(rmesa, rmesa->state.aos[i].buf->id);
-	}
-}
-#endif
-
 void r300ReleaseArrays(GLcontext * ctx)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	int i;
 
-	r300ReleaseDmaRegion(rmesa, &rmesa->state.elt_dma, __FUNCTION__);
+	if (rmesa->state.elt_dma_bo) {
+		radeon_bo_unref(rmesa->state.elt_dma_bo);
+		rmesa->state.elt_dma_bo = 0;
+	}
 	for (i = 0; i < rmesa->state.aos_count; i++) {
-		r300ReleaseDmaRegion(rmesa, &rmesa->state.aos[i], __FUNCTION__);
+		if (rmesa->state.aos[i].bo) {
+			radeon_bo_unref(rmesa->state.aos[i].bo);
+			rmesa->state.aos[i].bo = 0;
+		}
 	}
 }
 
 void r300EmitCacheFlush(r300ContextPtr rmesa)
 {
-	int cmd_reserved = 0;
-	int cmd_written = 0;
+	BATCH_LOCALS(rmesa);
 
-	drm_radeon_cmd_header_t *cmd = NULL;
-
-	reg_start(R300_RB3D_DSTCACHE_CTLSTAT, 0);
-	e32(R300_RB3D_DSTCACHE_CTLSTAT_DC_FREE_FREE_3D_TAGS |
-	    R300_RB3D_DSTCACHE_CTLSTAT_DC_FLUSH_FLUSH_DIRTY_3D);
-
-	reg_start(R300_ZB_ZCACHE_CTLSTAT, 0);
-	e32(R300_ZB_ZCACHE_CTLSTAT_ZC_FLUSH_FLUSH_AND_FREE |
-	    R300_ZB_ZCACHE_CTLSTAT_ZC_FREE_FREE);
+	BEGIN_BATCH(4);
+	OUT_BATCH_REGVAL(R300_RB3D_DSTCACHE_CTLSTAT,
+		R300_RB3D_DSTCACHE_CTLSTAT_DC_FREE_FREE_3D_TAGS |
+		R300_RB3D_DSTCACHE_CTLSTAT_DC_FLUSH_FLUSH_DIRTY_3D);
+	OUT_BATCH_REGVAL(R300_ZB_ZCACHE_CTLSTAT,
+		R300_ZB_ZCACHE_CTLSTAT_ZC_FLUSH_FLUSH_AND_FREE |
+		R300_ZB_ZCACHE_CTLSTAT_ZC_FREE_FREE);
+	END_BATCH();
+	COMMIT_BATCH();
 }
