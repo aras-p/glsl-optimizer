@@ -92,7 +92,8 @@ fs_sse_run( const struct sp_fragment_shader *base,
 		       machine->Temps);
 
    /* init kill mask */
-   machine->Temps[TGSI_EXEC_TEMP_KILMASK_I].xyzw[TGSI_EXEC_TEMP_KILMASK_C].u[0] = 0x0;
+   tgsi_set_kill_mask(machine, 0x0);
+   tgsi_set_exec_mask(machine, 1, 1, 1, 1);
 
    shader->func( machine->Inputs,
 		 machine->Outputs,

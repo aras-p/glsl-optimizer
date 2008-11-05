@@ -33,6 +33,7 @@
 #include "main/imports.h"
 #include "main/image.h"
 #include "main/macros.h"
+#include "shader/prog_uniform.h"
 
 #include "vbo/vbo.h"
 
@@ -483,6 +484,28 @@ setup_non_interleaved_attribs(GLcontext *ctx,
 
 
 
+/**
+ * Prior to drawing, check that any uniforms referenced by the
+ * current shader have been set.  If a uniform has not been set,
+ * issue a warning.
+ */
+static void
+check_uniforms(GLcontext *ctx)
+{
+   const struct gl_shader_program *shProg = ctx->Shader.CurrentProgram;
+   if (shProg && shProg->LinkStatus) {
+      GLuint i;
+      for (i = 0; i < shProg->Uniforms->NumUniforms; i++) {
+         const struct gl_uniform *u = &shProg->Uniforms->Uniforms[i];
+         if (!u->Initialized) {
+            _mesa_warning(ctx,
+                          "Using shader with uninitialized uniform: %s",
+                          u->Name);
+         }
+      }
+   }
+}
+
 
 /**
  * This function gets plugged into the VBO module and is called when
@@ -515,6 +538,10 @@ st_draw_vbo(GLcontext *ctx,
    /* must get these after state validation! */
    vp = ctx->st->vp;
    vs = &ctx->st->vp->state;
+
+   if (MESA_VERBOSE & VERBOSE_GLSL) {
+      check_uniforms(ctx);
+   }
 
    /*
     * Setup the vbuffer[] and velements[] arrays.
@@ -556,6 +583,9 @@ st_draw_vbo(GLcontext *ctx,
 
    pipe->set_vertex_buffers(pipe, num_vbuffers, vbuffer);
    pipe->set_vertex_elements(pipe, num_velements, velements);
+
+   if (num_vbuffers == 0 || num_velements == 0)
+      return;
 
    /* do actual drawing */
    if (ib) {

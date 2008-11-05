@@ -233,6 +233,12 @@ static GLbitfield get_fp_input_mask( GLcontext *ctx )
       /* Fixed function logic */
       GLbitfield varying_inputs = ctx->varying_vp_inputs;
 
+      /* These get generated in the setup routine regardless of the
+       * vertex program:
+       */
+      if (ctx->Point.PointSprite)
+         varying_inputs |= FRAG_BITS_TEX_ANY;
+
       /* First look at what values may be computed by the generated
        * vertex program:
        */
@@ -259,6 +265,12 @@ static GLbitfield get_fp_input_mask( GLcontext *ctx )
    else {
       /* calculate from vp->outputs */
       GLbitfield vp_outputs = ctx->VertexProgram._Current->Base.OutputsWritten;
+
+      /* These get generated in the setup routine regardless of the
+       * vertex program:
+       */
+      if (ctx->Point.PointSprite)
+         vp_outputs |= FRAG_BITS_TEX_ANY;
 
       if (vp_outputs & (1 << VERT_RESULT_COL0)) fp_inputs |= FRAG_BIT_COL0;
       if (vp_outputs & (1 << VERT_RESULT_COL1)) fp_inputs |= FRAG_BIT_COL1;

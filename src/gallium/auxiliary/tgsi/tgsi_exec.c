@@ -958,6 +958,10 @@ fetch_src_file_channel(
       switch( file ) {
       case TGSI_FILE_CONSTANT:
          assert(mach->Consts);
+         assert(index->i[0] >= 0);
+         assert(index->i[1] >= 0);
+         assert(index->i[2] >= 0);
+         assert(index->i[3] >= 0);
          chan->f[0] = mach->Consts[index->i[0]][swizzle];
          chan->f[1] = mach->Consts[index->i[1]][swizzle];
          chan->f[2] = mach->Consts[index->i[2]][swizzle];

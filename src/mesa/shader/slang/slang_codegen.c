@@ -3253,7 +3253,7 @@ _slang_gen_array_element(slang_assemble_ctx * A, slang_operation *oper)
       index = _slang_gen_operation(A, &oper->children[1]);
       if (array && index) {
          /* bounds check */
-         GLint constIndex = 0;
+         GLint constIndex = -1;
          if (index->Opcode == IR_FLOAT) {
             constIndex = (int) index->Value[0];
             if (constIndex < 0 || constIndex >= arrayLen) {

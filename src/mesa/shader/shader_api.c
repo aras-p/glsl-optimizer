@@ -1512,10 +1512,12 @@ set_program_uniform(GLcontext *ctx, struct gl_program *program,
                     GLenum type, GLsizei count, GLint elems,
                     const void *values)
 {
+   struct gl_program_parameter *param =
+      &program->Parameters->Parameters[index];
+
    assert(offset >= 0);
 
-   if (!compatible_types(type,
-                         program->Parameters->Parameters[index].DataType)) {
+   if (!compatible_types(type, param->DataType)) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glUniform(type mismatch)");
       return;
    }
@@ -1525,7 +1527,7 @@ set_program_uniform(GLcontext *ctx, struct gl_program *program,
       return;
    }
 
-   if (program->Parameters->Parameters[index].Type == PROGRAM_SAMPLER) {
+   if (param->Type == PROGRAM_SAMPLER) {
       /* This controls which texture unit which is used by a sampler */
       GLuint texUnit, sampler;
 
@@ -1556,9 +1558,9 @@ set_program_uniform(GLcontext *ctx, struct gl_program *program,
    else {
       /* ordinary uniform variable */
       GLsizei k, i;
-      GLint slots = (program->Parameters->Parameters[index].Size + 3) / 4;
+      GLint slots = (param->Size + 3) / 4;
 
-      if (count * elems > (GLint) program->Parameters->Parameters[index].Size) {
+      if (count * elems > (GLint) param->Size) {
          _mesa_error(ctx, GL_INVALID_OPERATION, "glUniform(count too large)");
          return;
       }
@@ -1567,7 +1569,8 @@ set_program_uniform(GLcontext *ctx, struct gl_program *program,
          count = slots;
 
       for (k = 0; k < count; k++) {
-         GLfloat *uniformVal = program->Parameters->ParameterValues[index + offset + k];
+         GLfloat *uniformVal =
+            program->Parameters->ParameterValues[index + offset + k];
          if (is_integer_type(type)) {
             const GLint *iValues = ((const GLint *) values) + k * elems;
             for (i = 0; i < elems; i++) {
@@ -1582,7 +1585,7 @@ set_program_uniform(GLcontext *ctx, struct gl_program *program,
          }
 
          /* if the uniform is bool-valued, convert to 1.0 or 0.0 */
-         if (is_boolean_type(program->Parameters->Parameters[index].DataType)) {
+         if (is_boolean_type(param->DataType)) {
             for (i = 0; i < elems; i++) {
                uniformVal[i] = uniformVal[i] ? 1.0f : 0.0f;
             }
@@ -1666,6 +1669,8 @@ _mesa_uniform(GLcontext *ctx, GLint location, GLsizei count,
                              index, offset, type, count, elems, values);
       }
    }
+
+   shProg->Uniforms->Uniforms[location].Initialized = GL_TRUE;
 }
 
 
@@ -1776,6 +1781,8 @@ _mesa_uniform_matrix(GLcontext *ctx, GLint cols, GLint rows,
                                     count, rows, cols, transpose, values);
       }
    }
+
+   shProg->Uniforms->Uniforms[location].Initialized = GL_TRUE;
 }
 
 

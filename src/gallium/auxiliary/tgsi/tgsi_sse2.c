@@ -72,6 +72,9 @@
 
 #define TEMP_R0   TGSI_EXEC_TEMP_R0
 #define TEMP_ADDR TGSI_EXEC_TEMP_ADDR
+#define TEMP_EXEC_MASK_I TGSI_EXEC_MASK_I
+#define TEMP_EXEC_MASK_C TGSI_EXEC_MASK_C
+
 
 /**
  * X86 utility functions.
@@ -233,6 +236,9 @@ emit_const(
    int indirectIndex )
 {
    if (indirect) {
+      /* 'vec' is the offset from the address register's value.
+       * We're loading CONST[ADDR+vec] into an xmm register.
+       */
       struct x86_reg r0 = get_input_base();
       struct x86_reg r1 = get_output_base();
       uint i;
@@ -243,18 +249,40 @@ emit_const(
       x86_push( func, r0 );
       x86_push( func, r1 );
 
+      /*
+       * Loop over the four pixels or vertices in the quad.
+       * Get the value of the address (offset) register for pixel/vertex[i],
+       * add it to the src offset and index into the constant buffer.
+       * Note that we're working on SOA data.
+       * If any of the pixel/vertex execution channels are unused their
+       * values will be garbage.  It's very important that we don't use
+       * those garbage values as indexes into the constant buffer since
+       * that'll cause segfaults.
+       * The solution is to bitwise-AND the offset with the execution mask
+       * register whose values are either 0 or ~0.
+       * The caller must setup the execution mask register to indicate
+       * which channels are valid/alive before running the shader.
+       * The execution mask will also figure into loops and conditionals
+       * someday.
+       */
       for (i = 0; i < QUAD_SIZE; i++) {
-         x86_lea( func, r0, get_const( vec, chan ) );
+         /* r1 = address register[i] */
          x86_mov( func, r1, x86_make_disp( get_temp( TEMP_ADDR, CHAN_X ), i * 4 ) );
+         /* r0 = execution mask[i] */
+         x86_mov( func, r0, x86_make_disp( get_temp( TEMP_EXEC_MASK_I, TEMP_EXEC_MASK_C ), i * 4 ) );
+         /* r1 = r1 & r0 */
+         x86_and( func, r1, r0 );
+         /* r0 = 'vec', the offset */
+         x86_lea( func, r0, get_const( vec, chan ) );
 
-         /* Quick hack to multiply by 16 -- need to add SHL to rtasm.
+         /* Quick hack to multiply r1 by 16 -- need to add SHL to rtasm.
           */
          x86_add( func, r1, r1 );
          x86_add( func, r1, r1 );
          x86_add( func, r1, r1 );
          x86_add( func, r1, r1 );
 
-         x86_add( func, r0, r1 );
+         x86_add( func, r0, r1 );  /* r0 = r0 + r1 */
          x86_mov( func, r1, x86_deref( r0 ) );
          x86_mov( func, x86_make_disp( get_temp( TEMP_R0, CHAN_X ), i * 4 ), r1 );
       }
@@ -268,6 +296,7 @@ emit_const(
          get_temp( TEMP_R0, CHAN_X ) );
    }
    else {
+      /* 'vec' is the index into the src register file, such as TEMP[vec] */
       assert( vec >= 0 );
 
       sse_movss(

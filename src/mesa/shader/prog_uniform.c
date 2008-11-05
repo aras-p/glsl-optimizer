@@ -87,6 +87,7 @@ _mesa_append_uniform(struct gl_uniform_list *list,
       list->Uniforms[oldNum].Name = _mesa_strdup(name);
       list->Uniforms[oldNum].VertPos = -1;
       list->Uniforms[oldNum].FragPos = -1;
+      list->Uniforms[oldNum].Initialized = GL_FALSE;
       index = oldNum;
       list->NumUniforms++;
    }
