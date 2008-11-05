@@ -94,7 +94,6 @@ intelDisplaySurface(__DRIdrawablePrivate *dPriv,
       int i;
 
       ASSERT(surf->buffer);
-      ASSERT(surf->cpp == cpp);
 
       DBG(SWAP, "screen pitch %d  src surface pitch %d\n",
 	  pitch, surf->stride);
