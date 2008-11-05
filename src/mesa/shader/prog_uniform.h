@@ -50,6 +50,7 @@ struct gl_uniform
    const char *Name;        /**< Null-terminated string */
    GLint VertPos;
    GLint FragPos;
+   GLboolean Initialized;   /**< For debug.  Has this uniform been set? */
 #if 0
    GLenum DataType;         /**< GL_FLOAT, GL_FLOAT_VEC2, etc */
    GLuint Size;             /**< Number of components (1..4) */
