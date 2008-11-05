@@ -330,6 +330,17 @@ constant_to_src_reg(struct prog_src_register *src, GLfloat val,
 }
 
 
+static void
+address_to_dst_reg(struct prog_dst_register *dst, GLuint index)
+{
+   assert(index == 0); /* only one address reg at this time */
+   dst->File = PROGRAM_ADDRESS;
+   dst->Index = index;
+   dst->WriteMask = WRITEMASK_X;
+}
+
+
+
 /**
  * Add new instruction at end of given program.
  * \param prog  the program to append instruction onto
@@ -614,6 +625,7 @@ emit_arith(slang_emit_info *emitInfo, slang_ir_node *n)
 
    /* result storage */
    alloc_node_storage(emitInfo, n, -1);
+
    assert(n->Store->Index >= 0);
    if (n->Store->Size == 2)
       n->Writemask = WRITEMASK_XY;
@@ -1546,6 +1558,60 @@ emit_swizzle(slang_emit_info *emitInfo, slang_ir_node *n)
 
 
 /**
+ * Move a block registers from src to dst (or move a single register).
+ * \param size  size of block, in floats (<=4 means one register)
+ */
+static struct prog_instruction *
+move_block(slang_emit_info *emitInfo,
+           GLuint size, GLboolean relAddr,
+           const slang_ir_storage *dst,
+           const slang_ir_storage *src)
+{
+   struct prog_instruction *inst;
+
+   if (size > 4) {
+      /* move matrix/struct etc (block of registers) */
+      slang_ir_storage dstStore = *dst;
+      slang_ir_storage srcStore = *src;
+      //GLint size = srcStore.Size;
+      /*ASSERT(n->Children[0]->Writemask == WRITEMASK_XYZW);
+      ASSERT(n->Children[1]->Store->Swizzle == SWIZZLE_NOOP);
+      */
+      dstStore.Size = 4;
+      srcStore.Size = 4;
+      while (size >= 4) {
+         inst = new_instruction(emitInfo, OPCODE_MOV);
+         inst->Comment = _mesa_strdup("IR_COPY block");
+         storage_to_dst_reg(&inst->DstReg, &dstStore, WRITEMASK_XYZW);
+         storage_to_src_reg(&inst->SrcReg[0], &srcStore);
+         inst->SrcReg[0].RelAddr = relAddr;
+         srcStore.Index++;
+         dstStore.Index++;
+         size -= 4;
+      }
+   }
+   else {
+      /* single register move */
+      GLuint writemask;
+      if (size == 1) {
+         GLuint comp = GET_SWZ(src->Swizzle, 0);
+         assert(comp < 4);
+         writemask = WRITEMASK_X << comp;
+      }
+      else {
+         writemask = WRITEMASK_XYZW;
+      }
+      inst = new_instruction(emitInfo, OPCODE_MOV);
+      storage_to_dst_reg(&inst->DstReg, dst, writemask);
+      storage_to_src_reg(&inst->SrcReg[0], src);
+      inst->SrcReg[0].RelAddr = relAddr;
+   }
+   return inst;
+}
+
+
+
+/**
  * Dereference array element.  Just resolve storage for the array
  * element represented by this node.
  */
@@ -1591,16 +1657,43 @@ emit_array_element(slang_emit_info *emitInfo, slang_ir_node *n)
       /* do codegen for array index expression */
       emit(emitInfo, n->Children[1]);
 
-      inst = new_instruction(emitInfo, OPCODE_ARL);
+      /* allocate temp storage for the array element */
+      assert(n->Store->Index < 0);
+      n->Store->File = PROGRAM_TEMPORARY;
+      n->Store->Parent = NULL;
+      alloc_node_storage(emitInfo, n, -1);
 
-      storage_to_dst_reg(&inst->DstReg, n->Store, n->Writemask);
-      storage_to_src_reg(&inst->SrcReg[0], n->Children[1]->Store);
+      if (n->Store->Size > 4) {
+         /* need to multiply the index by the element size */
+         GLint elemSize = (n->Store->Size + 3) / 4;
+         slang_ir_storage indexTemp;
 
-      inst->DstReg.File = PROGRAM_ADDRESS;
-      inst->DstReg.Index = 0; /* always address register [0] */
-      inst->Comment = _mesa_strdup("ARL ADDR");
+         /* allocate 1 float indexTemp */
+         alloc_local_temp(emitInfo, &indexTemp, 1);
 
-      n->Store->RelAddr = GL_TRUE;
+         /* MUL temp, index, elemSize */
+         inst = new_instruction(emitInfo, OPCODE_MUL);
+         storage_to_dst_reg(&inst->DstReg, &indexTemp, WRITEMASK_X);
+         storage_to_src_reg(&inst->SrcReg[0], n->Children[1]->Store);
+         constant_to_src_reg(&inst->SrcReg[1], elemSize, emitInfo);
+
+         /* load ADDR[0].X = temp */
+         inst = new_instruction(emitInfo, OPCODE_ARL);
+         storage_to_src_reg(&inst->SrcReg[0], &indexTemp);
+         address_to_dst_reg(&inst->DstReg, 0);
+
+         _slang_free_temp(emitInfo->vt, &indexTemp);
+      }
+      else {
+         /* simply load address reg w/ array index */
+         inst = new_instruction(emitInfo, OPCODE_ARL);
+         storage_to_src_reg(&inst->SrcReg[0], n->Children[1]->Store);
+         address_to_dst_reg(&inst->DstReg, 0);
+      }
+
+      /* copy from array element to temp storage */
+      move_block(emitInfo, n->Store->Size, GL_TRUE,
+                 n->Store, n->Children[0]->Store);
    }
 
    /* if array element size is one, make sure we only access X */
