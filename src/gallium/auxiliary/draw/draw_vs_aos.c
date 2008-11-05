@@ -2190,7 +2190,8 @@ static struct draw_vs_varient *varient_aos_sse( struct draw_vertex_shader *vs,
    if (!vaos->buffer)
       goto fail;
 
-   debug_printf("nr_vb: %d const: %x\n", vaos->nr_vb, vaos->base.key.const_vbuffers);
+   if (0)
+      debug_printf("nr_vb: %d const: %x\n", vaos->nr_vb, vaos->base.key.const_vbuffers);
 
 #if 0
    tgsi_dump(vs->state.tokens, 0);
