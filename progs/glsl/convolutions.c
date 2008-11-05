@@ -439,8 +439,6 @@ static void draw()
 
    glPopMatrix();
 
-   glFlush();
-
    glutSwapBuffers();
 }
 
