@@ -784,6 +784,17 @@ emit_f2it(
       make_xmm( xmm ) );
 }
 
+static void
+emit_i2f(
+   struct x86_function *func,
+   unsigned xmm )
+{
+   sse2_cvtdq2ps(
+      func,
+      make_xmm( xmm ),
+      make_xmm( xmm ) );
+}
+
 static void PIPE_CDECL
 flr4f(
    float *store )
@@ -2104,7 +2115,12 @@ emit_instruction(
       break;
 
    case TGSI_OPCODE_TRUNC:
-      return 0;
+      FOR_EACH_DST0_ENABLED_CHANNEL( *inst, chan_index ) {
+         FETCH( func, *inst, 0, 0, chan_index );
+         emit_f2it( func, 0 );
+         emit_i2f( func, 0 );
+         STORE( func, *inst, 0, 0, chan_index );
+      }
       break;
 
    case TGSI_OPCODE_SHL:
