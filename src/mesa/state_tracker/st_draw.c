@@ -584,6 +584,9 @@ st_draw_vbo(GLcontext *ctx,
    pipe->set_vertex_buffers(pipe, num_vbuffers, vbuffer);
    pipe->set_vertex_elements(pipe, num_velements, velements);
 
+   if (num_vbuffers == 0 || num_velements == 0)
+      return;
+
    /* do actual drawing */
    if (ib) {
       /* indexed primitive */
