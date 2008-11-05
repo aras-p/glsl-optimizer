@@ -33,6 +33,8 @@
 #include "draw/draw_context.h"
 #include "draw/draw_private.h"
 #include "draw/draw_pt.h"
+#include "draw/draw_vs.h"
+#include "tgsi/tgsi_dump.h"
 
 static unsigned trim( unsigned count, unsigned first, unsigned incr )
 {
@@ -194,6 +196,28 @@ draw_arrays(struct draw_context *draw, unsigned prim,
       draw_do_flush( draw, DRAW_FLUSH_STATE_CHANGE );
       draw->reduced_prim = reduced_prim;
    }
+
+#if 0
+   {
+      int i;
+      debug_printf("draw_arrays(prim=%u start=%u count=%u):\n",
+                   prim, start, count);
+      tgsi_dump(draw->vs.vertex_shader->state.tokens, 0);
+      debug_printf("Elements:\n");
+      for (i = 0; i < draw->pt.nr_vertex_elements; i++) {
+         debug_printf("  format=%s comps=%u\n",
+                      pf_name(draw->pt.vertex_element[i].src_format),
+                      draw->pt.vertex_element[i].nr_components);
+      }
+      debug_printf("Buffers:\n");
+      for (i = 0; i < draw->pt.nr_vertex_buffers; i++) {
+         debug_printf("  pitch=%u offset=%u ptr=%p\n",
+                      draw->pt.vertex_buffer[i].pitch,
+                      draw->pt.vertex_buffer[i].buffer_offset,
+                      draw->pt.user.vbuffer[i]);
+      }
+   }
+#endif
 
    /* drawing done here: */
    draw_pt_arrays(draw, prim, start, count);
