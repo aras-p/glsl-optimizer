@@ -64,6 +64,14 @@ output_quad(struct quad_stage *qs, struct quad_header *quad)
             for (i = 0; i < 4; i++) { /* loop over color chans */
                tile->data.color[y][x][i] = quadColor[i][j];
             }
+            if (0) {
+               debug_printf("sp write pixel %d,%d: %g, %g, %g\n",
+                            quad->input.x0 + x,
+                            quad->input.y0 + y,
+                            quadColor[0][j],
+                            quadColor[1][j],
+                            quadColor[2][j]);
+            }
          }
       }
    }

@@ -1422,10 +1422,22 @@ _mesa_use_program(GLcontext *ctx, GLuint program)
 
 
 /**
- * Update the vertex and fragment program's TexturesUsed arrays.
+ * Update the vertex/fragment program's TexturesUsed array.
+ *
+ * This needs to be called after glUniform(set sampler var) is called.
+ * A call to glUniform(samplerVar, value) causes a sampler to point to a
+ * particular texture unit.  We know the sampler's texture target
+ * (1D/2D/3D/etc) from compile time but the sampler's texture unit is
+ * set by glUniform() calls.
+ *
+ * So, scan the program->SamplerUnits[] and program->SamplerTargets[]
+ * information to update the prog->TexturesUsed[] values.
+ * Each value of TexturesUsed[unit] is one of zero, TEXTURE_1D_INDEX,
+ * TEXTURE_2D_INDEX, TEXTURE_3D_INDEX, etc.
+ * We'll use that info for state validation before rendering.
  */
-static void
-update_textures_used(struct gl_program *prog)
+void
+_mesa_update_shader_textures_used(struct gl_program *prog)
 {
    GLuint s;
 
@@ -1551,7 +1563,7 @@ set_program_uniform(GLcontext *ctx, struct gl_program *program,
 
       /* This maps a sampler to a texture unit: */
       program->SamplerUnits[sampler] = texUnit;
-      update_textures_used(program);
+      _mesa_update_shader_textures_used(program);
 
       FLUSH_VERTICES(ctx, _NEW_TEXTURE);
    }

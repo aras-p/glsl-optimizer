@@ -1045,12 +1045,16 @@ fetch_source(
    if (reg->SrcRegister.Indirect) {
       union tgsi_exec_channel index2;
       union tgsi_exec_channel indir_index;
+      const uint execmask = mach->ExecMask;
+      uint i;
 
+      /* which address register (always zero now) */
       index2.i[0] =
       index2.i[1] =
       index2.i[2] =
       index2.i[3] = reg->SrcRegisterInd.Index;
 
+      /* get current value of address register[swizzle] */
       swizzle = tgsi_util_get_src_register_swizzle( &reg->SrcRegisterInd, CHAN_X );
       fetch_src_file_channel(
          mach,
@@ -1059,10 +1063,19 @@ fetch_source(
          &index2,
          &indir_index );
 
+      /* add value of address register to the offset */
       index.i[0] += indir_index.i[0];
       index.i[1] += indir_index.i[1];
       index.i[2] += indir_index.i[2];
       index.i[3] += indir_index.i[3];
+
+      /* for disabled execution channels, zero-out the index to
+       * avoid using a potential garbage value.
+       */
+      for (i = 0; i < QUAD_SIZE; i++) {
+         if ((execmask & (1 << i)) == 0)
+            index.i[i] = 0;
+      }
    }
 
    if( reg->SrcRegister.Dimension ) {
@@ -1091,6 +1104,8 @@ fetch_source(
       if (reg->SrcRegisterDim.Indirect) {
          union tgsi_exec_channel index2;
          union tgsi_exec_channel indir_index;
+         const uint execmask = mach->ExecMask;
+         uint i;
 
          index2.i[0] =
          index2.i[1] =
@@ -1109,6 +1124,14 @@ fetch_source(
          index.i[1] += indir_index.i[1];
          index.i[2] += indir_index.i[2];
          index.i[3] += indir_index.i[3];
+
+         /* for disabled execution channels, zero-out the index to
+          * avoid using a potential garbage value.
+          */
+         for (i = 0; i < QUAD_SIZE; i++) {
+            if ((execmask & (1 << i)) == 0)
+               index.i[i] = 0;
+         }
       }
    }
 

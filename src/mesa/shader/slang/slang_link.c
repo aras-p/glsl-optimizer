@@ -561,6 +561,9 @@ _slang_link(GLcontext *ctx,
 
 
    if (fragProg && shProg->FragmentProgram) {
+      /* Compute initial program's TexturesUsed info */
+      _mesa_update_shader_textures_used(&shProg->FragmentProgram->Base);
+
       /* notify driver that a new fragment program has been compiled/linked */
       ctx->Driver.ProgramStringNotify(ctx, GL_FRAGMENT_PROGRAM_ARB,
                                       &shProg->FragmentProgram->Base);
@@ -576,6 +579,9 @@ _slang_link(GLcontext *ctx,
    }
 
    if (vertProg && shProg->VertexProgram) {
+      /* Compute initial program's TexturesUsed info */
+      _mesa_update_shader_textures_used(&shProg->VertexProgram->Base);
+
       /* notify driver that a new vertex program has been compiled/linked */
       ctx->Driver.ProgramStringNotify(ctx, GL_VERTEX_PROGRAM_ARB,
                                       &shProg->VertexProgram->Base);
