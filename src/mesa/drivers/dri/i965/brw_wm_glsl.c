@@ -1052,13 +1052,24 @@ static __inline struct brw_reg low_words( struct brw_reg reg )
     return stride( retype( reg, BRW_REGISTER_TYPE_W ), 0, 8, 2 );
 }
 
-/* One- and two-dimensional Perlin noise, similar to the description in
-   _Improving Noise_, Ken Perlin, Computer Graphics vol. 35 no. 3. */
+static __inline struct brw_reg even_bytes( struct brw_reg reg )
+{
+    return stride( retype( reg, BRW_REGISTER_TYPE_B ), 0, 16, 2 );
+}
+
+static __inline struct brw_reg odd_bytes( struct brw_reg reg )
+{
+    return stride( suboffset( retype( reg, BRW_REGISTER_TYPE_B ), 1 ),
+		   0, 16, 2 );
+}
+
+/* One-, two- and three-dimensional Perlin noise, similar to the description
+   in _Improving Noise_, Ken Perlin, Computer Graphics vol. 35 no. 3. */
 static void noise1_sub( struct brw_wm_compile *c ) {
 
     struct brw_compile *p = &c->func;
     struct brw_reg param,
-       x0, x1, /* gradients at each end */       
+	x0, x1, /* gradients at each end */       
 	t, tmp[ 2 ], /* float temporaries */
 	itmp[ 5 ]; /* unsigned integer temporaries (aliases of floats above) */
     int i;
@@ -1232,18 +1243,18 @@ static void noise2_sub( struct brw_wm_compile *c ) {
     for( i = 0; i < 4; i++ )
 	brw_MUL( p, itmp[ i ], itmp[ 4 ], itmp[ i ] );
     for( i = 0; i < 4; i++ )
-       brw_XOR( p, low_words( itmp[ i ] ), low_words( itmp[ i ] ),
-		high_words( itmp[ i ] ) );
+	brw_XOR( p, low_words( itmp[ i ] ), low_words( itmp[ i ] ),
+		 high_words( itmp[ i ] ) );
     for( i = 0; i < 4; i++ )
 	brw_MUL( p, itmp[ i ], itmp[ 5 ], itmp[ i ] );
     for( i = 0; i < 4; i++ )
-       brw_XOR( p, low_words( itmp[ i ] ), low_words( itmp[ i ] ),
-		high_words( itmp[ i ] ) );
+	brw_XOR( p, low_words( itmp[ i ] ), low_words( itmp[ i ] ),
+		 high_words( itmp[ i ] ) );
     for( i = 0; i < 4; i++ )
 	brw_MUL( p, itmp[ i ], itmp[ 6 ], itmp[ i ] );
     for( i = 0; i < 4; i++ )
-       brw_XOR( p, low_words( itmp[ i ] ), low_words( itmp[ i ] ),
-		high_words( itmp[ i ] ) );
+	brw_XOR( p, low_words( itmp[ i ] ), low_words( itmp[ i ] ),
+		 high_words( itmp[ i ] ) );
 
     /* Now we want to initialise the four gradients based on the
        hashes.  Format conversion from signed integer to float leaves
@@ -1336,6 +1347,312 @@ static void emit_noise2( struct brw_wm_compile *c,
     brw_MOV( p, param1, src1 );
 
     invoke_subroutine( c, SUB_NOISE2, noise2_sub );
+    
+    /* Fill in the result: */
+    brw_set_saturate( p, inst->SaturateMode == SATURATE_ZERO_ONE );
+    for (i = 0 ; i < 4; i++) {
+	if (mask & (1<<i)) {
+	    dst = get_dst_reg(c, inst, i, 1);
+	    brw_MOV( p, dst, param0 );
+	}
+    }
+    if( inst->SaturateMode == SATURATE_ZERO_ONE )
+	brw_set_saturate( p, 0 );
+    
+    release_tmps( c, mark );
+}
+
+/* The three-dimensional case is much like the one- and two- versions above,
+   but since the number of corners is rapidly growing we now pack 16 16-bit
+   hashes into each register to extract more parallelism from the EUs. */
+static void noise3_sub( struct brw_wm_compile *c ) {
+
+    struct brw_compile *p = &c->func;
+    struct brw_reg param0, param1, param2,
+	x0y0, x0y1, x1y0, x1y1, /* gradients at four of the corners */
+	xi, yi, zi, /* interpolation coefficients */
+	t, tmp[ 8 ], /* float temporaries */
+	itmp[ 8 ], /* unsigned integer temporaries (aliases of floats above) */
+	wtmp[ 8 ]; /* 16-way unsigned word temporaries (aliases of above) */
+    int i;
+    int mark = mark_tmps( c );
+
+    x0y0 = alloc_tmp( c );
+    x0y1 = alloc_tmp( c );
+    x1y0 = alloc_tmp( c );
+    x1y1 = alloc_tmp( c );
+    xi = alloc_tmp( c );
+    yi = alloc_tmp( c );
+    zi = alloc_tmp( c );
+    t = alloc_tmp( c );
+    for( i = 0; i < 8; i++ ) {
+	tmp[ i ] = alloc_tmp( c );
+	itmp[ i ] = retype( tmp[ i ], BRW_REGISTER_TYPE_UD );
+	wtmp[ i ] = brw_uw16_grf( tmp[ i ].nr, 0 );
+    }
+    
+    param0 = lookup_tmp( c, mark - 4 );
+    param1 = lookup_tmp( c, mark - 3 );
+    param2 = lookup_tmp( c, mark - 2 );
+
+    brw_set_access_mode( p, BRW_ALIGN_1 );
+    
+    /* Arrange the eight corner coordinates into scalars (itmp0..itmp3) to
+       be hashed.  Also compute the remainders (offsets within the unit
+       cube), interleaved to reduce register dependency penalties. */
+    brw_RNDD( p, itmp[ 0 ], param0 );
+    brw_RNDD( p, itmp[ 1 ], param1 );
+    brw_RNDD( p, itmp[ 2 ], param2 );
+    brw_MOV( p, itmp[ 4 ], brw_imm_ud( 0xBC8F ) ); /* constant used later */
+    brw_MOV( p, itmp[ 5 ], brw_imm_ud( 0xD0BD ) ); /* constant used later */
+    brw_MOV( p, itmp[ 6 ], brw_imm_ud( 0x9B93 ) ); /* constant used later */
+    brw_FRC( p, param0, param0 );
+    brw_FRC( p, param1, param1 );
+    brw_FRC( p, param2, param2 );
+    /* Since we now have only 16 bits of precision in the hash, we must
+       be more careful about thorough mixing to maintain entropy as we
+       squash the input vector into a small scalar. */
+    brw_MUL( p, brw_acc_reg(), itmp[ 4 ], itmp[ 0 ] );
+    brw_MAC( p, brw_acc_reg(), itmp[ 5 ], itmp[ 1 ] );
+    brw_MAC( p, itmp[ 0 ], itmp[ 6 ], itmp[ 2 ] );
+    brw_ADD( p, high_words( itmp[ 0 ] ), low_words( itmp[ 0 ] ),
+	     brw_imm_uw( 0xBC8F ) );
+
+    /* Temporarily disable the execution mask while we work with ExecSize=16
+       channels (the mask is set for ExecSize=8 and is probably incorrect).
+       Although this might cause execution of unwanted channels, the code
+       writes only to temporary registers and has no side effects, so
+       disabling the mask is harmless. */
+    brw_push_insn_state( p );
+    brw_set_mask_control( p, BRW_MASK_DISABLE );
+    brw_ADD( p, wtmp[ 1 ], wtmp[ 0 ], brw_imm_uw( 0xD0BD ) );
+    brw_ADD( p, wtmp[ 2 ], wtmp[ 0 ], brw_imm_uw( 0x9B93 ) );
+    brw_ADD( p, wtmp[ 3 ], wtmp[ 1 ], brw_imm_uw( 0x9B93 ) );
+
+    /* We're now ready to perform the hashing.  The eight hashes are
+       interleaved for performance.  The hash function used is
+       designed to rapidly achieve avalanche and require only 16x16
+       bit multiplication, and 8-bit swizzles (which we get for
+       free). */
+    for( i = 0; i < 4; i++ )
+	brw_MUL( p, wtmp[ i ], wtmp[ i ], brw_imm_uw( 0x28D9 ) );
+    for( i = 0; i < 4; i++ )
+	brw_XOR( p, even_bytes( wtmp[ i ] ), even_bytes( wtmp[ i ] ),
+		 odd_bytes( wtmp[ i ] ) );
+    for( i = 0; i < 4; i++ )
+	brw_MUL( p, wtmp[ i ], wtmp[ i ], brw_imm_uw( 0xC6D5 ) );
+    for( i = 0; i < 4; i++ )
+	brw_XOR( p, even_bytes( wtmp[ i ] ), even_bytes( wtmp[ i ] ),
+		 odd_bytes( wtmp[ i ] ) );
+    brw_pop_insn_state( p );
+
+    /* Now we want to initialise the four rear gradients based on the
+       hashes.  Format conversion from signed integer to float leaves
+       everything scaled too high by a factor of pow( 2, 15 ), but
+       we correct for that right at the end. */
+    /* x component */
+    brw_ADD( p, t, param0, brw_imm_f( -1.0 ) );
+    brw_MOV( p, x0y0, low_words( tmp[ 0 ] ) );
+    brw_MOV( p, x0y1, low_words( tmp[ 1 ] ) );
+    brw_MOV( p, x1y0, high_words( tmp[ 0 ] ) );
+    brw_MOV( p, x1y1, high_words( tmp[ 1 ] ) );
+
+    brw_push_insn_state( p );
+    brw_set_mask_control( p, BRW_MASK_DISABLE );
+    brw_SHL( p, wtmp[ 0 ], wtmp[ 0 ], brw_imm_uw( 5 ) );
+    brw_SHL( p, wtmp[ 1 ], wtmp[ 1 ], brw_imm_uw( 5 ) );
+    brw_pop_insn_state( p );
+    
+    brw_MUL( p, x1y0, x1y0, t );
+    brw_MUL( p, x1y1, x1y1, t );
+    brw_ADD( p, t, param1, brw_imm_f( -1.0 ) );
+    brw_MUL( p, x0y0, x0y0, param0 );
+    brw_MUL( p, x0y1, x0y1, param0 );
+
+    /* y component */
+    brw_MOV( p, tmp[ 5 ], low_words( tmp[ 1 ] ) );
+    brw_MOV( p, tmp[ 7 ], high_words( tmp[ 1 ] ) );
+    brw_MOV( p, tmp[ 4 ], low_words( tmp[ 0 ] ) );
+    brw_MOV( p, tmp[ 6 ], high_words( tmp[ 0 ] ) );
+    
+    brw_push_insn_state( p );
+    brw_set_mask_control( p, BRW_MASK_DISABLE );
+    brw_SHL( p, wtmp[ 0 ], wtmp[ 0 ], brw_imm_uw( 5 ) );
+    brw_SHL( p, wtmp[ 1 ], wtmp[ 1 ], brw_imm_uw( 5 ) );
+    brw_pop_insn_state( p );
+
+    brw_MUL( p, tmp[ 5 ], tmp[ 5 ], t );
+    brw_MUL( p, tmp[ 7 ], tmp[ 7 ], t );
+    brw_ADD( p, t, param0, brw_imm_f( -1.0 ) );
+    brw_MUL( p, tmp[ 4 ], tmp[ 4 ], param1 );
+    brw_MUL( p, tmp[ 6 ], tmp[ 6 ], param1 );
+    
+    brw_ADD( p, x0y1, x0y1, tmp[ 5 ] );
+    brw_ADD( p, x1y1, x1y1, tmp[ 7 ] );
+    brw_ADD( p, x0y0, x0y0, tmp[ 4 ] );
+    brw_ADD( p, x1y0, x1y0, tmp[ 6 ] );
+    
+    /* z component */
+    brw_MOV( p, tmp[ 4 ], low_words( tmp[ 0 ] ) );
+    brw_MOV( p, tmp[ 5 ], low_words( tmp[ 1 ] ) );
+    brw_MOV( p, tmp[ 6 ], high_words( tmp[ 0 ] ) );
+    brw_MOV( p, tmp[ 7 ], high_words( tmp[ 1 ] ) );
+
+    brw_MUL( p, tmp[ 4 ], tmp[ 4 ], param2 );
+    brw_MUL( p, tmp[ 5 ], tmp[ 5 ], param2 );
+    brw_MUL( p, tmp[ 6 ], tmp[ 6 ], param2 );
+    brw_MUL( p, tmp[ 7 ], tmp[ 7 ], param2 );
+    
+    brw_ADD( p, x0y0, x0y0, tmp[ 4 ] );
+    brw_ADD( p, x0y1, x0y1, tmp[ 5 ] );
+    brw_ADD( p, x1y0, x1y0, tmp[ 6 ] );
+    brw_ADD( p, x1y1, x1y1, tmp[ 7 ] );
+    
+    /* We interpolate between the gradients using the polynomial
+       6t^5 - 15t^4 + 10t^3 (Perlin). */
+    brw_MUL( p, xi, param0, brw_imm_f( 6.0 ) );
+    brw_MUL( p, yi, param1, brw_imm_f( 6.0 ) );
+    brw_MUL( p, zi, param2, brw_imm_f( 6.0 ) );
+    brw_ADD( p, xi, xi, brw_imm_f( -15.0 ) );
+    brw_ADD( p, yi, yi, brw_imm_f( -15.0 ) );
+    brw_ADD( p, zi, zi, brw_imm_f( -15.0 ) );
+    brw_MUL( p, xi, xi, param0 );
+    brw_MUL( p, yi, yi, param1 );
+    brw_MUL( p, zi, zi, param2 );
+    brw_ADD( p, xi, xi, brw_imm_f( 10.0 ) );
+    brw_ADD( p, yi, yi, brw_imm_f( 10.0 ) );
+    brw_ADD( p, zi, zi, brw_imm_f( 10.0 ) );
+    brw_ADD( p, x0y1, x0y1, negate( x0y0 ) ); /* unrelated work */
+    brw_ADD( p, x1y1, x1y1, negate( x1y0 ) ); /* unrelated work */
+    brw_MUL( p, xi, xi, param0 );
+    brw_MUL( p, yi, yi, param1 );
+    brw_MUL( p, zi, zi, param2 );
+    brw_MUL( p, xi, xi, param0 );
+    brw_MUL( p, yi, yi, param1 );
+    brw_MUL( p, zi, zi, param2 );
+    brw_MUL( p, xi, xi, param0 );
+    brw_MUL( p, yi, yi, param1 );
+    brw_MUL( p, zi, zi, param2 );
+    
+    /* Here we interpolate in the y dimension... */
+    brw_MUL( p, x0y1, x0y1, yi );
+    brw_MUL( p, x1y1, x1y1, yi );
+    brw_ADD( p, x0y0, x0y0, x0y1 );
+    brw_ADD( p, x1y0, x1y0, x1y1 );
+
+    /* And now in x.  Leave the result in tmp[ 0 ] (see below)... */
+    brw_ADD( p, x1y0, x1y0, negate( x0y0 ) );
+    brw_MUL( p, x1y0, x1y0, xi );
+    brw_ADD( p, tmp[ 0 ], x0y0, x1y0 );
+
+    /* Now do the same thing for the front four gradients... */
+    /* x component */
+    brw_MOV( p, x0y0, low_words( tmp[ 2 ] ) );
+    brw_MOV( p, x0y1, low_words( tmp[ 3 ] ) );
+    brw_MOV( p, x1y0, high_words( tmp[ 2 ] ) );
+    brw_MOV( p, x1y1, high_words( tmp[ 3 ] ) );
+
+    brw_push_insn_state( p );
+    brw_set_mask_control( p, BRW_MASK_DISABLE );
+    brw_SHL( p, wtmp[ 2 ], wtmp[ 2 ], brw_imm_uw( 5 ) );
+    brw_SHL( p, wtmp[ 3 ], wtmp[ 3 ], brw_imm_uw( 5 ) );
+    brw_pop_insn_state( p );
+
+    brw_MUL( p, x1y0, x1y0, t );
+    brw_MUL( p, x1y1, x1y1, t );
+    brw_ADD( p, t, param1, brw_imm_f( -1.0 ) );
+    brw_MUL( p, x0y0, x0y0, param0 );
+    brw_MUL( p, x0y1, x0y1, param0 );
+
+    /* y component */
+    brw_MOV( p, tmp[ 5 ], low_words( tmp[ 3 ] ) );
+    brw_MOV( p, tmp[ 7 ], high_words( tmp[ 3 ] ) );
+    brw_MOV( p, tmp[ 4 ], low_words( tmp[ 2 ] ) );
+    brw_MOV( p, tmp[ 6 ], high_words( tmp[ 2 ] ) );
+    
+    brw_push_insn_state( p );
+    brw_set_mask_control( p, BRW_MASK_DISABLE );
+    brw_SHL( p, wtmp[ 2 ], wtmp[ 2 ], brw_imm_uw( 5 ) );
+    brw_SHL( p, wtmp[ 3 ], wtmp[ 3 ], brw_imm_uw( 5 ) );
+    brw_pop_insn_state( p );
+
+    brw_MUL( p, tmp[ 5 ], tmp[ 5 ], t );
+    brw_MUL( p, tmp[ 7 ], tmp[ 7 ], t );
+    brw_ADD( p, t, param2, brw_imm_f( -1.0 ) );
+    brw_MUL( p, tmp[ 4 ], tmp[ 4 ], param1 );
+    brw_MUL( p, tmp[ 6 ], tmp[ 6 ], param1 );
+    
+    brw_ADD( p, x0y1, x0y1, tmp[ 5 ] );
+    brw_ADD( p, x1y1, x1y1, tmp[ 7 ] );
+    brw_ADD( p, x0y0, x0y0, tmp[ 4 ] );
+    brw_ADD( p, x1y0, x1y0, tmp[ 6 ] );
+    
+    /* z component */
+    brw_MOV( p, tmp[ 4 ], low_words( tmp[ 2 ] ) );
+    brw_MOV( p, tmp[ 5 ], low_words( tmp[ 3 ] ) );
+    brw_MOV( p, tmp[ 6 ], high_words( tmp[ 2 ] ) );
+    brw_MOV( p, tmp[ 7 ], high_words( tmp[ 3 ] ) );
+
+    brw_MUL( p, tmp[ 4 ], tmp[ 4 ], t );
+    brw_MUL( p, tmp[ 5 ], tmp[ 5 ], t );
+    brw_MUL( p, tmp[ 6 ], tmp[ 6 ], t );
+    brw_MUL( p, tmp[ 7 ], tmp[ 7 ], t );
+    
+    brw_ADD( p, x0y0, x0y0, tmp[ 4 ] );
+    brw_ADD( p, x0y1, x0y1, tmp[ 5 ] );
+    brw_ADD( p, x1y0, x1y0, tmp[ 6 ] );
+    brw_ADD( p, x1y1, x1y1, tmp[ 7 ] );
+    
+    /* The interpolation coefficients are still around from last time, so
+       again interpolate in the y dimension... */
+    brw_ADD( p, x0y1, x0y1, negate( x0y0 ) );
+    brw_ADD( p, x1y1, x1y1, negate( x1y0 ) );
+    brw_MUL( p, x0y1, x0y1, yi );
+    brw_MUL( p, x1y1, x1y1, yi );
+    brw_ADD( p, x0y0, x0y0, x0y1 );
+    brw_ADD( p, x1y0, x1y0, x1y1 );
+
+    /* And now in x.  The rear face is in tmp[ 0 ] (see above), so this
+       time put the front face in tmp[ 1 ] and we're nearly there... */
+    brw_ADD( p, x1y0, x1y0, negate( x0y0 ) );
+    brw_MUL( p, x1y0, x1y0, xi );
+    brw_ADD( p, tmp[ 1 ], x0y0, x1y0 );
+
+    /* The final interpolation, in the z dimension: */
+    brw_ADD( p, tmp[ 1 ], tmp[ 1 ], negate( tmp[ 0 ] ) );    
+    brw_MUL( p, tmp[ 1 ], tmp[ 1 ], zi );
+    brw_ADD( p, tmp[ 0 ], tmp[ 0 ], tmp[ 1 ] );
+    
+    /* scale by pow( 2, -15 ), as described above */
+    brw_MUL( p, param0, tmp[ 0 ], brw_imm_f( 0.000030517578125 ) );
+
+    release_tmps( c, mark );
+}
+
+static void emit_noise3( struct brw_wm_compile *c,
+			 struct prog_instruction *inst )
+{
+    struct brw_compile *p = &c->func;
+    struct brw_reg src0, src1, src2, param0, param1, param2, dst;
+    GLuint mask = inst->DstReg.WriteMask;
+    int i;
+    int mark = mark_tmps( c );
+
+    assert( mark == 0 );
+    
+    src0 = get_src_reg( c, inst->SrcReg, 0, 1 );
+    src1 = get_src_reg( c, inst->SrcReg, 1, 1 );
+    src2 = get_src_reg( c, inst->SrcReg, 2, 1 );
+
+    param0 = alloc_tmp( c );
+    param1 = alloc_tmp( c );
+    param2 = alloc_tmp( c );
+
+    brw_MOV( p, param0, src0 );
+    brw_MOV( p, param1, src1 );
+    brw_MOV( p, param2, src2 );
+
+    invoke_subroutine( c, SUB_NOISE3, noise3_sub );
     
     /* Fill in the result: */
     brw_set_saturate( p, inst->SaturateMode == SATURATE_ZERO_ONE );
@@ -1676,7 +1993,9 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
 	    case OPCODE_NOISE2:
 		emit_noise2(c, inst);
 		break;
-	    /* case OPCODE_NOISE3: */
+	    case OPCODE_NOISE3:
+		emit_noise3(c, inst);
+		break;
 	    /* case OPCODE_NOISE4: */
 		/* not yet implemented */
 	    case OPCODE_TEX:
