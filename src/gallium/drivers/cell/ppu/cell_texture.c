@@ -28,6 +28,7 @@
   * Authors:
   *   Keith Whitwell <keith@tungstengraphics.com>
   *   Michel Dänzer <michel@tungstengraphics.com>
+  *   Brian Paul
   */
 
 #include "pipe/p_context.h"
@@ -41,10 +42,10 @@
 #include "cell_state.h"
 #include "cell_texture.h"
 
-/* Simple, maximally packed layout.
- */
 
-static unsigned minify( unsigned d )
+
+static unsigned
+minify(unsigned d)
 {
    return MAX2(1, d>>1);
 }
@@ -209,6 +210,7 @@ twiddle_image_uint(uint w, uint h, uint tile_size, uint *dst,
    }
 }
 
+
 /**
  * For Cell.  Basically, rearrange the pixels/quads from this layout:
  *  +--+--+--+--+
@@ -238,22 +240,22 @@ twiddle_tile(const uint *tileIn, uint *tileOut)
    }
 }
 
+
 /**
  * Convert image from tiled layout to linear layout.  4-byte pixels.
  */
 static void
 untwiddle_image_uint(uint w, uint h, uint tile_size, uint *dst,
-                     uint src_stride, const uint *src)
+                     uint dst_stride, const uint *src)
 {
    const uint tile_size2 = tile_size * tile_size;
    const uint h_t = (h + tile_size - 1) / tile_size;
    const uint w_t = (w + tile_size - 1) / tile_size;
    uint *tile_buf;
-
    uint it, jt;  /* tile counters */
    uint i, j;    /* intra-tile counters */
 
-   src_stride /= 4; /* convert from bytes to pixels */
+   dst_stride /= 4; /* convert from bytes to pixels */
 
    tile_buf = align_malloc(tile_size * tile_size * 4, 16);
    
@@ -282,7 +284,7 @@ untwiddle_image_uint(uint w, uint h, uint tile_size, uint *dst,
                uint dstj = jt * tile_size + j;
                ASSERT(dsti < h);
                ASSERT(dstj < w);
-               dst[dsti * src_stride + dstj] = tsrc[i * tile_size + j];
+               dst[dsti * dst_stride + dstj] = tsrc[i * tile_size + j];
             }
          }
       }
@@ -290,6 +292,7 @@ untwiddle_image_uint(uint w, uint h, uint tile_size, uint *dst,
 
    align_free(tile_buf);
 }
+
 
 /**
  * Convert linear texture image data to tiled format for SPU usage.
@@ -340,6 +343,7 @@ cell_twiddle_texture(struct pipe_screen *screen,
 
    pipe_buffer_unmap(screen, surface->buffer);
 }
+
 
 /**
  * Convert SPU tiled texture image data to linear format for app usage.
