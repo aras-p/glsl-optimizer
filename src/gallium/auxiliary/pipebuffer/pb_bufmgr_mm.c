@@ -262,7 +262,7 @@ mm_bufmgr_create_from_buffer(struct pb_buffer *buffer,
    
 failure:
 if(mm->heap)
-   mmDestroy(mm->heap);
+   u_mmDestroy(mm->heap);
    if(mm->map)
       pb_unmap(mm->buffer);
    if(mm)
