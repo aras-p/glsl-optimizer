@@ -222,7 +222,8 @@ util_surface_copy(struct pipe_context *pipe,
                      w, h,
                      src_map,
                      do_flip ? -(int) src->stride : src->stride,
-                     src_x, src_y);
+                     src_x,
+                     do_flip ? w - src_y : src_y);
    }
 
    pipe->screen->surface_unmap(pipe->screen, src);
