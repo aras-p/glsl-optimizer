@@ -512,3 +512,19 @@ st_translate_fragment_program(struct st_context *st,
       tgsi_dump( fs.tokens, 0/*TGSI_DUMP_VERBOSE*/ );
 }
 
+
+/**
+ * Debug- print current shader text
+ */
+void
+st_print_shaders(GLcontext *ctx)
+{
+   struct gl_shader_program *shProg = ctx->Shader.CurrentProgram;
+   if (shProg) {
+      GLuint i;
+      for (i = 0; i < shProg->NumShaders; i++) {
+         printf("GLSL shader %u of %u:\n", i, shProg->NumShaders);
+         printf("%s\n", shProg->Shaders[i]->Source);
+      }
+   }
+}
