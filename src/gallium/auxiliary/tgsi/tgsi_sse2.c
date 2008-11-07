@@ -1742,7 +1742,18 @@ emit_instruction(
 
    case TGSI_OPCODE_DOT2ADD:
    /* TGSI_OPCODE_DP2A */
-      return 0;
+      FETCH( func, *inst, 0, 0, CHAN_X );  /* xmm0 = src[0].x */
+      FETCH( func, *inst, 1, 1, CHAN_X );  /* xmm1 = src[1].x */
+      emit_mul( func, 0, 1 );              /* xmm0 = xmm0 * xmm1 */
+      FETCH( func, *inst, 1, 0, CHAN_Y );  /* xmm1 = src[0].y */
+      FETCH( func, *inst, 2, 1, CHAN_Y );  /* xmm2 = src[1].y */
+      emit_mul( func, 1, 2 );              /* xmm1 = xmm1 * xmm2 */
+      emit_add( func, 0, 1 );              /* xmm0 = xmm0 + xmm1 */
+      FETCH( func, *inst, 1, 2, CHAN_X );  /* xmm1 = src[2].x */
+      emit_add( func, 0, 1 );              /* xmm0 = xmm0 + xmm1 */
+      FOR_EACH_DST0_ENABLED_CHANNEL( *inst, chan_index ) {
+         STORE( func, *inst, 0, 0, chan_index );  /* dest[ch] = xmm0 */
+      }
       break;
 
    case TGSI_OPCODE_INDEX:
@@ -2084,7 +2095,16 @@ emit_instruction(
       break;
 
    case TGSI_OPCODE_DP2:
-      return 0;
+      FETCH( func, *inst, 0, 0, CHAN_X );  /* xmm0 = src[0].x */
+      FETCH( func, *inst, 1, 1, CHAN_X );  /* xmm1 = src[1].x */
+      emit_mul( func, 0, 1 );              /* xmm0 = xmm0 * xmm1 */
+      FETCH( func, *inst, 1, 0, CHAN_Y );  /* xmm1 = src[0].y */
+      FETCH( func, *inst, 2, 1, CHAN_Y );  /* xmm2 = src[1].y */
+      emit_mul( func, 1, 2 );              /* xmm1 = xmm1 * xmm2 */
+      emit_add( func, 0, 1 );              /* xmm0 = xmm0 + xmm1 */
+      FOR_EACH_DST0_ENABLED_CHANNEL( *inst, chan_index ) {
+         STORE( func, *inst, 0, 0, chan_index );  /* dest[ch] = xmm0 */
+      }
       break;
 
    case TGSI_OPCODE_TXL:
