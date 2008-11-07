@@ -162,6 +162,7 @@ typedef struct slang_output_ctx_
    GLuint default_precision[TYPE_SPECIFIER_COUNT];
    GLboolean allow_precision;
    GLboolean allow_invariant;
+   GLboolean allow_centroid;
 } slang_output_ctx;
 
 /* _slang_compile() */
@@ -502,6 +503,27 @@ parse_type_variant(slang_parse_ctx * C, slang_type_variant *variant)
 }
 
 
+/* centroid qualifer */
+#define TYPE_CENTER    95
+#define TYPE_CENTROID  96
+
+static int
+parse_type_centroid(slang_parse_ctx * C, slang_type_centroid *centroid)
+{
+   GLuint c = *C->I++;
+   switch (c) {
+   case TYPE_CENTER:
+      *centroid = SLANG_CENTER;
+      return 1;
+   case TYPE_CENTROID:
+      *centroid = SLANG_CENTROID;
+      return 1;
+   default:
+      return 0;
+   }
+}
+
+
 /* type qualifier */
 #define TYPE_QUALIFIER_NONE 0
 #define TYPE_QUALIFIER_CONST 1
@@ -751,6 +773,9 @@ parse_fully_specified_type(slang_parse_ctx * C, slang_output_ctx * O,
    if (!parse_type_variant(C, &type->variant))
       return 0;
   
+   if (!parse_type_centroid(C, &type->centroid))
+      return 0;
+
    if (!parse_type_qualifier(C, &type->qualifier))
       return 0;
 
@@ -765,6 +790,19 @@ parse_fully_specified_type(slang_parse_ctx * C, slang_output_ctx * O,
          "'invariant' keyword not allowed (perhaps set #version 120)");
       return 0;
    }
+
+   if (!O->allow_centroid && type->centroid == SLANG_CENTROID) {
+      slang_info_log_error(C->L,
+         "'centroid' keyword not allowed (perhaps set #version 120)");
+      return 0;
+   }
+   else if (type->centroid == SLANG_CENTROID &&
+            type->qualifier != SLANG_QUAL_VARYING) {
+      slang_info_log_error(C->L,
+         "'centroid' keyword only allowed for varying vars");
+      return 0;
+   }
+
 
    /* need this?
    if (type->qualifier != SLANG_QUAL_VARYING &&
@@ -2118,6 +2156,9 @@ parse_code_unit(slang_parse_ctx * C, slang_code_unit * unit,
 #else
    o.allow_invariant = (C->version >= 120) ? GL_TRUE : GL_FALSE;
 #endif
+
+   /* allow 'centroid' keyword? */
+   o.allow_centroid = (C->version >= 120) ? GL_TRUE : GL_FALSE;
 
    /* allow 'lowp/mediump/highp' keywords? */
 #if FEATURE_es2_glsl
