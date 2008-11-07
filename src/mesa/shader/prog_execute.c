@@ -1190,7 +1190,7 @@ _mesa_execute_program(GLcontext * ctx,
             fetch_vector4(&inst->SrcReg[0], machine, a);
             tmp = a[0] * a[0] + a[1] * a[1] + a[2] * a[2];
             if (tmp != 0.0F)
-               tmp = 1.0F / tmp;
+               tmp = INV_SQRTF(tmp);
             result[0] = tmp * a[0];
             result[1] = tmp * a[1];
             result[2] = tmp * a[2];
@@ -1205,7 +1205,7 @@ _mesa_execute_program(GLcontext * ctx,
             fetch_vector4(&inst->SrcReg[0], machine, a);
             tmp = a[0] * a[0] + a[1] * a[1] + a[2] * a[2] + a[3] * a[3];
             if (tmp != 0.0F)
-               tmp = 1.0F / tmp;
+               tmp = INV_SQRTF(tmp);
             result[0] = tmp * a[0];
             result[1] = tmp * a[1];
             result[2] = tmp * a[2];
