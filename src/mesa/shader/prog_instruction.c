@@ -197,6 +197,8 @@ static const struct instruction_info InstInfo[MAX_OPCODE] = {
    { OPCODE_NOISE2, "NOISE2",  1, 1 },
    { OPCODE_NOISE3, "NOISE3",  1, 1 },
    { OPCODE_NOISE4, "NOISE4",  1, 1 },
+   { OPCODE_NRM3,   "NRM3",    1, 1 },
+   { OPCODE_NRM4,   "NRM4",    1, 1 },
    { OPCODE_PK2H,   "PK2H",    1, 1 },
    { OPCODE_PK2US,  "PK2US",   1, 1 },
    { OPCODE_PK4B,   "PK4B",    1, 1 },

@@ -1019,6 +1019,36 @@ _mesa_execute_program(GLcontext * ctx,
          break;
       case OPCODE_NOP:
          break;
+      case OPCODE_NRM3:        /* 3-component normalization */
+         {
+            GLfloat a[4], result[4];
+            GLfloat tmp;
+            fetch_vector4(&inst->SrcReg[0], machine, a);
+            tmp = a[0] * a[0] + a[1] * a[1] + a[2] * a[2];
+            if (tmp != 0.0F)
+               tmp = 1.0F / tmp;
+            result[0] = tmp * a[0];
+            result[1] = tmp * a[1];
+            result[2] = tmp * a[2];
+            result[3] = 0.0;  /* undefined, but prevent valgrind warnings */
+            store_vector4(inst, machine, result);
+         }
+         break;
+      case OPCODE_NRM4:        /* 4-component normalization */
+         {
+            GLfloat a[4], result[4];
+            GLfloat tmp;
+            fetch_vector4(&inst->SrcReg[0], machine, a);
+            tmp = a[0] * a[0] + a[1] * a[1] + a[2] * a[2] + a[3] * a[3];
+            if (tmp != 0.0F)
+               tmp = 1.0F / tmp;
+            result[0] = tmp * a[0];
+            result[1] = tmp * a[1];
+            result[2] = tmp * a[2];
+            result[3] = tmp * a[3];
+            store_vector4(inst, machine, result);
+         }
+         break;
       case OPCODE_PK2H:        /* pack two 16-bit floats in one 32-bit float */
          {
             GLfloat a[4], result[4];
@@ -1275,6 +1305,17 @@ _mesa_execute_program(GLcontext * ctx,
                       a[0], a[1], a[2], a[3],
                       b[0], b[1], b[2], b[3]);
             }
+         }
+         break;
+      case OPCODE_SSG:         /* set sign (-1, 0 or +1) */
+         {
+            GLfloat a[4], result[4];
+            fetch_vector4(&inst->SrcReg[0], machine, a);
+            result[0] = (GLfloat) ((a[0] > 0.0F) - (a[0] < 0.0F));
+            result[1] = (GLfloat) ((a[1] > 0.0F) - (a[1] < 0.0F));
+            result[2] = (GLfloat) ((a[2] > 0.0F) - (a[2] < 0.0F));
+            result[3] = (GLfloat) ((a[3] > 0.0F) - (a[3] < 0.0F));
+            store_vector4(inst, machine, result);
          }
          break;
       case OPCODE_STR:         /* set true, operands ignored */
