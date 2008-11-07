@@ -173,7 +173,6 @@ typedef enum prog_opcode {
    OPCODE_FLR,       /*   X        X       2       X         X   */
    OPCODE_FRC,       /*   X        X       2       X         X   */
    OPCODE_IF,        /*                                     opt  */
-   OPCODE_INT,       /*                                      X   */
    OPCODE_KIL,       /*            X                             */
    OPCODE_KIL_NV,    /*                            X         X   */
    OPCODE_LG2,       /*   X        X       2       X         X   */
@@ -221,6 +220,7 @@ typedef enum prog_opcode {
    OPCODE_TXL,       /*                    3       2         X   */
    OPCODE_TXP,       /*            X                         X   */
    OPCODE_TXP_NV,    /*                    3       X             */
+   OPCODE_TRUNC,     /*                                      X   */
    OPCODE_UP2H,      /*                            X             */
    OPCODE_UP2US,     /*                            X             */
    OPCODE_UP4B,      /*                            X             */
@@ -230,6 +230,9 @@ typedef enum prog_opcode {
    MAX_OPCODE
 } gl_inst_opcode;
 
+
+/* temporary, just in case, remove soon */
+#define OPCODE_INT OPCODE_TRUNC
 
 /**
  * Instruction source register.

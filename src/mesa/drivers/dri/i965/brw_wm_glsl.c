@@ -16,7 +16,7 @@ GLboolean brw_wm_is_glsl(const struct gl_fragment_program *fp)
 	struct prog_instruction *inst = &fp->Base.Instructions[i];
 	switch (inst->Opcode) {
 	    case OPCODE_IF:
-	    case OPCODE_INT:
+	    case OPCODE_TRUNC:
 	    case OPCODE_ENDIF:
 	    case OPCODE_CAL:
 	    case OPCODE_BRK:
@@ -255,7 +255,7 @@ static void emit_abs( struct brw_wm_compile *c,
     brw_set_saturate(p, 0);
 }
 
-static void emit_int( struct brw_wm_compile *c,
+static void emit_trunc( struct brw_wm_compile *c,
 		struct prog_instruction *inst)
 {
     int i;
@@ -1912,8 +1912,8 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
 	    case OPCODE_LRP:
 		emit_lrp(c, inst);
 		break;
-	    case OPCODE_INT:
-		emit_int(c, inst);
+	    case OPCODE_TRUNC:
+		emit_trunc(c, inst);
 		break;
 	    case OPCODE_MOV:
 		emit_mov(c, inst);
