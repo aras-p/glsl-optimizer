@@ -45,7 +45,6 @@ const struct brw_tracked_state *atoms[] =
 {
    &brw_check_fallback,
 
-   &brw_active_vertprog,
    &brw_wm_input_sizes,
    &brw_vs_prog,
    &brw_gs_prog, 
@@ -212,6 +211,10 @@ void brw_validate_state( struct brw_context *brw )
       brw->state.dirty.brw |= BRW_NEW_FRAGMENT_PROGRAM;
    }
 
+   if (brw->vertex_program != brw->attribs.VertexProgram->_Current) {
+      brw->vertex_program = brw->attribs.VertexProgram->_Current;
+      brw->state.dirty.brw |= BRW_NEW_VERTEX_PROGRAM;
+   }
 
    if (state->mesa == 0 &&
        state->cache == 0 &&

@@ -432,6 +432,12 @@ static INLINE struct brw_reg brw_uw8_grf( GLuint nr,
    return brw_uw8_reg(BRW_GENERAL_REGISTER_FILE, nr, subnr);
 }
 
+static INLINE struct brw_reg brw_uw16_grf( GLuint nr,
+					    GLuint subnr )
+{
+   return brw_uw16_reg(BRW_GENERAL_REGISTER_FILE, nr, subnr);
+}
+
 static INLINE struct brw_reg brw_null_reg( void )
 {
    return brw_vec8_reg(BRW_ARCHITECTURE_REGISTER_FILE, 

@@ -56,7 +56,7 @@ static const slang_ir_info IrInfo[] = {
    /* unary ops */
    { IR_MOVE, "IR_MOVE", OPCODE_MOV, 4, 1 },
    { IR_I_TO_F, "IR_I_TO_F", OPCODE_MOV, 4, 1 },  /* int[4] to float[4] */
-   { IR_F_TO_I, "IR_F_TO_I", OPCODE_INT, 4, 1 }, /* 4 floats to 4 ints */
+   { IR_F_TO_I, "IR_F_TO_I", OPCODE_TRUNC, 4, 1 },
    { IR_EXP, "IR_EXP", OPCODE_EXP, 1, 1 },
    { IR_EXP2, "IR_EXP2", OPCODE_EX2, 1, 1 },
    { IR_LOG2, "IR_LOG2", OPCODE_LG2, 1, 1 },

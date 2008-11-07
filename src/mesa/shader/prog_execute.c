@@ -790,17 +790,6 @@ _mesa_execute_program(GLcontext * ctx,
       case OPCODE_ENDIF:
          /* nothing */
          break;
-      case OPCODE_INT:         /* float to int */
-         {
-            GLfloat a[4], result[4];
-            fetch_vector4(&inst->SrcReg[0], machine, a);
-            result[0] = (GLfloat) (GLint) a[0];
-            result[1] = (GLfloat) (GLint) a[1];
-            result[2] = (GLfloat) (GLint) a[2];
-            result[3] = (GLfloat) (GLint) a[3];
-            store_vector4(inst, machine, result);
-         }
-         break;
       case OPCODE_KIL_NV:      /* NV_f_p only (conditional) */
          if (eval_condition(machine, inst)) {
             return GL_FALSE;
@@ -1424,6 +1413,17 @@ _mesa_execute_program(GLcontext * ctx,
             fetch_texel(ctx, machine, inst, texcoord, 0.0, color);
 
             store_vector4(inst, machine, color);
+         }
+         break;
+      case OPCODE_TRUNC:       /* truncate toward zero */
+         {
+            GLfloat a[4], result[4];
+            fetch_vector4(&inst->SrcReg[0], machine, a);
+            result[0] = (GLfloat) (GLint) a[0];
+            result[1] = (GLfloat) (GLint) a[1];
+            result[2] = (GLfloat) (GLint) a[2];
+            result[3] = (GLfloat) (GLint) a[3];
+            store_vector4(inst, machine, result);
          }
          break;
       case OPCODE_UP2H:        /* unpack two 16-bit floats */
