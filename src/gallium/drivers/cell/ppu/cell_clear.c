@@ -106,4 +106,17 @@ cell_clear_surface(struct pipe_context *pipe, struct pipe_surface *ps,
       clr->surface = surfIndex;
       clr->value = clearValue;
    }
+
+   /* Technically, the surface's contents are now known and cleared,
+    * so we could set the status to PIPE_SURFACE_STATUS_CLEAR.  But
+    * it turns out it's quite painful to recognize when any particular
+    * surface goes from PIPE_SURFACE_STATUS_CLEAR to 
+    * PIPE_SURFACE_STATUS_DEFINED (i.e. with known contents), because
+    * the drawing commands could be operating on numerous draw buffers,
+    * which we'd have to iterate through to set all their stati...
+    * For now, we cheat a bit and set the surface's status to DEFINED
+    * right here.  Later we should revisit this and set the status to
+    * CLEAR here, and find a better place to set the status to DEFINED.
+    */
+   ps->status = PIPE_SURFACE_STATUS_DEFINED;
 }

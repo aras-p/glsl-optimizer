@@ -1997,81 +1997,79 @@ cell_gen_fragment_function(struct cell_context *cell, struct spe_function *f)
        * Z and/or stencil.  We'll also convert the incoming fragment Z
        * value in fragZ_reg from a floating point value in [0.0..1.0] to
        * an unsigned integer value with the appropriate resolution.
+       * Note that even if depth or stencil is *not* enabled, if it's
+       * present in the buffer, we pull it out and put it back later;
+       * otherwise, we can inadvertently destroy the contents of
+       * buffers we're not supposed to touch (e.g., if the user is
+       * clearing the depth buffer but not the stencil buffer, a
+       * quad of constant depth is drawn over the surface; the stencil
+       * buffer must be maintained).
        */
       switch(zs_format) {
 
          case PIPE_FORMAT_S8Z24_UNORM: /* fall through */
          case PIPE_FORMAT_X8Z24_UNORM:
-            if (dsa->depth.enabled) {
-               /* We need the Z part at least */
-               setup_optional_register(f, &fbZ_reg_set, &fbZ_reg);
-               /* four 24-bit Z values in the low-order bits */
-               spe_and_uint(f, fbZ_reg, fbZS_reg, 0x00ffffff);
+            /* Pull out both Z and stencil */
+            setup_optional_register(f, &fbZ_reg_set, &fbZ_reg);
+            setup_optional_register(f, &fbS_reg_set, &fbS_reg);
 
-               /* Incoming fragZ_reg value is a float in 0.0...1.0; convert
-                * to a 24-bit unsigned integer
-                */
-               spe_cfltu(f, fragZ_reg, fragZ_reg, 32);
-               spe_rotmi(f, fragZ_reg, fragZ_reg, -8);
-            }
-            if (dsa->stencil[0].enabled) {
-               setup_optional_register(f, &fbS_reg_set, &fbS_reg);
-               /* four 8-bit Z values in the high-order bits */
-               spe_rotmi(f, fbS_reg, fbZS_reg, -24);
-            }
-            break;
+            /* four 24-bit Z values in the low-order bits */
+            spe_and_uint(f, fbZ_reg, fbZS_reg, 0x00ffffff);
+
+            /* Incoming fragZ_reg value is a float in 0.0...1.0; convert
+             * to a 24-bit unsigned integer
+             */
+            spe_cfltu(f, fragZ_reg, fragZ_reg, 32);
+            spe_rotmi(f, fragZ_reg, fragZ_reg, -8);
+
+            /* four 8-bit stencil values in the high-order bits */
+            spe_rotmi(f, fbS_reg, fbZS_reg, -24);
+         break;
 
          case PIPE_FORMAT_Z24S8_UNORM: /* fall through */
          case PIPE_FORMAT_Z24X8_UNORM:
-            if (dsa->depth.enabled) {
-               setup_optional_register(f, &fbZ_reg_set, &fbZ_reg);
-               /* shift by 8 to get the upper 24-bit values */
-               spe_rotmi(f, fbS_reg, fbZS_reg, -8);
+            setup_optional_register(f, &fbZ_reg_set, &fbZ_reg);
+            setup_optional_register(f, &fbS_reg_set, &fbS_reg);
 
-               /* Incoming fragZ_reg value is a float in 0.0...1.0; convert
-                * to a 24-bit unsigned integer
-                */
-               spe_cfltu(f, fragZ_reg, fragZ_reg, 32);
-               spe_rotmi(f, fragZ_reg, fragZ_reg, -8);
-            }
-            if (dsa->stencil[0].enabled) {
-               setup_optional_register(f, &fbS_reg_set, &fbS_reg);
-               /* 8-bit stencil in the low-order bits - mask them out */
-               spe_and_uint(f, fbS_reg, fbZS_reg, 0x000000ff);
-            }
-            break;
+            /* shift by 8 to get the upper 24-bit values */
+            spe_rotmi(f, fbS_reg, fbZS_reg, -8);
+
+            /* Incoming fragZ_reg value is a float in 0.0...1.0; convert
+             * to a 24-bit unsigned integer
+             */
+            spe_cfltu(f, fragZ_reg, fragZ_reg, 32);
+            spe_rotmi(f, fragZ_reg, fragZ_reg, -8);
+
+            /* 8-bit stencil in the low-order bits - mask them out */
+            spe_and_uint(f, fbS_reg, fbZS_reg, 0x000000ff);
+         break;
 
          case PIPE_FORMAT_Z32_UNORM:
-            if (dsa->depth.enabled) {
-               setup_optional_register(f, &fbZ_reg_set, &fbZ_reg);
-               /* Copy over 4 32-bit values */
-               spe_move(f, fbZ_reg, fbZS_reg);
+            setup_optional_register(f, &fbZ_reg_set, &fbZ_reg);
+            /* Copy over 4 32-bit values */
+            spe_move(f, fbZ_reg, fbZS_reg);
 
-               /* Incoming fragZ_reg value is a float in 0.0...1.0; convert
-                * to a 32-bit unsigned integer
-                */
-               spe_cfltu(f, fragZ_reg, fragZ_reg, 32);
-            }
+            /* Incoming fragZ_reg value is a float in 0.0...1.0; convert
+             * to a 32-bit unsigned integer
+             */
+            spe_cfltu(f, fragZ_reg, fragZ_reg, 32);
             /* No stencil, so can't do anything there */
-            break;
+         break;
 
          case PIPE_FORMAT_Z16_UNORM:
-            if (dsa->depth.enabled) {
-               /* XXX Not sure this is correct, but it was here before, so we're
-                * going with it for now
-                */
-               setup_optional_register(f, &fbZ_reg_set, &fbZ_reg);
-               /* Copy over 4 32-bit values */
-               spe_move(f, fbZ_reg, fbZS_reg);
+            /* XXX Not sure this is correct, but it was here before, so we're
+             * going with it for now
+             */
+            setup_optional_register(f, &fbZ_reg_set, &fbZ_reg);
+            /* Copy over 4 32-bit values */
+            spe_move(f, fbZ_reg, fbZS_reg);
 
-               /* Incoming fragZ_reg value is a float in 0.0...1.0; convert
-                * to a 16-bit unsigned integer
-                */
-               spe_cfltu(f, fragZ_reg, fragZ_reg, 32);
-               spe_rotmi(f, fragZ_reg, fragZ_reg, -16);
-            }
+            /* Incoming fragZ_reg value is a float in 0.0...1.0; convert
+             * to a 16-bit unsigned integer
+             */
+            spe_cfltu(f, fragZ_reg, fragZ_reg, 32);
+            spe_rotmi(f, fragZ_reg, fragZ_reg, -16);
             /* No stencil */
-            break;
 
          default:
             ASSERT(0); /* invalid format */
@@ -2118,39 +2116,19 @@ cell_gen_fragment_function(struct cell_context *cell, struct spe_function *f)
          spe_comment(f, 0, "Store quad's depth/stencil values in tile");
          if (zs_format == PIPE_FORMAT_S8Z24_UNORM ||
              zs_format == PIPE_FORMAT_X8Z24_UNORM) {
-            if (fbS_reg_set && fbZ_reg_set) {
-               spe_shli(f, fbS_reg, fbS_reg, 24); /* fbS = fbS << 24 */
-               spe_or(f, fbZS_reg, fbS_reg, fbZ_reg); /* fbZS = fbS | fbZ */
-            }
-            else if (fbS_reg_set) {
-               spe_shli(f, fbZS_reg, fbS_reg, 24); /* fbS = fbS << 24 */
-            }
-            else {
-               spe_move(f, fbZS_reg, fbZ_reg);
-            }
+            spe_shli(f, fbS_reg, fbS_reg, 24); /* fbS = fbS << 24 */
+            spe_or(f, fbZS_reg, fbS_reg, fbZ_reg); /* fbZS = fbS | fbZ */
          }
          else if (zs_format == PIPE_FORMAT_Z24S8_UNORM ||
                   zs_format == PIPE_FORMAT_Z24X8_UNORM) {
-            if (fbS_reg_set && fbZ_reg_set) {
-               spe_shli(f, fbZ_reg, fbZ_reg, 8); /* fbZ = fbZ << 8 */
-               spe_or(f, fbZS_reg, fbS_reg, fbZ_reg); /* fbZS = fbS | fbZ */
-            }
-            else if (fbS_reg_set) {
-               spe_move(f, fbZS_reg, fbS_reg);
-            }
-            else {
-               spe_shli(f, fbZ_reg, fbZ_reg, 8); /* fbZ = fbZ << 8 */
-            }
+            spe_shli(f, fbZ_reg, fbZ_reg, 8); /* fbZ = fbZ << 8 */
+            spe_or(f, fbZS_reg, fbS_reg, fbZ_reg); /* fbZS = fbS | fbZ */
          }
          else if (zs_format == PIPE_FORMAT_Z32_UNORM) {
-            if (fbZ_reg_set) {
-               spe_move(f, fbZS_reg, fbZ_reg); /* fbZS = fbZ */
-            }
+            spe_move(f, fbZS_reg, fbZ_reg); /* fbZS = fbZ */
          }
          else if (zs_format == PIPE_FORMAT_Z16_UNORM) {
-            if (fbZ_reg_set) {
-               spe_move(f, fbZS_reg, fbZ_reg); /* fbZS = fbZ */
-            }
+            spe_move(f, fbZS_reg, fbZ_reg); /* fbZS = fbZ */
          }
          else if (zs_format == PIPE_FORMAT_S8_UNORM) {
             ASSERT(0);   /* XXX to do */
@@ -2163,6 +2141,7 @@ cell_gen_fragment_function(struct cell_context *cell, struct spe_function *f)
          spe_stqx(f, fbZS_reg, depth_tile_reg, quad_offset_reg);
       }
 
+      /* Don't need these any more */
       release_optional_register(f, &fbZ_reg_set, fbZ_reg);
       release_optional_register(f, &fbS_reg_set, fbS_reg);
    }
