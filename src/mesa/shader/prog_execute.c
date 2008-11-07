@@ -776,6 +776,33 @@ _mesa_execute_program(GLcontext * ctx,
             store_vector4(inst, machine, result);
          }
          break;
+      case OPCODE_DP2:
+         {
+            GLfloat a[4], b[4], result[4];
+            fetch_vector4(&inst->SrcReg[0], machine, a);
+            fetch_vector4(&inst->SrcReg[1], machine, b);
+            result[0] = result[1] = result[2] = result[3] = DOT2(a, b);
+            store_vector4(inst, machine, result);
+            if (DEBUG_PROG) {
+               printf("DP2 %g = (%g %g) . (%g %g)\n",
+                      result[0], a[0], a[1], b[0], b[1]);
+            }
+         }
+         break;
+      case OPCODE_DP2A:
+         {
+            GLfloat a[4], b[4], c, result[4];
+            fetch_vector4(&inst->SrcReg[0], machine, a);
+            fetch_vector4(&inst->SrcReg[1], machine, b);
+            fetch_vector1(&inst->SrcReg[1], machine, &c);
+            result[0] = result[1] = result[2] = result[3] = DOT2(a, b) + c;
+            store_vector4(inst, machine, result);
+            if (DEBUG_PROG) {
+               printf("DP2A %g = (%g %g) . (%g %g) + %g\n",
+                      result[0], a[0], a[1], b[0], b[1], c);
+            }
+         }
+         break;
       case OPCODE_DP3:
          {
             GLfloat a[4], b[4], result[4];
@@ -808,8 +835,7 @@ _mesa_execute_program(GLcontext * ctx,
             GLfloat a[4], b[4], result[4];
             fetch_vector4(&inst->SrcReg[0], machine, a);
             fetch_vector4(&inst->SrcReg[1], machine, b);
-            result[0] = result[1] = result[2] = result[3] =
-               a[0] * b[0] + a[1] * b[1] + a[2] * b[2] + b[3];
+            result[0] = result[1] = result[2] = result[3] = DOT3(a, b) + b[3];
             store_vector4(inst, machine, result);
          }
          break;

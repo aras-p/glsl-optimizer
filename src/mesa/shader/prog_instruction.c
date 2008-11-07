@@ -169,6 +169,8 @@ static const struct instruction_info InstInfo[MAX_OPCODE] = {
    { OPCODE_COS,    "COS",     1, 1 },
    { OPCODE_DDX,    "DDX",     1, 1 },
    { OPCODE_DDY,    "DDY",     1, 1 },
+   { OPCODE_DP2,    "DP2",     2, 1 },
+   { OPCODE_DP2A,   "DP2A",    3, 1 },
    { OPCODE_DP3,    "DP3",     2, 1 },
    { OPCODE_DP4,    "DP4",     2, 1 },
    { OPCODE_DPH,    "DPH",     2, 1 },

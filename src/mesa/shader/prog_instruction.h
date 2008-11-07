@@ -160,6 +160,8 @@ typedef enum prog_opcode {
    OPCODE_COS,       /*            X       2       X         X   */
    OPCODE_DDX,       /*                            X         X   */
    OPCODE_DDY,       /*                            X         X   */
+   OPCODE_DP2,       /*                            2             */
+   OPCODE_DP2A,      /*                            2             */
    OPCODE_DP3,       /*   X        X       X       X         X   */
    OPCODE_DP4,       /*   X        X       X       X         X   */
    OPCODE_DPH,       /*   X        X       1.1                   */
