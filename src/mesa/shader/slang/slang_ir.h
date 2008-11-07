@@ -83,6 +83,9 @@ typedef enum
    IR_DIV,
    IR_DOT4,
    IR_DOT3,
+   IR_DOT2,
+   IR_NRM4,
+   IR_NRM3,
    IR_CROSS,   /* vec3 cross product */
    IR_LRP,
    IR_CLAMP,
