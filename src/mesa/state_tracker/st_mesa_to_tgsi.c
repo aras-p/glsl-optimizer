@@ -389,8 +389,8 @@ compile_instruction(
       fullinst->Instruction.Opcode = TGSI_OPCODE_IF;
       fullinst->InstructionExtLabel.Label = inst->BranchTarget + preamble_size;
       break;
-   case OPCODE_INT:
-      fullinst->Instruction.Opcode = TGSI_OPCODE_INT;
+   case OPCODE_TRUNC:
+      fullinst->Instruction.Opcode = TGSI_OPCODE_TRUNC;
       break;
    case OPCODE_KIL:
       /* conditional */
