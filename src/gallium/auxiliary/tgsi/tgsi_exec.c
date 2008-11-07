@@ -2041,7 +2041,21 @@ exec_instruction(
 
    case TGSI_OPCODE_DOT2ADD:
       /* TGSI_OPCODE_DP2A */
-      assert (0);
+      FETCH( &r[0], 0, CHAN_X );
+      FETCH( &r[1], 1, CHAN_X );
+      micro_mul( &r[0], &r[0], &r[1] );
+
+      FETCH( &r[1], 0, CHAN_Y );
+      FETCH( &r[2], 1, CHAN_Y );
+      micro_mul( &r[1], &r[1], &r[2] );
+      micro_add( &r[0], &r[0], &r[1] );
+
+      FETCH( &r[2], 2, CHAN_X );
+      micro_add( &r[0], &r[0], &r[2] );
+
+      FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
+         STORE( &r[0], 0, chan_index );
+      }
       break;
 
    case TGSI_OPCODE_INDEX:
@@ -2488,7 +2502,8 @@ exec_instruction(
          micro_mul( &dot, &r[2], &r[2] );
          micro_add( &tmp, &tmp, &dot );
 
-         /* tmp = 1 / tmp */
+         /* tmp = 1 / sqrt(tmp) */
+         micro_sqrt( &tmp, &tmp );
          micro_div( &tmp, &mach->Temps[TEMP_1_I].xyzw[TEMP_1_C], &tmp );
 
          /* note: w channel is undefined */
@@ -2521,7 +2536,8 @@ exec_instruction(
          micro_mul( &dot, &r[3], &r[3] );
          micro_add( &tmp, &tmp, &dot );
 
-         /* tmp = 1 / tmp */
+         /* tmp = 1 / sqrt(tmp) */
+         micro_sqrt( &tmp, &tmp );
          micro_div( &tmp, &mach->Temps[TEMP_1_I].xyzw[TEMP_1_C], &tmp );
 
          FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
