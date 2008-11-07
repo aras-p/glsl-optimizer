@@ -154,6 +154,7 @@ static const struct instruction_info InstInfo[MAX_OPCODE] = {
    { OPCODE_NOP,    "NOP",     0, 0 },
    { OPCODE_ABS,    "ABS",     1, 1 },
    { OPCODE_ADD,    "ADD",     2, 1 },
+   { OPCODE_AND,    "AND",     2, 1 },
    { OPCODE_ARA,    "ARA",     1, 1 },
    { OPCODE_ARL,    "ARL",     1, 1 },
    { OPCODE_ARL_NV, "ARL",     1, 1 },
@@ -193,10 +194,12 @@ static const struct instruction_info InstInfo[MAX_OPCODE] = {
    { OPCODE_MIN,    "MIN",     2, 1 },
    { OPCODE_MOV,    "MOV",     1, 1 },
    { OPCODE_MUL,    "MUL",     2, 1 },
+   { OPCODE_NOT,    "NOT",     1, 1 },
    { OPCODE_NOISE1, "NOISE1",  1, 1 },
    { OPCODE_NOISE2, "NOISE2",  1, 1 },
    { OPCODE_NOISE3, "NOISE3",  1, 1 },
    { OPCODE_NOISE4, "NOISE4",  1, 1 },
+   { OPCODE_OR,     "OR",      2, 1 },
    { OPCODE_NRM3,   "NRM3",    1, 1 },
    { OPCODE_NRM4,   "NRM4",    1, 1 },
    { OPCODE_PK2H,   "PK2H",    1, 1 },
@@ -237,6 +240,7 @@ static const struct instruction_info InstInfo[MAX_OPCODE] = {
    { OPCODE_UP4B,   "UP4B",    1, 1 },
    { OPCODE_UP4UB,  "UP4UB",   1, 1 },
    { OPCODE_X2D,    "X2D",     3, 1 },
+   { OPCODE_XOR,    "XOR",     2, 1 },
    { OPCODE_XPD,    "XPD",     2, 1 }
 };
 

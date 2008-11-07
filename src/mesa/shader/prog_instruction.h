@@ -145,6 +145,7 @@ typedef enum prog_opcode {
    OPCODE_NOP = 0,   /*                                      X   */
    OPCODE_ABS,       /*   X        X       1.1               X   */
    OPCODE_ADD,       /*   X        X       X       X         X   */
+   OPCODE_AND,       /*                                          */
    OPCODE_ARA,       /*                    2                     */
    OPCODE_ARL,       /*   X                X                     */
    OPCODE_ARL_NV,    /*                    2                     */
@@ -188,8 +189,10 @@ typedef enum prog_opcode {
    OPCODE_NOISE2,    /*                                      X   */
    OPCODE_NOISE3,    /*                                      X   */
    OPCODE_NOISE4,    /*                                      X   */
+   OPCODE_NOT,       /*                                          */
    OPCODE_NRM3,      /*                                          */
    OPCODE_NRM4,      /*                                          */
+   OPCODE_OR,        /*                                          */
    OPCODE_PK2H,      /*                            X             */
    OPCODE_PK2US,     /*                            X             */
    OPCODE_PK4B,      /*                            X             */
@@ -228,6 +231,7 @@ typedef enum prog_opcode {
    OPCODE_UP4B,      /*                            X             */
    OPCODE_UP4UB,     /*                            X             */
    OPCODE_X2D,       /*                            X             */
+   OPCODE_XOR,       /*                                          */
    OPCODE_XPD,       /*   X        X                         X   */
    MAX_OPCODE
 } gl_inst_opcode;
