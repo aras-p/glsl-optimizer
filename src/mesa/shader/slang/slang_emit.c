@@ -488,6 +488,9 @@ instruction_annotation(gl_inst_opcode opcode, char *dstAnnot,
    case OPCODE_MUL:
       operator = "*";
       break;
+   case OPCODE_DP2:
+      operator = "DP2";
+      break;
    case OPCODE_DP3:
       operator = "DP3";
       break;
@@ -708,7 +711,7 @@ emit_compare(slang_emit_info *emitInfo, slang_ir_node *n)
       }
       else {
          assert(size == 2);
-         dotOp = OPCODE_DP3;
+         dotOp = OPCODE_DP3; /* XXX use OPCODE_DP2 eventually */
          swizzle = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Y, SWIZZLE_Y);
       }
 
@@ -1893,12 +1896,15 @@ emit(slang_emit_info *emitInfo, slang_ir_node *n)
    case IR_NOISE2:
    case IR_NOISE3:
    case IR_NOISE4:
+   case IR_NRM4:
+   case IR_NRM3:
    /* binary */
    case IR_ADD:
    case IR_SUB:
    case IR_MUL:
    case IR_DOT4:
    case IR_DOT3:
+   case IR_DOT2:
    case IR_CROSS:
    case IR_MIN:
    case IR_MAX:
