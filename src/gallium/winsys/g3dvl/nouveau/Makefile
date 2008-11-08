@@ -26,11 +26,12 @@ LDFLAGS		+= -L${DRMDIR}/lib			\
 		   -L${GALLIUMDIR}/auxiliary/rtasm	\
 		   -L${GALLIUMDIR}/auxiliary/cso_cache	\
 		   -L${GALLIUMDIR}/drivers/nv10		\
+		   -L${GALLIUMDIR}/drivers/nv20		\
 		   -L${GALLIUMDIR}/drivers/nv30		\
 		   -L${GALLIUMDIR}/drivers/nv40		\
 		   -L${GALLIUMDIR}/drivers/nv50
 
-LIBS		+= -ldriclient -ldrm -lnv10 -lnv30 -lnv40 -lnv50 -ldraw -ltgsi -ltranslate -lrtasm -lcso_cache -lm
+LIBS		+= -ldriclient -ldrm -lnv10 -lnv20 -lnv30 -lnv40 -lnv50 -ldraw -ltgsi -ltranslate -lrtasm -lcso_cache -lm
 
 #############################################
 

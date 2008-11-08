@@ -70,6 +70,12 @@ extern struct pipe_context *
 nv10_create(struct pipe_screen *, unsigned pctx_id);
 
 extern struct pipe_screen *
+nv20_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *);
+
+extern struct pipe_context *
+nv20_create(struct pipe_screen *, unsigned pctx_id);
+
+extern struct pipe_screen *
 nv30_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *);
 
 extern struct pipe_context *
