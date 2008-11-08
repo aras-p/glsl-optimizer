@@ -239,9 +239,6 @@ typedef enum prog_opcode {
 } gl_inst_opcode;
 
 
-/* temporary, just in case, remove soon */
-#define OPCODE_INT OPCODE_TRUNC
-
 /**
  * Instruction source register.
  */
