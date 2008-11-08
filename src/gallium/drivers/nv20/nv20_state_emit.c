@@ -168,28 +168,28 @@ static void nv20_vertex_layout(struct nv20_context *nv20)
 	struct nv20_fragment_program *fp = nv20->fragprog.current;
 	uint32_t src = 0;
 	int i;
-	struct vertex_info vinfo;
+	struct vertex_info *vinfo = &nv20->vertex_info;
 
-	memset(&vinfo, 0, sizeof(vinfo));
+	memset(vinfo, 0, sizeof(*vinfo));
 
 	for (i = 0; i < fp->info.num_inputs; i++) {
 		switch (fp->info.input_semantic_name[i]) {
 			case TGSI_SEMANTIC_POSITION:
-				draw_emit_vertex_attr(&vinfo, EMIT_4F, INTERP_LINEAR, src++);
+				draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_LINEAR, src++);
 				break;
 			case TGSI_SEMANTIC_COLOR:
-				draw_emit_vertex_attr(&vinfo, EMIT_4F, INTERP_LINEAR, src++);
+				draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_LINEAR, src++);
 				break;
 			default:
 			case TGSI_SEMANTIC_GENERIC:
-				draw_emit_vertex_attr(&vinfo, EMIT_4F, INTERP_PERSPECTIVE, src++);
+				draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_PERSPECTIVE, src++);
 				break;
 			case TGSI_SEMANTIC_FOG:
-				draw_emit_vertex_attr(&vinfo, EMIT_4F, INTERP_PERSPECTIVE, src++);
+				draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_PERSPECTIVE, src++);
 				break;
 		}
 	}
-	draw_compute_vertex_size(&vinfo);
+	draw_compute_vertex_size(vinfo);
 }
 
 void
