@@ -2087,7 +2087,39 @@ emit_instruction(
       break;
 
    case TGSI_OPCODE_NRM:
-      return 0;
+      /* fall-through */
+   case TGSI_OPCODE_NRM4:
+      /* 3 or 4-component normalization */
+      {
+         uint dims = (inst->Instruction.Opcode == TGSI_OPCODE_NRM) ? 3 : 4;
+         /* note: cannot use xmm regs 2/3 here (see emit_rsqrt() above) */
+         FETCH( func, *inst, 4, 0, CHAN_X );    /* xmm4 = src[0].x */
+         FETCH( func, *inst, 5, 0, CHAN_Y );    /* xmm5 = src[0].y */
+         FETCH( func, *inst, 6, 0, CHAN_Z );    /* xmm6 = src[0].z */
+         if (dims == 4) {
+            FETCH( func, *inst, 7, 0, CHAN_W ); /* xmm7 = src[0].w */
+         }
+         emit_MOV( func, 0, 4 );                /* xmm0 = xmm3 */
+         emit_mul( func, 0, 4 );                /* xmm0 *= xmm3 */
+         emit_MOV( func, 1, 5 );                /* xmm1 = xmm4 */
+         emit_mul( func, 1, 5 );                /* xmm1 *= xmm4 */
+         emit_add( func, 0, 1 );                /* xmm0 += xmm1 */
+         emit_MOV( func, 1, 6 );                /* xmm1 = xmm5 */
+         emit_mul( func, 1, 6 );                /* xmm1 *= xmm5 */
+         emit_add( func, 0, 1 );                /* xmm0 += xmm1 */
+         if (dims == 4) {
+            emit_MOV( func, 1, 7 );             /* xmm1 = xmm7 */
+            emit_mul( func, 1, 7 );             /* xmm1 *= xmm7 */
+            emit_add( func, 0, 0 );             /* xmm0 += xmm1 */
+         }
+         emit_rsqrt( func, 1, 0 );              /* xmm1 = 1/sqrt(xmm0) */
+         FOR_EACH_DST0_ENABLED_CHANNEL( *inst, chan_index ) {
+            if (chan_index < dims) {
+               emit_mul( func, 4+chan_index, 1); /* xmm[4+ch] *= xmm1 */
+               STORE( func, *inst, 4+chan_index, 0, chan_index );
+            }
+         }
+      }
       break;
 
    case TGSI_OPCODE_DIV:
