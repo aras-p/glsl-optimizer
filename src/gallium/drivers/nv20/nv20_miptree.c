@@ -94,25 +94,18 @@ nv20_miptree_release(struct pipe_screen *screen, struct pipe_texture **pt)
 	}
 }
 
-static void
-nv20_miptree_update(struct pipe_context *pipe, struct pipe_texture *mt,
-		    uint face, uint levels)
-{
-}
-
-
 static struct pipe_surface *
 nv20_miptree_surface_get(struct pipe_screen *screen, struct pipe_texture *pt,
 			 unsigned face, unsigned level, unsigned zslice,
 			 unsigned flags)
 {
-	struct pipe_winsys *ws = screen->winsys;
 	struct nv20_miptree *nv20mt = (struct nv20_miptree *)pt;
 	struct pipe_surface *ps;
 
-	ps = ws->surface_alloc(ws);
+	ps = CALLOC_STRUCT(pipe_surface);
 	if (!ps)
 		return NULL;
+	pipe_texture_reference(&ps->texture, pt);
 	pipe_buffer_reference(screen, &ps->buffer, nv20mt->buffer);
 	ps->format = pt->format;
 	ps->width = pt->width[level];
@@ -121,9 +114,14 @@ nv20_miptree_surface_get(struct pipe_screen *screen, struct pipe_texture *pt,
 	ps->nblocksx = pt->nblocksx[level];
 	ps->nblocksy = pt->nblocksy[level];
 	ps->stride = nv20mt->level[level].pitch;
+	ps->usage = flags;
+	ps->status = PIPE_SURFACE_STATUS_DEFINED;
 
 	if (pt->target == PIPE_TEXTURE_CUBE) {
 		ps->offset = nv20mt->level[level].image_offset[face];
+	} else
+	if (pt->target == PIPE_TEXTURE_3D) {
+		ps->offset = nv20mt->level[level].image_offset[zslice];
 	} else {
 		ps->offset = nv20mt->level[level].image_offset[0];
 	}
@@ -132,9 +130,18 @@ nv20_miptree_surface_get(struct pipe_screen *screen, struct pipe_texture *pt,
 }
 
 static void
-nv20_miptree_surface_release(struct pipe_screen *screen,
-			     struct pipe_surface **surface)
+nv20_miptree_surface_release(struct pipe_screen *pscreen,
+			     struct pipe_surface **psurface)
 {
+	struct pipe_surface *ps = *psurface;
+
+	*psurface = NULL;
+	if (--ps->refcount > 0)
+		return;
+
+	pipe_texture_reference(&ps->texture, NULL);
+	pipe_buffer_reference(pscreen, &ps->buffer, NULL);
+	FREE(ps);
 }
 
 void nv20_screen_init_miptree_functions(struct pipe_screen *pscreen)
