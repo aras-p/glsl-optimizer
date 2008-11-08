@@ -1,20 +1,21 @@
 TOP = ../../../..
 include $(TOP)/configs/current
 
-LIBNAME = nv10
+LIBNAME = nv20
 
 DRIVER_SOURCES = \
-	nv10_clear.c \
-	nv10_context.c \
-	nv10_fragprog.c \
-	nv10_fragtex.c \
-	nv10_miptree.c \
-	nv10_prim_vbuf.c \
-	nv10_screen.c \
-	nv10_state.c \
-	nv10_state_emit.c \
-	nv10_surface.c \
-	nv10_vbo.c
+	nv20_clear.c \
+	nv20_context.c \
+	nv20_fragprog.c \
+	nv20_fragtex.c \
+	nv20_miptree.c \
+	nv20_prim_vbuf.c \
+	nv20_screen.c \
+	nv20_state.c \
+	nv20_state_emit.c \
+	nv20_surface.c \
+	nv20_vbo.c \
+	nv20_vertprog.c
 
 C_SOURCES = \
 	$(COMMON_SOURCES) \
