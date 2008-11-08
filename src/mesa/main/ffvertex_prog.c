@@ -726,11 +726,16 @@ static void emit_normalize_vec3( struct tnl_program *p,
 				 struct ureg dest,
 				 struct ureg src )
 {
+#if 0
+   /* XXX use this when drivers are ready for NRM3 */
+   emit_op1(p, OPCODE_NRM3, dest, WRITEMASK_XYZ, src);
+#else
    struct ureg tmp = get_temp(p);
    emit_op2(p, OPCODE_DP3, tmp, WRITEMASK_X, src, src);
    emit_op1(p, OPCODE_RSQ, tmp, WRITEMASK_X, tmp);
    emit_op2(p, OPCODE_MUL, dest, 0, src, swizzle1(tmp, X));
    release_temp(p, tmp);
+#endif
 }
 
 static void emit_passthrough( struct tnl_program *p, 
