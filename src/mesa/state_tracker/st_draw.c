@@ -672,7 +672,7 @@ st_draw_vbo(GLcontext *ctx,
       pipe_buffer_reference(pipe->screen, &vbuffer[attr].buffer, NULL);
       assert(!vbuffer[attr].buffer);
    }
-   pipe->set_vertex_buffers(pipe, vp->num_inputs, vbuffer);
+   pipe->set_vertex_buffers(pipe, num_vbuffers, vbuffer);
 }
 
 
