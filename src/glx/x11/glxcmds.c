@@ -254,10 +254,6 @@ GLXContext AllocateGLXContext( Display *dpy )
      CARD8 opcode;
     __GLXattribute *state;
 
-#ifdef USE_XCB
-    printf("USE_XCB\n");
-#endif
-
     if (!dpy)
         return NULL;
 
