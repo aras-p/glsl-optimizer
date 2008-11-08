@@ -6,16 +6,16 @@
 #include "tgsi/tgsi_parse.h"
 #include "tgsi/tgsi_util.h"
 
-#include "nv10_context.h"
+#include "nv20_context.h"
 
 void
-nv10_fragprog_bind(struct nv10_context *nv10, struct nv10_fragment_program *fp)
+nv20_fragprog_bind(struct nv20_context *nv20, struct nv20_fragment_program *fp)
 {
 }
 
 void
-nv10_fragprog_destroy(struct nv10_context *nv10,
-		      struct nv10_fragment_program *fp)
+nv20_fragprog_destroy(struct nv20_context *nv20,
+		      struct nv20_fragment_program *fp)
 {
 }
 

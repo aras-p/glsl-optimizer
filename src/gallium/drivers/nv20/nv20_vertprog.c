@@ -6,8 +6,8 @@
 #include "tgsi/tgsi_parse.h"
 #include "tgsi/tgsi_dump.h"
 
-#include "nv30_context.h"
-#include "nv30_state.h"
+#include "nv20_context.h"
+#include "nv20_state.h"
 
 /* TODO (at least...):
  *  1. Indexed consts  + ARL
@@ -32,47 +32,47 @@
 #define MASK_ALL (MASK_X|MASK_Y|MASK_Z|MASK_W)
 #define DEF_SCALE 0
 #define DEF_CTEST 0
-#include "nv30_shader.h"
+#include "nv20_shader.h"
 
-#define swz(s,x,y,z,w) nv30_sr_swz((s), SWZ_##x, SWZ_##y, SWZ_##z, SWZ_##w)
-#define neg(s) nv30_sr_neg((s))
-#define abs(s) nv30_sr_abs((s))
+#define swz(s,x,y,z,w) nv20_sr_swz((s), SWZ_##x, SWZ_##y, SWZ_##z, SWZ_##w)
+#define neg(s) nv20_sr_neg((s))
+#define abs(s) nv20_sr_abs((s))
 
-struct nv30_vpc {
-	struct nv30_vertex_program *vp;
+struct nv20_vpc {
+	struct nv20_vertex_program *vp;
 
-	struct nv30_vertex_program_exec *vpi;
+	struct nv20_vertex_program_exec *vpi;
 
 	unsigned output_map[PIPE_MAX_SHADER_OUTPUTS];
 
 	int high_temp;
 	int temp_temp_count;
 
-	struct nv30_sreg *imm;
+	struct nv20_sreg *imm;
 	unsigned nr_imm;
 };
 
-static struct nv30_sreg
-temp(struct nv30_vpc *vpc)
+static struct nv20_sreg
+temp(struct nv20_vpc *vpc)
 {
 	int idx;
 
 	idx  = vpc->temp_temp_count++;
 	idx += vpc->high_temp + 1;
-	return nv30_sr(NV30SR_TEMP, idx);
+	return nv20_sr(NV30SR_TEMP, idx);
 }
 
-static struct nv30_sreg
-constant(struct nv30_vpc *vpc, int pipe, float x, float y, float z, float w)
+static struct nv20_sreg
+constant(struct nv20_vpc *vpc, int pipe, float x, float y, float z, float w)
 {
-	struct nv30_vertex_program *vp = vpc->vp;
-	struct nv30_vertex_program_data *vpd;
+	struct nv20_vertex_program *vp = vpc->vp;
+	struct nv20_vertex_program_data *vpd;
 	int idx;
 
 	if (pipe >= 0) {
 		for (idx = 0; idx < vp->nr_consts; idx++) {
 			if (vp->consts[idx].index == pipe)
-				return nv30_sr(NV30SR_CONST, idx);
+				return nv20_sr(NV30SR_CONST, idx);
 		}
 	}
 
@@ -85,16 +85,16 @@ constant(struct nv30_vpc *vpc, int pipe, float x, float y, float z, float w)
 	vpd->value[1] = y;
 	vpd->value[2] = z;
 	vpd->value[3] = w;
-	return nv30_sr(NV30SR_CONST, idx);
+	return nv20_sr(NV30SR_CONST, idx);
 }
 
 #define arith(cc,s,o,d,m,s0,s1,s2) \
-	nv30_vp_arith((cc), (s), NV30_VP_INST_##o, (d), (m), (s0), (s1), (s2))
+	nv20_vp_arith((cc), (s), NV30_VP_INST_##o, (d), (m), (s0), (s1), (s2))
 
 static void
-emit_src(struct nv30_vpc *vpc, uint32_t *hw, int pos, struct nv30_sreg src)
+emit_src(struct nv20_vpc *vpc, uint32_t *hw, int pos, struct nv20_sreg src)
 {
-	struct nv30_vertex_program *vp = vpc->vp;
+	struct nv20_vertex_program *vp = vpc->vp;
 	uint32_t sr = 0;
 
 	switch (src.type) {
@@ -163,9 +163,9 @@ emit_src(struct nv30_vpc *vpc, uint32_t *hw, int pos, struct nv30_sreg src)
 }
 
 static void
-emit_dst(struct nv30_vpc *vpc, uint32_t *hw, int slot, struct nv30_sreg dst)
+emit_dst(struct nv20_vpc *vpc, uint32_t *hw, int slot, struct nv20_sreg dst)
 {
-	struct nv30_vertex_program *vp = vpc->vp;
+	struct nv20_vertex_program *vp = vpc->vp;
 
 	switch (dst.type) {
 	case NV30SR_TEMP:
@@ -205,12 +205,12 @@ emit_dst(struct nv30_vpc *vpc, uint32_t *hw, int slot, struct nv30_sreg dst)
 }
 
 static void
-nv30_vp_arith(struct nv30_vpc *vpc, int slot, int op,
-	      struct nv30_sreg dst, int mask,
-	      struct nv30_sreg s0, struct nv30_sreg s1,
-	      struct nv30_sreg s2)
+nv20_vp_arith(struct nv20_vpc *vpc, int slot, int op,
+	      struct nv20_sreg dst, int mask,
+	      struct nv20_sreg s0, struct nv20_sreg s1,
+	      struct nv20_sreg s2)
 {
-	struct nv30_vertex_program *vp = vpc->vp;
+	struct nv20_vertex_program *vp = vpc->vp;
 	uint32_t *hw;
 
 	vp->insns = realloc(vp->insns, ++vp->nr_insns * sizeof(*vpc->vpi));
@@ -248,13 +248,13 @@ nv30_vp_arith(struct nv30_vpc *vpc, int slot, int op,
 	emit_src(vpc, hw, 2, s2);
 }
 
-static INLINE struct nv30_sreg
-tgsi_src(struct nv30_vpc *vpc, const struct tgsi_full_src_register *fsrc) {
-	struct nv30_sreg src;
+static INLINE struct nv20_sreg
+tgsi_src(struct nv20_vpc *vpc, const struct tgsi_full_src_register *fsrc) {
+	struct nv20_sreg src;
 
 	switch (fsrc->SrcRegister.File) {
 	case TGSI_FILE_INPUT:
-		src = nv30_sr(NV30SR_INPUT, fsrc->SrcRegister.Index);
+		src = nv20_sr(NV30SR_INPUT, fsrc->SrcRegister.Index);
 		break;
 	case TGSI_FILE_CONSTANT:
 		src = constant(vpc, fsrc->SrcRegister.Index, 0, 0, 0, 0);
@@ -265,7 +265,7 @@ tgsi_src(struct nv30_vpc *vpc, const struct tgsi_full_src_register *fsrc) {
 	case TGSI_FILE_TEMPORARY:
 		if (vpc->high_temp < fsrc->SrcRegister.Index)
 			vpc->high_temp = fsrc->SrcRegister.Index;
-		src = nv30_sr(NV30SR_TEMP, fsrc->SrcRegister.Index);
+		src = nv20_sr(NV30SR_TEMP, fsrc->SrcRegister.Index);
 		break;
 	default:
 		NOUVEAU_ERR("bad src file\n");
@@ -281,18 +281,18 @@ tgsi_src(struct nv30_vpc *vpc, const struct tgsi_full_src_register *fsrc) {
 	return src;
 }
 
-static INLINE struct nv30_sreg
-tgsi_dst(struct nv30_vpc *vpc, const struct tgsi_full_dst_register *fdst) {
-	struct nv30_sreg dst;
+static INLINE struct nv20_sreg
+tgsi_dst(struct nv20_vpc *vpc, const struct tgsi_full_dst_register *fdst) {
+	struct nv20_sreg dst;
 
 	switch (fdst->DstRegister.File) {
 	case TGSI_FILE_OUTPUT:
-		dst = nv30_sr(NV30SR_OUTPUT,
+		dst = nv20_sr(NV30SR_OUTPUT,
 			      vpc->output_map[fdst->DstRegister.Index]);
 
 		break;
 	case TGSI_FILE_TEMPORARY:
-		dst = nv30_sr(NV30SR_TEMP, fdst->DstRegister.Index);
+		dst = nv20_sr(NV30SR_TEMP, fdst->DstRegister.Index);
 		if (vpc->high_temp < dst.index)
 			vpc->high_temp = dst.index;
 		break;
@@ -317,11 +317,11 @@ tgsi_mask(uint tgsi)
 }
 
 static boolean
-nv30_vertprog_parse_instruction(struct nv30_vpc *vpc,
+nv20_vertprog_parse_instruction(struct nv20_vpc *vpc,
 				const struct tgsi_full_instruction *finst)
 {
-	struct nv30_sreg src[3], dst, tmp;
-	struct nv30_sreg none = nv30_sr(NV30SR_NONE, 0);
+	struct nv20_sreg src[3], dst, tmp;
+	struct nv20_sreg none = nv20_sr(NV30SR_NONE, 0);
 	int mask;
 	int ai = -1, ci = -1;
 	int i;
@@ -484,7 +484,7 @@ nv30_vertprog_parse_instruction(struct nv30_vpc *vpc,
 }
 
 static boolean
-nv30_vertprog_parse_decl_output(struct nv30_vpc *vpc,
+nv20_vertprog_parse_decl_output(struct nv20_vpc *vpc,
 				const struct tgsi_full_declaration *fdec)
 {
 	int hw;
@@ -539,7 +539,7 @@ nv30_vertprog_parse_decl_output(struct nv30_vpc *vpc,
 }
 
 static boolean
-nv30_vertprog_prepare(struct nv30_vpc *vpc)
+nv20_vertprog_prepare(struct nv20_vpc *vpc)
 {
 	struct tgsi_parse_context p;
 	int nr_imm = 0;
@@ -560,7 +560,7 @@ nv30_vertprog_prepare(struct nv30_vpc *vpc)
 	tgsi_parse_free(&p);
 
 	if (nr_imm) {
-		vpc->imm = CALLOC(nr_imm, sizeof(struct nv30_sreg));
+		vpc->imm = CALLOC(nr_imm, sizeof(struct nv20_sreg));
 		assert(vpc->imm);
 	}
 
@@ -568,21 +568,21 @@ nv30_vertprog_prepare(struct nv30_vpc *vpc)
 }
 
 static void
-nv30_vertprog_translate(struct nv30_context *nv30,
-			struct nv30_vertex_program *vp)
+nv20_vertprog_translate(struct nv20_context *nv20,
+			struct nv20_vertex_program *vp)
 {
 	struct tgsi_parse_context parse;
-	struct nv30_vpc *vpc = NULL;
+	struct nv20_vpc *vpc = NULL;
 
 	tgsi_dump(vp->pipe.tokens,0);
 
-	vpc = CALLOC(1, sizeof(struct nv30_vpc));
+	vpc = CALLOC(1, sizeof(struct nv20_vpc));
 	if (!vpc)
 		return;
 	vpc->vp = vp;
 	vpc->high_temp = -1;
 
-	if (!nv30_vertprog_prepare(vpc)) {
+	if (!nv20_vertprog_prepare(vpc)) {
 		FREE(vpc);
 		return;
 	}
@@ -599,7 +599,7 @@ nv30_vertprog_translate(struct nv30_context *nv30,
 			fdec = &parse.FullToken.FullDeclaration;
 			switch (fdec->Declaration.File) {
 			case TGSI_FILE_OUTPUT:
-				if (!nv30_vertprog_parse_decl_output(vpc, fdec))
+				if (!nv20_vertprog_parse_decl_output(vpc, fdec))
 					goto out_err;
 				break;
 			default:
@@ -626,7 +626,7 @@ nv30_vertprog_translate(struct nv30_context *nv30,
 		{
 			const struct tgsi_full_instruction *finst;
 			finst = &parse.FullToken.FullInstruction;
-			if (!nv30_vertprog_parse_instruction(vpc, finst))
+			if (!nv20_vertprog_parse_instruction(vpc, finst))
 				goto out_err;
 		}
 			break;
@@ -643,35 +643,35 @@ out_err:
 }
 
 static boolean
-nv30_vertprog_validate(struct nv30_context *nv30)
+nv20_vertprog_validate(struct nv20_context *nv20)
 { 
-	struct nouveau_winsys *nvws = nv30->nvws;
-	struct pipe_winsys *ws = nv30->pipe.winsys;
-	struct nouveau_grobj *rankine = nv30->screen->rankine;
-	struct nv30_vertex_program *vp;
+	struct nouveau_winsys *nvws = nv20->nvws;
+	struct pipe_winsys *ws = nv20->pipe.winsys;
+	struct nouveau_grobj *rankine = nv20->screen->rankine;
+	struct nv20_vertex_program *vp;
 	struct pipe_buffer *constbuf;
 	boolean upload_code = FALSE, upload_data = FALSE;
 	int i;
 
-	vp = nv30->vertprog;
-	constbuf = nv30->constbuf[PIPE_SHADER_VERTEX];
+	vp = nv20->vertprog;
+	constbuf = nv20->constbuf[PIPE_SHADER_VERTEX];
 
 	/* Translate TGSI shader into hw bytecode */
 	if (!vp->translated) {
-		nv30_vertprog_translate(nv30, vp);
+		nv20_vertprog_translate(nv20, vp);
 		if (!vp->translated)
 			return FALSE;
 	}
 
 	/* Allocate hw vtxprog exec slots */
 	if (!vp->exec) {
-		struct nouveau_resource *heap = nv30->screen->vp_exec_heap;
+		struct nouveau_resource *heap = nv20->screen->vp_exec_heap;
 		struct nouveau_stateobj *so;
 		uint vplen = vp->nr_insns;
 
 		if (nvws->res_alloc(heap, vplen, vp, &vp->exec)) {
 			while (heap->next && heap->size < vplen) {
-				struct nv30_vertex_program *evict;
+				struct nv20_vertex_program *evict;
 				
 				evict = heap->next->priv;
 				nvws->res_free(&evict->exec);
@@ -691,11 +691,11 @@ nv30_vertprog_validate(struct nv30_context *nv30)
 
 	/* Allocate hw vtxprog const slots */
 	if (vp->nr_consts && !vp->data) {
-		struct nouveau_resource *heap = nv30->screen->vp_data_heap;
+		struct nouveau_resource *heap = nv20->screen->vp_data_heap;
 
 		if (nvws->res_alloc(heap, vp->nr_consts, vp, &vp->data)) {
 			while (heap->next && heap->size < vp->nr_consts) {
-				struct nv30_vertex_program *evict;
+				struct nv20_vertex_program *evict;
 				
 				evict = heap->next->priv;
 				nvws->res_free(&evict->data);
@@ -718,7 +718,7 @@ nv30_vertprog_validate(struct nv30_context *nv30)
 	 */
 	if (vp->exec_start != vp->exec->start) {
 		for (i = 0; i < vp->nr_insns; i++) {
-			struct nv30_vertex_program_exec *vpi = &vp->insns[i];
+			struct nv20_vertex_program_exec *vpi = &vp->insns[i];
 
 			if (vpi->has_branch_offset) {
 				assert(0);
@@ -730,7 +730,7 @@ nv30_vertprog_validate(struct nv30_context *nv30)
 
 	if (vp->nr_consts && vp->data_start != vp->data->start) {
 		for (i = 0; i < vp->nr_insns; i++) {
-			struct nv30_vertex_program_exec *vpi = &vp->insns[i];
+			struct nv20_vertex_program_exec *vpi = &vp->insns[i];
 
 			if (vpi->const_index >= 0) {
 				vpi->data[1] &= ~NV30_VP_INST_CONST_SRC_MASK;
@@ -754,7 +754,7 @@ nv30_vertprog_validate(struct nv30_context *nv30)
 		}
 
 		for (i = 0; i < vp->nr_consts; i++) {
-			struct nv30_vertex_program_data *vpd = &vp->consts[i];
+			struct nv20_vertex_program_data *vpd = &vp->consts[i];
 
 			if (vpd->index >= 0) {
 				if (!upload_data &&
@@ -792,8 +792,8 @@ nv30_vertprog_validate(struct nv30_context *nv30)
 		}
 	}
 
-	if (vp->so != nv30->state.hw[NV30_STATE_VERTPROG]) {
-		so_ref(vp->so, &nv30->state.hw[NV30_STATE_VERTPROG]);
+	if (vp->so != nv20->state.hw[NV30_STATE_VERTPROG]) {
+		so_ref(vp->so, &nv20->state.hw[NV30_STATE_VERTPROG]);
 		return TRUE;
 	}
 
@@ -801,9 +801,9 @@ nv30_vertprog_validate(struct nv30_context *nv30)
 }
 
 void
-nv30_vertprog_destroy(struct nv30_context *nv30, struct nv30_vertex_program *vp)
+nv20_vertprog_destroy(struct nv20_context *nv20, struct nv20_vertex_program *vp)
 {
-	struct nouveau_winsys *nvws = nv30->screen->nvws;
+	struct nouveau_winsys *nvws = nv20->screen->nvws;
 
 	vp->translated = FALSE;
 
@@ -829,8 +829,8 @@ nv30_vertprog_destroy(struct nv30_context *nv30, struct nv30_vertex_program *vp)
 	so_ref(NULL, &vp->so);
 }
 
-struct nv30_state_entry nv30_state_vertprog = {
-	.validate = nv30_vertprog_validate,
+struct nv20_state_entry nv20_state_vertprog = {
+	.validate = nv20_vertprog_validate,
 	.dirty = {
 		.pipe = NV30_NEW_VERTPROG /*| NV30_NEW_UCP*/,
 		.hw = NV30_STATE_VERTPROG,

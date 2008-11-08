@@ -1,4 +1,4 @@
-#include "nv10_context.h"
+#include "nv20_context.h"
 
 static INLINE int log2i(int i)
 {
@@ -33,14 +33,14 @@ static INLINE int log2i(int i)
   NV10TCL_TX_FORMAT_FORMAT_##tf,                                               \
 }
 
-struct nv10_texture_format {
+struct nv20_texture_format {
 	boolean defined;
 	uint	pipe;
 	int     format;
 };
 
-static struct nv10_texture_format
-nv10_texture_formats[] = {
+static struct nv20_texture_format
+nv20_texture_formats[] = {
 	_(A8R8G8B8_UNORM, A8R8G8B8),
 	_(A1R5G5B5_UNORM, A1R5G5B5),
 	_(A4R4G4B4_UNORM, A4R4G4B4),
@@ -54,10 +54,10 @@ nv10_texture_formats[] = {
 	{},
 };
 
-static struct nv10_texture_format *
-nv10_fragtex_format(uint pipe_format)
+static struct nv20_texture_format *
+nv20_fragtex_format(uint pipe_format)
 {
-	struct nv10_texture_format *tf = nv10_texture_formats;
+	struct nv20_texture_format *tf = nv20_texture_formats;
 
 	while (tf->defined) {
 		if (tf->pipe == pipe_format)
@@ -70,16 +70,16 @@ nv10_fragtex_format(uint pipe_format)
 
 
 static void
-nv10_fragtex_build(struct nv10_context *nv10, int unit)
+nv20_fragtex_build(struct nv20_context *nv20, int unit)
 {
 #if 0
-	struct nv10_sampler_state *ps = nv10->tex_sampler[unit];
-	struct nv10_miptree *nv10mt = nv10->tex_miptree[unit];
-	struct pipe_texture *pt = &nv10mt->base;
-	struct nv10_texture_format *tf;
+	struct nv20_sampler_state *ps = nv20->tex_sampler[unit];
+	struct nv20_miptree *nv20mt = nv20->tex_miptree[unit];
+	struct pipe_texture *pt = &nv20mt->base;
+	struct nv20_texture_format *tf;
 	uint32_t txf, txs, txp;
 
-	tf = nv10_fragtex_format(pt->format);
+	tf = nv20_fragtex_format(pt->format);
 	if (!tf || !tf->defined) {
 		NOUVEAU_ERR("Unsupported texture format: 0x%x\n", pt->format);
 		return;
@@ -107,9 +107,9 @@ nv10_fragtex_build(struct nv10_context *nv10, int unit)
 		return;
 	}
 
-	BEGIN_RING(celsius, NV10TCL_TX_OFFSET(unit), 8);
-	OUT_RELOCl(nv10mt->buffer, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_GART | NOUVEAU_BO_RD);
-	OUT_RELOCd(nv10mt->buffer,txf,NOUVEAU_BO_VRAM | NOUVEAU_BO_GART | NOUVEAU_BO_OR | NOUVEAU_BO_RD, 1/*VRAM*/,2/*TT*/);
+	BEGIN_RING(kelvin, NV10TCL_TX_OFFSET(unit), 8);
+	OUT_RELOCl(nv20mt->buffer, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_GART | NOUVEAU_BO_RD);
+	OUT_RELOCd(nv20mt->buffer,txf,NOUVEAU_BO_VRAM | NOUVEAU_BO_GART | NOUVEAU_BO_OR | NOUVEAU_BO_RD, 1/*VRAM*/,2/*TT*/);
 	OUT_RING  (ps->wrap);
 	OUT_RING  (0x40000000); /* enable */
 	OUT_RING  (txs);
@@ -120,30 +120,30 @@ nv10_fragtex_build(struct nv10_context *nv10, int unit)
 }
 
 void
-nv10_fragtex_bind(struct nv10_context *nv10)
+nv20_fragtex_bind(struct nv20_context *nv20)
 {
 #if 0
-	struct nv10_fragment_program *fp = nv10->fragprog.active;
+	struct nv20_fragment_program *fp = nv20->fragprog.active;
 	unsigned samplers, unit;
 
-	samplers = nv10->fp_samplers & ~fp->samplers;
+	samplers = nv20->fp_samplers & ~fp->samplers;
 	while (samplers) {
 		unit = ffs(samplers) - 1;
 		samplers &= ~(1 << unit);
 
-		BEGIN_RING(celsius, NV10TCL_TX_ENABLE(unit), 1);
+		BEGIN_RING(kelvin, NV10TCL_TX_ENABLE(unit), 1);
 		OUT_RING  (0);
 	}
 
-	samplers = nv10->dirty_samplers & fp->samplers;
+	samplers = nv20->dirty_samplers & fp->samplers;
 	while (samplers) {
 		unit = ffs(samplers) - 1;
 		samplers &= ~(1 << unit);
 
-		nv10_fragtex_build(nv10, unit);
+		nv20_fragtex_build(nv20, unit);
 	}
 
-	nv10->fp_samplers = fp->samplers;
+	nv20->fp_samplers = fp->samplers;
 #endif
 }
 

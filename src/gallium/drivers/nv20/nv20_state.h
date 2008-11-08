@@ -1,10 +1,10 @@
-#ifndef __NV10_STATE_H__
-#define __NV10_STATE_H__
+#ifndef __NV20_STATE_H__
+#define __NV20_STATE_H__
 
 #include "pipe/p_state.h"
 #include "tgsi/tgsi_scan.h"
 
-struct nv10_blend_state {
+struct nv20_blend_state {
 	uint32_t b_enable;
 	uint32_t b_srcfunc;
 	uint32_t b_dstfunc;
@@ -14,14 +14,14 @@ struct nv10_blend_state {
 	uint32_t d_enable;
 };
 
-struct nv10_sampler_state {
+struct nv20_sampler_state {
 	uint32_t wrap;
 	uint32_t en;
 	uint32_t filt;
 	uint32_t bcol;
 };
 
-struct nv10_rasterizer_state {
+struct nv20_rasterizer_state {
 	uint32_t shade_model;
 
 	uint32_t line_width;
@@ -43,24 +43,24 @@ struct nv10_rasterizer_state {
 	const struct pipe_rasterizer_state *templ;
 };
 
-struct nv10_vertex_program_exec {
+struct nv20_vertex_program_exec {
 	uint32_t data[4];
 	boolean has_branch_offset;
 	int const_index;
 };
 
-struct nv10_vertex_program_data {
+struct nv20_vertex_program_data {
 	int index; /* immediates == -1 */
 	float value[4];
 };
 
-struct nv10_vertex_program {
+struct nv20_vertex_program {
 	const struct pipe_shader_state *pipe;
 
 	boolean translated;
-	struct nv10_vertex_program_exec *insns;
+	struct nv20_vertex_program_exec *insns;
 	unsigned nr_insns;
-	struct nv10_vertex_program_data *consts;
+	struct nv20_vertex_program_data *consts;
 	unsigned nr_consts;
 
 	struct nouveau_resource *exec;
@@ -73,12 +73,12 @@ struct nv10_vertex_program {
 	uint32_t or;
 };
 
-struct nv10_fragment_program_data {
+struct nv20_fragment_program_data {
 	unsigned offset;
 	unsigned index;
 };
 
-struct nv10_fragment_program {
+struct nv20_fragment_program {
 	struct pipe_shader_state pipe;
 	struct tgsi_shader_info info;
 
@@ -89,7 +89,7 @@ struct nv10_fragment_program {
 	uint32_t *insn;
 	int       insn_len;
 
-	struct nv10_fragment_program_data *consts;
+	struct nv20_fragment_program_data *consts;
 	unsigned nr_consts;
 
 	struct pipe_buffer *buffer;
@@ -99,7 +99,7 @@ struct nv10_fragment_program {
 };
 
 
-struct nv10_depth_stencil_alpha_state {
+struct nv20_depth_stencil_alpha_state {
 	struct {
 		uint32_t func;
 		uint32_t write_enable;
@@ -124,7 +124,7 @@ struct nv10_depth_stencil_alpha_state {
 	} alpha;
 };
 
-struct nv10_miptree {
+struct nv20_miptree {
 	struct pipe_texture base;
 
 	struct pipe_buffer *buffer;

@@ -5,16 +5,16 @@
 
 #include "tgsi/tgsi_parse.h"
 
-#include "nv10_context.h"
-#include "nv10_state.h"
+#include "nv20_context.h"
+#include "nv20_state.h"
 
 static void *
-nv10_blend_state_create(struct pipe_context *pipe,
+nv20_blend_state_create(struct pipe_context *pipe,
 			const struct pipe_blend_state *cso)
 {
-	struct nv10_blend_state *cb;
+	struct nv20_blend_state *cb;
 
-	cb = MALLOC(sizeof(struct nv10_blend_state));
+	cb = MALLOC(sizeof(struct nv20_blend_state));
 
 	cb->b_enable = cso->blend_enable ? 1 : 0;
 	cb->b_srcfunc = ((nvgl_blend_func(cso->alpha_src_factor)<<16) |
@@ -33,17 +33,17 @@ nv10_blend_state_create(struct pipe_context *pipe,
 }
 
 static void
-nv10_blend_state_bind(struct pipe_context *pipe, void *blend)
+nv20_blend_state_bind(struct pipe_context *pipe, void *blend)
 {
-	struct nv10_context *nv10 = nv10_context(pipe);
+	struct nv20_context *nv20 = nv20_context(pipe);
 
-	nv10->blend = (struct nv10_blend_state*)blend;
+	nv20->blend = (struct nv20_blend_state*)blend;
 
-	nv10->dirty |= NV10_NEW_BLEND;
+	nv20->dirty |= NV20_NEW_BLEND;
 }
 
 static void
-nv10_blend_state_delete(struct pipe_context *pipe, void *hwcso)
+nv20_blend_state_delete(struct pipe_context *pipe, void *hwcso)
 {
 	FREE(hwcso);
 }
@@ -82,13 +82,13 @@ wrap_mode(unsigned wrap) {
 }
 
 static void *
-nv10_sampler_state_create(struct pipe_context *pipe,
+nv20_sampler_state_create(struct pipe_context *pipe,
 			  const struct pipe_sampler_state *cso)
 {
-	struct nv10_sampler_state *ps;
+	struct nv20_sampler_state *ps;
 	uint32_t filter = 0;
 
-	ps = MALLOC(sizeof(struct nv10_sampler_state));
+	ps = MALLOC(sizeof(struct nv20_sampler_state));
 
 	ps->wrap = ((wrap_mode(cso->wrap_s) << NV10TCL_TX_FORMAT_WRAP_S_SHIFT) |
 		    (wrap_mode(cso->wrap_t) << NV10TCL_TX_FORMAT_WRAP_T_SHIFT));
@@ -204,41 +204,41 @@ nv10_sampler_state_create(struct pipe_context *pipe,
 }
 
 static void
-nv10_sampler_state_bind(struct pipe_context *pipe, unsigned nr, void **sampler)
+nv20_sampler_state_bind(struct pipe_context *pipe, unsigned nr, void **sampler)
 {
-	struct nv10_context *nv10 = nv10_context(pipe);
+	struct nv20_context *nv20 = nv20_context(pipe);
 	unsigned unit;
 
 	for (unit = 0; unit < nr; unit++) {
-		nv10->tex_sampler[unit] = sampler[unit];
-		nv10->dirty_samplers |= (1 << unit);
+		nv20->tex_sampler[unit] = sampler[unit];
+		nv20->dirty_samplers |= (1 << unit);
 	}
 }
 
 static void
-nv10_sampler_state_delete(struct pipe_context *pipe, void *hwcso)
+nv20_sampler_state_delete(struct pipe_context *pipe, void *hwcso)
 {
 	FREE(hwcso);
 }
 
 static void
-nv10_set_sampler_texture(struct pipe_context *pipe, unsigned nr,
+nv20_set_sampler_texture(struct pipe_context *pipe, unsigned nr,
 			 struct pipe_texture **miptree)
 {
-	struct nv10_context *nv10 = nv10_context(pipe);
+	struct nv20_context *nv20 = nv20_context(pipe);
 	unsigned unit;
 
 	for (unit = 0; unit < nr; unit++) {
-		nv10->tex_miptree[unit] = (struct nv10_miptree *)miptree[unit];
-		nv10->dirty_samplers |= (1 << unit);
+		nv20->tex_miptree[unit] = (struct nv20_miptree *)miptree[unit];
+		nv20->dirty_samplers |= (1 << unit);
 	}
 }
 
 static void *
-nv10_rasterizer_state_create(struct pipe_context *pipe,
+nv20_rasterizer_state_create(struct pipe_context *pipe,
 			     const struct pipe_rasterizer_state *cso)
 {
-	struct nv10_rasterizer_state *rs;
+	struct nv20_rasterizer_state *rs;
 	int i;
 
 	/*XXX: ignored:
@@ -249,7 +249,7 @@ nv10_rasterizer_state_create(struct pipe_context *pipe,
 	 * 	multisample
 	 * 	offset_units / offset_scale
 	 */
-	rs = MALLOC(sizeof(struct nv10_rasterizer_state));
+	rs = MALLOC(sizeof(struct nv20_rasterizer_state));
 
 	rs->templ = cso;
 	
@@ -312,30 +312,30 @@ nv10_rasterizer_state_create(struct pipe_context *pipe,
 }
 
 static void
-nv10_rasterizer_state_bind(struct pipe_context *pipe, void *rast)
+nv20_rasterizer_state_bind(struct pipe_context *pipe, void *rast)
 {
-	struct nv10_context *nv10 = nv10_context(pipe);
+	struct nv20_context *nv20 = nv20_context(pipe);
 
-	nv10->rast = (struct nv10_rasterizer_state*)rast;
+	nv20->rast = (struct nv20_rasterizer_state*)rast;
 
-	draw_set_rasterizer_state(nv10->draw, (nv10->rast ? nv10->rast->templ : NULL));
+	draw_set_rasterizer_state(nv20->draw, (nv20->rast ? nv20->rast->templ : NULL));
 
-	nv10->dirty |= NV10_NEW_RAST;
+	nv20->dirty |= NV20_NEW_RAST;
 }
 
 static void
-nv10_rasterizer_state_delete(struct pipe_context *pipe, void *hwcso)
+nv20_rasterizer_state_delete(struct pipe_context *pipe, void *hwcso)
 {
 	FREE(hwcso);
 }
 
 static void *
-nv10_depth_stencil_alpha_state_create(struct pipe_context *pipe,
+nv20_depth_stencil_alpha_state_create(struct pipe_context *pipe,
 			const struct pipe_depth_stencil_alpha_state *cso)
 {
-	struct nv10_depth_stencil_alpha_state *hw;
+	struct nv20_depth_stencil_alpha_state *hw;
 
-	hw = MALLOC(sizeof(struct nv10_depth_stencil_alpha_state));
+	hw = MALLOC(sizeof(struct nv20_depth_stencil_alpha_state));
 
 	hw->depth.func		= nvgl_comparison_op(cso->depth.func);
 	hw->depth.write_enable	= cso->depth.writemask ? 1 : 0;
@@ -358,55 +358,55 @@ nv10_depth_stencil_alpha_state_create(struct pipe_context *pipe,
 }
 
 static void
-nv10_depth_stencil_alpha_state_bind(struct pipe_context *pipe, void *dsa)
+nv20_depth_stencil_alpha_state_bind(struct pipe_context *pipe, void *dsa)
 {
-	struct nv10_context *nv10 = nv10_context(pipe);
+	struct nv20_context *nv20 = nv20_context(pipe);
 
-	nv10->dsa = (struct nv10_depth_stencil_alpha_state*)dsa;
+	nv20->dsa = (struct nv20_depth_stencil_alpha_state*)dsa;
 
-	nv10->dirty |= NV10_NEW_DSA;
+	nv20->dirty |= NV20_NEW_DSA;
 }
 
 static void
-nv10_depth_stencil_alpha_state_delete(struct pipe_context *pipe, void *hwcso)
+nv20_depth_stencil_alpha_state_delete(struct pipe_context *pipe, void *hwcso)
 {
 	FREE(hwcso);
 }
 
 static void *
-nv10_vp_state_create(struct pipe_context *pipe,
+nv20_vp_state_create(struct pipe_context *pipe,
 		     const struct pipe_shader_state *templ)
 {
-	struct nv10_context *nv10 = nv10_context(pipe);
+	struct nv20_context *nv20 = nv20_context(pipe);
 
-	return draw_create_vertex_shader(nv10->draw, templ);
+	return draw_create_vertex_shader(nv20->draw, templ);
 }
 
 static void
-nv10_vp_state_bind(struct pipe_context *pipe, void *shader)
+nv20_vp_state_bind(struct pipe_context *pipe, void *shader)
 {
-	struct nv10_context *nv10 = nv10_context(pipe);
+	struct nv20_context *nv20 = nv20_context(pipe);
 
-	draw_bind_vertex_shader(nv10->draw, (struct draw_vertex_shader *) shader);
+	draw_bind_vertex_shader(nv20->draw, (struct draw_vertex_shader *) shader);
 
-	nv10->dirty |= NV10_NEW_VERTPROG;
+	nv20->dirty |= NV20_NEW_VERTPROG;
 }
 
 static void
-nv10_vp_state_delete(struct pipe_context *pipe, void *shader)
+nv20_vp_state_delete(struct pipe_context *pipe, void *shader)
 {
-	struct nv10_context *nv10 = nv10_context(pipe);
+	struct nv20_context *nv20 = nv20_context(pipe);
 
-	draw_delete_vertex_shader(nv10->draw, (struct draw_vertex_shader *) shader);
+	draw_delete_vertex_shader(nv20->draw, (struct draw_vertex_shader *) shader);
 }
 
 static void *
-nv10_fp_state_create(struct pipe_context *pipe,
+nv20_fp_state_create(struct pipe_context *pipe,
 		     const struct pipe_shader_state *cso)
 {
-	struct nv10_fragment_program *fp;
+	struct nv20_fragment_program *fp;
 
-	fp = CALLOC(1, sizeof(struct nv10_fragment_program));
+	fp = CALLOC(1, sizeof(struct nv20_fragment_program));
 	fp->pipe.tokens = tgsi_dup_tokens(cso->tokens);
 	
 	tgsi_scan_shader(cso->tokens, &fp->info);
@@ -415,51 +415,51 @@ nv10_fp_state_create(struct pipe_context *pipe,
 }
 
 static void
-nv10_fp_state_bind(struct pipe_context *pipe, void *hwcso)
+nv20_fp_state_bind(struct pipe_context *pipe, void *hwcso)
 {
-	struct nv10_context *nv10 = nv10_context(pipe);
-	struct nv10_fragment_program *fp = hwcso;
+	struct nv20_context *nv20 = nv20_context(pipe);
+	struct nv20_fragment_program *fp = hwcso;
 
-	nv10->fragprog.current = fp;
-	nv10->dirty |= NV10_NEW_FRAGPROG;
+	nv20->fragprog.current = fp;
+	nv20->dirty |= NV20_NEW_FRAGPROG;
 }
 
 static void
-nv10_fp_state_delete(struct pipe_context *pipe, void *hwcso)
+nv20_fp_state_delete(struct pipe_context *pipe, void *hwcso)
 {
-	struct nv10_context *nv10 = nv10_context(pipe);
-	struct nv10_fragment_program *fp = hwcso;
+	struct nv20_context *nv20 = nv20_context(pipe);
+	struct nv20_fragment_program *fp = hwcso;
 
-	nv10_fragprog_destroy(nv10, fp);
+	nv20_fragprog_destroy(nv20, fp);
 	FREE((void*)fp->pipe.tokens);
 	FREE(fp);
 }
 
 static void
-nv10_set_blend_color(struct pipe_context *pipe,
+nv20_set_blend_color(struct pipe_context *pipe,
 		     const struct pipe_blend_color *bcol)
 {
-	struct nv10_context *nv10 = nv10_context(pipe);
+	struct nv20_context *nv20 = nv20_context(pipe);
 
-	nv10->blend_color = (struct pipe_blend_color*)bcol;
+	nv20->blend_color = (struct pipe_blend_color*)bcol;
 
-	nv10->dirty |= NV10_NEW_BLENDCOL;
+	nv20->dirty |= NV20_NEW_BLENDCOL;
 }
 
 static void
-nv10_set_clip_state(struct pipe_context *pipe,
+nv20_set_clip_state(struct pipe_context *pipe,
 		    const struct pipe_clip_state *clip)
 {
-	struct nv10_context *nv10 = nv10_context(pipe);
+	struct nv20_context *nv20 = nv20_context(pipe);
 
-	draw_set_clip_state(nv10->draw, clip);
+	draw_set_clip_state(nv20->draw, clip);
 }
 
 static void
-nv10_set_constant_buffer(struct pipe_context *pipe, uint shader, uint index,
+nv20_set_constant_buffer(struct pipe_context *pipe, uint shader, uint index,
 			 const struct pipe_constant_buffer *buf )
 {
-	struct nv10_context *nv10 = nv10_context(pipe);
+	struct nv20_context *nv20 = nv20_context(pipe);
 	struct pipe_winsys *ws = pipe->winsys;
 
 	assert(shader < PIPE_SHADER_TYPES);
@@ -469,8 +469,8 @@ nv10_set_constant_buffer(struct pipe_context *pipe, uint shader, uint index,
 		void *mapped;
 		if (buf->size && (mapped = ws->buffer_map(ws, buf->buffer, PIPE_BUFFER_USAGE_CPU_READ)))
 		{
-			memcpy(nv10->constbuf[shader], mapped, buf->size);
-			nv10->constbuf_nr[shader] =
+			memcpy(nv20->constbuf[shader], mapped, buf->size);
+			nv20->constbuf_nr[shader] =
 				buf->size / (4 * sizeof(float));
 			ws->buffer_unmap(ws, buf->buffer);
 		}
@@ -478,111 +478,111 @@ nv10_set_constant_buffer(struct pipe_context *pipe, uint shader, uint index,
 }
 
 static void
-nv10_set_framebuffer_state(struct pipe_context *pipe,
+nv20_set_framebuffer_state(struct pipe_context *pipe,
 			   const struct pipe_framebuffer_state *fb)
 {
-	struct nv10_context *nv10 = nv10_context(pipe);
+	struct nv20_context *nv20 = nv20_context(pipe);
 
-	nv10->framebuffer = (struct pipe_framebuffer_state*)fb;
+	nv20->framebuffer = (struct pipe_framebuffer_state*)fb;
 
-	nv10->dirty |= NV10_NEW_FRAMEBUFFER;
+	nv20->dirty |= NV20_NEW_FRAMEBUFFER;
 }
 
 static void
-nv10_set_polygon_stipple(struct pipe_context *pipe,
+nv20_set_polygon_stipple(struct pipe_context *pipe,
 			 const struct pipe_poly_stipple *stipple)
 {
 	NOUVEAU_ERR("line stipple hahaha\n");
 }
 
 static void
-nv10_set_scissor_state(struct pipe_context *pipe,
+nv20_set_scissor_state(struct pipe_context *pipe,
 		       const struct pipe_scissor_state *s)
 {
-	struct nv10_context *nv10 = nv10_context(pipe);
+	struct nv20_context *nv20 = nv20_context(pipe);
 
-	nv10->scissor = (struct pipe_scissor_state*)s;
+	nv20->scissor = (struct pipe_scissor_state*)s;
 
-	nv10->dirty |= NV10_NEW_SCISSOR;
+	nv20->dirty |= NV20_NEW_SCISSOR;
 }
 
 static void
-nv10_set_viewport_state(struct pipe_context *pipe,
+nv20_set_viewport_state(struct pipe_context *pipe,
 			const struct pipe_viewport_state *vpt)
 {
-	struct nv10_context *nv10 = nv10_context(pipe);
+	struct nv20_context *nv20 = nv20_context(pipe);
 
-	nv10->viewport = (struct pipe_viewport_state*)vpt;
+	nv20->viewport = (struct pipe_viewport_state*)vpt;
 
-	draw_set_viewport_state(nv10->draw, nv10->viewport);
+	draw_set_viewport_state(nv20->draw, nv20->viewport);
 
-	nv10->dirty |= NV10_NEW_VIEWPORT;
+	nv20->dirty |= NV20_NEW_VIEWPORT;
 }
 
 static void
-nv10_set_vertex_buffers(struct pipe_context *pipe, unsigned count,
+nv20_set_vertex_buffers(struct pipe_context *pipe, unsigned count,
 			const struct pipe_vertex_buffer *vb)
 {
-	struct nv10_context *nv10 = nv10_context(pipe);
+	struct nv20_context *nv20 = nv20_context(pipe);
 
-	memcpy(nv10->vtxbuf, vb, sizeof(*vb) * count);
-	nv10->dirty |= NV10_NEW_VTXARRAYS;
+	memcpy(nv20->vtxbuf, vb, sizeof(*vb) * count);
+	nv20->dirty |= NV20_NEW_VTXARRAYS;
 
-	draw_set_vertex_buffers(nv10->draw, count, vb);
+	draw_set_vertex_buffers(nv20->draw, count, vb);
 }
 
 static void
-nv10_set_vertex_elements(struct pipe_context *pipe, unsigned count,
+nv20_set_vertex_elements(struct pipe_context *pipe, unsigned count,
 			 const struct pipe_vertex_element *ve)
 {
-	struct nv10_context *nv10 = nv10_context(pipe);
+	struct nv20_context *nv20 = nv20_context(pipe);
 
-	memcpy(nv10->vtxelt, ve, sizeof(*ve) * count);
-	nv10->dirty |= NV10_NEW_VTXARRAYS;
+	memcpy(nv20->vtxelt, ve, sizeof(*ve) * count);
+	nv20->dirty |= NV20_NEW_VTXARRAYS;
 
-	draw_set_vertex_elements(nv10->draw, count, ve);
+	draw_set_vertex_elements(nv20->draw, count, ve);
 }
 
 void
-nv10_init_state_functions(struct nv10_context *nv10)
+nv20_init_state_functions(struct nv20_context *nv20)
 {
-	nv10->pipe.create_blend_state = nv10_blend_state_create;
-	nv10->pipe.bind_blend_state = nv10_blend_state_bind;
-	nv10->pipe.delete_blend_state = nv10_blend_state_delete;
+	nv20->pipe.create_blend_state = nv20_blend_state_create;
+	nv20->pipe.bind_blend_state = nv20_blend_state_bind;
+	nv20->pipe.delete_blend_state = nv20_blend_state_delete;
 
-	nv10->pipe.create_sampler_state = nv10_sampler_state_create;
-	nv10->pipe.bind_sampler_states = nv10_sampler_state_bind;
-	nv10->pipe.delete_sampler_state = nv10_sampler_state_delete;
-	nv10->pipe.set_sampler_textures = nv10_set_sampler_texture;
+	nv20->pipe.create_sampler_state = nv20_sampler_state_create;
+	nv20->pipe.bind_sampler_states = nv20_sampler_state_bind;
+	nv20->pipe.delete_sampler_state = nv20_sampler_state_delete;
+	nv20->pipe.set_sampler_textures = nv20_set_sampler_texture;
 
-	nv10->pipe.create_rasterizer_state = nv10_rasterizer_state_create;
-	nv10->pipe.bind_rasterizer_state = nv10_rasterizer_state_bind;
-	nv10->pipe.delete_rasterizer_state = nv10_rasterizer_state_delete;
+	nv20->pipe.create_rasterizer_state = nv20_rasterizer_state_create;
+	nv20->pipe.bind_rasterizer_state = nv20_rasterizer_state_bind;
+	nv20->pipe.delete_rasterizer_state = nv20_rasterizer_state_delete;
 
-	nv10->pipe.create_depth_stencil_alpha_state =
-		nv10_depth_stencil_alpha_state_create;
-	nv10->pipe.bind_depth_stencil_alpha_state =
-		nv10_depth_stencil_alpha_state_bind;
-	nv10->pipe.delete_depth_stencil_alpha_state =
-		nv10_depth_stencil_alpha_state_delete;
+	nv20->pipe.create_depth_stencil_alpha_state =
+		nv20_depth_stencil_alpha_state_create;
+	nv20->pipe.bind_depth_stencil_alpha_state =
+		nv20_depth_stencil_alpha_state_bind;
+	nv20->pipe.delete_depth_stencil_alpha_state =
+		nv20_depth_stencil_alpha_state_delete;
 
-	nv10->pipe.create_vs_state = nv10_vp_state_create;
-	nv10->pipe.bind_vs_state = nv10_vp_state_bind;
-	nv10->pipe.delete_vs_state = nv10_vp_state_delete;
+	nv20->pipe.create_vs_state = nv20_vp_state_create;
+	nv20->pipe.bind_vs_state = nv20_vp_state_bind;
+	nv20->pipe.delete_vs_state = nv20_vp_state_delete;
 
-	nv10->pipe.create_fs_state = nv10_fp_state_create;
-	nv10->pipe.bind_fs_state = nv10_fp_state_bind;
-	nv10->pipe.delete_fs_state = nv10_fp_state_delete;
+	nv20->pipe.create_fs_state = nv20_fp_state_create;
+	nv20->pipe.bind_fs_state = nv20_fp_state_bind;
+	nv20->pipe.delete_fs_state = nv20_fp_state_delete;
 
-	nv10->pipe.set_blend_color = nv10_set_blend_color;
-	nv10->pipe.set_clip_state = nv10_set_clip_state;
-	nv10->pipe.set_constant_buffer = nv10_set_constant_buffer;
-	nv10->pipe.set_framebuffer_state = nv10_set_framebuffer_state;
-	nv10->pipe.set_polygon_stipple = nv10_set_polygon_stipple;
-	nv10->pipe.set_scissor_state = nv10_set_scissor_state;
-	nv10->pipe.set_viewport_state = nv10_set_viewport_state;
+	nv20->pipe.set_blend_color = nv20_set_blend_color;
+	nv20->pipe.set_clip_state = nv20_set_clip_state;
+	nv20->pipe.set_constant_buffer = nv20_set_constant_buffer;
+	nv20->pipe.set_framebuffer_state = nv20_set_framebuffer_state;
+	nv20->pipe.set_polygon_stipple = nv20_set_polygon_stipple;
+	nv20->pipe.set_scissor_state = nv20_set_scissor_state;
+	nv20->pipe.set_viewport_state = nv20_set_viewport_state;
 
-	nv10->pipe.set_vertex_buffers = nv10_set_vertex_buffers;
-	nv10->pipe.set_vertex_elements = nv10_set_vertex_elements;
+	nv20->pipe.set_vertex_buffers = nv20_set_vertex_buffers;
+	nv20->pipe.set_vertex_elements = nv20_set_vertex_elements;
 }
 

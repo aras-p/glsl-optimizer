@@ -42,18 +42,18 @@
 #include "pipe/p_inlines.h"
 #include "pipe/p_winsys.h"
 
-#include "nv10_context.h"
-#include "nv10_state.h"
+#include "nv20_context.h"
+#include "nv20_state.h"
 
 #include "draw/draw_vbuf.h"
 
 /**
- * Primitive renderer for nv10.
+ * Primitive renderer for nv20.
  */
-struct nv10_vbuf_render {
+struct nv20_vbuf_render {
 	struct vbuf_render base;
 
-	struct nv10_context *nv10;   
+	struct nv20_context *nv20;   
 
 	/** Vertex buffer */
 	struct pipe_buffer* buffer;
@@ -66,13 +66,13 @@ struct nv10_vbuf_render {
 };
 
 
-void nv10_vtxbuf_bind( struct nv10_context* nv10 )
+void nv20_vtxbuf_bind( struct nv20_context* nv20 )
 {
 	int i;
 	for(i = 0; i < 8; i++) {
-		BEGIN_RING(celsius, NV10TCL_VERTEX_ARRAY_ATTRIB_OFFSET(i), 1);
-		OUT_RING(0/*nv10->vtxbuf*/);
-		BEGIN_RING(celsius, NV10TCL_VERTEX_ARRAY_ATTRIB_FORMAT(i) ,1);
+		BEGIN_RING(kelvin, NV10TCL_VERTEX_ARRAY_ATTRIB_OFFSET(i), 1);
+		OUT_RING(0/*nv20->vtxbuf*/);
+		BEGIN_RING(kelvin, NV10TCL_VERTEX_ARRAY_ATTRIB_FORMAT(i) ,1);
 		OUT_RING(0/*XXX*/);
 	}
 }
@@ -80,75 +80,75 @@ void nv10_vtxbuf_bind( struct nv10_context* nv10 )
 /**
  * Basically a cast wrapper.
  */
-static INLINE struct nv10_vbuf_render *
-nv10_vbuf_render( struct vbuf_render *render )
+static INLINE struct nv20_vbuf_render *
+nv20_vbuf_render( struct vbuf_render *render )
 {
 	assert(render);
-	return (struct nv10_vbuf_render *)render;
+	return (struct nv20_vbuf_render *)render;
 }
 
 
 static const struct vertex_info *
-nv10_vbuf_render_get_vertex_info( struct vbuf_render *render )
+nv20_vbuf_render_get_vertex_info( struct vbuf_render *render )
 {
-	struct nv10_vbuf_render *nv10_render = nv10_vbuf_render(render);
-	struct nv10_context *nv10 = nv10_render->nv10;
+	struct nv20_vbuf_render *nv20_render = nv20_vbuf_render(render);
+	struct nv20_context *nv20 = nv20_render->nv20;
 
-	nv10_emit_hw_state(nv10);
+	nv20_emit_hw_state(nv20);
 
-	return &nv10->vertex_info;
+	return &nv20->vertex_info;
 }
 
 
 static void *
-nv10_vbuf_render_allocate_vertices( struct vbuf_render *render,
+nv20_vbuf_render_allocate_vertices( struct vbuf_render *render,
 		ushort vertex_size,
 		ushort nr_vertices )
 {
-	struct nv10_vbuf_render *nv10_render = nv10_vbuf_render(render);
-	struct nv10_context *nv10 = nv10_render->nv10;
-	struct pipe_winsys *winsys = nv10->pipe.winsys;
+	struct nv20_vbuf_render *nv20_render = nv20_vbuf_render(render);
+	struct nv20_context *nv20 = nv20_render->nv20;
+	struct pipe_winsys *winsys = nv20->pipe.winsys;
 	size_t size = (size_t)vertex_size * (size_t)nr_vertices;
 
-	assert(!nv10_render->buffer);
-	nv10_render->buffer = winsys->buffer_create(winsys, 64, PIPE_BUFFER_USAGE_VERTEX, size);
+	assert(!nv20_render->buffer);
+	nv20_render->buffer = winsys->buffer_create(winsys, 64, PIPE_BUFFER_USAGE_VERTEX, size);
 
-	nv10->dirty |= NV10_NEW_VTXARRAYS;
+	nv20->dirty |= NV20_NEW_VTXARRAYS;
 
 	return winsys->buffer_map(winsys, 
-			nv10_render->buffer, 
+			nv20_render->buffer, 
 			PIPE_BUFFER_USAGE_CPU_WRITE);
 }
 
 
 static void 
-nv10_vbuf_render_set_primitive( struct vbuf_render *render, 
+nv20_vbuf_render_set_primitive( struct vbuf_render *render, 
 		unsigned prim )
 {
-	struct nv10_vbuf_render *nv10_render = nv10_vbuf_render(render);
-	nv10_render->hwprim = prim + 1;
+	struct nv20_vbuf_render *nv20_render = nv20_vbuf_render(render);
+	nv20_render->hwprim = prim + 1;
 }
 
 
 static void 
-nv10_vbuf_render_draw( struct vbuf_render *render,
+nv20_vbuf_render_draw( struct vbuf_render *render,
 		const ushort *indices,
 		uint nr_indices)
 {
-	struct nv10_vbuf_render *nv10_render = nv10_vbuf_render(render);
-	struct nv10_context *nv10 = nv10_render->nv10;
+	struct nv20_vbuf_render *nv20_render = nv20_vbuf_render(render);
+	struct nv20_context *nv20 = nv20_render->nv20;
 	int push, i;
 
-	nv10_emit_hw_state(nv10);
+	nv20_emit_hw_state(nv20);
 
-	BEGIN_RING(celsius, NV10TCL_VERTEX_ARRAY_OFFSET_POS, 1);
-	OUT_RELOCl(nv10_render->buffer, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_GART | NOUVEAU_BO_RD);
+	BEGIN_RING(kelvin, NV10TCL_VERTEX_ARRAY_OFFSET_POS, 1);
+	OUT_RELOCl(nv20_render->buffer, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_GART | NOUVEAU_BO_RD);
 
-	BEGIN_RING(celsius, NV10TCL_VERTEX_BUFFER_BEGIN_END, 1);
-	OUT_RING(nv10_render->hwprim);
+	BEGIN_RING(kelvin, NV10TCL_VERTEX_BUFFER_BEGIN_END, 1);
+	OUT_RING(nv20_render->hwprim);
 
 	if (nr_indices & 1) {
-		BEGIN_RING(celsius, NV10TCL_VB_ELEMENT_U32, 1);
+		BEGIN_RING(kelvin, NV10TCL_VB_ELEMENT_U32, 1);
 		OUT_RING  (indices[0]);
 		indices++; nr_indices--;
 	}
@@ -157,7 +157,7 @@ nv10_vbuf_render_draw( struct vbuf_render *render,
 		// XXX too big/small ? check the size
 		push = MIN2(nr_indices, 1200 * 2);
 
-		BEGIN_RING_NI(celsius, NV10TCL_VB_ELEMENT_U16, push >> 1);
+		BEGIN_RING_NI(kelvin, NV10TCL_VB_ELEMENT_U16, push >> 1);
 		for (i = 0; i < push; i+=2)
 			OUT_RING((indices[i+1] << 16) | indices[i]);
 
@@ -165,33 +165,33 @@ nv10_vbuf_render_draw( struct vbuf_render *render,
 		indices  += push;
 	}
 
-	BEGIN_RING(celsius, NV10TCL_VERTEX_BUFFER_BEGIN_END, 1);
+	BEGIN_RING(kelvin, NV10TCL_VERTEX_BUFFER_BEGIN_END, 1);
 	OUT_RING  (0);
 }
 
 
 static void
-nv10_vbuf_render_release_vertices( struct vbuf_render *render,
+nv20_vbuf_render_release_vertices( struct vbuf_render *render,
 		void *vertices, 
 		unsigned vertex_size,
 		unsigned vertices_used )
 {
-	struct nv10_vbuf_render *nv10_render = nv10_vbuf_render(render);
-	struct nv10_context *nv10 = nv10_render->nv10;
-	struct pipe_winsys *winsys = nv10->pipe.winsys;
-	struct pipe_screen *pscreen = &nv10->screen->pipe;
+	struct nv20_vbuf_render *nv20_render = nv20_vbuf_render(render);
+	struct nv20_context *nv20 = nv20_render->nv20;
+	struct pipe_winsys *winsys = nv20->pipe.winsys;
+	struct pipe_screen *pscreen = &nv20->screen->pipe;
 
-	assert(nv10_render->buffer);
-	winsys->buffer_unmap(winsys, nv10_render->buffer);
-	pipe_buffer_reference(pscreen, &nv10_render->buffer, NULL);
+	assert(nv20_render->buffer);
+	winsys->buffer_unmap(winsys, nv20_render->buffer);
+	pipe_buffer_reference(pscreen, &nv20_render->buffer, NULL);
 }
 
 
 static void
-nv10_vbuf_render_destroy( struct vbuf_render *render )
+nv20_vbuf_render_destroy( struct vbuf_render *render )
 {
-	struct nv10_vbuf_render *nv10_render = nv10_vbuf_render(render);
-	FREE(nv10_render);
+	struct nv20_vbuf_render *nv20_render = nv20_vbuf_render(render);
+	FREE(nv20_render);
 }
 
 
@@ -199,38 +199,38 @@ nv10_vbuf_render_destroy( struct vbuf_render *render )
  * Create a new primitive render.
  */
 static struct vbuf_render *
-nv10_vbuf_render_create( struct nv10_context *nv10 )
+nv20_vbuf_render_create( struct nv20_context *nv20 )
 {
-	struct nv10_vbuf_render *nv10_render = CALLOC_STRUCT(nv10_vbuf_render);
+	struct nv20_vbuf_render *nv20_render = CALLOC_STRUCT(nv20_vbuf_render);
 
-	nv10_render->nv10 = nv10;
+	nv20_render->nv20 = nv20;
 
-	nv10_render->base.max_vertex_buffer_bytes = 16*1024;
-	nv10_render->base.max_indices = 1024;
-	nv10_render->base.get_vertex_info = nv10_vbuf_render_get_vertex_info;
-	nv10_render->base.allocate_vertices = nv10_vbuf_render_allocate_vertices;
-	nv10_render->base.set_primitive = nv10_vbuf_render_set_primitive;
-	nv10_render->base.draw = nv10_vbuf_render_draw;
-	nv10_render->base.release_vertices = nv10_vbuf_render_release_vertices;
-	nv10_render->base.destroy = nv10_vbuf_render_destroy;
+	nv20_render->base.max_vertex_buffer_bytes = 16*1024;
+	nv20_render->base.max_indices = 1024;
+	nv20_render->base.get_vertex_info = nv20_vbuf_render_get_vertex_info;
+	nv20_render->base.allocate_vertices = nv20_vbuf_render_allocate_vertices;
+	nv20_render->base.set_primitive = nv20_vbuf_render_set_primitive;
+	nv20_render->base.draw = nv20_vbuf_render_draw;
+	nv20_render->base.release_vertices = nv20_vbuf_render_release_vertices;
+	nv20_render->base.destroy = nv20_vbuf_render_destroy;
 
-	return &nv10_render->base;
+	return &nv20_render->base;
 }
 
 
 /**
  * Create a new primitive vbuf/render stage.
  */
-struct draw_stage *nv10_draw_vbuf_stage( struct nv10_context *nv10 )
+struct draw_stage *nv20_draw_vbuf_stage( struct nv20_context *nv20 )
 {
 	struct vbuf_render *render;
 	struct draw_stage *stage;
 
-	render = nv10_vbuf_render_create(nv10);
+	render = nv20_vbuf_render_create(nv20);
 	if(!render)
 		return NULL;
 
-	stage = draw_vbuf_stage( nv10->draw, render );
+	stage = draw_vbuf_stage( nv20->draw, render );
 	if(!stage) {
 		render->destroy(render);
 		return NULL;

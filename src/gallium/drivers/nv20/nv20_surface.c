@@ -26,39 +26,39 @@
  * 
  **************************************************************************/
 
-#include "nv10_context.h"
+#include "nv20_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_winsys.h"
 #include "pipe/p_inlines.h"
 #include "util/u_tile.h"
 
 static void
-nv10_surface_copy(struct pipe_context *pipe, unsigned do_flip,
+nv20_surface_copy(struct pipe_context *pipe, unsigned do_flip,
 		  struct pipe_surface *dest, unsigned destx, unsigned desty,
 		  struct pipe_surface *src, unsigned srcx, unsigned srcy,
 		  unsigned width, unsigned height)
 {
-	struct nv10_context *nv10 = nv10_context(pipe);
-	struct nouveau_winsys *nvws = nv10->nvws;
+	struct nv20_context *nv20 = nv20_context(pipe);
+	struct nouveau_winsys *nvws = nv20->nvws;
 
 	nvws->surface_copy(nvws, dest, destx, desty, src, srcx, srcy,
 			   width, height);
 }
 
 static void
-nv10_surface_fill(struct pipe_context *pipe, struct pipe_surface *dest,
+nv20_surface_fill(struct pipe_context *pipe, struct pipe_surface *dest,
 		  unsigned destx, unsigned desty, unsigned width,
 		  unsigned height, unsigned value)
 {
-	struct nv10_context *nv10 = nv10_context(pipe);
-	struct nouveau_winsys *nvws = nv10->nvws;
+	struct nv20_context *nv20 = nv20_context(pipe);
+	struct nouveau_winsys *nvws = nv20->nvws;
 
 	nvws->surface_fill(nvws, dest, destx, desty, width, height, value);
 }
 
 void
-nv10_init_surface_functions(struct nv10_context *nv10)
+nv20_init_surface_functions(struct nv20_context *nv20)
 {
-	nv10->pipe.surface_copy = nv10_surface_copy;
-	nv10->pipe.surface_fill = nv10_surface_fill;
+	nv20->pipe.surface_copy = nv20_surface_copy;
+	nv20->pipe.surface_fill = nv20_surface_fill;
 }
