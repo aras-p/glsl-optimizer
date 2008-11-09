@@ -179,7 +179,7 @@ static void r300EmitElts(GLcontext * ctx, void *elts, unsigned long n_elts)
 
 	rmesa->state.elt_dma_bo = radeon_bo_open(rmesa->radeon.radeonScreen->bom,
                                              0, n_elts * 4, 4,
-                                             RADEON_GEM_DOMAIN_GTT);
+                                             RADEON_GEM_DOMAIN_GTT, 0);
     rmesa->state.elt_dma_offset = 0;
     radeon_bo_map(rmesa->state.elt_dma_bo, 1);
 	out = rmesa->state.elt_dma_bo->ptr + rmesa->state.elt_dma_offset;
@@ -199,11 +199,23 @@ static void r300FireEB(r300ContextPtr rmesa, int vertex_count, int type)
                   type |
                   R300_VAP_VF_CNTL__INDEX_SIZE_32bit);
 
+    if (!rmesa->radeon.radeonScreen->driScreen->dri2.enabled) {
     	OUT_BATCH_PACKET3(R300_PACKET3_INDX_BUFFER, 2);
 	    OUT_BATCH(R300_EB_UNK1 | (0 << 16) | R300_EB_UNK2);
     	OUT_BATCH_RELOC(0, rmesa->state.elt_dma_bo,
                         rmesa->state.elt_dma_offset, 0);
         OUT_BATCH(vertex_count);
+    } else {
+    	OUT_BATCH_PACKET3(R300_PACKET3_INDX_BUFFER, 2);
+	    OUT_BATCH(R300_EB_UNK1 | (0 << 16) | R300_EB_UNK2);
+        OUT_BATCH(rmesa->state.elt_dma_offset);
+        OUT_BATCH(vertex_count);
+        radeon_cs_write_reloc(rmesa->cmdbuf.cs,
+                              rmesa->state.elt_dma_bo,
+                              0,
+                              rmesa->state.elt_dma_bo->size,
+                              0);
+    }
     	END_BATCH();
     }
 }
@@ -223,6 +235,8 @@ static void r300EmitAOS(r300ContextPtr rmesa, GLuint nr, GLuint offset)
 	OUT_BATCH_PACKET3(R300_PACKET3_3D_LOAD_VBPNTR, sz - 1);
 	OUT_BATCH(nr);
 
+    
+    if (!rmesa->radeon.radeonScreen->driScreen->dri2.enabled) {
 	for (i = 0; i + 1 < nr; i += 2) {
 		OUT_BATCH((rmesa->state.aos[i].components << 0) |
 			  (rmesa->state.aos[i].stride << 8) |
@@ -243,6 +257,52 @@ static void r300EmitAOS(r300ContextPtr rmesa, GLuint nr, GLuint offset)
 		OUT_BATCH_RELOC(0, rmesa->state.aos[nr - 1].bo,
 			rmesa->state.aos[nr - 1].offset + offset * 4 * rmesa->state.aos[nr - 1].stride, 0);
 	}
+    } else {
+	for (i = 0; i + 1 < nr; i += 2) {
+		OUT_BATCH((rmesa->state.aos[i].components << 0) |
+			  (rmesa->state.aos[i].stride << 8) |
+			  (rmesa->state.aos[i + 1].components << 16) |
+			  (rmesa->state.aos[i + 1].stride << 24));
+
+        voffset =  rmesa->state.aos[i + 0].offset +
+                   offset * 4 * rmesa->state.aos[i + 0].stride;
+		OUT_BATCH(voffset);
+        voffset =  rmesa->state.aos[i + 1].offset +
+                   offset * 4 * rmesa->state.aos[i + 1].stride;
+		OUT_BATCH(voffset);
+	}
+
+	if (nr & 1) {
+		OUT_BATCH((rmesa->state.aos[nr - 1].components << 0) |
+			  (rmesa->state.aos[nr - 1].stride << 8));
+		OUT_BATCH(rmesa->state.aos[nr - 1].offset + offset * 4 *
+                  rmesa->state.aos[nr - 1].stride);
+	}
+	for (i = 0; i + 1 < nr; i += 2) {
+   #if 0
+        fprintf(stderr, "3D_LOAD_VBPNTR 0x%08X & 0x%08X\n",
+                rmesa->state.aos[i+0].bo->handle,
+                rmesa->state.aos[i+1].bo->handle);
+   #endif
+        radeon_cs_write_reloc(rmesa->cmdbuf.cs,
+                              rmesa->state.aos[i+0].bo,
+                              0,
+                              rmesa->state.aos[i+0].bo->size,
+                              0);
+        radeon_cs_write_reloc(rmesa->cmdbuf.cs,
+                              rmesa->state.aos[i+1].bo,
+                              0,
+                              rmesa->state.aos[i+1].bo->size,
+                              0);
+	}
+	if (nr & 1) {
+        radeon_cs_write_reloc(rmesa->cmdbuf.cs,
+                              rmesa->state.aos[nr-1].bo,
+                              0,
+                              rmesa->state.aos[nr-1].bo->size,
+                              0);
+	}
+    }
 	END_BATCH();
 }
 

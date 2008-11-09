@@ -271,7 +271,7 @@ r300AllocDmaLowVerts( r300ContextPtr rmesa, int nverts, int vsize )
 	GLuint bytes = vsize * nverts;
 
 	rmesa->swtcl.bo = radeon_bo_open(rmesa->radeon.radeonScreen->bom,
-                                     0, bytes, 4, RADEON_GEM_DOMAIN_GTT);
+                                     0, bytes, 4, RADEON_GEM_DOMAIN_GTT, 0);
     radeon_bo_map(rmesa->swtcl.bo, 1);
     if (rmesa->swtcl.flush == NULL) {
         rmesa->radeon.glCtx->Driver.NeedFlush |= FLUSH_STORED_VERTICES;

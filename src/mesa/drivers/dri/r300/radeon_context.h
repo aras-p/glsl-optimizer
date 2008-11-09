@@ -203,6 +203,7 @@ extern GLboolean radeonMakeCurrent(__DRIcontextPrivate * driContextPriv,
 				   __DRIdrawablePrivate * driDrawPriv,
 				   __DRIdrawablePrivate * driReadPriv);
 extern GLboolean radeonUnbindContext(__DRIcontextPrivate * driContextPriv);
+void radeon_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable);
 
 /* ================================================================
  * Debugging:

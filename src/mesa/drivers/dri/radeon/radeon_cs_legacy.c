@@ -270,22 +270,30 @@ static int cs_emit(struct radeon_cs *cs)
     int r;
 
     /* please flush pipe do all pending work */
-    cs_write_dword(cs, cmdpacket0(R300_SC_SCREENDOOR, 1));
+    cs_write_dword(cs, cmdpacket0(csm->ctx->radeonScreen,
+                                  R300_SC_SCREENDOOR, 1));
     cs_write_dword(cs, 0x0);
-    cs_write_dword(cs, cmdpacket0(R300_SC_SCREENDOOR, 1));
+    cs_write_dword(cs, cmdpacket0(csm->ctx->radeonScreen,
+                                  R300_SC_SCREENDOOR, 1));
     cs_write_dword(cs, 0x00FFFFFF);
-    cs_write_dword(cs, cmdpacket0(R300_SC_HYPERZ, 1));
+    cs_write_dword(cs, cmdpacket0(csm->ctx->radeonScreen,
+                                  R300_SC_HYPERZ, 1));
     cs_write_dword(cs, 0x0);
-    cs_write_dword(cs, cmdpacket0(R300_US_CONFIG, 1));
+    cs_write_dword(cs, cmdpacket0(csm->ctx->radeonScreen,
+                                  R300_US_CONFIG, 1));
     cs_write_dword(cs, 0x0);
-    cs_write_dword(cs, cmdpacket0(R300_ZB_CNTL, 1));
+    cs_write_dword(cs, cmdpacket0(csm->ctx->radeonScreen,
+                                  R300_ZB_CNTL, 1));
     cs_write_dword(cs, 0x0);
-    cs_write_dword(cs, cmdwait(R300_WAIT_3D));
-    cs_write_dword(cs, cmdpacket0(R300_RB3D_DSTCACHE_CTLSTAT, 1));
+    cs_write_dword(cs, cmdwait(csm->ctx->radeonScreen, R300_WAIT_3D));
+    cs_write_dword(cs, cmdpacket0(csm->ctx->radeonScreen,
+                                  R300_RB3D_DSTCACHE_CTLSTAT, 1));
     cs_write_dword(cs, R300_RB3D_DSTCACHE_CTLSTAT_DC_FLUSH_FLUSH_DIRTY_3D);
-    cs_write_dword(cs, cmdpacket0(R300_ZB_ZCACHE_CTLSTAT, 1));
+    cs_write_dword(cs, cmdpacket0(csm->ctx->radeonScreen,
+                                  R300_ZB_ZCACHE_CTLSTAT, 1));
     cs_write_dword(cs, R300_ZB_ZCACHE_CTLSTAT_ZC_FLUSH_FLUSH_AND_FREE);
-    cs_write_dword(cs, cmdwait(R300_WAIT_3D | R300_WAIT_3D_CLEAN));
+    cs_write_dword(cs, cmdwait(csm->ctx->radeonScreen,
+                               R300_WAIT_3D | R300_WAIT_3D_CLEAN));
 
     /* append buffer age */
     age.scratch.cmd_type = R300_CMD_SCRATCH;
@@ -318,8 +326,15 @@ static int cs_emit(struct radeon_cs *cs)
     }
 
     r = drmCommandWrite(cs->csm->fd, DRM_RADEON_CMDBUF, &cmd, sizeof(cmd));
+    if (r) {
+        return r;
+    }
     cs_set_age(cs);
-    return r;
+        for (int i = 0; i < cs->cdw; i++) {
+            fprintf(stderr, "pkt[%04d]=0x%08X\n", i, cs->packets[i]);
+        }
+    exit(0);
+    return 0;
 }
 
 static int cs_destroy(struct radeon_cs *cs)
@@ -373,4 +388,9 @@ struct radeon_cs_manager *radeon_cs_manager_legacy(struct radeon_context *ctx)
     csm->ctx = ctx;
     csm->pending_age = 1;
     return (struct radeon_cs_manager*)csm;
+}
+
+void radeon_cs_manager_legacy_shutdown(struct radeon_cs_manager *csm)
+{
+    free(csm);
 }

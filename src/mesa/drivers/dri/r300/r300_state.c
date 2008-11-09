@@ -1101,10 +1101,19 @@ static void r300UpdateWindow(GLcontext * ctx)
 static void r300Viewport(GLcontext * ctx, GLint x, GLint y,
 			 GLsizei width, GLsizei height)
 {
+	r300ContextPtr rmesa = R300_CONTEXT(ctx);
+    __DRIcontext *driContext = rmesa->radeon.dri.context;
 	/* Don't pipeline viewport changes, conflict with window offset
 	 * setting below.  Could apply deltas to rescue pipelined viewport
 	 * values, or keep the originals hanging around.
 	 */
+    if (rmesa->radeon.radeonScreen->driScreen->dri2.enabled) {
+        radeon_update_renderbuffers(driContext, driContext->driDrawablePriv);
+        if (driContext->driDrawablePriv != driContext->driReadablePriv) {
+            radeon_update_renderbuffers(driContext,
+                                        driContext->driReadablePriv);
+        }
+    }
 	r300UpdateWindow(ctx);
 }
 
@@ -1164,21 +1173,6 @@ void r300UpdateDrawBuffer(GLcontext * ctx)
 	assert(rrb->pitch);
 
 	R300_STATECHANGE(rmesa, cb);
-
-#if 0
-	R200_STATECHANGE(rmesa, ctx);
-
-	/* Note: we used the (possibly) page-flipped values */
-	rmesa->hw.ctx.cmd[CTX_RB3D_COLOROFFSET]
-	    = ((drb->flippedOffset + rmesa->r200Screen->fbLocation)
-	       & R200_COLOROFFSET_MASK);
-	rmesa->hw.ctx.cmd[CTX_RB3D_COLORPITCH] = drb->flippedPitch;
-
-	if (rmesa->sarea->tiling_enabled) {
-		rmesa->hw.ctx.cmd[CTX_RB3D_COLORPITCH] |=
-		    R200_COLOR_TILE_ENABLE;
-	}
-#endif
 }
 
 static void
@@ -1398,7 +1392,8 @@ static void r300SetupFragmentShaderTextures(GLcontext *ctx, int *tmu_mappings)
 	}
 
 	r300->hw.fpt.cmd[R300_FPT_CMD_0] =
-		cmdpacket0(R300_US_TEX_INST_0, code->tex.length);
+		cmdpacket0(r300->radeon.radeonScreen,
+                   R300_US_TEX_INST_0, code->tex.length);
 }
 
 static void r500SetupFragmentShaderTextures(GLcontext *ctx, int *tmu_mappings)
@@ -1541,21 +1536,21 @@ static void r300SetupTextures(GLcontext * ctx)
 	}
 
 	r300->hw.tex.filter.cmd[R300_TEX_CMD_0] =
-	    cmdpacket0(R300_TX_FILTER0_0, last_hw_tmu + 1);
+	    cmdpacket0(r300->radeon.radeonScreen, R300_TX_FILTER0_0, last_hw_tmu + 1);
 	r300->hw.tex.filter_1.cmd[R300_TEX_CMD_0] =
-	    cmdpacket0(R300_TX_FILTER1_0, last_hw_tmu + 1);
+	    cmdpacket0(r300->radeon.radeonScreen, R300_TX_FILTER1_0, last_hw_tmu + 1);
 	r300->hw.tex.size.cmd[R300_TEX_CMD_0] =
-	    cmdpacket0(R300_TX_SIZE_0, last_hw_tmu + 1);
+	    cmdpacket0(r300->radeon.radeonScreen, R300_TX_SIZE_0, last_hw_tmu + 1);
 	r300->hw.tex.format.cmd[R300_TEX_CMD_0] =
-	    cmdpacket0(R300_TX_FORMAT_0, last_hw_tmu + 1);
+	    cmdpacket0(r300->radeon.radeonScreen, R300_TX_FORMAT_0, last_hw_tmu + 1);
 	r300->hw.tex.pitch.cmd[R300_TEX_CMD_0] =
-	    cmdpacket0(R300_TX_FORMAT2_0, last_hw_tmu + 1);
+	    cmdpacket0(r300->radeon.radeonScreen, R300_TX_FORMAT2_0, last_hw_tmu + 1);
 	r300->hw.tex.offset.cmd[R300_TEX_CMD_0] =
-	    cmdpacket0(R300_TX_OFFSET_0, last_hw_tmu + 1);
+	    cmdpacket0(r300->radeon.radeonScreen, R300_TX_OFFSET_0, last_hw_tmu + 1);
 	r300->hw.tex.chroma_key.cmd[R300_TEX_CMD_0] =
-	    cmdpacket0(R300_TX_CHROMA_KEY_0, last_hw_tmu + 1);
+	    cmdpacket0(r300->radeon.radeonScreen, R300_TX_CHROMA_KEY_0, last_hw_tmu + 1);
 	r300->hw.tex.border_color.cmd[R300_TEX_CMD_0] =
-	    cmdpacket0(R300_TX_BORDER_COLOR_0, last_hw_tmu + 1);
+	    cmdpacket0(r300->radeon.radeonScreen, R300_TX_BORDER_COLOR_0, last_hw_tmu + 1);
 
 	if (!fp)		/* should only happenen once, just after context is created */
 		return;
@@ -1567,7 +1562,7 @@ static void r300SetupTextures(GLcontext * ctx)
 			r300->hw.txe.cmd[R300_TXE_ENABLE] |= 1;
 			r300->hw.tex.filter.cmd[R300_TEX_VALUE_0] = 0;
 			r300->hw.tex.filter.cmd[R300_TEX_CMD_0] =
-				cmdpacket0(R300_TX_FILTER0_0, 1);
+				cmdpacket0(r300->radeon.radeonScreen, R300_TX_FILTER0_0, 1);
 		}
 		r300SetupFragmentShaderTextures(ctx, tmu_mappings);
 	} else
@@ -1729,7 +1724,7 @@ static void r300SetupRSUnit(GLcontext * ctx)
 	  | R300_HIRES_EN;
 
 	assert(high_rr >= 0);
-	r300->hw.rr.cmd[R300_RR_CMD_0] = cmdpacket0(R300_RS_INST_0, high_rr + 1);
+	r300->hw.rr.cmd[R300_RR_CMD_0] = cmdpacket0(r300->radeon.radeonScreen, R300_RS_INST_0, high_rr + 1);
 	r300->hw.rc.cmd[2] = high_rr;
 
 	if (InputsRead)
@@ -1889,7 +1884,7 @@ static void r500SetupRSUnit(GLcontext * ctx)
 	  | R300_HIRES_EN;
 
 	assert(high_rr >= 0);
-	r300->hw.rr.cmd[R300_RR_CMD_0] = cmdpacket0(R500_RS_INST_0, high_rr + 1);
+	r300->hw.rr.cmd[R300_RR_CMD_0] = cmdpacket0(r300->radeon.radeonScreen, R500_RS_INST_0, high_rr + 1);
 	r300->hw.rc.cmd[2] = 0xC0 | high_rr;
 
 	if (InputsRead)
@@ -2087,6 +2082,7 @@ static void r300SetupRealVertexProgram(r300ContextPtr rmesa)
 	  (inst_count << R300_PVS_LAST_VTX_SRC_INST_SHIFT);
 }
 
+
 static void r300SetupVertexProgram(r300ContextPtr rmesa)
 {
 	GLcontext *ctx = rmesa->radeon.glCtx;
@@ -2173,6 +2169,7 @@ static void r300Enable(GLcontext * ctx, GLenum cap, GLboolean state)
 static void r300ResetHwState(r300ContextPtr r300)
 {
 	GLcontext *ctx = r300->radeon.glCtx;
+	struct radeon_renderbuffer *rrb;
 	int has_tcl = 1;
 
 	if (!(r300->radeon.radeonScreen->chip_flags & RADEON_CHIPSET_TCL))
@@ -2364,8 +2361,8 @@ static void r300ResetHwState(r300ContextPtr r300)
 	r300->hw.rb3d_discard_src_pixel_lte_threshold.cmd[1] = 0x00000000;
 	r300->hw.rb3d_discard_src_pixel_lte_threshold.cmd[2] = 0xffffffff;
 
-
-	if (r300->radeon.sarea->tiling_enabled) {
+	rrb = r300->radeon.state.depth_buffer;
+    if (rrb && rrb->bo && (rrb->bo->flags & RADEON_BO_FLAGS_MACRO_TILE)) {
 		/* XXX: Turn off when clearing buffers ? */
 		r300->hw.zb.cmd[R300_ZB_PITCH] |= R300_DEPTHMACROTILE_ENABLE;
 
@@ -2499,10 +2496,10 @@ static void r300SetupPixelShader(r300ContextPtr rmesa)
 	R300_STATECHANGE(rmesa, fpi[1]);
 	R300_STATECHANGE(rmesa, fpi[2]);
 	R300_STATECHANGE(rmesa, fpi[3]);
-	rmesa->hw.fpi[0].cmd[R300_FPI_CMD_0] = cmdpacket0(R300_US_ALU_RGB_INST_0, code->alu.length);
-	rmesa->hw.fpi[1].cmd[R300_FPI_CMD_0] = cmdpacket0(R300_US_ALU_RGB_ADDR_0, code->alu.length);
-	rmesa->hw.fpi[2].cmd[R300_FPI_CMD_0] = cmdpacket0(R300_US_ALU_ALPHA_INST_0, code->alu.length);
-	rmesa->hw.fpi[3].cmd[R300_FPI_CMD_0] = cmdpacket0(R300_US_ALU_ALPHA_ADDR_0, code->alu.length);
+	rmesa->hw.fpi[0].cmd[R300_FPI_CMD_0] = cmdpacket0(rmesa->radeon.radeonScreen, R300_US_ALU_RGB_INST_0, code->alu.length);
+	rmesa->hw.fpi[1].cmd[R300_FPI_CMD_0] = cmdpacket0(rmesa->radeon.radeonScreen, R300_US_ALU_RGB_ADDR_0, code->alu.length);
+	rmesa->hw.fpi[2].cmd[R300_FPI_CMD_0] = cmdpacket0(rmesa->radeon.radeonScreen, R300_US_ALU_ALPHA_INST_0, code->alu.length);
+	rmesa->hw.fpi[3].cmd[R300_FPI_CMD_0] = cmdpacket0(rmesa->radeon.radeonScreen, R300_US_ALU_ALPHA_ADDR_0, code->alu.length);
 	for (i = 0; i < code->alu.length; i++) {
 		rmesa->hw.fpi[0].cmd[R300_FPI_INSTR_0 + i] = code->alu.inst[i].inst0;
 		rmesa->hw.fpi[1].cmd[R300_FPI_INSTR_0 + i] = code->alu.inst[i].inst1;
@@ -2533,7 +2530,7 @@ static void r300SetupPixelShader(r300ContextPtr rmesa)
 	}
 
 	R300_STATECHANGE(rmesa, fpp);
-	rmesa->hw.fpp.cmd[R300_FPP_CMD_0] = cmdpacket0(R300_PFS_PARAM_0_X, code->const_nr * 4);
+	rmesa->hw.fpp.cmd[R300_FPP_CMD_0] = cmdpacket0(rmesa->radeon.radeonScreen, R300_PFS_PARAM_0_X, code->const_nr * 4);
 	for (i = 0; i < code->const_nr; i++) {
 		const GLfloat *constant = get_fragmentprogram_constant(ctx,
 			&fp->mesa_program.Base, code->constant[i]);

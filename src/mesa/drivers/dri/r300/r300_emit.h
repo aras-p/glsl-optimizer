@@ -46,23 +46,31 @@
 
 /* TODO: move these defines (and the ones from DRM) into r300_reg.h and sync up
  * with DRM */
+#define CP_PACKET2  (2 << 30)
 #define CP_PACKET0(reg, n)	(RADEON_CP_PACKET0 | ((n)<<16) | ((reg)>>2))
 #define CP_PACKET3( pkt, n )						\
 	(RADEON_CP_PACKET3 | (pkt) | ((n) << 16))
 
-static INLINE uint32_t cmdpacket0(int reg, int count)
+static INLINE uint32_t cmdpacket0(struct radeon_screen *rscrn,
+                                  int reg, int count)
 {
-	drm_r300_cmd_header_t cmd;
+    if (!rscrn->driScreen->dri2.enabled) {
+	    drm_r300_cmd_header_t cmd;
 
-	cmd.packet0.cmd_type = R300_CMD_PACKET0;
-	cmd.packet0.count = count;
-	cmd.packet0.reghi = ((unsigned int)reg & 0xFF00) >> 8;
-	cmd.packet0.reglo = ((unsigned int)reg & 0x00FF);
+    	cmd.packet0.cmd_type = R300_CMD_PACKET0;
+	    cmd.packet0.count = count;
+    	cmd.packet0.reghi = ((unsigned int)reg & 0xFF00) >> 8;
+	    cmd.packet0.reglo = ((unsigned int)reg & 0x00FF);
 
-	return cmd.u;
+    	return cmd.u;
+    }
+    if (count) {
+        return CP_PACKET0(reg, count - 1);
+    }
+    return CP_PACKET2;
 }
 
-static INLINE uint32_t cmdvpu(int addr, int count)
+static INLINE uint32_t cmdvpu(struct radeon_screen *rscrn, int addr, int count)
 {
 	drm_r300_cmd_header_t cmd;
 
@@ -74,7 +82,8 @@ static INLINE uint32_t cmdvpu(int addr, int count)
 	return cmd.u;
 }
 
-static INLINE uint32_t cmdr500fp(int addr, int count, int type, int clamp)
+static INLINE uint32_t cmdr500fp(struct radeon_screen *rscrn,
+                                 int addr, int count, int type, int clamp)
 {
 	drm_r300_cmd_header_t cmd;
 
@@ -88,7 +97,7 @@ static INLINE uint32_t cmdr500fp(int addr, int count, int type, int clamp)
 	return cmd.u;
 }
 
-static INLINE uint32_t cmdpacket3(int packet)
+static INLINE uint32_t cmdpacket3(struct radeon_screen *rscrn, int packet)
 {
 	drm_r300_cmd_header_t cmd;
 
@@ -98,7 +107,8 @@ static INLINE uint32_t cmdpacket3(int packet)
 	return cmd.u;
 }
 
-static INLINE uint32_t cmdcpdelay(unsigned short count)
+static INLINE uint32_t cmdcpdelay(struct radeon_screen *rscrn,  
+                                  unsigned short count)
 {
 	drm_r300_cmd_header_t cmd;
 
@@ -108,7 +118,8 @@ static INLINE uint32_t cmdcpdelay(unsigned short count)
 	return cmd.u;
 }
 
-static INLINE uint32_t cmdwait(unsigned char flags)
+static INLINE uint32_t cmdwait(struct radeon_screen *rscrn,
+                               unsigned char flags)
 {
 	drm_r300_cmd_header_t cmd;
 
@@ -118,7 +129,7 @@ static INLINE uint32_t cmdwait(unsigned char flags)
 	return cmd.u;
 }
 
-static INLINE uint32_t cmdpacify(void)
+static INLINE uint32_t cmdpacify(struct radeon_screen *rscrn)
 {
 	drm_r300_cmd_header_t cmd;
 
@@ -130,13 +141,13 @@ static INLINE uint32_t cmdpacify(void)
 
 /** Single register write to command buffer; requires 2 dwords. */
 #define OUT_BATCH_REGVAL(reg, val) \
-	OUT_BATCH(cmdpacket0((reg), 1)); \
+	OUT_BATCH(cmdpacket0(b_l_r300->radeon.radeonScreen, (reg), 1)); \
 	OUT_BATCH((val))
 
 /** Continuous register range write to command buffer; requires 1 dword,
  * expects count dwords afterwards for register contents. */
 #define OUT_BATCH_REGSEQ(reg, count) \
-	OUT_BATCH(cmdpacket0((reg), (count)));
+	OUT_BATCH(cmdpacket0(b_l_r300->radeon.radeonScreen, (reg), (count)));
 
 /** Write a 32 bit float to the ring; requires 1 dword. */
 #define OUT_BATCH_FLOAT32(f) \
@@ -147,7 +158,10 @@ static INLINE uint32_t cmdpacify(void)
  * Outputs 2 dwords and expects (num_extra+1) additional dwords afterwards.
  */
 #define OUT_BATCH_PACKET3(packet, num_extra) do {\
-	OUT_BATCH(cmdpacket3(R300_CMD_PACKET3_RAW)); \
+    if (!b_l_r300->radeon.radeonScreen->driScreen->dri2.enabled) { \
+    	OUT_BATCH(cmdpacket3(b_l_r300->radeon.radeonScreen,\
+                  R300_CMD_PACKET3_RAW)); \
+    }\
 	OUT_BATCH(CP_PACKET3((packet), (num_extra))); \
 	} while(0)
 
@@ -158,27 +172,62 @@ void static INLINE end_3d(r300ContextPtr rmesa)
 {
 	BATCH_LOCALS(rmesa);
 
-	BEGIN_BATCH(1);
-	OUT_BATCH(cmdpacify());
-	END_BATCH();
+    if (!rmesa->radeon.radeonScreen->driScreen->dri2.enabled) {
+    	BEGIN_BATCH(1);
+	    OUT_BATCH(cmdpacify(rmesa->radeon.radeonScreen));
+    	END_BATCH();
+    }
 }
 
 void static INLINE cp_delay(r300ContextPtr rmesa, unsigned short count)
 {
 	BATCH_LOCALS(rmesa);
 
-	BEGIN_BATCH(1);
-	OUT_BATCH(cmdcpdelay(count));
-	END_BATCH();
+    if (!rmesa->radeon.radeonScreen->driScreen->dri2.enabled) {
+    	BEGIN_BATCH(1);
+	    OUT_BATCH(cmdcpdelay(rmesa->radeon.radeonScreen, count));
+    	END_BATCH();
+    }
 }
 
 void static INLINE cp_wait(r300ContextPtr rmesa, unsigned char flags)
 {
 	BATCH_LOCALS(rmesa);
+    uint32_t wait_until;
 
-	BEGIN_BATCH(1);
-	OUT_BATCH(cmdwait(flags));
-	END_BATCH();
+    if (!rmesa->radeon.radeonScreen->driScreen->dri2.enabled) {
+    	BEGIN_BATCH_NO_AUTOSTATE(1);
+    	OUT_BATCH(cmdwait(rmesa->radeon.radeonScreen, flags));
+	    END_BATCH();
+    } else {
+        switch(flags) {
+        case R300_WAIT_2D:
+            wait_until = (1 << 14);
+            break;
+        case R300_WAIT_3D:
+            wait_until = (1 << 15);
+            break;
+        case R300_NEW_WAIT_2D_3D:
+            wait_until = (1 << 14) | (1 << 15);
+            break;
+        case R300_NEW_WAIT_2D_2D_CLEAN:
+            wait_until = (1 << 14) | (1 << 16) | (1 << 18);
+            break;
+        case R300_NEW_WAIT_3D_3D_CLEAN:
+            wait_until = (1 << 15) | (1 << 17) | (1 << 18);
+            break;
+        case R300_NEW_WAIT_2D_2D_CLEAN_3D_3D_CLEAN:
+            wait_until  = (1 << 14) | (1 << 16) | (1 << 18);
+            wait_until |= (1 << 15) | (1 << 17) | (1 << 18);
+            break;
+        default:
+            return;
+        }
+    	BEGIN_BATCH_NO_AUTOSTATE(2);
+        OUT_BATCH(CP_PACKET0(RADEON_WAIT_UNTIL, 0));
+        OUT_BATCH(wait_until);
+	    END_BATCH();
+    }
 }
 
 extern int r300EmitArrays(GLcontext * ctx);

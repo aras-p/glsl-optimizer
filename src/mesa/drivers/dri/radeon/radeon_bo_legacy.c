@@ -233,6 +233,7 @@ static void legacy_track_pending(struct bo_manager_legacy *boml)
 static struct bo_legacy *bo_allocate(struct bo_manager_legacy *boml,
                                      uint32_t size,
                                      uint32_t alignment,
+                                     uint32_t domains,
                                      uint32_t flags)
 {
     struct bo_legacy *bo_legacy;
@@ -245,6 +246,7 @@ static struct bo_legacy *bo_allocate(struct bo_manager_legacy *boml,
     bo_legacy->base.handle = 0;
     bo_legacy->base.size = size;
     bo_legacy->base.alignment = alignment;
+    bo_legacy->base.domains = domains;
     bo_legacy->base.flags = flags;
     bo_legacy->base.ptr = NULL;
     bo_legacy->map_count = 0;
@@ -337,7 +339,7 @@ static void bo_free(struct bo_legacy *bo_legacy)
     }
     if (!bo_legacy->static_bo) {
         legacy_free_handle(boml, bo_legacy->base.handle);
-        if (bo_legacy->base.flags & RADEON_GEM_DOMAIN_GTT) {
+        if (bo_legacy->base.domains & RADEON_GEM_DOMAIN_GTT) {
             /* dma buffers */
             bo_dma_free(&bo_legacy->base);
         } else {
@@ -353,6 +355,7 @@ static struct radeon_bo *bo_open(struct radeon_bo_manager *bom,
                                  uint32_t handle,
                                  uint32_t size,
                                  uint32_t alignment,
+                                 uint32_t domains,
                                  uint32_t flags)
 {
     struct bo_manager_legacy *boml = (struct bo_manager_legacy *)bom;
@@ -371,14 +374,14 @@ static struct radeon_bo *bo_open(struct radeon_bo_manager *bom,
         return NULL;
     }
 
-    bo_legacy = bo_allocate(boml, size, alignment, flags);
+    bo_legacy = bo_allocate(boml, size, alignment, domains, flags);
     bo_legacy->static_bo = 0;
     r = legacy_new_handle(boml, &bo_legacy->base.handle);
     if (r) {
         bo_free(bo_legacy);
         return NULL;
     }
-    if (bo_legacy->base.flags & RADEON_GEM_DOMAIN_GTT) {
+    if (bo_legacy->base.domains & RADEON_GEM_DOMAIN_GTT) {
         legacy_track_pending(boml);
         /* dma buffers */
         r = bo_dma_alloc(&(bo_legacy->base));
@@ -555,7 +558,7 @@ int radeon_bo_legacy_validate(struct radeon_bo *bo,
         *eoffset = bo_legacy->offset + bo->size;
         return 0;
     }
-    if (!(bo->flags & RADEON_GEM_DOMAIN_GTT)) {
+    if (!(bo->domains & RADEON_GEM_DOMAIN_GTT)) {
         r = bo_vram_validate(bo, soffset, eoffset);
         if (r) {
             return r;
@@ -650,7 +653,7 @@ struct radeon_bo_manager *radeon_bo_manager_legacy(struct radeon_screen *scrn)
     /* biggest framebuffer size */
     size = 4096*4096*4; 
     /* allocate front */
-    bo = bo_allocate(bom, size, 0, 0);
+    bo = bo_allocate(bom, size, 0, RADEON_GEM_DOMAIN_VRAM, 0);
     if (bo == NULL) {
         radeon_bo_manager_legacy_shutdown((struct radeon_bo_manager*)bom);
         return NULL;
@@ -666,7 +669,7 @@ struct radeon_bo_manager *radeon_bo_manager_legacy(struct radeon_screen *scrn)
         bom->nhandle = bo->base.handle + 1;
     }
     /* allocate back */
-    bo = bo_allocate(bom, size, 0, 0);
+    bo = bo_allocate(bom, size, 0, RADEON_GEM_DOMAIN_VRAM, 0);
     if (bo == NULL) {
         radeon_bo_manager_legacy_shutdown((struct radeon_bo_manager*)bom);
         return NULL;
@@ -682,14 +685,15 @@ struct radeon_bo_manager *radeon_bo_manager_legacy(struct radeon_screen *scrn)
         bom->nhandle = bo->base.handle + 1;
     }
     /* allocate depth */
-    bo = bo_allocate(bom, size, 0, 0);
+    bo = bo_allocate(bom, size, 0, RADEON_GEM_DOMAIN_VRAM, 0);
     if (bo == NULL) {
         radeon_bo_manager_legacy_shutdown((struct radeon_bo_manager*)bom);
         return NULL;
     }
     bo->base.flags = 0;
     if (scrn->sarea->tiling_enabled) {
-        bo->base.flags = RADEON_BO_FLAGS_MACRO_TILE;
+        bo->base.flags |= RADEON_BO_FLAGS_MACRO_TILE;
+        bo->base.flags |= RADEON_BO_FLAGS_MICRO_TILE;
     }
     bo->static_bo = 1;
     bo->offset = bom->screen->depthOffset + bom->fb_location;
@@ -711,7 +715,7 @@ unsigned radeon_bo_legacy_relocs_size(struct radeon_bo *bo)
 {
     struct bo_legacy *bo_legacy = (struct bo_legacy*)bo;
 
-    if (bo_legacy->static_bo || (bo->flags & RADEON_GEM_DOMAIN_GTT)) {
+    if (bo_legacy->static_bo || (bo->domains & RADEON_GEM_DOMAIN_GTT)) {
         return 0;
     }
     return bo->size;

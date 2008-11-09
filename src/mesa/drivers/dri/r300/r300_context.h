@@ -208,7 +208,7 @@ struct r300_state_atom {
 	GLboolean dirty;
 
 	int (*check) (r300ContextPtr, struct r300_state_atom * atom);
-	void (*emit) (r300ContextPtr);
+	void (*emit) (r300ContextPtr, struct r300_state_atom * atom);
 };
 
 #define R300_VPT_CMD_0		0

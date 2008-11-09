@@ -86,6 +86,10 @@ void r300BeginBatch(r300ContextPtr r300,
  */
 #define OUT_BATCH_RELOC(data, bo, offset, flags) \
 	do { \
+        if (offset) {\
+            fprintf(stderr, "(%s:%s:%d) offset : %d\n",\
+            __FILE__, __FUNCTION__, __LINE__, offset);\
+        }\
         radeon_cs_write_dword(b_l_r300->cmdbuf.cs, offset);\
         radeon_cs_write_reloc(b_l_r300->cmdbuf.cs,bo,0,(bo)->size,flags);\
 	} while(0)
@@ -118,5 +122,8 @@ void r300BeginBatch(r300ContextPtr r300,
 #define COMMIT_BATCH() \
 	do { \
 	} while(0)
+
+void emit_vpu(r300ContextPtr r300, struct r300_state_atom * atom);
+int check_vpu(r300ContextPtr r300, struct r300_state_atom *atom);
 
 #endif				/* __R300_CMDBUF_H__ */

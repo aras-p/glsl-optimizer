@@ -97,19 +97,23 @@ extern int prevLockLine;
 	do {								\
 		char __ret = 0;						\
 		DEBUG_CHECK_LOCK();					\
+        if (!(rmesa)->radeonScreen->driScreen->dri2.enabled) { \
 		DRM_CAS((rmesa)->dri.hwLock, (rmesa)->dri.hwContext,	\
 			(DRM_LOCK_HELD | (rmesa)->dri.hwContext), __ret); \
 		if (__ret)						\
 			radeonGetLock((rmesa), 0);			\
+        }\
 		DEBUG_LOCK();						\
 	} while (0)
 
 #define UNLOCK_HARDWARE( rmesa )					\
 	do {								\
+        if (!(rmesa)->radeonScreen->driScreen->dri2.enabled) { \
 		DRM_UNLOCK((rmesa)->dri.fd,				\
 			(rmesa)->dri.hwLock,				\
 			(rmesa)->dri.hwContext);			\
 		DEBUG_RESET();						\
+        }\
 	} while (0)
 
 #endif				/* __RADEON_LOCK_H__ */

@@ -153,6 +153,7 @@ void radeonSetCliprects(radeonContextPtr radeon)
 	GLframebuffer *const draw_fb = (GLframebuffer*)drawable->driverPrivate;
 	GLframebuffer *const read_fb = (GLframebuffer*)readable->driverPrivate;
 
+    if (!radeon->radeonScreen->driScreen->dri2.enabled) {    
 	if (draw_fb->_ColorDrawBufferIndexes[0] == BUFFER_BACK_LEFT) {
 		/* Can't ignore 2d windows if we are page flipping. */
 		if (drawable->numBackClipRects == 0 || radeon->doPageFlip ||
@@ -168,6 +169,7 @@ void radeonSetCliprects(radeonContextPtr radeon)
 		radeon->numClipRects = drawable->numClipRects;
 		radeon->pClipRects = drawable->pClipRects;
 	}
+    }
 
 	if ((draw_fb->Width != drawable->w) ||
 	    (draw_fb->Height != drawable->h)) {

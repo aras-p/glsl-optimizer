@@ -178,7 +178,7 @@ static void r300EmitVec(GLcontext * ctx, struct r300_aos *aos,
 		aos->stride = size;
 	}
 	aos->bo = radeon_bo_open(rmesa->radeon.radeonScreen->bom,
-                             0, bo_size, 32, RADEON_GEM_DOMAIN_GTT);
+                             0, bo_size, 32, RADEON_GEM_DOMAIN_GTT, 0);
     aos->offset = 0;
 	aos->components = size;
 	aos->count = count;
@@ -436,6 +436,18 @@ int r300EmitArrays(GLcontext * ctx)
 	}
 
 	/* Setup INPUT_ROUTE. */
+    if (rmesa->radeon.radeonScreen->driScreen->dri2.enabled) {
+	R300_STATECHANGE(rmesa, vir[0]);
+    rmesa->hw.vir[0].cmd[0] &= 0xC000FFFF;
+    rmesa->hw.vir[1].cmd[0] &= 0xC000FFFF;
+	rmesa->hw.vir[0].cmd[0] |=
+        (r300VAPInputRoute0(&rmesa->hw.vir[0].cmd[R300_VIR_CNTL_0],
+                            vb->AttribPtr, inputs, tab, nr) & 0x3FFF) << 16;
+	R300_STATECHANGE(rmesa, vir[1]);
+	rmesa->hw.vir[1].cmd[0] |=
+	    (r300VAPInputRoute1(&rmesa->hw.vir[1].cmd[R300_VIR_CNTL_0], swizzle,
+	                        nr) & 0x3FFF) << 16;
+    } else {
 	R300_STATECHANGE(rmesa, vir[0]);
 	((drm_r300_cmd_header_t *) rmesa->hw.vir[0].cmd)->packet0.count =
 	    r300VAPInputRoute0(&rmesa->hw.vir[0].cmd[R300_VIR_CNTL_0],
@@ -444,6 +456,7 @@ int r300EmitArrays(GLcontext * ctx)
 	((drm_r300_cmd_header_t *) rmesa->hw.vir[1].cmd)->packet0.count =
 	    r300VAPInputRoute1(&rmesa->hw.vir[1].cmd[R300_VIR_CNTL_0], swizzle,
 			       nr);
+    }
 
 	/* Setup INPUT_CNTL. */
 	R300_STATECHANGE(rmesa, vic);

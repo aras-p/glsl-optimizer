@@ -57,8 +57,8 @@ C_SOURCES = $(COMMON_SOURCES) $(DRIVER_SOURCES)
 
 DRIVER_DEFINES = -DCOMPILE_R300 -DR200_MERGED=0 \
 	-DRADEON_COMMON=1 -DRADEON_COMMON_FOR_R300 \
-#	-DRADEON_BO_TRACK_OPEN \
 #	-DRADEON_BO_TRACK_REF \
+#	-DRADEON_BO_TRACK_OPEN \
 	-Wall
 
 SYMLINKS = \
@@ -79,6 +79,8 @@ COMMON_SYMLINKS = \
 	radeon_cs_legacy.c \
 	radeon_bo_legacy.h \
 	radeon_cs_legacy.h
+
+DRI_LIB_DEPS += -ldrm_radeon
 
 ##### TARGETS #####
 

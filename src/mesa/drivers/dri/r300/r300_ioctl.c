@@ -56,8 +56,11 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_reg.h"
 #include "r300_emit.h"
 #include "r300_fragprog.h"
+#include "r300_context.h"
 
 #include "vblank.h"
+
+#define R200_3D_DRAW_IMMD_2      0xC0003500
 
 #define CLEARBUFFER_COLOR	0x1
 #define CLEARBUFFER_DEPTH	0x2
@@ -79,7 +82,7 @@ static void r300ClearBuffer(r300ContextPtr r300, int flags,
 			dPriv->w, dPriv->h);
 
 	if (rrb) {
-		cbpitch = rrb->pitch;
+		cbpitch = (rrb->pitch / rrb->cpp);
 		if (rrb->cpp == 4)
 			cbpitch |= R300_COLOR_FORMAT_ARGB8888;
 		else
@@ -105,11 +108,11 @@ static void r300ClearBuffer(r300ContextPtr r300, int flags,
 #if 1
 	if (flags & (CLEARBUFFER_DEPTH | CLEARBUFFER_STENCIL)) {
 		assert(rrbd != 0);
-		cbpitch = rrbd->pitch;
+		cbpitch = (rrbd->pitch / rrbd->cpp);
 		if (rrbd->bo->flags & RADEON_BO_FLAGS_MACRO_TILE){
 			cbpitch |= R300_DEPTHMACROTILE_ENABLE;
         }
-        if (r300->radeon.glCtx->Visual.depthBits == 24) {
+		if (rrbd->bo->flags & RADEON_BO_FLAGS_MICRO_TILE){
             cbpitch |= R300_DEPTHMICROTILE_TILED;
         }
 		BEGIN_BATCH_NO_AUTOSTATE(4);
@@ -119,7 +122,7 @@ static void r300ClearBuffer(r300ContextPtr r300, int flags,
 		END_BATCH();
 	}
 #endif
-	BEGIN_BATCH_NO_AUTOSTATE(15);
+	BEGIN_BATCH_NO_AUTOSTATE(6);
 	OUT_BATCH_REGSEQ(RB3D_COLOR_CHANNEL_MASK, 1);
 	if (flags & CLEARBUFFER_COLOR) {
 		OUT_BATCH((ctx->Color.ColorMask[BCOMP] ? RB3D_COLOR_CHANNEL_MASK_BLUE_MASK0 : 0) |
@@ -130,7 +133,6 @@ static void r300ClearBuffer(r300ContextPtr r300, int flags,
 		OUT_BATCH(0);
 	}
 
-	OUT_BATCH_REGSEQ(R300_ZB_CNTL, 3);
 
 	{
 		uint32_t t1, t2;
@@ -157,22 +159,40 @@ static void r300ClearBuffer(r300ContextPtr r300, int flags,
 			     R300_S_FRONT_ZFAIL_OP_SHIFT);
 		}
 
+        OUT_BATCH_REGSEQ(R300_ZB_CNTL, 3);
 		OUT_BATCH(t1);
 		OUT_BATCH(t2);
-		OUT_BATCH(((ctx->Stencil.WriteMask[0] & R300_STENCILREF_MASK) << R300_STENCILWRITEMASK_SHIFT) |
+		OUT_BATCH(((ctx->Stencil.WriteMask[0] & R300_STENCILREF_MASK) <<
+                   R300_STENCILWRITEMASK_SHIFT) |
 			  (ctx->Stencil.Clear & R300_STENCILREF_MASK));
+        END_BATCH();
 	}
 
-	OUT_BATCH(cmdpacket3(R300_CMD_PACKET3_CLEAR));
-	OUT_BATCH_FLOAT32(dPriv->w / 2.0);
-	OUT_BATCH_FLOAT32(dPriv->h / 2.0);
-	OUT_BATCH_FLOAT32(ctx->Depth.Clear);
-	OUT_BATCH_FLOAT32(1.0);
-	OUT_BATCH_FLOAT32(ctx->Color.ClearColor[0]);
-	OUT_BATCH_FLOAT32(ctx->Color.ClearColor[1]);
-	OUT_BATCH_FLOAT32(ctx->Color.ClearColor[2]);
-	OUT_BATCH_FLOAT32(ctx->Color.ClearColor[3]);
-	END_BATCH();
+    if (!rmesa->radeon.radeonScreen->driScreen->dri2.enabled) {
+    	BEGIN_BATCH_NO_AUTOSTATE(9);
+    	OUT_BATCH(cmdpacket3(r300->radeon.radeonScreen, R300_CMD_PACKET3_CLEAR));
+    	OUT_BATCH_FLOAT32(dPriv->w / 2.0);
+	    OUT_BATCH_FLOAT32(dPriv->h / 2.0);
+    	OUT_BATCH_FLOAT32(ctx->Depth.Clear);
+	    OUT_BATCH_FLOAT32(1.0);
+    	OUT_BATCH_FLOAT32(ctx->Color.ClearColor[0]);
+	    OUT_BATCH_FLOAT32(ctx->Color.ClearColor[1]);
+    	OUT_BATCH_FLOAT32(ctx->Color.ClearColor[2]);
+	    OUT_BATCH_FLOAT32(ctx->Color.ClearColor[3]);
+    	END_BATCH();
+    } else {
+        OUT_BATCH(CP_PACKET3(R200_3D_DRAW_IMMD_2, 8));
+        OUT_BATCH(R300_PRIM_TYPE_POINT | R300_PRIM_WALK_RING |
+                  (1 << R300_PRIM_NUM_VERTICES_SHIFT));
+    	OUT_BATCH_FLOAT32(dPriv->w / 2.0);
+	    OUT_BATCH_FLOAT32(dPriv->h / 2.0);
+    	OUT_BATCH_FLOAT32(ctx->Depth.Clear);
+	    OUT_BATCH_FLOAT32(1.0);
+    	OUT_BATCH_FLOAT32(ctx->Color.ClearColor[0]);
+	    OUT_BATCH_FLOAT32(ctx->Color.ClearColor[1]);
+    	OUT_BATCH_FLOAT32(ctx->Color.ClearColor[2]);
+	    OUT_BATCH_FLOAT32(ctx->Color.ClearColor[3]);
+    }
 
 	r300EmitCacheFlush(rmesa);
 	cp_wait(rmesa, R300_WAIT_3D | R300_WAIT_3D_CLEAN);
@@ -379,7 +399,7 @@ static void r300EmitClearState(GLcontext * ctx)
 		OUT_BATCH(R500_US_CODE_RANGE_ADDR(0) | R500_US_CODE_RANGE_SIZE(1));
 		OUT_BATCH(R500_US_CODE_OFFSET_ADDR(0));
 
-		OUT_BATCH(cmdr500fp(0, 1, 0, 0));
+		OUT_BATCH(cmdr500fp(r300->radeon.radeonScreen, 0, 1, 0, 0));
 		OUT_BATCH(R500_INST_TYPE_OUT |
 			  R500_INST_TEX_SEM_WAIT |
 			  R500_INST_LAST |
@@ -456,10 +476,12 @@ static void r300EmitClearState(GLcontext * ctx)
 	END_BATCH();
 
 	if (has_tcl) {
+        struct r300_state_atom vpu;
+        uint32_t _cmd[10];
 		R300_STATECHANGE(r300, pvs);
 		R300_STATECHANGE(r300, vpi);
 
-		BEGIN_BATCH(13);
+		BEGIN_BATCH(4);
 		OUT_BATCH_REGSEQ(R300_VAP_PVS_CODE_CNTL_0, 3);
 		OUT_BATCH((0 << R300_PVS_FIRST_INST_SHIFT) |
 			  (0 << R300_PVS_XYZW_VALID_INST_SHIFT) |
@@ -467,18 +489,37 @@ static void r300EmitClearState(GLcontext * ctx)
 		OUT_BATCH((0 << R300_PVS_CONST_BASE_OFFSET_SHIFT) |
 			  (0 << R300_PVS_MAX_CONST_ADDR_SHIFT));
 		OUT_BATCH(1 << R300_PVS_LAST_VTX_SRC_INST_SHIFT);
-
-		OUT_BATCH(cmdvpu(0, 2));
-		OUT_BATCH(PVS_OP_DST_OPERAND(VE_ADD, GL_FALSE, GL_FALSE, 0, 0xf, PVS_DST_REG_OUT));
-		OUT_BATCH(PVS_SRC_OPERAND(0, PVS_SRC_SELECT_X, PVS_SRC_SELECT_Y, PVS_SRC_SELECT_Z, PVS_SRC_SELECT_W, PVS_SRC_REG_INPUT, VSF_FLAG_NONE));
-		OUT_BATCH(PVS_SRC_OPERAND(0, PVS_SRC_SELECT_FORCE_0, PVS_SRC_SELECT_FORCE_0, PVS_SRC_SELECT_FORCE_0, PVS_SRC_SELECT_FORCE_0, PVS_SRC_REG_INPUT, VSF_FLAG_NONE));
-		OUT_BATCH(0x0);
-
-		OUT_BATCH(PVS_OP_DST_OPERAND(VE_ADD, GL_FALSE, GL_FALSE, 1, 0xf, PVS_DST_REG_OUT));
-		OUT_BATCH(PVS_SRC_OPERAND(1, PVS_SRC_SELECT_X, PVS_SRC_SELECT_Y, PVS_SRC_SELECT_Z, PVS_SRC_SELECT_W, PVS_SRC_REG_INPUT, VSF_FLAG_NONE));
-		OUT_BATCH(PVS_SRC_OPERAND(1, PVS_SRC_SELECT_FORCE_0, PVS_SRC_SELECT_FORCE_0, PVS_SRC_SELECT_FORCE_0, PVS_SRC_SELECT_FORCE_0, PVS_SRC_REG_INPUT, VSF_FLAG_NONE));
-		OUT_BATCH(0x0);
 		END_BATCH();
+
+        vpu.check = check_vpu;
+        vpu.cmd = _cmd;
+        vpu.cmd[0] = cmdvpu(r300->radeon.radeonScreen, 0, 2);
+
+		vpu.cmd[1] = PVS_OP_DST_OPERAND(VE_ADD, GL_FALSE, GL_FALSE,
+                                         0, 0xf, PVS_DST_REG_OUT);
+		vpu.cmd[2] = PVS_SRC_OPERAND(0, PVS_SRC_SELECT_X, PVS_SRC_SELECT_Y,
+                                      PVS_SRC_SELECT_Z, PVS_SRC_SELECT_W,
+                                      PVS_SRC_REG_INPUT, VSF_FLAG_NONE);
+		vpu.cmd[3] = PVS_SRC_OPERAND(0, PVS_SRC_SELECT_FORCE_0,
+                                      PVS_SRC_SELECT_FORCE_0,
+                                      PVS_SRC_SELECT_FORCE_0,
+                                      PVS_SRC_SELECT_FORCE_0,
+                                      PVS_SRC_REG_INPUT, VSF_FLAG_NONE);
+		vpu.cmd[4] = 0x0;
+
+		vpu.cmd[5] = PVS_OP_DST_OPERAND(VE_ADD, GL_FALSE, GL_FALSE, 1, 0xf,
+                                         PVS_DST_REG_OUT);
+		vpu.cmd[6] = PVS_SRC_OPERAND(1, PVS_SRC_SELECT_X,
+                                      PVS_SRC_SELECT_Y, PVS_SRC_SELECT_Z,
+                                      PVS_SRC_SELECT_W, PVS_SRC_REG_INPUT,
+                                      VSF_FLAG_NONE);
+		vpu.cmd[7] = PVS_SRC_OPERAND(1, PVS_SRC_SELECT_FORCE_0,
+                                      PVS_SRC_SELECT_FORCE_0,
+                                      PVS_SRC_SELECT_FORCE_0,
+                                      PVS_SRC_SELECT_FORCE_0,
+                                      PVS_SRC_REG_INPUT, VSF_FLAG_NONE);
+		vpu.cmd[8] = 0x0;
+        emit_vpu(r300, &vpu);
 	}
 }
 
@@ -542,7 +583,7 @@ static void r300Clear(GLcontext * ctx, GLbitfield mask)
 	r300EnsureCmdBufSpace(r300, 421 * 3, __FUNCTION__);
 	if (flags || bits)
 		r300EmitClearState(ctx);
-    rrbd = (void *)r300->radeon.state.depth_buffer;
+    rrbd = (void *)fb->Attachment[BUFFER_DEPTH].Renderbuffer;
 
 	if (flags & BUFFER_BIT_FRONT_LEFT) {
 		rrb = (void *)fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer;

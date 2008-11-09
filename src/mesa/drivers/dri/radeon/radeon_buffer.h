@@ -39,7 +39,8 @@ struct radeon_renderbuffer
     unsigned int height;
 
     /* boo Xorg 6.8.2 compat */
-    int depthHasSurface;
+    int has_surface;
+
 
     __DRIdrawablePrivate *dPriv;
 };

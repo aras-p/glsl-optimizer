@@ -163,7 +163,10 @@ r300_mipmap_tree* r300_miptree_create(r300ContextPtr rmesa, r300TexObj *t,
 
 	calculate_miptree_layout(mt);
 
-	mt->bo = radeon_bo_open(rmesa->radeon.radeonScreen->bom, 0, mt->totalsize, 1024, 0);
+	mt->bo = radeon_bo_open(rmesa->radeon.radeonScreen->bom,
+                            0, mt->totalsize, 1024,
+                            RADEON_GEM_DOMAIN_VRAM,
+                            0);
 
 	return mt;
 }

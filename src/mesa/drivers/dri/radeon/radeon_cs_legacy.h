@@ -36,5 +36,6 @@
 #include "radeon_context.h"
 
 struct radeon_cs_manager *radeon_cs_manager_legacy(struct radeon_context *ctx);
+void radeon_cs_manager_legacy_shutdown(struct radeon_cs_manager *csm);
 
 #endif

@@ -220,7 +220,7 @@ void radeonSwapBuffers(__DRIdrawablePrivate * dPriv)
 		ctx = radeon->glCtx;
 
 		if (ctx->Visual.doubleBufferMode) {
-			_mesa_notifySwapBuffers(ctx);	/* flush pending rendering comands */
+			_mesa_notifySwapBuffers(ctx);/* flush pending rendering comands */
 			if (radeon->doPageFlip) {
 				radeonPageFlip(dPriv);
 			} else {
@@ -276,10 +276,11 @@ radeon_make_renderbuffer_current(radeonContextPtr radeon,
                                     radeon->radeonScreen->fbLocation,
                                     size,
                                     4096,
+                                    RADEON_GEM_DOMAIN_VRAM,
                                     0);
         }
 		rb->cpp = radeon->radeonScreen->cpp;
-		rb->pitch = radeon->radeonScreen->frontPitch;
+		rb->pitch = radeon->radeonScreen->frontPitch * rb->cpp;
 	}
 	if ((rb = (void *)draw->Attachment[BUFFER_BACK_LEFT].Renderbuffer)) {
 		if (!rb->bo) {
@@ -288,10 +289,11 @@ radeon_make_renderbuffer_current(radeonContextPtr radeon,
                                     radeon->radeonScreen->fbLocation,
                                     size,
                                     4096,
+                                    RADEON_GEM_DOMAIN_VRAM,
                                     0);
         }
 		rb->cpp = radeon->radeonScreen->cpp;
-		rb->pitch = radeon->radeonScreen->backPitch;
+		rb->pitch = radeon->radeonScreen->backPitch * rb->cpp;
 	}
 	if ((rb = (void *)draw->Attachment[BUFFER_DEPTH].Renderbuffer)) {
 		if (!rb->bo) {
@@ -300,11 +302,120 @@ radeon_make_renderbuffer_current(radeonContextPtr radeon,
                                     radeon->radeonScreen->fbLocation,
                                     size,
                                     4096,
+                                    RADEON_GEM_DOMAIN_VRAM,
                                     0);
         }
 		rb->cpp = radeon->radeonScreen->cpp;
-		rb->pitch = radeon->radeonScreen->depthPitch;
+		rb->pitch = radeon->radeonScreen->depthPitch * rb->cpp;
 	}
+}
+
+void
+radeon_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
+{
+    unsigned int attachments[10];
+    __DRIbuffer *buffers;
+    __DRIscreen *screen;
+	struct radeon_renderbuffer *rb;
+    int i, count;
+	GLframebuffer *draw;
+	radeonContextPtr radeon;
+
+	draw = drawable->driverPrivate;
+    screen = context->driScreenPriv;
+	radeon = (radeonContextPtr) context->driverPrivate;
+    i = 0;
+	if ((rb = (void *)draw->Attachment[BUFFER_FRONT_LEFT].Renderbuffer)) {
+        attachments[i++] = __DRI_BUFFER_FRONT_LEFT;
+    }
+	if ((rb = (void *)draw->Attachment[BUFFER_BACK_LEFT].Renderbuffer)) {
+        attachments[i++] = __DRI_BUFFER_BACK_LEFT;
+    }
+	if ((rb = (void *)draw->Attachment[BUFFER_DEPTH].Renderbuffer)) {
+        attachments[i++] = __DRI_BUFFER_DEPTH;
+    }
+
+    buffers = (*screen->dri2.loader->getBuffers)(drawable,
+                                                 &drawable->w,
+                                                 &drawable->h,
+                                                 attachments, i,
+                                                 &count,
+                                                 drawable->loaderPrivate);
+    if (buffers == NULL)
+        return;
+
+    /* set one cliprect to cover the whole drawable */
+    drawable->x = 0;
+    drawable->y = 0;
+    drawable->backX = 0;
+    drawable->backY = 0;
+    drawable->numClipRects = 1;
+    drawable->pClipRects[0].x1 = 0;
+    drawable->pClipRects[0].y1 = 0;
+    drawable->pClipRects[0].x2 = drawable->w;
+    drawable->pClipRects[0].y2 = drawable->h;
+    drawable->numBackClipRects = 1;
+    drawable->pBackClipRects[0].x1 = 0;
+    drawable->pBackClipRects[0].y1 = 0;
+    drawable->pBackClipRects[0].x2 = drawable->w;
+    drawable->pBackClipRects[0].y2 = drawable->h;
+    for (i = 0; i < count; i++) {
+        switch (buffers[i].attachment) {
+        case __DRI_BUFFER_FRONT_LEFT:
+            rb = (void *)draw->Attachment[BUFFER_FRONT_LEFT].Renderbuffer;
+            rb->cpp = buffers[i].cpp;
+            rb->pitch = buffers[i].pitch;
+            rb->height = drawable->h;
+            rb->has_surface = 0;
+            rb->bo = radeon_bo_open(radeon->radeonScreen->bom,
+                                    buffers[i].name,
+                                    0,
+                                    0,
+                                    RADEON_GEM_DOMAIN_VRAM,
+                                    buffers[i].flags);
+            if (rb->bo == NULL) {
+                fprintf(stderr, "failled to attach front %d\n",
+                        buffers[i].name);
+            }
+            break;
+        case __DRI_BUFFER_BACK_LEFT:
+            rb = (void *)draw->Attachment[BUFFER_BACK_LEFT].Renderbuffer;
+            rb->cpp = buffers[i].cpp;
+            rb->pitch = buffers[i].pitch;
+            rb->height = drawable->h;
+            rb->has_surface = 0;
+            rb->bo = radeon_bo_open(radeon->radeonScreen->bom,
+                                    buffers[i].name,
+                                    0,
+                                    0,
+                                    RADEON_GEM_DOMAIN_VRAM,
+                                    buffers[i].flags);
+            break;
+        case __DRI_BUFFER_DEPTH:
+            rb = (void *)draw->Attachment[BUFFER_DEPTH].Renderbuffer;
+            rb->cpp = buffers[i].cpp;
+            rb->pitch = buffers[i].pitch;
+            rb->height = drawable->h;
+            rb->has_surface = 0;
+            rb->bo = radeon_bo_open(radeon->radeonScreen->bom,
+                                    buffers[i].name,
+                                    0,
+                                    0,
+                                    RADEON_GEM_DOMAIN_VRAM,
+                                    buffers[i].flags);
+            break;
+        case __DRI_BUFFER_STENCIL:
+            break;
+        case __DRI_BUFFER_ACCUM:
+        default:
+            fprintf(stderr,
+                    "unhandled buffer attach event, attacment type %d\n",
+                    buffers[i].attachment);
+            return;
+        }
+    }
+	radeon = (radeonContextPtr) context->driverPrivate;
+	driUpdateFramebufferSize(radeon->glCtx, drawable);
 }
 
 
@@ -324,10 +435,20 @@ GLboolean radeonMakeCurrent(__DRIcontextPrivate * driContextPriv,
 		_mesa_make_current(NULL, NULL, NULL);
 		return GL_TRUE;
 	}
-
 	radeon = (radeonContextPtr) driContextPriv->driverPrivate;
 	dfb = driDrawPriv->driverPrivate;
 	rfb = driReadPriv->driverPrivate;
+
+    if (driContextPriv->driScreenPriv->dri2.enabled) {    
+        radeon_update_renderbuffers(driContextPriv, driDrawPriv);
+        if (driDrawPriv != driReadPriv)
+            radeon_update_renderbuffers(driContextPriv, driReadPriv);
+        radeon->state.color.rrb =
+            (void *)dfb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer;
+        radeon->state.depth_buffer =
+            (void *)dfb->Attachment[BUFFER_DEPTH].Renderbuffer;
+    }
+
 
 	if (RADEON_DEBUG & DEBUG_DRI)
 		fprintf(stderr, "%s ctx %p\n", __FUNCTION__, radeon->glCtx);
@@ -336,7 +457,9 @@ GLboolean radeonMakeCurrent(__DRIcontextPrivate * driContextPriv,
 	if (driReadPriv != driDrawPriv)
 		driUpdateFramebufferSize(radeon->glCtx, driReadPriv);
 
-	radeon_make_renderbuffer_current(radeon, dfb);
+    if (!driContextPriv->driScreenPriv->dri2.enabled) {    
+    	radeon_make_renderbuffer_current(radeon, dfb);
+    }
 
 	_mesa_make_current(radeon->glCtx, dfb, rfb);
 
@@ -364,7 +487,9 @@ GLboolean radeonMakeCurrent(__DRIcontextPrivate * driContextPriv,
 
 	_mesa_update_state(radeon->glCtx);
 
-	radeonUpdatePageFlipping(radeon);
+    if (!driContextPriv->driScreenPriv->dri2.enabled) {    
+	    radeonUpdatePageFlipping(radeon);
+    }
 
 	if (RADEON_DEBUG & DEBUG_DRI)
 		fprintf(stderr, "End %s\n", __FUNCTION__);
