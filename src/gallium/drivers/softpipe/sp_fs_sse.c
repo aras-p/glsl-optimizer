@@ -40,7 +40,7 @@
 #include "tgsi/tgsi_sse2.h"
 
 
-#if defined(PIPE_ARCH_X86) && defined(PIPE_ARCH_SSE)
+#if defined(PIPE_ARCH_X86)
 
 #include "rtasm/rtasm_x86sse.h"
 

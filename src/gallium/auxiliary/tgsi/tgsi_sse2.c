@@ -27,12 +27,14 @@
 
 #include "pipe/p_config.h"
 
-#if defined(PIPE_ARCH_X86) && defined(PIPE_ARCH_SSE)
+#if defined(PIPE_ARCH_X86)
 
 #include "pipe/p_debug.h"
 #include "pipe/p_shader_tokens.h"
 #include "util/u_math.h"
+#if defined(PIPE_ARCH_SSE)
 #include "util/u_sse.h"
+#endif
 #include "tgsi/tgsi_parse.h"
 #include "tgsi/tgsi_util.h"
 #include "tgsi_exec.h"
@@ -627,6 +629,9 @@ emit_func_call_dst_src(
       code );
 }
 
+
+#if defined(PIPE_ARCH_SSE)
+
 /*
  * Fast SSE2 implementation of special math functions.
  */
@@ -678,6 +683,7 @@ exp2f4(__m128 x)
    return _mm_mul_ps(expipart, expfpart);
 }
 
+
 /**
  * See http://www.devmaster.net/forums/showthread.php?p=43580
  */
@@ -720,11 +726,15 @@ log2f4(__m128 x)
    return _mm_add_ps(logmant, exp);
 }
 
+
 static INLINE __m128
 powf4(__m128 x, __m128 y)
 {
    return exp2f4(_mm_mul_ps(log2f4(x), y));
 }
+
+#endif /* PIPE_ARCH_SSE */
+
 
 
 /**
@@ -780,13 +790,20 @@ emit_cos(
 }
 
 static void PIPE_CDECL
-#if defined(PIPE_CC_GCC)
+#if defined(PIPE_CC_GCC) && defined(PIPE_ARCH_SSE)
 __attribute__((force_align_arg_pointer))
 #endif
 ex24f(
    float *store )
 {
+#if defined(PIPE_ARCH_SSE)
    _mm_store_ps(&store[0], exp2f4( _mm_load_ps(&store[0]) ));
+#else
+   store[0] = util_fast_exp2( store[0] );
+   store[1] = util_fast_exp2( store[1] );
+   store[2] = util_fast_exp2( store[2] );
+   store[3] = util_fast_exp2( store[3] );
+#endif
 }
 
 static void
@@ -871,13 +888,20 @@ emit_frc(
 }
 
 static void PIPE_CDECL
-#if defined(PIPE_CC_GCC)
+#if defined(PIPE_CC_GCC) && defined(PIPE_ARCH_SSE)
 __attribute__((force_align_arg_pointer))
 #endif
 lg24f(
    float *store )
 {
+#if defined(PIPE_ARCH_SSE)
    _mm_store_ps(&store[0], log2f4( _mm_load_ps(&store[0]) ));
+#else
+   store[0] = util_fast_log2( store[0] );
+   store[1] = util_fast_log2( store[1] );
+   store[2] = util_fast_log2( store[2] );
+   store[3] = util_fast_log2( store[3] );
+#endif
 }
 
 static void
@@ -930,19 +954,19 @@ emit_neg(
 }
 
 static void PIPE_CDECL
-#if defined(PIPE_CC_GCC)
+#if defined(PIPE_CC_GCC) && defined(PIPE_ARCH_SSE)
 __attribute__((force_align_arg_pointer))
 #endif
 pow4f(
    float *store )
 {
-#if 1
+#if defined(PIPE_ARCH_SSE)
    _mm_store_ps(&store[0], powf4( _mm_load_ps(&store[0]), _mm_load_ps(&store[4]) ));
 #else
-   store[0] = powf( store[0], store[4] );
-   store[1] = powf( store[1], store[5] );
-   store[2] = powf( store[2], store[6] );
-   store[3] = powf( store[3], store[7] );
+   store[0] = util_fast_pow( store[0], store[4] );
+   store[1] = util_fast_pow( store[1], store[5] );
+   store[2] = util_fast_pow( store[2], store[6] );
+   store[3] = util_fast_pow( store[3], store[7] );
 #endif
 }
 
