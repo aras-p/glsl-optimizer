@@ -101,7 +101,9 @@ void _debug_vprintf(const char *format, va_list ap)
 #elif defined(PIPE_SUBSYSTEM_WINDOWS_CE) || defined(PIPE_SUBSYSTEM_WINDOWS_MINIPORT) 
    /* TODO */
 #else /* !PIPE_SUBSYSTEM_WINDOWS */
+#ifdef DEBUG
    vfprintf(stderr, format, ap);
+#endif
 #endif
 }
 
