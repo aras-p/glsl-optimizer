@@ -3289,7 +3289,7 @@
         <param name="textures" type="const GLuint *" count="n"/>
         <param name="residences" type="GLboolean *" output="true" count="n"/>
         <return type="GLboolean"/>
-        <glx sop="143" always_array="true"/>
+        <glx sop="143" handcode="client" always_array="true"/>
     </function>
 
     <function name="BindTexture" offset="307">
@@ -8645,7 +8645,7 @@
         <param name="textures" type="const GLuint *" count="n"/>
         <param name="residences" type="GLboolean *" output="true" count="n"/>
         <return type="GLboolean"/>
-        <glx vendorpriv="11" always_array="true"/>
+        <glx vendorpriv="11" handcode="client" always_array="true"/>
     </function>
 
     <function name="BindTextureEXT" alias="BindTexture">
