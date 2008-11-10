@@ -26,7 +26,7 @@
  */
 
 #include "utils.h"
-#include "dispatch.h"
+#include "glapi/dispatch.h"
 
 #ifndef NULL
 # define NULL 0
