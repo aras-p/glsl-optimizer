@@ -235,10 +235,18 @@ struct intel_context
 
    /* These refer to the current drawing buffer:
     */
-   int drawX, drawY;            /**< origin of drawing area within region */
-   GLuint numClipRects;         /**< cliprects for drawing */
-   drm_clip_rect_t *pClipRects;
    struct gl_texture_object *frame_buffer_texobj;
+   /**
+    * Set to true if a single constant cliprect should be used in the
+    * batchbuffer.  Otherwise, cliprects must be calculated at batchbuffer
+    * flush time while the lock is held.
+    */
+   GLboolean constant_cliprect;
+   /**
+    * In !constant_cliprect mode, set to true if the front cliprects should be
+    * used instead of back.
+    */
+   GLboolean front_cliprects;
    drm_clip_rect_t fboRect;     /**< cliprect for FBO rendering */
 
    int perf_boxes;
@@ -270,10 +278,6 @@ struct intel_context
     * Configuration cache
     */
    driOptionCache optionCache;
-
-   /* Last seen width/height of the screen */
-   int width;
-   int height;
 
    int64_t swap_ust;
    int64_t swap_missed_ust;

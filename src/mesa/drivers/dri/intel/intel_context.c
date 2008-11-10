@@ -588,9 +588,6 @@ intelInitContext(struct intel_context *intel,
    intel->driFd = sPriv->fd;
    intel->driHwLock = sPriv->lock;
 
-   intel->width = intelScreen->width;
-   intel->height = intelScreen->height;
-
    driParseConfigFiles(&intel->optionCache, &intelScreen->optionCache,
                        intel->driScreen->myNum,
 		       IS_965(intelScreen->deviceID) ? "i965" : "i915");
@@ -930,38 +927,6 @@ intelContendedLock(struct intel_context *intel, GLuint flags)
       if (INTEL_DEBUG & DEBUG_BUFMGR)
 	 fprintf(stderr, "Lost Textures: sarea->texAge %x hw context %x\n",
 		 sarea->ctxOwner, intel->hHWContext);
-   }
-
-   if (sarea->width != intel->width || sarea->height != intel->height) {
-       int numClipRects = intel->numClipRects;
-
-       /*
-	* FIXME: Really only need to do this when drawing to a
-	* common back- or front buffer.
-	*/
-
-       /*
-	* This will essentially drop the outstanding batchbuffer on
-	* the floor.
-	*/
-       intel->numClipRects = 0;
-
-       if (intel->Fallback)
-	   _swrast_flush(&intel->ctx);
-
-       if (!IS_965(intel->intelScreen->deviceID))
-	   INTEL_FIREVERTICES(intel);
-
-       if (intel->batch->map != intel->batch->ptr)
-	   intel_batchbuffer_flush(intel->batch);
-
-       intel->numClipRects = numClipRects;
-
-       /* force window update */
-       intel->lastStamp = 0;
-
-       intel->width = sarea->width;
-       intel->height = sarea->height;
    }
 
    /* Drawable changed?

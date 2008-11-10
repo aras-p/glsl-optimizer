@@ -71,6 +71,38 @@ const struct brw_tracked_state brw_blend_constant_color = {
    .emit = upload_blend_constant_color
 };
 
+/* Constant single cliprect for framebuffer object or DRI2 drawing */
+static void upload_drawing_rect(struct brw_context *brw)
+{
+   struct intel_context *intel = &brw->intel;
+   GLcontext *ctx = &intel->ctx;
+
+   if (!intel->constant_cliprect)
+      return;
+
+   BEGIN_BATCH(4, NO_LOOP_CLIPRECTS);
+   OUT_BATCH(_3DSTATE_DRAWRECT_INFO_I965);
+   OUT_BATCH(0); /* xmin, ymin */
+   OUT_BATCH(((ctx->DrawBuffer->Width - 1) & 0xffff) |
+	    ((ctx->DrawBuffer->Height - 1) << 16));
+   OUT_BATCH(0);
+   ADVANCE_BATCH();
+}
+
+const struct brw_tracked_state brw_drawing_rect = {
+   .dirty = {
+      .mesa = _NEW_BUFFERS,
+      .brw = 0,
+      .cache = 0
+   },
+   .emit = upload_drawing_rect
+};
+
+static void prepare_binding_table_pointers(struct brw_context *brw)
+{
+   brw_add_validated_bo(brw, brw->wm.bind_bo);
+}
+
 /**
  * Upload the binding table pointers, which point each stage's array of surface
  * state pointers.
@@ -81,13 +113,6 @@ const struct brw_tracked_state brw_blend_constant_color = {
 static void upload_binding_table_pointers(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
-   dri_bo *aper_array[] = {
-      intel->batch->buf,
-      brw->wm.bind_bo,
-   };
-
-   if (dri_bufmgr_check_aperture_space(aper_array, ARRAY_SIZE(aper_array)))
-      intel_batchbuffer_flush(intel->batch);
 
    BEGIN_BATCH(6, IGNORE_CLIPRECTS);
    OUT_BATCH(CMD_BINDING_TABLE_PTRS << 16 | (6 - 2));
@@ -107,6 +132,7 @@ const struct brw_tracked_state brw_binding_table_pointers = {
       .brw = BRW_NEW_BATCH,
       .cache = CACHE_NEW_SURF_BIND,
    },
+   .prepare = prepare_binding_table_pointers,
    .emit = upload_binding_table_pointers,
 };
 
@@ -140,21 +166,18 @@ static void upload_pipelined_state_pointers(struct brw_context *brw )
    brw->state.dirty.brw |= BRW_NEW_PSP;
 }
 
+
+static void prepare_psp_urb_cbs(struct brw_context *brw)
+{
+   brw_add_validated_bo(brw, brw->vs.state_bo);
+   brw_add_validated_bo(brw, brw->gs.state_bo);
+   brw_add_validated_bo(brw, brw->clip.state_bo);
+   brw_add_validated_bo(brw, brw->wm.state_bo);
+   brw_add_validated_bo(brw, brw->cc.state_bo);
+}
+
 static void upload_psp_urb_cbs(struct brw_context *brw )
 {
-   struct intel_context *intel = &brw->intel;
-   dri_bo *aper_array[] = {
-      intel->batch->buf,
-      brw->vs.state_bo,
-      brw->gs.state_bo,
-      brw->clip.state_bo,
-      brw->wm.state_bo,
-      brw->cc.state_bo,
-   };
-
-   if (dri_bufmgr_check_aperture_space(aper_array, ARRAY_SIZE(aper_array)))
-      intel_batchbuffer_flush(intel->batch);
-
    upload_pipelined_state_pointers(brw);
    brw_upload_urb_fence(brw);
    brw_upload_constant_buffer_state(brw);
@@ -172,14 +195,23 @@ const struct brw_tracked_state brw_psp_urb_cbs = {
 		CACHE_NEW_WM_UNIT | 
 		CACHE_NEW_CC_UNIT)
    },
+   .prepare = prepare_psp_urb_cbs,
    .emit = upload_psp_urb_cbs,
 };
+
+static void prepare_depthbuffer(struct brw_context *brw)
+{
+   struct intel_region *region = brw->state.depth_region;
+
+   if (region != NULL)
+      brw_add_validated_bo(brw, region->buffer);
+}
 
 static void emit_depthbuffer(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
    struct intel_region *region = brw->state.depth_region;
-   unsigned int len = (BRW_IS_GM45(brw) || BRW_IS_G4X(brw)) ? sizeof(struct brw_depthbuffer_gm45_g4x) / 4 : sizeof(struct brw_depthbuffer) / 4;
+   unsigned int len = BRW_IS_G4X(brw) ? 6 : 5;
 
    if (region == NULL) {
       BEGIN_BATCH(len, IGNORE_CLIPRECTS);
@@ -190,16 +222,12 @@ static void emit_depthbuffer(struct brw_context *brw)
       OUT_BATCH(0);
       OUT_BATCH(0);
 
-      if (BRW_IS_GM45(brw) || BRW_IS_G4X(brw))
+      if (BRW_IS_G4X(brw))
          OUT_BATCH(0);
 
       ADVANCE_BATCH();
    } else {
       unsigned int format;
-      dri_bo *aper_array[] = {
-	 intel->batch->buf,
-	 region->buffer
-      };
 
       switch (region->cpp) {
       case 2:
@@ -216,9 +244,6 @@ static void emit_depthbuffer(struct brw_context *brw)
 	 return;
       }
 
-      if (dri_bufmgr_check_aperture_space(aper_array, ARRAY_SIZE(aper_array)))
-	 intel_batchbuffer_flush(intel->batch);
-
       BEGIN_BATCH(len, IGNORE_CLIPRECTS);
       OUT_BATCH(CMD_DEPTH_BUFFER << 16 | (len - 2));
       OUT_BATCH(((region->pitch * region->cpp) - 1) |
@@ -234,7 +259,7 @@ static void emit_depthbuffer(struct brw_context *brw)
 		((region->height - 1) << 19));
       OUT_BATCH(0);
 
-      if (BRW_IS_GM45(brw) || BRW_IS_G4X(brw))
+      if (BRW_IS_G4X(brw))
          OUT_BATCH(0);
 
       ADVANCE_BATCH();
@@ -247,6 +272,7 @@ const struct brw_tracked_state brw_depthbuffer = {
       .brw = BRW_NEW_DEPTH_BUFFER | BRW_NEW_BATCH,
       .cache = 0,
    },
+   .prepare = prepare_depthbuffer,
    .emit = emit_depthbuffer,
 };
 
@@ -318,7 +344,7 @@ static void upload_aa_line_parameters(struct brw_context *brw)
 {
    struct brw_aa_line_parameters balp;
    
-   if (!(BRW_IS_GM45(brw) || BRW_IS_G4X(brw)))
+   if (!BRW_IS_G4X(brw))
       return;
 
    /* use legacy aa line coverage computation */

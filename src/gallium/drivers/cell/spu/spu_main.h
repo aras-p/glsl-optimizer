@@ -160,8 +160,7 @@ struct spu_global
    tile_t ztile ALIGN16_ATTRIB;
 
    /** Read depth/stencil tiles? */
-   boolean read_depth;
-   boolean read_stencil;
+   boolean read_depth_stencil;
 
    /** Current tiles' status */
    ubyte cur_ctile_status, cur_ztile_status;

@@ -49,7 +49,7 @@ struct mem_block {
  * input: total size in bytes
  * return: a heap pointer if OK, NULL if error
  */
-extern struct mem_block *mmInit(int ofs, int size);
+extern struct mem_block *u_mmInit(int ofs, int size);
 
 /**
  * Allocate 'size' bytes with 2^align2 bytes alignment,
@@ -61,7 +61,7 @@ extern struct mem_block *mmInit(int ofs, int size);
  *		startSearch = linear offset from start of heap to begin search
  * return: pointer to the allocated block, 0 if error
  */
-extern struct mem_block *mmAllocMem(struct mem_block *heap, int size, int align2, 
+extern struct mem_block *u_mmAllocMem(struct mem_block *heap, int size, int align2, 
                             int startSearch);
 
 /**
@@ -69,23 +69,23 @@ extern struct mem_block *mmAllocMem(struct mem_block *heap, int size, int align2
  * input: pointer to a block
  * return: 0 if OK, -1 if error
  */
-extern int mmFreeMem(struct mem_block *b);
+extern int u_mmFreeMem(struct mem_block *b);
 
 /**
  * Free block starts at offset
  * input: pointer to a heap, start offset
  * return: pointer to a block
  */
-extern struct mem_block *mmFindBlock(struct mem_block *heap, int start);
+extern struct mem_block *u_mmFindBlock(struct mem_block *heap, int start);
 
 /**
  * destroy MM
  */
-extern void mmDestroy(struct mem_block *mmInit);
+extern void u_mmDestroy(struct mem_block *mmInit);
 
 /**
  * For debuging purpose.
  */
-extern void mmDumpMemInfo(const struct mem_block *mmInit);
+extern void u_mmDumpMemInfo(const struct mem_block *mmInit);
 
 #endif

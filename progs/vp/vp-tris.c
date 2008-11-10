@@ -5,7 +5,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include <GL/glut.h>
 
 #ifndef WIN32
 #include <unistd.h>
@@ -14,6 +13,8 @@
 #else
 #include <GL/glext.h>
 #endif
+
+#include <GL/glut.h>
 
 #ifdef WIN32
 static PFNGLBINDPROGRAMARBPROC glBindProgramARB = NULL;

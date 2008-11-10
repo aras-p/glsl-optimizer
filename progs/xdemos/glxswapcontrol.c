@@ -121,7 +121,7 @@ static char ** extension_table = NULL;
 static unsigned num_extensions;
 
 static GLboolean use_ztrick = GL_FALSE;
-static GLfloat   aspect;
+static GLfloat aspectX = 1.0f, aspectY = 1.0f;
 
 /*
  *
@@ -313,13 +313,13 @@ draw(void)
 
       glMatrixMode(GL_PROJECTION);
       glLoadIdentity();
-      glFrustum(-1.0, 1.0, -aspect, aspect, 5.0, 60.0);
+      glFrustum(-aspectX, aspectX, -aspectY, aspectY, 5.0, 60.0);
 
       glEnable(GL_LIGHTING);
 
       glMatrixMode(GL_MODELVIEW);
       glLoadIdentity();
-      glTranslatef(0.0, 0.0, -40.0);
+      glTranslatef(0.0, 0.0, -45.0);
    }
    else {
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -356,17 +356,23 @@ draw(void)
 static void
 reshape(int width, int height)
 {
-   aspect = (GLfloat) height / (GLfloat) width;
+   if (width > height) {
+      aspectX = (GLfloat) width / (GLfloat) height;
+      aspectY = 1.0;
+   }
+   else {
+      aspectX = 1.0;
+      aspectY = (GLfloat) height / (GLfloat) width;
+   }
 
-   
    glViewport(0, 0, (GLint) width, (GLint) height);
    glMatrixMode(GL_PROJECTION);
    glLoadIdentity();
 
-   glFrustum(-1.0, 1.0, -aspect, aspect, 5.0, 60.0);
+   glFrustum(-aspectX, aspectX, -aspectY, aspectY, 5.0, 60.0);
    glMatrixMode(GL_MODELVIEW);
    glLoadIdentity();
-   glTranslatef(0.0, 0.0, -40.0);
+   glTranslatef(0.0, 0.0, -45.0);
 }
 
 
@@ -407,13 +413,59 @@ init(void)
 }
 
 
+/**
+ * Remove window border/decorations.
+ */
+static void
+no_border( Display *dpy, Window w)
+{
+   static const unsigned MWM_HINTS_DECORATIONS = (1 << 1);
+   static const int PROP_MOTIF_WM_HINTS_ELEMENTS = 5;
+
+   typedef struct
+   {
+      unsigned long       flags;
+      unsigned long       functions;
+      unsigned long       decorations;
+      long                inputMode;
+      unsigned long       status;
+   } PropMotifWmHints;
+
+   PropMotifWmHints motif_hints;
+   Atom prop, proptype;
+   unsigned long flags = 0;
+
+   /* setup the property */
+   motif_hints.flags = MWM_HINTS_DECORATIONS;
+   motif_hints.decorations = flags;
+
+   /* get the atom for the property */
+   prop = XInternAtom( dpy, "_MOTIF_WM_HINTS", True );
+   if (!prop) {
+      /* something went wrong! */
+      return;
+   }
+
+   /* not sure this is correct, seems to work, XA_WM_HINTS didn't work */
+   proptype = prop;
+
+   XChangeProperty( dpy, w,                         /* display, window */
+                    prop, proptype,                 /* property, type */
+                    32,                             /* format: 32-bit datums */
+                    PropModeReplace,                /* mode */
+                    (unsigned char *) &motif_hints, /* data */
+                    PROP_MOTIF_WM_HINTS_ELEMENTS    /* nelements */
+                  );
+}
+
+
 /*
  * Create an RGB, double-buffered window.
  * Return the window and context handles.
  */
 static void
 make_window( Display *dpy, const char *name,
-             int x, int y, int width, int height,
+             int x, int y, int width, int height, GLboolean fullscreen,
              Window *winRet, GLXContext *ctxRet)
 {
    int attrib[] = { GLX_RGBA,
@@ -433,6 +485,12 @@ make_window( Display *dpy, const char *name,
 
    scrnum = DefaultScreen( dpy );
    root = RootWindow( dpy, scrnum );
+
+   if (fullscreen) {
+      x = y = 0;
+      width = DisplayWidth( dpy, scrnum );
+      height = DisplayHeight( dpy, scrnum );
+   }
 
    visinfo = glXChooseVisual( dpy, scrnum, attrib );
    if (!visinfo) {
@@ -463,6 +521,9 @@ make_window( Display *dpy, const char *name,
       XSetStandardProperties(dpy, win, name, name,
                               None, (char **)NULL, 0, &sizehints);
    }
+
+   if (fullscreen)
+      no_border(dpy, win);
 
    ctx = glXCreateContext( dpy, visinfo, NULL, True );
    if (!ctx) {
@@ -572,7 +633,6 @@ event_loop(Display *dpy, Window win)
  * Display the refresh rate of the display using the GLX_OML_sync_control
  * extension.
  */
-
 static void
 show_refresh_rate( Display * dpy )
 {
@@ -599,7 +659,6 @@ show_refresh_rate( Display * dpy )
  * \param string   String of GLX extensions.
  * \sa is_extension_supported
  */
-
 static void
 make_extension_table( const char * string )
 {
@@ -679,7 +738,6 @@ make_extension_table( const char * string )
  * \return GL_TRUE of the extension is supported, GL_FALSE otherwise.
  * \sa make_extension_table
  */
-
 static GLboolean
 is_extension_supported( const char * ext )
 {
@@ -705,11 +763,12 @@ main(int argc, char *argv[])
    int swap_interval = 1;
    GLboolean do_swap_interval = GL_FALSE;
    GLboolean force_get_rate = GL_FALSE;
+   GLboolean fullscreen = GL_FALSE;
    GLboolean printInfo = GL_FALSE;
    int i;
    PFNGLXSWAPINTERVALMESAPROC set_swap_interval = NULL;
    PFNGLXGETSWAPINTERVALMESAPROC get_swap_interval = NULL;
-
+   int width = 300, height = 300;
 
    for (i = 1; i < argc; i++) {
       if (strcmp(argv[i], "-display") == 0 && i + 1 < argc) {
@@ -731,6 +790,9 @@ main(int argc, char *argv[])
 	  */
 	 force_get_rate = GL_TRUE;
       }
+      else if (strcmp(argv[i], "-fullscreen") == 0) {
+         fullscreen = GL_TRUE;
+      }
       else if (strcmp(argv[i], "-ztrick") == 0) {
 	 use_ztrick = GL_TRUE;
       }
@@ -743,6 +805,7 @@ main(int argc, char *argv[])
          printf("  -info                   Display GL information\n");
          printf("  -swap N                 Swap no more than once per N vertical refreshes\n");
          printf("  -forcegetrate           Try to use glXGetMscRateOML function\n");
+         printf("  -fullscreen             Full-screen window\n");
          return 0;
       }
    }
@@ -753,7 +816,7 @@ main(int argc, char *argv[])
       return -1;
    }
 
-   make_window(dpy, "glxgears", 0, 0, 300, 300, &win, &ctx);
+   make_window(dpy, "glxgears", 0, 0, width, height, fullscreen, &win, &ctx);
    XMapWindow(dpy, win);
    glXMakeCurrent(dpy, win, ctx);
 
@@ -817,7 +880,7 @@ main(int argc, char *argv[])
    /* Set initial projection/viewing transformation.
     * same as glxgears.c
     */
-   reshape(300, 300);
+   reshape(width, height);
 
    event_loop(dpy, win);
 

@@ -74,8 +74,6 @@ Redisplay(void)
 
    glPopMatrix();
 
-   glFinish();
-   glFlush();
    glutSwapBuffers();
 }
 

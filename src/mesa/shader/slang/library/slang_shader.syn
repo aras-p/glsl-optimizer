@@ -229,6 +229,7 @@
 .emtcode OP_FIELD                                   59
 .emtcode OP_POSTINCREMENT                           60
 .emtcode OP_POSTDECREMENT                           61
+.emtcode OP_PRECISION                               62
 
 /* parameter qualifier */
 .emtcode PARAM_QUALIFIER_IN                         0
@@ -753,8 +754,16 @@ parameter_declarator_2
 
 /*
     <parameter_declaration>             ::= <type_qualifier> <parameter_qualifier>
+                                            <precision> <parameter_declarator>
+                                          | <type_qualifier> <parameter_qualifier>
+                                            <precision> <parameter_type_specifier>
+                                          | <type_qualifier> <parameter_qualifier>
                                             <parameter_declarator>
                                           | <type_qualifier> <parameter_qualifier>
+                                            <parameter_type_specifier>
+                                          | <parameter_qualifier> <precision>
+                                            <parameter_declarator>
+                                          | <parameter_qualifier> <precision>
                                             <parameter_type_specifier>
                                           | <parameter_qualifier> <parameter_declarator>
                                           | <parameter_qualifier> <parameter_type_specifier>
@@ -768,6 +777,12 @@ parameter_declaration_2
 parameter_declaration_3
     parameter_qualifier .emit TYPE_QUALIFIER_NONE .and parameter_declaration_4;
 parameter_declaration_4
+    parameter_declaration_optprec .and parameter_declaration_rest;
+parameter_declaration_optprec
+    parameter_declaration_prec .or .true .emit PRECISION_DEFAULT;
+parameter_declaration_prec
+    precision .and space;
+parameter_declaration_rest
     parameter_declarator .or parameter_type_specifier;
 
 /*
@@ -1047,6 +1062,7 @@ simple_statement
     .if (parsing_builtin != 0) __asm_statement .emit OP_ASM .or
     selection_statement .or
     iteration_statement .or
+    precision_stmt .emit OP_PRECISION .or
     jump_statement .or
     expression_statement .emit OP_EXPRESSION .or
     declaration_statement .emit OP_DECLARE;

@@ -107,7 +107,7 @@ cmd_fence(struct cell_command_fence *fence_cmd)
                                               CELL_FENCE_SIGNALLED};
    uint *dst = (uint *) fence_cmd->fence;
    dst += 4 * spu.init.id;  /* main store/memory address, not local store */
-
+   ASSERT_ALIGN16(dst);
    mfc_put((void *) &status,    /* src in local memory */
            (unsigned int) dst,  /* dst in main memory */
            sizeof(status),      /* size */
@@ -244,8 +244,7 @@ cmd_state_fragment_ops(const struct cell_command_fragment_ops *fops)
       }
    }
 
-   spu.read_depth = spu.depth_stencil_alpha.depth.enabled;
-   spu.read_stencil = spu.depth_stencil_alpha.stencil[0].enabled;
+   spu.read_depth_stencil = (spu.depth_stencil_alpha.depth.enabled || spu.depth_stencil_alpha.stencil[0].enabled);
 }
 
 

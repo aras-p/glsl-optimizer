@@ -40,6 +40,7 @@
 #include "util/u_sse.h"
 #include "tgsi/tgsi_parse.h"
 #include "tgsi/tgsi_util.h"
+#include "tgsi_dump.h"
 #include "tgsi_exec.h"
 #include "tgsi_ppc.h"
 #include "rtasm/rtasm_ppc.h"
@@ -72,11 +73,20 @@ const float ppc_builtin_constants[] ALIGN16_ATTRIB = {
 #define CHAN_Z 2
 #define CHAN_W 3
 
-#define TEMP_ONE_I   TGSI_EXEC_TEMP_ONE_I
-#define TEMP_ONE_C   TGSI_EXEC_TEMP_ONE_C
 
-#define TEMP_R0   TGSI_EXEC_TEMP_R0
-#define TEMP_ADDR TGSI_EXEC_TEMP_ADDR
+/**
+ * How many TGSI temps should be implemented with real PPC vector registers
+ * rather than memory.
+ */
+#define MAX_PPC_TEMPS 4
+
+
+struct reg_chan_vec
+{
+   struct tgsi_full_src_register src;
+   uint chan;
+   uint vec;
+};
 
 
 /**
@@ -92,9 +102,102 @@ struct gen_context
    int const_reg;     /**< GP register pointing to constants buffer */
    int builtins_reg;  /**< GP register pointint to built-in constants */
 
+   int offset_reg;    /**< used to reduce redundant li instructions */
+   int offset_value;
+
    int one_vec;       /**< vector register with {1.0, 1.0, 1.0, 1.0} */
    int bit31_vec;     /**< vector register with {1<<31, 1<<31, 1<<31, 1<<31} */
+
+   /**
+    * Map TGSI temps to PPC vector temps.
+    * We have 32 PPC vector regs.  Use 16 of them for storing 4 TGSI temps.
+    * XXX currently only do this for TGSI temps [0..MAX_PPC_TEMPS-1].
+    */
+   int temps_map[MAX_PPC_TEMPS][4];
+
+   /**
+    * Cache of src registers.
+    * This is used to avoid redundant load instructions.
+    */
+   struct {
+      struct tgsi_full_src_register src;
+      uint chan;
+      uint vec;
+   } regs[12];  /* 3 src regs, 4 channels */
+   uint num_regs;
 };
+
+
+/**
+ * Initialize code generation context.
+ */
+static void
+init_gen_context(struct gen_context *gen, struct ppc_function *func)
+{
+   uint i;
+
+   memset(gen, 0, sizeof(*gen));
+   gen->f = func;
+   gen->inputs_reg = ppc_reserve_register(func, 3);   /* first function param */
+   gen->outputs_reg = ppc_reserve_register(func, 4);  /* second function param */
+   gen->temps_reg = ppc_reserve_register(func, 5);    /* ... */
+   gen->immed_reg = ppc_reserve_register(func, 6);
+   gen->const_reg = ppc_reserve_register(func, 7);
+   gen->builtins_reg = ppc_reserve_register(func, 8);
+   gen->one_vec = -1;
+   gen->bit31_vec = -1;
+   gen->offset_reg = -1;
+   gen->offset_value = -9999999;
+   for (i = 0; i < MAX_PPC_TEMPS; i++) {
+      gen->temps_map[i][0] = ppc_allocate_vec_register(gen->f);
+      gen->temps_map[i][1] = ppc_allocate_vec_register(gen->f);
+      gen->temps_map[i][2] = ppc_allocate_vec_register(gen->f);
+      gen->temps_map[i][3] = ppc_allocate_vec_register(gen->f);
+   }
+}
+
+
+/**
+ * All PPC vector load/store instructions form an effective address
+ * by adding the contents of two registers.  For example:
+ *    lvx v2,r8,r9   # v2 = memory[r8 + r9]
+ *    stvx v2,r8,r9  # memory[r8 + r9] = v2;
+ * So our lvx/stvx instructions are typically preceded by an 'li' instruction
+ * to load r9 (above) with an immediate (an offset).
+ * This code emits that 'li' instruction, but only if the offset value is
+ * different than the previous 'li'.
+ * This optimization seems to save about 10% in the instruction count.
+ * Note that we need to unconditionally emit an 'li' inside basic blocks
+ * (such as inside loops).
+ */
+static int
+emit_li_offset(struct gen_context *gen, int offset)
+{
+   if (gen->offset_reg <= 0) {
+      /* allocate a GP register for storing load/store offset */
+      gen->offset_reg = ppc_allocate_register(gen->f);
+   }
+
+   /* emit new 'li' if offset is changing */
+   if (gen->offset_value < 0 || gen->offset_value != offset) {
+      gen->offset_value = offset;
+      ppc_li(gen->f, gen->offset_reg, offset);
+   }
+
+   return gen->offset_reg;
+}
+
+
+/**
+ * Forces subsequent emit_li_offset() calls to emit an 'li'.
+ * To be called at the top of basic blocks.
+ */
+static void
+reset_li_offset(struct gen_context *gen)
+{
+   gen->offset_value = -9999999;
+}
+
 
 
 /**
@@ -109,10 +212,9 @@ load_constant_vec(struct gen_context *gen, int dst_vec, float value)
    uint pos;
    for (pos = 0; pos < Elements(ppc_builtin_constants); pos++) {
       if (ppc_builtin_constants[pos] == value) {
-         int offset_reg = ppc_allocate_register(gen->f);
          int offset = pos * 4;
+         int offset_reg = emit_li_offset(gen, offset);
 
-         ppc_li(gen->f, offset_reg, offset);
          /* Load 4-byte word into vector register.
           * The vector slot depends on the effective address we load from.
           * We know that our builtins start at a 16-byte boundary so we
@@ -122,7 +224,6 @@ load_constant_vec(struct gen_context *gen, int dst_vec, float value)
          ppc_lvewx(gen->f, dst_vec, gen->builtins_reg, offset_reg);
          /* splat word[pos % 4] across the vector reg */
          ppc_vspltw(gen->f, dst_vec, dst_vec, pos % 4);
-         ppc_release_register(gen->f, offset_reg);
          return;
       }
    }
@@ -159,15 +260,15 @@ gen_get_bit31_vec(struct gen_context *gen)
 
 
 /**
- * Register fetch, put result in 'dst_vec'.
+ * Register fetch.  Return PPC vector register with result.
  */
-static void
+static int
 emit_fetch(struct gen_context *gen,
-           unsigned dst_vec,
            const struct tgsi_full_src_register *reg,
            const unsigned chan_index)
 {
    uint swizzle = tgsi_util_get_full_src_register_extswizzle(reg, chan_index);
+   int dst_vec = -1;
 
    switch (swizzle) {
    case TGSI_EXTSWIZZLE_X:
@@ -177,36 +278,46 @@ emit_fetch(struct gen_context *gen,
       switch (reg->SrcRegister.File) {
       case TGSI_FILE_INPUT:
          {
-            int offset_reg = ppc_allocate_register(gen->f);
             int offset = (reg->SrcRegister.Index * 4 + swizzle) * 16;
-            ppc_li(gen->f, offset_reg, offset);
+            int offset_reg = emit_li_offset(gen, offset);
+            dst_vec = ppc_allocate_vec_register(gen->f);
             ppc_lvx(gen->f, dst_vec, gen->inputs_reg, offset_reg);
-            ppc_release_register(gen->f, offset_reg);
          }
          break;
       case TGSI_FILE_TEMPORARY:
-         {
-            int offset_reg = ppc_allocate_register(gen->f);
+         if (reg->SrcRegister.Index < MAX_PPC_TEMPS) {
+            /* use PPC vec register */
+            dst_vec = gen->temps_map[reg->SrcRegister.Index][swizzle];
+         }
+         else {
+            /* use memory-based temp register "file" */
             int offset = (reg->SrcRegister.Index * 4 + swizzle) * 16;
-            ppc_li(gen->f, offset_reg, offset);
+            int offset_reg = emit_li_offset(gen, offset);
+            dst_vec = ppc_allocate_vec_register(gen->f);
             ppc_lvx(gen->f, dst_vec, gen->temps_reg, offset_reg);
-            ppc_release_register(gen->f, offset_reg);
          }
          break;
       case TGSI_FILE_IMMEDIATE:
          {
-            int offset_reg = ppc_allocate_register(gen->f);
-            int offset = (reg->SrcRegister.Index * 4 + swizzle) * 16;
-            ppc_li(gen->f, offset_reg, offset);
-            ppc_lvx(gen->f, dst_vec, gen->immed_reg, offset_reg);
-            ppc_release_register(gen->f, offset_reg);
+            int offset = (reg->SrcRegister.Index * 4 + swizzle) * 4;
+            int offset_reg = emit_li_offset(gen, offset);
+            dst_vec = ppc_allocate_vec_register(gen->f);
+            /* Load 4-byte word into vector register.
+             * The vector slot depends on the effective address we load from.
+             * We know that our immediates start at a 16-byte boundary so we
+             * know that 'swizzle' tells us which vector slot will have the
+             * loaded word.  The other vector slots will be undefined.
+             */
+            ppc_lvewx(gen->f, dst_vec, gen->immed_reg, offset_reg);
+            /* splat word[swizzle] across the vector reg */
+            ppc_vspltw(gen->f, dst_vec, dst_vec, swizzle);
          }
          break;
       case TGSI_FILE_CONSTANT:
          {
-            int offset_reg = ppc_allocate_register(gen->f);
             int offset = (reg->SrcRegister.Index * 4 + swizzle) * 4;
-            ppc_li(gen->f, offset_reg, offset);
+            int offset_reg = emit_li_offset(gen, offset);
+            dst_vec = ppc_allocate_vec_register(gen->f);
             /* Load 4-byte word into vector register.
              * The vector slot depends on the effective address we load from.
              * We know that our constants start at a 16-byte boundary so we
@@ -216,7 +327,6 @@ emit_fetch(struct gen_context *gen,
             ppc_lvewx(gen->f, dst_vec, gen->const_reg, offset_reg);
             /* splat word[swizzle] across the vector reg */
             ppc_vspltw(gen->f, dst_vec, dst_vec, swizzle);
-            ppc_release_register(gen->f, offset_reg);
          }
          break;
       default:
@@ -229,12 +339,15 @@ emit_fetch(struct gen_context *gen,
    case TGSI_EXTSWIZZLE_ONE:
       {
          int one_vec = gen_one_vec(gen);
+         dst_vec = ppc_allocate_vec_register(gen->f);
          ppc_vmove(gen->f, dst_vec, one_vec);
       }
       break;
    default:
       assert( 0 );
    }
+
+   assert(dst_vec >= 0);
 
    {
       uint sign_op = tgsi_util_get_full_src_register_sign_mode(reg, chan_index);
@@ -259,40 +372,148 @@ emit_fetch(struct gen_context *gen,
          }
       }
    }
-}
 
-#define FETCH( GEN, INST, DST_VEC, SRC_REG, CHAN ) \
-   emit_fetch( GEN, DST_VEC, &(INST).FullSrcRegisters[SRC_REG], CHAN )
+   return dst_vec;
+}
 
 
 
 /**
+ * Test if two TGSI src registers refer to the same memory location.
+ * We use this to avoid redundant register loads.
+ */
+static boolean
+equal_src_locs(const struct tgsi_full_src_register *a, uint chan_a,
+               const struct tgsi_full_src_register *b, uint chan_b)
+{
+   int swz_a, swz_b;
+   int sign_a, sign_b;
+   if (a->SrcRegister.File != b->SrcRegister.File)
+      return FALSE;
+   if (a->SrcRegister.Index != b->SrcRegister.Index)
+      return FALSE;
+   swz_a = tgsi_util_get_full_src_register_extswizzle(a, chan_a);
+   swz_b = tgsi_util_get_full_src_register_extswizzle(b, chan_b);
+   if (swz_a != swz_b)
+      return FALSE;
+   sign_a = tgsi_util_get_full_src_register_sign_mode(a, chan_a);
+   sign_b = tgsi_util_get_full_src_register_sign_mode(b, chan_b);
+   if (sign_a != sign_b)
+      return FALSE;
+   return TRUE;
+}
+
+
+/**
+ * Given a TGSI src register and channel index, return the PPC vector
+ * register containing the value.  We use a cache to prevent re-loading
+ * the same register multiple times.
+ * \return index of PPC vector register with the desired src operand
+ */
+static int
+get_src_vec(struct gen_context *gen,
+            struct tgsi_full_instruction *inst, int src_reg, uint chan)
+{
+   const const struct tgsi_full_src_register *src = 
+      &inst->FullSrcRegisters[src_reg];
+   int vec;
+   uint i;
+
+   /* check the cache */
+   for (i = 0; i < gen->num_regs; i++) {
+      if (equal_src_locs(&gen->regs[i].src, gen->regs[i].chan, src, chan)) {
+         /* cache hit */
+         assert(gen->regs[i].vec >= 0);
+         return gen->regs[i].vec;
+      }
+   }
+
+   /* cache miss: allocate new vec reg and emit fetch/load code */
+   vec = emit_fetch(gen, src, chan);
+   gen->regs[gen->num_regs].src = *src;
+   gen->regs[gen->num_regs].chan = chan;
+   gen->regs[gen->num_regs].vec = vec;
+   gen->num_regs++;
+
+   assert(gen->num_regs <= Elements(gen->regs));
+
+   assert(vec >= 0);
+
+   return vec;
+}
+
+
+/**
+ * Clear the src operand cache.  To be called at the end of each emit function.
+ */
+static void
+release_src_vecs(struct gen_context *gen)
+{
+   uint i;
+   for (i = 0; i < gen->num_regs; i++) {
+      const const struct tgsi_full_src_register src = gen->regs[i].src;
+      if (!(src.SrcRegister.File == TGSI_FILE_TEMPORARY &&
+            src.SrcRegister.Index < MAX_PPC_TEMPS)) {
+         ppc_release_vec_register(gen->f, gen->regs[i].vec);
+      }
+   }
+   gen->num_regs = 0;
+}
+
+
+
+static int
+get_dst_vec(struct gen_context *gen, 
+            const struct tgsi_full_instruction *inst,
+            unsigned chan_index)
+{
+   const struct tgsi_full_dst_register *reg = &inst->FullDstRegisters[0];
+
+   if (reg->DstRegister.File == TGSI_FILE_TEMPORARY &&
+       reg->DstRegister.Index < MAX_PPC_TEMPS) {
+      int vec = gen->temps_map[reg->DstRegister.Index][chan_index];
+      return vec;
+   }
+   else {
+      return ppc_allocate_vec_register(gen->f);
+   }
+}
+
+
+/**
  * Register store.  Store 'src_vec' at location indicated by 'reg'.
+ * \param free_vec  Should the src_vec be released when done?
  */
 static void
 emit_store(struct gen_context *gen,
-           unsigned src_vec,
-           const struct tgsi_full_dst_register *reg,
+           int src_vec,
            const struct tgsi_full_instruction *inst,
-           unsigned chan_index)
+           unsigned chan_index,
+           boolean free_vec)
 {
+   const struct tgsi_full_dst_register *reg = &inst->FullDstRegisters[0];
+
    switch (reg->DstRegister.File) {
    case TGSI_FILE_OUTPUT:
       {
-         int offset_reg = ppc_allocate_register(gen->f);
          int offset = (reg->DstRegister.Index * 4 + chan_index) * 16;
-         ppc_li(gen->f, offset_reg, offset);
+         int offset_reg = emit_li_offset(gen, offset);
          ppc_stvx(gen->f, src_vec, gen->outputs_reg, offset_reg);
-         ppc_release_register(gen->f, offset_reg);
       }
       break;
    case TGSI_FILE_TEMPORARY:
-      {
-         int offset_reg = ppc_allocate_register(gen->f);
+      if (reg->DstRegister.Index < MAX_PPC_TEMPS) {
+         if (!free_vec) {
+            int dst_vec = gen->temps_map[reg->DstRegister.Index][chan_index];
+            if (dst_vec != src_vec)
+               ppc_vmove(gen->f, dst_vec, src_vec);
+         }
+         free_vec = FALSE;
+      }
+      else {
          int offset = (reg->DstRegister.Index * 4 + chan_index) * 16;
-         ppc_li(gen->f, offset_reg, offset);
+         int offset_reg = emit_li_offset(gen, offset);
          ppc_stvx(gen->f, src_vec, gen->temps_reg, offset_reg);
-         ppc_release_register(gen->f, offset_reg);
       }
       break;
 #if 0
@@ -322,22 +543,20 @@ emit_store(struct gen_context *gen,
       break;
    }
 #endif
+
+   if (free_vec)
+      ppc_release_vec_register(gen->f, src_vec);
 }
-
-
-#define STORE( GEN, INST, XMM, INDEX, CHAN )\
-   emit_store( GEN, XMM, &(INST).FullDstRegisters[INDEX], &(INST), CHAN )
-
 
 
 static void
 emit_scalar_unaryop(struct gen_context *gen, struct tgsi_full_instruction *inst)
 {
-   int v0 = ppc_allocate_vec_register(gen->f);
-   int v1 = ppc_allocate_vec_register(gen->f);
+   int v0, v1;
    uint chan_index;
 
-   FETCH(gen, *inst, v0, 0, CHAN_X);
+   v0 = get_src_vec(gen, inst, 0, CHAN_X);
+   v1 = ppc_allocate_vec_register(gen->f);
 
    switch (inst->Instruction.Opcode) {
    case TGSI_OPCODE_RSQ:
@@ -353,9 +572,10 @@ emit_scalar_unaryop(struct gen_context *gen, struct tgsi_full_instruction *inst)
    }
 
    FOR_EACH_DST0_ENABLED_CHANNEL( *inst, chan_index ) {
-      STORE(gen, *inst, v1, 0, chan_index);
+      emit_store(gen, v1, inst, chan_index, FALSE);
    }
-   ppc_release_vec_register(gen->f, v0);
+
+   release_src_vecs(gen);
    ppc_release_vec_register(gen->f, v1);
 }
 
@@ -363,61 +583,65 @@ emit_scalar_unaryop(struct gen_context *gen, struct tgsi_full_instruction *inst)
 static void
 emit_unaryop(struct gen_context *gen, struct tgsi_full_instruction *inst)
 {
-   int v0 = ppc_allocate_vec_register(gen->f);
    uint chan_index;
    FOR_EACH_DST0_ENABLED_CHANNEL(*inst, chan_index) {
-      FETCH(gen, *inst, 0, 0, chan_index);   /* v0 = srcreg[0] */
+      int v0 = get_src_vec(gen, inst, 0, chan_index);   /* v0 = srcreg[0] */
+      int v1 = get_dst_vec(gen, inst, chan_index);
       switch (inst->Instruction.Opcode) {
       case TGSI_OPCODE_ABS:
          /* turn off the most significant bit of each vector float word */
          {
-            int v1 = ppc_allocate_vec_register(gen->f);
-            ppc_vspltisw(gen->f, v1, -1);  /* v1 = {-1, -1, -1, -1} */
-            ppc_vslw(gen->f, v1, v1, v1);  /* v1 = {1<<31, 1<<31, 1<<31, 1<<31} */
-            ppc_vandc(gen->f, v0, v0, v1); /* v0 = v0 & ~v1 */
-            ppc_release_vec_register(gen->f, v1);
+            int bit31_vec = gen_get_bit31_vec(gen);
+            ppc_vandc(gen->f, v1, v0, bit31_vec); /* v1 = v0 & ~bit31 */
          }
          break;
       case TGSI_OPCODE_FLOOR:
-         ppc_vrfim(gen->f, v0, v0);         /* v0 = floor(v0) */
+         ppc_vrfim(gen->f, v1, v0);         /* v1 = floor(v0) */
          break;
       case TGSI_OPCODE_FRAC:
-         {
-            int v1 = ppc_allocate_vec_register(gen->f);
-            ppc_vrfim(gen->f, v1, v0);         /* v1 = floor(v0) */
-            ppc_vsubfp(gen->f, v0, v0, v1);    /* v0 = v0 - v1 */
-            ppc_release_vec_register(gen->f, v1);
-         }
+         ppc_vrfim(gen->f, v1, v0);      /* tmp = floor(v0) */
+         ppc_vsubfp(gen->f, v1, v0, v1); /* v1 = v0 - v1 */
          break;
       case TGSI_OPCODE_EXPBASE2:
-         ppc_vexptefp(gen->f, v0, v0);      /* v0 = 2^v0 */
+         ppc_vexptefp(gen->f, v1, v0);     /* v1 = 2^v0 */
          break;
       case TGSI_OPCODE_LOGBASE2:
          /* XXX this may be broken! */
-         ppc_vlogefp(gen->f, v0, v0);      /* v0 = log2(v0) */
+         ppc_vlogefp(gen->f, v1, v0);      /* v1 = log2(v0) */
          break;
       case TGSI_OPCODE_MOV:
-         /* nothing */
+      case TGSI_OPCODE_SWZ:
+         if (v0 != v1)
+            ppc_vmove(gen->f, v1, v0);
          break;
       default:
          assert(0);
       }
-      STORE(gen, *inst, v0, 0, chan_index);   /* store v0 */
+      emit_store(gen, v1, inst, chan_index, TRUE);  /* store v0 */
    }
-   ppc_release_vec_register(gen->f, v0);
+
+   release_src_vecs(gen);
 }
 
 
 static void
 emit_binop(struct gen_context *gen, struct tgsi_full_instruction *inst)
 {
-   int v0 = ppc_allocate_vec_register(gen->f);
-   int v1 = ppc_allocate_vec_register(gen->f);
-   int v2 = ppc_allocate_vec_register(gen->f);
-   uint chan_index;
-   FOR_EACH_DST0_ENABLED_CHANNEL(*inst, chan_index) {
-      FETCH(gen, *inst, v0, 0, chan_index);   /* v0 = srcreg[0] */
-      FETCH(gen, *inst, v1, 1, chan_index);   /* v1 = srcreg[1] */
+   int zero_vec = -1;
+   uint chan;
+
+   if (inst->Instruction.Opcode == TGSI_OPCODE_MUL) {
+      zero_vec = ppc_allocate_vec_register(gen->f);
+      ppc_vzero(gen->f, zero_vec);
+   }
+
+   FOR_EACH_DST0_ENABLED_CHANNEL(*inst, chan) {
+      /* fetch src operands */
+      int v0 = get_src_vec(gen, inst, 0, chan);
+      int v1 = get_src_vec(gen, inst, 1, chan);
+      int v2 = get_dst_vec(gen, inst, chan);
+
+      /* emit binop */
       switch (inst->Instruction.Opcode) {
       case TGSI_OPCODE_ADD:
          ppc_vaddfp(gen->f, v2, v0, v1);
@@ -426,8 +650,7 @@ emit_binop(struct gen_context *gen, struct tgsi_full_instruction *inst)
          ppc_vsubfp(gen->f, v2, v0, v1);
          break;
       case TGSI_OPCODE_MUL:
-         ppc_vxor(gen->f, v2, v2, v2);        /* v2 = {0, 0, 0, 0} */
-         ppc_vmaddfp(gen->f, v2, v0, v1, v2); /* v2 = v0 * v1 + v0 */
+         ppc_vmaddfp(gen->f, v2, v0, v1, zero_vec);
          break;
       case TGSI_OPCODE_MIN:
          ppc_vminfp(gen->f, v2, v0, v1);
@@ -438,11 +661,48 @@ emit_binop(struct gen_context *gen, struct tgsi_full_instruction *inst)
       default:
          assert(0);
       }
-      STORE(gen, *inst, v2, 0, chan_index);   /* store v2 */
+
+      /* store v2 */
+      emit_store(gen, v2, inst, chan, TRUE);
    }
-   ppc_release_vec_register(gen->f, v0);
-   ppc_release_vec_register(gen->f, v1);
-   ppc_release_vec_register(gen->f, v2);
+
+   if (inst->Instruction.Opcode == TGSI_OPCODE_MUL)
+      ppc_release_vec_register(gen->f, zero_vec);
+
+   release_src_vecs(gen);
+}
+
+
+static void
+emit_triop(struct gen_context *gen, struct tgsi_full_instruction *inst)
+{
+   uint chan;
+
+   FOR_EACH_DST0_ENABLED_CHANNEL(*inst, chan) {
+      /* fetch src operands */
+      int v0 = get_src_vec(gen, inst, 0, chan);
+      int v1 = get_src_vec(gen, inst, 1, chan);
+      int v2 = get_src_vec(gen, inst, 2, chan);
+      int v3 = get_dst_vec(gen, inst, chan);
+
+      /* emit ALU */
+      switch (inst->Instruction.Opcode) {
+      case TGSI_OPCODE_MAD:
+         ppc_vmaddfp(gen->f, v3, v0, v1, v2);   /* v3 = v0 * v1 + v2 */
+         break;
+      case TGSI_OPCODE_LRP:
+         ppc_vsubfp(gen->f, v3, v1, v2);        /* v3 = v1 - v2 */
+         ppc_vmaddfp(gen->f, v3, v0, v3, v2);   /* v3 = v0 * v3 + v2 */
+         break;
+      default:
+         assert(0);
+      }
+
+      /* store v3 */
+      emit_store(gen, v3, inst, chan, TRUE);
+   }
+
+   release_src_vecs(gen);
 }
 
 
@@ -452,16 +712,15 @@ emit_binop(struct gen_context *gen, struct tgsi_full_instruction *inst)
 static void
 emit_inequality(struct gen_context *gen, struct tgsi_full_instruction *inst)
 {
-   int v0 = ppc_allocate_vec_register(gen->f);
-   int v1 = ppc_allocate_vec_register(gen->f);
-   int v2 = ppc_allocate_vec_register(gen->f);
-   uint chan_index;
-   boolean complement = FALSE;
+   uint chan;
    int one_vec = gen_one_vec(gen);
 
-   FOR_EACH_DST0_ENABLED_CHANNEL(*inst, chan_index) {
-      FETCH(gen, *inst, v0, 0, chan_index);   /* v0 = srcreg[0] */
-      FETCH(gen, *inst, v1, 1, chan_index);   /* v1 = srcreg[1] */
+   FOR_EACH_DST0_ENABLED_CHANNEL(*inst, chan) {
+      /* fetch src operands */
+      int v0 = get_src_vec(gen, inst, 0, chan);
+      int v1 = get_src_vec(gen, inst, 1, chan);
+      int v2 = get_dst_vec(gen, inst, chan);
+      boolean complement = FALSE;
 
       switch (inst->Instruction.Opcode) {
       case TGSI_OPCODE_SNE:
@@ -495,87 +754,54 @@ emit_inequality(struct gen_context *gen, struct tgsi_full_instruction *inst)
       else
          ppc_vand(gen->f, v2, one_vec, v2);     /* v2 = one_vec & v2 */
 
-      STORE(gen, *inst, v2, 0, chan_index);   /* store v2 */
+      /* store v2 */
+      emit_store(gen, v2, inst, chan, TRUE);
    }
 
-   ppc_release_vec_register(gen->f, v0);
-   ppc_release_vec_register(gen->f, v1);
-   ppc_release_vec_register(gen->f, v2);
+   release_src_vecs(gen);
 }
 
 
 static void
 emit_dotprod(struct gen_context *gen, struct tgsi_full_instruction *inst)
 {
-   int v0 = ppc_allocate_vec_register(gen->f);
-   int v1 = ppc_allocate_vec_register(gen->f);
-   int v2 = ppc_allocate_vec_register(gen->f);
+   int v0, v1, v2;
    uint chan_index;
+
+   v2 = ppc_allocate_vec_register(gen->f);
 
    ppc_vxor(gen->f, v2, v2, v2);           /* v2 = {0, 0, 0, 0} */
 
-   FETCH(gen, *inst, v0, 0, CHAN_X);       /* v0 = src0.XXXX */
-   FETCH(gen, *inst, v1, 1, CHAN_X);       /* v1 = src1.XXXX */
+   v0 = get_src_vec(gen, inst, 0, CHAN_X); /* v0 = src0.XXXX */
+   v1 = get_src_vec(gen, inst, 1, CHAN_X); /* v1 = src1.XXXX */
    ppc_vmaddfp(gen->f, v2, v0, v1, v2);    /* v2 = v0 * v1 + v2 */
 
-   FETCH(gen, *inst, v0, 0, CHAN_Y);       /* v0 = src0.YYYY */
-   FETCH(gen, *inst, v1, 1, CHAN_Y);       /* v1 = src1.YYYY */
+   v0 = get_src_vec(gen, inst, 0, CHAN_Y); /* v0 = src0.YYYY */
+   v1 = get_src_vec(gen, inst, 1, CHAN_Y); /* v1 = src1.YYYY */
    ppc_vmaddfp(gen->f, v2, v0, v1, v2);    /* v2 = v0 * v1 + v2 */
 
-   FETCH(gen, *inst, v0, 0, CHAN_Z);       /* v0 = src0.ZZZZ */
-   FETCH(gen, *inst, v1, 1, CHAN_Z);       /* v1 = src1.ZZZZ */
+   v0 = get_src_vec(gen, inst, 0, CHAN_Z); /* v0 = src0.ZZZZ */
+   v1 = get_src_vec(gen, inst, 1, CHAN_Z); /* v1 = src1.ZZZZ */
    ppc_vmaddfp(gen->f, v2, v0, v1, v2);    /* v2 = v0 * v1 + v2 */
 
    if (inst->Instruction.Opcode == TGSI_OPCODE_DP4) {
-      FETCH(gen, *inst, v0, 0, CHAN_W);    /* v0 = src0.WWWW */
-      FETCH(gen, *inst, v1, 1, CHAN_W);    /* v1 = src1.WWWW */
-      ppc_vmaddfp(gen->f, v2, v0, v1, v2); /* v2 = v0 * v1 + v2 */
+      v0 = get_src_vec(gen, inst, 0, CHAN_W); /* v0 = src0.WWWW */
+      v1 = get_src_vec(gen, inst, 1, CHAN_W); /* v1 = src1.WWWW */
+      ppc_vmaddfp(gen->f, v2, v0, v1, v2);    /* v2 = v0 * v1 + v2 */
    }
    else if (inst->Instruction.Opcode == TGSI_OPCODE_DPH) {
-      FETCH(gen, *inst, v1, 1, CHAN_W);    /* v1 = src1.WWWW */
-      ppc_vaddfp(gen->f, v2, v2, v1);      /* v2 = v2 + v1 */
+      v1 = get_src_vec(gen, inst, 1, CHAN_W); /* v1 = src1.WWWW */
+      ppc_vaddfp(gen->f, v2, v2, v1);         /* v2 = v2 + v1 */
    }
 
    FOR_EACH_DST0_ENABLED_CHANNEL(*inst, chan_index) {
-      STORE(gen, *inst, v2, 0, chan_index);  /* store v2 */
+      emit_store(gen, v2, inst, chan_index, FALSE);  /* store v2, free v2 later */
    }
-   ppc_release_vec_register(gen->f, v0);
-   ppc_release_vec_register(gen->f, v1);
+
+   release_src_vecs(gen);
+
    ppc_release_vec_register(gen->f, v2);
 }
-
-
-static void
-emit_triop(struct gen_context *gen, struct tgsi_full_instruction *inst)
-{
-   int v0 = ppc_allocate_vec_register(gen->f);
-   int v1 = ppc_allocate_vec_register(gen->f);
-   int v2 = ppc_allocate_vec_register(gen->f);
-   int v3 = ppc_allocate_vec_register(gen->f);
-   uint chan_index;
-   FOR_EACH_DST0_ENABLED_CHANNEL(*inst, chan_index) {
-      FETCH(gen, *inst, v0, 0, chan_index);   /* v0 = srcreg[0] */
-      FETCH(gen, *inst, v1, 1, chan_index);   /* v1 = srcreg[1] */
-      FETCH(gen, *inst, v2, 2, chan_index);   /* v2 = srcreg[2] */
-      switch (inst->Instruction.Opcode) {
-      case TGSI_OPCODE_MAD:
-         ppc_vmaddfp(gen->f, v3, v0, v1, v2);   /* v3 = v0 * v1 + v2 */
-         break;
-      case TGSI_OPCODE_LRP:
-         ppc_vsubfp(gen->f, v3, v1, v2);        /* v3 = v1 - v2 */
-         ppc_vmaddfp(gen->f, v3, v0, v3, v2);   /* v3 = v0 * v3 + v2 */
-         break;
-      default:
-         assert(0);
-      }
-      STORE(gen, *inst, v3, 0, chan_index);   /* store v3 */
-   }
-   ppc_release_vec_register(gen->f, v0);
-   ppc_release_vec_register(gen->f, v1);
-   ppc_release_vec_register(gen->f, v2);
-   ppc_release_vec_register(gen->f, v3);
-}
-
 
 
 /** Approximation for vr = pow(va, vb) */
@@ -604,43 +830,42 @@ emit_lit(struct gen_context *gen, struct tgsi_full_instruction *inst)
 
    /* Compute X */
    if (IS_DST0_CHANNEL_ENABLED(*inst, CHAN_X)) {
-      STORE(gen, *inst, one_vec, 0, CHAN_X);
+      emit_store(gen, one_vec, inst, CHAN_X, FALSE);
    }
 
    /* Compute Y, Z */
    if (IS_DST0_CHANNEL_ENABLED(*inst, CHAN_Y) ||
        IS_DST0_CHANNEL_ENABLED(*inst, CHAN_Z)) {
-      int x_vec = ppc_allocate_vec_register(gen->f);
+      int x_vec;
       int zero_vec = ppc_allocate_vec_register(gen->f);
 
-      FETCH(gen, *inst, x_vec, 0, CHAN_X);        /* x_vec = src[0].x */
+      x_vec = get_src_vec(gen, inst, 0, CHAN_X);  /* x_vec = src[0].x */
 
       ppc_vzero(gen->f, zero_vec);                /* zero = {0,0,0,0} */
       ppc_vmaxfp(gen->f, x_vec, x_vec, zero_vec); /* x_vec = max(x_vec, 0) */
 
       if (IS_DST0_CHANNEL_ENABLED(*inst, CHAN_Y)) {
-         STORE(gen, *inst, x_vec, 0, CHAN_Y);        /* store Y */
+         emit_store(gen, x_vec, inst, CHAN_Y, FALSE);
       }
 
       if (IS_DST0_CHANNEL_ENABLED(*inst, CHAN_Z)) {
-         int y_vec = ppc_allocate_vec_register(gen->f);
+         int y_vec, w_vec;
          int z_vec = ppc_allocate_vec_register(gen->f);
-         int w_vec = ppc_allocate_vec_register(gen->f);
          int pow_vec = ppc_allocate_vec_register(gen->f);
          int pos_vec = ppc_allocate_vec_register(gen->f);
          int p128_vec = ppc_allocate_vec_register(gen->f);
          int n128_vec = ppc_allocate_vec_register(gen->f);
 
-         FETCH(gen, *inst, y_vec, 0, CHAN_Y);        /* y_vec = src[0].y */
+         y_vec = get_src_vec(gen, inst, 0, CHAN_Y);  /* y_vec = src[0].y */
          ppc_vmaxfp(gen->f, y_vec, y_vec, zero_vec); /* y_vec = max(y_vec, 0) */
 
-         FETCH(gen, *inst, w_vec, 0, CHAN_W);        /* w_vec = src[0].w */
+         w_vec = get_src_vec(gen, inst, 0, CHAN_W);  /* w_vec = src[0].w */
 
-         /* clamp Y to [-128, 128] */
+         /* clamp W to [-128, 128] */
          load_constant_vec(gen, p128_vec, 128.0f);
          load_constant_vec(gen, n128_vec, -128.0f);
-         ppc_vmaxfp(gen->f, y_vec, y_vec, n128_vec); /* y = max(y, -128) */
-         ppc_vminfp(gen->f, y_vec, y_vec, p128_vec); /* y = min(y, 128) */
+         ppc_vmaxfp(gen->f, w_vec, w_vec, n128_vec); /* w = max(w, -128) */
+         ppc_vminfp(gen->f, w_vec, w_vec, p128_vec); /* w = min(w, 128) */
 
          /* if temp.x > 0
           *    z = pow(tmp.y, tmp.w)
@@ -651,27 +876,208 @@ emit_lit(struct gen_context *gen, struct tgsi_full_instruction *inst)
          ppc_vcmpgtfpx(gen->f, pos_vec, x_vec, zero_vec); /* pos = x > 0 */
          ppc_vand(gen->f, z_vec, pow_vec, pos_vec);       /* z = pow & pos */
 
-         STORE(gen, *inst, z_vec, 0, CHAN_Z);             /* store Z */
+         emit_store(gen, z_vec, inst, CHAN_Z, FALSE);
 
-         ppc_release_vec_register(gen->f, y_vec);
          ppc_release_vec_register(gen->f, z_vec);
-         ppc_release_vec_register(gen->f, w_vec);
          ppc_release_vec_register(gen->f, pow_vec);
          ppc_release_vec_register(gen->f, pos_vec);
          ppc_release_vec_register(gen->f, p128_vec);
          ppc_release_vec_register(gen->f, n128_vec);
       }
 
-      ppc_release_vec_register(gen->f, x_vec);
       ppc_release_vec_register(gen->f, zero_vec);
    }
 
    /* Compute W */
    if (IS_DST0_CHANNEL_ENABLED(*inst, CHAN_W)) {
-      STORE(gen, *inst, one_vec, 0, CHAN_W);
+      emit_store(gen, one_vec, inst, CHAN_W, FALSE);
    }
+
+   release_src_vecs(gen);
 }
 
+
+static void
+emit_exp(struct gen_context *gen, struct tgsi_full_instruction *inst)
+{
+   const int one_vec = gen_one_vec(gen);
+   int src_vec;
+
+   /* get src arg */
+   src_vec = get_src_vec(gen, inst, 0, CHAN_X);
+
+   /* Compute X = 2^floor(src) */
+   if (IS_DST0_CHANNEL_ENABLED(*inst, CHAN_X)) {
+      int dst_vec = get_dst_vec(gen, inst, CHAN_X);
+      int tmp_vec = ppc_allocate_vec_register(gen->f);
+      ppc_vrfim(gen->f, tmp_vec, src_vec);             /* tmp = floor(src); */
+      ppc_vexptefp(gen->f, dst_vec, tmp_vec);          /* dst = 2 ^ tmp */
+      emit_store(gen, dst_vec, inst, CHAN_X, TRUE);
+      ppc_release_vec_register(gen->f, tmp_vec);
+   }
+
+   /* Compute Y = src - floor(src) */
+   if (IS_DST0_CHANNEL_ENABLED(*inst, CHAN_Y)) {
+      int dst_vec = get_dst_vec(gen, inst, CHAN_Y);
+      int tmp_vec = ppc_allocate_vec_register(gen->f);
+      ppc_vrfim(gen->f, tmp_vec, src_vec);             /* tmp = floor(src); */
+      ppc_vsubfp(gen->f, dst_vec, src_vec, tmp_vec);   /* dst = src - tmp */
+      emit_store(gen, dst_vec, inst, CHAN_Y, TRUE);
+      ppc_release_vec_register(gen->f, tmp_vec);
+   }
+
+   /* Compute Z = RoughApprox2ToX(src) */
+   if (IS_DST0_CHANNEL_ENABLED(*inst, CHAN_Z)) {
+      int dst_vec = get_dst_vec(gen, inst, CHAN_Z);
+      ppc_vexptefp(gen->f, dst_vec, src_vec);          /* dst = 2 ^ src */
+      emit_store(gen, dst_vec, inst, CHAN_Z, TRUE);
+   }
+
+   /* Compute W = 1.0 */
+   if (IS_DST0_CHANNEL_ENABLED(*inst, CHAN_W)) {
+      emit_store(gen, one_vec, inst, CHAN_W, FALSE);
+   }
+
+   release_src_vecs(gen);
+}
+
+
+static void
+emit_log(struct gen_context *gen, struct tgsi_full_instruction *inst)
+{
+   const int bit31_vec = gen_get_bit31_vec(gen);
+   const int one_vec = gen_one_vec(gen);
+   int src_vec, abs_vec;
+
+   /* get src arg */
+   src_vec = get_src_vec(gen, inst, 0, CHAN_X);
+
+   /* compute abs(src) */
+   abs_vec = ppc_allocate_vec_register(gen->f);
+   ppc_vandc(gen->f, abs_vec, src_vec, bit31_vec);     /* abs = src & ~bit31 */
+
+   if (IS_DST0_CHANNEL_ENABLED(*inst, CHAN_X) &&
+       IS_DST0_CHANNEL_ENABLED(*inst, CHAN_Y)) {
+
+      /* compute tmp = floor(log2(abs)) */
+      int tmp_vec = ppc_allocate_vec_register(gen->f);
+      ppc_vlogefp(gen->f, tmp_vec, abs_vec);           /* tmp = log2(abs) */
+      ppc_vrfim(gen->f, tmp_vec, tmp_vec);             /* tmp = floor(tmp); */
+
+      /* Compute X = tmp */
+      if (IS_DST0_CHANNEL_ENABLED(*inst, CHAN_X)) {
+         emit_store(gen, tmp_vec, inst, CHAN_X, FALSE);
+      }
+      
+      /* Compute Y = abs / 2^tmp */
+      if (IS_DST0_CHANNEL_ENABLED(*inst, CHAN_Y)) {
+         const int zero_vec = ppc_allocate_vec_register(gen->f);
+         ppc_vzero(gen->f, zero_vec);
+         ppc_vexptefp(gen->f, tmp_vec, tmp_vec);       /* tmp = 2 ^ tmp */
+         ppc_vrefp(gen->f, tmp_vec, tmp_vec);          /* tmp = 1 / tmp */
+         /* tmp = abs * tmp + zero */
+         ppc_vmaddfp(gen->f, tmp_vec, abs_vec, tmp_vec, zero_vec);
+         emit_store(gen, tmp_vec, inst, CHAN_Y, FALSE);
+         ppc_release_vec_register(gen->f, zero_vec);
+      }
+
+      ppc_release_vec_register(gen->f, tmp_vec);
+   }
+
+   /* Compute Z = RoughApproxLog2(abs) */
+   if (IS_DST0_CHANNEL_ENABLED(*inst, CHAN_Z)) {
+      int dst_vec = get_dst_vec(gen, inst, CHAN_Z);
+      ppc_vlogefp(gen->f, dst_vec, abs_vec);           /* dst = log2(abs) */
+      emit_store(gen, dst_vec, inst, CHAN_Z, TRUE);
+   }
+
+   /* Compute W = 1.0 */
+   if (IS_DST0_CHANNEL_ENABLED(*inst, CHAN_W)) {
+      emit_store(gen, one_vec, inst, CHAN_W, FALSE);
+   }
+
+   ppc_release_vec_register(gen->f, abs_vec);
+   release_src_vecs(gen);
+}
+
+
+static void
+emit_pow(struct gen_context *gen, struct tgsi_full_instruction *inst)
+{
+   int s0_vec = get_src_vec(gen, inst, 0, CHAN_X);
+   int s1_vec = get_src_vec(gen, inst, 1, CHAN_X);
+   int pow_vec = ppc_allocate_vec_register(gen->f);
+   int chan;
+
+   ppc_vec_pow(gen->f, pow_vec, s0_vec, s1_vec);
+
+   FOR_EACH_DST0_ENABLED_CHANNEL(*inst, chan) {
+      emit_store(gen, pow_vec, inst, chan, FALSE);
+   }
+
+   ppc_release_vec_register(gen->f, pow_vec);
+
+   release_src_vecs(gen);
+}
+
+
+static void
+emit_xpd(struct gen_context *gen, struct tgsi_full_instruction *inst)
+{
+   int x0_vec, y0_vec, z0_vec;
+   int x1_vec, y1_vec, z1_vec;
+   int zero_vec, tmp_vec;
+   int tmp2_vec;
+
+   zero_vec = ppc_allocate_vec_register(gen->f);
+   ppc_vzero(gen->f, zero_vec);
+
+   tmp_vec = ppc_allocate_vec_register(gen->f);
+   tmp2_vec = ppc_allocate_vec_register(gen->f);
+
+   if (IS_DST0_CHANNEL_ENABLED(*inst, CHAN_Y) ||
+       IS_DST0_CHANNEL_ENABLED(*inst, CHAN_Z)) {
+      x0_vec = get_src_vec(gen, inst, 0, CHAN_X);
+      x1_vec = get_src_vec(gen, inst, 1, CHAN_X);
+   }
+   if (IS_DST0_CHANNEL_ENABLED(*inst, CHAN_X) ||
+       IS_DST0_CHANNEL_ENABLED(*inst, CHAN_Z)) {
+      y0_vec = get_src_vec(gen, inst, 0, CHAN_Y);
+      y1_vec = get_src_vec(gen, inst, 1, CHAN_Y);
+   }
+   if (IS_DST0_CHANNEL_ENABLED(*inst, CHAN_X) ||
+       IS_DST0_CHANNEL_ENABLED(*inst, CHAN_Y)) {
+      z0_vec = get_src_vec(gen, inst, 0, CHAN_Z);
+      z1_vec = get_src_vec(gen, inst, 1, CHAN_Z);
+   }
+
+   IF_IS_DST0_CHANNEL_ENABLED(*inst, CHAN_X) {
+      /* tmp = y0 * z1 */
+      ppc_vmaddfp(gen->f, tmp_vec, y0_vec, z1_vec, zero_vec);
+      /* tmp = tmp - z0 * y1*/
+      ppc_vnmsubfp(gen->f, tmp_vec, tmp_vec, z0_vec, y1_vec);
+      emit_store(gen, tmp_vec, inst, CHAN_X, FALSE);
+   }
+   IF_IS_DST0_CHANNEL_ENABLED(*inst, CHAN_Y) {
+      /* tmp = z0 * x1 */
+      ppc_vmaddfp(gen->f, tmp_vec, z0_vec, x1_vec, zero_vec);
+      /* tmp = tmp - x0 * z1 */
+      ppc_vnmsubfp(gen->f, tmp_vec, tmp_vec, x0_vec, z1_vec);
+      emit_store(gen, tmp_vec, inst, CHAN_Y, FALSE);
+   }
+   IF_IS_DST0_CHANNEL_ENABLED(*inst, CHAN_Z) {
+      /* tmp = x0 * y1 */
+      ppc_vmaddfp(gen->f, tmp_vec, x0_vec, y1_vec, zero_vec);
+      /* tmp = tmp - y0 * x1 */
+      ppc_vnmsubfp(gen->f, tmp_vec, tmp_vec, y0_vec, x1_vec);
+      emit_store(gen, tmp_vec, inst, CHAN_Z, FALSE);
+   }
+   /* W is undefined */
+
+   ppc_release_vec_register(gen->f, tmp_vec);
+   ppc_release_vec_register(gen->f, zero_vec);
+   release_src_vecs(gen);
+}
 
 static int
 emit_instruction(struct gen_context *gen,
@@ -679,6 +1085,7 @@ emit_instruction(struct gen_context *gen,
 {
    switch (inst->Instruction.Opcode) {
    case TGSI_OPCODE_MOV:
+   case TGSI_OPCODE_SWZ:
    case TGSI_OPCODE_ABS:
    case TGSI_OPCODE_FLOOR:
    case TGSI_OPCODE_FRAC:
@@ -717,16 +1124,27 @@ emit_instruction(struct gen_context *gen,
    case TGSI_OPCODE_LIT:
       emit_lit(gen, inst);
       break;
+   case TGSI_OPCODE_LOG:
+      emit_log(gen, inst);
+      break;
+   case TGSI_OPCODE_EXP:
+      emit_exp(gen, inst);
+      break;
+   case TGSI_OPCODE_POW:
+      emit_pow(gen, inst);
+      break;
+   case TGSI_OPCODE_XPD:
+      emit_xpd(gen, inst);
+      break;
    case TGSI_OPCODE_END:
       /* normal end */
       return 1;
    default:
       return 0;
    }
-
-   
    return 1;
 }
+
 
 static void
 emit_declaration(
@@ -805,6 +1223,7 @@ emit_epilogue(struct ppc_function *func)
 {
    ppc_return(func);
    /* XXX restore prev stack frame */
+   debug_printf("PPC: Emitted %u instructions\n", func->num_inst);
 }
 
 
@@ -837,17 +1256,14 @@ tgsi_emit_ppc(const struct tgsi_token *tokens,
    if (!use_ppc_asm)
       return FALSE;
 
+   if (0) {
+      debug_printf("\n********* TGSI->PPC ********\n");
+      tgsi_dump(tokens, 0);
+   }
+
    util_init_math();
 
-   gen.f = func;
-   gen.inputs_reg = ppc_reserve_register(func, 3);   /* first function param */
-   gen.outputs_reg = ppc_reserve_register(func, 4);  /* second function param */
-   gen.temps_reg = ppc_reserve_register(func, 5);    /* ... */
-   gen.immed_reg = ppc_reserve_register(func, 6);
-   gen.const_reg = ppc_reserve_register(func, 7);
-   gen.builtins_reg = ppc_reserve_register(func, 8);
-   gen.one_vec = -1;
-   gen.bit31_vec = -1;
+   init_gen_context(&gen, func);
 
    emit_prologue(func);
 
@@ -878,19 +1294,14 @@ tgsi_emit_ppc(const struct tgsi_token *tokens,
          /* splat each immediate component into a float[4] vector for SoA */
          {
             const uint size = parse.FullToken.FullImmediate.Immediate.Size - 1;
-            float *imm = (float *) immediates;
             uint i;
             assert(size <= 4);
             assert(num_immediates < TGSI_EXEC_NUM_IMMEDIATES);
             for (i = 0; i < size; i++) {
-               const float value =
-                  parse.FullToken.FullImmediate.u.ImmediateFloat32[i].Float;
-               imm[num_immediates * 4 + 0] = 
-               imm[num_immediates * 4 + 1] = 
-               imm[num_immediates * 4 + 2] = 
-               imm[num_immediates * 4 + 3] = value;
-               num_immediates++;
+               immediates[num_immediates][i] =
+		  parse.FullToken.FullImmediate.u.ImmediateFloat32[i].Float;
             }
+            num_immediates++;
          }
          break;
 
@@ -903,6 +1314,14 @@ tgsi_emit_ppc(const struct tgsi_token *tokens,
    emit_epilogue(func);
 
    tgsi_parse_free( &parse );
+
+   if (ppc_num_instructions(func) == 0) {
+      /* ran out of memory for instructions */
+      ok = FALSE;
+   }
+
+   if (!ok)
+      debug_printf("TGSI->PPC translation failed\n");
 
    return ok;
 }

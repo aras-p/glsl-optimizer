@@ -111,6 +111,9 @@ extern GLuint
 _mesa_tex_target_to_face(GLenum target);
 
 
+extern GLboolean
+_mesa_is_color_format(GLenum format);
+
 
 /**
  * Lock a texture for updating.  See also _mesa_lock_context_textures().

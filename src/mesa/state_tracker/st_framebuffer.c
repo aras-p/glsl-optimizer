@@ -176,7 +176,9 @@ st_set_framebuffer_surface(struct st_framebuffer *stfb,
    assert(surfIndex < BUFFER_COUNT);
 
    strb = st_renderbuffer(stfb->Base.Attachment[surfIndex].Renderbuffer);
-   assert(strb);
+
+   /* fail */
+   if (!strb) return;
 
    /* replace the renderbuffer's surface/texture pointers */
    pipe_surface_reference( &strb->surface, surf );
@@ -289,7 +291,8 @@ st_notify_swapbuffers_complete(struct st_framebuffer *stfb)
       for (i = 0; i < BUFFER_COUNT; i++) {
 	 if (stfb->Base.Attachment[i].Renderbuffer) {
 	    strb = st_renderbuffer(stfb->Base.Attachment[i].Renderbuffer);
-	    strb->surface->status = PIPE_SURFACE_STATUS_UNDEFINED;
+            if (strb->surface)
+               strb->surface->status = PIPE_SURFACE_STATUS_UNDEFINED;
 	 }
       }
    }

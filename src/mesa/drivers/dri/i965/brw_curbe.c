@@ -307,6 +307,7 @@ static void prepare_constant_buffer(struct brw_context *brw)
       dri_bo_subdata(brw->curbe.curbe_bo, brw->curbe.curbe_offset, bufsz, buf);
    }
 
+   brw_add_validated_bo(brw, brw->curbe.curbe_bo);
 
    /* Because this provokes an action (ie copy the constants into the
     * URB), it shouldn't be shortcircuited if identical to the
@@ -328,13 +329,6 @@ static void emit_constant_buffer(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
    GLuint sz = brw->curbe.total_size;
-   dri_bo *aper_array[] = {
-      brw->intel.batch->buf,
-      brw->curbe.curbe_bo,
-   };
-
-   if (dri_bufmgr_check_aperture_space(aper_array, ARRAY_SIZE(aper_array)))
-      intel_batchbuffer_flush(intel->batch);
 
    BEGIN_BATCH(2, IGNORE_CLIPRECTS);
    if (sz == 0) {

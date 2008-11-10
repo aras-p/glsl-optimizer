@@ -30,6 +30,7 @@
 #include "main/mtypes.h"
 #include "main/colormac.h"
 
+#include "intel_buffers.h"
 #include "intel_fbo.h"
 #include "intel_screen.h"
 #include "intel_span.h"
@@ -131,12 +132,8 @@ pwrite_8(struct intel_renderbuffer *irb, uint32_t offset, uint8_t val)
 }
 
 static uint32_t no_tile_swizzle(struct intel_renderbuffer *irb,
-				struct intel_context *intel,
 				int x, int y)
 {
-	x += intel->drawX;
-	y += intel->drawY;
-
 	return (y * irb->region->pitch + x) * irb->region->cpp;
 }
 
@@ -145,7 +142,6 @@ static uint32_t no_tile_swizzle(struct intel_renderbuffer *irb,
  */
 
 static uint32_t x_tile_swizzle(struct intel_renderbuffer *irb,
-			       struct intel_context *intel,
 			       int x, int y)
 {
 	int	tile_stride;
@@ -155,9 +151,6 @@ static uint32_t x_tile_swizzle(struct intel_renderbuffer *irb,
 	int	tile_off, tile_base;
 	
 	tile_stride = (irb->pfPitch * irb->region->cpp) << 3;
-	
-	x += intel->drawX;
-	y += intel->drawY;
 
 	xbyte = x * irb->region->cpp;
 
@@ -204,7 +197,6 @@ static uint32_t x_tile_swizzle(struct intel_renderbuffer *irb,
 }
 
 static uint32_t y_tile_swizzle(struct intel_renderbuffer *irb,
-			       struct intel_context *intel,
 			       int x, int y)
 {
 	int	tile_stride;
@@ -214,9 +206,6 @@ static uint32_t y_tile_swizzle(struct intel_renderbuffer *irb,
 	int	tile_off, tile_base;
 	
 	tile_stride = (irb->pfPitch * irb->region->cpp) << 5;
-	
-	x += intel->drawX;
-	y += intel->drawY;
 
 	xbyte = x * irb->region->cpp;
 
@@ -268,8 +257,12 @@ static uint32_t y_tile_swizzle(struct intel_renderbuffer *irb,
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);		\
    const GLint yScale = irb->RenderToTexture ? 1 : -1;			\
    const GLint yBias = irb->RenderToTexture ? 0 : irb->Base.Height - 1;	\
+   unsigned int num_cliprects;						\
+   struct drm_clip_rect *cliprects;					\
+   int x_off, y_off;							\
    GLuint p;								\
-   (void) p;
+   (void) p;								\
+   intel_get_cliprects(intel, &cliprects, &num_cliprects, &x_off, &y_off);
 
 /* XXX FBO: this is identical to the macro in spantmp2.h except we get
  * the cliprect info from the context, not the driDrawable.
@@ -277,12 +270,12 @@ static uint32_t y_tile_swizzle(struct intel_renderbuffer *irb,
  */
 #define HW_CLIPLOOP()							\
    do {									\
-      int _nc = intel->numClipRects;					\
+      int _nc = num_cliprects;						\
       while ( _nc-- ) {							\
-	 int minx = intel->pClipRects[_nc].x1 - intel->drawX;		\
-	 int miny = intel->pClipRects[_nc].y1 - intel->drawY;		\
-	 int maxx = intel->pClipRects[_nc].x2 - intel->drawX;		\
-	 int maxy = intel->pClipRects[_nc].y2 - intel->drawY;
+	 int minx = cliprects[_nc].x1 - x_off;				\
+	 int miny = cliprects[_nc].y1 - y_off;				\
+	 int maxx = cliprects[_nc].x2 - x_off;				\
+	 int maxy = cliprects[_nc].y2 - y_off;
 	
 #if 0
       }}
@@ -295,6 +288,11 @@ static uint32_t y_tile_swizzle(struct intel_renderbuffer *irb,
 
 #define HW_UNLOCK()
 
+/* Convenience macros to avoid typing the swizzle argument over and over */
+#define NO_TILE(_X, _Y) no_tile_swizzle(irb, (_X) + x_off, (_Y) + y_off)
+#define X_TILE(_X, _Y) x_tile_swizzle(irb, (_X) + x_off, (_Y) + y_off)
+#define Y_TILE(_X, _Y) y_tile_swizzle(irb, (_X) + x_off, (_Y) + y_off)
+
 /* 16 bit, RGB565 color spanline and pixel functions
  */
 #define SPANTMP_PIXEL_FMT GL_RGB
@@ -302,8 +300,8 @@ static uint32_t y_tile_swizzle(struct intel_renderbuffer *irb,
 
 #define TAG(x)    intel##x##_RGB565
 #define TAG2(x,y) intel##x##_RGB565##y
-#define GET_VALUE(X, Y) pread_16(irb, no_tile_swizzle(irb, intel, X, Y))
-#define PUT_VALUE(X, Y, V) pwrite_16(irb, no_tile_swizzle(irb, intel, X, Y), V)
+#define GET_VALUE(X, Y) pread_16(irb, NO_TILE(X, Y))
+#define PUT_VALUE(X, Y, V) pwrite_16(irb, NO_TILE(X, Y), V)
 #include "spantmp2.h"
 
 /* 32 bit, ARGB8888 color spanline and pixel functions
@@ -313,8 +311,8 @@ static uint32_t y_tile_swizzle(struct intel_renderbuffer *irb,
 
 #define TAG(x)    intel##x##_ARGB8888
 #define TAG2(x,y) intel##x##_ARGB8888##y
-#define GET_VALUE(X, Y) pread_32(irb, no_tile_swizzle(irb, intel, X, Y))
-#define PUT_VALUE(X, Y, V) pwrite_32(irb, no_tile_swizzle(irb, intel, X, Y), V)
+#define GET_VALUE(X, Y) pread_32(irb, NO_TILE(X, Y))
+#define PUT_VALUE(X, Y, V) pwrite_32(irb, NO_TILE(X, Y), V)
 #include "spantmp2.h"
 
 /* 32 bit, xRGB8888 color spanline and pixel functions
@@ -324,8 +322,8 @@ static uint32_t y_tile_swizzle(struct intel_renderbuffer *irb,
 
 #define TAG(x)    intel##x##_xRGB8888
 #define TAG2(x,y) intel##x##_xRGB8888##y
-#define GET_VALUE(X, Y) pread_xrgb8888(irb, no_tile_swizzle(irb, intel, X, Y))
-#define PUT_VALUE(X, Y, V) pwrite_xrgb8888(irb, no_tile_swizzle(irb, intel, X, Y), V)
+#define GET_VALUE(X, Y) pread_xrgb8888(irb, NO_TILE(X, Y))
+#define PUT_VALUE(X, Y, V) pwrite_xrgb8888(irb, NO_TILE(X, Y), V)
 #include "spantmp2.h"
 
 /* 16 bit RGB565 color tile spanline and pixel functions
@@ -336,8 +334,8 @@ static uint32_t y_tile_swizzle(struct intel_renderbuffer *irb,
 
 #define TAG(x)    intel_XTile_##x##_RGB565
 #define TAG2(x,y) intel_XTile_##x##_RGB565##y
-#define GET_VALUE(X, Y) pread_16(irb, x_tile_swizzle(irb, intel, X, Y))
-#define PUT_VALUE(X, Y, V) pwrite_16(irb, x_tile_swizzle(irb, intel, X, Y), V)
+#define GET_VALUE(X, Y) pread_16(irb, X_TILE(X, Y))
+#define PUT_VALUE(X, Y, V) pwrite_16(irb, X_TILE(X, Y), V)
 #include "spantmp2.h"
 
 #define SPANTMP_PIXEL_FMT GL_RGB
@@ -345,8 +343,8 @@ static uint32_t y_tile_swizzle(struct intel_renderbuffer *irb,
 
 #define TAG(x)    intel_YTile_##x##_RGB565
 #define TAG2(x,y) intel_YTile_##x##_RGB565##y
-#define GET_VALUE(X, Y) pread_16(irb, y_tile_swizzle(irb, intel, X, Y))
-#define PUT_VALUE(X, Y, V) pwrite_16(irb, y_tile_swizzle(irb, intel, X, Y), V)
+#define GET_VALUE(X, Y) pread_16(irb, Y_TILE(X, Y))
+#define PUT_VALUE(X, Y, V) pwrite_16(irb, Y_TILE(X, Y), V)
 #include "spantmp2.h"
 
 /* 32 bit ARGB888 color tile spanline and pixel functions
@@ -357,8 +355,8 @@ static uint32_t y_tile_swizzle(struct intel_renderbuffer *irb,
 
 #define TAG(x)    intel_XTile_##x##_ARGB8888
 #define TAG2(x,y) intel_XTile_##x##_ARGB8888##y
-#define GET_VALUE(X, Y) pread_32(irb, x_tile_swizzle(irb, intel, X, Y))
-#define PUT_VALUE(X, Y, V) pwrite_32(irb, x_tile_swizzle(irb, intel, X, Y), V)
+#define GET_VALUE(X, Y) pread_32(irb, X_TILE(X, Y))
+#define PUT_VALUE(X, Y, V) pwrite_32(irb, X_TILE(X, Y), V)
 #include "spantmp2.h"
 
 #define SPANTMP_PIXEL_FMT GL_BGRA
@@ -366,8 +364,8 @@ static uint32_t y_tile_swizzle(struct intel_renderbuffer *irb,
 
 #define TAG(x)    intel_YTile_##x##_ARGB8888
 #define TAG2(x,y) intel_YTile_##x##_ARGB8888##y
-#define GET_VALUE(X, Y) pread_32(irb, y_tile_swizzle(irb, intel, X, Y))
-#define PUT_VALUE(X, Y, V) pwrite_32(irb, y_tile_swizzle(irb, intel, X, Y), V)
+#define GET_VALUE(X, Y) pread_32(irb, Y_TILE(X, Y))
+#define PUT_VALUE(X, Y, V) pwrite_32(irb, Y_TILE(X, Y), V)
 #include "spantmp2.h"
 
 /* 32 bit xRGB888 color tile spanline and pixel functions
@@ -378,8 +376,8 @@ static uint32_t y_tile_swizzle(struct intel_renderbuffer *irb,
 
 #define TAG(x)    intel_XTile_##x##_xRGB8888
 #define TAG2(x,y) intel_XTile_##x##_xRGB8888##y
-#define GET_VALUE(X, Y) pread_xrgb8888(irb, x_tile_swizzle(irb, intel, X, Y))
-#define PUT_VALUE(X, Y, V) pwrite_xrgb8888(irb, x_tile_swizzle(irb, intel, X, Y), V)
+#define GET_VALUE(X, Y) pread_xrgb8888(irb, X_TILE(X, Y))
+#define PUT_VALUE(X, Y, V) pwrite_xrgb8888(irb, X_TILE(X, Y), V)
 #include "spantmp2.h"
 
 #define SPANTMP_PIXEL_FMT GL_BGRA
@@ -387,15 +385,19 @@ static uint32_t y_tile_swizzle(struct intel_renderbuffer *irb,
 
 #define TAG(x)    intel_YTile_##x##_xRGB8888
 #define TAG2(x,y) intel_YTile_##x##_xRGB8888##y
-#define GET_VALUE(X, Y) pread_xrgb8888(irb, y_tile_swizzle(irb, intel, X, Y))
-#define PUT_VALUE(X, Y, V) pwrite_xrgb8888(irb, y_tile_swizzle(irb, intel, X, Y), V)
+#define GET_VALUE(X, Y) pread_xrgb8888(irb, Y_TILE(X, Y))
+#define PUT_VALUE(X, Y, V) pwrite_xrgb8888(irb, Y_TILE(X, Y), V)
 #include "spantmp2.h"
 
 #define LOCAL_DEPTH_VARS						\
    struct intel_context *intel = intel_context(ctx);			\
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);		\
    const GLint yScale = irb->RenderToTexture ? 1 : -1;			\
-   const GLint yBias = irb->RenderToTexture ? 0 : irb->Base.Height - 1;
+   const GLint yBias = irb->RenderToTexture ? 0 : irb->Base.Height - 1; \
+   unsigned int num_cliprects;						\
+   struct drm_clip_rect *cliprects;					\
+   int x_off, y_off;							\
+   intel_get_cliprects(intel, &cliprects, &num_cliprects, &x_off, &y_off);
 
 
 #define LOCAL_STENCIL_VARS LOCAL_DEPTH_VARS
@@ -404,10 +406,8 @@ static uint32_t y_tile_swizzle(struct intel_renderbuffer *irb,
  ** 16-bit depthbuffer functions.
  **/
 #define VALUE_TYPE GLushort
-#define WRITE_DEPTH(_x, _y, d) \
-   pwrite_16(irb, no_tile_swizzle(irb, intel, _x, _y), d)
-#define READ_DEPTH(d, _x, _y) \
-   d = pread_16(irb, no_tile_swizzle(irb, intel, _x, _y))
+#define WRITE_DEPTH(_x, _y, d) pwrite_16(irb, NO_TILE(_x, _y), d)
+#define READ_DEPTH(d, _x, _y) d = pread_16(irb, NO_TILE(_x, _y))
 #define TAG(x) intel##x##_z16
 #include "depthtmp.h"
 
@@ -416,10 +416,8 @@ static uint32_t y_tile_swizzle(struct intel_renderbuffer *irb,
  ** 16-bit x tile depthbuffer functions.
  **/
 #define VALUE_TYPE GLushort
-#define WRITE_DEPTH(_x, _y, d) \
-   pwrite_16(irb, x_tile_swizzle(irb, intel, _x, _y), d)
-#define READ_DEPTH(d, _x, _y) \
-   d = pread_16(irb, x_tile_swizzle(irb, intel, _x, _y))
+#define WRITE_DEPTH(_x, _y, d) pwrite_16(irb, X_TILE(_x, _y), d)
+#define READ_DEPTH(d, _x, _y) d = pread_16(irb, X_TILE(_x, _y))
 #define TAG(x) intel_XTile_##x##_z16
 #include "depthtmp.h"
 
@@ -427,10 +425,8 @@ static uint32_t y_tile_swizzle(struct intel_renderbuffer *irb,
  ** 16-bit y tile depthbuffer functions.
  **/
 #define VALUE_TYPE GLushort
-#define WRITE_DEPTH(_x, _y, d) \
-   pwrite_16(irb, y_tile_swizzle(irb, intel, _x, _y), d)
-#define READ_DEPTH(d, _x, _y) \
-   d = pread_16(irb, y_tile_swizzle(irb, intel, _x, _y))
+#define WRITE_DEPTH(_x, _y, d) pwrite_16(irb, Y_TILE(_x, _y), d)
+#define READ_DEPTH(d, _x, _y) d = pread_16(irb, Y_TILE(_x, _y))
 #define TAG(x) intel_YTile_##x##_z16
 #include "depthtmp.h"
 
@@ -445,12 +441,11 @@ static uint32_t y_tile_swizzle(struct intel_renderbuffer *irb,
 
 /* Change ZZZS -> SZZZ */
 #define WRITE_DEPTH(_x, _y, d)					\
-   pwrite_32(irb, no_tile_swizzle(irb, intel, _x, _y),		\
-	     ((d) >> 8) | ((d) << 24))
+   pwrite_32(irb, NO_TILE(_x, _y), ((d) >> 8) | ((d) << 24))
 
 /* Change SZZZ -> ZZZS */
 #define READ_DEPTH( d, _x, _y ) {				\
-   GLuint tmp = pread_32(irb, no_tile_swizzle(irb, intel, _x, _y));	\
+   GLuint tmp = pread_32(irb, NO_TILE(_x, _y));			\
    d = (tmp << 8) | (tmp >> 24);				\
 }
 
@@ -468,12 +463,11 @@ static uint32_t y_tile_swizzle(struct intel_renderbuffer *irb,
 
 /* Change ZZZS -> SZZZ */
 #define WRITE_DEPTH(_x, _y, d)					\
-   pwrite_32(irb, x_tile_swizzle(irb, intel, _x, _y),		\
-	     ((d) >> 8) | ((d) << 24))				\
+   pwrite_32(irb, X_TILE(_x, _y), ((d) >> 8) | ((d) << 24))
 
 /* Change SZZZ -> ZZZS */
 #define READ_DEPTH( d, _x, _y ) {				\
-   GLuint tmp = pread_32(irb, x_tile_swizzle(irb, intel, _x, _y));	\
+   GLuint tmp = pread_32(irb, X_TILE(_x, _y));		\
    d = (tmp << 8) | (tmp >> 24);				\
 }
 
@@ -490,12 +484,11 @@ static uint32_t y_tile_swizzle(struct intel_renderbuffer *irb,
 
 /* Change ZZZS -> SZZZ */
 #define WRITE_DEPTH(_x, _y, d)					\
-   pwrite_32(irb, y_tile_swizzle(irb, intel, _x, _y),		\
-	     ((d) >> 8) | ((d) << 24))
+   pwrite_32(irb, Y_TILE(_x, _y), ((d) >> 8) | ((d) << 24))
 
 /* Change SZZZ -> ZZZS */
 #define READ_DEPTH( d, _x, _y ) {				\
-   GLuint tmp = pread_32(irb, y_tile_swizzle(irb, intel, _x, _y));	\
+   GLuint tmp = pread_32(irb, Y_TILE(_x, _y));			\
    d = (tmp << 8) | (tmp >> 24);				\
 }
 
@@ -506,36 +499,24 @@ static uint32_t y_tile_swizzle(struct intel_renderbuffer *irb,
 /**
  ** 8-bit stencil function (XXX FBO: This is obsolete)
  **/
-#define WRITE_STENCIL(_x, _y, d)				\
-   pwrite_8(irb, no_tile_swizzle(irb, intel, _x, _y) + 3, d)
-
-#define READ_STENCIL(d, _x, _y)					\
-   d = pread_8(irb, no_tile_swizzle(irb, intel, _x, _y) + 3);
-
+#define WRITE_STENCIL(_x, _y, d) pwrite_8(irb, NO_TILE(_x, _y) + 3, d)
+#define READ_STENCIL(d, _x, _y) d = pread_8(irb, NO_TILE(_x, _y) + 3);
 #define TAG(x) intel##x##_z24_s8
 #include "stenciltmp.h"
 
 /**
  ** 8-bit x-tile stencil function (XXX FBO: This is obsolete)
  **/
-#define WRITE_STENCIL(_x, _y, d)				\
-   pwrite_8(irb, x_tile_swizzle(irb, intel, _x, _y) + 3, d)
-
-#define READ_STENCIL(d, _x, _y)					\
-   d = pread_8(irb, x_tile_swizzle(irb, intel, _x, _y) + 3);
-
+#define WRITE_STENCIL(_x, _y, d) pwrite_8(irb, X_TILE(_x, _y) + 3, d)
+#define READ_STENCIL(d, _x, _y) d = pread_8(irb, X_TILE(_x, _y) + 3);
 #define TAG(x) intel_XTile_##x##_z24_s8
 #include "stenciltmp.h"
 
 /**
  ** 8-bit y-tile stencil function (XXX FBO: This is obsolete)
  **/
-#define WRITE_STENCIL(_x, _y, d)				\
-   pwrite_8(irb, y_tile_swizzle(irb, intel, _x, _y) + 3, d)
-
-#define READ_STENCIL(d, _x, _y)					\
-   d = pread_8(irb, y_tile_swizzle(irb, intel, _x, _y) + 3)
-
+#define WRITE_STENCIL(_x, _y, d) pwrite_8(irb, Y_TILE(_x, _y) + 3, d)
+#define READ_STENCIL(d, _x, _y) d = pread_8(irb, Y_TILE(_x, _y) + 3)
 #define TAG(x) intel_YTile_##x##_z24_s8
 #include "stenciltmp.h"
 
@@ -602,14 +583,10 @@ intel_map_unmap_buffers(struct intel_context *intel, GLboolean map)
       if (tex) {
          /* render to texture */
          ASSERT(att->Renderbuffer);
-         if (map) {
-            struct gl_texture_image *texImg;
-            texImg = tex->Image[att->CubeMapFace][att->TextureLevel];
+         if (map)
             intel_tex_map_images(intel, intel_texture_object(tex));
-         }
-         else {
+         else
             intel_tex_unmap_images(intel, intel_texture_object(tex));
-         }
       }
    }
 

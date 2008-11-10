@@ -30,6 +30,7 @@
 #include "intel_decode.h"
 #include "intel_reg.h"
 #include "intel_bufmgr.h"
+#include "intel_buffers.h"
 
 /* Relocations in kernel space:
  *    - pass dma buffer seperately
@@ -133,6 +134,9 @@ do_flush_locked(struct intel_batchbuffer *batch,
 {
    struct intel_context *intel = batch->intel;
    int ret = 0;
+   unsigned int num_cliprects = 0;
+   struct drm_clip_rect *cliprects = NULL;
+   int x_off = 0, y_off = 0;
 
    if (batch->buffer)
       dri_bo_subdata (batch->buf, 0, used, batch->buffer);
@@ -142,23 +146,21 @@ do_flush_locked(struct intel_batchbuffer *batch,
    batch->map = NULL;
    batch->ptr = NULL;
 
-   /* Throw away non-effective packets.  Won't work once we have
-    * hardware contexts which would preserve statechanges beyond a
-    * single buffer.
-    */
 
-   if (!(intel->numClipRects == 0 &&
-	 batch->cliprect_mode == LOOP_CLIPRECTS) || intel->no_hw) {
-      dri_bo_exec(batch->buf, used,
-		  intel->pClipRects,
-		  batch->cliprect_mode != LOOP_CLIPRECTS ?
-		  0 : intel->numClipRects,
-		  (((GLuint) intel->drawX) & 0xffff) |
-		  (((GLuint) intel->drawY) << 16));
+   if (batch->cliprect_mode == LOOP_CLIPRECTS) {
+      intel_get_cliprects(intel, &cliprects, &num_cliprects, &x_off, &y_off);
+   }
+   /* Dispatch the batchbuffer, if it has some effect (nonzero cliprects).
+    * Can't short-circuit like this once we have hardware contexts, but we
+    * should always be in DRI2 mode by then anyway.
+    */
+   if ((batch->cliprect_mode != LOOP_CLIPRECTS ||
+	num_cliprects != 0) && !intel->no_hw) {
+      dri_bo_exec(batch->buf, used, cliprects, num_cliprects,
+		  (x_off & 0xffff) | (y_off << 16));
    }
 
-   if (intel->numClipRects == 0 &&
-       batch->cliprect_mode == LOOP_CLIPRECTS) {
+   if (batch->cliprect_mode == LOOP_CLIPRECTS && num_cliprects == 0) {
       if (allow_unlock) {
 	 /* If we are not doing any actual user-visible rendering,
 	  * do a sched_yield to keep the app from pegging the cpu while

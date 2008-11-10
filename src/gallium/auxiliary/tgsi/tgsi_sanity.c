@@ -153,17 +153,21 @@ check_register_usage(
    if (!check_file_name( ctx, file ))
       return FALSE;
 
-   if (index < 0 || index > MAX_REGISTERS) {
-      report_error( ctx, "%s[%i]: Invalid index %s", file_names[file], index, name );
-      return FALSE;
-   }
-
    if (indirect_access) {
+      /* Note that 'index' is an offset relative to the value of the
+       * address register.  No range checking done here.
+       */
       if (!is_any_register_declared( ctx, file ))
          report_error( ctx, "%s: Undeclared %s register", file_names[file], name );
       ctx->regs_ind_used[file] = TRUE;
    }
    else {
+      if (index < 0 || index > MAX_REGISTERS) {
+         report_error( ctx, "%s[%i]: Invalid index %s",
+                       file_names[file], index, name );
+         return FALSE;
+      }
+
       if (!is_register_declared( ctx, file, index ))
          report_error( ctx, "%s[%d]: Undeclared %s register", file_names[file], index, name );
       ctx->regs_used[file][index / BITS_IN_REG_FLAG] |= (1 << (index % BITS_IN_REG_FLAG));

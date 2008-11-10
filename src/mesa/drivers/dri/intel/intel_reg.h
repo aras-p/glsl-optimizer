@@ -29,6 +29,8 @@
 #define CMD_2D				(0x2 << 29)
 #define CMD_3D				(0x3 << 29)
 
+#define MI_NOOP				(CMD_MI | 0)
+
 #define MI_BATCH_BUFFER_END		(CMD_MI | 0xA << 23)
 
 #define MI_FLUSH			(CMD_MI | (4 << 23))
@@ -43,6 +45,9 @@
 /* p189 */
 #define _3DSTATE_LOAD_STATE_IMMEDIATE_1   (CMD_3D | (0x1d<<24) | (0x04<<16))
 #define I1_LOAD_S(n)                      (1<<(4+n))
+
+#define _3DSTATE_DRAWRECT_INFO		(CMD_3D | (0x1d<<24) | (0x80<<16) | 0x3)
+#define _3DSTATE_DRAWRECT_INFO_I965	(CMD_3D | (3 << 27) | (1 << 24) | 0x2)
 
 /** @{
  *

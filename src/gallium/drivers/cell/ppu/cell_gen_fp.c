@@ -1303,65 +1303,100 @@ lookup_function(struct cell_context *cell, const char *funcname)
 /**
  * Emit code to call a SPU function.
  * Used to implement instructions like SIN/COS/POW/TEX/etc.
+ * If scalar, only the X components of the src regs are used, and the
+ * result is replicated across the dest register's XYZW components.
  */
 static boolean
 emit_function_call(struct codegen *gen,
                    const struct tgsi_full_instruction *inst,
-                   char *funcname, uint num_args)
+                   char *funcname, uint num_args, boolean scalar)
 {
    const uint addr = lookup_function(gen->cell, funcname);
    char comment[100];
-   int ch;
+   int s_regs[3];
+   int func_called = FALSE;
+   uint a, ch;
+   int retval_reg = -1;
 
    assert(num_args <= 3);
 
    snprintf(comment, sizeof(comment), "CALL %s:", funcname);
    spe_comment(gen->f, -4, comment);
 
+   if (scalar) {
+      for (a = 0; a < num_args; a++) {
+         s_regs[a] = get_src_reg(gen, CHAN_X, &inst->FullSrcRegisters[a]);
+      }
+      /* we'll call the function, put the return value in this register,
+       * then replicate it across all write-enabled components in d_reg.
+       */
+      retval_reg = spe_allocate_available_register(gen->f);
+   }
+
    for (ch = 0; ch < 4; ch++) {
       if (inst->FullDstRegisters[0].DstRegister.WriteMask & (1 << ch)) {
-         int s_regs[3], d_reg;
+         int d_reg;
          ubyte usedRegs[SPE_NUM_REGS];
-         uint a, i, numUsed;
+         uint i, numUsed;
 
-         for (a = 0; a < num_args; a++) {
-            s_regs[a] = get_src_reg(gen, ch, &inst->FullSrcRegisters[a]);
+         if (!scalar) {
+            for (a = 0; a < num_args; a++) {
+               s_regs[a] = get_src_reg(gen, ch, &inst->FullSrcRegisters[a]);
+            }
          }
+
          d_reg = get_dst_reg(gen, ch, &inst->FullDstRegisters[0]);
 
-         numUsed = spe_get_registers_used(gen->f, usedRegs);
-         assert(numUsed < gen->frame_size / 16 - 2);
+         if (!scalar || !func_called) {
+            /* for a scalar function, we'll really only call the function once */
 
-         /* save registers to stack */
-         for (i = 0; i < numUsed; i++) {
-            uint reg = usedRegs[i];
-            int offset = 2 + i;
-            spe_stqd(gen->f, reg, SPE_REG_SP, 16 * offset);
-         }
+            numUsed = spe_get_registers_used(gen->f, usedRegs);
+            assert(numUsed < gen->frame_size / 16 - 2);
 
-         /* setup function arguments */
-         for (a = 0; a < num_args; a++) {
-            spe_move(gen->f, 3 + a, s_regs[a]);
-         }
-
-         /* branch to function, save return addr */
-         spe_brasl(gen->f, SPE_REG_RA, addr);
-
-         /* save function's return value */
-         spe_move(gen->f, d_reg, 3);
-
-         /* restore registers from stack */
-         for (i = 0; i < numUsed; i++) {
-            uint reg = usedRegs[i];
-            if (reg != d_reg) {
+            /* save registers to stack */
+            for (i = 0; i < numUsed; i++) {
+               uint reg = usedRegs[i];
                int offset = 2 + i;
-               spe_lqd(gen->f, reg, SPE_REG_SP, 16 * offset);
+               spe_stqd(gen->f, reg, SPE_REG_SP, 16 * offset);
             }
+
+            /* setup function arguments */
+            for (a = 0; a < num_args; a++) {
+               spe_move(gen->f, 3 + a, s_regs[a]);
+            }
+
+            /* branch to function, save return addr */
+            spe_brasl(gen->f, SPE_REG_RA, addr);
+
+            /* save function's return value */
+            if (scalar)
+               spe_move(gen->f, retval_reg, 3);
+            else
+               spe_move(gen->f, d_reg, 3);
+
+            /* restore registers from stack */
+            for (i = 0; i < numUsed; i++) {
+               uint reg = usedRegs[i];
+               if (reg != d_reg && reg != retval_reg) {
+                  int offset = 2 + i;
+                  spe_lqd(gen->f, reg, SPE_REG_SP, 16 * offset);
+               }
+            }
+
+            func_called = TRUE;
+         }
+
+         if (scalar) {
+            spe_move(gen->f, d_reg, retval_reg);
          }
 
          store_dest_reg(gen, d_reg, ch, &inst->FullDstRegisters[0]);
          free_itemps(gen);
       }
+   }
+
+   if (scalar) {
+      spe_release_register(gen->f, retval_reg);
    }
 
    return true;
@@ -1770,15 +1805,15 @@ emit_instruction(struct codegen *gen,
       return emit_END(gen);
 
    case TGSI_OPCODE_COS:
-      return emit_function_call(gen, inst, "spu_cos", 1);
+      return emit_function_call(gen, inst, "spu_cos", 1, TRUE);
    case TGSI_OPCODE_SIN:
-      return emit_function_call(gen, inst, "spu_sin", 1);
+      return emit_function_call(gen, inst, "spu_sin", 1, TRUE);
    case TGSI_OPCODE_POW:
-      return emit_function_call(gen, inst, "spu_pow", 2);
+      return emit_function_call(gen, inst, "spu_pow", 2, TRUE);
    case TGSI_OPCODE_EXPBASE2:
-      return emit_function_call(gen, inst, "spu_exp2", 1);
+      return emit_function_call(gen, inst, "spu_exp2", 1, TRUE);
    case TGSI_OPCODE_LOGBASE2:
-      return emit_function_call(gen, inst, "spu_log2", 1);
+      return emit_function_call(gen, inst, "spu_log2", 1, TRUE);
    case TGSI_OPCODE_TEX:
       /* fall-through for now */
    case TGSI_OPCODE_TXD:

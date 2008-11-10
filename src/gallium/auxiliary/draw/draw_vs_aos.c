@@ -1632,6 +1632,17 @@ static boolean emit_SUB( struct aos_compilation *cp, const struct tgsi_full_inst
    return TRUE;
 }
 
+static boolean emit_TRUNC( struct aos_compilation *cp, const struct tgsi_full_instruction *op )
+{
+   struct x86_reg arg0 = fetch_src(cp, &op->FullSrcRegisters[0]);
+   struct x86_reg tmp0 = aos_get_xmm_reg(cp);
+
+   sse2_cvttps2dq(cp->func, tmp0, arg0);
+   sse2_cvtdq2ps(cp->func, tmp0, tmp0);
+
+   store_dest(cp, &op->FullDstRegisters[0], tmp0);
+   return TRUE;
+}
 
 static boolean emit_XPD( struct aos_compilation *cp, const struct tgsi_full_instruction *op ) 
 {
@@ -1769,6 +1780,9 @@ emit_instruction( struct aos_compilation *cp,
 
    case TGSI_OPCODE_SIN:
       return emit_SIN(cp, inst);
+
+   case TGSI_OPCODE_TRUNC:
+      return emit_TRUNC(cp, inst);
 
    case TGSI_OPCODE_END:
       return TRUE;
@@ -2176,7 +2190,8 @@ static struct draw_vs_varient *varient_aos_sse( struct draw_vertex_shader *vs,
    if (!vaos->buffer)
       goto fail;
 
-   debug_printf("nr_vb: %d const: %x\n", vaos->nr_vb, vaos->base.key.const_vbuffers);
+   if (0)
+      debug_printf("nr_vb: %d const: %x\n", vaos->nr_vb, vaos->base.key.const_vbuffers);
 
 #if 0
    tgsi_dump(vs->state.tokens, 0);

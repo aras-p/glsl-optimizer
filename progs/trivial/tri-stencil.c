@@ -49,7 +49,15 @@ static void Key(unsigned char key, int x, int y)
 
     switch (key) {
       case 27:
+        printf("Exiting...\n");
 	exit(1);
+      case 'r':
+        printf("Redisplaying...\n");
+        glutPostRedisplay();
+        break;
+      default:
+        printf("No such key '%c'...\n", key);
+        break;
     }
 }
 
@@ -89,7 +97,7 @@ static void Draw(void)
    glEnd();
 #endif
 
-#if 0
+#if 1
    glStencilFunc(GL_EQUAL, 1, 1);
    glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
 
@@ -130,7 +138,8 @@ int main(int argc, char **argv)
 	exit(1);
     }
 
-    glutInitWindowPosition(0, 0); glutInitWindowSize( 300, 300);
+    glutInitWindowPosition(0, 0); 
+    glutInitWindowSize( 300, 300);
 
     type = GLUT_RGB | GLUT_SINGLE | GLUT_DEPTH | GLUT_STENCIL;
     glutInitDisplayMode(type);

@@ -38,12 +38,13 @@
 #include "rtasm_execmem.h"
 
 
-#if defined(__linux__)
+#if defined(PIPE_OS_LINUX)
+
 
 /*
  * Allocate a large block of memory which can hold code then dole it out
  * in pieces by means of the generic memory manager code.
-*/
+ */
 
 #include <unistd.h>
 #include <sys/mman.h>
@@ -62,7 +63,7 @@ static void
 init_heap(void)
 {
    if (!exec_heap)
-      exec_heap = mmInit( 0, EXEC_HEAP_SIZE );
+      exec_heap = u_mmInit( 0, EXEC_HEAP_SIZE );
    
    if (!exec_mem)
       exec_mem = (unsigned char *) mmap(0, EXEC_HEAP_SIZE, 
@@ -82,8 +83,8 @@ rtasm_exec_malloc(size_t size)
    init_heap();
 
    if (exec_heap) {
-      size = (size + 31) & ~31;
-      block = mmAllocMem( exec_heap, size, 32, 0 );
+      size = (size + 31) & ~31;  /* next multiple of 32 bytes */
+      block = u_mmAllocMem( exec_heap, size, 5, 0 ); /* 5 -> 32-byte alignment */
    }
 
    if (block)
@@ -103,17 +104,17 @@ rtasm_exec_free(void *addr)
    pipe_mutex_lock(exec_mutex);
 
    if (exec_heap) {
-      struct mem_block *block = mmFindBlock(exec_heap, (unsigned char *)addr - exec_mem);
+      struct mem_block *block = u_mmFindBlock(exec_heap, (unsigned char *)addr - exec_mem);
    
       if (block)
-	 mmFreeMem(block);
+	 u_mmFreeMem(block);
    }
 
    pipe_mutex_unlock(exec_mutex);
 }
 
 
-#else
+#else /* PIPE_OS_LINUX */
 
 /*
  * Just use regular memory.
@@ -133,4 +134,4 @@ rtasm_exec_free(void *addr)
 }
 
 
-#endif
+#endif /* PIPE_OS_LINUX */

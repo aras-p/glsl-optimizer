@@ -27,6 +27,7 @@
 #include "main/context.h"
 #include "slang_ir.h"
 #include "slang_mem.h"
+#include "shader/prog_instruction.h"
 #include "shader/prog_print.h"
 
 
@@ -36,8 +37,11 @@ static const slang_ir_info IrInfo[] = {
    { IR_SUB, "IR_SUB", OPCODE_SUB, 4, 2 },
    { IR_MUL, "IR_MUL", OPCODE_MUL, 4, 2 },
    { IR_DIV, "IR_DIV", OPCODE_NOP, 0, 2 }, /* XXX broke */
-   { IR_DOT4, "IR_DOT_4", OPCODE_DP4, 1, 2 },
-   { IR_DOT3, "IR_DOT_3", OPCODE_DP3, 1, 2 },
+   { IR_DOT4, "IR_DOT4", OPCODE_DP4, 1, 2 },
+   { IR_DOT3, "IR_DOT3", OPCODE_DP3, 1, 2 },
+   { IR_DOT2, "IR_DOT2", OPCODE_DP2, 1, 2 },
+   { IR_NRM4, "IR_NRM4", OPCODE_NRM4, 1, 1 },
+   { IR_NRM3, "IR_NRM3", OPCODE_NRM3, 1, 1 },
    { IR_CROSS, "IR_CROSS", OPCODE_XPD, 3, 2 },
    { IR_LRP, "IR_LRP", OPCODE_LRP, 4, 3 },
    { IR_MIN, "IR_MIN", OPCODE_MIN, 4, 2 },
@@ -56,7 +60,7 @@ static const slang_ir_info IrInfo[] = {
    /* unary ops */
    { IR_MOVE, "IR_MOVE", OPCODE_MOV, 4, 1 },
    { IR_I_TO_F, "IR_I_TO_F", OPCODE_MOV, 4, 1 },  /* int[4] to float[4] */
-   { IR_F_TO_I, "IR_F_TO_I", OPCODE_INT, 4, 1 }, /* 4 floats to 4 ints */
+   { IR_F_TO_I, "IR_F_TO_I", OPCODE_TRUNC, 4, 1 },
    { IR_EXP, "IR_EXP", OPCODE_EXP, 1, 1 },
    { IR_EXP2, "IR_EXP2", OPCODE_EX2, 1, 1 },
    { IR_LOG2, "IR_LOG2", OPCODE_LG2, 1, 1 },

@@ -122,7 +122,7 @@
 #define CELL_DEBUG_CACHE                (1 << 6)
 
 /** Max instructions for doing per-fragment operations */
-#define SPU_MAX_FRAGMENT_OPS_INSTS 64
+#define SPU_MAX_FRAGMENT_OPS_INSTS 128
 
 
 

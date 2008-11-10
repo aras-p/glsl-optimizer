@@ -54,31 +54,16 @@
 typedef void (PIPE_CDECL *codegen_function) (float (*inputs)[4][4],
                                              float (*outputs)[4][4],
                                              float (*temps)[4][4],
-                                             float (*immeds)[4][4],
+                                             float (*immeds)[4],
                                              float (*consts)[4],
                                              const float *builtins);
 
-#if 0
-   const struct tgsi_exec_vector *input,
-   struct tgsi_exec_vector *output,
-   float (*constant)[4],        /* 3 */
-   struct tgsi_exec_vector *temporary, /* 4 */
-   float (*immediates)[4],      /* 5 */
-   const float (*aos_input)[4], /* 6 */
-   uint num_inputs,             /* 7 */
-   uint input_stride,           /* 8 */
-   float (*aos_output)[4],      /* 9 */
-   uint num_outputs,            /* 10 */
-   uint output_stride );        /* 11 */
-#endif
 
 struct draw_ppc_vertex_shader {
    struct draw_vertex_shader base;
    struct ppc_function ppc_program;
 
    codegen_function func;
-   
-   struct tgsi_exec_machine *machine;
 };
 
 
@@ -86,11 +71,12 @@ static void
 vs_ppc_prepare( struct draw_vertex_shader *base,
 		struct draw_context *draw )
 {
+   /* nothing */
 }
 
 
-
-/* Simplified vertex shader interface for the pt paths.  Given the
+/**
+ * Simplified vertex shader interface for the pt paths.  Given the
  * complexity of code-generating all the above operations together,
  * it's time to try doing all the other stuff separately.
  */
@@ -104,7 +90,6 @@ vs_ppc_run_linear( struct draw_vertex_shader *base,
 		   unsigned output_stride )
 {
    struct draw_ppc_vertex_shader *shader = (struct draw_ppc_vertex_shader *)base;
-   struct tgsi_exec_machine *machine = shader->machine;
    unsigned int i;
 
 #define MAX_VERTICES 4
@@ -137,26 +122,10 @@ vs_ppc_run_linear( struct draw_vertex_shader *base,
 
       /* run compiled shader
        */
-#if 0
-      shader->func(machine->Inputs,
-		   machine->Outputs,
-		   (float (*)[4])constants,
-		   machine->Temps,
-		   (float (*)[4])shader->base.immediates,
-                   input,
-                   base->info.num_inputs,
-                   input_stride,
-                   output,
-                   base->info.num_outputs,
-                   output_stride );
-#else
       shader->func(inputs_soa, outputs_soa, temps_soa,
-		   (float (*)[4][4]) shader->base.immediates,
+		   (float (*)[4]) shader->base.immediates,
 		   (float (*)[4]) constants,
                    ppc_builtin_constants);
-
-      /*output[0][0] = input[0][0] * 0.5;*/
-#endif
 
       /* convert (up to) four output verts from SoA back to AoS format */
       for (attr = 0; attr < base->info.num_outputs; attr++) {
@@ -183,8 +152,6 @@ vs_ppc_run_linear( struct draw_vertex_shader *base,
 }
 
 
-
-
 static void
 vs_ppc_delete( struct draw_vertex_shader *base )
 {
@@ -201,7 +168,7 @@ vs_ppc_delete( struct draw_vertex_shader *base )
 
 struct draw_vertex_shader *
 draw_create_vs_ppc(struct draw_context *draw,
-                          const struct pipe_shader_state *templ)
+                   const struct pipe_shader_state *templ)
 {
    struct draw_ppc_vertex_shader *vs;
 
@@ -227,16 +194,14 @@ draw_create_vs_ppc(struct draw_context *draw,
    vs->base.run_linear = vs_ppc_run_linear;
    vs->base.delete = vs_ppc_delete;
    
-   vs->base.immediates = align_malloc(TGSI_EXEC_NUM_IMMEDIATES * 4 * 4 *
+   vs->base.immediates = align_malloc(TGSI_EXEC_NUM_IMMEDIATES * 4 *
                                       sizeof(float), 16);
 
-   vs->machine = &draw->vs.machine;
-   
-   ppc_init_func( &vs->ppc_program, 2000 ); /* XXX fix limit */
+   ppc_init_func( &vs->ppc_program );
 
    if (!tgsi_emit_ppc( (struct tgsi_token *) vs->base.state.tokens,
 			&vs->ppc_program, 
-                        (float (*)[4])vs->base.immediates, 
+                       (float (*)[4]) vs->base.immediates, 
                         TRUE )) 
       goto fail;
       

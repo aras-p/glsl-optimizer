@@ -177,12 +177,16 @@ pb_get_base_buffer( struct pb_buffer *buf,
 }
 
 
+/**
+ * Don't call this directly. Use pb_reference instead.
+ */
 static INLINE void 
 pb_destroy(struct pb_buffer *buf)
 {
    assert(buf);
    if(!buf)
       return;
+   assert(buf->base.refcount == 0);
    buf->vtbl->destroy(buf);
 }
 
@@ -193,11 +197,16 @@ static INLINE void
 pb_reference(struct pb_buffer **dst,
              struct pb_buffer *src)
 {
-   if (src) 
+   if (src) {
+      assert(src->base.refcount);
       src->base.refcount++;
+   }
 
-   if (*dst && --(*dst)->base.refcount == 0)
-      pb_destroy( *dst );
+   if (*dst) {
+      assert((*dst)->base.refcount);
+      if(--(*dst)->base.refcount == 0)
+         pb_destroy( *dst );
+   }
 
    *dst = src;
 }

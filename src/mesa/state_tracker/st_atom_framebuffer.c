@@ -116,10 +116,11 @@ update_framebuffer_state( struct st_context *st )
          /* rendering to a GL texture, may have to update surface */
          update_renderbuffer_surface(st, strb);
       }
-      
-      assert(strb->surface);
-      framebuffer->cbufs[framebuffer->num_cbufs] = strb->surface;
-      framebuffer->num_cbufs++;
+
+      if (strb->surface) {
+         framebuffer->cbufs[framebuffer->num_cbufs] = strb->surface;
+         framebuffer->num_cbufs++;
+      }
    }
 
    strb = st_renderbuffer(fb->Attachment[BUFFER_DEPTH].Renderbuffer);
@@ -130,7 +131,6 @@ update_framebuffer_state( struct st_context *st )
          update_renderbuffer_surface(st, strb);
       }
 
-      assert(strb->surface);
       framebuffer->zsbuf = strb->surface;
    }
    else {

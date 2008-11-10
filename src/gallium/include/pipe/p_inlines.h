@@ -82,11 +82,14 @@ static INLINE void
 pipe_surface_reference(struct pipe_surface **ptr, struct pipe_surface *surf)
 {
    /* bump the refcount first */
-   if (surf) 
+   if (surf) {
+      assert(surf->refcount);
       surf->refcount++;
+   }
 
    if (*ptr) {
-
+      assert((*ptr)->refcount);
+      
       /* There are currently two sorts of surfaces... This needs to be
        * fixed so that all surfaces are views into a texture.
        */
@@ -113,11 +116,16 @@ winsys_buffer_reference(struct pipe_winsys *winsys,
 		      struct pipe_buffer **ptr,
 		      struct pipe_buffer *buf)
 {
-   if (buf) 
+   if (buf) {
+      assert(buf->refcount);
       buf->refcount++;
+   }
 
-   if (*ptr && --(*ptr)->refcount == 0)
-      winsys->buffer_destroy( winsys, *ptr );
+   if (*ptr) {
+      assert((*ptr)->refcount);
+      if(--(*ptr)->refcount == 0)
+         winsys->buffer_destroy( winsys, *ptr );
+   }
 
    *ptr = buf;
 }
@@ -133,12 +141,15 @@ pipe_texture_reference(struct pipe_texture **ptr,
 {
    assert(ptr);
 
-   if (pt) 
+   if (pt) { 
+      assert(pt->refcount);
       pt->refcount++;
+   }
 
    if (*ptr) {
       struct pipe_screen *screen = (*ptr)->screen;
       assert(screen);
+      assert((*ptr)->refcount);
       screen->texture_release(screen, ptr);
 
       assert(!*ptr);
@@ -154,6 +165,7 @@ pipe_texture_release(struct pipe_texture **ptr)
    struct pipe_screen *screen;
    assert(ptr);
    screen = (*ptr)->screen;
+   assert((*ptr)->refcount);
    screen->texture_release(screen, ptr);
    *ptr = NULL;
 }
@@ -174,12 +186,6 @@ static INLINE struct pipe_buffer *
 pipe_user_buffer_create( struct pipe_screen *screen, void *ptr, unsigned size )
 {
    return screen->winsys->user_buffer_create(screen->winsys, ptr, size);
-}
-
-static INLINE void
-pipe_buffer_destroy( struct pipe_screen *screen, struct pipe_buffer *buf )
-{
-   screen->winsys->buffer_destroy(screen->winsys, buf);
 }
 
 static INLINE void *

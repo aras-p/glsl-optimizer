@@ -179,8 +179,7 @@ struct gallivm_cpu_engine * gallivm_global_cpu_engine()
 
 typedef void (*vertex_shader_runner)(void *ainputs,
                                      void *dests,
-                                     float (*aconsts)[4],
-                                     void *temps);
+                                     float (*aconsts)[4]);
 
 #define MAX_TGSI_VERTICES 4
 /*!
@@ -223,8 +222,7 @@ int gallivm_cpu_vs_exec(struct gallivm_prog *prog,
       /* run shader */
       runner(machine->Inputs,
              machine->Outputs,
-             (float (*)[4]) constants,
-             machine->Temps);
+             (float (*)[4]) constants);
 
       /* Unswizzle all output results
        */

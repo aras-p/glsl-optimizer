@@ -1,7 +1,10 @@
 /**
- * "Toy Ball" shader demo.  Uses the example shaders from
- * chapter 11 of the OpenGL Shading Language "orange" book.
- * 16 Jan 2007
+ * Vertex "skinning" example.
+ * The idea is there are multiple modeling matrices applied to every
+ * vertex.  Weighting values in [0,1] control the influence of each
+ * matrix on each vertex.
+ *
+ * 4 Nov 2008
  */
 
 #include <assert.h>
@@ -16,8 +19,8 @@
 #include "shaderutil.h"
 
 
-static char *FragProgFile = "CH11-toyball.frag";
-static char *VertProgFile = "CH11-toyball.vert";
+static char *FragProgFile = "skinning.frag";
+static char *VertProgFile = "skinning.vert";
 
 /* program/shader objects */
 static GLuint fragShader;
@@ -25,44 +28,92 @@ static GLuint vertShader;
 static GLuint program;
 
 
-static struct uniform_info Uniforms[] = {
-   { "LightDir",       4, GL_FLOAT, { 0.57737, 0.57735, 0.57735, 0.0 }, -1 },
-   { "HVector",        4, GL_FLOAT, { 0.32506, 0.32506, 0.88808, 0.0 }, -1 },
-   { "BallCenter",     4, GL_FLOAT, { 0.0, 0.0, 0.0, 1.0 }, -1 },
-   { "SpecularColor",  4, GL_FLOAT, { 0.4, 0.4, 0.4, 60.0 }, -1 },
-   { "Red",         4, GL_FLOAT, { 0.6, 0.0, 0.0, 1.0 }, -1 },
-   { "Blue",        4, GL_FLOAT, { 0.0, 0.3, 0.6, 1.0 }, -1 },
-   { "Yellow",      4, GL_FLOAT, { 0.6, 0.5, 0.0, 1.0 }, -1 },
-   { "HalfSpace0",  4, GL_FLOAT, { 1.0, 0.0, 0.0, 0.2 }, -1 },
-   { "HalfSpace1",  4, GL_FLOAT, { 0.309016994, 0.951056516, 0.0, 0.2 }, -1 },
-   { "HalfSpace2",  4, GL_FLOAT, { -0.809016994, 0.587785252, 0.0, 0.2 }, -1 },
-   { "HalfSpace3",  4, GL_FLOAT, { -0.809016994, -0.587785252, 0.0, 0.2 }, -1 },
-   { "HalfSpace4",  4, GL_FLOAT, { 0.309116994, -0.951056516, 0.0, 0.2 }, -1 },
-   { "InOrOutInit", 1, GL_FLOAT, { -3.0, 0, 0, 0 }, -1 },
-   { "StripeWidth", 1, GL_FLOAT, {  0.3, 0, 0, 0 }, -1 },
-   { "FWidth",      1, GL_FLOAT, { 0.005, 0, 0, 0 }, -1 },
-   END_OF_UNIFORMS
-};
-
 static GLint win = 0;
-static GLboolean Anim = GL_FALSE;
-static GLfloat TexRot = 0.0;
-static GLfloat xRot = 0.0f, yRot = 0.0f, zRot = 0.0f;
+static GLboolean Anim = GL_TRUE;
+static GLboolean WireFrame = GL_TRUE;
+static GLfloat xRot = 0.0f, yRot = 90.0f, zRot = 0.0f;
+
+#define NUM_MATS 2
+
+static GLfloat Matrices[NUM_MATS][16];
+static GLint uMat0, uMat1;
+static GLint WeightAttr;
 
 
 static void
 Idle(void)
 {
-   TexRot += 2.0;
-   if (TexRot > 360.0)
-      TexRot -= 360.0;
+   yRot = 90 + glutGet(GLUT_ELAPSED_TIME) * 0.005;
    glutPostRedisplay();
+}
+
+
+static void
+Cylinder(GLfloat length, GLfloat radius, GLint slices, GLint stacks)
+{
+   float dw = 1.0 / (stacks - 1);
+   float dz = length / stacks;
+   int i, j;
+
+   for (j = 0; j < stacks; j++) {
+      float w0 = j * dw;
+      float z0 = j * dz;
+
+      glBegin(GL_TRIANGLE_STRIP);
+      for (i = 0; i < slices; i++) {
+         float a = (float) i / (slices - 1) * M_PI * 2.0;
+         float x = radius * cos(a);
+         float y = radius * sin(a);
+         glVertexAttrib1f_func(WeightAttr, w0);
+         glNormal3f(x, y, 0.0);
+         glVertex3f(x, y, z0);
+
+         glVertexAttrib1f_func(WeightAttr, w0 + dw);
+         glNormal3f(x, y, 0.0);
+         glVertex3f(x, y, z0 + dz);
+      }
+      glEnd();
+   }
+}
+
+
+/**
+ * Update/animate the two matrices.  One rotates, the other scales.
+ */
+static void
+UpdateMatrices(void)
+{
+   GLfloat t = glutGet(GLUT_ELAPSED_TIME) * 0.0025;
+   GLfloat scale = 0.5 * (1.1 + sin(0.5 * t));
+   GLfloat rot = cos(t) * 90.0;
+
+   glPushMatrix();
+   glLoadIdentity();
+   glScalef(1.0, scale, 1.0);
+   glGetFloatv(GL_MODELVIEW_MATRIX, Matrices[0]);
+   glPopMatrix();
+
+   glPushMatrix();
+   glLoadIdentity();
+   glRotatef(rot, 0, 0, 1);
+   glGetFloatv(GL_MODELVIEW_MATRIX, Matrices[1]);
+   glPopMatrix();
 }
 
 
 static void
 Redisplay(void)
 {
+   UpdateMatrices();
+
+   glUniformMatrix4fv_func(uMat0, 1, GL_FALSE, Matrices[0]);
+   glUniformMatrix4fv_func(uMat1, 1, GL_FALSE, Matrices[1]);
+
+   if (WireFrame)
+      glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+   else
+      glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
    
    glPushMatrix();
@@ -70,12 +121,10 @@ Redisplay(void)
    glRotatef(yRot, 0.0f, 1.0f, 0.0f);
    glRotatef(zRot, 0.0f, 0.0f, 1.0f);
 
-   glMatrixMode(GL_TEXTURE);
-   glLoadIdentity();
-   glRotatef(TexRot, 0.0f, 1.0f, 0.0f);
-   glMatrixMode(GL_MODELVIEW);
-
-   glutSolidSphere(2.0, 20, 10);
+   glPushMatrix();
+   glTranslatef(0, 0, -2.5);
+   Cylinder(5.0, 1.0, 10, 20);
+   glPopMatrix();
 
    glPopMatrix();
 
@@ -120,6 +169,9 @@ Key(unsigned char key, int x, int y)
          glutIdleFunc(Idle);
       else
          glutIdleFunc(NULL);
+      break;
+   case 'w':
+      WireFrame = !WireFrame;
       break;
    case 'z':
       zRot += step;
@@ -177,7 +229,10 @@ Init(void)
 
    glUseProgram_func(program);
 
-   InitUniforms(program, Uniforms);
+   uMat0 = glGetUniformLocation_func(program, "mat0");
+   uMat1 = glGetUniformLocation_func(program, "mat1");
+
+   WeightAttr = glGetAttribLocation_func(program, "weight");
 
    assert(glGetError() == 0);
 
@@ -208,8 +263,7 @@ int
 main(int argc, char *argv[])
 {
    glutInit(&argc, argv);
-   glutInitWindowPosition( 0, 0);
-   glutInitWindowSize(400, 400);
+   glutInitWindowSize(500, 500);
    glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
    win = glutCreateWindow(argv[0]);
    glutReshapeFunc(Reshape);
@@ -218,6 +272,8 @@ main(int argc, char *argv[])
    glutDisplayFunc(Redisplay);
    ParseOptions(argc, argv);
    Init();
+   if (Anim)
+      glutIdleFunc(Idle);
    glutMainLoop();
    return 0;
 }

@@ -151,4 +151,8 @@ st_translate_vertex_program(struct st_context *st,
                             const ubyte *fs_input_semantic_index);
 
 
+extern void
+st_print_shaders(GLcontext *ctx);
+
+
 #endif

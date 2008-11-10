@@ -460,7 +460,7 @@ l8_put_tile_rgba(ubyte *dst,
       for (j = 0; j < w; j++, pRow += 4) {
          unsigned r;
          r = float_to_ubyte(pRow[0]);
-         *dst++ = r;
+         *dst++ = (ubyte) r;
       }
       p += src_stride;
    }
@@ -504,7 +504,7 @@ a8_put_tile_rgba(ubyte *dst,
       for (j = 0; j < w; j++, pRow += 4) {
          unsigned a;
          a = float_to_ubyte(pRow[3]);
-         *dst++ = a;
+         *dst++ = (ubyte) a;
       }
       p += src_stride;
    }
@@ -634,7 +634,7 @@ i8_put_tile_rgba(ubyte *dst,
       for (j = 0; j < w; j++, pRow += 4) {
          unsigned r;
          r = float_to_ubyte(pRow[0]);
-         *dst++ = r;
+         *dst++ = (ubyte) r;
       }
       p += src_stride;
    }
@@ -763,6 +763,32 @@ z24s8_get_tile_rgba(const unsigned *src,
          pRow[1] =
          pRow[2] =
          pRow[3] = (float) (scale * (*src++ >> 8));
+      }
+      p += dst_stride;
+   }
+}
+
+
+/*** PIPE_FORMAT_Z32_FLOAT ***/
+
+/**
+ * Return each Z value as four floats in [0,1].
+ */
+static void
+z32f_get_tile_rgba(const float *src,
+                   unsigned w, unsigned h,
+                   float *p,
+                   unsigned dst_stride)
+{
+   unsigned i, j;
+
+   for (i = 0; i < h; i++) {
+      float *pRow = p;
+      for (j = 0; j < w; j++, pRow += 4) {
+         pRow[0] =
+         pRow[1] =
+         pRow[2] =
+         pRow[3] = *src++;
       }
       p += dst_stride;
    }
@@ -912,6 +938,9 @@ pipe_tile_raw_to_rgba(enum pipe_format format,
       break;
    case PIPE_FORMAT_Z24S8_UNORM:
       z24s8_get_tile_rgba((unsigned *) src, w, h, dst, dst_stride);
+      break;
+   case PIPE_FORMAT_Z32_FLOAT:
+      z32f_get_tile_rgba((float *) src, w, h, dst, dst_stride);
       break;
    case PIPE_FORMAT_YCBCR:
       ycbcr_get_tile_rgba((ushort *) src, w, h, dst, dst_stride, FALSE);

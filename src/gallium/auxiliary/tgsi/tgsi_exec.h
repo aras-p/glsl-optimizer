@@ -165,6 +165,10 @@ struct tgsi_exec_labels
 #define TGSI_EXEC_TEMP_HALF_I       (TGSI_EXEC_NUM_TEMPS + 3)
 #define TGSI_EXEC_TEMP_HALF_C       1
 
+/* execution mask, each value is either 0 or ~0 */
+#define TGSI_EXEC_MASK_I            (TGSI_EXEC_NUM_TEMPS + 3)
+#define TGSI_EXEC_MASK_C            2
+
 #define TGSI_EXEC_TEMP_R0           (TGSI_EXEC_NUM_TEMPS + 4)
 
 #define TGSI_EXEC_TEMP_ADDR         (TGSI_EXEC_NUM_TEMPS + 5)
@@ -263,6 +267,27 @@ tgsi_exec_machine_run(
 
 void
 tgsi_exec_machine_free_data(struct tgsi_exec_machine *mach);
+
+
+static INLINE void
+tgsi_set_kill_mask(struct tgsi_exec_machine *mach, unsigned mask)
+{
+   mach->Temps[TGSI_EXEC_TEMP_KILMASK_I].xyzw[TGSI_EXEC_TEMP_KILMASK_C].u[0] =
+      mask;
+}
+
+
+/** Set execution mask values prior to executing the shader */
+static INLINE void
+tgsi_set_exec_mask(struct tgsi_exec_machine *mach,
+                   boolean ch0, boolean ch1, boolean ch2, boolean ch3)
+{
+   int *mask = mach->Temps[TGSI_EXEC_MASK_I].xyzw[TGSI_EXEC_MASK_C].i;
+   mask[0] = ch0 ? ~0 : 0;
+   mask[1] = ch1 ? ~0 : 0;
+   mask[2] = ch2 ? ~0 : 0;
+   mask[3] = ch3 ? ~0 : 0;
+}
 
 
 #if defined __cplusplus

@@ -49,7 +49,7 @@ extern "C" {
 #endif
 
 
-#ifdef DBG
+#if defined(DBG) || defined(DEBUG)
 #ifndef DEBUG
 #define DEBUG 1
 #endif

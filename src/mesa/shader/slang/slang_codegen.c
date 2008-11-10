@@ -413,6 +413,9 @@ static slang_asm_info AsmInfo[] = {
    { "vec4_multiply", IR_MUL, 1, 2 },
    { "vec4_dot", IR_DOT4, 1, 2 },
    { "vec3_dot", IR_DOT3, 1, 2 },
+   { "vec2_dot", IR_DOT2, 1, 2 },
+   { "vec3_nrm", IR_NRM3, 1, 1 },
+   { "vec4_nrm", IR_NRM4, 1, 1 },
    { "vec3_cross", IR_CROSS, 1, 2 },
    { "vec4_lrp", IR_LRP, 1, 3 },
    { "vec4_min", IR_MIN, 1, 2 },
@@ -2309,7 +2312,7 @@ _slang_gen_if(slang_assemble_ctx * A, const slang_operation *oper)
 
    /* type-check expression */
    if (!_slang_is_boolean(A, &oper->children[0])) {
-      slang_info_log_error(A->log, "boolean expression expected for 'while'");
+      slang_info_log_error(A->log, "boolean expression expected for 'if'");
       return NULL;
    }
 
@@ -2439,12 +2442,6 @@ _slang_gen_var_decl(slang_assemble_ctx *A, slang_variable *var)
    /*assert(!var->declared);*/
    var->declared = GL_TRUE;
 
-   if(is_sampler_type(&var->type)) {
-      slang_info_log_error(A->log, "redeclaration of sampler '%s'",
-			   (char*) var->a_name);
-      return NULL;
-   }
-
    n = new_node0(IR_VAR_DECL);
    if (n) {
       _slang_attach_storage(n, var);
@@ -2453,7 +2450,13 @@ _slang_gen_var_decl(slang_assemble_ctx *A, slang_variable *var)
       assert(n->Store);
       assert(n->Store->Index < 0);
 
-      n->Store->File = PROGRAM_TEMPORARY;
+      if (is_sampler_type(&var->type)) {
+         n->Store->File = PROGRAM_SAMPLER;
+      }
+      else {
+         n->Store->File = PROGRAM_TEMPORARY;
+      }
+
       n->Store->Size = _slang_sizeof_type_specifier(&n->Var->type.specifier);
 
       if (n->Store->Size <= 0) {
@@ -3253,7 +3256,7 @@ _slang_gen_array_element(slang_assemble_ctx * A, slang_operation *oper)
       index = _slang_gen_operation(A, &oper->children[1]);
       if (array && index) {
          /* bounds check */
-         GLint constIndex = 0;
+         GLint constIndex = -1;
          if (index->Opcode == IR_FLOAT) {
             constIndex = (int) index->Value[0];
             if (constIndex < 0 || constIndex >= arrayLen) {
@@ -3811,6 +3814,8 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
       if (dbg) printf("VARYING ");
    }
    else if (var->type.qualifier == SLANG_QUAL_ATTRIBUTE) {
+      GLuint swizzle;
+      GLint index;
       /* attributes must be float, vec or mat */
       if (!_slang_type_is_float_vec_mat(var->type.specifier.type)) {
          slang_info_log_error(A->log,
@@ -3822,20 +3827,18 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
       if (prog) {
          /* user-defined vertex attribute */
          const GLint attr = -1; /* unknown */
-         GLint index = _mesa_add_attribute(prog->Attributes, varName,
-                                           size, datatype, attr);
+         swizzle = _slang_var_swizzle(size, 0);
+         index = _mesa_add_attribute(prog->Attributes, varName,
+                                     size, datatype, attr);
          assert(index >= 0);
-         store = _slang_new_ir_storage(PROGRAM_INPUT,
-                                       VERT_ATTRIB_GENERIC0 + index, size);
+         index = VERT_ATTRIB_GENERIC0 + index;
       }
       else {
          /* pre-defined vertex attrib */
-         GLuint swizzle;
-         GLint index = _slang_input_index(varName, GL_VERTEX_PROGRAM_ARB,
-                                          &swizzle);
+         index = _slang_input_index(varName, GL_VERTEX_PROGRAM_ARB, &swizzle);
          assert(index >= 0);
-         store = _slang_new_ir_storage_swz(PROGRAM_INPUT, index, size, swizzle);
       }
+      store = _slang_new_ir_storage_swz(PROGRAM_INPUT, index, size, swizzle);
       if (dbg) printf("ATTRIB ");
    }
    else if (var->type.qualifier == SLANG_QUAL_FIXEDINPUT) {

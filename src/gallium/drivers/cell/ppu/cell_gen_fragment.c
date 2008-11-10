@@ -1141,13 +1141,17 @@ gen_colormask(struct spe_function *f,
  * access to the Compare Immediate instructions where we don't in 
  * gen_depth_test(), which is what makes us very different.
  *
+ * There's some added complexity if there's a non-trivial state->mask
+ * value; then stencil and reference both must be masked
+ *
  * The return value in the stencil_pass_reg is a bitmask of valid
  * fragments that also passed the stencil test.  The bitmask of valid
- * fragments that failed would be found in (mask_reg & ~stencil_pass_reg).
+ * fragments that failed would be found in (fragment_mask_reg & ~stencil_pass_reg).
  */
 static void
 gen_stencil_test(struct spe_function *f, const struct pipe_stencil_state *state, 
-                 unsigned int mask_reg, unsigned int fbS_reg, 
+                 unsigned int stencil_max_value,
+                 unsigned int fragment_mask_reg, unsigned int fbS_reg, 
                  unsigned int stencil_pass_reg)
 {
    /* Generate code that puts the set of passing fragments into the stencil_pass_reg
@@ -1155,68 +1159,134 @@ gen_stencil_test(struct spe_function *f, const struct pipe_stencil_state *state,
     */
    switch (state->func) {
    case PIPE_FUNC_EQUAL:
-      /* stencil_pass = mask & (s == reference) */
-      spe_compare_equal_uint(f, stencil_pass_reg, fbS_reg, state->ref_value);
-      spe_and(f, stencil_pass_reg, mask_reg, stencil_pass_reg);
+      if (state->value_mask == stencil_max_value) {
+         /* stencil_pass = fragment_mask & (s == reference) */
+         spe_compare_equal_uint(f, stencil_pass_reg, fbS_reg, state->ref_value);
+         spe_and(f, stencil_pass_reg, fragment_mask_reg, stencil_pass_reg);
+      }
+      else {
+         /* stencil_pass = fragment_mask & ((s&mask) == (reference&mask)) */
+         unsigned int tmp_masked_stencil = spe_allocate_available_register(f);
+         spe_and_uint(f, tmp_masked_stencil, fbS_reg, state->value_mask);
+         spe_compare_equal_uint(f, stencil_pass_reg, tmp_masked_stencil, state->value_mask & state->ref_value);
+         spe_and(f, stencil_pass_reg, fragment_mask_reg, stencil_pass_reg);
+         spe_release_register(f, tmp_masked_stencil);
+      }
       break;
 
    case PIPE_FUNC_NOTEQUAL:
-      /* stencil_pass = mask & ~(s == reference) */
-      spe_compare_equal_uint(f, stencil_pass_reg, fbS_reg, state->ref_value);
-      spe_andc(f, stencil_pass_reg, mask_reg, stencil_pass_reg);
+      if (state->value_mask == stencil_max_value) {
+         /* stencil_pass = fragment_mask & ~(s == reference) */
+         spe_compare_equal_uint(f, stencil_pass_reg, fbS_reg, state->ref_value);
+         spe_andc(f, stencil_pass_reg, fragment_mask_reg, stencil_pass_reg);
+      }
+      else {
+         /* stencil_pass = fragment_mask & ~((s&mask) == (reference&mask)) */
+         unsigned int tmp_masked_stencil = spe_allocate_available_register(f);
+         spe_and_uint(f, tmp_masked_stencil, fbS_reg, state->value_mask);
+         spe_compare_equal_uint(f, stencil_pass_reg, tmp_masked_stencil, state->value_mask & state->ref_value);
+         spe_andc(f, stencil_pass_reg, fragment_mask_reg, stencil_pass_reg);
+         spe_release_register(f, tmp_masked_stencil);
+      }
       break;
 
    case PIPE_FUNC_GREATER:
-      /* stencil_pass = mask & (s > reference) */
-      spe_compare_greater_uint(f, stencil_pass_reg, fbS_reg, state->ref_value);
-      spe_and(f, stencil_pass_reg, mask_reg, stencil_pass_reg);
+      if (state->value_mask == stencil_max_value) {
+         /* stencil_pass = fragment_mask & (s > reference) */
+         spe_compare_greater_uint(f, stencil_pass_reg, fbS_reg, state->ref_value);
+         spe_and(f, stencil_pass_reg, fragment_mask_reg, stencil_pass_reg);
+      }
+      else {
+         /* stencil_pass = fragment_mask & ((s&mask) > (reference&mask)) */
+         unsigned int tmp_masked_stencil = spe_allocate_available_register(f);
+         spe_and_uint(f, tmp_masked_stencil, fbS_reg, state->value_mask);
+         spe_compare_greater_uint(f, stencil_pass_reg, tmp_masked_stencil, state->value_mask & state->ref_value);
+         spe_and(f, stencil_pass_reg, fragment_mask_reg, stencil_pass_reg);
+         spe_release_register(f, tmp_masked_stencil);
+      }
       break;
 
-   case PIPE_FUNC_LESS: {
-      /* stencil_pass = mask & (reference > s) */
-      /* There's no convenient Compare Less Than Immediate instruction, so
-       * we'll have to do this one the harder way, by loading a register and 
-       * comparing directly.  Compare Logical Greater Than Word (clgt) 
-       * treats its operands as unsigned - no sign extension.
-       */
-      unsigned int tmp_reg = spe_allocate_available_register(f);
-      spe_load_uint(f, tmp_reg, state->ref_value);
-      spe_clgt(f, stencil_pass_reg, tmp_reg, fbS_reg);
-      spe_and(f, stencil_pass_reg, mask_reg, stencil_pass_reg);
-      spe_release_register(f, tmp_reg);
+   case PIPE_FUNC_LESS:
+      if (state->value_mask == stencil_max_value) {
+         /* stencil_pass = fragment_mask & (reference > s) */
+         /* There's no convenient Compare Less Than Immediate instruction, so
+          * we'll have to do this one the harder way, by loading a register and 
+          * comparing directly.  Compare Logical Greater Than Word (clgt) 
+          * treats its operands as unsigned - no sign extension.
+          */
+         unsigned int tmp_reg = spe_allocate_available_register(f);
+         spe_load_uint(f, tmp_reg, state->ref_value);
+         spe_clgt(f, stencil_pass_reg, tmp_reg, fbS_reg);
+         spe_and(f, stencil_pass_reg, fragment_mask_reg, stencil_pass_reg);
+         spe_release_register(f, tmp_reg);
+      }
+      else {
+         /* stencil_pass = fragment_mask & ((reference&mask) > (s&mask)) */
+         unsigned int tmp_reg = spe_allocate_available_register(f);
+         unsigned int tmp_masked_stencil = spe_allocate_available_register(f);
+         spe_load_uint(f, tmp_reg, state->value_mask & state->ref_value);
+         spe_and_uint(f, tmp_masked_stencil, fbS_reg, state->value_mask);
+         spe_clgt(f, stencil_pass_reg, tmp_reg, tmp_masked_stencil);
+         spe_and(f, stencil_pass_reg, fragment_mask_reg, stencil_pass_reg);
+         spe_release_register(f, tmp_reg);
+         spe_release_register(f, tmp_masked_stencil);
+      }
       break;
-   }
 
    case PIPE_FUNC_LEQUAL:
-      /* stencil_pass = mask & (s <= reference) = mask & ~(s > reference) */
-      spe_compare_greater_uint(f, stencil_pass_reg, fbS_reg, state->ref_value);
-      spe_andc(f, stencil_pass_reg, mask_reg, stencil_pass_reg);
+      if (state->value_mask == stencil_max_value) {
+         /* stencil_pass = fragment_mask & (s <= reference) 
+          *              = fragment_mask & ~(s > reference) */
+         spe_compare_greater_uint(f, stencil_pass_reg, fbS_reg, state->ref_value);
+         spe_andc(f, stencil_pass_reg, fragment_mask_reg, stencil_pass_reg);
+      }
+      else {
+         /* stencil_pass = fragment_mask & ~((s&mask) > (reference&mask)) */
+         unsigned int tmp_masked_stencil = spe_allocate_available_register(f);
+         spe_and_uint(f, tmp_masked_stencil, fbS_reg, state->value_mask);
+         spe_compare_greater_uint(f, stencil_pass_reg, tmp_masked_stencil, state->value_mask & state->ref_value);
+         spe_andc(f, stencil_pass_reg, fragment_mask_reg, stencil_pass_reg);
+         spe_release_register(f, tmp_masked_stencil);
+      }
       break;
 
-   case PIPE_FUNC_GEQUAL: {
-      /* stencil_pass = mask & (s >= reference) = mask & ~(reference > s) */
-      /* As above, we have to do this by loading a register */
-      unsigned int tmp_reg = spe_allocate_available_register(f);
-      spe_load_uint(f, tmp_reg, state->ref_value);
-      spe_clgt(f, stencil_pass_reg, tmp_reg, fbS_reg);
-      spe_andc(f, stencil_pass_reg, mask_reg, stencil_pass_reg);
-      spe_release_register(f, tmp_reg);
+   case PIPE_FUNC_GEQUAL:
+      if (state->value_mask == stencil_max_value) {
+         /* stencil_pass = fragment_mask & (s >= reference) ]
+          *               = fragment_mask & ~(reference > s) */
+         /* As above, we have to do this by loading a register */
+         unsigned int tmp_reg = spe_allocate_available_register(f);
+         spe_load_uint(f, tmp_reg, state->ref_value);
+         spe_clgt(f, stencil_pass_reg, tmp_reg, fbS_reg);
+         spe_andc(f, stencil_pass_reg, fragment_mask_reg, stencil_pass_reg);
+         spe_release_register(f, tmp_reg);
+      }
+      else {
+         /* stencil_pass = fragment_mask & ~((reference&mask) > (s&mask)) */
+         unsigned int tmp_reg = spe_allocate_available_register(f);
+         unsigned int tmp_masked_stencil = spe_allocate_available_register(f);
+         spe_load_uint(f, tmp_reg, state->ref_value & state->value_mask);
+         spe_and_uint(f, tmp_masked_stencil, fbS_reg, state->value_mask);
+         spe_clgt(f, stencil_pass_reg, tmp_reg, tmp_masked_stencil);
+         spe_andc(f, stencil_pass_reg, fragment_mask_reg, stencil_pass_reg);
+         spe_release_register(f, tmp_reg);
+         spe_release_register(f, tmp_masked_stencil);
+      }
       break;
-   }
 
    case PIPE_FUNC_NEVER:
-      /* stencil_pass = mask & 0 = 0 */
+      /* stencil_pass = fragment_mask & 0 = 0 */
       spe_load_uint(f, stencil_pass_reg, 0);
       break;
 
    case PIPE_FUNC_ALWAYS:
-      /* stencil_pass = mask & 1 = mask */
-      spe_move(f, stencil_pass_reg, mask_reg);
+      /* stencil_pass = fragment_mask & 1 = fragment_mask */
+      spe_move(f, stencil_pass_reg, fragment_mask_reg);
       break;
    }
 
    /* The fragments that passed the stencil test are now in stencil_pass_reg.
-    * The fragments that failed would be (mask_reg & ~stencil_pass_reg).
+    * The fragments that failed would be (fragment_mask_reg & ~stencil_pass_reg).
     */
 }
 
@@ -1282,7 +1352,7 @@ gen_stencil_values(struct spe_function *f, unsigned int stencil_op,
       /* Add Word Immediate computes rT = rA + 10-bit signed immediate */
       spe_ai(f, newS_reg, fbS_reg, 1);
       /* Select from the current value or the new value based on the equality test */
-      spe_selb(f, newS_reg, fbS_reg, newS_reg, equals_reg);
+      spe_selb(f, newS_reg, newS_reg, fbS_reg, equals_reg);
 
       spe_release_register(f, equals_reg);
       break;
@@ -1295,7 +1365,7 @@ gen_stencil_values(struct spe_function *f, unsigned int stencil_op,
       /* Add Word Immediate with a (-1) value works */
       spe_ai(f, newS_reg, fbS_reg, -1);
       /* Select from the current value or the new value based on the equality test */
-      spe_selb(f, newS_reg, fbS_reg, newS_reg, equals_reg);
+      spe_selb(f, newS_reg, newS_reg, fbS_reg, equals_reg);
 
       spe_release_register(f, equals_reg);
       break;
@@ -1534,15 +1604,28 @@ gen_stencil_depth_test(struct spe_function *f,
     * meaning that we have to calculate the stencil values but do not
     * need to mask them), we can avoid generating code.  Don't forget
     * that we need to consider backfacing stencil, if enabled.
+    *
+    * Note that if the backface stencil is *not* enabled, the backface
+    * stencil will have the same values as the frontface stencil.
     */
-   if (dsa->stencil[0].write_mask == 0x0 && (!dsa->stencil[1].enabled || dsa->stencil[1].write_mask == 0x00)) {
-      /* Trivial: don't need to calculate stencil values, and don't need to 
-       * write them back to the framebuffer.
+   if (dsa->stencil[0].fail_op == PIPE_STENCIL_OP_KEEP &&
+       dsa->stencil[0].zfail_op == PIPE_STENCIL_OP_KEEP &&
+       dsa->stencil[0].zpass_op == PIPE_STENCIL_OP_KEEP &&
+       dsa->stencil[1].fail_op == PIPE_STENCIL_OP_KEEP &&
+       dsa->stencil[1].zfail_op == PIPE_STENCIL_OP_KEEP &&
+       dsa->stencil[1].zpass_op == PIPE_STENCIL_OP_KEEP) {
+       /* No changes to any stencil values */
+       need_to_calculate_stencil_values = false;
+       need_to_writemask_stencil_values = false;
+    }
+    else if (dsa->stencil[0].write_mask == 0x0 && dsa->stencil[1].write_mask == 0x0) {
+      /* All changes are writemasked out, so no need to calculate
+       * what those changes might be, and no need to write anything back.
        */
       need_to_calculate_stencil_values = false;
       need_to_writemask_stencil_values = false;
    }
-   else if (dsa->stencil[0].write_mask == 0xff && (!dsa->stencil[1].enabled || dsa->stencil[1].write_mask == 0xff)) {
+   else if (dsa->stencil[0].write_mask == 0xff && dsa->stencil[1].write_mask == 0xff) {
       /* Still trivial, but a little less so.  We need to write the stencil
        * values, but we don't need to mask them.
        */
@@ -1583,7 +1666,7 @@ gen_stencil_depth_test(struct spe_function *f,
     */
    spe_comment(f, 0, "Running basic stencil test");
    stencil_pass_reg = spe_allocate_available_register(f);
-   gen_stencil_test(f, &dsa->stencil[0], mask_reg, fbS_reg, stencil_pass_reg);
+   gen_stencil_test(f, &dsa->stencil[0], 0xff, mask_reg, fbS_reg, stencil_pass_reg);
 
    /* If two-sided stenciling is on, generate code to run the stencil
     * test on the backfacing stencil as well, and combine the two results
@@ -1592,7 +1675,7 @@ gen_stencil_depth_test(struct spe_function *f,
    if (dsa->stencil[1].enabled) {
       unsigned int temp_reg = spe_allocate_available_register(f);
       spe_comment(f, 0, "Running backface stencil test");
-      gen_stencil_test(f, &dsa->stencil[1], mask_reg, fbS_reg, temp_reg);
+      gen_stencil_test(f, &dsa->stencil[1], 0xff, mask_reg, fbS_reg, temp_reg);
       spe_selb(f, stencil_pass_reg, stencil_pass_reg, temp_reg, facing_reg);
       spe_release_register(f, temp_reg);
    }
@@ -1914,81 +1997,79 @@ cell_gen_fragment_function(struct cell_context *cell, struct spe_function *f)
        * Z and/or stencil.  We'll also convert the incoming fragment Z
        * value in fragZ_reg from a floating point value in [0.0..1.0] to
        * an unsigned integer value with the appropriate resolution.
+       * Note that even if depth or stencil is *not* enabled, if it's
+       * present in the buffer, we pull it out and put it back later;
+       * otherwise, we can inadvertently destroy the contents of
+       * buffers we're not supposed to touch (e.g., if the user is
+       * clearing the depth buffer but not the stencil buffer, a
+       * quad of constant depth is drawn over the surface; the stencil
+       * buffer must be maintained).
        */
       switch(zs_format) {
 
          case PIPE_FORMAT_S8Z24_UNORM: /* fall through */
          case PIPE_FORMAT_X8Z24_UNORM:
-            if (dsa->depth.enabled) {
-               /* We need the Z part at least */
-               setup_optional_register(f, &fbZ_reg_set, &fbZ_reg);
-               /* four 24-bit Z values in the low-order bits */
-               spe_and_uint(f, fbZ_reg, fbZS_reg, 0x00ffffff);
+            /* Pull out both Z and stencil */
+            setup_optional_register(f, &fbZ_reg_set, &fbZ_reg);
+            setup_optional_register(f, &fbS_reg_set, &fbS_reg);
 
-               /* Incoming fragZ_reg value is a float in 0.0...1.0; convert
-                * to a 24-bit unsigned integer
-                */
-               spe_cfltu(f, fragZ_reg, fragZ_reg, 32);
-               spe_rotmi(f, fragZ_reg, fragZ_reg, -8);
-            }
-            if (dsa->stencil[0].enabled) {
-               setup_optional_register(f, &fbS_reg_set, &fbS_reg);
-               /* four 8-bit Z values in the high-order bits */
-               spe_rotmi(f, fbS_reg, fbZS_reg, -24);
-            }
-            break;
+            /* four 24-bit Z values in the low-order bits */
+            spe_and_uint(f, fbZ_reg, fbZS_reg, 0x00ffffff);
+
+            /* Incoming fragZ_reg value is a float in 0.0...1.0; convert
+             * to a 24-bit unsigned integer
+             */
+            spe_cfltu(f, fragZ_reg, fragZ_reg, 32);
+            spe_rotmi(f, fragZ_reg, fragZ_reg, -8);
+
+            /* four 8-bit stencil values in the high-order bits */
+            spe_rotmi(f, fbS_reg, fbZS_reg, -24);
+         break;
 
          case PIPE_FORMAT_Z24S8_UNORM: /* fall through */
          case PIPE_FORMAT_Z24X8_UNORM:
-            if (dsa->depth.enabled) {
-               setup_optional_register(f, &fbZ_reg_set, &fbZ_reg);
-               /* shift by 8 to get the upper 24-bit values */
-               spe_rotmi(f, fbS_reg, fbZS_reg, -8);
+            setup_optional_register(f, &fbZ_reg_set, &fbZ_reg);
+            setup_optional_register(f, &fbS_reg_set, &fbS_reg);
 
-               /* Incoming fragZ_reg value is a float in 0.0...1.0; convert
-                * to a 24-bit unsigned integer
-                */
-               spe_cfltu(f, fragZ_reg, fragZ_reg, 32);
-               spe_rotmi(f, fragZ_reg, fragZ_reg, -8);
-            }
-            if (dsa->stencil[0].enabled) {
-               setup_optional_register(f, &fbS_reg_set, &fbS_reg);
-               /* 8-bit stencil in the low-order bits - mask them out */
-               spe_and_uint(f, fbS_reg, fbZS_reg, 0x000000ff);
-            }
-            break;
+            /* shift by 8 to get the upper 24-bit values */
+            spe_rotmi(f, fbS_reg, fbZS_reg, -8);
+
+            /* Incoming fragZ_reg value is a float in 0.0...1.0; convert
+             * to a 24-bit unsigned integer
+             */
+            spe_cfltu(f, fragZ_reg, fragZ_reg, 32);
+            spe_rotmi(f, fragZ_reg, fragZ_reg, -8);
+
+            /* 8-bit stencil in the low-order bits - mask them out */
+            spe_and_uint(f, fbS_reg, fbZS_reg, 0x000000ff);
+         break;
 
          case PIPE_FORMAT_Z32_UNORM:
-            if (dsa->depth.enabled) {
-               setup_optional_register(f, &fbZ_reg_set, &fbZ_reg);
-               /* Copy over 4 32-bit values */
-               spe_move(f, fbZ_reg, fbZS_reg);
+            setup_optional_register(f, &fbZ_reg_set, &fbZ_reg);
+            /* Copy over 4 32-bit values */
+            spe_move(f, fbZ_reg, fbZS_reg);
 
-               /* Incoming fragZ_reg value is a float in 0.0...1.0; convert
-                * to a 32-bit unsigned integer
-                */
-               spe_cfltu(f, fragZ_reg, fragZ_reg, 32);
-            }
+            /* Incoming fragZ_reg value is a float in 0.0...1.0; convert
+             * to a 32-bit unsigned integer
+             */
+            spe_cfltu(f, fragZ_reg, fragZ_reg, 32);
             /* No stencil, so can't do anything there */
-            break;
+         break;
 
          case PIPE_FORMAT_Z16_UNORM:
-            if (dsa->depth.enabled) {
-               /* XXX Not sure this is correct, but it was here before, so we're
-                * going with it for now
-                */
-               setup_optional_register(f, &fbZ_reg_set, &fbZ_reg);
-               /* Copy over 4 32-bit values */
-               spe_move(f, fbZ_reg, fbZS_reg);
+            /* XXX Not sure this is correct, but it was here before, so we're
+             * going with it for now
+             */
+            setup_optional_register(f, &fbZ_reg_set, &fbZ_reg);
+            /* Copy over 4 32-bit values */
+            spe_move(f, fbZ_reg, fbZS_reg);
 
-               /* Incoming fragZ_reg value is a float in 0.0...1.0; convert
-                * to a 16-bit unsigned integer
-                */
-               spe_cfltu(f, fragZ_reg, fragZ_reg, 32);
-               spe_rotmi(f, fragZ_reg, fragZ_reg, -16);
-            }
+            /* Incoming fragZ_reg value is a float in 0.0...1.0; convert
+             * to a 16-bit unsigned integer
+             */
+            spe_cfltu(f, fragZ_reg, fragZ_reg, 32);
+            spe_rotmi(f, fragZ_reg, fragZ_reg, -16);
             /* No stencil */
-            break;
 
          default:
             ASSERT(0); /* invalid format */
@@ -2035,39 +2116,19 @@ cell_gen_fragment_function(struct cell_context *cell, struct spe_function *f)
          spe_comment(f, 0, "Store quad's depth/stencil values in tile");
          if (zs_format == PIPE_FORMAT_S8Z24_UNORM ||
              zs_format == PIPE_FORMAT_X8Z24_UNORM) {
-            if (fbS_reg_set && fbZ_reg_set) {
-               spe_shli(f, fbS_reg, fbS_reg, 24); /* fbS = fbS << 24 */
-               spe_or(f, fbZS_reg, fbS_reg, fbZ_reg); /* fbZS = fbS | fbZ */
-            }
-            else if (fbS_reg_set) {
-               spe_shli(f, fbZS_reg, fbS_reg, 24); /* fbS = fbS << 24 */
-            }
-            else {
-               spe_move(f, fbZS_reg, fbZ_reg);
-            }
+            spe_shli(f, fbS_reg, fbS_reg, 24); /* fbS = fbS << 24 */
+            spe_or(f, fbZS_reg, fbS_reg, fbZ_reg); /* fbZS = fbS | fbZ */
          }
          else if (zs_format == PIPE_FORMAT_Z24S8_UNORM ||
                   zs_format == PIPE_FORMAT_Z24X8_UNORM) {
-            if (fbS_reg_set && fbZ_reg_set) {
-               spe_shli(f, fbZ_reg, fbZ_reg, 8); /* fbZ = fbZ << 8 */
-               spe_or(f, fbZS_reg, fbS_reg, fbZ_reg); /* fbZS = fbS | fbZ */
-            }
-            else if (fbS_reg_set) {
-               spe_move(f, fbZS_reg, fbS_reg);
-            }
-            else {
-               spe_shli(f, fbZ_reg, fbZ_reg, 8); /* fbZ = fbZ << 8 */
-            }
+            spe_shli(f, fbZ_reg, fbZ_reg, 8); /* fbZ = fbZ << 8 */
+            spe_or(f, fbZS_reg, fbS_reg, fbZ_reg); /* fbZS = fbS | fbZ */
          }
          else if (zs_format == PIPE_FORMAT_Z32_UNORM) {
-            if (fbZ_reg_set) {
-               spe_move(f, fbZS_reg, fbZ_reg); /* fbZS = fbZ */
-            }
+            spe_move(f, fbZS_reg, fbZ_reg); /* fbZS = fbZ */
          }
          else if (zs_format == PIPE_FORMAT_Z16_UNORM) {
-            if (fbZ_reg_set) {
-               spe_move(f, fbZS_reg, fbZ_reg); /* fbZS = fbZ */
-            }
+            spe_move(f, fbZS_reg, fbZ_reg); /* fbZS = fbZ */
          }
          else if (zs_format == PIPE_FORMAT_S8_UNORM) {
             ASSERT(0);   /* XXX to do */
@@ -2080,6 +2141,7 @@ cell_gen_fragment_function(struct cell_context *cell, struct spe_function *f)
          spe_stqx(f, fbZS_reg, depth_tile_reg, quad_offset_reg);
       }
 
+      /* Don't need these any more */
       release_optional_register(f, &fbZ_reg_set, fbZ_reg);
       release_optional_register(f, &fbS_reg_set, fbS_reg);
    }

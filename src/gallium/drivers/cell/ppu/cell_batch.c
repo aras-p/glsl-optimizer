@@ -100,12 +100,23 @@ emit_fence(struct cell_context *cell)
    const uint batch = cell->cur_batch;
    const uint size = cell->buffer_size[batch];
    struct cell_command_fence *fence_cmd;
+   struct cell_fence *fence = &cell->fenced_buffers[batch].fence;
+   uint i;
+
+   /* set fence status to emitted, not yet signalled */
+   for (i = 0; i < cell->num_spus; i++) {
+      fence->status[i][0] = CELL_FENCE_EMITTED;
+   }
 
    ASSERT(size + sizeof(struct cell_command_fence) <= CELL_BUFFER_SIZE);
 
    fence_cmd = (struct cell_command_fence *) (cell->buffer[batch] + size);
    fence_cmd->opcode = CELL_CMD_FENCE;
-   fence_cmd->fence = &cell->fenced_buffers[batch].fence;
+   fence_cmd->fence = fence;
+
+   /* update batch buffer size */
+   cell->buffer_size[batch] = size + sizeof(struct cell_command_fence);
+   assert(sizeof(struct cell_command_fence) % 8 == 0);
 }
 
 
@@ -119,7 +130,7 @@ cell_batch_flush(struct cell_context *cell)
 {
    static boolean flushing = FALSE;
    uint batch = cell->cur_batch;
-   const uint size = cell->buffer_size[batch];
+   uint size = cell->buffer_size[batch];
    uint spu, cmd_word;
 
    assert(!flushing);
@@ -130,8 +141,10 @@ cell_batch_flush(struct cell_context *cell)
    /* Before we use this batch buffer, make sure any fenced texture buffers
     * are released.
     */
-   if (cell->fenced_buffers[batch].head)
+   if (cell->fenced_buffers[batch].head) {
       emit_fence(cell);
+      size = cell->buffer_size[batch];
+   }
 
    flushing = TRUE;
 

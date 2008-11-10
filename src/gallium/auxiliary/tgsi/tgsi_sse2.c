@@ -27,12 +27,14 @@
 
 #include "pipe/p_config.h"
 
-#if defined(PIPE_ARCH_X86) && defined(PIPE_ARCH_SSE)
+#if defined(PIPE_ARCH_X86)
 
 #include "pipe/p_debug.h"
 #include "pipe/p_shader_tokens.h"
 #include "util/u_math.h"
+#if defined(PIPE_ARCH_SSE)
 #include "util/u_sse.h"
+#endif
 #include "tgsi/tgsi_parse.h"
 #include "tgsi/tgsi_util.h"
 #include "tgsi_exec.h"
@@ -72,6 +74,9 @@
 
 #define TEMP_R0   TGSI_EXEC_TEMP_R0
 #define TEMP_ADDR TGSI_EXEC_TEMP_ADDR
+#define TEMP_EXEC_MASK_I TGSI_EXEC_MASK_I
+#define TEMP_EXEC_MASK_C TGSI_EXEC_MASK_C
+
 
 /**
  * X86 utility functions.
@@ -233,6 +238,9 @@ emit_const(
    int indirectIndex )
 {
    if (indirect) {
+      /* 'vec' is the offset from the address register's value.
+       * We're loading CONST[ADDR+vec] into an xmm register.
+       */
       struct x86_reg r0 = get_input_base();
       struct x86_reg r1 = get_output_base();
       uint i;
@@ -243,18 +251,40 @@ emit_const(
       x86_push( func, r0 );
       x86_push( func, r1 );
 
+      /*
+       * Loop over the four pixels or vertices in the quad.
+       * Get the value of the address (offset) register for pixel/vertex[i],
+       * add it to the src offset and index into the constant buffer.
+       * Note that we're working on SOA data.
+       * If any of the pixel/vertex execution channels are unused their
+       * values will be garbage.  It's very important that we don't use
+       * those garbage values as indexes into the constant buffer since
+       * that'll cause segfaults.
+       * The solution is to bitwise-AND the offset with the execution mask
+       * register whose values are either 0 or ~0.
+       * The caller must setup the execution mask register to indicate
+       * which channels are valid/alive before running the shader.
+       * The execution mask will also figure into loops and conditionals
+       * someday.
+       */
       for (i = 0; i < QUAD_SIZE; i++) {
-         x86_lea( func, r0, get_const( vec, chan ) );
+         /* r1 = address register[i] */
          x86_mov( func, r1, x86_make_disp( get_temp( TEMP_ADDR, CHAN_X ), i * 4 ) );
+         /* r0 = execution mask[i] */
+         x86_mov( func, r0, x86_make_disp( get_temp( TEMP_EXEC_MASK_I, TEMP_EXEC_MASK_C ), i * 4 ) );
+         /* r1 = r1 & r0 */
+         x86_and( func, r1, r0 );
+         /* r0 = 'vec', the offset */
+         x86_lea( func, r0, get_const( vec, chan ) );
 
-         /* Quick hack to multiply by 16 -- need to add SHL to rtasm.
+         /* Quick hack to multiply r1 by 16 -- need to add SHL to rtasm.
           */
          x86_add( func, r1, r1 );
          x86_add( func, r1, r1 );
          x86_add( func, r1, r1 );
          x86_add( func, r1, r1 );
 
-         x86_add( func, r0, r1 );
+         x86_add( func, r0, r1 );  /* r0 = r0 + r1 */
          x86_mov( func, r1, x86_deref( r0 ) );
          x86_mov( func, x86_make_disp( get_temp( TEMP_R0, CHAN_X ), i * 4 ), r1 );
       }
@@ -268,6 +298,7 @@ emit_const(
          get_temp( TEMP_R0, CHAN_X ) );
    }
    else {
+      /* 'vec' is the index into the src register file, such as TEMP[vec] */
       assert( vec >= 0 );
 
       sse_movss(
@@ -598,6 +629,9 @@ emit_func_call_dst_src(
       code );
 }
 
+
+#if defined(PIPE_ARCH_SSE)
+
 /*
  * Fast SSE2 implementation of special math functions.
  */
@@ -649,6 +683,7 @@ exp2f4(__m128 x)
    return _mm_mul_ps(expipart, expfpart);
 }
 
+
 /**
  * See http://www.devmaster.net/forums/showthread.php?p=43580
  */
@@ -691,11 +726,15 @@ log2f4(__m128 x)
    return _mm_add_ps(logmant, exp);
 }
 
+
 static INLINE __m128
 powf4(__m128 x, __m128 y)
 {
    return exp2f4(_mm_mul_ps(log2f4(x), y));
 }
+
+#endif /* PIPE_ARCH_SSE */
+
 
 
 /**
@@ -751,13 +790,20 @@ emit_cos(
 }
 
 static void PIPE_CDECL
-#if defined(PIPE_CC_GCC)
+#if defined(PIPE_CC_GCC) && defined(PIPE_ARCH_SSE)
 __attribute__((force_align_arg_pointer))
 #endif
 ex24f(
    float *store )
 {
+#if defined(PIPE_ARCH_SSE)
    _mm_store_ps(&store[0], exp2f4( _mm_load_ps(&store[0]) ));
+#else
+   store[0] = util_fast_exp2( store[0] );
+   store[1] = util_fast_exp2( store[1] );
+   store[2] = util_fast_exp2( store[2] );
+   store[3] = util_fast_exp2( store[3] );
+#endif
 }
 
 static void
@@ -779,6 +825,17 @@ emit_f2it(
    unsigned xmm )
 {
    sse2_cvttps2dq(
+      func,
+      make_xmm( xmm ),
+      make_xmm( xmm ) );
+}
+
+static void
+emit_i2f(
+   struct x86_function *func,
+   unsigned xmm )
+{
+   sse2_cvtdq2ps(
       func,
       make_xmm( xmm ),
       make_xmm( xmm ) );
@@ -831,13 +888,20 @@ emit_frc(
 }
 
 static void PIPE_CDECL
-#if defined(PIPE_CC_GCC)
+#if defined(PIPE_CC_GCC) && defined(PIPE_ARCH_SSE)
 __attribute__((force_align_arg_pointer))
 #endif
 lg24f(
    float *store )
 {
+#if defined(PIPE_ARCH_SSE)
    _mm_store_ps(&store[0], log2f4( _mm_load_ps(&store[0]) ));
+#else
+   store[0] = util_fast_log2( store[0] );
+   store[1] = util_fast_log2( store[1] );
+   store[2] = util_fast_log2( store[2] );
+   store[3] = util_fast_log2( store[3] );
+#endif
 }
 
 static void
@@ -890,19 +954,19 @@ emit_neg(
 }
 
 static void PIPE_CDECL
-#if defined(PIPE_CC_GCC)
+#if defined(PIPE_CC_GCC) && defined(PIPE_ARCH_SSE)
 __attribute__((force_align_arg_pointer))
 #endif
 pow4f(
    float *store )
 {
-#if 1
+#if defined(PIPE_ARCH_SSE)
    _mm_store_ps(&store[0], powf4( _mm_load_ps(&store[0]), _mm_load_ps(&store[4]) ));
 #else
-   store[0] = powf( store[0], store[4] );
-   store[1] = powf( store[1], store[5] );
-   store[2] = powf( store[2], store[6] );
-   store[3] = powf( store[3], store[7] );
+   store[0] = util_fast_pow( store[0], store[4] );
+   store[1] = util_fast_pow( store[1], store[5] );
+   store[2] = util_fast_pow( store[2], store[6] );
+   store[3] = util_fast_pow( store[3], store[7] );
 #endif
 }
 
@@ -1702,7 +1766,18 @@ emit_instruction(
 
    case TGSI_OPCODE_DOT2ADD:
    /* TGSI_OPCODE_DP2A */
-      return 0;
+      FETCH( func, *inst, 0, 0, CHAN_X );  /* xmm0 = src[0].x */
+      FETCH( func, *inst, 1, 1, CHAN_X );  /* xmm1 = src[1].x */
+      emit_mul( func, 0, 1 );              /* xmm0 = xmm0 * xmm1 */
+      FETCH( func, *inst, 1, 0, CHAN_Y );  /* xmm1 = src[0].y */
+      FETCH( func, *inst, 2, 1, CHAN_Y );  /* xmm2 = src[1].y */
+      emit_mul( func, 1, 2 );              /* xmm1 = xmm1 * xmm2 */
+      emit_add( func, 0, 1 );              /* xmm0 = xmm0 + xmm1 */
+      FETCH( func, *inst, 1, 2, CHAN_X );  /* xmm1 = src[2].x */
+      emit_add( func, 0, 1 );              /* xmm0 = xmm0 + xmm1 */
+      FOR_EACH_DST0_ENABLED_CHANNEL( *inst, chan_index ) {
+         STORE( func, *inst, 0, 0, chan_index );  /* dest[ch] = xmm0 */
+      }
       break;
 
    case TGSI_OPCODE_INDEX:
@@ -2036,7 +2111,39 @@ emit_instruction(
       break;
 
    case TGSI_OPCODE_NRM:
-      return 0;
+      /* fall-through */
+   case TGSI_OPCODE_NRM4:
+      /* 3 or 4-component normalization */
+      {
+         uint dims = (inst->Instruction.Opcode == TGSI_OPCODE_NRM) ? 3 : 4;
+         /* note: cannot use xmm regs 2/3 here (see emit_rsqrt() above) */
+         FETCH( func, *inst, 4, 0, CHAN_X );    /* xmm4 = src[0].x */
+         FETCH( func, *inst, 5, 0, CHAN_Y );    /* xmm5 = src[0].y */
+         FETCH( func, *inst, 6, 0, CHAN_Z );    /* xmm6 = src[0].z */
+         if (dims == 4) {
+            FETCH( func, *inst, 7, 0, CHAN_W ); /* xmm7 = src[0].w */
+         }
+         emit_MOV( func, 0, 4 );                /* xmm0 = xmm3 */
+         emit_mul( func, 0, 4 );                /* xmm0 *= xmm3 */
+         emit_MOV( func, 1, 5 );                /* xmm1 = xmm4 */
+         emit_mul( func, 1, 5 );                /* xmm1 *= xmm4 */
+         emit_add( func, 0, 1 );                /* xmm0 += xmm1 */
+         emit_MOV( func, 1, 6 );                /* xmm1 = xmm5 */
+         emit_mul( func, 1, 6 );                /* xmm1 *= xmm5 */
+         emit_add( func, 0, 1 );                /* xmm0 += xmm1 */
+         if (dims == 4) {
+            emit_MOV( func, 1, 7 );             /* xmm1 = xmm7 */
+            emit_mul( func, 1, 7 );             /* xmm1 *= xmm7 */
+            emit_add( func, 0, 0 );             /* xmm0 += xmm1 */
+         }
+         emit_rsqrt( func, 1, 0 );              /* xmm1 = 1/sqrt(xmm0) */
+         FOR_EACH_DST0_ENABLED_CHANNEL( *inst, chan_index ) {
+            if (chan_index < dims) {
+               emit_mul( func, 4+chan_index, 1); /* xmm[4+ch] *= xmm1 */
+               STORE( func, *inst, 4+chan_index, 0, chan_index );
+            }
+         }
+      }
       break;
 
    case TGSI_OPCODE_DIV:
@@ -2044,7 +2151,16 @@ emit_instruction(
       break;
 
    case TGSI_OPCODE_DP2:
-      return 0;
+      FETCH( func, *inst, 0, 0, CHAN_X );  /* xmm0 = src[0].x */
+      FETCH( func, *inst, 1, 1, CHAN_X );  /* xmm1 = src[1].x */
+      emit_mul( func, 0, 1 );              /* xmm0 = xmm0 * xmm1 */
+      FETCH( func, *inst, 1, 0, CHAN_Y );  /* xmm1 = src[0].y */
+      FETCH( func, *inst, 2, 1, CHAN_Y );  /* xmm2 = src[1].y */
+      emit_mul( func, 1, 2 );              /* xmm1 = xmm1 * xmm2 */
+      emit_add( func, 0, 1 );              /* xmm0 = xmm0 + xmm1 */
+      FOR_EACH_DST0_ENABLED_CHANNEL( *inst, chan_index ) {
+         STORE( func, *inst, 0, 0, chan_index );  /* dest[ch] = xmm0 */
+      }
       break;
 
    case TGSI_OPCODE_TXL:
@@ -2104,7 +2220,12 @@ emit_instruction(
       break;
 
    case TGSI_OPCODE_TRUNC:
-      return 0;
+      FOR_EACH_DST0_ENABLED_CHANNEL( *inst, chan_index ) {
+         FETCH( func, *inst, 0, 0, chan_index );
+         emit_f2it( func, 0 );
+         emit_i2f( func, 0 );
+         STORE( func, *inst, 0, 0, chan_index );
+      }
       break;
 
    case TGSI_OPCODE_SHL:

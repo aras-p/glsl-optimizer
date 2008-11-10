@@ -75,19 +75,21 @@ intel_texture_drawpixels(GLcontext * ctx,
    /* We're going to mess with texturing with no regard to existing texture
     * state, so if there is some set up we have to bail.
     */
-   if (ctx->Texture._EnabledUnits != 0)
+   if (ctx->Texture._EnabledUnits != 0) {
+      if (INTEL_DEBUG & DEBUG_FALLBACKS)
+	 fprintf(stderr, "glDrawPixels() fallback: texturing enabled\n");
       return GL_FALSE;
+   }
 
    /* Can't do textured DrawPixels with a fragment program, unless we were
     * to generate a new program that sampled our texture and put the results
     * in the fragment color before the user's program started.
     */
-   if (ctx->FragmentProgram.Enabled)
+   if (ctx->FragmentProgram.Enabled) {
+      if (INTEL_DEBUG & DEBUG_FALLBACKS)
+	 fprintf(stderr, "glDrawPixels() fallback: fragment program enabled\n");
       return GL_FALSE;
-
-   /* Don't even want to think about it */
-   if (format == GL_COLOR_INDEX)
-      return GL_FALSE;
+   }
 
    /* We don't have a way to generate fragments with stencil values which *
     * will set the resulting stencil value.
@@ -108,8 +110,12 @@ intel_texture_drawpixels(GLcontext * ctx,
     * the color buffer, and sample the texture values into the fragment depth
     * in a program.
     */
-   if (format == GL_DEPTH_COMPONENT)
+   if (format == GL_DEPTH_COMPONENT) {
+      if (INTEL_DEBUG & DEBUG_FALLBACKS)
+	 fprintf(stderr,
+		 "glDrawPixels() fallback: format == GL_DEPTH_COMPONENT\n");
       return GL_FALSE;
+   }
 
    _mesa_PushAttrib(GL_ENABLE_BIT | GL_TRANSFORM_BIT | GL_TEXTURE_BIT |
 		    GL_CURRENT_BIT);
@@ -141,22 +147,27 @@ intel_texture_drawpixels(GLcontext * ctx,
    _mesa_PushMatrix();
    _mesa_LoadIdentity();
 
+   /* Create the vertex buffer based on the current raster pos.  The x and y
+    * we're handed are ctx->Current.RasterPos[0,1] rounded to integers.
+    * We also apply the depth.  However, the W component is already multiplied
+    * into ctx->Current.RasterPos[0,1,2] and we can ignore it at this point.
+    */
    vertices[0][0] = x;
    vertices[0][1] = y;
    vertices[0][2] = ctx->Current.RasterPos[2];
-   vertices[0][3] = ctx->Current.RasterPos[3];
+   vertices[0][3] = 1.0;
    vertices[1][0] = x + width * ctx->Pixel.ZoomX;
    vertices[1][1] = y;
    vertices[1][2] = ctx->Current.RasterPos[2];
-   vertices[1][3] = ctx->Current.RasterPos[3];
+   vertices[1][3] = 1.0;
    vertices[2][0] = x + width * ctx->Pixel.ZoomX;
    vertices[2][1] = y + height * ctx->Pixel.ZoomY;
    vertices[2][2] = ctx->Current.RasterPos[2];
-   vertices[2][3] = ctx->Current.RasterPos[3];
+   vertices[2][3] = 1.0;
    vertices[3][0] = x;
    vertices[3][1] = y + height * ctx->Pixel.ZoomY;
    vertices[3][2] = ctx->Current.RasterPos[2];
-   vertices[3][3] = ctx->Current.RasterPos[3];
+   vertices[3][3] = 1.0;
 
    texcoords[0][0] = 0.0;
    texcoords[0][1] = 0.0;
@@ -212,8 +223,12 @@ intel_stencil_drawpixels(GLcontext * ctx,
       return GL_TRUE;
 
    /* Can't do a per-bit writemask while treating stencil as rgba data. */
-   if ((ctx->Stencil.WriteMask[0] & 0xff) != 0xff)
+   if ((ctx->Stencil.WriteMask[0] & 0xff) != 0xff) {
+      if (INTEL_DEBUG & DEBUG_FALLBACKS)
+	 fprintf(stderr, "glDrawPixels(STENCIL_INDEX) fallback: "
+		 "stencil mask enabled\n");
       return GL_FALSE;
+   }
 
    /* We use FBOs for our wrapping of the depthbuffer into a color
     * destination.
@@ -224,21 +239,29 @@ intel_stencil_drawpixels(GLcontext * ctx,
    /* We're going to mess with texturing with no regard to existing texture
     * state, so if there is some set up we have to bail.
     */
-   if (ctx->Texture._EnabledUnits != 0)
+   if (ctx->Texture._EnabledUnits != 0) {
+      if (INTEL_DEBUG & DEBUG_FALLBACKS)
+	 fprintf(stderr, "glDrawPixels(STENCIL_INDEX) fallback: "
+		 "texturing enabled\n");
       return GL_FALSE;
+   }
 
    /* Can't do textured DrawPixels with a fragment program, unless we were
     * to generate a new program that sampled our texture and put the results
     * in the fragment color before the user's program started.
     */
-   if (ctx->FragmentProgram.Enabled)
+   if (ctx->FragmentProgram.Enabled) {
+      if (INTEL_DEBUG & DEBUG_FALLBACKS)
+	 fprintf(stderr, "glDrawPixels(STENCIL_INDEX) fallback: "
+		 "fragment program enabled\n");
       return GL_FALSE;
+   }
 
    /* Check that we can load in a texture this big. */
    if (width > (1 << (ctx->Const.MaxTextureLevels - 1)) ||
        height > (1 << (ctx->Const.MaxTextureLevels - 1))) {
       if (INTEL_DEBUG & DEBUG_FALLBACKS)
-	 fprintf(stderr, "glDrawPixels(STENCIL_IDNEX) fallback: "
+	 fprintf(stderr, "glDrawPixels(STENCIL_INDEX) fallback: "
 		 "bitmap too large (%dx%d)\n",
 		 width, height);
       return GL_FALSE;

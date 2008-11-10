@@ -28,6 +28,7 @@
   * Authors:
   *   Keith Whitwell <keith@tungstengraphics.com>
   *   Michel Dänzer <michel@tungstengraphics.com>
+  *   Brian Paul
   */
 
 #include "pipe/p_context.h"
@@ -42,10 +43,9 @@
 #include "cell_texture.h"
 
 
-/* Simple, maximally packed layout.
- */
 
-static unsigned minify( unsigned d )
+static unsigned
+minify(unsigned d)
 {
    return MAX2(1, d>>1);
 }
@@ -212,6 +212,89 @@ twiddle_image_uint(uint w, uint h, uint tile_size, uint *dst,
 
 
 /**
+ * For Cell.  Basically, rearrange the pixels/quads from this layout:
+ *  +--+--+--+--+
+ *  |p0|p1|p2|p3|....
+ *  +--+--+--+--+
+ *
+ * to this layout:
+ *  +--+--+
+ *  |p0|p1|....
+ *  +--+--+
+ *  |p2|p3|
+ *  +--+--+
+ */
+static void
+twiddle_tile(const uint *tileIn, uint *tileOut)
+{
+   int y, x;
+
+   for (y = 0; y < TILE_SIZE; y+=2) {
+      for (x = 0; x < TILE_SIZE; x+=2) {
+         int k = 4 * (y/2 * TILE_SIZE/2 + x/2);
+         tileOut[y * TILE_SIZE + (x + 0)] = tileIn[k];
+         tileOut[y * TILE_SIZE + (x + 1)] = tileIn[k+1];
+         tileOut[(y + 1) * TILE_SIZE + (x + 0)] = tileIn[k+2];
+         tileOut[(y + 1) * TILE_SIZE + (x + 1)] = tileIn[k+3];
+      }
+   }
+}
+
+
+/**
+ * Convert image from tiled layout to linear layout.  4-byte pixels.
+ */
+static void
+untwiddle_image_uint(uint w, uint h, uint tile_size, uint *dst,
+                     uint dst_stride, const uint *src)
+{
+   const uint tile_size2 = tile_size * tile_size;
+   const uint h_t = (h + tile_size - 1) / tile_size;
+   const uint w_t = (w + tile_size - 1) / tile_size;
+   uint *tile_buf;
+   uint it, jt;  /* tile counters */
+   uint i, j;    /* intra-tile counters */
+
+   dst_stride /= 4; /* convert from bytes to pixels */
+
+   tile_buf = align_malloc(tile_size * tile_size * 4, 16);
+   
+   /* loop over src tiles */
+   for (it = 0; it < h_t; it++) {
+      for (jt = 0; jt < w_t; jt++) {
+         /* start of src tile: */
+         const uint *tsrc = src + (it * w_t + jt) * tile_size2;
+         
+         twiddle_tile(tsrc, tile_buf);
+         tsrc = tile_buf;
+
+         /* compute size of this tile (may be smaller than tile_size) */
+         /* XXX note: a compiler bug was found here. That's why the code
+          * looks as it does.
+          */
+         uint tile_width = w - jt * tile_size;
+         tile_width = MIN2(tile_width, tile_size);
+         uint tile_height = h - it * tile_size;
+         tile_height = MIN2(tile_height, tile_size);
+
+         /* loop over texels in the tile */
+         for (i = 0; i < tile_height; i++) {
+            for (j = 0; j < tile_width; j++) {
+               uint dsti = it * tile_size + i;
+               uint dstj = jt * tile_size + j;
+               ASSERT(dsti < h);
+               ASSERT(dstj < w);
+               dst[dsti * dst_stride + dstj] = tsrc[i * tile_size + j];
+            }
+         }
+      }
+   }
+
+   align_free(tile_buf);
+}
+
+
+/**
  * Convert linear texture image data to tiled format for SPU usage.
  */
 static void
@@ -230,6 +313,7 @@ cell_twiddle_texture(struct pipe_screen *screen,
 
    switch (ct->base.format) {
    case PIPE_FORMAT_A8R8G8B8_UNORM:
+   case PIPE_FORMAT_B8G8R8A8_UNORM:
       {
          int numFaces = ct->base.target == PIPE_TEXTURE_CUBE ? 6 : 1;
          int offset = bufWidth * bufHeight * 4 * surface->face;
@@ -255,6 +339,51 @@ cell_twiddle_texture(struct pipe_screen *screen,
    default:
       printf("Cell: twiddle unsupported texture format\n");
       ;
+   }
+
+   pipe_buffer_unmap(screen, surface->buffer);
+}
+
+
+/**
+ * Convert SPU tiled texture image data to linear format for app usage.
+ */
+static void
+cell_untwiddle_texture(struct pipe_screen *screen,
+                     struct pipe_surface *surface)
+{
+   struct cell_texture *ct = cell_texture(surface->texture);
+   const uint level = surface->level;
+   const uint texWidth = ct->base.width[level];
+   const uint texHeight = ct->base.height[level];
+   const void *map = pipe_buffer_map(screen, surface->buffer,
+                                     PIPE_BUFFER_USAGE_CPU_READ);
+   const uint *src = (const uint *) ((const ubyte *) map + surface->offset);
+
+   switch (ct->base.format) {
+   case PIPE_FORMAT_A8R8G8B8_UNORM:
+   case PIPE_FORMAT_B8G8R8A8_UNORM:
+      {
+         int numFaces = ct->base.target == PIPE_TEXTURE_CUBE ? 6 : 1;
+         int offset = surface->stride * texHeight * 4 * surface->face;
+         uint *dst;
+
+         if (!ct->untiled_data[level]) {
+            ct->untiled_data[level] =
+               align_malloc(surface->stride * texHeight * 4 * numFaces, 16);
+         }
+
+         dst = (uint *) ((ubyte *) ct->untiled_data[level] + offset);
+
+         untwiddle_image_uint(texWidth, texHeight, TILE_SIZE, dst,
+                              surface->stride, src);
+      }
+      break;
+   default:
+      {
+         ct->untiled_data[level] = NULL;
+         printf("Cell: untwiddle unsupported texture format\n");
+      }
    }
 
    pipe_buffer_unmap(screen, surface->buffer);
@@ -294,13 +423,18 @@ cell_get_tex_surface(struct pipe_screen *screen,
       ps->zslice = zslice;
 
       if (pt->target == PIPE_TEXTURE_CUBE || pt->target == PIPE_TEXTURE_3D) {
-	 ps->offset += ((pt->target == PIPE_TEXTURE_CUBE) ? face : zslice) *
-		       ps->nblocksy *
-		       ps->stride;
+	         ps->offset += ((pt->target == PIPE_TEXTURE_CUBE) ? face : zslice) *
+		      ps->nblocksy *
+		      ps->stride;
       }
       else {
-	 assert(face == 0);
-	 assert(zslice == 0);
+         assert(face == 0);
+         assert(zslice == 0);
+      }
+
+      if (ps->usage & PIPE_BUFFER_USAGE_CPU_READ) {
+         /* convert from tiled to linear layout */
+         cell_untwiddle_texture(screen, ps);
       }
    }
    return ps;
@@ -311,6 +445,15 @@ static void
 cell_tex_surface_release(struct pipe_screen *screen, 
                          struct pipe_surface **s)
 {
+   struct cell_texture *ct = cell_texture((*s)->texture);
+   const uint level = (*s)->level;
+
+   if (((*s)->usage & PIPE_BUFFER_USAGE_CPU_READ) && (ct->untiled_data[level]))
+   {
+      align_free(ct->untiled_data[level]);
+      ct->untiled_data[level] = NULL;
+   }
+
    /* XXX if done rendering to teximage, re-tile */
 
    pipe_texture_reference(&(*s)->texture, NULL); 
@@ -325,6 +468,10 @@ cell_surface_map(struct pipe_screen *screen,
                  unsigned flags)
 {
    ubyte *map;
+   struct cell_texture *ct = cell_texture(surface->texture);
+   const uint level = surface->level;
+
+   assert(ct);
 
    if (flags & ~surface->usage) {
       assert(0);
@@ -335,7 +482,14 @@ cell_surface_map(struct pipe_screen *screen,
    if (map == NULL)
       return NULL;
    else
-      return (void *) (map + surface->offset);
+   {
+      if ((surface->usage & PIPE_BUFFER_USAGE_CPU_READ) && (ct->untiled_data[level])) {
+         return (void *) ((ubyte *) ct->untiled_data[level] + surface->offset);
+      }
+      else {
+         return (void *) (map + surface->offset);
+      }
+   }
 }
 
 

@@ -219,6 +219,7 @@ link_uniform_vars(struct gl_shader_program *shProg,
                 inst->Sampler, map[ inst->Sampler ]);
          */
          /* here, texUnit is really samplerUnit */
+         assert(inst->TexSrcUnit < MAX_SAMPLERS);
          inst->TexSrcUnit = samplerMap[inst->TexSrcUnit];
          prog->SamplerTargets[inst->TexSrcUnit] = inst->TexSrcTarget;
          prog->SamplersUsed |= (1 << inst->TexSrcUnit);
@@ -560,35 +561,39 @@ _slang_link(GLcontext *ctx,
 
 
    if (fragProg && shProg->FragmentProgram) {
+      /* Compute initial program's TexturesUsed info */
+      _mesa_update_shader_textures_used(&shProg->FragmentProgram->Base);
+
       /* notify driver that a new fragment program has been compiled/linked */
       ctx->Driver.ProgramStringNotify(ctx, GL_FRAGMENT_PROGRAM_ARB,
                                       &shProg->FragmentProgram->Base);
-#if 0
-      printf("************** original fragment program\n");
-      _mesa_print_program(&fragProg->Base);
-      _mesa_print_program_parameters(ctx, &fragProg->Base);
-#endif
-#if 0
-      printf("************** linked fragment prog\n");
-      _mesa_print_program(&shProg->FragmentProgram->Base);
-      _mesa_print_program_parameters(ctx, &shProg->FragmentProgram->Base);
-#endif
+      if (MESA_VERBOSE & VERBOSE_GLSL_DUMP) {
+         printf("Mesa original fragment program:\n");
+         _mesa_print_program(&fragProg->Base);
+         _mesa_print_program_parameters(ctx, &fragProg->Base);
+
+         printf("Mesa post-link fragment program:\n");
+         _mesa_print_program(&shProg->FragmentProgram->Base);
+         _mesa_print_program_parameters(ctx, &shProg->FragmentProgram->Base);
+      }
    }
 
    if (vertProg && shProg->VertexProgram) {
+      /* Compute initial program's TexturesUsed info */
+      _mesa_update_shader_textures_used(&shProg->VertexProgram->Base);
+
       /* notify driver that a new vertex program has been compiled/linked */
       ctx->Driver.ProgramStringNotify(ctx, GL_VERTEX_PROGRAM_ARB,
                                       &shProg->VertexProgram->Base);
-#if 0
-      printf("************** original vertex program\n");
-      _mesa_print_program(&vertProg->Base);
-      _mesa_print_program_parameters(ctx, &vertProg->Base);
-#endif
-#if 0
-      printf("************** linked vertex prog\n");
-      _mesa_print_program(&shProg->VertexProgram->Base);
-      _mesa_print_program_parameters(ctx, &shProg->VertexProgram->Base);
-#endif
+      if (MESA_VERBOSE & VERBOSE_GLSL_DUMP) {
+         printf("Mesa original vertex program:\n");
+         _mesa_print_program(&vertProg->Base);
+         _mesa_print_program_parameters(ctx, &vertProg->Base);
+
+         printf("Mesa post-link vertex program:\n");
+         _mesa_print_program(&shProg->VertexProgram->Base);
+         _mesa_print_program_parameters(ctx, &shProg->VertexProgram->Base);
+      }
    }
 
    shProg->LinkStatus = (shProg->VertexProgram || shProg->FragmentProgram);

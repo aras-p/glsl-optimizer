@@ -62,8 +62,9 @@ struct ppc_function
 
 
 
-extern void ppc_init_func(struct ppc_function *p, unsigned max_inst);
+extern void ppc_init_func(struct ppc_function *p);
 extern void ppc_release_func(struct ppc_function *p);
+extern uint ppc_num_instructions(const struct ppc_function *p);
 extern void (*ppc_get_func( struct ppc_function *p ))( void );
 extern void ppc_dump_func(const struct ppc_function *p);
 
@@ -97,9 +98,13 @@ ppc_vminfp(struct ppc_function *p, uint vD, uint vA, uint vB);
 extern void
 ppc_vmaxfp(struct ppc_function *p, uint vD, uint vA, uint vB);
 
-/** vector float mult add */
+/** vector float mult add: vD = vA * vB + vC */
 extern void
 ppc_vmaddfp(struct ppc_function *p, uint vD, uint vA, uint vB, uint vC);
+
+/** vector float negative mult subtract: vD = vA - vB * vC */
+extern void
+ppc_vnmsubfp(struct ppc_function *p, uint vD, uint vA, uint vB, uint vC);
 
 /** vector float compare greater than */
 extern void

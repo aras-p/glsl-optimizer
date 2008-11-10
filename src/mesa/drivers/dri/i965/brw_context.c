@@ -39,6 +39,7 @@
 #include "brw_context.h"
 #include "brw_defines.h"
 #include "brw_draw.h"
+#include "brw_state.h"
 #include "brw_vs.h"
 #include "intel_tex.h"
 #include "intel_blit.h"

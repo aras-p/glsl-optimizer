@@ -958,6 +958,10 @@ fetch_src_file_channel(
       switch( file ) {
       case TGSI_FILE_CONSTANT:
          assert(mach->Consts);
+         assert(index->i[0] >= 0);
+         assert(index->i[1] >= 0);
+         assert(index->i[2] >= 0);
+         assert(index->i[3] >= 0);
          chan->f[0] = mach->Consts[index->i[0]][swizzle];
          chan->f[1] = mach->Consts[index->i[1]][swizzle];
          chan->f[2] = mach->Consts[index->i[2]][swizzle];
@@ -1041,12 +1045,16 @@ fetch_source(
    if (reg->SrcRegister.Indirect) {
       union tgsi_exec_channel index2;
       union tgsi_exec_channel indir_index;
+      const uint execmask = mach->ExecMask;
+      uint i;
 
+      /* which address register (always zero now) */
       index2.i[0] =
       index2.i[1] =
       index2.i[2] =
       index2.i[3] = reg->SrcRegisterInd.Index;
 
+      /* get current value of address register[swizzle] */
       swizzle = tgsi_util_get_src_register_swizzle( &reg->SrcRegisterInd, CHAN_X );
       fetch_src_file_channel(
          mach,
@@ -1055,10 +1063,19 @@ fetch_source(
          &index2,
          &indir_index );
 
+      /* add value of address register to the offset */
       index.i[0] += indir_index.i[0];
       index.i[1] += indir_index.i[1];
       index.i[2] += indir_index.i[2];
       index.i[3] += indir_index.i[3];
+
+      /* for disabled execution channels, zero-out the index to
+       * avoid using a potential garbage value.
+       */
+      for (i = 0; i < QUAD_SIZE; i++) {
+         if ((execmask & (1 << i)) == 0)
+            index.i[i] = 0;
+      }
    }
 
    if( reg->SrcRegister.Dimension ) {
@@ -1087,6 +1104,8 @@ fetch_source(
       if (reg->SrcRegisterDim.Indirect) {
          union tgsi_exec_channel index2;
          union tgsi_exec_channel indir_index;
+         const uint execmask = mach->ExecMask;
+         uint i;
 
          index2.i[0] =
          index2.i[1] =
@@ -1105,6 +1124,14 @@ fetch_source(
          index.i[1] += indir_index.i[1];
          index.i[2] += indir_index.i[2];
          index.i[3] += indir_index.i[3];
+
+         /* for disabled execution channels, zero-out the index to
+          * avoid using a potential garbage value.
+          */
+         for (i = 0; i < QUAD_SIZE; i++) {
+            if ((execmask & (1 << i)) == 0)
+               index.i[i] = 0;
+         }
       }
    }
 
@@ -2007,7 +2034,21 @@ exec_instruction(
 
    case TGSI_OPCODE_DOT2ADD:
       /* TGSI_OPCODE_DP2A */
-      assert (0);
+      FETCH( &r[0], 0, CHAN_X );
+      FETCH( &r[1], 1, CHAN_X );
+      micro_mul( &r[0], &r[0], &r[1] );
+
+      FETCH( &r[1], 0, CHAN_Y );
+      FETCH( &r[2], 1, CHAN_Y );
+      micro_mul( &r[1], &r[1], &r[2] );
+      micro_add( &r[0], &r[0], &r[1] );
+
+      FETCH( &r[2], 2, CHAN_X );
+      micro_add( &r[0], &r[0], &r[2] );
+
+      FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
+         STORE( &r[0], 0, chan_index );
+      }
       break;
 
    case TGSI_OPCODE_INDEX:
@@ -2436,7 +2477,66 @@ exec_instruction(
       break;
 
    case TGSI_OPCODE_NRM:
-      assert (0);
+      /* 3-component vector normalize */
+      {
+         union tgsi_exec_channel tmp, dot;
+
+         /* tmp = dp3(src0, src0): */
+         FETCH( &r[0], 0, CHAN_X );
+         micro_mul( &tmp, &r[0], &r[0] );
+
+         FETCH( &r[1], 0, CHAN_Y );
+         micro_mul( &dot, &r[1], &r[1] );
+         micro_add( &tmp, &tmp, &dot );
+
+         FETCH( &r[2], 0, CHAN_Z );
+         micro_mul( &dot, &r[2], &r[2] );
+         micro_add( &tmp, &tmp, &dot );
+
+         /* tmp = 1 / sqrt(tmp) */
+         micro_sqrt( &tmp, &tmp );
+         micro_div( &tmp, &mach->Temps[TEMP_1_I].xyzw[TEMP_1_C], &tmp );
+
+         /* note: w channel is undefined */
+         FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
+            /* chan = chan * tmp */
+            micro_mul( &r[chan_index], &tmp, &r[chan_index] );
+            STORE( &r[chan_index], 0, chan_index );
+         }
+      }
+      break;
+
+   case TGSI_OPCODE_NRM4:
+      /* 4-component vector normalize */
+      {
+         union tgsi_exec_channel tmp, dot;
+
+         /* tmp = dp4(src0, src0): */
+         FETCH( &r[0], 0, CHAN_X );
+         micro_mul( &tmp, &r[0], &r[0] );
+
+         FETCH( &r[1], 0, CHAN_Y );
+         micro_mul( &dot, &r[1], &r[1] );
+         micro_add( &tmp, &tmp, &dot );
+
+         FETCH( &r[2], 0, CHAN_Z );
+         micro_mul( &dot, &r[2], &r[2] );
+         micro_add( &tmp, &tmp, &dot );
+
+         FETCH( &r[3], 0, CHAN_W );
+         micro_mul( &dot, &r[3], &r[3] );
+         micro_add( &tmp, &tmp, &dot );
+
+         /* tmp = 1 / sqrt(tmp) */
+         micro_sqrt( &tmp, &tmp );
+         micro_div( &tmp, &mach->Temps[TEMP_1_I].xyzw[TEMP_1_C], &tmp );
+
+         FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
+            /* chan = chan * tmp */
+            micro_mul( &r[chan_index], &tmp, &r[chan_index] );
+            STORE( &r[chan_index], 0, chan_index );
+         }
+      }
       break;
 
    case TGSI_OPCODE_DIV:

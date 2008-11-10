@@ -62,7 +62,6 @@ dri_bo_release(dri_bo **bo)
  */
 static void brw_destroy_context( struct intel_context *intel )
 {
-   GLcontext *ctx = &intel->ctx;
    struct brw_context *brw = brw_context(&intel->ctx);
    int i;
 

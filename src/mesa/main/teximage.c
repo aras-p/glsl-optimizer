@@ -388,9 +388,10 @@ _mesa_base_tex_format( GLcontext *ctx, GLint internalFormat )
  * index, depth, stencil, etc).
  * \param format  the image format value (may by an internal texture format)
  * \return GL_TRUE if its a color/RGBA format, GL_FALSE otherwise.
+ * XXX maybe move this func to image.c
  */
-static GLboolean
-is_color_format(GLenum format)
+GLboolean
+_mesa_is_color_format(GLenum format)
 {
    switch (format) {
       case GL_RED:
@@ -491,6 +492,7 @@ is_color_format(GLenum format)
 #endif /* FEATURE_EXT_texture_sRGB */
          return GL_TRUE;
       case GL_YCBCR_MESA:  /* not considered to be RGB */
+         /* fall-through */
       default:
          return GL_FALSE;
    }
@@ -1587,9 +1589,9 @@ texture_error_check( GLcontext *ctx, GLenum target,
    }
 
    /* make sure internal format and format basically agree */
-   colorFormat = is_color_format(format);
+   colorFormat = _mesa_is_color_format(format);
    indexFormat = is_index_format(format);
-   if ((is_color_format(internalFormat) && !colorFormat && !indexFormat) ||
+   if ((_mesa_is_color_format(internalFormat) && !colorFormat && !indexFormat) ||
        (is_index_format(internalFormat) && !indexFormat) ||
        (is_depth_format(internalFormat) != is_depth_format(format)) ||
        (is_ycbcr_format(internalFormat) != is_ycbcr_format(format)) ||
@@ -2051,30 +2053,20 @@ copytexture_error_check( GLcontext *ctx, GLuint dimensions,
 
 /**
  * Test glCopyTexSubImage[12]D() parameters for errors.
+ * Note that this is the first part of error checking.
+ * See also copytexsubimage_error_check2() below for the second part.
  * 
  * \param ctx GL context.
  * \param dimensions texture image dimensions (must be 1, 2 or 3).
  * \param target texture target given by the user.
  * \param level image level given by the user.
- * \param xoffset sub-image x offset given by the user.
- * \param yoffset sub-image y offset given by the user.
- * \param zoffset sub-image z offset given by the user.
- * \param width image width given by the user.
- * \param height image height given by the user.
  * 
  * \return GL_TRUE if an error was detected, or GL_FALSE if no errors.
- * 
- * Verifies each of the parameters against the constants specified in
- * __GLcontextRec::Const and the supported extensions, and according to the
- * OpenGL specification.
  */
 static GLboolean
-copytexsubimage_error_check( GLcontext *ctx, GLuint dimensions,
-                             GLenum target, GLint level,
-                             GLint xoffset, GLint yoffset, GLint zoffset,
-                             GLsizei width, GLsizei height)
+copytexsubimage_error_check1( GLcontext *ctx, GLuint dimensions,
+                              GLenum target, GLint level)
 {
-   /* Check target */
    /* Check that the source buffer is complete */
    if (ctx->ReadBuffer->Name) {
       _mesa_test_framebuffer_completeness(ctx, ctx->ReadBuffer);
@@ -2085,6 +2077,7 @@ copytexsubimage_error_check( GLcontext *ctx, GLuint dimensions,
       }
    }
 
+   /* Check target */
    if (dimensions == 1) {
       if (target != GL_TEXTURE_1D) {
          _mesa_error( ctx, GL_INVALID_ENUM, "glCopyTexSubImage1D(target)" );
@@ -2132,6 +2125,33 @@ copytexsubimage_error_check( GLcontext *ctx, GLuint dimensions,
       return GL_TRUE;
    }
 
+   return GL_FALSE;
+}
+
+
+/**
+ * Second part of error checking for glCopyTexSubImage[12]D().
+ * \param xoffset sub-image x offset given by the user.
+ * \param yoffset sub-image y offset given by the user.
+ * \param zoffset sub-image z offset given by the user.
+ * \param width image width given by the user.
+ * \param height image height given by the user.
+ */
+static GLboolean
+copytexsubimage_error_check2( GLcontext *ctx, GLuint dimensions,
+			      GLenum target, GLint level,
+			      GLint xoffset, GLint yoffset, GLint zoffset,
+			      GLsizei width, GLsizei height,
+			      const struct gl_texture_image *teximage )
+{
+   /* check that dest tex image exists */
+   if (!teximage) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glCopyTexSubImage%dD(undefined texture level: %d)",
+                  dimensions, level);
+      return GL_TRUE;
+   }
+
    /* Check size */
    if (width < 0) {
       _mesa_error(ctx, GL_INVALID_VALUE,
@@ -2144,23 +2164,7 @@ copytexsubimage_error_check( GLcontext *ctx, GLuint dimensions,
       return GL_TRUE;
    }
 
-   return GL_FALSE;
-}
-
-static GLboolean
-copytexsubimage_error_check2( GLcontext *ctx, GLuint dimensions,
-			      GLenum target, GLint level,
-			      GLint xoffset, GLint yoffset, GLint zoffset,
-			      GLsizei width, GLsizei height,
-			      const struct gl_texture_image *teximage )
-{
-   if (!teximage) {
-      _mesa_error(ctx, GL_INVALID_OPERATION,
-                  "glCopyTexSubImage%dD(undefined texture level: %d)",
-                  dimensions, level);
-      return GL_TRUE;
-   }
-
+   /* check x/y offsets */
    if (xoffset < -((GLint)teximage->Border)) {
       _mesa_error(ctx, GL_INVALID_VALUE,
                   "glCopyTexSubImage%dD(xoffset=%d)", dimensions, xoffset);
@@ -2185,6 +2189,7 @@ copytexsubimage_error_check2( GLcontext *ctx, GLuint dimensions,
       }
    }
 
+   /* check z offset */
    if (dimensions > 2) {
       if (zoffset < -((GLint)teximage->Border)) {
          _mesa_error(ctx, GL_INVALID_VALUE,
@@ -2336,8 +2341,8 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
        * texture's format.  Note that a color index texture can be converted
        * to RGBA so that combo is allowed.
        */
-      if (is_color_format(format)
-	  && !is_color_format(texImage->TexFormat->BaseFormat)
+      if (_mesa_is_color_format(format)
+	  && !_mesa_is_color_format(texImage->TexFormat->BaseFormat)
 	  && !is_index_format(texImage->TexFormat->BaseFormat)) {
 	 _mesa_error(ctx, GL_INVALID_OPERATION, "glGetTexImage(format mismatch)");
 	 goto out;
@@ -2430,7 +2435,7 @@ _mesa_TexImage1D( GLenum target, GLint level, GLint internalFormat,
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
 #if FEATURE_convolve
-   if (is_color_format(internalFormat)) {
+   if (_mesa_is_color_format(internalFormat)) {
       _mesa_adjust_image_for_convolution(ctx, 1, &postConvWidth, NULL);
    }
 #endif
@@ -2527,7 +2532,7 @@ _mesa_TexImage2D( GLenum target, GLint level, GLint internalFormat,
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
 #if FEATURE_convolve
-   if (is_color_format(internalFormat)) {
+   if (_mesa_is_color_format(internalFormat)) {
       _mesa_adjust_image_for_convolution(ctx, 2, &postConvWidth,
 					 &postConvHeight);
    }
@@ -2752,7 +2757,7 @@ _mesa_TexSubImage1D( GLenum target, GLint level,
 
 #if FEATURE_convolve
    /* XXX should test internal format */
-   if (is_color_format(format)) {
+   if (_mesa_is_color_format(format)) {
       _mesa_adjust_image_for_convolution(ctx, 1, &postConvWidth, NULL);
    }
 #endif
@@ -2812,7 +2817,7 @@ _mesa_TexSubImage2D( GLenum target, GLint level,
 
 #if FEATURE_convolve
    /* XXX should test internal format */
-   if (is_color_format(format)) {
+   if (_mesa_is_color_format(format)) {
       _mesa_adjust_image_for_convolution(ctx, 2, &postConvWidth,
                                          &postConvHeight);
    }
@@ -2927,7 +2932,7 @@ _mesa_CopyTexImage1D( GLenum target, GLint level,
       _mesa_update_state(ctx);
 
 #if FEATURE_convolve
-   if (is_color_format(internalFormat)) {
+   if (_mesa_is_color_format(internalFormat)) {
       _mesa_adjust_image_for_convolution(ctx, 1, &postConvWidth, NULL);
    }
 #endif
@@ -2992,11 +2997,12 @@ _mesa_CopyTexImage2D( GLenum target, GLint level, GLenum internalFormat,
       _mesa_update_state(ctx);
 
 #if FEATURE_convolve
-   if (is_color_format(internalFormat)) {
+   if (_mesa_is_color_format(internalFormat)) {
       _mesa_adjust_image_for_convolution(ctx, 2, &postConvWidth,
                                          &postConvHeight);
    }
 #endif
+
    if (copytexture_error_check(ctx, 2, target, level, internalFormat,
                                postConvWidth, postConvHeight, border))
       return;
@@ -3058,13 +3064,7 @@ _mesa_CopyTexSubImage1D( GLenum target, GLint level,
    if (ctx->NewState & _IMAGE_NEW_TRANSFER_STATE)
       _mesa_update_state(ctx);
 
-#if FEATURE_convolve
-   /* XXX should test internal format */
-   _mesa_adjust_image_for_convolution(ctx, 1, &postConvWidth, NULL);
-#endif
-
-   if (copytexsubimage_error_check(ctx, 1, target, level,
-                                   xoffset, 0, 0, postConvWidth, 1))
+   if (copytexsubimage_error_check1(ctx, 1, target, level))
       return;
 
    texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
@@ -3073,6 +3073,12 @@ _mesa_CopyTexSubImage1D( GLenum target, GLint level,
    _mesa_lock_texture(ctx, texObj);
    {
       texImage = _mesa_select_tex_image(ctx, texObj, target, level);
+
+#if FEATURE_convolve
+      if (texImage && _mesa_is_color_format(texImage->InternalFormat)) {
+         _mesa_adjust_image_for_convolution(ctx, 1, &postConvWidth, NULL);
+      }
+#endif
 
       if (copytexsubimage_error_check2(ctx, 1, target, level,
 				       xoffset, 0, 0, postConvWidth, 1,
@@ -3113,13 +3119,7 @@ _mesa_CopyTexSubImage2D( GLenum target, GLint level,
    if (ctx->NewState & _IMAGE_NEW_TRANSFER_STATE)
       _mesa_update_state(ctx);
 
-#if FEATURE_convolve
-   /* XXX should test internal format */
-   _mesa_adjust_image_for_convolution(ctx, 2, &postConvWidth, &postConvHeight);
-#endif
-
-   if (copytexsubimage_error_check(ctx, 2, target, level, xoffset, yoffset, 0,
-                                   postConvWidth, postConvHeight))
+   if (copytexsubimage_error_check1(ctx, 2, target, level))
       return;
 
    texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
@@ -3128,6 +3128,13 @@ _mesa_CopyTexSubImage2D( GLenum target, GLint level,
    _mesa_lock_texture(ctx, texObj);
    {
       texImage = _mesa_select_tex_image(ctx, texObj, target, level);
+
+#if FEATURE_convolve
+      if (texImage && _mesa_is_color_format(texImage->InternalFormat)) {
+         _mesa_adjust_image_for_convolution(ctx, 2,
+                                            &postConvWidth, &postConvHeight);
+      }
+#endif
 
       if (copytexsubimage_error_check2(ctx, 2, target, level, xoffset, yoffset, 0,
 				       postConvWidth, postConvHeight, texImage))
@@ -3167,13 +3174,7 @@ _mesa_CopyTexSubImage3D( GLenum target, GLint level,
    if (ctx->NewState & _IMAGE_NEW_TRANSFER_STATE)
       _mesa_update_state(ctx);
 
-#if FEATURE_convolve
-   /* XXX should test internal format */
-   _mesa_adjust_image_for_convolution(ctx, 2, &postConvWidth, &postConvHeight);
-#endif
-
-   if (copytexsubimage_error_check(ctx, 3, target, level, xoffset, yoffset,
-                                   zoffset, postConvWidth, postConvHeight))
+   if (copytexsubimage_error_check1(ctx, 3, target, level))
       return;
 
    texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
@@ -3182,6 +3183,13 @@ _mesa_CopyTexSubImage3D( GLenum target, GLint level,
    _mesa_lock_texture(ctx, texObj);
    {
       texImage = _mesa_select_tex_image(ctx, texObj, target, level);
+
+#if FEATURE_convolve
+      if (texImage && _mesa_is_color_format(texImage->InternalFormat)) {
+         _mesa_adjust_image_for_convolution(ctx, 2,
+                                            &postConvWidth, &postConvHeight);
+      }
+#endif
 
       if (copytexsubimage_error_check2(ctx, 3, target, level, xoffset, yoffset,
 				       zoffset, postConvWidth, postConvHeight,

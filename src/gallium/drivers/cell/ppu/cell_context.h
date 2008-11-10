@@ -89,7 +89,7 @@ struct cell_buffer_node;
  */
 struct cell_buffer_list
 {
-   struct cell_fence fence;
+   struct cell_fence fence ALIGN16_ATTRIB;
    struct cell_buffer_node *head;
 };
 

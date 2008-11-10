@@ -38,17 +38,18 @@
 #include <stdio.h>
 #include "util/u_memory.h"
 #include "pipe/p_debug.h"
+#include "rtasm_execmem.h"
 #include "rtasm_ppc.h"
 
 
 void
-ppc_init_func(struct ppc_function *p, unsigned max_inst)
+ppc_init_func(struct ppc_function *p)
 {
    uint i;
 
-   p->store = align_malloc(max_inst * PPC_INST_SIZE, 16);
    p->num_inst = 0;
-   p->max_inst = max_inst;
+   p->max_inst = 100; /* first guess at buffer size */
+   p->store = rtasm_exec_malloc(p->max_inst * PPC_INST_SIZE);
    p->reg_used = 0x0;
    p->fp_used = 0x0;
    p->vec_used = 0x0;
@@ -66,9 +67,16 @@ ppc_release_func(struct ppc_function *p)
 {
    assert(p->num_inst <= p->max_inst);
    if (p->store != NULL) {
-      align_free(p->store);
+      rtasm_exec_free(p->store);
    }
    p->store = NULL;
+}
+
+
+uint
+ppc_num_instructions(const struct ppc_function *p)
+{
+   return p->num_inst;
 }
 
 
@@ -202,6 +210,35 @@ ppc_release_vec_register(struct ppc_function *p, int reg)
 }
 
 
+/**
+ * Append instruction to instruction buffer.  Grow buffer if out of room.
+ */
+static void
+emit_instruction(struct ppc_function *p, uint32_t inst_bits)
+{
+   if (!p->store)
+      return;  /* out of memory, drop the instruction */
+
+   if (p->num_inst == p->max_inst) {
+      /* allocate larger buffer */
+      uint32_t *newbuf;
+      p->max_inst *= 2;  /* 2x larger */
+      newbuf = rtasm_exec_malloc(p->max_inst * PPC_INST_SIZE);
+      if (newbuf) {
+         memcpy(newbuf, p->store, p->num_inst * PPC_INST_SIZE);
+      }
+      rtasm_exec_free(p->store);
+      p->store = newbuf;
+      if (!p->store) {
+         /* out of memory */
+         p->num_inst = 0;
+         return;
+      }
+   }
+
+   p->store[p->num_inst++] = inst_bits;
+}
+
 
 union vx_inst {
    uint32_t bits;
@@ -223,8 +260,7 @@ emit_vx(struct ppc_function *p, uint op2, uint vD, uint vA, uint vB)
    inst.inst.vA = vA;
    inst.inst.vB = vB;
    inst.inst.op2 = op2;
-   p->store[p->num_inst++] = inst.bits;
-   assert(p->num_inst <= p->max_inst);
+   emit_instruction(p, inst.bits);
 };
 
 
@@ -250,8 +286,7 @@ emit_vxr(struct ppc_function *p, uint op2, uint vD, uint vA, uint vB)
    inst.inst.vB = vB;
    inst.inst.rC = 0;
    inst.inst.op2 = op2;
-   p->store[p->num_inst++] = inst.bits;
-   assert(p->num_inst <= p->max_inst);
+   emit_instruction(p, inst.bits);
 };
 
 
@@ -277,8 +312,7 @@ emit_va(struct ppc_function *p, uint op2, uint vD, uint vA, uint vB, uint vC)
    inst.inst.vB = vB;
    inst.inst.vC = vC;
    inst.inst.op2 = op2;
-   p->store[p->num_inst++] = inst.bits;
-   assert(p->num_inst <= p->max_inst);
+   emit_instruction(p, inst.bits);
 };
 
 
@@ -300,8 +334,7 @@ emit_i(struct ppc_function *p, uint op, uint li, uint aa, uint lk)
    inst.inst.li = li;
    inst.inst.aa = aa;
    inst.inst.lk = lk;
-   p->store[p->num_inst++] = inst.bits;
-   assert(p->num_inst <= p->max_inst);
+   emit_instruction(p, inst.bits);
 }
 
 
@@ -330,8 +363,7 @@ emit_xl(struct ppc_function *p, uint op, uint bo, uint bi, uint bh,
    inst.inst.bh = bh;
    inst.inst.op2 = op2;
    inst.inst.lk = lk;
-   p->store[p->num_inst++] = inst.bits;
-   assert(p->num_inst <= p->max_inst);
+   emit_instruction(p, inst.bits);
 }
 
 static INLINE void
@@ -373,8 +405,7 @@ emit_x(struct ppc_function *p, uint op, uint vrs, uint ra, uint rb, uint op2)
    inst.inst.rb = rb;
    inst.inst.op2 = op2;
    inst.inst.unused = 0x0;
-   p->store[p->num_inst++] = inst.bits;
-   assert(p->num_inst <= p->max_inst);
+   emit_instruction(p, inst.bits);
 }
 
 
@@ -398,8 +429,7 @@ emit_d(struct ppc_function *p, uint op, uint rt, uint ra, int si)
    inst.inst.rt = rt;
    inst.inst.ra = ra;
    inst.inst.si = (unsigned) (si & 0xffff);
-   p->store[p->num_inst++] = inst.bits;
-   assert(p->num_inst <= p->max_inst);
+   emit_instruction(p, inst.bits);
 };
 
 
@@ -428,8 +458,7 @@ emit_a(struct ppc_function *p, uint op, uint frt, uint fra, uint frb, uint op2,
    inst.inst.unused = 0x0;
    inst.inst.op2 = op2;
    inst.inst.rc = rc;
-   p->store[p->num_inst++] = inst.bits;
-   assert(p->num_inst <= p->max_inst);
+   emit_instruction(p, inst.bits);
 };
 
 
@@ -458,8 +487,7 @@ emit_xo(struct ppc_function *p, uint op, uint rt, uint ra, uint rb, uint oe,
    inst.inst.oe = oe;
    inst.inst.op2 = op2;
    inst.inst.rc = rc;
-   p->store[p->num_inst++] = inst.bits;
-   assert(p->num_inst <= p->max_inst);
+   emit_instruction(p, inst.bits);
 }
 
 
@@ -503,6 +531,13 @@ void
 ppc_vmaddfp(struct ppc_function *p, uint vD, uint vA, uint vB, uint vC)
 {
    emit_va(p, 46, vD, vA, vC, vB); /* note arg order */
+}
+
+/** vector float negative mult subtract: vD = vA - vB * vC */
+void
+ppc_vnmsubfp(struct ppc_function *p, uint vD, uint vA, uint vB, uint vC)
+{
+   emit_va(p, 47, vD, vB, vA, vC); /* note arg order */
 }
 
 /** vector float compare greater than */

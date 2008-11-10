@@ -175,7 +175,7 @@ struct brw_depthbuffer
    } dword4;
 };
 
-struct brw_depthbuffer_gm45_g4x
+struct brw_depthbuffer_g4x
 {
    union header_union header;
    
@@ -1405,7 +1405,7 @@ struct brw_instruction
          GLuint msg_target:4;
          GLuint pad1:3;
          GLuint end_of_thread:1;
-      } sampler_gm45_g4x; 
+      } sampler_g4x;
 
       struct brw_urb_immediate urb;
 

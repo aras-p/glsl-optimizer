@@ -19,6 +19,9 @@ enum cliprect_mode {
    /**
     * Batchbuffer contents require looping over per cliprect at batch submit
     * time.
+    *
+    * This will be upgraded to NO_LOOP_CLIPRECTS when there's a single
+    * constant cliprect, as in DRI2 or FBO rendering.
     */
    LOOP_CLIPRECTS,
    /**
@@ -29,8 +32,10 @@ enum cliprect_mode {
    /**
     * Batchbuffer contents contain drawing that already handles cliprects, such
     * as 2D drawing to front/back/depth that doesn't respect DRAWING_RECTANGLE.
+    *
     * Equivalent behavior to NO_LOOP_CLIPRECTS, but may not persist in batch
-    * outside of LOCK/UNLOCK.
+    * outside of LOCK/UNLOCK.  This is upgraded to just NO_LOOP_CLIPRECTS when
+    * there's a constant cliprect, as in DRI2 or FBO rendering.
     */
    REFERENCES_CLIPRECTS
 };
@@ -114,6 +119,11 @@ intel_batchbuffer_require_space(struct intel_batchbuffer *batch,
    assert(sz < batch->size - 8);
    if (intel_batchbuffer_space(batch) < sz)
       intel_batchbuffer_flush(batch);
+
+   if ((cliprect_mode == LOOP_CLIPRECTS ||
+	cliprect_mode == REFERENCES_CLIPRECTS) &&
+       batch->intel->constant_cliprect)
+      cliprect_mode = NO_LOOP_CLIPRECTS;
 
    if (cliprect_mode != IGNORE_CLIPRECTS) {
       if (batch->cliprect_mode == IGNORE_CLIPRECTS) {

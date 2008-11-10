@@ -37,7 +37,7 @@
 
 #include "draw_vs.h"
 
-#if defined(PIPE_ARCH_X86) && defined(PIPE_ARCH_SSE)
+#if defined(PIPE_ARCH_X86)
 
 #include "pipe/p_shader_tokens.h"
 
@@ -99,8 +99,22 @@ vs_sse_run_linear( struct draw_vertex_shader *base,
    struct tgsi_exec_machine *machine = shader->machine;
    unsigned int i;
 
+   /* By default, execute all channels.  XXX move this inside the loop
+    * below when we support shader conditionals/loops.
+    */
+   tgsi_set_exec_mask(machine, 1, 1, 1, 1);
+
    for (i = 0; i < count; i += MAX_TGSI_VERTICES) {
       unsigned int max_vertices = MIN2(MAX_TGSI_VERTICES, count - i);
+
+      if (max_vertices < 4) {
+         /* disable the unused execution channels */
+         tgsi_set_exec_mask(machine,
+                            1,
+                            max_vertices > 1,
+                            max_vertices > 2,
+                            0);
+      }
 
       /* run compiled shader
        */

@@ -26,7 +26,7 @@ SDK = /opt/cell/sdk/usr
 
 CFLAGS = $(OPT_FLAGS) -Wall -Winline -fPIC -m32 -std=c99 -mabi=altivec -maltivec \
 	-I. -I$(SDK)/include \
-	-DGALLIUM_CELL -DUSE_XSHM
+	-DGALLIUM_CELL -DUSE_XSHM -D_BSD_SOURCE
 
 CXXFLAGS = $(CFLAGS)
 

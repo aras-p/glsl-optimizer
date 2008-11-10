@@ -100,7 +100,7 @@ mm_buffer_destroy(struct pb_buffer *buf)
    assert(buf->base.refcount == 0);
    
    pipe_mutex_lock(mm->mutex);
-   mmFreeMem(mm_buf->block);
+   u_mmFreeMem(mm_buf->block);
    FREE(buf);
    pipe_mutex_unlock(mm->mutex);
 }
@@ -175,14 +175,14 @@ mm_bufmgr_create_buffer(struct pb_manager *mgr,
    
    mm_buf->mgr = mm;
    
-   mm_buf->block = mmAllocMem(mm->heap, size, mm->align2, 0);
+   mm_buf->block = u_mmAllocMem(mm->heap, size, mm->align2, 0);
    if(!mm_buf->block) {
       debug_printf("warning: heap full\n");
 #if 0
       mmDumpMemInfo(mm->heap);
 #endif
       
-      mm_buf->block = mmAllocMem(mm->heap, size, mm->align2, 0);
+      mm_buf->block = u_mmAllocMem(mm->heap, size, mm->align2, 0);
       if(!mm_buf->block) {
          FREE(mm_buf);
          pipe_mutex_unlock(mm->mutex);
@@ -213,7 +213,7 @@ mm_bufmgr_destroy(struct pb_manager *mgr)
    
    pipe_mutex_lock(mm->mutex);
 
-   mmDestroy(mm->heap);
+   u_mmDestroy(mm->heap);
    
    pb_unmap(mm->buffer);
    pb_reference(&mm->buffer, NULL);
@@ -254,7 +254,7 @@ mm_bufmgr_create_from_buffer(struct pb_buffer *buffer,
    if(!mm->map)
       goto failure;
 
-   mm->heap = mmInit(0, size); 
+   mm->heap = u_mmInit(0, size); 
    if (!mm->heap)
       goto failure;
 
@@ -262,7 +262,7 @@ mm_bufmgr_create_from_buffer(struct pb_buffer *buffer,
    
 failure:
 if(mm->heap)
-   mmDestroy(mm->heap);
+   u_mmDestroy(mm->heap);
    if(mm->map)
       pb_unmap(mm->buffer);
    if(mm)

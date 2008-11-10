@@ -38,6 +38,7 @@ void
 cell_fence_init(struct cell_fence *fence)
 {
    uint i;
+   ASSERT_ALIGN16(fence->status);
    for (i = 0; i < CELL_MAX_SPUS; i++) {
       fence->status[i][0] = CELL_FENCE_IDLE;
    }
@@ -50,9 +51,9 @@ cell_fence_signalled(const struct cell_context *cell,
 {
    uint i;
    for (i = 0; i < cell->num_spus; i++) {
-      //ASSERT(fence->status[i][0] != CELL_FENCE_IDLE);
-      if (fence->status[i][0] == CELL_FENCE_EMITTED)
+      if (fence->status[i][0] != CELL_FENCE_SIGNALLED)
          return FALSE;
+      /*assert(fence->status[i][0] == CELL_FENCE_EMITTED);*/
    }
    return TRUE;
 }
@@ -65,6 +66,15 @@ cell_fence_finish(const struct cell_context *cell,
    while (!cell_fence_signalled(cell, fence)) {
       usleep(10);
    }
+
+#ifdef DEBUG
+   {
+      uint i;
+      for (i = 0; i < cell->num_spus; i++) {
+         assert(fence->status[i][0] == CELL_FENCE_SIGNALLED);
+      }
+   }
+#endif
 }
 
 

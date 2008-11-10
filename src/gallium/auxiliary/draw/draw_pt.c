@@ -33,6 +33,8 @@
 #include "draw/draw_context.h"
 #include "draw/draw_private.h"
 #include "draw/draw_pt.h"
+#include "draw/draw_vs.h"
+#include "tgsi/tgsi_dump.h"
 
 static unsigned trim( unsigned count, unsigned first, unsigned incr )
 {
@@ -176,6 +178,92 @@ void draw_pt_destroy( struct draw_context *draw )
 }
 
 
+/**
+ * Debug- print the first 'count' vertices.
+ */
+static void
+draw_print_arrays(struct draw_context *draw, uint prim, int start, uint count)
+{
+   uint i;
+
+   debug_printf("Draw arrays(prim = %u, start = %u, count = %u)\n",
+                prim, start, count);
+
+   for (i = 0; i < count; i++) {
+      uint ii, j;
+
+      if (draw->pt.user.elts) {
+         /* indexed arrays */
+         switch (draw->pt.user.eltSize) {
+         case 1:
+            {
+               const ubyte *elem = (const ubyte *) draw->pt.user.elts;
+               ii = elem[start + i];
+            }
+            break;
+         case 2:
+            {
+               const ushort *elem = (const ushort *) draw->pt.user.elts;
+               ii = elem[start + i];
+            }
+            break;
+         case 4:
+            {
+               const uint *elem = (const uint *) draw->pt.user.elts;
+               ii = elem[start + i];
+            }
+            break;
+         default:
+            assert(0);
+         }
+         debug_printf("Element[%u + %u] -> Vertex %u:\n", start, i, ii);
+      }
+      else {
+         /* non-indexed arrays */
+         ii = start + i;
+         debug_printf("Vertex %u:\n", ii);
+      }
+
+      for (j = 0; j < draw->pt.nr_vertex_elements; j++) {
+         uint buf = draw->pt.vertex_element[j].vertex_buffer_index;
+         ubyte *ptr = (ubyte *) draw->pt.user.vbuffer[buf];
+         ptr += draw->pt.vertex_buffer[buf].pitch * ii;
+         ptr += draw->pt.vertex_element[j].src_offset;
+
+         debug_printf("  Attr %u: ", j);
+         switch (draw->pt.vertex_element[j].src_format) {
+         case PIPE_FORMAT_R32_FLOAT:
+            {
+               float *v = (float *) ptr;
+               debug_printf("%f  @ %p\n", v[0], (void *) v);
+            }
+            break;
+         case PIPE_FORMAT_R32G32_FLOAT:
+            {
+               float *v = (float *) ptr;
+               debug_printf("%f %f  @ %p\n", v[0], v[1], (void *) v);
+            }
+            break;
+         case PIPE_FORMAT_R32G32B32_FLOAT:
+            {
+               float *v = (float *) ptr;
+               debug_printf("%f %f %f  @ %p\n", v[0], v[1], v[2], (void *) v);
+            }
+            break;
+         case PIPE_FORMAT_R32G32B32A32_FLOAT:
+            {
+               float *v = (float *) ptr;
+               debug_printf("%f %f %f %f  @ %p\n", v[0], v[1], v[2], v[3],
+                            (void *) v);
+            }
+            break;
+         default:
+            debug_printf("other format (fix me)\n");
+            ;
+         }
+      }
+   }
+}
 
 
 /**
@@ -194,6 +282,31 @@ draw_arrays(struct draw_context *draw, unsigned prim,
       draw_do_flush( draw, DRAW_FLUSH_STATE_CHANGE );
       draw->reduced_prim = reduced_prim;
    }
+
+   if (0)
+      draw_print_arrays(draw, prim, start, MIN2(count, 20));
+
+#if 0
+   {
+      int i;
+      debug_printf("draw_arrays(prim=%u start=%u count=%u):\n",
+                   prim, start, count);
+      tgsi_dump(draw->vs.vertex_shader->state.tokens, 0);
+      debug_printf("Elements:\n");
+      for (i = 0; i < draw->pt.nr_vertex_elements; i++) {
+         debug_printf("  format=%s comps=%u\n",
+                      pf_name(draw->pt.vertex_element[i].src_format),
+                      draw->pt.vertex_element[i].nr_components);
+      }
+      debug_printf("Buffers:\n");
+      for (i = 0; i < draw->pt.nr_vertex_buffers; i++) {
+         debug_printf("  pitch=%u offset=%u ptr=%p\n",
+                      draw->pt.vertex_buffer[i].pitch,
+                      draw->pt.vertex_buffer[i].buffer_offset,
+                      draw->pt.user.vbuffer[i]);
+      }
+   }
+#endif
 
    /* drawing done here: */
    draw_pt_arrays(draw, prim, start, count);

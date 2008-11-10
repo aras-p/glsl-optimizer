@@ -250,10 +250,10 @@ static void get_space( struct brw_context *brw,
       wrap_buffers(brw, size);
    }
 
+   assert(*bo_return == NULL);
    dri_bo_reference(brw->vb.upload.bo);
    *bo_return = brw->vb.upload.bo;
    *offset_return = brw->vb.upload.offset;
-
    brw->vb.upload.offset += size;
 }
 
@@ -359,6 +359,14 @@ static void brw_prepare_vertices(struct brw_context *brw)
 	 input->offset = (unsigned long)input->glarray->Ptr;
 	 input->stride = input->glarray->StrideB;
       } else {
+	 if (input->bo != NULL) {
+	    /* Already-uploaded vertex data is present from a previous
+	     * prepare_vertices, but we had to re-validate state due to
+	     * check_aperture failing and a new batch being produced.
+	     */
+	    continue;
+	 }
+
 	 /* Queue the buffer object up to be uploaded in the next pass,
 	  * when we've decided if we're doing interleaved or not.
 	  */
@@ -417,6 +425,12 @@ static void brw_prepare_vertices(struct brw_context *brw)
    }
 
    brw_prepare_query_begin(brw);
+
+   for (i = 0; i < nr_enabled; i++) {
+      struct brw_vertex_element *input = enabled[i];
+
+      brw_add_validated_bo(brw, input->bo);
+   }
 }
 
 static void brw_emit_vertices(struct brw_context *brw)
@@ -512,7 +526,7 @@ static void brw_prepare_indices(struct brw_context *brw)
    struct intel_context *intel = &brw->intel;
    const struct _mesa_index_buffer *index_buffer = brw->ib.ib;
    GLuint ib_size;
-   dri_bo *bo;
+   dri_bo *bo = NULL;
    struct gl_buffer_object *bufferobj;
    GLuint offset;
 
@@ -561,6 +575,8 @@ static void brw_prepare_indices(struct brw_context *brw)
    dri_bo_unreference(brw->ib.bo);
    brw->ib.bo = bo;
    brw->ib.offset = offset;
+
+   brw_add_validated_bo(brw, brw->ib.bo);
 }
 
 static void brw_emit_indices(struct brw_context *brw)

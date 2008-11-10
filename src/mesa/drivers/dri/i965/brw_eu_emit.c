@@ -64,7 +64,9 @@ static void brw_set_dest( struct brw_instruction *insn,
 
       if (insn->header.access_mode == BRW_ALIGN_1) {
 	 insn->bits1.da1.dest_subreg_nr = dest.subnr;
-	 insn->bits1.da1.dest_horiz_stride = BRW_HORIZONTAL_STRIDE_1;
+	 if (dest.hstride == BRW_HORIZONTAL_STRIDE_0)
+	    dest.hstride = BRW_HORIZONTAL_STRIDE_1;
+	 insn->bits1.da1.dest_horiz_stride = dest.hstride;
       }
       else {
 	 insn->bits1.da16.dest_subreg_nr = dest.subnr / 16;
@@ -78,7 +80,9 @@ static void brw_set_dest( struct brw_instruction *insn,
        */
       if (insn->header.access_mode == BRW_ALIGN_1) {
 	 insn->bits1.ia1.dest_indirect_offset = dest.dw1.bits.indirect_offset;
-	 insn->bits1.ia1.dest_horiz_stride = BRW_HORIZONTAL_STRIDE_1;
+	 if (dest.hstride == BRW_HORIZONTAL_STRIDE_0)
+	    dest.hstride = BRW_HORIZONTAL_STRIDE_1;
+	 insn->bits1.ia1.dest_horiz_stride = dest.hstride;
       }
       else {
 	 insn->bits1.ia16.dest_indirect_offset = dest.dw1.bits.indirect_offset;
@@ -329,14 +333,14 @@ static void brw_set_sampler_message(struct brw_context *brw,
 {
    brw_set_src1(insn, brw_imm_d(0));
 
-   if (BRW_IS_GM45(brw) || BRW_IS_G4X(brw)) {
-      insn->bits3.sampler_gm45_g4x.binding_table_index = binding_table_index;
-      insn->bits3.sampler_gm45_g4x.sampler = sampler;
-      insn->bits3.sampler_gm45_g4x.msg_type = msg_type;
-      insn->bits3.sampler_gm45_g4x.response_length = response_length;
-      insn->bits3.sampler_gm45_g4x.msg_length = msg_length;
-      insn->bits3.sampler_gm45_g4x.end_of_thread = eot;
-      insn->bits3.sampler_gm45_g4x.msg_target = BRW_MESSAGE_TARGET_SAMPLER;
+   if (BRW_IS_G4X(brw)) {
+      insn->bits3.sampler_g4x.binding_table_index = binding_table_index;
+      insn->bits3.sampler_g4x.sampler = sampler;
+      insn->bits3.sampler_g4x.msg_type = msg_type;
+      insn->bits3.sampler_g4x.response_length = response_length;
+      insn->bits3.sampler_g4x.msg_length = msg_length;
+      insn->bits3.sampler_g4x.end_of_thread = eot;
+      insn->bits3.sampler_g4x.msg_target = BRW_MESSAGE_TARGET_SAMPLER;
    } else {
       insn->bits3.sampler.binding_table_index = binding_table_index;
       insn->bits3.sampler.sampler = sampler;

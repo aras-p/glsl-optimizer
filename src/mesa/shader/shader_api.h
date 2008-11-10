@@ -80,6 +80,10 @@ _mesa_lookup_shader(GLcontext *ctx, GLuint name);
 
 
 extern void
+_mesa_update_shader_textures_used(struct gl_program *prog);
+
+
+extern void
 _mesa_use_program(GLcontext *ctx, GLuint program);
 
 

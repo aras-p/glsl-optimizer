@@ -346,6 +346,12 @@ compile_instruction(
    case OPCODE_DDY:
       fullinst->Instruction.Opcode = TGSI_OPCODE_DDY;
       break;
+   case OPCODE_DP2:
+      fullinst->Instruction.Opcode = TGSI_OPCODE_DP2;
+      break;
+   case OPCODE_DP2A:
+      fullinst->Instruction.Opcode = TGSI_OPCODE_DP2A;
+      break;
    case OPCODE_DP3:
       fullinst->Instruction.Opcode = TGSI_OPCODE_DP3;
       break;
@@ -389,8 +395,8 @@ compile_instruction(
       fullinst->Instruction.Opcode = TGSI_OPCODE_IF;
       fullinst->InstructionExtLabel.Label = inst->BranchTarget + preamble_size;
       break;
-   case OPCODE_INT:
-      fullinst->Instruction.Opcode = TGSI_OPCODE_INT;
+   case OPCODE_TRUNC:
+      fullinst->Instruction.Opcode = TGSI_OPCODE_TRUNC;
       break;
    case OPCODE_KIL:
       /* conditional */
@@ -443,6 +449,12 @@ compile_instruction(
    case OPCODE_NOP:
       fullinst->Instruction.Opcode = TGSI_OPCODE_NOP;
       break;
+   case OPCODE_NRM3:
+      fullinst->Instruction.Opcode = TGSI_OPCODE_NRM;
+      break;
+   case OPCODE_NRM4:
+      fullinst->Instruction.Opcode = TGSI_OPCODE_NRM4;
+      break;
    case OPCODE_POW:
       fullinst->Instruction.Opcode = TGSI_OPCODE_POW;
       break;
@@ -491,6 +503,9 @@ compile_instruction(
       break;
    case OPCODE_SNE:
       fullinst->Instruction.Opcode = TGSI_OPCODE_SNE;
+      break;
+   case OPCODE_SSG:
+      fullinst->Instruction.Opcode = TGSI_OPCODE_SSG;
       break;
    case OPCODE_SUB:
       fullinst->Instruction.Opcode = TGSI_OPCODE_SUB;

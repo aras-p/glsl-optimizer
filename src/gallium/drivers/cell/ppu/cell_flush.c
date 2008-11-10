@@ -49,7 +49,7 @@ cell_flush(struct pipe_context *pipe, unsigned flags,
       flags |= CELL_FLUSH_WAIT;
    }
 
-   if (flags & PIPE_FLUSH_SWAPBUFFERS)
+   if (flags & (PIPE_FLUSH_SWAPBUFFERS | PIPE_FLUSH_RENDER_CACHE))
       flags |= CELL_FLUSH_WAIT;
 
    draw_flush( cell->draw );

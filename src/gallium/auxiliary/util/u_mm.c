@@ -31,7 +31,7 @@
 
 
 void
-mmDumpMemInfo(const struct mem_block *heap)
+u_mmDumpMemInfo(const struct mem_block *heap)
 {
    debug_printf("Memory heap %p:\n", (void *)heap);
    if (heap == 0) {
@@ -58,7 +58,7 @@ mmDumpMemInfo(const struct mem_block *heap)
 }
 
 struct mem_block *
-mmInit(int ofs, int size)
+u_mmInit(int ofs, int size)
 {
    struct mem_block *heap, *block;
   
@@ -165,12 +165,16 @@ SliceBlock(struct mem_block *p,
 
 
 struct mem_block *
-mmAllocMem(struct mem_block *heap, int size, int align2, int startSearch)
+u_mmAllocMem(struct mem_block *heap, int size, int align2, int startSearch)
 {
    struct mem_block *p;
    const int mask = (1 << align2)-1;
    int startofs = 0;
    int endofs;
+
+   assert(size >= 0);
+   assert(align2 >= 0);
+   assert(align2 <= 12); /* sanity check, 2^12 (4KB) enough? */
 
    if (!heap || align2 < 0 || size <= 0)
       return NULL;
@@ -198,7 +202,7 @@ mmAllocMem(struct mem_block *heap, int size, int align2, int startSearch)
 
 
 struct mem_block *
-mmFindBlock(struct mem_block *heap, int start)
+u_mmFindBlock(struct mem_block *heap, int start)
 {
    struct mem_block *p;
 
@@ -237,7 +241,7 @@ Join2Blocks(struct mem_block *p)
 }
 
 int
-mmFreeMem(struct mem_block *b)
+u_mmFreeMem(struct mem_block *b)
 {
    if (!b)
       return 0;
@@ -266,7 +270,7 @@ mmFreeMem(struct mem_block *b)
 
 
 void
-mmDestroy(struct mem_block *heap)
+u_mmDestroy(struct mem_block *heap)
 {
    struct mem_block *p;
 

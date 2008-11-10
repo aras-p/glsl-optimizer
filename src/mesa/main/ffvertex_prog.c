@@ -1306,14 +1306,13 @@ static void build_lighting( struct tnl_program *p )
             }
             else if (!p->state->material_shininess_is_zero) {
                emit_op1(p, OPCODE_LIT, lit, 0, dots);
-               emit_op2(p, OPCODE_ADD, _col0, 0, ambient, _col0);
+               emit_op2(p, OPCODE_ADD, _bfc0, 0, ambient, _bfc0);
             } 
             else {
                emit_degenerate_lit(p, lit, dots);
-               emit_op2(p, OPCODE_ADD, _col0, 0, ambient, _col0);
+               emit_op2(p, OPCODE_ADD, _bfc0, 0, ambient, _bfc0);
             }
 
-	    emit_op2(p, OPCODE_ADD, _bfc0, 0, ambient, _bfc0);
 	    emit_op3(p, OPCODE_MAD, res0, mask0, swizzle1(lit,Y), diffuse, _bfc0);
 	    emit_op3(p, OPCODE_MAD, res1, mask1, swizzle1(lit,Z), specular, _bfc1);
 
