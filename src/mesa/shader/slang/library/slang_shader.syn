@@ -1393,11 +1393,13 @@ identifier
     id_character_first .emit * .and .loop id_character_next .emit * .and .true .emit '\0';
 
 float
-    float_1 .or float_2;
+    float_1 .or float_2 .or float_3;
 float_1
-    float_fractional_constant .and float_optional_exponent_part;
+    float_fractional_constant .and float_optional_exponent_part .and optional_f_suffix;
 float_2
-    float_digit_sequence .and .true .emit '\0' .and float_exponent_part;
+    float_digit_sequence .and .true .emit '\0' .and float_exponent_part .and optional_f_suffix;
+float_3
+    float_digit_sequence .and .true .emit '\0' .and 'f' .emit '\0';
 
 float_fractional_constant
     float_fractional_constant_1 .or float_fractional_constant_2 .or float_fractional_constant_3;
@@ -1426,6 +1428,10 @@ float_optional_sign
 
 float_sign
     '+' .or '-' .emit '-';
+
+optional_f_suffix
+    'f' .or .true;
+
 
 integer
     integer_hex .or integer_oct .or integer_dec;
