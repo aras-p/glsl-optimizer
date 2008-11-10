@@ -386,7 +386,7 @@ nouveau_surface_channel_create_nv04(struct nouveau_channel_context *nvc)
 	BEGIN_RING(chan, nvc->NvSIFM, NV04_SCALED_IMAGE_FROM_MEMORY_DMA_IMAGE, 1);
 	OUT_RING  (chan, nvc->channel->vram->handle);
 	BEGIN_RING(chan, nvc->NvSIFM, NV04_SCALED_IMAGE_FROM_MEMORY_SURFACE, 1);
-	OUT_RING  (chan, nvc->NvSwzSurf);
+	OUT_RING  (chan, nvc->NvSwzSurf->handle);
 	BEGIN_RING(chan, nvc->NvSIFM, NV04_SCALED_IMAGE_FROM_MEMORY_PATTERN, 1);
 	OUT_RING  (chan, 0);
 	BEGIN_RING(chan, nvc->NvSIFM, NV04_SCALED_IMAGE_FROM_MEMORY_ROP, 1);
