@@ -75,7 +75,7 @@ _mesa_new_uniform_list(void);
 extern void
 _mesa_free_uniform_list(struct gl_uniform_list *list);
 
-extern GLboolean
+extern struct gl_uniform *
 _mesa_append_uniform(struct gl_uniform_list *list,
                      const char *name, GLenum target, GLuint progPos);
 

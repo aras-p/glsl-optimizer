@@ -49,6 +49,7 @@ struct gl_program_parameter
    GLenum DataType;         /**< GL_FLOAT, GL_FLOAT_VEC2, etc */
    GLuint Size;             /**< Number of components (1..4) */
    GLboolean Used;          /**< Helper flag for GLSL uniform tracking */
+   GLboolean Initialized;   /**< Has the ParameterValue[] been set? */
    /**
     * A sequence of STATE_* tokens and integers to identify GL state.
     */
@@ -111,7 +112,8 @@ _mesa_add_unnamed_constant(struct gl_program_parameter_list *paramList,
 
 extern GLint
 _mesa_add_uniform(struct gl_program_parameter_list *paramList,
-                  const char *name, GLuint size, GLenum datatype);
+                  const char *name, GLuint size, GLenum datatype,
+                  const GLfloat *values);
 
 extern void
 _mesa_use_uniform(struct gl_program_parameter_list *paramList,
