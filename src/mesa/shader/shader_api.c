@@ -1608,6 +1608,7 @@ _mesa_uniform(GLcontext *ctx, GLint location, GLsizei count,
               const GLvoid *values, GLenum type)
 {
    struct gl_shader_program *shProg = ctx->Shader.CurrentProgram;
+   struct gl_uniform *uniform;
    GLint elems, offset;
 
    if (!shProg || !shProg->LinkStatus) {
@@ -1654,12 +1655,14 @@ _mesa_uniform(GLcontext *ctx, GLint location, GLsizei count,
 
    FLUSH_VERTICES(ctx, _NEW_PROGRAM);
 
+   uniform = &shProg->Uniforms->Uniforms[location];
+
    /* A uniform var may be used by both a vertex shader and a fragment
     * shader.  We may need to update one or both shader's uniform here:
     */
    if (shProg->VertexProgram) {
       /* convert uniform location to program parameter index */
-      GLint index = shProg->Uniforms->Uniforms[location].VertPos;
+      GLint index = uniform->VertPos;
       if (index >= 0) {
          set_program_uniform(ctx, &shProg->VertexProgram->Base,
                              index, offset, type, count, elems, values);
@@ -1668,14 +1671,14 @@ _mesa_uniform(GLcontext *ctx, GLint location, GLsizei count,
 
    if (shProg->FragmentProgram) {
       /* convert uniform location to program parameter index */
-      GLint index = shProg->Uniforms->Uniforms[location].FragPos;
+      GLint index = uniform->FragPos;
       if (index >= 0) {
          set_program_uniform(ctx, &shProg->FragmentProgram->Base,
                              index, offset, type, count, elems, values);
       }
    }
 
-   shProg->Uniforms->Uniforms[location].Initialized = GL_TRUE;
+   uniform->Initialized = GL_TRUE;
 }
 
 
@@ -1742,8 +1745,9 @@ _mesa_uniform_matrix(GLcontext *ctx, GLint cols, GLint rows,
                      GLenum matrixType, GLint location, GLsizei count,
                      GLboolean transpose, const GLfloat *values)
 {
-   GLint offset;
    struct gl_shader_program *shProg = ctx->Shader.CurrentProgram;
+   struct gl_uniform *uniform;
+   GLint offset;
 
    if (!shProg || !shProg->LinkStatus) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
@@ -1767,9 +1771,11 @@ _mesa_uniform_matrix(GLcontext *ctx, GLint cols, GLint rows,
 
    FLUSH_VERTICES(ctx, _NEW_PROGRAM);
 
+   uniform = &shProg->Uniforms->Uniforms[location];
+
    if (shProg->VertexProgram) {
       /* convert uniform location to program parameter index */
-      GLint index = shProg->Uniforms->Uniforms[location].VertPos;
+      GLint index = uniform->VertPos;
       if (index >= 0) {
          set_program_uniform_matrix(ctx, &shProg->VertexProgram->Base,
                                     index, offset,
@@ -1779,7 +1785,7 @@ _mesa_uniform_matrix(GLcontext *ctx, GLint cols, GLint rows,
 
    if (shProg->FragmentProgram) {
       /* convert uniform location to program parameter index */
-      GLint index = shProg->Uniforms->Uniforms[location].FragPos;
+      GLint index = uniform->FragPos;
       if (index >= 0) {
          set_program_uniform_matrix(ctx, &shProg->FragmentProgram->Base,
                                     index, offset,
@@ -1787,7 +1793,7 @@ _mesa_uniform_matrix(GLcontext *ctx, GLint cols, GLint rows,
       }
    }
 
-   shProg->Uniforms->Uniforms[location].Initialized = GL_TRUE;
+   uniform->Initialized = GL_TRUE;
 }
 
 

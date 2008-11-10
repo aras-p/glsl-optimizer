@@ -193,7 +193,10 @@ link_uniform_vars(struct gl_shader_program *shProg,
 
       if ((p->Type == PROGRAM_UNIFORM && p->Used) ||
           p->Type == PROGRAM_SAMPLER) {
-         _mesa_append_uniform(shProg->Uniforms, p->Name, prog->Target, i);
+         struct gl_uniform *uniform =
+            _mesa_append_uniform(shProg->Uniforms, p->Name, prog->Target, i);
+         if (uniform)
+            uniform->Initialized = p->Initialized;
       }
 
       if (p->Type == PROGRAM_SAMPLER) {
