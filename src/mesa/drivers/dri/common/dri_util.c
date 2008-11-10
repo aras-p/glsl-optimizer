@@ -964,7 +964,7 @@ __driUtilCreateNewScreen(__DRInativeDisplay *dpy, int scrn, __DRIscreen *psc,
 
     api_ver = internal_api_version;
 
-    psp = (__DRIscreenPrivate *)_mesa_malloc(sizeof(__DRIscreenPrivate));
+    psp = (__DRIscreenPrivate *)_mesa_calloc(sizeof(__DRIscreenPrivate));
     if (!psp) {
 	return NULL;
     }
