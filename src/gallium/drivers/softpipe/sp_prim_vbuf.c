@@ -26,10 +26,10 @@
  **************************************************************************/
 
 /**
- * Post-transform vertex buffering.  This is an optional part of the
- * softpipe rendering pipeline.
- * Probably not desired in general, but useful for testing/debuggin.
- * Enabled/Disabled with SP_VBUF env var.
+ * Interface between 'draw' module's output and the softpipe rasterizer/setup
+ * code.  When the 'draw' module has finished filling a vertex buffer, the
+ * draw_arrays() functions below will be called.  Loop over the vertices and
+ * call the point/line/tri setup functions.
  *
  * Authors
  *  Brian Paul
@@ -131,21 +131,23 @@ static INLINE cptrf4 get_vert( const void *vertex_buffer,
 }
 
 
+/**
+ * draw elements / indexed primitives
+ */
 static void
 sp_vbuf_draw(struct vbuf_render *vbr, const ushort *indices, uint nr)
 {
    struct softpipe_vbuf_render *cvbr = softpipe_vbuf_render(vbr);
    struct softpipe_context *softpipe = cvbr->softpipe;
-   unsigned stride = softpipe->vertex_info_vbuf.size * sizeof(float);
-   unsigned i;
+   const unsigned stride = softpipe->vertex_info_vbuf.size * sizeof(float);
    const void *vertex_buffer = cvbr->vertex_buffer;
+   unsigned i;
 
    /* XXX: break this dependency - make setup_context live under
     * softpipe, rename the old "setup" draw stage to something else.
     */
    struct draw_stage *setup = softpipe->setup;
-   struct setup_context *setup_ctx = sp_draw_setup_context(softpipe->setup);
-
+   struct setup_context *setup_ctx = sp_draw_setup_context(setup);
 
    switch (cvbr->prim) {
    case PIPE_PRIM_POINTS:
@@ -258,13 +260,16 @@ sp_vbuf_draw_arrays(struct vbuf_render *vbr, uint start, uint nr)
 {
    struct softpipe_vbuf_render *cvbr = softpipe_vbuf_render(vbr);
    struct softpipe_context *softpipe = cvbr->softpipe;
-   struct draw_stage *setup = softpipe->setup;
-   const void *vertex_buffer = NULL;
    const unsigned stride = softpipe->vertex_info_vbuf.size * sizeof(float);
+   const void *vertex_buffer =
+      (void *) get_vert(cvbr->vertex_buffer, start, stride);
    unsigned i;
-   struct setup_context *setup_ctx = sp_draw_setup_context(setup);
 
-   vertex_buffer = (void *)get_vert(cvbr->vertex_buffer, start, stride);
+   /* XXX: break this dependency - make setup_context live under
+    * softpipe, rename the old "setup" draw stage to something else.
+    */
+   struct draw_stage *setup = softpipe->setup;
+   struct setup_context *setup_ctx = sp_draw_setup_context(setup);
 
    switch (cvbr->prim) {
    case PIPE_PRIM_POINTS:
