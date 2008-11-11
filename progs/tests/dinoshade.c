@@ -793,7 +793,7 @@ supportsOneDotOne(void)
 
   version = (char *) glGetString(GL_VERSION);
   if (sscanf(version, "%d.%d", &major, &minor) == 2)
-    return major >= 1 && minor >= 1;
+    return major * 10 + minor >= 11;
   return 0;            /* OpenGL version string malformed! */
 }
 
