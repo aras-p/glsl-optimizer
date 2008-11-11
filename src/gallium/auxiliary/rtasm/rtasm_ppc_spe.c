@@ -958,9 +958,12 @@ spe_compare_greater_uint(struct spe_function *p, unsigned rT, unsigned rA, unsig
 void
 spe_splat(struct spe_function *p, unsigned rT, unsigned rA)
 {
+   /* Use a temporary, just in case rT == rA */
+   unsigned int tmp_reg = spe_allocate_available_register(p);
    /* Duplicate bytes 0, 1, 2, and 3 across the whole register */
-   spe_ila(p, rT, 0x00010203);
-   spe_shufb(p, rT, rA, rA, rT);
+   spe_ila(p, tmp_reg, 0x00010203);
+   spe_shufb(p, rT, rA, rA, tmp_reg);
+   spe_release_register(p, tmp_reg);
 }
 
 

@@ -75,23 +75,29 @@ lookup_fragment_ops(struct cell_context *cell)
     * If not found, create/save new fragment ops command.
     */
    if (!ops) {
-      struct spe_function spe_code;
+      struct spe_function spe_code_front, spe_code_back;
 
       if (0)
          debug_printf("**** Create New Fragment Ops\n");
 
       /* Prepare the buffer that will hold the generated code. */
-      spe_init_func(&spe_code, SPU_MAX_FRAGMENT_OPS_INSTS * SPE_INST_SIZE);
+      spe_init_func(&spe_code_front, SPU_MAX_FRAGMENT_OPS_INSTS * SPE_INST_SIZE);
+      spe_init_func(&spe_code_back, SPU_MAX_FRAGMENT_OPS_INSTS * SPE_INST_SIZE);
 
-      /* generate new code */
-      cell_gen_fragment_function(cell, &spe_code);
+      /* generate new code.  Always generate new code for both front-facing
+       * and back-facing fragments, even if it's the same code in both
+       * cases.
+       */
+      cell_gen_fragment_function(cell, CELL_FACING_FRONT, &spe_code_front);
+      cell_gen_fragment_function(cell, CELL_FACING_BACK, &spe_code_back);
 
       /* alloc new fragment ops command */
       ops = CALLOC_STRUCT(cell_command_fragment_ops);
 
       /* populate the new cell_command_fragment_ops object */
       ops->opcode = CELL_CMD_STATE_FRAGMENT_OPS;
-      memcpy(ops->code, spe_code.store, spe_code_size(&spe_code));
+      memcpy(ops->code_front, spe_code_front.store, spe_code_size(&spe_code_front));
+      memcpy(ops->code_back, spe_code_back.store, spe_code_size(&spe_code_back));
       ops->dsa = *cell->depth_stencil;
       ops->blend = *cell->blend;
 
@@ -99,7 +105,8 @@ lookup_fragment_ops(struct cell_context *cell)
       util_keymap_insert(cell->fragment_ops_cache, &key, ops, NULL);
 
       /* release rtasm buffer */
-      spe_release_func(&spe_code);
+      spe_release_func(&spe_code_front);
+      spe_release_func(&spe_code_back);
    }
    else {
       if (0)

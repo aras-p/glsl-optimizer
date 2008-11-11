@@ -1412,144 +1412,72 @@ gen_stencil_values(struct spe_function *f, unsigned int stencil_op,
  * and released by the corresponding spe_release_register_set() call.
  */
 static void
-gen_get_stencil_values(struct spe_function *f, const struct pipe_depth_stencil_alpha_state *dsa,
+gen_get_stencil_values(struct spe_function *f, const struct pipe_stencil_state *stencil,
+                       const unsigned int depth_enabled,
                        unsigned int fbS_reg, 
                        unsigned int *fail_reg, unsigned int *zfail_reg, 
-                       unsigned int *zpass_reg, unsigned int *back_fail_reg, 
-                       unsigned int *back_zfail_reg, unsigned int *back_zpass_reg)
+                       unsigned int *zpass_reg)
 {
-   unsigned zfail_op, back_zfail_op;
+   unsigned zfail_op;
 
    /* Stenciling had better be enabled here */
-   ASSERT(dsa->stencil[0].enabled);
+   ASSERT(stencil->enabled);
 
    /* If the depth test is not enabled, it is treated as though it always
-    * passes.  In particular, that means that the "zfail_op" (and the backfacing
-    * counterpart, if active) are not considered - a failing stencil test will
-    * trigger the "fail_op", and a passing stencil test will trigger the
-    * "zpass_op".
+    * passes, which means that the zfail_op is not considered - a
+    * failing stencil test triggers the fail_op, and a passing one
+    * triggers the zpass_op
     *
-    * By overriding the operations in this case to be PIPE_STENCIL_OP_KEEP,
-    * we keep them from being calculated.
+    * As an optimization, override calculation of the zfail_op values
+    * if they aren't going to be used.  By setting the value of
+    * the operation to PIPE_STENCIL_OP_KEEP, its value will be assumed
+    * to match the incoming stencil values, and no calculation will
+    * be done.
     */
-   if (dsa->depth.enabled) {
-      zfail_op = dsa->stencil[0].zfail_op;
-      back_zfail_op = dsa->stencil[1].zfail_op;
+   if (depth_enabled) {
+      zfail_op = stencil->zfail_op;
    }
    else {
       zfail_op = PIPE_STENCIL_OP_KEEP;
-      back_zfail_op = PIPE_STENCIL_OP_KEEP;
    }
 
    /* One-sided or front-facing stencil */
-   if (dsa->stencil[0].fail_op == PIPE_STENCIL_OP_KEEP) {
+   if (stencil->fail_op == PIPE_STENCIL_OP_KEEP) {
       *fail_reg = fbS_reg;
    }
    else {
       *fail_reg = spe_allocate_available_register(f);
-      gen_stencil_values(f, dsa->stencil[0].fail_op, dsa->stencil[0].ref_value, 
+      gen_stencil_values(f, stencil->fail_op, stencil->ref_value, 
          0xff, fbS_reg, *fail_reg);
    }
 
+   /* Check the possibly overridden value, not the structure value */
    if (zfail_op == PIPE_STENCIL_OP_KEEP) {
       *zfail_reg = fbS_reg;
    }
-   else if (zfail_op == dsa->stencil[0].fail_op) {
+   else if (zfail_op == stencil->fail_op) {
       *zfail_reg = *fail_reg;
    }
    else {
       *zfail_reg = spe_allocate_available_register(f);
-      gen_stencil_values(f, dsa->stencil[0].zfail_op, dsa->stencil[0].ref_value, 
+      gen_stencil_values(f, stencil->zfail_op, stencil->ref_value, 
          0xff, fbS_reg, *zfail_reg);
    }
 
-   if (dsa->stencil[0].zpass_op == PIPE_STENCIL_OP_KEEP) {
+   if (stencil->zpass_op == PIPE_STENCIL_OP_KEEP) {
       *zpass_reg = fbS_reg;
    }
-   else if (dsa->stencil[0].zpass_op == dsa->stencil[0].fail_op) {
+   else if (stencil->zpass_op == stencil->fail_op) {
       *zpass_reg = *fail_reg;
    }
-   else if (dsa->stencil[0].zpass_op == zfail_op) {
+   else if (stencil->zpass_op == zfail_op) {
       *zpass_reg = *zfail_reg;
    }
    else {
       *zpass_reg = spe_allocate_available_register(f);
-      gen_stencil_values(f, dsa->stencil[0].zpass_op, dsa->stencil[0].ref_value, 
+      gen_stencil_values(f, stencil->zpass_op, stencil->ref_value, 
          0xff, fbS_reg, *zpass_reg);
    }
-
-   /* If two-sided stencil is enabled, we have more work to do. */
-   if (!dsa->stencil[1].enabled) {
-      /* This just flags that the registers need not be deallocated later */
-      *back_fail_reg = fbS_reg;
-      *back_zfail_reg = fbS_reg;
-      *back_zpass_reg = fbS_reg;
-   }
-   else {
-      /* Same calculations as above, but for the back stencil */
-      if (dsa->stencil[1].fail_op == PIPE_STENCIL_OP_KEEP) {
-         *back_fail_reg = fbS_reg;
-      }
-      else if (dsa->stencil[1].fail_op == dsa->stencil[0].fail_op) {
-         *back_fail_reg = *fail_reg;
-      }
-      else if (dsa->stencil[1].fail_op == zfail_op) {
-         *back_fail_reg = *zfail_reg;
-      }
-      else if (dsa->stencil[1].fail_op == dsa->stencil[0].zpass_op) {
-         *back_fail_reg = *zpass_reg;
-      }
-      else {
-         *back_fail_reg = spe_allocate_available_register(f);
-         gen_stencil_values(f, dsa->stencil[1].fail_op, dsa->stencil[1].ref_value, 
-            0xff, fbS_reg, *back_fail_reg);
-      }
-
-      if (back_zfail_op == PIPE_STENCIL_OP_KEEP) {
-         *back_zfail_reg = fbS_reg;
-      }
-      else if (back_zfail_op == dsa->stencil[0].fail_op) {
-         *back_zfail_reg = *fail_reg;
-      }
-      else if (back_zfail_op == zfail_op) {
-         *back_zfail_reg = *zfail_reg;
-      }
-      else if (back_zfail_op == dsa->stencil[0].zpass_op) {
-         *back_zfail_reg = *zpass_reg;
-      }
-      else if (back_zfail_op == dsa->stencil[1].fail_op) {
-         *back_zfail_reg = *back_fail_reg;
-      }
-      else {
-         *back_zfail_reg = spe_allocate_available_register(f);
-         gen_stencil_values(f, dsa->stencil[1].zfail_op, dsa->stencil[1].ref_value, 
-            0xff, fbS_reg, *back_zfail_reg);
-      }
-
-      if (dsa->stencil[1].zpass_op == PIPE_STENCIL_OP_KEEP) {
-         *back_zpass_reg = fbS_reg;
-      }
-      else if (dsa->stencil[1].zpass_op == dsa->stencil[0].fail_op) {
-         *back_zpass_reg = *fail_reg;
-      }
-      else if (dsa->stencil[1].zpass_op == zfail_op) {
-         *back_zpass_reg = *zfail_reg;
-      }
-      else if (dsa->stencil[1].zpass_op == dsa->stencil[0].zpass_op) {
-         *back_zpass_reg = *zpass_reg;
-      }
-      else if (dsa->stencil[1].zpass_op == dsa->stencil[1].fail_op) {
-         *back_zpass_reg = *back_fail_reg;
-      }
-      else if (dsa->stencil[1].zpass_op == back_zfail_op) {
-         *back_zpass_reg = *back_zfail_reg;
-      }
-      else {
-         *back_zfail_reg = spe_allocate_available_register(f);
-         gen_stencil_values(f, dsa->stencil[1].zpass_op, dsa->stencil[1].ref_value, 
-            0xff, fbS_reg, *back_zpass_reg);
-      }
-   } /* End of calculations for back-facing stencil */
 }
 
 /* Note that fbZ_reg may *not* be set on entry, if in fact
@@ -1559,7 +1487,7 @@ gen_get_stencil_values(struct spe_function *f, const struct pipe_depth_stencil_a
 static boolean
 gen_stencil_depth_test(struct spe_function *f, 
                        const struct pipe_depth_stencil_alpha_state *dsa, 
-                       const int const facing_reg,
+                       const uint facing,
                        const int mask_reg, const int fragZ_reg, 
                        const int fbZ_reg, const int fbS_reg)
 {
@@ -1570,6 +1498,8 @@ gen_stencil_depth_test(struct spe_function *f,
 
    boolean need_to_calculate_stencil_values;
    boolean need_to_writemask_stencil_values;
+
+   struct pipe_stencil_state *stencil;
 
    /* Registers.  We may or may not actually allocate these, depending
     * on whether the state values indicate that we need them.
@@ -1598,6 +1528,20 @@ gen_stencil_depth_test(struct spe_function *f,
    spe_comment(f, 0, "Allocating stencil register set");
    spe_allocate_register_set(f);
 
+   /* The facing we're given is the fragment facing; it doesn't
+    * exactly match the stencil facing.  If stencil is enabled,
+    * but two-sided stencil is *not* enabled, we use the same
+    * stencil settings for both front- and back-facing fragments.
+    * We only use the "back-facing" stencil for backfacing fragments
+    * if two-sided stenciling is enabled.
+    */
+   if (facing == CELL_FACING_BACK && dsa->stencil[1].enabled) {
+      stencil = &dsa->stencil[1];
+   }
+   else {
+      stencil = &dsa->stencil[0];
+   }
+
    /* Calculate the writemask.  If the writemask is trivial (either
     * all 0s, meaning that we don't need to calculate any stencil values
     * because they're not going to change the stencil anyway, or all 1s,
@@ -1608,24 +1552,20 @@ gen_stencil_depth_test(struct spe_function *f,
     * Note that if the backface stencil is *not* enabled, the backface
     * stencil will have the same values as the frontface stencil.
     */
-   if (dsa->stencil[0].fail_op == PIPE_STENCIL_OP_KEEP &&
-       dsa->stencil[0].zfail_op == PIPE_STENCIL_OP_KEEP &&
-       dsa->stencil[0].zpass_op == PIPE_STENCIL_OP_KEEP &&
-       dsa->stencil[1].fail_op == PIPE_STENCIL_OP_KEEP &&
-       dsa->stencil[1].zfail_op == PIPE_STENCIL_OP_KEEP &&
-       dsa->stencil[1].zpass_op == PIPE_STENCIL_OP_KEEP) {
-       /* No changes to any stencil values */
+   if (stencil->fail_op == PIPE_STENCIL_OP_KEEP &&
+       stencil->zfail_op == PIPE_STENCIL_OP_KEEP &&
+       stencil->zpass_op == PIPE_STENCIL_OP_KEEP) {
        need_to_calculate_stencil_values = false;
        need_to_writemask_stencil_values = false;
     }
-    else if (dsa->stencil[0].write_mask == 0x0 && dsa->stencil[1].write_mask == 0x0) {
+    else if (stencil->write_mask == 0x0) {
       /* All changes are writemasked out, so no need to calculate
        * what those changes might be, and no need to write anything back.
        */
       need_to_calculate_stencil_values = false;
       need_to_writemask_stencil_values = false;
    }
-   else if (dsa->stencil[0].write_mask == 0xff && dsa->stencil[1].write_mask == 0xff) {
+   else if (stencil->write_mask == 0xff) {
       /* Still trivial, but a little less so.  We need to write the stencil
        * values, but we don't need to mask them.
        */
@@ -1645,14 +1585,7 @@ gen_stencil_depth_test(struct spe_function *f,
        */
       spe_comment(f, 0, "Computing stencil writemask");
       stencil_writemask_reg = spe_allocate_available_register(f);
-      spe_load_uint(f, stencil_writemask_reg, dsa->stencil[0].write_mask);
-      if (dsa->stencil[1].enabled && dsa->stencil[0].write_mask != dsa->stencil[1].write_mask) {
-         unsigned int back_write_mask_reg = spe_allocate_available_register(f);
-         spe_comment(f, 0, "Resolving two-sided stencil writemask");
-         spe_load_uint(f, back_write_mask_reg, dsa->stencil[1].write_mask);
-         spe_selb(f, stencil_writemask_reg, stencil_writemask_reg, back_write_mask_reg, facing_reg);
-         spe_release_register(f, back_write_mask_reg);
-      }
+      spe_load_uint(f, stencil_writemask_reg, dsa->stencil[facing].write_mask);
    }
 
    /* At least one-sided stenciling must be on.  Generate code that
@@ -1666,19 +1599,7 @@ gen_stencil_depth_test(struct spe_function *f,
     */
    spe_comment(f, 0, "Running basic stencil test");
    stencil_pass_reg = spe_allocate_available_register(f);
-   gen_stencil_test(f, &dsa->stencil[0], 0xff, mask_reg, fbS_reg, stencil_pass_reg);
-
-   /* If two-sided stenciling is on, generate code to run the stencil
-    * test on the backfacing stencil as well, and combine the two results
-    * into the one correct result based on facing.
-    */
-   if (dsa->stencil[1].enabled) {
-      unsigned int temp_reg = spe_allocate_available_register(f);
-      spe_comment(f, 0, "Running backface stencil test");
-      gen_stencil_test(f, &dsa->stencil[1], 0xff, mask_reg, fbS_reg, temp_reg);
-      spe_selb(f, stencil_pass_reg, stencil_pass_reg, temp_reg, facing_reg);
-      spe_release_register(f, temp_reg);
-   }
+   gen_stencil_test(f, stencil, 0xff, mask_reg, fbS_reg, stencil_pass_reg);
 
    /* Generate code that, given the mask of valid fragments and the
     * mask of valid fragments that passed the stencil test, computes
@@ -1698,9 +1619,6 @@ gen_stencil_depth_test(struct spe_function *f,
 
    /* We may not need to calculate stencil values, if the writemask is off */
    if (need_to_calculate_stencil_values) {
-      unsigned int back_stencil_fail_values, back_stencil_pass_depth_fail_values, back_stencil_pass_depth_pass_values;
-      unsigned int front_stencil_fail_values, front_stencil_pass_depth_fail_values, front_stencil_pass_depth_pass_values;
-
       /* Generate code that calculates exactly which stencil values we need,
        * without calculating the same value twice (say, if two different
        * stencil ops have the same value).  This code will work for one-sided
@@ -1715,51 +1633,11 @@ gen_stencil_depth_test(struct spe_function *f,
        * This function will allocate a variant number of registers that
        * will be released as part of the register set.
        */
-      spe_comment(f, 0, "Computing stencil values");
-      gen_get_stencil_values(f, dsa, fbS_reg, 
-         &front_stencil_fail_values, &front_stencil_pass_depth_fail_values, 
-         &front_stencil_pass_depth_pass_values, &back_stencil_fail_values, 
-         &back_stencil_pass_depth_fail_values, &back_stencil_pass_depth_pass_values);
-
-      /* Tricky, tricky, tricky - the things we do to create optimal
-       * code...
-       *
-       * The various stencil values registers may overlap with each other
-       * and with fbS_reg arbitrarily (as any particular operation is
-       * only calculated once and stored in one register, no matter
-       * how many times it is used).  So we can't change the values 
-       * within those registers directly - if we change a value in a
-       * register that's being referenced by two different calculations,
-       * we've just unwittingly changed the second value as well...
-       *
-       * Avoid this by allocating new registers to hold the results
-       * (there may be 2, if the depth test is off, or 3, if it is on).
-       * These will be released as part of the register set.
-       */
-      if (!dsa->stencil[1].enabled) {
-         /* The easy case: if two-sided stenciling is *not* enabled, we
-          * just use the front-sided values.
-          */
-         stencil_fail_values = front_stencil_fail_values;
-         stencil_pass_depth_fail_values = front_stencil_pass_depth_fail_values;
-         stencil_pass_depth_pass_values = front_stencil_pass_depth_pass_values;
-      }
-      else { /* two-sided stencil enabled */
-         spe_comment(f, 0, "Resolving backface stencil values");
-         /* Allocate new registers for the needed merged values */
-         stencil_fail_values = spe_allocate_available_register(f);
-         spe_selb(f, stencil_fail_values, front_stencil_fail_values, back_stencil_fail_values, facing_reg);
-         if (dsa->depth.enabled) {
-            stencil_pass_depth_fail_values = spe_allocate_available_register(f);
-            spe_selb(f, stencil_pass_depth_fail_values, front_stencil_pass_depth_fail_values, back_stencil_pass_depth_fail_values, facing_reg);
-         }
-         else {
-            stencil_pass_depth_fail_values = fbS_reg;
-         }
-         stencil_pass_depth_pass_values = spe_allocate_available_register(f);
-         spe_selb(f, stencil_pass_depth_pass_values, front_stencil_pass_depth_pass_values, back_stencil_pass_depth_pass_values, facing_reg);
-      }
-   }
+      spe_comment(f, 0, facing == CELL_FACING_FRONT ? "Computing front-facing stencil values" : "Computing back-facing stencil values");
+      gen_get_stencil_values(f, stencil, dsa->depth.enabled, fbS_reg, 
+         &stencil_fail_values, &stencil_pass_depth_fail_values, 
+         &stencil_pass_depth_pass_values);
+   }  
 
    /* We now have all the stencil values we need.  We also need 
     * the results of the depth test to figure out which
@@ -1896,10 +1774,12 @@ gen_stencil_depth_test(struct spe_function *f,
  * should be much faster.
  *
  * \param cell  the rendering context (in)
+ * \param facing whether the generated code is for front-facing or 
+ *              back-facing fragments
  * \param f     the generated function (out)
  */
 void
-cell_gen_fragment_function(struct cell_context *cell, struct spe_function *f)
+cell_gen_fragment_function(struct cell_context *cell, uint facing, struct spe_function *f)
 {
    const struct pipe_depth_stencil_alpha_state *dsa = cell->depth_stencil;
    const struct pipe_blend_state *blend = cell->blend;
@@ -1917,7 +1797,8 @@ cell_gen_fragment_function(struct cell_context *cell, struct spe_function *f)
    const int fragB_reg = 10;  /* vector float */
    const int fragA_reg = 11;  /* vector float */
    const int mask_reg = 12;   /* vector uint */
-   const int facing_reg = 13; /* uint */
+
+   ASSERT(facing == CELL_FACING_FRONT || facing == CELL_FACING_BACK);
 
    /* offset of quad from start of tile
     * XXX assuming 4-byte pixels for color AND Z/stencil!!!!
@@ -1945,7 +1826,6 @@ cell_gen_fragment_function(struct cell_context *cell, struct spe_function *f)
    spe_allocate_register(f, fragB_reg);
    spe_allocate_register(f, fragA_reg);
    spe_allocate_register(f, mask_reg);
-   spe_allocate_register(f, facing_reg);
 
    quad_offset_reg = spe_allocate_available_register(f);
    fbRGBA_reg = spe_allocate_available_register(f);
@@ -1969,6 +1849,7 @@ cell_gen_fragment_function(struct cell_context *cell, struct spe_function *f)
       spe_release_register(f, y2_reg);
    }
 
+   /* Generate the alpha test, if needed. */
    if (dsa->alpha.enabled) {
       gen_alpha_test(dsa, f, mask_reg, fragA_reg);
    }
@@ -2095,7 +1976,7 @@ cell_gen_fragment_function(struct cell_context *cell, struct spe_function *f)
           * gen_stencil_depth_test() function must ignore the
           * fbZ_reg register if depth is not enabled.
           */
-         write_depth_stencil = gen_stencil_depth_test(f, dsa, facing_reg, mask_reg, fragZ_reg, fbZ_reg, fbS_reg);
+         write_depth_stencil = gen_stencil_depth_test(f, dsa, facing, mask_reg, fragZ_reg, fbZ_reg, fbS_reg);
       }
       else if (dsa->depth.enabled) {
          int zmask_reg = spe_allocate_available_register(f);

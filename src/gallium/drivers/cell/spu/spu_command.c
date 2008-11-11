@@ -214,7 +214,8 @@ cmd_state_fragment_ops(const struct cell_command_fragment_ops *fops)
 
    D_PRINTF(CELL_DEBUG_CMD, "CMD_STATE_FRAGMENT_OPS\n");
    /* Copy SPU code from batch buffer to spu buffer */
-   memcpy(spu.fragment_ops_code, fops->code, SPU_MAX_FRAGMENT_OPS_INSTS * 4);
+   memcpy(spu.fragment_ops_code_front, fops->code_front, SPU_MAX_FRAGMENT_OPS_INSTS * 4);
+   memcpy(spu.fragment_ops_code_back, fops->code_back, SPU_MAX_FRAGMENT_OPS_INSTS * 4);
    /* Copy state info (for fallback case only) */
    memcpy(&spu.depth_stencil_alpha, &fops->dsa, sizeof(fops->dsa));
    memcpy(&spu.blend, &fops->blend, sizeof(fops->blend));
@@ -234,7 +235,8 @@ cmd_state_fragment_ops(const struct cell_command_fragment_ops *fops)
     * raw state records that the fallback code requires.
     */
    if ((spu.init.debug_flags & CELL_DEBUG_FRAGMENT_OP_FALLBACK) == 0) {
-      spu.fragment_ops = (spu_fragment_ops_func) spu.fragment_ops_code;
+      spu.fragment_ops[CELL_FACING_FRONT] = (spu_fragment_ops_func) spu.fragment_ops_code_front;
+      spu.fragment_ops[CELL_FACING_BACK] = (spu_fragment_ops_func) spu.fragment_ops_code_back;
    }
    else {
       /* otherwise, the default fallback code remains in place */

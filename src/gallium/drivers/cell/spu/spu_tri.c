@@ -275,15 +275,20 @@ emit_quad( int x, int y, mask_t mask)
 
          /* Execute per-fragment/quad operations, including:
           * alpha test, z test, stencil test, blend and framebuffer writing.
+          * Note that there are two different fragment operations functions
+          * that can be called, one for front-facing fragments, and one
+          * for back-facing fragments.  (Often the two are the same;
+          * but in some cases, like two-sided stenciling, they can be
+          * very different.)  So choose the correct function depending
+          * on the calculated facing.
           */
-         spu.fragment_ops(ix, iy, &spu.ctile, &spu.ztile,
+         spu.fragment_ops[setup.facing](ix, iy, &spu.ctile, &spu.ztile,
                           fragZ,
                           outputs[0*4+0],
                           outputs[0*4+1],
                           outputs[0*4+2],
                           outputs[0*4+3],
-                          mask,
-                          setup.facing);
+                          mask);
       }
    }
 }
@@ -519,7 +524,14 @@ setup_sort_vertices(const struct vertex_header *v0,
 
    setup.oneOverArea = 1.0f / area;
 
-   /* The product of area * sign indicates front/back orientation (0/1) */
+   /* The product of area * sign indicates front/back orientation (0/1).
+    * Just in case someone gets the bright idea of switching the front
+    * and back constants without noticing that we're assuming their
+    * values in this operation, also assert that the values are
+    * what we think they are.
+    */
+   ASSERT(CELL_FACING_FRONT == 0);
+   ASSERT(CELL_FACING_BACK == 1);
    setup.facing = (area * sign > 0.0f)
       ^ (spu.rasterizer.front_winding == PIPE_WINDING_CW);
 

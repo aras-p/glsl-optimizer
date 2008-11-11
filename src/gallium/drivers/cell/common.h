@@ -130,6 +130,9 @@
 #define CELL_FENCE_EMITTED   1
 #define CELL_FENCE_SIGNALLED 2
 
+#define CELL_FACING_FRONT    0
+#define CELL_FACING_BACK     1
+
 struct cell_fence
 {
    /** There's a 16-byte status qword per SPU */
@@ -160,7 +163,8 @@ struct cell_command_fragment_ops
    struct pipe_depth_stencil_alpha_state dsa;
    struct pipe_blend_state blend;
    struct pipe_blend_color blend_color;
-   unsigned code[SPU_MAX_FRAGMENT_OPS_INSTS];
+   unsigned code_front[SPU_MAX_FRAGMENT_OPS_INSTS];
+   unsigned code_back[SPU_MAX_FRAGMENT_OPS_INSTS];
 };
 
 

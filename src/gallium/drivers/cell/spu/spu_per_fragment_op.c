@@ -75,8 +75,7 @@ spu_fallback_fragment_ops(uint x, uint y,
                           vector float fragG,
                           vector float fragB,
                           vector float fragA,
-                          vector unsigned int mask,
-                          uint facing)
+                          vector unsigned int mask)
 {
    vector float frag_aos[4];
    unsigned int fbc0, fbc1, fbc2, fbc3 ; /* framebuffer/tile colors */

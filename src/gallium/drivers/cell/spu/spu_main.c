@@ -63,7 +63,8 @@ one_time_init(void)
     * This will normally be overriden by a code-gen'd function
     * unless CELL_FORCE_FRAGMENT_OPS_FALLBACK is set.
     */
-   spu.fragment_ops = spu_fallback_fragment_ops;
+   spu.fragment_ops[CELL_FACING_FRONT] = spu_fallback_fragment_ops;
+   spu.fragment_ops[CELL_FACING_BACK] = spu_fallback_fragment_ops;
 }
 
 
@@ -90,7 +91,8 @@ main(main_param_t speid, main_param_t argp)
 
    ASSERT(sizeof(tile_t) == TILE_SIZE * TILE_SIZE * 4);
    ASSERT(sizeof(struct cell_command_render) % 8 == 0);
-   ASSERT(((unsigned long) &spu.fragment_ops_code) % 8 == 0);
+   ASSERT(((unsigned long) &spu.fragment_ops_code_front) % 8 == 0);
+   ASSERT(((unsigned long) &spu.fragment_ops_code_back) % 8 == 0);
    ASSERT(((unsigned long) &spu.fragment_program_code) % 8 == 0);
 
    one_time_init();

@@ -85,8 +85,7 @@ typedef void (*spu_fragment_ops_func)(uint x, uint y,
                                       vector float fragGreen,
                                       vector float fragBlue,
                                       vector float fragAlpha,
-                                      vector unsigned int mask,
-                                      uint facing);
+                                      vector unsigned int mask);
 
 /** Function for running fragment program */
 typedef vector unsigned int (*spu_fragment_program_func)(vector float *inputs,
@@ -170,9 +169,10 @@ struct spu_global
    ubyte ztile_status[CELL_MAX_HEIGHT/TILE_SIZE][CELL_MAX_WIDTH/TILE_SIZE] ALIGN16_ATTRIB;
 
    /** Current fragment ops machine code, at 8-byte boundary */
-   uint fragment_ops_code[SPU_MAX_FRAGMENT_OPS_INSTS] ALIGN8_ATTRIB;
-   /** Current fragment ops function */
-   spu_fragment_ops_func fragment_ops;
+   uint fragment_ops_code_front[SPU_MAX_FRAGMENT_OPS_INSTS] ALIGN8_ATTRIB;
+   uint fragment_ops_code_back[SPU_MAX_FRAGMENT_OPS_INSTS] ALIGN8_ATTRIB;
+   /** Current fragment ops functions, 0 = frontfacing, 1 = backfacing */
+   spu_fragment_ops_func fragment_ops[2];
 
    /** Current fragment program machine code, at 8-byte boundary */
    uint fragment_program_code[SPU_MAX_FRAGMENT_PROGRAM_INSTS] ALIGN8_ATTRIB;
