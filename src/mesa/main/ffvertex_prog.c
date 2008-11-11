@@ -1311,6 +1311,9 @@ static void build_lighting( struct tnl_program *p )
 	    emit_op3(p, OPCODE_MAD, res0, mask0, swizzle1(lit,Y), diffuse, _bfc0);
 	    emit_op3(p, OPCODE_MAD, res1, mask1, swizzle1(lit,Z), specular, _bfc1);
 
+            /* restore negate flag for next lighting */
+            dots = negate(dots);
+
 	    release_temp(p, ambient);
 	    release_temp(p, diffuse);
 	    release_temp(p, specular);
