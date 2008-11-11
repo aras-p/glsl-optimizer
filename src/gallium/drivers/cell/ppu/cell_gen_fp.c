@@ -880,6 +880,52 @@ emit_DPH(struct codegen *gen, const struct tgsi_full_instruction *inst)
 }
 
 /**
+ * Emit 3-component vector normalize.
+ */
+static boolean
+emit_NRM3(struct codegen *gen, const struct tgsi_full_instruction *inst)
+{
+   int ch;
+   int src_reg[3];
+   int t0_reg = get_itemp(gen), t1_reg = get_itemp(gen);
+
+   spe_comment(gen->f, -4, "NRM3:");
+
+   src_reg[0] = get_src_reg(gen, CHAN_X, &inst->FullSrcRegisters[0]);
+   src_reg[1] = get_src_reg(gen, CHAN_Y, &inst->FullSrcRegisters[0]);
+   src_reg[2] = get_src_reg(gen, CHAN_Z, &inst->FullSrcRegisters[0]);
+
+   /* t0 = x * x */
+   spe_fm(gen->f, t0_reg, src_reg[0], src_reg[0]);
+
+   /* t1 = y * y */
+   spe_fm(gen->f, t1_reg, src_reg[1], src_reg[1]);
+
+   /* t0 = z * z + t0 */
+   spe_fma(gen->f, t0_reg, src_reg[2], src_reg[2], t0_reg);
+
+   /* t0 = t0 + t1 */
+   spe_fa(gen->f, t0_reg, t0_reg, t1_reg);
+
+   /* t1 = 1.0 / sqrt(t0) */
+   spe_frsqest(gen->f, t1_reg, t0_reg);
+   spe_fi(gen->f, t1_reg, t0_reg, t1_reg);
+
+   for (ch = 0; ch < 3; ch++) {  /* NOTE: omit W channel */
+      if (inst->FullDstRegisters[0].DstRegister.WriteMask & (1 << ch)) {
+         int d_reg = get_dst_reg(gen, ch, &inst->FullDstRegisters[0]);
+         /* dst = src[ch] * t1 */
+         spe_fm(gen->f, d_reg, src_reg[ch], t1_reg);
+         store_dest_reg(gen, d_reg, ch, &inst->FullDstRegisters[0]);
+      }
+   }
+
+   free_itemps(gen);
+   return true;
+}
+
+
+/**
  * Emit cross product.  See emit_ADD for comments.
  */
 static boolean
@@ -1769,6 +1815,8 @@ emit_instruction(struct codegen *gen,
       return emit_DP4(gen, inst);
    case TGSI_OPCODE_DPH:
       return emit_DPH(gen, inst);
+   case TGSI_OPCODE_NRM:
+      return emit_NRM3(gen, inst);
    case TGSI_OPCODE_XPD:
       return emit_XPD(gen, inst);
    case TGSI_OPCODE_RCP:
