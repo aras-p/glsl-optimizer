@@ -124,6 +124,28 @@ handle_table_resize(struct handle_table *ht,
 }
 
 
+static INLINE void
+handle_table_clear(struct handle_table *ht, 
+                   unsigned index)
+{
+   void *object;
+   
+   /* The order here is important so that the object being destroyed is not
+    * present in the table when seen by the destroy callback, because the 
+    * destroy callback may directly or indirectly call the other functions in 
+    * this module.
+    */
+
+   object = ht->objects[index];
+   if(object) {
+      ht->objects[index] = NULL;
+      
+      if(ht->destroy)
+         ht->destroy(object);
+   }   
+}
+
+
 unsigned
 handle_table_add(struct handle_table *ht, 
                  void *object)
@@ -184,9 +206,8 @@ handle_table_set(struct handle_table *ht,
    if(!handle_table_resize(ht, index))
       return 0;
 
-   if(ht->objects[index] && ht->destroy)
-      ht->destroy(ht->objects[index]);
-      
+   handle_table_clear(ht, index);
+
    ht->objects[index] = object;
    
    return handle;
@@ -227,10 +248,8 @@ handle_table_remove(struct handle_table *ht,
    if(!object)
       return;
    
-   if(ht->destroy)
-      ht->destroy(object);
+   handle_table_clear(ht, index);
 
-   ht->objects[index] = NULL;
    if(index < ht->filled)
       ht->filled = index;
 }
@@ -266,8 +285,7 @@ handle_table_destroy(struct handle_table *ht)
 
    if(ht->destroy)
       for(index = 0; index < ht->size; ++index)
-	 if(ht->objects[index])
-	    ht->destroy(ht->objects[index]);
+         handle_table_clear(ht, index);
    
    FREE(ht->objects);
    FREE(ht);
