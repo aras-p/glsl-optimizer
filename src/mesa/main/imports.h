@@ -462,6 +462,16 @@ static INLINE int iceil(float f)
 #endif
 
 
+/**
+ * Is x a power of two?
+ */
+static INLINE int
+_mesa_is_pow_two(int x)
+{
+   return !(x & (x - 1));
+}
+
+
 /***
  *** UNCLAMPED_FLOAT_TO_UBYTE: clamp float to [0,1] and map to ubyte in [0,255]
  *** CLAMPED_FLOAT_TO_UBYTE: map float known to be in [0,1] to ubyte in [0,255]

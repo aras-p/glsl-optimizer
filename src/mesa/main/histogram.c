@@ -955,7 +955,7 @@ _mesa_Histogram(GLenum target, GLsizei width, GLenum internalFormat, GLboolean s
       }
    }
 
-   if (width != 0 && _mesa_bitcount(width) != 1) {
+   if (width != 0 && !_mesa_is_pow_two(width)) {
       if (target == GL_PROXY_HISTOGRAM) {
          error = GL_TRUE;
       }
