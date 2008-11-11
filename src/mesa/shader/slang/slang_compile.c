@@ -160,6 +160,9 @@ typedef struct slang_output_ctx_
    struct gl_program *program;
    slang_var_table *vartable;
    GLuint default_precision[TYPE_SPECIFIER_COUNT];
+   GLboolean allow_precision;
+   GLboolean allow_invariant;
+   GLboolean allow_centroid;
 } slang_output_ctx;
 
 /* _slang_compile() */
@@ -479,6 +482,48 @@ parse_struct(slang_parse_ctx * C, slang_output_ctx * O, slang_struct ** st)
 }
 
 
+/* invariant qualifer */
+#define TYPE_VARIANT    90
+#define TYPE_INVARIANT  91
+
+static int
+parse_type_variant(slang_parse_ctx * C, slang_type_variant *variant)
+{
+   GLuint invariant = *C->I++;
+   switch (invariant) {
+   case TYPE_VARIANT:
+      *variant = SLANG_VARIANT;
+      return 1;
+   case TYPE_INVARIANT:
+      *variant = SLANG_INVARIANT;
+      return 1;
+   default:
+      return 0;
+   }
+}
+
+
+/* centroid qualifer */
+#define TYPE_CENTER    95
+#define TYPE_CENTROID  96
+
+static int
+parse_type_centroid(slang_parse_ctx * C, slang_type_centroid *centroid)
+{
+   GLuint c = *C->I++;
+   switch (c) {
+   case TYPE_CENTER:
+      *centroid = SLANG_CENTER;
+      return 1;
+   case TYPE_CENTROID:
+      *centroid = SLANG_CENTROID;
+      return 1;
+   default:
+      return 0;
+   }
+}
+
+
 /* type qualifier */
 #define TYPE_QUALIFIER_NONE 0
 #define TYPE_QUALIFIER_CONST 1
@@ -491,7 +536,8 @@ parse_struct(slang_parse_ctx * C, slang_output_ctx * O, slang_struct ** st)
 static int
 parse_type_qualifier(slang_parse_ctx * C, slang_type_qualifier * qual)
 {
-   switch (*C->I++) {
+   GLuint qualifier = *C->I++;
+   switch (qualifier) {
    case TYPE_QUALIFIER_NONE:
       *qual = SLANG_QUAL_NONE;
       break;
@@ -691,48 +737,96 @@ parse_type_specifier(slang_parse_ctx * C, slang_output_ctx * O,
    return 1;
 }
 
+
 #define PRECISION_DEFAULT 0
 #define PRECISION_LOW     1
 #define PRECISION_MEDIUM  2
 #define PRECISION_HIGH    3
 
 static int
-parse_fully_specified_type(slang_parse_ctx * C, slang_output_ctx * O,
-                           slang_fully_specified_type * type)
+parse_type_precision(slang_parse_ctx *C,
+                     slang_type_precision *precision)
 {
-   GLuint precision;
-
-   if (!parse_type_qualifier(C, &type->qualifier))
-      return 0;
-   precision = *C->I++;
-   if (!parse_type_specifier(C, O, &type->specifier))
-      return 0;
-
-   switch (precision) {
+   GLint prec = *C->I++;
+   switch (prec) {
    case PRECISION_DEFAULT:
-      assert(type->specifier.type < TYPE_SPECIFIER_COUNT);
-      if (type->specifier.type < TYPE_SPECIFIER_COUNT)
-         type->precision = O->default_precision[type->specifier.type];
-      break;
+      *precision = SLANG_PREC_DEFAULT;
+      return 1;
    case PRECISION_LOW:
-      type->precision = SLANG_PREC_LOW;
-      break;
+      *precision = SLANG_PREC_LOW;
+      return 1;
    case PRECISION_MEDIUM:
-      type->precision = SLANG_PREC_MEDIUM;
-      break;
+      *precision = SLANG_PREC_MEDIUM;
+      return 1;
    case PRECISION_HIGH:
-      type->precision = SLANG_PREC_HIGH;
-      break;
+      *precision = SLANG_PREC_HIGH;
+      return 1;
    default:
       return 0;
    }
+}
 
-#if !FEATURE_es2_glsl
-   if (precision != PRECISION_DEFAULT) {
-      slang_info_log_error(C->L, "precision qualifiers not allowed");
+static int
+parse_fully_specified_type(slang_parse_ctx * C, slang_output_ctx * O,
+                           slang_fully_specified_type * type)
+{
+   if (!parse_type_variant(C, &type->variant))
+      return 0;
+  
+   if (!parse_type_centroid(C, &type->centroid))
+      return 0;
+
+   if (!parse_type_qualifier(C, &type->qualifier))
+      return 0;
+
+   if (!parse_type_precision(C, &type->precision))
+      return 0;
+
+   if (!parse_type_specifier(C, O, &type->specifier))
+      return 0;
+
+   if (!O->allow_invariant && type->variant == SLANG_INVARIANT) {
+      slang_info_log_error(C->L,
+         "'invariant' keyword not allowed (perhaps set #version 120)");
       return 0;
    }
-#endif
+
+   if (!O->allow_centroid && type->centroid == SLANG_CENTROID) {
+      slang_info_log_error(C->L,
+         "'centroid' keyword not allowed (perhaps set #version 120)");
+      return 0;
+   }
+   else if (type->centroid == SLANG_CENTROID &&
+            type->qualifier != SLANG_QUAL_VARYING) {
+      slang_info_log_error(C->L,
+         "'centroid' keyword only allowed for varying vars");
+      return 0;
+   }
+
+
+   /* need this?
+   if (type->qualifier != SLANG_QUAL_VARYING &&
+       type->variant == SLANG_INVARIANT) {
+      slang_info_log_error(C->L,
+                           "invariant qualifer only allowed for varying vars");
+      return 0;
+   }
+   */
+
+   if (O->allow_precision) {
+      if (type->precision == SLANG_PREC_DEFAULT) {
+         assert(type->specifier.type < TYPE_SPECIFIER_COUNT);
+         /* use the default precision for this datatype */
+         type->precision = O->default_precision[type->specifier.type];
+      }
+   }
+   else {
+      /* only default is allowed */
+      if (type->precision != SLANG_PREC_DEFAULT) {
+         slang_info_log_error(C->L, "precision qualifiers not allowed");
+         return 0;
+      }
+   }
 
    return 1;
 }
@@ -1484,10 +1578,13 @@ static int
 parse_function_prototype(slang_parse_ctx * C, slang_output_ctx * O,
                          slang_function * func)
 {
+   GLuint functype;
    /* parse function type and name */
    if (!parse_fully_specified_type(C, O, &func->header.type))
       return 0;
-   switch (*C->I++) {
+
+   functype = *C->I++;
+   switch (functype) {
    case FUNCTION_ORDINARY:
       func->kind = SLANG_FUNC_ORDINARY;
       func->header.a_name = parse_identifier(C);
@@ -1927,8 +2024,12 @@ parse_declaration(slang_parse_ctx * C, slang_output_ctx * O)
 static int
 parse_default_precision(slang_parse_ctx * C, slang_output_ctx * O)
 {
-#if FEATURE_es2_glsl
    int precision, type;
+
+   if (!O->allow_precision) {
+      slang_info_log_error(C->L, "syntax error at \"precision\"");
+      return 0;
+   }
 
    precision = *C->I++;
    switch (precision) {
@@ -1967,10 +2068,6 @@ parse_default_precision(slang_parse_ctx * C, slang_output_ctx * O)
    O->default_precision[type] = precision;
 
    return 1;
-#else
-   slang_info_log_error(C->L, "syntax error at \"precision\"");
-   return 0;
-#endif
 }
 
 
@@ -1989,7 +2086,7 @@ init_default_precision(slang_output_ctx *O, slang_unit_type type)
       O->default_precision[i] = PRECISION_HIGH;
 #endif
    }
-#if FEATURE_es2_glsl
+
    if (type == SLANG_UNIT_VERTEX_SHADER) {
       O->default_precision[TYPE_SPECIFIER_FLOAT] = PRECISION_HIGH;
       O->default_precision[TYPE_SPECIFIER_INT] = PRECISION_HIGH;
@@ -1997,14 +2094,13 @@ init_default_precision(slang_output_ctx *O, slang_unit_type type)
    else {
       O->default_precision[TYPE_SPECIFIER_INT] = PRECISION_MEDIUM;
    }
-#endif
 }
 
 
 static int
 parse_invariant(slang_parse_ctx * C, slang_output_ctx * O)
 {
-   if (C->version >= 120 || FEATURE_es2_glsl) {
+   if (O->allow_invariant) {
       slang_atom *a = parse_identifier(C);
       /* XXX not doing anything with this var yet */
       /*printf("ID: %s\n", (char*) a);*/
@@ -2046,7 +2142,6 @@ parse_code_unit(slang_parse_ctx * C, slang_code_unit * unit,
    }
 
    /* setup output context */
-   init_default_precision(&o, unit->type);
    o.funs = &unit->funs;
    o.structs = &unit->structs;
    o.vars = &unit->vars;
@@ -2054,6 +2149,25 @@ parse_code_unit(slang_parse_ctx * C, slang_code_unit * unit,
    o.program = shader ? shader->Program : NULL;
    o.vartable = _slang_new_var_table(maxRegs);
    _slang_push_var_table(o.vartable);
+
+   /* allow 'invariant' keyword? */
+#if FEATURE_es2_glsl
+   o.allow_invariant = GL_TRUE;
+#else
+   o.allow_invariant = (C->version >= 120) ? GL_TRUE : GL_FALSE;
+#endif
+
+   /* allow 'centroid' keyword? */
+   o.allow_centroid = (C->version >= 120) ? GL_TRUE : GL_FALSE;
+
+   /* allow 'lowp/mediump/highp' keywords? */
+#if FEATURE_es2_glsl
+   o.allow_precision = GL_TRUE;
+#else
+   o.allow_precision = (C->version >= 120) ? GL_TRUE : GL_FALSE;
+#endif
+   init_default_precision(&o, unit->type);
+
 
    /* parse individual functions and declarations */
    while (*C->I != EXTERNAL_NULL) {

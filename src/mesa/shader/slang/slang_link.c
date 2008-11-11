@@ -193,7 +193,10 @@ link_uniform_vars(struct gl_shader_program *shProg,
 
       if ((p->Type == PROGRAM_UNIFORM && p->Used) ||
           p->Type == PROGRAM_SAMPLER) {
-         _mesa_append_uniform(shProg->Uniforms, p->Name, prog->Target, i);
+         struct gl_uniform *uniform =
+            _mesa_append_uniform(shProg->Uniforms, p->Name, prog->Target, i);
+         if (uniform)
+            uniform->Initialized = p->Initialized;
       }
 
       if (p->Type == PROGRAM_SAMPLER) {
@@ -464,12 +467,17 @@ _slang_link(GLcontext *ctx,
    fragProg = NULL;
    for (i = 0; i < shProg->NumShaders; i++) {
       struct gl_shader *shader = shProg->Shaders[i];
-      if (shader->Type == GL_VERTEX_SHADER && shader->Main)
-         vertProg = vertex_program(shader->Program);
-      else if (shader->Type == GL_FRAGMENT_SHADER && shader->Main)
-         fragProg = fragment_program(shader->Program);
-      else
+      if (shader->Type == GL_VERTEX_SHADER) {
+         if (shader->Main)
+            vertProg = vertex_program(shader->Program);
+      }
+      else if (shader->Type == GL_FRAGMENT_SHADER) {
+         if (shader->Main)
+            fragProg = fragment_program(shader->Program);
+      }
+      else {
          _mesa_problem(ctx, "unexpected shader target in slang_link()");
+      }
    }
 
 #if FEATURE_es2_glsl

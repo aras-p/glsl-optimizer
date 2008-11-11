@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.3
+ * Version:  7.3
  *
- * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2008  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -419,7 +419,7 @@ print_dst_reg(const struct prog_dst_register *dstReg, gl_prog_print_mode mode,
 {
    _mesa_printf("%s%s",
                 reg_string((enum register_file) dstReg->File,
-                           dstReg->Index, mode, GL_FALSE, prog),
+                           dstReg->Index, mode, dstReg->RelAddr, prog),
                 writemask_string(dstReg->WriteMask));
 
    if (dstReg->CondMask != COND_TR) {

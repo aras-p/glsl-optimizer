@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  7.0.3
+ * Version:  7.3
  *
- * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2008  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -76,57 +76,52 @@ static const GLfloat ZeroVec[4] = { 0.0F, 0.0F, 0.0F, 0.0F };
  * source register.
  */
 static INLINE const GLfloat *
-get_register_pointer(const struct prog_src_register *source,
-                     const struct gl_program_machine *machine)
+get_src_register_pointer(const struct prog_src_register *source,
+                         const struct gl_program_machine *machine)
 {
+   const struct gl_program *prog = machine->CurProgram;
+   GLint reg = source->Index;
+
    if (source->RelAddr) {
-      const GLint reg = source->Index + machine->AddressReg[0][0];
-      if (source->File == PROGRAM_ENV_PARAM) {
-         if (reg < 0 || reg >= MAX_PROGRAM_ENV_PARAMS)
-            return ZeroVec;
-         else
-            return machine->EnvParams[reg];
-      }
-      else {
-         const struct gl_program_parameter_list *params;
-         ASSERT(source->File == PROGRAM_LOCAL_PARAM ||
-                source->File == PROGRAM_CONSTANT ||
-                source->File == PROGRAM_STATE_VAR ||
-                source->File == PROGRAM_UNIFORM);
-         params = machine->CurProgram->Parameters;
-         if (reg < 0 || reg >= (GLint)params->NumParameters)
-            return ZeroVec;
-         else
-            return params->ParameterValues[reg];
+      /* add address register value to src index/offset */
+      reg += machine->AddressReg[0][0];
+      if (reg < 0) {
+         return ZeroVec;
       }
    }
 
    switch (source->File) {
    case PROGRAM_TEMPORARY:
-      ASSERT(source->Index < MAX_PROGRAM_TEMPS);
-      return machine->Temporaries[source->Index];
+      if (reg >= MAX_PROGRAM_TEMPS)
+         return ZeroVec;
+      return machine->Temporaries[reg];
 
    case PROGRAM_INPUT:
-      if (machine->CurProgram->Target == GL_VERTEX_PROGRAM_ARB) {
-         ASSERT(source->Index < VERT_ATTRIB_MAX);
-         return machine->VertAttribs[source->Index];
+      if (prog->Target == GL_VERTEX_PROGRAM_ARB) {
+         if (reg >= VERT_ATTRIB_MAX)
+            return ZeroVec;
+         return machine->VertAttribs[reg];
       }
       else {
-         ASSERT(source->Index < FRAG_ATTRIB_MAX);
-         return machine->Attribs[source->Index][machine->CurElement];
+         if (reg >= FRAG_ATTRIB_MAX)
+            return ZeroVec;
+         return machine->Attribs[reg][machine->CurElement];
       }
 
    case PROGRAM_OUTPUT:
-      ASSERT(source->Index < MAX_PROGRAM_OUTPUTS);
-      return machine->Outputs[source->Index];
+      if (reg >= MAX_PROGRAM_OUTPUTS)
+         return ZeroVec;
+      return machine->Outputs[reg];
 
    case PROGRAM_LOCAL_PARAM:
-      ASSERT(source->Index < MAX_PROGRAM_LOCAL_PARAMS);
-      return machine->CurProgram->LocalParams[source->Index];
+      if (reg >= MAX_PROGRAM_LOCAL_PARAMS)
+         return ZeroVec;
+      return machine->CurProgram->LocalParams[reg];
 
    case PROGRAM_ENV_PARAM:
-      ASSERT(source->Index < MAX_PROGRAM_ENV_PARAMS);
-      return machine->EnvParams[source->Index];
+      if (reg >= MAX_PROGRAM_ENV_PARAMS)
+         return ZeroVec;
+      return machine->EnvParams[reg];
 
    case PROGRAM_STATE_VAR:
       /* Fallthrough */
@@ -135,17 +130,60 @@ get_register_pointer(const struct prog_src_register *source,
    case PROGRAM_UNIFORM:
       /* Fallthrough */
    case PROGRAM_NAMED_PARAM:
-      ASSERT(source->Index <
-             (GLint) machine->CurProgram->Parameters->NumParameters);
-      return machine->CurProgram->Parameters->ParameterValues[source->Index];
+      if (reg >= (GLint) prog->Parameters->NumParameters)
+         return ZeroVec;
+      return prog->Parameters->ParameterValues[reg];
 
    default:
       _mesa_problem(NULL,
-                    "Invalid input register file %d in get_register_pointer()",
-                    source->File);
+         "Invalid src register file %d in get_src_register_pointer()",
+         source->File);
       return NULL;
    }
 }
+
+
+/**
+ * Return a pointer to the 4-element float vector specified by the given
+ * destination register.
+ */
+static INLINE GLfloat *
+get_dst_register_pointer(const struct prog_dst_register *dest,
+                         struct gl_program_machine *machine)
+{
+   static GLfloat dummyReg[4];
+   GLint reg = dest->Index;
+
+   if (dest->RelAddr) {
+      /* add address register value to src index/offset */
+      reg += machine->AddressReg[0][0];
+      if (reg < 0) {
+         return dummyReg;
+      }
+   }
+
+   switch (dest->File) {
+   case PROGRAM_TEMPORARY:
+      if (reg >= MAX_PROGRAM_TEMPS)
+         return dummyReg;
+      return machine->Temporaries[reg];
+
+   case PROGRAM_OUTPUT:
+      if (reg >= MAX_PROGRAM_OUTPUTS)
+         return dummyReg;
+      return machine->Outputs[reg];
+
+   case PROGRAM_WRITE_ONLY:
+      return dummyReg;
+
+   default:
+      _mesa_problem(NULL,
+         "Invalid dest register file %d in get_dst_register_pointer()",
+         dest->File);
+      return NULL;
+   }
+}
+
 
 
 #if FEATURE_MESA_program_debug
@@ -161,12 +199,12 @@ _mesa_get_program_register(GLcontext *ctx, enum register_file file,
                            GLuint index, GLfloat val[4])
 {
    if (CurrentMachine) {
-      struct prog_src_register src;
-      const GLfloat *reg;
-      src.File = file;
-      src.Index = index;
-      reg = get_register_pointer(&src, CurrentMachine);
-      COPY_4V(val, reg);
+      struct prog_src_register srcReg;
+      const GLfloat *src;
+      srcReg.File = file;
+      srcReg.Index = index;
+      src = get_src_register_pointer(&srcReg, CurrentMachine);
+      COPY_4V(val, src);
    }
 }
 #endif /* FEATURE_MESA_program_debug */
@@ -180,7 +218,7 @@ static void
 fetch_vector4(const struct prog_src_register *source,
               const struct gl_program_machine *machine, GLfloat result[4])
 {
-   const GLfloat *src = get_register_pointer(source, machine);
+   const GLfloat *src = get_src_register_pointer(source, machine);
    ASSERT(src);
 
    if (source->Swizzle == SWIZZLE_NOOP) {
@@ -227,7 +265,7 @@ static void
 fetch_vector4ui(const struct prog_src_register *source,
                 const struct gl_program_machine *machine, GLuint result[4])
 {
-   const GLuint *src = (GLuint *) get_register_pointer(source, machine);
+   const GLuint *src = (GLuint *) get_src_register_pointer(source, machine);
    ASSERT(src);
 
    if (source->Swizzle == SWIZZLE_NOOP) {
@@ -317,7 +355,7 @@ static void
 fetch_vector1(const struct prog_src_register *source,
               const struct gl_program_machine *machine, GLfloat result[4])
 {
-   const GLfloat *src = get_register_pointer(source, machine);
+   const GLfloat *src = get_src_register_pointer(source, machine);
    ASSERT(src);
 
    result[0] = src[GET_SWZ(source->Swizzle, 0)];
@@ -432,29 +470,11 @@ static void
 store_vector4(const struct prog_instruction *inst,
               struct gl_program_machine *machine, const GLfloat value[4])
 {
-   const struct prog_dst_register *dest = &(inst->DstReg);
+   const struct prog_dst_register *dstReg = &(inst->DstReg);
    const GLboolean clamp = inst->SaturateMode == SATURATE_ZERO_ONE;
-   GLfloat *dstReg;
-   GLfloat dummyReg[4];
+   GLuint writeMask = dstReg->WriteMask;
    GLfloat clampedValue[4];
-   GLuint writeMask = dest->WriteMask;
-
-   switch (dest->File) {
-   case PROGRAM_OUTPUT:
-      ASSERT(dest->Index < MAX_PROGRAM_OUTPUTS);
-      dstReg = machine->Outputs[dest->Index];
-      break;
-   case PROGRAM_TEMPORARY:
-      ASSERT(dest->Index < MAX_PROGRAM_TEMPS);
-      dstReg = machine->Temporaries[dest->Index];
-      break;
-   case PROGRAM_WRITE_ONLY:
-      dstReg = dummyReg;
-      return;
-   default:
-      _mesa_problem(NULL, "bad register file in store_vector4(fp)");
-      return;
-   }
+   GLfloat *dst = get_dst_register_pointer(dstReg, machine);
 
 #if 0
    if (value[0] > 1.0e10 ||
@@ -472,38 +492,38 @@ store_vector4(const struct prog_instruction *inst,
       value = clampedValue;
    }
 
-   if (dest->CondMask != COND_TR) {
+   if (dstReg->CondMask != COND_TR) {
       /* condition codes may turn off some writes */
       if (writeMask & WRITEMASK_X) {
-         if (!test_cc(machine->CondCodes[GET_SWZ(dest->CondSwizzle, 0)],
-                      dest->CondMask))
+         if (!test_cc(machine->CondCodes[GET_SWZ(dstReg->CondSwizzle, 0)],
+                      dstReg->CondMask))
             writeMask &= ~WRITEMASK_X;
       }
       if (writeMask & WRITEMASK_Y) {
-         if (!test_cc(machine->CondCodes[GET_SWZ(dest->CondSwizzle, 1)],
-                      dest->CondMask))
+         if (!test_cc(machine->CondCodes[GET_SWZ(dstReg->CondSwizzle, 1)],
+                      dstReg->CondMask))
             writeMask &= ~WRITEMASK_Y;
       }
       if (writeMask & WRITEMASK_Z) {
-         if (!test_cc(machine->CondCodes[GET_SWZ(dest->CondSwizzle, 2)],
-                      dest->CondMask))
+         if (!test_cc(machine->CondCodes[GET_SWZ(dstReg->CondSwizzle, 2)],
+                      dstReg->CondMask))
             writeMask &= ~WRITEMASK_Z;
       }
       if (writeMask & WRITEMASK_W) {
-         if (!test_cc(machine->CondCodes[GET_SWZ(dest->CondSwizzle, 3)],
-                      dest->CondMask))
+         if (!test_cc(machine->CondCodes[GET_SWZ(dstReg->CondSwizzle, 3)],
+                      dstReg->CondMask))
             writeMask &= ~WRITEMASK_W;
       }
    }
 
    if (writeMask & WRITEMASK_X)
-      dstReg[0] = value[0];
+      dst[0] = value[0];
    if (writeMask & WRITEMASK_Y)
-      dstReg[1] = value[1];
+      dst[1] = value[1];
    if (writeMask & WRITEMASK_Z)
-      dstReg[2] = value[2];
+      dst[2] = value[2];
    if (writeMask & WRITEMASK_W)
-      dstReg[3] = value[3];
+      dst[3] = value[3];
 
    if (inst->CondUpdate) {
       if (writeMask & WRITEMASK_X)
@@ -532,60 +552,42 @@ static void
 store_vector4ui(const struct prog_instruction *inst,
                 struct gl_program_machine *machine, const GLuint value[4])
 {
-   const struct prog_dst_register *dest = &(inst->DstReg);
-   GLuint *dstReg;
-   GLuint dummyReg[4];
-   GLuint writeMask = dest->WriteMask;
+   const struct prog_dst_register *dstReg = &(inst->DstReg);
+   GLuint writeMask = dstReg->WriteMask;
+   GLuint *dst = (GLuint *) get_dst_register_pointer(dstReg, machine);
 
-   switch (dest->File) {
-   case PROGRAM_OUTPUT:
-      ASSERT(dest->Index < MAX_PROGRAM_OUTPUTS);
-      dstReg = (GLuint *) machine->Outputs[dest->Index];
-      break;
-   case PROGRAM_TEMPORARY:
-      ASSERT(dest->Index < MAX_PROGRAM_TEMPS);
-      dstReg = (GLuint *) machine->Temporaries[dest->Index];
-      break;
-   case PROGRAM_WRITE_ONLY:
-      dstReg = dummyReg;
-      return;
-   default:
-      _mesa_problem(NULL, "bad register file in store_vector4(fp)");
-      return;
-   }
-
-   if (dest->CondMask != COND_TR) {
+   if (dstReg->CondMask != COND_TR) {
       /* condition codes may turn off some writes */
       if (writeMask & WRITEMASK_X) {
-         if (!test_cc(machine->CondCodes[GET_SWZ(dest->CondSwizzle, 0)],
-                      dest->CondMask))
+         if (!test_cc(machine->CondCodes[GET_SWZ(dstReg->CondSwizzle, 0)],
+                      dstReg->CondMask))
             writeMask &= ~WRITEMASK_X;
       }
       if (writeMask & WRITEMASK_Y) {
-         if (!test_cc(machine->CondCodes[GET_SWZ(dest->CondSwizzle, 1)],
-                      dest->CondMask))
+         if (!test_cc(machine->CondCodes[GET_SWZ(dstReg->CondSwizzle, 1)],
+                      dstReg->CondMask))
             writeMask &= ~WRITEMASK_Y;
       }
       if (writeMask & WRITEMASK_Z) {
-         if (!test_cc(machine->CondCodes[GET_SWZ(dest->CondSwizzle, 2)],
-                      dest->CondMask))
+         if (!test_cc(machine->CondCodes[GET_SWZ(dstReg->CondSwizzle, 2)],
+                      dstReg->CondMask))
             writeMask &= ~WRITEMASK_Z;
       }
       if (writeMask & WRITEMASK_W) {
-         if (!test_cc(machine->CondCodes[GET_SWZ(dest->CondSwizzle, 3)],
-                      dest->CondMask))
+         if (!test_cc(machine->CondCodes[GET_SWZ(dstReg->CondSwizzle, 3)],
+                      dstReg->CondMask))
             writeMask &= ~WRITEMASK_W;
       }
    }
 
    if (writeMask & WRITEMASK_X)
-      dstReg[0] = value[0];
+      dst[0] = value[0];
    if (writeMask & WRITEMASK_Y)
-      dstReg[1] = value[1];
+      dst[1] = value[1];
    if (writeMask & WRITEMASK_Z)
-      dstReg[2] = value[2];
+      dst[2] = value[2];
    if (writeMask & WRITEMASK_W)
-      dstReg[3] = value[3];
+      dst[3] = value[3];
 
    if (inst->CondUpdate) {
       if (writeMask & WRITEMASK_X)
@@ -1527,7 +1529,7 @@ _mesa_execute_program(GLcontext * ctx,
       case OPCODE_SWZ:         /* extended swizzle */
          {
             const struct prog_src_register *source = &inst->SrcReg[0];
-            const GLfloat *src = get_register_pointer(source, machine);
+            const GLfloat *src = get_src_register_pointer(source, machine);
             GLfloat result[4];
             GLuint i;
             for (i = 0; i < 4; i++) {

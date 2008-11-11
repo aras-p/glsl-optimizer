@@ -78,7 +78,9 @@ class PrintRemapTable(gl_XML.gl_print_base):
 
 
 	def printRealHeader(self):
-		print """/**
+		print """
+#include "glapitable.h"
+/**
  * \\file dispatch.h
  * Macros for handling GL dispatch tables.
  *

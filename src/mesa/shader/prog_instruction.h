@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.3
+ * Version:  7.3
  *
- * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2008  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -239,9 +239,6 @@ typedef enum prog_opcode {
 } gl_inst_opcode;
 
 
-/* temporary, just in case, remove soon */
-#define OPCODE_INT OPCODE_TRUNC
-
 /**
  * Instruction source register.
  */
@@ -291,13 +288,10 @@ struct prog_src_register
  */
 struct prog_dst_register
 {
-   /**
-    * One of the PROGRAM_* register file values.
-    */
-   GLuint File:4;
-
+   GLuint File:4;      /**< One of the PROGRAM_* register file values */
    GLuint Index:8;
    GLuint WriteMask:4;
+   GLuint RelAddr:1;
 
    /**
     * \name Conditional destination update control.
@@ -329,7 +323,7 @@ struct prog_dst_register
    GLuint CondSrc:1;
    /*@}*/
 
-   GLuint pad:31;
+   GLuint pad:30;
 };
 
 

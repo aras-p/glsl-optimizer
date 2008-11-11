@@ -1,5 +1,5 @@
 /*
- * Mesa 3-D graphics library
+ * mesa 3-D graphics library
  * Version:  7.1
  *
  * Copyright (C) 1999-2008  Brian Paul   All Rights Reserved.
@@ -1244,9 +1244,9 @@ _mesa_init_teximage_fields(GLcontext *ctx, GLenum target,
    img->IsCompressed = GL_FALSE;
    img->CompressedSize = 0;
 
-   if ((width == 1 || _mesa_bitcount(img->Width2) == 1) &&
-       (height == 1 || _mesa_bitcount(img->Height2) == 1) &&
-       (depth == 1 || _mesa_bitcount(img->Depth2) == 1))
+   if ((width == 1 || _mesa_is_pow_two(img->Width2)) &&
+       (height == 1 || _mesa_is_pow_two(img->Height2)) &&
+       (depth == 1 || _mesa_is_pow_two(img->Depth2)))
       img->_IsPowerOfTwo = GL_TRUE;
    else
       img->_IsPowerOfTwo = GL_FALSE;
@@ -1317,7 +1317,7 @@ _mesa_test_proxy_teximage(GLcontext *ctx, GLenum target, GLint level,
       maxSize = 1 << (ctx->Const.MaxTextureLevels - 1);
       if (width < 2 * border || width > 2 + maxSize ||
           (!ctx->Extensions.ARB_texture_non_power_of_two &&
-           width >0 && _mesa_bitcount(width - 2 * border) != 1) ||
+           width >0 && !_mesa_is_pow_two(width - 2 * border)) ||
           level >= ctx->Const.MaxTextureLevels) {
          /* bad width or level */
          return GL_FALSE;
@@ -1327,10 +1327,10 @@ _mesa_test_proxy_teximage(GLcontext *ctx, GLenum target, GLint level,
       maxSize = 1 << (ctx->Const.MaxTextureLevels - 1);
       if (width < 2 * border || width > 2 + maxSize ||
           (!ctx->Extensions.ARB_texture_non_power_of_two &&
-           width > 0 && _mesa_bitcount(width - 2 * border) != 1) ||
+           width > 0 && !_mesa_is_pow_two(width - 2 * border)) ||
           height < 2 * border || height > 2 + maxSize ||
           (!ctx->Extensions.ARB_texture_non_power_of_two &&
-           height > 0 && _mesa_bitcount(height - 2 * border) != 1) ||
+           height > 0 && !_mesa_is_pow_two(height - 2 * border)) ||
           level >= ctx->Const.MaxTextureLevels) {
          /* bad width or height or level */
          return GL_FALSE;
@@ -1340,13 +1340,13 @@ _mesa_test_proxy_teximage(GLcontext *ctx, GLenum target, GLint level,
       maxSize = 1 << (ctx->Const.Max3DTextureLevels - 1);
       if (width < 2 * border || width > 2 + maxSize ||
           (!ctx->Extensions.ARB_texture_non_power_of_two &&
-           width > 0 && _mesa_bitcount(width - 2 * border) != 1) ||
+           width > 0 && !_mesa_is_pow_two(width - 2 * border)) ||
           height < 2 * border || height > 2 + maxSize ||
           (!ctx->Extensions.ARB_texture_non_power_of_two &&
-           height > 0 && _mesa_bitcount(height - 2 * border) != 1) ||
+           height > 0 && !_mesa_is_pow_two(height - 2 * border)) ||
           depth < 2 * border || depth > 2 + maxSize ||
           (!ctx->Extensions.ARB_texture_non_power_of_two &&
-           depth > 0 && _mesa_bitcount(depth - 2 * border) != 1) ||
+           depth > 0 && !_mesa_is_pow_two(depth - 2 * border)) ||
           level >= ctx->Const.Max3DTextureLevels) {
          /* bad width or height or depth or level */
          return GL_FALSE;
@@ -1364,10 +1364,10 @@ _mesa_test_proxy_teximage(GLcontext *ctx, GLenum target, GLint level,
       maxSize = 1 << (ctx->Const.MaxCubeTextureLevels - 1);
       if (width < 2 * border || width > 2 + maxSize ||
           (!ctx->Extensions.ARB_texture_non_power_of_two &&
-           width > 0 && _mesa_bitcount(width - 2 * border) != 1) ||
+           width > 0 && !_mesa_is_pow_two(width - 2 * border)) ||
           height < 2 * border || height > 2 + maxSize ||
           (!ctx->Extensions.ARB_texture_non_power_of_two &&
-           height > 0 && _mesa_bitcount(height - 2 * border) != 1) ||
+           height > 0 && !_mesa_is_pow_two(height - 2 * border)) ||
           level >= ctx->Const.MaxCubeTextureLevels) {
          /* bad width or height */
          return GL_FALSE;
@@ -1377,7 +1377,7 @@ _mesa_test_proxy_teximage(GLcontext *ctx, GLenum target, GLint level,
       maxSize = 1 << (ctx->Const.MaxTextureLevels - 1);
       if (width < 2 * border || width > 2 + maxSize ||
           (!ctx->Extensions.ARB_texture_non_power_of_two &&
-           width > 0 && _mesa_bitcount(width - 2 * border) != 1) ||
+           width > 0 && !_mesa_is_pow_two(width - 2 * border)) ||
           level >= ctx->Const.MaxTextureLevels) {
          /* bad width or level */
          return GL_FALSE;
@@ -1391,10 +1391,10 @@ _mesa_test_proxy_teximage(GLcontext *ctx, GLenum target, GLint level,
       maxSize = 1 << (ctx->Const.MaxTextureLevels - 1);
       if (width < 2 * border || width > 2 + maxSize ||
           (!ctx->Extensions.ARB_texture_non_power_of_two &&
-           width > 0 && _mesa_bitcount(width - 2 * border) != 1) ||
+           width > 0 && !_mesa_is_pow_two(width - 2 * border)) ||
           height < 2 * border || height > 2 + maxSize ||
           (!ctx->Extensions.ARB_texture_non_power_of_two &&
-           height > 0 && _mesa_bitcount(height - 2 * border) != 1) ||
+           height > 0 && !_mesa_is_pow_two(height - 2 * border)) ||
           level >= ctx->Const.MaxTextureLevels) {
          /* bad width or height or level */
          return GL_FALSE;
@@ -3284,16 +3284,16 @@ compressed_texture_error_check(GLcontext *ctx, GLint dimensions,
     * XXX We should probably use the proxy texture error check function here.
     */
    if (width < 1 || width > maxTextureSize ||
-       (!ctx->Extensions.ARB_texture_non_power_of_two && _mesa_bitcount(width) != 1))
+       (!ctx->Extensions.ARB_texture_non_power_of_two && !_mesa_is_pow_two(width)))
       return GL_INVALID_VALUE;
 
    if ((height < 1 || height > maxTextureSize ||
-       (!ctx->Extensions.ARB_texture_non_power_of_two && _mesa_bitcount(height) != 1))
+       (!ctx->Extensions.ARB_texture_non_power_of_two && !_mesa_is_pow_two(height)))
        && dimensions > 1)
       return GL_INVALID_VALUE;
 
    if ((depth < 1 || depth > maxTextureSize ||
-       (!ctx->Extensions.ARB_texture_non_power_of_two && _mesa_bitcount(depth) != 1))
+       (!ctx->Extensions.ARB_texture_non_power_of_two && !_mesa_is_pow_two(depth)))
        && dimensions > 2)
       return GL_INVALID_VALUE;
 

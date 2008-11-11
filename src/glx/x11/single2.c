@@ -1,4 +1,3 @@
-/* -*- mode: c; tab-width: 3; indent-tabs-mode: nil; c-basic-offset: 3; coding: utf-8-unix -*- */
 /*
  * SGI FREE SOFTWARE LICENSE B (Version 2.0, Sept. 18, 2008)
  * Copyright (C) 1991-2000 Silicon Graphics, Inc. All Rights Reserved.
@@ -36,6 +35,8 @@
 #include "glxextensions.h"
 #include "indirect.h"
 #include "indirect_vertex_array.h"
+#include "dispatch.h"
+#include "glapi.h"
 
 /* Used for GL_ARB_transpose_matrix */
 static void
@@ -862,4 +863,105 @@ __indirect_glGetPointerv(GLenum pname, void **params)
       __glXSetError(gc, GL_INVALID_ENUM);
       return;
    }
+}
+
+
+
+/**
+ * This was previously auto-generated, but we need to special-case
+ * how we handle writing into the 'residences' buffer when n%4!=0.
+ */
+#define X_GLsop_AreTexturesResident 143
+GLboolean
+__indirect_glAreTexturesResident(GLsizei n, const GLuint * textures,
+                                 GLboolean * residences)
+{
+    __GLXcontext *const gc = __glXGetCurrentContext();
+    Display *const dpy = gc->currentDpy;
+    GLboolean retval = (GLboolean) 0;
+    const GLuint cmdlen = 4 + __GLX_PAD((n * 4));
+    if (__builtin_expect((n >= 0) && (dpy != NULL), 1)) {
+#ifdef USE_XCB
+        xcb_connection_t *c = XGetXCBConnection(dpy);
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+        xcb_glx_are_textures_resident_reply_t *reply =
+            xcb_glx_are_textures_resident_reply(c,
+                                                xcb_glx_are_textures_resident
+                                                (c, gc->currentContextTag, n,
+                                                 textures), NULL);
+        (void) memcpy(residences, xcb_glx_are_textures_resident_data(reply),
+                      xcb_glx_are_textures_resident_data_length(reply) *
+                      sizeof(GLboolean));
+        retval = reply->ret_val;
+        free(reply);
+#else
+        GLubyte const *pc =
+            __glXSetupSingleRequest(gc, X_GLsop_AreTexturesResident, cmdlen);
+        (void) memcpy((void *) (pc + 0), (void *) (&n), 4);
+        (void) memcpy((void *) (pc + 4), (void *) (textures), (n * 4));
+        if (n & 3) {
+           /* n is not a multiple of four.
+            * When reply_is_always_array is TRUE, __glXReadReply() will
+            * put a multiple of four bytes into the dest buffer.  If the
+            * caller's buffer is not a multiple of four in size, we'll write
+            * out of bounds.  So use a temporary buffer that's a few bytes
+            * larger.
+            */
+           GLboolean *res4 = malloc((n + 3) & ~3);
+           retval = (GLboolean) __glXReadReply(dpy, 1, res4, GL_TRUE);
+           memcpy(residences, res4, n);
+           free(res4);
+        }
+        else {
+           retval = (GLboolean) __glXReadReply(dpy, 1, residences, GL_TRUE);
+        }
+        UnlockDisplay(dpy);
+        SyncHandle();
+#endif /* USE_XCB */
+    }
+    return retval;
+}
+
+
+/**
+ * This was previously auto-generated, but we need to special-case
+ * how we handle writing into the 'residences' buffer when n%4!=0.
+ */
+#define X_GLvop_AreTexturesResidentEXT 11
+GLboolean
+glAreTexturesResidentEXT(GLsizei n, const GLuint * textures,
+                         GLboolean * residences)
+{
+    __GLXcontext *const gc = __glXGetCurrentContext();
+
+    if (gc->isDirect) {
+        return CALL_AreTexturesResident(GET_DISPATCH(),
+                                        (n, textures, residences));
+    } else {
+        __GLXcontext *const gc = __glXGetCurrentContext();
+        Display *const dpy = gc->currentDpy;
+        GLboolean retval = (GLboolean) 0;
+        const GLuint cmdlen = 4 + __GLX_PAD((n * 4));
+        if (__builtin_expect((n >= 0) && (dpy != NULL), 1)) {
+            GLubyte const *pc =
+                __glXSetupVendorRequest(gc, X_GLXVendorPrivateWithReply,
+                                        X_GLvop_AreTexturesResidentEXT,
+                                        cmdlen);
+            (void) memcpy((void *) (pc + 0), (void *) (&n), 4);
+            (void) memcpy((void *) (pc + 4), (void *) (textures), (n * 4));
+            if (n & 3) {
+               /* see comments in __indirect_glAreTexturesResident() */
+               GLboolean *res4 = malloc((n + 3) & ~3);
+               retval = (GLboolean) __glXReadReply(dpy, 1, res4, GL_TRUE);
+               memcpy(residences, res4, n);
+               free(res4);
+            }
+            else {
+               retval = (GLboolean) __glXReadReply(dpy, 1, residences, GL_TRUE);
+            }
+            UnlockDisplay(dpy);
+            SyncHandle();
+        }
+        return retval;
+    }
 }

@@ -3708,11 +3708,6 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
       const GLint totalSize = array_size(size, var->array_len);
       const GLuint swizzle = _slang_var_swizzle(totalSize, 0);
 
-      if (var->initializer) {
-         slang_info_log_error(A->log, "illegal initializer for uniform '%s'", varName);
-         return GL_FALSE;
-      }
-
       if (prog) {
          /* user-defined uniform */
          if (datatype == GL_NONE) {
@@ -3720,7 +3715,7 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
                /* temporary work-around */
                GLenum datatype = GL_FLOAT;
                GLint uniformLoc = _mesa_add_uniform(prog->Parameters, varName,
-                                                    totalSize, datatype);
+                                                    totalSize, datatype, NULL);
                store = _slang_new_ir_storage_swz(PROGRAM_UNIFORM, uniformLoc,
                                                  totalSize, swizzle);
 
@@ -3737,6 +3732,12 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
                 * "f.a"  (GL_FLOAT_VEC3)
                 * "f.b"  (GL_FLOAT_VEC4)
                 */
+
+               if (var->initializer) {
+                  slang_info_log_error(A->log,
+                     "unsupported initializer for uniform '%s'", varName);
+                  return GL_FALSE;
+               }
             }
             else {
                slang_info_log_error(A->log,
@@ -3746,8 +3747,25 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
             }
          }
          else {
-            GLint uniformLoc = _mesa_add_uniform(prog->Parameters, varName,
-                                                 totalSize, datatype);
+            GLint uniformLoc;
+            const GLfloat *initialValues = NULL;
+            if (var->initializer) {
+               _slang_simplify(var->initializer, &A->space, A->atoms);
+               if (var->initializer->type == SLANG_OPER_LITERAL_FLOAT ||
+                   var->initializer->type == SLANG_OPER_LITERAL_INT) {
+                  /* simple float/vector initializer */
+                  initialValues = var->initializer->literal;
+               }
+               else {
+                  /* complex initializer */
+                  slang_info_log_error(A->log,
+                     "unsupported initializer for uniform '%s'", varName);
+                  return GL_FALSE;
+               }
+            }
+
+            uniformLoc = _mesa_add_uniform(prog->Parameters, varName,
+                                           totalSize, datatype, initialValues);
             store = _slang_new_ir_storage_swz(PROGRAM_UNIFORM, uniformLoc,
                                               totalSize, swizzle);
          }

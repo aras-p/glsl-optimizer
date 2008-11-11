@@ -679,7 +679,7 @@ driCreateNewScreen(int scrn,
     static const __DRIextension *emptyExtensionList[] = { NULL };
     __DRIscreen *psp;
 
-    psp = _mesa_malloc(sizeof *psp);
+    psp = _mesa_calloc(sizeof *psp);
     if (!psp)
 	return NULL;
 

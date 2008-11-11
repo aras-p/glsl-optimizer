@@ -128,6 +128,7 @@ _mesa_add_parameter(struct gl_program_parameter_list *paramList,
          if (values) {
             COPY_4V(paramList->ParameterValues[oldNum + i], values);
             values += 4;
+            p->Initialized = GL_TRUE;
          }
          else {
             /* silence valgrind */
@@ -259,7 +260,8 @@ _mesa_add_unnamed_constant(struct gl_program_parameter_list *paramList,
  */
 GLint
 _mesa_add_uniform(struct gl_program_parameter_list *paramList,
-                  const char *name, GLuint size, GLenum datatype)
+                  const char *name, GLuint size, GLenum datatype,
+                  const GLfloat *values)
 {
    GLint i = _mesa_lookup_parameter_index(paramList, -1, name);
    ASSERT(datatype != GL_NONE);
@@ -271,7 +273,7 @@ _mesa_add_uniform(struct gl_program_parameter_list *paramList,
    }
    else {
       i = _mesa_add_parameter(paramList, PROGRAM_UNIFORM, name,
-                              size, datatype, NULL, NULL);
+                              size, datatype, values, NULL);
       return i;
    }
 }

@@ -197,8 +197,10 @@ _intel_batchbuffer_flush(struct intel_batchbuffer *batch, const char *file,
    GLuint used = batch->ptr - batch->map;
    GLboolean was_locked = intel->locked;
 
-   if (used == 0)
+   if (used == 0) {
+      batch->cliprect_mode = IGNORE_CLIPRECTS;
       return;
+   }
 
    if (INTEL_DEBUG & DEBUG_BATCH)
       fprintf(stderr, "%s:%d: Batchbuffer flush with %db used\n", file, line,

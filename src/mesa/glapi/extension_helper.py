@@ -151,7 +151,7 @@ class PrintGlExtensionGlue(gl_XML.gl_print_base):
 
 	def printRealHeader(self):
 		print '#include "utils.h"'
-		print '#include "dispatch.h"'
+		print '#include "glapi/dispatch.h"'
 		print ''
 		return
 

@@ -1,4 +1,3 @@
-/* -*- mode: c; tab-width: 3; indent-tabs-mode: nil; c-basic-offset: 3; coding: utf-8-unix -*- */
 #ifndef __GLX_packsingle_h__
 #define __GLX_packsingle_h__
 
