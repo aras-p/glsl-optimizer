@@ -1,4 +1,3 @@
-/* -*- mode: c; tab-width: 3; indent-tabs-mode: nil; c-basic-offset: 3; coding: utf-8-unix -*- */
 /*
  * SGI FREE SOFTWARE LICENSE B (Version 2.0, Sept. 18, 2008)
  * Copyright (C) 1991-2000 Silicon Graphics, Inc. All Rights Reserved.
