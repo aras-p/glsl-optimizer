@@ -42,6 +42,8 @@
 #include "rtasm_ppc.h"
 
 
+#ifdef GALLIUM_CELL
+
 void
 ppc_init_func(struct ppc_function *p)
 {
@@ -957,3 +959,5 @@ ppc_return(struct ppc_function *p)
 {
    ppc_bclr(p, BRANCH_COND_ALWAYS, BRANCH_HINT_SUB_RETURN, 0);
 }
+
+#endif /* GALLIUM_CELL */
