@@ -163,7 +163,8 @@ static INLINE float logf( float f )
 
 static INLINE double log2( double x )
 {
-   return log( x ) / log( 2.0 );
+   const double invln2 = 1.442695041;
+   return log( x ) * invln2;
 }
 
 #else
