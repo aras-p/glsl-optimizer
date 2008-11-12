@@ -215,7 +215,7 @@ reg_string(enum register_file f, GLint index, gl_prog_print_mode mode,
    switch (mode) {
    case PROG_PRINT_DEBUG:
       if (relAddr)
-         sprintf(str, "%s[ADDR%s%d]", file_string(f, mode), (index > 0) ? "+" : "", index);
+         sprintf(str, "%s[ADDR+%d]", file_string(f, mode), index);
       else
          sprintf(str, "%s[%d]", file_string(f, mode), index);
       break;
