@@ -297,12 +297,14 @@ static void emit_tex_offsets(r300ContextPtr r300, struct r300_state_atom * atom)
     		OUT_BATCH_REGSEQ(R300_TX_OFFSET_0 + (i * 4), 1);
 			r300TexObj *t = r300->hw.textures[i];
 			if (t && !t->image_override) {
-				OUT_BATCH_RELOC(t->tile_bits, t->mt->bo, 0, 0);
+				OUT_BATCH_RELOC(t->tile_bits, t->mt->bo, 0,
+                                RADEON_GEM_DOMAIN_VRAM, 0, 0);
 			} else if (!t) {
 				OUT_BATCH(r300->radeon.radeonScreen->texOffset[0]);
 			} else {
                 if (t->bo) {
-                    OUT_BATCH_RELOC(t->tile_bits, t->bo, 0, 0);
+                    OUT_BATCH_RELOC(t->tile_bits, t->bo, 0,
+                    RADEON_GEM_DOMAIN_VRAM, 0, 0);
                 } else {
     				OUT_BATCH(t->override_offset);
                 }
@@ -339,7 +341,7 @@ static void emit_cb_offset(r300ContextPtr r300, struct r300_state_atom * atom)
 
 	BEGIN_BATCH(4);
 	OUT_BATCH_REGSEQ(R300_RB3D_COLOROFFSET0, 1);
-	OUT_BATCH_RELOC(0, rrb->bo, 0, 0);
+	OUT_BATCH_RELOC(0, rrb->bo, 0, 0, RADEON_GEM_DOMAIN_VRAM, 0);
 	OUT_BATCH_REGSEQ(R300_RB3D_COLORPITCH0, 1);
 	OUT_BATCH(cbpitch);
 	END_BATCH();
@@ -365,7 +367,7 @@ static void emit_zb_offset(r300ContextPtr r300, struct r300_state_atom * atom)
 
 	BEGIN_BATCH(4);
 	OUT_BATCH_REGSEQ(R300_ZB_DEPTHOFFSET, 1);
-	OUT_BATCH_RELOC(0, rrb->bo, 0, 0);
+	OUT_BATCH_RELOC(0, rrb->bo, 0, 0, RADEON_GEM_DOMAIN_VRAM, 0);
 	OUT_BATCH_REGVAL(R300_ZB_DEPTHPITCH, zbpitch);
 	END_BATCH();
 }

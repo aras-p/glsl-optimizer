@@ -94,19 +94,34 @@ static int cs_write_dword(struct radeon_cs *cs, uint32_t dword)
 
 static int cs_write_reloc(struct radeon_cs *cs,
                           struct radeon_bo *bo,
-                          uint32_t soffset,
-                          uint32_t eoffset,
-                          uint32_t domains)
+                          uint32_t start_offset,
+                          uint32_t end_offset,
+                          uint32_t read_domain,
+                          uint32_t write_domain,
+                          uint32_t flags)
 {
     struct cs_reloc_legacy *relocs;
     int i;
 
     relocs = (struct cs_reloc_legacy *)cs->relocs;
-    /* check reloc window */
-    if (eoffset > bo->size) {
+    /* check domains */
+    if ((read_domain && write_domain) || (!read_domain && !write_domain)) {
+        /* in one CS a bo can only be in read or write domain but not
+         * in read & write domain at the same sime
+         */
         return -EINVAL;
     }
-    if (soffset > eoffset) {
+    if (read_domain == RADEON_GEM_DOMAIN_CPU) {
+        return -EINVAL;
+    }
+    if (write_domain == RADEON_GEM_DOMAIN_CPU) {
+        return -EINVAL;
+    }
+    /* check reloc window */
+    if (end_offset > bo->size) {
+        return -EINVAL;
+    }
+    if (start_offset > end_offset) {
         return -EINVAL;
     }
     /* check if bo is already referenced */
@@ -114,16 +129,28 @@ static int cs_write_reloc(struct radeon_cs *cs,
         uint32_t *indices;
 
         if (relocs[i].base.bo->handle == bo->handle) {
-            /* update start offset and size */
-            if (eoffset > relocs[i].base.eoffset) {
-                relocs[i].base.eoffset = eoffset;
+            /* update start and end offset */
+            if (start_offset < relocs[i].base.start_offset) {
+                relocs[i].base.start_offset = start_offset;
             }
-            if (soffset < relocs[i].base.soffset) {
-                relocs[i].base.soffset = soffset;
+            if (end_offset > relocs[i].base.end_offset) {
+                relocs[i].base.end_offset = end_offset;
             }
-            relocs[i].base.size = relocs[i].base.eoffset -
-                                  relocs[i].base.soffset;
-            relocs[i].base.domains |= domains;
+            /* Check domains must be in read or write. As we check already
+             * checked that in argument one of the read or write domain was
+             * set we only need to check that if previous reloc as the read
+             * domain set then the read_domain should also be set for this
+             * new relocation.
+             */
+            if (relocs[i].base.read_domain && !read_domain) {
+                return -EINVAL;
+            }
+            if (relocs[i].base.write_domain && !write_domain) {
+                return -EINVAL;
+            }
+            relocs[i].base.read_domain |= read_domain;
+            relocs[i].base.write_domain |= write_domain;
+            /* save indice */
             relocs[i].cindices += 1;
             indices = (uint32_t*)realloc(relocs[i].indices,
                                          relocs[i].cindices * 4);
@@ -145,10 +172,11 @@ static int cs_write_reloc(struct radeon_cs *cs,
     }
     cs->relocs = relocs;
     relocs[cs->crelocs].base.bo = bo;
-    relocs[cs->crelocs].base.soffset = soffset;
-    relocs[cs->crelocs].base.eoffset = eoffset;
-    relocs[cs->crelocs].base.size = eoffset - soffset;
-    relocs[cs->crelocs].base.domains = domains;
+    relocs[cs->crelocs].base.start_offset = start_offset;
+    relocs[cs->crelocs].base.end_offset = end_offset;
+    relocs[cs->crelocs].base.read_domain = read_domain;
+    relocs[cs->crelocs].base.write_domain = write_domain;
+    relocs[cs->crelocs].base.flags = flags;
     relocs[cs->crelocs].indices = (uint32_t*)malloc(4);
     if (relocs[cs->crelocs].indices == NULL) {
         return -ENOMEM;
@@ -221,8 +249,8 @@ static int cs_process_relocs(struct radeon_cs *cs)
         for (j = 0; j < relocs[i].cindices; j++) {
             uint32_t soffset, eoffset;
 
-            soffset = relocs[i].base.soffset;
-            eoffset = relocs[i].base.eoffset;
+            soffset = relocs[i].base.start_offset;
+            eoffset = relocs[i].base.end_offset;
             r = radeon_bo_legacy_validate(relocs[i].base.bo,
                                            &soffset, &eoffset);
             if (r) {

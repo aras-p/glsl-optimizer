@@ -80,7 +80,7 @@ COMMON_SYMLINKS = \
 	radeon_bo_legacy.h \
 	radeon_cs_legacy.h
 
-DRI_LIB_DEPS += -ldrm_radeon
+DRI_LIB_DEPS += -ldrm-radeon
 
 ##### TARGETS #####
 

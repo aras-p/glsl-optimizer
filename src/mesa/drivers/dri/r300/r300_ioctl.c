@@ -101,7 +101,7 @@ static void r300ClearBuffer(r300ContextPtr r300, int flags,
 		assert(rrb != 0);
 		BEGIN_BATCH_NO_AUTOSTATE(4);
 		OUT_BATCH_REGSEQ(R300_RB3D_COLOROFFSET0, 1);
-		OUT_BATCH_RELOC(0, rrb->bo, 0, 0);
+		OUT_BATCH_RELOC(0, rrb->bo, 0, 0, RADEON_GEM_DOMAIN_VRAM, 0);
 		OUT_BATCH_REGVAL(R300_RB3D_COLORPITCH0, cbpitch);
 		END_BATCH();
 	}
@@ -117,7 +117,7 @@ static void r300ClearBuffer(r300ContextPtr r300, int flags,
         }
 		BEGIN_BATCH_NO_AUTOSTATE(4);
 		OUT_BATCH_REGSEQ(R300_ZB_DEPTHOFFSET, 1);
-		OUT_BATCH_RELOC(0, rrbd->bo, 0, 0);
+		OUT_BATCH_RELOC(0, rrbd->bo, 0, 0, RADEON_GEM_DOMAIN_VRAM, 0);
 		OUT_BATCH_REGVAL(R300_ZB_DEPTHPITCH, cbpitch);
 		END_BATCH();
 	}

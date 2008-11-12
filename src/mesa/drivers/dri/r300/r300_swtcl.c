@@ -646,7 +646,7 @@ void r300EmitVertexAOS(r300ContextPtr rmesa, GLuint vertex_size, struct radeon_b
 	OUT_BATCH_PACKET3(R300_PACKET3_3D_LOAD_VBPNTR, 2);
 	OUT_BATCH(1);
 	OUT_BATCH(vertex_size | (vertex_size << 8));
-	OUT_BATCH_RELOC(0, bo, offset, 0);
+	OUT_BATCH_RELOC(offset, bo, offset, RADEON_GEM_DOMAIN_GTT, 0, 0);
 	END_BATCH();
 }
 

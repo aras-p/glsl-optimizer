@@ -84,14 +84,20 @@ void r300BeginBatch(r300ContextPtr r300,
 /**
  * Write a relocated dword to the command buffer.
  */
-#define OUT_BATCH_RELOC(data, bo, offset, flags) \
+#define OUT_BATCH_RELOC(data, bo, offset, rd, wd, flags) \
 	do { \
         if (offset) {\
             fprintf(stderr, "(%s:%s:%d) offset : %d\n",\
             __FILE__, __FUNCTION__, __LINE__, offset);\
         }\
         radeon_cs_write_dword(b_l_r300->cmdbuf.cs, offset);\
-        radeon_cs_write_reloc(b_l_r300->cmdbuf.cs,bo,0,(bo)->size,flags);\
+        radeon_cs_write_reloc(b_l_r300->cmdbuf.cs, \
+                              bo, \
+                              offset, \
+                              (bo)->size, \
+                              rd, \
+                              wd, \
+                              flags);\
 	} while(0)
 
 /**
