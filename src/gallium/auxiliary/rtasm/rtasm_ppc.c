@@ -42,8 +42,6 @@
 #include "rtasm_ppc.h"
 
 
-#ifdef GALLIUM_CELL
-
 void
 ppc_init_func(struct ppc_function *p)
 {
@@ -253,7 +251,7 @@ union vx_inst {
    } inst;
 };
 
-static inline void
+static INLINE void
 emit_vx(struct ppc_function *p, uint op2, uint vD, uint vA, uint vB)
 {
    union vx_inst inst;
@@ -278,7 +276,7 @@ union vxr_inst {
    } inst;
 };
 
-static inline void
+static INLINE void
 emit_vxr(struct ppc_function *p, uint op2, uint vD, uint vA, uint vB)
 {
    union vxr_inst inst;
@@ -304,7 +302,7 @@ union va_inst {
    } inst;
 };
 
-static inline void
+static INLINE void
 emit_va(struct ppc_function *p, uint op2, uint vD, uint vA, uint vB, uint vC)
 {
    union va_inst inst;
@@ -421,7 +419,7 @@ union d_inst {
    } inst;
 };
 
-static inline void
+static INLINE void
 emit_d(struct ppc_function *p, uint op, uint rt, uint ra, int si)
 {
    union d_inst inst;
@@ -448,7 +446,7 @@ union a_inst {
    } inst;
 };
 
-static inline void
+static INLINE void
 emit_a(struct ppc_function *p, uint op, uint frt, uint fra, uint frb, uint op2,
        uint rc)
 {
@@ -959,5 +957,3 @@ ppc_return(struct ppc_function *p)
 {
    ppc_bclr(p, BRANCH_COND_ALWAYS, BRANCH_HINT_SUB_RETURN, 0);
 }
-
-#endif /* GALLIUM_CELL */
