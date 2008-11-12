@@ -121,6 +121,8 @@ nv30_miptree_surface_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 	ps->stride = nv30mt->level[level].pitch;
 	ps->usage = flags;
 	ps->status = PIPE_SURFACE_STATUS_DEFINED;
+	ps->refcount = 1;
+	ps->winsys = pscreen->winsys;
 
 	if (pt->target == PIPE_TEXTURE_CUBE) {
 		ps->offset = nv30mt->level[level].image_offset[face];

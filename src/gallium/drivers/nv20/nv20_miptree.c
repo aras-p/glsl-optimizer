@@ -116,6 +116,8 @@ nv20_miptree_surface_get(struct pipe_screen *screen, struct pipe_texture *pt,
 	ps->stride = nv20mt->level[level].pitch;
 	ps->usage = flags;
 	ps->status = PIPE_SURFACE_STATUS_DEFINED;
+	ps->refcount = 1;
+	ps->winsys = screen->winsys;
 
 	if (pt->target == PIPE_TEXTURE_CUBE) {
 		ps->offset = nv20mt->level[level].image_offset[face];

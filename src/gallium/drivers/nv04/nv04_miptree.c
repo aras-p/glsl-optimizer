@@ -109,6 +109,8 @@ nv04_miptree_surface_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 	ps->nblocksx = pt->nblocksx[level];
 	ps->nblocksy = pt->nblocksy[level];
 	ps->stride = nv04mt->level[level].pitch;
+	ps->refcount = 1;
+	ps->winsys = pscreen->winsys;
 
 	if (pt->target == PIPE_TEXTURE_CUBE) {
 		ps->offset = nv04mt->level[level].image_offset[face];
