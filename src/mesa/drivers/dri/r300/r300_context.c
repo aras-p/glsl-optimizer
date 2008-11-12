@@ -176,6 +176,17 @@ static const struct tnl_pipeline_stage *r300_pipeline[] = {
 	0,
 };
 
+static void r300RunPipeline(GLcontext * ctx)
+{
+    _mesa_lock_context_textures(ctx);
+
+    if (ctx->NewState)
+        _mesa_update_state_locked(ctx);
+    
+    _tnl_run_pipeline(ctx);
+    _mesa_unlock_context_textures(ctx);
+}
+
 /* Create the device specific rendering context.
  */
 GLboolean r300CreateContext(const __GLcontextModes * glVisual,
@@ -348,7 +359,7 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	if (!(screen->chip_flags & RADEON_CHIPSET_TCL))
 	        r300InitSwtcl(ctx);
 
-	TNL_CONTEXT(ctx)->Driver.RunPipeline = _tnl_run_pipeline;
+	TNL_CONTEXT(ctx)->Driver.RunPipeline = r300RunPipeline;
 
 	tcl_mode = driQueryOptioni(&r300->radeon.optionCache, "tcl_mode");
 	if (driQueryOptionb(&r300->radeon.optionCache, "no_rast")) {

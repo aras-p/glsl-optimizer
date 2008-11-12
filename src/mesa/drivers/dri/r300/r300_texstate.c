@@ -51,6 +51,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r300_mipmap_tree.h"
 #include "r300_tex.h"
 #include "r300_reg.h"
+#include "radeon_buffer.h"
 
 #define VALID_FORMAT(f) ( ((f) <= MESA_FORMAT_RGBA_DXT5			\
 			   || ((f) >= MESA_FORMAT_RGBA_FLOAT32 &&	\
@@ -328,7 +329,7 @@ static GLboolean r300_validate_texture(GLcontext * ctx, struct gl_texture_object
 	r300_texture_image *baseimage = get_r300_texture_image(texObj->Image[0][texObj->BaseLevel]);
 	int face, level;
 
-	if (t->validated)
+	if (t->validated || t->image_override)
 		return GL_TRUE;
 
 	if (RADEON_DEBUG & DEBUG_TEXTURE)
@@ -430,7 +431,7 @@ void r300SetTexOffset(__DRIcontext * pDRICtx, GLint texname,
 
 	if (!offset)
 		return;
-
+    t->bo = NULL;
 	t->override_offset = offset;
 	t->pitch_reg &= (1 << 13) -1;
 	pitch_val = pitch;
@@ -456,4 +457,74 @@ void r300SetTexOffset(__DRIcontext * pDRICtx, GLint texname,
 	pitch_val--;
 
 	t->pitch_reg |= pitch_val;
+}
+
+void r300SetTexBuffer(__DRIcontext *pDRICtx, GLint target, __DRIdrawable *dPriv)
+{
+    struct gl_texture_unit *texUnit;
+    struct gl_texture_object *texObj;
+    struct gl_texture_image *texImage;
+	struct radeon_renderbuffer *rb;
+	radeonContextPtr radeon;
+	r300ContextPtr rmesa;
+	GLframebuffer *fb;
+	r300TexObjPtr t;
+	uint32_t pitch_val;
+
+    target = GL_TEXTURE_RECTANGLE_ARB;
+	radeon = pDRICtx->driverPrivate;
+	rmesa = pDRICtx->driverPrivate;
+	fb = dPriv->driverPrivate;
+    texUnit = &radeon->glCtx->Texture.Unit[radeon->glCtx->Texture.CurrentUnit];
+    texObj = _mesa_select_tex_object(radeon->glCtx, texUnit, target);
+    texImage = _mesa_get_tex_image(radeon->glCtx, texObj, target, 0);
+
+    radeon_update_renderbuffers(pDRICtx, dPriv);
+    rb = (void*)fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer;
+    if (rb->bo == NULL) {
+        /* Failed to BO for the buffer */
+        return;
+    }
+
+    _mesa_lock_texture(radeon->glCtx, texObj);
+    _mesa_init_teximage_fields(radeon->glCtx, target, texImage,
+                               rb->width, rb->height, rb->cpp, 0, rb->cpp);
+	texImage->TexFormat = &_mesa_texformat_rgba8888_rev;
+
+	t = r300_tex_obj(texObj);
+    if (t == NULL) {
+        return;
+    }
+    t->bo = rb->bo;
+    t->tile_bits = 0;
+	t->image_override = GL_TRUE;
+	t->override_offset = 0;
+	t->pitch_reg &= (1 << 13) -1;
+	pitch_val = rb->pitch;
+	switch (rb->cpp) {
+	case 4:
+		t->format = R300_EASY_TX_FORMAT(X, Y, Z, W, W8Z8Y8X8);
+		t->filter |= tx_table[2].filter;
+		pitch_val /= 4;
+		break;
+	case 3:
+	default:
+		t->format = R300_EASY_TX_FORMAT(X, Y, Z, ONE, W8Z8Y8X8);
+		t->filter |= tx_table[4].filter;
+		pitch_val /= 4;
+		break;
+	case 2:
+		t->format = R300_EASY_TX_FORMAT(X, Y, Z, ONE, Z5Y6X5);
+		t->filter |= tx_table[5].filter;
+		pitch_val /= 2;
+		break;
+	}
+	pitch_val--;
+	t->size = ((rb->width - 1) << R300_TX_WIDTHMASK_SHIFT) |
+              ((rb->height - 1) << R300_TX_HEIGHTMASK_SHIFT);
+    t->size |= R300_TX_SIZE_TXPITCH_EN;
+	t->pitch_reg |= pitch_val;
+	t->validated = GL_TRUE;
+    _mesa_unlock_texture(radeon->glCtx, texObj);
+    return;
 }

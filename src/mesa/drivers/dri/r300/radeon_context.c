@@ -365,6 +365,7 @@ radeon_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
             rb = (void *)draw->Attachment[BUFFER_FRONT_LEFT].Renderbuffer;
             rb->cpp = buffers[i].cpp;
             rb->pitch = buffers[i].pitch;
+            rb->width = drawable->w;
             rb->height = drawable->h;
             rb->has_surface = 0;
             rb->bo = radeon_bo_open(radeon->radeonScreen->bom,
@@ -382,6 +383,7 @@ radeon_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
             rb = (void *)draw->Attachment[BUFFER_BACK_LEFT].Renderbuffer;
             rb->cpp = buffers[i].cpp;
             rb->pitch = buffers[i].pitch;
+            rb->width = drawable->w;
             rb->height = drawable->h;
             rb->has_surface = 0;
             rb->bo = radeon_bo_open(radeon->radeonScreen->bom,
@@ -395,6 +397,7 @@ radeon_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
             rb = (void *)draw->Attachment[BUFFER_DEPTH].Renderbuffer;
             rb->cpp = buffers[i].cpp;
             rb->pitch = buffers[i].pitch;
+            rb->width = drawable->w;
             rb->height = drawable->h;
             rb->has_surface = 0;
             rb->bo = radeon_bo_open(radeon->radeonScreen->bom,

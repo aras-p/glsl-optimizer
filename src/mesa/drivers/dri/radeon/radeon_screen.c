@@ -349,6 +349,14 @@ static const __DRItexOffsetExtension r300texOffsetExtension = {
     { __DRI_TEX_OFFSET, __DRI_TEX_OFFSET_VERSION },
    r300SetTexOffset,
 };
+
+void r300SetTexBuffer(__DRIcontext *pDRICtx,
+                      GLint target,
+                      __DRIdrawable *dPriv);
+static const __DRItexBufferExtension r300TexBufferExtension = {
+    { __DRI_TEX_BUFFER, __DRI_TEX_BUFFER_VERSION },
+   r300SetTexBuffer,
+};
 #endif
 
 /* Create the device specific screen private data struct.
@@ -1024,7 +1032,8 @@ radeonCreateScreen2(__DRIscreenPrivate *sPriv)
 #endif
 
 #if RADEON_COMMON && defined(RADEON_COMMON_FOR_R300)
-   //screen->extensions[i++] = &r300texOffsetExtension.base;
+   screen->extensions[i++] = &r300texOffsetExtension.base;
+   screen->extensions[i++] = &r300TexBufferExtension.base;
 #endif
 
    screen->extensions[i++] = NULL;
@@ -1455,8 +1464,6 @@ radeonInitScreen(__DRIscreenPrivate *psp)
 static const
 __DRIconfig **radeonInitScreen2(__DRIscreenPrivate *psp)
 {
-   fprintf(stderr, "DRI2 initialization\n");
-
    /* Calling driInitExtensions here, with a NULL context pointer,
     * does not actually enable the extensions.  It just makes sure
     * that all the dispatch offsets for all the extensions that
@@ -1479,8 +1486,6 @@ __DRIconfig **radeonInitScreen2(__DRIscreenPrivate *psp)
    if (!radeonInitDriver(psp)) {
        return NULL;
     }
-
-   fprintf(stderr, "DRI2 initialized\n");
 
    /* for now fill in all modes */
    return radeonFillInModes( psp, 24, 24, 8, 1);
@@ -1555,3 +1560,4 @@ const struct __DriverAPIRec driDriverAPI = {
    .CopySubBuffer   = r200CopySubBuffer,
 };
 #endif
+

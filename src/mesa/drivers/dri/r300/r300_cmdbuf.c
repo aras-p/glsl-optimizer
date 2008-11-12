@@ -74,14 +74,16 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 int r300FlushCmdBufLocked(r300ContextPtr r300, const char *caller)
 {
-	int ret;
+	int ret = 0;
 
 	if (r300->cmdbuf.flushing) {
 		fprintf(stderr, "Recursive call into r300FlushCmdBufLocked!\n");
 		exit(-1);
 	}
 	r300->cmdbuf.flushing = 1;
-    ret = radeon_cs_emit(r300->cmdbuf.cs);
+    if (r300->cmdbuf.cs->cdw) {
+        ret = radeon_cs_emit(r300->cmdbuf.cs);
+    }
     radeon_cs_erase(r300->cmdbuf.cs);
 	r300->cmdbuf.flushing = 0;
 	return ret;
@@ -299,7 +301,11 @@ static void emit_tex_offsets(r300ContextPtr r300, struct r300_state_atom * atom)
 			} else if (!t) {
 				OUT_BATCH(r300->radeon.radeonScreen->texOffset[0]);
 			} else {
-				OUT_BATCH(t->override_offset);
+                if (t->bo) {
+                    OUT_BATCH_RELOC(t->tile_bits, t->bo, 0, 0);
+                } else {
+    				OUT_BATCH(t->override_offset);
+                }
 			}
             END_BATCH();
 		}

@@ -176,6 +176,7 @@ struct r300_tex_obj {
 	/* end hardware registers */
 
 	GLuint tile_bits;	/* hw texture tile bits used on this texture */
+    struct radeon_bo *bo;
 };
 
 static INLINE r300TexObj* r300_tex_obj(struct gl_texture_object *texObj)

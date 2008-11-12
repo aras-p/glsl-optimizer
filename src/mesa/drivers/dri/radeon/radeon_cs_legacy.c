@@ -309,7 +309,6 @@ static int cs_emit(struct radeon_cs *cs)
     radeon_cs_write_dword(cs, ull >> 32);
     radeon_cs_write_dword(cs, 0);
 
-
     r = cs_process_relocs(cs);
     if (r) {
         return 0;
@@ -330,10 +329,6 @@ static int cs_emit(struct radeon_cs *cs)
         return r;
     }
     cs_set_age(cs);
-        for (int i = 0; i < cs->cdw; i++) {
-            fprintf(stderr, "pkt[%04d]=0x%08X\n", i, cs->packets[i]);
-        }
-    exit(0);
     return 0;
 }
 
@@ -362,7 +357,7 @@ static int cs_need_flush(struct radeon_cs *cs)
     return (cs->relocs_total_size > (7*1024*1024));
 }
 
-struct radeon_cs_funcs  radeon_cs_funcs = {
+static struct radeon_cs_funcs  radeon_cs_legacy_funcs = {
     cs_create,
     cs_write_dword,
     cs_write_reloc,
@@ -383,7 +378,7 @@ struct radeon_cs_manager *radeon_cs_manager_legacy(struct radeon_context *ctx)
     if (csm == NULL) {
         return NULL;
     }
-    csm->base.funcs = &radeon_cs_funcs;
+    csm->base.funcs = &radeon_cs_legacy_funcs;
     csm->base.fd = ctx->dri.fd;
     csm->ctx = ctx;
     csm->pending_age = 1;
