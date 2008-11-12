@@ -186,11 +186,12 @@ static __GLXDRIdrawable *dri2CreateDrawable(__GLXscreenConfigs *psc,
 static void dri2CopySubBuffer(__GLXDRIdrawable *pdraw,
 			      int x, int y, int width, int height)
 {
+    __GLXDRIdrawablePrivate *priv = (__GLXDRIdrawablePrivate *) pdraw;
     XRectangle xrect;
     XserverRegion region;
 
     xrect.x = x;
-    xrect.y = y;
+    xrect.y = priv->height - y - height;
     xrect.width = width;
     xrect.height = height;
 
@@ -331,7 +332,11 @@ static __GLXDRIscreen *dri2CreateScreen(__GLXscreenConfigs *psc, int screen,
     psp->createContext = dri2CreateContext;
     psp->createDrawable = dri2CreateDrawable;
     psp->swapBuffers = dri2SwapBuffers;
+
+    /* DRI2 suports SubBuffer through DRI2CopyRegion, so it's always
+     * available.*/
     psp->copySubBuffer = dri2CopySubBuffer;
+    __glXEnableDirectExtension(psc, "GLX_MESA_copy_sub_buffer");
 
     Xfree(driverName);
     Xfree(deviceName);
