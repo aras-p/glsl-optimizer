@@ -1190,14 +1190,14 @@ gen_stencil_test(struct spe_function *f, const struct pipe_stencil_state *state,
       }
       break;
 
-   case PIPE_FUNC_GREATER:
+   case PIPE_FUNC_LESS:
       if (state->value_mask == stencil_max_value) {
-         /* stencil_pass = fragment_mask & (s > reference) */
+         /* stencil_pass = fragment_mask & (reference < s)  */
          spe_compare_greater_uint(f, stencil_pass_reg, fbS_reg, state->ref_value);
          spe_and(f, stencil_pass_reg, fragment_mask_reg, stencil_pass_reg);
       }
       else {
-         /* stencil_pass = fragment_mask & ((s&mask) > (reference&mask)) */
+         /* stencil_pass = fragment_mask & ((reference&mask) < (s & mask)) */
          unsigned int tmp_masked_stencil = spe_allocate_available_register(f);
          spe_and_uint(f, tmp_masked_stencil, fbS_reg, state->value_mask);
          spe_compare_greater_uint(f, stencil_pass_reg, tmp_masked_stencil, state->value_mask & state->ref_value);
@@ -1206,7 +1206,7 @@ gen_stencil_test(struct spe_function *f, const struct pipe_stencil_state *state,
       }
       break;
 
-   case PIPE_FUNC_LESS:
+   case PIPE_FUNC_GREATER:
       if (state->value_mask == stencil_max_value) {
          /* stencil_pass = fragment_mask & (reference > s) */
          /* There's no convenient Compare Less Than Immediate instruction, so
@@ -1233,9 +1233,9 @@ gen_stencil_test(struct spe_function *f, const struct pipe_stencil_state *state,
       }
       break;
 
-   case PIPE_FUNC_LEQUAL:
+   case PIPE_FUNC_GEQUAL:
       if (state->value_mask == stencil_max_value) {
-         /* stencil_pass = fragment_mask & (s <= reference) 
+         /* stencil_pass = fragment_mask & (reference >= s) 
           *              = fragment_mask & ~(s > reference) */
          spe_compare_greater_uint(f, stencil_pass_reg, fbS_reg, state->ref_value);
          spe_andc(f, stencil_pass_reg, fragment_mask_reg, stencil_pass_reg);
@@ -1250,9 +1250,9 @@ gen_stencil_test(struct spe_function *f, const struct pipe_stencil_state *state,
       }
       break;
 
-   case PIPE_FUNC_GEQUAL:
+   case PIPE_FUNC_LEQUAL:
       if (state->value_mask == stencil_max_value) {
-         /* stencil_pass = fragment_mask & (s >= reference) ]
+         /* stencil_pass = fragment_mask & (reference <= s) ]
           *               = fragment_mask & ~(reference > s) */
          /* As above, we have to do this by loading a register */
          unsigned int tmp_reg = spe_allocate_available_register(f);
@@ -1779,7 +1779,7 @@ gen_stencil_depth_test(struct spe_function *f,
  * \param f     the generated function (out)
  */
 void
-cell_gen_fragment_function(struct cell_context *cell, uint facing, struct spe_function *f)
+cell_gen_fragment_function(struct cell_context *cell, const uint facing, struct spe_function *f)
 {
    const struct pipe_depth_stencil_alpha_state *dsa = cell->depth_stencil;
    const struct pipe_blend_state *blend = cell->blend;
@@ -1813,7 +1813,7 @@ cell_gen_fragment_function(struct cell_context *cell, uint facing, struct spe_fu
    if (cell->debug_flags & CELL_DEBUG_ASM) {
       spe_print_code(f, true);
       spe_indent(f, 8);
-      spe_comment(f, -4, "Begin per-fragment ops");
+      spe_comment(f, -4, facing == CELL_FACING_FRONT ? "Begin front-facing per-fragment ops": "Begin back-facing per-fragment ops");
    }
 
    spe_allocate_register(f, x_reg);
@@ -2092,6 +2092,9 @@ cell_gen_fragment_function(struct cell_context *cell, uint facing, struct spe_fu
    spe_release_register(f, quad_offset_reg);
 
    if (cell->debug_flags & CELL_DEBUG_ASM) {
-      spe_comment(f, -4, "End per-fragment ops");
+      char buffer[1024];
+      sprintf(buffer, "End %s-facing per-fragment ops: %d instructions", 
+         facing == CELL_FACING_FRONT ? "front" : "back", f->num_inst);
+      spe_comment(f, -4, buffer);
    }
 }
