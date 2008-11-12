@@ -353,6 +353,7 @@ static void brw_prepare_vertices(struct brw_context *brw)
 	    intel_buffer_object(input->glarray->BufferObj);
 
 	 /* Named buffer object: Just reference its contents directly. */
+	 dri_bo_unreference(input->bo);
 	 input->bo = intel_bufferobj_buffer(intel, intel_buffer,
 					    INTEL_READ);
 	 dri_bo_reference(input->bo);
