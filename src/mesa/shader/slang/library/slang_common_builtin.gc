@@ -47,7 +47,6 @@ uniform mat4 gl_ModelViewProjectionMatrix;
 uniform mat4 gl_TextureMatrix[gl_MaxTextureCoords];
 
 uniform mat3 gl_NormalMatrix;
-uniform mat3 __NormalMatrixTranspose;  // Mesa only
 
 uniform mat4 gl_ModelViewMatrixInverse;
 uniform mat4 gl_ProjectionMatrixInverse;

@@ -80,9 +80,7 @@ lookup_statevar(const char *var, GLint index1, GLint index2, const char *field,
       { "gl_TextureMatrixTranspose", STATE_TEXTURE_MATRIX, 0 },
       { "gl_TextureMatrixInverseTranspose", STATE_TEXTURE_MATRIX, STATE_MATRIX_INVERSE },
 
-      /* XXX verify these!!! */
       { "gl_NormalMatrix", STATE_MODELVIEW_MATRIX, STATE_MATRIX_TRANSPOSE },
-      { "__NormalMatrixTranspose", STATE_MODELVIEW_MATRIX, 0 },
 
       { NULL, 0, 0 }
    };
