@@ -161,6 +161,11 @@ static INLINE float logf( float f )
    return (float) log( (double) f );
 }
 
+static INLINE double log2( double x )
+{
+   return log( x ) / log( 2.0 );
+}
+
 #else
 /* Work-around an extra semi-colon in VS 2005 logf definition */
 #ifdef logf
