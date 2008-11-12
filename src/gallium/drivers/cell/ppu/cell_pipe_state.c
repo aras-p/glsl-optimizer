@@ -35,6 +35,7 @@
 #include "draw/draw_context.h"
 #include "cell_context.h"
 #include "cell_flush.h"
+#include "cell_pipe_state.h"
 #include "cell_state.h"
 #include "cell_texture.h"
 
