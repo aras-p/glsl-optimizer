@@ -245,6 +245,9 @@ extern void
 ppc_addi(struct ppc_function *p, uint rt, uint ra, int imm);
 
 extern void
+ppc_addis(struct ppc_function *p, uint rt, uint ra, int imm);
+
+extern void
 ppc_and(struct ppc_function *p, uint rt, uint ra, uint rb);
 
 extern void
@@ -309,6 +312,9 @@ ppc_stfs(struct ppc_function *p, uint frs, uint ra, int offset);
 
 extern void
 ppc_stfiwx(struct ppc_function *p, uint frs, uint ra, uint rb);
+
+extern void
+ppc_lfs(struct ppc_function *p, uint frt, uint ra, int offset);
 
 
 
