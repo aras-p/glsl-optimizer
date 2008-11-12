@@ -27,6 +27,7 @@
 
 #include "util/u_rect.h"
 #include "cell_context.h"
+#include "cell_surface.h"
 
 
 void
