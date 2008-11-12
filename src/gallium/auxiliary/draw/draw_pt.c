@@ -35,6 +35,7 @@
 #include "draw/draw_pt.h"
 #include "draw/draw_vs.h"
 #include "tgsi/tgsi_dump.h"
+#include "util/u_math.h"
 
 static unsigned trim( unsigned count, unsigned first, unsigned incr )
 {
