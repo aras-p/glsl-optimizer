@@ -1037,11 +1037,28 @@ fetch_source(
    union tgsi_exec_channel index;
    uint swizzle;
 
+   /* We start with a direct index into a register file.
+    *
+    *    file[1],
+    *    where:
+    *       file = SrcRegister.File
+    *       [1] = SrcRegister.Index
+    */
    index.i[0] =
    index.i[1] =
    index.i[2] =
    index.i[3] = reg->SrcRegister.Index;
 
+   /* There is an extra source register that indirectly subscripts
+    * a register file. The direct index now becomes an offset
+    * that is being added to the indirect register.
+    *
+    *    file[ind[2].x+1],
+    *    where:
+    *       ind = SrcRegisterInd.File
+    *       [2] = SrcRegisterInd.Index
+    *       .x = SrcRegisterInd.SwizzleX
+    */
    if (reg->SrcRegister.Indirect) {
       union tgsi_exec_channel index2;
       union tgsi_exec_channel indir_index;
@@ -1078,19 +1095,31 @@ fetch_source(
       }
    }
 
-   if( reg->SrcRegister.Dimension ) {
-      switch( reg->SrcRegister.File ) {
+   /* There is an extra source register that is a second
+    * subscript to a register file. Effectively it means that
+    * the register file is actually a 2D array of registers.
+    *
+    *    file[1][3] == file[1*sizeof(file[1])+3],
+    *    where:
+    *       [3] = SrcRegisterDim.Index
+    */
+   if (reg->SrcRegister.Dimension) {
+      /* The size of the first-order array depends on the register file type.
+       * We need to multiply the index to the first array to get an effective,
+       * "flat" index that points to the beginning of the second-order array.
+       */
+      switch (reg->SrcRegister.File) {
       case TGSI_FILE_INPUT:
-         index.i[0] *= 17;
-         index.i[1] *= 17;
-         index.i[2] *= 17;
-         index.i[3] *= 17;
+         index.i[0] *= TGSI_EXEC_MAX_INPUT_ATTRIBS;
+         index.i[1] *= TGSI_EXEC_MAX_INPUT_ATTRIBS;
+         index.i[2] *= TGSI_EXEC_MAX_INPUT_ATTRIBS;
+         index.i[3] *= TGSI_EXEC_MAX_INPUT_ATTRIBS;
          break;
       case TGSI_FILE_CONSTANT:
-         index.i[0] *= 4096;
-         index.i[1] *= 4096;
-         index.i[2] *= 4096;
-         index.i[3] *= 4096;
+         index.i[0] *= TGSI_EXEC_MAX_CONST_BUFFER;
+         index.i[1] *= TGSI_EXEC_MAX_CONST_BUFFER;
+         index.i[2] *= TGSI_EXEC_MAX_CONST_BUFFER;
+         index.i[3] *= TGSI_EXEC_MAX_CONST_BUFFER;
          break;
       default:
          assert( 0 );
@@ -1101,6 +1130,17 @@ fetch_source(
       index.i[2] += reg->SrcRegisterDim.Index;
       index.i[3] += reg->SrcRegisterDim.Index;
 
+      /* Again, the second subscript index can be addressed indirectly
+       * identically to the first one.
+       * Nothing stops us from indirectly addressing the indirect register,
+       * but there is no need for that, so we won't exercise it.
+       *
+       *    file[1][ind[4].y+3],
+       *    where:
+       *       ind = SrcRegisterDimInd.File
+       *       [4] = SrcRegisterDimInd.Index
+       *       .y = SrcRegisterDimInd.SwizzleX
+       */
       if (reg->SrcRegisterDim.Indirect) {
          union tgsi_exec_channel index2;
          union tgsi_exec_channel indir_index;
@@ -1133,6 +1173,11 @@ fetch_source(
                index.i[i] = 0;
          }
       }
+
+      /* If by any chance there was a need for a 3D array of register
+       * files, we would have to check whether SrcRegisterDim is followed
+       * by a dimension register and continue the saga.
+       */
    }
 
    swizzle = tgsi_util_get_full_src_register_extswizzle( reg, chan_index );
