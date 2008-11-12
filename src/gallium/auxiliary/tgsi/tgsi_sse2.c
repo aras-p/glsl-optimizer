@@ -527,7 +527,7 @@ emit_func_call_dst(
    void (PIPE_CDECL *code)() )
 {
    struct x86_reg ecx = x86_make_reg( file_REG32, reg_CX );
-   unsigned i, n, xmm;
+   unsigned i, n;
    unsigned xmm_mask;
    
    /* Bitmask of the xmm registers to save */
@@ -563,7 +563,7 @@ emit_func_call_dst(
          sse_movups(
             func,
             x86_make_disp( x86_make_reg( file_REG32, reg_SP ), n*16 ),
-            make_xmm( xmm ) );
+            make_xmm( i ) );
          ++n;
       }
    
@@ -581,7 +581,7 @@ emit_func_call_dst(
       if(xmm_mask & (1 << i)) {
          sse_movups(
             func,
-            make_xmm( xmm ),
+            make_xmm( i ),
             x86_make_disp( x86_make_reg( file_REG32, reg_SP ), n*16 ) );
          ++n;
       }
