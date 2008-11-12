@@ -37,6 +37,11 @@
 #include "indirect_vertex_array.h"
 #include "dispatch.h"
 #include "glapi.h"
+#ifdef USE_XCB
+#include <xcb/xcb.h>
+#include <xcb/glx.h>
+#endif /* USE_XCB */
+
 
 /* Used for GL_ARB_transpose_matrix */
 static void
