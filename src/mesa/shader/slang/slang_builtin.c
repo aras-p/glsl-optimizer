@@ -109,9 +109,12 @@ lookup_statevar(const char *var, GLint index1, GLint index2, const char *field,
    if (isMatrix) {
       if (tokens[0] == STATE_TEXTURE_MATRIX) {
          if (index1 >= 0) {
-            tokens[1] = index1;
-            index1 = 0; /* prevent extra addition at end of function */
+            tokens[1] = index1; /* which texture matrix */
          }
+      }
+      if (index1 < 0) {
+         /* index1 is unused: prevent extra addition at end of function */
+         index1 = 0;
       }
    }
    else if (strcmp(var, "gl_DepthRange") == 0) {
