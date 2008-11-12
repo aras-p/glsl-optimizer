@@ -100,7 +100,7 @@ extern void spe_comment(struct spe_function *p, int rel_indent, const char *s);
 #endif /* RTASM_PPC_SPE_H */
 
 #ifndef EMIT_
-#define EMIT_(name, _op) \
+#define EMIT_(_name, _op) \
     extern void _name (struct spe_function *p, unsigned rT)
 #define EMIT_R(_name, _op) \
     extern void _name (struct spe_function *p, unsigned rT, unsigned rA)
