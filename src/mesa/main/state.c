@@ -206,56 +206,54 @@ update_program(GLcontext *ctx)
 
    _mesa_reference_fragprog(ctx, &ctx->FragmentProgram._Current, NULL);
 
-   if (shProg && shProg->LinkStatus) {
+   if (shProg && shProg->LinkStatus && shProg->FragmentProgram) {
       /* Use shader programs */
-      /* XXX this isn't quite right, since we may have either a vertex
-       * _or_ fragment shader (not always both).
-       */
-      _mesa_reference_vertprog(ctx, &ctx->VertexProgram._Current,
-                               shProg->VertexProgram);
       _mesa_reference_fragprog(ctx, &ctx->FragmentProgram._Current,
                                shProg->FragmentProgram);
    }
-   else {
-      if (ctx->FragmentProgram._Enabled) {
-         /* use user-defined vertex program */
-         _mesa_reference_fragprog(ctx, &ctx->FragmentProgram._Current,
-                                  ctx->FragmentProgram.Current);
-      }
-      else if (ctx->FragmentProgram._MaintainTexEnvProgram) {
-         /* Use fragment program generated from fixed-function state.
-          */
-         _mesa_reference_fragprog(ctx, &ctx->FragmentProgram._Current,
-                                  _mesa_get_fixed_func_fragment_program(ctx));
-         _mesa_reference_fragprog(ctx, &ctx->FragmentProgram._TexEnvProgram,
-                                  ctx->FragmentProgram._Current);
-      }
-      else {
-         /* no fragment program */
-         _mesa_reference_fragprog(ctx, &ctx->FragmentProgram._Current, NULL);
-      }
-
-      /* Examine vertex program after fragment program as
-       * _mesa_get_fixed_func_vertex_program() needs to know active
-       * fragprog inputs.
+   else if (ctx->FragmentProgram._Enabled) {
+      /* use user-defined vertex program */
+      _mesa_reference_fragprog(ctx, &ctx->FragmentProgram._Current,
+                               ctx->FragmentProgram.Current);
+   }
+   else if (ctx->FragmentProgram._MaintainTexEnvProgram) {
+      /* Use fragment program generated from fixed-function state.
        */
-      if (ctx->VertexProgram._Enabled) {
-         /* use user-defined vertex program */
-         _mesa_reference_vertprog(ctx, &ctx->VertexProgram._Current,
-                                  ctx->VertexProgram.Current);
-      }
-      else if (ctx->VertexProgram._MaintainTnlProgram) {
-         /* Use vertex program generated from fixed-function state.
-          */
-         _mesa_reference_vertprog(ctx, &ctx->VertexProgram._Current,
-                                  _mesa_get_fixed_func_vertex_program(ctx));
-         _mesa_reference_vertprog(ctx, &ctx->VertexProgram._TnlProgram,
-                                  ctx->VertexProgram._Current);
-      }
-      else {
-         /* no vertex program */
-         _mesa_reference_vertprog(ctx, &ctx->VertexProgram._Current, NULL);
-      }
+      _mesa_reference_fragprog(ctx, &ctx->FragmentProgram._Current,
+                               _mesa_get_fixed_func_fragment_program(ctx));
+      _mesa_reference_fragprog(ctx, &ctx->FragmentProgram._TexEnvProgram,
+                               ctx->FragmentProgram._Current);
+   }
+   else {
+      /* no fragment program */
+      _mesa_reference_fragprog(ctx, &ctx->FragmentProgram._Current, NULL);
+   }
+
+   /* Examine vertex program after fragment program as
+    * _mesa_get_fixed_func_vertex_program() needs to know active
+    * fragprog inputs.
+    */
+   if (shProg && shProg->LinkStatus && shProg->VertexProgram) {
+      /* Use shader programs */
+      _mesa_reference_vertprog(ctx, &ctx->VertexProgram._Current,
+                            shProg->VertexProgram);
+   }
+   else if (ctx->VertexProgram._Enabled) {
+      /* use user-defined vertex program */
+      _mesa_reference_vertprog(ctx, &ctx->VertexProgram._Current,
+                               ctx->VertexProgram.Current);
+   }
+   else if (ctx->VertexProgram._MaintainTnlProgram) {
+      /* Use vertex program generated from fixed-function state.
+       */
+      _mesa_reference_vertprog(ctx, &ctx->VertexProgram._Current,
+                               _mesa_get_fixed_func_vertex_program(ctx));
+      _mesa_reference_vertprog(ctx, &ctx->VertexProgram._TnlProgram,
+                               ctx->VertexProgram._Current);
+   }
+   else {
+      /* no vertex program */
+      _mesa_reference_vertprog(ctx, &ctx->VertexProgram._Current, NULL);
    }
 
    /* XXX: get rid of _Active flag.
