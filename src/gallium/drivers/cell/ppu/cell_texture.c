@@ -314,6 +314,7 @@ cell_twiddle_texture(struct pipe_screen *screen,
    switch (ct->base.format) {
    case PIPE_FORMAT_A8R8G8B8_UNORM:
    case PIPE_FORMAT_B8G8R8A8_UNORM:
+   case PIPE_FORMAT_S8Z24_UNORM:
       {
          int numFaces = ct->base.target == PIPE_TEXTURE_CUBE ? 6 : 1;
          int offset = bufWidth * bufHeight * 4 * surface->face;
@@ -337,7 +338,7 @@ cell_twiddle_texture(struct pipe_screen *screen,
       }
       break;
    default:
-      printf("Cell: twiddle unsupported texture format\n");
+      printf("Cell: twiddle unsupported texture format 0x%x\n", ct->base.format);
       ;
    }
 
@@ -363,6 +364,7 @@ cell_untwiddle_texture(struct pipe_screen *screen,
    switch (ct->base.format) {
    case PIPE_FORMAT_A8R8G8B8_UNORM:
    case PIPE_FORMAT_B8G8R8A8_UNORM:
+   case PIPE_FORMAT_S8Z24_UNORM:
       {
          int numFaces = ct->base.target == PIPE_TEXTURE_CUBE ? 6 : 1;
          int offset = surface->stride * texHeight * 4 * surface->face;
@@ -382,7 +384,7 @@ cell_untwiddle_texture(struct pipe_screen *screen,
    default:
       {
          ct->untiled_data[level] = NULL;
-         printf("Cell: untwiddle unsupported texture format\n");
+         printf("Cell: untwiddle unsupported texture format 0x%x\n", ct->base.format);
       }
    }
 
