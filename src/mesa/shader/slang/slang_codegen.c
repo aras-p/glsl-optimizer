@@ -1602,19 +1602,6 @@ resolve_swizzle(const slang_operation *oper)
 
 
 /**
- * As above, but produce a writemask.
- */
-static GLuint
-resolve_writemask(slang_assemble_ctx *A, const slang_operation *oper)
-{
-   GLuint swizzle = resolve_swizzle(oper);
-   GLuint writemask, swizzleOut;
-   swizzle_to_writemask(A, swizzle, &writemask, &swizzleOut);
-   return writemask;
-}
-
-
-/**
  * Recursively descend through swizzle nodes to find the node's storage info.
  */
 static slang_ir_storage *
@@ -1677,13 +1664,10 @@ _slang_gen_asm(slang_assemble_ctx *A, slang_operation *oper,
       /* Setup n->Store to be a particular location.  Otherwise, storage
        * for the result (a temporary) will be allocated later.
        */
-      GLuint writemask = WRITEMASK_XYZW;
       slang_operation *dest_oper;
       slang_ir_node *n0;
 
       dest_oper = &oper->children[0];
-
-      writemask = resolve_writemask(A, dest_oper);
 
       n0 = _slang_gen_operation(A, dest_oper);
       if (!n0)
