@@ -32,6 +32,7 @@
 #include "st_cb_fbo.h"
 #include "main/enums.h"
 #include "main/teximage.h"
+#include "main/texstore.h"
 
 #undef Elements  /* fix re-defined macro warning */
 
@@ -352,6 +353,52 @@ st_texture_image_copy(struct pipe_context *pipe,
    }
 }
 
+/** Bind a pipe surface for use as a texture image */
+int
+st_set_teximage(struct pipe_texture *pt, int target)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   const GLuint unit = ctx->Texture.CurrentUnit;
+   struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
+   struct gl_texture_object *texObj;
+   struct gl_texture_image *texImage;
+   struct st_texture_image *stImage;
+   int internalFormat;
+
+   switch (pt->format) {
+   case PIPE_FORMAT_A8R8G8B8_UNORM:
+      internalFormat = GL_RGBA8;
+      break;
+   default:
+      return 0;
+   };
+
+   switch (target) {
+   case ST_TEXTURE_2D:
+      target = GL_TEXTURE_2D;
+      break;
+   case ST_TEXTURE_RECT:
+      target = GL_TEXTURE_RECTANGLE_ARB;
+      break;
+   default:
+      return 0;
+   }
+
+   texObj = _mesa_select_tex_object(ctx, texUnit, target);
+   texImage = _mesa_get_tex_image(ctx, texObj, target, 0);
+   stImage = st_texture_image(texImage);
+   
+   _mesa_init_teximage_fields(ctx, GL_TEXTURE_2D, texImage, pt->width[0],
+                              pt->height[0], 1, 0, internalFormat);
+
+   texImage->TexFormat = st_ChooseTextureFormat(ctx, internalFormat, GL_RGBA,
+                                                GL_UNSIGNED_BYTE);
+   _mesa_set_fetch_functions(texImage, 2);
+
+   pipe_texture_reference(&stImage->pt, pt);
+
+   return 1;
+}
 
 /** Redirect rendering into stfb's surface to a texture image */
 int
