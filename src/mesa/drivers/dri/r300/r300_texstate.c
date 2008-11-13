@@ -465,6 +465,7 @@ void r300SetTexBuffer(__DRIcontext *pDRICtx, GLint target, __DRIdrawable *dPriv)
     struct gl_texture_object *texObj;
     struct gl_texture_image *texImage;
 	struct radeon_renderbuffer *rb;
+	r300_texture_image *rImage;
 	radeonContextPtr radeon;
 	r300ContextPtr rmesa;
 	GLframebuffer *fb;
@@ -478,6 +479,11 @@ void r300SetTexBuffer(__DRIcontext *pDRICtx, GLint target, __DRIdrawable *dPriv)
     texUnit = &radeon->glCtx->Texture.Unit[radeon->glCtx->Texture.CurrentUnit];
     texObj = _mesa_select_tex_object(radeon->glCtx, texUnit, target);
     texImage = _mesa_get_tex_image(radeon->glCtx, texObj, target, 0);
+	rImage = get_r300_texture_image(texImage);
+	t = r300_tex_obj(texObj);
+    if (t == NULL) {
+        return;
+    }
 
     radeon_update_renderbuffers(pDRICtx, dPriv);
     rb = (void*)fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer;
@@ -487,14 +493,25 @@ void r300SetTexBuffer(__DRIcontext *pDRICtx, GLint target, __DRIdrawable *dPriv)
     }
 
     _mesa_lock_texture(radeon->glCtx, texObj);
+    if (t->bo) {
+        t->bo = NULL;
+    }
+    if (t->mt) {
+        t->mt = NULL;
+    }
+    if (rImage->bo) {
+        radeon_bo_unref(rImage->bo);
+        rImage->bo = NULL;
+    }
+    if (rImage->mt) {
+        r300_miptree_unreference(rImage->mt);
+        rImage->mt = NULL;
+    }
     _mesa_init_teximage_fields(radeon->glCtx, target, texImage,
                                rb->width, rb->height, rb->cpp, 0, rb->cpp);
 	texImage->TexFormat = &_mesa_texformat_rgba8888_rev;
+    rImage->bo = rb->bo;
 
-	t = r300_tex_obj(texObj);
-    if (t == NULL) {
-        return;
-    }
     t->bo = rb->bo;
     t->tile_bits = 0;
 	t->image_override = GL_TRUE;

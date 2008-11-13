@@ -139,6 +139,7 @@ struct _r300_texture_image {
 	 * by base.Data.
 	 */
 	struct _r300_mipmap_tree *mt;
+    struct radeon_bo *bo;
 
 	int mtlevel; /** if mt != 0, this is the image's level in the mipmap tree */
 	int mtface; /** if mt != 0, this is the image's face in the mipmap tree */

@@ -429,6 +429,10 @@ static void r300FreeTexImageData(GLcontext *ctx, struct gl_texture_image *timage
 	} else {
 		_mesa_free_texture_image_data(ctx, timage);
 	}
+    if (image->bo) {
+        radeon_bo_unref(image->bo);
+        image->bo = NULL;
+    }
 }
 
 
