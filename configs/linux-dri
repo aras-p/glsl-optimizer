@@ -52,7 +52,7 @@ GL_LIB_DEPS   = $(EXTRA_LIB_PATH) -lX11 -lXext -lXxf86vm -lXdamage -lXfixes \
 
 # Directories
 SRC_DIRS := glx/x11 egl $(SRC_DIRS)
-PROGRAM_DIRS = egl xdemos
+PROGRAM_DIRS := egl $(PROGRAM_DIRS)
 
 # EGL directories
 EGL_DRIVERS_DIRS = demo glx
@@ -70,4 +70,3 @@ GALLIUM_WINSYS_DIRS = drm
 
 #DRI_DIRS = i810 i915 i965 mach64 mga r128 r200 r300 radeon s3v \
 #	savage sis tdfx trident unichrome ffb
-DRI_DIRS = intel 
