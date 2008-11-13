@@ -265,6 +265,9 @@ debug_memory_end(unsigned long start_no)
    size_t total_size = 0;
    struct list_head *entry;
 
+   if(start_no == last_no)
+      return;
+
    entry = list.prev;
    for (; entry != &list; entry = entry->prev) {
       struct debug_memory_header *hdr;
@@ -301,5 +304,8 @@ debug_memory_end(unsigned long start_no)
    if(total_size) {
       debug_printf("Total of %u KB of system memory apparently leaked\n",
 		   (total_size + 1023)/1024);
+   }
+   else {
+      debug_printf("No memory leaks detected.\n");
    }
 }
