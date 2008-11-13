@@ -356,8 +356,8 @@ _mesa_swizzle_string(GLuint swizzle, GLuint negateBase, GLboolean extended)
 }
 
 
-static const char *
-writemask_string(GLuint writeMask)
+const char *
+_mesa_writemask_string(GLuint writeMask)
 {
    static char s[10];
    GLuint i = 0;
@@ -405,7 +405,7 @@ print_dst_reg(const struct prog_dst_register *dstReg, gl_prog_print_mode mode,
    _mesa_printf("%s%s",
                 reg_string((enum register_file) dstReg->File,
                            dstReg->Index, mode, dstReg->RelAddr, prog),
-                writemask_string(dstReg->WriteMask));
+                _mesa_writemask_string(dstReg->WriteMask));
 
    if (dstReg->CondMask != COND_TR) {
       _mesa_printf(" (%s.%s)",
@@ -417,7 +417,7 @@ print_dst_reg(const struct prog_dst_register *dstReg, gl_prog_print_mode mode,
    _mesa_printf("%s[%d]%s",
                 file_string((enum register_file) dstReg->File, mode),
                 dstReg->Index,
-                writemask_string(dstReg->WriteMask));
+                _mesa_writemask_string(dstReg->WriteMask));
 #endif
 }
 
