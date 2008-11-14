@@ -267,6 +267,8 @@ intelViewport(GLcontext * ctx,
               GLint x, GLint y, GLsizei width, GLsizei height)
 {
    intelCalcViewport(ctx);
+
+   intel_viewport(ctx, x, y, width, height);
 }
 
 static void
