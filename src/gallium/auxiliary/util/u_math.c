@@ -52,7 +52,7 @@ init_log2_table(void)
 {
    unsigned i;
    for (i = 0; i < LOG2_TABLE_SIZE; i++)
-      log2_table[i] = (float) log2(1.0 + i * (1.0 / LOG2_TABLE_SIZE));
+      log2_table[i] = (float) log2(1.0 + i * (1.0 / LOG2_TABLE_SCALE));
 }
 
 
