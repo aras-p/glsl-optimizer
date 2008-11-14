@@ -480,7 +480,6 @@ new_node3(slang_ir_opcode op,
       n->Children[0] = c0;
       n->Children[1] = c1;
       n->Children[2] = c2;
-      n->Writemask = WRITEMASK_XYZW;
       n->InstLocation = -1;
    }
    return n;
@@ -3048,7 +3047,6 @@ _slang_gen_assignment(slang_assemble_ctx * A, slang_operation *oper)
             rhs = _slang_gen_swizzle(rhs, newSwizzle);
          }
          n = new_node2(IR_COPY, lhs, rhs);
-         n->Writemask = writemask;
          return n;
       }
       else {
@@ -3205,8 +3203,6 @@ _slang_gen_array_element(slang_assemble_ctx * A, slang_operation *oper)
                                         SWIZZLE_NIL,
                                         SWIZZLE_NIL);
          n = _slang_gen_swizzle(n, swizzle);
-         /*n->Store = _slang_clone_ir_storage_swz(n->Store, */
-         n->Writemask = WRITEMASK_X << index;
       }
       assert(n->Store);
       return n;

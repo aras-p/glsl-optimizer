@@ -243,22 +243,6 @@ _slang_free_ir_tree(slang_ir_node *n)
 }
 
 
-
-static const char *
-writemask_string(GLuint writemask)
-{
-   static char s[6];
-   GLuint i, j = 0;
-   s[j++] = '.';
-   for (i = 0; i < 4; i++) {
-      if (writemask & (1 << i))
-         s[j++] = "xyzw"[i];
-   }
-   s[j] = 0;
-   return s;
-}
-
-
 static const char *
 storage_string(const slang_ir_storage *st)
 {
@@ -332,7 +316,7 @@ _slang_print_ir_tree(const slang_ir_node *n, int indent)
       _slang_print_ir_tree(n->Children[0], indent + 3);
       break;
    case IR_COPY:
-      printf("COPY (writemask = %s)\n", writemask_string(n->Writemask));
+      printf("COPY\n");
       _slang_print_ir_tree(n->Children[0], indent+3);
       _slang_print_ir_tree(n->Children[1], indent+3);
       break;

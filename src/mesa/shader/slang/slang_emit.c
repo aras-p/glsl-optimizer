@@ -257,8 +257,7 @@ fix_swizzle(GLuint swizzle)
  * Convert IR storage to an instruction dst register.
  */
 static void
-storage_to_dst_reg(struct prog_dst_register *dst, const slang_ir_storage *st,
-                   GLuint writemask)
+storage_to_dst_reg(struct prog_dst_register *dst, const slang_ir_storage *st)
 {
    const GLint size = st->Size;
    GLint index = st->Index;
@@ -280,23 +279,29 @@ storage_to_dst_reg(struct prog_dst_register *dst, const slang_ir_storage *st,
    assert(size >= 1);
    assert(size <= 4);
 
-#if 0
-   if (size == 1) {
-      GLuint comp = GET_SWZ(swizzle, 0);
-      assert(comp < 4);
-      dst->WriteMask = WRITEMASK_X << comp;
-   }
-   else {
-      dst->WriteMask = writemask;
-   }
-#elif 1
    if (swizzle != SWIZZLE_XYZW) {
       dst->WriteMask = swizzle_to_writemask(swizzle);
    }
    else {
+      GLuint writemask;
+      switch (size) {
+      case 1:
+         writemask = WRITEMASK_X << GET_SWZ(st->Swizzle, 0);
+         break;
+      case 2:
+         writemask = WRITEMASK_XY;
+         break;
+      case 3:
+         writemask = WRITEMASK_XYZ;
+         break;
+      case 4:
+         writemask = WRITEMASK_XYZW;
+         break;
+      default:
+         ; /* error would have been caught above */
+      }
       dst->WriteMask = writemask;
    }
-#endif
 }
 
 
@@ -422,27 +427,8 @@ emit_instruction(slang_emit_info *emitInfo,
    inst->Opcode = opcode;
    inst->BranchTarget = -1; /* invalid */
 
-   if (dst) {
-      GLuint writemask;
-      switch (dst->Size) {
-      case 4:
-         writemask = WRITEMASK_XYZW;
-         break;
-      case 3:
-         writemask = WRITEMASK_XYZ;
-         break;
-      case 2:
-         writemask = WRITEMASK_XY;
-         break;
-      case 1:
-         writemask = WRITEMASK_X << GET_SWZ(dst->Swizzle, 0);
-         break;
-      default:
-         writemask = WRITEMASK_XYZW;
-         assert(0);
-      }
-      storage_to_dst_reg(&inst->DstReg, dst, writemask);
-   }
+   if (dst)
+      storage_to_dst_reg(&inst->DstReg, dst);
 
    if (src1)
       storage_to_src_reg(&inst->SrcReg[0], src1);
@@ -1245,14 +1231,7 @@ emit_copy(slang_emit_info *emitInfo, slang_ir_node *n)
       /* fixup the previous instruction (which stored the RHS result) */
       assert(n->Children[0]->Store->Index >= 0);
 
-      /* use tighter writemask when possible */
-#if 0
-      if (n->Writemask == WRITEMASK_XYZW) {
-         n->Writemask = inst->DstReg.WriteMask;
-         printf("Narrow writemask to 0x%x\n", n->Writemask);
-      }
-#endif
-      storage_to_dst_reg(&inst->DstReg, n->Children[0]->Store, n->Writemask);
+      storage_to_dst_reg(&inst->DstReg, n->Children[0]->Store);
       return inst;
    }
    else
@@ -1263,7 +1242,6 @@ emit_copy(slang_emit_info *emitInfo, slang_ir_node *n)
          slang_ir_storage dstStore = *n->Children[0]->Store;
          slang_ir_storage srcStore = *n->Children[1]->Store;
          GLint size = srcStore.Size;
-         ASSERT(n->Children[0]->Writemask == WRITEMASK_XYZW);
          ASSERT(n->Children[1]->Store->Swizzle == SWIZZLE_NOOP);
          dstStore.Size = 4;
          srcStore.Size = 4;
@@ -1718,10 +1696,7 @@ move_block(slang_emit_info *emitInfo,
       /* move matrix/struct etc (block of registers) */
       slang_ir_storage dstStore = *dst;
       slang_ir_storage srcStore = *src;
-      //GLint size = srcStore.Size;
-      /*ASSERT(n->Children[0]->Writemask == WRITEMASK_XYZW);
-      ASSERT(n->Children[1]->Store->Swizzle == SWIZZLE_NOOP);
-      */
+
       dstStore.Size = 4;
       srcStore.Size = 4;
       while (size >= 4) {
