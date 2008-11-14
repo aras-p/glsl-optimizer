@@ -467,17 +467,6 @@ micro_exp2(
 }
 
 static void
-micro_f2it(
-   union tgsi_exec_channel *dst,
-   const union tgsi_exec_channel *src )
-{
-   dst->i[0] = (int) src->f[0];
-   dst->i[1] = (int) src->f[1];
-   dst->i[2] = (int) src->f[2];
-   dst->i[3] = (int) src->f[3];
-}
-
-static void
 micro_f2ut(
    union tgsi_exec_channel *dst,
    const union tgsi_exec_channel *src )
@@ -1075,10 +1064,10 @@ fetch_source(
          &indir_index );
 
       /* add value of address register to the offset */
-      index.i[0] += indir_index.i[0];
-      index.i[1] += indir_index.i[1];
-      index.i[2] += indir_index.i[2];
-      index.i[3] += indir_index.i[3];
+      index.i[0] += (int) indir_index.f[0];
+      index.i[1] += (int) indir_index.f[1];
+      index.i[2] += (int) indir_index.f[2];
+      index.i[3] += (int) indir_index.f[3];
 
       /* for disabled execution channels, zero-out the index to
        * avoid using a potential garbage value.
@@ -1131,10 +1120,10 @@ fetch_source(
             &index2,
             &indir_index );
 
-         index.i[0] += indir_index.i[0];
-         index.i[1] += indir_index.i[1];
-         index.i[2] += indir_index.i[2];
-         index.i[3] += indir_index.i[3];
+         index.i[0] += (int) indir_index.f[0];
+         index.i[1] += (int) indir_index.f[1];
+         index.i[2] += (int) indir_index.f[2];
+         index.i[3] += (int) indir_index.f[3];
 
          /* for disabled execution channels, zero-out the index to
           * avoid using a potential garbage value.
@@ -1754,7 +1743,7 @@ exec_instruction(
    case TGSI_OPCODE_ARL:
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH( &r[0], 0, chan_index );
-         micro_f2it( &r[0], &r[0] );
+         micro_trunc( &r[0], &r[0] );
          STORE( &r[0], 0, chan_index );
       }
       break;
