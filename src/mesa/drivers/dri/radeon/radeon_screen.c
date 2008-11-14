@@ -1059,6 +1059,7 @@ radeonDestroyScreen( __DRIscreenPrivate *sPriv )
         return;
 
     if (sPriv->dri2.enabled) {
+        radeon_tracker_print(&screen->bom->tracker, stderr);
         radeon_bo_manager_gem_shutdown(screen->bom);
     } else {
         radeon_bo_manager_legacy_shutdown(screen->bom);
@@ -1357,6 +1358,22 @@ radeonCreateBuffer( __DRIscreenPrivate *driScrnPriv,
 static void
 radeonDestroyBuffer(__DRIdrawablePrivate *driDrawPriv)
 {
+	struct radeon_renderbuffer *rb;
+	GLframebuffer *fb;
+    
+    fb = (void*)driDrawPriv->driverPrivate;
+    rb = (void *)fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer;
+    if (rb && rb->bo) {
+        radeon_bo_unref(rb->bo);
+    }
+    rb = (void *)fb->Attachment[BUFFER_BACK_LEFT].Renderbuffer;
+    if (rb && rb->bo) {
+        radeon_bo_unref(rb->bo);
+    }
+    rb = (void *)fb->Attachment[BUFFER_DEPTH].Renderbuffer;
+    if (rb && rb->bo) {
+        radeon_bo_unref(rb->bo);
+    }
    _mesa_unreference_framebuffer((GLframebuffer **)(&(driDrawPriv->driverPrivate)));
 }
 

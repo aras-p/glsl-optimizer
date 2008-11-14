@@ -486,6 +486,17 @@ void r300SetTexBuffer(__DRIcontext *pDRICtx, GLint target, __DRIdrawable *dPriv)
     }
 
     radeon_update_renderbuffers(pDRICtx, dPriv);
+    /* back & depth buffer are useless free them right away */
+    rb = (void*)fb->Attachment[BUFFER_DEPTH].Renderbuffer;
+    if (rb && rb->bo) {
+        radeon_bo_unref(rb->bo);
+        rb->bo = NULL;
+    }
+    rb = (void*)fb->Attachment[BUFFER_BACK_LEFT].Renderbuffer;
+    if (rb && rb->bo) {
+        radeon_bo_unref(rb->bo);
+        rb->bo = NULL;
+    }
     rb = (void*)fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer;
     if (rb->bo == NULL) {
         /* Failed to BO for the buffer */

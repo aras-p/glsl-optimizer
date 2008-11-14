@@ -191,6 +191,37 @@ GLboolean radeonInitContext(radeonContextPtr radeon,
  */
 void radeonCleanupContext(radeonContextPtr radeon)
 {
+    FILE *track;
+	struct radeon_renderbuffer *rb;
+	GLframebuffer *fb;
+    
+    fb = (void*)radeon->dri.drawable->driverPrivate;
+    rb = (void *)fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer;
+    if (rb && rb->bo) {
+        radeon_bo_unref(rb->bo);
+    }
+    rb = (void *)fb->Attachment[BUFFER_BACK_LEFT].Renderbuffer;
+    if (rb && rb->bo) {
+        radeon_bo_unref(rb->bo);
+    }
+    rb = (void *)fb->Attachment[BUFFER_DEPTH].Renderbuffer;
+    if (rb && rb->bo) {
+        radeon_bo_unref(rb->bo);
+    }
+    fb = (void*)radeon->dri.readable->driverPrivate;
+    rb = (void *)fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer;
+    if (rb && rb->bo) {
+        radeon_bo_unref(rb->bo);
+    }
+    rb = (void *)fb->Attachment[BUFFER_BACK_LEFT].Renderbuffer;
+    if (rb && rb->bo) {
+        radeon_bo_unref(rb->bo);
+    }
+    rb = (void *)fb->Attachment[BUFFER_DEPTH].Renderbuffer;
+    if (rb && rb->bo) {
+        radeon_bo_unref(rb->bo);
+    }
+
 	/* _mesa_destroy_context() might result in calls to functions that
 	 * depend on the DriverCtx, so don't set it to NULL before.
 	 *
@@ -204,6 +235,11 @@ void radeonCleanupContext(radeonContextPtr radeon)
 		FREE(radeon->state.scissor.pClipRects);
 		radeon->state.scissor.pClipRects = 0;
 	}
+    track = fopen("/tmp/tracklog", "w");
+    if (track) {
+        radeon_tracker_print(&radeon->radeonScreen->bom->tracker, track);
+        fclose(track);
+    }
 }
 
 
@@ -363,6 +399,10 @@ radeon_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
         switch (buffers[i].attachment) {
         case __DRI_BUFFER_FRONT_LEFT:
             rb = (void *)draw->Attachment[BUFFER_FRONT_LEFT].Renderbuffer;
+            if (rb->bo) {
+                radeon_bo_unref(rb->bo);
+                rb->bo = NULL;
+            }
             rb->cpp = buffers[i].cpp;
             rb->pitch = buffers[i].pitch;
             rb->width = drawable->w;
@@ -381,6 +421,10 @@ radeon_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
             break;
         case __DRI_BUFFER_BACK_LEFT:
             rb = (void *)draw->Attachment[BUFFER_BACK_LEFT].Renderbuffer;
+            if (rb->bo) {
+                radeon_bo_unref(rb->bo);
+                rb->bo = NULL;
+            }
             rb->cpp = buffers[i].cpp;
             rb->pitch = buffers[i].pitch;
             rb->width = drawable->w;
@@ -395,6 +439,10 @@ radeon_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
             break;
         case __DRI_BUFFER_DEPTH:
             rb = (void *)draw->Attachment[BUFFER_DEPTH].Renderbuffer;
+            if (rb->bo) {
+                radeon_bo_unref(rb->bo);
+                rb->bo = NULL;
+            }
             rb->cpp = buffers[i].cpp;
             rb->pitch = buffers[i].pitch;
             rb->width = drawable->w;
@@ -447,7 +495,7 @@ GLboolean radeonMakeCurrent(__DRIcontextPrivate * driContextPriv,
         if (driDrawPriv != driReadPriv)
             radeon_update_renderbuffers(driContextPriv, driReadPriv);
         radeon->state.color.rrb =
-            (void *)dfb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer;
+            (void *)dfb->Attachment[BUFFER_BACK_LEFT].Renderbuffer;
         radeon->state.depth_buffer =
             (void *)dfb->Attachment[BUFFER_DEPTH].Renderbuffer;
     }
