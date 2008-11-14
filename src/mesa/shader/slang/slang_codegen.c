@@ -1477,6 +1477,8 @@ _slang_simple_writemask(GLuint writemask, GLuint swizzle)
  * Convert the given swizzle into a writemask.  In some cases this
  * is trivial, in other cases, we'll need to also swizzle the right
  * hand side to put components in the right places.
+ * See comment above for more info.
+ * XXX this function could be simplified and should probably be renamed.
  * \param swizzle  the incoming swizzle
  * \param writemaskOut  returns the writemask
  * \param swizzleOut  swizzle to apply to the right-hand-side
