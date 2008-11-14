@@ -317,11 +317,13 @@ intel_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
    driUpdateFramebufferSize(&intel->ctx, drawable);
 }
 
-static void
+void
 intel_viewport(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
 {
     struct intel_context *intel = intel_context(ctx);
     __DRIcontext *driContext = intel->driContext;
+    void (*old_viewport)(GLcontext *ctx, GLint x, GLint y,
+			 GLsizei w, GLsizei h);
 
     if (!driContext->driScreenPriv->dri2.enabled)
 	return;
@@ -330,11 +332,12 @@ intel_viewport(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
     if (driContext->driDrawablePriv != driContext->driReadablePriv)
 	intel_update_renderbuffers(driContext, driContext->driReadablePriv);
 
+    old_viewport = ctx->Driver.Viewport;
     ctx->Driver.Viewport = NULL;
     intel->driDrawable = driContext->driDrawablePriv;
     intelWindowMoved(intel);
     intel_draw_buffer(ctx, intel->ctx.DrawBuffer);
-    ctx->Driver.Viewport = intel_viewport;
+    ctx->Driver.Viewport = old_viewport;
 }
 
 /**
@@ -544,7 +547,6 @@ intelInitDriverFunctions(struct dd_function_table *functions)
    functions->Finish = intelFinish;
    functions->GetString = intelGetString;
    functions->UpdateState = intelInvalidateState;
-   functions->Viewport = intel_viewport;
 
    functions->CopyColorTable = _swrast_CopyColorTable;
    functions->CopyColorSubTable = _swrast_CopyColorSubTable;
