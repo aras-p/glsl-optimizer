@@ -60,6 +60,8 @@ typedef struct
    struct gl_program **Subroutines;
    GLuint NumSubroutines;
 
+   GLuint MaxInstructions;  /**< size of prog->Instructions[] buffer */
+
    /* code-gen options */
    GLboolean EmitHighLevelInstructions;
    GLboolean EmitCondCodes;
@@ -387,9 +389,17 @@ new_instruction(slang_emit_info *emitInfo, gl_inst_opcode opcode)
       _mesa_print_instruction(prog->Instructions + prog->NumInstructions - 1);
    }
 #endif
-   prog->Instructions = _mesa_realloc_instructions(prog->Instructions,
-                                                   prog->NumInstructions,
-                                                   prog->NumInstructions + 1);
+   assert(prog->NumInstructions <= emitInfo->MaxInstructions);
+
+   if (prog->NumInstructions == emitInfo->MaxInstructions) {
+      /* grow the instruction buffer */
+      emitInfo->MaxInstructions += 20;
+      prog->Instructions =
+         _mesa_realloc_instructions(prog->Instructions,
+                                    prog->NumInstructions,
+                                    emitInfo->MaxInstructions);
+   }
+
    inst = prog->Instructions + prog->NumInstructions;
    prog->NumInstructions++;
    _mesa_init_instructions(inst, 1);
@@ -414,18 +424,11 @@ emit_instruction(slang_emit_info *emitInfo,
                  const slang_ir_storage *src2,
                  const slang_ir_storage *src3)
 {
-   struct gl_program *prog = emitInfo->prog;
    struct prog_instruction *inst;
 
-   prog->Instructions = _mesa_realloc_instructions(prog->Instructions,
-                                                   prog->NumInstructions,
-                                                   prog->NumInstructions + 1);
-   inst = prog->Instructions + prog->NumInstructions;
-   prog->NumInstructions++;
-
-   _mesa_init_instructions(inst, 1);
-   inst->Opcode = opcode;
-   inst->BranchTarget = -1; /* invalid */
+   inst = new_instruction(emitInfo, opcode);
+   if (!inst)
+      return NULL;
 
    if (dst)
       storage_to_dst_reg(&inst->DstReg, dst);
@@ -1034,13 +1037,17 @@ emit_fcall(slang_emit_info *emitInfo, slang_ir_node *n)
    struct gl_program *progSave;
    struct prog_instruction *inst;
    GLuint subroutineId;
+   GLuint maxInstSave;
 
    assert(n->Opcode == IR_CALL);
    assert(n->Label);
 
    /* save/push cur program */
+   maxInstSave = emitInfo->MaxInstructions;
    progSave = emitInfo->prog;
+
    emitInfo->prog = new_subroutine(emitInfo, &subroutineId);
+   emitInfo->MaxInstructions = emitInfo->prog->NumInstructions;
 
    _slang_label_set_location(n->Label, emitInfo->prog->NumInstructions,
                              emitInfo->prog);
@@ -1072,6 +1079,7 @@ emit_fcall(slang_emit_info *emitInfo, slang_ir_node *n)
 
    /* pop/restore cur program */
    emitInfo->prog = progSave;
+   emitInfo->MaxInstructions = maxInstSave;
 
    /* emit the function call */
    inst = new_instruction(emitInfo, OPCODE_CAL);
@@ -2199,6 +2207,7 @@ _slang_emit_code(slang_ir_node *n, slang_var_table *vt,
    emitInfo.prog = prog;
    emitInfo.Subroutines = NULL;
    emitInfo.NumSubroutines = 0;
+   emitInfo.MaxInstructions = 0;
 
    emitInfo.EmitHighLevelInstructions = ctx->Shader.EmitHighLevelInstructions;
    emitInfo.EmitCondCodes = ctx->Shader.EmitCondCodes;
