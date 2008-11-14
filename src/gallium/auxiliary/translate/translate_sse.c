@@ -29,7 +29,7 @@
 #include "pipe/p_config.h"
 #include "pipe/p_compiler.h"
 #include "util/u_memory.h"
-#include "util/u_simple_list.h"
+#include "util/u_math.h"
 
 #include "translate.h"
 
@@ -56,6 +56,11 @@ typedef void (PIPE_CDECL *run_elts_func)( struct translate *translate,
                                           unsigned count,
                                           void *output_buffer );
 
+struct translate_buffer {
+   const void *base_ptr;
+   unsigned stride;
+   void *ptr;                   /* updated per vertex */
+};
 
 
 struct translate_sse {
@@ -73,14 +78,20 @@ struct translate_sse {
    float float_255[4];
    float inv_255[4];
 
-   struct {
-      char *input_ptr;
-      unsigned input_stride;
-   } attrib[PIPE_MAX_ATTRIBS];
+   struct translate_buffer buffer[PIPE_MAX_ATTRIBS];
+   unsigned nr_buffers;
 
    run_func      gen_run;
    run_elts_func gen_run_elts;
 
+   /* these are actually known values, but putting them in a struct
+    * like this is helpful to keep them in sync across the file.
+    */
+   struct x86_reg tmp_EAX;
+   struct x86_reg idx_EBX;     /* either start+i or &elt[i] */
+   struct x86_reg outbuf_ECX;
+   struct x86_reg machine_EDX;
+   struct x86_reg count_ESI;    /* decrements to zero */
 };
 
 static int get_offset( const void *a, const void *b )
@@ -95,10 +106,6 @@ static struct x86_reg get_identity( struct translate_sse *p )
    struct x86_reg reg = x86_make_reg(file_XMM, 6);
 
    if (!p->loaded_identity) {
-      /* Nasty: 
-       */
-      struct x86_reg translateESI = x86_make_reg(file_REG32, reg_SI);
-
       p->loaded_identity = TRUE;
       p->identity[0] = 0;
       p->identity[1] = 0;
@@ -106,7 +113,7 @@ static struct x86_reg get_identity( struct translate_sse *p )
       p->identity[3] = 1;
 
       sse_movups(p->func, reg, 
-		 x86_make_disp(translateESI, 
+		 x86_make_disp(p->machine_EDX, 
 			       get_offset(p, &p->identity[0])));
    }
 
@@ -115,11 +122,9 @@ static struct x86_reg get_identity( struct translate_sse *p )
 
 static struct x86_reg get_255( struct translate_sse *p )
 {
-   struct x86_reg reg = x86_make_reg(file_XMM, 6);
+   struct x86_reg reg = x86_make_reg(file_XMM, 7);
 
    if (!p->loaded_255) {
-      struct x86_reg translateESI = x86_make_reg(file_REG32, reg_SI);
-
       p->loaded_255 = TRUE;
       p->float_255[0] =
 	 p->float_255[1] =
@@ -127,12 +132,11 @@ static struct x86_reg get_255( struct translate_sse *p )
 	 p->float_255[3] = 255.0f;
 
       sse_movups(p->func, reg, 
-		 x86_make_disp(translateESI, 
+		 x86_make_disp(p->machine_EDX, 
 			       get_offset(p, &p->float_255[0])));
    }
 
    return reg;
-   return x86_make_reg(file_XMM, 7);
 }
 
 static struct x86_reg get_inv_255( struct translate_sse *p )
@@ -140,8 +144,6 @@ static struct x86_reg get_inv_255( struct translate_sse *p )
    struct x86_reg reg = x86_make_reg(file_XMM, 5);
 
    if (!p->loaded_inv_255) {
-      struct x86_reg translateESI = x86_make_reg(file_REG32, reg_SI);
-
       p->loaded_inv_255 = TRUE;
       p->inv_255[0] =
 	 p->inv_255[1] =
@@ -149,7 +151,7 @@ static struct x86_reg get_inv_255( struct translate_sse *p )
 	 p->inv_255[3] = 1.0f / 255.0f;
 
       sse_movups(p->func, reg, 
-		 x86_make_disp(translateESI, 
+		 x86_make_disp(p->machine_EDX, 
 			       get_offset(p, &p->inv_255[0])));
    }
 
@@ -283,28 +285,6 @@ static void emit_store_R8G8B8A8_UNORM( struct translate_sse *p,
 
 
 
-static void get_src_ptr( struct translate_sse *p,
-			 struct x86_reg srcEAX,
-			 struct x86_reg translateREG,
-			 struct x86_reg eltREG,	
-			 unsigned a )
-{
-   struct x86_reg input_ptr = 
-      x86_make_disp(translateREG, 
-		    get_offset(p, &p->attrib[a].input_ptr));
-
-   struct x86_reg input_stride = 
-      x86_make_disp(translateREG, 
-		    get_offset(p, &p->attrib[a].input_stride));
-
-   /* Calculate pointer to current attrib:
-    */
-   x86_mov(p->func, srcEAX, input_stride);
-   x86_imul(p->func, srcEAX, eltREG);	
-   x86_add(p->func, srcEAX, input_ptr);
-}
-
-
 /* Extended swizzles?  Maybe later.
  */  
 static void emit_swizzle( struct translate_sse *p,
@@ -374,12 +354,126 @@ static boolean translate_attr( struct translate_sse *p,
    return TRUE;
 }
 
-/* Build run( struct translate *translate,
+
+static boolean init_inputs( struct translate_sse *p,
+                            boolean linear )
+{
+   unsigned i;
+   if (linear) {
+      for (i = 0; i < p->nr_buffers; i++) {
+         struct x86_reg buf_stride   = x86_make_disp(p->machine_EDX,
+                                                     get_offset(p, &p->buffer[i].stride));
+         struct x86_reg buf_ptr      = x86_make_disp(p->machine_EDX,
+                                                     get_offset(p, &p->buffer[i].ptr));
+         struct x86_reg buf_base_ptr = x86_make_disp(p->machine_EDX,
+                                                     get_offset(p, &p->buffer[i].base_ptr));
+         struct x86_reg elt = p->idx_EBX;
+         struct x86_reg tmp = p->tmp_EAX;
+
+
+         /* Calculate pointer to first attrib:
+          */
+         x86_mov(p->func, tmp, buf_stride);
+         x86_imul(p->func, tmp, elt);
+         x86_add(p->func, tmp, buf_base_ptr);
+
+
+         /* In the linear case, keep the buffer pointer instead of the
+          * index number.
+          */
+         if (p->nr_buffers == 1) 
+            x86_mov( p->func, elt, tmp );
+         else
+            x86_mov( p->func, buf_ptr, tmp );
+      }
+   }
+
+   return TRUE;
+}
+
+
+static struct x86_reg get_buffer_ptr( struct translate_sse *p,
+                                      boolean linear,
+                                      unsigned buf_idx,
+                                      struct x86_reg elt )
+{
+   if (linear && p->nr_buffers == 1) {
+      return p->idx_EBX;
+   }
+   else if (linear) {
+      struct x86_reg ptr = p->tmp_EAX;
+      struct x86_reg buf_ptr = 
+         x86_make_disp(p->machine_EDX, 
+                       get_offset(p, &p->buffer[buf_idx].ptr));
+      
+      x86_mov(p->func, ptr, buf_ptr);
+      return ptr;
+   }
+   else {
+      struct x86_reg ptr = p->tmp_EAX;
+
+      struct x86_reg buf_stride = 
+         x86_make_disp(p->machine_EDX, 
+                       get_offset(p, &p->buffer[buf_idx].stride));
+
+      struct x86_reg buf_base_ptr = 
+         x86_make_disp(p->machine_EDX, 
+                       get_offset(p, &p->buffer[buf_idx].base_ptr));
+
+
+
+      /* Calculate pointer to current attrib:
+       */
+      x86_mov(p->func, ptr, buf_stride);
+      x86_imul(p->func, ptr, elt);
+      x86_add(p->func, ptr, buf_base_ptr);
+      return ptr;
+   }
+}
+
+
+
+static boolean incr_inputs( struct translate_sse *p, 
+                            boolean linear )
+{
+   if (linear && p->nr_buffers == 1) {
+      struct x86_reg stride = x86_make_disp(p->machine_EDX,
+                                            get_offset(p, &p->buffer[0].stride));
+
+      x86_add(p->func, p->idx_EBX, stride);
+      sse_prefetchnta(p->func, x86_make_disp(p->idx_EBX, 192));
+   }
+   else if (linear) {
+      unsigned i;
+
+      /* Is this worthwhile??
+       */
+      for (i = 0; i < p->nr_buffers; i++) {
+         struct x86_reg buf_ptr = x86_make_disp(p->machine_EDX,
+                                                get_offset(p, &p->buffer[i].ptr));
+         struct x86_reg buf_stride = x86_make_disp(p->machine_EDX,
+                                                   get_offset(p, &p->buffer[i].stride));
+
+         x86_mov(p->func, p->tmp_EAX, buf_ptr);
+         x86_add(p->func, p->tmp_EAX, buf_stride);
+         if (i == 0) sse_prefetchnta(p->func, x86_make_disp(p->tmp_EAX, 192));
+         x86_mov(p->func, buf_ptr, p->tmp_EAX);
+      }
+   } 
+   else {
+      x86_lea(p->func, p->idx_EBX, x86_make_disp(p->idx_EBX, 4));
+   }
+   
+   return TRUE;
+}
+
+
+/* Build run( struct translate *machine,
  *            unsigned start,
  *            unsigned count,
  *            void *output_buffer )
  * or
- *  run_elts( struct translate *translate,
+ *  run_elts( struct translate *machine,
  *            unsigned *elts,
  *            unsigned count,
  *            void *output_buffer )
@@ -394,13 +488,14 @@ static boolean build_vertex_emit( struct translate_sse *p,
 				  struct x86_function *func,
 				  boolean linear )
 {
-   struct x86_reg vertexECX    = x86_make_reg(file_REG32, reg_AX);
-   struct x86_reg idxEBX       = x86_make_reg(file_REG32, reg_BX);
-   struct x86_reg srcEAX       = x86_make_reg(file_REG32, reg_CX);
-   struct x86_reg countEBP     = x86_make_reg(file_REG32, reg_BP);
-   struct x86_reg translateESI = x86_make_reg(file_REG32, reg_SI);
    int fixup, label;
    unsigned j;
+
+   p->tmp_EAX       = x86_make_reg(file_REG32, reg_AX);
+   p->idx_EBX       = x86_make_reg(file_REG32, reg_BX);
+   p->outbuf_ECX    = x86_make_reg(file_REG32, reg_CX);
+   p->machine_EDX   = x86_make_reg(file_REG32, reg_DX);
+   p->count_ESI     = x86_make_reg(file_REG32, reg_SI);
 
    p->func = func;
    p->loaded_inv_255 = FALSE;
@@ -411,74 +506,65 @@ static boolean build_vertex_emit( struct translate_sse *p,
 
    /* Push a few regs?
     */
-   x86_push(p->func, countEBP);
-   x86_push(p->func, translateESI);
-   x86_push(p->func, idxEBX);
+   x86_push(p->func, p->idx_EBX);
+   x86_push(p->func, p->count_ESI);
+
+   /* Load arguments into regs:
+    */
+   x86_mov(p->func, p->machine_EDX, x86_fn_arg(p->func, 1));
+   x86_mov(p->func, p->idx_EBX, x86_fn_arg(p->func, 2));
+   x86_mov(p->func, p->count_ESI, x86_fn_arg(p->func, 3));
+   x86_mov(p->func, p->outbuf_ECX, x86_fn_arg(p->func, 4));
 
    /* Get vertex count, compare to zero
     */
-   x86_xor(p->func, idxEBX, idxEBX);
-   x86_mov(p->func, countEBP, x86_fn_arg(p->func, 3));
-   x86_cmp(p->func, countEBP, idxEBX);
+   x86_xor(p->func, p->tmp_EAX, p->tmp_EAX);
+   x86_cmp(p->func, p->count_ESI, p->tmp_EAX);
    fixup = x86_jcc_forward(p->func, cc_E);
 
-   /* If linear, idx is the current element, otherwise it is a pointer
-    * to the current element.
-    */
-   x86_mov(p->func, idxEBX, x86_fn_arg(p->func, 2));
-
-   /* Initialize destination register. 
-    */
-   x86_mov(p->func, vertexECX, x86_fn_arg(p->func, 4));
-
-   /* Move argument 1 (translate_sse pointer) into a reg:
-    */
-   x86_mov(p->func, translateESI, x86_fn_arg(p->func, 1));
-
-   
    /* always load, needed or not:
     */
+   init_inputs(p, linear);
 
-   /* Note address for loop jump */
-   label = x86_get_label(p->func);
-
-
-   for (j = 0; j < p->translate.key.nr_elements; j++) {
-      const struct translate_element *a = &p->translate.key.element[j];
-
-      struct x86_reg destEAX = x86_make_disp(vertexECX, 
-					     a->output_offset);
-
-      /* Figure out source pointer address:
-       */
-      if (linear) {
-	 get_src_ptr(p, srcEAX, translateESI, idxEBX, j);
-      }
-      else {
-	 get_src_ptr(p, srcEAX, translateESI, x86_deref(idxEBX), j);
-      }
-
-      if (!translate_attr( p, a, x86_deref(srcEAX), destEAX ))
-	 return FALSE;
-   }
-
-   /* Next vertex:
+   /* Note address for loop jump
     */
-   x86_lea(p->func, vertexECX, x86_make_disp(vertexECX, p->translate.key.output_stride));
+   label = x86_get_label(p->func);
+   {
+      struct x86_reg elt = linear ? p->idx_EBX : x86_deref(p->idx_EBX);
+      int last_vb = -1;
+      struct x86_reg vb;
 
-   /* Incr index
-    */ 
-   if (linear) {
-      x86_inc(p->func, idxEBX);
-   } 
-   else {
-      x86_lea(p->func, idxEBX, x86_make_disp(idxEBX, 4));
+      for (j = 0; j < p->translate.key.nr_elements; j++) {
+         const struct translate_element *a = &p->translate.key.element[j];
+
+         /* Figure out source pointer address:
+          */
+         if (a->input_buffer != last_vb) {
+            last_vb = a->input_buffer;
+            vb = get_buffer_ptr(p, linear, a->input_buffer, elt);
+         }
+         
+         if (!translate_attr( p, a, 
+                              x86_make_disp(vb, a->input_offset), 
+                              x86_make_disp(p->outbuf_ECX, a->output_offset)))
+            return FALSE;
+      }
+
+      /* Next output vertex:
+       */
+      x86_lea(p->func, 
+              p->outbuf_ECX, 
+              x86_make_disp(p->outbuf_ECX, 
+                            p->translate.key.output_stride));
+
+      /* Incr index
+       */ 
+      incr_inputs( p, linear );
    }
 
    /* decr count, loop if not zero
     */
-   x86_dec(p->func, countEBP);
-   x86_test(p->func, countEBP, countEBP); 
+   x86_dec(p->func, p->count_ESI);
    x86_jcc(p->func, cc_NZ, label);
 
    /* Exit mmx state?
@@ -493,9 +579,8 @@ static boolean build_vertex_emit( struct translate_sse *p,
    /* Pop regs and return
     */
    
-   x86_pop(p->func, idxEBX);
-   x86_pop(p->func, translateESI);
-   x86_pop(p->func, countEBP);
+   x86_pop(p->func, p->count_ESI);
+   x86_pop(p->func, p->idx_EBX);
    x86_ret(p->func);
 
    return TRUE;
@@ -513,15 +598,16 @@ static void translate_sse_set_buffer( struct translate *translate,
 				unsigned stride )
 {
    struct translate_sse *p = (struct translate_sse *)translate;
-   unsigned i;
 
-   for (i = 0; i < p->translate.key.nr_elements; i++) {
-      if (p->translate.key.element[i].input_buffer == buf) {
-	 p->attrib[i].input_ptr = ((char *)ptr +
-				    p->translate.key.element[i].input_offset);
-	 p->attrib[i].input_stride = stride;
-      }
+   if (buf < p->nr_buffers) {
+      p->buffer[buf].base_ptr = (char *)ptr;
+      p->buffer[buf].stride = stride;
    }
+
+   if (0) debug_printf("%s %d/%d: %p %d\n", 
+                       __FUNCTION__, buf, 
+                       p->nr_buffers, 
+                       ptr, stride);
 }
 
 
@@ -565,6 +651,7 @@ static void PIPE_CDECL translate_sse_run( struct translate *translate,
 struct translate *translate_sse2_create( const struct translate_key *key )
 {
    struct translate_sse *p = NULL;
+   unsigned i;
 
    if (!rtasm_cpu_has_sse() || !rtasm_cpu_has_sse2())
       goto fail;
@@ -578,6 +665,11 @@ struct translate *translate_sse2_create( const struct translate_key *key )
    p->translate.set_buffer = translate_sse_set_buffer;
    p->translate.run_elts = translate_sse_run_elts;
    p->translate.run = translate_sse_run;
+
+   for (i = 0; i < key->nr_elements; i++) 
+      p->nr_buffers = MAX2( p->nr_buffers, key->element[i].input_buffer + 1 );
+
+   if (0) debug_printf("nr_buffers: %d\n", p->nr_buffers);
 
    if (!build_vertex_emit(p, &p->linear_func, TRUE))
       goto fail;
