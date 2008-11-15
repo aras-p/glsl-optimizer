@@ -973,7 +973,7 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
    screen->sarea_priv_offset = dri_priv->sarea_priv_offset;
    screen->sarea = (drm_radeon_sarea_t *) ((GLubyte *) sPriv->pSAREA +
 					       screen->sarea_priv_offset);
-   screen->bom = radeon_bo_manager_legacy(screen);
+   screen->bom = radeon_bo_manager_legacy_ctor(screen);
    if (screen->bom == NULL) {
     free(screen);
     return NULL;
@@ -1040,7 +1040,7 @@ radeonCreateScreen2(__DRIscreenPrivate *sPriv)
    sPriv->extensions = screen->extensions;
 
    screen->driScreen = sPriv;
-   screen->bom = radeon_bo_manager_gem(sPriv->fd);
+   screen->bom = radeon_bo_manager_gem_ctor(sPriv->fd);
    if (screen->bom == NULL) {
        free(screen);
        return NULL;
@@ -1060,9 +1060,9 @@ radeonDestroyScreen( __DRIscreenPrivate *sPriv )
 
     if (sPriv->dri2.enabled) {
         radeon_tracker_print(&screen->bom->tracker, stderr);
-        radeon_bo_manager_gem_shutdown(screen->bom);
+        radeon_bo_manager_gem_dtor(screen->bom);
     } else {
-        radeon_bo_manager_legacy_shutdown(screen->bom);
+        radeon_bo_manager_legacy_dtor(screen->bom);
 
         if ( screen->gartTextures.map ) {
             drmUnmap( screen->gartTextures.map, screen->gartTextures.size );

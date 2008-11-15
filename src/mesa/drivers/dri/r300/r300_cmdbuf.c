@@ -746,9 +746,9 @@ void r300InitCmdBuf(r300ContextPtr r300)
 
     if (r300->radeon.radeonScreen->driScreen->dri2.enabled) {
         int fd = r300->radeon.radeonScreen->driScreen->fd;
-        r300->cmdbuf.csm = radeon_cs_manager_gem(fd);
+        r300->cmdbuf.csm = radeon_cs_manager_gem_ctor(fd);
     } else {
-        r300->cmdbuf.csm = radeon_cs_manager_legacy(&r300->radeon);
+        r300->cmdbuf.csm = radeon_cs_manager_legacy_ctor(&r300->radeon);
     }
     if (r300->cmdbuf.csm == NULL) {
         /* FIXME: fatal error */
@@ -771,8 +771,8 @@ void r300DestroyCmdBuf(r300ContextPtr r300)
 		FREE(atom->cmd);
 	}
     if (r300->radeon.radeonScreen->driScreen->dri2.enabled) {
-        radeon_cs_manager_gem_shutdown(r300->cmdbuf.csm);
+        radeon_cs_manager_gem_dtor(r300->cmdbuf.csm);
     } else {
-        radeon_cs_manager_legacy_shutdown(r300->cmdbuf.csm);
+        radeon_cs_manager_legacy_dtor(r300->cmdbuf.csm);
     }
 }

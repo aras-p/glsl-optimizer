@@ -407,7 +407,7 @@ static void bo_ref(struct radeon_bo *bo)
 {
 }
 
-static void bo_unref(struct radeon_bo *bo)
+static struct radeon_bo *bo_unref(struct radeon_bo *bo)
 {
     struct bo_legacy *bo_legacy = (struct bo_legacy*)bo;
 
@@ -419,7 +419,9 @@ static void bo_unref(struct radeon_bo *bo)
         if (!bo_legacy->is_pending) {
             bo_free(bo_legacy);
         }
+        return NULL;
     }
+    return bo;
 }
 
 static int bo_map(struct radeon_bo *bo, int write)
@@ -589,7 +591,7 @@ void radeon_bo_legacy_pending(struct radeon_bo *bo, uint32_t pending)
     boml->cpendings++;
 }
 
-void radeon_bo_manager_legacy_shutdown(struct radeon_bo_manager *bom)
+void radeon_bo_manager_legacy_dtor(struct radeon_bo_manager *bom)
 {
     struct bo_manager_legacy *boml = (struct bo_manager_legacy *)bom;
     struct bo_legacy *bo_legacy;
@@ -609,7 +611,7 @@ void radeon_bo_manager_legacy_shutdown(struct radeon_bo_manager *bom)
     free(boml);
 }
 
-struct radeon_bo_manager *radeon_bo_manager_legacy(struct radeon_screen *scrn)
+struct radeon_bo_manager *radeon_bo_manager_legacy_ctor(struct radeon_screen *scrn)
 {
     struct bo_manager_legacy *bom;
     struct bo_legacy *bo;
@@ -646,7 +648,7 @@ struct radeon_bo_manager *radeon_bo_manager_legacy(struct radeon_screen *scrn)
     bom->nfree_handles = 0x400;
     bom->free_handles = (uint32_t*)malloc(bom->nfree_handles * 4);
     if (bom->free_handles == NULL) {
-        radeon_bo_manager_legacy_shutdown((struct radeon_bo_manager*)bom);
+        radeon_bo_manager_legacy_dtor((struct radeon_bo_manager*)bom);
         return NULL;
     }
 
@@ -655,7 +657,7 @@ struct radeon_bo_manager *radeon_bo_manager_legacy(struct radeon_screen *scrn)
     /* allocate front */
     bo = bo_allocate(bom, size, 0, RADEON_GEM_DOMAIN_VRAM, 0);
     if (bo == NULL) {
-        radeon_bo_manager_legacy_shutdown((struct radeon_bo_manager*)bom);
+        radeon_bo_manager_legacy_dtor((struct radeon_bo_manager*)bom);
         return NULL;
     }
     if (scrn->sarea->tiling_enabled) {
@@ -671,7 +673,7 @@ struct radeon_bo_manager *radeon_bo_manager_legacy(struct radeon_screen *scrn)
     /* allocate back */
     bo = bo_allocate(bom, size, 0, RADEON_GEM_DOMAIN_VRAM, 0);
     if (bo == NULL) {
-        radeon_bo_manager_legacy_shutdown((struct radeon_bo_manager*)bom);
+        radeon_bo_manager_legacy_dtor((struct radeon_bo_manager*)bom);
         return NULL;
     }
     if (scrn->sarea->tiling_enabled) {
@@ -687,7 +689,7 @@ struct radeon_bo_manager *radeon_bo_manager_legacy(struct radeon_screen *scrn)
     /* allocate depth */
     bo = bo_allocate(bom, size, 0, RADEON_GEM_DOMAIN_VRAM, 0);
     if (bo == NULL) {
-        radeon_bo_manager_legacy_shutdown((struct radeon_bo_manager*)bom);
+        radeon_bo_manager_legacy_dtor((struct radeon_bo_manager*)bom);
         return NULL;
     }
     bo->base.flags = 0;

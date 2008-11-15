@@ -397,7 +397,7 @@ static struct radeon_cs_funcs  radeon_cs_legacy_funcs = {
     cs_need_flush
 };
 
-struct radeon_cs_manager *radeon_cs_manager_legacy(struct radeon_context *ctx)
+struct radeon_cs_manager *radeon_cs_manager_legacy_ctor(struct radeon_context *ctx)
 {
     struct cs_manager_legacy *csm;
 
@@ -413,7 +413,7 @@ struct radeon_cs_manager *radeon_cs_manager_legacy(struct radeon_context *ctx)
     return (struct radeon_cs_manager*)csm;
 }
 
-void radeon_cs_manager_legacy_shutdown(struct radeon_cs_manager *csm)
+void radeon_cs_manager_legacy_dtor(struct radeon_cs_manager *csm)
 {
     free(csm);
 }
