@@ -565,7 +565,7 @@ static struct drm_mode_modeinfo *
 drm_find_mode(drmModeConnectorPtr connector, _EGLMode *mode)
 {
 	int i;
-	struct drm_mode_modeinfo *m;
+	struct drm_mode_modeinfo *m = NULL;
 
 	for (i = 0; i < connector->count_modes; i++) {
 		m = &connector->modes[i];
