@@ -246,8 +246,9 @@ util_fast_exp(float x)
 }
 
 
-#define LOG2_TABLE_SIZE_LOG2 8
-#define LOG2_TABLE_SIZE (1 << LOG2_TABLE_SIZE_LOG2)
+#define LOG2_TABLE_SIZE_LOG2 16
+#define LOG2_TABLE_SCALE (1 << LOG2_TABLE_SIZE_LOG2)
+#define LOG2_TABLE_SIZE (LOG2_TABLE_SCALE + 1)
 extern float log2_table[LOG2_TABLE_SIZE];
 
 
@@ -258,7 +259,8 @@ util_fast_log2(float x)
    float epart, mpart;
    num.f = x;
    epart = (float)(((num.i & 0x7f800000) >> 23) - 127);
-   mpart = log2_table[(num.i & 0x007fffff) >> (23 - LOG2_TABLE_SIZE_LOG2)];
+   /* mpart = log2_table[mantissa*LOG2_TABLE_SCALE + 0.5] */
+   mpart = log2_table[((num.i & 0x007fffff) + (1 << (22 - LOG2_TABLE_SIZE_LOG2))) >> (23 - LOG2_TABLE_SIZE_LOG2)];
    return epart + mpart;
 }
 

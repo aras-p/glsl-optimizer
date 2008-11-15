@@ -48,8 +48,8 @@ struct translate_element
 {
    enum pipe_format input_format;
    enum pipe_format output_format;
-   unsigned input_buffer;
-   unsigned input_offset;       /* can't really reduce the size of these */
+   unsigned input_buffer:8;
+   unsigned input_offset:24;
    unsigned output_offset;
 };
 
