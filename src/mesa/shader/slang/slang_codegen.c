@@ -480,7 +480,6 @@ new_node3(slang_ir_opcode op,
       n->Children[0] = c0;
       n->Children[1] = c1;
       n->Children[2] = c2;
-      n->Writemask = WRITEMASK_XYZW;
       n->InstLocation = -1;
    }
    return n;
@@ -1602,19 +1601,6 @@ resolve_swizzle(const slang_operation *oper)
 
 
 /**
- * As above, but produce a writemask.
- */
-static GLuint
-resolve_writemask(slang_assemble_ctx *A, const slang_operation *oper)
-{
-   GLuint swizzle = resolve_swizzle(oper);
-   GLuint writemask, swizzleOut;
-   swizzle_to_writemask(A, swizzle, &writemask, &swizzleOut);
-   return writemask;
-}
-
-
-/**
  * Recursively descend through swizzle nodes to find the node's storage info.
  */
 static slang_ir_storage *
@@ -1677,13 +1663,10 @@ _slang_gen_asm(slang_assemble_ctx *A, slang_operation *oper,
       /* Setup n->Store to be a particular location.  Otherwise, storage
        * for the result (a temporary) will be allocated later.
        */
-      GLuint writemask = WRITEMASK_XYZW;
       slang_operation *dest_oper;
       slang_ir_node *n0;
 
       dest_oper = &oper->children[0];
-
-      writemask = resolve_writemask(A, dest_oper);
 
       n0 = _slang_gen_operation(A, dest_oper);
       if (!n0)
@@ -3064,7 +3047,6 @@ _slang_gen_assignment(slang_assemble_ctx * A, slang_operation *oper)
             rhs = _slang_gen_swizzle(rhs, newSwizzle);
          }
          n = new_node2(IR_COPY, lhs, rhs);
-         n->Writemask = writemask;
          return n;
       }
       else {
@@ -3221,8 +3203,6 @@ _slang_gen_array_element(slang_assemble_ctx * A, slang_operation *oper)
                                         SWIZZLE_NIL,
                                         SWIZZLE_NIL);
          n = _slang_gen_swizzle(n, swizzle);
-         /*n->Store = _slang_clone_ir_storage_swz(n->Store, */
-         n->Writemask = WRITEMASK_X << index;
       }
       assert(n->Store);
       return n;

@@ -80,9 +80,7 @@ lookup_statevar(const char *var, GLint index1, GLint index2, const char *field,
       { "gl_TextureMatrixTranspose", STATE_TEXTURE_MATRIX, 0 },
       { "gl_TextureMatrixInverseTranspose", STATE_TEXTURE_MATRIX, STATE_MATRIX_INVERSE },
 
-      /* XXX verify these!!! */
       { "gl_NormalMatrix", STATE_MODELVIEW_MATRIX, STATE_MATRIX_TRANSPOSE },
-      { "__NormalMatrixTranspose", STATE_MODELVIEW_MATRIX, 0 },
 
       { NULL, 0, 0 }
    };
@@ -109,9 +107,13 @@ lookup_statevar(const char *var, GLint index1, GLint index2, const char *field,
    if (isMatrix) {
       if (tokens[0] == STATE_TEXTURE_MATRIX) {
          if (index1 >= 0) {
-            tokens[1] = index1;
+            tokens[1] = index1; /* which texture matrix */
             index1 = 0; /* prevent extra addition at end of function */
          }
+      }
+      if (index1 < 0) {
+         /* index1 is unused: prevent extra addition at end of function */
+         index1 = 0;
       }
    }
    else if (strcmp(var, "gl_DepthRange") == 0) {

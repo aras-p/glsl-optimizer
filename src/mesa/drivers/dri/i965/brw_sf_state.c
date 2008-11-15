@@ -172,7 +172,8 @@ sf_unit_create_from_key(struct brw_context *brw, struct brw_sf_unit_key *key,
 
    sf.thread4.nr_urb_entries = key->nr_urb_entries;
    sf.thread4.urb_entry_allocation_size = key->sfsize - 1;
-   sf.thread4.max_threads = MIN2(12, key->nr_urb_entries / 2) - 1;
+   /* Each SF thread produces 1 PUE, and there can be up to 24 threads */
+   sf.thread4.max_threads = MIN2(24, key->nr_urb_entries) - 1;
 
    if (INTEL_DEBUG & DEBUG_SINGLE_THREAD)
       sf.thread4.max_threads = 0;

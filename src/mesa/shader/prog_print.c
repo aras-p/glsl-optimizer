@@ -215,7 +215,7 @@ reg_string(enum register_file f, GLint index, gl_prog_print_mode mode,
    switch (mode) {
    case PROG_PRINT_DEBUG:
       if (relAddr)
-         sprintf(str, "%s[ADDR%s%d]", file_string(f, mode), (index > 0) ? "+" : "", index);
+         sprintf(str, "%s[ADDR+%d]", file_string(f, mode), index);
       else
          sprintf(str, "%s[%d]", file_string(f, mode), index);
       break;
@@ -371,8 +371,8 @@ _mesa_print_swizzle(GLuint swizzle)
 }
 
 
-static const char *
-writemask_string(GLuint writeMask)
+const char *
+_mesa_writemask_string(GLuint writeMask)
 {
    static char s[10];
    GLuint i = 0;
@@ -420,7 +420,7 @@ print_dst_reg(const struct prog_dst_register *dstReg, gl_prog_print_mode mode,
    _mesa_printf("%s%s",
                 reg_string((enum register_file) dstReg->File,
                            dstReg->Index, mode, dstReg->RelAddr, prog),
-                writemask_string(dstReg->WriteMask));
+                _mesa_writemask_string(dstReg->WriteMask));
 
    if (dstReg->CondMask != COND_TR) {
       _mesa_printf(" (%s.%s)",
@@ -432,7 +432,7 @@ print_dst_reg(const struct prog_dst_register *dstReg, gl_prog_print_mode mode,
    _mesa_printf("%s[%d]%s",
                 file_string((enum register_file) dstReg->File, mode),
                 dstReg->Index,
-                writemask_string(dstReg->WriteMask));
+                _mesa_writemask_string(dstReg->WriteMask));
 #endif
 }
 

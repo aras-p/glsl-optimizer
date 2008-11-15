@@ -77,12 +77,19 @@ vs_unit_create_from_key(struct brw_context *brw, struct brw_vs_unit_key *key)
 {
    struct brw_vs_unit_state vs;
    dri_bo *bo;
+   int chipset_max_threads;
 
    memset(&vs, 0, sizeof(vs));
 
    vs.thread0.kernel_start_pointer = brw->vs.prog_bo->offset >> 6; /* reloc */
    vs.thread0.grf_reg_count = ALIGN(key->total_grf, 16) / 16 - 1;
    vs.thread1.floating_point_mode = BRW_FLOATING_POINT_NON_IEEE_754;
+   /* Choosing multiple program flow means that we may get 2-vertex threads,
+    * which will have the channel mask for dwords 4-7 enabled in the thread,
+    * and those dwords will be written to the second URB handle when we
+    * brw_urb_WRITE() results.
+    */
+   vs.thread1.single_program_flow = 0;
    vs.thread3.urb_entry_read_length = key->urb_entry_read_length;
    vs.thread3.const_urb_entry_read_length = key->curb_entry_read_length;
    vs.thread3.dispatch_grf_start_reg = 1;
@@ -91,8 +98,13 @@ vs_unit_create_from_key(struct brw_context *brw, struct brw_vs_unit_key *key)
 
    vs.thread4.nr_urb_entries = key->nr_urb_entries;
    vs.thread4.urb_entry_allocation_size = key->urb_size - 1;
-   vs.thread4.max_threads = MIN2(MAX2(0, (key->nr_urb_entries - 6) / 2 - 1),
-				 15);
+
+   if (BRW_IS_G4X(brw))
+      chipset_max_threads = 32;
+   else
+      chipset_max_threads = 16;
+   vs.thread4.max_threads = CLAMP(key->nr_urb_entries / 2,
+				  1, chipset_max_threads) - 1;
 
    if (INTEL_DEBUG & DEBUG_SINGLE_THREAD)
       vs.thread4.max_threads = 0;

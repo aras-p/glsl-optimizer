@@ -105,6 +105,7 @@ static GLuint brw_set_prim(struct brw_context *brw, GLenum prim)
       }
 
       brw_validate_state(brw);
+      brw_upload_state(brw);
    }
 
    return hw_prim[prim];

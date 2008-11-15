@@ -67,8 +67,13 @@ wm_unit_populate_key(struct brw_context *brw, struct brw_wm_unit_key *key)
 
    if (INTEL_DEBUG & DEBUG_SINGLE_THREAD)
       key->max_threads = 1;
-   else
-      key->max_threads = 32;
+   else {
+      /* WM maximum threads is number of EUs times number of threads per EU. */
+      if (BRW_IS_G4X(brw))
+	 key->max_threads = 10 * 5;
+      else
+	 key->max_threads = 8 * 4;
+   }
 
    /* CACHE_NEW_WM_PROG */
    key->total_grf = brw->wm.prog_data->total_grf;

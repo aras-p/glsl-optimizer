@@ -173,7 +173,6 @@ typedef struct slang_ir_node_
 
    /** special fields depending on Opcode: */
    const char *Field;  /**< If Opcode == IR_FIELD */
-   GLuint Writemask;  /**< If Opcode == IR_MOVE */
    GLfloat Value[4];    /**< If Opcode == IR_FLOAT */
    slang_variable *Var;  /**< If Opcode == IR_VAR or IR_VAR_DECL */
    struct slang_ir_node_ *List;  /**< For various linked lists */

@@ -2500,6 +2500,7 @@ static void __glXCopySubBufferMESA(Display *dpy, GLXDrawable drawable,
     if ( pdraw != NULL ) {
 	__GLXscreenConfigs * const psc = GetGLXScreenConfigs(dpy, screen);
 	if (psc->driScreen->copySubBuffer != NULL) {
+	    glFlush();	    
 	    (*psc->driScreen->copySubBuffer)(pdraw, x, y, width, height);
 	}
 
