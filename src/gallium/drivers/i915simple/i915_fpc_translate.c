@@ -144,7 +144,7 @@ src_vector(struct i915_fp_compile *p,
            const struct tgsi_full_src_register *source)
 {
    uint index = source->SrcRegister.Index;
-   uint src, sem_name, sem_ind;
+   uint src = 0, sem_name, sem_ind;
 
    switch (source->SrcRegister.File) {
    case TGSI_FILE_TEMPORARY:

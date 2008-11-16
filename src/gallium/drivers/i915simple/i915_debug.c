@@ -210,6 +210,7 @@ BITS(
    PRINTF(stream, ": 0x%x\n", ((dw) & himask) >> (lo));
 }
 
+#ifdef DEBUG
 #define MBZ( dw, hi, lo) do {							\
    unsigned x = (dw) >> (lo);				\
    unsigned lomask = (1 << (lo)) - 1;			\
@@ -217,6 +218,10 @@ BITS(
    himask = (1UL << (hi)) - 1;				\
    assert ((x & himask & ~lomask) == 0);	\
 } while (0)
+#else
+#define MBZ( dw, hi, lo) do {							\
+} while (0)
+#endif
 
 static void
 FLAG(

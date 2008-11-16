@@ -206,11 +206,10 @@ i945_miptree_layout_2d( struct i915_texture *tex )
    unsigned nblocksx = pt->nblocksx[0];
    unsigned nblocksy = pt->nblocksy[0];
 
-#if 0 /* used for tiled display targets */
-   if (pt->last_level == 0 && pt->block.size == 4)
+   /* used for tiled display targets */
+   if (0)
       if (i915_displaytarget_layout(tex))
 	 return;
-#endif
 
    tex->stride = round_up(pt->nblocksx[0] * pt->block.size, 4);
 
