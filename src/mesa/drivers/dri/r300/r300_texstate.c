@@ -510,10 +510,6 @@ void r300SetTexBuffer(__DRIcontext *pDRICtx, GLint target, __DRIdrawable *dPriv)
     if (t->mt) {
         t->mt = NULL;
     }
-    if (rImage->bo) {
-        radeon_bo_unref(rImage->bo);
-        rImage->bo = NULL;
-    }
     if (rImage->mt) {
         r300_miptree_unreference(rImage->mt);
         rImage->mt = NULL;

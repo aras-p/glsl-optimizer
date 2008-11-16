@@ -169,6 +169,7 @@ static void r300EmitVec(GLcontext * ctx, struct r300_aos *aos,
 	uint32_t *out;
     uint32_t bo_size;
 
+    memset(aos, 0, sizeof(struct r300_aos));
 	if (stride == 0) {
         bo_size = size * 4;
 		count = 1;
@@ -428,7 +429,6 @@ int r300EmitArrays(GLcontext * ctx)
 		for (ci = 0; ci < vb->AttribPtr[tab[i]]->size; ci++) {
 			swizzle[i][ci] = ci;
 		}
-
 		r300EmitVec(ctx, &rmesa->state.aos[i],
 				vb->AttribPtr[tab[i]]->data,
 				vb->AttribPtr[tab[i]]->size,
@@ -486,8 +486,7 @@ void r300ReleaseArrays(GLcontext * ctx)
 	}
 	for (i = 0; i < rmesa->state.aos_count; i++) {
 		if (rmesa->state.aos[i].bo) {
-			radeon_bo_unref(rmesa->state.aos[i].bo);
-			rmesa->state.aos[i].bo = 0;
+			rmesa->state.aos[i].bo = radeon_bo_unref(rmesa->state.aos[i].bo);
 		}
 	}
 }

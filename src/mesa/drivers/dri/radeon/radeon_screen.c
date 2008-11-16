@@ -1179,6 +1179,7 @@ radeon_create_renderbuffer(GLenum format, __DRIdrawablePrivate *driDrawPriv)
 
     radeonSetSpanFunctions(ret);
 
+    ret->bo = NULL;
     return ret;
 }
 
@@ -1365,14 +1366,17 @@ radeonDestroyBuffer(__DRIdrawablePrivate *driDrawPriv)
     rb = (void *)fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer;
     if (rb && rb->bo) {
         radeon_bo_unref(rb->bo);
+        rb->bo = NULL;
     }
     rb = (void *)fb->Attachment[BUFFER_BACK_LEFT].Renderbuffer;
     if (rb && rb->bo) {
         radeon_bo_unref(rb->bo);
+        rb->bo = NULL;
     }
     rb = (void *)fb->Attachment[BUFFER_DEPTH].Renderbuffer;
     if (rb && rb->bo) {
         radeon_bo_unref(rb->bo);
+        rb->bo = NULL;
     }
    _mesa_unreference_framebuffer((GLframebuffer **)(&(driDrawPriv->driverPrivate)));
 }

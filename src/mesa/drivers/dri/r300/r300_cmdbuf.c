@@ -83,6 +83,7 @@ int r300FlushCmdBufLocked(r300ContextPtr r300, const char *caller)
 	r300->cmdbuf.flushing = 1;
     if (r300->cmdbuf.cs->cdw) {
         ret = radeon_cs_emit(r300->cmdbuf.cs);
+        r300->hw.all_dirty = 1;
     }
     radeon_cs_erase(r300->cmdbuf.cs);
 	r300->cmdbuf.flushing = 0;
@@ -208,8 +209,7 @@ void r300EmitState(r300ContextPtr r300)
 	if (RADEON_DEBUG & (DEBUG_STATE | DEBUG_PRIMS))
 		fprintf(stderr, "%s\n", __FUNCTION__);
 
-	if (r300->cmdbuf.cs->cdw && !r300->hw.is_dirty
-	    && !r300->hw.all_dirty)
+	if (r300->cmdbuf.cs->cdw && !r300->hw.is_dirty && !r300->hw.all_dirty)
 		return;
 
 	/* To avoid going across the entire set of states multiple times, just check
@@ -325,7 +325,7 @@ static void emit_cb_offset(r300ContextPtr r300, struct r300_state_atom * atom)
     if (r300->radeon.radeonScreen->driScreen->dri2.enabled) {
         rrb = fb->Attachment[BUFFER_BACK_LEFT].Renderbuffer;
     }
-	if (!rrb) {
+	if (!rrb || !rrb->bo) {
 		fprintf(stderr, "no rrb\n");
 		return;
 	}
