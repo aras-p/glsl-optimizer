@@ -323,7 +323,7 @@ llvm::Value * Storage::elemIdx(llvm::Value *ptr, int idx,
 
    if (indIdx) {
       getElem = GetElementPtrInst::Create(ptr,
-                                      BinaryOperator::create(Instruction::Add,
+                                      BinaryOperator::Create(Instruction::Add,
                                                              indIdx,
                                                              constantInt(idx),
                                                              name("add"),

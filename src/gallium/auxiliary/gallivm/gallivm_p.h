@@ -101,10 +101,10 @@ static INLINE int gallivm_w_swizzle(int swizzle)
    return w;
 }
 
-#endif /* MESA_LLVM */
-
 #if defined __cplusplus
 }
 #endif
+
+#endif /* MESA_LLVM */
 
 #endif
