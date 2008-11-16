@@ -385,6 +385,10 @@ static int cs_need_flush(struct radeon_cs *cs)
     return (cs->relocs_total_size > (7*1024*1024));
 }
 
+static void cs_print(struct radeon_cs *cs, FILE *file)
+{
+}
+
 static struct radeon_cs_funcs  radeon_cs_legacy_funcs = {
     cs_create,
     cs_write_dword,
@@ -394,7 +398,8 @@ static struct radeon_cs_funcs  radeon_cs_legacy_funcs = {
     cs_emit,
     cs_destroy,
     cs_erase,
-    cs_need_flush
+    cs_need_flush,
+    cs_print
 };
 
 struct radeon_cs_manager *radeon_cs_manager_legacy_ctor(struct radeon_context *ctx)
