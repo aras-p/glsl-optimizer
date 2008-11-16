@@ -178,7 +178,9 @@ i915_displaytarget_layout(struct i915_texture *tex)
    if (tex->base.width[0] >= 128) {
       tex->stride = power_of_two(tex->base.nblocksx[0] * pt->block.size);
       tex->total_nblocksy = round_up(tex->base.nblocksy[0], 8);
+#if 0 /* used for tiled display targets */
       tex->tiled = 1;
+#endif
    } else {
       tex->stride = round_up(tex->base.nblocksx[0] * pt->block.size, 64);
       tex->total_nblocksy = tex->base.nblocksy[0];
