@@ -13,6 +13,12 @@ if env['platform'] == 'windows':
 		'#src/mesa/main',
 	])
 
+	env.Append(CPPDEFINES = [
+		'__GL_EXPORTS',
+		'BUILD_GL32',
+		'_GNU_H_WINDOWS32_DEFINES',
+	])
+
 	sources = [
 		'opengl32.def',
 		'wgl.c',

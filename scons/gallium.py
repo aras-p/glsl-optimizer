@@ -170,22 +170,24 @@ def generate(env):
     #if env.get('quiet', False):
     #    quietCommandLines(env)
 
+    # Toolchain
+    platform = env['platform']
+    if env['toolchain'] == 'default':
+        if platform == 'winddk':
+            env['toolchain'] == 'winddk'
+        elif platform == 'wince':
+            env.Tool('wcesdk')
+            env['toolchain'] == 'wcesdk'
+    env.Tool(env['toolchain'])
+
     # shortcuts
     debug = env['debug']
     machine = env['machine']
     platform = env['platform']
     x86 = env['machine'] == 'x86'
     ppc = env['machine'] == 'ppc'
-    gcc = env['platform'] in ('linux', 'freebsd', 'darwin')
-    msvc = env['platform'] in ('windows', 'winddk', 'wince')
-
-    # Tool
-    if platform == 'winddk':
-        env.Tool('winddk')
-    elif platform == 'wince':
-        env.Tool('wcesdk')
-    else:
-        env.Tool('default')
+    gcc = env['platform'] in ('linux', 'freebsd', 'darwin') or env['toolchain'] == 'crossmingw'
+    msvc = env['platform'] in ('windows', 'winddk', 'wince') and env['toolchain'] != 'crossmingw'
 
     # Put build output in a separate dir, which depends on the current
     # configuration. See also http://www.scons.org/wiki/AdvancedBuildExample
