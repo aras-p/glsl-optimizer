@@ -1,31 +1,56 @@
 #!/usr/bin/env python
-#############################################################################
-#
-# Copyright 2008 Tungsten Graphics, Inc.
-#
-# This program is free software: you can redistribute it and/or modify it
-# under the terms of the GNU Lesser General Public License as published
-# by the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU Lesser General Public License for more details.
-#
-# You should have received a copy of the GNU Lesser General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#
-#############################################################################
+##########################################################################
+# 
+# Copyright 2008 Tungsten Graphics, Inc., Cedar Park, Texas.
+# All Rights Reserved.
+# 
+# Permission is hereby granted, free of charge, to any person obtaining a
+# copy of this software and associated documentation files (the
+# "Software"), to deal in the Software without restriction, including
+# without limitation the rights to use, copy, modify, merge, publish,
+# distribute, sub license, and/or sell copies of the Software, and to
+# permit persons to whom the Software is furnished to do so, subject to
+# the following conditions:
+# 
+# The above copyright notice and this permission notice (including the
+# next paragraph) shall be included in all copies or substantial portions
+# of the Software.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
+# IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
+# ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+# TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+# SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+# 
+##########################################################################
 
 
 '''Trace data model.'''
+
+
+import sys
+import string
+import format
+
+try:
+    from cStringIO import StringIO
+except ImportError:
+    from StringIO import StringIO
 
 
 class Node:
     
     def visit(self, visitor):
         raise NotImplementedError
+
+    def __str__(self):
+        stream = StringIO()
+        formatter = format.DefaultFormatter(stream)
+        pretty_printer = PrettyPrinter(formatter)
+        self.visit(pretty_printer)
+        return stream.getvalue()
 
 
 class Literal(Node):
@@ -35,12 +60,6 @@ class Literal(Node):
 
     def visit(self, visitor):
         visitor.visit_literal(self)
-        
-    def __str__(self):
-        if isinstance(self.value, str) and len(self.value) > 32:
-            return '...'
-        else: 
-            return repr(self.value)
 
 
 class NamedConstant(Node):
@@ -50,9 +69,6 @@ class NamedConstant(Node):
 
     def visit(self, visitor):
         visitor.visit_named_constant(self)
-        
-    def __str__(self):
-        return self.name
     
 
 class Array(Node):
@@ -62,9 +78,6 @@ class Array(Node):
 
     def visit(self, visitor):
         visitor.visit_array(self)
-        
-    def __str__(self):
-        return '{' + ', '.join([str(value) for value in self.elements]) + '}'
 
 
 class Struct(Node):
@@ -75,9 +88,6 @@ class Struct(Node):
 
     def visit(self, visitor):
         visitor.visit_struct(self)
-        
-    def __str__(self):
-        return '{' + ', '.join([name + ' = ' + str(value) for name, value in self.members]) + '}'
 
         
 class Pointer(Node):
@@ -87,9 +97,6 @@ class Pointer(Node):
 
     def visit(self, visitor):
         visitor.visit_pointer(self)
-        
-    def __str__(self):
-        return self.address
 
 
 class Call:
@@ -102,15 +109,6 @@ class Call:
         
     def visit(self, visitor):
         visitor.visit_call(self)
-        
-    def __str__(self):
-        s = self.method
-        if self.klass:
-            s = self.klass + '::' + s
-        s += '(' + ', '.join([name + ' = ' + str(value) for name, value in self.args]) + ')'
-        if self.ret is not None:
-            s += ' = ' + str(self.ret)
-        return s
 
 
 class Trace:
@@ -120,9 +118,6 @@ class Trace:
         
     def visit(self, visitor):
         visitor.visit_trace(self)
-        
-    def __str__(self):
-        return '\n'.join([str(call) for call in self.calls])
     
     
 class Visitor:
@@ -147,5 +142,70 @@ class Visitor:
     
     def visit_trace(self, node):
         raise NotImplementedError
+
+
+class PrettyPrinter:
+
+    def __init__(self, formatter):
+        self.formatter = formatter
     
+    def visit_literal(self, node):
+        if isinstance(node.value, basestring):
+            if len(node.value) >= 4096 or node.value.strip(string.printable):
+                self.formatter.text('...')
+                return
+
+            self.formatter.literal('"' + node.value + '"')
+            return
+
+        self.formatter.literal(repr(node.value))
+    
+    def visit_named_constant(self, node):
+        self.formatter.literal(node.name)
+    
+    def visit_array(self, node):
+        self.formatter.text('{')
+        sep = ''
+        for value in node.elements:
+            self.formatter.text(sep)
+            value.visit(self) 
+            sep = ', '
+        self.formatter.text('}')
+    
+    def visit_struct(self, node):
+        self.formatter.text('{')
+        sep = ''
+        for name, value in node.members:
+            self.formatter.text(sep)
+            self.formatter.variable(name)
+            self.formatter.text(' = ')
+            value.visit(self) 
+            sep = ', '
+        self.formatter.text('}')
+    
+    def visit_pointer(self, node):
+        self.formatter.address(node.address)
+    
+    def visit_call(self, node):
+        if node.klass is not None:
+            self.formatter.function(node.klass + '::' + node.method)
+        else:
+            self.formatter.function(node.method)
+        self.formatter.text('(')
+        sep = ''
+        for name, value in node.args:
+            self.formatter.text(sep)
+            self.formatter.variable(name)
+            self.formatter.text(' = ')
+            value.visit(self) 
+            sep = ', '
+        self.formatter.text(')')
+        if node.ret is not None:
+            self.formatter.text(' = ')
+            node.ret.visit(self)
+    
+    def visit_trace(self, node):
+        for call in node.calls:
+            call.visit(self)
+            self.formatter.newline()
 

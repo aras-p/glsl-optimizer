@@ -119,6 +119,7 @@ __inline double __cdecl atan2(double val)
 
 
 #if defined(_MSC_VER) 
+
 #if _MSC_VER < 1400 && !defined(__cplusplus) || defined(PIPE_SUBSYSTEM_WINDOWS_CE)
  
 static INLINE float cosf( float f ) 
@@ -161,12 +162,6 @@ static INLINE float logf( float f )
    return (float) log( (double) f );
 }
 
-static INLINE double log2( double x )
-{
-   const double invln2 = 1.442695041;
-   return log( x ) * invln2;
-}
-
 #else
 /* Work-around an extra semi-colon in VS 2005 logf definition */
 #ifdef logf
@@ -174,6 +169,13 @@ static INLINE double log2( double x )
 #define logf(x) ((float)log((double)(x)))
 #endif /* logf */
 #endif
+
+static INLINE double log2( double x )
+{
+   const double invln2 = 1.442695041;
+   return log( x ) * invln2;
+}
+
 #endif /* _MSC_VER */
 
 

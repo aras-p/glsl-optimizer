@@ -179,7 +179,35 @@ struct st_buffer {
       st_buffer_destroy($self);
    }
    
-   void write( const char *STRING, unsigned LENGTH, unsigned offset = 0) {
+   unsigned __len__(void) 
+   {
+      assert($self->buffer->refcount);
+      return $self->buffer->size;
+   }
+   
+   %cstring_output_allocate_size(char **STRING, int *LENGTH, free(*$1));
+   void read(char **STRING, int *LENGTH)
+   {
+      struct pipe_screen *screen = $self->st_dev->screen;
+      const char *map;
+      
+      assert($self->buffer->refcount);
+      
+      *LENGTH = $self->buffer->size;
+      *STRING = (char *) malloc($self->buffer->size);
+      if(!*STRING)
+         return;
+      
+      map = pipe_buffer_map(screen, $self->buffer, PIPE_BUFFER_USAGE_CPU_READ);
+      if(map) {
+         memcpy(*STRING, map, $self->buffer->size);
+         pipe_buffer_unmap(screen, $self->buffer);
+      }
+   }
+   
+   %cstring_input_binary(const char *STRING, unsigned LENGTH);
+   void write(const char *STRING, unsigned LENGTH, unsigned offset = 0) 
+   {
       struct pipe_screen *screen = $self->st_dev->screen;
       char *map;
       

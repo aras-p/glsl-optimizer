@@ -1,25 +1,35 @@
 #!/usr/bin/env python
-#############################################################################
-#
-# Copyright 2008 Tungsten Graphics, Inc.
-#
-# This program is free software: you can redistribute it and/or modify it
-# under the terms of the GNU Lesser General Public License as published
-# by the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU Lesser General Public License for more details.
-#
-# You should have received a copy of the GNU Lesser General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#
-#############################################################################
+##########################################################################
+# 
+# Copyright 2008 Tungsten Graphics, Inc., Cedar Park, Texas.
+# All Rights Reserved.
+# 
+# Permission is hereby granted, free of charge, to any person obtaining a
+# copy of this software and associated documentation files (the
+# "Software"), to deal in the Software without restriction, including
+# without limitation the rights to use, copy, modify, merge, publish,
+# distribute, sub license, and/or sell copies of the Software, and to
+# permit persons to whom the Software is furnished to do so, subject to
+# the following conditions:
+# 
+# The above copyright notice and this permission notice (including the
+# next paragraph) shall be included in all copies or substantial portions
+# of the Software.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
+# IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
+# ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+# TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+# SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+# 
+##########################################################################
 
 
 import sys
+import struct
+
 import gallium
 import model
 import parser
@@ -198,7 +208,8 @@ class Winsys(Object):
                                          4, 
                                          gallium.PIPE_BUFFER_USAGE_CPU_READ |
                                          gallium.PIPE_BUFFER_USAGE_CPU_WRITE )
-        buffer.write(data, size)
+        assert size == len(data)
+        buffer.write(data)
         return buffer
     
     def buffer_create(self, alignment, usage, size):
@@ -208,7 +219,8 @@ class Winsys(Object):
         pass
     
     def buffer_write(self, buffer, data, size):
-        buffer.write(data, size)
+        assert size == len(data)
+        buffer.write(data)
         
     def fence_finish(self, fence, flags):
         pass
@@ -361,6 +373,15 @@ class Context(Object):
         if state is not None:
             self.real.set_constant_buffer(shader, index, state.buffer)
 
+            if 1:
+                data = state.buffer.read()
+                format = '4f'
+                index = 0
+                for offset in range(0, len(data), struct.calcsize(format)):
+                    x, y, z, w = struct.unpack_from(format, data, offset)
+                    sys.stdout.write('\tCONST[%2u] = {%10.4f, %10.4f, %10.4f, %10.4f}\n' % (index, x, y, z, w))
+                    index += 1
+
     def set_framebuffer_state(self, state):
         _state = gallium.Framebuffer()
         _state.width = state.width
@@ -432,10 +453,16 @@ class Context(Object):
             show_image(self.cbufs[0])
     
 
-class Interpreter(parser.TraceParser):
+class Interpreter(parser.TraceDumper):
     
+    ignore_calls = set((
+            ('pipe_screen', 'is_format_supported'),
+            ('pipe_screen', 'get_param'),
+            ('pipe_screen', 'get_paramf'),
+    ))
+
     def __init__(self, stream):
-        parser.TraceParser.__init__(self, stream)
+        parser.TraceDumper.__init__(self, stream)
         self.objects = {}
         self.result = None
         self.globl = Global(self, None)
@@ -455,7 +482,11 @@ class Interpreter(parser.TraceParser):
             self.interpret_call(call)
 
     def handle_call(self, call):
-        sys.stderr.write("%s\n" % call)
+
+        if (call.klass, call.method) in self.ignore_calls:
+            return
+
+        parser.TraceDumper.handle_call(self, call)
         
         args = [self.interpret_arg(arg) for name, arg in call.args] 
         

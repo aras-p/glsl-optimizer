@@ -1,22 +1,30 @@
 #!/usr/bin/env python
-#############################################################################
-#
-# Copyright 2008 Tungsten Graphics, Inc.
-#
-# This program is free software: you can redistribute it and/or modify it
-# under the terms of the GNU Lesser General Public License as published
-# by the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU Lesser General Public License for more details.
-#
-# You should have received a copy of the GNU Lesser General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#
-#############################################################################
+##########################################################################
+# 
+# Copyright 2008 Tungsten Graphics, Inc., Cedar Park, Texas.
+# All Rights Reserved.
+# 
+# Permission is hereby granted, free of charge, to any person obtaining a
+# copy of this software and associated documentation files (the
+# "Software"), to deal in the Software without restriction, including
+# without limitation the rights to use, copy, modify, merge, publish,
+# distribute, sub license, and/or sell copies of the Software, and to
+# permit persons to whom the Software is furnished to do so, subject to
+# the following conditions:
+# 
+# The above copyright notice and this permission notice (including the
+# next paragraph) shall be included in all copies or substantial portions
+# of the Software.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
+# IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
+# ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+# TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+# SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+# 
+##########################################################################
 
 
 import sys
@@ -319,15 +327,19 @@ class TraceParser(XmlParser):
         return Pointer(address)
 
     def handle_call(self, call):
-        
         pass
     
     
 class TraceDumper(TraceParser):
     
+    def __init__(self, fp):
+        TraceParser.__init__(self, fp)
+        self.formatter = format.DefaultFormatter(sys.stdout)
+        self.pretty_printer = PrettyPrinter(self.formatter)
 
     def handle_call(self, call):
-        print call
+        call.visit(self.pretty_printer)
+        self.formatter.newline()
         
 
 def main(ParserFactory):
