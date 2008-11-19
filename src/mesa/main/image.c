@@ -1689,7 +1689,7 @@ _mesa_pack_rgba_span_float(GLcontext *ctx, GLuint n, GLfloat rgba[][4],
 
    if (dstFormat == GL_LUMINANCE || dstFormat == GL_LUMINANCE_ALPHA) {
       /* compute luminance values */
-      if (dstType != GL_FLOAT || ctx->Color.ClampReadColor == GL_TRUE) {
+      if (transferOps & IMAGE_CLAMP_BIT) {
          for (i = 0; i < n; i++) {
             GLfloat sum = rgba[i][RCOMP] + rgba[i][GCOMP] + rgba[i][BCOMP];
             luminance[i] = CLAMP(sum, 0.0F, 1.0F);
