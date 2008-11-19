@@ -442,6 +442,12 @@ class Context(Object):
 
 class Interpreter(parser.TraceDumper):
     
+    ignore_calls = set((
+            ('pipe_screen', 'is_format_supported'),
+            ('pipe_screen', 'get_param'),
+            ('pipe_screen', 'get_paramf'),
+    ))
+
     def __init__(self, stream):
         parser.TraceDumper.__init__(self, stream)
         self.objects = {}
@@ -463,6 +469,10 @@ class Interpreter(parser.TraceDumper):
             self.interpret_call(call)
 
     def handle_call(self, call):
+
+        if (call.klass, call.method) in self.ignore_calls:
+            return
+
         parser.TraceDumper.handle_call(self, call)
         
         args = [self.interpret_arg(arg) for name, arg in call.args] 
