@@ -28,6 +28,8 @@
 
 
 import sys
+import struct
+
 import gallium
 import model
 import parser
@@ -206,7 +208,8 @@ class Winsys(Object):
                                          4, 
                                          gallium.PIPE_BUFFER_USAGE_CPU_READ |
                                          gallium.PIPE_BUFFER_USAGE_CPU_WRITE )
-        buffer.write(data, size)
+        assert size == len(data)
+        buffer.write(data)
         return buffer
     
     def buffer_create(self, alignment, usage, size):
@@ -216,7 +219,8 @@ class Winsys(Object):
         pass
     
     def buffer_write(self, buffer, data, size):
-        buffer.write(data, size)
+        assert size == len(data)
+        buffer.write(data)
         
     def fence_finish(self, fence, flags):
         pass
@@ -368,6 +372,15 @@ class Context(Object):
     def set_constant_buffer(self, shader, index, state):
         if state is not None:
             self.real.set_constant_buffer(shader, index, state.buffer)
+
+            if 1:
+                data = state.buffer.read()
+                format = '4f'
+                index = 0
+                for offset in range(0, len(data), struct.calcsize(format)):
+                    x, y, z, w = struct.unpack_from(format, data, offset)
+                    sys.stdout.write('\tCONST[%2u] = {%10.4f, %10.4f, %10.4f, %10.4f}\n' % (index, x, y, z, w))
+                    index += 1
 
     def set_framebuffer_state(self, state):
         _state = gallium.Framebuffer()
