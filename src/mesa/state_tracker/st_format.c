@@ -512,6 +512,32 @@ st_choose_format(struct pipe_context *pipe, GLint internalFormat,
          return PIPE_FORMAT_Z24S8_UNORM;
       return PIPE_FORMAT_NONE;
 
+   case GL_SRGB_EXT:
+   case GL_SRGB8_EXT:
+   case GL_COMPRESSED_SRGB_EXT:
+   case GL_COMPRESSED_SRGB_S3TC_DXT1_EXT:
+   case GL_SRGB_ALPHA_EXT:
+   case GL_SRGB8_ALPHA8_EXT:
+   case GL_COMPRESSED_SRGB_ALPHA_EXT:
+   case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT:
+   case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT:
+   case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT:
+      return default_rgba_format( screen, target, tex_usage, geom_flags );
+
+   case GL_SLUMINANCE_ALPHA_EXT:
+   case GL_SLUMINANCE8_ALPHA8_EXT:
+   case GL_COMPRESSED_SLUMINANCE_EXT:
+   case GL_COMPRESSED_SLUMINANCE_ALPHA_EXT:
+      if (screen->is_format_supported( screen, PIPE_FORMAT_A8L8_UNORM, target, tex_usage, geom_flags ))
+         return PIPE_FORMAT_A8L8_UNORM;
+      return default_rgba_format( screen, target, tex_usage, geom_flags );
+
+   case GL_SLUMINANCE_EXT:
+   case GL_SLUMINANCE8_EXT:
+      if (screen->is_format_supported( screen, PIPE_FORMAT_L8_UNORM, target, tex_usage, geom_flags ))
+         return PIPE_FORMAT_L8_UNORM;
+      return default_rgba_format( screen, target, tex_usage, geom_flags );
+
    default:
       return PIPE_FORMAT_NONE;
    }
