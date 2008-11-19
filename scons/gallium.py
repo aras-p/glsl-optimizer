@@ -174,10 +174,9 @@ def generate(env):
     platform = env['platform']
     if env['toolchain'] == 'default':
         if platform == 'winddk':
-            env['toolchain'] == 'winddk'
+            env['toolchain'] = 'winddk'
         elif platform == 'wince':
-            env.Tool('wcesdk')
-            env['toolchain'] == 'wcesdk'
+            env['toolchain'] = 'wcesdk'
     env.Tool(env['toolchain'])
 
     # shortcuts
