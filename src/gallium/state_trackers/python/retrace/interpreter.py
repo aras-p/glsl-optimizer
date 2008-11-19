@@ -440,10 +440,10 @@ class Context(Object):
             show_image(self.cbufs[0])
     
 
-class Interpreter(parser.TraceParser):
+class Interpreter(parser.TraceDumper):
     
     def __init__(self, stream):
-        parser.TraceParser.__init__(self, stream)
+        parser.TraceDumper.__init__(self, stream)
         self.objects = {}
         self.result = None
         self.globl = Global(self, None)
@@ -463,7 +463,7 @@ class Interpreter(parser.TraceParser):
             self.interpret_call(call)
 
     def handle_call(self, call):
-        sys.stderr.write("%s\n" % call)
+        parser.TraceDumper.handle_call(self, call)
         
         args = [self.interpret_arg(arg) for name, arg in call.args] 
         

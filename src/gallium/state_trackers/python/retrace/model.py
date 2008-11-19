@@ -30,10 +30,26 @@
 '''Trace data model.'''
 
 
+import sys
+import format
+
+try:
+    from cStringIO import StringIO
+except ImportError:
+    from StringIO import StringIO
+
+
 class Node:
     
     def visit(self, visitor):
         raise NotImplementedError
+
+    def __str__(self):
+        stream = StringIO()
+        formatter = format.DefaultFormatter(stream)
+        pretty_printer = PrettyPrinter(formatter)
+        self.visit(pretty_printer)
+        return stream.getvalue()
 
 
 class Literal(Node):
@@ -43,12 +59,6 @@ class Literal(Node):
 
     def visit(self, visitor):
         visitor.visit_literal(self)
-        
-    def __str__(self):
-        if isinstance(self.value, str) and len(self.value) > 32:
-            return '...'
-        else: 
-            return repr(self.value)
 
 
 class NamedConstant(Node):
@@ -58,9 +68,6 @@ class NamedConstant(Node):
 
     def visit(self, visitor):
         visitor.visit_named_constant(self)
-        
-    def __str__(self):
-        return self.name
     
 
 class Array(Node):
@@ -70,9 +77,6 @@ class Array(Node):
 
     def visit(self, visitor):
         visitor.visit_array(self)
-        
-    def __str__(self):
-        return '{' + ', '.join([str(value) for value in self.elements]) + '}'
 
 
 class Struct(Node):
@@ -83,9 +87,6 @@ class Struct(Node):
 
     def visit(self, visitor):
         visitor.visit_struct(self)
-        
-    def __str__(self):
-        return '{' + ', '.join([name + ' = ' + str(value) for name, value in self.members]) + '}'
 
         
 class Pointer(Node):
@@ -95,9 +96,6 @@ class Pointer(Node):
 
     def visit(self, visitor):
         visitor.visit_pointer(self)
-        
-    def __str__(self):
-        return self.address
 
 
 class Call:
@@ -110,15 +108,6 @@ class Call:
         
     def visit(self, visitor):
         visitor.visit_call(self)
-        
-    def __str__(self):
-        s = self.method
-        if self.klass:
-            s = self.klass + '::' + s
-        s += '(' + ', '.join([name + ' = ' + str(value) for name, value in self.args]) + ')'
-        if self.ret is not None:
-            s += ' = ' + str(self.ret)
-        return s
 
 
 class Trace:
@@ -128,9 +117,6 @@ class Trace:
         
     def visit(self, visitor):
         visitor.visit_trace(self)
-        
-    def __str__(self):
-        return '\n'.join([str(call) for call in self.calls])
     
     
 class Visitor:
@@ -155,5 +141,65 @@ class Visitor:
     
     def visit_trace(self, node):
         raise NotImplementedError
+
+
+class PrettyPrinter:
+
+    def __init__(self, formatter):
+        self.formatter = formatter
     
+    def visit_literal(self, node):
+        if isinstance(node.value, str) and len(node.value) > 32:
+            self.formatter.text('...')
+        else: 
+            self.formatter.literal(repr(node.value))
+    
+    def visit_named_constant(self, node):
+        self.formatter.literal(node.name)
+    
+    def visit_array(self, node):
+        self.formatter.text('{')
+        sep = ''
+        for value in node.elements:
+            self.formatter.text(sep)
+            value.visit(self) 
+            sep = ', '
+        self.formatter.text('}')
+    
+    def visit_struct(self, node):
+        self.formatter.text('{')
+        sep = ''
+        for name, value in node.members:
+            self.formatter.text(sep)
+            self.formatter.variable(name)
+            self.formatter.text(' = ')
+            value.visit(self) 
+            sep = ', '
+        self.formatter.text('}')
+    
+    def visit_pointer(self, node):
+        self.formatter.address(node.address)
+    
+    def visit_call(self, node):
+        if node.klass is not None:
+            self.formatter.function(node.klass + '::' + node.method)
+        else:
+            self.formatter.function(node.method)
+        self.formatter.text('(')
+        sep = ''
+        for name, value in node.args:
+            self.formatter.text(sep)
+            self.formatter.variable(name)
+            self.formatter.text(' = ')
+            value.visit(self) 
+            sep = ', '
+        if node.ret is not None:
+            self.formatter.text(' = ')
+            node.ret.visit(self)
+        self.formatter.text(')')
+    
+    def visit_trace(self, node):
+        for call in node.calls:
+            call.visit(self)
+            self.formatter.newline()
 

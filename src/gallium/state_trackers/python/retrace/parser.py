@@ -327,15 +327,19 @@ class TraceParser(XmlParser):
         return Pointer(address)
 
     def handle_call(self, call):
-        
         pass
     
     
 class TraceDumper(TraceParser):
     
+    def __init__(self, fp):
+        TraceParser.__init__(self, fp)
+        self.formatter = format.DefaultFormatter(sys.stdout)
+        self.pretty_printer = PrettyPrinter(self.formatter)
 
     def handle_call(self, call):
-        print call
+        call.visit(self.pretty_printer)
+        self.formatter.newline()
         
 
 def main(ParserFactory):
