@@ -837,10 +837,8 @@ parameter_type_specifier_3
  * <init_declarator_list> ::= <single_declaration>
  *                          | <init_declarator_list> "," <identifier>
  *                          | <init_declarator_list> "," <identifier> "[" "]"
- *                          | <init_declarator_list> "," <identifier> "["
- *                            <constant_expression> "]"
- *                          | <init_declarator_list> "," <identifier> "="
- *                            <initializer>
+ *                          | <init_declarator_list> "," <identifier> "[" <constant_expression> "]"
+ *                          | <init_declarator_list> "," <identifier> "=" <initializer>
  */
 init_declarator_list
     single_declaration .and .loop init_declarator_list_1 .emit DECLARATOR_NEXT .and
@@ -860,10 +858,9 @@ init_declarator_list_5
  * <single_declaration> ::= <fully_specified_type>
  *                        | <fully_specified_type> <identifier>
  *                        | <fully_specified_type> <identifier> "[" "]"
- *                        | <fully_specified_type> <identifier> "["
- *                          <constant_expression> "]"
+ *                        | <fully_specified_type> <identifier> "[" <constant_expression> "]"
  *                        | <fully_specified_type> <identifier> "=" <initializer>
-*/
+ */
 single_declaration
     single_declaration_nospace .or single_declaration_space;
 single_declaration_space
@@ -924,12 +921,12 @@ centroid_qualifier
 
 
 /*
- *  <type_qualifier> ::= "const"
- *                     | "attribute" // Vertex only.
- *                     | "varying"
- *                     | "uniform"
- *                     | "__fixed_output"
- *                     | "__fixed_input"
+ * <type_qualifier> ::= "const"
+ *                    | "attribute" // Vertex only.
+ *                    | "varying"
+ *                    | "uniform"
+ *                    | "__fixed_output"
+ *                    | "__fixed_input"
  *
  * note: this is an extension to the standard language specification,
  * normally slang disallows __fixed_output and __fixed_input type qualifiers
@@ -1013,7 +1010,7 @@ type_specifier_nospace
 
 /*
  * <struct_specifier> ::= "struct" <identifier> "{" <struct_declaration_list> "}"
- *                       | "struct" "{" <struct_declaration_list> "}"
+ *                      | "struct" "{" <struct_declaration_list> "}"
  */
 struct_specifier
     "struct" .and struct_specifier_1 .and optional_space .and lbrace .error LBRACE_EXPECTED .and
@@ -1025,7 +1022,7 @@ struct_specifier_2
 
 /*
  * <struct_declaration_list> ::= <struct_declaration>
- *                              | <struct_declaration_list> <struct_declaration>
+ *                             | <struct_declaration_list> <struct_declaration>
  */
 struct_declaration_list
     struct_declaration .and .loop struct_declaration .emit FIELD_NEXT;
@@ -1042,7 +1039,7 @@ struct_declaration_nospace
 
 /*
  * <struct_declarator_list> ::= <struct_declarator>
- *                             | <struct_declarator_list> "," <struct_declarator>
+ *                            | <struct_declarator_list> "," <struct_declarator>
  */
 struct_declarator_list
     struct_declarator .and .loop struct_declarator_list_1 .emit FIELD_NEXT;
