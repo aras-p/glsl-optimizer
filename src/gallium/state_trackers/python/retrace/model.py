@@ -31,6 +31,7 @@
 
 
 import sys
+import string
 import format
 
 try:
@@ -149,10 +150,15 @@ class PrettyPrinter:
         self.formatter = formatter
     
     def visit_literal(self, node):
-        if isinstance(node.value, str) and len(node.value) > 32:
-            self.formatter.text('...')
-        else: 
-            self.formatter.literal(repr(node.value))
+        if isinstance(node.value, basestring):
+            if len(node.value) >= 4096 or node.value.strip(string.printable):
+                self.formatter.text('...')
+                return
+
+            self.formatter.literal('"' + node.value + '"')
+            return
+
+        self.formatter.literal(repr(node.value))
     
     def visit_named_constant(self, node):
         self.formatter.literal(node.name)
@@ -193,10 +199,10 @@ class PrettyPrinter:
             self.formatter.text(' = ')
             value.visit(self) 
             sep = ', '
+        self.formatter.text(')')
         if node.ret is not None:
             self.formatter.text(' = ')
             node.ret.visit(self)
-        self.formatter.text(')')
     
     def visit_trace(self, node):
         for call in node.calls:
