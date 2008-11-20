@@ -1,0 +1,40 @@
+import os
+
+Import('*')
+
+if env['platform'] in ['windows']:
+     
+    env = env.Clone()
+     
+    env.Append(CPPPATH = [
+    	'#src/mesa',
+    ])
+     
+    env.Append(CPPDEFINES = [
+        '__GL_EXPORTS',
+        'BUILD_GL32',
+        '_GNU_H_WINDOWS32_DEFINES',
+    ])
+     
+    sources = [
+        'stw_device.c',
+        'stw_framebuffer.c',
+        'stw_icd.c',
+        'stw_pixelformat.c',
+        'stw_quirks.c',
+        'stw_wgl_arbextensionsstring.c',
+        'stw_wgl_arbmultisample.c',
+        'stw_wgl_arbpixelformat.c',
+        #'stw_wgl.c',
+        'stw_wgl_context.c',
+        'stw_wgl_getprocaddress.c',
+        'stw_wgl_pixelformat.c',
+        'stw_wgl_swapbuffers.c',
+    ]
+
+    wgl = env.ConvenienceLibrary(
+        target ='wgl',
+        source = sources,
+    )
+    
+    Export('wgl')
