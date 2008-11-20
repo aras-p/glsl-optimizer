@@ -297,9 +297,12 @@ static void make_state_key( GLcontext *ctx,  struct state_key *key )
 
    for (i=0;i<MAX_TEXTURE_UNITS;i++) {
       const struct gl_texture_unit *texUnit = &ctx->Texture.Unit[i];
+      GLenum format;
 
       if (!texUnit->_ReallyEnabled || !texUnit->Enabled)
          continue;
+
+      format = texUnit->_Current->Image[0][texUnit->_Current->BaseLevel]->_BaseFormat;
 
       key->unit[i].enabled = 1;
       key->enabled_units |= (1<<i);
@@ -308,7 +311,9 @@ static void make_state_key( GLcontext *ctx,  struct state_key *key )
 
       key->unit[i].source_index = 
 	 translate_tex_src_bit(texUnit->_ReallyEnabled);		
-      key->unit[i].shadow = texUnit->_Current->CompareMode == GL_COMPARE_R_TO_TEXTURE;
+      key->unit[i].shadow = ((texUnit->_Current->CompareMode == GL_COMPARE_R_TO_TEXTURE) && 
+                             ((format == GL_DEPTH_COMPONENT) || 
+                              (format == GL_DEPTH_STENCIL_EXT)));
 
       key->unit[i].NumArgsRGB = texUnit->_CurrentCombine->_NumArgsRGB;
       key->unit[i].NumArgsA = texUnit->_CurrentCombine->_NumArgsA;

@@ -1477,6 +1477,8 @@ _slang_simple_writemask(GLuint writemask, GLuint swizzle)
  * Convert the given swizzle into a writemask.  In some cases this
  * is trivial, in other cases, we'll need to also swizzle the right
  * hand side to put components in the right places.
+ * See comment above for more info.
+ * XXX this function could be simplified and should probably be renamed.
  * \param swizzle  the incoming swizzle
  * \param writemaskOut  returns the writemask
  * \param swizzleOut  swizzle to apply to the right-hand-side
@@ -3114,7 +3116,7 @@ _slang_gen_struct_field(slang_assemble_ctx * A, slang_operation *oper)
       /* oper->a_id is the field name */
       slang_ir_node *base, *n;
       slang_typeinfo field_ti;
-      GLint fieldSize, fieldOffset = -1, swz;
+      GLint fieldSize, fieldOffset = -1;
 
       /* type of field */
       slang_typeinfo_construct(&field_ti);
@@ -3147,22 +3149,12 @@ _slang_gen_struct_field(slang_assemble_ctx * A, slang_operation *oper)
       if (!n)
          return NULL;
 
-
-      /* setup the storage info for this node */
-      swz = fieldOffset % 4;
-
       n->Field = (char *) oper->a_id;
-      n->Store = _slang_new_ir_storage_relative(fieldOffset / 4,
-                                                fieldSize,
-                                                base->Store);
-      if (fieldSize == 1)
-         n->Store->Swizzle = MAKE_SWIZZLE4(swz, swz, swz, swz);
-      else if (fieldSize == 2)
-         n->Store->Swizzle = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y,
-                                           SWIZZLE_NIL, SWIZZLE_NIL);
-      else if (fieldSize == 3)
-         n->Store->Swizzle = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y,
-                                           SWIZZLE_Z, SWIZZLE_NIL);
+
+      /* Store the field's offset in storage->Index */
+      n->Store = _slang_new_ir_storage(base->Store->File,
+                                       fieldOffset,
+                                       fieldSize);
 
       return n;
    }
@@ -3255,12 +3247,12 @@ _slang_gen_array_element(slang_assemble_ctx * A, slang_operation *oper)
          }
 
          elem = new_node2(IR_ELEMENT, array, index);
-         elem->Store = _slang_new_ir_storage_relative(constIndex,
-                                                      elemSize,
-                                                      array->Store);
 
-         assert(elem->Store->Parent);
-         /* XXX try to do some array bounds checking here */
+         /* The storage info here will be updated during code emit */
+         elem->Store = _slang_new_ir_storage(array->Store->File,
+                                             array->Store->Index,
+                                             elemSize);
+
          return elem;
       }
       else {

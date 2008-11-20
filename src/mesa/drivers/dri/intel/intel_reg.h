@@ -80,7 +80,7 @@
  */
 #define S0_VB_OFFSET_MASK_830		0xffffff8
 #define S0_VB_PITCH_SHIFT_830		1
-#define S0_VB_ENABLE_830		0
+#define S0_VB_ENABLE_830		(1<<0)
 /** @} */
 
 #define S1_VERTEX_WIDTH_SHIFT          24
@@ -100,8 +100,8 @@
 #define S2_TEXCOORD_FMT(unit, type)    ((type)<<(unit*4))
 #define S2_TEXCOORD_NONE               (~0)
 #define S2_TEX_COUNT_SHIFT_830		12
-#define S2_VERTEX_0_WIDTH_SHIFT_830	0
-#define S2_VERTEX_1_WIDTH_SHIFT_830	6
+#define S2_VERTEX_1_WIDTH_SHIFT_830	0
+#define S2_VERTEX_0_WIDTH_SHIFT_830	6
 /* S3 not interesting */
 
 #define S4_POINT_WIDTH_SHIFT           23

@@ -3719,6 +3719,14 @@ _mesa_get_teximage(GLcontext *ctx, GLenum target, GLint level,
                /* general case:  convert row to RGBA format */
                GLfloat rgba[MAX_WIDTH][4];
                GLint col;
+               GLbitfield transferOps = 0x0;
+
+               if (type == GL_FLOAT && 
+                   ((ctx->Color.ClampReadColor == GL_TRUE) ||
+                    (ctx->Color.ClampReadColor == GL_FIXED_ONLY_ARB &&
+                     texImage->TexFormat->DataType != GL_FLOAT)))
+                  transferOps |= IMAGE_CLAMP_BIT;
+
                for (col = 0; col < width; col++) {
                   (*texImage->FetchTexelf)(texImage, col, row, img, rgba[col]);
                   if (texImage->TexFormat->BaseFormat == GL_ALPHA) {
@@ -3743,7 +3751,7 @@ _mesa_get_teximage(GLcontext *ctx, GLenum target, GLint level,
                }
                _mesa_pack_rgba_span_float(ctx, width, (GLfloat (*)[4]) rgba,
                                           format, type, dest,
-                                          &ctx->Pack, 0x0 /*image xfer ops*/);
+                                          &ctx->Pack, transferOps /*image xfer ops*/);
             } /* format */
          } /* row */
       } /* img */

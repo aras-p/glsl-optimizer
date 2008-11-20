@@ -186,7 +186,7 @@ void intel_flush_prim(struct intel_context *intel)
       OUT_RELOC(vb_bo, I915_GEM_DOMAIN_VERTEX, 0,
 		offset | (intel->vertex_size << S0_VB_PITCH_SHIFT_830) |
 		S0_VB_ENABLE_830);
-      /* S1
+      /* S2
        * This is somewhat unfortunate -- VB width is tied up with
        * vertex format data that we've already uploaded through
        * _3DSTATE_VFT[01]_CMD.  We may want to replace emits of VFT state with
