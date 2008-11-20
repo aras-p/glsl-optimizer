@@ -1,0 +1,43 @@
+import os
+import os.path
+import sys
+
+env = Environment(
+    tools = ['generic'],
+    toolpath = ['../scons'],
+    ENV = os.environ,
+)
+
+
+# Use Mesa's headers and libs
+if 0:
+    env.Append(CPPPATH = ['#../include'])
+    env.Append(LIBPATH = ['#../lib'])
+
+
+conf = Configure(env)
+
+# OpenGL
+if env['platform'] == 'windows':
+    env.Prepend(LIBS = ['glu32', 'opengl32'])
+else:
+    env.Prepend(LIBS = ['GLU', 'GL'])
+
+# Glut
+env['GLUT'] = False
+if conf.CheckCHeader('GL/glut.h'):
+    if env['platform'] == 'windows':
+        env['GLUT_LIB'] = 'glut32'
+    else:
+        env['GLUT_LIB'] = 'glut'
+    env['GLUT'] = True
+
+conf.Finish()
+
+
+Export('env')
+
+SConscript(
+    'SConscript',
+    duplicate = 0 # http://www.scons.org/doc/0.97/HTML/scons-user/x2261.html
+)

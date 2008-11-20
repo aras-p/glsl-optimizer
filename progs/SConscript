@@ -1,0 +1,4 @@
+SConscript([
+    'demos/SConscript',
+    'trivial/SConscript',
+])
