@@ -338,7 +338,7 @@ cell_twiddle_texture(struct pipe_screen *screen,
       }
       break;
    default:
-      printf("Cell: twiddle unsupported texture format 0x%x\n", ct->base.format);
+      printf("Cell: twiddle unsupported texture format %s\n", pf_name(ct->base.format));
       ;
    }
 
@@ -384,7 +384,7 @@ cell_untwiddle_texture(struct pipe_screen *screen,
    default:
       {
          ct->untiled_data[level] = NULL;
-         printf("Cell: untwiddle unsupported texture format 0x%x\n", ct->base.format);
+         printf("Cell: untwiddle unsupported texture format %s\n", pf_name(ct->base.format));
       }
    }
 
