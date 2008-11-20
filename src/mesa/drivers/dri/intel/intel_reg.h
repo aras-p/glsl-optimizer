@@ -80,7 +80,7 @@
  */
 #define S0_VB_OFFSET_MASK_830		0xffffff8
 #define S0_VB_PITCH_SHIFT_830		1
-#define S0_VB_ENABLE_830		0
+#define S0_VB_ENABLE_830		(1<<0)
 /** @} */
 
 #define S1_VERTEX_WIDTH_SHIFT          24
