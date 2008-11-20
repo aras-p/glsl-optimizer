@@ -228,7 +228,7 @@ typedef struct {
   SetWindowPos(window, HWND_BOTTOM, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE)
 
 #define XSetWMName(display, window, tp) \
-  SetWindowText(window, (tp)->value)
+  SetWindowText(window, (const char *)(tp)->value)
 
 /* There really isn't a way to set the icon name separate from the
    windows name in Win32, so, just set the windows name. */

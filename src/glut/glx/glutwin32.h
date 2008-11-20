@@ -41,6 +41,7 @@
 
 /* Private routines from win32_util.c */
 #ifndef __CYGWIN32__
+struct timeval;
 extern int gettimeofday(struct timeval* tp, void* tzp);
 #endif
 extern void *__glutFont(void *font);
