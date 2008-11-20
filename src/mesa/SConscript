@@ -337,3 +337,6 @@ if env['platform'] != 'winddk':
 			source = glapi_sources,
 		)
 		Export('glapi')
+
+	if platform == 'windows':
+		SConscript('state_tracker/wgl/SConscript')
