@@ -5,4 +5,6 @@ SConscript('gallium/SConscript')
 if 'mesa' in env['statetrackers']:
 	SConscript('mesa/SConscript')
 
+SConscript('glut/glx/SConscript')
+
 SConscript('gallium/winsys/SConscript')

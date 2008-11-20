@@ -33,7 +33,7 @@
 #include <GL/glut.h>
 
 #if defined(MESA) && defined(_WIN32) && !defined(__CYGWIN32__)
-#include <gl/mesa_wgl.h>
+#include <GL/mesa_wgl.h>
 #endif
 
 #ifndef _WIN32

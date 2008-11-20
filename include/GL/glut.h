@@ -53,7 +53,7 @@ extern "C" {
 /* To disable supression of annoying warnings about floats being promoted
    to doubles, define GLUT_NO_WARNING_DISABLE in your compile preprocessor
    options. */
-# ifndef GLUT_NO_WARNING_DISABLE
+# if defined(_MSC_VER) && !defined(GLUT_NO_WARNING_DISABLE)
 #  pragma warning (disable:4244)  /* Disable bogus VC++ 4.2 conversion warnings. */
 #  pragma warning (disable:4305)  /* VC++ 5.0 version of above warning. */
 # endif
