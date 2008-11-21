@@ -2025,7 +2025,7 @@ emit_var_decl(slang_emit_info *emitInfo, slang_ir_node *n)
         printf("IR_VAR_DECL %s %d store %p\n",
         (char*) n->Var->a_name, n->Store->Index, (void*) n->Store);
       */
-      assert(n->Var->aux == n->Store);
+      assert(n->Var->store == n->Store);
    }
    if (emitInfo->EmitComments) {
       /* emit NOP with comment describing the variable's storage location */

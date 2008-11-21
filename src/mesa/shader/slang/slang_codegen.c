@@ -238,9 +238,9 @@ _slang_attach_storage(slang_ir_node *n, slang_variable *var)
 
    if (!n->Store) {
       /* need to setup storage */
-      if (n->Var && n->Var->aux) {
+      if (n->Var && n->Var->store) {
          /* node storage info = var storage info */
-         n->Store = (slang_ir_storage *) n->Var->aux;
+         n->Store = n->Var->store;
       }
       else {
          /* alloc new storage info */
@@ -251,8 +251,8 @@ _slang_attach_storage(slang_ir_node *n, slang_variable *var)
                 (void*) n->Store, n->Store->Size);
 #endif
          if (n->Var)
-            n->Var->aux = n->Store;
-         assert(n->Var->aux);
+            n->Var->store = n->Store;
+         assert(n->Var->store);
       }
    }
 }
@@ -2430,8 +2430,8 @@ _slang_gen_var_decl(slang_assemble_ctx *A, slang_variable *var)
    n = new_node0(IR_VAR_DECL);
    if (n) {
       _slang_attach_storage(n, var);
-      assert(var->aux);
-      assert(n->Store == var->aux);
+      assert(var->store);
+      assert(n->Store == var->store);
       assert(n->Store);
       assert(n->Store->Index < 0);
 
@@ -3890,7 +3890,7 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
                    store ? store->Index : -2);
 
    if (store)
-      var->aux = store;  /* save var's storage info */
+      var->store = store;  /* save var's storage info */
 
    var->declared = GL_TRUE;
 
