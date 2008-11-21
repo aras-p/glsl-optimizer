@@ -107,7 +107,7 @@ _slang_pop_var_table(slang_var_table *vt)
 
    /* free the storage allocated for each variable */
    for (i = 0; i < t->NumVars; i++) {
-      slang_ir_storage *store = (slang_ir_storage *) t->Vars[i]->aux;
+      slang_ir_storage *store = t->Vars[i]->store;
       GLint j;
       GLuint comp;
       if (dbg) printf("  Free var %s, size %d at %d.%s\n",
@@ -165,7 +165,7 @@ _slang_add_variable(slang_var_table *vt, slang_variable *v)
    assert(vt);
    t = vt->Top;
    assert(t);
-   if (dbg) printf("Adding var %s, store %p\n", (char *) v->a_name, v->aux);
+   if (dbg) printf("Adding var %s, store %p\n", (char *) v->a_name, (void *) v->store);
    t->Vars = (slang_variable **)
       _slang_realloc(t->Vars,
                      t->NumVars * sizeof(slang_variable *),

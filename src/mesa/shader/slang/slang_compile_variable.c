@@ -266,7 +266,7 @@ slang_variable_construct(slang_variable * var)
    var->address = ~0;
    var->size = 0;
    var->isTemp = GL_FALSE;
-   var->aux = NULL;
+   var->store = NULL;
    var->declared = 0;
    return 1;
 }
