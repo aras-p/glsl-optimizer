@@ -5,7 +5,8 @@ include $(TOP)/configs/default
 CONFIG_NAME = linux-cell
 
 
-GALLIUM_DRIVER_DIRS += cell
+# Omiting other gallium drivers:
+GALLIUM_DRIVER_DIRS = cell softpipe
 
 
 # Compiler and flags
