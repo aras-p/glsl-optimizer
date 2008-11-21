@@ -112,12 +112,6 @@ intel_check_blit_fragment_ops(GLcontext * ctx, GLboolean src_alpha_is_one)
       return GL_FALSE;
    }
 
-   if (ctx->Scissor.Enabled) {
-      /* XXX Note: Scissor could be done with the blitter */
-      DBG("fallback due to image scissor\n");
-      return GL_FALSE;
-   }
-
    if (ctx->RenderMode != GL_RENDER) {
       DBG("fallback due to render mode\n");
       return GL_FALSE;
