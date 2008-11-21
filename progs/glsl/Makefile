@@ -16,6 +16,7 @@ PROGS = \
 	convolutions \
 	deriv \
 	identity \
+	fragcoord \
 	mandelbrot \
 	multitex \
 	noise \
@@ -113,6 +114,13 @@ identity.o: identity.c extfuncs.h shaderutil.h
 
 identity: identity.o shaderutil.o
 	$(APP_CC) -I$(INCDIR) $(CFLAGS) $(LDFLAGS) identity.o shaderutil.o $(LIBS) -o $@
+
+
+fragcoord.o: fragcoord.c extfuncs.h shaderutil.h
+	$(CC) -c -I$(INCDIR) $(CFLAGS) fragcoord.c
+
+fragcoord: fragcoord.o shaderutil.o
+	$(CC) -I$(INCDIR) $(CFLAGS) $(LDFLAGS) fragcoord.o shaderutil.o $(LIBS) -o $@
 
 
 mandelbrot.o: mandelbrot.c extfuncs.h shaderutil.h
