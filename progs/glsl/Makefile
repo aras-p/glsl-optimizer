@@ -15,6 +15,7 @@ PROGS = \
 	bump \
 	convolutions \
 	deriv \
+	fragcoord \
 	mandelbrot \
 	multitex \
 	noise \
@@ -104,6 +105,13 @@ deriv.o: deriv.c extfuncs.h shaderutil.h
 
 deriv: deriv.o shaderutil.o
 	$(CC) -I$(INCDIR) $(CFLAGS) $(LDFLAGS) deriv.o shaderutil.o $(LIBS) -o $@
+
+
+fragcoord.o: fragcoord.c extfuncs.h shaderutil.h
+	$(CC) -c -I$(INCDIR) $(CFLAGS) fragcoord.c
+
+fragcoord: fragcoord.o shaderutil.o
+	$(CC) -I$(INCDIR) $(CFLAGS) $(LDFLAGS) fragcoord.o shaderutil.o $(LIBS) -o $@
 
 
 mandelbrot.o: mandelbrot.c extfuncs.h shaderutil.h
