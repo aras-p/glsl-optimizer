@@ -40,6 +40,7 @@
 #include "intel_reg.h"
 #include "intel_regions.h"
 #include "intel_batchbuffer.h"
+#include "intel_chipset.h"
 
 #define FILE_DEBUG_FLAG DEBUG_BLIT
 
@@ -359,51 +360,24 @@ intelEmitCopyBlit(struct intel_context *intel,
       return;
    }
 
-   /* Initial y values don't seem to work with negative pitches.  If
-    * we adjust the offsets manually (below), it seems to work fine.
-    *
-    * On the other hand, if we always adjust, the hardware doesn't
-    * know which blit directions to use, so overlapping copypixels get
-    * the wrong result.
-    */
-   if (dst_pitch > 0 && src_pitch > 0) {
-      assert(dst_x < dst_x2);
-      assert(dst_y < dst_y2);
+   assert(dst_x < dst_x2);
+   assert(dst_y < dst_y2);
 
-      BEGIN_BATCH(8, NO_LOOP_CLIPRECTS);
-      OUT_BATCH(CMD);
-      OUT_BATCH(BR13 | dst_pitch);
-      OUT_BATCH((dst_y << 16) | dst_x);
-      OUT_BATCH((dst_y2 << 16) | dst_x2);
-      OUT_RELOC(dst_buffer,
-		I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
-		dst_offset);
-      OUT_BATCH((src_y << 16) | src_x);
-      OUT_BATCH(src_pitch);
-      OUT_RELOC(src_buffer,
-		I915_GEM_DOMAIN_RENDER, 0,
-		src_offset);
-      ADVANCE_BATCH();
-   }
-   else {
-      assert(dst_x < dst_x2);
-      assert(h > 0);
+   BEGIN_BATCH(8, NO_LOOP_CLIPRECTS);
+   OUT_BATCH(CMD);
+   OUT_BATCH(BR13 | (uint16_t)dst_pitch);
+   OUT_BATCH((dst_y << 16) | dst_x);
+   OUT_BATCH((dst_y2 << 16) | dst_x2);
+   OUT_RELOC(dst_buffer,
+	     I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
+	     dst_offset);
+   OUT_BATCH((src_y << 16) | src_x);
+   OUT_BATCH((uint16_t)src_pitch);
+   OUT_RELOC(src_buffer,
+	     I915_GEM_DOMAIN_RENDER, 0,
+	     src_offset);
+   ADVANCE_BATCH();
 
-      BEGIN_BATCH(8, NO_LOOP_CLIPRECTS);
-      OUT_BATCH(CMD);
-      OUT_BATCH(BR13 | ((uint16_t)dst_pitch));
-      OUT_BATCH((0 << 16) | dst_x);
-      OUT_BATCH((h << 16) | dst_x2);
-      OUT_RELOC(dst_buffer,
-		I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
-		dst_offset + dst_y * dst_pitch);
-      OUT_BATCH((0 << 16) | src_x);
-      OUT_BATCH(src_pitch);
-      OUT_RELOC(src_buffer,
-		I915_GEM_DOMAIN_RENDER, 0,
-		src_offset + src_y * src_pitch);
-      ADVANCE_BATCH();
-   }
    intel_batchbuffer_emit_mi_flush(intel->batch);
 }
 

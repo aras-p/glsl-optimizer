@@ -222,17 +222,10 @@ intelInitTextureFuncs(struct dd_function_table *functions)
    functions->TexSubImage1D = intelTexSubImage1D;
    functions->TexSubImage2D = intelTexSubImage2D;
    functions->TexSubImage3D = intelTexSubImage3D;
-#ifdef I915
    functions->CopyTexImage1D = intelCopyTexImage1D;
    functions->CopyTexImage2D = intelCopyTexImage2D;
    functions->CopyTexSubImage1D = intelCopyTexSubImage1D;
    functions->CopyTexSubImage2D = intelCopyTexSubImage2D;
-#else
-   functions->CopyTexImage1D = _swrast_copy_teximage1d;
-   functions->CopyTexImage2D = _swrast_copy_teximage2d;
-   functions->CopyTexSubImage1D = _swrast_copy_texsubimage1d;
-   functions->CopyTexSubImage2D = _swrast_copy_texsubimage2d;
-#endif
    functions->GetTexImage = intelGetTexImage;
    functions->GenerateMipmap = intelGenerateMipmap;
 
