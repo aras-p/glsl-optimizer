@@ -341,7 +341,11 @@ static void emit_RI18(struct spe_function *p, unsigned op, unsigned rT,
 }
 
 
-
+#define EMIT(_name, _op) \
+void _name (struct spe_function *p) \
+{ \
+   emit_RR(p, _op, 0, 0, 0, __FUNCTION__); \
+}
 
 #define EMIT_(_name, _op) \
 void _name (struct spe_function *p, unsigned rT) \
@@ -713,7 +717,6 @@ hbrr;
 #if 0
 stop;
 EMIT_RR  (spe_stopd, 0x140);
-EMIT_    (spe_lnop,  0x001);
 EMIT_    (spe_nop,   0x201);
 sync;
 EMIT_    (spe_dsync, 0x003);

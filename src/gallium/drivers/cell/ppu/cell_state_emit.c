@@ -76,30 +76,86 @@ lookup_fragment_ops(struct cell_context *cell)
     */
    if (!ops) {
       struct spe_function spe_code_front, spe_code_back;
+      unsigned int facing_dependent, total_code_size;
 
       if (0)
          debug_printf("**** Create New Fragment Ops\n");
 
-      /* Prepare the buffer that will hold the generated code. */
-      spe_init_func(&spe_code_front, SPU_MAX_FRAGMENT_OPS_INSTS * SPE_INST_SIZE);
-      spe_init_func(&spe_code_back, SPU_MAX_FRAGMENT_OPS_INSTS * SPE_INST_SIZE);
+      /* Prepare the buffer that will hold the generated code.  The
+       * "0" passed in for the size means that the SPE code will
+       * use a default size.
+       */
+      spe_init_func(&spe_code_front, 0);
+      spe_init_func(&spe_code_back, 0);
 
-      /* generate new code.  Always generate new code for both front-facing
+      /* Generate new code.  Always generate new code for both front-facing
        * and back-facing fragments, even if it's the same code in both
        * cases.
        */
       cell_gen_fragment_function(cell, CELL_FACING_FRONT, &spe_code_front);
       cell_gen_fragment_function(cell, CELL_FACING_BACK, &spe_code_back);
 
-      /* alloc new fragment ops command */
-      ops = CALLOC_STRUCT(cell_command_fragment_ops);
+      /* Make sure the code is a multiple of 8 bytes long; this is
+       * required to ensure that the dual pipe instruction alignment
+       * is correct.  It's also important for the SPU unpacking,
+       * which assumes 8-byte boundaries.
+       */
+      unsigned int front_code_size = spe_code_size(&spe_code_front);
+      while (front_code_size % 8 != 0) {
+         spe_lnop(&spe_code_front);
+         front_code_size = spe_code_size(&spe_code_front);
+      }
+      unsigned int back_code_size = spe_code_size(&spe_code_back);
+      while (back_code_size % 8 != 0) {
+         spe_lnop(&spe_code_back);
+         back_code_size = spe_code_size(&spe_code_back);
+      }
 
+      /* Determine whether the code we generated is facing-dependent, by
+       * determining whether the generated code is different for the front-
+       * and back-facing fragments.
+       */
+      if (front_code_size == back_code_size && memcmp(spe_code_front.store, spe_code_back.store, front_code_size) == 0) {
+         /* Code is identical; only need one copy. */
+         facing_dependent = 0;
+         total_code_size = front_code_size;
+      }
+      else {
+         /* Code is different for front-facing and back-facing fragments.
+          * Need to send both copies.
+          */
+         facing_dependent = 1;
+         total_code_size = front_code_size + back_code_size;
+      }
+
+      /* alloc new fragment ops command.  Note that this structure
+       * has variant length based on the total code size required.
+       */
+      ops = CALLOC_VARIANT_LENGTH_STRUCT(cell_command_fragment_ops, total_code_size);
       /* populate the new cell_command_fragment_ops object */
       ops->opcode = CELL_CMD_STATE_FRAGMENT_OPS;
-      memcpy(ops->code_front, spe_code_front.store, spe_code_size(&spe_code_front));
-      memcpy(ops->code_back, spe_code_back.store, spe_code_size(&spe_code_back));
+      ops->total_code_size = total_code_size;
+      ops->front_code_index = 0;
+      memcpy(ops->code, spe_code_front.store, front_code_size);
+      if (facing_dependent) {
+        /* We have separate front- and back-facing code.  Append the
+         * back-facing code to the buffer.  Be careful because the code
+         * size is in bytes, but the buffer is of unsigned elements.
+         */
+        ops->back_code_index = front_code_size / sizeof(spe_code_front.store[0]);
+        memcpy(ops->code + ops->back_code_index, spe_code_back.store, back_code_size);
+      }
+      else {
+        /* Use the same code for front- and back-facing fragments */
+        ops->back_code_index = ops->front_code_index;
+      }
+
+      /* Set the fields for the fallback case.  Note that these fields
+       * (and the whole fallback case) will eventually go away.
+       */
       ops->dsa = *cell->depth_stencil;
       ops->blend = *cell->blend;
+      ops->blend_color = cell->blend_color;
 
       /* insert cell_command_fragment_ops object into keymap/cache */
       util_keymap_insert(cell->fragment_ops_cache, &key, ops, NULL);
@@ -200,9 +256,10 @@ cell_emit_state(struct cell_context *cell)
                       CELL_NEW_DEPTH_STENCIL |
                       CELL_NEW_BLEND)) {
       struct cell_command_fragment_ops *fops, *fops_cmd;
-      fops_cmd = cell_batch_alloc(cell, sizeof(*fops_cmd));
+      /* Note that cell_command_fragment_ops is a variant-sized record */
       fops = lookup_fragment_ops(cell);
-      memcpy(fops_cmd, fops, sizeof(*fops));
+      fops_cmd = cell_batch_alloc(cell, sizeof(*fops_cmd) + fops->total_code_size);
+      memcpy(fops_cmd, fops, sizeof(*fops) + fops->total_code_size);
    }
 
    if (cell->dirty & CELL_NEW_SAMPLER) {

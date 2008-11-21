@@ -1776,7 +1776,10 @@ gen_stencil_depth_test(struct spe_function *f,
  * \param cell  the rendering context (in)
  * \param facing whether the generated code is for front-facing or 
  *              back-facing fragments
- * \param f     the generated function (out)
+ * \param f     the generated function (in/out); on input, the function
+ *              must already have been initialized.  On exit, whatever
+ *              instructions within the generated function have had
+ *              the fragment ops appended.
  */
 void
 cell_gen_fragment_function(struct cell_context *cell, const uint facing, struct spe_function *f)
@@ -1807,8 +1810,6 @@ cell_gen_fragment_function(struct cell_context *cell, const uint facing, struct 
 
    int fbRGBA_reg;  /**< framebuffer's RGBA colors for quad */
    int fbZS_reg;    /**< framebuffer's combined z/stencil values for quad */
-
-   spe_init_func(f, SPU_MAX_FRAGMENT_OPS_INSTS * SPE_INST_SIZE);
 
    if (cell->debug_flags & CELL_DEBUG_ASM) {
       spe_print_code(f, true);

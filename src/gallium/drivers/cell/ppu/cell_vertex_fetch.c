@@ -145,6 +145,8 @@ emit_matrix_transpose(struct spe_function *p,
 }
 
 
+#if 0
+/* This appears to not be used currently */
 static void
 emit_fetch(struct spe_function *p,
 	   unsigned in_ptr, unsigned *offset,
@@ -256,6 +258,7 @@ emit_fetch(struct spe_function *p,
       spe_release_register(p, float_one);
    }
 }
+#endif
 
 
 void cell_update_vertex_fetch(struct draw_context *draw)

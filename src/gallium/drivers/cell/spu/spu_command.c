@@ -210,45 +210,72 @@ cmd_release_verts(const struct cell_command_release_verts *release)
 static void
 cmd_state_fragment_ops(const struct cell_command_fragment_ops *fops)
 {
-   static int warned = 0;
-
    D_PRINTF(CELL_DEBUG_CMD, "CMD_STATE_FRAGMENT_OPS\n");
-   /* Copy SPU code from batch buffer to spu buffer */
-   memcpy(spu.fragment_ops_code_front, fops->code_front, SPU_MAX_FRAGMENT_OPS_INSTS * 4);
-   memcpy(spu.fragment_ops_code_back, fops->code_back, SPU_MAX_FRAGMENT_OPS_INSTS * 4);
-   /* Copy state info (for fallback case only) */
+
+   /* Copy state info (for fallback case only - this will eventually
+    * go away when the fallback case goes away)
+    */
    memcpy(&spu.depth_stencil_alpha, &fops->dsa, sizeof(fops->dsa));
    memcpy(&spu.blend, &fops->blend, sizeof(fops->blend));
    memcpy(&spu.blend_color, &fops->blend_color, sizeof(fops->blend_color));
 
-   /* Parity twist!  For now, always use the fallback code by default,
-    * only switching to codegen when specifically requested.  This
-    * allows us to develop freely without risking taking down the
-    * branch.
-    *
-    * Later, the parity of this check will be reversed, so that
-    * codegen is *always* used, unless we specifically indicate that
-    * we don't want it.
-    *
-    * Eventually, the option will be removed completely, because in
-    * final code we'll always use codegen and won't even provide the
-    * raw state records that the fallback code requires.
+   /* Make sure the SPU knows which buffers it's expected to read when
+    * it's told to pull tiles.
     */
-   if ((spu.init.debug_flags & CELL_DEBUG_FRAGMENT_OP_FALLBACK) == 0) {
-      spu.fragment_ops[CELL_FACING_FRONT] = (spu_fragment_ops_func) spu.fragment_ops_code_front;
-      spu.fragment_ops[CELL_FACING_BACK] = (spu_fragment_ops_func) spu.fragment_ops_code_back;
-   }
-   else {
-      /* otherwise, the default fallback code remains in place */
+   spu.read_depth_stencil = (spu.depth_stencil_alpha.depth.enabled || spu.depth_stencil_alpha.stencil[0].enabled);
+
+   /* If we're forcing the fallback code to be used (for debug purposes),
+    * install that.  Otherwise install the incoming SPU code.
+    */
+   if ((spu.init.debug_flags & CELL_DEBUG_FRAGMENT_OP_FALLBACK) != 0) {
+      static unsigned int warned = 0;
       if (!warned) {
          fprintf(stderr, "Cell Warning: using fallback per-fragment code\n");
          warned = 1;
       }
+      /* The following two lines aren't really necessary if you
+       * know the debug flags won't change during a run, and if you
+       * know that the function pointers are initialized correctly.
+       * We set them here to allow a person to change the debug
+       * flags during a run (from inside a debugger).
+       */
+      spu.fragment_ops[CELL_FACING_FRONT] = spu_fallback_fragment_ops;
+      spu.fragment_ops[CELL_FACING_BACK] = spu_fallback_fragment_ops;
+      return;
    }
 
-   spu.read_depth_stencil = (spu.depth_stencil_alpha.depth.enabled || spu.depth_stencil_alpha.stencil[0].enabled);
-}
+   /* Make sure the SPU code buffer is large enough to hold the incoming code.
+    * Note that we *don't* use align_malloc() and align_free(), because
+    * those utility functions are *not* available in SPU code.
+    * */
+   if (spu.fragment_ops_code_size < fops->total_code_size) {
+      if (spu.fragment_ops_code != NULL) {
+         free(spu.fragment_ops_code);
+      }
+      spu.fragment_ops_code_size = fops->total_code_size;
+      spu.fragment_ops_code = malloc(fops->total_code_size);
+      if (spu.fragment_ops_code == NULL) {
+         /* Whoops. */
+         fprintf(stderr, "CELL Warning: failed to allocate fragment ops code (%d bytes) - using fallback\n", fops->total_code_size);
+         spu.fragment_ops_code = NULL;
+         spu.fragment_ops_code_size = 0;
+         spu.fragment_ops[CELL_FACING_FRONT] = spu_fallback_fragment_ops;
+         spu.fragment_ops[CELL_FACING_BACK] = spu_fallback_fragment_ops;
+         return;
+      }
+   }
 
+   /* Copy the SPU code from the command buffer to the spu buffer */
+   memcpy(spu.fragment_ops_code, fops->code, fops->total_code_size);
+
+   /* Set the pointers for the front-facing and back-facing fragments
+    * to the specified offsets within the code.  Note that if the
+    * front-facing and back-facing code are the same, they'll have
+    * the same offset.
+    */
+   spu.fragment_ops[CELL_FACING_FRONT] = (spu_fragment_ops_func) &spu.fragment_ops_code[fops->front_code_index];
+   spu.fragment_ops[CELL_FACING_BACK] = (spu_fragment_ops_func) &spu.fragment_ops_code[fops->back_code_index];
+}
 
 static void
 cmd_state_fragment_program(const struct cell_command_fragment_program *fp)
@@ -588,7 +615,8 @@ cmd_batch(uint opcode)
             struct cell_command_fragment_ops *fops
                = (struct cell_command_fragment_ops *) &buffer[pos];
             cmd_state_fragment_ops(fops);
-            pos += sizeof(*fops) / 8;
+            /* This is a variant-sized command */
+            pos += (sizeof(*fops) + fops->total_code_size)/ 8;
          }
          break;
       case CELL_CMD_STATE_FRAGMENT_PROGRAM:
@@ -755,4 +783,33 @@ command_loop(void)
 
    if (spu.init.debug_flags & CELL_DEBUG_CACHE)
       spu_dcache_report();
+}
+
+/* Initialize this module; we manage the fragment ops buffer here. */
+void
+spu_command_init(void)
+{
+   /* Install default/fallback fragment processing function.
+    * This will normally be overriden by a code-gen'd function
+    * unless CELL_FORCE_FRAGMENT_OPS_FALLBACK is set.
+    */
+   spu.fragment_ops[CELL_FACING_FRONT] = spu_fallback_fragment_ops;
+   spu.fragment_ops[CELL_FACING_BACK] = spu_fallback_fragment_ops;
+
+   /* Set up the basic empty buffer for code-gen'ed fragment ops */
+   spu.fragment_ops_code = NULL;
+   spu.fragment_ops_code_size = 0;
+}
+
+void
+spu_command_close(void)
+{
+   /* Deallocate the code-gen buffer for fragment ops, and reset the
+    * fragment ops functions to their initial setting (just to leave
+    * things in a good state).
+    */
+   if (spu.fragment_ops_code != NULL) {
+      free(spu.fragment_ops_code);
+   }
+   spu_command_init();
 }

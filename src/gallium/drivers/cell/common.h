@@ -121,11 +121,6 @@
 #define CELL_DEBUG_CMD                  (1 << 5)
 #define CELL_DEBUG_CACHE                (1 << 6)
 
-/** Max instructions for doing per-fragment operations */
-#define SPU_MAX_FRAGMENT_OPS_INSTS 128
-
-
-
 #define CELL_FENCE_IDLE      0
 #define CELL_FENCE_EMITTED   1
 #define CELL_FENCE_SIGNALLED 2
@@ -153,18 +148,36 @@ struct cell_command_fence
 
 /**
  * Command to specify per-fragment operations state and generated code.
- * Note that the dsa, blend, blend_color fields are really only needed
+ * Note that this is a variant-length structure, allocated with as 
+ * much memory as needed to hold the generated code; the "code"
+ * field *must* be the last field in the structure.  Also, the entire
+ * length of the structure (including the variant code field) must be
+ * a multiple of 8 bytes; we require that this structure itself be
+ * a multiple of 8 bytes, and that the generated code also be a multiple
+ * of 8 bytes.
+ *
+ * Also note that the dsa, blend, blend_color fields are really only needed
  * for the fallback/C per-pixel code.  They're not used when we generate
- * dynamic SPU fragment code (which is the normal case).
+ * dynamic SPU fragment code (which is the normal case), and will eventually
+ * be removed from this structure.
  */
 struct cell_command_fragment_ops
 {
    uint64_t opcode;      /**< CELL_CMD_STATE_FRAGMENT_OPS */
+
+   /* Fields for the fallback case */
    struct pipe_depth_stencil_alpha_state dsa;
    struct pipe_blend_state blend;
    struct pipe_blend_color blend_color;
-   unsigned code_front[SPU_MAX_FRAGMENT_OPS_INSTS];
-   unsigned code_back[SPU_MAX_FRAGMENT_OPS_INSTS];
+
+   /* Fields for the generated SPU code */
+   unsigned total_code_size;
+   unsigned front_code_index;
+   unsigned back_code_index;
+   /* this field has variant length, and must be the last field in 
+    * the structure
+    */
+   unsigned code[0];
 };
 
 

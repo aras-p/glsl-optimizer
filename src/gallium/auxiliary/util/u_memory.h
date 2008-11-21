@@ -151,6 +151,8 @@ REALLOC( void *old_ptr, unsigned old_size, unsigned new_size )
 
 #define CALLOC_STRUCT(T)   (struct T *) CALLOC(1, sizeof(struct T))
 
+#define CALLOC_VARIANT_LENGTH_STRUCT(T,more_size)   ((struct T *) CALLOC(1, sizeof(struct T) + more_size))
+
 
 /**
  * Return memory on given byte alignment

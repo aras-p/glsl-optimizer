@@ -58,16 +58,7 @@ one_time_init(void)
    memset(spu.ctile_status, TILE_STATUS_DEFINED, sizeof(spu.ctile_status));
    memset(spu.ztile_status, TILE_STATUS_DEFINED, sizeof(spu.ztile_status));
    invalidate_tex_cache();
-
-   /* Install default/fallback fragment processing function.
-    * This will normally be overriden by a code-gen'd function
-    * unless CELL_FORCE_FRAGMENT_OPS_FALLBACK is set.
-    */
-   spu.fragment_ops[CELL_FACING_FRONT] = spu_fallback_fragment_ops;
-   spu.fragment_ops[CELL_FACING_BACK] = spu_fallback_fragment_ops;
 }
-
-
 
 /* In some versions of the SDK the SPE main takes 'unsigned long' as a
  * parameter.  In others it takes 'unsigned long long'.  Use a define to
@@ -91,11 +82,11 @@ main(main_param_t speid, main_param_t argp)
 
    ASSERT(sizeof(tile_t) == TILE_SIZE * TILE_SIZE * 4);
    ASSERT(sizeof(struct cell_command_render) % 8 == 0);
-   ASSERT(((unsigned long) &spu.fragment_ops_code_front) % 8 == 0);
-   ASSERT(((unsigned long) &spu.fragment_ops_code_back) % 8 == 0);
+   ASSERT(sizeof(struct cell_command_fragment_ops) % 8 == 0);
    ASSERT(((unsigned long) &spu.fragment_program_code) % 8 == 0);
 
    one_time_init();
+   spu_command_init();
 
    D_PRINTF(CELL_DEBUG_CMD, "main() speid=%lu\n", (unsigned long) speid);
    D_PRINTF(CELL_DEBUG_FRAGMENT_OP_FALLBACK, "using fragment op fallback\n");
@@ -119,6 +110,8 @@ main(main_param_t speid, main_param_t argp)
 #endif
 
    command_loop();
+
+   spu_command_close();
 
    return 0;
 }

@@ -99,7 +99,9 @@ extern void spe_comment(struct spe_function *p, int rel_indent, const char *s);
 
 #endif /* RTASM_PPC_SPE_H */
 
-#ifndef EMIT_
+#ifndef EMIT
+#define EMIT(_name, _op) \
+    extern void _name (struct spe_function *p);
 #define EMIT_(_name, _op) \
     extern void _name (struct spe_function *p, unsigned rT);
 #define EMIT_R(_name, _op) \
@@ -129,7 +131,7 @@ extern void spe_comment(struct spe_function *p, int rel_indent, const char *s);
 #define EMIT_I16(_name, _op) \
     extern void _name (struct spe_function *p, int imm);
 #define UNDEF_EMIT_MACROS
-#endif /* EMIT_ */
+#endif /* EMIT */
 
 
 /* Memory load / store instructions
@@ -294,6 +296,10 @@ EMIT_RI16(spe_brz,       0x040)
 EMIT_RI16(spe_brhnz,     0x046)
 EMIT_RI16(spe_brhz,      0x044)
 
+/* Control instructions
+ */
+EMIT     (spe_lnop,      0x001)
+
 extern void
 spe_lqd(struct spe_function *p, unsigned rT, unsigned rA, int offset);
 
@@ -418,6 +424,7 @@ EMIT_R   (spe_wrch,       0x10d)
 
 
 #ifdef UNDEF_EMIT_MACROS
+#undef EMIT
 #undef EMIT_
 #undef EMIT_R
 #undef EMIT_RR
