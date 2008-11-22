@@ -2020,6 +2020,13 @@ _slang_gen_function_call_name(slang_assemble_ctx *A, const char *name,
                            name);
       return NULL;
    }
+   if (!fun->body) {
+      slang_info_log_error(A->log,
+                           "Function '%s' prototyped but not defined.  "
+                           "Separate compilation units not supported.",
+                           name);
+      return NULL;
+   }
 
    n = _slang_gen_function_call(A, fun, oper, dest);
 
