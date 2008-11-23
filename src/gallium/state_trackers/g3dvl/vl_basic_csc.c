@@ -5,6 +5,7 @@
 #include <pipe/p_context.h>
 #include <pipe/p_winsys.h>
 #include <pipe/p_state.h>
+#include <pipe/p_inlines.h>
 #include <tgsi/tgsi_parse.h>
 #include <tgsi/tgsi_build.h>
 #include "vl_csc.h"
@@ -33,6 +34,7 @@ struct vlBasicCSC
 	struct pipe_context			*pipe;
 	struct pipe_viewport_state		viewport;
 	struct pipe_framebuffer_state		framebuffer;
+	struct pipe_texture			*framebuffer_tex;
 	void					*sampler;
 	void					*vertex_shader, *fragment_shader;
 	struct pipe_vertex_buffer 		vertex_bufs[2];
@@ -49,6 +51,7 @@ static int vlResizeFrameBuffer
 {
 	struct vlBasicCSC	*basic_csc;
 	struct pipe_context	*pipe;
+	struct pipe_texture	template;
 
 	assert(csc);
 
@@ -58,13 +61,6 @@ static int vlResizeFrameBuffer
 	if (basic_csc->framebuffer.width == width && basic_csc->framebuffer.height == height)
 		return 0;
 
-	if (basic_csc->framebuffer.cbufs[0])
-		pipe->winsys->surface_release
-		(
-			pipe->winsys,
-			&basic_csc->framebuffer.cbufs[0]
-		);
-
 	basic_csc->viewport.scale[0] = width;
 	basic_csc->viewport.scale[1] = height;
 	basic_csc->viewport.scale[2] = 1;
@@ -73,20 +69,30 @@ static int vlResizeFrameBuffer
 	basic_csc->viewport.translate[1] = 0;
 	basic_csc->viewport.translate[2] = 0;
 	basic_csc->viewport.translate[3] = 0;
+	
+	if (basic_csc->framebuffer_tex)
+		pipe_texture_release(&basic_csc->framebuffer_tex);
+	
+	memset(&template, 0, sizeof(struct pipe_texture));
+	template.target = PIPE_TEXTURE_2D;
+	template.format = PIPE_FORMAT_A8R8G8B8_UNORM;
+	template.last_level = 0;
+	template.width[0] = width;
+	template.height[0] = height;
+	template.depth[0] = 1;
+	template.compressed = 0;
+	pf_get_block(template.format, &template.block);
+	template.tex_usage = PIPE_TEXTURE_USAGE_DISPLAY_TARGET;
+
+	basic_csc->framebuffer_tex = pipe->screen->texture_create(pipe->screen, &template);
 
 	basic_csc->framebuffer.width = width;
 	basic_csc->framebuffer.height = height;
-	basic_csc->framebuffer.cbufs[0] = pipe->winsys->surface_alloc(pipe->winsys);
-	pipe->winsys->surface_alloc_storage
+	basic_csc->framebuffer.cbufs[0] = pipe->screen->get_tex_surface
 	(
-		pipe->winsys,
-		basic_csc->framebuffer.cbufs[0],
-		width,
-		height,
-		PIPE_FORMAT_A8R8G8B8_UNORM,
-		/* XXX: SoftPipe doesn't change GPU usage to CPU like it does for textures */
-		PIPE_BUFFER_USAGE_CPU_READ | PIPE_BUFFER_USAGE_CPU_WRITE,
-		0
+		pipe->screen,
+		basic_csc->framebuffer_tex,
+		0, 0, 0, PIPE_BUFFER_USAGE_GPU_READ | PIPE_BUFFER_USAGE_GPU_WRITE
 	);
 
 	/* Clear to black, in case video doesn't fill the entire window */
@@ -111,7 +117,7 @@ static int vlBegin
 	pipe->set_framebuffer_state(pipe, &basic_csc->framebuffer);
 	pipe->set_viewport_state(pipe, &basic_csc->viewport);
 	pipe->bind_sampler_states(pipe, 1, (void**)&basic_csc->sampler);
-	/* Source texture set in vlPutSurface() */
+	/* Source texture set in vlPutPictureCSC() */
 	pipe->bind_vs_state(pipe, basic_csc->vertex_shader);
 	pipe->bind_fs_state(pipe, basic_csc->fragment_shader);
 	pipe->set_vertex_buffers(pipe, 2, basic_csc->vertex_bufs);
@@ -218,12 +224,8 @@ static int vlDestroy
 	basic_csc = (struct vlBasicCSC*)csc;
 	pipe = basic_csc->pipe;
 
-	if (basic_csc->framebuffer.cbufs[0])
-		pipe->winsys->surface_release
-		(
-			pipe->winsys,
-			&basic_csc->framebuffer.cbufs[0]
-		);
+	if (basic_csc->framebuffer_tex)
+		pipe_texture_release(&basic_csc->framebuffer_tex);
 
 	pipe->delete_sampler_state(pipe, basic_csc->sampler);
 	pipe->delete_vs_state(pipe, basic_csc->vertex_shader);
@@ -645,7 +647,10 @@ static int vlInit
 
 	pipe = csc->pipe;
 
-	/* Delay creating the FB until vlPutSurface() so we know window size */
+	/* Delay creating the FB until vlPutPictureCSC() so we know window size */
+	csc->framebuffer_tex = NULL;
+	csc->framebuffer.width = 0;
+	csc->framebuffer.height = 0;
 	csc->framebuffer.num_cbufs = 1;
 	csc->framebuffer.cbufs[0] = NULL;
 	csc->framebuffer.zsbuf = NULL;
