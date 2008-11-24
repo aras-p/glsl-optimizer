@@ -72,6 +72,8 @@ struct vlR16SnormBufferedMC
 	struct pipe_framebuffer_state		render_target;
 	struct pipe_sampler_state		*samplers[5];
 	struct pipe_texture			*textures[NUM_BUF_SETS][5];
+	struct pipe_surface			*tex_surface[3];
+	short					*texels[3];
 	void					*i_vs, *p_vs[2], *b_vs[2];
 	void					*i_fs, *p_fs[2], *b_fs[2];
 	struct pipe_vertex_buffer 		vertex_bufs[NUM_BUF_SETS][3];
@@ -144,7 +146,6 @@ static inline int vlGrabBlocks
 	short *blocks
 )
 {
-	struct pipe_surface	*tex_surface;
 	short			*texels;
 	unsigned int		tex_pitch;
 	unsigned int		x, y, tb = 0, sb = 0;
@@ -153,17 +154,8 @@ static inline int vlGrabBlocks
 	assert(mc);
 	assert(blocks);
 
-	tex_surface = mc->pipe->screen->get_tex_surface
-	(
-		mc->pipe->screen,
-		mc->textures[mc->cur_buf % NUM_BUF_SETS][0],
-		0, 0, 0, PIPE_BUFFER_USAGE_CPU_WRITE
-	);
-
-	texels = pipe_surface_map(tex_surface, PIPE_BUFFER_USAGE_CPU_WRITE);
-	tex_pitch = tex_surface->stride / tex_surface->block.size;
-
-	texels += mbpy * tex_pitch + mbpx;
+	tex_pitch = mc->tex_surface[0]->stride / mc->tex_surface[0]->block.size;
+	texels = mc->texels[0] + mbpy * tex_pitch + mbpx;
 
 	for (y = 0; y < 2; ++y)
 	{
@@ -204,25 +196,14 @@ static inline int vlGrabBlocks
 		}
 	}
 
-	pipe_surface_unmap(tex_surface);
-
 	/* TODO: Implement 422, 444 */
 	mbpx >>= 1;
 	mbpy >>= 1;
 
 	for (tb = 0; tb < 2; ++tb)
 	{
-		tex_surface = mc->pipe->screen->get_tex_surface
-		(
-			mc->pipe->screen,
-			mc->textures[mc->cur_buf % NUM_BUF_SETS][tb + 1],
-			0, 0, 0, PIPE_BUFFER_USAGE_CPU_WRITE
-		);
-
-		texels = pipe_surface_map(tex_surface, PIPE_BUFFER_USAGE_CPU_WRITE);
-		tex_pitch = tex_surface->stride / tex_surface->block.size;
-
-		texels += mbpy * tex_pitch + mbpx;
+		tex_pitch = mc->tex_surface[tb + 1]->stride / mc->tex_surface[tb + 1]->block.size;
+		texels = mc->texels[tb + 1] + mbpy * tex_pitch + mbpx;
 
 		if ((coded_block_pattern >> (1 - tb)) & 1)
 		{
@@ -244,8 +225,6 @@ static inline int vlGrabBlocks
 			mc->zero_block[tb + 1].x = (mbpx << 1) * mc->surface_tex_inv_size.x;
 			mc->zero_block[tb + 1].y = (mbpy << 1) * mc->surface_tex_inv_size.y;
 		}
-
-		pipe_surface_unmap(tex_surface);
 	}
 
 	return 0;
@@ -617,6 +596,12 @@ static int vlFlush
 
 		offset[mb_type_ex]++;
 	}
+	
+	for (i = 0; i < 3; ++i)
+	{
+		pipe_surface_unmap(mc->tex_surface[i]);
+		mc->pipe->screen->tex_surface_release(mc->pipe->screen, &mc->tex_surface[i]);
+	}
 
 	mc->render_target.cbufs[0] = pipe->screen->get_tex_surface
 	(
@@ -776,6 +761,18 @@ static int vlRenderMacroBlocksMpeg2R16SnormBuffered
 			mc->future_surface = batch->future_surface;
 			mc->surface_tex_inv_size.x = 1.0f / surface->texture->width[0];
 			mc->surface_tex_inv_size.y = 1.0f / surface->texture->height[0];
+			
+			for (i = 0; i < 3; ++i)
+			{
+				mc->tex_surface[i] = mc->pipe->screen->get_tex_surface
+				(
+					mc->pipe->screen,
+					mc->textures[mc->cur_buf % NUM_BUF_SETS][i],
+					0, 0, 0, PIPE_BUFFER_USAGE_CPU_WRITE
+				);
+
+				mc->texels[i] = pipe_surface_map(mc->tex_surface[i], PIPE_BUFFER_USAGE_CPU_WRITE);
+			}
 		}
 	}
 	else
@@ -785,6 +782,18 @@ static int vlRenderMacroBlocksMpeg2R16SnormBuffered
 		mc->future_surface = batch->future_surface;
 		mc->surface_tex_inv_size.x = 1.0f / surface->texture->width[0];
 		mc->surface_tex_inv_size.y = 1.0f / surface->texture->height[0];
+		
+		for (i = 0; i < 3; ++i)
+		{
+			mc->tex_surface[i] = mc->pipe->screen->get_tex_surface
+			(
+				mc->pipe->screen,
+				mc->textures[mc->cur_buf % NUM_BUF_SETS][i],
+				0, 0, 0, PIPE_BUFFER_USAGE_CPU_WRITE
+			);
+
+			mc->texels[i] = pipe_surface_map(mc->tex_surface[i], PIPE_BUFFER_USAGE_CPU_WRITE);
+		}
 	}
 
 	for (i = 0; i < batch->num_macroblocks; ++i)
@@ -1060,6 +1069,7 @@ static int vlInit
 	template.depth[0] = 1;
 	template.compressed = 0;
 	pf_get_block(template.format, &template.block);
+	template.tex_usage = PIPE_TEXTURE_USAGE_SAMPLER;
 
 	for (i = 0; i < NUM_BUF_SETS; ++i)
 		mc->textures[i][0] = pipe->screen->texture_create(pipe->screen, &template);
