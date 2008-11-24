@@ -93,8 +93,10 @@ void st_finish( struct st_context *st )
 
    st_flush(st, PIPE_FLUSH_RENDER_CACHE | PIPE_FLUSH_FRAME, &fence);
 
-   st->pipe->winsys->fence_finish(st->pipe->winsys, fence, 0);
-   st->pipe->winsys->fence_reference(st->pipe->winsys, &fence, NULL);
+   if(fence) {
+      st->pipe->winsys->fence_finish(st->pipe->winsys, fence, 0);
+      st->pipe->winsys->fence_reference(st->pipe->winsys, &fence, NULL);
+   }
 }
 
 
