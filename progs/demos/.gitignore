@@ -54,6 +54,7 @@ texcyl
 texdown
 texenv
 texobj
+textures
 trackball.c
 trackball.h
 trispd
