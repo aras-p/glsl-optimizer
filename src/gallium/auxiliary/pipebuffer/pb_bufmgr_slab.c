@@ -248,6 +248,25 @@ pb_slab_buffer_unmap(struct pb_buffer *_buf)
 }
 
 
+static enum pipe_error 
+pb_slab_buffer_validate(struct pb_buffer *_buf, 
+                         struct pb_validate *vl,
+                         unsigned flags)
+{
+   struct pb_slab_buffer *buf = pb_slab_buffer(_buf);
+   return pb_validate(buf->slab->bo, vl, flags);
+}
+
+
+static void
+pb_slab_buffer_fence(struct pb_buffer *_buf, 
+                      struct pipe_fence_handle *fence)
+{
+   struct pb_slab_buffer *buf = pb_slab_buffer(_buf);
+   pb_fence(buf->slab->bo, fence);
+}
+
+
 static void
 pb_slab_buffer_get_base_buffer(struct pb_buffer *_buf,
                                struct pb_buffer **base_buf,
@@ -264,6 +283,8 @@ pb_slab_buffer_vtbl = {
       pb_slab_buffer_destroy,
       pb_slab_buffer_map,
       pb_slab_buffer_unmap,
+      pb_slab_buffer_validate,
+      pb_slab_buffer_fence,
       pb_slab_buffer_get_base_buffer
 };
 

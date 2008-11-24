@@ -46,9 +46,16 @@
 #define PB_VALIDATE_INITIAL_SIZE 1 /* 512 */ 
 
 
+struct pb_validate_entry
+{
+   struct pb_buffer *buf;
+   unsigned flags;
+};
+
+
 struct pb_validate
 {
-   struct pb_buffer **buffers;
+   struct pb_validate_entry *entries;
    unsigned used;
    unsigned size;
 };
@@ -56,43 +63,50 @@ struct pb_validate
 
 enum pipe_error
 pb_validate_add_buffer(struct pb_validate *vl,
-                       struct pb_buffer *buf)
+                       struct pb_buffer *buf,
+                       unsigned flags)
 {
    assert(buf);
    if(!buf)
       return PIPE_ERROR;
 
+   assert(flags & PIPE_BUFFER_USAGE_GPU_READ_WRITE);
+   assert(!(flags & ~PIPE_BUFFER_USAGE_GPU_READ_WRITE));
+   flags &= PIPE_BUFFER_USAGE_GPU_READ_WRITE;
+
    /* We only need to store one reference for each buffer, so avoid storing
-    * consecutive references for the same buffer. It might not be the more 
-    * common pasttern, but it is easy to implement.
+    * consecutive references for the same buffer. It might not be the most 
+    * common pattern, but it is easy to implement.
     */
-   if(vl->used && vl->buffers[vl->used - 1] == buf) {
+   if(vl->used && vl->entries[vl->used - 1].buf == buf) {
+      vl->entries[vl->used - 1].flags |= flags;
       return PIPE_OK;
    }
    
    /* Grow the table */
    if(vl->used == vl->size) {
       unsigned new_size;
-      struct pb_buffer **new_buffers;
+      struct pb_validate_entry *new_entries;
       
       new_size = vl->size * 2;
       if(!new_size)
 	 return PIPE_ERROR_OUT_OF_MEMORY;
 
-      new_buffers = (struct pb_buffer **)REALLOC(vl->buffers,
-                                                 vl->size*sizeof(struct pb_buffer *),
-                                                 new_size*sizeof(struct pb_buffer *));
-      if(!new_buffers)
+      new_entries = (struct pb_validate_entry *)REALLOC(vl->entries,
+                                                        vl->size*sizeof(struct pb_validate_entry),
+                                                        new_size*sizeof(struct pb_validate_entry));
+      if(!new_entries)
          return PIPE_ERROR_OUT_OF_MEMORY;
       
-      memset(new_buffers + vl->size, 0, (new_size - vl->size)*sizeof(struct pb_buffer *));
+      memset(new_entries + vl->size, 0, (new_size - vl->size)*sizeof(struct pb_validate_entry));
       
       vl->size = new_size;
-      vl->buffers = new_buffers;
+      vl->entries = new_entries;
    }
    
-   assert(!vl->buffers[vl->used]);
-   pb_reference(&vl->buffers[vl->used], buf);
+   assert(!vl->entries[vl->used].buf);
+   pb_reference(&vl->entries[vl->used].buf, buf);
+   vl->entries[vl->used].flags = flags;
    ++vl->used;
    
    return PIPE_OK;
@@ -100,10 +114,36 @@ pb_validate_add_buffer(struct pb_validate *vl,
 
 
 enum pipe_error
+pb_validate_foreach(struct pb_validate *vl,
+                    enum pipe_error (*callback)(struct pb_buffer *buf, void *data),
+                    void *data)
+{
+   unsigned i;
+   for(i = 0; i < vl->used; ++i) {
+      enum pipe_error ret;
+      ret = callback(vl->entries[i].buf, data);
+      if(ret != PIPE_OK)
+         return ret;
+   }
+   return PIPE_OK;
+}
+
+
+enum pipe_error
 pb_validate_validate(struct pb_validate *vl) 
 {
-   /* FIXME: go through each buffer, ensure its not mapped, its address is 
-    * available -- requires a new pb_buffer interface */
+   unsigned i;
+   
+   for(i = 0; i < vl->used; ++i) {
+      enum pipe_error ret;
+      ret = pb_validate(vl->entries[i].buf, vl, vl->entries[i].flags);
+      if(ret != PIPE_OK) {
+         while(i--)
+            pb_validate(vl->entries[i].buf, NULL, 0);
+         return ret;
+      }
+   }
+
    return PIPE_OK;
 }
 
@@ -114,8 +154,8 @@ pb_validate_fence(struct pb_validate *vl,
 {
    unsigned i;
    for(i = 0; i < vl->used; ++i) {
-      buffer_fence(vl->buffers[i], fence);
-      pb_reference(&vl->buffers[i], NULL);
+      pb_fence(vl->entries[i].buf, fence);
+      pb_reference(&vl->entries[i].buf, NULL);
    }
    vl->used = 0;
 }
@@ -126,8 +166,8 @@ pb_validate_destroy(struct pb_validate *vl)
 {
    unsigned i;
    for(i = 0; i < vl->used; ++i)
-      pb_reference(&vl->buffers[i], NULL);
-   FREE(vl->buffers);
+      pb_reference(&vl->entries[i].buf, NULL);
+   FREE(vl->entries);
    FREE(vl);
 }
 
@@ -142,8 +182,8 @@ pb_validate_create()
       return NULL;
    
    vl->size = PB_VALIDATE_INITIAL_SIZE;
-   vl->buffers = (struct pb_buffer **)CALLOC(vl->size, sizeof(struct pb_buffer *));
-   if(!vl->buffers) {
+   vl->entries = (struct pb_validate_entry *)CALLOC(vl->size, sizeof(struct pb_validate_entry));
+   if(!vl->entries) {
       FREE(vl);
       return NULL;
    }

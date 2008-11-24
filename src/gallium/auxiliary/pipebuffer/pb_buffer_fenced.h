@@ -44,7 +44,7 @@
  * Between the handle's destruction, and the fence signalling, the buffer is 
  * stored in a fenced buffer list.
  * 
- * \author José Fonseca <jrfonseca@tungstengraphics.com>
+ * \author Jose Fonseca <jrfonseca@tungstengraphics.com>
  */
 
 #ifndef PB_BUFFER_FENCED_H_
@@ -68,14 +68,6 @@ struct pipe_fence_handle;
  * List of buffers which are awaiting fence signalling.
  */
 struct fenced_buffer_list;
-
-
-/**
- * The fenced buffer's virtual function table.
- * 
- * NOTE: Made public for debugging purposes.
- */
-extern const struct pb_vtbl fenced_buffer_vtbl;
 
 
 /**
@@ -106,17 +98,6 @@ fenced_buffer_list_destroy(struct fenced_buffer_list *fenced_list);
 struct pb_buffer *
 fenced_buffer_create(struct fenced_buffer_list *fenced, 
                      struct pb_buffer *buffer);
-
-
-/**
- * Set a buffer's fence.
- * 
- * NOTE: Although it takes a generic pb_buffer argument, it will fail
- * on everything but buffers returned by fenced_buffer_create.
- */
-void
-buffer_fence(struct pb_buffer *buf,
-             struct pipe_fence_handle *fence);
 
 
 #ifdef __cplusplus
