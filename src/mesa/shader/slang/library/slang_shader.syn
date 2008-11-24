@@ -178,6 +178,9 @@
 .emtcode TYPE_SPECIFIER_MAT34                       30
 .emtcode TYPE_SPECIFIER_MAT43                       31
 
+/* optional array size.  Ex: "float[6] myarray;" */
+.emtcode TYPE_ARRAY_SIZE                           220
+.emtcode TYPE_NO_ARRAY_SIZE                        221
 
 /* structure field */
 .emtcode FIELD_NONE                                 0
@@ -885,14 +888,22 @@ single_declaration_6
     constant_expression .emit VARIABLE_ARRAY_EXPLICIT .or .true .emit VARIABLE_ARRAY_UNKNOWN;
 
 /*
- * <fully_specified_type> ::= <opt_invariant> <opt_centroid> <opt_qualifer> <opt_precision> <type_specifier>
+ * <fully_specified_type> ::= <opt_invariant> <opt_centroid> <opt_qualifer> <opt_precision> <type_specifier> <opt_array_size>
  *
- * Example: "invariant varying highp vec3"
+ * Example: "invariant varying highp vec3 [4]"
+ *
+ * Note that the *_space version doesn't parse the array size, make sure it is being invoked after the *_nospace version.
  */
 fully_specified_type_space
-    fully_specified_type_optinvariant .and fully_specified_type_optcentroid .and fully_specified_type_optqual .and fully_specified_type_optprec .and type_specifier_space;
+    fully_specified_type_optinvariant .and fully_specified_type_optcentroid .and fully_specified_type_optqual .and fully_specified_type_optprec .and type_specifier_space .and .true .emit TYPE_NO_ARRAY_SIZE;
 fully_specified_type_nospace
-    fully_specified_type_optinvariant .and fully_specified_type_optcentroid .and fully_specified_type_optqual .and fully_specified_type_optprec .and type_specifier_nospace;
+    fully_specified_type_optinvariant .and fully_specified_type_optcentroid .and fully_specified_type_optqual .and fully_specified_type_optprec .and type_specifier_array;
+type_specifier_array
+    type_specifier_array_1 .or type_specifier_array_2;
+type_specifier_array_1
+    type_specifier_space .and array_size;
+type_specifier_array_2
+    type_specifier_nospace .and opt_array_size;
 fully_specified_type_optinvariant
     fully_specified_type_invariant .or .true .emit TYPE_VARIANT;
 fully_specified_type_invariant
@@ -909,6 +920,11 @@ fully_specified_type_optprec
     fully_specified_type_prec .or .true .emit PRECISION_DEFAULT;
 fully_specified_type_prec
     precision .and space;
+opt_array_size
+    array_size .or .true .emit TYPE_NO_ARRAY_SIZE;
+array_size
+    lbracket .emit TYPE_ARRAY_SIZE .and constant_expression .and rbracket;
+
 
 /*
  * <invariant_qualifier> ::= "invariant"
