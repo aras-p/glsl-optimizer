@@ -818,13 +818,13 @@ _mesa_print_parameter_list(const struct gl_program_parameter_list *list)
                    i, param->Size,
                    file_string(list->Parameters[i].Type, mode),
                    param->Name, v[0], v[1], v[2], v[3]);
-      if (param->Flags & PROG_PARAM_CENTROID_BIT)
+      if (param->Flags & PROG_PARAM_BIT_CENTROID)
          _mesa_printf(" Centroid");
-      if (param->Flags & PROG_PARAM_INVARIANT_BIT)
+      if (param->Flags & PROG_PARAM_BIT_INVARIANT)
          _mesa_printf(" Invariant");
-      if (param->Flags & PROG_PARAM_FLAT_BIT)
+      if (param->Flags & PROG_PARAM_BIT_FLAT)
          _mesa_printf(" Flat");
-      if (param->Flags & PROG_PARAM_LINEAR_BIT)
+      if (param->Flags & PROG_PARAM_BIT_LINEAR)
          _mesa_printf(" Linear");
       _mesa_printf("\n");
    }
