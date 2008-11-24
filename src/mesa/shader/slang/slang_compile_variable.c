@@ -122,6 +122,9 @@ slang_fully_specified_type_copy(slang_fully_specified_type * x,
    if (!slang_fully_specified_type_construct(&z))
       return 0;
    z.qualifier = y->qualifier;
+   z.precision = y->precision;
+   z.variant = y->variant;
+   z.centroid = y->centroid;
    if (!slang_type_specifier_copy(&z.specifier, &y->specifier)) {
       slang_fully_specified_type_destruct(&z);
       return 0;
