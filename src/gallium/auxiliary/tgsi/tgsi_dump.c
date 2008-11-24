@@ -246,6 +246,14 @@ iter_declaration(
    TXT( ", " );
    ENM( decl->Declaration.Interpolate, interpolate_names );
 
+   if (decl->Declaration.Centroid) {
+      TXT( ", CENTROID" );
+   }
+
+   if (decl->Declaration.Invariant) {
+      TXT( ", INVARIANT" );
+   }
+
    EOL();
 
    return TRUE;

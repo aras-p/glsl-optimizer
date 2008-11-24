@@ -112,7 +112,9 @@ struct tgsi_declaration
    unsigned UsageMask   : 4;  /* bitmask of TGSI_WRITEMASK_x flags */
    unsigned Interpolate : 4;  /* TGSI_INTERPOLATE_ */
    unsigned Semantic    : 1;  /* BOOL, any semantic info? */
-   unsigned Padding     : 6;
+   unsigned Centroid    : 1;  /* centroid sampling */
+   unsigned Invariant   : 1;  /* invariant optimization */
+   unsigned Padding     : 4;
    unsigned Extended    : 1;  /* BOOL */
 };
 
