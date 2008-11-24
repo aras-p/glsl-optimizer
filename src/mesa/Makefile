@@ -92,7 +92,10 @@ pcedit = sed \
 	-e 's,@INSTALL_DIR@,$(INSTALL_DIR),' \
 	-e 's,@INSTALL_LIB_DIR@,$(INSTALL_LIB_DIR),' \
 	-e 's,@INSTALL_INC_DIR@,$(INSTALL_INC_DIR),' \
-	-e 's,@VERSION@,$(MESA_MAJOR).$(MESA_MINOR).$(MESA_TINY),'
+	-e 's,@VERSION@,$(MESA_MAJOR).$(MESA_MINOR).$(MESA_TINY),' \
+	-e 's,@GL_PC_REQ_PRIV@,$(GL_PC_REQ_PRIV),' \
+	-e 's,@GL_PC_LIB_PRIV@,$(GL_PC_LIB_PRIV),' \
+	-e 's,@GL_PC_CFLAGS@,$(GL_PC_CFLAGS),'
 
 gl.pc: gl.pc.in
 	$(pcedit) $< > $@

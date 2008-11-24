@@ -25,7 +25,8 @@ pcedit = sed \
 	-e 's,@INSTALL_LIB_DIR@,$(INSTALL_LIB_DIR),' \
 	-e 's,@INSTALL_INC_DIR@,$(INSTALL_INC_DIR),' \
 	-e 's,@VERSION@,$(MESA_MAJOR).$(MESA_MINOR).$(MESA_TINY),' \
-	-e 's,@DRI_DRIVER_DIR@,$(DRI_DRIVER_SEARCH_DIR),'
+	-e 's,@DRI_DRIVER_DIR@,$(DRI_DRIVER_SEARCH_DIR),' \
+	-e 's,@DRI_PC_REQ_PRIV@,$(DRI_PC_REQ_PRIV),'
 
 dri.pc: dri.pc.in
 	$(pcedit) $< > $@

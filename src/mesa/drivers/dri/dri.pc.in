@@ -7,4 +7,5 @@ dridriverdir=@DRI_DRIVER_DIR@
 Name: dri
 Description: Direct Rendering Infrastructure
 Version: @VERSION@
+Requires.private: @DRI_PC_REQ_PRIV@
 Cflags: -I${includedir}
