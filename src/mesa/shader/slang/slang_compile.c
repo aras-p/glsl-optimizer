@@ -1799,8 +1799,11 @@ parse_init_declarator(slang_parse_ctx * C, slang_output_ctx * O,
       RETURN0;
    }
 
-   /* copy the declarator qualifier type, parse the identifier */
+   /* copy the declarator type qualifier/etc info, parse the identifier */
    var->type.qualifier = type->qualifier;
+   var->type.centroid = type->centroid;
+   var->type.precision = type->precision;
+   var->type.variant = type->variant;
    var->a_name = a_name;
    if (var->a_name == SLANG_ATOM_NULL)
       RETURN0;
