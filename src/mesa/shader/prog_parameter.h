@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.3
+ * Version:  7.3
  *
- * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2008  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -36,11 +36,17 @@
 
 
 /**
+ * Program parameter flags
+ */
+/*@{*/
+#define PROG_PARAM_CENTROID_BIT  0x1
+/*@}*/
+
+
+
+/**
  * Program parameter.
- * Used for NV_fragment_program for "DEFINE"d constants and "DECLARE"d
- * parameters.
- * Also used by ARB_vertex/fragment_programs for state variables, etc.
- * Used by shaders for uniforms, constants, varying vars, etc.
+ * Used by shaders/programs for uniforms, constants, varying vars, etc.
  */
 struct gl_program_parameter
 {
@@ -50,6 +56,7 @@ struct gl_program_parameter
    GLuint Size;             /**< Number of components (1..4) */
    GLboolean Used;          /**< Helper flag for GLSL uniform tracking */
    GLboolean Initialized;   /**< Has the ParameterValue[] been set? */
+   GLbitfield Flags;        /**< Bitmask of PROG_PARAM_*_BIT */
    /**
     * A sequence of STATE_* tokens and integers to identify GL state.
     */
@@ -94,7 +101,8 @@ extern GLint
 _mesa_add_parameter(struct gl_program_parameter_list *paramList,
                     enum register_file type, const char *name,
                     GLuint size, GLenum datatype, const GLfloat *values,
-                    const gl_state_index state[STATE_LENGTH]);
+                    const gl_state_index state[STATE_LENGTH],
+                    GLbitfield flags);
 
 extern GLint
 _mesa_add_named_parameter(struct gl_program_parameter_list *paramList,
@@ -125,7 +133,7 @@ _mesa_add_sampler(struct gl_program_parameter_list *paramList,
 
 extern GLint
 _mesa_add_varying(struct gl_program_parameter_list *paramList,
-                  const char *name, GLuint size);
+                  const char *name, GLuint size, GLbitfield flags);
 
 extern GLint
 _mesa_add_attribute(struct gl_program_parameter_list *paramList,

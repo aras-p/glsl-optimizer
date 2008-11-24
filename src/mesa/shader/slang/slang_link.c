@@ -103,7 +103,8 @@ link_varying_vars(struct gl_shader_program *shProg, struct gl_program *prog)
       }
       else {
          /* not already in linked list */
-         j = _mesa_add_varying(shProg->Varying, var->Name, var->Size);
+         j = _mesa_add_varying(shProg->Varying, var->Name, var->Size,
+                               var->Flags);
       }
 
       /* map varying[i] to varying[j].
