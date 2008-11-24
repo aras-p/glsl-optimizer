@@ -622,6 +622,7 @@ _mesa_clone_parameter_list(const struct gl_program_parameter_list *list)
       ASSERT(j >= 0);
       pCopy = clone->Parameters + j;
       pCopy->Used = p->Used;
+      pCopy->Flags = p->Flags;
       /* copy state indexes */
       if (p->Type == PROGRAM_STATE_VAR) {
          GLint k;
