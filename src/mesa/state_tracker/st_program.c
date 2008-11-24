@@ -99,7 +99,12 @@ st_translate_vertex_program(struct st_context *st,
    ubyte vs_output_semantic_index[PIPE_MAX_SHADER_OUTPUTS];
    uint vs_num_outputs = 0;
 
+   GLbitfield input_flags[MAX_PROGRAM_INPUTS];
+   GLbitfield output_flags[MAX_PROGRAM_OUTPUTS];
+
    memset(&vs, 0, sizeof(vs));
+   memset(input_flags, 0, sizeof(input_flags));
+   memset(output_flags, 0, sizeof(output_flags));
 
    if (stvp->Base.IsPositionInvariant)
       _mesa_insert_mvp_code(st->ctx, &stvp->Base);
@@ -171,6 +176,8 @@ st_translate_vertex_program(struct st_context *st,
          default:
             assert(0);
          }
+
+         input_flags[slot] = stvp->Base.Base.InputFlags[attr];
       }
    }
 
@@ -192,6 +199,7 @@ st_translate_vertex_program(struct st_context *st,
    for (i = 0; i < PIPE_MAX_SHADER_OUTPUTS; i++) {
       vs_output_semantic_name[i] = TGSI_SEMANTIC_GENERIC;
       vs_output_semantic_index[i] = 0;
+      output_flags[i] = 0x0;
    }
 
    num_generic = 0;
@@ -276,6 +284,8 @@ st_translate_vertex_program(struct st_context *st,
                vs_output_semantic_index[slot] = num_generic++;
             }
          }
+
+         output_flags[slot] = stvp->Base.Base.OutputFlags[attr];
       }
    }
 
@@ -307,21 +317,23 @@ st_translate_vertex_program(struct st_context *st,
 
    /* XXX: fix static allocation of tokens:
     */
-   num_tokens = st_translate_mesa_program( TGSI_PROCESSOR_VERTEX,
-                                &stvp->Base.Base,
-                                /* inputs */
-                                vs_num_inputs,
-                                stvp->input_to_index,
-                                vs_input_semantic_name,
-                                vs_input_semantic_index,
-                                NULL,
-                                /* outputs */
-                                vs_num_outputs,
-                                outputMapping,
-                                vs_output_semantic_name,
-                                vs_output_semantic_index,
-                                /* tokenized result */
-                                tokens, ST_MAX_SHADER_TOKENS);
+   num_tokens = st_translate_mesa_program(TGSI_PROCESSOR_VERTEX,
+                                          &stvp->Base.Base,
+                                          /* inputs */
+                                          vs_num_inputs,
+                                          stvp->input_to_index,
+                                          vs_input_semantic_name,
+                                          vs_input_semantic_index,
+                                          NULL,
+                                          input_flags,
+                                          /* outputs */
+                                          vs_num_outputs,
+                                          outputMapping,
+                                          vs_output_semantic_name,
+                                          vs_output_semantic_index,
+                                          output_flags,
+                                          /* tokenized result */
+                                          tokens, ST_MAX_SHADER_TOKENS);
 
    assert(num_tokens < ST_MAX_SHADER_TOKENS);
 
@@ -371,7 +383,12 @@ st_translate_fragment_program(struct st_context *st,
    ubyte fs_output_semantic_index[PIPE_MAX_SHADER_OUTPUTS];
    uint fs_num_outputs = 0;
 
+   GLbitfield input_flags[MAX_PROGRAM_INPUTS];
+   GLbitfield output_flags[MAX_PROGRAM_OUTPUTS];
+
    memset(&fs, 0, sizeof(fs));
+   memset(input_flags, 0, sizeof(input_flags));
+   memset(output_flags, 0, sizeof(output_flags));
 
    /* which vertex output goes to the first fragment input: */
    if (inputsRead & FRAG_BIT_WPOS)
@@ -435,6 +452,8 @@ st_translate_fragment_program(struct st_context *st,
             stfp->input_semantic_index[slot] = num_generic++;
             interpMode[slot] = TGSI_INTERPOLATE_PERSPECTIVE;
          }
+
+         input_flags[slot] = stfp->Base.Base.InputFlags[attr];
       }
    }
 
@@ -471,6 +490,9 @@ st_translate_fragment_program(struct st_context *st,
             default:
                assert(0);
             }
+
+            output_flags[fs_num_outputs] = stfp->Base.Base.OutputFlags[attr];
+
             fs_num_outputs++;
          }
       }
@@ -481,21 +503,23 @@ st_translate_fragment_program(struct st_context *st,
 
    /* XXX: fix static allocation of tokens:
     */
-   num_tokens = st_translate_mesa_program( TGSI_PROCESSOR_FRAGMENT,
-                                &stfp->Base.Base,
-                                /* inputs */
-                                fs_num_inputs,
-                                inputMapping,
-                                stfp->input_semantic_name,
-                                stfp->input_semantic_index,
-                                interpMode,
-                                /* outputs */
-                                fs_num_outputs,
-                                outputMapping,
-                                fs_output_semantic_name,
-                                fs_output_semantic_index,
-                                /* tokenized result */
-                                tokens, ST_MAX_SHADER_TOKENS);
+   num_tokens = st_translate_mesa_program(TGSI_PROCESSOR_FRAGMENT,
+                                          &stfp->Base.Base,
+                                          /* inputs */
+                                          fs_num_inputs,
+                                          inputMapping,
+                                          stfp->input_semantic_name,
+                                          stfp->input_semantic_index,
+                                          interpMode,
+                                          input_flags,
+                                          /* outputs */
+                                          fs_num_outputs,
+                                          outputMapping,
+                                          fs_output_semantic_name,
+                                          fs_output_semantic_index,
+                                          output_flags,
+                                          /* tokenized result */
+                                          tokens, ST_MAX_SHADER_TOKENS);
 
    assert(num_tokens < ST_MAX_SHADER_TOKENS);
 
