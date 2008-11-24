@@ -3779,7 +3779,9 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
 
       if (prog) {
          /* user-defined varying */
-         GLint varyingLoc = _mesa_add_varying(prog->Varying, varName, totalSize);
+         GLbitfield flags = 0x0;
+         GLint varyingLoc = _mesa_add_varying(prog->Varying, varName,
+                                              totalSize, flags);
          GLuint swizzle = _slang_var_swizzle(size, 0);
          store = _slang_new_ir_storage_swz(PROGRAM_VARYING, varyingLoc,
                                            totalSize, swizzle);
