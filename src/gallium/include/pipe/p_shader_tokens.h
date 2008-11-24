@@ -63,10 +63,10 @@ struct tgsi_processor
 
 struct tgsi_token
 {
-   unsigned Type       : 4;  /* TGSI_TOKEN_TYPE_ */
-   unsigned Size       : 8;  /* UINT */
+   unsigned Type       : 4;  /**< TGSI_TOKEN_TYPE_x */
+   unsigned Size       : 8;  /**< UINT */
    unsigned Padding    : 19;
-   unsigned Extended   : 1;  /* BOOL */
+   unsigned Extended   : 1;  /**< BOOL */
 };
 
 enum tgsi_file_type {
@@ -106,22 +106,22 @@ enum tgsi_file_type {
 
 struct tgsi_declaration
 {
-   unsigned Type        : 4;  /* TGSI_TOKEN_TYPE_DECLARATION */
-   unsigned Size        : 8;  /* UINT */
-   unsigned File        : 4;  /* one of TGSI_FILE_x */
-   unsigned UsageMask   : 4;  /* bitmask of TGSI_WRITEMASK_x flags */
-   unsigned Interpolate : 4;  /* TGSI_INTERPOLATE_ */
-   unsigned Semantic    : 1;  /* BOOL, any semantic info? */
-   unsigned Centroid    : 1;  /* centroid sampling */
-   unsigned Invariant   : 1;  /* invariant optimization */
+   unsigned Type        : 4;  /**< TGSI_TOKEN_TYPE_DECLARATION */
+   unsigned Size        : 8;  /**< UINT */
+   unsigned File        : 4;  /**< one of TGSI_FILE_x */
+   unsigned UsageMask   : 4;  /**< bitmask of TGSI_WRITEMASK_x flags */
+   unsigned Interpolate : 4;  /**< one of TGSI_INTERPOLATE_x */
+   unsigned Semantic    : 1;  /**< BOOL, any semantic info? */
+   unsigned Centroid    : 1;  /**< centroid sampling? */
+   unsigned Invariant   : 1;  /**< invariant optimization? */
    unsigned Padding     : 4;
-   unsigned Extended    : 1;  /* BOOL */
+   unsigned Extended    : 1;  /**< BOOL */
 };
 
 struct tgsi_declaration_range
 {
-   unsigned First   : 16; /* UINT */
-   unsigned Last    : 16; /* UINT */
+   unsigned First   : 16; /**< UINT */
+   unsigned Last    : 16; /**< UINT */
 };
 
 #define TGSI_SEMANTIC_POSITION 0
@@ -135,8 +135,8 @@ struct tgsi_declaration_range
 
 struct tgsi_declaration_semantic
 {
-   unsigned SemanticName   : 8;  /* one of TGSI_SEMANTIC_ */
-   unsigned SemanticIndex  : 16; /* UINT */
+   unsigned SemanticName   : 8;  /**< one of TGSI_SEMANTIC_x */
+   unsigned SemanticIndex  : 16; /**< UINT */
    unsigned Padding        : 8;
 };
 
@@ -144,11 +144,11 @@ struct tgsi_declaration_semantic
 
 struct tgsi_immediate
 {
-   unsigned Type       : 4;  /* TGSI_TOKEN_TYPE_IMMEDIATE */
-   unsigned Size       : 8;  /* UINT */
-   unsigned DataType   : 4;  /* TGSI_IMM_ */
+   unsigned Type       : 4;  /**< TGSI_TOKEN_TYPE_IMMEDIATE */
+   unsigned Size       : 8;  /**< UINT */
+   unsigned DataType   : 4;  /**< one of TGSI_IMM_x */
    unsigned Padding    : 15;
-   unsigned Extended   : 1;  /* BOOL */
+   unsigned Extended   : 1;  /**< BOOL */
 };
 
 struct tgsi_immediate_float32
