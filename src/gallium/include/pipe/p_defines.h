@@ -204,6 +204,14 @@ enum pipe_texture_target {
 /** Pipe driver custom usage flags should be greater or equal to this value */
 #define PIPE_BUFFER_USAGE_CUSTOM    (1 << 16)
 
+/* Convenient shortcuts */
+#define PIPE_BUFFER_USAGE_CPU_READ_WRITE \
+   ( PIPE_BUFFER_USAGE_CPU_READ | PIPE_BUFFER_USAGE_CPU_WRITE )
+#define PIPE_BUFFER_USAGE_GPU_READ_WRITE \
+   ( PIPE_BUFFER_USAGE_GPU_READ | PIPE_BUFFER_USAGE_GPU_WRITE )
+#define PIPE_BUFFER_USAGE_WRITE \
+   ( PIPE_BUFFER_USAGE_CPU_WRITE | PIPE_BUFFER_USAGE_GPU_WRITE )
+
 
 /** 
  * Flush types:
