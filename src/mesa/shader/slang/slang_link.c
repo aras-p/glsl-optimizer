@@ -76,6 +76,16 @@ link_error(struct gl_shader_program *shProg, const char *msg)
 
 
 /**
+ * Check if the given bit is either set or clear in both bitfields.
+ */
+static GLboolean
+bits_agree(GLbitfield flags1, GLbitfield flags2, GLbitfield bit)
+{
+   return (flags1 & bit) == (flags2 & bit);
+}
+
+
+/**
  * Linking varying vars involves rearranging varying vars so that the
  * vertex program's output varyings matches the order of the fragment
  * program's input varyings.
@@ -94,10 +104,25 @@ link_varying_vars(struct gl_shader_program *shProg, struct gl_program *prog)
       const struct gl_program_parameter *var = prog->Varying->Parameters + i;
       GLint j = _mesa_lookup_parameter_index(shProg->Varying, -1, var->Name);
       if (j >= 0) {
-         /* already in list, check size */
-         if (var->Size != shProg->Varying->Parameters[j].Size) {
-            /* error */
+         /* varying is already in list, do some error checking */
+         const struct gl_program_parameter *v =
+            &shProg->Varying->Parameters[j];
+         if (var->Size != v->Size) {
             link_error(shProg, "mismatched varying variable types");
+            return GL_FALSE;
+         }
+         if (!bits_agree(var->Flags, v->Flags, PROG_PARAM_BIT_CENTROID)) {
+            char msg[100];
+            snprintf(msg, sizeof(msg),
+                     "centroid modifier mismatch for '%s'", var->Name);
+            link_error(shProg, msg);
+            return GL_FALSE;
+         }
+         if (!bits_agree(var->Flags, v->Flags, PROG_PARAM_BIT_INVARIANT)) {
+            char msg[100];
+            snprintf(msg, sizeof(msg),
+                     "invariant modifier mismatch for '%s'", var->Name);
+            link_error(shProg, msg);
             return GL_FALSE;
          }
       }
