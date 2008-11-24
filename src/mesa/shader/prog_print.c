@@ -814,9 +814,18 @@ _mesa_print_parameter_list(const struct gl_program_parameter_list *list)
    for (i = 0; i < list->NumParameters; i++){
       struct gl_program_parameter *param = list->Parameters + i;
       const GLfloat *v = list->ParameterValues[i];
-      _mesa_printf("param[%d] sz=%d %s %s = {%.3g, %.3g, %.3g, %.3g};\n",
+      _mesa_printf("param[%d] sz=%d %s %s = {%.3g, %.3g, %.3g, %.3g}",
                    i, param->Size,
                    file_string(list->Parameters[i].Type, mode),
                    param->Name, v[0], v[1], v[2], v[3]);
+      if (param->Flags & PROG_PARAM_CENTROID_BIT)
+         _mesa_printf(" Centroid");
+      if (param->Flags & PROG_PARAM_INVARIANT_BIT)
+         _mesa_printf(" Invariant");
+      if (param->Flags & PROG_PARAM_FLAT_BIT)
+         _mesa_printf(" Flat");
+      if (param->Flags & PROG_PARAM_LINEAR_BIT)
+         _mesa_printf(" Linear");
+      _mesa_printf("\n");
    }
 }
