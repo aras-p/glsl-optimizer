@@ -191,6 +191,8 @@
 #define MAX_UNIFORMS 128   /**< number of float components */
 #define MAX_VARYING 8      /**< number of float[4] vectors */
 #define MAX_SAMPLERS 8
+#define MAX_PROGRAM_INPUTS 32
+#define MAX_PROGRAM_OUTPUTS 32
 /*@}*/
 
 /** For GL_NV_vertex_program */

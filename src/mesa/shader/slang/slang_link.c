@@ -89,15 +89,38 @@ bits_agree(GLbitfield flags1, GLbitfield flags2, GLbitfield bit)
  * Linking varying vars involves rearranging varying vars so that the
  * vertex program's output varyings matches the order of the fragment
  * program's input varyings.
+ * We'll then rewrite instructions to replace PROGRAM_VARYING with either
+ * PROGRAM_INPUT or PROGRAM_OUTPUT depending on whether it's a vertex or
+ * fragment shader.
+ * This is also where we set program Input/OutputFlags to indicate
+ * which inputs are centroid-sampled, invariant, etc.
  */
 static GLboolean
 link_varying_vars(struct gl_shader_program *shProg, struct gl_program *prog)
 {
    GLuint *map, i, firstVarying, newFile;
+   GLbitfield *inOutFlags;
 
    map = (GLuint *) malloc(prog->Varying->NumParameters * sizeof(GLuint));
    if (!map)
       return GL_FALSE;
+
+   /* Varying variables are treated like other vertex program outputs
+    * (and like other fragment program inputs).  The position of the
+    * first varying differs for vertex/fragment programs...
+    * Also, replace File=PROGRAM_VARYING with File=PROGRAM_INPUT/OUTPUT.
+    */
+   if (prog->Target == GL_VERTEX_PROGRAM_ARB) {
+      firstVarying = VERT_RESULT_VAR0;
+      newFile = PROGRAM_OUTPUT;
+      inOutFlags = prog->OutputFlags;
+   }
+   else {
+      assert(prog->Target == GL_FRAGMENT_PROGRAM_ARB);
+      firstVarying = FRAG_ATTRIB_VAR0;
+      newFile = PROGRAM_INPUT;
+      inOutFlags = prog->InputFlags;
+   }
 
    for (i = 0; i < prog->Varying->NumParameters; i++) {
       /* see if this varying is in the linked varying list */
@@ -132,12 +155,14 @@ link_varying_vars(struct gl_shader_program *shProg, struct gl_program *prog)
                                var->Flags);
       }
 
-      /* map varying[i] to varying[j].
+      /* Map varying[i] to varying[j].
+       * Plus, set prog->Input/OutputFlags[] as described above.
        * Note: the loop here takes care of arrays or large (sz>4) vars.
        */
       {
          GLint sz = var->Size;
          while (sz > 0) {
+            inOutFlags[firstVarying + j] = var->Flags;
             /*printf("Link varying from %d to %d\n", i, j);*/
             map[i++] = j++;
             sz -= 4;
@@ -146,21 +171,6 @@ link_varying_vars(struct gl_shader_program *shProg, struct gl_program *prog)
       }
    }
 
-
-   /* Varying variables are treated like other vertex program outputs
-    * (and like other fragment program inputs).  The position of the
-    * first varying differs for vertex/fragment programs...
-    * Also, replace File=PROGRAM_VARYING with File=PROGRAM_INPUT/OUTPUT.
-    */
-   if (prog->Target == GL_VERTEX_PROGRAM_ARB) {
-      firstVarying = VERT_RESULT_VAR0;
-      newFile = PROGRAM_OUTPUT;
-   }
-   else {
-      assert(prog->Target == GL_FRAGMENT_PROGRAM_ARB);
-      firstVarying = FRAG_ATTRIB_VAR0;
-      newFile = PROGRAM_INPUT;
-   }
 
    /* OK, now scan the program/shader instructions looking for varying vars,
     * replacing the old index with the new index.

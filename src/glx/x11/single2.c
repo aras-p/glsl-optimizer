@@ -40,6 +40,7 @@
 #ifdef USE_XCB
 #include <xcb/xcb.h>
 #include <xcb/glx.h>
+#include <X11/Xlib-xcb.h>
 #endif /* USE_XCB */
 
 
