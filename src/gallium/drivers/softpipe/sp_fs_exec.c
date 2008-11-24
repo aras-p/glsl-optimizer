@@ -92,7 +92,7 @@ sp_setup_pos_vector(const struct tgsi_interp_coef *coef,
 static void
 exec_prepare( const struct sp_fragment_shader *base,
 	      struct tgsi_exec_machine *machine,
-	      struct tgsi_sampler *samplers )
+	      struct tgsi_sampler **samplers )
 {
    /*
     * Bind tokens/shader to the interpreter's machine state.

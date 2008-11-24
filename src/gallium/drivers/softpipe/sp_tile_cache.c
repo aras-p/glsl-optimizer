@@ -494,11 +494,11 @@ tex_cache_pos(int x, int y, int z, int face, int level)
  * Tiles are read-only and indexed with more params.
  */
 const struct softpipe_cached_tile *
-sp_get_cached_tile_tex(struct pipe_context *pipe,
+sp_get_cached_tile_tex(struct softpipe_context *sp,
                        struct softpipe_tile_cache *tc, int x, int y, int z,
                        int face, int level)
 {
-   struct pipe_screen *screen = pipe->screen;
+   struct pipe_screen *screen = sp->pipe.screen;
    /* tile pos in framebuffer: */
    const int tile_x = x & ~(TILE_SIZE - 1);
    const int tile_y = y & ~(TILE_SIZE - 1);

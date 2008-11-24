@@ -68,17 +68,12 @@ struct tgsi_interp_coef
    float dady[NUM_CHANNELS];
 };
 
-
-struct softpipe_tile_cache;  /**< Opaque to TGSI */
-
 /**
  * Information for sampling textures, which must be implemented
  * by code outside the TGSI executor.
  */
 struct tgsi_sampler
 {
-   const struct pipe_sampler_state *state;
-   struct pipe_texture *texture;
    /** Get samples for four fragments in a quad */
    void (*get_samples)(struct tgsi_sampler *sampler,
                        const float s[QUAD_SIZE],
@@ -86,8 +81,6 @@ struct tgsi_sampler
                        const float p[QUAD_SIZE],
                        float lodbias,
                        float rgba[NUM_CHANNELS][QUAD_SIZE]);
-   void *pipe; /*XXX temporary*/
-   struct softpipe_tile_cache *cache;
 };
 
 /**
@@ -205,7 +198,7 @@ struct tgsi_exec_machine
    struct tgsi_exec_vector       *Temps;
    struct tgsi_exec_vector       *Addrs;
 
-   struct tgsi_sampler           *Samplers;
+   struct tgsi_sampler           **Samplers;
 
    float                         Imms[TGSI_EXEC_NUM_IMMEDIATES][4];
    unsigned                      ImmLimit;
@@ -268,7 +261,7 @@ tgsi_exec_machine_bind_shader(
    struct tgsi_exec_machine *mach,
    const struct tgsi_token *tokens,
    uint numSamplers,
-   struct tgsi_sampler *samplers);
+   struct tgsi_sampler **samplers);
 
 uint
 tgsi_exec_machine_run(

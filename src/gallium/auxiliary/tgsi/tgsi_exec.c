@@ -133,7 +133,7 @@ tgsi_exec_machine_bind_shader(
    struct tgsi_exec_machine *mach,
    const struct tgsi_token *tokens,
    uint numSamplers,
-   struct tgsi_sampler *samplers)
+   struct tgsi_sampler **samplers)
 {
    uint k;
    struct tgsi_parse_context parse;
@@ -1581,7 +1581,7 @@ exec_tex(struct tgsi_exec_machine *mach,
       else
          lodBias = 0.0;
 
-      fetch_texel(&mach->Samplers[unit],
+      fetch_texel(mach->Samplers[unit],
                   &r[0], NULL, NULL, lodBias,  /* S, T, P, BIAS */
                   &r[0], &r[1], &r[2], &r[3]); /* R, G, B, A */
       break;
@@ -1607,7 +1607,7 @@ exec_tex(struct tgsi_exec_machine *mach,
       else
          lodBias = 0.0;
 
-      fetch_texel(&mach->Samplers[unit],
+      fetch_texel(mach->Samplers[unit],
                   &r[0], &r[1], &r[2], lodBias,  /* inputs */
                   &r[0], &r[1], &r[2], &r[3]);  /* outputs */
       break;
@@ -1633,7 +1633,7 @@ exec_tex(struct tgsi_exec_machine *mach,
       else
          lodBias = 0.0;
 
-      fetch_texel(&mach->Samplers[unit],
+      fetch_texel(mach->Samplers[unit],
                   &r[0], &r[1], &r[2], lodBias,
                   &r[0], &r[1], &r[2], &r[3]);
       break;
