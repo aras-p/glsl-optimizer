@@ -39,10 +39,10 @@
  * Program parameter flags
  */
 /*@{*/
-#define PROG_PARAM_CENTROID_BIT   0x1  /**< for varying vars (GLSL 1.20) */
-#define PROG_PARAM_INVARIANT_BIT  0x2  /**< for varying vars (GLSL 1.20) */
-#define PROG_PARAM_FLAT_BIT       0x4  /**< for varying vars (GLSL 1.30) */
-#define PROG_PARAM_LINEAR_BIT     0x8  /**< for varying vars (GLSL 1.30) */
+#define PROG_PARAM_BIT_CENTROID   0x1  /**< for varying vars (GLSL 1.20) */
+#define PROG_PARAM_BIT_INVARIANT  0x2  /**< for varying vars (GLSL 1.20) */
+#define PROG_PARAM_BIT_FLAT       0x4  /**< for varying vars (GLSL 1.30) */
+#define PROG_PARAM_BIT_LINEAR     0x8  /**< for varying vars (GLSL 1.30) */
 /*@}*/
 
 
