@@ -578,7 +578,8 @@ make_input_decl(
    GLuint usage_mask,
    GLboolean semantic_info,
    GLuint semantic_name,
-   GLbitfield semantic_index )
+   GLbitfield semantic_index,
+   GLbitfield input_flags)
 {
    struct tgsi_full_declaration decl;
 
@@ -597,6 +598,10 @@ make_input_decl(
    if (interpolate_info) {
       decl.Declaration.Interpolate = interpolate;
    }
+   if (input_flags & PROG_PARAM_BIT_CENTROID)
+      decl.Declaration.Centroid = 1;
+   if (input_flags & PROG_PARAM_BIT_INVARIANT)
+      decl.Declaration.Invariant = 1;
 
    return decl;
 }
@@ -609,7 +614,8 @@ make_output_decl(
    GLuint index,
    GLuint semantic_name,
    GLuint semantic_index,
-   GLbitfield usage_mask )
+   GLuint usage_mask,
+   GLbitfield output_flags)
 {
    struct tgsi_full_declaration decl;
 
@@ -623,6 +629,10 @@ make_output_decl(
    decl.DeclarationRange.Last = index;
    decl.Semantic.SemanticName = semantic_name;
    decl.Semantic.SemanticIndex = semantic_index;
+   if (output_flags & PROG_PARAM_BIT_CENTROID)
+      decl.Declaration.Centroid = 1;
+   if (output_flags & PROG_PARAM_BIT_INVARIANT)
+      decl.Declaration.Invariant = 1;
 
    return decl;
 }
@@ -736,10 +746,12 @@ st_translate_mesa_program(
    const ubyte inputSemanticName[],
    const ubyte inputSemanticIndex[],
    const GLuint interpMode[],
+   const GLbitfield inputFlags[],
    GLuint numOutputs,
    const GLuint outputMapping[],
    const ubyte outputSemanticName[],
    const ubyte outputSemanticIndex[],
+   const GLbitfield outputFlags[],
    struct tgsi_token *tokens,
    GLuint maxTokens )
 {
@@ -777,7 +789,8 @@ st_translate_mesa_program(
                                     GL_TRUE, interpMode[i],
                                     TGSI_WRITEMASK_XYZW,
                                     GL_TRUE, inputSemanticName[i],
-                                    inputSemanticIndex[i]);
+                                    inputSemanticIndex[i],
+                                    inputFlags[i]);
          ti += tgsi_build_full_declaration(&fulldecl,
                                            &tokens[ti],
                                            header,
@@ -794,7 +807,8 @@ st_translate_mesa_program(
          fulldecl = make_input_decl(i,
                                     GL_FALSE, 0,
                                     TGSI_WRITEMASK_XYZW,
-                                    GL_FALSE, 0, 0);
+                                    GL_FALSE, 0, 0,
+                                    inputFlags[i]);
          ti += tgsi_build_full_declaration(&fulldecl,
                                            &tokens[ti],
                                            header,
@@ -813,13 +827,15 @@ st_translate_mesa_program(
             fulldecl = make_output_decl(i,
                                         TGSI_SEMANTIC_POSITION, /* Z / Depth */
                                         outputSemanticIndex[i],
-                                        TGSI_WRITEMASK_Z );
+                                        TGSI_WRITEMASK_Z,
+                                        outputFlags[i]);
             break;
          case TGSI_SEMANTIC_COLOR:
             fulldecl = make_output_decl(i,
                                         TGSI_SEMANTIC_COLOR,
                                         outputSemanticIndex[i],
-                                        TGSI_WRITEMASK_XYZW );
+                                        TGSI_WRITEMASK_XYZW,
+                                        outputFlags[i]);
             break;
          default:
             assert(0);
@@ -838,7 +854,8 @@ st_translate_mesa_program(
          fulldecl = make_output_decl(i,
                                      outputSemanticName[i],
                                      outputSemanticIndex[i],
-                                     TGSI_WRITEMASK_XYZW );
+                                     TGSI_WRITEMASK_XYZW,
+                                     outputFlags[i]);
          ti += tgsi_build_full_declaration(&fulldecl,
                                            &tokens[ti],
                                            header,
