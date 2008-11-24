@@ -30,7 +30,7 @@
  * Implementation of client buffer (also designated as "user buffers"), which
  * are just state-tracker owned data masqueraded as buffers.
  * 
- * \author José Fonseca <jrfonseca@tungstengraphics.com>
+ * \author Jose Fonseca <jrfonseca@tungstengraphics.com>
  */
 
 
@@ -91,6 +91,24 @@ pb_user_buffer_unmap(struct pb_buffer *buf)
 }
 
 
+static enum pipe_error 
+pb_user_buffer_validate(struct pb_buffer *buf, 
+                        struct pb_validate *vl,
+                        unsigned flags)
+{
+   assert(0);
+   return PIPE_ERROR;
+}
+
+
+static void
+pb_user_buffer_fence(struct pb_buffer *buf, 
+                     struct pipe_fence_handle *fence)
+{
+   assert(0);
+}
+
+
 static void
 pb_user_buffer_get_base_buffer(struct pb_buffer *buf,
                                struct pb_buffer **base_buf,
@@ -106,6 +124,8 @@ pb_user_buffer_vtbl = {
       pb_user_buffer_destroy,
       pb_user_buffer_map,
       pb_user_buffer_unmap,
+      pb_user_buffer_validate,
+      pb_user_buffer_fence,
       pb_user_buffer_get_base_buffer
 };
 

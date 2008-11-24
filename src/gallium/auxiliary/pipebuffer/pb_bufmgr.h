@@ -43,7 +43,7 @@
  * - the fenced buffer manager, which will delay buffer destruction until the 
  * the moment the card finishing processing it. 
  * 
- * \author José Fonseca <jrfonseca@tungstengraphics.com>
+ * \author Jose Fonseca <jrfonseca@tungstengraphics.com>
  */
 
 #ifndef PB_BUFMGR_H_

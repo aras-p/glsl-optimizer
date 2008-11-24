@@ -81,6 +81,24 @@ malloc_buffer_unmap(struct pb_buffer *buf)
 }
 
 
+static enum pipe_error 
+malloc_buffer_validate(struct pb_buffer *buf, 
+                       struct pb_validate *vl,
+                       unsigned flags)
+{
+   assert(0);
+   return PIPE_ERROR;
+}
+
+
+static void
+malloc_buffer_fence(struct pb_buffer *buf, 
+                    struct pipe_fence_handle *fence)
+{
+   assert(0);
+}
+
+
 static void
 malloc_buffer_get_base_buffer(struct pb_buffer *buf,
                               struct pb_buffer **base_buf,
@@ -96,6 +114,8 @@ malloc_buffer_vtbl = {
       malloc_buffer_destroy,
       malloc_buffer_map,
       malloc_buffer_unmap,
+      malloc_buffer_validate,
+      malloc_buffer_fence,
       malloc_buffer_get_base_buffer
 };
 

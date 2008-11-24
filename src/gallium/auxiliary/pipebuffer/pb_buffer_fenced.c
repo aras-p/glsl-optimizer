@@ -29,7 +29,7 @@
  * \file
  * Implementation of fenced buffers.
  * 
- * \author José Fonseca <jrfonseca-at-tungstengraphics-dot-com>
+ * \author Jose Fonseca <jrfonseca-at-tungstengraphics-dot-com>
  * \author Thomas Hellström <thomas-at-tungstengraphics-dot-com>
  */
 
@@ -58,13 +58,6 @@
  * Convenience macro (type safe).
  */
 #define SUPER(__derived) (&(__derived)->base)
-
-#define PIPE_BUFFER_USAGE_CPU_READ_WRITE \
-   ( PIPE_BUFFER_USAGE_CPU_READ | PIPE_BUFFER_USAGE_CPU_WRITE )
-#define PIPE_BUFFER_USAGE_GPU_READ_WRITE \
-   ( PIPE_BUFFER_USAGE_GPU_READ | PIPE_BUFFER_USAGE_GPU_WRITE )
-#define PIPE_BUFFER_USAGE_WRITE \
-   ( PIPE_BUFFER_USAGE_CPU_WRITE | PIPE_BUFFER_USAGE_GPU_WRITE )
 
 
 struct fenced_buffer_list
@@ -97,6 +90,8 @@ struct fenced_buffer
    unsigned flags;
 
    unsigned mapcount;
+   struct pb_validate *vl;
+   unsigned validation_flags;
    struct pipe_fence_handle *fence;
 
    struct list_head head;
@@ -108,7 +103,6 @@ static INLINE struct fenced_buffer *
 fenced_buffer(struct pb_buffer *buf)
 {
    assert(buf);
-   assert(buf->vtbl == &fenced_buffer_vtbl);
    return (struct fenced_buffer *)buf;
 }
 
@@ -274,6 +268,7 @@ fenced_buffer_map(struct pb_buffer *buf,
    struct fenced_buffer *fenced_buf = fenced_buffer(buf);
    void *map;
 
+   assert(flags & PIPE_BUFFER_USAGE_CPU_READ_WRITE);
    assert(!(flags & ~PIPE_BUFFER_USAGE_CPU_READ_WRITE));
    flags &= PIPE_BUFFER_USAGE_CPU_READ_WRITE;
    
@@ -315,6 +310,101 @@ fenced_buffer_unmap(struct pb_buffer *buf)
 }
 
 
+static enum pipe_error
+fenced_buffer_validate(struct pb_buffer *buf,
+                       struct pb_validate *vl,
+                       unsigned flags)
+{
+   struct fenced_buffer *fenced_buf = fenced_buffer(buf);
+   enum pipe_error ret;
+   
+   if(!vl) {
+      /* invalidate */
+      fenced_buf->vl = NULL;
+      fenced_buf->validation_flags = 0;
+      return PIPE_OK;
+   }
+   
+   assert(flags & PIPE_BUFFER_USAGE_GPU_READ_WRITE);
+   assert(!(flags & ~PIPE_BUFFER_USAGE_GPU_READ_WRITE));
+   flags &= PIPE_BUFFER_USAGE_GPU_READ_WRITE;
+
+   /* Buffer cannot be validated in two different lists */ 
+   if(fenced_buf->vl && fenced_buf->vl != vl)
+      return PIPE_ERROR_RETRY;
+   
+   /* Do not validate if buffer is still mapped */
+   if(fenced_buf->flags & PIPE_BUFFER_USAGE_CPU_READ_WRITE) {
+      /* TODO: wait for the thread that mapped the buffer to unmap it */
+      return PIPE_ERROR_RETRY;
+   }
+
+   /* Allow concurrent GPU reads, but serialize GPU writes */
+   if(fenced_buf->flags & PIPE_BUFFER_USAGE_GPU_READ_WRITE) {
+      if((fenced_buf->flags | flags) & PIPE_BUFFER_USAGE_GPU_WRITE) {
+         _fenced_buffer_finish(fenced_buf);
+      }
+   }
+
+   if(fenced_buf->vl == vl &&
+      (fenced_buf->validation_flags & flags) == flags) {
+      /* Nothing to do -- buffer already validated */
+      return PIPE_OK;
+   }
+
+   /* Final sanity checking */
+   assert(!(fenced_buf->flags & PIPE_BUFFER_USAGE_CPU_READ_WRITE));
+   assert(!(fenced_buf->flags & PIPE_BUFFER_USAGE_GPU_WRITE));
+   assert(!fenced_buf->mapcount);
+   
+   ret = pb_validate(fenced_buf->buffer, vl, flags);
+   if (ret != PIPE_OK)
+      return ret;
+   
+   fenced_buf->vl = vl;
+   fenced_buf->validation_flags |= flags;
+   
+   return PIPE_OK;
+}
+
+
+static void
+fenced_buffer_fence(struct pb_buffer *buf,
+                    struct pipe_fence_handle *fence)
+{
+   struct fenced_buffer *fenced_buf;
+   struct fenced_buffer_list *fenced_list;
+   struct pipe_winsys *winsys;
+
+   fenced_buf = fenced_buffer(buf);
+   fenced_list = fenced_buf->list;
+   winsys = fenced_list->winsys;
+   
+   if(fence == fenced_buf->fence) {
+      /* Nothing to do */
+      return;
+   }
+
+   assert(fenced_buf->vl);
+   assert(fenced_buf->validation_flags);
+   
+   pipe_mutex_lock(fenced_list->mutex);
+   if (fenced_buf->fence)
+      _fenced_buffer_remove(fenced_list, fenced_buf);
+   if (fence) {
+      winsys->fence_reference(winsys, &fenced_buf->fence, fence);
+      fenced_buf->flags |= fenced_buf->validation_flags;
+      _fenced_buffer_add(fenced_buf);
+   }
+   pipe_mutex_unlock(fenced_list->mutex);
+   
+   pb_fence(fenced_buf->buffer, fence);
+
+   fenced_buf->vl = NULL;
+   fenced_buf->validation_flags = 0;
+}
+
+
 static void
 fenced_buffer_get_base_buffer(struct pb_buffer *buf,
                               struct pb_buffer **base_buf,
@@ -325,11 +415,13 @@ fenced_buffer_get_base_buffer(struct pb_buffer *buf,
 }
 
 
-const struct pb_vtbl 
+static const struct pb_vtbl 
 fenced_buffer_vtbl = {
       fenced_buffer_destroy,
       fenced_buffer_map,
       fenced_buffer_unmap,
+      fenced_buffer_validate,
+      fenced_buffer_fence,
       fenced_buffer_get_base_buffer
 };
 
@@ -359,52 +451,6 @@ fenced_buffer_create(struct fenced_buffer_list *fenced_list,
    buf->list = fenced_list;
    
    return &buf->base;
-}
-
-
-void
-buffer_fence(struct pb_buffer *buf,
-             struct pipe_fence_handle *fence)
-{
-   struct fenced_buffer *fenced_buf;
-   struct fenced_buffer_list *fenced_list;
-   struct pipe_winsys *winsys;
-   /* FIXME: receive this as a parameter */
-   unsigned flags = fence ? PIPE_BUFFER_USAGE_GPU_READ_WRITE : 0;
-
-   /* This is a public function, so be extra cautious with the buffer passed, 
-    * as happens frequently to receive null buffers, or pointer to buffers 
-    * other than fenced buffers. */
-   assert(buf);
-   if(!buf)
-      return;
-   assert(buf->vtbl == &fenced_buffer_vtbl);
-   if(buf->vtbl != &fenced_buffer_vtbl)
-      return;
-   
-   fenced_buf = fenced_buffer(buf);
-   fenced_list = fenced_buf->list;
-   winsys = fenced_list->winsys;
-   
-   if(!fence || fence == fenced_buf->fence) {
-      /* Handle the same fence case specially, not only because it is a fast 
-       * path, but mostly to avoid serializing two writes with the same fence, 
-       * as that would bring the hardware down to synchronous operation without
-       * any benefit.
-       */
-      fenced_buf->flags |= flags & PIPE_BUFFER_USAGE_GPU_READ_WRITE;
-      return;
-   }
-   
-   pipe_mutex_lock(fenced_list->mutex);
-   if (fenced_buf->fence)
-      _fenced_buffer_remove(fenced_list, fenced_buf);
-   if (fence) {
-      winsys->fence_reference(winsys, &fenced_buf->fence, fence);
-      fenced_buf->flags |= flags & PIPE_BUFFER_USAGE_GPU_READ_WRITE;
-      _fenced_buffer_add(fenced_buf);
-   }
-   pipe_mutex_unlock(fenced_list->mutex);
 }
 
 
