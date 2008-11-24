@@ -84,6 +84,7 @@ typedef struct slang_fully_specified_type_
    slang_type_precision precision;
    slang_type_variant variant;
    slang_type_centroid centroid;
+   GLint array_len;           /**< -1 if not an array type */
 } slang_fully_specified_type;
 
 extern int
