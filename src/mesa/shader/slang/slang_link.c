@@ -605,6 +605,11 @@ _slang_link(GLcontext *ctx,
       }
    }
 
+   if (MESA_VERBOSE & VERBOSE_GLSL_DUMP) {
+      printf("Varying vars:\n");
+      _mesa_print_parameter_list(shProg->Varying);
+   }
+
    shProg->LinkStatus = (shProg->VertexProgram || shProg->FragmentProgram);
 }
 
