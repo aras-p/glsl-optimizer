@@ -119,6 +119,8 @@ tgsi_default_declaration( void )
    declaration.UsageMask = TGSI_WRITEMASK_XYZW;
    declaration.Interpolate = TGSI_INTERPOLATE_CONSTANT;
    declaration.Semantic = 0;
+   declaration.Centroid = 0;
+   declaration.Invariant = 0;
    declaration.Padding = 0;
    declaration.Extended = 0;
 
