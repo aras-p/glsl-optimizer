@@ -146,7 +146,10 @@ rastpos_point(struct draw_stage *stage, struct prim_header *prim)
    /* update raster pos */
    pos = prim->v[0]->data[0];
    ctx->Current.RasterPos[0] = pos[0];
-   ctx->Current.RasterPos[1] = height - pos[1]; /* invert Y */
+   if (st_fb_orientation(ctx->DrawBuffer) == Y_0_TOP)
+      ctx->Current.RasterPos[1] = height - pos[1]; /* invert Y */
+   else
+      ctx->Current.RasterPos[1] = pos[1];
    ctx->Current.RasterPos[2] = pos[2];
    ctx->Current.RasterPos[3] = pos[3];
 
