@@ -133,6 +133,8 @@ tgsi_build_declaration(
    unsigned usage_mask,
    unsigned interpolate,
    unsigned semantic,
+   unsigned centroid,
+   unsigned invariant,
    struct tgsi_header *header )
 {
    struct tgsi_declaration declaration;
@@ -145,6 +147,8 @@ tgsi_build_declaration(
    declaration.UsageMask = usage_mask;
    declaration.Interpolate = interpolate;
    declaration.Semantic = semantic;
+   declaration.Centroid = centroid;
+   declaration.Invariant = invariant;
 
    header_bodysize_grow( header );
 
@@ -196,6 +200,8 @@ tgsi_build_full_declaration(
       full_decl->Declaration.UsageMask,
       full_decl->Declaration.Interpolate,
       full_decl->Declaration.Semantic,
+      full_decl->Declaration.Centroid,
+      full_decl->Declaration.Invariant,
       header );
 
    if (maxsize <= size)
