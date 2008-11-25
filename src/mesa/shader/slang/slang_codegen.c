@@ -2042,6 +2042,46 @@ _slang_gen_function_call_name(slang_assemble_ctx *A, const char *name,
 }
 
 
+static slang_ir_node *
+_slang_gen_method_call(slang_assemble_ctx *A, slang_operation *oper)
+{
+   slang_atom *a_length = slang_atom_pool_atom(A->atoms, "length");
+   slang_ir_node *n;
+   slang_variable *var;
+
+   /* NOTE: In GLSL 1.20, there's only one kind of method
+    * call: array.length().  Anything else is an error.
+    */
+   if (oper->a_id != a_length) {
+      slang_info_log_error(A->log,
+                           "Undefined method call '%s'", (char *) oper->a_id);
+      return NULL;
+   }
+
+   /* length() takes no arguments */
+   if (oper->num_children > 0) {
+      slang_info_log_error(A->log, "Invalid arguments to length() method");
+      return NULL;
+   }
+
+   /* lookup the object/variable */
+   var = _slang_locate_variable(oper->locals, oper->a_obj, GL_TRUE);
+   if (!var || var->type.specifier.type != SLANG_SPEC_ARRAY) {
+      slang_info_log_error(A->log,
+                           "Undefined object '%s'", (char *) oper->a_obj);
+      return NULL;
+   }
+
+   /* Create a float/literal IR node encoding the array length */
+   n = new_node0(IR_FLOAT);
+   if (n) {
+      n->Value[0] = (float) var->array_len;
+      n->Store = _slang_new_ir_storage(PROGRAM_CONSTANT, -1, 1);
+   }
+   return n;
+}
+
+
 static GLboolean
 _slang_is_constant_cond(const slang_operation *oper, GLboolean *value)
 {
@@ -3534,6 +3574,8 @@ _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper)
    case SLANG_OPER_CALL:
       return _slang_gen_function_call_name(A, (const char *) oper->a_id,
                                            oper, NULL);
+   case SLANG_OPER_METHOD:
+      return _slang_gen_method_call(A, oper);
    case SLANG_OPER_RETURN:
       return _slang_gen_return(A, oper);
    case SLANG_OPER_LABEL:

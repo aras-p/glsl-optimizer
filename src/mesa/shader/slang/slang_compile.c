@@ -163,6 +163,7 @@ typedef struct slang_output_ctx_
    GLboolean allow_precision;
    GLboolean allow_invariant;
    GLboolean allow_centroid;
+   GLboolean allow_array_types;  /* float[] syntax */
 } slang_output_ctx;
 
 /* _slang_compile() */
@@ -344,8 +345,8 @@ static GLboolean
 convert_to_array(slang_parse_ctx * C, slang_variable * var,
                  const slang_type_specifier * sp)
 {
-   /* sized array - mark it as array, copy the specifier to the array element and
-    * parse the expression */
+   /* sized array - mark it as array, copy the specifier to the array element
+    * and parse the expression */
    var->type.specifier.type = SLANG_SPEC_ARRAY;
    var->type.specifier._array = (slang_type_specifier *)
       _slang_alloc(sizeof(slang_type_specifier));
@@ -776,6 +777,36 @@ parse_type_precision(slang_parse_ctx *C,
    }
 }
 
+
+#define TYPE_ARRAY_SIZE      220
+#define TYPE_NO_ARRAY_SIZE   221
+
+
+/*
+ * Parse array size (if present) in something like "uniform float [6] var;".
+ */
+static int
+parse_type_array_size(slang_parse_ctx *C, slang_output_ctx * O,
+                      GLint *size)
+{
+   GLint arr = *C->I++;
+   GLuint sz;
+
+   switch (arr) {
+   case TYPE_ARRAY_SIZE:
+      if (!parse_array_len(C, O, &sz))
+         RETURN0;
+      *size = sz;
+      return 1;
+   case TYPE_NO_ARRAY_SIZE:
+      *size = -1; /* -1 = not an array */
+      return 1;
+   default:
+      assert(0);
+      RETURN0;
+   }
+}
+
 static int
 parse_fully_specified_type(slang_parse_ctx * C, slang_output_ctx * O,
                            slang_fully_specified_type * type)
@@ -793,6 +824,9 @@ parse_fully_specified_type(slang_parse_ctx * C, slang_output_ctx * O,
       RETURN0;
 
    if (!parse_type_specifier(C, O, &type->specifier))
+      RETURN0;
+
+   if (!parse_type_array_size(C, O, &type->array_len))
       RETURN0;
 
    if (!O->allow_invariant && type->variant == SLANG_INVARIANT) {
@@ -836,6 +870,11 @@ parse_fully_specified_type(slang_parse_ctx * C, slang_output_ctx * O,
          slang_info_log_error(C->L, "precision qualifiers not allowed");
          RETURN0;
       }
+   }
+
+   if (!O->allow_array_types && type->array_len >= 0) {
+      slang_info_log_error(C->L, "first-class array types not allowed");
+      RETURN0;
    }
 
    return 1;
@@ -905,6 +944,7 @@ parse_fully_specified_type(slang_parse_ctx * C, slang_output_ctx * O,
 #define OP_POSTINCREMENT 60
 #define OP_POSTDECREMENT 61
 #define OP_PRECISION 62
+#define OP_METHOD 63
 
 
 /**
@@ -986,9 +1026,14 @@ parse_statement(slang_parse_ctx * C, slang_output_ctx * O,
             }
             for (i = first_var; i < O->vars->num_variables; i++) {
                slang_operation *o = &oper->children[i - first_var];
+               slang_variable *var = O->vars->variables[i];
                o->type = SLANG_OPER_VARIABLE_DECL;
                o->locals->outer_scope = O->vars;
-               o->a_id = O->vars->variables[i]->a_name;
+               o->a_id = var->a_name;
+
+               /* new/someday...
+               calculate_var_size(C, O, var);
+               */
 
                if (!legal_identifier(o->a_id)) {
                   slang_info_log_error(C->L, "illegal variable name '%s'",
@@ -1344,6 +1389,35 @@ parse_expression(slang_parse_ctx * C, slang_output_ctx * O,
          op->type = SLANG_OPER_SUBSCRIPT;
          if (!handle_nary_expression(C, op, &ops, &num_ops, 2))
             RETURN0;
+         break;
+      case OP_METHOD:
+         printf("******* begin OP_METHOD\n");
+         op->type = SLANG_OPER_METHOD;
+         op->a_obj = parse_identifier(C);
+         if (op->a_obj == SLANG_ATOM_NULL)
+            RETURN0;
+
+         op->a_id = parse_identifier(C);
+         if (op->a_id == SLANG_ATOM_NULL)
+            RETURN0;
+
+         while (*C->I != OP_END)
+            if (!parse_child_operation(C, O, op, 0))
+               RETURN0;
+         C->I++;
+#if 0
+         /* don't lookup the method (not yet anyway) */
+         if (!C->parsing_builtin
+             && !slang_function_scope_find_by_name(O->funs, op->a_id, 1)) {
+            const char *id;
+
+            id = slang_atom_pool_id(C->atoms, op->a_id);
+            if (!is_constructor_name(id, op->a_id, O->structs)) {
+               slang_info_log_error(C->L, "%s: undeclared function name.", id);
+               RETURN0;
+            }
+         }
+#endif
          break;
       case OP_CALL:
          op->type = SLANG_OPER_CALL;
@@ -1850,6 +1924,16 @@ parse_init_declarator(slang_parse_ctx * C, slang_output_ctx * O,
       RETURN0;
    }
 
+   if (type->array_len >= 0) {
+      /* The type was something like "float[4]" */
+      if (var->array_len != 0) {
+         slang_info_log_error(C->L, "multi-dimensional arrays not allowed");
+         RETURN0;
+      }
+      convert_to_array(C, var, &type->specifier);
+      var->array_len = type->array_len;
+   }
+
    /* allocate global address space for a variable with a known size */
    if (C->global_scope
        && !(var->type.specifier.type == SLANG_SPEC_ARRAY
@@ -2181,6 +2265,8 @@ parse_code_unit(slang_parse_ctx * C, slang_code_unit * unit,
 #endif
    init_default_precision(&o, unit->type);
 
+   /* allow 'float[]' keyword? */
+   o.allow_array_types = (C->version >= 120) ? GL_TRUE : GL_FALSE;
 
    /* parse individual functions and declarations */
    while (*C->I != EXTERNAL_NULL) {
