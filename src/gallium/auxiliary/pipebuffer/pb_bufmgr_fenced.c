@@ -30,7 +30,7 @@
  * \file
  * A buffer manager that wraps buffers in fenced buffers.
  * 
- * \author José Fonseca <jrfonseca@tungstengraphics.dot.com>
+ * \author Jose Fonseca <jrfonseca@tungstengraphics.dot.com>
  */
 
 

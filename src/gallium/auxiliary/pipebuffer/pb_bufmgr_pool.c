@@ -30,7 +30,7 @@
  * \file
  * Batch buffer pool management.
  * 
- * \author José Fonseca <jrfonseca-at-tungstengraphics-dot-com>
+ * \author Jose Fonseca <jrfonseca-at-tungstengraphics-dot-com>
  * \author Thomas Hellström <thomas-at-tungstengraphics-dot-com>
  */
 
@@ -138,6 +138,27 @@ pool_buffer_unmap(struct pb_buffer *buf)
 }
 
 
+static enum pipe_error 
+pool_buffer_validate(struct pb_buffer *buf, 
+                     struct pb_validate *vl,
+                     unsigned flags)
+{
+   struct pool_buffer *pool_buf = pool_buffer(buf);
+   struct pool_pb_manager *pool = pool_buf->mgr;
+   return pb_validate(pool->buffer, vl, flags);
+}
+
+
+static void
+pool_buffer_fence(struct pb_buffer *buf, 
+                  struct pipe_fence_handle *fence)
+{
+   struct pool_buffer *pool_buf = pool_buffer(buf);
+   struct pool_pb_manager *pool = pool_buf->mgr;
+   pb_fence(pool->buffer, fence);
+}
+
+
 static void
 pool_buffer_get_base_buffer(struct pb_buffer *buf,
                             struct pb_buffer **base_buf,
@@ -155,6 +176,8 @@ pool_buffer_vtbl = {
       pool_buffer_destroy,
       pool_buffer_map,
       pool_buffer_unmap,
+      pool_buffer_validate,
+      pool_buffer_fence,
       pool_buffer_get_base_buffer
 };
 

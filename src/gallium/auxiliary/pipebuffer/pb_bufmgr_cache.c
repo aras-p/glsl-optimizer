@@ -29,7 +29,7 @@
  * \file
  * Buffer cache.
  * 
- * \author José Fonseca <jrfonseca-at-tungstengraphics-dot-com>
+ * \author Jose Fonseca <jrfonseca-at-tungstengraphics-dot-com>
  * \author Thomas Hellström <thomas-at-tungstengraphics-dot-com>
  */
 
@@ -183,6 +183,25 @@ pb_cache_buffer_unmap(struct pb_buffer *_buf)
 }
 
 
+static enum pipe_error 
+pb_cache_buffer_validate(struct pb_buffer *_buf, 
+                         struct pb_validate *vl,
+                         unsigned flags)
+{
+   struct pb_cache_buffer *buf = pb_cache_buffer(_buf);
+   return pb_validate(buf->buffer, vl, flags);
+}
+
+
+static void
+pb_cache_buffer_fence(struct pb_buffer *_buf, 
+                      struct pipe_fence_handle *fence)
+{
+   struct pb_cache_buffer *buf = pb_cache_buffer(_buf);
+   pb_fence(buf->buffer, fence);
+}
+
+
 static void
 pb_cache_buffer_get_base_buffer(struct pb_buffer *_buf,
                               struct pb_buffer **base_buf,
@@ -198,6 +217,8 @@ pb_cache_buffer_vtbl = {
       pb_cache_buffer_destroy,
       pb_cache_buffer_map,
       pb_cache_buffer_unmap,
+      pb_cache_buffer_validate,
+      pb_cache_buffer_fence,
       pb_cache_buffer_get_base_buffer
 };
 

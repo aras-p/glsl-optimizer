@@ -43,7 +43,7 @@
  * - the fenced buffer manager, which will delay buffer destruction until the 
  * the moment the card finishing processing it. 
  * 
- * \author José Fonseca <jrfonseca@tungstengraphics.com>
+ * \author Jose Fonseca <jrfonseca@tungstengraphics.com>
  */
 
 #ifndef PB_BUFMGR_H_
@@ -180,6 +180,20 @@ fenced_bufmgr_create(struct pb_manager *provider,
 struct pb_manager *
 pb_alt_manager_create(struct pb_manager *provider1, 
                       struct pb_manager *provider2);
+
+
+/** 
+ * Ondemand buffer manager.
+ * 
+ * Buffers are created in malloc'ed memory (fast and cached), and the constents
+ * is transfered to a buffer from the provider (typically in slow uncached 
+ * memory) when there is an attempt to validate the buffer.
+ * 
+ * Ideal for situations where one does not know before hand whether a given
+ * buffer will effectively be used by the hardware or not. 
+ */
+struct pb_manager *
+pb_ondemand_manager_create(struct pb_manager *provider); 
 
 
 /** 

@@ -58,7 +58,13 @@ struct pb_validate;
 
 enum pipe_error
 pb_validate_add_buffer(struct pb_validate *vl,
-                       struct pb_buffer *buf);
+                       struct pb_buffer *buf,
+                       unsigned flags);
+
+enum pipe_error
+pb_validate_foreach(struct pb_validate *vl,
+                    enum pipe_error (*callback)(struct pb_buffer *buf, void *data),
+                    void *data);
 
 /**
  * Validate all buffers for hardware access.
@@ -71,7 +77,7 @@ pb_validate_validate(struct pb_validate *vl);
 /**
  * Fence all buffers and clear the list.
  * 
- * Should be called right before issuing commands to the hardware.
+ * Should be called right after issuing commands to the hardware.
  */
 void
 pb_validate_fence(struct pb_validate *vl,

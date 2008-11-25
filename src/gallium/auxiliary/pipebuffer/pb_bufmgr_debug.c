@@ -29,7 +29,7 @@
  * \file
  * Debug buffer manager to detect buffer under- and overflows.
  * 
- * \author José Fonseca <jrfonseca@tungstengraphics.com>
+ * \author Jose Fonseca <jrfonseca@tungstengraphics.com>
  */
 
 
@@ -255,11 +255,35 @@ pb_debug_buffer_get_base_buffer(struct pb_buffer *_buf,
 }
 
 
+static enum pipe_error 
+pb_debug_buffer_validate(struct pb_buffer *_buf, 
+                         struct pb_validate *vl,
+                         unsigned flags)
+{
+   struct pb_debug_buffer *buf = pb_debug_buffer(_buf);
+   
+   pb_debug_buffer_check(buf);
+
+   return pb_validate(buf->buffer, vl, flags);
+}
+
+
+static void
+pb_debug_buffer_fence(struct pb_buffer *_buf, 
+                      struct pipe_fence_handle *fence)
+{
+   struct pb_debug_buffer *buf = pb_debug_buffer(_buf);
+   pb_fence(buf->buffer, fence);
+}
+
+
 const struct pb_vtbl 
 pb_debug_buffer_vtbl = {
       pb_debug_buffer_destroy,
       pb_debug_buffer_map,
       pb_debug_buffer_unmap,
+      pb_debug_buffer_validate,
+      pb_debug_buffer_fence,
       pb_debug_buffer_get_base_buffer
 };
 

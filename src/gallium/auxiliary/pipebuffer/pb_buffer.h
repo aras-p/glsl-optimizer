@@ -37,7 +37,7 @@
  * There is no obligation of a winsys driver to use this library. And a pipe
  * driver should be completly agnostic about it.
  * 
- * \author Jos� Fonseca <jrfonseca@tungstengraphics.com>
+ * \author Jose Fonseca <jrfonseca@tungstengraphics.com>
  */
 
 #ifndef PB_BUFFER_H_
@@ -46,6 +46,7 @@
 
 #include "pipe/p_compiler.h"
 #include "pipe/p_debug.h"
+#include "pipe/p_error.h"
 #include "pipe/p_state.h"
 #include "pipe/p_inlines.h"
 
@@ -56,6 +57,8 @@ extern "C" {
 
 
 struct pb_vtbl;
+struct pb_validate;
+
 
 /**
  * Buffer description.
@@ -104,6 +107,13 @@ struct pb_vtbl
    
    void (*unmap)( struct pb_buffer *buf );
 
+   enum pipe_error (*validate)( struct pb_buffer *buf, 
+                                struct pb_validate *vl,
+                                unsigned flags );
+
+   void (*fence)( struct pb_buffer *buf, 
+                  struct pipe_fence_handle *fence );
+
    /**
     * Get the base buffer and the offset.
     * 
@@ -118,6 +128,7 @@ struct pb_vtbl
    void (*get_base_buffer)( struct pb_buffer *buf,
                             struct pb_buffer **base_buf,
                             unsigned *offset );
+   
 };
 
 
@@ -173,13 +184,33 @@ pb_get_base_buffer( struct pb_buffer *buf,
       offset = 0;
       return;
    }
+   assert(buf->vtbl->get_base_buffer);
    buf->vtbl->get_base_buffer(buf, base_buf, offset);
 }
 
 
-/**
- * Don't call this directly. Use pb_reference instead.
- */
+static INLINE enum pipe_error 
+pb_validate(struct pb_buffer *buf, struct pb_validate *vl, unsigned flags)
+{
+   assert(buf);
+   if(!buf)
+      return PIPE_ERROR;
+   assert(buf->vtbl->validate);
+   return buf->vtbl->validate(buf, vl, flags);
+}
+
+
+static INLINE void 
+pb_fence(struct pb_buffer *buf, struct pipe_fence_handle *fence)
+{
+   assert(buf);
+   if(!buf)
+      return;
+   assert(buf->vtbl->fence);
+   buf->vtbl->fence(buf, fence);
+}
+
+
 static INLINE void 
 pb_destroy(struct pb_buffer *buf)
 {
