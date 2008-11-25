@@ -944,6 +944,7 @@ parse_fully_specified_type(slang_parse_ctx * C, slang_output_ctx * O,
 #define OP_POSTINCREMENT 60
 #define OP_POSTDECREMENT 61
 #define OP_PRECISION 62
+#define OP_METHOD 63
 
 
 /**
@@ -1388,6 +1389,35 @@ parse_expression(slang_parse_ctx * C, slang_output_ctx * O,
          op->type = SLANG_OPER_SUBSCRIPT;
          if (!handle_nary_expression(C, op, &ops, &num_ops, 2))
             RETURN0;
+         break;
+      case OP_METHOD:
+         printf("******* begin OP_METHOD\n");
+         op->type = SLANG_OPER_METHOD;
+         op->a_obj = parse_identifier(C);
+         if (op->a_obj == SLANG_ATOM_NULL)
+            RETURN0;
+
+         op->a_id = parse_identifier(C);
+         if (op->a_id == SLANG_ATOM_NULL)
+            RETURN0;
+
+         while (*C->I != OP_END)
+            if (!parse_child_operation(C, O, op, 0))
+               RETURN0;
+         C->I++;
+#if 0
+         /* don't lookup the method (not yet anyway) */
+         if (!C->parsing_builtin
+             && !slang_function_scope_find_by_name(O->funs, op->a_id, 1)) {
+            const char *id;
+
+            id = slang_atom_pool_id(C->atoms, op->a_id);
+            if (!is_constructor_name(id, op->a_id, O->structs)) {
+               slang_info_log_error(C->L, "%s: undeclared function name.", id);
+               RETURN0;
+            }
+         }
+#endif
          break;
       case OP_CALL:
          op->type = SLANG_OPER_CALL;

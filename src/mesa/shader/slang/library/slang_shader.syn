@@ -251,6 +251,7 @@
 .emtcode OP_POSTINCREMENT                           60
 .emtcode OP_POSTDECREMENT                           61
 .emtcode OP_PRECISION                               62
+.emtcode OP_METHOD                                  63
 
 /* parameter qualifier */
 .emtcode PARAM_QUALIFIER_IN                         0
@@ -342,6 +343,25 @@ integer_expression
  * <function_call> ::= <function_call_generic>
  */
 function_call
+    function_call_or_method;
+
+/*
+ * <function_call_or_method> ::= <regular_function_call>
+ *                             | <postfix_expression> "." <function_call_generic>
+ */
+function_call_or_method
+    regular_function_call .or method_call;
+
+/*
+ * <method_call> ::= <identifier> "." <function_call_generic>
+ */
+method_call
+    identifier .emit OP_METHOD .and dot .and function_call_generic .and .true .emit OP_END;
+
+/*
+ * <regular_function_call> ::= <function_call_generic>
+ */
+regular_function_call
     function_call_generic .emit OP_CALL .and .true .emit OP_END;
 
 /*
