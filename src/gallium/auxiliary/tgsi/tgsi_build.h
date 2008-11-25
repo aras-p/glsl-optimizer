@@ -71,6 +71,8 @@ tgsi_build_declaration(
    unsigned usage_mask,
    unsigned interpolate,
    unsigned semantic,
+   unsigned centroid,
+   unsigned invariant,
    struct tgsi_header *header );
 
 struct tgsi_full_declaration
