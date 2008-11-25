@@ -653,6 +653,11 @@ slang_print_tree(const slang_operation *op, int indent)
       printf(")\n");
       break;
 
+   case SLANG_OPER_METHOD:
+      spaces(indent);
+      printf("METHOD CALL %s.%s\n", (char *) op->a_obj, (char *) op->a_id);
+      break;
+
    case SLANG_OPER_FIELD:
       spaces(indent);
       printf("FIELD %s of\n", (char*) op->a_id);

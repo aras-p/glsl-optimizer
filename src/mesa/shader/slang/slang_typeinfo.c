@@ -630,6 +630,12 @@ _slang_typeof_operation_(slang_operation * op,
          }
       }
       break;
+   case SLANG_OPER_METHOD:
+      /* at this time, GLSL 1.20 only has one method: array.length()
+       * which returns an integer.
+       */
+      ti->spec.type = SLANG_SPEC_INT;
+      break;
    case SLANG_OPER_FIELD:
       {
          slang_typeinfo _ti;
