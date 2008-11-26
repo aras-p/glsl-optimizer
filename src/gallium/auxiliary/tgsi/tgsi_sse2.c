@@ -855,12 +855,10 @@ rnd4f(
 static void
 emit_rnd(
    struct x86_function *func,
-   unsigned xmm_save, 
    unsigned xmm_dst )
 {
    emit_func_call_dst(
       func,
-      xmm_save,
       xmm_dst,
       rnd4f );
 }
@@ -937,12 +935,10 @@ sgn4f(
 static void
 emit_sgn(
    struct x86_function *func,
-   unsigned xmm_save, 
    unsigned xmm_dst )
 {
    emit_func_call_dst(
       func,
-      xmm_save,
       xmm_dst,
       sgn4f );
 }
@@ -1687,7 +1683,7 @@ emit_instruction(
    case TGSI_OPCODE_ROUND:
       FOR_EACH_DST0_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH( func, *inst, 0, 0, chan_index );
-         emit_rnd( func, 0, 0 );
+         emit_rnd( func, 0 );
          STORE( func, *inst, 0, 0, chan_index );
       }
       break;
@@ -1957,7 +1953,7 @@ emit_instruction(
    /* TGSI_OPCODE_SGN */
       FOR_EACH_DST0_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH( func, *inst, 0, 0, chan_index );
-         emit_sgn( func, 0, 0 );
+         emit_sgn( func, 0 );
          STORE( func, *inst, 0, 0, chan_index );
       }
       break;
