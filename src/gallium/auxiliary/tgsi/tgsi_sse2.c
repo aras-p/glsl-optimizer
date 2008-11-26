@@ -842,6 +842,29 @@ emit_rcp (
       make_xmm( xmm_src ) );
 }
 
+static void PIPE_CDECL
+rnd4f(
+   float *store )
+{
+   store[0] = floorf( store[0] + 0.5f );
+   store[1] = floorf( store[1] + 0.5f );
+   store[2] = floorf( store[2] + 0.5f );
+   store[3] = floorf( store[3] + 0.5f );
+}
+
+static void
+emit_rnd(
+   struct x86_function *func,
+   unsigned xmm_save, 
+   unsigned xmm_dst )
+{
+   emit_func_call_dst(
+      func,
+      xmm_save,
+      xmm_dst,
+      rnd4f );
+}
+
 static void
 emit_rsqrt(
    struct x86_function *func,
@@ -1662,7 +1685,11 @@ emit_instruction(
       break;
 
    case TGSI_OPCODE_ROUND:
-      return 0;
+      FOR_EACH_DST0_ENABLED_CHANNEL( *inst, chan_index ) {
+         FETCH( func, *inst, 0, 0, chan_index );
+         emit_rnd( func, 0, 0 );
+         STORE( func, *inst, 0, 0, chan_index );
+      }
       break;
 
    case TGSI_OPCODE_EXPBASE2:
