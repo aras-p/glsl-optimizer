@@ -1505,6 +1505,9 @@ WMesaContext WMesaCreateContext(HDC hDC,
     ctx = &c->gl_ctx;
     _mesa_initialize_context(ctx, visual, NULL, &functions, (void *)c);
 
+    /* visual no longer needed - it was copied by _mesa_initialize_context() */
+    _mesa_destroy_visual(visual);
+
     _mesa_enable_sw_extensions(ctx);
     _mesa_enable_1_3_extensions(ctx);
     _mesa_enable_1_4_extensions(ctx);
