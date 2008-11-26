@@ -219,11 +219,6 @@ combined_bitmap_fragment_program(GLcontext *ctx)
       st_translate_fragment_program(st, stfp->bitmap_program, NULL);
    }
 
-   /* Ideally we'd have updated the pipe constants during the normal
-    * st/atom mechanism.  But we can't since this is specific to glBitmap.
-    */
-   st_upload_constants(st, stfp->Base.Base.Parameters, PIPE_SHADER_FRAGMENT);
-
    return stfp->bitmap_program;
 }
 
@@ -442,6 +437,22 @@ draw_bitmap_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
 
    stfp = combined_bitmap_fragment_program(ctx);
 
+   /* As an optimization, Mesa's fragment programs will sometimes get the
+    * primary color from a statevar/constant rather than a varying variable.
+    * when that's the case, we need to ensure that we use the 'color'
+    * parameter and not the current attribute color (which may have changed
+    * through glRasterPos and state validation.
+    * So, we force the proper color here.  Not elegant, but it works.
+    */
+   {
+      GLfloat colorSave[4];
+      COPY_4V(colorSave, ctx->Current.Attrib[VERT_ATTRIB_COLOR0]);
+      COPY_4V(ctx->Current.Attrib[VERT_ATTRIB_COLOR0], color);
+      st_upload_constants(st, stfp->Base.Base.Parameters, PIPE_SHADER_FRAGMENT);
+      COPY_4V(ctx->Current.Attrib[VERT_ATTRIB_COLOR0], colorSave);
+   }
+
+
    /* limit checks */
    /* XXX if the bitmap is larger than the max texture size, break
     * it up into chunks.
@@ -476,7 +487,8 @@ draw_bitmap_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
          samplers[i] = &st->state.samplers[i];
       }
       samplers[stfp->bitmap_sampler] = &st->bitmap.sampler;
-      cso_set_samplers(cso, num, (const struct pipe_sampler_state **) samplers);   }
+      cso_set_samplers(cso, num, (const struct pipe_sampler_state **) samplers);
+   }
 
    /* user textures, plus the bitmap texture */
    {
