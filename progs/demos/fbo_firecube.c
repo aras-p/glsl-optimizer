@@ -154,6 +154,7 @@ static GLuint TexObj;
 static GLuint MyFB;
 static GLuint DepthRB;
 static GLboolean WireFrame = GL_FALSE;
+static GLboolean Anim = GL_TRUE;
 static GLint texType = 0;
 
 static GLint T0 = 0;
@@ -162,6 +163,11 @@ static GLint Win = 0;
 
 static GLfloat ViewRotX = 20.0, ViewRotY = 30.0, ViewRotZ = 0.0;
 static GLfloat CubeRot = 0.0;
+
+
+static void
+idle(void);
+
 
 static void
 CheckError(int line)
@@ -561,7 +567,7 @@ drawfire(void)
    printstring(GLUT_BITMAP_HELVETICA_18, texNames[texType]);
    glColor3f(1.0, 0.0, 0.0);
    glRasterPos2i(10, 470);
-   printstring(GLUT_BITMAP_HELVETICA_10,
+   printstring(GLUT_BITMAP_HELVETICA_10, 
 	       "Fire V1.5 Written by David Bucciarelli (tech.hmw@plus.it)");
 
    if (help)
@@ -605,7 +611,10 @@ key(unsigned char key, int x, int y)
       cleanup();
       exit(0);
       break;
-
+   case ' ':
+      Anim = !Anim;
+      glutIdleFunc(Anim ? idle : NULL);
+      break;
    case 'a':
       v += 0.0005;
       break;
@@ -1013,7 +1022,7 @@ static void
 visible(int vis)
 {
    if (vis == GLUT_VISIBLE)
-      glutIdleFunc(idle);
+      glutIdleFunc(Anim ? idle : NULL);
    else
       glutIdleFunc(NULL);
 }
