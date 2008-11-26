@@ -1084,6 +1084,29 @@ emit_setsign(
 }
 
 static void PIPE_CDECL
+sgn4f(
+   float *store )
+{
+   store[0] = store[0] < 0.0f ? -1.0f : store[0] > 0.0f ? 1.0f : 0.0f;
+   store[1] = store[1] < 0.0f ? -1.0f : store[1] > 0.0f ? 1.0f : 0.0f;
+   store[2] = store[2] < 0.0f ? -1.0f : store[2] > 0.0f ? 1.0f : 0.0f;
+   store[3] = store[3] < 0.0f ? -1.0f : store[3] > 0.0f ? 1.0f : 0.0f;
+}
+
+static void
+emit_sgn(
+   struct x86_function *func,
+   unsigned xmm_save, 
+   unsigned xmm_dst )
+{
+   emit_func_call_dst(
+      func,
+      xmm_save,
+      xmm_dst,
+      sgn4f );
+}
+
+static void PIPE_CDECL
 sin4f(
    float *store )
 {
@@ -2102,7 +2125,12 @@ emit_instruction(
       break;
 
    case TGSI_OPCODE_SSG:
-      return 0;
+   /* TGSI_OPCODE_SGN */
+      FOR_EACH_DST0_ENABLED_CHANNEL( *inst, chan_index ) {
+         FETCH( func, *inst, 0, 0, chan_index );
+         emit_sgn( func, 0, 0 );
+         STORE( func, *inst, 0, 0, chan_index );
+      }
       break;
 
    case TGSI_OPCODE_CMP:
