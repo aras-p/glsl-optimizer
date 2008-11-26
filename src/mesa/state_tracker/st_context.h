@@ -102,7 +102,7 @@ struct st_context
    } state;
 
    struct {
-      struct st_tracked_state tracked_state[2];
+      struct st_tracked_state tracked_state[PIPE_SHADER_TYPES];
    } constants;
 
    /* XXX unused: */
