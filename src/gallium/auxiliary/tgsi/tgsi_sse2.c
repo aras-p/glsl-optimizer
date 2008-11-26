@@ -1878,6 +1878,7 @@ emit_instruction(
       return 0;
       break;
 
+#if 0
    case TGSI_OPCODE_ARR:
       FOR_EACH_DST0_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH( func, *inst, 0, 0, chan_index );
@@ -1886,7 +1887,7 @@ emit_instruction(
          STORE( func, *inst, 0, 0, chan_index );
       }
       break;
-
+#endif
    case TGSI_OPCODE_BRA:
       return 0;
       break;
