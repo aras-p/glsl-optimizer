@@ -56,11 +56,13 @@ wmesa_free_framebuffer(HDC hdc)
 	prev = pwfb;
     }
     if (pwfb) {
+        struct gl_framebuffer *fb;
 	if (pwfb == FirstFramebuffer)
 	    FirstFramebuffer = pwfb->next;
 	else
 	    prev->next = pwfb->next;
-        _mesa_unreference_framebuffer(&pwfb->Base);
+        fb = &pwfb->Base;
+        _mesa_unreference_framebuffer(&fb); 
     }
 }
 
