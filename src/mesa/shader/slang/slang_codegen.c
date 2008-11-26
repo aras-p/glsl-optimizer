@@ -2028,6 +2028,21 @@ _slang_gen_function_call_name(slang_assemble_ctx *A, const char *name,
       return NULL;
    }
 
+   /* type checking to be sure function's return type matches 'dest' type */
+   if (dest) {
+      slang_typeinfo t0;
+
+      slang_typeinfo_construct(&t0);
+      _slang_typeof_operation(A, dest, &t0);
+
+      if (!slang_type_specifier_equal(&t0.spec, &fun->header.type.specifier)) {
+         slang_info_log_error(A->log,
+                              "Incompatible type returned by call to '%s'",
+                              name);
+         return NULL;
+      }
+   }
+
    n = _slang_gen_function_call(A, fun, oper, dest);
 
    if (n && !n->Store && !dest
