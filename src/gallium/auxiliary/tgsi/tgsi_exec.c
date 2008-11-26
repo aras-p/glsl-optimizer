@@ -840,6 +840,17 @@ micro_rnd(
 }
 
 static void
+micro_sgn(
+   union tgsi_exec_channel *dst,
+   const union tgsi_exec_channel *src )
+{
+   dst->f[0] = src->f[0] < 0.0f ? -1.0f : src->f[0] > 0.0f ? 1.0f : 0.0f;
+   dst->f[1] = src->f[1] < 0.0f ? -1.0f : src->f[1] > 0.0f ? 1.0f : 0.0f;
+   dst->f[2] = src->f[2] < 0.0f ? -1.0f : src->f[2] > 0.0f ? 1.0f : 0.0f;
+   dst->f[3] = src->f[3] < 0.0f ? -1.0f : src->f[3] > 0.0f ? 1.0f : 0.0f;
+}
+
+static void
 micro_shl(
    union tgsi_exec_channel *dst,
    const union tgsi_exec_channel *src0,
@@ -2423,7 +2434,12 @@ exec_instruction(
       break;
 
    case TGSI_OPCODE_SSG:
-      assert (0);
+   /* TGSI_OPCODE_SGN */
+      FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
+         FETCH( &r[0], 0, chan_index );
+         micro_sgn( &r[0], &r[0] );
+         STORE( &r[0], 0, chan_index );
+      }
       break;
 
    case TGSI_OPCODE_CMP:
