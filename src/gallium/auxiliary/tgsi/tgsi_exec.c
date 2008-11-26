@@ -2124,6 +2124,7 @@ exec_instruction(
       break;
 
    case TGSI_OPCODE_ROUND:
+   case TGSI_OPCODE_ARR:
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH( &r[0], 0, chan_index );
          micro_rnd( &r[0], &r[0] );
@@ -2421,10 +2422,6 @@ exec_instruction(
       break;
 
    case TGSI_OPCODE_ARA:
-      assert (0);
-      break;
-
-   case TGSI_OPCODE_ARR:
       assert (0);
       break;
 
