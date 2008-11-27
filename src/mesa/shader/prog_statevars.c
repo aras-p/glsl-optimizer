@@ -780,7 +780,6 @@ append_token(char *dst, gl_state_index k)
       append(dst, "ShadowAmbient");
       break;
    default:
-      assert(0);
       ;
    }
 }
