@@ -581,6 +581,63 @@ static GLboolean
 getFBConfigs(Display * dpy, __GLXdisplayPrivate * priv, int screen)
 {
    __GLXscreenConfigs *psc;
+#ifdef USE_XCB
+   xcb_connection_t* c = XGetXCBConnection(dpy);
+   xcb_glx_get_fb_configs_reply_t* reply_fb = NULL;
+   xcb_glx_get_fb_configs_sgix_reply_t* reply_sgix = NULL;
+   uint32_t num_fb_configs;
+   uint32_t num_properties;
+   uint32_t* props;
+
+   psc = priv->screenConfigs + screen;
+   psc->serverGLXexts = __glXQueryServerString(dpy, priv->majorOpcode,
+                                               screen, GLX_EXTENSIONS);
+   psc->configs = NULL;
+
+   if (atof(priv->serverGLXversion) >= 1.3) {
+      reply_fb = xcb_glx_get_fb_configs_reply(c,
+                                              xcb_glx_get_fb_configs(c,
+                                                                     screen),
+                                              NULL);
+      if (!reply_fb)
+         goto out;
+
+      num_fb_configs = reply_fb->num_fb_configs;
+      num_properties = reply_fb->num_properties * 2;
+      props = xcb_glx_get_fb_configs_property_list(reply_fb);
+   } else if (strstr(psc->serverGLXexts, "GLX_SGIX_fbconfig") != NULL) {
+      reply_sgix = xcb_glx_get_fb_configs_sgix_reply(
+         c,
+         xcb_glx_get_fb_configs_sgix(c,
+                                     65540, /* X_GLXvop_GetFBConfigsSGIX */
+                                     0,
+                                     screen),
+         NULL);
+
+      if (!reply_sgix)
+         goto out;
+
+      num_fb_configs = reply_sgix->num_fb_configs;
+      num_properties = reply_sgix->num_properties * 2;
+      props = xcb_glx_get_fb_configs_sgix_property_list(reply_sgix);
+   } else
+      goto out;
+
+   psc->configs = createConfigsFromProperties(props,
+                                              num_fb_configs,
+                                              num_properties,
+                                              screen,
+                                              GL_TRUE);
+
+   if (reply_fb)
+      free(reply_fb);
+
+   if (reply_sgix)
+      free(reply_sgix);
+
+out:
+   return psc->configs != NULL;
+#else /* USE_XCB */
    xGLXGetFBConfigsReq *fb_req;
    xGLXGetFBConfigsSGIXReq *sgi_req;
    xGLXVendorPrivateWithReplyReq *vpreq;
@@ -623,6 +680,7 @@ getFBConfigs(Display * dpy, __GLXdisplayPrivate * priv, int screen)
  out:
    UnlockDisplay(dpy);
    return psc->configs != NULL;
+#endif /* USE_XCB */
 }
 
 /*
