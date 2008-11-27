@@ -465,14 +465,8 @@ __glXInitializeVisualConfigFromTags(__GLcontextModes * config, int count,
 }
 
 static __GLcontextModes *
-createConfigsFromProperties(
-#ifdef USE_XCB
-   uint32_t* properties,
-#else
-   Display *dpy,
-#endif
-   int nvisuals, int nprops,
-   int screen, GLboolean tagged_only)
+createConfigsFromProperties(Display * dpy, int nvisuals, int nprops,
+                            int screen, GLboolean tagged_only)
 {
    INT32 buf[__GLX_TOTAL_CONFIG], *props;
    unsigned prop_size;
@@ -502,11 +496,7 @@ createConfigsFromProperties(
    /* Read each config structure and convert it into our format */
    m = modes;
    for (i = 0; i < nvisuals; i++) {
-#ifdef USE_XCB
-      memcpy(props, &properties[i*nprops], prop_size);
-#else
       _XRead(dpy, (char *) props, prop_size);
-#endif
       /* Older X servers don't send this so we default it here. */
       m->drawableType = GLX_WINDOW_BIT;
       __glXInitializeVisualConfigFromTags(m, nprops, props,
@@ -524,34 +514,8 @@ createConfigsFromProperties(
 static GLboolean
 getVisualConfigs(Display * dpy, __GLXdisplayPrivate * priv, int screen)
 {
-   __GLXscreenConfigs *psc;
-#ifdef USE_XCB
-   xcb_connection_t* c = XGetXCBConnection(dpy);
-   xcb_glx_get_visual_configs_reply_t* reply = NULL;
-   uint32_t* props;
-
-   psc = priv->screenConfigs + screen;
-   psc->visuals = NULL;
-
-   reply = xcb_glx_get_visual_configs_reply(c,
-                                            xcb_glx_get_visual_configs(c,
-                                                                       screen),
-                                            NULL);
-   if(!reply)
-      goto out;
-
-   props = xcb_glx_get_visual_configs_property_list(reply);
-   psc->visuals = createConfigsFromProperties(props,
-                                              reply->num_visuals,
-                                              reply->num_properties,
-                                              screen,
-                                              GL_FALSE);
-   free(reply);
-
-out:
-   return psc->visuals != NULL;
-#else /* USE_XCB */
    xGLXGetVisualConfigsReq *req;
+   __GLXscreenConfigs *psc;
    xGLXGetVisualConfigsReply reply;
 
    LockDisplay(dpy);
@@ -574,78 +538,19 @@ out:
  out:
    UnlockDisplay(dpy);
    return psc->visuals != NULL;
-#endif /* USE_XCB */
 }
 
 static GLboolean
 getFBConfigs(Display * dpy, __GLXdisplayPrivate * priv, int screen)
 {
-   __GLXscreenConfigs *psc;
-#ifdef USE_XCB
-   xcb_connection_t* c = XGetXCBConnection(dpy);
-   xcb_glx_get_fb_configs_reply_t* reply_fb = NULL;
-   xcb_glx_get_fb_configs_sgix_reply_t* reply_sgix = NULL;
-   uint32_t num_fb_configs;
-   uint32_t num_properties;
-   uint32_t* props;
-
-   psc = priv->screenConfigs + screen;
-   psc->serverGLXexts = __glXQueryServerString(dpy, priv->majorOpcode,
-                                               screen, GLX_EXTENSIONS);
-   psc->configs = NULL;
-
-   if (atof(priv->serverGLXversion) >= 1.3) {
-      reply_fb = xcb_glx_get_fb_configs_reply(c,
-                                              xcb_glx_get_fb_configs(c,
-                                                                     screen),
-                                              NULL);
-      if (!reply_fb)
-         goto out;
-
-      num_fb_configs = reply_fb->num_fb_configs;
-      num_properties = reply_fb->num_properties * 2;
-      props = xcb_glx_get_fb_configs_property_list(reply_fb);
-   } else if (strstr(psc->serverGLXexts, "GLX_SGIX_fbconfig") != NULL) {
-      reply_sgix = xcb_glx_get_fb_configs_sgix_reply(
-         c,
-         xcb_glx_get_fb_configs_sgix(c,
-                                     65540, /* X_GLXvop_GetFBConfigsSGIX */
-                                     0,
-                                     screen),
-         NULL);
-
-      if (!reply_sgix)
-         goto out;
-
-      num_fb_configs = reply_sgix->num_fb_configs;
-      num_properties = reply_sgix->num_properties * 2;
-      props = xcb_glx_get_fb_configs_sgix_property_list(reply_sgix);
-   } else
-      goto out;
-
-   psc->configs = createConfigsFromProperties(props,
-                                              num_fb_configs,
-                                              num_properties,
-                                              screen,
-                                              GL_TRUE);
-
-   if (reply_fb)
-      free(reply_fb);
-
-   if (reply_sgix)
-      free(reply_sgix);
-
-out:
-   return psc->configs != NULL;
-#else /* USE_XCB */
    xGLXGetFBConfigsReq *fb_req;
    xGLXGetFBConfigsSGIXReq *sgi_req;
    xGLXVendorPrivateWithReplyReq *vpreq;
    xGLXGetFBConfigsReply reply;
+   __GLXscreenConfigs *psc;
 
    psc = priv->screenConfigs + screen;
-   psc->serverGLXexts = __glXQueryServerString(dpy, priv->majorOpcode,
-                                               screen, GLX_EXTENSIONS);
+   psc->serverGLXexts = __glXQueryServerString(dpy, priv->majorOpcode, screen, GLX_EXTENSIONS);
 
    LockDisplay(dpy);
 
@@ -680,7 +585,6 @@ out:
  out:
    UnlockDisplay(dpy);
    return psc->configs != NULL;
-#endif /* USE_XCB */
 }
 
 /*
@@ -704,8 +608,7 @@ AllocAndFetchScreenConfigs(Display * dpy, __GLXdisplayPrivate * priv)
    memset(psc, 0, screens * sizeof(__GLXscreenConfigs));
    priv->screenConfigs = psc;
 
-   priv->serverGLXversion = __glXQueryServerString(dpy, priv->majorOpcode,
-                                                   0, GLX_VERSION);
+   priv->serverGLXversion = __glXQueryServerString(dpy, priv->majorOpcode, 0, GLX_VERSION);
    if (priv->serverGLXversion == NULL) {
       FreeScreenConfigs(priv);
       return GL_FALSE;
