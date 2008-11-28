@@ -133,7 +133,6 @@ struct brw_context;
 #define BRW_NEW_PSP                     0x800
 #define BRW_NEW_METAOPS                 0x1000
 #define BRW_NEW_FENCE                   0x2000
-#define BRW_NEW_LOCK                    0x4000
 #define BRW_NEW_INDICES			0x8000
 #define BRW_NEW_VERTICES		0x10000
 /**

@@ -280,8 +280,7 @@ const struct brw_tracked_state brw_wm_unit = {
 	       _NEW_COLOR),
 
       .brw = (BRW_NEW_FRAGMENT_PROGRAM | 
-	      BRW_NEW_CURBE_OFFSETS |
-	      BRW_NEW_LOCK),
+	      BRW_NEW_CURBE_OFFSETS),
 
       .cache = (CACHE_NEW_SURFACE | 
 		CACHE_NEW_WM_PROG | 
