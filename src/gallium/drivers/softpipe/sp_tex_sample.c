@@ -58,7 +58,11 @@
 /**
  * Linear interpolation macro
  */
-#define LERP(T, A, B)  ( (A) + (T) * ((B) - (A)) )
+static INLINE float
+lerp(float a, float v0, float v1)
+{
+   return v0 + a * (v1 - v0);
+}
 
 
 /**
@@ -73,10 +77,25 @@ static INLINE float
 lerp_2d(float a, float b,
         float v00, float v10, float v01, float v11)
 {
-   const float temp0 = LERP(a, v00, v10);
-   const float temp1 = LERP(a, v01, v11);
-   return LERP(b, temp0, temp1);
+   const float temp0 = lerp(a, v00, v10);
+   const float temp1 = lerp(a, v01, v11);
+   return lerp(b, temp0, temp1);
 }
+
+
+/**
+ * As above, but 3D interpolation of 8 values.
+ */
+static INLINE float
+lerp_3d(float a, float b, float c,
+        float v000, float v100, float v010, float v110,
+        float v001, float v101, float v011, float v111)
+{
+   const float temp0 = lerp_2d(a, b, v000, v100, v010, v110);
+   const float temp1 = lerp_2d(a, b, v001, v101, v011, v111);
+   return lerp(c, temp0, temp1);
+}
+
 
 
 /**
@@ -87,250 +106,275 @@ lerp_2d(float a, float b,
 
 
 /**
- * Apply texture coord wrapping mode and return integer texture index.
+ * Apply texture coord wrapping mode and return integer texture indexes
+ * for a vector of four texcoords (S or T or P).
  * \param wrapMode  PIPE_TEX_WRAP_x
- * \param s  the texcoord
+ * \param s  the incoming texcoords
  * \param size  the texture image size
+ * \param icoord  returns the integer texcoords
  * \return  integer texture index
  */
-static INLINE int
-nearest_texcoord(unsigned wrapMode, float s, unsigned size)
+static INLINE void
+nearest_texcoord_4(unsigned wrapMode, const float s[4], unsigned size,
+                   int icoord[4])
 {
-   int i;
+   uint ch;
    switch (wrapMode) {
    case PIPE_TEX_WRAP_REPEAT:
       /* s limited to [0,1) */
       /* i limited to [0,size-1] */
-      i = util_ifloor(s * size);
-      i = REMAINDER(i, size);
-      return i;
+      for (ch = 0; ch < 4; ch++) {
+         int i = util_ifloor(s[ch] * size);
+         icoord[ch] = REMAINDER(i, size);
+      }
+      return;
    case PIPE_TEX_WRAP_CLAMP:
       /* s limited to [0,1] */
       /* i limited to [0,size-1] */
-      if (s <= 0.0F)
-         i = 0;
-      else if (s >= 1.0F)
-         i = size - 1;
-      else
-         i = util_ifloor(s * size);
-      return i;
+      for (ch = 0; ch < 4; ch++) {
+         if (s[ch] <= 0.0F)
+            icoord[ch] = 0;
+         else if (s[ch] >= 1.0F)
+            icoord[ch] = size - 1;
+         else
+            icoord[ch] = util_ifloor(s[ch] * size);
+      }
+      return;
    case PIPE_TEX_WRAP_CLAMP_TO_EDGE:
       {
          /* s limited to [min,max] */
          /* i limited to [0, size-1] */
          const float min = 1.0F / (2.0F * size);
          const float max = 1.0F - min;
-         if (s < min)
-            i = 0;
-         else if (s > max)
-            i = size - 1;
-         else
-            i = util_ifloor(s * size);
+         for (ch = 0; ch < 4; ch++) {
+            if (s[ch] < min)
+               icoord[ch] = 0;
+            else if (s[ch] > max)
+               icoord[ch] = size - 1;
+            else
+               icoord[ch] = util_ifloor(s[ch] * size);
+         }
       }
-      return i;
+      return;
    case PIPE_TEX_WRAP_CLAMP_TO_BORDER:
       {
          /* s limited to [min,max] */
          /* i limited to [-1, size] */
          const float min = -1.0F / (2.0F * size);
          const float max = 1.0F - min;
-         if (s <= min)
-            i = -1;
-         else if (s >= max)
-            i = size;
-         else
-            i = util_ifloor(s * size);
+         for (ch = 0; ch < 4; ch++) {
+            if (s[ch] <= min)
+               icoord[ch] = -1;
+            else if (s[ch] >= max)
+               icoord[ch] = size;
+            else
+               icoord[ch] = util_ifloor(s[ch] * size);
+         }
       }
-      return i;
+      return;
    case PIPE_TEX_WRAP_MIRROR_REPEAT:
       {
          const float min = 1.0F / (2.0F * size);
          const float max = 1.0F - min;
-         const int flr = util_ifloor(s);
-         float u;
-         if (flr & 1)
-            u = 1.0F - (s - (float) flr);
-         else
-            u = s - (float) flr;
-         if (u < min)
-            i = 0;
-         else if (u > max)
-            i = size - 1;
-         else
-            i = util_ifloor(u * size);
+         for (ch = 0; ch < 4; ch++) {
+            const int flr = util_ifloor(s[ch]);
+            float u;
+            if (flr & 1)
+               u = 1.0F - (s[ch] - (float) flr);
+            else
+               u = s[ch] - (float) flr;
+            if (u < min)
+               icoord[ch] = 0;
+            else if (u > max)
+               icoord[ch] = size - 1;
+            else
+               icoord[ch] = util_ifloor(u * size);
+         }
       }
-      return i;
+      return;
    case PIPE_TEX_WRAP_MIRROR_CLAMP:
-      {
+      for (ch = 0; ch < 4; ch++) {
          /* s limited to [0,1] */
          /* i limited to [0,size-1] */
-         const float u = fabsf(s);
+         const float u = fabsf(s[ch]);
          if (u <= 0.0F)
-            i = 0;
+            icoord[ch] = 0;
          else if (u >= 1.0F)
-            i = size - 1;
+            icoord[ch] = size - 1;
          else
-            i = util_ifloor(u * size);
+            icoord[ch] = util_ifloor(u * size);
       }
-      return i;
+      return;
    case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_EDGE:
       {
          /* s limited to [min,max] */
          /* i limited to [0, size-1] */
          const float min = 1.0F / (2.0F * size);
          const float max = 1.0F - min;
-         const float u = fabsf(s);
-         if (u < min)
-            i = 0;
-         else if (u > max)
-            i = size - 1;
-         else
-            i = util_ifloor(u * size);
+         for (ch = 0; ch < 4; ch++) {
+            const float u = fabsf(s[ch]);
+            if (u < min)
+               icoord[ch] = 0;
+            else if (u > max)
+               icoord[ch] = size - 1;
+            else
+               icoord[ch] = util_ifloor(u * size);
+         }
       }
-      return i;
+      return;
    case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_BORDER:
       {
          /* s limited to [min,max] */
          /* i limited to [0, size-1] */
          const float min = -1.0F / (2.0F * size);
          const float max = 1.0F - min;
-         const float u = fabsf(s);
-         if (u < min)
-            i = -1;
-         else if (u > max)
-            i = size;
-         else
-            i = util_ifloor(u * size);
+         for (ch = 0; ch < 4; ch++) {
+            const float u = fabsf(s[ch]);
+            if (u < min)
+               icoord[ch] = -1;
+            else if (u > max)
+               icoord[ch] = size;
+            else
+               icoord[ch] = util_ifloor(u * size);
+         }
       }
-      return i;
+      return;
    default:
       assert(0);
-      return 0;
    }
 }
 
 
 /**
- * Used to compute texel locations for linear sampling.
+ * Used to compute texel locations for linear sampling for four texcoords.
  * \param wrapMode  PIPE_TEX_WRAP_x
- * \param s  the texcoord
+ * \param s  the texcoords
  * \param size  the texture image size
- * \param i0  returns first texture index
- * \param i1  returns second texture index (usually *i0 + 1)
- * \param a  returns blend factor/weight between texture indexes
+ * \param icoord0  returns first texture indexes
+ * \param icoord1  returns second texture indexes (usually icoord0 + 1)
+ * \param w  returns blend factor/weight between texture indexes
+ * \param icoord  returns the computed integer texture coords
  */
 static INLINE void
-linear_texcoord(unsigned wrapMode, float s, unsigned size,
-                int *i0, int *i1, float *a)
+linear_texcoord_4(unsigned wrapMode, const float s[4], unsigned size,
+                  int icoord0[4], int icoord1[4], float w[4])
 {
-   float u;
+   uint ch;
+
    switch (wrapMode) {
    case PIPE_TEX_WRAP_REPEAT:
-      u = s * size - 0.5F;
-      *i0 = REMAINDER(util_ifloor(u), size);
-      *i1 = REMAINDER(*i0 + 1, size);
-      break;
+      for (ch = 0; ch < 4; ch++) {
+         float u = s[ch] * size - 0.5F;
+         icoord0[ch] = REMAINDER(util_ifloor(u), size);
+         icoord1[ch] = REMAINDER(icoord0[ch] + 1, size);
+         w[ch] = FRAC(u);
+      }
+      break;;
    case PIPE_TEX_WRAP_CLAMP:
-      if (s <= 0.0F)
-         u = 0.0F;
-      else if (s >= 1.0F)
-         u = (float) size;
-      else
-         u = s * size;
-      u -= 0.5F;
-      *i0 = util_ifloor(u);
-      *i1 = *i0 + 1;
-      break;
+      for (ch = 0; ch < 4; ch++) {
+         float u = CLAMP(s[ch], 0.0F, 1.0F);
+         u = u * size - 0.5f;
+         icoord0[ch] = util_ifloor(u);
+         icoord1[ch] = icoord0[ch] + 1;
+         w[ch] = FRAC(u);
+      }
+      break;;
    case PIPE_TEX_WRAP_CLAMP_TO_EDGE:
-      if (s <= 0.0F)
-         u = 0.0F;
-      else if (s >= 1.0F)
-         u = (float) size;
-      else
-         u = s * size;
-      u -= 0.5F;
-      *i0 = util_ifloor(u);
-      *i1 = *i0 + 1;
-      if (*i0 < 0)
-         *i0 = 0;
-      if (*i1 >= (int) size)
-         *i1 = size - 1;
-      break;
+      for (ch = 0; ch < 4; ch++) {
+         float u = CLAMP(s[ch], 0.0F, 1.0F);
+         u = u * size - 0.5f;
+         icoord0[ch] = util_ifloor(u);
+         icoord1[ch] = icoord0[ch] + 1;
+         if (icoord0[ch] < 0)
+            icoord0[ch] = 0;
+         if (icoord1[ch] >= (int) size)
+            icoord1[ch] = size - 1;
+         w[ch] = FRAC(u);
+      }
+      break;;
    case PIPE_TEX_WRAP_CLAMP_TO_BORDER:
       {
          const float min = -1.0F / (2.0F * size);
          const float max = 1.0F - min;
-         if (s <= min)
-            u = min * size;
-         else if (s >= max)
-            u = max * size;
-         else
-            u = s * size;
-         u -= 0.5F;
-         *i0 = util_ifloor(u);
-         *i1 = *i0 + 1;
+         for (ch = 0; ch < 4; ch++) {
+            float u = CLAMP(s[ch], min, max);
+            u = u * size - 0.5f;
+            icoord0[ch] = util_ifloor(u);
+            icoord1[ch] = icoord0[ch] + 1;
+            w[ch] = FRAC(u);
+         }
       }
-      break;
+      break;;
    case PIPE_TEX_WRAP_MIRROR_REPEAT:
-      {
-         const int flr = util_ifloor(s);
+      for (ch = 0; ch < 4; ch++) {
+         const int flr = util_ifloor(s[ch]);
+         float u;
          if (flr & 1)
-            u = 1.0F - (s - (float) flr);
+            u = 1.0F - (s[ch] - (float) flr);
          else
-            u = s - (float) flr;
-         u = (u * size) - 0.5F;
-         *i0 = util_ifloor(u);
-         *i1 = *i0 + 1;
-         if (*i0 < 0)
-            *i0 = 0;
-         if (*i1 >= (int) size)
-            *i1 = size - 1;
+            u = s[ch] - (float) flr;
+         u = u * size - 0.5F;
+         icoord0[ch] = util_ifloor(u);
+         icoord1[ch] = icoord0[ch] + 1;
+         if (icoord0[ch] < 0)
+            icoord0[ch] = 0;
+         if (icoord1[ch] >= (int) size)
+            icoord1[ch] = size - 1;
+         w[ch] = FRAC(u);
       }
-      break;
+      break;;
    case PIPE_TEX_WRAP_MIRROR_CLAMP:
-      u = fabsf(s);
-      if (u >= 1.0F)
-         u = (float) size;
-      else
-         u *= size;
-      u -= 0.5F;
-      *i0 = util_ifloor(u);
-      *i1 = *i0 + 1;
-      break;
+      for (ch = 0; ch < 4; ch++) {
+         float u = fabsf(s[ch]);
+         if (u >= 1.0F)
+            u = (float) size;
+         else
+            u *= size;
+         u -= 0.5F;
+         icoord0[ch] = util_ifloor(u);
+         icoord1[ch] = icoord0[ch] + 1;
+         w[ch] = FRAC(u);
+      }
+      break;;
    case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_EDGE:
-      u = fabsf(s);
-      if (u >= 1.0F)
-         u = (float) size;
-      else
-         u *= size;
-      u -= 0.5F;
-      *i0 = util_ifloor(u);
-      *i1 = *i0 + 1;
-      if (*i0 < 0)
-         *i0 = 0;
-      if (*i1 >= (int) size)
-         *i1 = size - 1;
-      break;
+      for (ch = 0; ch < 4; ch++) {
+         float u = fabsf(s[ch]);
+         if (u >= 1.0F)
+            u = (float) size;
+         else
+            u *= size;
+         u -= 0.5F;
+         icoord0[ch] = util_ifloor(u);
+         icoord1[ch] = icoord0[ch] + 1;
+         if (icoord0[ch] < 0)
+            icoord0[ch] = 0;
+         if (icoord1[ch] >= (int) size)
+            icoord1[ch] = size - 1;
+         w[ch] = FRAC(u);
+      }
+      break;;
    case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_BORDER:
       {
          const float min = -1.0F / (2.0F * size);
          const float max = 1.0F - min;
-         u = fabsf(s);
-         if (u <= min)
-            u = min * size;
-         else if (u >= max)
-            u = max * size;
-         else
-            u *= size;
-         u -= 0.5F;
-         *i0 = util_ifloor(u);
-         *i1 = *i0 + 1;
+         for (ch = 0; ch < 4; ch++) {
+            float u = fabsf(s[ch]);
+            if (u <= min)
+               u = min * size;
+            else if (u >= max)
+               u = max * size;
+            else
+               u *= size;
+            u -= 0.5F;
+            icoord0[ch] = util_ifloor(u);
+            icoord1[ch] = icoord0[ch] + 1;
+            w[ch] = FRAC(u);
+         }
       }
-      break;
+      break;;
    default:
       assert(0);
    }
-   *a = FRAC(u);
 }
 
 
@@ -338,21 +382,27 @@ linear_texcoord(unsigned wrapMode, float s, unsigned size,
  * For RECT textures / unnormalized texcoords
  * Only a subset of wrap modes supported.
  */
-static INLINE int
-nearest_texcoord_unnorm(unsigned wrapMode, float s, unsigned size)
+static INLINE void
+nearest_texcoord_unnorm_4(unsigned wrapMode, const float s[4], unsigned size,
+                          int icoord[4])
 {
-   int i;
+   uint ch;
    switch (wrapMode) {
    case PIPE_TEX_WRAP_CLAMP:
-      i = util_ifloor(s);
-      return CLAMP(i, 0, (int) size-1);
+      for (ch = 0; ch < 4; ch++) {
+         int i = util_ifloor(s[ch]);
+         icoord[ch]= CLAMP(i, 0, (int) size-1);
+      }
+      return;
    case PIPE_TEX_WRAP_CLAMP_TO_EDGE:
       /* fall-through */
    case PIPE_TEX_WRAP_CLAMP_TO_BORDER:
-      return util_ifloor( CLAMP(s, 0.5F, (float) size - 0.5F) );
+      for (ch = 0; ch < 4; ch++) {
+         icoord[ch]= util_ifloor( CLAMP(s[ch], 0.5F, (float) size - 0.5F) );
+      }
+      return;
    default:
       assert(0);
-      return 0;
    }
 }
 
@@ -362,30 +412,36 @@ nearest_texcoord_unnorm(unsigned wrapMode, float s, unsigned size)
  * Only a subset of wrap modes supported.
  */
 static INLINE void
-linear_texcoord_unnorm(unsigned wrapMode, float s, unsigned size,
-                       int *i0, int *i1, float *a)
+linear_texcoord_unnorm_4(unsigned wrapMode, const float s[4], unsigned size,
+                         int icoord0[4], int icoord1[4], float w[4])
 {
+   uint ch;
    switch (wrapMode) {
    case PIPE_TEX_WRAP_CLAMP:
-      /* Not exactly what the spec says, but it matches NVIDIA output */
-      s = CLAMP(s - 0.5F, 0.0f, (float) size - 1.0f);
-      *i0 = util_ifloor(s);
-      *i1 = *i0 + 1;
-      break;
+      for (ch = 0; ch < 4; ch++) {
+         /* Not exactly what the spec says, but it matches NVIDIA output */
+         float u = CLAMP(s[ch] - 0.5F, 0.0f, (float) size - 1.0f);
+         icoord0[ch] = util_ifloor(u);
+         icoord1[ch] = icoord0[ch] + 1;
+         w[ch] = FRAC(u);
+      }
+      return;
    case PIPE_TEX_WRAP_CLAMP_TO_EDGE:
       /* fall-through */
    case PIPE_TEX_WRAP_CLAMP_TO_BORDER:
-      s = CLAMP(s, 0.5F, (float) size - 0.5F);
-      s -= 0.5F;
-      *i0 = util_ifloor(s);
-      *i1 = *i0 + 1;
-      if (*i1 > (int) size - 1)
-         *i1 = size - 1;
+      for (ch = 0; ch < 4; ch++) {
+         float u = CLAMP(s[ch], 0.5F, (float) size - 0.5F);
+         u -= 0.5F;
+         icoord0[ch] = util_ifloor(u);
+         icoord1[ch] = icoord0[ch] + 1;
+         if (icoord1[ch] > (int) size - 1)
+            icoord1[ch] = size - 1;
+         w[ch] = FRAC(u);
+      }
       break;
    default:
       assert(0);
    }
-   *a = FRAC(s);
 }
 
 
@@ -725,78 +781,93 @@ sp_get_samples_2d_common(const struct tgsi_sampler *tgsi_sampler,
 
    switch (imgFilter) {
    case PIPE_TEX_FILTER_NEAREST:
-      for (j = 0; j < QUAD_SIZE; j++) {
-         int x = nearest_texcoord(sampler->wrap_s, s[j], width);
-         int y = nearest_texcoord(sampler->wrap_t, t[j], height);
-         get_texel(tgsi_sampler, faces[j], level0, x, y, 0, rgba, j);
-         if (sampler->compare_mode == PIPE_TEX_COMPARE_R_TO_TEXTURE) {
-            shadow_compare(compare_func, rgba, p, j);
-         }
+      {
+         int x[4], y[4];
+         nearest_texcoord_4(sampler->wrap_s, s, width, x);
+         nearest_texcoord_4(sampler->wrap_t, t, height, y);
 
-         if (level0 != level1) {
-            /* get texels from second mipmap level and blend */
-            float rgba2[4][4];
-            unsigned c;
-            x = x / 2;
-            y = y / 2;
-            get_texel(tgsi_sampler, faces[j], level1, x, y, 0, rgba2, j);
-            if (sampler->compare_mode == PIPE_TEX_COMPARE_R_TO_TEXTURE){
-               shadow_compare(compare_func, rgba2, p, j);
+         for (j = 0; j < QUAD_SIZE; j++) {
+            get_texel(tgsi_sampler, faces[j], level0, x[j], y[j], 0, rgba, j);
+            if (sampler->compare_mode == PIPE_TEX_COMPARE_R_TO_TEXTURE) {
+               shadow_compare(compare_func, rgba, p, j);
             }
 
-            for (c = 0; c < NUM_CHANNELS; c++) {
-               rgba[c][j] = LERP(levelBlend, rgba[c][j], rgba2[c][j]);
+            if (level0 != level1) {
+               /* get texels from second mipmap level and blend */
+               float rgba2[4][4];
+               unsigned c;
+               x[j] /= 2;
+               y[j] /= 2;
+               get_texel(tgsi_sampler, faces[j], level1, x[j], y[j], 0,
+                         rgba2, j);
+               if (sampler->compare_mode == PIPE_TEX_COMPARE_R_TO_TEXTURE){
+                  shadow_compare(compare_func, rgba2, p, j);
+               }
+
+               for (c = 0; c < NUM_CHANNELS; c++) {
+                  rgba[c][j] = lerp(levelBlend, rgba[c][j], rgba2[c][j]);
+               }
             }
          }
       }
       break;
    case PIPE_TEX_FILTER_LINEAR:
    case PIPE_TEX_FILTER_ANISO:
-      for (j = 0; j < QUAD_SIZE; j++) {
-         float tx[4][4], a, b;
-         int x0, y0, x1, y1, c;
-         linear_texcoord(sampler->wrap_s, s[j], width,  &x0, &x1, &a);
-         linear_texcoord(sampler->wrap_t, t[j], height, &y0, &y1, &b);
-         get_texel(tgsi_sampler, faces[j], level0, x0, y0, 0, tx, 0);
-         get_texel(tgsi_sampler, faces[j], level0, x1, y0, 0, tx, 1);
-         get_texel(tgsi_sampler, faces[j], level0, x0, y1, 0, tx, 2);
-         get_texel(tgsi_sampler, faces[j], level0, x1, y1, 0, tx, 3);
-         if (sampler->compare_mode == PIPE_TEX_COMPARE_R_TO_TEXTURE) {
-            shadow_compare(compare_func, tx, p, 0);
-            shadow_compare(compare_func, tx, p, 1);
-            shadow_compare(compare_func, tx, p, 2);
-            shadow_compare(compare_func, tx, p, 3);
-         }
+      {
+         int x0[4], y0[4], x1[4], y1[4];
+         float xw[4], yw[4]; /* weights */
 
-         for (c = 0; c < 4; c++) {
-            rgba[c][j] = lerp_2d(a, b, tx[c][0], tx[c][1], tx[c][2], tx[c][3]);
-         }
+         linear_texcoord_4(sampler->wrap_s, s, width, x0, x1, xw);
+         linear_texcoord_4(sampler->wrap_t, t, height, y0, y1, yw);
 
-         if (level0 != level1) {
-            /* get texels from second mipmap level and blend */
-            float rgba2[4][4];
-            x0 = x0 / 2;
-            y0 = y0 / 2;
-            x1 = x1 / 2;
-            y1 = y1 / 2;
-            get_texel(tgsi_sampler, faces[j], level1, x0, y0, 0, tx, 0);
-            get_texel(tgsi_sampler, faces[j], level1, x1, y0, 0, tx, 1);
-            get_texel(tgsi_sampler, faces[j], level1, x0, y1, 0, tx, 2);
-            get_texel(tgsi_sampler, faces[j], level1, x1, y1, 0, tx, 3);
-            if (sampler->compare_mode == PIPE_TEX_COMPARE_R_TO_TEXTURE){
+         for (j = 0; j < QUAD_SIZE; j++) {
+            float tx[4][4]; /* texels */
+            int c;
+            get_texel(tgsi_sampler, faces[j], level0, x0[j], y0[j], 0, tx, 0);
+            get_texel(tgsi_sampler, faces[j], level0, x1[j], y0[j], 0, tx, 1);
+            get_texel(tgsi_sampler, faces[j], level0, x0[j], y1[j], 0, tx, 2);
+            get_texel(tgsi_sampler, faces[j], level0, x1[j], y1[j], 0, tx, 3);
+            if (sampler->compare_mode == PIPE_TEX_COMPARE_R_TO_TEXTURE) {
                shadow_compare(compare_func, tx, p, 0);
                shadow_compare(compare_func, tx, p, 1);
                shadow_compare(compare_func, tx, p, 2);
                shadow_compare(compare_func, tx, p, 3);
             }
 
+            /* interpolate R, G, B, A */
             for (c = 0; c < 4; c++) {
-               rgba2[c][j] = lerp_2d(a, b,
-                                     tx[c][0], tx[c][1], tx[c][2], tx[c][3]);
+               rgba[c][j] = lerp_2d(xw[j], yw[j],
+                                    tx[c][0], tx[c][1],
+                                    tx[c][2], tx[c][3]);
             }
 
-            for (c = 0; c < NUM_CHANNELS; c++) {
-               rgba[c][j] = LERP(levelBlend, rgba[c][j], rgba2[c][j]);
+            if (level0 != level1) {
+               /* get texels from second mipmap level and blend */
+               float rgba2[4][4];
+               x0[j] /= 2;
+               y0[j] /= 2;
+               x1[j] /= 2;
+               y1[j] /= 2;
+               get_texel(tgsi_sampler, faces[j], level1, x0[j], y0[j], 0, tx, 0);
+               get_texel(tgsi_sampler, faces[j], level1, x1[j], y0[j], 0, tx, 1);
+               get_texel(tgsi_sampler, faces[j], level1, x0[j], y1[j], 0, tx, 2);
+               get_texel(tgsi_sampler, faces[j], level1, x1[j], y1[j], 0, tx, 3);
+               if (sampler->compare_mode == PIPE_TEX_COMPARE_R_TO_TEXTURE){
+                  shadow_compare(compare_func, tx, p, 0);
+                  shadow_compare(compare_func, tx, p, 1);
+                  shadow_compare(compare_func, tx, p, 2);
+                  shadow_compare(compare_func, tx, p, 3);
+               }
+
+               /* interpolate R, G, B, A */
+               for (c = 0; c < 4; c++) {
+                  rgba2[c][j] = lerp_2d(xw[j], yw[j],
+                                        tx[c][0], tx[c][1], tx[c][2], tx[c][3]);
+               }
+
+               for (c = 0; c < NUM_CHANNELS; c++) {
+                  rgba[c][j] = lerp(levelBlend, rgba[c][j], rgba2[c][j]);
+               }
             }
          }
       }
@@ -868,89 +939,89 @@ sp_get_samples_3d(const struct tgsi_sampler *tgsi_sampler,
 
    switch (imgFilter) {
    case PIPE_TEX_FILTER_NEAREST:
-      for (j = 0; j < QUAD_SIZE; j++) {
-         int x = nearest_texcoord(sampler->wrap_s, s[j], width);
-         int y = nearest_texcoord(sampler->wrap_t, t[j], height);
-         int z = nearest_texcoord(sampler->wrap_r, p[j], depth);
-         get_texel(tgsi_sampler, face, level0, x, y, z, rgba, j);
-
-         if (level0 != level1) {
-            /* get texels from second mipmap level and blend */
-            float rgba2[4][4];
-            unsigned c;
-            x /= 2;
-            y /= 2;
-            z /= 2;
-            get_texel(tgsi_sampler, face, level1, x, y, z, rgba2, j);
-            for (c = 0; c < NUM_CHANNELS; c++) {
-               rgba[c][j] = LERP(levelBlend, rgba2[c][j], rgba[c][j]);
+      {
+         int x[4], y[4], z[4];
+         nearest_texcoord_4(sampler->wrap_s, s, width, x);
+         nearest_texcoord_4(sampler->wrap_t, t, height, y);
+         nearest_texcoord_4(sampler->wrap_r, p, depth, z);
+         for (j = 0; j < QUAD_SIZE; j++) {
+            get_texel(tgsi_sampler, face, level0, x[j], y[j], z[j], rgba, j);
+            if (level0 != level1) {
+               /* get texels from second mipmap level and blend */
+               float rgba2[4][4];
+               unsigned c;
+               x[j] /= 2;
+               y[j] /= 2;
+               z[j] /= 2;
+               get_texel(tgsi_sampler, face, level1, x[j], y[j], z[j], rgba2, j);
+               for (c = 0; c < NUM_CHANNELS; c++) {
+                  rgba[c][j] = lerp(levelBlend, rgba2[c][j], rgba[c][j]);
+               }
             }
          }
       }
       break;
    case PIPE_TEX_FILTER_LINEAR:
    case PIPE_TEX_FILTER_ANISO:
-      for (j = 0; j < QUAD_SIZE; j++) {
-         float texel0[4][4], texel1[4][4];
-         float xw, yw, zw; /* interpolation weights */
-         int x0, x1, y0, y1, z0, z1, c;
-         linear_texcoord(sampler->wrap_s, s[j], width,  &x0, &x1, &xw);
-         linear_texcoord(sampler->wrap_t, t[j], height, &y0, &y1, &yw);
-         linear_texcoord(sampler->wrap_r, p[j], depth,  &z0, &z1, &zw);
-         get_texel(tgsi_sampler, face, level0, x0, y0, z0, texel0, 0);
-         get_texel(tgsi_sampler, face, level0, x1, y0, z0, texel0, 1);
-         get_texel(tgsi_sampler, face, level0, x0, y1, z0, texel0, 2);
-         get_texel(tgsi_sampler, face, level0, x1, y1, z0, texel0, 3);
-         get_texel(tgsi_sampler, face, level0, x0, y0, z1, texel1, 0);
-         get_texel(tgsi_sampler, face, level0, x1, y0, z1, texel1, 1);
-         get_texel(tgsi_sampler, face, level0, x0, y1, z1, texel1, 2);
-         get_texel(tgsi_sampler, face, level0, x1, y1, z1, texel1, 3);
+      {
+         int x0[4], x1[4], y0[4], y1[4], z0[4], z1[4];
+         float xw[4], yw[4], zw[4]; /* interpolation weights */
+         linear_texcoord_4(sampler->wrap_s, s, width,  x0, x1, xw);
+         linear_texcoord_4(sampler->wrap_t, t, height, y0, y1, yw);
+         linear_texcoord_4(sampler->wrap_r, p, depth,  z0, z1, zw);
 
-         /* 3D lerp */
-         for (c = 0; c < 4; c++) {
-            float ctemp0[4][4], ctemp1[4][4];
-            ctemp0[c][j] = lerp_2d(xw, yw,
-                                   texel0[c][0], texel0[c][1],
-                                   texel0[c][2], texel0[c][3]);
-            ctemp1[c][j] = lerp_2d(xw, yw,
-                                   texel1[c][0], texel1[c][1],
-                                   texel1[c][2], texel1[c][3]);
-            rgba[c][j] = LERP(zw, ctemp0[c][j], ctemp1[c][j]);
-         }
+         for (j = 0; j < QUAD_SIZE; j++) {
+            int c;
+            float tx0[4][4], tx1[4][4];
+            get_texel(tgsi_sampler, face, level0, x0[j], y0[j], z0[j], tx0, 0);
+            get_texel(tgsi_sampler, face, level0, x1[j], y0[j], z0[j], tx0, 1);
+            get_texel(tgsi_sampler, face, level0, x0[j], y1[j], z0[j], tx0, 2);
+            get_texel(tgsi_sampler, face, level0, x1[j], y1[j], z0[j], tx0, 3);
+            get_texel(tgsi_sampler, face, level0, x0[j], y0[j], z1[j], tx1, 0);
+            get_texel(tgsi_sampler, face, level0, x1[j], y0[j], z1[j], tx1, 1);
+            get_texel(tgsi_sampler, face, level0, x0[j], y1[j], z1[j], tx1, 2);
+            get_texel(tgsi_sampler, face, level0, x1[j], y1[j], z1[j], tx1, 3);
 
-         if (level0 != level1) {
-            /* get texels from second mipmap level and blend */
-            float rgba2[4][4];
-            x0 /= 2;
-            y0 /= 2;
-            z0 /= 2;
-            x1 /= 2;
-            y1 /= 2;
-            z1 /= 2;
-            get_texel(tgsi_sampler, face, level1, x0, y0, z0, texel0, 0);
-            get_texel(tgsi_sampler, face, level1, x1, y0, z0, texel0, 1);
-            get_texel(tgsi_sampler, face, level1, x0, y1, z0, texel0, 2);
-            get_texel(tgsi_sampler, face, level1, x1, y1, z0, texel0, 3);
-            get_texel(tgsi_sampler, face, level1, x0, y0, z1, texel1, 0);
-            get_texel(tgsi_sampler, face, level1, x1, y0, z1, texel1, 1);
-            get_texel(tgsi_sampler, face, level1, x0, y1, z1, texel1, 2);
-            get_texel(tgsi_sampler, face, level1, x1, y1, z1, texel1, 3);
-
-            /* 3D lerp */
+            /* interpolate R, G, B, A */
             for (c = 0; c < 4; c++) {
-               float ctemp0[4][4], ctemp1[4][4];
-               ctemp0[c][j] = lerp_2d(xw, yw,
-                                      texel0[c][0], texel0[c][1],
-                                      texel0[c][2], texel0[c][3]);
-               ctemp1[c][j] = lerp_2d(xw, yw,
-                                      texel1[c][0], texel1[c][1],
-                                      texel1[c][2], texel1[c][3]);
-               rgba2[c][j] = LERP(zw, ctemp0[c][j], ctemp1[c][j]);
+               rgba[c][j] = lerp_3d(xw[j], yw[j], zw[j],
+                                    tx0[c][0], tx0[c][1],
+                                    tx0[c][2], tx0[c][3],
+                                    tx1[c][0], tx1[c][1],
+                                    tx1[c][2], tx1[c][3]);
             }
 
-            /* blend mipmap levels */
-            for (c = 0; c < NUM_CHANNELS; c++) {
-               rgba[c][j] = LERP(levelBlend, rgba[c][j], rgba2[c][j]);
+            if (level0 != level1) {
+               /* get texels from second mipmap level and blend */
+               float rgba2[4][4];
+               x0[j] /= 2;
+               y0[j] /= 2;
+               z0[j] /= 2;
+               x1[j] /= 2;
+               y1[j] /= 2;
+               z1[j] /= 2;
+               get_texel(tgsi_sampler, face, level1, x0[j], y0[j], z0[j], tx0, 0);
+               get_texel(tgsi_sampler, face, level1, x1[j], y0[j], z0[j], tx0, 1);
+               get_texel(tgsi_sampler, face, level1, x0[j], y1[j], z0[j], tx0, 2);
+               get_texel(tgsi_sampler, face, level1, x1[j], y1[j], z0[j], tx0, 3);
+               get_texel(tgsi_sampler, face, level1, x0[j], y0[j], z1[j], tx1, 0);
+               get_texel(tgsi_sampler, face, level1, x1[j], y0[j], z1[j], tx1, 1);
+               get_texel(tgsi_sampler, face, level1, x0[j], y1[j], z1[j], tx1, 2);
+               get_texel(tgsi_sampler, face, level1, x1[j], y1[j], z1[j], tx1, 3);
+
+               /* interpolate R, G, B, A */
+               for (c = 0; c < 4; c++) {
+                  rgba2[c][j] = lerp_3d(xw[j], yw[j], zw[j],
+                                        tx0[c][0], tx0[c][1],
+                                        tx0[c][2], tx0[c][3],
+                                        tx1[c][0], tx1[c][1],
+                                        tx1[c][2], tx1[c][3]);
+               }
+
+               /* blend mipmap levels */
+               for (c = 0; c < NUM_CHANNELS; c++) {
+                  rgba[c][j] = lerp(levelBlend, rgba[c][j], rgba2[c][j]);
+               }
             }
          }
       }
@@ -1011,35 +1082,42 @@ sp_get_samples_rect(const struct tgsi_sampler *tgsi_sampler,
 
    switch (imgFilter) {
    case PIPE_TEX_FILTER_NEAREST:
-      for (j = 0; j < QUAD_SIZE; j++) {
-         int x = nearest_texcoord_unnorm(sampler->wrap_s, s[j], width);
-         int y = nearest_texcoord_unnorm(sampler->wrap_t, t[j], height);
-         get_texel(tgsi_sampler, face, level0, x, y, 0, rgba, j);
-         if (sampler->compare_mode == PIPE_TEX_COMPARE_R_TO_TEXTURE) {
-            shadow_compare(compare_func, rgba, p, j);
+      {
+         int x[4], y[4];
+         nearest_texcoord_unnorm_4(sampler->wrap_s, s, width, x);
+         nearest_texcoord_unnorm_4(sampler->wrap_t, t, height, y);
+         for (j = 0; j < QUAD_SIZE; j++) {
+            get_texel(tgsi_sampler, face, level0, x[j], y[j], 0, rgba, j);
+            if (sampler->compare_mode == PIPE_TEX_COMPARE_R_TO_TEXTURE) {
+               shadow_compare(compare_func, rgba, p, j);
+            }
          }
       }
       break;
    case PIPE_TEX_FILTER_LINEAR:
    case PIPE_TEX_FILTER_ANISO:
-      for (j = 0; j < QUAD_SIZE; j++) {
-         float tx[4][4], a, b;
-         int x0, y0, x1, y1, c;
-         linear_texcoord_unnorm(sampler->wrap_s, s[j], width,  &x0, &x1, &a);
-         linear_texcoord_unnorm(sampler->wrap_t, t[j], height, &y0, &y1, &b);
-         get_texel(tgsi_sampler, face, level0, x0, y0, 0, tx, 0);
-         get_texel(tgsi_sampler, face, level0, x1, y0, 0, tx, 1);
-         get_texel(tgsi_sampler, face, level0, x0, y1, 0, tx, 2);
-         get_texel(tgsi_sampler, face, level0, x1, y1, 0, tx, 3);
-         if (sampler->compare_mode == PIPE_TEX_COMPARE_R_TO_TEXTURE) {
-            shadow_compare(compare_func, tx, p, 0);
-            shadow_compare(compare_func, tx, p, 1);
-            shadow_compare(compare_func, tx, p, 2);
-            shadow_compare(compare_func, tx, p, 3);
-         }
-
-         for (c = 0; c < 4; c++) {
-            rgba[c][j] = lerp_2d(a, b, tx[c][0], tx[c][1], tx[c][2], tx[c][3]);
+      {
+         int x0[4], y0[4], x1[4], y1[4];
+         float xw[4], yw[4]; /* weights */
+         linear_texcoord_unnorm_4(sampler->wrap_s, s, width,  x0, x1, xw);
+         linear_texcoord_unnorm_4(sampler->wrap_t, t, height, y0, y1, yw);
+         for (j = 0; j < QUAD_SIZE; j++) {
+            float tx[4][4]; /* texels */
+            int c;
+            get_texel(tgsi_sampler, face, level0, x0[j], y0[j], 0, tx, 0);
+            get_texel(tgsi_sampler, face, level0, x1[j], y0[j], 0, tx, 1);
+            get_texel(tgsi_sampler, face, level0, x0[j], y1[j], 0, tx, 2);
+            get_texel(tgsi_sampler, face, level0, x1[j], y1[j], 0, tx, 3);
+            if (sampler->compare_mode == PIPE_TEX_COMPARE_R_TO_TEXTURE) {
+               shadow_compare(compare_func, tx, p, 0);
+               shadow_compare(compare_func, tx, p, 1);
+               shadow_compare(compare_func, tx, p, 2);
+               shadow_compare(compare_func, tx, p, 3);
+            }
+            for (c = 0; c < 4; c++) {
+               rgba[c][j] = lerp_2d(xw[j], yw[j],
+                                    tx[c][0], tx[c][1], tx[c][2], tx[c][3]);
+            }
          }
       }
       break;
