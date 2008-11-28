@@ -605,7 +605,7 @@ append(char *dst, const char *src)
 
 
 /**
- * Convert token 'k' to a string, append it only 'dst' string.
+ * Convert token 'k' to a string, append it onto 'dst' string.
  */
 static void
 append_token(char *dst, gl_state_index k)
@@ -780,7 +780,8 @@ append_token(char *dst, gl_state_index k)
       append(dst, "ShadowAmbient");
       break;
    default:
-      ;
+      /* probably STATE_INTERNAL_DRIVER+i (driver private state) */
+      append(dst, "driverState");
    }
 }
 
