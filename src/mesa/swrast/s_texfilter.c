@@ -2925,6 +2925,7 @@ sample_depth_texture( GLcontext *ctx,
                                            width, col);
             row = clamp_rect_coord_nearest(tObj->WrapT, texcoords[i][1], height);
             slice = 0;
+            break;
 
          case GL_TEXTURE_2D_ARRAY_EXT:
             COMPUTE_NEAREST_TEXEL_LOCATION(tObj->WrapS, texcoords[i][0],
@@ -3034,6 +3035,7 @@ sample_depth_texture( GLcontext *ctx,
             j0 = clamp_rect_coord_nearest(tObj->WrapT, texcoords[i][1], height);
             j1 = j0;
             slice = 0;
+            break;
 
          case GL_TEXTURE_2D_ARRAY_EXT:
             COMPUTE_LINEAR_TEXEL_LOCATIONS(tObj->WrapS, texcoords[i][0],
