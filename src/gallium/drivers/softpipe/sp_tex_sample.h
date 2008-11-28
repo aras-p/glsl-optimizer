@@ -46,10 +46,10 @@ struct sp_shader_sampler
 
 
 
-static INLINE struct sp_shader_sampler *
-sp_shader_sampler(struct tgsi_sampler *sampler)
+static INLINE const struct sp_shader_sampler *
+sp_shader_sampler(const struct tgsi_sampler *sampler)
 {
-   return (struct sp_shader_sampler *) sampler;
+   return (const struct sp_shader_sampler *) sampler;
 }
 
 

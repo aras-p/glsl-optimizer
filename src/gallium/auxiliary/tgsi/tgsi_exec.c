@@ -1535,7 +1535,7 @@ exec_kilp(struct tgsi_exec_machine *mach,
 
 
 /*
- * Fetch a texel using STR texture coordinates.
+ * Fetch a four texture samples using STR texture coordinates.
  */
 static void
 fetch_texel( struct tgsi_sampler *sampler,
@@ -1569,7 +1569,7 @@ exec_tex(struct tgsi_exec_machine *mach,
          boolean projected)
 {
    const uint unit = inst->FullSrcRegisters[1].SrcRegister.Index;
-   union tgsi_exec_channel r[8];
+   union tgsi_exec_channel r[4];
    uint chan_index;
    float lodBias;
 

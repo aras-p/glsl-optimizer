@@ -516,6 +516,10 @@ compute_lambda(const struct pipe_texture *tex,
  * 2. Determine if we're minifying or magnifying
  * 3. If minifying, choose mipmap levels
  * 4. Return image filter to use within mipmap images
+ * \param level0  Returns first mipmap level to sample from
+ * \param level1  Returns second mipmap level to sample from
+ * \param levelBlend  Returns blend factor between levels, in [0,1]
+ * \param imgFilter  Returns either the min or mag filter, depending on lambda
  */
 static void
 choose_mipmap_levels(const struct pipe_texture *texture,
@@ -527,7 +531,6 @@ choose_mipmap_levels(const struct pipe_texture *texture,
                      unsigned *level0, unsigned *level1, float *levelBlend,
                      unsigned *imgFilter)
 {
-
    if (sampler->min_mip_filter == PIPE_TEX_MIPFILTER_NONE) {
       /* no mipmap selection needed */
       *level0 = *level1 = CLAMP((int) sampler->min_lod,
@@ -589,7 +592,6 @@ choose_mipmap_levels(const struct pipe_texture *texture,
 
 /**
  * Get a texel from a texture, using the texture tile cache.
- * Called by the TGSI interpreter.
  *
  * \param face  the cube face in 0..5
  * \param level  the mipmap level
@@ -603,7 +605,7 @@ choose_mipmap_levels(const struct pipe_texture *texture,
  * sp_get_cached_tile_tex() function.  Also, get 4 texels instead of 1...
  */
 static void
-get_texel(struct tgsi_sampler *tgsi_sampler,
+get_texel(const struct tgsi_sampler *tgsi_sampler,
           unsigned face, unsigned level, int x, int y, int z,
           float rgba[NUM_CHANNELS][QUAD_SIZE], unsigned j)
 {
@@ -693,7 +695,7 @@ shadow_compare(uint compare_func,
  * Could probably extend for 3D...
  */
 static void
-sp_get_samples_2d_common(struct tgsi_sampler *tgsi_sampler,
+sp_get_samples_2d_common(const struct tgsi_sampler *tgsi_sampler,
                          const float s[QUAD_SIZE],
                          const float t[QUAD_SIZE],
                          const float p[QUAD_SIZE],
@@ -805,8 +807,8 @@ sp_get_samples_2d_common(struct tgsi_sampler *tgsi_sampler,
 }
 
 
-static void
-sp_get_samples_1d(struct tgsi_sampler *sampler,
+static INLINE void
+sp_get_samples_1d(const struct tgsi_sampler *sampler,
                   const float s[QUAD_SIZE],
                   const float t[QUAD_SIZE],
                   const float p[QUAD_SIZE],
@@ -819,8 +821,8 @@ sp_get_samples_1d(struct tgsi_sampler *sampler,
 }
 
 
-static void
-sp_get_samples_2d(struct tgsi_sampler *sampler,
+static INLINE void
+sp_get_samples_2d(const struct tgsi_sampler *sampler,
                   const float s[QUAD_SIZE],
                   const float t[QUAD_SIZE],
                   const float p[QUAD_SIZE],
@@ -832,8 +834,8 @@ sp_get_samples_2d(struct tgsi_sampler *sampler,
 }
 
 
-static void
-sp_get_samples_3d(struct tgsi_sampler *tgsi_sampler,
+static INLINE void
+sp_get_samples_3d(const struct tgsi_sampler *tgsi_sampler,
                   const float s[QUAD_SIZE],
                   const float t[QUAD_SIZE],
                   const float p[QUAD_SIZE],
@@ -960,7 +962,7 @@ sp_get_samples_3d(struct tgsi_sampler *tgsi_sampler,
 
 
 static void
-sp_get_samples_cube(struct tgsi_sampler *sampler,
+sp_get_samples_cube(const struct tgsi_sampler *sampler,
                     const float s[QUAD_SIZE],
                     const float t[QUAD_SIZE],
                     const float p[QUAD_SIZE],
@@ -977,7 +979,7 @@ sp_get_samples_cube(struct tgsi_sampler *sampler,
 
 
 static void
-sp_get_samples_rect(struct tgsi_sampler *tgsi_sampler,
+sp_get_samples_rect(const struct tgsi_sampler *tgsi_sampler,
                     const float s[QUAD_SIZE],
                     const float t[QUAD_SIZE],
                     const float p[QUAD_SIZE],
@@ -1045,8 +1047,6 @@ sp_get_samples_rect(struct tgsi_sampler *tgsi_sampler,
       assert(0);
    }
 }
-
-
 
 
 /**
