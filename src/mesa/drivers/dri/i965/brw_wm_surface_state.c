@@ -438,6 +438,7 @@ static void prepare_wm_surfaces(struct brw_context *brw )
    GLcontext *ctx = &brw->intel.ctx;
    struct intel_context *intel = &brw->intel;
    GLuint i;
+   int old_nr_surfaces;
 
    if (brw->state.nr_draw_regions  > 1) {
       for (i = 0; i < brw->state.nr_draw_regions; i++) {
@@ -448,6 +449,7 @@ static void prepare_wm_surfaces(struct brw_context *brw )
       brw_update_region_surface(brw, brw->state.draw_regions[0], 0, GL_TRUE);
    }
 
+   old_nr_surfaces = brw->wm.nr_surfaces;
    brw->wm.nr_surfaces = MAX_DRAW_BUFFERS;
 
    for (i = 0; i < BRW_MAX_TEX_UNIT; i++) {
@@ -473,6 +475,9 @@ static void prepare_wm_surfaces(struct brw_context *brw )
 
    dri_bo_unreference(brw->wm.bind_bo);
    brw->wm.bind_bo = brw_wm_get_binding_table(brw);
+
+   if (brw->wm.nr_surfaces != old_nr_surfaces)
+      brw->state.dirty.brw |= BRW_NEW_NR_SURFACES;
 }
 
 

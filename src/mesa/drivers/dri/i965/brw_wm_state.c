@@ -88,7 +88,7 @@ wm_unit_populate_key(struct brw_context *brw, struct brw_wm_unit_key *key)
    /* BRW_NEW_CURBE_OFFSETS */
    key->curbe_offset = brw->curbe.wm_start;
 
-   /* CACHE_NEW_SURFACE */
+   /* BRW_NEW_NR_SURFACEs */
    key->nr_surfaces = brw->wm.nr_surfaces;
 
    /* CACHE_NEW_SAMPLER */
@@ -280,10 +280,10 @@ const struct brw_tracked_state brw_wm_unit = {
 	       _NEW_COLOR),
 
       .brw = (BRW_NEW_FRAGMENT_PROGRAM | 
-	      BRW_NEW_CURBE_OFFSETS),
+	      BRW_NEW_CURBE_OFFSETS |
+	      BRW_NEW_NR_SURFACES),
 
-      .cache = (CACHE_NEW_SURFACE | 
-		CACHE_NEW_WM_PROG | 
+      .cache = (CACHE_NEW_WM_PROG |
 		CACHE_NEW_SAMPLER)
    },
    .prepare = upload_wm_unit,

@@ -142,6 +142,7 @@ struct brw_context;
 #define BRW_NEW_BATCH			0x10000
 /** brw->depth_region updated */
 #define BRW_NEW_DEPTH_BUFFER		0x20000
+#define BRW_NEW_NR_SURFACES		0x40000
 
 struct brw_state_flags {
    /** State update flags signalled by mesa internals */
