@@ -61,9 +61,101 @@ static void intelRenderPrimitive(GLcontext * ctx, GLenum prim);
 static void intelRasterPrimitive(GLcontext * ctx, GLenum rprim,
                                  GLuint hwprim);
 
+static void
+intel_flush_inline_primitive(struct intel_context *intel)
+{
+   GLuint used = intel->batch->ptr - intel->prim.start_ptr;
+
+   assert(intel->prim.primitive != ~0);
+
+/*    _mesa_printf("/\n"); */
+
+   if (used < 8)
+      goto do_discard;
+
+   *(int *) intel->prim.start_ptr = (_3DPRIMITIVE |
+                                     intel->prim.primitive | (used / 4 - 2));
+
+   goto finished;
+
+ do_discard:
+   intel->batch->ptr -= used;
+
+ finished:
+   intel->prim.primitive = ~0;
+   intel->prim.start_ptr = 0;
+   intel->prim.flush = 0;
+}
+
+static void intel_start_inline(struct intel_context *intel, uint32_t prim)
+{
+   BATCH_LOCALS;
+   uint32_t batch_flags = LOOP_CLIPRECTS;
+
+   intel_wait_flips(intel);
+   intel->vtbl.emit_state(intel);
+
+   intel->no_batch_wrap = GL_TRUE;
+
+   /*_mesa_printf("%s *", __progname);*/
+
+   /* Emit a slot which will be filled with the inline primitive
+    * command later.
+    */
+   BEGIN_BATCH(2, batch_flags);
+   OUT_BATCH(0);
+
+   assert((intel->batch->dirty_state & (1<<1)) == 0);
+
+   intel->prim.start_ptr = intel->batch->ptr;
+   intel->prim.primitive = prim;
+   intel->prim.flush = intel_flush_inline_primitive;
+
+   OUT_BATCH(0);
+   ADVANCE_BATCH();
+
+   intel->no_batch_wrap = GL_FALSE;
+/*    _mesa_printf(">"); */
+}
+
+static void intel_wrap_inline(struct intel_context *intel)
+{
+   GLuint prim = intel->prim.primitive;
+
+   intel_flush_inline_primitive(intel);
+   intel_batchbuffer_flush(intel->batch);
+   intel_start_inline(intel, prim);  /* ??? */
+}
+
+static GLuint *intel_extend_inline(struct intel_context *intel, GLuint dwords)
+{
+   GLuint sz = dwords * sizeof(GLuint);
+   GLuint *ptr;
+
+   assert(intel->prim.flush == intel_flush_inline_primitive);
+
+   if (intel_batchbuffer_space(intel->batch) < sz)
+      intel_wrap_inline(intel);
+
+/*    _mesa_printf("."); */
+
+   intel->vtbl.assert_not_dirty(intel);
+
+   ptr = (GLuint *) intel->batch->ptr;
+   intel->batch->ptr += sz;
+
+   return ptr;
+}
+
 /** Sets the primitive type for a primitive sequence, flushing as needed. */
 void intel_set_prim(struct intel_context *intel, uint32_t prim)
 {
+   /* if we have no VBOs */
+
+   if (intel->intelScreen->no_vbo) {
+      intel_start_inline(intel, prim);
+      return;
+   }
    if (prim != intel->prim.primitive) {
       INTEL_FIREVERTICES(intel);
       intel->prim.primitive = prim;
@@ -74,6 +166,10 @@ void intel_set_prim(struct intel_context *intel, uint32_t prim)
 uint32_t *intel_get_prim_space(struct intel_context *intel, unsigned int count)
 {
    uint32_t *addr;
+
+   if (intel->intelScreen->no_vbo) {
+      return intel_extend_inline(intel, count * intel->vertex_size);
+   }
 
    /* Check for space in the existing VB */
    if (intel->prim.vb_bo == NULL ||
@@ -155,7 +251,7 @@ void intel_flush_prim(struct intel_context *intel)
 
 #if 0
    printf("emitting %d..%d=%d vertices size %d\n", offset,
-	  intel->prim.current_offset, intel->prim.count,
+	  intel->prim.current_offset, count,
 	  intel->vertex_size * 4);
 #endif
 

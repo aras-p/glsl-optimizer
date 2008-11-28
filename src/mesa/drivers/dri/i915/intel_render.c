@@ -117,6 +117,26 @@ intelDmaPrimitive(struct intel_context *intel, GLenum prim)
    intel_set_prim(intel, hw_prim[prim]);
 }
 
+static inline GLuint intel_get_vb_max(struct intel_context *intel)
+{
+   GLuint ret;
+
+   if (intel->intelScreen->no_vbo)
+      ret = intel->batch->size - 1500;
+   else
+      ret = INTEL_VB_SIZE;
+   ret /= (intel->vertex_size * 4);
+   return ret;
+}
+
+static inline GLuint intel_get_current_max(struct intel_context *intel)
+{
+
+   if (intel->intelScreen->no_vbo)
+      return intel_get_vb_max(intel);
+   else
+      return (INTEL_VB_SIZE - intel->prim.current_offset) / (intel->vertex_size * 4);
+}
 
 #define LOCAL_VARS struct intel_context *intel = intel_context(ctx)
 #define INIT( prim ) 				\
@@ -126,9 +146,8 @@ do {						\
 
 #define FLUSH() INTEL_FIREVERTICES(intel)
 
-#define GET_SUBSEQUENT_VB_MAX_VERTS() (INTEL_VB_SIZE / (intel->vertex_size * 4))
-#define GET_CURRENT_VB_MAX_VERTS() \
-   ((INTEL_VB_SIZE - intel->prim.current_offset) / (intel->vertex_size * 4))
+#define GET_SUBSEQUENT_VB_MAX_VERTS() intel_get_vb_max(intel)
+#define GET_CURRENT_VB_MAX_VERTS() intel_get_current_max(intel)
 
 #define ALLOC_VERTS(nr) intel_get_prim_space(intel, nr)
 

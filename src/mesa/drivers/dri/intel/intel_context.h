@@ -184,6 +184,7 @@ struct intel_context
       GLuint id;
       uint32_t primitive;	/**< Current hardware primitive type */
       void (*flush) (struct intel_context *);
+      GLubyte *start_ptr; /**< for i8xx */
       dri_bo *vb_bo;
       uint8_t *vb;
       unsigned int start_offset; /**< Byte offset of primitive sequence */

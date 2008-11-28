@@ -461,6 +461,7 @@ intelCreateContext(const __GLcontextModes * mesaVis,
 				  sharedContextPrivate);
       }
    } else {
+      intelScreen->no_vbo = GL_TRUE;
       return i830CreateContext(mesaVis, driContextPriv, sharedContextPrivate);
    }
 #else

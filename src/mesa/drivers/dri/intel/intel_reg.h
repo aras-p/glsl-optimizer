@@ -71,14 +71,14 @@
 /** @{
  * 915 definitions
  */
-#define S0_VB_OFFSET_MASK		0xffffffc
+#define S0_VB_OFFSET_MASK		0xffffffc0
 #define S0_AUTO_CACHE_INV_DISABLE	(1<<0)
 /** @} */
 
 /** @{
  * 830 definitions
  */
-#define S0_VB_OFFSET_MASK_830		0xffffff8
+#define S0_VB_OFFSET_MASK_830		0xffffff80
 #define S0_VB_PITCH_SHIFT_830		1
 #define S0_VB_ENABLE_830		(1<<0)
 /** @} */
