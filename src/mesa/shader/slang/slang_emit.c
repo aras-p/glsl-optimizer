@@ -1324,7 +1324,8 @@ emit_copy(slang_emit_info *emitInfo, slang_ir_node *n)
        _slang_is_temp(emitInfo->vt, n->Children[1]->Store) &&
        (inst->DstReg.File == n->Children[1]->Store->File) &&
        (inst->DstReg.Index == n->Children[1]->Store->Index) &&
-       !n->Children[0]->Store->IsIndirect) {
+       !n->Children[0]->Store->IsIndirect &&
+       n->Children[0]->Store->Size <= 4) {
       /* Peephole optimization:
        * The Right-Hand-Side has its results in a temporary place.
        * Modify the RHS (and the prev instruction) to store its results

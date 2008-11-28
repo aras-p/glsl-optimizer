@@ -31,6 +31,70 @@
 
 #include "glxclient.h"
 
+#if defined(USE_XCB)
+# include <X11/Xlib-xcb.h>
+# include <xcb/xcb.h>
+# include <xcb/glx.h>
+#endif
+
+#ifdef USE_XCB
+
+/**
+ * Exchange a protocol request for glXQueryServerString.
+ */
+char *
+__glXQueryServerString(Display* dpy,
+                       int opcode,
+                       CARD32 screen,
+                       CARD32 name)
+{
+   xcb_connection_t *c = XGetXCBConnection(dpy);
+   xcb_glx_query_server_string_reply_t* reply =
+      xcb_glx_query_server_string_reply(c,
+                                        xcb_glx_query_server_string(c,
+                                                                    screen,
+                                                                    name),
+                                        NULL);
+
+   /* The spec doesn't mention this, but the Xorg server replies with
+    * a string already terminated with '\0'. */
+   uint32_t len = xcb_glx_query_server_string_string_length(reply);
+   char* buf = Xmalloc(len);
+   memcpy(buf, xcb_glx_query_server_string_string(reply), len);
+   free(reply);
+
+   return buf;
+}
+
+/**
+ * Exchange a protocol request for glGetString.
+ */
+char *
+__glXGetString(Display* dpy,
+               int opcode,
+               CARD32 contextTag,
+               CARD32 name)
+{
+   xcb_connection_t *c = XGetXCBConnection(dpy);
+   xcb_glx_get_string_reply_t* reply =
+      xcb_glx_get_string_reply(c,
+                               xcb_glx_get_string(c,
+                                                  contextTag,
+                                                  name),
+                               NULL);
+
+   /* The spec doesn't mention this, but the Xorg server replies with
+    * a string already terminated with '\0'. */
+   uint32_t len = xcb_glx_get_string_string_length(reply);
+   char* buf = Xmalloc(len);
+   memcpy(buf, xcb_glx_get_string_string(reply), len);
+   free(reply);
+
+   return buf;
+}
+
+#else
+
 /**
  * GLX protocol structure for the ficticious "GXLGenericGetString" request.
  * 
@@ -57,7 +121,7 @@ typedef struct GLXGenericGetString
  * Query the Server GLX string.
  * This routine will allocate the necessay space for the string.
  */
-char *
+static char *
 __glXGetStringFromServer(Display * dpy, int opcode, CARD32 glxCode,
                          CARD32 for_whom, CARD32 name)
 {
@@ -101,3 +165,27 @@ __glXGetStringFromServer(Display * dpy, int opcode, CARD32 glxCode,
 
    return buf;
 }
+
+char *
+__glXQueryServerString(Display* dpy,
+                       int opcode,
+                       CARD32 screen,
+                       CARD32 name)
+{
+   return __glXGetStringFromServer(dpy, opcode,
+                                   X_GLXQueryServerString,
+                                   screen, name);
+}
+
+char *
+__glXGetString(Display* dpy,
+               int opcode,
+               CARD32 contextTag,
+               CARD32 name)
+{
+   return __glXGetStringFromServer(dpy, opcode, X_GLsop_GetString,
+                                   contextTag, name);
+}
+
+#endif /* USE_XCB */
+

@@ -1391,7 +1391,6 @@ parse_expression(slang_parse_ctx * C, slang_output_ctx * O,
             RETURN0;
          break;
       case OP_METHOD:
-         printf("******* begin OP_METHOD\n");
          op->type = SLANG_OPER_METHOD;
          op->a_obj = parse_identifier(C);
          if (op->a_obj == SLANG_ATOM_NULL)

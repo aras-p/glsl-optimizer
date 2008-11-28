@@ -741,8 +741,10 @@ extern void _XSend(Display*, const void*, long);
 extern void __glXInitializeVisualConfigFromTags( __GLcontextModes *config,
     int count, const INT32 *bp, Bool tagged_only, Bool fbconfig_style_tags );
 
-extern char * __glXGetStringFromServer( Display * dpy, int opcode,
-    CARD32 glxCode, CARD32 for_whom, CARD32 name );
+extern char * __glXQueryServerString(Display* dpy, int opcode,
+                                     CARD32 screen, CARD32 name);
+extern char * __glXGetString(Display* dpy, int opcode,
+                             CARD32 screen, CARD32 name);
 
 extern char *__glXstrdup(const char *str);
 
