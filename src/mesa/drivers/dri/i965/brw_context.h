@@ -133,15 +133,15 @@ struct brw_context;
 #define BRW_NEW_PSP                     0x800
 #define BRW_NEW_METAOPS                 0x1000
 #define BRW_NEW_FENCE                   0x2000
-#define BRW_NEW_INDICES			0x8000
-#define BRW_NEW_VERTICES		0x10000
+#define BRW_NEW_INDICES			0x4000
+#define BRW_NEW_VERTICES		0x8000
 /**
  * Used for any batch entry with a relocated pointer that will be used
  * by any 3D rendering.
  */
-#define BRW_NEW_BATCH			0x8000
+#define BRW_NEW_BATCH			0x10000
 /** brw->depth_region updated */
-#define BRW_NEW_DEPTH_BUFFER		0x10000
+#define BRW_NEW_DEPTH_BUFFER		0x20000
 
 struct brw_state_flags {
    /** State update flags signalled by mesa internals */
