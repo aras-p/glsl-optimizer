@@ -166,29 +166,82 @@ static void nv20_state_emit_framebuffer(struct nv20_context* nv20)
 static void nv20_vertex_layout(struct nv20_context *nv20)
 {
 	struct nv20_fragment_program *fp = nv20->fragprog.current;
-	uint32_t src = 0;
+	struct draw_context *dc = nv20->draw;
+	uint32_t src;
 	int i;
 	struct vertex_info *vinfo = &nv20->vertex_info;
+	const enum interp_mode colorInterp = INTERP_LINEAR;
+	boolean colors[2] = { FALSE };
+	boolean generics[4] = { FALSE };
+	boolean fog = FALSE;
 
 	memset(vinfo, 0, sizeof(*vinfo));
 
+	/*
+	 * NV10 hardware vertex attribute order:
+	 * fog, weight, normal, tex1, tex0, 2nd color, color, position
+	 * vinfo->hwfmt[0] has a used-bit corresponding to each of these.
+	 * relation to TGSI_SEMANTIC_*:
+	 * - POSITION: position (always used)
+	 * - COLOR: 2nd color, color
+	 * - GENERIC: weight, normal, tex1, tex0
+	 * - FOG: fog
+	 */
+
 	for (i = 0; i < fp->info.num_inputs; i++) {
-		switch (fp->info.input_semantic_name[i]) {
-			case TGSI_SEMANTIC_POSITION:
-				draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_LINEAR, src++);
-				break;
-			case TGSI_SEMANTIC_COLOR:
-				draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_LINEAR, src++);
-				break;
-			default:
-			case TGSI_SEMANTIC_GENERIC:
-				draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_PERSPECTIVE, src++);
-				break;
-			case TGSI_SEMANTIC_FOG:
-				draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_PERSPECTIVE, src++);
-				break;
+		int isn = fp->info.input_semantic_name[i];
+		int isi = fp->info.input_semantic_index[i];
+		switch (isn) {
+		case TGSI_SEMANTIC_POSITION:
+			break;
+		case TGSI_SEMANTIC_COLOR:
+			assert(isi < 2);
+			colors[isi] = TRUE;
+			break;
+		case TGSI_SEMANTIC_GENERIC:
+			assert(isi < 4);
+			generics[isi] = TRUE;
+			break;
+		case TGSI_SEMANTIC_FOG:
+			fog = TRUE;
+			break;
+		default:
+			assert(0 && "unknown input_semantic_name");
 		}
 	}
+
+	if (fog) {
+		int src = draw_find_vs_output(dc, TGSI_SEMANTIC_FOG, 0);
+		draw_emit_vertex_attr(vinfo, EMIT_1F, INTERP_PERSPECTIVE, src);
+		vinfo->hwfmt[0] |= (1 << 7);
+	}
+
+	for (i = 3; i >= 0; i--) {
+		int src;
+		if (!generics[i])
+			continue;
+		src = draw_find_vs_output(dc, TGSI_SEMANTIC_GENERIC, i);
+		draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_PERSPECTIVE, src);
+		vinfo->hwfmt[0] |= (1 << (i + 3));
+	}
+
+	if (colors[1]) {
+		int src = draw_find_vs_output(dc, TGSI_SEMANTIC_COLOR, 1);
+		draw_emit_vertex_attr(vinfo, EMIT_4F, colorInterp, src);
+		vinfo->hwfmt[0] |= (1 << 2);
+	}
+
+	if (colors[0]) {
+		int src = draw_find_vs_output(dc, TGSI_SEMANTIC_COLOR, 0);
+		draw_emit_vertex_attr(vinfo, EMIT_4F, colorInterp, src);
+		vinfo->hwfmt[0] |= (1 << 1);
+	}
+
+	/* always do position */
+	src = draw_find_vs_output(dc, TGSI_SEMANTIC_POSITION, 0);
+	draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_LINEAR, src);
+	vinfo->hwfmt[0] |= (1 << 0);
+
 	draw_compute_vertex_size(vinfo);
 }
 
