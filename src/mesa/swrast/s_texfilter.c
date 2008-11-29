@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  7.0.3
+ * Version:  7.3
  *
- * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2008  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -31,6 +31,16 @@
 
 #include "s_context.h"
 #include "s_texfilter.h"
+
+
+/*
+ * Note, the FRAC macro has to work perfectly.  Otherwise you'll sometimes
+ * see 1-pixel bands of improperly weighted linear-filtered textures.
+ * The tests/texwrap.c demo is a good test.
+ * Also note, FRAC(x) doesn't truly return the fractional part of x for x < 0.
+ * Instead, if x < 0 then FRAC(x) = 1 - true_frac(x).
+ */
+#define FRAC(f)  ((f) - IFLOOR(f))
 
 
 /**
@@ -223,257 +233,271 @@ lerp_rgba_3d(GLchan result[4], GLfloat a, GLfloat b, GLfloat c,
  * Used to compute texel locations for linear sampling.
  * Input:
  *    wrapMode = GL_REPEAT, GL_CLAMP, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_BORDER
- *    S = texcoord in [0,1]
- *    SIZE = width (or height or depth) of texture
+ *    s = texcoord in [0,1]
+ *    size = width (or height or depth) of texture
  * Output:
- *    U = texcoord in [0, width]
- *    I0, I1 = two nearest texel indexes
+ *    i0, i1 = returns two nearest texel indexes
+ *    weight = returns blend factor between texels
  */
-#define COMPUTE_LINEAR_TEXEL_LOCATIONS(wrapMode, S, U, SIZE, I0, I1)	\
-{									\
-   switch (wrapMode) {							\
-   case GL_REPEAT:							\
-      U = S * SIZE - 0.5F;						\
-      if (img->_IsPowerOfTwo) {						\
-         I0 = IFLOOR(U) & (SIZE - 1);					\
-         I1 = (I0 + 1) & (SIZE - 1);					\
-      }									\
-      else {								\
-         I0 = REMAINDER(IFLOOR(U), SIZE);				\
-         I1 = REMAINDER(I0 + 1, SIZE);					\
-      }									\
-      break;								\
-   case GL_CLAMP_TO_EDGE:						\
-      if (S <= 0.0F)							\
-         U = 0.0F;							\
-      else if (S >= 1.0F)						\
-         U = (GLfloat) SIZE;						\
-      else								\
-         U = S * SIZE;							\
-      U -= 0.5F;							\
-      I0 = IFLOOR(U);							\
-      I1 = I0 + 1;							\
-      if (I0 < 0)							\
-         I0 = 0;							\
-      if (I1 >= (GLint) SIZE)						\
-         I1 = SIZE - 1;							\
-      break;								\
-   case GL_CLAMP_TO_BORDER:						\
-      {									\
-         const GLfloat min = -1.0F / (2.0F * SIZE);			\
-         const GLfloat max = 1.0F - min;				\
-         if (S <= min)							\
-            U = min * SIZE;						\
-         else if (S >= max)						\
-            U = max * SIZE;						\
-         else								\
-            U = S * SIZE;						\
-         U -= 0.5F;							\
-         I0 = IFLOOR(U);						\
-         I1 = I0 + 1;							\
-      }									\
-      break;								\
-   case GL_MIRRORED_REPEAT:						\
-      {									\
-         const GLint flr = IFLOOR(S);					\
-         if (flr & 1)							\
-            U = 1.0F - (S - (GLfloat) flr);	/* flr is odd */	\
-         else								\
-            U = S - (GLfloat) flr;		/* flr is even */	\
-         U = (U * SIZE) - 0.5F;						\
-         I0 = IFLOOR(U);						\
-         I1 = I0 + 1;							\
-         if (I0 < 0)							\
-            I0 = 0;							\
-         if (I1 >= (GLint) SIZE)					\
-            I1 = SIZE - 1;						\
-      }									\
-      break;								\
-   case GL_MIRROR_CLAMP_EXT:						\
-      U = FABSF(S);							\
-      if (U >= 1.0F)							\
-         U = (GLfloat) SIZE;						\
-      else								\
-         U *= SIZE;							\
-      U -= 0.5F;							\
-      I0 = IFLOOR(U);							\
-      I1 = I0 + 1;							\
-      break;								\
-   case GL_MIRROR_CLAMP_TO_EDGE_EXT:					\
-      U = FABSF(S);							\
-      if (U >= 1.0F)							\
-         U = (GLfloat) SIZE;						\
-      else								\
-         U *= SIZE;							\
-      U -= 0.5F;							\
-      I0 = IFLOOR(U);							\
-      I1 = I0 + 1;							\
-      if (I0 < 0)							\
-         I0 = 0;							\
-      if (I1 >= (GLint) SIZE)						\
-         I1 = SIZE - 1;							\
-      break;								\
-   case GL_MIRROR_CLAMP_TO_BORDER_EXT:					\
-      {									\
-         const GLfloat min = -1.0F / (2.0F * SIZE);			\
-         const GLfloat max = 1.0F - min;				\
-         U = FABSF(S);							\
-         if (U <= min)							\
-            U = min * SIZE;						\
-         else if (U >= max)						\
-            U = max * SIZE;						\
-         else								\
-            U *= SIZE;							\
-         U -= 0.5F;							\
-         I0 = IFLOOR(U);						\
-         I1 = I0 + 1;							\
-      }									\
-      break;								\
-   case GL_CLAMP:							\
-      if (S <= 0.0F)							\
-         U = 0.0F;							\
-      else if (S >= 1.0F)						\
-         U = (GLfloat) SIZE;						\
-      else								\
-         U = S * SIZE;							\
-      U -= 0.5F;							\
-      I0 = IFLOOR(U);							\
-      I1 = I0 + 1;							\
-      break;								\
-   default:								\
-      _mesa_problem(ctx, "Bad wrap mode");				\
-      return;								\
-   }									\
+static INLINE void
+linear_texel_locations(GLenum wrapMode,
+                       const struct gl_texture_image *img,
+                       GLint size, GLfloat s,
+                       GLint *i0, GLint *i1, GLfloat *weight)
+{
+   GLfloat u;
+   switch (wrapMode) {
+   case GL_REPEAT:
+      u = s * size - 0.5F;
+      if (img->_IsPowerOfTwo) {
+         *i0 = IFLOOR(u) & (size - 1);
+         *i1 = (*i0 + 1) & (size - 1);
+      }
+      else {
+         *i0 = REMAINDER(IFLOOR(u), size);
+         *i1 = REMAINDER(*i0 + 1, size);
+      }
+      break;
+   case GL_CLAMP_TO_EDGE:
+      if (s <= 0.0F)
+         u = 0.0F;
+      else if (s >= 1.0F)
+         u = (GLfloat) size;
+      else
+         u = s * size;
+      u -= 0.5F;
+      *i0 = IFLOOR(u);
+      *i1 = *i0 + 1;
+      if (*i0 < 0)
+         *i0 = 0;
+      if (*i1 >= (GLint) size)
+         *i1 = size - 1;
+      break;
+   case GL_CLAMP_TO_BORDER:
+      {
+         const GLfloat min = -1.0F / (2.0F * size);
+         const GLfloat max = 1.0F - min;
+         if (s <= min)
+            u = min * size;
+         else if (s >= max)
+            u = max * size;
+         else
+            u = s * size;
+         u -= 0.5F;
+         *i0 = IFLOOR(u);
+         *i1 = *i0 + 1;
+      }
+      break;
+   case GL_MIRRORED_REPEAT:
+      {
+         const GLint flr = IFLOOR(s);
+         if (flr & 1)
+            u = 1.0F - (s - (GLfloat) flr);
+         else
+            u = s - (GLfloat) flr;
+         u = (u * size) - 0.5F;
+         *i0 = IFLOOR(u);
+         *i1 = *i0 + 1;
+         if (*i0 < 0)
+            *i0 = 0;
+         if (*i1 >= (GLint) size)
+            *i1 = size - 1;
+      }
+      break;
+   case GL_MIRROR_CLAMP_EXT:
+      u = FABSF(s);
+      if (u >= 1.0F)
+         u = (GLfloat) size;
+      else
+         u *= size;
+      u -= 0.5F;
+      *i0 = IFLOOR(u);
+      *i1 = *i0 + 1;
+      break;
+   case GL_MIRROR_CLAMP_TO_EDGE_EXT:
+      u = FABSF(s);
+      if (u >= 1.0F)
+         u = (GLfloat) size;
+      else
+         u *= size;
+      u -= 0.5F;
+      *i0 = IFLOOR(u);
+      *i1 = *i0 + 1;
+      if (*i0 < 0)
+         *i0 = 0;
+      if (*i1 >= (GLint) size)
+         *i1 = size - 1;
+      break;
+   case GL_MIRROR_CLAMP_TO_BORDER_EXT:
+      {
+         const GLfloat min = -1.0F / (2.0F * size);
+         const GLfloat max = 1.0F - min;
+         u = FABSF(s);
+         if (u <= min)
+            u = min * size;
+         else if (u >= max)
+            u = max * size;
+         else
+            u *= size;
+         u -= 0.5F;
+         *i0 = IFLOOR(u);
+         *i1 = *i0 + 1;
+      }
+      break;
+   case GL_CLAMP:
+      if (s <= 0.0F)
+         u = 0.0F;
+      else if (s >= 1.0F)
+         u = (GLfloat) size;
+      else
+         u = s * size;
+      u -= 0.5F;
+      *i0 = IFLOOR(u);
+      *i1 = *i0 + 1;
+      break;
+   default:
+      _mesa_problem(NULL, "Bad wrap mode");
+      u = 0.0F;
+   }
+   *weight = FRAC(u);
 }
 
 
 /**
  * Used to compute texel location for nearest sampling.
  */
-#define COMPUTE_NEAREST_TEXEL_LOCATION(wrapMode, S, SIZE, I)		\
-{									\
-   switch (wrapMode) {							\
-   case GL_REPEAT:							\
-      /* s limited to [0,1) */						\
-      /* i limited to [0,size-1] */					\
-      I = IFLOOR(S * SIZE);						\
-      if (img->_IsPowerOfTwo)						\
-         I &= (SIZE - 1);						\
-      else								\
-         I = REMAINDER(I, SIZE);					\
-      break;								\
-   case GL_CLAMP_TO_EDGE:						\
-      {									\
-         /* s limited to [min,max] */					\
-         /* i limited to [0, size-1] */					\
-         const GLfloat min = 1.0F / (2.0F * SIZE);			\
-         const GLfloat max = 1.0F - min;				\
-         if (S < min)							\
-            I = 0;							\
-         else if (S > max)						\
-            I = SIZE - 1;						\
-         else								\
-            I = IFLOOR(S * SIZE);					\
-      }									\
-      break;								\
-   case GL_CLAMP_TO_BORDER:						\
-      {									\
-         /* s limited to [min,max] */					\
-         /* i limited to [-1, size] */					\
-         const GLfloat min = -1.0F / (2.0F * SIZE);			\
-         const GLfloat max = 1.0F - min;				\
-         if (S <= min)							\
-            I = -1;							\
-         else if (S >= max)						\
-            I = SIZE;							\
-         else								\
-            I = IFLOOR(S * SIZE);					\
-      }									\
-      break;								\
-   case GL_MIRRORED_REPEAT:						\
-      {									\
-         const GLfloat min = 1.0F / (2.0F * SIZE);			\
-         const GLfloat max = 1.0F - min;				\
-         const GLint flr = IFLOOR(S);					\
-         GLfloat u;							\
-         if (flr & 1)							\
-            u = 1.0F - (S - (GLfloat) flr);	/* flr is odd */	\
-         else								\
-            u = S - (GLfloat) flr;		/* flr is even */	\
-         if (u < min)							\
-            I = 0;							\
-         else if (u > max)						\
-            I = SIZE - 1;						\
-         else								\
-            I = IFLOOR(u * SIZE);					\
-      }									\
-      break;								\
-   case GL_MIRROR_CLAMP_EXT:						\
-      {									\
-         /* s limited to [0,1] */					\
-         /* i limited to [0,size-1] */					\
-         const GLfloat u = FABSF(S);					\
-         if (u <= 0.0F)							\
-            I = 0;							\
-         else if (u >= 1.0F)						\
-            I = SIZE - 1;						\
-         else								\
-            I = IFLOOR(u * SIZE);					\
-      }									\
-      break;								\
-   case GL_MIRROR_CLAMP_TO_EDGE_EXT:					\
-      {									\
-         /* s limited to [min,max] */					\
-         /* i limited to [0, size-1] */					\
-         const GLfloat min = 1.0F / (2.0F * SIZE);			\
-         const GLfloat max = 1.0F - min;				\
-         const GLfloat u = FABSF(S);					\
-         if (u < min)							\
-            I = 0;							\
-         else if (u > max)						\
-            I = SIZE - 1;						\
-         else								\
-            I = IFLOOR(u * SIZE);					\
-      }									\
-      break;								\
-   case GL_MIRROR_CLAMP_TO_BORDER_EXT:					\
-      {									\
-         /* s limited to [min,max] */					\
-         /* i limited to [0, size-1] */					\
-         const GLfloat min = -1.0F / (2.0F * SIZE);			\
-         const GLfloat max = 1.0F - min;				\
-         const GLfloat u = FABSF(S);					\
-         if (u < min)							\
-            I = -1;							\
-         else if (u > max)						\
-            I = SIZE;							\
-         else								\
-            I = IFLOOR(u * SIZE);					\
-      }									\
-      break;								\
-   case GL_CLAMP:							\
-      /* s limited to [0,1] */						\
-      /* i limited to [0,size-1] */					\
-      if (S <= 0.0F)							\
-         I = 0;								\
-      else if (S >= 1.0F)						\
-         I = SIZE - 1;							\
-      else								\
-         I = IFLOOR(S * SIZE);						\
-      break;								\
-   default:								\
-      _mesa_problem(ctx, "Bad wrap mode");				\
-      return;								\
-   }									\
+static INLINE GLint
+nearest_texel_location(GLenum wrapMode,
+                       const struct gl_texture_image *img,
+                       GLint size, GLfloat s)
+{
+   GLint i;
+
+   switch (wrapMode) {
+   case GL_REPEAT:
+      /* s limited to [0,1) */
+      /* i limited to [0,size-1] */
+      i = IFLOOR(s * size);
+      if (img->_IsPowerOfTwo)
+         i &= (size - 1);
+      else
+         i = REMAINDER(i, size);
+      return i;
+   case GL_CLAMP_TO_EDGE:
+      {
+         /* s limited to [min,max] */
+         /* i limited to [0, size-1] */
+         const GLfloat min = 1.0F / (2.0F * size);
+         const GLfloat max = 1.0F - min;
+         if (s < min)
+            i = 0;
+         else if (s > max)
+            i = size - 1;
+         else
+            i = IFLOOR(s * size);
+      }
+      return i;
+   case GL_CLAMP_TO_BORDER:
+      {
+         /* s limited to [min,max] */
+         /* i limited to [-1, size] */
+         const GLfloat min = -1.0F / (2.0F * size);
+         const GLfloat max = 1.0F - min;
+         if (s <= min)
+            i = -1;
+         else if (s >= max)
+            i = size;
+         else
+            i = IFLOOR(s * size);
+      }
+      return i;
+   case GL_MIRRORED_REPEAT:
+      {
+         const GLfloat min = 1.0F / (2.0F * size);
+         const GLfloat max = 1.0F - min;
+         const GLint flr = IFLOOR(s);
+         GLfloat u;
+         if (flr & 1)
+            u = 1.0F - (s - (GLfloat) flr);
+         else
+            u = s - (GLfloat) flr;
+         if (u < min)
+            i = 0;
+         else if (u > max)
+            i = size - 1;
+         else
+            i = IFLOOR(u * size);
+      }
+      return i;
+   case GL_MIRROR_CLAMP_EXT:
+      {
+         /* s limited to [0,1] */
+         /* i limited to [0,size-1] */
+         const GLfloat u = FABSF(s);
+         if (u <= 0.0F)
+            i = 0;
+         else if (u >= 1.0F)
+            i = size - 1;
+         else
+            i = IFLOOR(u * size);
+      }
+      return i;
+   case GL_MIRROR_CLAMP_TO_EDGE_EXT:
+      {
+         /* s limited to [min,max] */
+         /* i limited to [0, size-1] */
+         const GLfloat min = 1.0F / (2.0F * size);
+         const GLfloat max = 1.0F - min;
+         const GLfloat u = FABSF(s);
+         if (u < min)
+            i = 0;
+         else if (u > max)
+            i = size - 1;
+         else
+            i = IFLOOR(u * size);
+      }
+      return i;
+   case GL_MIRROR_CLAMP_TO_BORDER_EXT:
+      {
+         /* s limited to [min,max] */
+         /* i limited to [0, size-1] */
+         const GLfloat min = -1.0F / (2.0F * size);
+         const GLfloat max = 1.0F - min;
+         const GLfloat u = FABSF(s);
+         if (u < min)
+            i = -1;
+         else if (u > max)
+            i = size;
+         else
+            i = IFLOOR(u * size);
+      }
+      return i;
+   case GL_CLAMP:
+      /* s limited to [0,1] */
+      /* i limited to [0,size-1] */
+      if (s <= 0.0F)
+         i = 0;
+      else if (s >= 1.0F)
+         i = size - 1;
+      else
+         i = IFLOOR(s * size);
+      return i;
+   default:
+      _mesa_problem(NULL, "Bad wrap mode");
+      return 0;
+   }
 }
 
 
 /* Power of two image sizes only */
-#define COMPUTE_LINEAR_REPEAT_TEXEL_LOCATION(S, U, SIZE, I0, I1)	\
-{									\
-   U = S * SIZE - 0.5F;							\
-   I0 = IFLOOR(U) & (SIZE - 1);						\
-   I1 = (I0 + 1) & (SIZE - 1);						\
+static INLINE void
+linear_repeat_texel_location(GLuint size, GLfloat s,
+                             GLint *i0, GLint *i1, GLfloat *weight)
+{
+   GLfloat u = s * size - 0.5F;
+   *i0 = IFLOOR(u) & (size - 1);
+   *i1 = (*i0 + 1) & (size - 1);
+   *weight = FRAC(u);
 }
 
 
@@ -512,17 +536,6 @@ nearest_mipmap_level(const struct gl_texture_object *tObj, GLfloat lambda)
       level = tObj->_MaxLevel;
    return level;
 }
-
-
-
-/*
- * Note, the FRAC macro has to work perfectly.  Otherwise you'll sometimes
- * see 1-pixel bands of improperly weighted linear-filtered textures.
- * The tests/texwrap.c demo is a good test.
- * Also note, FRAC(x) doesn't truly return the fractional part of x for x < 0.
- * Instead, if x < 0 then FRAC(x) = 1 - true_frac(x).
- */
-#define FRAC(f)  ((f) - IFLOOR(f))
 
 
 
@@ -662,7 +675,7 @@ sample_1d_nearest(GLcontext *ctx,
 {
    const GLint width = img->Width2;  /* without border, power of two */
    GLint i;
-   COMPUTE_NEAREST_TEXEL_LOCATION(tObj->WrapS, texcoord[0], width, i);
+   i = nearest_texel_location(tObj->WrapS, img, width, texcoord[0]);
    /* skip over the border, if any */
    i += img->Border;
    if (i < 0 || i >= (GLint) img->Width) {
@@ -686,12 +699,11 @@ sample_1d_linear(GLcontext *ctx,
 {
    const GLint width = img->Width2;
    GLint i0, i1;
-   GLfloat u;
    GLbitfield useBorderColor = 0x0;
    GLfloat a;
    GLchan t0[4], t1[4];  /* texels */
 
-   COMPUTE_LINEAR_TEXEL_LOCATIONS(tObj->WrapS, texcoord[0], u, width, i0, i1);
+   linear_texel_locations(tObj->WrapS, img, width, texcoord[0], &i0, &i1, &a);
 
    if (img->Border) {
       i0 += img->Border;
@@ -716,7 +728,6 @@ sample_1d_linear(GLcontext *ctx,
       img->FetchTexelc(img, i1, 0, 0, t1);
    }
 
-   a = FRAC(u);
    lerp_rgba(rgba, a, t0, t1);
 }
 
@@ -930,8 +941,8 @@ sample_2d_nearest(GLcontext *ctx,
    GLint i, j;
    (void) ctx;
 
-   COMPUTE_NEAREST_TEXEL_LOCATION(tObj->WrapS, texcoord[0], width,  i);
-   COMPUTE_NEAREST_TEXEL_LOCATION(tObj->WrapT, texcoord[1], height, j);
+   i = nearest_texel_location(tObj->WrapS, img, width, texcoord[0]);
+   j = nearest_texel_location(tObj->WrapT, img, height, texcoord[1]);
 
    /* skip over the border, if any */
    i += img->Border;
@@ -963,12 +974,11 @@ sample_2d_linear(GLcontext *ctx,
    const GLint height = img->Height2;
    GLint i0, j0, i1, j1;
    GLbitfield useBorderColor = 0x0;
-   GLfloat u, v;
    GLfloat a, b;
    GLchan t00[4], t10[4], t01[4], t11[4]; /* sampled texel colors */
 
-   COMPUTE_LINEAR_TEXEL_LOCATIONS(tObj->WrapS, texcoord[0], u, width,  i0, i1);
-   COMPUTE_LINEAR_TEXEL_LOCATIONS(tObj->WrapT, texcoord[1], v, height, j0, j1);
+   linear_texel_locations(tObj->WrapS, img, width, texcoord[0],  &i0, &i1, &a);
+   linear_texel_locations(tObj->WrapT, img, height, texcoord[1], &j0, &j1, &b);
 
    if (img->Border) {
       i0 += img->Border;
@@ -1009,8 +1019,6 @@ sample_2d_linear(GLcontext *ctx,
       img->FetchTexelc(img, i1, j1, 0, t11);
    }
 
-   a = FRAC(u);
-   b = FRAC(v);
    lerp_rgba_2d(rgba, a, b, t00, t10, t01, t11);
 }
 
@@ -1029,8 +1037,7 @@ sample_2d_linear_repeat(GLcontext *ctx,
    const GLint width = img->Width2;
    const GLint height = img->Height2;
    GLint i0, j0, i1, j1;
-   GLfloat u, v;
-   GLfloat a, b;
+   GLfloat wi, wj;
    GLchan t00[4], t10[4], t01[4], t11[4]; /* sampled texel colors */
 
    (void) ctx;
@@ -1041,17 +1048,15 @@ sample_2d_linear_repeat(GLcontext *ctx,
    ASSERT(img->TexFormat->BaseFormat != GL_COLOR_INDEX);
    ASSERT(img->_IsPowerOfTwo);
 
-   COMPUTE_LINEAR_REPEAT_TEXEL_LOCATION(texcoord[0], u, width,  i0, i1);
-   COMPUTE_LINEAR_REPEAT_TEXEL_LOCATION(texcoord[1], v, height, j0, j1);
+   linear_repeat_texel_location(width,  texcoord[0], &i0, &i1, &wi);
+   linear_repeat_texel_location(height, texcoord[1], &j0, &j1, &wj);
 
    img->FetchTexelc(img, i0, j0, 0, t00);
    img->FetchTexelc(img, i1, j0, 0, t10);
    img->FetchTexelc(img, i0, j1, 0, t01);
    img->FetchTexelc(img, i1, j1, 0, t11);
 
-   a = FRAC(u);
-   b = FRAC(v);
-   lerp_rgba_2d(rgba, a, b, t00, t10, t01, t11);
+   lerp_rgba_2d(rgba, wi, wj, t00, t10, t01, t11);
 }
 
 
@@ -1425,9 +1430,9 @@ sample_3d_nearest(GLcontext *ctx,
    GLint i, j, k;
    (void) ctx;
 
-   COMPUTE_NEAREST_TEXEL_LOCATION(tObj->WrapS, texcoord[0], width,  i);
-   COMPUTE_NEAREST_TEXEL_LOCATION(tObj->WrapT, texcoord[1], height, j);
-   COMPUTE_NEAREST_TEXEL_LOCATION(tObj->WrapR, texcoord[2], depth,  k);
+   i = nearest_texel_location(tObj->WrapS, img, width, texcoord[0]);
+   j = nearest_texel_location(tObj->WrapT, img, height, texcoord[1]);
+   k = nearest_texel_location(tObj->WrapR, img, depth, texcoord[2]);
 
    if (i < 0 || i >= (GLint) img->Width ||
        j < 0 || j >= (GLint) img->Height ||
@@ -1457,14 +1462,13 @@ sample_3d_linear(GLcontext *ctx,
    const GLint depth = img->Depth2;
    GLint i0, j0, k0, i1, j1, k1;
    GLbitfield useBorderColor = 0x0;
-   GLfloat u, v, w;
    GLfloat a, b, c;
    GLchan t000[4], t010[4], t001[4], t011[4];
    GLchan t100[4], t110[4], t101[4], t111[4];
 
-   COMPUTE_LINEAR_TEXEL_LOCATIONS(tObj->WrapS, texcoord[0], u, width,  i0, i1);
-   COMPUTE_LINEAR_TEXEL_LOCATIONS(tObj->WrapT, texcoord[1], v, height, j0, j1);
-   COMPUTE_LINEAR_TEXEL_LOCATIONS(tObj->WrapR, texcoord[2], w, depth,  k0, k1);
+   linear_texel_locations(tObj->WrapS, img, width, texcoord[0],  &i0, &i1, &a);
+   linear_texel_locations(tObj->WrapT, img, height, texcoord[1], &j0, &j1, &b);
+   linear_texel_locations(tObj->WrapR, img, depth, texcoord[2],  &k0, &k1, &c);
 
    if (img->Border) {
       i0 += img->Border;
@@ -1536,9 +1540,6 @@ sample_3d_linear(GLcontext *ctx,
    }
 
    /* trilinear interpolation of samples */
-   a = FRAC(u);
-   b = FRAC(v);
-   c = FRAC(w);
    lerp_rgba_3d(rgba, a, b, c, t000, t100, t010, t110, t001, t101, t011, t111);
 }
 
@@ -2031,14 +2032,16 @@ sample_lambda_cube( GLcontext *ctx,
 static INLINE GLint
 clamp_rect_coord_nearest(GLenum wrapMode, GLfloat coord, GLint max)
 {
-   if (wrapMode == GL_CLAMP) {
+   switch (wrapMode) {
+   case GL_CLAMP:
       return IFLOOR( CLAMP(coord, 0.0F, max - 1) );
-   }
-   else if (wrapMode == GL_CLAMP_TO_EDGE) {
+   case GL_CLAMP_TO_EDGE:
       return IFLOOR( CLAMP(coord, 0.5F, max - 0.5F) );
-   }
-   else {
+   case GL_CLAMP_TO_BORDER:
       return IFLOOR( CLAMP(coord, -0.5F, max + 0.5F) );
+   default:
+      _mesa_problem(NULL, "bad wrapMode in clamp_rect_coord_nearest");
+      return 0;
    }
 }
 
@@ -2048,33 +2051,37 @@ clamp_rect_coord_nearest(GLenum wrapMode, GLfloat coord, GLint max)
  */
 static INLINE void
 clamp_rect_coord_linear(GLenum wrapMode, GLfloat coord, GLint max,
-                        GLint *i0out, GLint *i1out)
+                        GLint *i0out, GLint *i1out, GLfloat *weight)
 {
    GLfloat fcol;
    GLint i0, i1;
-   if (wrapMode == GL_CLAMP) {
+   switch (wrapMode) {
+   case GL_CLAMP:
       /* Not exactly what the spec says, but it matches NVIDIA output */
       fcol = CLAMP(coord - 0.5F, 0.0, max-1);
       i0 = IFLOOR(fcol);
       i1 = i0 + 1;
-   }
-   else if (wrapMode == GL_CLAMP_TO_EDGE) {
+      break;
+   case GL_CLAMP_TO_EDGE:
       fcol = CLAMP(coord, 0.5F, max - 0.5F);
       fcol -= 0.5F;
       i0 = IFLOOR(fcol);
       i1 = i0 + 1;
       if (i1 > max - 1)
          i1 = max - 1;
-   }
-   else {
-      ASSERT(wrapMode == GL_CLAMP_TO_BORDER);
+      break;
+   case GL_CLAMP_TO_BORDER:
       fcol = CLAMP(coord, -0.5F, max + 0.5F);
       fcol -= 0.5F;
       i0 = IFLOOR(fcol);
       i1 = i0 + 1;
+   default:
+      _mesa_problem(NULL, "bad wrapMode in clamp_rect_coord_linear");
+      i0 = i1 = 0;
    }
    *i0out = i0;
    *i1out = i1;
+   *weight = FRAC(fcol);
 }
 
 
@@ -2138,58 +2145,16 @@ sample_linear_rect(GLcontext *ctx,
           tObj->WrapT == GL_CLAMP_TO_BORDER);
    ASSERT(img->TexFormat->BaseFormat != GL_COLOR_INDEX);
 
-   /* XXX lots of opportunity for optimization in this loop */
    for (i = 0; i < n; i++) {
-      GLfloat frow, fcol;
       GLint i0, j0, i1, j1;
       GLchan t00[4], t01[4], t10[4], t11[4];
       GLfloat a, b;
       GLbitfield useBorderColor = 0x0;
 
-      /* NOTE: we DO NOT use [0, 1] texture coordinates! */
-      if (tObj->WrapS == GL_CLAMP) {
-         /* Not exactly what the spec says, but it matches NVIDIA output */
-         fcol = CLAMP(texcoords[i][0] - 0.5F, 0.0, width_minus_1);
-         i0 = IFLOOR(fcol);
-         i1 = i0 + 1;
-      }
-      else if (tObj->WrapS == GL_CLAMP_TO_EDGE) {
-         fcol = CLAMP(texcoords[i][0], 0.5F, width - 0.5F);
-         fcol -= 0.5F;
-         i0 = IFLOOR(fcol);
-         i1 = i0 + 1;
-         if (i1 > width_minus_1)
-            i1 = width_minus_1;
-      }
-      else {
-         ASSERT(tObj->WrapS == GL_CLAMP_TO_BORDER);
-         fcol = CLAMP(texcoords[i][0], -0.5F, width + 0.5F);
-         fcol -= 0.5F;
-         i0 = IFLOOR(fcol);
-         i1 = i0 + 1;
-      }
-
-      if (tObj->WrapT == GL_CLAMP) {
-         /* Not exactly what the spec says, but it matches NVIDIA output */
-         frow = CLAMP(texcoords[i][1] - 0.5F, 0.0, width_minus_1);
-         j0 = IFLOOR(frow);
-         j1 = j0 + 1;
-      }
-      else if (tObj->WrapT == GL_CLAMP_TO_EDGE) {
-         frow = CLAMP(texcoords[i][1], 0.5F, height - 0.5F);
-         frow -= 0.5F;
-         j0 = IFLOOR(frow);
-         j1 = j0 + 1;
-         if (j1 > height_minus_1)
-            j1 = height_minus_1;
-      }
-      else {
-         ASSERT(tObj->WrapT == GL_CLAMP_TO_BORDER);
-         frow = CLAMP(texcoords[i][1], -0.5F, height + 0.5F);
-         frow -= 0.5F;
-         j0 = IFLOOR(frow);
-         j1 = j0 + 1;
-      }
+      clamp_rect_coord_linear(tObj->WrapS, texcoords[i][0], width,
+                              &i0, &i1, &a);
+      clamp_rect_coord_linear(tObj->WrapT, texcoords[i][1], height,
+                              &j0, &j1, &b);
 
       /* compute integer rows/columns */
       if (i0 < 0 || i0 > width_minus_1)   useBorderColor |= I0BIT;
@@ -2217,10 +2182,6 @@ sample_linear_rect(GLcontext *ctx,
          COPY_CHAN4(t11, tObj->_BorderChan);
       else
          img->FetchTexelc(img, i1, j1, 0, t11);
-
-      /* compute interpolants */
-      a = FRAC(fcol);
-      b = FRAC(frow);
 
       lerp_rgba_2d(rgba[i], a, b, t00, t10, t01, t11);
    }
@@ -2286,8 +2247,8 @@ sample_2d_array_nearest(GLcontext *ctx,
    GLint array;
    (void) ctx;
 
-   COMPUTE_NEAREST_TEXEL_LOCATION(tObj->WrapS, texcoord[0], width,  i);
-   COMPUTE_NEAREST_TEXEL_LOCATION(tObj->WrapT, texcoord[1], height, j);
+   i = nearest_texel_location(tObj->WrapS, img, width, texcoord[0]);
+   j = nearest_texel_location(tObj->WrapT, img, height, texcoord[1]);
    array = clamp_rect_coord_nearest(tObj->WrapR, texcoord[2], depth);
 
    if (i < 0 || i >= (GLint) img->Width ||
@@ -2319,12 +2280,11 @@ sample_2d_array_linear(GLcontext *ctx,
    GLint i0, j0, i1, j1;
    GLint array;
    GLbitfield useBorderColor = 0x0;
-   GLfloat u, v;
    GLfloat a, b;
    GLchan t00[4], t01[4], t10[4], t11[4];
 
-   COMPUTE_LINEAR_TEXEL_LOCATIONS(tObj->WrapS, texcoord[0], u, width,  i0, i1);
-   COMPUTE_LINEAR_TEXEL_LOCATIONS(tObj->WrapT, texcoord[1], v, height, j0, j1);
+   linear_texel_locations(tObj->WrapS, img, width,  texcoord[0], &i0, &i1, &a);
+   linear_texel_locations(tObj->WrapT, img, height, texcoord[1], &j0, &j1, &b);
    array = clamp_rect_coord_nearest(tObj->WrapR, texcoord[2], depth);
 
    if (array < 0 || array >= depth) {
@@ -2372,8 +2332,6 @@ sample_2d_array_linear(GLcontext *ctx,
       }
       
       /* trilinear interpolation of samples */
-      a = FRAC(u);
-      b = FRAC(v);
       lerp_rgba_2d(rgba, a, b, t00, t10, t01, t11);
    }
 }
@@ -2593,7 +2551,7 @@ sample_1d_array_nearest(GLcontext *ctx,
    GLint array;
    (void) ctx;
 
-   COMPUTE_NEAREST_TEXEL_LOCATION(tObj->WrapS, texcoord[0], width,  i);
+   i = nearest_texel_location(tObj->WrapS, img, width, texcoord[0]);
    array = clamp_rect_coord_nearest(tObj->WrapT, texcoord[1], height);
 
    if (i < 0 || i >= (GLint) img->Width ||
@@ -2623,11 +2581,10 @@ sample_1d_array_linear(GLcontext *ctx,
    GLint i0, i1;
    GLint array;
    GLbitfield useBorderColor = 0x0;
-   GLfloat u;
    GLfloat a;
    GLchan t0[4], t1[4];
 
-   COMPUTE_LINEAR_TEXEL_LOCATIONS(tObj->WrapS, texcoord[0], u, width,  i0, i1);
+   linear_texel_locations(tObj->WrapS, img, width, texcoord[0], &i0, &i1, &a);
    array = clamp_rect_coord_nearest(tObj->WrapT, texcoord[1], height);
 
    if (img->Border) {
@@ -2657,7 +2614,6 @@ sample_1d_array_linear(GLcontext *ctx,
    }
 
    /* bilinear interpolation of samples */
-   a = FRAC(u);
    lerp_rgba(rgba, a, t0, t1);
 }
 
@@ -2906,32 +2862,32 @@ sample_depth_texture( GLcontext *ctx,
             break;
             
          case GL_TEXTURE_1D:
-            COMPUTE_NEAREST_TEXEL_LOCATION(tObj->WrapS, texcoords[i][0],
-                                           width, col);
+            col = nearest_texel_location(tObj->WrapS, img, width,
+                                         texcoords[i][0]);
             row = 0;
             slice = 0;
             break;
 
          case GL_TEXTURE_2D:
-            COMPUTE_NEAREST_TEXEL_LOCATION(tObj->WrapS, texcoords[i][0],
-                                           width, col);
-            COMPUTE_NEAREST_TEXEL_LOCATION(tObj->WrapT, texcoords[i][1],
-                                           height, row);
+            col = nearest_texel_location(tObj->WrapS, img, width,
+                                         texcoords[i][0]);
+            row = nearest_texel_location(tObj->WrapT, img, height,
+                                         texcoords[i][1]);
             slice = 0;
             break;
 
          case GL_TEXTURE_1D_ARRAY_EXT:
-            COMPUTE_NEAREST_TEXEL_LOCATION(tObj->WrapS, texcoords[i][0],
-                                           width, col);
+            col = nearest_texel_location(tObj->WrapS, img, width,
+                                         texcoords[i][0]);
             row = clamp_rect_coord_nearest(tObj->WrapT, texcoords[i][1], height);
             slice = 0;
             break;
 
          case GL_TEXTURE_2D_ARRAY_EXT:
-            COMPUTE_NEAREST_TEXEL_LOCATION(tObj->WrapS, texcoords[i][0],
-                                           width, col);
-            COMPUTE_NEAREST_TEXEL_LOCATION(tObj->WrapT, texcoords[i][1],
-                                           height, row);
+            col = nearest_texel_location(tObj->WrapS, img, width,
+                                         texcoords[i][0]);
+            row = nearest_texel_location(tObj->WrapT, img, height,
+                                         texcoords[i][1]);
             slice = clamp_rect_coord_nearest(tObj->WrapR, texcoords[i][2], depth);
             break;
          }
@@ -3008,40 +2964,40 @@ sample_depth_texture( GLcontext *ctx,
          GLfloat depth00, depth01, depth10, depth11;
          GLint i0, i1, j0, j1;
          GLint slice;
-         GLfloat u, v;
+         GLfloat a, b;
          GLuint useBorderTexel;
 
          switch (tObj->Target) {
          case GL_TEXTURE_RECTANGLE_ARB:
             clamp_rect_coord_linear(tObj->WrapS, texcoords[i][0],
-                                    width, &i0, &i1);
+                                    width, &i0, &i1, &a);
             clamp_rect_coord_linear(tObj->WrapT, texcoords[i][1],
-                                    height, &j0, &j1);
+                                    height, &j0, &j1, &b);
             slice = 0;
             break;
 
          case GL_TEXTURE_1D:
          case GL_TEXTURE_2D:
-            COMPUTE_LINEAR_TEXEL_LOCATIONS(tObj->WrapS, texcoords[i][0],
-                                           u, width, i0, i1);
-            COMPUTE_LINEAR_TEXEL_LOCATIONS(tObj->WrapT, texcoords[i][1],
-                                           v, height,j0, j1);
+            linear_texel_locations(tObj->WrapS, img, width,
+                                   texcoords[i][0], &i0, &i1, &a);
+            linear_texel_locations(tObj->WrapT, img, height,
+                                   texcoords[i][1], &j0, &j1, &b);
             slice = 0;
             break;
 
          case GL_TEXTURE_1D_ARRAY_EXT:
-            COMPUTE_LINEAR_TEXEL_LOCATIONS(tObj->WrapS, texcoords[i][0],
-                                           u, width, i0, i1);
+            linear_texel_locations(tObj->WrapS, img, width,
+                                   texcoords[i][0], &i0, &i1, &a);
             j0 = clamp_rect_coord_nearest(tObj->WrapT, texcoords[i][1], height);
             j1 = j0;
             slice = 0;
             break;
 
          case GL_TEXTURE_2D_ARRAY_EXT:
-            COMPUTE_LINEAR_TEXEL_LOCATIONS(tObj->WrapS, texcoords[i][0],
-                                           u, width, i0, i1);
-            COMPUTE_LINEAR_TEXEL_LOCATIONS(tObj->WrapT, texcoords[i][1],
-                                           v, height,j0, j1);
+            linear_texel_locations(tObj->WrapS, img, width,
+                                   texcoords[i][0], &i0, &i1, &a);
+            linear_texel_locations(tObj->WrapT, img, height,
+                                   texcoords[i][1], &j0, &j1, &b);
             slice = clamp_rect_coord_nearest(tObj->WrapR, texcoords[i][2], depth);
             break;
          }
@@ -3105,8 +3061,6 @@ sample_depth_texture( GLcontext *ctx,
 
          if (0) {
             /* compute a single weighted depth sample and do one comparison */
-            const GLfloat a = FRAC(u + 1.0F);
-            const GLfloat b = FRAC(v + 1.0F);
             const GLfloat depthSample
                = lerp_2d(a, b, depth00, depth10, depth01, depth11);
             if ((depthSample <= texcoords[i][compare_coord] && function == GL_LEQUAL) ||
@@ -3177,8 +3131,6 @@ sample_depth_texture( GLcontext *ctx,
             case GL_NONE:
                /* ordinary bilinear filtering */
                {
-                  const GLfloat a = FRAC(u + 1.0F);
-                  const GLfloat b = FRAC(v + 1.0F);
                   const GLfloat depthSample
                      = lerp_2d(a, b, depth00, depth10, depth01, depth11);
                   CLAMPED_FLOAT_TO_CHAN(result, depthSample);
@@ -3272,10 +3224,10 @@ sample_depth_texture2(const GLcontext *ctx,
          GLint col, row, ii, jj, imin, imax, jmin, jmax, samples, count;
          GLfloat w;
          GLchan lum;
-         COMPUTE_NEAREST_TEXEL_LOCATION(texObj->WrapS, texcoords[i][0],
-					width, col);
-         COMPUTE_NEAREST_TEXEL_LOCATION(texObj->WrapT, texcoords[i][1],
-					height, row);
+         col = nearest_texel_location(texObj->WrapS, img, width,
+                                      texcoords[i][0]);
+         row = nearest_texel_location(texObj->WrapT, img, height,
+                                      texcoords[i][1]);
 
          imin = col - K;
          imax = col + K;
