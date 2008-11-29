@@ -55,16 +55,28 @@ struct nv20_vbuf_render {
 
 	struct nv20_context *nv20;   
 
-	/** Vertex buffer */
-	struct pipe_buffer* buffer;
+	/** Vertex buffer in VRAM */
+	struct pipe_buffer *pbuffer;
+
+	/** Vertex buffer in normal memory */
+	void *mbuffer;
 
 	/** Vertex size in bytes */
-	unsigned vertex_size;
+	/*unsigned vertex_size;*/
 
 	/** Hardware primitive */
 	unsigned hwprim;
 };
 
+/**
+ * Basically a cast wrapper.
+ */
+static INLINE struct nv20_vbuf_render *
+nv20_vbuf_render(struct vbuf_render *render)
+{
+	assert(render);
+	return (struct nv20_vbuf_render *)render;
+}
 
 void nv20_vtxbuf_bind( struct nv20_context* nv20 )
 {
@@ -77,17 +89,6 @@ void nv20_vtxbuf_bind( struct nv20_context* nv20 )
 	}
 }
 
-/**
- * Basically a cast wrapper.
- */
-static INLINE struct nv20_vbuf_render *
-nv20_vbuf_render( struct vbuf_render *render )
-{
-	assert(render);
-	return (struct nv20_vbuf_render *)render;
-}
-
-
 static const struct vertex_info *
 nv20_vbuf_render_get_vertex_info( struct vbuf_render *render )
 {
@@ -99,6 +100,23 @@ nv20_vbuf_render_get_vertex_info( struct vbuf_render *render )
 	return &nv20->vertex_info;
 }
 
+static void *
+nv20__allocate_mbuffer(struct nv20_vbuf_render *nv20_render, size_t size)
+{
+	nv20_render->mbuffer = MALLOC(size);
+	return nv20_render->mbuffer;
+}
+
+static void *
+nv20__allocate_pbuffer(struct nv20_vbuf_render *nv20_render, size_t size)
+{
+	struct pipe_winsys *winsys = nv20_render->nv20->pipe.winsys;
+	nv20_render->pbuffer = winsys->buffer_create(winsys, 64,
+					PIPE_BUFFER_USAGE_VERTEX, size);
+	return winsys->buffer_map(winsys,
+			nv20_render->pbuffer,
+			PIPE_BUFFER_USAGE_CPU_WRITE);
+}
 
 static void *
 nv20_vbuf_render_allocate_vertices( struct vbuf_render *render,
@@ -106,43 +124,154 @@ nv20_vbuf_render_allocate_vertices( struct vbuf_render *render,
 		ushort nr_vertices )
 {
 	struct nv20_vbuf_render *nv20_render = nv20_vbuf_render(render);
-	struct nv20_context *nv20 = nv20_render->nv20;
-	struct pipe_winsys *winsys = nv20->pipe.winsys;
 	size_t size = (size_t)vertex_size * (size_t)nr_vertices;
+	void *buf;
 
-	assert(!nv20_render->buffer);
-	nv20_render->buffer = winsys->buffer_create(winsys, 64, PIPE_BUFFER_USAGE_VERTEX, size);
+	assert(!nv20_render->pbuffer);
+	assert(!nv20_render->mbuffer);
 
-	nv20->dirty |= NV20_NEW_VTXARRAYS;
+	/*
+	 * For small amount of vertices, don't bother with pipe vertex
+	 * buffer, the data will be passed directly via the fifo.
+	 */
+	/* XXX: Pipe vertex buffers don't work. */
+	if (0 && size > 16 * 1024)
+		buf = nv20__allocate_pbuffer(nv20_render, size);
+	else
+		buf = nv20__allocate_mbuffer(nv20_render, size);
 
-	return winsys->buffer_map(winsys, 
-			nv20_render->buffer, 
-			PIPE_BUFFER_USAGE_CPU_WRITE);
+	if (buf)
+		nv20_render->nv20->dirty |= NV20_NEW_VTXARRAYS;
+
+	return buf;
 }
 
-
-static void 
+static void
 nv20_vbuf_render_set_primitive( struct vbuf_render *render, 
 		unsigned prim )
 {
 	struct nv20_vbuf_render *nv20_render = nv20_vbuf_render(render);
-	nv20_render->hwprim = prim + 1;
+	nv20_render->hwprim = nvgl_primitive(prim);
 }
 
+static uint32_t
+nv20__vtxhwformat(unsigned stride, unsigned fields, unsigned type)
+{
+	return (stride << NV10TCL_VERTEX_ARRAY_ATTRIB_FORMAT_STRIDE_SHIFT) |
+		(fields << NV10TCL_VERTEX_ARRAY_ATTRIB_FORMAT_FIELDS_SHIFT) |
+		(type << NV10TCL_VERTEX_ARRAY_ATTRIB_FORMAT_TYPE_SHIFT);
+}
 
-static void 
-nv20_vbuf_render_draw( struct vbuf_render *render,
+static unsigned
+nv20__emit_format(struct nv20_context *nv20, enum attrib_emit type, int hwattr)
+{
+	uint32_t hwfmt = 0;
+	unsigned fields;
+
+	switch (type) {
+	case EMIT_OMIT:
+		hwfmt = nv20__vtxhwformat(0, 0, 2);
+		fields = 0;
+		break;
+	case EMIT_1F:
+		hwfmt = nv20__vtxhwformat(4, 1, 2);
+		fields = 1;
+		break;
+	case EMIT_2F:
+		hwfmt = nv20__vtxhwformat(8, 2, 2);
+		fields = 2;
+		break;
+	case EMIT_3F:
+		hwfmt = nv20__vtxhwformat(12, 3, 2);
+		fields = 3;
+		break;
+	case EMIT_4F:
+		hwfmt = nv20__vtxhwformat(16, 4, 2);
+		fields = 4;
+		break;
+	default:
+		NOUVEAU_ERR("unhandled attrib_emit %d\n", type);
+		return 0;
+	}
+
+	BEGIN_RING(kelvin, NV10TCL_VERTEX_ARRAY_ATTRIB_FORMAT(hwattr), 1);
+	OUT_RING(hwfmt);
+	return fields;
+}
+
+static unsigned
+nv20__emit_vertex_array_format(struct nv20_context *nv20)
+{
+	struct vertex_info *vinfo = &nv20->vertex_info;
+	int hwattr = NV10TCL_VERTEX_ARRAY_ATTRIB_FORMAT__SIZE;
+	int attr = 0;
+	unsigned nr_fields = 0;
+
+	while (hwattr-- > 0) {
+		if (vinfo->hwfmt[0] & (1 << hwattr)) {
+			nr_fields += nv20__emit_format(nv20,
+					vinfo->attrib[attr].emit, hwattr);
+			attr++;
+		} else
+			nv20__emit_format(nv20, EMIT_OMIT, hwattr);
+	}
+	BEGIN_RING(kelvin, NV10TCL_VERTEX_ARRAY_VALIDATE, 1);
+	OUT_RING(0);
+
+	return nr_fields;
+}
+
+static void
+nv20__draw_mbuffer(struct nv20_vbuf_render *nv20_render,
 		const ushort *indices,
 		uint nr_indices)
 {
-	struct nv20_vbuf_render *nv20_render = nv20_vbuf_render(render);
+	struct nv20_context *nv20 = nv20_render->nv20;
+	struct vertex_info *vinfo = &nv20->vertex_info;
+	unsigned nr_fields;
+	int max_push;
+	ubyte *data = nv20_render->mbuffer;
+	int vsz = 4 * vinfo->size;
+
+	nr_fields = nv20__emit_vertex_array_format(nv20);
+
+	BEGIN_RING(kelvin, NV10TCL_VERTEX_BEGIN_END, 1);
+	OUT_RING(nv20_render->hwprim);
+
+	max_push = 1200 / nr_fields;
+	while (nr_indices) {
+		int i;
+		int push = MIN2(nr_indices, max_push);
+
+		BEGIN_RING_NI(kelvin, NV10TCL_VERTEX_ARRAY_DATA,
+							push * nr_fields);
+		for (i = 0; i < push; i++) {
+			/* XXX: fixme to handle other than floats? */
+			int f = nr_fields;
+			float *attrv = (float*)&data[indices[i] * vsz];
+			while (f-- > 0)
+				OUT_RINGf(*attrv++);
+		}
+
+		nr_indices -= push;
+		indices += push;
+	}
+
+	BEGIN_RING(kelvin, NV10TCL_VERTEX_BEGIN_END, 1);
+	OUT_RING(NV10TCL_VERTEX_BEGIN_END_STOP);
+}
+
+static void
+nv20__draw_pbuffer(struct nv20_vbuf_render *nv20_render,
+		const ushort *indices,
+		uint nr_indices)
+{
 	struct nv20_context *nv20 = nv20_render->nv20;
 	int push, i;
 
-	nv20_emit_hw_state(nv20);
-
 	BEGIN_RING(kelvin, NV10TCL_VERTEX_ARRAY_OFFSET_POS, 1);
-	OUT_RELOCl(nv20_render->buffer, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_GART | NOUVEAU_BO_RD);
+	OUT_RELOCl(nv20_render->pbuffer, 0,
+			NOUVEAU_BO_VRAM | NOUVEAU_BO_GART | NOUVEAU_BO_RD);
 
 	BEGIN_RING(kelvin, NV10TCL_VERTEX_BUFFER_BEGIN_END, 1);
 	OUT_RING(nv20_render->hwprim);
@@ -169,6 +298,23 @@ nv20_vbuf_render_draw( struct vbuf_render *render,
 	OUT_RING  (0);
 }
 
+static void
+nv20_vbuf_render_draw( struct vbuf_render *render,
+		const ushort *indices,
+		uint nr_indices)
+{
+	struct nv20_vbuf_render *nv20_render = nv20_vbuf_render(render);
+
+	nv20_emit_hw_state(nv20_render->nv20);
+
+	if (nv20_render->pbuffer)
+		nv20__draw_pbuffer(nv20_render, indices, nr_indices);
+	else if (nv20_render->mbuffer)
+		nv20__draw_mbuffer(nv20_render, indices, nr_indices);
+	else
+		assert(0);
+}
+
 
 static void
 nv20_vbuf_render_release_vertices( struct vbuf_render *render,
@@ -181,9 +327,14 @@ nv20_vbuf_render_release_vertices( struct vbuf_render *render,
 	struct pipe_winsys *winsys = nv20->pipe.winsys;
 	struct pipe_screen *pscreen = &nv20->screen->pipe;
 
-	assert(nv20_render->buffer);
-	winsys->buffer_unmap(winsys, nv20_render->buffer);
-	pipe_buffer_reference(pscreen, &nv20_render->buffer, NULL);
+	if (nv20_render->pbuffer) {
+		winsys->buffer_unmap(winsys, nv20_render->pbuffer);
+		pipe_buffer_reference(pscreen, &nv20_render->pbuffer, NULL);
+	} else if (nv20_render->mbuffer) {
+		FREE(nv20_render->mbuffer);
+		nv20_render->mbuffer = NULL;
+	} else
+		assert(0);
 }
 
 
@@ -191,6 +342,10 @@ static void
 nv20_vbuf_render_destroy( struct vbuf_render *render )
 {
 	struct nv20_vbuf_render *nv20_render = nv20_vbuf_render(render);
+
+	assert(!nv20_render->pbuffer);
+	assert(!nv20_render->mbuffer);
+
 	FREE(nv20_render);
 }
 
@@ -208,7 +363,8 @@ nv20_vbuf_render_create( struct nv20_context *nv20 )
 	nv20_render->base.max_vertex_buffer_bytes = 16*1024;
 	nv20_render->base.max_indices = 1024;
 	nv20_render->base.get_vertex_info = nv20_vbuf_render_get_vertex_info;
-	nv20_render->base.allocate_vertices = nv20_vbuf_render_allocate_vertices;
+	nv20_render->base.allocate_vertices =
+					nv20_vbuf_render_allocate_vertices;
 	nv20_render->base.set_primitive = nv20_vbuf_render_set_primitive;
 	nv20_render->base.draw = nv20_vbuf_render_draw;
 	nv20_render->base.release_vertices = nv20_vbuf_render_release_vertices;
