@@ -47,7 +47,8 @@ struct nouveau_softpipe_winsys {
  * Return list of surface formats supported by this driver.
  */
 static boolean
-nouveau_is_format_supported(struct softpipe_winsys *sws, uint format)
+nouveau_is_format_supported(struct softpipe_winsys *sws,
+						enum pipe_format format)
 {
 	switch (format) {
 	case PIPE_FORMAT_A8R8G8B8_UNORM:
