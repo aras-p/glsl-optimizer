@@ -666,7 +666,7 @@ get_texel(const struct tgsi_sampler *tgsi_sampler,
           float rgba[NUM_CHANNELS][QUAD_SIZE], unsigned j)
 {
    const struct sp_shader_sampler *samp = sp_shader_sampler(tgsi_sampler);
-   const struct softpipe_context *sp = samp->sp;
+   struct softpipe_context *sp = samp->sp;
    const uint unit = samp->unit;
    const struct pipe_texture *texture = sp->texture[unit];
    const struct pipe_sampler_state *sampler = sp->sampler[unit];
@@ -683,7 +683,7 @@ get_texel(const struct tgsi_sampler *tgsi_sampler,
       const int tx = x % TILE_SIZE;
       const int ty = y % TILE_SIZE;
       const struct softpipe_cached_tile *tile
-         = sp_get_cached_tile_tex(samp->sp, samp->cache,
+         = sp_get_cached_tile_tex(sp, samp->cache,
                                   x, y, z, face, level);
       rgba[0][j] = tile->data.color[ty][tx][0];
       rgba[1][j] = tile->data.color[ty][tx][1];
@@ -1062,8 +1062,7 @@ sp_get_samples_rect(const struct tgsi_sampler *tgsi_sampler,
    const uint unit = samp->unit;
    const struct pipe_texture *texture = sp->texture[unit];
    const struct pipe_sampler_state *sampler = sp->sampler[unit];
-   //sp_get_samples_2d_common(sampler, s, t, p, lodbias, rgba, faces);
-   static const uint face = 0;
+   const uint face = 0;
    const uint compare_func = sampler->compare_func;
    unsigned level0, level1, j, imgFilter;
    int width, height;
@@ -1129,15 +1128,7 @@ sp_get_samples_rect(const struct tgsi_sampler *tgsi_sampler,
 
 /**
  * Called via tgsi_sampler::get_samples()
- * Use the sampler's state setting to get a filtered RGBA value
- * from the sampler's texture.
- *
- * XXX we can implement many versions of this function, each
- * tightly coded for a specific combination of sampler state
- * (nearest + repeat), (bilinear mipmap + clamp), etc.
- *
- * The update_samplers() function in st_atom_sampler.c could create
- * a new tgsi_sampler object for each state combo it finds....
+ * Get four filtered RGBA values from the sampler's texture.
  */
 void
 sp_get_samples(struct tgsi_sampler *tgsi_sampler,
