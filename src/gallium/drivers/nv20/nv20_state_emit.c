@@ -1,5 +1,6 @@
 #include "nv20_context.h"
 #include "nv20_state.h"
+#include "draw/draw_context.h"
 
 static void nv20_state_emit_blend(struct nv20_context* nv20)
 {
