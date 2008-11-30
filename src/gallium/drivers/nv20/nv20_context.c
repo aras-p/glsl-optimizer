@@ -177,7 +177,7 @@ static void nv20_init_hwctx(struct nv20_context *nv20)
 	OUT_RING  (0);
 	BEGIN_RING(kelvin, NV10TCL_CULL_FACE_ENABLE, 1);
 	OUT_RING  (0);
-	BEGIN_RING(kelvin, NV10TCL_CLIP_PLANE_ENABLE(0), 8);
+	BEGIN_RING(kelvin, NV10TCL_TX_GEN_S(0), 8);
 	for (i=0;i<8;i++) {
 		OUT_RING  (0);
 	}
