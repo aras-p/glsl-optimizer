@@ -121,12 +121,17 @@ nv10_vbuf_render_allocate_vertices( struct vbuf_render *render,
 }
 
 
-static void 
+static boolean
 nv10_vbuf_render_set_primitive( struct vbuf_render *render, 
 		unsigned prim )
 {
 	struct nv10_vbuf_render *nv10_render = nv10_vbuf_render(render);
-	nv10_render->hwprim = prim + 1;
+	unsigned hwp = nvgl_primitive(prim);
+	if (hwp == 0)
+		return FALSE;
+
+	nv10_render->hwprim = hwp;
+	return TRUE;
 }
 
 

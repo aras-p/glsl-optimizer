@@ -189,7 +189,7 @@ nvgl_primitive(unsigned prim) {
 	case PIPE_PRIM_POLYGON:
 		return 0x000a;
 	default:
-		return 0x0001;
+		return 0;
 	}
 }
 
