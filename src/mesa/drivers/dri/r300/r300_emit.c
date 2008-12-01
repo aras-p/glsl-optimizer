@@ -436,10 +436,10 @@ int r300EmitArrays(GLcontext * ctx)
 	}
 
 	/* Setup INPUT_ROUTE. */
-    if (rmesa->radeon.radeonScreen->driScreen->dri2.enabled) {
-	R300_STATECHANGE(rmesa, vir[0]);
-    rmesa->hw.vir[0].cmd[0] &= 0xC000FFFF;
-    rmesa->hw.vir[1].cmd[0] &= 0xC000FFFF;
+    if (rmesa->radeon.radeonScreen->kernel_mm) {
+      R300_STATECHANGE(rmesa, vir[0]);
+      rmesa->hw.vir[0].cmd[0] &= 0xC000FFFF;
+      rmesa->hw.vir[1].cmd[0] &= 0xC000FFFF;
 	rmesa->hw.vir[0].cmd[0] |=
         (r300VAPInputRoute0(&rmesa->hw.vir[0].cmd[R300_VIR_CNTL_0],
                             vb->AttribPtr, inputs, tab, nr) & 0x3FFF) << 16;

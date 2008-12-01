@@ -121,7 +121,8 @@ void radeonGetLock(radeonContextPtr rmesa, GLuint flags)
 
 	if (sarea->ctx_owner != rmesa->dri.hwContext) {
 		sarea->ctx_owner = rmesa->dri.hwContext;
-        radeon_bo_legacy_texture_age(rmesa->radeonScreen->bom);
+		if (!rmesa->radeonScreen->kernel_mm)
+		    radeon_bo_legacy_texture_age(rmesa->radeonScreen->bom);
 	}
 
 	rmesa->lost_context = GL_TRUE;

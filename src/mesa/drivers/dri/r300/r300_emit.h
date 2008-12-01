@@ -54,7 +54,7 @@
 static INLINE uint32_t cmdpacket0(struct radeon_screen *rscrn,
                                   int reg, int count)
 {
-    if (!rscrn->driScreen->dri2.enabled) {
+    if (!rscrn->kernel_mm) {
 	    drm_r300_cmd_header_t cmd;
 
     	cmd.packet0.cmd_type = R300_CMD_PACKET0;
@@ -158,7 +158,7 @@ static INLINE uint32_t cmdpacify(struct radeon_screen *rscrn)
  * Outputs 2 dwords and expects (num_extra+1) additional dwords afterwards.
  */
 #define OUT_BATCH_PACKET3(packet, num_extra) do {\
-    if (!b_l_r300->radeon.radeonScreen->driScreen->dri2.enabled) { \
+    if (!b_l_r300->radeon.radeonScreen->kernel_mm) { \
     	OUT_BATCH(cmdpacket3(b_l_r300->radeon.radeonScreen,\
                   R300_CMD_PACKET3_RAW)); \
     }\
@@ -172,7 +172,7 @@ void static INLINE end_3d(r300ContextPtr rmesa)
 {
 	BATCH_LOCALS(rmesa);
 
-    if (!rmesa->radeon.radeonScreen->driScreen->dri2.enabled) {
+    if (!rmesa->radeon.radeonScreen->kernel_mm) {
     	BEGIN_BATCH(1);
 	    OUT_BATCH(cmdpacify(rmesa->radeon.radeonScreen));
     	END_BATCH();
@@ -183,7 +183,7 @@ void static INLINE cp_delay(r300ContextPtr rmesa, unsigned short count)
 {
 	BATCH_LOCALS(rmesa);
 
-    if (!rmesa->radeon.radeonScreen->driScreen->dri2.enabled) {
+    if (!rmesa->radeon.radeonScreen->kernel_mm) {
     	BEGIN_BATCH(1);
 	    OUT_BATCH(cmdcpdelay(rmesa->radeon.radeonScreen, count));
     	END_BATCH();
@@ -195,7 +195,7 @@ void static INLINE cp_wait(r300ContextPtr rmesa, unsigned char flags)
 	BATCH_LOCALS(rmesa);
     uint32_t wait_until;
 
-    if (!rmesa->radeon.radeonScreen->driScreen->dri2.enabled) {
+    if (!rmesa->radeon.radeonScreen->kernel_mm) {
     	BEGIN_BATCH_NO_AUTOSTATE(1);
     	OUT_BATCH(cmdwait(rmesa->radeon.radeonScreen, flags));
 	    END_BATCH();

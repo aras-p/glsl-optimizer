@@ -168,7 +168,7 @@ static void r300ClearBuffer(r300ContextPtr r300, int flags,
         END_BATCH();
 	}
 
-    if (!rmesa->radeon.radeonScreen->driScreen->dri2.enabled) {
+    if (!rmesa->radeon.radeonScreen->kernel_mm) {
     	BEGIN_BATCH_NO_AUTOSTATE(9);
     	OUT_BATCH(cmdpacket3(r300->radeon.radeonScreen, R300_CMD_PACKET3_CLEAR));
     	OUT_BATCH_FLOAT32(dPriv->w / 2.0);

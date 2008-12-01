@@ -199,7 +199,7 @@ static void r300FireEB(r300ContextPtr rmesa, int vertex_count, int type)
                   type |
                   R300_VAP_VF_CNTL__INDEX_SIZE_32bit);
 
-    if (!rmesa->radeon.radeonScreen->driScreen->dri2.enabled) {
+    if (!rmesa->radeon.radeonScreen->kernel_mm) {
     	OUT_BATCH_PACKET3(R300_PACKET3_INDX_BUFFER, 2);
 	    OUT_BATCH(R300_EB_UNK1 | (0 << 16) | R300_EB_UNK2);
     	OUT_BATCH_RELOC(rmesa->state.elt_dma_offset,
@@ -238,7 +238,7 @@ static void r300EmitAOS(r300ContextPtr rmesa, GLuint nr, GLuint offset)
 	OUT_BATCH(nr);
 
     
-    if (!rmesa->radeon.radeonScreen->driScreen->dri2.enabled) {
+    if (!rmesa->radeon.radeonScreen->kernel_mm) {
 	for (i = 0; i + 1 < nr; i += 2) {
 		OUT_BATCH((rmesa->state.aos[i].components << 0) |
 			  (rmesa->state.aos[i].stride << 8) |

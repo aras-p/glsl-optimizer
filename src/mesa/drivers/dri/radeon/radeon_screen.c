@@ -35,6 +35,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  * \author  Gareth Hughes <gareth@valinux.com>
  */
 
+#include <errno.h>
 #include "main/glheader.h"
 #include "main/imports.h"
 #include "main/mtypes.h"
@@ -366,7 +367,7 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
 {
    radeonScreenPtr screen;
    RADEONDRIPtr dri_priv = (RADEONDRIPtr)sPriv->pDevPriv;
-   unsigned char *RADEONMMIO;
+   unsigned char *RADEONMMIO = NULL;
    int i;
    int ret;
    uint32_t temp;
@@ -398,6 +399,21 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
    screen->card_type = (dri_priv->IsPCI ? RADEON_CARD_PCI : RADEON_CARD_AGP);
    {
       int ret;
+
+#ifdef RADEON_PARAM_KERNEL_MM
+     ret = radeonGetParam( sPriv->fd, RADEON_PARAM_KERNEL_MM,
+                            &screen->kernel_mm);
+
+      if (ret && ret != -EINVAL) {
+         FREE( screen );
+         fprintf(stderr, "drm_radeon_getparam_t (RADEON_OFFSET): %d\n", ret);
+         return NULL;
+      }
+
+      if (ret == -EINVAL)
+          screen->kernel_mm = 0;
+#endif
+
       ret = radeonGetParam( sPriv->fd, RADEON_PARAM_GART_BUFFER_OFFSET,
 			    &screen->gart_buffer_offset);
 
@@ -431,58 +447,60 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
       screen->drmSupportsVertexProgram = (sPriv->drm_version.minor >= 25);
    }
 
-   screen->mmio.handle = dri_priv->registerHandle;
-   screen->mmio.size   = dri_priv->registerSize;
-   if ( drmMap( sPriv->fd,
-		screen->mmio.handle,
-		screen->mmio.size,
-		&screen->mmio.map ) ) {
-      FREE( screen );
-      __driUtilMessage("%s: drmMap failed\n", __FUNCTION__ );
-      return NULL;
-   }
+   if (!screen->kernel_mm) {
+     screen->mmio.handle = dri_priv->registerHandle;
+     screen->mmio.size   = dri_priv->registerSize;
+     if ( drmMap( sPriv->fd,
+		  screen->mmio.handle,
+		  screen->mmio.size,
+		  &screen->mmio.map ) ) {
+       FREE( screen );
+       __driUtilMessage("%s: drmMap failed\n", __FUNCTION__ );
+       return NULL;
+     }
 
-   RADEONMMIO = screen->mmio.map;
+     RADEONMMIO = screen->mmio.map;
 
-   screen->status.handle = dri_priv->statusHandle;
-   screen->status.size   = dri_priv->statusSize;
-   if ( drmMap( sPriv->fd,
-		screen->status.handle,
-		screen->status.size,
-		&screen->status.map ) ) {
-      drmUnmap( screen->mmio.map, screen->mmio.size );
-      FREE( screen );
-      __driUtilMessage("%s: drmMap (2) failed\n", __FUNCTION__ );
-      return NULL;
-   }
-   screen->scratch = (__volatile__ uint32_t *)
-      ((GLubyte *)screen->status.map + RADEON_SCRATCH_REG_OFFSET);
+     screen->status.handle = dri_priv->statusHandle;
+     screen->status.size   = dri_priv->statusSize;
+     if ( drmMap( sPriv->fd,
+		  screen->status.handle,
+		  screen->status.size,
+		  &screen->status.map ) ) {
+       drmUnmap( screen->mmio.map, screen->mmio.size );
+       FREE( screen );
+       __driUtilMessage("%s: drmMap (2) failed\n", __FUNCTION__ );
+       return NULL;
+     }
+     screen->scratch = (__volatile__ uint32_t *)
+       ((GLubyte *)screen->status.map + RADEON_SCRATCH_REG_OFFSET);
 
-   screen->buffers = drmMapBufs( sPriv->fd );
-   if ( !screen->buffers ) {
-      drmUnmap( screen->status.map, screen->status.size );
-      drmUnmap( screen->mmio.map, screen->mmio.size );
-      FREE( screen );
-      __driUtilMessage("%s: drmMapBufs failed\n", __FUNCTION__ );
-      return NULL;
-   }
-
-   if ( dri_priv->gartTexHandle && dri_priv->gartTexMapSize ) {
-      screen->gartTextures.handle = dri_priv->gartTexHandle;
-      screen->gartTextures.size   = dri_priv->gartTexMapSize;
-      if ( drmMap( sPriv->fd,
-		   screen->gartTextures.handle,
-		   screen->gartTextures.size,
-		   (drmAddressPtr)&screen->gartTextures.map ) ) {
+     screen->buffers = drmMapBufs( sPriv->fd );
+     if ( !screen->buffers ) {
+       drmUnmap( screen->status.map, screen->status.size );
+       drmUnmap( screen->mmio.map, screen->mmio.size );
+       FREE( screen );
+       __driUtilMessage("%s: drmMapBufs failed\n", __FUNCTION__ );
+       return NULL;
+     }
+     
+     if ( dri_priv->gartTexHandle && dri_priv->gartTexMapSize ) {
+       screen->gartTextures.handle = dri_priv->gartTexHandle;
+       screen->gartTextures.size   = dri_priv->gartTexMapSize;
+       if ( drmMap( sPriv->fd,
+		    screen->gartTextures.handle,
+		    screen->gartTextures.size,
+		    (drmAddressPtr)&screen->gartTextures.map ) ) {
 	 drmUnmapBufs( screen->buffers );
 	 drmUnmap( screen->status.map, screen->status.size );
 	 drmUnmap( screen->mmio.map, screen->mmio.size );
 	 FREE( screen );
 	 __driUtilMessage("%s: drmMap failed for GART texture area\n", __FUNCTION__);
 	 return NULL;
-      }
-
-      screen->gart_texture_offset = dri_priv->gartTexOffset + screen->gart_base;
+       }
+       
+       screen->gart_texture_offset = dri_priv->gartTexOffset + screen->gart_base;
+     }
    }
 
    screen->chip_flags = 0;
@@ -849,7 +867,7 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
    ret = radeonGetParam( sPriv->fd, RADEON_PARAM_FB_LOCATION,
                          &temp);
    if (ret) {
-       if (screen->chip_family < CHIP_FAMILY_RS690)
+       if (screen->chip_family < CHIP_FAMILY_RS690 && !screen->kernel_mm)
 	   screen->fbLocation      = ( INREG( RADEON_MC_FB_LOCATION ) & 0xffff) << 16;
        else {
            FREE( screen );
@@ -973,10 +991,14 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
    screen->sarea_priv_offset = dri_priv->sarea_priv_offset;
    screen->sarea = (drm_radeon_sarea_t *) ((GLubyte *) sPriv->pSAREA +
 					       screen->sarea_priv_offset);
-   screen->bom = radeon_bo_manager_legacy_ctor(screen);
+
+   if (screen->kernel_mm)
+     screen->bom = radeon_bo_manager_gem_ctor(sPriv->fd);
+   else
+     screen->bom = radeon_bo_manager_legacy_ctor(screen);
    if (screen->bom == NULL) {
-    free(screen);
-    return NULL;
+     free(screen);
+     return NULL;
    }
    return screen;
 }
@@ -1004,6 +1026,7 @@ radeonCreateScreen2(__DRIscreenPrivate *sPriv)
    driParseOptionInfo (&screen->optionCache,
 		       __driConfigOptions, __driNConfigOptions);
 
+   screen->kernel_mm = 1;
    screen->chip_flags = 0;
    /* FIXME: do either an ioctl (bad) or a sysfs file for driver to
     * information about which chipset is their */
@@ -1058,7 +1081,7 @@ radeonDestroyScreen( __DRIscreenPrivate *sPriv )
     if (!screen)
         return;
 
-    if (sPriv->dri2.enabled) {
+    if (screen->kernel_mm) {
         radeon_tracker_print(&screen->bom->tracker, stderr);
         radeon_bo_manager_gem_dtor(screen->bom);
     } else {

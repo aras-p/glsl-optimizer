@@ -234,7 +234,7 @@ void r300EmitState(r300ContextPtr r300)
 
 static unsigned packet0_count(r300ContextPtr r300, uint32_t *pkt)
 {
-    if (r300->radeon.radeonScreen->driScreen->dri2.enabled) {
+    if (r300->radeon.radeonScreen->kernel_mm) {
         return ((((*pkt) >> 16) & 0x3FFF) + 1);
     } else {
         drm_r300_cmd_header_t *t = (drm_r300_cmd_header_t*)pkt;
@@ -252,7 +252,7 @@ void emit_vpu(r300ContextPtr r300, struct r300_state_atom * atom)
 	drm_r300_cmd_header_t cmd;
     uint32_t addr, ndw, i;
 
-    if (!r300->radeon.radeonScreen->driScreen->dri2.enabled) {
+    if (!r300->radeon.radeonScreen->kernel_mm) {
         uint32_t dwords;
     	dwords = (*atom->check) (r300, atom);
         BEGIN_BATCH_NO_AUTOSTATE(dwords);
@@ -744,7 +744,7 @@ void r300InitCmdBuf(r300ContextPtr r300)
 			size * 4, r300->hw.max_state_size * 4);
 	}
 
-    if (r300->radeon.radeonScreen->driScreen->dri2.enabled) {
+    if (r300->radeon.radeonScreen->kernel_mm) {
         int fd = r300->radeon.radeonScreen->driScreen->fd;
         r300->cmdbuf.csm = radeon_cs_manager_gem_ctor(fd);
     } else {
@@ -770,7 +770,7 @@ void r300DestroyCmdBuf(r300ContextPtr r300)
 	foreach(atom, &r300->hw.atomlist) {
 		FREE(atom->cmd);
 	}
-    if (r300->radeon.radeonScreen->driScreen->dri2.enabled) {
+    if (r300->radeon.radeonScreen->driScreen->dri2.enabled || r300->radeon.radeonScreen->kernel_mm) {
         radeon_cs_manager_gem_dtor(r300->cmdbuf.csm);
     } else {
         radeon_cs_manager_legacy_dtor(r300->cmdbuf.csm);
