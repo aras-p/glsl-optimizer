@@ -2004,7 +2004,7 @@ save_Lightfv(GLenum light, GLenum pname, const GLfloat *params)
    Node *n;
    ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION(ctx, OPCODE_LIGHT, 6);
-   if (OPCODE_LIGHT) {
+   if (n) {
       GLint i, nParams;
       n[1].e = light;
       n[2].e = pname;
