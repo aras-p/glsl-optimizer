@@ -4,6 +4,7 @@ bump
 convolutions
 deriv
 extfuncs.h
+fragcoord
 identity
 mandelbrot
 multitex
