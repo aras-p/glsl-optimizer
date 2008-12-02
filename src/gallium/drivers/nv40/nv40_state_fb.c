@@ -1,5 +1,31 @@
 #include "nv40_context.h"
 
+static INLINE int log2i(int i)
+{
+	int r = 0;
+
+	if (i & 0xffff0000) {
+		i >>= 16;
+		r += 16;
+	}
+	if (i & 0x0000ff00) {
+		i >>= 8;
+		r += 8;
+	}
+	if (i & 0x000000f0) {
+		i >>= 4;
+		r += 4;
+	}
+	if (i & 0x0000000c) {
+		i >>= 2;
+		r += 2;
+	}
+	if (i & 0x00000002) {
+		r += 1;
+	}
+	return r;
+}
+
 static boolean
 nv40_state_framebuffer_validate(struct nv40_context *nv40)
 {
@@ -32,7 +58,17 @@ nv40_state_framebuffer_validate(struct nv40_context *nv40)
 		zeta = fb->zsbuf;
 	}
 
-	rt_format = NV40TCL_RT_FORMAT_TYPE_LINEAR;
+	if (!(rt[0]->texture->tex_usage & NOUVEAU_TEXTURE_USAGE_LINEAR)) {
+		assert(!(fb->width & (fb->width - 1)) && !(fb->height & (fb->height - 1)));
+		for (i = 1; i < fb->num_cbufs; i++)
+			assert(!(rt[i]->texture->tex_usage & NOUVEAU_TEXTURE_USAGE_LINEAR));
+
+		rt_format = NV40TCL_RT_FORMAT_TYPE_SWIZZLED |
+		            log2i(fb->width) << NV40TCL_RT_FORMAT_LOG2_WIDTH_SHIFT |
+		            log2i(fb->height) << NV40TCL_RT_FORMAT_LOG2_HEIGHT_SHIFT;
+	}
+	else
+		rt_format = NV40TCL_RT_FORMAT_TYPE_LINEAR;
 
 	switch (colour_format) {
 	case PIPE_FORMAT_A8R8G8B8_UNORM:

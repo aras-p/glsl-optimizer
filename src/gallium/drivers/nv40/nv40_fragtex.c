@@ -66,7 +66,6 @@ nv40_fragtex_build(struct nv40_context *nv40, int unit)
 	struct nv40_texture_format *tf;
 	struct nouveau_stateobj *so;
 	uint32_t txf, txs, txp;
-	int swizzled = 0; /*XXX: implement in region code? */
 	unsigned tex_flags = NOUVEAU_BO_VRAM | NOUVEAU_BO_GART | NOUVEAU_BO_RD;
 
 	tf = nv40_fragtex_format(pt->format);
@@ -98,7 +97,7 @@ nv40_fragtex_build(struct nv40_context *nv40, int unit)
 		return NULL;
 	}
 
-	if (swizzled) {
+	if (!(pt->tex_usage & NOUVEAU_TEXTURE_USAGE_LINEAR)) {
 		txp = 0;
 	} else {
 		txp  = nv40mt->level[0].pitch;

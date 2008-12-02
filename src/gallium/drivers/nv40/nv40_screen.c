@@ -137,22 +137,73 @@ static void *
 nv40_surface_map(struct pipe_screen *screen, struct pipe_surface *surface,
 		 unsigned flags )
 {
-	struct pipe_winsys *ws = screen->winsys;
-	void *map;
+	struct pipe_winsys	*ws = screen->winsys;
+	struct pipe_surface	*surface_to_map;
+	void			*map;
 
-	map = ws->buffer_map(ws, surface->buffer, flags);
+	if (!(surface->texture->tex_usage & NOUVEAU_TEXTURE_USAGE_LINEAR)) {
+		struct nv40_miptree *mt = (struct nv40_miptree *)surface->texture;
+
+		if (!mt->shadow_tex) {
+			unsigned old_tex_usage = surface->texture->tex_usage;
+			surface->texture->tex_usage = NOUVEAU_TEXTURE_USAGE_LINEAR;
+			mt->shadow_tex = screen->texture_create(screen, surface->texture);
+			surface->texture->tex_usage = old_tex_usage;
+
+			assert(mt->shadow_tex->tex_usage & NOUVEAU_TEXTURE_USAGE_LINEAR);
+			mt->shadow_surface = screen->get_tex_surface
+			(
+				screen, mt->shadow_tex,
+				surface->face, surface->level, surface->zslice,
+				surface->usage
+			);
+		}
+
+		surface_to_map = mt->shadow_surface;
+	}
+	else
+		surface_to_map = surface;
+
+	assert(surface_to_map);
+
+	map = ws->buffer_map(ws, surface_to_map->buffer, flags);
 	if (!map)
 		return NULL;
 
-	return map + surface->offset;
+	return map + surface_to_map->offset;
 }
 
 static void
 nv40_surface_unmap(struct pipe_screen *screen, struct pipe_surface *surface)
 {
-	struct pipe_winsys *ws = screen->winsys;
+	struct pipe_winsys	*ws = screen->winsys;
+	struct pipe_surface	*surface_to_unmap;
 
-	ws->buffer_unmap(ws, surface->buffer);
+	/* TODO: Copy from shadow just before push buffer is flushed instead.
+	         There are probably some programs that map/unmap excessively
+	         before rendering. */
+	if (!(surface->texture->tex_usage & NOUVEAU_TEXTURE_USAGE_LINEAR)) {
+		struct nv40_miptree *mt = (struct nv40_miptree *)surface->texture;
+
+		assert(mt->shadow_tex);
+
+		surface_to_unmap = mt->shadow_surface;
+	}
+	else
+		surface_to_unmap = surface;
+
+	assert(surface_to_unmap);
+
+	ws->buffer_unmap(ws, surface_to_unmap->buffer);
+
+	if (surface_to_unmap != surface) {
+		struct nv40_screen *nvscreen = nv40_screen(screen);
+
+		nvscreen->nvws->surface_copy(nvscreen->nvws,
+		                             surface, 0, 0,
+		                             surface_to_unmap, 0, 0,
+		                             surface->width, surface->height);
+	}
 }
 
 static void
