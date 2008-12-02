@@ -8,7 +8,6 @@ static void
 nv40_miptree_layout(struct nv40_miptree *mt)
 {
 	struct pipe_texture *pt = &mt->base;
-	boolean swizzled = FALSE;
 	uint width = pt->width[0], height = pt->height[0], depth = pt->depth[0];
 	uint offset = 0;
 	int nr_faces, l, f, pitch;
@@ -30,7 +29,7 @@ nv40_miptree_layout(struct nv40_miptree *mt)
 		pt->nblocksx[l] = pf_get_nblocksx(&pt->block, width);
 		pt->nblocksy[l] = pf_get_nblocksy(&pt->block, height);
 
-		if (swizzled)
+		if (!(pt->tex_usage & NOUVEAU_TEXTURE_USAGE_LINEAR))
 			pitch = pt->nblocksx[l];
 		pitch = align(pitch, 64);
 
@@ -68,8 +67,6 @@ nv40_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *pt)
 	mt->shadow_tex = NULL;
 	mt->shadow_surface = NULL;
 
-	nv40_miptree_layout(mt);
-
 	/* Swizzled textures must be POT */
 	if (pt->width[0] & (pt->width[0] - 1) ||
 	    pt->height[0] & (pt->height[0] - 1))
@@ -90,6 +87,8 @@ nv40_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *pt)
 			mt->base.tex_usage |= NOUVEAU_TEXTURE_USAGE_LINEAR;
 		}
 	}
+
+	nv40_miptree_layout(mt);
 
 	mt->buffer = ws->buffer_create(ws, 256,
 				       PIPE_BUFFER_USAGE_PIXEL |

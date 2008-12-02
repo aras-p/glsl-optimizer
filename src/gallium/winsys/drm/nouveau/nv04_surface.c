@@ -84,11 +84,14 @@ nv04_scaled_image_format(enum pipe_format format)
 
 static void
 nv04_surface_copy_swizzle(struct nouveau_context *nv, unsigned dx, unsigned dy,
-		       unsigned sx, unsigned sy, unsigned w, unsigned h)
+                          unsigned sx, unsigned sy, unsigned w, unsigned h)
 {
 	struct nouveau_channel *chan = nv->nvc->channel;
 	struct pipe_surface *dst = nv->surf_dst;
 	struct pipe_surface *src = nv->surf_src;
+
+	/* POT or GTFO */
+	assert(!(w & (w - 1)) && !(h & (h - 1)));
 
 	BEGIN_RING(chan, nv->nvc->NvSwzSurf, NV04_SWIZZLED_SURFACE_DMA_IMAGE, 1);
 	OUT_RELOCo(chan, nouveau_buffer(dst->buffer)->bo,
