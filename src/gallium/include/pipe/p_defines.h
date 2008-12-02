@@ -171,6 +171,8 @@ enum pipe_texture_target {
 #define PIPE_TEXTURE_USAGE_PRIMARY         0x4 /* ie a frontbuffer */
 #define PIPE_TEXTURE_USAGE_DEPTH_STENCIL   0x8
 #define PIPE_TEXTURE_USAGE_SAMPLER         0x10
+/** Pipe driver custom usage flags should be greater or equal to this value */
+#define PIPE_TEXTURE_USAGE_CUSTOM          (1 << 16)
 
 #define PIPE_TEXTURE_GEOM_NON_SQUARE       0x1
 #define PIPE_TEXTURE_GEOM_NON_POWER_OF_TWO 0x2
