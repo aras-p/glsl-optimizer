@@ -37,6 +37,7 @@
 #include "draw/draw_vertex.h"
 
 #include "sp_quad.h"
+#include "sp_tex_sample.h"
 
 
 /**
@@ -138,6 +139,12 @@ struct softpipe_context {
 
       struct quad_stage *first; /**< points to one of the above stages */
    } quad[SP_NUM_QUAD_THREADS];
+
+   /** TGSI exec things */
+   struct {
+      struct sp_shader_sampler samplers[PIPE_MAX_SAMPLERS];
+      struct sp_shader_sampler *samplers_list[PIPE_MAX_SAMPLERS];
+   } tgsi;
 
    /** The primitive drawing context */
    struct draw_context *draw;
