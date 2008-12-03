@@ -45,7 +45,7 @@ struct pipe_context;
 struct draw_context;
 struct draw_stage;
 struct draw_vertex_shader;
-
+struct tgsi_sampler;
 
 
 struct draw_context *draw_create( void );
@@ -89,6 +89,12 @@ draw_find_vs_output(const struct draw_context *draw,
 
 uint
 draw_num_vs_outputs(const struct draw_context *draw);
+
+
+void
+draw_texture_samplers(struct draw_context *draw,
+                      uint num_samplers,
+                      struct tgsi_sampler **samplers);
 
 
 

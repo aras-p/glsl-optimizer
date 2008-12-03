@@ -185,6 +185,9 @@ struct draw_context
       /** TGSI program interpreter runtime state */
       struct tgsi_exec_machine machine;
 
+      uint num_samplers;
+      struct tgsi_sampler **samplers;
+
       /* This (and the tgsi_exec_machine struct) probably need to be moved somewhere private.
        */
       struct gallivm_cpu_engine *engine;   

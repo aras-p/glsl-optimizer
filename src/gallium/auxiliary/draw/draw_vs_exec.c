@@ -68,8 +68,8 @@ vs_exec_prepare( struct draw_vertex_shader *shader,
    if (evs->machine->Tokens != shader->state.tokens) {
       tgsi_exec_machine_bind_shader(evs->machine,
                                     shader->state.tokens,
-                                    PIPE_MAX_SAMPLERS,
-                                    NULL /*samplers*/ );
+                                    draw->vs.num_samplers,
+                                    draw->vs.samplers);
    }
 }
 

@@ -331,6 +331,21 @@ draw_num_vs_outputs(const struct draw_context *draw)
 }
 
 
+/**
+ * Provide TGSI sampler objects for vertex shaders that use texture fetches.
+ * This might only be used by software drivers for the time being.
+ */
+void
+draw_texture_samplers(struct draw_context *draw,
+                      uint num_samplers,
+                      struct tgsi_sampler **samplers)
+{
+   draw->vs.num_samplers = num_samplers;
+   draw->vs.samplers = samplers;
+}
+
+
+
 
 void draw_set_render( struct draw_context *draw, 
 		      struct vbuf_render *render )
