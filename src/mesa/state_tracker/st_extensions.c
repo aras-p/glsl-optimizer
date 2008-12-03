@@ -89,6 +89,9 @@ void st_init_limits(struct st_context *st)
       = _min(screen->get_param(screen, PIPE_CAP_MAX_TEXTURE_IMAGE_UNITS),
             MAX_TEXTURE_IMAGE_UNITS);
 
+   c->MaxVertexTextureImageUnits
+      = screen->get_param(screen, PIPE_CAP_MAX_VERTEX_TEXTURE_UNITS);
+
    c->MaxDrawBuffers
       = _clamp(screen->get_param(screen, PIPE_CAP_MAX_RENDER_TARGETS),
               1, MAX_DRAW_BUFFERS);
