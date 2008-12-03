@@ -25,7 +25,8 @@ PROGS = \
 	texdemo1 \
 	toyball \
 	twoside \
-	trirast
+	trirast \
+	vert-tex
 
 
 ##### RULES #####
@@ -183,6 +184,12 @@ trirast.o: trirast.c extfuncs.h shaderutil.h
 trirast: trirast.o shaderutil.o
 	$(CC) -I$(INCDIR) $(CFLAGS) $(LDFLAGS) trirast.o shaderutil.o $(LIBS) -o $@
 
+
+vert-tex.o: vert-tex.c extfuncs.h shaderutil.h
+	$(CC) -c -I$(INCDIR) $(CFLAGS) vert-tex.c
+
+vert-tex: vert-tex.o shaderutil.o
+	$(CC) -I$(INCDIR) $(CFLAGS) $(LDFLAGS) vert-tex.o shaderutil.o $(LIBS) -o $@
 
 
 
