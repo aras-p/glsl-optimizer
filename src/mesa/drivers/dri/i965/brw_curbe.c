@@ -184,8 +184,8 @@ static void prepare_constant_buffer(struct brw_context *brw)
     * function will also be called whenever fp or vp changes.
     */
    brw->curbe.tracked_state.dirty.mesa = (_NEW_TRANSFORM|_NEW_PROJECTION);
-   brw->curbe.tracked_state.dirty.mesa |= vp->param_state;
-   brw->curbe.tracked_state.dirty.mesa |= fp->param_state;
+   brw->curbe.tracked_state.dirty.mesa |= vp->program.Base.Parameters->StateFlags;
+   brw->curbe.tracked_state.dirty.mesa |= fp->program.Base.Parameters->StateFlags;
 
    if (sz == 0) {
 

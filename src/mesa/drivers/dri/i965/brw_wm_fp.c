@@ -426,10 +426,6 @@ static struct prog_src_register search_or_add_param5(struct brw_wm_compile *c,
 
    idx = _mesa_add_state_reference( paramList, tokens );
 
-   /* Recalculate state dependency: 
-    */
-   c->fp->param_state = paramList->StateFlags;
-
    return src_reg(PROGRAM_STATE_VAR, idx);
 }
 

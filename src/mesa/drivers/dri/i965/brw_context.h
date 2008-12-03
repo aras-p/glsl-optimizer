@@ -158,7 +158,6 @@ struct brw_state_flags {
 struct brw_vertex_program {
    struct gl_vertex_program program;
    GLuint id;
-   GLuint param_state;		/* flags indicating state tracked by params */
 };
 
 
@@ -166,7 +165,6 @@ struct brw_vertex_program {
 struct brw_fragment_program {
    struct gl_fragment_program program;
    GLuint id;
-   GLuint param_state;		/* flags indicating state tracked by params */
 };
 
 
