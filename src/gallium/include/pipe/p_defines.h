@@ -294,6 +294,7 @@ enum pipe_texture_target {
 #define PIPE_CAP_GUARD_BAND_BOTTOM       23  /*< float */
 #define PIPE_CAP_TEXTURE_MIRROR_CLAMP    24
 #define PIPE_CAP_TEXTURE_MIRROR_REPEAT   25
+#define PIPE_CAP_MAX_VERTEX_TEXTURE_UNITS 26
 
 
 
