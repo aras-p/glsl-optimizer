@@ -121,12 +121,13 @@ gl_filter_to_img_filter(GLenum filter)
 static void 
 update_samplers(struct st_context *st)
 {
-   const struct st_fragment_program *fs = st->fp;
+   struct gl_vertex_program *vprog = st->ctx->VertexProgram._Current;
+   struct gl_fragment_program *fprog = st->ctx->FragmentProgram._Current;
+   const GLbitfield samplersUsed = (vprog->Base.SamplersUsed |
+                                    fprog->Base.SamplersUsed);
    GLuint su;
 
    st->state.num_samplers = 0;
-
-   /*printf("%s samplers used = 0x%x\n", __FUNCTION__, fs->Base.Base.SamplersUsed);*/
 
    /* loop over sampler units (aka tex image units) */
    for (su = 0; su < st->ctx->Const.MaxTextureImageUnits; su++) {
@@ -134,11 +135,16 @@ update_samplers(struct st_context *st)
 
       memset(sampler, 0, sizeof(*sampler));
 
-      if (fs->Base.Base.SamplersUsed & (1 << su)) {
-         GLuint texUnit = fs->Base.Base.SamplerUnits[su];
-         const struct gl_texture_object *texobj
-            = st->ctx->Texture.Unit[texUnit]._Current;
+      if (samplersUsed & (1 << su)) {
+         struct gl_texture_object *texobj;
+         GLuint texUnit;
 
+         if (fprog->Base.SamplersUsed & (1 << su))
+            texUnit = fprog->Base.SamplerUnits[su];
+         else
+            texUnit = vprog->Base.SamplerUnits[su];
+
+         texobj = st->ctx->Texture.Unit[texUnit]._Current;
          if (!texobj) {
             texobj = st_get_default_texture(st);
          }

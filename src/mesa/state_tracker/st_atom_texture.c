@@ -44,22 +44,30 @@
 static void 
 update_textures(struct st_context *st)
 {
+   struct gl_vertex_program *vprog = st->ctx->VertexProgram._Current;
    struct gl_fragment_program *fprog = st->ctx->FragmentProgram._Current;
+   const GLbitfield samplersUsed = (vprog->Base.SamplersUsed |
+                                    fprog->Base.SamplersUsed);
    GLuint su;
 
    st->state.num_textures = 0;
 
-   /*printf("%s samplers used = 0x%x\n", __FUNCTION__, fprog->Base.SamplersUsed);*/
-
+   /* loop over sampler units (aka tex image units) */
    for (su = 0; su < st->ctx->Const.MaxTextureCoordUnits; su++) {
       struct pipe_texture *pt = NULL;
 
-      if (fprog->Base.SamplersUsed & (1 << su)) {
-         const GLuint texUnit = fprog->Base.SamplerUnits[su];
-         struct gl_texture_object *texObj
-            = st->ctx->Texture.Unit[texUnit]._Current;
+      if (samplersUsed & (1 << su)) {
+         struct gl_texture_object *texObj;
          struct st_texture_object *stObj;
          GLboolean flush, retval;
+         GLuint texUnit;
+
+         if (fprog->Base.SamplersUsed & (1 << su))
+            texUnit = fprog->Base.SamplerUnits[su];
+         else
+            texUnit = vprog->Base.SamplerUnits[su];
+
+         texObj = st->ctx->Texture.Unit[texUnit]._Current;
 
          if (!texObj) {
             texObj = st_get_default_texture(st);
