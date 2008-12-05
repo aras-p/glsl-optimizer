@@ -80,8 +80,7 @@ nv40_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *pt)
 		/* TODO: Figure out which formats can be swizzled */
 		case PIPE_FORMAT_A8R8G8B8_UNORM:
 		case PIPE_FORMAT_X8R8G8B8_UNORM:
-		/* XXX: Re-enable when SIFM size limits are fixed */
-		/*case PIPE_FORMAT_R16_SNORM:*/
+		case PIPE_FORMAT_R16_SNORM:
 			break;
 		default:
 			mt->base.tex_usage |= NOUVEAU_TEXTURE_USAGE_LINEAR;
