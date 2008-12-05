@@ -20,7 +20,8 @@
 #define NOUVEAU_TEXTURE_USAGE_LINEAR (1 << 16)
 
 #define NOUVEAU_BUFFER_USAGE_TEXTURE (1 << 16)
-#define NOUVEAU_BUFFER_USAGE_ZETA    (1 << 17)
+#define NOUVEAU_BUFFER_USAGE_CPU     (1 << 17)
+#define NOUVEAU_BUFFER_USAGE_ZETA    (1 << 18)
 
 struct nouveau_winsys {
 	struct nouveau_context *nv;

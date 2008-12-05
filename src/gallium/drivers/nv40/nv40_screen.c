@@ -148,7 +148,8 @@ nv40_surface_map(struct pipe_screen *screen, struct pipe_surface *surface,
 
 		if (!mt->shadow_tex) {
 			unsigned old_tex_usage = surface->texture->tex_usage;
-			surface->texture->tex_usage = NOUVEAU_TEXTURE_USAGE_LINEAR;
+			surface->texture->tex_usage = NOUVEAU_TEXTURE_USAGE_LINEAR |
+			                              PIPE_TEXTURE_USAGE_DYNAMIC;
 			mt->shadow_tex = screen->texture_create(screen, surface->texture);
 			surface->texture->tex_usage = old_tex_usage;
 

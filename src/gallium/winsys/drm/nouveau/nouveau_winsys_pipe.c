@@ -49,7 +49,8 @@ nouveau_pipe_bo_create(struct pipe_winsys *pws, unsigned alignment,
 	if (usage & PIPE_BUFFER_USAGE_PIXEL) {
 		if (usage & NOUVEAU_BUFFER_USAGE_TEXTURE)
 			flags |= NOUVEAU_BO_GART;
-		flags |= NOUVEAU_BO_VRAM;
+		if (!(usage & NOUVEAU_BUFFER_USAGE_CPU))
+			flags |= NOUVEAU_BO_VRAM;
 
 		switch (dev->chipset & 0xf0) {
 		case 0x50:

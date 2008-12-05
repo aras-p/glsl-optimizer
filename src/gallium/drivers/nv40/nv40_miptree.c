@@ -57,6 +57,8 @@ nv40_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *pt)
 {
 	struct pipe_winsys *ws = pscreen->winsys;
 	struct nv40_miptree *mt;
+	unsigned buf_usage = PIPE_BUFFER_USAGE_PIXEL |
+	                     NOUVEAU_BUFFER_USAGE_TEXTURE;
 
 	mt = MALLOC(sizeof(struct nv40_miptree));
 	if (!mt)
@@ -75,6 +77,9 @@ nv40_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *pt)
 	if (pt->tex_usage & (PIPE_TEXTURE_USAGE_PRIMARY |
 	                     PIPE_TEXTURE_USAGE_DISPLAY_TARGET))
 		mt->base.tex_usage |= NOUVEAU_TEXTURE_USAGE_LINEAR;
+	else
+	if (pt->tex_usage & PIPE_TEXTURE_USAGE_DYNAMIC)
+		mt->base.tex_usage |= NOUVEAU_TEXTURE_USAGE_LINEAR;
 	else {
 		switch (pt->format) {
 		/* TODO: Figure out which formats can be swizzled */
@@ -87,12 +92,12 @@ nv40_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *pt)
 		}
 	}
 
+	if (pt->tex_usage & PIPE_TEXTURE_USAGE_DYNAMIC)
+		buf_usage |= NOUVEAU_BUFFER_USAGE_CPU;
+
 	nv40_miptree_layout(mt);
 
-	mt->buffer = ws->buffer_create(ws, 256,
-				       PIPE_BUFFER_USAGE_PIXEL |
-				       NOUVEAU_BUFFER_USAGE_TEXTURE,
-				       mt->total_size);
+	mt->buffer = ws->buffer_create(ws, 256, buf_usage, mt->total_size);
 	if (!mt->buffer) {
 		FREE(mt);
 		return NULL;
