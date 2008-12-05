@@ -1069,7 +1069,7 @@ static int vlInit
 	template.depth[0] = 1;
 	template.compressed = 0;
 	pf_get_block(template.format, &template.block);
-	template.tex_usage = PIPE_TEXTURE_USAGE_SAMPLER;
+	template.tex_usage = PIPE_TEXTURE_USAGE_SAMPLER | PIPE_TEXTURE_USAGE_DYNAMIC;
 
 	for (i = 0; i < NUM_BUF_SETS; ++i)
 		mc->textures[i][0] = pipe->screen->texture_create(pipe->screen, &template);
