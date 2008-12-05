@@ -626,7 +626,7 @@ static int vlCreateDataBufs
 	memcpy
 	(
 		pipe->winsys->buffer_map(pipe->winsys, csc->fs_const_buf.buffer, PIPE_BUFFER_USAGE_CPU_WRITE),
-		&bt_601,
+		&bt_601_full,
 		sizeof(struct vlFragmentShaderConsts)
 	);
 
