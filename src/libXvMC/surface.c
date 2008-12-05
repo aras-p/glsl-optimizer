@@ -261,8 +261,14 @@ Status XvMCPutSurface
 
 	assert(srcx + srcw - 1 < surface->width);
 	assert(srcy + srch - 1 < surface->height);
-	assert(destx + destw - 1 < width);
-	assert(desty + desth - 1 < height);
+	/* XXX: Some apps (mplayer) hit these asserts because they call
+	 * this function after the window has been resized by the WM
+	 * but before they've handled the corresponding XEvent and
+	 * know about the new dimensions. The output will be clipped
+	 * for a few frames until the app updates destw and desth.
+	 */
+	/*assert(destx + destw - 1 < width);
+	assert(desty + desth - 1 < height);*/
 
 	vl_sfc = surface->privData;
 
