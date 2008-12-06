@@ -93,7 +93,7 @@ nv40_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *pt)
 	}
 
 	if (pt->tex_usage & PIPE_TEXTURE_USAGE_DYNAMIC)
-		buf_usage |= NOUVEAU_BUFFER_USAGE_CPU;
+		buf_usage |= PIPE_BUFFER_USAGE_CPU_READ_WRITE;
 
 	nv40_miptree_layout(mt);
 

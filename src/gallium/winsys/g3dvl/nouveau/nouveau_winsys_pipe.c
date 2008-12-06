@@ -112,7 +112,7 @@ nouveau_pipe_bo_create(struct pipe_winsys *pws, unsigned alignment,
 	if (usage & PIPE_BUFFER_USAGE_PIXEL) {
 		if (usage & NOUVEAU_BUFFER_USAGE_TEXTURE)
 			flags |= NOUVEAU_BO_GART;
-		if (!(usage & NOUVEAU_BUFFER_USAGE_CPU))
+		if (!(usage & PIPE_BUFFER_USAGE_CPU_READ_WRITE))
 			flags |= NOUVEAU_BO_VRAM;
 	}
 
