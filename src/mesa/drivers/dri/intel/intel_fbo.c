@@ -620,7 +620,14 @@ intel_render_texture(GLcontext * ctx,
 
    ASSERT(newImage);
 
-   if (!irb) {
+   if (newImage->Border != 0) {
+      /* Fallback on drawing to a texture with a border, which won't have a
+       * miptree.
+       */
+       _mesa_reference_renderbuffer(&att->Renderbuffer, NULL);
+       _mesa_render_texture(ctx, fb, att);
+       return;
+   } else if (!irb) {
       irb = intel_wrap_texture(ctx, newImage);
       if (irb) {
          /* bind the wrapper to the attachment point */
