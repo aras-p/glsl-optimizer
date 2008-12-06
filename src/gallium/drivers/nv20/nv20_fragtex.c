@@ -30,7 +30,7 @@ static INLINE int log2i(int i)
 {                                                                              \
   TRUE,                                                                        \
   PIPE_FORMAT_##m,                                                             \
-  NV10TCL_TX_FORMAT_FORMAT_##tf,                                               \
+  NV20TCL_TX_FORMAT_FORMAT_##tf,                                               \
 }
 
 struct nv20_texture_format {
@@ -47,10 +47,10 @@ nv20_texture_formats[] = {
 	_(L8_UNORM      , L8      ),
 	_(A8_UNORM      , A8      ),
 	_(A8L8_UNORM    , A8L8    ),
-//	_(RGB_DXT1      , DXT1,   ),
-//	_(RGBA_DXT1     , DXT1,   ),
-//	_(RGBA_DXT3     , DXT3,   ),
-//	_(RGBA_DXT5     , DXT5,   ),
+/*	_(RGB_DXT1      , DXT1,   ), */
+/*	_(RGBA_DXT1     , DXT1,   ), */
+/*	_(RGBA_DXT3     , DXT3,   ), */
+/*	_(RGBA_DXT5     , DXT5,   ), */
 	{},
 };
 

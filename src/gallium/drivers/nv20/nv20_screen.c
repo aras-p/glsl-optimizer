@@ -151,7 +151,7 @@ struct pipe_screen *
 nv20_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 {
 	struct nv20_screen *screen = CALLOC_STRUCT(nv20_screen);
-	unsigned celsius_class;
+	unsigned kelvin_class = 0;
 	unsigned chipset = nvws->channel->device->chipset;
 	int ret;
 
@@ -160,21 +160,17 @@ nv20_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 	screen->nvws = nvws;
 
 	/* 3D object */
-	if (chipset>=0x20)
-		celsius_class=NV11TCL;
-	else if (chipset>=0x17)
-		celsius_class=NV17TCL;
-	else if (chipset>=0x11)
-		celsius_class=NV11TCL;
-	else
-		celsius_class=NV10TCL;
+	if (chipset >= 0x25)
+		kelvin_class = NV25TCL;
+	else if (chipset >= 0x20)
+		kelvin_class = NV20TCL;
 
-	if (!celsius_class) {
-		NOUVEAU_ERR("Unknown nv1x chipset: nv%02x\n", chipset);
+	if (!kelvin_class || chipset >= 0x30) {
+		NOUVEAU_ERR("Unknown nv2x chipset: nv%02x\n", chipset);
 		return NULL;
 	}
 
-	ret = nvws->grobj_alloc(nvws, celsius_class, &screen->kelvin);
+	ret = nvws->grobj_alloc(nvws, kelvin_class, &screen->kelvin);
 	if (ret) {
 		NOUVEAU_ERR("Error creating 3D object: %d\n", ret);
 		return FALSE;

@@ -55,30 +55,30 @@ wrap_mode(unsigned wrap) {
 
 	switch (wrap) {
 	case PIPE_TEX_WRAP_REPEAT:
-		ret = NV10TCL_TX_FORMAT_WRAP_S_REPEAT;
+		ret = NV20TCL_TX_WRAP_S_REPEAT;
 		break;
 	case PIPE_TEX_WRAP_MIRROR_REPEAT:
-		ret = NV10TCL_TX_FORMAT_WRAP_S_MIRRORED_REPEAT;
+		ret = NV20TCL_TX_WRAP_S_MIRRORED_REPEAT;
 		break;
 	case PIPE_TEX_WRAP_CLAMP_TO_EDGE:
-		ret = NV10TCL_TX_FORMAT_WRAP_S_CLAMP_TO_EDGE;
+		ret = NV20TCL_TX_WRAP_S_CLAMP_TO_EDGE;
 		break;
 	case PIPE_TEX_WRAP_CLAMP_TO_BORDER:
-		ret = NV10TCL_TX_FORMAT_WRAP_S_CLAMP_TO_BORDER;
+		ret = NV20TCL_TX_WRAP_S_CLAMP_TO_BORDER;
 		break;
 	case PIPE_TEX_WRAP_CLAMP:
-		ret = NV10TCL_TX_FORMAT_WRAP_S_CLAMP;
+		ret = NV20TCL_TX_WRAP_S_CLAMP;
 		break;
 	case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_EDGE:
 	case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_BORDER:
 	case PIPE_TEX_WRAP_MIRROR_CLAMP:
 	default:
 		NOUVEAU_ERR("unknown wrap mode: %d\n", wrap);
-		ret = NV10TCL_TX_FORMAT_WRAP_S_REPEAT;
+		ret = NV20TCL_TX_WRAP_S_REPEAT;
 		break;
 	}
 
-	return ret >> NV10TCL_TX_FORMAT_WRAP_S_SHIFT;
+	return (ret >> NV20TCL_TX_WRAP_S_SHIFT);
 }
 
 static void *
@@ -90,43 +90,31 @@ nv20_sampler_state_create(struct pipe_context *pipe,
 
 	ps = MALLOC(sizeof(struct nv20_sampler_state));
 
-	ps->wrap = ((wrap_mode(cso->wrap_s) << NV10TCL_TX_FORMAT_WRAP_S_SHIFT) |
-		    (wrap_mode(cso->wrap_t) << NV10TCL_TX_FORMAT_WRAP_T_SHIFT));
+	ps->wrap = ((wrap_mode(cso->wrap_s) << NV20TCL_TX_WRAP_S_SHIFT) |
+		    (wrap_mode(cso->wrap_t) << NV20TCL_TX_WRAP_T_SHIFT));
 
 	ps->en = 0;
 	if (cso->max_anisotropy > 1.0) {
 		/* no idea, binary driver sets it, works without it.. meh.. */
 		ps->wrap |= (1 << 5);
 
-/*		if (cso->max_anisotropy >= 16.0) {
-			ps->en |= NV10TCL_TX_ENABLE_ANISO_16X;
-		} else
-		if (cso->max_anisotropy >= 12.0) {
-			ps->en |= NV10TCL_TX_ENABLE_ANISO_12X;
-		} else
-		if (cso->max_anisotropy >= 10.0) {
-			ps->en |= NV10TCL_TX_ENABLE_ANISO_10X;
-		} else
-		if (cso->max_anisotropy >= 8.0) {
-			ps->en |= NV10TCL_TX_ENABLE_ANISO_8X;
-		} else
-		if (cso->max_anisotropy >= 6.0) {
-			ps->en |= NV10TCL_TX_ENABLE_ANISO_6X;
+/*		if (cso->max_anisotropy >= 8.0) {
+			ps->en |= NV20TCL_TX_ENABLE_ANISO_8X;
 		} else
 		if (cso->max_anisotropy >= 4.0) {
-			ps->en |= NV10TCL_TX_ENABLE_ANISO_4X;
+			ps->en |= NV20TCL_TX_ENABLE_ANISO_4X;
 		} else {
-			ps->en |= NV10TCL_TX_ENABLE_ANISO_2X;
+			ps->en |= NV20TCL_TX_ENABLE_ANISO_2X;
 		}*/
 	}
 
 	switch (cso->mag_img_filter) {
 	case PIPE_TEX_FILTER_LINEAR:
-		filter |= NV10TCL_TX_FILTER_MAGNIFY_LINEAR;
+		filter |= NV20TCL_TX_FILTER_MAGNIFY_LINEAR;
 		break;
 	case PIPE_TEX_FILTER_NEAREST:
 	default:
-		filter |= NV10TCL_TX_FILTER_MAGNIFY_NEAREST;
+		filter |= NV20TCL_TX_FILTER_MAGNIFY_NEAREST;
 		break;
 	}
 
@@ -134,14 +122,15 @@ nv20_sampler_state_create(struct pipe_context *pipe,
 	case PIPE_TEX_FILTER_LINEAR:
 		switch (cso->min_mip_filter) {
 		case PIPE_TEX_MIPFILTER_NEAREST:
-			filter |= NV10TCL_TX_FILTER_MINIFY_LINEAR_MIPMAP_NEAREST;
+			filter |=
+				NV20TCL_TX_FILTER_MINIFY_LINEAR_MIPMAP_NEAREST;
 			break;
 		case PIPE_TEX_MIPFILTER_LINEAR:
-			filter |= NV10TCL_TX_FILTER_MINIFY_LINEAR_MIPMAP_LINEAR;
+			filter |= NV20TCL_TX_FILTER_MINIFY_LINEAR_MIPMAP_LINEAR;
 			break;
 		case PIPE_TEX_MIPFILTER_NONE:
 		default:
-			filter |= NV10TCL_TX_FILTER_MINIFY_LINEAR;
+			filter |= NV20TCL_TX_FILTER_MINIFY_LINEAR;
 			break;
 		}
 		break;
@@ -149,14 +138,16 @@ nv20_sampler_state_create(struct pipe_context *pipe,
 	default:
 		switch (cso->min_mip_filter) {
 		case PIPE_TEX_MIPFILTER_NEAREST:
-			filter |= NV10TCL_TX_FILTER_MINIFY_NEAREST_MIPMAP_NEAREST;
+			filter |=
+				NV20TCL_TX_FILTER_MINIFY_NEAREST_MIPMAP_NEAREST;
 		break;
 		case PIPE_TEX_MIPFILTER_LINEAR:
-			filter |= NV10TCL_TX_FILTER_MINIFY_NEAREST_MIPMAP_LINEAR;
+			filter |=
+				NV20TCL_TX_FILTER_MINIFY_NEAREST_MIPMAP_LINEAR;
 			break;
 		case PIPE_TEX_MIPFILTER_NONE:
 		default:
-			filter |= NV10TCL_TX_FILTER_MINIFY_NEAREST;
+			filter |= NV20TCL_TX_FILTER_MINIFY_NEAREST;
 			break;
 		}
 		break;
@@ -253,21 +244,23 @@ nv20_rasterizer_state_create(struct pipe_context *pipe,
 
 	rs->templ = cso;
 	
-	rs->shade_model = cso->flatshade ? 0x1d00 : 0x1d01;
+	rs->shade_model = cso->flatshade ? NV20TCL_SHADE_MODEL_FLAT :
+						NV20TCL_SHADE_MODEL_SMOOTH;
 
 	rs->line_width = (unsigned char)(cso->line_width * 8.0) & 0xff;
 	rs->line_smooth_en = cso->line_smooth ? 1 : 0;
 
+	/* XXX: nv20 and nv25 different! */
 	rs->point_size = *(uint32_t*)&cso->point_size;
 
 	rs->poly_smooth_en = cso->poly_smooth ? 1 : 0;
 
 	if (cso->front_winding == PIPE_WINDING_CCW) {
-		rs->front_face = NV10TCL_FRONT_FACE_CCW;
+		rs->front_face = NV20TCL_FRONT_FACE_CCW;
 		rs->poly_mode_front = nvgl_polygon_mode(cso->fill_ccw);
 		rs->poly_mode_back  = nvgl_polygon_mode(cso->fill_cw);
 	} else {
-		rs->front_face = NV10TCL_FRONT_FACE_CW;
+		rs->front_face = NV20TCL_FRONT_FACE_CW;
 		rs->poly_mode_front = nvgl_polygon_mode(cso->fill_cw);
 		rs->poly_mode_back  = nvgl_polygon_mode(cso->fill_ccw);
 	}
@@ -276,20 +269,20 @@ nv20_rasterizer_state_create(struct pipe_context *pipe,
 	case PIPE_WINDING_CCW:
 		rs->cull_face_en = 1;
 		if (cso->front_winding == PIPE_WINDING_CCW)
-			rs->cull_face    = NV10TCL_CULL_FACE_FRONT;
+			rs->cull_face    = NV20TCL_CULL_FACE_FRONT;
 		else
-			rs->cull_face    = NV10TCL_CULL_FACE_BACK;
+			rs->cull_face    = NV20TCL_CULL_FACE_BACK;
 		break;
 	case PIPE_WINDING_CW:
 		rs->cull_face_en = 1;
 		if (cso->front_winding == PIPE_WINDING_CW)
-			rs->cull_face    = NV10TCL_CULL_FACE_FRONT;
+			rs->cull_face    = NV20TCL_CULL_FACE_FRONT;
 		else
-			rs->cull_face    = NV10TCL_CULL_FACE_BACK;
+			rs->cull_face    = NV20TCL_CULL_FACE_BACK;
 		break;
 	case PIPE_WINDING_BOTH:
 		rs->cull_face_en = 1;
-		rs->cull_face    = NV10TCL_CULL_FACE_FRONT_AND_BACK;
+		rs->cull_face    = NV20TCL_CULL_FACE_FRONT_AND_BACK;
 		break;
 	case PIPE_WINDING_NONE:
 	default:

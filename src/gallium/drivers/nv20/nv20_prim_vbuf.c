@@ -80,13 +80,15 @@ nv20_vbuf_render(struct vbuf_render *render)
 
 void nv20_vtxbuf_bind( struct nv20_context* nv20 )
 {
+#if 0
 	int i;
-	for(i = 0; i < 8; i++) {
-		BEGIN_RING(kelvin, NV10TCL_VERTEX_ARRAY_ATTRIB_OFFSET(i), 1);
+	for(i = 0; i < NV20TCL_VTXBUF_ADDRESS__SIZE; i++) {
+		BEGIN_RING(kelvin, NV20TCL_VTXBUF_ADDRESS(i), 1);
 		OUT_RING(0/*nv20->vtxbuf*/);
-		BEGIN_RING(kelvin, NV10TCL_VERTEX_ARRAY_ATTRIB_FORMAT(i) ,1);
+		BEGIN_RING(kelvin, NV20TCL_VTXFMT(i) ,1);
 		OUT_RING(0/*XXX*/);
 	}
+#endif
 }
 
 static const struct vertex_info *
@@ -162,9 +164,9 @@ nv20_vbuf_render_set_primitive( struct vbuf_render *render,
 static uint32_t
 nv20__vtxhwformat(unsigned stride, unsigned fields, unsigned type)
 {
-	return (stride << NV10TCL_VERTEX_ARRAY_ATTRIB_FORMAT_STRIDE_SHIFT) |
-		(fields << NV10TCL_VERTEX_ARRAY_ATTRIB_FORMAT_FIELDS_SHIFT) |
-		(type << NV10TCL_VERTEX_ARRAY_ATTRIB_FORMAT_TYPE_SHIFT);
+	return (stride << NV20TCL_VTXFMT_STRIDE_SHIFT) |
+		(fields << NV20TCL_VTXFMT_SIZE_SHIFT) |
+		(type << NV20TCL_VTXFMT_TYPE_SHIFT);
 }
 
 static unsigned
@@ -199,7 +201,7 @@ nv20__emit_format(struct nv20_context *nv20, enum attrib_emit type, int hwattr)
 		return 0;
 	}
 
-	BEGIN_RING(kelvin, NV10TCL_VERTEX_ARRAY_ATTRIB_FORMAT(hwattr), 1);
+	BEGIN_RING(kelvin, NV20TCL_VTXFMT(hwattr), 1);
 	OUT_RING(hwfmt);
 	return fields;
 }
@@ -208,7 +210,7 @@ static unsigned
 nv20__emit_vertex_array_format(struct nv20_context *nv20)
 {
 	struct vertex_info *vinfo = &nv20->vertex_info;
-	int hwattr = NV10TCL_VERTEX_ARRAY_ATTRIB_FORMAT__SIZE;
+	int hwattr = NV20TCL_VTXFMT__SIZE;
 	int attr = 0;
 	unsigned nr_fields = 0;
 
@@ -220,8 +222,6 @@ nv20__emit_vertex_array_format(struct nv20_context *nv20)
 		} else
 			nv20__emit_format(nv20, EMIT_OMIT, hwattr);
 	}
-	BEGIN_RING(kelvin, NV10TCL_VERTEX_ARRAY_VALIDATE, 1);
-	OUT_RING(0);
 
 	return nr_fields;
 }
@@ -240,7 +240,7 @@ nv20__draw_mbuffer(struct nv20_vbuf_render *nv20_render,
 
 	nr_fields = nv20__emit_vertex_array_format(nv20);
 
-	BEGIN_RING(kelvin, NV10TCL_VERTEX_BEGIN_END, 1);
+	BEGIN_RING(kelvin, NV20TCL_VERTEX_BEGIN_END, 1);
 	OUT_RING(nv20_render->hwprim);
 
 	max_push = 1200 / nr_fields;
@@ -248,8 +248,7 @@ nv20__draw_mbuffer(struct nv20_vbuf_render *nv20_render,
 		int i;
 		int push = MIN2(nr_indices, max_push);
 
-		BEGIN_RING_NI(kelvin, NV10TCL_VERTEX_ARRAY_DATA,
-							push * nr_fields);
+		BEGIN_RING_NI(kelvin, NV20TCL_VERTEX_DATA, push * nr_fields);
 		for (i = 0; i < push; i++) {
 			/* XXX: fixme to handle other than floats? */
 			int f = nr_fields;
@@ -262,8 +261,8 @@ nv20__draw_mbuffer(struct nv20_vbuf_render *nv20_render,
 		indices += push;
 	}
 
-	BEGIN_RING(kelvin, NV10TCL_VERTEX_BEGIN_END, 1);
-	OUT_RING(NV10TCL_VERTEX_BEGIN_END_STOP);
+	BEGIN_RING(kelvin, NV20TCL_VERTEX_BEGIN_END, 1);
+	OUT_RING(NV20TCL_VERTEX_BEGIN_END_STOP);
 }
 
 static void
@@ -273,6 +272,8 @@ nv20__draw_pbuffer(struct nv20_vbuf_render *nv20_render,
 {
 	struct nv20_context *nv20 = nv20_render->nv20;
 	int push, i;
+
+	NOUVEAU_ERR("nv20__draw_pbuffer: this path is broken.\n");
 
 	BEGIN_RING(kelvin, NV10TCL_VERTEX_ARRAY_OFFSET_POS, 1);
 	OUT_RELOCl(nv20_render->pbuffer, 0,
