@@ -260,6 +260,11 @@ do_blit_copypixels(GLcontext * ctx,
    struct intel_context *intel = intel_context(ctx);
    struct intel_region *dst = intel_drawbuf_region(intel);
    struct intel_region *src = copypix_src_region(intel, type);
+   struct gl_framebuffer *fb = ctx->DrawBuffer;
+   struct gl_framebuffer *read_fb = ctx->ReadBuffer;
+   unsigned int num_cliprects;
+   drm_clip_rect_t *cliprects;
+   int x_off, y_off;
 
    /* Copypixels can be more than a straight copy.  Ensure all the
     * extra operations are disabled:
@@ -277,71 +282,74 @@ do_blit_copypixels(GLcontext * ctx,
 
    LOCK_HARDWARE(intel);
 
-   if (intel->driDrawable->numClipRects) {
-      __DRIdrawablePrivate *dPriv = intel->driDrawable;
-      __DRIdrawablePrivate *dReadPriv = intel->driReadDrawable;
-      drm_clip_rect_t *box = dPriv->pClipRects;
-      GLint nbox = dPriv->numClipRects;
-      GLint delta_x = 0;
-      GLint delta_y = 0;
+   intel_get_cliprects(intel, &cliprects, &num_cliprects, &x_off, &y_off);
+   if (num_cliprects != 0) {
+      GLint delta_x;
+      GLint delta_y;
+      GLint orig_dstx;
+      GLint orig_dsty;
+      GLint orig_srcx;
+      GLint orig_srcy;
       GLuint i;
 
-      /* Do scissoring in GL coordinates:
-       */
-      if (ctx->Scissor.Enabled)
-      {
-	 GLint x = ctx->Scissor.X;
-	 GLint y = ctx->Scissor.Y;
-	 GLuint w = ctx->Scissor.Width;
-	 GLuint h = ctx->Scissor.Height;
-	 GLint dx = dstx - srcx;
-         GLint dy = dsty - srcy;
+      /* XXX: We fail to handle different inversion between read and draw framebuffer. */
 
-         if (!_mesa_clip_to_region(x, y, x+w-1, y+h-1, &dstx, &dsty, &width, &height))
-            goto out;
-	 
-         srcx = dstx - dx;
-         srcy = dsty - dy;
-      }
+      /* Clip to destination buffer. */
+      orig_dstx = dstx;
+      orig_dsty = dsty;
+      if (!_mesa_clip_to_region(fb->_Xmin, fb->_Ymin,
+				fb->_Xmax, fb->_Ymax,
+				&dstx, &dsty, &width, &height))
+	 goto out;
+      /* Adjust src coords for our post-clipped destination origin */
+      srcx += dstx - orig_dstx;
+      srcy += dsty - orig_dsty;
+
+      /* Clip to source buffer. */
+      orig_srcx = srcx;
+      orig_srcy = srcy;
+      if (!_mesa_clip_to_region(read_fb->_Xmin, read_fb->_Ymin,
+				read_fb->_Xmax, read_fb->_Ymax,
+				&srcx, &srcy, &width, &height))
+	 goto out;
+      /* Adjust dst coords for our post-clipped source origin */
+      dstx += srcx - orig_srcx;
+      dsty += srcy - orig_srcy;
 
       /* Convert from GL to hardware coordinates:
        */
-      dsty = dPriv->h - dsty - height;  
-      srcy = dPriv->h - srcy - height;  
-      dstx += dPriv->x;
-      dsty += dPriv->y;
-      srcx += dReadPriv->x;
-      srcy += dReadPriv->y;
-
-      /* Clip against the source region.  This is the only source
-       * clipping we do.  Dst is clipped with cliprects below.
-       */
-      {
-         delta_x = srcx - dstx;
-         delta_y = srcy - dsty;
-
-         if (!_mesa_clip_to_region(0, 0, src->pitch, src->height,
-                                   &srcx, &srcy, &width, &height))
-            goto out;
-
-         dstx = srcx - delta_x;
-         dsty = srcy - delta_y;
+      if (fb->Name == 0) {
+	 /* copypixels to a system framebuffer */
+	 dstx = x_off + dstx;
+	 dsty = y_off + (fb->Height - dsty - height);
+      } else {
+	 /* copypixels to a user framebuffer object */
+	 dstx = x_off + dstx;
+	 dsty = y_off + dsty;
       }
 
+      /* Flip source Y if it's a system framebuffer. */
+      if (read_fb->Name == 0) {
+	 srcx = intel->driReadDrawable->x + srcx;
+	 srcy = intel->driReadDrawable->y + (fb->Height - srcy - height);
+      }
+
+      delta_x = srcx - dstx;
+      delta_y = srcy - dsty;
       /* Could do slightly more clipping: Eg, take the intersection of
-       * the existing set of cliprects and those cliprects translated
-       * by delta_x, delta_y:
-       * 
+       * the destination cliprects and the read drawable cliprects
+       *
        * This code will not overwrite other windows, but will
        * introduce garbage when copying from obscured window regions.
        */
-      for (i = 0; i < nbox; i++) {
+      for (i = 0; i < num_cliprects; i++) {
 	 GLint clip_x = dstx;
 	 GLint clip_y = dsty;
 	 GLint clip_w = width;
 	 GLint clip_h = height;
 
-         if (!_mesa_clip_to_region(box[i].x1, box[i].y1, box[i].x2, box[i].y2,
+         if (!_mesa_clip_to_region(cliprects[i].x1, cliprects[i].y1,
+				   cliprects[i].x2, cliprects[i].y2,
 				   &clip_x, &clip_y, &clip_w, &clip_h))
             continue;
 
