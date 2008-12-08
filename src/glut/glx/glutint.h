@@ -664,6 +664,7 @@ extern unsigned int __glutModifierMask;
 #ifdef _WIN32
 extern void (__cdecl *__glutExitFunc)(int retval);
 #endif
+extern char *__glutPPMFile;
 
 /* private variables from glut_menu.c */
 extern GLUTmenuItem *__glutItemSelected;
@@ -683,6 +684,9 @@ extern void (*__glutFreeOverlayFunc) (GLUToverlay *);
 extern void __glutFreeOverlay(GLUToverlay * overlay);
 extern XVisualInfo *__glutDetermineWindowVisual(Bool * treatAsSingle,
   Bool * visAlloced, void **fbc);
+
+/* private variables from glut_ppm.c */
+extern void __glutWritePPMFile(void);
 
 /* private variables from glut_mesa.c */
 extern int __glutMesaSwapHackSupport;
@@ -811,5 +815,6 @@ extern GLint __glutSwapTime;
 extern LONG WINAPI __glutWindowProc(HWND win, UINT msg, WPARAM w, LPARAM l);
 extern HDC XHDC;
 #endif
+
 
 #endif /* __glutint_h__ */

@@ -56,6 +56,7 @@ SOURCES = \
 	glut_modifier.c \
 	glut_mroman.c \
 	glut_overlay.c \
+	glut_ppm.c \
 	glut_roman.c \
 	glut_shapes.c \
 	glut_space.c \

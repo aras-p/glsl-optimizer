@@ -51,6 +51,7 @@ int __glutInitX = -1, __glutInitY = -1;
 GLboolean __glutForceDirect = GL_FALSE,
   __glutTryDirect = GL_TRUE;
 Atom __glutWMDeleteWindow;
+char *__glutPPMFile = NULL;
 /* *INDENT-ON* */
 
 #ifdef _WIN32
@@ -341,6 +342,9 @@ glutInit(int *argcp, char **argv)
            __glutFPS = 5000;  /* 5000 milliseconds */
      }
   }
+
+  /* check if GLUT_PPM_FILE env var is set */
+  __glutPPMFile = getenv("GLUT_PPM_FILE");
 }
 
 #ifdef _WIN32
