@@ -293,7 +293,6 @@ void DRI2CopyRegion(Display *dpy, XID drawable, XserverRegion region,
     req->region = region;
     req->dest = dest;
     req->src = src;
-    req->bitmask = 0;
 
     _XReply(dpy, (xReply *)&rep, 0, xFalse);
 

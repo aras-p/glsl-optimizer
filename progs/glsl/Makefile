@@ -27,7 +27,7 @@ PROGS = \
 	toyball \
 	twoside \
 	trirast \
-	texdemo1 
+	vert-tex
 
 
 ##### RULES #####
@@ -189,7 +189,19 @@ trirast.o: trirast.c extfuncs.h shaderutil.h
 	$(APP_CC) -c -I$(INCDIR) $(CFLAGS) trirast.c
 
 trirast: trirast.o shaderutil.o
+<<<<<<< HEAD:progs/glsl/Makefile
 	$(APP_CC) -I$(INCDIR) $(CFLAGS) $(LDFLAGS) trirast.o shaderutil.o $(LIBS) -o $@
+=======
+	$(CC) -I$(INCDIR) $(CFLAGS) $(LDFLAGS) trirast.o shaderutil.o $(LIBS) -o $@
+
+
+vert-tex.o: vert-tex.c extfuncs.h shaderutil.h
+	$(CC) -c -I$(INCDIR) $(CFLAGS) vert-tex.c
+
+vert-tex: vert-tex.o shaderutil.o
+	$(CC) -I$(INCDIR) $(CFLAGS) $(LDFLAGS) vert-tex.o shaderutil.o $(LIBS) -o $@
+
+>>>>>>> origin/master:progs/glsl/Makefile
 
 
 

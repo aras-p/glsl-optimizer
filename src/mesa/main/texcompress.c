@@ -151,8 +151,6 @@ _mesa_compressed_texture_size( GLcontext *ctx,
       /* Textures smaller than 8x4 will effectively be made into 8x4 and
        * take 16 bytes.
        */
-      if (size < 16)
-         size = 16;
       return size;
 #endif
 #if FEATURE_texture_s3tc
@@ -166,8 +164,6 @@ _mesa_compressed_texture_size( GLcontext *ctx,
       /* Textures smaller than 4x4 will effectively be made into 4x4 and
        * take 8 bytes.
        */
-      if (size < 8)
-         size = 8;
       return size;
    case MESA_FORMAT_RGBA_DXT3:
    case MESA_FORMAT_RGBA_DXT5:
@@ -179,8 +175,6 @@ _mesa_compressed_texture_size( GLcontext *ctx,
       /* Textures smaller than 4x4 will effectively be made into 4x4 and
        * take 16 bytes.
        */
-      if (size < 16)
-         size = 16;
       return size;
 #endif
    default:

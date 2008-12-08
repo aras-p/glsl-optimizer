@@ -49,8 +49,7 @@
 #define IZ_DEPTH_TEST_ENABLE_BIT    0x8
 #define IZ_STENCIL_WRITE_ENABLE_BIT 0x10
 #define IZ_STENCIL_TEST_ENABLE_BIT  0x20
-#define IZ_EARLY_DEPTH_TEST_BIT     0x40
-#define IZ_BIT_MAX                  0x80
+#define IZ_BIT_MAX                  0x40
 
 #define AA_NEVER     0
 #define AA_SOMETIMES 1

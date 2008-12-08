@@ -77,6 +77,7 @@ typedef struct
 
    GLboolean no_hw;
 
+   GLboolean no_vbo;
    int ttm;
    dri_bufmgr *bufmgr;
 

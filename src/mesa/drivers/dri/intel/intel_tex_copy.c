@@ -98,7 +98,9 @@ do_copy_texsubimage(struct intel_context *intel,
       get_teximage_source(intel, internalFormat);
 
    if (!intelImage->mt || !src) {
-      DBG("%s fail %p %p\n", __FUNCTION__, intelImage->mt, src);
+      if (INTEL_DEBUG & DEBUG_FALLBACKS)
+	 fprintf(stderr, "%s fail %p %p\n",
+		 __FUNCTION__, intelImage->mt, src);
       return GL_FALSE;
    }
 

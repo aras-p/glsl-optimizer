@@ -230,12 +230,6 @@ static void brw_wm_populate_key( struct brw_context *brw,
 	 lookup |= IZ_STENCIL_WRITE_ENABLE_BIT;
    }
 
-   /* XXX: when should this be disabled?
-    */
-   if (1)
-      lookup |= IZ_EARLY_DEPTH_TEST_BIT;
-
-   
    line_aa = AA_NEVER;
 
    /* _NEW_LINE, _NEW_POLYGON, BRW_NEW_REDUCED_PRIMITIVE */

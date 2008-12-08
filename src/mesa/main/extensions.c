@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  7.1
+ * Version:  7.3
  *
  * Copyright (C) 1999-2008  Brian Paul   All Rights Reserved.
  *
@@ -296,6 +296,15 @@ _mesa_enable_sw_extensions(GLcontext *ctx)
    ctx->Extensions.SGIX_shadow_ambient = GL_TRUE;
 #if FEATURE_ARB_vertex_program || FEATURE_ARB_fragment_program
    ctx->Extensions.EXT_gpu_program_parameters = GL_TRUE;
+#endif
+#if FEATURE_texture_fxt1
+   _mesa_enable_extension(ctx, "GL_3DFX_texture_compression_FXT1");
+#endif
+#if FEATURE_texture_s3tc
+   if (ctx->Mesa_DXTn) {
+      _mesa_enable_extension(ctx, "GL_EXT_texture_compression_s3tc");
+      _mesa_enable_extension(ctx, "GL_S3_s3tc");
+   }
 #endif
 }
 
