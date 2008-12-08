@@ -240,6 +240,9 @@ class Winsys(Object):
 
 class Screen(Object):
     
+    def destroy(self):
+        pass
+
     def get_name(self):
         pass
     
@@ -292,6 +295,8 @@ class Context(Object):
         Object.__init__(self, interpreter, real)
         self.cbufs = []
         self.zsbuf = None
+        self.vbufs = []
+        self.velems = []
 
     def destroy(self):
         pass
@@ -409,6 +414,7 @@ class Context(Object):
             self.real.set_sampler_texture(i, textures[i])
 
     def set_vertex_buffers(self, n, vbufs):
+        self.vbufs = vbufs[0:n]
         for i in range(n):
             vbuf = vbufs[i]
             self.real.set_vertex_buffer(
@@ -420,6 +426,7 @@ class Context(Object):
             )
 
     def set_vertex_elements(self, n, elements):
+        self.velems = elements[0:n]
         for i in range(n):
             self.real.set_vertex_element(i, elements[i])
         self.real.set_vertex_elements(n)
@@ -429,6 +436,23 @@ class Context(Object):
         pass
     
     def draw_arrays(self, mode, start, count):
+        for index in range(start, start + count):
+            sys.stdout.write('\t{\n')
+            for velem in self.velems:
+                vbuf = self.vbufs[velem.vertex_buffer_index]
+
+                offset = vbuf.buffer_offset + velem.src_offset + vbuf.pitch*index
+                format = {
+                    gallium.PIPE_FORMAT_R32G32B32_FLOAT: '3f',
+                    gallium.PIPE_FORMAT_B8G8R8A8_UNORM: '4B',
+                }[velem.src_format]
+
+                data = vbuf.buffer.read()
+                values = struct.unpack_from(format, data, offset)
+                sys.stdout.write('\t\t{' + ', '.join(map(str, values)) + '},\n')
+                assert len(values) == velem.nr_components
+            sys.stdout.write('\t},\n')
+            
         self.real.draw_arrays(mode, start, count)
     
     def draw_elements(self, indexBuffer, indexSize, mode, start, count):
