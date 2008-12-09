@@ -225,6 +225,8 @@ class PrintGlxDispatchFunctions(glX_proto_common.glx_print_proto):
 		list = []
 
 		for param in f.parameterIterator():
+			if param.is_padding:
+				continue
 
 			if param.is_counter or param.is_image() or param.is_output or param.name in f.count_parameter_list or len(param.count_parameter_list):
 				location = param.name

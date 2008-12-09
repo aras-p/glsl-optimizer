@@ -333,7 +333,7 @@ const GLuint __glXDefaultPixelStore[9] = { 0, 0, 0, 0, 0, 0, 0, 0, 1 };
 					if image.img_pad_dimensions:
 						do_it = 1
 						break
-			
+
 
 				if do_it:
 					[h, n] = hash_pixel_function(func)
@@ -422,7 +422,10 @@ generic_%u_byte( GLint rop, const void * ptr )
 		else:
 			src_ptr = "&" + p.name
 
-		if not extra_offset:
+		if p.is_padding:
+			print '(void) memset((void *)(%s + %u), 0, %s);' \
+			    % (pc, p.offset + adjust, p.size_string() )
+		elif not extra_offset:
 			print '(void) memcpy((void *)(%s + %u), (void *)(%s), %s);' \
 			    % (pc, p.offset + adjust, src_ptr, p.size_string() )
 		else:
@@ -471,6 +474,10 @@ generic_%u_byte( GLint rop, const void * ptr )
 					dim_str = "dim"
 				else:
 					dim_str = str(dim)
+
+				if param.is_padding:
+					print '(void) memset((void *)(%s + %u), 0, %s);' \
+					% (pc, (param.offset - 4) + adjust, param.size_string() )
 
 				if param.img_null_flag:
 					if large:
@@ -739,6 +746,9 @@ generic_%u_byte( GLint rop, const void * ptr )
 
 			p_string = ""
 			for param in f.parameterIterateGlxSend():
+				if param.is_padding:
+					continue
+
 				p_string += ", " + param.name
 
 				if param.is_image():
