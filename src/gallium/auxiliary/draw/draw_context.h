@@ -123,11 +123,11 @@ draw_set_mapped_element_buffer_range( struct draw_context *draw,
                                       unsigned eltSize,
                                       unsigned min_index,
                                       unsigned max_index,
-                                      void *elements );
+                                      const void *elements );
 
 void draw_set_mapped_element_buffer( struct draw_context *draw,
                                      unsigned eltSize, 
-                                     void *elements );
+                                     const void *elements );
 
 void draw_set_mapped_vertex_buffer(struct draw_context *draw,
                                    unsigned attr, const void *buffer);
