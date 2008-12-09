@@ -354,6 +354,7 @@ static GLboolean build_vertex_emit( struct x86_program *p )
    struct x86_reg temp = x86_make_reg(file_XMM, 0);
    struct x86_reg vp0 = x86_make_reg(file_XMM, 1);
    struct x86_reg vp1 = x86_make_reg(file_XMM, 2);
+   struct x86_reg temp2 = x86_make_reg(file_XMM, 3);
    GLubyte *fixup, *label;
 
    /* Push a few regs?
@@ -526,7 +527,8 @@ static GLboolean build_vertex_emit( struct x86_program *p )
 	    sse_shufps(&p->func, temp, temp, SHUF(W,X,Y,Z));
 
 	    get_src_ptr(p, srcECX, vtxESI, &a[1]);
-	    emit_load(p, temp, 1, x86_deref(srcECX), a[1].inputsize);
+	    emit_load(p, temp2, 1, x86_deref(srcECX), a[1].inputsize);
+	    sse_movss(&p->func, temp, temp2);
 	    update_src_ptr(p, srcECX, vtxESI, &a[1]);
 
 	    /* Rearrange and possibly do BGR conversion:
