@@ -539,8 +539,8 @@ static GLboolean build_vertex_emit( struct x86_program *p )
 	 }
 	 else {
 	    _mesa_printf("Can't emit 3ub\n");
+	    return GL_FALSE;	/* add this later */
 	 }
-	 return GL_FALSE;	/* add this later */
 	 break;
 
       case EMIT_4UB_4F_RGBA:
