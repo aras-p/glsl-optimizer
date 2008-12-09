@@ -159,9 +159,16 @@ invert: invert.o readtex.o
 invert.o: invert.c readtex.h
 	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) invert.c -o $@
 
+
+floattex: floattex.o readtex.o shaderutil.o
+	$(CC) $(CFLAGS) $(LDFLAGS) floattex.o readtex.o shaderutil.o $(LIBS) -o $@
+
+floattex.o: floattex.c readtex.h shaderutil.h
+	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) floattex.c -o $@
+
+
 readtex.o: readtex.c
 	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) readtex.c -o $@
-
 
 readtex.h: $(TOP)/progs/util/readtex.h
 	ln -s $(TOP)/progs/util/readtex.h .
@@ -169,8 +176,21 @@ readtex.h: $(TOP)/progs/util/readtex.h
 readtex.c: $(TOP)/progs/util/readtex.c
 	ln -s $(TOP)/progs/util/readtex.c .
 
+
+
 extfuncs.h: $(TOP)/progs/util/extfuncs.h
 	ln -s $(TOP)/progs/util/extfuncs.h .
+
+
+
+shaderutil.c: $(TOP)/progs/util/shaderutil.c
+	cp $< .
+
+shaderutil.h: $(TOP)/progs/util/shaderutil.h
+	cp $< .
+
+shaderutil.o: shaderutil.c shaderutil.h
+	$(CC) -c -I$(INCDIR) $(CFLAGS) shaderutil.c
 
 
 

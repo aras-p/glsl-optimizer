@@ -9,32 +9,37 @@
 #include <stdlib.h>
 #include <math.h>
 #include <GL/glut.h>
+#include "extfuncs.h"
+#include "readtex.h"
+#include "shaderutil.h"
 
 
-/* XXX - temporary */
-#ifndef GL_ARB_texture_float
-#define GL_ARB_texture_float 1
-#define GL_TEXTURE_RED_TYPE_ARB             0x9000
-#define GL_TEXTURE_GREEN_TYPE_ARB           0x9001
-#define GL_TEXTURE_BLUE_TYPE_ARB            0x9002
-#define GL_TEXTURE_ALPHA_TYPE_ARB           0x9003
-#define GL_TEXTURE_LUMINANCE_TYPE_ARB       0x9004
-#define GL_TEXTURE_INTENSITY_TYPE_ARB       0x9005
-#define GL_TEXTURE_DEPTH_TYPE_ARB           0x9006
-#define GL_UNSIGNED_NORMALIZED_ARB          0x9007
-#define GL_RGBA32F_ARB                      0x8814
-#define GL_RGB32F_ARB                       0x8815
-#define GL_ALPHA32F_ARB                     0x8816
-#define GL_INTENSITY32F_ARB                 0x8817
-#define GL_LUMINANCE32F_ARB                 0x8818
-#define GL_LUMINANCE_ALPHA32F_ARB           0x8819
-#define GL_RGBA16F_ARB                      0x881A
-#define GL_RGB16F_ARB                       0x881B
-#define GL_ALPHA16F_ARB                     0x881C
-#define GL_INTENSITY16F_ARB                 0x881D
-#define GL_LUMINANCE16F_ARB                 0x881E
-#define GL_LUMINANCE_ALPHA16F_ARB           0x881F
-#endif
+static const char *TexFile = "../images/arch.rgb";
+
+static const char *FragShaderText = 
+   "uniform sampler2D tex1; \n"
+   "void main() \n"
+   "{ \n"
+   "   vec4 t = texture2D(tex1, gl_TexCoord[0].xy); \n"
+   "   // convert from [-255,0] to [0,1] \n"
+   "   gl_FragColor = t * (-1.0 / 255.0); \n"
+   "} \n";
+
+static const char *VertShaderText = 
+   "void main() \n"
+   "{ \n"
+   "   gl_TexCoord[0] = gl_MultiTexCoord0; \n"
+   "   gl_Position = ftransform(); \n"
+   "} \n";
+
+static struct uniform_info Uniforms[] = {
+   { "tex1",  1, GL_INT, { 0, 0, 0, 0 }, -1 },
+   END_OF_UNIFORMS
+};
+
+
+static GLuint Program;
+
 
 
 static GLboolean
@@ -57,7 +62,12 @@ Draw(void)
 
    glPushMatrix();
 
-   glutSolidCube(2.0);
+   glBegin(GL_POLYGON);
+   glTexCoord2f( 0.0, 0.0 );   glVertex2f( -1.0, -1.0 );
+   glTexCoord2f( 1.0, 0.0 );   glVertex2f(  1.0, -1.0 );
+   glTexCoord2f( 1.0, 1.0 );   glVertex2f(  1.0,  1.0 );
+   glTexCoord2f( 0.0, 1.0 );   glVertex2f( -1.0,  1.0 );
+   glEnd();
 
    glPopMatrix();
 
@@ -74,7 +84,7 @@ Reshape(int width, int height)
    glFrustum(-1.0, 1.0, -1.0, 1.0, 5.0, 25.0);
    glMatrixMode(GL_MODELVIEW);
    glLoadIdentity();
-   glTranslatef(0.0, 0.0, -15.0);
+   glTranslatef(0.0, 0.0, -8.0);
 }
 
 
@@ -94,31 +104,43 @@ Key(unsigned char key, int x, int y)
 
 
 static void
-Init(void)
+InitTexture(void)
 {
-   GLfloat tex[16][16][4];
-   GLfloat tex2[16][16][4];
-   GLint i, j, t;
+   GLenum filter = GL_LINEAR;
+   GLint imgWidth, imgHeight;
+   GLenum imgFormat;
+   GLubyte *image = NULL;
+   GLfloat *ftex;
+   GLint i, t;
 
-   if (!glutExtensionSupported("GL_MESAX_texture_float")) {
-      printf("Sorry, this test requires GL_MESAX_texture_float\n");
-      exit(1);
+   image = LoadRGBImage(TexFile, &imgWidth, &imgHeight, &imgFormat);
+   if (!image) {
+      printf("Couldn't read %s\n", TexFile);
+      exit(0);
    }
 
-   for (i = 0; i < 16; i++) {
-      for (j = 0; j < 16; j++) {
-         GLfloat s = i / 15.0;
-         tex[i][j][0] = s;
-         tex[i][j][1] = 2.0 * s;
-         tex[i][j][2] = -3.0 * s;
-         tex[i][j][3] = 4.0 * s;
-      }
+   assert(imgFormat == GL_RGB);
+
+   ftex = (float *) malloc(imgWidth * imgHeight * 4 * sizeof(float));
+   if (!ftex) {
+      printf("out of memory\n");
+      exit(0);
    }
 
-   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F_ARB, 16, 16, 0, GL_RGBA,
-                GL_FLOAT, tex);
-   CheckError(__LINE__);
+   /* convert ubytes to floats, negated */
+   for (i = 0; i < imgWidth * imgHeight * 3; i++) {
+      ftex[i] = -1.0f * image[i];
+   }
 
+   glActiveTexture(GL_TEXTURE0);
+   glBindTexture(GL_TEXTURE_2D, 42);
+
+   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F_ARB,
+                imgWidth, imgHeight, 0,
+                GL_RGB, GL_FLOAT, ftex);
+
+
+   /* sanity checks */
    glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_RED_TYPE_ARB, &t);
    assert(t == GL_FLOAT);
    glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_GREEN_TYPE_ARB, &t);
@@ -128,8 +150,15 @@ Init(void)
    glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_ALPHA_TYPE_ARB, &t);
    assert(t == GL_FLOAT);
 
-   CheckError(__LINE__);
+   free(image);
+   free(ftex);
+      
+   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
+   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
 
+#if 0
    /* read back the texture and make sure values are correct */
    glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_FLOAT, tex2);
    CheckError(__LINE__);
@@ -147,8 +176,49 @@ Init(void)
          }
       }
    }
+#endif
+}
 
 
+static GLuint
+CreateProgram(void)
+{
+   GLuint fragShader, vertShader, program;
+
+   vertShader = CompileShaderText(GL_VERTEX_SHADER, VertShaderText);
+   fragShader = CompileShaderText(GL_FRAGMENT_SHADER, FragShaderText);
+   assert(vertShader);
+   program = LinkShaders(vertShader, fragShader);
+
+   assert(program);
+
+   // InitUniforms(program, Uniforms);
+
+   return program;
+}
+
+
+static void
+Init(void)
+{
+   glClearColor(0.25, 0.25, 0.25, 0.0);
+
+   GetExtensionFuncs();
+
+   if (!ShadersSupported()) {
+      printf("Sorry, this test requires GLSL\n");
+      exit(1);
+   }
+
+   if (!glutExtensionSupported("GL_MESAX_texture_float")) {
+      printf("Sorry, this test requires GL_MESAX_texture_float\n");
+      exit(1);
+   }
+
+   InitTexture();
+
+   Program = CreateProgram();
+   glUseProgram_func(Program);
 }
 
 
