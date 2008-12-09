@@ -164,9 +164,13 @@ do_blit_bitmap( GLcontext *ctx,
 {
    struct intel_context *intel = intel_context(ctx);
    struct intel_region *dst = intel_drawbuf_region(intel);
+   struct gl_framebuffer *fb = ctx->DrawBuffer;
    GLfloat tmpColor[4];
    GLubyte ubcolor[4];
    GLuint color8888, color565;
+   unsigned int num_cliprects;
+   drm_clip_rect_t *cliprects;
+   int x_off, y_off;
 
    if (!dst)
        return GL_FALSE;
@@ -196,49 +200,50 @@ do_blit_bitmap( GLcontext *ctx,
 
    LOCK_HARDWARE(intel);
 
-   if (intel->driDrawable->numClipRects) {
-      __DRIdrawablePrivate *dPriv = intel->driDrawable;
-      drm_clip_rect_t *box = dPriv->pClipRects;
+   intel_get_cliprects(intel, &cliprects, &num_cliprects, &x_off, &y_off);
+   if (num_cliprects != 0) {
       drm_clip_rect_t dest_rect;
-      GLint nbox = dPriv->numClipRects;
       GLint srcx = 0, srcy = 0;
-      GLint orig_screen_x1, orig_screen_y2;
       GLuint i;
+      GLint orig_dstx = dstx;
+      GLint orig_dsty = dsty;
 
-
-      orig_screen_x1 = dPriv->x + dstx;
-      orig_screen_y2 = dPriv->y + (dPriv->h - dsty);
-
-      /* Do scissoring in GL coordinates:
-       */
-      if (ctx->Scissor.Enabled)
-      {
-	 GLint x = ctx->Scissor.X;
-	 GLint y = ctx->Scissor.Y;
-	 GLuint w = ctx->Scissor.Width;
-	 GLuint h = ctx->Scissor.Height;
-
-         if (!_mesa_clip_to_region(x, y, x+w-1, y+h-1, &dstx, &dsty, &width, &height))
+      /* Clip to buffer bounds and scissor. */
+      if (!_mesa_clip_to_region(fb->_Xmin, fb->_Ymin,
+				fb->_Xmax, fb->_Ymax,
+				&dstx, &dsty, &width, &height))
             goto out;
+
+      /* Convert from GL to hardware coordinates.  Transform original points
+       * along with it so that we can look at cliprects in hw coordinates and
+       * map back to points in the source space.
+       */
+      if (fb->Name == 0) {
+	 /* bitmap to a system framebuffer */
+	 dstx = x_off + dstx;
+	 dsty = y_off + (fb->Height - dsty - height);
+	 orig_dstx = x_off + orig_dstx;
+	 orig_dsty = y_off + (fb->Height - orig_dsty - height);
+      } else {
+	 /* bitmap to a user framebuffer object */
+	 dstx = x_off + dstx;
+	 dsty = y_off + dsty;
+	 orig_dstx = x_off + orig_dstx;
+	 orig_dsty = y_off + orig_dsty;
       }
 
-      /* Convert from GL to hardware coordinates:
-       */
-      dsty = dPriv->y + (dPriv->h - dsty - height);  
-      dstx = dPriv->x + dstx;
+      dest_rect.x1 = dstx;
+      dest_rect.y1 = dsty;
+      dest_rect.x2 = dstx + width;
+      dest_rect.y2 = dsty + height;
 
-      dest_rect.x1 = dstx < 0 ? 0 : dstx;
-      dest_rect.y1 = dsty < 0 ? 0 : dsty;
-      dest_rect.x2 = dstx + width < 0 ? 0 : dstx + width;
-      dest_rect.y2 = dsty + height < 0 ? 0 : dsty + height;
-
-      for (i = 0; i < nbox; i++) {
+      for (i = 0; i < num_cliprects; i++) {
          drm_clip_rect_t rect;
 	 int box_w, box_h;
 	 GLint px, py;
 	 GLuint stipple[32];  
 
-         if (!intel_intersect_cliprects(&rect, &dest_rect, &box[i]))
+         if (!intel_intersect_cliprects(&rect, &dest_rect, &cliprects[i]))
             continue;
 
 	 /* Now go back to GL coordinates to figure out what subset of
@@ -246,9 +251,8 @@ do_blit_bitmap( GLcontext *ctx,
 	  */
 	 box_w = rect.x2 - rect.x1;
 	 box_h = rect.y2 - rect.y1;
-	 srcx = rect.x1 - orig_screen_x1;
-	 srcy = orig_screen_y2 - rect.y2;
-
+	 srcx = rect.x1 - orig_dstx;
+	 srcy = rect.y1 - orig_dsty;
 
 #define DY 32
 #define DX 32
@@ -275,7 +279,7 @@ do_blit_bitmap( GLcontext *ctx,
 				   srcx + px, srcy + py, w, h,
 				   (GLubyte *)stipple,
 				   8,
-				   GL_TRUE) == 0)
+				   fb->Name == 0 ? GL_TRUE : GL_FALSE) == 0)
 		  continue;
 
 	       /* 
@@ -300,6 +304,8 @@ do_blit_bitmap( GLcontext *ctx,
 out:
    UNLOCK_HARDWARE(intel);
 
+   if (INTEL_DEBUG & DEBUG_SYNC)
+      intel_batchbuffer_flush(intel->batch);
 
    if (unpack->BufferObj->Name) {
       /* done with PBO so unmap it now */

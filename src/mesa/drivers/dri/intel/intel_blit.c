@@ -600,7 +600,7 @@ intelEmitImmediateColorExpandBlit(struct intel_context *intel,
    intel_batchbuffer_require_space( intel->batch,
 				    (8 * 4) +
 				    (3 * 4) +
-				    dwords,
+				    dwords * 4,
 				    REFERENCES_CLIPRECTS );
 
    opcode = XY_SETUP_BLT_CMD;
