@@ -146,7 +146,8 @@ static void emit_load3f_1( struct x86_program *p,
 			   struct x86_reg dest,
 			   struct x86_reg arg0 )
 {
-   emit_load4f_1(p, dest, arg0);
+   /* Loading from memory erases the upper bits. */
+   sse_movss(&p->func, dest, arg0);
 }
 
 static void emit_load2f_2( struct x86_program *p, 
@@ -160,7 +161,8 @@ static void emit_load2f_1( struct x86_program *p,
 			   struct x86_reg dest,
 			   struct x86_reg arg0 )
 {
-   emit_load4f_1(p, dest, arg0);
+   /* Loading from memory erases the upper bits. */
+   sse_movss(&p->func, dest, arg0);
 }
 
 static void emit_load1f_1( struct x86_program *p, 
