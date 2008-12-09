@@ -435,15 +435,21 @@ class Context(Object):
         # FIXME
         pass
     
-    def draw_arrays(self, mode, start, count):
+    def dump_vertices(self, start, count):
         for index in range(start, start + count):
+            if index >= start + 16:
+                sys.stdout.write('\t...\n')
+                break
             sys.stdout.write('\t{\n')
             for velem in self.velems:
                 vbuf = self.vbufs[velem.vertex_buffer_index]
 
                 offset = vbuf.buffer_offset + velem.src_offset + vbuf.pitch*index
                 format = {
+                    gallium.PIPE_FORMAT_R32_FLOAT: 'f',
+                    gallium.PIPE_FORMAT_R32G32_FLOAT: '2f',
                     gallium.PIPE_FORMAT_R32G32B32_FLOAT: '3f',
+                    gallium.PIPE_FORMAT_R32G32B32A32_FLOAT: '4f',
                     gallium.PIPE_FORMAT_B8G8R8A8_UNORM: '4B',
                 }[velem.src_format]
 
@@ -452,13 +458,50 @@ class Context(Object):
                 sys.stdout.write('\t\t{' + ', '.join(map(str, values)) + '},\n')
                 assert len(values) == velem.nr_components
             sys.stdout.write('\t},\n')
+
+    def dump_indices(self, ibuf, isize, start, count):
+        format = {
+            1: 'B',
+            2: 'H',
+            4: 'I',
+        }[isize]
+
+        assert struct.calcsize(format) == isize
+
+        data = ibuf.read()
+        maxindex, minindex = 0, 0xffffffff
+
+        sys.stdout.write('\t{\n')
+        for i in range(start, start + count):
+            if i >= start + 16:
+                sys.stdout.write('\t...\n')
+                break
+            offset = i*isize
+            index, = struct.unpack_from(format, data, offset)
+            sys.stdout.write('\t\t%u,\n' % index)
+            minindex = min(minindex, index)
+            maxindex = max(maxindex, index)
+        sys.stdout.write('\t},\n')
+
+        return minindex, maxindex
+
+    def draw_arrays(self, mode, start, count):
+        self.dump_vertices(start, count)
             
         self.real.draw_arrays(mode, start, count)
     
     def draw_elements(self, indexBuffer, indexSize, mode, start, count):
+        minindex, maxindex = self.dump_indices(indexBuffer, indexSize, start, count)
+        self.dump_vertices(minindex, maxindex - minindex)
+
         self.real.draw_elements(indexBuffer, indexSize, mode, start, count)
         
     def draw_range_elements(self, indexBuffer, indexSize, minIndex, maxIndex, mode, start, count):
+        minindex, maxindex = self.dump_indices(indexBuffer, indexSize, start, count)
+        minindex = min(minindex, minIndex)
+        maxindex = min(maxindex, maxIndex)
+        self.dump_vertices(minindex, maxindex - minindex)
+
         self.real.draw_range_elements(indexBuffer, indexSize, minIndex, maxIndex, mode, start, count)
         
     def flush(self, flags):
