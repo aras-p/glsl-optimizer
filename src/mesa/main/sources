@@ -20,6 +20,7 @@ debug.c \
 depth.c \
 depthstencil.c \
 dlist.c \
+dlopen.c \
 drawpix.c \
 enable.c \
 enums.c \
@@ -101,6 +102,7 @@ debug.h \
 depth.h \
 depthstencil.h \
 dlist.h \
+dlopen.h \
 drawpix.h \
 enable.h \
 enums.h \

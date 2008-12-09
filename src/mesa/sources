@@ -21,6 +21,7 @@ MAIN_SOURCES = \
 	main/depth.c \
 	main/depthstencil.c \
 	main/dlist.c \
+	main/dlopen.c \
 	main/drawpix.c \
 	main/enable.c \
 	main/enums.c \
