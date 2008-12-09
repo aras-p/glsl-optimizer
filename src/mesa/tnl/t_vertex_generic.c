@@ -113,7 +113,7 @@ static INLINE void insert_3f_viewport_2( const struct tnl_clipspace_attr *a, GLu
    DEBUG_INSERT;
    out[0] = vp[0] * in[0] + vp[12];
    out[1] = vp[5] * in[1] + vp[13];
-   out[2] = vp[10] * in[2] + vp[14];
+   out[2] = vp[14];
 }
 
 static INLINE void insert_3f_viewport_1( const struct tnl_clipspace_attr *a, GLubyte *v,
