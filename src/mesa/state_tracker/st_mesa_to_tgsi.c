@@ -463,9 +463,15 @@ compile_instruction(
       break;
    case OPCODE_RSQ:
       fullinst->Instruction.Opcode = TGSI_OPCODE_RSQ;
-      tgsi_util_set_full_src_register_sign_mode(
-         &fullinst->FullSrcRegisters[0],
-         TGSI_UTIL_SIGN_CLEAR );
+
+      /* KW: Don't do this here.  If particular hardware needs to do
+       * this, can do so in the driver..
+       */
+#if 0
+       tgsi_util_set_full_src_register_sign_mode(
+          &fullinst->FullSrcRegisters[0],
+          TGSI_UTIL_SIGN_CLEAR ); 
+#endif
       break;
    case OPCODE_SCS:
       fullinst->Instruction.Opcode = TGSI_OPCODE_SCS;
