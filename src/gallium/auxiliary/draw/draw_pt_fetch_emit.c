@@ -338,6 +338,9 @@ static boolean fetch_emit_run_linear_elts( struct draw_pt_middle_end *middle,
     */
    draw_do_flush( draw, DRAW_FLUSH_BACKEND );
 
+   if (count > 65535) /* FIXME */
+      return FALSE;
+
    hw_verts = draw->render->allocate_vertices( draw->render,
                                                (ushort)feme->translate->key.output_stride,
                                                (ushort)count );

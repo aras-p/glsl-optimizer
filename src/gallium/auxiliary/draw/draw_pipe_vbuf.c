@@ -399,6 +399,8 @@ vbuf_alloc_vertices( struct vbuf_stage *vbuf )
     * and it will flush itself if necessary to do so.  If this does
     * fail, we are basically without usable hardware.
     */
+   assert(vbuf->max_vertices < 65536);
+
    vbuf->vertices = (uint *) vbuf->render->allocate_vertices(vbuf->render,
 							     (ushort) vbuf->vertex_size,
 							     (ushort) vbuf->max_vertices);
