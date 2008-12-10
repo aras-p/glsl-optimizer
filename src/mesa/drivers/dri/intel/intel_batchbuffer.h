@@ -55,6 +55,12 @@ struct intel_batchbuffer
 
    GLuint size;
 
+   /** Tracking of BEGIN_BATCH()/OUT_BATCH()/ADVANCE_BATCH() debugging */
+   struct {
+      GLuint total;
+      GLubyte *start_ptr;
+   } emit;
+
    GLuint dirty_state;
 };
 
@@ -143,9 +149,12 @@ intel_batchbuffer_require_space(struct intel_batchbuffer *batch,
 
 #define BEGIN_BATCH(n, cliprect_mode) do {				\
    intel_batchbuffer_require_space(intel->batch, (n)*4, cliprect_mode); \
+   assert(intel->batch->emit.start_ptr == NULL);			\
+   intel->batch->emit.total = (n) * 4;					\
+   intel->batch->emit.start_ptr = intel->batch->ptr;			\
 } while (0)
 
-#define OUT_BATCH(d)  intel_batchbuffer_emit_dword(intel->batch, d)
+#define OUT_BATCH(d) intel_batchbuffer_emit_dword(intel->batch, d)
 
 #define OUT_RELOC(buf, read_domains, write_domain, delta) do {		\
    assert((delta) >= 0);						\
@@ -153,7 +162,16 @@ intel_batchbuffer_require_space(struct intel_batchbuffer *batch,
 				read_domains, write_domain, delta);	\
 } while (0)
 
-#define ADVANCE_BATCH() do { } while(0)
+#define ADVANCE_BATCH() do {						\
+   unsigned int _n = intel->batch->ptr - intel->batch->emit.start_ptr;	\
+   assert(intel->batch->emit.start_ptr != NULL);			\
+   if (_n != intel->batch->emit.total) {				\
+      fprintf(stderr, "ADVANCE_BATCH: %d of %d dwords emitted\n",	\
+	      _n, intel->batch->emit.total);				\
+      abort();								\
+   }									\
+   intel->batch->emit.start_ptr = NULL;					\
+} while(0)
 
 
 static INLINE void
