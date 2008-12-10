@@ -409,6 +409,7 @@ setup_non_interleaved_attribs(GLcontext *ctx,
                               const struct st_vertex_program *vp,
                               const struct gl_client_array **arrays,
                               GLuint max_index,
+                              GLboolean *userSpace,
                               struct pipe_vertex_buffer vbuffer[],
                               struct pipe_vertex_element velements[])
 {
@@ -419,6 +420,8 @@ setup_non_interleaved_attribs(GLcontext *ctx,
       const GLuint mesaAttr = vp->index_to_input[attr];
       struct gl_buffer_object *bufobj = arrays[mesaAttr]->BufferObj;
       GLsizei stride = arrays[mesaAttr]->StrideB;
+
+      *userSpace = GL_FALSE;
 
       if (bufobj && bufobj->Name) {
          /* Attribute data is in a VBO.
@@ -439,6 +442,8 @@ setup_non_interleaved_attribs(GLcontext *ctx,
          uint bytes;
          /*printf("user-space array %d stride %d\n", attr, stride);*/
 	
+         *userSpace = GL_TRUE;
+
          /* wrap user data */
          if (arrays[mesaAttr]->Ptr) {
             /* user's vertex array */
@@ -555,7 +560,7 @@ st_draw_vbo(GLcontext *ctx,
    else {
       /*printf("Draw non-interleaved\n");*/
       setup_non_interleaved_attribs(ctx, vp, arrays, max_index,
-                                    vbuffer, velements);
+                                    &userSpace, vbuffer, velements);
       num_vbuffers = vp->num_inputs;
       num_velements = vp->num_inputs;
    }
@@ -665,12 +670,16 @@ st_draw_vbo(GLcontext *ctx,
    }
 
    /* unreference buffers (frees wrapped user-space buffer objects) */
-   for (attr = 0; attr < num_vbuffers; attr++) {
-      pipe_buffer_reference(pipe->screen, &vbuffer[attr].buffer, NULL);
-      assert(!vbuffer[attr].buffer);
+   if (userSpace) 
+   {
+      for (attr = 0; attr < num_vbuffers; attr++) {
+         pipe_buffer_reference(pipe->screen, &vbuffer[attr].buffer, NULL);
+         assert(!vbuffer[attr].buffer);
+      }
+      pipe->set_vertex_buffers(pipe, 0, NULL);
    }
-   pipe->set_vertex_buffers(pipe, num_vbuffers, vbuffer);
 }
+
 
 void st_init_draw( struct st_context *st )
 {
