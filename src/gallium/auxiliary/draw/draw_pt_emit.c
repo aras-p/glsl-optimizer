@@ -165,8 +165,10 @@ void draw_pt_emit( struct pt_emit *emit,
     */
    draw_do_flush( draw, DRAW_FLUSH_BACKEND );
 
-   if (count > 65535) /* FIXME */
-      return FALSE;
+   if (vertex_count > 65535) { /* FIXME */
+      assert(0);
+      return;
+   }
 
    /* XXX: and work out some way to coordinate the render primitive
     * between vbuf.c and here...
@@ -228,6 +230,11 @@ void draw_pt_emit_linear(struct pt_emit *emit,
    /* XXX: need to flush to get prim_vbuf.c to release its allocation?? 
     */
    draw_do_flush( draw, DRAW_FLUSH_BACKEND );
+
+   if (count > 65535) { /* FIXME */
+      assert(0);
+      return;
+   }
 
    /* XXX: and work out some way to coordinate the render primitive
     * between vbuf.c and here...

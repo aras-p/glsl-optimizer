@@ -229,6 +229,11 @@ static void fetch_emit_run( struct draw_pt_middle_end *middle,
     */
    draw_do_flush( draw, DRAW_FLUSH_BACKEND );
 
+   if (fetch_count > 65535) { /* FIXME */
+      assert(0);
+      return;
+   }
+
    hw_verts = draw->render->allocate_vertices( draw->render,
                                                (ushort)feme->translate->key.output_stride,
                                                (ushort)fetch_count );
@@ -282,6 +287,11 @@ static void fetch_emit_run_linear( struct draw_pt_middle_end *middle,
    /* XXX: need to flush to get prim_vbuf.c to release its allocation??
     */
    draw_do_flush( draw, DRAW_FLUSH_BACKEND );
+
+   if (count > 65535) { /* FIXME */
+      assert(0);
+      return;
+   }
 
    hw_verts = draw->render->allocate_vertices( draw->render,
                                                (ushort)feme->translate->key.output_stride,
