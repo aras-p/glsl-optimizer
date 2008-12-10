@@ -234,7 +234,7 @@ static void fse_run_linear( struct draw_pt_middle_end *middle,
     */
    draw_do_flush( draw, DRAW_FLUSH_BACKEND );
 
-   if (count > 65535) { /* FIXME */
+   if (count >= UNDEFINED_VERTEX_ID) {
       assert(0);
       return;
    }
@@ -298,7 +298,7 @@ fse_run(struct draw_pt_middle_end *middle,
     */
    draw_do_flush( draw, DRAW_FLUSH_BACKEND );
 
-   if (fetch_count > 65535) { /* FIXME */
+   if (fetch_count >= UNDEFINED_VERTEX_ID) {
       assert(0);
       return;
    }
@@ -357,7 +357,7 @@ static boolean fse_run_linear_elts( struct draw_pt_middle_end *middle,
     */
    draw_do_flush( draw, DRAW_FLUSH_BACKEND );
 
-   if (count > 65535) /* FIXME */
+   if (count >= UNDEFINED_VERTEX_ID)
       return FALSE;
 
    hw_verts = draw->render->allocate_vertices( draw->render,

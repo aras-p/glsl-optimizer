@@ -165,7 +165,7 @@ void draw_pt_emit( struct pt_emit *emit,
     */
    draw_do_flush( draw, DRAW_FLUSH_BACKEND );
 
-   if (vertex_count > 65535) { /* FIXME */
+   if (vertex_count >= UNDEFINED_VERTEX_ID) {
       assert(0);
       return;
    }
@@ -231,7 +231,7 @@ void draw_pt_emit_linear(struct pt_emit *emit,
     */
    draw_do_flush( draw, DRAW_FLUSH_BACKEND );
 
-   if (count > 65535) { /* FIXME */
+   if (count >= UNDEFINED_VERTEX_ID) {
       assert(0);
       return;
    }
