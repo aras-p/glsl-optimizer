@@ -59,4 +59,9 @@ st_feedback_draw_vbo(GLcontext *ctx,
                      GLuint min_index,
                      GLuint max_index);
 
+/* Internal function:
+ */
+extern GLuint
+st_pipe_vertex_format(GLenum type, GLuint size, GLboolean normalized);
+
 #endif
