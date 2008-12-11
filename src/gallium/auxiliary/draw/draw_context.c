@@ -103,6 +103,18 @@ void draw_flush( struct draw_context *draw )
 }
 
 
+/**
+ * Specify the Minimum Resolvable Depth factor for polygon offset.
+ * This factor potentially depends on the number of Z buffer bits,
+ * the rasterization algorithm and the arithmetic performed on Z
+ * values between vertex shading and rasterization.  It will vary
+ * from one driver to another.
+ */
+void draw_set_mrd(struct draw_context *draw, double mrd)
+{
+   draw->mrd = mrd;
+}
+
 
 /**
  * Register new primitive rasterization/rendering state.
