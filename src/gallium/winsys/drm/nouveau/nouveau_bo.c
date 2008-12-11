@@ -273,6 +273,40 @@ nouveau_bo_del(struct nouveau_bo **bo)
 }
 
 int
+nouveau_bo_busy(struct nouveau_bo *bo, uint32_t flags)
+{
+	struct nouveau_bo_priv *nvbo = nouveau_bo(bo);
+	struct nouveau_fence *fence;
+
+	if (!nvbo)
+		return -EINVAL;
+
+	/* If the buffer is pending it must be busy, unless
+	 * both are RD, in which case we can allow access */
+	if (nvbo->pending) {
+		if ((nvbo->pending->flags & NOUVEAU_BO_RDWR) == NOUVEAU_BO_RD &&
+		    (flags & NOUVEAU_BO_RDWR) == NOUVEAU_BO_RD)
+			return 0;
+		else
+			return 1;
+	}
+
+	if (flags & NOUVEAU_BO_WR)
+		fence = nvbo->fence;
+	else
+		fence = nvbo->wr_fence;
+
+	/* If the buffer is not pending and doesn't have a fence
+	 * that conflicts with our flags then it can't be busy
+	 */
+	if (!fence)
+		return 0;
+	else
+		/* If the fence is signalled the buffer is not busy, else is busy */
+		return !nouveau_fence(fence)->signalled;
+}
+
+int
 nouveau_bo_map(struct nouveau_bo *bo, uint32_t flags)
 {
 	struct nouveau_bo_priv *nvbo = nouveau_bo(bo);
