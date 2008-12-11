@@ -288,7 +288,7 @@ static void fetch_emit_run_linear( struct draw_pt_middle_end *middle,
     */
    draw_do_flush( draw, DRAW_FLUSH_BACKEND );
 
-   if (count >= UNDEFINED_VERTEX_ID)
+   if (count >= UNDEFINED_VERTEX_ID) {
       assert(0);
       return;
    }
