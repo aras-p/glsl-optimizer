@@ -324,7 +324,7 @@ vcache_check_run( struct draw_pt_front_end *frontend,
    unsigned fetch_count = max_index + 1 - min_index;
    const ushort *transformed_elts;
    ushort *storage = NULL;
-   boolean ok;
+   boolean ok = FALSE;
 
 
    if (0) debug_printf("fetch_count %d fetch_max %d draw_count %d\n", fetch_count, 
@@ -413,11 +413,12 @@ vcache_check_run( struct draw_pt_front_end *frontend,
       transformed_elts = storage;
    }
 
-   ok = vcache->middle->run_linear_elts( vcache->middle,
-                                         min_index, /* start */
-                                         fetch_count,
-                                         transformed_elts,
-                                         draw_count );
+   if (fetch_count < UNDEFINED_VERTEX_ID)
+      ok = vcache->middle->run_linear_elts( vcache->middle,
+                                            min_index, /* start */
+                                            fetch_count,
+                                            transformed_elts,
+                                            draw_count );
    
    FREE(storage);
 
