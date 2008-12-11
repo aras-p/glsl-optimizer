@@ -89,6 +89,31 @@ nouveau_surface_release(struct pipe_winsys *ws, struct pipe_surface **s)
 	}
 }
 
+static uint32_t
+nouveau_flags_from_usage(struct nouveau_context *nv, unsigned usage)
+{
+	uint32_t flags = NOUVEAU_BO_LOCAL;
+
+	if (usage & PIPE_BUFFER_USAGE_PIXEL) {
+		if (usage & NOUVEAU_BUFFER_USAGE_TEXTURE)
+			flags |= NOUVEAU_BO_GART;
+		if (!(usage & PIPE_BUFFER_USAGE_CPU_READ_WRITE))
+			flags |= NOUVEAU_BO_VRAM;
+	}
+
+	if (usage & PIPE_BUFFER_USAGE_VERTEX) {
+		if (nv->cap.hw_vertex_buffer)
+			flags |= NOUVEAU_BO_GART;
+	}
+
+	if (usage & PIPE_BUFFER_USAGE_INDEX) {
+		if (nv->cap.hw_index_buffer)
+			flags |= NOUVEAU_BO_GART;
+	}
+
+	return flags;
+}
+
 static struct pipe_buffer *
 nouveau_pipe_bo_create(struct pipe_winsys *pws, unsigned alignment,
 		       unsigned usage, unsigned size)
@@ -107,24 +132,7 @@ nouveau_pipe_bo_create(struct pipe_winsys *pws, unsigned alignment,
 	nvbuf->base.usage = usage;
 	nvbuf->base.size = size;
 
-	flags = NOUVEAU_BO_LOCAL;
-
-	if (usage & PIPE_BUFFER_USAGE_PIXEL) {
-		if (usage & NOUVEAU_BUFFER_USAGE_TEXTURE)
-			flags |= NOUVEAU_BO_GART;
-		if (!(usage & PIPE_BUFFER_USAGE_CPU_READ_WRITE))
-			flags |= NOUVEAU_BO_VRAM;
-	}
-
-	if (usage & PIPE_BUFFER_USAGE_VERTEX) {
-		if (nv->cap.hw_vertex_buffer)
-			flags |= NOUVEAU_BO_GART;
-	}
-
-	if (usage & PIPE_BUFFER_USAGE_INDEX) {
-		if (nv->cap.hw_index_buffer)
-			flags |= NOUVEAU_BO_GART;
-	}
+	flags = nouveau_flags_from_usage(nv, usage);
 
 	if (nouveau_bo_new(dev, flags, alignment, size, &nvbuf->bo)) {
 		free(nvbuf);
@@ -175,6 +183,26 @@ nouveau_pipe_bo_map(struct pipe_winsys *pws, struct pipe_buffer *buf,
 		map_flags |= NOUVEAU_BO_RD;
 	if (flags & PIPE_BUFFER_USAGE_CPU_WRITE)
 		map_flags |= NOUVEAU_BO_WR;
+
+	if ((map_flags & NOUVEAU_BO_RDWR) == NOUVEAU_BO_WR &&
+	    !nouveau_bo_busy(nvbuf->bo, map_flags)) {
+		/* XXX: Technically incorrect. If the client maps a buffer for write-only
+		 * and leaves part of the buffer untouched it probably expects those parts
+		 * to remain intact. This is violated because we allocate a whole new buffer
+		 * and don't copy the previous buffer's contents, so this optimization is
+		 * only valid if the client intends to overwrite the whole buffer.
+		 */
+		struct nouveau_pipe_winsys *nvpws = (struct nouveau_pipe_winsys *)pws;
+		struct nouveau_context *nv = nvpws->nv;
+		struct nouveau_device *dev = nv->nv_screen->device;
+		struct nouveau_bo *rename;
+		uint32_t flags = nouveau_flags_from_usage(nv, buf->usage);
+
+		if (!nouveau_bo_new(dev, flags, buf->alignment, buf->size, &rename)) {
+			nouveau_bo_del(&nvbuf->bo);
+			nvbuf->bo = rename;
+		}
+	}
 
 	if (nouveau_bo_map(nvbuf->bo, map_flags))
 		return NULL;

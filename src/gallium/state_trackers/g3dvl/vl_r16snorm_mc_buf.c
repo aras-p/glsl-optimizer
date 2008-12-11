@@ -17,16 +17,7 @@
 #include "vl_types.h"
 #include "vl_defs.h"
 
-/*
- * TODO: Dynamically determine number of buf sets to use, based on
- * video size and available mem, since we can easily run out of memory
- * for high res videos.
- * Note: Destroying previous frame's buffers and creating new ones
- * doesn't work, since the buffer are not actually destroyed until their
- * fence is signalled, and if we render fast enough we will create faster
- * than we destroy.
- */
-#define NUM_BUF_SETS 4	/* Number of rotating buffer sets to use */
+const unsigned int DEFAULT_BUF_ALIGNMENT = 256;
 
 enum vlMacroBlockTypeEx
 {
@@ -56,32 +47,67 @@ struct vlR16SnormBufferedMC
 {
 	struct vlRender				base;
 
-	unsigned int				picture_width, picture_height;
+	unsigned int				picture_width;
+	unsigned int				picture_height;
 	enum vlFormat				picture_format;
+	unsigned int				macroblocks_per_picture;
 
-	unsigned int				cur_buf;
 	struct vlSurface			*buffered_surface;
-	struct vlSurface			*past_surface, *future_surface;
+	struct vlSurface			*past_surface;
+	struct vlSurface			*future_surface;
 	struct vlVertex2f			surface_tex_inv_size;
 	struct vlVertex2f			zero_block[3];
 	unsigned int				num_macroblocks;
 	struct vlMpeg2MacroBlock		*macroblocks;
+	struct pipe_surface			*tex_surface[3];
+	short					*texels[3];
 
 	struct pipe_context			*pipe;
 	struct pipe_viewport_state		viewport;
 	struct pipe_framebuffer_state		render_target;
-	struct pipe_sampler_state		*samplers[5];
-	struct pipe_texture			*textures[NUM_BUF_SETS][5];
-	struct pipe_surface			*tex_surface[3];
-	short					*texels[3];
+
+	union
+	{
+		void					*all[5];
+		struct
+		{
+			void				*y;
+			void				*cb;
+			void				*cr;
+			void				*ref[2];
+		};
+	} samplers;
+
+	union
+	{
+		struct pipe_texture			*all[5];
+		struct
+		{
+			struct pipe_texture		*y;
+			struct pipe_texture		*cb;
+			struct pipe_texture		*cr;
+			struct pipe_texture		*ref[2];
+		};
+	} textures;
+
+	union
+	{
+		struct pipe_vertex_buffer 		all[3];
+		struct
+		{
+			struct pipe_vertex_buffer	ycbcr;
+			struct pipe_vertex_buffer	ref[2];
+		};
+	} vertex_bufs;
+
 	void					*i_vs, *p_vs[2], *b_vs[2];
 	void					*i_fs, *p_fs[2], *b_fs[2];
-	struct pipe_vertex_buffer 		vertex_bufs[NUM_BUF_SETS][3];
 	struct pipe_vertex_element		vertex_elems[8];
-	struct pipe_constant_buffer		vs_const_buf, fs_const_buf;
+	struct pipe_constant_buffer		vs_const_buf;
+	struct pipe_constant_buffer		fs_const_buf;
 };
 
-static int vlBegin
+static inline int vlBegin
 (
 	struct vlRender *render
 )
@@ -382,7 +408,7 @@ static inline int vlGrabMacroBlockVB
 			vb = (struct vlVertex2f*)mc->pipe->winsys->buffer_map
 			(
 				mc->pipe->winsys,
-				mc->vertex_bufs[mc->cur_buf % NUM_BUF_SETS][2].buffer,
+				mc->vertex_bufs.ref[1].buffer,
 				PIPE_BUFFER_USAGE_CPU_WRITE
 			) + pos * 2 * 24;
 
@@ -411,7 +437,7 @@ static inline int vlGrabMacroBlockVB
 				}
 			}
 
-			mc->pipe->winsys->buffer_unmap(mc->pipe->winsys, mc->vertex_bufs[mc->cur_buf % NUM_BUF_SETS][2].buffer);
+			mc->pipe->winsys->buffer_unmap(mc->pipe->winsys, mc->vertex_bufs.ref[1].buffer);
 
 			/* fall-through */
 		}
@@ -423,7 +449,7 @@ static inline int vlGrabMacroBlockVB
 			vb = (struct vlVertex2f*)mc->pipe->winsys->buffer_map
 			(
 				mc->pipe->winsys,
-				mc->vertex_bufs[mc->cur_buf % NUM_BUF_SETS][1].buffer,
+				mc->vertex_bufs.ref[0].buffer,
 				PIPE_BUFFER_USAGE_CPU_WRITE
 			) + pos * 2 * 24;
 
@@ -469,7 +495,7 @@ static inline int vlGrabMacroBlockVB
 				}
 			}
 
-			mc->pipe->winsys->buffer_unmap(mc->pipe->winsys, mc->vertex_bufs[mc->cur_buf % NUM_BUF_SETS][1].buffer);
+			mc->pipe->winsys->buffer_unmap(mc->pipe->winsys, mc->vertex_bufs.ref[0].buffer);
 
 			/* fall-through */
 		}
@@ -497,7 +523,7 @@ static inline int vlGrabMacroBlockVB
 			vb = (struct vlMacroBlockVertexStream0*)mc->pipe->winsys->buffer_map
 			(
 				mc->pipe->winsys,
-				mc->vertex_bufs[mc->cur_buf % NUM_BUF_SETS][0].buffer,
+				mc->vertex_bufs.ycbcr.buffer,
 				PIPE_BUFFER_USAGE_CPU_WRITE
 			) + pos * 24;
 
@@ -533,7 +559,7 @@ static inline int vlGrabMacroBlockVB
 				4, 2, 1, mc->zero_block
 			);
 
-			mc->pipe->winsys->buffer_unmap(mc->pipe->winsys, mc->vertex_bufs[mc->cur_buf % NUM_BUF_SETS][0].buffer);
+			mc->pipe->winsys->buffer_unmap(mc->pipe->winsys, mc->vertex_bufs.ycbcr.buffer);
 
 			break;
 		}
@@ -555,9 +581,6 @@ static int vlFlush
 	unsigned int			num_macroblocks[vlNumMacroBlockExTypes] = {0};
 	unsigned int			offset[vlNumMacroBlockExTypes];
 	unsigned int			vb_start = 0;
-	unsigned int			mbw;
-	unsigned int			mbh;
-	unsigned int			num_mb_per_frame;
 	unsigned int			i;
 
 	assert(render);
@@ -567,11 +590,7 @@ static int vlFlush
 	if (!mc->buffered_surface)
 		return 0;
 
-	mbw = align(mc->picture_width, VL_MACROBLOCK_WIDTH) / VL_MACROBLOCK_WIDTH;
-	mbh = align(mc->picture_height, VL_MACROBLOCK_HEIGHT) / VL_MACROBLOCK_HEIGHT;
-	num_mb_per_frame = mbw * mbh;
-
-	if (mc->num_macroblocks < num_mb_per_frame)
+	if (mc->num_macroblocks < mc->macroblocks_per_picture)
 		return 0;
 
 	pipe = mc->pipe;
@@ -628,10 +647,10 @@ static int vlFlush
 
 	if (num_macroblocks[vlMacroBlockExTypeIntra] > 0)
 	{
-		pipe->set_vertex_buffers(pipe, 1, mc->vertex_bufs[mc->cur_buf % NUM_BUF_SETS]);
+		pipe->set_vertex_buffers(pipe, 1, mc->vertex_bufs.all);
 		pipe->set_vertex_elements(pipe, 4, mc->vertex_elems);
-		pipe->set_sampler_textures(pipe, 3, mc->textures[mc->cur_buf % NUM_BUF_SETS]);
-		pipe->bind_sampler_states(pipe, 3, (void**)mc->samplers);
+		pipe->set_sampler_textures(pipe, 3, mc->textures.all);
+		pipe->bind_sampler_states(pipe, 3, mc->samplers.all);
 		pipe->bind_vs_state(pipe, mc->i_vs);
 		pipe->bind_fs_state(pipe, mc->i_fs);
 
@@ -641,11 +660,11 @@ static int vlFlush
 
 	if (num_macroblocks[vlMacroBlockExTypeFwdPredictedFrame] > 0)
 	{
-		pipe->set_vertex_buffers(pipe, 2, mc->vertex_bufs[mc->cur_buf % NUM_BUF_SETS]);
+		pipe->set_vertex_buffers(pipe, 2, mc->vertex_bufs.all);
 		pipe->set_vertex_elements(pipe, 6, mc->vertex_elems);
-		mc->textures[mc->cur_buf % NUM_BUF_SETS][3] = mc->past_surface->texture;
-		pipe->set_sampler_textures(pipe, 4, mc->textures[mc->cur_buf % NUM_BUF_SETS]);
-		pipe->bind_sampler_states(pipe, 4, (void**)mc->samplers);
+		mc->textures.ref[0] = mc->past_surface->texture;
+		pipe->set_sampler_textures(pipe, 4, mc->textures.all);
+		pipe->bind_sampler_states(pipe, 4, mc->samplers.all);
 		pipe->bind_vs_state(pipe, mc->p_vs[0]);
 		pipe->bind_fs_state(pipe, mc->p_fs[0]);
 
@@ -655,11 +674,11 @@ static int vlFlush
 
 	if (num_macroblocks[vlMacroBlockExTypeFwdPredictedField] > 0)
 	{
-		pipe->set_vertex_buffers(pipe, 2, mc->vertex_bufs[mc->cur_buf % NUM_BUF_SETS]);
+		pipe->set_vertex_buffers(pipe, 2, mc->vertex_bufs.all);
 		pipe->set_vertex_elements(pipe, 6, mc->vertex_elems);
-		mc->textures[mc->cur_buf % NUM_BUF_SETS][3] = mc->past_surface->texture;
-		pipe->set_sampler_textures(pipe, 4, mc->textures[mc->cur_buf % NUM_BUF_SETS]);
-		pipe->bind_sampler_states(pipe, 4, (void**)mc->samplers);
+		mc->textures.ref[0] = mc->past_surface->texture;
+		pipe->set_sampler_textures(pipe, 4, mc->textures.all);
+		pipe->bind_sampler_states(pipe, 4, mc->samplers.all);
 		pipe->bind_vs_state(pipe, mc->p_vs[1]);
 		pipe->bind_fs_state(pipe, mc->p_fs[1]);
 
@@ -669,11 +688,11 @@ static int vlFlush
 
 	if (num_macroblocks[vlMacroBlockExTypeBkwdPredictedFrame] > 0)
 	{
-		pipe->set_vertex_buffers(pipe, 2, mc->vertex_bufs[mc->cur_buf % NUM_BUF_SETS]);
+		pipe->set_vertex_buffers(pipe, 2, mc->vertex_bufs.all);
 		pipe->set_vertex_elements(pipe, 6, mc->vertex_elems);
-		mc->textures[mc->cur_buf % NUM_BUF_SETS][3] = mc->future_surface->texture;
-		pipe->set_sampler_textures(pipe, 4, mc->textures[mc->cur_buf % NUM_BUF_SETS]);
-		pipe->bind_sampler_states(pipe, 4, (void**)mc->samplers);
+		mc->textures.ref[0] = mc->future_surface->texture;
+		pipe->set_sampler_textures(pipe, 4, mc->textures.all);
+		pipe->bind_sampler_states(pipe, 4, mc->samplers.all);
 		pipe->bind_vs_state(pipe, mc->p_vs[0]);
 		pipe->bind_fs_state(pipe, mc->p_fs[0]);
 
@@ -683,11 +702,11 @@ static int vlFlush
 
 	if (num_macroblocks[vlMacroBlockExTypeBkwdPredictedField] > 0)
 	{
-		pipe->set_vertex_buffers(pipe, 2, mc->vertex_bufs[mc->cur_buf % NUM_BUF_SETS]);
+		pipe->set_vertex_buffers(pipe, 2, mc->vertex_bufs.all);
 		pipe->set_vertex_elements(pipe, 6, mc->vertex_elems);
-		mc->textures[mc->cur_buf % NUM_BUF_SETS][3] = mc->future_surface->texture;
-		pipe->set_sampler_textures(pipe, 4, mc->textures[mc->cur_buf % NUM_BUF_SETS]);
-		pipe->bind_sampler_states(pipe, 4, (void**)mc->samplers);
+		mc->textures.ref[0] = mc->future_surface->texture;
+		pipe->set_sampler_textures(pipe, 4, mc->textures.all);
+		pipe->bind_sampler_states(pipe, 4, mc->samplers.all);
 		pipe->bind_vs_state(pipe, mc->p_vs[1]);
 		pipe->bind_fs_state(pipe, mc->p_fs[1]);
 
@@ -697,12 +716,12 @@ static int vlFlush
 
 	if (num_macroblocks[vlMacroBlockExTypeBiPredictedFrame] > 0)
 	{
-		pipe->set_vertex_buffers(pipe, 3, mc->vertex_bufs[mc->cur_buf % NUM_BUF_SETS]);
+		pipe->set_vertex_buffers(pipe, 3, mc->vertex_bufs.all);
 		pipe->set_vertex_elements(pipe, 8, mc->vertex_elems);
-		mc->textures[mc->cur_buf % NUM_BUF_SETS][3] = mc->past_surface->texture;
-		mc->textures[mc->cur_buf % NUM_BUF_SETS][4] = mc->future_surface->texture;
-		pipe->set_sampler_textures(pipe, 5, mc->textures[mc->cur_buf % NUM_BUF_SETS]);
-		pipe->bind_sampler_states(pipe, 5, (void**)mc->samplers);
+		mc->textures.ref[0] = mc->past_surface->texture;
+		mc->textures.ref[1] = mc->future_surface->texture;
+		pipe->set_sampler_textures(pipe, 5, mc->textures.all);
+		pipe->bind_sampler_states(pipe, 5, mc->samplers.all);
 		pipe->bind_vs_state(pipe, mc->b_vs[0]);
 		pipe->bind_fs_state(pipe, mc->b_fs[0]);
 
@@ -712,12 +731,12 @@ static int vlFlush
 
 	if (num_macroblocks[vlMacroBlockExTypeBiPredictedField] > 0)
 	{
-		pipe->set_vertex_buffers(pipe, 3, mc->vertex_bufs[mc->cur_buf % NUM_BUF_SETS]);
+		pipe->set_vertex_buffers(pipe, 3, mc->vertex_bufs.all);
 		pipe->set_vertex_elements(pipe, 8, mc->vertex_elems);
-		mc->textures[mc->cur_buf % NUM_BUF_SETS][3] = mc->past_surface->texture;
-		mc->textures[mc->cur_buf % NUM_BUF_SETS][4] = mc->future_surface->texture;
-		pipe->set_sampler_textures(pipe, 5, mc->textures[mc->cur_buf % NUM_BUF_SETS]);
-		pipe->bind_sampler_states(pipe, 5, (void**)mc->samplers);
+		mc->textures.ref[0] = mc->past_surface->texture;
+		mc->textures.ref[1] = mc->future_surface->texture;
+		pipe->set_sampler_textures(pipe, 5, mc->textures.all);
+		pipe->bind_sampler_states(pipe, 5, mc->samplers.all);
 		pipe->bind_vs_state(pipe, mc->b_vs[1]);
 		pipe->bind_fs_state(pipe, mc->b_fs[1]);
 
@@ -732,7 +751,6 @@ static int vlFlush
 
 	mc->buffered_surface = NULL;
 	mc->num_macroblocks = 0;
-	mc->cur_buf++;
 
 	return 0;
 }
@@ -745,6 +763,7 @@ static int vlRenderMacroBlocksMpeg2R16SnormBuffered
 )
 {
 	struct vlR16SnormBufferedMC	*mc;
+	bool				new_surface = false;
 	unsigned int			i;
 
 	assert(render);
@@ -756,39 +775,26 @@ static int vlRenderMacroBlocksMpeg2R16SnormBuffered
 		if (mc->buffered_surface != surface)
 		{
 			vlFlush(&mc->base);
-			mc->buffered_surface = surface;
-			mc->past_surface = batch->past_surface;
-			mc->future_surface = batch->future_surface;
-			mc->surface_tex_inv_size.x = 1.0f / surface->texture->width[0];
-			mc->surface_tex_inv_size.y = 1.0f / surface->texture->height[0];
-			
-			for (i = 0; i < 3; ++i)
-			{
-				mc->tex_surface[i] = mc->pipe->screen->get_tex_surface
-				(
-					mc->pipe->screen,
-					mc->textures[mc->cur_buf % NUM_BUF_SETS][i],
-					0, 0, 0, PIPE_BUFFER_USAGE_CPU_WRITE
-				);
-
-				mc->texels[i] = pipe_surface_map(mc->tex_surface[i], PIPE_BUFFER_USAGE_CPU_WRITE);
-			}
+			new_surface = true;
 		}
 	}
 	else
+		new_surface = true;
+
+	if (new_surface)
 	{
 		mc->buffered_surface = surface;
 		mc->past_surface = batch->past_surface;
 		mc->future_surface = batch->future_surface;
 		mc->surface_tex_inv_size.x = 1.0f / surface->texture->width[0];
 		mc->surface_tex_inv_size.y = 1.0f / surface->texture->height[0];
-		
+
 		for (i = 0; i < 3; ++i)
 		{
 			mc->tex_surface[i] = mc->pipe->screen->get_tex_surface
 			(
 				mc->pipe->screen,
-				mc->textures[mc->cur_buf % NUM_BUF_SETS][i],
+				mc->textures.all[i],
 				0, 0, 0, PIPE_BUFFER_USAGE_CPU_WRITE
 			);
 
@@ -802,7 +808,7 @@ static int vlRenderMacroBlocksMpeg2R16SnormBuffered
 	return 0;
 }
 
-static int vlEnd
+static inline int vlEnd
 (
 	struct vlRender *render
 )
@@ -819,7 +825,7 @@ static int vlDestroy
 {
 	struct vlR16SnormBufferedMC	*mc;
 	struct pipe_context		*pipe;
-	unsigned int			h, i;
+	unsigned int			i;
 
 	assert(render);
 
@@ -827,19 +833,14 @@ static int vlDestroy
 	pipe = mc->pipe;
 
 	for (i = 0; i < 5; ++i)
-		pipe->delete_sampler_state(pipe, mc->samplers[i]);
+		pipe->delete_sampler_state(pipe, mc->samplers.all[i]);
 
-	for (h = 0; h < NUM_BUF_SETS; ++h)
-			for (i = 0; i < 3; ++i)
-				pipe->winsys->buffer_destroy(pipe->winsys, mc->vertex_bufs[h][i].buffer);
+	for (i = 0; i < 3; ++i)
+		pipe->winsys->buffer_destroy(pipe->winsys, mc->vertex_bufs.all[i].buffer);
 
 	/* Textures 3 & 4 are not created directly, no need to release them here */
-	for (i = 0; i < NUM_BUF_SETS; ++i)
-	{
-		pipe_texture_release(&mc->textures[i][0]);
-		pipe_texture_release(&mc->textures[i][1]);
-		pipe_texture_release(&mc->textures[i][2]);
-	}
+	for (i = 0; i < 3; ++i)
+		pipe_texture_release(&mc->textures.all[i]);
 
 	pipe->delete_vs_state(pipe, mc->i_vs);
 	pipe->delete_fs_state(pipe, mc->i_fs);
@@ -882,42 +883,39 @@ static int vlCreateDataBufs
 {
 	const unsigned int	mbw = align(mc->picture_width, VL_MACROBLOCK_WIDTH) / VL_MACROBLOCK_WIDTH;
 	const unsigned int	mbh = align(mc->picture_height, VL_MACROBLOCK_HEIGHT) / VL_MACROBLOCK_HEIGHT;
-	const unsigned int	num_mb_per_frame = mbw * mbh;
 
 	struct pipe_context	*pipe;
-	unsigned int		h, i;
+	unsigned int		i;
 
 	assert(mc);
 
 	pipe = mc->pipe;
+	mc->macroblocks_per_picture = mbw * mbh;
 
 	/* Create our vertex buffers */
-	for (h = 0; h < NUM_BUF_SETS; ++h)
+	mc->vertex_bufs.ycbcr.pitch = sizeof(struct vlVertex2f) * 4;
+	mc->vertex_bufs.ycbcr.max_index = 24 * mc->macroblocks_per_picture - 1;
+	mc->vertex_bufs.ycbcr.buffer_offset = 0;
+	mc->vertex_bufs.ycbcr.buffer = pipe->winsys->buffer_create
+	(
+		pipe->winsys,
+		DEFAULT_BUF_ALIGNMENT,
+		PIPE_BUFFER_USAGE_VERTEX,
+		sizeof(struct vlVertex2f) * 4 * 24 * mc->macroblocks_per_picture
+	);
+
+	for (i = 1; i < 3; ++i)
 	{
-		mc->vertex_bufs[h][0].pitch = sizeof(struct vlVertex2f) * 4;
-		mc->vertex_bufs[h][0].max_index = 24 * num_mb_per_frame - 1;
-		mc->vertex_bufs[h][0].buffer_offset = 0;
-		mc->vertex_bufs[h][0].buffer = pipe->winsys->buffer_create
+		mc->vertex_bufs.all[i].pitch = sizeof(struct vlVertex2f) * 2;
+		mc->vertex_bufs.all[i].max_index = 24 * mc->macroblocks_per_picture - 1;
+		mc->vertex_bufs.all[i].buffer_offset = 0;
+		mc->vertex_bufs.all[i].buffer = pipe->winsys->buffer_create
 		(
 			pipe->winsys,
-			1,
+			DEFAULT_BUF_ALIGNMENT,
 			PIPE_BUFFER_USAGE_VERTEX,
-			sizeof(struct vlVertex2f) * 4 * 24 * num_mb_per_frame
+			sizeof(struct vlVertex2f) * 2 * 24 * mc->macroblocks_per_picture
 		);
-
-		for (i = 1; i < 3; ++i)
-		{
-			mc->vertex_bufs[h][i].pitch = sizeof(struct vlVertex2f) * 2;
-			mc->vertex_bufs[h][i].max_index = 24 * num_mb_per_frame - 1;
-			mc->vertex_bufs[h][i].buffer_offset = 0;
-			mc->vertex_bufs[h][i].buffer = pipe->winsys->buffer_create
-			(
-				pipe->winsys,
-				1,
-				PIPE_BUFFER_USAGE_VERTEX,
-				sizeof(struct vlVertex2f) * 2 * 24 * num_mb_per_frame
-			);
-		}
 	}
 
 	/* Position element */
@@ -973,7 +971,7 @@ static int vlCreateDataBufs
 	mc->vs_const_buf.buffer = pipe->winsys->buffer_create
 	(
 		pipe->winsys,
-		1,
+		DEFAULT_BUF_ALIGNMENT,
 		PIPE_BUFFER_USAGE_CONSTANT,
 		mc->vs_const_buf.size
 	);
@@ -982,7 +980,7 @@ static int vlCreateDataBufs
 	mc->fs_const_buf.buffer = pipe->winsys->buffer_create
 	(
 		pipe->winsys,
-		1,
+		DEFAULT_BUF_ALIGNMENT,
 		PIPE_BUFFER_USAGE_CONSTANT,
 		mc->fs_const_buf.size
 	);
@@ -996,7 +994,7 @@ static int vlCreateDataBufs
 
 	pipe->winsys->buffer_unmap(pipe->winsys, mc->fs_const_buf.buffer);
 
-	mc->macroblocks = malloc(sizeof(struct vlMpeg2MacroBlock) * num_mb_per_frame);
+	mc->macroblocks = malloc(sizeof(struct vlMpeg2MacroBlock) * mc->macroblocks_per_picture);
 
 	return 0;
 }
@@ -1015,6 +1013,13 @@ static int vlInit
 	assert(mc);
 
 	pipe = mc->pipe;
+
+	mc->buffered_surface = NULL;
+	mc->past_surface = NULL;
+	mc->future_surface = NULL;
+	for (i = 0; i < 3; ++i)
+		mc->zero_block[i].x = -1.0f;
+	mc->num_macroblocks = 0;
 
 	/* For MC we render to textures, which are rounded up to nearest POT */
 	mc->viewport.scale[0] = vlRoundUpPOT(mc->picture_width);
@@ -1057,7 +1062,7 @@ static int vlInit
 		/*sampler.max_lod = ;*/
 		/*sampler.border_color[i] = ;*/
 		/*sampler.max_anisotropy = ;*/
-		mc->samplers[i] = pipe->create_sampler_state(pipe, &sampler);
+		mc->samplers.all[i] = pipe->create_sampler_state(pipe, &sampler);
 	}
 
 	memset(&template, 0, sizeof(struct pipe_texture));
@@ -1071,8 +1076,7 @@ static int vlInit
 	pf_get_block(template.format, &template.block);
 	template.tex_usage = PIPE_TEXTURE_USAGE_SAMPLER | PIPE_TEXTURE_USAGE_DYNAMIC;
 
-	for (i = 0; i < NUM_BUF_SETS; ++i)
-		mc->textures[i][0] = pipe->screen->texture_create(pipe->screen, &template);
+	mc->textures.y = pipe->screen->texture_create(pipe->screen, &template);
 
 	if (mc->picture_format == vlFormatYCbCr420)
 	{
@@ -1082,13 +1086,10 @@ static int vlInit
 	else if (mc->picture_format == vlFormatYCbCr422)
 		template.height[0] = vlRoundUpPOT(mc->picture_height / 2);
 
-	for (i = 0; i < NUM_BUF_SETS; ++i)
-	{
-		mc->textures[i][1] = pipe->screen->texture_create(pipe->screen, &template);
-		mc->textures[i][2] = pipe->screen->texture_create(pipe->screen, &template);
-	}
+	mc->textures.cb = pipe->screen->texture_create(pipe->screen, &template);
+	mc->textures.cr = pipe->screen->texture_create(pipe->screen, &template);
 
-	/* textures[3] & textures[4] are assigned from vlSurfaces for P and B macroblocks at render time */
+	/* textures.all[3] & textures.all[4] are assigned from vlSurfaces for P and B macroblocks at render time */
 
 	vlCreateVertexShaderIMB(mc);
 	vlCreateFragmentShaderIMB(mc);
@@ -1114,8 +1115,7 @@ int vlCreateR16SNormBufferedMC
 	struct vlRender **render
 )
 {
-	struct vlR16SnormBufferedMC	*mc;
-	unsigned int			i;
+	struct vlR16SnormBufferedMC *mc;
 
 	assert(pipe);
 	assert(render);
@@ -1130,14 +1130,6 @@ int vlCreateR16SNormBufferedMC
 	mc->pipe = pipe;
 	mc->picture_width = picture_width;
 	mc->picture_height = picture_height;
-
-	mc->cur_buf = 0;
-	mc->buffered_surface = NULL;
-	mc->past_surface = NULL;
-	mc->future_surface = NULL;
-	for (i = 0; i < 3; ++i)
-		mc->zero_block[i].x = -1.0f;
-	mc->num_macroblocks = 0;
 
 	vlInit(mc);
 
