@@ -12,6 +12,15 @@ if env['platform'] == 'windows':
 	])
 
 	env.Append(CPPDEFINES = [
+		'__GL_EXPORTS',
+		'BUILD_GL32',
+		'_GNU_H_WINDOWS32_DEFINES',
+	])
+
+	env.Append(LIBS = [
+		'gdi32',
+		'user32',ss
+		'kernel32',
 	])
 
 	sources = [
@@ -22,11 +31,6 @@ if env['platform'] == 'windows':
 	drivers = [
 		softpipe,
 	]
-
-	env.Append(LIBS = [
-		'gdi32', 
-		'user32'
-	])
 
 	env.SharedLibrary(
 		target ='opengl32',
