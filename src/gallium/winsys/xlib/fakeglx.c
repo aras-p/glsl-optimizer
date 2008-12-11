@@ -419,7 +419,7 @@ static XMesaVisual
 create_glx_visual( Display *dpy, XVisualInfo *visinfo )
 {
    int vislevel;
-   GLint zBits = 24; /*default_depth_bits();*/
+   GLint zBits = default_depth_bits();
    GLint accBits = default_accum_bits();
    GLboolean alphaFlag = default_alpha_bits() > 0;
 
@@ -1289,7 +1289,7 @@ choose_visual( Display *dpy, int screen, const int *list, GLboolean fbConfig )
          double_flag = GL_TRUE;
          if (vis->depth > 8)
             rgb_flag = GL_TRUE;
-         depth_size = 24; /*default_depth_bits();*/
+         depth_size = default_depth_bits();
          stencil_size = STENCIL_BITS;
          /* XXX accum??? */
       }

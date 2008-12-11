@@ -72,6 +72,7 @@ void draw_enable_line_stipple(struct draw_context *draw, boolean enable);
 
 void draw_enable_point_sprites(struct draw_context *draw, boolean enable);
 
+void draw_set_mrd(struct draw_context *draw, double mrd);
 
 boolean
 draw_install_aaline_stage(struct draw_context *draw, struct pipe_context *pipe);
@@ -129,11 +130,11 @@ draw_set_mapped_element_buffer_range( struct draw_context *draw,
                                       unsigned eltSize,
                                       unsigned min_index,
                                       unsigned max_index,
-                                      void *elements );
+                                      const void *elements );
 
 void draw_set_mapped_element_buffer( struct draw_context *draw,
                                      unsigned eltSize, 
-                                     void *elements );
+                                     const void *elements );
 
 void draw_set_mapped_vertex_buffer(struct draw_context *draw,
                                    unsigned attr, const void *buffer);

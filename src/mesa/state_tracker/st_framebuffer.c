@@ -286,15 +286,17 @@ st_notify_swapbuffers_complete(struct st_framebuffer *stfb)
 
    if (ctx && ctx->DrawBuffer == &stfb->Base) {
       struct st_renderbuffer *strb;
-      int i;
 
-      for (i = 0; i < BUFFER_COUNT; i++) {
-	 if (stfb->Base.Attachment[i].Renderbuffer) {
-	    strb = st_renderbuffer(stfb->Base.Attachment[i].Renderbuffer);
-            if (strb->surface)
-               strb->surface->status = PIPE_SURFACE_STATUS_UNDEFINED;
-	 }
-      }
+      /* Mark back color buffers as undefined */
+      strb = st_renderbuffer(stfb->Base.Attachment[BUFFER_BACK_LEFT].
+                             Renderbuffer);
+      if (strb && strb->surface)
+         strb->surface->status = PIPE_SURFACE_STATUS_UNDEFINED;
+
+      strb = st_renderbuffer(stfb->Base.Attachment[BUFFER_BACK_RIGHT].
+                             Renderbuffer);
+      if (strb && strb->surface)
+         strb->surface->status = PIPE_SURFACE_STATUS_UNDEFINED;
    }
 }
 

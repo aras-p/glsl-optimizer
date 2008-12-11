@@ -77,6 +77,7 @@ SOURCES = \
 	quadstrip-flat.c \
 	quadstrip.c \
 	tri-alpha.c \
+	tri-array-interleaved.c \
 	tri-blend-color.c \
 	tri-blend-max.c \
 	tri-blend-min.c \
@@ -102,6 +103,7 @@ SOURCES = \
 	tri-repeat.c \
 	tri-scissor-tri.c \
 	tri-stencil.c \
+	tri-stipple.c \
 	tri-tex.c \
 	tri-tex-3d.c \
 	tri-tri.c \

@@ -172,6 +172,8 @@ struct draw_context
 
    boolean force_passthrough; /**< never clip or shade */
 
+   double mrd;  /**< minimum resolvable depth value, for polygon offset */
+
    /* pipe state that we need: */
    const struct pipe_rasterizer_state *rasterizer;
    struct pipe_viewport_state viewport;

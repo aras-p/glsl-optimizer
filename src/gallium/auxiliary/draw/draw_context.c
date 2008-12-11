@@ -103,6 +103,18 @@ void draw_flush( struct draw_context *draw )
 }
 
 
+/**
+ * Specify the Minimum Resolvable Depth factor for polygon offset.
+ * This factor potentially depends on the number of Z buffer bits,
+ * the rasterization algorithm and the arithmetic performed on Z
+ * values between vertex shading and rasterization.  It will vary
+ * from one driver to another.
+ */
+void draw_set_mrd(struct draw_context *draw, double mrd)
+{
+   draw->mrd = mrd;
+}
+
 
 /**
  * Register new primitive rasterization/rendering state.
@@ -377,7 +389,7 @@ draw_set_mapped_element_buffer_range( struct draw_context *draw,
                                       unsigned eltSize,
                                       unsigned min_index,
                                       unsigned max_index,
-                                      void *elements )
+                                      const void *elements )
 {
    draw->pt.user.elts = elements;
    draw->pt.user.eltSize = eltSize;
@@ -389,7 +401,7 @@ draw_set_mapped_element_buffer_range( struct draw_context *draw,
 void
 draw_set_mapped_element_buffer( struct draw_context *draw,
                                 unsigned eltSize,
-                                void *elements )
+                                const void *elements )
 {
    draw->pt.user.elts = elements;
    draw->pt.user.eltSize = eltSize;

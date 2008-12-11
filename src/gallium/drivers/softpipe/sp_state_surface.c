@@ -101,6 +101,26 @@ softpipe_set_framebuffer_state(struct pipe_context *pipe,
    }
 #endif
 
+   /* Tell draw module how deep the Z/depth buffer is */
+   {
+      int depth_bits;
+      double mrd;
+      if (sp->framebuffer.zsbuf) {
+         depth_bits = pf_get_component_bits(sp->framebuffer.zsbuf->format,
+                                            PIPE_FORMAT_COMP_Z);
+      }
+      else {
+         depth_bits = 0;
+      }
+      if (depth_bits > 16) {
+         mrd = 0.0000001;
+      }
+      else {
+         mrd = 0.00002;
+      }
+      draw_set_mrd(sp->draw, mrd);
+   }
+
    sp->framebuffer.width = fb->width;
    sp->framebuffer.height = fb->height;
 

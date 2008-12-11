@@ -122,9 +122,8 @@ static void offset_first_tri( struct draw_stage *stage,
 			      struct prim_header *header )
 {
    struct offset_stage *offset = offset_stage(stage);
-   float mrd = 1.0f / 65535.0f; /* XXX this depends on depthbuffer bits! */
 
-   offset->units = stage->draw->rasterizer->offset_units * mrd;
+   offset->units = stage->draw->rasterizer->offset_units * stage->draw->mrd;
    offset->scale = stage->draw->rasterizer->offset_scale;
 
    stage->tri = offset_tri;
