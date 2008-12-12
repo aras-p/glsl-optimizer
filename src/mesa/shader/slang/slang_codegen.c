@@ -67,11 +67,11 @@ _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper);
  * Returns GL_FALSE otherwise.
  */
 static GLboolean
-_slang_typeof_operation(const struct slang_assemble_ctx_ * A,
+typeof_operation(const struct slang_assemble_ctx_ * A,
                         slang_operation * op,
                         slang_typeinfo * ti)
 {
-   return _slang_typeof_operation_(op, &A->space, ti, A->atoms, A->log);
+   return _slang_typeof_operation(op, &A->space, ti, A->atoms, A->log);
 }
 
 
@@ -2064,7 +2064,7 @@ _slang_gen_function_call_name(slang_assemble_ctx *A, const char *name,
       slang_typeinfo t0;
 
       slang_typeinfo_construct(&t0);
-      _slang_typeof_operation(A, dest, &t0);
+      typeof_operation(A, dest, &t0);
 
       if (!slang_type_specifier_equal(&t0.spec, &fun->header.type.specifier)) {
          slang_info_log_error(A->log,
@@ -2158,7 +2158,7 @@ _slang_is_scalar_or_boolean(slang_assemble_ctx *A, slang_operation *oper)
    GLint size;
 
    slang_typeinfo_construct(&type);
-   _slang_typeof_operation(A, oper, &type);
+   typeof_operation(A, oper, &type);
    size = _slang_sizeof_type_specifier(&type.spec);
    slang_typeinfo_destruct(&type);
    return size == 1;
@@ -2175,7 +2175,7 @@ _slang_is_boolean(slang_assemble_ctx *A, slang_operation *oper)
    GLboolean isBool;
 
    slang_typeinfo_construct(&type);
-   _slang_typeof_operation(A, oper, &type);
+   typeof_operation(A, oper, &type);
    isBool = (type.spec.type == SLANG_SPEC_BOOL);
    slang_typeinfo_destruct(&type);
    return isBool;
@@ -2656,7 +2656,7 @@ _slang_gen_select(slang_assemble_ctx *A, slang_operation *oper)
 
    /* type of children[0] must be boolean */
    slang_typeinfo_construct(&type0);
-   _slang_typeof_operation(A, &oper->children[0], &type0);
+   typeof_operation(A, &oper->children[0], &type0);
    isBool = (type0.spec.type == SLANG_SPEC_BOOL);
    slang_typeinfo_destruct(&type0);
    if (!isBool) {
@@ -2666,8 +2666,8 @@ _slang_gen_select(slang_assemble_ctx *A, slang_operation *oper)
 
    slang_typeinfo_construct(&type1);
    slang_typeinfo_construct(&type2);
-   _slang_typeof_operation(A, &oper->children[1], &type1);
-   _slang_typeof_operation(A, &oper->children[2], &type2);
+   typeof_operation(A, &oper->children[1], &type1);
+   typeof_operation(A, &oper->children[2], &type2);
    isEqual = slang_type_specifier_equal(&type1.spec, &type2.spec);
    slang_typeinfo_destruct(&type1);
    slang_typeinfo_destruct(&type2);
@@ -2881,10 +2881,10 @@ _slang_assignment_compatible(slang_assemble_ctx *A,
    }
 
    slang_typeinfo_construct(&t0);
-   _slang_typeof_operation(A, op0, &t0);
+   typeof_operation(A, op0, &t0);
 
    slang_typeinfo_construct(&t1);
-   _slang_typeof_operation(A, op1, &t1);
+   typeof_operation(A, op1, &t1);
 
    sz0 = _slang_sizeof_type_specifier(&t0.spec);
    sz1 = _slang_sizeof_type_specifier(&t1.spec);
@@ -3170,7 +3170,7 @@ _slang_gen_struct_field(slang_assemble_ctx * A, slang_operation *oper)
 
    /* type of struct */
    slang_typeinfo_construct(&ti);
-   _slang_typeof_operation(A, &oper->children[0], &ti);
+   typeof_operation(A, &oper->children[0], &ti);
 
    if (_slang_type_is_vector(ti.spec.type)) {
       /* the field should be a swizzle */
@@ -3222,7 +3222,7 @@ _slang_gen_struct_field(slang_assemble_ctx * A, slang_operation *oper)
 
       /* type of field */
       slang_typeinfo_construct(&field_ti);
-      _slang_typeof_operation(A, oper, &field_ti);
+      typeof_operation(A, oper, &field_ti);
 
       fieldSize = _slang_sizeof_type_specifier(&field_ti.spec);
       if (fieldSize > 0)
@@ -3273,7 +3273,7 @@ _slang_gen_array_element(slang_assemble_ctx * A, slang_operation *oper)
 
    /* get array's type info */
    slang_typeinfo_construct(&array_ti);
-   _slang_typeof_operation(A, &oper->children[0], &array_ti);
+   typeof_operation(A, &oper->children[0], &array_ti);
 
    if (_slang_type_is_vector(array_ti.spec.type)) {
       /* indexing a simple vector type: "vec4 v; v[0]=p;" */
@@ -3309,7 +3309,7 @@ _slang_gen_array_element(slang_assemble_ctx * A, slang_operation *oper)
 
       /* size of array element */
       slang_typeinfo_construct(&elem_ti);
-      _slang_typeof_operation(A, oper, &elem_ti);
+      typeof_operation(A, oper, &elem_ti);
       elemSize = _slang_sizeof_type_specifier(&elem_ti.spec);
 
       if (_slang_type_is_matrix(array_ti.spec.type))
@@ -3374,10 +3374,10 @@ _slang_gen_compare(slang_assemble_ctx *A, slang_operation *oper,
    slang_ir_node *n;
    
    slang_typeinfo_construct(&t0);
-   _slang_typeof_operation(A, &oper->children[0], &t0);
+   typeof_operation(A, &oper->children[0], &t0);
 
    slang_typeinfo_construct(&t1);
-   _slang_typeof_operation(A, &oper->children[0], &t1);
+   typeof_operation(A, &oper->children[0], &t1);
 
    if (t0.spec.type == SLANG_SPEC_ARRAY ||
        t1.spec.type == SLANG_SPEC_ARRAY) {

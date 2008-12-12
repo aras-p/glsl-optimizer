@@ -210,7 +210,7 @@ _slang_function_locate(const slang_function_scope * funcs, slang_atom a_name,
    for (i = 0; i < num_args; i++) {
       if (!slang_typeinfo_construct(&arg_ti[i]))
          return NULL;
-      if (!_slang_typeof_operation_(&args[i], space, &arg_ti[i], atoms, log)) {
+      if (!_slang_typeof_operation(&args[i], space, &arg_ti[i], atoms, log)) {
          return NULL;
       }
    }
