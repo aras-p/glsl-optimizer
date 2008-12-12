@@ -91,7 +91,7 @@ slang_replace_scope(slang_operation *oper,
    if (oper->type == SLANG_OPER_VARIABLE_DECL) {
       /* search/replace in the initializer */
       slang_variable *var;
-      var = _slang_locate_variable(oper->locals, oper->a_id, GL_TRUE);
+      var = _slang_variable_locate(oper->locals, oper->a_id, GL_TRUE);
       if (var && var->initializer) {
          slang_replace_scope(var->initializer, oldScope, newScope);
       }

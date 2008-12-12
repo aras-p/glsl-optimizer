@@ -232,7 +232,7 @@ slang_variable_copy(slang_variable * x, const slang_variable * y)
  * \param all  if true, search parent scopes too.
  */
 slang_variable *
-_slang_locate_variable(const slang_variable_scope * scope,
+_slang_variable_locate(const slang_variable_scope * scope,
                        const slang_atom a_name, GLboolean all)
 {
    while (scope) {

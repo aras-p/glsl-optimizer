@@ -791,7 +791,7 @@ static void
 slang_resolve_variable(slang_operation *oper)
 {
    if (oper->type == SLANG_OPER_IDENTIFIER && !oper->var) {
-      oper->var = _slang_locate_variable(oper->locals, oper->a_id, GL_TRUE);
+      oper->var = _slang_variable_locate(oper->locals, oper->a_id, GL_TRUE);
    }
 }
 
@@ -807,7 +807,7 @@ slang_substitute(slang_assemble_ctx *A, slang_operation *oper,
    switch (oper->type) {
    case SLANG_OPER_VARIABLE_DECL:
       {
-         slang_variable *v = _slang_locate_variable(oper->locals,
+         slang_variable *v = _slang_variable_locate(oper->locals,
                                                     oper->a_id, GL_TRUE);
          assert(v);
          if (v->initializer && oper->num_children == 0) {
@@ -829,7 +829,7 @@ slang_substitute(slang_assemble_ctx *A, slang_operation *oper,
          slang_atom id = oper->a_id;
          slang_variable *v;
 	 GLuint i;
-         v = _slang_locate_variable(oper->locals, id, GL_TRUE);
+         v = _slang_variable_locate(oper->locals, id, GL_TRUE);
 	 if (!v) {
             _mesa_problem(NULL, "var %s not found!\n", (char *) oper->a_id);
             return;
@@ -1771,7 +1771,7 @@ static slang_function *
 _slang_make_struct_constructor(slang_assemble_ctx *A, slang_struct *str)
 {
    const GLint numFields = str->fields->num_variables;
-   slang_function *fun = slang_new_function(SLANG_FUNC_CONSTRUCTOR);
+   slang_function *fun = slang_function_new(SLANG_FUNC_CONSTRUCTOR);
 
    /* function header (name, return type) */
    fun->header.a_name = str->a_name;
@@ -1930,7 +1930,7 @@ _slang_locate_struct_constructor(slang_assemble_ctx *A, const char *name)
 static slang_function *
 _slang_make_array_constructor(slang_assemble_ctx *A, slang_operation *oper)
 {
-   slang_function *fun = slang_new_function(SLANG_FUNC_CONSTRUCTOR);
+   slang_function *fun = slang_function_new(SLANG_FUNC_CONSTRUCTOR);
    if (fun) {
       slang_type_specifier_type baseType =
          slang_type_specifier_type_from_string((char *) oper->a_id);
@@ -1992,7 +1992,7 @@ _slang_gen_function_call_name(slang_assemble_ctx *A, const char *name,
    }
    else {
       /* Try to find function by name and exact argument type matching */
-      fun = _slang_locate_function(A->space.funcs, atom, params, param_count,
+      fun = _slang_function_locate(A->space.funcs, atom, params, param_count,
                                    &A->space, A->atoms, A->log, &error);
    }
 
@@ -2108,7 +2108,7 @@ _slang_gen_method_call(slang_assemble_ctx *A, slang_operation *oper)
    }
 
    /* lookup the object/variable */
-   var = _slang_locate_variable(oper->locals, oper->a_obj, GL_TRUE);
+   var = _slang_variable_locate(oper->locals, oper->a_obj, GL_TRUE);
    if (!var || var->type.specifier.type != SLANG_SPEC_ARRAY) {
       slang_info_log_error(A->log,
                            "Undefined object '%s'", (char *) oper->a_obj);
@@ -2804,8 +2804,8 @@ _slang_gen_return(slang_assemble_ctx * A, slang_operation *oper)
 
 #if 1 /* DEBUG */
       {
-         slang_variable *v
-            = _slang_locate_variable(oper->locals, a_retVal, GL_TRUE);
+         slang_variable *v =
+            _slang_variable_locate(oper->locals, a_retVal, GL_TRUE);
          if (!v) {
             /* trying to return a value in a void-valued function */
             return NULL;
@@ -2846,7 +2846,7 @@ _slang_is_constant_expr(const slang_operation *oper)
 
    switch (oper->type) {
    case SLANG_OPER_IDENTIFIER:
-      var = _slang_locate_variable(oper->locals, oper->a_id, GL_TRUE);
+      var = _slang_variable_locate(oper->locals, oper->a_id, GL_TRUE);
       if (var && var->type.qualifier == SLANG_QUAL_CONST)
          return GL_TRUE;
       return GL_FALSE;
@@ -2936,7 +2936,7 @@ _slang_gen_declaration(slang_assemble_ctx *A, slang_operation *oper)
    assert(oper->num_children <= 1);
 
    /* lookup the variable by name */
-   var = _slang_locate_variable(oper->locals, oper->a_id, GL_TRUE);
+   var = _slang_variable_locate(oper->locals, oper->a_id, GL_TRUE);
    if (!var)
       return NULL;  /* "shouldn't happen" */
 
@@ -3003,7 +3003,7 @@ _slang_gen_variable(slang_assemble_ctx * A, slang_operation *oper)
     * use it.  Otherwise, use the oper's var id.
     */
    slang_atom name = oper->var ? oper->var->a_name : oper->a_id;
-   slang_variable *var = _slang_locate_variable(oper->locals, name, GL_TRUE);
+   slang_variable *var = _slang_variable_locate(oper->locals, name, GL_TRUE);
    slang_ir_node *n = new_var(A, var);
    if (!n) {
       slang_info_log_error(A->log, "undefined variable '%s'", (char *) name);
@@ -3073,7 +3073,7 @@ _slang_gen_assignment(slang_assemble_ctx * A, slang_operation *oper)
    if (oper->children[0].type == SLANG_OPER_IDENTIFIER) {
       /* Check that var is writeable */
       slang_variable *var
-         = _slang_locate_variable(oper->children[0].locals,
+         = _slang_variable_locate(oper->children[0].locals,
                                   oper->children[0].a_id, GL_TRUE);
       if (!var) {
          slang_info_log_error(A->log, "undefined variable '%s'",
