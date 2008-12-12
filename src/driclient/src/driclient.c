@@ -111,7 +111,22 @@ free_screen:
 
 int driDestroyScreen(dri_screen_t *dri_screen)
 {
+	Drawable	draw;
+	dri_drawable_t	*dri_draw;
+
 	assert(dri_screen);
+
+	if (drmHashFirst(dri_screen->drawable_hash, &draw, (void**)&dri_draw))
+	{
+		dri_draw->refcount = 1;
+		driDestroyDrawable(dri_draw);
+
+		while (drmHashNext(dri_screen->drawable_hash, &draw, (void**)&dri_draw))
+		{
+			dri_draw->refcount = 1;
+			driDestroyDrawable(dri_draw);
+		}
+	}
 
 	drmHashDestroy(dri_screen->drawable_hash);
 	drmUnmap(dri_screen->sarea, SAREA_MAX);
