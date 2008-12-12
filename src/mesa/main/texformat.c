@@ -3,6 +3,7 @@
  * Version:  6.5.1
  *
  * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
+ * Copyright (c) 2008 VMware, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -331,6 +332,30 @@ const struct gl_texture_format _mesa_texformat_srgba8 = {
    fetch_texel_2d_srgba8,		/* FetchTexel2Df */
    fetch_texel_3d_srgba8,		/* FetchTexel3Df */
    store_texel_srgba8			/* StoreTexel */
+};
+
+const struct gl_texture_format _mesa_texformat_sargb8 = {
+   MESA_FORMAT_SARGB8,			/* MesaFormat */
+   GL_RGBA,				/* BaseFormat */
+   GL_UNSIGNED_NORMALIZED_ARB,		/* DataType */
+   8,					/* RedBits */
+   8,					/* GreenBits */
+   8,					/* BlueBits */
+   8,					/* AlphaBits */
+   0,					/* LuminanceBits */
+   0,					/* IntensityBits */
+   0,					/* IndexBits */
+   0,					/* DepthBits */
+   0,					/* StencilBits */
+   4,					/* TexelBytes */
+   _mesa_texstore_sargb8,		/* StoreTexImageFunc */
+   NULL,				/* FetchTexel1D */
+   NULL,				/* FetchTexel2D */
+   NULL,				/* FetchTexel3D */
+   fetch_texel_1d_sargb8,		/* FetchTexel1Df */
+   fetch_texel_2d_sargb8,		/* FetchTexel2Df */
+   fetch_texel_3d_sargb8,		/* FetchTexel3Df */
+   store_texel_sargb8			/* StoreTexel */
 };
 
 const struct gl_texture_format _mesa_texformat_sl8 = {
@@ -1578,21 +1603,40 @@ _mesa_choose_tex_format( GLcontext *ctx, GLint internalFormat,
          case GL_SLUMINANCE_ALPHA_EXT:
          case GL_SLUMINANCE8_ALPHA8_EXT:
             return &_mesa_texformat_sla8;
-         /* NOTE: not supporting any compression of sRGB at this time */
-         case GL_COMPRESSED_SRGB_EXT:
-            return &_mesa_texformat_srgb8;
-         case GL_COMPRESSED_SRGB_ALPHA_EXT:
-            return &_mesa_texformat_srgba8;
          case GL_COMPRESSED_SLUMINANCE_EXT:
             return &_mesa_texformat_sl8;
          case GL_COMPRESSED_SLUMINANCE_ALPHA_EXT:
             return &_mesa_texformat_sla8;
-         case GL_COMPRESSED_SRGB_S3TC_DXT1_EXT:
+         case GL_COMPRESSED_SRGB_EXT:
+#if FEATURE_texture_s3tc
+            if (ctx->Extensions.EXT_texture_compression_s3tc)
+               return &_mesa_texformat_srgb_dxt1;
+#endif
             return &_mesa_texformat_srgb8;
-         case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT:
-         case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT:
-         case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT:
+         case GL_COMPRESSED_SRGB_ALPHA_EXT:
+#if FEATURE_texture_s3tc
+            if (ctx->Extensions.EXT_texture_compression_s3tc)
+               return &_mesa_texformat_srgba_dxt3; /* Not srgba_dxt1, see spec */
+#endif
             return &_mesa_texformat_srgba8;
+#if FEATURE_texture_s3tc
+         case GL_COMPRESSED_SRGB_S3TC_DXT1_EXT:
+            if (ctx->Extensions.EXT_texture_compression_s3tc)
+               return &_mesa_texformat_srgb_dxt1;
+            break;
+         case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT:
+            if (ctx->Extensions.EXT_texture_compression_s3tc)
+               return &_mesa_texformat_srgba_dxt1;
+            break;
+         case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT:
+            if (ctx->Extensions.EXT_texture_compression_s3tc)
+               return &_mesa_texformat_srgba_dxt3;
+            break;
+         case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT:
+            if (ctx->Extensions.EXT_texture_compression_s3tc)
+               return &_mesa_texformat_srgba_dxt5;
+            break;
+#endif
          default:
             ; /* fallthrough */
       }
@@ -1694,6 +1738,7 @@ _mesa_format_to_type_and_comps(const struct gl_texture_format *format,
       *comps = 3;
       return;
    case MESA_FORMAT_SRGBA8:
+   case MESA_FORMAT_SARGB8:
       *datatype = GL_UNSIGNED_BYTE;
       *comps = 4;
       return;
@@ -1716,6 +1761,12 @@ _mesa_format_to_type_and_comps(const struct gl_texture_format *format,
    case MESA_FORMAT_RGBA_DXT1:
    case MESA_FORMAT_RGBA_DXT3:
    case MESA_FORMAT_RGBA_DXT5:
+#if FEATURE_EXT_texture_sRGB
+   case MESA_FORMAT_SRGB_DXT1:
+   case MESA_FORMAT_SRGBA_DXT1:
+   case MESA_FORMAT_SRGBA_DXT3:
+   case MESA_FORMAT_SRGBA_DXT5:
+#endif
       /* XXX generate error instead? */
       *datatype = GL_UNSIGNED_BYTE;
       *comps = 0;

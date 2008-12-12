@@ -3,6 +3,7 @@
  * Version:  7.3
  *
  * Copyright (C) 1999-2008  Brian Paul   All Rights Reserved.
+ * Copyright (c) 2008 VMware, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -2662,7 +2663,6 @@ _mesa_texstore_rgba_float16(TEXSTORE_PARAMS)
 GLboolean
 _mesa_texstore_srgb8(TEXSTORE_PARAMS)
 {
-   const GLboolean littleEndian = _mesa_little_endian();
    const struct gl_texture_format *newDstFormat;
    StoreTexImageFunc store;
    GLboolean k;
@@ -2670,14 +2670,8 @@ _mesa_texstore_srgb8(TEXSTORE_PARAMS)
    ASSERT(dstFormat == &_mesa_texformat_srgb8);
 
    /* reuse normal rgb texstore code */
-   if (littleEndian) {
-      newDstFormat = &_mesa_texformat_bgr888;
-      store = _mesa_texstore_bgr888;
-   }
-   else {
-      newDstFormat = &_mesa_texformat_rgb888;
-      store = _mesa_texstore_rgb888;
-   }
+   newDstFormat = &_mesa_texformat_rgb888;
+   store = _mesa_texstore_rgb888;
 
    k = store(ctx, dims, baseInternalFormat,
              newDstFormat, dstAddr,
@@ -2693,19 +2687,37 @@ _mesa_texstore_srgb8(TEXSTORE_PARAMS)
 GLboolean
 _mesa_texstore_srgba8(TEXSTORE_PARAMS)
 {
-   const GLboolean littleEndian = _mesa_little_endian();
    const struct gl_texture_format *newDstFormat;
    GLboolean k;
 
    ASSERT(dstFormat == &_mesa_texformat_srgba8);
 
    /* reuse normal rgba texstore code */
-   if (littleEndian)
-      newDstFormat = &_mesa_texformat_rgba8888_rev;
-   else
-      newDstFormat = &_mesa_texformat_rgba8888;
+   newDstFormat = &_mesa_texformat_rgba8888;
 
    k = _mesa_texstore_rgba8888(ctx, dims, baseInternalFormat,
+                               newDstFormat, dstAddr,
+                               dstXoffset, dstYoffset, dstZoffset,
+                               dstRowStride, dstImageOffsets,
+                               srcWidth, srcHeight, srcDepth,
+                               srcFormat, srcType,
+                               srcAddr, srcPacking);
+   return k;
+}
+
+
+GLboolean
+_mesa_texstore_sargb8(TEXSTORE_PARAMS)
+{
+   const struct gl_texture_format *newDstFormat;
+   GLboolean k;
+
+   ASSERT(dstFormat == &_mesa_texformat_sargb8);
+
+   /* reuse normal rgba texstore code */
+   newDstFormat = &_mesa_texformat_argb8888;
+
+   k = _mesa_texstore_argb8888(ctx, dims, baseInternalFormat,
                                newDstFormat, dstAddr,
                                dstXoffset, dstYoffset, dstZoffset,
                                dstRowStride, dstImageOffsets,
@@ -2741,17 +2753,13 @@ _mesa_texstore_sl8(TEXSTORE_PARAMS)
 GLboolean
 _mesa_texstore_sla8(TEXSTORE_PARAMS)
 {
-   const GLboolean littleEndian = _mesa_little_endian();
    const struct gl_texture_format *newDstFormat;
    GLboolean k;
 
    ASSERT(dstFormat == &_mesa_texformat_sla8);
 
    /* reuse normal luminance/alpha texstore code */
-   if (littleEndian)
-      newDstFormat = &_mesa_texformat_al88;
-   else
-      newDstFormat = &_mesa_texformat_al88_rev;
+   newDstFormat = &_mesa_texformat_al88;
 
    k = _mesa_texstore_al88(ctx, dims, baseInternalFormat,
                            newDstFormat, dstAddr,
@@ -3581,6 +3589,7 @@ is_srgb_teximage(const struct gl_texture_image *texImage)
    switch (texImage->TexFormat->MesaFormat) {
    case MESA_FORMAT_SRGB8:
    case MESA_FORMAT_SRGBA8:
+   case MESA_FORMAT_SARGB8:
    case MESA_FORMAT_SL8:
    case MESA_FORMAT_SLA8:
       return GL_TRUE;
@@ -3713,6 +3722,10 @@ _mesa_get_teximage(GLcontext *ctx, GLenum target, GLint level,
                MEMCPY(dest,
                       (const GLubyte *) texImage->Data + row * rowstride,
                       comps * width * sizeof(GLubyte));
+               /* FIXME: isn't it necessary to still do component assigning
+                  according to format/type? */
+               /* FIXME: need to do something else for compressed srgb textures
+                         (currently will return values converted to linear) */
             }
 #endif /* FEATURE_EXT_texture_sRGB */
             else {

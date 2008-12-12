@@ -3,6 +3,7 @@
  * Version:  6.5.1
  *
  * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
+ * Copyright (c) 2008 VMware, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -84,6 +85,25 @@ _mesa_get_compressed_formats(GLcontext *ctx, GLint *formats, GLboolean all)
             if (all)
                n += 1;
          }
+#if FEATURE_EXT_texture_sRGB
+         if (ctx->Extensions.EXT_texture_sRGB) {
+            if (formats) {
+               if (all) {
+                  /* according to sRGB spec, these should not be returned
+                     via the GL_COMPRESSED_TEXTURE_FORMATS query as they
+                     aren't really general purpose */
+                  formats[n++] = GL_COMPRESSED_SRGB_S3TC_DXT1_EXT;
+                  formats[n++] = GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT;
+                  formats[n++] = GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT;
+                  formats[n++] = GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT;
+               }
+            }
+            else {
+               if (all)
+                  n += 4;
+            }
+         }
+#endif /* FEATURE_EXT_texture_sRGB */
       }
       if (ctx->Extensions.S3_s3tc) {
          if (formats) {
@@ -96,19 +116,6 @@ _mesa_get_compressed_formats(GLcontext *ctx, GLint *formats, GLboolean all)
             n += 4;
          }
       }
-#if FEATURE_EXT_texture_sRGB
-      if (ctx->Extensions.EXT_texture_sRGB) {
-         if (formats) {
-            formats[n++] = GL_COMPRESSED_SRGB_S3TC_DXT1_EXT;
-            formats[n++] = GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT;
-            formats[n++] = GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT;
-            formats[n++] = GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT;
-         }
-         else {
-            n += 4;
-         }
-      }
-#endif /* FEATURE_EXT_texture_sRGB */
    }
    return n;
 }
@@ -156,6 +163,10 @@ _mesa_compressed_texture_size( GLcontext *ctx,
 #if FEATURE_texture_s3tc
    case MESA_FORMAT_RGB_DXT1:
    case MESA_FORMAT_RGBA_DXT1:
+#if FEATURE_EXT_texture_sRGB
+   case MESA_FORMAT_SRGB_DXT1:
+   case MESA_FORMAT_SRGBA_DXT1:
+#endif
       /* round up width, height to next multiple of 4 */
       width = (width + 3) & ~3;
       height = (height + 3) & ~3;
@@ -167,6 +178,10 @@ _mesa_compressed_texture_size( GLcontext *ctx,
       return size;
    case MESA_FORMAT_RGBA_DXT3:
    case MESA_FORMAT_RGBA_DXT5:
+#if FEATURE_EXT_texture_sRGB
+   case MESA_FORMAT_SRGBA_DXT3:
+   case MESA_FORMAT_SRGBA_DXT5:
+#endif
       /* round up width, height to next multiple of 4 */
       width = (width + 3) & ~3;
       height = (height + 3) & ~3;
@@ -226,6 +241,20 @@ _mesa_compressed_texture_size_glenum(GLcontext *ctx,
    case GL_RGBA4_S3TC:
       mesaFormat = MESA_FORMAT_RGBA_DXT5;
       break;
+#if FEATURE_EXT_texture_sRGB
+   case GL_COMPRESSED_SRGB_S3TC_DXT1_EXT:
+      mesaFormat = MESA_FORMAT_SRGB_DXT1;
+      break;
+   case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT:
+      mesaFormat = MESA_FORMAT_SRGBA_DXT1;
+      break;
+   case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT:
+      mesaFormat = MESA_FORMAT_SRGBA_DXT3;
+      break;
+   case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT:
+      mesaFormat = MESA_FORMAT_SRGBA_DXT5;
+      break;
+#endif
 #endif
    default:
       return 0;
@@ -257,10 +286,18 @@ _mesa_compressed_row_stride(GLuint mesaFormat, GLsizei width)
 #if FEATURE_texture_s3tc
    case MESA_FORMAT_RGB_DXT1:
    case MESA_FORMAT_RGBA_DXT1:
+#if FEATURE_EXT_texture_sRGB
+   case MESA_FORMAT_SRGB_DXT1:
+   case MESA_FORMAT_SRGBA_DXT1:
+#endif
       stride = ((width + 3) / 4) * 8; /* 8 bytes per 4x4 tile */
       break;
    case MESA_FORMAT_RGBA_DXT3:
    case MESA_FORMAT_RGBA_DXT5:
+#if FEATURE_EXT_texture_sRGB
+   case MESA_FORMAT_SRGBA_DXT3:
+   case MESA_FORMAT_SRGBA_DXT5:
+#endif
       stride = ((width + 3) / 4) * 16; /* 16 bytes per 4x4 tile */
       break;
 #endif
@@ -309,10 +346,18 @@ _mesa_compressed_image_address(GLint col, GLint row, GLint img,
 #if FEATURE_texture_s3tc
    case MESA_FORMAT_RGB_DXT1:
    case MESA_FORMAT_RGBA_DXT1:
+#if FEATURE_EXT_texture_sRGB
+   case MESA_FORMAT_SRGB_DXT1:
+   case MESA_FORMAT_SRGBA_DXT1:
+#endif
       addr = (GLubyte *) image + 8 * (((width + 3) / 4) * (row / 4) + col / 4);
       break;
    case MESA_FORMAT_RGBA_DXT3:
    case MESA_FORMAT_RGBA_DXT5:
+#if FEATURE_EXT_texture_sRGB
+   case MESA_FORMAT_SRGBA_DXT3:
+   case MESA_FORMAT_SRGBA_DXT5:
+#endif
       addr = (GLubyte *) image + 16 * (((width + 3) / 4) * (row / 4) + col / 4);
       break;
 #endif
