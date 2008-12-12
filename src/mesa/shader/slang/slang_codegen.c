@@ -2576,6 +2576,7 @@ _slang_gen_var_decl(slang_assemble_ctx *A, slang_variable *var,
 #endif
       }
 
+      /* constant-folding, etc here */
       _slang_simplify(initializer, &A->space, A->atoms); 
 
       init = _slang_gen_operation(A, initializer);
@@ -3941,26 +3942,9 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
       slang_ir_node *n;
 
       /* IR node to declare the variable */
-      n = _slang_gen_var_decl(A, var, NULL);
+      n = _slang_gen_var_decl(A, var, var->initializer);
 
-      /* IR code for the var's initializer, if present */
-      if (var->initializer) {
-         slang_ir_node *lhs, *rhs, *init;
-
-         /* Generate IR_COPY instruction to initialize the variable */
-         lhs = new_node0(IR_VAR);
-         lhs->Var = var;
-         lhs->Store = n->Store;
-
-         /* constant folding, etc */
-         _slang_simplify(var->initializer, &A->space, A->atoms);
-
-         rhs = _slang_gen_operation(A, var->initializer);
-         assert(rhs);
-         init = new_node2(IR_COPY, lhs, rhs);
-         n = new_seq(n, init);
-      }
-
+      /* emit GPU instructions */
       success = _slang_emit_code(n, A->vartable, A->program, GL_FALSE, A->log);
 
       _slang_free_ir_tree(n);
