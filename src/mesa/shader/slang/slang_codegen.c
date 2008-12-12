@@ -2477,70 +2477,125 @@ _slang_gen_temporary(GLint size)
 
 /**
  * Generate IR node for allocating/declaring a variable.
+ * \param initializer  Optional initializer expression for the variable.
  */
 static slang_ir_node *
-_slang_gen_var_decl(slang_assemble_ctx *A, slang_variable *var)
+_slang_gen_var_decl(slang_assemble_ctx *A, slang_variable *var,
+                    slang_operation *initializer)
 {
-   slang_ir_node *n;
+   slang_ir_node *varDecl, *n;
+   slang_ir_storage *store;
 
    /*assert(!var->declared);*/
    var->declared = GL_TRUE;
 
-   n = new_node0(IR_VAR_DECL);
-   if (!n)
+   varDecl = new_node0(IR_VAR_DECL);
+   if (!varDecl)
       return NULL;
 
-   _slang_attach_storage(n, var);
+   _slang_attach_storage(varDecl, var);
    assert(var->store);
-   assert(n->Store == var->store);
-   assert(n->Store);
-   assert(n->Store->Index < 0);
+   assert(varDecl->Store == var->store);
+   assert(varDecl->Store);
+   assert(varDecl->Store->Index < 0);
+   store = var->store;
 
+   assert(store == varDecl->Store);
+
+   /* determine GPU storage file */
+   /* XXX if the variable is const, use PROGRAM_CONSTANT */
    if (is_sampler_type(&var->type)) {
-      n->Store->File = PROGRAM_SAMPLER;
+      store->File = PROGRAM_SAMPLER;
    }
    else {
-      n->Store->File = PROGRAM_TEMPORARY;
+      store->File = PROGRAM_TEMPORARY;
    }
 
-   n->Store->Size = _slang_sizeof_type_specifier(&n->Var->type.specifier);
+   store->Size = _slang_sizeof_type_specifier(&varDecl->Var->type.specifier);
 
-   if (n->Store->Size <= 0) {
+   if (store->Size <= 0) {
       slang_info_log_error(A->log, "invalid declaration for '%s'",
                            (char*) var->a_name);
       return NULL;
    }
+
 #if 0
    printf("%s var %p %s  store=%p index=%d size=%d\n",
           __FUNCTION__, (void *) var, (char *) var->a_name,
-          (void *) n->Store, n->Store->Index, n->Store->Size);
+          (void *) store, store->Index, store->Size);
 #endif
 
    if (var->array_len > 0) {
       /* this is an array */
       /* round up the element size to a multiple of 4 */
-      GLint sz = (n->Store->Size + 3) & ~3;
+      GLint sz = (store->Size + 3) & ~3;
       /* total size = element size * array length */
       sz *= var->array_len;
-      n->Store->Size = sz;
+      store->Size = sz;
    }
 
    /* setup default swizzle for storing the variable */
    /* XXX this may not be needed anymore - remove & test */
-   switch (n->Store->Size) {
+   switch (store->Size) {
    case 2:
-      n->Store->Swizzle = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y,
-                                        SWIZZLE_NIL, SWIZZLE_NIL);
+      store->Swizzle = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y,
+                                     SWIZZLE_NIL, SWIZZLE_NIL);
       break;
    case 3:
-      n->Store->Swizzle = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y,
-                                        SWIZZLE_Z, SWIZZLE_NIL);
+      store->Swizzle = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y,
+                                     SWIZZLE_Z, SWIZZLE_NIL);
       break;
    default:
       /* Note that float-sized vars may be allocated in any x/y/z/w
        * slot, but that won't be determined until code emit time.
        */
-      n->Store->Swizzle = SWIZZLE_NOOP;
+      store->Swizzle = SWIZZLE_NOOP;
+   }
+
+   /* if there's an initializer, generate IR for the expression */
+   if (initializer) {
+      const char *varName = (const char *) var->a_name;
+      slang_ir_node *varRef, *init;
+
+      varRef = new_var(A, var);
+      if (!varRef) {
+         slang_info_log_error(A->log, "undefined variable '%s'", varName);
+         return NULL;
+      }
+
+      if (var->type.qualifier == SLANG_QUAL_CONST) {
+         /* if the variable is const, the initializer must be a const
+          * expression as well.
+          */
+#if 0
+         if (!_slang_is_constant_expr(initializer)) {
+            slang_info_log_error(A->log,
+                                 "initializer for %s not constant", varName);
+            return NULL;
+         }
+#endif
+      }
+
+      _slang_simplify(initializer, &A->space, A->atoms); 
+
+      init = _slang_gen_operation(A, initializer);
+      if (!init)
+         return NULL;
+
+      /*assert(init->Store);*/
+
+      /* XXX remove this when type checking is added above */
+      if (init->Store && varRef->Store->Size != init->Store->Size) {
+         slang_info_log_error(A->log, "invalid assignment (wrong types)");
+         return NULL;
+      }
+
+      n = new_node2(IR_COPY, varRef, init);
+      n = new_seq(varDecl, n);
+   }
+   else {
+      /* no initializer */
+      n = varDecl;
    }
 
    return n;
@@ -2835,20 +2890,20 @@ _slang_assignment_compatible(slang_assemble_ctx *A,
 
 
 /**
- * Generate IR tree for a variable declaration.
+ * Generate IR tree for a local variable declaration.
  */
 static slang_ir_node *
 _slang_gen_declaration(slang_assemble_ctx *A, slang_operation *oper)
 {
-   slang_ir_node *n;
-   slang_ir_node *varDecl;
-   slang_variable *var;
    const char *varName = (char *) oper->a_id;
+   slang_variable *var;
+   slang_ir_node *varDecl;
    slang_operation *initializer;
 
    assert(oper->type == SLANG_OPER_VARIABLE_DECL);
    assert(oper->num_children <= 1);
 
+   /* lookup the variable by name */
    var = _slang_locate_variable(oper->locals, oper->a_id, GL_TRUE);
    if (!var)
       return NULL;  /* "shouldn't happen" */
@@ -2870,10 +2925,6 @@ _slang_gen_declaration(slang_assemble_ctx *A, slang_operation *oper)
    }
 #endif
 
-   varDecl = _slang_gen_var_decl(A, var);
-   if (!varDecl)
-      return NULL;
-
    /* check if the var has an initializer */
    if (oper->num_children > 0) {
       assert(oper->num_children == 1);
@@ -2886,6 +2937,19 @@ _slang_gen_declaration(slang_assemble_ctx *A, slang_operation *oper)
       initializer = NULL;
    }
 
+   if (initializer) {
+      /* check/compare var type and initializer type */
+      if (!_slang_assignment_compatible(A, oper, initializer)) {
+         slang_info_log_error(A->log, "incompatible types in assignment");
+         return NULL;
+      }         
+   }
+
+   /* Generate IR node */
+   varDecl = _slang_gen_var_decl(A, var, initializer);
+   if (!varDecl)
+      return NULL;
+
    if (var->type.qualifier == SLANG_QUAL_CONST && !initializer) {
       slang_info_log_error(A->log,
                            "const-qualified variable '%s' requires initializer",
@@ -2893,57 +2957,7 @@ _slang_gen_declaration(slang_assemble_ctx *A, slang_operation *oper)
       return NULL;
    }
 
-
-   if (initializer) {
-      slang_ir_node *varRef, *init;
-
-      /* type check/compare var and initializer */
-      if (!_slang_assignment_compatible(A, oper, initializer)) {
-         slang_info_log_error(A->log, "incompatible types in assignment");
-         return NULL;
-      }         
-
-      varRef = new_var(A, var);
-      if (!varRef) {
-         slang_info_log_error(A->log, "undefined variable '%s'", varName);
-         return NULL;
-      }
-
-      if (var->type.qualifier == SLANG_QUAL_CONST) {
-         /* if the variable is const, the initializer must be a const
-          * expression as well.
-          */
-#if 0
-         if (!_slang_is_constant_expr(initializer)) {
-            slang_info_log_error(A->log,
-                                 "initializer for %s not constant", varName);
-            return NULL;
-         }
-#endif
-      }
-
-      _slang_simplify(initializer, &A->space, A->atoms); 
-
-      init = _slang_gen_operation(A, initializer);
-      if (!init)
-         return NULL;
-
-      /*assert(init->Store);*/
-
-      /* XXX remove this when type checking is added above */
-      if (init->Store && varRef->Store->Size != init->Store->Size) {
-         slang_info_log_error(A->log, "invalid assignment (wrong types)");
-         return NULL;
-      }
-
-      n = new_node2(IR_COPY, varRef, init);
-      n = new_seq(varDecl, n);
-   }
-   else {
-      n = varDecl;
-   }
-
-   return n;
+   return varDecl;
 }
 
 
@@ -3927,7 +3941,7 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
       slang_ir_node *n;
 
       /* IR node to declare the variable */
-      n = _slang_gen_var_decl(A, var);
+      n = _slang_gen_var_decl(A, var, NULL);
 
       /* IR code for the var's initializer, if present */
       if (var->initializer) {
