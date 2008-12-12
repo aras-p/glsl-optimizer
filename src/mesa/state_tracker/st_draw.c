@@ -364,11 +364,12 @@ setup_interleaved_attribs(GLcontext *ctx,
       struct gl_buffer_object *bufobj = arrays[mesaAttr]->BufferObj;
       struct st_buffer_object *stobj = st_buffer_object(bufobj);
       GLsizei stride = arrays[mesaAttr]->StrideB;
-      const GLubyte *low, *high;
 
       /*printf("stobj %u = %p\n", attr, (void*)stobj);*/
 
       if (attr == 0) {
+         const GLubyte *low, *high;
+
          get_arrays_bounds(vp, arrays, max_index, &low, &high);
          /*printf("buffer range: %p %p  %d\n", low, high, high-low);*/
 
