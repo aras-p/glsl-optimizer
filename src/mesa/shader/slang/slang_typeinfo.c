@@ -296,7 +296,7 @@ slang_type_specifier_new(slang_type_specifier_type type,
                          struct slang_type_specifier_ *_array)
 {
    slang_type_specifier *spec =
-      (slang_type_specifier *) _mesa_malloc(sizeof(slang_type_specifier));
+      (slang_type_specifier *) _slang_alloc(sizeof(slang_type_specifier));
    if (spec) {
       spec->type = type;
       spec->_struct = _struct;
