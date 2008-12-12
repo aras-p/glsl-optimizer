@@ -32,42 +32,6 @@
 #include "slang_compile.h"
 #include "slang_mem.h"
 
-/* slang_fixup_table */
-
-void
-slang_fixup_table_init(slang_fixup_table * fix)
-{
-   fix->table = NULL;
-   fix->count = 0;
-}
-
-void
-slang_fixup_table_free(slang_fixup_table * fix)
-{
-   _slang_free(fix->table);
-   slang_fixup_table_init(fix);
-}
-
-/**
- * Add a new fixup address to the table.
- */
-GLboolean
-slang_fixup_save(slang_fixup_table *fixups, GLuint address)
-{
-   fixups->table = (GLuint *)
-      _slang_realloc(fixups->table,
-                     fixups->count * sizeof(GLuint),
-                     (fixups->count + 1) * sizeof(GLuint));
-   if (fixups->table == NULL)
-      return GL_FALSE;
-   fixups->table[fixups->count] = address;
-   fixups->count++;
-   return GL_TRUE;
-}
-
-
-
-/* slang_function */
 
 int
 slang_function_construct(slang_function * func)
@@ -86,8 +50,6 @@ slang_function_construct(slang_function * func)
    _slang_variable_scope_ctr(func->parameters);
    func->param_count = 0;
    func->body = NULL;
-   //func->address = ~0;
-   //slang_fixup_table_init(&func->fixups);
    return 1;
 }
 
@@ -101,7 +63,6 @@ slang_function_destruct(slang_function * func)
       slang_operation_destruct(func->body);
       _slang_free(func->body);
    }
-   //slang_fixup_table_free(&func->fixups);
 }
 
 
