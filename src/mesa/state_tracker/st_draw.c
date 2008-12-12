@@ -670,12 +670,13 @@ st_draw_vbo(GLcontext *ctx,
    }
 
    /* unreference buffers (frees wrapped user-space buffer objects) */
+   for (attr = 0; attr < num_vbuffers; attr++) {
+      pipe_buffer_reference(pipe->screen, &vbuffer[attr].buffer, NULL);
+      assert(!vbuffer[attr].buffer);
+   }
+
    if (userSpace) 
    {
-      for (attr = 0; attr < num_vbuffers; attr++) {
-         pipe_buffer_reference(pipe->screen, &vbuffer[attr].buffer, NULL);
-         assert(!vbuffer[attr].buffer);
-      }
       pipe->set_vertex_buffers(pipe, 0, NULL);
    }
 }
