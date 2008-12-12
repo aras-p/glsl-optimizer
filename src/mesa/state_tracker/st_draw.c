@@ -304,18 +304,17 @@ is_interleaved_arrays(const struct st_vertex_program *vp,
    }
 
    *userSpace = (num_client_arrays == vp->num_inputs);
-   /*printf("user space: %d\n", (int) *userSpace);*/
+   /* printf("user space: %d (%d %d)\n", (int) *userSpace,num_client_arrays,vp->num_inputs); */
 
    return GL_TRUE;
 }
 
 
 /**
- * Once we know all the arrays are in user space, this function
- * computes the memory range occupied by the arrays.
+ * Compute the memory range occupied by the arrays.
  */
 static void
-get_user_arrays_bounds(const struct st_vertex_program *vp,
+get_arrays_bounds(const struct st_vertex_program *vp,
                        const struct gl_client_array **arrays,
                        GLuint max_index,
                        const GLubyte **low, const GLubyte **high)
@@ -365,24 +364,24 @@ setup_interleaved_attribs(GLcontext *ctx,
       struct gl_buffer_object *bufobj = arrays[mesaAttr]->BufferObj;
       struct st_buffer_object *stobj = st_buffer_object(bufobj);
       GLsizei stride = arrays[mesaAttr]->StrideB;
+      const GLubyte *low, *high;
 
       /*printf("stobj %u = %p\n", attr, (void*)stobj);*/
 
       if (attr == 0) {
+         get_arrays_bounds(vp, arrays, max_index, &low, &high);
+         /*printf("buffer range: %p %p  %d\n", low, high, high-low);*/
+
+         offset0 = low;
          if (userSpace) {
-            const GLubyte *low, *high;
-            get_user_arrays_bounds(vp, arrays, max_index, &low, &high);
-            /*printf("user buffer range: %p %p  %d\n", low, high, high-low);*/
             vbuffer->buffer =
                pipe_user_buffer_create(pipe->screen, (void *) low, high - low);
             vbuffer->buffer_offset = 0;
-            offset0 = low;
          }
          else {
             vbuffer->buffer = NULL;
             pipe_buffer_reference(pipe->screen, &vbuffer->buffer, stobj->buffer);
             vbuffer->buffer_offset = (unsigned) arrays[mesaAttr]->Ptr;
-            offset0 = arrays[mesaAttr]->Ptr;
          }
          vbuffer->pitch = stride; /* in bytes */
          vbuffer->max_index = max_index;
