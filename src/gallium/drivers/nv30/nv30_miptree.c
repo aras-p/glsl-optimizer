@@ -65,6 +65,29 @@ nv30_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *pt)
 	mt->base = *pt;
 	mt->base.refcount = 1;
 	mt->base.screen = pscreen;
+	mt->shadow_tex = NULL;
+	mt->shadow_surface = NULL;
+
+	/* Swizzled textures must be POT */
+	if (pt->width[0] & (pt->width[0] - 1) ||
+	    pt->height[0] & (pt->height[0] - 1))
+		mt->base.tex_usage |= NOUVEAU_TEXTURE_USAGE_LINEAR;
+	else
+	if (pt->tex_usage & (PIPE_TEXTURE_USAGE_PRIMARY |
+	                     PIPE_TEXTURE_USAGE_DISPLAY_TARGET))
+		mt->base.tex_usage |= NOUVEAU_TEXTURE_USAGE_LINEAR;
+	else {
+		switch (pt->format) {
+		/* TODO: Figure out which formats can be swizzled */
+		case PIPE_FORMAT_A8R8G8B8_UNORM:
+		case PIPE_FORMAT_X8R8G8B8_UNORM:
+		/* XXX: Re-enable when SIFM size limits are fixed */
+		/*case PIPE_FORMAT_R16_SNORM:*/
+			break;
+		default:
+			mt->base.tex_usage |= NOUVEAU_TEXTURE_USAGE_LINEAR;
+		}
+	}
 
 	nv30_miptree_layout(mt);
 
@@ -81,22 +104,29 @@ nv30_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *pt)
 }
 
 static void
-nv30_miptree_release(struct pipe_screen *pscreen, struct pipe_texture **pt)
+nv30_miptree_release(struct pipe_screen *pscreen, struct pipe_texture **ppt)
 {
-	struct pipe_texture *mt = *pt;
+	struct pipe_texture *pt = *ppt;
+	struct nv30_miptree *mt = (struct nv30_miptree *)pt;
+	int l;
 
-	*pt = NULL;
-	if (--mt->refcount <= 0) {
-		struct nv30_miptree *nv30mt = (struct nv30_miptree *)mt;
-		int l;
+	*ppt = NULL;
+	if (--pt->refcount)
+		return;
 
-		pipe_buffer_reference(pscreen, &nv30mt->buffer, NULL);
-		for (l = 0; l <= mt->last_level; l++) {
-			if (nv30mt->level[l].image_offset)
-				FREE(nv30mt->level[l].image_offset);
-		}
-		FREE(nv30mt);
+	pipe_buffer_reference(pscreen, &mt->buffer, NULL);
+	for (l = 0; l <= pt->last_level; l++) {
+		if (mt->level[l].image_offset)
+			FREE(mt->level[l].image_offset);
 	}
+
+	if (mt->shadow_tex) {
+		assert(mt->shadow_surface);
+		pscreen->tex_surface_release(pscreen, &mt->shadow_surface);
+		nv30_miptree_release(pscreen, &mt->shadow_tex);
+	}
+
+	FREE(mt);
 }
 
 static struct pipe_surface *
@@ -123,6 +153,9 @@ nv30_miptree_surface_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 	ps->status = PIPE_SURFACE_STATUS_DEFINED;
 	ps->refcount = 1;
 	ps->winsys = pscreen->winsys;
+	ps->face = face;
+	ps->level = level;
+	ps->zslice = zslice;
 
 	if (pt->target == PIPE_TEXTURE_CUBE) {
 		ps->offset = nv30mt->level[level].image_offset[face];
