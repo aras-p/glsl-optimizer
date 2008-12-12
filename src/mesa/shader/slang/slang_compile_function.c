@@ -189,3 +189,74 @@ slang_function_scope_find(slang_function_scope * funcs, slang_function * fun,
       return slang_function_scope_find(funcs->outer_scope, fun, 1);
    return NULL;
 }
+
+
+/**
+ * Lookup a function according to name and parameter count/types.
+ */
+slang_function *
+_slang_locate_function(const slang_function_scope * funcs, slang_atom a_name,
+                       slang_operation * args, GLuint num_args,
+                       const slang_name_space * space, slang_atom_pool * atoms,
+                       slang_info_log *log, GLboolean *error)
+{
+   slang_typeinfo arg_ti[100];
+   GLuint i;
+
+   *error = GL_FALSE;
+
+   /* determine type of each argument */
+   assert(num_args < 100);
+   for (i = 0; i < num_args; i++) {
+      if (!slang_typeinfo_construct(&arg_ti[i]))
+         return NULL;
+      if (!_slang_typeof_operation_(&args[i], space, &arg_ti[i], atoms, log)) {
+         return NULL;
+      }
+   }
+
+   /* loop over function scopes */
+   while (funcs) {
+
+      /* look for function with matching name and argument/param types */
+      for (i = 0; i < funcs->num_functions; i++) {
+         slang_function *f = &funcs->functions[i];
+         const GLuint haveRetValue = _slang_function_has_return_value(f);
+         GLuint j;
+
+         if (a_name != f->header.a_name)
+            continue;
+         if (f->param_count - haveRetValue != num_args)
+            continue;
+
+         /* compare parameter / argument types */
+         for (j = 0; j < num_args; j++) {
+            if (!slang_type_specifier_compatible(&arg_ti[j].spec,
+                              &f->parameters->variables[j]->type.specifier)) {
+               /* param/arg types don't match */
+               break;
+            }
+
+            /* "out" and "inout" formal parameter requires the actual
+             * argument to be an l-value.
+             */
+            if (!arg_ti[j].can_be_referenced &&
+                (f->parameters->variables[j]->type.qualifier == SLANG_QUAL_OUT ||
+                 f->parameters->variables[j]->type.qualifier == SLANG_QUAL_INOUT)) {
+               /* param is not an lvalue! */
+               *error = GL_TRUE;
+               return NULL;
+            }
+         }
+
+         if (j == num_args) {
+            /* name and args match! */
+            return f;
+         }
+      }
+
+      funcs = funcs->outer_scope;
+   }
+
+   return NULL;
+}

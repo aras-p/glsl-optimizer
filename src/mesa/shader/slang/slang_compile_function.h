@@ -26,8 +26,6 @@
 #define SLANG_COMPILE_FUNCTION_H
 
 
-struct slang_code_unit_;
-
 /**
  * Types of functions.
  */
@@ -81,5 +79,14 @@ slang_function_scope_find_by_name(slang_function_scope *, slang_atom, int);
 
 extern slang_function *
 slang_function_scope_find(slang_function_scope *, slang_function *, int);
+
+extern struct slang_function_ *
+_slang_locate_function(const struct slang_function_scope_ *funcs,
+                       slang_atom name, struct slang_operation_ *params,
+                       GLuint num_params,
+                       const slang_name_space *space,
+                       slang_atom_pool *atoms, slang_info_log *log,
+                       GLboolean *error);
+
 
 #endif /* SLANG_COMPILE_FUNCTION_H */
