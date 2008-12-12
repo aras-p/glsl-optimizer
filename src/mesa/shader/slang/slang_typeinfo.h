@@ -134,8 +134,8 @@ typedef enum slang_type_specifier_type_
 typedef struct slang_type_specifier_
 {
    slang_type_specifier_type type;
-   struct slang_struct_ *_struct;         /**< used if type == spec_struct */
-   struct slang_type_specifier_ *_array;  /**< used if type == spec_array */
+   struct slang_struct_ *_struct;         /**< if type == SLANG_SPEC_STRUCT */
+   struct slang_type_specifier_ *_array;  /**< if type == SLANG_SPEC_ARRAY */
 } slang_type_specifier;
 
 
@@ -144,6 +144,12 @@ slang_type_specifier_ctr(slang_type_specifier *);
 
 extern GLvoid
 slang_type_specifier_dtr(slang_type_specifier *);
+
+extern slang_type_specifier *
+slang_type_specifier_new(slang_type_specifier_type type,
+                         struct slang_struct_ *_struct,
+                         struct slang_type_specifier_ *_array);
+
 
 extern GLboolean
 slang_type_specifier_copy(slang_type_specifier *, const slang_type_specifier *);

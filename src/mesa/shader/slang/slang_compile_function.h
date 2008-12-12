@@ -64,12 +64,15 @@ typedef struct slang_function_
    slang_variable_scope *parameters; /**< formal parameters AND local vars */
    unsigned int param_count;   /**< number of formal params (no locals) */
    slang_operation *body;      /**< The instruction tree */
+#if 0
    unsigned int address;       /**< Address of this func in memory */
    slang_fixup_table fixups;   /**< Mem locations which need func's address */
+#endif
 } slang_function;
 
 extern int slang_function_construct(slang_function *);
 extern void slang_function_destruct(slang_function *);
+extern slang_function *slang_new_function(slang_function_kind kind);
 
 
 /**
