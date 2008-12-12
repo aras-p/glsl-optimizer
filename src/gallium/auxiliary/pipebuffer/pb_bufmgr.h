@@ -183,20 +183,6 @@ pb_alt_manager_create(struct pb_manager *provider1,
 
 
 /** 
- * Ondemand buffer manager.
- * 
- * Buffers are created in malloc'ed memory (fast and cached), and the constents
- * is transfered to a buffer from the provider (typically in slow uncached 
- * memory) when there is an attempt to validate the buffer.
- * 
- * Ideal for situations where one does not know before hand whether a given
- * buffer will effectively be used by the hardware or not. 
- */
-struct pb_manager *
-pb_ondemand_manager_create(struct pb_manager *provider); 
-
-
-/** 
  * Debug buffer manager to detect buffer under- and overflows.
  *
  * Band size should be a multiple of the largest alignment
