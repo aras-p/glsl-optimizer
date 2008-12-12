@@ -38,7 +38,6 @@ typedef struct slang_variable_
    slang_atom a_name;               /**< The variable's name (char *) */
    GLuint array_len;                /**< only if type == SLANG_SPEC_ARRAy */
    struct slang_operation_ *initializer; /**< Optional initializer code */
-   GLuint address;                  /**< Storage location */
    GLuint size;                     /**< Variable's size in bytes */
    GLboolean isTemp;                /**< a named temporary (__resultTmp) */
    GLboolean declared;              /**< for debug */

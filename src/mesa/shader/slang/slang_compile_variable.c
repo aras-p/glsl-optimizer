@@ -164,7 +164,6 @@ slang_variable_construct(slang_variable * var)
    var->a_name = SLANG_ATOM_NULL;
    var->array_len = 0;
    var->initializer = NULL;
-   var->address = ~0;
    var->size = 0;
    var->isTemp = GL_FALSE;
    var->store = NULL;
@@ -219,7 +218,6 @@ slang_variable_copy(slang_variable * x, const slang_variable * y)
          return 0;
       }
    }
-   z.address = y->address;
    z.size = y->size;
    slang_variable_destruct(x);
    *x = z;

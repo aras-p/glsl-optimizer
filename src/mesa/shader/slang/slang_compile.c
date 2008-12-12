@@ -74,18 +74,6 @@ legal_identifier(slang_atom name)
 }
 
 
-/**
- * Allocate storage for a variable of 'size' bytes from given pool.
- * Return the allocated address for the variable.
- */
-static GLuint
-slang_var_pool_alloc(slang_var_pool * pool, unsigned int size)
-{
-   const GLuint addr = pool->next_addr;
-   pool->next_addr += size;
-   return addr;
-}
-
 /*
  * slang_code_unit
  */
@@ -120,7 +108,6 @@ _slang_code_object_ctr(slang_code_object * self)
    for (i = 0; i < SLANG_BUILTIN_TOTAL; i++)
       _slang_code_unit_ctr(&self->builtin[i], self);
    _slang_code_unit_ctr(&self->unit, self);
-   self->varpool.next_addr = 0;
    slang_atom_pool_construct(&self->atompool);
 }
 
@@ -156,7 +143,6 @@ typedef struct slang_output_ctx_
    slang_variable_scope *vars;
    slang_function_scope *funs;
    slang_struct_scope *structs;
-   slang_var_pool *global_pool;
    struct gl_program *program;
    slang_var_table *vartable;
    GLuint default_precision[TYPE_SPECIFIER_COUNT];
@@ -2058,7 +2044,6 @@ parse_init_declarator(slang_parse_ctx * C, slang_output_ctx * O,
             && var->array_len == 0)) {
       if (!calculate_var_size(C, O, var))
          return GL_FALSE;
-      var->address = slang_var_pool_alloc(O->global_pool, var->size);
    }
 
    /* emit code for global var decl */
@@ -2358,7 +2343,6 @@ parse_code_unit(slang_parse_ctx * C, slang_code_unit * unit,
    o.funs = &unit->funs;
    o.structs = &unit->structs;
    o.vars = &unit->vars;
-   o.global_pool = &unit->object->varpool;
    o.program = shader ? shader->Program : NULL;
    o.vartable = _slang_new_var_table(maxRegs);
    _slang_push_var_table(o.vartable);
