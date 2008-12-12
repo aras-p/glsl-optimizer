@@ -2490,61 +2490,62 @@ _slang_gen_var_decl(slang_assemble_ctx *A, slang_variable *var)
    var->declared = GL_TRUE;
 
    n = new_node0(IR_VAR_DECL);
-   if (n) {
-      _slang_attach_storage(n, var);
-      assert(var->store);
-      assert(n->Store == var->store);
-      assert(n->Store);
-      assert(n->Store->Index < 0);
+   if (!n)
+      return NULL;
 
-      if (is_sampler_type(&var->type)) {
-         n->Store->File = PROGRAM_SAMPLER;
-      }
-      else {
-         n->Store->File = PROGRAM_TEMPORARY;
-      }
+   _slang_attach_storage(n, var);
+   assert(var->store);
+   assert(n->Store == var->store);
+   assert(n->Store);
+   assert(n->Store->Index < 0);
 
-      n->Store->Size = _slang_sizeof_type_specifier(&n->Var->type.specifier);
+   if (is_sampler_type(&var->type)) {
+      n->Store->File = PROGRAM_SAMPLER;
+   }
+   else {
+      n->Store->File = PROGRAM_TEMPORARY;
+   }
 
-      if (n->Store->Size <= 0) {
-         slang_info_log_error(A->log, "invalid declaration for '%s'",
-                              (char*) var->a_name);
-         return NULL;
-      }
+   n->Store->Size = _slang_sizeof_type_specifier(&n->Var->type.specifier);
+
+   if (n->Store->Size <= 0) {
+      slang_info_log_error(A->log, "invalid declaration for '%s'",
+                           (char*) var->a_name);
+      return NULL;
+   }
 #if 0
-      printf("%s var %p %s  store=%p index=%d size=%d\n",
-             __FUNCTION__, (void *) var, (char *) var->a_name,
-             (void *) n->Store, n->Store->Index, n->Store->Size);
+   printf("%s var %p %s  store=%p index=%d size=%d\n",
+          __FUNCTION__, (void *) var, (char *) var->a_name,
+          (void *) n->Store, n->Store->Index, n->Store->Size);
 #endif
 
-      if (var->array_len > 0) {
-         /* this is an array */
-         /* round up the element size to a multiple of 4 */
-         GLint sz = (n->Store->Size + 3) & ~3;
-         /* total size = element size * array length */
-         sz *= var->array_len;
-         n->Store->Size = sz;
-      }
-
-      assert(n->Store->Size > 0);
-
-      /* setup default swizzle for storing the variable */
-      switch (n->Store->Size) {
-      case 2:
-         n->Store->Swizzle = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y,
-                                           SWIZZLE_NIL, SWIZZLE_NIL);
-         break;
-      case 3:
-         n->Store->Swizzle = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y,
-                                           SWIZZLE_Z, SWIZZLE_NIL);
-         break;
-      default:
-         /* Note that float-sized vars may be allocated in any x/y/z/w
-          * slot, but that won't be determined until code emit time.
-          */
-         n->Store->Swizzle = SWIZZLE_NOOP;
-      }
+   if (var->array_len > 0) {
+      /* this is an array */
+      /* round up the element size to a multiple of 4 */
+      GLint sz = (n->Store->Size + 3) & ~3;
+      /* total size = element size * array length */
+      sz *= var->array_len;
+      n->Store->Size = sz;
    }
+
+   /* setup default swizzle for storing the variable */
+   /* XXX this may not be needed anymore - remove & test */
+   switch (n->Store->Size) {
+   case 2:
+      n->Store->Swizzle = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y,
+                                        SWIZZLE_NIL, SWIZZLE_NIL);
+      break;
+   case 3:
+      n->Store->Swizzle = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y,
+                                        SWIZZLE_Z, SWIZZLE_NIL);
+      break;
+   default:
+      /* Note that float-sized vars may be allocated in any x/y/z/w
+       * slot, but that won't be determined until code emit time.
+       */
+      n->Store->Swizzle = SWIZZLE_NOOP;
+   }
+
    return n;
 }
 
