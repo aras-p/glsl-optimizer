@@ -1477,6 +1477,7 @@ parse_expression(slang_parse_ctx * C, slang_output_ctx * O,
                      RETURN0;
                   }
                   array_constructor_size = (int) array_size.literal[0];
+                  op->array_constructor = GL_TRUE;
                   slang_operation_destruct(&array_size);
                }
                break;
