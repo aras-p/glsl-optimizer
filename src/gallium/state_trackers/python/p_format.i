@@ -1,6 +1,7 @@
 /**************************************************************************
  * 
  * Copyright 2008 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright (c) 2008 VMware, Inc.
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -128,10 +129,14 @@ enum pipe_format {
    PIPE_FORMAT_R32G32B32A32_FIXED,
 
    PIPE_FORMAT_L8_SRGB,
-   PIPE_FORMAT_A8_L8_SRGB,
+   PIPE_FORMAT_A8L8_SRGB,
    PIPE_FORMAT_R8G8B8_SRGB,
    PIPE_FORMAT_R8G8B8A8_SRGB,
    PIPE_FORMAT_R8G8B8X8_SRGB,
+   PIPE_FORMAT_A8R8G8B8_SRGB,
+   PIPE_FORMAT_X8R8G8B8_SRGB,
+   PIPE_FORMAT_B8G8R8A8_SRGB,
+   PIPE_FORMAT_B8G8R8X8_SRGB,
 
    PIPE_FORMAT_X8UB8UG8SR8S_NORM,
    PIPE_FORMAT_B6UG5SR5S_NORM,
@@ -140,6 +145,11 @@ enum pipe_format {
    PIPE_FORMAT_DXT1_RGBA,
    PIPE_FORMAT_DXT3_RGBA,
    PIPE_FORMAT_DXT5_RGBA,
+
+   PIPE_FORMAT_DXT1_SRGB,
+   PIPE_FORMAT_DXT1_SRGBA,
+   PIPE_FORMAT_DXT3_SRGBA,
+   PIPE_FORMAT_DXT5_SRGBA,
 };
 
 

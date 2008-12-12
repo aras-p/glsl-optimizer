@@ -1,6 +1,7 @@
 /**************************************************************************
  * 
  * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright (c) 2008 VMware, Inc.
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -242,6 +243,9 @@ void st_init_extensions(struct st_context *st)
    }
 
    if (screen->is_format_supported(screen, PIPE_FORMAT_R8G8B8A8_SRGB,
+                                   PIPE_TEXTURE_2D, 
+                                   PIPE_TEXTURE_USAGE_SAMPLER, 0) ||
+      screen->is_format_supported(screen, PIPE_FORMAT_A8R8G8B8_SRGB,
                                    PIPE_TEXTURE_2D, 
                                    PIPE_TEXTURE_USAGE_SAMPLER, 0)) {
       ctx->Extensions.EXT_texture_sRGB = GL_TRUE;

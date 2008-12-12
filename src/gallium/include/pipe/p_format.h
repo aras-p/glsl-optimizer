@@ -1,6 +1,7 @@
 /**************************************************************************
  * 
  * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright (c) 2008 VMware, Inc.
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -245,13 +246,14 @@ static INLINE uint pf_rev(pipe_format_ycbcr_t f)
 /**
   * Compresssed format layouts (this will probably change)
   */
-#define _PIPE_FORMAT_DXT( LEVEL, RSIZE, GSIZE, BSIZE, ASIZE ) \
+#define _PIPE_FORMAT_DXT( LEVEL, RSIZE, GSIZE, BSIZE, ASIZE, TYPE ) \
    ((PIPE_FORMAT_LAYOUT_DXT << 0) | \
     ((LEVEL) << 2) | \
     ((RSIZE) << 5) | \
     ((GSIZE) << 8) | \
     ((BSIZE) << 11) | \
-    ((ASIZE) << 14) )
+    ((ASIZE) << 14) | \
+    ((TYPE) << 29))
 
 
 
@@ -360,20 +362,30 @@ enum pipe_format {
    PIPE_FORMAT_R32G32B32A32_FIXED    = _PIPE_FORMAT_RGBAZS_8 ( _PIPE_FORMAT_RGBA, 4, 4, 4, 4, PIPE_FORMAT_TYPE_FIXED ),
    /* sRGB formats */
    PIPE_FORMAT_L8_SRGB               = _PIPE_FORMAT_RGBAZS_8 ( _PIPE_FORMAT_RRR1, 1, 1, 1, 0, PIPE_FORMAT_TYPE_SRGB ),
-   PIPE_FORMAT_A8_L8_SRGB            = _PIPE_FORMAT_RGBAZS_8 ( _PIPE_FORMAT_RRRG, 1, 1, 1, 1, PIPE_FORMAT_TYPE_SRGB ),
+   PIPE_FORMAT_A8L8_SRGB             = _PIPE_FORMAT_RGBAZS_8 ( _PIPE_FORMAT_RRRG, 1, 1, 1, 1, PIPE_FORMAT_TYPE_SRGB ),
    PIPE_FORMAT_R8G8B8_SRGB           = _PIPE_FORMAT_RGBAZS_8 ( _PIPE_FORMAT_RGB1, 1, 1, 1, 0, PIPE_FORMAT_TYPE_SRGB ),
    PIPE_FORMAT_R8G8B8A8_SRGB         = _PIPE_FORMAT_RGBAZS_8 ( _PIPE_FORMAT_RGBA, 1, 1, 1, 1, PIPE_FORMAT_TYPE_SRGB ),
    PIPE_FORMAT_R8G8B8X8_SRGB         = _PIPE_FORMAT_RGBAZS_8 ( _PIPE_FORMAT_RGB1, 1, 1, 1, 1, PIPE_FORMAT_TYPE_SRGB ),
+   PIPE_FORMAT_A8R8G8B8_SRGB         = _PIPE_FORMAT_RGBAZS_8 ( _PIPE_FORMAT_ARGB, 1, 1, 1, 1, PIPE_FORMAT_TYPE_SRGB ),
+   PIPE_FORMAT_X8R8G8B8_SRGB         = _PIPE_FORMAT_RGBAZS_8 ( _PIPE_FORMAT_1RGB, 1, 1, 1, 1, PIPE_FORMAT_TYPE_SRGB ),
+   PIPE_FORMAT_B8G8R8A8_SRGB         = _PIPE_FORMAT_RGBAZS_8 ( _PIPE_FORMAT_BGRA, 1, 1, 1, 1, PIPE_FORMAT_TYPE_SRGB ),
+   PIPE_FORMAT_B8G8R8X8_SRGB         = _PIPE_FORMAT_RGBAZS_8 ( _PIPE_FORMAT_BGR1, 1, 1, 1, 1, PIPE_FORMAT_TYPE_SRGB ),
 
    /* mixed formats */
    PIPE_FORMAT_X8UB8UG8SR8S_NORM     = _PIPE_FORMAT_MIXED( _PIPE_FORMAT_1BGR, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1 ),
    PIPE_FORMAT_B6UG5SR5S_NORM        = _PIPE_FORMAT_MIXED( _PIPE_FORMAT_BGR1, 6, 5, 5, 0, 0, 1, 1, 0, 1, 0 ),
 
    /* compressed formats */
-   PIPE_FORMAT_DXT1_RGB              = _PIPE_FORMAT_DXT( 1, 8, 8, 8, 0 ),
-   PIPE_FORMAT_DXT1_RGBA             = _PIPE_FORMAT_DXT( 1, 8, 8, 8, 8 ),
-   PIPE_FORMAT_DXT3_RGBA             = _PIPE_FORMAT_DXT( 3, 8, 8, 8, 8 ),
-   PIPE_FORMAT_DXT5_RGBA             = _PIPE_FORMAT_DXT( 5, 8, 8, 8, 8 )
+   PIPE_FORMAT_DXT1_RGB              = _PIPE_FORMAT_DXT( 1, 8, 8, 8, 0, PIPE_FORMAT_TYPE_UNORM ),
+   PIPE_FORMAT_DXT1_RGBA             = _PIPE_FORMAT_DXT( 1, 8, 8, 8, 8, PIPE_FORMAT_TYPE_UNORM ),
+   PIPE_FORMAT_DXT3_RGBA             = _PIPE_FORMAT_DXT( 3, 8, 8, 8, 8, PIPE_FORMAT_TYPE_UNORM ),
+   PIPE_FORMAT_DXT5_RGBA             = _PIPE_FORMAT_DXT( 5, 8, 8, 8, 8, PIPE_FORMAT_TYPE_UNORM ),
+
+   /* sRGB, compressed */
+   PIPE_FORMAT_DXT1_SRGB             = _PIPE_FORMAT_DXT( 1, 8, 8, 8, 0, PIPE_FORMAT_TYPE_SRGB ),
+   PIPE_FORMAT_DXT1_SRGBA            = _PIPE_FORMAT_DXT( 1, 8, 8, 8, 8, PIPE_FORMAT_TYPE_SRGB ),
+   PIPE_FORMAT_DXT3_SRGBA            = _PIPE_FORMAT_DXT( 3, 8, 8, 8, 8, PIPE_FORMAT_TYPE_SRGB ),
+   PIPE_FORMAT_DXT5_SRGBA            = _PIPE_FORMAT_DXT( 5, 8, 8, 8, 8, PIPE_FORMAT_TYPE_SRGB )
 };
 
 /**
@@ -477,12 +489,16 @@ pf_get_block(enum pipe_format format, struct pipe_format_block *block)
    switch(format) {
    case PIPE_FORMAT_DXT1_RGBA:
    case PIPE_FORMAT_DXT1_RGB:
+   case PIPE_FORMAT_DXT1_SRGBA:
+   case PIPE_FORMAT_DXT1_SRGB:
       block->size = 8;
       block->width = 4;
       block->height = 4;
       break;
    case PIPE_FORMAT_DXT3_RGBA:
    case PIPE_FORMAT_DXT5_RGBA:
+   case PIPE_FORMAT_DXT3_SRGBA:
+   case PIPE_FORMAT_DXT5_SRGBA:
       block->size = 16;
       block->width = 4;
       block->height = 4;
@@ -540,7 +556,7 @@ pf_has_alpha( enum pipe_format format )
       /* FIXME: pf_get_component_bits( PIPE_FORMAT_A8L8_UNORM, PIPE_FORMAT_COMP_A ) should not return 0 right? */
       if(format == PIPE_FORMAT_A8_UNORM || 
          format == PIPE_FORMAT_A8L8_UNORM || 
-         format == PIPE_FORMAT_A8_L8_SRGB)
+         format == PIPE_FORMAT_A8L8_SRGB)
          return TRUE;
       return pf_get_component_bits( format, PIPE_FORMAT_COMP_A ) ? TRUE : FALSE;
    case PIPE_FORMAT_LAYOUT_YCBCR:
@@ -550,6 +566,9 @@ pf_has_alpha( enum pipe_format format )
       case PIPE_FORMAT_DXT1_RGBA:
       case PIPE_FORMAT_DXT3_RGBA:
       case PIPE_FORMAT_DXT5_RGBA:
+      case PIPE_FORMAT_DXT1_SRGBA:
+      case PIPE_FORMAT_DXT3_SRGBA:
+      case PIPE_FORMAT_DXT5_SRGBA:
          return TRUE;
       default:
          return FALSE;

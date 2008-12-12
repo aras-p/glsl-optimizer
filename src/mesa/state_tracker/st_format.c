@@ -1,6 +1,7 @@
 /**************************************************************************
  * 
  * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright (c) 2008 VMware, Inc.
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -263,6 +264,28 @@ st_mesa_format_to_pipe_format(GLuint mesaFormat)
       return PIPE_FORMAT_DXT3_RGBA;
    case MESA_FORMAT_RGBA_DXT5:
       return PIPE_FORMAT_DXT5_RGBA;
+#if FEATURE_EXT_texture_sRGB
+   case MESA_FORMAT_SRGB_DXT1:
+      return PIPE_FORMAT_DXT1_SRGB;
+   case MESA_FORMAT_SRGBA_DXT1:
+      return PIPE_FORMAT_DXT1_SRGBA;
+   case MESA_FORMAT_SRGBA_DXT3:
+      return PIPE_FORMAT_DXT3_SRGBA;
+   case MESA_FORMAT_SRGBA_DXT5:
+      return PIPE_FORMAT_DXT5_SRGBA;
+#endif
+#endif
+#if FEATURE_EXT_texture_sRGB
+   case MESA_FORMAT_SLA8:
+      return PIPE_FORMAT_A8L8_SRGB;
+   case MESA_FORMAT_SL8:
+      return PIPE_FORMAT_L8_SRGB;
+   case MESA_FORMAT_SRGB8:
+      return PIPE_FORMAT_R8G8B8_SRGB;
+   case MESA_FORMAT_SRGBA8:
+      return PIPE_FORMAT_R8G8B8A8_SRGB;
+   case MESA_FORMAT_SARGB8:
+      return PIPE_FORMAT_A8R8G8B8_SRGB;
 #endif
    default:
       assert(0);
@@ -294,6 +317,28 @@ default_rgba_format(struct pipe_screen *screen,
    return PIPE_FORMAT_NONE;
 }
 
+/**
+ * Find an sRGBA format supported by the context/winsys.
+ */
+static enum pipe_format
+default_srgba_format(struct pipe_screen *screen, 
+                    enum pipe_texture_target target,
+                    unsigned tex_usage, 
+                    unsigned geom_flags)
+{
+   static const enum pipe_format colorFormats[] = {
+      PIPE_FORMAT_A8R8G8B8_SRGB,
+      PIPE_FORMAT_B8G8R8A8_SRGB,
+      PIPE_FORMAT_R8G8B8A8_SRGB,
+   };
+   uint i;
+   for (i = 0; i < Elements(colorFormats); i++) {
+      if (screen->is_format_supported( screen, colorFormats[i], target, tex_usage, geom_flags )) {
+         return colorFormats[i];
+      }
+   }
+   return PIPE_FORMAT_NONE;
+}
 
 /**
  * Search list of formats for first RGBA format with >8 bits/channel.
@@ -515,28 +560,32 @@ st_choose_format(struct pipe_context *pipe, GLint internalFormat,
    case GL_SRGB_EXT:
    case GL_SRGB8_EXT:
    case GL_COMPRESSED_SRGB_EXT:
-   case GL_COMPRESSED_SRGB_S3TC_DXT1_EXT:
+   case GL_COMPRESSED_SRGB_ALPHA_EXT:
    case GL_SRGB_ALPHA_EXT:
    case GL_SRGB8_ALPHA8_EXT:
-   case GL_COMPRESSED_SRGB_ALPHA_EXT:
+      return default_srgba_format( screen, target, tex_usage, geom_flags );
+   case GL_COMPRESSED_SRGB_S3TC_DXT1_EXT:
+      return PIPE_FORMAT_DXT1_SRGB;
    case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT:
+      return PIPE_FORMAT_DXT1_SRGBA;
    case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT:
+      return PIPE_FORMAT_DXT3_SRGBA;
    case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT:
-      return default_rgba_format( screen, target, tex_usage, geom_flags );
+      return PIPE_FORMAT_DXT5_SRGBA;
 
    case GL_SLUMINANCE_ALPHA_EXT:
    case GL_SLUMINANCE8_ALPHA8_EXT:
    case GL_COMPRESSED_SLUMINANCE_EXT:
    case GL_COMPRESSED_SLUMINANCE_ALPHA_EXT:
-      if (screen->is_format_supported( screen, PIPE_FORMAT_A8L8_UNORM, target, tex_usage, geom_flags ))
-         return PIPE_FORMAT_A8L8_UNORM;
-      return default_rgba_format( screen, target, tex_usage, geom_flags );
+      if (screen->is_format_supported( screen, PIPE_FORMAT_A8L8_SRGB, target, tex_usage, geom_flags ))
+         return PIPE_FORMAT_A8L8_SRGB;
+      return default_srgba_format( screen, target, tex_usage, geom_flags );
 
    case GL_SLUMINANCE_EXT:
    case GL_SLUMINANCE8_EXT:
-      if (screen->is_format_supported( screen, PIPE_FORMAT_L8_UNORM, target, tex_usage, geom_flags ))
-         return PIPE_FORMAT_L8_UNORM;
-      return default_rgba_format( screen, target, tex_usage, geom_flags );
+      if (screen->is_format_supported( screen, PIPE_FORMAT_L8_SRGB, target, tex_usage, geom_flags ))
+         return PIPE_FORMAT_L8_SRGB;
+      return default_srgba_format( screen, target, tex_usage, geom_flags );
 
    default:
       return PIPE_FORMAT_NONE;
@@ -617,6 +666,28 @@ translate_gallium_format_to_mesa_format(enum pipe_format format)
       return &_mesa_texformat_rgba_dxt3;
    case PIPE_FORMAT_DXT5_RGBA:
       return &_mesa_texformat_rgba_dxt5;
+#if FEATURE_EXT_texture_sRGB
+   case PIPE_FORMAT_DXT1_SRGB:
+      return &_mesa_texformat_srgb_dxt1;
+   case PIPE_FORMAT_DXT1_SRGBA:
+      return &_mesa_texformat_srgba_dxt1;
+   case PIPE_FORMAT_DXT3_SRGBA:
+      return &_mesa_texformat_srgba_dxt3;
+   case PIPE_FORMAT_DXT5_SRGBA:
+      return &_mesa_texformat_srgba_dxt5;
+#endif
+#endif
+#if FEATURE_EXT_texture_sRGB
+   case PIPE_FORMAT_A8L8_SRGB:
+      return &_mesa_texformat_sla8;
+   case PIPE_FORMAT_L8_SRGB:
+      return &_mesa_texformat_sl8;
+   case PIPE_FORMAT_R8G8B8_SRGB:
+      return &_mesa_texformat_srgb8;
+   case PIPE_FORMAT_R8G8B8A8_SRGB:
+      return &_mesa_texformat_srgba8;
+   case PIPE_FORMAT_A8R8G8B8_SRGB:
+      return &_mesa_texformat_sargb8;
 #endif
    /* XXX add additional cases */
    default:
