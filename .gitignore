@@ -1,5 +1,11 @@
 *.a
+*.dll
+*.exe
+*.ilk
 *.o
+*.obj
+*.pc
+*.pdb
 *.pyc
 *.pyo
 *.so
@@ -9,6 +15,12 @@ depend
 depend.bak
 lib
 lib64
-.sconsign*
+configure
+autom4te.cache
+aclocal.m4
+config.log
+config.status
+cscope*
+.scon*
 config.py
 build

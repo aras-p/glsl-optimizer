@@ -1,0 +1,71 @@
+Import('env')
+
+if not env['GLUT']:
+    Return()
+
+env = env.Clone()
+
+env.Prepend(LIBS = ['$GLUT_LIB'])
+
+progs = [
+	'arbfplight',
+	'arbfslight',
+	'arbocclude',
+	'bounce',
+	'clearspd',
+	'copypix',
+	'cubemap',
+	'drawpix',
+	'engine',
+	'fbo_firecube',
+	'fire',
+	'fogcoord',
+	'fplight',
+	'fslight',
+	'gamma',
+	'gearbox',
+	'gears',
+	'geartrain',
+	'glinfo',
+	'gloss',
+	'glslnoise',
+	'gltestperf',
+	'glutfx',
+	'isosurf',
+	'ipers',
+	'lodbias',
+	'morph3d',
+	'multiarb',
+	'paltex',
+	'pointblast',
+	'rain',
+	'ray',
+	'readpix',
+	'reflect',
+	'renormal',
+	'shadowtex',
+	'singlebuffer',
+	'streaming_rect',
+	'spectex',
+	'spriteblast',
+	'stex3d',
+	'teapot',
+	'terrain',
+	'tessdemo',
+	'texcyl',
+	'texdown',
+	'texenv',
+	'texobj',
+	'textures',
+	'trispd',
+	'tunnel',
+	'tunnel2',
+	'vao_demo',
+	'winpos',
+]
+
+for prog in progs:
+    prog = env.Program(
+        target = prog,
+        source = prog + '.c',
+    )
