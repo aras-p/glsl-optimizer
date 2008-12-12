@@ -182,7 +182,7 @@ pb_validate_create()
       return NULL;
    
    vl->size = PB_VALIDATE_INITIAL_SIZE;
-   vl->entries = (struct pb_validate_entry *)CALLOC(vl->size, sizeof(struct pb_validate_entry));
+   vl->entries = (struct pb_validate_entry *)CALLOC(vl->size, sizeof(struct pb_buffer *));
    if(!vl->entries) {
       FREE(vl);
       return NULL;
