@@ -40,21 +40,6 @@ typedef enum slang_function_kind_
 
 
 /**
- * When we need to fill in addresses which we won't know until the future,
- * we keep track of them with a fix-up table.
- */
-typedef struct slang_fixup_table_
-{
-   GLuint *table;     /**< array[count] of addresses */
-   GLuint count;
-} slang_fixup_table;
-
-extern void slang_fixup_table_init(slang_fixup_table *);
-extern void slang_fixup_table_free(slang_fixup_table *);
-extern GLboolean slang_fixup_save(slang_fixup_table *fixups, GLuint address);
-
-
-/**
  * Description of a compiled shader function.
  */
 typedef struct slang_function_
@@ -64,10 +49,6 @@ typedef struct slang_function_
    slang_variable_scope *parameters; /**< formal parameters AND local vars */
    unsigned int param_count;   /**< number of formal params (no locals) */
    slang_operation *body;      /**< The instruction tree */
-#if 0
-   unsigned int address;       /**< Address of this func in memory */
-   slang_fixup_table fixups;   /**< Mem locations which need func's address */
-#endif
 } slang_function;
 
 extern int slang_function_construct(slang_function *);
