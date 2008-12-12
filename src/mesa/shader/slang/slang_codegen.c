@@ -2069,9 +2069,9 @@ _slang_make_array_constructor(slang_assemble_ctx *A, slang_operation *oper)
       }
    }
 
-
+   /*
    slang_print_function(fun, 1);
-
+   */
 
    return fun;
 }
