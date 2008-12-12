@@ -1991,7 +1991,6 @@ parse_init_declarator(slang_parse_ctx * C, slang_output_ctx * O,
    var->type.centroid = type->centroid;
    var->type.precision = type->precision;
    var->type.variant = type->variant;
-   var->type.array_len = type->array_len;
    var->a_name = a_name;
    if (var->a_name == SLANG_ATOM_NULL)
       RETURN0;
