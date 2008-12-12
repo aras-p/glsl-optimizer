@@ -600,7 +600,15 @@ _slang_typeof_operation(slang_operation * op,
             return GL_FALSE;
          }
          ti->can_be_referenced = GL_TRUE;
-         ti->array_len = var->array_len;
+         if (var->type.specifier.type == SLANG_SPEC_ARRAY &&
+             var->type.array_len >= 1) {
+            /* the datatype is an array, ex: float[3] x; */
+            ti->array_len = var->type.array_len;
+         }
+         else {
+            /* the variable is an array, ex: float x[3]; */
+            ti->array_len = var->array_len;
+         }
       }
       break;
    case SLANG_OPER_SEQUENCE:
