@@ -653,16 +653,13 @@ new_if(slang_ir_node *cond, slang_ir_node *ifPart, slang_ir_node *elsePart)
  * New IR_VAR node - a reference to a previously declared variable.
  */
 static slang_ir_node *
-new_var(slang_assemble_ctx *A, slang_operation *oper, slang_atom name)
+new_var(slang_assemble_ctx *A, slang_variable *var)
 {
    slang_ir_node *n;
-   slang_variable *var = _slang_locate_variable(oper->locals, name, GL_TRUE);
    if (!var)
       return NULL;
 
    assert(var->declared);
-
-   assert(!oper->var || oper->var == var);
 
    n = new_node0(IR_VAR);
    if (n) {
@@ -2845,20 +2842,20 @@ _slang_gen_declaration(slang_assemble_ctx *A, slang_operation *oper)
 {
    slang_ir_node *n;
    slang_ir_node *varDecl;
-   slang_variable *v;
+   slang_variable *var;
    const char *varName = (char *) oper->a_id;
    slang_operation *initializer;
 
    assert(oper->type == SLANG_OPER_VARIABLE_DECL);
    assert(oper->num_children <= 1);
 
-   v = _slang_locate_variable(oper->locals, oper->a_id, GL_TRUE);
-   if (!v)
+   var = _slang_locate_variable(oper->locals, oper->a_id, GL_TRUE);
+   if (!var)
       return NULL;  /* "shouldn't happen" */
 
-   if (v->type.qualifier == SLANG_QUAL_ATTRIBUTE ||
-       v->type.qualifier == SLANG_QUAL_VARYING ||
-       v->type.qualifier == SLANG_QUAL_UNIFORM) {
+   if (var->type.qualifier == SLANG_QUAL_ATTRIBUTE ||
+       var->type.qualifier == SLANG_QUAL_VARYING ||
+       var->type.qualifier == SLANG_QUAL_UNIFORM) {
       /* can't declare attribute/uniform vars inside functions */
       slang_info_log_error(A->log,
                 "local variable '%s' cannot be an attribute/uniform/varying",
@@ -2873,7 +2870,7 @@ _slang_gen_declaration(slang_assemble_ctx *A, slang_operation *oper)
    }
 #endif
 
-   varDecl = _slang_gen_var_decl(A, v);
+   varDecl = _slang_gen_var_decl(A, var);
    if (!varDecl)
       return NULL;
 
@@ -2882,14 +2879,14 @@ _slang_gen_declaration(slang_assemble_ctx *A, slang_operation *oper)
       assert(oper->num_children == 1);
       initializer = &oper->children[0];
    }
-   else if (v->initializer) {
-      initializer = v->initializer;
+   else if (var->initializer) {
+      initializer = var->initializer;
    }
    else {
       initializer = NULL;
    }
 
-   if (v->type.qualifier == SLANG_QUAL_CONST && !initializer) {
+   if (var->type.qualifier == SLANG_QUAL_CONST && !initializer) {
       slang_info_log_error(A->log,
                            "const-qualified variable '%s' requires initializer",
                            varName);
@@ -2898,7 +2895,7 @@ _slang_gen_declaration(slang_assemble_ctx *A, slang_operation *oper)
 
 
    if (initializer) {
-      slang_ir_node *var, *init;
+      slang_ir_node *varRef, *init;
 
       /* type check/compare var and initializer */
       if (!_slang_assignment_compatible(A, oper, initializer)) {
@@ -2906,13 +2903,13 @@ _slang_gen_declaration(slang_assemble_ctx *A, slang_operation *oper)
          return NULL;
       }         
 
-      var = new_var(A, oper, oper->a_id);
-      if (!var) {
+      varRef = new_var(A, var);
+      if (!varRef) {
          slang_info_log_error(A->log, "undefined variable '%s'", varName);
          return NULL;
       }
 
-      if (v->type.qualifier == SLANG_QUAL_CONST) {
+      if (var->type.qualifier == SLANG_QUAL_CONST) {
          /* if the variable is const, the initializer must be a const
           * expression as well.
           */
@@ -2934,12 +2931,12 @@ _slang_gen_declaration(slang_assemble_ctx *A, slang_operation *oper)
       /*assert(init->Store);*/
 
       /* XXX remove this when type checking is added above */
-      if (init->Store && var->Store->Size != init->Store->Size) {
+      if (init->Store && varRef->Store->Size != init->Store->Size) {
          slang_info_log_error(A->log, "invalid assignment (wrong types)");
          return NULL;
       }
 
-      n = new_node2(IR_COPY, var, init);
+      n = new_node2(IR_COPY, varRef, init);
       n = new_seq(varDecl, n);
    }
    else {
@@ -2959,10 +2956,11 @@ _slang_gen_variable(slang_assemble_ctx * A, slang_operation *oper)
    /* If there's a variable associated with this oper (from inlining)
     * use it.  Otherwise, use the oper's var id.
     */
-   slang_atom aVar = oper->var ? oper->var->a_name : oper->a_id;
-   slang_ir_node *n = new_var(A, oper, aVar);
+   slang_atom name = oper->var ? oper->var->a_name : oper->a_id;
+   slang_variable *var = _slang_locate_variable(oper->locals, name, GL_TRUE);
+   slang_ir_node *n = new_var(A, var);
    if (!n) {
-      slang_info_log_error(A->log, "undefined variable '%s'", (char *) aVar);
+      slang_info_log_error(A->log, "undefined variable '%s'", (char *) name);
       return NULL;
    }
    return n;
