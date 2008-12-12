@@ -53,12 +53,6 @@ typedef enum slang_unit_type_
 } slang_unit_type;
 
 
-typedef struct slang_var_pool_
-{
-   GLuint next_addr;
-} slang_var_pool;
-
-
 typedef struct slang_code_unit_
 {
    slang_variable_scope vars;
@@ -86,7 +80,6 @@ typedef struct slang_code_object_
 {
    slang_code_unit builtin[SLANG_BUILTIN_TOTAL];
    slang_code_unit unit;
-   slang_var_pool varpool;
    slang_atom_pool atompool;
 } slang_code_object;
 
