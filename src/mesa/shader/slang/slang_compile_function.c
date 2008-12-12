@@ -86,8 +86,8 @@ slang_function_construct(slang_function * func)
    _slang_variable_scope_ctr(func->parameters);
    func->param_count = 0;
    func->body = NULL;
-   func->address = ~0;
-   slang_fixup_table_init(&func->fixups);
+   //func->address = ~0;
+   //slang_fixup_table_init(&func->fixups);
    return 1;
 }
 
@@ -101,8 +101,22 @@ slang_function_destruct(slang_function * func)
       slang_operation_destruct(func->body);
       _slang_free(func->body);
    }
-   slang_fixup_table_free(&func->fixups);
+   //slang_fixup_table_free(&func->fixups);
 }
+
+
+slang_function *
+slang_new_function(slang_function_kind kind)
+{
+   slang_function *fun = (slang_function *)
+      _mesa_malloc(sizeof(slang_function));
+   if (fun) {
+      slang_function_construct(fun);
+      fun->kind = kind;
+   }
+   return fun;
+}
+
 
 /*
  * slang_function_scope

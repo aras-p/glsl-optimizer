@@ -1757,18 +1757,12 @@ _slang_find_function_by_max_argc(slang_function_scope *scope,
  * struct type.
  */
 static slang_function *
-_slang_make_constructor(slang_assemble_ctx *A, slang_struct *str)
+_slang_make_struct_constructor(slang_assemble_ctx *A, slang_struct *str)
 {
    const GLint numFields = str->fields->num_variables;
-
-   slang_function *fun = (slang_function *) _mesa_malloc(sizeof(slang_function));
-   if (!fun)
-      return NULL;
-
-   slang_function_construct(fun);
+   slang_function *fun = slang_new_function(SLANG_FUNC_CONSTRUCTOR);
 
    /* function header (name, return type) */
-   fun->kind = SLANG_FUNC_CONSTRUCTOR;
    fun->header.a_name = str->a_name;
    fun->header.type.qualifier = SLANG_QUAL_NONE;
    fun->header.type.specifier.type = SLANG_SPEC_STRUCT;
@@ -1887,7 +1881,6 @@ _slang_make_constructor(slang_assemble_ctx *A, slang_struct *str)
          ret->children[0].type = SLANG_OPER_IDENTIFIER;
          ret->children[0].a_id = var->a_name;
          ret->children[0].locals = _slang_variable_scope_new(scope);
-
       }
    }
    /*
@@ -1910,7 +1903,7 @@ _slang_locate_struct_constructor(slang_assemble_ctx *A, const char *name)
          /* found a structure type that matches the function name */
          if (!str->constructor) {
             /* create the constructor function now */
-            str->constructor = _slang_make_constructor(A, str);
+            str->constructor = _slang_make_struct_constructor(A, str);
          }
          return str->constructor;
       }
@@ -1918,6 +1911,29 @@ _slang_locate_struct_constructor(slang_assemble_ctx *A, const char *name)
    return NULL;
 }
 
+
+/**
+ * Generate a new slang_function to satisfy a call to an array constructor.
+ * Ex:  float[3](1., 2., 3.)
+ */
+static slang_function *
+_slang_make_array_constructor(slang_assemble_ctx *A, slang_operation *oper)
+{
+   slang_function *fun = slang_new_function(SLANG_FUNC_CONSTRUCTOR);
+   if (fun) {
+      slang_type_specifier_type baseType =
+         slang_type_specifier_type_from_string((char *) oper->a_id);
+
+      fun->header.a_name = oper->a_id;
+      fun->header.type.qualifier = SLANG_QUAL_NONE;
+      fun->header.type.specifier.type = SLANG_SPEC_ARRAY;
+      fun->header.type.specifier._array =
+         slang_type_specifier_new(baseType, NULL, NULL);
+
+
+   }
+   return fun;
+}
 
 
 static GLboolean
@@ -1959,11 +1975,15 @@ _slang_gen_function_call_name(slang_assemble_ctx *A, const char *name,
    if (atom == SLANG_ATOM_NULL)
       return NULL;
 
-   /*
-    * First, try to find function by name and exact argument type matching.
-    */
-   fun = _slang_locate_function(A->space.funcs, atom, params, param_count,
-				&A->space, A->atoms, A->log, &error);
+   if (oper->array_constructor) {
+      /* this needs special handling */
+      fun = _slang_make_array_constructor(A, oper);
+   }
+   else {
+      /* Try to find function by name and exact argument type matching */
+      fun = _slang_locate_function(A->space.funcs, atom, params, param_count,
+                                   &A->space, A->atoms, A->log, &error);
+   }
 
    if (error) {
       slang_info_log_error(A->log,

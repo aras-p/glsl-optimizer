@@ -2181,8 +2181,8 @@ parse_function(slang_parse_ctx * C, slang_output_ctx * O, int definition,
          /* destroy the existing function declaration and replace it
           * with the new one, remember to save the fixup table
           */
-         parsed_func.fixups = found_func->fixups;
-         slang_fixup_table_init(&found_func->fixups);
+         //parsed_func.fixups = found_func->fixups;
+         //slang_fixup_table_init(&found_func->fixups);
          slang_function_destruct(found_func);
          *found_func = parsed_func;
       }

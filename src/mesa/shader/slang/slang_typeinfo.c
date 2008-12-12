@@ -187,6 +187,21 @@ slang_type_specifier_dtr(slang_type_specifier * self)
    }
 }
 
+slang_type_specifier *
+slang_type_specifier_new(slang_type_specifier_type type,
+                         struct slang_struct_ *_struct,
+                         struct slang_type_specifier_ *_array)
+{
+   slang_type_specifier *spec =
+      (slang_type_specifier *) _mesa_malloc(sizeof(slang_type_specifier));
+   if (spec) {
+      spec->type = type;
+      spec->_struct = _struct;
+      spec->_array = _array;
+   }
+   return spec;
+}
+
 GLboolean
 slang_type_specifier_copy(slang_type_specifier * x,
                           const slang_type_specifier * y)
@@ -583,7 +598,18 @@ _slang_typeof_operation_(slang_operation * op,
       }
       break;
    case SLANG_OPER_CALL:
-      if (op->fun) {
+      if (op->array_constructor) {
+         /* build array typeinfo */
+         ti->spec.type = SLANG_SPEC_ARRAY;
+         ti->spec._array = (slang_type_specifier *)
+            _slang_alloc(sizeof(slang_type_specifier));
+         slang_type_specifier_ctr(ti->spec._array);
+
+         ti->spec._array->type =
+            slang_type_specifier_type_from_string((char *) op->a_id);
+         ti->array_len = op->num_children;
+      }
+      else if (op->fun) {
          /* we've resolved this call before */
          slang_type_specifier_copy(&ti->spec, &op->fun->header.type.specifier);
       }
