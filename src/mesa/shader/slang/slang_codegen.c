@@ -2707,24 +2707,6 @@ _slang_gen_var_decl(slang_assemble_ctx *A, slang_variable *var,
       store->Size = sz;
    }
 
-   /* setup default swizzle for storing the variable */
-   /* XXX this may not be needed anymore - remove & test */
-   switch (store->Size) {
-   case 2:
-      store->Swizzle = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y,
-                                     SWIZZLE_NIL, SWIZZLE_NIL);
-      break;
-   case 3:
-      store->Swizzle = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y,
-                                     SWIZZLE_Z, SWIZZLE_NIL);
-      break;
-   default:
-      /* Note that float-sized vars may be allocated in any x/y/z/w
-       * slot, but that won't be determined until code emit time.
-       */
-      store->Swizzle = SWIZZLE_NOOP;
-   }
-
    /* if there's an initializer, generate IR for the expression */
    if (initializer) {
       const char *varName = (const char *) var->a_name;
