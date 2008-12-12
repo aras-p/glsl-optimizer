@@ -213,7 +213,7 @@ slang_typeinfo_destruct(slang_typeinfo *);
 
 
 extern GLboolean
-_slang_typeof_operation_(struct slang_operation_ *,
+_slang_typeof_operation(struct slang_operation_ *,
                          const struct slang_name_space_ *,
                          slang_typeinfo *, slang_atom_pool *,
                          slang_info_log *log);

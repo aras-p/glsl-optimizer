@@ -490,7 +490,7 @@ typeof_math_call(const char *name, slang_operation *call,
  * \return GL_TRUE for success, GL_FALSE if failure
  */
 GLboolean
-_slang_typeof_operation_(slang_operation * op,
+_slang_typeof_operation(slang_operation * op,
                          const slang_name_space * space,
                          slang_typeinfo * ti,
                          slang_atom_pool * atoms,
@@ -522,7 +522,7 @@ _slang_typeof_operation_(slang_operation * op,
    case SLANG_OPER_DIVASSIGN:
    case SLANG_OPER_PREINCREMENT:
    case SLANG_OPER_PREDECREMENT:
-      if (!_slang_typeof_operation_(op->children, space, ti, atoms, log))
+      if (!_slang_typeof_operation(op->children, space, ti, atoms, log))
          return GL_FALSE;
       break;
    case SLANG_OPER_LITERAL_BOOL:
@@ -605,7 +605,7 @@ _slang_typeof_operation_(slang_operation * op,
       break;
    case SLANG_OPER_SEQUENCE:
       /* TODO: check [0] and [1] if they match */
-      if (!_slang_typeof_operation_(&op->children[1], space, ti, atoms, log)) {
+      if (!_slang_typeof_operation(&op->children[1], space, ti, atoms, log)) {
          return GL_FALSE;
       }
       ti->can_be_referenced = GL_FALSE;
@@ -619,7 +619,7 @@ _slang_typeof_operation_(slang_operation * op,
       /*case SLANG_OPER_ANDASSIGN: */
    case SLANG_OPER_SELECT:
       /* TODO: check [1] and [2] if they match */
-      if (!_slang_typeof_operation_(&op->children[1], space, ti, atoms, log)) {
+      if (!_slang_typeof_operation(&op->children[1], space, ti, atoms, log)) {
          return GL_FALSE;
       }
       ti->can_be_referenced = GL_FALSE;
@@ -652,7 +652,7 @@ _slang_typeof_operation_(slang_operation * op,
       break;
    /*case SLANG_OPER_MODULUS: */
    case SLANG_OPER_PLUS:
-      if (!_slang_typeof_operation_(op->children, space, ti, atoms, log))
+      if (!_slang_typeof_operation(op->children, space, ti, atoms, log))
          return GL_FALSE;
       ti->can_be_referenced = GL_FALSE;
       ti->is_swizzled = GL_FALSE;
@@ -669,7 +669,7 @@ _slang_typeof_operation_(slang_operation * op,
 
          if (!slang_typeinfo_construct(&_ti))
             return GL_FALSE;
-         if (!_slang_typeof_operation_(op->children, space, &_ti, atoms, log)) {
+         if (!_slang_typeof_operation(op->children, space, &_ti, atoms, log)) {
             slang_typeinfo_destruct(&_ti);
             return GL_FALSE;
          }
@@ -763,7 +763,7 @@ _slang_typeof_operation_(slang_operation * op,
 
          if (!slang_typeinfo_construct(&_ti))
             return GL_FALSE;
-         if (!_slang_typeof_operation_(op->children, space, &_ti, atoms, log)) {
+         if (!_slang_typeof_operation(op->children, space, &_ti, atoms, log)) {
             slang_typeinfo_destruct(&_ti);
             return GL_FALSE;
          }
@@ -869,7 +869,7 @@ _slang_typeof_operation_(slang_operation * op,
       break;
    case SLANG_OPER_POSTINCREMENT:
    case SLANG_OPER_POSTDECREMENT:
-      if (!_slang_typeof_operation_(op->children, space, ti, atoms, log))
+      if (!_slang_typeof_operation(op->children, space, ti, atoms, log))
          return GL_FALSE;
       ti->can_be_referenced = GL_FALSE;
       ti->is_swizzled = GL_FALSE;

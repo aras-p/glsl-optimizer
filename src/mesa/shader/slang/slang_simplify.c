@@ -380,7 +380,7 @@ _slang_cast_func_params(slang_operation *callOper, const slang_function *fun,
       /* Get type of arg[i] */
       if (!slang_typeinfo_construct(&argType))
          return GL_FALSE;
-      if (!_slang_typeof_operation_(&callOper->children[i], space,
+      if (!_slang_typeof_operation(&callOper->children[i], space,
                                     &argType, atoms, log)) {
          slang_typeinfo_destruct(&argType);
          return GL_FALSE;
@@ -464,7 +464,7 @@ _slang_adapt_call(slang_operation *callOper, const slang_function *fun,
          /* Get type of arg[i] */
          if (!slang_typeinfo_construct(&argType))
             return GL_FALSE;
-         if (!_slang_typeof_operation_(&callOper->children[i], space,
+         if (!_slang_typeof_operation(&callOper->children[i], space,
                                        &argType, atoms, log)) {
             slang_typeinfo_destruct(&argType);
             return GL_FALSE;
