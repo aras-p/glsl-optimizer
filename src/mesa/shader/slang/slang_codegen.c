@@ -61,6 +61,20 @@ static slang_ir_node *
 _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper);
 
 
+/**
+ * Retrieves type information about an operation.
+ * Returns GL_TRUE on success.
+ * Returns GL_FALSE otherwise.
+ */
+static GLboolean
+_slang_typeof_operation(const struct slang_assemble_ctx_ * A,
+                        slang_operation * op,
+                        slang_typeinfo * ti)
+{
+   return _slang_typeof_operation_(op, &A->space, ti, A->atoms, A->log);
+}
+
+
 static GLboolean
 is_sampler_type(const slang_fully_specified_type *t)
 {

@@ -55,17 +55,7 @@ typedef struct slang_name_space_
 } slang_name_space;
 
 
-typedef struct slang_assemble_ctx_
-{
-   slang_atom_pool *atoms;
-   slang_name_space space;
-   struct gl_program *program;
-   slang_var_table *vartable;
-   slang_info_log *log;
-   struct slang_label_ *curFuncEndLabel;
-   struct slang_ir_node_ *CurLoop;
-   struct slang_function_ *CurFunction;
-} slang_assemble_ctx;
+struct slang_assemble_ctx_;
 
 
 extern GLboolean
@@ -77,6 +67,43 @@ _slang_is_swizzle_mask(const slang_swizzle *swz, GLuint rows);
 extern GLvoid
 _slang_multiply_swizzles(slang_swizzle *, const slang_swizzle *,
                          const slang_swizzle *);
+
+
+typedef enum slang_type_variant_
+{
+   SLANG_VARIANT,    /* the default */
+   SLANG_INVARIANT   /* indicates the "invariant" keyword */
+} slang_type_variant;
+
+
+typedef enum slang_type_centroid_
+{
+   SLANG_CENTER,    /* the default */
+   SLANG_CENTROID   /* indicates the "centroid" keyword */
+} slang_type_centroid;
+
+
+typedef enum slang_type_qualifier_
+{
+   SLANG_QUAL_NONE,
+   SLANG_QUAL_CONST,
+   SLANG_QUAL_ATTRIBUTE,
+   SLANG_QUAL_VARYING,
+   SLANG_QUAL_UNIFORM,
+   SLANG_QUAL_OUT,
+   SLANG_QUAL_INOUT,
+   SLANG_QUAL_FIXEDOUTPUT,      /* internal */
+   SLANG_QUAL_FIXEDINPUT        /* internal */
+} slang_type_qualifier;
+
+
+typedef enum slang_type_precision_
+{
+   SLANG_PREC_DEFAULT,
+   SLANG_PREC_LOW,
+   SLANG_PREC_MEDIUM,
+   SLANG_PREC_HIGH
+} slang_type_precision;
 
 
 /**
@@ -119,6 +146,13 @@ typedef enum slang_type_specifier_type_
 } slang_type_specifier_type;
 
 
+extern slang_type_specifier_type
+slang_type_specifier_type_from_string(const char *);
+
+extern const char *
+slang_type_specifier_type_to_string(slang_type_specifier_type);
+
+
 /**
  * Describes more sophisticated types, like structs and arrays.
  */
@@ -155,6 +189,28 @@ slang_type_specifier_compatible(const slang_type_specifier * x,
                                 const slang_type_specifier * y);
 
 
+typedef struct slang_fully_specified_type_
+{
+   slang_type_qualifier qualifier;
+   slang_type_specifier specifier;
+   slang_type_precision precision;
+   slang_type_variant variant;
+   slang_type_centroid centroid;
+   GLint array_len;           /**< -1 if not an array type */
+} slang_fully_specified_type;
+
+extern int
+slang_fully_specified_type_construct(slang_fully_specified_type *);
+
+extern void
+slang_fully_specified_type_destruct(slang_fully_specified_type *);
+
+extern int
+slang_fully_specified_type_copy(slang_fully_specified_type *,
+				const slang_fully_specified_type *);
+
+
+
 typedef struct slang_typeinfo_
 {
    GLboolean can_be_referenced;
@@ -170,16 +226,6 @@ slang_typeinfo_construct(slang_typeinfo *);
 extern GLvoid
 slang_typeinfo_destruct(slang_typeinfo *);
 
-
-/**
- * Retrieves type information about an operation.
- * Returns GL_TRUE on success.
- * Returns GL_FALSE otherwise.
- */
-extern GLboolean
-_slang_typeof_operation(const slang_assemble_ctx *,
-                        struct slang_operation_ *,
-                        slang_typeinfo *);
 
 extern GLboolean
 _slang_typeof_operation_(struct slang_operation_ *,
