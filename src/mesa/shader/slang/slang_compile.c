@@ -270,6 +270,10 @@ static int parse_expression(slang_parse_ctx *, slang_output_ctx *,
                             slang_operation *);
 static int parse_type_specifier(slang_parse_ctx *, slang_output_ctx *,
                                 slang_type_specifier *);
+static int
+parse_type_array_size(slang_parse_ctx *C,
+                      slang_output_ctx *O,
+                      GLint *array_len);
 
 static GLboolean
 parse_array_len(slang_parse_ctx * C, slang_output_ctx * O, GLuint * len)
@@ -366,7 +370,8 @@ convert_to_array(slang_parse_ctx * C, slang_variable * var,
 static GLboolean
 parse_struct_field_var(slang_parse_ctx * C, slang_output_ctx * O,
                        slang_variable * var, slang_atom a_name,
-                       const slang_type_specifier * sp)
+                       const slang_type_specifier * sp,
+                       GLuint array_len)
 {
    var->a_name = a_name;
    if (var->a_name == SLANG_ATOM_NULL)
@@ -374,10 +379,19 @@ parse_struct_field_var(slang_parse_ctx * C, slang_output_ctx * O,
 
    switch (*C->I++) {
    case FIELD_NONE:
-      if (!slang_type_specifier_copy(&var->type.specifier, sp))
-         return GL_FALSE;
+      if (array_len != -1) {
+         if (!convert_to_array(C, var, sp))
+            return GL_FALSE;
+         var->array_len = array_len;
+      }
+      else {
+         if (!slang_type_specifier_copy(&var->type.specifier, sp))
+            return GL_FALSE;
+      }
       break;
    case FIELD_ARRAY:
+      if (array_len != -1)
+         return GL_FALSE;
       if (!convert_to_array(C, var, sp))
          return GL_FALSE;
       if (!parse_array_len(C, O, &var->array_len))
@@ -395,9 +409,12 @@ parse_struct_field(slang_parse_ctx * C, slang_output_ctx * O,
                    slang_struct * st, slang_type_specifier * sp)
 {
    slang_output_ctx o = *O;
+   GLint array_len;
 
    o.structs = st->structs;
    if (!parse_type_specifier(C, &o, sp))
+      RETURN0;
+   if (!parse_type_array_size(C, &o, &array_len))
       RETURN0;
 
    do {
@@ -413,7 +430,7 @@ parse_struct_field(slang_parse_ctx * C, slang_output_ctx * O,
          RETURN0;
       }
 
-      if (!parse_struct_field_var(C, &o, var, a_name, sp))
+      if (!parse_struct_field_var(C, &o, var, a_name, sp, array_len))
          RETURN0;
    }
    while (*C->I++ != FIELD_NONE);
@@ -748,6 +765,31 @@ parse_type_specifier(slang_parse_ctx * C, slang_output_ctx * O,
    return 1;
 }
 
+#define TYPE_SPECIFIER_NONARRAY 0
+#define TYPE_SPECIFIER_ARRAY    1
+
+static int
+parse_type_array_size(slang_parse_ctx *C,
+                      slang_output_ctx *O,
+                      GLint *array_len)
+{
+   GLuint size;
+
+   switch (*C->I++) {
+   case TYPE_SPECIFIER_NONARRAY:
+      *array_len = -1; /* -1 = not an array */
+      break;
+   case TYPE_SPECIFIER_ARRAY:
+      if (!parse_array_len(C, O, &size))
+         RETURN0;
+      *array_len = (GLint) size;
+      break;
+   default:
+      assert(0);
+      RETURN0;
+   }
+   return 1;
+}
 
 #define PRECISION_DEFAULT 0
 #define PRECISION_LOW     1
@@ -773,36 +815,6 @@ parse_type_precision(slang_parse_ctx *C,
       *precision = SLANG_PREC_HIGH;
       return 1;
    default:
-      RETURN0;
-   }
-}
-
-
-#define TYPE_ARRAY_SIZE      220
-#define TYPE_NO_ARRAY_SIZE   221
-
-
-/*
- * Parse array size (if present) in something like "uniform float [6] var;".
- */
-static int
-parse_type_array_size(slang_parse_ctx *C, slang_output_ctx * O,
-                      GLint *size)
-{
-   GLint arr = *C->I++;
-   GLuint sz;
-
-   switch (arr) {
-   case TYPE_ARRAY_SIZE:
-      if (!parse_array_len(C, O, &sz))
-         RETURN0;
-      *size = sz;
-      return 1;
-   case TYPE_NO_ARRAY_SIZE:
-      *size = -1; /* -1 = not an array */
-      return 1;
-   default:
-      assert(0);
       RETURN0;
    }
 }
@@ -978,8 +990,12 @@ static int
 parse_statement(slang_parse_ctx * C, slang_output_ctx * O,
                 slang_operation * oper)
 {
+   int op;
+
    oper->locals->outer_scope = O->vars;
-   switch (*C->I++) {
+
+   op = *C->I++;
+   switch (op) {
    case OP_BLOCK_BEGIN_NO_NEW_SCOPE:
       /* parse child statements, do not create new variable scope */
       oper->type = SLANG_OPER_BLOCK_NO_NEW_SCOPE;
@@ -1132,6 +1148,7 @@ parse_statement(slang_parse_ctx * C, slang_output_ctx * O,
       }
       break;
    default:
+      printf("Unexpected operation %d\n", op);
       RETURN0;
    }
    return 1;
@@ -1178,6 +1195,9 @@ is_constructor_name(const char *name, slang_atom a_name,
       return 1;
    return slang_struct_scope_find(structs, a_name, 1) != NULL;
 }
+
+#define FUNCTION_CALL_NONARRAY 0
+#define FUNCTION_CALL_ARRAY    1
 
 static int
 parse_expression(slang_parse_ctx * C, slang_output_ctx * O,
@@ -1419,23 +1439,72 @@ parse_expression(slang_parse_ctx * C, slang_output_ctx * O,
 #endif
          break;
       case OP_CALL:
-         op->type = SLANG_OPER_CALL;
-         op->a_id = parse_identifier(C);
-         if (op->a_id == SLANG_ATOM_NULL)
-            RETURN0;
-         while (*C->I != OP_END)
-            if (!parse_child_operation(C, O, op, 0))
-               RETURN0;
-         C->I++;
+         {
+            GLboolean array_constructor = GL_FALSE;
+            GLint array_constructor_size;
 
-         if (!C->parsing_builtin
-             && !slang_function_scope_find_by_name(O->funs, op->a_id, 1)) {
-            const char *id;
-
-            id = slang_atom_pool_id(C->atoms, op->a_id);
-            if (!is_constructor_name(id, op->a_id, O->structs)) {
-               slang_info_log_error(C->L, "%s: undeclared function name.", id);
+            op->type = SLANG_OPER_CALL;
+            op->a_id = parse_identifier(C);
+            if (op->a_id == SLANG_ATOM_NULL)
                RETURN0;
+            switch (*C->I++) {
+            case FUNCTION_CALL_NONARRAY:
+               /* Nothing to do. */
+               break;
+            case FUNCTION_CALL_ARRAY:
+               /* Calling an array constructor. For example:
+                *   float[3](1.1, 2.2, 3.3);
+                */
+               if (!O->allow_array_types) {
+                  slang_info_log_error(C->L,
+                                       "array constructors not allowed "
+                                       "in this GLSL version");
+                  RETURN0;
+               }
+               else {
+                  array_constructor = GL_TRUE;
+                  /* parse the array constructor size */
+                  slang_operation array_size;
+                  slang_operation_construct(&array_size);
+                  if (!parse_expression(C, O, &array_size)) {
+                     slang_operation_destruct(&array_size);
+                     return GL_FALSE;
+                  }
+                  if (array_size.type != SLANG_OPER_LITERAL_INT) {
+                     slang_info_log_error(C->L,
+                        "constructor array size is not an integer");
+                     slang_operation_destruct(&array_size);
+                     RETURN0;
+                  }
+                  array_constructor_size = (int) array_size.literal[0];
+                  slang_operation_destruct(&array_size);
+               }
+               break;
+            default:
+               assert(0);
+               RETURN0;
+            }
+            while (*C->I != OP_END)
+               if (!parse_child_operation(C, O, op, 0))
+                  RETURN0;
+            C->I++;
+
+            if (array_constructor &&
+                array_constructor_size != op->num_children) {
+               slang_info_log_error(C->L, "number of parameters to array"
+                                    " constructor does not match array size");
+               RETURN0;
+            }
+
+            if (!C->parsing_builtin
+                && !slang_function_scope_find_by_name(O->funs, op->a_id, 1)) {
+               const char *id;
+
+               id = slang_atom_pool_id(C->atoms, op->a_id);
+               if (!is_constructor_name(id, op->a_id, O->structs)) {
+                  slang_info_log_error(C->L, "%s: undeclared function name.", id);
+                  RETURN0;
+               }
             }
          }
          break;
@@ -1528,9 +1597,29 @@ parse_parameter_declaration(slang_parse_ctx * C, slang_output_ctx * O,
    /* parse parameter's type specifier and name */
    if (!parse_type_specifier(C, O, &param->type.specifier))
       RETURN0;
+   if (!parse_type_array_size(C, O, &param->type.array_len))
+      RETURN0;
    param->a_name = parse_identifier(C);
    if (param->a_name == SLANG_ATOM_NULL)
       RETURN0;
+
+   /* first-class array
+    */
+   if (param->type.array_len >= 0) {
+      slang_type_specifier p;
+
+      slang_type_specifier_ctr(&p);
+      if (!slang_type_specifier_copy(&p, &param->type.specifier)) {
+         slang_type_specifier_dtr(&p);
+         RETURN0;
+      }
+      if (!convert_to_array(C, param, &p)) {
+         slang_type_specifier_dtr(&p);
+         RETURN0;
+      }
+      slang_type_specifier_dtr(&p);
+      param->array_len = param->type.array_len;
+   }
 
    /* if the parameter is an array, parse its size (the size must be
     * explicitly defined
@@ -1538,24 +1627,29 @@ parse_parameter_declaration(slang_parse_ctx * C, slang_output_ctx * O,
    if (*C->I++ == PARAMETER_ARRAY_PRESENT) {
       slang_type_specifier p;
 
+      if (param->type.array_len >= 0) {
+         slang_info_log_error(C->L, "multi-dimensional arrays not allowed");
+         RETURN0;
+      }
       slang_type_specifier_ctr(&p);
       if (!slang_type_specifier_copy(&p, &param->type.specifier)) {
          slang_type_specifier_dtr(&p);
-         return GL_FALSE;
+         RETURN0;
       }
       if (!convert_to_array(C, param, &p)) {
          slang_type_specifier_dtr(&p);
-         return GL_FALSE;
+         RETURN0;
       }
       slang_type_specifier_dtr(&p);
       if (!parse_array_len(C, O, &param->array_len))
-         return GL_FALSE;
+         RETURN0;
    }
 
+#if 0
    /* calculate the parameter size */
    if (!calculate_var_size(C, O, param))
-      return GL_FALSE;
-
+      RETURN0;
+#endif
    /* TODO: allocate the local address here? */
    return 1;
 }
@@ -1884,13 +1978,27 @@ parse_init_declarator(slang_parse_ctx * C, slang_output_ctx * O,
    switch (*C->I++) {
    case VARIABLE_NONE:
       /* simple variable declarator - just copy the specifier */
-      if (!slang_type_specifier_copy(&var->type.specifier, &type->specifier))
-         RETURN0;
+      if (type->array_len >= 0) {
+         /* The type was something like "float[4]" */
+         convert_to_array(C, var, &type->specifier);
+         var->array_len = type->array_len;
+      }
+      else {
+         if (!slang_type_specifier_copy(&var->type.specifier, &type->specifier))
+            RETURN0;
+      }
       break;
    case VARIABLE_INITIALIZER:
       /* initialized variable - copy the specifier and parse the expression */
-      if (!slang_type_specifier_copy(&var->type.specifier, &type->specifier))
-         RETURN0;
+      if (type->array_len >= 0) {
+         /* The type was something like "float[4]" */
+         convert_to_array(C, var, &type->specifier);
+         var->array_len = type->array_len;
+      }
+      else {
+         if (!slang_type_specifier_copy(&var->type.specifier, &type->specifier))
+            RETURN0;
+      }
       var->initializer =
          (slang_operation *) _slang_alloc(sizeof(slang_operation));
       if (var->initializer == NULL) {
@@ -1908,12 +2016,20 @@ parse_init_declarator(slang_parse_ctx * C, slang_output_ctx * O,
       break;
    case VARIABLE_ARRAY_UNKNOWN:
       /* unsized array - mark it as array and copy the specifier to
-         the array element
-      */
+       * the array element
+       */
+      if (type->array_len >= 0) {
+         slang_info_log_error(C->L, "multi-dimensional arrays not allowed");
+         RETURN0;
+      }
       if (!convert_to_array(C, var, &type->specifier))
          return GL_FALSE;
       break;
    case VARIABLE_ARRAY_EXPLICIT:
+      if (type->array_len >= 0) {
+         slang_info_log_error(C->L, "multi-dimensional arrays not allowed");
+         RETURN0;
+      }
       if (!convert_to_array(C, var, &type->specifier))
          return GL_FALSE;
       if (!parse_array_len(C, O, &var->array_len))
@@ -1921,16 +2037,6 @@ parse_init_declarator(slang_parse_ctx * C, slang_output_ctx * O,
       break;
    default:
       RETURN0;
-   }
-
-   if (type->array_len >= 0) {
-      /* The type was something like "float[4]" */
-      if (var->array_len != 0) {
-         slang_info_log_error(C->L, "multi-dimensional arrays not allowed");
-         RETURN0;
-      }
-      convert_to_array(C, var, &type->specifier);
-      var->array_len = type->array_len;
    }
 
    /* allocate global address space for a variable with a known size */
