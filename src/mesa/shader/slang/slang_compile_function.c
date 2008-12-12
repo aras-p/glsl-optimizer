@@ -70,7 +70,7 @@ slang_function *
 slang_function_new(slang_function_kind kind)
 {
    slang_function *fun = (slang_function *)
-      _mesa_malloc(sizeof(slang_function));
+      _slang_alloc(sizeof(slang_function));
    if (fun) {
       slang_function_construct(fun);
       fun->kind = kind;
