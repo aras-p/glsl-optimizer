@@ -1790,7 +1790,7 @@ _slang_make_struct_constructor(slang_assemble_ctx *A, slang_struct *str)
          printf("Field %d: %s\n", i, (char*) str->fields->variables[i]->a_name);
          */
          slang_variable *p = slang_variable_scope_grow(fun->parameters);
-         *p = *str->fields->variables[i]; /* copy the type */
+         *p = *str->fields->variables[i]; /* copy the variable and type */
          p->type.qualifier = SLANG_QUAL_CONST;
       }
       fun->param_count = fun->parameters->num_variables;
@@ -1933,19 +1933,146 @@ _slang_locate_struct_constructor(slang_assemble_ctx *A, const char *name)
 static slang_function *
 _slang_make_array_constructor(slang_assemble_ctx *A, slang_operation *oper)
 {
-   slang_function *fun = slang_function_new(SLANG_FUNC_CONSTRUCTOR);
-   if (fun) {
-      slang_type_specifier_type baseType =
-         slang_type_specifier_type_from_string((char *) oper->a_id);
+   slang_type_specifier_type baseType;
+   slang_function *fun;
+   int num_elements;
 
+   fun = slang_function_new(SLANG_FUNC_CONSTRUCTOR);
+   if (!fun)
+      return NULL;
+
+   baseType = slang_type_specifier_type_from_string((char *) oper->a_id);
+
+   num_elements = oper->num_children;
+
+   /* function header, return type */
+   {
       fun->header.a_name = oper->a_id;
       fun->header.type.qualifier = SLANG_QUAL_NONE;
       fun->header.type.specifier.type = SLANG_SPEC_ARRAY;
       fun->header.type.specifier._array =
          slang_type_specifier_new(baseType, NULL, NULL);
-
-
+      fun->header.type.array_len = num_elements;
    }
+
+   /* function parameters (= number of elements) */
+   {
+      GLint i;
+      for (i = 0; i < num_elements; i++) {
+         /*
+         printf("Field %d: %s\n", i, (char*) str->fields->variables[i]->a_name);
+         */
+         slang_variable *p = slang_variable_scope_grow(fun->parameters);
+         char name[10];
+         snprintf(name, sizeof(name), "p%d", i);
+         p->a_name = slang_atom_pool_atom(A->atoms, name);
+         p->type.qualifier = SLANG_QUAL_CONST;
+         p->type.specifier.type = baseType;
+      }
+      fun->param_count = fun->parameters->num_variables;
+   }
+
+   /* Add __retVal to params */
+   {
+      slang_variable *p = slang_variable_scope_grow(fun->parameters);
+      slang_atom a_retVal = slang_atom_pool_atom(A->atoms, "__retVal");
+      assert(a_retVal);
+      p->a_name = a_retVal;
+      p->type = fun->header.type;
+      p->type.qualifier = SLANG_QUAL_OUT;
+      p->type.specifier.type = baseType;
+      fun->param_count++;
+   }
+
+   /* function body is:
+    *    block:
+    *       declare T;
+    *       T[0] = p0;
+    *       T[1] = p1;
+    *       ...
+    *       T[n] = pn;
+    *       return T;
+    */
+   {
+      slang_variable_scope *scope;
+      slang_variable *var;
+      GLint i;
+
+      fun->body = slang_operation_new(1);
+      fun->body->type = SLANG_OPER_BLOCK_NEW_SCOPE;
+      fun->body->num_children = num_elements + 2;
+      fun->body->children = slang_operation_new(num_elements + 2);
+
+      scope = fun->body->locals;
+      scope->outer_scope = fun->parameters;
+
+      /* create local var 't' */
+      var = slang_variable_scope_grow(scope);
+      var->a_name = slang_atom_pool_atom(A->atoms, "ttt");
+      var->type = fun->header.type;/*XXX copy*/
+
+      /* declare t */
+      {
+         slang_operation *decl;
+
+         decl = &fun->body->children[0];
+         decl->type = SLANG_OPER_VARIABLE_DECL;
+         decl->locals = _slang_variable_scope_new(scope);
+         decl->a_id = var->a_name;
+      }
+
+      /* assign params to elements of t */
+      for (i = 0; i < num_elements; i++) {
+         slang_operation *assign = &fun->body->children[1 + i];
+
+         assign->type = SLANG_OPER_ASSIGN;
+         assign->locals = _slang_variable_scope_new(scope);
+         assign->num_children = 2;
+         assign->children = slang_operation_new(2);
+         
+         {
+            slang_operation *lhs = &assign->children[0];
+
+            lhs->type = SLANG_OPER_SUBSCRIPT;
+            lhs->locals = _slang_variable_scope_new(scope);
+            lhs->num_children = 2;
+            lhs->children = slang_operation_new(2);
+ 
+            lhs->children[0].type = SLANG_OPER_IDENTIFIER;
+            lhs->children[0].a_id = var->a_name;
+            lhs->children[0].locals = _slang_variable_scope_new(scope);
+
+            lhs->children[1].type = SLANG_OPER_LITERAL_INT;
+            lhs->children[1].literal[0] = (GLfloat) i;
+         }
+
+         {
+            slang_operation *rhs = &assign->children[1];
+
+            rhs->type = SLANG_OPER_IDENTIFIER;
+            rhs->locals = _slang_variable_scope_new(scope);
+            rhs->a_id = fun->parameters->variables[i]->a_name;
+         }         
+      }
+
+      /* return t; */
+      {
+         slang_operation *ret = &fun->body->children[num_elements + 1];
+
+         ret->type = SLANG_OPER_RETURN;
+         ret->locals = _slang_variable_scope_new(scope);
+         ret->num_children = 1;
+         ret->children = slang_operation_new(1);
+         ret->children[0].type = SLANG_OPER_IDENTIFIER;
+         ret->children[0].a_id = var->a_name;
+         ret->children[0].locals = _slang_variable_scope_new(scope);
+      }
+   }
+
+
+   slang_print_function(fun, 1);
+
+
    return fun;
 }
 
@@ -1982,7 +2109,6 @@ _slang_gen_function_call_name(slang_assemble_ctx *A, const char *name,
    const GLuint param_count = oper->num_children;
    slang_atom atom;
    slang_function *fun;
-   GLboolean error;
    slang_ir_node *n;
 
    atom = slang_atom_pool_atom(A->atoms, name);
@@ -1995,15 +2121,15 @@ _slang_gen_function_call_name(slang_assemble_ctx *A, const char *name,
    }
    else {
       /* Try to find function by name and exact argument type matching */
+      GLboolean error = GL_FALSE;
       fun = _slang_function_locate(A->space.funcs, atom, params, param_count,
                                    &A->space, A->atoms, A->log, &error);
-   }
-
-   if (error) {
-      slang_info_log_error(A->log,
-                           "Function '%s' not found (check argument types)",
-                           name);
-      return NULL;
+      if (error) {
+         slang_info_log_error(A->log,
+                              "Function '%s' not found (check argument types)",
+                              name);
+         return NULL;
+      }
    }
 
    if (!fun) {
@@ -2082,6 +2208,11 @@ _slang_gen_function_call_name(slang_assemble_ctx *A, const char *name,
       GLint size = _slang_sizeof_type_specifier(&fun->header.type.specifier);
       n->Store = _slang_new_ir_storage(PROGRAM_TEMPORARY, -1, size);
       /*printf("Alloc storage for function result, size %d \n", size);*/
+   }
+
+   if (oper->array_constructor) {
+      /* free the temporary array constructor function now */
+      slang_function_destruct(fun);
    }
 
    return n;
