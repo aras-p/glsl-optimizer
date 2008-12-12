@@ -25,10 +25,6 @@
 #ifndef SLANG_COMPILE_VARIABLE_H
 #define SLANG_COMPILE_VARIABLE_H
 
-#if defined __cplusplus
-extern "C" {
-#endif
-
 
 struct slang_ir_storage_;
 
@@ -90,9 +86,5 @@ extern slang_variable *
 _slang_locate_variable(const slang_variable_scope *, const slang_atom a_name,
                        GLboolean all);
 
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif /* SLANG_COMPILE_VARIABLE_H */
