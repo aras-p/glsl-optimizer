@@ -34,6 +34,9 @@
 
 struct slang_operation_;
 
+struct slang_name_space_;
+
+
 
 /**
  * Holds complete information about vector swizzle - the <swizzle>
@@ -47,26 +50,8 @@ typedef struct slang_swizzle_
    GLuint swizzle[4];
 } slang_swizzle;
 
-typedef struct slang_name_space_
-{
-   struct slang_function_scope_ *funcs;
-   struct slang_struct_scope_ *structs;
-   struct slang_variable_scope_ *vars;
-} slang_name_space;
-
-
-struct slang_assemble_ctx_;
-
-
 extern GLboolean
 _slang_is_swizzle(const char *field, GLuint rows, slang_swizzle *swz);
-
-extern GLboolean
-_slang_is_swizzle_mask(const slang_swizzle *swz, GLuint rows);
-
-extern GLvoid
-_slang_multiply_swizzles(slang_swizzle *, const slang_swizzle *,
-                         const slang_swizzle *);
 
 
 typedef enum slang_type_variant_
@@ -229,7 +214,7 @@ slang_typeinfo_destruct(slang_typeinfo *);
 
 extern GLboolean
 _slang_typeof_operation_(struct slang_operation_ *,
-                         const slang_name_space *,
+                         const struct slang_name_space_ *,
                          slang_typeinfo *, slang_atom_pool *,
                          slang_info_log *log);
 

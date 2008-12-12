@@ -37,6 +37,13 @@
 extern "C" {
 #endif
 
+typedef struct slang_name_space_
+{
+   struct slang_function_scope_ *funcs;
+   struct slang_struct_scope_ *structs;
+   struct slang_variable_scope_ *vars;
+} slang_name_space;
+
 typedef enum slang_unit_type_
 {
    SLANG_UNIT_FRAGMENT_SHADER,

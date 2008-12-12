@@ -84,7 +84,7 @@ extern struct slang_function_ *
 _slang_locate_function(const struct slang_function_scope_ *funcs,
                        slang_atom name, struct slang_operation_ *params,
                        GLuint num_params,
-                       const slang_name_space *space,
+                       const struct slang_name_space_ *space,
                        slang_atom_pool *atoms, slang_info_log *log,
                        GLboolean *error);
 
