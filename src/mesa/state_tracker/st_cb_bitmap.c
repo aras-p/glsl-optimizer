@@ -349,8 +349,7 @@ make_bitmap_texture(GLcontext *ctx, GLsizei width, GLsizei height,
    return pt;
 }
 
-
-static void
+static GLuint
 setup_bitmap_vertex_data(struct st_context *st,
                          int x, int y, int width, int height,
                          float z, const float color[4])
@@ -369,12 +368,18 @@ setup_bitmap_vertex_data(struct st_context *st,
    const GLfloat clip_y0 = (GLfloat)(y0 / fb_height * 2.0 - 1.0);
    const GLfloat clip_x1 = (GLfloat)(x1 / fb_width * 2.0 - 1.0);
    const GLfloat clip_y1 = (GLfloat)(y1 / fb_height * 2.0 - 1.0);
+   const GLuint max_slots = 4096 / sizeof(st->bitmap.vertices);
    GLuint i;
-   void *buf;
+
+   if (st->bitmap.vbuf_slot >= max_slots) {
+      pipe_buffer_reference(pipe->screen, &st->bitmap.vbuf, NULL);
+      st->bitmap.vbuf_slot = 0;
+   }
 
    if (!st->bitmap.vbuf) {
-      st->bitmap.vbuf = pipe_buffer_create(pipe->screen, 32, PIPE_BUFFER_USAGE_VERTEX,
-                                           sizeof(st->bitmap.vertices));
+      st->bitmap.vbuf = pipe_buffer_create(pipe->screen, 32, 
+                                           PIPE_BUFFER_USAGE_VERTEX,
+                                           max_slots * sizeof(st->bitmap.vertices));
    }
 
    /* Positions are in clip coords since we need to do clipping in case
@@ -413,9 +418,19 @@ setup_bitmap_vertex_data(struct st_context *st,
    }
 
    /* put vertex data into vbuf */
-   buf = pipe_buffer_map(pipe->screen, st->bitmap.vbuf, PIPE_BUFFER_USAGE_CPU_WRITE);
-   memcpy(buf, st->bitmap.vertices, sizeof(st->bitmap.vertices));
-   pipe_buffer_unmap(pipe->screen, st->bitmap.vbuf);
+   {
+      char *buf = pipe_buffer_map(pipe->screen, 
+                                  st->bitmap.vbuf, 
+                                  PIPE_BUFFER_USAGE_CPU_WRITE);
+
+      memcpy(buf + st->bitmap.vbuf_slot * sizeof st->bitmap.vertices, 
+             st->bitmap.vertices, 
+             sizeof st->bitmap.vertices);
+
+      pipe_buffer_unmap(pipe->screen, st->bitmap.vbuf);
+   }
+
+   return st->bitmap.vbuf_slot++ * sizeof st->bitmap.vertices;
 }
 
 
@@ -434,6 +449,7 @@ draw_bitmap_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
    struct cso_context *cso = ctx->st->cso_context;
    struct st_fragment_program *stfp;
    GLuint maxSize;
+   GLuint offset;
 
    stfp = combined_bitmap_fragment_program(ctx);
 
@@ -518,11 +534,11 @@ draw_bitmap_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
    }
 
    /* draw textured quad */
-   setup_bitmap_vertex_data(st, x, y, width, height,
-                            ctx->Current.RasterPos[2],
-                            color);
+   offset = setup_bitmap_vertex_data(st, x, y, width, height,
+                                     ctx->Current.RasterPos[2],
+                                     color);
 
-   util_draw_vertex_buffer(pipe, st->bitmap.vbuf,
+   util_draw_vertex_buffer(pipe, st->bitmap.vbuf, offset,
                            PIPE_PRIM_TRIANGLE_FAN,
                            4,  /* verts */
                            3); /* attribs/vert */
@@ -592,12 +608,12 @@ st_flush_bitmap_cache(struct st_context *st)
          struct pipe_screen *screen = pipe->screen;
 
          assert(cache->xmin <= cache->xmax);
-         /*
-         printf("flush size %d x %d  at %d, %d\n",
+ 
+/*         printf("flush size %d x %d  at %d, %d\n",
                 cache->xmax - cache->xmin,
                 cache->ymax - cache->ymin,
                 cache->xpos, cache->ypos);
-         */
+*/
 
          /* The texture surface has been mapped until now.
           * So unmap and release the texture surface before drawing.
@@ -621,6 +637,20 @@ st_flush_bitmap_cache(struct st_context *st)
 
       reset_cache(st);
    }
+}
+
+/* Flush bitmap cache and release vertex buffer.
+ */
+void
+st_flush_bitmap( struct st_context *st )
+{
+   st_flush_bitmap_cache(st);
+
+   /* Release vertex buffer to avoid synchronous rendering if we were
+    * to map it in the next frame.
+    */
+   pipe_buffer_reference(st->pipe->screen, &st->bitmap.vbuf, NULL);
+   st->bitmap.vbuf_slot = 0;
 }
 
 

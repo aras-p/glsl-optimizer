@@ -426,7 +426,7 @@ st_finish_render_texture(GLcontext *ctx,
    if (!strb)
       return;
 
-   ctx->st->pipe->flush(ctx->st->pipe, PIPE_FLUSH_RENDER_CACHE, NULL);
+   st_flush( ctx->st, PIPE_FLUSH_RENDER_CACHE, NULL );
 
    if (strb->surface)
       screen->tex_surface_release( screen, &strb->surface );

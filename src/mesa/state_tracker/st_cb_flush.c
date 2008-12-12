@@ -37,11 +37,14 @@
 #include "st_context.h"
 #include "st_cb_bitmap.h"
 #include "st_cb_flush.h"
+#include "st_cb_clear.h"
 #include "st_cb_fbo.h"
 #include "st_public.h"
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_winsys.h"
+#include "util/u_gen_mipmap.h"
+#include "util/u_blit.h"
 
 
 static INLINE GLboolean
@@ -78,7 +81,13 @@ void st_flush( struct st_context *st, uint pipeFlushFlags,
 {
    FLUSH_VERTICES(st->ctx, 0);
 
-   st_flush_bitmap_cache(st);
+   /* Release any vertex buffers that might potentially be accessed in
+    * successive frames:
+    */
+   st_flush_bitmap(st);
+   st_flush_clear(st);
+   util_blit_flush(st->blit);
+   util_gen_mipmap_flush(st->gen_mipmap);
 
    st->pipe->flush( st->pipe, pipeFlushFlags, fence );
 }

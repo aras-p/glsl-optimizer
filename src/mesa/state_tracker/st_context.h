@@ -154,6 +154,7 @@ struct st_context
       void *vs;
       float vertices[4][3][4];  /**< vertex pos + color + texcoord */
       struct pipe_buffer *vbuf;
+      unsigned vbuf_slot;       /* next free slot in vbuf */
       struct bitmap_cache *cache;
    } bitmap;
 
@@ -173,6 +174,7 @@ struct st_context
       void *fs;
       float vertices[4][2][4];  /**< vertex pos + color */
       struct pipe_buffer *vbuf;
+      unsigned vbuf_slot;
    } clear;
 
    void *passthrough_fs;  /**< simple pass-through frag shader */

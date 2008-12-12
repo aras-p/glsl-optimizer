@@ -494,7 +494,7 @@ draw_quad(GLcontext *ctx, GLfloat x0, GLfloat y0, GLfloat z,
       memcpy(map, verts, sizeof(verts));
       pipe_buffer_unmap(pipe->screen, buf);
 
-      util_draw_vertex_buffer(pipe, buf,
+      util_draw_vertex_buffer(pipe, buf, 0,
                               PIPE_PRIM_QUADS,
                               4,  /* verts */
                               3); /* attribs/vert */

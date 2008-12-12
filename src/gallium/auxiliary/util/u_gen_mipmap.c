@@ -69,6 +69,8 @@ struct gen_mipmap_state
    void *fs;
 
    struct pipe_buffer *vbuf;  /**< quad vertices */
+   unsigned vbuf_slot;
+
    float vertices[4][2][4];   /**< vertex/texcoords for quad */
 };
 
@@ -779,10 +781,28 @@ util_create_gen_mipmap(struct pipe_context *pipe,
 }
 
 
-static void
+static unsigned get_next_slot( struct gen_mipmap_state *ctx )
+{
+   const unsigned max_slots = 4096 / sizeof ctx->vertices;
+
+   if (ctx->vbuf_slot >= max_slots) 
+      util_gen_mipmap_flush( ctx );
+
+   if (!ctx->vbuf) {
+      ctx->vbuf = pipe_buffer_create(ctx->pipe->screen,
+                                     32,
+                                     PIPE_BUFFER_USAGE_VERTEX,
+                                     max_slots * sizeof ctx->vertices);
+   }
+   
+   return ctx->vbuf_slot++ * sizeof ctx->vertices;
+}
+
+static unsigned
 set_vertex_data(struct gen_mipmap_state *ctx, float width, float height)
 {
    void *buf;
+   unsigned offset;
 
    ctx->vertices[0][0][0] = 0.0f; /*x*/
    ctx->vertices[0][0][1] = 0.0f; /*y*/
@@ -804,12 +824,16 @@ set_vertex_data(struct gen_mipmap_state *ctx, float width, float height)
    ctx->vertices[3][1][0] = 0.0f;
    ctx->vertices[3][1][1] = 1.0f;
 
+   offset = get_next_slot( ctx );
+
    buf = pipe_buffer_map(ctx->pipe->screen, ctx->vbuf,
                          PIPE_BUFFER_USAGE_CPU_WRITE);
 
-   memcpy(buf, ctx->vertices, sizeof(ctx->vertices));
+   memcpy((char *)buf + offset, ctx->vertices, sizeof(ctx->vertices));
 
    pipe_buffer_unmap(ctx->pipe->screen, ctx->vbuf);
+
+   return offset;
 }
 
 
@@ -834,6 +858,17 @@ util_destroy_gen_mipmap(struct gen_mipmap_state *ctx)
 }
 
 
+
+/* Release vertex buffer at end of frame to avoid synchronous
+ * rendering.
+ */
+void util_gen_mipmap_flush( struct gen_mipmap_state *ctx )
+{
+   pipe_buffer_reference(ctx->pipe->screen, &ctx->vbuf, NULL);
+   ctx->vbuf_slot = 0;
+} 
+
+
 /**
  * Generate mipmap images.  It's assumed all needed texture memory is
  * already allocated.
@@ -855,6 +890,7 @@ util_gen_mipmap(struct gen_mipmap_state *ctx,
    struct pipe_framebuffer_state fb;
    uint dstLevel;
    uint zslice = 0;
+   uint offset;
 
    /* check if we can render in the texture's format */
    if (!screen->is_format_supported(screen, pt->format, PIPE_TEXTURE_2D,
@@ -925,10 +961,13 @@ util_gen_mipmap(struct gen_mipmap_state *ctx,
       cso_set_sampler_textures(ctx->cso, 1, &pt);
 
       /* quad coords in window coords (bypassing clipping, viewport mapping) */
-      set_vertex_data(ctx,
-                      (float) pt->width[dstLevel],
-                      (float) pt->height[dstLevel]);
-      util_draw_vertex_buffer(ctx->pipe, ctx->vbuf,
+      offset = set_vertex_data(ctx,
+                               (float) pt->width[dstLevel],
+                               (float) pt->height[dstLevel]);
+
+      util_draw_vertex_buffer(ctx->pipe, 
+                              ctx->vbuf,
+                              offset,
                               PIPE_PRIM_TRIANGLE_FAN,
                               4,  /* verts */
                               2); /* attribs/vert */
