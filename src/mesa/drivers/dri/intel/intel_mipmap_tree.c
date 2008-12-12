@@ -163,7 +163,7 @@ intel_miptree_create_for_region(struct intel_context *intel,
    mt->pitch = region->pitch;
 #endif
 
-   mt->region = region;
+   intel_region_reference(&mt->region, region);
 
    return mt;
  }
