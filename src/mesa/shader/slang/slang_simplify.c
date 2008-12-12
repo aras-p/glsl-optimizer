@@ -135,7 +135,7 @@ _slang_simplify(slang_operation *oper,
       /* look for user-defined constant */
       {
          slang_variable *var;
-         var = _slang_locate_variable(oper->locals, oper->a_id, GL_TRUE);
+         var = _slang_variable_locate(oper->locals, oper->a_id, GL_TRUE);
          if (var) {
             if (var->type.qualifier == SLANG_QUAL_CONST &&
                 var->initializer &&

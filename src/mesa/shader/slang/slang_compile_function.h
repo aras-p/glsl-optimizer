@@ -51,7 +51,10 @@ typedef struct slang_function_
 
 extern int slang_function_construct(slang_function *);
 extern void slang_function_destruct(slang_function *);
-extern slang_function *slang_new_function(slang_function_kind kind);
+extern slang_function *slang_function_new(slang_function_kind kind);
+
+extern GLboolean
+_slang_function_has_return_value(const slang_function *fun);
 
 
 /**
@@ -71,9 +74,6 @@ _slang_function_scope_ctr(slang_function_scope *);
 extern void
 slang_function_scope_destruct(slang_function_scope *);
 
-extern GLboolean
-_slang_function_has_return_value(const slang_function *fun);
-
 extern int
 slang_function_scope_find_by_name(slang_function_scope *, slang_atom, int);
 
@@ -81,7 +81,7 @@ extern slang_function *
 slang_function_scope_find(slang_function_scope *, slang_function *, int);
 
 extern struct slang_function_ *
-_slang_locate_function(const struct slang_function_scope_ *funcs,
+_slang_function_locate(const struct slang_function_scope_ *funcs,
                        slang_atom name, struct slang_operation_ *params,
                        GLuint num_params,
                        const struct slang_name_space_ *space,

@@ -425,7 +425,7 @@ _slang_typeof_function(slang_atom a_name,
 {
    GLboolean error;
 
-   *funFound = _slang_locate_function(space->funcs, a_name, params,
+   *funFound = _slang_function_locate(space->funcs, a_name, params,
                                       num_params, space, atoms, log, &error);
    if (error)
       return GL_FALSE;
@@ -589,7 +589,7 @@ _slang_typeof_operation_(slang_operation * op,
    case SLANG_OPER_VARIABLE_DECL:
       {
          slang_variable *var;
-         var = _slang_locate_variable(op->locals, op->a_id, GL_TRUE);
+         var = _slang_variable_locate(op->locals, op->a_id, GL_TRUE);
          if (!var) {
             slang_info_log_error(log, "undefined variable '%s'",
                                  (char *) op->a_id);
@@ -770,7 +770,7 @@ _slang_typeof_operation_(slang_operation * op,
          if (_ti.spec.type == SLANG_SPEC_STRUCT) {
             slang_variable *field;
 
-            field = _slang_locate_variable(_ti.spec._struct->fields, op->a_id,
+            field = _slang_variable_locate(_ti.spec._struct->fields, op->a_id,
                                            GL_FALSE);
             if (field == NULL) {
                slang_typeinfo_destruct(&_ti);

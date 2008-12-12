@@ -300,7 +300,7 @@ parse_array_len(slang_parse_ctx * C, slang_output_ctx * O, GLuint * len)
       result = GL_TRUE;
       *len = (GLint) array_size.literal[0];
    } else if (array_size.type == SLANG_OPER_IDENTIFIER) {
-      slang_variable *var = _slang_locate_variable(array_size.locals, array_size.a_id, GL_TRUE);
+      slang_variable *var = _slang_variable_locate(array_size.locals, array_size.a_id, GL_TRUE);
       if (!var) {
          slang_info_log_error(C->L, "undefined variable '%s'",
                               (char *) array_size.a_id);
@@ -425,7 +425,7 @@ parse_struct_field(slang_parse_ctx * C, slang_output_ctx * O,
          RETURN0;
       }
       a_name = parse_identifier(C);
-      if (_slang_locate_variable(st->fields, a_name, GL_FALSE)) {
+      if (_slang_variable_locate(st->fields, a_name, GL_FALSE)) {
          slang_info_log_error(C->L, "duplicate field '%s'", (char *) a_name);
          RETURN0;
       }
@@ -1953,7 +1953,7 @@ parse_init_declarator(slang_parse_ctx * C, slang_output_ctx * O,
    a_name = parse_identifier(C);
 
    /* check if name is already in this scope */
-   if (_slang_locate_variable(O->vars, a_name, GL_FALSE)) {
+   if (_slang_variable_locate(O->vars, a_name, GL_FALSE)) {
       slang_info_log_error(C->L,
                    "declaration of '%s' conflicts with previous declaration",
                    (char *) a_name);

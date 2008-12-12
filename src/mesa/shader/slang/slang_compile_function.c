@@ -67,7 +67,7 @@ slang_function_destruct(slang_function * func)
 
 
 slang_function *
-slang_new_function(slang_function_kind kind)
+slang_function_new(slang_function_kind kind)
 {
    slang_function *fun = (slang_function *)
       _mesa_malloc(sizeof(slang_function));
@@ -195,7 +195,7 @@ slang_function_scope_find(slang_function_scope * funcs, slang_function * fun,
  * Lookup a function according to name and parameter count/types.
  */
 slang_function *
-_slang_locate_function(const slang_function_scope * funcs, slang_atom a_name,
+_slang_function_locate(const slang_function_scope * funcs, slang_atom a_name,
                        slang_operation * args, GLuint num_args,
                        const slang_name_space * space, slang_atom_pool * atoms,
                        slang_info_log *log, GLboolean *error)

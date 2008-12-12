@@ -83,7 +83,7 @@ extern int
 slang_variable_copy(slang_variable *, const slang_variable *);
 
 extern slang_variable *
-_slang_locate_variable(const slang_variable_scope *, const slang_atom a_name,
+_slang_variable_locate(const slang_variable_scope *, const slang_atom a_name,
                        GLboolean all);
 
 
