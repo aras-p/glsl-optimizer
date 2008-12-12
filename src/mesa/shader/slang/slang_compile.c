@@ -345,6 +345,20 @@ calculate_var_size(slang_parse_ctx * C, slang_output_ctx * O,
    return GL_TRUE;
 }
 
+static void
+promote_type_to_array(slang_parse_ctx *C,
+                      slang_fully_specified_type *type,
+                      GLint array_len)
+{
+   slang_type_specifier *baseType =
+      slang_type_specifier_new(type->specifier.type, NULL, NULL);
+
+   type->specifier.type = SLANG_SPEC_ARRAY;
+   type->specifier._array = baseType;
+   type->array_len = array_len;
+}
+
+
 static GLboolean
 convert_to_array(slang_parse_ctx * C, slang_variable * var,
                  const slang_type_specifier * sp)
@@ -887,6 +901,11 @@ parse_fully_specified_type(slang_parse_ctx * C, slang_output_ctx * O,
    if (!O->allow_array_types && type->array_len >= 0) {
       slang_info_log_error(C->L, "first-class array types not allowed");
       RETURN0;
+   }
+
+   if (type->array_len >= 0) {
+      /* convert type to array type (ex: convert "int" to "array of int" */
+      promote_type_to_array(C, type, type->array_len);
    }
 
    return 1;
@@ -1972,6 +1991,7 @@ parse_init_declarator(slang_parse_ctx * C, slang_output_ctx * O,
    var->type.centroid = type->centroid;
    var->type.precision = type->precision;
    var->type.variant = type->variant;
+   var->type.array_len = type->array_len;
    var->a_name = a_name;
    if (var->a_name == SLANG_ATOM_NULL)
       RETURN0;
@@ -1979,15 +1999,8 @@ parse_init_declarator(slang_parse_ctx * C, slang_output_ctx * O,
    switch (*C->I++) {
    case VARIABLE_NONE:
       /* simple variable declarator - just copy the specifier */
-      if (type->array_len >= 0) {
-         /* The type was something like "float[4]" */
-         convert_to_array(C, var, &type->specifier);
-         var->array_len = type->array_len;
-      }
-      else {
-         if (!slang_type_specifier_copy(&var->type.specifier, &type->specifier))
-            RETURN0;
-      }
+      if (!slang_type_specifier_copy(&var->type.specifier, &type->specifier))
+         RETURN0;
       break;
    case VARIABLE_INITIALIZER:
       /* initialized variable - copy the specifier and parse the expression */

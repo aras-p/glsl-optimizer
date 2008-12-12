@@ -67,9 +67,9 @@ _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper);
  * Returns GL_FALSE otherwise.
  */
 static GLboolean
-typeof_operation(const struct slang_assemble_ctx_ * A,
-                        slang_operation * op,
-                        slang_typeinfo * ti)
+typeof_operation(const struct slang_assemble_ctx_ *A,
+                 slang_operation *op,
+                 slang_typeinfo *ti)
 {
    return _slang_typeof_operation(op, &A->space, ti, A->atoms, A->log);
 }
@@ -2558,6 +2558,14 @@ _slang_gen_var_decl(slang_assemble_ctx *A, slang_variable *var,
           __FUNCTION__, (void *) var, (char *) var->a_name,
           (void *) store, store->Index, store->Size);
 #endif
+
+   if (var->type.array_len > 0) {
+      /* the type is an array, ex: float[4] x; */
+      GLint sz = (store->Size + 3) & ~3;
+      /* total size = element size * array length */
+      sz *= var->type.array_len;
+      store->Size = sz;
+   }
 
    if (var->array_len > 0) {
       /* this is an array */
