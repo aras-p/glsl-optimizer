@@ -2712,12 +2712,6 @@ _slang_gen_var_decl(slang_assemble_ctx *A, slang_variable *var,
       const char *varName = (const char *) var->a_name;
       slang_ir_node *varRef, *init;
 
-      varRef = new_var(A, var);
-      if (!varRef) {
-         slang_info_log_error(A->log, "undefined variable '%s'", varName);
-         return NULL;
-      }
-
       if (var->type.qualifier == SLANG_QUAL_CONST) {
          /* if the variable is const, the initializer must be a const
           * expression as well.
@@ -2734,11 +2728,17 @@ _slang_gen_var_decl(slang_assemble_ctx *A, slang_variable *var,
       /* constant-folding, etc here */
       _slang_simplify(initializer, &A->space, A->atoms); 
 
+      /* IR for initializer */
       init = _slang_gen_operation(A, initializer);
       if (!init)
          return NULL;
 
-      /*assert(init->Store);*/
+      /* IR for the variable we're initializing */
+      varRef = new_var(A, var);
+      if (!varRef) {
+         slang_info_log_error(A->log, "undefined variable '%s'", varName);
+         return NULL;
+      }
 
       /* XXX remove this when type checking is added above */
       if (init->Store && varRef->Store->Size != init->Store->Size) {
@@ -2746,6 +2746,7 @@ _slang_gen_var_decl(slang_assemble_ctx *A, slang_variable *var,
          return NULL;
       }
 
+      /* assign RHS to LHS */
       n = new_node2(IR_COPY, varRef, init);
       n = new_seq(varDecl, n);
    }
