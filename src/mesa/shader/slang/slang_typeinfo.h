@@ -68,15 +68,6 @@ typedef struct slang_assemble_ctx_
 } slang_assemble_ctx;
 
 
-extern struct slang_function_ *
-_slang_locate_function(const struct slang_function_scope_ *funcs,
-                       slang_atom name, struct slang_operation_ *params,
-                       GLuint num_params,
-                       const slang_name_space *space,
-                       slang_atom_pool *atoms, slang_info_log *log,
-                       GLboolean *error);
-
-
 extern GLboolean
 _slang_is_swizzle(const char *field, GLuint rows, slang_swizzle *swz);
 
@@ -157,6 +148,11 @@ slang_type_specifier_copy(slang_type_specifier *, const slang_type_specifier *);
 extern GLboolean
 slang_type_specifier_equal(const slang_type_specifier *,
                            const slang_type_specifier *);
+
+
+extern GLboolean
+slang_type_specifier_compatible(const slang_type_specifier * x,
+                                const slang_type_specifier * y);
 
 
 typedef struct slang_typeinfo_
