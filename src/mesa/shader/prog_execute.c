@@ -705,7 +705,7 @@ _mesa_execute_program(GLcontext * ctx,
          {
             GLfloat t[4];
             fetch_vector4(&inst->SrcReg[0], machine, t);
-            machine->AddressReg[0][0] = (GLint) FLOORF(t[0]);
+            machine->AddressReg[0][0] = IFLOOR(t[0]);
          }
          break;
       case OPCODE_BGNLOOP:
