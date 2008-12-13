@@ -30,6 +30,7 @@ static const char *FragShaderText =
    "   vec4 p;\n"
    "   p.xy = gl_TexCoord[0].xy;\n"
    "   p.z = Slice;\n"
+   "   p.w = 0;\n"
    "   vec4 n = noise4(p * scale);\n"
    "   gl_FragColor = n * Scale + Bias;\n"
    "}\n";
