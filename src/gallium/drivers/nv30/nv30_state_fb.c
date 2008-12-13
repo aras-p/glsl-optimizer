@@ -1,30 +1,5 @@
 #include "nv30_context.h"
-
-static INLINE int log2i(int i)
-{
-	int r = 0;
-
-	if (i & 0xffff0000) {
-		i >>= 16;
-		r += 16;
-	}
-	if (i & 0x0000ff00) {
-		i >>= 8;
-		r += 8;
-	}
-	if (i & 0x000000f0) {
-		i >>= 4;
-		r += 4;
-	}
-	if (i & 0x0000000c) {
-		i >>= 2;
-		r += 2;
-	}
-	if (i & 0x00000002) {
-		r += 1;
-	}
-	return r;
-}
+#include "nouveau/nouveau_util.h"
 
 static boolean
 nv30_state_framebuffer_validate(struct nv30_context *nv30)
