@@ -17,6 +17,7 @@ PROGS = \
 	deriv \
 	fragcoord \
 	mandelbrot \
+	multinoise \
 	multitex \
 	noise \
 	points \
