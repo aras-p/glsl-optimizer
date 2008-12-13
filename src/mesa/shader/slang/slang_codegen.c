@@ -2641,6 +2641,75 @@ _slang_gen_temporary(GLint size)
 
 
 /**
+ * Generate program constants for an array.
+ * Ex: const vec2[3] v = vec2[3](vec2(1,1), vec2(2,2), vec2(3,3));
+ * This will allocate and initialize three vector constants, storing
+ * the array in constant memory, not temporaries like a non-const array.
+ * This can also be used for uniform array initializers.
+ * \return GL_TRUE for success, GL_FALSE if failure (semantic error, etc).
+ */
+static GLboolean
+make_constant_array(slang_assemble_ctx *A,
+                    slang_variable *var,
+                    slang_operation *initializer)
+{
+   struct gl_program *prog = A->program;
+   const GLenum datatype = _slang_gltype_from_specifier(&var->type.specifier);
+   const char *varName = (char *) var->a_name;
+   const GLuint numElements = initializer->num_children;
+   GLint size;
+   GLuint i, j;
+   GLfloat *values;
+
+   if (!var->store) {
+      var->store = _slang_new_ir_storage(PROGRAM_UNDEFINED, -6, -6);
+   }
+   size = var->store->Size;
+
+   assert(var->type.qualifier == SLANG_QUAL_CONST ||
+          var->type.qualifier == SLANG_QUAL_UNIFORM);
+   assert(initializer->type == SLANG_OPER_CALL);
+   assert(initializer->array_constructor);
+
+   values = (GLfloat *) _mesa_malloc(numElements * 4 * sizeof(GLfloat));
+
+   /* convert constructor params into ordinary floats */
+   for (i = 0; i < numElements; i++) {
+      const slang_operation *op = &initializer->children[i];
+      if (op->type != SLANG_OPER_LITERAL_FLOAT) {
+         /* unsupported type for this optimization */
+         free(values);
+         return GL_FALSE;
+      }
+      for (j = 0; j < op->literal_size; j++) {
+         values[i * 4 + j] = op->literal[j];
+      }
+      for ( ; j < 4; j++) {
+         values[i * 4 + j] = 0.0f;
+      }
+   }
+
+   /* slightly different paths for constants vs. uniforms */
+   if (var->type.qualifier == SLANG_QUAL_UNIFORM) {
+      var->store->File = PROGRAM_UNIFORM;
+      var->store->Index = _mesa_add_uniform(prog->Parameters, varName,
+                                            size, datatype, values);
+   }
+   else {
+      var->store->File = PROGRAM_CONSTANT;
+      var->store->Index = _mesa_add_named_constant(prog->Parameters, varName,
+                                                   values, size);
+   }
+   assert(var->store->Size == size);
+
+   _mesa_free(values);
+
+   return GL_TRUE;
+}
+
+
+
+/**
  * Generate IR node for allocating/declaring a variable.
  * \param initializer  Optional initializer expression for the variable.
  */
@@ -2725,20 +2794,30 @@ _slang_gen_var_decl(slang_assemble_ctx *A, slang_variable *var,
 #endif
       }
 
-      /* constant-folding, etc here */
-      _slang_simplify(initializer, &A->space, A->atoms); 
-
-      /* IR for initializer */
-      init = _slang_gen_operation(A, initializer);
-      if (!init)
-         return NULL;
-
       /* IR for the variable we're initializing */
       varRef = new_var(A, var);
       if (!varRef) {
          slang_info_log_error(A->log, "undefined variable '%s'", varName);
          return NULL;
       }
+
+      /* constant-folding, etc here */
+      _slang_simplify(initializer, &A->space, A->atoms); 
+
+      if ((var->type.qualifier == SLANG_QUAL_CONST ||
+           var->type.qualifier == SLANG_QUAL_UNIFORM) &&
+          initializer->type == SLANG_OPER_CALL &&
+          initializer->array_constructor) {
+         printf("Constant array initializer\n");
+         make_constant_array(A, var, initializer);
+         n = varRef;
+         return n;
+      }
+
+      /* IR for initializer */
+      init = _slang_gen_operation(A, initializer);
+      if (!init)
+         return NULL;
 
       /* XXX remove this when type checking is added above */
       if (init->Store && varRef->Store->Size != init->Store->Size) {
@@ -3947,6 +4026,13 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
          else {
             GLint uniformLoc;
             const GLfloat *initialValues = NULL;
+#if 0
+            /* this code needs some work yet */
+            if (make_constant_array(A, var, var->initializer)) {
+               /* OK */
+            }
+            else
+#endif
             if (var->initializer) {
                _slang_simplify(var->initializer, &A->space, A->atoms);
                if (var->initializer->type == SLANG_OPER_LITERAL_FLOAT ||
