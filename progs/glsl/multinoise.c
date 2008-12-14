@@ -23,19 +23,23 @@ static const char *VertShaderText =
 static const char *FragShaderText[ 4 ] = {
    "void main()\n"
    "{\n"
-   "   gl_FragColor = noise3( gl_TexCoord[ 0 ].w ) * 0.5 + 0.5;\n"
+   "   gl_FragColor.rgb = noise3( gl_TexCoord[ 0 ].w ) * 0.5 + 0.5;\n"
+   "   gl_FragColor.a = 1;\n"
    "}\n",
    "void main()\n"
    "{\n"
-   "   gl_FragColor = noise3( gl_TexCoord[ 0 ].xw ) * 0.5 + 0.5;\n"
+   "   gl_FragColor.rgb = noise3( gl_TexCoord[ 0 ].xw ) * 0.5 + 0.5;\n"
+   "   gl_FragColor.a = 1;\n"
    "}\n",
    "void main()\n"
    "{\n"
-   "   gl_FragColor = noise3( gl_TexCoord[ 0 ].xyw ) * 0.5 + 0.5;\n"
+   "   gl_FragColor.rgb = noise3( gl_TexCoord[ 0 ].xyw ) * 0.5 + 0.5;\n"
+   "   gl_FragColor.a = 1;\n"
    "}\n",
    "void main()\n"
    "{\n"
-   "   gl_FragColor = noise3( gl_TexCoord[ 0 ].xyzw ) * 0.5 + 0.5;\n"
+   "   gl_FragColor.rgb = noise3( gl_TexCoord[ 0 ].xyzw ) * 0.5 + 0.5;\n"
+   "   gl_FragColor.a = 1;\n"
    "}\n"
 };
     
