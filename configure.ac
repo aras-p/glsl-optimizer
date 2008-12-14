@@ -801,6 +801,7 @@ osmesa)
         OSMESA_LIB_DEPS=""
     fi
     OSMESA_MESA_DEPS=""
+    OSMESA_PC_LIB_PRIV="-lm -lpthread $SELINUX_LIBS"
     ;;
 *)
     # Link OSMesa to libGL otherwise
@@ -811,13 +812,17 @@ osmesa)
     else
         OSMESA_MESA_DEPS=""
     fi
+    OSMESA_PC_REQ="gl"
     ;;
 esac
 if test "$enable_static" = no; then
     OSMESA_LIB_DEPS="$OSMESA_LIB_DEPS $OS_LIBS"
 fi
+OSMESA_PC_LIB_PRIV="$OSMESA_PC_LIB_PRIV $OS_LIBS"
 AC_SUBST([OSMESA_LIB_DEPS])
 AC_SUBST([OSMESA_MESA_DEPS])
+AC_SUBST([OSMESA_PC_REQ])
+AC_SUBST([OSMESA_PC_LIB_PRIV])
 
 dnl
 dnl GLU configuration
@@ -840,8 +845,7 @@ if test "x$enable_glu" = xyes; then
 
         # Link libGLU to libOSMesa instead of libGL
         GLU_LIB_DEPS=""
-        GLU_PC_LIB='-L$(INSTALL_LIB_DIR) -l$(OSMESA_LIB)'
-        GLU_PC_CFLAGS='-I$(INSTALL_INC_DIR)'
+        GLU_PC_REQ="osmesa"
         if test "$enable_static" = no; then
             GLU_MESA_DEPS='-l$(OSMESA_LIB)'
         else
@@ -871,7 +875,6 @@ AC_SUBST([GLU_LIB_DEPS])
 AC_SUBST([GLU_MESA_DEPS])
 AC_SUBST([GLU_PC_REQ])
 AC_SUBST([GLU_PC_REQ_PRIV])
-AC_SUBST([GLU_PC_LIB])
 AC_SUBST([GLU_PC_LIB_PRIV])
 AC_SUBST([GLU_PC_CFLAGS])
 

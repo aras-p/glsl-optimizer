@@ -21,7 +21,6 @@ pcedit = sed \
 	-e 's,@VERSION@,$(MESA_MAJOR).$(MESA_MINOR).$(MESA_TINY),' \
 	-e 's,@GLU_PC_REQ@,$(GLU_PC_REQ),' \
 	-e 's,@GLU_PC_REQ_PRIV@,$(GLU_PC_REQ_PRIV),' \
-	-e 's,@GLU_PC_LIB@,$(GLU_PC_LIB),' \
 	-e 's,@GLU_PC_LIB_PRIV@,$(GLU_PC_LIB_PRIV),' \
 	-e 's,@GLU_PC_CFLAGS@,$(GLU_PC_CFLAGS),'
 glu.pc: glu.pc.in
