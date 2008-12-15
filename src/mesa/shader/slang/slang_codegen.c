@@ -2717,6 +2717,8 @@ static slang_ir_node *
 _slang_gen_var_decl(slang_assemble_ctx *A, slang_variable *var,
                     slang_operation *initializer)
 {
+   const char *varName = (const char *) var->a_name;
+   const GLenum datatype = _slang_gltype_from_specifier(&var->type.specifier);
    slang_ir_node *varDecl, *n;
    slang_ir_storage *store;
 
@@ -2736,28 +2738,23 @@ _slang_gen_var_decl(slang_assemble_ctx *A, slang_variable *var,
 
    assert(store == varDecl->Store);
 
-   /* determine GPU storage file */
-   /* XXX if the variable is const, use PROGRAM_CONSTANT */
+   /* determine GPU register file for simple cases */
    if (is_sampler_type(&var->type)) {
       store->File = PROGRAM_SAMPLER;
+   }
+   else if (var->type.qualifier == SLANG_QUAL_UNIFORM) {
+      store->File = PROGRAM_UNIFORM;
    }
    else {
       store->File = PROGRAM_TEMPORARY;
    }
 
    store->Size = _slang_sizeof_type_specifier(&varDecl->Var->type.specifier);
-
    if (store->Size <= 0) {
       slang_info_log_error(A->log, "invalid declaration for '%s'",
                            (char*) var->a_name);
       return NULL;
    }
-
-#if 0
-   printf("%s var %p %s  store=%p index=%d size=%d\n",
-          __FUNCTION__, (void *) var, (char *) var->a_name,
-          (void *) store, store->Index, store->Size);
-#endif
 
    if (var->type.array_len > 0) {
       /* the type is an array, ex: float[4] x; */
@@ -2778,7 +2775,6 @@ _slang_gen_var_decl(slang_assemble_ctx *A, slang_variable *var,
 
    /* if there's an initializer, generate IR for the expression */
    if (initializer) {
-      const char *varName = (const char *) var->a_name;
       slang_ir_node *varRef, *init;
 
       if (var->type.qualifier == SLANG_QUAL_CONST) {
@@ -2804,14 +2800,39 @@ _slang_gen_var_decl(slang_assemble_ctx *A, slang_variable *var,
       /* constant-folding, etc here */
       _slang_simplify(initializer, &A->space, A->atoms); 
 
-      if ((var->type.qualifier == SLANG_QUAL_CONST ||
-           var->type.qualifier == SLANG_QUAL_UNIFORM) &&
-          initializer->type == SLANG_OPER_CALL &&
-          initializer->array_constructor) {
-         printf("Constant array initializer\n");
-         make_constant_array(A, var, initializer);
-         n = varRef;
-         return n;
+      /* look for simple constant-valued variables and uniforms */
+      if (var->type.qualifier == SLANG_QUAL_CONST ||
+          var->type.qualifier == SLANG_QUAL_UNIFORM) {
+
+         if (initializer->type == SLANG_OPER_CALL &&
+             initializer->array_constructor) {
+            /* array initializer */
+            make_constant_array(A, var, initializer);
+            return varRef;
+         }
+         else if (initializer->type == SLANG_OPER_LITERAL_FLOAT ||
+                  initializer->type == SLANG_OPER_LITERAL_INT) {
+            /* simple float/vector initializer */
+            if (store->File == PROGRAM_UNIFORM) {
+               store->Index = _mesa_add_uniform(A->program->Parameters,
+                                                varName,
+                                                store->Size, datatype,
+                                                initializer->literal);
+               /* XXX fix store->Swizzle here */
+               return varRef;
+            }
+#if 0
+            else {
+               store->File = PROGRAM_CONSTANT;
+               store->Index = _mesa_add_named_constant(A->program->Parameters,
+                                                       varName,
+                                                       initializer->literal,
+                                                       store->Size);
+               /* XXX fix swizzle here */
+               return varRef;
+            }
+#endif
+         }
       }
 
       /* IR for initializer */
@@ -2833,6 +2854,19 @@ _slang_gen_var_decl(slang_assemble_ctx *A, slang_variable *var,
       /* no initializer */
       n = varDecl;
    }
+
+   if (store->File == PROGRAM_UNIFORM && store->Index < 0) {
+      /* */
+      store->Index = _mesa_add_uniform(A->program->Parameters, varName,
+                                       store->Size, datatype, NULL);
+      store->Swizzle = _slang_var_swizzle(store->Size, 0);
+   }
+
+#if 0
+   printf("%s var %p %s  store=%p index=%d size=%d\n",
+          __FUNCTION__, (void *) var, (char *) varName,
+          (void *) store, store->Index, store->Size);
+#endif
 
    return n;
 }
@@ -4024,6 +4058,12 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
             }
          }
          else {
+            /* non-struct uniform */
+#if 01
+            if (!_slang_gen_var_decl(A, var, var->initializer))
+               return GL_FALSE;
+            store = var->store;
+#else
             GLint uniformLoc;
             const GLfloat *initialValues = NULL;
 #if 0
@@ -4052,6 +4092,7 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
                                            totalSize, datatype, initialValues);
             store = _slang_new_ir_storage_swz(PROGRAM_UNIFORM, uniformLoc,
                                               totalSize, swizzle);
+#endif
          }
       }
       else {
