@@ -3267,7 +3267,8 @@
         <param name="width" type="GLsizei"/>
         <param name="format" type="GLenum"/>
         <param name="type" type="GLenum"/>
-        <param name="pixels" type="const GLvoid *" img_width="width" img_xoff="xoffset" img_format="format" img_type="type" img_target="target" img_null_flag="true" img_pad_dimensions="true"/>
+        <param name="UNUSED" type="GLuint" padding="true"/>
+        <param name="pixels" type="const GLvoid *" img_width="width" img_xoff="xoffset" img_format="format" img_type="type" img_target="target" img_pad_dimensions="true"/>
         <glx rop="4099" large="true"/>
     </function>
 
@@ -3280,7 +3281,8 @@
         <param name="height" type="GLsizei"/>
         <param name="format" type="GLenum"/>
         <param name="type" type="GLenum"/>
-        <param name="pixels" type="const GLvoid *" img_width="width" img_height="height" img_xoff="xoffset" img_yoff="yoffset" img_format="format" img_type="type" img_target="target" img_null_flag="true" img_pad_dimensions="true"/>
+        <param name="UNUSED" type="GLuint" padding="true"/>
+        <param name="pixels" type="const GLvoid *" img_width="width" img_height="height" img_xoff="xoffset" img_yoff="yoffset" img_format="format" img_type="type" img_target="target" img_pad_dimensions="true"/>
         <glx rop="4100" large="true"/>
     </function>
 
@@ -3994,7 +3996,8 @@
         <param name="depth" type="GLsizei"/>
         <param name="format" type="GLenum"/>
         <param name="type" type="GLenum"/>
-        <param name="pixels" type="const GLvoid *" img_width="width" img_height="height" img_depth="depth" img_xoff="xoffset" img_yoff="yoffset" img_zoff="zoffset" img_format="format" img_type="type" img_target="target" img_null_flag="true" img_pad_dimensions="true"/>
+        <param name="UNUSED" type="GLuint" padding="true"/>
+        <param name="pixels" type="const GLvoid *" img_width="width" img_height="height" img_depth="depth" img_xoff="xoffset" img_yoff="yoffset" img_zoff="zoffset" img_format="format" img_type="type" img_target="target" img_pad_dimensions="true"/>
         <glx rop="4115" large="true"/>
     </function>
 
@@ -8061,6 +8064,7 @@
         <param name="depth" type="GLsizei"/>
         <param name="format" type="GLenum"/>
         <param name="type" type="GLenum"/>
+        <param name="UNUSED" type="GLuint" padding="true"/>
         <param name="pixels" type="const GLvoid *"/>
     </function>
 </category>
@@ -8092,6 +8096,7 @@
         <param name="width" type="GLsizei"/>
         <param name="format" type="GLenum"/>
         <param name="type" type="GLenum"/>
+        <param name="UNUSED" type="GLuint" padding="true"/>
         <param name="pixels" type="const GLvoid *"/>
     </function>
 
@@ -8104,6 +8109,7 @@
         <param name="height" type="GLsizei"/>
         <param name="format" type="GLenum"/>
         <param name="type" type="GLenum"/>
+        <param name="UNUSED" type="GLuint" padding="true"/>
         <param name="pixels" type="const GLvoid *"/>
     </function>
 </category>
@@ -8627,7 +8633,8 @@
         <param name="size4d" type="GLsizei"/>
         <param name="format" type="GLenum"/>
         <param name="type" type="GLenum"/>
-        <param name="pixels" type="const GLvoid *" img_width="width" img_height="height" img_depth="depth" img_extent="size4d" img_xoff="xoffset" img_yoff="yoffset" img_zoff="zoffset" img_woff="woffset" img_format="format" img_type="type" img_target="target" img_null_flag="true" img_pad_dimensions="true"/>
+        <param name="UNUSED" type="GLuint" padding="true"/>
+        <param name="pixels" type="const GLvoid *" img_width="width" img_height="height" img_depth="depth" img_extent="size4d" img_xoff="xoffset" img_yoff="yoffset" img_zoff="zoffset" img_woff="woffset" img_format="format" img_type="type" img_target="target" img_pad_dimensions="true"/>
         <glx rop="2058" ignore="true"/>
     </function>
 </category>

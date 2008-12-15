@@ -174,6 +174,9 @@ class PrintGlExtensionGlue(gl_XML.gl_print_base):
 
 				parameter_signature = ''
 				for p in f.parameterIterator():
+					if p.is_padding:
+						continue
+
 					# FIXME: This is a *really* ugly hack. :(
 
 					tn = p.type_expr.get_base_type_node()

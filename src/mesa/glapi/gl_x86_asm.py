@@ -44,6 +44,9 @@ class PrintGenericStubs(gl_XML.gl_print_base):
 	def get_stack_size(self, f):
 		size = 0
 		for p in f.parameterIterator():
+			if p.is_padding:
+				continue
+
 			size += p.get_stack_size()
 
 		return size

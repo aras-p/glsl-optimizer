@@ -30,7 +30,10 @@ pcedit = sed \
 	-e 's,@INSTALL_DIR@,$(INSTALL_DIR),' \
 	-e 's,@INSTALL_LIB_DIR@,$(INSTALL_LIB_DIR),' \
 	-e 's,@INSTALL_INC_DIR@,$(INSTALL_INC_DIR),' \
-	-e 's,@VERSION@,$(MAJOR).$(MINOR).$(TINY),'
+	-e 's,@VERSION@,$(MAJOR).$(MINOR).$(TINY),' \
+	-e 's,@GLW_PC_REQ_PRIV@,$(GLW_PC_REQ_PRIV),' \
+	-e 's,@GLW_PC_LIB_PRIV@,$(GLW_PC_LIB_PRIV),' \
+	-e 's,@GLW_PC_CFLAGS@,$(GLW_PC_CFLAGS),'
 glw.pc: glw.pc.in
 	$(pcedit) $< > $@
 

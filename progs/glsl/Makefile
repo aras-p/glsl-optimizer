@@ -18,6 +18,7 @@ PROGS = \
 	identity \
 	fragcoord \
 	mandelbrot \
+	multinoise \
 	multitex \
 	noise \
 	points \

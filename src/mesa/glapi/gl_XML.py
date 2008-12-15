@@ -309,6 +309,9 @@ def create_parameter_string(parameters, include_names):
 
 	list = []
 	for p in parameters:
+		if p.is_padding:
+			continue
+
 		if include_names:
 			list.append( p.string() )
 		else:
@@ -463,6 +466,7 @@ class gl_parameter:
 		self.img_null_flag      = is_attr_true( element, 'img_null_flag' )
 		self.img_send_null      = is_attr_true( element, 'img_send_null' )
 
+		self.is_padding = is_attr_true( element, 'padding' )
 		return
 
 

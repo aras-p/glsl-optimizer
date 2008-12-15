@@ -836,10 +836,71 @@ get_965_depthformat(unsigned int depthformat)
     }
 }
 
+static const char *
+get_965_element_component(uint32_t data, int component)
+{
+    uint32_t component_control = (data >> (16 + (3 - component) * 4)) & 0x7;
+
+    switch (component_control) {
+    case 0:
+	return "nostore";
+    case 1:
+	switch (component) {
+	case 0: return "X";
+	case 1: return "Y";
+	case 2: return "Z";
+	case 3: return "W";
+	default: return "fail";
+	}
+    case 2:
+	return "0.0";
+    case 3:
+	return "1.0";
+    case 4:
+	return "0x1";
+    case 5:
+	return "VID";
+    default:
+	return "fail";
+    }
+}
+
+static const char *
+get_965_prim_type(uint32_t data)
+{
+    uint32_t primtype = (data >> 10) & 0x1f;
+
+    switch (primtype) {
+    case 0x01: return "point list";
+    case 0x02: return "line list";
+    case 0x03: return "line strip";
+    case 0x04: return "tri list";
+    case 0x05: return "tri strip";
+    case 0x06: return "tri fan";
+    case 0x07: return "quad list";
+    case 0x08: return "quad strip";
+    case 0x09: return "line list adj";
+    case 0x0a: return "line strip adj";
+    case 0x0b: return "tri list adj";
+    case 0x0c: return "tri strip adj";
+    case 0x0d: return "tri strip reverse";
+    case 0x0e: return "polygon";
+    case 0x0f: return "rect list";
+    case 0x10: return "line loop";
+    case 0x11: return "point list bf";
+    case 0x12: return "line strip cont";
+    case 0x13: return "line strip bf";
+    case 0x14: return "line strip cont bf";
+    case 0x15: return "tri fan no stipple";
+    default: return "fail";
+    }
+}
+
 static int
 decode_3d_965(uint32_t *data, int count, uint32_t hw_offset, int *failures)
 {
     unsigned int opcode, len;
+    int i;
 
     struct {
 	uint32_t opcode;
@@ -860,8 +921,7 @@ decode_3d_965(uint32_t *data, int count, uint32_t hw_offset, int *failures)
 	{ 0x780b, 1, 1, "3DSTATE_VF_STATISTICS" },
 	{ 0x7808, 5, 257, "3DSTATE_VERTEX_BUFFERS" },
 	{ 0x7809, 3, 256, "3DSTATE_VERTEX_ELEMENTS" },
-	/* 0x7808: 3DSTATE_VERTEX_BUFFERS */
-	/* 0x7809: 3DSTATE_VERTEX_ELEMENTS */
+	{ 0x780a, 3, 3, "3DSTATE_INDEX_BUFFER" },
 	{ 0x7900, 4, 4, "3DSTATE_DRAWING_RECTANGLE" },
 	{ 0x7901, 5, 5, "3DSTATE_CONSTANT_COLOR" },
 	{ 0x7905, 5, 7, "3DSTATE_DEPTH_BUFFER" },
@@ -947,6 +1007,64 @@ decode_3d_965(uint32_t *data, int count, uint32_t hw_offset, int *failures)
 
 	return len;
 
+    case 0x7808:
+	len = (data[0] & 0xff) + 2;
+	if ((len - 1) % 4 != 0)
+	    fprintf(out, "Bad count in 3DSTATE_VERTEX_BUFFERS\n");
+	if (count < len)
+	    BUFFER_FAIL(count, len, "3DSTATE_VERTEX_BUFFERS");
+	instr_out(data, hw_offset, 0, "3DSTATE_VERTEX_BUFFERS\n");
+
+	for (i = 1; i < len;) {
+	    instr_out(data, hw_offset, i, "buffer %d: %s, pitch %db\n",
+		      data[i] >> 27,
+		      data[i] & (1 << 26) ? "random" : "sequential",
+		      data[i] & 0x07ff);
+	    i++;
+	    instr_out(data, hw_offset, i++, "buffer address\n");
+	    instr_out(data, hw_offset, i++, "max index\n");
+	    instr_out(data, hw_offset, i++, "mbz\n");
+	}
+	return len;
+
+    case 0x7809:
+	len = (data[0] & 0xff) + 2;
+	if ((len + 1) % 2 != 0)
+	    fprintf(out, "Bad count in 3DSTATE_VERTEX_ELEMENTS\n");
+	if (count < len)
+	    BUFFER_FAIL(count, len, "3DSTATE_VERTEX_ELEMENTS");
+	instr_out(data, hw_offset, 0, "3DSTATE_VERTEX_ELEMENTS\n");
+
+	for (i = 1; i < len;) {
+	    instr_out(data, hw_offset, i, "buffer %d: %svalid, type 0x%04x, "
+		      "src offset 0x%04xd bytes\n",
+		      data[i] >> 27,
+		      data[i] & (1 << 26) ? "" : "in",
+		      (data[i] >> 16) & 0x1ff,
+		      data[i] & 0x07ff);
+	    i++;
+	    instr_out(data, hw_offset, i, "(%s, %s, %s, %s), "
+		      "dst offset 0x%02x bytes\n",
+		      get_965_element_component(data[i], 0),
+		      get_965_element_component(data[i], 1),
+		      get_965_element_component(data[i], 2),
+		      get_965_element_component(data[i], 3),
+		      (data[i] & 0xff) * 4);
+	    i++;
+	}
+	return len;
+
+    case 0x780a:
+	len = (data[0] & 0xff) + 2;
+	if (len != 3)
+	    fprintf(out, "Bad count in 3DSTATE_INDEX_BUFFER\n");
+	if (count < len)
+	    BUFFER_FAIL(count, len, "3DSTATE_INDEX_BUFFER");
+	instr_out(data, hw_offset, 0, "3DSTATE_INDEX_BUFFER\n");
+	instr_out(data, hw_offset, 1, "beginning buffer address\n");
+	instr_out(data, hw_offset, 2, "ending buffer address\n");
+	return len;
+
     case 0x7900:
 	if (len != 4)
 	    fprintf(out, "Bad count in 3DSTATE_DRAWING_RECTANGLE\n");
@@ -968,9 +1086,9 @@ decode_3d_965(uint32_t *data, int count, uint32_t hw_offset, int *failures)
 	return len;
 
     case 0x7905:
-	if (len != 5)
+	if (len != 5 && len != 6)
 	    fprintf(out, "Bad count in 3DSTATE_DEPTH_BUFFER\n");
-	if (count < 5)
+	if (count < len)
 	    BUFFER_FAIL(count, len, "3DSTATE_DEPTH_BUFFER");
 
 	instr_out(data, hw_offset, 0,
@@ -985,7 +1103,27 @@ decode_3d_965(uint32_t *data, int count, uint32_t hw_offset, int *failures)
 		  ((data[3] & 0x0007ffc0) >> 6) + 1,
 		  ((data[3] & 0xfff80000) >> 19) + 1);
 	instr_out(data, hw_offset, 4, "volume depth\n");
+	if (len == 6)
+	    instr_out(data, hw_offset, 5, "\n");
 
+	return len;
+
+    case 0x7b00:
+	len = (data[0] & 0xff) + 2;
+	if (len != 6)
+	    fprintf(out, "Bad count in 3DPRIMITIVE\n");
+	if (count < len)
+	    BUFFER_FAIL(count, len, "3DPRIMITIVE");
+
+	instr_out(data, hw_offset, 0,
+		  "3DPRIMITIVE: %s %s\n",
+		  get_965_prim_type(data[0]),
+		  (data[0] & (1 << 15)) ? "random" : "sequential");
+	instr_out(data, hw_offset, 1, "primitive count\n");
+	instr_out(data, hw_offset, 2, "start vertex\n");
+	instr_out(data, hw_offset, 3, "instance count\n");
+	instr_out(data, hw_offset, 4, "start instance\n");
+	instr_out(data, hw_offset, 5, "index bias\n");
 	return len;
     }
 
