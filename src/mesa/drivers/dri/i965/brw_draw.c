@@ -309,11 +309,11 @@ static GLboolean brw_try_draw_prims( GLcontext *ctx,
       if (first_time || (brw->state.dirty.brw & BRW_NEW_PRIMITIVE)) {
 	 first_time = GL_FALSE;
 
+	 brw_validate_state(brw);
+
 	 /* Various fallback checks:  */
 	 if (brw->intel.Fallback)
 	    goto out;
-
-	 brw_validate_state(brw);
 
 	 /* Check that we can fit our state in with our existing batchbuffer, or
 	  * flush otherwise.
