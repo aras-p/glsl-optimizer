@@ -2710,7 +2710,15 @@ make_constant_array(slang_assemble_ctx *A,
 
 
 /**
- * Generate IR node for allocating/declaring a variable.
+ * Generate IR node for allocating/declaring a variable (either a local or
+ * a global).
+ * Generally, this involves allocating slang_ir_storage for the variable,
+ * choosing a register file (temporary, constant, etc).  For ordinary
+ * variables we do not yet allocate storage though.  We do that when we
+ * find the first actual use of the variable to avoid allocating temp regs
+ * that will never get used.
+ * At this time, uniforms are always allocated space in this function.
+ *
  * \param initializer  Optional initializer expression for the variable.
  */
 static slang_ir_node *
@@ -4059,40 +4067,9 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
          }
          else {
             /* non-struct uniform */
-#if 01
             if (!_slang_gen_var_decl(A, var, var->initializer))
                return GL_FALSE;
             store = var->store;
-#else
-            GLint uniformLoc;
-            const GLfloat *initialValues = NULL;
-#if 0
-            /* this code needs some work yet */
-            if (make_constant_array(A, var, var->initializer)) {
-               /* OK */
-            }
-            else
-#endif
-            if (var->initializer) {
-               _slang_simplify(var->initializer, &A->space, A->atoms);
-               if (var->initializer->type == SLANG_OPER_LITERAL_FLOAT ||
-                   var->initializer->type == SLANG_OPER_LITERAL_INT) {
-                  /* simple float/vector initializer */
-                  initialValues = var->initializer->literal;
-               }
-               else {
-                  /* complex initializer */
-                  slang_info_log_error(A->log,
-                     "unsupported initializer for uniform '%s'", varName);
-                  return GL_FALSE;
-               }
-            }
-
-            uniformLoc = _mesa_add_uniform(prog->Parameters, varName,
-                                           totalSize, datatype, initialValues);
-            store = _slang_new_ir_storage_swz(PROGRAM_UNIFORM, uniformLoc,
-                                              totalSize, swizzle);
-#endif
          }
       }
       else {
