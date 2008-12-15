@@ -2773,7 +2773,7 @@ _slang_gen_var_decl(slang_assemble_ctx *A, slang_variable *var,
    }
 
    if (var->array_len > 0) {
-      /* this is an array */
+      /* this is an array, ex: float x[4]; */
       /* round up the element size to a multiple of 4 */
       GLint sz = (store->Size + 3) & ~3;
       /* total size = element size * array length */
@@ -3166,9 +3166,9 @@ _slang_assignment_compatible(slang_assemble_ctx *A,
 }
 
 
-
 /**
  * Generate IR tree for a local variable declaration.
+ * Basically do some error checking and call _slang_gen_var_decl().
  */
 static slang_ir_node *
 _slang_gen_declaration(slang_assemble_ctx *A, slang_operation *oper)
@@ -3222,25 +3222,27 @@ _slang_gen_declaration(slang_assemble_ctx *A, slang_operation *oper)
          return NULL;
       }         
    }
+   else {
+      if (var->type.qualifier == SLANG_QUAL_CONST) {
+         slang_info_log_error(A->log,
+                       "const-qualified variable '%s' requires initializer",
+                       varName);
+         return NULL;
+      }
+   }
 
    /* Generate IR node */
    varDecl = _slang_gen_var_decl(A, var, initializer);
    if (!varDecl)
       return NULL;
 
-   if (var->type.qualifier == SLANG_QUAL_CONST && !initializer) {
-      slang_info_log_error(A->log,
-                           "const-qualified variable '%s' requires initializer",
-                           varName);
-      return NULL;
-   }
-
    return varDecl;
 }
 
 
 /**
- * Generate IR tree for a variable (such as in an expression).
+ * Generate IR tree for a reference to a variable (such as in an expression).
+ * This is different from a variable declaration.
  */
 static slang_ir_node *
 _slang_gen_variable(slang_assemble_ctx * A, slang_operation *oper)
