@@ -40,6 +40,7 @@
 void 
 util_draw_vertex_buffer(struct pipe_context *pipe,
                         struct pipe_buffer *vbuf,
+                        uint offset,
                         uint prim_type,
                         uint num_verts,
                         uint num_attribs)
@@ -53,7 +54,7 @@ util_draw_vertex_buffer(struct pipe_context *pipe,
    /* tell pipe about the vertex buffer */
    vbuffer.buffer = vbuf;
    vbuffer.pitch = num_attribs * 4 * sizeof(float);  /* vertex size */
-   vbuffer.buffer_offset = 0;
+   vbuffer.buffer_offset = offset;
    pipe->set_vertex_buffers(pipe, 1, &vbuffer);
 
    /* tell pipe about the vertex attributes */
@@ -124,7 +125,7 @@ util_draw_texquad(struct pipe_context *pipe,
          v[29] = 1.0;
 
          pipe_buffer_unmap(pipe->screen, vbuf);
-         util_draw_vertex_buffer(pipe, vbuf, PIPE_PRIM_TRIANGLE_FAN, 4, 2);
+         util_draw_vertex_buffer(pipe, vbuf, 0, PIPE_PRIM_TRIANGLE_FAN, 4, 2);
       }
 
       pipe_buffer_reference(pipe->screen, &vbuf, NULL);

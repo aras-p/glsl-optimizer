@@ -70,6 +70,10 @@ util_blit_pixels_tex(struct blit_state *ctx,
                      int dstX1, int dstY1,
                      float z, uint filter);
 
+/* Call at end of frame to avoid synchronous rendering.
+ */
+extern void
+util_blit_flush( struct blit_state *ctx );
 
 #ifdef __cplusplus
 }

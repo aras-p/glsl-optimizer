@@ -38,6 +38,7 @@
 #include "st_cb_accum.h"
 #include "st_cb_fbo.h"
 #include "st_draw.h"
+#include "st_public.h"
 #include "st_format.h"
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
@@ -324,7 +325,7 @@ st_Accum(GLcontext *ctx, GLenum op, GLfloat value)
    const GLint height = ctx->DrawBuffer->_Ymax - ypos;
 
    /* make sure color bufs aren't cached */
-   pipe->flush(pipe, PIPE_FLUSH_RENDER_CACHE, NULL);
+   st_flush( st, PIPE_FLUSH_RENDER_CACHE, NULL );
 
    switch (op) {
    case GL_ADD:

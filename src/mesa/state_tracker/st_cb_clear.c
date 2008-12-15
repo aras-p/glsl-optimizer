@@ -148,12 +148,18 @@ draw_quad(GLcontext *ctx,
 {
    struct st_context *st = ctx->st;
    struct pipe_context *pipe = st->pipe;
+   const GLuint max_slots = 1024 / sizeof(st->clear.vertices);
    GLuint i;
    void *buf;
 
+   if (st->clear.vbuf_slot >= max_slots) {
+      pipe_buffer_reference(pipe->screen, &st->clear.vbuf, NULL);
+      st->clear.vbuf_slot = 0;
+   }
+
    if (!st->clear.vbuf) {
       st->clear.vbuf = pipe_buffer_create(pipe->screen, 32, PIPE_BUFFER_USAGE_VERTEX,
-                                          sizeof(st->clear.vertices));
+                                          max_slots * sizeof(st->clear.vertices));
    }
 
    /* positions */
@@ -181,14 +187,23 @@ draw_quad(GLcontext *ctx,
 
    /* put vertex data into vbuf */
    buf = pipe_buffer_map(pipe->screen, st->clear.vbuf, PIPE_BUFFER_USAGE_CPU_WRITE);
-   memcpy(buf, st->clear.vertices, sizeof(st->clear.vertices));
+
+   memcpy((char *)buf + st->clear.vbuf_slot * sizeof(st->clear.vertices), 
+          st->clear.vertices, 
+          sizeof(st->clear.vertices));
+
    pipe_buffer_unmap(pipe->screen, st->clear.vbuf);
 
    /* draw */
-   util_draw_vertex_buffer(pipe, st->clear.vbuf,
+   util_draw_vertex_buffer(pipe, 
+                           st->clear.vbuf, 
+                           st->clear.vbuf_slot * sizeof(st->clear.vertices),
                            PIPE_PRIM_TRIANGLE_FAN,
                            4,  /* verts */
                            2); /* attribs/vert */
+
+   /* Increment slot */
+   st->clear.vbuf_slot++;
 }
 
 
@@ -507,6 +522,16 @@ clear_depth_stencil_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
    }
 }
 
+
+void st_flush_clear( struct st_context *st )
+{
+   /* Release vertex buffer to avoid synchronous rendering if we were
+    * to map it in the next frame.
+    */
+   pipe_buffer_reference(st->pipe->screen, &st->clear.vbuf, NULL);
+   st->clear.vbuf_slot = 0;
+}
+ 
 
 
 /**

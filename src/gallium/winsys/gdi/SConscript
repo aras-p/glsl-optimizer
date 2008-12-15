@@ -14,12 +14,6 @@ if env['platform'] == 'windows':
 	env.Append(CPPDEFINES = [
 	])
 
-	env.Append(CPPDEFINES = [
-		'__GL_EXPORTS',
-		'BUILD_GL32',
-		'_GNU_H_WINDOWS32_DEFINES',
-	])
-
 	sources = [
 		'#src/mesa/state_tracker/wgl/opengl32.def',
 		'gdi_softpipe_winsys.c',

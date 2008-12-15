@@ -66,6 +66,8 @@ struct blit_state
    void *fs;
 
    struct pipe_buffer *vbuf;  /**< quad vertices */
+   unsigned vbuf_slot;
+
    float vertices[4][2][4];   /**< vertex/texcoords for quad */
 };
 
@@ -138,17 +140,7 @@ util_create_blit(struct pipe_context *pipe, struct cso_context *cso)
 
    /* fragment shader */
    ctx->fs = util_make_fragment_tex_shader(pipe, &ctx->frag_shader);
-
-   ctx->vbuf = pipe_buffer_create(pipe->screen,
-                                  32,
-                                  PIPE_BUFFER_USAGE_VERTEX,
-                                  sizeof(ctx->vertices));
-   if (!ctx->vbuf) {
-      FREE(ctx);
-      ctx->pipe->delete_fs_state(ctx->pipe, ctx->fs);
-      ctx->pipe->delete_vs_state(ctx->pipe, ctx->vs);
-      return NULL;
-   }
+   ctx->vbuf = NULL;
 
    /* init vertex data that doesn't change */
    for (i = 0; i < 4; i++) {
@@ -181,15 +173,35 @@ util_destroy_blit(struct blit_state *ctx)
 }
 
 
+static unsigned get_next_slot( struct blit_state *ctx )
+{
+   const unsigned max_slots = 4096 / sizeof ctx->vertices;
+
+   if (ctx->vbuf_slot >= max_slots) 
+      util_blit_flush( ctx );
+
+   if (!ctx->vbuf) {
+      ctx->vbuf = pipe_buffer_create(ctx->pipe->screen,
+                                     32,
+                                     PIPE_BUFFER_USAGE_VERTEX,
+                                     max_slots * sizeof ctx->vertices);
+   }
+   
+   return ctx->vbuf_slot++ * sizeof ctx->vertices;
+}
+                               
+
+
 /**
  * Setup vertex data for the textured quad we'll draw.
  * Note: y=0=top
  */
-static void
+static unsigned
 setup_vertex_data(struct blit_state *ctx,
                   float x0, float y0, float x1, float y1, float z)
 {
    void *buf;
+   unsigned offset;
 
    ctx->vertices[0][0][0] = x0;
    ctx->vertices[0][0][1] = y0;
@@ -215,12 +227,16 @@ setup_vertex_data(struct blit_state *ctx,
    ctx->vertices[3][1][0] = 0.0f;
    ctx->vertices[3][1][1] = 1.0f;
 
+   offset = get_next_slot( ctx );
+
    buf = pipe_buffer_map(ctx->pipe->screen, ctx->vbuf,
                          PIPE_BUFFER_USAGE_CPU_WRITE);
 
-   memcpy(buf, ctx->vertices, sizeof(ctx->vertices));
+   memcpy((char *)buf + offset, ctx->vertices, sizeof(ctx->vertices));
 
    pipe_buffer_unmap(ctx->pipe->screen, ctx->vbuf);
+
+   return offset;
 }
 
 
@@ -228,13 +244,14 @@ setup_vertex_data(struct blit_state *ctx,
  * Setup vertex data for the textured quad we'll draw.
  * Note: y=0=top
  */
-static void
+static unsigned
 setup_vertex_data_tex(struct blit_state *ctx,
                       float x0, float y0, float x1, float y1,
                       float s0, float t0, float s1, float t1,
                       float z)
 {
    void *buf;
+   unsigned offset;
 
    ctx->vertices[0][0][0] = x0;
    ctx->vertices[0][0][1] = y0;
@@ -260,12 +277,16 @@ setup_vertex_data_tex(struct blit_state *ctx,
    ctx->vertices[3][1][0] = s0;
    ctx->vertices[3][1][1] = t1;
 
+   offset = get_next_slot( ctx );
+
    buf = pipe_buffer_map(ctx->pipe->screen, ctx->vbuf,
                          PIPE_BUFFER_USAGE_CPU_WRITE);
 
-   memcpy(buf, ctx->vertices, sizeof(ctx->vertices));
+   memcpy((char *)buf + offset, ctx->vertices, sizeof(ctx->vertices));
 
    pipe_buffer_unmap(ctx->pipe->screen, ctx->vbuf);
+
+   return offset;
 }
 /**
  * Copy pixel block from src surface to dst surface.
@@ -291,6 +312,7 @@ util_blit_pixels(struct blit_state *ctx,
    const int srcH = abs(srcY1 - srcY0);
    const int srcLeft = MIN2(srcX0, srcX1);
    const int srcTop = MIN2(srcY0, srcY1);
+   unsigned offset;
 
    assert(filter == PIPE_TEX_MIPFILTER_NEAREST ||
           filter == PIPE_TEX_MIPFILTER_LINEAR);
@@ -398,11 +420,11 @@ util_blit_pixels(struct blit_state *ctx,
    cso_set_framebuffer(ctx->cso, &fb);
 
    /* draw quad */
-   setup_vertex_data(ctx,
-                     (float) dstX0, (float) dstY0, 
-                     (float) dstX1, (float) dstY1, z);
+   offset = setup_vertex_data(ctx,
+                              (float) dstX0, (float) dstY0, 
+                              (float) dstX1, (float) dstY1, z);
 
-   util_draw_vertex_buffer(ctx->pipe, ctx->vbuf,
+   util_draw_vertex_buffer(ctx->pipe, ctx->vbuf, offset,
                            PIPE_PRIM_TRIANGLE_FAN,
                            4,  /* verts */
                            2); /* attribs/vert */
@@ -420,6 +442,18 @@ util_blit_pixels(struct blit_state *ctx,
 
    screen->texture_release(screen, &tex);
 }
+
+
+/* Release vertex buffer at end of frame to avoid synchronous
+ * rendering.
+ */
+void util_blit_flush( struct blit_state *ctx )
+{
+   pipe_buffer_reference(ctx->pipe->screen, &ctx->vbuf, NULL);
+   ctx->vbuf_slot = 0;
+} 
+
+
 
 /**
  * Copy pixel block from src texture to dst surface.
@@ -442,6 +476,7 @@ util_blit_pixels_tex(struct blit_state *ctx,
    struct pipe_screen *screen = pipe->screen;
    struct pipe_framebuffer_state fb;
    float s0, t0, s1, t1;
+   unsigned offset;
 
    assert(filter == PIPE_TEX_MIPFILTER_NEAREST ||
           filter == PIPE_TEX_MIPFILTER_LINEAR);
@@ -496,13 +531,14 @@ util_blit_pixels_tex(struct blit_state *ctx,
    cso_set_framebuffer(ctx->cso, &fb);
 
    /* draw quad */
-   setup_vertex_data_tex(ctx,
-                     (float) dstX0, (float) dstY0,
-                     (float) dstX1, (float) dstY1,
-                     s0, t0, s1, t1,
-                     z);
+   offset = setup_vertex_data_tex(ctx,
+                                  (float) dstX0, (float) dstY0,
+                                  (float) dstX1, (float) dstY1,
+                                  s0, t0, s1, t1,
+                                  z);
 
-   util_draw_vertex_buffer(ctx->pipe, ctx->vbuf,
+   util_draw_vertex_buffer(ctx->pipe, 
+                           ctx->vbuf, offset,
                            PIPE_PRIM_TRIANGLE_FAN,
                            4,  /* verts */
                            2); /* attribs/vert */

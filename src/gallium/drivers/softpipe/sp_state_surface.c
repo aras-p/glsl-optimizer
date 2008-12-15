@@ -34,6 +34,8 @@
 #include "sp_surface.h"
 #include "sp_tile_cache.h"
 
+#include "draw/draw_context.h"
+
 
 /**
  * XXX this might get moved someday
