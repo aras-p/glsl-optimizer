@@ -234,6 +234,48 @@ _slang_sizeof_type_specifier(const slang_type_specifier *spec)
 
 
 /**
+ * Query variable/array length (number of elements).
+ * This is slightly non-trivial because there are two ways to express
+ * arrays: "float x[3]" vs. "float[3] x".
+ * \return the length of the array for the given variable, or 0 if not an array
+ */
+static GLint
+_slang_array_length(const slang_variable *var)
+{
+   if (var->type.array_len > 0) {
+      /* Ex: float[4] x; */
+      return var->type.array_len;
+   }
+   if (var->array_len > 0) {
+      /* Ex: float x[4]; */
+      return var->array_len;
+   }
+   return 0;
+}
+
+
+/**
+ * Compute total size of array give size of element, number of elements.
+ * \return size in floats
+ */
+static GLint
+_slang_array_size(GLint elemSize, GLint arrayLen)
+{
+   GLint total;
+   assert(elemSize > 0);
+   if (arrayLen > 1) {
+      /* round up base type to multiple of 4 */
+      total = ((elemSize + 3) & ~0x3) * MAX2(arrayLen, 1);
+   }
+   else {
+      total = elemSize;
+   }
+   return total;
+}
+
+
+
+/**
  * Establish the binding between a slang_ir_node and a slang_variable.
  * Then, allocate/attach a slang_ir_storage object to the IR node if needed.
  * The IR node must be a IR_VAR or IR_VAR_DECL node.
@@ -1416,27 +1458,6 @@ slang_find_asm_info(const char *name)
 
 
 /**
- * Return the default swizzle mask for accessing a variable of the
- * given size (in floats).  If size = 1, comp is used to identify
- * which component [0..3] of the register holds the variable.
- */
-static GLuint
-_slang_var_swizzle(GLint size, GLint comp)
-{
-   switch (size) {
-   case 1:
-      return MAKE_SWIZZLE4(comp, comp, comp, comp);
-   case 2:
-      return MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_NIL, SWIZZLE_NIL);
-   case 3:
-      return MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_NIL);
-   default:
-      return SWIZZLE_XYZW;
-   }
-}
-
-
-/**
  * Some write-masked assignments are simple, but others are hard.
  * Simple example:
  *    vec3 v;
@@ -2243,7 +2264,7 @@ _slang_gen_method_call(slang_assemble_ctx *A, slang_operation *oper)
    /* Create a float/literal IR node encoding the array length */
    n = new_node0(IR_FLOAT);
    if (n) {
-      n->Value[0] = (float) var->array_len;
+      n->Value[0] = (float) _slang_array_length(var);
       n->Store = _slang_new_ir_storage(PROGRAM_CONSTANT, -1, 1);
    }
    return n;
@@ -2720,7 +2741,7 @@ _slang_gen_var_decl(slang_assemble_ctx *A, slang_variable *var,
    const GLenum datatype = _slang_gltype_from_specifier(&var->type.specifier);
    slang_ir_node *varDecl, *n;
    slang_ir_storage *store;
-   GLint size, totalSize;  /* if array then totalSize > size */
+   GLint arrayLen, size, totalSize;  /* if array then totalSize > size */
    enum register_file file;
 
    /*assert(!var->declared);*/
@@ -2737,29 +2758,14 @@ _slang_gen_var_decl(slang_assemble_ctx *A, slang_variable *var,
       file = PROGRAM_TEMPORARY;
    }
 
-   size = _slang_sizeof_type_specifier(&var->type.specifier);
+   totalSize = size = _slang_sizeof_type_specifier(&var->type.specifier);
    if (size <= 0) {
       slang_info_log_error(A->log, "invalid declaration for '%s'", varName);
       return NULL;
    }
 
-   totalSize = size;
-   if (var->type.array_len > 0) {
-      /* the type is an array, ex: float[4] x; */
-      GLint sz = (totalSize + 3) & ~3;
-      /* total size = element size * array length */
-      sz *= var->type.array_len;
-      totalSize = sz;
-   }
-
-   if (var->array_len > 0) {
-      /* this is an array, ex: float x[4]; */
-      /* round up the element size to a multiple of 4 */
-      GLint sz = (totalSize + 3) & ~3;
-      /* total size = element size * array length */
-      sz *= var->array_len;
-      totalSize = sz;
-   }
+   arrayLen = _slang_array_length(var);
+   totalSize = _slang_array_size(size, arrayLen);
 
    /* Allocate IR node for the declaration */
    varDecl = new_node0(IR_VAR_DECL);
@@ -3603,7 +3609,7 @@ _slang_gen_array_element(slang_assemble_ctx * A, slang_operation *oper)
          elem->Store = _slang_new_ir_storage(array->Store->File,
                                              array->Store->Index,
                                              elemSize);
-
+         elem->Store->Swizzle = _slang_var_swizzle(elemSize, 0);
          return elem;
       }
       else {
@@ -3961,24 +3967,6 @@ _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper)
 
 
 /**
- * Compute total size of array give size of element, number of elements.
- */
-static GLint
-array_size(GLint baseSize, GLint arrayLen)
-{
-   GLint total;
-   if (arrayLen > 1) {
-      /* round up base type to multiple of 4 */
-      total = ((baseSize + 3) & ~0x3) * MAX2(arrayLen, 1);
-   }
-   else {
-      total = baseSize;
-   }
-   return total;
-}
-
-
-/**
  * Called by compiler when a global variable has been parsed/compiled.
  * Here we examine the variable's type to determine what kind of register
  * storage will be used.
@@ -4003,6 +3991,8 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
    const GLenum datatype = _slang_gltype_from_specifier(&var->type.specifier);
    const GLint texIndex = sampler_to_texture_index(var->type.specifier.type);
    const GLint size = _slang_sizeof_type_specifier(&var->type.specifier);
+   const GLint arrayLen = _slang_array_length(var);
+   const GLint totalSize = _slang_array_size(size, arrayLen);
 
    if (texIndex != -1) {
       /* This is a texture sampler variable...
@@ -4030,7 +4020,6 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
    }
    else if (var->type.qualifier == SLANG_QUAL_UNIFORM) {
       /* Uniform variable */
-      const GLint totalSize = array_size(size, var->array_len);
       const GLuint swizzle = _slang_var_swizzle(totalSize, 0);
 
       if (prog) {
@@ -4089,8 +4078,6 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
       if (dbg) printf("UNIFORM (sz %d) ", totalSize);
    }
    else if (var->type.qualifier == SLANG_QUAL_VARYING) {
-      const GLint totalSize = array_size(size, var->array_len);
-
       /* varyings must be float, vec or mat */
       if (!_slang_type_is_float_vec_mat(var->type.specifier.type) &&
           var->type.specifier.type != SLANG_SPEC_ARRAY) {
