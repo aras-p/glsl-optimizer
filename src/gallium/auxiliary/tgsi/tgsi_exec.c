@@ -1797,7 +1797,7 @@ exec_instruction(
    case TGSI_OPCODE_ARL:
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH( &r[0], 0, chan_index );
-         micro_trunc( &r[0], &r[0] );
+         micro_flr( &r[0], &r[0] );
          STORE( &r[0], 0, chan_index );
       }
       break;
