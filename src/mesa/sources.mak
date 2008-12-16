@@ -21,6 +21,7 @@ MAIN_SOURCES = \
 	main/depth.c \
 	main/depthstencil.c \
 	main/dlist.c \
+	main/dlopen.c \
 	main/drawpix.c \
 	main/enable.c \
 	main/enums.c \
@@ -223,6 +224,7 @@ SHADER_SOURCES = \
 	shader/prog_debug.c \
 	shader/prog_execute.c \
 	shader/prog_instruction.c \
+	shader/prog_noise.c \
 	shader/prog_parameter.c \
 	shader/prog_print.c \
 	shader/prog_statevars.c \
@@ -241,7 +243,6 @@ SLANG_SOURCES =	\
 	shader/slang/slang_emit.c	\
 	shader/slang/slang_ir.c	\
 	shader/slang/slang_label.c	\
-	shader/slang/slang_library_noise.c	\
 	shader/slang/slang_link.c	\
 	shader/slang/slang_log.c	\
 	shader/slang/slang_mem.c	\
