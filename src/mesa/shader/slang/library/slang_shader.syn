@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5
  *
  * Copyright (C) 2004-2006  Brian Paul   All Rights Reserved.
+ * Copyright (C) 2008 VMware, Inc.  All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -59,7 +59,7 @@
 .syntax translation_unit;
 
 /* revision number - increment after each change affecting emitted output */
-.emtcode REVISION                                   4
+.emtcode REVISION                                   5
 
 /* external declaration (or precision or invariant stmt) */
 .emtcode EXTERNAL_NULL                              0
@@ -82,6 +82,10 @@
 .emtcode FUNCTION_ORDINARY                          0
 .emtcode FUNCTION_CONSTRUCTOR                       1
 .emtcode FUNCTION_OPERATOR                          2
+
+/* function call type */
+.emtcode FUNCTION_CALL_NONARRAY                     0
+.emtcode FUNCTION_CALL_ARRAY                        1
 
 /* operator type */
 .emtcode OPERATOR_ADDASSIGN                         1
@@ -178,9 +182,9 @@
 .emtcode TYPE_SPECIFIER_MAT34                       30
 .emtcode TYPE_SPECIFIER_MAT43                       31
 
-/* optional array size.  Ex: "float[6] myarray;" */
-.emtcode TYPE_ARRAY_SIZE                           220
-.emtcode TYPE_NO_ARRAY_SIZE                        221
+/* type specifier array */
+.emtcode TYPE_SPECIFIER_NONARRAY                    0
+.emtcode TYPE_SPECIFIER_ARRAY                       1
 
 /* structure field */
 .emtcode FIELD_NONE                                 0
@@ -403,11 +407,17 @@ function_call_header
 /*
  * <function_identifier> ::= <constructor_identifier>
  *                         | <identifier>
+ *                         | <type_specifier>
  *
- * note: <constructor_identifier> has been deleted
+ * note: <constructor_identifier> and <type_specifier> have been deleted
  */
 function_identifier
-    identifier;
+    identifier .and function_identifier_opt_array;
+function_identifier_opt_array
+    function_identifier_array .emit FUNCTION_CALL_ARRAY .or
+    .true .emit FUNCTION_CALL_NONARRAY;
+function_identifier_array
+    lbracket .and constant_expression .and rbracket;
 
 /*
  * <unary_expression> ::= <postfix_expression>
@@ -908,22 +918,14 @@ single_declaration_6
     constant_expression .emit VARIABLE_ARRAY_EXPLICIT .or .true .emit VARIABLE_ARRAY_UNKNOWN;
 
 /*
- * <fully_specified_type> ::= <opt_invariant> <opt_centroid> <opt_qualifer> <opt_precision> <type_specifier> <opt_array_size>
+ * <fully_specified_type> ::= <opt_invariant> <opt_centroid> <opt_qualifer> <opt_precision> <type_specifier>
  *
- * Example: "invariant varying highp vec3 [4]"
- *
- * Note that the *_space version doesn't parse the array size, make sure it is being invoked after the *_nospace version.
+ * Example: "invariant varying highp vec3"
  */
 fully_specified_type_space
-    fully_specified_type_optinvariant .and fully_specified_type_optcentroid .and fully_specified_type_optqual .and fully_specified_type_optprec .and type_specifier_space .and .true .emit TYPE_NO_ARRAY_SIZE;
+    fully_specified_type_optinvariant .and fully_specified_type_optcentroid .and fully_specified_type_optqual .and fully_specified_type_optprec .and type_specifier_space;
 fully_specified_type_nospace
-    fully_specified_type_optinvariant .and fully_specified_type_optcentroid .and fully_specified_type_optqual .and fully_specified_type_optprec .and type_specifier_array;
-type_specifier_array
-    type_specifier_array_1 .or type_specifier_array_2;
-type_specifier_array_1
-    type_specifier_space .and array_size;
-type_specifier_array_2
-    type_specifier_nospace .and opt_array_size;
+    fully_specified_type_optinvariant .and fully_specified_type_optcentroid .and fully_specified_type_optqual .and fully_specified_type_optprec .and type_specifier_nospace;
 fully_specified_type_optinvariant
     fully_specified_type_invariant .or .true .emit TYPE_VARIANT;
 fully_specified_type_invariant
@@ -940,11 +942,6 @@ fully_specified_type_optprec
     fully_specified_type_prec .or .true .emit PRECISION_DEFAULT;
 fully_specified_type_prec
     precision .and space;
-opt_array_size
-    array_size .or .true .emit TYPE_NO_ARRAY_SIZE;
-array_size
-    lbracket .emit TYPE_ARRAY_SIZE .and constant_expression .and rbracket;
-
 
 /*
  * <invariant_qualifier> ::= "invariant"
@@ -976,40 +973,40 @@ type_qualifier
     .if (parsing_builtin != 0) "__fixed_input" .emit TYPE_QUALIFIER_FIXEDINPUT;
 
 /*
- * <type_specifier> ::= "void"
- *                    | "float"
- *                    | "int"
- *                    | "bool"
- *                    | "vec2"
- *                    | "vec3"
- *                    | "vec4"
- *                    | "bvec2"
- *                    | "bvec3"
- *                    | "bvec4"
- *                    | "ivec2"
- *                    | "ivec3"
- *                    | "ivec4"
- *                    | "mat2"
- *                    | "mat3"
- *                    | "mat4"
- *                    | "mat2x3"
- *                    | "mat3x2"
- *                    | "mat2x4"
- *                    | "mat4x2"
- *                    | "mat3x4"
- *                    | "mat4x3"
- *                    | "sampler1D"
- *                    | "sampler2D"
- *                    | "sampler3D"
- *                    | "samplerCube"
- *                    | "sampler1DShadow"
- *                    | "sampler2DShadow"
- *                    | "sampler2DRect"
- *                    | "sampler2DRectShadow"
- *                    | <struct_specifier>
- *                    | <type_name>
+ * <type_specifier_nonarray> ::= "void"
+ *                             | "float"
+ *                             | "int"
+ *                             | "bool"
+ *                             | "vec2"
+ *                             | "vec3"
+ *                             | "vec4"
+ *                             | "bvec2"
+ *                             | "bvec3"
+ *                             | "bvec4"
+ *                             | "ivec2"
+ *                             | "ivec3"
+ *                             | "ivec4"
+ *                             | "mat2"
+ *                             | "mat3"
+ *                             | "mat4"
+ *                             | "mat2x3"
+ *                             | "mat3x2"
+ *                             | "mat2x4"
+ *                             | "mat4x2"
+ *                             | "mat3x4"
+ *                             | "mat4x3"
+ *                             | "sampler1D"
+ *                             | "sampler2D"
+ *                             | "sampler3D"
+ *                             | "samplerCube"
+ *                             | "sampler1DShadow"
+ *                             | "sampler2DShadow"
+ *                             | "sampler2DRect"
+ *                             | "sampler2DRectShadow"
+ *                             | <struct_specifier>
+ *                             | <type_name>
  */
-type_specifier_space
+type_specifier_nonarray_space
     "void" .emit TYPE_SPECIFIER_VOID .or
     "float" .emit TYPE_SPECIFIER_FLOAT .or
     "int" .emit TYPE_SPECIFIER_INT .or
@@ -1041,8 +1038,23 @@ type_specifier_space
     "sampler2DRect" .emit TYPE_SPECIFIER_SAMPLER2DRECT .or
     "sampler2DRectShadow" .emit TYPE_SPECIFIER_SAMPLER2DRECTSHADOW .or
     type_name .emit TYPE_SPECIFIER_TYPENAME;
-type_specifier_nospace
+type_specifier_nonarray_nospace
     struct_specifier .emit TYPE_SPECIFIER_STRUCT;
+type_specifier_nonarray
+    type_specifier_nonarray_nospace .or type_specifier_nonarray_space;
+
+/*
+ * <type_specifier> ::= <type_specifier_nonarray>
+ *                    | <type_specifier_nonarray> "[" <constant_expression> "]"
+ */
+type_specifier_space
+    type_specifier_nonarray_space .and .true .emit TYPE_SPECIFIER_NONARRAY;
+type_specifier_nospace
+    type_specifier_nospace_array .or type_specifier_nospace_1;
+type_specifier_nospace_1
+    type_specifier_nonarray_nospace .and .true .emit TYPE_SPECIFIER_NONARRAY;
+type_specifier_nospace_array
+    type_specifier_nonarray .and lbracket .emit TYPE_SPECIFIER_ARRAY .and constant_expression .and rbracket;
 
 /*
  * <struct_specifier> ::= "struct" <identifier> "{" <struct_declaration_list> "}"
