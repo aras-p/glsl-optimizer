@@ -15,21 +15,44 @@ OpenGL Shading Language</a>.
 </p>
 
 <p>
-Last updated on 28 March 2007.
+Last updated on 15 December 2008.
 </p>
 
 <p>
 Contents
 </p>
 <ul>
+<li><a href="#120">GLSL 1.20 support</a>
 <li><a href="#unsup">Unsupported Features</a>
 <li><a href="#notes">Implementation Notes</a>
 <li><a href="#hints">Programming Hints</a>
 <li><a href="#standalone">Stand-alone GLSL Compiler</a>
 <li><a href="#implementation">Compiler Implementation</a>
 <li><a href="#validation">Compiler Validation</a>
-<li><a href="#120">GLSL 1.20 support</a>
 </ul>
+
+
+
+<a name="120">
+<h2>GLSL 1.20 support</h2>
+
+<p>
+GLSL version 1.20 is supported in Mesa 7.3.
+Among the features/differences of GLSL 1.20 are:
+<ul>
+<li><code>mat2x3, mat2x4</code>, etc. types and functions
+<li><code>transpose(), outerProduct(), matrixCompMult()</code> functions
+(but untested)
+<li>precision qualifiers (lowp, mediump, highp)
+<li><code>invariant</code> qualifier
+<li><code>array.length()</code> method
+<li><code>float[5] a;</code> array syntax
+<li><code>centroid</code> qualifier
+<li>unsized array constructors
+<li>initializers for uniforms
+<li>const initializers calling built-in functions
+</ul>
+
 
 
 <a name="unsup">
@@ -41,15 +64,10 @@ in Mesa:
 </p>
 
 <ul>
-<li>Dereferencing arrays with non-constant indexes
-<li>Comparison of user-defined structs
 <li>Linking of multiple shaders is not supported
 <li>gl_ClipVertex
-<li>The derivative functions such as dFdx() are not implemented
-<li>The inverse trig functions asin(), acos(), and atan() are not implemented
 <li>The gl_Color and gl_SecondaryColor varying vars are interpolated
     without perspective correction
-<li>Floating point literal suffixes 'f' and 'F' aren't allowed.
 </ul>
 
 <p>
@@ -304,11 +322,11 @@ Extra NOP instructions will also be inserted.
 <h2>Compiler Validation</h2>
 
 <p>
-A new <a href="http://glean.sf.net" target="_parent">Glean</a> test has
+A <a href="http://glean.sf.net" target="_parent">Glean</a> test has
 been create to exercise the GLSL compiler.
 </p>
 <p>
-The <em>glsl1</em> test runs over 150 sub-tests to check that the language
+The <em>glsl1</em> test runs over 170 sub-tests to check that the language
 features and built-in functions work properly.
 This test should be run frequently while working on the compiler to catch
 regressions.
@@ -317,40 +335,6 @@ regressions.
 The test coverage is reasonably broad and complete but additional tests
 should be added.
 </p>
-
-
-
-<a name="120">
-<h2>GLSL 1.20 support</h2>
-
-<p>
-Support for GLSL version 1.20 is underway.  Status as follows.
-</p>
-
-<h3>Supported</h3>
-<ul>
-<li><code>mat2x3, mat2x4</code>, etc. types and functions
-<li><code>transpose(), outerProduct(), matrixCompMult()</code> functions
-(but untested)
-<li>precision qualifiers (lowp, mediump, highp)
-</ul>
-
-<h3>Partially Complete</h3>
-<ul>
-<li><code>invariant</code> qualifier
-</ul>
-
-<h3>Not Completed</h3>
-<ul>
-<li><code>array.length()</code> method
-<li><code>float[5] a;</code> array syntax
-<li><code>centroid</code> qualifier
-<li>unsized array constructors
-<li>initializers for uniforms
-<li>const initializers calling built-in functions
-</ul>
-
-
 
 
 </BODY>
