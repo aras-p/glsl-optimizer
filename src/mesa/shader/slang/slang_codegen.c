@@ -669,18 +669,9 @@ new_if(slang_ir_node *cond, slang_ir_node *ifPart, slang_ir_node *elsePart)
 static slang_ir_node *
 new_var(slang_assemble_ctx *A, slang_variable *var)
 {
-   slang_ir_node *n;
-   if (!var)
-      return NULL;
-
-   assert(var->declared);
-
-   n = new_node0(IR_VAR);
+   slang_ir_node *n = new_node0(IR_VAR);
    if (n) {
       _slang_attach_storage(n, var);
-      /*
-      printf("new_var %s store=%p\n", (char*)name, (void*) n->Store);
-      */
    }
    return n;
 }
@@ -2712,11 +2703,11 @@ make_constant_array(slang_assemble_ctx *A,
 /**
  * Generate IR node for allocating/declaring a variable (either a local or
  * a global).
- * Generally, this involves allocating slang_ir_storage for the variable,
- * choosing a register file (temporary, constant, etc).  For ordinary
- * variables we do not yet allocate storage though.  We do that when we
- * find the first actual use of the variable to avoid allocating temp regs
- * that will never get used.
+ * Generally, this involves allocating an slang_ir_storage instance for the
+ * variable, choosing a register file (temporary, constant, etc).
+ * For ordinary variables we do not yet allocate storage though.  We do that
+ * when we find the first actual use of the variable to avoid allocating temp
+ * regs that will never get used.
  * At this time, uniforms are always allocated space in this function.
  *
  * \param initializer  Optional initializer expression for the variable.
@@ -2729,15 +2720,53 @@ _slang_gen_var_decl(slang_assemble_ctx *A, slang_variable *var,
    const GLenum datatype = _slang_gltype_from_specifier(&var->type.specifier);
    slang_ir_node *varDecl, *n;
    slang_ir_storage *store;
+   GLint size, totalSize;  /* if array then totalSize > size */
+   enum register_file file;
 
    /*assert(!var->declared);*/
    var->declared = GL_TRUE;
 
+   /* determine GPU register file for simple cases */
+   if (is_sampler_type(&var->type)) {
+      file = PROGRAM_SAMPLER;
+   }
+   else if (var->type.qualifier == SLANG_QUAL_UNIFORM) {
+      file = PROGRAM_UNIFORM;
+   }
+   else {
+      file = PROGRAM_TEMPORARY;
+   }
+
+   size = _slang_sizeof_type_specifier(&var->type.specifier);
+   if (size <= 0) {
+      slang_info_log_error(A->log, "invalid declaration for '%s'", varName);
+      return NULL;
+   }
+
+   totalSize = size;
+   if (var->type.array_len > 0) {
+      /* the type is an array, ex: float[4] x; */
+      GLint sz = (totalSize + 3) & ~3;
+      /* total size = element size * array length */
+      sz *= var->type.array_len;
+      totalSize = sz;
+   }
+
+   if (var->array_len > 0) {
+      /* this is an array, ex: float x[4]; */
+      /* round up the element size to a multiple of 4 */
+      GLint sz = (totalSize + 3) & ~3;
+      /* total size = element size * array length */
+      sz *= var->array_len;
+      totalSize = sz;
+   }
+
+   /* Allocate IR node for the declaration */
    varDecl = new_node0(IR_VAR_DECL);
    if (!varDecl)
       return NULL;
 
-   _slang_attach_storage(varDecl, var);
+   _slang_attach_storage(varDecl, var); /* undefined storage at first */
    assert(var->store);
    assert(varDecl->Store == var->store);
    assert(varDecl->Store);
@@ -2746,40 +2775,13 @@ _slang_gen_var_decl(slang_assemble_ctx *A, slang_variable *var,
 
    assert(store == varDecl->Store);
 
-   /* determine GPU register file for simple cases */
-   if (is_sampler_type(&var->type)) {
-      store->File = PROGRAM_SAMPLER;
-   }
-   else if (var->type.qualifier == SLANG_QUAL_UNIFORM) {
-      store->File = PROGRAM_UNIFORM;
-   }
-   else {
-      store->File = PROGRAM_TEMPORARY;
-   }
 
-   store->Size = _slang_sizeof_type_specifier(&varDecl->Var->type.specifier);
-   if (store->Size <= 0) {
-      slang_info_log_error(A->log, "invalid declaration for '%s'",
-                           (char*) var->a_name);
-      return NULL;
-   }
-
-   if (var->type.array_len > 0) {
-      /* the type is an array, ex: float[4] x; */
-      GLint sz = (store->Size + 3) & ~3;
-      /* total size = element size * array length */
-      sz *= var->type.array_len;
-      store->Size = sz;
-   }
-
-   if (var->array_len > 0) {
-      /* this is an array, ex: float x[4]; */
-      /* round up the element size to a multiple of 4 */
-      GLint sz = (store->Size + 3) & ~3;
-      /* total size = element size * array length */
-      sz *= var->array_len;
-      store->Size = sz;
-   }
+   /* Fill in storage fields which we now know.  store->Index/Swizzle may be
+    * set for some cases below.  Otherwise, store->Index/Swizzle will be set
+    * during code emit.
+    */
+   store->File = file;
+   store->Size = totalSize;
 
    /* if there's an initializer, generate IR for the expression */
    if (initializer) {
@@ -2801,7 +2803,7 @@ _slang_gen_var_decl(slang_assemble_ctx *A, slang_variable *var,
       /* IR for the variable we're initializing */
       varRef = new_var(A, var);
       if (!varRef) {
-         slang_info_log_error(A->log, "undefined variable '%s'", varName);
+         slang_info_log_error(A->log, "out of memory");
          return NULL;
       }
 
@@ -2815,8 +2817,8 @@ _slang_gen_var_decl(slang_assemble_ctx *A, slang_variable *var,
          if (initializer->type == SLANG_OPER_CALL &&
              initializer->array_constructor) {
             /* array initializer */
-            make_constant_array(A, var, initializer);
-            return varRef;
+            if (make_constant_array(A, var, initializer))
+               return varRef;
          }
          else if (initializer->type == SLANG_OPER_LITERAL_FLOAT ||
                   initializer->type == SLANG_OPER_LITERAL_INT) {
@@ -2824,9 +2826,9 @@ _slang_gen_var_decl(slang_assemble_ctx *A, slang_variable *var,
             if (store->File == PROGRAM_UNIFORM) {
                store->Index = _mesa_add_uniform(A->program->Parameters,
                                                 varName,
-                                                store->Size, datatype,
+                                                totalSize, datatype,
                                                 initializer->literal);
-               /* XXX fix store->Swizzle here */
+               store->Swizzle = _slang_var_swizzle(size, 0);
                return varRef;
             }
 #if 0
@@ -2835,8 +2837,8 @@ _slang_gen_var_decl(slang_assemble_ctx *A, slang_variable *var,
                store->Index = _mesa_add_named_constant(A->program->Parameters,
                                                        varName,
                                                        initializer->literal,
-                                                       store->Size);
-               /* XXX fix swizzle here */
+                                                       totalSize);
+               store->Swizzle = _slang_var_swizzle(size, 0);
                return varRef;
             }
 #endif
@@ -2849,7 +2851,7 @@ _slang_gen_var_decl(slang_assemble_ctx *A, slang_variable *var,
          return NULL;
 
       /* XXX remove this when type checking is added above */
-      if (init->Store && varRef->Store->Size != init->Store->Size) {
+      if (init->Store && init->Store->Size != totalSize) {
          slang_info_log_error(A->log, "invalid assignment (wrong types)");
          return NULL;
       }
@@ -2864,10 +2866,10 @@ _slang_gen_var_decl(slang_assemble_ctx *A, slang_variable *var,
    }
 
    if (store->File == PROGRAM_UNIFORM && store->Index < 0) {
-      /* */
+      /* always need to allocate storage for uniforms at this point */
       store->Index = _mesa_add_uniform(A->program->Parameters, varName,
-                                       store->Size, datatype, NULL);
-      store->Swizzle = _slang_var_swizzle(store->Size, 0);
+                                       totalSize, datatype, NULL);
+      store->Swizzle = _slang_var_swizzle(size, 0);
    }
 
 #if 0
@@ -3252,11 +3254,13 @@ _slang_gen_variable(slang_assemble_ctx * A, slang_operation *oper)
     */
    slang_atom name = oper->var ? oper->var->a_name : oper->a_id;
    slang_variable *var = _slang_variable_locate(oper->locals, name, GL_TRUE);
-   slang_ir_node *n = new_var(A, var);
-   if (!n) {
+   slang_ir_node *n;
+   if (!var) {
       slang_info_log_error(A->log, "undefined variable '%s'", (char *) name);
       return NULL;
    }
+   assert(var->declared);
+   n = new_var(A, var);
    return n;
 }
 
