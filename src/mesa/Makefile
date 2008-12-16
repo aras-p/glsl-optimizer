@@ -18,14 +18,12 @@ include sources.mak
 
 
 
+
 # Default: build dependencies, then asm_subdirs, then convenience
 # libs (.a) and finally the device drivers:
 default: depend asm_subdirs libmesa.a libglapi.a driver_subdirs
 
 
-# Default: build dependencies, then asm_subdirs, then convenience
-# libs (.a) and finally the device drivers:
-default: depend asm_subdirs libmesa.a $(GLAPI_LIB) driver_subdirs
 
 ######################################################################
 # Helper libraries used by many drivers:
