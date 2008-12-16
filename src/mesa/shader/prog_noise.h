@@ -22,21 +22,13 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#if !defined SLANG_LIBRARY_NOISE_H
-#define SLANG_LIBRARY_NOISE_H
+#ifndef PROG_NOISE
+#define PROG_NOISE
 
-#if defined __cplusplus
-extern "C" {
-#endif
-
-GLfloat _slang_library_noise1 (GLfloat);
-GLfloat _slang_library_noise2 (GLfloat, GLfloat);
-GLfloat _slang_library_noise3 (GLfloat, GLfloat, GLfloat);
-GLfloat _slang_library_noise4 (GLfloat, GLfloat, GLfloat, GLfloat);
-
-#ifdef __cplusplus
-}
-#endif
+extern GLfloat _mesa_noise1(GLfloat);
+extern GLfloat _mesa_noise2(GLfloat, GLfloat);
+extern GLfloat _mesa_noise3(GLfloat, GLfloat, GLfloat);
+extern GLfloat _mesa_noise4(GLfloat, GLfloat, GLfloat, GLfloat);
 
 #endif
 

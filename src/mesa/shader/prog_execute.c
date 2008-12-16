@@ -43,7 +43,7 @@
 #include "prog_instruction.h"
 #include "prog_parameter.h"
 #include "prog_print.h"
-#include "shader/slang/slang_library_noise.h"
+#include "prog_noise.h"
 
 
 /* debug predicate */
@@ -1137,7 +1137,8 @@ _mesa_execute_program(GLcontext * ctx,
             fetch_vector1(&inst->SrcReg[0], machine, a);
             result[0] =
                result[1] =
-               result[2] = result[3] = _slang_library_noise1(a[0]);
+               result[2] =
+               result[3] = _mesa_noise1(a[0]);
             store_vector4(inst, machine, result);
          }
          break;
@@ -1147,7 +1148,7 @@ _mesa_execute_program(GLcontext * ctx,
             fetch_vector4(&inst->SrcReg[0], machine, a);
             result[0] =
                result[1] =
-               result[2] = result[3] = _slang_library_noise2(a[0], a[1]);
+               result[2] = result[3] = _mesa_noise2(a[0], a[1]);
             store_vector4(inst, machine, result);
          }
          break;
@@ -1158,7 +1159,7 @@ _mesa_execute_program(GLcontext * ctx,
             result[0] =
                result[1] =
                result[2] =
-               result[3] = _slang_library_noise3(a[0], a[1], a[2]);
+               result[3] = _mesa_noise3(a[0], a[1], a[2]);
             store_vector4(inst, machine, result);
          }
          break;
@@ -1169,7 +1170,7 @@ _mesa_execute_program(GLcontext * ctx,
             result[0] =
                result[1] =
                result[2] =
-               result[3] = _slang_library_noise4(a[0], a[1], a[2], a[3]);
+               result[3] = _mesa_noise4(a[0], a[1], a[2], a[3]);
             store_vector4(inst, machine, result);
          }
          break;

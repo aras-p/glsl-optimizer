@@ -502,6 +502,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\..\src\mesa\shader\prog_noise.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\..\src\mesa\shader\prog_parameter.c"
 				>
 			</File>
@@ -767,10 +771,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\shader\slang\slang_label.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\..\src\mesa\shader\slang\slang_library_noise.c"
 				>
 			</File>
 			<File
@@ -1359,6 +1359,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\..\src\mesa\shader\prog_noise.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\..\src\mesa\shader\prog_parameter.h"
 				>
 			</File>
@@ -1564,10 +1568,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\shader\slang\slang_label.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\..\src\mesa\shader\slang\slang_library_noise.h"
 				>
 			</File>
 			<File
