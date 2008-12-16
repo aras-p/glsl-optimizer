@@ -158,7 +158,7 @@ typedef struct slang_output_ctx_
 /* Debugging aid, print file/line where parsing error is detected */
 #define RETURN0 \
    do { \
-      if (0) \
+      if (1) \
          printf("slang error at %s:%d\n", __FILE__, __LINE__); \
       return 0; \
    } while (0)
@@ -1425,6 +1425,9 @@ parse_expression(slang_parse_ctx * C, slang_output_ctx * O,
          if (op->a_id == SLANG_ATOM_NULL)
             RETURN0;
 
+         assert(*C->I == OP_END);
+         C->I++;
+
          while (*C->I != OP_END)
             if (!parse_child_operation(C, O, op, 0))
                RETURN0;
@@ -1977,6 +1980,7 @@ parse_init_declarator(slang_parse_ctx * C, slang_output_ctx * O,
    var->type.centroid = type->centroid;
    var->type.precision = type->precision;
    var->type.variant = type->variant;
+   var->type.array_len = type->array_len;
    var->a_name = a_name;
    if (var->a_name == SLANG_ATOM_NULL)
       RETURN0;
@@ -1989,7 +1993,7 @@ parse_init_declarator(slang_parse_ctx * C, slang_output_ctx * O,
       break;
    case VARIABLE_INITIALIZER:
       /* initialized variable - copy the specifier and parse the expression */
-      if (type->array_len >= 0) {
+      if (0 && type->array_len >= 0) {
          /* The type was something like "float[4]" */
          convert_to_array(C, var, &type->specifier);
          var->array_len = type->array_len;
@@ -2026,6 +2030,7 @@ parse_init_declarator(slang_parse_ctx * C, slang_output_ctx * O,
       break;
    case VARIABLE_ARRAY_EXPLICIT:
       if (type->array_len >= 0) {
+         /* the user is trying to do something like: float[2] x[3]; */
          slang_info_log_error(C->L, "multi-dimensional arrays not allowed");
          RETURN0;
       }
