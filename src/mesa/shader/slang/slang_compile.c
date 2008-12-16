@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.2
  *
  * Copyright (C) 2005-2006  Brian Paul   All Rights Reserved.
+ * Copyright (C) 2008 VMware, Inc.  All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -237,7 +237,7 @@ parse_float(slang_parse_ctx * C, float *number)
 }
 
 /* revision number - increment after each change affecting emitted output */
-#define REVISION 4
+#define REVISION 5
 
 static int
 check_revision(slang_parse_ctx * C)
