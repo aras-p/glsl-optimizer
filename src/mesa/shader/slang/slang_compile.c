@@ -158,7 +158,7 @@ typedef struct slang_output_ctx_
 /* Debugging aid, print file/line where parsing error is detected */
 #define RETURN0 \
    do { \
-      if (1) \
+      if (0) \
          printf("slang error at %s:%d\n", __FILE__, __LINE__); \
       return 0; \
    } while (0)
@@ -1153,7 +1153,7 @@ parse_statement(slang_parse_ctx * C, slang_output_ctx * O,
       }
       break;
    default:
-      printf("Unexpected operation %d\n", op);
+      /*printf("Unexpected operation %d\n", op);*/
       RETURN0;
    }
    return 1;
