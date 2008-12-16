@@ -187,7 +187,6 @@ _mesa_add_named_constant(struct gl_program_parameter_list *paramList,
       return pos;
    }
 #endif
-   size = 4; /** XXX fix */
    return _mesa_add_parameter(paramList, PROGRAM_CONSTANT, name,
                               size, GL_NONE, values, NULL, 0x0);
 }

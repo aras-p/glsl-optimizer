@@ -278,7 +278,7 @@ slang_print_tree(const slang_operation *op, int indent)
       assert(op->num_children == 0 || op->num_children == 1);
       {
          slang_variable *v;
-         v = _slang_locate_variable(op->locals, op->a_id, GL_TRUE);
+         v = _slang_variable_locate(op->locals, op->a_id, GL_TRUE);
          if (v) {
             const slang_variable_scope *scope;
             spaces(indent);
@@ -636,7 +636,7 @@ slang_print_tree(const slang_operation *op, int indent)
    case SLANG_OPER_CALL:
 #if 0
          slang_function *fun
-            = _slang_locate_function(A->space.funcs, oper->a_id,
+            = _slang_function_locate(A->space.funcs, oper->a_id,
                                      oper->children,
                                      oper->num_children, &A->space, A->atoms);
 #endif

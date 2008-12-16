@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  7.1
  *
  * Copyright (C) 2005-2008  Brian Paul   All Rights Reserved.
+ * Copyright (C) 2008 VMware, Inc.   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -152,6 +152,28 @@ _slang_swizzle_swizzle(GLuint swz1, GLuint swz2)
    swz = MAKE_SWIZZLE4(s[0], s[1], s[2], s[3]);
    return swz;
 }
+
+
+/**
+ * Return the default swizzle mask for accessing a variable of the
+ * given size (in floats).  If size = 1, comp is used to identify
+ * which component [0..3] of the register holds the variable.
+ */
+GLuint
+_slang_var_swizzle(GLint size, GLint comp)
+{
+   switch (size) {
+   case 1:
+      return MAKE_SWIZZLE4(comp, comp, comp, comp);
+   case 2:
+      return MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_NIL, SWIZZLE_NIL);
+   case 3:
+      return MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_NIL);
+   default:
+      return SWIZZLE_XYZW;
+   }
+}
+
 
 
 /**
@@ -1917,6 +1939,7 @@ emit_array_element(slang_emit_info *emitInfo, slang_ir_node *n)
    }
 
    n->Store->Size = elemSize;
+   n->Store->Swizzle = _slang_var_swizzle(elemSize, 0);
 
    return NULL; /* no instruction */
 }

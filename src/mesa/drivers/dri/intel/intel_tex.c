@@ -231,6 +231,7 @@ intelInitTextureFuncs(struct dd_function_table *functions)
 
    /* compressed texture functions */
    functions->CompressedTexImage2D = intelCompressedTexImage2D;
+   functions->CompressedTexSubImage2D = intelCompressedTexSubImage2D;
    functions->GetCompressedTexImage = intelGetCompressedTexImage;
 
    functions->NewTextureObject = intelNewTextureObject;

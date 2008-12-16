@@ -1,8 +1,7 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5
  *
- * Copyright (C) 2006  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2008  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -22,21 +21,22 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#if !defined SLANG_LIBRARY_NOISE_H
-#define SLANG_LIBRARY_NOISE_H
 
-#if defined __cplusplus
-extern "C" {
+#ifndef DLOPEN_H
+#define DLOPEN_H
+
+
+typedef void (*GenericFunc)(void);
+
+
+extern void *
+_mesa_dlopen(const char *libname, int flags);
+
+extern GenericFunc
+_mesa_dlsym(void *handle, const char *fname);
+
+extern void
+_mesa_dlclose(void *handle);
+
+
 #endif
-
-GLfloat _slang_library_noise1 (GLfloat);
-GLfloat _slang_library_noise2 (GLfloat, GLfloat);
-GLfloat _slang_library_noise3 (GLfloat, GLfloat, GLfloat);
-GLfloat _slang_library_noise4 (GLfloat, GLfloat, GLfloat, GLfloat);
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif
-

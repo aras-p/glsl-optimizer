@@ -207,7 +207,7 @@ link_varying_vars(struct gl_shader_program *shProg, struct gl_program *prog)
  * This is basically a list/index of all uniforms found in either/both of
  * the vertex and fragment shaders.
  */
-static void
+static GLboolean
 link_uniform_vars(struct gl_shader_program *shProg,
                   struct gl_program *prog,
                   GLuint *numSamplers)
@@ -239,7 +239,10 @@ link_uniform_vars(struct gl_shader_program *shProg,
          /* Allocate a new sampler index */
          GLuint sampNum = *numSamplers;
          GLuint oldSampNum = (GLuint) prog->Parameters->ParameterValues[i][0];
-         assert(oldSampNum < MAX_SAMPLERS);
+         if (oldSampNum >= MAX_SAMPLERS) {
+            link_error(shProg, "Too many texture samplers");
+            return GL_FALSE;
+         }
          samplerMap[oldSampNum] = sampNum;
          (*numSamplers)++;
       }
@@ -265,6 +268,7 @@ link_uniform_vars(struct gl_shader_program *shProg,
       }
    }
 
+   return GL_TRUE;
 }
 
 
@@ -559,10 +563,18 @@ _slang_link(GLcontext *ctx,
    }
 
    /* link uniform vars */
-   if (shProg->VertexProgram)
-      link_uniform_vars(shProg, &shProg->VertexProgram->Base, &numSamplers);
-   if (shProg->FragmentProgram)
-      link_uniform_vars(shProg, &shProg->FragmentProgram->Base, &numSamplers);
+   if (shProg->VertexProgram) {
+      if (!link_uniform_vars(shProg, &shProg->VertexProgram->Base,
+                             &numSamplers)) {
+         return;
+      }
+   }
+   if (shProg->FragmentProgram) {
+      if (!link_uniform_vars(shProg, &shProg->FragmentProgram->Base,
+                             &numSamplers)) {
+         return;
+      }
+   }
 
    /*_mesa_print_uniforms(shProg->Uniforms);*/
 
