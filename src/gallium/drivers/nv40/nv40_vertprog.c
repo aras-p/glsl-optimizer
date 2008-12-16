@@ -571,7 +571,7 @@ nv40_vertprog_parse_instruction(struct nv40_vpc *vpc,
 	case TGSI_OPCODE_RET:
 		break;
 	case TGSI_OPCODE_RSQ:
-		arith(vpc, 1, OP_RSQ, dst, mask, none, none, src[0]);
+		arith(vpc, 1, OP_RSQ, dst, mask, none, none, abs(src[0]));
 		break;
 	case TGSI_OPCODE_SGE:
 		arith(vpc, 0, OP_SGE, dst, mask, src[0], src[1], none);
