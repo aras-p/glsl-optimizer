@@ -67,7 +67,7 @@ static void varray_line_loop_segment(struct varray_frontend *varray,
                                      unsigned segment_count,
                                      boolean end )
 {
-   assert(segment_count+1 < varray->fetch_max);
+   assert(segment_count < varray->fetch_max);
    if (segment_count >= 1) {
       unsigned nr = 0, i;
 
@@ -77,7 +77,7 @@ static void varray_line_loop_segment(struct varray_frontend *varray,
       if (end) 
          varray->fetch_elts[nr++] = start;
 
-      assert(nr < FETCH_MAX);
+      assert(nr <= FETCH_MAX);
 
       varray->middle->run(varray->middle, 
                           varray->fetch_elts,
@@ -94,7 +94,7 @@ static void varray_fan_segment(struct varray_frontend *varray,
                                unsigned segment_start,
                                unsigned segment_count )
 {
-   assert(segment_count+1 < varray->fetch_max);
+   assert(segment_count < varray->fetch_max);
    if (segment_count >= 2) {
       unsigned nr = 0, i;
 
@@ -104,7 +104,7 @@ static void varray_fan_segment(struct varray_frontend *varray,
       for (i = 0 ; i < segment_count; i++) 
          varray->fetch_elts[nr++] = start + segment_start + i;
 
-      assert(nr < FETCH_MAX);
+      assert(nr <= FETCH_MAX);
 
       varray->middle->run(varray->middle, 
                           varray->fetch_elts,
