@@ -116,6 +116,8 @@ nv50_screen_get_param(struct pipe_screen *pscreen, int param)
 	case PIPE_CAP_TEXTURE_MIRROR_CLAMP:
 	case PIPE_CAP_TEXTURE_MIRROR_REPEAT:
 		return 1;
+	case PIPE_CAP_MAX_VERTEX_TEXTURE_UNITS:
+		return 0;
 	case NOUVEAU_CAP_HW_VTXBUF:	
 		return 1;
 	case NOUVEAU_CAP_HW_IDXBUF:	

@@ -50,6 +50,8 @@ nv10_screen_get_param(struct pipe_screen *screen, int param)
 		return 0;
 	case PIPE_CAP_MAX_TEXTURE_CUBE_LEVELS:
 		return 12;
+	case PIPE_CAP_MAX_VERTEX_TEXTURE_UNITS:
+		return 0;
 	case NOUVEAU_CAP_HW_VTXBUF:
 	case NOUVEAU_CAP_HW_IDXBUF:
 		return 0;

@@ -50,6 +50,8 @@ nv04_screen_get_param(struct pipe_screen *screen, int param)
 		return 0;
 	case PIPE_CAP_MAX_TEXTURE_CUBE_LEVELS:
 		return 0;
+	case PIPE_CAP_MAX_VERTEX_TEXTURE_UNITS:
+		return 0;
 	default:
 		NOUVEAU_ERR("Unknown PIPE_CAP %d\n", param);
 		return 0;
