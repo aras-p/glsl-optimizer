@@ -27,6 +27,7 @@ PROGS = \
 	toyball \
 	twoside \
 	trirast \
+	vert-or-frag-only \
 	vert-tex
 
 
@@ -184,6 +185,14 @@ trirast.o: trirast.c extfuncs.h shaderutil.h
 
 trirast: trirast.o shaderutil.o
 	$(CC) -I$(INCDIR) $(CFLAGS) $(LDFLAGS) trirast.o shaderutil.o $(LIBS) -o $@
+
+
+vert-or-frag-only.o: vert-or-frag-only.c extfuncs.h shaderutil.h
+	$(CC) -c -I$(INCDIR) $(CFLAGS) vert-or-frag-only.c
+
+vert-or-frag-only: vert-or-frag-only.o shaderutil.o
+	$(CC) -I$(INCDIR) $(CFLAGS) $(LDFLAGS) vert-or-frag-only.o shaderutil.o $(LIBS) -o $@
+
 
 
 vert-tex.o: vert-tex.c extfuncs.h shaderutil.h
