@@ -215,7 +215,9 @@ static GLbitfield get_fp_input_mask( GLcontext *ctx )
    else if (ctx->RenderMode == GL_FEEDBACK) {
       fp_inputs = (FRAG_BIT_COL0 | FRAG_BIT_TEX0);
    }
-   else if (!ctx->VertexProgram._Current) {
+   else if (!ctx->VertexProgram._Enabled ||
+            !ctx->VertexProgram._Current) {
+
       /* Fixed function logic */
       GLbitfield varying_inputs = ctx->varying_vp_inputs;
 
