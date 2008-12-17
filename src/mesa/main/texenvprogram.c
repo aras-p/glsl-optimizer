@@ -179,13 +179,17 @@ static GLuint translate_mode( GLenum mode )
 #define TEXTURE_UNKNOWN_INDEX 7
 static GLuint translate_tex_src_bit( GLbitfield bit )
 {
+   /* make sure number of switch cases is correct */
+   assert(NUM_TEXTURE_TARGETS == 7);
    switch (bit) {
-   case TEXTURE_1D_BIT:   return TEXTURE_1D_INDEX;
-   case TEXTURE_2D_BIT:   return TEXTURE_2D_INDEX;
-   case TEXTURE_RECT_BIT: return TEXTURE_RECT_INDEX;
-   case TEXTURE_3D_BIT:   return TEXTURE_3D_INDEX;
-   case TEXTURE_CUBE_BIT: return TEXTURE_CUBE_INDEX;
-   default: return TEXTURE_UNKNOWN_INDEX;
+   case TEXTURE_1D_BIT:         return TEXTURE_1D_INDEX;
+   case TEXTURE_2D_BIT:         return TEXTURE_2D_INDEX;
+   case TEXTURE_3D_BIT:         return TEXTURE_3D_INDEX;
+   case TEXTURE_CUBE_BIT:       return TEXTURE_CUBE_INDEX;
+   case TEXTURE_RECT_BIT:       return TEXTURE_RECT_INDEX;
+   case TEXTURE_1D_ARRAY_BIT:   return TEXTURE_1D_ARRAY_INDEX;
+   case TEXTURE_2D_ARRAY_BIT:   return TEXTURE_2D_ARRAY_INDEX;
+   default:                     return TEXTURE_UNKNOWN_INDEX;
    }
 }
 
