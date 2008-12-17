@@ -304,6 +304,9 @@ save_glx_visual( Display *dpy, XVisualInfo *vinfo,
       return NULL;
    }
 
+   if (stencil_size > 0 && depth_size > 0)
+      depth_size = 24;
+
    /* Comparing IDs uses less memory but sometimes fails. */
    /* XXX revisit this after 3.0 is finished. */
    if (_mesa_getenv("MESA_GLX_VISUAL_HACK"))
