@@ -219,6 +219,9 @@ static GLuint translate_tex_src_bit( GLbitfield bit )
  */
 static GLbitfield get_fp_input_mask( GLcontext *ctx )
 {
+   const GLboolean vertexShader = (ctx->Shader.CurrentProgram &&
+                                   ctx->Shader.CurrentProgram->VertexProgram);
+   const GLboolean vertexProgram = ctx->VertexProgram._Enabled;
    GLbitfield fp_inputs = 0x0;
 
    if (ctx->VertexProgram._Overriden) {
@@ -231,10 +234,9 @@ static GLbitfield get_fp_input_mask( GLcontext *ctx )
    else if (ctx->RenderMode == GL_FEEDBACK) {
       fp_inputs = (FRAG_BIT_COL0 | FRAG_BIT_TEX0);
    }
-   else if (!ctx->VertexProgram._Enabled ||
+   else if (!(vertexProgram || vertexShader) ||
             !ctx->VertexProgram._Current) {
-
-      /* Fixed function logic */
+      /* Fixed function vertex logic */
       GLbitfield varying_inputs = ctx->varying_vp_inputs;
 
       /* These get generated in the setup routine regardless of the
