@@ -7,7 +7,7 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.3
+ * Version:  7.3
  *
  * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
  *
@@ -1957,14 +1957,15 @@ struct gl_program_state
  */
 struct gl_vertex_program_state
 {
-   GLboolean Enabled;               /**< GL_VERTEX_PROGRAM_ARB/NV */
-   GLboolean _Enabled;              /**< Enabled and valid program? */
+   GLboolean Enabled;               /**< User-set GL_VERTEX_PROGRAM_ARB/NV flag */
+   GLboolean _Enabled;              /**< Enabled and _valid_ user program? */
    GLboolean PointSizeEnabled;      /**< GL_VERTEX_PROGRAM_POINT_SIZE_ARB/NV */
    GLboolean TwoSideEnabled;        /**< GL_VERTEX_PROGRAM_TWO_SIDE_ARB/NV */
-   struct gl_vertex_program *Current;  /**< user-bound vertex program */
+   struct gl_vertex_program *Current;  /**< User-bound vertex program */
 
-   /** Currently enabled and valid program (including internal programs
-    * and compiled shader programs).
+   /** Currently enabled and valid vertex program (including internal programs,
+    * user-defined vertex programs and GLSL vertex shaders).
+    * This is the program we must use when rendering.
     */
    struct gl_vertex_program *_Current;
 
@@ -1998,12 +1999,12 @@ struct gl_vertex_program_state
 struct gl_fragment_program_state
 {
    GLboolean Enabled;     /**< User-set fragment program enable flag */
-   GLboolean _Enabled;    /**< Fragment program enabled and valid? */
-   GLboolean _Active;
+   GLboolean _Enabled;    /**< Enabled and _valid_ user program? */
    struct gl_fragment_program *Current;  /**< User-bound fragment program */
 
-   /** Currently enabled and valid program (including internal programs
-    * and compiled shader programs).
+   /** Currently enabled and valid fragment program (including internal programs,
+    * user-defined fragment programs and GLSL fragment shaders).
+    * This is the program we must use when rendering.
     */
    struct gl_fragment_program *_Current;
 
@@ -2012,6 +2013,7 @@ struct gl_fragment_program_state
    /** Should fixed-function texturing be implemented with a fragment prog? */
    GLboolean _MaintainTexEnvProgram;
    GLboolean _UseTexEnvProgram;
+   GLboolean _Active;     /**< Use internal texenv program? */
 
    /** Program to emulate fixed-function texture env/combine (see above) */
    struct gl_fragment_program *_TexEnvProgram;
