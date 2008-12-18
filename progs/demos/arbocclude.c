@@ -37,7 +37,7 @@
 static GLboolean Anim = GL_TRUE;
 static GLfloat Xpos = 0;
 static GLuint OccQuery;
-
+static GLint Win = 0;
 
 
 static void
@@ -204,6 +204,7 @@ static void Key( unsigned char key, int x, int y )
    (void) y;
    switch (key) {
       case 27:
+         glutDestroyWindow(Win);
          exit(0);
          break;
       case ' ':
@@ -271,7 +272,7 @@ int main( int argc, char *argv[] )
    glutInitWindowPosition( 0, 0 );
    glutInitWindowSize( 400, 400 );
    glutInitDisplayMode( GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH );
-   glutCreateWindow(argv[0]);
+   Win = glutCreateWindow(argv[0]);
    glutReshapeFunc( Reshape );
    glutKeyboardFunc( Key );
    glutSpecialFunc( SpecialKey );
