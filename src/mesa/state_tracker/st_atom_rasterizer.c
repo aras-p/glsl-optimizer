@@ -107,12 +107,15 @@ static void update_raster_state( struct st_context *st )
    /* _NEW_LIGHT | _NEW_PROGRAM
     *
     * Back-face colors can come from traditional lighting (when
-    * GL_LIGHT_MODEL_TWO_SIDE is set) or from vertex programs (when
+    * GL_LIGHT_MODEL_TWO_SIDE is set) or from vertex programs/shaders (when
     * GL_VERTEX_PROGRAM_TWO_SIDE is set).  Note the logic here.
     */
    if (ctx->VertexProgram._Current) {
-      if (ctx->VertexProgram._Enabled) {
-         /* user-defined program */
+      if (ctx->VertexProgram._Enabled ||
+          (ctx->Shader.CurrentProgram &&
+           ctx->Shader.CurrentProgram->VertexProgram &&
+           ctx->Shader.CurrentProgram->LinkStatus)) {
+         /* user-defined vertex program or shader */
          raster->light_twoside = ctx->VertexProgram.TwoSideEnabled;
       }
       else {
