@@ -300,7 +300,7 @@ i915_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
        */
       if (tObj->Target == GL_TEXTURE_CUBE_MAP_ARB &&
           (((ws != GL_CLAMP) && (ws != GL_CLAMP_TO_EDGE)) ||
-           ((wr != GL_CLAMP) && (wr != GL_CLAMP_TO_EDGE))))
+           ((wt != GL_CLAMP) && (wt != GL_CLAMP_TO_EDGE))))
           return GL_FALSE;
 
       state[I915_TEXREG_SS3] = ss3;     /* SS3_NORMALIZED_COORDS */
