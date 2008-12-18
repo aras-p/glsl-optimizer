@@ -190,8 +190,8 @@ update_program(GLcontext *ctx)
 
    /*
     * Set the ctx->VertexProgram._Current and ctx->FragmentProgram._Current
-    * pointers to the programs that should be enabled/used.  These will only
-    * be NULL if we need to use the fixed-function code.
+    * pointers to the programs that should be used for rendering.  If either
+    * is NULL, use fixed-function code paths.
     *
     * These programs may come from several sources.  The priority is as
     * follows:
@@ -203,8 +203,6 @@ update_program(GLcontext *ctx)
     * program (and vice versa) here, but in practice that shouldn't ever
     * come up, or matter.
     */
-
-   _mesa_reference_fragprog(ctx, &ctx->FragmentProgram._Current, NULL);
 
    if (shProg && shProg->LinkStatus && shProg->FragmentProgram) {
       /* Use shader programs */
