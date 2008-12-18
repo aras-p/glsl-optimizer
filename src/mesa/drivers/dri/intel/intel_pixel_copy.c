@@ -308,8 +308,8 @@ do_blit_copypixels(GLcontext * ctx,
       /* Clip to source buffer. */
       orig_srcx = srcx;
       orig_srcy = srcy;
-      if (!_mesa_clip_to_region(read_fb->_Xmin, read_fb->_Ymin,
-				read_fb->_Xmax, read_fb->_Ymax,
+      if (!_mesa_clip_to_region(0, 0,
+				read_fb->Width, read_fb->Height,
 				&srcx, &srcy, &width, &height))
 	 goto out;
       /* Adjust dst coords for our post-clipped source origin */
