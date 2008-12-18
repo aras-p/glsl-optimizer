@@ -258,7 +258,19 @@ static GLbitfield get_fp_input_mask( GLcontext *ctx )
    }
    else {
       /* calculate from vp->outputs */
-      GLbitfield vp_outputs = ctx->VertexProgram._Current->Base.OutputsWritten;
+      struct gl_vertex_program *vprog;
+      GLbitfield vp_outputs;
+
+      /* Choose GLSL vertex shader over ARB vertex program.  Need this
+       * since vertex shader state validation comes after fragment state
+       * validation (see additional comments in state.c).
+       */
+      if (vertexShader)
+         vprog = ctx->Shader.CurrentProgram->VertexProgram;
+      else
+         vprog = ctx->VertexProgram._Current;
+
+      vp_outputs = vprog->Base.OutputsWritten;
 
       /* These get generated in the setup routine regardless of the
        * vertex program:
