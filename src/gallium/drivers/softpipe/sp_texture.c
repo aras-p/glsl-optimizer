@@ -219,6 +219,8 @@ softpipe_get_tex_surface(struct pipe_screen *screen,
    assert(level <= pt->last_level);
 
    ps = CALLOC_STRUCT(pipe_surface);
+   ps->refcount = 1;
+   ps->winsys = ws;
    if (ps) {
       assert(ps->refcount);
       assert(ps->winsys);
