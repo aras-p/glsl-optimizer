@@ -760,15 +760,6 @@ util_create_gen_mipmap(struct pipe_context *pipe,
    /* fragment shader */
    ctx->fs = util_make_fragment_tex_shader(pipe, &ctx->frag_shader);
 
-   ctx->vbuf = pipe_buffer_create(pipe->screen,
-                                  32,
-                                  PIPE_BUFFER_USAGE_VERTEX,
-                                  sizeof(ctx->vertices));
-   if (!ctx->vbuf) {
-      FREE(ctx);
-      return NULL;
-   }
-
    /* vertex data that doesn't change */
    for (i = 0; i < 4; i++) {
       ctx->vertices[i][0][2] = 0.0f; /* z */
@@ -777,11 +768,18 @@ util_create_gen_mipmap(struct pipe_context *pipe,
       ctx->vertices[i][1][3] = 1.0f; /* q */
    }
 
+   /* Note: the actual vertex buffer is allocated as needed below */
+
    return ctx;
 }
 
 
-static unsigned get_next_slot( struct gen_mipmap_state *ctx )
+/**
+ * Get next "slot" of vertex space in the vertex buffer.
+ * We're allocating one large vertex buffer and using it piece by piece.
+ */
+static unsigned
+get_next_slot(struct gen_mipmap_state *ctx)
 {
    const unsigned max_slots = 4096 / sizeof ctx->vertices;
 
@@ -797,6 +795,7 @@ static unsigned get_next_slot( struct gen_mipmap_state *ctx )
    
    return ctx->vbuf_slot++ * sizeof ctx->vertices;
 }
+
 
 static unsigned
 set_vertex_data(struct gen_mipmap_state *ctx, float width, float height)
