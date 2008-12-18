@@ -2,6 +2,7 @@
  * 
  * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
+ * Copyright 2008 VMware, Inc.  All rights reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
@@ -221,12 +222,22 @@ softpipe_create( struct pipe_screen *screen,
       softpipe->quad[i].output = sp_quad_output_stage(softpipe);
    }
 
+   /* vertex shader samplers */
    for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
-      softpipe->tgsi.samplers[i].base.get_samples = sp_get_samples;
-      softpipe->tgsi.samplers[i].unit = i;
-      softpipe->tgsi.samplers[i].sp = softpipe;
-      softpipe->tgsi.samplers[i].cache = softpipe->tex_cache[i];
-      softpipe->tgsi.samplers_list[i] = &softpipe->tgsi.samplers[i];
+      softpipe->tgsi.vert_samplers[i].base.get_samples = sp_get_samples_vertex;
+      softpipe->tgsi.vert_samplers[i].unit = i;
+      softpipe->tgsi.vert_samplers[i].sp = softpipe;
+      softpipe->tgsi.vert_samplers[i].cache = softpipe->tex_cache[i];
+      softpipe->tgsi.vert_samplers_list[i] = &softpipe->tgsi.vert_samplers[i];
+   }
+
+   /* fragment shader samplers */
+   for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
+      softpipe->tgsi.frag_samplers[i].base.get_samples = sp_get_samples_fragment;
+      softpipe->tgsi.frag_samplers[i].unit = i;
+      softpipe->tgsi.frag_samplers[i].sp = softpipe;
+      softpipe->tgsi.frag_samplers[i].cache = softpipe->tex_cache[i];
+      softpipe->tgsi.frag_samplers_list[i] = &softpipe->tgsi.frag_samplers[i];
    }
 
    /*
@@ -237,7 +248,9 @@ softpipe_create( struct pipe_screen *screen,
       goto fail;
 
    draw_texture_samplers(softpipe->draw,
-                         PIPE_MAX_SAMPLERS, softpipe->tgsi.samplers_list);
+                         PIPE_MAX_SAMPLERS,
+                         (struct tgsi_sampler **)
+                            softpipe->tgsi.vert_samplers_list);
 
    softpipe->setup = sp_draw_render_stage(softpipe);
    if (!softpipe->setup)

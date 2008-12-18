@@ -2,6 +2,7 @@
  * 
  * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
+ * Copyright 2008 VMware, Inc.  All rights reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
@@ -51,8 +52,6 @@
 struct quad_shade_stage
 {
    struct quad_stage stage;  /**< base class */
-   struct sp_shader_sampler samplers[PIPE_MAX_SAMPLERS];
-   struct sp_shader_sampler *samplers_list[PIPE_MAX_SAMPLERS];
    struct tgsi_exec_machine machine;
    struct tgsi_exec_vector *inputs, *outputs;
 };
@@ -151,7 +150,8 @@ static void shade_begin(struct quad_stage *qs)
 
    softpipe->fs->prepare( softpipe->fs, 
 			  &qss->machine,
-			  (struct tgsi_sampler **) qss->samplers_list );
+			  (struct tgsi_sampler **)
+                             softpipe->tgsi.frag_samplers_list );
 
    qs->next->begin(qs->next);
 }
@@ -183,16 +183,6 @@ struct quad_stage *sp_quad_shade_stage( struct softpipe_context *softpipe )
    qss->stage.begin = shade_begin;
    qss->stage.run = shade_quad;
    qss->stage.destroy = shade_destroy;
-
-   /* setup TGSI sampler state */
-   for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
-      assert(softpipe->tex_cache[i]);
-      qss->samplers[i].base.get_samples = sp_get_samples;
-      qss->samplers[i].unit = i;
-      qss->samplers[i].sp = softpipe;
-      qss->samplers[i].cache = softpipe->tex_cache[i];
-      qss->samplers_list[i] = &qss->samplers[i];
-   }
 
    tgsi_exec_machine_init( &qss->machine );
 

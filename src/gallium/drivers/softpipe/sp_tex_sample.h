@@ -54,12 +54,20 @@ sp_shader_sampler(const struct tgsi_sampler *sampler)
 
 
 extern void
-sp_get_samples(struct tgsi_sampler *sampler,
-               const float s[QUAD_SIZE],
-               const float t[QUAD_SIZE],
-               const float p[QUAD_SIZE],
-               float lodbias,
-               float rgba[NUM_CHANNELS][QUAD_SIZE]);
+sp_get_samples_fragment(struct tgsi_sampler *tgsi_sampler,
+                        const float s[QUAD_SIZE],
+                        const float t[QUAD_SIZE],
+                        const float p[QUAD_SIZE],
+                        float lodbias,
+                        float rgba[NUM_CHANNELS][QUAD_SIZE]);
+
+extern void
+sp_get_samples_vertex(struct tgsi_sampler *tgsi_sampler,
+                      const float s[QUAD_SIZE],
+                      const float t[QUAD_SIZE],
+                      const float p[QUAD_SIZE],
+                      float lodbias,
+                      float rgba[NUM_CHANNELS][QUAD_SIZE]);
 
 
 #endif /* SP_TEX_SAMPLE_H */

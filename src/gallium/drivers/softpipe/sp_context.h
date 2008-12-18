@@ -142,8 +142,10 @@ struct softpipe_context {
 
    /** TGSI exec things */
    struct {
-      struct sp_shader_sampler samplers[PIPE_MAX_SAMPLERS];
-      struct sp_shader_sampler *samplers_list[PIPE_MAX_SAMPLERS];
+      struct sp_shader_sampler vert_samplers[PIPE_MAX_SAMPLERS];
+      struct sp_shader_sampler *vert_samplers_list[PIPE_MAX_SAMPLERS];
+      struct sp_shader_sampler frag_samplers[PIPE_MAX_SAMPLERS];
+      struct sp_shader_sampler *frag_samplers_list[PIPE_MAX_SAMPLERS];
    } tgsi;
 
    /** The primitive drawing context */
