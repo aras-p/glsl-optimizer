@@ -266,6 +266,9 @@ do_blit_copypixels(GLcontext * ctx,
    drm_clip_rect_t *cliprects;
    int x_off, y_off;
 
+   /* Update draw buffer bounds */
+   _mesa_update_state(ctx);
+
    /* Copypixels can be more than a straight copy.  Ensure all the
     * extra operations are disabled:
     */
