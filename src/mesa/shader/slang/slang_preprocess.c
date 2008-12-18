@@ -641,8 +641,10 @@ expand_symbol (expand_state *e, pp_symbol *symbol)
       SKIP_WHITE(e->input);
 
       /* Parse macro actual parameters. This can be anything, separated by a colon.
-       * TODO: What about nested/grouped parameters by parenthesis? */
+       */
       for (i = 0; i < symbol->parameters.count; i++) {
+         GLuint nested_paren_count = 0; /* track number of nested parentheses */
+
          if (*e->input == ')') {
             slang_info_log_error (e->state->elog, "preprocess error: unexpected ')'.");
             return GL_FALSE;
@@ -650,8 +652,19 @@ expand_symbol (expand_state *e, pp_symbol *symbol)
 
          /* Eat all characters up to the comma or closing parentheses. */
          pp_symbol_reset (&symbol->parameters.symbols[i]);
-         while (!IS_NULL(*e->input) && *e->input != ',' && *e->input != ')')
+         while (!IS_NULL(*e->input)) {
+            /* Exit loop only when all nested parens have been eaten. */
+            if (nested_paren_count == 0 && (*e->input == ',' || *e->input == ')'))
+               break;
+
+            /* Actually count nested parens here. */
+            if (*e->input == '(')
+               nested_paren_count++;
+            else if (*e->input == ')')
+               nested_paren_count--;
+
             slang_string_pushc (&symbol->parameters.symbols[i].replacement, *e->input++);
+         }
 
          /* If it was not the last paremeter, skip the comma. Otherwise, skip the
           * closing parentheses. */
