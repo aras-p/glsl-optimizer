@@ -297,7 +297,7 @@ i830_emit_invarient_state(struct intel_context *intel)
 {
    BATCH_LOCALS;
 
-   BEGIN_BATCH(40, IGNORE_CLIPRECTS);
+   BEGIN_BATCH(30, IGNORE_CLIPRECTS);
 
    OUT_BATCH(_3DSTATE_DFLT_DIFFUSE_CMD);
    OUT_BATCH(0);
@@ -491,8 +491,17 @@ i830_emit_state(struct intel_context *intel)
    }
 
    if (dirty & I830_UPLOAD_BUFFERS) {
+      GLuint count = 9; 
+
       DBG("I830_UPLOAD_BUFFERS:\n");
-      BEGIN_BATCH(I830_DEST_SETUP_SIZE + 2, IGNORE_CLIPRECTS);
+
+      if (state->depth_region)
+          count += 3;
+
+      if (intel->constant_cliprect)
+          count += 6;
+
+      BEGIN_BATCH(count, IGNORE_CLIPRECTS);
       OUT_BATCH(state->Buffer[I830_DESTREG_CBUFADDR0]);
       OUT_BATCH(state->Buffer[I830_DESTREG_CBUFADDR1]);
       OUT_RELOC(state->draw_region->buffer,
@@ -557,6 +566,8 @@ i830_emit_state(struct intel_context *intel)
          OUT_BATCH(state->Tex[i][I830_TEXREG_TM0S4]);
          OUT_BATCH(state->Tex[i][I830_TEXREG_MCS]);
          OUT_BATCH(state->Tex[i][I830_TEXREG_CUBE]);
+
+         ADVANCE_BATCH();
       }
 
       if (dirty & I830_UPLOAD_TEXBLEND(i)) {

@@ -173,7 +173,7 @@ i915_emit_invarient_state(struct intel_context *intel)
 {
    BATCH_LOCALS;
 
-   BEGIN_BATCH(200, IGNORE_CLIPRECTS);
+   BEGIN_BATCH(20, IGNORE_CLIPRECTS);
 
    OUT_BATCH(_3DSTATE_AA_CMD |
              AA_LINE_ECAAR_WIDTH_ENABLE |
@@ -376,9 +376,18 @@ i915_emit_state(struct intel_context *intel)
    }
 
    if (dirty & I915_UPLOAD_BUFFERS) {
+      GLuint count = 9;
+
       if (INTEL_DEBUG & DEBUG_STATE)
          fprintf(stderr, "I915_UPLOAD_BUFFERS:\n");
-      BEGIN_BATCH(I915_DEST_SETUP_SIZE + 2, IGNORE_CLIPRECTS);
+
+      if (state->depth_region)
+          count += 3;
+
+      if (intel->constant_cliprect)
+          count += 6;
+
+      BEGIN_BATCH(count, IGNORE_CLIPRECTS);
       OUT_BATCH(state->Buffer[I915_DESTREG_CBUFADDR0]);
       OUT_BATCH(state->Buffer[I915_DESTREG_CBUFADDR1]);
       OUT_RELOC(state->draw_region->buffer,
