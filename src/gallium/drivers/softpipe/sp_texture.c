@@ -94,40 +94,31 @@ softpipe_texture_layout(struct pipe_screen *screen,
    return spt->buffer != NULL;
 }
 
-
-
-/* Hack it up to use the old winsys->surface_alloc_storage()
- * method for now:
- */
 static boolean
 softpipe_displaytarget_layout(struct pipe_screen *screen,
                               struct softpipe_texture * spt)
 {
    struct pipe_winsys *ws = screen->winsys;
-   struct pipe_surface surf;
-   unsigned flags = (PIPE_BUFFER_USAGE_CPU_READ |
-                     PIPE_BUFFER_USAGE_CPU_WRITE |
-                     PIPE_BUFFER_USAGE_GPU_READ |
-                     PIPE_BUFFER_USAGE_GPU_WRITE);
+   size_t tex_size;
+   unsigned cpp;
 
-
-   memset(&surf, 0, sizeof(surf));
-
-   ws->surface_alloc_storage( ws, 
-                              &surf,
-                              spt->base.width[0], 
-                              spt->base.height[0],
-                              spt->base.format,
-                              flags,
-                              spt->base.tex_usage);
-      
+   switch (spt->base.format) {
+   case PIPE_FORMAT_R5G6B5_UNORM:
+      cpp = 2;
+      break;
+   case PIPE_FORMAT_Z24S8_UNORM: 
+   case PIPE_FORMAT_A8R8G8B8_UNORM:
+   default:
+      cpp = 4;
+      break;
+   }
+   tex_size = spt->base.width[0] * cpp * spt->base.height[0];
+   spt->buffer = ws->buffer_create(ws, 64, PIPE_BUFFER_USAGE_PIXEL, tex_size);
    /* Now extract the goodies: 
     */
    spt->base.nblocksx[0] = pf_get_nblocksx(&spt->base.block, spt->base.width[0]);  
    spt->base.nblocksy[0] = pf_get_nblocksy(&spt->base.block, spt->base.height[0]);  
-   spt->stride[0] = surf.stride;
-   spt->buffer = surf.buffer;
-
+   spt->stride[0] = spt->base.width[0] * cpp;
    return spt->buffer != NULL;
 }
 
@@ -227,10 +218,11 @@ softpipe_get_tex_surface(struct pipe_screen *screen,
 
    assert(level <= pt->last_level);
 
-   ps = ws->surface_alloc(ws);
+   ps = CALLOC_STRUCT(pipe_surface);
    if (ps) {
       assert(ps->refcount);
       assert(ps->winsys);
+      pipe_texture_reference(&ps->texture, pt);
       pipe_buffer_reference(screen, &ps->buffer, spt->buffer);
       ps->format = pt->format;
       ps->block = pt->block;
@@ -261,19 +253,18 @@ softpipe_get_tex_surface(struct pipe_screen *screen,
          spt->modified = TRUE;
       }
 
-      pipe_texture_reference(&ps->texture, pt); 
       ps->face = face;
       ps->level = level;
       ps->zslice = zslice;
 
       if (pt->target == PIPE_TEXTURE_CUBE || pt->target == PIPE_TEXTURE_3D) {
-	 ps->offset += ((pt->target == PIPE_TEXTURE_CUBE) ? face : zslice) *
-		       ps->nblocksy *
-		       ps->stride;
+         ps->offset += ((pt->target == PIPE_TEXTURE_CUBE) ? face : zslice) *
+            ps->nblocksy *
+            ps->stride;
       }
       else {
-	 assert(face == 0);
-	 assert(zslice == 0);
+         assert(face == 0);
+         assert(zslice == 0);
       }
    }
    return ps;
@@ -284,14 +275,18 @@ static void
 softpipe_tex_surface_release(struct pipe_screen *screen, 
                              struct pipe_surface **s)
 {
+   struct pipe_surface *surf = *s;
    /* Effectively do the texture_update work here - if texture images
     * needed post-processing to put them into hardware layout, this is
     * where it would happen.  For softpipe, nothing to do.
     */
    assert ((*s)->texture);
-   pipe_texture_reference(&(*s)->texture, NULL); 
-
-   screen->winsys->surface_release(screen->winsys, s);
+   if (--surf->refcount == 0) {
+      pipe_texture_reference(&surf->texture, NULL); 
+      pipe_buffer_reference(screen, &surf->buffer, NULL);
+      FREE(surf);
+   }
+   *s = NULL;
 }
 
 
