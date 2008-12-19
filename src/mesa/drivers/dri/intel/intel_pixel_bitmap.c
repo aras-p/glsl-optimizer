@@ -150,8 +150,18 @@ static GLuint get_bitmap_rect(GLsizei width, GLsizei height,
    return count;
 }
 
-
-
+/**
+ * Returns the low Y value of the vertical range given, flipped according to
+ * whether the framebuffer is or not.
+ */
+static inline int
+y_flip(struct gl_framebuffer *fb, int y, int height)
+{
+   if (fb->Name != 0)
+      return y;
+   else
+      return fb->Height - y - height;
+}
 
 /*
  * Render a bitmap.
@@ -208,8 +218,6 @@ do_blit_bitmap( GLcontext *ctx,
 
    intel_get_cliprects(intel, &cliprects, &num_cliprects, &x_off, &y_off);
    if (num_cliprects != 0) {
-      drm_clip_rect_t dest_rect;
-      GLint srcx = 0, srcy = 0;
       GLuint i;
       GLint orig_dstx = dstx;
       GLint orig_dsty = dsty;
@@ -220,45 +228,26 @@ do_blit_bitmap( GLcontext *ctx,
 				&dstx, &dsty, &width, &height))
             goto out;
 
-      /* Convert from GL to hardware coordinates.  Transform original points
-       * along with it so that we can look at cliprects in hw coordinates and
-       * map back to points in the source space.
-       */
-      if (fb->Name == 0) {
-	 /* bitmap to a system framebuffer */
-	 dstx = x_off + dstx;
-	 dsty = y_off + (fb->Height - dsty - height);
-	 orig_dstx = x_off + orig_dstx;
-	 orig_dsty = y_off + (fb->Height - orig_dsty - height);
-      } else {
-	 /* bitmap to a user framebuffer object */
-	 dstx = x_off + dstx;
-	 dsty = y_off + dsty;
-	 orig_dstx = x_off + orig_dstx;
-	 orig_dsty = y_off + orig_dsty;
-      }
-
-      dest_rect.x1 = dstx;
-      dest_rect.y1 = dsty;
-      dest_rect.x2 = dstx + width;
-      dest_rect.y2 = dsty + height;
+      dstx = x_off + dstx;
+      dsty = y_off + y_flip(fb, dsty, height);
 
       for (i = 0; i < num_cliprects; i++) {
-         drm_clip_rect_t rect;
-	 int box_w, box_h;
+	 int box_x, box_y, box_w, box_h;
 	 GLint px, py;
 	 GLuint stipple[32];  
 
-         if (!intel_intersect_cliprects(&rect, &dest_rect, &cliprects[i]))
-            continue;
+	 box_x = dstx;
+	 box_y = dsty;
+	 box_w = width;
+	 box_h = height;
 
-	 /* Now go back to GL coordinates to figure out what subset of
-	  * the bitmap we are uploading for this cliprect:
-	  */
-	 box_w = rect.x2 - rect.x1;
-	 box_h = rect.y2 - rect.y1;
-	 srcx = rect.x1 - orig_dstx;
-	 srcy = rect.y1 - orig_dsty;
+	 /* Clip to drawable cliprect */
+         if (!_mesa_clip_to_region(cliprects[i].x1,
+				   cliprects[i].y1,
+				   cliprects[i].x2 - cliprects[i].x1,
+				   cliprects[i].y2 - cliprects[i].y1,
+				   &box_x, &box_y, &box_w, &box_h))
+	    continue;
 
 #define DY 32
 #define DX 32
@@ -279,10 +268,16 @@ do_blit_bitmap( GLcontext *ctx,
 
 	       /* May need to adjust this when padding has been introduced in
 		* sz above:
+		*
+		* Have to translate destination coordinates back into source
+		* coordinates.
 		*/
 	       if (get_bitmap_rect(bitmap_width, bitmap_height, unpack,
 				   bitmap,
-				   srcx + px, srcy + py, w, h,
+				   -orig_dstx + (box_x + px - x_off),
+				   -orig_dsty + y_flip(fb,
+						       box_y + py - y_off, h),
+				   w, h,
 				   (GLubyte *)stipple,
 				   8,
 				   fb->Name == 0 ? GL_TRUE : GL_FALSE) == 0)
@@ -299,8 +294,8 @@ do_blit_bitmap( GLcontext *ctx,
 						  dst->buffer,
 						  0,
 						  dst->tiling,
-						  rect.x1 + px,
-						  rect.y2 - (py + h),
+						  box_x + px,
+						  box_y + py,
 						  w, h,
 						  logic_op);
 	    } 
