@@ -5152,7 +5152,7 @@ _mesa_clip_to_region(GLint xmin, GLint ymin,
 
    /* right clipping */
    if (*x + *width > xmax)
-      *width -= (*x + *width - xmax - 1);
+      *width -= (*x + *width - xmax);
 
    if (*width <= 0)
       return GL_FALSE;
@@ -5165,7 +5165,7 @@ _mesa_clip_to_region(GLint xmin, GLint ymin,
 
    /* top (or bottom) clipping */
    if (*y + *height > ymax)
-      *height -= (*y + *height - ymax - 1);
+      *height -= (*y + *height - ymax);
 
    if (*height <= 0)
       return GL_FALSE;
