@@ -169,6 +169,8 @@ void
 st_set_framebuffer_surface(struct st_framebuffer *stfb,
                            uint surfIndex, struct pipe_surface *surf)
 {
+   GET_CURRENT_CONTEXT(ctx);
+   struct st_context *st;
    static const GLuint invalid_size = 9999999;
    struct st_renderbuffer *strb;
    GLuint width, height, i;
@@ -183,6 +185,15 @@ st_set_framebuffer_surface(struct st_framebuffer *stfb,
    /* replace the renderbuffer's surface/texture pointers */
    pipe_surface_reference( &strb->surface, surf );
    pipe_texture_reference( &strb->texture, surf->texture );
+
+   if (ctx) {
+      /* If ctx isn't set, we've likely not made current yet.
+       * But when we do, we need to start setting this dirty bit
+       * to ensure the renderbuffer attachements are up-to-date
+       * via update_framebuffer.
+       */
+      ctx->st->dirty.st |= ST_NEW_FRAMEBUFFER;
+   }
 
    /* update renderbuffer's width/height */
    strb->Base.Width = surf->width;
