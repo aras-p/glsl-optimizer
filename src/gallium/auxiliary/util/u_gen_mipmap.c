@@ -2,6 +2,7 @@
  *
  * Copyright 2008 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
+ * Copyright 2008  VMware, Inc.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
@@ -93,13 +94,82 @@ enum dtype
 typedef ushort half_float;
 
 
-#if 0
-extern half_float
-float_to_half(float f);
+static half_float
+float_to_half(float f)
+{
+   /* XXX fix this */
+   return 0;
+}
 
-extern float
-half_to_float(half_float h);
-#endif
+static float
+half_to_float(half_float h)
+{
+   /* XXX fix this */
+   return 0.0f;
+}
+
+
+
+
+/**
+ * \name Support macros for do_row and do_row_3d
+ *
+ * The macro madness is here for two reasons.  First, it compacts the code
+ * slightly.  Second, it makes it much easier to adjust the specifics of the
+ * filter to tune the rounding characteristics.
+ */
+/*@{*/
+#define DECLARE_ROW_POINTERS(t, e) \
+      const t(*rowA)[e] = (const t(*)[e]) srcRowA; \
+      const t(*rowB)[e] = (const t(*)[e]) srcRowB; \
+      const t(*rowC)[e] = (const t(*)[e]) srcRowC; \
+      const t(*rowD)[e] = (const t(*)[e]) srcRowD; \
+      t(*dst)[e] = (t(*)[e]) dstRow
+
+#define DECLARE_ROW_POINTERS0(t) \
+      const t *rowA = (const t *) srcRowA; \
+      const t *rowB = (const t *) srcRowB; \
+      const t *rowC = (const t *) srcRowC; \
+      const t *rowD = (const t *) srcRowD; \
+      t *dst = (t *) dstRow
+
+#define FILTER_SUM_3D(Aj, Ak, Bj, Bk, Cj, Ck, Dj, Dk) \
+   ((unsigned) Aj + (unsigned) Ak \
+    + (unsigned) Bj + (unsigned) Bk \
+    + (unsigned) Cj + (unsigned) Ck \
+    + (unsigned) Dj + (unsigned) Dk \
+    + 4) >> 3
+
+#define FILTER_3D(e) \
+   do { \
+      dst[i][e] = FILTER_SUM_3D(rowA[j][e], rowA[k][e], \
+                                rowB[j][e], rowB[k][e], \
+                                rowC[j][e], rowC[k][e], \
+                                rowD[j][e], rowD[k][e]); \
+   } while(0)
+   
+#define FILTER_F_3D(e) \
+   do { \
+      dst[i][e] = (rowA[j][e] + rowA[k][e] \
+                   + rowB[j][e] + rowB[k][e] \
+                   + rowC[j][e] + rowC[k][e] \
+                   + rowD[j][e] + rowD[k][e]) * 0.125F; \
+   } while(0)
+
+#define FILTER_HF_3D(e) \
+   do { \
+      const float aj = half_to_float(rowA[j][e]); \
+      const float ak = half_to_float(rowA[k][e]); \
+      const float bj = half_to_float(rowB[j][e]); \
+      const float bk = half_to_float(rowB[k][e]); \
+      const float cj = half_to_float(rowC[j][e]); \
+      const float ck = half_to_float(rowC[k][e]); \
+      const float dj = half_to_float(rowD[j][e]); \
+      const float dk = half_to_float(rowD[k][e]); \
+      dst[i][e] = float_to_half((aj + ak + bj + bk + cj + ck + dj + dk) \
+                                      * 0.125F); \
+   } while(0)
+/*@}*/
 
 
 /**
@@ -471,6 +541,385 @@ do_row(enum dtype datatype, uint comps, int srcWidth,
 }
 
 
+/**
+ * Average together four rows of a source image to produce a single new
+ * row in the dest image.  It's legal for the two source rows to point
+ * to the same data.  The source width must be equal to either the
+ * dest width or two times the dest width.
+ *
+ * \param datatype  GL pixel type \c GL_UNSIGNED_BYTE, \c GL_UNSIGNED_SHORT,
+ *                  \c GL_FLOAT, etc.
+ * \param comps     number of components per pixel (1..4)
+ * \param srcWidth  Width of a row in the source data
+ * \param srcRowA   Pointer to one of the rows of source data
+ * \param srcRowB   Pointer to one of the rows of source data
+ * \param srcRowC   Pointer to one of the rows of source data
+ * \param srcRowD   Pointer to one of the rows of source data
+ * \param dstWidth  Width of a row in the destination data
+ * \param srcRowA   Pointer to the row of destination data
+ */
+static void
+do_row_3D(enum dtype datatype, uint comps, int srcWidth,
+          const void *srcRowA, const void *srcRowB,
+          const void *srcRowC, const void *srcRowD,
+          int dstWidth, void *dstRow)
+{
+   const uint k0 = (srcWidth == dstWidth) ? 0 : 1;
+   const uint colStride = (srcWidth == dstWidth) ? 1 : 2;
+   uint i, j, k;
+
+   assert(comps >= 1);
+   assert(comps <= 4);
+
+   if ((datatype == UBYTE) && (comps == 4)) {
+      DECLARE_ROW_POINTERS(ubyte, 4);
+
+      for (i = j = 0, k = k0; i < (uint) dstWidth;
+           i++, j += colStride, k += colStride) {
+         FILTER_3D(0);
+         FILTER_3D(1);
+         FILTER_3D(2);
+         FILTER_3D(3);
+      }
+   }
+   else if ((datatype == UBYTE) && (comps == 3)) {
+      DECLARE_ROW_POINTERS(ubyte, 3);
+
+      for (i = j = 0, k = k0; i < (uint) dstWidth;
+           i++, j += colStride, k += colStride) {
+         FILTER_3D(0);
+         FILTER_3D(1);
+         FILTER_3D(2);
+      }
+   }
+   else if ((datatype == UBYTE) && (comps == 2)) {
+      DECLARE_ROW_POINTERS(ubyte, 2);
+
+      for (i = j = 0, k = k0; i < (uint) dstWidth;
+           i++, j += colStride, k += colStride) {
+         FILTER_3D(0);
+         FILTER_3D(1);
+      }
+   }
+   else if ((datatype == UBYTE) && (comps == 1)) {
+      DECLARE_ROW_POINTERS(ubyte, 1);
+
+      for (i = j = 0, k = k0; i < (uint) dstWidth;
+           i++, j += colStride, k += colStride) {
+         FILTER_3D(0);
+      }
+   }
+   else if ((datatype == USHORT) && (comps == 4)) {
+      DECLARE_ROW_POINTERS(ushort, 4);
+
+      for (i = j = 0, k = k0; i < (uint) dstWidth;
+           i++, j += colStride, k += colStride) {
+         FILTER_3D(0);
+         FILTER_3D(1);
+         FILTER_3D(2);
+         FILTER_3D(3);
+      }
+   }
+   else if ((datatype == USHORT) && (comps == 3)) {
+      DECLARE_ROW_POINTERS(ushort, 3);
+
+      for (i = j = 0, k = k0; i < (uint) dstWidth;
+           i++, j += colStride, k += colStride) {
+         FILTER_3D(0);
+         FILTER_3D(1);
+         FILTER_3D(2);
+      }
+   }
+   else if ((datatype == USHORT) && (comps == 2)) {
+      DECLARE_ROW_POINTERS(ushort, 2);
+
+      for (i = j = 0, k = k0; i < (uint) dstWidth;
+           i++, j += colStride, k += colStride) {
+         FILTER_3D(0);
+         FILTER_3D(1);
+      }
+   }
+   else if ((datatype == USHORT) && (comps == 1)) {
+      DECLARE_ROW_POINTERS(ushort, 1);
+
+      for (i = j = 0, k = k0; i < (uint) dstWidth;
+           i++, j += colStride, k += colStride) {
+         FILTER_3D(0);
+      }
+   }
+   else if ((datatype == FLOAT) && (comps == 4)) {
+      DECLARE_ROW_POINTERS(float, 4);
+
+      for (i = j = 0, k = k0; i < (uint) dstWidth;
+           i++, j += colStride, k += colStride) {
+         FILTER_F_3D(0);
+         FILTER_F_3D(1);
+         FILTER_F_3D(2);
+         FILTER_F_3D(3);
+      }
+   }
+   else if ((datatype == FLOAT) && (comps == 3)) {
+      DECLARE_ROW_POINTERS(float, 3);
+
+      for (i = j = 0, k = k0; i < (uint) dstWidth;
+           i++, j += colStride, k += colStride) {
+         FILTER_F_3D(0);
+         FILTER_F_3D(1);
+         FILTER_F_3D(2);
+      }
+   }
+   else if ((datatype == FLOAT) && (comps == 2)) {
+      DECLARE_ROW_POINTERS(float, 2);
+
+      for (i = j = 0, k = k0; i < (uint) dstWidth;
+           i++, j += colStride, k += colStride) {
+         FILTER_F_3D(0);
+         FILTER_F_3D(1);
+      }
+   }
+   else if ((datatype == FLOAT) && (comps == 1)) {
+      DECLARE_ROW_POINTERS(float, 1);
+
+      for (i = j = 0, k = k0; i < (uint) dstWidth;
+           i++, j += colStride, k += colStride) {
+         FILTER_F_3D(0);
+      }
+   }
+   else if ((datatype == HALF_FLOAT) && (comps == 4)) {
+      DECLARE_ROW_POINTERS(half_float, 4);
+
+      for (i = j = 0, k = k0; i < (uint) dstWidth;
+           i++, j += colStride, k += colStride) {
+         FILTER_HF_3D(0);
+         FILTER_HF_3D(1);
+         FILTER_HF_3D(2);
+         FILTER_HF_3D(3);
+      }
+   }
+   else if ((datatype == HALF_FLOAT) && (comps == 3)) {
+      DECLARE_ROW_POINTERS(half_float, 4);
+
+      for (i = j = 0, k = k0; i < (uint) dstWidth;
+           i++, j += colStride, k += colStride) {
+         FILTER_HF_3D(0);
+         FILTER_HF_3D(1);
+         FILTER_HF_3D(2);
+      }
+   }
+   else if ((datatype == HALF_FLOAT) && (comps == 2)) {
+      DECLARE_ROW_POINTERS(half_float, 4);
+
+      for (i = j = 0, k = k0; i < (uint) dstWidth;
+           i++, j += colStride, k += colStride) {
+         FILTER_HF_3D(0);
+         FILTER_HF_3D(1);
+      }
+   }
+   else if ((datatype == HALF_FLOAT) && (comps == 1)) {
+      DECLARE_ROW_POINTERS(half_float, 4);
+
+      for (i = j = 0, k = k0; i < (uint) dstWidth;
+           i++, j += colStride, k += colStride) {
+         FILTER_HF_3D(0);
+      }
+   }
+   else if ((datatype == UINT) && (comps == 1)) {
+      const uint *rowA = (const uint *) srcRowA;
+      const uint *rowB = (const uint *) srcRowB;
+      const uint *rowC = (const uint *) srcRowC;
+      const uint *rowD = (const uint *) srcRowD;
+      float *dst = (float *) dstRow;
+
+      for (i = j = 0, k = k0; i < (uint) dstWidth;
+           i++, j += colStride, k += colStride) {
+         const uint64_t tmp = (((uint64_t) rowA[j] + (uint64_t) rowA[k])
+                               + ((uint64_t) rowB[j] + (uint64_t) rowB[k])
+                               + ((uint64_t) rowC[j] + (uint64_t) rowC[k])
+                               + ((uint64_t) rowD[j] + (uint64_t) rowD[k]));
+         dst[i] = (float)((double) tmp * 0.125);
+      }
+   }
+   else if ((datatype == USHORT_5_6_5) && (comps == 3)) {
+      DECLARE_ROW_POINTERS0(ushort);
+
+      for (i = j = 0, k = k0; i < (uint) dstWidth;
+           i++, j += colStride, k += colStride) {
+         const int rowAr0 = rowA[j] & 0x1f;
+         const int rowAr1 = rowA[k] & 0x1f;
+         const int rowBr0 = rowB[j] & 0x1f;
+         const int rowBr1 = rowB[k] & 0x1f;
+         const int rowCr0 = rowC[j] & 0x1f;
+         const int rowCr1 = rowC[k] & 0x1f;
+         const int rowDr0 = rowD[j] & 0x1f;
+         const int rowDr1 = rowD[k] & 0x1f;
+         const int rowAg0 = (rowA[j] >> 5) & 0x3f;
+         const int rowAg1 = (rowA[k] >> 5) & 0x3f;
+         const int rowBg0 = (rowB[j] >> 5) & 0x3f;
+         const int rowBg1 = (rowB[k] >> 5) & 0x3f;
+         const int rowCg0 = (rowC[j] >> 5) & 0x3f;
+         const int rowCg1 = (rowC[k] >> 5) & 0x3f;
+         const int rowDg0 = (rowD[j] >> 5) & 0x3f;
+         const int rowDg1 = (rowD[k] >> 5) & 0x3f;
+         const int rowAb0 = (rowA[j] >> 11) & 0x1f;
+         const int rowAb1 = (rowA[k] >> 11) & 0x1f;
+         const int rowBb0 = (rowB[j] >> 11) & 0x1f;
+         const int rowBb1 = (rowB[k] >> 11) & 0x1f;
+         const int rowCb0 = (rowC[j] >> 11) & 0x1f;
+         const int rowCb1 = (rowC[k] >> 11) & 0x1f;
+         const int rowDb0 = (rowD[j] >> 11) & 0x1f;
+         const int rowDb1 = (rowD[k] >> 11) & 0x1f;
+         const int r = FILTER_SUM_3D(rowAr0, rowAr1, rowBr0, rowBr1,
+                                       rowCr0, rowCr1, rowDr0, rowDr1);
+         const int g = FILTER_SUM_3D(rowAg0, rowAg1, rowBg0, rowBg1,
+                                       rowCg0, rowCg1, rowDg0, rowDg1);
+         const int b = FILTER_SUM_3D(rowAb0, rowAb1, rowBb0, rowBb1,
+                                       rowCb0, rowCb1, rowDb0, rowDb1);
+         dst[i] = (b << 11) | (g << 5) | r;
+      }
+   }
+   else if ((datatype == USHORT_4_4_4_4) && (comps == 4)) {
+      DECLARE_ROW_POINTERS0(ushort);
+
+      for (i = j = 0, k = k0; i < (uint) dstWidth;
+           i++, j += colStride, k += colStride) {
+         const int rowAr0 = rowA[j] & 0xf;
+         const int rowAr1 = rowA[k] & 0xf;
+         const int rowBr0 = rowB[j] & 0xf;
+         const int rowBr1 = rowB[k] & 0xf;
+         const int rowCr0 = rowC[j] & 0xf;
+         const int rowCr1 = rowC[k] & 0xf;
+         const int rowDr0 = rowD[j] & 0xf;
+         const int rowDr1 = rowD[k] & 0xf;
+         const int rowAg0 = (rowA[j] >> 4) & 0xf;
+         const int rowAg1 = (rowA[k] >> 4) & 0xf;
+         const int rowBg0 = (rowB[j] >> 4) & 0xf;
+         const int rowBg1 = (rowB[k] >> 4) & 0xf;
+         const int rowCg0 = (rowC[j] >> 4) & 0xf;
+         const int rowCg1 = (rowC[k] >> 4) & 0xf;
+         const int rowDg0 = (rowD[j] >> 4) & 0xf;
+         const int rowDg1 = (rowD[k] >> 4) & 0xf;
+         const int rowAb0 = (rowA[j] >> 8) & 0xf;
+         const int rowAb1 = (rowA[k] >> 8) & 0xf;
+         const int rowBb0 = (rowB[j] >> 8) & 0xf;
+         const int rowBb1 = (rowB[k] >> 8) & 0xf;
+         const int rowCb0 = (rowC[j] >> 8) & 0xf;
+         const int rowCb1 = (rowC[k] >> 8) & 0xf;
+         const int rowDb0 = (rowD[j] >> 8) & 0xf;
+         const int rowDb1 = (rowD[k] >> 8) & 0xf;
+         const int rowAa0 = (rowA[j] >> 12) & 0xf;
+         const int rowAa1 = (rowA[k] >> 12) & 0xf;
+         const int rowBa0 = (rowB[j] >> 12) & 0xf;
+         const int rowBa1 = (rowB[k] >> 12) & 0xf;
+         const int rowCa0 = (rowC[j] >> 12) & 0xf;
+         const int rowCa1 = (rowC[k] >> 12) & 0xf;
+         const int rowDa0 = (rowD[j] >> 12) & 0xf;
+         const int rowDa1 = (rowD[k] >> 12) & 0xf;
+         const int r = FILTER_SUM_3D(rowAr0, rowAr1, rowBr0, rowBr1,
+                                       rowCr0, rowCr1, rowDr0, rowDr1);
+         const int g = FILTER_SUM_3D(rowAg0, rowAg1, rowBg0, rowBg1,
+                                       rowCg0, rowCg1, rowDg0, rowDg1);
+         const int b = FILTER_SUM_3D(rowAb0, rowAb1, rowBb0, rowBb1,
+                                       rowCb0, rowCb1, rowDb0, rowDb1);
+         const int a = FILTER_SUM_3D(rowAa0, rowAa1, rowBa0, rowBa1,
+                                       rowCa0, rowCa1, rowDa0, rowDa1);
+
+         dst[i] = (a << 12) | (b << 8) | (g << 4) | r;
+      }
+   }
+   else if ((datatype == USHORT_1_5_5_5_REV) && (comps == 4)) {
+      DECLARE_ROW_POINTERS0(ushort);
+
+      for (i = j = 0, k = k0; i < (uint) dstWidth;
+           i++, j += colStride, k += colStride) {
+         const int rowAr0 = rowA[j] & 0x1f;
+         const int rowAr1 = rowA[k] & 0x1f;
+         const int rowBr0 = rowB[j] & 0x1f;
+         const int rowBr1 = rowB[k] & 0x1f;
+         const int rowCr0 = rowC[j] & 0x1f;
+         const int rowCr1 = rowC[k] & 0x1f;
+         const int rowDr0 = rowD[j] & 0x1f;
+         const int rowDr1 = rowD[k] & 0x1f;
+         const int rowAg0 = (rowA[j] >> 5) & 0x1f;
+         const int rowAg1 = (rowA[k] >> 5) & 0x1f;
+         const int rowBg0 = (rowB[j] >> 5) & 0x1f;
+         const int rowBg1 = (rowB[k] >> 5) & 0x1f;
+         const int rowCg0 = (rowC[j] >> 5) & 0x1f;
+         const int rowCg1 = (rowC[k] >> 5) & 0x1f;
+         const int rowDg0 = (rowD[j] >> 5) & 0x1f;
+         const int rowDg1 = (rowD[k] >> 5) & 0x1f;
+         const int rowAb0 = (rowA[j] >> 10) & 0x1f;
+         const int rowAb1 = (rowA[k] >> 10) & 0x1f;
+         const int rowBb0 = (rowB[j] >> 10) & 0x1f;
+         const int rowBb1 = (rowB[k] >> 10) & 0x1f;
+         const int rowCb0 = (rowC[j] >> 10) & 0x1f;
+         const int rowCb1 = (rowC[k] >> 10) & 0x1f;
+         const int rowDb0 = (rowD[j] >> 10) & 0x1f;
+         const int rowDb1 = (rowD[k] >> 10) & 0x1f;
+         const int rowAa0 = (rowA[j] >> 15) & 0x1;
+         const int rowAa1 = (rowA[k] >> 15) & 0x1;
+         const int rowBa0 = (rowB[j] >> 15) & 0x1;
+         const int rowBa1 = (rowB[k] >> 15) & 0x1;
+         const int rowCa0 = (rowC[j] >> 15) & 0x1;
+         const int rowCa1 = (rowC[k] >> 15) & 0x1;
+         const int rowDa0 = (rowD[j] >> 15) & 0x1;
+         const int rowDa1 = (rowD[k] >> 15) & 0x1;
+         const int r = FILTER_SUM_3D(rowAr0, rowAr1, rowBr0, rowBr1,
+                                       rowCr0, rowCr1, rowDr0, rowDr1);
+         const int g = FILTER_SUM_3D(rowAg0, rowAg1, rowBg0, rowBg1,
+                                       rowCg0, rowCg1, rowDg0, rowDg1);
+         const int b = FILTER_SUM_3D(rowAb0, rowAb1, rowBb0, rowBb1,
+                                       rowCb0, rowCb1, rowDb0, rowDb1);
+         const int a = FILTER_SUM_3D(rowAa0, rowAa1, rowBa0, rowBa1,
+                                       rowCa0, rowCa1, rowDa0, rowDa1);
+
+         dst[i] = (a << 15) | (b << 10) | (g << 5) | r;
+      }
+   }
+   else if ((datatype == UBYTE_3_3_2) && (comps == 3)) {
+      DECLARE_ROW_POINTERS0(ushort);
+
+      for (i = j = 0, k = k0; i < (uint) dstWidth;
+           i++, j += colStride, k += colStride) {
+         const int rowAr0 = rowA[j] & 0x3;
+         const int rowAr1 = rowA[k] & 0x3;
+         const int rowBr0 = rowB[j] & 0x3;
+         const int rowBr1 = rowB[k] & 0x3;
+         const int rowCr0 = rowC[j] & 0x3;
+         const int rowCr1 = rowC[k] & 0x3;
+         const int rowDr0 = rowD[j] & 0x3;
+         const int rowDr1 = rowD[k] & 0x3;
+         const int rowAg0 = (rowA[j] >> 2) & 0x7;
+         const int rowAg1 = (rowA[k] >> 2) & 0x7;
+         const int rowBg0 = (rowB[j] >> 2) & 0x7;
+         const int rowBg1 = (rowB[k] >> 2) & 0x7;
+         const int rowCg0 = (rowC[j] >> 2) & 0x7;
+         const int rowCg1 = (rowC[k] >> 2) & 0x7;
+         const int rowDg0 = (rowD[j] >> 2) & 0x7;
+         const int rowDg1 = (rowD[k] >> 2) & 0x7;
+         const int rowAb0 = (rowA[j] >> 5) & 0x7;
+         const int rowAb1 = (rowA[k] >> 5) & 0x7;
+         const int rowBb0 = (rowB[j] >> 5) & 0x7;
+         const int rowBb1 = (rowB[k] >> 5) & 0x7;
+         const int rowCb0 = (rowC[j] >> 5) & 0x7;
+         const int rowCb1 = (rowC[k] >> 5) & 0x7;
+         const int rowDb0 = (rowD[j] >> 5) & 0x7;
+         const int rowDb1 = (rowD[k] >> 5) & 0x7;
+         const int r = FILTER_SUM_3D(rowAr0, rowAr1, rowBr0, rowBr1,
+                                       rowCr0, rowCr1, rowDr0, rowDr1);
+         const int g = FILTER_SUM_3D(rowAg0, rowAg1, rowBg0, rowBg1,
+                                       rowCg0, rowCg1, rowDg0, rowDg1);
+         const int b = FILTER_SUM_3D(rowAb0, rowAb1, rowBb0, rowBb1,
+                                       rowCb0, rowCb1, rowDb0, rowDb1);
+         dst[i] = (b << 5) | (g << 2) | r;
+      }
+   }
+   else {
+      debug_printf("bad format in do_row_3D()");
+   }
+}
+
+
+
 static void
 format_to_type_comps(enum pipe_format pformat,
                      enum dtype *datatype, uint *comps)
@@ -576,6 +1025,87 @@ reduce_2d(enum pipe_format pformat,
 
 
 static void
+reduce_3d(enum pipe_format pformat,
+          int srcWidth, int srcHeight, int srcDepth,
+          int srcRowStride, const ubyte *srcPtr,
+          int dstWidth, int dstHeight, int dstDepth,
+          int dstRowStride, ubyte *dstPtr)
+{
+   const int bpt = pf_get_size(pformat);
+   const int border = 0;
+   int img, row;
+   int bytesPerSrcImage, bytesPerDstImage;
+   int bytesPerSrcRow, bytesPerDstRow;
+   int srcImageOffset, srcRowOffset;
+   enum dtype datatype;
+   uint comps;
+
+   format_to_type_comps(pformat, &datatype, &comps);
+
+   bytesPerSrcImage = srcWidth * srcHeight * bpt;
+   bytesPerDstImage = dstWidth * dstHeight * bpt;
+
+   bytesPerSrcRow = srcWidth * bpt;
+   bytesPerDstRow = dstWidth * bpt;
+
+   /* Offset between adjacent src images to be averaged together */
+   srcImageOffset = (srcDepth == dstDepth) ? 0 : bytesPerSrcImage;
+
+   /* Offset between adjacent src rows to be averaged together */
+   srcRowOffset = (srcHeight == dstHeight) ? 0 : srcWidth * bpt;
+
+   /*
+    * Need to average together up to 8 src pixels for each dest pixel.
+    * Break that down into 3 operations:
+    *   1. take two rows from source image and average them together.
+    *   2. take two rows from next source image and average them together.
+    *   3. take the two averaged rows and average them for the final dst row.
+    */
+
+   /*
+   _mesa_printf("mip3d %d x %d x %d  ->  %d x %d x %d\n",
+          srcWidth, srcHeight, srcDepth, dstWidth, dstHeight, dstDepth);
+   */
+
+   for (img = 0; img < dstDepth; img++) {
+      /* first source image pointer, skipping border */
+      const ubyte *imgSrcA = srcPtr
+         + (bytesPerSrcImage + bytesPerSrcRow + border) * bpt * border
+         + img * (bytesPerSrcImage + srcImageOffset);
+      /* second source image pointer, skipping border */
+      const ubyte *imgSrcB = imgSrcA + srcImageOffset;
+      /* address of the dest image, skipping border */
+      ubyte *imgDst = dstPtr
+         + (bytesPerDstImage + bytesPerDstRow + border) * bpt * border
+         + img * bytesPerDstImage;
+
+      /* setup the four source row pointers and the dest row pointer */
+      const ubyte *srcImgARowA = imgSrcA;
+      const ubyte *srcImgARowB = imgSrcA + srcRowOffset;
+      const ubyte *srcImgBRowA = imgSrcB;
+      const ubyte *srcImgBRowB = imgSrcB + srcRowOffset;
+      ubyte *dstImgRow = imgDst;
+
+      for (row = 0; row < dstHeight; row++) {
+         do_row_3D(datatype, comps, srcWidth, 
+                   srcImgARowA, srcImgARowB,
+                   srcImgBRowA, srcImgBRowB,
+                   dstWidth, dstImgRow);
+
+         /* advance to next rows */
+         srcImgARowA += bytesPerSrcRow + srcRowOffset;
+         srcImgARowB += bytesPerSrcRow + srcRowOffset;
+         srcImgBRowA += bytesPerSrcRow + srcRowOffset;
+         srcImgBRowB += bytesPerSrcRow + srcRowOffset;
+         dstImgRow += bytesPerDstRow;
+      }
+   }
+}
+
+
+
+
+static void
 make_1d_mipmap(struct gen_mipmap_state *ctx,
                struct pipe_texture *pt,
                uint face, uint baseLevel, uint lastLevel)
@@ -666,6 +1196,46 @@ make_3d_mipmap(struct gen_mipmap_state *ctx,
                struct pipe_texture *pt,
                uint face, uint baseLevel, uint lastLevel)
 {
+   struct pipe_context *pipe = ctx->pipe;
+   struct pipe_screen *screen = pipe->screen;
+   uint dstLevel, zslice;
+
+   assert(pt->block.width == 1);
+   assert(pt->block.height == 1);
+
+   for (dstLevel = baseLevel + 1; dstLevel <= lastLevel; dstLevel++) {
+      const uint srcLevel = dstLevel - 1;
+      struct pipe_surface *srcSurf, *dstSurf;
+      ubyte *srcMap, *dstMap;
+      
+      srcSurf = screen->get_tex_surface(screen, pt, face, srcLevel, zslice,
+                                        PIPE_BUFFER_USAGE_CPU_READ);
+      dstSurf = screen->get_tex_surface(screen, pt, face, dstLevel, zslice,
+                                        PIPE_BUFFER_USAGE_CPU_WRITE);
+
+      srcMap = ((ubyte *) pipe_buffer_map(screen, srcSurf->buffer,
+                                          PIPE_BUFFER_USAGE_CPU_READ)
+                + srcSurf->offset);
+      dstMap = ((ubyte *) pipe_buffer_map(screen, dstSurf->buffer,
+                                          PIPE_BUFFER_USAGE_CPU_WRITE)
+                + dstSurf->offset);
+
+#if 0
+      reduce_3d(pt->format,
+                srcSurf->width, srcSurf->height,
+                srcSurf->stride, srcMap,
+                dstSurf->width, dstSurf->height,
+                dstSurf->stride, dstMap);
+#else
+      (void) reduce_3d;
+#endif
+
+      pipe_buffer_unmap(screen, srcSurf->buffer);
+      pipe_buffer_unmap(screen, dstSurf->buffer);
+
+      pipe_surface_reference(&srcSurf, NULL);
+      pipe_surface_reference(&dstSurf, NULL);
+   }
 }
 
 
