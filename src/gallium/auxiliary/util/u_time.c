@@ -111,7 +111,7 @@ util_time_add(const struct util_time *t1,
 #elif defined(PIPE_SUBSYSTEM_WINDOWS_MINIPORT)
    /* 1 tick = 100 nano seconds. */
    t2->counter = t1->counter + usecs * 10;
-#elif 
+#else
    LARGE_INTEGER temp;
    LONGLONG freq;
    freq = temp.QuadPart;
