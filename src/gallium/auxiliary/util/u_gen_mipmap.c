@@ -420,7 +420,7 @@ do_row(enum dtype datatype, uint comps, int srcWidth,
          const int rowAr0 = rowA[j] & 0x1f;
          const int rowAr1 = rowA[k] & 0x1f;
          const int rowBr0 = rowB[j] & 0x1f;
-         const int rowBr1 = rowB[k] & 0xf;
+         const int rowBr1 = rowB[k] & 0x1f;
          const int rowAg0 = (rowA[j] >> 5) & 0x1f;
          const int rowAg1 = (rowA[k] >> 5) & 0x1f;
          const int rowBg0 = (rowB[j] >> 5) & 0x1f;
