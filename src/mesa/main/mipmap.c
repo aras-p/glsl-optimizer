@@ -361,7 +361,7 @@ do_row(GLenum datatype, GLuint comps, GLint srcWidth,
          const GLint rowAr0 = rowA[j] & 0x1f;
          const GLint rowAr1 = rowA[k] & 0x1f;
          const GLint rowBr0 = rowB[j] & 0x1f;
-         const GLint rowBr1 = rowB[k] & 0xf;
+         const GLint rowBr1 = rowB[k] & 0x1f;
          const GLint rowAg0 = (rowA[j] >> 5) & 0x1f;
          const GLint rowAg1 = (rowA[k] >> 5) & 0x1f;
          const GLint rowBg0 = (rowB[j] >> 5) & 0x1f;
