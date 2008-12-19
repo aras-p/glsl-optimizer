@@ -2,6 +2,7 @@
  * 
  * Copyright 2008 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
+ * Copyright 2008 VMware, Inc.  All rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
@@ -79,38 +80,61 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
       switch( parse.FullToken.Token.Type ) {
       case TGSI_TOKEN_TYPE_INSTRUCTION:
          {
-            struct tgsi_full_instruction *fullinst
+            const struct tgsi_full_instruction *fullinst
                = &parse.FullToken.FullInstruction;
 
             assert(fullinst->Instruction.Opcode < TGSI_OPCODE_LAST);
             info->opcode_count[fullinst->Instruction.Opcode]++;
+
+            /* special case: scan fragment shaders for use of the fog
+             * input/attribute.  The X component is fog, the Y component
+             * is the front/back-face flag.
+             */
+            if (procType == TGSI_PROCESSOR_FRAGMENT) {
+               uint i;
+               for (i = 0; i < fullinst->Instruction.NumSrcRegs; i++) {
+                  const struct tgsi_full_src_register *src =
+                     &fullinst->FullSrcRegisters[i];
+                  if (src->SrcRegister.File == TGSI_FILE_INPUT) {
+                     const int ind = src->SrcRegister.Index;
+                     if (info->input_semantic_name[ind] == TGSI_SEMANTIC_FOG) {
+                        if (src->SrcRegister.SwizzleX == TGSI_SWIZZLE_X) {
+                           info->uses_fogcoord = TRUE;
+                        }
+                        else if (src->SrcRegister.SwizzleX == TGSI_SWIZZLE_Y) {
+                           info->uses_frontfacing = TRUE;
+                        }
+                     }
+                  }
+               }
+            }
          }
          break;
 
       case TGSI_TOKEN_TYPE_DECLARATION:
          {
-            struct tgsi_full_declaration *fulldecl
+            const struct tgsi_full_declaration *fulldecl
                = &parse.FullToken.FullDeclaration;
             uint file = fulldecl->Declaration.File;
-            uint i;
-            for (i = fulldecl->DeclarationRange.First;
-                 i <= fulldecl->DeclarationRange.Last;
-                 i++) {
+            uint reg;
+            for (reg = fulldecl->DeclarationRange.First;
+                 reg <= fulldecl->DeclarationRange.Last;
+                 reg++) {
 
                /* only first 32 regs will appear in this bitfield */
-               info->file_mask[file] |= (1 << i);
+               info->file_mask[file] |= (1 << reg);
                info->file_count[file]++;
                info->file_max[file] = MAX2(info->file_max[file], (int)i);
 
                if (file == TGSI_FILE_INPUT) {
-                  info->input_semantic_name[i] = (ubyte)fulldecl->Semantic.SemanticName;
-                  info->input_semantic_index[i] = (ubyte)fulldecl->Semantic.SemanticIndex;
+                  info->input_semantic_name[reg] = (ubyte)fulldecl->Semantic.SemanticName;
+                  info->input_semantic_index[reg] = (ubyte)fulldecl->Semantic.SemanticIndex;
                   info->num_inputs++;
                }
 
                if (file == TGSI_FILE_OUTPUT) {
-                  info->output_semantic_name[i] = (ubyte)fulldecl->Semantic.SemanticName;
-                  info->output_semantic_index[i] = (ubyte)fulldecl->Semantic.SemanticIndex;
+                  info->output_semantic_name[reg] = (ubyte)fulldecl->Semantic.SemanticName;
+                  info->output_semantic_index[reg] = (ubyte)fulldecl->Semantic.SemanticIndex;
                   info->num_outputs++;
                }
 
@@ -132,9 +156,6 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
          assert( 0 );
       }
    }
-
-   assert( info->file_max[TGSI_FILE_INPUT] + 1 == info->num_inputs );
-   assert( info->file_max[TGSI_FILE_OUTPUT] + 1 == info->num_outputs );
 
    info->uses_kill = (info->opcode_count[TGSI_OPCODE_KIL] ||
                       info->opcode_count[TGSI_OPCODE_KILP]);

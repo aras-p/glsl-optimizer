@@ -41,7 +41,6 @@ struct tgsi_shader_info
 {
    uint num_tokens;
 
-   /* XXX eventually remove the corresponding fields from pipe_shader_state: */
    ubyte num_inputs;
    ubyte num_outputs;
    ubyte input_semantic_name[PIPE_MAX_SHADER_INPUTS]; /**< TGSI_SEMANTIC_x */
@@ -59,6 +58,8 @@ struct tgsi_shader_info
 
    boolean writes_z;  /**< does fragment shader write Z value? */
    boolean uses_kill;  /**< KIL or KILP instruction used? */
+   boolean uses_fogcoord; /**< fragment shader uses fog coord? */
+   boolean uses_frontfacing; /**< fragment shader uses front/back-face flag? */
 };
 
 
