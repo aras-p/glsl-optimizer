@@ -963,7 +963,10 @@ _mesa_execute_program(GLcontext * ctx,
          {
             GLfloat a[4], result[4];
             fetch_vector1(&inst->SrcReg[0], machine, a);
-            result[0] = result[1] = result[2] = result[3] = LOG2(a[0]);
+	    /* The fast LOG2 macro doesn't meet the precision requirements.
+	     */
+            result[0] = result[1] = result[2] = result[3] =
+		(log(a[0]) * 1.442695F);
             store_vector4(inst, machine, result);
          }
          break;
@@ -1022,7 +1025,11 @@ _mesa_execute_program(GLcontext * ctx,
                   GLfloat mantissa = FREXPF(t[0], &exponent);
                   q[0] = (GLfloat) (exponent - 1);
                   q[1] = (GLfloat) (2.0 * mantissa); /* map [.5, 1) -> [1, 2) */
-                  q[2] = (GLfloat) (q[0] + LOG2(q[1]));
+
+		  /* The fast LOG2 macro doesn't meet the precision
+		   * requirements.
+		   */
+                  q[2] = (log(t[0]) * 1.442695F);
                }
             }
             else {

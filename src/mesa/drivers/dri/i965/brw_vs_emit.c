@@ -420,7 +420,7 @@ static void emit_exp_noalias( struct brw_vs_compile *c,
 		 BRW_MATH_FUNCTION_EXP, 
 		 brw_writemask(dst, WRITEMASK_Z),
 		 brw_swizzle1(arg0, 0), 
-		 BRW_MATH_PRECISION_PARTIAL);
+		 BRW_MATH_PRECISION_FULL);
    }  
 
    if (dst.dw1.bits.writemask & WRITEMASK_W) {

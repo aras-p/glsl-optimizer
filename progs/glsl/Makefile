@@ -202,6 +202,14 @@ vert-or-frag-only: vert-or-frag-only.o shaderutil.o
 
 
 
+vert-or-frag-only.o: vert-or-frag-only.c extfuncs.h shaderutil.h
+	$(CC) -c -I$(INCDIR) $(CFLAGS) vert-or-frag-only.c
+
+vert-or-frag-only: vert-or-frag-only.o shaderutil.o
+	$(CC) -I$(INCDIR) $(CFLAGS) $(LDFLAGS) vert-or-frag-only.o shaderutil.o $(LIBS) -o $@
+
+
+
 vert-tex.o: vert-tex.c extfuncs.h shaderutil.h
 	$(APP_CC) -c -I$(INCDIR) $(CFLAGS) vert-tex.c
 
