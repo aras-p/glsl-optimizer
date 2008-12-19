@@ -191,22 +191,22 @@ trirast.o: trirast.c extfuncs.h shaderutil.h
 	$(APP_CC) -c -I$(INCDIR) $(CFLAGS) trirast.c
 
 trirast: trirast.o shaderutil.o
-	$(CC) -I$(INCDIR) $(CFLAGS) $(LDFLAGS) trirast.o shaderutil.o $(LIBS) -o $@
+	$(APP_CC) -I$(INCDIR) $(CFLAGS) $(LDFLAGS) trirast.o shaderutil.o $(LIBS) -o $@
 
 
 vert-or-frag-only.o: vert-or-frag-only.c extfuncs.h shaderutil.h
-	$(CC) -c -I$(INCDIR) $(CFLAGS) vert-or-frag-only.c
+	$(APP_CC) -c -I$(INCDIR) $(CFLAGS) vert-or-frag-only.c
 
 vert-or-frag-only: vert-or-frag-only.o shaderutil.o
-	$(CC) -I$(INCDIR) $(CFLAGS) $(LDFLAGS) vert-or-frag-only.o shaderutil.o $(LIBS) -o $@
+	$(APP_CC) -I$(INCDIR) $(CFLAGS) $(LDFLAGS) vert-or-frag-only.o shaderutil.o $(LIBS) -o $@
 
 
 
 vert-tex.o: vert-tex.c extfuncs.h shaderutil.h
-	$(CC) -c -I$(INCDIR) $(CFLAGS) vert-tex.c
+	$(APP_CC) -c -I$(INCDIR) $(CFLAGS) vert-tex.c
 
 vert-tex: vert-tex.o shaderutil.o
-	$(CC) -I$(INCDIR) $(CFLAGS) $(LDFLAGS) vert-tex.o shaderutil.o $(LIBS) -o $@
+	$(APP_CC) -I$(INCDIR) $(CFLAGS) $(LDFLAGS) vert-tex.o shaderutil.o $(LIBS) -o $@
 
 
 
