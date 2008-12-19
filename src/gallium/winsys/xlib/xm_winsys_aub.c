@@ -560,6 +560,9 @@ static void aub_i965_buffer_subdata_typed(struct brw_winsys *winsys,
 struct pipe_context *
 xmesa_create_i965simple( struct pipe_winsys *winsys )
 {
+#ifdef GALLIUM_CELL
+   return NULL;
+#else
    struct aub_brw_winsys *iws = CALLOC_STRUCT( aub_brw_winsys );
    struct pipe_screen *screen = brw_create_screen(winsys, 0/* XXX pci_id */);
    
@@ -583,4 +586,5 @@ xmesa_create_i965simple( struct pipe_winsys *winsys )
    return brw_create( screen,
 		      &iws->winsys,
 		      0 );
+#endif
 }
