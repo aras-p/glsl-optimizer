@@ -166,7 +166,6 @@ struct intel_context
 
    struct intel_region *front_region;
    struct intel_region *back_region;
-   struct intel_region *third_region;
    struct intel_region *depth_region;
 
    /**

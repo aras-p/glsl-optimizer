@@ -56,7 +56,6 @@ typedef struct
 {
    intelRegion front;
    intelRegion back;
-   intelRegion third;
    intelRegion depth;
    intelRegion tex;
 
