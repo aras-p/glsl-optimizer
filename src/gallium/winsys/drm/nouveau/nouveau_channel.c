@@ -118,6 +118,8 @@ nouveau_channel_free(struct nouveau_channel **chan)
 	nouveau_grobj_free(&nvchan->base.gart);
 	nouveau_grobj_free(&nvchan->base.nullobj);
 
+	free(nvchan->pb.buffers);
+	free(nvchan->pb.relocs);
 	cf.channel = nvchan->drm.channel;
 	drmCommandWrite(nvdev->fd, DRM_NOUVEAU_CHANNEL_FREE, &cf, sizeof(cf));
 	free(nvchan);

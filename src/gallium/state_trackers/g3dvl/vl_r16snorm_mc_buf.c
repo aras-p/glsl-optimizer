@@ -745,6 +745,7 @@ static int vlFlush
 	}
 
 	pipe->flush(pipe, PIPE_FLUSH_RENDER_CACHE, &mc->buffered_surface->render_fence);
+	pipe->screen->tex_surface_release(pipe->screen, mc->render_target.cbufs[0]);
 
 	for (i = 0; i < 3; ++i)
 		mc->zero_block[i].x = -1.0f;
