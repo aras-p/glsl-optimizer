@@ -52,7 +52,7 @@ extern "C" {
 #endif
 
 
-#if defined(PIPE_SUBSYSTEM_WINDOWS) && defined(DEBUG) 
+#if defined(PIPE_OS_WINDOWS) && defined(DEBUG) 
 
 /* memory debugging */
 
