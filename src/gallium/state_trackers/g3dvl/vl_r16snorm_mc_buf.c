@@ -43,6 +43,14 @@ struct vlFragmentShaderConsts
 	struct vlVertex4f div;
 };
 
+struct vlMacroBlockVertexStream0
+{
+	struct vlVertex2f pos;
+	struct vlVertex2f luma_tc;
+	struct vlVertex2f cb_tc;
+	struct vlVertex2f cr_tc;
+};
+
 struct vlR16SnormBufferedMC
 {
 	struct vlRender				base;
@@ -390,7 +398,9 @@ static inline int vlGrabMacroBlockVB
 (
 	struct vlR16SnormBufferedMC *mc,
 	struct vlMpeg2MacroBlock *macroblock,
-	unsigned int pos
+	unsigned int pos,
+	struct vlMacroBlockVertexStream0 *ycbcr_vb,
+	struct vlVertex2f **ref_vb
 )
 {
 	struct vlVertex2f	mo_vec[2];
@@ -398,6 +408,7 @@ static inline int vlGrabMacroBlockVB
 
 	assert(mc);
 	assert(macroblock);
+	assert(ycbcr_vb);
 
 	switch (macroblock->mb_type)
 	{
@@ -405,12 +416,9 @@ static inline int vlGrabMacroBlockVB
 		{
 			struct vlVertex2f *vb;
 
-			vb = (struct vlVertex2f*)mc->pipe->winsys->buffer_map
-			(
-				mc->pipe->winsys,
-				mc->vertex_bufs.ref[1].buffer,
-				PIPE_BUFFER_USAGE_CPU_WRITE
-			) + pos * 2 * 24;
+			assert(ref_vb && ref_vb[1]);
+
+			vb = ref_vb[1] + pos * 2 * 24;
 
 			mo_vec[0].x = macroblock->PMV[0][1][0] * 0.5f * mc->surface_tex_inv_size.x;
 			mo_vec[0].y = macroblock->PMV[0][1][1] * 0.5f * mc->surface_tex_inv_size.y;
@@ -437,8 +445,6 @@ static inline int vlGrabMacroBlockVB
 				}
 			}
 
-			mc->pipe->winsys->buffer_unmap(mc->pipe->winsys, mc->vertex_bufs.ref[1].buffer);
-
 			/* fall-through */
 		}
 		case vlMacroBlockTypeFwdPredicted:
@@ -446,12 +452,9 @@ static inline int vlGrabMacroBlockVB
 		{
 			struct vlVertex2f *vb;
 
-			vb = (struct vlVertex2f*)mc->pipe->winsys->buffer_map
-			(
-				mc->pipe->winsys,
-				mc->vertex_bufs.ref[0].buffer,
-				PIPE_BUFFER_USAGE_CPU_WRITE
-			) + pos * 2 * 24;
+			assert(ref_vb && ref_vb[0]);
+
+			vb = ref_vb[0] + pos * 2 * 24;
 
 			if (macroblock->mb_type == vlMacroBlockTypeBkwdPredicted)
 			{
@@ -495,8 +498,6 @@ static inline int vlGrabMacroBlockVB
 				}
 			}
 
-			mc->pipe->winsys->buffer_unmap(mc->pipe->winsys, mc->vertex_bufs.ref[0].buffer);
-
 			/* fall-through */
 		}
 		case vlMacroBlockTypeIntra:
@@ -512,20 +513,9 @@ static inline int vlGrabMacroBlockVB
 				mc->surface_tex_inv_size.y * (VL_MACROBLOCK_HEIGHT / 2)
 			};
 
-			struct vlMacroBlockVertexStream0
-			{
-				struct vlVertex2f pos;
-				struct vlVertex2f luma_tc;
-				struct vlVertex2f cb_tc;
-				struct vlVertex2f cr_tc;
-			} *vb;
+			struct vlMacroBlockVertexStream0 *vb;
 
-			vb = (struct vlMacroBlockVertexStream0*)mc->pipe->winsys->buffer_map
-			(
-				mc->pipe->winsys,
-				mc->vertex_bufs.ycbcr.buffer,
-				PIPE_BUFFER_USAGE_CPU_WRITE
-			) + pos * 24;
+			vb = ycbcr_vb + pos * 24;
 
 			SET_BLOCK
 			(
@@ -558,8 +548,6 @@ static inline int vlGrabMacroBlockVB
 				unit.x, unit.y, half.x, half.y, half.x, half.y,
 				4, 2, 1, mc->zero_block
 			);
-
-			mc->pipe->winsys->buffer_unmap(mc->pipe->winsys, mc->vertex_bufs.ycbcr.buffer);
 
 			break;
 		}
@@ -607,13 +595,37 @@ static int vlFlush
 	for (i = 1; i < vlNumMacroBlockExTypes; ++i)
 		offset[i] = offset[i - 1] + num_macroblocks[i - 1];
 
-	for (i = 0; i < mc->num_macroblocks; ++i)
 	{
-		enum vlMacroBlockTypeEx mb_type_ex = vlGetMacroBlockTypeEx(&mc->macroblocks[i]);
+		struct vlMacroBlockVertexStream0	*ycbcr_vb;
+		struct vlVertex2f			*ref_vb[2];
 
-		vlGrabMacroBlockVB(mc, &mc->macroblocks[i], offset[mb_type_ex]);
+		ycbcr_vb = (struct vlMacroBlockVertexStream0*)mc->pipe->winsys->buffer_map
+		(
+			mc->pipe->winsys,
+			mc->vertex_bufs.ycbcr.buffer,
+			PIPE_BUFFER_USAGE_CPU_WRITE
+		);
 
-		offset[mb_type_ex]++;
+		for (i = 0; i < 2; ++i)
+			ref_vb[i] = (struct vlVertex2f*)mc->pipe->winsys->buffer_map
+			(
+				mc->pipe->winsys,
+				mc->vertex_bufs.ref[i].buffer,
+				PIPE_BUFFER_USAGE_CPU_WRITE
+			);
+
+		for (i = 0; i < mc->num_macroblocks; ++i)
+		{
+			enum vlMacroBlockTypeEx mb_type_ex = vlGetMacroBlockTypeEx(&mc->macroblocks[i]);
+
+			vlGrabMacroBlockVB(mc, &mc->macroblocks[i], offset[mb_type_ex], ycbcr_vb, ref_vb);
+
+			offset[mb_type_ex]++;
+		}
+
+		mc->pipe->winsys->buffer_unmap(mc->pipe->winsys, mc->vertex_bufs.ycbcr.buffer);
+		for (i = 0; i < 2; ++i)
+			mc->pipe->winsys->buffer_unmap(mc->pipe->winsys, mc->vertex_bufs.ref[i].buffer);
 	}
 	
 	for (i = 0; i < 3; ++i)
