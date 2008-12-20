@@ -1338,7 +1338,7 @@ radeonCreateBuffer( __DRIscreenPrivate *driScrnPriv,
                                  driDrawPriv);
          radeonSetSpanFunctions(depthRb, mesaVis);
          _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &depthRb->Base);
-    	 depthRb->has_surface = screen->depthHasSurface;
+    	// depthRb->has_surface = screen->depthHasSurface;
       }
       else if (mesaVis->depthBits == 24) {
          driRenderbuffer *depthRb
@@ -1349,7 +1349,7 @@ radeonCreateBuffer( __DRIscreenPrivate *driScrnPriv,
                                  driDrawPriv);
          radeonSetSpanFunctions(depthRb, mesaVis);
          _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &depthRb->Base);
- 	     depthRb->has_surface = screen->depthHasSurface;
+ 	 //    depthRb->has_surface = screen->depthHasSurface;
       }
 
       /* stencil renderbuffer */
@@ -1362,7 +1362,7 @@ radeonCreateBuffer( __DRIscreenPrivate *driScrnPriv,
                                  driDrawPriv);
          radeonSetSpanFunctions(stencilRb, mesaVis);
          _mesa_add_renderbuffer(fb, BUFFER_STENCIL, &stencilRb->Base);
-         stencilRb->has_surface = screen->depthHasSurface;
+         //stencilRb->has_surface = screen->depthHasSurface;
       }
 
       _mesa_add_soft_renderbuffers(fb,
