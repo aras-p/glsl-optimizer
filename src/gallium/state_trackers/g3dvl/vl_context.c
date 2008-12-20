@@ -5,7 +5,6 @@
 #include <pipe/p_context.h>
 #include <pipe/p_state.h>
 #include "vl_render.h"
-#include "vl_r16snorm_mc.h"
 #include "vl_r16snorm_mc_buf.h"
 #include "vl_csc.h"
 #include "vl_basic_csc.h"
@@ -127,7 +126,6 @@ int vlCreateContext
 
 	vlInitCommon(ctx);
 
-	/*vlCreateR16SNormMC(pipe, picture_width, picture_height, picture_format, &ctx->render);*/
 	vlCreateR16SNormBufferedMC(pipe, picture_width, picture_height, picture_format, &ctx->render);
 	vlCreateBasicCSC(pipe, &ctx->csc);
 
