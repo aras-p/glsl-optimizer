@@ -1,7 +1,7 @@
 #define VL_INTERNAL
 #include "vl_screen.h"
 #include <assert.h>
-#include <stdlib.h>
+#include <util/u_memory.h>
 
 int vlCreateScreen
 (
@@ -17,7 +17,7 @@ int vlCreateScreen
 	assert(pscreen);
 	assert(vl_screen);
 
-	scrn = calloc(1, sizeof(struct vlScreen));
+	scrn = CALLOC_STRUCT(vlScreen);
 
 	if (!scrn)
 		return 1;
@@ -37,7 +37,7 @@ int vlDestroyScreen
 {
 	assert(screen);
 
-	free(screen);
+	FREE(screen);
 
 	return 0;
 }

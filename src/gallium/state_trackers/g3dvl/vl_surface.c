@@ -1,11 +1,11 @@
 #define VL_INTERNAL
 #include "vl_surface.h"
 #include <assert.h>
-#include <stdlib.h>
 #include <string.h>
 #include <pipe/p_screen.h>
 #include <pipe/p_state.h>
 #include <pipe/p_inlines.h>
+#include <util/u_memory.h>
 #include <vl_winsys.h>
 #include "vl_screen.h"
 #include "vl_context.h"
@@ -28,7 +28,7 @@ int vlCreateSurface
 	assert(screen);
 	assert(surface);
 
-	sfc = calloc(1, sizeof(struct vlSurface));
+	sfc = CALLOC_STRUCT(vlSurface);
 
 	if (!sfc)
 		return 1;
@@ -64,7 +64,7 @@ int vlDestroySurface
 	assert(surface);
 
 	pipe_texture_release(&surface->texture);
-	free(surface);
+	FREE(surface);
 
 	return 0;
 }

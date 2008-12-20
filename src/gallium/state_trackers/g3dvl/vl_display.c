@@ -1,7 +1,7 @@
 #define VL_INTERNAL
 #include "vl_display.h"
 #include <assert.h>
-#include <stdlib.h>
+#include <util/u_memory.h>
 
 int vlCreateDisplay
 (
@@ -14,7 +14,7 @@ int vlCreateDisplay
 	assert(native_display);
 	assert(display);
 
-	dpy = calloc(1, sizeof(struct vlDisplay));
+	dpy = CALLOC_STRUCT(vlDisplay);
 
 	if (!dpy)
 		return 1;
@@ -32,7 +32,7 @@ int vlDestroyDisplay
 {
 	assert(display);
 
-	free(display);
+	FREE(display);
 
 	return 0;
 }

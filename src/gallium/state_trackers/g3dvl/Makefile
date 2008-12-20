@@ -3,7 +3,10 @@ OBJECTS		= vl_display.o vl_screen.o vl_context.o vl_surface.o vl_shader_build.o 
 		  vl_r16snorm_mc_buf.o
 GALLIUMDIR	= ../..
 
-CFLAGS		+= -g -Wall -fPIC -I${GALLIUMDIR}/include -I${GALLIUMDIR}/auxiliary -I${GALLIUMDIR}/winsys/g3dvl
+CFLAGS		+= -g -Wall -Werror=implicit-function-declaration -fPIC	\
+		   -I${GALLIUMDIR}/include				\
+		   -I${GALLIUMDIR}/auxiliary				\
+		   -I${GALLIUMDIR}/winsys/g3dvl				\
 
 #############################################
 

@@ -1,7 +1,6 @@
 #define VL_INTERNAL
 #include "vl_r16snorm_mc_buf.h"
 #include <assert.h>
-#include <stdlib.h>
 #include <pipe/p_context.h>
 #include <pipe/p_winsys.h>
 #include <pipe/p_screen.h>
@@ -10,6 +9,7 @@
 #include <tgsi/tgsi_parse.h>
 #include <tgsi/tgsi_build.h>
 #include <util/u_math.h>
+#include <util/u_memory.h>
 #include "vl_render.h"
 #include "vl_shader_build.h"
 #include "vl_surface.h"
@@ -869,8 +869,8 @@ static int vlDestroy
 	pipe->winsys->buffer_destroy(pipe->winsys, mc->vs_const_buf.buffer);
 	pipe->winsys->buffer_destroy(pipe->winsys, mc->fs_const_buf.buffer);
 
-	free(mc->macroblocks);
-	free(mc);
+	FREE(mc->macroblocks);
+	FREE(mc);
 
 	return 0;
 }
@@ -1007,7 +1007,7 @@ static int vlCreateDataBufs
 
 	pipe->winsys->buffer_unmap(pipe->winsys, mc->fs_const_buf.buffer);
 
-	mc->macroblocks = malloc(sizeof(struct vlMpeg2MacroBlock) * mc->macroblocks_per_picture);
+	mc->macroblocks = MALLOC(sizeof(struct vlMpeg2MacroBlock) * mc->macroblocks_per_picture);
 
 	return 0;
 }
@@ -1133,7 +1133,7 @@ int vlCreateR16SNormBufferedMC
 	assert(pipe);
 	assert(render);
 
-	mc = calloc(1, sizeof(struct vlR16SnormBufferedMC));
+	mc = CALLOC_STRUCT(vlR16SnormBufferedMC);
 
 	mc->base.vlBegin = &vlBegin;
 	mc->base.vlRenderMacroBlocksMpeg2 = &vlRenderMacroBlocksMpeg2R16SnormBuffered;
