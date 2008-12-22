@@ -93,8 +93,6 @@ void r300BeginBatch(r300ContextPtr r300,
         radeon_cs_write_dword(b_l_r300->cmdbuf.cs, offset);\
         radeon_cs_write_reloc(b_l_r300->cmdbuf.cs, \
                               bo, \
-                              offset, \
-                              (bo)->size, \
                               rd, \
                               wd, \
                               flags);\

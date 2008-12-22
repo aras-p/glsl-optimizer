@@ -214,8 +214,6 @@ static void r300FireEB(r300ContextPtr rmesa, int vertex_count, int type)
         OUT_BATCH(vertex_count);
         radeon_cs_write_reloc(rmesa->cmdbuf.cs,
                               rmesa->state.elt_dma_bo,
-                              0,
-                              rmesa->state.elt_dma_bo->size,
                               RADEON_GEM_DOMAIN_GTT, 0, 0);
     }
     	END_BATCH();
@@ -299,16 +297,12 @@ static void r300EmitAOS(r300ContextPtr rmesa, GLuint nr, GLuint offset)
                    offset * 4 * rmesa->state.aos[i + 0].stride;
         radeon_cs_write_reloc(rmesa->cmdbuf.cs,
                               rmesa->state.aos[i+0].bo,
-                              voffset,
-                              rmesa->state.aos[i+0].bo->size,
                               RADEON_GEM_DOMAIN_GTT,
                               0, 0);
         voffset =  rmesa->state.aos[i + 1].offset +
                    offset * 4 * rmesa->state.aos[i + 1].stride;
         radeon_cs_write_reloc(rmesa->cmdbuf.cs,
                               rmesa->state.aos[i+1].bo,
-                              voffset,
-                              rmesa->state.aos[i+1].bo->size,
                               RADEON_GEM_DOMAIN_GTT,
                               0, 0);
 	}
@@ -317,8 +311,6 @@ static void r300EmitAOS(r300ContextPtr rmesa, GLuint nr, GLuint offset)
                    offset * 4 * rmesa->state.aos[nr - 1].stride;
         radeon_cs_write_reloc(rmesa->cmdbuf.cs,
                               rmesa->state.aos[nr-1].bo,
-                              voffset,
-                              rmesa->state.aos[nr-1].bo->size,
                               RADEON_GEM_DOMAIN_GTT,
                               0, 0);
 	}

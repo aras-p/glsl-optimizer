@@ -499,9 +499,9 @@ static void r300EmitClearState(GLcontext * ctx)
 		OUT_BATCH(1 << R300_PVS_LAST_VTX_SRC_INST_SHIFT);
 		END_BATCH();
 
-        vpu.check = check_vpu;
-        vpu.cmd = _cmd;
-        vpu.cmd[0] = cmdvpu(r300->radeon.radeonScreen, 0, 2);
+		vpu.check = check_vpu;
+		vpu.cmd = _cmd;
+		vpu.cmd[0] = cmdvpu(r300->radeon.radeonScreen, 0, 2);
 
 		vpu.cmd[1] = PVS_OP_DST_OPERAND(VE_ADD, GL_FALSE, GL_FALSE,
                                          0, 0xf, PVS_DST_REG_OUT);
@@ -520,6 +520,7 @@ static void r300EmitClearState(GLcontext * ctx)
 		vpu.cmd[6] = PVS_SRC_OPERAND(1, PVS_SRC_SELECT_X,
                                       PVS_SRC_SELECT_Y, PVS_SRC_SELECT_Z,
                                       PVS_SRC_SELECT_W, PVS_SRC_REG_INPUT,
+
                                       VSF_FLAG_NONE);
 		vpu.cmd[7] = PVS_SRC_OPERAND(1, PVS_SRC_SELECT_FORCE_0,
                                       PVS_SRC_SELECT_FORCE_0,
@@ -527,7 +528,7 @@ static void r300EmitClearState(GLcontext * ctx)
                                       PVS_SRC_SELECT_FORCE_0,
                                       PVS_SRC_REG_INPUT, VSF_FLAG_NONE);
 		vpu.cmd[8] = 0x0;
-        emit_vpu(r300, &vpu);
+		emit_vpu(r300, &vpu);
 	}
 }
 

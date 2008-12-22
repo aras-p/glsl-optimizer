@@ -341,14 +341,14 @@ static void emit_tex_offsets(r300ContextPtr r300, struct r300_state_atom * atom)
 			} else if (!t) {
 				OUT_BATCH(r300->radeon.radeonScreen->texOffset[0]);
 			} else {
-                if (t->bo) {
-                    OUT_BATCH_RELOC(t->tile_bits, t->bo, 0,
-                    RADEON_GEM_DOMAIN_VRAM, 0, 0);
-                } else {
-    				OUT_BATCH(t->override_offset);
-                }
+				if (t->bo) {
+					OUT_BATCH_RELOC(t->tile_bits, t->bo, 0,
+							RADEON_GEM_DOMAIN_VRAM, 0, 0);
+				} else {
+					OUT_BATCH(t->override_offset);
+				}
 			}
-            END_BATCH();
+			END_BATCH();
 		}
 	}
 }
@@ -361,9 +361,9 @@ static void emit_cb_offset(r300ContextPtr r300, struct r300_state_atom * atom)
 	GLframebuffer *fb = r300->radeon.dri.drawable->driverPrivate;
 
 	rrb = r300->radeon.state.color.rrb;
-    if (r300->radeon.radeonScreen->driScreen->dri2.enabled) {
-        rrb = fb->Attachment[BUFFER_BACK_LEFT].Renderbuffer;
-    }
+	if (r300->radeon.radeonScreen->driScreen->dri2.enabled) {
+		rrb = fb->Attachment[BUFFER_BACK_LEFT].Renderbuffer;
+	}
 	if (!rrb || !rrb->bo) {
 		fprintf(stderr, "no rrb\n");
 		return;
@@ -397,13 +397,13 @@ static void emit_zb_offset(r300ContextPtr r300, struct r300_state_atom * atom)
 		return;
 
 	zbpitch = (rrb->pitch / rrb->cpp);
-    if (rrb->bo->flags & RADEON_BO_FLAGS_MACRO_TILE) {
-        zbpitch |= R300_DEPTHMACROTILE_ENABLE;
-    }
-    if (rrb->bo->flags & RADEON_BO_FLAGS_MICRO_TILE){
-        zbpitch |= R300_DEPTHMICROTILE_TILED;
-    }
-
+	if (rrb->bo->flags & RADEON_BO_FLAGS_MACRO_TILE) {
+		zbpitch |= R300_DEPTHMACROTILE_ENABLE;
+	}
+	if (rrb->bo->flags & RADEON_BO_FLAGS_MICRO_TILE){
+		zbpitch |= R300_DEPTHMICROTILE_TILED;
+	}
+	
 	BEGIN_BATCH(4);
 	OUT_BATCH_REGSEQ(R300_ZB_DEPTHOFFSET, 1);
 	OUT_BATCH_RELOC(0, rrb->bo, 0, 0, RADEON_GEM_DOMAIN_VRAM, 0);
@@ -688,43 +688,43 @@ void r300InitCmdBuf(r300ContextPtr r300)
 		ALLOC_STATE(vpi, vpu, R300_VPI_CMDSIZE, 0);
 		r300->hw.vpi.cmd[0] =
 		    cmdvpu(r300->radeon.radeonScreen, R300_PVS_CODE_START, 0);
-    	r300->hw.vpi.emit = emit_vpu;
+		r300->hw.vpi.emit = emit_vpu;
 
 		if (is_r500) {
 		    ALLOC_STATE(vpp, vpu, R300_VPP_CMDSIZE, 0);
 		    r300->hw.vpp.cmd[0] =
 			cmdvpu(r300->radeon.radeonScreen, R500_PVS_CONST_START, 0);
-        	r300->hw.vpp.emit = emit_vpu;
+		    r300->hw.vpp.emit = emit_vpu;
 
 		    ALLOC_STATE(vps, vpu, R300_VPS_CMDSIZE, 0);
 		    r300->hw.vps.cmd[0] =
 			cmdvpu(r300->radeon.radeonScreen, R500_POINT_VPORT_SCALE_OFFSET, 1);
-        	r300->hw.vps.emit = emit_vpu;
+		    r300->hw.vps.emit = emit_vpu;
 
 			for (i = 0; i < 6; i++) {
-				ALLOC_STATE(vpucp[i], vpu, R300_VPUCP_CMDSIZE, 0);
-				r300->hw.vpucp[i].cmd[0] =
-					cmdvpu(r300->radeon.radeonScreen,
+			  ALLOC_STATE(vpucp[i], vpu, R300_VPUCP_CMDSIZE, 0);
+			  r300->hw.vpucp[i].cmd[0] =
+				  cmdvpu(r300->radeon.radeonScreen,
                            R500_PVS_UCP_START + i, 1);
-              	r300->hw.vpucp[i].emit = emit_vpu;
+				r300->hw.vpucp[i].emit = emit_vpu;
 			}
 		} else {
 		    ALLOC_STATE(vpp, vpu, R300_VPP_CMDSIZE, 0);
 		    r300->hw.vpp.cmd[0] =
 			cmdvpu(r300->radeon.radeonScreen, R300_PVS_CONST_START, 0);
-            r300->hw.vpp.emit = emit_vpu;
+		    r300->hw.vpp.emit = emit_vpu;
 
 		    ALLOC_STATE(vps, vpu, R300_VPS_CMDSIZE, 0);
 		    r300->hw.vps.cmd[0] =
 			cmdvpu(r300->radeon.radeonScreen, R300_POINT_VPORT_SCALE_OFFSET, 1);
-            r300->hw.vps.emit = emit_vpu;
+		    r300->hw.vps.emit = emit_vpu;
 
 			for (i = 0; i < 6; i++) {
 				ALLOC_STATE(vpucp[i], vpu, R300_VPUCP_CMDSIZE, 0);
 				r300->hw.vpucp[i].cmd[0] =
 					cmdvpu(r300->radeon.radeonScreen,
-                           R300_PVS_UCP_START + i, 1);
-                r300->hw.vpucp[i].emit = emit_vpu;
+					       R300_PVS_UCP_START + i, 1);
+				r300->hw.vpucp[i].emit = emit_vpu;
 			}
 		}
 	}
