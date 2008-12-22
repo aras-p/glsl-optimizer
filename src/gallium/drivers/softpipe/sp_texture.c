@@ -239,10 +239,8 @@ softpipe_get_tex_surface(struct pipe_screen *screen,
 
    ps = CALLOC_STRUCT(pipe_surface);
    ps->refcount = 1;
-   ps->winsys = ws;
    if (ps) {
       assert(ps->refcount);
-      assert(ps->winsys);
       pipe_texture_reference(&ps->texture, pt);
       pipe_buffer_reference(screen, &ps->buffer, spt->buffer);
       ps->format = pt->format;
