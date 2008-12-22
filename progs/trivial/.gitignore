@@ -79,11 +79,6 @@ tri-cull
 tri-cull-both
 tri-dlist
 tri-edgeflag
-trifan
-trifan-flat
-trifan-flat-clip
-trifan-flat-unfilled-clip
-trifan-unfilled
 tri-fbo
 tri-fbo-tex
 tri-flat
@@ -112,6 +107,11 @@ tri-unfilled-userclip-stip
 tri-userclip
 tri-z
 tri-z-eq
+trifan
+trifan-flat
+trifan-flat-clip
+trifan-flat-unfilled-clip
+trifan-unfilled
 tristrip
 tristrip-clip
 tristrip-flat

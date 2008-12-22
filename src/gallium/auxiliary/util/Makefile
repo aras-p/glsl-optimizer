@@ -6,10 +6,12 @@ LIBNAME = util
 C_SOURCES = \
 	p_debug.c \
 	u_blit.c \
+	u_cache.c \
 	u_draw_quad.c \
 	u_gen_mipmap.c \
 	u_handle_table.c \
 	u_hash_table.c \
+	u_hash.c \
 	u_keymap.c \
 	u_linear.c \
 	u_math.c \
