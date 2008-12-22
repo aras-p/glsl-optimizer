@@ -981,7 +981,7 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
 #endif
 
 #if RADEON_COMMON && defined(RADEON_COMMON_FOR_R300)
-   screen->extensions[i++] = &r300texOffsetExtension.base;
+   //screen->extensions[i++] = &r300texOffsetExtension.base;
 #endif
 
    screen->extensions[i++] = NULL;
