@@ -284,6 +284,45 @@ void emit_vpu(r300ContextPtr r300, struct r300_state_atom * atom)
     }
 }
 
+void emit_r500fp(r300ContextPtr r300, struct r300_state_atom * atom)
+{
+	BATCH_LOCALS(r300);
+	drm_r300_cmd_header_t cmd;
+	uint32_t addr, ndw, i, sz;
+	int type, clamp, stride;
+
+	if (!r300->radeon.radeonScreen->kernel_mm) {
+		uint32_t dwords;
+		dwords = (*atom->check) (r300, atom);
+		BEGIN_BATCH_NO_AUTOSTATE(dwords);
+		OUT_BATCH_TABLE(atom->cmd, dwords);
+		END_BATCH();
+		return;
+	}
+
+	cmd.u = atom->cmd[0];
+	sz = cmd.r500fp.count;
+	addr = ((cmd.r500fp.adrhi_flags & 1) << 8) | cmd.r500fp.adrlo;
+	type = !!(cmd.r500fp.adrhi_flags & R500FP_CONSTANT_TYPE);
+	clamp = !!(cmd.r500fp.adrhi_flags & R500FP_CONSTANT_CLAMP);
+
+	addr |= (type << 16);
+	addr |= (clamp << 17);
+
+	stride = type ? 4 : 6;
+
+	ndw = sz * stride;
+	if (ndw) {
+
+		OUT_BATCH(CP_PACKET0(R500_GA_US_VECTOR_INDEX, 0));
+		OUT_BATCH(addr);
+		OUT_BATCH(CP_PACKET0(R500_GA_US_VECTOR_DATA, ndw-1) | RADEON_ONE_REG_WR);
+		for (i = 0; i < ndw; i++) {
+			OUT_BATCH(atom->cmd[i+1]);
+		}
+	}
+}
+
 static void emit_tex_offsets(r300ContextPtr r300, struct r300_state_atom * atom)
 {
 	BATCH_LOCALS(r300);
@@ -395,7 +434,7 @@ int check_vpu(r300ContextPtr r300, struct r300_state_atom *atom)
 	return cnt ? (cnt * 4) + 1 : 0;
 }
 
-static int check_r500fp(r300ContextPtr r300, struct r300_state_atom *atom)
+int check_r500fp(r300ContextPtr r300, struct r300_state_atom *atom)
 {
 	int cnt;
 
@@ -403,11 +442,11 @@ static int check_r500fp(r300ContextPtr r300, struct r300_state_atom *atom)
 	return cnt ? (cnt * 6) + 1 : 0;
 }
 
-static int check_r500fp_const(r300ContextPtr r300, struct r300_state_atom *atom)
+int check_r500fp_const(r300ContextPtr r300, struct r300_state_atom *atom)
 {
 	int cnt;
 
-    cnt = r500fp_count(atom->cmd);
+	cnt = r500fp_count(atom->cmd);
 	return cnt ? (cnt * 4) + 1 : 0;
 }
 
@@ -570,10 +609,12 @@ void r300InitCmdBuf(r300ContextPtr r300)
 
 		ALLOC_STATE(r500fp, r500fp, R500_FPI_CMDSIZE, 0);
 		r300->hw.r500fp.cmd[R300_FPI_CMD_0] =
-            cmdr500fp(r300->radeon.radeonScreen, 0, 0, 0, 0);
+			cmdr500fp(r300->radeon.radeonScreen, 0, 0, 0, 0);
+		r300->hw.r500fp.emit = emit_r500fp;
 		ALLOC_STATE(r500fp_const, r500fp_const, R500_FPP_CMDSIZE, 0);
 		r300->hw.r500fp_const.cmd[R300_FPI_CMD_0] =
-            cmdr500fp(r300->radeon.radeonScreen, 0, 0, 1, 0);
+			cmdr500fp(r300->radeon.radeonScreen, 0, 0, 1, 0);
+		r300->hw.r500fp_const.emit = emit_r500fp;
 	} else {
 		ALLOC_STATE(fp, always, R300_FP_CMDSIZE, 0);
 		r300->hw.fp.cmd[R300_FP_CMD_0] = cmdpacket0(r300->radeon.radeonScreen, R300_US_CONFIG, 3);

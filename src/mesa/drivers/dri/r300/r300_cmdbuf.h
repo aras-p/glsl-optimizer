@@ -132,4 +132,8 @@ void r300BeginBatch(r300ContextPtr r300,
 void emit_vpu(r300ContextPtr r300, struct r300_state_atom * atom);
 int check_vpu(r300ContextPtr r300, struct r300_state_atom *atom);
 
+void emit_r500fp(r300ContextPtr r300, struct r300_state_atom * atom);
+int check_r500fp(r300ContextPtr r300, struct r300_state_atom *atom);
+int check_r500fp_const(r300ContextPtr r300, struct r300_state_atom *atom);
+
 #endif				/* __R300_CMDBUF_H__ */
