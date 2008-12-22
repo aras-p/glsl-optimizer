@@ -59,19 +59,19 @@ struct util_cache;
  * @param size maximum number of entries
  */
 struct util_cache *
-util_cache_create(uint32_t (*hash)(void *key),
-                int (*compare)(void *key1, void *key2),
-                void (*destroy)(void *key, void *value),
-                uint32_t size);
+util_cache_create(uint32_t (*hash)(const void *key),
+                  int (*compare)(const void *key1, const void *key2),
+                  void (*destroy)(void *key, void *value),
+                  uint32_t size);
 
 void
 util_cache_set(struct util_cache *cache,
-             void *key,
-             void *value);
+               void *key,
+               void *value);
 
 void *
 util_cache_get(struct util_cache *cache, 
-             void *key);
+               const void *key);
 
 void
 util_cache_clear(struct util_cache *cache);

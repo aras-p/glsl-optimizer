@@ -36,7 +36,7 @@
 #include "u_hash.h"
 
 
-static uint32_t 
+static const uint32_t 
 util_crc32_table[256] = {
    0x00000000, 0x77073096, 0xee0e612c, 0x990951ba, 
    0x076dc419, 0x706af48f, 0xe963a535, 0x9e6495a3, 
@@ -109,7 +109,7 @@ util_crc32_table[256] = {
  * @sa http://www.w3.org/TR/PNG/#D-CRCAppendix
  */
 uint32_t
-util_hash_crc32(void *data, size_t size)
+util_hash_crc32(const void *data, size_t size)
 {
    uint8_t *p = (uint8_t *)data;
    uint32_t crc = 0xffffffff;

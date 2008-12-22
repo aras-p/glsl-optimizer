@@ -57,10 +57,10 @@ struct util_cache_entry
 struct util_cache
 {
    /** Hash function */
-   uint32_t (*hash)(void *key);
+   uint32_t (*hash)(const void *key);
    
    /** Compare two keys */
-   int (*compare)(void *key1, void *key2);
+   int (*compare)(const void *key1, const void *key2);
 
    /** Destroy a (key, value) pair */
    void (*destroy)(void *key, void *value);
@@ -76,10 +76,10 @@ struct util_cache
 
 
 struct util_cache *
-util_cache_create(uint32_t (*hash)(void *key),
-                int (*compare)(void *key1, void *key2),
-                void (*destroy)(void *key, void *value),
-                uint32_t size)
+util_cache_create(uint32_t (*hash)(const void *key),
+                  int (*compare)(const void *key1, const void *key2),
+                  void (*destroy)(void *key, void *value),
+                  uint32_t size)
 {
    struct util_cache *cache;
    
@@ -104,7 +104,7 @@ util_cache_create(uint32_t (*hash)(void *key),
 
 static INLINE struct util_cache_entry *
 util_cache_entry_get(struct util_cache *cache,
-                     void *key)
+                     const void *key)
 {
    uint32_t hash;
    
@@ -153,7 +153,7 @@ util_cache_set(struct util_cache *cache,
 
 void *
 util_cache_get(struct util_cache *cache, 
-               void *key)
+               const void *key)
 {
    struct util_cache_entry *entry;
 
