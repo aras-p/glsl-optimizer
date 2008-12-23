@@ -109,6 +109,8 @@ struct GLX_egl_driver
 
    XVisualInfo *visuals;
    GLXFBConfig *fbconfigs;
+
+   int glx_maj, glx_min;
 };
 
 
@@ -350,8 +352,10 @@ create_configs(_EGLDisplay *disp, struct GLX_egl_driver *GLX_drv)
    /* get list of all fbconfigs on this screen */
    GLX_drv->fbconfigs = glXGetFBConfigs(disp->Xdpy, DefaultScreen(disp->Xdpy), &numVisuals);
 
-   if (numVisuals == 0)
+   if (numVisuals == 0) {
+      GLX_drv->fbconfigs = NULL;
       goto xvisual;
+   }
 
    for (i = 0; i < numVisuals; i++) {
       struct GLX_egl_config *config;
@@ -444,6 +448,8 @@ GLX_eglInitialize(_EGLDriver *drv, EGLDisplay dpy,
       }
    }
 
+   glXQueryVersion(disp->Xdpy, &GLX_drv->glx_maj, &GLX_drv->glx_min);
+   
    GLX_drv->Base.Initialized = EGL_TRUE;
 
    GLX_drv->Base.Name = "GLX";
@@ -773,8 +779,6 @@ _eglMain(_EGLDisplay *disp, const char *args)
    if (!GLX_drv)
       return NULL;
 
-   glXQueryVersion(disp->Xdpy, &maj, &min);
-
    _eglInitDriverFallbacks(&GLX_drv->Base);
    GLX_drv->Base.API.Initialize = GLX_eglInitialize;
    GLX_drv->Base.API.Terminate = GLX_eglTerminate;
@@ -782,7 +786,7 @@ _eglMain(_EGLDisplay *disp, const char *args)
    GLX_drv->Base.API.MakeCurrent = GLX_eglMakeCurrent;
    GLX_drv->Base.API.CreateWindowSurface = GLX_eglCreateWindowSurface;
 #ifdef GLX_VERSION_1_3
-   if (maj == 1 && min >= 3) {
+   if (GLX_drv->glx_maj == 1 && GLX_drv->glx_min >= 3) {
       GLX_drv->Base.API.CreatePixmapSurface = GLX_eglCreatePixmapSurface;
       GLX_drv->Base.API.CreatePbufferSurface = GLX_eglCreatePbufferSurface;
       printf("GLX: Pbuffer and Pixmap support\n");
