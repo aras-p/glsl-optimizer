@@ -446,7 +446,7 @@ GLX_eglInitialize(_EGLDriver *drv, EGLDisplay dpy,
          _eglLog(_EGL_WARNING, "GLX: XOpenDisplay failed");
          return EGL_FALSE;
       }
-   }
+   } 
 
    glXQueryVersion(disp->Xdpy, &GLX_drv->glx_maj, &GLX_drv->glx_min);
    
@@ -463,6 +463,33 @@ GLX_eglInitialize(_EGLDriver *drv, EGLDisplay dpy,
    return EGL_TRUE;
 }
 
+/*
+ * Do some clean-up that normally occurs in XCloseDisplay().
+ * We do this here because we're about to unload a dynamic library
+ * that has added some per-display extension data and callbacks.
+ * If we don't do this here we'll crash in XCloseDisplay() because it'll
+ * try to call functions that went away when the driver library was unloaded.
+ */
+static void
+FreeDisplayExt(Display *dpy)
+{
+   _XExtension *ext, *next;
+
+   for (ext = dpy->ext_procs; ext; ext = next) {
+      next = ext->next;
+      if (ext->close_display) {
+         ext->close_display(dpy, &ext->codes);
+         ext->close_display = NULL;
+      }
+      if (ext->name)
+         Xfree(ext->name);
+      Xfree(ext);
+   }
+   dpy->ext_procs = NULL;
+
+   _XFreeExtData (dpy->ext_data);
+   dpy->ext_data = NULL;
+}
 
 /**
  * Called via eglTerminate(), drv->API.Terminate().
@@ -474,7 +501,7 @@ GLX_eglTerminate(_EGLDriver *drv, EGLDisplay dpy)
 
    _eglLog(_EGL_DEBUG, "GLX: eglTerminate");
 
-//   XCloseDisplay(disp->Xdpy);
+   FreeDisplayExt(disp->Xdpy);
 
    return EGL_TRUE;
 }
