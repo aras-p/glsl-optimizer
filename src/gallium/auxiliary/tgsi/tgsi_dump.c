@@ -180,14 +180,16 @@ _dump_register_ind(
    uint file,
    int index,
    uint ind_file,
-   int ind_index )
+   int ind_index,
+   uint ind_swizzle )
 {
    ENM( file, file_names );
    CHR( '[' );
    ENM( ind_file, file_names );
    CHR( '[' );
    SID( ind_index );
-   CHR( ']' );
+   TXT( "]." );
+   ENM( ind_swizzle, swizzle_names );
    if (index != 0) {
       if (index > 0)
          CHR( '+' );
@@ -377,7 +379,8 @@ iter_instruction(
             src->SrcRegister.File,
             src->SrcRegister.Index,
             src->SrcRegisterInd.File,
-            src->SrcRegisterInd.Index );
+            src->SrcRegisterInd.Index,
+            src->SrcRegisterInd.SwizzleX );
       }
       else {
          _dump_register(
