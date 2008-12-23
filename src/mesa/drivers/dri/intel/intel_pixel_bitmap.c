@@ -244,8 +244,8 @@ do_blit_bitmap( GLcontext *ctx,
 	 /* Clip to drawable cliprect */
          if (!_mesa_clip_to_region(cliprects[i].x1,
 				   cliprects[i].y1,
-				   cliprects[i].x2 - cliprects[i].x1,
-				   cliprects[i].y2 - cliprects[i].y1,
+				   cliprects[i].x2,
+				   cliprects[i].y2,
 				   &box_x, &box_y, &box_w, &box_h))
 	    continue;
 
