@@ -33,6 +33,7 @@
 #include "draw_private.h"
 #include "draw_pipe.h"
 #include "draw_context.h"
+#include "draw_vbuf.h"
 
 static boolean points( unsigned prim )
 {
@@ -52,16 +53,28 @@ static boolean triangles( unsigned prim )
 }
 
 /**
- * Check if we need any special pipeline stages, or whether
- * prims/verts can go through untouched.  Don't test for bypass
- * clipping or vs modes, this function is just about the primitive
- * pipeline stages.
+ * Default version of a function to check if we need any special
+ * pipeline stages, or whether prims/verts can go through untouched.
+ * Don't test for bypass clipping or vs modes, this function is just
+ * about the primitive pipeline stages.
+ *
+ * This can be overridden by the driver.
  */
 boolean
 draw_need_pipeline(const struct draw_context *draw,
                    const struct pipe_rasterizer_state *rasterizer,
                    unsigned int prim )
 {
+   /* If the driver has overridden this, use that version: 
+    */
+   if (draw->render &&
+       draw->render->need_pipeline) 
+   {
+      return draw->render->need_pipeline( draw->render,
+                                          rasterizer,
+                                          prim );
+   }
+
    /* Don't have to worry about triangles turning into lines/points
     * and triggering the pipeline, because we have to trigger the
     * pipeline *anyway* if unfilled mode is active.
