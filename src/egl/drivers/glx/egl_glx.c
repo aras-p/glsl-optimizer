@@ -36,8 +36,6 @@
 /*
  * TODO: 
  *
- * Add GLXFBConfig support
- * Pbuffer & Pixmap support
  * test eglBind/ReleaseTexImage
  */
 
@@ -110,8 +108,7 @@ struct GLX_egl_driver
    _EGLDriver Base;   /**< base class */
 
    XVisualInfo *visuals;
-
-   /* GLXFBConfig *fbconfigs - todo */
+   GLXFBConfig *fbconfigs;
 };
 
 
@@ -245,6 +242,99 @@ get_visual_attribs(Display *dpy, XVisualInfo *vInfo,
    return GL_TRUE;
 }
 
+#ifdef GLX_VERSION_1_3
+
+static int
+glx_token_to_visual_class(int visual_type)
+{
+   switch (visual_type) {
+   case GLX_TRUE_COLOR:
+      return TrueColor;
+   case GLX_DIRECT_COLOR:
+      return DirectColor;
+   case GLX_PSEUDO_COLOR:
+      return PseudoColor;
+   case GLX_STATIC_COLOR:
+      return StaticColor;
+   case GLX_GRAY_SCALE:
+      return GrayScale;
+   case GLX_STATIC_GRAY:
+      return StaticGray;
+   case GLX_NONE:
+   default:
+      return None;
+   }
+}
+static GLboolean
+get_fbconfig_attribs(Display *dpy, GLXFBConfig fbconfig,
+		     struct visual_attribs *attribs)
+{
+   int visual_type;
+
+   memset(attribs, 0, sizeof(struct visual_attribs));
+
+   /* We don't use the GLX_FBCONFIG_ID here */
+   glXGetFBConfigAttrib(dpy, fbconfig, GLX_VISUAL_ID, &attribs->id);
+
+#if 0
+   attribs->depth = vInfo->depth;
+   attribs->redMask = vInfo->red_mask;
+   attribs->greenMask = vInfo->green_mask;
+   attribs->blueMask = vInfo->blue_mask;
+   attribs->colormapSize = vInfo->colormap_size;
+   attribs->bitsPerRGB = vInfo->bits_per_rgb;
+#endif
+
+   glXGetFBConfigAttrib(dpy, fbconfig, GLX_X_VISUAL_TYPE, &visual_type);
+   attribs->klass = glx_token_to_visual_class(visual_type);
+
+   glXGetFBConfigAttrib(dpy, fbconfig, GLX_BUFFER_SIZE, &attribs->bufferSize);
+   glXGetFBConfigAttrib(dpy, fbconfig, GLX_LEVEL, &attribs->level);
+   glXGetFBConfigAttrib(dpy, fbconfig, GLX_RENDER_TYPE, &attribs->render_type);
+   if (!(attribs->render_type & GLX_RGBA_BIT))
+      return GL_FALSE;
+
+   glXGetFBConfigAttrib(dpy, fbconfig, GLX_DOUBLEBUFFER, &attribs->doubleBuffer);
+   if (!attribs->doubleBuffer)
+      return GL_FALSE;
+
+   glXGetFBConfigAttrib(dpy, fbconfig, GLX_STEREO, &attribs->stereo);
+   glXGetFBConfigAttrib(dpy, fbconfig, GLX_AUX_BUFFERS, &attribs->auxBuffers);
+
+   glXGetFBConfigAttrib(dpy, fbconfig, GLX_RED_SIZE, &attribs->redSize);
+   glXGetFBConfigAttrib(dpy, fbconfig, GLX_GREEN_SIZE, &attribs->greenSize);
+   glXGetFBConfigAttrib(dpy, fbconfig, GLX_BLUE_SIZE, &attribs->blueSize);
+   glXGetFBConfigAttrib(dpy, fbconfig, GLX_ALPHA_SIZE, &attribs->alphaSize);
+   glXGetFBConfigAttrib(dpy, fbconfig, GLX_DEPTH_SIZE, &attribs->depthSize);
+   glXGetFBConfigAttrib(dpy, fbconfig, GLX_STENCIL_SIZE, &attribs->stencilSize);
+
+   glXGetFBConfigAttrib(dpy, fbconfig, GLX_ACCUM_RED_SIZE, &attribs->accumRedSize);
+   glXGetFBConfigAttrib(dpy, fbconfig, GLX_ACCUM_GREEN_SIZE, &attribs->accumGreenSize);
+   glXGetFBConfigAttrib(dpy, fbconfig, GLX_ACCUM_BLUE_SIZE, &attribs->accumBlueSize);
+   glXGetFBConfigAttrib(dpy, fbconfig, GLX_ACCUM_ALPHA_SIZE, &attribs->accumAlphaSize);
+
+   /* get transparent pixel stuff */
+   glXGetFBConfigAttrib(dpy, fbconfig,GLX_TRANSPARENT_TYPE, &attribs->transparentType);
+   if (attribs->transparentType == GLX_TRANSPARENT_RGB) {
+     glXGetFBConfigAttrib(dpy, fbconfig, GLX_TRANSPARENT_RED_VALUE, &attribs->transparentRedValue);
+     glXGetFBConfigAttrib(dpy, fbconfig, GLX_TRANSPARENT_GREEN_VALUE, &attribs->transparentGreenValue);
+     glXGetFBConfigAttrib(dpy, fbconfig, GLX_TRANSPARENT_BLUE_VALUE, &attribs->transparentBlueValue);
+     glXGetFBConfigAttrib(dpy, fbconfig, GLX_TRANSPARENT_ALPHA_VALUE, &attribs->transparentAlphaValue);
+   }
+   else if (attribs->transparentType == GLX_TRANSPARENT_INDEX) {
+     glXGetFBConfigAttrib(dpy, fbconfig, GLX_TRANSPARENT_INDEX_VALUE, &attribs->transparentIndexValue);
+   }
+
+   glXGetFBConfigAttrib(dpy, fbconfig, GLX_SAMPLE_BUFFERS, &attribs->numMultisample);
+   glXGetFBConfigAttrib(dpy, fbconfig, GLX_SAMPLES, &attribs->numSamples);
+
+   glXGetFBConfigAttrib(dpy, fbconfig, GLX_CONFIG_CAVEAT, &attribs->visualCaveat);
+
+   return GL_TRUE;
+}
+
+#endif
+
 static EGLBoolean
 create_configs(_EGLDisplay *disp, struct GLX_egl_driver *GLX_drv)
 {
@@ -254,6 +344,48 @@ create_configs(_EGLDisplay *disp, struct GLX_egl_driver *GLX_drv)
    int i;
    struct visual_attribs attribs;
 
+   GLX_drv->fbconfigs = NULL;
+
+#ifdef GLX_VERSION_1_3
+   /* get list of all fbconfigs on this screen */
+   GLX_drv->fbconfigs = glXGetFBConfigs(disp->Xdpy, DefaultScreen(disp->Xdpy), &numVisuals);
+
+   if (numVisuals == 0)
+      goto xvisual;
+
+   for (i = 0; i < numVisuals; i++) {
+      struct GLX_egl_config *config;
+
+      if (!get_fbconfig_attribs(disp->Xdpy, GLX_drv->fbconfigs[i], &attribs))
+         continue;
+
+      config = CALLOC_STRUCT(GLX_egl_config);
+
+      _eglInitConfig(&config->Base, i+1);
+      SET_CONFIG_ATTRIB(&config->Base, EGL_NATIVE_VISUAL_ID, attribs.id);
+      SET_CONFIG_ATTRIB(&config->Base, EGL_BUFFER_SIZE, attribs.bufferSize);
+      SET_CONFIG_ATTRIB(&config->Base, EGL_RED_SIZE, attribs.redSize);
+      SET_CONFIG_ATTRIB(&config->Base, EGL_GREEN_SIZE, attribs.greenSize);
+      SET_CONFIG_ATTRIB(&config->Base, EGL_BLUE_SIZE, attribs.blueSize);
+      SET_CONFIG_ATTRIB(&config->Base, EGL_ALPHA_SIZE, attribs.alphaSize);
+      SET_CONFIG_ATTRIB(&config->Base, EGL_DEPTH_SIZE, attribs.depthSize);
+      SET_CONFIG_ATTRIB(&config->Base, EGL_STENCIL_SIZE, attribs.stencilSize);
+      SET_CONFIG_ATTRIB(&config->Base, EGL_SAMPLES, attribs.numSamples);
+      SET_CONFIG_ATTRIB(&config->Base, EGL_SAMPLE_BUFFERS, attribs.numMultisample);
+      SET_CONFIG_ATTRIB(&config->Base, EGL_CONFORMANT, all_apis);
+      SET_CONFIG_ATTRIB(&config->Base, EGL_RENDERABLE_TYPE, all_apis);
+      SET_CONFIG_ATTRIB(&config->Base, EGL_SURFACE_TYPE,
+                        (EGL_WINDOW_BIT | EGL_PBUFFER_BIT | EGL_PIXMAP_BIT));
+
+      /* XXX possibly other things to init... */
+
+      _eglAddConfig(disp, &config->Base);
+   }
+
+   goto end;
+#endif
+
+xvisual:
    /* get list of all visuals on this screen */
    theTemplate.screen = DefaultScreen(disp->Xdpy);
    mask = VisualScreenMask;
@@ -288,6 +420,7 @@ create_configs(_EGLDisplay *disp, struct GLX_egl_driver *GLX_drv)
       _eglAddConfig(disp, &config->Base);
    }
 
+end:
    return EGL_TRUE;
 }
 
@@ -301,12 +434,12 @@ GLX_eglInitialize(_EGLDriver *drv, EGLDisplay dpy,
    struct GLX_egl_driver *GLX_drv = GLX_egl_driver(drv);
    _EGLDisplay *disp = _eglLookupDisplay(dpy);
 
-   _eglLog(_EGL_DEBUG, "XDRI: eglInitialize");
+   _eglLog(_EGL_DEBUG, "GLX: eglInitialize");
 
    if (!disp->Xdpy) {
       disp->Xdpy = XOpenDisplay(NULL);
       if (!disp->Xdpy) {
-         _eglLog(_EGL_WARNING, "XDRI: XOpenDisplay failed");
+         _eglLog(_EGL_WARNING, "GLX: XOpenDisplay failed");
          return EGL_FALSE;
       }
    }
@@ -333,7 +466,7 @@ GLX_eglTerminate(_EGLDriver *drv, EGLDisplay dpy)
 {
    _EGLDisplay *disp = _eglLookupDisplay(dpy);
 
-   _eglLog(_EGL_DEBUG, "XDRI: eglTerminate");
+   _eglLog(_EGL_DEBUG, "GLX: eglTerminate");
 
 //   XCloseDisplay(disp->Xdpy);
 
@@ -374,13 +507,20 @@ GLX_eglCreateContext(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
    conf = _eglLookupConfig(drv, dpy, config);
    assert(conf);
 
-   GLX_ctx->context = glXCreateContext(disp->Xdpy, &GLX_drv->visuals[(int)config-1], GLX_ctx_shared ? GLX_ctx_shared->context : NULL, GL_TRUE);
+#ifdef GLX_VERSION_1_3
+   if (GLX_drv->fbconfigs)
+      GLX_ctx->context = glXCreateNewContext(disp->Xdpy, GLX_drv->fbconfigs[(int)config-1], GLX_RGBA_TYPE, GLX_ctx_shared ? GLX_ctx_shared->context : NULL, GL_TRUE);
+   else
+#endif
+      GLX_ctx->context = glXCreateContext(disp->Xdpy, &GLX_drv->visuals[(int)config-1], GLX_ctx_shared ? GLX_ctx_shared->context : NULL, GL_TRUE);
    if (!GLX_ctx->context)
       return EGL_FALSE;
 
-   /* need to have a direct rendering context */
+#if 1
+   /* (maybe?) need to have a direct rendering context */
    if (!glXIsDirect(disp->Xdpy, GLX_ctx->context))
       return EGL_FALSE;
+#endif
 
    return _eglGetContextHandle(&GLX_ctx->Base);
 }
@@ -404,9 +544,11 @@ GLX_eglMakeCurrent(_EGLDriver *drv, EGLDisplay dpy, EGLSurface d,
    if (!_eglMakeCurrent(drv, dpy, d, r, context))
       return EGL_FALSE;
 
-//   if (!glXMakeContextCurrent(disp->Xdpy, GLX_dsurf->drawable, GLX_rsurf->drawable, GLX_ctx->context))
-   if (!glXMakeCurrent(disp->Xdpy, GLX_dsurf ? GLX_dsurf->drawable : 0, GLX_ctx ? GLX_ctx->context : NULL))
-      return EGL_FALSE;
+#ifdef GLX_VERSION_1_3
+   if (!glXMakeContextCurrent(disp->Xdpy, GLX_dsurf->drawable, GLX_rsurf->drawable, GLX_ctx->context))
+#endif
+      if (!glXMakeCurrent(disp->Xdpy, GLX_dsurf ? GLX_dsurf->drawable : 0, GLX_ctx ? GLX_ctx->context : NULL))
+         return EGL_FALSE;
 
    return EGL_TRUE;
 }
@@ -455,6 +597,85 @@ GLX_eglCreateWindowSurface(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
 
    return _eglGetSurfaceHandle(&GLX_surf->Base);
 }
+
+#ifdef GLX_VERSION_1_3
+static EGLSurface
+GLX_eglCreatePixmapSurface(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config, 
+			   NativePixmapType pixmap, const EGLint *attrib_list)
+{
+   struct GLX_egl_driver *GLX_drv = GLX_egl_driver(drv);
+   _EGLDisplay *disp = _eglLookupDisplay(dpy);
+   struct GLX_egl_surface *GLX_surf;
+   int i;
+
+   GLX_surf = CALLOC_STRUCT(GLX_egl_surface);
+   if (!GLX_surf)
+      return EGL_NO_SURFACE;
+
+   if (!_eglInitSurface(drv, dpy, &GLX_surf->Base, EGL_PIXMAP_BIT,
+                        config, attrib_list)) {
+      free(GLX_surf);
+      return EGL_FALSE;
+   }
+
+   _eglSaveSurface(&GLX_surf->Base);
+
+   for (i = 0; attrib_list && attrib_list[i] != EGL_NONE; i++) {
+      switch (attrib_list[i]) {
+         /* no attribs at this time */
+      default:
+         _eglError(EGL_BAD_ATTRIBUTE, "eglCreatePixmapSurface");
+         return EGL_NO_SURFACE;
+      }
+   }
+
+   GLX_surf->drawable = glXCreatePixmap(disp->Xdpy, GLX_drv->fbconfigs[(int)config-1], pixmap, NULL);
+
+   return _eglGetSurfaceHandle(&GLX_surf->Base);
+}
+
+static EGLSurface
+GLX_eglCreatePbufferSurface(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
+                            const EGLint *attrib_list)
+{
+   struct GLX_egl_driver *GLX_drv = GLX_egl_driver(drv);
+   _EGLDisplay *disp = _eglLookupDisplay(dpy);
+   struct GLX_egl_surface *GLX_surf;
+   int attribs[5];
+   int i = 0, j = 0;
+
+   GLX_surf = CALLOC_STRUCT(GLX_egl_surface);
+   if (!GLX_surf)
+      return EGL_NO_SURFACE;
+
+   if (!_eglInitSurface(drv, dpy, &GLX_surf->Base, EGL_PBUFFER_BIT,
+                        config, attrib_list)) {
+      free(GLX_surf);
+      return EGL_NO_SURFACE;
+   }
+
+   _eglSaveSurface(&GLX_surf->Base);
+
+   while(attrib_list[i] != EGL_NONE) {
+      switch (attrib_list[i]) {
+         case EGL_WIDTH:
+	    attribs[j++] = GLX_PBUFFER_WIDTH;
+	    attribs[j++] = attrib_list[i+1];
+	    break;
+	 case EGL_HEIGHT:
+	    attribs[j++] = GLX_PBUFFER_HEIGHT;
+	    attribs[j++] = attrib_list[i+1];
+	    break;
+      }
+      i++;
+   }
+   attribs[j++] = 0;
+
+   GLX_surf->drawable = glXCreatePbuffer(disp->Xdpy, GLX_drv->fbconfigs[(int)config-1], attribs);
+
+   return _eglGetSurfaceHandle(&GLX_surf->Base);
+}
+#endif
 
 static EGLBoolean
 GLX_eglDestroySurface(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surface)
@@ -517,7 +738,7 @@ GLX_eglSwapBuffers(_EGLDriver *drv, EGLDisplay dpy, EGLSurface draw)
    _EGLSurface *surf = _eglLookupSurface(draw);
    struct GLX_egl_surface *GLX_surf = GLX_egl_surface(surf);
 
-   _eglLog(_EGL_DEBUG, "XDRI: EGL SwapBuffers 0x%x",draw);
+   _eglLog(_EGL_DEBUG, "GLX: EGL SwapBuffers 0x%x",draw);
 
    /* error checking step: */
    if (!_eglSwapBuffers(drv, dpy, draw))
@@ -547,9 +768,12 @@ _eglMain(_EGLDisplay *disp, const char *args)
 {
    struct GLX_egl_driver *GLX_drv = CALLOC_STRUCT(GLX_egl_driver);
    char *env;
+   int maj = 0, min = 0;
 
    if (!GLX_drv)
       return NULL;
+
+   glXQueryVersion(disp->Xdpy, &maj, &min);
 
    _eglInitDriverFallbacks(&GLX_drv->Base);
    GLX_drv->Base.API.Initialize = GLX_eglInitialize;
@@ -557,6 +781,15 @@ _eglMain(_EGLDisplay *disp, const char *args)
    GLX_drv->Base.API.CreateContext = GLX_eglCreateContext;
    GLX_drv->Base.API.MakeCurrent = GLX_eglMakeCurrent;
    GLX_drv->Base.API.CreateWindowSurface = GLX_eglCreateWindowSurface;
+#ifdef GLX_VERSION_1_3
+   if (maj == 1 && min >= 3) {
+      GLX_drv->Base.API.CreatePixmapSurface = GLX_eglCreatePixmapSurface;
+      GLX_drv->Base.API.CreatePbufferSurface = GLX_eglCreatePbufferSurface;
+      printf("GLX: Pbuffer and Pixmap support\n");
+   } else {
+      printf("GLX: No pbuffer or pixmap support\n");
+   }
+#endif
    GLX_drv->Base.API.DestroySurface = GLX_eglDestroySurface;
    GLX_drv->Base.API.BindTexImage = GLX_eglBindTexImage;
    GLX_drv->Base.API.ReleaseTexImage = GLX_eglReleaseTexImage;
