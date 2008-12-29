@@ -209,7 +209,7 @@ static void r300FireEB(r300ContextPtr rmesa, unsigned long addr,
 
 	start_packet3(CP_PACKET3(R300_PACKET3_INDX_BUFFER, 2), 2);
 	e32(R300_INDX_BUFFER_ONE_REG_WR | (0 << R300_INDX_BUFFER_SKIP_SHIFT) |
-	    (R300_VAP_PORT_IDX0 >> 2))
+	    (R300_VAP_PORT_IDX0 >> 2));
 	e32(addr);
 	e32(vertex_count);
 }
