@@ -19,7 +19,7 @@ if env['platform'] == 'windows':
 
 	env.Append(LIBS = [
 		'gdi32',
-		'user32',ss
+		'user32',
 		'kernel32',
 	])
 
