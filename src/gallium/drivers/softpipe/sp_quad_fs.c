@@ -171,7 +171,6 @@ static void shade_destroy(struct quad_stage *qs)
 struct quad_stage *sp_quad_shade_stage( struct softpipe_context *softpipe )
 {
    struct quad_shade_stage *qss = CALLOC_STRUCT(quad_shade_stage);
-   uint i;
 
    /* allocate storage for program inputs/outputs, aligned to 16 bytes */
    qss->inputs = MALLOC(PIPE_MAX_ATTRIBS * sizeof(*qss->inputs) + 16);

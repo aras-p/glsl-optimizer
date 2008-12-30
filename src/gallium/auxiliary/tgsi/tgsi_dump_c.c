@@ -646,7 +646,6 @@ tgsi_dump_c(
    struct tgsi_full_declaration fd;
    uint ignored = flags & TGSI_DUMP_C_IGNORED;
    uint deflt = flags & TGSI_DUMP_C_DEFAULT;
-   uint instno = 0;
 
    tgsi_parse_init( &parse, tokens );
 
