@@ -55,8 +55,8 @@ struct texenvprog_cache_item
 #define DISASSEM (MESA_VERBOSE & VERBOSE_DISASSEM)
 
 struct mode_opt {
-   GLubyte Source:4;
-   GLubyte Operand:3;
+   GLuint Source:4;
+   GLuint Operand:3;
 };
 
 struct state_key {
