@@ -51,6 +51,7 @@ sources = [
     'glut_mesa.c',
     'glut_modifier.c',
     'glut_overlay.c',
+    'glut_ppm.c',
     'glut_shapes.c',
     'glut_space.c',
     'glut_stroke.c',
