@@ -12,11 +12,6 @@ if env['platform'] != 'winddk':
 		'#/src/mesa',
 	])
 	
-	if gcc:
-		env.Append(CFLAGS = [
-			'-std=c99',
-		])
-
 	#
 	# Source files
 	#
@@ -165,6 +160,7 @@ if env['platform'] != 'winddk':
 		'state_tracker/st_context.c',
 		'state_tracker/st_debug.c',
 		'state_tracker/st_draw.c',
+		'state_tracker/st_draw_feedback.c',
 		'state_tracker/st_extensions.c',
 		'state_tracker/st_format.c',
 		'state_tracker/st_framebuffer.c',

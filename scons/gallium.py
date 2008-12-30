@@ -313,6 +313,7 @@ def generate(env):
             '-Wmissing-prototypes',
             '-Wno-long-long',
             '-ffast-math',
+            '-std=c99',
             '-pedantic',
             '-fmessage-length=0', # be nice to Eclipse
         ]
