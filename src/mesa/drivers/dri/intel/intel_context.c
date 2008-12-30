@@ -388,7 +388,6 @@ static const struct dri_extension card_extensions[] = {
    { "GL_NV_vertex_program",              GL_NV_vertex_program_functions },
    { "GL_NV_vertex_program1_1",           NULL },
    { "GL_SGIS_generate_mipmap",           NULL },
-   { "GL_ATI_texture_env_combine3",       NULL },
    { NULL, NULL }
 };
 
@@ -413,6 +412,7 @@ static const struct dri_extension brw_extensions[] = {
    { "GL_EXT_shadow_funcs",               NULL },
    { "GL_EXT_texture_sRGB",		  NULL },
    { "GL_ATI_separate_stencil",           GL_ATI_separate_stencil_functions },
+   { "GL_ATI_texture_env_combine3",       NULL },
    { NULL,                                NULL }
 };
 
