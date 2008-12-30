@@ -112,20 +112,22 @@ typedef unsigned char boolean;
 
 
 /* Function inlining */
-#ifdef __cplusplus
-#  define INLINE inline
-#elif defined(__GNUC__)
-#  define INLINE __inline__
-#elif defined(_MSC_VER)
-#  define INLINE __inline
-#elif defined(__ICL)
-#  define INLINE __inline
-#elif defined(__INTEL_COMPILER)
-#  define INLINE inline
-#elif defined(__WATCOMC__) && (__WATCOMC__ >= 1100)
-#  define INLINE __inline
-#else
-#  define INLINE
+#ifndef INLINE
+#  ifdef __cplusplus
+#    define INLINE inline
+#  elif defined(__GNUC__)
+#    define INLINE __inline__
+#  elif defined(_MSC_VER)
+#    define INLINE __inline
+#  elif defined(__ICL)
+#    define INLINE __inline
+#  elif defined(__INTEL_COMPILER)
+#    define INLINE inline
+#  elif defined(__WATCOMC__) && (__WATCOMC__ >= 1100)
+#    define INLINE __inline
+#  else
+#    define INLINE
+#  endif
 #endif
 
 
