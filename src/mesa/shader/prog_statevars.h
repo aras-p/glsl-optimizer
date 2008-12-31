@@ -79,10 +79,10 @@ typedef enum gl_state_index_ {
    STATE_SHININESS,
    STATE_HALF_VECTOR,
 
-   STATE_POSITION,
-   STATE_ATTENUATION,
-   STATE_SPOT_DIRECTION,
-   STATE_SPOT_CUTOFF,
+   STATE_POSITION,       /**< xyzw = position */
+   STATE_ATTENUATION,    /**< xyz = attenuation, w = spot exponent */
+   STATE_SPOT_DIRECTION, /**< xyz = direction, w = cos(cutoff) */
+   STATE_SPOT_CUTOFF,    /**< x = cutoff, yzw = undefined */
 
    STATE_TEXGEN_EYE_S,
    STATE_TEXGEN_EYE_T,

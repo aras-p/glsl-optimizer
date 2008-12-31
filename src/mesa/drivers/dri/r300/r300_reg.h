@@ -64,7 +64,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define R300_SE_VPORT_ZSCALE                0x1DA8
 #define R300_SE_VPORT_ZOFFSET               0x1DAC
 
-
+#define R300_VAP_PORT_IDX0		    0x2040
 /*
  * Vertex Array Processing (VAP) Control
  */
@@ -3201,9 +3201,9 @@ enum {
 #define R300_PACKET3_3D_LOAD_VBPNTR         0x00002F00
 
 #define R300_PACKET3_INDX_BUFFER            0x00003300
-#    define R300_EB_UNK1_SHIFT                      24
-#    define R300_EB_UNK1                    (0x80<<24)
-#    define R300_EB_UNK2                        0x0810
+#    define R300_INDX_BUFFER_DST_SHIFT          0
+#    define R300_INDX_BUFFER_SKIP_SHIFT         16
+#    define R300_INDX_BUFFER_ONE_REG_WR		(1<<31)
 
 /* Same as R300_PACKET3_3D_DRAW_VBUF but without VAP_VTX_FMT */
 #define R300_PACKET3_3D_DRAW_VBUF_2         0x00003400
