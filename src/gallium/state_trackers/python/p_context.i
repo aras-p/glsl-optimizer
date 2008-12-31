@@ -245,7 +245,7 @@ struct st_context {
       memcpy(map, vertices, size);
       pipe_buffer_unmap(screen, vbuf);
       
-      util_draw_vertex_buffer(pipe, vbuf, prim, num_verts, num_attribs);
+      util_draw_vertex_buffer(pipe, vbuf, 0, prim, num_verts, num_attribs);
       
 error2:
       pipe_buffer_reference(screen, &vbuf, NULL);
