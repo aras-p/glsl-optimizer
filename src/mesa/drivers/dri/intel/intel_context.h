@@ -157,6 +157,16 @@ struct intel_context
       void (*debug_batch)(struct intel_context *intel);
    } vtbl;
 
+   struct {
+      struct gl_fragment_program *bitmap_fp;
+      struct gl_vertex_program *passthrough_vp;
+
+      struct gl_fragment_program *saved_fp;
+      GLboolean saved_fp_enable;
+      struct gl_vertex_program *saved_vp;
+      GLboolean saved_vp_enable;
+   } meta;
+
    GLint refcount;
    GLuint Fallback;
    GLuint NewGLState;
