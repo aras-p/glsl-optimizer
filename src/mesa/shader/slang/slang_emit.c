@@ -348,6 +348,10 @@ storage_to_src_reg(struct prog_src_register *src, const slang_ir_storage *st)
    assert(index >= 0);
    while (st->Parent) {
       st = st->Parent;
+      if (st->Index < 0) {
+         /* an error should have been reported already */
+         return;
+      }
       assert(st->Index >= 0);
       index += st->Index;
       swizzle = _slang_swizzle_swizzle(fix_swizzle(st->Swizzle), swizzle);
@@ -1841,9 +1845,17 @@ emit_array_element(slang_emit_info *emitInfo, slang_ir_node *n)
          root = root->Parent;
 
       if (root->File == PROGRAM_STATE_VAR) {
-         GLint index = _slang_alloc_statevar(n, emitInfo->prog->Parameters);
-         assert(n->Store->Index == index);
-         return NULL;
+         GLboolean direct;
+         GLint index =
+            _slang_alloc_statevar(n, emitInfo->prog->Parameters, &direct);
+         if (index < 0) {
+            /* error */
+            return NULL;
+         }
+         if (direct) {
+            n->Store->Index = index;
+            return NULL; /* all done */
+         }
       }
    }
 
@@ -1967,18 +1979,22 @@ emit_struct_field(slang_emit_info *emitInfo, slang_ir_node *n)
     * space for the ones that we actually use!
     */
    if (root->File == PROGRAM_STATE_VAR) {
-      root->Index = _slang_alloc_statevar(n, emitInfo->prog->Parameters);
-      if (root->Index < 0) {
+      GLboolean direct;
+      GLint index = _slang_alloc_statevar(n, emitInfo->prog->Parameters, &direct);
+      if (index < 0) {
          slang_info_log_error(emitInfo->log, "Error parsing state variable");
          return NULL;
       }
-      return NULL;
+      if (direct) {
+         root->Index = index;
+         return NULL; /* all done */
+      }
    }
-   else {
-      /* do codegen for struct */
-      emit(emitInfo, n->Children[0]);
-      assert(n->Children[0]->Store->Index >= 0);
-   }
+
+   /* do codegen for struct */
+   emit(emitInfo, n->Children[0]);
+   assert(n->Children[0]->Store->Index >= 0);
+
 
    fieldOffset = n->Store->Index;
    fieldSize = n->Store->Size;
@@ -2077,7 +2093,18 @@ emit_var_ref(slang_emit_info *emitInfo, slang_ir_node *n)
    assert(n->Store->File != PROGRAM_UNDEFINED);
 
    if (n->Store->File == PROGRAM_STATE_VAR && n->Store->Index < 0) {
-      n->Store->Index = _slang_alloc_statevar(n, emitInfo->prog->Parameters);
+      GLboolean direct;
+      GLint index = _slang_alloc_statevar(n, emitInfo->prog->Parameters, &direct);
+      if (index < 0) {
+         /* error */
+         char s[100];
+         snprintf(s, sizeof(s), "Undefined variable '%s'",
+                  (char *) n->Var->a_name);
+         slang_info_log_error(emitInfo->log, s);
+         return NULL;
+      }
+
+      n->Store->Index = index;
    }
    else if (n->Store->File == PROGRAM_UNIFORM) {
       /* mark var as used */
