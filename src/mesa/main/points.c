@@ -257,7 +257,7 @@ _mesa_init_point(GLcontext *ctx)
    ctx->Point.PointSprite = GL_FALSE; /* GL_ARB/NV_point_sprite */
    ctx->Point.SpriteRMode = GL_ZERO; /* GL_NV_point_sprite (only!) */
    ctx->Point.SpriteOrigin = GL_UPPER_LEFT; /* GL_ARB_point_sprite */
-   for (i = 0; i < MAX_TEXTURE_UNITS; i++) {
+   for (i = 0; i < MAX_TEXTURE_COORD_UNITS; i++) {
       ctx->Point.CoordReplace[i] = GL_FALSE; /* GL_ARB/NV_point_sprite */
    }
 }

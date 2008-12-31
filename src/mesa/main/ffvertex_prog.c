@@ -275,7 +275,7 @@ static void make_state_key( GLcontext *ctx, struct state_key *key )
        ctx->Texture._EnabledUnits)
       key->texture_enabled_global = 1;
       
-   for (i = 0; i < MAX_TEXTURE_UNITS; i++) {
+   for (i = 0; i < MAX_TEXTURE_COORD_UNITS; i++) {
       struct gl_texture_unit *texUnit = &ctx->Texture.Unit[i];
 
       if (texUnit->_ReallyEnabled)
@@ -1451,7 +1451,7 @@ static void build_texture_transform( struct tnl_program *p )
 {
    GLuint i, j;
 
-   for (i = 0; i < MAX_TEXTURE_UNITS; i++) {
+   for (i = 0; i < MAX_TEXTURE_COORD_UNITS; i++) {
 
       if (!(p->state->fragprog_inputs_read & FRAG_BIT_TEX(i)))
 	 continue;

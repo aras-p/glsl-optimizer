@@ -38,6 +38,21 @@
 #include "texenvprogram.h"
 
 
+/*
+ * Note on texture units:
+ *
+ * The number of texture units supported by fixed-function fragment
+ * processing is MAX_TEXTURE_COORD_UNITS, not MAX_TEXTURE_IMAGE_UNITS.
+ * That's because there's a one-to-one correspondence between texture
+ * coordinates and samplers in fixed-function processing.
+ *
+ * Since fixed-function vertex processing is limited to MAX_TEXTURE_COORD_UNITS
+ * sets of texcoords, so is fixed-function fragment processing.
+ *
+ * We can safely use ctx->Const.MaxTextureUnits for loop bounds.
+ */
+
+
 struct texenvprog_cache_item
 {
    GLuint hash;
@@ -52,7 +67,7 @@ struct texenvprog_cache_item
  * up to four instructions per texture unit (TEX + 3 for combine),
  * then there's fog and specular add.
  */
-#define MAX_INSTRUCTIONS ((MAX_TEXTURE_UNITS * 4) + 12)
+#define MAX_INSTRUCTIONS ((MAX_TEXTURE_COORD_UNITS * 4) + 12)
 
 #define DISASSEM (MESA_VERBOSE & VERBOSE_DISASSEM)
 
@@ -211,7 +226,7 @@ static void make_state_key( GLcontext *ctx,  struct state_key *key )
 	
    memset(key, 0, sizeof(*key));
 
-   for (i=0;i<MAX_TEXTURE_UNITS;i++) {
+   for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
       const struct gl_texture_unit *texUnit = &ctx->Texture.Unit[i];
       GLenum format;
 
@@ -306,7 +321,7 @@ struct texenv_fragment_program {
    GLbitfield temp_in_use;	/* Tracks temporary regs which are in use. */
    GLboolean error;
 
-   struct ureg src_texture[MAX_TEXTURE_UNITS];   
+   struct ureg src_texture[MAX_TEXTURE_COORD_UNITS];   
    /* Reg containing each texture unit's sampled texture color,
     * else undef.
     */
@@ -1056,7 +1071,7 @@ create_new_program(GLcontext *ctx, struct state_key *key,
    p.program->Base.InputsRead = 0;
    p.program->Base.OutputsWritten = 1 << FRAG_RESULT_COLR;
 
-   for (unit = 0; unit < MAX_TEXTURE_UNITS; unit++)
+   for (unit = 0; unit < ctx->Const.MaxTextureUnits; unit++)
       p.src_texture[unit] = undef;
 
    p.src_previous = undef;

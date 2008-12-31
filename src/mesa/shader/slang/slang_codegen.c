@@ -391,7 +391,7 @@ _slang_input_index(const char *name, GLenum target, GLuint *swizzleOut)
    const struct input_info *inputs
       = (target == GL_VERTEX_PROGRAM_ARB) ? vertInputs : fragInputs;
 
-   ASSERT(MAX_TEXTURE_UNITS == 8); /* if this fails, fix vertInputs above */
+   ASSERT(MAX_TEXTURE_COORD_UNITS == 8); /* if this fails, fix vertInputs above */
 
    for (i = 0; inputs[i].Name; i++) {
       if (strcmp(inputs[i].Name, name) == 0) {

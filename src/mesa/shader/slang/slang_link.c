@@ -208,7 +208,8 @@ link_varying_vars(struct gl_shader_program *shProg, struct gl_program *prog)
  * the vertex and fragment shaders.
  */
 static GLboolean
-link_uniform_vars(struct gl_shader_program *shProg,
+link_uniform_vars(GLcontext *ctx,
+                  struct gl_shader_program *shProg,
                   struct gl_program *prog,
                   GLuint *numSamplers)
 {
@@ -239,10 +240,10 @@ link_uniform_vars(struct gl_shader_program *shProg,
          /* Allocate a new sampler index */
          GLuint sampNum = *numSamplers;
          GLuint oldSampNum = (GLuint) prog->Parameters->ParameterValues[i][0];
-         if (oldSampNum >= MAX_SAMPLERS) {
+         if (oldSampNum >= ctx->Const.MaxTextureImageUnits) {
             char s[100];
             sprintf(s, "Too many texture samplers (%u, max is %u)",
-                    oldSampNum + 1, MAX_SAMPLERS);
+                    oldSampNum + 1, ctx->Const.MaxTextureImageUnits);
             link_error(shProg, s);
             return GL_FALSE;
          }
@@ -568,13 +569,13 @@ _slang_link(GLcontext *ctx,
 
    /* link uniform vars */
    if (shProg->VertexProgram) {
-      if (!link_uniform_vars(shProg, &shProg->VertexProgram->Base,
+      if (!link_uniform_vars(ctx, shProg, &shProg->VertexProgram->Base,
                              &numSamplers)) {
          return;
       }
    }
    if (shProg->FragmentProgram) {
-      if (!link_uniform_vars(shProg, &shProg->FragmentProgram->Base,
+      if (!link_uniform_vars(ctx, shProg, &shProg->FragmentProgram->Base,
                              &numSamplers)) {
          return;
       }
