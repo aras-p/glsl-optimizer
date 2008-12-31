@@ -240,7 +240,10 @@ link_uniform_vars(struct gl_shader_program *shProg,
          GLuint sampNum = *numSamplers;
          GLuint oldSampNum = (GLuint) prog->Parameters->ParameterValues[i][0];
          if (oldSampNum >= MAX_SAMPLERS) {
-            link_error(shProg, "Too many texture samplers");
+            char s[100];
+            sprintf(s, "Too many texture samplers (%u, max is %u)",
+                    oldSampNum + 1, MAX_SAMPLERS);
+            link_error(shProg, s);
             return GL_FALSE;
          }
          samplerMap[oldSampNum] = sampNum;
