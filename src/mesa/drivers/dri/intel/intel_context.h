@@ -165,6 +165,9 @@ struct intel_context
       GLboolean saved_fp_enable;
       struct gl_vertex_program *saved_vp;
       GLboolean saved_vp_enable;
+
+      GLint saved_vp_x, saved_vp_y;
+      GLsizei saved_vp_width, saved_vp_height;
    } meta;
 
    GLint refcount;

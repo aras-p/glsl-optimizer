@@ -36,7 +36,6 @@
 #include "main/texobj.h"
 #include "main/texstate.h"
 #include "main/texparam.h"
-#include "main/matrix.h"
 #include "main/varray.h"
 #include "main/attrib.h"
 #include "main/enable.h"
@@ -68,6 +67,7 @@ intel_texture_drawpixels(GLcontext * ctx,
 			 const struct gl_pixelstore_attrib *unpack,
 			 const GLvoid *pixels)
 {
+   struct intel_context *intel = intel_context(ctx);
    GLuint texname;
    GLfloat vertices[4][4];
    GLfloat texcoords[4][2];
@@ -117,7 +117,7 @@ intel_texture_drawpixels(GLcontext * ctx,
       return GL_FALSE;
    }
 
-   _mesa_PushAttrib(GL_ENABLE_BIT | GL_TRANSFORM_BIT | GL_TEXTURE_BIT |
+   _mesa_PushAttrib(GL_ENABLE_BIT | GL_TEXTURE_BIT |
 		    GL_CURRENT_BIT);
    _mesa_PushClientAttrib(GL_CLIENT_VERTEX_ARRAY_BIT);
 
@@ -138,14 +138,7 @@ intel_texture_drawpixels(GLcontext * ctx,
    _mesa_TexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, format,
 		    type, pixels);
 
-   _mesa_MatrixMode(GL_PROJECTION);
-   _mesa_PushMatrix();
-   _mesa_LoadIdentity();
-   _mesa_Ortho(0, ctx->DrawBuffer->Width, 0, ctx->DrawBuffer->Height, 1, -1);
-
-   _mesa_MatrixMode(GL_MODELVIEW);
-   _mesa_PushMatrix();
-   _mesa_LoadIdentity();
+   intel_meta_set_passthrough_transform(intel);
 
    /* Create the vertex buffer based on the current raster pos.  The x and y
     * we're handed are ctx->Current.RasterPos[0,1] rounded to integers.
@@ -184,10 +177,7 @@ intel_texture_drawpixels(GLcontext * ctx,
    _mesa_Enable(GL_TEXTURE_COORD_ARRAY);
    CALL_DrawArrays(ctx->Exec, (GL_TRIANGLE_FAN, 0, 4));
 
-   _mesa_MatrixMode(GL_PROJECTION);
-   _mesa_PopMatrix();
-   _mesa_MatrixMode(GL_MODELVIEW);
-   _mesa_PopMatrix();
+   intel_meta_restore_transform(intel);
    _mesa_PopClientAttrib();
    _mesa_PopAttrib();
 
@@ -205,6 +195,7 @@ intel_stencil_drawpixels(GLcontext * ctx,
 			 const struct gl_pixelstore_attrib *unpack,
 			 const GLvoid *pixels)
 {
+   struct intel_context *intel = intel_context(ctx);
    GLuint texname, rb_name, fb_name, old_fb_name;
    GLfloat vertices[4][2];
    GLfloat texcoords[4][2];
@@ -267,7 +258,7 @@ intel_stencil_drawpixels(GLcontext * ctx,
       return GL_FALSE;
    }
 
-   _mesa_PushAttrib(GL_ENABLE_BIT | GL_TRANSFORM_BIT | GL_TEXTURE_BIT |
+   _mesa_PushAttrib(GL_ENABLE_BIT | GL_TEXTURE_BIT |
 		    GL_CURRENT_BIT | GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
    _mesa_PushClientAttrib(GL_CLIENT_VERTEX_ARRAY_BIT);
    old_fb_name = ctx->DrawBuffer->Name;
@@ -335,14 +326,7 @@ intel_stencil_drawpixels(GLcontext * ctx,
    ctx->Unpack = old_unpack;
    _mesa_free(stencil_pixels);
 
-   _mesa_MatrixMode(GL_PROJECTION);
-   _mesa_PushMatrix();
-   _mesa_LoadIdentity();
-   _mesa_Ortho(0, ctx->DrawBuffer->Width, 0, ctx->DrawBuffer->Height, 1, -1);
-
-   _mesa_MatrixMode(GL_MODELVIEW);
-   _mesa_PushMatrix();
-   _mesa_LoadIdentity();
+   intel_meta_set_passthrough_transform(intel);
 
    vertices[0][0] = x;
    vertices[0][1] = y;
@@ -368,12 +352,10 @@ intel_stencil_drawpixels(GLcontext * ctx,
    _mesa_Enable(GL_TEXTURE_COORD_ARRAY);
    CALL_DrawArrays(ctx->Exec, (GL_TRIANGLE_FAN, 0, 4));
 
+   intel_meta_restore_transform(intel);
+
    _mesa_BindFramebufferEXT(GL_FRAMEBUFFER_EXT, old_fb_name);
 
-   _mesa_MatrixMode(GL_PROJECTION);
-   _mesa_PopMatrix();
-   _mesa_MatrixMode(GL_MODELVIEW);
-   _mesa_PopMatrix();
    _mesa_PopClientAttrib();
    _mesa_PopAttrib();
 

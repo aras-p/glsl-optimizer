@@ -31,7 +31,8 @@
 #include "main/mtypes.h"
 
 void intelInitPixelFuncs(struct dd_function_table *functions);
-
+void intel_meta_set_passthrough_transform(struct intel_context *intel);
+void intel_meta_restore_transform(struct intel_context *intel);
 void intel_meta_set_passthrough_vertex_program(struct intel_context *intel);
 void intel_meta_restore_vertex_program(struct intel_context *intel);
 void intel_meta_set_fragment_program(struct intel_context *intel,

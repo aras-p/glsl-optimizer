@@ -39,7 +39,6 @@
 #include "main/texobj.h"
 #include "main/texstate.h"
 #include "main/texparam.h"
-#include "main/matrix.h"
 #include "main/varray.h"
 #include "main/attrib.h"
 #include "main/enable.h"
@@ -425,7 +424,7 @@ intel_texture_bitmap(GLcontext * ctx,
    }
 
    /* Save GL state before we start setting up our drawing */
-   _mesa_PushAttrib(GL_ENABLE_BIT | GL_TRANSFORM_BIT | GL_CURRENT_BIT |
+   _mesa_PushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT |
 		    GL_VIEWPORT_BIT);
    _mesa_PushClientAttrib(GL_CLIENT_VERTEX_ARRAY_BIT |
 			  GL_CLIENT_PIXEL_STORE_BIT);
@@ -451,20 +450,11 @@ intel_texture_bitmap(GLcontext * ctx,
 		    GL_ALPHA, GL_UNSIGNED_BYTE, a8_bitmap);
    _mesa_free(a8_bitmap);
 
-   _mesa_Viewport(0, 0, ctx->DrawBuffer->Width, ctx->DrawBuffer->Height);
-   _mesa_MatrixMode(GL_PROJECTION);
-   _mesa_PushMatrix();
-   _mesa_LoadIdentity();
-   _mesa_Ortho(0, ctx->DrawBuffer->Width, 0, ctx->DrawBuffer->Height, 1, -1);
-
-   _mesa_MatrixMode(GL_MODELVIEW);
-   _mesa_PushMatrix();
-   _mesa_LoadIdentity();
-
    intel_meta_set_fragment_program(intel, &intel->meta.bitmap_fp, fp);
    _mesa_ProgramLocalParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, 0,
 				     ctx->Current.RasterColor);
    intel_meta_set_passthrough_vertex_program(intel);
+   intel_meta_set_passthrough_transform(intel);
 
    vertices[0][0] = dst_x;
    vertices[0][1] = dst_y;
@@ -498,13 +488,9 @@ intel_texture_bitmap(GLcontext * ctx,
    _mesa_Enable(GL_TEXTURE_COORD_ARRAY);
    CALL_DrawArrays(ctx->Exec, (GL_TRIANGLE_FAN, 0, 4));
 
+   intel_meta_restore_transform(intel);
    intel_meta_restore_fragment_program(intel);
    intel_meta_restore_vertex_program(intel);
-
-   _mesa_MatrixMode(GL_PROJECTION);
-   _mesa_PopMatrix();
-   _mesa_MatrixMode(GL_MODELVIEW);
-   _mesa_PopMatrix();
 
    _mesa_PopClientAttrib();
    _mesa_Disable(GL_TEXTURE_2D); /* asserted that it was disabled at entry */

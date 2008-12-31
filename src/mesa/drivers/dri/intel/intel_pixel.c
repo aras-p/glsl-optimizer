@@ -29,6 +29,7 @@
 #include "main/state.h"
 #include "main/context.h"
 #include "main/enable.h"
+#include "main/matrix.h"
 #include "swrast/swrast.h"
 #include "shader/arbprogram.h"
 #include "shader/program.h"
@@ -169,6 +170,40 @@ intel_check_blit_format(struct intel_region * region,
               _mesa_lookup_enum_by_nr(type), _mesa_lookup_enum_by_nr(format));
 
    return GL_FALSE;
+}
+
+void
+intel_meta_set_passthrough_transform(struct intel_context *intel)
+{
+   GLcontext *ctx = &intel->ctx;
+
+   intel->meta.saved_vp_x = ctx->Viewport.X;
+   intel->meta.saved_vp_y = ctx->Viewport.Y;
+   intel->meta.saved_vp_width = ctx->Viewport.Width;
+   intel->meta.saved_vp_height = ctx->Viewport.Height;
+
+   _mesa_Viewport(0, 0, ctx->DrawBuffer->Width, ctx->DrawBuffer->Height);
+
+   _mesa_MatrixMode(GL_PROJECTION);
+   _mesa_PushMatrix();
+   _mesa_LoadIdentity();
+   _mesa_Ortho(0, ctx->DrawBuffer->Width, 0, ctx->DrawBuffer->Height, 1, -1);
+
+   _mesa_MatrixMode(GL_MODELVIEW);
+   _mesa_PushMatrix();
+   _mesa_LoadIdentity();
+}
+
+void
+intel_meta_restore_transform(struct intel_context *intel)
+{
+   _mesa_MatrixMode(GL_PROJECTION);
+   _mesa_PopMatrix();
+   _mesa_MatrixMode(GL_MODELVIEW);
+   _mesa_PopMatrix();
+
+   _mesa_Viewport(intel->meta.saved_vp_x, intel->meta.saved_vp_y,
+		  intel->meta.saved_vp_width, intel->meta.saved_vp_height);
 }
 
 /**
