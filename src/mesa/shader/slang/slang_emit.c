@@ -2002,9 +2002,7 @@ emit_struct_field(slang_emit_info *emitInfo, slang_ir_node *n)
    _slang_copy_ir_storage(n->Store, n->Children[0]->Store);
 
    n->Store->Index = n->Children[0]->Store->Index + fieldOffset / 4;
-   /* XXX test this:
-   n->Store->Index += fieldOffset / 4;
-   */
+   n->Store->Size = fieldSize;
 
    switch (fieldSize) {
    case 1:
