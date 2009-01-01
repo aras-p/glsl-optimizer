@@ -606,7 +606,7 @@ static void emit_nrm( struct brw_vs_compile *c,
    else
       brw_DP4(p, tmp, arg0, arg0);
 
-   /* tmp = 1 / tmp */
+   /* tmp = 1 / sqrt(tmp) */
    emit_math1(c, BRW_MATH_FUNCTION_RSQ, tmp, tmp, BRW_MATH_PRECISION_FULL);
 
    /* dst = arg0 * tmp */
