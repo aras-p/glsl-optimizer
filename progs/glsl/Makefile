@@ -22,6 +22,7 @@ PROGS = \
 	noise \
 	points \
 	pointcoord \
+	samplers \
 	skinning \
 	texdemo1 \
 	toyball \
@@ -150,6 +151,13 @@ pointcoord.o: pointcoord.c readtex.h extfuncs.h shaderutil.h
 
 pointcoord: pointcoord.o readtex.o shaderutil.o
 	$(CC) -I$(INCDIR) $(CFLAGS) $(LDFLAGS) pointcoord.o readtex.o shaderutil.o $(LIBS) -o $@
+
+
+samplers.o: samplers.c readtex.h extfuncs.h shaderutil.h
+	$(CC) -c -I$(INCDIR) $(CFLAGS) samplers.c
+
+samplers: samplers.o readtex.o shaderutil.o
+	$(CC) -I$(INCDIR) $(CFLAGS) $(LDFLAGS) samplers.o readtex.o shaderutil.o $(LIBS) -o $@
 
 
 skinning.o: skinning.c readtex.h extfuncs.h shaderutil.h
