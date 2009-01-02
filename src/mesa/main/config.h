@@ -1,13 +1,9 @@
-/**
- * \file config.h
- * Tunable configuration parameters.
- */
-
 /*
  * Mesa 3-D graphics library
- * Version:  7.1
+ * Version:  7.3
  *
  * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
+ * Copyright (C) 2008  VMware, Inc.  All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -27,6 +23,10 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+/**
+ * \file config.h
+ * Tunable configuration parameters.
+ */
 
 #ifndef MESA_CONFIG_H_INCLUDED
 #define MESA_CONFIG_H_INCLUDED
@@ -115,27 +115,28 @@
 /** Maximum number of layers in a 1D or 2D array texture - GL_MESA_texture_array */
 #define MAX_ARRAY_TEXTURE_LAYERS 64
 
-/** Number of texture units - GL_ARB_multitexture
- * This needs to be the larger of MAX_TEXTURE_COORD_UNITS and
- * MAX_TEXTURE_IMAGE_UNITS seen below, since MAX_TEXTURE_UNITS is used
- * to dimension some arrays that store both coord and image data.
-*/
-#define MAX_TEXTURE_UNITS 8
-
-/*@}*/
-
+/**
+ * Max number of texture coordinate units.  This mainly just applies to
+ * the fixed-function vertex code.  This will be difficult to raise above
+ * eight because of various vertex attribute bitvectors.
+ */
+#define MAX_TEXTURE_COORD_UNITS 8
 
 /**
- * \name Separate numbers of texture coordinates and texture image units.
- *
- * These values will eventually replace most instances of MAX_TEXTURE_UNITS.
- * We should always have MAX_TEXTURE_COORD_UNITS <= MAX_TEXTURE_IMAGE_UNITS.
- * And, GL_MAX_TEXTURE_UNITS <= MAX_TEXTURE_COORD_UNITS.
+ * Max number of texture image units.  Also determines number of texture
+ * samplers in shaders.
  */
-/*@{*/
-#define MAX_TEXTURE_COORD_UNITS 8
-#define MAX_TEXTURE_IMAGE_UNITS 8
-/*@}*/
+#define MAX_TEXTURE_IMAGE_UNITS 16
+
+/**
+ * Larger of MAX_TEXTURE_COORD_UNITS and MAX_TEXTURE_IMAGE_UNITS.
+ * This value is only used for dimensioning arrays.
+ * Either MAX_TEXTURE_COORD_UNITS or MAX_TEXTURE_IMAGE_UNITS (or the
+ * corresponding ctx->Const.MaxTextureCoord/ImageUnits fields) should be
+ * used almost everywhere else.
+ */
+#define MAX_TEXTURE_UNITS ((MAX_TEXTURE_COORD_UNITS > MAX_TEXTURE_IMAGE_UNITS) ? MAX_TEXTURE_COORD_UNITS : MAX_TEXTURE_IMAGE_UNITS)
+
 
 /** 
  * Maximum viewport/image width. Must accomodate all texture sizes too. 
@@ -190,7 +191,7 @@
 #define MAX_PROGRAM_ADDRESS_REGS 2
 #define MAX_UNIFORMS 256   /**< number of vec4 uniforms */
 #define MAX_VARYING 8      /**< number of float[4] vectors */
-#define MAX_SAMPLERS 8
+#define MAX_SAMPLERS MAX_TEXTURE_IMAGE_UNITS
 #define MAX_PROGRAM_INPUTS 32
 #define MAX_PROGRAM_OUTPUTS 32
 /*@}*/
@@ -218,8 +219,8 @@
 /** For GL_ARB_vertex_shader */
 /*@{*/
 #define MAX_VERTEX_ATTRIBS 16
-#define MAX_VERTEX_TEXTURE_IMAGE_UNITS MAX_TEXTURE_UNITS
-#define MAX_COMBINED_TEXTURE_IMAGE_UNITS (MAX_TEXTURE_IMAGE_UNITS + MAX_VERTEX_TEXTURE_IMAGE_UNITS)
+#define MAX_VERTEX_TEXTURE_IMAGE_UNITS MAX_TEXTURE_IMAGE_UNITS
+#define MAX_COMBINED_TEXTURE_IMAGE_UNITS MAX_TEXTURE_IMAGE_UNITS
 /*@}*/
 
 

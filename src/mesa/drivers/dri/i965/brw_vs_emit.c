@@ -73,8 +73,6 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
 
    c->prog_data.curb_read_length = reg - 1;
 
-
-
    /* Allocate input regs:  
     */
    c->nr_inputs = 0;
@@ -84,8 +82,7 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
 	 c->regs[PROGRAM_INPUT][i] = brw_vec8_grf(reg, 0);
 	 reg++;
       }
-   }     
-
+   }
 
    /* Allocate outputs: TODO: could organize the non-position outputs
     * to go straight into message regs.
@@ -339,6 +336,7 @@ static void emit_math1( struct brw_vs_compile *c,
    }
 }
 
+
 static void emit_math2( struct brw_vs_compile *c, 
 			GLuint function,
 			struct brw_reg dst,
@@ -370,7 +368,6 @@ static void emit_math2( struct brw_vs_compile *c,
       release_tmp(c, tmp);
    }
 }
-		     
 
 
 static void emit_exp_noalias( struct brw_vs_compile *c,
@@ -521,8 +518,6 @@ static void emit_log_noalias( struct brw_vs_compile *c,
 }
 
 
-      
-
 /* Need to unalias - consider swizzles:   r0 = DST r0.xxxx r1
  */
 static void emit_dst_noalias( struct brw_vs_compile *c, 
@@ -544,6 +539,7 @@ static void emit_dst_noalias( struct brw_vs_compile *c,
       brw_MOV(p, brw_writemask(dst, WRITEMASK_W), arg1);
 }
 
+
 static void emit_xpd( struct brw_compile *p,
 		      struct brw_reg dst,
 		      struct brw_reg t,
@@ -552,7 +548,6 @@ static void emit_xpd( struct brw_compile *p,
    brw_MUL(p, brw_null_reg(), brw_swizzle(t, 1,2,0,3),  brw_swizzle(u,2,0,1,3));
    brw_MAC(p, dst,     negate(brw_swizzle(t, 2,0,1,3)), brw_swizzle(u,1,2,0,3));
 }
-
 
 
 static void emit_lit_noalias( struct brw_vs_compile *c, 
@@ -596,7 +591,29 @@ static void emit_lit_noalias( struct brw_vs_compile *c,
 }
 
 
+/** 3 or 4-component vector normalization */
+static void emit_nrm( struct brw_vs_compile *c, 
+                      struct brw_reg dst,
+                      struct brw_reg arg0,
+                      int num_comps)
+{
+   struct brw_compile *p = &c->func;
+   struct brw_reg tmp = get_tmp(c);
 
+   /* tmp = dot(arg0, arg0) */
+   if (num_comps == 3)
+      brw_DP3(p, tmp, arg0, arg0);
+   else
+      brw_DP4(p, tmp, arg0, arg0);
+
+   /* tmp = 1 / sqrt(tmp) */
+   emit_math1(c, BRW_MATH_FUNCTION_RSQ, tmp, tmp, BRW_MATH_PRECISION_FULL);
+
+   /* dst = arg0 * tmp */
+   brw_MUL(p, dst, arg0, tmp);
+
+   release_tmp(c, tmp);
+}
 
 
 /* TODO: relative addressing!
@@ -632,7 +649,6 @@ static struct brw_reg get_reg( struct brw_vs_compile *c,
       return brw_null_reg();
    }
 }
-
 
 
 static struct brw_reg deref( struct brw_vs_compile *c,
@@ -728,8 +744,6 @@ static struct brw_reg get_dst( struct brw_vs_compile *c,
 }
 
 
-
-
 static void emit_swz( struct brw_vs_compile *c, 
 		      struct brw_reg dst,
 		      struct prog_src_register src )
@@ -801,8 +815,8 @@ static void emit_swz( struct brw_vs_compile *c,
 }
 
 
-
-/* Post-vertex-program processing.  Send the results to the URB.
+/**
+ * Post-vertex-program processing.  Send the results to the URB.
  */
 static void emit_vertex_write( struct brw_vs_compile *c)
 {
@@ -816,7 +830,6 @@ static void emit_vertex_write( struct brw_vs_compile *c)
 	      get_reg(c, PROGRAM_OUTPUT, VERT_RESULT_EDGE),
 	      get_reg(c, PROGRAM_INPUT, VERT_ATTRIB_EDGEFLAG));
    }
-
 
    /* Build ndc coords */
    if (!c->key.know_w_is_one) {
@@ -848,14 +861,12 @@ static void emit_vertex_write( struct brw_vs_compile *c)
 	 brw_AND(p, brw_writemask(header1, WRITEMASK_W), header1, brw_imm_ud(0x7ff<<8));
       }
 
-
       for (i = 0; i < c->key.nr_userclip; i++) {
 	 brw_set_conditionalmod(p, BRW_CONDITIONAL_L);
 	 brw_DP4(p, brw_null_reg(), pos, c->userplane[i]);
 	 brw_OR(p, brw_writemask(header1, WRITEMASK_W), header1, brw_imm_ud(1<<i));
 	 brw_set_predicate_control(p, BRW_PREDICATE_NONE);
       }
-
 
       /* i965 clipping workaround: 
        * 1) Test for -ve rhw
@@ -888,14 +899,12 @@ static void emit_vertex_write( struct brw_vs_compile *c)
       brw_MOV(p, retype(brw_message_reg(1), BRW_REGISTER_TYPE_UD), brw_imm_ud(0));
    }
 
-
    /* Emit the (interleaved) headers for the two vertices - an 8-reg
     * of zeros followed by two sets of NDC coordinates:
     */
    brw_set_access_mode(p, BRW_ALIGN_1);
    brw_MOV(p, offset(m0, 2), ndc);
    brw_MOV(p, offset(m0, 3), pos);
-   
 
    brw_urb_WRITE(p, 
 		 brw_null_reg(), /* dest */
@@ -909,8 +918,8 @@ static void emit_vertex_write( struct brw_vs_compile *c)
 		 1, 		/* writes complete */
 		 0, 		/* urb destination offset */
 		 BRW_URB_SWIZZLE_INTERLEAVE);
-
 }
+
 
 static void 
 post_vs_emit( struct brw_vs_compile *c, struct brw_instruction *end_inst )
@@ -1035,6 +1044,12 @@ void brw_vs_emit(struct brw_vs_compile *c )
       case OPCODE_DPH:
 	 brw_DPH(p, dst, args[0], args[1]);
 	 break;
+      case OPCODE_NRM3:
+	 emit_nrm(c, dst, args[0], 3);
+	 break;
+      case OPCODE_NRM4:
+	 emit_nrm(c, dst, args[0], 4);
+	 break;
       case OPCODE_DST:
 	 unalias2(c, dst, args[0], args[1], emit_dst_noalias); 
 	 break;
@@ -1102,7 +1117,7 @@ void brw_vs_emit(struct brw_vs_compile *c )
 	 break;
       case OPCODE_SGT:
          emit_sgt(p, dst, args[0], args[1]);
-        break;
+         break;
       case OPCODE_SLT:
 	 emit_slt(p, dst, args[0], args[1]);
 	 break;
@@ -1136,7 +1151,7 @@ void brw_vs_emit(struct brw_vs_compile *c )
          brw_set_predicate_control(p, BRW_PREDICATE_NORMAL);
          brw_ADD(p, brw_ip_reg(), brw_ip_reg(), brw_imm_d(1*16));
          brw_set_predicate_control_flag_value(p, 0xff);
-        break;
+         break;
       case OPCODE_CAL:
 	 brw_set_access_mode(p, BRW_ALIGN_1);
 	 brw_ADD(p, deref_1d(stack_index, 0), brw_ip_reg(), brw_imm_d(3*16));
@@ -1145,7 +1160,7 @@ void brw_vs_emit(struct brw_vs_compile *c )
 			 get_addr_reg(stack_index), brw_imm_d(4));
 	 inst->Data = &p->store[p->nr_insn];
 	 brw_ADD(p, brw_ip_reg(), brw_ip_reg(), brw_imm_d(1*16));
-        break;
+         break;
       case OPCODE_RET:
 	 brw_ADD(p, get_addr_reg(stack_index),
 			 get_addr_reg(stack_index), brw_imm_d(-4));
@@ -1154,17 +1169,17 @@ void brw_vs_emit(struct brw_vs_compile *c )
 	 brw_set_access_mode(p, BRW_ALIGN_16);
       case OPCODE_END:	
          brw_ADD(p, brw_ip_reg(), brw_ip_reg(), brw_imm_d(1*16));
-        break;
+         break;
       case OPCODE_PRINT:
       case OPCODE_BGNSUB:
       case OPCODE_ENDSUB:
+         /* no-op instructions */
 	 break;
       default:
-	 _mesa_printf("Unsupported opcode %i (%s) in vertex shader\n",
-		      inst->Opcode, inst->Opcode < MAX_OPCODE ?
+	 _mesa_problem(NULL, "Unsupported opcode %i (%s) in vertex shader",
+                       inst->Opcode, inst->Opcode < MAX_OPCODE ?
 				    _mesa_opcode_string(inst->Opcode) :
 				    "unknown");
-	 break;
       }
 
       if ((inst->DstReg.File == PROGRAM_OUTPUT)

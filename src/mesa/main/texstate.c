@@ -81,7 +81,7 @@ _mesa_copy_texture_state( const GLcontext *src, GLcontext *dst )
    dst->Texture.SharedPalette = src->Texture.SharedPalette;
 
    /* per-unit state */
-   for (i = 0; i < src->Const.MaxTextureUnits; i++) {
+   for (i = 0; i < src->Const.MaxTextureImageUnits; i++) {
       dst->Texture.Unit[i].Enabled = src->Texture.Unit[i].Enabled;
       dst->Texture.Unit[i].EnvMode = src->Texture.Unit[i].EnvMode;
       COPY_4V(dst->Texture.Unit[i].EnvColor, src->Texture.Unit[i].EnvColor);
@@ -307,8 +307,7 @@ _mesa_ActiveTextureARB(GLenum texture)
       _mesa_debug(ctx, "glActiveTexture %s\n",
                   _mesa_lookup_enum_by_nr(texture));
 
-   /* XXX error-check against max(coordunits, imageunits) */
-   if (texUnit >= ctx->Const.MaxTextureUnits) {
+   if (texUnit >= ctx->Const.MaxTextureImageUnits) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glActiveTexture(texture)");
       return;
    }
@@ -369,7 +368,7 @@ update_texture_matrices( GLcontext *ctx )
 
    ctx->Texture._TexMatEnabled = 0;
 
-   for (i=0; i < ctx->Const.MaxTextureUnits; i++) {
+   for (i=0; i < ctx->Const.MaxTextureCoordUnits; i++) {
       if (_math_matrix_is_dirty(ctx->TextureMatrixStack[i].Top)) {
 	 _math_matrix_analyse( ctx->TextureMatrixStack[i].Top );
 
@@ -491,7 +490,7 @@ update_texture_state( GLcontext *ctx )
    /*
     * Update texture unit state.
     */
-   for (unit = 0; unit < ctx->Const.MaxTextureUnits; unit++) {
+   for (unit = 0; unit < ctx->Const.MaxTextureImageUnits; unit++) {
       struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
       GLbitfield enableBits;
 
@@ -621,7 +620,7 @@ update_texture_state( GLcontext *ctx )
    }
 
    /* Setup texgen for those texture coordinate sets that are in use */
-   for (unit = 0; unit < ctx->Const.MaxTextureUnits; unit++) {
+   for (unit = 0; unit < ctx->Const.MaxTextureCoordUnits; unit++) {
       struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
 
       if (!(ctx->Texture._EnabledCoordUnits & (1 << unit)))

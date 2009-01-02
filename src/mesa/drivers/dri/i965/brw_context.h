@@ -238,7 +238,7 @@ struct brw_vs_ouput_sizes {
 };
 
 
-#define BRW_MAX_TEX_UNIT 8
+#define BRW_MAX_TEX_UNIT 16
 #define BRW_WM_MAX_SURF BRW_MAX_TEX_UNIT + MAX_DRAW_BUFFERS
 
 enum brw_cache_id {

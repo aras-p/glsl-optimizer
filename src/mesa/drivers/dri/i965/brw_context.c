@@ -32,6 +32,7 @@
 
 #include "main/imports.h"
 #include "main/api_noop.h"
+#include "main/macros.h"
 #include "main/vtxfmt.h"
 #include "main/simple_list.h"
 #include "shader/shader_api.h"
@@ -128,9 +129,10 @@ GLboolean brwCreateContext( const __GLcontextModes *mesaVis,
 
    TNL_CONTEXT(ctx)->Driver.RunPipeline = _tnl_run_pipeline;
 
-   ctx->Const.MaxTextureUnits = BRW_MAX_TEX_UNIT;
    ctx->Const.MaxTextureImageUnits = BRW_MAX_TEX_UNIT;
-   ctx->Const.MaxTextureCoordUnits = BRW_MAX_TEX_UNIT;
+   ctx->Const.MaxTextureCoordUnits = 8; /* Mesa limit */
+   ctx->Const.MaxTextureUnits = MIN2(ctx->Const.MaxTextureCoordUnits,
+                                     ctx->Const.MaxTextureImageUnits);
    ctx->Const.MaxVertexTextureImageUnits = 0; /* no vertex shader textures */
 
    /* Advertise the full hardware capabilities.  The new memory

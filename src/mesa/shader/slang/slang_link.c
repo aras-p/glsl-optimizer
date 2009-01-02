@@ -1,8 +1,9 @@
 /*
  * Mesa 3-D graphics library
- * Version:  7.2
+ * Version:  7.3
  *
  * Copyright (C) 2008  Brian Paul   All Rights Reserved.
+ * Copyright (C) 2009  VMware, Inc.  All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -206,13 +207,27 @@ link_varying_vars(struct gl_shader_program *shProg, struct gl_program *prog)
  * Build the shProg->Uniforms list.
  * This is basically a list/index of all uniforms found in either/both of
  * the vertex and fragment shaders.
+ *
+ * About uniforms:
+ * Each uniform has two indexes, one that points into the vertex
+ * program's parameter array and another that points into the fragment
+ * program's parameter array.  When the user changes a uniform's value
+ * we have to change the value in the vertex and/or fragment program's
+ * parameter array.
+ *
+ * This function will be called twice to set up the two uniform->parameter
+ * mappings.
+ *
+ * If a uniform is only present in the vertex program OR fragment program
+ * then the fragment/vertex parameter index, respectively, will be -1.
  */
 static GLboolean
-link_uniform_vars(struct gl_shader_program *shProg,
+link_uniform_vars(GLcontext *ctx,
+                  struct gl_shader_program *shProg,
                   struct gl_program *prog,
                   GLuint *numSamplers)
 {
-   GLuint samplerMap[MAX_SAMPLERS];
+   GLuint samplerMap[200]; /* max number of samplers declared, not used */
    GLuint i;
 
    for (i = 0; i < prog->Parameters->NumParameters; i++) {
@@ -227,33 +242,41 @@ link_uniform_vars(struct gl_shader_program *shProg,
        * Furthermore, we'll need to fix the state-var's size/datatype info.
        */
 
-      if ((p->Type == PROGRAM_UNIFORM && p->Used) ||
-          p->Type == PROGRAM_SAMPLER) {
+      if ((p->Type == PROGRAM_UNIFORM || p->Type == PROGRAM_SAMPLER)
+          && p->Used) {
+         /* add this uniform, indexing into the target's Parameters list */
          struct gl_uniform *uniform =
             _mesa_append_uniform(shProg->Uniforms, p->Name, prog->Target, i);
          if (uniform)
             uniform->Initialized = p->Initialized;
       }
 
-      if (p->Type == PROGRAM_SAMPLER) {
+      /* The samplerMap[] table we build here is used to remap/re-index
+       * sampler references by TEX instructions.
+       */
+      if (p->Type == PROGRAM_SAMPLER && p->Used) {
          /* Allocate a new sampler index */
-         GLuint sampNum = *numSamplers;
          GLuint oldSampNum = (GLuint) prog->Parameters->ParameterValues[i][0];
-         if (oldSampNum >= MAX_SAMPLERS) {
+         GLuint newSampNum = *numSamplers;
+         if (newSampNum >= ctx->Const.MaxTextureImageUnits) {
             char s[100];
             sprintf(s, "Too many texture samplers (%u, max is %u)",
-                    oldSampNum + 1, MAX_SAMPLERS);
+                    newSampNum, ctx->Const.MaxTextureImageUnits);
             link_error(shProg, s);
             return GL_FALSE;
          }
-         samplerMap[oldSampNum] = sampNum;
+         /* save old->new mapping in the table */
+         if (oldSampNum < Elements(samplerMap))
+            samplerMap[oldSampNum] = newSampNum;
+         /* update parameter's sampler index */
+         prog->Parameters->ParameterValues[i][0] = (GLfloat) newSampNum;
          (*numSamplers)++;
       }
    }
 
-
-   /* OK, now scan the program/shader instructions looking for sampler vars,
-    * replacing the old index with the new index.
+   /* OK, now scan the program/shader instructions looking for texture
+    * instructions using sampler vars.  Replace old sampler indexes with
+    * new ones.
     */
    prog->SamplersUsed = 0x0;
    for (i = 0; i < prog->NumInstructions; i++) {
@@ -264,10 +287,13 @@ link_uniform_vars(struct gl_shader_program *shProg,
                 inst->Sampler, map[ inst->Sampler ]);
          */
          /* here, texUnit is really samplerUnit */
-         assert(inst->TexSrcUnit < MAX_SAMPLERS);
-         inst->TexSrcUnit = samplerMap[inst->TexSrcUnit];
-         prog->SamplerTargets[inst->TexSrcUnit] = inst->TexSrcTarget;
-         prog->SamplersUsed |= (1 << inst->TexSrcUnit);
+         const GLint oldSampNum = inst->TexSrcUnit;
+         if (oldSampNum < Elements(samplerMap)) {
+            const GLuint newSampNum = samplerMap[oldSampNum];
+            inst->TexSrcUnit = newSampNum;
+            prog->SamplerTargets[newSampNum] = inst->TexSrcTarget;
+            prog->SamplersUsed |= (1 << newSampNum);
+         }
       }
    }
 
@@ -567,13 +593,13 @@ _slang_link(GLcontext *ctx,
 
    /* link uniform vars */
    if (shProg->VertexProgram) {
-      if (!link_uniform_vars(shProg, &shProg->VertexProgram->Base,
+      if (!link_uniform_vars(ctx, shProg, &shProg->VertexProgram->Base,
                              &numSamplers)) {
          return;
       }
    }
    if (shProg->FragmentProgram) {
-      if (!link_uniform_vars(shProg, &shProg->FragmentProgram->Base,
+      if (!link_uniform_vars(ctx, shProg, &shProg->FragmentProgram->Base,
                              &numSamplers)) {
          return;
       }

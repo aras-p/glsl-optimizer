@@ -27,8 +27,9 @@
 // From Shader Spec, ver. 1.10, rev. 59
 //
 
-//bp: XXX these will probably go away since the value needs to be
-//determined at runtime and may vary from one GLcontext to another...
+// Note: the values assigned to these constants here aren't actually used.
+// They're set by the compiler according to the GL context limits.
+// See slang_simplify.c
 const int gl_MaxLights = 8;
 const int gl_MaxClipPlanes = 6;
 const int gl_MaxTextureUnits = 8;
