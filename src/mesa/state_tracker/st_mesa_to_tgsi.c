@@ -745,6 +745,7 @@ find_temporaries(const struct gl_program *program,
  */
 GLuint
 st_translate_mesa_program(
+   GLcontext *ctx,
    uint procType,
    const struct gl_program *program,
    GLuint numInputs,
@@ -992,7 +993,7 @@ st_translate_mesa_program(
    }
 
    /* texture samplers */
-   for (i = 0; i < 8; i++) {
+   for (i = 0; i < ctx->Const.MaxTextureImageUnits; i++) {
       if (program->SamplersUsed & (1 << i)) {
          struct tgsi_full_declaration fulldecl;
 

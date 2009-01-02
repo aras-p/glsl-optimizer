@@ -84,15 +84,17 @@ void st_init_limits(struct st_context *st)
    c->MaxTextureRectSize
       = _min(1 << (c->MaxTextureLevels - 1), MAX_TEXTURE_RECT_SIZE);
 
-   c->MaxTextureUnits
-      = c->MaxTextureImageUnits
-      = c->MaxTextureCoordUnits
+   c->MaxTextureImageUnits
       = _min(screen->get_param(screen, PIPE_CAP_MAX_TEXTURE_IMAGE_UNITS),
             MAX_TEXTURE_IMAGE_UNITS);
 
    c->MaxVertexTextureImageUnits
       = _min(screen->get_param(screen, PIPE_CAP_MAX_VERTEX_TEXTURE_UNITS),
              MAX_VERTEX_TEXTURE_IMAGE_UNITS);
+
+   c->MaxTextureCoordUnits = MAX_TEXTURE_COORD_UNITS;
+
+   c->MaxTextureUnits = MIN2(c->MaxTextureImageUnits, c->MaxTextureCoordUnits);
 
    c->MaxDrawBuffers
       = _clamp(screen->get_param(screen, PIPE_CAP_MAX_RENDER_TARGETS),
