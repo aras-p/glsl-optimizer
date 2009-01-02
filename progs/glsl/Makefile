@@ -120,10 +120,10 @@ identity: identity.o shaderutil.o
 
 
 fragcoord.o: fragcoord.c extfuncs.h shaderutil.h
-	$(CC) -c -I$(INCDIR) $(CFLAGS) fragcoord.c
+	$(APP_CC) -c -I$(INCDIR) $(CFLAGS) fragcoord.c
 
 fragcoord: fragcoord.o shaderutil.o
-	$(CC) -I$(INCDIR) $(CFLAGS) $(LDFLAGS) fragcoord.o shaderutil.o $(LIBS) -o $@
+	$(APP_CC) -I$(INCDIR) $(CFLAGS) $(LDFLAGS) fragcoord.o shaderutil.o $(LIBS) -o $@
 
 
 mandelbrot.o: mandelbrot.c extfuncs.h shaderutil.h
@@ -161,10 +161,10 @@ pointcoord: pointcoord.o readtex.o shaderutil.o
 
 
 samplers.o: samplers.c readtex.h extfuncs.h shaderutil.h
-	$(CC) -c -I$(INCDIR) $(CFLAGS) samplers.c
+	$(APP_CC) -c -I$(INCDIR) $(CFLAGS) samplers.c
 
 samplers: samplers.o readtex.o shaderutil.o
-	$(CC) -I$(INCDIR) $(CFLAGS) $(LDFLAGS) samplers.o readtex.o shaderutil.o $(LIBS) -o $@
+	$(APP_CC) -I$(INCDIR) $(CFLAGS) $(LDFLAGS) samplers.o readtex.o shaderutil.o $(LIBS) -o $@
 
 
 skinning.o: skinning.c readtex.h extfuncs.h shaderutil.h
@@ -211,10 +211,10 @@ vert-or-frag-only: vert-or-frag-only.o shaderutil.o
 
 
 vert-or-frag-only.o: vert-or-frag-only.c extfuncs.h shaderutil.h
-	$(CC) -c -I$(INCDIR) $(CFLAGS) vert-or-frag-only.c
+	$(APP_CC) -c -I$(INCDIR) $(CFLAGS) vert-or-frag-only.c
 
 vert-or-frag-only: vert-or-frag-only.o shaderutil.o
-	$(CC) -I$(INCDIR) $(CFLAGS) $(LDFLAGS) vert-or-frag-only.o shaderutil.o $(LIBS) -o $@
+	$(APP_CC) -I$(INCDIR) $(CFLAGS) $(LDFLAGS) vert-or-frag-only.o shaderutil.o $(LIBS) -o $@
 
 
 
