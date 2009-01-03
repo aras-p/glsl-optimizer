@@ -82,7 +82,7 @@ cell_get_param(struct pipe_screen *screen, int param)
    case PIPE_CAP_MAX_TEXTURE_CUBE_LEVELS:
       return CELL_MAX_TEXTURE_LEVELS;
    default:
-      return 10;
+      return 0;
    }
 }
 
@@ -108,7 +108,7 @@ cell_get_paramf(struct pipe_screen *screen, int param)
       return 16.0; /* arbitrary */
 
    default:
-      return 10;
+      return 0;
    }
 }
 
