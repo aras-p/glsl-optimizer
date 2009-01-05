@@ -31,7 +31,8 @@ nv50_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *pt)
 {
 	struct pipe_winsys *ws = pscreen->winsys;
 	struct nv50_miptree *mt = CALLOC_STRUCT(nv50_miptree);
-	unsigned usage, pitch, width, height;
+	unsigned usage, width = pt->width[0], height = pt->height[0];
+	int i;
 
 	mt->base = *pt;
 	mt->base.refcount = 1;
@@ -47,12 +48,31 @@ nv50_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *pt)
 		break;
 	}
 
-	width = align(pt->width[0], 8);
-	height = align(pt->height[0], 8);
-	pitch = width * pt->block.size;
-	pitch = (pitch + 63) & ~63;
+	switch (pt->target) {
+	case PIPE_TEXTURE_3D:
+		mt->image_nr = pt->depth[0];
+		break;
+	case PIPE_TEXTURE_CUBE:
+		mt->image_nr = 6;
+		break;
+	default:
+		mt->image_nr = 1;
+		break;
+	}
+	mt->image_offset = CALLOC(mt->image_nr, sizeof(int));
 
-	mt->buffer = ws->buffer_create(ws, 256, usage, pitch * height);
+	for (i = 0; i < mt->image_nr; i++) {
+		int image_size;
+
+		image_size  = align(width, 8) * pt->block.size;
+		image_size  = align(image_size, 64);
+		image_size *= align(height, 8) * pt->block.size;
+
+		mt->image_offset[i] = mt->total_size;
+		mt->total_size += image_size;
+	}
+
+	mt->buffer = ws->buffer_create(ws, 256, usage, mt->total_size);
 	if (!mt->buffer) {
 		FREE(mt);
 		return NULL;
@@ -84,6 +104,15 @@ nv50_miptree_surface_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 	struct nv50_miptree *mt = nv50_miptree(pt);
 	struct nv50_surface *s;
 	struct pipe_surface *ps;
+	int img;
+
+	if (pt->target == PIPE_TEXTURE_CUBE)
+		img = face;
+	else
+	if (pt->target == PIPE_TEXTURE_3D)
+		img = zslice;
+	else
+		img = 0;
 
 	s = CALLOC_STRUCT(nv50_surface);
 	if (!s)
@@ -99,7 +128,7 @@ nv50_miptree_surface_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 	ps->nblocksx = pt->nblocksx[level];
 	ps->nblocksy = pt->nblocksy[level];
 	ps->stride = ps->width * ps->block.size;
-	ps->offset = 0;
+	ps->offset = mt->image_offset[img];
 	ps->usage = flags;
 	ps->status = PIPE_SURFACE_STATUS_DEFINED;
 
