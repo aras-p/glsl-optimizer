@@ -934,7 +934,7 @@ nv50_program_tx_insn(struct nv50_pc *pc, const union tgsi_full_token *tok)
 {
 	const struct tgsi_full_instruction *inst = &tok->FullInstruction;
 	struct nv50_reg *rdst[4], *dst[4], *src[3][4], *temp;
-	unsigned mask, sat;
+	unsigned mask, sat, unit;
 	int i, c;
 
 	mask = inst->FullDstRegisters[0].DstRegister.WriteMask;
@@ -948,8 +948,13 @@ nv50_program_tx_insn(struct nv50_pc *pc, const union tgsi_full_token *tok)
 	}
 
 	for (i = 0; i < inst->Instruction.NumSrcRegs; i++) {
+		struct tgsi_full_src_register *fs = &inst->FullSrcRegisters[i];
+
+		if (fs->SrcRegister.File == TGSI_FILE_SAMPLER)
+			unit = fs->SrcRegister.Index;
+
 		for (c = 0; c < 4; c++)
-			src[i][c] = tgsi_src(pc, c, &inst->FullSrcRegisters[i]);
+			src[i][c] = tgsi_src(pc, c, fs);
 	}
 
 	if (sat) {
@@ -1198,6 +1203,7 @@ nv50_program_tx_insn(struct nv50_pc *pc, const union tgsi_full_token *tok)
 
 		e = exec(pc);
 		e->inst[0] = 0xf6400000;
+		e->inst[0] |= (unit << 9);
 		set_long(pc, e);
 		e->inst[1] |= 0x0000c004;
 		set_dst(pc, t[0], e);
