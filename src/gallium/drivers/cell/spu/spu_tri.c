@@ -77,8 +77,13 @@ struct vertex_header {
  * Triangle edge info
  */
 struct edge {
-   float dx;		/**< X(v1) - X(v0), used only during setup */
-   float dy;		/**< Y(v1) - Y(v0), used only during setup */
+   union {
+      struct {
+         float dx;	/**< X(v1) - X(v0), used only during setup */
+         float dy;	/**< Y(v1) - Y(v0), used only during setup */
+      };
+      vec_float4 ds;    /**< vector accessor for dx and dy */
+   };
    float dxdy;		/**< dx/dy */
    float sx, sy;	/**< first sample point coord */
    int lines;		/**< number of lines on this edge */
@@ -517,12 +522,9 @@ setup_sort_vertices(const struct vertex_header *v0,
        spu_extract(setup.vmax->data[0], 0) > setup.cliprect_maxx)
       return FALSE;
 
-   setup.ebot.dx = spu_extract(setup.vmid->data[0], 0) - spu_extract(setup.vmin->data[0], 0);
-   setup.ebot.dy = spu_extract(setup.vmid->data[0], 1) - spu_extract(setup.vmin->data[0], 1);
-   setup.emaj.dx = spu_extract(setup.vmax->data[0], 0) - spu_extract(setup.vmin->data[0], 0);
-   setup.emaj.dy = spu_extract(setup.vmax->data[0], 1) - spu_extract(setup.vmin->data[0], 1);
-   setup.etop.dx = spu_extract(setup.vmax->data[0], 0) - spu_extract(setup.vmid->data[0], 0);
-   setup.etop.dy = spu_extract(setup.vmax->data[0], 1) - spu_extract(setup.vmid->data[0], 1);
+   setup.ebot.ds = spu_sub(setup.vmid->data[0], setup.vmin->data[0]);
+   setup.emaj.ds = spu_sub(setup.vmax->data[0], setup.vmin->data[0]);
+   setup.etop.ds = spu_sub(setup.vmax->data[0], setup.vmid->data[0]);
 
    /*
     * Compute triangle's area.  Use 1/area to compute partial
