@@ -35,6 +35,7 @@
 #include "util/u_math.h"
 #include "spu_colorpack.h"
 #include "spu_main.h"
+#include "spu_shuffle.h"
 #include "spu_texture.h"
 #include "spu_tile.h"
 #include "spu_tri.h"
@@ -122,8 +123,7 @@ struct setup_stage {
    struct interp_coef coef[PIPE_MAX_SHADER_INPUTS];
 
    struct {
-      int left[2];   /**< [0] = row0, [1] = row1 */
-      int right[2];
+      vec_int4 quad; /**< [0] = row0, [1] = row1; {left[0],left[1],right[0],right[1]} */
       int y;
       unsigned y_flags;
       unsigned mask;     /**< mask of MASK_BOTTOM/TOP_LEFT/RIGHT bits */
@@ -306,52 +306,35 @@ block(int x)
 
 
 /**
- * Compute mask which indicates which pixels in the 2x2 quad are actually inside
- * the triangle's bounds.
- * The mask is a uint4 vector and each element will be 0 or 0xffffffff.
- */
-static INLINE mask_t
-calculate_mask(int x)
-{
-   /* This is a little tricky.
-    * Use & instead of && to avoid branches.
-    * Use negation to convert true/false to ~0/0 values.
-    */
-   mask_t mask;
-   mask = spu_insert(-((x   >= setup.span.left[0]) & (x   < setup.span.right[0])), mask, 0);
-   mask = spu_insert(-((x+1 >= setup.span.left[0]) & (x+1 < setup.span.right[0])), mask, 1);
-   mask = spu_insert(-((x   >= setup.span.left[1]) & (x   < setup.span.right[1])), mask, 2);
-   mask = spu_insert(-((x+1 >= setup.span.left[1]) & (x+1 < setup.span.right[1])), mask, 3);
-   return mask;
-}
-
-
-/**
  * Render a horizontal span of quads
  */
 static void
 flush_spans(void)
 {
    int minleft, maxright;
-   int x;
+
+   const int l0 = spu_extract(setup.span.quad, 0);
+   const int l1 = spu_extract(setup.span.quad, 1);
+   const int r0 = spu_extract(setup.span.quad, 2);
+   const int r1 = spu_extract(setup.span.quad, 3);
 
    switch (setup.span.y_flags) {
    case 0x3:
       /* both odd and even lines written (both quad rows) */
-      minleft = MIN2(setup.span.left[0], setup.span.left[1]);
-      maxright = MAX2(setup.span.right[0], setup.span.right[1]);
+      minleft = MIN2(l0, l1);
+      maxright = MAX2(r0, r1);
       break;
 
    case 0x1:
       /* only even line written (quad top row) */
-      minleft = setup.span.left[0];
-      maxright = setup.span.right[0];
+      minleft = l0;
+      maxright = r0;
       break;
 
    case 0x2:
       /* only odd line written (quad bottom row) */
-      minleft = setup.span.left[1];
-      maxright = setup.span.right[1];
+      minleft = l1;
+      maxright = r1;
       break;
 
    default:
@@ -389,17 +372,42 @@ flush_spans(void)
       ASSERT(spu.cur_ztile_status != TILE_STATUS_DEFINED);
    }
 
-   /* XXX this loop could be moved into the above switch cases and
-    * calculate_mask() could be simplified a bit...
-    */
-   for (x = block(minleft); x <= block(maxright); x += 2) {
-      emit_quad( x, setup.span.y, calculate_mask( x ));
+   /* XXX this loop could be moved into the above switch cases... */
+   
+   /* Setup for mask calculation */
+   const vec_int4 quad_LlRr = setup.span.quad;
+   const vec_int4 quad_RrLl = spu_rlqwbyte(quad_LlRr, 8);
+   const vec_int4 quad_LLll = spu_shuffle(quad_LlRr, quad_LlRr, SHUFFLE4(A,A,B,B));
+   const vec_int4 quad_RRrr = spu_shuffle(quad_RrLl, quad_RrLl, SHUFFLE4(A,A,B,B));
+
+   const vec_int4 twos = spu_splats(2);
+
+   const int x = block(minleft);
+   vec_int4 xs = {x, x+1, x, x+1};
+
+   for (; spu_extract(xs, 0) <= block(maxright); xs += twos) {
+      /**
+       * Computes mask to indicate which pixels in the 2x2 quad are actually
+       * inside the triangle's bounds.
+       */
+      
+      /* Calculate ({x,x+1,x,x+1} >= {l[0],l[0],l[1],l[1]}) */
+      const mask_t gt_LLll_xs = spu_cmpgt(quad_LLll, xs);
+      const mask_t gte_xs_LLll = spu_nand(gt_LLll_xs, gt_LLll_xs); 
+      
+      /* Calculate ({r[0],r[0],r[1],r[1]} > {x,x+1,x,x+1}) */
+      const mask_t gt_RRrr_xs = spu_cmpgt(quad_RRrr, xs);
+
+      /* Combine results to create mask */
+      const mask_t mask = spu_and(gte_xs_LLll, gt_RRrr_xs);
+
+      emit_quad(spu_extract(xs, 0), setup.span.y, mask);
    }
 
    setup.span.y = 0;
    setup.span.y_flags = 0;
-   setup.span.right[0] = 0;
-   setup.span.right[1] = 0;
+   /* Zero right elements */
+   setup.span.quad = spu_shuffle(setup.span.quad, setup.span.quad, SHUFFLE4(A,B,0,0));
 }
 
 
@@ -746,9 +754,11 @@ subtriangle(struct edge *eleft, struct edge *eright, unsigned lines)
             setup.span.y = block(_y);
          }
 
-         setup.span.left[_y&1] = left;
-         setup.span.right[_y&1] = right;
-         setup.span.y_flags |= 1<<(_y&1);
+         int offset = _y&1;
+         vec_int4 quad_LlRr = {left, left, right, right};
+         /* Store left and right in 0 or 1 row of quad based on offset */
+         setup.span.quad = spu_sel(quad_LlRr, setup.span.quad, spu_maskw(5<<offset));
+         setup.span.y_flags |= 1<<offset;
       }
    }
 
@@ -790,8 +800,8 @@ tri_draw(const float *v0, const float *v1, const float *v2,
 
    setup.span.y = 0;
    setup.span.y_flags = 0;
-   setup.span.right[0] = 0;
-   setup.span.right[1] = 0;
+   /* Zero right elements */
+   setup.span.quad = spu_shuffle(setup.span.quad, setup.span.quad, SHUFFLE4(A,B,0,0));
 
    if (setup.oneOverArea < 0.0) {
       /* emaj on left */
