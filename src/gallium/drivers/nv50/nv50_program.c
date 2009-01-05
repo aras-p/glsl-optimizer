@@ -1718,7 +1718,7 @@ nv50_fragprog_validate(struct nv50_context *nv50)
 void
 nv50_program_destroy(struct nv50_context *nv50, struct nv50_program *p)
 {
-	struct pipe_winsys *ws = nv50->pipe.winsys;
+	struct pipe_screen *pscreen = nv50->pipe.screen;
 
 	while (p->exec_head) {
 		struct nv50_program_exec *e = p->exec_head;
@@ -1730,7 +1730,7 @@ nv50_program_destroy(struct nv50_context *nv50, struct nv50_program *p)
 	p->exec_size = 0;
 
 	if (p->buffer)
-		pipe_buffer_reference(ws, &p->buffer, NULL);
+		pipe_buffer_reference(pscreen, &p->buffer, NULL);
 
 	nv50->screen->nvws->res_free(&p->data);
 
