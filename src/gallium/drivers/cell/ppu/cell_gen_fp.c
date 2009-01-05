@@ -84,7 +84,17 @@ struct codegen
 
    /** Current IF/ELSE/ENDIF nesting level */
    int if_nesting;
-   /** Index of execution mask register */
+   /** Current BGNLOOP/ENDLOOP nesting level */
+   int loop_nesting;
+   /** Location of start of current loop */
+   int loop_start;
+
+   /** Index of if/conditional mask register */
+   int cond_mask_reg;
+   /** Index of loop mask register */
+   int loop_mask_reg;
+
+   /** Index of master execution mask register */
    int exec_mask_reg;
 
    /** KIL mask: indicates which fragments have been killed */
@@ -171,10 +181,10 @@ get_address_reg(struct codegen *gen)
 
 
 /**
- * Return index of the pixel execution mask.
+ * Return index of the master execution mask.
  * The register is allocated an initialized upon the first call.
  *
- * The pixel execution mask controls which pixels in a quad are
+ * The master execution mask controls which pixels in a quad are
  * modified, according to surrounding conditionals, loops, etc.
  */
 static int
@@ -183,17 +193,38 @@ get_exec_mask_reg(struct codegen *gen)
    if (gen->exec_mask_reg <= 0) {
       gen->exec_mask_reg = spe_allocate_available_register(gen->f);
 
-      spe_indent(gen->f, 4);
-      spe_comment(gen->f, -4, "INIT EXEC MASK = ~0:");
-
-      /* exec_mask = {~0, ~0, ~0, ~0} */
+      /* XXX this may not be needed */
+      spe_comment(gen->f, 0*-4, "initialize master execution mask = ~0");
       spe_load_int(gen->f, gen->exec_mask_reg, ~0);
-
-      spe_indent(gen->f, -4);
    }
 
    return gen->exec_mask_reg;
 }
+
+
+/** Return index of the conditional (if/else) execution mask register */
+static int
+get_cond_mask_reg(struct codegen *gen)
+{
+   if (gen->cond_mask_reg <= 0) {
+      gen->cond_mask_reg = spe_allocate_available_register(gen->f);
+   }
+
+   return gen->cond_mask_reg;
+}
+
+
+/** Return index of the loop execution mask register */
+static int
+get_loop_mask_reg(struct codegen *gen)
+{
+   if (gen->loop_mask_reg <= 0) {
+      gen->loop_mask_reg = spe_allocate_available_register(gen->f);
+   }
+
+   return gen->loop_mask_reg;
+}
+
 
 
 static boolean
@@ -354,7 +385,7 @@ get_dst_reg(struct codegen *gen,
 
    switch (dest->DstRegister.File) {
    case TGSI_FILE_TEMPORARY:
-      if (gen->if_nesting > 0)
+      if (gen->if_nesting > 0 || gen->loop_nesting > 0)
          reg = get_itemp(gen);
       else
          reg = gen->temp_regs[dest->DstRegister.Index][channel];
@@ -399,7 +430,7 @@ store_dest_reg(struct codegen *gen,
 
    switch (dest->DstRegister.File) {
    case TGSI_FILE_TEMPORARY:
-      if (gen->if_nesting > 0) {
+      if (gen->if_nesting > 0 || gen->loop_nesting > 0) {
          int d_reg = gen->temp_regs[dest->DstRegister.Index][channel];
          int exec_reg = get_exec_mask_reg(gen);
          /* Mix d with new value according to exec mask:
@@ -416,7 +447,7 @@ store_dest_reg(struct codegen *gen,
       {
          /* offset is measured in quadwords, not bytes */
          int offset = dest->DstRegister.Index * 4 + channel;
-         if (gen->if_nesting > 0) {
+         if (gen->if_nesting > 0 || gen->loop_nesting > 0) {
             int exec_reg = get_exec_mask_reg(gen);
             int curval_reg = get_itemp(gen);
             /* First read the current value from memory:
@@ -1011,8 +1042,6 @@ emit_inequality(struct codegen *gen, const struct tgsi_full_instruction *inst)
    int ch, s1_reg[4], s2_reg[4], d_reg[4], one_reg;
    bool complement = FALSE;
 
-   one_reg = get_const_one_reg(gen);
-
    switch (inst->Instruction.Opcode) {
    case TGSI_OPCODE_SGT:
       spe_comment(gen->f, -4, "SGT:");
@@ -1038,6 +1067,8 @@ emit_inequality(struct codegen *gen, const struct tgsi_full_instruction *inst)
    default:
       ;
    }
+
+   one_reg = get_const_one_reg(gen);
 
    FOR_EACH_ENABLED_CHANNEL(inst, ch) {
       s1_reg[ch] = get_src_reg(gen, ch, &inst->FullSrcRegisters[0]);
@@ -1515,7 +1546,7 @@ emit_KIL(struct codegen *gen, const struct tgsi_full_instruction *inst)
       }
    }
 
-   if (gen->if_nesting) {
+   if (gen->if_nesting || gen->loop_nesting) {
       /* may have been a conditional kil */
       spe_and(gen->f, kil_reg, kil_reg, gen->exec_mask_reg);
    }
@@ -1573,15 +1604,56 @@ emit_MIN_MAX(struct codegen *gen, const struct tgsi_full_instruction *inst)
 }
 
 
+/**
+ * Emit code to update the execution mask.
+ * This needs to be done whenever the execution status of a conditional
+ * or loop is changed.
+ */
+static void
+emit_update_exec_mask(struct codegen *gen)
+{
+   const int exec_reg = get_exec_mask_reg(gen);
+   const int cond_reg = gen->cond_mask_reg;
+   const int loop_reg = gen->loop_mask_reg;
+
+   spe_comment(gen->f, 0, "Update master execution mask");
+
+   if (gen->if_nesting > 0 && gen->loop_nesting > 0) {
+      /* exec_mask = cond_mask & loop_mask */
+      assert(cond_reg > 0);
+      assert(loop_reg > 0);
+      spe_and(gen->f, exec_reg, cond_reg, loop_reg);
+   }
+   else if (gen->if_nesting > 0) {
+      assert(cond_reg > 0);
+      spe_move(gen->f, exec_reg, cond_reg);
+   }
+   else if (gen->loop_nesting > 0) {
+      assert(loop_reg > 0);
+      spe_move(gen->f, exec_reg, loop_reg);
+   }
+   else {
+      spe_load_int(gen->f, exec_reg, ~0x0);
+   }
+}
+
+
 static boolean
 emit_IF(struct codegen *gen, const struct tgsi_full_instruction *inst)
 {
    const int channel = 0;
-   const int exec_reg = get_exec_mask_reg(gen);
+   int cond_reg;
 
    spe_comment(gen->f, -4, "IF:");
 
-   /* update execution mask with the predicate register */
+   cond_reg = get_cond_mask_reg(gen);
+
+   /* XXX push cond exec mask */
+
+   spe_comment(gen->f,  0, "init conditional exec mask = ~0:");
+   spe_load_int(gen->f, cond_reg, ~0);
+
+   /* update conditional execution mask with the predicate register */
    int tmp_reg = get_itemp(gen);
    int s1_reg = get_src_reg(gen, channel, &inst->FullSrcRegisters[0]);
 
@@ -1589,10 +1661,13 @@ emit_IF(struct codegen *gen, const struct tgsi_full_instruction *inst)
    spe_ceqi(gen->f, tmp_reg, s1_reg, 0);
    /* tmp = !tmp */
    spe_complement(gen->f, tmp_reg, tmp_reg);
-   /* exec_mask = exec_mask & tmp */
-   spe_and(gen->f, exec_reg, exec_reg, tmp_reg);
+   /* cond_mask = cond_mask & tmp */
+   spe_and(gen->f, cond_reg, cond_reg, tmp_reg);
 
    gen->if_nesting++;
+
+   /* update the master execution mask */
+   emit_update_exec_mask(gen);
 
    free_itemps(gen);
 
@@ -1603,12 +1678,13 @@ emit_IF(struct codegen *gen, const struct tgsi_full_instruction *inst)
 static boolean
 emit_ELSE(struct codegen *gen, const struct tgsi_full_instruction *inst)
 {
-   const int exec_reg = get_exec_mask_reg(gen);
+   const int cond_reg = get_cond_mask_reg(gen);
 
    spe_comment(gen->f, -4, "ELSE:");
 
-   /* exec_mask = !exec_mask */
-   spe_complement(gen->f, exec_reg, exec_reg);
+   spe_comment(gen->f, 0, "cond exec mask = !cond exec mask");
+   spe_complement(gen->f, cond_reg, cond_reg);
+   emit_update_exec_mask(gen);
 
    return TRUE;
 }
@@ -1617,15 +1693,93 @@ emit_ELSE(struct codegen *gen, const struct tgsi_full_instruction *inst)
 static boolean
 emit_ENDIF(struct codegen *gen, const struct tgsi_full_instruction *inst)
 {
-   const int exec_reg = get_exec_mask_reg(gen);
-
    spe_comment(gen->f, -4, "ENDIF:");
 
-   /* XXX todo: pop execution mask */
-
-   spe_load_int(gen->f, exec_reg, ~0x0);
+   /* XXX todo: pop cond exec mask */
 
    gen->if_nesting--;
+
+   emit_update_exec_mask(gen);
+
+   return TRUE;
+}
+
+
+static boolean
+emit_BGNLOOP(struct codegen *gen, const struct tgsi_full_instruction *inst)
+{
+   int exec_reg, loop_reg;
+
+   spe_comment(gen->f, -4, "BGNLOOP:");
+
+   exec_reg = get_exec_mask_reg(gen);
+   loop_reg = get_loop_mask_reg(gen);
+
+   /* XXX push loop_exec mask */
+
+   spe_comment(gen->f,  0*-4, "initialize loop exec mask = ~0");
+   spe_load_int(gen->f, loop_reg, ~0x0);
+
+   gen->loop_nesting++;
+   gen->loop_start = spe_code_size(gen->f);  /* in bytes */
+
+   return TRUE;
+}
+
+
+static boolean
+emit_ENDLOOP(struct codegen *gen, const struct tgsi_full_instruction *inst)
+{
+   const int loop_reg = get_loop_mask_reg(gen);
+   const int tmp_reg = get_itemp(gen);
+   int offset;
+
+   spe_comment(gen->f, -4, "ENDLOOP:");
+
+   /* tmp_reg = exec[0] | exec[1] | exec[2] | exec[3] */
+   spe_orx(gen->f, tmp_reg, loop_reg);
+
+   offset = gen->loop_start - spe_code_size(gen->f); /* in bytes */
+
+   /* branch back to top of loop if tmp_reg != 0 */
+   spe_brnz(gen->f, tmp_reg, offset / 4);
+
+   /* XXX pop loop_exec mask */
+
+   gen->loop_nesting--;
+
+   emit_update_exec_mask(gen);
+
+   return TRUE;
+}
+
+
+static boolean
+emit_BRK(struct codegen *gen, const struct tgsi_full_instruction *inst)
+{
+   const int exec_reg = get_exec_mask_reg(gen);
+   const int loop_reg = get_loop_mask_reg(gen);
+
+   spe_comment(gen->f, -4, "BREAK:");
+
+   assert(gen->loop_nesting > 0);
+
+   spe_comment(gen->f, 0, "loop exec mask &= ~master exec mask");
+   spe_andc(gen->f, loop_reg, loop_reg, exec_reg);
+
+   emit_update_exec_mask(gen);
+
+   return TRUE;
+}
+
+
+static boolean
+emit_CONT(struct codegen *gen, const struct tgsi_full_instruction *inst)
+{
+   spe_comment(gen->f, -4, "CONT:");
+
+   assert(gen->loop_nesting > 0);
+
    return TRUE;
 }
 
@@ -1766,6 +1920,15 @@ emit_instruction(struct codegen *gen,
    case TGSI_OPCODE_ENDIF:
       return emit_ENDIF(gen, inst);
 
+   case TGSI_OPCODE_BGNLOOP2:
+      return emit_BGNLOOP(gen, inst);
+   case TGSI_OPCODE_ENDLOOP2:
+      return emit_ENDLOOP(gen, inst);
+   case TGSI_OPCODE_BRK:
+      return emit_BRK(gen, inst);
+   case TGSI_OPCODE_CONT:
+      return emit_CONT(gen, inst);
+
    case TGSI_OPCODE_DDX:
       return emit_DDX_DDY(gen, inst, TRUE);
    case TGSI_OPCODE_DDY:
@@ -1807,10 +1970,14 @@ emit_immediate(struct codegen *gen, const struct tgsi_full_immediate *immed)
          gen->imm_regs[gen->num_imm][ch] = gen->imm_regs[gen->num_imm][ch - 1];
       }
       else {
+         char str[100];
          int reg = spe_allocate_available_register(gen->f);
 
          if (reg < 0)
             return FALSE;
+
+         sprintf(str, "init $%d = %f", reg, val);
+         spe_comment(gen->f, 0, str);
 
          /* update immediate map */
          gen->imm_regs[gen->num_imm][ch] = reg;
