@@ -108,10 +108,15 @@ struct setup_stage {
     * turn.  Currently fixed at 4 floats, but should change in time.
     * Codegen will help cope with this.
     */
-   const struct vertex_header *vmax;
-   const struct vertex_header *vmid;
-   const struct vertex_header *vmin;
-   const struct vertex_header *vprovoke;
+   union {
+      struct {
+         const struct vertex_header *vmin;
+         const struct vertex_header *vmid;
+         const struct vertex_header *vmax;
+         const struct vertex_header *vprovoke;
+      };
+      qword vertex_headers;
+   };
 
    struct edge ebot;
    struct edge etop;
@@ -457,55 +462,39 @@ setup_sort_vertices(const struct vertex_header *v0,
 
    /* determine bottom to top order of vertices */
    {
-      float y0 = spu_extract(v0->data[0], 1);
-      float y1 = spu_extract(v1->data[0], 1);
-      float y2 = spu_extract(v2->data[0], 1);
-      if (y0 <= y1) {
-	 if (y1 <= y2) {
-	    /* y0<=y1<=y2 */
-	    setup.vmin = v0;   
-	    setup.vmid = v1;   
-	    setup.vmax = v2;
-            sign = -1.0f;
-	 }
-	 else if (y2 <= y0) {
-	    /* y2<=y0<=y1 */
-	    setup.vmin = v2;   
-	    setup.vmid = v0;   
-	    setup.vmax = v1;   
-            sign = -1.0f;
-	 }
-	 else {
-	    /* y0<=y2<=y1 */
-	    setup.vmin = v0;   
-	    setup.vmid = v2;   
-	    setup.vmax = v1;  
-            sign = 1.0f;
-	 }
-      }
-      else {
-	 if (y0 <= y2) {
-	    /* y1<=y0<=y2 */
-	    setup.vmin = v1;   
-	    setup.vmid = v0;   
-	    setup.vmax = v2;  
-            sign = 1.0f;
-	 }
-	 else if (y2 <= y1) {
-	    /* y2<=y1<=y0 */
-	    setup.vmin = v2;   
-	    setup.vmid = v1;   
-	    setup.vmax = v0;  
-            sign = 1.0f;
-	 }
-	 else {
-	    /* y1<=y2<=y0 */
-	    setup.vmin = v1;   
-	    setup.vmid = v2;   
-	    setup.vmax = v0;
-            sign = -1.0f;
-	 }
-      }
+      /* A table of shuffle patterns for putting vertex_header pointers into
+         correct order.  Quite magical. */
+      const vec_uchar16 sort_order_patterns[] = {
+         SHUFFLE4(A,B,C,C),
+         SHUFFLE4(C,A,B,C),
+         SHUFFLE4(A,C,B,C),
+         SHUFFLE4(B,C,A,C),
+         SHUFFLE4(B,A,C,C),
+         SHUFFLE4(C,B,A,C) };
+
+      /* The vertex_header pointers, packed for easy shuffling later */
+      const vec_uint4 vs = {(unsigned)v0, (unsigned)v1, (unsigned)v2};
+
+      /* Collate y values into two vectors for comparison.
+         Using only one shuffle constant! ;) */
+      const vec_float4 y_02_ = spu_shuffle(v0->data[0], v2->data[0], SHUFFLE4(0,B,b,C));
+      const vec_float4 y_10_ = spu_shuffle(v1->data[0], v0->data[0], SHUFFLE4(0,B,b,C));
+      const vec_float4 y_012 = spu_shuffle(y_02_, v1->data[0], SHUFFLE4(0,B,b,C));
+      const vec_float4 y_120 = spu_shuffle(y_10_, v2->data[0], SHUFFLE4(0,B,b,C));
+
+      /* Perform comparison: {y0,y1,y2} > {y1,y2,y0} */
+      const vec_uint4 compare = spu_cmpgt(y_012, y_120);
+      /* Compress the result of the comparison into 4 bits */
+      const vec_uint4 gather = spu_gather(compare);
+      /* Subtract one to attain the index into the LUT.  Magical. */
+      const unsigned int index = spu_extract(gather, 0) - 1;
+
+      /* Load the appropriate pattern and construct the desired vector. */
+      setup.vertex_headers = (qword)spu_shuffle(vs, vs, sort_order_patterns[index]);
+
+      /* Using the result of the comparison, set sign.
+         Very magical. */
+      sign = ((si_to_uint(si_cntb((qword)gather)) == 2) ? 1.0f : -1.0f);
    }
 
    /* Check if triangle is completely outside the tile bounds */
@@ -544,8 +533,6 @@ setup_sort_vertices(const struct vertex_header *v0,
    ASSERT(CELL_FACING_BACK == 1);
    setup.facing = (area * sign > 0.0f)
       ^ (spu.rasterizer.front_winding == PIPE_WINDING_CW);
-
-   setup.vprovoke = v2;
 
    return TRUE;
 }
