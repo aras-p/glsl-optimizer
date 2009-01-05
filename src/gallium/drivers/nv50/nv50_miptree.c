@@ -31,7 +31,7 @@ nv50_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *pt)
 {
 	struct pipe_winsys *ws = pscreen->winsys;
 	struct nv50_miptree *mt = CALLOC_STRUCT(nv50_miptree);
-	unsigned usage, pitch;
+	unsigned usage, pitch, width, height;
 
 	mt->base = *pt;
 	mt->base.refcount = 1;
@@ -47,11 +47,12 @@ nv50_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *pt)
 		break;
 	}
 
-	pitch = ((pt->width[0] + 63) & ~63) * pt->block.size;
-	/*XXX*/
-	pitch *= 2;
+	width = align(pt->width[0], 8);
+	height = align(pt->height[0], 8);
+	pitch = width * pt->block.size;
+	pitch = (pitch + 63) & ~63;
 
-	mt->buffer = ws->buffer_create(ws, 256, usage, pitch * pt->height[0]);
+	mt->buffer = ws->buffer_create(ws, 256, usage, pitch * height);
 	if (!mt->buffer) {
 		FREE(mt);
 		return NULL;
