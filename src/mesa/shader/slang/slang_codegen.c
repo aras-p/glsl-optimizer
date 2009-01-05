@@ -3320,6 +3320,22 @@ is_store_writable(const slang_assemble_ctx *A, const slang_ir_storage *store)
 
 
 /**
+ * Walk up an IR storage path to compute the final swizzle.
+ * This is used when we find an expression such as "foo.xz.yx".
+ */
+static GLuint
+root_swizzle(const slang_ir_storage *st)
+{
+   GLuint swizzle = st->Swizzle;
+   while (st->Parent) {
+      st = st->Parent;
+      swizzle = _slang_swizzle_swizzle(st->Swizzle, swizzle);
+   }
+   return swizzle;
+}
+
+
+/**
  * Generate IR tree for an assignment (=).
  */
 static slang_ir_node *
@@ -3394,9 +3410,9 @@ _slang_gen_assignment(slang_assemble_ctx * A, slang_operation *oper)
       rhs = _slang_gen_operation(A, &oper->children[1]);
       if (lhs && rhs) {
          /* convert lhs swizzle into writemask */
+         const GLuint swizzle = root_swizzle(lhs->Store);
          GLuint writemask, newSwizzle;
-         if (!swizzle_to_writemask(A, lhs->Store->Swizzle,
-                                   &writemask, &newSwizzle)) {
+         if (!swizzle_to_writemask(A, swizzle, &writemask, &newSwizzle)) {
             /* Non-simple writemask, need to swizzle right hand side in
              * order to put components into the right place.
              */
