@@ -1187,6 +1187,7 @@ nv50_program_tx_insn(struct nv50_pc *pc, const union tgsi_full_token *tok)
 		}
 		break;
 	case TGSI_OPCODE_TEX:
+	case TGSI_OPCODE_TXP:
 	{
 		struct nv50_reg *t[4];
 		struct nv50_program_exec *e;
