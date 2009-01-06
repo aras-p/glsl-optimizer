@@ -44,6 +44,8 @@ struct drv_context
 
 struct stw_device
 {
+   const struct stw_winsys *stw_winsys;
+   
    struct pipe_screen *screen;
 
    struct drv_context ctx_array[DRV_CONTEXT_MAX];
