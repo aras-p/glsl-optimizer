@@ -728,7 +728,7 @@ emit_LERP(struct codegen *gen, const struct tgsi_full_instruction *inst)
 static boolean
 emit_RCP_RSQ(struct codegen *gen, const struct tgsi_full_instruction *inst)
 {
-   int ch, s1_reg[4], d_reg[4];
+   int ch, s1_reg[4], d_reg[4], tmp_reg[4];
 
    if (inst->Instruction.Opcode == TGSI_OPCODE_RCP) {
       spe_comment(gen->f, -4, "RCP:");
@@ -741,21 +741,23 @@ emit_RCP_RSQ(struct codegen *gen, const struct tgsi_full_instruction *inst)
    FOR_EACH_ENABLED_CHANNEL(inst, ch) {
       s1_reg[ch] = get_src_reg(gen, ch, &inst->FullSrcRegisters[0]);
       d_reg[ch] = get_dst_reg(gen, ch, &inst->FullDstRegisters[0]);
+      tmp_reg[ch] = get_itemp(gen);
    }
 
    FOR_EACH_ENABLED_CHANNEL(inst, ch) {
       if (inst->Instruction.Opcode == TGSI_OPCODE_RCP) {
-         /* d = 1/s1 */
-         spe_frest(gen->f, d_reg[ch], s1_reg[ch]);
+         /* tmp = 1/s1 */
+         spe_frest(gen->f, tmp_reg[ch], s1_reg[ch]);
       }
       else {
-         /* d = 1/sqrt(s1) */
-         spe_frsqest(gen->f, d_reg[ch], s1_reg[ch]);
+         /* tmp = 1/sqrt(s1) */
+         spe_frsqest(gen->f, tmp_reg[ch], s1_reg[ch]);
       }
    }
 
    FOR_EACH_ENABLED_CHANNEL(inst, ch) {
-      spe_fi(gen->f, d_reg[ch], s1_reg[ch], d_reg[ch]);
+      /* d = float_interp(s1, tmp) */
+      spe_fi(gen->f, d_reg[ch], s1_reg[ch], tmp_reg[ch]);
    }
 
    FOR_EACH_ENABLED_CHANNEL(inst, ch) {
