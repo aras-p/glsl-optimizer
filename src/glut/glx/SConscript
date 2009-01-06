@@ -11,7 +11,6 @@ env.Replace(CPPDEFINES = [
     'BUILD_GLUT32', 
     'GLUT_BUILDING_LIB', 
     'MESA', 
-    '_DLL',
     'NDEBUG',
     'GLUT_NO_WARNING_DISABLE',
 ])
@@ -38,7 +37,7 @@ sources = [
     'glut_dstr.c',
     'glut_event.c',
     'glut_ext.c',
-    'glut_fcb.c',
+    'glut_fbc.c',
     'glut_fullscrn.c',
     'glut_gamemode.c',
     'glut_get.c',
