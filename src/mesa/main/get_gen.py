@@ -180,7 +180,7 @@ StateVars = [
 	( "GL_DEPTH_BIAS", GLfloat, ["ctx->Pixel.DepthBias"], "", None ),
 	( "GL_DEPTH_BITS", GLint, ["ctx->DrawBuffer->Visual.depthBits"],
 	  "", None ),
-	( "GL_DEPTH_CLEAR_VALUE", GLfloatN, ["ctx->Depth.Clear"], "", None ),
+	( "GL_DEPTH_CLEAR_VALUE", GLfloatN, ["((GLfloat) ctx->Depth.Clear)"], "", None ),
 	( "GL_DEPTH_FUNC", GLenum, ["ctx->Depth.Func"], "", None ),
 	( "GL_DEPTH_RANGE", GLfloatN,
 	  [ "ctx->Viewport.Near", "ctx->Viewport.Far" ], "", None ),
