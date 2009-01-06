@@ -138,6 +138,10 @@
 .emtcode TYPE_VARIANT                               90
 .emtcode TYPE_INVARIANT                             91
 
+/* centroid qualifier */
+.emtcode TYPE_CENTER                                95
+.emtcode TYPE_CENTROID                              96
+
 /* type specifier */
 .emtcode TYPE_SPECIFIER_VOID                        0
 .emtcode TYPE_SPECIFIER_BOOL                        1
@@ -884,18 +888,22 @@ single_declaration_6
     constant_expression .emit VARIABLE_ARRAY_EXPLICIT .or .true .emit VARIABLE_ARRAY_UNKNOWN;
 
 /*
- * <fully_specified_type> ::= <opt_invariant> <opt_qualifer> <opt_precision> <type_specifier>
+ * <fully_specified_type> ::= <opt_invariant> <opt_centroid> <opt_qualifer> <opt_precision> <type_specifier>
  *
  * Example: "invariant varying highp vec3"
  */
 fully_specified_type_space
-    fully_specified_type_optinvariant .and fully_specified_type_optqual .and fully_specified_type_optprec .and type_specifier_space;
+    fully_specified_type_optinvariant .and fully_specified_type_optcentroid .and fully_specified_type_optqual .and fully_specified_type_optprec .and type_specifier_space;
 fully_specified_type_nospace
-    fully_specified_type_optinvariant .and fully_specified_type_optqual .and fully_specified_type_optprec .and type_specifier_nospace;
+    fully_specified_type_optinvariant .and fully_specified_type_optcentroid .and fully_specified_type_optqual .and fully_specified_type_optprec .and type_specifier_nospace;
 fully_specified_type_optinvariant
     fully_specified_type_invariant .or .true .emit TYPE_VARIANT;
 fully_specified_type_invariant
     invariant_qualifier .and space;
+fully_specified_type_optcentroid
+    fully_specified_type_centroid .or .true .emit TYPE_CENTER;
+fully_specified_type_centroid
+    centroid_qualifier .and space;
 fully_specified_type_optqual
     fully_specified_type_qual .or .true .emit TYPE_QUALIFIER_NONE;
 fully_specified_type_qual
@@ -910,6 +918,9 @@ fully_specified_type_prec
  */
 invariant_qualifier
     "invariant" .emit TYPE_INVARIANT;
+
+centroid_qualifier
+    "centroid" .emit TYPE_CENTROID;
 
 
 /*

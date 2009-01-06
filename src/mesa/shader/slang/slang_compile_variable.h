@@ -37,6 +37,13 @@ typedef enum slang_type_variant_
 } slang_type_variant;
 
 
+typedef enum slang_type_centroid_
+{
+   SLANG_CENTER,    /* the default */
+   SLANG_CENTROID   /* indicates the "centroid" keyword */
+} slang_type_centroid;
+
+
 typedef enum slang_type_qualifier_
 {
    SLANG_QUAL_NONE,
@@ -73,6 +80,7 @@ typedef struct slang_fully_specified_type_
    slang_type_specifier specifier;
    slang_type_precision precision;
    slang_type_variant variant;
+   slang_type_centroid centroid;
 } slang_fully_specified_type;
 
 extern int
