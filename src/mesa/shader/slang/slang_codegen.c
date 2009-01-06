@@ -3556,8 +3556,16 @@ _slang_gen_array_element(slang_assemble_ctx * A, slang_operation *oper)
       index = (GLint) oper->children[1].literal[0];
       if (oper->children[1].type != SLANG_OPER_LITERAL_INT ||
           index >= (GLint) max) {
+#if 0
          slang_info_log_error(A->log, "Invalid array index for vector type");
+         printf("type = %d\n", oper->children[1].type);
+         printf("index = %d, max = %d\n", index, max);
+         printf("array = %s\n", (char*)oper->children[0].a_id);
+         printf("index = %s\n", (char*)oper->children[1].a_id);
          return NULL;
+#else
+         index = 0;
+#endif
       }
 
       n = _slang_gen_operation(A, &oper->children[0]);
