@@ -320,7 +320,7 @@ gdi_softpipe_flush_frontbuffer(struct pipe_winsys *winsys,
     memset(&bmi, 0, sizeof(BITMAPINFO));
     bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
     bmi.bmiHeader.biWidth = surface->stride / pf_get_size(surface->format);
-    bmi.bmiHeader.biHeight= -surface->height;
+    bmi.bmiHeader.biHeight= -(long)surface->height;
     bmi.bmiHeader.biPlanes = 1;
     bmi.bmiHeader.biBitCount = pf_get_bits(surface->format);
     bmi.bmiHeader.biCompression = BI_RGB;
