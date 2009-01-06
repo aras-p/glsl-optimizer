@@ -30,6 +30,13 @@ extern "C" {
 #endif
 
 
+typedef enum slang_type_variant_
+{
+   SLANG_VARIANT,    /* the default */
+   SLANG_INVARIANT   /* indicates the "invariant" keyword */
+} slang_type_variant;
+
+
 typedef enum slang_type_qualifier_
 {
    SLANG_QUAL_NONE,
@@ -65,6 +72,7 @@ typedef struct slang_fully_specified_type_
    slang_type_qualifier qualifier;
    slang_type_specifier specifier;
    slang_type_precision precision;
+   slang_type_variant variant;
 } slang_fully_specified_type;
 
 extern int

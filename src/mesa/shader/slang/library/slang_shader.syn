@@ -134,6 +134,10 @@
 .emtcode TYPE_QUALIFIER_FIXEDOUTPUT                 5
 .emtcode TYPE_QUALIFIER_FIXEDINPUT                  6
 
+/* invariant qualifier */
+.emtcode TYPE_VARIANT                               90
+.emtcode TYPE_INVARIANT                             91
+
 /* type specifier */
 .emtcode TYPE_SPECIFIER_VOID                        0
 .emtcode TYPE_SPECIFIER_BOOL                        1
@@ -880,15 +884,18 @@ single_declaration_6
     constant_expression .emit VARIABLE_ARRAY_EXPLICIT .or .true .emit VARIABLE_ARRAY_UNKNOWN;
 
 /*
- * <fully_specified_type> ::= <type_specifier>
- *                          | <type_qualifier> <type_specifier>
- *                          | <precision> <type_specifier>
- *                          | <type_qualifier> <precision> <type_specifier>
+ * <fully_specified_type> ::= <opt_invariant> <opt_qualifer> <opt_precision> <type_specifier>
+ *
+ * Example: "invariant varying highp vec3"
  */
 fully_specified_type_space
-    fully_specified_type_optqual .and fully_specified_type_optprec .and type_specifier_space;
+    fully_specified_type_optinvariant .and fully_specified_type_optqual .and fully_specified_type_optprec .and type_specifier_space;
 fully_specified_type_nospace
-    fully_specified_type_optqual .and fully_specified_type_optprec .and type_specifier_nospace;
+    fully_specified_type_optinvariant .and fully_specified_type_optqual .and fully_specified_type_optprec .and type_specifier_nospace;
+fully_specified_type_optinvariant
+    fully_specified_type_invariant .or .true .emit TYPE_VARIANT;
+fully_specified_type_invariant
+    invariant_qualifier .and space;
 fully_specified_type_optqual
     fully_specified_type_qual .or .true .emit TYPE_QUALIFIER_NONE;
 fully_specified_type_qual
@@ -897,6 +904,13 @@ fully_specified_type_optprec
     fully_specified_type_prec .or .true .emit PRECISION_DEFAULT;
 fully_specified_type_prec
     precision .and space;
+
+/*
+ * <invariant_qualifier> ::= "invariant"
+ */
+invariant_qualifier
+    "invariant" .emit TYPE_INVARIANT;
+
 
 /*
  *  <type_qualifier> ::= "const"
@@ -1291,8 +1305,8 @@ translation_unit
  */
 external_declaration
     precision_stmt .emit DEFAULT_PRECISION .or
-    invariant_stmt .emit INVARIANT_STMT .or
     function_definition .emit EXTERNAL_FUNCTION_DEFINITION .or
+    invariant_stmt .emit INVARIANT_STMT .or
     declaration .emit EXTERNAL_DECLARATION;
 
 
