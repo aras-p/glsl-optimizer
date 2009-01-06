@@ -1641,7 +1641,7 @@ _mesa_format_to_type_and_comps(const struct gl_texture_format *format,
    case MESA_FORMAT_ARGB1555:
    case MESA_FORMAT_ARGB1555_REV:
       *datatype = GL_UNSIGNED_SHORT_1_5_5_5_REV;
-      *comps = 3;
+      *comps = 4;
       return;
 
    case MESA_FORMAT_AL88:
