@@ -1287,6 +1287,7 @@ emit_tex(slang_emit_info *emitInfo, slang_ir_node *n)
 
    /* Child[0] is the sampler (a uniform which'll indicate the texture unit) */
    assert(n->Children[0]->Store);
+   assert(n->Children[0]->Store->File == PROGRAM_SAMPLER);
    /* Store->Index is the sampler index */
    assert(n->Children[0]->Store->Index >= 0);
    /* Store->Size is the texture target */
@@ -1295,6 +1296,10 @@ emit_tex(slang_emit_info *emitInfo, slang_ir_node *n)
 
    inst->TexSrcTarget = n->Children[0]->Store->Size;
    inst->TexSrcUnit = n->Children[0]->Store->Index; /* i.e. uniform's index */
+
+   /* mark the sampler as being used */
+   _mesa_use_uniform(emitInfo->prog->Parameters,
+                     (char *) n->Children[0]->Var->a_name);
 
    return inst;
 }
@@ -2101,7 +2106,8 @@ emit_var_ref(slang_emit_info *emitInfo, slang_ir_node *n)
 
       n->Store->Index = index;
    }
-   else if (n->Store->File == PROGRAM_UNIFORM) {
+   else if (n->Store->File == PROGRAM_UNIFORM ||
+            n->Store->File == PROGRAM_SAMPLER) {
       /* mark var as used */
       _mesa_use_uniform(emitInfo->prog->Parameters, (char *) n->Var->a_name);
    }

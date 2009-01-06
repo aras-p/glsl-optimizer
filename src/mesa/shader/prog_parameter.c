@@ -290,7 +290,8 @@ _mesa_use_uniform(struct gl_program_parameter_list *paramList,
    GLuint i;
    for (i = 0; i < paramList->NumParameters; i++) {
       struct gl_program_parameter *p = paramList->Parameters + i;
-      if (p->Type == PROGRAM_UNIFORM && _mesa_strcmp(p->Name, name) == 0) {
+      if ((p->Type == PROGRAM_UNIFORM || p->Type == PROGRAM_SAMPLER) &&
+          _mesa_strcmp(p->Name, name) == 0) {
          p->Used = GL_TRUE;
          /* Note that large uniforms may occupy several slots so we're
           * not done searching yet.
