@@ -25,9 +25,8 @@
  * 
  **************************************************************************/
 
-#define _GDI32_
-
 #include <windows.h>
+
 #include "main/context.h"
 #include "pipe/p_format.h"
 #include "state_tracker/st_context.h"

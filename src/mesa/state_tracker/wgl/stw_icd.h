@@ -31,9 +31,7 @@
 
 #include <windows.h>
 
-
 #include "GL/gl.h"
-#include "GL/mesa_wgl.h"
 
 
 typedef ULONG DHGLRC;

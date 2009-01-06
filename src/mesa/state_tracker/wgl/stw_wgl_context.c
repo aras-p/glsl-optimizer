@@ -25,8 +25,6 @@
  *
  **************************************************************************/
 
-#define _GDI32_
-
 #include <windows.h>
 
 #include "main/mtypes.h"
@@ -41,7 +39,7 @@
 #include "stw_pixelformat.h"
 #include "stw_wgl_arbmultisample.h"
 #include "stw_wgl_context.h"
-#include "stw_wgl_pixelformat.h"
+#include "stw_wgl.h"
 
 static struct wgl_context *ctx_head = NULL;
 
