@@ -222,7 +222,8 @@ link_varying_vars(struct gl_shader_program *shProg, struct gl_program *prog)
  * then the fragment/vertex parameter index, respectively, will be -1.
  */
 static GLboolean
-link_uniform_vars(struct gl_shader_program *shProg,
+link_uniform_vars(GLcontext *ctx,
+                  struct gl_shader_program *shProg,
                   struct gl_program *prog,
                   GLuint *numSamplers)
 {
@@ -593,13 +594,13 @@ _slang_link(GLcontext *ctx,
 
    /* link uniform vars */
    if (shProg->VertexProgram) {
-      if (!link_uniform_vars(shProg, &shProg->VertexProgram->Base,
+      if (!link_uniform_vars(ctx, shProg, &shProg->VertexProgram->Base,
                              &numSamplers)) {
          return;
       }
    }
    if (shProg->FragmentProgram) {
-      if (!link_uniform_vars(shProg, &shProg->FragmentProgram->Base,
+      if (!link_uniform_vars(ctx, shProg, &shProg->FragmentProgram->Base,
                              &numSamplers)) {
          return;
       }
