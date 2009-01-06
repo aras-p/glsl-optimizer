@@ -358,7 +358,6 @@ _mesa_swizzle_string(GLuint swizzle, GLuint negateBase, GLboolean extended)
 }
 
 
-<<<<<<< HEAD:src/mesa/shader/prog_print.c
 void
 _mesa_print_swizzle(GLuint swizzle)
 {
