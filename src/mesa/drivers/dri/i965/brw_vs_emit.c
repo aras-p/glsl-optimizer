@@ -1133,6 +1133,10 @@ void brw_vs_emit(struct brw_vs_compile *c )
 	  */
 	 emit_swz(c, dst, inst->SrcReg[0] );
 	 break;
+      case OPCODE_TRUNC:
+         /* round toward zero */
+	 brw_RNDZ(p, dst, args[0]);
+	 break;
       case OPCODE_XPD:
 	 emit_xpd(p, dst, args[0], args[1]);
 	 break;

@@ -36,6 +36,9 @@ _mesa_swap2( GLushort *p, GLuint n );
 extern void
 _mesa_swap4( GLuint *p, GLuint n );
 
+extern GLboolean
+_mesa_type_is_packed(GLenum type);
+
 extern GLint
 _mesa_sizeof_type( GLenum type );
 

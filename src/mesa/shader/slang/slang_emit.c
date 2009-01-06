@@ -310,24 +310,22 @@ storage_to_dst_reg(struct prog_dst_register *dst, const slang_ir_storage *st)
       dst->WriteMask = swizzle_to_writemask(swizzle);
    }
    else {
-      GLuint writemask;
       switch (size) {
       case 1:
-         writemask = WRITEMASK_X << GET_SWZ(st->Swizzle, 0);
+         dst->WriteMask = WRITEMASK_X << GET_SWZ(st->Swizzle, 0);
          break;
       case 2:
-         writemask = WRITEMASK_XY;
+         dst->WriteMask = WRITEMASK_XY;
          break;
       case 3:
-         writemask = WRITEMASK_XYZ;
+         dst->WriteMask = WRITEMASK_XYZ;
          break;
       case 4:
-         writemask = WRITEMASK_XYZW;
+         dst->WriteMask = WRITEMASK_XYZW;
          break;
       default:
          ; /* error would have been caught above */
       }
-      dst->WriteMask = writemask;
    }
 
    dst->RelAddr = relAddr;

@@ -324,7 +324,7 @@ MAIN_FILES = \
 
 DRI_FILES = \
 	$(DIRECTORY)/include/GL/internal/dri_interface.h		\
-	$(DIRECTORY)/include/GL/internal/dri_sarea.h			\
+	$(DIRECTORY)/include/GL/internal/glcore.h			\
 	$(DIRECTORY)/include/GL/internal/sarea.h			\
 	$(DIRECTORY)/src/glx/Makefile					\
 	$(DIRECTORY)/src/glx/x11/Makefile				\
