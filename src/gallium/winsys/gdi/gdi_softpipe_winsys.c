@@ -337,8 +337,23 @@ gdi_softpipe_flush_frontbuffer(struct pipe_winsys *winsys,
 }
 
 
-const struct stw_winsys stw_winsys = {
+static const struct stw_winsys stw_winsys = {
    &gdi_softpipe_screen_create,
    &gdi_softpipe_context_create,
    &gdi_softpipe_flush_frontbuffer
 };
+
+
+BOOL WINAPI
+DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpReserved)
+{
+   switch (fdwReason) {
+   case DLL_PROCESS_ATTACH:
+      return st_init(&stw_winsys);
+
+   case DLL_PROCESS_DETACH:
+      st_cleanup();
+      break;
+   }
+   return TRUE;
+}

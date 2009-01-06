@@ -30,6 +30,8 @@
 
 #include <windows.h> /* for HDC */
 
+#include "pipe/p_compiler.h"
+
 struct pipe_screen;
 struct pipe_context;
 struct pipe_winsys;
@@ -49,6 +51,10 @@ struct stw_winsys
                          HDC hDC );
 };
 
-extern const struct stw_winsys stw_winsys;
+boolean
+st_init(const struct stw_winsys *stw_winsys);
+
+void
+st_cleanup(void);
 
 #endif /* STW_WINSYS_H */

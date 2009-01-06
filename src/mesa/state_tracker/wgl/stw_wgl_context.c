@@ -105,7 +105,7 @@ wglCreateContext(
       return NULL;
    }
 
-   pipe = stw_winsys.create_context( stw_dev->screen );
+   pipe = stw_dev->stw_winsys->create_context( stw_dev->screen );
    if (!pipe) {
       _mesa_destroy_visual( visual );
       FREE( ctx );
