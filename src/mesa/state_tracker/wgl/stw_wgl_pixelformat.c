@@ -25,14 +25,12 @@
  *
  **************************************************************************/
 
-#define _GDI32_
-
 #include <windows.h>
 
 #include "pipe/p_compiler.h"
 #include "pipe/p_debug.h"
 #include "stw_pixelformat.h"
-#include "stw_wgl_pixelformat.h"
+#include "stw_wgl.h"
 
 static uint currentpixelformat = 0;
 

@@ -29,12 +29,12 @@
 #include <stdio.h>
 
 #include "GL/gl.h"
-#include "GL/mesa_wgl.h"
 
 #include "pipe/p_debug.h"
 
 #include "stw_device.h"
 #include "stw_icd.h"
+#include "stw_wgl.h"
 
 
 static HGLRC

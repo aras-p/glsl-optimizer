@@ -33,6 +33,7 @@
 struct pipe_screen;
 struct pipe_context;
 struct pipe_winsys;
+struct pipe_surface;
 
 struct stw_winsys
 {

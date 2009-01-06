@@ -25,9 +25,8 @@
  *
  **************************************************************************/
 
-#define _GDI32_
-
 #include <windows.h>
+
 #include "glapi/glapi.h"
 #include "stw_wgl_arbextensionsstring.h"
 #include "stw_wgl_arbpixelformat.h"
