@@ -934,6 +934,18 @@ _mesa_sprintf( char *str, const char *fmt, ... )
    return r;
 }
 
+/** Wrapper around vsnprintf() */
+int
+_mesa_snprintf( char *str, size_t size, const char *fmt, ... )
+{
+   int r;
+   va_list args;
+   va_start( args, fmt );  
+   r = vsnprintf( str, size, fmt, args );
+   va_end( args );
+   return r;
+}
+
 /** Wrapper around printf(), using vsprintf() for the formatting. */
 void
 _mesa_printf( const char *fmtString, ... )

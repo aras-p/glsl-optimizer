@@ -767,6 +767,9 @@ _mesa_strtod( const char *s, char **end );
 extern int
 _mesa_sprintf( char *str, const char *fmt, ... );
 
+extern int
+_mesa_snprintf( char *str, size_t size, const char *fmt, ... );
+
 extern void
 _mesa_printf( const char *fmtString, ... );
 
