@@ -122,10 +122,11 @@ static struct prog_dst_register dst_reg(GLuint file, GLuint idx)
    reg.File = file;
    reg.Index = idx;
    reg.WriteMask = WRITEMASK_XYZW;
+   reg.RelAddr = 0;
    reg.CondMask = 0;
    reg.CondSwizzle = 0;
-   reg.pad = 0;
    reg.CondSrc = 0;
+   reg.pad = 0;
    return reg;
 }
 
