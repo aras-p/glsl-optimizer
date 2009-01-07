@@ -571,7 +571,7 @@ _mesa_delete_instructions(struct gl_program *prog, GLuint start, GLuint count)
    for (i = 0; i < prog->NumInstructions; i++) {
       struct prog_instruction *inst = prog->Instructions + i;
       if (inst->BranchTarget > 0) {
-         if (inst->BranchTarget >= start) {
+         if (inst->BranchTarget > start) {
             inst->BranchTarget -= count;
          }
       }
