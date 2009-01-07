@@ -2014,8 +2014,6 @@ struct gl_fragment_program_state
 
    /** Should fixed-function texturing be implemented with a fragment prog? */
    GLboolean _MaintainTexEnvProgram;
-   GLboolean _UseTexEnvProgram;
-   GLboolean _Active;     /**< Use internal texenv program? */
 
    /** Program to emulate fixed-function texture env/combine (see above) */
    struct gl_fragment_program *_TexEnvProgram;
