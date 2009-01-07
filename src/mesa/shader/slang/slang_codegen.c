@@ -1585,6 +1585,7 @@ swizzle_to_writemask(slang_assemble_ctx *A, GLuint swizzle,
 }
 
 
+#if 0 /* not used, but don't remove just yet */
 /**
  * Recursively traverse 'oper' to produce a swizzle mask in the event
  * of any vector subscripts and swizzle suffixes.
@@ -1638,8 +1639,10 @@ resolve_swizzle(const slang_operation *oper)
       return SWIZZLE_XYZW;
    }
 }
+#endif
 
 
+#if 0
 /**
  * Recursively descend through swizzle nodes to find the node's storage info.
  */
@@ -1651,7 +1654,7 @@ get_store(const slang_ir_node *n)
    }
    return n->Store;
 }
-
+#endif
 
 
 /**
@@ -1724,6 +1727,7 @@ _slang_gen_asm(slang_assemble_ctx *A, slang_operation *oper,
 }
 
 
+#if 0
 static void
 print_funcs(struct slang_function_scope_ *scope, const char *name)
 {
@@ -1737,6 +1741,7 @@ print_funcs(struct slang_function_scope_ *scope, const char *name)
    if (scope->outer_scope)
       print_funcs(scope->outer_scope, name);
 }
+#endif
 
 
 /**
@@ -3323,6 +3328,7 @@ _slang_gen_return(slang_assemble_ctx * A, slang_operation *oper)
 }
 
 
+#if 0
 /**
  * Determine if the given operation/expression is const-valued.
  */
@@ -3346,6 +3352,7 @@ _slang_is_constant_expr(const slang_operation *oper)
       return GL_TRUE;
    }
 }
+#endif
 
 
 /**
