@@ -1973,7 +1973,7 @@ _slang_make_array_constructor(slang_assemble_ctx *A, slang_operation *oper)
          */
          slang_variable *p = slang_variable_scope_grow(fun->parameters);
          char name[10];
-         snprintf(name, sizeof(name), "p%d", i);
+         _mesa_snprintf(name, sizeof(name), "p%d", i);
          p->a_name = slang_atom_pool_atom(A->atoms, name);
          p->type.qualifier = SLANG_QUAL_CONST;
          p->type.specifier.type = baseType;
