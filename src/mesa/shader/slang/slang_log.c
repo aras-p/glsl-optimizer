@@ -1,8 +1,9 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.3
+ * Version:  7.3
  *
  * Copyright (C) 2005-2007  Brian Paul   All Rights Reserved.
+ * Copyright (C) 2009  VMware, Inc.  All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -43,11 +44,7 @@ void
 slang_info_log_destruct(slang_info_log * log)
 {
    if (!log->dont_free_text)
-#if 0
-      slang_alloc_free(log->text);
-#else
       _mesa_free(log->text);
-#endif
 }
 
 static int
@@ -64,18 +61,10 @@ slang_info_log_message(slang_info_log * log, const char *prefix,
    if (log->text != NULL) {
       GLuint old_len = slang_string_length(log->text);
       log->text = (char *)
-#if 0
-	 slang_alloc_realloc(log->text, old_len + 1, old_len + size);
-#else
 	 _mesa_realloc(log->text, old_len + 1, old_len + size);
-#endif
    }
    else {
-#if 0
-      log->text = (char *) (slang_alloc_malloc(size));
-#else
       log->text = (char *) (_mesa_malloc(size));
-#endif
       if (log->text != NULL)
          log->text[0] = '\0';
    }
