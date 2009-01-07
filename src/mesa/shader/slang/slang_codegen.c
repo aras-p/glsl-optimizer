@@ -58,7 +58,7 @@
 
 
 /** Max iterations to unroll */
-const GLuint MAX_FOR_LOOP_UNROLL_ITERATIONS = 20;
+const GLuint MAX_FOR_LOOP_UNROLL_ITERATIONS = 32;
 
 /** Max for-loop body size (in slang operations) to unroll */
 const GLuint MAX_FOR_LOOP_UNROLL_BODY_SIZE = 50;
@@ -2487,19 +2487,45 @@ _slang_can_unroll_for_loop(slang_assemble_ctx * A, const slang_operation *oper)
    GLuint bodySize;
    GLint start, end;
    const char *varName;
+   slang_atom varId;
 
    assert(oper->type == SLANG_OPER_FOR);
    assert(oper->num_children == 4);
 
-   /* children[0] must be "i=constant" */
-   if (oper->children[0].type != SLANG_OPER_EXPRESSION)
+   /* children[0] must be either "int i=constant" or "i=constant" */
+   if (oper->children[0].type == SLANG_OPER_BLOCK_NO_NEW_SCOPE) {
+      slang_variable *var;
+
+      if (oper->children[0].children[0].type != SLANG_OPER_VARIABLE_DECL)
+         return GL_FALSE;
+
+      varId = oper->children[0].children[0].a_id;
+
+      var = _slang_variable_locate(oper->children[0].children[0].locals,
+                                   varId, GL_TRUE);
+      if (!var)
+         return GL_FALSE;
+      if (!var->initializer)
+         return GL_FALSE;
+      if (var->initializer->type != SLANG_OPER_LITERAL_INT)
+         return GL_FALSE;
+      start = (GLint) var->initializer->literal[0];
+   }
+   else if (oper->children[0].type == SLANG_OPER_EXPRESSION) {
+      if (oper->children[0].children[0].type != SLANG_OPER_ASSIGN)
+         return GL_FALSE;
+      if (oper->children[0].children[0].children[0].type != SLANG_OPER_IDENTIFIER)
+         return GL_FALSE;
+      if (oper->children[0].children[0].children[1].type != SLANG_OPER_LITERAL_INT)
+         return GL_FALSE;
+
+      varId = oper->children[0].children[0].children[0].a_id;
+
+      start = (GLint) oper->children[0].children[0].children[1].literal[0];
+   }
+   else {
       return GL_FALSE;
-   if (oper->children[0].children[0].type != SLANG_OPER_ASSIGN)
-      return GL_FALSE;
-   if (oper->children[0].children[0].children[0].type != SLANG_OPER_IDENTIFIER)
-      return GL_FALSE;
-   if (oper->children[0].children[0].children[1].type != SLANG_OPER_LITERAL_INT)
-      return GL_FALSE;
+   }
 
    /* children[1] must be "i<constant" */
    if (oper->children[1].type != SLANG_OPER_EXPRESSION)
@@ -2511,6 +2537,8 @@ _slang_can_unroll_for_loop(slang_assemble_ctx * A, const slang_operation *oper)
    if (oper->children[1].children[0].children[1].type != SLANG_OPER_LITERAL_INT)
       return GL_FALSE;
 
+   end = (GLint) oper->children[1].children[0].children[1].literal[0];
+
    /* children[2] must be "i++" or "++i" */
    if (oper->children[2].type != SLANG_OPER_POSTINCREMENT &&
        oper->children[2].type != SLANG_OPER_PREINCREMENT)
@@ -2519,13 +2547,11 @@ _slang_can_unroll_for_loop(slang_assemble_ctx * A, const slang_operation *oper)
       return GL_FALSE;
 
    /* make sure the same variable name is used in all places */
-   if ((oper->children[0].children[0].children[0].a_id !=
-        oper->children[1].children[0].children[0].a_id) ||
-       (oper->children[0].children[0].children[0].a_id !=
-        oper->children[2].children[0].a_id))
+   if ((oper->children[1].children[0].children[0].a_id != varId) ||
+       (oper->children[2].children[0].a_id != varId))
       return GL_FALSE;
 
-   varName = (const char *) oper->children[0].children[0].children[0].a_id;
+   varName = (const char *) varId;
 
    /* children[3], the loop body, can't be too large */
    bodySize = sizeof_operation(&oper->children[3]);
@@ -2536,10 +2562,6 @@ _slang_can_unroll_for_loop(slang_assemble_ctx * A, const slang_operation *oper)
                            varName);
       return GL_FALSE;
    }
-
-   /* get/check loop iteration limits */
-   start = (GLint) oper->children[0].children[0].children[1].literal[0];
-   end = (GLint) oper->children[1].children[0].children[1].literal[0];
 
    if (start >= end)
       return GL_FALSE; /* degenerate case */
@@ -2578,13 +2600,27 @@ _slang_unroll_for_loop(slang_assemble_ctx * A, const slang_operation *oper)
 {
    GLint start, end, iter;
    slang_ir_node *n, *root = NULL;
+   slang_atom varId;
 
-   start = (GLint) oper->children[0].children[0].children[1].literal[0];
+   if (oper->children[0].type == SLANG_OPER_BLOCK_NO_NEW_SCOPE) {
+      /* for (int i=0; ... */
+      slang_variable *var;
+
+      varId = oper->children[0].children[0].a_id;
+      var = _slang_variable_locate(oper->children[0].children[0].locals,
+                                   varId, GL_TRUE);
+      start = (GLint) var->initializer->literal[0];
+   }
+   else {
+      /* for (i=0; ... */
+      varId = oper->children[0].children[0].children[0].a_id;
+      start = (GLint) oper->children[0].children[0].children[1].literal[0];
+   }
+
    end = (GLint) oper->children[1].children[0].children[1].literal[0];
 
    for (iter = start; iter < end; iter++) {
       slang_operation *body;
-      slang_atom id;
 
       /* make a copy of the loop body */
       body = slang_operation_new(1);
@@ -2594,14 +2630,12 @@ _slang_unroll_for_loop(slang_assemble_ctx * A, const slang_operation *oper)
       if (!slang_operation_copy(body, &oper->children[3]))
          return NULL;
 
-      id = oper->children[0].children[0].children[0].a_id;
-
-      /* in body, replace instances of 'id' with literal 'iter' */
+      /* in body, replace instances of 'varId' with literal 'iter' */
       {
          slang_variable *oldVar;
          slang_operation *newOper;
 
-         oldVar = _slang_variable_locate(oper->locals, id, GL_TRUE);
+         oldVar = _slang_variable_locate(oper->locals, varId, GL_TRUE);
          if (!oldVar) {
             /* undeclared loop variable */
             slang_operation_delete(body);
