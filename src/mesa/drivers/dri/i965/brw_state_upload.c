@@ -314,12 +314,8 @@ void brw_validate_state( struct brw_context *brw )
       state->brw |= ~0;
    }
 
-   /* texenv program needs to notify us somehow when this happens: 
-    * Some confusion about which state flag should represent this change.
-    */
    if (brw->fragment_program != brw->attribs.FragmentProgram->_Current) {
       brw->fragment_program = brw->attribs.FragmentProgram->_Current;
-      brw->state.dirty.mesa |= _NEW_PROGRAM;
       brw->state.dirty.brw |= BRW_NEW_FRAGMENT_PROGRAM;
    }
 
