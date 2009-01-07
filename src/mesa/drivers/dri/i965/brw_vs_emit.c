@@ -1064,6 +1064,11 @@ void brw_vs_emit(struct brw_vs_compile *c )
       else
 	  dst = get_dst(c, inst->DstReg);
 
+      if (inst->SaturateMode != SATURATE_OFF) {
+	 _mesa_problem(NULL, "Unsupported saturate %d in vertex shader",
+                       inst->SaturateMode);
+      }
+
       switch (inst->Opcode) {
       case OPCODE_ABS:
 	 brw_MOV(p, dst, brw_abs(args[0]));
