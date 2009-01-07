@@ -83,7 +83,6 @@ const struct brw_tracked_state brw_wm_unit;
 
 const struct brw_tracked_state brw_psp_urb_cbs;
 
-const struct brw_tracked_state brw_active_vertprog;
 const struct brw_tracked_state brw_pipe_control;
 
 const struct brw_tracked_state brw_clear_surface_cache;

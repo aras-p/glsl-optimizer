@@ -68,7 +68,6 @@ DRIVER_SOURCES = \
 	brw_vs_constval.c \
 	brw_vs_emit.c \
 	brw_vs_state.c \
-	brw_vs_tnl.c \
 	brw_vtbl.c \
 	brw_wm.c \
 	brw_wm_debug.c \
