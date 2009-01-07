@@ -58,10 +58,17 @@
 
 
 /** Max iterations to unroll */
-const GLuint MAX_FOR_LOOP_UNROLL_ITERATIONS = 4;
+const GLuint MAX_FOR_LOOP_UNROLL_ITERATIONS = 20;
 
 /** Max for-loop body size (in slang operations) to unroll */
 const GLuint MAX_FOR_LOOP_UNROLL_BODY_SIZE = 50;
+
+/** Max for-loop body complexity to unroll.
+ * We'll compute complexity as the product of the number of iterations
+ * and the size of the body.  So long-ish loops with very simple bodies
+ * can be unrolled, as well as short loops with larger bodies.
+ */
+const GLuint MAX_FOR_LOOP_UNROLL_COMPLEXITY = 200;
 
 
 
@@ -2533,10 +2540,22 @@ _slang_can_unroll_for_loop(slang_assemble_ctx * A, const slang_operation *oper)
    /* get/check loop iteration limits */
    start = (GLint) oper->children[0].children[0].children[1].literal[0];
    end = (GLint) oper->children[1].children[0].children[1].literal[0];
+
+   if (start >= end)
+      return GL_FALSE; /* degenerate case */
+
    if (end - start > MAX_FOR_LOOP_UNROLL_ITERATIONS) {
       slang_info_log_print(A->log,
                            "Note: 'for (%s=%d; %s<%d; ++%s)' is too"
                            " many iterations to unroll",
+                           varName, start, varName, end, varName);
+      return GL_FALSE;
+   }
+
+   if ((end - start) * bodySize > MAX_FOR_LOOP_UNROLL_COMPLEXITY) {
+      slang_info_log_print(A->log,
+                           "Note: 'for (%s=%d; %s<%d; ++%s)' will generate"
+                           " too much code to unroll",
                            varName, start, varName, end, varName);
       return GL_FALSE;
    }
