@@ -137,15 +137,15 @@ link_varying_vars(struct gl_shader_program *shProg, struct gl_program *prog)
          }
          if (!bits_agree(var->Flags, v->Flags, PROG_PARAM_BIT_CENTROID)) {
             char msg[100];
-            snprintf(msg, sizeof(msg),
-                     "centroid modifier mismatch for '%s'", var->Name);
+            _mesa_snprintf(msg, sizeof(msg),
+                           "centroid modifier mismatch for '%s'", var->Name);
             link_error(shProg, msg);
             return GL_FALSE;
          }
          if (!bits_agree(var->Flags, v->Flags, PROG_PARAM_BIT_INVARIANT)) {
             char msg[100];
-            snprintf(msg, sizeof(msg),
-                     "invariant modifier mismatch for '%s'", var->Name);
+            _mesa_snprintf(msg, sizeof(msg),
+                           "invariant modifier mismatch for '%s'", var->Name);
             link_error(shProg, msg);
             return GL_FALSE;
          }

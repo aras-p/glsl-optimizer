@@ -2099,8 +2099,8 @@ emit_var_ref(slang_emit_info *emitInfo, slang_ir_node *n)
       if (index < 0) {
          /* error */
          char s[100];
-         snprintf(s, sizeof(s), "Undefined variable '%s'",
-                  (char *) n->Var->a_name);
+         _mesa_snprintf(s, sizeof(s), "Undefined variable '%s'",
+                        (char *) n->Var->a_name);
          slang_info_log_error(emitInfo->log, s);
          return NULL;
       }
