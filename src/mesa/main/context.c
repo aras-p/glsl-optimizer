@@ -1225,7 +1225,6 @@ _mesa_initialize_context(GLcontext *ctx,
 
    ctx->FragmentProgram._MaintainTexEnvProgram
       = (_mesa_getenv("MESA_TEX_PROG") != NULL);
-   ctx->FragmentProgram._UseTexEnvProgram = ctx->FragmentProgram._MaintainTexEnvProgram;
 
    ctx->VertexProgram._MaintainTnlProgram
       = (_mesa_getenv("MESA_TNL_PROG") != NULL);

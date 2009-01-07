@@ -254,17 +254,6 @@ update_program(GLcontext *ctx)
       _mesa_reference_vertprog(ctx, &ctx->VertexProgram._Current, NULL);
    }
 
-   /* XXX: get rid of _Active flag.
-    */
-#if 1
-   ctx->FragmentProgram._Active = ctx->FragmentProgram._Enabled;
-   if (ctx->FragmentProgram._MaintainTexEnvProgram &&
-       !ctx->FragmentProgram._Enabled) {
-      if (ctx->FragmentProgram._UseTexEnvProgram)
-	 ctx->FragmentProgram._Active = GL_TRUE;
-   }
-#endif
-
    /* Let the driver know what's happening:
     */
    if (ctx->FragmentProgram._Current != prevFP && ctx->Driver.BindProgram) {
