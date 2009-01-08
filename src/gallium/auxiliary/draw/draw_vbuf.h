@@ -30,7 +30,7 @@
  * Vertex buffer drawing stage.
  * 
  * \author Keith Whitwell <keith@tungstengraphics.com>
- * \author José Fonseca <jrfonsec@tungstengraphics.com>
+ * \author Jose Fonseca <jrfonsec@tungstengraphics.com>
  */
 
 #ifndef DRAW_VBUF_H_
@@ -38,6 +38,7 @@
 
 
 
+struct pipe_rasterizer_state;
 struct draw_context;
 struct vertex_info;
 
