@@ -199,7 +199,11 @@ xlib_create_brw_context( struct pipe_screen *screen,
 
    /* Create the i965simple context:
     */
+#ifdef GALLIUM_CELL
+   return NULL;
+#else
    return brw_create( screen,
 		      &xbcws->brw_context_winsys,
 		      0 );
+#endif
 }

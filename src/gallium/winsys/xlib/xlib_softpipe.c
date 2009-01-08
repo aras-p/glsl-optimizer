@@ -708,7 +708,7 @@ xlib_create_cell_winsys( void )
 struct pipe_screen *
 xlib_create_cell_screen( struct pipe_winsys *pws )
 {
-   return xlib_create_softpipe_screen( pws );
+   return cell_create_screen( pws );
 }
 
 

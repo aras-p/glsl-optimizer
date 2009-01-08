@@ -352,7 +352,11 @@ xlib_create_brw_winsys( void )
 struct pipe_screen *
 xlib_create_brw_screen( struct pipe_winsys *winsys )
 {
+#ifdef GALLIUM_CELL
+   return NULL;
+#else
    return brw_create_screen(winsys, 0/* XXX pci_id */);
+#endif
 }
 
 

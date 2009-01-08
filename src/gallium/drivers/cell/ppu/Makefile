@@ -39,8 +39,7 @@ SOURCES = \
 	cell_texture.c \
 	cell_vbuf.c \
 	cell_vertex_fetch.c \
-	cell_vertex_shader.c \
-	cell_winsys.c
+	cell_vertex_shader.c
 
 
 OBJECTS = $(SOURCES:.c=.o) \
