@@ -1126,14 +1126,6 @@ XMesaBuffer XMesaGetCurrentReadBuffer( void )
 }
 
 
-#ifndef FX
-GLboolean XMesaSetFXmode( GLint mode )
-{
-   (void) mode;
-   return GL_FALSE;
-}
-#endif
-
 
 
 /*

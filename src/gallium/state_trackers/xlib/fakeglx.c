@@ -1489,9 +1489,6 @@ Fake_glXMakeContextCurrent( Display *dpy, GLXDrawable draw,
             /* Out of memory, or context/drawable depth mismatch */
             return False;
          }
-#ifdef FX
-         FXcreateContext( xmctx->xm_visual, draw, xmctx, drawBuffer );
-#endif
       }
 
       /* Find the XMesaBuffer which corresponds to the GLXDrawable 'read' */
@@ -1509,9 +1506,6 @@ Fake_glXMakeContextCurrent( Display *dpy, GLXDrawable draw,
             /* Out of memory, or context/drawable depth mismatch */
             return False;
          }
-#ifdef FX
-         FXcreateContext( xmctx->xm_visual, read, xmctx, readBuffer );
-#endif
       }
 
       if (no_rast &&
@@ -2017,12 +2011,6 @@ Fake_glXWaitX( void )
 static const char *
 get_extensions( void )
 {
-#ifdef FX
-   const char *fx = _mesa_getenv("MESA_GLX_FX");
-   if (fx && fx[0] != 'd') {
-      return EXTENSIONS;
-   }
-#endif
    return EXTENSIONS + 23; /* skip "GLX_MESA_set_3dfx_mode" */
 }
 
@@ -2197,11 +2185,6 @@ Fake_glXCreateWindow( Display *dpy, GLXFBConfig config, Window win,
    xmbuf = XMesaCreateWindowBuffer(xmvis, win);
    if (!xmbuf)
       return 0;
-
-#ifdef FX
-   /* XXX this will segfault if actually called */
-   FXcreateContext(xmvis, win, NULL, xmbuf);
-#endif
 
    (void) dpy;
    (void) attribList;  /* Ignored in GLX 1.3 */
@@ -2995,7 +2978,7 @@ Fake_glXReleaseBuffersMESA( Display *dpy, GLXDrawable d )
 static Bool
 Fake_glXSet3DfxModeMESA( int mode )
 {
-   return XMesaSetFXmode( mode );
+   return FALSE;
 }
 
 
