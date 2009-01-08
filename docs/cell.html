@@ -6,7 +6,7 @@
 
 <BODY>
 
-<H1>Mesa Cell Driver</H1>
+<H1>Mesa/Gallium Cell Driver</H1>
 
 <p>
 The Mesa
@@ -23,18 +23,19 @@ Two phases are planned.
 First, to implement the framework for parallel rasterization using the Cell
 SPEs, including texture mapping.
 Second, to implement a full-featured OpenGL driver with support for GLSL, etc.
+The second phase is now underway.
 </p>
 
 
 <H2>Source Code</H2>
 
 <p>
-The Cell driver source code is on the <code>gallium-0.1</code> branch of the
-git repository.
+The latest Cell driver source code is on the <code>gallium-0.2</code> branch
+of the Mesa git repository.
 After you've cloned the repository, check out the branch with:
 </p>
 <pre>
-   git-checkout -b gallium-0.1 origin/gallium-0.1
+   git-checkout -b gallium-0.2 origin/gallium-0.2
 </pre>
 <p>
 To build the driver you'll need the IBM Cell SDK (version 2.1 or 3.0).
@@ -43,12 +44,13 @@ or the Cell Simulator (untested, though).
 </p>
 
 <p>
-If using Cell SDK 3.0, first edit configs/linux-cell and add
-<code>-DSPU_MAIN_PARAM_LONG_LONG</code> to the SPU_CFLAGS.
+If using Cell SDK 2.1, see the configs/linux-cell file for some
+special changes.
 </p>
 
 <p>
 To compile the code, run <code>make linux-cell</code>.
+To build in debug mode, run <code>make linux-cell-debug</code>.
 </p>
 
 <p>
@@ -60,7 +62,7 @@ directory that contains <code>libGL.so</code>.
 Verify that the Cell driver is being used by running <code>glxinfo</code>
 and looking for:
 <pre>
-  OpenGL renderer string: Gallium 0.1, Cell on Xlib
+  OpenGL renderer string: Gallium 0.2, Cell on Xlib
 </pre>
 
 
@@ -77,21 +79,61 @@ SPU local store as needed.
 Similarly, textures are tiled and brought into local store as needed.
 </p>
 
-<p>
-More recently, vertex transformation has been parallelized across the SPUs
-as well.
-</p>
-
 
 <H2>Status</H2>
 
 <p>
-As of February 2008 the driver supports smooth/flat shaded triangle rendering
-with Z testing and simple texture mapping.
-Simple demos like gears run successfully.
-To test texture mapping, try progs/demos/texcyl (press right mouse button for
-rendering options).
+As of October 2008, the driver runs quite a few OpenGL demos.
+Features that work include:
 </p>
+<ul>
+<li>Point/line/triangle rendering, glDrawPixels
+<li>2D, NPOT and cube texture maps with nearest/linear/mipmap filtering
+<li>Dynamic SPU code generation for fragment shaders, but not complete
+<li>Dynamic SPU code generation for fragment ops (blend, Z-test, etc), but not complete
+<li>Dynamic PPU/PPC code generation for vertex shaders, but not complete
+</ul>
+<p>
+Performance has recently improved with the addition of PPC code generation
+for vertex shaders, but the code quality isn't too great yet.
+</p>
+<p>
+Another bottleneck is SwapBuffers.  It may be the limiting factor for
+many simple GL tests.
+</p>
+
+
+
+<H2>Debug Options</H2>
+
+<p>
+The CELL_DEBUG env var can be set to a comma-separated list of one or
+more of the following debug options:
+</p>
+<ul>
+<li><b>checker</b> - use a different background clear color for each SPU.
+   This lets you see which SPU is rendering which screen tiles.
+<li><b>sync</b> - wait/synchronize after each DMA transfer
+<li><b>asm</b> - print generated SPU assembly code to stdout
+<li><b>fragops</b> - emit fragment ops debug messages
+<li><b>fragopfallback</b> - don't use codegen for fragment ops
+<li><b>cmd</b> - print SPU commands as their received
+<li><b>cache</b> - print texture cache statistics when program exits
+</ul>
+<p>
+Note that some of these options may only work for linux-cell-debug builds.
+</p>
+
+<p>
+If the GALLIUM_NOPPC env var is set, PPC code generation will not be used
+and vertex shaders will be run with the TGSI interpreter.
+</p>
+<p>
+If the GALLIUM_NOCELL env var is set, the softpipe driver will be used
+intead of the Cell driver.
+This is useful for comparison/validation.
+</p>
+
 
 
 <H2>Contributing</H2>
