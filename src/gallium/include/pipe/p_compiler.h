@@ -96,7 +96,6 @@ typedef int     _Bool;
 typedef unsigned int       uint;
 typedef unsigned char      ubyte;
 typedef unsigned short     ushort;
-typedef uint64_t           uint64;
 
 #if 0
 #define boolean bool

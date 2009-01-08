@@ -109,7 +109,7 @@ struct pipe_context {
    boolean (*get_query_result)(struct pipe_context *pipe, 
                                struct pipe_query *q,
                                boolean wait,
-                               uint64 *result);
+                               uint64_t *result);
    /*@}*/
 
    /**

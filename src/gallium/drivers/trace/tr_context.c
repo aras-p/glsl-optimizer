@@ -274,11 +274,11 @@ static INLINE boolean
 trace_context_get_query_result(struct pipe_context *_pipe, 
                                struct pipe_query *query,
                                boolean wait,
-                               uint64 *presult)
+                               uint64_t *presult)
 {
    struct trace_context *tr_ctx = trace_context(_pipe);
    struct pipe_context *pipe = tr_ctx->pipe;
-   uint64 result;
+   uint64_t result;
    boolean _result;
 
    trace_dump_call_begin("pipe_context", "get_query_result");

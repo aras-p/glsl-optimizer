@@ -37,8 +37,8 @@
 #include "sp_query.h"
 
 struct softpipe_query {
-   uint64 start;
-   uint64 end;
+   uint64_t start;
+   uint64_t end;
 };
 
 
@@ -87,7 +87,7 @@ static boolean
 softpipe_get_query_result(struct pipe_context *pipe, 
 			  struct pipe_query *q,
 			  boolean wait,
-			  uint64 *result )
+			  uint64_t *result )
 {
    struct softpipe_query *sq = softpipe_query(q);
    *result = sq->end - sq->start;

@@ -49,7 +49,7 @@ nv30_state_emit(struct nv30_context *nv30)
 	struct nv30_state *state = &nv30->state;
 	struct nv30_screen *screen = nv30->screen;
 	unsigned i, samplers;
-	uint64 states;
+	uint64_t states;
 
 	if (nv30->pctx_id != screen->cur_pctx) {
 		for (i = 0; i < NV30_STATE_MAX; i++) {
