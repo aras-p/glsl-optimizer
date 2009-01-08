@@ -20,12 +20,7 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
  * USE OR OTHER DEALINGS IN THE SOFTWARE. */
 
-#ifndef R300_CONTEXT_H
-#define R300_CONTEXT_H
+#ifndef R300_STATE_H
+#define R300_STATE_H
 
-/* Convenience cast wrapper. */
-static struct r300_context* r300_context(struct pipe_context* pipe) {
-    return (struct r300_context*)pipe;
-}
-
-#endif /* R300_CONTEXT_H */
+#endif /* R300_STATE_H */
