@@ -68,7 +68,7 @@ const GLuint MAX_FOR_LOOP_UNROLL_BODY_SIZE = 50;
  * and the size of the body.  So long-ish loops with very simple bodies
  * can be unrolled, as well as short loops with larger bodies.
  */
-const GLuint MAX_FOR_LOOP_UNROLL_COMPLEXITY = 200;
+const GLuint MAX_FOR_LOOP_UNROLL_COMPLEXITY = 256;
 
 
 
