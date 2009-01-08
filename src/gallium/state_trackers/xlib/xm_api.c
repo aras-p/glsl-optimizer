@@ -1029,13 +1029,6 @@ xmesa_check_and_update_buffer_size(XMesaContext xmctx, XMesaBuffer drawBuffer)
 }
 
 
-/*
- * Bind buffer b to context c and make c the current rendering context.
- */
-GLboolean XMesaMakeCurrent( XMesaContext c, XMesaBuffer b )
-{
-   return XMesaMakeCurrent2( c, b, b );
-}
 
 
 /*

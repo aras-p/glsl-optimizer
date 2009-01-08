@@ -1534,7 +1534,7 @@ Fake_glXMakeContextCurrent( Display *dpy, GLXDrawable draw,
    }
    else if (!ctx && !draw && !read) {
       /* release current context w/out assigning new one. */
-      XMesaMakeCurrent( NULL, NULL );
+      XMesaMakeCurrent2( NULL, NULL, NULL );
       MakeCurrent_PrevContext = 0;
       MakeCurrent_PrevDrawable = 0;
       MakeCurrent_PrevReadable = 0;
