@@ -50,7 +50,6 @@
 #include "mtypes.h"
 #include "version.h"
 #include "fakeglx.h"
-#include "xmesaP.h"
 #include "state_tracker/st_context.h"
 #include "state_tracker/st_public.h"
 

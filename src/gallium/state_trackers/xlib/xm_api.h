@@ -64,35 +64,6 @@ and create a window, you must do the following to use the X/Mesa interface:
 #ifndef XMESA_H
 #define XMESA_H
 
-#ifdef __VMS
-#include <GL/vms_x_fix.h>
-#endif
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#include <X11/Xlib.h>
-#include <X11/Xutil.h>
-#include "GL/gl.h"
-
-#ifdef AMIWIN
-#include <pragmas/xlib_pragmas.h>
-extern struct Library *XLibBase;
-#endif
-
-
-#define XMESA_MAJOR_VERSION 6
-#define XMESA_MINOR_VERSION 3
-
-
-
-/*
- * Values passed to XMesaGetString:
- */
-#define XMESA_VERSION 1
-#define XMESA_EXTENSIONS 2
-
 
 
 typedef struct xmesa_context *XMesaContext;
@@ -101,6 +72,9 @@ typedef struct xmesa_visual *XMesaVisual;
 
 typedef struct xmesa_buffer *XMesaBuffer;
 
+/* Every user of this file also includes xmesaP.h
+ */
+#include "xmesaP.h"
 
 
 /*
@@ -222,19 +196,6 @@ extern XMesaContext XMesaGetCurrentContext( void );
 
 
 /*
- * Return handle to the current (draw) buffer.
- */
-extern XMesaBuffer XMesaGetCurrentBuffer( void );
-
-
-/*
- * Return handle to the current read buffer.
- * New in Mesa 3.3
- */
-extern XMesaBuffer XMesaGetCurrentReadBuffer( void );
-
-
-/*
  * Swap the front and back buffers for the given buffer.  No action is
  * taken if the buffer is not double buffered.
  */
@@ -253,37 +214,6 @@ extern void XMesaCopySubBuffer( XMesaBuffer b,
 				int height );
 
 
-/*
- * Return a pointer to the the Pixmap or XImage being used as the back
- * color buffer of an XMesaBuffer.  This function is a way to get "under
- * the hood" of X/Mesa so one can manipulate the back buffer directly.
- * Input:  b - the XMesaBuffer
- * Output:  pixmap - pointer to back buffer's Pixmap, or 0
- *          ximage - pointer to back buffer's XImage, or NULL
- * Return:  GL_TRUE = context is double buffered
- *          GL_FALSE = context is single buffered
- */
-extern GLboolean XMesaGetBackBuffer( XMesaBuffer b,
-				     Pixmap *pixmap,
-				     XImage **ximage );
-
-
-
-/*
- * Return the depth buffer associated with an XMesaBuffer.
- * Input:  b - the XMesa buffer handle
- * Output:  width, height - size of buffer in pixels
- *          bytesPerValue - bytes per depth value (2 or 4)
- *          buffer - pointer to depth buffer values
- * Return:  GL_TRUE or GL_FALSE to indicate success or failure.
- *
- * New in Mesa 2.4.
- */
-extern GLboolean XMesaGetDepthBuffer( XMesaBuffer b,
-				      GLint *width,
-				      GLint *height,
-				      GLint *bytesPerValue,
-				      void **buffer );
 
 
 
@@ -295,50 +225,12 @@ extern void XMesaFlush( XMesaContext c );
 
 
 /*
- * Get an X/Mesa-specific string.
- * Input:  name - either XMESA_VERSION or XMESA_EXTENSIONS
- */
-extern const char *XMesaGetString( XMesaContext c, int name );
-
-
-
-/*
  * Scan for XMesaBuffers whose window/pixmap has been destroyed, then free
  * any memory used by that buffer.
  *
  * New in Mesa 2.3.
  */
 extern void XMesaGarbageCollect( void );
-
-
-
-/*
- * Return a dithered pixel value.
- * Input:  c - XMesaContext
- *         x, y - window coordinate
- *         red, green, blue, alpha - color components in [0,1]
- * Return:  pixel value
- *
- * New in Mesa 2.3.
- */
-extern unsigned long XMesaDitherColor( XMesaContext xmesa,
-				       GLint x,
-				       GLint y,
-				       GLfloat red,
-				       GLfloat green,
-				       GLfloat blue,
-				       GLfloat alpha );
-
-
-
-
-/*
- * Reallocate the back/depth/stencil/accum/etc/ buffers associated with
- * buffer <b> if its size has changed.
- *
- * New in Mesa 4.0.2
- */
-extern void XMesaResizeBuffers( XMesaBuffer b );
 
 
 
@@ -369,10 +261,6 @@ XMesaCreatePixmapTextureBuffer(XMesaVisual v, Pixmap p,
                                int format, int target, int mipmap);
 
 
-
-#ifdef __cplusplus
-}
-#endif
 
 
 #endif

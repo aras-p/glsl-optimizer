@@ -59,7 +59,6 @@
 
 #include "glxheader.h"
 #include "xm_api.h"
-#include "xmesaP.h"
 #include "main/context.h"
 #include "main/framebuffer.h"
 
@@ -1015,8 +1014,7 @@ XMesaDestroyBuffer(XMesaBuffer b)
  * and all attached renderbuffers.
  * Called when:
  *  1. the first time a buffer is bound to a context.
- *  2. from the XMesaResizeBuffers() API function.
- *  3. SwapBuffers.  XXX probabaly from xm_flush_frontbuffer() too...
+ *  2. SwapBuffers.  XXX probabaly from xm_flush_frontbuffer() too...
  * Note: it's possible (and legal) for xmctx to be NULL.  That can happen
  * when resizing a buffer when no rendering context is bound.
  */
@@ -1100,30 +1098,6 @@ XMesaContext XMesaGetCurrentContext( void )
 }
 
 
-XMesaBuffer XMesaGetCurrentBuffer( void )
-{
-   GET_CURRENT_CONTEXT(ctx);
-   if (ctx) {
-      XMesaBuffer xmbuf = xmesa_buffer(ctx->DrawBuffer);
-      return xmbuf;
-   }
-   else {
-      return 0;
-   }
-}
-
-
-/* New in Mesa 3.1 */
-XMesaBuffer XMesaGetCurrentReadBuffer( void )
-{
-   GET_CURRENT_CONTEXT(ctx);
-   if (ctx) {
-      return xmesa_buffer(ctx->ReadBuffer);
-   }
-   else {
-      return 0;
-   }
-}
 
 
 
@@ -1176,25 +1150,6 @@ void XMesaCopySubBuffer( XMesaBuffer b, int x, int y, int width, int height )
 
 
 
-/*
- * Return the depth buffer associated with an XMesaBuffer.
- * Input:  b - the XMesa buffer handle
- * Output:  width, height - size of buffer in pixels
- *          bytesPerValue - bytes per depth value (2 or 4)
- *          buffer - pointer to depth buffer values
- * Return:  GL_TRUE or GL_FALSE to indicate success or failure.
- */
-GLboolean XMesaGetDepthBuffer( XMesaBuffer b, GLint *width, GLint *height,
-                               GLint *bytesPerValue, void **buffer )
-{
-   *width = 0;
-   *height = 0;
-   *bytesPerValue = 0;
-   *buffer = 0;
-   return GL_FALSE;
-}
-
-
 void XMesaFlush( XMesaContext c )
 {
    if (c && c->xm_visual->display) {
@@ -1204,20 +1159,6 @@ void XMesaFlush( XMesaContext c )
 }
 
 
-
-const char *XMesaGetString( XMesaContext c, int name )
-{
-   (void) c;
-   if (name==XMESA_VERSION) {
-      return "5.0";
-   }
-   else if (name==XMESA_EXTENSIONS) {
-      return "";
-   }
-   else {
-      return NULL;
-   }
-}
 
 
 
@@ -1268,30 +1209,6 @@ void XMesaGarbageCollect( void )
          }
       }
    }
-}
-
-
-unsigned long XMesaDitherColor( XMesaContext xmesa, GLint x, GLint y,
-                                GLfloat red, GLfloat green,
-                                GLfloat blue, GLfloat alpha )
-{
-   /* no longer supported */
-   return 0;
-}
-
-
-/*
- * This is typically called when the window size changes and we need
- * to reallocate the buffer's back/depth/stencil/accum buffers.
- */
-PUBLIC void
-XMesaResizeBuffers( XMesaBuffer b )
-{
-   GET_CURRENT_CONTEXT(ctx);
-   XMesaContext xmctx = xmesa_context(ctx);
-   if (!xmctx)
-      return;
-   xmesa_check_and_update_buffer_size(xmctx, b);
 }
 
 
