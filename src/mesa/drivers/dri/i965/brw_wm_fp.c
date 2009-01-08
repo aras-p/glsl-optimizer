@@ -864,9 +864,9 @@ static void emit_fog( struct brw_wm_compile *c )
 
 static void emit_fb_write( struct brw_wm_compile *c )
 {
-   struct prog_src_register outcolor = src_reg(PROGRAM_OUTPUT, FRAG_RESULT_COLR);
    struct prog_src_register payload_r0_depth = src_reg(PROGRAM_PAYLOAD, PAYLOAD_DEPTH);
    struct prog_src_register outdepth = src_reg(PROGRAM_OUTPUT, FRAG_RESULT_DEPR);
+   struct prog_src_register outcolor;
    GLuint i;
 
    struct prog_instruction *inst, *last_inst;
@@ -890,7 +890,14 @@ static void emit_fb_write( struct brw_wm_compile *c )
 	   }
        }
        last_inst->Sampler |= 1; //eot
-   }else {
+   }
+   else {
+      /* if gl_FragData[0] is written, use it, else use gl_FragColor */
+      if (c->fp->program.Base.OutputsWritten & (1 << FRAG_RESULT_DATA0))
+         outcolor = src_reg(PROGRAM_OUTPUT, FRAG_RESULT_DATA0);
+      else 
+         outcolor = src_reg(PROGRAM_OUTPUT, FRAG_RESULT_COLR);
+
        inst = emit_op(c, WM_FB_WRITE, dst_mask(dst_undef(),0),
 	       0, 0, 0, outcolor, payload_r0_depth, outdepth);
        inst->Sampler = 1|(0<<1);
