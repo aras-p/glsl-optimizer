@@ -27,7 +27,7 @@
 #define XMESAP_H
 
 
-#include "GL/xmesa.h"
+#include "old_xmesa.h"
 #include "mtypes.h"
 
 #include "state_tracker/st_context.h"
