@@ -58,7 +58,7 @@
 #endif
 
 #include "glxheader.h"
-#include "old_xmesa.h"
+#include "xm_api.h"
 #include "xmesaP.h"
 #include "main/context.h"
 #include "main/framebuffer.h"
