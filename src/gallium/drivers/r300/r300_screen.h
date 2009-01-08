@@ -23,6 +23,11 @@
 #ifndef R300_SCREEN_H
 #define R300_SCREEN_H
 
+#include "pipe/p_screen.h"
+#include "util/u_memory.h"
+
+#include "r300_context.h"
+
 struct r300_screen {
     /* Parent class */
     struct pipe_screen screen;
@@ -30,6 +35,14 @@ struct r300_screen {
     boolean is_r400;
     boolean is_r500;
     int pci_id;
+};
+
+/* Convenience cast wrapper. */
+static struct r300_screen* r300_screen(struct pipe_screen* screen) {
+    return (struct r300_screen*)screen;
 }
+
+/* Creates a new r300 screen. */
+struct pipe_screen* r300_create_screen(struct pipe_winsys* winsys, uint pci_id);
 
 #endif /* R300_SCREEN_H */

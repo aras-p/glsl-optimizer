@@ -1,9 +1,9 @@
 #include "r300_context.h"
 
-static void r300_destroy_context(struct pipe_context* pipe) {
-    struct r300_context* context = r300_context(pipe);
+static void r300_destroy_context(struct pipe_context* context) {
+    struct r300_context* r300 = r300_context(context);
 
-    draw_destroy(context->draw);
+    draw_destroy(r300->draw);
 
     FREE(context);
 }
@@ -12,16 +12,16 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
                                          struct pipe_winsys* winsys,
                                          struct amd_winsys* amd_winsys)
 {
-    struct r300_context* context = CALLOC_STRUCT(r300_context);
+    struct r300_context* r300 = CALLOC_STRUCT(r300_context);
 
-    if (!context)
+    if (!r300)
         return NULL;
 
-    context->winsys = amd_winsys;
-    context->context.winsys = winsys;
-    context->context.screen = screen;
+    r300->winsys = amd_winsys;
+    r300->context.winsys = winsys;
+    r300->context.screen = screen;
 
-    context->context.destroy = r300_destroy_context;
+    r300->context.destroy = r300_destroy_context;
 
-    return &context->context;
+    return &r300->context;
 }

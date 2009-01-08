@@ -1,6 +1,26 @@
-/* XXX put a copyright here */
+/*
+ * Copyright 2008 Corbin Simpson <MostAwesomeDude@gmail.com>
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * on the rights to use, copy, modify, merge, publish, distribute, sub
+ * license, and/or sell copies of the Software, and to permit persons to whom
+ * the Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice (including the next
+ * paragraph) shall be included in all copies or substantial portions of the
+ * Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHOR(S) AND/OR THEIR SUPPLIERS BE LIABLE FOR ANY CLAIM,
+ * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+ * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+ * USE OR OTHER DEALINGS IN THE SOFTWARE. */
 
-/* I know my style's weird, get used to it */
+#include "r300_screen.h"
 
 static const char* r300_get_vendor(struct pipe_screen* pscreen) {
     return "X.Org R300 Project";
@@ -12,6 +32,8 @@ static const char* r300_get_name(struct pipe_screen* pscreen) {
 }
 
 static int r300_get_param(struct pipe_screen* pscreen, int param) {
+    struct r300_screen* r300screen = r300_screen(pscreen);
+
     switch (param) {
         /* Cases marked "IN THEORY" are possible on the hardware,
          * but haven't been implemented yet. */
@@ -43,9 +65,13 @@ static int r300_get_param(struct pipe_screen* pscreen, int param) {
             /* IN THEORY */
             return 0;
         case PIPE_CAP_MAX_TEXTURE_2D_LEVELS:
-            /* 12 == 2048x2048
-             * R500 can do 4096x4096 */
-            return 12;
+            /* 12 == 2048x2048 */
+            if (r300screen->is_r500) {
+                /* R500 can do 4096x4096 */
+                return 13;
+            } else {
+                return 12;
+            }
         case PIPE_CAP_MAX_TEXTURE_3D_LEVELS:
             /* XXX educated guess */
             return 8;
@@ -60,7 +86,7 @@ static int r300_get_param(struct pipe_screen* pscreen, int param) {
     }
 }
 
-static float r300_get_paramf(struct pipe_screen* pscreen, float param) {
+static float r300_get_paramf(struct pipe_screen* pscreen, int param) {
     switch (param) {
         case PIPE_CAP_MAX_LINE_WIDTH:
         case PIPE_CAP_MAX_LINE_WIDTH_AA:
@@ -81,12 +107,35 @@ static float r300_get_paramf(struct pipe_screen* pscreen, float param) {
 }
 
 static boolean r300_is_format_supported(struct pipe_screen* pscreen,
-                                        enum pipe_format format, uint type)
+                                        enum pipe_format format,
+                                        enum pipe_texture_target target,
+                                        unsigned tex_usage,
+                                        unsigned geom_flags)
 {
     return FALSE;
 }
 
-static r300_destroy_screen(struct pipe_screen* pscreen) {
+static void* r300_surface_map(struct pipe_screen* screen,
+                              struct pipe_surface* surface,
+                              unsigned flags)
+{
+    /* XXX is this all we need to do here? */
+    char* map = pipe_buffer_map(screen, surface->buffer, flags);
+
+    if (!map) {
+        return NULL;
+    }
+
+    return map + surface->offset;
+}
+
+static void r300_surface_unmap(struct pipe_screen* screen,
+                               struct pipe_surface* surface)
+{
+    pipe_buffer_unmap(screen, surface->buffer);
+}
+
+static void r300_destroy_screen(struct pipe_screen* pscreen) {
     FREE(pscreen);
 }
 
