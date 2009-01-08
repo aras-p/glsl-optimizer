@@ -46,8 +46,8 @@ extern XMesaBuffer XMesaBufferList;
  */
 struct xmesa_visual {
    GLvisual mesa_visual;	/* Device independent visual parameters */
-   XMesaDisplay *display;	/* The X11 display */
-   XMesaVisualInfo visinfo;	/* X's visual info (pointer to private copy) */
+   Display *display;	/* The X11 display */
+   XVisualInfo * visinfo;	/* X's visual info (pointer to private copy) */
    XVisualInfo *vishandle;	/* Only used in fakeglx.c */
    GLint BitsPerPixel;		/* True bits per pixel for XImages */
 
@@ -86,11 +86,11 @@ struct xmesa_buffer {
 
    GLboolean wasCurrent;	/* was ever the current buffer? */
    XMesaVisual xm_visual;	/* the X/Mesa visual */
-   XMesaDrawable drawable;	/* Usually the X window ID */
-   XMesaColormap cmap;		/* the X colormap */
+   Drawable drawable;	/* Usually the X window ID */
+   Colormap cmap;		/* the X colormap */
    BufferType type;             /* window, pixmap, pbuffer or glxwindow */
 
-   XMesaImage *tempImage;
+   XImage *tempImage;
    unsigned long selectedEvents;/* for pbuffers only */
 
    GLuint shm;			/* X Shared Memory extension status:	*/
@@ -101,7 +101,7 @@ struct xmesa_buffer {
    XShmSegmentInfo shminfo;
 #endif
 
-   XMesaGC gc;			/* scratch GC for span, line, tri drawing */
+   GC gc;			/* scratch GC for span, line, tri drawing */
 
    /* GLX_EXT_texture_from_pixmap */
    GLint TextureTarget; /** GLX_TEXTURE_1D_EXT, for example */
@@ -134,13 +134,13 @@ extern void
 xmesa_delete_framebuffer(struct gl_framebuffer *fb);
 
 extern XMesaBuffer
-xmesa_find_buffer(XMesaDisplay *dpy, XMesaColormap cmap, XMesaBuffer notThis);
+xmesa_find_buffer(Display *dpy, Colormap cmap, XMesaBuffer notThis);
 
 extern void
 xmesa_check_and_update_buffer_size(XMesaContext xmctx, XMesaBuffer drawBuffer);
 
 extern void
-xmesa_destroy_buffers_on_display(XMesaDisplay *dpy);
+xmesa_destroy_buffers_on_display(Display *dpy);
 
 static INLINE GLuint
 xmesa_buffer_width(XMesaBuffer b)
@@ -155,6 +155,6 @@ xmesa_buffer_height(XMesaBuffer b)
 }
 
 extern int
-xmesa_check_for_xshm(XMesaDisplay *display);
+xmesa_check_for_xshm(Display *display);
 
 #endif

@@ -127,8 +127,8 @@ typedef struct xmesa_buffer *XMesaBuffer;
  *         visualCaveat - ala the GLX extension, usually GLX_NONE_EXT
  * Return;  a new XMesaVisual or 0 if error.
  */
-extern XMesaVisual XMesaCreateVisual( XMesaDisplay *display,
-                                      XMesaVisualInfo visinfo,
+extern XMesaVisual XMesaCreateVisual( Display *display,
+                                      XVisualInfo * visinfo,
                                       GLboolean rgb_flag,
                                       GLboolean alpha_flag,
                                       GLboolean db_flag,
@@ -187,15 +187,15 @@ extern GLboolean XMesaCopyContext( XMesaContext src,
 /*
  * Create an XMesaBuffer from an X window.
  */
-extern XMesaBuffer XMesaCreateWindowBuffer( XMesaVisual v, XMesaWindow w );
+extern XMesaBuffer XMesaCreateWindowBuffer( XMesaVisual v, Window w );
 
 
 /*
  * Create an XMesaBuffer from an X pixmap.
  */
 extern XMesaBuffer XMesaCreatePixmapBuffer( XMesaVisual v,
-					    XMesaPixmap p,
-					    XMesaColormap cmap );
+					    Pixmap p,
+					    Colormap cmap );
 
 
 /*
@@ -209,8 +209,8 @@ extern void XMesaDestroyBuffer( XMesaBuffer b );
  *
  * New in Mesa 2.3.
  */
-extern XMesaBuffer XMesaFindBuffer( XMesaDisplay *dpy,
-				    XMesaDrawable d );
+extern XMesaBuffer XMesaFindBuffer( Display *dpy,
+				    Drawable d );
 
 
 
@@ -286,8 +286,8 @@ extern void XMesaCopySubBuffer( XMesaBuffer b,
  *          GL_FALSE = context is single buffered
  */
 extern GLboolean XMesaGetBackBuffer( XMesaBuffer b,
-				     XMesaPixmap *pixmap,
-				     XMesaImage **ximage );
+				     Pixmap *pixmap,
+				     XImage **ximage );
 
 
 
@@ -368,7 +368,7 @@ extern void XMesaResizeBuffers( XMesaBuffer b );
  * Create a pbuffer.
  * New in Mesa 4.1
  */
-extern XMesaBuffer XMesaCreatePBuffer(XMesaVisual v, XMesaColormap cmap,
+extern XMesaBuffer XMesaCreatePBuffer(XMesaVisual v, Colormap cmap,
                                       unsigned int width, unsigned int height);
 
 
@@ -378,16 +378,16 @@ extern XMesaBuffer XMesaCreatePBuffer(XMesaVisual v, XMesaColormap cmap,
  * New in Mesa 7.1
  */
 extern void
-XMesaBindTexImage(XMesaDisplay *dpy, XMesaBuffer drawable, int buffer,
+XMesaBindTexImage(Display *dpy, XMesaBuffer drawable, int buffer,
                   const int *attrib_list);
 
 extern void
-XMesaReleaseTexImage(XMesaDisplay *dpy, XMesaBuffer drawable, int buffer);
+XMesaReleaseTexImage(Display *dpy, XMesaBuffer drawable, int buffer);
 
 
 extern XMesaBuffer
-XMesaCreatePixmapTextureBuffer(XMesaVisual v, XMesaPixmap p,
-                               XMesaColormap cmap,
+XMesaCreatePixmapTextureBuffer(XMesaVisual v, Pixmap p,
+                               Colormap cmap,
                                int format, int target, int mipmap);
 
 

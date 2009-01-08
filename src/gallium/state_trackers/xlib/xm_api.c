@@ -101,7 +101,7 @@ static int host_byte_order( void )
  *          1 = shared XImage support available
  *          2 = shared Pixmap support available also
  */
-int xmesa_check_for_xshm( XMesaDisplay *display )
+int xmesa_check_for_xshm( Display *display )
 {
 #if defined(USE_XSHM)
    int major, minor, ignore;
@@ -143,9 +143,9 @@ int xmesa_check_for_xshm( XMesaDisplay *display )
 static int
 bits_per_pixel( XMesaVisual xmv )
 {
-   XMesaDisplay *dpy = xmv->display;
-   XMesaVisualInfo visinfo = xmv->visinfo;
-   XMesaImage *img;
+   Display *dpy = xmv->display;
+   XVisualInfo * visinfo = xmv->visinfo;
+   XImage *img;
    int bitsPerPixel;
    /* Create a temporary XImage */
    img = XCreateImage( dpy, visinfo->visual, visinfo->depth,
@@ -178,7 +178,7 @@ bits_per_pixel( XMesaVisual xmv )
  */
 static GLboolean WindowExistsFlag;
 
-static int window_exists_err_handler( XMesaDisplay* dpy, XErrorEvent* xerr )
+static int window_exists_err_handler( Display* dpy, XErrorEvent* xerr )
 {
    (void) dpy;
    if (xerr->error_code == BadWindow) {
@@ -187,10 +187,10 @@ static int window_exists_err_handler( XMesaDisplay* dpy, XErrorEvent* xerr )
    return 0;
 }
 
-static GLboolean window_exists( XMesaDisplay *dpy, Window win )
+static GLboolean window_exists( Display *dpy, Window win )
 {
    XWindowAttributes wa;
-   int (*old_handler)( XMesaDisplay*, XErrorEvent* );
+   int (*old_handler)( Display*, XErrorEvent* );
    WindowExistsFlag = GL_TRUE;
    old_handler = XSetErrorHandler(window_exists_err_handler);
    XGetWindowAttributes( dpy, win, &wa ); /* dummy request */
@@ -199,7 +199,7 @@ static GLboolean window_exists( XMesaDisplay *dpy, Window win )
 }
 
 static Status
-get_drawable_size( XMesaDisplay *dpy, Drawable d, uint *width, uint *height )
+get_drawable_size( Display *dpy, Drawable d, uint *width, uint *height )
 {
    Window root;
    Status stat;
@@ -219,7 +219,7 @@ get_drawable_size( XMesaDisplay *dpy, Drawable d, uint *width, uint *height )
  * \param height  returns height in pixels
  */
 static void
-xmesa_get_window_size(XMesaDisplay *dpy, XMesaBuffer b,
+xmesa_get_window_size(Display *dpy, XMesaBuffer b,
                       GLuint *width, GLuint *height)
 {
    Status stat;
@@ -303,8 +303,8 @@ XMesaBuffer XMesaBufferList = NULL;
  * \return new XMesaBuffer or NULL if any problem
  */
 static XMesaBuffer
-create_xmesa_buffer(XMesaDrawable d, BufferType type,
-                    XMesaVisual vis, XMesaColormap cmap)
+create_xmesa_buffer(Drawable d, BufferType type,
+                    XMesaVisual vis, Colormap cmap)
 {
    XMesaBuffer b;
    GLframebuffer *fb;
@@ -397,7 +397,7 @@ create_xmesa_buffer(XMesaDrawable d, BufferType type,
  * the notThis buffer.
  */
 XMesaBuffer
-xmesa_find_buffer(XMesaDisplay *dpy, XMesaColormap cmap, XMesaBuffer notThis)
+xmesa_find_buffer(Display *dpy, Colormap cmap, XMesaBuffer notThis)
 {
    XMesaBuffer b;
    for (b = XMesaBufferList; b; b = b->Next) {
@@ -475,8 +475,8 @@ xmesa_free_buffer(XMesaBuffer buffer)
  */
 static GLboolean
 initialize_visual_and_buffer(XMesaVisual v, XMesaBuffer b,
-                             GLboolean rgb_flag, XMesaDrawable window,
-                             XMesaColormap cmap)
+                             GLboolean rgb_flag, Drawable window,
+                             Colormap cmap)
 {
    ASSERT(!b || b->xm_visual == v);
 
@@ -598,8 +598,8 @@ xmesa_convert_from_x_visual_type( int visualType )
  * Return;  a new XMesaVisual or 0 if error.
  */
 PUBLIC
-XMesaVisual XMesaCreateVisual( XMesaDisplay *display,
-                               XMesaVisualInfo visinfo,
+XMesaVisual XMesaCreateVisual( Display *display,
+                               XVisualInfo * visinfo,
                                GLboolean rgb_flag,
                                GLboolean alpha_flag,
                                GLboolean db_flag,
@@ -826,11 +826,11 @@ void XMesaDestroyContext( XMesaContext c )
  * \return  new XMesaBuffer or NULL if error
  */
 PUBLIC XMesaBuffer
-XMesaCreateWindowBuffer(XMesaVisual v, XMesaWindow w)
+XMesaCreateWindowBuffer(XMesaVisual v, Window w)
 {
    XWindowAttributes attr;
    XMesaBuffer b;
-   XMesaColormap cmap;
+   Colormap cmap;
    int depth;
 
    assert(v);
@@ -856,12 +856,12 @@ XMesaCreateWindowBuffer(XMesaVisual v, XMesaWindow w)
       cmap = XCreateColormap(v->display, w, attr.visual, AllocNone);
    }
 
-   b = create_xmesa_buffer((XMesaDrawable) w, WINDOW, v, cmap);
+   b = create_xmesa_buffer((Drawable) w, WINDOW, v, cmap);
    if (!b)
       return NULL;
 
    if (!initialize_visual_and_buffer( v, b, v->mesa_visual.rgbMode,
-                                      (XMesaDrawable) w, cmap )) {
+                                      (Drawable) w, cmap )) {
       xmesa_free_buffer(b);
       return NULL;
    }
@@ -881,18 +881,18 @@ XMesaCreateWindowBuffer(XMesaVisual v, XMesaWindow w)
  * \returns new XMesaBuffer or NULL if error
  */
 PUBLIC XMesaBuffer
-XMesaCreatePixmapBuffer(XMesaVisual v, XMesaPixmap p, XMesaColormap cmap)
+XMesaCreatePixmapBuffer(XMesaVisual v, Pixmap p, Colormap cmap)
 {
    XMesaBuffer b;
 
    assert(v);
 
-   b = create_xmesa_buffer((XMesaDrawable) p, PIXMAP, v, cmap);
+   b = create_xmesa_buffer((Drawable) p, PIXMAP, v, cmap);
    if (!b)
       return NULL;
 
    if (!initialize_visual_and_buffer(v, b, v->mesa_visual.rgbMode,
-				     (XMesaDrawable) p, cmap)) {
+				     (Drawable) p, cmap)) {
       xmesa_free_buffer(b);
       return NULL;
    }
@@ -905,8 +905,8 @@ XMesaCreatePixmapBuffer(XMesaVisual v, XMesaPixmap p, XMesaColormap cmap)
  * For GLX_EXT_texture_from_pixmap
  */
 XMesaBuffer
-XMesaCreatePixmapTextureBuffer(XMesaVisual v, XMesaPixmap p,
-                               XMesaColormap cmap,
+XMesaCreatePixmapTextureBuffer(XMesaVisual v, Pixmap p,
+                               Colormap cmap,
                                int format, int target, int mipmap)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -915,7 +915,7 @@ XMesaCreatePixmapTextureBuffer(XMesaVisual v, XMesaPixmap p,
 
    assert(v);
 
-   b = create_xmesa_buffer((XMesaDrawable) p, PIXMAP, v, cmap);
+   b = create_xmesa_buffer((Drawable) p, PIXMAP, v, cmap);
    if (!b)
       return NULL;
 
@@ -953,7 +953,7 @@ XMesaCreatePixmapTextureBuffer(XMesaVisual v, XMesaPixmap p,
    b->TextureMipmap = mipmap;
 
    if (!initialize_visual_and_buffer(v, b, v->mesa_visual.rgbMode,
-				     (XMesaDrawable) p, cmap)) {
+				     (Drawable) p, cmap)) {
       xmesa_free_buffer(b);
       return NULL;
    }
@@ -964,11 +964,11 @@ XMesaCreatePixmapTextureBuffer(XMesaVisual v, XMesaPixmap p,
 
 
 XMesaBuffer
-XMesaCreatePBuffer(XMesaVisual v, XMesaColormap cmap,
+XMesaCreatePBuffer(XMesaVisual v, Colormap cmap,
                    unsigned int width, unsigned int height)
 {
-   XMesaWindow root;
-   XMesaDrawable drawable;  /* X Pixmap Drawable */
+   Window root;
+   Drawable drawable;  /* X Pixmap Drawable */
    XMesaBuffer b;
 
    /* allocate pixmap for front buffer */
@@ -1221,7 +1221,7 @@ const char *XMesaGetString( XMesaContext c, int name )
 
 
 
-XMesaBuffer XMesaFindBuffer( XMesaDisplay *dpy, XMesaDrawable d )
+XMesaBuffer XMesaFindBuffer( Display *dpy, Drawable d )
 {
    XMesaBuffer b;
    for (b=XMesaBufferList; b; b=b->Next) {
@@ -1236,7 +1236,7 @@ XMesaBuffer XMesaFindBuffer( XMesaDisplay *dpy, XMesaDrawable d )
 /**
  * Free/destroy all XMesaBuffers associated with given display.
  */
-void xmesa_destroy_buffers_on_display(XMesaDisplay *dpy)
+void xmesa_destroy_buffers_on_display(Display *dpy)
 {
    XMesaBuffer b, next;
    for (b = XMesaBufferList; b; b = next) {
@@ -1298,7 +1298,7 @@ XMesaResizeBuffers( XMesaBuffer b )
 
 
 PUBLIC void
-XMesaBindTexImage(XMesaDisplay *dpy, XMesaBuffer drawable, int buffer,
+XMesaBindTexImage(Display *dpy, XMesaBuffer drawable, int buffer,
                   const int *attrib_list)
 {
 }
@@ -1306,7 +1306,7 @@ XMesaBindTexImage(XMesaDisplay *dpy, XMesaBuffer drawable, int buffer,
 
 
 PUBLIC void
-XMesaReleaseTexImage(XMesaDisplay *dpy, XMesaBuffer drawable, int buffer)
+XMesaReleaseTexImage(Display *dpy, XMesaBuffer drawable, int buffer)
 {
 }
 

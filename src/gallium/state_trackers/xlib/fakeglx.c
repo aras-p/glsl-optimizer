@@ -2195,7 +2195,7 @@ Fake_glXCreateWindow( Display *dpy, GLXFBConfig config, Window win,
 static void
 Fake_glXDestroyWindow( Display *dpy, GLXWindow window )
 {
-   XMesaBuffer b = XMesaFindBuffer(dpy, (XMesaDrawable) window);
+   XMesaBuffer b = XMesaFindBuffer(dpy, (Drawable) window);
    if (b)
       XMesaDestroyBuffer(b);
    /* don't destroy X window */
@@ -2316,7 +2316,7 @@ Fake_glXCreatePixmap( Display *dpy, GLXFBConfig config, Pixmap pixmap,
 static void
 Fake_glXDestroyPixmap( Display *dpy, GLXPixmap pixmap )
 {
-   XMesaBuffer b = XMesaFindBuffer(dpy, (XMesaDrawable)pixmap);
+   XMesaBuffer b = XMesaFindBuffer(dpy, (Drawable)pixmap);
    if (b)
       XMesaDestroyBuffer(b);
    /* don't destroy X pixmap */

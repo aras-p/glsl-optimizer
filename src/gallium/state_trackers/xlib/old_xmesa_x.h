@@ -39,16 +39,6 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifndef _XMESA_X_H_
 #define _XMESA_X_H_
 
-typedef Display      XMesaDisplay;
-typedef Pixmap       XMesaPixmap;
-typedef Colormap     XMesaColormap;
-typedef Drawable     XMesaDrawable;
-typedef Window       XMesaWindow;
-typedef GC           XMesaGC;
-typedef XVisualInfo *XMesaVisualInfo;
-typedef XImage       XMesaImage;
-typedef XPoint       XMesaPoint;
-typedef XColor       XMesaColor;
 
 #define XMesaDestroyImage      XDestroyImage
 
