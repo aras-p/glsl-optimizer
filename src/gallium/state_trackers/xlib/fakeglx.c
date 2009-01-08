@@ -54,10 +54,6 @@
 #include "state_tracker/st_public.h"
 
 
-#ifdef __VMS
-#define _mesa_sprintf sprintf
-#endif
-
 /* This indicates the client-side GLX API and GLX encoder version. */
 #define CLIENT_MAJOR_VERSION 1
 #define CLIENT_MINOR_VERSION 4  /* but don't have 1.3's pbuffers, etc yet */

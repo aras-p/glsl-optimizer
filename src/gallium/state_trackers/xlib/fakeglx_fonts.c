@@ -28,10 +28,6 @@
  * Copyright (C) 1995 Thorsten.Ohl @ Physik.TH-Darmstadt.de
  */
 
-#ifdef __VMS
-#include <GL/vms_x_fix.h>
-#endif
-
 #include "glxheader.h"
 #include "context.h"
 #include "imports.h"
