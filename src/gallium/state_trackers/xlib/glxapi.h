@@ -206,8 +206,6 @@ extern const char *
 _glxapi_get_version(void);
 
 
-extern const char **
-_glxapi_get_extensions(void);
 
 
 extern GLuint
