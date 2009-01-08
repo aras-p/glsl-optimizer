@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.2
  *
- * Copyright (C) 2005-2006  Brian Paul   All Rights Reserved.
+ * Copyright (C) 2005-2008  Brian Paul   All Rights Reserved.
+ * Copyright (C) 2009 VMware, Inc.   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -475,52 +475,63 @@ pp_cond_stack_reevaluate (pp_cond_stack *self)
    self->top->effective = self->top->current && self->top[1].effective;
 }
 
-/*
+
+/**
  * Extension enables through #extension directive.
  * NOTE: Currently, only enable/disable state is stored.
  */
-
 typedef struct
 {
-   GLboolean MESA_shader_debug;        /* GL_MESA_shader_debug enable */
-   GLboolean ARB_texture_rectangle; /* GL_ARB_texture_rectangle enable */
+   GLboolean ARB_draw_buffers;
+   GLboolean ARB_texture_rectangle;
 } pp_ext;
 
-/*
+
+/**
  * Disable all extensions. Called at startup and on #extension all: disable.
  */
 static GLvoid
-pp_ext_disable_all (pp_ext *self)
+pp_ext_disable_all(pp_ext *self)
 {
-   self->MESA_shader_debug = GL_FALSE;
+   _mesa_memset(self, 0, sizeof(self));
 }
 
+
+/**
+ * Called during preprocessor initialization to set the initial enable/disable
+ * state of extensions.
+ */
 static GLvoid
-pp_ext_init (pp_ext *self)
+pp_ext_init(pp_ext *self, const struct gl_extensions *extensions)
 {
    pp_ext_disable_all (self);
-   self->ARB_texture_rectangle = GL_TRUE;
-   /* Other initialization code goes here. */
+   if (extensions->ARB_draw_buffers)
+      self->ARB_draw_buffers = GL_TRUE;
+   if (extensions->NV_texture_rectangle)
+      self->ARB_texture_rectangle = GL_TRUE;
 }
 
+/**
+ * Called in response to #extension directives to enable/disable
+ * the named extension.
+ */
 static GLboolean
-pp_ext_set (pp_ext *self, const char *name, GLboolean enable)
+pp_ext_set(pp_ext *self, const char *name, GLboolean enable)
 {
-   if (_mesa_strcmp (name, "MESA_shader_debug") == 0)
-      self->MESA_shader_debug = enable;
+   if (_mesa_strcmp (name, "GL_ARB_draw_buffers") == 0)
+      self->ARB_draw_buffers = enable;
    else if (_mesa_strcmp (name, "GL_ARB_texture_rectangle") == 0)
       self->ARB_texture_rectangle = enable;
-   /* Next extension name tests go here. */
    else
       return GL_FALSE;
    return GL_TRUE;
 }
 
-/*
- * The state of preprocessor: current line, file and version number, list of all defined macros
- * and the #if/#endif context.
- */
 
+/**
+ * The state of preprocessor: current line, file and version number, list
+ * of all defined macros and the #if/#endif context.
+ */
 typedef struct
 {
    GLint line;
@@ -533,7 +544,8 @@ typedef struct
 } pp_state;
 
 static GLvoid
-pp_state_init (pp_state *self, slang_info_log *elog)
+pp_state_init (pp_state *self, slang_info_log *elog,
+               const struct gl_extensions *extensions)
 {
    self->line = 0;
    self->file = 1;
@@ -543,7 +555,7 @@ pp_state_init (pp_state *self, slang_info_log *elog)
    self->version = 110;
 #endif
    pp_symbols_init (&self->symbols);
-   pp_ext_init (&self->ext);
+   pp_ext_init (&self->ext, extensions);
    self->elog = elog;
 
    /* Initialize condition stack and create the global context. */
@@ -851,8 +863,10 @@ parse_if (slang_string *output, const byte *prod, GLuint *pi, GLint *result, pp_
 #define BEHAVIOR_DISABLE 4
 
 static GLboolean
-preprocess_source (slang_string *output, const char *source, grammar pid, grammar eid,
-                   slang_info_log *elog)
+preprocess_source (slang_string *output, const char *source,
+                   grammar pid, grammar eid,
+                   slang_info_log *elog,
+                   const struct gl_extensions *extensions)
 {
    static const char *predefined[] = {
       "__FILE__",
@@ -873,7 +887,7 @@ preprocess_source (slang_string *output, const char *source, grammar pid, gramma
       return GL_FALSE;
    }
 
-   pp_state_init (&state, elog);
+   pp_state_init (&state, elog, extensions);
 
    /* add the predefined symbols to the symbol table */
    for (i = 0; predefined[i]; i++) {
@@ -1196,8 +1210,20 @@ error:
    return GL_FALSE;
 }
 
+
+/**
+ * Run preprocessor on source code.
+ * \param extensions  indicates which GL extensions are enabled
+ * \param output  the post-process results
+ * \param input  the input text
+ * \param elog  log to record warnings, errors
+ * \return GL_TRUE for success, GL_FALSE for error
+ */
 GLboolean
-_slang_preprocess_directives (slang_string *output, const char *input, slang_info_log *elog)
+_slang_preprocess_directives(slang_string *output,
+                             const char *input,
+                             slang_info_log *elog,
+                             const struct gl_extensions *extensions)
 {
    grammar pid, eid;
    GLboolean success;
@@ -1213,7 +1239,7 @@ _slang_preprocess_directives (slang_string *output, const char *input, slang_inf
       grammar_destroy (pid);
       return GL_FALSE;
    }
-   success = preprocess_source (output, input, pid, eid, elog);
+   success = preprocess_source (output, input, pid, eid, elog, extensions);
    grammar_destroy (eid);
    grammar_destroy (pid);
    return success;
