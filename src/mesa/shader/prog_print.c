@@ -71,6 +71,8 @@ file_string(enum register_file f, gl_prog_print_mode mode)
       return "ADDR";
    case PROGRAM_SAMPLER:
       return "SAMPLER";
+   case PROGRAM_UNDEFINED:
+      return "UNDEFINED";
    default:
       return "Unknown program file!";
    }
