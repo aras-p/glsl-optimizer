@@ -18,10 +18,10 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
         return NULL;
 
     context->winsys = amd_winsys;
-    context->pipe.winsys = winsys;
-    context->pipe.screen = screen;
+    context->context.winsys = winsys;
+    context->context.screen = screen;
 
-    context->pipe.destroy = r300_destroy_context;
+    context->context.destroy = r300_destroy_context;
 
-    return &context->pipe;
+    return &context->context;
 }

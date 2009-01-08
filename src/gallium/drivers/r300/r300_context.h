@@ -23,6 +23,14 @@
 #ifndef R300_CONTEXT_H
 #define R300_CONTEXT_H
 
+struct r300_context {
+    /* Parent class */
+    struct pipe_context context;
+
+    struct amd_winsys* winsys;
+    struct draw_context* draw;
+}
+
 /* Convenience cast wrapper. */
 static struct r300_context* r300_context(struct pipe_context* pipe) {
     return (struct r300_context*)pipe;
