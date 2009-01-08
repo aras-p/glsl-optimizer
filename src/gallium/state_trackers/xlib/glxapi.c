@@ -40,7 +40,6 @@
 #include "pipe/p_thread.h"
 
 
-extern struct _glxapi_table *_real_GetGLXDispatchTable(void);
 extern struct _glxapi_table *_mesa_GetGLXDispatchTable(void);
 
 

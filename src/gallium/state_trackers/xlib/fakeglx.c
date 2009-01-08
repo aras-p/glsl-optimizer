@@ -3059,9 +3059,11 @@ extern struct _glxapi_table *_mesa_GetGLXDispatchTable(void);
 /**
  * Create a new GLX API dispatch table with its function pointers
  * initialized to point to Mesa's "fake" GLX API functions.
- * Note: there's a similar function (_real_GetGLXDispatchTable) that
- * returns a new dispatch table with all pointers initalized to point
- * to "real" GLX functions (which understand GLX wire protocol, etc).
+ *
+ * Note: there used to be a similar function
+ * (_real_GetGLXDispatchTable) that returns a new dispatch table with
+ * all pointers initalized to point to "real" GLX functions (which
+ * understand GLX wire protocol, etc).
  */
 struct _glxapi_table *
 _mesa_GetGLXDispatchTable(void)
