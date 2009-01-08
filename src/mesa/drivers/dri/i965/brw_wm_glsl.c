@@ -623,7 +623,7 @@ static void emit_dph(struct brw_wm_compile *c,
     brw_MAC(p, brw_null_reg(), src0[1], src1[1]);
     brw_MAC(p, dst, src0[2], src1[2]);
     brw_set_saturate(p, (inst->SaturateMode != SATURATE_OFF) ? 1 : 0);
-    brw_ADD(p, dst, src0[3], src1[3]);
+    brw_ADD(p, dst, dst, src1[3]);
     brw_set_saturate(p, 0);
 }
 
