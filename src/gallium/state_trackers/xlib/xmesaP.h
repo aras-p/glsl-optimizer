@@ -42,12 +42,6 @@ extern pipe_mutex _xmesa_lock;
 
 extern XMesaBuffer XMesaBufferList;
 
-/*
- */
-#define XMESA_SOFTPIPE 1
-#define XMESA_AUB      2
-extern int xmesa_mode;
-
 
 /**
  * Visual inforation, derived from GLvisual.
@@ -156,9 +150,6 @@ xmesa_check_and_update_buffer_size(XMesaContext xmctx, XMesaBuffer drawBuffer);
 extern void
 xmesa_destroy_buffers_on_display(XMesaDisplay *dpy);
 
-extern struct pipe_context *
-xmesa_create_pipe_context(XMesaContext xm, uint pixelformat);
-
 static INLINE GLuint
 xmesa_buffer_width(XMesaBuffer b)
 {
@@ -170,9 +161,6 @@ xmesa_buffer_height(XMesaBuffer b)
 {
    return b->stfb->Base.Height;
 }
-
-extern void
-xmesa_display_surface(XMesaBuffer b, const struct pipe_surface *surf);
 
 extern int
 xmesa_check_for_xshm(XMesaDisplay *display);

@@ -19,16 +19,17 @@ INCLUDE_DIRS = \
 	-I$(TOP)/src/mesa/main \
 	-I$(TOP)/src/gallium/include \
 	-I$(TOP)/src/gallium/drivers \
+	-I$(TOP)/src/gallium/state_trackers/xlib \
 	-I$(TOP)/src/gallium/auxiliary
 
 XLIB_WINSYS_SOURCES = \
-	glxapi.c	\
-	fakeglx.c	\
-	xfonts.c	\
-	xm_api.c	\
-	xm_winsys.c	\
-	xm_winsys_aub.c	\
-	brw_aub.c
+	xlib.c \
+	xlib_brw_aub.c \
+	xlib_brw_context.c \
+	xlib_brw_screen.c \
+	xlib_softpipe.c \
+	xlib_trace.c 
+
 
 XLIB_WINSYS_OBJECTS = $(XLIB_WINSYS_SOURCES:.c=.o)
 
@@ -63,6 +64,7 @@ $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME): $(XLIB_WINSYS_OBJECTS) $(LIBS)
 		-major $(GL_MAJOR) -minor $(GL_MINOR) -patch $(GL_TINY) \
 		-install $(TOP)/$(LIB_DIR) \
 		$(MKLIB_OPTIONS) $(XLIB_WINSYS_OBJECTS) \
+		$(TOP)/src/gallium/state_trackers/xlib/*.o \
 		--start-group $(LIBS) --end-group $(GL_LIB_DEPS)
 
 

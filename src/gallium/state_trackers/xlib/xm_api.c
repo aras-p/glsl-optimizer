@@ -67,17 +67,16 @@
 #include "state_tracker/st_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_screen.h"
+#include "pipe/p_winsys.h"
 #include "pipe/p_context.h"
 
-#include "xm_winsys_aub.h"
+#include "xm_winsys.h"
 
 /**
  * Global X driver lock
  */
 pipe_mutex _xmesa_lock;
 
-
-int xmesa_mode;
 
 
 /**********************************************************************/
@@ -777,6 +776,8 @@ PUBLIC
 XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
 {
    static GLboolean firstTime = GL_TRUE;
+   struct pipe_winsys *winsys;
+   struct pipe_screen *screen;
    struct pipe_context *pipe;
    XMesaContext c;
    GLcontext *mesaCtx;
@@ -797,24 +798,30 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
 
    c->xm_visual = v;
    c->xm_buffer = NULL;   /* set later by XMesaMakeCurrent */
+   
+   /* XXX: create once per Xlib Display.
+    */
+   winsys = xmesa_create_pipe_winsys();
+   if (winsys == NULL)
+      goto fail;
 
-   if (!getenv("XM_AUB")) {
-      xmesa_mode = XMESA_SOFTPIPE;
-      pipe = xmesa_create_pipe_context( c, pf );
-   }
-   else {
-      xmesa_mode = XMESA_AUB;
-      pipe = xmesa_create_i965simple(xmesa_get_pipe_winsys_aub(v));
-   }
+   /* XXX: create once per Xlib Display.
+    */
+   screen = xmesa_create_pipe_screen( winsys );
+   if (screen == NULL)
+      goto fail;
 
+   pipe = xmesa_create_pipe_context( screen,
+                                     (void *)c );
    if (pipe == NULL)
       goto fail;
 
-   c->st = st_create_context(pipe, &v->mesa_visual,
+   c->st = st_create_context(pipe, 
+                             &v->mesa_visual,
                              share_list ? share_list->st : NULL);
    if (c->st == NULL)
       goto fail;
-   
+
    mesaCtx = c->st->ctx;
    c->st->ctx->DriverCtx = c;
 
@@ -840,6 +847,13 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
       st_destroy_context(c->st);
    else if (pipe)
       pipe->destroy(pipe);
+
+   if (screen)
+      screen->destroy( screen );
+
+   if (winsys)
+      winsys->destroy( winsys );
+
    FREE(c);
    return NULL;
 }
@@ -849,12 +863,14 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
 PUBLIC
 void XMesaDestroyContext( XMesaContext c )
 {
-   struct pipe_screen *screen = c->st->pipe->screen;
    st_destroy_context(c->st);
+
    /* FIXME: We should destroy the screen here, but if we do so, surfaces may 
     * outlive it, causing segfaults
+   struct pipe_screen *screen = c->st->pipe->screen; 
    screen->destroy(screen);
    */
+
    _mesa_free(c);
 }
 
@@ -1244,10 +1260,8 @@ void XMesaSwapBuffers( XMesaBuffer b )
 
    surf = st_get_framebuffer_surface(b->stfb, ST_SURFACE_BACK_LEFT);
    if (surf) {
-      if (xmesa_mode == XMESA_AUB)
-         xmesa_display_aub( surf );
-      else
-	 xmesa_display_surface(b, surf);
+      xmesa_display_surface(b, surf);
+//	 xmesa_display_surface(b, surf);
    }
 
    xmesa_check_and_update_buffer_size(NULL, b);

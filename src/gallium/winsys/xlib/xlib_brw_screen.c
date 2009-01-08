@@ -33,8 +33,8 @@
  */
 
 
-#include "glxheader.h"
-#include "xmesaP.h"
+//#include "state_trackers/xlib/glxheader.h"
+//#include "state_trackers/xlib/xmesaP.h"
 
 #include "pipe/p_winsys.h"
 #include "pipe/p_inlines.h"
@@ -42,8 +42,9 @@
 #include "util/u_memory.h"
 #include "i965simple/brw_winsys.h"
 #include "i965simple/brw_screen.h"
-#include "brw_aub.h"
-#include "xm_winsys_aub.h"
+
+#include "xlib_brw_aub.h"
+#include "xlib_brw.h"
 
 
 
@@ -142,29 +143,8 @@ aub_buffer_destroy(struct pipe_winsys *winsys,
 }
 
 
-void xmesa_buffer_subdata_aub(struct pipe_winsys *winsys, 
-			      struct pipe_buffer *buf,
-			      unsigned long offset, 
-			      unsigned long size, 
-			      const void *data,
-			      unsigned aub_type,
-			      unsigned aub_sub_type)
-{
-   struct aub_pipe_winsys *iws = aub_pipe_winsys(winsys);
-   struct aub_buffer *sbo = aub_bo(buf);
 
-   assert(sbo->size > offset + size);
-   memcpy(sbo->data + offset, data, size);
-
-   brw_aub_gtt_data( iws->aubfile, 
-		     sbo->offset + offset,
-		     sbo->data + offset,
-		     size,
-		     aub_type,
-		     aub_sub_type );
-}
-
-void xmesa_commands_aub(struct pipe_winsys *winsys,
+void xlib_brw_commands_aub(struct pipe_winsys *winsys,
 			unsigned *cmds,
 			unsigned nr_dwords)
 {
@@ -182,16 +162,10 @@ void xmesa_commands_aub(struct pipe_winsys *winsys,
 }
 
 
+/* XXX: fix me:
+ */
 static struct aub_pipe_winsys *global_winsys = NULL;
 
-void xmesa_display_aub( /* struct pipe_winsys *winsys, */
-		       struct pipe_surface *surface )
-{
-//   struct aub_pipe_winsys *iws = aub_pipe_winsys(winsys);
-   brw_aub_dump_bmp( global_winsys->aubfile, 
-		     surface,
-		     aub_bo(surface->buffer)->offset );
-}
 
 
 
@@ -245,10 +219,13 @@ aub_user_buffer_create(struct pipe_winsys *winsys, void *ptr, unsigned bytes)
  */
 static void
 aub_flush_frontbuffer( struct pipe_winsys *winsys,
-                         struct pipe_surface *surf,
-                         void *context_private)
+                       struct pipe_surface *surface,
+                       void *context_private)
 {
-   xmesa_display_aub( surf );
+//   struct aub_pipe_winsys *iws = aub_pipe_winsys(winsys);
+   brw_aub_dump_bmp( global_winsys->aubfile, 
+		     surface,
+		     aub_bo(surface->buffer)->offset );
 }
 
 static struct pipe_surface *
@@ -322,8 +299,20 @@ aub_get_name( struct pipe_winsys *winsys )
    return "Aub/xlib";
 }
 
+static void
+xlib_brw_destroy_pipe_winsys_aub( struct pipe_winsys *winsys )
+
+{
+   struct aub_pipe_winsys *iws = aub_pipe_winsys(winsys);
+   brw_aub_destroy(iws->aubfile);
+   free(iws->pool);
+   free(iws);
+}
+
+
+
 struct pipe_winsys *
-xmesa_create_pipe_winsys_aub( void )
+xlib_create_brw_winsys( void )
 {
    struct aub_pipe_winsys *iws = CALLOC_STRUCT( aub_pipe_winsys );
    
@@ -341,6 +330,7 @@ xmesa_create_pipe_winsys_aub( void )
    iws->winsys.buffer_destroy = aub_buffer_destroy;
    iws->winsys.flush_frontbuffer = aub_flush_frontbuffer;
    iws->winsys.get_name = aub_get_name;
+   iws->winsys.destroy = xlib_brw_destroy_pipe_winsys_aub;
 
    iws->winsys.surface_alloc = aub_i915_surface_alloc;
    iws->winsys.surface_alloc_storage = aub_i915_surface_alloc_storage;
@@ -359,122 +349,30 @@ xmesa_create_pipe_winsys_aub( void )
 }
 
 
-void
-xmesa_destroy_pipe_winsys_aub( struct pipe_winsys *winsys )
-
+struct pipe_screen *
+xlib_create_brw_screen( struct pipe_winsys *winsys )
 {
-   struct aub_pipe_winsys *iws = aub_pipe_winsys(winsys);
-   brw_aub_destroy(iws->aubfile);
-   free(iws->pool);
-   free(iws);
+   return brw_create_screen(winsys, 0/* XXX pci_id */);
 }
 
 
-
-
-
-
-
-#define IWS_BATCHBUFFER_SIZE 1024
-
-struct aub_brw_winsys {
-   struct brw_winsys winsys;   /**< batch buffer funcs */
-   struct aub_context *aub;
-                         
-   struct pipe_winsys *pipe_winsys;
-
-   unsigned batch_data[IWS_BATCHBUFFER_SIZE];
-   unsigned batch_nr;
-   unsigned batch_size;
-   unsigned batch_alloc;
-};
-
-
-/* Turn a i965simple winsys into an aub/i965simple winsys:
+/* These per-screen functions are acually made available to the driver
+ * through the brw_winsys (per-context) entity.
  */
-static inline struct aub_brw_winsys *
-aub_brw_winsys( struct brw_winsys *sws )
-{
-   return (struct aub_brw_winsys *)sws;
-}
-
-
-/* Simple batchbuffer interface:
- */
-
-static unsigned *aub_i965_batch_start( struct brw_winsys *sws,
-					 unsigned dwords,
-					 unsigned relocs )
-{
-   struct aub_brw_winsys *iws = aub_brw_winsys(sws);
-
-   if (iws->batch_size < iws->batch_nr + dwords)
-      return NULL;
-
-   iws->batch_alloc = iws->batch_nr + dwords;
-   return (void *)1;			/* not a valid pointer! */
-}
-
-static void aub_i965_batch_dword( struct brw_winsys *sws,
-				    unsigned dword )
-{
-   struct aub_brw_winsys *iws = aub_brw_winsys(sws);
-
-   assert(iws->batch_nr < iws->batch_alloc);
-   iws->batch_data[iws->batch_nr++] = dword;
-}
-
-static void aub_i965_batch_reloc( struct brw_winsys *sws,
-			     struct pipe_buffer *buf,
-			     unsigned access_flags,
-			     unsigned delta )
-{
-   struct aub_brw_winsys *iws = aub_brw_winsys(sws);
-
-   assert(iws->batch_nr < iws->batch_alloc);
-   iws->batch_data[iws->batch_nr++] = aub_bo(buf)->offset + delta;
-}
-
-static unsigned aub_i965_get_buffer_offset( struct brw_winsys *sws,
-					    struct pipe_buffer *buf,
-					    unsigned access_flags )
+unsigned xlib_brw_get_buffer_offset( struct pipe_winsys *pws,
+                                     struct pipe_buffer *buf,
+                                     unsigned access_flags )
 {
    return aub_bo(buf)->offset;
 }
 
-static void aub_i965_batch_end( struct brw_winsys *sws )
+void xlib_brw_buffer_subdata_typed( struct pipe_winsys *pws,
+                                    struct pipe_buffer *buf,
+                                    unsigned long offset, 
+                                    unsigned long size, 
+                                    const void *data,
+                                    unsigned data_type )
 {
-   struct aub_brw_winsys *iws = aub_brw_winsys(sws);
-
-   assert(iws->batch_nr <= iws->batch_alloc);
-   iws->batch_alloc = 0;
-}
-
-static void aub_i965_batch_flush( struct brw_winsys *sws,
-				    struct pipe_fence_handle **fence )
-{
-   struct aub_brw_winsys *iws = aub_brw_winsys(sws);
-   assert(iws->batch_nr <= iws->batch_size);
-
-   if (iws->batch_nr) {
-      xmesa_commands_aub( iws->pipe_winsys,
-			  iws->batch_data,
-			  iws->batch_nr );
-   }
-
-   iws->batch_nr = 0;
-}
-
-
-
-static void aub_i965_buffer_subdata_typed(struct brw_winsys *winsys, 
-					    struct pipe_buffer *buf,
-					    unsigned long offset, 
-					    unsigned long size, 
-					    const void *data,
-					    unsigned data_type)
-{
-   struct aub_brw_winsys *iws = aub_brw_winsys(winsys);
    unsigned aub_type = DW_GENERAL_STATE;
    unsigned aub_sub_type;
 
@@ -545,46 +443,28 @@ static void aub_i965_buffer_subdata_typed(struct brw_winsys *winsys,
       break;
    }
 
-   xmesa_buffer_subdata_aub( iws->pipe_winsys,
-			     buf,
-			     offset,
-			     size,
-			     data,
-			     aub_type,
-			     aub_sub_type );
+   {
+      struct aub_pipe_winsys *iws = aub_pipe_winsys(pws);
+      struct aub_buffer *sbo = aub_bo(buf);
+
+      assert(sbo->size > offset + size);
+      memcpy(sbo->data + offset, data, size);
+
+      brw_aub_gtt_data( iws->aubfile, 
+                        sbo->offset + offset,
+                        sbo->data + offset,
+                        size,
+                        aub_type,
+                        aub_sub_type );
+   }
 }
-   
-/**
- * Create i965 hardware rendering context.
- */
-struct pipe_context *
-xmesa_create_i965simple( struct pipe_winsys *winsys )
+ 
+
+void
+xlib_brw_display_surface(struct xmesa_buffer *b, 
+                         struct pipe_surface *surf)
 {
-#ifdef GALLIUM_CELL
-   return NULL;
-#else
-   struct aub_brw_winsys *iws = CALLOC_STRUCT( aub_brw_winsys );
-   struct pipe_screen *screen = brw_create_screen(winsys, 0/* XXX pci_id */);
-   
-   /* Fill in this struct with callbacks that i965simple will need to
-    * communicate with the window system, buffer manager, etc. 
-    */
-   iws->winsys.batch_start = aub_i965_batch_start;
-   iws->winsys.batch_dword = aub_i965_batch_dword;
-   iws->winsys.batch_reloc = aub_i965_batch_reloc;
-   iws->winsys.batch_end = aub_i965_batch_end;
-   iws->winsys.batch_flush = aub_i965_batch_flush;
-   iws->winsys.buffer_subdata_typed = aub_i965_buffer_subdata_typed;
-   iws->winsys.get_buffer_offset = aub_i965_get_buffer_offset;
-
-   iws->pipe_winsys = winsys;
-
-   iws->batch_size = IWS_BATCHBUFFER_SIZE;
-
-   /* Create the i965simple context:
-    */
-   return brw_create( screen,
-		      &iws->winsys,
-		      0 );
-#endif
+   brw_aub_dump_bmp( global_winsys->aubfile, 
+		     surf,
+		     aub_bo(surf->buffer)->offset );
 }

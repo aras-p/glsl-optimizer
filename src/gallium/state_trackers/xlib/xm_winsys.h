@@ -1,3 +1,4 @@
+
 /**************************************************************************
  * 
  * Copyright 2006 Tungsten Graphics, Inc., Cedar Park, Texas.
@@ -25,44 +26,32 @@
  * 
  **************************************************************************/
 
-#ifndef AUB_WINSYS_H
-#define AUB_WINSYS_H
+#ifndef XM_WINSYS_H
+#define XM_WINSYS_H
 
 struct pipe_context;
+struct pipe_screen;
 struct pipe_winsys;
-struct pipe_buffer;
 struct pipe_surface;
-
-struct pipe_winsys *
-xmesa_create_pipe_winsys_aub( void );
-
-void
-xmesa_destroy_pipe_winsys_aub( struct pipe_winsys *winsys );
+struct xmesa_buffer;
 
 
+/* Will turn this into a callback-style interface.  For now, these
+ * have fixed names, and are implemented in the winsys/xlib directory.
+ */
+struct pipe_winsys *xmesa_create_pipe_winsys( void );
 
-struct pipe_context *
-xmesa_create_i965simple( struct pipe_winsys *winsys );
+struct pipe_screen *xmesa_create_pipe_screen( struct pipe_winsys * );
 
+/* The context_private argument needs to go away.  Is currently used
+ * in a round-about way to associate a display-target surface with its
+ * Xlib window.
+ */
+struct pipe_context *xmesa_create_pipe_context( struct pipe_screen *,
+                                                void *context_private );
 
+void xmesa_display_surface( struct xmesa_buffer *, 
+                            struct pipe_surface * );
 
-void xmesa_buffer_subdata_aub(struct pipe_winsys *winsys, 
-			      struct pipe_buffer *buf,
-			      unsigned long offset, 
-			      unsigned long size, 
-			      const void *data,
-			      unsigned aub_type,
-			      unsigned aub_sub_type);
-
-void xmesa_commands_aub(struct pipe_winsys *winsys,
-			unsigned *cmds,
-			unsigned nr_dwords);
-
-
-void xmesa_display_aub( /* struct pipe_winsys *winsys, */
-   struct pipe_surface *surface );
-
-extern struct pipe_winsys *
-xmesa_get_pipe_winsys_aub(struct xmesa_visual *xm_vis);
 
 #endif

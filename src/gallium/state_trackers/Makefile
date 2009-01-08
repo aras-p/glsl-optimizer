@@ -1,9 +1,8 @@
-TOP = ../..
+TOP = ../../..
 include $(TOP)/configs/current
 
 
-SUBDIRS = auxiliary drivers state_trackers
-# Note winsys/ needs to be built after src/mesa
+SUBDIRS = xlib
 
 
 default: subdirs

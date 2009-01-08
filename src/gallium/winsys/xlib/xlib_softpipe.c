@@ -55,13 +55,7 @@
 #define TILE_SIZE 32  /* avoid compilation errors */
 #endif
 
-#ifdef GALLIUM_TRACE
-#include "trace/tr_screen.h"
-#include "trace/tr_context.h"
-#endif
-
-#include "xm_winsys_aub.h"
-
+#include "xlib_softpipe.h"
 
 /**
  * Subclass of pipe_buffer for Xlib winsys.
@@ -76,7 +70,7 @@ struct xm_buffer
    
    XImage *tempImage;
    int shm;
-#if defined(USE_XSHM) && !defined(XFree86Server)
+#if defined(USE_XSHM)
    XShmSegmentInfo shminfo;
 #endif
 };
@@ -88,7 +82,7 @@ struct xm_buffer
 struct xmesa_pipe_winsys
 {
    struct pipe_winsys base;
-   struct xmesa_visual *xm_visual;
+/*   struct xmesa_visual *xm_visual; */
    int shm;
 };
 
@@ -105,7 +99,7 @@ xm_buffer( struct pipe_buffer *buf )
 /**
  * X Shared Memory Image extension code
  */
-#if defined(USE_XSHM) && !defined(XFree86Server)
+#if defined(USE_XSHM)
 
 #define XSHM_ENABLED(b) ((b)->shm)
 
@@ -252,7 +246,7 @@ xm_buffer_destroy(struct pipe_winsys *pws,
    struct xm_buffer *oldBuf = xm_buffer(buf);
 
    if (oldBuf->data) {
-#if defined(USE_XSHM) && !defined(XFree86Server)
+#if defined(USE_XSHM)
       if (oldBuf->shminfo.shmid >= 0) {
          shmdt(oldBuf->shminfo.shmaddr);
          shmctl(oldBuf->shminfo.shmid, IPC_RMID, 0);
@@ -310,8 +304,8 @@ twiddle_tile(const uint *tileIn, uint *tileOut)
  * Display a surface that's in a tiled configuration.  That is, all the
  * pixels for a TILE_SIZExTILE_SIZE block are contiguous in memory.
  */
-static void
-xmesa_display_surface_tiled(XMesaBuffer b, const struct pipe_surface *surf)
+void
+xlib_cell_display_surface(struct xmesa_buffer *b, struct pipe_surface *surf)
 {
    XImage *ximage;
    struct xm_buffer *xm_buf = xm_buffer(surf->buffer);
@@ -359,7 +353,7 @@ xmesa_display_surface_tiled(XMesaBuffer b, const struct pipe_surface *surf)
             /* twiddle from temp to ximage in shared memory */
             twiddle_tile(tmpTile, (uint *) ximage->data);
             /* display image in shared memory */
-#if defined(USE_XSHM) && !defined(XFree86Server)
+#if defined(USE_XSHM)
             XShmPutImage(b->xm_visual->display, b->drawable, b->gc,
                          ximage, 0, 0, x, y, w, h, False);
 #endif
@@ -382,7 +376,8 @@ xmesa_display_surface_tiled(XMesaBuffer b, const struct pipe_surface *surf)
  * by the XMesaBuffer.
  */
 void
-xmesa_display_surface(XMesaBuffer b, const struct pipe_surface *surf)
+xlib_softpipe_display_surface(struct xmesa_buffer *b, 
+                              struct pipe_surface *surf)
 {
    XImage *ximage;
    struct xm_buffer *xm_buf = xm_buffer(surf->buffer);
@@ -404,7 +399,7 @@ xmesa_display_surface(XMesaBuffer b, const struct pipe_surface *surf)
       return;
 
    if (tileSize) {
-      xmesa_display_surface_tiled(b, surf);
+      xlib_cell_display_surface(b, surf);
       return;
    }
 
@@ -419,7 +414,7 @@ xmesa_display_surface(XMesaBuffer b, const struct pipe_surface *surf)
 
    /* display image in Window */
    if (XSHM_ENABLED(xm_buf)) {
-#if defined(USE_XSHM) && !defined(XFree86Server)
+#if defined(USE_XSHM)
       XShmPutImage(b->xm_visual->display, b->drawable, b->gc,
                    ximage, 0, 0, 0, 0, surf->width, surf->height, False);
 #endif
@@ -449,7 +444,7 @@ xm_flush_frontbuffer(struct pipe_winsys *pws,
     * This function copies that XImage to the actual X Window.
     */
    XMesaContext xmctx = (XMesaContext) context_private;
-   xmesa_display_surface(xmctx->xm_buffer, surf);
+   xlib_softpipe_display_surface(xmctx->xm_buffer, surf);
 }
 
 
@@ -468,7 +463,7 @@ xm_buffer_create(struct pipe_winsys *pws,
                  unsigned size)
 {
    struct xm_buffer *buffer = CALLOC_STRUCT(xm_buffer);
-#if defined(USE_XSHM) && !defined(XFree86Server)
+#if defined(USE_XSHM)
    struct xmesa_pipe_winsys *xpws = (struct xmesa_pipe_winsys *) pws;
 #endif
 
@@ -478,7 +473,7 @@ xm_buffer_create(struct pipe_winsys *pws,
    buffer->base.size = size;
 
 
-#if defined(USE_XSHM) && !defined(XFree86Server)
+#if defined(USE_XSHM)
    buffer->shminfo.shmid = -1;
    buffer->shminfo.shmaddr = (char *) -1;
 
@@ -625,33 +620,16 @@ xm_fence_finish(struct pipe_winsys *sws, struct pipe_fence_handle *fence,
 }
 
 
-/**
- * Return pointer to a pipe_winsys object.
- * For Xlib, this is a singleton object.
- * Nothing special for the Xlib driver so no subclassing or anything.
- */
+
 struct pipe_winsys *
-xmesa_get_pipe_winsys_aub(struct xmesa_visual *xm_vis)
-{
-   static struct xmesa_pipe_winsys *ws = NULL;
-
-   if (!ws) {
-      ws = (struct xmesa_pipe_winsys *) xmesa_create_pipe_winsys_aub();
-   }
-   return &ws->base;
-}
-
-
-static struct pipe_winsys *
-xmesa_get_pipe_winsys(struct xmesa_visual *xm_vis)
+xlib_create_softpipe_winsys( void )
 {
    static struct xmesa_pipe_winsys *ws = NULL;
 
    if (!ws) {
       ws = CALLOC_STRUCT(xmesa_pipe_winsys);
 
-      ws->xm_visual = xm_vis;
-      ws->shm = xmesa_check_for_xshm(xm_vis->display);
+      //ws->shm = xmesa_check_for_xshm( display );
 
       /* Fill in this struct with callbacks that pipe will need to
        * communicate with the window system, buffer manager, etc. 
@@ -678,42 +656,89 @@ xmesa_get_pipe_winsys(struct xmesa_visual *xm_vis)
 }
 
 
-struct pipe_context *
-xmesa_create_pipe_context(XMesaContext xmesa, uint pixelformat)
+struct pipe_screen *
+xlib_create_softpipe_screen( struct pipe_winsys *pws )
 {
-   struct pipe_winsys *pws;
+   struct pipe_screen *screen;
+
+   screen = softpipe_create_screen(pws);
+   if (screen == NULL)
+      goto fail;
+
+   return screen;
+
+fail:
+   return NULL;
+}
+
+
+struct pipe_context *
+xlib_create_softpipe_context( struct pipe_screen *screen,
+                              void *context_private )
+{
    struct pipe_context *pipe;
    
-   if (getenv("XM_AUB")) {
-      pws = xmesa_get_pipe_winsys_aub(xmesa->xm_visual);
-   }
-   else {
-      pws = xmesa_get_pipe_winsys(xmesa->xm_visual);
-   }
+   pipe = softpipe_create(screen, screen->winsys, NULL);
+   if (pipe == NULL)
+      goto fail;
 
+   pipe->priv = context_private;
+   return pipe;
+
+fail:
+   /* Free stuff here */
+   return NULL;
+}
+
+
+/***********************************************************************
+ * Cell piggybacks on softpipe code still.
+ *
+ * Should be untangled sufficiently to live in a separate file, at
+ * least.  That would mean removing #ifdef GALLIUM_CELL's from above
+ * and creating cell-specific versions of either those functions or
+ * the entire file.
+ */
+struct pipe_winsys *
+xlib_create_cell_winsys( void )
+{
+   return xlib_create_softpipe_winsys();
+}
+
+struct pipe_screen *
+xlib_create_cell_screen( struct pipe_winsys *pws )
+{
+   return xlib_create_softpipe_screen( pws );
+}
+
+
+struct pipe_context *
+xlib_create_cell_context( struct pipe_screen *screen,
+                          void *priv )
+{
 #ifdef GALLIUM_CELL
-   if (!getenv("GALLIUM_NOCELL")) {
-      struct cell_winsys *cws = cell_get_winsys(pixelformat);
-      struct pipe_screen *screen = cell_create_screen(pws);
+   struct cell_winsys *cws;
+   struct pipe_context *pipe;
 
-      pipe = cell_create_context(screen, cws);
-   }
-   else
-#endif
-   {
-      struct pipe_screen *screen = softpipe_create_screen(pws);
+   if (getenv("GALLIUM_NOCELL")) 
+      return xlib_create_softpipe_context( screen, priv );
 
-      pipe = softpipe_create(screen, pws, NULL);
+   
+   /* This takes a cell_winsys pointer, but probably that should be
+    * created and stored at screen creation, not context creation.
+    *
+    * The actual cell_winsys value isn't used for anything, so just
+    * passing NULL for now.
+    */
+   pipe = cell_create_context( screen, NULL);
+   if (pipe == NULL)
+      goto fail;
 
-#ifdef GALLIUM_TRACE
-      screen = trace_screen_create(screen);
-      
-      pipe = trace_context_create(screen, pipe);
-#endif
-   }
-
-   if (pipe)
-      pipe->priv = xmesa;
+   pipe->priv = priv;
 
    return pipe;
+
+fail:
+#endif
+   return NULL;
 }
