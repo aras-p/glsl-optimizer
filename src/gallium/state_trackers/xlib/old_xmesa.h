@@ -74,7 +74,6 @@ extern "C" {
 
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
-#include "old_xmesa_x.h"
 #include "GL/gl.h"
 
 #ifdef AMIWIN

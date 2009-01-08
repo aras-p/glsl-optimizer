@@ -161,7 +161,7 @@ bits_per_pixel( XMesaVisual xmv )
    /* free the XImage */
    _mesa_free( img->data );
    img->data = NULL;
-   XMesaDestroyImage( img );
+   XDestroyImage( img );
    return bitsPerPixel;
 }
 
@@ -236,6 +236,10 @@ xmesa_get_window_size(Display *dpy, XMesaBuffer b,
    }
 }
 
+#define GET_REDMASK(__v)        __v->mesa_visual.redMask
+#define GET_GREENMASK(__v)      __v->mesa_visual.greenMask
+#define GET_BLUEMASK(__v)       __v->mesa_visual.blueMask
+
 
 /**
  * Choose the pixel format for the given visual.
@@ -245,11 +249,14 @@ xmesa_get_window_size(Display *dpy, XMesaBuffer b,
 static GLuint
 choose_pixel_format(XMesaVisual v)
 {
+   boolean native_byte_order = (host_byte_order() == 
+                                ImageByteOrder(v->display));
+
    if (   GET_REDMASK(v)   == 0x0000ff
        && GET_GREENMASK(v) == 0x00ff00
        && GET_BLUEMASK(v)  == 0xff0000
        && v->BitsPerPixel == 32) {
-      if (CHECK_BYTE_ORDER(v)) {
+      if (native_byte_order) {
          /* no byteswapping needed */
          return 0 /* PIXEL_FORMAT_U_A8_B8_G8_R8 */;
       }
@@ -261,7 +268,7 @@ choose_pixel_format(XMesaVisual v)
             && GET_GREENMASK(v) == 0x00ff00
             && GET_BLUEMASK(v)  == 0x0000ff
             && v->BitsPerPixel == 32) {
-      if (CHECK_BYTE_ORDER(v)) {
+      if (native_byte_order) {
          /* no byteswapping needed */
          return PIPE_FORMAT_A8R8G8B8_UNORM;
       }
@@ -272,7 +279,7 @@ choose_pixel_format(XMesaVisual v)
    else if (   GET_REDMASK(v)   == 0xf800
             && GET_GREENMASK(v) == 0x07e0
             && GET_BLUEMASK(v)  == 0x001f
-            && CHECK_BYTE_ORDER(v)
+            && native_byte_order
             && v->BitsPerPixel == 16) {
       /* 5-6-5 RGB */
       return PIPE_FORMAT_R5G6B5_UNORM;
@@ -517,7 +524,7 @@ initialize_visual_and_buffer(XMesaVisual v, XMesaBuffer b,
    if (_mesa_getenv("MESA_INFO")) {
       _mesa_printf("X/Mesa visual = %p\n", (void *) v);
       _mesa_printf("X/Mesa level = %d\n", v->mesa_visual.level);
-      _mesa_printf("X/Mesa depth = %d\n", GET_VISUAL_DEPTH(v));
+      _mesa_printf("X/Mesa depth = %d\n", v->visinfo->depth);
       _mesa_printf("X/Mesa bits per pixel = %d\n", v->BitsPerPixel);
    }
 
@@ -533,7 +540,7 @@ initialize_visual_and_buffer(XMesaVisual v, XMesaBuffer b,
 
       /* X11 graphics context */
       b->gc = XCreateGC( v->display, window, 0, NULL );
-      XMesaSetFunction( v->display, b->gc, GXcopy );
+      XSetFunction( v->display, b->gc, GXcopy );
    }
 
    return GL_TRUE;
@@ -676,14 +683,14 @@ XMesaVisual XMesaCreateVisual( Display *display,
       else {
          /* this is an approximation */
          int depth;
-         depth = GET_VISUAL_DEPTH(v);
+         depth = v->visinfo->depth;
          red_bits = depth / 3;
          depth -= red_bits;
          green_bits = depth / 2;
          depth -= green_bits;
          blue_bits = depth;
          alpha_bits = 0;
-         assert( red_bits + green_bits + blue_bits == GET_VISUAL_DEPTH(v) );
+         assert( red_bits + green_bits + blue_bits == v->visinfo->depth );
       }
       alpha_bits = v->mesa_visual.alphaBits;
    }
@@ -839,9 +846,9 @@ XMesaCreateWindowBuffer(XMesaVisual v, Window w)
    /* Check that window depth matches visual depth */
    XGetWindowAttributes( v->display, w, &attr );
    depth = attr.depth;
-   if (GET_VISUAL_DEPTH(v) != depth) {
+   if (v->visinfo->depth != depth) {
       _mesa_warning(NULL, "XMesaCreateWindowBuffer: depth mismatch between visual (%d) and window (%d)!\n",
-                    GET_VISUAL_DEPTH(v), depth);
+                    v->visinfo->depth, depth);
       return NULL;
    }
 
