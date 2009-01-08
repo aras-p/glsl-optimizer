@@ -55,6 +55,17 @@ struct vbuf_render {
    unsigned max_vertex_buffer_bytes;
 
    /**
+    * Query if the hardware driver needs assistance for a particular
+    * combination of rasterizer state and primitive.
+    *
+    * Currently optional.
+    */
+   boolean (*need_pipeline)(const struct vbuf_render *render,
+                            const struct pipe_rasterizer_state *rasterizer,
+                            unsigned int prim );
+
+
+   /**
     * Get the hardware vertex format.
     * 
     * XXX: have this in draw_context instead?

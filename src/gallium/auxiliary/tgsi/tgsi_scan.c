@@ -124,7 +124,7 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
                /* only first 32 regs will appear in this bitfield */
                info->file_mask[file] |= (1 << reg);
                info->file_count[file]++;
-               info->file_max[file] = MAX2(info->file_max[file], (int)i);
+               info->file_max[file] = MAX2(info->file_max[file], (int)reg);
 
                if (file == TGSI_FILE_INPUT) {
                   info->input_semantic_name[reg] = (ubyte)fulldecl->Semantic.SemanticName;
