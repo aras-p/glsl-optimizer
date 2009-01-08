@@ -48,7 +48,7 @@ _mesa_dlopen(const char *libname, int flags)
    flags = RTLD_LAZY | RTLD_GLOBAL; /* Overriding flags at this time */
    return dlopen(libname, flags);
 #elif defined(__MINGW32__)
-   return LoadLibrary(libname);
+   return LoadLibraryA(libname);
 #else
    return NULL;
 #endif
