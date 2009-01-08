@@ -37,10 +37,8 @@
 #include "main/glheader.h"
 #include "glapi/glapi.h"
 #include "glxapi.h"
+#include "fakeglx.h"
 #include "pipe/p_thread.h"
-
-
-extern struct _glxapi_table *_mesa_GetGLXDispatchTable(void);
 
 
 struct display_dispatch {

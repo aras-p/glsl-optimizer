@@ -35,7 +35,7 @@
 #include "glxheader.h"
 #include "context.h"
 #include "imports.h"
-#include "xfonts.h"
+#include "fakeglx.h"
 
 
 /* Some debugging info.  */

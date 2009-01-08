@@ -24,8 +24,9 @@
  */
 
 
-#ifndef XFONTS_H
-#define XFONTS_H
+#ifndef FAKEGLX_H
+#define FAKEGLX_H
+
 
 #ifdef __VMS
 #include <GL/vms_x_fix.h>
@@ -33,6 +34,9 @@
 
 #include <X11/Xlib.h>
 
+struct _glxapi_table;
+
+extern struct _glxapi_table *_mesa_GetGLXDispatchTable(void);
 
 extern void Fake_glXUseXFont( Font font, int first, int count, int listbase );
 

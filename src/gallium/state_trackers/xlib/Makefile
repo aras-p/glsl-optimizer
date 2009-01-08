@@ -15,7 +15,7 @@ DRIVER_INCLUDES = \
 C_SOURCES = \
 	glxapi.c	\
 	fakeglx.c	\
-	xfonts.c	\
+	fakeglx_fonts.c	\
 	xm_api.c
 
 

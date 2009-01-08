@@ -49,7 +49,7 @@
 #include "imports.h"
 #include "mtypes.h"
 #include "version.h"
-#include "xfonts.h"
+#include "fakeglx.h"
 #include "xmesaP.h"
 #include "state_tracker/st_context.h"
 #include "state_tracker/st_public.h"
@@ -3024,9 +3024,6 @@ Fake_glXReleaseTexImageEXT(Display *dpy, GLXDrawable drawable, int buffer)
       XMesaReleaseTexImage(dpy, b, buffer);
 }
 
-
-/* silence warning */
-extern struct _glxapi_table *_mesa_GetGLXDispatchTable(void);
 
 
 /**
