@@ -29,9 +29,6 @@
 
 #include "GL/xmesa.h"
 #include "mtypes.h"
-#ifdef XFree86Server
-#include "xm_image.h"
-#endif
 
 #include "state_tracker/st_context.h"
 #include "state_tracker/st_public.h"
@@ -50,13 +47,8 @@ extern XMesaBuffer XMesaBufferList;
 struct xmesa_visual {
    GLvisual mesa_visual;	/* Device independent visual parameters */
    XMesaDisplay *display;	/* The X11 display */
-#ifdef XFree86Server
-   GLint ColormapEntries;
-   GLint nplanes;
-#else
    XMesaVisualInfo visinfo;	/* X's visual info (pointer to private copy) */
    XVisualInfo *vishandle;	/* Only used in fakeglx.c */
-#endif
    GLint BitsPerPixel;		/* True bits per pixel for XImages */
 
    GLboolean ximage_flag;	/* Use XImage for back buffer (not pixmap)? */
@@ -105,7 +97,7 @@ struct xmesa_buffer {
 				/*    0 = not available			*/
 				/*    1 = XImage support available	*/
 				/*    2 = Pixmap support available too	*/
-#if defined(USE_XSHM) && !defined(XFree86Server)
+#if defined(USE_XSHM)
    XShmSegmentInfo shminfo;
 #endif
 
