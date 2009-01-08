@@ -184,9 +184,6 @@ struct _glxapi_table {
    /*** GLX_MESA_pixmap_colormap ***/
    GLXPixmap (*CreateGLXPixmapMESA)(Display *dpy, XVisualInfo *visinfo, Pixmap pixmap, Colormap cmap);
 
-   /*** GLX_MESA_set_3dfx_mode ***/
-   Bool (*Set3DfxModeMESA)(int mode);
-
    /*** GLX_NV_vertex_array_range ***/
    void * (*AllocateMemoryNV)( GLsizei size,
                                GLfloat readFrequency,

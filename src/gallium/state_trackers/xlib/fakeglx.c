@@ -76,7 +76,6 @@
 #define VENDOR "Brian Paul"
 
 #define EXTENSIONS \
-   "GLX_MESA_set_3dfx_mode " \
    "GLX_MESA_copy_sub_buffer " \
    "GLX_MESA_pixmap_colormap " \
    "GLX_MESA_release_buffers " \
@@ -2011,7 +2010,7 @@ Fake_glXWaitX( void )
 static const char *
 get_extensions( void )
 {
-   return EXTENSIONS + 23; /* skip "GLX_MESA_set_3dfx_mode" */
+   return EXTENSIONS;
 }
 
 
@@ -2973,15 +2972,6 @@ Fake_glXReleaseBuffersMESA( Display *dpy, GLXDrawable d )
 
 
 
-/*** GLX_MESA_set_3dfx_mode ***/
-
-static Bool
-Fake_glXSet3DfxModeMESA( int mode )
-{
-   return FALSE;
-}
-
-
 
 /*** GLX_NV_vertex_array range ***/
 static void *
@@ -3181,9 +3171,6 @@ _mesa_GetGLXDispatchTable(void)
 
    /*** GLX_MESA_pixmap_colormap ***/
    glx.CreateGLXPixmapMESA = Fake_glXCreateGLXPixmapMESA;
-
-   /*** GLX_MESA_set_3dfx_mode ***/
-   glx.Set3DfxModeMESA = Fake_glXSet3DfxModeMESA;
 
    /*** GLX_NV_vertex_array_range ***/
    glx.AllocateMemoryNV = Fake_glXAllocateMemoryNV;
