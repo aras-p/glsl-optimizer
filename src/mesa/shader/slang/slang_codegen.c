@@ -228,7 +228,14 @@ _slang_sizeof_type_specifier(const slang_type_specifier *spec)
       break;
    case SLANG_SPEC_STRUCT:
       sz = _slang_field_offset(spec, 0); /* special use */
-      if (sz > 4) {
+      if (sz == 1) {
+         /* 1-float structs are actually troublesome to deal with since they
+          * might get placed at R.x, R.y, R.z or R.z.  Return size=2 to
+          * ensure the object is placed at R.x
+          */
+         sz = 2;
+      }
+      else if (sz > 4) {
          sz = (sz + 3) & ~0x3; /* round up to multiple of four */
       }
       break;
