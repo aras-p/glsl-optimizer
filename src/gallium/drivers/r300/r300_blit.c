@@ -59,14 +59,12 @@ int r300_fill_blit(struct r300_context* r300,
     /* Set up the 2D engine. */
     OUT_CS_REG(RADEON_DEFAULT_SC_BOTTOM_RIGHT,
                   RADEON_DEFAULT_SC_RIGHT_MAX | RADEON_DEFAULT_SC_BOTTOM_MAX);
-    /* XXX I have no idea what these flags mean, is this awesome? (y/n) */
     OUT_CS_REG(RADEON_DP_GUI_MASTER_CNTL,
                   RADEON_GMC_DST_PITCH_OFFSET_CNTL |
                   RADEON_GMC_BRUSH_SOLID_COLOR |
                   (dest_type << 8) |
                   RADEON_GMC_SRC_DATATYPE_COLOR |
-                  /* XXX is this the right rop? */
-                  RADEON_ROP3_ONE |
+                  RADEON_ROP3_P |
                   RADEON_GMC_CLR_CMP_CNTL_DIS);
     /* XXX pack this? */
     OUT_CS_REG(RADEON_DP_BRUSH_FRGD_CLR, color);
