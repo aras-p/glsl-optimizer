@@ -310,39 +310,23 @@ create_glx_visual( Display *dpy, XVisualInfo *visinfo )
    GLboolean alphaFlag = default_alpha_bits() > 0;
 
    if (is_usable_visual( visinfo )) {
-      if (_mesa_getenv("MESA_GLX_FORCE_CI")) {
-         /* Configure this visual as a COLOR INDEX visual. */
-         return save_glx_visual( dpy, visinfo,
-                                 GL_FALSE,   /* rgb */
-                                 GL_FALSE,  /* alpha */
-                                 GL_TRUE,   /* double */
-                                 GL_FALSE,  /* stereo */
-                                 zBits,
-                                 STENCIL_BITS,
-                                 0, 0, 0, 0, /* accum bits */
-                                 0,         /* level */
-                                 0          /* numAux */
-                               );
-      }
-      else {
-         /* Configure this visual as RGB, double-buffered, depth-buffered. */
-         /* This is surely wrong for some people's needs but what else */
-         /* can be done?  They should use glXChooseVisual(). */
-         return save_glx_visual( dpy, visinfo,
-                                 GL_TRUE,   /* rgb */
-                                 alphaFlag, /* alpha */
-                                 GL_TRUE,   /* double */
-                                 GL_FALSE,  /* stereo */
-                                 zBits,
-                                 STENCIL_BITS,
-                                 accBits, /* r */
-                                 accBits, /* g */
-                                 accBits, /* b */
-                                 accBits, /* a */
-                                 0,         /* level */
-                                 0          /* numAux */
-                               );
-      }
+      /* Configure this visual as RGB, double-buffered, depth-buffered. */
+      /* This is surely wrong for some people's needs but what else */
+      /* can be done?  They should use glXChooseVisual(). */
+      return save_glx_visual( dpy, visinfo,
+                              GL_TRUE,   /* rgb */
+                              alphaFlag, /* alpha */
+                              GL_TRUE,   /* double */
+                              GL_FALSE,  /* stereo */
+                              zBits,
+                              STENCIL_BITS,
+                              accBits, /* r */
+                              accBits, /* g */
+                              accBits, /* b */
+                              accBits, /* a */
+                              0,         /* level */
+                              0          /* numAux */
+         );
    }
    else {
       _mesa_warning(NULL, "Mesa: error in glXCreateContext: bad visual\n");
@@ -426,7 +410,7 @@ get_visual( Display *dpy, int scr, unsigned int depth, int xclass )
          return NULL;
       }
    }
-
+   
    return vis;
 }
 
@@ -479,88 +463,48 @@ get_env_visual(Display *dpy, int scr, const char *varname)
 
 
 /*
- * Select an X visual which satisfies the RGBA/CI flag and minimum depth.
- * Input:  dpy, screen - X display and screen number
- *         rgba - GL_TRUE = RGBA mode, GL_FALSE = CI mode
+ * Select an X visual which satisfies the RGBA flag and minimum depth.
+ * Input:  dpy, 
+ *         screen - X display and screen number
  *         min_depth - minimum visual depth
  *         preferred_class - preferred GLX visual class or DONT_CARE
  * Return:  pointer to an XVisualInfo or NULL.
  */
 static XVisualInfo *
-choose_x_visual( Display *dpy, int screen, GLboolean rgba, int min_depth,
+choose_x_visual( Display *dpy, int screen, int min_depth,
                  int preferred_class )
 {
    XVisualInfo *vis;
    int xclass, visclass = 0;
    int depth;
 
-   if (rgba) {
-      /* First see if the MESA_RGB_VISUAL env var is defined */
-      vis = get_env_visual( dpy, screen, "MESA_RGB_VISUAL" );
-      if (vis) {
-	 return vis;
-      }
-      /* Otherwise, search for a suitable visual */
-      if (preferred_class==DONT_CARE) {
-         for (xclass=0;xclass<6;xclass++) {
-            switch (xclass) {
-               case 0:  visclass = TrueColor;    break;
-               case 1:  visclass = DirectColor;  break;
-               case 2:  visclass = PseudoColor;  break;
-               case 3:  visclass = StaticColor;  break;
-               case 4:  visclass = GrayScale;    break;
-               case 5:  visclass = StaticGray;   break;
-            }
-            if (min_depth==0) {
-               /* start with shallowest */
-               for (depth=0;depth<=32;depth++) {
-                  if (visclass==TrueColor && depth==8) {
-                     /* Special case:  try to get 8-bit PseudoColor before */
-                     /* 8-bit TrueColor */
-                     vis = get_visual( dpy, screen, 8, PseudoColor );
-                     if (vis) {
-                        return vis;
-                     }
-                  }
-                  vis = get_visual( dpy, screen, depth, visclass );
-                  if (vis) {
-                     return vis;
-                  }
-               }
-            }
-            else {
-               /* start with deepest */
-               for (depth=32;depth>=min_depth;depth--) {
-                  if (visclass==TrueColor && depth==8) {
-                     /* Special case:  try to get 8-bit PseudoColor before */
-                     /* 8-bit TrueColor */
-                     vis = get_visual( dpy, screen, 8, PseudoColor );
-                     if (vis) {
-                        return vis;
-                     }
-                  }
-                  vis = get_visual( dpy, screen, depth, visclass );
-                  if (vis) {
-                     return vis;
-                  }
-               }
-            }
-         }
-      }
-      else {
-         /* search for a specific visual class */
-         switch (preferred_class) {
-            case GLX_TRUE_COLOR_EXT:    visclass = TrueColor;    break;
-            case GLX_DIRECT_COLOR_EXT:  visclass = DirectColor;  break;
-            case GLX_PSEUDO_COLOR_EXT:  visclass = PseudoColor;  break;
-            case GLX_STATIC_COLOR_EXT:  visclass = StaticColor;  break;
-            case GLX_GRAY_SCALE_EXT:    visclass = GrayScale;    break;
-            case GLX_STATIC_GRAY_EXT:   visclass = StaticGray;   break;
-            default:   return NULL;
+   /* First see if the MESA_RGB_VISUAL env var is defined */
+   vis = get_env_visual( dpy, screen, "MESA_RGB_VISUAL" );
+   if (vis) {
+      return vis;
+   }
+   /* Otherwise, search for a suitable visual */
+   if (preferred_class==DONT_CARE) {
+      for (xclass=0;xclass<6;xclass++) {
+         switch (xclass) {
+         case 0:  visclass = TrueColor;    break;
+         case 1:  visclass = DirectColor;  break;
+         case 2:  visclass = PseudoColor;  break;
+         case 3:  visclass = StaticColor;  break;
+         case 4:  visclass = GrayScale;    break;
+         case 5:  visclass = StaticGray;   break;
          }
          if (min_depth==0) {
             /* start with shallowest */
             for (depth=0;depth<=32;depth++) {
+               if (visclass==TrueColor && depth==8) {
+                  /* Special case:  try to get 8-bit PseudoColor before */
+                  /* 8-bit TrueColor */
+                  vis = get_visual( dpy, screen, 8, PseudoColor );
+                  if (vis) {
+                     return vis;
+                  }
+               }
                vis = get_visual( dpy, screen, depth, visclass );
                if (vis) {
                   return vis;
@@ -570,6 +514,14 @@ choose_x_visual( Display *dpy, int screen, GLboolean rgba, int min_depth,
          else {
             /* start with deepest */
             for (depth=32;depth>=min_depth;depth--) {
+               if (visclass==TrueColor && depth==8) {
+                  /* Special case:  try to get 8-bit PseudoColor before */
+                  /* 8-bit TrueColor */
+                  vis = get_visual( dpy, screen, 8, PseudoColor );
+                  if (vis) {
+                     return vis;
+                  }
+               }
                vis = get_visual( dpy, screen, depth, visclass );
                if (vis) {
                   return vis;
@@ -579,56 +531,28 @@ choose_x_visual( Display *dpy, int screen, GLboolean rgba, int min_depth,
       }
    }
    else {
-      /* First see if the MESA_CI_VISUAL env var is defined */
-      vis = get_env_visual( dpy, screen, "MESA_CI_VISUAL" );
-      if (vis) {
-	 return vis;
+      /* search for a specific visual class */
+      switch (preferred_class) {
+      case GLX_TRUE_COLOR_EXT:    visclass = TrueColor;    break;
+      case GLX_DIRECT_COLOR_EXT:  visclass = DirectColor;  break;
+      case GLX_PSEUDO_COLOR_EXT:  visclass = PseudoColor;  break;
+      case GLX_STATIC_COLOR_EXT:  visclass = StaticColor;  break;
+      case GLX_GRAY_SCALE_EXT:    visclass = GrayScale;    break;
+      case GLX_STATIC_GRAY_EXT:   visclass = StaticGray;   break;
+      default:   return NULL;
       }
-      /* Otherwise, search for a suitable visual, starting with shallowest */
-      if (preferred_class==DONT_CARE) {
-         for (xclass=0;xclass<4;xclass++) {
-            switch (xclass) {
-               case 0:  visclass = PseudoColor;  break;
-               case 1:  visclass = StaticColor;  break;
-               case 2:  visclass = GrayScale;    break;
-               case 3:  visclass = StaticGray;   break;
-            }
-            /* try 8-bit up through 16-bit */
-            for (depth=8;depth<=16;depth++) {
-               vis = get_visual( dpy, screen, depth, visclass );
-               if (vis) {
-                  return vis;
-               }
-            }
-            /* try min_depth up to 8-bit */
-            for (depth=min_depth;depth<8;depth++) {
-               vis = get_visual( dpy, screen, depth, visclass );
-               if (vis) {
-                  return vis;
-               }
-            }
-         }
-      }
-      else {
-         /* search for a specific visual class */
-         switch (preferred_class) {
-            case GLX_TRUE_COLOR_EXT:    visclass = TrueColor;    break;
-            case GLX_DIRECT_COLOR_EXT:  visclass = DirectColor;  break;
-            case GLX_PSEUDO_COLOR_EXT:  visclass = PseudoColor;  break;
-            case GLX_STATIC_COLOR_EXT:  visclass = StaticColor;  break;
-            case GLX_GRAY_SCALE_EXT:    visclass = GrayScale;    break;
-            case GLX_STATIC_GRAY_EXT:   visclass = StaticGray;   break;
-            default:   return NULL;
-         }
-         /* try 8-bit up through 16-bit */
-         for (depth=8;depth<=16;depth++) {
+      if (min_depth==0) {
+         /* start with shallowest */
+         for (depth=0;depth<=32;depth++) {
             vis = get_visual( dpy, screen, depth, visclass );
             if (vis) {
                return vis;
             }
          }
-         /* try min_depth up to 8-bit */
-         for (depth=min_depth;depth<8;depth++) {
+      }
+      else {
+         /* start with deepest */
+         for (depth=32;depth>=min_depth;depth--) {
             vis = get_visual( dpy, screen, depth, visclass );
             if (vis) {
                return vis;
@@ -990,6 +914,7 @@ choose_visual( Display *dpy, int screen, const int *list, GLboolean fbConfig )
 
    (void) caveat;
 
+
    /*
     * Since we're only simulating the GLX extension this function will never
     * find any real GL visuals.  Instead, all we can do is try to find an RGB
@@ -1007,8 +932,7 @@ choose_visual( Display *dpy, int screen, const int *list, GLboolean fbConfig )
       if (vis) {
          /* give the visual some useful GLX attributes */
          double_flag = GL_TRUE;
-         if (vis->depth > 8)
-            rgb_flag = GL_TRUE;
+         rgb_flag = GL_TRUE;
          depth_size = default_depth_bits();
          stencil_size = STENCIL_BITS;
          /* XXX accum??? */
@@ -1016,22 +940,17 @@ choose_visual( Display *dpy, int screen, const int *list, GLboolean fbConfig )
    }
    else if (level==0) {
       /* normal color planes */
-      if (rgb_flag) {
-         /* Get an RGB visual */
-         int min_rgb = min_red + min_green + min_blue;
-         if (min_rgb>1 && min_rgb<8) {
-            /* a special case to be sure we can get a monochrome visual */
-            min_rgb = 1;
-         }
-         vis = choose_x_visual( dpy, screen, rgb_flag, min_rgb, visual_type );
+      /* Get an RGB visual */
+      int min_rgb = min_red + min_green + min_blue;
+      if (min_rgb>1 && min_rgb<8) {
+         /* a special case to be sure we can get a monochrome visual */
+         min_rgb = 1;
       }
-      else {
-         /* Get a color index visual */
-         vis = choose_x_visual( dpy, screen, rgb_flag, min_ci, visual_type );
-         accumRedSize = accumGreenSize = accumBlueSize = accumAlphaSize = 0;
-      }
+      vis = choose_x_visual( dpy, screen, min_rgb, visual_type );
    }
    else {
+      _mesa_warning(NULL, "overlay not supported");
+      return NULL;
    }
 
    if (vis) {
@@ -1057,11 +976,16 @@ choose_visual( Display *dpy, int screen, const int *list, GLboolean fbConfig )
       /* we only support one size of stencil and accum buffers. */
       if (stencil_size > 0)
          stencil_size = STENCIL_BITS;
-      if (accumRedSize > 0 || accumGreenSize > 0 || accumBlueSize > 0 ||
+
+      if (accumRedSize > 0 || 
+          accumGreenSize > 0 || 
+          accumBlueSize > 0 ||
           accumAlphaSize > 0) {
+
          accumRedSize = 
-         accumGreenSize = 
-         accumBlueSize = default_accum_bits();
+            accumGreenSize = 
+            accumBlueSize = default_accum_bits();
+
          accumAlphaSize = alpha_flag ? accumRedSize : 0;
       }
 
@@ -1085,16 +1009,12 @@ Fake_glXChooseVisual( Display *dpy, int screen, int *list )
 
    xmvis = choose_visual(dpy, screen, list, GL_FALSE);
    if (xmvis) {
-#if 0
-      return xmvis->vishandle;
-#else
       /* create a new vishandle - the cached one may be stale */
       xmvis->vishandle = (XVisualInfo *) _mesa_malloc(sizeof(XVisualInfo));
       if (xmvis->vishandle) {
          _mesa_memcpy(xmvis->vishandle, xmvis->visinfo, sizeof(XVisualInfo));
       }
       return xmvis->vishandle;
-#endif
    }
    else
       return NULL;
