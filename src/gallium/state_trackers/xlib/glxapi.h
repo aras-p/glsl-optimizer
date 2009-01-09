@@ -184,16 +184,6 @@ struct _glxapi_table {
    /*** GLX_MESA_pixmap_colormap ***/
    GLXPixmap (*CreateGLXPixmapMESA)(Display *dpy, XVisualInfo *visinfo, Pixmap pixmap, Colormap cmap);
 
-   /*** GLX_NV_vertex_array_range ***/
-   void * (*AllocateMemoryNV)( GLsizei size,
-                               GLfloat readFrequency,
-                               GLfloat writeFrequency,
-                               GLfloat priority );
-   void (*FreeMemoryNV)( GLvoid *pointer );
-
-   /*** GLX_MESA_agp_offset ***/
-   GLuint (*GetAGPOffsetMESA)( const GLvoid *pointer );
-
    /*** GLX_EXT_texture_from_pixmap ***/
    void (*BindTexImageEXT)(Display *dpy, GLXDrawable drawable, int buffer,
                            const int *attrib_list);

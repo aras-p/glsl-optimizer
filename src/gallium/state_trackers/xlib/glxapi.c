@@ -996,55 +996,6 @@ glXCreateGLXPixmapMESA(Display *dpy, XVisualInfo *visinfo, Pixmap pixmap, Colorm
    return (t->CreateGLXPixmapMESA)(dpy, visinfo, pixmap, cmap);
 }
 
-
-
-/*** GLX_NV_vertex_array_range ***/
-
-void PUBLIC *
-glXAllocateMemoryNV( GLsizei size,
-                     GLfloat readFrequency,
-                     GLfloat writeFrequency,
-                     GLfloat priority )
-{
-   struct _glxapi_table *t;
-   Display *dpy = glXGetCurrentDisplay();
-   GET_DISPATCH(dpy, t);
-   if (!t)
-      return NULL;
-   return (t->AllocateMemoryNV)(size, readFrequency, writeFrequency, priority);
-}
-
-
-void PUBLIC
-glXFreeMemoryNV( GLvoid *pointer )
-{
-   struct _glxapi_table *t;
-   Display *dpy = glXGetCurrentDisplay();
-   GET_DISPATCH(dpy, t);
-   if (!t)
-      return;
-   (t->FreeMemoryNV)(pointer);
-}
-
-
-
-
-/*** GLX_MESA_agp_offset */
-
-GLuint PUBLIC
-glXGetAGPOffsetMESA( const GLvoid *pointer )
-{
-   struct _glxapi_table *t;
-   Display *dpy = glXGetCurrentDisplay();
-   GET_DISPATCH(dpy, t);
-   if (!t)
-      return ~0;
-   return (t->GetAGPOffsetMESA)(pointer);
-}
-
-
-
-
 /*** GLX_EXT_texture_from_pixmap */
 
 void
@@ -1243,13 +1194,6 @@ static struct name_address_pair GLX_functions[] = {
 
    /*** GLX_ARB_get_proc_address ***/
    { "glXGetProcAddressARB", (__GLXextFuncPtr) glXGetProcAddressARB },
-
-   /*** GLX_NV_vertex_array_range ***/
-   { "glXAllocateMemoryNV", (__GLXextFuncPtr) glXAllocateMemoryNV },
-   { "glXFreeMemoryNV", (__GLXextFuncPtr) glXFreeMemoryNV },
-
-   /*** GLX_MESA_agp_offset ***/
-   { "glXGetAGPOffsetMESA", (__GLXextFuncPtr) glXGetAGPOffsetMESA },
 
    /*** GLX_EXT_texture_from_pixmap ***/
    { "glXBindTexImageEXT", (__GLXextFuncPtr) glXBindTexImageEXT },

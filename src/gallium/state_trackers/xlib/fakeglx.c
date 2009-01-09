@@ -2963,41 +2963,6 @@ Fake_glXReleaseBuffersMESA( Display *dpy, GLXDrawable d )
    return False;
 }
 
-
-
-
-/*** GLX_NV_vertex_array range ***/
-static void *
-Fake_glXAllocateMemoryNV( GLsizei size,
-                          GLfloat readFrequency,
-                          GLfloat writeFrequency,
-                          GLfloat priority )
-{
-   (void) size;
-   (void) readFrequency;
-   (void) writeFrequency;
-   (void) priority;
-   return NULL;
-}
-
-
-static void 
-Fake_glXFreeMemoryNV( GLvoid *pointer )
-{
-   (void) pointer;
-}
-
-
-/*** GLX_MESA_agp_offset ***/
-
-static GLuint
-Fake_glXGetAGPOffsetMESA( const GLvoid *pointer )
-{
-   (void) pointer;
-   return ~0;
-}
-
-
 /*** GLX_EXT_texture_from_pixmap ***/
 
 static void
@@ -3161,13 +3126,6 @@ _mesa_GetGLXDispatchTable(void)
 
    /*** GLX_MESA_pixmap_colormap ***/
    glx.CreateGLXPixmapMESA = Fake_glXCreateGLXPixmapMESA;
-
-   /*** GLX_NV_vertex_array_range ***/
-   glx.AllocateMemoryNV = Fake_glXAllocateMemoryNV;
-   glx.FreeMemoryNV = Fake_glXFreeMemoryNV;
-
-   /*** GLX_MESA_agp_offset ***/
-   glx.GetAGPOffsetMESA = Fake_glXGetAGPOffsetMESA;
 
    /*** GLX_EXT_texture_from_pixmap ***/
    glx.BindTexImageEXT = Fake_glXBindTexImageEXT;
