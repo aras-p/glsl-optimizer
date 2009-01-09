@@ -148,7 +148,6 @@ st_create_context_priv( GLcontext *ctx, struct pipe_context *pipe )
    /* Need these flags:
     */
    st->ctx->FragmentProgram._MaintainTexEnvProgram = GL_TRUE;
-   st->ctx->FragmentProgram._UseTexEnvProgram = GL_TRUE;
 
    st->ctx->VertexProgram._MaintainTnlProgram = GL_TRUE;
 
