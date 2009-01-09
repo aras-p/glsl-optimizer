@@ -1,4 +1,4 @@
-TOP = ../../../..
+TOP = ../../../../..
 include $(TOP)/configs/current
 
 LIBNAME = xlib
@@ -19,7 +19,7 @@ C_SOURCES = \
 	xm_api.c
 
 
-include ../../Makefile.template
+include ../../../Makefile.template
 
 symlinks:
 

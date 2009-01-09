@@ -19,7 +19,7 @@ INCLUDE_DIRS = \
 	-I$(TOP)/src/mesa/main \
 	-I$(TOP)/src/gallium/include \
 	-I$(TOP)/src/gallium/drivers \
-	-I$(TOP)/src/gallium/state_trackers/xlib \
+	-I$(TOP)/src/gallium/state_trackers/glx/xlib \
 	-I$(TOP)/src/gallium/auxiliary
 
 XLIB_WINSYS_SOURCES = \
@@ -38,6 +38,7 @@ XLIB_WINSYS_OBJECTS = $(XLIB_WINSYS_SOURCES:.c=.o)
 
 LIBS = \
 	$(GALLIUM_DRIVERS) \
+	$(TOP)/src/gallium/state_trackers/glx/xlib/libxlib.a \
 	$(TOP)/src/mesa/libglapi.a \
 	$(TOP)/src/mesa/libmesa.a \
 	$(GALLIUM_AUXILIARIES) \
@@ -58,13 +59,12 @@ default: $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME)
 
 
 # Make the libGL.so library
-$(TOP)/$(LIB_DIR)/$(GL_LIB_NAME): $(XLIB_WINSYS_OBJECTS) $(LIBS)
+$(TOP)/$(LIB_DIR)/$(GL_LIB_NAME): $(XLIB_WINSYS_OBJECTS) $(LIBS) Makefile
 	$(TOP)/bin/mklib -o $(GL_LIB) \
 		-linker "$(CC)" \
 		-major $(GL_MAJOR) -minor $(GL_MINOR) -patch $(GL_TINY) \
 		-install $(TOP)/$(LIB_DIR) \
 		$(MKLIB_OPTIONS) $(XLIB_WINSYS_OBJECTS) \
-		$(TOP)/src/gallium/state_trackers/xlib/*.o \
 		--start-group $(LIBS) --end-group $(GL_LIB_DEPS)
 
 

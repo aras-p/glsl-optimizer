@@ -1,8 +1,8 @@
-TOP = ../../..
+TOP = ../../../..
 include $(TOP)/configs/current
 
 
-SUBDIRS = glx
+SUBDIRS = xlib
 
 
 default: subdirs
