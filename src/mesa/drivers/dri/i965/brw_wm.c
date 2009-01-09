@@ -136,6 +136,9 @@ static void do_wm_prog( struct brw_context *brw,
 	*/
        brw_wm_emit(c);
    }
+   if (INTEL_DEBUG & DEBUG_WM)
+      fprintf(stderr, "\n");
+
    /* get the program
     */
    program = brw_get_program(&c->func, &program_size);
