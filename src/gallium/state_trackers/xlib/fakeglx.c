@@ -108,22 +108,6 @@ static XMesaVisual *VisualTable = NULL;
 static int NumVisuals = 0;
 
 
-/*
- * This struct and some code fragments borrowed
- * from Mark Kilgard's GLUT library.
- */
-typedef struct _OverlayInfo {
-  /* Avoid 64-bit portability problems by being careful to use
-     longs due to the way XGetWindowProperty is specified. Note
-     that these parameters are passed as CARD32s over X
-     protocol. */
-  unsigned long overlay_visual;
-  long transparent_type;
-  long value;
-  long layer;
-} OverlayInfo;
-
-
 
 /* Macro to handle c_class vs class field name in XVisualInfo struct */
 #if defined(__cplusplus) || defined(c_plusplus)
@@ -163,98 +147,6 @@ is_usable_visual( XVisualInfo *vinfo )
 	 return GL_FALSE;
    }
 }
-
-
-
-/**
- * Get an array OverlayInfo records for specified screen.
- * \param dpy  the display
- * \param screen  screen number
- * \param numOverlays  returns numver of OverlayInfo records
- * \return  pointer to OverlayInfo array, free with XFree()
- */
-static OverlayInfo *
-GetOverlayInfo(Display *dpy, int screen, int *numOverlays)
-{
-   Atom overlayVisualsAtom;
-   Atom actualType;
-   Status status;
-   unsigned char *ovInfo;
-   unsigned long sizeData, bytesLeft;
-   int actualFormat;
-
-   /*
-    * The SERVER_OVERLAY_VISUALS property on the root window contains
-    * a list of overlay visuals.  Get that list now.
-    */
-   overlayVisualsAtom = XInternAtom(dpy,"SERVER_OVERLAY_VISUALS", True);
-   if (overlayVisualsAtom == None) {
-      return 0;
-   }
-
-   status = XGetWindowProperty(dpy, RootWindow(dpy, screen),
-                               overlayVisualsAtom, 0L, (long) 10000, False,
-                               overlayVisualsAtom, &actualType, &actualFormat,
-                               &sizeData, &bytesLeft,
-                               &ovInfo);
-
-   if (status != Success || actualType != overlayVisualsAtom ||
-       actualFormat != 32 || sizeData < 4) {
-      /* something went wrong */
-      XFree((void *) ovInfo);
-      *numOverlays = 0;
-      return NULL;
-   }
-
-   *numOverlays = sizeData / 4;
-   return (OverlayInfo *) ovInfo;
-}
-
-
-
-/**
- * Return the level (overlay, normal, underlay) of a given XVisualInfo.
- * Input:  dpy - the X display
- *         vinfo - the XVisualInfo to test
- * Return:  level of the visual:
- *             0 = normal planes
- *            >0 = overlay planes
- *            <0 = underlay planes
- */
-static int
-level_of_visual( Display *dpy, XVisualInfo *vinfo )
-{
-   OverlayInfo *overlay_info;
-   int numOverlaysPerScreen, i;
-
-   overlay_info = GetOverlayInfo(dpy, vinfo->screen, &numOverlaysPerScreen);
-   if (!overlay_info) {
-      return 0;
-   }
-
-   /* search the overlay visual list for the visual ID of interest */
-   for (i = 0; i < numOverlaysPerScreen; i++) {
-      const OverlayInfo *ov = overlay_info + i;
-      if (ov->overlay_visual == vinfo->visualid) {
-         /* found the visual */
-         if (/*ov->transparent_type==1 &&*/ ov->layer!=0) {
-            int level = ov->layer;
-            XFree((void *) overlay_info);
-            return level;
-         }
-         else {
-            XFree((void *) overlay_info);
-            return 0;
-         }
-      }
-   }
-
-   /* The visual ID was not found in the overlay list. */
-   XFree((void *) overlay_info);
-   return 0;
-}
-
-
 
 
 /*
@@ -413,27 +305,11 @@ default_accum_bits(void)
 static XMesaVisual
 create_glx_visual( Display *dpy, XVisualInfo *visinfo )
 {
-   int vislevel;
    GLint zBits = default_depth_bits();
    GLint accBits = default_accum_bits();
    GLboolean alphaFlag = default_alpha_bits() > 0;
 
-   vislevel = level_of_visual( dpy, visinfo );
-   if (vislevel) {
-      /* Configure this visual as a CI, single-buffered overlay */
-      return save_glx_visual( dpy, visinfo,
-                              GL_FALSE,  /* rgb */
-                              GL_FALSE,  /* alpha */
-                              GL_FALSE,  /* double */
-                              GL_FALSE,  /* stereo */
-                              0,         /* depth bits */
-                              0,         /* stencil bits */
-                              0,0,0,0,   /* accum bits */
-                              vislevel,  /* level */
-                              0          /* numAux */
-                            );
-   }
-   else if (is_usable_visual( visinfo )) {
+   if (is_usable_visual( visinfo )) {
       if (_mesa_getenv("MESA_GLX_FORCE_CI")) {
          /* Configure this visual as a COLOR INDEX visual. */
          return save_glx_visual( dpy, visinfo,
@@ -504,45 +380,6 @@ find_glx_visual( Display *dpy, XVisualInfo *vinfo )
 
 
 
-/**
- * Return the transparent pixel value for a GLX visual.
- * Input:  glxvis - the glx_visual
- * Return:  a pixel value or -1 if no transparent pixel
- */
-static int
-transparent_pixel( XMesaVisual glxvis )
-{
-   Display *dpy = glxvis->display;
-   XVisualInfo *vinfo = glxvis->visinfo;
-   OverlayInfo *overlay_info;
-   int numOverlaysPerScreen, i;
-
-   overlay_info = GetOverlayInfo(dpy, vinfo->screen, &numOverlaysPerScreen);
-   if (!overlay_info) {
-      return -1;
-   }
-
-   for (i = 0; i < numOverlaysPerScreen; i++) {
-      const OverlayInfo *ov = overlay_info + i;
-      if (ov->overlay_visual == vinfo->visualid) {
-         /* found it! */
-         if (ov->transparent_type == 0) {
-            /* type 0 indicates no transparency */
-            XFree((void *) overlay_info);
-            return -1;
-         }
-         else {
-            /* ov->value is the transparent pixel */
-            XFree((void *) overlay_info);
-            return ov->value;
-         }
-      }
-   }
-
-   /* The visual ID was not found in the overlay list. */
-   XFree((void *) overlay_info);
-   return -1;
-}
 
 
 
@@ -658,7 +495,6 @@ choose_x_visual( Display *dpy, int screen, GLboolean rgba, int min_depth,
    int depth;
 
    if (rgba) {
-      Atom hp_cr_maps = XInternAtom(dpy, "_HP_RGB_SMOOTH_MAP_LIST", True);
       /* First see if the MESA_RGB_VISUAL env var is defined */
       vis = get_env_visual( dpy, screen, "MESA_RGB_VISUAL" );
       if (vis) {
@@ -678,7 +514,7 @@ choose_x_visual( Display *dpy, int screen, GLboolean rgba, int min_depth,
             if (min_depth==0) {
                /* start with shallowest */
                for (depth=0;depth<=32;depth++) {
-                  if (visclass==TrueColor && depth==8 && !hp_cr_maps) {
+                  if (visclass==TrueColor && depth==8) {
                      /* Special case:  try to get 8-bit PseudoColor before */
                      /* 8-bit TrueColor */
                      vis = get_visual( dpy, screen, 8, PseudoColor );
@@ -695,7 +531,7 @@ choose_x_visual( Display *dpy, int screen, GLboolean rgba, int min_depth,
             else {
                /* start with deepest */
                for (depth=32;depth>=min_depth;depth--) {
-                  if (visclass==TrueColor && depth==8 && !hp_cr_maps) {
+                  if (visclass==TrueColor && depth==8) {
                      /* Special case:  try to get 8-bit PseudoColor before */
                      /* 8-bit TrueColor */
                      vis = get_visual( dpy, screen, 8, PseudoColor );
@@ -806,117 +642,6 @@ choose_x_visual( Display *dpy, int screen, GLboolean rgba, int min_depth,
 }
 
 
-
-/*
- * Find the deepest X over/underlay visual of at least min_depth.
- * Input:  dpy, screen - X display and screen number
- *         level - the over/underlay level
- *         trans_type - transparent pixel type: GLX_NONE_EXT,
- *                      GLX_TRANSPARENT_RGB_EXT, GLX_TRANSPARENT_INDEX_EXT,
- *                      or DONT_CARE
- *         trans_value - transparent pixel value or DONT_CARE
- *         min_depth - minimum visual depth
- *         preferred_class - preferred GLX visual class or DONT_CARE
- * Return:  pointer to an XVisualInfo or NULL.
- */
-static XVisualInfo *
-choose_x_overlay_visual( Display *dpy, int scr, GLboolean rgbFlag,
-                         int level, int trans_type, int trans_value,
-                         int min_depth, int preferred_class )
-{
-   OverlayInfo *overlay_info;
-   int numOverlaysPerScreen;
-   int i;
-   XVisualInfo *deepvis;
-   int deepest;
-
-   /*DEBUG int tt, tv; */
-
-   switch (preferred_class) {
-      case GLX_TRUE_COLOR_EXT:    preferred_class = TrueColor;    break;
-      case GLX_DIRECT_COLOR_EXT:  preferred_class = DirectColor;  break;
-      case GLX_PSEUDO_COLOR_EXT:  preferred_class = PseudoColor;  break;
-      case GLX_STATIC_COLOR_EXT:  preferred_class = StaticColor;  break;
-      case GLX_GRAY_SCALE_EXT:    preferred_class = GrayScale;    break;
-      case GLX_STATIC_GRAY_EXT:   preferred_class = StaticGray;   break;
-      default:                    preferred_class = DONT_CARE;
-   }
-
-   overlay_info = GetOverlayInfo(dpy, scr, &numOverlaysPerScreen);
-   if (!overlay_info) {
-      return NULL;
-   }
-
-   /* Search for the deepest overlay which satisifies all criteria. */
-   deepest = min_depth;
-   deepvis = NULL;
-
-   for (i = 0; i < numOverlaysPerScreen; i++) {
-      const OverlayInfo *ov = overlay_info + i;
-      XVisualInfo *vislist, vistemplate;
-      int count;
-
-      if (ov->layer!=level) {
-         /* failed overlay level criteria */
-         continue;
-      }
-      if (!(trans_type==DONT_CARE
-            || (trans_type==GLX_TRANSPARENT_INDEX_EXT
-                && ov->transparent_type>0)
-            || (trans_type==GLX_NONE_EXT && ov->transparent_type==0))) {
-         /* failed transparent pixel type criteria */
-         continue;
-      }
-      if (trans_value!=DONT_CARE && trans_value!=ov->value) {
-         /* failed transparent pixel value criteria */
-         continue;
-      }
-
-      /* get XVisualInfo and check the depth */
-      vistemplate.visualid = ov->overlay_visual;
-      vistemplate.screen = scr;
-      vislist = XGetVisualInfo( dpy, VisualIDMask | VisualScreenMask,
-                                &vistemplate, &count );
-
-      if (count!=1) {
-         /* something went wrong */
-         continue;
-      }
-      if (preferred_class!=DONT_CARE && preferred_class!=vislist->CLASS) {
-         /* wrong visual class */
-         continue;
-      }
-
-      /* if RGB was requested, make sure we have True/DirectColor */
-      if (rgbFlag && vislist->CLASS != TrueColor
-          && vislist->CLASS != DirectColor)
-         continue;
-
-      /* if CI was requested, make sure we have a color indexed visual */
-      if (!rgbFlag
-          && (vislist->CLASS == TrueColor || vislist->CLASS == DirectColor))
-         continue;
-
-      if (deepvis==NULL || vislist->depth > deepest) {
-         /* YES!  found a satisfactory visual */
-         if (deepvis) {
-            XFree( deepvis );
-         }
-         deepest = vislist->depth;
-         deepvis = vislist;
-         /* DEBUG  tt = ov->transparent_type;*/
-         /* DEBUG  tv = ov->value; */
-      }
-   }
-
-/*DEBUG
-   if (deepvis) {
-      printf("chose 0x%x:  layer=%d depth=%d trans_type=%d trans_value=%d\n",
-             deepvis->visualid, level, deepvis->depth, tt, tv );
-   }
-*/
-   return deepvis;
-}
 
 
 /**********************************************************************/
@@ -1307,22 +1032,6 @@ choose_visual( Display *dpy, int screen, const int *list, GLboolean fbConfig )
       }
    }
    else {
-      /* over/underlay planes */
-      if (rgb_flag) {
-         /* rgba overlay */
-         int min_rgb = min_red + min_green + min_blue;
-         if (min_rgb>1 && min_rgb<8) {
-            /* a special case to be sure we can get a monochrome visual */
-            min_rgb = 1;
-         }
-         vis = choose_x_overlay_visual( dpy, screen, rgb_flag, level,
-                              trans_type, trans_value, min_rgb, visual_type );
-      }
-      else {
-         /* color index overlay */
-         vis = choose_x_overlay_visual( dpy, screen, rgb_flag, level,
-                              trans_type, trans_value, min_ci, visual_type );
-      }
    }
 
    if (vis) {
@@ -1810,32 +1519,11 @@ get_config( XMesaVisual xmvis, int attrib, int *value, GLboolean fbconfig )
          }
          return 0;
       case GLX_TRANSPARENT_TYPE_EXT:
-         if (xmvis->mesa_visual.level==0) {
-            /* normal planes */
-            *value = GLX_NONE_EXT;
-         }
-         else if (xmvis->mesa_visual.level>0) {
-            /* overlay */
-            if (xmvis->mesa_visual.rgbMode) {
-               *value = GLX_TRANSPARENT_RGB_EXT;
-            }
-            else {
-               *value = GLX_TRANSPARENT_INDEX_EXT;
-            }
-         }
-         else if (xmvis->mesa_visual.level<0) {
-            /* underlay */
-            *value = GLX_NONE_EXT;
-         }
+         /* normal planes */
+         *value = GLX_NONE_EXT;
          return 0;
       case GLX_TRANSPARENT_INDEX_VALUE_EXT:
-         {
-            int pixel = transparent_pixel( xmvis );
-            if (pixel>=0) {
-               *value = pixel;
-            }
-            /* else undefined */
-         }
+         /* undefined */
          return 0;
       case GLX_TRANSPARENT_RED_VALUE_EXT:
          /* undefined */
