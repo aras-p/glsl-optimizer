@@ -89,6 +89,7 @@ int INTEL_DEBUG = (0);
 #define need_GL_EXT_multi_draw_arrays
 #define need_GL_EXT_point_parameters
 #define need_GL_EXT_secondary_color
+#define need_GL_EXT_stencil_two_side
 #define need_GL_ATI_separate_stencil
 #define need_GL_NV_point_sprite
 #define need_GL_NV_vertex_program
@@ -413,6 +414,7 @@ static const struct dri_extension brw_extensions[] = {
    { "GL_ARB_texture_non_power_of_two",   NULL },
    { "GL_ARB_vertex_shader",              GL_ARB_vertex_shader_functions },
    { "GL_EXT_shadow_funcs",               NULL },
+   { "GL_EXT_stencil_two_side",           GL_EXT_stencil_two_side_functions },
    { "GL_EXT_texture_sRGB",		  NULL },
    { "GL_ATI_separate_stencil",           GL_ATI_separate_stencil_functions },
    { "GL_ATI_texture_env_combine3",       NULL },
