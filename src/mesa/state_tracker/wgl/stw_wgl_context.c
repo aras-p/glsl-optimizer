@@ -25,8 +25,6 @@
  *
  **************************************************************************/
 
-#define _GDI32_
-
 #include <windows.h>
 
 #include "main/mtypes.h"
@@ -41,7 +39,7 @@
 #include "stw_pixelformat.h"
 #include "stw_wgl_arbmultisample.h"
 #include "stw_wgl_context.h"
-#include "stw_wgl_pixelformat.h"
+#include "stw_wgl.h"
 
 static struct wgl_context *ctx_head = NULL;
 
@@ -107,7 +105,7 @@ wglCreateContext(
       return NULL;
    }
 
-   pipe = stw_winsys.create_context( stw_dev->screen );
+   pipe = stw_dev->stw_winsys->create_context( stw_dev->screen );
    if (!pipe) {
       _mesa_destroy_visual( visual );
       FREE( ctx );

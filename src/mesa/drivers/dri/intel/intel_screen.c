@@ -177,13 +177,6 @@ intelUpdateScreenFromSAREA(intelScreenPrivate * intelScreen,
    intelScreen->back.size = sarea->back_size;
    intelScreen->back.tiled = sarea->back_tiled;
 
-   if (intelScreen->driScrnPriv->ddx_version.minor >= 8) {
-      intelScreen->third.offset = sarea->third_offset;
-      intelScreen->third.handle = sarea->third_handle;
-      intelScreen->third.size = sarea->third_size;
-      intelScreen->third.tiled = sarea->third_tiled;
-   }
-
    intelScreen->depth.offset = sarea->depth_offset;
    intelScreen->depth.handle = sarea->depth_handle;
    intelScreen->depth.size = sarea->depth_size;
@@ -192,12 +185,10 @@ intelUpdateScreenFromSAREA(intelScreenPrivate * intelScreen,
    if (intelScreen->driScrnPriv->ddx_version.minor >= 9) {
       intelScreen->front.bo_handle = sarea->front_bo_handle;
       intelScreen->back.bo_handle = sarea->back_bo_handle;
-      intelScreen->third.bo_handle = sarea->third_bo_handle;
       intelScreen->depth.bo_handle = sarea->depth_bo_handle;
    } else {
       intelScreen->front.bo_handle = -1;
       intelScreen->back.bo_handle = -1;
-      intelScreen->third.bo_handle = -1;
       intelScreen->depth.bo_handle = -1;
    }
 
@@ -353,12 +344,6 @@ intelCreateBuffer(__DRIscreenPrivate * driScrnPriv,
          _mesa_add_renderbuffer(&intel_fb->Base, BUFFER_BACK_LEFT,
 				&intel_fb->color_rb[1]->Base);
 
-	 if (screen->third.handle) {
-	    struct gl_renderbuffer *tmp_rb = NULL;
-
-	    intel_fb->color_rb[2] = intel_create_renderbuffer(rgbFormat);
-	    _mesa_reference_renderbuffer(&tmp_rb, &intel_fb->color_rb[2]->Base);
-	 }
       }
 
       if (mesaVis->depthBits == 24) {

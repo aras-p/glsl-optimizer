@@ -11,8 +11,9 @@ if env['platform'] in ['windows']:
     ])
      
     env.Append(CPPDEFINES = [
+        '_GDI32_', # prevent wgl* being declared __declspec(dllimport)
+        'BUILD_GL32', # declare gl* as __declspec(dllexport) in Mesa headers 
         '__GL_EXPORTS',
-        'BUILD_GL32',
         '_GNU_H_WINDOWS32_DEFINES',
     ])
      

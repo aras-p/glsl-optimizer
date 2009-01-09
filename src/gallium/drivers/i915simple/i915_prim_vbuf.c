@@ -197,9 +197,7 @@ i915_vbuf_render_set_primitive( struct vbuf_render *render,
       i915_render->fallback = 0;
       return TRUE;
    default:
-      assert((int)"Error unkown primtive type" & 0);
-      /* Actually, can handle a lot more just fine...  Fixme.
-       */
+      /* FIXME: Actually, can handle a lot more just fine... */
       return FALSE;
    }
 }

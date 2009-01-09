@@ -35,6 +35,7 @@
 #include "util/u_math.h"
 #include "spu_colorpack.h"
 #include "spu_main.h"
+#include "spu_shuffle.h"
 #include "spu_texture.h"
 #include "spu_tile.h"
 #include "spu_tri.h"
@@ -76,8 +77,13 @@ struct vertex_header {
  * Triangle edge info
  */
 struct edge {
-   float dx;		/**< X(v1) - X(v0), used only during setup */
-   float dy;		/**< Y(v1) - Y(v0), used only during setup */
+   union {
+      struct {
+         float dx;	/**< X(v1) - X(v0), used only during setup */
+         float dy;	/**< Y(v1) - Y(v0), used only during setup */
+      };
+      vec_float4 ds;    /**< vector accessor for dx and dy */
+   };
    float dxdy;		/**< dx/dy */
    float sx, sy;	/**< first sample point coord */
    int lines;		/**< number of lines on this edge */
@@ -102,10 +108,15 @@ struct setup_stage {
     * turn.  Currently fixed at 4 floats, but should change in time.
     * Codegen will help cope with this.
     */
-   const struct vertex_header *vmax;
-   const struct vertex_header *vmid;
-   const struct vertex_header *vmin;
-   const struct vertex_header *vprovoke;
+   union {
+      struct {
+         const struct vertex_header *vmin;
+         const struct vertex_header *vmid;
+         const struct vertex_header *vmax;
+         const struct vertex_header *vprovoke;
+      };
+      qword vertex_headers;
+   };
 
    struct edge ebot;
    struct edge etop;
@@ -122,8 +133,7 @@ struct setup_stage {
    struct interp_coef coef[PIPE_MAX_SHADER_INPUTS];
 
    struct {
-      int left[2];   /**< [0] = row0, [1] = row1 */
-      int right[2];
+      vec_int4 quad; /**< [0] = row0, [1] = row1; {left[0],left[1],right[0],right[1]} */
       int y;
       unsigned y_flags;
       unsigned mask;     /**< mask of MASK_BOTTOM/TOP_LEFT/RIGHT bits */
@@ -306,52 +316,35 @@ block(int x)
 
 
 /**
- * Compute mask which indicates which pixels in the 2x2 quad are actually inside
- * the triangle's bounds.
- * The mask is a uint4 vector and each element will be 0 or 0xffffffff.
- */
-static INLINE mask_t
-calculate_mask(int x)
-{
-   /* This is a little tricky.
-    * Use & instead of && to avoid branches.
-    * Use negation to convert true/false to ~0/0 values.
-    */
-   mask_t mask;
-   mask = spu_insert(-((x   >= setup.span.left[0]) & (x   < setup.span.right[0])), mask, 0);
-   mask = spu_insert(-((x+1 >= setup.span.left[0]) & (x+1 < setup.span.right[0])), mask, 1);
-   mask = spu_insert(-((x   >= setup.span.left[1]) & (x   < setup.span.right[1])), mask, 2);
-   mask = spu_insert(-((x+1 >= setup.span.left[1]) & (x+1 < setup.span.right[1])), mask, 3);
-   return mask;
-}
-
-
-/**
  * Render a horizontal span of quads
  */
 static void
 flush_spans(void)
 {
    int minleft, maxright;
-   int x;
+
+   const int l0 = spu_extract(setup.span.quad, 0);
+   const int l1 = spu_extract(setup.span.quad, 1);
+   const int r0 = spu_extract(setup.span.quad, 2);
+   const int r1 = spu_extract(setup.span.quad, 3);
 
    switch (setup.span.y_flags) {
    case 0x3:
       /* both odd and even lines written (both quad rows) */
-      minleft = MIN2(setup.span.left[0], setup.span.left[1]);
-      maxright = MAX2(setup.span.right[0], setup.span.right[1]);
+      minleft = MIN2(l0, l1);
+      maxright = MAX2(r0, r1);
       break;
 
    case 0x1:
       /* only even line written (quad top row) */
-      minleft = setup.span.left[0];
-      maxright = setup.span.right[0];
+      minleft = l0;
+      maxright = r0;
       break;
 
    case 0x2:
       /* only odd line written (quad bottom row) */
-      minleft = setup.span.left[1];
-      maxright = setup.span.right[1];
+      minleft = l1;
+      maxright = r1;
       break;
 
    default:
@@ -389,17 +382,42 @@ flush_spans(void)
       ASSERT(spu.cur_ztile_status != TILE_STATUS_DEFINED);
    }
 
-   /* XXX this loop could be moved into the above switch cases and
-    * calculate_mask() could be simplified a bit...
-    */
-   for (x = block(minleft); x <= block(maxright); x += 2) {
-      emit_quad( x, setup.span.y, calculate_mask( x ));
+   /* XXX this loop could be moved into the above switch cases... */
+   
+   /* Setup for mask calculation */
+   const vec_int4 quad_LlRr = setup.span.quad;
+   const vec_int4 quad_RrLl = spu_rlqwbyte(quad_LlRr, 8);
+   const vec_int4 quad_LLll = spu_shuffle(quad_LlRr, quad_LlRr, SHUFFLE4(A,A,B,B));
+   const vec_int4 quad_RRrr = spu_shuffle(quad_RrLl, quad_RrLl, SHUFFLE4(A,A,B,B));
+
+   const vec_int4 twos = spu_splats(2);
+
+   const int x = block(minleft);
+   vec_int4 xs = {x, x+1, x, x+1};
+
+   for (; spu_extract(xs, 0) <= block(maxright); xs += twos) {
+      /**
+       * Computes mask to indicate which pixels in the 2x2 quad are actually
+       * inside the triangle's bounds.
+       */
+      
+      /* Calculate ({x,x+1,x,x+1} >= {l[0],l[0],l[1],l[1]}) */
+      const mask_t gt_LLll_xs = spu_cmpgt(quad_LLll, xs);
+      const mask_t gte_xs_LLll = spu_nand(gt_LLll_xs, gt_LLll_xs); 
+      
+      /* Calculate ({r[0],r[0],r[1],r[1]} > {x,x+1,x,x+1}) */
+      const mask_t gt_RRrr_xs = spu_cmpgt(quad_RRrr, xs);
+
+      /* Combine results to create mask */
+      const mask_t mask = spu_and(gte_xs_LLll, gt_RRrr_xs);
+
+      emit_quad(spu_extract(xs, 0), setup.span.y, mask);
    }
 
    setup.span.y = 0;
    setup.span.y_flags = 0;
-   setup.span.right[0] = 0;
-   setup.span.right[1] = 0;
+   /* Zero right elements */
+   setup.span.quad = spu_shuffle(setup.span.quad, setup.span.quad, SHUFFLE4(A,B,0,0));
 }
 
 
@@ -444,55 +462,39 @@ setup_sort_vertices(const struct vertex_header *v0,
 
    /* determine bottom to top order of vertices */
    {
-      float y0 = spu_extract(v0->data[0], 1);
-      float y1 = spu_extract(v1->data[0], 1);
-      float y2 = spu_extract(v2->data[0], 1);
-      if (y0 <= y1) {
-	 if (y1 <= y2) {
-	    /* y0<=y1<=y2 */
-	    setup.vmin = v0;   
-	    setup.vmid = v1;   
-	    setup.vmax = v2;
-            sign = -1.0f;
-	 }
-	 else if (y2 <= y0) {
-	    /* y2<=y0<=y1 */
-	    setup.vmin = v2;   
-	    setup.vmid = v0;   
-	    setup.vmax = v1;   
-            sign = -1.0f;
-	 }
-	 else {
-	    /* y0<=y2<=y1 */
-	    setup.vmin = v0;   
-	    setup.vmid = v2;   
-	    setup.vmax = v1;  
-            sign = 1.0f;
-	 }
-      }
-      else {
-	 if (y0 <= y2) {
-	    /* y1<=y0<=y2 */
-	    setup.vmin = v1;   
-	    setup.vmid = v0;   
-	    setup.vmax = v2;  
-            sign = 1.0f;
-	 }
-	 else if (y2 <= y1) {
-	    /* y2<=y1<=y0 */
-	    setup.vmin = v2;   
-	    setup.vmid = v1;   
-	    setup.vmax = v0;  
-            sign = 1.0f;
-	 }
-	 else {
-	    /* y1<=y2<=y0 */
-	    setup.vmin = v1;   
-	    setup.vmid = v2;   
-	    setup.vmax = v0;
-            sign = -1.0f;
-	 }
-      }
+      /* A table of shuffle patterns for putting vertex_header pointers into
+         correct order.  Quite magical. */
+      const vec_uchar16 sort_order_patterns[] = {
+         SHUFFLE4(A,B,C,C),
+         SHUFFLE4(C,A,B,C),
+         SHUFFLE4(A,C,B,C),
+         SHUFFLE4(B,C,A,C),
+         SHUFFLE4(B,A,C,C),
+         SHUFFLE4(C,B,A,C) };
+
+      /* The vertex_header pointers, packed for easy shuffling later */
+      const vec_uint4 vs = {(unsigned)v0, (unsigned)v1, (unsigned)v2};
+
+      /* Collate y values into two vectors for comparison.
+         Using only one shuffle constant! ;) */
+      const vec_float4 y_02_ = spu_shuffle(v0->data[0], v2->data[0], SHUFFLE4(0,B,b,C));
+      const vec_float4 y_10_ = spu_shuffle(v1->data[0], v0->data[0], SHUFFLE4(0,B,b,C));
+      const vec_float4 y_012 = spu_shuffle(y_02_, v1->data[0], SHUFFLE4(0,B,b,C));
+      const vec_float4 y_120 = spu_shuffle(y_10_, v2->data[0], SHUFFLE4(0,B,b,C));
+
+      /* Perform comparison: {y0,y1,y2} > {y1,y2,y0} */
+      const vec_uint4 compare = spu_cmpgt(y_012, y_120);
+      /* Compress the result of the comparison into 4 bits */
+      const vec_uint4 gather = spu_gather(compare);
+      /* Subtract one to attain the index into the LUT.  Magical. */
+      const unsigned int index = spu_extract(gather, 0) - 1;
+
+      /* Load the appropriate pattern and construct the desired vector. */
+      setup.vertex_headers = (qword)spu_shuffle(vs, vs, sort_order_patterns[index]);
+
+      /* Using the result of the comparison, set sign.
+         Very magical. */
+      sign = ((si_to_uint(si_cntb((qword)gather)) == 2) ? 1.0f : -1.0f);
    }
 
    /* Check if triangle is completely outside the tile bounds */
@@ -509,12 +511,9 @@ setup_sort_vertices(const struct vertex_header *v0,
        spu_extract(setup.vmax->data[0], 0) > setup.cliprect_maxx)
       return FALSE;
 
-   setup.ebot.dx = spu_extract(setup.vmid->data[0], 0) - spu_extract(setup.vmin->data[0], 0);
-   setup.ebot.dy = spu_extract(setup.vmid->data[0], 1) - spu_extract(setup.vmin->data[0], 1);
-   setup.emaj.dx = spu_extract(setup.vmax->data[0], 0) - spu_extract(setup.vmin->data[0], 0);
-   setup.emaj.dy = spu_extract(setup.vmax->data[0], 1) - spu_extract(setup.vmin->data[0], 1);
-   setup.etop.dx = spu_extract(setup.vmax->data[0], 0) - spu_extract(setup.vmid->data[0], 0);
-   setup.etop.dy = spu_extract(setup.vmax->data[0], 1) - spu_extract(setup.vmid->data[0], 1);
+   setup.ebot.ds = spu_sub(setup.vmid->data[0], setup.vmin->data[0]);
+   setup.emaj.ds = spu_sub(setup.vmax->data[0], setup.vmin->data[0]);
+   setup.etop.ds = spu_sub(setup.vmax->data[0], setup.vmid->data[0]);
 
    /*
     * Compute triangle's area.  Use 1/area to compute partial
@@ -534,8 +533,6 @@ setup_sort_vertices(const struct vertex_header *v0,
    ASSERT(CELL_FACING_BACK == 1);
    setup.facing = (area * sign > 0.0f)
       ^ (spu.rasterizer.front_winding == PIPE_WINDING_CW);
-
-   setup.vprovoke = v2;
 
    return TRUE;
 }
@@ -746,9 +743,11 @@ subtriangle(struct edge *eleft, struct edge *eright, unsigned lines)
             setup.span.y = block(_y);
          }
 
-         setup.span.left[_y&1] = left;
-         setup.span.right[_y&1] = right;
-         setup.span.y_flags |= 1<<(_y&1);
+         int offset = _y&1;
+         vec_int4 quad_LlRr = {left, left, right, right};
+         /* Store left and right in 0 or 1 row of quad based on offset */
+         setup.span.quad = spu_sel(quad_LlRr, setup.span.quad, spu_maskw(5<<offset));
+         setup.span.y_flags |= 1<<offset;
       }
    }
 
@@ -790,8 +789,8 @@ tri_draw(const float *v0, const float *v1, const float *v2,
 
    setup.span.y = 0;
    setup.span.y_flags = 0;
-   setup.span.right[0] = 0;
-   setup.span.right[1] = 0;
+   /* Zero right elements */
+   setup.span.quad = spu_shuffle(setup.span.quad, setup.span.quad, SHUFFLE4(A,B,0,0));
 
    if (setup.oneOverArea < 0.0) {
       /* emaj on left */

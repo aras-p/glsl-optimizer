@@ -41,6 +41,7 @@ struct gl_program;
 
 GLuint
 st_translate_mesa_program(
+   GLcontext *ctx,
    uint procType,
    const struct gl_program *program,
    GLuint numInputs,

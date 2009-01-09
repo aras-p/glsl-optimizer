@@ -34,14 +34,10 @@ libmesa.a: $(MESA_OBJECTS)
 
 # Make archive of gl* API dispatcher functions only
 libglapi.a: $(GLAPI_OBJECTS)
-	@ $(MKLIB) -o glapi -static $(GLAPI_OBJECTS)
-
-# Make archive of gl* API dispatcher functions only
-$(GLAPI_LIB): $(GLAPI_OBJECTS)
 	@if [ "${WINDOW_SYSTEM}" = "dri" ] ; then \
 		touch libglapi.a ; \
 	else \
-		$(TOP)/bin/mklib -o glapi -static $(GLAPI_OBJECTS) ; \
+		$(MKLIB) -o glapi -static $(GLAPI_OBJECTS) ; \
 	fi
 
 ######################################################################

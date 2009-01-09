@@ -550,15 +550,6 @@ intel_recreate_static_regions(struct intel_context *intel)
 			    intel->back_region,
 			    &intelScreen->back);
 
-#ifdef I915
-   if (intelScreen->third.handle) {
-      intel->third_region =
-	 intel_recreate_static(intel, "third",
-			       intel->third_region,
-			       &intelScreen->third);
-   }
-#endif /* I915 */
-
    /* Still assumes front.cpp == depth.cpp.  We can kill this when we move to
     * private buffers.
     */

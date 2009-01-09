@@ -179,6 +179,38 @@ free_temp(struct nv50_pc *pc, struct nv50_reg *r)
 	}
 }
 
+static int
+alloc_temp4(struct nv50_pc *pc, struct nv50_reg *dst[4], int idx)
+{
+	int i;
+
+	if ((idx + 4) >= NV50_SU_MAX_TEMP)
+		return 1;
+
+	if (pc->r_temp[idx] || pc->r_temp[idx + 1] ||
+	    pc->r_temp[idx + 2] || pc->r_temp[idx + 3])
+		return alloc_temp4(pc, dst, idx + 1);
+
+	for (i = 0; i < 4; i++) {
+		dst[i] = CALLOC_STRUCT(nv50_reg);
+		dst[i]->type = P_TEMP;
+		dst[i]->index = -1;
+		dst[i]->hw = idx + i;
+		pc->r_temp[idx + i] = dst[i];
+	}
+
+	return 0;
+}
+
+static void
+free_temp4(struct nv50_pc *pc, struct nv50_reg *reg[4])
+{
+	int i;
+
+	for (i = 0; i < 4; i++)
+		free_temp(pc, reg[i]);
+}
+
 static struct nv50_reg *
 temp_temp(struct nv50_pc *pc)
 {
@@ -902,7 +934,7 @@ nv50_program_tx_insn(struct nv50_pc *pc, const union tgsi_full_token *tok)
 {
 	const struct tgsi_full_instruction *inst = &tok->FullInstruction;
 	struct nv50_reg *rdst[4], *dst[4], *src[3][4], *temp;
-	unsigned mask, sat;
+	unsigned mask, sat, unit;
 	int i, c;
 
 	mask = inst->FullDstRegisters[0].DstRegister.WriteMask;
@@ -916,8 +948,13 @@ nv50_program_tx_insn(struct nv50_pc *pc, const union tgsi_full_token *tok)
 	}
 
 	for (i = 0; i < inst->Instruction.NumSrcRegs; i++) {
+		struct tgsi_full_src_register *fs = &inst->FullSrcRegisters[i];
+
+		if (fs->SrcRegister.File == TGSI_FILE_SAMPLER)
+			unit = fs->SrcRegister.Index;
+
 		for (c = 0; c < 4; c++)
-			src[i][c] = tgsi_src(pc, c, &inst->FullSrcRegisters[i]);
+			src[i][c] = tgsi_src(pc, c, fs);
 	}
 
 	if (sat) {
@@ -1155,35 +1192,30 @@ nv50_program_tx_insn(struct nv50_pc *pc, const union tgsi_full_token *tok)
 		}
 		break;
 	case TGSI_OPCODE_TEX:
-		{
-			struct nv50_reg *t0, *t1, *t2, *t3;
-			struct nv50_program_exec *e;
+	case TGSI_OPCODE_TXP:
+	{
+		struct nv50_reg *t[4];
+		struct nv50_program_exec *e;
 
-			t0 = alloc_temp(pc, NULL);
-			t0 = alloc_temp(pc, NULL);
-			t1 = alloc_temp(pc, NULL);
-			t2 = alloc_temp(pc, NULL);
-			t3 = alloc_temp(pc, NULL);
-			emit_mov(pc, t0, src[0][0]);
-			emit_mov(pc, t1, src[0][1]);
+		alloc_temp4(pc, t, 0);
+		emit_mov(pc, t[0], src[0][0]);
+		emit_mov(pc, t[1], src[0][1]);
 
-			e = exec(pc);
-			e->inst[0] = 0xf6400000;
-			set_long(pc, e);
-			e->inst[1] |= 0x0000c004;
-			set_dst(pc, t0, e);
-			emit(pc, e);
+		e = exec(pc);
+		e->inst[0] = 0xf6400000;
+		e->inst[0] |= (unit << 9);
+		set_long(pc, e);
+		e->inst[1] |= 0x0000c004;
+		set_dst(pc, t[0], e);
+		emit(pc, e);
 
-			if (mask & (1 << 0)) emit_mov(pc, dst[0], t0);
-			if (mask & (1 << 1)) emit_mov(pc, dst[1], t1);
-			if (mask & (1 << 2)) emit_mov(pc, dst[2], t2);
-			if (mask & (1 << 3)) emit_mov(pc, dst[3], t3);
+		if (mask & (1 << 0)) emit_mov(pc, dst[0], t[0]);
+		if (mask & (1 << 1)) emit_mov(pc, dst[1], t[1]);
+		if (mask & (1 << 2)) emit_mov(pc, dst[2], t[2]);
+		if (mask & (1 << 3)) emit_mov(pc, dst[3], t[3]);
 
-			free_temp(pc, t0);
-			free_temp(pc, t1);
-			free_temp(pc, t2);
-			free_temp(pc, t3);
-		}
+		free_temp4(pc, t);
+	}
 		break;
 	case TGSI_OPCODE_XPD:
 		temp = alloc_temp(pc, NULL);
@@ -1570,8 +1602,13 @@ nv50_program_validate_code(struct nv50_context *nv50, struct nv50_program *p)
 	if (!upload)
 		return;
 
+	NOUVEAU_ERR("-------\n");
 	up = ptr = MALLOC(p->exec_size * 4);
 	for (e = p->exec_head; e; e = e->next) {
+		NOUVEAU_ERR("0x%08x\n", e->inst[0]);
+		if (is_long(e))
+			NOUVEAU_ERR("0x%08x\n", e->inst[1]);
+
 		*(ptr++) = e->inst[0];
 		if (is_long(e))
 			*(ptr++) = e->inst[1];
@@ -1687,7 +1724,7 @@ nv50_fragprog_validate(struct nv50_context *nv50)
 void
 nv50_program_destroy(struct nv50_context *nv50, struct nv50_program *p)
 {
-	struct pipe_winsys *ws = nv50->pipe.winsys;
+	struct pipe_screen *pscreen = nv50->pipe.screen;
 
 	while (p->exec_head) {
 		struct nv50_program_exec *e = p->exec_head;
@@ -1699,7 +1736,7 @@ nv50_program_destroy(struct nv50_context *nv50, struct nv50_program *p)
 	p->exec_size = 0;
 
 	if (p->buffer)
-		pipe_buffer_reference(ws, &p->buffer, NULL);
+		pipe_buffer_reference(pscreen, &p->buffer, NULL);
 
 	nv50->screen->nvws->res_free(&p->data);
 

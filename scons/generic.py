@@ -458,6 +458,16 @@ def generate(env):
     env.Append(CFLAGS = cflags)
     env.Append(CXXFLAGS = cflags)
 
+    if env['platform'] == 'windows' and msvc:
+        # Choose the appropriate MSVC CRT
+        # http://msdn.microsoft.com/en-us/library/2kzt1wy3.aspx
+        if env['debug']:
+            env.Append(CCFLAGS = ['/MTd'])
+            env.Append(SHCCFLAGS = ['/LDd'])
+        else:
+            env.Append(CCFLAGS = ['/MT'])
+            env.Append(SHCCFLAGS = ['/LD'])
+    
     # Assembler options
     if gcc:
         if env['machine'] == 'x86':

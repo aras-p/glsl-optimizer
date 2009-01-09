@@ -30,7 +30,7 @@
  * Vertex buffer drawing stage.
  * 
  * \author Keith Whitwell <keith@tungstengraphics.com>
- * \author José Fonseca <jrfonsec@tungstengraphics.com>
+ * \author Jose Fonseca <jrfonsec@tungstengraphics.com>
  */
 
 #ifndef DRAW_VBUF_H_
@@ -38,6 +38,7 @@
 
 
 
+struct pipe_rasterizer_state;
 struct draw_context;
 struct vertex_info;
 
@@ -53,6 +54,17 @@ struct vbuf_render {
     */
    unsigned max_indices;
    unsigned max_vertex_buffer_bytes;
+
+   /**
+    * Query if the hardware driver needs assistance for a particular
+    * combination of rasterizer state and primitive.
+    *
+    * Currently optional.
+    */
+   boolean (*need_pipeline)(const struct vbuf_render *render,
+                            const struct pipe_rasterizer_state *rasterizer,
+                            unsigned int prim );
+
 
    /**
     * Get the hardware vertex format.

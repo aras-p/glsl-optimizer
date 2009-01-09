@@ -157,6 +157,19 @@ struct intel_context
       void (*debug_batch)(struct intel_context *intel);
    } vtbl;
 
+   struct {
+      struct gl_fragment_program *bitmap_fp;
+      struct gl_vertex_program *passthrough_vp;
+
+      struct gl_fragment_program *saved_fp;
+      GLboolean saved_fp_enable;
+      struct gl_vertex_program *saved_vp;
+      GLboolean saved_vp_enable;
+
+      GLint saved_vp_x, saved_vp_y;
+      GLsizei saved_vp_width, saved_vp_height;
+   } meta;
+
    GLint refcount;
    GLuint Fallback;
    GLuint NewGLState;
@@ -166,7 +179,6 @@ struct intel_context
 
    struct intel_region *front_region;
    struct intel_region *back_region;
-   struct intel_region *third_region;
    struct intel_region *depth_region;
 
    /**

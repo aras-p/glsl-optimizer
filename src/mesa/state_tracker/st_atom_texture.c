@@ -53,7 +53,7 @@ update_textures(struct st_context *st)
    st->state.num_textures = 0;
 
    /* loop over sampler units (aka tex image units) */
-   for (su = 0; su < st->ctx->Const.MaxTextureCoordUnits; su++) {
+   for (su = 0; su < st->ctx->Const.MaxTextureImageUnits; su++) {
       struct pipe_texture *pt = NULL;
 
       if (samplersUsed & (1 << su)) {

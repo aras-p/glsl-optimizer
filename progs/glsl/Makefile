@@ -23,6 +23,7 @@ PROGS = \
 	noise \
 	points \
 	pointcoord \
+	samplers \
 	skinning \
 	texdemo1 \
 	toyball \
@@ -119,10 +120,10 @@ identity: identity.o shaderutil.o
 
 
 fragcoord.o: fragcoord.c extfuncs.h shaderutil.h
-	$(CC) -c -I$(INCDIR) $(CFLAGS) fragcoord.c
+	$(APP_CC) -c -I$(INCDIR) $(CFLAGS) fragcoord.c
 
 fragcoord: fragcoord.o shaderutil.o
-	$(CC) -I$(INCDIR) $(CFLAGS) $(LDFLAGS) fragcoord.o shaderutil.o $(LIBS) -o $@
+	$(APP_CC) -I$(INCDIR) $(CFLAGS) $(LDFLAGS) fragcoord.o shaderutil.o $(LIBS) -o $@
 
 
 mandelbrot.o: mandelbrot.c extfuncs.h shaderutil.h
@@ -157,6 +158,13 @@ pointcoord.o: pointcoord.c readtex.h extfuncs.h shaderutil.h
 
 pointcoord: pointcoord.o readtex.o shaderutil.o
 	$(APP_CC) -I$(INCDIR) $(CFLAGS) $(LDFLAGS) pointcoord.o readtex.o shaderutil.o $(LIBS) -o $@
+
+
+samplers.o: samplers.c readtex.h extfuncs.h shaderutil.h
+	$(APP_CC) -c -I$(INCDIR) $(CFLAGS) samplers.c
+
+samplers: samplers.o readtex.o shaderutil.o
+	$(APP_CC) -I$(INCDIR) $(CFLAGS) $(LDFLAGS) samplers.o readtex.o shaderutil.o $(LIBS) -o $@
 
 
 skinning.o: skinning.c readtex.h extfuncs.h shaderutil.h
@@ -199,8 +207,6 @@ vert-or-frag-only.o: vert-or-frag-only.c extfuncs.h shaderutil.h
 
 vert-or-frag-only: vert-or-frag-only.o shaderutil.o
 	$(APP_CC) -I$(INCDIR) $(CFLAGS) $(LDFLAGS) vert-or-frag-only.o shaderutil.o $(LIBS) -o $@
-
-
 
 
 vert-tex.o: vert-tex.c extfuncs.h shaderutil.h

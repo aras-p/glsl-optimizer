@@ -261,7 +261,7 @@ emit_vx(struct ppc_function *p, uint op2, uint vD, uint vA, uint vB)
    inst.inst.vB = vB;
    inst.inst.op2 = op2;
    emit_instruction(p, inst.bits);
-};
+}
 
 
 union vxr_inst {
@@ -287,7 +287,7 @@ emit_vxr(struct ppc_function *p, uint op2, uint vD, uint vA, uint vB)
    inst.inst.rC = 0;
    inst.inst.op2 = op2;
    emit_instruction(p, inst.bits);
-};
+}
 
 
 union va_inst {
@@ -313,7 +313,7 @@ emit_va(struct ppc_function *p, uint op2, uint vD, uint vA, uint vB, uint vC)
    inst.inst.vC = vC;
    inst.inst.op2 = op2;
    emit_instruction(p, inst.bits);
-};
+}
 
 
 union i_inst {
@@ -430,7 +430,7 @@ emit_d(struct ppc_function *p, uint op, uint rt, uint ra, int si)
    inst.inst.ra = ra;
    inst.inst.si = (unsigned) (si & 0xffff);
    emit_instruction(p, inst.bits);
-};
+}
 
 
 union a_inst {
@@ -459,7 +459,7 @@ emit_a(struct ppc_function *p, uint op, uint frt, uint fra, uint frb, uint op2,
    inst.inst.op2 = op2;
    inst.inst.rc = rc;
    emit_instruction(p, inst.bits);
-};
+}
 
 
 union xo_inst {

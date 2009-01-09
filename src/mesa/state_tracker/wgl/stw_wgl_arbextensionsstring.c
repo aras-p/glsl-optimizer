@@ -25,9 +25,8 @@
  * 
  **************************************************************************/
 
-#define _GDI32_
-
 #include <windows.h>
+
 #include "stw_wgl_arbextensionsstring.h"
 
 WINGDIAPI const char * APIENTRY

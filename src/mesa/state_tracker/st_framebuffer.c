@@ -170,7 +170,6 @@ st_set_framebuffer_surface(struct st_framebuffer *stfb,
                            uint surfIndex, struct pipe_surface *surf)
 {
    GET_CURRENT_CONTEXT(ctx);
-   struct st_context *st;
    static const GLuint invalid_size = 9999999;
    struct st_renderbuffer *strb;
    GLuint width, height, i;

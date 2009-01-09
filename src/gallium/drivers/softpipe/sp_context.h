@@ -94,7 +94,7 @@ struct softpipe_context {
    /* Counter for occlusion queries.  Note this supports overlapping
     * queries.
     */
-   uint64 occlusion_count;
+   uint64_t occlusion_count;
 
    /*
     * Mapped vertex buffers

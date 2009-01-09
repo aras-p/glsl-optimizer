@@ -162,7 +162,7 @@ rastpos_point(struct draw_stage *stage, struct prim_header *prim)
                  ctx->Current.RasterSecondaryColor,
                  VERT_RESULT_COL1, VERT_ATTRIB_COLOR1);
 
-   for (i = 0; i < MAX_TEXTURE_UNITS; i++) {
+   for (i = 0; i < ctx->Const.MaxTextureCoordUnits; i++) {
       update_attrib(ctx, outputMapping, prim->v[0],
                     ctx->Current.RasterTexCoords[i],
                     VERT_RESULT_TEX0 + i, VERT_ATTRIB_TEX0 + i);

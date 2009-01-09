@@ -1,14 +1,9 @@
-/**
- * \file context.c
- * Mesa context/visual/framebuffer management functions.
- * \author Brian Paul
- */
-
 /*
  * Mesa 3-D graphics library
- * Version:  7.1
+ * Version:  7.3
  *
  * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
+ * Copyright (C) 2008  VMware, Inc.  All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -28,6 +23,11 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+/**
+ * \file context.c
+ * Mesa context/visual/framebuffer management functions.
+ * \author Brian Paul
+ */
 
 /**
  * \mainpage Mesa Main Module
@@ -870,9 +870,6 @@ _mesa_init_constants(GLcontext *ctx)
    assert(MAX_TEXTURE_LEVELS >= MAX_3D_TEXTURE_LEVELS);
    assert(MAX_TEXTURE_LEVELS >= MAX_CUBE_TEXTURE_LEVELS);
 
-   assert(MAX_TEXTURE_UNITS >= MAX_TEXTURE_COORD_UNITS);
-   assert(MAX_TEXTURE_UNITS >= MAX_TEXTURE_IMAGE_UNITS);
-
    /* Constants, may be overriden (usually only reduced) by device drivers */
    ctx->Const.MaxTextureLevels = MAX_TEXTURE_LEVELS;
    ctx->Const.Max3DTextureLevels = MAX_3D_TEXTURE_LEVELS;
@@ -962,6 +959,9 @@ check_context_limits(GLcontext *ctx)
    assert(ctx->Const.MaxTextureCoordUnits <= MAX_TEXTURE_COORD_UNITS);
    assert(ctx->Const.MaxTextureUnits <= MAX_TEXTURE_IMAGE_UNITS);
    assert(ctx->Const.MaxTextureUnits <= MAX_TEXTURE_COORD_UNITS);
+
+   /* number of coord units cannot be greater than number of image units */
+   assert(ctx->Const.MaxTextureCoordUnits <= ctx->Const.MaxTextureImageUnits);
 
    assert(ctx->Const.MaxViewportWidth <= MAX_WIDTH);
    assert(ctx->Const.MaxViewportHeight <= MAX_WIDTH);

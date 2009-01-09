@@ -81,9 +81,9 @@ struct vertex_info
     * memcmp() comparisons.
     */
    struct {
-      ubyte interp_mode:4;      /**< INTERP_x */
-      ubyte emit:4;             /**< EMIT_x */
-      ubyte src_index;          /**< map to post-xform attribs */
+      unsigned interp_mode:4;      /**< INTERP_x */
+      unsigned emit:4;             /**< EMIT_x */
+      unsigned src_index:8;          /**< map to post-xform attribs */
    } attrib[PIPE_MAX_SHADER_INPUTS];
 };
 

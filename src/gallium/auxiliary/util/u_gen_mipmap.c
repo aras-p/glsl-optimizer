@@ -1198,7 +1198,7 @@ make_3d_mipmap(struct gen_mipmap_state *ctx,
 {
    struct pipe_context *pipe = ctx->pipe;
    struct pipe_screen *screen = pipe->screen;
-   uint dstLevel, zslice;
+   uint dstLevel, zslice = 0;
 
    assert(pt->block.width == 1);
    assert(pt->block.height == 1);

@@ -412,6 +412,7 @@ static const struct dri_extension brw_extensions[] = {
    { "GL_EXT_shadow_funcs",               NULL },
    { "GL_EXT_texture_sRGB",		  NULL },
    { "GL_ATI_separate_stencil",           GL_ATI_separate_stencil_functions },
+   { "GL_ATI_texture_env_combine3",       NULL },
    { NULL,                                NULL }
 };
 
@@ -775,7 +776,6 @@ intelDestroyContext(__DRIcontextPrivate * driContextPriv)
 
       intel_region_release(&intel->front_region);
       intel_region_release(&intel->back_region);
-      intel_region_release(&intel->third_region);
       intel_region_release(&intel->depth_region);
 
       driDestroyOptionCache(&intel->optionCache);
@@ -825,12 +825,7 @@ intelMakeCurrent(__DRIcontextPrivate * driContextPriv,
 	    intel_renderbuffer_set_region(intel_fb->color_rb[1],
 					  intel->back_region);
          }
-#if 0
-         if (intel_fb->color_rb[2]) {
-	    intel_renderbuffer_set_region(intel_fb->color_rb[2],
-					  intel->third_region);
-         }
-#endif
+
          if (irbDepth) {
 	    intel_renderbuffer_set_region(irbDepth, intel->depth_region);
          }
@@ -867,7 +862,7 @@ intelMakeCurrent(__DRIcontextPrivate * driContextPriv,
 	       driDrawableInitVBlank(driDrawPriv);
 	       intel_fb->vbl_waited = driDrawPriv->vblSeq;
 
-	       for (i = 0; i < (intel->intelScreen->third.handle ? 3 : 2); i++) {
+	       for (i = 0; i < 2; i++) {
 		  if (intel_fb->color_rb[i])
 		     intel_fb->color_rb[i]->vbl_pending = driDrawPriv->vblSeq;
 	       }

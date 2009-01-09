@@ -65,7 +65,7 @@ nv40_state_emit(struct nv40_context *nv40)
 	struct nv40_state *state = &nv40->state;
 	struct nv40_screen *screen = nv40->screen;
 	unsigned i, samplers;
-	uint64 states;
+	uint64_t states;
 
 	if (nv40->pctx_id != screen->cur_pctx) {
 		for (i = 0; i < NV40_STATE_MAX; i++) {

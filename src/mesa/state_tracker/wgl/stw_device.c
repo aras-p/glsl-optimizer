@@ -37,8 +37,8 @@
 struct stw_device *stw_dev = NULL;
 
 
-static BOOL
-st_init(void)
+boolean
+st_init(const struct stw_winsys *stw_winsys)
 {
    static struct stw_device stw_dev_storage;
 
@@ -47,7 +47,9 @@ st_init(void)
    stw_dev = &stw_dev_storage;
    memset(stw_dev, 0, sizeof(*stw_dev));
 
-   stw_dev->screen = stw_winsys.create_screen();
+   stw_dev->stw_winsys = stw_winsys;
+
+   stw_dev->screen = stw_winsys->create_screen();
    if(!stw_dev->screen)
       goto error1;
 
@@ -61,7 +63,7 @@ error1:
 }
 
 
-static void
+void
 st_cleanup(void)
 {
    DHGLRC dhglrc;
@@ -75,19 +77,4 @@ st_cleanup(void)
          DrvDeleteContext( dhglrc );
 
    stw_dev = NULL;
-}
-
-
-BOOL WINAPI
-DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpReserved)
-{
-   switch (fdwReason) {
-   case DLL_PROCESS_ATTACH:
-      return st_init();
-
-   case DLL_PROCESS_DETACH:
-      st_cleanup();
-      break;
-   }
-   return TRUE;
 }

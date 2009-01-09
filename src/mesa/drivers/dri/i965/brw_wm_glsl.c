@@ -267,7 +267,7 @@ static void emit_trunc( struct brw_wm_compile *c,
 	    struct brw_reg src, dst;
 	    dst = get_dst_reg(c, inst, i, 1) ;
 	    src = get_src_reg(c, &inst->SrcReg[0], i, 1);
-	    brw_RNDD(p, dst, src);
+	    brw_RNDZ(p, dst, src);
 	}
     }
     brw_set_saturate(p, 0);

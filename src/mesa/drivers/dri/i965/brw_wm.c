@@ -36,6 +36,7 @@
 #include "brw_state.h"
 
 
+/** Return number of src args for given instruction */
 GLuint brw_wm_nr_args( GLuint opcode )
 {
    switch (opcode) {
@@ -58,6 +59,8 @@ GLuint brw_wm_nr_args( GLuint opcode )
    case OPCODE_TXP:	
    case OPCODE_KIL:
    case OPCODE_LIT: 
+   case OPCODE_NRM3:
+   case OPCODE_NRM4:
    case WM_CINTERP: 
    case WM_WPOSXY: 
       return 1;

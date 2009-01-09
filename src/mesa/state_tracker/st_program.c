@@ -317,7 +317,8 @@ st_translate_vertex_program(struct st_context *st,
 
    /* XXX: fix static allocation of tokens:
     */
-   num_tokens = st_translate_mesa_program(TGSI_PROCESSOR_VERTEX,
+   num_tokens = st_translate_mesa_program(st->ctx,
+                                          TGSI_PROCESSOR_VERTEX,
                                           &stvp->Base.Base,
                                           /* inputs */
                                           vs_num_inputs,
@@ -503,7 +504,8 @@ st_translate_fragment_program(struct st_context *st,
 
    /* XXX: fix static allocation of tokens:
     */
-   num_tokens = st_translate_mesa_program(TGSI_PROCESSOR_FRAGMENT,
+   num_tokens = st_translate_mesa_program(st->ctx,
+                                          TGSI_PROCESSOR_FRAGMENT,
                                           &stfp->Base.Base,
                                           /* inputs */
                                           fs_num_inputs,

@@ -289,7 +289,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          params[0] = INT_TO_BOOLEAN(ctx->DrawBuffer->Visual.depthBits);
          break;
       case GL_DEPTH_CLEAR_VALUE:
-         params[0] = FLOAT_TO_BOOLEAN(ctx->Depth.Clear);
+         params[0] = FLOAT_TO_BOOLEAN(((GLfloat) ctx->Depth.Clear));
          break;
       case GL_DEPTH_FUNC:
          params[0] = ENUM_TO_BOOLEAN(ctx->Depth.Func);
@@ -2137,7 +2137,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          params[0] = (GLfloat)(ctx->DrawBuffer->Visual.depthBits);
          break;
       case GL_DEPTH_CLEAR_VALUE:
-         params[0] = ctx->Depth.Clear;
+         params[0] = ((GLfloat) ctx->Depth.Clear);
          break;
       case GL_DEPTH_FUNC:
          params[0] = ENUM_TO_FLOAT(ctx->Depth.Func);
@@ -3985,7 +3985,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          params[0] = ctx->DrawBuffer->Visual.depthBits;
          break;
       case GL_DEPTH_CLEAR_VALUE:
-         params[0] = FLOAT_TO_INT(ctx->Depth.Clear);
+         params[0] = FLOAT_TO_INT(((GLfloat) ctx->Depth.Clear));
          break;
       case GL_DEPTH_FUNC:
          params[0] = ENUM_TO_INT(ctx->Depth.Func);

@@ -50,7 +50,7 @@ nv40_query_begin(struct pipe_context *pipe, struct pipe_query *pq)
 	 * the existing query to notify completion, but it could be better.
 	 */
 	if (q->object) {
-		uint64 tmp;
+		uint64_t tmp;
 		pipe->get_query_result(pipe, pq, 1, &tmp);
 	}
 
@@ -80,7 +80,7 @@ nv40_query_end(struct pipe_context *pipe, struct pipe_query *pq)
 
 static boolean
 nv40_query_result(struct pipe_context *pipe, struct pipe_query *pq,
-		  boolean wait, uint64 *result)
+		  boolean wait, uint64_t *result)
 {
 	struct nv40_context *nv40 = nv40_context(pipe);
 	struct nv40_query *q = nv40_query(pq);

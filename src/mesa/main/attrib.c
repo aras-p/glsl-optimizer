@@ -1,8 +1,9 @@
 /*
  * Mesa 3-D graphics library
- * Version:  7.2
+ * Version:  7.3
  *
  * Copyright (C) 1999-2008  Brian Paul   All Rights Reserved.
+ * Copyright (C) 2009  VMware, Inc.   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -224,7 +225,7 @@ _mesa_PushAttrib(GLbitfield mask)
       attr->SampleAlphaToOne = ctx->Multisample.SampleAlphaToOne;
       attr->SampleCoverage = ctx->Multisample.SampleCoverage;
       attr->SampleCoverageInvert = ctx->Multisample.SampleCoverageInvert;
-      for (i=0; i<MAX_TEXTURE_UNITS; i++) {
+      for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
          attr->Texture[i] = ctx->Texture.Unit[i].Enabled;
          attr->TexGen[i] = ctx->Texture.Unit[i].TexGenEnabled;
          attr->TextureColorTable[i] = ctx->Texture.Unit[i].ColorTableEnabled;

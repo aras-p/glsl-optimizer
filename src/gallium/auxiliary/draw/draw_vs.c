@@ -50,7 +50,7 @@ void draw_vs_set_constants( struct draw_context *draw,
                             const float (*constants)[4],
                             unsigned size )
 {
-   if (((unsigned)constants) & 0xf) {
+   if (((uintptr_t)constants) & 0xf) {
       if (size > draw->vs.const_storage_size) {
          if (draw->vs.aligned_constant_storage)
             align_free((void *)draw->vs.aligned_constant_storage);

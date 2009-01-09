@@ -181,7 +181,7 @@ intelUpdatePageFlipping(struct intel_context *intel,
    intel_fb->pf_current_page = (intel->sarea->pf_current_page >>
 				(intel_fb->pf_planes & 0x2)) & 0x3;
 
-   intel_fb->pf_num_pages = intel->intelScreen->third.handle ? 3 : 2;
+   intel_fb->pf_num_pages = 2;
 
    pf_active = pf_planes && (pf_planes & intel->sarea->pf_active) == pf_planes;
 

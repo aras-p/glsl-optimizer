@@ -61,7 +61,7 @@
 /**
  * \return GL_TRUE if type is packed pixel type, GL_FALSE otherwise.
  */
-static GLboolean
+GLboolean
 _mesa_type_is_packed(GLenum type)
 {
    switch (type) {

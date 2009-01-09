@@ -25,9 +25,8 @@
  *
  **************************************************************************/
 
-#define _GDI32_
-
 #include <windows.h>
+
 #include "pipe/p_winsys.h"
 #include "pipe/p_screen.h"
 #include "pipe/p_context.h"
@@ -36,7 +35,7 @@
 #include "stw_winsys.h"
 #include "stw_device.h"
 #include "stw_framebuffer.h"
-#include "stw_wgl_context.h"
+#include "stw_wgl.h"
 
 WINGDIAPI BOOL APIENTRY
 wglSwapBuffers(
@@ -56,9 +55,9 @@ wglSwapBuffers(
 
    surf = st_get_framebuffer_surface( fb->stfb, ST_SURFACE_BACK_LEFT );
 
-   stw_winsys.flush_frontbuffer(stw_dev->screen->winsys,
-                               surf,
-                               hdc );
+   stw_dev->stw_winsys->flush_frontbuffer(stw_dev->screen->winsys,
+                                          surf,
+                                          hdc );
 
    return TRUE;
 }
