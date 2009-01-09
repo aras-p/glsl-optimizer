@@ -707,7 +707,11 @@ xlib_create_cell_winsys( void )
 struct pipe_screen *
 xlib_create_cell_screen( struct pipe_winsys *pws )
 {
+#ifdef GALLIUM_CELL
    return cell_create_screen( pws );
+#else
+   return NULL;
+#endif
 }
 
 
