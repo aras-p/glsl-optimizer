@@ -72,6 +72,7 @@
 #define need_GL_EXT_framebuffer_blit
 #define need_GL_EXT_gpu_program_parameters
 #define need_GL_EXT_paletted_texture
+#define need_GL_EXT_stencil_two_side
 #define need_GL_IBM_multimode_draw_arrays
 #define need_GL_MESA_resize_buffers
 #define need_GL_NV_vertex_program
@@ -103,6 +104,7 @@ const struct dri_extension card_extensions[] =
     { "GL_EXT_framebuffer_blit",	GL_EXT_framebuffer_blit_functions },
     { "GL_EXT_gpu_program_parameters",	GL_EXT_gpu_program_parameters_functions },
     { "GL_EXT_paletted_texture",	GL_EXT_paletted_texture_functions },
+    { "GL_EXT_stencil_two_side",	GL_EXT_stencil_two_side_functions },
     { "GL_IBM_multimode_draw_arrays",	GL_IBM_multimode_draw_arrays_functions },
     { "GL_MESA_resize_buffers",		GL_MESA_resize_buffers_functions },
     { "GL_NV_vertex_program",		GL_NV_vertex_program_functions },

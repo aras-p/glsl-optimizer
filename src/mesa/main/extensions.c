@@ -262,7 +262,7 @@ _mesa_enable_sw_extensions(GLcontext *ctx)
    ctx->Extensions.EXT_secondary_color = GL_TRUE;
    ctx->Extensions.EXT_shared_texture_palette = GL_TRUE;
    ctx->Extensions.EXT_stencil_wrap = GL_TRUE;
-   ctx->Extensions.EXT_stencil_two_side = GL_FALSE; /* obsolete */
+   ctx->Extensions.EXT_stencil_two_side = GL_TRUE;
    ctx->Extensions.EXT_texture_env_add = GL_TRUE;
    ctx->Extensions.EXT_texture_env_combine = GL_TRUE;
    ctx->Extensions.EXT_texture_env_dot3 = GL_TRUE;
@@ -410,7 +410,7 @@ _mesa_enable_2_0_extensions(GLcontext *ctx)
 #if FEATURE_ARB_shading_language_100
    ctx->Extensions.ARB_shading_language_100 = GL_TRUE;
 #endif
-   ctx->Extensions.EXT_stencil_two_side = GL_FALSE; /* obsolete */
+   ctx->Extensions.EXT_stencil_two_side = GL_TRUE;
 #if FEATURE_ARB_vertex_shader
    ctx->Extensions.ARB_vertex_shader = GL_TRUE;
 #endif
