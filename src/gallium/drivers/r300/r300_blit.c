@@ -20,6 +20,8 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
  * USE OR OTHER DEALINGS IN THE SOFTWARE. */
 
+#include "r300_blit.h"
+
 /* Does a "paint" into the specified rectangle.
  * Returns 1 on success, 0 on error. */
 int r300_fill_blit(struct r300_context* r300,

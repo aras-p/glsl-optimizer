@@ -20,10 +20,14 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
  * USE OR OTHER DEALINGS IN THE SOFTWARE. */
 
+#include "r300_clear.h"
+
 /* This gets its own file because Intel's is in its own file.
  * I assume there's a good reason. */
-void r300_clear(struct pipe_context* pipe, struct pipe_surface* ps, unsigned val)
+void r300_clear(struct pipe_context* pipe,
+                struct pipe_surface* ps,
+                unsigned color)
 {
-    pipe->surface_fill(pipe, ps, 0, 0, ps->width, ps->height, clearValue);
+    pipe->surface_fill(pipe, ps, 0, 0, ps->width, ps->height, color);
     ps->status = PIPE_SURFACE_STATUS_DEFINED;
 }

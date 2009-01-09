@@ -119,7 +119,7 @@ static void* r300_surface_map(struct pipe_screen* screen,
                               struct pipe_surface* surface,
                               unsigned flags)
 {
-    /* XXX is this all we need to do here? */
+    /* XXX this is not quite right */
     char* map = pipe_buffer_map(screen, surface->buffer, flags);
 
     if (!map) {

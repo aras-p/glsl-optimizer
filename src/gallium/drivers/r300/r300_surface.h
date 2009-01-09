@@ -23,6 +23,14 @@
 #ifndef R300_SURFACE_H
 #define R300_SURFACE_H
 
+#include "pipe/p_context.h"
+#include "pipe/p_screen.h"
+
+#include "util/u_rect.h"
+
 #include "r300_blit.h"
+#include "r300_context.h"
+
+void r300_init_surface_functions(struct r300_context* r300);
 
 #endif /* R300_SURFACE_H */

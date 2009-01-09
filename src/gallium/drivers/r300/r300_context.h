@@ -25,6 +25,8 @@
 
 #include "pipe/p_context.h"
 
+#include "r300_surface.h"
+
 struct r300_context {
     /* Parent class */
     struct pipe_context context;

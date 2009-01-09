@@ -20,4 +20,8 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
  * USE OR OTHER DEALINGS IN THE SOFTWARE. */
 
-void r300_clear(struct pipe_context* pipe, struct pipe_surface* ps, unsigned val);
+#include "pipe/p_context.h"
+
+void r300_clear(struct pipe_context* pipe,
+                struct pipe_surface* ps,
+                unsigned color);

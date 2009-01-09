@@ -23,10 +23,17 @@
 #ifndef R300_BLIT_H
 #define R300_BLIT_H
 
+#include "pipe/p_state.h"
+
+#include "radeon_reg.h"
+
+/* Forward declarations. */
+struct r300_context;
+
 extern int r300_fill_blit(struct r300_context* r300,
                           unsigned cpp,
                           short dst_pitch,
-                          struct pipe_buffer *dst_buffer,
+                          struct pipe_buffer* dst_buffer,
                           unsigned dst_offset,
                           short x, short y,
                           short w, short h,

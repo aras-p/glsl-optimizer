@@ -50,5 +50,7 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
     struct radeon_cs_manager* csm = radeon_cs_manager_gem_ctor(fd);
     r300->cs = cs_gem_create(csm, 64 * 1024 / 4); */
 
+    r300_init_surface_functions(r300);
+
     return &r300->context;
 }
