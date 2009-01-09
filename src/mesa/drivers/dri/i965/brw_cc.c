@@ -84,6 +84,7 @@ static void
 cc_unit_populate_key(struct brw_context *brw, struct brw_cc_unit_key *key)
 {
    struct gl_stencil_attrib *stencil = brw->attribs.Stencil;
+   const unsigned back = stencil->_BackFace;
 
    memset(key, 0, sizeof(*key));
 
@@ -100,13 +101,13 @@ cc_unit_populate_key(struct brw_context *brw, struct brw_cc_unit_key *key)
       key->stencil_test_mask[0] = stencil->ValueMask[0];
    }
    if (key->stencil_two_side) {
-      key->stencil_func[1] = stencil->Function[1];
-      key->stencil_fail_op[1] = stencil->FailFunc[1];
-      key->stencil_pass_depth_fail_op[1] = stencil->ZFailFunc[1];
-      key->stencil_pass_depth_pass_op[1] = stencil->ZPassFunc[1];
-      key->stencil_ref[1] = stencil->Ref[1];
-      key->stencil_write_mask[1] = stencil->WriteMask[1];
-      key->stencil_test_mask[1] = stencil->ValueMask[1];
+      key->stencil_func[1] = stencil->Function[back];
+      key->stencil_fail_op[1] = stencil->FailFunc[back];
+      key->stencil_pass_depth_fail_op[1] = stencil->ZFailFunc[back];
+      key->stencil_pass_depth_pass_op[1] = stencil->ZPassFunc[back];
+      key->stencil_ref[1] = stencil->Ref[back];
+      key->stencil_write_mask[1] = stencil->WriteMask[back];
+      key->stencil_test_mask[1] = stencil->ValueMask[back];
    }
 
    if (brw->attribs.Color->_LogicOpEnabled)

@@ -1108,20 +1108,34 @@ struct gl_scissor_attrib
 
 /**
  * Stencil attribute group (GL_STENCIL_BUFFER_BIT).
+ *
+ * Three sets of stencil data are tracked so that OpenGL 2.0,
+ * GL_EXT_stencil_two_side, and GL_ATI_separate_stencil can all be supported
+ * simultaneously.  In each of the stencil state arrays, element 0 corresponds
+ * to GL_FRONT.  Element 1 corresponds to the OpenGL 2.0 /
+ * GL_ATI_separate_stencil GL_BACK state.  Element 2 corresponds to the
+ * GL_EXT_stencil_two_side GL_BACK state.
+ *
+ * The derived value \c _BackFace is either 1 or 2 depending on whether or
+ * not GL_STENCIL_TEST_TWO_SIDE_EXT is enabled.
+ *
+ * The derived value \c _TestTwoSide is set when the front-face and back-face
+ * stencil state are different.
  */
 struct gl_stencil_attrib
 {
    GLboolean Enabled;		/**< Enabled flag */
    GLboolean TestTwoSide;	/**< GL_EXT_stencil_two_side */
-   GLubyte ActiveFace;		/**< GL_EXT_stencil_two_side (0 or 1) */
+   GLubyte ActiveFace;		/**< GL_EXT_stencil_two_side (0 or 2) */
    GLboolean _TestTwoSide;
-   GLenum Function[2];		/**< Stencil function */
-   GLenum FailFunc[2];		/**< Fail function */
-   GLenum ZPassFunc[2];		/**< Depth buffer pass function */
-   GLenum ZFailFunc[2];		/**< Depth buffer fail function */
-   GLint Ref[2];		/**< Reference value */
-   GLuint ValueMask[2];		/**< Value mask */
-   GLuint WriteMask[2];		/**< Write mask */
+   GLubyte _BackFace;
+   GLenum Function[3];		/**< Stencil function */
+   GLenum FailFunc[3];		/**< Fail function */
+   GLenum ZPassFunc[3];		/**< Depth buffer pass function */
+   GLenum ZFailFunc[3];		/**< Depth buffer fail function */
+   GLint Ref[3];		/**< Reference value */
+   GLuint ValueMask[3];		/**< Value mask */
+   GLuint WriteMask[3];		/**< Write mask */
    GLuint Clear;		/**< Clear value */
 };
 

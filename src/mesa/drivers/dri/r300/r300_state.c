@@ -974,15 +974,9 @@ static void r300StencilFuncSeparate(GLcontext * ctx, GLenum face,
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	GLuint refmask =
-	    (((ctx->Stencil.
-	       Ref[0] & 0xff) << R300_STENCILREF_SHIFT) | ((ctx->
-							    Stencil.
-							    ValueMask
-							    [0] &
-							    0xff)
-							   <<
-							   R300_STENCILMASK_SHIFT));
-
+	    ((ctx->Stencil.Ref[0] & 0xff) << R300_STENCILREF_SHIFT)
+	     | ((ctx->Stencil.ValueMask[0] & 0xff) << R300_STENCILMASK_SHIFT);
+	const unsigned back = ctx->Stencil._BackFace;
 	GLuint flag;
 
 	R300_STATECHANGE(rmesa, zs);
@@ -1000,8 +994,7 @@ static void r300StencilFuncSeparate(GLcontext * ctx, GLenum face,
 	rmesa->hw.zs.cmd[R300_ZS_CNTL_1] |=
 	    (flag << R300_S_FRONT_FUNC_SHIFT);
 
-	if (ctx->Stencil._TestTwoSide)
-		flag = translate_func(ctx->Stencil.Function[1]);
+	flag = translate_func(ctx->Stencil.Function[back]);
 
 	rmesa->hw.zs.cmd[R300_ZS_CNTL_1] |=
 	    (flag << R300_S_BACK_FUNC_SHIFT);
@@ -1026,6 +1019,7 @@ static void r300StencilOpSeparate(GLcontext * ctx, GLenum face,
 				  GLenum fail, GLenum zfail, GLenum zpass)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
+	const unsigned back = ctx->Stencil._BackFace;
 
 	R300_STATECHANGE(rmesa, zs);
 	/* It is easier to mask what's left.. */
@@ -1042,23 +1036,13 @@ static void r300StencilOpSeparate(GLcontext * ctx, GLenum face,
 	    | (translate_stencil_op(ctx->Stencil.ZPassFunc[0]) <<
 	       R300_S_FRONT_ZPASS_OP_SHIFT);
 
-	if (ctx->Stencil._TestTwoSide) {
-		rmesa->hw.zs.cmd[R300_ZS_CNTL_1] |=
-		    (translate_stencil_op(ctx->Stencil.FailFunc[1]) <<
-		     R300_S_BACK_SFAIL_OP_SHIFT)
-		    | (translate_stencil_op(ctx->Stencil.ZFailFunc[1]) <<
-		       R300_S_BACK_ZFAIL_OP_SHIFT)
-		    | (translate_stencil_op(ctx->Stencil.ZPassFunc[1]) <<
-		       R300_S_BACK_ZPASS_OP_SHIFT);
-	} else {
-		rmesa->hw.zs.cmd[R300_ZS_CNTL_1] |=
-		    (translate_stencil_op(ctx->Stencil.FailFunc[0]) <<
-		     R300_S_BACK_SFAIL_OP_SHIFT)
-		    | (translate_stencil_op(ctx->Stencil.ZFailFunc[0]) <<
-		       R300_S_BACK_ZFAIL_OP_SHIFT)
-		    | (translate_stencil_op(ctx->Stencil.ZPassFunc[0]) <<
-		       R300_S_BACK_ZPASS_OP_SHIFT);
-	}
+	rmesa->hw.zs.cmd[R300_ZS_CNTL_1] |=
+	    (translate_stencil_op(ctx->Stencil.FailFunc[back]) <<
+	     R300_S_BACK_SFAIL_OP_SHIFT)
+	    | (translate_stencil_op(ctx->Stencil.ZFailFunc[back]) <<
+	       R300_S_BACK_ZFAIL_OP_SHIFT)
+	    | (translate_stencil_op(ctx->Stencil.ZPassFunc[back]) <<
+	       R300_S_BACK_ZPASS_OP_SHIFT);
 }
 
 /* =============================================================

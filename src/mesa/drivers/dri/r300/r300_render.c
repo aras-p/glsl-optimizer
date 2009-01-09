@@ -347,6 +347,8 @@ static GLboolean r300RunRender(GLcontext * ctx,
 static int r300Fallback(GLcontext * ctx)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
+	const unsigned back = ctx->Stencil._BackFace;
+
 	/* Do we need to use new-style shaders?
 	 * Also is there a better way to do this? */
 	if (r300->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV515) {
@@ -371,12 +373,14 @@ static int r300Fallback(GLcontext * ctx)
 
 	FALLBACK_IF(ctx->RenderMode != GL_RENDER);
 
-	FALLBACK_IF(ctx->Stencil._TestTwoSide
-		    && (ctx->Stencil.Ref[0] != ctx->Stencil.Ref[1]
-			|| ctx->Stencil.ValueMask[0] !=
-			ctx->Stencil.ValueMask[1]
-			|| ctx->Stencil.WriteMask[0] !=
-			ctx->Stencil.WriteMask[1]));
+	/* If GL_EXT_stencil_two_side is disabled, this fallback check can
+	 * be removed.
+	 */
+	FALLBACK_IF(ctx->Stencil.Ref[0] != ctx->Stencil.Ref[back]
+		    || ctx->Stencil.ValueMask[0] !=
+		    ctx->Stencil.ValueMask[back]
+		    || ctx->Stencil.WriteMask[0] !=
+		    ctx->Stencil.WriteMask[back]);
 
 	if (ctx->Extensions.NV_point_sprite || ctx->Extensions.ARB_point_sprite)
 		FALLBACK_IF(ctx->Point.PointSprite);
