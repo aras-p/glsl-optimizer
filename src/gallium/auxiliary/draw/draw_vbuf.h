@@ -37,6 +37,8 @@
 #define DRAW_VBUF_H_
 
 
+#include "pipe/p_compiler.h"
+
 
 struct pipe_rasterizer_state;
 struct draw_context;
