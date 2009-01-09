@@ -99,7 +99,6 @@ static float r300_get_paramf(struct pipe_screen* pscreen, int param) {
         case PIPE_CAP_MAX_TEXTURE_ANISOTROPY:
             return 16.0;
         case PIPE_CAP_MAX_TEXTURE_LOD_BIAS:
-            /* XXX again... */
             return 16.0;
         default:
             return 0.0;
