@@ -31,6 +31,13 @@ struct r300_context {
 
     struct amd_winsys* winsys;
     struct draw_context* draw;
+
+    /* CS object. This is very much like Intel's batchbuffer.
+     * Fill it full of dwords and relocs and then submit.
+     * Repeat as needed. */
+    /* Note: Unlike Mesa's version of this, we don't keep a copy of the CSM
+     * that was used to create this CS. Is this a good idea? */
+    struct radeon_cs* cs;
 };
 
 /* Convenience cast wrapper. */
