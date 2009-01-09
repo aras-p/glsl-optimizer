@@ -25,7 +25,7 @@
 
 #include "pipe/p_state.h"
 
-#include "radeon_reg.h"
+#include "r300_cs.h"
 
 /* Forward declarations. */
 struct r300_context;

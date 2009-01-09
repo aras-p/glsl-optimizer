@@ -33,6 +33,7 @@ int r300_fill_blit(struct r300_context* r300,
                    short w, short h,
                    unsigned color)
 {
+    CS_LOCALS(r300);
     uint32_t dest_type;
 
     /* Check for fallbacks. */
@@ -55,6 +56,8 @@ int r300_fill_blit(struct r300_context* r300,
 
     /* XXX odds are *incredibly* good that we were in 3D just a bit ago,
      * so flush here first. */
+
+    BEGIN_CS(10 + 2 + 2);
 
     /* Set up the 2D engine. */
     OUT_CS_REG(RADEON_DEFAULT_SC_BOTTOM_RIGHT,
@@ -86,5 +89,8 @@ int r300_fill_blit(struct r300_context* r300,
     OUT_CS_REG(RADEON_DSTCACHE_CTLSTAT, RADEON_RB2D_DC_FLUSH_ALL);
     OUT_CS_REG(RADEON_WAIT_UNTIL,
                RADEON_WAIT_2D_IDLECLEAN | RADEON_WAIT_DMA_GUI_IDLE);
+
+    END_CS;
+
     return 1;
 }
