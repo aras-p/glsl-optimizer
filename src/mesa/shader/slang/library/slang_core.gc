@@ -1344,7 +1344,7 @@ float __operator /= (inout float a, const float b)
 
 vec2 __operator += (inout vec2 v, const vec2 u)
 {
-   v + v + u;
+   v = v + u;
    return v;
 }
 
