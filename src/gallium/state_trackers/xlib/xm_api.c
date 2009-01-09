@@ -57,7 +57,6 @@
 #undef __WIN32__
 #endif
 
-#include "glxheader.h"
 #include "xm_api.h"
 #include "main/context.h"
 #include "main/framebuffer.h"
@@ -70,6 +69,7 @@
 #include "pipe/p_context.h"
 
 #include "xm_winsys.h"
+#include <GL/glx.h>
 
 /**
  * Global X driver lock

@@ -40,14 +40,12 @@
 
 
 
-#include "glxheader.h"
 #include "glxapi.h"
 #include "xm_api.h"
 #include "context.h"
 #include "config.h"
 #include "macros.h"
 #include "imports.h"
-#include "mtypes.h"
 #include "version.h"
 #include "fakeglx.h"
 #include "state_tracker/st_context.h"

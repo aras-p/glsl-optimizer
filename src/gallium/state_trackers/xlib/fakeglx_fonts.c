@@ -28,10 +28,10 @@
  * Copyright (C) 1995 Thorsten.Ohl @ Physik.TH-Darmstadt.de
  */
 
-#include "glxheader.h"
 #include "context.h"
 #include "imports.h"
 #include "fakeglx.h"
+#include <GL/glx.h>
 
 
 /* Some debugging info.  */

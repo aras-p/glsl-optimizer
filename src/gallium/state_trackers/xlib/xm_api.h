@@ -23,14 +23,6 @@
  */
 
 
-/*
- * Mesa/X11 interface.  This header file serves as the documentation for
- * the Mesa/X11 interface functions.
- *
- * Note: this interface isn't intended for user programs.  It's primarily
- * just for implementing the pseudo-GLX interface.
- */
-
 
 /* Sample Usage:
 
@@ -65,16 +57,25 @@ and create a window, you must do the following to use the X/Mesa interface:
 #define XMESA_H
 
 
+#include "mtypes.h"
+#include "state_tracker/st_context.h"
+#include "state_tracker/st_public.h"
+#include "pipe/p_thread.h"
 
-typedef struct xmesa_context *XMesaContext;
 
-typedef struct xmesa_visual *XMesaVisual;
+# include <X11/Xlib.h>
+# include <X11/Xlibint.h>
+# include <X11/Xutil.h>
+# ifdef USE_XSHM  /* was SHM */
+#  include <sys/ipc.h>
+#  include <sys/shm.h>
+#  include <X11/extensions/XShm.h>
+# endif
 
 typedef struct xmesa_buffer *XMesaBuffer;
+typedef struct xmesa_context *XMesaContext;
+typedef struct xmesa_visual *XMesaVisual;
 
-/* Every user of this file also includes xmesaP.h
- */
-#include "xmesaP.h"
 
 
 /*
@@ -261,6 +262,132 @@ XMesaCreatePixmapTextureBuffer(XMesaVisual v, Pixmap p,
                                int format, int target, int mipmap);
 
 
+
+
+/***********************************************************************
+ */
+
+extern pipe_mutex _xmesa_lock;
+
+extern struct xmesa_buffer *XMesaBufferList;
+
+
+/**
+ * Visual inforation, derived from GLvisual.
+ * Basically corresponds to an XVisualInfo.
+ */
+struct xmesa_visual {
+   GLvisual mesa_visual;	/* Device independent visual parameters */
+   Display *display;	/* The X11 display */
+   XVisualInfo * visinfo;	/* X's visual info (pointer to private copy) */
+   XVisualInfo *vishandle;	/* Only used in fakeglx.c */
+   GLint BitsPerPixel;		/* True bits per pixel for XImages */
+
+   GLboolean ximage_flag;	/* Use XImage for back buffer (not pixmap)? */
+};
+
+
+/**
+ * Context info, derived from st_context.
+ * Basically corresponds to a GLXContext.
+ */
+struct xmesa_context {
+   struct st_context *st;
+   XMesaVisual xm_visual;	/** pixel format info */
+   XMesaBuffer xm_buffer;	/** current drawbuffer */
+};
+
+
+/**
+ * Types of X/GLX drawables we might render into.
+ */
+typedef enum {
+   WINDOW,          /* An X window */
+   GLXWINDOW,       /* GLX window */
+   PIXMAP,          /* GLX pixmap */
+   PBUFFER          /* GLX Pbuffer */
+} BufferType;
+
+
+/**
+ * Framebuffer information, derived from.
+ * Basically corresponds to a GLXDrawable.
+ */
+struct xmesa_buffer {
+   struct st_framebuffer *stfb;
+
+   GLboolean wasCurrent;	/* was ever the current buffer? */
+   XMesaVisual xm_visual;	/* the X/Mesa visual */
+   Drawable drawable;	/* Usually the X window ID */
+   Colormap cmap;		/* the X colormap */
+   BufferType type;             /* window, pixmap, pbuffer or glxwindow */
+
+   XImage *tempImage;
+   unsigned long selectedEvents;/* for pbuffers only */
+
+   GLuint shm;			/* X Shared Memory extension status:	*/
+				/*    0 = not available			*/
+				/*    1 = XImage support available	*/
+				/*    2 = Pixmap support available too	*/
+#if defined(USE_XSHM)
+   XShmSegmentInfo shminfo;
+#endif
+
+   GC gc;			/* scratch GC for span, line, tri drawing */
+
+   /* GLX_EXT_texture_from_pixmap */
+   GLint TextureTarget; /** GLX_TEXTURE_1D_EXT, for example */
+   GLint TextureFormat; /** GLX_TEXTURE_FORMAT_RGB_EXT, for example */
+   GLint TextureMipmap; /** 0 or 1 */
+
+   struct xmesa_buffer *Next;	/* Linked list pointer: */
+};
+
+
+
+/** cast wrapper */
+static INLINE XMesaContext
+xmesa_context(GLcontext *ctx)
+{
+   return (XMesaContext) ctx->DriverCtx;
+}
+
+
+/** cast wrapper */
+static INLINE XMesaBuffer
+xmesa_buffer(GLframebuffer *fb)
+{
+   struct st_framebuffer *stfb = (struct st_framebuffer *) fb;
+   return (XMesaBuffer) st_framebuffer_private(stfb);
+}
+
+
+extern void
+xmesa_delete_framebuffer(struct gl_framebuffer *fb);
+
+extern XMesaBuffer
+xmesa_find_buffer(Display *dpy, Colormap cmap, XMesaBuffer notThis);
+
+extern void
+xmesa_check_and_update_buffer_size(XMesaContext xmctx, XMesaBuffer drawBuffer);
+
+extern void
+xmesa_destroy_buffers_on_display(Display *dpy);
+
+static INLINE GLuint
+xmesa_buffer_width(XMesaBuffer b)
+{
+   return b->stfb->Base.Width;
+}
+
+static INLINE GLuint
+xmesa_buffer_height(XMesaBuffer b)
+{
+   return b->stfb->Base.Height;
+}
+
+extern int
+xmesa_check_for_xshm(Display *display);
 
 
 #endif

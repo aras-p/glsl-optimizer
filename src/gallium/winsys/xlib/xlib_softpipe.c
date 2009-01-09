@@ -33,8 +33,7 @@
  */
 
 
-#include "glxheader.h"
-#include "xmesaP.h"
+#include "xm_api.h"
 
 #undef ASSERT
 #undef Elements
@@ -109,7 +108,7 @@ static volatile int mesaXErrorFlag = 0;
  * Catches potential Xlib errors.
  */
 static int
-mesaHandleXError(XMesaDisplay *dpy, XErrorEvent *event)
+mesaHandleXError(Display *dpy, XErrorEvent *event)
 {
    (void) dpy;
    (void) event;
@@ -154,7 +153,7 @@ alloc_shm_ximage(struct xm_buffer *b, struct xmesa_buffer *xmb,
 #if 0
    GC gc;
 #endif
-   int (*old_handler)(XMesaDisplay *, XErrorEvent *);
+   int (*old_handler)(Display *, XErrorEvent *);
 
    b->tempImage = XShmCreateImage(xmb->xm_visual->display,
                                   xmb->xm_visual->visinfo->visual,
