@@ -55,6 +55,9 @@ INCLUDE_DIRS = \
 	$(CC) -c $(INCLUDE_DIRS) $(CFLAGS) $< -o $@
 
 
+.c.s:
+	$(CC) -S $(INCLUDE_DIRS) $(CFLAGS) $< -o $@
+
 
 default: $(CELL_LIB)
 
