@@ -29,12 +29,12 @@
  * Authors: Keith Whitwell <keithw-at-tungstengraphics-dot-com>
  */
 
-#include "imports.h"
-
-#include "pipe/p_defines.h"
-#include "pipe/p_format.h"
-#include "softpipe/sp_winsys.h"
-
+#include <pipe/p_winsys.h>
+#include <pipe/p_screen.h>
+#include <pipe/p_defines.h>
+#include <pipe/p_format.h>
+#include <softpipe/sp_winsys.h>
+#include <util/u_memory.h>
 #include "nouveau_context.h"
 #include "nouveau_winsys_pipe.h"
 
@@ -48,7 +48,7 @@ struct nouveau_softpipe_winsys {
  */
 static boolean
 nouveau_is_format_supported(struct softpipe_winsys *sws,
-						enum pipe_format format)
+                            enum pipe_format format)
 {
 	switch (format) {
 	case PIPE_FORMAT_A8R8G8B8_UNORM:
@@ -68,19 +68,34 @@ nouveau_create_softpipe(struct nouveau_context *nv)
 	struct nouveau_softpipe_winsys *nvsws;
 	struct pipe_screen *pscreen;
 	struct pipe_winsys *ws;
+	struct pipe_context *pipe;
 
 	ws = nouveau_create_pipe_winsys(nv);
 	if (!ws)
 		return NULL;
 	pscreen = softpipe_create_screen(ws);
-
-	nvsws = CALLOC_STRUCT(nouveau_softpipe_winsys);
-	if (!nvsws)
+	if (!pscreen) {
+		ws->destroy(ws);
 		return NULL;
+	}
+	nvsws = CALLOC_STRUCT(nouveau_softpipe_winsys);
+	if (!nvsws) {
+		ws->destroy(ws);
+		pscreen->destroy(pscreen);
+		return NULL;
+	}
 
 	nvsws->sws.is_format_supported = nouveau_is_format_supported;
 	nvsws->nv = nv;
 
-	return softpipe_create(pscreen, ws, &nvsws->sws);
+	pipe = softpipe_create(pscreen, ws, &nvsws->sws);
+	if (!pipe) {
+		ws->destroy(ws);
+		pscreen->destroy(pscreen);
+		FREE(nvsws);
+		return NULL;
+	}
+
+	return pipe;
 }
 

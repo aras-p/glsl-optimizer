@@ -22,7 +22,7 @@
 
 #include <stdlib.h>
 #include <errno.h>
-
+#include <util/u_memory.h>
 #include "nouveau_drmif.h"
 #include "nouveau_local.h"
 
@@ -32,7 +32,7 @@ nouveau_resource_init(struct nouveau_resource **heap,
 {
 	struct nouveau_resource *r;
 
-	r = calloc(1, sizeof(struct nouveau_resource));
+	r = CALLOC_STRUCT(nouveau_resource);
 	if (!r)
 		return 1;
 
@@ -53,7 +53,7 @@ nouveau_resource_alloc(struct nouveau_resource *heap, int size, void *priv,
 
 	while (heap) {
 		if (!heap->in_use && heap->size >= size) {
-			r = calloc(1, sizeof(struct nouveau_resource));
+			r = CALLOC_STRUCT(nouveau_resource);
 			if (!r)
 				return 1;
 
@@ -73,7 +73,7 @@ nouveau_resource_alloc(struct nouveau_resource *heap, int size, void *priv,
 			*res = r;
 			return 0;
 		}
-			
+
 		heap = heap->next;
 	}
 
@@ -110,7 +110,7 @@ nouveau_resource_free(struct nouveau_resource **res)
 		if (r->next)
 			r->next->prev = r->prev;
 		r->prev->size += r->size;
-		free(r);
+		FREE(r);
 	}
-	
+
 }

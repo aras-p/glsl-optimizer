@@ -17,7 +17,7 @@
 #include "vl_types.h"
 #include "vl_defs.h"
 
-const unsigned int DEFAULT_BUF_ALIGNMENT = 256;
+const unsigned int DEFAULT_BUF_ALIGNMENT = 1;
 
 enum vlMacroBlockTypeEx
 {
@@ -394,7 +394,7 @@ static inline int vlGrabMacroBlock
 		(vb)[5].cr_tc.x = (zb)[2].x + (hx);	(vb)[5].cr_tc.y = (zb)[2].y + (hy);					\
 	}
 
-static inline int vlGrabMacroBlockVB
+static inline int vlGenMacroblockVerts
 (
 	struct vlR16SnormBufferedMC *mc,
 	struct vlMpeg2MacroBlock *macroblock,
@@ -618,7 +618,7 @@ static int vlFlush
 		{
 			enum vlMacroBlockTypeEx mb_type_ex = vlGetMacroBlockTypeEx(&mc->macroblocks[i]);
 
-			vlGrabMacroBlockVB(mc, &mc->macroblocks[i], offset[mb_type_ex], ycbcr_vb, ref_vb);
+			vlGenMacroblockVerts(mc, &mc->macroblocks[i], offset[mb_type_ex], ycbcr_vb, ref_vb);
 
 			offset[mb_type_ex]++;
 		}
@@ -627,7 +627,7 @@ static int vlFlush
 		for (i = 0; i < 2; ++i)
 			mc->pipe->winsys->buffer_unmap(mc->pipe->winsys, mc->vertex_bufs.ref[i].buffer);
 	}
-	
+
 	for (i = 0; i < 3; ++i)
 	{
 		pipe_surface_unmap(mc->tex_surface[i]);
@@ -757,7 +757,7 @@ static int vlFlush
 	}
 
 	pipe->flush(pipe, PIPE_FLUSH_RENDER_CACHE, &mc->buffered_surface->render_fence);
-	pipe->screen->tex_surface_release(pipe->screen, mc->render_target.cbufs[0]);
+	pipe->screen->tex_surface_release(pipe->screen, &mc->render_target.cbufs[0]);
 
 	for (i = 0; i < 3; ++i)
 		mc->zero_block[i].x = -1.0f;

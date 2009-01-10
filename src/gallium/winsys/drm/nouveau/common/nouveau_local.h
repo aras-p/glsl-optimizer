@@ -5,8 +5,6 @@
 #include "nouveau_winsys_pipe.h"
 #include <stdio.h>
 
-struct pipe_buffer;
-
 /* Debug output */
 #define NOUVEAU_MSG(fmt, args...) do {                                         \
 	fprintf(stdout, "nouveau: "fmt, ##args);                               \

@@ -1,24 +1,11 @@
-#include "pipe/p_winsys.h"
-#include "pipe/p_defines.h"
-#include "pipe/p_inlines.h"
-
-#include "util/u_memory.h"
-
+#include <pipe/p_winsys.h>
+#include <pipe/p_defines.h>
+#include <pipe/p_inlines.h>
+#include <util/u_memory.h>
 #include "nouveau_context.h"
 #include "nouveau_local.h"
 #include "nouveau_screen.h"
-#include "nouveau_swapbuffers.h"
 #include "nouveau_winsys_pipe.h"
-
-static void
-nouveau_flush_frontbuffer(struct pipe_winsys *pws, struct pipe_surface *surf,
-			  void *context_private)
-{
-	struct nouveau_context *nv = context_private;
-	__DRIdrawablePrivate *dPriv = nv->dri_drawable;
-
-	nouveau_copy_buffer(dPriv, surf, NULL);
-}
 
 static const char *
 nouveau_get_name(struct pipe_winsys *pws)
@@ -26,25 +13,11 @@ nouveau_get_name(struct pipe_winsys *pws)
 	return "Nouveau/DRI";
 }
 
-static struct pipe_buffer *
-nouveau_pipe_bo_create(struct pipe_winsys *pws, unsigned alignment,
-		       unsigned usage, unsigned size)
+static uint32_t
+nouveau_flags_from_usage(struct nouveau_context *nv, unsigned usage)
 {
-	struct nouveau_pipe_winsys *nvpws = (struct nouveau_pipe_winsys *)pws;
-	struct nouveau_context *nv = nvpws->nv;
 	struct nouveau_device *dev = nv->nv_screen->device;
-	struct nouveau_pipe_buffer *nvbuf;
-	uint32_t flags;
-
-	nvbuf = calloc(1, sizeof(*nvbuf));
-	if (!nvbuf)
-		return NULL;
-	nvbuf->base.refcount = 1;
-	nvbuf->base.alignment = alignment;
-	nvbuf->base.usage = usage;
-	nvbuf->base.size = size;
-
-	flags = NOUVEAU_BO_LOCAL;
+	uint32_t flags = NOUVEAU_BO_LOCAL;
 
 	if (usage & PIPE_BUFFER_USAGE_PIXEL) {
 		if (usage & NOUVEAU_BUFFER_USAGE_TEXTURE)
@@ -75,8 +48,31 @@ nouveau_pipe_bo_create(struct pipe_winsys *pws, unsigned alignment,
 			flags |= NOUVEAU_BO_GART;
 	}
 
+	return flags;
+}
+
+static struct pipe_buffer *
+nouveau_pipe_bo_create(struct pipe_winsys *pws, unsigned alignment,
+		       unsigned usage, unsigned size)
+{
+	struct nouveau_pipe_winsys *nvpws = (struct nouveau_pipe_winsys *)pws;
+	struct nouveau_context *nv = nvpws->nv;
+	struct nouveau_device *dev = nv->nv_screen->device;
+	struct nouveau_pipe_buffer *nvbuf;
+	uint32_t flags;
+
+	nvbuf = CALLOC_STRUCT(nouveau_pipe_buffer);
+	if (!nvbuf)
+		return NULL;
+	nvbuf->base.refcount = 1;
+	nvbuf->base.alignment = alignment;
+	nvbuf->base.usage = usage;
+	nvbuf->base.size = size;
+
+	flags = nouveau_flags_from_usage(nv, flags);
+
 	if (nouveau_bo_new(dev, flags, alignment, size, &nvbuf->bo)) {
-		free(nvbuf);
+		FREE(nvbuf);
 		return NULL;
 	}
 
@@ -90,14 +86,14 @@ nouveau_pipe_bo_user_create(struct pipe_winsys *pws, void *ptr, unsigned bytes)
 	struct nouveau_device *dev = nvpws->nv->nv_screen->device;
 	struct nouveau_pipe_buffer *nvbuf;
 
-	nvbuf = calloc(1, sizeof(*nvbuf));
+	nvbuf = CALLOC_STRUCT(nouveau_pipe_buffer);
 	if (!nvbuf)
 		return NULL;
 	nvbuf->base.refcount = 1;
 	nvbuf->base.size = bytes;
 
 	if (nouveau_bo_user(dev, ptr, bytes, &nvbuf->bo)) {
-		free(nvbuf);
+		FREE(nvbuf);
 		return NULL;
 	}
 
@@ -110,7 +106,7 @@ nouveau_pipe_bo_del(struct pipe_winsys *ws, struct pipe_buffer *buf)
 	struct nouveau_pipe_buffer *nvbuf = nouveau_buffer(buf);
 
 	nouveau_bo_del(&nvbuf->bo);
-	free(nvbuf);
+	FREE(nvbuf);
 }
 
 static void *
@@ -124,6 +120,26 @@ nouveau_pipe_bo_map(struct pipe_winsys *pws, struct pipe_buffer *buf,
 		map_flags |= NOUVEAU_BO_RD;
 	if (flags & PIPE_BUFFER_USAGE_CPU_WRITE)
 		map_flags |= NOUVEAU_BO_WR;
+
+	/* XXX: Technically incorrect. If the client maps a buffer for write-only
+	 * and leaves part of the buffer untouched it probably expects those parts
+	 * to remain intact. This is violated because we allocate a whole new buffer
+	 * and don't copy the previous buffer's contents, so this optimization is
+	 * only valid if the client intends to overwrite the whole buffer.
+	 */
+	if ((map_flags & NOUVEAU_BO_RDWR) == NOUVEAU_BO_WR &&
+	    !nouveau_bo_busy(nvbuf->bo, map_flags)) {
+		struct nouveau_pipe_winsys *nvpws = (struct nouveau_pipe_winsys *)pws;
+		struct nouveau_context *nv = nvpws->nv;
+		struct nouveau_device *dev = nv->nv_screen->device;
+		struct nouveau_bo *rename;
+		uint32_t flags = nouveau_flags_from_usage(nv, buf->usage);
+
+		if (!nouveau_bo_new(dev, flags, buf->alignment, buf->size, &rename)) {
+			nouveau_bo_del(&nvbuf->bo);
+			nvbuf->bo = rename;
+		}
+	}
 
 	if (nouveau_bo_map(nvbuf->bo, map_flags))
 		return NULL;
@@ -176,6 +192,12 @@ nouveau_pipe_fence_finish(struct pipe_winsys *ws,
 	return nouveau_fence_wait(&ref);
 }
 
+static void
+nouveau_destroy(struct pipe_winsys *pws)
+{
+	FREE(pws);
+}
+
 struct pipe_winsys *
 nouveau_create_pipe_winsys(struct nouveau_context *nv)
 {
@@ -201,7 +223,7 @@ nouveau_create_pipe_winsys(struct nouveau_context *nv)
 	pws->fence_finish = nouveau_pipe_fence_finish;
 
 	pws->get_name = nouveau_get_name;
+	pws->destroy = nouveau_destroy;
 
 	return &nvpws->pws;
 }
-

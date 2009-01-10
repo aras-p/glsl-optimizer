@@ -1,11 +1,8 @@
-#include "pipe/p_context.h"
-#include "util/u_memory.h"
-#include "nouveau_context.h"
+#include "nouveau_screen_vl.h"
+#include <util/u_memory.h>
 #include <nouveau_drm.h>
-#include "nouveau_dri.h"
-#include "nouveau_local.h"
-#include "nouveau_screen.h"
-#include "nouveau_swapbuffers.h"
+#include <common/nouveau_dri.h>
+#include <common/nouveau_local.h>
 
 #if NOUVEAU_DRM_HEADER_PATCHLEVEL != 11
 #error nouveau_drm.h version does not match expected version
@@ -50,34 +47,33 @@ int nouveau_check_dri_drm_ddx(dri_version_t *dri, dri_version_t *drm, dri_versio
 int
 nouveau_screen_create(dri_screen_t *dri_screen, dri_framebuffer_t *dri_framebuf)
 {
-	struct nouveau_dri	*nv_dri = dri_framebuf->private;
-	struct nouveau_screen	*nv_screen;
-	int			ret;
+	struct nouveau_dri		*nv_dri = dri_framebuf->private;
+	struct nouveau_screen_vl	*nv_screen;
+
+	assert(dri_screen);
+	assert(dri_framebuf);
 
 	if (nouveau_check_dri_drm_ddx(&dri_screen->dri, &dri_screen->drm, &dri_screen->ddx))
 		return 1;
 
-	nv_screen = CALLOC_STRUCT(nouveau_screen);
+	nv_screen = CALLOC_STRUCT(nouveau_screen_vl);
+
 	if (!nv_screen)
 		return 1;
-	nv_screen->dri_screen = dri_screen;
-	dri_screen->private = (void*)nv_screen;
+
+	if (nouveau_screen_init(nv_dri, dri_screen->fd, &nv_screen->base))
+	{
+		FREE(nv_screen);
+		return 1;
+	}
 
 	/*
 	driParseOptionInfo(&nv_screen->option_cache,
 			   __driConfigOptions, __driNConfigOptions);
 	*/
 
-	if ((ret = nouveau_device_open_existing(&nv_screen->device, 0,
-						dri_screen->fd, 0))) {
-		NOUVEAU_ERR("Failed opening nouveau device: %d.\n", ret);
-		return 1;
-	}
-
-	nv_screen->front_offset = nv_dri->front_offset;
-	nv_screen->front_pitch  = nv_dri->front_pitch * (nv_dri->bpp / 8);
-	nv_screen->front_cpp = nv_dri->bpp / 8;
-	nv_screen->front_height = nv_dri->height;
+	nv_screen->dri_screen = dri_screen;
+	dri_screen->private = (void*)nv_screen;
 
 	return 0;
 }
@@ -85,7 +81,8 @@ nouveau_screen_create(dri_screen_t *dri_screen, dri_framebuffer_t *dri_framebuf)
 void
 nouveau_screen_destroy(dri_screen_t *dri_screen)
 {
-	struct nouveau_screen *nv_screen = dri_screen->private;
+	struct nouveau_screen_vl *nv_screen = dri_screen->private;
 
+	nouveau_screen_cleanup(&nv_screen->base);
 	FREE(nv_screen);
 }

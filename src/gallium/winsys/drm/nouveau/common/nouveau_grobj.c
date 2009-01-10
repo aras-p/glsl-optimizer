@@ -22,7 +22,7 @@
 
 #include <stdlib.h>
 #include <errno.h>
-
+#include <util/u_memory.h>
 #include "nouveau_drmif.h"
 
 int
@@ -37,7 +37,7 @@ nouveau_grobj_alloc(struct nouveau_channel *chan, uint32_t handle,
 	if (!nvdev || !grobj || *grobj)
 		return -EINVAL;
 
-	nvgrobj = calloc(1, sizeof(*nvgrobj));
+	nvgrobj = CALLOC_STRUCT(nouveau_grobj_priv);
 	if (!nvgrobj)
 		return -ENOMEM;
 	nvgrobj->base.channel = chan;
@@ -67,7 +67,7 @@ nouveau_grobj_ref(struct nouveau_channel *chan, uint32_t handle,
 	if (!chan || !grobj || *grobj)
 		return -EINVAL;
 
-	nvgrobj = calloc(1, sizeof(struct nouveau_grobj_priv));
+	nvgrobj = CALLOC_STRUCT(nouveau_grobj_priv);
 	if (!nvgrobj)
 		return -ENOMEM;
 	nvgrobj->base.channel = chan;
@@ -102,6 +102,6 @@ nouveau_grobj_free(struct nouveau_grobj **grobj)
 		drmCommandWrite(nvdev->fd, DRM_NOUVEAU_GPUOBJ_FREE,
 				&f, sizeof(f));	
 	}
-	free(nvgrobj);
+	FREE(nvgrobj);
 }
 

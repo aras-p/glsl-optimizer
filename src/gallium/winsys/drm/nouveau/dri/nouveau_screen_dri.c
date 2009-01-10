@@ -1,16 +1,15 @@
-#include "utils.h"
-#include "vblank.h"
-#include "xmlpool.h"
+#include <utils.h>
+#include <vblank.h>
+#include <xmlpool.h>
 
-#include "pipe/p_context.h"
-#include "state_tracker/st_public.h"
-#include "state_tracker/st_cb_fbo.h"
-
-#include "nouveau_context.h"
-#include "nouveau_drm.h"
-#include "nouveau_dri.h"
-#include "nouveau_local.h"
-#include "nouveau_screen.h"
+#include <pipe/p_context.h>
+#include <state_tracker/st_public.h>
+#include <state_tracker/st_cb_fbo.h>
+#include <nouveau_drm.h>
+#include "../common/nouveau_dri.h"
+#include "../common/nouveau_local.h"
+#include "nouveau_context_dri.h"
+#include "nouveau_screen_dri.h"
 #include "nouveau_swapbuffers.h"
 
 #if NOUVEAU_DRM_HEADER_PATCHLEVEL != 11
@@ -183,13 +182,12 @@ static const __DRIconfig **
 nouveau_screen_create(__DRIscreenPrivate *psp)
 {
 	struct nouveau_dri *nv_dri = psp->pDevPriv;
-	struct nouveau_screen *nv_screen;
+	struct nouveau_screen_dri *nv_screen;
 	static const __DRIversion ddx_expected =
 		{ 0, 0, NOUVEAU_DRM_HEADER_PATCHLEVEL };
 	static const __DRIversion dri_expected = { 4, 0, 0 };
 	static const __DRIversion drm_expected =
 		{ 0, 0, NOUVEAU_DRM_HEADER_PATCHLEVEL };
-	int ret;
 
 	if (!driCheckDriDdxDrmVersions2("nouveau",
 					&psp->dri_version, &dri_expected,
@@ -209,28 +207,23 @@ nouveau_screen_create(__DRIscreenPrivate *psp)
 
 	if (psp->devPrivSize != sizeof(struct nouveau_dri)) {
 		NOUVEAU_ERR("DRI struct mismatch between DDX/DRI\n");
-		return GL_FALSE;
+		return NULL;
 	}
 
-	nv_screen = CALLOC_STRUCT(nouveau_screen);
+	nv_screen = CALLOC_STRUCT(nouveau_screen_dri);
 	if (!nv_screen)
-		return GL_FALSE;
-	nv_screen->driScrnPriv = psp;
-	psp->private = (void *)nv_screen;
+		return NULL;
 
 	driParseOptionInfo(&nv_screen->option_cache,
 			   __driConfigOptions, __driNConfigOptions);
 
-	if ((ret = nouveau_device_open_existing(&nv_screen->device, 0,
-						psp->fd, 0))) {
-		NOUVEAU_ERR("Failed opening nouveau device: %d\n", ret);
-		return GL_FALSE;
+	if (nouveau_screen_init(nv_dri, psp->fd, &nv_screen->base)) {
+		FREE(nv_screen);
+		return NULL;
 	}
 
-	nv_screen->front_offset = nv_dri->front_offset;
-	nv_screen->front_pitch  = nv_dri->front_pitch * (nv_dri->bpp / 8);
-	nv_screen->front_cpp = nv_dri->bpp / 8;
-	nv_screen->front_height = nv_dri->height;
+	nv_screen->driScrnPriv = psp;
+	psp->private = (void *)nv_screen;
 
 	return (const __DRIconfig **)
 		nouveau_fill_in_modes(psp, nv_dri->bpp,
@@ -241,9 +234,10 @@ nouveau_screen_create(__DRIscreenPrivate *psp)
 static void
 nouveau_screen_destroy(__DRIscreenPrivate *driScrnPriv)
 {
-	struct nouveau_screen *nv_screen = driScrnPriv->private;
+	struct nouveau_screen_dri *nv_screen = driScrnPriv->private;
 
 	driScrnPriv->private = NULL;
+	nouveau_screen_cleanup(&nv_screen->base);
 	FREE(nv_screen);
 }
 
