@@ -200,9 +200,7 @@ MAIN_FILES = \
 	$(DIRECTORY)/docs/RELNOTES*					\
 	$(DIRECTORY)/docs/*.spec					\
 	$(DIRECTORY)/include/GL/internal/glcore.h			\
-	$(DIRECTORY)/include/GL/amesa.h					\
 	$(DIRECTORY)/include/GL/dmesa.h					\
-	$(DIRECTORY)/include/GL/fxmesa.h				\
 	$(DIRECTORY)/include/GL/ggimesa.h				\
 	$(DIRECTORY)/include/GL/gl.h					\
 	$(DIRECTORY)/include/GL/glext.h					\
@@ -217,13 +215,8 @@ MAIN_FILES = \
 	$(DIRECTORY)/include/GL/mglmesa.h				\
 	$(DIRECTORY)/include/GL/osmesa.h				\
 	$(DIRECTORY)/include/GL/svgamesa.h				\
-	$(DIRECTORY)/include/GL/ugl*.h					\
 	$(DIRECTORY)/include/GL/vms_x_fix.h				\
 	$(DIRECTORY)/include/GL/wmesa.h					\
-	$(DIRECTORY)/include/GL/xmesa.h					\
-	$(DIRECTORY)/include/GL/xmesa_x.h				\
-	$(DIRECTORY)/include/GL/xmesa_xf86.h				\
-	$(DIRECTORY)/include/GLView.h					\
 	$(DIRECTORY)/src/Makefile					\
 	$(DIRECTORY)/src/descrip.mms					\
 	$(DIRECTORY)/src/mesa/Makefile*					\
