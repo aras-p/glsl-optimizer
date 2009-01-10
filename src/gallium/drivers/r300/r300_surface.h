@@ -31,6 +31,4 @@
 #include "r300_blit.h"
 #include "r300_context.h"
 
-void r300_init_surface_functions(struct r300_context* r300);
-
 #endif /* R300_SURFACE_H */

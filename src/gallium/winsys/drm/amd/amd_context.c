@@ -243,8 +243,10 @@ GLboolean amd_context_create(const __GLcontextModes *visual,
     }
 
     if (GL_TRUE) {
-        /* XXX "NULL" is a struct pipe_screen* just in case we ever need it... */
-        pipe = r300_create_context(NULL, amd_context->pipe_winsys,
+        amd_context->pipe_screen = r300_create_screen(amd_context->pipe_winsys,
+                                                      0x0);
+        pipe = r300_create_context(amd_context->pipe_screen,
+                                   amd_context->pipe_winsys,
                                    (struct amd_pipe_winsys*)amd_context->pipe_winsys);
     } else {
         pipe = amd_create_softpipe(amd_context);

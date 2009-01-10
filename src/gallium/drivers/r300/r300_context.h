@@ -23,9 +23,9 @@
 #ifndef R300_CONTEXT_H
 #define R300_CONTEXT_H
 
+#include "draw/draw_context.h"
 #include "pipe/p_context.h"
-
-#include "r300_surface.h"
+#include "util/u_memory.h"
 
 struct r300_context {
     /* Parent class */
@@ -46,5 +46,12 @@ struct r300_context {
 static struct r300_context* r300_context(struct pipe_context* context) {
     return (struct r300_context*)context;
 }
+
+/* Context initialization. */
+void r300_init_surface_functions(struct r300_context* r300);
+
+struct pipe_context* r300_create_context(struct pipe_screen* screen,
+                                         struct pipe_winsys* winsys,
+                                         struct amd_winsys* amd_winsys);
 
 #endif /* R300_CONTEXT_H */
