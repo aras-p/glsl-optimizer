@@ -42,7 +42,6 @@
 
 #include "glxheader.h"
 #include "glxapi.h"
-#include "GL/xmesa.h"
 #include "main/context.h"
 #include "main/config.h"
 #include "main/macros.h"

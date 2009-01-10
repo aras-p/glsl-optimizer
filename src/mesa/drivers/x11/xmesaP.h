@@ -27,7 +27,7 @@
 #define XMESAP_H
 
 
-#include "GL/xmesa.h"
+#include "xmesa.h"
 #include "main/mtypes.h"
 #if defined(FX)
 #include "GL/fxmesa.h"
