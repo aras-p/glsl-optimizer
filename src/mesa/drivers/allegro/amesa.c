@@ -26,7 +26,7 @@
 #include "main/imports.h"
 #include "main/matrix.h"
 #include "main/mtypes.h"
-#include "GL/amesa.h"
+#include "amesa.h"
 
 
 struct amesa_visual
