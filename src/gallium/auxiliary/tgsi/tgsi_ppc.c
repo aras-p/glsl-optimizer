@@ -81,14 +81,6 @@ const float ppc_builtin_constants[] ALIGN16_ATTRIB = {
 #define MAX_PPC_TEMPS 3
 
 
-struct reg_chan_vec
-{
-   struct tgsi_full_src_register src;
-   uint chan;
-   uint vec;
-};
-
-
 /**
  * Context/state used during code gen.
  */
