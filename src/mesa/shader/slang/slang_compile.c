@@ -1138,8 +1138,26 @@ parse_statement(slang_parse_ctx * C, slang_output_ctx * O,
             RETURN0;
          if (!parse_child_operation(C, &o, oper, GL_FALSE))
             RETURN0;
+#if 0
          if (!parse_child_operation(C, &o, oper, GL_TRUE))
             RETURN0;
+#else
+         /* force creation of new scope for loop body */
+         {
+            slang_operation *ch;
+            slang_output_ctx oo = o;
+
+            /* grow child array */
+            ch = slang_operation_grow(&oper->num_children, &oper->children);
+            ch->type = SLANG_OPER_BLOCK_NEW_SCOPE;
+
+            ch->locals->outer_scope = o.vars;
+            oo.vars = ch->locals;
+
+            if (!parse_child_operation(C, &oo, ch, GL_TRUE))
+               RETURN0;
+         }
+#endif
       }
       break;
    case OP_PRECISION:
