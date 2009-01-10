@@ -25,6 +25,7 @@
 
 #include "pipe/p_state.h"
 
+#include "r300_context.h"
 #include "r300_cs.h"
 
 /* Forward declarations. */
