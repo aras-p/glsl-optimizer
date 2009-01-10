@@ -206,6 +206,8 @@ DRI_CONF_BEGIN
 DRI_CONF_END;
 static const GLuint __driNConfigOptions = 17;
 
+extern const struct dri_extension gl_20_extension[];
+
 #ifndef RADEON_DEBUG
 int RADEON_DEBUG = 0;
 
@@ -1140,6 +1142,7 @@ static void radeonDestroyContext(__DRIcontextPrivate * driContextPriv)
 
 #endif
 
+
 /**
  * This is the driver specific part of the createNewScreen entry point.
  *
@@ -1192,6 +1195,8 @@ radeonInitScreen(__DRIscreenPrivate *psp)
    driInitSingleExtension( NULL, NV_vp_extension );
    driInitSingleExtension( NULL, ATI_fs_extension );
    driInitExtensions( NULL, point_extensions, GL_FALSE );
+#elif defined(RADEON_COMMON_FOR_R300)
+   driInitSingleExtension( NULL, gl_20_extension );
 #endif
 
    if (!radeonInitDriver(psp))
