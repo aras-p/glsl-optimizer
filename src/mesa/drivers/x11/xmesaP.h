@@ -30,7 +30,7 @@
 #include "xmesa.h"
 #include "main/mtypes.h"
 #if defined(FX)
-#include "GL/fxmesa.h"
+#include "fxmesa.h"
 #include "xm_glide.h"
 #endif
 #ifdef XFree86Server
