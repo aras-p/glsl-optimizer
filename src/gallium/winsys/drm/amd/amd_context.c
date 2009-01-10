@@ -243,6 +243,7 @@ GLboolean amd_context_create(const __GLcontextModes *visual,
     }
 
     if (GL_TRUE) {
+        /* XXX second arg should be PCI ID, but damned if I know why */
         amd_context->pipe_screen = r300_create_screen(amd_context->pipe_winsys,
                                                       0x0);
         pipe = r300_create_context(amd_context->pipe_screen,

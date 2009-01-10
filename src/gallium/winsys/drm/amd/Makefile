@@ -23,6 +23,6 @@ ASM_SOURCES =
 
 include ../Makefile.template
 
-DRI_LIB_DEPS += -ldrm-radeon
+DRI_LIB_DEPS += -ldrm_radeon
 
 symlinks:
