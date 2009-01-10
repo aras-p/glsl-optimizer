@@ -1005,7 +1005,7 @@ parse_statement(slang_parse_ctx * C, slang_output_ctx * O,
       /* parse child statements, do not create new variable scope */
       oper->type = SLANG_OPER_BLOCK_NO_NEW_SCOPE;
       while (*C->I != OP_END)
-         if (!parse_child_operation(C, O, oper, 1))
+         if (!parse_child_operation(C, O, oper, GL_TRUE))
             RETURN0;
       C->I++;
       break;
@@ -1017,7 +1017,7 @@ parse_statement(slang_parse_ctx * C, slang_output_ctx * O,
          oper->type = SLANG_OPER_BLOCK_NEW_SCOPE;
          o.vars = oper->locals;
          while (*C->I != OP_END)
-            if (!parse_child_operation(C, &o, oper, 1))
+            if (!parse_child_operation(C, &o, oper, GL_TRUE))
                RETURN0;
          C->I++;
       }
@@ -1074,7 +1074,7 @@ parse_statement(slang_parse_ctx * C, slang_output_ctx * O,
       if (oper->a_id == SLANG_ATOM_NULL)
          RETURN0;
       while (*C->I != OP_END) {
-         if (!parse_child_operation(C, O, oper, 0))
+         if (!parse_child_operation(C, O, oper, GL_FALSE))
             RETURN0;
       }
       C->I++;
@@ -1090,21 +1090,21 @@ parse_statement(slang_parse_ctx * C, slang_output_ctx * O,
       break;
    case OP_RETURN:
       oper->type = SLANG_OPER_RETURN;
-      if (!parse_child_operation(C, O, oper, 0))
+      if (!parse_child_operation(C, O, oper, GL_FALSE))
          RETURN0;
       break;
    case OP_EXPRESSION:
       oper->type = SLANG_OPER_EXPRESSION;
-      if (!parse_child_operation(C, O, oper, 0))
+      if (!parse_child_operation(C, O, oper, GL_FALSE))
          RETURN0;
       break;
    case OP_IF:
       oper->type = SLANG_OPER_IF;
-      if (!parse_child_operation(C, O, oper, 0))
+      if (!parse_child_operation(C, O, oper, GL_FALSE))
          RETURN0;
-      if (!parse_child_operation(C, O, oper, 1))
+      if (!parse_child_operation(C, O, oper, GL_TRUE))
          RETURN0;
-      if (!parse_child_operation(C, O, oper, 1))
+      if (!parse_child_operation(C, O, oper, GL_TRUE))
          RETURN0;
       break;
    case OP_WHILE:
@@ -1113,17 +1113,17 @@ parse_statement(slang_parse_ctx * C, slang_output_ctx * O,
 
          oper->type = SLANG_OPER_WHILE;
          o.vars = oper->locals;
-         if (!parse_child_operation(C, &o, oper, 1))
+         if (!parse_child_operation(C, &o, oper, GL_TRUE))
             RETURN0;
-         if (!parse_child_operation(C, &o, oper, 1))
+         if (!parse_child_operation(C, &o, oper, GL_TRUE))
             RETURN0;
       }
       break;
    case OP_DO:
       oper->type = SLANG_OPER_DO;
-      if (!parse_child_operation(C, O, oper, 1))
+      if (!parse_child_operation(C, O, oper, GL_TRUE))
          RETURN0;
-      if (!parse_child_operation(C, O, oper, 0))
+      if (!parse_child_operation(C, O, oper, GL_FALSE))
          RETURN0;
       break;
    case OP_FOR:
@@ -1132,13 +1132,13 @@ parse_statement(slang_parse_ctx * C, slang_output_ctx * O,
 
          oper->type = SLANG_OPER_FOR;
          o.vars = oper->locals;
-         if (!parse_child_operation(C, &o, oper, 1))
+         if (!parse_child_operation(C, &o, oper, GL_TRUE))
             RETURN0;
-         if (!parse_child_operation(C, &o, oper, 1))
+         if (!parse_child_operation(C, &o, oper, GL_TRUE))
             RETURN0;
-         if (!parse_child_operation(C, &o, oper, 0))
+         if (!parse_child_operation(C, &o, oper, GL_FALSE))
             RETURN0;
-         if (!parse_child_operation(C, &o, oper, 1))
+         if (!parse_child_operation(C, &o, oper, GL_TRUE))
             RETURN0;
       }
       break;
@@ -1429,7 +1429,7 @@ parse_expression(slang_parse_ctx * C, slang_output_ctx * O,
          C->I++;
 
          while (*C->I != OP_END)
-            if (!parse_child_operation(C, O, op, 0))
+            if (!parse_child_operation(C, O, op, GL_FALSE))
                RETURN0;
          C->I++;
 #if 0
@@ -1494,7 +1494,7 @@ parse_expression(slang_parse_ctx * C, slang_output_ctx * O,
                RETURN0;
             }
             while (*C->I != OP_END)
-               if (!parse_child_operation(C, O, op, 0))
+               if (!parse_child_operation(C, O, op, GL_FALSE))
                   RETURN0;
             C->I++;
 
