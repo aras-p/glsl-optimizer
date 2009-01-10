@@ -78,7 +78,7 @@ const float ppc_builtin_constants[] ALIGN16_ATTRIB = {
  * How many TGSI temps should be implemented with real PPC vector registers
  * rather than memory.
  */
-#define MAX_PPC_TEMPS 4
+#define MAX_PPC_TEMPS 3
 
 
 struct reg_chan_vec
@@ -155,6 +155,29 @@ init_gen_context(struct gen_context *gen, struct ppc_function *func)
       gen->temps_map[i][3] = ppc_allocate_vec_register(gen->f);
    }
 }
+
+
+/**
+ * Is the given TGSI register stored as a real PPC vector register?
+ */
+static boolean
+is_ppc_vec_temporary(const struct tgsi_full_src_register *reg)
+{
+   return (reg->SrcRegister.File == TGSI_FILE_TEMPORARY &&
+           reg->SrcRegister.Index < MAX_PPC_TEMPS);
+}
+
+
+/**
+ * Is the given TGSI register stored as a real PPC vector register?
+ */
+static boolean
+is_ppc_vec_temporary_dst(const struct tgsi_full_dst_register *reg)
+{
+   return (reg->DstRegister.File == TGSI_FILE_TEMPORARY &&
+           reg->DstRegister.Index < MAX_PPC_TEMPS);
+}
+
 
 
 /**
@@ -285,7 +308,7 @@ emit_fetch(struct gen_context *gen,
          }
          break;
       case TGSI_FILE_TEMPORARY:
-         if (reg->SrcRegister.Index < MAX_PPC_TEMPS) {
+         if (is_ppc_vec_temporary(reg)) {
             /* use PPC vec register */
             dst_vec = gen->temps_map[reg->SrcRegister.Index][swizzle];
          }
@@ -353,23 +376,33 @@ emit_fetch(struct gen_context *gen,
       uint sign_op = tgsi_util_get_full_src_register_sign_mode(reg, chan_index);
       if (sign_op != TGSI_UTIL_SIGN_KEEP) {
          int bit31_vec = gen_get_bit31_vec(gen);
+         int dst_vec2;
+
+         if (is_ppc_vec_temporary(reg)) {
+            /* need to use a new temp */
+            dst_vec2 = ppc_allocate_vec_register(gen->f);
+         }
+         else {
+            dst_vec2 = dst_vec;
+         }
 
          switch (sign_op) {
          case TGSI_UTIL_SIGN_CLEAR:
             /* vec = vec & ~bit31 */
-            ppc_vandc(gen->f, dst_vec, dst_vec, bit31_vec);
+            ppc_vandc(gen->f, dst_vec2, dst_vec, bit31_vec);
             break;
          case TGSI_UTIL_SIGN_SET:
             /* vec = vec | bit31 */
-            ppc_vor(gen->f, dst_vec, dst_vec, bit31_vec);
+            ppc_vor(gen->f, dst_vec2, dst_vec, bit31_vec);
             break;
          case TGSI_UTIL_SIGN_TOGGLE:
             /* vec = vec ^ bit31 */
-            ppc_vxor(gen->f, dst_vec, dst_vec, bit31_vec);
+            ppc_vxor(gen->f, dst_vec2, dst_vec, bit31_vec);
             break;
          default:
             assert(0);
          }
+         return dst_vec2;
       }
    }
 
@@ -452,8 +485,7 @@ release_src_vecs(struct gen_context *gen)
    uint i;
    for (i = 0; i < gen->num_regs; i++) {
       const const struct tgsi_full_src_register src = gen->regs[i].src;
-      if (!(src.SrcRegister.File == TGSI_FILE_TEMPORARY &&
-            src.SrcRegister.Index < MAX_PPC_TEMPS)) {
+      if (!is_ppc_vec_temporary(&src)) {
          ppc_release_vec_register(gen->f, gen->regs[i].vec);
       }
    }
@@ -469,8 +501,7 @@ get_dst_vec(struct gen_context *gen,
 {
    const struct tgsi_full_dst_register *reg = &inst->FullDstRegisters[0];
 
-   if (reg->DstRegister.File == TGSI_FILE_TEMPORARY &&
-       reg->DstRegister.Index < MAX_PPC_TEMPS) {
+   if (is_ppc_vec_temporary_dst(reg)) {
       int vec = gen->temps_map[reg->DstRegister.Index][chan_index];
       return vec;
    }
@@ -502,7 +533,7 @@ emit_store(struct gen_context *gen,
       }
       break;
    case TGSI_FILE_TEMPORARY:
-      if (reg->DstRegister.Index < MAX_PPC_TEMPS) {
+      if (is_ppc_vec_temporary_dst(reg)) {
          if (!free_vec) {
             int dst_vec = gen->temps_map[reg->DstRegister.Index][chan_index];
             if (dst_vec != src_vec)
