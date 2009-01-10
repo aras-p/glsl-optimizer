@@ -98,7 +98,7 @@ nv30_screen_surface_format_supported(struct pipe_screen *pscreen,
 	if (tex_usage & PIPE_TEXTURE_USAGE_RENDER_TARGET) {
 		switch (format) {
 		case PIPE_FORMAT_A8R8G8B8_UNORM:
-		case PIPE_FORMAT_R5G6B5_UNORM: 
+		case PIPE_FORMAT_R5G6B5_UNORM:
 		case PIPE_FORMAT_Z24S8_UNORM:
 		case PIPE_FORMAT_Z16_UNORM:
 			return TRUE;
@@ -110,7 +110,7 @@ nv30_screen_surface_format_supported(struct pipe_screen *pscreen,
 		case PIPE_FORMAT_A8R8G8B8_UNORM:
 		case PIPE_FORMAT_A1R5G5B5_UNORM:
 		case PIPE_FORMAT_A4R4G4B4_UNORM:
-		case PIPE_FORMAT_R5G6B5_UNORM: 
+		case PIPE_FORMAT_R5G6B5_UNORM:
 		case PIPE_FORMAT_L8_UNORM:
 		case PIPE_FORMAT_A8_UNORM:
 		case PIPE_FORMAT_I8_UNORM:
@@ -139,7 +139,8 @@ nv30_surface_map(struct pipe_screen *screen, struct pipe_surface *surface,
 
 		if (!mt->shadow_tex) {
 			unsigned old_tex_usage = surface->texture->tex_usage;
-			surface->texture->tex_usage = NOUVEAU_TEXTURE_USAGE_LINEAR;
+			surface->texture->tex_usage = NOUVEAU_TEXTURE_USAGE_LINEAR |
+			                              PIPE_TEXTURE_USAGE_DYNAMIC;
 			mt->shadow_tex = screen->texture_create(screen, surface->texture);
 			surface->texture->tex_usage = old_tex_usage;
 
@@ -326,7 +327,7 @@ nv30_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 	so_data  (so, 3);
 	so_method(so, screen->rankine, 0x1450, 1);
 	so_data  (so, 0x00030004);
-	
+
 	/* NEW */
 	so_method(so, screen->rankine, 0x1e98, 1);
 	so_data  (so, 0);
@@ -382,4 +383,3 @@ nv30_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 
 	return &screen->pipe;
 }
-

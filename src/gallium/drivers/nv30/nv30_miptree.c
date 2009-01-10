@@ -21,7 +21,7 @@ nv30_miptree_layout(struct nv30_miptree *nv30mt)
 	} else {
 		nr_faces = 1;
 	}
-	
+
 	pitch = pt->width[0];
 	for (l = 0; l <= pt->last_level; l++) {
 		pt->width[l] = width;
@@ -76,13 +76,15 @@ nv30_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *pt)
 	if (pt->tex_usage & (PIPE_TEXTURE_USAGE_PRIMARY |
 	                     PIPE_TEXTURE_USAGE_DISPLAY_TARGET))
 		mt->base.tex_usage |= NOUVEAU_TEXTURE_USAGE_LINEAR;
+	else
+	if (pt->tex_usage & PIPE_TEXTURE_USAGE_DYNAMIC)
+		mt->base.tex_usage |= NOUVEAU_TEXTURE_USAGE_LINEAR;
 	else {
 		switch (pt->format) {
 		/* TODO: Figure out which formats can be swizzled */
 		case PIPE_FORMAT_A8R8G8B8_UNORM:
 		case PIPE_FORMAT_X8R8G8B8_UNORM:
-		/* XXX: Re-enable when SIFM size limits are fixed */
-		/*case PIPE_FORMAT_R16_SNORM:*/
+		case PIPE_FORMAT_R16_SNORM:
 			break;
 		default:
 			mt->base.tex_usage |= NOUVEAU_TEXTURE_USAGE_LINEAR;
@@ -192,4 +194,3 @@ nv30_screen_init_miptree_functions(struct pipe_screen *pscreen)
 	pscreen->get_tex_surface = nv30_miptree_surface_new;
 	pscreen->tex_surface_release = nv30_miptree_surface_del;
 }
-
