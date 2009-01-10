@@ -555,6 +555,18 @@ emit_scalar_unaryop(struct gen_context *gen, struct tgsi_full_instruction *inst)
    int v0, v1;
    uint chan_index;
 
+   switch (inst->Instruction.Opcode) {
+   case TGSI_OPCODE_RSQ:
+      ppc_comment(gen->f, -4, "RSQ:");
+      break;
+   case TGSI_OPCODE_RCP:
+      ppc_comment(gen->f, -4, "LCP:");
+      break;
+   default:
+      assert(0);
+   }
+
+
    v0 = get_src_vec(gen, inst, 0, CHAN_X);
    v1 = ppc_allocate_vec_register(gen->f);
 
@@ -584,6 +596,33 @@ static void
 emit_unaryop(struct gen_context *gen, struct tgsi_full_instruction *inst)
 {
    uint chan_index;
+
+   switch (inst->Instruction.Opcode) {
+   case TGSI_OPCODE_ABS:
+      ppc_comment(gen->f, -4, "ABS:");
+      break;
+   case TGSI_OPCODE_FLOOR:
+      ppc_comment(gen->f, -4, "FLOOR:");
+      break;
+   case TGSI_OPCODE_FRAC:
+      ppc_comment(gen->f, -4, "FRAC:");
+      break;
+   case TGSI_OPCODE_EXPBASE2:
+      ppc_comment(gen->f, -4, "EXPBASE2:");
+      break;
+   case TGSI_OPCODE_LOGBASE2:
+      ppc_comment(gen->f, -4, "LOGBASE2:");
+      break;
+   case TGSI_OPCODE_MOV:
+      ppc_comment(gen->f, -4, "MOV:");
+      break;
+   case TGSI_OPCODE_SWZ:
+      ppc_comment(gen->f, -4, "SWZ:");
+      break;
+   default:
+      assert(0);
+   }
+
    FOR_EACH_DST0_ENABLED_CHANNEL(*inst, chan_index) {
       int v0 = get_src_vec(gen, inst, 0, chan_index);   /* v0 = srcreg[0] */
       int v1 = get_dst_vec(gen, inst, chan_index);
@@ -629,6 +668,26 @@ emit_binop(struct gen_context *gen, struct tgsi_full_instruction *inst)
 {
    int zero_vec = -1;
    uint chan;
+
+   switch (inst->Instruction.Opcode) {
+   case TGSI_OPCODE_ADD:
+      ppc_comment(gen->f, -4, "ADD:");
+      break;
+   case TGSI_OPCODE_SUB:
+      ppc_comment(gen->f, -4, "SUB:");
+      break;
+   case TGSI_OPCODE_MUL:
+      ppc_comment(gen->f, -4, "MUL:");
+      break;
+   case TGSI_OPCODE_MIN:
+      ppc_comment(gen->f, -4, "MIN:");
+      break;
+   case TGSI_OPCODE_MAX:
+      ppc_comment(gen->f, -4, "MAX:");
+      break;
+   default:
+      assert(0);
+   }
 
    if (inst->Instruction.Opcode == TGSI_OPCODE_MUL) {
       zero_vec = ppc_allocate_vec_register(gen->f);
@@ -677,6 +736,17 @@ static void
 emit_triop(struct gen_context *gen, struct tgsi_full_instruction *inst)
 {
    uint chan;
+
+   switch (inst->Instruction.Opcode) {
+   case TGSI_OPCODE_MAD:
+      ppc_comment(gen->f, -4, "MAD:");
+      break;
+   case TGSI_OPCODE_LRP:
+      ppc_comment(gen->f, -4, "LRP:");
+      break;
+   default:
+      assert(0);
+   }
 
    FOR_EACH_DST0_ENABLED_CHANNEL(*inst, chan) {
       /* fetch src operands */
@@ -768,9 +838,23 @@ emit_dotprod(struct gen_context *gen, struct tgsi_full_instruction *inst)
    int v0, v1, v2;
    uint chan_index;
 
+   switch (inst->Instruction.Opcode) {
+   case TGSI_OPCODE_DP3:
+      ppc_comment(gen->f, -4, "DP3:");
+      break;
+   case TGSI_OPCODE_DP4:
+      ppc_comment(gen->f, -4, "DP4:");
+      break;
+   case TGSI_OPCODE_DPH:
+      ppc_comment(gen->f, -4, "DPH:");
+      break;
+   default:
+      assert(0);
+   }
+
    v2 = ppc_allocate_vec_register(gen->f);
 
-   ppc_vxor(gen->f, v2, v2, v2);           /* v2 = {0, 0, 0, 0} */
+   ppc_vzero(gen->f, v2);                  /* v2 = {0, 0, 0, 0} */
 
    v0 = get_src_vec(gen, inst, 0, CHAN_X); /* v0 = src0.XXXX */
    v1 = get_src_vec(gen, inst, 1, CHAN_X); /* v1 = src1.XXXX */
@@ -812,10 +896,11 @@ ppc_vec_pow(struct ppc_function *f, int vr, int va, int vb)
    int t_vec = ppc_allocate_vec_register(f);
    int zero_vec = ppc_allocate_vec_register(f);
 
+   ppc_comment(f, -4, "POW:");
    ppc_vzero(f, zero_vec);
 
    ppc_vlogefp(f, t_vec, va);                   /* t = log2(va) */
-   ppc_vmaddfp(f, t_vec, t_vec, vb, zero_vec);  /* t = t * vb */
+   ppc_vmaddfp(f, t_vec, t_vec, vb, zero_vec);  /* t = t * vb + zero */
    ppc_vexptefp(f, vr, t_vec);                  /* vr = 2^t */
 
    ppc_release_vec_register(f, t_vec);
@@ -1221,9 +1306,12 @@ emit_prologue(struct ppc_function *func)
 static void
 emit_epilogue(struct ppc_function *func)
 {
+   ppc_comment(func, -4, "Epilogue:");
    ppc_return(func);
    /* XXX restore prev stack frame */
+#if 0
    debug_printf("PPC: Emitted %u instructions\n", func->num_inst);
+#endif
 }
 
 
