@@ -41,9 +41,16 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
 
     r300->winsys = amd_winsys;
     r300->context.winsys = winsys;
-    r300->context.screen = screen;
+    if (screen) {
+        r300->context.screen = screen;
+    } else {
+        /* XXX second arg should be pciid, find a way to get it from winsys */
+        r300->context.screen = r300_create_screen(winsys, 0x0);
+    }
 
     r300->context.destroy = r300_destroy_context;
+
+    r300->draw = draw_create();
 
     /* XXX this is almost certainly wrong
      * put this all in winsys, where we can get an FD
