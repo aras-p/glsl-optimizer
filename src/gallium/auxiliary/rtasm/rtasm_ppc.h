@@ -1,6 +1,7 @@
 /**************************************************************************
  *
  * Copyright (C) 2008 Tungsten Graphics, Inc.   All Rights Reserved.
+ * Copyright (C) 2009 VMware, Inc.  All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -58,6 +59,8 @@ struct ppc_function
    uint32_t reg_used;   /** used/free general-purpose registers bitmask */
    uint32_t fp_used;   /** used/free floating point registers bitmask */
    uint32_t vec_used;   /** used/free vector registers bitmask */
+   int indent;
+   boolean print;
 };
 
 
@@ -67,6 +70,10 @@ extern void ppc_release_func(struct ppc_function *p);
 extern uint ppc_num_instructions(const struct ppc_function *p);
 extern void (*ppc_get_func( struct ppc_function *p ))( void );
 extern void ppc_dump_func(const struct ppc_function *p);
+
+extern void ppc_print_code(struct ppc_function *p, boolean enable);
+extern void ppc_indent(struct ppc_function *p, int spaces);
+extern void ppc_comment(struct ppc_function *p, int rel_indent, const char *s);
 
 extern int ppc_reserve_register(struct ppc_function *p, int reg);
 extern int ppc_allocate_register(struct ppc_function *p);
