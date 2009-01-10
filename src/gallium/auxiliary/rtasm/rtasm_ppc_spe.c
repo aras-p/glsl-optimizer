@@ -443,7 +443,7 @@ void spe_init_func(struct spe_function *p, unsigned code_size)
       p->regs[i] = 1;
     }
 
-    p->print = false;
+    p->print = FALSE;
     p->indent = 0;
 }
 
