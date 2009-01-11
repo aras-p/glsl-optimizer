@@ -2,6 +2,7 @@
  * 
  * Copyright 2008 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
+ * Copyright 2009 VMware, Inc.  All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
@@ -25,11 +26,10 @@
  * 
  **************************************************************************/
 
-
-
 /**
  * Generate SPU per-fragment code (actually per-quad code).
  * \author Brian Paul
+ * \author Bob Ellison
  */
 
 
@@ -237,39 +237,53 @@ gen_alpha_test(const struct pipe_depth_stencil_alpha_state *dsa,
    spe_release_register(f, amask_reg);
 }
 
-/* This pair of functions is used inline to allocate and deallocate
+
+/**
+ * This pair of functions is used inline to allocate and deallocate
  * optional constant registers.  Once a constant is discovered to be 
  * needed, we will likely need it again, so we don't want to deallocate
  * it and have to allocate and load it again unnecessarily.
  */
-static inline void
-setup_optional_register(struct spe_function *f, boolean *is_already_set, unsigned int *r)
+static INLINE void
+setup_optional_register(struct spe_function *f,
+                        boolean *is_already_set,
+                        uint *r)
 {
-   if (*is_already_set) return;
+   if (*is_already_set)
+      return;
    *r = spe_allocate_available_register(f);
    *is_already_set = true;
 }
 
-static inline void
-release_optional_register(struct spe_function *f, boolean *is_already_set, unsigned int r)
+static INLINE void
+release_optional_register(struct spe_function *f,
+                          boolean *is_already_set,
+                          uint r)
 {
-    if (!*is_already_set) return;
+    if (!*is_already_set)
+       return;
     spe_release_register(f, r);
     *is_already_set = false;
 }
 
-static inline void
-setup_const_register(struct spe_function *f, boolean *is_already_set, unsigned int *r, float value)
+static INLINE void
+setup_const_register(struct spe_function *f,
+                     boolean *is_already_set,
+                     uint *r,
+                     float value)
 {
-   if (*is_already_set) return;
+   if (*is_already_set)
+      return;
    setup_optional_register(f, is_already_set, r);
    spe_load_float(f, *r, value);
 }
 
-static inline void
-release_const_register(struct spe_function *f, boolean *is_already_set, unsigned int r)
+static INLINE void
+release_const_register(struct spe_function *f,
+                       boolean *is_already_set,
+                       uint r)
 {
-    release_optional_register(f, is_already_set, r);
+   release_optional_register(f, is_already_set, r);
 }
 
 /**
@@ -1055,6 +1069,7 @@ gen_pack_colors(struct spe_function *f,
    spe_release_register(f, ba_reg);
 }
 
+
 static void
 gen_colormask(struct spe_function *f,
               uint colormask,
@@ -1111,11 +1126,13 @@ gen_colormask(struct spe_function *f,
       a_mask = 0;
    }
 
-   /* Get a temporary register to hold the mask that will be applied to the fragment */
+   /* Get a temporary register to hold the mask that will be applied
+    * to the fragment
+    */
    int colormask_reg = spe_allocate_available_register(f);
 
-   /* The actual mask we're going to use is an OR of the remaining R, G, B, and A
-    * masks.  Load the result value into our temporary register.
+   /* The actual mask we're going to use is an OR of the remaining R, G, B,
+    * and A masks.  Load the result value into our temporary register.
     */
    spe_load_uint(f, colormask_reg, r_mask | g_mask | b_mask | a_mask);
 
@@ -1135,7 +1152,9 @@ gen_colormask(struct spe_function *f,
     spe_release_register(f, colormask_reg);
 }
 
-/* This function is annoyingly similar to gen_depth_test(), above, except
+
+/**
+ * This function is annoyingly similar to gen_depth_test(), above, except
  * that instead of comparing two varying values (i.e. fragment and buffer),
  * we're comparing a varying value with a static value.  As such, we have
  * access to the Compare Immediate instructions where we don't in 
@@ -1146,7 +1165,8 @@ gen_colormask(struct spe_function *f,
  *
  * The return value in the stencil_pass_reg is a bitmask of valid
  * fragments that also passed the stencil test.  The bitmask of valid
- * fragments that failed would be found in (fragment_mask_reg & ~stencil_pass_reg).
+ * fragments that failed would be found in
+ * (fragment_mask_reg & ~stencil_pass_reg).
  */
 static void
 gen_stencil_test(struct spe_function *f, const struct pipe_stencil_state *state, 
@@ -1154,8 +1174,9 @@ gen_stencil_test(struct spe_function *f, const struct pipe_stencil_state *state,
                  unsigned int fragment_mask_reg, unsigned int fbS_reg, 
                  unsigned int stencil_pass_reg)
 {
-   /* Generate code that puts the set of passing fragments into the stencil_pass_reg
-    * register, taking into account whether each fragment was active to begin with.
+   /* Generate code that puts the set of passing fragments into the
+    * stencil_pass_reg register, taking into account whether each fragment
+    * was active to begin with.
     */
    switch (state->func) {
    case PIPE_FUNC_EQUAL:
@@ -1168,7 +1189,8 @@ gen_stencil_test(struct spe_function *f, const struct pipe_stencil_state *state,
          /* stencil_pass = fragment_mask & ((s&mask) == (reference&mask)) */
          unsigned int tmp_masked_stencil = spe_allocate_available_register(f);
          spe_and_uint(f, tmp_masked_stencil, fbS_reg, state->value_mask);
-         spe_compare_equal_uint(f, stencil_pass_reg, tmp_masked_stencil, state->value_mask & state->ref_value);
+         spe_compare_equal_uint(f, stencil_pass_reg, tmp_masked_stencil,
+                                state->value_mask & state->ref_value);
          spe_and(f, stencil_pass_reg, fragment_mask_reg, stencil_pass_reg);
          spe_release_register(f, tmp_masked_stencil);
       }
@@ -1184,7 +1206,8 @@ gen_stencil_test(struct spe_function *f, const struct pipe_stencil_state *state,
          /* stencil_pass = fragment_mask & ~((s&mask) == (reference&mask)) */
          unsigned int tmp_masked_stencil = spe_allocate_available_register(f);
          spe_and_uint(f, tmp_masked_stencil, fbS_reg, state->value_mask);
-         spe_compare_equal_uint(f, stencil_pass_reg, tmp_masked_stencil, state->value_mask & state->ref_value);
+         spe_compare_equal_uint(f, stencil_pass_reg, tmp_masked_stencil,
+                                state->value_mask & state->ref_value);
          spe_andc(f, stencil_pass_reg, fragment_mask_reg, stencil_pass_reg);
          spe_release_register(f, tmp_masked_stencil);
       }
@@ -1200,7 +1223,8 @@ gen_stencil_test(struct spe_function *f, const struct pipe_stencil_state *state,
          /* stencil_pass = fragment_mask & ((reference&mask) < (s & mask)) */
          unsigned int tmp_masked_stencil = spe_allocate_available_register(f);
          spe_and_uint(f, tmp_masked_stencil, fbS_reg, state->value_mask);
-         spe_compare_greater_uint(f, stencil_pass_reg, tmp_masked_stencil, state->value_mask & state->ref_value);
+         spe_compare_greater_uint(f, stencil_pass_reg, tmp_masked_stencil,
+                                  state->value_mask & state->ref_value);
          spe_and(f, stencil_pass_reg, fragment_mask_reg, stencil_pass_reg);
          spe_release_register(f, tmp_masked_stencil);
       }
@@ -1237,14 +1261,16 @@ gen_stencil_test(struct spe_function *f, const struct pipe_stencil_state *state,
       if (state->value_mask == stencil_max_value) {
          /* stencil_pass = fragment_mask & (reference >= s) 
           *              = fragment_mask & ~(s > reference) */
-         spe_compare_greater_uint(f, stencil_pass_reg, fbS_reg, state->ref_value);
+         spe_compare_greater_uint(f, stencil_pass_reg, fbS_reg,
+                                  state->ref_value);
          spe_andc(f, stencil_pass_reg, fragment_mask_reg, stencil_pass_reg);
       }
       else {
          /* stencil_pass = fragment_mask & ~((s&mask) > (reference&mask)) */
          unsigned int tmp_masked_stencil = spe_allocate_available_register(f);
          spe_and_uint(f, tmp_masked_stencil, fbS_reg, state->value_mask);
-         spe_compare_greater_uint(f, stencil_pass_reg, tmp_masked_stencil, state->value_mask & state->ref_value);
+         spe_compare_greater_uint(f, stencil_pass_reg, tmp_masked_stencil,
+                                  state->value_mask & state->ref_value);
          spe_andc(f, stencil_pass_reg, fragment_mask_reg, stencil_pass_reg);
          spe_release_register(f, tmp_masked_stencil);
       }
@@ -1302,9 +1328,12 @@ gen_stencil_test(struct spe_function *f, const struct pipe_stencil_state *state,
  * in the stencil buffer - in other words, it should be usable as a mask.
  */
 static void
-gen_stencil_values(struct spe_function *f, unsigned int stencil_op,
-                   unsigned int stencil_ref_value, unsigned int stencil_max_value,
-                   unsigned int fbS_reg, unsigned int newS_reg)
+gen_stencil_values(struct spe_function *f,
+                   unsigned int stencil_op,
+                   unsigned int stencil_ref_value,
+                   unsigned int stencil_max_value,
+                   unsigned int fbS_reg,
+                   unsigned int newS_reg)
 {
    /* The code below assumes that newS_reg and fbS_reg are not the same
     * register; if they can be, the calculations below will have to use
@@ -1412,10 +1441,12 @@ gen_stencil_values(struct spe_function *f, unsigned int stencil_op,
  * and released by the corresponding spe_release_register_set() call.
  */
 static void
-gen_get_stencil_values(struct spe_function *f, const struct pipe_stencil_state *stencil,
+gen_get_stencil_values(struct spe_function *f,
+                       const struct pipe_stencil_state *stencil,
                        const unsigned int depth_enabled,
                        unsigned int fbS_reg, 
-                       unsigned int *fail_reg, unsigned int *zfail_reg, 
+                       unsigned int *fail_reg,
+                       unsigned int *zfail_reg, 
                        unsigned int *zpass_reg)
 {
    unsigned zfail_op;
@@ -1633,7 +1664,9 @@ gen_stencil_depth_test(struct spe_function *f,
        * This function will allocate a variant number of registers that
        * will be released as part of the register set.
        */
-      spe_comment(f, 0, facing == CELL_FACING_FRONT ? "Computing front-facing stencil values" : "Computing back-facing stencil values");
+      spe_comment(f, 0, facing == CELL_FACING_FRONT
+                  ? "Computing front-facing stencil values"
+                  : "Computing back-facing stencil values");
       gen_get_stencil_values(f, stencil, dsa->depth.enabled, fbS_reg, 
          &stencil_fail_values, &stencil_pass_depth_fail_values, 
          &stencil_pass_depth_pass_values);
@@ -1652,7 +1685,8 @@ gen_stencil_depth_test(struct spe_function *f,
    if (dsa->depth.enabled) {
       spe_comment(f, 0, "Running stencil depth test");
       zmask_reg = spe_allocate_available_register(f);
-      modified_buffers |= gen_depth_test(f, dsa, mask_reg, fragZ_reg, fbZ_reg, zmask_reg);
+      modified_buffers |= gen_depth_test(f, dsa, mask_reg, fragZ_reg,
+                                         fbZ_reg, zmask_reg);
    }
 
    if (need_to_calculate_stencil_values) {
@@ -1689,11 +1723,14 @@ gen_stencil_depth_test(struct spe_function *f,
           * depth passing mask.  Note that zmask_reg *must* have been
           * set above if we're here.
           */
-         unsigned int stencil_pass_depth_fail_mask = spe_allocate_available_register(f);
+         unsigned int stencil_pass_depth_fail_mask =
+            spe_allocate_available_register(f);
+
          spe_comment(f, 0, "Loading stencil pass/depth fail values");
          spe_andc(f, stencil_pass_depth_fail_mask, stencil_pass_reg, zmask_reg);
 
-         spe_selb(f, newS_reg, newS_reg, stencil_pass_depth_fail_values, stencil_pass_depth_fail_mask);
+         spe_selb(f, newS_reg, newS_reg, stencil_pass_depth_fail_values,
+                  stencil_pass_depth_fail_mask);
 
          spe_release_register(f, stencil_pass_depth_fail_mask);
          modified_buffers = true;
@@ -1782,7 +1819,9 @@ gen_stencil_depth_test(struct spe_function *f,
  *              the fragment ops appended.
  */
 void
-cell_gen_fragment_function(struct cell_context *cell, const uint facing, struct spe_function *f)
+cell_gen_fragment_function(struct cell_context *cell,
+                           const uint facing,
+                           struct spe_function *f)
 {
    const struct pipe_depth_stencil_alpha_state *dsa = cell->depth_stencil;
    const struct pipe_blend_state *blend = cell->blend;
@@ -1814,7 +1853,9 @@ cell_gen_fragment_function(struct cell_context *cell, const uint facing, struct 
    if (cell->debug_flags & CELL_DEBUG_ASM) {
       spe_print_code(f, true);
       spe_indent(f, 8);
-      spe_comment(f, -4, facing == CELL_FACING_FRONT ? "Begin front-facing per-fragment ops": "Begin back-facing per-fragment ops");
+      spe_comment(f, -4, facing == CELL_FACING_FRONT
+                  ? "Begin front-facing per-fragment ops"
+                  : "Begin back-facing per-fragment ops");
    }
 
    spe_allocate_register(f, x_reg);
@@ -1868,7 +1909,7 @@ cell_gen_fragment_function(struct cell_context *cell, const uint facing, struct 
       boolean fbS_reg_set = false, fbZ_reg_set = false;
       unsigned int fbS_reg, fbZ_reg = 0;
 
-      spe_comment(f, 0, "Fetching Z/stencil quad from tile");
+      spe_comment(f, 0, "Fetch Z/stencil quad from tile");
 
       /* fetch quad of depth/stencil values from tile at (x,y) */
       /* Load: fbZS_reg = memory[depth_tile_reg + offset_reg] */
@@ -1888,73 +1929,73 @@ cell_gen_fragment_function(struct cell_context *cell, const uint facing, struct 
        * buffer must be maintained).
        */
       switch(zs_format) {
+      case PIPE_FORMAT_S8Z24_UNORM: /* fall through */
+      case PIPE_FORMAT_X8Z24_UNORM:
+         /* Pull out both Z and stencil */
+         setup_optional_register(f, &fbZ_reg_set, &fbZ_reg);
+         setup_optional_register(f, &fbS_reg_set, &fbS_reg);
 
-         case PIPE_FORMAT_S8Z24_UNORM: /* fall through */
-         case PIPE_FORMAT_X8Z24_UNORM:
-            /* Pull out both Z and stencil */
-            setup_optional_register(f, &fbZ_reg_set, &fbZ_reg);
-            setup_optional_register(f, &fbS_reg_set, &fbS_reg);
+         /* four 24-bit Z values in the low-order bits */
+         spe_and_uint(f, fbZ_reg, fbZS_reg, 0x00ffffff);
 
-            /* four 24-bit Z values in the low-order bits */
-            spe_and_uint(f, fbZ_reg, fbZS_reg, 0x00ffffff);
+         /* Incoming fragZ_reg value is a float in 0.0...1.0; convert
+          * to a 24-bit unsigned integer
+          */
+         spe_cfltu(f, fragZ_reg, fragZ_reg, 32);
+         spe_rotmi(f, fragZ_reg, fragZ_reg, -8);
 
-            /* Incoming fragZ_reg value is a float in 0.0...1.0; convert
-             * to a 24-bit unsigned integer
-             */
-            spe_cfltu(f, fragZ_reg, fragZ_reg, 32);
-            spe_rotmi(f, fragZ_reg, fragZ_reg, -8);
-
-            /* four 8-bit stencil values in the high-order bits */
-            spe_rotmi(f, fbS_reg, fbZS_reg, -24);
+         /* four 8-bit stencil values in the high-order bits */
+         spe_rotmi(f, fbS_reg, fbZS_reg, -24);
          break;
 
-         case PIPE_FORMAT_Z24S8_UNORM: /* fall through */
-         case PIPE_FORMAT_Z24X8_UNORM:
-            setup_optional_register(f, &fbZ_reg_set, &fbZ_reg);
-            setup_optional_register(f, &fbS_reg_set, &fbS_reg);
+      case PIPE_FORMAT_Z24S8_UNORM: /* fall through */
+      case PIPE_FORMAT_Z24X8_UNORM:
+         setup_optional_register(f, &fbZ_reg_set, &fbZ_reg);
+         setup_optional_register(f, &fbS_reg_set, &fbS_reg);
 
-            /* shift by 8 to get the upper 24-bit values */
-            spe_rotmi(f, fbS_reg, fbZS_reg, -8);
+         /* shift by 8 to get the upper 24-bit values */
+         spe_rotmi(f, fbS_reg, fbZS_reg, -8);
 
-            /* Incoming fragZ_reg value is a float in 0.0...1.0; convert
-             * to a 24-bit unsigned integer
-             */
-            spe_cfltu(f, fragZ_reg, fragZ_reg, 32);
-            spe_rotmi(f, fragZ_reg, fragZ_reg, -8);
+         /* Incoming fragZ_reg value is a float in 0.0...1.0; convert
+          * to a 24-bit unsigned integer
+          */
+         spe_cfltu(f, fragZ_reg, fragZ_reg, 32);
+         spe_rotmi(f, fragZ_reg, fragZ_reg, -8);
 
-            /* 8-bit stencil in the low-order bits - mask them out */
-            spe_and_uint(f, fbS_reg, fbZS_reg, 0x000000ff);
+         /* 8-bit stencil in the low-order bits - mask them out */
+         spe_and_uint(f, fbS_reg, fbZS_reg, 0x000000ff);
          break;
 
-         case PIPE_FORMAT_Z32_UNORM:
-            setup_optional_register(f, &fbZ_reg_set, &fbZ_reg);
-            /* Copy over 4 32-bit values */
-            spe_move(f, fbZ_reg, fbZS_reg);
+      case PIPE_FORMAT_Z32_UNORM:
+         setup_optional_register(f, &fbZ_reg_set, &fbZ_reg);
+         /* Copy over 4 32-bit values */
+         spe_move(f, fbZ_reg, fbZS_reg);
 
-            /* Incoming fragZ_reg value is a float in 0.0...1.0; convert
-             * to a 32-bit unsigned integer
-             */
-            spe_cfltu(f, fragZ_reg, fragZ_reg, 32);
-            /* No stencil, so can't do anything there */
+         /* Incoming fragZ_reg value is a float in 0.0...1.0; convert
+          * to a 32-bit unsigned integer
+          */
+         spe_cfltu(f, fragZ_reg, fragZ_reg, 32);
+         /* No stencil, so can't do anything there */
          break;
 
-         case PIPE_FORMAT_Z16_UNORM:
-            /* XXX Not sure this is correct, but it was here before, so we're
-             * going with it for now
-             */
-            setup_optional_register(f, &fbZ_reg_set, &fbZ_reg);
-            /* Copy over 4 32-bit values */
-            spe_move(f, fbZ_reg, fbZS_reg);
+      case PIPE_FORMAT_Z16_UNORM:
+         /* XXX Not sure this is correct, but it was here before, so we're
+          * going with it for now
+          */
+         setup_optional_register(f, &fbZ_reg_set, &fbZ_reg);
+         /* Copy over 4 32-bit values */
+         spe_move(f, fbZ_reg, fbZS_reg);
 
-            /* Incoming fragZ_reg value is a float in 0.0...1.0; convert
-             * to a 16-bit unsigned integer
-             */
-            spe_cfltu(f, fragZ_reg, fragZ_reg, 32);
-            spe_rotmi(f, fragZ_reg, fragZ_reg, -16);
-            /* No stencil */
+         /* Incoming fragZ_reg value is a float in 0.0...1.0; convert
+          * to a 16-bit unsigned integer
+          */
+         spe_cfltu(f, fragZ_reg, fragZ_reg, 32);
+         spe_rotmi(f, fragZ_reg, fragZ_reg, -16);
+         /* No stencil */
+         break;
 
-         default:
-            ASSERT(0); /* invalid format */
+      default:
+         ASSERT(0); /* invalid format */
       }
 
       /* If stencil is enabled, use the stencil-specific code
@@ -1977,13 +2018,16 @@ cell_gen_fragment_function(struct cell_context *cell, const uint facing, struct 
           * gen_stencil_depth_test() function must ignore the
           * fbZ_reg register if depth is not enabled.
           */
-         write_depth_stencil = gen_stencil_depth_test(f, dsa, facing, mask_reg, fragZ_reg, fbZ_reg, fbS_reg);
+         write_depth_stencil = gen_stencil_depth_test(f, dsa, facing,
+                                                      mask_reg, fragZ_reg,
+                                                      fbZ_reg, fbS_reg);
       }
       else if (dsa->depth.enabled) {
          int zmask_reg = spe_allocate_available_register(f);
          ASSERT(fbZ_reg_set);
          spe_comment(f, 0, "Perform depth test");
-         write_depth_stencil = gen_depth_test(f, dsa, mask_reg, fragZ_reg, fbZ_reg, zmask_reg);
+         write_depth_stencil = gen_depth_test(f, dsa, mask_reg, fragZ_reg,
+                                              fbZ_reg, zmask_reg);
          spe_release_register(f, zmask_reg);
       }
       else {
