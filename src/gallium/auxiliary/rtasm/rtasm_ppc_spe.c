@@ -213,8 +213,8 @@ emit_instruction(struct spe_function *p, uint32_t inst_bits)
 
 
 
-static void emit_RR(struct spe_function *p, unsigned op, unsigned rT,
-		    unsigned rA, unsigned rB, const char *name)
+static void emit_RR(struct spe_function *p, unsigned op, int rT,
+		    int rA, int rB, const char *name)
 {
     union spe_inst_RR inst;
     inst.inst.op = op;
@@ -230,8 +230,8 @@ static void emit_RR(struct spe_function *p, unsigned op, unsigned rT,
 }
 
 
-static void emit_RRR(struct spe_function *p, unsigned op, unsigned rT,
-                     unsigned rA, unsigned rB, unsigned rC, const char *name)
+static void emit_RRR(struct spe_function *p, unsigned op, int rT,
+                     int rA, int rB, int rC, const char *name)
 {
     union spe_inst_RRR inst;
     inst.inst.op = op;
@@ -248,8 +248,8 @@ static void emit_RRR(struct spe_function *p, unsigned op, unsigned rT,
 }
 
 
-static void emit_RI7(struct spe_function *p, unsigned op, unsigned rT,
-		     unsigned rA, int imm, const char *name)
+static void emit_RI7(struct spe_function *p, unsigned op, int rT,
+		     int rA, int imm, const char *name)
 {
     union spe_inst_RI7 inst;
     inst.inst.op = op;
@@ -266,8 +266,8 @@ static void emit_RI7(struct spe_function *p, unsigned op, unsigned rT,
 
 
 
-static void emit_RI8(struct spe_function *p, unsigned op, unsigned rT,
-		     unsigned rA, int imm, const char *name)
+static void emit_RI8(struct spe_function *p, unsigned op, int rT,
+		     int rA, int imm, const char *name)
 {
     union spe_inst_RI8 inst;
     inst.inst.op = op;
@@ -284,8 +284,8 @@ static void emit_RI8(struct spe_function *p, unsigned op, unsigned rT,
 
 
 
-static void emit_RI10(struct spe_function *p, unsigned op, unsigned rT,
-		      unsigned rA, int imm, const char *name)
+static void emit_RI10(struct spe_function *p, unsigned op, int rT,
+		      int rA, int imm, const char *name)
 {
     union spe_inst_RI10 inst;
     inst.inst.op = op;
@@ -302,8 +302,8 @@ static void emit_RI10(struct spe_function *p, unsigned op, unsigned rT,
 
 
 /** As above, but do range checking on signed immediate value */
-static void emit_RI10s(struct spe_function *p, unsigned op, unsigned rT,
-                       unsigned rA, int imm, const char *name)
+static void emit_RI10s(struct spe_function *p, unsigned op, int rT,
+                       int rA, int imm, const char *name)
 {
     assert(imm <= 511);
     assert(imm >= -512);
@@ -311,7 +311,7 @@ static void emit_RI10s(struct spe_function *p, unsigned op, unsigned rT,
 }
 
 
-static void emit_RI16(struct spe_function *p, unsigned op, unsigned rT,
+static void emit_RI16(struct spe_function *p, unsigned op, int rT,
 		      int imm, const char *name)
 {
     union spe_inst_RI16 inst;
@@ -326,7 +326,7 @@ static void emit_RI16(struct spe_function *p, unsigned op, unsigned rT,
 }
 
 
-static void emit_RI18(struct spe_function *p, unsigned op, unsigned rT,
+static void emit_RI18(struct spe_function *p, unsigned op, int rT,
 		      int imm, const char *name)
 {
     union spe_inst_RI18 inst;
@@ -348,61 +348,61 @@ void _name (struct spe_function *p) \
 }
 
 #define EMIT_(_name, _op) \
-void _name (struct spe_function *p, unsigned rT) \
+void _name (struct spe_function *p, int rT) \
 { \
    emit_RR(p, _op, rT, 0, 0, __FUNCTION__); \
 }
 
 #define EMIT_R(_name, _op) \
-void _name (struct spe_function *p, unsigned rT, unsigned rA) \
+void _name (struct spe_function *p, int rT, int rA) \
 { \
    emit_RR(p, _op, rT, rA, 0, __FUNCTION__);                 \
 }
 
 #define EMIT_RR(_name, _op) \
-void _name (struct spe_function *p, unsigned rT, unsigned rA, unsigned rB) \
+void _name (struct spe_function *p, int rT, int rA, int rB) \
 { \
    emit_RR(p, _op, rT, rA, rB, __FUNCTION__);                \
 }
 
 #define EMIT_RRR(_name, _op) \
-void _name (struct spe_function *p, unsigned rT, unsigned rA, unsigned rB, unsigned rC) \
+void _name (struct spe_function *p, int rT, int rA, int rB, int rC) \
 { \
    emit_RRR(p, _op, rT, rA, rB, rC, __FUNCTION__);           \
 }
 
 #define EMIT_RI7(_name, _op) \
-void _name (struct spe_function *p, unsigned rT, unsigned rA, int imm) \
+void _name (struct spe_function *p, int rT, int rA, int imm) \
 { \
    emit_RI7(p, _op, rT, rA, imm, __FUNCTION__);              \
 }
 
 #define EMIT_RI8(_name, _op, bias) \
-void _name (struct spe_function *p, unsigned rT, unsigned rA, int imm) \
+void _name (struct spe_function *p, int rT, int rA, int imm) \
 { \
    emit_RI8(p, _op, rT, rA, bias - imm, __FUNCTION__);       \
 }
 
 #define EMIT_RI10(_name, _op) \
-void _name (struct spe_function *p, unsigned rT, unsigned rA, int imm) \
+void _name (struct spe_function *p, int rT, int rA, int imm) \
 { \
    emit_RI10(p, _op, rT, rA, imm, __FUNCTION__);             \
 }
 
 #define EMIT_RI10s(_name, _op) \
-void _name (struct spe_function *p, unsigned rT, unsigned rA, int imm) \
+void _name (struct spe_function *p, int rT, int rA, int imm) \
 { \
    emit_RI10s(p, _op, rT, rA, imm, __FUNCTION__);             \
 }
 
 #define EMIT_RI16(_name, _op) \
-void _name (struct spe_function *p, unsigned rT, int imm) \
+void _name (struct spe_function *p, int rT, int imm) \
 { \
    emit_RI16(p, _op, rT, imm, __FUNCTION__);                 \
 }
 
 #define EMIT_RI18(_name, _op) \
-void _name (struct spe_function *p, unsigned rT, int imm) \
+void _name (struct spe_function *p, int rT, int imm) \
 { \
    emit_RI18(p, _op, rT, imm, __FUNCTION__);                 \
 }
@@ -424,7 +424,7 @@ void _name (struct spe_function *p, int imm) \
  */
 void spe_init_func(struct spe_function *p, unsigned code_size)
 {
-    unsigned int i;
+    uint i;
 
     if (!code_size)
        code_size = 64;
@@ -503,6 +503,7 @@ int spe_allocate_register(struct spe_function *p, int reg)
  */
 void spe_release_register(struct spe_function *p, int reg)
 {
+   assert(reg >= 0);
    assert(reg < SPE_NUM_REGS);
    assert(p->regs[reg] == 1);
 
@@ -517,7 +518,7 @@ void spe_release_register(struct spe_function *p, int reg)
  */
 void spe_allocate_register_set(struct spe_function *p)
 {
-   unsigned int i;
+   uint i;
 
    /* Keep track of the set count.  If it ever wraps around to 0, 
     * we're in trouble.
@@ -538,7 +539,7 @@ void spe_allocate_register_set(struct spe_function *p)
 
 void spe_release_register_set(struct spe_function *p)
 {
-   unsigned int i;
+   uint i;
 
    /* If the set count drops below zero, we're in trouble. */
    assert(p->set_count > 0);
@@ -599,7 +600,7 @@ spe_comment(struct spe_function *p, int rel_indent, const char *s)
  * Load quad word.
  * NOTE: offset is in bytes and the least significant 4 bits must be zero!
  */
-void spe_lqd(struct spe_function *p, unsigned rT, unsigned rA, int offset)
+void spe_lqd(struct spe_function *p, int rT, int rA, int offset)
 {
    const boolean pSave = p->print;
 
@@ -624,7 +625,7 @@ void spe_lqd(struct spe_function *p, unsigned rT, unsigned rA, int offset)
  * Store quad word.
  * NOTE: offset is in bytes and the least significant 4 bits must be zero!
  */
-void spe_stqd(struct spe_function *p, unsigned rT, unsigned rA, int offset)
+void spe_stqd(struct spe_function *p, int rT, int rA, int offset)
 {
    const boolean pSave = p->print;
 
@@ -653,51 +654,51 @@ void spe_stqd(struct spe_function *p, unsigned rT, unsigned rA, int offset)
  */
 
 /** Branch Indirect to address in rA */
-void spe_bi(struct spe_function *p, unsigned rA, int d, int e)
+void spe_bi(struct spe_function *p, int rA, int d, int e)
 {
    emit_RI7(p, 0x1a8, 0, rA, (d << 5) | (e << 4), __FUNCTION__);
 }
 
 /** Interupt Return */
-void spe_iret(struct spe_function *p, unsigned rA, int d, int e)
+void spe_iret(struct spe_function *p, int rA, int d, int e)
 {
    emit_RI7(p, 0x1aa, 0, rA, (d << 5) | (e << 4), __FUNCTION__);
 }
 
 /** Branch indirect and set link on external data */
-void spe_bisled(struct spe_function *p, unsigned rT, unsigned rA, int d,
+void spe_bisled(struct spe_function *p, int rT, int rA, int d,
 		int e)
 {
    emit_RI7(p, 0x1ab, rT, rA, (d << 5) | (e << 4), __FUNCTION__);
 }
 
 /** Branch indirect and set link.  Save PC in rT, jump to rA. */
-void spe_bisl(struct spe_function *p, unsigned rT, unsigned rA, int d,
+void spe_bisl(struct spe_function *p, int rT, int rA, int d,
 		int e)
 {
    emit_RI7(p, 0x1a9, rT, rA, (d << 5) | (e << 4), __FUNCTION__);
 }
 
 /** Branch indirect if zero word.  If rT.word[0]==0, jump to rA. */
-void spe_biz(struct spe_function *p, unsigned rT, unsigned rA, int d, int e)
+void spe_biz(struct spe_function *p, int rT, int rA, int d, int e)
 {
    emit_RI7(p, 0x128, rT, rA, (d << 5) | (e << 4), __FUNCTION__);
 }
 
 /** Branch indirect if non-zero word.  If rT.word[0]!=0, jump to rA. */
-void spe_binz(struct spe_function *p, unsigned rT, unsigned rA, int d, int e)
+void spe_binz(struct spe_function *p, int rT, int rA, int d, int e)
 {
    emit_RI7(p, 0x129, rT, rA, (d << 5) | (e << 4), __FUNCTION__);
 }
 
 /** Branch indirect if zero halfword.  If rT.halfword[1]==0, jump to rA. */
-void spe_bihz(struct spe_function *p, unsigned rT, unsigned rA, int d, int e)
+void spe_bihz(struct spe_function *p, int rT, int rA, int d, int e)
 {
    emit_RI7(p, 0x12a, rT, rA, (d << 5) | (e << 4), __FUNCTION__);
 }
 
 /** Branch indirect if non-zero halfword.  If rT.halfword[1]!=0, jump to rA. */
-void spe_bihnz(struct spe_function *p, unsigned rT, unsigned rA, int d, int e)
+void spe_bihnz(struct spe_function *p, int rT, int rA, int d, int e)
 {
    emit_RI7(p, 0x12b, rT, rA, (d << 5) | (e << 4), __FUNCTION__);
 }
@@ -733,7 +734,7 @@ EMIT_R   (spe_mtspr, 0x10c);
 
 
 void
-spe_load_float(struct spe_function *p, unsigned rT, float x)
+spe_load_float(struct spe_function *p, int rT, float x)
 {
    if (x == 0.0f) {
       spe_il(p, rT, 0x0);
@@ -760,7 +761,7 @@ spe_load_float(struct spe_function *p, unsigned rT, float x)
 
 
 void
-spe_load_int(struct spe_function *p, unsigned rT, int i)
+spe_load_int(struct spe_function *p, int rT, int i)
 {
    if (-32768 <= i && i <= 32767) {
       spe_il(p, rT, i);
@@ -772,7 +773,7 @@ spe_load_int(struct spe_function *p, unsigned rT, int i)
    }
 }
 
-void spe_load_uint(struct spe_function *p, unsigned rT, unsigned int ui)
+void spe_load_uint(struct spe_function *p, int rT, uint ui)
 {
    /* If the whole value is in the lower 18 bits, use ila, which
     * doesn't sign-extend.  Otherwise, if the two halfwords of
@@ -793,7 +794,7 @@ void spe_load_uint(struct spe_function *p, unsigned rT, unsigned int ui)
       ((ui & 0x00ff0000) == 0 || (ui & 0x00ff0000) == 0x00ff0000) &&
       ((ui & 0xff000000) == 0 || (ui & 0xff000000) == 0xff000000)
    ) {
-      unsigned int mask = 0;
+      uint mask = 0;
       /* fsmbi duplicates each bit in the given mask eight times,
        * using a 16-bit value to initialize a 16-byte quadword.
        * Each 4-bit nybble of the mask corresponds to a full word
@@ -822,7 +823,7 @@ void spe_load_uint(struct spe_function *p, unsigned rT, unsigned int ui)
  * Changes to one should be made in the other.
  */
 void
-spe_and_uint(struct spe_function *p, unsigned rT, unsigned rA, unsigned int ui)
+spe_and_uint(struct spe_function *p, int rT, int rA, uint ui)
 {
    /* If we can, emit a single instruction, either And Byte Immediate
     * (which uses the same constant across each byte), And Halfword Immediate
@@ -832,7 +833,7 @@ spe_and_uint(struct spe_function *p, unsigned rT, unsigned rA, unsigned int ui)
     *
     * Otherwise, we'll need to use a temporary register.
     */
-   unsigned int tmp;
+   uint tmp;
 
    /* If the upper 23 bits are all 0s or all 1s, sign extension
     * will work and we can use And Word Immediate
@@ -863,7 +864,7 @@ spe_and_uint(struct spe_function *p, unsigned rT, unsigned rA, unsigned int ui)
    }
 
    /* Otherwise, we'll have to use a temporary register. */
-   unsigned int tmp_reg = spe_allocate_available_register(p);
+   int tmp_reg = spe_allocate_available_register(p);
    spe_load_uint(p, tmp_reg, ui);
    spe_and(p, rT, rA, tmp_reg);
    spe_release_register(p, tmp_reg);
@@ -875,7 +876,7 @@ spe_and_uint(struct spe_function *p, unsigned rT, unsigned rA, unsigned int ui)
  * Changes to one should be made in the other.
  */
 void
-spe_xor_uint(struct spe_function *p, unsigned rT, unsigned rA, unsigned int ui)
+spe_xor_uint(struct spe_function *p, int rT, int rA, uint ui)
 {
    /* If we can, emit a single instruction, either Exclusive Or Byte 
     * Immediate (which uses the same constant across each byte), Exclusive 
@@ -885,7 +886,7 @@ spe_xor_uint(struct spe_function *p, unsigned rT, unsigned rA, unsigned int ui)
     *
     * Otherwise, we'll need to use a temporary register.
     */
-   unsigned int tmp;
+   uint tmp;
 
    /* If the upper 23 bits are all 0s or all 1s, sign extension
     * will work and we can use Exclusive Or Word Immediate
@@ -916,14 +917,14 @@ spe_xor_uint(struct spe_function *p, unsigned rT, unsigned rA, unsigned int ui)
    }
 
    /* Otherwise, we'll have to use a temporary register. */
-   unsigned int tmp_reg = spe_allocate_available_register(p);
+   int tmp_reg = spe_allocate_available_register(p);
    spe_load_uint(p, tmp_reg, ui);
    spe_xor(p, rT, rA, tmp_reg);
    spe_release_register(p, tmp_reg);
 }
 
 void
-spe_compare_equal_uint(struct spe_function *p, unsigned rT, unsigned rA, unsigned int ui)
+spe_compare_equal_uint(struct spe_function *p, int rT, int rA, uint ui)
 {
    /* If the comparison value is 9 bits or less, it fits inside a
     * Compare Equal Word Immediate instruction.
@@ -933,7 +934,7 @@ spe_compare_equal_uint(struct spe_function *p, unsigned rT, unsigned rA, unsigne
    }
    /* Otherwise, we're going to have to load a word first. */
    else {
-      unsigned int tmp_reg = spe_allocate_available_register(p);
+      int tmp_reg = spe_allocate_available_register(p);
       spe_load_uint(p, tmp_reg, ui);
       spe_ceq(p, rT, rA, tmp_reg);
       spe_release_register(p, tmp_reg);
@@ -941,7 +942,7 @@ spe_compare_equal_uint(struct spe_function *p, unsigned rT, unsigned rA, unsigne
 }
 
 void
-spe_compare_greater_uint(struct spe_function *p, unsigned rT, unsigned rA, unsigned int ui)
+spe_compare_greater_uint(struct spe_function *p, int rT, int rA, uint ui)
 {
    /* If the comparison value is 10 bits or less, it fits inside a
     * Compare Logical Greater Than Word Immediate instruction.
@@ -951,7 +952,7 @@ spe_compare_greater_uint(struct spe_function *p, unsigned rT, unsigned rA, unsig
    }
    /* Otherwise, we're going to have to load a word first. */
    else {
-      unsigned int tmp_reg = spe_allocate_available_register(p);
+      int tmp_reg = spe_allocate_available_register(p);
       spe_load_uint(p, tmp_reg, ui);
       spe_clgt(p, rT, rA, tmp_reg);
       spe_release_register(p, tmp_reg);
@@ -959,10 +960,10 @@ spe_compare_greater_uint(struct spe_function *p, unsigned rT, unsigned rA, unsig
 }
 
 void
-spe_splat(struct spe_function *p, unsigned rT, unsigned rA)
+spe_splat(struct spe_function *p, int rT, int rA)
 {
    /* Use a temporary, just in case rT == rA */
-   unsigned int tmp_reg = spe_allocate_available_register(p);
+   int tmp_reg = spe_allocate_available_register(p);
    /* Duplicate bytes 0, 1, 2, and 3 across the whole register */
    spe_ila(p, tmp_reg, 0x00010203);
    spe_shufb(p, rT, rA, rA, tmp_reg);
@@ -971,14 +972,14 @@ spe_splat(struct spe_function *p, unsigned rT, unsigned rA)
 
 
 void
-spe_complement(struct spe_function *p, unsigned rT, unsigned rA)
+spe_complement(struct spe_function *p, int rT, int rA)
 {
    spe_nor(p, rT, rA, rA);
 }
 
 
 void
-spe_move(struct spe_function *p, unsigned rT, unsigned rA)
+spe_move(struct spe_function *p, int rT, int rA)
 {
    /* Use different instructions depending on the instruction address
     * to take advantage of the dual pipelines.
@@ -991,14 +992,14 @@ spe_move(struct spe_function *p, unsigned rT, unsigned rA)
 
 
 void
-spe_zero(struct spe_function *p, unsigned rT)
+spe_zero(struct spe_function *p, int rT)
 {
    spe_xor(p, rT, rT, rT);
 }
 
 
 void
-spe_splat_word(struct spe_function *p, unsigned rT, unsigned rA, int word)
+spe_splat_word(struct spe_function *p, int rT, int rA, int word)
 {
    assert(word >= 0);
    assert(word <= 3);
@@ -1038,9 +1039,9 @@ spe_splat_word(struct spe_function *p, unsigned rT, unsigned rA, int word)
  * like "x = min(x, a)", we always allocate a new register to be safe.
  */
 void 
-spe_float_min(struct spe_function *p, unsigned rT, unsigned rA, unsigned rB)
+spe_float_min(struct spe_function *p, int rT, int rA, int rB)
 {
-   unsigned int compare_reg = spe_allocate_available_register(p);
+   int compare_reg = spe_allocate_available_register(p);
    spe_fcgt(p, compare_reg, rA, rB);
    spe_selb(p, rT, rA, rB, compare_reg);
    spe_release_register(p, compare_reg);
@@ -1055,9 +1056,9 @@ spe_float_min(struct spe_function *p, unsigned rT, unsigned rA, unsigned rB)
  * so that the larger of the two is selected instead of the smaller.
  */
 void 
-spe_float_max(struct spe_function *p, unsigned rT, unsigned rA, unsigned rB)
+spe_float_max(struct spe_function *p, int rT, int rA, int rB)
 {
-   unsigned int compare_reg = spe_allocate_available_register(p);
+   int compare_reg = spe_allocate_available_register(p);
    spe_fcgt(p, compare_reg, rA, rB);
    spe_selb(p, rT, rB, rA, compare_reg);
    spe_release_register(p, compare_reg);
