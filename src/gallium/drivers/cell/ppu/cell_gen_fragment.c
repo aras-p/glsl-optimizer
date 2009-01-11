@@ -246,44 +246,36 @@ gen_alpha_test(const struct pipe_depth_stencil_alpha_state *dsa,
  */
 static INLINE void
 setup_optional_register(struct spe_function *f,
-                        boolean *is_already_set,
                         int *r)
 {
-   if (*is_already_set)
-      return;
-   *r = spe_allocate_available_register(f);
-   *is_already_set = TRUE;
+   if (*r < 0)
+      *r = spe_allocate_available_register(f);
 }
 
 static INLINE void
 release_optional_register(struct spe_function *f,
-                          boolean *is_already_set,
                           int r)
 {
-    if (!*is_already_set)
-       return;
-    spe_release_register(f, r);
-    *is_already_set = FALSE;
+   if (r >= 0)
+      spe_release_register(f, r);
 }
 
 static INLINE void
 setup_const_register(struct spe_function *f,
-                     boolean *is_already_set,
                      int *r,
                      float value)
 {
-   if (*is_already_set)
+   if (*r >= 0)
       return;
-   setup_optional_register(f, is_already_set, r);
+   setup_optional_register(f, r);
    spe_load_float(f, *r, value);
 }
 
 static INLINE void
 release_const_register(struct spe_function *f,
-                       boolean *is_already_set,
                        int r)
 {
-   release_optional_register(f, is_already_set, r);
+   release_optional_register(f, r);
 }
 
 /**
@@ -324,11 +316,8 @@ gen_blend(const struct pipe_blend_state *blend,
     * if we do use them, make sure we only allocate them once by
     * keeping a flag on each one.
     */
-   boolean one_reg_set = FALSE;
-   int one_reg;
-   boolean constR_reg_set = FALSE, constG_reg_set = FALSE, 
-      constB_reg_set = FALSE, constA_reg_set = FALSE;
-   int constR_reg, constG_reg, constB_reg, constA_reg;
+   int one_reg = -1;
+   int constR_reg = -1, constG_reg = -1, constB_reg = -1, constA_reg = -1;
 
    ASSERT(blend->blend_enable);
 
@@ -490,9 +479,9 @@ gen_blend(const struct pipe_blend_state *blend,
       break;
    case PIPE_BLENDFACTOR_CONST_COLOR:
       /* We need the optional constant color registers */
-      setup_const_register(f, &constR_reg_set, &constR_reg, blend_color->color[0]);
-      setup_const_register(f, &constG_reg_set, &constG_reg, blend_color->color[1]);
-      setup_const_register(f, &constB_reg_set, &constB_reg, blend_color->color[2]);
+      setup_const_register(f, &constR_reg, blend_color->color[0]);
+      setup_const_register(f, &constG_reg, blend_color->color[1]);
+      setup_const_register(f, &constB_reg, blend_color->color[2]);
       /* now, factor = (Rc,Gc,Bc), so term = (R*Rc,G*Gc,B*Bc) */
       spe_fm(f, term1R_reg, fragR_reg, constR_reg);
       spe_fm(f, term1G_reg, fragG_reg, constG_reg);
@@ -500,7 +489,7 @@ gen_blend(const struct pipe_blend_state *blend,
       break;
    case PIPE_BLENDFACTOR_CONST_ALPHA:
       /* we'll need the optional constant alpha register */
-      setup_const_register(f, &constA_reg_set, &constA_reg, blend_color->color[3]);
+      setup_const_register(f, &constA_reg, blend_color->color[3]);
       /* factor = (Ac,Ac,Ac), so term = (R*Ac,G*Ac,B*Ac) */
       spe_fm(f, term1R_reg, fragR_reg, constA_reg);
       spe_fm(f, term1G_reg, fragG_reg, constA_reg);
@@ -508,9 +497,9 @@ gen_blend(const struct pipe_blend_state *blend,
       break;
    case PIPE_BLENDFACTOR_INV_CONST_COLOR:
       /* We need the optional constant color registers */
-      setup_const_register(f, &constR_reg_set, &constR_reg, blend_color->color[0]);
-      setup_const_register(f, &constG_reg_set, &constG_reg, blend_color->color[1]);
-      setup_const_register(f, &constB_reg_set, &constB_reg, blend_color->color[2]);
+      setup_const_register(f, &constR_reg, blend_color->color[0]);
+      setup_const_register(f, &constG_reg, blend_color->color[1]);
+      setup_const_register(f, &constB_reg, blend_color->color[2]);
       /* factor = (1-Rc,1-Gc,1-Bc), so term = (R*(1-Rc),G*(1-Gc),B*(1-Bc)) 
        * or term = (R-R*Rc, G-G*Gc, B-B*Bc)
        * fnms(a,b,c,d) computes a = d - b*c
@@ -521,9 +510,9 @@ gen_blend(const struct pipe_blend_state *blend,
       break;
    case PIPE_BLENDFACTOR_INV_CONST_ALPHA:
       /* We need the optional constant color registers */
-      setup_const_register(f, &constR_reg_set, &constR_reg, blend_color->color[0]);
-      setup_const_register(f, &constG_reg_set, &constG_reg, blend_color->color[1]);
-      setup_const_register(f, &constB_reg_set, &constB_reg, blend_color->color[2]);
+      setup_const_register(f, &constR_reg, blend_color->color[0]);
+      setup_const_register(f, &constG_reg, blend_color->color[1]);
+      setup_const_register(f, &constB_reg, blend_color->color[2]);
       /* factor = (1-Ac,1-Ac,1-Ac), so term = (R*(1-Ac),G*(1-Ac),B*(1-Ac))
        * or term = (R-R*Ac,G-G*Ac,B-B*Ac)
        * fnms(a,b,c,d) computes a = d - b*c
@@ -534,7 +523,7 @@ gen_blend(const struct pipe_blend_state *blend,
       break;
    case PIPE_BLENDFACTOR_SRC_ALPHA_SATURATE:
       /* We'll need the optional {1,1,1,1} register */
-      setup_const_register(f, &one_reg_set, &one_reg, 1.0f);
+      setup_const_register(f, &one_reg, 1.0f);
       /* factor = (min(A,1-Afb),min(A,1-Afb),min(A,1-Afb)), so 
        * term = (R*min(A,1-Afb), G*min(A,1-Afb), B*min(A,1-Afb))
        * We could expand the term (as a*min(b,c) == min(a*b,a*c)
@@ -612,7 +601,7 @@ gen_blend(const struct pipe_blend_state *blend,
    case PIPE_BLENDFACTOR_CONST_ALPHA: /* fall through */
    case PIPE_BLENDFACTOR_CONST_COLOR:
       /* We need the optional constA_reg register */
-      setup_const_register(f, &constA_reg_set, &constA_reg, blend_color->color[3]);
+      setup_const_register(f, &constA_reg, blend_color->color[3]);
       /* factor = Ac, so term = A*Ac */
       spe_fm(f, term1A_reg, fragA_reg, constA_reg);
       break;
@@ -620,7 +609,7 @@ gen_blend(const struct pipe_blend_state *blend,
    case PIPE_BLENDFACTOR_INV_CONST_ALPHA: /* fall through */
    case PIPE_BLENDFACTOR_INV_CONST_COLOR:
       /* We need the optional constA_reg register */
-      setup_const_register(f, &constA_reg_set, &constA_reg, blend_color->color[3]);
+      setup_const_register(f, &constA_reg, blend_color->color[3]);
       /* factor = 1-Ac, so term = A*(1-Ac) = A-A*Ac */
       /* fnms(a,b,c,d) computes a = d - b*c */
       spe_fnms(f, term1A_reg, fragA_reg, constA_reg, fragA_reg);
@@ -717,9 +706,9 @@ gen_blend(const struct pipe_blend_state *blend,
       break;
    case PIPE_BLENDFACTOR_CONST_COLOR:
       /* We need the optional constant color registers */
-      setup_const_register(f, &constR_reg_set, &constR_reg, blend_color->color[0]);
-      setup_const_register(f, &constG_reg_set, &constG_reg, blend_color->color[1]);
-      setup_const_register(f, &constB_reg_set, &constB_reg, blend_color->color[2]);
+      setup_const_register(f, &constR_reg, blend_color->color[0]);
+      setup_const_register(f, &constG_reg, blend_color->color[1]);
+      setup_const_register(f, &constB_reg, blend_color->color[2]);
       /* now, factor = (Rc,Gc,Bc), so term = (Rfb*Rc,Gfb*Gc,Bfb*Bc) */
       spe_fm(f, term2R_reg, fbR_reg, constR_reg);
       spe_fm(f, term2G_reg, fbG_reg, constG_reg);
@@ -727,7 +716,7 @@ gen_blend(const struct pipe_blend_state *blend,
       break;
    case PIPE_BLENDFACTOR_CONST_ALPHA:
       /* we'll need the optional constant alpha register */
-      setup_const_register(f, &constA_reg_set, &constA_reg, blend_color->color[3]);
+      setup_const_register(f, &constA_reg, blend_color->color[3]);
       /* factor = (Ac,Ac,Ac), so term = (Rfb*Ac,Gfb*Ac,Bfb*Ac) */
       spe_fm(f, term2R_reg, fbR_reg, constA_reg);
       spe_fm(f, term2G_reg, fbG_reg, constA_reg);
@@ -735,9 +724,9 @@ gen_blend(const struct pipe_blend_state *blend,
       break;
    case PIPE_BLENDFACTOR_INV_CONST_COLOR:
       /* We need the optional constant color registers */
-      setup_const_register(f, &constR_reg_set, &constR_reg, blend_color->color[0]);
-      setup_const_register(f, &constG_reg_set, &constG_reg, blend_color->color[1]);
-      setup_const_register(f, &constB_reg_set, &constB_reg, blend_color->color[2]);
+      setup_const_register(f, &constR_reg, blend_color->color[0]);
+      setup_const_register(f, &constG_reg, blend_color->color[1]);
+      setup_const_register(f, &constB_reg, blend_color->color[2]);
       /* factor = (1-Rc,1-Gc,1-Bc), so term = (Rfb*(1-Rc),Gfb*(1-Gc),Bfb*(1-Bc)) 
        * or term = (Rfb-Rfb*Rc, Gfb-Gfb*Gc, Bfb-Bfb*Bc)
        * fnms(a,b,c,d) computes a = d - b*c
@@ -748,9 +737,9 @@ gen_blend(const struct pipe_blend_state *blend,
       break;
    case PIPE_BLENDFACTOR_INV_CONST_ALPHA:
       /* We need the optional constant color registers */
-      setup_const_register(f, &constR_reg_set, &constR_reg, blend_color->color[0]);
-      setup_const_register(f, &constG_reg_set, &constG_reg, blend_color->color[1]);
-      setup_const_register(f, &constB_reg_set, &constB_reg, blend_color->color[2]);
+      setup_const_register(f, &constR_reg, blend_color->color[0]);
+      setup_const_register(f, &constG_reg, blend_color->color[1]);
+      setup_const_register(f, &constB_reg, blend_color->color[2]);
       /* factor = (1-Ac,1-Ac,1-Ac), so term = (Rfb*(1-Ac),Gfb*(1-Ac),Bfb*(1-Ac))
        * or term = (Rfb-Rfb*Ac,Gfb-Gfb*Ac,Bfb-Bfb*Ac)
        * fnms(a,b,c,d) computes a = d - b*c
@@ -820,7 +809,7 @@ gen_blend(const struct pipe_blend_state *blend,
    case PIPE_BLENDFACTOR_CONST_ALPHA: /* fall through */
    case PIPE_BLENDFACTOR_CONST_COLOR:
       /* We need the optional constA_reg register */
-      setup_const_register(f, &constA_reg_set, &constA_reg, blend_color->color[3]);
+      setup_const_register(f, &constA_reg, blend_color->color[3]);
       /* factor = Ac, so term = Afb*Ac */
       spe_fm(f, term2A_reg, fbA_reg, constA_reg);
       break;
@@ -828,7 +817,7 @@ gen_blend(const struct pipe_blend_state *blend,
    case PIPE_BLENDFACTOR_INV_CONST_ALPHA: /* fall through */
    case PIPE_BLENDFACTOR_INV_CONST_COLOR:
       /* We need the optional constA_reg register */
-      setup_const_register(f, &constA_reg_set, &constA_reg, blend_color->color[3]);
+      setup_const_register(f, &constA_reg, blend_color->color[3]);
       /* factor = 1-Ac, so term = Afb*(1-Ac) = Afb-Afb*Ac */
       /* fnms(a,b,c,d) computes a = d - b*c */
       spe_fnms(f, term2A_reg, fbA_reg, constA_reg, fbA_reg);
@@ -924,11 +913,11 @@ gen_blend(const struct pipe_blend_state *blend,
    spe_release_register(f, tmp_reg);
 
    /* Free any optional registers that actually got used */
-   release_const_register(f, &one_reg_set, one_reg);
-   release_const_register(f, &constR_reg_set, constR_reg);
-   release_const_register(f, &constG_reg_set, constG_reg);
-   release_const_register(f, &constB_reg_set, constB_reg);
-   release_const_register(f, &constA_reg_set, constA_reg);
+   release_const_register(f, one_reg);
+   release_const_register(f, constR_reg);
+   release_const_register(f, constG_reg);
+   release_const_register(f, constB_reg);
+   release_const_register(f, constA_reg);
 }
 
 
@@ -1825,8 +1814,7 @@ gen_depth_stencil(struct cell_context *cell,
    boolean write_depth_stencil;
 
    /* We may or may not need to allocate a register for Z or stencil values */
-   boolean fbS_reg_set = FALSE, fbZ_reg_set = FALSE;
-   int fbS_reg, fbZ_reg = 0;
+   int fbS_reg = -1, fbZ_reg = -1;
 
    /* framebuffer's combined z/stencil values for quad */
    int fbZS_reg = spe_allocate_available_register(f);
@@ -1855,8 +1843,8 @@ gen_depth_stencil(struct cell_context *cell,
    case PIPE_FORMAT_S8Z24_UNORM: /* fall through */
    case PIPE_FORMAT_X8Z24_UNORM:
       /* Pull out both Z and stencil */
-      setup_optional_register(f, &fbZ_reg_set, &fbZ_reg);
-      setup_optional_register(f, &fbS_reg_set, &fbS_reg);
+      setup_optional_register(f, &fbZ_reg);
+      setup_optional_register(f, &fbS_reg);
 
       /* four 24-bit Z values in the low-order bits */
       spe_and_uint(f, fbZ_reg, fbZS_reg, 0x00ffffff);
@@ -1873,8 +1861,8 @@ gen_depth_stencil(struct cell_context *cell,
 
    case PIPE_FORMAT_Z24S8_UNORM: /* fall through */
    case PIPE_FORMAT_Z24X8_UNORM:
-      setup_optional_register(f, &fbZ_reg_set, &fbZ_reg);
-      setup_optional_register(f, &fbS_reg_set, &fbS_reg);
+      setup_optional_register(f, &fbZ_reg);
+      setup_optional_register(f, &fbS_reg);
 
       /* shift by 8 to get the upper 24-bit values */
       spe_rotmi(f, fbS_reg, fbZS_reg, -8);
@@ -1890,7 +1878,7 @@ gen_depth_stencil(struct cell_context *cell,
       break;
 
    case PIPE_FORMAT_Z32_UNORM:
-      setup_optional_register(f, &fbZ_reg_set, &fbZ_reg);
+      setup_optional_register(f, &fbZ_reg);
       /* Copy over 4 32-bit values */
       spe_move(f, fbZ_reg, fbZS_reg);
 
@@ -1905,7 +1893,7 @@ gen_depth_stencil(struct cell_context *cell,
       /* XXX Not sure this is correct, but it was here before, so we're
        * going with it for now
        */
-      setup_optional_register(f, &fbZ_reg_set, &fbZ_reg);
+      setup_optional_register(f, &fbZ_reg);
       /* Copy over 4 32-bit values */
       spe_move(f, fbZ_reg, fbZS_reg);
 
@@ -1933,7 +1921,7 @@ gen_depth_stencil(struct cell_context *cell,
        * the mask_reg, fbZ_reg, and fbS_reg as required by the
        * tests.
        */
-      ASSERT(fbS_reg_set);
+      ASSERT(fbS_reg >= 0);
       spe_comment(f, 0, "Perform stencil test");
 
       /* Note that fbZ_reg may not be set on entry, if stenciling
@@ -1947,7 +1935,7 @@ gen_depth_stencil(struct cell_context *cell,
    }
    else if (dsa->depth.enabled) {
       int zmask_reg = spe_allocate_available_register(f);
-      ASSERT(fbZ_reg_set);
+      ASSERT(fbZ_reg >= 0);
       spe_comment(f, 0, "Perform depth test");
       write_depth_stencil = gen_depth_test(f, dsa, mask_reg, fragZ_reg,
                                            fbZ_reg, zmask_reg);
@@ -1991,8 +1979,8 @@ gen_depth_stencil(struct cell_context *cell,
    }
 
    /* Don't need these any more */
-   release_optional_register(f, &fbZ_reg_set, fbZ_reg);
-   release_optional_register(f, &fbS_reg_set, fbS_reg);
+   release_optional_register(f, fbZ_reg);
+   release_optional_register(f, fbS_reg);
    spe_release_register(f, fbZS_reg);
 }
 
