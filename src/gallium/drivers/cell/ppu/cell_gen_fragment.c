@@ -278,6 +278,92 @@ release_const_register(struct spe_function *f,
    release_optional_register(f, r);
 }
 
+
+
+/**
+ * Unpack/convert framebuffer colors from four 32-bit packed colors
+ * (fbRGBA) to four float RGBA vectors (fbR, fbG, fbB, fbA).
+ * Each 8-bit color component is expanded into a float in [0.0, 1.0].
+ */
+static void
+unpack_colors(struct spe_function *f,
+              enum pipe_format color_format,
+              int fbRGBA_reg,
+              int fbR_reg, int fbG_reg, int fbB_reg, int fbA_reg)
+{
+   int mask_reg = spe_allocate_available_register(f);
+
+   /* mask = {0x000000ff, 0x000000ff, 0x000000ff, 0x000000ff} */
+   spe_load_int(f, mask_reg, 0xff);
+
+   /* XXX there may be more clever ways to implement the following code */
+   switch (color_format) {
+   case PIPE_FORMAT_A8R8G8B8_UNORM:
+      /* fbB = fbB & mask */
+      spe_and(f, fbB_reg, fbRGBA_reg, mask_reg);
+      /* mask = mask << 8 */
+      spe_roti(f, mask_reg, mask_reg, 8);
+
+      /* fbG = fbRGBA & mask */
+      spe_and(f, fbG_reg, fbRGBA_reg, mask_reg);
+      /* fbG = fbG >> 8 */
+      spe_roti(f, fbG_reg, fbG_reg, -8);
+      /* mask = mask << 8 */
+      spe_roti(f, mask_reg, mask_reg, 8);
+
+      /* fbR = fbRGBA & mask */
+      spe_and(f, fbR_reg, fbRGBA_reg, mask_reg);
+      /* fbR = fbR >> 16 */
+      spe_roti(f, fbR_reg, fbR_reg, -16);
+      /* mask = mask << 8 */
+      spe_roti(f, mask_reg, mask_reg, 8);
+
+      /* fbA = fbRGBA & mask */
+      spe_and(f, fbA_reg, fbRGBA_reg, mask_reg);
+      /* fbA = fbA >> 24 */
+      spe_roti(f, fbA_reg, fbA_reg, -24);
+      break;
+
+   case PIPE_FORMAT_B8G8R8A8_UNORM:
+      /* fbA = fbA & mask */
+      spe_and(f, fbA_reg, fbRGBA_reg, mask_reg);
+      /* mask = mask << 8 */
+      spe_roti(f, mask_reg, mask_reg, 8);
+
+      /* fbR = fbRGBA & mask */
+      spe_and(f, fbR_reg, fbRGBA_reg, mask_reg);
+      /* fbR = fbR >> 8 */
+      spe_roti(f, fbR_reg, fbR_reg, -8);
+      /* mask = mask << 8 */
+      spe_roti(f, mask_reg, mask_reg, 8);
+
+      /* fbG = fbRGBA & mask */
+      spe_and(f, fbG_reg, fbRGBA_reg, mask_reg);
+      /* fbG = fbG >> 16 */
+      spe_roti(f, fbG_reg, fbG_reg, -16);
+      /* mask = mask << 8 */
+      spe_roti(f, mask_reg, mask_reg, 8);
+
+      /* fbB = fbRGBA & mask */
+      spe_and(f, fbB_reg, fbRGBA_reg, mask_reg);
+      /* fbB = fbB >> 24 */
+      spe_roti(f, fbB_reg, fbB_reg, -24);
+      break;
+
+   default:
+      ASSERT(0);
+   }
+
+   /* convert int[4] in [0,255] to float[4] in [0.0, 1.0] */
+   spe_cuflt(f, fbR_reg, fbR_reg, 8);
+   spe_cuflt(f, fbG_reg, fbG_reg, 8);
+   spe_cuflt(f, fbB_reg, fbB_reg, 8);
+   spe_cuflt(f, fbA_reg, fbA_reg, 8);
+
+   spe_release_register(f, mask_reg);
+}
+
+
 /**
  * Generate SPE code to implement the given blend mode for a quad of pixels.
  * \param f          SPE function to append instruction onto.
@@ -321,82 +407,9 @@ gen_blend(const struct pipe_blend_state *blend,
 
    ASSERT(blend->blend_enable);
 
-   /* Unpack/convert framebuffer colors from four 32-bit packed colors
-    * (fbRGBA) to four float RGBA vectors (fbR, fbG, fbB, fbA).
-    * Each 8-bit color component is expanded into a float in [0.0, 1.0].
-    */
-   {
-      int mask_reg = spe_allocate_available_register(f);
-
-      /* mask = {0x000000ff, 0x000000ff, 0x000000ff, 0x000000ff} */
-      spe_load_int(f, mask_reg, 0xff);
-
-      /* XXX there may be more clever ways to implement the following code */
-      switch (color_format) {
-      case PIPE_FORMAT_A8R8G8B8_UNORM:
-         /* fbB = fbB & mask */
-         spe_and(f, fbB_reg, fbRGBA_reg, mask_reg);
-         /* mask = mask << 8 */
-         spe_roti(f, mask_reg, mask_reg, 8);
-
-         /* fbG = fbRGBA & mask */
-         spe_and(f, fbG_reg, fbRGBA_reg, mask_reg);
-         /* fbG = fbG >> 8 */
-         spe_roti(f, fbG_reg, fbG_reg, -8);
-         /* mask = mask << 8 */
-         spe_roti(f, mask_reg, mask_reg, 8);
-
-         /* fbR = fbRGBA & mask */
-         spe_and(f, fbR_reg, fbRGBA_reg, mask_reg);
-         /* fbR = fbR >> 16 */
-         spe_roti(f, fbR_reg, fbR_reg, -16);
-         /* mask = mask << 8 */
-         spe_roti(f, mask_reg, mask_reg, 8);
-
-         /* fbA = fbRGBA & mask */
-         spe_and(f, fbA_reg, fbRGBA_reg, mask_reg);
-         /* fbA = fbA >> 24 */
-         spe_roti(f, fbA_reg, fbA_reg, -24);
-         break;
-
-      case PIPE_FORMAT_B8G8R8A8_UNORM:
-         /* fbA = fbA & mask */
-         spe_and(f, fbA_reg, fbRGBA_reg, mask_reg);
-         /* mask = mask << 8 */
-         spe_roti(f, mask_reg, mask_reg, 8);
-
-         /* fbR = fbRGBA & mask */
-         spe_and(f, fbR_reg, fbRGBA_reg, mask_reg);
-         /* fbR = fbR >> 8 */
-         spe_roti(f, fbR_reg, fbR_reg, -8);
-         /* mask = mask << 8 */
-         spe_roti(f, mask_reg, mask_reg, 8);
-
-         /* fbG = fbRGBA & mask */
-         spe_and(f, fbG_reg, fbRGBA_reg, mask_reg);
-         /* fbG = fbG >> 16 */
-         spe_roti(f, fbG_reg, fbG_reg, -16);
-         /* mask = mask << 8 */
-         spe_roti(f, mask_reg, mask_reg, 8);
-
-         /* fbB = fbRGBA & mask */
-         spe_and(f, fbB_reg, fbRGBA_reg, mask_reg);
-         /* fbB = fbB >> 24 */
-         spe_roti(f, fbB_reg, fbB_reg, -24);
-         break;
-
-      default:
-         ASSERT(0);
-      }
-
-      /* convert int[4] in [0,255] to float[4] in [0.0, 1.0] */
-      spe_cuflt(f, fbR_reg, fbR_reg, 8);
-      spe_cuflt(f, fbG_reg, fbG_reg, 8);
-      spe_cuflt(f, fbB_reg, fbB_reg, 8);
-      spe_cuflt(f, fbA_reg, fbA_reg, 8);
-
-      spe_release_register(f, mask_reg);
-   }
+   /* packed RGBA -> float colors */
+   unpack_colors(f, color_format, fbRGBA_reg,
+                 fbR_reg, fbG_reg, fbB_reg, fbA_reg);
 
    /*
     * Compute Src RGB terms.  We're actually looking for the value
