@@ -1316,7 +1316,9 @@ gen_stencil_test(struct spe_function *f, const struct pipe_stencil_state *state,
     */
 }
 
-/* This function generates code that calculates a set of new stencil values
+
+/**
+ * This function generates code that calculates a set of new stencil values
  * given the earlier values and the operation to apply.  It does not
  * apply any tests.  It is intended to be called up to 3 times
  * (for the stencil fail operation, for the stencil pass-z fail operation,
@@ -1426,7 +1428,8 @@ gen_stencil_values(struct spe_function *f,
 }
 
 
-/* This function generates code to get all the necessary possible
+/**
+ * This function generates code to get all the necessary possible
  * stencil values.  For each of the output registers (fail_reg,
  * zfail_reg, and zpass_reg), it either allocates a new register
  * and calculates a new set of values based on the stencil operation,
@@ -1511,7 +1514,8 @@ gen_get_stencil_values(struct spe_function *f,
    }
 }
 
-/* Note that fbZ_reg may *not* be set on entry, if in fact
+/**
+ * Note that fbZ_reg may *not* be set on entry, if in fact
  * the depth test is not enabled.  This function must not use
  * the register if depth is not enabled.
  */
@@ -1794,6 +1798,205 @@ gen_stencil_depth_test(struct spe_function *f,
 
 
 /**
+ * Generate depth and/or stencil test code.
+ * \param cell  context
+ * \param dsa  depth/stencil/alpha state
+ * \param f  spe function to emit
+ * \param facing  either CELL_FACING_FRONT or CELL_FACING_BACK
+ * \param mask_reg  register containing the pixel alive/dead mask
+ * \param depth_tile_reg  register containing address of z/stencil tile
+ * \param quad_offset_reg  offset to quad from start of tile
+ * \param fragZ_reg  register containg fragment Z values
+ */
+static void
+gen_depth_stencil(struct cell_context *cell,
+                  const struct pipe_depth_stencil_alpha_state *dsa,
+                  struct spe_function *f,
+                  uint facing,
+                  uint mask_reg,
+                  uint depth_tile_reg,
+                  uint quad_offset_reg,
+                  uint fragZ_reg)
+
+{
+   const enum pipe_format zs_format = cell->framebuffer.zsbuf->format;
+   boolean write_depth_stencil;
+
+   /* We may or may not need to allocate a register for Z or stencil values */
+   boolean fbS_reg_set = false, fbZ_reg_set = false;
+   unsigned int fbS_reg, fbZ_reg = 0;
+
+   /* framebuffer's combined z/stencil values for quad */
+   int fbZS_reg = spe_allocate_available_register(f);
+
+
+   spe_comment(f, 0, "Fetch Z/stencil quad from tile");
+
+   /* fetch quad of depth/stencil values from tile at (x,y) */
+   /* Load: fbZS_reg = memory[depth_tile_reg + offset_reg] */
+   /* XXX Not sure this is allowed if we've only got a 16-bit Z buffer... */
+   spe_lqx(f, fbZS_reg, depth_tile_reg, quad_offset_reg);
+
+   /* From the Z/stencil buffer format, pull out the bits we need for
+    * Z and/or stencil.  We'll also convert the incoming fragment Z
+    * value in fragZ_reg from a floating point value in [0.0..1.0] to
+    * an unsigned integer value with the appropriate resolution.
+    * Note that even if depth or stencil is *not* enabled, if it's
+    * present in the buffer, we pull it out and put it back later;
+    * otherwise, we can inadvertently destroy the contents of
+    * buffers we're not supposed to touch (e.g., if the user is
+    * clearing the depth buffer but not the stencil buffer, a
+    * quad of constant depth is drawn over the surface; the stencil
+    * buffer must be maintained).
+    */
+   switch(zs_format) {
+   case PIPE_FORMAT_S8Z24_UNORM: /* fall through */
+   case PIPE_FORMAT_X8Z24_UNORM:
+      /* Pull out both Z and stencil */
+      setup_optional_register(f, &fbZ_reg_set, &fbZ_reg);
+      setup_optional_register(f, &fbS_reg_set, &fbS_reg);
+
+      /* four 24-bit Z values in the low-order bits */
+      spe_and_uint(f, fbZ_reg, fbZS_reg, 0x00ffffff);
+
+      /* Incoming fragZ_reg value is a float in 0.0...1.0; convert
+       * to a 24-bit unsigned integer
+       */
+      spe_cfltu(f, fragZ_reg, fragZ_reg, 32);
+      spe_rotmi(f, fragZ_reg, fragZ_reg, -8);
+
+      /* four 8-bit stencil values in the high-order bits */
+      spe_rotmi(f, fbS_reg, fbZS_reg, -24);
+      break;
+
+   case PIPE_FORMAT_Z24S8_UNORM: /* fall through */
+   case PIPE_FORMAT_Z24X8_UNORM:
+      setup_optional_register(f, &fbZ_reg_set, &fbZ_reg);
+      setup_optional_register(f, &fbS_reg_set, &fbS_reg);
+
+      /* shift by 8 to get the upper 24-bit values */
+      spe_rotmi(f, fbS_reg, fbZS_reg, -8);
+
+      /* Incoming fragZ_reg value is a float in 0.0...1.0; convert
+       * to a 24-bit unsigned integer
+       */
+      spe_cfltu(f, fragZ_reg, fragZ_reg, 32);
+      spe_rotmi(f, fragZ_reg, fragZ_reg, -8);
+
+      /* 8-bit stencil in the low-order bits - mask them out */
+      spe_and_uint(f, fbS_reg, fbZS_reg, 0x000000ff);
+      break;
+
+   case PIPE_FORMAT_Z32_UNORM:
+      setup_optional_register(f, &fbZ_reg_set, &fbZ_reg);
+      /* Copy over 4 32-bit values */
+      spe_move(f, fbZ_reg, fbZS_reg);
+
+      /* Incoming fragZ_reg value is a float in 0.0...1.0; convert
+       * to a 32-bit unsigned integer
+       */
+      spe_cfltu(f, fragZ_reg, fragZ_reg, 32);
+      /* No stencil, so can't do anything there */
+      break;
+
+   case PIPE_FORMAT_Z16_UNORM:
+      /* XXX Not sure this is correct, but it was here before, so we're
+       * going with it for now
+       */
+      setup_optional_register(f, &fbZ_reg_set, &fbZ_reg);
+      /* Copy over 4 32-bit values */
+      spe_move(f, fbZ_reg, fbZS_reg);
+
+      /* Incoming fragZ_reg value is a float in 0.0...1.0; convert
+       * to a 16-bit unsigned integer
+       */
+      spe_cfltu(f, fragZ_reg, fragZ_reg, 32);
+      spe_rotmi(f, fragZ_reg, fragZ_reg, -16);
+      /* No stencil */
+      break;
+
+   default:
+      ASSERT(0); /* invalid format */
+   }
+
+   /* If stencil is enabled, use the stencil-specific code
+    * generator to generate both the stencil and depth (if needed)
+    * tests.  Otherwise, if only depth is enabled, generate
+    * a quick depth test.  The test generators themselves will
+    * report back whether the depth/stencil buffer has to be
+    * written back.
+    */
+   if (dsa->stencil[0].enabled) {
+      /* This will perform the stencil and depth tests, and update
+       * the mask_reg, fbZ_reg, and fbS_reg as required by the
+       * tests.
+       */
+      ASSERT(fbS_reg_set);
+      spe_comment(f, 0, "Perform stencil test");
+
+      /* Note that fbZ_reg may not be set on entry, if stenciling
+       * is enabled but there's no Z-buffer.  The 
+       * gen_stencil_depth_test() function must ignore the
+       * fbZ_reg register if depth is not enabled.
+       */
+      write_depth_stencil = gen_stencil_depth_test(f, dsa, facing,
+                                                   mask_reg, fragZ_reg,
+                                                   fbZ_reg, fbS_reg);
+   }
+   else if (dsa->depth.enabled) {
+      int zmask_reg = spe_allocate_available_register(f);
+      ASSERT(fbZ_reg_set);
+      spe_comment(f, 0, "Perform depth test");
+      write_depth_stencil = gen_depth_test(f, dsa, mask_reg, fragZ_reg,
+                                           fbZ_reg, zmask_reg);
+      spe_release_register(f, zmask_reg);
+   }
+   else {
+      write_depth_stencil = false;
+   }
+
+   if (write_depth_stencil) {
+      /* Merge latest Z and Stencil values into fbZS_reg.
+       * fbZ_reg has four Z vals in bits [23..0] or bits [15..0].
+       * fbS_reg has four 8-bit Z values in bits [7..0].
+       */
+      spe_comment(f, 0, "Store quad's depth/stencil values in tile");
+      if (zs_format == PIPE_FORMAT_S8Z24_UNORM ||
+          zs_format == PIPE_FORMAT_X8Z24_UNORM) {
+         spe_shli(f, fbS_reg, fbS_reg, 24); /* fbS = fbS << 24 */
+         spe_or(f, fbZS_reg, fbS_reg, fbZ_reg); /* fbZS = fbS | fbZ */
+      }
+      else if (zs_format == PIPE_FORMAT_Z24S8_UNORM ||
+               zs_format == PIPE_FORMAT_Z24X8_UNORM) {
+         spe_shli(f, fbZ_reg, fbZ_reg, 8); /* fbZ = fbZ << 8 */
+         spe_or(f, fbZS_reg, fbS_reg, fbZ_reg); /* fbZS = fbS | fbZ */
+      }
+      else if (zs_format == PIPE_FORMAT_Z32_UNORM) {
+         spe_move(f, fbZS_reg, fbZ_reg); /* fbZS = fbZ */
+      }
+      else if (zs_format == PIPE_FORMAT_Z16_UNORM) {
+         spe_move(f, fbZS_reg, fbZ_reg); /* fbZS = fbZ */
+      }
+      else if (zs_format == PIPE_FORMAT_S8_UNORM) {
+         ASSERT(0);   /* XXX to do */
+      }
+      else {
+         ASSERT(0); /* bad zs_format */
+      }
+
+      /* Store: memory[depth_tile_reg + quad_offset_reg] = fbZS */
+      spe_stqx(f, fbZS_reg, depth_tile_reg, quad_offset_reg);
+   }
+
+   /* Don't need these any more */
+   release_optional_register(f, &fbZ_reg_set, fbZ_reg);
+   release_optional_register(f, &fbS_reg_set, fbS_reg);
+   spe_release_register(f, fbZS_reg);
+}
+
+
+
+/**
  * Generate SPE code to implement the fragment operations (alpha test,
  * depth test, stencil test, blending, colormask, and final
  * framebuffer write) as specified by the current context state.
@@ -1848,7 +2051,6 @@ cell_gen_fragment_function(struct cell_context *cell,
    int quad_offset_reg;
 
    int fbRGBA_reg;  /**< framebuffer's RGBA colors for quad */
-   int fbZS_reg;    /**< framebuffer's combined z/stencil values for quad */
 
    if (cell->debug_flags & CELL_DEBUG_ASM) {
       spe_print_code(f, true);
@@ -1871,7 +2073,6 @@ cell_gen_fragment_function(struct cell_context *cell,
 
    quad_offset_reg = spe_allocate_available_register(f);
    fbRGBA_reg = spe_allocate_available_register(f);
-   fbZS_reg = spe_allocate_available_register(f);
 
    /* compute offset of quad from start of tile, in bytes */
    {
@@ -1896,180 +2097,14 @@ cell_gen_fragment_function(struct cell_context *cell,
       gen_alpha_test(dsa, f, mask_reg, fragA_reg);
    }
 
-   /* If we need the stencil buffers (because one- or two-sided stencil is
-    * enabled) or the depth buffer (because the depth test is enabled),
-    * go grab them.  Note that if either one- or two-sided stencil is
-    * enabled, dsa->stencil[0].enabled will be true.
-    */
+   /* generate depth and/or stencil test code */
    if (dsa->depth.enabled || dsa->stencil[0].enabled) {
-      const enum pipe_format zs_format = cell->framebuffer.zsbuf->format;
-      boolean write_depth_stencil;
-
-      /* We may or may not need to allocate a register for Z or stencil values */
-      boolean fbS_reg_set = false, fbZ_reg_set = false;
-      unsigned int fbS_reg, fbZ_reg = 0;
-
-      spe_comment(f, 0, "Fetch Z/stencil quad from tile");
-
-      /* fetch quad of depth/stencil values from tile at (x,y) */
-      /* Load: fbZS_reg = memory[depth_tile_reg + offset_reg] */
-      /* XXX Not sure this is allowed if we've only got a 16-bit Z buffer... */
-      spe_lqx(f, fbZS_reg, depth_tile_reg, quad_offset_reg);
-
-      /* From the Z/stencil buffer format, pull out the bits we need for
-       * Z and/or stencil.  We'll also convert the incoming fragment Z
-       * value in fragZ_reg from a floating point value in [0.0..1.0] to
-       * an unsigned integer value with the appropriate resolution.
-       * Note that even if depth or stencil is *not* enabled, if it's
-       * present in the buffer, we pull it out and put it back later;
-       * otherwise, we can inadvertently destroy the contents of
-       * buffers we're not supposed to touch (e.g., if the user is
-       * clearing the depth buffer but not the stencil buffer, a
-       * quad of constant depth is drawn over the surface; the stencil
-       * buffer must be maintained).
-       */
-      switch(zs_format) {
-      case PIPE_FORMAT_S8Z24_UNORM: /* fall through */
-      case PIPE_FORMAT_X8Z24_UNORM:
-         /* Pull out both Z and stencil */
-         setup_optional_register(f, &fbZ_reg_set, &fbZ_reg);
-         setup_optional_register(f, &fbS_reg_set, &fbS_reg);
-
-         /* four 24-bit Z values in the low-order bits */
-         spe_and_uint(f, fbZ_reg, fbZS_reg, 0x00ffffff);
-
-         /* Incoming fragZ_reg value is a float in 0.0...1.0; convert
-          * to a 24-bit unsigned integer
-          */
-         spe_cfltu(f, fragZ_reg, fragZ_reg, 32);
-         spe_rotmi(f, fragZ_reg, fragZ_reg, -8);
-
-         /* four 8-bit stencil values in the high-order bits */
-         spe_rotmi(f, fbS_reg, fbZS_reg, -24);
-         break;
-
-      case PIPE_FORMAT_Z24S8_UNORM: /* fall through */
-      case PIPE_FORMAT_Z24X8_UNORM:
-         setup_optional_register(f, &fbZ_reg_set, &fbZ_reg);
-         setup_optional_register(f, &fbS_reg_set, &fbS_reg);
-
-         /* shift by 8 to get the upper 24-bit values */
-         spe_rotmi(f, fbS_reg, fbZS_reg, -8);
-
-         /* Incoming fragZ_reg value is a float in 0.0...1.0; convert
-          * to a 24-bit unsigned integer
-          */
-         spe_cfltu(f, fragZ_reg, fragZ_reg, 32);
-         spe_rotmi(f, fragZ_reg, fragZ_reg, -8);
-
-         /* 8-bit stencil in the low-order bits - mask them out */
-         spe_and_uint(f, fbS_reg, fbZS_reg, 0x000000ff);
-         break;
-
-      case PIPE_FORMAT_Z32_UNORM:
-         setup_optional_register(f, &fbZ_reg_set, &fbZ_reg);
-         /* Copy over 4 32-bit values */
-         spe_move(f, fbZ_reg, fbZS_reg);
-
-         /* Incoming fragZ_reg value is a float in 0.0...1.0; convert
-          * to a 32-bit unsigned integer
-          */
-         spe_cfltu(f, fragZ_reg, fragZ_reg, 32);
-         /* No stencil, so can't do anything there */
-         break;
-
-      case PIPE_FORMAT_Z16_UNORM:
-         /* XXX Not sure this is correct, but it was here before, so we're
-          * going with it for now
-          */
-         setup_optional_register(f, &fbZ_reg_set, &fbZ_reg);
-         /* Copy over 4 32-bit values */
-         spe_move(f, fbZ_reg, fbZS_reg);
-
-         /* Incoming fragZ_reg value is a float in 0.0...1.0; convert
-          * to a 16-bit unsigned integer
-          */
-         spe_cfltu(f, fragZ_reg, fragZ_reg, 32);
-         spe_rotmi(f, fragZ_reg, fragZ_reg, -16);
-         /* No stencil */
-         break;
-
-      default:
-         ASSERT(0); /* invalid format */
-      }
-
-      /* If stencil is enabled, use the stencil-specific code
-       * generator to generate both the stencil and depth (if needed)
-       * tests.  Otherwise, if only depth is enabled, generate
-       * a quick depth test.  The test generators themselves will
-       * report back whether the depth/stencil buffer has to be
-       * written back.
-       */
-      if (dsa->stencil[0].enabled) {
-         /* This will perform the stencil and depth tests, and update
-          * the mask_reg, fbZ_reg, and fbS_reg as required by the
-          * tests.
-          */
-         ASSERT(fbS_reg_set);
-         spe_comment(f, 0, "Perform stencil test");
-
-         /* Note that fbZ_reg may not be set on entry, if stenciling
-          * is enabled but there's no Z-buffer.  The 
-          * gen_stencil_depth_test() function must ignore the
-          * fbZ_reg register if depth is not enabled.
-          */
-         write_depth_stencil = gen_stencil_depth_test(f, dsa, facing,
-                                                      mask_reg, fragZ_reg,
-                                                      fbZ_reg, fbS_reg);
-      }
-      else if (dsa->depth.enabled) {
-         int zmask_reg = spe_allocate_available_register(f);
-         ASSERT(fbZ_reg_set);
-         spe_comment(f, 0, "Perform depth test");
-         write_depth_stencil = gen_depth_test(f, dsa, mask_reg, fragZ_reg,
-                                              fbZ_reg, zmask_reg);
-         spe_release_register(f, zmask_reg);
-      }
-      else {
-         write_depth_stencil = false;
-      }
-
-      if (write_depth_stencil) {
-         /* Merge latest Z and Stencil values into fbZS_reg.
-          * fbZ_reg has four Z vals in bits [23..0] or bits [15..0].
-          * fbS_reg has four 8-bit Z values in bits [7..0].
-          */
-         spe_comment(f, 0, "Store quad's depth/stencil values in tile");
-         if (zs_format == PIPE_FORMAT_S8Z24_UNORM ||
-             zs_format == PIPE_FORMAT_X8Z24_UNORM) {
-            spe_shli(f, fbS_reg, fbS_reg, 24); /* fbS = fbS << 24 */
-            spe_or(f, fbZS_reg, fbS_reg, fbZ_reg); /* fbZS = fbS | fbZ */
-         }
-         else if (zs_format == PIPE_FORMAT_Z24S8_UNORM ||
-                  zs_format == PIPE_FORMAT_Z24X8_UNORM) {
-            spe_shli(f, fbZ_reg, fbZ_reg, 8); /* fbZ = fbZ << 8 */
-            spe_or(f, fbZS_reg, fbS_reg, fbZ_reg); /* fbZS = fbS | fbZ */
-         }
-         else if (zs_format == PIPE_FORMAT_Z32_UNORM) {
-            spe_move(f, fbZS_reg, fbZ_reg); /* fbZS = fbZ */
-         }
-         else if (zs_format == PIPE_FORMAT_Z16_UNORM) {
-            spe_move(f, fbZS_reg, fbZ_reg); /* fbZS = fbZ */
-         }
-         else if (zs_format == PIPE_FORMAT_S8_UNORM) {
-            ASSERT(0);   /* XXX to do */
-         }
-         else {
-            ASSERT(0); /* bad zs_format */
-         }
-
-         /* Store: memory[depth_tile_reg + quad_offset_reg] = fbZS */
-         spe_stqx(f, fbZS_reg, depth_tile_reg, quad_offset_reg);
-      }
-
-      /* Don't need these any more */
-      release_optional_register(f, &fbZ_reg_set, fbZ_reg);
-      release_optional_register(f, &fbS_reg_set, fbS_reg);
+      gen_depth_stencil(cell, dsa, f,
+                        facing,
+                        mask_reg,
+                        depth_tile_reg,
+                        quad_offset_reg,
+                        fragZ_reg);
    }
 
    /* Get framebuffer quad/colors.  We'll need these for blending,
@@ -2133,7 +2168,6 @@ cell_gen_fragment_function(struct cell_context *cell,
    spe_bi(f, SPE_REG_RA, 0, 0);  /* return from function call */
 
    spe_release_register(f, fbRGBA_reg);
-   spe_release_register(f, fbZS_reg);
    spe_release_register(f, quad_offset_reg);
 
    if (cell->debug_flags & CELL_DEBUG_ASM) {
