@@ -291,61 +291,61 @@ unpack_colors(struct spe_function *f,
               int fbRGBA_reg,
               int fbR_reg, int fbG_reg, int fbB_reg, int fbA_reg)
 {
-   int mask_reg = spe_allocate_available_register(f);
+   int mask0_reg = spe_allocate_available_register(f);
+   int mask1_reg = spe_allocate_available_register(f);
+   int mask2_reg = spe_allocate_available_register(f);
+   int mask3_reg = spe_allocate_available_register(f);
 
-   /* mask = {0x000000ff, 0x000000ff, 0x000000ff, 0x000000ff} */
-   spe_load_int(f, mask_reg, 0xff);
+   spe_load_int(f, mask0_reg, 0xff);
+   spe_load_int(f, mask1_reg, 0xff00);
+   spe_load_int(f, mask2_reg, 0xff0000);
+   spe_load_int(f, mask3_reg, 0xff000000);
 
-   /* XXX there may be more clever ways to implement the following code */
+   spe_comment(f, 0, "Unpack framebuffer colors, convert to floats");
+
    switch (color_format) {
    case PIPE_FORMAT_A8R8G8B8_UNORM:
-      /* fbB = fbB & mask */
-      spe_and(f, fbB_reg, fbRGBA_reg, mask_reg);
-      /* mask = mask << 8 */
-      spe_roti(f, mask_reg, mask_reg, 8);
+      /* fbB = fbRGBA & mask */
+      spe_and(f, fbB_reg, fbRGBA_reg, mask0_reg);
 
       /* fbG = fbRGBA & mask */
-      spe_and(f, fbG_reg, fbRGBA_reg, mask_reg);
-      /* fbG = fbG >> 8 */
-      spe_roti(f, fbG_reg, fbG_reg, -8);
-      /* mask = mask << 8 */
-      spe_roti(f, mask_reg, mask_reg, 8);
+      spe_and(f, fbG_reg, fbRGBA_reg, mask1_reg);
 
       /* fbR = fbRGBA & mask */
-      spe_and(f, fbR_reg, fbRGBA_reg, mask_reg);
-      /* fbR = fbR >> 16 */
-      spe_roti(f, fbR_reg, fbR_reg, -16);
-      /* mask = mask << 8 */
-      spe_roti(f, mask_reg, mask_reg, 8);
+      spe_and(f, fbR_reg, fbRGBA_reg, mask2_reg);
 
       /* fbA = fbRGBA & mask */
-      spe_and(f, fbA_reg, fbRGBA_reg, mask_reg);
+      spe_and(f, fbA_reg, fbRGBA_reg, mask3_reg);
+
+      /* fbG = fbG >> 8 */
+      spe_roti(f, fbG_reg, fbG_reg, -8);
+
+      /* fbR = fbR >> 16 */
+      spe_roti(f, fbR_reg, fbR_reg, -16);
+
       /* fbA = fbA >> 24 */
       spe_roti(f, fbA_reg, fbA_reg, -24);
       break;
 
    case PIPE_FORMAT_B8G8R8A8_UNORM:
-      /* fbA = fbA & mask */
-      spe_and(f, fbA_reg, fbRGBA_reg, mask_reg);
-      /* mask = mask << 8 */
-      spe_roti(f, mask_reg, mask_reg, 8);
+      /* fbA = fbRGBA & mask */
+      spe_and(f, fbA_reg, fbRGBA_reg, mask0_reg);
 
       /* fbR = fbRGBA & mask */
-      spe_and(f, fbR_reg, fbRGBA_reg, mask_reg);
-      /* fbR = fbR >> 8 */
-      spe_roti(f, fbR_reg, fbR_reg, -8);
-      /* mask = mask << 8 */
-      spe_roti(f, mask_reg, mask_reg, 8);
+      spe_and(f, fbR_reg, fbRGBA_reg, mask1_reg);
 
       /* fbG = fbRGBA & mask */
-      spe_and(f, fbG_reg, fbRGBA_reg, mask_reg);
-      /* fbG = fbG >> 16 */
-      spe_roti(f, fbG_reg, fbG_reg, -16);
-      /* mask = mask << 8 */
-      spe_roti(f, mask_reg, mask_reg, 8);
+      spe_and(f, fbG_reg, fbRGBA_reg, mask2_reg);
 
       /* fbB = fbRGBA & mask */
-      spe_and(f, fbB_reg, fbRGBA_reg, mask_reg);
+      spe_and(f, fbB_reg, fbRGBA_reg, mask3_reg);
+
+      /* fbR = fbR >> 8 */
+      spe_roti(f, fbR_reg, fbR_reg, -8);
+
+      /* fbG = fbG >> 16 */
+      spe_roti(f, fbG_reg, fbG_reg, -16);
+
       /* fbB = fbB >> 24 */
       spe_roti(f, fbB_reg, fbB_reg, -24);
       break;
@@ -360,7 +360,10 @@ unpack_colors(struct spe_function *f,
    spe_cuflt(f, fbB_reg, fbB_reg, 8);
    spe_cuflt(f, fbA_reg, fbA_reg, 8);
 
-   spe_release_register(f, mask_reg);
+   spe_release_register(f, mask0_reg);
+   spe_release_register(f, mask1_reg);
+   spe_release_register(f, mask2_reg);
+   spe_release_register(f, mask3_reg);
 }
 
 
