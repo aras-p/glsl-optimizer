@@ -1,26 +1,26 @@
-#include "pipe/p_context.h"
-#include "nouveau_context.h"
-#include "nouveau_local.h"
-#include "nouveau_screen.h"
+#include <driclient.h>
+#include <common/nouveau_local.h>
+#include <common/nouveau_screen.h>
+#include "nouveau_context_vl.h"
 #include "nouveau_swapbuffers.h"
 
 void
 nouveau_copy_buffer(dri_drawable_t *dri_drawable, struct pipe_surface *surf,
 		    const drm_clip_rect_t *rect)
 {
-	struct nouveau_context	*nv = dri_drawable->private;
-	drm_clip_rect_t		*pbox;
-	int			nbox, i;
+	struct nouveau_context_vl	*nv = dri_drawable->private;
+	drm_clip_rect_t			*pbox;
+	int				nbox, i;
 
-	LOCK_HARDWARE(nv);
+	LOCK_HARDWARE(&nv->base);
 	if (!dri_drawable->num_cliprects) {
-		UNLOCK_HARDWARE(nv);
+		UNLOCK_HARDWARE(&nv->base);
 		return;
 	}
 	pbox = dri_drawable->cliprects;
 	nbox = dri_drawable->num_cliprects;
 
-	nv->surface_copy_prep(nv, nv->frontbuffer, surf);
+	nv->base.surface_copy_prep(&nv->base, nv->base.frontbuffer, surf);
 	for (i = 0; i < nbox; i++, pbox++) {
 		int sx, sy, dx, dy, w, h;
 
@@ -31,14 +31,11 @@ nouveau_copy_buffer(dri_drawable_t *dri_drawable, struct pipe_surface *surf,
 		w  = pbox->x2 - pbox->x1;
 		h  = pbox->y2 - pbox->y1;
 
-		nv->surface_copy(nv, dx, dy, sx, sy, w, h);
+		nv->base.surface_copy(&nv->base, dx, dy, sx, sy, w, h);
 	}
 
-	FIRE_RING(nv->nvc->channel);
-	UNLOCK_HARDWARE(nv);
-
-	//if (nv->last_stamp != dri_drawable->last_sarea_stamp)
-		//nv->last_stamp = dri_drawable->last_sarea_stamp;
+	FIRE_RING(nv->base.nvc->channel);
+	UNLOCK_HARDWARE(&nv->base);
 }
 
 void
@@ -62,3 +59,35 @@ nouveau_swap_buffers(dri_drawable_t *dri_drawable, struct pipe_surface *surf)
 		nouveau_copy_buffer(dri_drawable, surf, NULL);
 }
 
+void
+nouveau_flush_frontbuffer(struct pipe_winsys *pws, struct pipe_surface *surf,
+			  void *context_private)
+{
+	struct nouveau_context_vl	*nv;
+	dri_drawable_t			*dri_drawable;
+
+	assert(pws);
+	assert(surf);
+	assert(context_private);
+
+	nv = context_private;
+	dri_drawable = nv->dri_drawable;
+
+	nouveau_copy_buffer(dri_drawable, surf, NULL);
+}
+
+void
+nouveau_contended_lock(struct nouveau_context *nv)
+{
+	struct nouveau_context_vl	*nv_vl = (struct nouveau_context_vl*)nv;
+	dri_drawable_t			*dri_drawable = nv_vl->dri_drawable;
+	dri_screen_t			*dri_screen = nv_vl->dri_context->dri_screen;
+
+	/* If the window moved, may need to set a new cliprect now.
+	 *
+	 * NOTE: This releases and regains the hw lock, so all state
+	 * checking must be done *after* this call:
+	 */
+	if (dri_drawable)
+		DRI_VALIDATE_DRAWABLE_INFO(dri_screen, dri_drawable);
+}

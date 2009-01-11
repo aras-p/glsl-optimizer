@@ -199,6 +199,11 @@ draw_create_vs_ppc(struct draw_context *draw,
 
    ppc_init_func( &vs->ppc_program );
 
+#if 0
+   ppc_print_code(&vs->ppc_program, TRUE);
+   ppc_indent(&vs->ppc_program, 8);
+#endif
+
    if (!tgsi_emit_ppc( (struct tgsi_token *) vs->base.state.tokens,
 			&vs->ppc_program, 
                        (float (*)[4]) vs->base.immediates, 

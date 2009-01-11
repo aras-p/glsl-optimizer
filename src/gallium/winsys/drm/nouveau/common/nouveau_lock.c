@@ -25,34 +25,11 @@
  * 
  **************************************************************************/
 
-#include "main/glheader.h"
-#include "glapi/glthread.h"
-#include <GL/internal/glcore.h>
-
+#include <pipe/p_thread.h>
 #include "nouveau_context.h"
 #include "nouveau_screen.h"
 
-_glthread_DECLARE_STATIC_MUTEX( lockMutex );
-
-static void
-nouveau_contended_lock(struct nouveau_context *nv, GLuint flags)
-{
-	__DRIdrawablePrivate *dPriv = nv->dri_drawable;
-	__DRIscreenPrivate *sPriv = nv->dri_screen;
-	struct nouveau_screen *nv_screen = nv->nv_screen;
-	struct nouveau_device *dev = nv_screen->device;
-	struct nouveau_device_priv *nvdev = nouveau_device(dev);
-
-	drmGetLock(nvdev->fd, nvdev->ctx, flags);
-
-	/* If the window moved, may need to set a new cliprect now.
-	 *
-	 * NOTE: This releases and regains the hw lock, so all state
-	 * checking must be done *after* this call:
-	 */
-	if (dPriv)
-		DRI_VALIDATE_DRAWABLE_INFO(sPriv, dPriv);
-}
+pipe_static_mutex(lockMutex);
 
 /* Lock the hardware and validate our state.
  */
@@ -64,20 +41,21 @@ LOCK_HARDWARE(struct nouveau_context *nv)
 	struct nouveau_device_priv *nvdev = nouveau_device(dev);
 	char __ret=0;
 
-	_glthread_LOCK_MUTEX(lockMutex);
 	assert(!nv->locked);
-	
+	pipe_mutex_lock(lockMutex);
+
 	DRM_CAS(nvdev->lock, nvdev->ctx,
 		(DRM_LOCK_HELD | nvdev->ctx), __ret);
-	
-	if (__ret)
-		nouveau_contended_lock(nv, 0);
-	nv->locked = GL_TRUE;
+
+	if (__ret) {
+		drmGetLock(nvdev->fd, nvdev->ctx, 0);
+		nouveau_contended_lock(nv);
+	}
+	nv->locked = 1;
 }
 
-
-  /* Unlock the hardware using the global current context 
-   */
+/* Unlock the hardware using the global current context 
+ */
 void
 UNLOCK_HARDWARE(struct nouveau_context *nv)
 {
@@ -86,9 +64,9 @@ UNLOCK_HARDWARE(struct nouveau_context *nv)
 	struct nouveau_device_priv *nvdev = nouveau_device(dev);
 
 	assert(nv->locked);
-	nv->locked = GL_FALSE;
+	nv->locked = 0;
 
 	DRM_UNLOCK(nvdev->fd, nvdev->lock, nvdev->ctx);
 
-	_glthread_UNLOCK_MUTEX(lockMutex);
+	pipe_mutex_unlock(lockMutex);
 } 

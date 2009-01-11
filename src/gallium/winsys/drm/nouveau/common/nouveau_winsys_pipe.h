@@ -31,4 +31,9 @@ nouveau_create_softpipe(struct nouveau_context *nv);
 struct pipe_context *
 nouveau_pipe_create(struct nouveau_context *nv);
 
+/* Must be provided by clients of common code */
+extern void
+nouveau_flush_frontbuffer(struct pipe_winsys *pws, struct pipe_surface *surf,
+			  void *context_private);
+
 #endif

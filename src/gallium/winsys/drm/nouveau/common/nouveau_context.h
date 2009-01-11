@@ -1,9 +1,6 @@
 #ifndef __NOUVEAU_CONTEXT_H__
 #define __NOUVEAU_CONTEXT_H__
 
-/*#include "xmlconfig.h"*/
-
-#include <driclient.h>
 #include "nouveau/nouveau_winsys.h"
 #include "nouveau_drmif.h"
 #include "nouveau_dma.h"
@@ -37,16 +34,9 @@ struct nouveau_channel_context {
 };
 
 struct nouveau_context {
-	/* DRI stuff */
-	dri_context_t		*dri_context;
-	dri_drawable_t		*dri_drawable;
-	unsigned int		last_stamp;
-	/*driOptionCache	dri_option_cache;*/
-	drm_context_t		drm_context;
-	drmLock			drm_lock;
-	int			locked;
-	struct nouveau_screen	*nv_screen;
-	struct pipe_surface	*frontbuffer;
+	int locked;
+	struct nouveau_screen *nv_screen;
+	struct pipe_surface *frontbuffer;
 
 	struct {
 		int hw_vertex_buffer;
@@ -54,13 +44,12 @@ struct nouveau_context {
 	} cap;
 
 	/* Hardware context */
-	struct nouveau_channel_context	*nvc;
-	int				pctx_id;
+	struct nouveau_channel_context *nvc;
+	int pctx_id;
 
 	/* pipe_surface accel */
-	struct pipe_surface		*surf_src, *surf_dst;
-	unsigned			surf_src_offset, surf_dst_offset;
-	
+	struct pipe_surface *surf_src, *surf_dst;
+	unsigned surf_src_offset, surf_dst_offset;
 	int  (*surface_copy_prep)(struct nouveau_context *,
 				  struct pipe_surface *dst,
 				  struct pipe_surface *src);
@@ -71,23 +60,11 @@ struct nouveau_context {
 			    unsigned, unsigned, unsigned, unsigned, unsigned);
 };
 
-extern int nouveau_context_create(dri_context_t *);
-extern void nouveau_context_destroy(dri_context_t *);
-extern int nouveau_context_bind(struct nouveau_context *, dri_drawable_t *);
-extern int nouveau_context_unbind(struct nouveau_context *);
-
-#ifdef DEBUG
-extern int __nouveau_debug;
-
-#define DEBUG_BO (1 << 0)
-
-#define DBG(flag, ...) do {                   \
-	if (__nouveau_debug & (DEBUG_##flag)) \
-		NOUVEAU_ERR(__VA_ARGS__);     \
-} while(0)
-#else
-#define DBG(flag, ...)
-#endif
+extern int nouveau_context_init(struct nouveau_screen *nv_screen,
+                                drm_context_t hHWContext, drmLock *sarea_lock,
+                                struct nouveau_context *nv_share,
+                                struct nouveau_context *nv);
+extern void nouveau_context_cleanup(struct nouveau_context *nv);
 
 extern void LOCK_HARDWARE(struct nouveau_context *);
 extern void UNLOCK_HARDWARE(struct nouveau_context *);
@@ -101,5 +78,9 @@ extern int nouveau_surface_init_nv50(struct nouveau_context *);
 
 extern uint32_t *nouveau_pipe_dma_beginp(struct nouveau_grobj *, int, int);
 extern void nouveau_pipe_dma_kickoff(struct nouveau_channel *);
+
+/* Must be provided by clients of common code */
+extern void
+nouveau_contended_lock(struct nouveau_context *nv);
 
 #endif

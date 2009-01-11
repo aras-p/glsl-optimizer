@@ -2474,7 +2474,8 @@ static GLboolean
 compile_with_grammar(grammar id, const char *source, slang_code_unit * unit,
                      slang_unit_type type, slang_info_log * infolog,
                      slang_code_unit * builtin,
-                     struct gl_shader *shader)
+                     struct gl_shader *shader,
+                     const struct gl_extensions *extensions)
 {
    byte *prod;
    GLuint size, start, version;
@@ -2502,7 +2503,8 @@ compile_with_grammar(grammar id, const char *source, slang_code_unit * unit,
 
    /* Now preprocess the source string. */
    slang_string_init(&preprocessed);
-   if (!_slang_preprocess_directives(&preprocessed, &source[start], infolog)) {
+   if (!_slang_preprocess_directives(&preprocessed, &source[start],
+                                     infolog, extensions)) {
       slang_string_free(&preprocessed);
       slang_info_log_error(infolog, "failed to preprocess the source.");
       return GL_FALSE;
@@ -2575,7 +2577,8 @@ static const byte slang_vertex_builtin_gc[] = {
 static GLboolean
 compile_object(grammar * id, const char *source, slang_code_object * object,
                slang_unit_type type, slang_info_log * infolog,
-               struct gl_shader *shader)
+               struct gl_shader *shader,
+               const struct gl_extensions *extensions)
 {
    slang_code_unit *builtins = NULL;
    GLuint base_version = 110;
@@ -2674,7 +2677,7 @@ compile_object(grammar * id, const char *source, slang_code_object * object,
 
    /* compile the actual shader - pass-in built-in library for external shader */
    return compile_with_grammar(*id, source, &object->unit, type, infolog,
-                               builtins, shader);
+                               builtins, shader, extensions);
 }
 
 
@@ -2697,7 +2700,8 @@ compile_shader(GLcontext *ctx, slang_code_object * object,
    _slang_code_object_dtr(object);
    _slang_code_object_ctr(object);
 
-   success = compile_object(&id, shader->Source, object, type, infolog, shader);
+   success = compile_object(&id, shader->Source, object, type, infolog, shader,
+                            &ctx->Extensions);
    if (id != 0)
       grammar_destroy(id);
    if (!success)

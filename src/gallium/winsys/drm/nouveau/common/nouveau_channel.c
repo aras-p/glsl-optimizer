@@ -23,7 +23,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
-
+#include <util/u_memory.h>
 #include "nouveau_drmif.h"
 #include "nouveau_dma.h"
 
@@ -38,7 +38,7 @@ nouveau_channel_alloc(struct nouveau_device *dev, uint32_t fb_ctxdma,
 	if (!nvdev || !chan || *chan)
 	    return -EINVAL;
 
-	nvchan = calloc(1, sizeof(struct nouveau_channel_priv));
+	nvchan = CALLOC_STRUCT(nouveau_channel_priv);
 	if (!nvchan)
 		return -ENOMEM;
 	nvchan->base.device = dev;
@@ -48,7 +48,7 @@ nouveau_channel_alloc(struct nouveau_device *dev, uint32_t fb_ctxdma,
 	ret = drmCommandWriteRead(nvdev->fd, DRM_NOUVEAU_CHANNEL_ALLOC,
 				  &nvchan->drm, sizeof(nvchan->drm));
 	if (ret) {
-		free(nvchan);
+		FREE(nvchan);
 		return ret;
 	}
 
@@ -111,16 +111,16 @@ nouveau_channel_free(struct nouveau_channel **chan)
 	nvchan = nouveau_channel(*chan);
 	*chan = NULL;
 	nvdev = nouveau_device(nvchan->base.device);
-	
+
 	FIRE_RING_CH(&nvchan->base);
 
 	nouveau_grobj_free(&nvchan->base.vram);
 	nouveau_grobj_free(&nvchan->base.gart);
 	nouveau_grobj_free(&nvchan->base.nullobj);
 
+	FREE(nvchan->pb.buffers);
+	FREE(nvchan->pb.relocs);
 	cf.channel = nvchan->drm.channel;
 	drmCommandWrite(nvdev->fd, DRM_NOUVEAU_CHANNEL_FREE, &cf, sizeof(cf));
-	free(nvchan);
+	FREE(nvchan);
 }
-
-

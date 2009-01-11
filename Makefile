@@ -182,10 +182,10 @@ ultrix-gcc:
 
 # Rules for making release tarballs
 
-DIRECTORY = Mesa-7.1-rc4
-LIB_NAME = MesaLib-7.1-rc4
-DEMO_NAME = MesaDemos-7.1-rc4
-GLUT_NAME = MesaGLUT-7.1-rc4
+DIRECTORY = Mesa-7.3-rc1
+LIB_NAME = MesaLib-7.3-rc1
+DEMO_NAME = MesaDemos-7.3-rc1
+GLUT_NAME = MesaGLUT-7.3-rc1
 
 MAIN_FILES = \
 	$(DIRECTORY)/Makefile*						\

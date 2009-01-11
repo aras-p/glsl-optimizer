@@ -25,12 +25,12 @@
  * 
  **************************************************************************/
 
-#include <pthread.h>
+#include <pipe/p_thread.h>
 #include <driclient.h>
 #include "nouveau_context.h"
 #include "nouveau_screen.h"
 
-static pthread_mutex_t lockMutex = PTHREAD_MUTEX_INITIALIZER;
+pipe_static_mutex(lockMutex);
 
 static void
 nouveau_contended_lock(struct nouveau_context *nv, unsigned int flags)
@@ -62,7 +62,7 @@ LOCK_HARDWARE(struct nouveau_context *nv)
 	struct nouveau_device_priv	*nvdev = nouveau_device(dev);
 	char				__ret=0;
 
-	pthread_mutex_lock(&lockMutex);
+	pipe_mutex_lock(lockMutex);
 	assert(!nv->locked);
 	
 	DRM_CAS(nvdev->lock, nvdev->ctx,
@@ -88,5 +88,5 @@ UNLOCK_HARDWARE(struct nouveau_context *nv)
 
 	DRM_UNLOCK(nvdev->fd, nvdev->lock, nvdev->ctx);
 
-	pthread_mutex_unlock(&lockMutex);
+	pipe_mutex_unlock(lockMutex);
 } 

@@ -1,13 +1,13 @@
 #define VL_INTERNAL
 #include "vl_basic_csc.h"
 #include <assert.h>
-#include <stdlib.h>
 #include <pipe/p_context.h>
 #include <pipe/p_winsys.h>
 #include <pipe/p_state.h>
 #include <pipe/p_inlines.h>
 #include <tgsi/tgsi_parse.h>
 #include <tgsi/tgsi_build.h>
+#include <util/u_memory.h>
 #include "vl_csc.h"
 #include "vl_surface.h"
 #include "vl_shader_build.h"
@@ -237,7 +237,7 @@ static int vlDestroy
 	pipe->winsys->buffer_destroy(pipe->winsys, basic_csc->vs_const_buf.buffer);
 	pipe->winsys->buffer_destroy(pipe->winsys, basic_csc->fs_const_buf.buffer);
 
-	free(basic_csc);
+	FREE(basic_csc);
 
 	return 0;
 }
@@ -369,7 +369,7 @@ static int vlCreateVertexShader
 	assert(context);
 
 	pipe = csc->pipe;
-	tokens = (struct tgsi_token*)malloc(max_tokens * sizeof(struct tgsi_token));
+	tokens = (struct tgsi_token*)MALLOC(max_tokens * sizeof(struct tgsi_token));
 
 	/* Version */
 	*(struct tgsi_version*)&tokens[0] = tgsi_build_version();
@@ -430,7 +430,7 @@ static int vlCreateVertexShader
 
 	vs.tokens = tokens;
 	csc->vertex_shader = pipe->create_vs_state(pipe, &vs);
-	free(tokens);
+	FREE(tokens);
 
 	return 0;
 }
@@ -456,7 +456,7 @@ static int vlCreateFragmentShader
 	assert(context);
 
 	pipe = csc->pipe;
-	tokens = (struct tgsi_token*)malloc(max_tokens * sizeof(struct tgsi_token));
+	tokens = (struct tgsi_token*)MALLOC(max_tokens * sizeof(struct tgsi_token));
 
 	/* Version */
 	*(struct tgsi_version*)&tokens[0] = tgsi_build_version();
@@ -517,7 +517,7 @@ static int vlCreateFragmentShader
 
 	fs.tokens = tokens;
 	csc->fragment_shader = pipe->create_fs_state(pipe, &fs);
-	free(tokens);
+	FREE(tokens);
 
 	return 0;
 }
@@ -626,7 +626,7 @@ static int vlCreateDataBufs
 	memcpy
 	(
 		pipe->winsys->buffer_map(pipe->winsys, csc->fs_const_buf.buffer, PIPE_BUFFER_USAGE_CPU_WRITE),
-		&bt_601,
+		&bt_601_full,
 		sizeof(struct vlFragmentShaderConsts)
 	);
 
@@ -691,7 +691,7 @@ int vlCreateBasicCSC
 	assert(pipe);
 	assert(csc);
 
-	basic_csc = calloc(1, sizeof(struct vlBasicCSC));
+	basic_csc = CALLOC_STRUCT(vlBasicCSC);
 
 	if (!basic_csc)
 		return 1;

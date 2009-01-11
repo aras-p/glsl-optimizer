@@ -23,7 +23,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <assert.h>
-
+#include <util/u_memory.h>
 #include "nouveau_drmif.h"
 #include "nouveau_dma.h"
 
@@ -97,9 +97,9 @@ nouveau_pushbuf_init(struct nouveau_channel *chan)
 	nouveau_pushbuf_space(chan, 0);
 	chan->pushbuf = &nvchan->pb.base;
 
-	nvchan->pb.buffers = calloc(NOUVEAU_PUSHBUF_MAX_BUFFERS,
+	nvchan->pb.buffers = CALLOC(NOUVEAU_PUSHBUF_MAX_BUFFERS,
 				    sizeof(struct nouveau_pushbuf_bo));
-	nvchan->pb.relocs = calloc(NOUVEAU_PUSHBUF_MAX_RELOCS,
+	nvchan->pb.relocs = CALLOC(NOUVEAU_PUSHBUF_MAX_RELOCS,
 				   sizeof(struct nouveau_pushbuf_reloc));
 	return 0;
 }
@@ -268,4 +268,3 @@ nouveau_pushbuf_emit_reloc(struct nouveau_channel *chan, void *ptr,
 		*(uint32_t *)ptr = nouveau_pushbuf_calc_reloc(bo, r);
 	return 0;
 }
-

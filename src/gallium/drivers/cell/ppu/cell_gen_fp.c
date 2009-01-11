@@ -145,7 +145,7 @@ get_const_one_reg(struct codegen *gen)
       gen->one_reg = spe_allocate_available_register(gen->f);
 
       spe_indent(gen->f, 4);
-      spe_comment(gen->f, -4, "INIT CONSTANT 1.0:");
+      spe_comment(gen->f, -4, "init constant reg = 1.0:");
 
       /* one = {1.0, 1.0, 1.0, 1.0} */
       spe_load_float(gen->f, gen->one_reg, 1.0f);
@@ -168,7 +168,7 @@ get_address_reg(struct codegen *gen)
       gen->addr_reg = spe_allocate_available_register(gen->f);
 
       spe_indent(gen->f, 4);
-      spe_comment(gen->f, -4, "INIT CONSTANT 1.0:");
+      spe_comment(gen->f, -4, "init address reg = 0:");
 
       /* init addr = {0, 0, 0, 0} */
       spe_zero(gen->f, gen->addr_reg);
@@ -479,7 +479,7 @@ emit_prologue(struct codegen *gen)
 {
    gen->frame_size = 1024; /* XXX temporary, should be dynamic */
 
-   spe_comment(gen->f, -4, "Function prologue:");
+   spe_comment(gen->f, 0, "Function prologue:");
 
    /* save $lr on stack     # stqd $lr,16($sp) */
    spe_stqd(gen->f, SPE_REG_RA, SPE_REG_SP, 16);
@@ -515,7 +515,7 @@ emit_epilogue(struct codegen *gen)
 {
    const int return_reg = 3;
 
-   spe_comment(gen->f, -4, "Function epilogue:");
+   spe_comment(gen->f, 0, "Function epilogue:");
 
    spe_comment(gen->f, 0, "return the killed mask");
    if (gen->kill_mask_reg > 0) {
@@ -561,8 +561,6 @@ emit_ARL(struct codegen *gen, const struct tgsi_full_instruction *inst)
 {
    int ch = 0, src_reg, addr_reg;
 
-   spe_comment(gen->f, -4, "ARL:");
-
    src_reg = get_src_reg(gen, ch, &inst->FullSrcRegisters[0]);
    addr_reg = get_address_reg(gen);
 
@@ -579,8 +577,6 @@ static boolean
 emit_MOV(struct codegen *gen, const struct tgsi_full_instruction *inst)
 {
    int ch, src_reg[4], dst_reg[4];
-
-   spe_comment(gen->f, -4, "MOV:");
 
    FOR_EACH_ENABLED_CHANNEL(inst, ch) {
       src_reg[ch] = get_src_reg(gen, ch, &inst->FullSrcRegisters[0]);
@@ -611,20 +607,6 @@ static boolean
 emit_binop(struct codegen *gen, const struct tgsi_full_instruction *inst)
 {
    int ch, s1_reg[4], s2_reg[4], d_reg[4];
-
-   switch (inst->Instruction.Opcode) {
-   case TGSI_OPCODE_ADD:
-      spe_comment(gen->f, -4, "ADD:");
-      break;
-   case TGSI_OPCODE_SUB:
-      spe_comment(gen->f, -4, "SUB:");
-      break;
-   case TGSI_OPCODE_MUL:
-      spe_comment(gen->f, -4, "MUL:");
-      break;
-   default:
-      assert(0);
-   }
 
    /* Loop over Red/Green/Blue/Alpha channels, fetch src operands */
    FOR_EACH_ENABLED_CHANNEL(inst, ch) {
@@ -670,7 +652,7 @@ static boolean
 emit_MAD(struct codegen *gen, const struct tgsi_full_instruction *inst)
 {
    int ch, s1_reg[4], s2_reg[4], s3_reg[4], d_reg[4];
-   spe_comment(gen->f, -4, "MAD:");
+
    FOR_EACH_ENABLED_CHANNEL(inst, ch) {
       s1_reg[ch] = get_src_reg(gen, ch, &inst->FullSrcRegisters[0]);
       s2_reg[ch] = get_src_reg(gen, ch, &inst->FullSrcRegisters[1]);
@@ -695,7 +677,7 @@ static boolean
 emit_LERP(struct codegen *gen, const struct tgsi_full_instruction *inst)
 {
    int ch, s1_reg[4], s2_reg[4], s3_reg[4], d_reg[4], tmp_reg[4];
-   spe_comment(gen->f, -4, "LERP:");
+
    /* setup/get src/dst/temp regs */
    FOR_EACH_ENABLED_CHANNEL(inst, ch) {
       s1_reg[ch] = get_src_reg(gen, ch, &inst->FullSrcRegisters[0]);
@@ -729,14 +711,6 @@ static boolean
 emit_RCP_RSQ(struct codegen *gen, const struct tgsi_full_instruction *inst)
 {
    int ch, s1_reg[4], d_reg[4], tmp_reg[4];
-
-   if (inst->Instruction.Opcode == TGSI_OPCODE_RCP) {
-      spe_comment(gen->f, -4, "RCP:");
-   }
-   else {
-      assert(inst->Instruction.Opcode == TGSI_OPCODE_RSQ);
-      spe_comment(gen->f, -4, "RSQ:");
-   }
 
    FOR_EACH_ENABLED_CHANNEL(inst, ch) {
       s1_reg[ch] = get_src_reg(gen, ch, &inst->FullSrcRegisters[0]);
@@ -778,8 +752,6 @@ emit_ABS(struct codegen *gen, const struct tgsi_full_instruction *inst)
    int ch, s1_reg[4], d_reg[4];
    const int bit31mask_reg = get_itemp(gen);
 
-   spe_comment(gen->f, -4, "ABS:");
-
    /* mask with bit 31 set, the rest cleared */  
    spe_load_uint(gen->f, bit31mask_reg, (1 << 31));
 
@@ -811,8 +783,6 @@ emit_DP3(struct codegen *gen, const struct tgsi_full_instruction *inst)
    int s1x_reg, s1y_reg, s1z_reg;
    int s2x_reg, s2y_reg, s2z_reg;
    int t0_reg = get_itemp(gen), t1_reg = get_itemp(gen);
-
-   spe_comment(gen->f, -4, "DP3:");
 
    s1x_reg = get_src_reg(gen, CHAN_X, &inst->FullSrcRegisters[0]);
    s2x_reg = get_src_reg(gen, CHAN_X, &inst->FullSrcRegisters[1]);
@@ -853,8 +823,6 @@ emit_DP4(struct codegen *gen, const struct tgsi_full_instruction *inst)
    int s0x_reg, s0y_reg, s0z_reg, s0w_reg;
    int s1x_reg, s1y_reg, s1z_reg, s1w_reg;
    int t0_reg = get_itemp(gen), t1_reg = get_itemp(gen);
-
-   spe_comment(gen->f, -4, "DP4:");
 
    s0x_reg = get_src_reg(gen, CHAN_X, &inst->FullSrcRegisters[0]);
    s1x_reg = get_src_reg(gen, CHAN_X, &inst->FullSrcRegisters[1]);
@@ -898,8 +866,6 @@ emit_DPH(struct codegen *gen, const struct tgsi_full_instruction *inst)
 {
    /* XXX rewrite this function to look more like DP3/DP4 */
    int ch;
-   spe_comment(gen->f, -4, "DPH:");
-
    int s1_reg = get_src_reg(gen, CHAN_X, &inst->FullSrcRegisters[0]);
    int s2_reg = get_src_reg(gen, CHAN_X, &inst->FullSrcRegisters[1]);
    int tmp_reg = get_itemp(gen);
@@ -941,8 +907,6 @@ emit_NRM3(struct codegen *gen, const struct tgsi_full_instruction *inst)
    int src_reg[3];
    int t0_reg = get_itemp(gen), t1_reg = get_itemp(gen);
 
-   spe_comment(gen->f, -4, "NRM3:");
-
    src_reg[0] = get_src_reg(gen, CHAN_X, &inst->FullSrcRegisters[0]);
    src_reg[1] = get_src_reg(gen, CHAN_Y, &inst->FullSrcRegisters[0]);
    src_reg[2] = get_src_reg(gen, CHAN_Z, &inst->FullSrcRegisters[0]);
@@ -981,8 +945,6 @@ emit_NRM3(struct codegen *gen, const struct tgsi_full_instruction *inst)
 static boolean
 emit_XPD(struct codegen *gen, const struct tgsi_full_instruction *inst)
 {
-   spe_comment(gen->f, -4, "XPD:");
-
    int s1_reg = get_src_reg(gen, CHAN_Z, &inst->FullSrcRegisters[0]);
    int s2_reg = get_src_reg(gen, CHAN_Y, &inst->FullSrcRegisters[1]);
    int tmp_reg = get_itemp(gen);
@@ -1044,32 +1006,6 @@ emit_inequality(struct codegen *gen, const struct tgsi_full_instruction *inst)
    int ch, s1_reg[4], s2_reg[4], d_reg[4], one_reg;
    bool complement = FALSE;
 
-   switch (inst->Instruction.Opcode) {
-   case TGSI_OPCODE_SGT:
-      spe_comment(gen->f, -4, "SGT:");
-      break;
-   case TGSI_OPCODE_SLT:
-      spe_comment(gen->f, -4, "SLT:");
-      break;
-   case TGSI_OPCODE_SGE:
-      spe_comment(gen->f, -4, "SGE:");
-      complement = TRUE;
-      break;
-   case TGSI_OPCODE_SLE:
-      spe_comment(gen->f, -4, "SLE:");
-      complement = TRUE;
-      break;
-   case TGSI_OPCODE_SEQ:
-      spe_comment(gen->f, -4, "SEQ:");
-      break;
-   case TGSI_OPCODE_SNE:
-      spe_comment(gen->f, -4, "SNE:");
-      complement = TRUE;
-      break;
-   default:
-      ;
-   }
-
    one_reg = get_const_one_reg(gen);
 
    FOR_EACH_ENABLED_CHANNEL(inst, ch) {
@@ -1088,15 +1024,18 @@ emit_inequality(struct codegen *gen, const struct tgsi_full_instruction *inst)
          break;
       case TGSI_OPCODE_SGE:
          spe_fcgt(gen->f, d_reg[ch], s2_reg[ch], s1_reg[ch]);
+         complement = TRUE;
          break;
       case TGSI_OPCODE_SLE:
          spe_fcgt(gen->f, d_reg[ch], s1_reg[ch], s2_reg[ch]);
+         complement = TRUE;
          break;
       case TGSI_OPCODE_SEQ:
          spe_fceq(gen->f, d_reg[ch], s1_reg[ch], s2_reg[ch]);
          break;
       case TGSI_OPCODE_SNE:
          spe_fceq(gen->f, d_reg[ch], s1_reg[ch], s2_reg[ch]);
+         complement = TRUE;
          break;
       default:
          assert(0);
@@ -1129,8 +1068,6 @@ emit_CMP(struct codegen *gen, const struct tgsi_full_instruction *inst)
 {
    int ch;
 
-   spe_comment(gen->f, -4, "CMP:");
-
    FOR_EACH_ENABLED_CHANNEL(inst, ch) {
       int s1_reg = get_src_reg(gen, ch, &inst->FullSrcRegisters[0]);
       int s2_reg = get_src_reg(gen, ch, &inst->FullSrcRegisters[1]);
@@ -1160,8 +1097,6 @@ static boolean
 emit_TRUNC(struct codegen *gen, const struct tgsi_full_instruction *inst)
 {
    int ch, s1_reg[4], d_reg[4];
-
-   spe_comment(gen->f, -4, "TRUNC:");
 
    FOR_EACH_ENABLED_CHANNEL(inst, ch) {
       s1_reg[ch] = get_src_reg(gen, ch, &inst->FullSrcRegisters[0]);
@@ -1197,8 +1132,6 @@ static boolean
 emit_FLR(struct codegen *gen, const struct tgsi_full_instruction *inst)
 {
    int ch, s1_reg[4], d_reg[4], tmp_reg[4], zero_reg, one_reg;
-
-   spe_comment(gen->f, -4, "FLR:");
 
    zero_reg = get_itemp(gen);
    spe_zero(gen->f, zero_reg);
@@ -1247,8 +1180,6 @@ static boolean
 emit_FRC(struct codegen *gen, const struct tgsi_full_instruction *inst)
 {
    int ch, s1_reg[4], d_reg[4], tmp_reg[4], zero_reg, one_reg;
-
-   spe_comment(gen->f, -4, "FRC:");
 
    zero_reg = get_itemp(gen);
    spe_zero(gen->f, zero_reg);
@@ -1577,8 +1508,6 @@ emit_MIN_MAX(struct codegen *gen, const struct tgsi_full_instruction *inst)
 {
    int ch, s0_reg[4], s1_reg[4], d_reg[4], tmp_reg[4];
 
-   spe_comment(gen->f, -4, "MAX:");
-
    FOR_EACH_ENABLED_CHANNEL(inst, ch) {
       s0_reg[ch] = get_src_reg(gen, ch, &inst->FullSrcRegisters[0]);
       s1_reg[ch] = get_src_reg(gen, ch, &inst->FullSrcRegisters[1]);
@@ -1646,8 +1575,6 @@ emit_IF(struct codegen *gen, const struct tgsi_full_instruction *inst)
    const int channel = 0;
    int cond_reg;
 
-   spe_comment(gen->f, -4, "IF:");
-
    cond_reg = get_cond_mask_reg(gen);
 
    /* XXX push cond exec mask */
@@ -1682,8 +1609,6 @@ emit_ELSE(struct codegen *gen, const struct tgsi_full_instruction *inst)
 {
    const int cond_reg = get_cond_mask_reg(gen);
 
-   spe_comment(gen->f, -4, "ELSE:");
-
    spe_comment(gen->f, 0, "cond exec mask = !cond exec mask");
    spe_complement(gen->f, cond_reg, cond_reg);
    emit_update_exec_mask(gen);
@@ -1695,8 +1620,6 @@ emit_ELSE(struct codegen *gen, const struct tgsi_full_instruction *inst)
 static boolean
 emit_ENDIF(struct codegen *gen, const struct tgsi_full_instruction *inst)
 {
-   spe_comment(gen->f, -4, "ENDIF:");
-
    /* XXX todo: pop cond exec mask */
 
    gen->if_nesting--;
@@ -1711,8 +1634,6 @@ static boolean
 emit_BGNLOOP(struct codegen *gen, const struct tgsi_full_instruction *inst)
 {
    int exec_reg, loop_reg;
-
-   spe_comment(gen->f, -4, "BGNLOOP:");
 
    exec_reg = get_exec_mask_reg(gen);
    loop_reg = get_loop_mask_reg(gen);
@@ -1735,8 +1656,6 @@ emit_ENDLOOP(struct codegen *gen, const struct tgsi_full_instruction *inst)
    const int loop_reg = get_loop_mask_reg(gen);
    const int tmp_reg = get_itemp(gen);
    int offset;
-
-   spe_comment(gen->f, -4, "ENDLOOP:");
 
    /* tmp_reg = exec[0] | exec[1] | exec[2] | exec[3] */
    spe_orx(gen->f, tmp_reg, loop_reg);
@@ -1762,8 +1681,6 @@ emit_BRK(struct codegen *gen, const struct tgsi_full_instruction *inst)
    const int exec_reg = get_exec_mask_reg(gen);
    const int loop_reg = get_loop_mask_reg(gen);
 
-   spe_comment(gen->f, -4, "BREAK:");
-
    assert(gen->loop_nesting > 0);
 
    spe_comment(gen->f, 0, "loop exec mask &= ~master exec mask");
@@ -1778,8 +1695,6 @@ emit_BRK(struct codegen *gen, const struct tgsi_full_instruction *inst)
 static boolean
 emit_CONT(struct codegen *gen, const struct tgsi_full_instruction *inst)
 {
-   spe_comment(gen->f, -4, "CONT:");
-
    assert(gen->loop_nesting > 0);
 
    return TRUE;
@@ -1791,8 +1706,6 @@ emit_DDX_DDY(struct codegen *gen, const struct tgsi_full_instruction *inst,
              boolean ddx)
 {
    int ch;
-
-   spe_comment(gen->f, -4, ddx ? "DDX:" : "DDY:");
 
    FOR_EACH_ENABLED_CHANNEL(inst, ch) {
       int s_reg = get_src_reg(gen, ch, &inst->FullSrcRegisters[0]);
@@ -1829,7 +1742,6 @@ emit_DDX_DDY(struct codegen *gen, const struct tgsi_full_instruction *inst,
 static boolean
 emit_END(struct codegen *gen)
 {
-   spe_comment(gen->f, -4, "END:");
    emit_epilogue(gen);
    return TRUE;
 }
@@ -1962,8 +1874,6 @@ emit_immediate(struct codegen *gen, const struct tgsi_full_immediate *immed)
 
    assert(gen->num_imm < MAX_TEMPS);
 
-   spe_comment(gen->f, -4, "IMMEDIATE:");
-
    for (ch = 0; ch < 4; ch++) {
       float val = immed->u.ImmediateFloat32[ch].Float;
 
@@ -2028,7 +1938,7 @@ emit_declaration(struct cell_context *cell,
             sprintf(buf, "TGSI temp[%d] maps to SPU regs [$%d $%d $%d $%d]", i,
                     gen->temp_regs[i][0], gen->temp_regs[i][1],
                     gen->temp_regs[i][2], gen->temp_regs[i][3]);
-            spe_comment(gen->f, -4, buf);
+            spe_comment(gen->f, 0, buf);
          }
       }
       break;
@@ -2056,6 +1966,7 @@ cell_gen_fragment_program(struct cell_context *cell,
 {
    struct tgsi_parse_context parse;
    struct codegen gen;
+   uint ic = 0;
 
    memset(&gen, 0, sizeof(gen));
    gen.cell = cell;
@@ -2073,7 +1984,7 @@ cell_gen_fragment_program(struct cell_context *cell,
 
    if (cell->debug_flags & CELL_DEBUG_ASM) {
       spe_print_code(f, TRUE);
-      spe_indent(f, 8);
+      spe_indent(f, 2*8);
       printf("Begin %s\n", __FUNCTION__);
       tgsi_dump(tokens, 0);
    }
@@ -2087,16 +1998,29 @@ cell_gen_fragment_program(struct cell_context *cell,
 
       switch (parse.FullToken.Token.Type) {
       case TGSI_TOKEN_TYPE_IMMEDIATE:
+         if (f->print) {
+            _debug_printf("    # ");
+            tgsi_dump_immediate(&parse.FullToken.FullImmediate);
+         }
          if (!emit_immediate(&gen, &parse.FullToken.FullImmediate))
             gen.error = TRUE;
          break;
 
       case TGSI_TOKEN_TYPE_DECLARATION:
+         if (f->print) {
+            _debug_printf("    # ");
+            tgsi_dump_declaration(&parse.FullToken.FullDeclaration);
+         }
          if (!emit_declaration(cell, &gen, &parse.FullToken.FullDeclaration))
             gen.error = TRUE;
          break;
 
       case TGSI_TOKEN_TYPE_INSTRUCTION:
+         if (f->print) {
+            _debug_printf("    # ");
+            ic++;
+            tgsi_dump_instruction(&parse.FullToken.FullInstruction, ic);
+         }
          if (!emit_instruction(&gen, &parse.FullToken.FullInstruction))
             gen.error = TRUE;
          break;

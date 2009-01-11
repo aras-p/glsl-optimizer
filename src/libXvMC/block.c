@@ -1,7 +1,7 @@
 #include <assert.h>
-#include <stdlib.h>
 #include <X11/Xlib.h>
 #include <X11/extensions/XvMC.h>
+#include <util/u_memory.h>
 #include <vl_display.h>
 #include <vl_screen.h>
 #include <vl_context.h>
@@ -26,7 +26,7 @@ Status XvMCCreateBlocks(Display *display, XvMCContext *context, unsigned int num
 
 	blocks->context_id = context->context_id;
 	blocks->num_blocks = num_blocks;
-	blocks->blocks = malloc(BLOCK_SIZE * num_blocks);
+	blocks->blocks = MALLOC(BLOCK_SIZE * num_blocks);
 	/* Since we don't have a VL type for blocks, set privData to the display so we can catch mismatches */
 	blocks->privData = display;
 
@@ -38,7 +38,7 @@ Status XvMCDestroyBlocks(Display *display, XvMCBlockArray *blocks)
 	assert(display);
 	assert(blocks);
 	assert(display == blocks->privData);
-	free(blocks->blocks);
+	FREE(blocks->blocks);
 
 	return Success;
 }
@@ -61,7 +61,7 @@ Status XvMCCreateMacroBlocks(Display *display, XvMCContext *context, unsigned in
 
 	blocks->context_id = context->context_id;
 	blocks->num_blocks = num_blocks;
-	blocks->macro_blocks = malloc(sizeof(XvMCMacroBlock) * num_blocks);
+	blocks->macro_blocks = MALLOC(sizeof(XvMCMacroBlock) * num_blocks);
 	/* Since we don't have a VL type for blocks, set privData to the display so we can catch mismatches */
 	blocks->privData = display;
 
@@ -73,7 +73,7 @@ Status XvMCDestroyMacroBlocks(Display *display, XvMCMacroBlockArray *blocks)
 	assert(display);
 	assert(blocks);
 	assert(display == blocks->privData);
-	free(blocks->macro_blocks);
+	FREE(blocks->macro_blocks);
 
 	return Success;
 }

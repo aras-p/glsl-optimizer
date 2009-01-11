@@ -182,6 +182,8 @@ Status XvMCCreateContext(Display *display, XvPortID port, int surface_type_id, i
 Status XvMCDestroyContext(Display *display, XvMCContext *context)
 {
 	struct vlContext	*vl_ctx;
+	struct vlScreen		*vl_screen;
+	struct vlDisplay	*vl_dpy;
 	struct pipe_context	*pipe;
 
 	assert(display);
@@ -194,7 +196,11 @@ Status XvMCDestroyContext(Display *display, XvMCContext *context)
 	assert(display == vlGetNativeDisplay(vlGetDisplay(vlContextGetScreen(vl_ctx))));
 
 	pipe = vlGetPipeContext(vl_ctx);
+	vl_screen = vlContextGetScreen(vl_ctx);
+	vl_dpy = vlGetDisplay(vl_screen);
 	vlDestroyContext(vl_ctx);
+	vlDestroyScreen(vl_screen);
+	vlDestroyDisplay(vl_dpy);
 	destroy_pipe_context(pipe);
 
 	return Success;

@@ -1,28 +1,12 @@
-#include "pipe/p_defines.h"
-#include "pipe/p_context.h"
-#include "pipe/p_screen.h"
-#include "util/u_memory.h"
-
+#include <pipe/p_defines.h>
+#include <pipe/p_context.h>
+#include <pipe/p_screen.h>
+#include <util/u_memory.h>
 #include "nouveau_context.h"
 #include "nouveau_dri.h"
 #include "nouveau_local.h"
 #include "nouveau_screen.h"
 #include "nouveau_winsys_pipe.h"
-
-/*
-#ifdef DEBUG
-static const struct dri_debug_control debug_control[] = {
-	{ "bo", DEBUG_BO },
-	{ NULL, 0 }
-};
-int __nouveau_debug = 0;
-#endif
-*/
-
-/*
- * TODO: Re-examine dri_screen, dri_context, nouveau_screen, nouveau_context
- * relationships, seems like there is a lot of room for simplification there.
- */
 
 static void
 nouveau_channel_context_destroy(struct nouveau_channel_context *nvc)
@@ -89,15 +73,15 @@ nouveau_channel_context_create(struct nouveau_device *dev)
 }
 
 int
-nouveau_context_create(dri_context_t *dri_context)
+nouveau_context_init(struct nouveau_screen *nv_screen,
+                     drm_context_t hHWContext, drmLock *sarea_lock,
+                     struct nouveau_context *nv_share,
+                     struct nouveau_context *nv)
 {
-	dri_screen_t			*dri_screen = dri_context->dri_screen;
-	struct nouveau_screen 		*nv_screen = dri_screen->private;
-	struct nouveau_context		*nv = CALLOC_STRUCT(nouveau_context);
-	struct pipe_context		*pipe = NULL;
-	struct nouveau_channel_context	*nvc = NULL;
-	struct nouveau_device		*dev = nv_screen->device;
-	int				i;
+	struct pipe_context *pipe = NULL;
+	struct nouveau_channel_context *nvc = NULL;
+	struct nouveau_device *dev = nv_screen->device;
+	int i;
 
 	switch (dev->chipset & 0xf0) {
 	case 0x10:
@@ -118,25 +102,14 @@ nouveau_context_create(dri_context_t *dri_context)
 		return 1;
 	}
 
-	dri_context->private = (void*)nv;
-	nv->dri_context = dri_context;
 	nv->nv_screen  = nv_screen;
 
 	{
 		struct nouveau_device_priv *nvdev = nouveau_device(dev);
 
-		nvdev->ctx  = dri_context->drm_context;
-		nvdev->lock = (drmLock*)&dri_screen->sarea->lock;
+		nvdev->ctx  = hHWContext;
+		nvdev->lock = sarea_lock;
 	}
-
-	/*
-	driParseConfigFiles(&nv->dri_option_cache, &nv_screen->option_cache,
-			    nv->dri_screen->myNum, "nouveau");
-#ifdef DEBUG
-	__nouveau_debug = driParseDebugString(getenv("NOUVEAU_DEBUG"),
-					      debug_control);
-#endif
-	*/
 
 	/*XXX: Hack up a fake region and buffer object for front buffer.
 	 *     This will go away with TTM, replaced with a simple reference
@@ -150,7 +123,7 @@ nouveau_context_create(dri_context_t *dri_context)
 		fb_bo = calloc(1, sizeof(struct nouveau_bo_priv));
 		fb_bo->drm.offset = nv_screen->front_offset;
 		fb_bo->drm.flags = NOUVEAU_MEM_FB;
-		fb_bo->drm.size = nv_screen->front_pitch *
+		fb_bo->drm.size = nv_screen->front_pitch * 
 				  nv_screen->front_height;
 		fb_bo->refcount = 1;
 		fb_bo->base.flags = NOUVEAU_BO_PIN | NOUVEAU_BO_VRAM;
@@ -177,7 +150,27 @@ nouveau_context_create(dri_context_t *dri_context)
 		nv->frontbuffer = fb_surf;
 	}
 
+	/* Attempt to share a single channel between multiple contexts from
+	 * a single process.
+	 */
 	nvc = nv_screen->nvc;
+	if (!nvc && nv_share)
+		nvc = nv_share->nvc;
+
+	/*XXX: temporary - disable multi-context/single-channel on pre-NV4x */
+	switch (dev->chipset & 0xf0) {
+	case 0x40:
+	case 0x60:
+		/* NV40 class */
+	case 0x50:
+	case 0x80:
+	case 0x90:
+		/* G80 class */
+		break;
+	default:
+		nvc = NULL;
+		break;
+	}
 
 	if (!nvc) {
 		nvc = nouveau_channel_context_create(dev);
@@ -235,8 +228,6 @@ nouveau_context_create(dri_context_t *dri_context)
 			pscreen->get_param(pscreen, NOUVEAU_CAP_HW_IDXBUF);
 	}
 
-	/* XXX: nouveau_winsys_softpipe needs a mesa header removed before we can compile it. */
-	/*
 	if (!pipe) {
 		NOUVEAU_MSG("Using softpipe\n");
 		pipe = nouveau_create_softpipe(nv);
@@ -245,11 +236,6 @@ nouveau_context_create(dri_context_t *dri_context)
 			return 1;
 		}
 	}
-	*/
-	if (!pipe) {
-		NOUVEAU_ERR("Error creating pipe, bailing\n");
-		return 1;
-	}
 
 	pipe->priv = nv;
 
@@ -257,9 +243,8 @@ nouveau_context_create(dri_context_t *dri_context)
 }
 
 void
-nouveau_context_destroy(dri_context_t *dri_context)
+nouveau_context_cleanup(struct nouveau_context *nv)
 {
-	struct nouveau_context *nv = dri_context->private;
 	struct nouveau_channel_context *nvc = nv->nvc;
 
 	assert(nv);
@@ -271,100 +256,7 @@ nouveau_context_destroy(dri_context_t *dri_context)
 			nv->nv_screen->nvc = NULL;
 		}
 	}
-
-	free(nv);
+	
+	/* XXX: Who cleans up the pipe? */
 }
 
-int
-nouveau_context_bind(struct nouveau_context *nv, dri_drawable_t *dri_drawable)
-{
-	assert(nv);
-	assert(dri_drawable);
-
-	if (nv->dri_drawable != dri_drawable)
-	{
-		nv->dri_drawable = dri_drawable;
-		dri_drawable->private = nv;
-	}
-
-	return 0;
-}
-
-int
-nouveau_context_unbind(struct nouveau_context *nv)
-{
-	assert(nv);
-
-	nv->dri_drawable = NULL;
-
-	return 0;
-}
-
-/* Show starts here */
-
-int bind_pipe_drawable(struct pipe_context *pipe, Drawable drawable)
-{
-	struct nouveau_context	*nv;
-	dri_drawable_t		*dri_drawable;
-
-	nv = pipe->priv;
-
-	driCreateDrawable(nv->nv_screen->dri_screen, drawable, &dri_drawable);
-
-	nouveau_context_bind(nv, dri_drawable);
-
-	return 0;
-}
-
-int unbind_pipe_drawable(struct pipe_context *pipe)
-{
-	nouveau_context_unbind(pipe->priv);
-
-	return 0;
-}
-
-struct pipe_context* create_pipe_context(Display *display, int screen)
-{
-	dri_screen_t		*dri_screen;
-	dri_framebuffer_t	dri_framebuf;
-	dri_context_t		*dri_context;
-	struct nouveau_context	*nv;
-
-	driCreateScreen(display, screen, &dri_screen, &dri_framebuf);
-	driCreateContext(dri_screen, XDefaultVisual(display, screen), &dri_context);
-
-	nouveau_screen_create(dri_screen, &dri_framebuf);
-	nouveau_context_create(dri_context);
-
-	nv = dri_context->private;
-
-	return nv->nvc->pctx[nv->pctx_id];
-}
-
-int destroy_pipe_context(struct pipe_context *pipe)
-{
-	struct pipe_screen	*screen;
-	struct pipe_winsys	*winsys;
-	struct nouveau_context	*nv;
-	dri_screen_t		*dri_screen;
-	dri_context_t		*dri_context;
-
-	assert(pipe);
-
-	screen = pipe->screen;
-	winsys = pipe->winsys;
-	nv = pipe->priv;
-	dri_context = nv->dri_context;
-	dri_screen = dri_context->dri_screen;
-
-	pipe->destroy(pipe);
-	screen->destroy(screen);
-	free(winsys);
-
-	nouveau_context_destroy(dri_context);
-	nouveau_screen_destroy(dri_screen);
-	driDestroyContext(dri_context);
-	driDestroyScreen(dri_screen);
-
-	return 0;
-}

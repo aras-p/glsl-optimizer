@@ -23,7 +23,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
-
+#include <util/u_memory.h>
 #include "nouveau_drmif.h"
 
 int
@@ -36,7 +36,7 @@ nouveau_device_open_existing(struct nouveau_device **dev, int close,
 	if (!dev || *dev)
 	    return -EINVAL;
 
-	nvdev = calloc(1, sizeof(*nvdev));
+	nvdev = CALLOC_STRUCT(nouveau_device_priv);
 	if (!nvdev)
 	    return -ENOMEM;
 	nvdev->fd = fd;
@@ -112,7 +112,7 @@ nouveau_device_close(struct nouveau_device **dev)
 		drmDestroyContext(nvdev->fd, nvdev->ctx);
 		drmClose(nvdev->fd);
 	}
-	free(nvdev);
+	FREE(nvdev);
 }
 
 int

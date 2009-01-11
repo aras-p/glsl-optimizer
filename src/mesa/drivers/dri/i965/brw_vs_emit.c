@@ -193,6 +193,7 @@ static void unalias1( struct brw_vs_compile *c,
       struct brw_reg tmp = brw_writemask(get_tmp(c), dst.dw1.bits.writemask);
       func(c, tmp, arg0);
       brw_MOV(p, dst, tmp);
+      release_tmp(c, tmp);
    }
    else {
       func(c, dst, arg0);
@@ -214,9 +215,35 @@ static void unalias2( struct brw_vs_compile *c,
       struct brw_reg tmp = brw_writemask(get_tmp(c), dst.dw1.bits.writemask);
       func(c, tmp, arg0, arg1);
       brw_MOV(p, dst, tmp);
+      release_tmp(c, tmp);
    }
    else {
       func(c, dst, arg0, arg1);
+   }
+}
+
+static void unalias3( struct brw_vs_compile *c,
+		      struct brw_reg dst,
+		      struct brw_reg arg0,
+		      struct brw_reg arg1,
+		      struct brw_reg arg2,
+		      void (*func)( struct brw_vs_compile *,
+				    struct brw_reg,
+				    struct brw_reg,
+				    struct brw_reg,
+				    struct brw_reg ))
+{
+   if ((dst.file == arg0.file && dst.nr == arg0.nr) ||
+       (dst.file == arg1.file && dst.nr == arg1.nr) ||
+       (dst.file == arg2.file && dst.nr == arg2.nr)) {
+      struct brw_compile *p = &c->func;
+      struct brw_reg tmp = brw_writemask(get_tmp(c), dst.dw1.bits.writemask);
+      func(c, tmp, arg0, arg1, arg2);
+      brw_MOV(p, dst, tmp);
+      release_tmp(c, tmp);
+   }
+   else {
+      func(c, dst, arg0, arg1, arg2);
    }
 }
 
@@ -590,6 +617,18 @@ static void emit_lit_noalias( struct brw_vs_compile *c,
    brw_ENDIF(p, if_insn);
 }
 
+static void emit_lrp_noalias(struct brw_vs_compile *c,
+			     struct brw_reg dst,
+			     struct brw_reg arg0,
+			     struct brw_reg arg1,
+			     struct brw_reg arg2)
+{
+   struct brw_compile *p = &c->func;
+
+   brw_ADD(p, dst, negate(arg0), brw_imm_f(1.0));
+   brw_MUL(p, brw_null_reg(), dst, arg2);
+   brw_MAC(p, dst, arg0, arg1);
+}
 
 /** 3 or 4-component vector normalization */
 static void emit_nrm( struct brw_vs_compile *c, 
@@ -1025,6 +1064,11 @@ void brw_vs_emit(struct brw_vs_compile *c )
       else
 	  dst = get_dst(c, inst->DstReg);
 
+      if (inst->SaturateMode != SATURATE_OFF) {
+	 _mesa_problem(NULL, "Unsupported saturate %d in vertex shader",
+                       inst->SaturateMode);
+      }
+
       switch (inst->Opcode) {
       case OPCODE_ABS:
 	 brw_MOV(p, dst, brw_abs(args[0]));
@@ -1076,6 +1120,9 @@ void brw_vs_emit(struct brw_vs_compile *c )
 	 break;
       case OPCODE_LIT:
 	 unalias1(c, dst, args[0], emit_lit_noalias);
+	 break;
+      case OPCODE_LRP:
+	 unalias3(c, dst, args[0], args[1], args[2], emit_lrp_noalias);
 	 break;
       case OPCODE_MAD:
 	 brw_MOV(p, brw_acc_reg(), args[2]);

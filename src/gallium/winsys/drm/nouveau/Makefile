@@ -1,46 +1,25 @@
-
 TOP = ../../../../..
 include $(TOP)/configs/current
 
-LIBNAME = nouveau_dri.so
 
-MINIGLX_SOURCES =
+SUBDIRS = common dri
 
-PIPE_DRIVERS = \
-	$(TOP)/src/gallium/drivers/softpipe/libsoftpipe.a \
-	$(TOP)/src/gallium/drivers/nv04/libnv04.a \
-	$(TOP)/src/gallium/drivers/nv10/libnv10.a \
-	$(TOP)/src/gallium/drivers/nv20/libnv20.a \
-	$(TOP)/src/gallium/drivers/nv30/libnv30.a \
-	$(TOP)/src/gallium/drivers/nv40/libnv40.a \
-	$(TOP)/src/gallium/drivers/nv50/libnv50.a
 
-DRIVER_SOURCES = \
-	nouveau_bo.c \
-	nouveau_channel.c \
-	nouveau_context.c \
-	nouveau_device.c \
-	nouveau_dma.c \
-	nouveau_fence.c \
-	nouveau_grobj.c \
-	nouveau_lock.c \
-	nouveau_notifier.c \
-	nouveau_pushbuf.c \
-	nouveau_resource.c \
-	nouveau_screen.c \
-	nouveau_swapbuffers.c \
-	nouveau_winsys.c \
-	nouveau_winsys_pipe.c \
-	nouveau_winsys_softpipe.c \
-	nv04_surface.c \
-	nv50_surface.c
+default: subdirs
 
-C_SOURCES = \
-	$(COMMON_GALLIUM_SOURCES) \
-	$(DRIVER_SOURCES)
 
-ASM_SOURCES = 
+subdirs:
+	@for dir in $(SUBDIRS) ; do \
+		if [ -d $$dir ] ; then \
+			(cd $$dir && $(MAKE)) || exit 1 ; \
+		fi \
+	done
 
-include ../Makefile.template
 
-symlinks:
+clean:
+	rm -f `find . -name \*.[oa]`
+	rm -f `find . -name depend`
+
+
+# Dummy install target
+install:

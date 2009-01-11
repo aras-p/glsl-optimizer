@@ -1,11 +1,10 @@
 #define VL_INTERNAL
 #include "vl_context.h"
 #include <assert.h>
-#include <stdlib.h>
 #include <pipe/p_context.h>
 #include <pipe/p_state.h>
+#include <util/u_memory.h>
 #include "vl_render.h"
-#include "vl_r16snorm_mc.h"
 #include "vl_r16snorm_mc_buf.h"
 #include "vl_csc.h"
 #include "vl_basic_csc.h"
@@ -112,7 +111,7 @@ int vlCreateContext
 	assert(context);
 	assert(pipe);
 
-	ctx = calloc(1, sizeof(struct vlContext));
+	ctx = CALLOC_STRUCT(vlContext);
 
 	if (!ctx)
 		return 1;
@@ -127,7 +126,6 @@ int vlCreateContext
 
 	vlInitCommon(ctx);
 
-	/*vlCreateR16SNormMC(pipe, picture_width, picture_height, picture_format, &ctx->render);*/
 	vlCreateR16SNormBufferedMC(pipe, picture_width, picture_height, picture_format, &ctx->render);
 	vlCreateBasicCSC(pipe, &ctx->csc);
 
@@ -154,7 +152,7 @@ int vlDestroyContext
 	context->pipe->delete_rasterizer_state(context->pipe, context->raster);
 	context->pipe->delete_depth_stencil_alpha_state(context->pipe, context->dsa);
 
-	free(context);
+	FREE(context);
 
 	return 0;
 }

@@ -287,6 +287,9 @@ extern void
 nouveau_bo_del(struct nouveau_bo **);
 
 extern int
+nouveau_bo_busy(struct nouveau_bo *bo, uint32_t flags);
+
+extern int
 nouveau_bo_map(struct nouveau_bo *, uint32_t flags);
 
 extern void

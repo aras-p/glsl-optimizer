@@ -78,15 +78,7 @@ const float ppc_builtin_constants[] ALIGN16_ATTRIB = {
  * How many TGSI temps should be implemented with real PPC vector registers
  * rather than memory.
  */
-#define MAX_PPC_TEMPS 4
-
-
-struct reg_chan_vec
-{
-   struct tgsi_full_src_register src;
-   uint chan;
-   uint vec;
-};
+#define MAX_PPC_TEMPS 3
 
 
 /**
@@ -155,6 +147,29 @@ init_gen_context(struct gen_context *gen, struct ppc_function *func)
       gen->temps_map[i][3] = ppc_allocate_vec_register(gen->f);
    }
 }
+
+
+/**
+ * Is the given TGSI register stored as a real PPC vector register?
+ */
+static boolean
+is_ppc_vec_temporary(const struct tgsi_full_src_register *reg)
+{
+   return (reg->SrcRegister.File == TGSI_FILE_TEMPORARY &&
+           reg->SrcRegister.Index < MAX_PPC_TEMPS);
+}
+
+
+/**
+ * Is the given TGSI register stored as a real PPC vector register?
+ */
+static boolean
+is_ppc_vec_temporary_dst(const struct tgsi_full_dst_register *reg)
+{
+   return (reg->DstRegister.File == TGSI_FILE_TEMPORARY &&
+           reg->DstRegister.Index < MAX_PPC_TEMPS);
+}
+
 
 
 /**
@@ -285,7 +300,7 @@ emit_fetch(struct gen_context *gen,
          }
          break;
       case TGSI_FILE_TEMPORARY:
-         if (reg->SrcRegister.Index < MAX_PPC_TEMPS) {
+         if (is_ppc_vec_temporary(reg)) {
             /* use PPC vec register */
             dst_vec = gen->temps_map[reg->SrcRegister.Index][swizzle];
          }
@@ -353,23 +368,33 @@ emit_fetch(struct gen_context *gen,
       uint sign_op = tgsi_util_get_full_src_register_sign_mode(reg, chan_index);
       if (sign_op != TGSI_UTIL_SIGN_KEEP) {
          int bit31_vec = gen_get_bit31_vec(gen);
+         int dst_vec2;
+
+         if (is_ppc_vec_temporary(reg)) {
+            /* need to use a new temp */
+            dst_vec2 = ppc_allocate_vec_register(gen->f);
+         }
+         else {
+            dst_vec2 = dst_vec;
+         }
 
          switch (sign_op) {
          case TGSI_UTIL_SIGN_CLEAR:
             /* vec = vec & ~bit31 */
-            ppc_vandc(gen->f, dst_vec, dst_vec, bit31_vec);
+            ppc_vandc(gen->f, dst_vec2, dst_vec, bit31_vec);
             break;
          case TGSI_UTIL_SIGN_SET:
             /* vec = vec | bit31 */
-            ppc_vor(gen->f, dst_vec, dst_vec, bit31_vec);
+            ppc_vor(gen->f, dst_vec2, dst_vec, bit31_vec);
             break;
          case TGSI_UTIL_SIGN_TOGGLE:
             /* vec = vec ^ bit31 */
-            ppc_vxor(gen->f, dst_vec, dst_vec, bit31_vec);
+            ppc_vxor(gen->f, dst_vec2, dst_vec, bit31_vec);
             break;
          default:
             assert(0);
          }
+         return dst_vec2;
       }
    }
 
@@ -452,8 +477,7 @@ release_src_vecs(struct gen_context *gen)
    uint i;
    for (i = 0; i < gen->num_regs; i++) {
       const const struct tgsi_full_src_register src = gen->regs[i].src;
-      if (!(src.SrcRegister.File == TGSI_FILE_TEMPORARY &&
-            src.SrcRegister.Index < MAX_PPC_TEMPS)) {
+      if (!is_ppc_vec_temporary(&src)) {
          ppc_release_vec_register(gen->f, gen->regs[i].vec);
       }
    }
@@ -469,8 +493,7 @@ get_dst_vec(struct gen_context *gen,
 {
    const struct tgsi_full_dst_register *reg = &inst->FullDstRegisters[0];
 
-   if (reg->DstRegister.File == TGSI_FILE_TEMPORARY &&
-       reg->DstRegister.Index < MAX_PPC_TEMPS) {
+   if (is_ppc_vec_temporary_dst(reg)) {
       int vec = gen->temps_map[reg->DstRegister.Index][chan_index];
       return vec;
    }
@@ -502,7 +525,7 @@ emit_store(struct gen_context *gen,
       }
       break;
    case TGSI_FILE_TEMPORARY:
-      if (reg->DstRegister.Index < MAX_PPC_TEMPS) {
+      if (is_ppc_vec_temporary_dst(reg)) {
          if (!free_vec) {
             int dst_vec = gen->temps_map[reg->DstRegister.Index][chan_index];
             if (dst_vec != src_vec)
@@ -584,6 +607,7 @@ static void
 emit_unaryop(struct gen_context *gen, struct tgsi_full_instruction *inst)
 {
    uint chan_index;
+
    FOR_EACH_DST0_ENABLED_CHANNEL(*inst, chan_index) {
       int v0 = get_src_vec(gen, inst, 0, chan_index);   /* v0 = srcreg[0] */
       int v1 = get_dst_vec(gen, inst, chan_index);
@@ -770,7 +794,7 @@ emit_dotprod(struct gen_context *gen, struct tgsi_full_instruction *inst)
 
    v2 = ppc_allocate_vec_register(gen->f);
 
-   ppc_vxor(gen->f, v2, v2, v2);           /* v2 = {0, 0, 0, 0} */
+   ppc_vzero(gen->f, v2);                  /* v2 = {0, 0, 0, 0} */
 
    v0 = get_src_vec(gen, inst, 0, CHAN_X); /* v0 = src0.XXXX */
    v1 = get_src_vec(gen, inst, 1, CHAN_X); /* v1 = src1.XXXX */
@@ -815,7 +839,7 @@ ppc_vec_pow(struct ppc_function *f, int vr, int va, int vb)
    ppc_vzero(f, zero_vec);
 
    ppc_vlogefp(f, t_vec, va);                   /* t = log2(va) */
-   ppc_vmaddfp(f, t_vec, t_vec, vb, zero_vec);  /* t = t * vb */
+   ppc_vmaddfp(f, t_vec, t_vec, vb, zero_vec);  /* t = t * vb + zero */
    ppc_vexptefp(f, vr, t_vec);                  /* vr = 2^t */
 
    ppc_release_vec_register(f, t_vec);
@@ -1221,9 +1245,12 @@ emit_prologue(struct ppc_function *func)
 static void
 emit_epilogue(struct ppc_function *func)
 {
+   ppc_comment(func, -4, "Epilogue:");
    ppc_return(func);
    /* XXX restore prev stack frame */
+#if 0
    debug_printf("PPC: Emitted %u instructions\n", func->num_inst);
+#endif
 }
 
 
@@ -1248,6 +1275,7 @@ tgsi_emit_ppc(const struct tgsi_token *tokens,
    unsigned ok = 1;
    uint num_immediates = 0;
    struct gen_context gen;
+   uint ic = 0;
 
    if (use_ppc_asm < 0) {
       /* If GALLIUM_NOPPC is set, don't use PPC codegen */
@@ -1280,6 +1308,12 @@ tgsi_emit_ppc(const struct tgsi_token *tokens,
          break;
 
       case TGSI_TOKEN_TYPE_INSTRUCTION:
+         if (func->print) {
+            _debug_printf("# ");
+            ic++;
+            tgsi_dump_instruction(&parse.FullToken.FullInstruction, ic);
+         }
+
          ok = emit_instruction(&gen, &parse.FullToken.FullInstruction);
 
 	 if (!ok) {

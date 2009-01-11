@@ -57,6 +57,21 @@
 #include "slang_print.h"
 
 
+/** Max iterations to unroll */
+const GLuint MAX_FOR_LOOP_UNROLL_ITERATIONS = 32;
+
+/** Max for-loop body size (in slang operations) to unroll */
+const GLuint MAX_FOR_LOOP_UNROLL_BODY_SIZE = 50;
+
+/** Max for-loop body complexity to unroll.
+ * We'll compute complexity as the product of the number of iterations
+ * and the size of the body.  So long-ish loops with very simple bodies
+ * can be unrolled, as well as short loops with larger bodies.
+ */
+const GLuint MAX_FOR_LOOP_UNROLL_COMPLEXITY = 256;
+
+
+
 static slang_ir_node *
 _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper);
 
@@ -1570,6 +1585,7 @@ swizzle_to_writemask(slang_assemble_ctx *A, GLuint swizzle,
 }
 
 
+#if 0 /* not used, but don't remove just yet */
 /**
  * Recursively traverse 'oper' to produce a swizzle mask in the event
  * of any vector subscripts and swizzle suffixes.
@@ -1623,8 +1639,10 @@ resolve_swizzle(const slang_operation *oper)
       return SWIZZLE_XYZW;
    }
 }
+#endif
 
 
+#if 0
 /**
  * Recursively descend through swizzle nodes to find the node's storage info.
  */
@@ -1636,7 +1654,7 @@ get_store(const slang_ir_node *n)
    }
    return n->Store;
 }
-
+#endif
 
 
 /**
@@ -1709,6 +1727,7 @@ _slang_gen_asm(slang_assemble_ctx *A, slang_operation *oper,
 }
 
 
+#if 0
 static void
 print_funcs(struct slang_function_scope_ *scope, const char *name)
 {
@@ -1722,6 +1741,7 @@ print_funcs(struct slang_function_scope_ *scope, const char *name)
    if (scope->outer_scope)
       print_funcs(scope->outer_scope, name);
 }
+#endif
 
 
 /**
@@ -2439,40 +2459,259 @@ _slang_gen_do(slang_assemble_ctx * A, const slang_operation *oper)
 
 
 /**
- * Generate for-loop using high-level IR_LOOP instruction.
+ * Recursively count the number of operations rooted at 'oper'.
+ * This gives some kind of indication of the size/complexity of an operation.
+ */
+static GLuint
+sizeof_operation(const slang_operation *oper)
+{
+   if (oper) {
+      GLuint count = 1; /* me */
+      GLuint i;
+      for (i = 0; i < oper->num_children; i++) {
+         count += sizeof_operation(&oper->children[i]);
+      }
+      return count;
+   }
+   else {
+      return 0;
+   }
+}
+
+
+/**
+ * Determine if a for-loop can be unrolled.
+ * At this time, only a rather narrow class of for loops can be unrolled.
+ * See code for details.
+ * When a loop can't be unrolled because it's too large we'll emit a
+ * message to the log.
+ */
+static GLboolean
+_slang_can_unroll_for_loop(slang_assemble_ctx * A, const slang_operation *oper)
+{
+   GLuint bodySize;
+   GLint start, end;
+   const char *varName;
+   slang_atom varId;
+
+   assert(oper->type == SLANG_OPER_FOR);
+   assert(oper->num_children == 4);
+
+   /* children[0] must be either "int i=constant" or "i=constant" */
+   if (oper->children[0].type == SLANG_OPER_BLOCK_NO_NEW_SCOPE) {
+      slang_variable *var;
+
+      if (oper->children[0].children[0].type != SLANG_OPER_VARIABLE_DECL)
+         return GL_FALSE;
+
+      varId = oper->children[0].children[0].a_id;
+
+      var = _slang_variable_locate(oper->children[0].children[0].locals,
+                                   varId, GL_TRUE);
+      if (!var)
+         return GL_FALSE;
+      if (!var->initializer)
+         return GL_FALSE;
+      if (var->initializer->type != SLANG_OPER_LITERAL_INT)
+         return GL_FALSE;
+      start = (GLint) var->initializer->literal[0];
+   }
+   else if (oper->children[0].type == SLANG_OPER_EXPRESSION) {
+      if (oper->children[0].children[0].type != SLANG_OPER_ASSIGN)
+         return GL_FALSE;
+      if (oper->children[0].children[0].children[0].type != SLANG_OPER_IDENTIFIER)
+         return GL_FALSE;
+      if (oper->children[0].children[0].children[1].type != SLANG_OPER_LITERAL_INT)
+         return GL_FALSE;
+
+      varId = oper->children[0].children[0].children[0].a_id;
+
+      start = (GLint) oper->children[0].children[0].children[1].literal[0];
+   }
+   else {
+      return GL_FALSE;
+   }
+
+   /* children[1] must be "i<constant" */
+   if (oper->children[1].type != SLANG_OPER_EXPRESSION)
+      return GL_FALSE;
+   if (oper->children[1].children[0].type != SLANG_OPER_LESS)
+      return GL_FALSE;
+   if (oper->children[1].children[0].children[0].type != SLANG_OPER_IDENTIFIER)
+      return GL_FALSE;
+   if (oper->children[1].children[0].children[1].type != SLANG_OPER_LITERAL_INT)
+      return GL_FALSE;
+
+   end = (GLint) oper->children[1].children[0].children[1].literal[0];
+
+   /* children[2] must be "i++" or "++i" */
+   if (oper->children[2].type != SLANG_OPER_POSTINCREMENT &&
+       oper->children[2].type != SLANG_OPER_PREINCREMENT)
+      return GL_FALSE;
+   if (oper->children[2].children[0].type != SLANG_OPER_IDENTIFIER)
+      return GL_FALSE;
+
+   /* make sure the same variable name is used in all places */
+   if ((oper->children[1].children[0].children[0].a_id != varId) ||
+       (oper->children[2].children[0].a_id != varId))
+      return GL_FALSE;
+
+   varName = (const char *) varId;
+
+   /* children[3], the loop body, can't be too large */
+   bodySize = sizeof_operation(&oper->children[3]);
+   if (bodySize > MAX_FOR_LOOP_UNROLL_BODY_SIZE) {
+      slang_info_log_print(A->log,
+                           "Note: 'for (%s ... )' body is too large/complex"
+                           " to unroll",
+                           varName);
+      return GL_FALSE;
+   }
+
+   if (start >= end)
+      return GL_FALSE; /* degenerate case */
+
+   if (end - start > MAX_FOR_LOOP_UNROLL_ITERATIONS) {
+      slang_info_log_print(A->log,
+                           "Note: 'for (%s=%d; %s<%d; ++%s)' is too"
+                           " many iterations to unroll",
+                           varName, start, varName, end, varName);
+      return GL_FALSE;
+   }
+
+   if ((end - start) * bodySize > MAX_FOR_LOOP_UNROLL_COMPLEXITY) {
+      slang_info_log_print(A->log,
+                           "Note: 'for (%s=%d; %s<%d; ++%s)' will generate"
+                           " too much code to unroll",
+                           varName, start, varName, end, varName);
+      return GL_FALSE;
+   }
+
+   return GL_TRUE; /* we can unroll the loop */
+}
+
+
+/**
+ * Unroll a for-loop.
+ * First we determine the number of iterations to unroll.
+ * Then for each iteration:
+ *   make a copy of the loop body
+ *   replace instances of the loop variable with the current iteration value
+ *   generate IR code for the body
+ * \return pointer to generated IR code or NULL if error, out of memory, etc.
+ */
+static slang_ir_node *
+_slang_unroll_for_loop(slang_assemble_ctx * A, const slang_operation *oper)
+{
+   GLint start, end, iter;
+   slang_ir_node *n, *root = NULL;
+   slang_atom varId;
+
+   if (oper->children[0].type == SLANG_OPER_BLOCK_NO_NEW_SCOPE) {
+      /* for (int i=0; ... */
+      slang_variable *var;
+
+      varId = oper->children[0].children[0].a_id;
+      var = _slang_variable_locate(oper->children[0].children[0].locals,
+                                   varId, GL_TRUE);
+      start = (GLint) var->initializer->literal[0];
+   }
+   else {
+      /* for (i=0; ... */
+      varId = oper->children[0].children[0].children[0].a_id;
+      start = (GLint) oper->children[0].children[0].children[1].literal[0];
+   }
+
+   end = (GLint) oper->children[1].children[0].children[1].literal[0];
+
+   for (iter = start; iter < end; iter++) {
+      slang_operation *body;
+
+      /* make a copy of the loop body */
+      body = slang_operation_new(1);
+      if (!body)
+         return NULL;
+
+      if (!slang_operation_copy(body, &oper->children[3]))
+         return NULL;
+
+      /* in body, replace instances of 'varId' with literal 'iter' */
+      {
+         slang_variable *oldVar;
+         slang_operation *newOper;
+
+         oldVar = _slang_variable_locate(oper->locals, varId, GL_TRUE);
+         if (!oldVar) {
+            /* undeclared loop variable */
+            slang_operation_delete(body);
+            return NULL;
+         }
+
+         newOper = slang_operation_new(1);
+         newOper->type = SLANG_OPER_LITERAL_INT;
+         newOper->literal_size = 1;
+         newOper->literal[0] = iter;
+
+         /* replace instances of the loop variable with newOper */
+         slang_substitute(A, body, 1, &oldVar, &newOper, GL_FALSE);
+      }
+
+      /* do IR codegen for body */
+      n = _slang_gen_operation(A, body);
+      root = new_seq(root, n);
+
+      slang_operation_delete(body);
+   }
+
+   return root;
+}
+
+
+/**
+ * Generate IR for a for-loop.  Unrolling will be done when possible.
  */
 static slang_ir_node *
 _slang_gen_for(slang_assemble_ctx * A, const slang_operation *oper)
 {
-   /*
-    * init code (child[0])
-    * LOOP:
-    *    BREAK if !expr (child[1])
-    *    body code (child[3])
-    *    tail code:
-    *       incr code (child[2])   // XXX continue here
-    */
-   slang_ir_node *prevLoop, *loop, *cond, *breakIf, *body, *init, *incr;
+   GLboolean unroll = _slang_can_unroll_for_loop(A, oper);
 
-   init = _slang_gen_operation(A, &oper->children[0]);
-   loop = new_loop(NULL);
+   if (unroll) {
+      slang_ir_node *code = _slang_unroll_for_loop(A, oper);
+      if (code)
+         return code;
+   }
 
-   /* save old, push new loop */
-   prevLoop = A->CurLoop;
-   A->CurLoop = loop;
+   /* conventional for-loop code generation */
+   {
+      /*
+       * init code (child[0])
+       * LOOP:
+       *    BREAK if !expr (child[1])
+       *    body code (child[3])
+       *    tail code:
+       *       incr code (child[2])   // XXX continue here
+       */
+      slang_ir_node *prevLoop, *loop, *cond, *breakIf, *body, *init, *incr;
+      init = _slang_gen_operation(A, &oper->children[0]);
+      loop = new_loop(NULL);
 
-   cond = new_cond(new_not(_slang_gen_operation(A, &oper->children[1])));
-   breakIf = new_break_if_true(A->CurLoop, cond);
-   body = _slang_gen_operation(A, &oper->children[3]);
-   incr = _slang_gen_operation(A, &oper->children[2]);
+      /* save old, push new loop */
+      prevLoop = A->CurLoop;
+      A->CurLoop = loop;
 
-   loop->Children[0] = new_seq(breakIf, body);
-   loop->Children[1] = incr;  /* tail code */
+      cond = new_cond(new_not(_slang_gen_operation(A, &oper->children[1])));
+      breakIf = new_break_if_true(A->CurLoop, cond);
+      body = _slang_gen_operation(A, &oper->children[3]);
+      incr = _slang_gen_operation(A, &oper->children[2]);
 
-   /* pop loop, restore prev */
-   A->CurLoop = prevLoop;
+      loop->Children[0] = new_seq(breakIf, body);
+      loop->Children[1] = incr;  /* tail code */
 
-   return new_seq(init, loop);
+      /* pop loop, restore prev */
+      A->CurLoop = prevLoop;
+
+      return new_seq(init, loop);
+   }
 }
 
 
@@ -3089,6 +3328,7 @@ _slang_gen_return(slang_assemble_ctx * A, slang_operation *oper)
 }
 
 
+#if 0
 /**
  * Determine if the given operation/expression is const-valued.
  */
@@ -3112,6 +3352,7 @@ _slang_is_constant_expr(const slang_operation *oper)
       return GL_TRUE;
    }
 }
+#endif
 
 
 /**
@@ -3556,8 +3797,16 @@ _slang_gen_array_element(slang_assemble_ctx * A, slang_operation *oper)
       index = (GLint) oper->children[1].literal[0];
       if (oper->children[1].type != SLANG_OPER_LITERAL_INT ||
           index >= (GLint) max) {
+#if 0
          slang_info_log_error(A->log, "Invalid array index for vector type");
+         printf("type = %d\n", oper->children[1].type);
+         printf("index = %d, max = %d\n", index, max);
+         printf("array = %s\n", (char*)oper->children[0].a_id);
+         printf("index = %s\n", (char*)oper->children[1].a_id);
          return NULL;
+#else
+         index = 0;
+#endif
       }
 
       n = _slang_gen_operation(A, &oper->children[0]);
