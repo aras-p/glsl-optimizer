@@ -91,7 +91,6 @@ nv50_miptree(struct pipe_texture *pt)
 
 struct nv50_surface {
 	struct pipe_surface base;
-	struct pipe_buffer *untiled;
 };
 
 static INLINE struct nv50_surface *
