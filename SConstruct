@@ -133,7 +133,7 @@ if dri:
 # LLVM
 if llvm:
 	# See also http://www.scons.org/wiki/UsingPkgConfig
-	env.ParseConfig('llvm-config --cflags --ldflags --libs')
+	env.ParseConfig('llvm-config --cflags --ldflags --libs backend bitreader engine ipo')
 	env.Append(CPPDEFINES = ['MESA_LLVM'])
         # Force C++ linkage
 	env['LINK'] = env['CXX']

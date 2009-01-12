@@ -22,9 +22,9 @@ endif
 
 ifeq ($(MESA_LLVM),1)
 #  LLVM_CFLAGS=`llvm-config --cflags`
-  LLVM_CXXFLAGS=`llvm-config --cxxflags` -Wno-long-long
-  LLVM_LDFLAGS=`llvm-config --ldflags`
-  LLVM_LIBS=`llvm-config --libs`
+  LLVM_CXXFLAGS=`llvm-config --cxxflags backend bitreader engine ipo` -Wno-long-long
+  LLVM_LDFLAGS=`llvm-config --ldflags backend bitreader engine ipo`
+  LLVM_LIBS=`llvm-config --libs backend bitreader engine ipo`
   MKLIB_OPTIONS=-cplusplus
 else
   LLVM_CFLAGS=
