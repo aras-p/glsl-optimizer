@@ -79,20 +79,5 @@ dri_screen(__DRIscreenPrivate *sPriv)
 }
 
 
-extern void dri_destroy_context(__DRIcontextPrivate * driContextPriv);
-
-extern boolean dri_unbind_context(__DRIcontextPrivate * driContextPriv);
-
-extern boolean
-dri_make_current(__DRIcontextPrivate * driContextPriv,
-                 __DRIdrawablePrivate * driDrawPriv,
-                 __DRIdrawablePrivate * driReadPriv);
-
-
-extern boolean
-dri_create_context(const __GLcontextModes * visual,
-                   __DRIcontextPrivate * driContextPriv,
-                   void *sharedContextPrivate);
-
 
 #endif

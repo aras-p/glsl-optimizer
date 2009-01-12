@@ -37,7 +37,7 @@ dri_contended_lock(struct dri_context *ctx)
 {
    __DRIdrawablePrivate *dPriv = ctx->dPriv;
    __DRIcontextPrivate *cPriv = ctx->cPriv;
-   __DRIscreenPrivate *sPriv = ctx->sPriv;
+   __DRIscreenPrivate *sPriv = cPriv->driScreenPriv;
 
    drmGetLock(sPriv->fd, cPriv->hHWContext, 0);
 
@@ -53,8 +53,8 @@ dri_contended_lock(struct dri_context *ctx)
  */
 void dri_lock_hardware( struct dri_context *ctx )
 {
-   __DRIscreenPrivate *sPriv = ctx->sPriv;
    __DRIcontextPrivate *cPriv = ctx->cPriv;
+   __DRIscreenPrivate *sPriv = cPriv->driScreenPriv;
    char __ret = 0;
 
    pipe_mutex_lock(lockMutex);
@@ -76,8 +76,8 @@ void dri_lock_hardware( struct dri_context *ctx )
  */
 void dri_unlock_hardware( struct dri_context *ctx )
 {
-   __DRIscreenPrivate *sPriv = ctx->sPriv;
    __DRIcontextPrivate *cPriv = ctx->cPriv;
+   __DRIscreenPrivate *sPriv = cPriv->driScreenPriv;
 
    assert(ctx->locked);
    ctx->locked = FALSE;

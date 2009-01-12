@@ -25,23 +25,54 @@
  *
  **************************************************************************/
 
-#ifndef DRI_SWAPBUFFERS_H
-#define DRI_SWAPBUFFERS_H
+#ifndef DRI_DRAWABLE_H
+#define DRI_DRAWABLE_H
 
+#include "pipe/p_compiler.h"
 
 struct pipe_surface;
+struct pipe_fence;
+struct st_framebuffer;
 
 
-extern void dri_display_surface(__DRIdrawablePrivate * dPriv,
-                                struct pipe_surface *surf,
-                                const drm_clip_rect_t * rect);
+struct dri_drawable
+{
+   __DRIdrawablePrivate *dPriv;
+   unsigned stamp;
 
-extern void dri_swap_buffers(__DRIdrawablePrivate * dPriv);
+   struct pipe_fence *last_swap_fence;
+   struct pipe_fence *first_swap_fence;
 
-extern void dri_copy_sub_buffer(__DRIdrawablePrivate * dPriv,
-                               int x, int y, int w, int h);
+   struct st_framebuffer *stfb;
+};
 
-extern void dri_update_window_size(__DRIdrawablePrivate *dPriv);
+
+static INLINE struct dri_drawable *
+dri_drawable(__DRIdrawablePrivate * driDrawPriv)
+{
+   return (struct dri_drawable *) driDrawPriv->driverPrivate;
+}
+
+
+/***********************************************************************
+ * dri_drawable.c
+ */
+
+void 
+dri_display_surface(__DRIdrawablePrivate * dPriv,
+                    struct pipe_surface *surf,
+                    const drm_clip_rect_t * rect);
+
+void 
+dri_swap_buffers(__DRIdrawablePrivate * dPriv);
+
+void 
+dri_copy_sub_buffer(__DRIdrawablePrivate * dPriv,
+                    int x, int y, 
+                    int w, int h);
+
+void 
+dri_update_window_size(__DRIdrawablePrivate *dPriv);
 
 
 #endif

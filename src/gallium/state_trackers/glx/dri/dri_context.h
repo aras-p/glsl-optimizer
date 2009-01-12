@@ -27,12 +27,10 @@
 #ifndef DRI_CONTEXT_H
 #define DRI_CONTEXT_H
 
-#include <stdint.h>
+#include "pipe/p_compiler.h"
 #include "drm.h"
+#include "dri_util.h"
 
-#include "pipe/p_debug.h"
-
-#include "dri_screen.h"
 
 struct pipe_context;
 struct pipe_fence;
@@ -56,35 +54,39 @@ struct dri_context
 };
 
 
-
-struct dri_drawable
-{
-   __DRIdrawablePrivate *dPriv;
-   unsigned stamp;
-
-   struct pipe_fence *last_swap_fence;
-   struct pipe_fence *first_swap_fence;
-
-   struct st_framebuffer *stfb;
-};
-
-
 static INLINE struct dri_context *
 dri_context(__DRIcontextPrivate *driContextPriv)
 {
    return (struct dri_context *) driContextPriv->driverPrivate;
 }
 
-static INLINE struct dri_drawable *
-dri_drawable(__DRIdrawablePrivate * driDrawPriv)
-{
-   return (struct dri_drawable *) driDrawPriv->driverPrivate;
-}
+/***********************************************************************
+ * dri_context.c
+ */
+void 
+dri_destroy_context(__DRIcontextPrivate * driContextPriv);
+
+boolean 
+dri_unbind_context(__DRIcontextPrivate * driContextPriv);
+
+boolean
+dri_make_current(__DRIcontextPrivate * driContextPriv,
+                 __DRIdrawablePrivate * driDrawPriv,
+                 __DRIdrawablePrivate * driReadPriv);
+
+boolean
+dri_create_context(const __GLcontextModes * visual,
+                   __DRIcontextPrivate * driContextPriv,
+                   void *sharedContextPrivate);
+
+
 
 /***********************************************************************
  * dri_lock.c
  */
-void dri_lock_hardware( struct dri_context *dri, struct dri_drawable *drawable );
+void dri_lock_hardware( struct dri_context *context, 
+                        struct dri_drawable *drawable );
+
 void dri_unlock_hardware( struct dri_context *dri );
 boolean dri_is_locked( struct dri_context *dri );
 
