@@ -124,7 +124,7 @@ nv50_miptree_sync(struct pipe_screen *pscreen, struct nv50_miptree *mt,
 	struct pipe_surface *dst, *src;
 	unsigned face = 0, zslice = 0;
 
-	if (!lvl->image_dirty_cpu & (1 << image))
+	if (!(lvl->image_dirty_cpu & (1 << image)))
 		return;
 
 	if (mt->base.target == PIPE_TEXTURE_CUBE)
@@ -138,13 +138,14 @@ nv50_miptree_sync(struct pipe_screen *pscreen, struct nv50_miptree *mt,
 	 */
 	lvl->image_dirty_cpu &= ~(1 << image);
 
-	dst = pscreen->get_tex_surface(pscreen, &mt->base, face, level, zslice,
-				       PIPE_BUFFER_USAGE_GPU_WRITE);
 	/* Pretend we're doing CPU access so we get the backing pipe_surface
 	 * and not a view into the larger miptree.
 	 */
 	src = pscreen->get_tex_surface(pscreen, &mt->base, face, level, zslice,
 				       PIPE_BUFFER_USAGE_CPU_READ);
+
+	dst = pscreen->get_tex_surface(pscreen, &mt->base, face, level, zslice,
+				       PIPE_BUFFER_USAGE_GPU_WRITE);
 
 	nvws->surface_copy(nvws, dst, 0, 0, src, 0, 0, dst->width, dst->height);
 
