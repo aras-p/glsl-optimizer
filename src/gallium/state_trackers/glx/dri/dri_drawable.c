@@ -116,7 +116,7 @@ blit_swapbuffers(__DRIdrawablePrivate *dPriv,
  * \param surf  the surface to display
  * \param rect  optional subrect of surface to display (may be NULL).
  */
-void
+static void
 dri_display_surface(__DRIdrawablePrivate *dPriv,
                     struct pipe_surface *source,
                     const drm_clip_rect_t *rect)

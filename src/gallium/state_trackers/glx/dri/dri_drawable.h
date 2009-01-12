@@ -59,11 +59,6 @@ dri_drawable(__DRIdrawablePrivate * driDrawPriv)
  */
 
 void 
-dri_display_surface(__DRIdrawablePrivate * dPriv,
-                    struct pipe_surface *surf,
-                    const drm_clip_rect_t * rect);
-
-void 
 dri_swap_buffers(__DRIdrawablePrivate * dPriv);
 
 void 
