@@ -204,6 +204,14 @@ do_blit_bitmap( GLcontext *ctx,
    /* Update draw buffer bounds */
    _mesa_update_state(ctx);
 
+   if (ctx->Depth.Test) {
+      /* The blit path produces incorrect results when depth testing is on.
+       * It seems the blit Z coord is always 1.0 (the far plane) so fragments
+       * will likely be obscured by other, closer geometry.
+       */
+      return GL_FALSE;
+   }
+
    if (!dst)
        return GL_FALSE;
 
@@ -357,6 +365,7 @@ intel_texture_bitmap(GLcontext * ctx,
    GLubyte *unpacked_bitmap;
    GLubyte *a8_bitmap;
    int x, y;
+   GLfloat dst_z;
 
    /* We need a fragment program for the KIL effect */
    if (!ctx->Extensions.ARB_fragment_program ||
@@ -456,21 +465,24 @@ intel_texture_bitmap(GLcontext * ctx,
    intel_meta_set_passthrough_vertex_program(intel);
    intel_meta_set_passthrough_transform(intel);
 
+   /* convert rasterpos Z from [0,1] to NDC coord in [-1,1] */
+   dst_z = -1.0 + 2.0 * ctx->Current.RasterPos[2];
+
    vertices[0][0] = dst_x;
    vertices[0][1] = dst_y;
-   vertices[0][2] = ctx->Current.RasterPos[2];
+   vertices[0][2] = dst_z;
    vertices[0][3] = 1.0;
    vertices[1][0] = dst_x + width;
    vertices[1][1] = dst_y;
-   vertices[1][2] = ctx->Current.RasterPos[2];
+   vertices[1][2] = dst_z;
    vertices[1][3] = 1.0;
    vertices[2][0] = dst_x + width;
    vertices[2][1] = dst_y + height;
-   vertices[2][2] = ctx->Current.RasterPos[2];
+   vertices[2][2] = dst_z;
    vertices[2][3] = 1.0;
    vertices[3][0] = dst_x;
    vertices[3][1] = dst_y + height;
-   vertices[3][2] = ctx->Current.RasterPos[2];
+   vertices[3][2] = dst_z;
    vertices[3][3] = 1.0;
 
    texcoords[0][0] = 0.0;
