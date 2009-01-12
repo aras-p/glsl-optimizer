@@ -69,7 +69,7 @@ nv50_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *tmp)
 		pt->height[l] = height;
 		pt->depth[l] = depth;
 		pt->nblocksx[l] = pf_get_nblocksx(&pt->block, width);
-		pt->nblocksy[l] = pf_get_nblocksy(&pt->block, width);
+		pt->nblocksy[l] = pf_get_nblocksy(&pt->block, height);
 
 		lvl->image_offset = CALLOC(mt->image_nr, sizeof(int));
 		lvl->image = CALLOC(mt->image_nr, sizeof(struct pipe_buffer *));
