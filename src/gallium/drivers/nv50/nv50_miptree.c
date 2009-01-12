@@ -104,6 +104,24 @@ nv50_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *tmp)
 	return &mt->base;
 }
 
+static INLINE void
+mark_dirty(uint32_t *flags, unsigned image)
+{
+	flags[image / 32] |= (1 << (image % 32));
+}
+
+static INLINE void
+mark_clean(uint32_t *flags, unsigned image)
+{
+	flags[image / 32] &= ~(1 << (image % 32));
+}
+
+static INLINE int
+is_dirty(uint32_t *flags, unsigned image)
+{
+	return !!(flags[image / 32] & (1 << (image % 32)));
+}
+
 static void
 nv50_miptree_release(struct pipe_screen *pscreen, struct pipe_texture **ppt)
 {
@@ -128,7 +146,7 @@ nv50_miptree_sync(struct pipe_screen *pscreen, struct nv50_miptree *mt,
 	struct pipe_surface *dst, *src;
 	unsigned face = 0, zslice = 0;
 
-	if (!(lvl->image_dirty_cpu & (1 << image)))
+	if (!is_dirty(lvl->image_dirty_cpu, image))
 		return;
 
 	if (mt->base.target == PIPE_TEXTURE_CUBE)
@@ -140,7 +158,7 @@ nv50_miptree_sync(struct pipe_screen *pscreen, struct nv50_miptree *mt,
 	/* Mark as clean already - so we don't continually call this function
 	 * trying to get a GPU_WRITE pipe_surface!
 	 */
-	lvl->image_dirty_cpu &= ~(1 << image);
+	mark_clean(lvl->image_dirty_cpu, image);
 
 	/* Pretend we're doing CPU access so we get the backing pipe_surface
 	 * and not a view into the larger miptree.
@@ -198,14 +216,14 @@ nv50_miptree_surface_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 
 	if (flags & PIPE_BUFFER_USAGE_CPU_READ_WRITE) {
 		assert(!(flags & PIPE_BUFFER_USAGE_GPU_READ_WRITE));
-		assert(!(lvl->image_dirty_gpu & (1 << img)));
+		assert(!is_dirty(lvl->image_dirty_gpu, img));
 
 		ps->offset = 0;
 		pipe_texture_reference(&ps->texture, pt);
 		pipe_buffer_reference(pscreen, &ps->buffer, lvl->image[img]);
 
 		if (flags & PIPE_BUFFER_USAGE_CPU_WRITE)
-			lvl->image_dirty_cpu |= (1 << img);
+			mark_dirty(lvl->image_dirty_cpu, img);
 	} else {
 		nv50_miptree_sync(pscreen, mt, level, img);
 
@@ -214,7 +232,7 @@ nv50_miptree_surface_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 		pipe_buffer_reference(pscreen, &ps->buffer, mt->buffer);
 
 		if (flags & PIPE_BUFFER_USAGE_GPU_WRITE)
-			lvl->image_dirty_gpu |= (1 << img);
+			mark_dirty(lvl->image_dirty_gpu, img);
 	}
 
 	return ps;
