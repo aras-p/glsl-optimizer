@@ -206,11 +206,12 @@ llvm::Module * InstructionsSoa::currentModule() const
 
 void InstructionsSoa::createBuiltins()
 {
+   std::string ErrMsg;
    MemoryBuffer *buffer = MemoryBuffer::getMemBuffer(
       (const char*)&soabuiltins_data[0],
       (const char*)&soabuiltins_data[Elements(soabuiltins_data)]);
-   m_builtins = ParseBitcodeFile(buffer);
-   std::cout<<"Builtins created at "<<m_builtins<<std::endl;
+   m_builtins = ParseBitcodeFile(buffer, &ErrMsg);
+   std::cout<<"Builtins created at "<<m_builtins<<" ("<<ErrMsg<<")"<<std::endl;
    assert(m_builtins);
    createDependencies();
 }
