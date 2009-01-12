@@ -73,6 +73,10 @@ nv50_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *tmp)
 
 		lvl->image_offset = CALLOC(mt->image_nr, sizeof(int));
 		lvl->image = CALLOC(mt->image_nr, sizeof(struct pipe_buffer *));
+
+		width = MAX2(1, width >> 1);
+		height = MAX2(1, height >> 1);
+		depth = MAX2(1, depth >> 1);
 	}
 
 	for (i = 0; i < mt->image_nr; i++) {
@@ -144,8 +148,11 @@ nv50_miptree_sync(struct pipe_screen *pscreen, struct nv50_miptree *mt,
 	src = pscreen->get_tex_surface(pscreen, &mt->base, face, level, zslice,
 				       PIPE_BUFFER_USAGE_CPU_READ);
 
+	/* Pretend we're only reading with the GPU so surface doesn't get marked
+	 * as dirtied by the GPU.
+	 */
 	dst = pscreen->get_tex_surface(pscreen, &mt->base, face, level, zslice,
-				       PIPE_BUFFER_USAGE_GPU_WRITE);
+				       PIPE_BUFFER_USAGE_GPU_READ);
 
 	nvws->surface_copy(nvws, dst, 0, 0, src, 0, 0, dst->width, dst->height);
 
@@ -191,7 +198,7 @@ nv50_miptree_surface_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 
 	if (flags & PIPE_BUFFER_USAGE_CPU_READ_WRITE) {
 		assert(!(flags & PIPE_BUFFER_USAGE_GPU_READ_WRITE));
-		assert(!(lvl->image_dirty_cpu & (1 << img)));
+		assert(!(lvl->image_dirty_gpu & (1 << img)));
 
 		ps->offset = 0;
 		pipe_texture_reference(&ps->texture, pt);
