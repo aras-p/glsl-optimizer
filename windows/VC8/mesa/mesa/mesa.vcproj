@@ -180,6 +180,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\..\src\mesa\main\api_exec.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\..\src\mesa\main\api_loopback.c"
 				>
 			</File>
@@ -328,6 +332,10 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath="..\..\..\..\src\mesa\glapi\glapi_getproc.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\..\src\mesa\glapi\glthread.c"
 				>
 			</File>
@@ -466,6 +474,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\..\src\mesa\main\multisample.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\..\src\mesa\shader\nvfragparse.c"
 				>
 			</File>
@@ -479,6 +491,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\main\pixel.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\main\pixelstore.c"
 				>
 			</File>
 			<File
@@ -858,6 +874,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\..\src\mesa\tnl\t_rasterpos.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\..\src\mesa\tnl\t_vb_cull.c"
 				>
 			</File>
@@ -922,6 +942,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\..\src\mesa\main\texenv.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\..\src\mesa\main\texenvprogram.c"
 				>
 			</File>
@@ -930,11 +954,19 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\..\src\mesa\main\texgen.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\..\src\mesa\main\teximage.c"
 				>
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\main\texobj.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\main\texparam.c"
 				>
 			</File>
 			<File
@@ -1347,6 +1379,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\..\src\mesa\shader\prog_cache.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\..\src\mesa\shader\prog_debug.h"
 				>
 			</File>
@@ -1520,6 +1556,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\shader\shader_api.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\main\scissor.h"
 				>
 			</File>
 			<File
