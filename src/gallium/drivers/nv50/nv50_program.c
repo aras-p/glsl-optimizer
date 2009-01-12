@@ -841,6 +841,28 @@ emit_neg(struct nv50_pc *pc, struct nv50_reg *dst, struct nv50_reg *src)
 	emit(pc, e);
 }
 
+static void
+emit_kil(struct nv50_pc *pc, struct nv50_reg *src)
+{
+	struct nv50_program_exec *e;
+	const int r_pred = 1;
+
+	/* Sets predicate reg ? */
+	e = exec(pc);
+	e->inst[0] = 0xa00001fd;
+	e->inst[1] = 0xc4014788;
+	set_src_0(pc, src, e);
+	set_pred_wr(pc, 1, r_pred, e);
+	emit(pc, e);
+
+	/* This is probably KILP */
+	e = exec(pc);
+	e->inst[0] = 0x000001fe;
+	set_long(pc, e);
+	set_pred(pc, 1 /* LT? */, r_pred, e);
+	emit(pc, e);
+}
+
 static struct nv50_reg *
 tgsi_dst(struct nv50_pc *pc, int c, const struct tgsi_full_dst_register *dst)
 {
@@ -1068,6 +1090,12 @@ nv50_program_tx_insn(struct nv50_pc *pc, const union tgsi_full_token *tok)
 			emit_sub(pc, dst[c], src[0][c], temp);
 		}
 		free_temp(pc, temp);
+		break;
+	case TGSI_OPCODE_KIL:
+		emit_kil(pc, src[0][0]);
+		emit_kil(pc, src[0][1]);
+		emit_kil(pc, src[0][2]);
+		emit_kil(pc, src[0][3]);
 		break;
 	case TGSI_OPCODE_LIT:
 		emit_lit(pc, &dst[0], mask, &src[0][0]);
