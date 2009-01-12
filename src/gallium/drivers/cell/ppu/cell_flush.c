@@ -72,8 +72,9 @@ cell_flush_int(struct cell_context *cell, unsigned flags)
    flushing = TRUE;
 
    if (flags & CELL_FLUSH_WAIT) {
-      uint64_t *cmd = (uint64_t *) cell_batch_alloc(cell, sizeof(uint64_t));
-      *cmd = CELL_CMD_FINISH;
+      STATIC_ASSERT(sizeof(opcode_t) % 16 == 0);
+      opcode_t *cmd = (opcode_t*) cell_batch_alloc16(cell, sizeof(opcode_t));
+      *cmd[0] = CELL_CMD_FINISH;
    }
 
    cell_batch_flush(cell);
@@ -101,11 +102,11 @@ void
 cell_flush_buffer_range(struct cell_context *cell, void *ptr,
 			unsigned size)
 {
-   uint64_t batch[1 + (ROUNDUP8(sizeof(struct cell_buffer_range)) / 8)];
-   struct cell_buffer_range *br = (struct cell_buffer_range *) & batch[1];
-
+   STATIC_ASSERT((sizeof(opcode_t) + sizeof(struct cell_buffer_range)) % 16 == 0);
+   uint32_t *batch = (uint32_t*)cell_batch_alloc16(cell, 
+      sizeof(opcode_t) + sizeof(struct cell_buffer_range));
+   struct cell_buffer_range *br = (struct cell_buffer_range *) &batch[4];
    batch[0] = CELL_CMD_FLUSH_BUFFER_RANGE;
    br->base = (uintptr_t) ptr;
    br->size = size;
-   cell_batch_append(cell, batch, sizeof(batch));
 }

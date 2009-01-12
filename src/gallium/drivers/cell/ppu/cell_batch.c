@@ -108,15 +108,16 @@ emit_fence(struct cell_context *cell)
       fence->status[i][0] = CELL_FENCE_EMITTED;
    }
 
+   STATIC_ASSERT(sizeof(struct cell_command_fence) % 16 == 0);
+   ASSERT(size % 16 == 0);
    ASSERT(size + sizeof(struct cell_command_fence) <= CELL_BUFFER_SIZE);
 
    fence_cmd = (struct cell_command_fence *) (cell->buffer[batch] + size);
-   fence_cmd->opcode = CELL_CMD_FENCE;
+   fence_cmd->opcode[0] = CELL_CMD_FENCE;
    fence_cmd->fence = fence;
 
    /* update batch buffer size */
    cell->buffer_size[batch] = size + sizeof(struct cell_command_fence);
-   assert(sizeof(struct cell_command_fence) % 8 == 0);
 }
 
 
@@ -192,16 +193,17 @@ cell_batch_free_space(const struct cell_context *cell)
 
 
 /**
- * Append data to the current batch buffer.
- * \param data  address of block of bytes to append
- * \param bytes  size of block of bytes
+ * Allocate space in the current batch buffer for 'bytes' space.
+ * Bytes must be a multiple of 16 bytes.  Allocation will be 16 byte aligned.
+ * \return address in batch buffer to put data
  */
-void
-cell_batch_append(struct cell_context *cell, const void *data, uint bytes)
+void *
+cell_batch_alloc16(struct cell_context *cell, uint bytes)
 {
+   void *pos;
    uint size;
 
-   ASSERT(bytes % 8 == 0);
+   ASSERT(bytes % 16 == 0);
    ASSERT(bytes <= CELL_BUFFER_SIZE);
    ASSERT(cell->cur_batch >= 0);
 
@@ -222,64 +224,7 @@ cell_batch_append(struct cell_context *cell, const void *data, uint bytes)
       size = 0;
    }
 
-   ASSERT(size + bytes <= CELL_BUFFER_SIZE);
-
-   memcpy(cell->buffer[cell->cur_batch] + size, data, bytes);
-
-   cell->buffer_size[cell->cur_batch] = size + bytes;
-}
-
-
-/**
- * Allocate space in the current batch buffer for 'bytes' space.
- * \return address in batch buffer to put data
- */
-void *
-cell_batch_alloc(struct cell_context *cell, uint bytes)
-{
-   return cell_batch_alloc_aligned(cell, bytes, 1);
-}
-
-
-/**
- * Same as \sa cell_batch_alloc, but return an address at a particular
- * alignment.
- */
-void *
-cell_batch_alloc_aligned(struct cell_context *cell, uint bytes,
-                         uint alignment)
-{
-   void *pos;
-   uint size, padbytes;
-
-   ASSERT(bytes % 8 == 0);
-   ASSERT(bytes <= CELL_BUFFER_SIZE);
-   ASSERT(alignment > 0);
-   ASSERT(cell->cur_batch >= 0);
-
-#ifdef ASSERT
-   {
-      uint spu;
-      for (spu = 0; spu < cell->num_spus; spu++) {
-         ASSERT(cell->buffer_status[spu][cell->cur_batch][0]
-                 == CELL_BUFFER_STATUS_USED);
-      }
-   }
-#endif
-
-   size = cell->buffer_size[cell->cur_batch];
-
-   padbytes = (alignment - (size % alignment)) % alignment;
-
-   if (padbytes + bytes > cell_batch_free_space(cell)) {
-      cell_batch_flush(cell);
-      size = 0;
-   }
-   else {
-      size += padbytes;
-   }
-
-   ASSERT(size % alignment == 0);
+   ASSERT(size % 16 == 0);
    ASSERT(size + bytes <= CELL_BUFFER_SIZE);
 
    pos = (void *) (cell->buffer[cell->cur_batch] + size);

@@ -99,10 +99,11 @@ cell_clear_surface(struct pipe_context *pipe, struct pipe_surface *ps,
 
    /* Build a CLEAR command and place it in the current batch buffer */
    {
+      STATIC_ASSERT(sizeof(struct cell_command_clear_surface) % 16 == 0);
       struct cell_command_clear_surface *clr
          = (struct cell_command_clear_surface *)
-         cell_batch_alloc(cell, sizeof(*clr));
-      clr->opcode = CELL_CMD_CLEAR_SURFACE;
+         cell_batch_alloc16(cell, sizeof(*clr));
+      clr->opcode[0] = CELL_CMD_CLEAR_SURFACE;
       clr->surface = surfIndex;
       clr->value = clearValue;
    }

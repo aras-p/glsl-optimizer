@@ -49,6 +49,15 @@
    }
 
 
+
+#define JOIN(x, y) JOIN_AGAIN(x, y)
+#define JOIN_AGAIN(x, y) x ## y
+
+#define STATIC_ASSERT(e) \
+{typedef char JOIN(assertion_failed_at_line_, __LINE__) [(e) ? 1 : -1];}
+
+
+
 /** for sanity checking */
 #define ASSERT_ALIGN16(ptr) \
   ASSERT((((unsigned long) (ptr)) & 0xf) == 0);
@@ -134,6 +143,11 @@ struct cell_fence
    volatile uint status[CELL_MAX_SPUS][4];
 };
 
+#ifdef __SPU__
+typedef vector unsigned int opcode_t;
+#else
+typedef unsigned int opcode_t[4];
+#endif
 
 /**
  * Fence command sent to SPUs.  In response, the SPUs will write
@@ -141,8 +155,9 @@ struct cell_fence
  */
 struct cell_command_fence
 {
-   uint64_t opcode;      /**< CELL_CMD_FENCE */
+   opcode_t opcode;      /**< CELL_CMD_FENCE */
    struct cell_fence *fence;
+   uint32_t pad_[3];
 };
 
 
@@ -163,7 +178,7 @@ struct cell_command_fence
  */
 struct cell_command_fragment_ops
 {
-   uint64_t opcode;      /**< CELL_CMD_STATE_FRAGMENT_OPS */
+   opcode_t opcode;      /**< CELL_CMD_STATE_FRAGMENT_OPS */
 
    /* Fields for the fallback case */
    struct pipe_depth_stencil_alpha_state dsa;
@@ -189,8 +204,9 @@ struct cell_command_fragment_ops
  */
 struct cell_command_fragment_program
 {
-   uint64_t opcode;      /**< CELL_CMD_STATE_FRAGMENT_PROGRAM */
+   opcode_t opcode;      /**< CELL_CMD_STATE_FRAGMENT_PROGRAM */
    uint num_inst;        /**< Number of instructions */
+   uint32_t pad[3];
    unsigned code[SPU_MAX_FRAGMENT_PROGRAM_INSTS];
 };
 
@@ -200,10 +216,11 @@ struct cell_command_fragment_program
  */
 struct cell_command_framebuffer
 {
-   uint64_t opcode;     /**< CELL_CMD_STATE_FRAMEBUFFER */
+   opcode_t opcode;     /**< CELL_CMD_STATE_FRAMEBUFFER */
    int width, height;
    void *color_start, *depth_start;
    enum pipe_format color_format, depth_format;
+   uint32_t pad_[2];
 };
 
 
@@ -212,7 +229,7 @@ struct cell_command_framebuffer
  */
 struct cell_command_rasterizer
 {
-   uint64_t opcode;    /**< CELL_CMD_STATE_RASTERIZER */
+   opcode_t opcode;    /**< CELL_CMD_STATE_RASTERIZER */
    struct pipe_rasterizer_state rasterizer;
 };
 
@@ -222,9 +239,10 @@ struct cell_command_rasterizer
  */
 struct cell_command_clear_surface
 {
-   uint64_t opcode;     /**< CELL_CMD_CLEAR_SURFACE */
+   opcode_t opcode;     /**< CELL_CMD_CLEAR_SURFACE */
    uint surface; /**< Temporary: 0=color, 1=Z */
    uint value;
+   uint32_t pad[2];
 };
 
 
@@ -271,7 +289,7 @@ struct cell_shader_info
 #define SPU_VERTS_PER_BATCH 64
 struct cell_command_vs
 {
-   uint64_t opcode;       /**< CELL_CMD_VS_EXECUTE */
+   opcode_t opcode;       /**< CELL_CMD_VS_EXECUTE */
    uint64_t vOut[SPU_VERTS_PER_BATCH];
    unsigned num_elts;
    unsigned elts[SPU_VERTS_PER_BATCH];
@@ -283,7 +301,7 @@ struct cell_command_vs
 
 struct cell_command_render
 {
-   uint64_t opcode;   /**< CELL_CMD_RENDER */
+   opcode_t opcode;   /**< CELL_CMD_RENDER */
    uint prim_type;    /**< PIPE_PRIM_x */
    uint num_verts;
    uint vertex_size;  /**< bytes per vertex */
@@ -292,27 +310,30 @@ struct cell_command_render
    float xmin, ymin, xmax, ymax;  /* XXX another dummy field */
    uint min_index;
    boolean inline_verts;
+   uint32_t pad_[1];
 };
 
 
 struct cell_command_release_verts
 {
-   uint64_t opcode;         /**< CELL_CMD_RELEASE_VERTS */
+   opcode_t opcode;         /**< CELL_CMD_RELEASE_VERTS */
    uint vertex_buf;    /**< in [0, CELL_NUM_BUFFERS-1] */
+   uint32_t pad_[3];
 };
 
 
 struct cell_command_sampler
 {
-   uint64_t opcode;         /**< CELL_CMD_STATE_SAMPLER */
+   opcode_t opcode;         /**< CELL_CMD_STATE_SAMPLER */
    uint unit;
    struct pipe_sampler_state state;
+   uint32_t pad_[1];
 };
 
 
 struct cell_command_texture
 {
-   uint64_t opcode;     /**< CELL_CMD_STATE_TEXTURE */
+   opcode_t opcode;     /**< CELL_CMD_STATE_TEXTURE */
    uint target;         /**< PIPE_TEXTURE_x */
    uint unit;
    void *start[CELL_MAX_TEXTURE_LEVELS];   /**< Address in main memory */

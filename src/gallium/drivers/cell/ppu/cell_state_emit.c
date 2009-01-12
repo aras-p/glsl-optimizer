@@ -133,7 +133,7 @@ lookup_fragment_ops(struct cell_context *cell)
        */
       ops = CALLOC_VARIANT_LENGTH_STRUCT(cell_command_fragment_ops, total_code_size);
       /* populate the new cell_command_fragment_ops object */
-      ops->opcode = CELL_CMD_STATE_FRAGMENT_OPS;
+      ops->opcode[0] = CELL_CMD_STATE_FRAGMENT_OPS;
       ops->total_code_size = total_code_size;
       ops->front_code_index = 0;
       memcpy(ops->code, spe_code_front.store, front_code_size);
@@ -178,10 +178,10 @@ static void
 emit_state_cmd(struct cell_context *cell, uint cmd,
                const void *state, uint state_size)
 {
-   uint64_t *dst = (uint64_t *) 
-       cell_batch_alloc(cell, ROUNDUP8(sizeof(uint64_t) + state_size));
+   uint32_t *dst = (uint32_t *) 
+       cell_batch_alloc16(cell, ROUNDUP16(sizeof(opcode_t) + state_size));
    *dst = cmd;
-   memcpy(dst + 1, state, state_size);
+   memcpy(dst + 4, state, state_size);
 }
 
 
@@ -195,9 +195,10 @@ cell_emit_state(struct cell_context *cell)
    if (cell->dirty & CELL_NEW_FRAMEBUFFER) {
       struct pipe_surface *cbuf = cell->framebuffer.cbufs[0];
       struct pipe_surface *zbuf = cell->framebuffer.zsbuf;
+      STATIC_ASSERT(sizeof(struct cell_command_framebuffer) % 16 == 0);
       struct cell_command_framebuffer *fb
-         = cell_batch_alloc(cell, sizeof(*fb));
-      fb->opcode = CELL_CMD_STATE_FRAMEBUFFER;
+         = cell_batch_alloc16(cell, sizeof(*fb));
+      fb->opcode[0] = CELL_CMD_STATE_FRAMEBUFFER;
       fb->color_start = cell->cbuf_map[0];
       fb->color_format = cbuf->format;
       fb->depth_start = cell->zsbuf_map;
@@ -211,17 +212,19 @@ cell_emit_state(struct cell_context *cell)
    }
 
    if (cell->dirty & (CELL_NEW_RASTERIZER)) {
+      STATIC_ASSERT(sizeof(struct cell_command_rasterizer) % 16 == 0);
       struct cell_command_rasterizer *rast =
-         cell_batch_alloc(cell, sizeof(*rast));
-      rast->opcode = CELL_CMD_STATE_RASTERIZER;
+         cell_batch_alloc16(cell, sizeof(*rast));
+      rast->opcode[0] = CELL_CMD_STATE_RASTERIZER;
       rast->rasterizer = *cell->rasterizer;
    }
 
    if (cell->dirty & (CELL_NEW_FS)) {
       /* Send new fragment program to SPUs */
+      STATIC_ASSERT(sizeof(struct cell_command_fragment_program) % 16 == 0);
       struct cell_command_fragment_program *fp
-            = cell_batch_alloc(cell, sizeof(*fp));
-      fp->opcode = CELL_CMD_STATE_FRAGMENT_PROGRAM;
+            = cell_batch_alloc16(cell, sizeof(*fp));
+      fp->opcode[0] = CELL_CMD_STATE_FRAGMENT_PROGRAM;
       fp->num_inst = cell->fs->code.num_inst;
       memcpy(&fp->code, cell->fs->code.store,
              SPU_MAX_FRAGMENT_PROGRAM_INSTS * SPE_INST_SIZE);
@@ -238,14 +241,14 @@ cell_emit_state(struct cell_context *cell)
       const uint shader = PIPE_SHADER_FRAGMENT;
       const uint num_const = cell->constants[shader].size / sizeof(float);
       uint i, j;
-      float *buf = cell_batch_alloc(cell, 16 + num_const * sizeof(float));
-      uint64_t *ibuf = (uint64_t *) buf;
+      float *buf = cell_batch_alloc16(cell, ROUNDUP16(32 + num_const * sizeof(float)));
+      uint32_t *ibuf = (uint32_t *) buf;
       const float *constants = pipe_buffer_map(cell->pipe.screen,
                                                cell->constants[shader].buffer,
                                                PIPE_BUFFER_USAGE_CPU_READ);
       ibuf[0] = CELL_CMD_STATE_FS_CONSTANTS;
-      ibuf[1] = num_const;
-      j = 4;
+      ibuf[4] = num_const;
+      j = 8;
       for (i = 0; i < num_const; i++) {
          buf[j++] = constants[i];
       }
@@ -258,7 +261,7 @@ cell_emit_state(struct cell_context *cell)
       struct cell_command_fragment_ops *fops, *fops_cmd;
       /* Note that cell_command_fragment_ops is a variant-sized record */
       fops = lookup_fragment_ops(cell);
-      fops_cmd = cell_batch_alloc(cell, sizeof(*fops_cmd) + fops->total_code_size);
+      fops_cmd = cell_batch_alloc16(cell, ROUNDUP16(sizeof(*fops_cmd) + fops->total_code_size));
       memcpy(fops_cmd, fops, sizeof(*fops) + fops->total_code_size);
    }
 
@@ -267,9 +270,10 @@ cell_emit_state(struct cell_context *cell)
       for (i = 0; i < CELL_MAX_SAMPLERS; i++) {
          if (cell->dirty_samplers & (1 << i)) {
             if (cell->sampler[i]) {
+               STATIC_ASSERT(sizeof(struct cell_command_sampler) % 16 == 0);
                struct cell_command_sampler *sampler
-                  = cell_batch_alloc(cell, sizeof(*sampler));
-               sampler->opcode = CELL_CMD_STATE_SAMPLER;
+                  = cell_batch_alloc16(cell, sizeof(*sampler));
+               sampler->opcode[0] = CELL_CMD_STATE_SAMPLER;
                sampler->unit = i;
                sampler->state = *cell->sampler[i];
             }
@@ -282,9 +286,10 @@ cell_emit_state(struct cell_context *cell)
       uint i;
       for (i = 0;i < CELL_MAX_SAMPLERS; i++) {
          if (cell->dirty_textures & (1 << i)) {
+            STATIC_ASSERT(sizeof(struct cell_command_texture) % 16 == 0);
             struct cell_command_texture *texture
-               =  cell_batch_alloc(cell, sizeof(*texture));
-            texture->opcode = CELL_CMD_STATE_TEXTURE;
+               =  (struct cell_command_texture *)cell_batch_alloc16(cell, sizeof(*texture));
+            texture->opcode[0] = CELL_CMD_STATE_TEXTURE;
             texture->unit = i;
             if (cell->texture[i]) {
                uint level;
