@@ -178,6 +178,38 @@ nv50_miptree_sync(struct pipe_screen *pscreen, struct nv50_miptree *mt,
 	pscreen->tex_surface_release(pscreen, &src);
 }
 
+/* The reverse of the above */
+void
+nv50_miptree_sync_cpu(struct pipe_screen *pscreen, struct nv50_miptree *mt,
+		      unsigned level, unsigned image)
+{
+	struct nouveau_winsys *nvws = nv50_screen(pscreen)->nvws;
+	struct nv50_miptree_level *lvl = &mt->level[level];
+	struct pipe_surface *dst, *src;
+	unsigned face = 0, zslice = 0;
+
+	if (!is_dirty(lvl->image_dirty_gpu, image))
+		return;
+
+	if (mt->base.target == PIPE_TEXTURE_CUBE)
+		face = image;
+	else
+	if (mt->base.target == PIPE_TEXTURE_3D)
+		zslice = image;
+
+	mark_clean(lvl->image_dirty_gpu, image);
+
+	src = pscreen->get_tex_surface(pscreen, &mt->base, face, level, zslice,
+				       PIPE_BUFFER_USAGE_GPU_READ);
+	dst = pscreen->get_tex_surface(pscreen, &mt->base, face, level, zslice,
+				       PIPE_BUFFER_USAGE_CPU_READ);
+
+	nvws->surface_copy(nvws, dst, 0, 0, src, 0, 0, dst->width, dst->height);
+
+	pscreen->tex_surface_release(pscreen, &dst);
+	pscreen->tex_surface_release(pscreen, &src);
+}
+
 static struct pipe_surface *
 nv50_miptree_surface_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 			 unsigned face, unsigned level, unsigned zslice,
@@ -216,7 +248,7 @@ nv50_miptree_surface_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 
 	if (flags & PIPE_BUFFER_USAGE_CPU_READ_WRITE) {
 		assert(!(flags & PIPE_BUFFER_USAGE_GPU_READ_WRITE));
-		assert(!is_dirty(lvl->image_dirty_gpu, img));
+		nv50_miptree_sync_cpu(pscreen, mt, level, img);
 
 		ps->offset = 0;
 		pipe_texture_reference(&ps->texture, pt);
