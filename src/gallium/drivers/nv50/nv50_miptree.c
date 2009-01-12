@@ -27,14 +27,16 @@
 #include "nv50_context.h"
 
 static struct pipe_texture *
-nv50_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *pt)
+nv50_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *tmp)
 {
 	struct pipe_winsys *ws = pscreen->winsys;
 	struct nv50_miptree *mt = CALLOC_STRUCT(nv50_miptree);
-	unsigned usage, width = pt->width[0], height = pt->height[0];
-	int i;
+	struct pipe_texture *pt = &mt->base;
+	unsigned usage, width = tmp->width[0], height = tmp->height[0];
+	unsigned depth = tmp->depth[0];
+	int i, l;
 
-	mt->base = *pt;
+	mt->base = *tmp;
 	mt->base.refcount = 1;
 	mt->base.screen = pscreen;
 
@@ -59,17 +61,34 @@ nv50_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *pt)
 		mt->image_nr = 1;
 		break;
 	}
-	mt->image_offset = CALLOC(mt->image_nr, sizeof(int));
+
+	for (l = 0; l <= pt->last_level; l++) {
+		struct nv50_miptree_level *lvl = &mt->level[l];
+
+		pt->width[l] = width;
+		pt->height[l] = height;
+		pt->depth[l] = depth;
+		pt->nblocksx[l] = pf_get_nblocksx(&pt->block, width);
+		pt->nblocksy[l] = pf_get_nblocksy(&pt->block, width);
+
+		lvl->image_offset = CALLOC(mt->image_nr, sizeof(int));
+		lvl->image = CALLOC(mt->image_nr, sizeof(struct pipe_buffer *));
+	}
 
 	for (i = 0; i < mt->image_nr; i++) {
-		int image_size;
+		for (l = 0; l <= pt->last_level; l++) {
+			struct nv50_miptree_level *lvl = &mt->level[l];
+			int size;
 
-		image_size  = align(width, 8) * pt->block.size;
-		image_size  = align(image_size, 64);
-		image_size *= align(height, 8) * pt->block.size;
+			size  = align(pt->width[l], 8) * pt->block.size;
+			size  = align(size, 64);
+			size *= align(pt->height[l], 8) * pt->block.size;
 
-		mt->image_offset[i] = mt->total_size;
-		mt->total_size += image_size;
+			lvl->image[i] = ws->buffer_create(ws, 256, 0, size);
+			lvl->image_offset[i] = mt->total_size;
+
+			mt->total_size += size;
+		}
 	}
 
 	mt->buffer = ws->buffer_create(ws, 256, usage, mt->total_size);
@@ -128,7 +147,7 @@ nv50_miptree_surface_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 	ps->nblocksx = pt->nblocksx[level];
 	ps->nblocksy = pt->nblocksy[level];
 	ps->stride = ps->width * ps->block.size;
-	ps->offset = mt->image_offset[img];
+	ps->offset = mt->level[level].image_offset[img];
 	ps->usage = flags;
 	ps->status = PIPE_SURFACE_STATUS_DEFINED;
 

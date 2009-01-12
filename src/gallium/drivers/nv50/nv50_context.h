@@ -67,11 +67,17 @@ struct nv50_rasterizer_stateobj {
 	struct nouveau_stateobj *so;
 };
 
+struct nv50_miptree_level {
+	struct pipe_buffer **image;
+	int *image_offset;
+	unsigned image_dirty;
+};
+
 struct nv50_miptree {
 	struct pipe_texture base;
 	struct pipe_buffer *buffer;
 
-	int *image_offset;
+	struct nv50_miptree_level level[PIPE_MAX_TEXTURE_LEVELS];
 	int image_nr;
 	int total_size;
 };
