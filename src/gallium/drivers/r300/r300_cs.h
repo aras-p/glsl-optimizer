@@ -23,8 +23,9 @@
 #ifndef R300_CS_H
 #define R300_CS_H
 
-#include "radeon_cs.h"
 #include "radeon_reg.h"
+
+#include "r300_winsys.h"
 
 /* Yes, I know macros are ugly. However, they are much prettier than the code
  * that they neatly hide away, and don't have the cost of function setup,so
@@ -32,39 +33,40 @@
 
 #define MAX_CS_SIZE 64 * 1024 / 4
 
+/* XXX stolen from radeon_drm.h */
+#define RADEON_GEM_DOMAIN_CPU  0x1
+#define RADEON_GEM_DOMAIN_GTT  0x2
+#define RADEON_GEM_DOMAIN_VRAM 0x4
+
 #define CP_PACKET0(register, count) \
     (RADEON_CP_PACKET0 | ((count) << 16) | ((register) >> 2))
 
 #define CS_LOCALS(context) \
-    struct radeon_cs* cs = context->cs
+    struct r300_winsys* cs_winsys = context->winsys; \
+    struct radeon_cs* cs = cs_winsys->cs
 
 
-#define CHECK_CS(size) do { \
-    if ((cs->cdw + (size) + 128) > MAX_CS_SIZE || radeon_cs_need_flush(cs)) { \
-        /* XXX flush the CS */ \
-    } } while (0)
+#define CHECK_CS(size) \
+    cs_winsys->check_cs(cs, (size))
 
-/* XXX radeon_cs_begin is currently unimplemented on the backend, but let's
- * be future-proof, yeah? */
 #define BEGIN_CS(size) do { \
     CHECK_CS(size); \
-    radeon_cs_begin(cs, (size), __FILE__, __FUNCTION__, __LINE__); \
+    cs_winsys->begin_cs(cs, (size), __FILE__, __FUNCTION__, __LINE__); \
 } while (0)
 
 #define OUT_CS(value) \
-    radeon_cs_write_dword(cs, value)
+    cs_winsys->write_cs_dword(cs, value)
 
 #define OUT_CS_REG(register, value) do { \
     OUT_CS(CP_PACKET0(register, 0)); \
     OUT_CS(value); } while (0)
 
 #define OUT_CS_RELOC(bo, offset, rd, wd, flags) do { \
-    radeon_cs_write_dword(cs, offset); \
-    radeon_cs_write_reloc(cs, bo, rd, wd, flags); \
+    OUT_CS(offset); \
+    cs_winsys->write_cs_reloc(cs, bo, rd, wd, flags); \
 } while (0)
 
-/* XXX more future-proofing */
 #define END_CS \
-    radeon_cs_end(cs, __FILE__, __FUNCTION__, __LINE__)
+    cs_winsys->end_cs(cs, __FILE__, __FUNCTION__, __LINE__)
 
 #endif /* R300_CS_H */

@@ -20,33 +20,36 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
  * USE OR OTHER DEALINGS IN THE SOFTWARE. */
 
-#ifndef R300_CONTEXT_H
-#define R300_CONTEXT_H
+#include "amd_r300.h"
 
-#include "draw/draw_context.h"
-#include "pipe/p_context.h"
-#include "util/u_memory.h"
-
-struct r300_context {
-    /* Parent class */
-    struct pipe_context context;
-
-    /* The interface to the windowing system, etc. */
-    struct r300_winsys* winsys;
-    /* Draw module. Used mostly for SW TCL. */
-    struct draw_context* draw;
-};
-
-/* Convenience cast wrapper. */
-static struct r300_context* r300_context(struct pipe_context* context) {
-    return (struct r300_context*)context;
+static boolean amd_r300_check_cs(struct radeon_cs* cs, int size)
+{
+    /* XXX check size here, lazy ass! */
+    return TRUE;
 }
 
-/* Context initialization. */
-void r300_init_surface_functions(struct r300_context* r300);
+static void amd_r300_write_cs_reloc(struct radeon_cs* cs,
+                                    struct pipe_buffer* pbuffer,
+                                    uint32_t rd,
+                                    uint32_t wd,
+                                    uint32_t flags)
+{
+    radeon_cs_write_reloc(cs, ((struct amd_pipe_buffer*)pbuffer)->bo, rd, wd, flags);
+}
 
-struct pipe_context* r300_create_context(struct pipe_screen* screen,
-                                         struct pipe_winsys* winsys,
-                                         struct r300_winsys* r300_winsys);
+struct r300_winsys* amd_create_r300_winsys(int fd)
+{
+    struct r300_winsys* winsys = calloc(1, sizeof(struct r300_winsys));
 
-#endif /* R300_CONTEXT_H */
+    struct radeon_cs_manager* csm = radeon_cs_manager_gem_ctor(fd);
+
+    winsys->cs = radeon_cs_create(csm, 1024 * 64 / 4);
+
+    winsys->check_cs = amd_r300_check_cs;
+    winsys->begin_cs = radeon_cs_begin;
+    winsys->write_cs_dword = radeon_cs_write_dword;
+    winsys->write_cs_reloc = amd_r300_write_cs_reloc;
+    winsys->end_cs = radeon_cs_end;
+
+    return winsys;
+}

@@ -32,16 +32,16 @@ static void r300_destroy_context(struct pipe_context* context) {
 
 struct pipe_context* r300_create_context(struct pipe_screen* screen,
                                          struct pipe_winsys* winsys,
-                                         struct amd_winsys* amd_winsys)
+                                         struct r300_winsys* r300_winsys)
 {
     struct r300_context* r300 = CALLOC_STRUCT(r300_context);
 
     if (!r300)
         return NULL;
 
-    r300->winsys = amd_winsys;
+    r300->winsys = r300_winsys;
     r300->context.winsys = winsys;
-    r300->context.screen = screen;
+    r300->context.screen = r300_create_screen(winsys, 0x0);
 
     r300->context.destroy = r300_destroy_context;
 

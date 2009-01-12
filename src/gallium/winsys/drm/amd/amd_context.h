@@ -35,6 +35,8 @@
 #include "state_tracker/st_context.h"
 #include "amd_screen.h"
 
+#include "amd_r300.h"
+
 struct amd_framebuffer {
     struct st_framebuffer   *st_framebuffer;
     unsigned                attachments;

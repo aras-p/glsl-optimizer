@@ -20,33 +20,10 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
  * USE OR OTHER DEALINGS IN THE SOFTWARE. */
 
-#ifndef R300_CONTEXT_H
-#define R300_CONTEXT_H
+#include "radeon_cs.h"
 
-#include "draw/draw_context.h"
-#include "pipe/p_context.h"
-#include "util/u_memory.h"
+#include "r300_winsys.h"
 
-struct r300_context {
-    /* Parent class */
-    struct pipe_context context;
+#include "amd_buffer.h"
 
-    /* The interface to the windowing system, etc. */
-    struct r300_winsys* winsys;
-    /* Draw module. Used mostly for SW TCL. */
-    struct draw_context* draw;
-};
-
-/* Convenience cast wrapper. */
-static struct r300_context* r300_context(struct pipe_context* context) {
-    return (struct r300_context*)context;
-}
-
-/* Context initialization. */
-void r300_init_surface_functions(struct r300_context* r300);
-
-struct pipe_context* r300_create_context(struct pipe_screen* screen,
-                                         struct pipe_winsys* winsys,
-                                         struct r300_winsys* r300_winsys);
-
-#endif /* R300_CONTEXT_H */
+struct r300_winsys* amd_create_r300_winsys(int fd);

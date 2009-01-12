@@ -243,12 +243,10 @@ GLboolean amd_context_create(const __GLcontextModes *visual,
     }
 
     if (GL_TRUE) {
-        /* XXX second arg should be PCI ID, but damned if I know why */
-        amd_context->pipe_screen = r300_create_screen(amd_context->pipe_winsys,
-                                                      0x0);
-        pipe = r300_create_context(amd_context->pipe_screen,
+        fprintf(stderr, "Creating r300 context...");
+        pipe = r300_create_context(NULL,
                                    amd_context->pipe_winsys,
-                                   (struct amd_pipe_winsys*)amd_context->pipe_winsys);
+                                   amd_create_r300_winsys(amd_context->drm_fd));
     } else {
         pipe = amd_create_softpipe(amd_context);
     }

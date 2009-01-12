@@ -144,13 +144,13 @@ struct pipe_screen* r300_create_screen(struct pipe_winsys* winsys, uint pci_id) 
     if (!r300screen)
         return NULL;
 
-    /* XXX break this into its own function? */
+    /* XXX break this into its own function?
     switch (pci_id) {
         default:
             debug_printf("%s: unknown PCI ID 0x%x, cannot create screen!\n",
                          __FUNCTION__, pci_id);
             return NULL;
-    }
+    } */
 
     r300screen->pci_id = pci_id;
     r300screen->screen.winsys = winsys;

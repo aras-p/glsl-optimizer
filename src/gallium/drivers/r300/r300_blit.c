@@ -79,7 +79,7 @@ int r300_fill_blit(struct r300_context* r300,
     OUT_CS_REG(RADEON_DP_CNTL,
                   RADEON_DST_X_LEFT_TO_RIGHT | RADEON_DST_Y_TOP_TO_BOTTOM);
     OUT_CS_REG(RADEON_DST_PITCH_OFFSET, 0x0);
-    /* XXX fix this shit -> OUT_RELOC(dst, 0, RADEON_GEM_DOMAIN_VRAM) */
+    OUT_CS_RELOC(dst_buffer, 0, 0, RADEON_GEM_DOMAIN_VRAM, 0);
 
     /* Do the actual paint. */
     OUT_CS_REG(RADEON_DST_Y_X, (y << 16) | x);
