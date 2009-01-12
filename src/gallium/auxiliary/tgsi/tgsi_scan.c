@@ -43,6 +43,9 @@
 
 
 /**
+ * Scan the given TGSI shader to collect information such as number of
+ * registers used, special instructions used, etc.
+ * \return info  the result of the scan
  */
 void
 tgsi_scan_shader(const struct tgsi_token *tokens,
@@ -115,7 +118,7 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
          {
             const struct tgsi_full_declaration *fulldecl
                = &parse.FullToken.FullDeclaration;
-            uint file = fulldecl->Declaration.File;
+            const uint file = fulldecl->Declaration.File;
             uint reg;
             for (reg = fulldecl->DeclarationRange.First;
                  reg <= fulldecl->DeclarationRange.Last;
@@ -131,8 +134,7 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
                   info->input_semantic_index[reg] = (ubyte)fulldecl->Semantic.SemanticIndex;
                   info->num_inputs++;
                }
-
-               if (file == TGSI_FILE_OUTPUT) {
+               else if (file == TGSI_FILE_OUTPUT) {
                   info->output_semantic_name[reg] = (ubyte)fulldecl->Semantic.SemanticName;
                   info->output_semantic_index[reg] = (ubyte)fulldecl->Semantic.SemanticIndex;
                   info->num_outputs++;
