@@ -32,7 +32,7 @@
 #include "nv50_context.h"
 
 #define NV50_SU_MAX_TEMP 64
-#define NV50_PROGRAM_DUMP
+//#define NV50_PROGRAM_DUMP
 
 /* ARL - gallium craps itself on progs/vp/arl.txt
  *
@@ -1602,13 +1602,19 @@ nv50_program_validate_code(struct nv50_context *nv50, struct nv50_program *p)
 	if (!upload)
 		return;
 
+#ifdef NV50_PROGRAM_DUMP
 	NOUVEAU_ERR("-------\n");
 	up = ptr = MALLOC(p->exec_size * 4);
 	for (e = p->exec_head; e; e = e->next) {
 		NOUVEAU_ERR("0x%08x\n", e->inst[0]);
 		if (is_long(e))
 			NOUVEAU_ERR("0x%08x\n", e->inst[1]);
+	}
 
+#endif
+
+	up = ptr = MALLOC(p->exec_size * 4);
+	for (e = p->exec_head; e; e = e->next) {
 		*(ptr++) = e->inst[0];
 		if (is_long(e))
 			*(ptr++) = e->inst[1];
