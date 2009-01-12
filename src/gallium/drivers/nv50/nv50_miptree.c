@@ -115,12 +115,50 @@ nv50_miptree_release(struct pipe_screen *pscreen, struct pipe_texture **ppt)
 	}
 }
 
+void
+nv50_miptree_sync(struct pipe_screen *pscreen, struct nv50_miptree *mt,
+		  unsigned level, unsigned image)
+{
+	struct nouveau_winsys *nvws = nv50_screen(pscreen)->nvws;
+	struct nv50_miptree_level *lvl = &mt->level[level];
+	struct pipe_surface *dst, *src;
+	unsigned face = 0, zslice = 0;
+
+	if (!lvl->image_dirty_cpu & (1 << image))
+		return;
+
+	if (mt->base.target == PIPE_TEXTURE_CUBE)
+		face = image;
+	else
+	if (mt->base.target == PIPE_TEXTURE_3D)
+		zslice = image;
+
+	/* Mark as clean already - so we don't continually call this function
+	 * trying to get a GPU_WRITE pipe_surface!
+	 */
+	lvl->image_dirty_cpu &= ~(1 << image);
+
+	dst = pscreen->get_tex_surface(pscreen, &mt->base, face, level, zslice,
+				       PIPE_BUFFER_USAGE_GPU_WRITE);
+	/* Pretend we're doing CPU access so we get the backing pipe_surface
+	 * and not a view into the larger miptree.
+	 */
+	src = pscreen->get_tex_surface(pscreen, &mt->base, face, level, zslice,
+				       PIPE_BUFFER_USAGE_CPU_READ);
+
+	nvws->surface_copy(nvws, dst, 0, 0, src, 0, 0, dst->width, dst->height);
+
+	pscreen->tex_surface_release(pscreen, &dst);
+	pscreen->tex_surface_release(pscreen, &src);
+}
+
 static struct pipe_surface *
 nv50_miptree_surface_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 			 unsigned face, unsigned level, unsigned zslice,
 			 unsigned flags)
 {
 	struct nv50_miptree *mt = nv50_miptree(pt);
+	struct nv50_miptree_level *lvl = &mt->level[level];
 	struct nv50_surface *s;
 	struct pipe_surface *ps;
 	int img;
@@ -147,12 +185,29 @@ nv50_miptree_surface_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 	ps->nblocksx = pt->nblocksx[level];
 	ps->nblocksy = pt->nblocksy[level];
 	ps->stride = ps->width * ps->block.size;
-	ps->offset = mt->level[level].image_offset[img];
 	ps->usage = flags;
 	ps->status = PIPE_SURFACE_STATUS_DEFINED;
 
-	pipe_texture_reference(&ps->texture, pt);
-	pipe_buffer_reference(pscreen, &ps->buffer, mt->buffer);
+	if (flags & PIPE_BUFFER_USAGE_CPU_READ_WRITE) {
+		assert(!(flags & PIPE_BUFFER_USAGE_GPU_READ_WRITE));
+		assert(!(lvl->image_dirty_cpu & (1 << img)));
+
+		ps->offset = 0;
+		pipe_texture_reference(&ps->texture, pt);
+		pipe_buffer_reference(pscreen, &ps->buffer, lvl->image[img]);
+
+		if (flags & PIPE_BUFFER_USAGE_CPU_WRITE)
+			lvl->image_dirty_cpu |= (1 << img);
+	} else {
+		nv50_miptree_sync(pscreen, mt, level, img);
+
+		ps->offset = lvl->image_offset[img];
+		pipe_texture_reference(&ps->texture, pt);
+		pipe_buffer_reference(pscreen, &ps->buffer, mt->buffer);
+
+		if (flags & PIPE_BUFFER_USAGE_GPU_WRITE)
+			lvl->image_dirty_gpu |= (1 << img);
+	}
 
 	return ps;
 }

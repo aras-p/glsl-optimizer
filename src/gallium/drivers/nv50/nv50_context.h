@@ -70,7 +70,8 @@ struct nv50_rasterizer_stateobj {
 struct nv50_miptree_level {
 	struct pipe_buffer **image;
 	int *image_offset;
-	unsigned image_dirty;
+	unsigned image_dirty_cpu;
+	unsigned image_dirty_gpu;
 };
 
 struct nv50_miptree {
