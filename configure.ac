@@ -83,7 +83,7 @@ dnl Compiler macros
 DEFINES=""
 AC_SUBST([DEFINES])
 case "$host_os" in
-*-gnu)
+*-gnu*)
 if test "x$GCC" = xyes; then
     DEFINES="$DEFINES -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_BSD_SOURCE"
 fi
