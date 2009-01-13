@@ -74,6 +74,8 @@ struct r300_winsys {
            const char* function,
            int line);
 
+    /* Flush the CS. */
+    void (*flush_cs)(struct radeon_cs* cs);
 };
 
 struct pipe_context* r300_create_context(struct pipe_screen* screen,

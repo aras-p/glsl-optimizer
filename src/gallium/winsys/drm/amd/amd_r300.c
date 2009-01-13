@@ -37,6 +37,12 @@ static void amd_r300_write_cs_reloc(struct radeon_cs* cs,
     radeon_cs_write_reloc(cs, ((struct amd_pipe_buffer*)pbuffer)->bo, rd, wd, flags);
 }
 
+static void amd_r300_flush_cs(struct radeon_cs* cs)
+{
+    radeon_cs_emit(cs);
+    radeon_cs_erase(cs);
+}
+
 struct r300_winsys* amd_create_r300_winsys(int fd)
 {
     struct r300_winsys* winsys = calloc(1, sizeof(struct r300_winsys));
@@ -50,6 +56,7 @@ struct r300_winsys* amd_create_r300_winsys(int fd)
     winsys->write_cs_dword = radeon_cs_write_dword;
     winsys->write_cs_reloc = amd_r300_write_cs_reloc;
     winsys->end_cs = radeon_cs_end;
+    winsys->flush_cs = amd_r300_flush_cs;
 
     return winsys;
 }

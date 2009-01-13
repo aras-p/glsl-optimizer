@@ -69,4 +69,7 @@
 #define END_CS \
     cs_winsys->end_cs(cs, __FILE__, __FUNCTION__, __LINE__)
 
+#define FLUSH_CS \
+    cs_winsys->flush_cs(cs)
+
 #endif /* R300_CS_H */
