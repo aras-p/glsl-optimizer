@@ -45,6 +45,7 @@
 
 #include "xlib_brw_aub.h"
 #include "xlib_brw.h"
+#include "xlib.h"
 
 
 
@@ -311,7 +312,7 @@ xlib_brw_destroy_pipe_winsys_aub( struct pipe_winsys *winsys )
 
 
 
-struct pipe_winsys *
+static struct pipe_winsys *
 xlib_create_brw_winsys( void )
 {
    struct aub_pipe_winsys *iws = CALLOC_STRUCT( aub_pipe_winsys );
@@ -349,14 +350,10 @@ xlib_create_brw_winsys( void )
 }
 
 
-struct pipe_screen *
+static struct pipe_screen *
 xlib_create_brw_screen( struct pipe_winsys *winsys )
 {
-#ifdef GALLIUM_CELL
-   return NULL;
-#else
    return brw_create_screen(winsys, 0/* XXX pci_id */);
-#endif
 }
 
 
@@ -464,7 +461,7 @@ void xlib_brw_buffer_subdata_typed( struct pipe_winsys *pws,
 }
  
 
-void
+static void
 xlib_brw_display_surface(struct xmesa_buffer *b, 
                          struct pipe_surface *surf)
 {
@@ -472,3 +469,12 @@ xlib_brw_display_surface(struct xmesa_buffer *b,
 		     surf,
 		     aub_bo(surf->buffer)->offset );
 }
+
+
+struct xm_driver xlib_brw_driver = 
+{
+   .create_pipe_winsys = xlib_create_brw_winsys,
+   .create_pipe_screen = xlib_create_brw_screen,
+   .create_pipe_context = xlib_create_brw_context,
+   .display_surface = xlib_brw_display_surface,
+};

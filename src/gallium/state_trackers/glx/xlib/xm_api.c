@@ -71,6 +71,18 @@
 #include "xm_winsys.h"
 #include <GL/glx.h>
 
+
+/* Driver interface routines, set up by xlib backend on library
+ * _init().  These are global in the same way that function names are
+ * global.
+ */
+static struct xm_driver driver;
+
+void xmesa_set_driver( const struct xm_driver *templ )
+{
+   driver = *templ;
+}
+
 /**
  * Global X driver lock
  */
@@ -756,17 +768,17 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
    
    /* XXX: create once per Xlib Display.
     */
-   winsys = xmesa_create_pipe_winsys();
+   winsys = driver.create_pipe_winsys();
    if (winsys == NULL)
       goto fail;
 
    /* XXX: create once per Xlib Display.
     */
-   screen = xmesa_create_pipe_screen( winsys );
+   screen = driver.create_pipe_screen( winsys );
    if (screen == NULL)
       goto fail;
 
-   pipe = xmesa_create_pipe_context( screen,
+   pipe = driver.create_pipe_context( screen,
                                      (void *)c );
    if (pipe == NULL)
       goto fail;
@@ -1118,8 +1130,7 @@ void XMesaSwapBuffers( XMesaBuffer b )
 
    surf = st_get_framebuffer_surface(b->stfb, ST_SURFACE_BACK_LEFT);
    if (surf) {
-      xmesa_display_surface(b, surf);
-//	 xmesa_display_surface(b, surf);
+      driver.display_surface(b, surf);
    }
 
    xmesa_check_and_update_buffer_size(NULL, b);

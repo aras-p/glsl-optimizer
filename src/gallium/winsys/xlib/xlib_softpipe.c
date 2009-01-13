@@ -54,7 +54,7 @@
 #define TILE_SIZE 32  /* avoid compilation errors */
 #endif
 
-#include "xlib_softpipe.h"
+#include "xlib.h"
 
 /**
  * Subclass of pipe_buffer for Xlib winsys.
@@ -303,7 +303,7 @@ twiddle_tile(const uint *tileIn, uint *tileOut)
  * Display a surface that's in a tiled configuration.  That is, all the
  * pixels for a TILE_SIZExTILE_SIZE block are contiguous in memory.
  */
-void
+static void
 xlib_cell_display_surface(struct xmesa_buffer *b, struct pipe_surface *surf)
 {
    XImage *ximage;
@@ -374,7 +374,7 @@ xlib_cell_display_surface(struct xmesa_buffer *b, struct pipe_surface *surf)
  * Display/copy the image in the surface into the X window specified
  * by the XMesaBuffer.
  */
-void
+static void
 xlib_softpipe_display_surface(struct xmesa_buffer *b, 
                               struct pipe_surface *surf)
 {
@@ -620,7 +620,7 @@ xm_fence_finish(struct pipe_winsys *sws, struct pipe_fence_handle *fence,
 
 
 
-struct pipe_winsys *
+static struct pipe_winsys *
 xlib_create_softpipe_winsys( void )
 {
    static struct xmesa_pipe_winsys *ws = NULL;
@@ -655,7 +655,7 @@ xlib_create_softpipe_winsys( void )
 }
 
 
-struct pipe_screen *
+static struct pipe_screen *
 xlib_create_softpipe_screen( struct pipe_winsys *pws )
 {
    struct pipe_screen *screen;
@@ -671,7 +671,7 @@ fail:
 }
 
 
-struct pipe_context *
+static struct pipe_context *
 xlib_create_softpipe_context( struct pipe_screen *screen,
                               void *context_private )
 {
@@ -689,6 +689,14 @@ fail:
    return NULL;
 }
 
+struct xm_driver xlib_softpipe_driver = 
+{
+   .create_pipe_winsys = xlib_create_softpipe_winsys,
+   .create_pipe_screen = xlib_create_softpipe_screen,
+   .create_pipe_context = xlib_create_softpipe_context,
+   .display_surface = xlib_softpipe_display_surface
+};
+
 
 /***********************************************************************
  * Cell piggybacks on softpipe code still.
@@ -698,28 +706,25 @@ fail:
  * and creating cell-specific versions of either those functions or
  * the entire file.
  */
-struct pipe_winsys *
+#ifdef GALLIUM_CELL
+
+static struct pipe_winsys *
 xlib_create_cell_winsys( void )
 {
    return xlib_create_softpipe_winsys();
 }
 
-struct pipe_screen *
+static struct pipe_screen *
 xlib_create_cell_screen( struct pipe_winsys *pws )
 {
-#ifdef GALLIUM_CELL
    return cell_create_screen( pws );
-#else
-   return NULL;
-#endif
 }
 
 
-struct pipe_context *
+static struct pipe_context *
 xlib_create_cell_context( struct pipe_screen *screen,
                           void *priv )
 {
-#ifdef GALLIUM_CELL
    struct cell_winsys *cws;
    struct pipe_context *pipe;
 
@@ -742,6 +747,26 @@ xlib_create_cell_context( struct pipe_screen *screen,
    return pipe;
 
 fail:
-#endif
    return NULL;
 }
+#endif
+
+#if defined(GALLIUM_CELL)
+struct xm_driver xlib_cell_driver = 
+{
+   .create_pipe_winsys = xlib_create_cell_winsys,
+   .create_pipe_screen = xlib_create_cell_screen,
+   .create_pipe_context = xlib_create_cell_context,
+   .display_surface = xlib_cell_display_surface,
+};
+#else
+struct xm_driver xlib_cell_driver = 
+{
+   .create_pipe_winsys = xlib_create_softpipe_winsys,
+   .create_pipe_screen = xlib_create_softpipe_screen,
+   .create_pipe_context = xlib_create_softpipe_context,
+   .display_surface = xlib_softpipe_display_surface,
+};
+#endif
+
+

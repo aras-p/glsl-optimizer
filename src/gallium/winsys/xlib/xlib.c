@@ -31,9 +31,7 @@
  *   Keith Whitwell
  */
 
-#include "xlib_trace.h"
-#include "xlib_softpipe.h"
-#include "xlib_brw.h"
+#include "xlib.h"
 #include "xm_winsys.h"
 
 #include <stdlib.h>
@@ -50,7 +48,6 @@ enum mode {
    MODE_SOFTPIPE
 };
 
-static enum mode xlib_mode;
 
 static enum mode get_mode()
 {
@@ -68,88 +65,30 @@ static enum mode get_mode()
    return MODE_SOFTPIPE;
 }
 
+static void _init( void ) __attribute__((constructor));
 
-struct pipe_winsys *
-xmesa_create_pipe_winsys( void )
+static void _init( void )
 {
-   xlib_mode = get_mode();
+   enum mode xlib_mode = get_mode();
 
    switch (xlib_mode) {
    case MODE_TRACE:
-      return xlib_create_trace_winsys();
-   case MODE_BRW:
-      return xlib_create_brw_winsys();
-   case MODE_CELL:
-      return xlib_create_cell_winsys();
-   case MODE_SOFTPIPE:
-      return xlib_create_softpipe_winsys();
-   default:
-      assert(0);
-      return NULL;
-   }
-}
-
-struct pipe_screen *
-xmesa_create_pipe_screen( struct pipe_winsys *winsys )
-{
-   switch (xlib_mode) {
-   case MODE_TRACE:
-      return xlib_create_trace_screen( winsys );
-   case MODE_BRW:
-      return xlib_create_brw_screen( winsys );
-   case MODE_CELL:
-      return xlib_create_cell_screen( winsys );
-   case MODE_SOFTPIPE:
-      return xlib_create_softpipe_screen( winsys );
-   default:
-      assert(0);
-      return NULL;
-   }
-}
-
-struct pipe_context *
-xmesa_create_pipe_context( struct pipe_screen *screen,
-                           void *priv )
-{
-   switch (xlib_mode) {
-   case MODE_TRACE:
-      return xlib_create_trace_context( screen, priv );
-   case MODE_BRW:
-      return xlib_create_brw_context( screen, priv );
-   case MODE_CELL:
-      return xlib_create_cell_context( screen, priv );
-   case MODE_SOFTPIPE:
-      return xlib_create_softpipe_context( screen, priv );
-   default:
-      assert(0);
-      return NULL;
-   }
-}
-
-void
-xmesa_display_surface( struct xmesa_buffer *buffer,
-                       struct pipe_surface *surf )
-{
-   switch (xlib_mode) {
-   case MODE_TRACE:
-      xlib_trace_display_surface( buffer, surf );
+      xmesa_set_driver( &xlib_trace_driver );
       break;
    case MODE_BRW:
-      xlib_brw_display_surface( buffer, surf );
+      xmesa_set_driver( &xlib_brw_driver );
       break;
    case MODE_CELL:
-      xlib_cell_display_surface( buffer, surf );
+      xmesa_set_driver( &xlib_cell_driver );
       break;
    case MODE_SOFTPIPE:
-      xlib_softpipe_display_surface( buffer, surf );
+      xmesa_set_driver( &xlib_softpipe_driver );
       break;
    default:
       assert(0);
       break;
    }
 }
-
-
 
 /***********************************************************************
  *

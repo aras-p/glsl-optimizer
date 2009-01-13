@@ -142,8 +142,7 @@ dri_display_surface(__DRIdrawablePrivate *dPriv,
    drawable->last_swap_fence = drawable->first_swap_fence;
    drawable->first_swap_fence = NULL;
 
-   /* The lock_hardware is required for the cliprects.  Buffer offsets
-    * should work regardless.
+   /* Call lock_hardware to update dPriv cliprects. 
     */
    dri_lock_hardware(context, drawable);
    {

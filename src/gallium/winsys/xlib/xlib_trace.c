@@ -33,25 +33,24 @@
  */
 
 
-#include "xlib_softpipe.h"
-#include "xlib_trace.h"
+#include "xlib.h"
 
 #include "trace/tr_screen.h"
 #include "trace/tr_context.h"
 
 
-struct pipe_winsys *
+static struct pipe_winsys *
 xlib_create_trace_winsys( void )
 {
-   return xlib_create_softpipe_winsys();
+   return xlib_softpipe_driver.create_pipe_winsys();
 }
 
-struct pipe_screen *
+static struct pipe_screen *
 xlib_create_trace_screen( struct pipe_winsys *winsys )
 {
    struct pipe_screen *screen, *trace_screen;
 
-   screen = xlib_create_softpipe_screen( winsys );
+   screen = xlib_softpipe_driver.create_pipe_screen( winsys );
    if (screen == NULL)
       goto fail;
 
@@ -68,13 +67,13 @@ fail:
    return NULL;
 }
 
-struct pipe_context *
+static struct pipe_context *
 xlib_create_trace_context( struct pipe_screen *screen,
                            void *priv )
 {
    struct pipe_context *pipe, *trace_pipe;
    
-   pipe = xlib_create_softpipe_context( screen, priv );
+   pipe = xlib_softpipe_driver.create_pipe_context( screen, priv );
    if (pipe == NULL)
       goto fail;
 
@@ -92,11 +91,20 @@ fail:
    return NULL;
 }
 
-void
+static void
 xlib_trace_display_surface( struct xmesa_buffer *buffer,
                             struct pipe_surface *surf )
 {
    /* ??
     */
-   xlib_softpipe_display_surface( buffer, surf );
+   xlib_softpipe_driver.display_surface( buffer, surf );
 }
+
+
+struct xm_driver xlib_trace_driver = 
+{
+   .create_pipe_winsys = xlib_create_trace_winsys,
+   .create_pipe_screen = xlib_create_trace_screen,
+   .create_pipe_context = xlib_create_trace_context,
+   .display_surface = xlib_trace_display_surface,
+};

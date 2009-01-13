@@ -36,22 +36,27 @@ struct pipe_surface;
 struct xmesa_buffer;
 
 
-/* Will turn this into a callback-style interface.  For now, these
- * have fixed names, and are implemented in the winsys/xlib directory.
- */
-struct pipe_winsys *xmesa_create_pipe_winsys( void );
+struct xm_driver {
 
-struct pipe_screen *xmesa_create_pipe_screen( struct pipe_winsys * );
+   struct pipe_winsys *(*create_pipe_winsys)( void );
 
-/* The context_private argument needs to go away.  Is currently used
- * in a round-about way to associate a display-target surface with its
- * Xlib window.
- */
-struct pipe_context *xmesa_create_pipe_context( struct pipe_screen *,
+   struct pipe_screen *(*create_pipe_screen)( struct pipe_winsys * );
+
+   /* The context_private argument needs to go away.  Is currently used
+    * in a round-about way to associate a display-target surface with its
+    * Xlib window.
+    */
+   struct pipe_context *(*create_pipe_context)( struct pipe_screen *,
                                                 void *context_private );
 
-void xmesa_display_surface( struct xmesa_buffer *, 
+   void (*display_surface)( struct xmesa_buffer *, 
                             struct pipe_surface * );
+
+};
+
+
+extern void
+xmesa_set_driver( const struct xm_driver *driver );
 
 
 #endif
