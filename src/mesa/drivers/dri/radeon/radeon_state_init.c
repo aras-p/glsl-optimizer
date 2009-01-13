@@ -96,14 +96,14 @@ static int cmdscl( int offset, int stride, int count )
    return h.i;
 }
 
-#define CHECK( NM, FLAG )			\
-static GLboolean check_##NM( GLcontext *ctx )	\
-{						\
-   return FLAG;					\
+#define CHECK( NM, FLAG )				\
+static GLboolean check_##NM( GLcontext *ctx, int idx )	\
+{							\
+   return FLAG;						\
 }
 
 #define TCL_CHECK( NM, FLAG )				\
-static GLboolean check_##NM( GLcontext *ctx )		\
+static GLboolean check_##NM( GLcontext *ctx, int idx )	\
 {							\
    radeonContextPtr rmesa = RADEON_CONTEXT(ctx);	\
    return !rmesa->TclFallback && (FLAG);		\

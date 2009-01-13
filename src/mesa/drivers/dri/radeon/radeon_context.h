@@ -351,25 +351,6 @@ struct radeon_state {
 			(rvb)->address - rmesa->dma.buf0_address +	\
 			(rvb)->start)
 
-struct radeon_dri_mirror {
-	__DRIcontextPrivate *context;	/* DRI context */
-	__DRIscreenPrivate *screen;	/* DRI screen */
-
-   /**
-    * DRI drawable bound to this context for drawing.
-    */
-	__DRIdrawablePrivate *drawable;
-
-   /**
-    * DRI drawable bound to this context for reading.
-    */
-	__DRIdrawablePrivate *readable;
-
-	drm_context_t hwContext;
-	drm_hw_lock_t *hwLock;
-	int fd;
-	int drmMinor;
-};
 
 #define RADEON_CMD_BUF_SZ  (8*1024)
 
@@ -584,19 +565,5 @@ extern int RADEON_DEBUG;
 #else
 #define RADEON_DEBUG		0
 #endif
-
-#define DEBUG_TEXTURE	0x0001
-#define DEBUG_STATE	0x0002
-#define DEBUG_IOCTL	0x0004
-#define DEBUG_PRIMS	0x0008
-#define DEBUG_VERTS	0x0010
-#define DEBUG_FALLBACKS	0x0020
-#define DEBUG_VFMT	0x0040
-#define DEBUG_CODEGEN	0x0080
-#define DEBUG_VERBOSE	0x0100
-#define DEBUG_DRI       0x0200
-#define DEBUG_DMA       0x0400
-#define DEBUG_SANITY    0x0800
-#define DEBUG_SYNC      0x1000
 
 #endif				/* __RADEON_CONTEXT_H__ */

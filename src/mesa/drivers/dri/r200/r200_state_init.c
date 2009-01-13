@@ -58,7 +58,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 void r200PrintDirty( r200ContextPtr rmesa, const char *msg )
 {
-   struct r200_state_atom *l;
+   struct radeon_state_atom *l;
 
    fprintf(stderr, msg);
    fprintf(stderr, ": ");

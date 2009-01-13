@@ -85,7 +85,7 @@ static void radeonSaveHwState( radeonContextPtr rmesa )
    rmesa->backup_store.cmd_used = 0;
 
    foreach( atom, &rmesa->hw.atomlist ) {
-      if ( atom->check( rmesa->glCtx ) ) {
+      if ( atom->check( rmesa->glCtx, 0 ) ) {
 	 int size = atom->cmd_size * 4;
 	 memcpy( dest, atom->cmd, size);
 	 dest += size;
@@ -198,7 +198,7 @@ void radeonEmitState( radeonContextPtr rmesa )
    if (RADEON_DEBUG & DEBUG_STATE) {
       foreach(atom, &rmesa->hw.atomlist) {
 	 if (atom->dirty || rmesa->hw.all_dirty) {
-	    if (atom->check(rmesa->glCtx))
+	    if (atom->check(rmesa->glCtx, 0))
 	       print_state_atom(atom);
 	    else
 	       fprintf(stderr, "skip state %s\n", atom->name);
@@ -213,7 +213,7 @@ void radeonEmitState( radeonContextPtr rmesa )
 	   atom->is_tcl)
 	 atom->dirty = GL_FALSE;
       if (atom->dirty) {
-	 if (atom->check(rmesa->glCtx)) {
+	if (atom->check(rmesa->glCtx, 0)) {
 	    int size = atom->cmd_size * 4;
 	    memcpy(dest, atom->cmd, size);
 	    dest += size;

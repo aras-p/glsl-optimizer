@@ -106,18 +106,6 @@ struct r200_texture_state {
 };
 
 
-struct r200_state_atom {
-   struct r200_state_atom *next, *prev;
-   const char *name;		         /* for debug */
-   int cmd_size;		         /* size in bytes */
-   GLuint is_tcl;
-   GLuint idx;
-   int *cmd;			         /* one or more cmd's */
-   int *lastcmd;			 /* one or more cmd's */
-   GLboolean dirty;
-   GLboolean (*check)( GLcontext *, int );    /* is this state active? */
-};
-
 /* Trying to keep these relatively short as the variables are becoming
  * extravagently long.  Drop the driver name prefix off the front of
  * everything - I think we know which driver we're in by now, and keep the
@@ -493,48 +481,48 @@ struct r200_state_atom {
 
 struct r200_hw_state {
    /* Head of the linked list of state atoms. */
-   struct r200_state_atom atomlist;
+   struct radeon_state_atom atomlist;
 
    /* Hardware state, stored as cmdbuf commands:  
     *   -- Need to doublebuffer for
     *           - reviving state after loss of context
     *           - eliding noop statechange loops? (except line stipple count)
     */
-   struct r200_state_atom ctx;
-   struct r200_state_atom set;
-   struct r200_state_atom vte;
-   struct r200_state_atom lin;
-   struct r200_state_atom msk;
-   struct r200_state_atom vpt;
-   struct r200_state_atom vap;
-   struct r200_state_atom vtx;
-   struct r200_state_atom tcl;
-   struct r200_state_atom msl;
-   struct r200_state_atom tcg;
-   struct r200_state_atom msc;
-   struct r200_state_atom cst;
-   struct r200_state_atom tam;
-   struct r200_state_atom tf;
-   struct r200_state_atom tex[6];
-   struct r200_state_atom cube[6];
-   struct r200_state_atom zbs;
-   struct r200_state_atom mtl[2];
-   struct r200_state_atom mat[9];
-   struct r200_state_atom lit[8]; /* includes vec, scl commands */
-   struct r200_state_atom ucp[6];
-   struct r200_state_atom pix[6]; /* pixshader stages */
-   struct r200_state_atom eye; /* eye pos */
-   struct r200_state_atom grd; /* guard band clipping */
-   struct r200_state_atom fog;
-   struct r200_state_atom glt;
-   struct r200_state_atom prf;
-   struct r200_state_atom afs[2];
-   struct r200_state_atom pvs;
-   struct r200_state_atom vpi[2];
-   struct r200_state_atom vpp[2];
-   struct r200_state_atom atf;
-   struct r200_state_atom spr;
-   struct r200_state_atom ptp;
+   struct radeon_state_atom ctx;
+   struct radeon_state_atom set;
+   struct radeon_state_atom vte;
+   struct radeon_state_atom lin;
+   struct radeon_state_atom msk;
+   struct radeon_state_atom vpt;
+   struct radeon_state_atom vap;
+   struct radeon_state_atom vtx;
+   struct radeon_state_atom tcl;
+   struct radeon_state_atom msl;
+   struct radeon_state_atom tcg;
+   struct radeon_state_atom msc;
+   struct radeon_state_atom cst;
+   struct radeon_state_atom tam;
+   struct radeon_state_atom tf;
+   struct radeon_state_atom tex[6];
+   struct radeon_state_atom cube[6];
+   struct radeon_state_atom zbs;
+   struct radeon_state_atom mtl[2];
+   struct radeon_state_atom mat[9];
+   struct radeon_state_atom lit[8]; /* includes vec, scl commands */
+   struct radeon_state_atom ucp[6];
+   struct radeon_state_atom pix[6]; /* pixshader stages */
+   struct radeon_state_atom eye; /* eye pos */
+   struct radeon_state_atom grd; /* guard band clipping */
+   struct radeon_state_atom fog;
+   struct radeon_state_atom glt;
+   struct radeon_state_atom prf;
+   struct radeon_state_atom afs[2];
+   struct radeon_state_atom pvs;
+   struct radeon_state_atom vpi[2];
+   struct radeon_state_atom vpp[2];
+   struct radeon_state_atom atf;
+   struct radeon_state_atom spr;
+   struct radeon_state_atom ptp;
 
    int max_state_size;	/* Number of bytes necessary for a full state emit. */
    GLboolean is_dirty, all_dirty;
@@ -545,9 +533,6 @@ struct r200_state {
     */
    struct radeon_colorbuffer_state color;
    struct radeon_depthbuffer_state depth;
-#if 00
-   struct r200_pixel_state pixel;
-#endif
    struct radeon_scissor_state scissor;
    struct radeon_stencilbuffer_state stencil;
    struct radeon_stipple_state stipple;
@@ -558,19 +543,6 @@ struct r200_state {
 #define GET_START(rvb) (rmesa->r200Screen->gart_buffer_offset +		\
 			(rvb)->address - rmesa->dma.buf0_address +	\
 			(rvb)->start)
-
-struct r200_dri_mirror {
-   __DRIcontextPrivate	*context;	/* DRI context */
-   __DRIscreenPrivate	*screen;	/* DRI screen */
-   __DRIdrawablePrivate	*drawable;	/* DRI drawable bound to this ctx */
-   __DRIdrawablePrivate	*readable;	/* DRI readable bound to this ctx */
-
-   drm_context_t hwContext;
-   drm_hw_lock_t *hwLock;
-   int fd;
-   int drmMinor;
-};
-
 
 #define R200_CMD_BUF_SZ  (16*1024) 
 
@@ -760,7 +732,7 @@ struct r200_context {
 
    /* Mirrors of some DRI state
     */
-   struct r200_dri_mirror dri;
+   struct radeon_dri_mirror dri;
 
    /* Configuration cache
     */
@@ -798,20 +770,6 @@ extern int R200_DEBUG;
 #define R200_DEBUG		0
 #endif
 
-#define DEBUG_TEXTURE	0x001
-#define DEBUG_STATE	0x002
-#define DEBUG_IOCTL	0x004
-#define DEBUG_PRIMS	0x008
-#define DEBUG_VERTS	0x010
-#define DEBUG_FALLBACKS	0x020
-#define DEBUG_VFMT	0x040
-#define DEBUG_CODEGEN	0x080
-#define DEBUG_VERBOSE	0x100
-#define DEBUG_DRI       0x200
-#define DEBUG_DMA       0x400
-#define DEBUG_SANITY    0x800
-#define DEBUG_SYNC      0x1000
-#define DEBUG_PIXEL     0x2000
-#define DEBUG_MEMORY    0x4000
+
 
 #endif /* __R200_CONTEXT_H__ */

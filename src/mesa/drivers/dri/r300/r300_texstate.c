@@ -461,8 +461,8 @@ void r300SetTexOffset(__DRIcontext * pDRICtx, GLint texname,
 
 void r300SetTexBuffer(__DRIcontext *pDRICtx, GLint target, __DRIdrawable *dPriv)
 {
-    struct gl_texture_unit *texUnit;
-    struct gl_texture_object *texObj;
+	struct gl_texture_unit *texUnit;
+	struct gl_texture_object *texObj;
     struct gl_texture_image *texImage;
 	struct radeon_renderbuffer *rb;
 	r300_texture_image *rImage;
@@ -472,18 +472,21 @@ void r300SetTexBuffer(__DRIcontext *pDRICtx, GLint target, __DRIdrawable *dPriv)
 	r300TexObjPtr t;
 	uint32_t pitch_val;
 
-    target = GL_TEXTURE_RECTANGLE_ARB;
+	target = GL_TEXTURE_RECTANGLE_ARB;
+
 	radeon = pDRICtx->driverPrivate;
 	rmesa = pDRICtx->driverPrivate;
+
 	fb = dPriv->driverPrivate;
-    texUnit = &radeon->glCtx->Texture.Unit[radeon->glCtx->Texture.CurrentUnit];
-    texObj = _mesa_select_tex_object(radeon->glCtx, texUnit, target);
-    texImage = _mesa_get_tex_image(radeon->glCtx, texObj, target, 0);
+        texUnit = &radeon->glCtx->Texture.Unit[radeon->glCtx->Texture.CurrentUnit];
+	texObj = _mesa_select_tex_object(radeon->glCtx, texUnit, target);
+        texImage = _mesa_get_tex_image(radeon->glCtx, texObj, target, 0);
+
 	rImage = get_r300_texture_image(texImage);
 	t = r300_tex_obj(texObj);
-    if (t == NULL) {
-        return;
-    }
+        if (t == NULL) {
+    	    return;
+    	}
 
     radeon_update_renderbuffers(pDRICtx, dPriv);
     /* back & depth buffer are useless free them right away */
@@ -514,8 +517,9 @@ void r300SetTexBuffer(__DRIcontext *pDRICtx, GLint target, __DRIdrawable *dPriv)
         r300_miptree_unreference(rImage->mt);
         rImage->mt = NULL;
     }
+	fprintf(stderr,"settexbuf %dx%d@%d\n", rb->width, rb->height, rb->cpp);
     _mesa_init_teximage_fields(radeon->glCtx, target, texImage,
-                               rb->width, rb->height, rb->cpp, 0, rb->cpp);
+                               rb->width, rb->height, 1, 0, rb->cpp);
 	texImage->TexFormat = &_mesa_texformat_rgba8888_rev;
     rImage->bo = rb->bo;
 

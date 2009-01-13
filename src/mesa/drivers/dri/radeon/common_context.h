@@ -74,11 +74,12 @@ struct radeon_state_atom {
 	struct radeon_state_atom *next, *prev;
 	const char *name;	/* for debug */
 	int cmd_size;		/* size in bytes */
+        GLuint idx;
 	GLuint is_tcl;
 	int *cmd;		/* one or more cmd's */
 	int *lastcmd;		/* one or more cmd's */
 	GLboolean dirty;	/* dirty-mark in emit_state_list */
-	GLboolean(*check) (GLcontext *);	/* is this state active? */
+        GLboolean(*check) (GLcontext *, int idx);	/* is this state active? */
 };
 
 typedef struct radeon_tex_obj radeonTexObj, *radeonTexObjPtr;
@@ -176,3 +177,39 @@ static INLINE GLuint radeonPackColor(GLuint cpp,
 		return 0;
 	}
 }
+
+struct radeon_dri_mirror {
+	__DRIcontextPrivate *context;	/* DRI context */
+	__DRIscreenPrivate *screen;	/* DRI screen */
+
+   /**
+    * DRI drawable bound to this context for drawing.
+    */
+	__DRIdrawablePrivate *drawable;
+
+   /**
+    * DRI drawable bound to this context for reading.
+    */
+	__DRIdrawablePrivate *readable;
+
+	drm_context_t hwContext;
+	drm_hw_lock_t *hwLock;
+	int fd;
+	int drmMinor;
+};
+
+#define DEBUG_TEXTURE	0x001
+#define DEBUG_STATE	0x002
+#define DEBUG_IOCTL	0x004
+#define DEBUG_PRIMS	0x008
+#define DEBUG_VERTS	0x010
+#define DEBUG_FALLBACKS	0x020
+#define DEBUG_VFMT	0x040
+#define DEBUG_CODEGEN	0x080
+#define DEBUG_VERBOSE	0x100
+#define DEBUG_DRI       0x200
+#define DEBUG_DMA       0x400
+#define DEBUG_SANITY    0x800
+#define DEBUG_SYNC      0x1000
+#define DEBUG_PIXEL     0x2000
+#define DEBUG_MEMORY    0x4000

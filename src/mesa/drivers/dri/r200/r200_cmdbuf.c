@@ -45,7 +45,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r200_sanity.h"
 #include "radeon_reg.h"
 
-static void print_state_atom( struct r200_state_atom *state )
+static void print_state_atom( struct radeon_state_atom *state )
 {
    int i;
 
@@ -118,7 +118,7 @@ void r200SetUpAtomList( r200ContextPtr rmesa )
 
 static void r200SaveHwState( r200ContextPtr rmesa )
 {
-   struct r200_state_atom *atom;
+   struct radeon_state_atom *atom;
    char * dest = rmesa->backup_store.cmd_buf;
 
    if (R200_DEBUG & DEBUG_STATE)
@@ -146,7 +146,7 @@ void r200EmitState( r200ContextPtr rmesa )
 {
    char *dest;
    int mtu;
-   struct r200_state_atom *atom;
+   struct radeon_state_atom *atom;
 
    if (R200_DEBUG & (DEBUG_STATE|DEBUG_PRIMS))
       fprintf(stderr, "%s\n", __FUNCTION__);

@@ -139,7 +139,7 @@ do {								\
 
 static INLINE int R200_DB_STATECHANGE( 
    r200ContextPtr rmesa,
-   struct r200_state_atom *atom )
+   struct radeon_state_atom *atom )
 {
    if (memcmp(atom->cmd, atom->lastcmd, atom->cmd_size*4)) {
       int *tmp;
