@@ -4261,10 +4261,14 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
    slang_ir_storage *store = NULL;
    int dbg = 0;
    const GLenum datatype = _slang_gltype_from_specifier(&var->type.specifier);
-   const GLint texIndex = sampler_to_texture_index(var->type.specifier.type);
    const GLint size = _slang_sizeof_type_specifier(&var->type.specifier);
    const GLint arrayLen = _slang_array_length(var);
    const GLint totalSize = _slang_array_size(size, arrayLen);
+   GLint texIndex = sampler_to_texture_index(var->type.specifier.type);
+
+   /* check for sampler2D arrays */
+   if (texIndex == -1 && var->type.specifier._array)
+      texIndex = sampler_to_texture_index(var->type.specifier._array->type);
 
    if (texIndex != -1) {
       /* This is a texture sampler variable...
@@ -4278,15 +4282,36 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
       }
 #if FEATURE_es2_glsl /* XXX should use FEATURE_texture_rect */
       /* disallow rect samplers */
-      if (var->type.specifier.type == SLANG_SPEC_SAMPLER2DRECT ||
-          var->type.specifier.type == SLANG_SPEC_SAMPLER2DRECTSHADOW) {
+      if ((var->type.specifier._array && 
+           (var->type.specifier._array->type == SLANG_SPEC_SAMPLER2DRECT ||
+            var->type.specifier._array->type == SLANG_SPEC_SAMPLER2DRECTSHADOW)) ||
+          (var->type.specifier.type == SLANG_SPEC_SAMPLER2DRECT ||
+           var->type.specifier.type == SLANG_SPEC_SAMPLER2DRECTSHADOW)) {
          slang_info_log_error(A->log, "invalid sampler type for '%s'", varName);
          return GL_FALSE;
       }
 #endif
       {
+         const GLuint swizzle = _slang_var_swizzle(totalSize, 0);
          GLint sampNum = _mesa_add_sampler(prog->Parameters, varName, datatype);
-         store = _slang_new_ir_storage(PROGRAM_SAMPLER, sampNum, texIndex);
+         store = _slang_new_ir_storage_swz(PROGRAM_SAMPLER, sampNum,
+                                                 totalSize, swizzle);
+
+         /* If we have a sampler array, then we need to allocate the 
+	  * additional samplers to ensure we don't allocate them elsewhere.
+	  * We can't directly use _mesa_add_sampler() as that checks the
+	  * varName and gets a match, so we call _mesa_add_parameter()
+	  * directly and use the last sampler number for the call above.
+	  */
+	 if (arrayLen > 0) {
+	    GLint a = arrayLen - 1;
+	    GLint i;
+	    for (i = 0; i < a; i++) {
+               GLfloat value = (GLfloat)(i + sampNum + 1);
+               (void) _mesa_add_parameter(prog->Parameters, PROGRAM_SAMPLER,
+                                 varName, 1, datatype, &value, NULL, 0x0);
+	    }
+	 }
       }
       if (dbg) printf("SAMPLER ");
    }

@@ -1271,6 +1271,20 @@ emit_tex(slang_emit_info *emitInfo, slang_ir_node *n)
       opcode = OPCODE_TXP;
    }
 
+   if (n->Children[0]->Opcode == IR_ELEMENT) {
+      /* array is the sampler (a uniform which'll indicate the texture unit) */
+      assert(n->Children[0]->Children[0]->Store);
+      assert(n->Children[0]->Children[0]->Store->File == PROGRAM_SAMPLER);
+
+      emit(emitInfo, n->Children[0]);
+
+      n->Children[0]->Var = n->Children[0]->Children[0]->Var;
+   } else {
+      /* this is the sampler (a uniform which'll indicate the texture unit) */
+      assert(n->Children[0]->Store);
+      assert(n->Children[0]->Store->File == PROGRAM_SAMPLER);
+   }
+
    /* emit code for the texcoord operand */
    (void) emit(emitInfo, n->Children[1]);
 
@@ -1286,9 +1300,6 @@ emit_tex(slang_emit_info *emitInfo, slang_ir_node *n)
                            NULL,
                            NULL);
 
-   /* Child[0] is the sampler (a uniform which'll indicate the texture unit) */
-   assert(n->Children[0]->Store);
-   assert(n->Children[0]->Store->File == PROGRAM_SAMPLER);
    /* Store->Index is the sampler index */
    assert(n->Children[0]->Store->Index >= 0);
    /* Store->Size is the texture target */
