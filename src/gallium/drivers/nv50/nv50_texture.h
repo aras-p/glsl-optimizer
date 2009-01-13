@@ -50,6 +50,9 @@
 #define NV50TIC_0_0_FMT_5_6_5                                     0x00000015
 #define NV50TIC_0_0_FMT_8_8                                       0x00000018
 #define NV50TIC_0_0_FMT_8                                         0x0000001d
+#define NV50TIC_0_0_FMT_DXT1                                      0x00000024
+#define NV50TIC_0_0_FMT_DXT3                                      0x00000025
+#define NV50TIC_0_0_FMT_DXT5                                      0x00000026
 
 #define NV50TIC_0_1_OFFSET_LOW_MASK                               0xffffffff
 #define NV50TIC_0_1_OFFSET_LOW_SHIFT                                       0
