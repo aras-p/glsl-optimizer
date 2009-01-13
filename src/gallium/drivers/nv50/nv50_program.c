@@ -1739,7 +1739,7 @@ nv50_fragprog_validate(struct nv50_context *nv50)
 	so_reloc (so, p->buffer, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD |
 		  NOUVEAU_BO_LOW, 0, 0);
 	so_method(so, tesla, 0x1904, 4);
-	so_data  (so, 0x01040404); /* p: 0x01000404 */
+	so_data  (so, 0x00040404); /* p: 0x01000404 */
 	so_data  (so, 0x00000004);
 	so_data  (so, 0x00000000);
 	so_data  (so, 0x00000000);
