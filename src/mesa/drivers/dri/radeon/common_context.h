@@ -178,6 +178,16 @@ static INLINE GLuint radeonPackColor(GLuint cpp,
 	}
 }
 
+#define MAX_CMD_BUF_SZ (16*1024)
+
+struct radeon_store {
+	GLuint statenr;
+	GLuint primnr;
+	char cmd_buf[MAX_CMD_BUF_SZ];
+	int cmd_used;
+	int elts_start;
+};
+
 struct radeon_dri_mirror {
 	__DRIcontextPrivate *context;	/* DRI context */
 	__DRIscreenPrivate *screen;	/* DRI screen */
@@ -213,3 +223,4 @@ struct radeon_dri_mirror {
 #define DEBUG_SYNC      0x1000
 #define DEBUG_PIXEL     0x2000
 #define DEBUG_MEMORY    0x4000
+

@@ -540,19 +540,11 @@ struct r200_state {
    GLuint envneeded;
 };
 
-#define GET_START(rvb) (rmesa->r200Screen->gart_buffer_offset +		\
+#define GET_START(rvb) (rmesa->radeonScreen->gart_buffer_offset +		\
 			(rvb)->address - rmesa->dma.buf0_address +	\
 			(rvb)->start)
 
 #define R200_CMD_BUF_SZ  (16*1024) 
-
-struct r200_store {
-   GLuint statenr;
-   GLuint primnr;
-   char cmd_buf[R200_CMD_BUF_SZ];
-   int cmd_used;   
-   int elts_start;
-};
 
 
 /* r200_tcl.c
@@ -671,11 +663,11 @@ struct r200_context {
     */
    struct radeon_ioctl ioctl;
    struct radeon_dma dma;
-   struct r200_store store;
+   struct radeon_store store;
    /* A full state emit as of the first state emit in the main store, in case
     * the context is lost.
     */
-   struct r200_store backup_store;
+   struct radeon_store backup_store;
 
    /* Page flipping
     */
@@ -699,7 +691,7 @@ struct r200_context {
    unsigned int lastStamp;
    GLboolean lost_context;
    GLboolean save_on_next_emit;
-   radeonScreenPtr r200Screen;	/* Screen private DRI data */
+   radeonScreenPtr radeonScreen;	/* Screen private DRI data */
    drm_radeon_sarea_t *sarea;		/* Private SAREA data */
 
    /* TCL stuff

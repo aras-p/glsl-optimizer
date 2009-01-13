@@ -114,7 +114,7 @@ static void r200BlendColor( GLcontext *ctx, const GLfloat cf[4] )
    CLAMPED_FLOAT_TO_UBYTE(color[1], cf[1]);
    CLAMPED_FLOAT_TO_UBYTE(color[2], cf[2]);
    CLAMPED_FLOAT_TO_UBYTE(color[3], cf[3]);
-   if (rmesa->r200Screen->drmSupportsBlendColor)
+   if (rmesa->radeonScreen->drmSupportsBlendColor)
       rmesa->hw.ctx.cmd[CTX_RB3D_BLENDCOLOR] = radeonPackColor( 4, color[0], color[1], color[2], color[3] );
 }
 
@@ -213,7 +213,7 @@ static void r200_set_blend_state( GLcontext * ctx )
 
    R200_STATECHANGE( rmesa, ctx );
 
-   if (rmesa->r200Screen->drmSupportsBlendColor) {
+   if (rmesa->radeonScreen->drmSupportsBlendColor) {
       if (ctx->Color.ColorLogicOpEnabled) {
          rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] =  cntl | R200_ROP_ENABLE;
          rmesa->hw.ctx.cmd[CTX_RB3D_ABLENDCNTL] = eqn | func;
@@ -278,7 +278,7 @@ static void r200_set_blend_state( GLcontext * ctx )
       return;
    }
 
-   if (!rmesa->r200Screen->drmSupportsBlendColor) {
+   if (!rmesa->radeonScreen->drmSupportsBlendColor) {
       rmesa->hw.ctx.cmd[CTX_RB3D_BLENDCNTL] = eqn | func;
       return;
    }
@@ -803,7 +803,7 @@ static void r200ColorMask( GLcontext *ctx,
 			   GLboolean b, GLboolean a )
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
-   GLuint mask = radeonPackColor( rmesa->r200Screen->cpp,
+   GLuint mask = radeonPackColor( rmesa->radeonScreen->cpp,
 				ctx->Color.ColorMask[RCOMP],
 				ctx->Color.ColorMask[GCOMP],
 				ctx->Color.ColorMask[BCOMP],
@@ -1805,7 +1805,7 @@ static void r200ClearColor( GLcontext *ctx, const GLfloat c[4] )
    CLAMPED_FLOAT_TO_UBYTE(color[1], c[1]);
    CLAMPED_FLOAT_TO_UBYTE(color[2], c[2]);
    CLAMPED_FLOAT_TO_UBYTE(color[3], c[3]);
-   rmesa->state.color.clear = radeonPackColor( rmesa->r200Screen->cpp,
+   rmesa->state.color.clear = radeonPackColor( rmesa->radeonScreen->cpp,
                                              color[0], color[1],
                                              color[2], color[3] );
 }
@@ -2465,7 +2465,7 @@ r200UpdateDrawBuffer(GLcontext *ctx)
 
    /* Note: we used the (possibly) page-flipped values */
    rmesa->hw.ctx.cmd[CTX_RB3D_COLOROFFSET]
-     = ((drb->flippedOffset + rmesa->r200Screen->fbLocation)
+     = ((drb->flippedOffset + rmesa->radeonScreen->fbLocation)
 	& R200_COLOROFFSET_MASK);
    rmesa->hw.ctx.cmd[CTX_RB3D_COLORPITCH] = drb->flippedPitch;
    if (rmesa->sarea->tiling_enabled) {

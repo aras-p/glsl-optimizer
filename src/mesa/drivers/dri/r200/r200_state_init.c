@@ -191,7 +191,7 @@ void r200InitState( r200ContextPtr rmesa )
    GLuint color_fmt, depth_fmt, i;
    GLint drawPitch, drawOffset;
 
-   switch ( rmesa->r200Screen->cpp ) {
+   switch ( rmesa->radeonScreen->cpp ) {
    case 2:
       color_fmt = R200_COLOR_FORMAT_RGB565;
       break;
@@ -231,19 +231,19 @@ void r200InitState( r200ContextPtr rmesa )
    rmesa->Fallback = 0;
 
    if ( ctx->Visual.doubleBufferMode && rmesa->sarea->pfCurrentPage == 0 ) {
-      drawOffset = rmesa->r200Screen->backOffset;
-      drawPitch  = rmesa->r200Screen->backPitch;
+      drawOffset = rmesa->radeonScreen->backOffset;
+      drawPitch  = rmesa->radeonScreen->backPitch;
    } else {
-      drawOffset = rmesa->r200Screen->frontOffset;
-      drawPitch  = rmesa->r200Screen->frontPitch;
+      drawOffset = rmesa->radeonScreen->frontOffset;
+      drawPitch  = rmesa->radeonScreen->frontPitch;
    }
 #if 000
    if ( ctx->Visual.doubleBufferMode && rmesa->sarea->pfCurrentPage == 0 ) {
-      rmesa->state.color.drawOffset = rmesa->r200Screen->backOffset;
-      rmesa->state.color.drawPitch  = rmesa->r200Screen->backPitch;
+      rmesa->state.color.drawOffset = rmesa->radeonScreen->backOffset;
+      rmesa->state.color.drawPitch  = rmesa->radeonScreen->backPitch;
    } else {
-      rmesa->state.color.drawOffset = rmesa->r200Screen->frontOffset;
-      rmesa->state.color.drawPitch  = rmesa->r200Screen->frontPitch;
+      rmesa->state.color.drawOffset = rmesa->radeonScreen->frontOffset;
+      rmesa->state.color.drawPitch  = rmesa->radeonScreen->frontPitch;
    }
 
    rmesa->state.pixel.readOffset = rmesa->state.color.drawOffset;
@@ -267,7 +267,7 @@ void r200InitState( r200ContextPtr rmesa )
 
    /* Allocate state buffers:
     */
-   if (rmesa->r200Screen->drmSupportsBlendColor)
+   if (rmesa->radeonScreen->drmSupportsBlendColor)
       ALLOC_STATE( ctx, always, CTX_STATE_SIZE_NEWDRM, "CTX/context", 0 );
    else
       ALLOC_STATE( ctx, always, CTX_STATE_SIZE_OLDDRM, "CTX/context", 0 );
@@ -282,8 +282,8 @@ void r200InitState( r200ContextPtr rmesa )
    ALLOC_STATE( cst, always, CST_STATE_SIZE, "CST/constant", 0 );
    ALLOC_STATE( zbs, always, ZBS_STATE_SIZE, "ZBS/zbias", 0 );
    ALLOC_STATE( tf, tf, TF_STATE_SIZE, "TF/tfactor", 0 );
-   if (rmesa->r200Screen->drmSupportsFragShader) {
-      if (rmesa->r200Screen->chip_family == CHIP_FAMILY_R200) {
+   if (rmesa->radeonScreen->drmSupportsFragShader) {
+      if (rmesa->radeonScreen->chip_family == CHIP_FAMILY_R200) {
       /* make sure texture units 0/1 are emitted pair-wise for r200 t0 hang workaround */
 	 ALLOC_STATE( tex[0], tex_pair, TEX_STATE_SIZE_NEWDRM, "TEX/tex-0", 0 );
 	 ALLOC_STATE( tex[1], tex_pair, TEX_STATE_SIZE_NEWDRM, "TEX/tex-1", 1 );
@@ -303,7 +303,7 @@ void r200InitState( r200ContextPtr rmesa )
       ALLOC_STATE( afs[1], afs, AFS_STATE_SIZE, "AFS/afsinst-1", 1 );
    }
    else {
-      if (rmesa->r200Screen->chip_family == CHIP_FAMILY_R200) {
+      if (rmesa->radeonScreen->chip_family == CHIP_FAMILY_R200) {
 	 ALLOC_STATE( tex[0], tex_pair, TEX_STATE_SIZE_OLDDRM, "TEX/tex-0", 0 );
 	 ALLOC_STATE( tex[1], tex_pair, TEX_STATE_SIZE_OLDDRM, "TEX/tex-1", 1 );
 	 ALLOC_STATE( tam, tex_any, TAM_STATE_SIZE, "TAM/tam", 0 );
@@ -321,7 +321,7 @@ void r200InitState( r200ContextPtr rmesa )
       ALLOC_STATE( afs[0], never, AFS_STATE_SIZE, "AFS/afsinst-0", 0 );
       ALLOC_STATE( afs[1], never, AFS_STATE_SIZE, "AFS/afsinst-1", 1 );
    }
-   if (rmesa->r200Screen->drmSupportsCubeMapsR200) {
+   if (rmesa->radeonScreen->drmSupportsCubeMapsR200) {
       ALLOC_STATE( cube[0], tex_cube, CUBE_STATE_SIZE, "CUBE/tex-0", 0 );
       ALLOC_STATE( cube[1], tex_cube, CUBE_STATE_SIZE, "CUBE/tex-1", 1 );
       ALLOC_STATE( cube[2], tex_cube, CUBE_STATE_SIZE, "CUBE/tex-2", 2 );
@@ -337,7 +337,7 @@ void r200InitState( r200ContextPtr rmesa )
       ALLOC_STATE( cube[4], never, CUBE_STATE_SIZE, "CUBE/tex-4", 4 );
       ALLOC_STATE( cube[5], never, CUBE_STATE_SIZE, "CUBE/tex-5", 5 );
    }
-   if (rmesa->r200Screen->drmSupportsVertexProgram) {
+   if (rmesa->radeonScreen->drmSupportsVertexProgram) {
       ALLOC_STATE( pvs, tcl_vp, PVS_STATE_SIZE, "PVS/pvscntl", 0 );
       ALLOC_STATE( vpi[0], tcl_vp, VPI_STATE_SIZE, "VP/vertexprog-0", 0 );
       ALLOC_STATE( vpi[1], tcl_vp_size, VPI_STATE_SIZE, "VP/vertexprog-1", 1 );
@@ -390,13 +390,13 @@ void r200InitState( r200ContextPtr rmesa )
    ALLOC_STATE( pix[3], texenv, PIX_STATE_SIZE, "PIX/pixstage-3", 3 );
    ALLOC_STATE( pix[4], texenv, PIX_STATE_SIZE, "PIX/pixstage-4", 4 );
    ALLOC_STATE( pix[5], texenv, PIX_STATE_SIZE, "PIX/pixstage-5", 5 );
-   if (rmesa->r200Screen->drmSupportsTriPerf) {
+   if (rmesa->radeonScreen->drmSupportsTriPerf) {
       ALLOC_STATE( prf, always, PRF_STATE_SIZE, "PRF/performance-tri", 0 );
    }
    else {
       ALLOC_STATE( prf, never, PRF_STATE_SIZE, "PRF/performance-tri", 0 );
    }
-   if (rmesa->r200Screen->drmSupportsPointSprites) {
+   if (rmesa->radeonScreen->drmSupportsPointSprites) {
       ALLOC_STATE( spr, always, SPR_STATE_SIZE, "SPR/pointsprite", 0 );
       ALLOC_STATE( ptp, tcl, PTP_STATE_SIZE, "PTP/pointparams", 0 );
    }
@@ -412,7 +412,7 @@ void r200InitState( r200ContextPtr rmesa )
    rmesa->hw.ctx.cmd[CTX_CMD_0] = cmdpkt(RADEON_EMIT_PP_MISC);
    rmesa->hw.ctx.cmd[CTX_CMD_1] = cmdpkt(RADEON_EMIT_PP_CNTL);
    rmesa->hw.ctx.cmd[CTX_CMD_2] = cmdpkt(RADEON_EMIT_RB3D_COLORPITCH);
-   if (rmesa->r200Screen->drmSupportsBlendColor)
+   if (rmesa->radeonScreen->drmSupportsBlendColor)
       rmesa->hw.ctx.cmd[CTX_CMD_3] = cmdpkt(R200_EMIT_RB3D_BLENDCOLOR);
    rmesa->hw.lin.cmd[LIN_CMD_0] = cmdpkt(RADEON_EMIT_RE_LINE_PATTERN);
    rmesa->hw.lin.cmd[LIN_CMD_1] = cmdpkt(RADEON_EMIT_SE_LINE_WIDTH);
@@ -429,7 +429,7 @@ void r200InitState( r200ContextPtr rmesa )
    rmesa->hw.cst.cmd[CST_CMD_6] = cmdpkt(R200_EMIT_TCL_INPUT_VTX_VECTOR_ADDR_0);
    rmesa->hw.tam.cmd[TAM_CMD_0] = cmdpkt(R200_EMIT_PP_TAM_DEBUG3);
    rmesa->hw.tf.cmd[TF_CMD_0] = cmdpkt(R200_EMIT_TFACTOR_0);
-   if (rmesa->r200Screen->drmSupportsFragShader) {
+   if (rmesa->radeonScreen->drmSupportsFragShader) {
       rmesa->hw.atf.cmd[ATF_CMD_0] = cmdpkt(R200_EMIT_ATF_TFACTOR);
       rmesa->hw.tex[0].cmd[TEX_CMD_0] = cmdpkt(R200_EMIT_PP_TXCTLALL_0);
       rmesa->hw.tex[0].cmd[TEX_CMD_1_NEWDRM] = cmdpkt(R200_EMIT_PP_TXOFFSET_0);
@@ -567,7 +567,7 @@ void r200InitState( r200ContextPtr rmesa )
 				(R200_BLEND_GL_ONE << R200_SRC_BLEND_SHIFT) |
 				(R200_BLEND_GL_ZERO << R200_DST_BLEND_SHIFT));
 
-   if (rmesa->r200Screen->drmSupportsBlendColor) {
+   if (rmesa->radeonScreen->drmSupportsBlendColor) {
       rmesa->hw.ctx.cmd[CTX_RB3D_BLENDCOLOR] = 0x00000000;
       rmesa->hw.ctx.cmd[CTX_RB3D_ABLENDCNTL] = (R200_COMB_FCN_ADD_CLAMP |
 				(R200_BLEND_GL_ONE << R200_SRC_BLEND_SHIFT) |
@@ -578,10 +578,10 @@ void r200InitState( r200ContextPtr rmesa )
    }
 
    rmesa->hw.ctx.cmd[CTX_RB3D_DEPTHOFFSET] =
-      rmesa->r200Screen->depthOffset + rmesa->r200Screen->fbLocation;
+      rmesa->radeonScreen->depthOffset + rmesa->radeonScreen->fbLocation;
 
    rmesa->hw.ctx.cmd[CTX_RB3D_DEPTHPITCH] = 
-      ((rmesa->r200Screen->depthPitch &
+      ((rmesa->radeonScreen->depthPitch &
 	R200_DEPTHPITCH_MASK) |
        R200_DEPTH_ENDIAN_NO_SWAP);
    
@@ -599,7 +599,7 @@ void r200InitState( r200ContextPtr rmesa )
    if (rmesa->using_hyperz) {
       rmesa->hw.ctx.cmd[CTX_RB3D_ZSTENCILCNTL] |= R200_Z_COMPRESSION_ENABLE |
 						  R200_Z_DECOMPRESSION_ENABLE;
-/*      if (rmesa->r200Screen->chip_family == CHIP_FAMILY_R200)
+/*      if (rmesa->radeonScreen->chip_family == CHIP_FAMILY_R200)
 	 rmesa->hw.ctx.cmd[CTX_RB3D_ZSTENCILCNTL] |= RADEON_Z_HIERARCHY_ENABLE;*/
    }
 
@@ -628,7 +628,7 @@ void r200InitState( r200ContextPtr rmesa )
 
 #if 000
    rmesa->hw.ctx.cmd[CTX_RB3D_COLOROFFSET] = ((rmesa->state.color.drawOffset +
-					       rmesa->r200Screen->fbLocation)
+					       rmesa->radeonScreen->fbLocation)
 					      & R200_COLOROFFSET_MASK);
 
    rmesa->hw.ctx.cmd[CTX_RB3D_COLORPITCH] = ((rmesa->state.color.drawPitch &
@@ -636,7 +636,7 @@ void r200InitState( r200ContextPtr rmesa )
 					     R200_COLOR_ENDIAN_NO_SWAP);
 #else
    rmesa->hw.ctx.cmd[CTX_RB3D_COLOROFFSET] = ((drawOffset +
-					       rmesa->r200Screen->fbLocation)
+					       rmesa->radeonScreen->fbLocation)
 					      & R200_COLOROFFSET_MASK);
 
    rmesa->hw.ctx.cmd[CTX_RB3D_COLORPITCH] = ((drawPitch &
@@ -704,7 +704,7 @@ void r200InitState( r200ContextPtr rmesa )
 						R200_VC_NO_SWAP;
 #endif
 
-   if (!(rmesa->r200Screen->chip_flags & RADEON_CHIPSET_TCL)) {
+   if (!(rmesa->radeonScreen->chip_flags & RADEON_CHIPSET_TCL)) {
       /* Bypass TCL */
       rmesa->hw.cst.cmd[CST_SE_VAP_CNTL_STATUS] |= (1<<8);
    }
@@ -743,28 +743,28 @@ void r200InitState( r200ContextPtr rmesa )
       rmesa->hw.tex[i].cmd[TEX_PP_TXFORMAT_X] =
          (/* R200_TEXCOORD_PROJ | */
           0x100000);	/* Small default bias */
-      if (rmesa->r200Screen->drmSupportsFragShader) {
+      if (rmesa->radeonScreen->drmSupportsFragShader) {
 	 rmesa->hw.tex[i].cmd[TEX_PP_TXOFFSET_NEWDRM] =
-	     rmesa->r200Screen->texOffset[RADEON_LOCAL_TEX_HEAP];
+	     rmesa->radeonScreen->texOffset[RADEON_LOCAL_TEX_HEAP];
 	 rmesa->hw.tex[i].cmd[TEX_PP_CUBIC_FACES] = 0;
 	 rmesa->hw.tex[i].cmd[TEX_PP_TXMULTI_CTL] = 0;
       }
       else {
 	  rmesa->hw.tex[i].cmd[TEX_PP_TXOFFSET_OLDDRM] =
-	     rmesa->r200Screen->texOffset[RADEON_LOCAL_TEX_HEAP];
+	     rmesa->radeonScreen->texOffset[RADEON_LOCAL_TEX_HEAP];
      }
 
       rmesa->hw.cube[i].cmd[CUBE_PP_CUBIC_FACES] = 0;
       rmesa->hw.cube[i].cmd[CUBE_PP_CUBIC_OFFSET_F1] =
-         rmesa->r200Screen->texOffset[RADEON_LOCAL_TEX_HEAP];
+         rmesa->radeonScreen->texOffset[RADEON_LOCAL_TEX_HEAP];
       rmesa->hw.cube[i].cmd[CUBE_PP_CUBIC_OFFSET_F2] =
-         rmesa->r200Screen->texOffset[RADEON_LOCAL_TEX_HEAP];
+         rmesa->radeonScreen->texOffset[RADEON_LOCAL_TEX_HEAP];
       rmesa->hw.cube[i].cmd[CUBE_PP_CUBIC_OFFSET_F3] =
-         rmesa->r200Screen->texOffset[RADEON_LOCAL_TEX_HEAP];
+         rmesa->radeonScreen->texOffset[RADEON_LOCAL_TEX_HEAP];
       rmesa->hw.cube[i].cmd[CUBE_PP_CUBIC_OFFSET_F4] =
-         rmesa->r200Screen->texOffset[RADEON_LOCAL_TEX_HEAP];
+         rmesa->radeonScreen->texOffset[RADEON_LOCAL_TEX_HEAP];
       rmesa->hw.cube[i].cmd[CUBE_PP_CUBIC_OFFSET_F5] =
-         rmesa->r200Screen->texOffset[RADEON_LOCAL_TEX_HEAP];
+         rmesa->radeonScreen->texOffset[RADEON_LOCAL_TEX_HEAP];
 
       rmesa->hw.pix[i].cmd[PIX_PP_TXCBLEND] =
          (R200_TXC_ARG_A_ZERO |

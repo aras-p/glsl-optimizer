@@ -93,8 +93,8 @@ static const GLubyte *r200GetString( GLcontext *ctx, GLenum name )
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
    static char buffer[128];
    unsigned   offset;
-   GLuint agp_mode = (rmesa->r200Screen->card_type == RADEON_CARD_PCI)? 0 :
-      rmesa->r200Screen->AGPMode;
+   GLuint agp_mode = (rmesa->radeonScreen->card_type == RADEON_CARD_PCI)? 0 :
+      rmesa->radeonScreen->AGPMode;
 
    switch ( name ) {
    case GL_VENDOR:
@@ -321,12 +321,12 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
    rmesa->dri.fd = sPriv->fd;
    rmesa->dri.drmMinor = sPriv->drm_version.minor;
 
-   rmesa->r200Screen = screen;
+   rmesa->radeonScreen = screen;
    rmesa->sarea = (drm_radeon_sarea_t *)((GLubyte *)sPriv->pSAREA +
 				       screen->sarea_priv_offset);
 
 
-   rmesa->dma.buf0_address = rmesa->r200Screen->buffers->list[0].address;
+   rmesa->dma.buf0_address = rmesa->radeonScreen->buffers->list[0].address;
 
    (void) memset( rmesa->texture_heaps, 0, sizeof( rmesa->texture_heaps ) );
    make_empty_list( & rmesa->swapped );
@@ -391,7 +391,7 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
    ctx->Const.MinPointSizeAA = 1.0;
    ctx->Const.MaxPointSizeAA = 1.0;
    ctx->Const.PointSizeGranularity = 0.0625;
-   if (rmesa->r200Screen->drmSupportsPointSprites)
+   if (rmesa->radeonScreen->drmSupportsPointSprites)
       ctx->Const.MaxPointSize = 2047.0;
    else
       ctx->Const.MaxPointSize = 1.0;
@@ -445,7 +445,7 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
    _math_matrix_set_identity( &rmesa->tmpmat );
 
    driInitExtensions( ctx, card_extensions, GL_TRUE );
-   if (!(rmesa->r200Screen->chip_flags & R200_CHIPSET_YCBCR_BROKEN)) {
+   if (!(rmesa->radeonScreen->chip_flags & R200_CHIPSET_YCBCR_BROKEN)) {
      /* yuv textures don't work with some chips - R200 / rv280 okay so far
 	others get the bit ordering right but don't actually do YUV-RGB conversion */
       _mesa_enable_extension( ctx, "GL_MESA_ycbcr_texture" );
@@ -458,19 +458,19 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
       _mesa_enable_extension( ctx, "GL_EXT_texture_compression_s3tc" );
    }
 
-   if (rmesa->r200Screen->drmSupportsCubeMapsR200)
+   if (rmesa->radeonScreen->drmSupportsCubeMapsR200)
       _mesa_enable_extension( ctx, "GL_ARB_texture_cube_map" );
-   if (rmesa->r200Screen->drmSupportsBlendColor) {
+   if (rmesa->radeonScreen->drmSupportsBlendColor) {
        driInitExtensions( ctx, blend_extensions, GL_FALSE );
    }
-   if(rmesa->r200Screen->drmSupportsVertexProgram)
+   if(rmesa->radeonScreen->drmSupportsVertexProgram)
       driInitSingleExtension( ctx, ARB_vp_extension );
    if(driQueryOptionb(&rmesa->optionCache, "nv_vertex_program"))
       driInitSingleExtension( ctx, NV_vp_extension );
 
-   if ((ctx->Const.MaxTextureUnits == 6) && rmesa->r200Screen->drmSupportsFragShader)
+   if ((ctx->Const.MaxTextureUnits == 6) && rmesa->radeonScreen->drmSupportsFragShader)
       driInitSingleExtension( ctx, ATI_fs_extension );
-   if (rmesa->r200Screen->drmSupportsPointSprites)
+   if (rmesa->radeonScreen->drmSupportsPointSprites)
       driInitExtensions( ctx, point_extensions, GL_FALSE );
 #if 0
    r200InitDriverFuncs( ctx );
@@ -490,7 +490,7 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
    rmesa->iw.irq_seq = -1;
    rmesa->irqsEmitted = 0;
    rmesa->do_irqs = (fthrottle_mode == DRI_CONF_FTHROTTLE_IRQS &&
-		     rmesa->r200Screen->irq);
+		     rmesa->radeonScreen->irq);
 
    rmesa->do_usleeps = (fthrottle_mode == DRI_CONF_FTHROTTLE_USLEEPS);
 
@@ -499,7 +499,7 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
 	      "IRQ's not enabled, falling back to %s: %d %d\n",
 	      rmesa->do_usleeps ? "usleeps" : "busy waits",
 	      fthrottle_mode,
-	      rmesa->r200Screen->irq);
+	      rmesa->radeonScreen->irq);
 
    rmesa->prefer_gart_client_texturing = 
       (getenv("R200_GART_CLIENT_TEXTURES") != 0);
@@ -520,9 +520,9 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
       FALLBACK(rmesa, R200_FALLBACK_DISABLE, 1);
    }
    else if (tcl_mode == DRI_CONF_TCL_SW || getenv("R200_NO_TCL") ||
-	    !(rmesa->r200Screen->chip_flags & RADEON_CHIPSET_TCL)) {
-      if (rmesa->r200Screen->chip_flags & RADEON_CHIPSET_TCL) {
-	 rmesa->r200Screen->chip_flags &= ~RADEON_CHIPSET_TCL;
+	    !(rmesa->radeonScreen->chip_flags & RADEON_CHIPSET_TCL)) {
+      if (rmesa->radeonScreen->chip_flags & RADEON_CHIPSET_TCL) {
+	 rmesa->radeonScreen->chip_flags &= ~RADEON_CHIPSET_TCL;
 	 fprintf(stderr, "Disabling HW TCL support\n");
       }
       TCL_FALLBACK(rmesa->glCtx, R200_TCL_FALLBACK_TCL_DISABLE, 1);
@@ -670,7 +670,7 @@ r200MakeCurrent( __DRIcontextPrivate *driContextPriv,
       if ( newCtx->dri.drawable != driDrawPriv ||
            newCtx->lastStamp != driDrawPriv->lastStamp ) {
 	 if (driDrawPriv->swap_interval == (unsigned)-1) {
-	    driDrawPriv->vblFlags = (newCtx->r200Screen->irq != 0)
+	    driDrawPriv->vblFlags = (newCtx->radeonScreen->irq != 0)
 	       ? driGetDefaultVBlankFlags(&newCtx->optionCache)
 	       : VBLANK_FLAG_NO_IRQ;
 

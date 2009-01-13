@@ -285,7 +285,7 @@ static void flush_last_swtcl_prim( r200ContextPtr rmesa  )
 
    if (rmesa->dma.current.buf) {
       struct radeon_dma_region *current = &rmesa->dma.current;
-      GLuint current_offset = (rmesa->r200Screen->gart_buffer_offset +
+      GLuint current_offset = (rmesa->radeonScreen->gart_buffer_offset +
 			       current->buf->buf->idx * RADEON_BUFFER_SIZE + 
 			       current->start);
 

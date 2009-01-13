@@ -489,7 +489,7 @@ int r200UploadTexImages( r200ContextPtr rmesa, radeonTexObjPtr t, GLuint face )
       }
 
       /* Set the base offset of the texture image */
-      t->bufAddr = rmesa->r200Screen->texOffset[heap] 
+      t->bufAddr = rmesa->radeonScreen->texOffset[heap] 
 	   + t->base.memBlock->ofs;
       t->pp_txoffset = t->bufAddr;
        

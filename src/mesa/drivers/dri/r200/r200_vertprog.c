@@ -1110,7 +1110,7 @@ void r200SetupVertexProg( GLcontext *ctx ) {
    }
    /* could optimize setting up vertex progs away for non-tcl hw */
    fallback = !(vp->native && r200VertexProgUpdateParams(ctx, vp) &&
-      rmesa->r200Screen->drmSupportsVertexProgram);
+      rmesa->radeonScreen->drmSupportsVertexProgram);
    TCL_FALLBACK(ctx, R200_TCL_FALLBACK_VERTEX_PROGRAM, fallback);
    if (rmesa->TclFallback) return;
 

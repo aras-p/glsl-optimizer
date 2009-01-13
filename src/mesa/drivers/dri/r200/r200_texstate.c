@@ -1225,7 +1225,7 @@ static void import_tex_obj_state( r200ContextPtr rmesa,
    cmd[TEX_PP_TXSIZE] = texobj->pp_txsize; /* NPOT only! */
    cmd[TEX_PP_TXPITCH] = texobj->pp_txpitch; /* NPOT only! */
    cmd[TEX_PP_BORDER_COLOR] = texobj->pp_border_color;
-   if (rmesa->r200Screen->drmSupportsFragShader) {
+   if (rmesa->radeonScreen->drmSupportsFragShader) {
       cmd[TEX_PP_TXOFFSET_NEWDRM] = texobj->pp_txoffset;
    }
    else {
@@ -1239,7 +1239,7 @@ static void import_tex_obj_state( r200ContextPtr rmesa,
 
       R200_STATECHANGE( rmesa, cube[unit] );
       cube_cmd[CUBE_PP_CUBIC_FACES] = texobj->pp_cubic_faces;
-      if (rmesa->r200Screen->drmSupportsFragShader) {
+      if (rmesa->radeonScreen->drmSupportsFragShader) {
 	 /* that value is submitted twice. could change cube atom
 	    to not include that command when new drm is used */
 	 cmd[TEX_PP_CUBIC_FACES] = texobj->pp_cubic_faces;
@@ -1850,7 +1850,7 @@ void r200UpdateTextureState( GLcontext *ctx )
       r200ChooseVertexState( ctx );
 
 
-   if (rmesa->r200Screen->chip_family == CHIP_FAMILY_R200) {
+   if (rmesa->radeonScreen->chip_family == CHIP_FAMILY_R200) {
 
       /*
        * T0 hang workaround -------------

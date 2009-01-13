@@ -66,7 +66,7 @@ static void r200WaitForIdle( r200ContextPtr rmesa );
 static void r200BackUpAndEmitLostStateLocked( r200ContextPtr rmesa )
 {
    GLuint nr_released_bufs;
-   struct r200_store saved_store;
+   struct radeon_store saved_store;
 
    if (rmesa->backup_store.cmd_used == 0)
       return;
@@ -249,7 +249,7 @@ void r200RefillCurrentDmaRegion( r200ContextPtr rmesa )
       fprintf(stderr, "Allocated buffer %d\n", index);
 
    dmabuf = CALLOC_STRUCT( radeon_dma_buffer );
-   dmabuf->buf = &rmesa->r200Screen->buffers->list[index];
+   dmabuf->buf = &rmesa->radeonScreen->buffers->list[index];
    dmabuf->refcount = 1;
 
    rmesa->dma.current.buf = dmabuf;
@@ -578,16 +578,16 @@ void r200PageFlip( __DRIdrawablePrivate *dPriv )
 
 #if 000
    if ( rmesa->sarea->pfCurrentPage == 1 ) {
-	 rmesa->state.color.drawOffset = rmesa->r200Screen->frontOffset;
-	 rmesa->state.color.drawPitch  = rmesa->r200Screen->frontPitch;
+	 rmesa->state.color.drawOffset = rmesa->radeonScreen->frontOffset;
+	 rmesa->state.color.drawPitch  = rmesa->radeonScreen->frontPitch;
    } else {
-	 rmesa->state.color.drawOffset = rmesa->r200Screen->backOffset;
-	 rmesa->state.color.drawPitch  = rmesa->r200Screen->backPitch;
+	 rmesa->state.color.drawOffset = rmesa->radeonScreen->backOffset;
+	 rmesa->state.color.drawPitch  = rmesa->radeonScreen->backPitch;
    }
 
    R200_STATECHANGE( rmesa, ctx );
    rmesa->hw.ctx.cmd[CTX_RB3D_COLOROFFSET] = rmesa->state.color.drawOffset
-					   + rmesa->r200Screen->fbLocation;
+					   + rmesa->radeonScreen->fbLocation;
    rmesa->hw.ctx.cmd[CTX_RB3D_COLORPITCH]  = rmesa->state.color.drawPitch;
    if (rmesa->sarea->tiling_enabled) {
       rmesa->hw.ctx.cmd[CTX_RB3D_COLORPITCH] |= R200_COLOR_TILE_ENABLE;
@@ -663,7 +663,7 @@ static void r200Clear( GLcontext *ctx, GLbitfield mask )
 
    if (rmesa->using_hyperz) {
       flags |= RADEON_USE_COMP_ZBUF;
-/*      if (rmesa->r200Screen->chip_family == CHIP_FAMILY_R200)
+/*      if (rmesa->radeonScreen->chip_family == CHIP_FAMILY_R200)
 	 flags |= RADEON_USE_HIERZ; */
       if (!(rmesa->state.stencil.hwBuffer) ||
 	 ((flags & RADEON_DEPTH) && (flags & RADEON_STENCIL) &&
@@ -875,7 +875,7 @@ void *r200AllocateMemoryMESA(__DRIscreen *screen, GLsizei size,
       fprintf(stderr, "%s sz %d %f/%f/%f\n", __FUNCTION__, size, readfreq, 
 	      writefreq, priority);
 
-   if (!ctx || !(rmesa = R200_CONTEXT(ctx)) || !rmesa->r200Screen->gartTextures.map)
+   if (!ctx || !(rmesa = R200_CONTEXT(ctx)) || !rmesa->radeonScreen->gartTextures.map)
       return NULL;
 
    if (getenv("R200_NO_ALLOC"))
@@ -886,7 +886,7 @@ void *r200AllocateMemoryMESA(__DRIscreen *screen, GLsizei size,
    alloc.size = size;
    alloc.region_offset = &region_offset;
 
-   ret = drmCommandWriteRead( rmesa->r200Screen->driScreen->fd,
+   ret = drmCommandWriteRead( rmesa->radeonScreen->driScreen->fd,
 			      DRM_RADEON_ALLOC,
 			      &alloc, sizeof(alloc));
    
@@ -896,7 +896,7 @@ void *r200AllocateMemoryMESA(__DRIscreen *screen, GLsizei size,
    }
    
    {
-      char *region_start = (char *)rmesa->r200Screen->gartTextures.map;
+      char *region_start = (char *)rmesa->radeonScreen->gartTextures.map;
       return (void *)(region_start + region_offset);
    }
 }
@@ -914,24 +914,24 @@ void r200FreeMemoryMESA(__DRIscreen *screen, GLvoid *pointer)
    if (R200_DEBUG & DEBUG_IOCTL)
       fprintf(stderr, "%s %p\n", __FUNCTION__, pointer);
 
-   if (!ctx || !(rmesa = R200_CONTEXT(ctx)) || !rmesa->r200Screen->gartTextures.map) {
+   if (!ctx || !(rmesa = R200_CONTEXT(ctx)) || !rmesa->radeonScreen->gartTextures.map) {
       fprintf(stderr, "%s: no context\n", __FUNCTION__);
       return;
    }
 
-   region_offset = (char *)pointer - (char *)rmesa->r200Screen->gartTextures.map;
+   region_offset = (char *)pointer - (char *)rmesa->radeonScreen->gartTextures.map;
 
    if (region_offset < 0 || 
-       region_offset > rmesa->r200Screen->gartTextures.size) {
+       region_offset > rmesa->radeonScreen->gartTextures.size) {
       fprintf(stderr, "offset %d outside range 0..%d\n", region_offset,
-	      rmesa->r200Screen->gartTextures.size);
+	      rmesa->radeonScreen->gartTextures.size);
       return;
    }
 
    memfree.region = RADEON_MEM_REGION_GART;
    memfree.region_offset = region_offset;
    
-   ret = drmCommandWrite( rmesa->r200Screen->driScreen->fd,
+   ret = drmCommandWrite( rmesa->radeonScreen->driScreen->fd,
 			  DRM_RADEON_FREE,
 			  &memfree, sizeof(memfree));
    
@@ -956,16 +956,16 @@ GLuint r200GetMemoryOffsetMESA(__DRIscreen *screen, const GLvoid *pointer)
 
    card_offset = r200GartOffsetFromVirtual( rmesa, pointer );
 
-   return card_offset - rmesa->r200Screen->gart_base;
+   return card_offset - rmesa->radeonScreen->gart_base;
 }
 
 GLboolean r200IsGartMemory( r200ContextPtr rmesa, const GLvoid *pointer,
 			   GLint size )
 {
-   ptrdiff_t offset = (char *)pointer - (char *)rmesa->r200Screen->gartTextures.map;
+   ptrdiff_t offset = (char *)pointer - (char *)rmesa->radeonScreen->gartTextures.map;
    int valid = (size >= 0 &&
 		offset >= 0 &&
-		offset + size < rmesa->r200Screen->gartTextures.size);
+		offset + size < rmesa->radeonScreen->gartTextures.size);
 
    if (R200_DEBUG & DEBUG_IOCTL)
       fprintf(stderr, "r200IsGartMemory( %p ) : %d\n", pointer, valid );
@@ -976,12 +976,12 @@ GLboolean r200IsGartMemory( r200ContextPtr rmesa, const GLvoid *pointer,
 
 GLuint r200GartOffsetFromVirtual( r200ContextPtr rmesa, const GLvoid *pointer )
 {
-   ptrdiff_t offset = (char *)pointer - (char *)rmesa->r200Screen->gartTextures.map;
+   ptrdiff_t offset = (char *)pointer - (char *)rmesa->radeonScreen->gartTextures.map;
 
-   if (offset < 0 || offset > rmesa->r200Screen->gartTextures.size)
+   if (offset < 0 || offset > rmesa->radeonScreen->gartTextures.size)
       return ~0;
    else
-      return rmesa->r200Screen->gart_texture_offset + offset;
+      return rmesa->radeonScreen->gart_texture_offset + offset;
 }
 
 

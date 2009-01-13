@@ -51,7 +51,7 @@ check_color( const GLcontext *ctx, GLenum type, GLenum format,
 	     const void *pixels, GLint sz, GLint pitch )
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
-   GLuint cpp = rmesa->r200Screen->cpp;
+   GLuint cpp = rmesa->radeonScreen->cpp;
 
    if (R200_DEBUG & DEBUG_PIXEL)
       fprintf(stderr, "%s\n", __FUNCTION__);
@@ -137,8 +137,8 @@ clip_pixelrect( const GLcontext *ctx,
    if (*height <= 0)
       return GL_FALSE;
 
-   *size = ((*y + *height - 1) * rmesa->r200Screen->frontPitch +
-	    (*x + *width - 1) * rmesa->r200Screen->cpp);
+   *size = ((*y + *height - 1) * rmesa->radeonScreen->frontPitch +
+	    (*x + *width - 1) * rmesa->radeonScreen->cpp);
 
    return GL_TRUE;
 }
@@ -153,7 +153,7 @@ r200TryReadPixels( GLcontext *ctx,
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
    GLint pitch = pack->RowLength ? pack->RowLength : width;
    GLint blit_format;
-   GLuint cpp = rmesa->r200Screen->cpp;
+   GLuint cpp = rmesa->radeonScreen->cpp;
    GLint size = width * height * cpp;
 
    if (R200_DEBUG & DEBUG_PIXEL)
@@ -162,7 +162,7 @@ r200TryReadPixels( GLcontext *ctx,
    /* Only accelerate reading to GART buffers.
     */
    if ( !r200IsGartMemory(rmesa, pixels, 
-			 pitch * height * rmesa->r200Screen->cpp ) ) {
+			 pitch * height * rmesa->radeonScreen->cpp ) ) {
       if (R200_DEBUG & DEBUG_PIXEL)
 	 fprintf(stderr, "%s: dest not GART\n", __FUNCTION__);
       return GL_FALSE;
@@ -180,7 +180,7 @@ r200TryReadPixels( GLcontext *ctx,
    if (!check_color(ctx, type, format, pack, pixels, size, pitch))
       return GL_FALSE;
 
-   switch ( rmesa->r200Screen->cpp ) {
+   switch ( rmesa->radeonScreen->cpp ) {
    case 4:
       blit_format = R200_CP_COLOR_FORMAT_ARGB8888;
       break;
@@ -216,10 +216,10 @@ r200TryReadPixels( GLcontext *ctx,
       driRenderbuffer *drb = (driRenderbuffer *) ctx->ReadBuffer->_ColorReadBuffer;
       int nbox = dPriv->numClipRects;
       int src_offset = drb->offset
-		     + rmesa->r200Screen->fbLocation;
+		     + rmesa->radeonScreen->fbLocation;
       int src_pitch = drb->pitch * drb->cpp;
       int dst_offset = r200GartOffsetFromVirtual( rmesa, pixels );
-      int dst_pitch = pitch * rmesa->r200Screen->cpp;
+      int dst_pitch = pitch * rmesa->radeonScreen->cpp;
       drm_clip_rect_t *box = dPriv->pClipRects;
       int i;
 
@@ -301,12 +301,12 @@ static void do_draw_pix( GLcontext *ctx,
    int blit_format;
    int size;
    int src_offset = r200GartOffsetFromVirtual( rmesa, pixels );
-   int src_pitch = pitch * rmesa->r200Screen->cpp;
+   int src_pitch = pitch * rmesa->radeonScreen->cpp;
 
    if (R200_DEBUG & DEBUG_PIXEL)
       fprintf(stderr, "%s\n", __FUNCTION__);
 
-   switch ( rmesa->r200Screen->cpp ) {
+   switch ( rmesa->radeonScreen->cpp ) {
    case 2:
       blit_format = R200_CP_COLOR_FORMAT_RGB565;
       break;
@@ -357,7 +357,7 @@ static void do_draw_pix( GLcontext *ctx,
 		    blit_format,
 		    src_pitch, src_offset,
 		    drb->pitch * drb->cpp,
-		    drb->offset + rmesa->r200Screen->fbLocation,
+		    drb->offset + rmesa->radeonScreen->fbLocation,
 		    bx - x, by - y,
 		    bx, by,
 		    bw, bh );
@@ -381,7 +381,7 @@ r200TryDrawPixels( GLcontext *ctx,
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
    GLint pitch = unpack->RowLength ? unpack->RowLength : width;
    GLuint planemask;
-   GLuint cpp = rmesa->r200Screen->cpp;
+   GLuint cpp = rmesa->radeonScreen->cpp;
    GLint size = height * pitch * cpp;
 
    if (R200_DEBUG & DEBUG_PIXEL)

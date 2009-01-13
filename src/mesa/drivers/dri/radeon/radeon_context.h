@@ -354,14 +354,6 @@ struct radeon_state {
 
 #define RADEON_CMD_BUF_SZ  (8*1024)
 
-struct radeon_store {
-	GLuint statenr;
-	GLuint primnr;
-	char cmd_buf[RADEON_CMD_BUF_SZ];
-	int cmd_used;
-	int elts_start;
-};
-
 /* radeon_tcl.c
  */
 struct radeon_tcl_info {
