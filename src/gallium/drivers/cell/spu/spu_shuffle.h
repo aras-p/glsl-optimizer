@@ -171,7 +171,7 @@
    SHUFFLE_PATTERN_16_##M##__, \
    SHUFFLE_PATTERN_16_##N##__, \
    SHUFFLE_PATTERN_16_##O##__, \
-   SHUFFLE_PATTERN_16_##P
+   SHUFFLE_PATTERN_16_##P##__
 
 #define SHUFFLE16(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P) \
    ((const vector unsigned char){ \
