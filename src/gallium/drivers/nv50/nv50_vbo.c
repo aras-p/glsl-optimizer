@@ -60,6 +60,8 @@ nv50_draw_arrays(struct pipe_context *pipe, unsigned mode, unsigned start,
 	OUT_RING  (0);
 	BEGIN_RING(tesla, 0x142c, 1);
 	OUT_RING  (0);
+	BEGIN_RING(tesla, 0x1440, 1);
+	OUT_RING  (0);
 
 	BEGIN_RING(tesla, NV50TCL_VERTEX_BEGIN, 1);
 	OUT_RING  (nv50_prim(mode));
