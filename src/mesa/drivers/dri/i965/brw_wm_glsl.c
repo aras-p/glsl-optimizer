@@ -892,6 +892,10 @@ static void emit_lrp(struct brw_wm_compile *c,
     }
 }
 
+/**
+ * For GLSL shaders, this KIL will be unconditional.
+ * It may be contained inside an IF/ENDIF structure of course.
+ */
 static void emit_kil(struct brw_wm_compile *c)
 {
     struct brw_compile *p = &c->func;
