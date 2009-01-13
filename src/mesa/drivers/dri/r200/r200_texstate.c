@@ -153,7 +153,7 @@ static const struct tx_table tx_table_le[] =
 static void r200SetTexImages( r200ContextPtr rmesa,
 			      struct gl_texture_object *tObj )
 {
-   r200TexObjPtr t = (r200TexObjPtr)tObj->DriverData;
+   radeonTexObjPtr t = (radeonTexObjPtr)tObj->DriverData;
    const struct gl_texture_image *baseImage = tObj->Image[0][tObj->BaseLevel];
    GLint curOffset, blitWidth;
    GLint i, texelBytes;
@@ -383,7 +383,7 @@ static void r200SetTexImages( r200ContextPtr rmesa,
       t->pp_txpitch -= 32;
    }
 
-   t->dirty_state = TEX_ALL;
+   t->dirty_state = R200_TEX_ALL;
 
    /* FYI: r200UploadTexImages( rmesa, t ) used to be called here */
 }
@@ -982,12 +982,12 @@ void r200SetTexOffset(__DRIcontext * pDRICtx, GLint texname,
 	r200ContextPtr rmesa = pDRICtx->driverPrivate;
 	struct gl_texture_object *tObj =
 	    _mesa_lookup_texture(rmesa->glCtx, texname);
-	r200TexObjPtr t;
+	radeonTexObjPtr t;
 
 	if (!tObj)
 		return;
 
-	t = (r200TexObjPtr) tObj->DriverData;
+	t = (radeonTexObjPtr) tObj->DriverData;
 
 	t->image_override = GL_TRUE;
 
@@ -1209,7 +1209,7 @@ static GLboolean r200UpdateAllTexEnv( GLcontext *ctx )
 
 static void import_tex_obj_state( r200ContextPtr rmesa,
 				  int unit,
-				  r200TexObjPtr texobj )
+				  radeonTexObjPtr texobj )
 {
 /* do not use RADEON_DB_STATE to avoid stale texture caches */
    int *cmd = &rmesa->hw.tex[unit].cmd[TEX_CMD_0];
@@ -1580,7 +1580,7 @@ static GLboolean enable_tex_2d( GLcontext *ctx, int unit )
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
    struct gl_texture_object *tObj = texUnit->_Current;
-   r200TexObjPtr t = (r200TexObjPtr) tObj->DriverData;
+   radeonTexObjPtr t = (radeonTexObjPtr) tObj->DriverData;
 
    /* Need to load the 2d images associated with this unit.
     */
@@ -1594,7 +1594,7 @@ static GLboolean enable_tex_2d( GLcontext *ctx, int unit )
    if ( t->base.dirty_images[0] ) {
       R200_FIREVERTICES( rmesa );
       r200SetTexImages( rmesa, tObj );
-      r200UploadTexImages( rmesa, (r200TexObjPtr) tObj->DriverData, 0 );
+      r200UploadTexImages( rmesa, (radeonTexObjPtr) tObj->DriverData, 0 );
       if ( !t->base.memBlock && !t->image_override ) 
 	 return GL_FALSE;
    }
@@ -1610,7 +1610,7 @@ static GLboolean enable_tex_3d( GLcontext *ctx, int unit )
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
    struct gl_texture_object *tObj = texUnit->_Current;
-   r200TexObjPtr t = (r200TexObjPtr) tObj->DriverData;
+   radeonTexObjPtr t = (radeonTexObjPtr) tObj->DriverData;
 
    /* Need to load the 3d images associated with this unit.
     */
@@ -1630,7 +1630,7 @@ static GLboolean enable_tex_3d( GLcontext *ctx, int unit )
    if ( t->base.dirty_images[0] ) {
       R200_FIREVERTICES( rmesa );
       r200SetTexImages( rmesa, tObj );
-      r200UploadTexImages( rmesa, (r200TexObjPtr) tObj->DriverData, 0 );
+      r200UploadTexImages( rmesa, (radeonTexObjPtr) tObj->DriverData, 0 );
       if ( !t->base.memBlock ) 
 	 return GL_FALSE;
    }
@@ -1646,7 +1646,7 @@ static GLboolean enable_tex_cube( GLcontext *ctx, int unit )
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
    struct gl_texture_object *tObj = texUnit->_Current;
-   r200TexObjPtr t = (r200TexObjPtr) tObj->DriverData;
+   radeonTexObjPtr t = (radeonTexObjPtr) tObj->DriverData;
    GLuint face;
 
    /* Need to load the 2d images associated with this unit.
@@ -1671,7 +1671,7 @@ static GLboolean enable_tex_cube( GLcontext *ctx, int unit )
    /* upload (per face) */
    for (face = 0; face < 6; face++) {
       if (t->base.dirty_images[face]) {
-         r200UploadTexImages( rmesa, (r200TexObjPtr) tObj->DriverData, face );
+         r200UploadTexImages( rmesa, (radeonTexObjPtr) tObj->DriverData, face );
       }
    }
       
@@ -1690,7 +1690,7 @@ static GLboolean enable_tex_rect( GLcontext *ctx, int unit )
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
    struct gl_texture_object *tObj = texUnit->_Current;
-   r200TexObjPtr t = (r200TexObjPtr) tObj->DriverData;
+   radeonTexObjPtr t = (radeonTexObjPtr) tObj->DriverData;
 
    if (!(t->pp_txformat & R200_TXFORMAT_NON_POWER2)) {
       t->pp_txformat |= R200_TXFORMAT_NON_POWER2;
@@ -1702,7 +1702,7 @@ static GLboolean enable_tex_rect( GLcontext *ctx, int unit )
    if ( t->base.dirty_images[0] ) {
       R200_FIREVERTICES( rmesa );
       r200SetTexImages( rmesa, tObj );
-      r200UploadTexImages( rmesa, (r200TexObjPtr) tObj->DriverData, 0 );
+      r200UploadTexImages( rmesa, (radeonTexObjPtr) tObj->DriverData, 0 );
       if ( !t->base.memBlock &&
            !t->image_override &&
            !rmesa->prefer_gart_client_texturing ) 
@@ -1720,7 +1720,7 @@ static GLboolean update_tex_common( GLcontext *ctx, int unit )
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
    struct gl_texture_object *tObj = texUnit->_Current;
-   r200TexObjPtr t = (r200TexObjPtr) tObj->DriverData;
+   radeonTexObjPtr t = (radeonTexObjPtr) tObj->DriverData;
 
    /* Fallback if there's a texture border */
    if ( tObj->Image[0][tObj->BaseLevel]->Border > 0 )

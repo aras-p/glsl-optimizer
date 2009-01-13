@@ -50,7 +50,8 @@ COMMON_SYMLINKS = \
 	radeon_screen.c \
 	radeon_screen.h \
 	radeon_bo_legacy.h \
-	radeon_buffer.h
+	radeon_buffer.h \
+	common_context.h
 
 ##### TARGETS #####
 

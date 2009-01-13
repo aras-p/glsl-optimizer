@@ -373,7 +373,7 @@ int radeonUploadTexImages( radeonContextPtr rmesa, radeonTexObjPtr t, GLuint fac
 
       /* Mark this texobj as dirty on all units:
        */
-      t->dirty_state = TEX_ALL;
+      t->dirty_state = R100_TEX_ALL;
    }
 
 

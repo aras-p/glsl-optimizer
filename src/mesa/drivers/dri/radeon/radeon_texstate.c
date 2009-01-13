@@ -350,7 +350,7 @@ static void radeonSetTexImages( radeonContextPtr rmesa,
       t->pp_txpitch -= 32;
    }
 
-   t->dirty_state = TEX_ALL;
+   t->dirty_state = R100_TEX_ALL;
 
    /* FYI: radeonUploadTexImages( rmesa, t ); used to be called here */
 }

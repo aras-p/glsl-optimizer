@@ -1,0 +1,178 @@
+/* This union is used to avoid warnings/miscompilation
+   with float to uint32_t casts due to strict-aliasing */
+typedef union { GLfloat f; uint32_t ui32; } float_ui32_type;
+
+#include "main/mm.h"
+#include "math/m_vector.h"
+
+
+#define TEX_0   0x1
+#define TEX_1   0x2
+#define TEX_2   0x4
+#define TEX_3	0x8
+#define TEX_4	0x10
+#define TEX_5	0x20
+
+/* Rasterizing fallbacks */
+/* See correponding strings in r200_swtcl.c */
+#define RADEON_FALLBACK_TEXTURE		0x0001
+#define RADEON_FALLBACK_DRAW_BUFFER	0x0002
+#define RADEON_FALLBACK_STENCIL		0x0004
+#define RADEON_FALLBACK_RENDER_MODE	0x0008
+#define RADEON_FALLBACK_BLEND_EQ	0x0010
+#define RADEON_FALLBACK_BLEND_FUNC	0x0020
+#define RADEON_FALLBACK_DISABLE 	0x0040
+#define RADEON_FALLBACK_BORDER_MODE	0x0080
+
+#define R200_FALLBACK_TEXTURE           0x01
+#define R200_FALLBACK_DRAW_BUFFER       0x02
+#define R200_FALLBACK_STENCIL           0x04
+#define R200_FALLBACK_RENDER_MODE       0x08
+#define R200_FALLBACK_DISABLE           0x10
+#define R200_FALLBACK_BORDER_MODE       0x20
+
+/* The blit width for texture uploads
+ */
+#define BLIT_WIDTH_BYTES 1024
+
+/* Use the templated vertex format:
+ */
+#define COLOR_IS_RGBA
+#define TAG(x) radeon##x
+#include "tnl_dd/t_dd_vertex.h"
+#undef TAG
+
+struct radeon_colorbuffer_state {
+	GLuint clear;
+	int roundEnable;
+};
+
+struct radeon_depthbuffer_state {
+	GLuint clear;
+	GLfloat scale;
+};
+
+struct radeon_scissor_state {
+	drm_clip_rect_t rect;
+	GLboolean enabled;
+
+	GLuint numClipRects;	/* Cliprects active */
+	GLuint numAllocedClipRects;	/* Cliprects available */
+	drm_clip_rect_t *pClipRects;
+};
+
+struct radeon_stencilbuffer_state {
+	GLboolean hwBuffer;
+	GLuint clear;		/* rb3d_stencilrefmask value */
+};
+
+struct radeon_stipple_state {
+	GLuint mask[32];
+};
+
+struct radeon_state_atom {
+	struct radeon_state_atom *next, *prev;
+	const char *name;	/* for debug */
+	int cmd_size;		/* size in bytes */
+	GLuint is_tcl;
+	int *cmd;		/* one or more cmd's */
+	int *lastcmd;		/* one or more cmd's */
+	GLboolean dirty;	/* dirty-mark in emit_state_list */
+	GLboolean(*check) (GLcontext *);	/* is this state active? */
+};
+
+typedef struct radeon_tex_obj radeonTexObj, *radeonTexObjPtr;
+
+/* Texture object in locally shared texture space.
+ */
+struct radeon_tex_obj {
+	driTextureObject base;
+
+	GLuint bufAddr;		/* Offset to start of locally
+				   shared texture block */
+
+	GLuint dirty_state;	/* Flags (1 per texunit) for
+				   whether or not this texobj
+				   has dirty hardware state
+				   (pp_*) that needs to be
+				   brought into the
+				   texunit. */
+
+	drm_radeon_tex_image_t image[6][RADEON_MAX_TEXTURE_LEVELS];
+	/* Six, for the cube faces */
+
+	GLboolean image_override; /* Image overridden by GLX_EXT_tfp */
+
+	GLuint pp_txfilter;	/* hardware register values */
+	GLuint pp_txformat;
+        GLuint pp_txformat_x;
+	GLuint pp_txoffset;	/* Image location in texmem.
+				   All cube faces follow. */
+	GLuint pp_txsize;	/* npot only */
+	GLuint pp_txpitch;	/* npot only */
+	GLuint pp_border_color;
+	GLuint pp_cubic_faces;	/* cube face 1,2,3,4 log2 sizes */
+
+	GLboolean border_fallback;
+
+	GLuint tile_bits;	/* hw texture tile bits used on this texture */
+};
+
+/* Need refcounting on dma buffers:
+ */
+struct radeon_dma_buffer {
+	int refcount;		/* the number of retained regions in buf */
+	drmBufPtr buf;
+};
+
+/* A retained region, eg vertices for indexed vertices.
+ */
+struct radeon_dma_region {
+   struct radeon_dma_buffer *buf;
+   char *address;		/* == buf->address */
+   int start, end, ptr;		/* offsets from start of buf */
+   int aos_start;
+   int aos_stride;
+   int aos_size;
+};
+
+
+struct radeon_dma {
+   /* Active dma region.  Allocations for vertices and retained
+    * regions come from here.  Also used for emitting random vertices,
+    * these may be flushed by calling flush_current();
+    */
+   struct radeon_dma_region current;
+   
+   void (*flush)( void * );
+
+   char *buf0_address;		/* start of buf[0], for index calcs */
+   GLuint nr_released_bufs;	/* flush after so many buffers released */
+};
+
+struct radeon_ioctl {
+	GLuint vertex_offset;
+	GLuint vertex_size;
+};
+
+#define RADEON_MAX_PRIMS 64
+
+struct radeon_prim {
+	GLuint start;
+	GLuint end;
+	GLuint prim;
+};
+
+static INLINE GLuint radeonPackColor(GLuint cpp,
+                                     GLubyte r, GLubyte g,
+                                     GLubyte b, GLubyte a)
+{
+	switch (cpp) {
+	case 2:
+		return PACK_COLOR_565(r, g, b);
+	case 4:
+		return PACK_COLOR_8888(a, r, g, b);
+	default:
+		return 0;
+	}
+}

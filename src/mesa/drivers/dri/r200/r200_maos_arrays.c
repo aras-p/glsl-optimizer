@@ -61,7 +61,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  */
 static void emit_ubyte_rgba3( GLcontext *ctx,
-		       struct r200_dma_region *rvb,
+		       struct radeon_dma_region *rvb,
 		       char *data,
 		       int stride,
 		       int count )
@@ -84,7 +84,7 @@ static void emit_ubyte_rgba3( GLcontext *ctx,
 }
 
 static void emit_ubyte_rgba4( GLcontext *ctx,
-			      struct r200_dma_region *rvb,
+			      struct radeon_dma_region *rvb,
 			      char *data,
 			      int stride,
 			      int count )
@@ -109,7 +109,7 @@ static void emit_ubyte_rgba4( GLcontext *ctx,
 
 
 static void emit_ubyte_rgba( GLcontext *ctx,
-			     struct r200_dma_region *rvb,
+			     struct radeon_dma_region *rvb,
 			     char *data,
 			     int size,
 			     int stride,
@@ -176,7 +176,7 @@ do {						\
 
 
 static void emit_vecfog( GLcontext *ctx,
-			 struct r200_dma_region *rvb,
+			 struct radeon_dma_region *rvb,
 			 char *data,
 			 int stride,
 			 int count )
@@ -219,7 +219,7 @@ static void emit_vecfog( GLcontext *ctx,
 
 
 static void emit_vec4( GLcontext *ctx,
-		       struct r200_dma_region *rvb,
+		       struct radeon_dma_region *rvb,
 		       char *data,
 		       int stride,
 		       int count )
@@ -243,7 +243,7 @@ static void emit_vec4( GLcontext *ctx,
 
 
 static void emit_vec8( GLcontext *ctx,
-		       struct r200_dma_region *rvb,
+		       struct radeon_dma_region *rvb,
 		       char *data,
 		       int stride,
 		       int count )
@@ -267,7 +267,7 @@ static void emit_vec8( GLcontext *ctx,
 }
 
 static void emit_vec12( GLcontext *ctx,
-		       struct r200_dma_region *rvb,
+		       struct radeon_dma_region *rvb,
 		       char *data,
 		       int stride,
 		       int count )
@@ -292,7 +292,7 @@ static void emit_vec12( GLcontext *ctx,
 }
 
 static void emit_vec16( GLcontext *ctx,
-			struct r200_dma_region *rvb,
+			struct radeon_dma_region *rvb,
 			char *data,
 			int stride,
 			int count )
@@ -319,7 +319,7 @@ static void emit_vec16( GLcontext *ctx,
 
 
 static void emit_vector( GLcontext *ctx,
-			 struct r200_dma_region *rvb,
+			 struct radeon_dma_region *rvb,
 			 char *data,
 			 int size,
 			 int stride,
@@ -379,7 +379,7 @@ void r200EmitArrays( GLcontext *ctx, GLubyte *vimap_rev )
 {
    r200ContextPtr rmesa = R200_CONTEXT( ctx );
    struct vertex_buffer *VB = &TNL_CONTEXT( ctx )->vb;
-   struct r200_dma_region **component = rmesa->tcl.aos_components;
+   struct radeon_dma_region **component = rmesa->tcl.aos_components;
    GLuint nr = 0;
    GLuint vfmt0 = 0, vfmt1 = 0;
    GLuint count = VB->Count;

@@ -194,7 +194,7 @@ void r200FlushCmdBuf( r200ContextPtr rmesa, const char *caller )
 
 void r200RefillCurrentDmaRegion( r200ContextPtr rmesa )
 {
-   struct r200_dma_buffer *dmabuf;
+   struct radeon_dma_buffer *dmabuf;
    int fd = rmesa->dri.fd;
    int index = 0;
    int size = 0;
@@ -248,7 +248,7 @@ void r200RefillCurrentDmaRegion( r200ContextPtr rmesa )
    if (R200_DEBUG & DEBUG_DMA)
       fprintf(stderr, "Allocated buffer %d\n", index);
 
-   dmabuf = CALLOC_STRUCT( r200_dma_buffer );
+   dmabuf = CALLOC_STRUCT( radeon_dma_buffer );
    dmabuf->buf = &rmesa->r200Screen->buffers->list[index];
    dmabuf->refcount = 1;
 
@@ -260,7 +260,7 @@ void r200RefillCurrentDmaRegion( r200ContextPtr rmesa )
 }
 
 void r200ReleaseDmaRegion( r200ContextPtr rmesa,
-			     struct r200_dma_region *region,
+			     struct radeon_dma_region *region,
 			     const char *caller )
 {
    if (R200_DEBUG & DEBUG_IOCTL)
@@ -295,7 +295,7 @@ void r200ReleaseDmaRegion( r200ContextPtr rmesa,
  * space in current, grab a new buffer (and discard what was left of current)
  */
 void r200AllocDmaRegion( r200ContextPtr rmesa, 
-			   struct r200_dma_region *region,
+			   struct radeon_dma_region *region,
 			   int bytes,
 			   int alignment )
 {

@@ -41,9 +41,9 @@ extern void r200SetTexOffset(__DRIcontext *pDRICtx, GLint texname,
 
 extern void r200UpdateTextureState( GLcontext *ctx );
 
-extern int r200UploadTexImages( r200ContextPtr rmesa, r200TexObjPtr t, GLuint face );
+extern int r200UploadTexImages( r200ContextPtr rmesa, radeonTexObjPtr t, GLuint face );
 
-extern void r200DestroyTexObj( r200ContextPtr rmesa, r200TexObjPtr t );
+extern void r200DestroyTexObj( r200ContextPtr rmesa, radeonTexObjPtr t );
 
 extern void r200InitTextureFuncs( struct dd_function_table *functions );
 

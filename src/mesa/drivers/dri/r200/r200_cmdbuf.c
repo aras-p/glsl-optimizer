@@ -321,7 +321,7 @@ void r200EmitVertexAOS( r200ContextPtr rmesa,
 		       
 
 void r200EmitAOS( r200ContextPtr rmesa,
-		    struct r200_dma_region **component,
+		    struct radeon_dma_region **component,
 		    GLuint nr,
 		    GLuint offset )
 {

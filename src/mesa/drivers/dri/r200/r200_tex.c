@@ -63,7 +63,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  * \param twrap Wrap mode for the \a t texture coordinate
  */
 
-static void r200SetTexWrap( r200TexObjPtr t, GLenum swrap, GLenum twrap, GLenum rwrap )
+static void r200SetTexWrap( radeonTexObjPtr t, GLenum swrap, GLenum twrap, GLenum rwrap )
 {
    GLboolean  is_clamp = GL_FALSE;
    GLboolean  is_clamp_to_border = GL_FALSE;
@@ -180,7 +180,7 @@ static void r200SetTexWrap( r200TexObjPtr t, GLenum swrap, GLenum twrap, GLenum 
    t->border_fallback = (is_clamp && is_clamp_to_border);
 }
 
-static void r200SetTexMaxAnisotropy( r200TexObjPtr t, GLfloat max )
+static void r200SetTexMaxAnisotropy( radeonTexObjPtr t, GLfloat max )
 {
    t->pp_txfilter &= ~R200_MAX_ANISO_MASK;
 
@@ -205,7 +205,7 @@ static void r200SetTexMaxAnisotropy( r200TexObjPtr t, GLfloat max )
  * \param magf Texture magnification mode
  */
 
-static void r200SetTexFilter( r200TexObjPtr t, GLenum minf, GLenum magf )
+static void r200SetTexFilter( radeonTexObjPtr t, GLenum minf, GLenum magf )
 {
    GLuint anisotropy = (t->pp_txfilter & R200_MAX_ANISO_MASK);
 
@@ -267,9 +267,9 @@ static void r200SetTexFilter( r200TexObjPtr t, GLenum minf, GLenum magf )
    }
 }
 
-static void r200SetTexBorderColor( r200TexObjPtr t, GLubyte c[4] )
+static void r200SetTexBorderColor( radeonTexObjPtr t, GLubyte c[4] )
 {
-   t->pp_border_color = r200PackColor( 4, c[0], c[1], c[2], c[3] );
+   t->pp_border_color = radeonPackColor( 4, c[0], c[1], c[2], c[3] );
 }
 
 
@@ -279,11 +279,11 @@ static void r200SetTexBorderColor( r200TexObjPtr t, GLubyte c[4] )
  * texture after it was swapped out or teximaged again.
  */
 
-static r200TexObjPtr r200AllocTexObj( struct gl_texture_object *texObj )
+static radeonTexObjPtr r200AllocTexObj( struct gl_texture_object *texObj )
 {
-   r200TexObjPtr t;
+   radeonTexObjPtr t;
 
-   t = CALLOC_STRUCT( r200_tex_obj );
+   t = CALLOC_STRUCT( radeon_tex_obj );
    texObj->DriverData = t;
    if ( t != NULL ) {
       if ( R200_DEBUG & DEBUG_TEXTURE ) {
@@ -978,7 +978,7 @@ static void r200TexEnv( GLcontext *ctx, GLenum target,
       GLubyte c[4];
       GLuint envColor;
       UNCLAMPED_FLOAT_TO_RGBA_CHAN( c, texUnit->EnvColor );
-      envColor = r200PackColor( 4, c[0], c[1], c[2], c[3] );
+      envColor = radeonPackColor( 4, c[0], c[1], c[2], c[3] );
       if ( rmesa->hw.tf.cmd[TF_TFACTOR_0 + unit] != envColor ) {
 	 R200_STATECHANGE( rmesa, tf );
 	 rmesa->hw.tf.cmd[TF_TFACTOR_0 + unit] = envColor;
@@ -1034,7 +1034,7 @@ static void r200TexParameter( GLcontext *ctx, GLenum target,
 				struct gl_texture_object *texObj,
 				GLenum pname, const GLfloat *params )
 {
-   r200TexObjPtr t = (r200TexObjPtr) texObj->DriverData;
+   radeonTexObjPtr t = (radeonTexObjPtr) texObj->DriverData;
 
    if ( R200_DEBUG & (DEBUG_STATE|DEBUG_TEXTURE) ) {
       fprintf( stderr, "%s( %s )\n", __FUNCTION__,
@@ -1077,7 +1077,7 @@ static void r200TexParameter( GLcontext *ctx, GLenum target,
 
    /* Mark this texobj as dirty (one bit per tex unit)
     */
-   t->dirty_state = TEX_ALL;
+   t->dirty_state = R200_TEX_ALL;
 }
 
 

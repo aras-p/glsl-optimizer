@@ -776,7 +776,7 @@ static void radeonTexParameter( GLcontext *ctx, GLenum target,
 
    /* Mark this texobj as dirty (one bit per tex unit)
     */
-   t->dirty_state = TEX_ALL;
+   t->dirty_state = R100_TEX_ALL;
 }
 
 

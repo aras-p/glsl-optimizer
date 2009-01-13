@@ -59,7 +59,7 @@ extern GLushort *r200AllocEltsOpenEnded( r200ContextPtr rmesa,
 					   GLuint min_nr );
 
 extern void r200EmitAOS( r200ContextPtr rmesa,
-			   struct r200_dma_region **regions,
+			   struct radeon_dma_region **regions,
 			   GLuint n,
 			   GLuint offset );
 
@@ -81,12 +81,12 @@ extern int r200FlushCmdBufLocked( r200ContextPtr rmesa, const char * caller );
 extern void r200RefillCurrentDmaRegion( r200ContextPtr rmesa );
 
 extern void r200AllocDmaRegion( r200ContextPtr rmesa,
-				  struct r200_dma_region *region,
+				  struct radeon_dma_region *region,
 				  int bytes, 
 				  int alignment );
 
 extern void r200ReleaseDmaRegion( r200ContextPtr rmesa,
-				    struct r200_dma_region *region,
+				    struct radeon_dma_region *region,
 				    const char *caller );
 
 extern void r200CopyBuffer( __DRIdrawablePrivate *drawable,

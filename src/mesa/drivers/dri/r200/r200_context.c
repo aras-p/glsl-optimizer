@@ -341,7 +341,7 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
 	    (drmTextureRegionPtr)rmesa->sarea->tex_list[i],
 	    & rmesa->sarea->tex_age[i],
 	    & rmesa->swapped,
-	    sizeof( r200TexObj ),
+	    sizeof( radeonTexObj ),
 	    (destroy_texture_object_t *) r200DestroyTexObj );
    }
    rmesa->texture_depth = driQueryOptioni (&rmesa->optionCache,

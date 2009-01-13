@@ -284,7 +284,7 @@ static void flush_last_swtcl_prim( r200ContextPtr rmesa  )
    rmesa->dma.flush = NULL;
 
    if (rmesa->dma.current.buf) {
-      struct r200_dma_region *current = &rmesa->dma.current;
+      struct radeon_dma_region *current = &rmesa->dma.current;
       GLuint current_offset = (rmesa->r200Screen->gart_buffer_offset +
 			       current->buf->buf->idx * RADEON_BUFFER_SIZE + 
 			       current->start);
@@ -397,8 +397,8 @@ static void r200ResetLineStipple( GLcontext *ctx );
 #define LOCAL_VARS						\
    r200ContextPtr rmesa = R200_CONTEXT(ctx);		\
    const char *r200verts = (char *)rmesa->swtcl.verts;
-#define VERT(x) (r200Vertex *)(r200verts + ((x) * vertsize * sizeof(int)))
-#define VERTEX r200Vertex 
+#define VERT(x) (radeonVertex *)(r200verts + ((x) * vertsize * sizeof(int)))
+#define VERTEX radeonVertex 
 #define DO_DEBUG_VERTS (1 && (R200_DEBUG & DEBUG_VERTS))
 
 #undef TAG
@@ -460,7 +460,7 @@ static struct {
 
 #define VERT_SET_RGBA( v, c )  					\
 do {								\
-   r200_color_t *color = (r200_color_t *)&((v)->ui[coloroffset]);	\
+   radeon_color_t *color = (radeon_color_t *)&((v)->ui[coloroffset]);	\
    UNCLAMPED_FLOAT_TO_UBYTE(color->red, (c)[0]);		\
    UNCLAMPED_FLOAT_TO_UBYTE(color->green, (c)[1]);		\
    UNCLAMPED_FLOAT_TO_UBYTE(color->blue, (c)[2]);		\
@@ -472,7 +472,7 @@ do {								\
 #define VERT_SET_SPEC( v, c )					\
 do {								\
    if (specoffset) {						\
-      r200_color_t *spec = (r200_color_t *)&((v)->ui[specoffset]);	\
+      radeon_color_t *spec = (radeon_color_t *)&((v)->ui[specoffset]);	\
       UNCLAMPED_FLOAT_TO_UBYTE(spec->red, (c)[0]);	\
       UNCLAMPED_FLOAT_TO_UBYTE(spec->green, (c)[1]);	\
       UNCLAMPED_FLOAT_TO_UBYTE(spec->blue, (c)[2]);	\
@@ -481,8 +481,8 @@ do {								\
 #define VERT_COPY_SPEC( v0, v1 )			\
 do {							\
    if (specoffset) {					\
-      r200_color_t *spec0 = (r200_color_t *)&((v0)->ui[specoffset]);	\
-      r200_color_t *spec1 = (r200_color_t *)&((v1)->ui[specoffset]);	\
+      radeon_color_t *spec0 = (radeon_color_t *)&((v0)->ui[specoffset]);	\
+      radeon_color_t *spec1 = (radeon_color_t *)&((v1)->ui[specoffset]);	\
       spec0->red   = spec1->red;	\
       spec0->green = spec1->green;	\
       spec0->blue  = spec1->blue; 	\
@@ -772,7 +772,7 @@ r200PointsBitmap( GLcontext *ctx, GLint px, GLint py,
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
    const GLfloat *rc = ctx->Current.RasterColor; 
    GLint row, col;
-   r200Vertex vert;
+   radeonVertex vert;
    GLuint orig_vte;
    GLuint h;
 

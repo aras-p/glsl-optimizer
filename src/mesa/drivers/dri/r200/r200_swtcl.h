@@ -57,10 +57,10 @@ extern void r200_emit_indexed_verts( GLcontext *ctx,
 				       GLuint count );
 
 extern void r200_translate_vertex( GLcontext *ctx, 
-				     const r200Vertex *src, 
+				     const radeonVertex *src, 
 				     SWvertex *dst );
 
-extern void r200_print_vertex( GLcontext *ctx, const r200Vertex *v );
+extern void r200_print_vertex( GLcontext *ctx, const radeonVertex *v );
 
 extern void r200_import_float_colors( GLcontext *ctx );
 extern void r200_import_float_spec_colors( GLcontext *ctx );

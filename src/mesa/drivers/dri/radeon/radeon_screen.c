@@ -1042,6 +1042,9 @@ radeonCreateScreen2(__DRIscreenPrivate *sPriv)
    screen->kernel_mm = 1;
    screen->chip_flags = 0;
 
+   ret = radeonGetParam( sPriv->fd, RADEON_PARAM_IRQ_NR,
+			 &screen->irq);
+
    ret = radeonGetParam( sPriv->fd, RADEON_PARAM_DEVICE_ID,
 			 &device_id);
    if (ret) {

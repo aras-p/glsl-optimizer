@@ -55,7 +55,7 @@ SOFTWARE.
  * include NULLing out hardware state that points to the texture.
  */
 void
-r200DestroyTexObj( r200ContextPtr rmesa, r200TexObjPtr t )
+r200DestroyTexObj( r200ContextPtr rmesa, radeonTexObjPtr t )
 {
    if ( R200_DEBUG & DEBUG_TEXTURE ) {
       fprintf( stderr, "%s( %p, %p )\n", __FUNCTION__, 
@@ -83,7 +83,7 @@ r200DestroyTexObj( r200ContextPtr rmesa, r200TexObjPtr t )
 
 
 static void r200UploadGARTClientSubImage( r200ContextPtr rmesa,
-					  r200TexObjPtr t, 
+					  radeonTexObjPtr t, 
 					  struct gl_texture_image *texImage,
 					  GLint hwlevel,
 					  GLint x, GLint y, 
@@ -147,7 +147,7 @@ static void r200UploadGARTClientSubImage( r200ContextPtr rmesa,
 }
 
 static void r200UploadRectSubImage( r200ContextPtr rmesa,
-				    r200TexObjPtr t, 
+				    radeonTexObjPtr t, 
 				    struct gl_texture_image *texImage,
 				    GLint x, GLint y, 
 				    GLint width, GLint height )
@@ -216,7 +216,7 @@ static void r200UploadRectSubImage( r200ContextPtr rmesa,
       /* Data not in GART memory, or bad pitch.
        */
       for (done = 0; done < height ; ) {
-	 struct r200_dma_region region;
+	 struct radeon_dma_region region;
 	 int lines = MIN2( height - done, RADEON_BUFFER_SIZE / dstPitch );
 	 int src_pitch;
 	 char *tex;
@@ -273,7 +273,7 @@ static void r200UploadRectSubImage( r200ContextPtr rmesa,
  * Upload the texture image associated with texture \a t at the specified
  * level at the address relative to \a start.
  */
-static void uploadSubImage( r200ContextPtr rmesa, r200TexObjPtr t, 
+static void uploadSubImage( r200ContextPtr rmesa, radeonTexObjPtr t, 
 			    GLint hwlevel,
 			    GLint x, GLint y, GLint width, GLint height,
 			    GLuint face )
@@ -458,7 +458,7 @@ static void uploadSubImage( r200ContextPtr rmesa, r200TexObjPtr t,
  * \param face Cube map face to be uploaded.  Zero for non-cube maps.
  */
 
-int r200UploadTexImages( r200ContextPtr rmesa, r200TexObjPtr t, GLuint face )
+int r200UploadTexImages( r200ContextPtr rmesa, radeonTexObjPtr t, GLuint face )
 {
    const int numLevels = t->base.lastLevel - t->base.firstLevel + 1;
 
@@ -500,7 +500,7 @@ int r200UploadTexImages( r200ContextPtr rmesa, r200TexObjPtr t, GLuint face )
 
       /* Mark this texobj as dirty on all units:
        */
-      t->dirty_state = TEX_ALL;
+      t->dirty_state = R200_TEX_ALL;
    }
 
    /* Let the world know we've used this memory recently.

@@ -115,7 +115,7 @@ static void r200BlendColor( GLcontext *ctx, const GLfloat cf[4] )
    CLAMPED_FLOAT_TO_UBYTE(color[2], cf[2]);
    CLAMPED_FLOAT_TO_UBYTE(color[3], cf[3]);
    if (rmesa->r200Screen->drmSupportsBlendColor)
-      rmesa->hw.ctx.cmd[CTX_RB3D_BLENDCOLOR] = r200PackColor( 4, color[0], color[1], color[2], color[3] );
+      rmesa->hw.ctx.cmd[CTX_RB3D_BLENDCOLOR] = radeonPackColor( 4, color[0], color[1], color[2], color[3] );
 }
 
 /**
@@ -480,7 +480,7 @@ static void r200Fogfv( GLcontext *ctx, GLenum pname, const GLfloat *param )
    case GL_FOG_COLOR: 
       R200_STATECHANGE( rmesa, ctx );
       UNCLAMPED_FLOAT_TO_RGB_CHAN( col, ctx->Fog.Color );
-      i = r200PackColor( 4, col[0], col[1], col[2], 0 );
+      i = radeonPackColor( 4, col[0], col[1], col[2], 0 );
       rmesa->hw.ctx.cmd[CTX_PP_FOG_COLOR] &= ~R200_FOG_COLOR_MASK;
       rmesa->hw.ctx.cmd[CTX_PP_FOG_COLOR] |= i;
       break;
@@ -803,7 +803,7 @@ static void r200ColorMask( GLcontext *ctx,
 			   GLboolean b, GLboolean a )
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
-   GLuint mask = r200PackColor( rmesa->r200Screen->cpp,
+   GLuint mask = radeonPackColor( rmesa->r200Screen->cpp,
 				ctx->Color.ColorMask[RCOMP],
 				ctx->Color.ColorMask[GCOMP],
 				ctx->Color.ColorMask[BCOMP],
@@ -1805,7 +1805,7 @@ static void r200ClearColor( GLcontext *ctx, const GLfloat c[4] )
    CLAMPED_FLOAT_TO_UBYTE(color[1], c[1]);
    CLAMPED_FLOAT_TO_UBYTE(color[2], c[2]);
    CLAMPED_FLOAT_TO_UBYTE(color[3], c[3]);
-   rmesa->state.color.clear = r200PackColor( rmesa->r200Screen->cpp,
+   rmesa->state.color.clear = radeonPackColor( rmesa->r200Screen->cpp,
                                              color[0], color[1],
                                              color[2], color[3] );
 }
