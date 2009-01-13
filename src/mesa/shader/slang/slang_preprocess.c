@@ -51,6 +51,9 @@ grammar_error_to_log (slang_info_log *log)
    GLint pos;
 
    grammar_get_last_error ((byte *) (buf), sizeof (buf), &pos);
+   if (buf[0] == 0) {
+      _mesa_snprintf(buf, sizeof(buf), "Preprocessor error");
+   }
    slang_info_log_error (log, buf);
 }
 
@@ -529,6 +532,20 @@ pp_ext_set(pp_ext *self, const char *name, GLboolean enable)
 
 
 /**
+ * Called in response to #pragma.  For example, "#pragma debug(on)" would
+ * call this function as pp_pragma("debug", "on").
+ * At this time, pragmas are silently ignored.
+ */
+static void
+pp_pragma(const char *pragma, const char *param)
+{
+#if 0
+   printf("#pragma %s %s\n", pragma, param);
+#endif
+}
+
+
+/**
  * The state of preprocessor: current line, file and version number, list
  * of all defined macros and the #if/#endif context.
  */
@@ -862,6 +879,10 @@ parse_if (slang_string *output, const byte *prod, GLuint *pi, GLint *result, pp_
 #define BEHAVIOR_WARN    3
 #define BEHAVIOR_DISABLE 4
 
+#define PRAGMA_NO_PARAM  0
+#define PRAGMA_PARAM     1
+
+
 static GLboolean
 preprocess_source (slang_string *output, const char *source,
                    grammar pid, grammar eid,
@@ -940,9 +961,11 @@ preprocess_source (slang_string *output, const char *source,
       else {
          const char *id;
          GLuint idlen;
+         GLubyte token;
 
          i++;
-         switch (prod[i++]) {
+         token = prod[i++];
+         switch (token) {
 
          case TOKEN_END:
             /* End of source string.
@@ -1156,6 +1179,25 @@ preprocess_source (slang_string *output, const char *source,
                default:
                   assert (0);
                }
+            }
+            break;
+
+         case TOKEN_PRAGMA:
+            {
+               GLint have_param;
+               const char *pragma, *param;
+
+               pragma = (const char *) (&prod[i]);
+               i += _mesa_strlen(pragma) + 1;
+               have_param = (prod[i++] == PRAGMA_PARAM);
+               if (have_param) {
+                  param = (const char *) (&prod[i]);
+                  i += _mesa_strlen(param) + 1;
+               }
+               else {
+                  param = NULL;
+               }
+               pp_pragma(pragma, param);
             }
             break;
 
