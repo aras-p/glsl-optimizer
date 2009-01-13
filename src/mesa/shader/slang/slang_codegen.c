@@ -4301,7 +4301,7 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
 	  * additional samplers to ensure we don't allocate them elsewhere.
 	  * We can't directly use _mesa_add_sampler() as that checks the
 	  * varName and gets a match, so we call _mesa_add_parameter()
-	  * directly and use the last sampler number for the call above.
+	  * directly and use the last sampler number from the call above.
 	  */
 	 if (arrayLen > 0) {
 	    GLint a = arrayLen - 1;
