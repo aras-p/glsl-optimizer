@@ -104,7 +104,7 @@ nv50_screen_get_param(struct pipe_screen *pscreen, int param)
 	case PIPE_CAP_MAX_RENDER_TARGETS:
 		return 8;
 	case PIPE_CAP_OCCLUSION_QUERY:
-		return 0;
+		return 1;
 	case PIPE_CAP_TEXTURE_SHADOW_MAP:
 		return 0;
 	case PIPE_CAP_MAX_TEXTURE_2D_LEVELS:
