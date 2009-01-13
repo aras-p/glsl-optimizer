@@ -33,6 +33,7 @@
 #include "shader/prog_parameter.h"
 #include "shader/program.h"
 #include "shader/programopt.h"
+#include "shader/prog_print.h"
 
 #include "tnl/tnl.h"
 #include "tnl/t_context.h"
@@ -1048,6 +1049,9 @@ i915ProgramStringNotify(GLcontext * ctx,
          _mesa_append_fog_code(ctx, &p->FragProg);
          p->FragProg.FogOption = GL_NONE;
       }
+
+      if (INTEL_DEBUG & DEBUG_STATE)
+	 _mesa_print_program(prog);
    }
 
    _tnl_program_string(ctx, target, prog);
