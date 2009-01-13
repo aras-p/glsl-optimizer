@@ -24,6 +24,7 @@ INCLUDE_DIRS = \
 
 XLIB_WINSYS_SOURCES = \
 	xlib.c \
+	xlib_cell.c \
 	xlib_brw_aub.c \
 	xlib_brw_context.c \
 	xlib_brw_screen.c \

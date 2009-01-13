@@ -2,6 +2,7 @@
 #ifndef XLIB_H
 #define XLIB_H
 
+#include "pipe/p_compiler.h"
 #include "xm_winsys.h"
 
 extern struct xm_driver xlib_trace_driver;

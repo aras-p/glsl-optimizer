@@ -32,6 +32,9 @@
  *   Brian Paul
  */
 
+#include "xlib.h"
+
+#ifdef GALLIUM_CELL
 
 #include "xm_api.h"
 
@@ -44,9 +47,11 @@
 #include "pipe/p_inlines.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
-#include "softpipe/sp_winsys.h"
 
-#include "xlib.h"
+#include "cell/ppu/cell_context.h"
+#include "cell/ppu/cell_screen.h"
+#include "cell/ppu/cell_winsys.h"
+
 
 /**
  * Subclass of pipe_buffer for Xlib winsys.
@@ -61,7 +66,6 @@ struct xm_buffer
    
    XImage *tempImage;
    int shm;
-   XShmSegmentInfo shminfo;
 };
 
 
@@ -71,8 +75,6 @@ struct xm_buffer
 struct xmesa_pipe_winsys
 {
    struct pipe_winsys base;
-/*   struct xmesa_visual *xm_visual; */
-   int shm;
 };
 
 
@@ -83,94 +85,6 @@ xm_buffer( struct pipe_buffer *buf )
 {
    return (struct xm_buffer *)buf;
 }
-
-
-/**
- * X Shared Memory Image extension code
- */
-#define XSHM_ENABLED(b) ((b)->shm)
-
-static volatile int mesaXErrorFlag = 0;
-
-/**
- * Catches potential Xlib errors.
- */
-static int
-mesaHandleXError(Display *dpy, XErrorEvent *event)
-{
-   (void) dpy;
-   (void) event;
-   mesaXErrorFlag = 1;
-   return 0;
-}
-
-
-static GLboolean alloc_shm(struct xm_buffer *buf, unsigned size)
-{
-   XShmSegmentInfo *const shminfo = & buf->shminfo;
-
-   shminfo->shmid = shmget(IPC_PRIVATE, size, IPC_CREAT|0777);
-   if (shminfo->shmid < 0) {
-      return GL_FALSE;
-   }
-
-   shminfo->shmaddr = (char *) shmat(shminfo->shmid, 0, 0);
-   if (shminfo->shmaddr == (char *) -1) {
-      shmctl(shminfo->shmid, IPC_RMID, 0);
-      return GL_FALSE;
-   }
-
-   shminfo->readOnly = False;
-   return GL_TRUE;
-}
-
-
-/**
- * Allocate a shared memory XImage back buffer for the given XMesaBuffer.
- */
-static void
-alloc_shm_ximage(struct xm_buffer *b, struct xmesa_buffer *xmb,
-                 unsigned width, unsigned height)
-{
-   /*
-    * We have to do a _lot_ of error checking here to be sure we can
-    * really use the XSHM extension.  It seems different servers trigger
-    * errors at different points if the extension won't work.  Therefore
-    * we have to be very careful...
-    */
-   int (*old_handler)(Display *, XErrorEvent *);
-
-   b->tempImage = XShmCreateImage(xmb->xm_visual->display,
-                                  xmb->xm_visual->visinfo->visual,
-                                  xmb->xm_visual->visinfo->depth,
-                                  ZPixmap,
-                                  NULL,
-                                  &b->shminfo,
-                                  width, height);
-   if (b->tempImage == NULL) {
-      b->shm = 0;
-      return;
-   }
-
-
-   mesaXErrorFlag = 0;
-   old_handler = XSetErrorHandler(mesaHandleXError);
-   /* This may trigger the X protocol error we're ready to catch: */
-   XShmAttach(xmb->xm_visual->display, &b->shminfo);
-   XSync(xmb->xm_visual->display, False);
-
-   if (mesaXErrorFlag) {
-      /* we are on a remote display, this error is normal, don't print it */
-      XFlush(xmb->xm_visual->display);
-      mesaXErrorFlag = 0;
-      XDestroyImage(b->tempImage);
-      b->tempImage = NULL;
-      b->shm = 0;
-      (void) XSetErrorHandler(old_handler);
-      return;
-   }
-}
-
 
 
 /* Most callbacks map direcly onto dri_bufmgr operations:
@@ -198,14 +112,6 @@ xm_buffer_destroy(struct pipe_winsys *pws,
    struct xm_buffer *oldBuf = xm_buffer(buf);
 
    if (oldBuf->data) {
-      if (oldBuf->shminfo.shmid >= 0) {
-         shmdt(oldBuf->shminfo.shmaddr);
-         shmctl(oldBuf->shminfo.shmid, IPC_RMID, 0);
-         
-         oldBuf->shminfo.shmid = -1;
-         oldBuf->shminfo.shmaddr = (char *) -1;
-      }
-      else
       {
          if (!oldBuf->userBuffer) {
             align_free(oldBuf->data);
@@ -219,56 +125,89 @@ xm_buffer_destroy(struct pipe_winsys *pws,
 }
 
 
-
 /**
- * Display/copy the image in the surface into the X window specified
- * by the XMesaBuffer.
+ * For Cell.  Basically, rearrange the pixels/quads from this layout:
+ *  +--+--+--+--+
+ *  |p0|p1|p2|p3|....
+ *  +--+--+--+--+
+ *
+ * to this layout:
+ *  +--+--+
+ *  |p0|p1|....
+ *  +--+--+
+ *  |p2|p3|
+ *  +--+--+
  */
 static void
-xlib_softpipe_display_surface(struct xmesa_buffer *b, 
-                              struct pipe_surface *surf)
+twiddle_tile(const uint *tileIn, uint *tileOut)
+{
+   int y, x;
+
+   for (y = 0; y < TILE_SIZE; y+=2) {
+      for (x = 0; x < TILE_SIZE; x+=2) {
+         int k = 4 * (y/2 * TILE_SIZE/2 + x/2);
+         tileOut[y * TILE_SIZE + (x + 0)] = tileIn[k];
+         tileOut[y * TILE_SIZE + (x + 1)] = tileIn[k+1];
+         tileOut[(y + 1) * TILE_SIZE + (x + 0)] = tileIn[k+2];
+         tileOut[(y + 1) * TILE_SIZE + (x + 1)] = tileIn[k+3];
+      }
+   }
+}
+
+
+
+/**
+ * Display a surface that's in a tiled configuration.  That is, all the
+ * pixels for a TILE_SIZExTILE_SIZE block are contiguous in memory.
+ */
+static void
+xlib_cell_display_surface(struct xmesa_buffer *b, struct pipe_surface *surf)
 {
    XImage *ximage;
    struct xm_buffer *xm_buf = xm_buffer(surf->buffer);
-   static boolean no_swap = 0;
-   static boolean firsttime = 1;
-   static int tileSize = 0;
+   const uint tilesPerRow = (surf->width + TILE_SIZE - 1) / TILE_SIZE;
+   uint x, y;
 
-   if (firsttime) {
-      no_swap = getenv("SP_NO_RAST") != NULL;
-      firsttime = 0;
-   }
+   ximage = b->tempImage;
 
-   if (no_swap)
-      return;
+   /* check that the XImage has been previously initialized */
+   assert(ximage->format);
+   assert(ximage->bitmap_unit);
 
-   if (XSHM_ENABLED(xm_buf) && (xm_buf->tempImage == NULL)) {
-      assert(surf->block.width == 1);
-      assert(surf->block.height == 1);
-      alloc_shm_ximage(xm_buf, b, surf->stride/surf->block.size, surf->height);
-   }
+   /* update XImage's fields */
+   ximage->width = TILE_SIZE;
+   ximage->height = TILE_SIZE;
+   ximage->bytes_per_line = TILE_SIZE * 4;
 
-   ximage = (XSHM_ENABLED(xm_buf)) ? xm_buf->tempImage : b->tempImage;
-   ximage->data = xm_buf->data;
+   for (y = 0; y < surf->height; y += TILE_SIZE) {
+      for (x = 0; x < surf->width; x += TILE_SIZE) {
+         uint tmpTile[TILE_SIZE * TILE_SIZE];
+         int tx = x / TILE_SIZE;
+         int ty = y / TILE_SIZE;
+         int offset = ty * tilesPerRow + tx;
+         int w = TILE_SIZE;
+         int h = TILE_SIZE;
 
-   /* display image in Window */
-   if (XSHM_ENABLED(xm_buf)) {
-      XShmPutImage(b->xm_visual->display, b->drawable, b->gc,
-                   ximage, 0, 0, 0, 0, surf->width, surf->height, False);
-   } else {
-      /* check that the XImage has been previously initialized */
-      assert(ximage->format);
-      assert(ximage->bitmap_unit);
+         if (y + h > surf->height)
+            h = surf->height - y;
+         if (x + w > surf->width)
+            w = surf->width - x;
 
-      /* update XImage's fields */
-      ximage->width = surf->width;
-      ximage->height = surf->height;
-      ximage->bytes_per_line = surf->stride;
+         /* offset in pixels */
+         offset *= TILE_SIZE * TILE_SIZE;
 
-      XPutImage(b->xm_visual->display, b->drawable, b->gc,
-                ximage, 0, 0, 0, 0, surf->width, surf->height);
+         /* twiddle from ximage buffer to temp tile */
+         twiddle_tile((uint *) xm_buf->data + offset, tmpTile);
+         /* display temp tile data */
+         ximage->data = (char *) tmpTile;
+         XPutImage(b->xm_visual->display, b->drawable, b->gc,
+                   ximage, 0, 0, x, y, w, h);
+      }
    }
 }
+
+
+
 
 
 static void
@@ -281,7 +220,7 @@ xm_flush_frontbuffer(struct pipe_winsys *pws,
     * This function copies that XImage to the actual X Window.
     */
    XMesaContext xmctx = (XMesaContext) context_private;
-   xlib_softpipe_display_surface(xmctx->xm_buffer, surf);
+   xlib_cell_display_surface(xmctx->xm_buffer, surf);
 }
 
 
@@ -289,7 +228,7 @@ xm_flush_frontbuffer(struct pipe_winsys *pws,
 static const char *
 xm_get_name(struct pipe_winsys *pws)
 {
-   return "Xlib";
+   return "Xlib/Cell";
 }
 
 
@@ -300,22 +239,12 @@ xm_buffer_create(struct pipe_winsys *pws,
                  unsigned size)
 {
    struct xm_buffer *buffer = CALLOC_STRUCT(xm_buffer);
-   struct xmesa_pipe_winsys *xpws = (struct xmesa_pipe_winsys *) pws;
 
    buffer->base.refcount = 1;
    buffer->base.alignment = alignment;
    buffer->base.usage = usage;
    buffer->base.size = size;
-   buffer->shminfo.shmid = -1;
-   buffer->shminfo.shmaddr = (char *) -1;
 
-   if (xpws->shm && (usage & PIPE_BUFFER_USAGE_PIXEL) != 0) {
-      buffer->shm = xpws->shm;
-
-      if (alloc_shm(buffer, size)) {
-         buffer->data = buffer->shminfo.shmaddr;
-      }
-   }
 
    if (buffer->data == NULL) {
       buffer->shm = 0;
@@ -377,7 +306,8 @@ xm_surface_alloc_storage(struct pipe_winsys *winsys,
    assert(!surf->buffer);
    surf->buffer = winsys->buffer_create(winsys, alignment,
                                         PIPE_BUFFER_USAGE_PIXEL,
-                                        surf->stride * surf->nblocksy);
+                                        /* XXX a bit of a hack */
+                                        surf->stride * round_up(surf->nblocksy, TILE_SIZE));
 
    if(!surf->buffer)
       return -1;
@@ -449,7 +379,7 @@ xm_fence_finish(struct pipe_winsys *sws, struct pipe_fence_handle *fence,
 
 
 static struct pipe_winsys *
-xlib_create_softpipe_winsys( void )
+xlib_create_cell_winsys( void )
 {
    static struct xmesa_pipe_winsys *ws = NULL;
 
@@ -482,46 +412,53 @@ xlib_create_softpipe_winsys( void )
 
 
 static struct pipe_screen *
-xlib_create_softpipe_screen( struct pipe_winsys *pws )
+xlib_create_cell_screen( struct pipe_winsys *pws )
 {
-   struct pipe_screen *screen;
-
-   screen = softpipe_create_screen(pws);
-   if (screen == NULL)
-      goto fail;
-
-   return screen;
-
-fail:
-   return NULL;
+   return cell_create_screen( pws );
 }
 
 
 static struct pipe_context *
-xlib_create_softpipe_context( struct pipe_screen *screen,
-                              void *context_private )
+xlib_create_cell_context( struct pipe_screen *screen,
+                          void *priv )
 {
    struct pipe_context *pipe;
+
    
-   pipe = softpipe_create(screen, screen->winsys, NULL);
+   /* This takes a cell_winsys pointer, but probably that should be
+    * created and stored at screen creation, not context creation.
+    *
+    * The actual cell_winsys value isn't used for anything, so just
+    * passing NULL for now.
+    */
+   pipe = cell_create_context( screen, NULL);
    if (pipe == NULL)
       goto fail;
 
-   pipe->priv = context_private;
+   pipe->priv = priv;
+
    return pipe;
 
 fail:
-   /* Free stuff here */
    return NULL;
 }
 
-struct xm_driver xlib_softpipe_driver = 
+struct xm_driver xlib_cell_driver = 
 {
-   .create_pipe_winsys = xlib_create_softpipe_winsys,
-   .create_pipe_screen = xlib_create_softpipe_screen,
-   .create_pipe_context = xlib_create_softpipe_context,
-   .display_surface = xlib_softpipe_display_surface
+   .create_pipe_winsys = xlib_create_cell_winsys,
+   .create_pipe_screen = xlib_create_cell_screen,
+   .create_pipe_context = xlib_create_cell_context,
+   .display_surface = xlib_cell_display_surface,
 };
 
+#else
 
+struct xm_driver xlib_cell_driver = 
+{
+   .create_pipe_winsys = NULL,
+   .create_pipe_screen = NULL,
+   .create_pipe_context = NULL,
+   .display_surface = NULL,
+};
 
+#endif

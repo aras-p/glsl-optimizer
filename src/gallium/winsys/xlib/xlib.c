@@ -90,6 +90,7 @@ static void _init( void )
    }
 }
 
+
 /***********************************************************************
  *
  * Butt-ugly hack to convince the linker not to throw away public GL
