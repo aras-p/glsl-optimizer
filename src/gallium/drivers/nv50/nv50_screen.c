@@ -98,7 +98,7 @@ nv50_screen_get_param(struct pipe_screen *pscreen, int param)
 	case PIPE_CAP_S3TC:
 		return 0;
 	case PIPE_CAP_ANISOTROPIC_FILTER:
-		return 0;
+		return 1;
 	case PIPE_CAP_POINT_SPRITE:
 		return 0;
 	case PIPE_CAP_MAX_RENDER_TARGETS:
