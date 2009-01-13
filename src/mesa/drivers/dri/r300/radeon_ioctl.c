@@ -366,10 +366,19 @@ void radeonFlush(GLcontext * ctx)
 void radeonFinish(GLcontext * ctx)
 {
 	radeonContextPtr radeon = RADEON_CONTEXT(ctx);
+	struct gl_framebuffer *fb = ctx->DrawBuffer;
+	int i;
 
 	radeonFlush(ctx);
 
-	if (radeon->do_irqs) {
+	if (radeon->radeonScreen->kernel_mm) {
+		for (i = 0; i < fb->_NumColorDrawBuffers; i++) {
+			struct radeon_renderbuffer *rrb;
+			rrb = (struct radeon_renderbuffer *)fb->_ColorDrawBuffers[i];
+			if (rrb->bo)
+			    radeon_bo_wait(rrb->bo);
+		}
+	} else if (radeon->do_irqs) {
 		LOCK_HARDWARE(radeon);
 		radeonEmitIrqLocked(radeon);
 		UNLOCK_HARDWARE(radeon);
