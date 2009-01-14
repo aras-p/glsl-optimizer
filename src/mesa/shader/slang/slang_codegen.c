@@ -4285,10 +4285,8 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
       }
 #endif
       {
-         const GLuint swizzle = _slang_var_swizzle(totalSize, 0);
          GLint sampNum = _mesa_add_sampler(prog->Parameters, varName, datatype);
-         store = _slang_new_ir_storage_swz(PROGRAM_SAMPLER, sampNum,
-                                                 totalSize, swizzle);
+         store = _slang_new_ir_storage(PROGRAM_SAMPLER, sampNum, texIndex);
 
          /* If we have a sampler array, then we need to allocate the 
 	  * additional samplers to ensure we don't allocate them elsewhere.
