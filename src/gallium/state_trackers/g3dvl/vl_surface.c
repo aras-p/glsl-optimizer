@@ -51,6 +51,12 @@ int vlCreateSurface
 
 	sfc->texture = vlGetPipeScreen(screen)->texture_create(vlGetPipeScreen(screen), &template);
 
+	if (!sfc->texture)
+	{
+		FREE(sfc);
+		return 1;
+	}
+
 	*surface = sfc;
 
 	return 0;
