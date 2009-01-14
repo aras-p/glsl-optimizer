@@ -34,7 +34,13 @@ struct r300_blend_state {
     uint32_t dither;              /* R300_RB3D_DITHER_CTL: 0x4e50 */
 };
 
-#define R300_NEW_BLEND 0x1
+struct r300_scissor_state {
+    uint32_t scissor_top_left;     /* R300_SC_SCISSORS_TL: 0x43e0 */
+    uint32_t scissor_bottom_right; /* R300_SC_SCISSORS_BR: 0x43e4 */
+};
+
+#define R300_NEW_BLEND    0x1
+#define R300_NEW_SCISSOR  0x2
 
 struct r300_context {
     /* Parent class */
@@ -48,6 +54,8 @@ struct r300_context {
     /* Various CSO state objects. */
     /* Blend state. */
     struct r300_blend_state* blend_state;
+    /* Scissor state. */
+    struct r300_scissor_state* scissor_state;
 
     /* Bitmask of dirty state objects. */
     uint32_t dirty_state;

@@ -88,6 +88,9 @@ static uint32_t translate_blend_factor(int blend_fact) {
     return 0;
 }
 
+/* Create a new blend state based on the CSO blend state.
+ *
+ * This encompasses alpha blending, logic/raster ops, and blend dithering. */
 static void* r300_create_blend_state(struct pipe_context* pipe,
                                      struct pipe_blend_state* state)
 {
@@ -128,6 +131,7 @@ static void* r300_create_blend_state(struct pipe_context* pipe,
     return (void*)blend;
 }
 
+/* Bind blend state. */
 static void r300_bind_blend_state(struct pipe_context* pipe,
                                   void* state)
 {
@@ -137,8 +141,51 @@ static void r300_bind_blend_state(struct pipe_context* pipe,
     r300->dirty_state |= R300_NEW_BLEND;
 }
 
+/* Free blend state. */
 static void r300_delete_blend_state(struct pipe_context* pipe,
                                     void* state)
+{
+    FREE(state);
+}
+
+/* Create a new scissor state based on the CSO scissor state.
+ *
+ * This is only for the fragment scissors. */
+static void* r300_create_scissor_state(struct pipe_context* pipe,
+                                    struct pipe_scissor_state* state)
+{
+    uint32_t left, top, right, bottom;
+    struct r300_scissor_state* scissor = CALLOC_STRUCT(r300_scissor_state);
+
+    /* So, a bit of info. The scissors are offset by R300_SCISSORS_OFFSET in
+     * both directions for all values, and can only be 13 bits wide. Why?
+     * We may never know. */
+    left = (state->minx + R300_SCISSORS_OFFSET) & 0x1fff;
+    top = (state->miny + R300_SCISSORS_OFFSET) & 0x1fff;
+    right = (state->maxx + R300_SCISSORS_OFFSET) & 0x1fff;
+    bottom = (state->maxy + R300_SCISSORS_OFFSET) & 0x1fff;
+
+    scissor->scissor_top_left = (left << R300_SCISSORS_X_SHIFT) |
+            (top << R300_SCISSORS_Y_SHIFT);
+    scissor->scissor_bottom_right = (right << R300_SCISSORS_X_SHIFT) |
+            (bottom << R300_SCISSORS_Y_SHIFT);
+
+    return (void*)scissor;
+}
+
+/* Bind scissor state.*/
+static void r300_bind_scissor_state(struct pipe_context* pipe,
+                                 void* state)
+{
+    struct r300_context* r300 = r300_context(pipe);
+
+    r300->scissor_state = (struct r300_scissor_state*)state;
+    r300->dirty_state |= R300_NEW_SCISSOR;
+}
+
+/* Delete scissor state. */
+static void r300_delete_scissor_state(struct pipe_context* pipe,
+                                   void* state)
 {
     FREE(state);
 }
