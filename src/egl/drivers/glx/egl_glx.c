@@ -578,7 +578,7 @@ GLX_eglMakeCurrent(_EGLDriver *drv, EGLDisplay dpy, EGLSurface d,
       return EGL_FALSE;
 
 #ifdef GLX_VERSION_1_3
-   if (!glXMakeContextCurrent(disp->Xdpy, GLX_dsurf->drawable, GLX_rsurf->drawable, GLX_ctx->context))
+   if (!glXMakeContextCurrent(disp->Xdpy, GLX_dsurf ? GLX_dsurf->drawable : 0, GLX_rsurf ? GLX_rsurf->drawable : 0, GLX_ctx ? GLX_ctx->context : NULL))
 #endif
       if (!glXMakeCurrent(disp->Xdpy, GLX_dsurf ? GLX_dsurf->drawable : 0, GLX_ctx ? GLX_ctx->context : NULL))
          return EGL_FALSE;
