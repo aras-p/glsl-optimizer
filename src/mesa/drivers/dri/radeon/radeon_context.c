@@ -75,10 +75,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "vblank.h"
 #include "utils.h"
 #include "xmlpool.h" /* for symbolic values of enum-type options */
-#ifndef RADEON_DEBUG
-int RADEON_DEBUG = (0);
-#endif
-
 
 /* Return various strings for glGetString().
  */

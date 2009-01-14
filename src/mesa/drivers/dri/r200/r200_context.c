@@ -82,9 +82,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "vblank.h"
 #include "utils.h"
 #include "xmlpool.h" /* for symbolic values of enum-type options */
-#ifndef R200_DEBUG
-int R200_DEBUG = (0);
-#endif
 
 /* Return various strings for glGetString().
  */

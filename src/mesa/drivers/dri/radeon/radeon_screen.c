@@ -212,7 +212,6 @@ DRI_CONF_END;
 static const GLuint __driNConfigOptions = 17;
 
 #ifndef RADEON_DEBUG
-int RADEON_DEBUG = 0;
 
 static const struct dri_debug_control debug_control[] = {
 	{"fall", DEBUG_FALLBACKS},

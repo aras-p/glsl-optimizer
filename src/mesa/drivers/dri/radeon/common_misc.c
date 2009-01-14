@@ -65,6 +65,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "common_misc.h"
 #include "common_lock.h"
 
+#ifndef RADEON_DEBUG
+int RADEON_DEBUG = (0);
+#endif
+
 /* =============================================================
  * Scissoring
  */

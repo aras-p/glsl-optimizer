@@ -84,6 +84,8 @@ static const GLubyte *radeonGetString(GLcontext * ctx, GLenum name)
 			radeon->radeonScreen->AGPMode;
 		const char* chipname;
 
+			
+
 		if (IS_R300_CLASS(radeon->radeonScreen))
 			chipname = "R300";
 		else
@@ -93,14 +95,17 @@ static const GLubyte *radeonGetString(GLcontext * ctx, GLenum name)
 					      agp_mode);
 
 		if (IS_R300_CLASS(radeon->radeonScreen)) {
-		sprintf(&buffer[offset], " %sTCL",
-			(radeon->radeonScreen->chip_flags & RADEON_CHIPSET_TCL)
-			? "" : "NO-");
+			sprintf(&buffer[offset], " %sTCL",
+				(radeon->radeonScreen->chip_flags & RADEON_CHIPSET_TCL)
+				? "" : "NO-");
 		} else {
 			sprintf(&buffer[offset], " %sTCL",
-			!(radeon->TclFallback & RADEON_TCL_FALLBACK_TCL_DISABLE)
-			? "" : "NO-");
+				!(radeon->TclFallback & RADEON_TCL_FALLBACK_TCL_DISABLE)
+				? "" : "NO-");
 		}
+
+		if (radeon->radeonScreen->driScreen->dri2.enabled)
+			strcat(buffer, " DRI2");
 
 		return (GLubyte *) buffer;
 	}
