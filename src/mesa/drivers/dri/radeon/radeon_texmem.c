@@ -53,7 +53,7 @@ SOFTWARE.
  * include NULLing out hardware state that points to the texture.
  */
 void
-radeonDestroyTexObj( radeonContextPtr rmesa, radeonTexObjPtr t )
+radeonDestroyTexObj( r100ContextPtr rmesa, radeonTexObjPtr t )
 {
    if ( RADEON_DEBUG & DEBUG_TEXTURE ) {
       fprintf( stderr, "%s( %p, %p )\n", __FUNCTION__, (void *)t, (void *)t->base.tObj );
@@ -63,7 +63,7 @@ radeonDestroyTexObj( radeonContextPtr rmesa, radeonTexObjPtr t )
       unsigned   i;
 
 
-      for ( i = 0 ; i < rmesa->glCtx->Const.MaxTextureUnits ; i++ ) {
+      for ( i = 0 ; i < rmesa->radeon.glCtx->Const.MaxTextureUnits ; i++ ) {
 	 if ( t == rmesa->state.texture.unit[i].texobj ) {
 	    rmesa->state.texture.unit[i].texobj = NULL;
 	 }
@@ -77,7 +77,7 @@ radeonDestroyTexObj( radeonContextPtr rmesa, radeonTexObjPtr t )
  */
 
 
-static void radeonUploadRectSubImage( radeonContextPtr rmesa,
+static void radeonUploadRectSubImage( r100ContextPtr rmesa,
 				      radeonTexObjPtr t, 
 				      struct gl_texture_image *texImage,
 				      GLint x, GLint y, 
@@ -172,7 +172,7 @@ static void radeonUploadRectSubImage( radeonContextPtr rmesa,
  * Upload the texture image associated with texture \a t at the specified
  * level at the address relative to \a start.
  */
-static void uploadSubImage( radeonContextPtr rmesa, radeonTexObjPtr t, 
+static void uploadSubImage( r100ContextPtr rmesa, radeonTexObjPtr t, 
 			    GLint hwlevel,
 			    GLint x, GLint y, GLint width, GLint height,
 			    GLuint face )
@@ -300,7 +300,7 @@ static void uploadSubImage( radeonContextPtr rmesa, radeonTexObjPtr t,
 
    LOCK_HARDWARE( rmesa );
    do {
-      ret = drmCommandWriteRead( rmesa->dri.fd, DRM_RADEON_TEXTURE,
+      ret = drmCommandWriteRead( rmesa->radeon.dri.fd, DRM_RADEON_TEXTURE,
                                  &tex, sizeof(drm_radeon_texture_t) );
    } while ( ret == -EAGAIN );
 
@@ -329,7 +329,7 @@ static void uploadSubImage( radeonContextPtr rmesa, radeonTexObjPtr t,
  * \param face Cube map face to be uploaded.  Zero for non-cube maps.
  */
 
-int radeonUploadTexImages( radeonContextPtr rmesa, radeonTexObjPtr t, GLuint face )
+int radeonUploadTexImages( r100ContextPtr rmesa, radeonTexObjPtr t, GLuint face )
 {
    int numLevels;
 
@@ -338,7 +338,7 @@ int radeonUploadTexImages( radeonContextPtr rmesa, radeonTexObjPtr t, GLuint fac
 
    if ( RADEON_DEBUG & (DEBUG_TEXTURE|DEBUG_IOCTL) ) {
       fprintf( stderr, "%s( %p, %p ) sz=%d lvls=%d-%d\n", __FUNCTION__,
-	       (void *)rmesa->glCtx, (void *)t->base.tObj, t->base.totalSize,
+	       (void *)rmesa->radeon.glCtx, (void *)t->base.tObj, t->base.totalSize,
 	       t->base.firstLevel, t->base.lastLevel );
    }
 
@@ -346,7 +346,7 @@ int radeonUploadTexImages( radeonContextPtr rmesa, radeonTexObjPtr t, GLuint fac
 
    if (RADEON_DEBUG & DEBUG_SYNC) {
       fprintf(stderr, "%s: Syncing\n", __FUNCTION__ );
-      radeonFinish( rmesa->glCtx );
+      radeonFinish( rmesa->radeon.glCtx );
    }
 
    LOCK_HARDWARE( rmesa );
@@ -354,7 +354,7 @@ int radeonUploadTexImages( radeonContextPtr rmesa, radeonTexObjPtr t, GLuint fac
    if ( t->base.memBlock == NULL ) {
       int heap;
 
-      heap = driAllocateTexture( rmesa->texture_heaps, rmesa->nr_heaps,
+      heap = driAllocateTexture( rmesa->radeon.texture_heaps, rmesa->radeon.nr_heaps,
 				 (driTextureObject *) t );
       if ( heap == -1 ) {
 	 UNLOCK_HARDWARE( rmesa );
@@ -362,7 +362,7 @@ int radeonUploadTexImages( radeonContextPtr rmesa, radeonTexObjPtr t, GLuint fac
       }
 
       /* Set the base offset of the texture image */
-      t->bufAddr = rmesa->radeonScreen->texOffset[heap] 
+      t->bufAddr = rmesa->radeon.radeonScreen->texOffset[heap] 
 	   + t->base.memBlock->ofs;
       t->pp_txoffset = t->bufAddr;
 
@@ -397,7 +397,7 @@ int radeonUploadTexImages( radeonContextPtr rmesa, radeonTexObjPtr t, GLuint fac
 
    if (RADEON_DEBUG & DEBUG_SYNC) {
       fprintf(stderr, "%s: Syncing\n", __FUNCTION__ );
-      radeonFinish( rmesa->glCtx );
+      radeonFinish( rmesa->radeon.glCtx );
    }
 
    return 0;

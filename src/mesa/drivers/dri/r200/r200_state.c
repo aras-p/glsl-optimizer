@@ -114,7 +114,7 @@ static void r200BlendColor( GLcontext *ctx, const GLfloat cf[4] )
    CLAMPED_FLOAT_TO_UBYTE(color[1], cf[1]);
    CLAMPED_FLOAT_TO_UBYTE(color[2], cf[2]);
    CLAMPED_FLOAT_TO_UBYTE(color[3], cf[3]);
-   if (rmesa->radeonScreen->drmSupportsBlendColor)
+   if (rmesa->radeon.radeonScreen->drmSupportsBlendColor)
       rmesa->hw.ctx.cmd[CTX_RB3D_BLENDCOLOR] = radeonPackColor( 4, color[0], color[1], color[2], color[3] );
 }
 
@@ -213,7 +213,7 @@ static void r200_set_blend_state( GLcontext * ctx )
 
    R200_STATECHANGE( rmesa, ctx );
 
-   if (rmesa->radeonScreen->drmSupportsBlendColor) {
+   if (rmesa->radeon.radeonScreen->drmSupportsBlendColor) {
       if (ctx->Color.ColorLogicOpEnabled) {
          rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] =  cntl | R200_ROP_ENABLE;
          rmesa->hw.ctx.cmd[CTX_RB3D_ABLENDCNTL] = eqn | func;
@@ -278,7 +278,7 @@ static void r200_set_blend_state( GLcontext * ctx )
       return;
    }
 
-   if (!rmesa->radeonScreen->drmSupportsBlendColor) {
+   if (!rmesa->radeon.radeonScreen->drmSupportsBlendColor) {
       rmesa->hw.ctx.cmd[CTX_RB3D_BLENDCNTL] = eqn | func;
       return;
    }
@@ -549,8 +549,8 @@ void r200RecalcScissorRects( r200ContextPtr rmesa )
 
    /* Grow cliprect store?
     */
-   if (rmesa->state.scissor.numAllocedClipRects < rmesa->numClipRects) {
-      while (rmesa->state.scissor.numAllocedClipRects < rmesa->numClipRects) {
+   if (rmesa->state.scissor.numAllocedClipRects < rmesa->radeon.numClipRects) {
+      while (rmesa->state.scissor.numAllocedClipRects < rmesa->radeon.numClipRects) {
 	 rmesa->state.scissor.numAllocedClipRects += 1;	/* zero case */
 	 rmesa->state.scissor.numAllocedClipRects *= 2;
       }
@@ -571,9 +571,9 @@ void r200RecalcScissorRects( r200ContextPtr rmesa )
    out = rmesa->state.scissor.pClipRects;
    rmesa->state.scissor.numClipRects = 0;
 
-   for ( i = 0 ; i < rmesa->numClipRects ;  i++ ) {
+   for ( i = 0 ; i < rmesa->radeon.numClipRects ;  i++ ) {
       if ( intersect_rect( out, 
-			   &rmesa->pClipRects[i], 
+			   &rmesa->radeon.pClipRects[i], 
 			   &rmesa->state.scissor.rect ) ) {
 	 rmesa->state.scissor.numClipRects++;
 	 out++;
@@ -586,8 +586,8 @@ static void r200UpdateScissor( GLcontext *ctx )
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
 
-   if ( rmesa->dri.drawable ) {
-      __DRIdrawablePrivate *dPriv = rmesa->dri.drawable;
+   if ( rmesa->radeon.dri.drawable ) {
+      __DRIdrawablePrivate *dPriv = rmesa->radeon.dri.drawable;
 
       int x = ctx->Scissor.X;
       int y = dPriv->h - ctx->Scissor.Y - ctx->Scissor.Height;
@@ -803,7 +803,7 @@ static void r200ColorMask( GLcontext *ctx,
 			   GLboolean b, GLboolean a )
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
-   GLuint mask = radeonPackColor( rmesa->radeonScreen->cpp,
+   GLuint mask = radeonPackColor( rmesa->radeon.radeonScreen->cpp,
 				ctx->Color.ColorMask[RCOMP],
 				ctx->Color.ColorMask[GCOMP],
 				ctx->Color.ColorMask[BCOMP],
@@ -867,7 +867,7 @@ static void r200PolygonStipple( GLcontext *ctx, const GLubyte *mask )
    /* FIXME: Use window x,y offsets into stipple RAM.
     */
    stipple.mask = rmesa->state.stipple.mask;
-   drmCommandWrite( rmesa->dri.fd, DRM_RADEON_STIPPLE, 
+   drmCommandWrite( rmesa->radeon.dri.fd, DRM_RADEON_STIPPLE, 
                     &stipple, sizeof(stipple) );
    UNLOCK_HARDWARE( rmesa );
 }
@@ -881,7 +881,7 @@ static void r200PolygonMode( GLcontext *ctx, GLenum face, GLenum mode )
     * cases work. 
     */
    TCL_FALLBACK( ctx, R200_TCL_FALLBACK_UNFILLED, flag);
-   if (rmesa->TclFallback) {
+   if (rmesa->radeon.TclFallback) {
       r200ChooseRenderState( ctx );
       r200ChooseVertexState( ctx );
    }
@@ -958,7 +958,7 @@ static void r200UpdateSpecular( GLcontext *ctx )
 
    /* Update vertex/render formats
     */
-   if (rmesa->TclFallback) { 
+   if (rmesa->radeon.TclFallback) { 
       r200ChooseRenderState( ctx );
       r200ChooseVertexState( ctx );
    }
@@ -1430,7 +1430,7 @@ static void r200LightModelfv( GLcontext *ctx, GLenum pname,
 	    rmesa->hw.tcl.cmd[TCL_LIGHT_MODEL_CTL_0] |= R200_LIGHT_TWOSIDE;
 	 else
 	    rmesa->hw.tcl.cmd[TCL_LIGHT_MODEL_CTL_0] &= ~(R200_LIGHT_TWOSIDE);
-	 if (rmesa->TclFallback) {
+	 if (rmesa->radeon.TclFallback) {
 	    r200ChooseRenderState( ctx );
 	    r200ChooseVertexState( ctx );
 	 }
@@ -1700,7 +1700,7 @@ static void r200ClearStencil( GLcontext *ctx, GLint s )
 void r200UpdateWindow( GLcontext *ctx )
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
-   __DRIdrawablePrivate *dPriv = rmesa->dri.drawable;
+   __DRIdrawablePrivate *dPriv = rmesa->radeon.dri.drawable;
    GLfloat xoffset = (GLfloat)dPriv->x;
    GLfloat yoffset = (GLfloat)dPriv->y + dPriv->h;
    const GLfloat *v = ctx->Viewport._WindowMap.m;
@@ -1744,7 +1744,7 @@ static void r200DepthRange( GLcontext *ctx, GLclampd nearval,
 void r200UpdateViewportOffset( GLcontext *ctx )
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
-   __DRIdrawablePrivate *dPriv = rmesa->dri.drawable;
+   __DRIdrawablePrivate *dPriv = rmesa->radeon.dri.drawable;
    GLfloat xoffset = (GLfloat)dPriv->x;
    GLfloat yoffset = (GLfloat)dPriv->y + dPriv->h;
    const GLfloat *v = ctx->Viewport._WindowMap.m;
@@ -1774,8 +1774,8 @@ void r200UpdateViewportOffset( GLcontext *ctx )
                 R200_STIPPLE_Y_OFFSET_MASK);
 
          /* add magic offsets, then invert */
-         stx = 31 - ((rmesa->dri.drawable->x - 1) & R200_STIPPLE_COORD_MASK);
-         sty = 31 - ((rmesa->dri.drawable->y + rmesa->dri.drawable->h - 1)
+         stx = 31 - ((rmesa->radeon.dri.drawable->x - 1) & R200_STIPPLE_COORD_MASK);
+         sty = 31 - ((rmesa->radeon.dri.drawable->y + rmesa->radeon.dri.drawable->h - 1)
                      & R200_STIPPLE_COORD_MASK);
 
          m |= ((stx << R200_STIPPLE_X_OFFSET_SHIFT) |
@@ -1805,7 +1805,7 @@ static void r200ClearColor( GLcontext *ctx, const GLfloat c[4] )
    CLAMPED_FLOAT_TO_UBYTE(color[1], c[1]);
    CLAMPED_FLOAT_TO_UBYTE(color[2], c[2]);
    CLAMPED_FLOAT_TO_UBYTE(color[3], c[3]);
-   rmesa->state.color.clear = radeonPackColor( rmesa->radeonScreen->cpp,
+   rmesa->state.color.clear = radeonPackColor( rmesa->radeon.radeonScreen->cpp,
                                              color[0], color[1],
                                              color[2], color[3] );
 }
@@ -1854,31 +1854,31 @@ static void r200LogicOpCode( GLcontext *ctx, GLenum opcode )
  */
 void r200SetCliprects( r200ContextPtr rmesa )
 {
-   __DRIdrawablePrivate *const drawable = rmesa->dri.drawable;
-   __DRIdrawablePrivate *const readable = rmesa->dri.readable;
+   __DRIdrawablePrivate *const drawable = rmesa->radeon.dri.drawable;
+   __DRIdrawablePrivate *const readable = rmesa->radeon.dri.readable;
    GLframebuffer *const draw_fb = (GLframebuffer*) drawable->driverPrivate;
    GLframebuffer *const read_fb = (GLframebuffer*) readable->driverPrivate;
 
    if (draw_fb->_ColorDrawBufferIndexes[0] == BUFFER_BIT_BACK_LEFT) {
       /* Can't ignore 2d windows if we are page flipping.
        */
-      if ( drawable->numBackClipRects == 0 || rmesa->doPageFlip ) {
-         rmesa->numClipRects = drawable->numClipRects;
-         rmesa->pClipRects = drawable->pClipRects;
+      if ( drawable->numBackClipRects == 0 || rmesa->radeon.doPageFlip ) {
+         rmesa->radeon.numClipRects = drawable->numClipRects;
+         rmesa->radeon.pClipRects = drawable->pClipRects;
       }
       else {
-         rmesa->numClipRects = drawable->numBackClipRects;
-         rmesa->pClipRects = drawable->pBackClipRects;
+         rmesa->radeon.numClipRects = drawable->numBackClipRects;
+         rmesa->radeon.pClipRects = drawable->pBackClipRects;
       }
    }
    else {
      /* front buffer (or none, or multiple buffers) */
-     rmesa->numClipRects = drawable->numClipRects;
-     rmesa->pClipRects = drawable->pClipRects;
+     rmesa->radeon.numClipRects = drawable->numClipRects;
+     rmesa->radeon.pClipRects = drawable->pClipRects;
   }
 
    if ((draw_fb->Width != drawable->w) || (draw_fb->Height != drawable->h)) {
-      _mesa_resize_framebuffer(rmesa->glCtx, draw_fb,
+      _mesa_resize_framebuffer(rmesa->radeon.glCtx, draw_fb,
 			       drawable->w, drawable->h);
       draw_fb->Initialized = GL_TRUE;
    }
@@ -1886,7 +1886,7 @@ void r200SetCliprects( r200ContextPtr rmesa )
    if (drawable != readable) {
       if ((read_fb->Width != readable->w) ||
 	  (read_fb->Height != readable->h)) {
-	 _mesa_resize_framebuffer(rmesa->glCtx, read_fb,
+	 _mesa_resize_framebuffer(rmesa->radeon.glCtx, read_fb,
 				  readable->w, readable->h);
 	 read_fb->Initialized = GL_TRUE;
       }
@@ -1895,7 +1895,7 @@ void r200SetCliprects( r200ContextPtr rmesa )
    if (rmesa->state.scissor.enabled)
       r200RecalcScissorRects( rmesa );
 
-   rmesa->lastStamp = drawable->lastStamp;
+   rmesa->radeon.lastStamp = drawable->lastStamp;
 }
 
 
@@ -2031,7 +2031,7 @@ static void r200Enable( GLcontext *ctx, GLenum cap, GLboolean state )
 	 rmesa->hw.tcl.cmd[TCL_UCP_VERT_BLEND_CTL] &= ~R200_TCL_FOG_MASK;
       }
       r200UpdateSpecular( ctx ); /* for PK_SPEC */
-      if (rmesa->TclFallback) 
+      if (rmesa->radeon.TclFallback) 
 	 r200ChooseVertexState( ctx );
       _mesa_allow_light_in_model( ctx, !state );
       break;
@@ -2068,7 +2068,7 @@ static void r200Enable( GLcontext *ctx, GLenum cap, GLboolean state )
    case GL_LIGHTING:
       r200UpdateSpecular(ctx);
       /* for reflection map fixup - might set recheck_texgen for all units too */
-      rmesa->NewGLState |= _NEW_TEXTURE;
+      rmesa->radeon.NewGLState |= _NEW_TEXTURE;
       break;
 
    case GL_LINE_SMOOTH:
@@ -2465,10 +2465,10 @@ r200UpdateDrawBuffer(GLcontext *ctx)
 
    /* Note: we used the (possibly) page-flipped values */
    rmesa->hw.ctx.cmd[CTX_RB3D_COLOROFFSET]
-     = ((drb->flippedOffset + rmesa->radeonScreen->fbLocation)
+     = ((drb->flippedOffset + rmesa->radeon.radeonScreen->fbLocation)
 	& R200_COLOROFFSET_MASK);
    rmesa->hw.ctx.cmd[CTX_RB3D_COLORPITCH] = drb->flippedPitch;
-   if (rmesa->sarea->tiling_enabled) {
+   if (rmesa->radeon.sarea->tiling_enabled) {
       rmesa->hw.ctx.cmd[CTX_RB3D_COLORPITCH] |= R200_COLOR_TILE_ENABLE;
    }
 }
@@ -2478,7 +2478,7 @@ r200UpdateDrawBuffer(GLcontext *ctx)
 void r200ValidateState( GLcontext *ctx )
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
-   GLuint new_state = rmesa->NewGLState;
+   GLuint new_state = rmesa->radeon.NewGLState;
 
    if (new_state & (_NEW_BUFFERS | _NEW_COLOR | _NEW_PIXEL)) {
      r200UpdateDrawBuffer(ctx);
@@ -2486,7 +2486,7 @@ void r200ValidateState( GLcontext *ctx )
 
    if (new_state & (_NEW_TEXTURE | _NEW_PROGRAM)) {
       r200UpdateTextureState( ctx );
-      new_state |= rmesa->NewGLState; /* may add TEXTURE_MATRIX */
+      new_state |= rmesa->radeon.NewGLState; /* may add TEXTURE_MATRIX */
       r200UpdateLocalViewer( ctx );
    }
 
@@ -2533,7 +2533,7 @@ void r200ValidateState( GLcontext *ctx )
       else TCL_FALLBACK(ctx, R200_TCL_FALLBACK_VERTEX_PROGRAM, 0);
    }
 
-   rmesa->NewGLState = 0;
+   rmesa->radeon.NewGLState = 0;
 }
 
 
@@ -2544,7 +2544,7 @@ static void r200InvalidateState( GLcontext *ctx, GLuint new_state )
    _vbo_InvalidateState( ctx, new_state );
    _tnl_InvalidateState( ctx, new_state );
    _ae_invalidate_state( ctx, new_state );
-   R200_CONTEXT(ctx)->NewGLState |= new_state;
+   R200_CONTEXT(ctx)->radeon.NewGLState |= new_state;
 }
 
 /* A hack.  The r200 can actually cope just fine with materials
@@ -2573,11 +2573,11 @@ static void r200WrapRunPipeline( GLcontext *ctx )
    GLboolean has_material;
 
    if (0)
-      fprintf(stderr, "%s, newstate: %x\n", __FUNCTION__, rmesa->NewGLState);
+      fprintf(stderr, "%s, newstate: %x\n", __FUNCTION__, rmesa->radeon.NewGLState);
 
    /* Validate state:
     */
-   if (rmesa->NewGLState)
+   if (rmesa->radeon.NewGLState)
       r200ValidateState( ctx );
 
    has_material = !ctx->VertexProgram._Enabled && ctx->Light.Enabled && check_material( ctx );

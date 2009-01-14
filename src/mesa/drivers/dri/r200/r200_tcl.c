@@ -154,7 +154,7 @@ static GLushort *r200AllocElts( r200ContextPtr rmesa, GLuint nr )
    }
    else {
       if (rmesa->dma.flush)
-	 rmesa->dma.flush( rmesa );
+	 rmesa->dma.flush( rmesa->radeon.glCtx );
 
       r200EnsureCmdBufSpace( rmesa, AOS_BUFSZ(rmesa->tcl.nr_aos_components) +
 			     rmesa->hw.max_state_size + ELTS_BUFSZ(nr) );
@@ -394,7 +394,7 @@ static GLboolean r200_run_tcl_render( GLcontext *ctx,
 
    /* TODO: separate this from the swtnl pipeline 
     */
-   if (rmesa->TclFallback)
+   if (rmesa->radeon.TclFallback)
       return GL_TRUE;	/* fallback to software t&l */
 
    if (R200_DEBUG & DEBUG_PRIMS)
@@ -405,7 +405,7 @@ static GLboolean r200_run_tcl_render( GLcontext *ctx,
 
    /* Validate state:
     */
-   if (rmesa->NewGLState)
+   if (rmesa->radeon.NewGLState)
       r200ValidateState( ctx );
 
    if (!ctx->VertexProgram._Enabled) {
@@ -566,7 +566,7 @@ static void transition_to_hwtnl( GLcontext *ctx )
    tnl->Driver.NotifyMaterialChange = r200UpdateMaterial;
 
    if ( rmesa->dma.flush )			
-      rmesa->dma.flush( rmesa );	
+      rmesa->dma.flush( rmesa->radeon.glCtx );	
 
    rmesa->dma.flush = NULL;
    
@@ -631,10 +631,10 @@ static char *getFallbackString(GLuint bit)
 void r200TclFallback( GLcontext *ctx, GLuint bit, GLboolean mode )
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
-   GLuint oldfallback = rmesa->TclFallback;
+   GLuint oldfallback = rmesa->radeon.TclFallback;
 
    if (mode) {
-      rmesa->TclFallback |= bit;
+      rmesa->radeon.TclFallback |= bit;
       if (oldfallback == 0) {
 	 if (R200_DEBUG & DEBUG_FALLBACKS) 
 	    fprintf(stderr, "R200 begin tcl fallback %s\n",
@@ -643,7 +643,7 @@ void r200TclFallback( GLcontext *ctx, GLuint bit, GLboolean mode )
       }
    }
    else {
-      rmesa->TclFallback &= ~bit;
+      rmesa->radeon.TclFallback &= ~bit;
       if (oldfallback == bit) {
 	 if (R200_DEBUG & DEBUG_FALLBACKS) 
 	    fprintf(stderr, "R200 end tcl fallback %s\n",

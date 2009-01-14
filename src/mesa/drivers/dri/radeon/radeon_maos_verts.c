@@ -310,7 +310,7 @@ static void init_tcl_verts( void )
 
 void radeonEmitArrays( GLcontext *ctx, GLuint inputs )
 {
-   radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
+   r100ContextPtr rmesa = R100_CONTEXT(ctx);
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
    GLuint req = 0;
    GLuint unit;
@@ -437,7 +437,7 @@ void radeonEmitArrays( GLcontext *ctx, GLuint inputs )
 
 void radeonReleaseArrays( GLcontext *ctx, GLuint newinputs )
 {
-   radeonContextPtr rmesa = RADEON_CONTEXT( ctx );
+   r100ContextPtr rmesa = R100_CONTEXT( ctx );
 
 #if 0
    if (RADEON_DEBUG & DEBUG_VERTS) 

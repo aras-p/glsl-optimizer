@@ -55,7 +55,7 @@ typedef struct r300_context *r300ContextPtr;
 #include "radeon_lock.h"
 #include "main/mm.h"
 
-/* From http://gcc.gnu.org/onlinedocs/gcc-3.2.3/gcc/Variadic-Macros.html .
+/* From http://gcc. gnu.org/onlinedocs/gcc-3.2.3/gcc/Variadic-Macros.html .
    I suppose we could inline this and use macro to fetch out __LINE__ and stuff in case we run into trouble
    with other compilers ... GLUE!
 */
@@ -194,24 +194,6 @@ struct r300_texture_state {
 	int tc_count;		/* number of incoming texture coordinates from VAP */
 };
 
-/**
- * A block of hardware state.
- *
- * When check returns non-zero, the returned number of dwords must be
- * copied verbatim into the command buffer in order to update a state atom
- * when it is dirty.
- */
-struct r300_state_atom {
-	struct r300_state_atom *next, *prev;
-	const char *name;	/* for debug */
-	int cmd_size;		/* maximum size in dwords */
-	GLuint idx;		/* index in an array (e.g. textures) */
-	uint32_t *cmd;
-	GLboolean dirty;
-
-	int (*check) (r300ContextPtr, struct r300_state_atom * atom);
-	void (*emit) (r300ContextPtr, struct r300_state_atom * atom);
-};
 
 #define R300_VPT_CMD_0		0
 #define R300_VPT_XSCALE		1
@@ -428,96 +410,96 @@ struct r300_state_atom {
  * Cache for hardware register state.
  */
 struct r300_hw_state {
-	struct r300_state_atom atomlist;
+	struct radeon_state_atom atomlist;
 
 	GLboolean is_dirty;
 	GLboolean all_dirty;
 	int max_state_size;	/* in dwords */
 
-	struct r300_state_atom vpt;	/* viewport (1D98) */
-	struct r300_state_atom vap_cntl;
-        struct r300_state_atom vap_index_offset; /* 0x208c r5xx only */
-	struct r300_state_atom vof;	/* VAP output format register 0x2090 */
-	struct r300_state_atom vte;	/* (20B0) */
-	struct r300_state_atom vap_vf_max_vtx_indx;	/* Maximum Vertex Indx Clamp (2134) */
-	struct r300_state_atom vap_cntl_status;
-	struct r300_state_atom vir[2];	/* vap input route (2150/21E0) */
-	struct r300_state_atom vic;	/* vap input control (2180) */
-	struct r300_state_atom vap_psc_sgn_norm_cntl; /* Programmable Stream Control Signed Normalize Control (21DC) */
-	struct r300_state_atom vap_clip_cntl;
-	struct r300_state_atom vap_clip;
-	struct r300_state_atom vap_pvs_vtx_timeout_reg;	/* Vertex timeout register (2288) */
-	struct r300_state_atom pvs;	/* pvs_cntl (22D0) */
-	struct r300_state_atom gb_enable;	/* (4008) */
-	struct r300_state_atom gb_misc;	/* Multisampling position shifts ? (4010) */
-	struct r300_state_atom ga_point_s0;	/* S Texture Coordinate of Vertex 0 for Point texture stuffing (LLC) (4200) */
-	struct r300_state_atom ga_triangle_stipple;	/* (4214) */
-	struct r300_state_atom ps;	/* pointsize (421C) */
-	struct r300_state_atom ga_point_minmax;	/* (4230) */
-	struct r300_state_atom lcntl;	/* line control */
-	struct r300_state_atom ga_line_stipple;	/* (4260) */
-	struct r300_state_atom shade;
-	struct r300_state_atom polygon_mode;
-	struct r300_state_atom fogp;	/* fog parameters (4294) */
-	struct r300_state_atom ga_soft_reset;	/* (429C) */
-	struct r300_state_atom zbias_cntl;
-	struct r300_state_atom zbs;	/* zbias (42A4) */
-	struct r300_state_atom occlusion_cntl;
-	struct r300_state_atom cul;	/* cull cntl (42B8) */
-	struct r300_state_atom su_depth_scale;	/* (42C0) */
-	struct r300_state_atom rc;	/* rs control (4300) */
-	struct r300_state_atom ri;	/* rs interpolators (4310) */
-	struct r300_state_atom rr;	/* rs route (4330) */
-	struct r300_state_atom sc_hyperz;	/* (43A4) */
-	struct r300_state_atom sc_screendoor;	/* (43E8) */
-	struct r300_state_atom fp;	/* fragment program cntl + nodes (4600) */
-	struct r300_state_atom fpt;	/* texi - (4620) */
-	struct r300_state_atom us_out_fmt;	/* (46A4) */
-	struct r300_state_atom r500fp;	/* r500 fp instructions */
-	struct r300_state_atom r500fp_const;	/* r500 fp constants */
-	struct r300_state_atom fpi[4];	/* fp instructions (46C0/47C0/48C0/49C0) */
-	struct r300_state_atom fogs;	/* fog state (4BC0) */
-	struct r300_state_atom fogc;	/* fog color (4BC8) */
-	struct r300_state_atom at;	/* alpha test (4BD4) */
-	struct r300_state_atom fg_depth_src;	/* (4BD8) */
-	struct r300_state_atom fpp;	/* 0x4C00 and following */
-	struct r300_state_atom rb3d_cctl;	/* (4E00) */
-	struct r300_state_atom bld;	/* blending (4E04) */
-	struct r300_state_atom cmk;	/* colormask (4E0C) */
-	struct r300_state_atom blend_color;	/* constant blend color */
-	struct r300_state_atom rop;	/* ropcntl */
-	struct r300_state_atom cb;	/* colorbuffer (4E28) */
-	struct r300_state_atom rb3d_dither_ctl;	/* (4E50) */
-	struct r300_state_atom rb3d_aaresolve_ctl;	/* (4E88) */
-	struct r300_state_atom rb3d_discard_src_pixel_lte_threshold;	/* (4E88) I saw it only written on RV350 hardware..  */
-	struct r300_state_atom zs;	/* zstencil control (4F00) */
-	struct r300_state_atom zstencil_format;
-	struct r300_state_atom zb;	/* z buffer (4F20) */
-	struct r300_state_atom zb_depthclearvalue;	/* (4F28) */
-	struct r300_state_atom unk4F30;	/* (4F30) */
-	struct r300_state_atom zb_hiz_offset;	/* (4F44) */
-	struct r300_state_atom zb_hiz_pitch;	/* (4F54) */
+	struct radeon_state_atom vpt;	/* viewport (1D98) */
+	struct radeon_state_atom vap_cntl;
+        struct radeon_state_atom vap_index_offset; /* 0x208c r5xx only */
+	struct radeon_state_atom vof;	/* VAP output format register 0x2090 */
+	struct radeon_state_atom vte;	/* (20B0) */
+	struct radeon_state_atom vap_vf_max_vtx_indx;	/* Maximum Vertex Indx Clamp (2134) */
+	struct radeon_state_atom vap_cntl_status;
+	struct radeon_state_atom vir[2];	/* vap input route (2150/21E0) */
+	struct radeon_state_atom vic;	/* vap input control (2180) */
+	struct radeon_state_atom vap_psc_sgn_norm_cntl; /* Programmable Stream Control Signed Normalize Control (21DC) */
+	struct radeon_state_atom vap_clip_cntl;
+	struct radeon_state_atom vap_clip;
+	struct radeon_state_atom vap_pvs_vtx_timeout_reg;	/* Vertex timeout register (2288) */
+	struct radeon_state_atom pvs;	/* pvs_cntl (22D0) */
+	struct radeon_state_atom gb_enable;	/* (4008) */
+	struct radeon_state_atom gb_misc;	/* Multisampling position shifts ? (4010) */
+	struct radeon_state_atom ga_point_s0;	/* S Texture Coordinate of Vertex 0 for Point texture stuffing (LLC) (4200) */
+	struct radeon_state_atom ga_triangle_stipple;	/* (4214) */
+	struct radeon_state_atom ps;	/* pointsize (421C) */
+	struct radeon_state_atom ga_point_minmax;	/* (4230) */
+	struct radeon_state_atom lcntl;	/* line control */
+	struct radeon_state_atom ga_line_stipple;	/* (4260) */
+	struct radeon_state_atom shade;
+	struct radeon_state_atom polygon_mode;
+	struct radeon_state_atom fogp;	/* fog parameters (4294) */
+	struct radeon_state_atom ga_soft_reset;	/* (429C) */
+	struct radeon_state_atom zbias_cntl;
+	struct radeon_state_atom zbs;	/* zbias (42A4) */
+	struct radeon_state_atom occlusion_cntl;
+	struct radeon_state_atom cul;	/* cull cntl (42B8) */
+	struct radeon_state_atom su_depth_scale;	/* (42C0) */
+	struct radeon_state_atom rc;	/* rs control (4300) */
+	struct radeon_state_atom ri;	/* rs interpolators (4310) */
+	struct radeon_state_atom rr;	/* rs route (4330) */
+	struct radeon_state_atom sc_hyperz;	/* (43A4) */
+	struct radeon_state_atom sc_screendoor;	/* (43E8) */
+	struct radeon_state_atom fp;	/* fragment program cntl + nodes (4600) */
+	struct radeon_state_atom fpt;	/* texi - (4620) */
+	struct radeon_state_atom us_out_fmt;	/* (46A4) */
+	struct radeon_state_atom r500fp;	/* r500 fp instructions */
+	struct radeon_state_atom r500fp_const;	/* r500 fp constants */
+	struct radeon_state_atom fpi[4];	/* fp instructions (46C0/47C0/48C0/49C0) */
+	struct radeon_state_atom fogs;	/* fog state (4BC0) */
+	struct radeon_state_atom fogc;	/* fog color (4BC8) */
+	struct radeon_state_atom at;	/* alpha test (4BD4) */
+	struct radeon_state_atom fg_depth_src;	/* (4BD8) */
+	struct radeon_state_atom fpp;	/* 0x4C00 and following */
+	struct radeon_state_atom rb3d_cctl;	/* (4E00) */
+	struct radeon_state_atom bld;	/* blending (4E04) */
+	struct radeon_state_atom cmk;	/* colormask (4E0C) */
+	struct radeon_state_atom blend_color;	/* constant blend color */
+	struct radeon_state_atom rop;	/* ropcntl */
+	struct radeon_state_atom cb;	/* colorbuffer (4E28) */
+	struct radeon_state_atom rb3d_dither_ctl;	/* (4E50) */
+	struct radeon_state_atom rb3d_aaresolve_ctl;	/* (4E88) */
+	struct radeon_state_atom rb3d_discard_src_pixel_lte_threshold;	/* (4E88) I saw it only written on RV350 hardware..  */
+	struct radeon_state_atom zs;	/* zstencil control (4F00) */
+	struct radeon_state_atom zstencil_format;
+	struct radeon_state_atom zb;	/* z buffer (4F20) */
+	struct radeon_state_atom zb_depthclearvalue;	/* (4F28) */
+	struct radeon_state_atom unk4F30;	/* (4F30) */
+	struct radeon_state_atom zb_hiz_offset;	/* (4F44) */
+	struct radeon_state_atom zb_hiz_pitch;	/* (4F54) */
 
-	struct r300_state_atom vpi;	/* vp instructions */
-	struct r300_state_atom vpp;	/* vp parameters */
-	struct r300_state_atom vps;	/* vertex point size (?) */
-	struct r300_state_atom vpucp[6];	/* vp user clip plane - 6 */
+	struct radeon_state_atom vpi;	/* vp instructions */
+	struct radeon_state_atom vpp;	/* vp parameters */
+	struct radeon_state_atom vps;	/* vertex point size (?) */
+	struct radeon_state_atom vpucp[6];	/* vp user clip plane - 6 */
 	/* 8 texture units */
 	/* the state is grouped by function and not by
 	   texture unit. This makes single unit updates
 	   really awkward - we are much better off
 	   updating the whole thing at once */
 	struct {
-		struct r300_state_atom filter;
-		struct r300_state_atom filter_1;
-		struct r300_state_atom size;
-		struct r300_state_atom format;
-		struct r300_state_atom pitch;
-		struct r300_state_atom offset;
-		struct r300_state_atom chroma_key;
-		struct r300_state_atom border_color;
+		struct radeon_state_atom filter;
+		struct radeon_state_atom filter_1;
+		struct radeon_state_atom size;
+		struct radeon_state_atom format;
+		struct radeon_state_atom pitch;
+		struct radeon_state_atom offset;
+		struct radeon_state_atom chroma_key;
+		struct radeon_state_atom border_color;
 	} tex;
-	struct r300_state_atom txe;	/* tex enable (4104) */
+	struct radeon_state_atom txe;	/* tex enable (4104) */
 
 	r300TexObj *textures[R300_MAX_TEXTURE_UNITS];
 };
@@ -841,10 +823,6 @@ struct r300_swtcl_info {
 
    /* Fallback rasterization functions
     */
-  //   r200_point_func draw_point;
-  //   r200_line_func draw_line;
-  //   r200_tri_func draw_tri;
-
    GLuint hw_primitive;
    GLenum render_primitive;
    GLuint numverts;

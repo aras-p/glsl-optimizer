@@ -56,12 +56,12 @@ int prevLockLine = 0;
 
 /* Turn on/off page flipping according to the flags in the sarea:
  */
-static void radeonUpdatePageFlipping(radeonContextPtr rmesa)
+static void radeonUpdatePageFlipping(r100ContextPtr rmesa)
 {
-	rmesa->doPageFlip = rmesa->sarea->pfState;
-	if (rmesa->glCtx->WinSysDrawBuffer) {
-		driFlipRenderbuffers(rmesa->glCtx->WinSysDrawBuffer,
-				     rmesa->sarea->pfCurrentPage);
+	rmesa->radeon.doPageFlip = rmesa->radeon.sarea->pfState;
+	if (rmesa->radeon.glCtx->WinSysDrawBuffer) {
+		driFlipRenderbuffers(rmesa->radeon.glCtx->WinSysDrawBuffer,
+				     rmesa->radeon.sarea->pfCurrentPage);
 	}
 }
 
@@ -73,14 +73,14 @@ static void radeonUpdatePageFlipping(radeonContextPtr rmesa)
  * the hardware lock when it changes the window state, this routine will
  * automatically be called after such a change.
  */
-void radeonGetLock(radeonContextPtr rmesa, GLuint flags)
+void radeonGetLock(r100ContextPtr rmesa, GLuint flags)
 {
-	__DRIdrawablePrivate *const drawable = rmesa->dri.drawable;
-	__DRIdrawablePrivate *const readable = rmesa->dri.readable;
-	__DRIscreenPrivate *sPriv = rmesa->dri.screen;
-	drm_radeon_sarea_t *sarea = rmesa->sarea;
+	__DRIdrawablePrivate *const drawable = rmesa->radeon.dri.drawable;
+	__DRIdrawablePrivate *const readable = rmesa->radeon.dri.readable;
+	__DRIscreenPrivate *sPriv = rmesa->radeon.dri.screen;
+	drm_radeon_sarea_t *sarea = rmesa->radeon.sarea;
 
-	drmGetLock(rmesa->dri.fd, rmesa->dri.hwContext, flags);
+	drmGetLock(rmesa->radeon.dri.fd, rmesa->radeon.dri.hwContext, flags);
 
 	/* The window might have moved, so we might need to get new clip
 	 * rects.
@@ -95,15 +95,15 @@ void radeonGetLock(radeonContextPtr rmesa, GLuint flags)
 		DRI_VALIDATE_DRAWABLE_INFO(sPriv, readable);
 	}
 
-	if (rmesa->lastStamp != drawable->lastStamp) {
+	if (rmesa->radeon.lastStamp != drawable->lastStamp) {
 		radeonUpdatePageFlipping(rmesa);
 		radeonSetCliprects(rmesa);
-		radeonUpdateViewportOffset(rmesa->glCtx);
-		driUpdateFramebufferSize(rmesa->glCtx, drawable);
+		radeonUpdateViewportOffset(rmesa->radeon.glCtx);
+		driUpdateFramebufferSize(rmesa->radeon.glCtx, drawable);
 	}
 
 	RADEON_STATECHANGE(rmesa, ctx);
-	if (rmesa->sarea->tiling_enabled) {
+	if (rmesa->radeon.sarea->tiling_enabled) {
 		rmesa->hw.ctx.cmd[CTX_RB3D_COLORPITCH] |=
 		    RADEON_COLOR_TILE_ENABLE;
 	} else {
@@ -111,14 +111,14 @@ void radeonGetLock(radeonContextPtr rmesa, GLuint flags)
 		    ~RADEON_COLOR_TILE_ENABLE;
 	}
 
-	if (sarea->ctx_owner != rmesa->dri.hwContext) {
+	if (sarea->ctx_owner != rmesa->radeon.dri.hwContext) {
 		int i;
-		sarea->ctx_owner = rmesa->dri.hwContext;
+		sarea->ctx_owner = rmesa->radeon.dri.hwContext;
 
-		for (i = 0; i < rmesa->nr_heaps; i++) {
-			DRI_AGE_TEXTURES(rmesa->texture_heaps[i]);
+		for (i = 0; i < rmesa->radeon.nr_heaps; i++) {
+			DRI_AGE_TEXTURES(rmesa->radeon.texture_heaps[i]);
 		}
 	}
 
-	rmesa->lost_context = GL_TRUE;
+	rmesa->radeon.lost_context = GL_TRUE;
 }

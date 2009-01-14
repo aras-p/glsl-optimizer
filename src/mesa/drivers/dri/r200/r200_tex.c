@@ -335,9 +335,9 @@ r200ChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
    const GLboolean do32bpt =
-       ( rmesa->texture_depth == DRI_CONF_TEXTURE_DEPTH_32 );
+       ( rmesa->radeon.texture_depth == DRI_CONF_TEXTURE_DEPTH_32 );
    const GLboolean force16bpt =
-       ( rmesa->texture_depth == DRI_CONF_TEXTURE_DEPTH_FORCE_16 );
+       ( rmesa->radeon.texture_depth == DRI_CONF_TEXTURE_DEPTH_FORCE_16 );
    (void) format;
 
    switch ( internalFormat ) {
@@ -997,7 +997,7 @@ static void r200TexEnv( GLcontext *ctx, GLenum target,
        * NOTE: Add a small bias to the bias for conform mipsel.c test.
        */
       bias = *param + .01;
-      min = driQueryOptionb (&rmesa->optionCache, "no_neg_lod_bias") ?
+      min = driQueryOptionb (&rmesa->radeon.optionCache, "no_neg_lod_bias") ?
 	  0.0 : -16.0;
       bias = CLAMP( bias, min, 16.0 );
       b = (int)(bias * fixed_one) & R200_LOD_BIAS_MASK;
@@ -1162,7 +1162,7 @@ r200NewTextureObject( GLcontext *ctx, GLuint name, GLenum target )
    obj = _mesa_new_texture_object(ctx, name, target);
    if (!obj)
       return NULL;
-   obj->MaxAnisotropy = rmesa->initialMaxAnisotropy;
+   obj->MaxAnisotropy = rmesa->radeon.initialMaxAnisotropy;
    r200AllocTexObj( obj );
    return obj;
 }

@@ -74,7 +74,7 @@ static void r200BackUpAndEmitLostStateLocked( r200ContextPtr rmesa )
    if (R200_DEBUG & DEBUG_STATE)
       fprintf(stderr, "Emitting backup state on lost context\n");
 
-   rmesa->lost_context = GL_FALSE;
+   rmesa->radeon.lost_context = GL_FALSE;
 
    nr_released_bufs = rmesa->dma.nr_released_bufs;
    saved_store = rmesa->store;
@@ -90,7 +90,7 @@ int r200FlushCmdBufLocked( r200ContextPtr rmesa, const char * caller )
    int ret, i;
    drm_radeon_cmd_buffer_t cmd;
 
-   if (rmesa->lost_context)
+   if (rmesa->radeon.lost_context)
       r200BackUpAndEmitLostStateLocked( rmesa );
 
    if (R200_DEBUG & DEBUG_IOCTL) {
@@ -114,8 +114,8 @@ int r200FlushCmdBufLocked( r200ContextPtr rmesa, const char * caller )
 				    rmesa->state.scissor.pClipRects);
       else
 	 ret = r200SanityCmdBuffer( rmesa, 
-				    rmesa->numClipRects,
-				    rmesa->pClipRects);
+				    rmesa->radeon.numClipRects,
+				    rmesa->radeon.pClipRects);
       if (ret) {
 	 fprintf(stderr, "drmSanityCommandWrite: %d\n", ret);	 
 	 goto out;
@@ -124,8 +124,8 @@ int r200FlushCmdBufLocked( r200ContextPtr rmesa, const char * caller )
 
 
    if (R200_DEBUG & DEBUG_MEMORY) {
-      if (! driValidateTextureHeaps( rmesa->texture_heaps, rmesa->nr_heaps,
-				     & rmesa->swapped ) ) {
+      if (! driValidateTextureHeaps( rmesa->radeon.texture_heaps, rmesa->radeon.nr_heaps,
+				     & rmesa->radeon.swapped ) ) {
 	 fprintf( stderr, "%s: texture memory is inconsistent - expect "
 		  "mangled textures\n", __FUNCTION__ );
       }
@@ -139,11 +139,11 @@ int r200FlushCmdBufLocked( r200ContextPtr rmesa, const char * caller )
       cmd.nbox = rmesa->state.scissor.numClipRects;
       cmd.boxes = (drm_clip_rect_t *)rmesa->state.scissor.pClipRects;
    } else {
-      cmd.nbox = rmesa->numClipRects;
-      cmd.boxes = (drm_clip_rect_t *)rmesa->pClipRects;
+      cmd.nbox = rmesa->radeon.numClipRects;
+      cmd.boxes = (drm_clip_rect_t *)rmesa->radeon.pClipRects;
    }
 
-   ret = drmCommandWrite( rmesa->dri.fd,
+   ret = drmCommandWrite( rmesa->radeon.dri.fd,
 			  DRM_RADEON_CMDBUF,
 			  &cmd, sizeof(cmd) );
 
@@ -195,7 +195,7 @@ void r200FlushCmdBuf( r200ContextPtr rmesa, const char *caller )
 void r200RefillCurrentDmaRegion( r200ContextPtr rmesa )
 {
    struct radeon_dma_buffer *dmabuf;
-   int fd = rmesa->dri.fd;
+   int fd = rmesa->radeon.dri.fd;
    int index = 0;
    int size = 0;
    drmDMAReq dma;
@@ -205,7 +205,7 @@ void r200RefillCurrentDmaRegion( r200ContextPtr rmesa )
       fprintf(stderr, "%s\n", __FUNCTION__);  
 
    if (rmesa->dma.flush) {
-      rmesa->dma.flush( rmesa );
+      rmesa->dma.flush( rmesa->radeon.glCtx );
    }
 
    if (rmesa->dma.current.buf)
@@ -214,7 +214,7 @@ void r200RefillCurrentDmaRegion( r200ContextPtr rmesa )
    if (rmesa->dma.nr_released_bufs > 4)
       r200FlushCmdBuf( rmesa, __FUNCTION__ );
 
-   dma.context = rmesa->dri.hwContext;
+   dma.context = rmesa->radeon.dri.hwContext;
    dma.send_count = 0;
    dma.send_list = NULL;
    dma.send_sizes = NULL;
@@ -236,7 +236,7 @@ void r200RefillCurrentDmaRegion( r200ContextPtr rmesa )
 	 r200FlushCmdBufLocked( rmesa, __FUNCTION__ );
       }
 
-      if (rmesa->do_usleeps) {
+      if (rmesa->radeon.do_usleeps) {
 	 UNLOCK_HARDWARE( rmesa );
 	 DO_USLEEP( 1 );
 	 LOCK_HARDWARE( rmesa );
@@ -249,7 +249,7 @@ void r200RefillCurrentDmaRegion( r200ContextPtr rmesa )
       fprintf(stderr, "Allocated buffer %d\n", index);
 
    dmabuf = CALLOC_STRUCT( radeon_dma_buffer );
-   dmabuf->buf = &rmesa->radeonScreen->buffers->list[index];
+   dmabuf->buf = &rmesa->radeon.radeonScreen->buffers->list[index];
    dmabuf->refcount = 1;
 
    rmesa->dma.current.buf = dmabuf;
@@ -270,7 +270,7 @@ void r200ReleaseDmaRegion( r200ContextPtr rmesa,
       return;
 
    if (rmesa->dma.flush)
-      rmesa->dma.flush( rmesa );
+      rmesa->dma.flush( rmesa->radeon.glCtx );
 
    if (--region->buf->refcount == 0) {
       drm_radeon_cmd_header_t *cmd;
@@ -303,7 +303,7 @@ void r200AllocDmaRegion( r200ContextPtr rmesa,
       fprintf(stderr, "%s %d\n", __FUNCTION__, bytes);
 
    if (rmesa->dma.flush)
-      rmesa->dma.flush( rmesa );
+      rmesa->dma.flush( rmesa->radeon.glCtx );
 
    if (region->buf)
       r200ReleaseDmaRegion( rmesa, region, __FUNCTION__ );
@@ -341,7 +341,7 @@ static uint32_t r200GetLastFrame(r200ContextPtr rmesa)
 
    gp.param = RADEON_PARAM_LAST_FRAME;
    gp.value = (int *)&frame;
-   ret = drmCommandWriteRead( rmesa->dri.fd, DRM_RADEON_GETPARAM,
+   ret = drmCommandWriteRead( rmesa->radeon.dri.fd, DRM_RADEON_GETPARAM,
 			      &gp, sizeof(gp) );
    if ( ret ) {
       fprintf( stderr, "%s: drmRadeonGetParam: %d\n", __FUNCTION__, ret );
@@ -356,8 +356,8 @@ static void r200EmitIrqLocked( r200ContextPtr rmesa )
    drm_radeon_irq_emit_t ie;
    int ret;
 
-   ie.irq_seq = &rmesa->iw.irq_seq;
-   ret = drmCommandWriteRead( rmesa->dri.fd, DRM_RADEON_IRQ_EMIT, 
+   ie.irq_seq = &rmesa->radeon.iw.irq_seq;
+   ret = drmCommandWriteRead( rmesa->radeon.dri.fd, DRM_RADEON_IRQ_EMIT, 
 			      &ie, sizeof(ie) );
    if ( ret ) {
       fprintf( stderr, "%s: drmRadeonIrqEmit: %d\n", __FUNCTION__, ret );
@@ -371,8 +371,8 @@ static void r200WaitIrq( r200ContextPtr rmesa )
    int ret;
 
    do {
-      ret = drmCommandWrite( rmesa->dri.fd, DRM_RADEON_IRQ_WAIT,
-			     &rmesa->iw, sizeof(rmesa->iw) );
+      ret = drmCommandWrite( rmesa->radeon.dri.fd, DRM_RADEON_IRQ_WAIT,
+			     &rmesa->radeon.iw, sizeof(rmesa->radeon.iw) );
    } while (ret && (errno == EINTR || errno == EBUSY));
 
    if ( ret ) {
@@ -384,11 +384,11 @@ static void r200WaitIrq( r200ContextPtr rmesa )
 
 static void r200WaitForFrameCompletion( r200ContextPtr rmesa )
 {
-   drm_radeon_sarea_t *sarea = rmesa->sarea;
+   drm_radeon_sarea_t *sarea = rmesa->radeon.sarea;
 
-   if (rmesa->do_irqs) {
+   if (rmesa->radeon.do_irqs) {
       if (r200GetLastFrame(rmesa) < sarea->last_frame) {
-	 if (!rmesa->irqsEmitted) {
+	 if (!rmesa->radeon.irqsEmitted) {
 	    while (r200GetLastFrame (rmesa) < sarea->last_frame)
 	       ;
 	 }
@@ -397,18 +397,18 @@ static void r200WaitForFrameCompletion( r200ContextPtr rmesa )
 	    r200WaitIrq( rmesa );	
 	    LOCK_HARDWARE( rmesa ); 
 	 }
-	 rmesa->irqsEmitted = 10;
+	 rmesa->radeon.irqsEmitted = 10;
       }
 
-      if (rmesa->irqsEmitted) {
+      if (rmesa->radeon.irqsEmitted) {
 	 r200EmitIrqLocked( rmesa );
-	 rmesa->irqsEmitted--;
+	 rmesa->radeon.irqsEmitted--;
       }
    } 
    else {
       while (r200GetLastFrame (rmesa) < sarea->last_frame) {
 	 UNLOCK_HARDWARE( rmesa ); 
-	 if (rmesa->do_usleeps) 
+	 if (rmesa->radeon.do_usleeps) 
 	    DO_USLEEP( 1 );
 	 LOCK_HARDWARE( rmesa ); 
       }
@@ -435,7 +435,7 @@ void r200CopyBuffer( __DRIdrawablePrivate *dPriv,
    rmesa = (r200ContextPtr) dPriv->driContextPriv->driverPrivate;
 
    if ( R200_DEBUG & DEBUG_IOCTL ) {
-      fprintf( stderr, "\n%s( %p )\n\n", __FUNCTION__, (void *)rmesa->glCtx );
+      fprintf( stderr, "\n%s( %p )\n\n", __FUNCTION__, (void *)rmesa->radeon.glCtx );
    }
 
    R200_FIREVERTICES( rmesa );
@@ -459,7 +459,7 @@ void r200CopyBuffer( __DRIdrawablePrivate *dPriv,
    for ( i = 0 ; i < nbox ; ) {
       GLint nr = MIN2( i + RADEON_NR_SAREA_CLIPRECTS , nbox );
       drm_clip_rect_t *box = dPriv->pClipRects;
-      drm_clip_rect_t *b = rmesa->sarea->boxes;
+      drm_clip_rect_t *b = rmesa->radeon.sarea->boxes;
       GLint n = 0;
 
       for ( ; i < nr ; i++ ) {
@@ -484,12 +484,12 @@ void r200CopyBuffer( __DRIdrawablePrivate *dPriv,
 	  b++;
 	  n++;
       }
-      rmesa->sarea->nbox = n;
+      rmesa->radeon.sarea->nbox = n;
 
       if (!n)
 	 continue;
 
-      ret = drmCommandNone( rmesa->dri.fd, DRM_RADEON_SWAP );
+      ret = drmCommandNone( rmesa->radeon.dri.fd, DRM_RADEON_SWAP );
 
       if ( ret ) {
 	 fprintf( stderr, "DRM_R200_SWAP_BUFFERS: return = %d\n", ret );
@@ -503,14 +503,14 @@ void r200CopyBuffer( __DRIdrawablePrivate *dPriv,
    {
        rmesa->hw.all_dirty = GL_TRUE;
 
-       rmesa->swap_count++;
+       rmesa->radeon.swap_count++;
        (*psp->systemTime->getUST)( & ust );
        if ( missed_target ) {
-	   rmesa->swap_missed_count++;
-	   rmesa->swap_missed_ust = ust - rmesa->swap_ust;
+	   rmesa->radeon.swap_missed_count++;
+	   rmesa->radeon.swap_missed_ust = ust - rmesa->radeon.swap_ust;
        }
 
-       rmesa->swap_ust = ust;
+       rmesa->radeon.swap_ust = ust;
 
        sched_yield();
    }
@@ -531,7 +531,7 @@ void r200PageFlip( __DRIdrawablePrivate *dPriv )
 
    if ( R200_DEBUG & DEBUG_IOCTL ) {
       fprintf(stderr, "%s: pfCurrentPage: %d\n", __FUNCTION__,
-	      rmesa->sarea->pfCurrentPage);
+	      rmesa->radeon.sarea->pfCurrentPage);
    }
 
    R200_FIREVERTICES( rmesa );
@@ -547,9 +547,9 @@ void r200PageFlip( __DRIdrawablePrivate *dPriv )
     */
    {
       drm_clip_rect_t *box = dPriv->pClipRects;
-      drm_clip_rect_t *b = rmesa->sarea->boxes;
+      drm_clip_rect_t *b = rmesa->radeon.sarea->boxes;
       b[0] = box[0];
-      rmesa->sarea->nbox = 1;
+      rmesa->radeon.sarea->nbox = 1;
    }
 
    /* Throttle the frame rate -- only allow a few pending swap buffers
@@ -559,12 +559,12 @@ void r200PageFlip( __DRIdrawablePrivate *dPriv )
    UNLOCK_HARDWARE( rmesa );
    driWaitForVBlank( dPriv, & missed_target );
    if ( missed_target ) {
-      rmesa->swap_missed_count++;
-      (void) (*psp->systemTime->getUST)( & rmesa->swap_missed_ust );
+      rmesa->radeon.swap_missed_count++;
+      (void) (*psp->systemTime->getUST)( & rmesa->radeon.swap_missed_ust );
    }
    LOCK_HARDWARE( rmesa );
 
-   ret = drmCommandNone( rmesa->dri.fd, DRM_RADEON_FLIP );
+   ret = drmCommandNone( rmesa->radeon.dri.fd, DRM_RADEON_FLIP );
 
    UNLOCK_HARDWARE( rmesa );
 
@@ -573,34 +573,34 @@ void r200PageFlip( __DRIdrawablePrivate *dPriv )
       exit( 1 );
    }
 
-   rmesa->swap_count++;
-   (void) (*psp->systemTime->getUST)( & rmesa->swap_ust );
+   rmesa->radeon.swap_count++;
+   (void) (*psp->systemTime->getUST)( & rmesa->radeon.swap_ust );
 
 #if 000
-   if ( rmesa->sarea->pfCurrentPage == 1 ) {
-	 rmesa->state.color.drawOffset = rmesa->radeonScreen->frontOffset;
-	 rmesa->state.color.drawPitch  = rmesa->radeonScreen->frontPitch;
+   if ( rmesa->radeon.sarea->pfCurrentPage == 1 ) {
+	 rmesa->state.color.drawOffset = rmesa->radeon.radeonScreen->frontOffset;
+	 rmesa->state.color.drawPitch  = rmesa->radeon.radeonScreen->frontPitch;
    } else {
-	 rmesa->state.color.drawOffset = rmesa->radeonScreen->backOffset;
-	 rmesa->state.color.drawPitch  = rmesa->radeonScreen->backPitch;
+	 rmesa->state.color.drawOffset = rmesa->radeon.radeonScreen->backOffset;
+	 rmesa->state.color.drawPitch  = rmesa->radeon.radeonScreen->backPitch;
    }
 
    R200_STATECHANGE( rmesa, ctx );
    rmesa->hw.ctx.cmd[CTX_RB3D_COLOROFFSET] = rmesa->state.color.drawOffset
-					   + rmesa->radeonScreen->fbLocation;
+					   + rmesa->radeon.radeonScreen->fbLocation;
    rmesa->hw.ctx.cmd[CTX_RB3D_COLORPITCH]  = rmesa->state.color.drawPitch;
-   if (rmesa->sarea->tiling_enabled) {
+   if (rmesa->radeon.sarea->tiling_enabled) {
       rmesa->hw.ctx.cmd[CTX_RB3D_COLORPITCH] |= R200_COLOR_TILE_ENABLE;
    }
 #else
    /* Get ready for drawing next frame.  Update the renderbuffers'
     * flippedOffset/Pitch fields so we draw into the right place.
     */
-   driFlipRenderbuffers(rmesa->glCtx->WinSysDrawBuffer,
-                        rmesa->sarea->pfCurrentPage);
+   driFlipRenderbuffers(rmesa->radeon.glCtx->WinSysDrawBuffer,
+                        rmesa->radeon.sarea->pfCurrentPage);
 
 
-   r200UpdateDrawBuffer(rmesa->glCtx);
+   r200UpdateDrawBuffer(rmesa->radeon.glCtx);
 #endif
 }
 
@@ -611,7 +611,7 @@ void r200PageFlip( __DRIdrawablePrivate *dPriv )
 static void r200Clear( GLcontext *ctx, GLbitfield mask )
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
-   __DRIdrawablePrivate *dPriv = rmesa->dri.drawable;
+   __DRIdrawablePrivate *dPriv = rmesa->radeon.dri.drawable;
    GLuint flags = 0;
    GLuint color_mask = 0;
    GLint ret, i;
@@ -663,7 +663,7 @@ static void r200Clear( GLcontext *ctx, GLbitfield mask )
 
    if (rmesa->using_hyperz) {
       flags |= RADEON_USE_COMP_ZBUF;
-/*      if (rmesa->radeonScreen->chip_family == CHIP_FAMILY_R200)
+/*      if (rmesa->radeon.radeonScreen->chip_family == CHIP_FAMILY_R200)
 	 flags |= RADEON_USE_HIERZ; */
       if (!(rmesa->state.stencil.hwBuffer) ||
 	 ((flags & RADEON_DEPTH) && (flags & RADEON_STENCIL) &&
@@ -693,7 +693,7 @@ static void r200Clear( GLcontext *ctx, GLbitfield mask )
 
       gp.param = RADEON_PARAM_LAST_CLEAR;
       gp.value = (int *)&clear;
-      ret = drmCommandWriteRead( rmesa->dri.fd,
+      ret = drmCommandWriteRead( rmesa->radeon.dri.fd,
 		      DRM_RADEON_GETPARAM, &gp, sizeof(gp) );
 
       if ( ret ) {
@@ -703,11 +703,11 @@ static void r200Clear( GLcontext *ctx, GLbitfield mask )
 
       /* Clear throttling needs more thought.
        */
-      if ( rmesa->sarea->last_clear - clear <= 25 ) {
+      if ( rmesa->radeon.sarea->last_clear - clear <= 25 ) {
 	 break;
       }
       
-      if (rmesa->do_usleeps) {
+      if (rmesa->radeon.do_usleeps) {
 	 UNLOCK_HARDWARE( rmesa );
 	 DO_USLEEP( 1 );
 	 LOCK_HARDWARE( rmesa );
@@ -720,7 +720,7 @@ static void r200Clear( GLcontext *ctx, GLbitfield mask )
    for ( i = 0 ; i < dPriv->numClipRects ; ) {
       GLint nr = MIN2( i + RADEON_NR_SAREA_CLIPRECTS, dPriv->numClipRects );
       drm_clip_rect_t *box = dPriv->pClipRects;
-      drm_clip_rect_t *b = rmesa->sarea->boxes;
+      drm_clip_rect_t *b = rmesa->radeon.sarea->boxes;
       drm_radeon_clear_t clear;
       drm_radeon_clear_rect_t depth_boxes[RADEON_NR_SAREA_CLIPRECTS];
       GLint n = 0;
@@ -755,7 +755,7 @@ static void r200Clear( GLcontext *ctx, GLbitfield mask )
 	 }
       }
 
-      rmesa->sarea->nbox = n;
+      rmesa->radeon.sarea->nbox = n;
 
       clear.flags       = flags;
       clear.clear_color = rmesa->state.color.clear;
@@ -765,7 +765,7 @@ static void r200Clear( GLcontext *ctx, GLbitfield mask )
       clear.depth_boxes = depth_boxes;
 
       n--;
-      b = rmesa->sarea->boxes;
+      b = rmesa->radeon.sarea->boxes;
       for ( ; n >= 0 ; n-- ) {
 	 depth_boxes[n].f[CLEAR_X1] = (float)b[n].x1;
 	 depth_boxes[n].f[CLEAR_Y1] = (float)b[n].y1;
@@ -774,7 +774,7 @@ static void r200Clear( GLcontext *ctx, GLbitfield mask )
 	 depth_boxes[n].f[CLEAR_DEPTH] = ctx->Depth.Clear;
       }
 
-      ret = drmCommandWrite( rmesa->dri.fd, DRM_RADEON_CLEAR,
+      ret = drmCommandWrite( rmesa->radeon.dri.fd, DRM_RADEON_CLEAR,
 			     &clear, sizeof(clear));
 
 
@@ -796,7 +796,7 @@ void r200WaitForIdleLocked( r200ContextPtr rmesa )
     int i = 0;
     
     do {
-       ret = drmCommandNone( rmesa->dri.fd, DRM_RADEON_CP_IDLE);
+       ret = drmCommandNone( rmesa->radeon.dri.fd, DRM_RADEON_CP_IDLE);
        if (ret) 
 	  DO_USLEEP( 1 );
     } while (ret && ++i < 100);
@@ -825,7 +825,7 @@ void r200Flush( GLcontext *ctx )
       fprintf(stderr, "%s\n", __FUNCTION__);
 
    if (rmesa->dma.flush)
-      rmesa->dma.flush( rmesa );
+      rmesa->dma.flush( ctx );
 
    r200EmitState( rmesa );
    
@@ -841,7 +841,7 @@ void r200Finish( GLcontext *ctx )
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
    r200Flush( ctx );
 
-   if (rmesa->do_irqs) {
+   if (rmesa->radeon.do_irqs) {
       LOCK_HARDWARE( rmesa );
       r200EmitIrqLocked( rmesa );
       UNLOCK_HARDWARE( rmesa );
@@ -875,7 +875,7 @@ void *r200AllocateMemoryMESA(__DRIscreen *screen, GLsizei size,
       fprintf(stderr, "%s sz %d %f/%f/%f\n", __FUNCTION__, size, readfreq, 
 	      writefreq, priority);
 
-   if (!ctx || !(rmesa = R200_CONTEXT(ctx)) || !rmesa->radeonScreen->gartTextures.map)
+   if (!ctx || !(rmesa = R200_CONTEXT(ctx)) || !rmesa->radeon.radeonScreen->gartTextures.map)
       return NULL;
 
    if (getenv("R200_NO_ALLOC"))
@@ -886,7 +886,7 @@ void *r200AllocateMemoryMESA(__DRIscreen *screen, GLsizei size,
    alloc.size = size;
    alloc.region_offset = &region_offset;
 
-   ret = drmCommandWriteRead( rmesa->radeonScreen->driScreen->fd,
+   ret = drmCommandWriteRead( rmesa->radeon.radeonScreen->driScreen->fd,
 			      DRM_RADEON_ALLOC,
 			      &alloc, sizeof(alloc));
    
@@ -896,7 +896,7 @@ void *r200AllocateMemoryMESA(__DRIscreen *screen, GLsizei size,
    }
    
    {
-      char *region_start = (char *)rmesa->radeonScreen->gartTextures.map;
+      char *region_start = (char *)rmesa->radeon.radeonScreen->gartTextures.map;
       return (void *)(region_start + region_offset);
    }
 }
@@ -914,24 +914,24 @@ void r200FreeMemoryMESA(__DRIscreen *screen, GLvoid *pointer)
    if (R200_DEBUG & DEBUG_IOCTL)
       fprintf(stderr, "%s %p\n", __FUNCTION__, pointer);
 
-   if (!ctx || !(rmesa = R200_CONTEXT(ctx)) || !rmesa->radeonScreen->gartTextures.map) {
+   if (!ctx || !(rmesa = R200_CONTEXT(ctx)) || !rmesa->radeon.radeonScreen->gartTextures.map) {
       fprintf(stderr, "%s: no context\n", __FUNCTION__);
       return;
    }
 
-   region_offset = (char *)pointer - (char *)rmesa->radeonScreen->gartTextures.map;
+   region_offset = (char *)pointer - (char *)rmesa->radeon.radeonScreen->gartTextures.map;
 
    if (region_offset < 0 || 
-       region_offset > rmesa->radeonScreen->gartTextures.size) {
+       region_offset > rmesa->radeon.radeonScreen->gartTextures.size) {
       fprintf(stderr, "offset %d outside range 0..%d\n", region_offset,
-	      rmesa->radeonScreen->gartTextures.size);
+	      rmesa->radeon.radeonScreen->gartTextures.size);
       return;
    }
 
    memfree.region = RADEON_MEM_REGION_GART;
    memfree.region_offset = region_offset;
    
-   ret = drmCommandWrite( rmesa->radeonScreen->driScreen->fd,
+   ret = drmCommandWrite( rmesa->radeon.radeonScreen->driScreen->fd,
 			  DRM_RADEON_FREE,
 			  &memfree, sizeof(memfree));
    
@@ -956,16 +956,16 @@ GLuint r200GetMemoryOffsetMESA(__DRIscreen *screen, const GLvoid *pointer)
 
    card_offset = r200GartOffsetFromVirtual( rmesa, pointer );
 
-   return card_offset - rmesa->radeonScreen->gart_base;
+   return card_offset - rmesa->radeon.radeonScreen->gart_base;
 }
 
 GLboolean r200IsGartMemory( r200ContextPtr rmesa, const GLvoid *pointer,
 			   GLint size )
 {
-   ptrdiff_t offset = (char *)pointer - (char *)rmesa->radeonScreen->gartTextures.map;
+   ptrdiff_t offset = (char *)pointer - (char *)rmesa->radeon.radeonScreen->gartTextures.map;
    int valid = (size >= 0 &&
 		offset >= 0 &&
-		offset + size < rmesa->radeonScreen->gartTextures.size);
+		offset + size < rmesa->radeon.radeonScreen->gartTextures.size);
 
    if (R200_DEBUG & DEBUG_IOCTL)
       fprintf(stderr, "r200IsGartMemory( %p ) : %d\n", pointer, valid );
@@ -976,12 +976,12 @@ GLboolean r200IsGartMemory( r200ContextPtr rmesa, const GLvoid *pointer,
 
 GLuint r200GartOffsetFromVirtual( r200ContextPtr rmesa, const GLvoid *pointer )
 {
-   ptrdiff_t offset = (char *)pointer - (char *)rmesa->radeonScreen->gartTextures.map;
+   ptrdiff_t offset = (char *)pointer - (char *)rmesa->radeon.radeonScreen->gartTextures.map;
 
-   if (offset < 0 || offset > rmesa->radeonScreen->gartTextures.size)
+   if (offset < 0 || offset > rmesa->radeon.radeonScreen->gartTextures.size)
       return ~0;
    else
-      return rmesa->radeonScreen->gart_texture_offset + offset;
+      return rmesa->radeon.radeonScreen->gart_texture_offset + offset;
 }
 
 

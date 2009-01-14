@@ -55,7 +55,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r200_tcl.h"
 
 
-static void flush_last_swtcl_prim( r200ContextPtr rmesa  );
+static void flush_last_swtcl_prim( GLcontext *ctx  );
 
 
 /***********************************************************************
@@ -185,7 +185,7 @@ static void r200SetVertexFormat( GLcontext *ctx )
       rmesa->hw.ctx.cmd[CTX_PP_FOG_COLOR] |= R200_FOG_USE_SPEC_ALPHA;
    }
 
-   if (!RENDERINPUTS_EQUAL( rmesa->tnl_index_bitset, index_bitset ) ||
+   if (!RENDERINPUTS_EQUAL( rmesa->radeon.tnl_index_bitset, index_bitset ) ||
 	(rmesa->hw.vtx.cmd[VTX_VTXFMT_0] != fmt_0) ||
 	(rmesa->hw.vtx.cmd[VTX_VTXFMT_1] != fmt_1) ) {
       R200_NEWPRIM(rmesa);
@@ -199,7 +199,7 @@ static void r200SetVertexFormat( GLcontext *ctx )
 			      rmesa->swtcl.vertex_attr_count,
 			      NULL, 0 );
       rmesa->swtcl.vertex_size /= 4;
-      RENDERINPUTS_COPY( rmesa->tnl_index_bitset, index_bitset );
+      RENDERINPUTS_COPY( rmesa->radeon.tnl_index_bitset, index_bitset );
    }
 }
 
@@ -212,7 +212,7 @@ static void r200RenderStart( GLcontext *ctx )
 
    if (rmesa->dma.flush != 0 && 
        rmesa->dma.flush != flush_last_swtcl_prim)
-      rmesa->dma.flush( rmesa );
+      rmesa->dma.flush( ctx );
 }
 
 
@@ -232,7 +232,7 @@ void r200ChooseVertexState( GLcontext *ctx )
     * rasterization fallback.  As this function will be called again when we
     * leave a rasterization fallback, we can just skip it for now.
     */
-   if (rmesa->Fallback != 0)
+   if (rmesa->radeon.Fallback != 0)
       return;
 
    vte = rmesa->hw.vte.cmd[VTE_SE_VTE_CNTL];
@@ -276,8 +276,9 @@ void r200ChooseVertexState( GLcontext *ctx )
 
 /* Flush vertices in the current dma region.
  */
-static void flush_last_swtcl_prim( r200ContextPtr rmesa  )
+static void flush_last_swtcl_prim(GLcontext *ctx)
 {
+   r200ContextPtr rmesa = R200_CONTEXT(ctx);
    if (R200_DEBUG & DEBUG_IOCTL)
       fprintf(stderr, "%s\n", __FUNCTION__);
 
@@ -285,7 +286,7 @@ static void flush_last_swtcl_prim( r200ContextPtr rmesa  )
 
    if (rmesa->dma.current.buf) {
       struct radeon_dma_region *current = &rmesa->dma.current;
-      GLuint current_offset = (rmesa->radeonScreen->gart_buffer_offset +
+      GLuint current_offset = (rmesa->radeon.radeonScreen->gart_buffer_offset +
 			       current->buf->buf->idx * RADEON_BUFFER_SIZE + 
 			       current->start);
 
@@ -324,7 +325,7 @@ r200AllocDmaLowVerts( r200ContextPtr rmesa, int nverts, int vsize )
       r200RefillCurrentDmaRegion( rmesa );
 
    if (!rmesa->dma.flush) {
-      rmesa->glCtx->Driver.NeedFlush |= FLUSH_STORED_VERTICES;
+      rmesa->radeon.glCtx->Driver.NeedFlush |= FLUSH_STORED_VERTICES;
       rmesa->dma.flush = flush_last_swtcl_prim;
    }
 
@@ -599,7 +600,7 @@ void r200ChooseRenderState( GLcontext *ctx )
    GLuint index = 0;
    GLuint flags = ctx->_TriangleCaps;
 
-   if (!rmesa->TclFallback || rmesa->Fallback) 
+   if (!rmesa->radeon.TclFallback || rmesa->radeon.Fallback) 
       return;
 
    if (flags & DD_TRI_LIGHT_TWOSIDE) index |= R200_TWOSIDE_BIT;
@@ -701,10 +702,10 @@ void r200Fallback( GLcontext *ctx, GLuint bit, GLboolean mode )
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
    TNLcontext *tnl = TNL_CONTEXT(ctx);
-   GLuint oldfallback = rmesa->Fallback;
+   GLuint oldfallback = rmesa->radeon.Fallback;
 
    if (mode) {
-      rmesa->Fallback |= bit;
+      rmesa->radeon.Fallback |= bit;
       if (oldfallback == 0) {
 	 R200_FIREVERTICES( rmesa );
 	 TCL_FALLBACK( ctx, R200_TCL_FALLBACK_RASTER, GL_TRUE );
@@ -717,7 +718,7 @@ void r200Fallback( GLcontext *ctx, GLuint bit, GLboolean mode )
       }
    }
    else {
-      rmesa->Fallback &= ~bit;
+      rmesa->radeon.Fallback &= ~bit;
       if (oldfallback == bit) {
 
 	 _swrast_flush( ctx );
@@ -731,14 +732,14 @@ void r200Fallback( GLcontext *ctx, GLuint bit, GLboolean mode )
 
 	 tnl->Driver.Render.ResetLineStipple = r200ResetLineStipple;
 	 TCL_FALLBACK( ctx, R200_TCL_FALLBACK_RASTER, GL_FALSE );
-	 if (rmesa->TclFallback) {
-	    /* These are already done if rmesa->TclFallback goes to
+	 if (rmesa->radeon.TclFallback) {
+	    /* These are already done if rmesa->radeon.TclFallback goes to
 	     * zero above. But not if it doesn't (R200_NO_TCL for
 	     * example?)
 	     */
 	    _tnl_invalidate_vertex_state( ctx, ~0 );
 	    _tnl_invalidate_vertices( ctx, ~0 );
-	    RENDERINPUTS_ZERO( rmesa->tnl_index_bitset );
+	    RENDERINPUTS_ZERO( rmesa->radeon.tnl_index_bitset );
 	    r200ChooseVertexState( ctx );
 	    r200ChooseRenderState( ctx );
 	 }
@@ -873,8 +874,8 @@ r200PointsBitmap( GLcontext *ctx, GLint px, GLint py,
     */
    LOCK_HARDWARE( rmesa );
    UNLOCK_HARDWARE( rmesa );
-   h = rmesa->dri.drawable->h + rmesa->dri.drawable->y;
-   px += rmesa->dri.drawable->x;
+   h = rmesa->radeon.dri.drawable->h + rmesa->radeon.dri.drawable->y;
+   px += rmesa->radeon.dri.drawable->x;
 
    /* Clipping handled by existing mechansims in r200_ioctl.c?
     */
@@ -929,7 +930,7 @@ r200PointsBitmap( GLcontext *ctx, GLint px, GLint py,
 
    /* Need to restore vertexformat?
     */
-   if (rmesa->TclFallback)
+   if (rmesa->radeon.TclFallback)
       r200ChooseVertexState( ctx );
 }
 

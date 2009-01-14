@@ -50,7 +50,7 @@
  * State initialization
  */
 
-void radeonPrintDirty( radeonContextPtr rmesa, const char *msg )
+void radeonPrintDirty( r100ContextPtr rmesa, const char *msg )
 {
    struct radeon_state_atom *l;
 
@@ -97,16 +97,16 @@ static int cmdscl( int offset, int stride, int count )
 }
 
 #define CHECK( NM, FLAG )				\
-static GLboolean check_##NM( GLcontext *ctx, int idx )	\
+static int check_##NM( GLcontext *ctx, struct radeon_state_atom *atom )	\
 {							\
    return FLAG;						\
 }
 
 #define TCL_CHECK( NM, FLAG )				\
-static GLboolean check_##NM( GLcontext *ctx, int idx )	\
+static int check_##NM( GLcontext *ctx, struct radeon_state_atom *atom )	\
 {							\
-   radeonContextPtr rmesa = RADEON_CONTEXT(ctx);	\
-   return !rmesa->TclFallback && (FLAG);		\
+   r100ContextPtr rmesa = R100_CONTEXT(ctx);	\
+   return !rmesa->radeon.TclFallback && (FLAG);		\
 }
 
 
@@ -150,13 +150,13 @@ CHECK( txr2, (ctx->Texture.Unit[2]._ReallyEnabled & TEXTURE_RECT_BIT))
 
 /* Initialize the context's hardware state.
  */
-void radeonInitState( radeonContextPtr rmesa )
+void radeonInitState( r100ContextPtr rmesa )
 {
-   GLcontext *ctx = rmesa->glCtx;
+   GLcontext *ctx = rmesa->radeon.glCtx;
    GLuint color_fmt, depth_fmt, i;
    GLint drawPitch, drawOffset;
 
-   switch ( rmesa->radeonScreen->cpp ) {
+   switch ( rmesa->radeon.radeonScreen->cpp ) {
    case 2:
       color_fmt = RADEON_COLOR_FORMAT_RGB565;
       break;
@@ -193,14 +193,14 @@ void radeonInitState( radeonContextPtr rmesa )
    rmesa->state.stencil.hwBuffer = ( ctx->Visual.stencilBits > 0 &&
 				     ctx->Visual.depthBits == 24 );
 
-   rmesa->Fallback = 0;
+   rmesa->radeon.Fallback = 0;
 
-   if ( ctx->Visual.doubleBufferMode && rmesa->sarea->pfCurrentPage == 0 ) {
-      drawOffset = rmesa->radeonScreen->backOffset;
-      drawPitch  = rmesa->radeonScreen->backPitch;
+   if ( ctx->Visual.doubleBufferMode && rmesa->radeon.sarea->pfCurrentPage == 0 ) {
+      drawOffset = rmesa->radeon.radeonScreen->backOffset;
+      drawPitch  = rmesa->radeon.radeonScreen->backPitch;
    } else {
-      drawOffset = rmesa->radeonScreen->frontOffset;
-      drawPitch  = rmesa->radeonScreen->frontPitch;
+      drawOffset = rmesa->radeon.radeonScreen->frontOffset;
+      drawPitch  = rmesa->radeon.radeonScreen->frontPitch;
    }
 
    rmesa->hw.max_state_size = 0;
@@ -208,8 +208,8 @@ void radeonInitState( radeonContextPtr rmesa )
 #define ALLOC_STATE( ATOM, CHK, SZ, NM, FLAG )				\
    do {								\
       rmesa->hw.ATOM.cmd_size = SZ;				\
-      rmesa->hw.ATOM.cmd = (int *)CALLOC(SZ * sizeof(int));	\
-      rmesa->hw.ATOM.lastcmd = (int *)CALLOC(SZ * sizeof(int));	\
+      rmesa->hw.ATOM.cmd = (GLuint *)CALLOC(SZ * sizeof(int));	\
+      rmesa->hw.ATOM.lastcmd = (GLuint *)CALLOC(SZ * sizeof(int));	\
       rmesa->hw.ATOM.name = NM;					\
       rmesa->hw.ATOM.is_tcl = FLAG;					\
       rmesa->hw.ATOM.check = check_##CHK;				\
@@ -236,7 +236,7 @@ void radeonInitState( radeonContextPtr rmesa )
    ALLOC_STATE( tex[0], tex0, TEX_STATE_SIZE, "TEX/tex-0", 0 );
    ALLOC_STATE( tex[1], tex1, TEX_STATE_SIZE, "TEX/tex-1", 0 );
    ALLOC_STATE( tex[2], tex2, TEX_STATE_SIZE, "TEX/tex-2", 0 );
-   if (rmesa->radeonScreen->drmSupportsCubeMapsR100)
+   if (rmesa->radeon.radeonScreen->drmSupportsCubeMapsR100)
    {
       ALLOC_STATE( cube[0], cube0, CUBE_STATE_SIZE, "CUBE/cube-0", 0 );
       ALLOC_STATE( cube[1], cube1, CUBE_STATE_SIZE, "CUBE/cube-1", 0 );
@@ -353,10 +353,10 @@ void radeonInitState( radeonContextPtr rmesa )
 					    RADEON_DST_BLEND_GL_ZERO );
 
    rmesa->hw.ctx.cmd[CTX_RB3D_DEPTHOFFSET] =
-      rmesa->radeonScreen->depthOffset + rmesa->radeonScreen->fbLocation;
+      rmesa->radeon.radeonScreen->depthOffset + rmesa->radeon.radeonScreen->fbLocation;
 
    rmesa->hw.ctx.cmd[CTX_RB3D_DEPTHPITCH] = 
-      ((rmesa->radeonScreen->depthPitch &
+      ((rmesa->radeon.radeonScreen->depthPitch &
 	RADEON_DEPTHPITCH_MASK) |
        RADEON_DEPTH_ENDIAN_NO_SWAP);
        
@@ -374,7 +374,7 @@ void radeonInitState( radeonContextPtr rmesa )
    if (rmesa->using_hyperz) {
        rmesa->hw.ctx.cmd[CTX_RB3D_ZSTENCILCNTL] |= RADEON_Z_COMPRESSION_ENABLE |
 						   RADEON_Z_DECOMPRESSION_ENABLE;
-      if (rmesa->radeonScreen->chip_flags & RADEON_CHIPSET_TCL) {
+      if (rmesa->radeon.radeonScreen->chip_flags & RADEON_CHIPSET_TCL) {
 	 /* works for q3, but slight rendering errors with glxgears ? */
 /*	 rmesa->hw.ctx.cmd[CTX_RB3D_ZSTENCILCNTL] |= RADEON_Z_HIERARCHY_ENABLE;*/
 	 /* need this otherwise get lots of lockups with q3 ??? */
@@ -389,7 +389,7 @@ void radeonInitState( radeonContextPtr rmesa )
 				       color_fmt |
 				       RADEON_ZBLOCK16);
 
-   switch ( driQueryOptioni( &rmesa->optionCache, "dither_mode" ) ) {
+   switch ( driQueryOptioni( &rmesa->radeon.optionCache, "dither_mode" ) ) {
    case DRI_CONF_DITHER_XERRORDIFFRESET:
       rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] |= RADEON_DITHER_INIT;
       break;
@@ -397,19 +397,19 @@ void radeonInitState( radeonContextPtr rmesa )
       rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] |= RADEON_SCALE_DITHER_ENABLE;
       break;
    }
-   if ( driQueryOptioni( &rmesa->optionCache, "round_mode" ) ==
+   if ( driQueryOptioni( &rmesa->radeon.optionCache, "round_mode" ) ==
 	DRI_CONF_ROUND_ROUND )
       rmesa->state.color.roundEnable = RADEON_ROUND_ENABLE;
    else
       rmesa->state.color.roundEnable = 0;
-   if ( driQueryOptioni (&rmesa->optionCache, "color_reduction" ) ==
+   if ( driQueryOptioni (&rmesa->radeon.optionCache, "color_reduction" ) ==
 	DRI_CONF_COLOR_REDUCTION_DITHER )
       rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] |= RADEON_DITHER_ENABLE;
    else
       rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] |= rmesa->state.color.roundEnable;
 
    rmesa->hw.ctx.cmd[CTX_RB3D_COLOROFFSET] = ((drawOffset +
-					       rmesa->radeonScreen->fbLocation)
+					       rmesa->radeon.radeonScreen->fbLocation)
 					      & RADEON_COLOROFFSET_MASK);
 
    rmesa->hw.ctx.cmd[CTX_RB3D_COLORPITCH] = ((drawPitch &
@@ -418,7 +418,7 @@ void radeonInitState( radeonContextPtr rmesa )
 
 
    /* (fixed size) sarea is initialized to zero afaics so can omit version check. Phew! */
-   if (rmesa->sarea->tiling_enabled) {
+   if (rmesa->radeon.sarea->tiling_enabled) {
       rmesa->hw.ctx.cmd[CTX_RB3D_COLORPITCH] |= RADEON_COLOR_TILE_ENABLE;
    }
 
@@ -444,7 +444,7 @@ void radeonInitState( radeonContextPtr rmesa )
   					    RADEON_VC_NO_SWAP;
 #endif
 
-   if (!(rmesa->radeonScreen->chip_flags & RADEON_CHIPSET_TCL)) {
+   if (!(rmesa->radeon.radeonScreen->chip_flags & RADEON_CHIPSET_TCL)) {
      rmesa->hw.set.cmd[SET_SE_CNTL_STATUS] |= RADEON_TCL_BYPASS;
    }
 
@@ -492,7 +492,7 @@ void radeonInitState( radeonContextPtr rmesa )
 
       /* Initialize the texture offset to the start of the card texture heap */
       rmesa->hw.tex[i].cmd[TEX_PP_TXOFFSET] =
-	  rmesa->radeonScreen->texOffset[RADEON_LOCAL_TEX_HEAP];
+	  rmesa->radeon.radeonScreen->texOffset[RADEON_LOCAL_TEX_HEAP];
 
       rmesa->hw.tex[i].cmd[TEX_PP_BORDER_COLOR] = 0;
       rmesa->hw.tex[i].cmd[TEX_PP_TXCBLEND] =  
@@ -513,15 +513,15 @@ void radeonInitState( radeonContextPtr rmesa )
 
       rmesa->hw.cube[i].cmd[CUBE_PP_CUBIC_FACES] = 0;
       rmesa->hw.cube[i].cmd[CUBE_PP_CUBIC_OFFSET_0] =
-	  rmesa->radeonScreen->texOffset[RADEON_LOCAL_TEX_HEAP];
+	  rmesa->radeon.radeonScreen->texOffset[RADEON_LOCAL_TEX_HEAP];
       rmesa->hw.cube[i].cmd[CUBE_PP_CUBIC_OFFSET_1] =
-	  rmesa->radeonScreen->texOffset[RADEON_LOCAL_TEX_HEAP];
+	  rmesa->radeon.radeonScreen->texOffset[RADEON_LOCAL_TEX_HEAP];
       rmesa->hw.cube[i].cmd[CUBE_PP_CUBIC_OFFSET_2] =
-	  rmesa->radeonScreen->texOffset[RADEON_LOCAL_TEX_HEAP];
+	  rmesa->radeon.radeonScreen->texOffset[RADEON_LOCAL_TEX_HEAP];
       rmesa->hw.cube[i].cmd[CUBE_PP_CUBIC_OFFSET_3] =
-	  rmesa->radeonScreen->texOffset[RADEON_LOCAL_TEX_HEAP];
+	  rmesa->radeon.radeonScreen->texOffset[RADEON_LOCAL_TEX_HEAP];
       rmesa->hw.cube[i].cmd[CUBE_PP_CUBIC_OFFSET_4] =
-	  rmesa->radeonScreen->texOffset[RADEON_LOCAL_TEX_HEAP];
+	  rmesa->radeon.radeonScreen->texOffset[RADEON_LOCAL_TEX_HEAP];
    }
 
    /* Can only add ST1 at the time of doing some multitex but can keep

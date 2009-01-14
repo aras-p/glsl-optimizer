@@ -42,7 +42,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifndef __RADEON_LOCK_H__
 #define __RADEON_LOCK_H__
 
-extern void radeonGetLock(radeonContextPtr rmesa, GLuint flags);
+extern void radeonGetLock(r100ContextPtr rmesa, GLuint flags);
 
 /* Turn DEBUG_LOCKING on to find locking conflicts.
  */
@@ -94,8 +94,8 @@ extern int prevLockLine;
    do {								\
       char __ret = 0;						\
       DEBUG_CHECK_LOCK();					\
-      DRM_CAS( (rmesa)->dri.hwLock, (rmesa)->dri.hwContext,		\
-	       (DRM_LOCK_HELD | (rmesa)->dri.hwContext), __ret );	\
+      DRM_CAS( (rmesa)->radeon.dri.hwLock, (rmesa)->radeon.dri.hwContext,		\
+	       (DRM_LOCK_HELD | (rmesa)->radeon.dri.hwContext), __ret );	\
       if ( __ret )						\
 	 radeonGetLock( (rmesa), 0 );				\
       DEBUG_LOCK();						\
@@ -103,9 +103,9 @@ extern int prevLockLine;
 
 #define UNLOCK_HARDWARE( rmesa )					\
    do {									\
-      DRM_UNLOCK( (rmesa)->dri.fd,					\
-		  (rmesa)->dri.hwLock,					\
-		  (rmesa)->dri.hwContext );				\
+      DRM_UNLOCK( (rmesa)->radeon.dri.fd,					\
+		  (rmesa)->radeon.dri.hwLock,					\
+		  (rmesa)->radeon.dri.hwContext );				\
       DEBUG_RESET();							\
    } while (0)
 

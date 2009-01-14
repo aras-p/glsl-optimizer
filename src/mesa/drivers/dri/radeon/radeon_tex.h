@@ -43,10 +43,10 @@ extern void radeonSetTexOffset(__DRIcontext *pDRICtx, GLint texname,
 
 extern void radeonUpdateTextureState( GLcontext *ctx );
 
-extern int radeonUploadTexImages( radeonContextPtr rmesa, radeonTexObjPtr t,
+extern int radeonUploadTexImages( r100ContextPtr rmesa, radeonTexObjPtr t,
 				  GLuint face );
 
-extern void radeonDestroyTexObj( radeonContextPtr rmesa, radeonTexObjPtr t );
+extern void radeonDestroyTexObj( r100ContextPtr rmesa, radeonTexObjPtr t );
 
 extern void radeonInitTextureFuncs( struct dd_function_table *functions );
 

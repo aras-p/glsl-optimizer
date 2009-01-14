@@ -48,32 +48,23 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "drm.h"
 #include "radeon_drm.h"
 #include "texmem.h"
-
 #include "main/macros.h"
 #include "main/mtypes.h"
 #include "main/colormac.h"
-
-struct radeon_context;
-typedef struct radeon_context radeonContextRec;
-typedef struct radeon_context *radeonContextPtr;
-
-#include "radeon_lock.h"
 #include "radeon_screen.h"
 
 #include "common_context.h"
 
+
+struct r100_context;
+typedef struct r100_context r100ContextRec;
+typedef struct r100_context *r100ContextPtr;
+
+#include "radeon_lock.h"
+
+
+
 #define R100_TEX_ALL 0x7
-
-typedef void (*radeon_tri_func) (radeonContextPtr,
-				 radeonVertex *,
-				 radeonVertex *, radeonVertex *);
-
-typedef void (*radeon_line_func) (radeonContextPtr,
-				  radeonVertex *, radeonVertex *);
-
-typedef void (*radeon_point_func) (radeonContextPtr, radeonVertex *);
-
-
 
 /* used for both tcl_vtx and vc_frmt tex bits (they are identical) */
 #define RADEON_ST_BIT(unit) \
@@ -336,9 +327,8 @@ struct radeon_hw_state {
 	GLboolean is_dirty, all_dirty;
 };
 
+
 struct radeon_state {
-	/* Derived state for internal purposes:
-	 */
 	struct radeon_colorbuffer_state color;
 	struct radeon_depthbuffer_state depth;
 	struct radeon_scissor_state scissor;
@@ -347,7 +337,7 @@ struct radeon_state {
 	struct radeon_texture_state texture;
 };
 
-#define GET_START(rvb) (rmesa->radeonScreen->gart_buffer_offset +			\
+#define GET_START(rvb) (rmesa->radeon.radeonScreen->gart_buffer_offset +			\
 			(rvb)->address - rmesa->dma.buf0_address +	\
 			(rvb)->start)
 
@@ -427,28 +417,13 @@ struct radeon_swtcl_info {
  */
 #define RADEON_MAX_VERTEX_SIZE 20
 
-struct radeon_context {
-	GLcontext *glCtx;	/* Mesa context */
+struct r100_context {
+        struct radeon_context radeon;
 
 	/* Driver and hardware state management
 	 */
 	struct radeon_hw_state hw;
 	struct radeon_state state;
-
-	/* Texture object bookkeeping
-	 */
-	unsigned nr_heaps;
-	driTexHeap *texture_heaps[RADEON_NR_TEX_HEAPS];
-	driTextureObject swapped;
-	int texture_depth;
-	float initialMaxAnisotropy;
-
-	/* Rasterization and vertex state:
-	 */
-	GLuint TclFallback;
-	GLuint Fallback;
-	GLuint NewGLState;
-	 DECLARE_RENDERINPUTS(tnl_index_bitset);	/* index of bits for last tnl_install_attrs */
 
 	/* Vertex buffers
 	 */
@@ -459,27 +434,6 @@ struct radeon_context {
 	 * the context is lost.
 	 */
 	struct radeon_store backup_store;
-
-	/* Page flipping
-	 */
-	GLuint doPageFlip;
-
-	/* Busy waiting
-	 */
-	GLuint do_usleeps;
-	GLuint do_irqs;
-	GLuint irqsEmitted;
-	drm_radeon_irq_wait_t iw;
-
-	/* Drawable, cliprect and scissor information
-	 */
-	GLuint numClipRects;	/* Cliprects for the draw buffer */
-	drm_clip_rect_t *pClipRects;
-	unsigned int lastStamp;
-	GLboolean lost_context;
-	GLboolean save_on_next_emit;
-	radeonScreenPtr radeonScreen;	/* Screen private DRI data */
-	drm_radeon_sarea_t *sarea;	/* Private SAREA data */
 
 	/* TCL stuff
 	 */
@@ -492,14 +446,6 @@ struct radeon_context {
 	GLmatrix tmpmat[RADEON_MAX_TEXTURE_UNITS];
 	GLuint last_ReallyEnabled;
 
-	/* VBI
-	 */
-	int64_t swap_ust;
-	int64_t swap_missed_ust;
-
-	GLuint swap_count;
-	GLuint swap_missed_count;
-
 	/* radeon_tcl.c
 	 */
 	struct radeon_tcl_info tcl;
@@ -507,14 +453,6 @@ struct radeon_context {
 	/* radeon_swtcl.c
 	 */
 	struct radeon_swtcl_info swtcl;
-
-	/* Mirrors of some DRI state
-	 */
-	struct radeon_dri_mirror dri;
-
-	/* Configuration cache
-	 */
-	driOptionCache optionCache;
 
 	GLboolean using_hyperz;
 	GLboolean texmicrotile;
@@ -528,9 +466,11 @@ struct radeon_context {
 	GLuint c_textureSwaps;
 	GLuint c_textureBytes;
 	GLuint c_vertexBuffers;
+
+	GLboolean save_on_next_emit;
 };
 
-#define RADEON_CONTEXT(ctx)		((radeonContextPtr)(ctx->DriverCtx))
+#define R100_CONTEXT(ctx)		((r100ContextPtr)(ctx->DriverCtx))
 
 
 #define RADEON_OLD_PACKETS 1

@@ -1572,11 +1572,7 @@ __DRIconfig **radeonInitScreen2(__DRIscreenPrivate *psp)
 static int
 getSwapInfo( __DRIdrawablePrivate *dPriv, __DRIswapInfo * sInfo )
 {
-#if !RADEON_COMMON || (RADEON_COMMON && defined(RADEON_COMMON_FOR_R300))
    radeonContextPtr  rmesa;
-#elif RADEON_COMMON && defined(RADEON_COMMON_FOR_R200)
-   r200ContextPtr  rmesa;
-#endif
 
    if ( (dPriv == NULL) || (dPriv->driContextPriv == NULL)
 	|| (dPriv->driContextPriv->driverPrivate == NULL)

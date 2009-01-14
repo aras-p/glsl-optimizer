@@ -122,7 +122,7 @@ tx_table[] =
  * \param tObj GL texture object whose images are to be posted to
  *                 hardware state.
  */
-static void radeonSetTexImages( radeonContextPtr rmesa,
+static void radeonSetTexImages( r100ContextPtr rmesa,
 				struct gl_texture_object *tObj )
 {
    radeonTexObjPtr t = (radeonTexObjPtr)tObj->DriverData;
@@ -503,7 +503,7 @@ do {							\
 
 static GLboolean radeonUpdateTextureEnv( GLcontext *ctx, int unit )
 {
-   radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
+   r100ContextPtr rmesa = R100_CONTEXT(ctx);
    const struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
    GLuint color_combine, alpha_combine;
    const GLuint color_combine0 = RADEON_COLOR_ARG_A_ZERO | RADEON_COLOR_ARG_B_ZERO
@@ -846,9 +846,9 @@ static GLboolean radeonUpdateTextureEnv( GLcontext *ctx, int unit )
 void radeonSetTexOffset(__DRIcontext * pDRICtx, GLint texname,
                         unsigned long long offset, GLint depth, GLuint pitch)
 {
-	radeonContextPtr rmesa = pDRICtx->driverPrivate;
+	r100ContextPtr rmesa = pDRICtx->driverPrivate;
 	struct gl_texture_object *tObj =
-	    _mesa_lookup_texture(rmesa->glCtx, texname);
+	    _mesa_lookup_texture(rmesa->radeon.glCtx, texname);
 	radeonTexObjPtr t;
 
 	if (tObj == NULL)
@@ -901,7 +901,7 @@ void radeonSetTexOffset(__DRIcontext * pDRICtx, GLint texname,
                               RADEON_TXFORMAT_NON_POWER2)
 
 
-static void import_tex_obj_state( radeonContextPtr rmesa,
+static void import_tex_obj_state( r100ContextPtr rmesa,
 				  int unit,
 				  radeonTexObjPtr texobj )
 {
@@ -958,7 +958,7 @@ static void import_tex_obj_state( radeonContextPtr rmesa,
 
 
 
-static void set_texgen_matrix( radeonContextPtr rmesa, 
+static void set_texgen_matrix( r100ContextPtr rmesa, 
 			       GLuint unit,
 			       const GLfloat *s_plane,
 			       const GLfloat *t_plane,
@@ -986,14 +986,14 @@ static void set_texgen_matrix( radeonContextPtr rmesa,
    rmesa->TexGenMatrix[unit].m[15] = q_plane[3];
 
    rmesa->TexGenEnabled |= RADEON_TEXMAT_0_ENABLE << unit;
-   rmesa->NewGLState |= _NEW_TEXTURE_MATRIX;
+   rmesa->radeon.NewGLState |= _NEW_TEXTURE_MATRIX;
 }
 
 /* Returns GL_FALSE if fallback required.
  */
 static GLboolean radeon_validate_texgen( GLcontext *ctx, GLuint unit )
 {
-   radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
+   r100ContextPtr rmesa = R100_CONTEXT(ctx);
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
    GLuint inputshift = RADEON_TEXGEN_0_INPUT_SHIFT + unit*4;
    GLuint tmp = rmesa->TexGenEnabled;
@@ -1094,7 +1094,7 @@ static GLboolean radeon_validate_texgen( GLcontext *ctx, GLuint unit )
    }
 
    if (tmp != rmesa->TexGenEnabled) {
-      rmesa->NewGLState |= _NEW_TEXTURE_MATRIX;
+      rmesa->radeon.NewGLState |= _NEW_TEXTURE_MATRIX;
    }
 
    return GL_TRUE;
@@ -1103,7 +1103,7 @@ static GLboolean radeon_validate_texgen( GLcontext *ctx, GLuint unit )
 
 static void disable_tex( GLcontext *ctx, int unit )
 {
-   radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
+   r100ContextPtr rmesa = R100_CONTEXT(ctx);
 
    if (rmesa->hw.ctx.cmd[CTX_PP_CNTL] & (RADEON_TEX_0_ENABLE<<unit)) {
       /* Texture unit disabled */
@@ -1124,7 +1124,7 @@ static void disable_tex( GLcontext *ctx, int unit )
       rmesa->hw.tcl.cmd[TCL_OUTPUT_VTXFMT] &= ~(RADEON_ST_BIT(unit) |
 						RADEON_Q_BIT(unit));
 
-      if (rmesa->TclFallback & (RADEON_TCL_FALLBACK_TEXGEN_0<<unit)) {
+      if (rmesa->radeon.TclFallback & (RADEON_TCL_FALLBACK_TEXGEN_0<<unit)) {
 	 TCL_FALLBACK( ctx, (RADEON_TCL_FALLBACK_TEXGEN_0<<unit), GL_FALSE);
 	 rmesa->recheck_texgen[unit] = GL_TRUE;
       }
@@ -1151,7 +1151,7 @@ static void disable_tex( GLcontext *ctx, int unit )
 
 	 if (tmp != rmesa->TexGenEnabled) {
 	    rmesa->recheck_texgen[unit] = GL_TRUE;
-	    rmesa->NewGLState |= _NEW_TEXTURE_MATRIX;
+	    rmesa->radeon.NewGLState |= _NEW_TEXTURE_MATRIX;
 	 }
       }
    }
@@ -1159,7 +1159,7 @@ static void disable_tex( GLcontext *ctx, int unit )
 
 static GLboolean enable_tex_2d( GLcontext *ctx, int unit )
 {
-   radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
+   r100ContextPtr rmesa = R100_CONTEXT(ctx);
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
    struct gl_texture_object *tObj = texUnit->_Current;
    radeonTexObjPtr t = (radeonTexObjPtr) tObj->DriverData;
@@ -1186,7 +1186,7 @@ static GLboolean enable_tex_2d( GLcontext *ctx, int unit )
 
 static GLboolean enable_tex_cube( GLcontext *ctx, int unit )
 {
-   radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
+   r100ContextPtr rmesa = R100_CONTEXT(ctx);
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
    struct gl_texture_object *tObj = texUnit->_Current;
    radeonTexObjPtr t = (radeonTexObjPtr) tObj->DriverData;
@@ -1228,7 +1228,7 @@ static GLboolean enable_tex_cube( GLcontext *ctx, int unit )
 
 static GLboolean enable_tex_rect( GLcontext *ctx, int unit )
 {
-   radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
+   r100ContextPtr rmesa = R100_CONTEXT(ctx);
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
    struct gl_texture_object *tObj = texUnit->_Current;
    radeonTexObjPtr t = (radeonTexObjPtr) tObj->DriverData;
@@ -1257,7 +1257,7 @@ static GLboolean enable_tex_rect( GLcontext *ctx, int unit )
 
 static GLboolean update_tex_common( GLcontext *ctx, int unit )
 {
-   radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
+   r100ContextPtr rmesa = R100_CONTEXT(ctx);
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
    struct gl_texture_object *tObj = texUnit->_Current;
    radeonTexObjPtr t = (radeonTexObjPtr) tObj->DriverData;
@@ -1309,14 +1309,14 @@ static GLboolean update_tex_common( GLcontext *ctx, int unit )
    if (t->dirty_state & (1<<unit)) {
       import_tex_obj_state( rmesa, unit, t );
       /* may need to update texture matrix (for texrect adjustments) */
-      rmesa->NewGLState |= _NEW_TEXTURE_MATRIX;
+      rmesa->radeon.NewGLState |= _NEW_TEXTURE_MATRIX;
    }
 
    if (rmesa->recheck_texgen[unit]) {
       GLboolean fallback = !radeon_validate_texgen( ctx, unit );
       TCL_FALLBACK( ctx, (RADEON_TCL_FALLBACK_TEXGEN_0<<unit), fallback);
       rmesa->recheck_texgen[unit] = 0;
-      rmesa->NewGLState |= _NEW_TEXTURE_MATRIX;
+      rmesa->radeon.NewGLState |= _NEW_TEXTURE_MATRIX;
    }
 
    format = tObj->Image[0][tObj->BaseLevel]->_BaseFormat;
@@ -1362,7 +1362,7 @@ static GLboolean radeonUpdateTextureUnit( GLcontext *ctx, int unit )
 
 void radeonUpdateTextureState( GLcontext *ctx )
 {
-   radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
+   r100ContextPtr rmesa = R100_CONTEXT(ctx);
    GLboolean ok;
 
    ok = (radeonUpdateTextureUnit( ctx, 0 ) &&
@@ -1371,6 +1371,6 @@ void radeonUpdateTextureState( GLcontext *ctx )
 
    FALLBACK( rmesa, RADEON_FALLBACK_TEXTURE, !ok );
 
-   if (rmesa->TclFallback)
+   if (rmesa->radeon.TclFallback)
       radeonChooseVertexState( ctx );
 }

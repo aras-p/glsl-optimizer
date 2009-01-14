@@ -66,7 +66,7 @@ r200DestroyTexObj( r200ContextPtr rmesa, radeonTexObjPtr t )
       unsigned   i;
 
 
-      for ( i = 0 ; i < rmesa->glCtx->Const.MaxTextureUnits ; i++ ) {
+      for ( i = 0 ; i < rmesa->radeon.glCtx->Const.MaxTextureUnits ; i++ ) {
 	 if ( t == rmesa->state.texture.unit[i].texobj ) {
 	    rmesa->state.texture.unit[i].texobj = NULL;
 	    rmesa->hw.tex[i].dirty = GL_FALSE;
@@ -424,7 +424,7 @@ static void uploadSubImage( r200ContextPtr rmesa, radeonTexObjPtr t,
 
    LOCK_HARDWARE( rmesa );
    do {
-      ret = drmCommandWriteRead( rmesa->dri.fd, DRM_RADEON_TEXTURE,
+      ret = drmCommandWriteRead( rmesa->radeon.dri.fd, DRM_RADEON_TEXTURE,
                                  &tex, sizeof(drm_radeon_texture_t) );
       if (ret) {
 	 if (R200_DEBUG & DEBUG_IOCTL)
@@ -464,7 +464,7 @@ int r200UploadTexImages( r200ContextPtr rmesa, radeonTexObjPtr t, GLuint face )
 
    if ( R200_DEBUG & (DEBUG_TEXTURE|DEBUG_IOCTL) ) {
       fprintf( stderr, "%s( %p, %p ) sz=%d lvls=%d-%d\n", __FUNCTION__,
-	       (void *)rmesa->glCtx, (void *)t->base.tObj, t->base.totalSize,
+	       (void *)rmesa->radeon.glCtx, (void *)t->base.tObj, t->base.totalSize,
 	       t->base.firstLevel, t->base.lastLevel );
    }
 
@@ -473,7 +473,7 @@ int r200UploadTexImages( r200ContextPtr rmesa, radeonTexObjPtr t, GLuint face )
 
    if (R200_DEBUG & DEBUG_SYNC) {
       fprintf(stderr, "%s: Syncing\n", __FUNCTION__ );
-      r200Finish( rmesa->glCtx );
+      r200Finish( rmesa->radeon.glCtx );
    }
 
    LOCK_HARDWARE( rmesa );
@@ -481,7 +481,7 @@ int r200UploadTexImages( r200ContextPtr rmesa, radeonTexObjPtr t, GLuint face )
    if ( t->base.memBlock == NULL ) {
       int heap;
 
-      heap = driAllocateTexture( rmesa->texture_heaps, rmesa->nr_heaps,
+      heap = driAllocateTexture( rmesa->radeon.texture_heaps, rmesa->radeon.nr_heaps,
 				 (driTextureObject *) t );
       if ( heap == -1 ) {
 	 UNLOCK_HARDWARE( rmesa );
@@ -489,7 +489,7 @@ int r200UploadTexImages( r200ContextPtr rmesa, radeonTexObjPtr t, GLuint face )
       }
 
       /* Set the base offset of the texture image */
-      t->bufAddr = rmesa->radeonScreen->texOffset[heap] 
+      t->bufAddr = rmesa->radeon.radeonScreen->texOffset[heap] 
 	   + t->base.memBlock->ofs;
       t->pp_txoffset = t->bufAddr;
        
@@ -523,7 +523,7 @@ int r200UploadTexImages( r200ContextPtr rmesa, radeonTexObjPtr t, GLuint face )
 
    if (R200_DEBUG & DEBUG_SYNC) {
       fprintf(stderr, "%s: Syncing\n", __FUNCTION__ );
-      r200Finish( rmesa->glCtx );
+      r200Finish( rmesa->radeon.glCtx );
    }
 
    return 0;

@@ -387,7 +387,7 @@ static void r300EmitClearState(GLcontext * ctx)
 			FP_SELA(0, NO, W, FP_TMP(0), 0, 0));
 		END_BATCH();
 	} else {
-		struct r300_state_atom r500fp;
+		struct radeon_state_atom r500fp;
 		uint32_t _cmd[10];
 
 		R300_STATECHANGE(r300, fp);
@@ -443,7 +443,7 @@ static void r300EmitClearState(GLcontext * ctx)
 			R500_ALU_RGBA_A_SWIZ_0;
 		
 		r500fp.cmd[7] = 0;
-		emit_r500fp(r300, &r500fp);
+		emit_r500fp(ctx, &r500fp);
 	}
 
 	BEGIN_BATCH(2);
@@ -484,7 +484,7 @@ static void r300EmitClearState(GLcontext * ctx)
 	END_BATCH();
 
 	if (has_tcl) {
-        struct r300_state_atom vpu;
+        struct radeon_state_atom vpu;
         uint32_t _cmd[10];
 		R300_STATECHANGE(r300, pvs);
 		R300_STATECHANGE(r300, vpi);
@@ -528,7 +528,7 @@ static void r300EmitClearState(GLcontext * ctx)
                                       PVS_SRC_SELECT_FORCE_0,
                                       PVS_SRC_REG_INPUT, VSF_FLAG_NONE);
 		vpu.cmd[8] = 0x0;
-		emit_vpu(r300, &vpu);
+		emit_vpu(ctx, &vpu);
 	}
 }
 

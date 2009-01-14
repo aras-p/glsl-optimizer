@@ -981,7 +981,7 @@ void r200SetTexOffset(__DRIcontext * pDRICtx, GLint texname,
 {
 	r200ContextPtr rmesa = pDRICtx->driverPrivate;
 	struct gl_texture_object *tObj =
-	    _mesa_lookup_texture(rmesa->glCtx, texname);
+	    _mesa_lookup_texture(rmesa->radeon.glCtx, texname);
 	radeonTexObjPtr t;
 
 	if (!tObj)
@@ -1212,7 +1212,7 @@ static void import_tex_obj_state( r200ContextPtr rmesa,
 				  radeonTexObjPtr texobj )
 {
 /* do not use RADEON_DB_STATE to avoid stale texture caches */
-   int *cmd = &rmesa->hw.tex[unit].cmd[TEX_CMD_0];
+   GLuint *cmd = &rmesa->hw.tex[unit].cmd[TEX_CMD_0];
 
    R200_STATECHANGE( rmesa, tex[unit] );
 
@@ -1225,7 +1225,7 @@ static void import_tex_obj_state( r200ContextPtr rmesa,
    cmd[TEX_PP_TXSIZE] = texobj->pp_txsize; /* NPOT only! */
    cmd[TEX_PP_TXPITCH] = texobj->pp_txpitch; /* NPOT only! */
    cmd[TEX_PP_BORDER_COLOR] = texobj->pp_border_color;
-   if (rmesa->radeonScreen->drmSupportsFragShader) {
+   if (rmesa->radeon.radeonScreen->drmSupportsFragShader) {
       cmd[TEX_PP_TXOFFSET_NEWDRM] = texobj->pp_txoffset;
    }
    else {
@@ -1233,13 +1233,13 @@ static void import_tex_obj_state( r200ContextPtr rmesa,
    }
 
    if (texobj->base.tObj->Target == GL_TEXTURE_CUBE_MAP) {
-      int *cube_cmd = &rmesa->hw.cube[unit].cmd[CUBE_CMD_0];
+      GLuint *cube_cmd = &rmesa->hw.cube[unit].cmd[CUBE_CMD_0];
       GLuint bytesPerFace = texobj->base.totalSize / 6;
       ASSERT(texobj->base.totalSize % 6 == 0);
 
       R200_STATECHANGE( rmesa, cube[unit] );
       cube_cmd[CUBE_PP_CUBIC_FACES] = texobj->pp_cubic_faces;
-      if (rmesa->radeonScreen->drmSupportsFragShader) {
+      if (rmesa->radeon.radeonScreen->drmSupportsFragShader) {
 	 /* that value is submitted twice. could change cube atom
 	    to not include that command when new drm is used */
 	 cmd[TEX_PP_CUBIC_FACES] = texobj->pp_cubic_faces;
@@ -1535,7 +1535,7 @@ static void disable_tex( GLcontext *ctx, int unit )
       R200_STATECHANGE( rmesa, vtx );
       rmesa->hw.vtx.cmd[VTX_TCL_OUTPUT_VTXFMT_1] &= ~(7 << (unit * 3));
 	 
-      if (rmesa->TclFallback & (R200_TCL_FALLBACK_TEXGEN_0<<unit)) {
+      if (rmesa->radeon.TclFallback & (R200_TCL_FALLBACK_TEXGEN_0<<unit)) {
 	 TCL_FALLBACK( ctx, (R200_TCL_FALLBACK_TEXGEN_0<<unit), GL_FALSE);
       }
 
@@ -1553,7 +1553,7 @@ static void disable_tex( GLcontext *ctx, int unit )
 
 	 if (tmp != rmesa->TexGenEnabled) {
 	    rmesa->recheck_texgen[unit] = GL_TRUE;
-	    rmesa->NewGLState |= _NEW_TEXTURE_MATRIX;
+	    rmesa->radeon.NewGLState |= _NEW_TEXTURE_MATRIX;
 	 }
       }
    }
@@ -1767,7 +1767,7 @@ static GLboolean update_tex_common( GLcontext *ctx, int unit )
       GLboolean fallback = !r200_validate_texgen( ctx, unit );
       TCL_FALLBACK( ctx, (R200_TCL_FALLBACK_TEXGEN_0<<unit), fallback);
       rmesa->recheck_texgen[unit] = 0;
-      rmesa->NewGLState |= _NEW_TEXTURE_MATRIX;
+      rmesa->radeon.NewGLState |= _NEW_TEXTURE_MATRIX;
    }
 
    FALLBACK( rmesa, R200_FALLBACK_BORDER_MODE, t->border_fallback );
@@ -1846,11 +1846,11 @@ void r200UpdateTextureState( GLcontext *ctx )
 
    FALLBACK( rmesa, R200_FALLBACK_TEXTURE, !ok );
 
-   if (rmesa->TclFallback)
+   if (rmesa->radeon.TclFallback)
       r200ChooseVertexState( ctx );
 
 
-   if (rmesa->radeonScreen->chip_family == CHIP_FAMILY_R200) {
+   if (rmesa->radeon.radeonScreen->chip_family == CHIP_FAMILY_R200) {
 
       /*
        * T0 hang workaround -------------

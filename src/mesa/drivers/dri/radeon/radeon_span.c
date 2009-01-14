@@ -282,16 +282,19 @@ static void radeonSpanRenderStart(GLcontext * ctx)
 #ifdef COMPILE_R300
 	r300ContextPtr r300 = (r300ContextPtr) rmesa;
 	R300_FIREVERTICES(r300);
-#else
-	RADEON_FIREVERTICES(rmesa);
-#endif
 	LOCK_HARDWARE(rmesa);
+#else
+	r100ContextPtr r100 = (r100ContextPtr) rmesa;
+	RADEON_FIREVERTICES(r100);
+	LOCK_HARDWARE(r100);
+#endif
+
 	radeonWaitForIdleLocked(rmesa);
 }
 
 static void radeonSpanRenderFinish(GLcontext * ctx)
 {
-	radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
+	r100ContextPtr rmesa = R100_CONTEXT(ctx);
 	_swrast_flush(ctx);
 	UNLOCK_HARDWARE(rmesa);
 }

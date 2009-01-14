@@ -58,8 +58,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define RADEON_IDLE_RETRY           16
 
 
-static void radeonWaitForIdle( radeonContextPtr rmesa );
-static int radeonFlushCmdBufLocked( radeonContextPtr rmesa, 
+static void radeonWaitForIdle( r100ContextPtr rmesa );
+static int radeonFlushCmdBufLocked( r100ContextPtr rmesa, 
 				    const char * caller );
 
 static void print_state_atom( struct radeon_state_atom *state )
@@ -74,7 +74,7 @@ static void print_state_atom( struct radeon_state_atom *state )
 
 }
 
-static void radeonSaveHwState( radeonContextPtr rmesa )
+static void radeonSaveHwState( r100ContextPtr rmesa )
 {
    struct radeon_state_atom *atom;
    char * dest = rmesa->backup_store.cmd_buf;
@@ -85,7 +85,7 @@ static void radeonSaveHwState( radeonContextPtr rmesa )
    rmesa->backup_store.cmd_used = 0;
 
    foreach( atom, &rmesa->hw.atomlist ) {
-      if ( atom->check( rmesa->glCtx, 0 ) ) {
+      if ( atom->check( rmesa->radeon.glCtx, 0 ) ) {
 	 int size = atom->cmd_size * 4;
 	 memcpy( dest, atom->cmd, size);
 	 dest += size;
@@ -105,7 +105,7 @@ static void radeonSaveHwState( radeonContextPtr rmesa )
  * it, flush it, and then put the current one back.  This is so commands at the
  * start of a cmdbuf can rely on the state being kept from the previous one.
  */
-static void radeonBackUpAndEmitLostStateLocked( radeonContextPtr rmesa )
+static void radeonBackUpAndEmitLostStateLocked( r100ContextPtr rmesa )
 {
    GLuint nr_released_bufs;
    struct radeon_store saved_store;
@@ -116,7 +116,7 @@ static void radeonBackUpAndEmitLostStateLocked( radeonContextPtr rmesa )
    if (RADEON_DEBUG & DEBUG_STATE)
       fprintf(stderr, "Emitting backup state on lost context\n");
 
-   rmesa->lost_context = GL_FALSE;
+   rmesa->radeon.lost_context = GL_FALSE;
 
    nr_released_bufs = rmesa->dma.nr_released_bufs;
    saved_store = rmesa->store;
@@ -134,9 +134,9 @@ static void radeonBackUpAndEmitLostStateLocked( radeonContextPtr rmesa )
 /* The state atoms will be emitted in the order they appear in the atom list,
  * so this step is important.
  */
-void radeonSetUpAtomList( radeonContextPtr rmesa )
+void radeonSetUpAtomList( r100ContextPtr rmesa )
 {
-   int i, mtu = rmesa->glCtx->Const.MaxTextureUnits;
+   int i, mtu = rmesa->radeon.glCtx->Const.MaxTextureUnits;
 
    make_empty_list(&rmesa->hw.atomlist);
    rmesa->hw.atomlist.name = "atom-list";
@@ -167,7 +167,7 @@ void radeonSetUpAtomList( radeonContextPtr rmesa )
    insert_at_tail(&rmesa->hw.atomlist, &rmesa->hw.glt);
 }
 
-void radeonEmitState( radeonContextPtr rmesa )
+void radeonEmitState( r100ContextPtr rmesa )
 {
    struct radeon_state_atom *atom;
    char *dest;
@@ -198,7 +198,7 @@ void radeonEmitState( radeonContextPtr rmesa )
    if (RADEON_DEBUG & DEBUG_STATE) {
       foreach(atom, &rmesa->hw.atomlist) {
 	 if (atom->dirty || rmesa->hw.all_dirty) {
-	    if (atom->check(rmesa->glCtx, 0))
+	    if (atom->check(rmesa->radeon.glCtx, 0))
 	       print_state_atom(atom);
 	    else
 	       fprintf(stderr, "skip state %s\n", atom->name);
@@ -209,11 +209,11 @@ void radeonEmitState( radeonContextPtr rmesa )
    foreach(atom, &rmesa->hw.atomlist) {
       if (rmesa->hw.all_dirty)
 	 atom->dirty = GL_TRUE;
-      if (!(rmesa->radeonScreen->chip_flags & RADEON_CHIPSET_TCL) &&
+      if (!(rmesa->radeon.radeonScreen->chip_flags & RADEON_CHIPSET_TCL) &&
 	   atom->is_tcl)
 	 atom->dirty = GL_FALSE;
       if (atom->dirty) {
-	if (atom->check(rmesa->glCtx, 0)) {
+	if (atom->check(rmesa->radeon.glCtx, 0)) {
 	    int size = atom->cmd_size * 4;
 	    memcpy(dest, atom->cmd, size);
 	    dest += size;
@@ -232,7 +232,7 @@ void radeonEmitState( radeonContextPtr rmesa )
 /* Fire a section of the retained (indexed_verts) buffer as a regular
  * primtive.  
  */
-extern void radeonEmitVbufPrim( radeonContextPtr rmesa,
+extern void radeonEmitVbufPrim( r100ContextPtr rmesa,
 				GLuint vertex_format,
 				GLuint primitive,
 				GLuint vertex_nr )
@@ -288,8 +288,9 @@ extern void radeonEmitVbufPrim( radeonContextPtr rmesa,
 }
 
 
-void radeonFlushElts( radeonContextPtr rmesa )
+void radeonFlushElts( GLcontext *ctx )
 {
+  r100ContextPtr rmesa = R100_CONTEXT(ctx);
    int *cmd = (int *)(rmesa->store.cmd_buf + rmesa->store.elts_start);
    int dwords;
 #if RADEON_OLD_PACKETS
@@ -319,12 +320,12 @@ void radeonFlushElts( radeonContextPtr rmesa )
 
    if (RADEON_DEBUG & DEBUG_SYNC) {
       fprintf(stderr, "%s: Syncing\n", __FUNCTION__);
-      radeonFinish( rmesa->glCtx );
+      radeonFinish( rmesa->radeon.glCtx );
    }
 }
 
 
-GLushort *radeonAllocEltsOpenEnded( radeonContextPtr rmesa,
+GLushort *radeonAllocEltsOpenEnded( r100ContextPtr rmesa,
 				    GLuint vertex_format,
 				    GLuint primitive,
 				    GLuint min_nr )
@@ -375,7 +376,7 @@ GLushort *radeonAllocEltsOpenEnded( radeonContextPtr rmesa,
 	      cmd[1].i, vertex_format, primitive);
 
    assert(!rmesa->dma.flush);
-   rmesa->glCtx->Driver.NeedFlush |= FLUSH_STORED_VERTICES;
+   rmesa->radeon.glCtx->Driver.NeedFlush |= FLUSH_STORED_VERTICES;
    rmesa->dma.flush = radeonFlushElts;
 
    rmesa->store.elts_start = ((char *)cmd) - rmesa->store.cmd_buf;
@@ -385,7 +386,7 @@ GLushort *radeonAllocEltsOpenEnded( radeonContextPtr rmesa,
 
 
 
-void radeonEmitVertexAOS( radeonContextPtr rmesa,
+void radeonEmitVertexAOS( r100ContextPtr rmesa,
 			  GLuint vertex_size,
 			  GLuint offset )
 {
@@ -412,7 +413,7 @@ void radeonEmitVertexAOS( radeonContextPtr rmesa,
 }
 		       
 
-void radeonEmitAOS( radeonContextPtr rmesa,
+void radeonEmitAOS( r100ContextPtr rmesa,
 		    struct radeon_dma_region **component,
 		    GLuint nr,
 		    GLuint offset )
@@ -467,7 +468,7 @@ void radeonEmitAOS( radeonContextPtr rmesa,
 }
 
 /* using already shifted color_fmt! */
-void radeonEmitBlit( radeonContextPtr rmesa, /* FIXME: which drmMinor is required? */
+void radeonEmitBlit( r100ContextPtr rmesa, /* FIXME: which drmMinor is required? */
 		   GLuint color_fmt,
 		   GLuint src_pitch,
 		   GLuint src_offset,
@@ -518,7 +519,7 @@ void radeonEmitBlit( radeonContextPtr rmesa, /* FIXME: which drmMinor is require
 }
 
 
-void radeonEmitWait( radeonContextPtr rmesa, GLuint flags )
+void radeonEmitWait( r100ContextPtr rmesa, GLuint flags )
 {
    drm_radeon_cmd_header_t *cmd;
 
@@ -532,13 +533,13 @@ void radeonEmitWait( radeonContextPtr rmesa, GLuint flags )
 }
 
 
-static int radeonFlushCmdBufLocked( radeonContextPtr rmesa, 
+static int radeonFlushCmdBufLocked( r100ContextPtr rmesa, 
 				    const char * caller )
 {
    int ret, i;
    drm_radeon_cmd_buffer_t cmd;
 
-   if (rmesa->lost_context)
+   if (rmesa->radeon.lost_context)
       radeonBackUpAndEmitLostStateLocked(rmesa);
 
    if (RADEON_DEBUG & DEBUG_IOCTL) {
@@ -562,8 +563,8 @@ static int radeonFlushCmdBufLocked( radeonContextPtr rmesa,
 				      rmesa->state.scissor.pClipRects);
       else
 	 ret = radeonSanityCmdBuffer( rmesa, 
-				      rmesa->numClipRects,
-				      rmesa->pClipRects);
+				      rmesa->radeon.numClipRects,
+				      rmesa->radeon.pClipRects);
       if (ret) {
 	 fprintf(stderr, "drmSanityCommandWrite: %d\n", ret);	 
 	 goto out;
@@ -578,11 +579,11 @@ static int radeonFlushCmdBufLocked( radeonContextPtr rmesa,
       cmd.nbox = rmesa->state.scissor.numClipRects;
       cmd.boxes = rmesa->state.scissor.pClipRects;
    } else {
-      cmd.nbox = rmesa->numClipRects;
-      cmd.boxes = rmesa->pClipRects;
+      cmd.nbox = rmesa->radeon.numClipRects;
+      cmd.boxes = rmesa->radeon.pClipRects;
    }
 
-   ret = drmCommandWrite( rmesa->dri.fd,
+   ret = drmCommandWrite( rmesa->radeon.dri.fd,
 			  DRM_RADEON_CMDBUF,
 			  &cmd, sizeof(cmd) );
 
@@ -608,7 +609,7 @@ static int radeonFlushCmdBufLocked( radeonContextPtr rmesa,
 /* Note: does not emit any commands to avoid recursion on
  * radeonAllocCmdBuf.
  */
-void radeonFlushCmdBuf( radeonContextPtr rmesa, const char *caller )
+void radeonFlushCmdBuf( r100ContextPtr rmesa, const char *caller )
 {
    int ret;
 
@@ -630,10 +631,10 @@ void radeonFlushCmdBuf( radeonContextPtr rmesa, const char *caller )
  */
 
 
-void radeonRefillCurrentDmaRegion( radeonContextPtr rmesa )
+void radeonRefillCurrentDmaRegion( r100ContextPtr rmesa )
 {
    struct radeon_dma_buffer *dmabuf;
-   int fd = rmesa->dri.fd;
+   int fd = rmesa->radeon.dri.fd;
    int index = 0;
    int size = 0;
    drmDMAReq dma;
@@ -643,7 +644,7 @@ void radeonRefillCurrentDmaRegion( radeonContextPtr rmesa )
       fprintf(stderr, "%s\n", __FUNCTION__);  
 
    if (rmesa->dma.flush) {
-      rmesa->dma.flush( rmesa );
+      rmesa->dma.flush( rmesa->radeon.glCtx );
    }
 
    if (rmesa->dma.current.buf)
@@ -652,7 +653,7 @@ void radeonRefillCurrentDmaRegion( radeonContextPtr rmesa )
    if (rmesa->dma.nr_released_bufs > 4)
       radeonFlushCmdBuf( rmesa, __FUNCTION__ );
 
-   dma.context = rmesa->dri.hwContext;
+   dma.context = rmesa->radeon.dri.hwContext;
    dma.send_count = 0;
    dma.send_list = NULL;
    dma.send_sizes = NULL;
@@ -693,7 +694,7 @@ void radeonRefillCurrentDmaRegion( radeonContextPtr rmesa )
       fprintf(stderr, "Allocated buffer %d\n", index);
 
    dmabuf = CALLOC_STRUCT( radeon_dma_buffer );
-   dmabuf->buf = &rmesa->radeonScreen->buffers->list[index];
+   dmabuf->buf = &rmesa->radeon.radeonScreen->buffers->list[index];
    dmabuf->refcount = 1;
 
    rmesa->dma.current.buf = dmabuf;
@@ -705,7 +706,7 @@ void radeonRefillCurrentDmaRegion( radeonContextPtr rmesa )
    rmesa->c_vertexBuffers++;
 }
 
-void radeonReleaseDmaRegion( radeonContextPtr rmesa,
+void radeonReleaseDmaRegion( r100ContextPtr rmesa,
 			     struct radeon_dma_region *region,
 			     const char *caller )
 {
@@ -716,7 +717,7 @@ void radeonReleaseDmaRegion( radeonContextPtr rmesa,
       return;
 
    if (rmesa->dma.flush)
-      rmesa->dma.flush( rmesa );
+      rmesa->dma.flush( rmesa->radeon.glCtx );
 
    if (--region->buf->refcount == 0) {
       drm_radeon_cmd_header_t *cmd;
@@ -740,7 +741,7 @@ void radeonReleaseDmaRegion( radeonContextPtr rmesa,
 /* Allocates a region from rmesa->dma.current.  If there isn't enough
  * space in current, grab a new buffer (and discard what was left of current)
  */
-void radeonAllocDmaRegion( radeonContextPtr rmesa, 
+void radeonAllocDmaRegion( r100ContextPtr rmesa, 
 			   struct radeon_dma_region *region,
 			   int bytes,
 			   int alignment )
@@ -749,7 +750,7 @@ void radeonAllocDmaRegion( radeonContextPtr rmesa,
       fprintf(stderr, "%s %d\n", __FUNCTION__, bytes);
 
    if (rmesa->dma.flush)
-      rmesa->dma.flush( rmesa );
+      rmesa->dma.flush( rmesa->radeon.glCtx );
 
    if (region->buf)
       radeonReleaseDmaRegion( rmesa, region, __FUNCTION__ );
@@ -777,7 +778,7 @@ void radeonAllocDmaRegion( radeonContextPtr rmesa,
  * SwapBuffers with client-side throttling
  */
 
-static uint32_t radeonGetLastFrame (radeonContextPtr rmesa) 
+static uint32_t radeonGetLastFrame (r100ContextPtr rmesa) 
 {
    drm_radeon_getparam_t gp;
    int ret;
@@ -785,7 +786,7 @@ static uint32_t radeonGetLastFrame (radeonContextPtr rmesa)
 
    gp.param = RADEON_PARAM_LAST_FRAME;
    gp.value = (int *)&frame;
-   ret = drmCommandWriteRead( rmesa->dri.fd, DRM_RADEON_GETPARAM,
+   ret = drmCommandWriteRead( rmesa->radeon.dri.fd, DRM_RADEON_GETPARAM,
 			      &gp, sizeof(gp) );
 
    if ( ret ) {
@@ -796,13 +797,13 @@ static uint32_t radeonGetLastFrame (radeonContextPtr rmesa)
    return frame;
 }
 
-static void radeonEmitIrqLocked( radeonContextPtr rmesa )
+static void radeonEmitIrqLocked( r100ContextPtr rmesa )
 {
    drm_radeon_irq_emit_t ie;
    int ret;
 
-   ie.irq_seq = &rmesa->iw.irq_seq;
-   ret = drmCommandWriteRead( rmesa->dri.fd, DRM_RADEON_IRQ_EMIT, 
+   ie.irq_seq = &rmesa->radeon.iw.irq_seq;
+   ret = drmCommandWriteRead( rmesa->radeon.dri.fd, DRM_RADEON_IRQ_EMIT, 
 			      &ie, sizeof(ie) );
    if ( ret ) {
       fprintf( stderr, "%s: drm_radeon_irq_emit_t: %d\n", __FUNCTION__, ret );
@@ -811,13 +812,13 @@ static void radeonEmitIrqLocked( radeonContextPtr rmesa )
 }
 
 
-static void radeonWaitIrq( radeonContextPtr rmesa )
+static void radeonWaitIrq( r100ContextPtr rmesa )
 {
    int ret;
 
    do {
-      ret = drmCommandWrite( rmesa->dri.fd, DRM_RADEON_IRQ_WAIT,
-			     &rmesa->iw, sizeof(rmesa->iw) );
+      ret = drmCommandWrite( rmesa->radeon.dri.fd, DRM_RADEON_IRQ_WAIT,
+			     &rmesa->radeon.iw, sizeof(rmesa->radeon.iw) );
    } while (ret && (errno == EINTR || errno == EBUSY));
 
    if ( ret ) {
@@ -827,13 +828,13 @@ static void radeonWaitIrq( radeonContextPtr rmesa )
 }
 
 
-static void radeonWaitForFrameCompletion( radeonContextPtr rmesa )
+static void radeonWaitForFrameCompletion( r100ContextPtr rmesa )
 {
-   drm_radeon_sarea_t *sarea = rmesa->sarea;
+   drm_radeon_sarea_t *sarea = rmesa->radeon.sarea;
 
-   if (rmesa->do_irqs) {
+   if (rmesa->radeon.do_irqs) {
       if (radeonGetLastFrame(rmesa) < sarea->last_frame) {
-	 if (!rmesa->irqsEmitted) {
+	 if (!rmesa->radeon.irqsEmitted) {
 	    while (radeonGetLastFrame (rmesa) < sarea->last_frame)
 	       ;
 	 }
@@ -842,18 +843,18 @@ static void radeonWaitForFrameCompletion( radeonContextPtr rmesa )
 	    radeonWaitIrq( rmesa );	
 	    LOCK_HARDWARE( rmesa ); 
 	 }
-	 rmesa->irqsEmitted = 10;
+	 rmesa->radeon.irqsEmitted = 10;
       }
 
-      if (rmesa->irqsEmitted) {
+      if (rmesa->radeon.irqsEmitted) {
 	 radeonEmitIrqLocked( rmesa );
-	 rmesa->irqsEmitted--;
+	 rmesa->radeon.irqsEmitted--;
       }
    } 
    else {
       while (radeonGetLastFrame (rmesa) < sarea->last_frame) {
 	 UNLOCK_HARDWARE( rmesa ); 
-	 if (rmesa->do_usleeps) 
+	 if (rmesa->radeon.do_usleeps) 
 	    DO_USLEEP( 1 );
 	 LOCK_HARDWARE( rmesa ); 
       }
@@ -865,7 +866,7 @@ static void radeonWaitForFrameCompletion( radeonContextPtr rmesa )
 void radeonCopyBuffer( __DRIdrawablePrivate *dPriv,
 		       const drm_clip_rect_t	  *rect)
 {
-   radeonContextPtr rmesa;
+   r100ContextPtr rmesa;
    GLint nbox, i, ret;
    GLboolean   missed_target;
    int64_t ust;
@@ -875,10 +876,10 @@ void radeonCopyBuffer( __DRIdrawablePrivate *dPriv,
    assert(dPriv->driContextPriv);
    assert(dPriv->driContextPriv->driverPrivate);
 
-   rmesa = (radeonContextPtr) dPriv->driContextPriv->driverPrivate;
+   rmesa = (r100ContextPtr) dPriv->driContextPriv->driverPrivate;
 
    if ( RADEON_DEBUG & DEBUG_IOCTL ) {
-      fprintf( stderr, "\n%s( %p )\n\n", __FUNCTION__, (void *) rmesa->glCtx );
+      fprintf( stderr, "\n%s( %p )\n\n", __FUNCTION__, (void *) rmesa->radeon.glCtx );
    }
 
    RADEON_FIREVERTICES( rmesa );
@@ -900,7 +901,7 @@ void radeonCopyBuffer( __DRIdrawablePrivate *dPriv,
    for ( i = 0 ; i < nbox ; ) {
       GLint nr = MIN2( i + RADEON_NR_SAREA_CLIPRECTS , nbox );
       drm_clip_rect_t *box = dPriv->pClipRects;
-      drm_clip_rect_t *b = rmesa->sarea->boxes;
+      drm_clip_rect_t *b = rmesa->radeon.sarea->boxes;
       GLint n = 0;
 
       for ( ; i < nr ; i++ ) {
@@ -925,12 +926,12 @@ void radeonCopyBuffer( __DRIdrawablePrivate *dPriv,
 	  b++;
 	  n++;
       }
-      rmesa->sarea->nbox = n;
+      rmesa->radeon.sarea->nbox = n;
 
       if (!n)
 	 continue;
 
-      ret = drmCommandNone( rmesa->dri.fd, DRM_RADEON_SWAP );
+      ret = drmCommandNone( rmesa->radeon.dri.fd, DRM_RADEON_SWAP );
 
       if ( ret ) {
 	 fprintf( stderr, "DRM_RADEON_SWAP_BUFFERS: return = %d\n", ret );
@@ -943,21 +944,21 @@ void radeonCopyBuffer( __DRIdrawablePrivate *dPriv,
    if (!rect)
    {
        psp = dPriv->driScreenPriv;
-       rmesa->swap_count++;
+       rmesa->radeon.swap_count++;
        (*psp->systemTime->getUST)( & ust );
        if ( missed_target ) {
-	   rmesa->swap_missed_count++;
-	   rmesa->swap_missed_ust = ust - rmesa->swap_ust;
+	   rmesa->radeon.swap_missed_count++;
+	   rmesa->radeon.swap_missed_ust = ust - rmesa->radeon.swap_ust;
        }
 
-       rmesa->swap_ust = ust;
+       rmesa->radeon.swap_ust = ust;
        rmesa->hw.all_dirty = GL_TRUE;
    }
 }
 
 void radeonPageFlip( __DRIdrawablePrivate *dPriv )
 {
-   radeonContextPtr rmesa;
+   r100ContextPtr rmesa;
    GLint ret;
    GLboolean   missed_target;
    __DRIscreenPrivate *psp;
@@ -966,12 +967,12 @@ void radeonPageFlip( __DRIdrawablePrivate *dPriv )
    assert(dPriv->driContextPriv);
    assert(dPriv->driContextPriv->driverPrivate);
 
-   rmesa = (radeonContextPtr) dPriv->driContextPriv->driverPrivate;
+   rmesa = (r100ContextPtr) dPriv->driContextPriv->driverPrivate;
    psp = dPriv->driScreenPriv;
 
    if ( RADEON_DEBUG & DEBUG_IOCTL ) {
       fprintf(stderr, "%s: pfCurrentPage: %d\n", __FUNCTION__,
-	      rmesa->sarea->pfCurrentPage);
+	      rmesa->radeon.sarea->pfCurrentPage);
    }
 
    RADEON_FIREVERTICES( rmesa );
@@ -982,9 +983,9 @@ void radeonPageFlip( __DRIdrawablePrivate *dPriv )
    if (dPriv->numClipRects)
    {
       drm_clip_rect_t *box = dPriv->pClipRects;
-      drm_clip_rect_t *b = rmesa->sarea->boxes;
+      drm_clip_rect_t *b = rmesa->radeon.sarea->boxes;
       b[0] = box[0];
-      rmesa->sarea->nbox = 1;
+      rmesa->radeon.sarea->nbox = 1;
    }
 
    /* Throttle the frame rate -- only allow a few pending swap buffers
@@ -994,12 +995,12 @@ void radeonPageFlip( __DRIdrawablePrivate *dPriv )
    UNLOCK_HARDWARE( rmesa );
    driWaitForVBlank( dPriv, & missed_target );
    if ( missed_target ) {
-      rmesa->swap_missed_count++;
-      (void) (*psp->systemTime->getUST)( & rmesa->swap_missed_ust );
+      rmesa->radeon.swap_missed_count++;
+      (void) (*psp->systemTime->getUST)( & rmesa->radeon.swap_missed_ust );
    }
    LOCK_HARDWARE( rmesa );
 
-   ret = drmCommandNone( rmesa->dri.fd, DRM_RADEON_FLIP );
+   ret = drmCommandNone( rmesa->radeon.dri.fd, DRM_RADEON_FLIP );
 
    UNLOCK_HARDWARE( rmesa );
 
@@ -1008,16 +1009,16 @@ void radeonPageFlip( __DRIdrawablePrivate *dPriv )
       exit( 1 );
    }
 
-   rmesa->swap_count++;
-   (void) (*psp->systemTime->getUST)( & rmesa->swap_ust );
+   rmesa->radeon.swap_count++;
+   (void) (*psp->systemTime->getUST)( & rmesa->radeon.swap_ust );
 
    /* Get ready for drawing next frame.  Update the renderbuffers'
     * flippedOffset/Pitch fields so we draw into the right place.
     */
-   driFlipRenderbuffers(rmesa->glCtx->WinSysDrawBuffer,
-                        rmesa->sarea->pfCurrentPage);
+   driFlipRenderbuffers(rmesa->radeon.glCtx->WinSysDrawBuffer,
+                        rmesa->radeon.sarea->pfCurrentPage);
 
-   radeonUpdateDrawBuffer(rmesa->glCtx);
+   radeonUpdateDrawBuffer(rmesa->radeon.glCtx);
 }
 
 
@@ -1028,9 +1029,9 @@ void radeonPageFlip( __DRIdrawablePrivate *dPriv )
 
 static void radeonClear( GLcontext *ctx, GLbitfield mask )
 {
-   radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
-   __DRIdrawablePrivate *dPriv = rmesa->dri.drawable;
-   drm_radeon_sarea_t *sarea = rmesa->sarea;
+   r100ContextPtr rmesa = R100_CONTEXT(ctx);
+   __DRIdrawablePrivate *dPriv = rmesa->radeon.dri.drawable;
+   drm_radeon_sarea_t *sarea = rmesa->radeon.sarea;
    uint32_t clear;
    GLuint flags = 0;
    GLuint color_mask = 0;
@@ -1083,7 +1084,7 @@ static void radeonClear( GLcontext *ctx, GLbitfield mask )
 
    if (rmesa->using_hyperz) {
       flags |= RADEON_USE_COMP_ZBUF;
-/*      if (rmesa->radeonScreen->chipset & RADEON_CHIPSET_TCL) 
+/*      if (rmesa->radeon.radeonScreen->chipset & RADEON_CHIPSET_TCL) 
          flags |= RADEON_USE_HIERZ; */
       if (!(rmesa->state.stencil.hwBuffer) ||
 	 ((flags & RADEON_DEPTH) && (flags & RADEON_STENCIL) &&
@@ -1112,7 +1113,7 @@ static void radeonClear( GLcontext *ctx, GLbitfield mask )
 
       gp.param = RADEON_PARAM_LAST_CLEAR;
       gp.value = (int *)&clear;
-      ret = drmCommandWriteRead( rmesa->dri.fd,
+      ret = drmCommandWriteRead( rmesa->radeon.dri.fd,
 				 DRM_RADEON_GETPARAM, &gp, sizeof(gp) );
 
       if ( ret ) {
@@ -1124,7 +1125,7 @@ static void radeonClear( GLcontext *ctx, GLbitfield mask )
 	 break;
       }
 
-      if ( rmesa->do_usleeps ) {
+      if ( rmesa->radeon.do_usleeps ) {
 	 UNLOCK_HARDWARE( rmesa );
 	 DO_USLEEP( 1 );
 	 LOCK_HARDWARE( rmesa );
@@ -1137,7 +1138,7 @@ static void radeonClear( GLcontext *ctx, GLbitfield mask )
    for ( i = 0 ; i < dPriv->numClipRects ; ) {
       GLint nr = MIN2( i + RADEON_NR_SAREA_CLIPRECTS, dPriv->numClipRects );
       drm_clip_rect_t *box = dPriv->pClipRects;
-      drm_clip_rect_t *b = rmesa->sarea->boxes;
+      drm_clip_rect_t *b = rmesa->radeon.sarea->boxes;
       drm_radeon_clear_t clear;
       drm_radeon_clear_rect_t depth_boxes[RADEON_NR_SAREA_CLIPRECTS];
       GLint n = 0;
@@ -1172,7 +1173,7 @@ static void radeonClear( GLcontext *ctx, GLbitfield mask )
 	 }
       }
 
-      rmesa->sarea->nbox = n;
+      rmesa->radeon.sarea->nbox = n;
 
       clear.flags       = flags;
       clear.clear_color = rmesa->state.color.clear;
@@ -1182,7 +1183,7 @@ static void radeonClear( GLcontext *ctx, GLbitfield mask )
       clear.depth_boxes = depth_boxes;
 
       n--;
-      b = rmesa->sarea->boxes;
+      b = rmesa->radeon.sarea->boxes;
       for ( ; n >= 0 ; n-- ) {
 	 depth_boxes[n].f[CLEAR_X1] = (float)b[n].x1;
 	 depth_boxes[n].f[CLEAR_Y1] = (float)b[n].y1;
@@ -1192,7 +1193,7 @@ static void radeonClear( GLcontext *ctx, GLbitfield mask )
 	    (float)rmesa->state.depth.clear;
       }
 
-      ret = drmCommandWrite( rmesa->dri.fd, DRM_RADEON_CLEAR,
+      ret = drmCommandWrite( rmesa->radeon.dri.fd, DRM_RADEON_CLEAR,
 			     &clear, sizeof(drm_radeon_clear_t));
 
       if ( ret ) {
@@ -1207,9 +1208,9 @@ static void radeonClear( GLcontext *ctx, GLbitfield mask )
 }
 
 
-void radeonWaitForIdleLocked( radeonContextPtr rmesa )
+void radeonWaitForIdleLocked( r100ContextPtr rmesa )
 {
-    int fd = rmesa->dri.fd;
+    int fd = rmesa->radeon.dri.fd;
     int to = 0;
     int ret, i = 0;
 
@@ -1229,7 +1230,7 @@ void radeonWaitForIdleLocked( radeonContextPtr rmesa )
 }
 
 
-static void radeonWaitForIdle( radeonContextPtr rmesa )
+static void radeonWaitForIdle( r100ContextPtr rmesa )
 {
    LOCK_HARDWARE(rmesa);
    radeonWaitForIdleLocked( rmesa );
@@ -1239,13 +1240,13 @@ static void radeonWaitForIdle( radeonContextPtr rmesa )
 
 void radeonFlush( GLcontext *ctx )
 {
-   radeonContextPtr rmesa = RADEON_CONTEXT( ctx );
+   r100ContextPtr rmesa = R100_CONTEXT( ctx );
 
    if (RADEON_DEBUG & DEBUG_IOCTL)
       fprintf(stderr, "%s\n", __FUNCTION__);
 
    if (rmesa->dma.flush)
-      rmesa->dma.flush( rmesa );
+      rmesa->dma.flush( rmesa->radeon.glCtx );
 
    radeonEmitState( rmesa );
    
@@ -1258,10 +1259,10 @@ void radeonFlush( GLcontext *ctx )
  */
 void radeonFinish( GLcontext *ctx )
 {
-   radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
+   r100ContextPtr rmesa = R100_CONTEXT(ctx);
    radeonFlush( ctx );
 
-   if (rmesa->do_irqs) {
+   if (rmesa->radeon.do_irqs) {
       LOCK_HARDWARE( rmesa );
       radeonEmitIrqLocked( rmesa );
       UNLOCK_HARDWARE( rmesa );

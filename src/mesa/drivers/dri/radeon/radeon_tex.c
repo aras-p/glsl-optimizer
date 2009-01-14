@@ -287,11 +287,11 @@ static const struct gl_texture_format *
 radeonChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
                            GLenum format, GLenum type )
 {
-   radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
+   r100ContextPtr rmesa = R100_CONTEXT(ctx);
    const GLboolean do32bpt =
-       ( rmesa->texture_depth == DRI_CONF_TEXTURE_DEPTH_32 );
+       ( rmesa->radeon.texture_depth == DRI_CONF_TEXTURE_DEPTH_32 );
    const GLboolean force16bpt =
-       ( rmesa->texture_depth == DRI_CONF_TEXTURE_DEPTH_FORCE_16 );
+       ( rmesa->radeon.texture_depth == DRI_CONF_TEXTURE_DEPTH_FORCE_16 );
    (void) format;
 
    switch ( internalFormat ) {
@@ -670,7 +670,7 @@ static void radeonCompressedTexSubImage2D( GLcontext *ctx, GLenum target, GLint 
 static void radeonTexEnv( GLcontext *ctx, GLenum target,
 			  GLenum pname, const GLfloat *param )
 {
-   radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
+   r100ContextPtr rmesa = R100_CONTEXT(ctx);
    GLuint unit = ctx->Texture.CurrentUnit;
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
 
@@ -701,7 +701,7 @@ static void radeonTexEnv( GLcontext *ctx, GLenum target,
        * functions, one mapping [-1.0,0.0] to [-128,0] and one mapping
        * [0.0,4.0] to [0,127].
        */
-      min = driQueryOptionb (&rmesa->optionCache, "no_neg_lod_bias") ?
+      min = driQueryOptionb (&rmesa->radeon.optionCache, "no_neg_lod_bias") ?
 	  0.0 : -1.0;
       bias = CLAMP( *param, min, 4.0 );
       if ( bias == 0 ) {
@@ -797,7 +797,7 @@ static void radeonBindTexture( GLcontext *ctx, GLenum target,
 static void radeonDeleteTexture( GLcontext *ctx,
 				 struct gl_texture_object *texObj )
 {
-   radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
+   r100ContextPtr rmesa = R100_CONTEXT(ctx);
    driTextureObject * t = (driTextureObject *) texObj->DriverData;
 
    if ( RADEON_DEBUG & (DEBUG_STATE|DEBUG_TEXTURE) ) {
@@ -832,7 +832,7 @@ static void radeonTexGen( GLcontext *ctx,
 			  GLenum pname,
 			  const GLfloat *params )
 {
-   radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
+   r100ContextPtr rmesa = R100_CONTEXT(ctx);
    GLuint unit = ctx->Texture.CurrentUnit;
    rmesa->recheck_texgen[unit] = GL_TRUE;
 }
@@ -846,12 +846,12 @@ static void radeonTexGen( GLcontext *ctx,
 static struct gl_texture_object *
 radeonNewTextureObject( GLcontext *ctx, GLuint name, GLenum target )
 {
-   radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
+   r100ContextPtr rmesa = R100_CONTEXT(ctx);
    struct gl_texture_object *obj;
    obj = _mesa_new_texture_object(ctx, name, target);
    if (!obj)
       return NULL;
-   obj->MaxAnisotropy = rmesa->initialMaxAnisotropy;
+   obj->MaxAnisotropy = rmesa->radeon.initialMaxAnisotropy;
    radeonAllocTexObj( obj );
    return obj;
 }

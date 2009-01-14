@@ -51,10 +51,10 @@ int prevLockLine = 0;
 static void
 r200UpdatePageFlipping( r200ContextPtr rmesa )
 {
-   rmesa->doPageFlip = rmesa->sarea->pfState;
-   if (rmesa->glCtx->WinSysDrawBuffer) {
-      driFlipRenderbuffers(rmesa->glCtx->WinSysDrawBuffer,
-                           rmesa->sarea->pfCurrentPage);
+   rmesa->radeon.doPageFlip = rmesa->radeon.sarea->pfState;
+   if (rmesa->radeon.glCtx->WinSysDrawBuffer) {
+      driFlipRenderbuffers(rmesa->radeon.glCtx->WinSysDrawBuffer,
+                           rmesa->radeon.sarea->pfCurrentPage);
    }
 }
 
@@ -70,13 +70,13 @@ r200UpdatePageFlipping( r200ContextPtr rmesa )
  */
 void r200GetLock( r200ContextPtr rmesa, GLuint flags )
 {
-   __DRIdrawablePrivate *drawable = rmesa->dri.drawable;
-   __DRIdrawablePrivate *readable = rmesa->dri.readable;
-   __DRIscreenPrivate *sPriv = rmesa->dri.screen;
-   drm_radeon_sarea_t *sarea = rmesa->sarea;
+   __DRIdrawablePrivate *drawable = rmesa->radeon.dri.drawable;
+   __DRIdrawablePrivate *readable = rmesa->radeon.dri.readable;
+   __DRIscreenPrivate *sPriv = rmesa->radeon.dri.screen;
+   drm_radeon_sarea_t *sarea = rmesa->radeon.sarea;
    int i;
 
-   drmGetLock( rmesa->dri.fd, rmesa->dri.hwContext, flags );
+   drmGetLock( rmesa->radeon.dri.fd, rmesa->radeon.dri.hwContext, flags );
 
    /* The window might have moved, so we might need to get new clip
     * rects.
@@ -91,26 +91,26 @@ void r200GetLock( r200ContextPtr rmesa, GLuint flags )
       DRI_VALIDATE_DRAWABLE_INFO( sPriv, readable );
    }
 
-   if ( rmesa->lastStamp != drawable->lastStamp ) {
+   if ( rmesa->radeon.lastStamp != drawable->lastStamp ) {
       r200UpdatePageFlipping( rmesa );
       r200SetCliprects( rmesa );
-      r200UpdateViewportOffset( rmesa->glCtx );
-      driUpdateFramebufferSize(rmesa->glCtx, drawable);
+      r200UpdateViewportOffset( rmesa->radeon.glCtx );
+      driUpdateFramebufferSize(rmesa->radeon.glCtx, drawable);
    }
 
    R200_STATECHANGE( rmesa, ctx );
-   if (rmesa->sarea->tiling_enabled) {
+   if (rmesa->radeon.sarea->tiling_enabled) {
       rmesa->hw.ctx.cmd[CTX_RB3D_COLORPITCH] |= R200_COLOR_TILE_ENABLE;
    }
    else rmesa->hw.ctx.cmd[CTX_RB3D_COLORPITCH] &= ~R200_COLOR_TILE_ENABLE;
 
-   if ( sarea->ctx_owner != rmesa->dri.hwContext ) {
-      sarea->ctx_owner = rmesa->dri.hwContext;
+   if ( sarea->ctx_owner != rmesa->radeon.dri.hwContext ) {
+      sarea->ctx_owner = rmesa->radeon.dri.hwContext;
    }
 
-   for ( i = 0 ; i < rmesa->nr_heaps ; i++ ) {
-      DRI_AGE_TEXTURES( rmesa->texture_heaps[ i ] );
+   for ( i = 0 ; i < rmesa->radeon.nr_heaps ; i++ ) {
+      DRI_AGE_TEXTURES( rmesa->radeon.texture_heaps[ i ] );
    }
 
-   rmesa->lost_context = GL_TRUE;
+   rmesa->radeon.lost_context = GL_TRUE;
 }

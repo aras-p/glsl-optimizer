@@ -259,7 +259,7 @@ static void r200SpanRenderStart( GLcontext *ctx )
       driRenderbuffer *drb =
 	 (driRenderbuffer *) ctx->WinSysDrawBuffer->_ColorDrawBuffers[0];
       volatile int *buf =
-	 (volatile int *)(rmesa->dri.screen->pFB + drb->offset);
+	 (volatile int *)(rmesa->radeon.dri.screen->pFB + drb->offset);
       p = *buf;
       *buf = p;
    }

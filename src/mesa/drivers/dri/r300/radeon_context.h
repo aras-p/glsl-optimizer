@@ -49,20 +49,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "drm.h"
 #include "dri_util.h"
 
-struct radeon_context;
-typedef struct radeon_context radeonContextRec;
-typedef struct radeon_context *radeonContextPtr;
-
-/* Rasterizing fallbacks */
-/* See correponding strings in r200_swtcl.c */
-#define RADEON_FALLBACK_TEXTURE		0x0001
-#define RADEON_FALLBACK_DRAW_BUFFER	0x0002
-#define RADEON_FALLBACK_STENCIL		0x0004
-#define RADEON_FALLBACK_RENDER_MODE	0x0008
-#define RADEON_FALLBACK_BLEND_EQ	0x0010
-#define RADEON_FALLBACK_BLEND_FUNC	0x0020
-#define RADEON_FALLBACK_DISABLE		0x0040
-#define RADEON_FALLBACK_BORDER_MODE	0x0080
+#include "radeon_screen.h"
+#include "common_context.h"
 
 #if R200_MERGED
 extern void radeonFallback(GLcontext * ctx, GLuint bit, GLboolean mode);
@@ -99,96 +87,6 @@ extern void radeonTclFallback(GLcontext * ctx, GLuint bit, GLboolean mode);
 #define TCL_FALLBACK( ctx, bit, mode )	;
 #endif
 
-struct radeon_dri_mirror {
-	__DRIcontextPrivate *context;	/* DRI context */
-	__DRIscreenPrivate *screen;	/* DRI screen */
-	/**
-	 * DRI drawable bound to this context for drawing.
-	 */
-	__DRIdrawablePrivate *drawable;
-
-	/**
-	 * DRI drawable bound to this context for reading.
-	 */
-	__DRIdrawablePrivate *readable;
-
-	drm_context_t hwContext;
-	drm_hw_lock_t *hwLock;
-	int fd;
-	int drmMinor;
-};
-
-/**
- * Derived state for internal purposes.
- */
-struct radeon_scissor_state {
-	drm_clip_rect_t rect;
-	GLboolean enabled;
-
-	GLuint numClipRects;	/* Cliprects active */
-	GLuint numAllocedClipRects;	/* Cliprects available */
-	drm_clip_rect_t *pClipRects;
-};
-
-struct radeon_colorbuffer_state {
-	GLuint clear;
-	struct radeon_renderbuffer *rrb;
-};
-
-struct radeon_state {
-	struct radeon_colorbuffer_state color;
-	struct radeon_scissor_state scissor;
-	struct radeon_renderbuffer *depth_buffer;
-};
-
-/**
- * Common per-context variables shared by R200 and R300.
- * R200- and R300-specific code "derive" their own context from this
- * structure.
- */
-struct radeon_context {
-	GLcontext *glCtx;	/* Mesa context */
-	radeonScreenPtr radeonScreen;	/* Screen private DRI data */
-
-	/* Fallback state */
-	GLuint Fallback;
-	GLuint TclFallback;
-
-	/* Page flipping */
-	GLuint doPageFlip;
-
-	/* Drawable, cliprect and scissor information */
-	GLuint numClipRects;	/* Cliprects for the draw buffer */
-	drm_clip_rect_t *pClipRects;
-	unsigned int lastStamp;
-	GLboolean lost_context;
-	drm_radeon_sarea_t *sarea;	/* Private SAREA data */
-
-	/* Mirrors of some DRI state */
-	struct radeon_dri_mirror dri;
-
-	/* Busy waiting */
-	GLuint do_usleeps;
-	GLuint do_irqs;
-	GLuint irqsEmitted;
-	drm_radeon_irq_wait_t iw;
-
-	/* buffer swap */
-	int64_t swap_ust;
-	int64_t swap_missed_ust;
-
-	GLuint swap_count;
-	GLuint swap_missed_count;
-
-	/* Derived state */
-	struct radeon_state state;
-
-	/* Configuration cache
-	 */
-	driOptionCache optionCache;
-};
-
-#define RADEON_CONTEXT(glctx) ((radeonContextPtr)(ctx->DriverCtx))
 
 extern void radeonSwapBuffers(__DRIdrawablePrivate * dPriv);
 extern void radeonCopySubBuffer(__DRIdrawablePrivate * dPriv,
@@ -216,18 +114,6 @@ extern int RADEON_DEBUG;
 #define RADEON_DEBUG		0
 #endif
 
-#define DEBUG_TEXTURE	0x0001
-#define DEBUG_STATE	0x0002
-#define DEBUG_IOCTL	0x0004
-#define DEBUG_PRIMS	0x0008
-#define DEBUG_VERTS	0x0010
-#define DEBUG_FALLBACKS	0x0020
-#define DEBUG_VFMT	0x0040
-#define DEBUG_CODEGEN	0x0080
-#define DEBUG_VERBOSE	0x0100
-#define DEBUG_DRI       0x0200
-#define DEBUG_DMA       0x0400
-#define DEBUG_SANITY    0x0800
 #define DEBUG_SYNC      0x1000
 #define DEBUG_PIXEL     0x2000
 #define DEBUG_MEMORY    0x4000

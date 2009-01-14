@@ -40,29 +40,30 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_lock.h"
 
 
-extern void radeonEmitState( radeonContextPtr rmesa );
-extern void radeonEmitVertexAOS( radeonContextPtr rmesa,
+extern void radeonEmitState( r100ContextPtr rmesa );
+extern void radeonEmitVertexAOS( r100ContextPtr rmesa,
 				 GLuint vertex_size,
 				 GLuint offset );
 
-extern void radeonEmitVbufPrim( radeonContextPtr rmesa,
+extern void radeonEmitVbufPrim( r100ContextPtr rmesa,
 				GLuint vertex_format,
 				GLuint primitive,
 				GLuint vertex_nr );
 
-extern void radeonFlushElts( radeonContextPtr rmesa );
+extern void radeonFlushElts( GLcontext *ctx );
+			    
 
-extern GLushort *radeonAllocEltsOpenEnded( radeonContextPtr rmesa,
+extern GLushort *radeonAllocEltsOpenEnded( r100ContextPtr rmesa,
 					   GLuint vertex_format,
 					   GLuint primitive,
 					   GLuint min_nr );
 
-extern void radeonEmitAOS( radeonContextPtr rmesa,
+extern void radeonEmitAOS( r100ContextPtr rmesa,
 			   struct radeon_dma_region **regions,
 			   GLuint n,
 			   GLuint offset );
 
-extern void radeonEmitBlit( radeonContextPtr rmesa,
+extern void radeonEmitBlit( r100ContextPtr rmesa,
 			    GLuint color_fmt,
 			    GLuint src_pitch,
 			    GLuint src_offset,
@@ -72,17 +73,17 @@ extern void radeonEmitBlit( radeonContextPtr rmesa,
 			    GLint dstx, GLint dsty,
 			    GLuint w, GLuint h );
 
-extern void radeonEmitWait( radeonContextPtr rmesa, GLuint flags );
+extern void radeonEmitWait( r100ContextPtr rmesa, GLuint flags );
 
-extern void radeonFlushCmdBuf( radeonContextPtr rmesa, const char * );
-extern void radeonRefillCurrentDmaRegion( radeonContextPtr rmesa );
+extern void radeonFlushCmdBuf( r100ContextPtr rmesa, const char * );
+extern void radeonRefillCurrentDmaRegion( r100ContextPtr rmesa );
 
-extern void radeonAllocDmaRegion( radeonContextPtr rmesa,
+extern void radeonAllocDmaRegion( r100ContextPtr rmesa,
 				  struct radeon_dma_region *region,
 				  int bytes, 
 				  int alignment );
 
-extern void radeonReleaseDmaRegion( radeonContextPtr rmesa,
+extern void radeonReleaseDmaRegion( r100ContextPtr rmesa,
 				    struct radeon_dma_region *region,
 				    const char *caller );
 
@@ -91,11 +92,11 @@ extern void radeonCopyBuffer( __DRIdrawablePrivate *drawable,
 extern void radeonPageFlip( __DRIdrawablePrivate *drawable );
 extern void radeonFlush( GLcontext *ctx );
 extern void radeonFinish( GLcontext *ctx );
-extern void radeonWaitForIdleLocked( radeonContextPtr rmesa );
-extern void radeonWaitForVBlank( radeonContextPtr rmesa );
+extern void radeonWaitForIdleLocked( r100ContextPtr rmesa );
+extern void radeonWaitForVBlank( r100ContextPtr rmesa );
 extern void radeonInitIoctlFuncs( GLcontext *ctx );
-extern void radeonGetAllParams( radeonContextPtr rmesa );
-extern void radeonSetUpAtomList( radeonContextPtr rmesa );
+extern void radeonGetAllParams( r100ContextPtr rmesa );
+extern void radeonSetUpAtomList( r100ContextPtr rmesa );
 
 /* ================================================================
  * Helper macros:
@@ -106,7 +107,7 @@ extern void radeonSetUpAtomList( radeonContextPtr rmesa );
 #define RADEON_NEWPRIM( rmesa )			\
 do {						\
    if ( rmesa->dma.flush )			\
-      rmesa->dma.flush( rmesa );	\
+      rmesa->dma.flush( rmesa->radeon.glCtx );	\
 } while (0)
 
 /* Can accomodate several state changes and primitive changes without
@@ -124,11 +125,11 @@ do {								\
 	   rmesa->hw.ATOM.cmd_size * 4)
 
 static INLINE int RADEON_DB_STATECHANGE( 
-   radeonContextPtr rmesa,
+   r100ContextPtr rmesa,
    struct radeon_state_atom *atom )
 {
    if (memcmp(atom->cmd, atom->lastcmd, atom->cmd_size*4)) {
-      int *tmp;
+      GLuint *tmp;
       RADEON_NEWPRIM( rmesa );
       atom->dirty = GL_TRUE;
       rmesa->hw.is_dirty = GL_TRUE;
@@ -147,7 +148,7 @@ static INLINE int RADEON_DB_STATECHANGE(
 #define RADEON_FIREVERTICES( rmesa )			\
 do {							\
    if ( rmesa->store.cmd_used || rmesa->dma.flush ) {	\
-      radeonFlush( rmesa->glCtx );			\
+      radeonFlush( rmesa->radeon.glCtx );			\
    }							\
 } while (0)
 
@@ -176,7 +177,7 @@ do {							\
  * and hang on to the lock until the critical section is finished and we flush
  * the buffer again and unlock.
  */
-static INLINE void radeonEnsureCmdBufSpace( radeonContextPtr rmesa,
+static INLINE void radeonEnsureCmdBufSpace( r100ContextPtr rmesa,
 					      int bytes )
 {
    if (rmesa->store.cmd_used + bytes > RADEON_CMD_BUF_SZ)
@@ -186,7 +187,7 @@ static INLINE void radeonEnsureCmdBufSpace( radeonContextPtr rmesa,
 
 /* Alloc space in the command buffer
  */
-static INLINE char *radeonAllocCmdBuf( radeonContextPtr rmesa,
+static INLINE char *radeonAllocCmdBuf( r100ContextPtr rmesa,
 					 int bytes, const char *where )
 {
    if (rmesa->store.cmd_used + bytes > RADEON_CMD_BUF_SZ)

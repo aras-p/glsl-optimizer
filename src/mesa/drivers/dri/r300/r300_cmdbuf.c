@@ -136,10 +136,10 @@ void r300BeginBatch(r300ContextPtr r300, int n,
 }
 
 static void r300PrintStateAtom(r300ContextPtr r300,
-                               struct r300_state_atom *state)
+                               struct radeon_state_atom *state)
 {
 	int i;
-	int dwords = (*state->check) (r300, state);
+	int dwords = (*state->check) (r300->radeon.glCtx, state);
 
 	fprintf(stderr, "  emit %s %d/%d\n", state->name, dwords, state->cmd_size);
 
@@ -160,7 +160,7 @@ static void r300PrintStateAtom(r300ContextPtr r300,
 static INLINE void r300EmitAtoms(r300ContextPtr r300, GLboolean dirty)
 {
 	BATCH_LOCALS(r300);
-	struct r300_state_atom *atom;
+	struct radeon_state_atom *atom;
 	int dwords;
 
     cp_wait(r300, R300_WAIT_3D | R300_WAIT_3D_CLEAN);
@@ -173,13 +173,13 @@ static INLINE void r300EmitAtoms(r300ContextPtr r300, GLboolean dirty)
 	/* Emit actual atoms */
 	foreach(atom, &r300->hw.atomlist) {
 		if ((atom->dirty || r300->hw.all_dirty) == dirty) {
-			dwords = (*atom->check) (r300, atom);
+			dwords = (*atom->check) (r300->radeon.glCtx, atom);
 			if (dwords) {
 				if (DEBUG_CMDBUF && RADEON_DEBUG & DEBUG_STATE) {
 					r300PrintStateAtom(r300, atom);
 				}
 				if (atom->emit) {
-					(*atom->emit)(r300, atom);
+					(*atom->emit)(r300->radeon.glCtx, atom);
 				} else {
 					BEGIN_BATCH_NO_AUTOSTATE(dwords);
 					OUT_BATCH_TABLE(atom->cmd, dwords);
@@ -246,15 +246,16 @@ static unsigned packet0_count(r300ContextPtr r300, uint32_t *pkt)
 #define vpu_count(ptr) (((drm_r300_cmd_header_t*)(ptr))->vpu.count)
 #define r500fp_count(ptr) (((drm_r300_cmd_header_t*)(ptr))->r500fp.count)
 
-void emit_vpu(r300ContextPtr r300, struct r300_state_atom * atom)
+void emit_vpu(GLcontext *ctx, struct radeon_state_atom * atom)
 {
+	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	BATCH_LOCALS(r300);
 	drm_r300_cmd_header_t cmd;
     uint32_t addr, ndw, i;
 
     if (!r300->radeon.radeonScreen->kernel_mm) {
         uint32_t dwords;
-    	dwords = (*atom->check) (r300, atom);
+    	dwords = (*atom->check) (ctx, atom);
         BEGIN_BATCH_NO_AUTOSTATE(dwords);
         OUT_BATCH_TABLE(atom->cmd, dwords);
         END_BATCH();
@@ -284,8 +285,9 @@ void emit_vpu(r300ContextPtr r300, struct r300_state_atom * atom)
     }
 }
 
-void emit_r500fp(r300ContextPtr r300, struct r300_state_atom * atom)
+void emit_r500fp(GLcontext *ctx, struct radeon_state_atom * atom)
 {
+	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	BATCH_LOCALS(r300);
 	drm_r300_cmd_header_t cmd;
 	uint32_t addr, ndw, i, sz;
@@ -293,7 +295,7 @@ void emit_r500fp(r300ContextPtr r300, struct r300_state_atom * atom)
 
 	if (!r300->radeon.radeonScreen->kernel_mm) {
 		uint32_t dwords;
-		dwords = (*atom->check) (r300, atom);
+		dwords = (*atom->check) (ctx, atom);
 		BEGIN_BATCH_NO_AUTOSTATE(dwords);
 		OUT_BATCH_TABLE(atom->cmd, dwords);
 		END_BATCH();
@@ -323,8 +325,9 @@ void emit_r500fp(r300ContextPtr r300, struct r300_state_atom * atom)
 	}
 }
 
-static void emit_tex_offsets(r300ContextPtr r300, struct r300_state_atom * atom)
+static void emit_tex_offsets(GLcontext *ctx, struct radeon_state_atom * atom)
 {
+	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	BATCH_LOCALS(r300);
 	int numtmus = packet0_count(r300, r300->hw.tex.offset.cmd);
 
@@ -353,8 +356,9 @@ static void emit_tex_offsets(r300ContextPtr r300, struct r300_state_atom * atom)
 	}
 }
 
-static void emit_cb_offset(r300ContextPtr r300, struct r300_state_atom * atom)
+static void emit_cb_offset(GLcontext *ctx, struct radeon_state_atom * atom)
 {
+	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	BATCH_LOCALS(r300);
 	struct radeon_renderbuffer *rrb;
 	uint32_t cbpitch;
@@ -362,7 +366,7 @@ static void emit_cb_offset(r300ContextPtr r300, struct r300_state_atom * atom)
 
 	rrb = r300->radeon.state.color.rrb;
 	if (r300->radeon.radeonScreen->driScreen->dri2.enabled) {
-		rrb = fb->Attachment[BUFFER_BACK_LEFT].Renderbuffer;
+		rrb = (struct radeon_renderbuffer *)fb->Attachment[BUFFER_BACK_LEFT].Renderbuffer;
 	}
 	if (!rrb || !rrb->bo) {
 		fprintf(stderr, "no rrb\n");
@@ -386,8 +390,9 @@ static void emit_cb_offset(r300ContextPtr r300, struct r300_state_atom * atom)
 	END_BATCH();
 }
 
-static void emit_zb_offset(r300ContextPtr r300, struct r300_state_atom * atom)
+static void emit_zb_offset(GLcontext *ctx, struct radeon_state_atom * atom)
 {
+	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	BATCH_LOCALS(r300);
 	struct radeon_renderbuffer *rrb;
 	uint32_t zbpitch;
@@ -411,22 +416,23 @@ static void emit_zb_offset(r300ContextPtr r300, struct r300_state_atom * atom)
 	END_BATCH();
 }
 
-static int check_always(r300ContextPtr r300, struct r300_state_atom *atom)
+static int check_always(GLcontext *ctx, struct radeon_state_atom *atom)
 {
 	return atom->cmd_size;
 }
 
-static int check_variable(r300ContextPtr r300, struct r300_state_atom *atom)
+static int check_variable(GLcontext *ctx, struct radeon_state_atom *atom)
 {
+	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	int cnt;
-    if (atom->cmd[0] == CP_PACKET2) {
-        return 0;
-    }
+	if (atom->cmd[0] == CP_PACKET2) {
+		return 0;
+	}
 	cnt = packet0_count(r300, atom->cmd);
 	return cnt ? cnt + 1 : 0;
 }
 
-int check_vpu(r300ContextPtr r300, struct r300_state_atom *atom)
+int check_vpu(GLcontext *ctx, struct radeon_state_atom *atom)
 {
 	int cnt;
 
@@ -434,7 +440,7 @@ int check_vpu(r300ContextPtr r300, struct r300_state_atom *atom)
 	return cnt ? (cnt * 4) + 1 : 0;
 }
 
-int check_r500fp(r300ContextPtr r300, struct r300_state_atom *atom)
+int check_r500fp(GLcontext *ctx, struct radeon_state_atom *atom)
 {
 	int cnt;
 
@@ -442,7 +448,7 @@ int check_r500fp(r300ContextPtr r300, struct r300_state_atom *atom)
 	return cnt ? (cnt * 6) + 1 : 0;
 }
 
-int check_r500fp_const(r300ContextPtr r300, struct r300_state_atom *atom)
+int check_r500fp_const(GLcontext *ctx, struct radeon_state_atom *atom)
 {
 	int cnt;
 
@@ -774,7 +780,7 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	if (size > 64 * 256)
 		size = 64 * 256;
 
-    size = 64 * 1024 / 4;
+	size = 64 * 1024 / 4;
 	if (RADEON_DEBUG & (DEBUG_IOCTL | DEBUG_DMA)) {
 		fprintf(stderr, "sizeof(drm_r300_cmd_header_t)=%zd\n",
 			sizeof(drm_r300_cmd_header_t));
@@ -805,7 +811,7 @@ void r300InitCmdBuf(r300ContextPtr r300)
  */
 void r300DestroyCmdBuf(r300ContextPtr r300)
 {
-	struct r300_state_atom *atom;
+	struct radeon_state_atom *atom;
 
     radeon_cs_destroy(r300->cmdbuf.cs);
 	foreach(atom, &r300->hw.atomlist) {

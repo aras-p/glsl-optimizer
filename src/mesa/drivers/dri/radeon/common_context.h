@@ -1,9 +1,18 @@
+
+#ifndef COMMON_CONTEXT_H
+#define COMMON_CONTEXT_H
 /* This union is used to avoid warnings/miscompilation
    with float to uint32_t casts due to strict-aliasing */
 typedef union { GLfloat f; uint32_t ui32; } float_ui32_type;
 
+struct radeon_context;
+typedef struct radeon_context radeonContextRec;
+typedef struct radeon_context *radeonContextPtr;
+
 #include "main/mm.h"
 #include "math/m_vector.h"
+#include "texmem.h"
+#include "tnl/t_context.h"
 
 
 #define TEX_0   0x1
@@ -45,11 +54,13 @@ typedef union { GLfloat f; uint32_t ui32; } float_ui32_type;
 struct radeon_colorbuffer_state {
 	GLuint clear;
 	int roundEnable;
+	struct radeon_renderbuffer *rrb;
 };
 
 struct radeon_depthbuffer_state {
 	GLuint clear;
 	GLfloat scale;
+	struct radeon_renderbuffer *rrb;
 };
 
 struct radeon_scissor_state {
@@ -76,16 +87,18 @@ struct radeon_state_atom {
 	int cmd_size;		/* size in bytes */
         GLuint idx;
 	GLuint is_tcl;
-	int *cmd;		/* one or more cmd's */
-	int *lastcmd;		/* one or more cmd's */
+        GLuint *cmd;		/* one or more cmd's */
+	GLuint *lastcmd;		/* one or more cmd's */
 	GLboolean dirty;	/* dirty-mark in emit_state_list */
-        GLboolean(*check) (GLcontext *, int idx);	/* is this state active? */
+        int (*check) (GLcontext *, struct radeon_state_atom *atom); /* is this state active? */
+        void (*emit) (GLcontext *, struct radeon_state_atom *atom);
 };
 
 typedef struct radeon_tex_obj radeonTexObj, *radeonTexObjPtr;
 
 /* Texture object in locally shared texture space.
  */
+#ifndef RADEON_COMMON_FOR_R300
 struct radeon_tex_obj {
 	driTextureObject base;
 
@@ -118,6 +131,7 @@ struct radeon_tex_obj {
 
 	GLuint tile_bits;	/* hw texture tile bits used on this texture */
 };
+#endif
 
 /* Need refcounting on dma buffers:
  */
@@ -145,7 +159,7 @@ struct radeon_dma {
     */
    struct radeon_dma_region current;
    
-   void (*flush)( void * );
+   void (*flush)( GLcontext *ctx );
 
    char *buf0_address;		/* start of buf[0], for index calcs */
    GLuint nr_released_bufs;	/* flush after so many buffers released */
@@ -224,3 +238,77 @@ struct radeon_dri_mirror {
 #define DEBUG_PIXEL     0x2000
 #define DEBUG_MEMORY    0x4000
 
+
+
+typedef void (*radeon_tri_func) (radeonContextPtr,
+				 radeonVertex *,
+				 radeonVertex *, radeonVertex *);
+
+typedef void (*radeon_line_func) (radeonContextPtr,
+				  radeonVertex *, radeonVertex *);
+
+typedef void (*radeon_point_func) (radeonContextPtr, radeonVertex *);
+
+struct r300_radeon_state {
+	struct radeon_colorbuffer_state color;
+	struct radeon_scissor_state scissor;
+	struct radeon_renderbuffer *depth_buffer;
+};
+
+struct radeon_context {
+   GLcontext *glCtx;
+   radeonScreenPtr radeonScreen;	/* Screen private DRI data */
+  
+   /* Texture object bookkeeping
+    */
+   unsigned              nr_heaps;
+   driTexHeap          * texture_heaps[ RADEON_NR_TEX_HEAPS ];
+   driTextureObject      swapped;
+   int                   texture_depth;
+   float                 initialMaxAnisotropy;
+
+   /* Rasterization and vertex state:
+    */
+   GLuint TclFallback;
+   GLuint Fallback;
+   GLuint NewGLState;
+   DECLARE_RENDERINPUTS(tnl_index_bitset);	/* index of bits for last tnl_install_attrs */
+
+   /* Page flipping */
+   GLuint doPageFlip;
+
+   /* Drawable, cliprect and scissor information */
+   GLuint numClipRects;	/* Cliprects for the draw buffer */
+   drm_clip_rect_t *pClipRects;
+   unsigned int lastStamp;
+   GLboolean lost_context;
+   drm_radeon_sarea_t *sarea;	/* Private SAREA data */
+
+   /* Mirrors of some DRI state */
+   struct radeon_dri_mirror dri;
+
+   /* Busy waiting */
+   GLuint do_usleeps;
+   GLuint do_irqs;
+   GLuint irqsEmitted;
+   drm_radeon_irq_wait_t iw;
+
+   /* buffer swap */
+   int64_t swap_ust;
+   int64_t swap_missed_ust;
+
+   GLuint swap_count;
+   GLuint swap_missed_count;
+
+   /* Derived state - for r300 only */
+   struct r300_radeon_state state;
+
+   /* Configuration cache
+    */
+   driOptionCache optionCache;
+
+};
+
+#define RADEON_CONTEXT(glctx) ((radeonContextPtr)(ctx->DriverCtx))
+
+#endif

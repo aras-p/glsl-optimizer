@@ -64,7 +64,7 @@ void r200SetUpAtomList( r200ContextPtr rmesa )
 {
    int i, mtu;
 
-   mtu = rmesa->glCtx->Const.MaxTextureUnits;
+   mtu = rmesa->radeon.glCtx->Const.MaxTextureUnits;
 
    make_empty_list(&rmesa->hw.atomlist);
    rmesa->hw.atomlist.name = "atom-list";
@@ -127,7 +127,7 @@ static void r200SaveHwState( r200ContextPtr rmesa )
    rmesa->backup_store.cmd_used = 0;
 
    foreach( atom, &rmesa->hw.atomlist ) {
-      if ( atom->check( rmesa->glCtx, atom->idx ) ) {
+      if ( atom->check( rmesa->radeon.glCtx, atom ) ) {
 	 int size = atom->cmd_size * 4;
 	 memcpy( dest, atom->cmd, size);
 	 dest += size;
@@ -159,7 +159,7 @@ void r200EmitState( r200ContextPtr rmesa )
    if (!rmesa->hw.is_dirty && !rmesa->hw.all_dirty)
       return;
 
-   mtu = rmesa->glCtx->Const.MaxTextureUnits;
+   mtu = rmesa->radeon.glCtx->Const.MaxTextureUnits;
 
    /* To avoid going across the entire set of states multiple times, just check
     * for enough space for the case of emitting all state, and inline the
@@ -173,7 +173,7 @@ void r200EmitState( r200ContextPtr rmesa )
    if (R200_DEBUG & DEBUG_STATE) {
       foreach( atom, &rmesa->hw.atomlist ) {
 	 if ( atom->dirty || rmesa->hw.all_dirty ) {
-	    if ( atom->check( rmesa->glCtx, atom->idx ) )
+	    if ( atom->check( rmesa->radeon.glCtx, atom ) )
 	       print_state_atom( atom );
 	    else
 	       fprintf(stderr, "skip state %s\n", atom->name);
@@ -185,7 +185,7 @@ void r200EmitState( r200ContextPtr rmesa )
       if ( rmesa->hw.all_dirty )
 	 atom->dirty = GL_TRUE;
       if ( atom->dirty ) {
-	 if ( atom->check( rmesa->glCtx, atom->idx ) ) {
+	 if ( atom->check( rmesa->radeon.glCtx, atom ) ) {
 	    int size = atom->cmd_size * 4;
 	    memcpy( dest, atom->cmd, size);
 	    dest += size;
@@ -230,8 +230,9 @@ void r200EmitVbufPrim( r200ContextPtr rmesa,
 }
 
 
-void r200FlushElts( r200ContextPtr rmesa )
+void r200FlushElts( GLcontext *ctx )
 {
+   r200ContextPtr rmesa = R200_CONTEXT(ctx);
    int *cmd = (int *)(rmesa->store.cmd_buf + rmesa->store.elts_start);
    int dwords;
    int nr = (rmesa->store.cmd_used - (rmesa->store.elts_start + 12)) / 2;
@@ -252,7 +253,7 @@ void r200FlushElts( r200ContextPtr rmesa )
 
    if (R200_DEBUG & DEBUG_SYNC) {
       fprintf(stderr, "%s: Syncing\n", __FUNCTION__);
-      r200Finish( rmesa->glCtx );
+      r200Finish( rmesa->radeon.glCtx );
    }
 }
 
@@ -289,7 +290,7 @@ GLushort *r200AllocEltsOpenEnded( r200ContextPtr rmesa,
 	      cmd[1].i, primitive);
 
    assert(!rmesa->dma.flush);
-   rmesa->glCtx->Driver.NeedFlush |= FLUSH_STORED_VERTICES;
+   rmesa->radeon.glCtx->Driver.NeedFlush |= FLUSH_STORED_VERTICES;
    rmesa->dma.flush = r200FlushElts;
 
    rmesa->store.elts_start = ((char *)cmd) - rmesa->store.cmd_buf;

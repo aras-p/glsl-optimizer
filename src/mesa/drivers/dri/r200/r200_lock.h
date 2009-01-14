@@ -88,8 +88,8 @@ extern int prevLockLine;
    do {								\
       char __ret = 0;						\
       DEBUG_CHECK_LOCK();					\
-      DRM_CAS( rmesa->dri.hwLock, rmesa->dri.hwContext,		\
-	       (DRM_LOCK_HELD | rmesa->dri.hwContext), __ret );	\
+      DRM_CAS( rmesa->radeon.dri.hwLock, rmesa->radeon.dri.hwContext,		\
+	       (DRM_LOCK_HELD | rmesa->radeon.dri.hwContext), __ret );	\
       if ( __ret )						\
 	 r200GetLock( rmesa, 0 );				\
       DEBUG_LOCK();						\
@@ -97,9 +97,9 @@ extern int prevLockLine;
 
 #define UNLOCK_HARDWARE( rmesa )					\
    do {									\
-      DRM_UNLOCK( rmesa->dri.fd,					\
-		  rmesa->dri.hwLock,					\
-		  rmesa->dri.hwContext );				\
+      DRM_UNLOCK( rmesa->radeon.dri.fd,					\
+		  rmesa->radeon.dri.hwLock,					\
+		  rmesa->radeon.dri.hwContext );				\
       DEBUG_RESET();							\
    } while (0)
 

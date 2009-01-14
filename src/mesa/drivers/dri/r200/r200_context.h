@@ -53,6 +53,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #error This driver requires a newer libdrm to compile
 #endif
 
+#include "radeon_screen.h"
 #include "common_context.h"
 
 struct r200_context;
@@ -60,21 +61,8 @@ typedef struct r200_context r200ContextRec;
 typedef struct r200_context *r200ContextPtr;
 
 #include "r200_lock.h"
-#include "radeon_screen.h"
+
 #include "main/mm.h"
-
-typedef void (*r200_tri_func)( r200ContextPtr,
-				 radeonVertex *,
-				 radeonVertex *,
-				 radeonVertex * );
-
-typedef void (*r200_line_func)( r200ContextPtr,
-				  radeonVertex *,
-				  radeonVertex * );
-
-typedef void (*r200_point_func)( r200ContextPtr,
-				   radeonVertex * );
-
 
 struct r200_vertex_program {
         struct gl_vertex_program mesa_program; /* Must be first */
@@ -540,7 +528,7 @@ struct r200_state {
    GLuint envneeded;
 };
 
-#define GET_START(rvb) (rmesa->radeonScreen->gart_buffer_offset +		\
+#define GET_START(rvb) (rmesa->radeon.radeonScreen->gart_buffer_offset +		\
 			(rvb)->address - rmesa->dma.buf0_address +	\
 			(rvb)->start)
 
@@ -592,9 +580,9 @@ struct r200_swtcl_info {
 
    /* Fallback rasterization functions
     */
-   r200_point_func draw_point;
-   r200_line_func draw_line;
-   r200_tri_func draw_tri;
+   radeon_point_func draw_point;
+   radeon_line_func draw_line;
+   radeon_tri_func draw_tri;
 
    GLuint hw_primitive;
    GLenum render_primitive;
@@ -636,28 +624,13 @@ struct r200_swtcl_info {
 
 
 struct r200_context {
-   GLcontext *glCtx;			/* Mesa context */
+   struct radeon_context radeon;
 
    /* Driver and hardware state management
     */
    struct r200_hw_state hw;
    struct r200_state state;
    struct r200_vertex_program *curr_vp_hw;
-
-   /* Texture object bookkeeping
-    */
-   unsigned              nr_heaps;
-   driTexHeap          * texture_heaps[ RADEON_NR_TEX_HEAPS ];
-   driTextureObject      swapped;
-   int                   texture_depth;
-   float                 initialMaxAnisotropy;
-
-   /* Rasterization and vertex state:
-    */
-   GLuint TclFallback;
-   GLuint Fallback;
-   GLuint NewGLState;
-   DECLARE_RENDERINPUTS(tnl_index_bitset);	/* index of bits for last tnl_install_attrs */
 
    /* Vertex buffers
     */
@@ -669,30 +642,11 @@ struct r200_context {
     */
    struct radeon_store backup_store;
 
-   /* Page flipping
-    */
-   GLuint doPageFlip;
-
-   /* Busy waiting
-    */
-   GLuint do_usleeps;
-   GLuint do_irqs;
-   GLuint irqsEmitted;
-   drm_radeon_irq_wait_t iw;
-
    /* Clientdata textures;
     */
    GLuint prefer_gart_client_texturing;
 
-   /* Drawable, cliprect and scissor information
-    */
-   GLuint numClipRects;			/* Cliprects for the draw buffer */
-   drm_clip_rect_t *pClipRects;
-   unsigned int lastStamp;
-   GLboolean lost_context;
    GLboolean save_on_next_emit;
-   radeonScreenPtr radeonScreen;	/* Screen private DRI data */
-   drm_radeon_sarea_t *sarea;		/* Private SAREA data */
 
    /* TCL stuff
     */
@@ -705,15 +659,6 @@ struct r200_context {
    GLuint TexGenCompSel;
    GLmatrix tmpmat;
 
-   /* buffer swap
-    */
-   int64_t swap_ust;
-   int64_t swap_missed_ust;
-
-   GLuint swap_count;
-   GLuint swap_missed_count;
-
-
    /* r200_tcl.c
     */
    struct r200_tcl_info tcl;
@@ -721,14 +666,6 @@ struct r200_context {
    /* r200_swtcl.c
     */
    struct r200_swtcl_info swtcl;
-
-   /* Mirrors of some DRI state
-    */
-   struct radeon_dri_mirror dri;
-
-   /* Configuration cache
-    */
-   driOptionCache optionCache;
 
    GLboolean using_hyperz;
    GLboolean texmicrotile;
