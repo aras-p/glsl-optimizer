@@ -160,8 +160,13 @@ st_generate_mipmap(GLcontext *ctx, GLenum target,
    struct st_context *st = ctx->st;
    struct pipe_texture *pt = st_get_texobj_texture(texObj);
    const uint baseLevel = texObj->BaseLevel;
-   const uint lastLevel = pt->last_level;
+   uint lastLevel;
    uint dstLevel;
+
+   if (!pt)
+      return;
+
+   lastLevel = pt->last_level;
 
    if (!st_render_mipmap(st, target, pt, baseLevel, lastLevel)) {
       fallback_generate_mipmap(ctx, target, texObj);

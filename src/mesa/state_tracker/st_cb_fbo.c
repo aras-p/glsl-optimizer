@@ -388,8 +388,6 @@ st_render_texture(GLcontext *ctx,
    /*printf("***** render to texture level %d: %d x %d\n", att->TextureLevel, rb->Width, rb->Height);*/
 
    pt = st_get_texobj_texture(att->Texture);
-   assert(pt);
-   /*printf("***** pipe texture %d x %d\n", pt->width[0], pt->height[0]);*/
 
    pipe_texture_reference( &strb->texture, pt );
 
@@ -397,7 +395,10 @@ st_render_texture(GLcontext *ctx,
 
    /* the new surface will be created during framebuffer validation */
 
-   init_renderbuffer_bits(strb, pt->format);
+   if (pt) {
+      /*printf("***** pipe texture %d x %d\n", pt->width[0], pt->height[0]);*/
+      init_renderbuffer_bits(strb, pt->format);
+   }
 
    /*
    printf("RENDER TO TEXTURE obj=%p pt=%p surf=%p  %d x %d\n",
