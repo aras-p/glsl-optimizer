@@ -1300,14 +1300,10 @@ emit_tex(slang_emit_info *emitInfo, slang_ir_node *n)
                            NULL,
                            NULL);
 
-   /* Store->Index is the sampler index */
+   /* Store->Index is the uniform/sampler index */
    assert(n->Children[0]->Store->Index >= 0);
-   /* Store->Size is the texture target */
-   assert(n->Children[0]->Store->Size >= TEXTURE_1D_INDEX);
-   assert(n->Children[0]->Store->Size <= TEXTURE_RECT_INDEX);
-
-   inst->TexSrcTarget = n->Children[0]->Store->Size;
-   inst->TexSrcUnit = n->Children[0]->Store->Index; /* i.e. uniform's index */
+   inst->TexSrcUnit = n->Children[0]->Store->Index;
+   inst->TexSrcTarget = n->Children[0]->Store->TexTarget;
 
    /* mark the sampler as being used */
    _mesa_use_uniform(emitInfo->prog->Parameters,

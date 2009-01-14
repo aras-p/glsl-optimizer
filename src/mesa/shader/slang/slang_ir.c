@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  7.1
  *
  * Copyright (C) 2005-2008  Brian Paul   All Rights Reserved.
+ * Copyright (C) 2009  VMware, Inc.   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -214,6 +214,26 @@ _slang_new_ir_storage_indirect(enum register_file file,
    }
    return st;
 }
+
+
+/**
+ * Allocate IR storage for a texture sampler.
+ * \param sampNum  the sampler number/index
+ * \param texTarget  one of TEXTURE_x_INDEX values
+ * \param size  number of samplers (in case of sampler array)
+ */
+slang_ir_storage *
+_slang_new_ir_storage_sampler(GLint sampNum, GLuint texTarget, GLint size)
+{
+   slang_ir_storage *st;
+   assert(texTarget < NUM_TEXTURE_TARGETS);
+   st = _slang_new_ir_storage(PROGRAM_SAMPLER, sampNum, size);
+   if (st) {
+      st->TexTarget = texTarget;
+   }
+   return st;
+}
+
 
 
 /* XXX temporary function */
