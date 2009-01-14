@@ -23,10 +23,9 @@
 #ifndef R300_SCREEN_H
 #define R300_SCREEN_H
 
+#include "pipe/p_inlines.h"
 #include "pipe/p_screen.h"
 #include "util/u_memory.h"
-
-#include "r300_context.h"
 
 struct r300_screen {
     /* Parent class */

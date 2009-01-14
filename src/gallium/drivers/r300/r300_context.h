@@ -27,6 +27,8 @@
 #include "pipe/p_context.h"
 #include "util/u_memory.h"
 
+#include "r300_screen.h"
+
 struct r300_blend_state {
     uint32_t blend_control;       /* R300_RB3D_BLENDCNTL: 0x4e04 */
     uint32_t alpha_blend_control; /* R300_RB3D_ABLENDCNTL: 0x4e08 */
