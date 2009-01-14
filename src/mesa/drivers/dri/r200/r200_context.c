@@ -672,7 +672,7 @@ r200MakeCurrent( __DRIcontextPrivate *driContextPriv,
 
 	 newCtx->radeon.dri.drawable = driDrawPriv;
 
-	 r200SetCliprects(newCtx);
+	 radeonSetCliprects(&newCtx->radeon);
 	 r200UpdateViewportOffset( newCtx->radeon.glCtx );
       }
 

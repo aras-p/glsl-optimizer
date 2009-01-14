@@ -43,8 +43,6 @@ extern void r200InitTnlFuncs( GLcontext *ctx );
 
 extern void r200UpdateMaterial( GLcontext *ctx );
 
-extern void r200SetCliprects( r200ContextPtr rmesa );
-extern void r200RecalcScissorRects( r200ContextPtr rmesa );
 extern void r200UpdateViewportOffset( GLcontext *ctx );
 extern void r200UpdateWindow( GLcontext *ctx );
 extern void r200UpdateDrawBuffer(GLcontext *ctx);
