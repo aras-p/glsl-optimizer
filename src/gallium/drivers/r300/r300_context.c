@@ -54,5 +54,7 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
 
     r300_init_surface_functions(r300);
 
+    r300_init_state_functions(r300);
+
     return &r300->context;
 }
