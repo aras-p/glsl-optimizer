@@ -16,6 +16,7 @@ SOURCES = \
 	clear-scissor.c \
 	clear-undefined.c \
 	clear-repeat.c \
+	clear-random.c \
 	clear.c \
 	dlist-dangling.c \
 	dlist-edgeflag-dangling.c \
