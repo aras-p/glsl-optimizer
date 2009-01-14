@@ -121,6 +121,21 @@ nouveau_pipe_bo_map(struct pipe_winsys *pws, struct pipe_buffer *buf,
 	if (flags & PIPE_BUFFER_USAGE_CPU_WRITE)
 		map_flags |= NOUVEAU_BO_WR;
 
+	if (flags & PIPE_BUFFER_USAGE_DISCARD &&
+	    !(flags & PIPE_BUFFER_USAGE_CPU_READ) &&
+	    nouveau_bo_busy(nvbuf->bo, map_flags)) {
+		struct nouveau_pipe_winsys *nvpws = (struct nouveau_pipe_winsys *)pws;
+		struct nouveau_context *nv = nvpws->nv;
+		struct nouveau_device *dev = nv->nv_screen->device;
+		struct nouveau_bo *rename;
+		uint32_t flags = nouveau_flags_from_usage(nv, buf->usage);
+
+		if (!nouveau_bo_new(dev, flags, buf->alignment, buf->size, &rename)) {
+			nouveau_bo_del(&nvbuf->bo);
+			nvbuf->bo = rename;
+		}
+	}
+
 	if (nouveau_bo_map(nvbuf->bo, map_flags))
 		return NULL;
 	return nvbuf->bo->map;
