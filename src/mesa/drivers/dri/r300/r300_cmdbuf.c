@@ -397,7 +397,7 @@ static void emit_zb_offset(GLcontext *ctx, struct radeon_state_atom * atom)
 	struct radeon_renderbuffer *rrb;
 	uint32_t zbpitch;
 
-	rrb = r300->radeon.state.depth_buffer;
+	rrb = r300->radeon.state.depth.rrb;
 	if (!rrb)
 		return;
 

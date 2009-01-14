@@ -24,9 +24,10 @@ DRIVER_SOURCES = \
 		 radeon_bo_legacy.c \
 		 radeon_cs_legacy.c \
 		 radeon_screen.c \
+		 common_lock.c \
+		 common_misc.c \
 		 radeon_context.c \
 		 radeon_ioctl.c \
-		 radeon_lock.c \
 		 radeon_span.c \
 		 radeon_state.c \
 		 r300_context.c \
@@ -78,7 +79,11 @@ COMMON_SYMLINKS = \
 	radeon_cs_legacy.c \
 	radeon_bo_legacy.h \
 	radeon_cs_legacy.h \
-	common_context.h
+	common_context.h \
+	common_lock.c \
+	common_lock.h \
+	common_misc.c \
+	common_misc.h
 
 DRI_LIB_DEPS += -ldrm_radeon
 

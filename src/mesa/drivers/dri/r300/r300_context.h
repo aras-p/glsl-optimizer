@@ -522,14 +522,6 @@ struct r300_cmdbuf {
  * State cache
  */
 
-struct r300_depthbuffer_state {
-	GLfloat scale;
-};
-
-struct r300_stencilbuffer_state {
-	GLboolean hw_stencil;
-};
-
 /* Vertex shader state */
 
 /* Perhaps more if we store programs in vmem? */
@@ -773,7 +765,6 @@ struct r300_aos {
 };
 
 struct r300_state {
-	struct r300_depthbuffer_state depth;
 	struct r300_texture_state texture;
 	int sw_tcl_inputs[VERT_ATTRIB_MAX];
 	struct r300_vertex_shader_state vertex_shader;
@@ -785,8 +776,6 @@ struct r300_state {
 
 	DECLARE_RENDERINPUTS(render_inputs_bitset);	/* actual render inputs that R300 was configured for.
 							   They are the same as tnl->render_inputs for fixed pipeline */
-
-	struct r300_stencilbuffer_state stencil;
 
 };
 

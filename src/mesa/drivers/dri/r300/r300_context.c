@@ -187,6 +187,23 @@ static void r300RunPipeline(GLcontext * ctx)
     _mesa_unlock_context_textures(ctx);
 }
 
+static void r300_get_lock(radeonContextPtr rmesa)
+{
+	drm_radeon_sarea_t *sarea = rmesa->sarea;
+
+	if (sarea->ctx_owner != rmesa->dri.hwContext) {
+		sarea->ctx_owner = rmesa->dri.hwContext;
+		if (!rmesa->radeonScreen->kernel_mm)
+			radeon_bo_legacy_texture_age(rmesa->radeonScreen->bom);
+	}
+}		  
+
+static void r300_init_vtbl(radeonContextPtr radeon)
+{
+   radeon->vtbl.get_lock = r300_get_lock;
+   radeon->vtbl.update_viewport_offset = r300UpdateViewportOffset;
+}
+
 /* Create the device specific rendering context.
  */
 GLboolean r300CreateContext(const __GLcontextModes * glVisual,
@@ -212,6 +229,7 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	if (!(screen->chip_flags & RADEON_CHIPSET_TCL))
 		hw_tcl_on = future_hw_tcl_on = 0;
 
+	r300_init_vtbl(&r300->radeon);
 	/* Parse configuration files.
 	 * Do this here so that initialMaxAnisotropy is set before we create
 	 * the default textures.

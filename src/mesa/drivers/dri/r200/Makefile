@@ -13,7 +13,6 @@ endif
 
 DRIVER_SOURCES = r200_context.c \
 		 r200_ioctl.c \
-		 r200_lock.c \
 		 r200_state.c \
 		 r200_state_init.c \
 		 r200_cmdbuf.c \
@@ -29,6 +28,8 @@ DRIVER_SOURCES = r200_context.c \
 		 r200_fragshader.c \
 		 r200_vertprog.c \
 		 radeon_screen.c \
+		 common_lock.c \
+		 common_misc.c \
 		 $(EGL_SOURCES)
 
 C_SOURCES = $(COMMON_SOURCES) $(DRIVER_SOURCES)
@@ -51,7 +52,11 @@ COMMON_SYMLINKS = \
 	radeon_screen.h \
 	radeon_bo_legacy.h \
 	radeon_buffer.h \
-	common_context.h
+	common_context.h \
+	common_lock.c \
+	common_lock.h \
+	common_misc.h \
+	common_misc.c
 
 ##### TARGETS #####
 

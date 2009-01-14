@@ -51,6 +51,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "radeon_screen.h"
 #include "common_context.h"
+#include "common_misc.h"
 
 #if R200_MERGED
 extern void radeonFallback(GLcontext * ctx, GLuint bit, GLboolean mode);

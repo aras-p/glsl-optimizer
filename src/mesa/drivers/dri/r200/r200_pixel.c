@@ -197,14 +197,14 @@ r200TryReadPixels( GLcontext *ctx,
     * a full command buffer expects to be called unlocked.  As a
     * workaround, immediately flush the buffer on aquiring the lock.
     */
-   LOCK_HARDWARE( rmesa );
+   LOCK_HARDWARE( &rmesa->radeon );
 
    if (rmesa->store.cmd_used)
       r200FlushCmdBufLocked( rmesa, __FUNCTION__ );
 
    if (!clip_pixelrect(ctx, ctx->ReadBuffer, &x, &y, &width, &height,
 		       &size)) {
-      UNLOCK_HARDWARE( rmesa );
+      UNLOCK_HARDWARE( &rmesa->radeon );
       if (R200_DEBUG & DEBUG_PIXEL)
 	 fprintf(stderr, "%s totally clipped -- nothing to do\n",
 		 __FUNCTION__);
@@ -259,7 +259,7 @@ r200TryReadPixels( GLcontext *ctx,
 
       r200FlushCmdBufLocked( rmesa, __FUNCTION__ );
    }
-   UNLOCK_HARDWARE( rmesa );
+   UNLOCK_HARDWARE( &rmesa->radeon );
 
    r200Finish( ctx ); /* required by GL */
 
@@ -318,7 +318,7 @@ static void do_draw_pix( GLcontext *ctx,
    }
 
 
-   LOCK_HARDWARE( rmesa );
+   LOCK_HARDWARE( &rmesa->radeon );
 
    if (rmesa->store.cmd_used)
       r200FlushCmdBufLocked( rmesa, __FUNCTION__ );
@@ -328,7 +328,7 @@ static void do_draw_pix( GLcontext *ctx,
    if (!clip_pixelrect(ctx, ctx->DrawBuffer,
 		       &x, &y, &width, &height,
 		       &size)) {
-      UNLOCK_HARDWARE( rmesa );
+      UNLOCK_HARDWARE( &rmesa->radeon );
       return;
    }
 
@@ -365,7 +365,7 @@ static void do_draw_pix( GLcontext *ctx,
 
    r200FlushCmdBufLocked( rmesa, __FUNCTION__ );
    r200WaitForIdleLocked( rmesa ); /* required by GL */
-   UNLOCK_HARDWARE( rmesa );
+   UNLOCK_HARDWARE( &rmesa->radeon );
 }
 
 

@@ -242,6 +242,32 @@ static const struct dri_debug_control debug_control[] =
     { NULL,    0 }
 };
 
+static void r200_get_lock(radeonContextPtr radeon)
+{
+   r200ContextPtr rmesa = (r200ContextPtr)radeon;
+   drm_radeon_sarea_t *sarea = radeon->sarea;
+   int i;
+
+   R200_STATECHANGE( rmesa, ctx );
+   if (rmesa->radeon.sarea->tiling_enabled) {
+      rmesa->hw.ctx.cmd[CTX_RB3D_COLORPITCH] |= R200_COLOR_TILE_ENABLE;
+   }
+   else rmesa->hw.ctx.cmd[CTX_RB3D_COLORPITCH] &= ~R200_COLOR_TILE_ENABLE;
+
+   if ( sarea->ctx_owner != rmesa->radeon.dri.hwContext ) {
+      sarea->ctx_owner = rmesa->radeon.dri.hwContext;
+   }
+
+   for ( i = 0 ; i < rmesa->radeon.nr_heaps ; i++ ) {
+      DRI_AGE_TEXTURES( rmesa->radeon.texture_heaps[ i ] );
+   }
+}
+   
+static void r200_init_vtbl(radeonContextPtr radeon)
+{
+   radeon->vtbl.get_lock = r200_get_lock;
+   radeon->vtbl.update_viewport_offset = r200UpdateViewportOffset;
+}
 
 /* Create the device specific rendering context.
  */
@@ -265,7 +291,8 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
    rmesa = (r200ContextPtr) CALLOC( sizeof(*rmesa) );
    if ( !rmesa )
       return GL_FALSE;
-      
+
+   r200_init_vtbl(&rmesa->radeon);
    /* init exp fog table data */
    r200InitStaticFogData();
 
@@ -568,9 +595,9 @@ void r200DestroyContext( __DRIcontextPrivate *driContextPriv )
 	 r200FlushCmdBuf( rmesa, __FUNCTION__ );
       }
 
-      if (rmesa->state.scissor.pClipRects) {
-	 FREE(rmesa->state.scissor.pClipRects);
-	 rmesa->state.scissor.pClipRects = NULL;
+      if (rmesa->radeon.state.scissor.pClipRects) {
+	 FREE(rmesa->radeon.state.scissor.pClipRects);
+	 rmesa->radeon.state.scissor.pClipRects = NULL;
       }
 
       if ( release_texture_heaps ) {

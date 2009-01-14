@@ -311,10 +311,10 @@ static void radeonClearDepth( GLcontext *ctx, GLclampd d )
 
    switch ( format ) {
    case RADEON_DEPTH_FORMAT_16BIT_INT_Z:
-      rmesa->state.depth.clear = d * 0x0000ffff;
+      rmesa->radeon.state.depth.clear = d * 0x0000ffff;
       break;
    case RADEON_DEPTH_FORMAT_24BIT_INT_Z:
-      rmesa->state.depth.clear = d * 0x00ffffff;
+      rmesa->radeon.state.depth.clear = d * 0x00ffffff;
       break;
    }
 }
@@ -410,85 +410,6 @@ static void radeonFogfv( GLcontext *ctx, GLenum pname, const GLfloat *param )
 /* =============================================================
  * Scissoring
  */
-
-
-static GLboolean intersect_rect( drm_clip_rect_t *out,
-				 drm_clip_rect_t *a,
-				 drm_clip_rect_t *b )
-{
-   *out = *a;
-   if ( b->x1 > out->x1 ) out->x1 = b->x1;
-   if ( b->y1 > out->y1 ) out->y1 = b->y1;
-   if ( b->x2 < out->x2 ) out->x2 = b->x2;
-   if ( b->y2 < out->y2 ) out->y2 = b->y2;
-   if ( out->x1 >= out->x2 ) return GL_FALSE;
-   if ( out->y1 >= out->y2 ) return GL_FALSE;
-   return GL_TRUE;
-}
-
-
-void radeonRecalcScissorRects( r100ContextPtr rmesa )
-{
-   drm_clip_rect_t *out;
-   int i;
-
-   /* Grow cliprect store?
-    */
-   if (rmesa->state.scissor.numAllocedClipRects < rmesa->radeon.numClipRects) {
-      while (rmesa->state.scissor.numAllocedClipRects < rmesa->radeon.numClipRects) {
-	 rmesa->state.scissor.numAllocedClipRects += 1;	/* zero case */
-	 rmesa->state.scissor.numAllocedClipRects *= 2;
-      }
-
-      if (rmesa->state.scissor.pClipRects)
-	 FREE(rmesa->state.scissor.pClipRects);
-
-      rmesa->state.scissor.pClipRects = 
-	 MALLOC( rmesa->state.scissor.numAllocedClipRects * 
-		 sizeof(drm_clip_rect_t) );
-
-      if ( rmesa->state.scissor.pClipRects == NULL ) {
-	 rmesa->state.scissor.numAllocedClipRects = 0;
-	 return;
-      }
-   }
-   
-   out = rmesa->state.scissor.pClipRects;
-   rmesa->state.scissor.numClipRects = 0;
-
-   for ( i = 0 ; i < rmesa->radeon.numClipRects ;  i++ ) {
-      if ( intersect_rect( out, 
-			   &rmesa->radeon.pClipRects[i], 
-			   &rmesa->state.scissor.rect ) ) {
-	 rmesa->state.scissor.numClipRects++;
-	 out++;
-      }
-   }
-}
-
-
-static void radeonUpdateScissor( GLcontext *ctx )
-{
-   r100ContextPtr rmesa = R100_CONTEXT(ctx);
-
-   if ( rmesa->radeon.dri.drawable ) {
-      __DRIdrawablePrivate *dPriv = rmesa->radeon.dri.drawable;
-
-      int x = ctx->Scissor.X;
-      int y = dPriv->h - ctx->Scissor.Y - ctx->Scissor.Height;
-      int w = ctx->Scissor.X + ctx->Scissor.Width - 1;
-      int h = dPriv->h - ctx->Scissor.Y - 1;
-
-      rmesa->state.scissor.rect.x1 = x + dPriv->x;
-      rmesa->state.scissor.rect.y1 = y + dPriv->y;
-      rmesa->state.scissor.rect.x2 = w + dPriv->x + 1;
-      rmesa->state.scissor.rect.y2 = h + dPriv->y + 1;
-
-      radeonRecalcScissorRects( rmesa );
-   }
-}
-
-
 static void radeonScissor( GLcontext *ctx,
 			   GLint x, GLint y, GLsizei w, GLsizei h )
 {
@@ -624,7 +545,7 @@ static void radeonPolygonOffset( GLcontext *ctx,
 				 GLfloat factor, GLfloat units )
 {
    r100ContextPtr rmesa = R100_CONTEXT(ctx);
-   float_ui32_type constant =  { units * rmesa->state.depth.scale };
+   float_ui32_type constant =  { units * rmesa->radeon.state.depth.scale };
    float_ui32_type factoru = { factor };
 
    RADEON_STATECHANGE( rmesa, zbs );
@@ -647,14 +568,14 @@ static void radeonPolygonStipple( GLcontext *ctx, const GLubyte *mask )
    /* TODO: push this into cmd mechanism
     */
    RADEON_FIREVERTICES( rmesa );
-   LOCK_HARDWARE( rmesa );
+   LOCK_HARDWARE( &rmesa->radeon );
 
    /* FIXME: Use window x,y offsets into stipple RAM.
     */
    stipple.mask = rmesa->state.stipple.mask;
    drmCommandWrite( rmesa->radeon.dri.fd, DRM_RADEON_STIPPLE, 
                     &stipple, sizeof(drm_radeon_stipple_t) );
-   UNLOCK_HARDWARE( rmesa );
+   UNLOCK_HARDWARE( &rmesa->radeon );
 }
 
 static void radeonPolygonMode( GLcontext *ctx, GLenum face, GLenum mode )
@@ -1457,7 +1378,7 @@ static void radeonClearStencil( GLcontext *ctx, GLint s )
 {
    r100ContextPtr rmesa = R100_CONTEXT(ctx);
 
-   rmesa->state.stencil.clear = 
+   rmesa->radeon.state.stencil.clear = 
       ((GLuint) (ctx->Stencil.Clear & 0xff) |
        (0xff << RADEON_STENCIL_MASK_SHIFT) |
        ((ctx->Stencil.WriteMask[0] & 0xff) << RADEON_STENCIL_WRITEMASK_SHIFT));
@@ -1491,8 +1412,8 @@ void radeonUpdateWindow( GLcontext *ctx )
    float_ui32_type tx = { v[MAT_TX] + xoffset + SUBPIXEL_X };
    float_ui32_type sy = { - v[MAT_SY] };
    float_ui32_type ty = { (- v[MAT_TY]) + yoffset + SUBPIXEL_Y };
-   float_ui32_type sz = { v[MAT_SZ] * rmesa->state.depth.scale };
-   float_ui32_type tz = { v[MAT_TZ] * rmesa->state.depth.scale };
+   float_ui32_type sz = { v[MAT_SZ] * rmesa->radeon.state.depth.scale };
+   float_ui32_type tz = { v[MAT_TZ] * rmesa->radeon.state.depth.scale };
 
    RADEON_FIREVERTICES( rmesa );
    RADEON_STATECHANGE( rmesa, vpt );
@@ -1586,7 +1507,7 @@ static void radeonClearColor( GLcontext *ctx, const GLfloat color[4] )
    CLAMPED_FLOAT_TO_UBYTE(c[1], color[1]);
    CLAMPED_FLOAT_TO_UBYTE(c[2], color[2]);
    CLAMPED_FLOAT_TO_UBYTE(c[3], color[3]);
-   rmesa->state.color.clear = radeonPackColor( rmesa->radeon.radeonScreen->cpp,
+   rmesa->radeon.state.color.clear = radeonPackColor( rmesa->radeon.radeonScreen->cpp,
 					       c[0], c[1], c[2], c[3] );
 }
 
@@ -1630,55 +1551,6 @@ static void radeonLogicOpCode( GLcontext *ctx, GLenum opcode )
 
 
 /**
- * Set up the cliprects for either front or back-buffer drawing.
- */
-void radeonSetCliprects( r100ContextPtr rmesa )
-{
-   __DRIdrawablePrivate *const drawable = rmesa->radeon.dri.drawable;
-   __DRIdrawablePrivate *const readable = rmesa->radeon.dri.readable;
-   GLframebuffer *const draw_fb = (GLframebuffer*) drawable->driverPrivate;
-   GLframebuffer *const read_fb = (GLframebuffer*) readable->driverPrivate;
-
-   if (draw_fb->_ColorDrawBufferIndexes[0] == BUFFER_BACK_LEFT) {
-      /* Can't ignore 2d windows if we are page flipping.
-       */
-      if ( drawable->numBackClipRects == 0 || rmesa->radeon.doPageFlip ) {
-	 rmesa->radeon.numClipRects = drawable->numClipRects;
-	 rmesa->radeon.pClipRects = drawable->pClipRects;
-      }
-      else {
-	 rmesa->radeon.numClipRects = drawable->numBackClipRects;
-	 rmesa->radeon.pClipRects = drawable->pBackClipRects;
-      }
-   }
-   else {
-      /* front buffer (or none, or multiple buffers */
-      rmesa->radeon.numClipRects = drawable->numClipRects;
-      rmesa->radeon.pClipRects = drawable->pClipRects;
-   }
-
-   if ((draw_fb->Width != drawable->w) || (draw_fb->Height != drawable->h)) {
-      _mesa_resize_framebuffer(rmesa->radeon.glCtx, draw_fb,
-			       drawable->w, drawable->h);
-      draw_fb->Initialized = GL_TRUE;
-   }
-
-   if (drawable != readable) {
-      if ((read_fb->Width != readable->w) || (read_fb->Height != readable->h)) {
-	 _mesa_resize_framebuffer(rmesa->radeon.glCtx, read_fb,
-				  readable->w, readable->h);
-	 read_fb->Initialized = GL_TRUE;
-      }
-   }
-
-   if (rmesa->state.scissor.enabled)
-      radeonRecalcScissorRects( rmesa );
-
-   rmesa->radeon.lastStamp = drawable->lastStamp;
-}
-
-
-/**
  * Called via glDrawBuffer.
  */
 static void radeonDrawBuffer( GLcontext *ctx, GLenum mode )
@@ -1707,7 +1579,7 @@ static void radeonDrawBuffer( GLcontext *ctx, GLenum mode )
       return;
    }
 
-   radeonSetCliprects( rmesa );
+   radeonSetCliprects( &rmesa->radeon );
 
    /* We'll set the drawing engine's offset/pitch parameters later
     * when we update other state.
@@ -1821,10 +1693,10 @@ static void radeonEnable( GLcontext *ctx, GLenum cap, GLboolean state )
       RADEON_STATECHANGE(rmesa, ctx );
       if ( state ) {
 	 rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] |=  RADEON_DITHER_ENABLE;
-	 rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] &= ~rmesa->state.color.roundEnable;
+	 rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] &= ~rmesa->radeon.state.color.roundEnable;
       } else {
 	 rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] &= ~RADEON_DITHER_ENABLE;
-	 rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] |=  rmesa->state.color.roundEnable;
+	 rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] |=  rmesa->radeon.state.color.roundEnable;
       }
       break;
 
@@ -1972,12 +1844,12 @@ static void radeonEnable( GLcontext *ctx, GLenum cap, GLboolean state )
 
    case GL_SCISSOR_TEST:
       RADEON_FIREVERTICES( rmesa );
-      rmesa->state.scissor.enabled = state;
+      rmesa->radeon.state.scissor.enabled = state;
       radeonUpdateScissor( ctx );
       break;
 
    case GL_STENCIL_TEST:
-      if ( rmesa->state.stencil.hwBuffer ) {
+      if ( rmesa->radeon.state.stencil.hwBuffer ) {
 	 RADEON_STATECHANGE( rmesa, ctx );
 	 if ( state ) {
 	    rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] |=  RADEON_STENCIL_ENABLE;

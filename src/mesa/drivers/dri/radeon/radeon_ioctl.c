@@ -557,10 +557,10 @@ static int radeonFlushCmdBufLocked( r100ContextPtr rmesa,
 
 
    if (RADEON_DEBUG & DEBUG_SANITY) {
-      if (rmesa->state.scissor.enabled) 
+      if (rmesa->radeon.state.scissor.enabled) 
 	 ret = radeonSanityCmdBuffer( rmesa, 
-				      rmesa->state.scissor.numClipRects,
-				      rmesa->state.scissor.pClipRects);
+				      rmesa->radeon.state.scissor.numClipRects,
+				      rmesa->radeon.state.scissor.pClipRects);
       else
 	 ret = radeonSanityCmdBuffer( rmesa, 
 				      rmesa->radeon.numClipRects,
@@ -575,9 +575,9 @@ static int radeonFlushCmdBufLocked( r100ContextPtr rmesa,
    cmd.bufsz = rmesa->store.cmd_used;
    cmd.buf = rmesa->store.cmd_buf;
 
-   if (rmesa->state.scissor.enabled) {
-      cmd.nbox = rmesa->state.scissor.numClipRects;
-      cmd.boxes = rmesa->state.scissor.pClipRects;
+   if (rmesa->radeon.state.scissor.enabled) {
+      cmd.nbox = rmesa->radeon.state.scissor.numClipRects;
+      cmd.boxes = rmesa->radeon.state.scissor.pClipRects;
    } else {
       cmd.nbox = rmesa->radeon.numClipRects;
       cmd.boxes = rmesa->radeon.pClipRects;
@@ -614,11 +614,11 @@ void radeonFlushCmdBuf( r100ContextPtr rmesa, const char *caller )
    int ret;
 
 	      
-   LOCK_HARDWARE( rmesa );
+   LOCK_HARDWARE( &rmesa->radeon );
 
    ret = radeonFlushCmdBufLocked( rmesa, caller );
 
-   UNLOCK_HARDWARE( rmesa );
+   UNLOCK_HARDWARE( &rmesa->radeon );
 
    if (ret) {
       fprintf(stderr, "drm_radeon_cmd_buffer_t: %d (exiting)\n", ret);
@@ -664,7 +664,7 @@ void radeonRefillCurrentDmaRegion( r100ContextPtr rmesa )
    dma.request_sizes = &size;
    dma.granted_count = 0;
 
-   LOCK_HARDWARE(rmesa);	/* no need to validate */
+   LOCK_HARDWARE(&rmesa->radeon);	/* no need to validate */
 
    ret = drmDMA( fd, &dma );
       
@@ -682,13 +682,13 @@ void radeonRefillCurrentDmaRegion( r100ContextPtr rmesa )
       ret = drmDMA( fd, &dma );
 
       if ( ret != 0 ) {
-	 UNLOCK_HARDWARE( rmesa );
+	 UNLOCK_HARDWARE( &rmesa->radeon );
 	 fprintf( stderr, "Error: Could not get dma buffer... exiting\n" );
 	 exit( -1 );
       }
    }
 
-   UNLOCK_HARDWARE(rmesa);
+   UNLOCK_HARDWARE(&rmesa->radeon);
 
    if (RADEON_DEBUG & DEBUG_DMA)
       fprintf(stderr, "Allocated buffer %d\n", index);
@@ -839,9 +839,9 @@ static void radeonWaitForFrameCompletion( r100ContextPtr rmesa )
 	       ;
 	 }
 	 else {
-	    UNLOCK_HARDWARE( rmesa ); 
+	    UNLOCK_HARDWARE( &rmesa->radeon ); 
 	    radeonWaitIrq( rmesa );	
-	    LOCK_HARDWARE( rmesa ); 
+	    LOCK_HARDWARE( &rmesa->radeon ); 
 	 }
 	 rmesa->radeon.irqsEmitted = 10;
       }
@@ -853,10 +853,10 @@ static void radeonWaitForFrameCompletion( r100ContextPtr rmesa )
    } 
    else {
       while (radeonGetLastFrame (rmesa) < sarea->last_frame) {
-	 UNLOCK_HARDWARE( rmesa ); 
+	 UNLOCK_HARDWARE( &rmesa->radeon ); 
 	 if (rmesa->radeon.do_usleeps) 
 	    DO_USLEEP( 1 );
-	 LOCK_HARDWARE( rmesa ); 
+	 LOCK_HARDWARE( &rmesa->radeon ); 
       }
    }
 }
@@ -883,7 +883,7 @@ void radeonCopyBuffer( __DRIdrawablePrivate *dPriv,
    }
 
    RADEON_FIREVERTICES( rmesa );
-   LOCK_HARDWARE( rmesa );
+   LOCK_HARDWARE( &rmesa->radeon );
 
    /* Throttle the frame rate -- only allow one pending swap buffers
     * request at a time.
@@ -891,9 +891,9 @@ void radeonCopyBuffer( __DRIdrawablePrivate *dPriv,
    radeonWaitForFrameCompletion( rmesa );
    if (!rect)
    {
-       UNLOCK_HARDWARE( rmesa );
+       UNLOCK_HARDWARE( &rmesa->radeon );
        driWaitForVBlank( dPriv, & missed_target );
-       LOCK_HARDWARE( rmesa );
+       LOCK_HARDWARE( &rmesa->radeon );
    }
 
    nbox = dPriv->numClipRects; /* must be in locked region */
@@ -935,12 +935,12 @@ void radeonCopyBuffer( __DRIdrawablePrivate *dPriv,
 
       if ( ret ) {
 	 fprintf( stderr, "DRM_RADEON_SWAP_BUFFERS: return = %d\n", ret );
-	 UNLOCK_HARDWARE( rmesa );
+	 UNLOCK_HARDWARE( &rmesa->radeon );
 	 exit( 1 );
       }
    }
 
-   UNLOCK_HARDWARE( rmesa );
+   UNLOCK_HARDWARE( &rmesa->radeon );
    if (!rect)
    {
        psp = dPriv->driScreenPriv;
@@ -976,7 +976,7 @@ void radeonPageFlip( __DRIdrawablePrivate *dPriv )
    }
 
    RADEON_FIREVERTICES( rmesa );
-   LOCK_HARDWARE( rmesa );
+   LOCK_HARDWARE( &rmesa->radeon );
 
    /* Need to do this for the perf box placement:
     */
@@ -992,17 +992,17 @@ void radeonPageFlip( __DRIdrawablePrivate *dPriv )
     * request at a time.
     */
    radeonWaitForFrameCompletion( rmesa );
-   UNLOCK_HARDWARE( rmesa );
+   UNLOCK_HARDWARE( &rmesa->radeon );
    driWaitForVBlank( dPriv, & missed_target );
    if ( missed_target ) {
       rmesa->radeon.swap_missed_count++;
       (void) (*psp->systemTime->getUST)( & rmesa->radeon.swap_missed_ust );
    }
-   LOCK_HARDWARE( rmesa );
+   LOCK_HARDWARE( &rmesa->radeon );
 
    ret = drmCommandNone( rmesa->radeon.dri.fd, DRM_RADEON_FLIP );
 
-   UNLOCK_HARDWARE( rmesa );
+   UNLOCK_HARDWARE( &rmesa->radeon );
 
    if ( ret ) {
       fprintf( stderr, "DRM_RADEON_FLIP: return = %d\n", ret );
@@ -1043,8 +1043,8 @@ static void radeonClear( GLcontext *ctx, GLbitfield mask )
    }
 
    {
-      LOCK_HARDWARE( rmesa );
-      UNLOCK_HARDWARE( rmesa );
+      LOCK_HARDWARE( &rmesa->radeon );
+      UNLOCK_HARDWARE( &rmesa->radeon );
       if ( dPriv->numClipRects == 0 ) 
 	 return;
    }
@@ -1068,7 +1068,7 @@ static void radeonClear( GLcontext *ctx, GLbitfield mask )
       mask &= ~BUFFER_BIT_DEPTH;
    }
 
-   if ( (mask & BUFFER_BIT_STENCIL) && rmesa->state.stencil.hwBuffer ) {
+   if ( (mask & BUFFER_BIT_STENCIL) && rmesa->radeon.state.stencil.hwBuffer ) {
       flags |= RADEON_STENCIL;
       mask &= ~BUFFER_BIT_STENCIL;
    }
@@ -1086,14 +1086,14 @@ static void radeonClear( GLcontext *ctx, GLbitfield mask )
       flags |= RADEON_USE_COMP_ZBUF;
 /*      if (rmesa->radeon.radeonScreen->chipset & RADEON_CHIPSET_TCL) 
          flags |= RADEON_USE_HIERZ; */
-      if (!(rmesa->state.stencil.hwBuffer) ||
+      if (!(rmesa->radeon.state.stencil.hwBuffer) ||
 	 ((flags & RADEON_DEPTH) && (flags & RADEON_STENCIL) &&
-	    ((rmesa->state.stencil.clear & RADEON_STENCIL_WRITE_MASK) == RADEON_STENCIL_WRITE_MASK))) {
+	    ((rmesa->radeon.state.stencil.clear & RADEON_STENCIL_WRITE_MASK) == RADEON_STENCIL_WRITE_MASK))) {
 	  flags |= RADEON_CLEAR_FASTZ;
       }
    }
 
-   LOCK_HARDWARE( rmesa );
+   LOCK_HARDWARE( &rmesa->radeon );
 
    /* compute region after locking: */
    cx = ctx->DrawBuffer->_Xmin;
@@ -1126,9 +1126,9 @@ static void radeonClear( GLcontext *ctx, GLbitfield mask )
       }
 
       if ( rmesa->radeon.do_usleeps ) {
-	 UNLOCK_HARDWARE( rmesa );
+	 UNLOCK_HARDWARE( &rmesa->radeon );
 	 DO_USLEEP( 1 );
-	 LOCK_HARDWARE( rmesa );
+	 LOCK_HARDWARE( &rmesa->radeon );
       }
    }
 
@@ -1176,10 +1176,10 @@ static void radeonClear( GLcontext *ctx, GLbitfield mask )
       rmesa->radeon.sarea->nbox = n;
 
       clear.flags       = flags;
-      clear.clear_color = rmesa->state.color.clear;
-      clear.clear_depth = rmesa->state.depth.clear;
+      clear.clear_color = rmesa->radeon.state.color.clear;
+      clear.clear_depth = rmesa->radeon.state.depth.clear;
       clear.color_mask  = rmesa->hw.msk.cmd[MSK_RB3D_PLANEMASK];
-      clear.depth_mask  = rmesa->state.stencil.clear;
+      clear.depth_mask  = rmesa->radeon.state.stencil.clear;
       clear.depth_boxes = depth_boxes;
 
       n--;
@@ -1190,20 +1190,20 @@ static void radeonClear( GLcontext *ctx, GLbitfield mask )
 	 depth_boxes[n].f[CLEAR_X2] = (float)b[n].x2;
 	 depth_boxes[n].f[CLEAR_Y2] = (float)b[n].y2;
 	 depth_boxes[n].f[CLEAR_DEPTH] = 
-	    (float)rmesa->state.depth.clear;
+	    (float)rmesa->radeon.state.depth.clear;
       }
 
       ret = drmCommandWrite( rmesa->radeon.dri.fd, DRM_RADEON_CLEAR,
 			     &clear, sizeof(drm_radeon_clear_t));
 
       if ( ret ) {
-	 UNLOCK_HARDWARE( rmesa );
+	 UNLOCK_HARDWARE( &rmesa->radeon );
 	 fprintf( stderr, "DRM_RADEON_CLEAR: return = %d\n", ret );
 	 exit( 1 );
       }
    }
 
-   UNLOCK_HARDWARE( rmesa );
+   UNLOCK_HARDWARE( &rmesa->radeon );
    rmesa->hw.all_dirty = GL_TRUE;
 }
 
@@ -1223,7 +1223,7 @@ void radeonWaitForIdleLocked( r100ContextPtr rmesa )
     } while ( ( ret == -EBUSY ) && ( to++ < RADEON_TIMEOUT ) );
 
     if ( ret < 0 ) {
-	UNLOCK_HARDWARE( rmesa );
+	UNLOCK_HARDWARE( &rmesa->radeon );
 	fprintf( stderr, "Error: Radeon timed out... exiting\n" );
 	exit( -1 );
     }
@@ -1232,9 +1232,9 @@ void radeonWaitForIdleLocked( r100ContextPtr rmesa )
 
 static void radeonWaitForIdle( r100ContextPtr rmesa )
 {
-   LOCK_HARDWARE(rmesa);
+   LOCK_HARDWARE(&rmesa->radeon);
    radeonWaitForIdleLocked( rmesa );
-   UNLOCK_HARDWARE(rmesa);
+   UNLOCK_HARDWARE(&rmesa->radeon);
 }
 
 
@@ -1263,9 +1263,9 @@ void radeonFinish( GLcontext *ctx )
    radeonFlush( ctx );
 
    if (rmesa->radeon.do_irqs) {
-      LOCK_HARDWARE( rmesa );
+      LOCK_HARDWARE( &rmesa->radeon );
       radeonEmitIrqLocked( rmesa );
-      UNLOCK_HARDWARE( rmesa );
+      UNLOCK_HARDWARE( &rmesa->radeon );
       radeonWaitIrq( rmesa );
    }
    else

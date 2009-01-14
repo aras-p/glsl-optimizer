@@ -203,20 +203,20 @@ void r200InitState( r200ContextPtr rmesa )
       exit( -1 );
    }
 
-   rmesa->state.color.clear = 0x00000000;
+   rmesa->radeon.state.color.clear = 0x00000000;
 
    switch ( ctx->Visual.depthBits ) {
    case 16:
-      rmesa->state.depth.clear = 0x0000ffff;
-      rmesa->state.depth.scale = 1.0 / (GLfloat)0xffff;
+      rmesa->radeon.state.depth.clear = 0x0000ffff;
+      rmesa->radeon.state.depth.scale = 1.0 / (GLfloat)0xffff;
       depth_fmt = R200_DEPTH_FORMAT_16BIT_INT_Z;
-      rmesa->state.stencil.clear = 0x00000000;
+      rmesa->radeon.state.stencil.clear = 0x00000000;
       break;
    case 24:
-      rmesa->state.depth.clear = 0x00ffffff;
-      rmesa->state.depth.scale = 1.0 / (GLfloat)0xffffff;
+      rmesa->radeon.state.depth.clear = 0x00ffffff;
+      rmesa->radeon.state.depth.scale = 1.0 / (GLfloat)0xffffff;
       depth_fmt = R200_DEPTH_FORMAT_24BIT_INT_Z;
-      rmesa->state.stencil.clear = 0xffff0000;
+      rmesa->radeon.state.stencil.clear = 0xffff0000;
       break;
    default:
       fprintf( stderr, "Error: Unsupported depth %d... exiting\n",
@@ -225,7 +225,7 @@ void r200InitState( r200ContextPtr rmesa )
    }
 
    /* Only have hw stencil when depth buffer is 24 bits deep */
-   rmesa->state.stencil.hwBuffer = ( ctx->Visual.stencilBits > 0 &&
+   rmesa->radeon.state.stencil.hwBuffer = ( ctx->Visual.stencilBits > 0 &&
 				     ctx->Visual.depthBits == 24 );
 
    rmesa->radeon.Fallback = 0;
@@ -239,15 +239,15 @@ void r200InitState( r200ContextPtr rmesa )
    }
 #if 000
    if ( ctx->Visual.doubleBufferMode && rmesa->sarea->pfCurrentPage == 0 ) {
-      rmesa->state.color.drawOffset = rmesa->radeon.radeonScreen->backOffset;
-      rmesa->state.color.drawPitch  = rmesa->radeon.radeonScreen->backPitch;
+      rmesa->radeon.state.color.drawOffset = rmesa->radeon.radeonScreen->backOffset;
+      rmesa->radeon.state.color.drawPitch  = rmesa->radeon.radeonScreen->backPitch;
    } else {
-      rmesa->state.color.drawOffset = rmesa->radeon.radeonScreen->frontOffset;
-      rmesa->state.color.drawPitch  = rmesa->radeon.radeonScreen->frontPitch;
+      rmesa->radeon.state.color.drawOffset = rmesa->radeon.radeonScreen->frontOffset;
+      rmesa->radeon.state.color.drawPitch  = rmesa->radeon.radeonScreen->frontPitch;
    }
 
-   rmesa->state.pixel.readOffset = rmesa->state.color.drawOffset;
-   rmesa->state.pixel.readPitch  = rmesa->state.color.drawPitch;
+   rmesa->state.pixel.readOffset = rmesa->radeon.state.color.drawOffset;
+   rmesa->state.pixel.readPitch  = rmesa->radeon.state.color.drawPitch;
 #endif
 
    rmesa->hw.max_state_size = 0;
@@ -617,21 +617,21 @@ void r200InitState( r200ContextPtr rmesa )
    }
    if ( driQueryOptioni( &rmesa->radeon.optionCache, "round_mode" ) ==
 	DRI_CONF_ROUND_ROUND )
-      rmesa->state.color.roundEnable = R200_ROUND_ENABLE;
+      rmesa->radeon.state.color.roundEnable = R200_ROUND_ENABLE;
    else
-      rmesa->state.color.roundEnable = 0;
+      rmesa->radeon.state.color.roundEnable = 0;
    if ( driQueryOptioni (&rmesa->radeon.optionCache, "color_reduction" ) ==
 	DRI_CONF_COLOR_REDUCTION_DITHER )
       rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] |= R200_DITHER_ENABLE;
    else
-      rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] |= rmesa->state.color.roundEnable;
+      rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] |= rmesa->radeon.state.color.roundEnable;
 
 #if 000
-   rmesa->hw.ctx.cmd[CTX_RB3D_COLOROFFSET] = ((rmesa->state.color.drawOffset +
+   rmesa->hw.ctx.cmd[CTX_RB3D_COLOROFFSET] = ((rmesa->radeon.state.color.drawOffset +
 					       rmesa->radeon.radeonScreen->fbLocation)
 					      & R200_COLOROFFSET_MASK);
 
-   rmesa->hw.ctx.cmd[CTX_RB3D_COLORPITCH] = ((rmesa->state.color.drawPitch &
+   rmesa->hw.ctx.cmd[CTX_RB3D_COLORPITCH] = ((rmesa->radeon.state.color.drawPitch &
 					      R200_COLORPITCH_MASK) |
 					     R200_COLOR_ENDIAN_NO_SWAP);
 #else

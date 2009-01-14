@@ -249,10 +249,11 @@ typedef void (*radeon_line_func) (radeonContextPtr,
 
 typedef void (*radeon_point_func) (radeonContextPtr, radeonVertex *);
 
-struct r300_radeon_state {
+struct radeon_state {
 	struct radeon_colorbuffer_state color;
+	struct radeon_depthbuffer_state depth;
 	struct radeon_scissor_state scissor;
-	struct radeon_renderbuffer *depth_buffer;
+	struct radeon_stencilbuffer_state stencil;
 };
 
 struct radeon_context {
@@ -301,12 +302,16 @@ struct radeon_context {
    GLuint swap_missed_count;
 
    /* Derived state - for r300 only */
-   struct r300_radeon_state state;
+   struct radeon_state state;
 
    /* Configuration cache
     */
    driOptionCache optionCache;
 
+   struct {
+      void (*get_lock)(radeonContextPtr radeon);
+      void (*update_viewport_offset)(GLcontext *ctx);
+   } vtbl;
 };
 
 #define RADEON_CONTEXT(glctx) ((radeonContextPtr)(ctx->DriverCtx))

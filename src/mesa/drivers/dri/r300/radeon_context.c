@@ -554,7 +554,7 @@ GLboolean radeonMakeCurrent(__DRIcontextPrivate * driContextPriv,
 			radeon_update_renderbuffers(driContextPriv, driReadPriv);
 		radeon->state.color.rrb =
 			(void *)dfb->Attachment[BUFFER_BACK_LEFT].Renderbuffer;
-		radeon->state.depth_buffer =
+		radeon->state.depth.rrb =
 			(void *)dfb->Attachment[BUFFER_DEPTH].Renderbuffer;
 	}
 

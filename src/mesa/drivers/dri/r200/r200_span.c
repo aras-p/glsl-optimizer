@@ -242,7 +242,7 @@ static void r200SpanRenderStart( GLcontext *ctx )
    r200ContextPtr rmesa = R200_CONTEXT( ctx );
 
    R200_FIREVERTICES( rmesa );
-   LOCK_HARDWARE( rmesa );
+   LOCK_HARDWARE( &rmesa->radeon );
    r200WaitForIdleLocked( rmesa );
 
    /* Read & rewrite the first pixel in the frame buffer.  This should
@@ -269,7 +269,7 @@ static void r200SpanRenderFinish( GLcontext *ctx )
 {
    r200ContextPtr rmesa = R200_CONTEXT( ctx );
    _swrast_flush( ctx );
-   UNLOCK_HARDWARE( rmesa );
+   UNLOCK_HARDWARE( &rmesa->radeon );
 }
 
 void r200InitSpanFuncs( GLcontext *ctx )

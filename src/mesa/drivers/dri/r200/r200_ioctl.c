@@ -108,10 +108,10 @@ int r200FlushCmdBufLocked( r200ContextPtr rmesa, const char * caller )
 
 
    if (R200_DEBUG & DEBUG_SANITY) {
-      if (rmesa->state.scissor.enabled) 
+      if (rmesa->radeon.state.scissor.enabled) 
 	 ret = r200SanityCmdBuffer( rmesa, 
-				    rmesa->state.scissor.numClipRects,
-				    rmesa->state.scissor.pClipRects);
+				    rmesa->radeon.state.scissor.numClipRects,
+				    rmesa->radeon.state.scissor.pClipRects);
       else
 	 ret = r200SanityCmdBuffer( rmesa, 
 				    rmesa->radeon.numClipRects,
@@ -135,9 +135,9 @@ int r200FlushCmdBufLocked( r200ContextPtr rmesa, const char * caller )
    cmd.bufsz = rmesa->store.cmd_used;
    cmd.buf = rmesa->store.cmd_buf;
 
-   if (rmesa->state.scissor.enabled) {
-      cmd.nbox = rmesa->state.scissor.numClipRects;
-      cmd.boxes = (drm_clip_rect_t *)rmesa->state.scissor.pClipRects;
+   if (rmesa->radeon.state.scissor.enabled) {
+      cmd.nbox = rmesa->radeon.state.scissor.numClipRects;
+      cmd.boxes = (drm_clip_rect_t *)rmesa->radeon.state.scissor.pClipRects;
    } else {
       cmd.nbox = rmesa->radeon.numClipRects;
       cmd.boxes = (drm_clip_rect_t *)rmesa->radeon.pClipRects;
@@ -174,11 +174,11 @@ void r200FlushCmdBuf( r200ContextPtr rmesa, const char *caller )
 {
    int ret;
 
-   LOCK_HARDWARE( rmesa );
+   LOCK_HARDWARE( &rmesa->radeon );
 
    ret = r200FlushCmdBufLocked( rmesa, caller );
 
-   UNLOCK_HARDWARE( rmesa );
+   UNLOCK_HARDWARE( &rmesa->radeon );
 
    if (ret) {
       fprintf(stderr, "drmRadeonCmdBuffer: %d (exiting)\n", ret);
@@ -225,7 +225,7 @@ void r200RefillCurrentDmaRegion( r200ContextPtr rmesa )
    dma.request_sizes = &size;
    dma.granted_count = 0;
 
-   LOCK_HARDWARE(rmesa);	/* no need to validate */
+   LOCK_HARDWARE(&rmesa->radeon);	/* no need to validate */
 
    while (1) {
       ret = drmDMA( fd, &dma );
@@ -237,13 +237,13 @@ void r200RefillCurrentDmaRegion( r200ContextPtr rmesa )
       }
 
       if (rmesa->radeon.do_usleeps) {
-	 UNLOCK_HARDWARE( rmesa );
+	 UNLOCK_HARDWARE( &rmesa->radeon );
 	 DO_USLEEP( 1 );
-	 LOCK_HARDWARE( rmesa );
+	 LOCK_HARDWARE( &rmesa->radeon );
       }
    }
 
-   UNLOCK_HARDWARE(rmesa);
+   UNLOCK_HARDWARE(&rmesa->radeon);
 
    if (R200_DEBUG & DEBUG_DMA)
       fprintf(stderr, "Allocated buffer %d\n", index);
@@ -393,9 +393,9 @@ static void r200WaitForFrameCompletion( r200ContextPtr rmesa )
 	       ;
 	 }
 	 else {
-	    UNLOCK_HARDWARE( rmesa ); 
+	    UNLOCK_HARDWARE( &rmesa->radeon ); 
 	    r200WaitIrq( rmesa );	
-	    LOCK_HARDWARE( rmesa ); 
+	    LOCK_HARDWARE( &rmesa->radeon ); 
 	 }
 	 rmesa->radeon.irqsEmitted = 10;
       }
@@ -407,10 +407,10 @@ static void r200WaitForFrameCompletion( r200ContextPtr rmesa )
    } 
    else {
       while (r200GetLastFrame (rmesa) < sarea->last_frame) {
-	 UNLOCK_HARDWARE( rmesa ); 
+	 UNLOCK_HARDWARE( &rmesa->radeon ); 
 	 if (rmesa->radeon.do_usleeps) 
 	    DO_USLEEP( 1 );
-	 LOCK_HARDWARE( rmesa ); 
+	 LOCK_HARDWARE( &rmesa->radeon ); 
       }
    }
 }
@@ -440,7 +440,7 @@ void r200CopyBuffer( __DRIdrawablePrivate *dPriv,
 
    R200_FIREVERTICES( rmesa );
 
-   LOCK_HARDWARE( rmesa );
+   LOCK_HARDWARE( &rmesa->radeon );
 
 
    /* Throttle the frame rate -- only allow one pending swap buffers
@@ -449,9 +449,9 @@ void r200CopyBuffer( __DRIdrawablePrivate *dPriv,
    r200WaitForFrameCompletion( rmesa );
    if (!rect)
    {
-       UNLOCK_HARDWARE( rmesa );
+       UNLOCK_HARDWARE( &rmesa->radeon );
        driWaitForVBlank( dPriv, & missed_target );
-       LOCK_HARDWARE( rmesa );
+       LOCK_HARDWARE( &rmesa->radeon );
    }
 
    nbox = dPriv->numClipRects; /* must be in locked region */
@@ -493,12 +493,12 @@ void r200CopyBuffer( __DRIdrawablePrivate *dPriv,
 
       if ( ret ) {
 	 fprintf( stderr, "DRM_R200_SWAP_BUFFERS: return = %d\n", ret );
-	 UNLOCK_HARDWARE( rmesa );
+	 UNLOCK_HARDWARE( &rmesa->radeon );
 	 exit( 1 );
       }
    }
 
-   UNLOCK_HARDWARE( rmesa );
+   UNLOCK_HARDWARE( &rmesa->radeon );
    if (!rect)
    {
        rmesa->hw.all_dirty = GL_TRUE;
@@ -535,10 +535,10 @@ void r200PageFlip( __DRIdrawablePrivate *dPriv )
    }
 
    R200_FIREVERTICES( rmesa );
-   LOCK_HARDWARE( rmesa );
+   LOCK_HARDWARE( &rmesa->radeon );
 
    if (!dPriv->numClipRects) {
-      UNLOCK_HARDWARE( rmesa );
+      UNLOCK_HARDWARE( &rmesa->radeon );
       usleep( 10000 );		/* throttle invisible client 10ms */
       return;
    }
@@ -556,17 +556,17 @@ void r200PageFlip( __DRIdrawablePrivate *dPriv )
     * request at a time.
     */
    r200WaitForFrameCompletion( rmesa );
-   UNLOCK_HARDWARE( rmesa );
+   UNLOCK_HARDWARE( &rmesa->radeon );
    driWaitForVBlank( dPriv, & missed_target );
    if ( missed_target ) {
       rmesa->radeon.swap_missed_count++;
       (void) (*psp->systemTime->getUST)( & rmesa->radeon.swap_missed_ust );
    }
-   LOCK_HARDWARE( rmesa );
+   LOCK_HARDWARE( &rmesa->radeon );
 
    ret = drmCommandNone( rmesa->radeon.dri.fd, DRM_RADEON_FLIP );
 
-   UNLOCK_HARDWARE( rmesa );
+   UNLOCK_HARDWARE( &rmesa->radeon );
 
    if ( ret ) {
       fprintf( stderr, "DRM_RADEON_FLIP: return = %d\n", ret );
@@ -622,8 +622,8 @@ static void r200Clear( GLcontext *ctx, GLbitfield mask )
    }
 
    {
-      LOCK_HARDWARE( rmesa );
-      UNLOCK_HARDWARE( rmesa );
+      LOCK_HARDWARE( &rmesa->radeon );
+      UNLOCK_HARDWARE( &rmesa->radeon );
       if ( dPriv->numClipRects == 0 ) 
 	 return;
    }
@@ -647,7 +647,7 @@ static void r200Clear( GLcontext *ctx, GLbitfield mask )
       mask &= ~BUFFER_BIT_DEPTH;
    }
 
-   if ( (mask & BUFFER_BIT_STENCIL) && rmesa->state.stencil.hwBuffer ) {
+   if ( (mask & BUFFER_BIT_STENCIL) && rmesa->radeon.state.stencil.hwBuffer ) {
       flags |= RADEON_STENCIL;
       mask &= ~BUFFER_BIT_STENCIL;
    }
@@ -665,14 +665,14 @@ static void r200Clear( GLcontext *ctx, GLbitfield mask )
       flags |= RADEON_USE_COMP_ZBUF;
 /*      if (rmesa->radeon.radeonScreen->chip_family == CHIP_FAMILY_R200)
 	 flags |= RADEON_USE_HIERZ; */
-      if (!(rmesa->state.stencil.hwBuffer) ||
+      if (!(rmesa->radeon.state.stencil.hwBuffer) ||
 	 ((flags & RADEON_DEPTH) && (flags & RADEON_STENCIL) &&
-	    ((rmesa->state.stencil.clear & R200_STENCIL_WRITE_MASK) == R200_STENCIL_WRITE_MASK))) {
+	    ((rmesa->radeon.state.stencil.clear & R200_STENCIL_WRITE_MASK) == R200_STENCIL_WRITE_MASK))) {
 	  flags |= RADEON_CLEAR_FASTZ;
       }
    }
 
-   LOCK_HARDWARE( rmesa );
+   LOCK_HARDWARE( &rmesa->radeon );
 
    /* compute region after locking: */
    cx = ctx->DrawBuffer->_Xmin;
@@ -708,9 +708,9 @@ static void r200Clear( GLcontext *ctx, GLbitfield mask )
       }
       
       if (rmesa->radeon.do_usleeps) {
-	 UNLOCK_HARDWARE( rmesa );
+	 UNLOCK_HARDWARE( &rmesa->radeon );
 	 DO_USLEEP( 1 );
-	 LOCK_HARDWARE( rmesa );
+	 LOCK_HARDWARE( &rmesa->radeon );
       }
    }
 
@@ -758,10 +758,10 @@ static void r200Clear( GLcontext *ctx, GLbitfield mask )
       rmesa->radeon.sarea->nbox = n;
 
       clear.flags       = flags;
-      clear.clear_color = rmesa->state.color.clear;
-      clear.clear_depth = rmesa->state.depth.clear;	/* needed for hyperz */
+      clear.clear_color = rmesa->radeon.state.color.clear;
+      clear.clear_depth = rmesa->radeon.state.depth.clear;	/* needed for hyperz */
       clear.color_mask  = rmesa->hw.msk.cmd[MSK_RB3D_PLANEMASK];
-      clear.depth_mask  = rmesa->state.stencil.clear;
+      clear.depth_mask  = rmesa->radeon.state.stencil.clear;
       clear.depth_boxes = depth_boxes;
 
       n--;
@@ -779,13 +779,13 @@ static void r200Clear( GLcontext *ctx, GLbitfield mask )
 
 
       if ( ret ) {
-	 UNLOCK_HARDWARE( rmesa );
+	 UNLOCK_HARDWARE( &rmesa->radeon );
 	 fprintf( stderr, "DRM_RADEON_CLEAR: return = %d\n", ret );
 	 exit( 1 );
       }
    }
 
-   UNLOCK_HARDWARE( rmesa );
+   UNLOCK_HARDWARE( &rmesa->radeon );
    rmesa->hw.all_dirty = GL_TRUE;
 }
 
@@ -802,7 +802,7 @@ void r200WaitForIdleLocked( r200ContextPtr rmesa )
     } while (ret && ++i < 100);
     
     if ( ret < 0 ) {
-       UNLOCK_HARDWARE( rmesa );
+       UNLOCK_HARDWARE( &rmesa->radeon );
        fprintf( stderr, "Error: R200 timed out... exiting\n" );
        exit( -1 );
     }
@@ -811,9 +811,9 @@ void r200WaitForIdleLocked( r200ContextPtr rmesa )
 
 static void r200WaitForIdle( r200ContextPtr rmesa )
 {
-   LOCK_HARDWARE(rmesa);
+   LOCK_HARDWARE(&rmesa->radeon);
    r200WaitForIdleLocked( rmesa );
-   UNLOCK_HARDWARE(rmesa);
+   UNLOCK_HARDWARE(&rmesa->radeon);
 }
 
 
@@ -842,9 +842,9 @@ void r200Finish( GLcontext *ctx )
    r200Flush( ctx );
 
    if (rmesa->radeon.do_irqs) {
-      LOCK_HARDWARE( rmesa );
+      LOCK_HARDWARE( &rmesa->radeon );
       r200EmitIrqLocked( rmesa );
-      UNLOCK_HARDWARE( rmesa );
+      UNLOCK_HARDWARE( &rmesa->radeon );
       r200WaitIrq( rmesa );
    }
    else 

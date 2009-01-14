@@ -11,7 +11,6 @@ MINIGLX_SOURCES = server/radeon_dri.c
 DRIVER_SOURCES = \
 	radeon_context.c \
 	radeon_ioctl.c \
-	radeon_lock.c \
 	radeon_screen.c \
 	radeon_state.c \
 	radeon_state_init.c \
@@ -22,7 +21,9 @@ DRIVER_SOURCES = \
 	radeon_swtcl.c \
 	radeon_span.c \
 	radeon_maos.c \
-	radeon_sanity.c 
+	radeon_sanity.c \
+	common_lock.c \
+	common_misc.c
 
 C_SOURCES = \
 	$(COMMON_SOURCES) \

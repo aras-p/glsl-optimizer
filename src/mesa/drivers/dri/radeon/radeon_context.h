@@ -54,6 +54,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_screen.h"
 
 #include "common_context.h"
+#include "common_misc.h"
 
 
 struct r100_context;
@@ -328,11 +329,7 @@ struct radeon_hw_state {
 };
 
 
-struct radeon_state {
-	struct radeon_colorbuffer_state color;
-	struct radeon_depthbuffer_state depth;
-	struct radeon_scissor_state scissor;
-	struct radeon_stencilbuffer_state stencil;
+struct r100_state {
 	struct radeon_stipple_state stipple;
 	struct radeon_texture_state texture;
 };
@@ -423,7 +420,7 @@ struct r100_context {
 	/* Driver and hardware state management
 	 */
 	struct radeon_hw_state hw;
-	struct radeon_state state;
+	struct r100_state state;
 
 	/* Vertex buffers
 	 */

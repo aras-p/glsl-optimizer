@@ -55,6 +55,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "radeon_screen.h"
 #include "common_context.h"
+#include "common_misc.h"
 
 struct r200_context;
 typedef struct r200_context r200ContextRec;
@@ -519,10 +520,6 @@ struct r200_hw_state {
 struct r200_state {
    /* Derived state for internal purposes:
     */
-   struct radeon_colorbuffer_state color;
-   struct radeon_depthbuffer_state depth;
-   struct radeon_scissor_state scissor;
-   struct radeon_stencilbuffer_state stencil;
    struct radeon_stipple_state stipple;
    struct r200_texture_state texture;
    GLuint envneeded;

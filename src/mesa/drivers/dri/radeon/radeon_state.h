@@ -44,8 +44,6 @@ extern void radeonInitStateFuncs( GLcontext *ctx );
 
 extern void radeonUpdateMaterial( GLcontext *ctx );
 
-extern void radeonSetCliprects( r100ContextPtr rmesa );
-extern void radeonRecalcScissorRects( r100ContextPtr rmesa );
 extern void radeonUpdateViewportOffset( GLcontext *ctx );
 extern void radeonUpdateWindow( GLcontext *ctx );
 extern void radeonUpdateDrawBuffer( GLcontext *ctx );

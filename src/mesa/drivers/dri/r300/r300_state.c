@@ -591,7 +591,7 @@ static void r300SetStencilState(GLcontext * ctx, GLboolean state)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 
-	if (r300->state.stencil.hw_stencil) {
+	if (r300->radeon.state.stencil.hwBuffer) {
 		R300_STATECHANGE(r300, zs);
 		if (state) {
 			r300->hw.zs.cmd[R300_ZS_CNTL_0] |=
@@ -1084,8 +1084,8 @@ static void r300UpdateWindow(GLcontext * ctx)
 	GLfloat tx = v[MAT_TX] + xoffset + SUBPIXEL_X;
 	GLfloat sy = -v[MAT_SY];
 	GLfloat ty = (-v[MAT_TY]) + yoffset + SUBPIXEL_Y;
-	GLfloat sz = v[MAT_SZ] * rmesa->state.depth.scale;
-	GLfloat tz = v[MAT_TZ] * rmesa->state.depth.scale;
+	GLfloat sz = v[MAT_SZ] * rmesa->radeon.state.depth.scale;
+	GLfloat tz = v[MAT_TZ] * rmesa->radeon.state.depth.scale;
 
 	R300_FIREVERTICES(rmesa);
 	R300_STATECHANGE(rmesa, vpt);
@@ -2361,7 +2361,7 @@ static void r300ResetHwState(r300ContextPtr r300)
 	r300->hw.rb3d_discard_src_pixel_lte_threshold.cmd[1] = 0x00000000;
 	r300->hw.rb3d_discard_src_pixel_lte_threshold.cmd[2] = 0xffffffff;
 
-	rrb = r300->radeon.state.depth_buffer;
+	rrb = r300->radeon.state.depth.rrb;
     if (rrb && rrb->bo && (rrb->bo->flags & RADEON_BO_FLAGS_MACRO_TILE)) {
 		/* XXX: Turn off when clearing buffers ? */
 		r300->hw.zb.cmd[R300_ZB_PITCH] |= R300_DEPTHMACROTILE_ENABLE;
@@ -2694,11 +2694,11 @@ void r300InitState(r300ContextPtr r300)
 
 	switch (ctx->Visual.depthBits) {
 	case 16:
-		r300->state.depth.scale = 1.0 / (GLfloat) 0xffff;
+		r300->radeon.state.depth.scale = 1.0 / (GLfloat) 0xffff;
 		depth_fmt = R300_DEPTHFORMAT_16BIT_INT_Z;
 		break;
 	case 24:
-		r300->state.depth.scale = 1.0 / (GLfloat) 0xffffff;
+		r300->radeon.state.depth.scale = 1.0 / (GLfloat) 0xffffff;
 		depth_fmt = R300_DEPTHFORMAT_24BIT_INT_Z_8BIT_STENCIL;
 		break;
 	default:
@@ -2708,8 +2708,8 @@ void r300InitState(r300ContextPtr r300)
 	}
 
 	/* Only have hw stencil when depth buffer is 24 bits deep */
-	r300->state.stencil.hw_stencil = (ctx->Visual.stencilBits > 0 &&
-					  ctx->Visual.depthBits == 24);
+	r300->radeon.state.stencil.hwBuffer = (ctx->Visual.stencilBits > 0 &&
+					       ctx->Visual.depthBits == 24);
 
 	memset(&(r300->state.texture), 0, sizeof(r300->state.texture));
 

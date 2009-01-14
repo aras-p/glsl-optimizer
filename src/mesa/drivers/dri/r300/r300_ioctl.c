@@ -576,7 +576,7 @@ static void r300Clear(GLcontext * ctx, GLbitfield mask)
 		mask &= ~BUFFER_BIT_DEPTH;
 	}
 
-	if ((mask & BUFFER_BIT_STENCIL) && r300->state.stencil.hw_stencil) {
+	if ((mask & BUFFER_BIT_STENCIL) && r300->radeon.state.stencil.hwBuffer) {
 		bits |= CLEARBUFFER_STENCIL;
 		mask &= ~BUFFER_BIT_STENCIL;
 	}

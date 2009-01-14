@@ -422,7 +422,7 @@ static void uploadSubImage( r200ContextPtr rmesa, radeonTexObjPtr t,
       }
    }
 
-   LOCK_HARDWARE( rmesa );
+   LOCK_HARDWARE( &rmesa->radeon );
    do {
       ret = drmCommandWriteRead( rmesa->radeon.dri.fd, DRM_RADEON_TEXTURE,
                                  &tex, sizeof(drm_radeon_texture_t) );
@@ -433,7 +433,7 @@ static void uploadSubImage( r200ContextPtr rmesa, radeonTexObjPtr t,
       }
    } while ( ret == -EAGAIN );
 
-   UNLOCK_HARDWARE( rmesa );
+   UNLOCK_HARDWARE( &rmesa->radeon );
 
    if ( ret ) {
       fprintf( stderr, "DRM_RADEON_TEXTURE: return = %d\n", ret );
@@ -476,7 +476,7 @@ int r200UploadTexImages( r200ContextPtr rmesa, radeonTexObjPtr t, GLuint face )
       r200Finish( rmesa->radeon.glCtx );
    }
 
-   LOCK_HARDWARE( rmesa );
+   LOCK_HARDWARE( &rmesa->radeon );
 
    if ( t->base.memBlock == NULL ) {
       int heap;
@@ -484,7 +484,7 @@ int r200UploadTexImages( r200ContextPtr rmesa, radeonTexObjPtr t, GLuint face )
       heap = driAllocateTexture( rmesa->radeon.texture_heaps, rmesa->radeon.nr_heaps,
 				 (driTextureObject *) t );
       if ( heap == -1 ) {
-	 UNLOCK_HARDWARE( rmesa );
+	 UNLOCK_HARDWARE( &rmesa->radeon );
 	 return -1;
       }
 
@@ -506,7 +506,7 @@ int r200UploadTexImages( r200ContextPtr rmesa, radeonTexObjPtr t, GLuint face )
    /* Let the world know we've used this memory recently.
     */
    driUpdateTextureLRU( (driTextureObject *) t );
-   UNLOCK_HARDWARE( rmesa );
+   UNLOCK_HARDWARE( &rmesa->radeon );
 
    /* Upload any images that are new */
    if (t->base.dirty_images[face]) {

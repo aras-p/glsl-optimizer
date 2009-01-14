@@ -31,10 +31,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifndef __RADEON_STATE_H__
 #define __RADEON_STATE_H__
 
-extern void radeonRecalcScissorRects(radeonContextPtr radeon);
-extern void radeonSetCliprects(radeonContextPtr radeon);
-extern void radeonUpdateScissor(GLcontext* ctx);
-
 extern void radeonEnable(GLcontext* ctx, GLenum cap, GLboolean state);
 
 extern void radeonInitState(radeonContextPtr radeon);
