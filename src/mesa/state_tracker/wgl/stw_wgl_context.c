@@ -111,6 +111,9 @@ wglCreateContext(
       FREE( ctx );
       return NULL;
    }
+   
+   assert(!pipe->priv);
+   pipe->priv = hdc;
 
    ctx->st = st_create_context( pipe, visual, NULL );
    if (ctx->st == NULL) {
@@ -265,6 +268,8 @@ wglMakeCurrent(
    if (ctx && fb) {
       st_make_current( ctx->st, fb->stfb, fb->stfb );
       framebuffer_resize( fb, width, height );
+      ctx->hdc = hdc;
+      ctx->st->pipe->priv = hdc;
    }
    else {
       /* Detach */
