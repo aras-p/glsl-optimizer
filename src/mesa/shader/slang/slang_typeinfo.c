@@ -23,7 +23,7 @@
  */
 
 /**
- * \file slang_assemble_typeinfo.c
+ * \file slang_typeinfo.c
  * slang type info
  * \author Michal Krol
  */
