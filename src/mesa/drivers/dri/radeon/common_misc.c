@@ -339,7 +339,6 @@ static void radeonWaitForIdle(radeonContextPtr radeon)
 void radeonCopyBuffer( __DRIdrawablePrivate *dPriv,
 		       const drm_clip_rect_t	  *rect)
 {
-   GLcontext *ctx;
    radeonContextPtr rmesa;
    GLint nbox, i, ret;
    GLboolean   missed_target;
@@ -350,14 +349,13 @@ void radeonCopyBuffer( __DRIdrawablePrivate *dPriv,
    assert(dPriv->driContextPriv);
    assert(dPriv->driContextPriv->driverPrivate);
    
-   ctx = (GLcontext *) dPriv->driContextPriv->driverPrivate;
    rmesa = (radeonContextPtr) dPriv->driContextPriv->driverPrivate;
 
    if ( RADEON_DEBUG & DEBUG_IOCTL ) {
       fprintf( stderr, "\n%s( %p )\n\n", __FUNCTION__, (void *) rmesa->glCtx );
    }
 
-   rmesa->vtbl.flush(ctx);
+   rmesa->vtbl.flush(rmesa->glCtx);
    LOCK_HARDWARE( rmesa );
 
    /* Throttle the frame rate -- only allow one pending swap buffers
@@ -427,7 +425,7 @@ void radeonCopyBuffer( __DRIdrawablePrivate *dPriv,
        }
 
        rmesa->swap_ust = ust;
-       rmesa->vtbl.set_all_dirty(ctx);
+       rmesa->vtbl.set_all_dirty(rmesa->glCtx);
 
    }
 }
