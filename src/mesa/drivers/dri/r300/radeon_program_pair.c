@@ -473,6 +473,11 @@ static void allocate_input_registers(struct pair_state *s)
 		alloc_hw_reg(s, PROGRAM_INPUT, FRAG_ATTRIB_COL1, hwindex++);
 	InputsRead &= ~FRAG_BIT_COL1;
 
+	/* Fog coordinate */
+	if (InputsRead & FRAG_BIT_FOGC)
+		alloc_hw_reg(s, PROGRAM_INPUT, FRAG_ATTRIB_FOGC, hwindex++);
+	InputsRead &= ~FRAG_BIT_FOGC;
+
 	/* Anything else */
 	if (InputsRead)
 		error("Don't know how to handle inputs 0x%x\n", InputsRead);
