@@ -177,8 +177,11 @@ intel_validate_paired_depth_stencil(GLcontext * ctx,
       }
       else {
          /* Separate depth/stencil buffers, need to interleave now */
-         ASSERT(depthRb->Base._BaseFormat == GL_DEPTH_COMPONENT);
-         ASSERT(stencilRb->Base._BaseFormat == GL_STENCIL_INDEX);
+         ASSERT(depthRb->Base._BaseFormat == GL_DEPTH_COMPONENT ||
+                depthRb->Base._BaseFormat == GL_DEPTH_STENCIL);
+         ASSERT(stencilRb->Base._BaseFormat == GL_STENCIL_INDEX ||
+                stencilRb->Base._BaseFormat == GL_DEPTH_STENCIL);
+
          /* may need to interleave depth/stencil now */
          if (depthRb->PairedStencil == stencilRb->Base.Name) {
             /* OK, the depth and stencil buffers are already interleaved */
