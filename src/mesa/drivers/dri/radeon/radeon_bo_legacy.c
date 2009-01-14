@@ -41,12 +41,13 @@
 #include <sys/ioctl.h>
 #include "xf86drm.h"
 #include "texmem.h"
+#include "main/simple_list.h"
+
 #include "drm.h"
 #include "radeon_drm.h"
 #include "radeon_bo.h"
 #include "radeon_bo_legacy.h"
-#include "radeon_ioctl.h"
-
+#include "common_context.h"
 
 struct bo_legacy {
     struct radeon_bo    base;

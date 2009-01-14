@@ -8,6 +8,9 @@
 #include "tnl/t_context.h"
 #include "main/colormac.h"
 
+#include "radeon_screen.h"
+#include "radeon_drm.h"
+#include "dri_util.h"
 
 /* This union is used to avoid warnings/miscompilation
    with float to uint32_t casts due to strict-aliasing */
@@ -333,6 +336,7 @@ struct radeon_context {
       void (*flush)(GLcontext *ctx);
       void (*set_all_dirty)(GLcontext *ctx);
       void (*update_draw_buffer)(GLcontext *ctx);
+      void (*emit_cs_header)(struct radeon_cs *cs, radeonContextPtr rmesa);
    } vtbl;
 };
 

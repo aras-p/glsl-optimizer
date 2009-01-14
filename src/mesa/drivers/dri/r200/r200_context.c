@@ -272,6 +272,10 @@ static void r200_vtbl_set_all_dirty(GLcontext *ctx)
    rmesa->hw.all_dirty = GL_TRUE;
 }
 
+static void r200_vtbl_emit_cs_header(struct radeon_cs *cs, radeonContextPtr rmesa)
+{
+}
+
 static void r200_init_vtbl(radeonContextPtr radeon)
 {
    radeon->vtbl.get_lock = r200_get_lock;
@@ -279,7 +283,9 @@ static void r200_init_vtbl(radeonContextPtr radeon)
    radeon->vtbl.flush = r200_vtbl_flush;
    radeon->vtbl.set_all_dirty = r200_vtbl_set_all_dirty;
    radeon->vtbl.update_draw_buffer = r200UpdateDrawBuffer;
+   radeon->vtbl.emit_cs_header = r200_vtbl_emit_cs_header;
 }
+
 
 /* Create the device specific rendering context.
  */

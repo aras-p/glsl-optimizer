@@ -30,6 +30,8 @@ DRIVER_SOURCES = r200_context.c \
 		 radeon_screen.c \
 		 common_lock.c \
 		 common_misc.c \
+		 radeon_bo_legacy.c \
+		 radeon_cs_legacy.c \
 		 $(EGL_SOURCES)
 
 C_SOURCES = $(COMMON_SOURCES) $(DRIVER_SOURCES)
@@ -50,6 +52,8 @@ COMMON_SYMLINKS = \
 	radeon_chipset.h \
 	radeon_screen.c \
 	radeon_screen.h \
+	radeon_bo_legacy.c \
+	radeon_cs_legacy.c \
 	radeon_bo_legacy.h \
 	radeon_cs_legacy.h \
 	radeon_buffer.h \
@@ -59,6 +63,7 @@ COMMON_SYMLINKS = \
 	common_misc.h \
 	common_misc.c
 
+DRI_LIB_DEPS += -ldrm_radeon
 
 ##### TARGETS #####
 

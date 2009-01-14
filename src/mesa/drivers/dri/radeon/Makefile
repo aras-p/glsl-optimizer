@@ -23,13 +23,17 @@ DRIVER_SOURCES = \
 	radeon_maos.c \
 	radeon_sanity.c \
 	common_lock.c \
-	common_misc.c
+	common_misc.c \
+	radeon_bo_legacy.c \
+	radeon_cs_legacy.c
 
 C_SOURCES = \
 	$(COMMON_SOURCES) \
 	$(DRIVER_SOURCES) 
 
 DRIVER_DEFINES = -DRADEON_COMMON=0
+
+DRI_LIB_DEPS += -ldrm_radeon
 
 X86_SOURCES = 
 
