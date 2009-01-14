@@ -81,6 +81,7 @@ progs = [
 	'tri-blend-sub',
 	'tri-blend',
 	'tri-clip',
+	'tri-clear',
 	'tri-cull-both',
 	'tri-cull',
 	'tri-dlist',
