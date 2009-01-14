@@ -344,9 +344,9 @@ void radeonCopyBuffer( __DRIdrawablePrivate *dPriv,
    ctx = (GLcontext *) dPriv->driContextPriv->driverPrivate;
    rmesa = (radeonContextPtr) dPriv->driContextPriv->driverPrivate;
 
-///   if ( RADEON_DEBUG & DEBUG_IOCTL ) {
-//      fprintf( stderr, "\n%s( %p )\n\n", __FUNCTION__, (void *) rmesa->glCtx );
-//   }
+   if ( RADEON_DEBUG & DEBUG_IOCTL ) {
+      fprintf( stderr, "\n%s( %p )\n\n", __FUNCTION__, (void *) rmesa->glCtx );
+   }
 
    rmesa->vtbl.flush(ctx);
    LOCK_HARDWARE( rmesa );
@@ -437,16 +437,14 @@ void radeonPageFlip( __DRIdrawablePrivate *dPriv )
    assert(dPriv->driContextPriv->driverPrivate);
 
    rmesa = (radeonContextPtr) dPriv->driContextPriv->driverPrivate;
-  rrb = (void *)fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer;
+   rrb = (void *)fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer;
 
    psp = dPriv->driScreenPriv;
 
-#if 0
    if ( RADEON_DEBUG & DEBUG_IOCTL ) {
       fprintf(stderr, "%s: pfCurrentPage: %d\n", __FUNCTION__,
 	      rmesa->sarea->pfCurrentPage);
    }
-#endif
 
    rmesa->vtbl.flush(rmesa->glCtx);
 
@@ -525,3 +523,57 @@ void radeon_common_finish(GLcontext * ctx)
 		radeonWaitForIdle(radeon);
 	}
 }
+
+/**
+ * Swap front and back buffer.
+ */
+void radeonSwapBuffers(__DRIdrawablePrivate * dPriv)
+{
+	if (dPriv->driContextPriv && dPriv->driContextPriv->driverPrivate) {
+		radeonContextPtr radeon;
+		GLcontext *ctx;
+
+		radeon = (radeonContextPtr) dPriv->driContextPriv->driverPrivate;
+		ctx = radeon->glCtx;
+
+		if (ctx->Visual.doubleBufferMode) {
+			_mesa_notifySwapBuffers(ctx);/* flush pending rendering comands */
+			if (radeon->doPageFlip) {
+				radeonPageFlip(dPriv);
+			} else {
+				radeonCopyBuffer(dPriv, NULL);
+			}
+		}
+	} else {
+		/* XXX this shouldn't be an error but we can't handle it for now */
+		_mesa_problem(NULL, "%s: drawable has no context!",
+			      __FUNCTION__);
+	}
+}
+
+void radeonCopySubBuffer(__DRIdrawablePrivate * dPriv,
+			 int x, int y, int w, int h )
+{
+    if (dPriv->driContextPriv && dPriv->driContextPriv->driverPrivate) {
+	radeonContextPtr radeon;
+	GLcontext *ctx;
+
+	radeon = (radeonContextPtr) dPriv->driContextPriv->driverPrivate;
+	ctx = radeon->glCtx;
+
+	if (ctx->Visual.doubleBufferMode) {
+	    drm_clip_rect_t rect;
+	    rect.x1 = x + dPriv->x;
+	    rect.y1 = (dPriv->h - y - h) + dPriv->y;
+	    rect.x2 = rect.x1 + w;
+	    rect.y2 = rect.y1 + h;
+	    _mesa_notifySwapBuffers(ctx);	/* flush pending rendering comands */
+	    radeonCopyBuffer(dPriv, &rect);
+	}
+    } else {
+	/* XXX this shouldn't be an error but we can't handle it for now */
+	_mesa_problem(NULL, "%s: drawable has no context!",
+		      __FUNCTION__);
+    }
+}
+

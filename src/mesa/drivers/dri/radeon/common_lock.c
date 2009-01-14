@@ -46,6 +46,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_screen.h"
 #include "common_context.h"
 #include "common_lock.h"
+#include "common_misc.h"
 
 #include "drirenderbuffer.h"
 
@@ -65,7 +66,7 @@ void radeonUpdatePageFlipping(radeonContextPtr rmesa)
 
 	rmesa->doPageFlip = rmesa->sarea->pfState;
 	if (rmesa->glCtx->WinSysDrawBuffer) {
-		r300UpdateDrawBuffer(rmesa->glCtx);
+		rmesa->vtbl.update_draw_buffer(rmesa->glCtx);
 	}
 
 	use_back = rmesa->glCtx->DrawBuffer ?

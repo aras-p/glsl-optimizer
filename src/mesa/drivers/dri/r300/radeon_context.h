@@ -89,7 +89,6 @@ extern void radeonTclFallback(GLcontext * ctx, GLuint bit, GLboolean mode);
 #endif
 
 
-extern void radeonSwapBuffers(__DRIdrawablePrivate * dPriv);
 extern void radeonCopySubBuffer(__DRIdrawablePrivate * dPriv,
 				int x, int y, int w, int h);
 extern GLboolean radeonInitContext(radeonContextPtr radeon,

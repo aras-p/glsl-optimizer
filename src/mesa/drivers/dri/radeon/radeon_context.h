@@ -476,23 +476,11 @@ extern void radeonDestroyContext(__DRIcontextPrivate * driContextPriv);
 extern GLboolean radeonCreateContext(const __GLcontextModes * glVisual,
 				     __DRIcontextPrivate * driContextPriv,
 				     void *sharedContextPrivate);
-extern void radeonSwapBuffers(__DRIdrawablePrivate * dPriv);
-extern void radeonCopySubBuffer(__DRIdrawablePrivate * dPriv,
-				int x, int y, int w, int h);
 extern GLboolean radeonMakeCurrent(__DRIcontextPrivate * driContextPriv,
 				   __DRIdrawablePrivate * driDrawPriv,
 				   __DRIdrawablePrivate * driReadPriv);
 extern GLboolean radeonUnbindContext(__DRIcontextPrivate * driContextPriv);
 
-/* ================================================================
- * Debugging:
- */
-#define DO_DEBUG		1
 
-#if DO_DEBUG
-extern int RADEON_DEBUG;
-#else
-#define RADEON_DEBUG		0
-#endif
 
 #endif				/* __RADEON_CONTEXT_H__ */

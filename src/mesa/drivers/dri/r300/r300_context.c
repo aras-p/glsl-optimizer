@@ -215,6 +215,7 @@ static void r300_init_vtbl(radeonContextPtr radeon)
    radeon->vtbl.update_viewport_offset = r300UpdateViewportOffset;
    radeon->vtbl.flush = r300_vtbl_flush;
    radeon->vtbl.set_all_dirty = r300_vtbl_set_all_dirty;
+   radeon->vtbl.update_draw_buffer = r300UpdateDrawBuffer;
 }
 
 

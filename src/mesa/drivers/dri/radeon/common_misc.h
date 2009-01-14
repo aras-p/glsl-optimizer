@@ -11,5 +11,10 @@ void radeonCopyBuffer( __DRIdrawablePrivate *dPriv,
 		       const drm_clip_rect_t	  *rect);
 void radeonPageFlip( __DRIdrawablePrivate *dPriv );
 void radeon_common_finish(GLcontext * ctx);
+void radeonSwapBuffers(__DRIdrawablePrivate * dPriv);
+void radeonCopySubBuffer(__DRIdrawablePrivate * dPriv,
+			 int x, int y, int w, int h );
+
+void radeonUpdatePageFlipping(radeonContextPtr rmesa);
 
 #endif

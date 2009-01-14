@@ -563,61 +563,6 @@ void radeonDestroyContext( __DRIcontextPrivate *driContextPriv )
    }
 }
 
-
-
-
-void
-radeonSwapBuffers( __DRIdrawablePrivate *dPriv )
-{
-
-   if (dPriv->driContextPriv && dPriv->driContextPriv->driverPrivate) {
-      r100ContextPtr rmesa;
-      GLcontext *ctx;
-      rmesa = (r100ContextPtr) dPriv->driContextPriv->driverPrivate;
-      ctx = rmesa->radeon.glCtx;
-      if (ctx->Visual.doubleBufferMode) {
-         _mesa_notifySwapBuffers( ctx );  /* flush pending rendering comands */
-
-         if ( rmesa->radeon.doPageFlip ) {
-            radeonPageFlip( dPriv );
-         }
-         else {
-	     radeonCopyBuffer( dPriv, NULL );
-         }
-      }
-   }
-   else {
-      /* XXX this shouldn't be an error but we can't handle it for now */
-      _mesa_problem(NULL, "%s: drawable has no context!", __FUNCTION__);
-   }
-}
-
-void radeonCopySubBuffer(__DRIdrawablePrivate * dPriv,
-			 int x, int y, int w, int h )
-{
-    if (dPriv->driContextPriv && dPriv->driContextPriv->driverPrivate) {
-	radeonContextPtr radeon;
-	GLcontext *ctx;
-
-	radeon = (radeonContextPtr) dPriv->driContextPriv->driverPrivate;
-	ctx = radeon->glCtx;
-
-	if (ctx->Visual.doubleBufferMode) {
-	    drm_clip_rect_t rect;
-	    rect.x1 = x + dPriv->x;
-	    rect.y1 = (dPriv->h - y - h) + dPriv->y;
-	    rect.x2 = rect.x1 + w;
-	    rect.y2 = rect.y1 + h;
-	    _mesa_notifySwapBuffers(ctx);	/* flush pending rendering comands */
-	    radeonCopyBuffer(dPriv, &rect);
-	}
-    } else {
-	/* XXX this shouldn't be an error but we can't handle it for now */
-	_mesa_problem(NULL, "%s: drawable has no context!",
-		      __FUNCTION__);
-    }
-}
-
 /* Make context `c' the current context and bind it to the given
  * drawing and reading surfaces.
  */

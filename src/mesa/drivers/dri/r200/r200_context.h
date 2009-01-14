@@ -677,9 +677,6 @@ extern void r200DestroyContext( __DRIcontextPrivate *driContextPriv );
 extern GLboolean r200CreateContext( const __GLcontextModes *glVisual,
 				    __DRIcontextPrivate *driContextPriv,
 				    void *sharedContextPrivate);
-extern void r200SwapBuffers( __DRIdrawablePrivate *dPriv );
-extern void r200CopySubBuffer( __DRIdrawablePrivate * dPriv,
-			       int x, int y, int w, int h );
 extern GLboolean r200MakeCurrent( __DRIcontextPrivate *driContextPriv,
 				  __DRIdrawablePrivate *driDrawPriv,
 				  __DRIdrawablePrivate *driReadPriv );
@@ -688,13 +685,8 @@ extern GLboolean r200UnbindContext( __DRIcontextPrivate *driContextPriv );
 /* ================================================================
  * Debugging:
  */
-#define DO_DEBUG		1
 
-#if DO_DEBUG
-extern int R200_DEBUG;
-#else
-#define R200_DEBUG		0
-#endif
+#define R200_DEBUG RADEON_DEBUG
 
 
 

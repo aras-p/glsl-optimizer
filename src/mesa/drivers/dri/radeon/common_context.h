@@ -319,4 +319,15 @@ struct radeon_context {
 
 #define RADEON_CONTEXT(glctx) ((radeonContextPtr)(ctx->DriverCtx))
 
+/* ================================================================
+ * Debugging:
+ */
+#define DO_DEBUG		1
+
+#if DO_DEBUG
+extern int RADEON_DEBUG;
+#else
+#define RADEON_DEBUG		0
+#endif
+
 #endif
