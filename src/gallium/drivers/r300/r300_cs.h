@@ -23,8 +23,7 @@
 #ifndef R300_CS_H
 #define R300_CS_H
 
-#include "radeon_reg.h"
-
+#include "r300_reg.h"
 #include "r300_winsys.h"
 
 /* Yes, I know macros are ugly. However, they are much prettier than the code

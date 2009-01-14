@@ -35,7 +35,7 @@ int r300_fill_blit(struct r300_context* r300,
 {
     CS_LOCALS(r300);
     uint32_t dest_type;
-
+#if 0
     /* Check for fallbacks. */
     /* XXX we can do YUV surfaces, too, but only in 3D mode. Hmm... */
     switch(cpp) {
@@ -91,6 +91,6 @@ int r300_fill_blit(struct r300_context* r300,
                RADEON_WAIT_2D_IDLECLEAN | RADEON_WAIT_DMA_GUI_IDLE);
 
     END_CS;
-
+#endif
     return 1;
 }

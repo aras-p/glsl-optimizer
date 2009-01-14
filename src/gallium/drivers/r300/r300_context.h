@@ -27,6 +27,15 @@
 #include "pipe/p_context.h"
 #include "util/u_memory.h"
 
+struct r300_blend_state {
+    uint32_t blend_control;       /* R300_RB3D_BLENDCNTL: 0x4e04 */
+    uint32_t alpha_blend_control; /* R300_RB3D_ABLENDCNTL: 0x4e08 */
+    uint32_t rop;                 /* R300_RB3D_ROPCNTL: 0x4e18 */
+    uint32_t dither;              /* R300_RB3D_DITHER_CTL: 0x4e50 */
+};
+
+#define R300_NEW_BLEND 0x1
+
 struct r300_context {
     /* Parent class */
     struct pipe_context context;
@@ -35,6 +44,13 @@ struct r300_context {
     struct r300_winsys* winsys;
     /* Draw module. Used mostly for SW TCL. */
     struct draw_context* draw;
+
+    /* Various CSO state objects. */
+    /* Blend state. */
+    struct r300_blend_state* blend_state;
+
+    /* Bitmask of dirty state objects. */
+    uint32_t dirty_state;
 };
 
 /* Convenience cast wrapper. */

@@ -23,4 +23,6 @@
 #ifndef R300_STATE_H
 #define R300_STATE_H
 
+#include "r300_reg.h"
+
 #endif /* R300_STATE_H */
