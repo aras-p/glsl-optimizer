@@ -25,4 +25,6 @@
 
 #include "r300_reg.h"
 
+#include "util/u_math.h"
+
 #endif /* R300_STATE_H */

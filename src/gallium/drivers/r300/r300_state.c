@@ -148,6 +148,168 @@ static void r300_delete_blend_state(struct pipe_context* pipe,
     FREE(state);
 }
 
+static uint32_t translate_depth_stencil_function(int zs_func) {
+    switch (zs_func) {
+        case PIPE_FUNC_NEVER:
+            return R300_ZS_NEVER;
+        case PIPE_FUNC_LESS:
+            return R300_ZS_LESS;
+        case PIPE_FUNC_EQUAL:
+            return R300_ZS_EQUAL;
+        case PIPE_FUNC_LEQUAL:
+            return R300_ZS_LEQUAL;
+        case PIPE_FUNC_GREATER:
+            return R300_ZS_GREATER;
+        case PIPE_FUNC_NOTEQUAL:
+            return R300_ZS_NOTEQUAL;
+        case PIPE_FUNC_GEQUAL:
+            return R300_ZS_GEQUAL;
+        case PIPE_FUNC_ALWAYS:
+            return R300_ZS_ALWAYS;
+        default:
+            /* XXX shouldn't be reachable */
+            break;
+    }
+    return 0;
+}
+
+static uint32_t translate_stencil_op(int s_op) {
+    switch (s_op) {
+        case PIPE_STENCIL_OP_KEEP:
+            return R300_ZS_KEEP;
+        case PIPE_STENCIL_OP_ZERO:
+            return R300_ZS_ZERO;
+        case PIPE_STENCIL_OP_REPLACE:
+            return R300_ZS_REPLACE;
+        case PIPE_STENCIL_OP_INCR:
+            return R300_ZS_INCR;
+        case PIPE_STENCIL_OP_DECR:
+            return R300_ZS_DECR;
+        case PIPE_STENCIL_OP_INCR_WRAP:
+            return R300_ZS_INCR_WRAP;
+        case PIPE_STENCIL_OP_DECR_WRAP:
+            return R300_ZS_DECR_WRAP;
+        case PIPE_STENCIL_OP_INVERT:
+            return R300_ZS_INVERT;
+        default:
+            /* XXX shouldn't be reachable */
+            break;
+    }
+    return 0;
+}
+
+static uint32_t translate_alpha_function(int alpha_func) {
+    switch (alpha_func) {
+        case PIPE_FUNC_NEVER:
+            return R300_FG_ALPHA_FUNC_NEVER;
+        case PIPE_FUNC_LESS:
+            return R300_FG_ALPHA_FUNC_LESS;
+        case PIPE_FUNC_EQUAL:
+            return R300_FG_ALPHA_FUNC_EQUAL;
+        case PIPE_FUNC_LEQUAL:
+            return R300_FG_ALPHA_FUNC_LE;
+        case PIPE_FUNC_GREATER:
+            return R300_FG_ALPHA_FUNC_GREATER;
+        case PIPE_FUNC_NOTEQUAL:
+            return R300_FG_ALPHA_FUNC_NOTEQUAL;
+        case PIPE_FUNC_GEQUAL:
+            return R300_FG_ALPHA_FUNC_GE;
+        case PIPE_FUNC_ALWAYS:
+            return R300_FG_ALPHA_FUNC_ALWAYS;
+        default:
+            /* XXX shouldn't be reachable */
+            break;
+    }
+    return 0;
+}
+
+/* Create a new depth, stencil, and alpha state based on the CSO dsa state.
+ *
+ * This contains the depth buffer, stencil buffer, alpha test, and such.
+ * On the Radeon, depth and stencil buffer setup are intertwined, which is
+ * the reason for some of the strange-looking assignments across registers. */
+static void* r300_create_dsa_state(struct pipe_context* pipe,
+                                     struct pipe_depth_stencil_alpha_state* state)
+{
+    struct r300_dsa_state* dsa = CALLOC_STRUCT(r300_dsa_state);
+
+    /* Depth test setup. */
+    if (state->depth.enabled) {
+        dsa->z_buffer_control |= R300_Z_ENABLE;
+
+        if (state->depth.writemask) {
+            dsa->z_buffer_control |= R300_Z_WRITE_ENABLE;
+        }
+
+        dsa->z_stencil_control |=
+                (translate_depth_stencil_function(state->depth.func) <<
+                    R300_Z_FUNC_SHIFT);
+    }
+
+    /* Stencil buffer setup. */
+    if (state->stencil[0].enabled) {
+        dsa->z_buffer_control |= R300_STENCIL_ENABLE;
+        dsa->z_stencil_control |=
+                (translate_depth_stencil_function(state->stencil[0].func) <<
+                    R300_S_FRONT_FUNC_SHIFT) |
+                (translate_stencil_op(state->stencil[0].fail_op) <<
+                    R300_S_FRONT_SFAIL_OP_SHIFT) |
+                (translate_stencil_op(state->stencil[0].zpass_op) <<
+                    R300_S_FRONT_ZPASS_OP_SHIFT) |
+                (translate_stencil_op(state->stencil[0].zfail_op) <<
+                    R300_S_FRONT_ZFAIL_OP_SHIFT);
+
+        dsa->stencil_ref_mask = (state->stencil[0].ref_value) |
+                (state->stencil[0].value_mask << R300_STENCILMASK_SHIFT) |
+                (state->stencil[0].write_mask << R300_STENCILWRITEMASK_SHIFT);
+
+        if (state->stencil[1].enabled) {
+            dsa->z_buffer_control |= R300_STENCIL_FRONT_BACK;
+            dsa->z_stencil_control |=
+                    (translate_depth_stencil_function(state->stencil[1].func) <<
+                        R300_S_BACK_FUNC_SHIFT) |
+                    (translate_stencil_op(state->stencil[1].fail_op) <<
+                        R300_S_BACK_SFAIL_OP_SHIFT) |
+                    (translate_stencil_op(state->stencil[1].zpass_op) <<
+                        R300_S_BACK_ZPASS_OP_SHIFT) |
+                    (translate_stencil_op(state->stencil[1].zfail_op) <<
+                        R300_S_BACK_ZFAIL_OP_SHIFT);
+
+            dsa->stencil_ref_bf = (state->stencil[1].ref_value) |
+                    (state->stencil[1].value_mask << R300_STENCILMASK_SHIFT) |
+                    (state->stencil[1].write_mask << R300_STENCILWRITEMASK_SHIFT);
+        }
+    }
+
+    /* Alpha test setup. */
+    if (state->alpha.enabled) {
+        dsa->alpha_function = translate_alpha_function(state->alpha.func) |
+                R300_FG_ALPHA_FUNC_ENABLE;
+        dsa->alpha_reference = CLAMP(state->alpha.ref * 1023.0f, 0, 1023);
+    } else {
+        dsa->z_buffer_top = R300_ZTOP_ENABLE;
+    }
+
+    return (void*)dsa;
+}
+
+/* Bind DSA state. */
+static void r300_bind_dsa_state(struct pipe_context* pipe,
+                                  void* state)
+{
+    struct r300_context* r300 = r300_context(pipe);
+
+    r300->dsa_state = (struct r300_dsa_state*)state;
+    r300->dirty_state |= R300_NEW_DSA;
+}
+
+/* Free DSA state. */
+static void r300_delete_dsa_state(struct pipe_context* pipe,
+                                    void* state)
+{
+    FREE(state);
+}
+
 /* Create a new scissor state based on the CSO scissor state.
  *
  * This is only for the fragment scissors. */
