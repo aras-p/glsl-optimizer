@@ -24,6 +24,7 @@ PROGS = \
 	points \
 	pointcoord \
 	samplers \
+	samplers_array \
 	skinning \
 	texdemo1 \
 	toyball \
@@ -166,6 +167,11 @@ samplers.o: samplers.c readtex.h extfuncs.h shaderutil.h
 samplers: samplers.o readtex.o shaderutil.o
 	$(APP_CC) -I$(INCDIR) $(CFLAGS) $(LDFLAGS) samplers.o readtex.o shaderutil.o $(LIBS) -o $@
 
+samplers_array.o: samplers.c readtex.h extfuncs.h shaderutil.h
+	$(APP_CC) -c -DSAMPLERS_ARRAY -I$(INCDIR) $(CFLAGS) samplers.c -o samplers_array.o
+
+samplers_array: samplers_array.o readtex.o shaderutil.o
+	$(APP_CC) -I$(INCDIR) $(CFLAGS) $(LDFLAGS) samplers_array.o readtex.o shaderutil.o $(LIBS) -o $@
 
 skinning.o: skinning.c readtex.h extfuncs.h shaderutil.h
 	$(APP_CC) -c -I$(INCDIR) $(CFLAGS) skinning.c
