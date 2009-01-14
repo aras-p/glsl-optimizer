@@ -57,7 +57,7 @@ struct vertex_header {
 
 /* XXX fix this */
 #undef CEILF
-#define CEILF(X) ((float) (int) ((X) + 0.99999))
+#define CEILF(X) ((float) (int) ((X) + 0.99999f))
 
 
 #define QUAD_TOP_LEFT     0
