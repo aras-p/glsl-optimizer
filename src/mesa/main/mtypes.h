@@ -2094,6 +2094,13 @@ struct gl_query_state
 };
 
 
+/** Set by #pragma directives */
+struct gl_sl_pragmas
+{
+   GLboolean Optimize;  /**< defaults on */
+   GLboolean Debug;     /**< defaults off */
+};
+
 
 /**
  * A GLSL vertex or fragment shader object.
@@ -2104,12 +2111,12 @@ struct gl_shader
    GLuint Name;  /**< AKA the handle */
    GLint RefCount;  /**< Reference count */
    GLboolean DeletePending;
-
-   const GLchar *Source;  /**< Source code string */
    GLboolean CompileStatus;
+   GLboolean Main;  /**< shader defines main() */
+   const GLchar *Source;  /**< Source code string */
    struct gl_program *Program;  /**< Post-compile assembly code */
    GLchar *InfoLog;
-   GLboolean Main;  /**< shader defines main() */
+   struct gl_sl_pragmas Pragmas;
 };
 
 

@@ -144,6 +144,7 @@ typedef struct slang_output_ctx_
    slang_function_scope *funs;
    slang_struct_scope *structs;
    struct gl_program *program;
+   struct gl_sl_pragmas *pragmas;
    slang_var_table *vartable;
    GLuint default_precision[TYPE_SPECIFIER_COUNT];
    GLboolean allow_precision;
@@ -2059,6 +2060,7 @@ parse_init_declarator(slang_parse_ctx * C, slang_output_ctx * O,
       A.space.structs = O->structs;
       A.space.vars = O->vars;
       A.program = O->program;
+      A.pragmas = O->pragmas;
       A.vartable = O->vartable;
       A.log = C->L;
       A.curFuncEndLabel = NULL;
@@ -2349,6 +2351,7 @@ parse_code_unit(slang_parse_ctx * C, slang_code_unit * unit,
    o.structs = &unit->structs;
    o.vars = &unit->vars;
    o.program = shader ? shader->Program : NULL;
+   o.pragmas = shader ? &shader->Pragmas : NULL;
    o.vartable = _slang_new_var_table(maxRegs);
    _slang_push_var_table(o.vartable);
 
@@ -2417,6 +2420,7 @@ parse_code_unit(slang_parse_ctx * C, slang_code_unit * unit,
       A.space.structs = o.structs;
       A.space.vars = o.vars;
       A.program = o.program;
+      A.pragmas = &shader->Pragmas;
       A.vartable = o.vartable;
       A.log = C->L;
 
@@ -2475,7 +2479,8 @@ compile_with_grammar(grammar id, const char *source, slang_code_unit * unit,
                      slang_unit_type type, slang_info_log * infolog,
                      slang_code_unit * builtin,
                      struct gl_shader *shader,
-                     const struct gl_extensions *extensions)
+                     const struct gl_extensions *extensions,
+                     struct gl_sl_pragmas *pragmas)
 {
    byte *prod;
    GLuint size, start, version;
@@ -2504,7 +2509,7 @@ compile_with_grammar(grammar id, const char *source, slang_code_unit * unit,
    /* Now preprocess the source string. */
    slang_string_init(&preprocessed);
    if (!_slang_preprocess_directives(&preprocessed, &source[start],
-                                     infolog, extensions)) {
+                                     infolog, extensions, pragmas)) {
       slang_string_free(&preprocessed);
       slang_info_log_error(infolog, "failed to preprocess the source.");
       return GL_FALSE;
@@ -2578,7 +2583,8 @@ static GLboolean
 compile_object(grammar * id, const char *source, slang_code_object * object,
                slang_unit_type type, slang_info_log * infolog,
                struct gl_shader *shader,
-               const struct gl_extensions *extensions)
+               const struct gl_extensions *extensions,
+               struct gl_sl_pragmas *pragmas)
 {
    slang_code_unit *builtins = NULL;
    GLuint base_version = 110;
@@ -2677,7 +2683,7 @@ compile_object(grammar * id, const char *source, slang_code_object * object,
 
    /* compile the actual shader - pass-in built-in library for external shader */
    return compile_with_grammar(*id, source, &object->unit, type, infolog,
-                               builtins, shader, extensions);
+                               builtins, shader, extensions, pragmas);
 }
 
 
@@ -2701,7 +2707,7 @@ compile_shader(GLcontext *ctx, slang_code_object * object,
    _slang_code_object_ctr(object);
 
    success = compile_object(&id, shader->Source, object, type, infolog, shader,
-                            &ctx->Extensions);
+                            &ctx->Extensions, &shader->Pragmas);
    if (id != 0)
       grammar_destroy(id);
    if (!success)

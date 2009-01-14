@@ -4493,7 +4493,7 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
       n = _slang_gen_var_decl(A, var, var->initializer);
 
       /* emit GPU instructions */
-      success = _slang_emit_code(n, A->vartable, A->program, GL_FALSE, A->log);
+      success = _slang_emit_code(n, A->vartable, A->program, A->pragmas, GL_FALSE, A->log);
 
       _slang_free_ir_tree(n);
    }
@@ -4603,7 +4603,7 @@ _slang_codegen_function(slang_assemble_ctx * A, slang_function * fun)
 #endif
 
    /* Emit program instructions */
-   success = _slang_emit_code(n, A->vartable, A->program, GL_TRUE, A->log);
+   success = _slang_emit_code(n, A->vartable, A->program, A->pragmas, GL_TRUE, A->log);
    _slang_free_ir_tree(n);
 
    /* free codegen context */

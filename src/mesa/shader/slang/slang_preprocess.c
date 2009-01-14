@@ -531,17 +531,53 @@ pp_ext_set(pp_ext *self, const char *name, GLboolean enable)
 }
 
 
+static void
+pp_pragmas_init(struct gl_sl_pragmas *pragmas)
+{
+   pragmas->Optimize = GL_TRUE;
+   pragmas->Debug = GL_FALSE;
+}
+
+
 /**
  * Called in response to #pragma.  For example, "#pragma debug(on)" would
  * call this function as pp_pragma("debug", "on").
- * At this time, pragmas are silently ignored.
+ * \return GL_TRUE if pragma is valid, GL_FALSE if invalid
  */
-static void
-pp_pragma(const char *pragma, const char *param)
+static GLboolean
+pp_pragma(struct gl_sl_pragmas *pragmas, const char *pragma, const char *param)
 {
 #if 0
    printf("#pragma %s %s\n", pragma, param);
 #endif
+   if (_mesa_strcmp(pragma, "optimize") == 0) {
+      if (!param)
+         return GL_FALSE; /* missing required param */
+      if (_mesa_strcmp(param, "on") == 0) {
+         pragmas->Optimize = GL_TRUE;
+      }
+      else if (_mesa_strcmp(param, "off") == 0) {
+         pragmas->Optimize = GL_FALSE;
+      }
+      else {
+         return GL_FALSE; /* invalid param */
+      }
+   }
+   else if (_mesa_strcmp(pragma, "debug") == 0) {
+      if (!param)
+         return GL_FALSE; /* missing required param */
+      if (_mesa_strcmp(param, "on") == 0) {
+         pragmas->Debug = GL_TRUE;
+      }
+      else if (_mesa_strcmp(param, "off") == 0) {
+         pragmas->Debug = GL_FALSE;
+      }
+      else {
+         return GL_FALSE; /* invalid param */
+      }
+   }
+   /* all other pragmas are silently ignored */
+   return GL_TRUE;
 }
 
 
@@ -887,7 +923,8 @@ static GLboolean
 preprocess_source (slang_string *output, const char *source,
                    grammar pid, grammar eid,
                    slang_info_log *elog,
-                   const struct gl_extensions *extensions)
+                   const struct gl_extensions *extensions,
+                   struct gl_sl_pragmas *pragmas)
 {
    static const char *predefined[] = {
       "__FILE__",
@@ -909,6 +946,7 @@ preprocess_source (slang_string *output, const char *source,
    }
 
    pp_state_init (&state, elog, extensions);
+   pp_pragmas_init (pragmas);
 
    /* add the predefined symbols to the symbol table */
    for (i = 0; predefined[i]; i++) {
@@ -1197,7 +1235,7 @@ preprocess_source (slang_string *output, const char *source,
                else {
                   param = NULL;
                }
-               pp_pragma(pragma, param);
+               pp_pragma(pragmas, pragma, param);
             }
             break;
 
@@ -1265,7 +1303,8 @@ GLboolean
 _slang_preprocess_directives(slang_string *output,
                              const char *input,
                              slang_info_log *elog,
-                             const struct gl_extensions *extensions)
+                             const struct gl_extensions *extensions,
+                             struct gl_sl_pragmas *pragmas)
 {
    grammar pid, eid;
    GLboolean success;
@@ -1281,7 +1320,7 @@ _slang_preprocess_directives(slang_string *output,
       grammar_destroy (pid);
       return GL_FALSE;
    }
-   success = preprocess_source (output, input, pid, eid, elog, extensions);
+   success = preprocess_source (output, input, pid, eid, elog, extensions, pragmas);
    grammar_destroy (eid);
    grammar_destroy (pid);
    return success;

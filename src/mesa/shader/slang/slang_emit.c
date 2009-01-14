@@ -2377,10 +2377,20 @@ _slang_resolve_subroutines(slang_emit_info *emitInfo)
 
 
 
-
+/**
+ * Convert the IR tree into GPU instructions.
+ * \param n  root of IR tree
+ * \param vt  variable table
+ * \param prog  program to put GPU instructions into
+ * \param pragmas  controls codegen options
+ * \param withEnd  if true, emit END opcode at end
+ * \param log  log for emitting errors/warnings/info
+ */
 GLboolean
 _slang_emit_code(slang_ir_node *n, slang_var_table *vt,
-                 struct gl_program *prog, GLboolean withEnd,
+                 struct gl_program *prog,
+                 const struct gl_sl_pragmas *pragmas,
+                 GLboolean withEnd,
                  slang_info_log *log)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -2397,7 +2407,7 @@ _slang_emit_code(slang_ir_node *n, slang_var_table *vt,
 
    emitInfo.EmitHighLevelInstructions = ctx->Shader.EmitHighLevelInstructions;
    emitInfo.EmitCondCodes = ctx->Shader.EmitCondCodes;
-   emitInfo.EmitComments = ctx->Shader.EmitComments;
+   emitInfo.EmitComments = ctx->Shader.EmitComments || pragmas->Debug;
    emitInfo.EmitBeginEndSub = GL_TRUE;
 
    if (!emitInfo.EmitCondCodes) {
