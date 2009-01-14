@@ -162,18 +162,16 @@ def generate(env):
     # Some setting from the platform also have to be overridden:
     env['OBJPREFIX']      = ''
     env['OBJSUFFIX']      = '.o'
-    env['LIBPREFIX']      = 'lib'
-    env['LIBSUFFIX']      = '.a'
     env['SHOBJPREFIX']    = '$OBJPREFIX'
     env['SHOBJSUFFIX']    = '$OBJSUFFIX'
     env['PROGPREFIX']     = ''
     env['PROGSUFFIX']     = '.exe'
-    env['LIBPREFIX']      = ''
-    env['LIBSUFFIX']      = '.lib'
+    env['LIBPREFIX']      = 'lib'
+    env['LIBSUFFIX']      = '.a'
     env['SHLIBPREFIX']    = ''
     env['SHLIBSUFFIX']    = '.dll'
-    env['LIBPREFIXES']    = [ '$LIBPREFIX' ]
-    env['LIBSUFFIXES']    = [ '$LIBSUFFIX' ]
+    env['LIBPREFIXES']    = [ 'lib', '' ]
+    env['LIBSUFFIXES']    = [ '.a', '.lib' ]
 
     env.AppendUnique(LIBS = ['iberty'])
     env.AppendUnique(LINKFLAGS = ['-Wl,--enable-stdcall-fixup'])
