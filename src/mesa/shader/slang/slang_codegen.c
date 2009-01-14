@@ -4239,6 +4239,21 @@ _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper)
 
 
 /**
+ * Check if the given type specifier is a rectangular texture sampler.
+ */
+static GLboolean
+is_rect_sampler_spec(const slang_type_specifier *spec)
+{
+   while (spec->_array) {
+      spec = spec->_array;
+   }
+   return spec->type == SLANG_SPEC_SAMPLER2DRECT ||
+          spec->type == SLANG_SPEC_SAMPLER2DRECTSHADOW;
+}
+
+
+
+/**
  * Called by compiler when a global variable has been parsed/compiled.
  * Here we examine the variable's type to determine what kind of register
  * storage will be used.
@@ -4282,14 +4297,12 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
       }
 #if FEATURE_es2_glsl /* XXX should use FEATURE_texture_rect */
       /* disallow rect samplers */
-      if ((var->type.specifier._array && 
-           (var->type.specifier._array->type == SLANG_SPEC_SAMPLER2DRECT ||
-            var->type.specifier._array->type == SLANG_SPEC_SAMPLER2DRECTSHADOW)) ||
-          (var->type.specifier.type == SLANG_SPEC_SAMPLER2DRECT ||
-           var->type.specifier.type == SLANG_SPEC_SAMPLER2DRECTSHADOW)) {
+      if (is_rect_sampler_spec(&var->type.specifier)) {
          slang_info_log_error(A->log, "invalid sampler type for '%s'", varName);
          return GL_FALSE;
       }
+#else
+      (void) is_rect_sampler_spec; /* silence warning */
 #endif
       {
          GLint sampNum = _mesa_add_sampler(prog->Parameters, varName, datatype);
