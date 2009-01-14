@@ -544,7 +544,6 @@ intelClearWithBlit(GLcontext *ctx, GLbitfield mask)
                   _mesa_debug(ctx, "hardware blit clear buf %d rb id %d\n",
                   buf, irb->Base.Name);
                 */
-	       intel_wait_flips(intel);
 
                assert(b.x1 < b.x2);
                assert(b.y1 < b.y2);

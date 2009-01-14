@@ -39,14 +39,7 @@ struct intel_framebuffer
 {
    struct gl_framebuffer Base;
 
-   struct intel_renderbuffer *color_rb[3];
-
-   /* Drawable page flipping state */
-   GLboolean pf_active;
-   GLuint pf_seq;
-   GLint pf_planes;
-   GLint pf_current_page;
-   GLint pf_num_pages;
+   struct intel_renderbuffer *color_rb[2];
 
    /* VBI
     */
@@ -75,8 +68,6 @@ struct intel_renderbuffer
 
    GLuint PairedDepth;   /**< only used if this is a depth renderbuffer */
    GLuint PairedStencil; /**< only used if this is a stencil renderbuffer */
-
-   GLuint pf_pending;  /**< sequence number of pending flip */
 
    GLuint vbl_pending;   /**< vblank sequence number of pending flip */
 
