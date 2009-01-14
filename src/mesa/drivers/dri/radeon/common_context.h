@@ -1,6 +1,14 @@
 
 #ifndef COMMON_CONTEXT_H
 #define COMMON_CONTEXT_H
+
+#include "main/mm.h"
+#include "math/m_vector.h"
+#include "texmem.h"
+#include "tnl/t_context.h"
+#include "main/colormac.h"
+
+
 /* This union is used to avoid warnings/miscompilation
    with float to uint32_t casts due to strict-aliasing */
 typedef union { GLfloat f; uint32_t ui32; } float_ui32_type;
@@ -8,11 +16,6 @@ typedef union { GLfloat f; uint32_t ui32; } float_ui32_type;
 struct radeon_context;
 typedef struct radeon_context radeonContextRec;
 typedef struct radeon_context *radeonContextPtr;
-
-#include "main/mm.h"
-#include "math/m_vector.h"
-#include "texmem.h"
-#include "tnl/t_context.h"
 
 
 #define TEX_0   0x1
@@ -256,6 +259,20 @@ struct radeon_state {
 	struct radeon_stencilbuffer_state stencil;
 };
 
+/**
+ * This structure holds the command buffer while it is being constructed.
+ *
+ * The first batch of commands in the buffer is always the state that needs
+ * to be re-emitted when the context is lost. This batch can be skipped
+ * otherwise.
+ */
+struct radeon_cmdbuf {
+	struct radeon_cs_manager    *csm;
+	struct radeon_cs            *cs;
+	int size; /** # of dwords total */
+	unsigned int flushing:1; /** whether we're currently in FlushCmdBufLocked */
+};
+
 struct radeon_context {
    GLcontext *glCtx;
    radeonScreenPtr radeonScreen;	/* Screen private DRI data */
@@ -307,6 +324,8 @@ struct radeon_context {
    /* Configuration cache
     */
    driOptionCache optionCache;
+
+   struct radeon_cmdbuf cmdbuf;
 
    struct {
       void (*get_lock)(radeonContextPtr radeon);

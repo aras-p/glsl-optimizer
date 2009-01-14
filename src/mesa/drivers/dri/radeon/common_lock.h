@@ -41,6 +41,11 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #ifndef COMMON_LOCK_H
 #define COMMON_LOCK_H
+
+#include "main/colormac.h"
+#include "radeon_screen.h"
+#include "common_context.h"
+
 extern void radeonGetLock(radeonContextPtr rmesa, GLuint flags);
 
 /* Turn DEBUG_LOCKING on to find locking conflicts.
@@ -93,19 +98,23 @@ extern int prevLockLine;
    do {								\
       char __ret = 0;						\
       DEBUG_CHECK_LOCK();					\
-      DRM_CAS( (rmesa)->dri.hwLock, (rmesa)->dri.hwContext,		\
-	       (DRM_LOCK_HELD | (rmesa)->dri.hwContext), __ret );	\
-      if ( __ret )							\
+      if (!(rmesa)->radeonScreen->driScreen->dri2.enabled) {		\
+	DRM_CAS( (rmesa)->dri.hwLock, (rmesa)->dri.hwContext,		\
+		 (DRM_LOCK_HELD | (rmesa)->dri.hwContext), __ret );	\
+	if ( __ret )							\
 	  radeonGetLock( (rmesa), 0 );					\
+      }									\
       DEBUG_LOCK();							\
    } while (0)
 
 #define UNLOCK_HARDWARE( rmesa )					\
    do {									\
-      DRM_UNLOCK( (rmesa)->dri.fd,					\
-		  (rmesa)->dri.hwLock,					\
-		  (rmesa)->dri.hwContext );				\
-      DEBUG_RESET();							\
+     if (!(rmesa)->radeonScreen->driScreen->dri2.enabled) {		\
+       DRM_UNLOCK( (rmesa)->dri.fd,					\
+		   (rmesa)->dri.hwLock,					\
+		   (rmesa)->dri.hwContext );				\
+       DEBUG_RESET();							\
+     }									\
    } while (0)
 
 #endif

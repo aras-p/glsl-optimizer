@@ -47,6 +47,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_macros.h"
 #include "radeon_screen.h"
 #include "radeon_buffer.h"
+#include "common_misc.h"
 #if !RADEON_COMMON
 #include "radeon_context.h"
 #include "radeon_span.h"

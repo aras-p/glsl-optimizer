@@ -65,6 +65,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r300_tex.h"
 #include "r300_emit.h"
 #include "r300_swtcl.h"
+#include "radeon_bo_legacy.h"
 
 
 #include "vblank.h"
@@ -443,7 +444,7 @@ void r300DestroyContext(__DRIcontextPrivate * driContextPriv)
 		_vbo_DestroyContext(r300->radeon.glCtx);
 		_swrast_DestroyContext(r300->radeon.glCtx);
 
-		r300FlushCmdBuf(r300, __FUNCTION__);
+		rcommonFlushCmdBuf(&r300->radeon, __FUNCTION__);
 		r300DestroyCmdBuf(r300);
 
 		if (radeon->state.scissor.pClipRects) {

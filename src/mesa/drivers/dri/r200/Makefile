@@ -51,12 +51,14 @@ COMMON_SYMLINKS = \
 	radeon_screen.c \
 	radeon_screen.h \
 	radeon_bo_legacy.h \
+	radeon_cs_legacy.h \
 	radeon_buffer.h \
 	common_context.h \
 	common_lock.c \
 	common_lock.h \
 	common_misc.h \
 	common_misc.c
+
 
 ##### TARGETS #####
 

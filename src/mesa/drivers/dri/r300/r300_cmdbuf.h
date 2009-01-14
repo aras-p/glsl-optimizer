@@ -39,14 +39,11 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r300_context.h"
 #include "radeon_cs.h"
 
-extern int r300FlushCmdBufLocked(r300ContextPtr r300, const char *caller);
-extern int r300FlushCmdBuf(r300ContextPtr r300, const char *caller);
 
 extern void r300EmitState(r300ContextPtr r300);
 
 extern void r300InitCmdBuf(r300ContextPtr r300);
 extern void r300DestroyCmdBuf(r300ContextPtr r300);
-extern void r300EnsureCmdBufSpace(r300ContextPtr r300, int dwords, const char *caller);
 
 void r300BeginBatch(r300ContextPtr r300,
 		    int n,
@@ -78,7 +75,7 @@ void r300BeginBatch(r300ContextPtr r300,
  */
 #define OUT_BATCH(data) \
 	do { \
-        radeon_cs_write_dword(b_l_r300->cmdbuf.cs, data);\
+        radeon_cs_write_dword(b_l_r300->radeon.cmdbuf.cs, data);\
 	} while(0)
 
 /**
@@ -90,8 +87,8 @@ void r300BeginBatch(r300ContextPtr r300,
             fprintf(stderr, "(%s:%s:%d) offset : %d\n",\
             __FILE__, __FUNCTION__, __LINE__, offset);\
         }\
-        radeon_cs_write_dword(b_l_r300->cmdbuf.cs, offset);\
-        radeon_cs_write_reloc(b_l_r300->cmdbuf.cs, \
+        radeon_cs_write_dword(b_l_r300->radeon.cmdbuf.cs, offset);\
+        radeon_cs_write_reloc(b_l_r300->radeon.cmdbuf.cs, \
                               bo, \
                               rd, \
                               wd, \
@@ -105,7 +102,7 @@ void r300BeginBatch(r300ContextPtr r300,
 	do { \
 		int _i; \
         for (_i=0; _i < n; _i++) {\
-            radeon_cs_write_dword(b_l_r300->cmdbuf.cs, ptr[_i]);\
+            radeon_cs_write_dword(b_l_r300->radeon.cmdbuf.cs, ptr[_i]);\
         }\
 	} while(0)
 
@@ -116,7 +113,7 @@ void r300BeginBatch(r300ContextPtr r300,
  */
 #define END_BATCH() \
 	do { \
-        radeon_cs_end(b_l_r300->cmdbuf.cs, __FILE__, __FUNCTION__, __LINE__);\
+        radeon_cs_end(b_l_r300->radeon.cmdbuf.cs, __FILE__, __FUNCTION__, __LINE__);\
 	} while(0)
 
 /**

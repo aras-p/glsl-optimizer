@@ -1711,7 +1711,7 @@ void r200UpdateViewportOffset( GLcontext *ctx )
       }
    }
 
-   r200UpdateScissor( ctx );
+   radeonUpdateScissor( ctx );
 }
 
 
@@ -2056,7 +2056,7 @@ static void r200Enable( GLcontext *ctx, GLenum cap, GLboolean state )
    case GL_SCISSOR_TEST:
       R200_FIREVERTICES( rmesa );
       rmesa->radeon.state.scissor.enabled = state;
-      r200UpdateScissor( ctx );
+      radeonUpdateScissor( ctx );
       break;
 
    case GL_STENCIL_TEST:

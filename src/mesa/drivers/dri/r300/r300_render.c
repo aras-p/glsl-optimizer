@@ -212,7 +212,7 @@ static void r300FireEB(r300ContextPtr rmesa, int vertex_count, int type)
 	    OUT_BATCH(R300_EB_UNK1 | (0 << 16) | R300_EB_UNK2);
         OUT_BATCH(rmesa->state.elt_dma_offset);
         OUT_BATCH(vertex_count);
-        radeon_cs_write_reloc(rmesa->cmdbuf.cs,
+        radeon_cs_write_reloc(rmesa->radeon.cmdbuf.cs,
                               rmesa->state.elt_dma_bo,
                               RADEON_GEM_DOMAIN_GTT, 0, 0);
     }
@@ -295,13 +295,13 @@ static void r300EmitAOS(r300ContextPtr rmesa, GLuint nr, GLuint offset)
 	for (i = 0; i + 1 < nr; i += 2) {
         voffset =  rmesa->state.aos[i + 0].offset +
                    offset * 4 * rmesa->state.aos[i + 0].stride;
-        radeon_cs_write_reloc(rmesa->cmdbuf.cs,
+        radeon_cs_write_reloc(rmesa->radeon.cmdbuf.cs,
                               rmesa->state.aos[i+0].bo,
                               RADEON_GEM_DOMAIN_GTT,
                               0, 0);
         voffset =  rmesa->state.aos[i + 1].offset +
                    offset * 4 * rmesa->state.aos[i + 1].stride;
-        radeon_cs_write_reloc(rmesa->cmdbuf.cs,
+        radeon_cs_write_reloc(rmesa->radeon.cmdbuf.cs,
                               rmesa->state.aos[i+1].bo,
                               RADEON_GEM_DOMAIN_GTT,
                               0, 0);
@@ -309,7 +309,7 @@ static void r300EmitAOS(r300ContextPtr rmesa, GLuint nr, GLuint offset)
 	if (nr & 1) {
         voffset =  rmesa->state.aos[nr - 1].offset +
                    offset * 4 * rmesa->state.aos[nr - 1].stride;
-        radeon_cs_write_reloc(rmesa->cmdbuf.cs,
+        radeon_cs_write_reloc(rmesa->radeon.cmdbuf.cs,
                               rmesa->state.aos[nr-1].bo,
                               RADEON_GEM_DOMAIN_GTT,
                               0, 0);
@@ -346,7 +346,7 @@ static void r300RunRenderPrimitive(r300ContextPtr rmesa, GLcontext * ctx,
 	 * This is supposed to ensure that we can get all rendering
 	 * commands into a single command buffer.
 	 */
-	r300EnsureCmdBufSpace(rmesa, 64, __FUNCTION__);
+	rcommonEnsureCmdBufSpace(&rmesa->radeon, 64, __FUNCTION__);
 
 	if (vb->Elts) {
 		if (num_verts > 65535) {

@@ -42,6 +42,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_drm.h"
 #include "dri_util.h"
 #include "texmem.h"
+#include "radeon_context.h"
 #include "radeon_bo.h"
 
 #include "main/macros.h"
@@ -505,20 +506,6 @@ struct r300_hw_state {
 };
 
 /**
- * This structure holds the command buffer while it is being constructed.
- *
- * The first batch of commands in the buffer is always the state that needs
- * to be re-emitted when the context is lost. This batch can be skipped
- * otherwise.
- */
-struct r300_cmdbuf {
-    struct radeon_cs_manager    *csm;
-    struct radeon_cs            *cs;
-	int size; /** # of dwords total */
-	unsigned int flushing:1; /** whether we're currently in FlushCmdBufLocked */
-};
-
-/**
  * State cache
  */
 
@@ -838,7 +825,7 @@ struct r300_context {
 	struct radeon_context radeon;	/* parent class, must be first */
 
 	struct r300_hw_state hw;
-	struct r300_cmdbuf cmdbuf;
+
 	struct r300_state state;
 	struct gl_vertex_program *curr_vp;
 	struct r300_vertex_program *selected_vp;

@@ -69,70 +69,19 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 #define SPACE_FOR_FLUSHING	4
 
-/**
- * Send the current command buffer via ioctl to the hardware.
- */
-int r300FlushCmdBufLocked(r300ContextPtr r300, const char *caller)
-{
-	int ret = 0;
-
-	if (r300->cmdbuf.flushing) {
-		fprintf(stderr, "Recursive call into r300FlushCmdBufLocked!\n");
-		exit(-1);
-	}
-	r300->cmdbuf.flushing = 1;
-    if (r300->cmdbuf.cs->cdw) {
-        ret = radeon_cs_emit(r300->cmdbuf.cs);
-        r300->hw.all_dirty = 1;
-    }
-    radeon_cs_erase(r300->cmdbuf.cs);
-	r300->cmdbuf.flushing = 0;
-	return ret;
-}
-
-int r300FlushCmdBuf(r300ContextPtr r300, const char *caller)
-{
-	int ret;
-
-	LOCK_HARDWARE(&r300->radeon);
-	ret = r300FlushCmdBufLocked(r300, caller);
-	UNLOCK_HARDWARE(&r300->radeon);
-
-	if (ret) {
-		fprintf(stderr, "drmRadeonCmdBuffer: %d\n", ret);
-		_mesa_exit(ret);
-	}
-
-	return ret;
-}
-
-/**
- * Make sure that enough space is available in the command buffer
- * by flushing if necessary.
- *
- * \param dwords The number of dwords we need to be free on the command buffer
- */
-void r300EnsureCmdBufSpace(r300ContextPtr r300, int dwords, const char *caller)
-{
-	if ((r300->cmdbuf.cs->cdw + dwords + 128) > r300->cmdbuf.size ||
-        radeon_cs_need_flush(r300->cmdbuf.cs)) {
-		r300FlushCmdBuf(r300, caller);
-    }
-}
-
 void r300BeginBatch(r300ContextPtr r300, int n,
 		    int dostate,
                     const char *file,
                     const char *function,
                     int line)
 {
-	r300EnsureCmdBufSpace(r300, n, function);
-	if (!r300->cmdbuf.cs->cdw && dostate) {
+	rcommonEnsureCmdBufSpace(&r300->radeon, n, function);
+	if (!r300->radeon.cmdbuf.cs->cdw && dostate) {
 		if (RADEON_DEBUG & DEBUG_IOCTL)
 			fprintf(stderr, "Reemit state after flush (from %s)\n", function);
 		r300EmitState(r300);
 	}
-    radeon_cs_begin(r300->cmdbuf.cs, n, file, function, line);
+	radeon_cs_begin(r300->radeon.cmdbuf.cs, n, file, function, line);
 }
 
 static void r300PrintStateAtom(r300ContextPtr r300,
@@ -209,15 +158,15 @@ void r300EmitState(r300ContextPtr r300)
 	if (RADEON_DEBUG & (DEBUG_STATE | DEBUG_PRIMS))
 		fprintf(stderr, "%s\n", __FUNCTION__);
 
-	if (r300->cmdbuf.cs->cdw && !r300->hw.is_dirty && !r300->hw.all_dirty)
+	if (r300->radeon.cmdbuf.cs->cdw && !r300->hw.is_dirty && !r300->hw.all_dirty)
 		return;
 
 	/* To avoid going across the entire set of states multiple times, just check
 	 * for enough space for the case of emitting all state.
 	 */
-	r300EnsureCmdBufSpace(r300, r300->hw.max_state_size, __FUNCTION__);
+	rcommonEnsureCmdBufSpace(&r300->radeon, r300->hw.max_state_size, __FUNCTION__);
 
-	if (!r300->cmdbuf.cs->cdw) {
+	if (!r300->radeon.cmdbuf.cs->cdw) {
 		if (RADEON_DEBUG & DEBUG_STATE)
 			fprintf(stderr, "Begin reemit state\n");
 
@@ -473,7 +422,7 @@ int check_r500fp_const(GLcontext *ctx, struct radeon_state_atom *atom)
  */
 void r300InitCmdBuf(r300ContextPtr r300)
 {
-	int size, mtu;
+	int mtu;
 	int has_tcl = 1;
 	int is_r500 = 0;
 	int i;
@@ -770,40 +719,7 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	r300->hw.is_dirty = GL_TRUE;
 	r300->hw.all_dirty = GL_TRUE;
 
-	/* Initialize command buffer */
-	size =
-	    256 * driQueryOptioni(&r300->radeon.optionCache,
-				  "command_buffer_size");
-	if (size < 2 * r300->hw.max_state_size) {
-		size = 2 * r300->hw.max_state_size + 65535;
-	}
-	if (size > 64 * 256)
-		size = 64 * 256;
-
-	size = 64 * 1024 / 4;
-	if (RADEON_DEBUG & (DEBUG_IOCTL | DEBUG_DMA)) {
-		fprintf(stderr, "sizeof(drm_r300_cmd_header_t)=%zd\n",
-			sizeof(drm_r300_cmd_header_t));
-		fprintf(stderr, "sizeof(drm_radeon_cmd_buffer_t)=%zd\n",
-			sizeof(drm_radeon_cmd_buffer_t));
-		fprintf(stderr,
-			"Allocating %d bytes command buffer (max state is %d bytes)\n",
-			size * 4, r300->hw.max_state_size * 4);
-	}
-
-    if (r300->radeon.radeonScreen->kernel_mm) {
-        int fd = r300->radeon.radeonScreen->driScreen->fd;
-        r300->cmdbuf.csm = radeon_cs_manager_gem_ctor(fd);
-    } else {
-        r300->cmdbuf.csm = radeon_cs_manager_legacy_ctor(&r300->radeon);
-    }
-    if (r300->cmdbuf.csm == NULL) {
-        /* FIXME: fatal error */
-        return;
-    }
-    r300->cmdbuf.cs = radeon_cs_create(r300->cmdbuf.csm, size);
-    assert(r300->cmdbuf.cs != NULL);
-	r300->cmdbuf.size = size;
+	rcommonInitCmdBuf(&r300->radeon, r300->hw.max_state_size);
 }
 
 /**
@@ -813,13 +729,9 @@ void r300DestroyCmdBuf(r300ContextPtr r300)
 {
 	struct radeon_state_atom *atom;
 
-    radeon_cs_destroy(r300->cmdbuf.cs);
 	foreach(atom, &r300->hw.atomlist) {
 		FREE(atom->cmd);
 	}
-    if (r300->radeon.radeonScreen->driScreen->dri2.enabled || r300->radeon.radeonScreen->kernel_mm) {
-        radeon_cs_manager_gem_dtor(r300->cmdbuf.csm);
-    } else {
-        radeon_cs_manager_legacy_dtor(r300->cmdbuf.csm);
-    }
+	rcommonDestroyCmdBuf(&r300->radeon);
+
 }

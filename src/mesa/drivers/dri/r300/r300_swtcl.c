@@ -247,9 +247,9 @@ static void flush_last_swtcl_prim( r300ContextPtr rmesa  )
 		fprintf(stderr, "%s\n", __FUNCTION__);
     rmesa->swtcl.flush = NULL;
     radeon_bo_unmap(rmesa->swtcl.bo);
-    r300EnsureCmdBufSpace(rmesa,
-                          rmesa->hw.max_state_size + (12*sizeof(int)),
-                          __FUNCTION__);
+    rcommonEnsureCmdBufSpace(rmesa,
+			     rmesa->hw.max_state_size + (12*sizeof(int)),
+			     __FUNCTION__);
     r300EmitState(rmesa);
     r300EmitVertexAOS(rmesa,
                       rmesa->swtcl.vertex_size,

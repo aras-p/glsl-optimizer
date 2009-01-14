@@ -84,7 +84,7 @@ void radeonUpdatePageFlipping(radeonContextPtr rmesa)
 #else
 /* Turn on/off page flipping according to the flags in the sarea:
  */
-static void radeonUpdatePageFlipping(radeonContextPtr rmesa)
+void radeonUpdatePageFlipping(radeonContextPtr rmesa)
 {
 	rmesa->doPageFlip = rmesa->sarea->pfState;
 	if (rmesa->glCtx->WinSysDrawBuffer) {

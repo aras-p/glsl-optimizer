@@ -589,7 +589,7 @@ static void r300Clear(GLcontext * ctx, GLbitfield mask)
 	}
 
 	/* Make sure it fits there. */
-	r300EnsureCmdBufSpace(r300, 421 * 3, __FUNCTION__);
+	rcommonEnsureCmdBufSpace(&r300->radeon, 421 * 3, __FUNCTION__);
 	if (flags || bits)
 		r300EmitClearState(ctx);
     rrbd = (void *)fb->Attachment[BUFFER_DEPTH].Renderbuffer;
@@ -623,8 +623,8 @@ void r300Flush(GLcontext * ctx)
         rmesa->swtcl.flush(rmesa);
     }
 
-	if (rmesa->cmdbuf.cs->cdw) {
-		r300FlushCmdBuf(rmesa, __FUNCTION__);
+	if (rmesa->radeon.cmdbuf.cs->cdw) {
+		rcommonFlushCmdBuf(&rmesa->radeon, __FUNCTION__);
 	}
 }
 

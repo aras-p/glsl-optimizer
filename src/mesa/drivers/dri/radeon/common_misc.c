@@ -51,11 +51,16 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "drirenderbuffer.h"
 #include "vblank.h"
 
-
+#include "radeon_bo.h"
+#include "radeon_cs.h"
+#include "radeon_bo_legacy.h"
+#include "radeon_cs_legacy.h"
+#include "radeon_bo_gem.h"
+#include "radeon_cs_gem.h"
 #include "dri_util.h"
 #include "radeon_drm.h"
-#include "radeon_screen.h"
 #include "radeon_buffer.h"
+#include "radeon_screen.h"
 #include "common_context.h"
 #include "common_misc.h"
 #include "common_lock.h"
@@ -577,3 +582,106 @@ void radeonCopySubBuffer(__DRIdrawablePrivate * dPriv,
     }
 }
 
+/* cmdbuffer */
+/**
+ * Send the current command buffer via ioctl to the hardware.
+ */
+int rcommonFlushCmdBufLocked(radeonContextPtr rmesa, const char *caller)
+{
+	int ret = 0;
+
+	if (rmesa->cmdbuf.flushing) {
+		fprintf(stderr, "Recursive call into r300FlushCmdBufLocked!\n");
+		exit(-1);
+	}
+	rmesa->cmdbuf.flushing = 1;
+	if (rmesa->cmdbuf.cs->cdw) {
+		ret = radeon_cs_emit(rmesa->cmdbuf.cs);
+		rmesa->vtbl.set_all_dirty(rmesa->glCtx);
+	}
+	radeon_cs_erase(rmesa->cmdbuf.cs);
+	rmesa->cmdbuf.flushing = 0;
+	return ret;
+}
+
+int rcommonFlushCmdBuf(radeonContextPtr rmesa, const char *caller)
+{
+	int ret;
+
+	LOCK_HARDWARE(rmesa);
+	ret = rcommonFlushCmdBufLocked(rmesa, caller);
+	UNLOCK_HARDWARE(rmesa);
+
+	if (ret) {
+		fprintf(stderr, "drmRadeonCmdBuffer: %d\n", ret);
+		_mesa_exit(ret);
+	}
+
+	return ret;
+}
+
+/**
+ * Make sure that enough space is available in the command buffer
+ * by flushing if necessary.
+ *
+ * \param dwords The number of dwords we need to be free on the command buffer
+ */
+void rcommonEnsureCmdBufSpace(radeonContextPtr rmesa, int dwords, const char *caller)
+{
+	if ((rmesa->cmdbuf.cs->cdw + dwords + 128) > rmesa->cmdbuf.size ||
+	    radeon_cs_need_flush(rmesa->cmdbuf.cs)) {
+		rcommonFlushCmdBuf(rmesa, caller);
+    }
+}
+
+void rcommonInitCmdBuf(radeonContextPtr rmesa, int max_state_size)
+{
+	GLuint size;
+	/* Initialize command buffer */
+	size = 256 * driQueryOptioni(&rmesa->optionCache,
+				     "command_buffer_size");
+	if (size < 2 * max_state_size) {
+		size = 2 * max_state_size + 65535;
+	}
+	if (size > 64 * 256)
+		size = 64 * 256;
+
+	size = 64 * 1024 / 4;
+
+	if (RADEON_DEBUG & (DEBUG_IOCTL | DEBUG_DMA)) {
+		fprintf(stderr, "sizeof(drm_r300_cmd_header_t)=%zd\n",
+			sizeof(drm_r300_cmd_header_t));
+		fprintf(stderr, "sizeof(drm_radeon_cmd_buffer_t)=%zd\n",
+			sizeof(drm_radeon_cmd_buffer_t));
+		fprintf(stderr,
+			"Allocating %d bytes command buffer (max state is %d bytes)\n",
+			size * 4, max_state_size * 4);
+	}
+
+	if (rmesa->radeonScreen->kernel_mm) {
+		int fd = rmesa->radeonScreen->driScreen->fd;
+		rmesa->cmdbuf.csm = radeon_cs_manager_gem_ctor(fd);
+	} else {
+		rmesa->cmdbuf.csm = radeon_cs_manager_legacy_ctor(rmesa);
+	}
+	if (rmesa->cmdbuf.csm == NULL) {
+		/* FIXME: fatal error */
+		return;
+	}
+	rmesa->cmdbuf.cs = radeon_cs_create(rmesa->cmdbuf.csm, size);
+	assert(rmesa->cmdbuf.cs != NULL);
+	rmesa->cmdbuf.size = size;
+
+}
+/**
+ * Destroy the command buffer
+ */
+void rcommonDestroyCmdBuf(radeonContextPtr rmesa)
+{
+	radeon_cs_destroy(rmesa->cmdbuf.cs);
+	if (rmesa->radeonScreen->driScreen->dri2.enabled || rmesa->radeonScreen->kernel_mm) {
+		radeon_cs_manager_gem_dtor(rmesa->cmdbuf.csm);
+	} else {
+		radeon_cs_manager_legacy_dtor(rmesa->cmdbuf.csm);
+	}
+}
