@@ -30,7 +30,6 @@
 
 
 #include "glxheader.h"
-#include "GL/xmesa.h"
 #include "xmesaP.h"
 #include "main/imports.h"
 #include "main/framebuffer.h"

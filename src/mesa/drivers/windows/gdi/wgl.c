@@ -601,8 +601,9 @@ WINGDIAPI BOOL GLAPIENTRY wglCopyContext(HGLRC hglrcSrc,
 WINGDIAPI HGLRC GLAPIENTRY wglCreateLayerContext(HDC hdc,
 						 int iLayerPlane)
 {
-    (void) hdc; (void) iLayerPlane;
     SetLastError(0);
+    if (iLayerPlane == 0)
+        return wglCreateContext( hdc );
     return(NULL);
 }
 

@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8.00"
+	Version="8,00"
 	Name="glut"
 	ProjectGUID="{0234F0D2-C8A6-4C4D-93E7-0E2248049C67}"
+	RootNamespace="glut"
 	>
 	<Platforms>
 		<Platform
@@ -79,6 +80,7 @@
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="../../mesa/Debug"
 				IgnoreAllDefaultLibraries="true"
+				ModuleDefinitionFile="..\..\..\..\src\glut\glx\glut.def"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile=".\Debug/GLUT32.pdb"
 				ImportLibrary=".\Debug/GLUT32.lib"
@@ -175,6 +177,7 @@
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="../../mesa/Release"
 				IgnoreAllDefaultLibraries="true"
+				ModuleDefinitionFile="..\..\..\..\src\glut\glx\glut.def"
 				ProgramDatabaseFile=".\Release/GLUT32.pdb"
 				ImportLibrary=".\Release/GLUT32.lib"
 			/>
@@ -322,6 +325,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\glut\glx\glut_overlay.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\glut\glx\glut_ppm.c"
 				>
 			</File>
 			<File

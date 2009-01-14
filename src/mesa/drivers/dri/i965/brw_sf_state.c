@@ -229,7 +229,7 @@ sf_unit_create_from_key(struct brw_context *brw, struct brw_sf_unit_key *key,
    /* XXX clamp max depends on AA vs. non-AA */
 
    sf.sf7.sprite_point = key->point_sprite;
-   sf.sf7.point_size = CLAMP(nearbyint(key->point_size), 1, 255) * (1<<3);
+   sf.sf7.point_size = CLAMP(rint(key->point_size), 1, 255) * (1<<3);
    sf.sf7.use_point_size_state = !key->point_attenuated;
    sf.sf7.aa_line_distance_mode = 0;
 

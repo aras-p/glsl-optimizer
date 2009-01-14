@@ -228,7 +228,14 @@ _slang_sizeof_type_specifier(const slang_type_specifier *spec)
       break;
    case SLANG_SPEC_STRUCT:
       sz = _slang_field_offset(spec, 0); /* special use */
-      if (sz > 4) {
+      if (sz == 1) {
+         /* 1-float structs are actually troublesome to deal with since they
+          * might get placed at R.x, R.y, R.z or R.z.  Return size=2 to
+          * ensure the object is placed at R.x
+          */
+         sz = 2;
+      }
+      else if (sz > 4) {
          sz = (sz + 3) & ~0x3; /* round up to multiple of four */
       }
       break;
@@ -4286,7 +4293,7 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
 #endif
       {
          GLint sampNum = _mesa_add_sampler(prog->Parameters, varName, datatype);
-         store = _slang_new_ir_storage(PROGRAM_SAMPLER, sampNum, texIndex);
+         store = _slang_new_ir_storage_sampler(sampNum, texIndex, totalSize);
 
          /* If we have a sampler array, then we need to allocate the 
 	  * additional samplers to ensure we don't allocate them elsewhere.
@@ -4486,7 +4493,7 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
       n = _slang_gen_var_decl(A, var, var->initializer);
 
       /* emit GPU instructions */
-      success = _slang_emit_code(n, A->vartable, A->program, GL_FALSE, A->log);
+      success = _slang_emit_code(n, A->vartable, A->program, A->pragmas, GL_FALSE, A->log);
 
       _slang_free_ir_tree(n);
    }
@@ -4596,7 +4603,7 @@ _slang_codegen_function(slang_assemble_ctx * A, slang_function * fun)
 #endif
 
    /* Emit program instructions */
-   success = _slang_emit_code(n, A->vartable, A->program, GL_TRUE, A->log);
+   success = _slang_emit_code(n, A->vartable, A->program, A->pragmas, GL_TRUE, A->log);
    _slang_free_ir_tree(n);
 
    /* free codegen context */

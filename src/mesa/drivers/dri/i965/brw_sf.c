@@ -73,10 +73,12 @@ static void compile_sf_prog( struct brw_context *brw,
 	 c.attr_to_idx[i] = idx;
 	 c.idx_to_attr[idx] = i;
 	 if (i >= VERT_RESULT_TEX0 && i <= VERT_RESULT_TEX7) {
-		 c.point_attrs[i].CoordReplace = 
-			brw->attribs.Point->CoordReplace[i - VERT_RESULT_TEX0];
-	 } else
-		 c.point_attrs[i].CoordReplace = GL_FALSE;
+            c.point_attrs[i].CoordReplace = 
+               brw->attribs.Point->CoordReplace[i - VERT_RESULT_TEX0];
+	 }
+         else {
+            c.point_attrs[i].CoordReplace = GL_FALSE;
+         }
 	 idx++;
       }
    
@@ -106,7 +108,6 @@ static void compile_sf_prog( struct brw_context *brw,
       assert(0);
       return;
    }
-	 
 
    /* get the program
     */

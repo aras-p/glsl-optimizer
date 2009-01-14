@@ -16,7 +16,7 @@ Status
 
 Version
 
-    Last Modified Date:  8 June 2000
+    Last Modified Date:  12 January 2009
 
 Number
 
@@ -69,6 +69,12 @@ Additions to Chapter 3 of the GLX 1.3 Specification (Functions and Errors)
     <width> and <height> indicate the size in pixels.  Coordinate (0,0)
     corresponds to the lower-left pixel of the window, like glReadPixels.
 
+    If dpy and drawable are the display and drawable for the calling
+    thread's current context, glXCopySubBufferMESA performs an
+    implicit glFlush before it returns.  Subsequent OpenGL commands
+    may be issued immediately after calling glXCopySubBufferMESA, but
+    are not executed until the copy is completed. 
+
 GLX Protocol
 
     None at this time.  The extension is implemented in terms of ordinary
@@ -84,5 +90,7 @@ New State
 
 Revision History
 
-    8 June 2000 - initial specification
+    12 January 2009 Ian Romanick - Added language about implicit flush
+                                   and command completion.
+    8 June 2000     Brian Paul   - initial specification
 

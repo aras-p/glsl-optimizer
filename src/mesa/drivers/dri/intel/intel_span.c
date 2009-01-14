@@ -633,7 +633,7 @@ intelSpanRenderStart(GLcontext * ctx)
    intelFlush(&intel->ctx);
    LOCK_HARDWARE(intel);
 
-   for (i = 0; i < ctx->Const.MaxTextureCoordUnits; i++) {
+   for (i = 0; i < ctx->Const.MaxTextureImageUnits; i++) {
       if (ctx->Texture.Unit[i]._ReallyEnabled) {
          struct gl_texture_object *texObj = ctx->Texture.Unit[i]._Current;
          intel_tex_map_images(intel, intel_texture_object(texObj));
@@ -655,7 +655,7 @@ intelSpanRenderFinish(GLcontext * ctx)
 
    _swrast_flush(ctx);
 
-   for (i = 0; i < ctx->Const.MaxTextureCoordUnits; i++) {
+   for (i = 0; i < ctx->Const.MaxTextureImageUnits; i++) {
       if (ctx->Texture.Unit[i]._ReallyEnabled) {
          struct gl_texture_object *texObj = ctx->Texture.Unit[i]._Current;
          intel_tex_unmap_images(intel, intel_texture_object(texObj));

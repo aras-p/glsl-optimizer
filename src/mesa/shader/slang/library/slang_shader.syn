@@ -1162,13 +1162,6 @@ compound_statement_3
     lbrace .and statement_list .and rbrace;
 
 /*
- * <statement_no_new_scope> ::= <compound_statement_no_new_scope>
- *                            | <simple_statement>
- */
-statement_no_new_scope
-    compound_statement_no_new_scope .or simple_statement;
-
-/*
  * <compound_statement_no_new_scope> ::= "{" "}"
  *                                     | "{" <statement_list> "}"
  */
@@ -1180,6 +1173,7 @@ compound_statement_no_new_scope_2
     lbrace .and rbrace;
 compound_statement_no_new_scope_3
     lbrace .and statement_list .and rbrace;
+
 
 /*
  * <statement_list> ::= <statement>
@@ -1242,8 +1236,7 @@ condition_3
 /*
  * <iteration_statement> ::= "while" "(" <condition> ")" <statement>
  *                         | "do" <statement> "while" "(" <expression> ")" ";"
- *                         | "for" "(" <for_init_statement> <for_rest_statement> ")"
- *                            <statement_no_new_scope>
+ *                         | "for" "(" <for_init_statement> <for_rest_statement> ")" <statement>
  */
 iteration_statement
     iteration_statement_1 .or iteration_statement_2 .or iteration_statement_3;
@@ -1255,7 +1248,7 @@ iteration_statement_2
     expression .and rparen .error RPAREN_EXPECTED .emit OP_END .and semicolon;
 iteration_statement_3
     "for" .emit OP_FOR .and lparen .error LPAREN_EXPECTED .and for_init_statement .and
-    for_rest_statement .and rparen .error RPAREN_EXPECTED .and statement_no_new_scope;
+    for_rest_statement .and rparen .error RPAREN_EXPECTED .and statement;
 
 /*
  * <for_init_statement> ::= <expression_statement>

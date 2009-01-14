@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8.00"
+	Version="8,00"
 	Name="mesa"
 	ProjectGUID="{2120C974-2717-4709-B44F-D6E6D0A56448}"
+	RootNamespace="mesa"
 	>
 	<Platforms>
 		<Platform
@@ -180,6 +181,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\..\src\mesa\main\api_exec.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\..\src\mesa\main\api_loopback.c"
 				>
 			</File>
@@ -224,6 +229,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\..\src\mesa\main\clear.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\..\src\mesa\main\clip.c"
 				>
 			</File>
@@ -260,6 +269,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\..\src\mesa\main\dlopen.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\..\src\mesa\main\drawpix.c"
 				>
 			</File>
@@ -289,6 +302,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\main\feedback.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\main\ffvertex_prog.c"
 				>
 			</File>
 			<File
@@ -326,6 +343,10 @@
 						PreprocessorDefinitions="_CRT_SECURE_NO_DEPRECATE"
 					/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\glapi\glapi_getproc.c"
+				>
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\glapi\glthread.c"
@@ -466,6 +487,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\..\src\mesa\main\multisample.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\..\src\mesa\shader\nvfragparse.c"
 				>
 			</File>
@@ -482,11 +507,19 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\..\src\mesa\main\pixelstore.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\..\src\mesa\main\points.c"
 				>
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\main\polygon.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\shader\prog_cache.c"
 				>
 			</File>
 			<File
@@ -555,6 +588,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\main\rbadaptors.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\main\readpix.c"
 				>
 			</File>
 			<File
@@ -675,6 +712,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\swrast\s_zoom.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\main\scissor.c"
 				>
 			</File>
 			<File
@@ -858,6 +899,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\..\src\mesa\tnl\t_rasterpos.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\..\src\mesa\tnl\t_vb_cull.c"
 				>
 			</File>
@@ -922,6 +967,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\..\src\mesa\main\texenv.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\..\src\mesa\main\texenvprogram.c"
 				>
 			</File>
@@ -930,11 +979,19 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\..\src\mesa\main\texgen.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\..\src\mesa\main\teximage.c"
 				>
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\main\texobj.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\main\texparam.c"
 				>
 			</File>
 			<File
@@ -1051,6 +1108,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\..\src\mesa\main\api_exec.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\..\src\mesa\main\api_loopback.h"
 				>
 			</File>
@@ -1075,11 +1136,19 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\..\src\mesa\main\arrayobj.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\..\src\mesa\shader\atifragshader.h"
 				>
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\main\attrib.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\main\bitset.h"
 				>
 			</File>
 			<File
@@ -1092,6 +1161,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\main\buffers.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\main\clear.h"
 				>
 			</File>
 			<File
@@ -1139,6 +1212,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\..\src\mesa\main\dlopen.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\..\src\mesa\main\drawpix.h"
 				>
 			</File>
@@ -1164,6 +1241,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\main\feedback.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\main\ffvertex_prog.h"
 				>
 			</File>
 			<File
@@ -1315,11 +1396,27 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\..\src\mesa\main\mcompiler.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\main\mfeatures.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\main\mipmap.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\..\src\mesa\main\mm.h"
 				>
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\main\mtypes.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\main\multisample.h"
 				>
 			</File>
 			<File
@@ -1336,6 +1433,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\main\pixel.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\main\pixelstore.h"
 				>
 			</File>
 			<File
@@ -1396,6 +1497,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\main\rbadaptors.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\main\readpix.h"
 				>
 			</File>
 			<File
@@ -1516,6 +1621,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\swrast\s_zoom.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\main\scissor.h"
 				>
 			</File>
 			<File
@@ -1675,6 +1784,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\..\src\mesa\main\texenv.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\..\src\mesa\main\texenvprogram.h"
 				>
 			</File>
@@ -1687,11 +1800,19 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\..\src\mesa\main\texgen.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\..\src\mesa\main\teximage.h"
 				>
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\main\texobj.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\main\texparam.h"
 				>
 			</File>
 			<File

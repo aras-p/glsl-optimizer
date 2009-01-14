@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.3
  *
- * Copyright (C) 2005-2007  Brian Paul   All Rights Reserved.
+ * Copyright (C) 2005-2008  Brian Paul   All Rights Reserved.
+ * Copyright (C) 2009  VMware, Inc.   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -168,8 +168,8 @@ typedef enum
 struct slang_ir_storage_
 {
    enum register_file File;  /**< PROGRAM_TEMPORARY, PROGRAM_INPUT, etc */
-   GLint Index;  /**< -1 means unallocated */
-   GLint Size;  /**< number of floats */
+   GLint Index;    /**< -1 means unallocated */
+   GLint Size;     /**< number of floats or ints */
    GLuint Swizzle; /**< Swizzle AND writemask info */
    GLint RefCount; /**< Used during IR tree delete */
 
@@ -179,6 +179,7 @@ struct slang_ir_storage_
    enum register_file IndirectFile;
    GLint IndirectIndex;
    GLuint IndirectSwizzle;
+   GLuint TexTarget;  /**< If File==PROGRAM_SAMPLER, one of TEXTURE_x_INDEX */
 
    /** If Parent is non-null, Index is relative to parent.
     * The other fields are ignored.
@@ -253,6 +254,10 @@ _slang_new_ir_storage_indirect(enum register_file file,
                                enum register_file indirectFile,
                                GLint indirectIndex,
                                GLuint indirectSwizzle);
+
+extern slang_ir_storage *
+_slang_new_ir_storage_sampler(GLint sampNum, GLuint texTarget, GLint size);
+
 
 extern void
 _slang_copy_ir_storage(slang_ir_storage *dst, const slang_ir_storage *src);

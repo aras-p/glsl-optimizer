@@ -22,7 +22,7 @@ AC_CONFIG_AUX_DIR([bin])
 AC_CANONICAL_HOST
 
 dnl Versions for external dependencies
-LIBDRM_REQUIRED=2.3.1
+LIBDRM_REQUIRED=2.4.3
 DRI2PROTO_REQUIRED=1.99.3
 
 dnl Check for progs
@@ -83,11 +83,8 @@ dnl Compiler macros
 DEFINES=""
 AC_SUBST([DEFINES])
 case "$host_os" in
-*-gnu)
-if test "x$GCC" = xyes; then
-    DEFINES="$DEFINES -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_BSD_SOURCE"
-fi
-    DEFINES="$DEFINES -D_SVID_SOURCE -D_GNU_SOURCE -DPTHREADS"
+*-gnu*)
+    DEFINES="$DEFINES -D_GNU_SOURCE -DPTHREADS"
     ;;
 solaris*)
     DEFINES="$DEFINES -DPTHREADS -DSVR4"
