@@ -89,13 +89,8 @@ extern void r200ReleaseDmaRegion( r200ContextPtr rmesa,
 				    struct radeon_dma_region *region,
 				    const char *caller );
 
-extern void r200CopyBuffer( __DRIdrawablePrivate *drawable,
-			    const drm_clip_rect_t      *rect);
-extern void r200PageFlip( __DRIdrawablePrivate *drawable );
 extern void r200Flush( GLcontext *ctx );
 extern void r200Finish( GLcontext *ctx );
-extern void r200WaitForIdleLocked( r200ContextPtr rmesa );
-extern void r200WaitForVBlank( r200ContextPtr rmesa );
 extern void r200InitIoctlFuncs( struct dd_function_table *functions );
 
 extern void *r200AllocateMemoryMESA( __DRIscreen *screen, GLsizei size, GLfloat readfreq,

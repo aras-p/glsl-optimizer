@@ -55,9 +55,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define R200_IDLE_RETRY           16
 
 
-static void r200WaitForIdle( r200ContextPtr rmesa );
-
-
 /* At this point we were in FlushCmdBufLocked but we had lost our context, so
  * we need to unwire our current cmdbuf, hook the one with the saved state in
  * it, flush it, and then put the current one back.  This is so commands at the
@@ -152,7 +149,7 @@ int r200FlushCmdBufLocked( r200ContextPtr rmesa, const char * caller )
 
    if (R200_DEBUG & DEBUG_SYNC) {
       fprintf(stderr, "\nSyncing in %s\n\n", __FUNCTION__);
-      r200WaitForIdleLocked( rmesa );
+      radeonWaitForIdleLocked( &rmesa->radeon );
    }
 
 
@@ -327,281 +324,6 @@ void r200AllocDmaRegion( r200ContextPtr rmesa,
       rmesa->dma.current.ptr = (rmesa->dma.current.ptr + 0x7) & ~0x7;  
 
    assert( rmesa->dma.current.ptr <= rmesa->dma.current.end );
-}
-
-/* ================================================================
- * SwapBuffers with client-side throttling
- */
-
-static uint32_t r200GetLastFrame(r200ContextPtr rmesa)
-{
-   drm_radeon_getparam_t gp;
-   int ret;
-   uint32_t frame;
-
-   gp.param = RADEON_PARAM_LAST_FRAME;
-   gp.value = (int *)&frame;
-   ret = drmCommandWriteRead( rmesa->radeon.dri.fd, DRM_RADEON_GETPARAM,
-			      &gp, sizeof(gp) );
-   if ( ret ) {
-      fprintf( stderr, "%s: drmRadeonGetParam: %d\n", __FUNCTION__, ret );
-      exit(1);
-   }
-
-   return frame;
-}
-
-static void r200EmitIrqLocked( r200ContextPtr rmesa )
-{
-   drm_radeon_irq_emit_t ie;
-   int ret;
-
-   ie.irq_seq = &rmesa->radeon.iw.irq_seq;
-   ret = drmCommandWriteRead( rmesa->radeon.dri.fd, DRM_RADEON_IRQ_EMIT, 
-			      &ie, sizeof(ie) );
-   if ( ret ) {
-      fprintf( stderr, "%s: drmRadeonIrqEmit: %d\n", __FUNCTION__, ret );
-      exit(1);
-   }
-}
-
-
-static void r200WaitIrq( r200ContextPtr rmesa )
-{
-   int ret;
-
-   do {
-      ret = drmCommandWrite( rmesa->radeon.dri.fd, DRM_RADEON_IRQ_WAIT,
-			     &rmesa->radeon.iw, sizeof(rmesa->radeon.iw) );
-   } while (ret && (errno == EINTR || errno == EBUSY));
-
-   if ( ret ) {
-      fprintf( stderr, "%s: drmRadeonIrqWait: %d\n", __FUNCTION__, ret );
-      exit(1);
-   }
-}
-
-
-static void r200WaitForFrameCompletion( r200ContextPtr rmesa )
-{
-   drm_radeon_sarea_t *sarea = rmesa->radeon.sarea;
-
-   if (rmesa->radeon.do_irqs) {
-      if (r200GetLastFrame(rmesa) < sarea->last_frame) {
-	 if (!rmesa->radeon.irqsEmitted) {
-	    while (r200GetLastFrame (rmesa) < sarea->last_frame)
-	       ;
-	 }
-	 else {
-	    UNLOCK_HARDWARE( &rmesa->radeon ); 
-	    r200WaitIrq( rmesa );	
-	    LOCK_HARDWARE( &rmesa->radeon ); 
-	 }
-	 rmesa->radeon.irqsEmitted = 10;
-      }
-
-      if (rmesa->radeon.irqsEmitted) {
-	 r200EmitIrqLocked( rmesa );
-	 rmesa->radeon.irqsEmitted--;
-      }
-   } 
-   else {
-      while (r200GetLastFrame (rmesa) < sarea->last_frame) {
-	 UNLOCK_HARDWARE( &rmesa->radeon ); 
-	 if (rmesa->radeon.do_usleeps) 
-	    DO_USLEEP( 1 );
-	 LOCK_HARDWARE( &rmesa->radeon ); 
-      }
-   }
-}
-
-
-
-/* Copy the back color buffer to the front color buffer.
- */
-void r200CopyBuffer( __DRIdrawablePrivate *dPriv,
-		      const drm_clip_rect_t	 *rect)
-{
-   r200ContextPtr rmesa;
-   GLint nbox, i, ret;
-   GLboolean   missed_target;
-   int64_t ust;
-   __DRIscreenPrivate *psp = dPriv->driScreenPriv;
-
-   assert(dPriv);
-   assert(dPriv->driContextPriv);
-   assert(dPriv->driContextPriv->driverPrivate);
-
-   rmesa = (r200ContextPtr) dPriv->driContextPriv->driverPrivate;
-
-   if ( R200_DEBUG & DEBUG_IOCTL ) {
-      fprintf( stderr, "\n%s( %p )\n\n", __FUNCTION__, (void *)rmesa->radeon.glCtx );
-   }
-
-   R200_FIREVERTICES( rmesa );
-
-   LOCK_HARDWARE( &rmesa->radeon );
-
-
-   /* Throttle the frame rate -- only allow one pending swap buffers
-    * request at a time.
-    */
-   r200WaitForFrameCompletion( rmesa );
-   if (!rect)
-   {
-       UNLOCK_HARDWARE( &rmesa->radeon );
-       driWaitForVBlank( dPriv, & missed_target );
-       LOCK_HARDWARE( &rmesa->radeon );
-   }
-
-   nbox = dPriv->numClipRects; /* must be in locked region */
-
-   for ( i = 0 ; i < nbox ; ) {
-      GLint nr = MIN2( i + RADEON_NR_SAREA_CLIPRECTS , nbox );
-      drm_clip_rect_t *box = dPriv->pClipRects;
-      drm_clip_rect_t *b = rmesa->radeon.sarea->boxes;
-      GLint n = 0;
-
-      for ( ; i < nr ; i++ ) {
-
-	  *b = box[i];
-
-	  if (rect)
-	  {
-	     if (rect->x1 > b->x1)
-		 b->x1 = rect->x1;
-	     if (rect->y1 > b->y1)
-		 b->y1 = rect->y1;
-	     if (rect->x2 < b->x2)
-		 b->x2 = rect->x2;
-	     if (rect->y2 < b->y2)
-		 b->y2 = rect->y2;
-
-	     if (b->x1 >= b->x2 || b->y1 >= b->y2)
-		 continue;
-	  }
-
-	  b++;
-	  n++;
-      }
-      rmesa->radeon.sarea->nbox = n;
-
-      if (!n)
-	 continue;
-
-      ret = drmCommandNone( rmesa->radeon.dri.fd, DRM_RADEON_SWAP );
-
-      if ( ret ) {
-	 fprintf( stderr, "DRM_R200_SWAP_BUFFERS: return = %d\n", ret );
-	 UNLOCK_HARDWARE( &rmesa->radeon );
-	 exit( 1 );
-      }
-   }
-
-   UNLOCK_HARDWARE( &rmesa->radeon );
-   if (!rect)
-   {
-       rmesa->hw.all_dirty = GL_TRUE;
-
-       rmesa->radeon.swap_count++;
-       (*psp->systemTime->getUST)( & ust );
-       if ( missed_target ) {
-	   rmesa->radeon.swap_missed_count++;
-	   rmesa->radeon.swap_missed_ust = ust - rmesa->radeon.swap_ust;
-       }
-
-       rmesa->radeon.swap_ust = ust;
-
-       sched_yield();
-   }
-}
-
-void r200PageFlip( __DRIdrawablePrivate *dPriv )
-{
-   r200ContextPtr rmesa;
-   GLint ret;
-   GLboolean   missed_target;
-   __DRIscreenPrivate *psp = dPriv->driScreenPriv;
-
-   assert(dPriv);
-   assert(dPriv->driContextPriv);
-   assert(dPriv->driContextPriv->driverPrivate);
-
-   rmesa = (r200ContextPtr) dPriv->driContextPriv->driverPrivate;
-
-   if ( R200_DEBUG & DEBUG_IOCTL ) {
-      fprintf(stderr, "%s: pfCurrentPage: %d\n", __FUNCTION__,
-	      rmesa->radeon.sarea->pfCurrentPage);
-   }
-
-   R200_FIREVERTICES( rmesa );
-   LOCK_HARDWARE( &rmesa->radeon );
-
-   if (!dPriv->numClipRects) {
-      UNLOCK_HARDWARE( &rmesa->radeon );
-      usleep( 10000 );		/* throttle invisible client 10ms */
-      return;
-   }
-
-   /* Need to do this for the perf box placement:
-    */
-   {
-      drm_clip_rect_t *box = dPriv->pClipRects;
-      drm_clip_rect_t *b = rmesa->radeon.sarea->boxes;
-      b[0] = box[0];
-      rmesa->radeon.sarea->nbox = 1;
-   }
-
-   /* Throttle the frame rate -- only allow a few pending swap buffers
-    * request at a time.
-    */
-   r200WaitForFrameCompletion( rmesa );
-   UNLOCK_HARDWARE( &rmesa->radeon );
-   driWaitForVBlank( dPriv, & missed_target );
-   if ( missed_target ) {
-      rmesa->radeon.swap_missed_count++;
-      (void) (*psp->systemTime->getUST)( & rmesa->radeon.swap_missed_ust );
-   }
-   LOCK_HARDWARE( &rmesa->radeon );
-
-   ret = drmCommandNone( rmesa->radeon.dri.fd, DRM_RADEON_FLIP );
-
-   UNLOCK_HARDWARE( &rmesa->radeon );
-
-   if ( ret ) {
-      fprintf( stderr, "DRM_RADEON_FLIP: return = %d\n", ret );
-      exit( 1 );
-   }
-
-   rmesa->radeon.swap_count++;
-   (void) (*psp->systemTime->getUST)( & rmesa->radeon.swap_ust );
-
-#if 000
-   if ( rmesa->radeon.sarea->pfCurrentPage == 1 ) {
-	 rmesa->state.color.drawOffset = rmesa->radeon.radeonScreen->frontOffset;
-	 rmesa->state.color.drawPitch  = rmesa->radeon.radeonScreen->frontPitch;
-   } else {
-	 rmesa->state.color.drawOffset = rmesa->radeon.radeonScreen->backOffset;
-	 rmesa->state.color.drawPitch  = rmesa->radeon.radeonScreen->backPitch;
-   }
-
-   R200_STATECHANGE( rmesa, ctx );
-   rmesa->hw.ctx.cmd[CTX_RB3D_COLOROFFSET] = rmesa->state.color.drawOffset
-					   + rmesa->radeon.radeonScreen->fbLocation;
-   rmesa->hw.ctx.cmd[CTX_RB3D_COLORPITCH]  = rmesa->state.color.drawPitch;
-   if (rmesa->radeon.sarea->tiling_enabled) {
-      rmesa->hw.ctx.cmd[CTX_RB3D_COLORPITCH] |= R200_COLOR_TILE_ENABLE;
-   }
-#else
-   /* Get ready for drawing next frame.  Update the renderbuffers'
-    * flippedOffset/Pitch fields so we draw into the right place.
-    */
-   driFlipRenderbuffers(rmesa->radeon.glCtx->WinSysDrawBuffer,
-                        rmesa->radeon.sarea->pfCurrentPage);
-
-
-   r200UpdateDrawBuffer(rmesa->radeon.glCtx);
-#endif
 }
 
 
@@ -790,33 +512,6 @@ static void r200Clear( GLcontext *ctx, GLbitfield mask )
 }
 
 
-void r200WaitForIdleLocked( r200ContextPtr rmesa )
-{
-    int ret;
-    int i = 0;
-    
-    do {
-       ret = drmCommandNone( rmesa->radeon.dri.fd, DRM_RADEON_CP_IDLE);
-       if (ret) 
-	  DO_USLEEP( 1 );
-    } while (ret && ++i < 100);
-    
-    if ( ret < 0 ) {
-       UNLOCK_HARDWARE( &rmesa->radeon );
-       fprintf( stderr, "Error: R200 timed out... exiting\n" );
-       exit( -1 );
-    }
-}
-
-
-static void r200WaitForIdle( r200ContextPtr rmesa )
-{
-   LOCK_HARDWARE(&rmesa->radeon);
-   r200WaitForIdleLocked( rmesa );
-   UNLOCK_HARDWARE(&rmesa->radeon);
-}
-
-
 void r200Flush( GLcontext *ctx )
 {
    r200ContextPtr rmesa = R200_CONTEXT( ctx );
@@ -838,17 +533,8 @@ void r200Flush( GLcontext *ctx )
  */
 void r200Finish( GLcontext *ctx )
 {
-   r200ContextPtr rmesa = R200_CONTEXT(ctx);
    r200Flush( ctx );
-
-   if (rmesa->radeon.do_irqs) {
-      LOCK_HARDWARE( &rmesa->radeon );
-      r200EmitIrqLocked( rmesa );
-      UNLOCK_HARDWARE( &rmesa->radeon );
-      r200WaitIrq( rmesa );
-   }
-   else 
-      r200WaitForIdle( rmesa );
+   radeon_common_finish(ctx);
 }
 
 

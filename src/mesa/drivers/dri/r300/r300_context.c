@@ -198,11 +198,25 @@ static void r300_get_lock(radeonContextPtr rmesa)
 	}
 }		  
 
+static void r300_vtbl_flush(GLcontext *ctx)
+{
+	r300Flush(ctx);
+}
+
+static void r300_vtbl_set_all_dirty(GLcontext *ctx)
+{
+	r300ContextPtr rmesa = R300_CONTEXT(ctx);
+	rmesa->hw.all_dirty = GL_TRUE;
+}
+
 static void r300_init_vtbl(radeonContextPtr radeon)
 {
    radeon->vtbl.get_lock = r300_get_lock;
    radeon->vtbl.update_viewport_offset = r300UpdateViewportOffset;
+   radeon->vtbl.flush = r300_vtbl_flush;
+   radeon->vtbl.set_all_dirty = r300_vtbl_set_all_dirty;
 }
+
 
 /* Create the device specific rendering context.
  */

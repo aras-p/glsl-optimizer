@@ -33,6 +33,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *   Keith Whitwell <keith@tungstengraphics.com>
  */
 
+#include <errno.h>
 #include "main/glheader.h"
 #include "main/imports.h"
 #include "main/api_arrayelt.h"
@@ -47,11 +48,18 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "tnl/t_pipeline.h"
 #include "swrast_setup/swrast_setup.h"
 
+#include "drirenderbuffer.h"
+#include "vblank.h"
+
+
 #include "dri_util.h"
 #include "radeon_drm.h"
 #include "radeon_screen.h"
+#include "radeon_buffer.h"
 #include "common_context.h"
 #include "common_misc.h"
+#include "common_lock.h"
+
 /* =============================================================
  * Scissoring
  */
@@ -184,4 +192,336 @@ void radeonUpdateScissor( GLcontext *ctx )
 
       radeonRecalcScissorRects( rmesa );
    }
+}
+
+/* ================================================================
+ * SwapBuffers with client-side throttling
+ */
+
+static uint32_t radeonGetLastFrame(radeonContextPtr radeon)
+{
+	drm_radeon_getparam_t gp;
+	int ret;
+	uint32_t frame;
+
+	gp.param = RADEON_PARAM_LAST_FRAME;
+	gp.value = (int *)&frame;
+	ret = drmCommandWriteRead(radeon->dri.fd, DRM_RADEON_GETPARAM,
+				  &gp, sizeof(gp));
+	if (ret) {
+		fprintf(stderr, "%s: drmRadeonGetParam: %d\n", __FUNCTION__,
+			ret);
+		exit(1);
+	}
+
+	return frame;
+}
+
+uint32_t radeonGetAge(radeonContextPtr radeon)
+{
+	drm_radeon_getparam_t gp;
+	int ret;
+	uint32_t age;
+
+	gp.param = RADEON_PARAM_LAST_CLEAR;
+	gp.value = (int *)&age;
+	ret = drmCommandWriteRead(radeon->dri.fd, DRM_RADEON_GETPARAM,
+				  &gp, sizeof(gp));
+	if (ret) {
+		fprintf(stderr, "%s: drmRadeonGetParam: %d\n", __FUNCTION__,
+			ret);
+		exit(1);
+	}
+
+	return age;
+}
+
+static void radeonEmitIrqLocked(radeonContextPtr radeon)
+{
+	drm_radeon_irq_emit_t ie;
+	int ret;
+
+	ie.irq_seq = &radeon->iw.irq_seq;
+	ret = drmCommandWriteRead(radeon->dri.fd, DRM_RADEON_IRQ_EMIT,
+				  &ie, sizeof(ie));
+	if (ret) {
+		fprintf(stderr, "%s: drmRadeonIrqEmit: %d\n", __FUNCTION__,
+			ret);
+		exit(1);
+	}
+}
+
+static void radeonWaitIrq(radeonContextPtr radeon)
+{
+	int ret;
+
+	do {
+		ret = drmCommandWrite(radeon->dri.fd, DRM_RADEON_IRQ_WAIT,
+				      &radeon->iw, sizeof(radeon->iw));
+	} while (ret && (errno == EINTR || errno == EBUSY));
+
+	if (ret) {
+		fprintf(stderr, "%s: drmRadeonIrqWait: %d\n", __FUNCTION__,
+			ret);
+		exit(1);
+	}
+}
+
+static void radeonWaitForFrameCompletion(radeonContextPtr radeon)
+{
+	drm_radeon_sarea_t *sarea = radeon->sarea;
+
+	if (radeon->do_irqs) {
+		if (radeonGetLastFrame(radeon) < sarea->last_frame) {
+			if (!radeon->irqsEmitted) {
+				while (radeonGetLastFrame(radeon) <
+				       sarea->last_frame) ;
+			} else {
+				UNLOCK_HARDWARE(radeon);
+				radeonWaitIrq(radeon);
+				LOCK_HARDWARE(radeon);
+			}
+			radeon->irqsEmitted = 10;
+		}
+
+		if (radeon->irqsEmitted) {
+			radeonEmitIrqLocked(radeon);
+			radeon->irqsEmitted--;
+		}
+	} else {
+		while (radeonGetLastFrame(radeon) < sarea->last_frame) {
+			UNLOCK_HARDWARE(radeon);
+			if (radeon->do_usleeps)
+				DO_USLEEP(1);
+			LOCK_HARDWARE(radeon);
+		}
+	}
+}
+
+/* wait for idle */
+void radeonWaitForIdleLocked(radeonContextPtr radeon)
+{
+	int ret;
+	int i = 0;
+
+	do {
+		ret = drmCommandNone(radeon->dri.fd, DRM_RADEON_CP_IDLE);
+		if (ret)
+			DO_USLEEP(1);
+	} while (ret && ++i < 100);
+
+	if (ret < 0) {
+		UNLOCK_HARDWARE(radeon);
+		fprintf(stderr, "Error: R300 timed out... exiting\n");
+		exit(-1);
+	}
+}
+
+static void radeonWaitForIdle(radeonContextPtr radeon)
+{
+	LOCK_HARDWARE(radeon);
+	radeonWaitForIdleLocked(radeon);
+	UNLOCK_HARDWARE(radeon);
+}
+
+
+/* Copy the back color buffer to the front color buffer.
+ */
+void radeonCopyBuffer( __DRIdrawablePrivate *dPriv,
+		       const drm_clip_rect_t	  *rect)
+{
+   GLcontext *ctx;
+   radeonContextPtr rmesa;
+   GLint nbox, i, ret;
+   GLboolean   missed_target;
+   int64_t ust;
+   __DRIscreenPrivate *psp;
+
+   assert(dPriv);
+   assert(dPriv->driContextPriv);
+   assert(dPriv->driContextPriv->driverPrivate);
+   
+   ctx = (GLcontext *) dPriv->driContextPriv->driverPrivate;
+   rmesa = (radeonContextPtr) dPriv->driContextPriv->driverPrivate;
+
+///   if ( RADEON_DEBUG & DEBUG_IOCTL ) {
+//      fprintf( stderr, "\n%s( %p )\n\n", __FUNCTION__, (void *) rmesa->glCtx );
+//   }
+
+   rmesa->vtbl.flush(ctx);
+   LOCK_HARDWARE( rmesa );
+
+   /* Throttle the frame rate -- only allow one pending swap buffers
+    * request at a time.
+    */
+   radeonWaitForFrameCompletion( rmesa );
+   if (!rect)
+   {
+       UNLOCK_HARDWARE( rmesa );
+       driWaitForVBlank( dPriv, & missed_target );
+       LOCK_HARDWARE( rmesa );
+   }
+
+   nbox = dPriv->numClipRects; /* must be in locked region */
+
+   for ( i = 0 ; i < nbox ; ) {
+      GLint nr = MIN2( i + RADEON_NR_SAREA_CLIPRECTS , nbox );
+      drm_clip_rect_t *box = dPriv->pClipRects;
+      drm_clip_rect_t *b = rmesa->sarea->boxes;
+      GLint n = 0;
+
+      for ( ; i < nr ; i++ ) {
+
+	  *b = box[i];
+
+	  if (rect)
+	  {
+	      if (rect->x1 > b->x1)
+		  b->x1 = rect->x1;
+	      if (rect->y1 > b->y1)
+		  b->y1 = rect->y1;
+	      if (rect->x2 < b->x2)
+		  b->x2 = rect->x2;
+	      if (rect->y2 < b->y2)
+		  b->y2 = rect->y2;
+
+	      if (b->x1 >= b->x2 || b->y1 >= b->y2)
+		  continue;
+	  }
+
+	  b++;
+	  n++;
+      }
+      rmesa->sarea->nbox = n;
+
+      if (!n)
+	 continue;
+
+      ret = drmCommandNone( rmesa->dri.fd, DRM_RADEON_SWAP );
+
+      if ( ret ) {
+	 fprintf( stderr, "DRM_RADEON_SWAP_BUFFERS: return = %d\n", ret );
+	 UNLOCK_HARDWARE( rmesa );
+	 exit( 1 );
+      }
+   }
+
+   UNLOCK_HARDWARE( rmesa );
+   if (!rect)
+   {
+       psp = dPriv->driScreenPriv;
+       rmesa->swap_count++;
+       (*psp->systemTime->getUST)( & ust );
+       if ( missed_target ) {
+	   rmesa->swap_missed_count++;
+	   rmesa->swap_missed_ust = ust - rmesa->swap_ust;
+       }
+
+       rmesa->swap_ust = ust;
+       rmesa->vtbl.set_all_dirty(ctx);
+
+   }
+}
+
+void radeonPageFlip( __DRIdrawablePrivate *dPriv )
+{
+   radeonContextPtr rmesa;
+   GLint ret;
+   GLboolean   missed_target;
+   __DRIscreenPrivate *psp;
+   struct radeon_renderbuffer *rrb;
+   GLframebuffer *fb = dPriv->driverPrivate;
+
+   assert(dPriv);
+   assert(dPriv->driContextPriv);
+   assert(dPriv->driContextPriv->driverPrivate);
+
+   rmesa = (radeonContextPtr) dPriv->driContextPriv->driverPrivate;
+  rrb = (void *)fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer;
+
+   psp = dPriv->driScreenPriv;
+
+#if 0
+   if ( RADEON_DEBUG & DEBUG_IOCTL ) {
+      fprintf(stderr, "%s: pfCurrentPage: %d\n", __FUNCTION__,
+	      rmesa->sarea->pfCurrentPage);
+   }
+#endif
+
+   rmesa->vtbl.flush(rmesa->glCtx);
+
+   LOCK_HARDWARE( rmesa );
+
+   if (!dPriv->numClipRects) {
+	   UNLOCK_HARDWARE(rmesa);
+	   usleep(10000);	/* throttle invisible client 10ms */
+	   return;
+   }
+
+   drm_clip_rect_t *box = dPriv->pClipRects;
+   drm_clip_rect_t *b = rmesa->sarea->boxes;
+   b[0] = box[0];
+   rmesa->sarea->nbox = 1;
+
+   /* Throttle the frame rate -- only allow a few pending swap buffers
+    * request at a time.
+    */
+   radeonWaitForFrameCompletion( rmesa );
+   UNLOCK_HARDWARE( rmesa );
+   driWaitForVBlank( dPriv, & missed_target );
+   if ( missed_target ) {
+      rmesa->swap_missed_count++;
+      (void) (*psp->systemTime->getUST)( & rmesa->swap_missed_ust );
+   }
+   LOCK_HARDWARE( rmesa );
+
+   ret = drmCommandNone( rmesa->dri.fd, DRM_RADEON_FLIP );
+
+   UNLOCK_HARDWARE( rmesa );
+
+   if ( ret ) {
+      fprintf( stderr, "DRM_RADEON_FLIP: return = %d\n", ret );
+      exit( 1 );
+   }
+
+   rmesa->swap_count++;
+   (void) (*psp->systemTime->getUST)( & rmesa->swap_ust );
+
+   /* Get ready for drawing next frame.  Update the renderbuffers'
+    * flippedOffset/Pitch fields so we draw into the right place.
+    */
+   driFlipRenderbuffers(rmesa->glCtx->WinSysDrawBuffer,
+                        rmesa->sarea->pfCurrentPage);
+
+   rmesa->state.color.rrb = rrb;
+
+   if (rmesa->vtbl.update_draw_buffer)
+	   rmesa->vtbl.update_draw_buffer(rmesa->glCtx);
+}
+
+
+/* Make sure all commands have been sent to the hardware and have
+ * completed processing.
+ */
+void radeon_common_finish(GLcontext * ctx)
+{
+	radeonContextPtr radeon = RADEON_CONTEXT(ctx);
+	struct gl_framebuffer *fb = ctx->DrawBuffer;
+	int i;
+
+	if (radeon->radeonScreen->kernel_mm) {
+		for (i = 0; i < fb->_NumColorDrawBuffers; i++) {
+			struct radeon_renderbuffer *rrb;
+			rrb = (struct radeon_renderbuffer *)fb->_ColorDrawBuffers[i];
+			if (rrb->bo)
+			    radeon_bo_wait(rrb->bo);
+		}
+	} else if (radeon->do_irqs) {
+		LOCK_HARDWARE(radeon);
+		radeonEmitIrqLocked(radeon);
+		UNLOCK_HARDWARE(radeon);
+		radeonWaitIrq(radeon);
+	} else {
+		radeonWaitForIdle(radeon);
+	}
 }

@@ -262,11 +262,26 @@ static void r200_get_lock(radeonContextPtr radeon)
       DRI_AGE_TEXTURES( rmesa->radeon.texture_heaps[ i ] );
    }
 }
-   
+
+
+static void r200_vtbl_flush(GLcontext *ctx)
+{
+   R200_FIREVERTICES(R200_CONTEXT(ctx));
+}
+
+static void r200_vtbl_set_all_dirty(GLcontext *ctx)
+{
+   r200ContextPtr rmesa = R200_CONTEXT(ctx);
+   rmesa->hw.all_dirty = GL_TRUE;
+}
+
 static void r200_init_vtbl(radeonContextPtr radeon)
 {
    radeon->vtbl.get_lock = r200_get_lock;
    radeon->vtbl.update_viewport_offset = r200UpdateViewportOffset;
+   radeon->vtbl.flush = r200_vtbl_flush;
+   radeon->vtbl.set_all_dirty = r200_vtbl_set_all_dirty;
+   radeon->vtbl.update_draw_buffer = r200UpdateDrawBuffer;
 }
 
 /* Create the device specific rendering context.
@@ -642,7 +657,7 @@ r200SwapBuffers( __DRIdrawablePrivate *dPriv )
             r200PageFlip( dPriv );
          }
          else {
-	     r200CopyBuffer( dPriv, NULL );
+	     radeonCopyBuffer( dPriv, NULL );
          }
       }
    }
@@ -668,7 +683,7 @@ r200CopySubBuffer( __DRIdrawablePrivate *dPriv,
 	 rect.x2 = rect.x1 + w;
 	 rect.y2 = rect.y1 + h;
          _mesa_notifySwapBuffers( ctx );  /* flush pending rendering comands */
-	 r200CopyBuffer( dPriv, &rect );
+	 radeonCopyBuffer( dPriv, &rect );
       }
    }
    else {

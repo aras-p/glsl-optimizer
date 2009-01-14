@@ -364,7 +364,7 @@ static void do_draw_pix( GLcontext *ctx,
    }
 
    r200FlushCmdBufLocked( rmesa, __FUNCTION__ );
-   r200WaitForIdleLocked( rmesa ); /* required by GL */
+   radeonWaitForIdleLocked( &rmesa->radeon ); /* required by GL */
    UNLOCK_HARDWARE( &rmesa->radeon );
 }
 

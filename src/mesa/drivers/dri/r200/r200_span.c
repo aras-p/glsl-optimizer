@@ -243,7 +243,7 @@ static void r200SpanRenderStart( GLcontext *ctx )
 
    R200_FIREVERTICES( rmesa );
    LOCK_HARDWARE( &rmesa->radeon );
-   r200WaitForIdleLocked( rmesa );
+   radeonWaitForIdleLocked( &rmesa->radeon );
 
    /* Read & rewrite the first pixel in the frame buffer.  This should
     * be a noop, right?  In fact without this conform fails as reading

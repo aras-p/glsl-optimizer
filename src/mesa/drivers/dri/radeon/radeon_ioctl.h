@@ -87,13 +87,8 @@ extern void radeonReleaseDmaRegion( r100ContextPtr rmesa,
 				    struct radeon_dma_region *region,
 				    const char *caller );
 
-extern void radeonCopyBuffer( __DRIdrawablePrivate *drawable,
-			      const drm_clip_rect_t	 *rect);
-extern void radeonPageFlip( __DRIdrawablePrivate *drawable );
 extern void radeonFlush( GLcontext *ctx );
 extern void radeonFinish( GLcontext *ctx );
-extern void radeonWaitForIdleLocked( r100ContextPtr rmesa );
-extern void radeonWaitForVBlank( r100ContextPtr rmesa );
 extern void radeonInitIoctlFuncs( GLcontext *ctx );
 extern void radeonGetAllParams( r100ContextPtr rmesa );
 extern void radeonSetUpAtomList( r100ContextPtr rmesa );

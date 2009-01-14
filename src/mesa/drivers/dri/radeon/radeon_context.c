@@ -218,10 +218,24 @@ static void r100_get_lock(radeonContextPtr radeon)
    }
 }
 
+static void r100_vtbl_flush(GLcontext *ctx)
+{
+   RADEON_FIREVERTICES(R100_CONTEXT(ctx));
+}
+
+static void r100_vtbl_set_all_dirty(GLcontext *ctx)
+{
+   r100ContextPtr rmesa = R100_CONTEXT(ctx);
+   rmesa->hw.all_dirty = GL_TRUE;
+}
+
 static void r100_init_vtbl(radeonContextPtr radeon)
 {
    radeon->vtbl.get_lock = r100_get_lock;
    radeon->vtbl.update_viewport_offset = radeonUpdateViewportOffset;
+   radeon->vtbl.flush = r100_vtbl_flush;
+   radeon->vtbl.set_all_dirty = r100_vtbl_set_all_dirty;
+   radeon->vtbl.update_draw_buffer = radeonUpdateDrawBuffer;
 }
 
 /* Create the device specific context.

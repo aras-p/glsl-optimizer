@@ -311,6 +311,9 @@ struct radeon_context {
    struct {
       void (*get_lock)(radeonContextPtr radeon);
       void (*update_viewport_offset)(GLcontext *ctx);
+      void (*flush)(GLcontext *ctx);
+      void (*set_all_dirty)(GLcontext *ctx);
+      void (*update_draw_buffer)(GLcontext *ctx);
    } vtbl;
 };
 
