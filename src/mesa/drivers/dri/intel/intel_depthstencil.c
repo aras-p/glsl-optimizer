@@ -110,7 +110,10 @@ intel_unpair_depth_stencil(GLcontext *ctx, struct intel_renderbuffer *irb)
 	 ASSERT(stencilIrb->PairedDepth == rb->Name);
 	 intel_renderbuffer_map(intel, rb);
 	 intel_renderbuffer_map(intel, stencilRb);
+#if 0
+         /* disable for now */
 	 _mesa_extract_stencil(ctx, rb, stencilRb);
+#endif
 	 intel_renderbuffer_unmap(intel, stencilRb);
 	 intel_renderbuffer_unmap(intel, rb);
          stencilIrb->PairedDepth = 0;
@@ -132,7 +135,10 @@ intel_unpair_depth_stencil(GLcontext *ctx, struct intel_renderbuffer *irb)
 	 ASSERT(depthIrb->PairedStencil == rb->Name);
 	 intel_renderbuffer_map(intel, rb);
 	 intel_renderbuffer_map(intel, depthRb);
+#if 0
+         /* disable for now */
 	 _mesa_extract_stencil(ctx, depthRb, rb);
+#endif
 	 intel_renderbuffer_unmap(intel, depthRb);
 	 intel_renderbuffer_unmap(intel, rb);
          depthIrb->PairedStencil = 0;

@@ -248,11 +248,18 @@ intel_alloc_renderbuffer_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
       cpp = 4;
       break;
    case GL_DEPTH_COMPONENT16:
+#if 0
       rb->_ActualFormat = GL_DEPTH_COMPONENT16;
       rb->DataType = GL_UNSIGNED_SHORT;
       rb->DepthBits = 16;
       cpp = 2;
       break;
+#else
+      /* fall-through.
+       * 16bpp depth renderbuffer can't be paired with a stencil buffer so
+       * always used combined depth/stencil format.
+       */
+#endif
    case GL_DEPTH_COMPONENT:
    case GL_DEPTH_COMPONENT24:
    case GL_DEPTH_COMPONENT32:
