@@ -208,7 +208,8 @@ _mesa_Lightfv( GLenum light, GLenum pname, const GLfloat *params )
       if (_math_matrix_is_dirty(ctx->ModelviewMatrixStack.Top)) {
 	 _math_matrix_analyse(ctx->ModelviewMatrixStack.Top);
       }
-      TRANSFORM_NORMAL(temp, params, ctx->ModelviewMatrixStack.Top->inv);
+      TRANSFORM_DIRECTION(temp, params, ctx->ModelviewMatrixStack.Top->m);
+      NORMALIZE_3FV(temp);
       params = temp;
       break;
    case GL_SPOT_EXPONENT:
