@@ -603,7 +603,7 @@ static int vlFlush
 		(
 			mc->pipe->winsys,
 			mc->vertex_bufs.ycbcr.buffer,
-			PIPE_BUFFER_USAGE_CPU_WRITE
+			PIPE_BUFFER_USAGE_CPU_WRITE | PIPE_BUFFER_USAGE_DISCARD
 		);
 
 		for (i = 0; i < 2; ++i)
@@ -611,7 +611,7 @@ static int vlFlush
 			(
 				mc->pipe->winsys,
 				mc->vertex_bufs.ref[i].buffer,
-				PIPE_BUFFER_USAGE_CPU_WRITE
+				PIPE_BUFFER_USAGE_CPU_WRITE | PIPE_BUFFER_USAGE_DISCARD
 			);
 
 		for (i = 0; i < mc->num_macroblocks; ++i)
@@ -647,7 +647,7 @@ static int vlFlush
 	(
 		pipe->winsys,
 		mc->vs_const_buf.buffer,
-		PIPE_BUFFER_USAGE_CPU_WRITE
+		PIPE_BUFFER_USAGE_CPU_WRITE | PIPE_BUFFER_USAGE_DISCARD
 	);
 
 	vs_consts->denorm.x = mc->buffered_surface->texture->width[0];
@@ -808,10 +808,10 @@ static int vlRenderMacroBlocksMpeg2R16SnormBuffered
 			(
 				mc->pipe->screen,
 				mc->textures.all[i],
-				0, 0, 0, PIPE_BUFFER_USAGE_CPU_WRITE
+				0, 0, 0, PIPE_BUFFER_USAGE_CPU_WRITE | PIPE_BUFFER_USAGE_DISCARD
 			);
 
-			mc->texels[i] = pipe_surface_map(mc->tex_surface[i], PIPE_BUFFER_USAGE_CPU_WRITE);
+			mc->texels[i] = pipe_surface_map(mc->tex_surface[i], PIPE_BUFFER_USAGE_CPU_WRITE | PIPE_BUFFER_USAGE_DISCARD);
 		}
 	}
 
@@ -913,7 +913,7 @@ static int vlCreateDataBufs
 	(
 		pipe->winsys,
 		DEFAULT_BUF_ALIGNMENT,
-		PIPE_BUFFER_USAGE_VERTEX,
+		PIPE_BUFFER_USAGE_VERTEX | PIPE_BUFFER_USAGE_DISCARD,
 		sizeof(struct vlVertex2f) * 4 * 24 * mc->macroblocks_per_picture
 	);
 
@@ -926,7 +926,7 @@ static int vlCreateDataBufs
 		(
 			pipe->winsys,
 			DEFAULT_BUF_ALIGNMENT,
-			PIPE_BUFFER_USAGE_VERTEX,
+			PIPE_BUFFER_USAGE_VERTEX | PIPE_BUFFER_USAGE_DISCARD,
 			sizeof(struct vlVertex2f) * 2 * 24 * mc->macroblocks_per_picture
 		);
 	}
@@ -985,7 +985,7 @@ static int vlCreateDataBufs
 	(
 		pipe->winsys,
 		DEFAULT_BUF_ALIGNMENT,
-		PIPE_BUFFER_USAGE_CONSTANT,
+		PIPE_BUFFER_USAGE_CONSTANT | PIPE_BUFFER_USAGE_DISCARD,
 		mc->vs_const_buf.size
 	);
 

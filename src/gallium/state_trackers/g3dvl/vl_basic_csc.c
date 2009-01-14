@@ -157,7 +157,7 @@ static int vlPutPictureCSC
 	(
 		pipe->winsys,
 		basic_csc->vs_const_buf.buffer,
-		PIPE_BUFFER_USAGE_CPU_WRITE
+		PIPE_BUFFER_USAGE_CPU_WRITE | PIPE_BUFFER_USAGE_DISCARD
 	);
 
 	vs_consts->dst_scale.x = destw / (float)basic_csc->framebuffer.cbufs[0]->width;
@@ -602,7 +602,7 @@ static int vlCreateDataBufs
 	(
 		pipe->winsys,
 		1,
-		PIPE_BUFFER_USAGE_CONSTANT,
+		PIPE_BUFFER_USAGE_CONSTANT | PIPE_BUFFER_USAGE_DISCARD,
 		csc->vs_const_buf.size
 	);
 
