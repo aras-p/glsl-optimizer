@@ -359,8 +359,8 @@ st_render_texture(GLcontext *ctx,
    const struct gl_texture_image *texImage =
       att->Texture->Image[att->CubeMapFace][att->TextureLevel];
 
-
-   if (!pt) return;
+   if (!pt) 
+      return;
 
    assert(!att->Renderbuffer);
 
