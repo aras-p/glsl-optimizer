@@ -210,6 +210,11 @@ static void r300_vtbl_set_all_dirty(GLcontext *ctx)
 	rmesa->hw.all_dirty = GL_TRUE;
 }
 
+static void r300_vtbl_emit_state(radeonContextPtr rmesa)
+{
+	r300EmitState((r300ContextPtr)rmesa);
+}
+
 extern int cs_write_dword(struct radeon_cs *cs, uint32_t dword);
 
 static void r300_vtbl_emit_cs_header(struct radeon_cs *cs, radeonContextPtr rmesa)
@@ -249,6 +254,7 @@ static void r300_init_vtbl(radeonContextPtr radeon)
    radeon->vtbl.set_all_dirty = r300_vtbl_set_all_dirty;
    radeon->vtbl.update_draw_buffer = r300UpdateDrawBuffer;
    radeon->vtbl.emit_cs_header = r300_vtbl_emit_cs_header;
+   radeon->vtbl.emit_state = r300_vtbl_emit_state;
 }
 
 

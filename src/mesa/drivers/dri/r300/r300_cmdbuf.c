@@ -69,21 +69,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 #define SPACE_FOR_FLUSHING	4
 
-void r300BeginBatch(r300ContextPtr r300, int n,
-		    int dostate,
-                    const char *file,
-                    const char *function,
-                    int line)
-{
-	rcommonEnsureCmdBufSpace(&r300->radeon, n, function);
-	if (!r300->radeon.cmdbuf.cs->cdw && dostate) {
-		if (RADEON_DEBUG & DEBUG_IOCTL)
-			fprintf(stderr, "Reemit state after flush (from %s)\n", function);
-		r300EmitState(r300);
-	}
-	radeon_cs_begin(r300->radeon.cmdbuf.cs, n, file, function, line);
-}
-
 static void r300PrintStateAtom(r300ContextPtr r300,
                                struct radeon_state_atom *state)
 {
@@ -108,7 +93,7 @@ static void r300PrintStateAtom(r300ContextPtr r300,
  */
 static INLINE void r300EmitAtoms(r300ContextPtr r300, GLboolean dirty)
 {
-	BATCH_LOCALS(r300);
+	BATCH_LOCALS(&r300->radeon);
 	struct radeon_state_atom *atom;
 	int dwords;
 
@@ -198,7 +183,7 @@ static unsigned packet0_count(r300ContextPtr r300, uint32_t *pkt)
 void emit_vpu(GLcontext *ctx, struct radeon_state_atom * atom)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
-	BATCH_LOCALS(r300);
+	BATCH_LOCALS(&r300->radeon);
 	drm_r300_cmd_header_t cmd;
     uint32_t addr, ndw, i;
 
@@ -237,7 +222,7 @@ void emit_vpu(GLcontext *ctx, struct radeon_state_atom * atom)
 void emit_r500fp(GLcontext *ctx, struct radeon_state_atom * atom)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
-	BATCH_LOCALS(r300);
+	BATCH_LOCALS(&r300->radeon);
 	drm_r300_cmd_header_t cmd;
 	uint32_t addr, ndw, i, sz;
 	int type, clamp, stride;
@@ -277,7 +262,7 @@ void emit_r500fp(GLcontext *ctx, struct radeon_state_atom * atom)
 static void emit_tex_offsets(GLcontext *ctx, struct radeon_state_atom * atom)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
-	BATCH_LOCALS(r300);
+	BATCH_LOCALS(&r300->radeon);
 	int numtmus = packet0_count(r300, r300->hw.tex.offset.cmd);
 
 	if (numtmus) {
@@ -308,7 +293,7 @@ static void emit_tex_offsets(GLcontext *ctx, struct radeon_state_atom * atom)
 static void emit_cb_offset(GLcontext *ctx, struct radeon_state_atom * atom)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
-	BATCH_LOCALS(r300);
+	BATCH_LOCALS(&r300->radeon);
 	struct radeon_renderbuffer *rrb;
 	uint32_t cbpitch;
 	GLframebuffer *fb = r300->radeon.dri.drawable->driverPrivate;

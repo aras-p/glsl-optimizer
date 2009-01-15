@@ -18,9 +18,4 @@ void radeonCopySubBuffer(__DRIdrawablePrivate * dPriv,
 
 void radeonUpdatePageFlipping(radeonContextPtr rmesa);
 
-void rcommonEnsureCmdBufSpace(radeonContextPtr rmesa, int dwords, const char *caller);
-int rcommonFlushCmdBuf(radeonContextPtr rmesa, const char *caller);
-int rcommonFlushCmdBufLocked(radeonContextPtr rmesa, const char *caller);
-void rcommonInitCmdBuf(radeonContextPtr rmesa, int max_state_size);
-void rcommonDestroyCmdBuf(radeonContextPtr rmesa);
 #endif

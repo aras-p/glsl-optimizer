@@ -83,7 +83,8 @@ COMMON_SYMLINKS = \
 	common_lock.c \
 	common_lock.h \
 	common_misc.c \
-	common_misc.h
+	common_misc.h \
+	common_cmdbuf.h
 
 DRI_LIB_DEPS += -ldrm_radeon
 

@@ -64,6 +64,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "common_context.h"
 #include "common_misc.h"
 #include "common_lock.h"
+#include "common_cmdbuf.h"
 
 #ifndef RADEON_DEBUG
 int RADEON_DEBUG = (0);
@@ -686,4 +687,19 @@ void rcommonDestroyCmdBuf(radeonContextPtr rmesa)
 	} else {
 		radeon_cs_manager_legacy_dtor(rmesa->cmdbuf.csm);
 	}
+}
+
+void rcommonBeginBatch(radeonContextPtr rmesa, int n,
+		       int dostate,
+		       const char *file,
+		       const char *function,
+		       int line)
+{
+	rcommonEnsureCmdBufSpace(rmesa, n, function);
+	if (!rmesa->cmdbuf.cs->cdw && dostate) {
+		if (RADEON_DEBUG & DEBUG_IOCTL)
+		  fprintf(stderr, "Reemit state after flush (from %s)\n", function);
+		rmesa->vtbl.emit_state(rmesa);
+	}
+	radeon_cs_begin(rmesa->cmdbuf.cs, n, file, function, line);
 }

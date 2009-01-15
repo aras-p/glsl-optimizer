@@ -337,6 +337,7 @@ struct radeon_context {
       void (*set_all_dirty)(GLcontext *ctx);
       void (*update_draw_buffer)(GLcontext *ctx);
       void (*emit_cs_header)(struct radeon_cs *cs, radeonContextPtr rmesa);
+      void (*emit_state)(radeonContextPtr rmesa);
    } vtbl;
 };
 
