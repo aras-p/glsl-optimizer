@@ -636,7 +636,7 @@ void r300DestroySwtcl(GLcontext *ctx)
 
 void r300EmitVertexAOS(r300ContextPtr rmesa, GLuint vertex_size, struct radeon_bo *bo, GLuint offset)
 {
-	BATCH_LOCALS(rmesa);
+	BATCH_LOCALS(&rmesa->radeon);
 
 	if (RADEON_DEBUG & DEBUG_VERTS)
 		fprintf(stderr, "%s:  vertex_size %d, offset 0x%x \n",
@@ -652,7 +652,7 @@ void r300EmitVertexAOS(r300ContextPtr rmesa, GLuint vertex_size, struct radeon_b
 
 void r300EmitVbufPrim(r300ContextPtr rmesa, GLuint primitive, GLuint vertex_nr)
 {
-	BATCH_LOCALS(rmesa);
+	BATCH_LOCALS(&rmesa->radeon);
 	int type, num_verts;
 
 	type = r300PrimitiveType(rmesa, primitive);

@@ -327,7 +327,7 @@ static void emit_cb_offset(GLcontext *ctx, struct radeon_state_atom * atom)
 static void emit_zb_offset(GLcontext *ctx, struct radeon_state_atom * atom)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
-	BATCH_LOCALS(r300);
+	BATCH_LOCALS(&r300->radeon);
 	struct radeon_renderbuffer *rrb;
 	uint32_t zbpitch;
 

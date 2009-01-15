@@ -75,50 +75,7 @@ typedef struct r300_context *r300ContextPtr;
 #include "r300_vertprog.h"
 #include "r500_fragprog.h"
 
-/**
- * This function takes a float and packs it into a uint32_t
- */
-static INLINE uint32_t r300PackFloat32(float fl)
-{
-	union {
-		float fl;
-		uint32_t u;
-	} u;
 
-	u.fl = fl;
-	return u.u;
-}
-
-/* This is probably wrong for some values, I need to test this
- * some more.  Range checking would be a good idea also..
- *
- * But it works for most things.  I'll fix it later if someone
- * else with a better clue doesn't
- */
-static INLINE uint32_t r300PackFloat24(float f)
-{
-	float mantissa;
-	int exponent;
-	uint32_t float24 = 0;
-
-	if (f == 0.0)
-		return 0;
-
-	mantissa = frexpf(f, &exponent);
-
-	/* Handle -ve */
-	if (mantissa < 0) {
-		float24 |= (1 << 23);
-		mantissa = mantissa * -1.0;
-	}
-	/* Handle exponent, bias of 63 */
-	exponent += 62;
-	float24 |= (exponent << 16);
-	/* Kill 7 LSB of mantissa */
-	float24 |= (r300PackFloat32(mantissa) & 0x7FFFFF) >> 7;
-
-	return float24;
-}
 
 /************ DMA BUFFERS **************/
 
@@ -868,5 +825,8 @@ extern int r300VertexProgUpdateParams(GLcontext * ctx,
 #define RADEON_D_PLAYBACK 1
 #define RADEON_D_PLAYBACK_RAW 2
 #define RADEON_D_T 3
+
+#define r300PackFloat32 radeonPackFloat32
+#define r300PackFloat24 radeonPackFloat24
 
 #endif				/* __R300_CONTEXT_H__ */

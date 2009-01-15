@@ -138,28 +138,13 @@ static INLINE uint32_t cmdpacify(struct radeon_screen *rscrn)
 	return cmd.u;
 }
 
-
-/** Single register write to command buffer; requires 2 dwords. */
-#define OUT_BATCH_REGVAL(reg, val) \
-	OUT_BATCH(cmdpacket0(b_l_r300->radeon.radeonScreen, (reg), 1)); \
-	OUT_BATCH((val))
-
-/** Continuous register range write to command buffer; requires 1 dword,
- * expects count dwords afterwards for register contents. */
-#define OUT_BATCH_REGSEQ(reg, count) \
-	OUT_BATCH(cmdpacket0(b_l_r300->radeon.radeonScreen, (reg), (count)));
-
-/** Write a 32 bit float to the ring; requires 1 dword. */
-#define OUT_BATCH_FLOAT32(f) \
-	OUT_BATCH(r300PackFloat32((f)));
-
 /**
  * Write the header of a packet3 to the command buffer.
  * Outputs 2 dwords and expects (num_extra+1) additional dwords afterwards.
  */
 #define OUT_BATCH_PACKET3(packet, num_extra) do {\
-    if (!b_l_r300->radeon.radeonScreen->kernel_mm) { \
-    	OUT_BATCH(cmdpacket3(b_l_r300->radeon.radeonScreen,\
+    if (!b_l_rmesa->radeonScreen->kernel_mm) { \
+    	OUT_BATCH(cmdpacket3(b_l_rmesa->radeonScreen,\
                   R300_CMD_PACKET3_RAW)); \
     }\
 	OUT_BATCH(CP_PACKET3((packet), (num_extra))); \
@@ -170,7 +155,7 @@ static INLINE uint32_t cmdpacify(struct radeon_screen *rscrn)
  */
 void static INLINE end_3d(r300ContextPtr rmesa)
 {
-	BATCH_LOCALS(rmesa);
+	BATCH_LOCALS(&rmesa->radeon);
 
     if (!rmesa->radeon.radeonScreen->kernel_mm) {
     	BEGIN_BATCH(1);
@@ -181,7 +166,7 @@ void static INLINE end_3d(r300ContextPtr rmesa)
 
 void static INLINE cp_delay(r300ContextPtr rmesa, unsigned short count)
 {
-	BATCH_LOCALS(rmesa);
+	BATCH_LOCALS(&rmesa->radeon);
 
     if (!rmesa->radeon.radeonScreen->kernel_mm) {
     	BEGIN_BATCH(1);
@@ -192,42 +177,42 @@ void static INLINE cp_delay(r300ContextPtr rmesa, unsigned short count)
 
 void static INLINE cp_wait(r300ContextPtr rmesa, unsigned char flags)
 {
-	BATCH_LOCALS(rmesa);
-    uint32_t wait_until;
+	BATCH_LOCALS(&rmesa->radeon);
+	uint32_t wait_until;
 
-    if (!rmesa->radeon.radeonScreen->kernel_mm) {
-    	BEGIN_BATCH_NO_AUTOSTATE(1);
-    	OUT_BATCH(cmdwait(rmesa->radeon.radeonScreen, flags));
-	    END_BATCH();
-    } else {
-        switch(flags) {
-        case R300_WAIT_2D:
-            wait_until = (1 << 14);
-            break;
-        case R300_WAIT_3D:
-            wait_until = (1 << 15);
-            break;
-        case R300_NEW_WAIT_2D_3D:
-            wait_until = (1 << 14) | (1 << 15);
-            break;
-        case R300_NEW_WAIT_2D_2D_CLEAN:
-            wait_until = (1 << 14) | (1 << 16) | (1 << 18);
-            break;
-        case R300_NEW_WAIT_3D_3D_CLEAN:
-            wait_until = (1 << 15) | (1 << 17) | (1 << 18);
-            break;
-        case R300_NEW_WAIT_2D_2D_CLEAN_3D_3D_CLEAN:
-            wait_until  = (1 << 14) | (1 << 16) | (1 << 18);
-            wait_until |= (1 << 15) | (1 << 17) | (1 << 18);
-            break;
-        default:
-            return;
-        }
-    	BEGIN_BATCH_NO_AUTOSTATE(2);
-        OUT_BATCH(CP_PACKET0(RADEON_WAIT_UNTIL, 0));
-        OUT_BATCH(wait_until);
-	    END_BATCH();
-    }
+	if (!rmesa->radeon.radeonScreen->kernel_mm) {
+		BEGIN_BATCH_NO_AUTOSTATE(1);
+		OUT_BATCH(cmdwait(rmesa->radeon.radeonScreen, flags));
+		END_BATCH();
+	} else {
+		switch(flags) {
+		case R300_WAIT_2D:
+			wait_until = (1 << 14);
+			break;
+		case R300_WAIT_3D:
+			wait_until = (1 << 15);
+			break;
+		case R300_NEW_WAIT_2D_3D:
+			wait_until = (1 << 14) | (1 << 15);
+			break;
+		case R300_NEW_WAIT_2D_2D_CLEAN:
+			wait_until = (1 << 14) | (1 << 16) | (1 << 18);
+			break;
+		case R300_NEW_WAIT_3D_3D_CLEAN:
+			wait_until = (1 << 15) | (1 << 17) | (1 << 18);
+			break;
+		case R300_NEW_WAIT_2D_2D_CLEAN_3D_3D_CLEAN:
+			wait_until  = (1 << 14) | (1 << 16) | (1 << 18);
+			wait_until |= (1 << 15) | (1 << 17) | (1 << 18);
+			break;
+		default:
+			return;
+		}
+		BEGIN_BATCH_NO_AUTOSTATE(2);
+		OUT_BATCH(CP_PACKET0(RADEON_WAIT_UNTIL, 0));
+		OUT_BATCH(wait_until);
+		END_BATCH();
+	}
 }
 
 extern int r300EmitArrays(GLcontext * ctx);

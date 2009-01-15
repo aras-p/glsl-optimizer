@@ -70,7 +70,7 @@ static void r300ClearBuffer(r300ContextPtr r300, int flags,
 			    struct radeon_renderbuffer *rrb,
                 struct radeon_renderbuffer *rrbd)
 {
-	BATCH_LOCALS(r300);
+	BATCH_LOCALS(&r300->radeon);
 	GLcontext *ctx = r300->radeon.glCtx;
 	__DRIdrawablePrivate *dPriv = r300->radeon.dri.drawable;
 	GLuint cbpitch = 0;
@@ -205,7 +205,7 @@ static void r300ClearBuffer(r300ContextPtr r300, int flags,
 static void r300EmitClearState(GLcontext * ctx)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
-	BATCH_LOCALS(r300);
+	BATCH_LOCALS(&r300->radeon);
 	__DRIdrawablePrivate *dPriv = r300->radeon.dri.drawable;
 	int i;
 	int has_tcl = 1;

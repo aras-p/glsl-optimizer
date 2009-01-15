@@ -31,7 +31,7 @@ void rcommonBeginBatch(radeonContextPtr rmesa,
 /**
  * Same as BEGIN_BATCH, but do not cause automatic state emits.
  */
-#define BEGIN_BATCH_NO_AUTOSTATE(n) rcommonBeginBatch(b_l_r300, n, 0, __FILE__, __FUNCTION__, __LINE__)
+#define BEGIN_BATCH_NO_AUTOSTATE(n) rcommonBeginBatch(b_l_rmesa, n, 0, __FILE__, __FUNCTION__, __LINE__)
 
 /**
  * Write one dword to the command buffer.
@@ -89,5 +89,17 @@ void rcommonBeginBatch(radeonContextPtr rmesa,
 	} while(0)
 
 
+/** Single register write to command buffer; requires 2 dwords. */
+#define OUT_BATCH_REGVAL(reg, val) \
+	OUT_BATCH(cmdpacket0(b_l_rmesa->radeonScreen, (reg), 1)); \
+	OUT_BATCH((val))
 
+/** Continuous register range write to command buffer; requires 1 dword,
+ * expects count dwords afterwards for register contents. */
+#define OUT_BATCH_REGSEQ(reg, count) \
+	OUT_BATCH(cmdpacket0(b_l_rmesa->radeonScreen, (reg), (count)));
+
+/** Write a 32 bit float to the ring; requires 1 dword. */
+#define OUT_BATCH_FLOAT32(f) \
+	OUT_BATCH(radeonPackFloat32((f)));
 #endif

@@ -493,7 +493,7 @@ void r300ReleaseArrays(GLcontext * ctx)
 
 void r300EmitCacheFlush(r300ContextPtr rmesa)
 {
-	BATCH_LOCALS(rmesa);
+	BATCH_LOCALS(&rmesa->radeon);
 
 	BEGIN_BATCH(4);
 	OUT_BATCH_REGVAL(R300_RB3D_DSTCACHE_CTLSTAT,
