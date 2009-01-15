@@ -170,6 +170,7 @@ void radeonEmitState( r100ContextPtr rmesa )
 {
    struct radeon_state_atom *atom;
    char *dest;
+   uint32_t dwords;
 
    if (RADEON_DEBUG & (DEBUG_STATE|DEBUG_PRIMS))
       fprintf(stderr, "%s\n", __FUNCTION__);
@@ -212,11 +213,17 @@ void radeonEmitState( r100ContextPtr rmesa )
 	   atom->is_tcl)
 	 atom->dirty = GL_FALSE;
       if (atom->dirty) {
-	if (atom->check(rmesa->radeon.glCtx, 0)) {
+	dwords = atom->check(rmesa->radeon.glCtx, atom);
+	if (dwords) {
 	    int size = atom->cmd_size * 4;
-	    memcpy(dest, atom->cmd, size);
-	    dest += size;
-	    rmesa->store.cmd_used += size;
+	    
+	    if (atom->emit) {
+	      (*atom->emit)(rmesa->radeon.glCtx, atom);
+	    } else {
+	      memcpy(dest, atom->cmd, size);
+	      dest += size;
+	      rmesa->store.cmd_used += size;
+	    }
 	    atom->dirty = GL_FALSE;
 	 }
       }

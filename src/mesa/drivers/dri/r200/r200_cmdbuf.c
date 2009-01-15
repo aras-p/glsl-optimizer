@@ -120,18 +120,24 @@ static void r200SaveHwState( r200ContextPtr rmesa )
 {
    struct radeon_state_atom *atom;
    char * dest = rmesa->backup_store.cmd_buf;
-
+   uint32_t dwords;
    if (R200_DEBUG & DEBUG_STATE)
       fprintf(stderr, "%s\n", __FUNCTION__);
 
    rmesa->backup_store.cmd_used = 0;
 
    foreach( atom, &rmesa->hw.atomlist ) {
-      if ( atom->check( rmesa->radeon.glCtx, atom ) ) {
+      dwords = atom->check( rmesa->radeon.glCtx, atom );
+      if ( dwords ) {
 	 int size = atom->cmd_size * 4;
-	 memcpy( dest, atom->cmd, size);
-	 dest += size;
-	 rmesa->backup_store.cmd_used += size;
+
+	 if (atom->emit) {
+	   (*atom->emit)(rmesa->radeon.glCtx, atom);
+	 } else {
+	   memcpy( dest, atom->cmd, size);
+	   dest += size;
+	   rmesa->backup_store.cmd_used += size;
+	 }
 	 if (R200_DEBUG & DEBUG_STATE)
 	    print_state_atom( atom );
       }
@@ -147,6 +153,7 @@ void r200EmitState( r200ContextPtr rmesa )
    char *dest;
    int mtu;
    struct radeon_state_atom *atom;
+   uint32_t dwords;
 
    if (R200_DEBUG & (DEBUG_STATE|DEBUG_PRIMS))
       fprintf(stderr, "%s\n", __FUNCTION__);
@@ -173,7 +180,8 @@ void r200EmitState( r200ContextPtr rmesa )
    if (R200_DEBUG & DEBUG_STATE) {
       foreach( atom, &rmesa->hw.atomlist ) {
 	 if ( atom->dirty || rmesa->hw.all_dirty ) {
-	    if ( atom->check( rmesa->radeon.glCtx, atom ) )
+	    dwords = atom->check( rmesa->radeon.glCtx, atom );
+	    if ( dwords )
 	       print_state_atom( atom );
 	    else
 	       fprintf(stderr, "skip state %s\n", atom->name);
@@ -185,11 +193,16 @@ void r200EmitState( r200ContextPtr rmesa )
       if ( rmesa->hw.all_dirty )
 	 atom->dirty = GL_TRUE;
       if ( atom->dirty ) {
-	 if ( atom->check( rmesa->radeon.glCtx, atom ) ) {
+	 dwords = atom->check( rmesa->radeon.glCtx, atom );
+	 if ( dwords ) {
 	    int size = atom->cmd_size * 4;
-	    memcpy( dest, atom->cmd, size);
-	    dest += size;
-	    rmesa->store.cmd_used += size;
+	    if (atom->emit) {
+	      (*atom->emit)(rmesa->radeon.glCtx, atom);
+	    } else {
+	      memcpy( dest, atom->cmd, size);
+	      dest += size;
+	      rmesa->store.cmd_used += size;
+	    }
 	    atom->dirty = GL_FALSE;
 	 }
       }

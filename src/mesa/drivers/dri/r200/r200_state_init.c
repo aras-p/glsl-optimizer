@@ -130,25 +130,22 @@ static int cmdscl2( int offset, int stride, int count )
 static int check_##NM( GLcontext *ctx, struct radeon_state_atom *atom) \
 {							\
    r200ContextPtr rmesa = R200_CONTEXT(ctx);		\
-   (void) atom;						\
    (void) rmesa;					\
-   return FLAG;						\
+   return (FLAG) ? atom->cmd_size : 0;			\
 }
 
 #define TCL_CHECK( NM, FLAG )				\
 static int check_##NM( GLcontext *ctx, struct radeon_state_atom *atom) \
 {									\
    r200ContextPtr rmesa = R200_CONTEXT(ctx);				\
-   (void) atom;						\
-   return !rmesa->radeon.TclFallback && !ctx->VertexProgram._Enabled && (FLAG);	\
+   return (!rmesa->radeon.TclFallback && !ctx->VertexProgram._Enabled && (FLAG)) ? atom->cmd_size : 0; \
 }
 
 #define TCL_OR_VP_CHECK( NM, FLAG )			\
 static int check_##NM( GLcontext *ctx, struct radeon_state_atom *atom ) \
 {							\
    r200ContextPtr rmesa = R200_CONTEXT(ctx);		\
-   (void) atom;						\
-   return !rmesa->radeon.TclFallback && (FLAG);		\
+   return (!rmesa->radeon.TclFallback && (FLAG)) ? atom->cmd_size : 0;	\
 }
 
 #define VP_CHECK( NM, FLAG )				\
@@ -156,9 +153,8 @@ static int check_##NM( GLcontext *ctx, struct radeon_state_atom *atom ) \
 {									\
    r200ContextPtr rmesa = R200_CONTEXT(ctx);				\
    (void) atom;								\
-   return !rmesa->radeon.TclFallback && ctx->VertexProgram._Enabled && (FLAG);	\
+   return (!rmesa->radeon.TclFallback && ctx->VertexProgram._Enabled && (FLAG)) ? atom->cmd_size : 0; \
 }
-
 
 CHECK( always, GL_TRUE )
 CHECK( never, GL_FALSE )

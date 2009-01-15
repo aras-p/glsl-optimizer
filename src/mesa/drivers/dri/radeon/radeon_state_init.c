@@ -99,14 +99,14 @@ static int cmdscl( int offset, int stride, int count )
 #define CHECK( NM, FLAG )				\
 static int check_##NM( GLcontext *ctx, struct radeon_state_atom *atom )	\
 {							\
-   return FLAG;						\
+   return FLAG ? atom->cmd_size : 0;			\
 }
 
 #define TCL_CHECK( NM, FLAG )				\
 static int check_##NM( GLcontext *ctx, struct radeon_state_atom *atom )	\
 {							\
    r100ContextPtr rmesa = R100_CONTEXT(ctx);	\
-   return !rmesa->radeon.TclFallback && (FLAG);		\
+   return (!rmesa->radeon.TclFallback && (FLAG)) ? atom->cmd_size : 0;	\
 }
 
 
