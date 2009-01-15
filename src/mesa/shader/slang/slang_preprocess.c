@@ -923,12 +923,8 @@ static GLboolean
 preprocess_source (slang_string *output, const char *source,
                    grammar pid, grammar eid,
                    slang_info_log *elog,
-<<<<<<< HEAD:src/mesa/shader/slang/slang_preprocess.c
-                   const struct gl_extensions *extensions)
-=======
                    const struct gl_extensions *extensions,
                    struct gl_sl_pragmas *pragmas)
->>>>>>> origin/master:src/mesa/shader/slang/slang_preprocess.c
 {
    static const char *predefined[] = {
       "__FILE__",
@@ -950,10 +946,7 @@ preprocess_source (slang_string *output, const char *source,
    }
 
    pp_state_init (&state, elog, extensions);
-<<<<<<< HEAD:src/mesa/shader/slang/slang_preprocess.c
-=======
    pp_pragmas_init (pragmas);
->>>>>>> origin/master:src/mesa/shader/slang/slang_preprocess.c
 
    /* add the predefined symbols to the symbol table */
    for (i = 0; predefined[i]; i++) {
@@ -1310,12 +1303,8 @@ GLboolean
 _slang_preprocess_directives(slang_string *output,
                              const char *input,
                              slang_info_log *elog,
-<<<<<<< HEAD:src/mesa/shader/slang/slang_preprocess.c
-                             const struct gl_extensions *extensions)
-=======
                              const struct gl_extensions *extensions,
                              struct gl_sl_pragmas *pragmas)
->>>>>>> origin/master:src/mesa/shader/slang/slang_preprocess.c
 {
    grammar pid, eid;
    GLboolean success;
@@ -1331,11 +1320,7 @@ _slang_preprocess_directives(slang_string *output,
       grammar_destroy (pid);
       return GL_FALSE;
    }
-<<<<<<< HEAD:src/mesa/shader/slang/slang_preprocess.c
-   success = preprocess_source (output, input, pid, eid, elog, extensions);
-=======
    success = preprocess_source (output, input, pid, eid, elog, extensions, pragmas);
->>>>>>> origin/master:src/mesa/shader/slang/slang_preprocess.c
    grammar_destroy (eid);
    grammar_destroy (pid);
    return success;
