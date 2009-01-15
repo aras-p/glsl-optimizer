@@ -1471,9 +1471,9 @@ parse_expression(slang_parse_ctx * C, slang_output_ctx * O,
                   RETURN0;
                }
                else {
-                  array_constructor = GL_TRUE;
                   /* parse the array constructor size */
                   slang_operation array_size;
+                  array_constructor = GL_TRUE;
                   slang_operation_construct(&array_size);
                   if (!parse_expression(C, O, &array_size)) {
                      slang_operation_destruct(&array_size);
