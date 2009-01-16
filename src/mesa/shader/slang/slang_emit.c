@@ -1349,9 +1349,10 @@ emit_copy(slang_emit_info *emitInfo, slang_ir_node *n)
 
    if (n->Store->File == PROGRAM_SAMPLER) {
       /* no code generated for sampler assignments,
-       * just copy the sampler index at compile time.
+       * just copy the sampler index/target at compile time.
        */
       n->Store->Index = n->Children[1]->Store->Index;
+      n->Store->TexTarget = n->Children[1]->Store->TexTarget;
       return NULL;
    }
 

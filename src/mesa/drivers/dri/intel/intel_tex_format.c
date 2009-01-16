@@ -134,8 +134,14 @@ intelChooseTextureFormat(GLcontext * ctx, GLint internalFormat,
    case GL_DEPTH_COMPONENT16:
    case GL_DEPTH_COMPONENT24:
    case GL_DEPTH_COMPONENT32:
+#if 0
       return &_mesa_texformat_z16;
-
+#else
+      /* fall-through.
+       * 16bpp depth texture can't be paired with a stencil buffer so
+       * always used combined depth/stencil format.
+       */
+#endif
    case GL_DEPTH_STENCIL_EXT:
    case GL_DEPTH24_STENCIL8_EXT:
       return &_mesa_texformat_s8_z24;
@@ -158,7 +164,7 @@ intelChooseTextureFormat(GLcontext * ctx, GLint internalFormat,
    case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT:
    case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT:
    case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT:
-     return &_mesa_texformat_srgb_dxt1;
+      return &_mesa_texformat_srgb_dxt1;
 #endif
 
    default:

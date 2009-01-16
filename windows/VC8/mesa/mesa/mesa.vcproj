@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8,00"
+	Version="8.00"
 	Name="mesa"
 	ProjectGUID="{2120C974-2717-4709-B44F-D6E6D0A56448}"
 	RootNamespace="mesa"
+	TargetFrameworkVersion="131072"
 	>
 	<Platforms>
 		<Platform
@@ -347,6 +348,22 @@
 			<File
 				RelativePath="..\..\..\..\src\mesa\glapi\glapi_getproc.c"
 				>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						PreprocessorDefinitions="_CRT_SECURE_NO_DEPRECATE"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						PreprocessorDefinitions="_CRT_SECURE_NO_DEPRECATE"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\glapi\glthread.c"
