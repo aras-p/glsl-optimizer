@@ -119,6 +119,12 @@ do_texture_copypixels(GLcontext * ctx,
    if (!src || !dst || type != GL_COLOR)
       return GL_FALSE;
 
+   if (ctx->_ImageTransferState) {
+      if (INTEL_DEBUG & DEBUG_PIXEL)
+         fprintf(stderr, "%s: check_color failed\n", __FUNCTION__);
+      return GL_FALSE;
+   }
+
    /* Can't handle overlapping regions.  Don't have sufficient control
     * over rasterization to pull it off in-place.  Punt on these for
     * now.
