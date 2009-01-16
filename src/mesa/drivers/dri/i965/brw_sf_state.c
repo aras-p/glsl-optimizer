@@ -42,22 +42,15 @@ static void upload_sf_vp(struct brw_context *brw)
    GLcontext *ctx = &brw->intel.ctx;
    const GLfloat depth_scale = 1.0F / ctx->DrawBuffer->_DepthMaxF;
    struct brw_sf_viewport sfv;
-   struct intel_renderbuffer *irb =
-      intel_renderbuffer(ctx->DrawBuffer->_ColorDrawBuffers[0]);
    GLfloat y_scale, y_bias;
 
    memset(&sfv, 0, sizeof(sfv));
 
-   if (ctx->DrawBuffer->Name) {
-      /* User-created FBO */
-      if (irb && !irb->RenderToTexture) {
-	 y_scale = -1.0;
-	 y_bias = ctx->DrawBuffer->Height;
-      } else {
-	 y_scale = 1.0;
-	 y_bias = 0;
-      }
-   } else {
+   if (intel_rendering_to_texture(ctx)) {
+      y_scale = 1.0;
+      y_bias = 0;
+   }
+   else {
       y_scale = -1.0;
       y_bias = ctx->DrawBuffer->Height;
    }
@@ -120,6 +113,7 @@ struct brw_sf_unit_key {
    GLboolean scissor, line_smooth, point_sprite, point_attenuated;
    float line_width;
    float point_size;
+   GLboolean render_to_texture;
 };
 
 static void
@@ -150,6 +144,8 @@ sf_unit_populate_key(struct brw_context *brw, struct brw_sf_unit_key *key)
    key->point_sprite = brw->attribs.Point->PointSprite;
    key->point_size = brw->attribs.Point->Size;
    key->point_attenuated = brw->attribs.Point->_Attenuated;
+
+   key->render_to_texture = intel_rendering_to_texture(&brw->intel.ctx);
 }
 
 static dri_bo *
@@ -195,6 +191,11 @@ sf_unit_create_from_key(struct brw_context *brw, struct brw_sf_unit_key *key,
       sf.sf5.front_winding = BRW_FRONTWINDING_CCW;
    else
       sf.sf5.front_winding = BRW_FRONTWINDING_CW;
+
+   /* The viewport is inverted for rendering to texture, and that inverts
+    * polygon front/back orientation.
+    */
+   sf.sf5.front_winding ^= key->render_to_texture;
 
    switch (key->cull_face) {
    case GL_FRONT:
