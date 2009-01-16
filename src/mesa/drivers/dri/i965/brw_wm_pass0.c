@@ -115,7 +115,7 @@ static const struct brw_wm_ref *get_param_ref( struct brw_wm_compile *c,
       ref->value = &c->creg[i/16];
       ref->insn = 0;
       ref->prevuse = NULL;
-      
+
       return ref;
    }
 }
@@ -142,7 +142,7 @@ static const struct brw_wm_ref *get_const_ref( struct brw_wm_compile *c,
        */
       c->constref[i].constval = *constval;
       c->constref[i].ref = get_param_ref(c, constval);
-   
+
       return c->constref[i].ref;
    }
    else {
@@ -198,7 +198,7 @@ static const struct brw_wm_ref *pass0_get_reg( struct brw_wm_compile *c,
 	     */
 	    ref = get_const_ref(c, &plist->ParameterValues[idx][component]);
 	    break;
-	    
+
 	 case PROGRAM_STATE_VAR:
 	 case PROGRAM_UNIFORM:
 	    /* These may change from run to run:
@@ -229,14 +229,13 @@ static const struct brw_wm_ref *pass0_get_reg( struct brw_wm_compile *c,
 
 
 
-
 /***********************************************************************
  * Straight translation to internal instruction format
  */
 
 static void pass0_set_dst( struct brw_wm_compile *c,
-			   struct brw_wm_instruction *out,		     
-			   const struct prog_instruction *inst,		     
+			   struct brw_wm_instruction *out,
+			   const struct prog_instruction *inst,
 			   GLuint writemask )
 {
    const struct prog_dst_register *dst = &inst->DstReg;
@@ -245,18 +244,17 @@ static void pass0_set_dst( struct brw_wm_compile *c,
    for (i = 0; i < 4; i++) {
       if (writemask & (1<<i)) {
 	 out->dst[i] = get_value(c);
-
 	 pass0_set_fpreg_value(c, dst->File, dst->Index, i, out->dst[i]);
       }
    }
-   
+
    out->writemask = writemask;
 }
 
 
 static void pass0_set_dst_scalar( struct brw_wm_compile *c,
-				  struct brw_wm_instruction *out,		     
-				  const struct prog_instruction *inst,		     
+				  struct brw_wm_instruction *out,
+                                  const struct prog_instruction *inst,
 				  GLuint writemask )
 {
    if (writemask) {
@@ -282,7 +280,6 @@ static void pass0_set_dst_scalar( struct brw_wm_compile *c,
 }
 
 
-
 static const struct brw_wm_ref *get_fp_src_reg_ref( struct brw_wm_compile *c,
 						    struct prog_src_register src,
 						    GLuint i )
@@ -292,14 +289,13 @@ static const struct brw_wm_ref *get_fp_src_reg_ref( struct brw_wm_compile *c,
    static const GLfloat const_zero = 0.0;
    static const GLfloat const_one = 1.0;
 
-	 
    if (component == SWIZZLE_ZERO) 
       src_ref = get_const_ref(c, &const_zero);
    else if (component == SWIZZLE_ONE) 
       src_ref = get_const_ref(c, &const_one);
    else 
       src_ref = pass0_get_reg(c, src.File, src.Index, component);
-	 
+
    return src_ref;
 }
 
@@ -311,19 +307,19 @@ static struct brw_wm_ref *get_new_ref( struct brw_wm_compile *c,
 {
    const struct brw_wm_ref *ref = get_fp_src_reg_ref(c, src, i);
    struct brw_wm_ref *newref = get_ref(c);
-      
+
    newref->value = ref->value;
    newref->hw_reg = ref->hw_reg;
 
-   if (insn) { 
+   if (insn) {
       newref->insn = insn - c->instruction;
       newref->prevuse = newref->value->lastuse;
       newref->value->lastuse = newref;
    }
 
-   if (src.NegateBase & (1<<i)) 
+   if (src.NegateBase & (1<<i))
       newref->hw_reg.negate ^= 1;
-	    
+
    if (src.Abs) {
       newref->hw_reg.negate = 0;
       newref->hw_reg.abs = 1;
@@ -331,7 +327,6 @@ static struct brw_wm_ref *get_new_ref( struct brw_wm_compile *c,
 
    return newref;
 }
-
 
 
 static struct brw_wm_instruction *translate_insn( struct brw_wm_compile *c,
@@ -418,6 +413,7 @@ static void pass0_init_payload( struct brw_wm_compile *c )
 			     &c->payload.input_interp[i] );      
 }
 
+
 /***********************************************************************
  * PASS 0
  *
@@ -440,7 +436,6 @@ void brw_wm_pass0( struct brw_wm_compile *c )
    for (insn = 0; insn < c->nr_fp_insns; insn++) {
       const struct prog_instruction *inst = &c->prog_instructions[insn];
 
-
       /* Optimize away moves, otherwise emit translated instruction:
        */      
       switch (inst->Opcode) {
@@ -453,8 +448,6 @@ void brw_wm_pass0( struct brw_wm_compile *c )
 	    translate_insn(c, inst);
 	 }
 	 break;
-	 
-
       default:
 	 translate_insn(c, inst);
 	 break;
@@ -465,4 +458,3 @@ void brw_wm_pass0( struct brw_wm_compile *c )
       brw_wm_print_program(c, "pass0");
    }
 }
-
