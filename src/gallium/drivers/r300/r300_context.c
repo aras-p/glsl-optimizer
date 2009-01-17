@@ -27,7 +27,8 @@ static void r300_destroy_context(struct pipe_context* context) {
 
     draw_destroy(r300->draw);
 
-    FREE(context);
+    FREE(r300->scissor_state);
+    FREE(r300);
 }
 
 struct pipe_context* r300_create_context(struct pipe_screen* screen,
@@ -47,10 +48,7 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
 
     r300->draw = draw_create();
 
-    /* XXX this is almost certainly wrong
-     * put this all in winsys, where we can get an FD
-    struct radeon_cs_manager* csm = radeon_cs_manager_gem_ctor(fd);
-    r300->cs = cs_gem_create(csm, 64 * 1024 / 4); */
+    r300->scissor_state = CALLOC_STRUCT(r300_scissor_state);
 
     r300_init_surface_functions(r300);
 

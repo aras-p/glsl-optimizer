@@ -46,9 +46,24 @@ struct r300_dsa_state {
     uint32_t stencil_ref_bf;    /* R300_ZB_STENCILREFMASK_BF: 0x4fd4 */
 };
 
+struct r300_rs_state {
+    uint32_t polygon_offset_enable; /* R300_SU_POLY_OFFSET_ENABLE: 0x42b4 */
+    uint32_t cull_mode;             /* R300_SU_CULL_MODE: 0x42b8 */
+    uint32_t depth_scale_front;     /* R300_SU_POLY_OFFSET_FRONT_SCALE: 0x42a4 */
+    uint32_t depth_offset_front;    /* R300_SU_POLY_OFFSET_FRONT_OFFSET: 0x42a8 */
+    uint32_t depth_scale_back;      /* R300_SU_POLY_OFFSET_BACK_SCALE: 0x42ac */
+    uint32_t depth_offset_back;     /* R300_SU_POLY_OFFSET_BACK_OFFSET: 0x42b0 */
+};
+
+struct r300_scissor_state {
+    uint32_t scissor_top_left;     /* R300_SC_SCISSORS_TL: 0x43e0 */
+    uint32_t scissor_bottom_right; /* R300_SC_SCISSORS_BR: 0x43e4 */
+};
+
 #define R300_NEW_BLEND    0x1
 #define R300_NEW_DSA      0x2
-#define R300_NEW_SCISSOR  0x4
+#define R300_NEW_RS       0x4
+#define R300_NEW_SCISSOR  0x8
 
 struct r300_context {
     /* Parent class */
@@ -64,8 +79,10 @@ struct r300_context {
     struct r300_blend_state* blend_state;
     /* Depth, stencil, and alpha state. */
     struct r300_dsa_state* dsa_state;
+    /* Rasterizer state. */
+    struct r300_rs_state* rs_state;
     /* Scissor state. */
-    struct pipe_scissor_state* scissor_state;
+    struct r300_scissor_state* scissor_state;
 
     /* Bitmask of dirty state objects. */
     uint32_t dirty_state;

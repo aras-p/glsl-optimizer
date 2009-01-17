@@ -23,6 +23,23 @@
 #include "r300_context.h"
 #include "r300_state.h"
 
+/* r300_state: Functions used to intialize state context by translating
+ * Gallium state objects into semi-native r300 state objects.
+ *
+ * XXX break this file up into pieces if it gets too big! */
+
+/* Pack a float into a dword. */
+static uint32_t pack_float_32(float f)
+{
+    union {
+        float f;
+        uint32_t u;
+    } u;
+
+    u.f = f;
+    return u.u;
+}
+
 static uint32_t translate_blend_function(int blend_func) {
     switch (blend_func) {
         case PIPE_BLEND_ADD:
@@ -229,7 +246,7 @@ static uint32_t translate_alpha_function(int alpha_func) {
  * On the Radeon, depth and stencil buffer setup are intertwined, which is
  * the reason for some of the strange-looking assignments across registers. */
 static void* r300_create_dsa_state(struct pipe_context* pipe,
-                                     struct pipe_depth_stencil_alpha_state* state)
+                                   struct pipe_depth_stencil_alpha_state* state)
 {
     struct r300_dsa_state* dsa = CALLOC_STRUCT(r300_dsa_state);
 
@@ -309,6 +326,102 @@ static void r300_delete_dsa_state(struct pipe_context* pipe,
 {
     FREE(state);
 }
+#if 0
+struct pipe_rasterizer_state
+{
+    unsigned flatshade:1;
+    unsigned light_twoside:1;
+    unsigned fill_cw:2;        /**< PIPE_POLYGON_MODE_x */
+    unsigned fill_ccw:2;       /**< PIPE_POLYGON_MODE_x */
+    unsigned scissor:1;
+    unsigned poly_smooth:1;
+    unsigned poly_stipple_enable:1;
+    unsigned point_smooth:1;
+    unsigned point_sprite:1;
+    unsigned point_size_per_vertex:1; /**< size computed in vertex shader */
+    unsigned multisample:1;         /* XXX maybe more ms state in future */
+    unsigned line_smooth:1;
+    unsigned line_stipple_enable:1;
+    unsigned line_stipple_factor:8;  /**< [1..256] actually */
+    unsigned line_stipple_pattern:16;
+    unsigned line_last_pixel:1;
+    unsigned bypass_clipping:1;
+    unsigned bypass_vs:1; /**< Skip the vertex shader.  Note that the shader is
+    still needed though, to indicate inputs/outputs */
+    unsigned origin_lower_left:1;  /**< Is (0,0) the lower-left corner? */
+    unsigned flatshade_first:1;   /**< take color attribute from the first vertex of a primitive */
+    unsigned gl_rasterization_rules:1; /**< enable tweaks for GL rasterization?  */
+
+    float line_width;
+    float point_size;           /**< used when no per-vertex size */
+    float point_size_min;        /* XXX - temporary, will go away */
+    float point_size_max;        /* XXX - temporary, will go away */
+    ubyte sprite_coord_mode[PIPE_MAX_SHADER_OUTPUTS]; /**< PIPE_SPRITE_COORD_ */
+};
+#endif
+/* Create a new rasterizer state based on the CSO rasterizer state.
+ *
+ * This is a very large chunk of state, and covers most of the graphics
+ * backend (GB), geometry assembly (GA), and setup unit (SU) blocks.
+ *
+ * In a not entirely unironic sidenote, this state has nearly nothing to do
+ * with the actual block on the Radeon called the rasterizer (RS). */
+static void* r300_create_rs_state(struct pipe_context* pipe,
+                                          struct pipe_rasterizer_state* state)
+{
+    struct r300_rs_state* rs = CALLOC_STRUCT(r300_rs_state);
+
+    /* Radeons don't think in "CW/CCW", they think in "front/back". */
+    if (state->front_winding == PIPE_WINDING_CW) {
+        rs->cull_mode = R300_FRONT_FACE_CW;
+
+        if (state->offset_cw) {
+            rs->polygon_offset_enable |= R300_FRONT_ENABLE;
+        }
+        if (state->offset_ccw) {
+            rs->polygon_offset_enable |= R300_BACK_ENABLE;
+        }
+    } else {
+        rs->cull_mode = R300_FRONT_FACE_CCW;
+
+        if (state->offset_ccw) {
+            rs->polygon_offset_enable |= R300_FRONT_ENABLE;
+        }
+        if (state->offset_cw) {
+            rs->polygon_offset_enable |= R300_BACK_ENABLE;
+        }
+    }
+    if (state->front_winding & state->cull_mode) {
+        rs->cull_mode |= R300_CULL_FRONT;
+    }
+    if (~(state->front_winding) & state->cull_mode) {
+        rs->cull_mode |= R300_CULL_BACK;
+    }
+
+    if (rs->polygon_offset_enable) {
+        rs->depth_offset_front = rs->depth_offset_back =
+                pack_float_32(state->offset_units);
+        rs->depth_scale_front = rs->depth_scale_back =
+                pack_float_32(state->offset_scale);
+    }
+
+    return (void*)rs;
+}
+
+/* Bind rasterizer state. */
+static void r300_bind_rs_state(struct pipe_context* pipe, void* state)
+{
+    struct r300_context* r300 = r300_context(pipe);
+
+    r300->rs_state = (struct r300_rs_state*)state;
+    r300->dirty_state |= R300_NEW_RS;
+}
+
+/* Free rasterizer state. */
+static void r300_delete_rs_state(struct pipe_context* pipe, void* state)
+{
+    FREE(state);
+}
 
 static void r300_set_scissor_state(struct pipe_context* pipe,
                                    struct pipe_scissor_state* state)
@@ -316,8 +429,21 @@ static void r300_set_scissor_state(struct pipe_context* pipe,
     struct r300_context* r300 = r300_context(pipe);
     draw_flush(r300->draw);
 
-    /* XXX figure out how this memory doesn't get lost in space
-    memcpy(r300->scissor, scissor, sizeof(struct pipe_scissor_state)); */
+    uint32_t left, top, right, bottom;
+
+    /* So, a bit of info. The scissors are offset by R300_SCISSORS_OFFSET in
+     * both directions for all values, and can only be 13 bits wide. Why?
+     * We may never know. */
+    left = (state->minx + R300_SCISSORS_OFFSET) & 0x1fff;
+    top = (state->miny + R300_SCISSORS_OFFSET) & 0x1fff;
+    right = (state->maxx + R300_SCISSORS_OFFSET) & 0x1fff;
+    bottom = (state->maxy + R300_SCISSORS_OFFSET) & 0x1fff;
+
+    r300->scissor_state->scissor_top_left = (left << R300_SCISSORS_X_SHIFT) |
+            (top << R300_SCISSORS_Y_SHIFT);
+    r300->scissor_state->scissor_bottom_right = (right << R300_SCISSORS_X_SHIFT) |
+            (bottom << R300_SCISSORS_Y_SHIFT);
+
     r300->dirty_state |= R300_NEW_SCISSOR;
 }
 
@@ -347,6 +473,10 @@ void r300_init_state_functions(struct r300_context* r300) {
     r300->context.create_blend_state = r300_create_blend_state;
     r300->context.bind_blend_state = r300_bind_blend_state;
     r300->context.delete_blend_state = r300_delete_blend_state;
+
+    r300->context.create_rasterizer_state = r300_create_rs_state;
+    r300->context.bind_rasterizer_state = r300_bind_rs_state;
+    r300->context.delete_rasterizer_state = r300_delete_rs_state;
 
     r300->context.create_depth_stencil_alpha_state = r300_create_dsa_state;
     r300->context.bind_depth_stencil_alpha_state = r300_bind_dsa_state;
