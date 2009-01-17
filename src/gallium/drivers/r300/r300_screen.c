@@ -35,7 +35,7 @@ static int r300_get_param(struct pipe_screen* pscreen, int param) {
     struct r300_screen* r300screen = r300_screen(pscreen);
 
     switch (param) {
-        /* Cases marked "IN THEORY" are possible on the hardware,
+        /* XXX cases marked "IN THEORY" are possible on the hardware,
          * but haven't been implemented yet. */
         case PIPE_CAP_MAX_TEXTURE_IMAGE_UNITS:
             /* XXX I'm told this goes up to 16 */
@@ -48,6 +48,11 @@ static int r300_get_param(struct pipe_screen* pscreen, int param) {
             return 0;
         case PIPE_CAP_TWO_SIDED_STENCIL:
             /* IN THEORY */
+            /* if (r300screen->is_r500) {
+             * return 1;
+             * } else {
+             * return 0;
+             * } */
             return 0;
         case PIPE_CAP_ANISOTROPIC_FILTER:
             /* IN THEORY */

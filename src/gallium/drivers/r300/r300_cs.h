@@ -37,6 +37,9 @@
 #define RADEON_GEM_DOMAIN_GTT  0x2
 #define RADEON_GEM_DOMAIN_VRAM 0x4
 
+/* XXX stolen from radeon_reg.h */
+#define RADEON_CP_PACKET0 0x0
+
 #define CP_PACKET0(register, count) \
     (RADEON_CP_PACKET0 | ((count) << 16) | ((register) >> 2))
 

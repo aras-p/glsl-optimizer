@@ -30,8 +30,8 @@
 #include "r300_screen.h"
 
 struct r300_blend_state {
-    uint32_t blend_control;       /* R300_RB3D_BLENDCNTL: 0x4e04 */
-    uint32_t alpha_blend_control; /* R300_RB3D_ABLENDCNTL: 0x4e08 */
+    uint32_t blend_control;       /* R300_RB3D_CBLEND: 0x4e04 */
+    uint32_t alpha_blend_control; /* R300_RB3D_ABLEND: 0x4e08 */
     uint32_t rop;                 /* R300_RB3D_ROPCNTL: 0x4e18 */
     uint32_t dither;              /* R300_RB3D_DITHER_CTL: 0x4e50 */
 };
@@ -51,16 +51,16 @@ struct r300_dsa_state {
     uint32_t z_stencil_control; /* R300_ZB_ZSTENCILCNTL: 0x4f04 */
     uint32_t stencil_ref_mask;  /* R300_ZB_STENCILREFMASK: 0x4f08 */
     uint32_t z_buffer_top;      /* R300_ZB_ZTOP: 0x4f14 */
-    uint32_t stencil_ref_bf;    /* R300_ZB_STENCILREFMASK_BF: 0x4fd4 */
+    uint32_t stencil_ref_bf;    /* R500_ZB_STENCILREFMASK_BF: 0x4fd4 */
 };
 
 struct r300_rs_state {
-    uint32_t polygon_offset_enable; /* R300_SU_POLY_OFFSET_ENABLE: 0x42b4 */
-    uint32_t cull_mode;             /* R300_SU_CULL_MODE: 0x42b8 */
     uint32_t depth_scale_front;     /* R300_SU_POLY_OFFSET_FRONT_SCALE: 0x42a4 */
     uint32_t depth_offset_front;    /* R300_SU_POLY_OFFSET_FRONT_OFFSET: 0x42a8 */
     uint32_t depth_scale_back;      /* R300_SU_POLY_OFFSET_BACK_SCALE: 0x42ac */
     uint32_t depth_offset_back;     /* R300_SU_POLY_OFFSET_BACK_OFFSET: 0x42b0 */
+    uint32_t polygon_offset_enable; /* R300_SU_POLY_OFFSET_ENABLE: 0x42b4 */
+    uint32_t cull_mode;             /* R300_SU_CULL_MODE: 0x42b8 */
 };
 
 struct r300_scissor_state {
@@ -73,6 +73,7 @@ struct r300_scissor_state {
 #define R300_NEW_DSA            0x04
 #define R300_NEW_RS             0x08
 #define R300_NEW_SCISSOR        0x10
+#define R300_NEW_KITCHEN_SINK   0x1f
 
 struct r300_context {
     /* Parent class */
