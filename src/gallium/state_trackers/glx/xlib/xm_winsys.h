@@ -31,16 +31,13 @@
 
 struct pipe_context;
 struct pipe_screen;
-struct pipe_winsys;
 struct pipe_surface;
 struct xmesa_buffer;
 
 
 struct xm_driver {
 
-   struct pipe_winsys *(*create_pipe_winsys)( void );
-
-   struct pipe_screen *(*create_pipe_screen)( struct pipe_winsys * );
+   struct pipe_screen *(*create_pipe_screen)( void );
 
    /* The context_private argument needs to go away.  Is currently used
     * in a round-about way to associate a display-target surface with its

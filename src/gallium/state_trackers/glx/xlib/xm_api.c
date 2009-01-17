@@ -65,7 +65,6 @@
 #include "state_tracker/st_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_screen.h"
-#include "pipe/p_winsys.h"
 #include "pipe/p_context.h"
 
 #include "xm_winsys.h"
@@ -743,7 +742,6 @@ PUBLIC
 XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
 {
    static GLboolean firstTime = GL_TRUE;
-   struct pipe_winsys *winsys;
    struct pipe_screen *screen;
    struct pipe_context *pipe;
    XMesaContext c;
@@ -768,13 +766,7 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
    
    /* XXX: create once per Xlib Display.
     */
-   winsys = driver.create_pipe_winsys();
-   if (winsys == NULL)
-      goto fail;
-
-   /* XXX: create once per Xlib Display.
-    */
-   screen = driver.create_pipe_screen( winsys );
+   screen = driver.create_pipe_screen();
    if (screen == NULL)
       goto fail;
 
@@ -810,9 +802,6 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
 
    if (screen)
       screen->destroy( screen );
-
-   if (winsys)
-      winsys->destroy( winsys );
 
    FREE(c);
    return NULL;
