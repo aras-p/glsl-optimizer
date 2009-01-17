@@ -351,9 +351,26 @@ xlib_create_brw_winsys( void )
 
 
 static struct pipe_screen *
-xlib_create_brw_screen( struct pipe_winsys *winsys )
+xlib_create_brw_screen( void )
 {
-   return brw_create_screen(winsys, 0/* XXX pci_id */);
+   struct pipe_winsys *winsys;
+   struct pipe_screen *screen;
+
+   winsys = xlib_create_brw_winsys();
+   if (winsys == NULL)
+      return NULL;
+
+   screen = brw_create_screen(winsys, 0/* XXX pci_id */);
+   if (screen == NULL)
+      goto fail;
+
+   return screen;
+
+fail:
+   if (winsys)
+      winsys->destroy( winsys );
+
+   return NULL;
 }
 
 
@@ -473,7 +490,6 @@ xlib_brw_display_surface(struct xmesa_buffer *b,
 
 struct xm_driver xlib_brw_driver = 
 {
-   .create_pipe_winsys = xlib_create_brw_winsys,
    .create_pipe_screen = xlib_create_brw_screen,
    .create_pipe_context = xlib_create_brw_context,
    .display_surface = xlib_brw_display_surface,

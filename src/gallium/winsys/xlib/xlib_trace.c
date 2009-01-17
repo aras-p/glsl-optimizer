@@ -38,19 +38,16 @@
 #include "trace/tr_screen.h"
 #include "trace/tr_context.h"
 
+#include "pipe/p_screen.h"
 
-static struct pipe_winsys *
-xlib_create_trace_winsys( void )
-{
-   return xlib_softpipe_driver.create_pipe_winsys();
-}
+
 
 static struct pipe_screen *
-xlib_create_trace_screen( struct pipe_winsys *winsys )
+xlib_create_trace_screen( void )
 {
    struct pipe_screen *screen, *trace_screen;
 
-   screen = xlib_softpipe_driver.create_pipe_screen( winsys );
+   screen = xlib_softpipe_driver.create_pipe_screen();
    if (screen == NULL)
       goto fail;
 
@@ -63,7 +60,8 @@ xlib_create_trace_screen( struct pipe_winsys *winsys )
    return trace_screen;
 
 fail:
-   /* free stuff */
+   if (screen)
+      screen->destroy( screen );
    return NULL;
 }
 
@@ -103,7 +101,6 @@ xlib_trace_display_surface( struct xmesa_buffer *buffer,
 
 struct xm_driver xlib_trace_driver = 
 {
-   .create_pipe_winsys = xlib_create_trace_winsys,
    .create_pipe_screen = xlib_create_trace_screen,
    .create_pipe_context = xlib_create_trace_context,
    .display_surface = xlib_trace_display_surface,

@@ -232,7 +232,6 @@ xlib_softpipe_display_surface(struct xmesa_buffer *b,
    struct xm_buffer *xm_buf = xm_buffer(surf->buffer);
    static boolean no_swap = 0;
    static boolean firsttime = 1;
-   static int tileSize = 0;
 
    if (firsttime) {
       no_swap = getenv("SP_NO_RAST") != NULL;
@@ -482,17 +481,25 @@ xlib_create_softpipe_winsys( void )
 
 
 static struct pipe_screen *
-xlib_create_softpipe_screen( struct pipe_winsys *pws )
+xlib_create_softpipe_screen( void )
 {
+   struct pipe_winsys *winsys;
    struct pipe_screen *screen;
 
-   screen = softpipe_create_screen(pws);
+   winsys = xlib_create_softpipe_winsys();
+   if (winsys == NULL)
+      return NULL;
+
+   screen = softpipe_create_screen(winsys);
    if (screen == NULL)
       goto fail;
 
    return screen;
 
 fail:
+   if (winsys)
+      winsys->destroy( winsys );
+
    return NULL;
 }
 
@@ -517,7 +524,6 @@ fail:
 
 struct xm_driver xlib_softpipe_driver = 
 {
-   .create_pipe_winsys = xlib_create_softpipe_winsys,
    .create_pipe_screen = xlib_create_softpipe_screen,
    .create_pipe_context = xlib_create_softpipe_context,
    .display_surface = xlib_softpipe_display_surface

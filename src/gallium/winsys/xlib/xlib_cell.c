@@ -414,7 +414,24 @@ xlib_create_cell_winsys( void )
 static struct pipe_screen *
 xlib_create_cell_screen( struct pipe_winsys *pws )
 {
-   return cell_create_screen( pws );
+   struct pipe_winsys *winsys;
+   struct pipe_screen *screen;
+
+   winsys = xlib_create_cell_winsys();
+   if (winsys == NULL)
+      return NULL;
+
+   screen = cell_create_screen(winsys);
+   if (screen == NULL)
+      goto fail;
+
+   return screen;
+
+fail:
+   if (winsys)
+      winsys->destroy( winsys );
+
+   return NULL;
 }
 
 
@@ -445,7 +462,6 @@ fail:
 
 struct xm_driver xlib_cell_driver = 
 {
-   .create_pipe_winsys = xlib_create_cell_winsys,
    .create_pipe_screen = xlib_create_cell_screen,
    .create_pipe_context = xlib_create_cell_context,
    .display_surface = xlib_cell_display_surface,
@@ -455,7 +471,6 @@ struct xm_driver xlib_cell_driver =
 
 struct xm_driver xlib_cell_driver = 
 {
-   .create_pipe_winsys = NULL,
    .create_pipe_screen = NULL,
    .create_pipe_context = NULL,
    .display_surface = NULL,
