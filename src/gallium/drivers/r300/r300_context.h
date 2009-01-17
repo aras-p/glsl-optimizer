@@ -36,6 +36,14 @@ struct r300_blend_state {
     uint32_t dither;              /* R300_RB3D_DITHER_CTL: 0x4e50 */
 };
 
+struct r300_blend_color_state {
+    /* RV515 and earlier */
+    uint32_t blend_color;            /* R300_RB3D_BLEND_COLOR: 0x4e10 */
+    /* R520 and newer */
+    uint32_t blend_color_red_alpha;  /* R500_RB3D_CONSTANT_COLOR_AR: 0x4ef8 */
+    uint32_t blend_color_green_blue; /* R500_RB3D_CONSTANT_COLOR_GB: 0x4efc */
+};
+
 struct r300_dsa_state {
     uint32_t alpha_function;    /* R300_FG_ALPHA_FUNC: 0x4bd4 */
     uint32_t alpha_reference;   /* R500_FG_ALPHA_VALUE: 0x4be0 */
@@ -60,10 +68,11 @@ struct r300_scissor_state {
     uint32_t scissor_bottom_right; /* R300_SC_SCISSORS_BR: 0x43e4 */
 };
 
-#define R300_NEW_BLEND    0x1
-#define R300_NEW_DSA      0x2
-#define R300_NEW_RS       0x4
-#define R300_NEW_SCISSOR  0x8
+#define R300_NEW_BLEND          0x01
+#define R300_NEW_BLEND_COLOR    0x02
+#define R300_NEW_DSA            0x04
+#define R300_NEW_RS             0x08
+#define R300_NEW_SCISSOR        0x10
 
 struct r300_context {
     /* Parent class */
@@ -77,6 +86,8 @@ struct r300_context {
     /* Various CSO state objects. */
     /* Blend state. */
     struct r300_blend_state* blend_state;
+    /* Blend color state. */
+    struct r300_blend_color_state* blend_color_state;
     /* Depth, stencil, and alpha state. */
     struct r300_dsa_state* dsa_state;
     /* Rasterizer state. */

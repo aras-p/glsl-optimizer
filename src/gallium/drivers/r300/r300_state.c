@@ -165,6 +165,33 @@ static void r300_delete_blend_state(struct pipe_context* pipe,
     FREE(state);
 }
 
+/* Set blend color.
+ * Setup both R300 and R500 registers, figure out later which one to write. */
+static void r300_set_blend_color(struct pipe_context* pipe,
+                                 const struct pipe_blend_color* color)
+{
+    struct r300_context* r300 = r300_context(pipe);
+    uint32_t r, g, b, a;
+    ubyte ur, ug, ub, ua;
+
+    r = util_iround(color->color[0] * 1023.0f);
+    g = util_iround(color->color[1] * 1023.0f);
+    b = util_iround(color->color[2] * 1023.0f);
+    a = util_iround(color->color[3] * 1023.0f);
+
+    ur = float_to_ubyte(color->color[0]);
+    ug = float_to_ubyte(color->color[1]);
+    ub = float_to_ubyte(color->color[2]);
+    ua = float_to_ubyte(color->color[3]);
+
+    r300->blend_color_state->blend_color = (a << 24) | (r << 16) | (g << 8) | b;
+
+    r300->blend_color_state->blend_color_red_alpha = ur | (ua << 16);
+    r300->blend_color_state->blend_color_green_blue = ub | (ug << 16);
+
+    r300->dirty_state |= R300_NEW_BLEND_COLOR;
+}
+
 static uint32_t translate_depth_stencil_function(int zs_func) {
     switch (zs_func) {
         case PIPE_FUNC_NEVER:
@@ -473,6 +500,8 @@ void r300_init_state_functions(struct r300_context* r300) {
     r300->context.create_blend_state = r300_create_blend_state;
     r300->context.bind_blend_state = r300_bind_blend_state;
     r300->context.delete_blend_state = r300_delete_blend_state;
+
+    r300->context.set_blend_color = r300_set_blend_color;
 
     r300->context.create_rasterizer_state = r300_create_rs_state;
     r300->context.bind_rasterizer_state = r300_bind_rs_state;
