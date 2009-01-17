@@ -406,6 +406,32 @@ debug_dump_enum(const struct debug_named_value *names,
 
 
 const char *
+debug_dump_enum_noprefix(const struct debug_named_value *names, 
+                         const char *prefix,
+                         unsigned long value)
+{
+   static char rest[64];
+   
+   while(names->name) {
+      if(names->value == value) {
+         const char *name = names->name;
+         while (*name == *prefix) {
+            name++;
+            prefix++;
+         }
+         return name;
+      }
+      ++names;
+   }
+
+   
+
+   util_snprintf(rest, sizeof(rest), "0x%08lx", value);
+   return rest;
+}
+
+
+const char *
 debug_dump_flags(const struct debug_named_value *names, 
                  unsigned long value)
 {

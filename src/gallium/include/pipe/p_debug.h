@@ -261,6 +261,11 @@ const char *
 debug_dump_enum(const struct debug_named_value *names, 
                 unsigned long value);
 
+const char *
+debug_dump_enum_noprefix(const struct debug_named_value *names, 
+                         const char *prefix,
+                         unsigned long value);
+
 
 /**
  * Convert binary flags value to a string.
