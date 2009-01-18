@@ -141,9 +141,10 @@ err:
 }
 
 struct pipe_buffer *
-intel_be_buffer_from_handle(struct intel_be_device *dev,
-			    const char* name, unsigned handle)
+intel_be_buffer_from_handle(struct pipe_winsys *winsys,
+                            const char* name, unsigned handle)
 {
+	struct intel_be_device *dev = intel_be_device(winsys);
 	struct intel_be_buffer *buffer = CALLOC_STRUCT(intel_be_buffer);
 
 	if (!buffer)
@@ -167,6 +168,14 @@ intel_be_buffer_from_handle(struct intel_be_device *dev,
 err:
 	free(buffer);
 	return NULL;
+}
+
+unsigned
+intel_be_handle_from_buffer(struct pipe_winsys *winsys,
+                            struct pipe_buffer *buf)
+{
+	drm_intel_bo *bo = intel_bo(buf);
+	return bo->handle;
 }
 
 /*
@@ -247,8 +256,6 @@ intel_be_init_device(struct intel_be_device *dev, int fd, unsigned id)
 	dev->base.fence_finish = intel_be_fence_finish;
 
 	dev->pools.gem = drm_intel_bufmgr_gem_init(dev->fd, dev->max_batch_size);
-
-	dev->screen = i915_create_screen(&dev->base, id);
 
 	return true;
 }

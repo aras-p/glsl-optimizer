@@ -16,11 +16,6 @@ struct intel_be_device
 {
 	struct pipe_winsys base;
 
-	/**
-	 * Hw level screen
-	 */
-	struct pipe_screen *screen;
-
 	int fd; /**< Drm file discriptor */
 
 	size_t max_batch_size;
@@ -47,13 +42,22 @@ struct intel_be_buffer {
 };
 
 /**
- * Create a be buffer from a drm bo handle
+ * Create a be buffer from a drm bo handle.
  *
- * Takes a reference
+ * Takes a reference.
  */
 struct pipe_buffer *
-intel_be_buffer_from_handle(struct intel_be_device *device,
+intel_be_buffer_from_handle(struct pipe_winsys *winsys,
                             const char* name, unsigned handle);
+
+/**
+ * Gets a handle from a buffer.
+ *
+ * If buffer is destroyed handle may become invalid.
+ */
+unsigned
+intel_be_handle_from_buffer(struct pipe_winsys *winsys,
+                            struct pipe_buffer *buffer);
 
 static INLINE struct intel_be_buffer *
 intel_be_buffer(struct pipe_buffer *buf)

@@ -12,6 +12,7 @@ intel_be_batchbuffer_alloc(struct intel_be_context *intel)
 {
 	struct intel_be_batchbuffer *batch = CALLOC_STRUCT(intel_be_batchbuffer);
 
+
 	batch->base.buffer = NULL;
 	batch->base.winsys = &intel->base;
 	batch->base.map = NULL;
@@ -28,7 +29,7 @@ intel_be_batchbuffer_alloc(struct intel_be_context *intel)
 
 	intel_be_batchbuffer_reset(batch);
 
-	return NULL;
+	return batch;
 }
 
 void
