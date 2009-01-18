@@ -599,17 +599,17 @@ static int vlFlush
 		struct vlMacroBlockVertexStream0	*ycbcr_vb;
 		struct vlVertex2f			*ref_vb[2];
 
-		ycbcr_vb = (struct vlMacroBlockVertexStream0*)mc->pipe->winsys->buffer_map
+		ycbcr_vb = (struct vlMacroBlockVertexStream0*)pipe_buffer_map
 		(
-			mc->pipe->winsys,
+			pipe->screen,
 			mc->vertex_bufs.ycbcr.buffer,
 			PIPE_BUFFER_USAGE_CPU_WRITE | PIPE_BUFFER_USAGE_DISCARD
 		);
 
 		for (i = 0; i < 2; ++i)
-			ref_vb[i] = (struct vlVertex2f*)mc->pipe->winsys->buffer_map
+			ref_vb[i] = (struct vlVertex2f*)pipe_buffer_map
 			(
-				mc->pipe->winsys,
+				pipe->screen,
 				mc->vertex_bufs.ref[i].buffer,
 				PIPE_BUFFER_USAGE_CPU_WRITE | PIPE_BUFFER_USAGE_DISCARD
 			);
@@ -623,15 +623,15 @@ static int vlFlush
 			offset[mb_type_ex]++;
 		}
 
-		mc->pipe->winsys->buffer_unmap(mc->pipe->winsys, mc->vertex_bufs.ycbcr.buffer);
+		pipe_buffer_unmap(pipe->screen, mc->vertex_bufs.ycbcr.buffer);
 		for (i = 0; i < 2; ++i)
-			mc->pipe->winsys->buffer_unmap(mc->pipe->winsys, mc->vertex_bufs.ref[i].buffer);
+			pipe_buffer_unmap(pipe->screen, mc->vertex_bufs.ref[i].buffer);
 	}
 
 	for (i = 0; i < 3; ++i)
 	{
 		pipe_surface_unmap(mc->tex_surface[i]);
-		mc->pipe->screen->tex_surface_release(mc->pipe->screen, &mc->tex_surface[i]);
+		pipe_surface_reference(&mc->tex_surface[i], NULL);
 	}
 
 	mc->render_target.cbufs[0] = pipe->screen->get_tex_surface
@@ -653,7 +653,7 @@ static int vlFlush
 	vs_consts->denorm.x = mc->buffered_surface->texture->width[0];
 	vs_consts->denorm.y = mc->buffered_surface->texture->height[0];
 
-	pipe->winsys->buffer_unmap(pipe->winsys, mc->vs_const_buf.buffer);
+	pipe_buffer_unmap(pipe->screen, mc->vs_const_buf.buffer);
 	pipe->set_constant_buffer(pipe, PIPE_SHADER_VERTEX, 0, &mc->vs_const_buf);
 	pipe->set_constant_buffer(pipe, PIPE_SHADER_FRAGMENT, 0, &mc->fs_const_buf);
 
@@ -757,7 +757,7 @@ static int vlFlush
 	}
 
 	pipe->flush(pipe, PIPE_FLUSH_RENDER_CACHE, &mc->buffered_surface->render_fence);
-	pipe->screen->tex_surface_release(pipe->screen, &mc->render_target.cbufs[0]);
+	pipe_surface_reference(&mc->render_target.cbufs[0], NULL);
 
 	for (i = 0; i < 3; ++i)
 		mc->zero_block[i].x = -1.0f;
@@ -849,11 +849,11 @@ static int vlDestroy
 		pipe->delete_sampler_state(pipe, mc->samplers.all[i]);
 
 	for (i = 0; i < 3; ++i)
-		pipe->winsys->buffer_destroy(pipe->winsys, mc->vertex_bufs.all[i].buffer);
+		pipe_buffer_reference(pipe->screen, &mc->vertex_bufs.all[i].buffer, NULL);
 
 	/* Textures 3 & 4 are not created directly, no need to release them here */
 	for (i = 0; i < 3; ++i)
-		pipe_texture_release(&mc->textures.all[i]);
+		pipe_texture_reference(&mc->textures.all[i], NULL);
 
 	pipe->delete_vs_state(pipe, mc->i_vs);
 	pipe->delete_fs_state(pipe, mc->i_fs);
@@ -866,8 +866,8 @@ static int vlDestroy
 		pipe->delete_fs_state(pipe, mc->b_fs[i]);
 	}
 
-	pipe->winsys->buffer_destroy(pipe->winsys, mc->vs_const_buf.buffer);
-	pipe->winsys->buffer_destroy(pipe->winsys, mc->fs_const_buf.buffer);
+	pipe_buffer_reference(pipe->screen, &mc->vs_const_buf.buffer, NULL);
+	pipe_buffer_reference(pipe->screen, &mc->fs_const_buf.buffer, NULL);
 
 	FREE(mc->macroblocks);
 	FREE(mc);
@@ -909,9 +909,9 @@ static int vlCreateDataBufs
 	mc->vertex_bufs.ycbcr.pitch = sizeof(struct vlVertex2f) * 4;
 	mc->vertex_bufs.ycbcr.max_index = 24 * mc->macroblocks_per_picture - 1;
 	mc->vertex_bufs.ycbcr.buffer_offset = 0;
-	mc->vertex_bufs.ycbcr.buffer = pipe->winsys->buffer_create
+	mc->vertex_bufs.ycbcr.buffer = pipe_buffer_create
 	(
-		pipe->winsys,
+		pipe->screen,
 		DEFAULT_BUF_ALIGNMENT,
 		PIPE_BUFFER_USAGE_VERTEX | PIPE_BUFFER_USAGE_DISCARD,
 		sizeof(struct vlVertex2f) * 4 * 24 * mc->macroblocks_per_picture
@@ -922,9 +922,9 @@ static int vlCreateDataBufs
 		mc->vertex_bufs.all[i].pitch = sizeof(struct vlVertex2f) * 2;
 		mc->vertex_bufs.all[i].max_index = 24 * mc->macroblocks_per_picture - 1;
 		mc->vertex_bufs.all[i].buffer_offset = 0;
-		mc->vertex_bufs.all[i].buffer = pipe->winsys->buffer_create
+		mc->vertex_bufs.all[i].buffer = pipe_buffer_create
 		(
-			pipe->winsys,
+			pipe->screen,
 			DEFAULT_BUF_ALIGNMENT,
 			PIPE_BUFFER_USAGE_VERTEX | PIPE_BUFFER_USAGE_DISCARD,
 			sizeof(struct vlVertex2f) * 2 * 24 * mc->macroblocks_per_picture
@@ -981,18 +981,18 @@ static int vlCreateDataBufs
 
 	/* Create our constant buffer */
 	mc->vs_const_buf.size = sizeof(struct vlVertexShaderConsts);
-	mc->vs_const_buf.buffer = pipe->winsys->buffer_create
+	mc->vs_const_buf.buffer = pipe_buffer_create
 	(
-		pipe->winsys,
+		pipe->screen,
 		DEFAULT_BUF_ALIGNMENT,
 		PIPE_BUFFER_USAGE_CONSTANT | PIPE_BUFFER_USAGE_DISCARD,
 		mc->vs_const_buf.size
 	);
 
 	mc->fs_const_buf.size = sizeof(struct vlFragmentShaderConsts);
-	mc->fs_const_buf.buffer = pipe->winsys->buffer_create
+	mc->fs_const_buf.buffer = pipe_buffer_create
 	(
-		pipe->winsys,
+		pipe->screen,
 		DEFAULT_BUF_ALIGNMENT,
 		PIPE_BUFFER_USAGE_CONSTANT,
 		mc->fs_const_buf.size
@@ -1000,12 +1000,12 @@ static int vlCreateDataBufs
 
 	memcpy
 	(
-		pipe->winsys->buffer_map(pipe->winsys, mc->fs_const_buf.buffer, PIPE_BUFFER_USAGE_CPU_WRITE),
+		pipe_buffer_map(pipe->screen, mc->fs_const_buf.buffer, PIPE_BUFFER_USAGE_CPU_WRITE),
 		&fs_consts,
 		sizeof(struct vlFragmentShaderConsts)
 	);
 
-	pipe->winsys->buffer_unmap(pipe->winsys, mc->fs_const_buf.buffer);
+	pipe_buffer_unmap(pipe->screen, mc->fs_const_buf.buffer);
 
 	mc->macroblocks = MALLOC(sizeof(struct vlMpeg2MacroBlock) * mc->macroblocks_per_picture);
 

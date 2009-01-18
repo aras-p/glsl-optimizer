@@ -69,7 +69,7 @@ int vlDestroySurface
 {
 	assert(surface);
 
-	pipe_texture_release(&surface->texture);
+	pipe_texture_reference(&surface->texture, NULL);
 	FREE(surface);
 
 	return 0;
