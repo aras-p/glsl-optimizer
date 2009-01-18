@@ -32,6 +32,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 #include <GL/gl.h>
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
@@ -108,6 +109,8 @@ main(int argc, char *argv[])
 		printf("eglscreen: Show surface failed\n");
 		return 0;
 	}
+
+	usleep(5000000);
 
 	eglDestroySurface(d, screen_surf);
 	eglTerminate(d);
