@@ -344,16 +344,6 @@ xm_user_buffer_create(struct pipe_winsys *pws, void *ptr, unsigned bytes)
 }
 
 
-
-/**
- * Round n up to next multiple.
- */
-static INLINE unsigned
-round_up(unsigned n, unsigned multiple)
-{
-   return (n + multiple - 1) & ~(multiple - 1);
-}
-
 static int
 xm_surface_alloc_storage(struct pipe_winsys *winsys,
                          struct pipe_surface *surf,
@@ -362,7 +352,7 @@ xm_surface_alloc_storage(struct pipe_winsys *winsys,
                          unsigned flags,
                          unsigned tex_usage)
 {
-   const unsigned alignment = 64;
+   const int alignment = 64;
 
    surf->width = width;
    surf->height = height;
@@ -370,7 +360,7 @@ xm_surface_alloc_storage(struct pipe_winsys *winsys,
    pf_get_block(format, &surf->block);
    surf->nblocksx = pf_get_nblocksx(&surf->block, width);
    surf->nblocksy = pf_get_nblocksy(&surf->block, height);
-   surf->stride = round_up(surf->nblocksx * surf->block.size, alignment);
+   surf->stride = align(surf->nblocksx * surf->block.size, alignment);
    surf->usage = flags;
 
    assert(!surf->buffer);
