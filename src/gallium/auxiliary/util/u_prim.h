@@ -119,4 +119,20 @@ static INLINE boolean u_trim_pipe_prim( unsigned pipe_prim, unsigned *nr )
 }
 
 
+static INLINE boolean u_reduced_prim( unsigned pipe_prim )
+{
+   switch (pipe_prim) {
+   case PIPE_PRIM_POINTS:
+      return PIPE_PRIM_POINTS;
+
+   case PIPE_PRIM_LINES:
+   case PIPE_PRIM_LINE_STRIP:
+   case PIPE_PRIM_LINE_LOOP:
+      return PIPE_PRIM_LINES;
+
+   default:
+      return PIPE_PRIM_TRIANGLES;
+   }
+}
+
 #endif
