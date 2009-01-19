@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8.00"
+	Version="8,00"
 	Name="gdi"
 	ProjectGUID="{A1B24907-E196-4826-B6AF-26723629B633}"
+	RootNamespace="gdi"
 	>
 	<Platforms>
 		<Platform
@@ -49,7 +50,7 @@
 				AdditionalIncludeDirectories="../../../../include,../../../../src/mesa,../../../../src/mesa/main,../../../../src/mesa/glapi,../../../../src/mesa/swrast,../../../../src/mesa/shader"
 				PreprocessorDefinitions="_DEBUG;WIN32;_WINDOWS;_USRDLL;GDI_EXPORTS;_DLL;BUILD_GL32;MESA_MINWARN"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="1"
+				RuntimeLibrary="3"
 				PrecompiledHeaderFile=".\Debug/gdi.pch"
 				AssemblerListingLocation=".\Debug/"
 				ObjectFile=".\Debug/"
@@ -74,12 +75,10 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="mesa.lib msvcrtd.lib gdi32.lib user32.lib winmm.lib odbc32.lib odbccp32.lib"
 				OutputFile="Debug/OPENGL32.DLL"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="../mesa/Debug"
-				IgnoreAllDefaultLibraries="true"
 				ModuleDefinitionFile="..\..\..\..\src\mesa\drivers\windows\gdi\mesa.def"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile=".\Debug/OPENGL32.pdb"
@@ -147,7 +146,7 @@
 				AdditionalIncludeDirectories="../../main,../../../../include,../../../../src/mesa,../../../../src/mesa/main,../../../../src/mesa/glapi,../../../../src/mesa/swrast,../../../../src/mesa/shader"
 				PreprocessorDefinitions="NDEBUG;WIN32;_WINDOWS;_USRDLL;GDI_EXPORTS;_DLL;BUILD_GL32;MESA_MINWARN"
 				StringPooling="true"
-				RuntimeLibrary="0"
+				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
 				PrecompiledHeaderFile=".\Release/gdi.pch"
 				AssemblerListingLocation=".\Release/"
@@ -171,12 +170,10 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="mesa.lib winmm.lib gdi32.lib user32.lib msvcrt.lib odbc32.lib odbccp32.lib"
 				OutputFile="Release/OPENGL32.DLL"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="../mesa/Release"
-				IgnoreAllDefaultLibraries="true"
 				ModuleDefinitionFile="..\..\..\..\src\mesa\drivers\windows\gdi\mesa.def"
 				ProgramDatabaseFile=".\Release/OPENGL32.pdb"
 				ImportLibrary=".\Release/OPENGL32.lib"

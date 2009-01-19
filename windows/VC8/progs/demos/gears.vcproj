@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8.00"
+	Version="8,00"
 	Name="gears"
 	ProjectGUID="{3A7B0671-10F8-45D1-B012-F6D650F817CE}"
+	RootNamespace="gears"
 	>
 	<Platforms>
 		<Platform
@@ -45,7 +46,7 @@
 				AdditionalIncludeDirectories="../../../../include"
 				PreprocessorDefinitions="WIN32,_DEBUG,_CONSOLE"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="1"
+				RuntimeLibrary="3"
 				PrecompiledHeaderFile=".\Debug/gears.pch"
 				AssemblerListingLocation=".\Debug/"
 				ObjectFile=".\Debug/"
@@ -69,7 +70,6 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="glut32.lib odbc32.lib odbccp32.lib"
 				OutputFile=".\Debug/gears.exe"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
@@ -136,7 +136,7 @@
 				AdditionalIncludeDirectories="../../../../include"
 				PreprocessorDefinitions="WIN32,NDEBUG,_CONSOLE"
 				StringPooling="true"
-				RuntimeLibrary="0"
+				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
 				PrecompiledHeaderFile=".\Release/gears.pch"
 				AssemblerListingLocation=".\Release/"
@@ -160,7 +160,6 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="glut32.lib odbc32.lib odbccp32.lib"
 				OutputFile=".\Release/gears.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
