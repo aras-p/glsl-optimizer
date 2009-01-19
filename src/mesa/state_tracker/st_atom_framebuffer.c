@@ -34,6 +34,7 @@
 #include "st_context.h"
 #include "st_atom.h"
 #include "st_cb_fbo.h"
+#include "st_public.h"
 #include "st_texture.h"
 #include "pipe/p_context.h"
 #include "pipe/p_inlines.h"
@@ -146,7 +147,18 @@ update_framebuffer_state( struct st_context *st )
 
    if (fb->_ColorDrawBufferIndexes[0] == BUFFER_FRONT_LEFT) {
       if (st->frontbuffer_status == FRONT_STATUS_COPY_OF_BACK) {
-         /* XXX copy back buf to front? */
+         /* copy back color buffer to front color buffer */
+         struct st_framebuffer *stfb = (struct st_framebuffer *) fb;
+         struct pipe_surface *surf_front
+            = st_get_framebuffer_surface(stfb, ST_SURFACE_FRONT_LEFT);
+         struct pipe_surface *surf_back
+            = st_get_framebuffer_surface(stfb, ST_SURFACE_BACK_LEFT);
+
+         st->pipe->surface_copy(st->pipe,
+                                FALSE,
+                                surf_front, 0, 0,  /* dest */
+                                surf_back, 0, 0,   /* src */
+                                fb->Width, fb->Height);
       }
       /* we're assuming we'll really draw to the front buffer */
       st->frontbuffer_status = FRONT_STATUS_DIRTY;
