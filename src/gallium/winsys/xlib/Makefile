@@ -69,11 +69,11 @@ $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME): $(XLIB_WINSYS_OBJECTS) $(LIBS) Makefile
 		--start-group $(LIBS) --end-group $(GL_LIB_DEPS)
 
 
-depend: $(ALL_SOURCES)
+depend: $(XLIB_WINSYS_SOURCES)
 	@ echo "running $(MKDEP)"
 	@ rm -f depend  # workaround oops on gutsy?!?
 	@ touch depend
-	@ $(MKDEP) $(MKDEP_OPTIONS) $(DEFINES) $(INCLUDE_DIRS) $(ALL_SOURCES) \
+	$(MKDEP) $(MKDEP_OPTIONS) $(DEFINES) $(INCLUDE_DIRS) $(XLIB_WINSYS_SOURCES) \
 		> /dev/null 2>/dev/null
 
 
