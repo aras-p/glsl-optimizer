@@ -310,6 +310,7 @@ static void
 Init(int argc, char *argv[])
 {
    static const GLfloat mat[4] = { 1.0, 0.5, 0.5, 1.0 };
+   GLboolean ARB_fbo = glutExtensionSupported("GL_ARB_framebuffer_object");
    GLint i;
 
    if (!glutExtensionSupported("GL_EXT_framebuffer_object")) {
@@ -332,8 +333,10 @@ Init(int argc, char *argv[])
    glGenFramebuffersEXT(1, &MyFB);
    assert(MyFB);
    assert(!glIsFramebufferEXT(MyFB));
-   glDeleteFramebuffersEXT(1, &MyFB);
-   assert(!glIsFramebufferEXT(MyFB));
+   if (!ARB_fbo) {
+      glDeleteFramebuffersEXT(1, &MyFB);
+      assert(!glIsFramebufferEXT(MyFB));
+   }
    /* Note, continue to use MyFB below */
 
    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, MyFB);

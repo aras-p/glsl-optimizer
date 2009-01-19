@@ -122,6 +122,7 @@ Key( unsigned char key, int x, int y )
 static void
 Init( void )
 {
+   GLboolean ARB_fbo = glutExtensionSupported("GL_ARB_framebuffer_object");
    GLint i;
 
    if (!glutExtensionSupported("GL_EXT_framebuffer_object")) {
@@ -133,16 +134,20 @@ Init( void )
    glGenFramebuffersEXT(1, &MyFB);
    assert(MyFB);
    assert(!glIsFramebufferEXT(MyFB));
-   glDeleteFramebuffersEXT(1, &MyFB);
-   assert(!glIsFramebufferEXT(MyFB));
+   if (!ARB_fbo) {
+      glDeleteFramebuffersEXT(1, &MyFB);
+      assert(!glIsFramebufferEXT(MyFB));
+   }
    /* Note, continue to use MyFB below */
 
    glGenRenderbuffersEXT(1, &MyRB);
    assert(MyRB);
    assert(!glIsRenderbufferEXT(MyRB));
-   glDeleteRenderbuffersEXT(1, &MyRB);
-   assert(!glIsRenderbufferEXT(MyRB));
-   MyRB = 42; /* an arbitrary ID */
+   if (!ARB_fbo) {
+      glDeleteRenderbuffersEXT(1, &MyRB);
+      assert(!glIsRenderbufferEXT(MyRB));
+      MyRB = 42; /* an arbitrary ID */
+   }
 
    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, MyFB);
    assert(glIsFramebufferEXT(MyFB));
