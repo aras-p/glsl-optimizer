@@ -68,13 +68,10 @@ intel_be_offset_relocation(struct intel_be_batchbuffer *batch,
 	offset = (unsigned)(batch->base.ptr - batch->base.map);
 	batch->base.ptr += 4;
 
-/*
-	TODO: Enable this when we submit batch buffers to HW
 	ret = drm_intel_bo_emit_reloc(bo, pre_add,
 	                              batch->bo, offset,
 	                              read_domains,
 	                              write_domain);
-*/
 
 	if (!ret)
 		batch->base.relocs++;
@@ -87,10 +84,31 @@ intel_be_batchbuffer_flush(struct intel_be_batchbuffer *batch,
 			   struct intel_be_fence **fence)
 {
 	struct i915_batchbuffer *i915 = &batch->base;
+	unsigned used = 0;
+	int ret = 0;
 
 	assert(i915_batchbuffer_space(i915) >= 0);
 
-	/* TODO: submit stuff to HW */
+	used = batch->base.ptr - batch->base.map;
+	assert((used & 3) == 0);
+
+	if (used & 4) {
+		((uint32_t *) batch->base.ptr)[0] = ((0<<29)|(4<<23)); // MI_FLUSH;
+		((uint32_t *) batch->base.ptr)[1] = 0;
+		((uint32_t *) batch->base.ptr)[2] = (0xA<<23); // MI_BATCH_BUFFER_END;
+		batch->base.ptr += 12;
+	} else {
+		((uint32_t *) batch->base.ptr)[0] = ((0<<29)|(4<<23)); // MI_FLUSH;
+		((uint32_t *) batch->base.ptr)[1] = (0xA<<23); // MI_BATCH_BUFFER_END;
+		batch->base.ptr += 8;
+	}
+
+	used = batch->base.ptr - batch->base.map;
+
+	drm_intel_bo_subdata(batch->bo, 0, used, batch->base.map);
+	ret = drm_intel_bo_exec(batch->bo, used, NULL, 0, 0);
+
+	assert(ret == 0);
 
 	intel_be_batchbuffer_reset(batch);
 
