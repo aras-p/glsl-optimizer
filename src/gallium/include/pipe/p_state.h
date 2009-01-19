@@ -172,7 +172,8 @@ struct pipe_shader_state
 };
 
 
-struct pipe_depth_state {
+struct pipe_depth_state 
+{
    unsigned enabled:1;         /**< depth test enabled? */
    unsigned writemask:1;       /**< allow depth buffer writes? */
    unsigned func:3;            /**< depth test func (PIPE_FUNC_x) */
@@ -180,7 +181,8 @@ struct pipe_depth_state {
 };
 
 
-struct pipe_stencil_state {
+struct pipe_stencil_state
+{
    unsigned enabled:1;  /**< stencil[0]: stencil enabled, stencil[1]: two-side enabled */
    unsigned func:3;     /**< PIPE_FUNC_x */
    unsigned fail_op:3;  /**< PIPE_STENCIL_OP_x */
@@ -192,7 +194,8 @@ struct pipe_stencil_state {
 };
 
 
-struct pipe_alpha_state {
+struct pipe_alpha_state
+{
    unsigned enabled:1;
    unsigned func:3;     /**< PIPE_FUNC_x */
    float ref;           /**< reference value */
@@ -291,7 +294,7 @@ struct pipe_surface
 
    struct pipe_winsys *winsys;   /**< winsys which owns/created the surface */
 
-   struct pipe_texture *texture; /**< optional texture into which this is a view  */
+   struct pipe_texture *texture; /**< optional texture into which this is a view */
    unsigned face;
    unsigned level;
    unsigned zslice;
@@ -317,9 +320,9 @@ struct pipe_texture
    unsigned last_level:8;    /**< Index of last mipmap level present/defined */
    unsigned compressed:1;
 
-   unsigned nr_samples:8;          /**< for multisampled surfaces, nr of samples */
+   unsigned nr_samples:8;    /**< for multisampled surfaces, nr of samples */
 
-   unsigned tex_usage;          /* PIPE_TEXTURE_USAGE_* */
+   unsigned tex_usage;       /* PIPE_TEXTURE_USAGE_* */
 
    /* These are also refcounted:
     */
