@@ -27,7 +27,7 @@
 #define XMESAP_H
 
 
-#include "GL/xmesa.h"
+#include "xmesa.h"
 #include "mtypes.h"
 #ifdef XFree86Server
 #include "xm_image.h"
