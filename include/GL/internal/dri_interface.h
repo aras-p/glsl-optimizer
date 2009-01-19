@@ -624,6 +624,8 @@ struct __DRIswrastExtensionRec {
 #define __DRI_BUFFER_DEPTH		4
 #define __DRI_BUFFER_STENCIL		5
 #define __DRI_BUFFER_ACCUM		6
+#define __DRI_BUFFER_FAKE_FRONT_LEFT	7
+#define __DRI_BUFFER_FAKE_FRONT_RIGHT	8
 
 struct __DRIbufferRec {
     unsigned int attachment;
