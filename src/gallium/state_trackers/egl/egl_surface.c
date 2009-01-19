@@ -7,6 +7,8 @@
 #include "egllog.h"
 
 #include "pipe/p_inlines.h"
+#include "pipe/p_screen.h"
+#include "pipe/p_context.h"
 
 #include "state_tracker/drm_api.h"
 
@@ -64,6 +66,97 @@ drm_create_framebuffer(const __GLcontextModes *visual,
 	                             priv);
 }
 
+static void
+drm_create_texture(_EGLDriver *drv,
+                   struct drm_screen *scrn,
+                   unsigned w, unsigned h)
+{
+	struct drm_device *dev = (struct drm_device *)drv;
+	struct pipe_screen *screen = dev->screen;
+	struct pipe_surface *surface;
+	struct pipe_texture *texture;
+	struct pipe_texture templat;
+	struct pipe_buffer *buf;
+	unsigned stride = 1024;
+	unsigned pitch = 0;
+	unsigned size = 0;
+	void *ptr;
+
+	/* ugly */
+	if (stride < w)
+		stride = 2048;
+
+	pitch = stride * 4;
+	size = h * 2 * pitch;
+
+	buf = pipe_buffer_create(screen,
+	                         0, /* alignment */
+	                         PIPE_BUFFER_USAGE_GPU_READ_WRITE |
+	                         PIPE_BUFFER_USAGE_CPU_READ_WRITE,
+	                         size);
+
+	if (!buf)
+		goto err_buf;
+
+#if DEBUG
+	ptr = pipe_buffer_map(screen, buf, PIPE_BUFFER_USAGE_CPU_WRITE);
+	memset(ptr, 0xFF, size);
+	pipe_buffer_unmap(screen, buf);
+#else
+	(void)ptr;
+#endif
+
+	memset(&templat, 0, sizeof(templat));
+	templat.tex_usage |= PIPE_TEXTURE_USAGE_DISPLAY_TARGET;
+	templat.tex_usage |= PIPE_TEXTURE_USAGE_RENDER_TARGET;
+	templat.target = PIPE_TEXTURE_2D;
+	templat.last_level = 0;
+	templat.depth[0] = 1;
+	templat.format = PIPE_FORMAT_A8R8G8B8_UNORM;
+	templat.width[0] = w;
+	templat.height[0] = h;
+	pf_get_block(templat.format, &templat.block);
+
+	texture = screen->texture_blanket(dev->screen,
+	                                  &templat,
+	                                  &pitch,
+	                                  buf);
+	if (!texture)
+		goto err_tex;
+
+	surface = screen->get_tex_surface(screen,
+	                                  texture,
+	                                  0,
+	                                  0,
+	                                  0,
+	                                  PIPE_BUFFER_USAGE_GPU_WRITE);
+
+	if (!surface)
+		goto err_surf;
+
+
+	scrn->tex = texture;
+	scrn->surface = surface;
+	scrn->buffer = buf;
+	scrn->front.width = w;
+	scrn->front.height = h;
+	scrn->front.pitch = pitch;
+	scrn->front.handle = drm_api_hocks.handle_from_buffer(dev->winsys, scrn->buffer);
+	if (0)
+		goto err_handle;
+
+	return;
+
+err_handle:
+	pipe_surface_reference(&surface, NULL);
+err_surf:
+	pipe_texture_reference(&texture, NULL);
+err_tex:
+	pipe_buffer_reference(screen, &buf, NULL);
+err_buf:
+	return;
+}
+
 /*
  * Exported functions
  */
@@ -87,6 +180,8 @@ drm_takedown_shown_screen(_EGLDriver *drv, struct drm_screen *screen)
 	drmModeFreeFB(screen->fb);
 	screen->fb = NULL;
 
+	pipe_surface_reference(&screen->surface, NULL);
+	pipe_texture_reference(&screen->tex, NULL);
 	pipe_buffer_reference(dev->screen, &screen->buffer, NULL);
 
 	screen->shown = 0;
@@ -186,33 +281,21 @@ drm_show_screen_surface_mesa(_EGLDriver *drv, EGLDisplay dpy,
 	struct drm_surface *surf = lookup_drm_surface(surface);
 	struct drm_screen *scrn = lookup_drm_screen(dpy, screen);
 	_EGLMode *mode = _eglLookupMode(dpy, m);
-	size_t pitch = 2048 * 4;
-	size_t size = mode->Height * pitch;
 	int ret;
 	unsigned int i, k;
-	void *ptr;
 
 	if (scrn->shown)
 		drm_takedown_shown_screen(drv, scrn);
 
-	scrn->buffer = pipe_buffer_create(dev->screen,
-	                                  0, /* alignment */
-	                                  PIPE_BUFFER_USAGE_GPU_READ_WRITE |
-	                                  PIPE_BUFFER_USAGE_CPU_READ_WRITE,
-	                                  size);
 
+	drm_create_texture(drv, scrn, mode->Width, mode->Height);
 	if (!scrn->buffer)
 		return EGL_FALSE;
 
-	ptr = pipe_buffer_map(dev->screen, scrn->buffer, PIPE_BUFFER_USAGE_CPU_WRITE);
-	memset(ptr, 0xFF, size);
-	pipe_buffer_unmap(dev->screen, scrn->buffer);
-
-	scrn->handle = drm_api_hocks.handle_from_buffer(dev->winsys, scrn->buffer);
-
-	ret = drmModeAddFB(dev->drmFD, mode->Width, mode->Height,
-	                   32, 32, pitch,
-	                   scrn->handle,
+	ret = drmModeAddFB(dev->drmFD,
+	                   scrn->front.width, scrn->front.height,
+	                   32, 32, scrn->front.pitch,
+	                   scrn->front.handle,
 	                   &scrn->fbID);
 
 	if (ret)
@@ -257,8 +340,8 @@ drm_show_screen_surface_mesa(_EGLDriver *drv, EGLDisplay dpy,
 		goto err_crtc;
 
 	surf->screen = scrn;
-	scrn->surf = surf;
 
+	scrn->surf = surf;
 	scrn->shown = 1;
 
 	return EGL_TRUE;
@@ -272,6 +355,8 @@ err_fb:
 	scrn->fb = NULL;
 
 err_bo:
+	pipe_surface_reference(&scrn->surface, NULL);
+	pipe_texture_reference(&scrn->tex, NULL);
 	pipe_buffer_reference(dev->screen, &scrn->buffer, NULL);
 
 	return EGL_FALSE;
@@ -314,6 +399,15 @@ drm_swap_buffers(_EGLDriver *drv, EGLDisplay dpy, EGLSurface draw)
 		st_notify_swapbuffers(surf->stfb);
 
 		if (surf->screen) {
+			surf->user->pipe->flush(surf->user->pipe, PIPE_FLUSH_RENDER_CACHE | PIPE_FLUSH_TEXTURE_CACHE, NULL);
+			surf->user->pipe->surface_copy(surf->user->pipe,
+				0,
+				surf->screen->surface,
+				0, 0,
+				back_surf,
+				0, 0,
+				surf->w, surf->h);
+			surf->user->pipe->flush(surf->user->pipe, PIPE_FLUSH_RENDER_CACHE | PIPE_FLUSH_TEXTURE_CACHE, NULL);
 			/* TODO stuff here */
 		}
 

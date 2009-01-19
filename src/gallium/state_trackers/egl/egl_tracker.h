@@ -96,13 +96,19 @@ struct drm_screen
 	 */
 
 	struct pipe_buffer *buffer;
+	struct pipe_texture *tex;
+	struct pipe_surface *surface;
 
 	/*
 	 * drm
 	 */
 
-	/* buffer handle */
-	int handle;
+	struct {
+		unsigned height;
+		unsigned width;
+		unsigned pitch;
+		unsigned handle;
+	} front;
 
 	/* currently only support one connector */
 	drmModeConnectorPtr connector;
