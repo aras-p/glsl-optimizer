@@ -297,6 +297,7 @@ static inline int vlGrabMacroBlock
 {
 	assert(mc);
 	assert(macroblock);
+	assert(mc->num_macroblocks < mc->macroblocks_per_picture);
 
 	mc->macroblocks[mc->num_macroblocks].mbx = macroblock->mbx;
 	mc->macroblocks[mc->num_macroblocks].mby = macroblock->mby;
@@ -330,6 +331,7 @@ static inline int vlGrabMacroBlock
 }
 
 #define SET_BLOCK(vb, cbp, mbx, mby, unitx, unity, ofsx, ofsy, hx, hy, lm, cbm, crm, zb)					\
+	do {															\
 	(vb)[0].pos.x = (mbx) * (unitx) + (ofsx);		(vb)[0].pos.y = (mby) * (unity) + (ofsy);			\
 	(vb)[1].pos.x = (mbx) * (unitx) + (ofsx);		(vb)[1].pos.y = (mby) * (unity) + (ofsy) + (hy);		\
 	(vb)[2].pos.x = (mbx) * (unitx) + (ofsx) + (hx);	(vb)[2].pos.y = (mby) * (unity) + (ofsy);			\
@@ -392,7 +394,8 @@ static inline int vlGrabMacroBlock
 		(vb)[3].cr_tc.x = (zb)[2].x + (hx);	(vb)[3].cr_tc.y = (zb)[2].y;						\
 		(vb)[4].cr_tc.x = (zb)[2].x;		(vb)[4].cr_tc.y = (zb)[2].y + (hy);					\
 		(vb)[5].cr_tc.x = (zb)[2].x + (hx);	(vb)[5].cr_tc.y = (zb)[2].y + (hy);					\
-	}
+	}															\
+	} while (0)
 
 static inline int vlGenMacroblockVerts
 (
@@ -409,6 +412,7 @@ static inline int vlGenMacroblockVerts
 	assert(mc);
 	assert(macroblock);
 	assert(ycbcr_vb);
+	assert(pos < mc->macroblocks_per_picture);
 
 	switch (macroblock->mb_type)
 	{
@@ -580,6 +584,8 @@ static int vlFlush
 
 	if (mc->num_macroblocks < mc->macroblocks_per_picture)
 		return 0;
+
+	assert(mc->num_macroblocks <= mc->macroblocks_per_picture);
 
 	pipe = mc->pipe;
 
