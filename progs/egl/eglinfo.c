@@ -147,7 +147,8 @@ int
 main(int argc, char *argv[])
 {
    int maj, min;
-   EGLDisplay d = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+   //EGLDisplay d = eglGetDisplay((EGLNativeDisplayType)"!EGL_i915");
+   EGLDisplay d = eglGetDisplay((EGLNativeDisplayType)"!EGL_i915");
 
    if (!eglInitialize(d, &maj, &min)) {
       printf("eglinfo: eglInitialize failed\n");
