@@ -191,6 +191,9 @@ _mesa_enable_sw_extensions(GLcontext *ctx)
 #if FEATURE_ARB_fragment_shader
    ctx->Extensions.ARB_fragment_shader = GL_TRUE;
 #endif
+#if FEATURE_ARB_framebuffer_object
+   ctx->Extensions.ARB_framebuffer_object = GL_TRUE;
+#endif
    ctx->Extensions.ARB_half_float_pixel = GL_TRUE;
    ctx->Extensions.ARB_imaging = GL_TRUE;
    ctx->Extensions.ARB_multitexture = GL_TRUE;
