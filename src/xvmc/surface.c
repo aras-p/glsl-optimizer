@@ -73,14 +73,13 @@ Status XvMCCreateSurface(Display *display, XvMCContext *context, XvMCSurface *su
 
 	assert(display == vlGetNativeDisplay(vlGetDisplay(vlContextGetScreen(vl_ctx))));
 
-	vlCreateSurface
-	(
-		vlContextGetScreen(vl_ctx),
-		context->width,
-		context->height,
-		vlGetPictureFormat(vl_ctx),
-		&vl_sfc
-	);
+	if (vlCreateSurface(vlContextGetScreen(vl_ctx),
+	                    context->width, context->height,
+	                    vlGetPictureFormat(vl_ctx),
+	                    &vl_sfc))
+	{
+		return BadAlloc;
+	}
 
 	vlBindToContext(vl_sfc, vl_ctx);
 

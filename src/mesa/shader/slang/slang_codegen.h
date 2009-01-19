@@ -36,6 +36,7 @@ typedef struct slang_assemble_ctx_
    slang_atom_pool *atoms;
    slang_name_space space;
    struct gl_program *program;
+   struct gl_sl_pragmas *pragmas;
    slang_var_table *vartable;
    slang_info_log *log;
    struct slang_label_ *curFuncEndLabel;

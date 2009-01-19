@@ -245,14 +245,22 @@ GenFragmentShader(GLint numSamplers)
    int s;
 
    p += sprintf(p, "// Generated fragment shader:\n");
+#ifndef SAMPLERS_ARRAY
    for (s = 0; s < numSamplers; s++) {
       p += sprintf(p, "uniform sampler2D tex%d;\n", s);
    }
+#else
+   p += sprintf(p, "uniform sampler2D tex[%d];\n", numSamplers);
+#endif
    p += sprintf(p, "void main()\n");
    p += sprintf(p, "{\n");
    p += sprintf(p, "   vec4 color = vec4(0.0);\n");
    for (s = 0; s < numSamplers; s++) {
+#ifndef SAMPLERS_ARRAY
       p += sprintf(p, "   color += texture2D(tex%d, gl_TexCoord[0].xy);\n", s);
+#else
+      p += sprintf(p, "   color += texture2D(tex[%d], gl_TexCoord[0].xy);\n", s);
+#endif
    }
    p += sprintf(p, "   gl_FragColor = color;\n");
    p += sprintf(p, "}\n");
@@ -302,7 +310,11 @@ InitProgram(void)
       char uname[10];
       GLint loc;
 
+#ifndef SAMPLERS_ARRAY
       sprintf(uname, "tex%d", s);
+#else
+      sprintf(uname, "tex[%d]", s);
+#endif
       loc = glGetUniformLocation_func(Program, uname);
       assert(loc >= 0);
 

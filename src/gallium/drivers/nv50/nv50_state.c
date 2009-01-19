@@ -175,6 +175,32 @@ nv50_sampler_state_create(struct pipe_context *pipe,
 		break;
 	}
 
+	if (cso->max_anisotropy >= 16.0)
+		tsc[0] |= (7 << 20);
+	else
+	if (cso->max_anisotropy >= 12.0)
+		tsc[0] |= (6 << 20);
+	else
+	if (cso->max_anisotropy >= 10.0)
+		tsc[0] |= (5 << 20);
+	else
+	if (cso->max_anisotropy >= 8.0)
+		tsc[0] |= (4 << 20);
+	else
+	if (cso->max_anisotropy >= 6.0)
+		tsc[0] |= (3 << 20);
+	else
+	if (cso->max_anisotropy >= 4.0)
+		tsc[0] |= (2 << 20);
+	else
+	if (cso->max_anisotropy >= 2.0)
+		tsc[0] |= (1 << 20);
+
+	if (cso->compare_mode == PIPE_TEX_COMPARE_R_TO_TEXTURE) {
+		tsc[0] |= (1 << 8);
+		tsc[0] |= (nvgl_comparison_op(cso->compare_func) & 0x7);
+	}
+
 	return (void *)tsc;
 }
 

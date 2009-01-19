@@ -21,8 +21,8 @@ glGetString(GL_VERSION) depends on the particular driver being used.
 Some drivers don't support all the features required in OpenGL 2.1.
 </p>
 <p>
-<p>
-DRM version 2.4.3 or later should be used with Mesa 7.3
+See the <a href="install.html">Compiling/Installing page</a> for prerequisites
+for DRI ardware acceleration.
 </p>
 
 
@@ -43,10 +43,19 @@ tbd
 <ul>
 <li>Assorted GLSL bug fixes
 <li>Assorted i965 driver fixes
+<li>Fix for wglCreateLayerContext() in WGL/Windows driver
+<li>Build fixes for OpenBSD and gcc 2.95
+<li>GLSL preprocessor handles #pragma now
+<li>Fix incorrect transformation of GL_SPOT_DIRECTION
 </ul>
 
 <h2>Changes</h2>
 <ul>
+<li>Deprecated the "XMesa" interface (include/GL/xmesa*.h files)
+<li>Deprecated the "FXMesa" interface (include/GL/fxmesa.h file)
+<li>Deprecated the "Allegro" interface (include/GL/amesa.h file)
+<li>Removed include/GL/uglmesa.h header
+<li>Removed include/GLView.h header for BeOS
 </ul>
 
 

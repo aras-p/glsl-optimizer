@@ -21,41 +21,101 @@
  */
 
 #include "pipe/p_context.h"
+#include "pipe/p_inlines.h"
 
 #include "nv50_context.h"
+
+struct nv50_query {
+	struct pipe_buffer *buffer;
+	unsigned type;
+	boolean ready;
+	uint64_t result;
+};
+
+static INLINE struct nv50_query *
+nv50_query(struct pipe_query *pipe)
+{
+	return (struct nv50_query *)pipe;
+}
 
 static struct pipe_query *
 nv50_query_create(struct pipe_context *pipe, unsigned type)
 {
-	NOUVEAU_ERR("unimplemented\n");
-	return NULL;
+	struct pipe_winsys *ws = pipe->winsys;
+	struct nv50_query *q = CALLOC_STRUCT(nv50_query);
+
+	assert (q->type == PIPE_QUERY_OCCLUSION_COUNTER);
+	q->type = type;
+
+	q->buffer = ws->buffer_create(ws, 256, 0, 16);
+	if (!q->buffer) {
+		FREE(q);
+		return NULL;
+	}
+
+	return (struct pipe_query *)q;
 }
 
 static void
-nv50_query_destroy(struct pipe_context *pipe, struct pipe_query *q)
+nv50_query_destroy(struct pipe_context *pipe, struct pipe_query *pq)
 {
-	NOUVEAU_ERR("unimplemented\n");
+	struct nv50_query *q = nv50_query(pq);
+
+	if (q) {
+		pipe_buffer_reference(pipe, &q->buffer, NULL);
+		FREE(q);
+	}
 }
 
 static void
-nv50_query_begin(struct pipe_context *pipe, struct pipe_query *q)
+nv50_query_begin(struct pipe_context *pipe, struct pipe_query *pq)
 {
-	NOUVEAU_ERR("unimplemented\n");
+	struct nv50_context *nv50 = nv50_context(pipe);
+	struct nv50_query *q = nv50_query(pq);
+
+	BEGIN_RING(tesla, 0x1530, 1);
+	OUT_RING  (1);
+	BEGIN_RING(tesla, 0x1514, 1);
+	OUT_RING  (1);
+
+	q->ready = FALSE;
 }
 
 static void
-nv50_query_end(struct pipe_context *pipe, struct pipe_query *q)
+nv50_query_end(struct pipe_context *pipe, struct pipe_query *pq)
 {
-	NOUVEAU_ERR("unimplemented\n");
+	struct nv50_context *nv50 = nv50_context(pipe);
+	struct nv50_query *q = nv50_query(pq);
+
+	BEGIN_RING(tesla, 0x1b00, 4);
+	OUT_RELOCh(q->buffer, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
+	OUT_RELOCl(q->buffer, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
+	OUT_RING  (0x00000000);
+	OUT_RING  (0x0100f002);
+	FIRE_RING (NULL);
 }
 
 static boolean
-nv50_query_result(struct pipe_context *pipe, struct pipe_query *q,
+nv50_query_result(struct pipe_context *pipe, struct pipe_query *pq,
 		  boolean wait, uint64_t *result)
 {
-	NOUVEAU_ERR("unimplemented\n");
-	*result = 0xdeadcafe;
-	return TRUE;
+	struct pipe_winsys *ws = pipe->winsys;
+	struct nv50_query *q = nv50_query(pq);
+
+	/*XXX: Want to be able to return FALSE here instead of blocking
+	 *     until the result is available..
+	 */
+
+	if (!q->ready) {
+		uint32_t *map = ws->buffer_map(ws, q->buffer,
+					       PIPE_BUFFER_USAGE_CPU_READ);
+		q->result = map[1];
+		q->ready = TRUE;
+		ws->buffer_unmap(ws, q->buffer);
+	}
+
+	*result = q->result;
+	return q->ready;
 }
 
 void

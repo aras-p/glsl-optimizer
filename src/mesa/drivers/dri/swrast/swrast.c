@@ -66,6 +66,7 @@
 #define need_GL_ARB_vertex_program
 #define need_GL_APPLE_vertex_array_object
 #define need_GL_ATI_fragment_shader
+#define need_GL_ATI_separate_stencil
 #define need_GL_EXT_depth_bounds_test
 #define need_GL_EXT_framebuffer_object
 #define need_GL_EXT_framebuffer_blit
@@ -96,6 +97,7 @@ const struct dri_extension card_extensions[] =
     { "GL_ARB_vertex_program",		GL_ARB_vertex_program_functions },
     { "GL_APPLE_vertex_array_object",	GL_APPLE_vertex_array_object_functions },
     { "GL_ATI_fragment_shader",		GL_ATI_fragment_shader_functions },
+    { "GL_ATI_separate_stencil",	GL_ATI_separate_stencil_functions },
     { "GL_EXT_depth_bounds_test",	GL_EXT_depth_bounds_test_functions },
     { "GL_EXT_framebuffer_object",	GL_EXT_framebuffer_object_functions },
     { "GL_EXT_framebuffer_blit",	GL_EXT_framebuffer_blit_functions },

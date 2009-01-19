@@ -2,7 +2,7 @@ TOP = ../../../../..
 include $(TOP)/configs/current
 
 
-SUBDIRS = common dri egl
+SUBDIRS = gem egl
 
 
 default: subdirs

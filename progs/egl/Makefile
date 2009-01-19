@@ -15,6 +15,7 @@ PROGRAMS = \
 	egltri \
 	eglinfo \
 	eglgears \
+	eglscreen \
 	peglgears \
 	xeglgears \
 	xegl_tri
@@ -69,6 +70,11 @@ eglgears: eglgears.o $(TOP)/$(LIB_DIR)/libEGL.so
 eglgears.o: eglgears.c $(HEADERS)
 	$(CC) -c $(CFLAGS) -I$(TOP)/include eglgears.c
 
+eglscreen: eglscreen.o $(TOP)/$(LIB_DIR)/libEGL.so
+	$(CC) $(CFLAGS) $(LDFLAGS) eglscreen.o -L$(TOP)/$(LIB_DIR) -lEGL -lGL $(LIBDRM_LIB) $(APP_LIB_DEPS) -o $@
+
+eglscreen.o: eglscreen.c $(HEADERS)
+	$(CC) -c $(CFLAGS) -I$(TOP)/include eglscreen.c
 
 peglgears: peglgears.o $(TOP)/$(LIB_DIR)/libEGL.so
 	$(CC) $(CFLAGS) peglgears.o -L$(TOP)/$(LIB_DIR) -lEGL -lGL $(LIBDRM_LIB) $(APP_LIB_DEPS) -o $@

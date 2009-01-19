@@ -116,10 +116,11 @@ cell_vbuf_release_vertices(struct vbuf_render *vbr, void *vertices,
 
    /* Tell SPUs they can release the vert buf */
    if (cvbr->vertex_buf != ~0U) {
+      STATIC_ASSERT(sizeof(struct cell_command_release_verts) % 16 == 0);
       struct cell_command_release_verts *release
          = (struct cell_command_release_verts *)
-         cell_batch_alloc(cell, sizeof(struct cell_command_release_verts));
-      release->opcode = CELL_CMD_RELEASE_VERTS;
+         cell_batch_alloc16(cell, sizeof(struct cell_command_release_verts));
+      release->opcode[0] = CELL_CMD_RELEASE_VERTS;
       release->vertex_buf = cvbr->vertex_buf;
    }
 
@@ -210,15 +211,16 @@ cell_vbuf_draw(struct vbuf_render *vbr,
 
    /* build/insert batch RENDER command */
    {
-      const uint index_bytes = ROUNDUP8(nr_indices * 2);
-      const uint vertex_bytes = nr_vertices * 4 * cell->vertex_info.size;
+      const uint index_bytes = ROUNDUP16(nr_indices * 2);
+      const uint vertex_bytes = ROUNDUP16(nr_vertices * 4 * cell->vertex_info.size);
+      STATIC_ASSERT(sizeof(struct cell_command_render) % 16 == 0);
       const uint batch_size = sizeof(struct cell_command_render) + index_bytes;
 
       struct cell_command_render *render
          = (struct cell_command_render *)
-         cell_batch_alloc(cell, batch_size);
+         cell_batch_alloc16(cell, batch_size);
 
-      render->opcode = CELL_CMD_RENDER;
+      render->opcode[0] = CELL_CMD_RENDER;
       render->prim_type = cvbr->prim;
 
       render->num_indexes = nr_indices;
@@ -236,7 +238,7 @@ cell_vbuf_draw(struct vbuf_render *vbr,
           min_index == 0 &&
           vertex_bytes + 16 <= cell_batch_free_space(cell)) {
          /* vertex data inlined, after indices, at 16-byte boundary */
-         void *dst = cell_batch_alloc_aligned(cell, vertex_bytes, 16);
+         void *dst = cell_batch_alloc16(cell, vertex_bytes);
          memcpy(dst, vertices, vertex_bytes);
          render->inline_verts = TRUE;
          render->vertex_buf = ~0;

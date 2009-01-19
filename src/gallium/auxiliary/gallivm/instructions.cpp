@@ -43,7 +43,7 @@
 #include <llvm/Function.h>
 #include <llvm/InstrTypes.h>
 #include <llvm/Instructions.h>
-#include <llvm/ParameterAttributes.h>
+#include <llvm/Attributes.h>
 #include <llvm/Support/MemoryBuffer.h>
 #include <llvm/Bitcode/ReaderWriter.h>
 

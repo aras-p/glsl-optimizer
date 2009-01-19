@@ -42,7 +42,7 @@ nouveau_context_create(const __GLcontextModes *glVis,
 
 	if (nouveau_context_init(&nv_screen->base, driContextPriv->hHWContext,
 	                         (drmLock *)&driScrnPriv->pSAREA->lock,
-	                         nv_share, &nv->base)) {
+	                         &nv_share->base, &nv->base)) {
 		return GL_FALSE;
 	}
 

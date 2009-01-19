@@ -67,11 +67,18 @@ struct nv50_rasterizer_stateobj {
 	struct nouveau_stateobj *so;
 };
 
+struct nv50_miptree_level {
+	struct pipe_buffer **image;
+	int *image_offset;
+	unsigned image_dirty_cpu[512/32];
+	unsigned image_dirty_gpu[512/32];
+};
+
 struct nv50_miptree {
 	struct pipe_texture base;
 	struct pipe_buffer *buffer;
 
-	int *image_offset;
+	struct nv50_miptree_level level[PIPE_MAX_TEXTURE_LEVELS];
 	int image_nr;
 	int total_size;
 };
@@ -84,7 +91,6 @@ nv50_miptree(struct pipe_texture *pt)
 
 struct nv50_surface {
 	struct pipe_surface base;
-	struct pipe_buffer *untiled;
 };
 
 static INLINE struct nv50_surface *
@@ -185,5 +191,9 @@ extern boolean nv50_state_validate(struct nv50_context *nv50);
 
 /* nv50_tex.c */
 extern void nv50_tex_validate(struct nv50_context *);
+
+/* nv50_miptree.c */
+extern void nv50_miptree_sync(struct pipe_screen *, struct nv50_miptree *,
+			      unsigned level, unsigned image);
 
 #endif

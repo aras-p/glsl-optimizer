@@ -69,7 +69,7 @@ nouveau_pipe_bo_create(struct pipe_winsys *pws, unsigned alignment,
 	nvbuf->base.usage = usage;
 	nvbuf->base.size = size;
 
-	flags = nouveau_flags_from_usage(nv, flags);
+	flags = nouveau_flags_from_usage(nv, usage);
 
 	if (nouveau_bo_new(dev, flags, alignment, size, &nvbuf->bo)) {
 		FREE(nvbuf);
@@ -121,14 +121,9 @@ nouveau_pipe_bo_map(struct pipe_winsys *pws, struct pipe_buffer *buf,
 	if (flags & PIPE_BUFFER_USAGE_CPU_WRITE)
 		map_flags |= NOUVEAU_BO_WR;
 
-	/* XXX: Technically incorrect. If the client maps a buffer for write-only
-	 * and leaves part of the buffer untouched it probably expects those parts
-	 * to remain intact. This is violated because we allocate a whole new buffer
-	 * and don't copy the previous buffer's contents, so this optimization is
-	 * only valid if the client intends to overwrite the whole buffer.
-	 */
-	if ((map_flags & NOUVEAU_BO_RDWR) == NOUVEAU_BO_WR &&
-	    !nouveau_bo_busy(nvbuf->bo, map_flags)) {
+	if (flags & PIPE_BUFFER_USAGE_DISCARD &&
+	    !(flags & PIPE_BUFFER_USAGE_CPU_READ) &&
+	    nouveau_bo_busy(nvbuf->bo, map_flags)) {
 		struct nouveau_pipe_winsys *nvpws = (struct nouveau_pipe_winsys *)pws;
 		struct nouveau_context *nv = nvpws->nv;
 		struct nouveau_device *dev = nv->nv_screen->device;

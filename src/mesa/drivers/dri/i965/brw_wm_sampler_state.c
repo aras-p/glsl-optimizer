@@ -244,7 +244,7 @@ brw_wm_sampler_populate_key(struct brw_context *brw,
 	 entry->minfilter = texObj->MinFilter;
 	 entry->magfilter = texObj->MagFilter;
 	 entry->comparemode = texObj->CompareMode;
-    entry->comparefunc = texObj->CompareFunc;
+         entry->comparefunc = texObj->CompareFunc;
 
 	 dri_bo_unreference(brw->wm.sdc_bo[unit]);
 	 if (firstImage->_BaseFormat == GL_DEPTH_COMPONENT) {

@@ -71,7 +71,10 @@ static int vlResizeFrameBuffer
 	basic_csc->viewport.translate[3] = 0;
 	
 	if (basic_csc->framebuffer_tex)
-		pipe_texture_release(&basic_csc->framebuffer_tex);
+	{
+		pipe_surface_reference(&basic_csc->framebuffer.cbufs[0], NULL);
+		pipe_texture_reference(&basic_csc->framebuffer_tex, NULL);
+	}
 	
 	memset(&template, 0, sizeof(struct pipe_texture));
 	template.target = PIPE_TEXTURE_2D;
@@ -153,11 +156,11 @@ static int vlPutPictureCSC
 	basic_csc = (struct vlBasicCSC*)csc;
 	pipe = basic_csc->pipe;
 
-	vs_consts = pipe->winsys->buffer_map
+	vs_consts = pipe_buffer_map
 	(
-		pipe->winsys,
+		pipe->screen,
 		basic_csc->vs_const_buf.buffer,
-		PIPE_BUFFER_USAGE_CPU_WRITE
+		PIPE_BUFFER_USAGE_CPU_WRITE | PIPE_BUFFER_USAGE_DISCARD
 	);
 
 	vs_consts->dst_scale.x = destw / (float)basic_csc->framebuffer.cbufs[0]->width;
@@ -178,7 +181,7 @@ static int vlPutPictureCSC
 	vs_consts->src_trans.z = 0;
 	vs_consts->src_trans.w = 0;
 
-	pipe->winsys->buffer_unmap(pipe->winsys, basic_csc->vs_const_buf.buffer);
+	pipe_buffer_unmap(pipe->screen, basic_csc->vs_const_buf.buffer);
 
 	pipe->set_sampler_textures(pipe, 1, &surface->texture);
 	pipe->draw_arrays(pipe, PIPE_PRIM_TRIANGLE_STRIP, 0, 4);
@@ -225,17 +228,20 @@ static int vlDestroy
 	pipe = basic_csc->pipe;
 
 	if (basic_csc->framebuffer_tex)
-		pipe_texture_release(&basic_csc->framebuffer_tex);
+	{
+		pipe_surface_reference(&basic_csc->framebuffer.cbufs[0], NULL);
+		pipe_texture_reference(&basic_csc->framebuffer_tex, NULL);
+	}
 
 	pipe->delete_sampler_state(pipe, basic_csc->sampler);
 	pipe->delete_vs_state(pipe, basic_csc->vertex_shader);
 	pipe->delete_fs_state(pipe, basic_csc->fragment_shader);
 
 	for (i = 0; i < 2; ++i)
-		pipe->winsys->buffer_destroy(pipe->winsys, basic_csc->vertex_bufs[i].buffer);
+		pipe_buffer_reference(pipe->screen, &basic_csc->vertex_bufs[i].buffer, NULL);
 
-	pipe->winsys->buffer_destroy(pipe->winsys, basic_csc->vs_const_buf.buffer);
-	pipe->winsys->buffer_destroy(pipe->winsys, basic_csc->fs_const_buf.buffer);
+	pipe_buffer_reference(pipe->screen, &basic_csc->vs_const_buf.buffer, NULL);
+	pipe_buffer_reference(pipe->screen, &basic_csc->fs_const_buf.buffer, NULL);
 
 	FREE(basic_csc);
 
@@ -542,9 +548,9 @@ static int vlCreateDataBufs
 	csc->vertex_bufs[0].pitch = sizeof(struct vlVertex2f);
 	csc->vertex_bufs[0].max_index = 3;
 	csc->vertex_bufs[0].buffer_offset = 0;
-	csc->vertex_bufs[0].buffer = pipe->winsys->buffer_create
+	csc->vertex_bufs[0].buffer = pipe_buffer_create
 	(
-		pipe->winsys,
+		pipe->screen,
 		1,
 		PIPE_BUFFER_USAGE_VERTEX,
 		sizeof(struct vlVertex2f) * 4
@@ -552,12 +558,12 @@ static int vlCreateDataBufs
 
 	memcpy
 	(
-		pipe->winsys->buffer_map(pipe->winsys, csc->vertex_bufs[0].buffer, PIPE_BUFFER_USAGE_CPU_WRITE),
+		pipe_buffer_map(pipe->screen, csc->vertex_bufs[0].buffer, PIPE_BUFFER_USAGE_CPU_WRITE),
 		surface_verts,
 		sizeof(struct vlVertex2f) * 4
 	);
 
-	pipe->winsys->buffer_unmap(pipe->winsys, csc->vertex_bufs[0].buffer);
+	pipe_buffer_unmap(pipe->screen, csc->vertex_bufs[0].buffer);
 
 	csc->vertex_elems[0].src_offset = 0;
 	csc->vertex_elems[0].vertex_buffer_index = 0;
@@ -571,9 +577,9 @@ static int vlCreateDataBufs
 	csc->vertex_bufs[1].pitch = sizeof(struct vlVertex2f);
 	csc->vertex_bufs[1].max_index = 3;
 	csc->vertex_bufs[1].buffer_offset = 0;
-	csc->vertex_bufs[1].buffer = pipe->winsys->buffer_create
+	csc->vertex_bufs[1].buffer = pipe_buffer_create
 	(
-		pipe->winsys,
+		pipe->screen,
 		1,
 		PIPE_BUFFER_USAGE_VERTEX,
 		sizeof(struct vlVertex2f) * 4
@@ -581,12 +587,12 @@ static int vlCreateDataBufs
 
 	memcpy
 	(
-		pipe->winsys->buffer_map(pipe->winsys, csc->vertex_bufs[1].buffer, PIPE_BUFFER_USAGE_CPU_WRITE),
+		pipe_buffer_map(pipe->screen, csc->vertex_bufs[1].buffer, PIPE_BUFFER_USAGE_CPU_WRITE),
 		surface_texcoords,
 		sizeof(struct vlVertex2f) * 4
 	);
 
-	pipe->winsys->buffer_unmap(pipe->winsys, csc->vertex_bufs[1].buffer);
+	pipe_buffer_unmap(pipe->screen, csc->vertex_bufs[1].buffer);
 
 	csc->vertex_elems[1].src_offset = 0;
 	csc->vertex_elems[1].vertex_buffer_index = 1;
@@ -598,11 +604,11 @@ static int vlCreateDataBufs
 	 * Const buffer contains scaling and translation vectors
 	 */
 	csc->vs_const_buf.size = sizeof(struct vlVertexShaderConsts);
-	csc->vs_const_buf.buffer = pipe->winsys->buffer_create
+	csc->vs_const_buf.buffer = pipe_buffer_create
 	(
-		pipe->winsys,
+		pipe->screen,
 		1,
-		PIPE_BUFFER_USAGE_CONSTANT,
+		PIPE_BUFFER_USAGE_CONSTANT | PIPE_BUFFER_USAGE_DISCARD,
 		csc->vs_const_buf.size
 	);
 
@@ -611,9 +617,9 @@ static int vlCreateDataBufs
 	 * Const buffer contains the color conversion matrix and bias vectors
 	 */
 	csc->fs_const_buf.size = sizeof(struct vlFragmentShaderConsts);
-	csc->fs_const_buf.buffer = pipe->winsys->buffer_create
+	csc->fs_const_buf.buffer = pipe_buffer_create
 	(
-		pipe->winsys,
+		pipe->screen,
 		1,
 		PIPE_BUFFER_USAGE_CONSTANT,
 		csc->fs_const_buf.size
@@ -625,12 +631,12 @@ static int vlCreateDataBufs
 	 */
 	memcpy
 	(
-		pipe->winsys->buffer_map(pipe->winsys, csc->fs_const_buf.buffer, PIPE_BUFFER_USAGE_CPU_WRITE),
+		pipe_buffer_map(pipe->screen, csc->fs_const_buf.buffer, PIPE_BUFFER_USAGE_CPU_WRITE),
 		&bt_601_full,
 		sizeof(struct vlFragmentShaderConsts)
 	);
 
-	pipe->winsys->buffer_unmap(pipe->winsys, csc->fs_const_buf.buffer);
+	pipe_buffer_unmap(pipe->screen, csc->fs_const_buf.buffer);
 
 	return 0;
 }

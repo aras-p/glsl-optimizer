@@ -24,8 +24,10 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#define EGL_EGLEXT_PROTOTYPES
 
 #include <EGL/egl.h>
+#include <EGL/eglext.h>
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -34,7 +36,6 @@
 #define MAX_CONFIGS 1000
 #define MAX_MODES 1000
 #define MAX_SCREENS 10
-
 
 /**
  * Print table of all available configurations.
@@ -146,7 +147,8 @@ int
 main(int argc, char *argv[])
 {
    int maj, min;
-   EGLDisplay d = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+   //EGLDisplay d = eglGetDisplay((EGLNativeDisplayType)"!EGL_i915");
+   EGLDisplay d = eglGetDisplay((EGLNativeDisplayType)"!EGL_i915");
 
    if (!eglInitialize(d, &maj, &min)) {
       printf("eglinfo: eglInitialize failed\n");

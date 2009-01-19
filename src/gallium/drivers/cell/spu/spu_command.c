@@ -292,10 +292,10 @@ cmd_state_fragment_program(const struct cell_command_fragment_program *fp)
 
 
 static uint
-cmd_state_fs_constants(const uint64_t *buffer, uint pos)
+cmd_state_fs_constants(const qword *buffer, uint pos)
 {
-   const uint num_const = buffer[pos + 1];
-   const float *constants = (const float *) &buffer[pos + 2];
+   const uint num_const = spu_extract((vector unsigned int)buffer[pos+1], 0);
+   const float *constants = (const float *) &buffer[pos+2];
    uint i;
 
    D_PRINTF(CELL_DEBUG_CMD, "CMD_STATE_FS_CONSTANTS (%u)\n", num_const);
@@ -306,8 +306,8 @@ cmd_state_fs_constants(const uint64_t *buffer, uint pos)
       spu.constants[i] = spu_splats(constants[i]);
    }
 
-   /* return new buffer pos (in 8-byte words) */
-   return pos + 2 + num_const / 2;
+   /* return new buffer pos (in 16-byte words) */
+   return pos + 2 + (ROUNDUP16(num_const * sizeof(float)) / 16);
 }
 
 
@@ -547,8 +547,8 @@ cmd_batch(uint opcode)
 {
    const uint buf = (opcode >> 8) & 0xff;
    uint size = (opcode >> 16);
-   uint64_t buffer[CELL_BUFFER_SIZE / 8] ALIGN16_ATTRIB;
-   const unsigned usize = size / sizeof(buffer[0]);
+   qword buffer[CELL_BUFFER_SIZE / 16] ALIGN16_ATTRIB;
+   const unsigned usize = ROUNDUP16(size) / sizeof(buffer[0]);
    uint pos;
 
    D_PRINTF(CELL_DEBUG_CMD, "BATCH buffer %u, len %u, from %p\n",
@@ -578,7 +578,7 @@ cmd_batch(uint opcode)
     * Loop over commands in the batch buffer
     */
    for (pos = 0; pos < usize; /* no incr */) {
-      switch (buffer[pos]) {
+      switch (si_to_uint(buffer[pos])) {
       /*
        * rendering commands
        */
@@ -587,7 +587,7 @@ cmd_batch(uint opcode)
             struct cell_command_clear_surface *clr
                = (struct cell_command_clear_surface *) &buffer[pos];
             cmd_clear_surface(clr);
-            pos += sizeof(*clr) / 8;
+            pos += sizeof(*clr) / 16;
          }
          break;
       case CELL_CMD_RENDER:
@@ -596,7 +596,7 @@ cmd_batch(uint opcode)
                = (struct cell_command_render *) &buffer[pos];
             uint pos_incr;
             cmd_render(render, &pos_incr);
-            pos += pos_incr;
+            pos += ((pos_incr+1)&~1) / 2; // should 'fix' cmd_render return
          }
          break;
       /*
@@ -607,7 +607,7 @@ cmd_batch(uint opcode)
             struct cell_command_framebuffer *fb
                = (struct cell_command_framebuffer *) &buffer[pos];
             cmd_state_framebuffer(fb);
-            pos += sizeof(*fb) / 8;
+            pos += sizeof(*fb) / 16;
          }
          break;
       case CELL_CMD_STATE_FRAGMENT_OPS:
@@ -616,7 +616,7 @@ cmd_batch(uint opcode)
                = (struct cell_command_fragment_ops *) &buffer[pos];
             cmd_state_fragment_ops(fops);
             /* This is a variant-sized command */
-            pos += (sizeof(*fops) + fops->total_code_size)/ 8;
+            pos += ROUNDUP16(sizeof(*fops) + fops->total_code_size) / 16;
          }
          break;
       case CELL_CMD_STATE_FRAGMENT_PROGRAM:
@@ -624,7 +624,7 @@ cmd_batch(uint opcode)
             struct cell_command_fragment_program *fp
                = (struct cell_command_fragment_program *) &buffer[pos];
             cmd_state_fragment_program(fp);
-            pos += sizeof(*fp) / 8;
+            pos += sizeof(*fp) / 16;
          }
          break;
       case CELL_CMD_STATE_FS_CONSTANTS:
@@ -635,7 +635,7 @@ cmd_batch(uint opcode)
             struct cell_command_rasterizer *rast =
                (struct cell_command_rasterizer *) &buffer[pos];
             spu.rasterizer = rast->rasterizer;
-            pos += sizeof(*rast) / 8;
+            pos += sizeof(*rast) / 16;
          }
          break;
       case CELL_CMD_STATE_SAMPLER:
@@ -643,7 +643,7 @@ cmd_batch(uint opcode)
             struct cell_command_sampler *sampler
                = (struct cell_command_sampler *) &buffer[pos];
             cmd_state_sampler(sampler);
-            pos += sizeof(*sampler) / 8;
+            pos += sizeof(*sampler) / 16;
          }
          break;
       case CELL_CMD_STATE_TEXTURE:
@@ -651,37 +651,37 @@ cmd_batch(uint opcode)
             struct cell_command_texture *texture
                = (struct cell_command_texture *) &buffer[pos];
             cmd_state_texture(texture);
-            pos += sizeof(*texture) / 8;
+            pos += sizeof(*texture) / 16;
          }
          break;
       case CELL_CMD_STATE_VERTEX_INFO:
          cmd_state_vertex_info((struct vertex_info *) &buffer[pos+1]);
-         pos += (1 + ROUNDUP8(sizeof(struct vertex_info)) / 8);
+         pos += 1 + ROUNDUP16(sizeof(struct vertex_info)) / 16;
          break;
       case CELL_CMD_STATE_VIEWPORT:
          (void) memcpy(& draw.viewport, &buffer[pos+1],
                        sizeof(struct pipe_viewport_state));
-         pos += (1 + ROUNDUP8(sizeof(struct pipe_viewport_state)) / 8);
+         pos += 1 + ROUNDUP16(sizeof(struct pipe_viewport_state)) / 16;
          break;
       case CELL_CMD_STATE_UNIFORMS:
-         draw.constants = (const float (*)[4]) (uintptr_t) buffer[pos + 1];
+         draw.constants = (const float (*)[4]) (uintptr_t)spu_extract((vector unsigned int)buffer[pos+1],0);
          pos += 2;
          break;
       case CELL_CMD_STATE_VS_ARRAY_INFO:
          cmd_state_vs_array_info((struct cell_array_info *) &buffer[pos+1]);
-         pos += (1 + ROUNDUP8(sizeof(struct cell_array_info)) / 8);
+         pos += 1 + ROUNDUP16(sizeof(struct cell_array_info)) / 16;
          break;
       case CELL_CMD_STATE_BIND_VS:
 #if 0
          spu_bind_vertex_shader(&draw,
                                 (struct cell_shader_info *) &buffer[pos+1]);
 #endif
-         pos += (1 + ROUNDUP8(sizeof(struct cell_shader_info)) / 8);
+         pos += 1 + ROUNDUP16(sizeof(struct cell_shader_info)) / 16;
          break;
       case CELL_CMD_STATE_ATTRIB_FETCH:
          cmd_state_attrib_fetch((struct cell_attribute_fetch_code *)
                                 &buffer[pos+1]);
-         pos += (1 + ROUNDUP8(sizeof(struct cell_attribute_fetch_code)) / 8);
+         pos += 1 + ROUNDUP16(sizeof(struct cell_attribute_fetch_code)) / 16;
          break;
       /*
        * misc commands
@@ -695,7 +695,7 @@ cmd_batch(uint opcode)
             struct cell_command_fence *fence_cmd =
                (struct cell_command_fence *) &buffer[pos];
             cmd_fence(fence_cmd);
-            pos += sizeof(*fence_cmd) / 8;
+            pos += sizeof(*fence_cmd) / 16;
          }
          break;
       case CELL_CMD_RELEASE_VERTS:
@@ -703,7 +703,7 @@ cmd_batch(uint opcode)
             struct cell_command_release_verts *release
                = (struct cell_command_release_verts *) &buffer[pos];
             cmd_release_verts(release);
-            pos += sizeof(*release) / 8;
+            pos += sizeof(*release) / 16;
          }
          break;
       case CELL_CMD_FLUSH_BUFFER_RANGE: {
@@ -711,11 +711,11 @@ cmd_batch(uint opcode)
 	     &buffer[pos+1];
 
 	 spu_dcache_mark_dirty((unsigned) br->base, br->size);
-         pos += (1 + ROUNDUP8(sizeof(struct cell_buffer_range)) / 8);
+         pos += 1 + ROUNDUP16(sizeof(struct cell_buffer_range)) / 16;
 	 break;
       }
       default:
-         printf("SPU %u: bad opcode: 0x%llx\n", spu.init.id, buffer[pos]);
+         printf("SPU %u: bad opcode: 0x%x\n", spu.init.id, si_to_uint(buffer[pos]));
          ASSERT(0);
          break;
       }

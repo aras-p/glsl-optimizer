@@ -354,11 +354,13 @@ st_render_texture(GLcontext *ctx,
 {
    struct st_renderbuffer *strb;
    struct gl_renderbuffer *rb;
-   struct pipe_texture *pt;
+   struct pipe_texture *pt = st_get_texobj_texture(att->Texture);
    struct st_texture_object *stObj;
    const struct gl_texture_image *texImage =
       att->Texture->Image[att->CubeMapFace][att->TextureLevel];
 
+   if (!pt) 
+      return;
 
    assert(!att->Renderbuffer);
 
@@ -387,8 +389,6 @@ st_render_texture(GLcontext *ctx,
    rb->Height = texImage->Height2;
    /*printf("***** render to texture level %d: %d x %d\n", att->TextureLevel, rb->Width, rb->Height);*/
 
-   pt = st_get_texobj_texture(att->Texture);
-   assert(pt);
    /*printf("***** pipe texture %d x %d\n", pt->width[0], pt->height[0]);*/
 
    pipe_texture_reference( &strb->texture, pt );

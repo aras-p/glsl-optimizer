@@ -84,14 +84,14 @@ default: depend symlinks $(LIBNAME) $(TOP)/$(LIB_DIR)/$(LIBNAME) $(LIBNAME_EGL) 
 
 $(LIBNAME): $(OBJECTS) $(MESA_MODULES) $(PIPE_DRIVERS) $(WINOBJ) Makefile $(TOP)/src/mesa/drivers/dri/Makefile.template
 	$(TOP)/bin/mklib -noprefix -o $@ \
-		$(OBJECTS) $(PIPE_DRIVERS) $(MESA_MODULES)  $(WINOBJ) $(DRI_LIB_DEPS)
+		$(OBJECTS) $(PIPE_DRIVERS) $(MESA_MODULES)  $(WINOBJ) $(DRI_LIB_DEPS) $(DRIVER_EXTRAS)
 
 $(LIBNAME_EGL): $(WINSYS_OBJECTS) $(LIBS)
 	$(TOP)/bin/mklib -o $(LIBNAME_EGL) \
 		-linker "$(CC)" \
 		-noprefix \
 		$(OBJECTS) $(MKLIB_OPTIONS) $(WINSYS_OBJECTS) $(PIPE_DRIVERS) $(WINOBJ) $(DRI_LIB_DEPS) \
-		--whole-archive $(LIBS) $(GALLIUM_AUXILIARIES) --no-whole-archive
+		--whole-archive $(LIBS) $(GALLIUM_AUXILIARIES) --no-whole-archive $(DRIVER_EXTRAS)
 
 $(TOP)/$(LIB_DIR)/$(LIBNAME): $(LIBNAME)
 	$(INSTALL) $(LIBNAME) $(TOP)/$(LIB_DIR) 

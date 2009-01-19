@@ -71,6 +71,7 @@ intel_texture_drawpixels(GLcontext * ctx,
    GLuint texname;
    GLfloat vertices[4][4];
    GLfloat texcoords[4][2];
+   GLfloat z;
 
    /* We're going to mess with texturing with no regard to existing texture
     * state, so if there is some set up we have to bail.
@@ -140,6 +141,9 @@ intel_texture_drawpixels(GLcontext * ctx,
 
    intel_meta_set_passthrough_transform(intel);
 
+   /* convert rasterpos Z from [0,1] to NDC coord in [-1,1] */
+   z = -1.0 + 2.0 * ctx->Current.RasterPos[2];
+
    /* Create the vertex buffer based on the current raster pos.  The x and y
     * we're handed are ctx->Current.RasterPos[0,1] rounded to integers.
     * We also apply the depth.  However, the W component is already multiplied
@@ -147,19 +151,19 @@ intel_texture_drawpixels(GLcontext * ctx,
     */
    vertices[0][0] = x;
    vertices[0][1] = y;
-   vertices[0][2] = ctx->Current.RasterPos[2];
+   vertices[0][2] = z;
    vertices[0][3] = 1.0;
    vertices[1][0] = x + width * ctx->Pixel.ZoomX;
    vertices[1][1] = y;
-   vertices[1][2] = ctx->Current.RasterPos[2];
+   vertices[1][2] = z;
    vertices[1][3] = 1.0;
    vertices[2][0] = x + width * ctx->Pixel.ZoomX;
    vertices[2][1] = y + height * ctx->Pixel.ZoomY;
-   vertices[2][2] = ctx->Current.RasterPos[2];
+   vertices[2][2] = z;
    vertices[2][3] = 1.0;
    vertices[3][0] = x;
    vertices[3][1] = y + height * ctx->Pixel.ZoomY;
-   vertices[3][2] = ctx->Current.RasterPos[2];
+   vertices[3][2] = z;
    vertices[3][3] = 1.0;
 
    texcoords[0][0] = 0.0;

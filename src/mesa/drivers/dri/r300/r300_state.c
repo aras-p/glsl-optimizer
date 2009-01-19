@@ -1675,6 +1675,13 @@ static void r300SetupRSUnit(GLcontext * ctx)
 		rs_col_count += count;
 	}
 
+	if (InputsRead & FRAG_BIT_FOGC) {
+		/* XXX FIX THIS
+		 * Just turn off the bit for now.
+		 * Need to do something similar to the color/texcoord inputs.
+		 */
+		InputsRead &= ~FRAG_BIT_FOGC;
+	}
 
 	for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
 		int swiz;

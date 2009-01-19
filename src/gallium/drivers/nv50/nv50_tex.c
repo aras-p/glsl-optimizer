@@ -85,6 +85,34 @@ nv50_tex_construct(struct nouveau_stateobj *so, struct nv50_miptree *mt)
 			    NV50TIC_0_0_MAPB_C0 | NV50TIC_0_0_TYPEB_UNORM |
 			    NV50TIC_0_0_FMT_8_8);
 		break;
+	case PIPE_FORMAT_DXT1_RGB:
+		so_data(so, NV50TIC_0_0_MAPA_ONE | NV50TIC_0_0_TYPEA_UNORM |
+			    NV50TIC_0_0_MAPR_C0 | NV50TIC_0_0_TYPER_UNORM |
+			    NV50TIC_0_0_MAPG_C1 | NV50TIC_0_0_TYPEG_UNORM |
+			    NV50TIC_0_0_MAPB_C2 | NV50TIC_0_0_TYPEB_UNORM |
+			    NV50TIC_0_0_FMT_DXT1);
+		break;
+	case PIPE_FORMAT_DXT1_RGBA:
+		so_data(so, NV50TIC_0_0_MAPA_C3 | NV50TIC_0_0_TYPEA_UNORM |
+			    NV50TIC_0_0_MAPR_C0 | NV50TIC_0_0_TYPER_UNORM |
+			    NV50TIC_0_0_MAPG_C1 | NV50TIC_0_0_TYPEG_UNORM |
+			    NV50TIC_0_0_MAPB_C2 | NV50TIC_0_0_TYPEB_UNORM |
+			    NV50TIC_0_0_FMT_DXT1);
+		break;
+	case PIPE_FORMAT_DXT3_RGBA:
+		so_data(so, NV50TIC_0_0_MAPA_C3 | NV50TIC_0_0_TYPEA_UNORM |
+			    NV50TIC_0_0_MAPR_C0 | NV50TIC_0_0_TYPER_UNORM |
+			    NV50TIC_0_0_MAPG_C1 | NV50TIC_0_0_TYPEG_UNORM |
+			    NV50TIC_0_0_MAPB_C2 | NV50TIC_0_0_TYPEB_UNORM |
+			    NV50TIC_0_0_FMT_DXT3);
+		break;
+	case PIPE_FORMAT_DXT5_RGBA:
+		so_data(so, NV50TIC_0_0_MAPA_C3 | NV50TIC_0_0_TYPEA_UNORM |
+			    NV50TIC_0_0_MAPR_C0 | NV50TIC_0_0_TYPER_UNORM |
+			    NV50TIC_0_0_MAPG_C1 | NV50TIC_0_0_TYPEG_UNORM |
+			    NV50TIC_0_0_MAPB_C2 | NV50TIC_0_0_TYPEB_UNORM |
+			    NV50TIC_0_0_FMT_DXT5);
+		break;
 	default:
 		return 1;
 	}
@@ -105,14 +133,23 @@ nv50_tex_validate(struct nv50_context *nv50)
 {
 	struct nouveau_grobj *tesla = nv50->screen->tesla;
 	struct nouveau_stateobj *so;
-	int i;
+	int unit, level, image;
 
 	so = so_new(nv50->miptree_nr * 8 + 3, nv50->miptree_nr * 2);
 	so_method(so, tesla, 0x0f00, 1);
 	so_data  (so, NV50_CB_TIC);
 	so_method(so, tesla, 0x40000f04, nv50->miptree_nr * 8);
-	for (i = 0; i < nv50->miptree_nr; i++) {
-		if (nv50_tex_construct(so, nv50->miptree[i])) {
+	for (unit = 0; unit < nv50->miptree_nr; unit++) {
+		struct nv50_miptree *mt = nv50->miptree[unit];
+
+		for (level = 0; level <= mt->base.last_level; level++) {
+			for (image = 0; image < mt->image_nr; image++) {
+				nv50_miptree_sync(&nv50->screen->pipe, mt,
+						  level, image);
+			}
+		}
+
+		if (nv50_tex_construct(so, mt)) {
 			NOUVEAU_ERR("failed tex validate\n");
 			so_ref(NULL, &so);
 			return;

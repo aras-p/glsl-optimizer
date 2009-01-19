@@ -51,6 +51,12 @@ int vlCreateSurface
 
 	sfc->texture = vlGetPipeScreen(screen)->texture_create(vlGetPipeScreen(screen), &template);
 
+	if (!sfc->texture)
+	{
+		FREE(sfc);
+		return 1;
+	}
+
 	*surface = sfc;
 
 	return 0;
@@ -63,7 +69,7 @@ int vlDestroySurface
 {
 	assert(surface);
 
-	pipe_texture_release(&surface->texture);
+	pipe_texture_reference(&surface->texture, NULL);
 	FREE(surface);
 
 	return 0;

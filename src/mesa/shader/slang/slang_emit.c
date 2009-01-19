@@ -1271,6 +1271,20 @@ emit_tex(slang_emit_info *emitInfo, slang_ir_node *n)
       opcode = OPCODE_TXP;
    }
 
+   if (n->Children[0]->Opcode == IR_ELEMENT) {
+      /* array is the sampler (a uniform which'll indicate the texture unit) */
+      assert(n->Children[0]->Children[0]->Store);
+      assert(n->Children[0]->Children[0]->Store->File == PROGRAM_SAMPLER);
+
+      emit(emitInfo, n->Children[0]);
+
+      n->Children[0]->Var = n->Children[0]->Children[0]->Var;
+   } else {
+      /* this is the sampler (a uniform which'll indicate the texture unit) */
+      assert(n->Children[0]->Store);
+      assert(n->Children[0]->Store->File == PROGRAM_SAMPLER);
+   }
+
    /* emit code for the texcoord operand */
    (void) emit(emitInfo, n->Children[1]);
 
@@ -1286,17 +1300,10 @@ emit_tex(slang_emit_info *emitInfo, slang_ir_node *n)
                            NULL,
                            NULL);
 
-   /* Child[0] is the sampler (a uniform which'll indicate the texture unit) */
-   assert(n->Children[0]->Store);
-   assert(n->Children[0]->Store->File == PROGRAM_SAMPLER);
-   /* Store->Index is the sampler index */
+   /* Store->Index is the uniform/sampler index */
    assert(n->Children[0]->Store->Index >= 0);
-   /* Store->Size is the texture target */
-   assert(n->Children[0]->Store->Size >= TEXTURE_1D_INDEX);
-   assert(n->Children[0]->Store->Size <= TEXTURE_RECT_INDEX);
-
-   inst->TexSrcTarget = n->Children[0]->Store->Size;
-   inst->TexSrcUnit = n->Children[0]->Store->Index; /* i.e. uniform's index */
+   inst->TexSrcUnit = n->Children[0]->Store->Index;
+   inst->TexSrcTarget = n->Children[0]->Store->TexTarget;
 
    /* mark the sampler as being used */
    _mesa_use_uniform(emitInfo->prog->Parameters,
@@ -1342,9 +1349,10 @@ emit_copy(slang_emit_info *emitInfo, slang_ir_node *n)
 
    if (n->Store->File == PROGRAM_SAMPLER) {
       /* no code generated for sampler assignments,
-       * just copy the sampler index at compile time.
+       * just copy the sampler index/target at compile time.
        */
       n->Store->Index = n->Children[1]->Store->Index;
+      n->Store->TexTarget = n->Children[1]->Store->TexTarget;
       return NULL;
    }
 
@@ -2370,10 +2378,20 @@ _slang_resolve_subroutines(slang_emit_info *emitInfo)
 
 
 
-
+/**
+ * Convert the IR tree into GPU instructions.
+ * \param n  root of IR tree
+ * \param vt  variable table
+ * \param prog  program to put GPU instructions into
+ * \param pragmas  controls codegen options
+ * \param withEnd  if true, emit END opcode at end
+ * \param log  log for emitting errors/warnings/info
+ */
 GLboolean
 _slang_emit_code(slang_ir_node *n, slang_var_table *vt,
-                 struct gl_program *prog, GLboolean withEnd,
+                 struct gl_program *prog,
+                 const struct gl_sl_pragmas *pragmas,
+                 GLboolean withEnd,
                  slang_info_log *log)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -2390,7 +2408,7 @@ _slang_emit_code(slang_ir_node *n, slang_var_table *vt,
 
    emitInfo.EmitHighLevelInstructions = ctx->Shader.EmitHighLevelInstructions;
    emitInfo.EmitCondCodes = ctx->Shader.EmitCondCodes;
-   emitInfo.EmitComments = ctx->Shader.EmitComments;
+   emitInfo.EmitComments = ctx->Shader.EmitComments || pragmas->Debug;
    emitInfo.EmitBeginEndSub = GL_TRUE;
 
    if (!emitInfo.EmitCondCodes) {

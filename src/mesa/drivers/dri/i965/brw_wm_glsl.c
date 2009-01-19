@@ -892,15 +892,19 @@ static void emit_lrp(struct brw_wm_compile *c,
     }
 }
 
+/**
+ * For GLSL shaders, this KIL will be unconditional.
+ * It may be contained inside an IF/ENDIF structure of course.
+ */
 static void emit_kil(struct brw_wm_compile *c)
 {
-	struct brw_compile *p = &c->func;
-	struct brw_reg depth = retype(brw_vec1_grf(0, 0), BRW_REGISTER_TYPE_UW);
-	brw_push_insn_state(p);
-	brw_set_mask_control(p, BRW_MASK_DISABLE);
-	brw_NOT(p, c->emit_mask_reg, brw_mask_reg(1)); //IMASK
-	brw_AND(p, depth, c->emit_mask_reg, depth);
-	brw_pop_insn_state(p);
+    struct brw_compile *p = &c->func;
+    struct brw_reg depth = retype(brw_vec1_grf(0, 0), BRW_REGISTER_TYPE_UW);
+    brw_push_insn_state(p);
+    brw_set_mask_control(p, BRW_MASK_DISABLE);
+    brw_NOT(p, c->emit_mask_reg, brw_mask_reg(1)); //IMASK
+    brw_AND(p, depth, c->emit_mask_reg, depth);
+    brw_pop_insn_state(p);
 }
 
 static void emit_mad(struct brw_wm_compile *c,

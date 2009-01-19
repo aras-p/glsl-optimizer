@@ -51,6 +51,9 @@ grammar_error_to_log (slang_info_log *log)
    GLint pos;
 
    grammar_get_last_error ((byte *) (buf), sizeof (buf), &pos);
+   if (buf[0] == 0) {
+      _mesa_snprintf(buf, sizeof(buf), "Preprocessor error");
+   }
    slang_info_log_error (log, buf);
 }
 
@@ -528,6 +531,56 @@ pp_ext_set(pp_ext *self, const char *name, GLboolean enable)
 }
 
 
+static void
+pp_pragmas_init(struct gl_sl_pragmas *pragmas)
+{
+   pragmas->Optimize = GL_TRUE;
+   pragmas->Debug = GL_FALSE;
+}
+
+
+/**
+ * Called in response to #pragma.  For example, "#pragma debug(on)" would
+ * call this function as pp_pragma("debug", "on").
+ * \return GL_TRUE if pragma is valid, GL_FALSE if invalid
+ */
+static GLboolean
+pp_pragma(struct gl_sl_pragmas *pragmas, const char *pragma, const char *param)
+{
+#if 0
+   printf("#pragma %s %s\n", pragma, param);
+#endif
+   if (_mesa_strcmp(pragma, "optimize") == 0) {
+      if (!param)
+         return GL_FALSE; /* missing required param */
+      if (_mesa_strcmp(param, "on") == 0) {
+         pragmas->Optimize = GL_TRUE;
+      }
+      else if (_mesa_strcmp(param, "off") == 0) {
+         pragmas->Optimize = GL_FALSE;
+      }
+      else {
+         return GL_FALSE; /* invalid param */
+      }
+   }
+   else if (_mesa_strcmp(pragma, "debug") == 0) {
+      if (!param)
+         return GL_FALSE; /* missing required param */
+      if (_mesa_strcmp(param, "on") == 0) {
+         pragmas->Debug = GL_TRUE;
+      }
+      else if (_mesa_strcmp(param, "off") == 0) {
+         pragmas->Debug = GL_FALSE;
+      }
+      else {
+         return GL_FALSE; /* invalid param */
+      }
+   }
+   /* all other pragmas are silently ignored */
+   return GL_TRUE;
+}
+
+
 /**
  * The state of preprocessor: current line, file and version number, list
  * of all defined macros and the #if/#endif context.
@@ -862,11 +915,16 @@ parse_if (slang_string *output, const byte *prod, GLuint *pi, GLint *result, pp_
 #define BEHAVIOR_WARN    3
 #define BEHAVIOR_DISABLE 4
 
+#define PRAGMA_NO_PARAM  0
+#define PRAGMA_PARAM     1
+
+
 static GLboolean
 preprocess_source (slang_string *output, const char *source,
                    grammar pid, grammar eid,
                    slang_info_log *elog,
-                   const struct gl_extensions *extensions)
+                   const struct gl_extensions *extensions,
+                   struct gl_sl_pragmas *pragmas)
 {
    static const char *predefined[] = {
       "__FILE__",
@@ -888,6 +946,7 @@ preprocess_source (slang_string *output, const char *source,
    }
 
    pp_state_init (&state, elog, extensions);
+   pp_pragmas_init (pragmas);
 
    /* add the predefined symbols to the symbol table */
    for (i = 0; predefined[i]; i++) {
@@ -940,9 +999,11 @@ preprocess_source (slang_string *output, const char *source,
       else {
          const char *id;
          GLuint idlen;
+         GLubyte token;
 
          i++;
-         switch (prod[i++]) {
+         token = prod[i++];
+         switch (token) {
 
          case TOKEN_END:
             /* End of source string.
@@ -1159,6 +1220,25 @@ preprocess_source (slang_string *output, const char *source,
             }
             break;
 
+         case TOKEN_PRAGMA:
+            {
+               GLint have_param;
+               const char *pragma, *param;
+
+               pragma = (const char *) (&prod[i]);
+               i += _mesa_strlen(pragma) + 1;
+               have_param = (prod[i++] == PRAGMA_PARAM);
+               if (have_param) {
+                  param = (const char *) (&prod[i]);
+                  i += _mesa_strlen(param) + 1;
+               }
+               else {
+                  param = NULL;
+               }
+               pp_pragma(pragmas, pragma, param);
+            }
+            break;
+
          case TOKEN_LINE:
             id = (const char *) (&prod[i]);
             i += _mesa_strlen (id) + 1;
@@ -1223,7 +1303,8 @@ GLboolean
 _slang_preprocess_directives(slang_string *output,
                              const char *input,
                              slang_info_log *elog,
-                             const struct gl_extensions *extensions)
+                             const struct gl_extensions *extensions,
+                             struct gl_sl_pragmas *pragmas)
 {
    grammar pid, eid;
    GLboolean success;
@@ -1239,7 +1320,7 @@ _slang_preprocess_directives(slang_string *output,
       grammar_destroy (pid);
       return GL_FALSE;
    }
-   success = preprocess_source (output, input, pid, eid, elog, extensions);
+   success = preprocess_source (output, input, pid, eid, elog, extensions, pragmas);
    grammar_destroy (eid);
    grammar_destroy (pid);
    return success;

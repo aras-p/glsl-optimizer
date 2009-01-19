@@ -37,7 +37,7 @@
 #include <llvm/Function.h>
 #include <llvm/Instructions.h>
 #include <llvm/Transforms/Utils/Cloning.h>
-#include <llvm/ParameterAttributes.h>
+#include <llvm/Attributes.h>
 #include <llvm/Support/MemoryBuffer.h>
 #include <llvm/Bitcode/ReaderWriter.h>
 
@@ -206,11 +206,12 @@ llvm::Module * InstructionsSoa::currentModule() const
 
 void InstructionsSoa::createBuiltins()
 {
+   std::string ErrMsg;
    MemoryBuffer *buffer = MemoryBuffer::getMemBuffer(
       (const char*)&soabuiltins_data[0],
-      (const char*)&soabuiltins_data[Elements(soabuiltins_data)]);
-   m_builtins = ParseBitcodeFile(buffer);
-   std::cout<<"Builtins created at "<<m_builtins<<std::endl;
+      (const char*)&soabuiltins_data[Elements(soabuiltins_data) - 1]);
+   m_builtins = ParseBitcodeFile(buffer, &ErrMsg);
+   std::cout<<"Builtins created at "<<m_builtins<<" ("<<ErrMsg<<")"<<std::endl;
    assert(m_builtins);
    createDependencies();
 }

@@ -79,9 +79,9 @@ struct spe_function
 };
 
 
-extern void spe_init_func(struct spe_function *p, unsigned code_size);
+extern void spe_init_func(struct spe_function *p, uint code_size);
 extern void spe_release_func(struct spe_function *p);
-extern unsigned spe_code_size(const struct spe_function *p);
+extern uint spe_code_size(const struct spe_function *p);
 
 extern int spe_allocate_available_register(struct spe_function *p);
 extern int spe_allocate_register(struct spe_function *p, int reg);
@@ -89,8 +89,7 @@ extern void spe_release_register(struct spe_function *p, int reg);
 extern void spe_allocate_register_set(struct spe_function *p);
 extern void spe_release_register_set(struct spe_function *p);
 
-extern unsigned
-spe_get_registers_used(const struct spe_function *p, ubyte used[]);
+extern uint spe_get_registers_used(const struct spe_function *p, ubyte used[]);
 
 extern void spe_print_code(struct spe_function *p, boolean enable);
 extern void spe_indent(struct spe_function *p, int spaces);
@@ -103,31 +102,25 @@ extern void spe_comment(struct spe_function *p, int rel_indent, const char *s);
 #define EMIT(_name, _op) \
     extern void _name (struct spe_function *p);
 #define EMIT_(_name, _op) \
-    extern void _name (struct spe_function *p, unsigned rT);
+    extern void _name (struct spe_function *p, int rT);
 #define EMIT_R(_name, _op) \
-    extern void _name (struct spe_function *p, unsigned rT, unsigned rA);
+    extern void _name (struct spe_function *p, int rT, int rA);
 #define EMIT_RR(_name, _op) \
-    extern void _name (struct spe_function *p, unsigned rT, unsigned rA, \
-                       unsigned rB);
+    extern void _name (struct spe_function *p, int rT, int rA, int rB);
 #define EMIT_RRR(_name, _op) \
-    extern void _name (struct spe_function *p, unsigned rT, unsigned rA, \
-                       unsigned rB, unsigned rC);
+    extern void _name (struct spe_function *p, int rT, int rA, int rB, int rC);
 #define EMIT_RI7(_name, _op) \
-    extern void _name (struct spe_function *p, unsigned rT, unsigned rA, \
-                       int imm);
+    extern void _name (struct spe_function *p, int rT, int rA, int imm);
 #define EMIT_RI8(_name, _op, bias) \
-    extern void _name (struct spe_function *p, unsigned rT, unsigned rA, \
-                       int imm);
+    extern void _name (struct spe_function *p, int rT, int rA, int imm);
 #define EMIT_RI10(_name, _op) \
-    extern void _name (struct spe_function *p, unsigned rT, unsigned rA, \
-                       int imm);
+    extern void _name (struct spe_function *p, int rT, int rA, int imm);
 #define EMIT_RI10s(_name, _op) \
-    extern void _name (struct spe_function *p, unsigned rT, unsigned rA, \
-                       int imm);
+    extern void _name (struct spe_function *p, int rT, int rA, int imm);
 #define EMIT_RI16(_name, _op) \
-    extern void _name (struct spe_function *p, unsigned rT, int imm);
+    extern void _name (struct spe_function *p, int rT, int imm);
 #define EMIT_RI18(_name, _op) \
-    extern void _name (struct spe_function *p, unsigned rT, int imm);
+    extern void _name (struct spe_function *p, int rT, int imm);
 #define EMIT_I16(_name, _op) \
     extern void _name (struct spe_function *p, int imm);
 #define UNDEF_EMIT_MACROS
@@ -301,82 +294,82 @@ EMIT_RI16(spe_brhz,      0x044)
 EMIT     (spe_lnop,      0x001)
 
 extern void
-spe_lqd(struct spe_function *p, unsigned rT, unsigned rA, int offset);
+spe_lqd(struct spe_function *p, int rT, int rA, int offset);
 
 extern void
-spe_stqd(struct spe_function *p, unsigned rT, unsigned rA, int offset);
+spe_stqd(struct spe_function *p, int rT, int rA, int offset);
 
-extern void spe_bi(struct spe_function *p, unsigned rA, int d, int e);
-extern void spe_iret(struct spe_function *p, unsigned rA, int d, int e);
-extern void spe_bisled(struct spe_function *p, unsigned rT, unsigned rA,
+extern void spe_bi(struct spe_function *p, int rA, int d, int e);
+extern void spe_iret(struct spe_function *p, int rA, int d, int e);
+extern void spe_bisled(struct spe_function *p, int rT, int rA,
     int d, int e);
-extern void spe_bisl(struct spe_function *p, unsigned rT, unsigned rA,
+extern void spe_bisl(struct spe_function *p, int rT, int rA,
     int d, int e);
-extern void spe_biz(struct spe_function *p, unsigned rT, unsigned rA,
+extern void spe_biz(struct spe_function *p, int rT, int rA,
     int d, int e);
-extern void spe_binz(struct spe_function *p, unsigned rT, unsigned rA,
+extern void spe_binz(struct spe_function *p, int rT, int rA,
     int d, int e);
-extern void spe_bihz(struct spe_function *p, unsigned rT, unsigned rA,
+extern void spe_bihz(struct spe_function *p, int rT, int rA,
     int d, int e);
-extern void spe_bihnz(struct spe_function *p, unsigned rT, unsigned rA,
+extern void spe_bihnz(struct spe_function *p, int rT, int rA,
     int d, int e);
 
 
 /** Load/splat immediate float into rT. */
 extern void
-spe_load_float(struct spe_function *p, unsigned rT, float x);
+spe_load_float(struct spe_function *p, int rT, float x);
 
 /** Load/splat immediate int into rT. */
 extern void
-spe_load_int(struct spe_function *p, unsigned rT, int i);
+spe_load_int(struct spe_function *p, int rT, int i);
 
 /** Load/splat immediate unsigned int into rT. */
 extern void
-spe_load_uint(struct spe_function *p, unsigned rT, unsigned int ui);
+spe_load_uint(struct spe_function *p, int rT, uint ui);
 
 /** And immediate value into rT. */
 extern void
-spe_and_uint(struct spe_function *p, unsigned rT, unsigned rA, unsigned int ui);
+spe_and_uint(struct spe_function *p, int rT, int rA, uint ui);
 
 /** Xor immediate value into rT. */
 extern void
-spe_xor_uint(struct spe_function *p, unsigned rT, unsigned rA, unsigned int ui);
+spe_xor_uint(struct spe_function *p, int rT, int rA, uint ui);
 
 /** Compare equal with immediate value. */
 extern void
-spe_compare_equal_uint(struct spe_function *p, unsigned rT, unsigned rA, unsigned int ui);
+spe_compare_equal_uint(struct spe_function *p, int rT, int rA, uint ui);
 
 /** Compare greater with immediate value. */
 extern void
-spe_compare_greater_uint(struct spe_function *p, unsigned rT, unsigned rA, unsigned int ui);
+spe_compare_greater_uint(struct spe_function *p, int rT, int rA, uint ui);
 
 /** Replicate word 0 of rA across rT. */
 extern void
-spe_splat(struct spe_function *p, unsigned rT, unsigned rA);
+spe_splat(struct spe_function *p, int rT, int rA);
 
 /** rT = complement_all_bits(rA). */
 extern void
-spe_complement(struct spe_function *p, unsigned rT, unsigned rA);
+spe_complement(struct spe_function *p, int rT, int rA);
 
 /** rT = rA. */
 extern void
-spe_move(struct spe_function *p, unsigned rT, unsigned rA);
+spe_move(struct spe_function *p, int rT, int rA);
 
 /** rT = {0,0,0,0}. */
 extern void
-spe_zero(struct spe_function *p, unsigned rT);
+spe_zero(struct spe_function *p, int rT);
 
 /** rT = splat(rA, word) */
 extern void
-spe_splat_word(struct spe_function *p, unsigned rT, unsigned rA, int word);
+spe_splat_word(struct spe_function *p, int rT, int rA, int word);
 
 /** rT = float min(rA, rB) */
 extern void
-spe_float_min(struct spe_function *p, unsigned rT, unsigned rA, unsigned rB);
+spe_float_min(struct spe_function *p, int rT, int rA, int rB);
 
 /** rT = float max(rA, rB) */
 extern void
-spe_float_max(struct spe_function *p, unsigned rT, unsigned rA, unsigned rB);
+spe_float_max(struct spe_function *p, int rT, int rA, int rB);
 
 
 /* Floating-point instructions

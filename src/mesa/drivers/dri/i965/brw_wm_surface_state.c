@@ -192,21 +192,27 @@ brw_create_texture_surface( struct brw_context *brw,
    if (key->bo) 
       surf.ss0.surface_format = translate_tex_format(key->format, key->depthmode);
    else {
-     switch(key->depth) {
-     case 32: surf.ss0.surface_format = BRW_SURFACEFORMAT_B8G8R8A8_UNORM; break;
-     default:
-     case 24: surf.ss0.surface_format = BRW_SURFACEFORMAT_B8G8R8X8_UNORM; break;
-     case 16: surf.ss0.surface_format = BRW_SURFACEFORMAT_B5G6R5_UNORM; break;
-     }
+      switch (key->depth) {
+      case 32:
+         surf.ss0.surface_format = BRW_SURFACEFORMAT_B8G8R8A8_UNORM;
+         break;
+      default:
+      case 24:
+         surf.ss0.surface_format = BRW_SURFACEFORMAT_B8G8R8X8_UNORM;
+         break;
+      case 16:
+         surf.ss0.surface_format = BRW_SURFACEFORMAT_B5G6R5_UNORM;
+         break;
+      }
    }
 
    /* This is ok for all textures with channel width 8bit or less:
     */
 /*    surf.ss0.data_return_format = BRW_SURFACERETURNFORMAT_S1; */
    if (key->bo)
-     surf.ss1.base_addr = key->bo->offset; /* reloc */
+      surf.ss1.base_addr = key->bo->offset; /* reloc */
    else
-     surf.ss1.base_addr = key->offset;
+      surf.ss1.base_addr = key->offset;
 
    surf.ss2.mip_count = key->last_level - key->first_level;
    surf.ss2.width = key->width - 1;

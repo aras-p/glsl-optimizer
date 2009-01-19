@@ -1,8 +1,9 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.3
+ * Version:  7.3
  *
- * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2008  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2009  VMware, Inc.  All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -157,7 +158,7 @@ static const struct instruction_info InstInfo[MAX_OPCODE] = {
    { OPCODE_AND,    "AND",     2, 1 },
    { OPCODE_ARA,    "ARA",     1, 1 },
    { OPCODE_ARL,    "ARL",     1, 1 },
-   { OPCODE_ARL_NV, "ARL",     1, 1 },
+   { OPCODE_ARL_NV, "ARL_NV",  1, 1 },
    { OPCODE_ARR,    "ARL",     1, 1 },
    { OPCODE_BGNLOOP,"BGNLOOP", 0, 0 },
    { OPCODE_BGNSUB, "BGNSUB",  0, 0 },
@@ -186,7 +187,7 @@ static const struct instruction_info InstInfo[MAX_OPCODE] = {
    { OPCODE_FRC,    "FRC",     1, 1 },
    { OPCODE_IF,     "IF",      1, 0 },
    { OPCODE_KIL,    "KIL",     1, 0 },
-   { OPCODE_KIL_NV, "KIL",     0, 0 },
+   { OPCODE_KIL_NV, "KIL_NV",  0, 0 },
    { OPCODE_LG2,    "LG2",     1, 1 },
    { OPCODE_LIT,    "LIT",     1, 1 },
    { OPCODE_LOG,    "LOG",     1, 1 },
@@ -235,7 +236,7 @@ static const struct instruction_info InstInfo[MAX_OPCODE] = {
    { OPCODE_TXD,    "TXD",     3, 1 },
    { OPCODE_TXL,    "TXL",     1, 1 },
    { OPCODE_TXP,    "TXP",     1, 1 },
-   { OPCODE_TXP_NV, "TXP",     1, 1 },
+   { OPCODE_TXP_NV, "TXP_NV",  1, 1 },
    { OPCODE_TRUNC,  "TRUNC",   1, 1 },
    { OPCODE_UP2H,   "UP2H",    1, 1 },
    { OPCODE_UP2US,  "UP2US",   1, 1 },

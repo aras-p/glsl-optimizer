@@ -53,7 +53,7 @@
 #include <llvm/ModuleProvider.h>
 #include <llvm/Pass.h>
 #include <llvm/PassManager.h>
-#include <llvm/ParameterAttributes.h>
+#include <llvm/Attributes.h>
 #include <llvm/Support/PatternMatch.h>
 #include <llvm/ExecutionEngine/JIT.h>
 #include <llvm/ExecutionEngine/Interpreter.h>

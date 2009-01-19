@@ -260,8 +260,8 @@ link_uniform_vars(GLcontext *ctx,
          GLuint newSampNum = *numSamplers;
          if (newSampNum >= ctx->Const.MaxTextureImageUnits) {
             char s[100];
-            sprintf(s, "Too many texture samplers (%u, max is %u)",
-                    newSampNum, ctx->Const.MaxTextureImageUnits);
+            _mesa_sprintf(s, "Too many texture samplers (%u, max is %u)",
+                          newSampNum, ctx->Const.MaxTextureImageUnits);
             link_error(shProg, s);
             return GL_FALSE;
          }
@@ -282,12 +282,14 @@ link_uniform_vars(GLcontext *ctx,
    for (i = 0; i < prog->NumInstructions; i++) {
       struct prog_instruction *inst = prog->Instructions + i;
       if (_mesa_is_tex_instruction(inst->Opcode)) {
-         /*
-         printf("====== remap sampler from %d to %d\n",
-                inst->Sampler, map[ inst->Sampler ]);
-         */
-         /* here, texUnit is really samplerUnit */
          const GLint oldSampNum = inst->TexSrcUnit;
+
+#if 0
+         printf("====== remap sampler from %d to %d\n",
+                inst->TexSrcUnit, samplerMap[ inst->TexSrcUnit ]);
+#endif
+
+         /* here, texUnit is really samplerUnit */
          if (oldSampNum < Elements(samplerMap)) {
             const GLuint newSampNum = samplerMap[oldSampNum];
             inst->TexSrcUnit = newSampNum;
