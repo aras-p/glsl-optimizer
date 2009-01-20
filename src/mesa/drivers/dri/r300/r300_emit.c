@@ -63,141 +63,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #define DEBUG_ALL DEBUG_VERTS
 
-#if defined(USE_X86_ASM)
-#define COPY_DWORDS( dst, src, nr )					\
-do {									\
-	int __tmp;							\
-	__asm__ __volatile__( "rep ; movsl"				\
-			      : "=%c" (__tmp), "=D" (dst), "=S" (__tmp)	\
-			      : "0" (nr),				\
-			        "D" ((long)dst),			\
-			        "S" ((long)src) );			\
-} while (0)
-#else
-#define COPY_DWORDS( dst, src, nr )		\
-do {						\
-   int j;					\
-   for ( j = 0 ; j < nr ; j++ )			\
-      dst[j] = ((int *)src)[j];			\
-   dst += nr;					\
-} while (0)
-#endif
-
-static void r300EmitVec4(uint32_t *out, GLvoid * data, int stride, int count)
-{
-	int i;
-
-	if (RADEON_DEBUG & DEBUG_VERTS)
-		fprintf(stderr, "%s count %d stride %d out %p data %p\n",
-			__FUNCTION__, count, stride, (void *)out, (void *)data);
-
-	if (stride == 4)
-		COPY_DWORDS(out, data, count);
-	else
-		for (i = 0; i < count; i++) {
-			out[0] = *(int *)data;
-			out++;
-			data += stride;
-		}
-}
-
-static void r300EmitVec8(uint32_t *out, GLvoid * data, int stride, int count)
-{
-	int i;
-
-	if (RADEON_DEBUG & DEBUG_VERTS)
-		fprintf(stderr, "%s count %d stride %d out %p data %p\n",
-			__FUNCTION__, count, stride, (void *)out, (void *)data);
-
-	if (stride == 8)
-		COPY_DWORDS(out, data, count * 2);
-	else
-		for (i = 0; i < count; i++) {
-			out[0] = *(int *)data;
-			out[1] = *(int *)(data + 4);
-			out += 2;
-			data += stride;
-		}
-}
-
-static void r300EmitVec12(uint32_t *out, GLvoid * data, int stride, int count)
-{
-	int i;
-
-	if (RADEON_DEBUG & DEBUG_VERTS)
-		fprintf(stderr, "%s count %d stride %d out %p data %p\n",
-			__FUNCTION__, count, stride, (void *)out, (void *)data);
-
-	if (stride == 12) {
-		COPY_DWORDS(out, data, count * 3);
-    }
-	else
-		for (i = 0; i < count; i++) {
-			out[0] = *(int *)data;
-			out[1] = *(int *)(data + 4);
-			out[2] = *(int *)(data + 8);
-			out += 3;
-			data += stride;
-		}
-}
-
-static void r300EmitVec16(uint32_t *out, GLvoid * data, int stride, int count)
-{
-	int i;
-
-	if (RADEON_DEBUG & DEBUG_VERTS)
-		fprintf(stderr, "%s count %d stride %d out %p data %p\n",
-			__FUNCTION__, count, stride, (void *)out, (void *)data);
-
-	if (stride == 16)
-		COPY_DWORDS(out, data, count * 4);
-	else
-		for (i = 0; i < count; i++) {
-			out[0] = *(int *)data;
-			out[1] = *(int *)(data + 4);
-			out[2] = *(int *)(data + 8);
-			out[3] = *(int *)(data + 12);
-			out += 4;
-			data += stride;
-		}
-}
-
-static void r300EmitVec(GLcontext * ctx, struct r300_aos *aos,
-			GLvoid * data, int size, int stride, int count)
-{
-	r300ContextPtr rmesa = R300_CONTEXT(ctx);
-	uint32_t *out;
-    uint32_t bo_size;
-
-    memset(aos, 0, sizeof(struct r300_aos));
-	if (stride == 0) {
-        bo_size = size * 4;
-		count = 1;
-		aos->stride = 0;
-	} else {
-        bo_size = size * count * 4;
-		aos->stride = size;
-	}
-	aos->bo = radeon_bo_open(rmesa->radeon.radeonScreen->bom,
-                             0, bo_size, 32, RADEON_GEM_DOMAIN_GTT, 0);
-    aos->offset = 0;
-	aos->components = size;
-	aos->count = count;
-
-	radeon_bo_map(aos->bo, 1);
-	out = (uint32_t*)((char*)aos->bo->ptr + aos->offset);
-	switch (size) {
-	case 1: r300EmitVec4(out, data, stride, count); break;
-	case 2: r300EmitVec8(out, data, stride, count); break;
-	case 3: r300EmitVec12(out, data, stride, count); break;
-	case 4: r300EmitVec16(out, data, stride, count); break;
-	default:
-		assert(0);
-		break;
-	}
-	radeon_bo_unmap(aos->bo);
-}
-
 #define DW_SIZE(x) ((inputs[tab[(x)]] << R300_DST_VEC_LOC_SHIFT) |	\
 		    (attribptr[tab[(x)]]->size - 1) << R300_DATA_TYPE_0_SHIFT)
 
@@ -429,10 +294,10 @@ int r300EmitArrays(GLcontext * ctx)
 		for (ci = 0; ci < vb->AttribPtr[tab[i]]->size; ci++) {
 			swizzle[i][ci] = ci;
 		}
-		r300EmitVec(ctx, &rmesa->state.aos[i],
-				vb->AttribPtr[tab[i]]->data,
-				vb->AttribPtr[tab[i]]->size,
-				vb->AttribPtr[tab[i]]->stride, count);
+		rcommon_emit_vector(ctx, &rmesa->state.aos[i],
+				    vb->AttribPtr[tab[i]]->data,
+				    vb->AttribPtr[tab[i]]->size,
+				    vb->AttribPtr[tab[i]]->stride, count);
 	}
 
 	/* Setup INPUT_ROUTE. */

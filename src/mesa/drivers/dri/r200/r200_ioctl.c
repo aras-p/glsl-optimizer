@@ -42,6 +42,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "swrast/swrast.h"
 
 #include "r200_context.h"
+#include "common_cmdbuf.h"
 #include "r200_state.h"
 #include "r200_ioctl.h"
 #include "r200_tcl.h"
@@ -77,11 +78,12 @@ static void r200BackUpAndEmitLostStateLocked( r200ContextPtr rmesa )
    saved_store = rmesa->store;
    rmesa->dma.nr_released_bufs = 0;
    rmesa->store = rmesa->backup_store;
-   r200FlushCmdBufLocked( rmesa, __FUNCTION__ );
+   rcommonFlushCmdBufLocked( &rmesa->radeon, __FUNCTION__ );
    rmesa->dma.nr_released_bufs = nr_released_bufs;
    rmesa->store = saved_store;
 }
 
+#if 0
 int r200FlushCmdBufLocked( r200ContextPtr rmesa, const char * caller )
 {
    int ret, i;
@@ -163,7 +165,6 @@ int r200FlushCmdBufLocked( r200ContextPtr rmesa, const char * caller )
    return ret;
 }
 
-
 /* Note: does not emit any commands to avoid recursion on
  * r200AllocCmdBuf.
  */
@@ -173,7 +174,7 @@ void r200FlushCmdBuf( r200ContextPtr rmesa, const char *caller )
 
    LOCK_HARDWARE( &rmesa->radeon );
 
-   ret = r200FlushCmdBufLocked( rmesa, caller );
+   ret = rcommonFlushCmdBufLocked( rmesa, caller );
 
    UNLOCK_HARDWARE( &rmesa->radeon );
 
@@ -182,13 +183,14 @@ void r200FlushCmdBuf( r200ContextPtr rmesa, const char *caller )
       exit(ret);
    }
 }
+#endif
 
 
 /* =============================================================
  * Hardware vertex buffer handling
  */
 
-
+#if 0
 void r200RefillCurrentDmaRegion( r200ContextPtr rmesa )
 {
    struct radeon_dma_buffer *dmabuf;
@@ -209,7 +211,7 @@ void r200RefillCurrentDmaRegion( r200ContextPtr rmesa )
       r200ReleaseDmaRegion( rmesa, &rmesa->dma.current, __FUNCTION__ );
 
    if (rmesa->dma.nr_released_bufs > 4)
-      r200FlushCmdBuf( rmesa, __FUNCTION__ );
+      rcommonFlushCmdBuf( &rmesa->radeon, __FUNCTION__ );
 
    dma.context = rmesa->radeon.dri.hwContext;
    dma.send_count = 0;
@@ -230,7 +232,7 @@ void r200RefillCurrentDmaRegion( r200ContextPtr rmesa )
 	 break;
    
       if (rmesa->dma.nr_released_bufs) {
-	 r200FlushCmdBufLocked( rmesa, __FUNCTION__ );
+	 rcommonFlushCmdBuf( &rmesa->radeon, __FUNCTION__ );
       }
 
       if (rmesa->radeon.do_usleeps) {
@@ -325,7 +327,7 @@ void r200AllocDmaRegion( r200ContextPtr rmesa,
 
    assert( rmesa->dma.current.ptr <= rmesa->dma.current.end );
 }
-
+#endif
 
 /* ================================================================
  * Buffer clear
@@ -437,7 +439,7 @@ static void r200Clear( GLcontext *ctx, GLbitfield mask )
    }
 
    /* Send current state to the hardware */
-   r200FlushCmdBufLocked( rmesa, __FUNCTION__ );
+   rcommonFlushCmdBufLocked( &rmesa->radeon, __FUNCTION__ );
 
    for ( i = 0 ; i < dPriv->numClipRects ; ) {
       GLint nr = MIN2( i + RADEON_NR_SAREA_CLIPRECTS, dPriv->numClipRects );
@@ -525,7 +527,7 @@ void r200Flush( GLcontext *ctx )
    r200EmitState( rmesa );
    
    if (rmesa->store.cmd_used)
-      r200FlushCmdBuf( rmesa, __FUNCTION__ );
+      rcommonFlushCmdBuf( &rmesa->radeon, __FUNCTION__ );
 }
 
 /* Make sure all commands have been sent to the hardware and have

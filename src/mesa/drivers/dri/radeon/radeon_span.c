@@ -308,20 +308,17 @@ void radeonInitSpanFuncs(GLcontext * ctx)
 /**
  * Plug in the Get/Put routines for the given driRenderbuffer.
  */
-void radeonSetSpanFunctions(driRenderbuffer * drb, const GLvisual * vis)
+void radeonSetSpanFunctions(struct radeon_renderbuffer *rrb)
 {
-	if (drb->Base.InternalFormat == GL_RGBA) {
-		if (vis->redBits == 5 && vis->greenBits == 6
-		    && vis->blueBits == 5) {
-			radeonInitPointers_RGB565(&drb->Base);
-		} else {
-			radeonInitPointers_ARGB8888(&drb->Base);
-		}
-	} else if (drb->Base.InternalFormat == GL_DEPTH_COMPONENT16) {
-		radeonInitDepthPointers_z16(&drb->Base);
-	} else if (drb->Base.InternalFormat == GL_DEPTH_COMPONENT24) {
-		radeonInitDepthPointers_z24_s8(&drb->Base);
-	} else if (drb->Base.InternalFormat == GL_STENCIL_INDEX8_EXT) {
-		radeonInitStencilPointers_z24_s8(&drb->Base);
+	if (rrb->base.InternalFormat == GL_RGB5) {
+		radeonInitPointers_RGB565(&rrb->base);
+	} else if (rrb->base.InternalFormat == GL_RGBA8) {
+		radeonInitPointers_ARGB8888(&rrb->base);
+	} else if (rrb->base.InternalFormat == GL_DEPTH_COMPONENT16) {
+		radeonInitDepthPointers_z16(&rrb->base);
+	} else if (rrb->base.InternalFormat == GL_DEPTH_COMPONENT24) {
+		radeonInitDepthPointers_z24_s8(&rrb->base);
+	} else if (rrb->base.InternalFormat == GL_STENCIL_INDEX8_EXT) {
+		radeonInitStencilPointers_z24_s8(&rrb->base);
 	}
 }

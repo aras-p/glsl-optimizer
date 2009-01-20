@@ -538,7 +538,8 @@ struct r200_tcl_info {
    GLuint hw_primitive;
 
 /* hw can handle 12 components max */
-   struct radeon_dma_region *aos_components[12];
+  struct radeon_aos aos[12];
+  //   struct radeon_dma_region *aos_components[12];
    GLuint nr_aos_components;
 
    GLuint *Elts;
@@ -600,6 +601,8 @@ struct r200_swtcl_info {
     */
    GLboolean needproj;
 
+   struct radeon_bo *bo;
+   void (*flush) (r200ContextPtr);
    struct radeon_dma_region indexed_verts;
 };
 
@@ -618,7 +621,6 @@ struct r200_swtcl_info {
     */
 
 #define R200_MAX_VERTEX_SIZE ((3*6)+11)
-
 
 struct r200_context {
    struct radeon_context radeon;
@@ -641,7 +643,7 @@ struct r200_context {
 
    /* Clientdata textures;
     */
-   GLuint prefer_gart_client_texturing;
+  GLuint prefer_gart_client_texturing;
 
    GLboolean save_on_next_emit;
 

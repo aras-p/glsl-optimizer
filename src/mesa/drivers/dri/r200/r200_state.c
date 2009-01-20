@@ -47,6 +47,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "tnl/t_pipeline.h"
 #include "swrast_setup/swrast_setup.h"
 
+#include "radeon_buffer.h"
 #include "r200_context.h"
 #include "r200_ioctl.h"
 #include "r200_state.h"
@@ -1624,8 +1625,8 @@ void r200UpdateWindow( GLcontext *ctx )
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
    __DRIdrawablePrivate *dPriv = rmesa->radeon.dri.drawable;
-   GLfloat xoffset = (GLfloat)dPriv->x;
-   GLfloat yoffset = (GLfloat)dPriv->y + dPriv->h;
+   GLfloat xoffset = dPriv ? (GLfloat) dPriv->x : 0;
+   GLfloat yoffset = dPriv ? (GLfloat) dPriv->y + dPriv->h : 0;
    const GLfloat *v = ctx->Viewport._WindowMap.m;
 
    float_ui32_type sx = { v[MAT_SX] };
@@ -2316,34 +2317,34 @@ r200UpdateDrawBuffer(GLcontext *ctx)
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
    struct gl_framebuffer *fb = ctx->DrawBuffer;
-   driRenderbuffer *drb;
+   struct radeon_renderbuffer *rrb;
 
    if (fb->_ColorDrawBufferIndexes[0] == BUFFER_FRONT_LEFT) {
-      /* draw to front */
-      drb = (driRenderbuffer *) fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer;
-   }
-   else if (fb->_ColorDrawBufferIndexes[0] == BUFFER_BACK_LEFT) {
-      /* draw to back */
-      drb = (driRenderbuffer *) fb->Attachment[BUFFER_BACK_LEFT].Renderbuffer;
-   }
-   else {
-      /* drawing to multiple buffers, or none */
-      return;
+     /* draw to front */
+     rrb = (void *) fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer;
+   } else if (fb->_ColorDrawBufferIndexes[0] == BUFFER_BACK_LEFT) {
+     /* draw to back */
+     rrb = (void *) fb->Attachment[BUFFER_BACK_LEFT].Renderbuffer;
+   } else {
+     /* drawing to multiple buffers, or none */
+     return;
    }
 
-   assert(drb);
-   assert(drb->flippedPitch);
+   assert(rrb);
+   assert(rrb->pitch);
 
    R200_STATECHANGE( rmesa, ctx );
 
+#if 0
    /* Note: we used the (possibly) page-flipped values */
    rmesa->hw.ctx.cmd[CTX_RB3D_COLOROFFSET]
-     = ((drb->flippedOffset + rmesa->radeon.radeonScreen->fbLocation)
+     = ((rrb->flippedOffset + rmesa->radeon.radeonScreen->fbLocation)
 	& R200_COLOROFFSET_MASK);
    rmesa->hw.ctx.cmd[CTX_RB3D_COLORPITCH] = drb->flippedPitch;
    if (rmesa->radeon.sarea->tiling_enabled) {
       rmesa->hw.ctx.cmd[CTX_RB3D_COLORPITCH] |= R200_COLOR_TILE_ENABLE;
    }
+#endif
 }
 
 

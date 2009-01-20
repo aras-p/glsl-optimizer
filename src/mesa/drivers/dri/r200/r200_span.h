@@ -39,7 +39,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 extern void r200InitSpanFuncs( GLcontext *ctx );
 
-extern void
-radeonSetSpanFunctions(driRenderbuffer *rb, const GLvisual *vis);
+extern void radeonSetSpanFunctions(struct radeon_renderbuffer *rrb);
 
 #endif

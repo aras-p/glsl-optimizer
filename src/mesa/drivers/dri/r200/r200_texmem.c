@@ -226,7 +226,7 @@ static void r200UploadRectSubImage( r200ContextPtr rmesa,
 	 tex = (char *)texImage->Data + done * src_pitch;
 
 	 memset(&region, 0, sizeof(region));
-	 r200AllocDmaRegion( rmesa, &region, lines * dstPitch, 1024 );
+	 //	 r200AllocDmaRegion( rmesa, &region, lines * dstPitch, 1024 );
 
 	 /* Copy texdata to dma:
 	  */
@@ -262,7 +262,7 @@ static void r200UploadRectSubImage( r200ContextPtr rmesa,
 	 
 	 r200EmitWait( rmesa, RADEON_WAIT_2D );
 
-	 r200ReleaseDmaRegion( rmesa, &region, __FUNCTION__ );
+	 //	 r200ReleaseDmaRegion( rmesa, &region, __FUNCTION__ );
 	 done += lines;
       }
    }

@@ -45,8 +45,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 extern void r200EmitState( r200ContextPtr rmesa );
 extern void r200EmitVertexAOS( r200ContextPtr rmesa,
-				 GLuint vertex_size,
-				 GLuint offset );
+			       GLuint vertex_size,
+			       struct radeon_bo *bo,
+			       GLuint offset );
 
 extern void r200EmitVbufPrim( r200ContextPtr rmesa,
 				GLuint primitive,
@@ -58,10 +59,7 @@ extern GLushort *r200AllocEltsOpenEnded( r200ContextPtr rmesa,
 					   GLuint primitive,
 					   GLuint min_nr );
 
-extern void r200EmitAOS( r200ContextPtr rmesa,
-			   struct radeon_dma_region **regions,
-			   GLuint n,
-			   GLuint offset );
+extern void r200EmitAOS(r200ContextPtr rmesa, GLuint nr, GLuint offset);
 
 extern void r200EmitBlit( r200ContextPtr rmesa,
 			  GLuint color_fmt,
@@ -75,8 +73,8 @@ extern void r200EmitBlit( r200ContextPtr rmesa,
 
 extern void r200EmitWait( r200ContextPtr rmesa, GLuint flags );
 
-extern void r200FlushCmdBuf( r200ContextPtr rmesa, const char * );
-extern int r200FlushCmdBufLocked( r200ContextPtr rmesa, const char * caller );
+//extern void r200FlushCmdBuf( r200ContextPtr rmesa, const char * );
+//extern int r200FlushCmdBufLocked( r200ContextPtr rmesa, const char * caller );
 
 extern void r200RefillCurrentDmaRegion( r200ContextPtr rmesa );
 
@@ -178,10 +176,11 @@ do {							\
  * and hang on to the lock until the critical section is finished and we flush
  * the buffer again and unlock.
  */
+#if 0
 static INLINE void r200EnsureCmdBufSpace( r200ContextPtr rmesa, int bytes )
 {
    if (rmesa->store.cmd_used + bytes > R200_CMD_BUF_SZ)
-      r200FlushCmdBuf( rmesa, __FUNCTION__ );
+      rcommonFlushCmdBuf( rmesa, __FUNCTION__ );
    assert( bytes <= R200_CMD_BUF_SZ );
 }
 
@@ -200,5 +199,47 @@ static INLINE char *r200AllocCmdBuf( r200ContextPtr rmesa,
    assert( rmesa->store.cmd_used <= R200_CMD_BUF_SZ );
    return head;
 }
+#endif
+
+static inline uint32_t cmdpacket3_clip(int cmd_type)
+{
+  drm_radeon_cmd_header_t cmd;
+
+  cmd.i = 0;
+  cmd.header.cmd_type = RADEON_CMD_PACKET3_CLIP;
+
+  return (uint32_t)cmd.i;
+
+}
+#define OUT_BATCH_PACKET3_CLIP(packet, num_extra) do {	      \
+    if (!b_l_rmesa->radeonScreen->kernel_mm) {		      \
+      OUT_BATCH(cmdpacket3_clip(0));			      \
+      OUT_BATCH(packet);				      \
+    } else {						      \
+      OUT_BATCH(CP_PACKET2);				      \
+      OUT_BATCH(CP_PACKET3((packet), (num_extra)));	      \
+    }							      \
+  } while(0)
+
+static inline uint32_t cmdpacket3(int cmd_type)
+{
+  drm_radeon_cmd_header_t cmd;
+
+  cmd.i = 0;
+  cmd.header.cmd_type = RADEON_CMD_PACKET3;
+
+  return (uint32_t)cmd.i;
+
+}
+#define OUT_BATCH_PACKET3(packet, num_extra) do {	      \
+    if (!b_l_rmesa->radeonScreen->kernel_mm) {		      \
+      OUT_BATCH(cmdpacket3(0));			      \
+      OUT_BATCH(packet);				      \
+    } else {						      \
+      OUT_BATCH(CP_PACKET2);				      \
+      OUT_BATCH(CP_PACKET3((packet), (num_extra)));	      \
+    }							      \
+  } while(0)
+
 
 #endif /* __R200_IOCTL_H__ */

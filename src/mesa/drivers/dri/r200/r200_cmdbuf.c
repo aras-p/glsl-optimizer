@@ -38,7 +38,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "swrast/swrast.h"
 #include "main/simple_list.h"
 
+#include "radeon_cs.h"
 #include "r200_context.h"
+#include "common_cmdbuf.h"
 #include "r200_state.h"
 #include "r200_ioctl.h"
 #include "r200_tcl.h"
@@ -148,6 +150,40 @@ static void r200SaveHwState( r200ContextPtr rmesa )
       fprintf(stderr, "Returning to r200EmitState\n");
 }
 
+static INLINE void r200EmitAtoms(r200ContextPtr r200, GLboolean dirty)
+{
+   BATCH_LOCALS(&r200->radeon);
+   struct radeon_state_atom *atom;
+   int dwords;
+
+   /* Emit actual atoms */
+   foreach(atom, &r200->hw.atomlist) {
+     if ((atom->dirty || r200->hw.all_dirty) == dirty) {
+       dwords = (*atom->check) (r200->radeon.glCtx, atom);
+       if (dwords) {
+	 //	 if (DEBUG_CMDBUF && RADEON_DEBUG & DEBUG_STATE) {
+	 //	   r300PrintStateAtom(r300, atom);
+	 //		}
+	 if (atom->emit) {
+	   (*atom->emit)(r200->radeon.glCtx, atom);
+	 } else {
+	   BEGIN_BATCH_NO_AUTOSTATE(dwords);
+	   OUT_BATCH_TABLE(atom->cmd, dwords);
+	   END_BATCH();
+	 }
+	 atom->dirty = GL_FALSE;
+       } else {
+	 //	 if (DEBUG_CMDBUF && RADEON_DEBUG & DEBUG_STATE) {
+	 //	   fprintf(stderr, "  skip state %s\n",
+	 //		   atom->name);
+	 //	 }
+       }
+     }
+   }
+   
+   COMMIT_BATCH();
+}
+
 void r200EmitState( r200ContextPtr rmesa )
 {
    char *dest;
@@ -163,8 +199,8 @@ void r200EmitState( r200ContextPtr rmesa )
       rmesa->save_on_next_emit = GL_FALSE;
    }
 
-   if (!rmesa->hw.is_dirty && !rmesa->hw.all_dirty)
-      return;
+   if (rmesa->radeon.cmdbuf.cs->cdw && !rmesa->hw.is_dirty && !rmesa->hw.all_dirty)
+       return;
 
    mtu = rmesa->radeon.glCtx->Const.MaxTextureUnits;
 
@@ -172,44 +208,19 @@ void r200EmitState( r200ContextPtr rmesa )
     * for enough space for the case of emitting all state, and inline the
     * r200AllocCmdBuf code here without all the checks.
     */
-   r200EnsureCmdBufSpace( rmesa, rmesa->hw.max_state_size );
+   rcommonEnsureCmdBufSpace(&rmesa->radeon, rmesa->hw.max_state_size, __FUNCTION__);
 
-   /* we need to calculate dest after EnsureCmdBufSpace
-      as we may flush the buffer - airlied */
-   dest = rmesa->store.cmd_buf + rmesa->store.cmd_used;
-   if (R200_DEBUG & DEBUG_STATE) {
-      foreach( atom, &rmesa->hw.atomlist ) {
-	 if ( atom->dirty || rmesa->hw.all_dirty ) {
-	    dwords = atom->check( rmesa->radeon.glCtx, atom );
-	    if ( dwords )
-	       print_state_atom( atom );
-	    else
-	       fprintf(stderr, "skip state %s\n", atom->name);
-	 }
-      }
+   if (!rmesa->radeon.cmdbuf.cs->cdw) {
+     if (RADEON_DEBUG & DEBUG_STATE)
+       fprintf(stderr, "Begin reemit state\n");
+     
+     r200EmitAtoms(rmesa, GL_FALSE);
    }
 
-   foreach( atom, &rmesa->hw.atomlist ) {
-      if ( rmesa->hw.all_dirty )
-	 atom->dirty = GL_TRUE;
-      if ( atom->dirty ) {
-	 dwords = atom->check( rmesa->radeon.glCtx, atom );
-	 if ( dwords ) {
-	    int size = atom->cmd_size * 4;
-	    if (atom->emit) {
-	      (*atom->emit)(rmesa->radeon.glCtx, atom);
-	    } else {
-	      memcpy( dest, atom->cmd, size);
-	      dest += size;
-	      rmesa->store.cmd_used += size;
-	    }
-	    atom->dirty = GL_FALSE;
-	 }
-      }
-   }
+   if (RADEON_DEBUG & DEBUG_STATE)
+     fprintf(stderr, "Begin dirty state\n");
 
-   assert( rmesa->store.cmd_used <= R200_CMD_BUF_SZ );
-
+   r200EmitAtoms(rmesa, GL_TRUE);
    rmesa->hw.is_dirty = GL_FALSE;
    rmesa->hw.all_dirty = GL_FALSE;
 }
@@ -222,6 +233,7 @@ void r200EmitVbufPrim( r200ContextPtr rmesa,
                        GLuint vertex_nr )
 {
    drm_radeon_cmd_header_t *cmd;
+   BATCH_LOCALS(&rmesa->radeon);
 
    assert(!(primitive & R200_VF_PRIM_WALK_IND));
    
@@ -230,7 +242,13 @@ void r200EmitVbufPrim( r200ContextPtr rmesa,
    if (R200_DEBUG & (DEBUG_IOCTL|DEBUG_PRIMS))
       fprintf(stderr, "%s cmd_used/4: %d prim %x nr %d\n", __FUNCTION__,
 	      rmesa->store.cmd_used/4, primitive, vertex_nr);
-   
+ 
+   BEGIN_BATCH(3);
+   OUT_BATCH_PACKET3_CLIP(R200_CP_CMD_3D_DRAW_VBUF_2, 0);
+   OUT_BATCH(primitive | R200_VF_PRIM_WALK_LIST | R200_VF_COLOR_ORDER_RGBA |
+	     (vertex_nr << R200_VF_VERTEX_NUMBER_SHIFT));
+   END_BATCH();
+#if 0
    cmd = (drm_radeon_cmd_header_t *)r200AllocCmdBuf( rmesa, VBUF_BUFSZ,
 						  __FUNCTION__ );
    cmd[0].i = 0;
@@ -240,6 +258,7 @@ void r200EmitVbufPrim( r200ContextPtr rmesa,
 	       R200_VF_PRIM_WALK_LIST |
 	       R200_VF_COLOR_ORDER_RGBA |
 	       (vertex_nr << R200_VF_VERTEX_NUMBER_SHIFT));
+#endif
 }
 
 
@@ -285,8 +304,8 @@ GLushort *r200AllocEltsOpenEnded( r200ContextPtr rmesa,
    
    r200EmitState( rmesa );
    
-   cmd = (drm_radeon_cmd_header_t *)r200AllocCmdBuf( rmesa, ELTS_BUFSZ(min_nr),
-						__FUNCTION__ );
+   //   cmd = (drm_radeon_cmd_header_t *)r200AllocCmdBuf( rmesa, ELTS_BUFSZ(min_nr),
+   //						__FUNCTION__ );
    cmd[0].i = 0;
    cmd[0].header.cmd_type = RADEON_CMD_PACKET3_CLIP;
    cmd[1].i = R200_CP_CMD_3D_DRAW_INDX_2;
@@ -314,26 +333,124 @@ GLushort *r200AllocEltsOpenEnded( r200ContextPtr rmesa,
 
 
 void r200EmitVertexAOS( r200ContextPtr rmesa,
-			  GLuint vertex_size,
-			  GLuint offset )
+			GLuint vertex_size,
+ 			struct radeon_bo *bo,
+			GLuint offset )
 {
-   drm_radeon_cmd_header_t *cmd;
+   BATCH_LOCALS(&rmesa->radeon);
 
    if (R200_DEBUG & (DEBUG_PRIMS|DEBUG_IOCTL))
       fprintf(stderr, "%s:  vertex_size 0x%x offset 0x%x \n",
 	      __FUNCTION__, vertex_size, offset);
 
-   cmd = (drm_radeon_cmd_header_t *)r200AllocCmdBuf( rmesa, VERT_AOS_BUFSZ,
-						  __FUNCTION__ );
 
-   cmd[0].header.cmd_type = RADEON_CMD_PACKET3;
-   cmd[1].i = R200_CP_CMD_3D_LOAD_VBPNTR | (2 << 16);
-   cmd[2].i = 1;
-   cmd[3].i = vertex_size | (vertex_size << 8);
-   cmd[4].i = offset;
+   BEGIN_BATCH(5);
+   OUT_BATCH_PACKET3(R200_CP_CMD_3D_LOAD_VBPNTR, 2);
+   OUT_BATCH(1);
+   OUT_BATCH(vertex_size | (vertex_size << 8));
+   OUT_BATCH_RELOC(offset, bo, offset, RADEON_GEM_DOMAIN_GTT, 0, 0);
+   END_BATCH();
+}
+
+void r200EmitAOS(r200ContextPtr rmesa, GLuint nr, GLuint offset)
+{
+   BATCH_LOCALS(&rmesa->radeon);
+   uint32_t voffset;
+   int sz = 1 + (nr >> 1) * 3 + (nr & 1) * 2;
+   int i;
+   
+   if (RADEON_DEBUG & DEBUG_VERTS)
+      fprintf(stderr, "%s: nr=%d, ofs=0x%08x\n", __FUNCTION__, nr,
+	      offset);
+
+   BEGIN_BATCH(sz+2);
+   OUT_BATCH_PACKET3(R200_CP_CMD_3D_LOAD_VBPNTR, sz - 1);
+   OUT_BATCH(nr);
+
+    
+   if (!rmesa->radeon.radeonScreen->kernel_mm) {
+      for (i = 0; i + 1 < nr; i += 2) {
+	 OUT_BATCH((rmesa->tcl.aos[i].components << 0) |
+		   (rmesa->tcl.aos[i].stride << 8) |
+		   (rmesa->tcl.aos[i + 1].components << 16) |
+		   (rmesa->tcl.aos[i + 1].stride << 24));
+			
+	 voffset =  rmesa->tcl.aos[i + 0].offset +
+	    offset * 4 * rmesa->tcl.aos[i + 0].stride;
+	 OUT_BATCH_RELOC(voffset,
+			 rmesa->tcl.aos[i].bo,
+			 voffset,
+			 RADEON_GEM_DOMAIN_GTT,
+			 0, 0);
+	 voffset =  rmesa->tcl.aos[i + 1].offset +
+	    offset * 4 * rmesa->tcl.aos[i + 1].stride;
+	 OUT_BATCH_RELOC(voffset,
+			 rmesa->tcl.aos[i+1].bo,
+			 voffset,
+			 RADEON_GEM_DOMAIN_GTT,
+			 0, 0);
+      }
+      
+      if (nr & 1) {
+	 OUT_BATCH((rmesa->tcl.aos[nr - 1].components << 0) |
+		   (rmesa->tcl.aos[nr - 1].stride << 8));
+	 voffset =  rmesa->tcl.aos[nr - 1].offset +
+	    offset * 4 * rmesa->tcl.aos[nr - 1].stride;
+	 OUT_BATCH_RELOC(voffset,
+			 rmesa->tcl.aos[nr - 1].bo,
+			 voffset,
+			 RADEON_GEM_DOMAIN_GTT,
+			 0, 0);
+      }
+   } else {
+      for (i = 0; i + 1 < nr; i += 2) {
+	 OUT_BATCH((rmesa->tcl.aos[i].components << 0) |
+		   (rmesa->tcl.aos[i].stride << 8) |
+		   (rmesa->tcl.aos[i + 1].components << 16) |
+		   (rmesa->tcl.aos[i + 1].stride << 24));
+	 
+	 voffset =  rmesa->tcl.aos[i + 0].offset +
+	    offset * 4 * rmesa->tcl.aos[i + 0].stride;
+	 OUT_BATCH(voffset);
+	 voffset =  rmesa->tcl.aos[i + 1].offset +
+	    offset * 4 * rmesa->tcl.aos[i + 1].stride;
+	 OUT_BATCH(voffset);
+      }
+      
+      if (nr & 1) {
+	 OUT_BATCH((rmesa->tcl.aos[nr - 1].components << 0) |
+		   (rmesa->tcl.aos[nr - 1].stride << 8));
+	 voffset =  rmesa->tcl.aos[nr - 1].offset +
+	    offset * 4 * rmesa->tcl.aos[nr - 1].stride;
+	 OUT_BATCH(voffset);
+      }
+      for (i = 0; i + 1 < nr; i += 2) {
+	 voffset =  rmesa->tcl.aos[i + 0].offset +
+	    offset * 4 * rmesa->tcl.aos[i + 0].stride;
+	 radeon_cs_write_reloc(rmesa->radeon.cmdbuf.cs,
+			       rmesa->tcl.aos[i+0].bo,
+			       RADEON_GEM_DOMAIN_GTT,
+			       0, 0);
+	 voffset =  rmesa->tcl.aos[i + 1].offset +
+	    offset * 4 * rmesa->tcl.aos[i + 1].stride;
+	 radeon_cs_write_reloc(rmesa->radeon.cmdbuf.cs,
+			       rmesa->tcl.aos[i+1].bo,
+			       RADEON_GEM_DOMAIN_GTT,
+			       0, 0);
+      }
+      if (nr & 1) {
+	 voffset =  rmesa->tcl.aos[nr - 1].offset +
+	    offset * 4 * rmesa->tcl.aos[nr - 1].stride;
+	 radeon_cs_write_reloc(rmesa->radeon.cmdbuf.cs,
+			       rmesa->tcl.aos[nr-1].bo,
+			       RADEON_GEM_DOMAIN_GTT,
+			       0, 0);
+      }
+   }
+   END_BATCH();
 }
 		       
-
+#if 0
 void r200EmitAOS( r200ContextPtr rmesa,
 		    struct radeon_dma_region **component,
 		    GLuint nr,
@@ -377,6 +494,7 @@ void r200EmitAOS( r200ContextPtr rmesa,
 	 fprintf(stderr, "   %d: %x\n", i, tmp[i]);
    }
 }
+#endif
 
 void r200EmitBlit( r200ContextPtr rmesa,
 		   GLuint color_fmt,
@@ -404,8 +522,8 @@ void r200EmitBlit( r200ContextPtr rmesa,
    assert( w < (1<<16) );
    assert( h < (1<<16) );
 
-   cmd = (drm_radeon_cmd_header_t *)r200AllocCmdBuf( rmesa, 8 * sizeof(int),
-						  __FUNCTION__ );
+   //   cmd = (drm_radeon_cmd_header_t *)r200AllocCmdBuf( rmesa, 8 * sizeof(int),
+   //						  __FUNCTION__ );
 
 
    cmd[0].header.cmd_type = RADEON_CMD_PACKET3;
@@ -434,8 +552,8 @@ void r200EmitWait( r200ContextPtr rmesa, GLuint flags )
 
    assert( !(flags & ~(RADEON_WAIT_2D|RADEON_WAIT_3D)) );
 
-   cmd = (drm_radeon_cmd_header_t *)r200AllocCmdBuf( rmesa, 1 * sizeof(int),
-					   __FUNCTION__ );
+   //   cmd = (drm_radeon_cmd_header_t *)r200AllocCmdBuf( rmesa, 1 * sizeof(int),
+   //					   __FUNCTION__ );
    cmd[0].i = 0;
    cmd[0].wait.cmd_type = RADEON_CMD_WAIT;
    cmd[0].wait.flags = flags;

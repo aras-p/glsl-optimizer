@@ -527,6 +527,7 @@ void radeonDestroyContext( __DRIcontextPrivate *driContextPriv )
 	 radeonFlushCmdBuf( rmesa, __FUNCTION__ );
       }
 
+      radeonCleanupContext(&rmesa->radeon);
       _mesa_vector4f_free( &rmesa->tcl.ObjClean );
 
       if (rmesa->radeon.state.scissor.pClipRects) {
@@ -548,65 +549,12 @@ void radeonDestroyContext( __DRIcontextPrivate *driContextPriv )
 	 assert( is_empty_list( & rmesa->radeon.swapped ) );
       }
 
-      /* free the Mesa context */
-      rmesa->radeon.glCtx->DriverCtx = NULL;
-      _mesa_destroy_context( rmesa->radeon.glCtx );
-
-      /* free the option cache */
-      driDestroyOptionCache (&rmesa->radeon.optionCache);
+      radeonCleanupContext(&rmesa->radeon);
 
       FREE( rmesa );
    }
 }
 
-/* Make context `c' the current context and bind it to the given
- * drawing and reading surfaces.
- */
-GLboolean
-radeonMakeCurrent( __DRIcontextPrivate *driContextPriv,
-                   __DRIdrawablePrivate *driDrawPriv,
-                   __DRIdrawablePrivate *driReadPriv )
-{
-   if ( driContextPriv ) {
-      radeonContextPtr newCtx = 
-	 (radeonContextPtr) driContextPriv->driverPrivate;
-
-      if (RADEON_DEBUG & DEBUG_DRI)
-	 fprintf(stderr, "%s ctx %p\n", __FUNCTION__, (void *) newCtx->glCtx);
-
-      newCtx->dri.readable = driReadPriv;
-
-      if ( (newCtx->dri.drawable != driDrawPriv) ||
-           newCtx->lastStamp != driDrawPriv->lastStamp ) {
-	 if (driDrawPriv->swap_interval == (unsigned)-1) {
-	    driDrawPriv->vblFlags = (newCtx->radeonScreen->irq != 0)
-	       ? driGetDefaultVBlankFlags(&newCtx->optionCache)
-	       : VBLANK_FLAG_NO_IRQ;
-
-	    driDrawableInitVBlank( driDrawPriv );
-	 }
-
-	 newCtx->dri.drawable = driDrawPriv;
-
-	 radeonSetCliprects(newCtx);
-	 radeonUpdateViewportOffset( newCtx->glCtx );
-      }
-
-      _mesa_make_current( newCtx->glCtx,
-			  (GLframebuffer *) driDrawPriv->driverPrivate,
-			  (GLframebuffer *) driReadPriv->driverPrivate );
-
-      _mesa_update_state( newCtx->glCtx );
-   } else {
-      if (RADEON_DEBUG & DEBUG_DRI)
-	 fprintf(stderr, "%s ctx is null\n", __FUNCTION__);
-      _mesa_make_current( NULL, NULL, NULL );
-   }
-
-   if (RADEON_DEBUG & DEBUG_DRI)
-      fprintf(stderr, "End %s\n", __FUNCTION__);
-   return GL_TRUE;
-}
 
 /* Force the context `c' to be unbound from its buffer.
  */

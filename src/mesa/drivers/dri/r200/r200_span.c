@@ -38,6 +38,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "swrast/swrast.h"
 
 #include "r200_context.h"
+#include "radeon_buffer.h"
 #include "r200_ioctl.h"
 #include "r200_state.h"
 #include "r200_span.h"
@@ -86,8 +87,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define SPANTMP_PIXEL_FMT GL_RGB
 #define SPANTMP_PIXEL_TYPE GL_UNSIGNED_SHORT_5_6_5
 
-#define TAG(x)    r200##x##_RGB565
-#define TAG2(x,y) r200##x##_RGB565##y
+#define TAG(x)    radeon##x##_RGB565
+#define TAG2(x,y) radeon##x##_RGB565##y
 #define GET_PTR(X,Y) (buf + ((Y) * drb->flippedPitch + (X)) * 2)
 #include "spantmp2.h"
 
@@ -96,8 +97,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define SPANTMP_PIXEL_FMT GL_BGRA
 #define SPANTMP_PIXEL_TYPE GL_UNSIGNED_INT_8_8_8_8_REV
 
-#define TAG(x)    r200##x##_ARGB8888
-#define TAG2(x,y) r200##x##_ARGB8888##y
+#define TAG(x)    radeon##x##_ARGB8888
+#define TAG2(x,y) radeon##x##_ARGB8888##y
 #define GET_PTR(X,Y) (buf + ((Y) * drb->flippedPitch + (X)) * 4)
 #include "spantmp2.h"
 
@@ -180,7 +181,7 @@ r200_mba_z16( driRenderbuffer *drb, GLint x, GLint y )
 #define READ_DEPTH( d, _x, _y )						\
    d = *(GLushort *)(buf + r200_mba_z16( drb, _x + xo, _y + yo ));
 
-#define TAG(x) r200##x##_z16
+#define TAG(x) radeon##x##_z16
 #include "depthtmp.h"
 
 
@@ -201,7 +202,7 @@ do {									\
    d = *(GLuint *)(buf + r200_mba_z32( drb, _x + xo,			\
 					 _y + yo )) & 0x00ffffff;
 
-#define TAG(x) r200##x##_z24_s8
+#define TAG(x) radeon##x##_z24_s8
 #include "depthtmp.h"
 
 
@@ -228,7 +229,7 @@ do {									\
    d = tmp >> 24;							\
 } while (0)
 
-#define TAG(x) r200##x##_z24_s8
+#define TAG(x) radeon##x##_z24_s8
 #include "stenciltmp.h"
 
 
@@ -284,24 +285,17 @@ void r200InitSpanFuncs( GLcontext *ctx )
 /**
  * Plug in the Get/Put routines for the given driRenderbuffer.
  */
-void
-radeonSetSpanFunctions(driRenderbuffer *drb, const GLvisual *vis)
+void radeonSetSpanFunctions(struct radeon_renderbuffer *rrb)
 {
-   if (drb->Base.InternalFormat == GL_RGBA) {
-      if (vis->redBits == 5 && vis->greenBits == 6 && vis->blueBits == 5) {
-         r200InitPointers_RGB565(&drb->Base);
-      }
-      else {
-         r200InitPointers_ARGB8888(&drb->Base);
-      }
-   }
-   else if (drb->Base.InternalFormat == GL_DEPTH_COMPONENT16) {
-      r200InitDepthPointers_z16(&drb->Base);
-   }
-   else if (drb->Base.InternalFormat == GL_DEPTH_COMPONENT24) {
-      r200InitDepthPointers_z24_s8(&drb->Base);
-   }
-   else if (drb->Base.InternalFormat == GL_STENCIL_INDEX8_EXT) {
-      r200InitStencilPointers_z24_s8(&drb->Base);
-   }
+	if (rrb->base.InternalFormat == GL_RGB5) {
+		radeonInitPointers_RGB565(&rrb->base);
+	} else if (rrb->base.InternalFormat == GL_RGBA8) {
+		radeonInitPointers_ARGB8888(&rrb->base);
+	} else if (rrb->base.InternalFormat == GL_DEPTH_COMPONENT16) {
+		radeonInitDepthPointers_z16(&rrb->base);
+	} else if (rrb->base.InternalFormat == GL_DEPTH_COMPONENT24) {
+		radeonInitDepthPointers_z24_s8(&rrb->base);
+	} else if (rrb->base.InternalFormat == GL_STENCIL_INDEX8_EXT) {
+		radeonInitStencilPointers_z24_s8(&rrb->base);
+	}
 }

@@ -18,4 +18,18 @@ void radeonCopySubBuffer(__DRIdrawablePrivate * dPriv,
 
 void radeonUpdatePageFlipping(radeonContextPtr rmesa);
 
+GLboolean radeonInitContext(radeonContextPtr radeon,
+			    struct dd_function_table* functions,
+			    const __GLcontextModes * glVisual,
+			    __DRIcontextPrivate * driContextPriv,
+			    void *sharedContextPrivate);
+
+void radeonCleanupContext(radeonContextPtr radeon);
+void radeon_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable);
+GLboolean radeonMakeCurrent(__DRIcontextPrivate * driContextPriv,
+			    __DRIdrawablePrivate * driDrawPriv,
+			    __DRIdrawablePrivate * driReadPriv);
+
+void rcommon_emit_vector(GLcontext * ctx, struct radeon_aos *aos,
+			 GLvoid * data, int size, int stride, int count);
 #endif

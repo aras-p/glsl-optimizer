@@ -297,9 +297,9 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
    radeonScreenPtr screen = (radeonScreenPtr)(sPriv->private);
    struct dd_function_table functions;
    r200ContextPtr rmesa;
-   GLcontext *ctx, *shareCtx;
+   GLcontext *ctx;
    int i;
-   int tcl_mode, fthrottle_mode;
+   int tcl_mode;
 
    assert(glVisual);
    assert(driContextPriv);
@@ -344,31 +344,12 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
    r200InitTextureFuncs(&functions);
    r200InitShaderFuncs(&functions); 
 
-   /* Allocate and initialize the Mesa context */
-   if (sharedContextPrivate)
-      shareCtx = ((r200ContextPtr) sharedContextPrivate)->radeon.glCtx;
-   else
-      shareCtx = NULL;
-   rmesa->radeon.glCtx = _mesa_create_context(glVisual, shareCtx,
-                                       &functions, (void *) rmesa);
-   if (!rmesa->radeon.glCtx) {
-      FREE(rmesa);
-      return GL_FALSE;
+   if (!radeonInitContext(&rmesa->radeon, &functions,
+			  glVisual, driContextPriv,
+			  sharedContextPrivate)) {
+     FREE(rmesa);
+     return GL_FALSE;
    }
-   driContextPriv->driverPrivate = rmesa;
-
-   /* Init r200 context data */
-   rmesa->radeon.dri.context = driContextPriv;
-   rmesa->radeon.dri.screen = sPriv;
-   rmesa->radeon.dri.drawable = NULL; /* Set by XMesaMakeCurrent */
-   rmesa->radeon.dri.hwContext = driContextPriv->hHWContext;
-   rmesa->radeon.dri.hwLock = &sPriv->pSAREA->lock;
-   rmesa->radeon.dri.fd = sPriv->fd;
-   rmesa->radeon.dri.drmMinor = sPriv->drm_version.minor;
-
-   rmesa->radeon.radeonScreen = screen;
-   rmesa->radeon.sarea = (drm_radeon_sarea_t *)((GLubyte *)sPriv->pSAREA +
-				       screen->sarea_priv_offset);
 
 
    rmesa->dma.buf0_address = rmesa->radeon.radeonScreen->buffers->list[0].address;
@@ -531,26 +512,8 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
    r200InitState( rmesa );
    r200InitSwtcl( ctx );
 
-   fthrottle_mode = driQueryOptioni(&rmesa->radeon.optionCache, "fthrottle_mode");
-   rmesa->radeon.iw.irq_seq = -1;
-   rmesa->radeon.irqsEmitted = 0;
-   rmesa->radeon.do_irqs = (fthrottle_mode == DRI_CONF_FTHROTTLE_IRQS &&
-		     rmesa->radeon.radeonScreen->irq);
-
-   rmesa->radeon.do_usleeps = (fthrottle_mode == DRI_CONF_FTHROTTLE_USLEEPS);
-
-   if (!rmesa->radeon.do_irqs)
-      fprintf(stderr,
-	      "IRQ's not enabled, falling back to %s: %d %d\n",
-	      rmesa->radeon.do_usleeps ? "usleeps" : "busy waits",
-	      fthrottle_mode,
-	      rmesa->radeon.radeonScreen->irq);
-
    rmesa->prefer_gart_client_texturing = 
       (getenv("R200_GART_CLIENT_TEXTURES") != 0);
-
-   (*sPriv->systemTime->getUST)( & rmesa->radeon.swap_ust );
-
 
 #if DO_DEBUG
    R200_DEBUG  = driParseDebugString( getenv( "R200_DEBUG" ),
@@ -609,14 +572,15 @@ void r200DestroyContext( __DRIcontextPrivate *driContextPriv )
       r200ReleaseArrays( rmesa->radeon.glCtx, ~0 );
 
       if (rmesa->dma.current.buf) {
-	 r200ReleaseDmaRegion( rmesa, &rmesa->dma.current, __FUNCTION__ );
-	 r200FlushCmdBuf( rmesa, __FUNCTION__ );
+	//	 r200ReleaseDmaRegion( rmesa, &rmesa->dma.current, __FUNCTION__ );
+	 rcommonFlushCmdBuf( &rmesa->radeon, __FUNCTION__ );
       }
 
       if (rmesa->radeon.state.scissor.pClipRects) {
 	 FREE(rmesa->radeon.state.scissor.pClipRects);
 	 rmesa->radeon.state.scissor.pClipRects = NULL;
       }
+
 
       if ( release_texture_heaps ) {
          /* This share group is about to go away, free our private
@@ -632,67 +596,13 @@ void r200DestroyContext( __DRIcontextPrivate *driContextPriv )
 	 assert( is_empty_list( & rmesa->radeon.swapped ) );
       }
 
-      /* free the Mesa context */
-      rmesa->radeon.glCtx->DriverCtx = NULL;
-      _mesa_destroy_context( rmesa->radeon.glCtx );
-
-      /* free the option cache */
-      driDestroyOptionCache (&rmesa->radeon.optionCache);
+      radeonCleanupContext(&rmesa->radeon);
 
       FREE( rmesa );
    }
 }
 
-/* Force the context `c' to be the current context and associate with it
- * buffer `b'.
- */
-GLboolean
-r200MakeCurrent( __DRIcontextPrivate *driContextPriv,
-                   __DRIdrawablePrivate *driDrawPriv,
-                   __DRIdrawablePrivate *driReadPriv )
-{
-   if ( driContextPriv ) {
-      r200ContextPtr newCtx = 
-	 (r200ContextPtr) driContextPriv->driverPrivate;
 
-      if (R200_DEBUG & DEBUG_DRI)
-	 fprintf(stderr, "%s ctx %p\n", __FUNCTION__, (void *)newCtx->radeon.glCtx);
-
-      newCtx->radeon.dri.readable = driReadPriv;
-
-      if ( newCtx->radeon.dri.drawable != driDrawPriv ||
-           newCtx->radeon.lastStamp != driDrawPriv->lastStamp ) {
-	 if (driDrawPriv->swap_interval == (unsigned)-1) {
-	    driDrawPriv->vblFlags = (newCtx->radeon.radeonScreen->irq != 0)
-	       ? driGetDefaultVBlankFlags(&newCtx->radeon.optionCache)
-	       : VBLANK_FLAG_NO_IRQ;
-
-	    driDrawableInitVBlank( driDrawPriv );
-	 }
-
-	 newCtx->radeon.dri.drawable = driDrawPriv;
-
-	 radeonSetCliprects(&newCtx->radeon);
-	 r200UpdateViewportOffset( newCtx->radeon.glCtx );
-      }
-
-      _mesa_make_current( newCtx->radeon.glCtx,
-			  (GLframebuffer *) driDrawPriv->driverPrivate,
-			  (GLframebuffer *) driReadPriv->driverPrivate );
-
-      _mesa_update_state( newCtx->radeon.glCtx );
-      r200ValidateState( newCtx->radeon.glCtx );
-
-   } else {
-      if (R200_DEBUG & DEBUG_DRI)
-	 fprintf(stderr, "%s ctx is null\n", __FUNCTION__);
-      _mesa_make_current( NULL, NULL, NULL );
-   }
-
-   if (R200_DEBUG & DEBUG_DRI)
-      fprintf(stderr, "End %s\n", __FUNCTION__);
-   return GL_TRUE;
-}
 
 /* Force the context `c' to be unbound from its buffer.
  */

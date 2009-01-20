@@ -123,14 +123,14 @@ static void emit_ubyte_rgba( GLcontext *ctx,
    assert (!rvb->buf);
 
    if (stride == 0) {
-      r200AllocDmaRegion( rmesa, rvb, 4, 4 );
+     //       r200AllocDmaRegion( rmesa, rvb, 4, 4 );
       count = 1;
       rvb->aos_start = GET_START(rvb);
       rvb->aos_stride = 0;
       rvb->aos_size = 1;
    }
    else {
-      r200AllocDmaRegion( rmesa, rvb, 4 * count, 4 );	/* alignment? */
+     //      r200AllocDmaRegion( rmesa, rvb, 4 * count, 4 );	/* alignment? */
       rvb->aos_start = GET_START(rvb);
       rvb->aos_stride = 1;
       rvb->aos_size = 1;
@@ -193,14 +193,14 @@ static void emit_vecfog( GLcontext *ctx,
    assert (!rvb->buf);
 
    if (stride == 0) {
-      r200AllocDmaRegion( rmesa, rvb, 4, 4 );
+     //      r200AllocDmaRegion( rmesa, rvb, 4, 4 );
       count = 1;
       rvb->aos_start = GET_START(rvb);
       rvb->aos_stride = 0;
       rvb->aos_size = 1;
    }
    else {
-      r200AllocDmaRegion( rmesa, rvb, count * 4, 4 );	/* alignment? */
+     //      r200AllocDmaRegion( rmesa, rvb, count * 4, 4 );	/* alignment? */
       rvb->aos_start = GET_START(rvb);
       rvb->aos_stride = 1;
       rvb->aos_size = 1;
@@ -334,14 +334,14 @@ static void emit_vector( GLcontext *ctx,
    assert (!rvb->buf);
 
    if (stride == 0) {
-      r200AllocDmaRegion( rmesa, rvb, size * 4, 4 );
+     //      r200AllocDmaRegion( rmesa, rvb, size * 4, 4 );
       count = 1;
       rvb->aos_start = GET_START(rvb);
       rvb->aos_stride = 0;
       rvb->aos_size = size;
    }
    else {
-      r200AllocDmaRegion( rmesa, rvb, size * count * 4, 4 );	/* alignment? */
+     //      r200AllocDmaRegion( rmesa, rvb, size * count * 4, 4 );	/* alignment? */
       rvb->aos_start = GET_START(rvb);
       rvb->aos_stride = size;
       rvb->aos_size = size;
@@ -379,7 +379,7 @@ void r200EmitArrays( GLcontext *ctx, GLubyte *vimap_rev )
 {
    r200ContextPtr rmesa = R200_CONTEXT( ctx );
    struct vertex_buffer *VB = &TNL_CONTEXT( ctx )->vb;
-   struct radeon_dma_region **component = rmesa->tcl.aos_components;
+   //   struct radeon_dma_region **component = rmesa->tcl.aos_components;
    GLuint nr = 0;
    GLuint vfmt0 = 0, vfmt1 = 0;
    GLuint count = VB->Count;
@@ -418,12 +418,12 @@ void r200EmitArrays( GLcontext *ctx, GLubyte *vimap_rev )
 	    assert(attrib == VERT_ATTRIB_FOG);
 	    if (!rmesa->tcl.vertex_data[i].buf) {
 	       if (ctx->VertexProgram._Enabled)
-		  emit_vector( ctx,
-			 &(rmesa->tcl.vertex_data[i]),
-			 (char *)VB->AttribPtr[attrib]->data,
-			 1,
-			 VB->AttribPtr[attrib]->stride,
-			 count);
+		  rcommon_emit_vector( ctx,
+				       &(rmesa->tcl.vertex_data[i]),
+				       (char *)VB->AttribPtr[attrib]->data,
+				       1,
+				       VB->AttribPtr[attrib]->stride,
+				       count);
 	       else
 		  emit_vecfog( ctx,
 			 &(rmesa->tcl.vertex_data[i]),
@@ -483,7 +483,7 @@ void r200EmitArrays( GLcontext *ctx, GLubyte *vimap_rev )
 	 }
 after_emit:
 	 assert(nr < 12);
-	 component[nr++] = &rmesa->tcl.vertex_data[i];
+	 //	 component[nr++] = &rmesa->tcl.vertex_data[i];
       }
    }
 
@@ -505,8 +505,8 @@ void r200ReleaseArrays( GLcontext *ctx, GLuint newinputs )
    /* only do it for changed inputs ? */
    int i;
    for (i = 0; i < 15; i++) {
-      if (newinputs & (1 << i))
-	 r200ReleaseDmaRegion( rmesa,
-	    &rmesa->tcl.vertex_data[i], __FUNCTION__ );
+     //      if (newinputs & (1 << i))
+	//	 r200ReleaseDmaRegion( rmesa,
+	//	    &rmesa->tcl.vertex_data[i], __FUNCTION__ );
    }
 }

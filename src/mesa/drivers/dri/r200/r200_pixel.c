@@ -200,7 +200,7 @@ r200TryReadPixels( GLcontext *ctx,
    LOCK_HARDWARE( &rmesa->radeon );
 
    if (rmesa->store.cmd_used)
-      r200FlushCmdBufLocked( rmesa, __FUNCTION__ );
+      rcommonFlushCmdBufLocked( &rmesa->radeon, __FUNCTION__ );
 
    if (!clip_pixelrect(ctx, ctx->ReadBuffer, &x, &y, &width, &height,
 		       &size)) {
@@ -257,7 +257,7 @@ r200TryReadPixels( GLcontext *ctx,
 		       bw, bh );
       }
 
-      r200FlushCmdBufLocked( rmesa, __FUNCTION__ );
+      rcommonFlushCmdBufLocked( &rmesa->radeon, __FUNCTION__ );
    }
    UNLOCK_HARDWARE( &rmesa->radeon );
 
@@ -321,7 +321,7 @@ static void do_draw_pix( GLcontext *ctx,
    LOCK_HARDWARE( &rmesa->radeon );
 
    if (rmesa->store.cmd_used)
-      r200FlushCmdBufLocked( rmesa, __FUNCTION__ );
+      rcommonFlushCmdBufLocked( &rmesa->radeon, __FUNCTION__ );
 
    y -= height;			/* cope with pixel zoom */
    
@@ -363,7 +363,7 @@ static void do_draw_pix( GLcontext *ctx,
 		    bw, bh );
    }
 
-   r200FlushCmdBufLocked( rmesa, __FUNCTION__ );
+   rcommonFlushCmdBufLocked( &rmesa->radeon, __FUNCTION__ );
    radeonWaitForIdleLocked( &rmesa->radeon ); /* required by GL */
    UNLOCK_HARDWARE( &rmesa->radeon );
 }

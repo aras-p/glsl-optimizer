@@ -1404,8 +1404,8 @@ void radeonUpdateWindow( GLcontext *ctx )
 {
    r100ContextPtr rmesa = R100_CONTEXT(ctx);
    __DRIdrawablePrivate *dPriv = rmesa->radeon.dri.drawable;
-   GLfloat xoffset = (GLfloat)dPriv->x;
-   GLfloat yoffset = (GLfloat)dPriv->y + dPriv->h;
+   GLfloat xoffset = dPriv ? (GLfloat) dPriv->x : 0;
+   GLfloat yoffset = dPriv ? (GLfloat) dPriv->y + dPriv->h : 0;
    const GLfloat *v = ctx->Viewport._WindowMap.m;
 
    float_ui32_type sx = { v[MAT_SX] };

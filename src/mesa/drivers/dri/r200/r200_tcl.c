@@ -156,11 +156,10 @@ static GLushort *r200AllocElts( r200ContextPtr rmesa, GLuint nr )
       if (rmesa->dma.flush)
 	 rmesa->dma.flush( rmesa->radeon.glCtx );
 
-      r200EnsureCmdBufSpace( rmesa, AOS_BUFSZ(rmesa->tcl.nr_aos_components) +
+      rcommonEnsureCmdBufSpace(rmesa, AOS_BUFSZ(rmesa->tcl.nr_aos_components) +
 			     rmesa->hw.max_state_size + ELTS_BUFSZ(nr) );
 
       r200EmitAOS( rmesa,
-		   rmesa->tcl.aos_components,
 		   rmesa->tcl.nr_aos_components, 0 );
 
       return r200AllocEltsOpenEnded( rmesa, rmesa->tcl.hw_primitive, nr );
@@ -188,13 +187,12 @@ static void r200EmitPrim( GLcontext *ctx,
    r200ContextPtr rmesa = R200_CONTEXT( ctx );
    r200TclPrimitive( ctx, prim, hwprim );
    
-   r200EnsureCmdBufSpace( rmesa, AOS_BUFSZ(rmesa->tcl.nr_aos_components) +
-			  rmesa->hw.max_state_size + VBUF_BUFSZ );
+   rcommonEnsureCmdBufSpace( rmesa, AOS_BUFSZ(rmesa->tcl.nr_aos_components) +
+			     rmesa->hw.max_state_size + VBUF_BUFSZ );
 
    r200EmitAOS( rmesa,
-		  rmesa->tcl.aos_components,
-		  rmesa->tcl.nr_aos_components,
-		  start );
+		rmesa->tcl.nr_aos_components,
+		start );
    
    /* Why couldn't this packet have taken an offset param?
     */
@@ -570,9 +568,9 @@ static void transition_to_hwtnl( GLcontext *ctx )
 
    rmesa->dma.flush = NULL;
    
-   if (rmesa->swtcl.indexed_verts.buf) 
-      r200ReleaseDmaRegion( rmesa, &rmesa->swtcl.indexed_verts, 
-			      __FUNCTION__ );
+   //   if (rmesa->swtcl.indexed_verts.buf) 
+     //      r200ReleaseDmaRegion( rmesa, &rmesa->swtcl.indexed_verts, 
+     //			      __FUNCTION__ );
 
    R200_STATECHANGE( rmesa, vap );
    rmesa->hw.vap.cmd[VAP_SE_VAP_CNTL] |= R200_VAP_TCL_ENABLE;

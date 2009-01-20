@@ -180,11 +180,11 @@ static void r300EmitElts(GLcontext * ctx, void *elts, unsigned long n_elts)
 	rmesa->state.elt_dma_bo = radeon_bo_open(rmesa->radeon.radeonScreen->bom,
                                              0, n_elts * 4, 4,
                                              RADEON_GEM_DOMAIN_GTT, 0);
-    rmesa->state.elt_dma_offset = 0;
-    radeon_bo_map(rmesa->state.elt_dma_bo, 1);
+	rmesa->state.elt_dma_offset = 0;
+	radeon_bo_map(rmesa->state.elt_dma_bo, 1);
 	out = rmesa->state.elt_dma_bo->ptr + rmesa->state.elt_dma_offset;
 	memcpy(out, elts, n_elts * 4);
-    radeon_bo_unmap(rmesa->state.elt_dma_bo);
+	radeon_bo_unmap(rmesa->state.elt_dma_bo);
 }
 
 static void r300FireEB(r300ContextPtr rmesa, int vertex_count, int type)

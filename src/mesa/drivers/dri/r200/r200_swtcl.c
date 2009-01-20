@@ -48,6 +48,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "tnl/t_context.h"
 #include "tnl/t_pipeline.h"
 
+#include "radeon_bo.h"
 #include "r200_context.h"
 #include "r200_ioctl.h"
 #include "r200_state.h"
@@ -284,33 +285,24 @@ static void flush_last_swtcl_prim(GLcontext *ctx)
 
    rmesa->dma.flush = NULL;
 
-   if (rmesa->dma.current.buf) {
-      struct radeon_dma_region *current = &rmesa->dma.current;
-      GLuint current_offset = (rmesa->radeon.radeonScreen->gart_buffer_offset +
-			       current->buf->buf->idx * RADEON_BUFFER_SIZE + 
-			       current->start);
+   radeon_bo_unmap(rmesa->swtcl.bo);
+   rcommonEnsureCmdBufSpace(rmesa,
+			    rmesa->hw.max_state_size + (12*sizeof(int)),
+			    __FUNCTION__);
 
-      assert (!(rmesa->swtcl.hw_primitive & R200_VF_PRIM_WALK_IND));
 
-      assert (current->start + 
-	      rmesa->swtcl.numverts * rmesa->swtcl.vertex_size * 4 ==
-	      current->ptr);
+   r200EmitState(rmesa);
+   r200EmitVertexAOS( rmesa,
+		      rmesa->swtcl.vertex_size,
+		      rmesa->swtcl.bo, 0);
 
-      if (rmesa->dma.current.start != rmesa->dma.current.ptr) {
-	 r200EnsureCmdBufSpace( rmesa, VERT_AOS_BUFSZ +
-			        rmesa->hw.max_state_size + VBUF_BUFSZ );
-	 r200EmitVertexAOS( rmesa,
-			      rmesa->swtcl.vertex_size,
-			      current_offset);
+		      
+   r200EmitVbufPrim( rmesa,
+		     rmesa->swtcl.hw_primitive,
+		     rmesa->swtcl.numverts);
 
-	 r200EmitVbufPrim( rmesa,
-			   rmesa->swtcl.hw_primitive,
-			   rmesa->swtcl.numverts);
-      }
-
-      rmesa->swtcl.numverts = 0;
-      current->start = current->ptr;
-   }
+   //   COMMIT_BATCH();
+   rmesa->swtcl.numverts = 0;
 }
 
 
@@ -321,28 +313,16 @@ r200AllocDmaLowVerts( r200ContextPtr rmesa, int nverts, int vsize )
 {
    GLuint bytes = vsize * nverts;
 
-   if ( rmesa->dma.current.ptr + bytes > rmesa->dma.current.end ) 
-      r200RefillCurrentDmaRegion( rmesa );
-
-   if (!rmesa->dma.flush) {
-      rmesa->radeon.glCtx->Driver.NeedFlush |= FLUSH_STORED_VERTICES;
-      rmesa->dma.flush = flush_last_swtcl_prim;
+   rmesa->swtcl.bo = radeon_bo_open(rmesa->radeon.radeonScreen->bom,
+				    0, bytes, 4, RADEON_GEM_DOMAIN_GTT, 0);
+   radeon_bo_map(rmesa->swtcl.bo, 1);
+   if (rmesa->swtcl.flush == NULL) {
+     rmesa->radeon.glCtx->Driver.NeedFlush |= FLUSH_STORED_VERTICES;
+     rmesa->swtcl.flush = flush_last_swtcl_prim;
    }
+   return rmesa->swtcl.bo->ptr;
 
-   ASSERT( vsize == rmesa->swtcl.vertex_size * 4 );
-   ASSERT( rmesa->dma.flush == flush_last_swtcl_prim );
-   ASSERT( rmesa->dma.current.start + 
-	   rmesa->swtcl.numverts * rmesa->swtcl.vertex_size * 4 ==
-	   rmesa->dma.current.ptr );
-
-
-   {
-      GLubyte *head = (GLubyte *) (rmesa->dma.current.address + rmesa->dma.current.ptr);
-      rmesa->dma.current.ptr += bytes;
-      rmesa->swtcl.numverts += nverts;
-      return head;
-   }
-
+   
 }
 
 
@@ -974,6 +954,6 @@ void r200DestroySwtcl( GLcontext *ctx )
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
 
-   if (rmesa->swtcl.indexed_verts.buf) 
-      r200ReleaseDmaRegion( rmesa, &rmesa->swtcl.indexed_verts, __FUNCTION__ );
+   //   if (rmesa->swtcl.indexed_verts.buf) 
+     //      r200ReleaseDmaRegion( rmesa, &rmesa->swtcl.indexed_verts, __FUNCTION__ );
 }

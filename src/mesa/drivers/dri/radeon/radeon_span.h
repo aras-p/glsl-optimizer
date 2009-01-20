@@ -48,9 +48,5 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 extern void radeonInitSpanFuncs(GLcontext * ctx);
 
-#if COMPILE_R300
 extern void radeonSetSpanFunctions(struct radeon_renderbuffer *rrb);
-#else
-extern void radeonSetSpanFunctions(driRenderbuffer * rb, const GLvisual * vis);
-#endif
 #endif

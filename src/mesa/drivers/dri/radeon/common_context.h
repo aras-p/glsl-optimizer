@@ -46,6 +46,16 @@ typedef struct radeon_context *radeonContextPtr;
 #define R200_FALLBACK_DISABLE           0x10
 #define R200_FALLBACK_BORDER_MODE       0x20
 
+#define RADEON_TCL_FALLBACK_RASTER            0x1 /* rasterization */
+#define RADEON_TCL_FALLBACK_UNFILLED          0x2 /* unfilled tris */
+#define RADEON_TCL_FALLBACK_LIGHT_TWOSIDE     0x4 /* twoside tris */
+#define RADEON_TCL_FALLBACK_MATERIAL          0x8 /* material in vb */
+#define RADEON_TCL_FALLBACK_TEXGEN_0          0x10 /* texgen, unit 0 */
+#define RADEON_TCL_FALLBACK_TEXGEN_1          0x20 /* texgen, unit 1 */
+#define RADEON_TCL_FALLBACK_TEXGEN_2          0x40 /* texgen, unit 2 */
+#define RADEON_TCL_FALLBACK_TCL_DISABLE       0x80 /* user disable */
+#define RADEON_TCL_FALLBACK_FOGCOORDSPEC      0x100 /* fogcoord, sep. spec light */
+
 /* The blit width for texture uploads
  */
 #define BLIT_WIDTH_BYTES 1024
@@ -157,6 +167,13 @@ struct radeon_dma_region {
    int aos_size;
 };
 
+struct radeon_aos {
+	struct radeon_bo *bo; /** Buffer object where vertex data is stored */
+	int offset; /** Offset into buffer object, in bytes */
+	int components; /** Number of components per vertex */
+	int stride; /** Stride in dwords (may be 0 for repeating) */
+	int count; /** Number of vertices */
+};
 
 struct radeon_dma {
    /* Active dma region.  Allocations for vertices and retained

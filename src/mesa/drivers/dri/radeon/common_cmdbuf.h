@@ -14,6 +14,10 @@ void rcommonBeginBatch(radeonContextPtr rmesa,
 		       const char *function,
 		       int line);
 
+#define CP_PACKET2  (2 << 30)
+#define CP_PACKET0(reg, n)	(RADEON_CP_PACKET0 | ((n)<<16) | ((reg)>>2))
+#define CP_PACKET3( pkt, n )						\
+	(RADEON_CP_PACKET3 | (pkt) | ((n) << 16))
 
 /**
  * Every function writing to the command buffer needs to declare this

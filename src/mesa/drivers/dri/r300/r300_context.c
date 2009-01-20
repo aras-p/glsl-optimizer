@@ -496,8 +496,6 @@ void r300DestroyContext(__DRIcontextPrivate * driContextPriv)
 		 * state, so don't destroy it earlier
 		 */
 
-		/* free the option cache */
-		driDestroyOptionCache(&r300->radeon.optionCache);
 
 		FREE(r300);
 	}

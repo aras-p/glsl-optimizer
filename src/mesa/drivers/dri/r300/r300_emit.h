@@ -44,13 +44,6 @@
 #include "r300_cmdbuf.h"
 #include "radeon_reg.h"
 
-/* TODO: move these defines (and the ones from DRM) into r300_reg.h and sync up
- * with DRM */
-#define CP_PACKET2  (2 << 30)
-#define CP_PACKET0(reg, n)	(RADEON_CP_PACKET0 | ((n)<<16) | ((reg)>>2))
-#define CP_PACKET3( pkt, n )						\
-	(RADEON_CP_PACKET3 | (pkt) | ((n) << 16))
-
 static INLINE uint32_t cmdpacket0(struct radeon_screen *rscrn,
                                   int reg, int count)
 {
