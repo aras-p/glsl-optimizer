@@ -206,8 +206,8 @@ static int cs_end(struct radeon_cs *cs,
     }
     cs->section = 0;
     if (cs->section_ndw != cs->section_cdw) {
-        fprintf(stderr, "CS section size missmatch start at (%s,%s,%d)\n",
-                cs->section_file, cs->section_func, cs->section_line);
+        fprintf(stderr, "CS section size missmatch start at (%s,%s,%d) %d vs %d\n",
+                cs->section_file, cs->section_func, cs->section_line, cs->section_ndw, cs->section_cdw);
         fprintf(stderr, "CS section end at (%s,%s,%d)\n",
                 file, func, line);
         return -EPIPE;
@@ -221,10 +221,6 @@ static int cs_process_relocs(struct radeon_cs *cs)
     struct cs_reloc_legacy *relocs;
     int i, j, r;
 
-    if (!IS_R300_CLASS(csm->ctx->radeonScreen)) {
-        /* FIXME: r300 only right now */
-        return -EINVAL;
-    }
     csm = (struct cs_manager_legacy*)cs->csm;
     relocs = (struct cs_reloc_legacy *)cs->relocs;
     for (i = 0; i < cs->crelocs; i++) {
@@ -238,6 +234,8 @@ static int cs_process_relocs(struct radeon_cs *cs)
                         relocs[i].base.bo, soffset, eoffset);
                 return r;
             }
+	    fprintf(stderr, "validated %p [0x%08X, 0x%08X]\n",
+		    relocs[i].base.bo, soffset, eoffset);
             cs->packets[relocs[i].indices[j]] += soffset;
             if (cs->packets[relocs[i].indices[j]] >= eoffset) {
                 radeon_bo_debug(relocs[i].base.bo, 12);
@@ -269,6 +267,14 @@ static int cs_set_age(struct radeon_cs *cs)
     return 0;
 }
 
+static void dump_cmdbuf(struct radeon_cs *cs)
+{
+  int i;
+  for (i = 0; i < cs->cdw; i++){
+    fprintf(stderr,"%x: %08x\n", i, cs->packets[i]);
+  }
+
+}
 static int cs_emit(struct radeon_cs *cs)
 {
     struct cs_manager_legacy *csm = (struct cs_manager_legacy*)cs->csm;
@@ -279,19 +285,22 @@ static int cs_emit(struct radeon_cs *cs)
 
     csm->ctx->vtbl.emit_cs_header(cs, csm->ctx);
 
+
     /* append buffer age */
-    age.scratch.cmd_type = R300_CMD_SCRATCH;
-    /* Scratch register 2 corresponds to what radeonGetAge polls */
-    csm->pending_age = 0;
-    csm->pending_count = 1;
-    ull = (uint64_t) (intptr_t) &csm->pending_age;
-    age.scratch.reg = 2;
-    age.scratch.n_bufs = 1;
-    age.scratch.flags = 0;
-    radeon_cs_write_dword(cs, age.u);
-    radeon_cs_write_dword(cs, ull & 0xffffffff);
-    radeon_cs_write_dword(cs, ull >> 32);
-    radeon_cs_write_dword(cs, 0);
+    if (IS_R300_CLASS(csm->ctx->radeonScreen)) {
+      age.scratch.cmd_type = R300_CMD_SCRATCH;
+      /* Scratch register 2 corresponds to what radeonGetAge polls */
+      csm->pending_age = 0;
+      csm->pending_count = 1;
+      ull = (uint64_t) (intptr_t) &csm->pending_age;
+      age.scratch.reg = 2;
+      age.scratch.n_bufs = 1;
+      age.scratch.flags = 0;
+      radeon_cs_write_dword(cs, age.u);
+      radeon_cs_write_dword(cs, ull & 0xffffffff);
+      radeon_cs_write_dword(cs, ull >> 32);
+      radeon_cs_write_dword(cs, 0);
+    }
 
     r = cs_process_relocs(cs);
     if (r) {
@@ -307,6 +316,8 @@ static int cs_emit(struct radeon_cs *cs)
         cmd.nbox = csm->ctx->numClipRects;
         cmd.boxes = (drm_clip_rect_t *) csm->ctx->pClipRects;
     }
+
+    dump_cmdbuf(cs);
 
     r = drmCommandWrite(cs->csm->fd, DRM_RADEON_CMDBUF, &cmd, sizeof(cmd));
     if (r) {

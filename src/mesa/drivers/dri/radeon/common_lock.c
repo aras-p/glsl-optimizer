@@ -55,7 +55,6 @@ char *prevLockFile = NULL;
 int prevLockLine = 0;
 #endif
 
-#ifdef RADEON_COMMON_FOR_R300
 /* Turn on/off page flipping according to the flags in the sarea:
  */
 void radeonUpdatePageFlipping(radeonContextPtr rmesa)
@@ -81,18 +80,6 @@ void radeonUpdatePageFlipping(radeonContextPtr rmesa)
 
 	rmesa->state.depth.rrb = (void *)fb->Attachment[BUFFER_DEPTH].Renderbuffer;
 }
-#else
-/* Turn on/off page flipping according to the flags in the sarea:
- */
-void radeonUpdatePageFlipping(radeonContextPtr rmesa)
-{
-	rmesa->doPageFlip = rmesa->sarea->pfState;
-	if (rmesa->glCtx->WinSysDrawBuffer) {
-		driFlipRenderbuffers(rmesa->glCtx->WinSysDrawBuffer,
-				     rmesa->sarea->pfCurrentPage);
-	}
-}
-#endif
 
 /* Update the hardware state.  This is called if another context has
  * grabbed the hardware lock, which includes the X server.  This

@@ -47,17 +47,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r200_sanity.h"
 #include "radeon_reg.h"
 
-static void print_state_atom( struct radeon_state_atom *state )
-{
-   int i;
-
-   fprintf(stderr, "emit %s/%d\n", state->name, state->cmd_size);
-
-   if (0 & R200_DEBUG & DEBUG_VERBOSE) 
-      for (i = 0 ; i < state->cmd_size ; i++) 
-	 fprintf(stderr, "\t%s[%d]: %x\n", state->name, i, state->cmd[i]);
-
-}
+#define DEBUG_CMDBUF         0
 
 /* The state atoms will be emitted in the order they appear in the atom list,
  * so this step is important.
@@ -141,7 +131,7 @@ static void r200SaveHwState( r200ContextPtr rmesa )
 	   rmesa->backup_store.cmd_used += size;
 	 }
 	 if (R200_DEBUG & DEBUG_STATE)
-	    print_state_atom( atom );
+	    radeon_print_state_atom( atom );
       }
    }
 
@@ -161,9 +151,9 @@ static INLINE void r200EmitAtoms(r200ContextPtr r200, GLboolean dirty)
      if ((atom->dirty || r200->hw.all_dirty) == dirty) {
        dwords = (*atom->check) (r200->radeon.glCtx, atom);
        if (dwords) {
-	 //	 if (DEBUG_CMDBUF && RADEON_DEBUG & DEBUG_STATE) {
-	 //	   r300PrintStateAtom(r300, atom);
-	 //		}
+	  if (DEBUG_CMDBUF && RADEON_DEBUG & DEBUG_STATE) {
+	     radeon_print_state_atom(atom);
+	  }
 	 if (atom->emit) {
 	   (*atom->emit)(r200->radeon.glCtx, atom);
 	 } else {
@@ -173,10 +163,10 @@ static INLINE void r200EmitAtoms(r200ContextPtr r200, GLboolean dirty)
 	 }
 	 atom->dirty = GL_FALSE;
        } else {
-	 //	 if (DEBUG_CMDBUF && RADEON_DEBUG & DEBUG_STATE) {
-	 //	   fprintf(stderr, "  skip state %s\n",
-	 //		   atom->name);
-	 //	 }
+	  if (DEBUG_CMDBUF && RADEON_DEBUG & DEBUG_STATE) {
+	     fprintf(stderr, "  skip state %s\n",
+		     atom->name);
+	  }
        }
      }
    }

@@ -68,7 +68,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 static void r300ClearBuffer(r300ContextPtr r300, int flags,
 			    struct radeon_renderbuffer *rrb,
-                struct radeon_renderbuffer *rrbd)
+			    struct radeon_renderbuffer *rrbd)
 {
 	BATCH_LOCALS(&r300->radeon);
 	GLcontext *ctx = r300->radeon.glCtx;
@@ -592,7 +592,7 @@ static void r300Clear(GLcontext * ctx, GLbitfield mask)
 	rcommonEnsureCmdBufSpace(&r300->radeon, 421 * 3, __FUNCTION__);
 	if (flags || bits)
 		r300EmitClearState(ctx);
-    rrbd = (void *)fb->Attachment[BUFFER_DEPTH].Renderbuffer;
+	rrbd = (void *)fb->Attachment[BUFFER_DEPTH].Renderbuffer;
 
 	if (flags & BUFFER_BIT_FRONT_LEFT) {
 		rrb = (void *)fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer;

@@ -32,4 +32,5 @@ GLboolean radeonMakeCurrent(__DRIcontextPrivate * driContextPriv,
 
 void rcommon_emit_vector(GLcontext * ctx, struct radeon_aos *aos,
 			 GLvoid * data, int size, int stride, int count);
+void radeon_print_state_atom( struct radeon_state_atom *state );
 #endif

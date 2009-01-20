@@ -1337,3 +1337,16 @@ void rcommon_emit_vector(GLcontext * ctx, struct radeon_aos *aos,
 	}
 	radeon_bo_unmap(aos->bo);
 }
+
+
+void radeon_print_state_atom( struct radeon_state_atom *state )
+{
+   int i;
+
+   fprintf(stderr, "emit %s/%d\n", state->name, state->cmd_size);
+
+   if (RADEON_DEBUG & DEBUG_VERBOSE) 
+      for (i = 0 ; i < state->cmd_size ; i++) 
+	 fprintf(stderr, "\t%s[%d]: %x\n", state->name, i, state->cmd[i]);
+
+}

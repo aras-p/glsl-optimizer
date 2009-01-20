@@ -201,40 +201,31 @@ static INLINE char *r200AllocCmdBuf( r200ContextPtr rmesa,
 }
 #endif
 
-static inline uint32_t cmdpacket3_clip(int cmd_type)
+static inline uint32_t cmdpacket3(int cmd_type)
 {
   drm_radeon_cmd_header_t cmd;
 
   cmd.i = 0;
-  cmd.header.cmd_type = RADEON_CMD_PACKET3_CLIP;
+  cmd.header.cmd_type = cmd_type;
 
   return (uint32_t)cmd.i;
 
 }
-#define OUT_BATCH_PACKET3_CLIP(packet, num_extra) do {	      \
+
+#define OUT_BATCH_PACKET3(packet, num_extra) do {	      \
     if (!b_l_rmesa->radeonScreen->kernel_mm) {		      \
-      OUT_BATCH(cmdpacket3_clip(0));			      \
-      OUT_BATCH(packet);				      \
+      OUT_BATCH(cmdpacket3(RADEON_CMD_PACKET3));				      \
+      OUT_BATCH(CP_PACKET3((packet), (num_extra)));	      \
     } else {						      \
       OUT_BATCH(CP_PACKET2);				      \
       OUT_BATCH(CP_PACKET3((packet), (num_extra)));	      \
     }							      \
   } while(0)
 
-static inline uint32_t cmdpacket3(int cmd_type)
-{
-  drm_radeon_cmd_header_t cmd;
-
-  cmd.i = 0;
-  cmd.header.cmd_type = RADEON_CMD_PACKET3;
-
-  return (uint32_t)cmd.i;
-
-}
-#define OUT_BATCH_PACKET3(packet, num_extra) do {	      \
+#define OUT_BATCH_PACKET3_CLIP(packet, num_extra) do {	      \
     if (!b_l_rmesa->radeonScreen->kernel_mm) {		      \
-      OUT_BATCH(cmdpacket3(0));			      \
-      OUT_BATCH(packet);				      \
+      OUT_BATCH(cmdpacket3(RADEON_CMD_PACKET3_CLIP));	      \
+      OUT_BATCH(CP_PACKET3((packet), (num_extra)));	      \
     } else {						      \
       OUT_BATCH(CP_PACKET2);				      \
       OUT_BATCH(CP_PACKET3((packet), (num_extra)));	      \

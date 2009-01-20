@@ -142,6 +142,7 @@ static GLboolean discrete_prim[0x10] = {
 
 static GLushort *r200AllocElts( r200ContextPtr rmesa, GLuint nr ) 
 {
+   fprintf(stderr,"alloc elts\n");
    if (rmesa->dma.flush == r200FlushElts &&
        rmesa->store.cmd_used + nr*2 < R200_CMD_BUF_SZ) {
 
@@ -187,6 +188,7 @@ static void r200EmitPrim( GLcontext *ctx,
    r200ContextPtr rmesa = R200_CONTEXT( ctx );
    r200TclPrimitive( ctx, prim, hwprim );
    
+   fprintf(stderr,"Emit prim %d\n", rmesa->tcl.nr_aos_components);
    rcommonEnsureCmdBufSpace( rmesa, AOS_BUFSZ(rmesa->tcl.nr_aos_components) +
 			     rmesa->hw.max_state_size + VBUF_BUFSZ );
 

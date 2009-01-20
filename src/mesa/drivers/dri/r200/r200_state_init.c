@@ -43,6 +43,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "tnl/t_pipeline.h"
 #include "swrast_setup/swrast_setup.h"
 
+#include "radeon_buffer.h"
+#include "radeon_cs.h"
+#include "common_context.h"
+#include "common_cmdbuf.h"
 #include "r200_context.h"
 #include "r200_ioctl.h"
 #include "r200_state.h"
@@ -288,32 +292,66 @@ VP_CHECK( tcl_vp_size, ctx->VertexProgram.Current->Base.NumNativeInstructions > 
 VP_CHECK( tcl_vpp_size, ctx->VertexProgram.Current->Base.NumNativeParameters > 96 )
 
 
-#if 0
-static int ctx_emit(GLcontext *ctx, struct radeon_state_atom *atom)
+static void ctx_emit(GLcontext *ctx, struct radeon_state_atom *atom)
 {
    r200ContextPtr r200 = R200_CONTEXT(ctx);
    BATCH_LOCALS(&r200->radeon);
    struct radeon_renderbuffer *rrb;
    uint32_t cbpitch;
+   uint32_t zbpitch;
+   uint32_t dwords = atom->cmd_size;
    GLframebuffer *fb = r200->radeon.dri.drawable->driverPrivate;
-   
+
+   /* output the first 7 bytes of context */
+   BEGIN_BATCH_NO_AUTOSTATE(dwords);
+   OUT_BATCH_TABLE(atom->cmd, 5);
+
+   rrb = r200->radeon.state.depth.rrb;
+   if (!rrb) {
+     OUT_BATCH(atom->cmd[CTX_RB3D_DEPTHOFFSET]);
+     OUT_BATCH(atom->cmd[CTX_RB3D_DEPTHPITCH]);
+   } else {
+     zbpitch = (rrb->pitch / rrb->cpp);
+     OUT_BATCH_RELOC(0, rrb->bo, 0, 0, RADEON_GEM_DOMAIN_VRAM, 0);
+     OUT_BATCH(zbpitch);
+   }
+     
+   OUT_BATCH(atom->cmd[CTX_RB3D_ZSTENCILCNTL]);
+   OUT_BATCH(atom->cmd[CTX_CMD_1]);
+   OUT_BATCH(atom->cmd[CTX_PP_CNTL]);
+   OUT_BATCH(atom->cmd[CTX_RB3D_CNTL]);
+
    rrb = r200->radeon.state.color.rrb;
    if (r200->radeon.radeonScreen->driScreen->dri2.enabled) {
       rrb = (struct radeon_renderbuffer *)fb->Attachment[BUFFER_BACK_LEFT].Renderbuffer;
    }
    if (!rrb || !rrb->bo) {
-      fprintf(stderr, "no rrb\n");
-      return;
+     OUT_BATCH(atom->cmd[CTX_RB3D_COLOROFFSET]);
+   } else {
+     OUT_BATCH_RELOC(0, rrb->bo, 0, 0, RADEON_GEM_DOMAIN_VRAM, 0);
    }
 
-   cbpitch = (rrb->pitch / rrb->cpp);
-   if (rrb->cpp == 4)
-      ;
-   else
-      ;
+   OUT_BATCH(atom->cmd[CTX_CMD_2]);
+
+   if (!rrb || !rrb->bo) {
+     OUT_BATCH(atom->cmd[CTX_RB3D_COLORPITCH]);
+   } else {
+     cbpitch = (rrb->pitch / rrb->cpp);
+     if (rrb->cpp == 4)
+       ;
+     else
+       ;
+     if (r200->radeon.sarea->tiling_enabled)
+       cbpitch |= R200_COLOR_TILE_ENABLE;
+     OUT_BATCH(cbpitch);
+   }
+
+   if (atom->cmd_size == CTX_STATE_SIZE_NEWDRM)
+     OUT_BATCH_TABLE((atom->cmd + 14), 4);
+
+   END_BATCH();
    
 }
-#endif
 
 static int tex_emit(GLcontext *ctx, struct radeon_state_atom *atom)
 {
@@ -410,7 +448,7 @@ void r200InitState( r200ContextPtr rmesa )
    else
       ALLOC_STATE( ctx, always, CTX_STATE_SIZE_OLDDRM, "CTX/context", 0 );
 
-   //   rmesa->hw.ctx.emit = ctx_emit;
+   rmesa->hw.ctx.emit = ctx_emit;
    ALLOC_STATE( set, always, SET_STATE_SIZE, "SET/setup", 0 );
    ALLOC_STATE( lin, always, LIN_STATE_SIZE, "LIN/line", 0 );
    ALLOC_STATE( msk, always, MSK_STATE_SIZE, "MSK/mask", 0 );

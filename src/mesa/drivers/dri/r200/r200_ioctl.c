@@ -41,7 +41,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/context.h"
 #include "swrast/swrast.h"
 
+#include "radeon_cs.h"
 #include "r200_context.h"
+
 #include "common_cmdbuf.h"
 #include "r200_state.h"
 #include "r200_ioctl.h"
@@ -525,8 +527,8 @@ void r200Flush( GLcontext *ctx )
       rmesa->dma.flush( ctx );
 
    r200EmitState( rmesa );
-   
-   if (rmesa->store.cmd_used)
+
+   if (rmesa->radeon.cmdbuf.cs->cdw)
       rcommonFlushCmdBuf( &rmesa->radeon, __FUNCTION__ );
 }
 

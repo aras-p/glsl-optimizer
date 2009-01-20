@@ -2362,7 +2362,7 @@ static void r300ResetHwState(r300ContextPtr r300)
 	r300->hw.rb3d_discard_src_pixel_lte_threshold.cmd[2] = 0xffffffff;
 
 	rrb = r300->radeon.state.depth.rrb;
-    if (rrb && rrb->bo && (rrb->bo->flags & RADEON_BO_FLAGS_MACRO_TILE)) {
+	if (rrb && rrb->bo && (rrb->bo->flags & RADEON_BO_FLAGS_MACRO_TILE)) {
 		/* XXX: Turn off when clearing buffers ? */
 		r300->hw.zb.cmd[R300_ZB_PITCH] |= R300_DEPTHMACROTILE_ENABLE;
 
