@@ -55,6 +55,7 @@ struct r300_dsa_state {
 };
 
 struct r300_rs_state {
+    uint32_t vap_control_status;    /* R300_VAP_CNTL_STATUS: 0x2140 */
     uint32_t depth_scale_front;     /* R300_SU_POLY_OFFSET_FRONT_SCALE: 0x42a4 */
     uint32_t depth_offset_front;    /* R300_SU_POLY_OFFSET_FRONT_OFFSET: 0x42a8 */
     uint32_t depth_scale_back;      /* R300_SU_POLY_OFFSET_BACK_SCALE: 0x42ac */
@@ -98,6 +99,8 @@ struct r300_context {
 
     /* Bitmask of dirty state objects. */
     uint32_t dirty_state;
+    /* Flag indicating whether or not the HW is dirty. */
+    uint32_t dirty_hw;
 };
 
 /* Convenience cast wrapper. */

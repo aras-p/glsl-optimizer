@@ -31,6 +31,10 @@ static void r300_emit_dirty_state(struct r300_context* r300)
     struct r300_screen* r300screen = (struct r300_screen*)r300->context.screen;
     CS_LOCALS(r300);
 
+    if (!(r300->dirty_state) && !(r300->dirty_hw)) {
+        return;
+    }
+
     /* XXX check size */
 
     if (r300->dirty_state & R300_NEW_BLEND) {
@@ -72,6 +76,7 @@ static void r300_emit_dirty_state(struct r300_context* r300)
 
     if (r300->dirty_state & R300_NEW_RS) {
         struct r300_rs_state* rs = r300->rs_state;
+        OUT_CS_REG(R300_VAP_CNTL_STATUS, rs->vap_control_status);
         /* XXX next six are contiguous regs */
         OUT_CS_REG(R300_SU_POLY_OFFSET_FRONT_SCALE, rs->depth_scale_front);
         OUT_CS_REG(R300_SU_POLY_OFFSET_FRONT_OFFSET, rs->depth_offset_front);

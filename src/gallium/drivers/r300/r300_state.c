@@ -434,6 +434,10 @@ static void* r300_create_rs_state(struct pipe_context* pipe,
                 pack_float_32(state->offset_scale);
     }
 
+    /* XXX this is part of HW TCL */
+    /* XXX endian control */
+    rs->vap_control_status = R300_VAP_TCL_BYPASS;
+
     return (void*)rs;
 }
 
