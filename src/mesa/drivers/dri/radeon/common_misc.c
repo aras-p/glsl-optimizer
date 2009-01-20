@@ -1311,15 +1311,15 @@ void rcommon_emit_vector(GLcontext * ctx, struct radeon_aos *aos,
 
 	memset(aos, 0, sizeof(struct radeon_aos));
 	if (stride == 0) {
-        bo_size = size * 4;
+		bo_size = size * 4;
 		count = 1;
 		aos->stride = 0;
 	} else {
-        bo_size = size * count * 4;
+		bo_size = size * count * 4;
 		aos->stride = size;
 	}
 	aos->bo = radeon_bo_open(rmesa->radeonScreen->bom,
-                             0, bo_size, 32, RADEON_GEM_DOMAIN_GTT, 0);
+				 0, bo_size, 32, RADEON_GEM_DOMAIN_GTT, 0);
 	aos->offset = 0;
 	aos->components = size;
 	aos->count = count;

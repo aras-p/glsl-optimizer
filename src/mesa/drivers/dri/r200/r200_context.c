@@ -276,6 +276,11 @@ static void r200_vtbl_emit_cs_header(struct radeon_cs *cs, radeonContextPtr rmes
 {
 }
 
+static void r200_vtbl_emit_state(radeonContextPtr rmesa)
+{
+	r200EmitState((r200ContextPtr)rmesa);
+}
+
 static void r200_init_vtbl(radeonContextPtr radeon)
 {
    radeon->vtbl.get_lock = r200_get_lock;
@@ -284,6 +289,7 @@ static void r200_init_vtbl(radeonContextPtr radeon)
    radeon->vtbl.set_all_dirty = r200_vtbl_set_all_dirty;
    radeon->vtbl.update_draw_buffer = r200UpdateDrawBuffer;
    radeon->vtbl.emit_cs_header = r200_vtbl_emit_cs_header;
+   radeon->vtbl.emit_state = r200_vtbl_emit_state;
 }
 
 
