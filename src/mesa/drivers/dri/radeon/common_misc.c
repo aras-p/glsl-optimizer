@@ -66,6 +66,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "common_misc.h"
 #include "common_lock.h"
 #include "common_cmdbuf.h"
+#include "radeon_mipmap_tree.h"
 
 #define DRIVER_DATE "20090101"
 
@@ -1349,4 +1350,117 @@ void radeon_print_state_atom( struct radeon_state_atom *state )
       for (i = 0 ; i < state->cmd_size ; i++) 
 	 fprintf(stderr, "\t%s[%d]: %x\n", state->name, i, state->cmd[i]);
 
+}
+
+/* textures */
+/**
+ * Allocate an empty texture image object.
+ */
+struct gl_texture_image *radeonNewTextureImage(GLcontext *ctx)
+{
+	return CALLOC(sizeof(radeon_texture_image));
+}
+
+/**
+ * Free memory associated with this texture image.
+ */
+void radeonFreeTexImageData(GLcontext *ctx, struct gl_texture_image *timage)
+{
+	radeon_texture_image* image = get_radeon_texture_image(timage);
+
+	if (image->mt) {
+		radeon_miptree_unreference(image->mt);
+		image->mt = 0;
+		assert(!image->base.Data);
+	} else {
+		_mesa_free_texture_image_data(ctx, timage);
+	}
+	if (image->bo) {
+		radeon_bo_unref(image->bo);
+		image->bo = NULL;
+	}
+}
+
+/* Set Data pointer and additional data for mapped texture image */
+static void teximage_set_map_data(radeon_texture_image *image)
+{
+	radeon_mipmap_level *lvl = &image->mt->levels[image->mtlevel];
+	image->base.Data = image->mt->bo->ptr + lvl->faces[image->mtface].offset;
+	image->base.RowStride = lvl->rowstride / image->mt->bpp;
+}
+
+
+/**
+ * Map a single texture image for glTexImage and friends.
+ */
+void radeon_teximage_map(radeon_texture_image *image, GLboolean write_enable)
+{
+	if (image->mt) {
+		assert(!image->base.Data);
+
+		radeon_bo_map(image->mt->bo, write_enable);
+		teximage_set_map_data(image);
+	}
+}
+
+
+void radeon_teximage_unmap(radeon_texture_image *image)
+{
+	if (image->mt) {
+		assert(image->base.Data);
+
+		image->base.Data = 0;
+		radeon_bo_unmap(image->mt->bo);
+	}
+}
+
+/**
+ * Map a validated texture for reading during software rendering.
+ */
+void radeonMapTexture(GLcontext *ctx, struct gl_texture_object *texObj)
+{
+	radeonTexObj* t = radeon_tex_obj(texObj);
+	int face, level;
+
+	assert(texObj->_Complete);
+	assert(t->mt);
+
+	radeon_bo_map(t->mt->bo, GL_FALSE);
+	for(face = 0; face < t->mt->faces; ++face) {
+		for(level = t->mt->firstLevel; level <= t->mt->lastLevel; ++level)
+			teximage_set_map_data(get_radeon_texture_image(texObj->Image[face][level]));
+	}
+}
+
+void radeonUnmapTexture(GLcontext *ctx, struct gl_texture_object *texObj)
+{
+	radeonTexObj* t = radeon_tex_obj(texObj);
+	int face, level;
+
+	assert(texObj->_Complete);
+	assert(t->mt);
+
+	for(face = 0; face < t->mt->faces; ++face) {
+		for(level = t->mt->firstLevel; level <= t->mt->lastLevel; ++level)
+			texObj->Image[face][level]->Data = 0;
+	}
+	radeon_bo_unmap(t->mt->bo);
+}
+
+
+
+/**
+ * Wraps Mesa's implementation to ensure that the base level image is mapped.
+ *
+ * This relies on internal details of _mesa_generate_mipmap, in particular
+ * the fact that the memory for recreated texture images is always freed.
+ */
+void radeon_generate_mipmap(GLcontext* ctx, GLenum target, struct gl_texture_object *texObj)
+{
+	GLuint face = face_for_target(target);
+	radeon_texture_image *baseimage = get_radeon_texture_image(texObj->Image[face][texObj->BaseLevel]);
+
+	radeon_teximage_map(baseimage, GL_FALSE);
+	_mesa_generate_mipmap(ctx, target, texObj);
+	radeon_teximage_unmap(baseimage);
 }

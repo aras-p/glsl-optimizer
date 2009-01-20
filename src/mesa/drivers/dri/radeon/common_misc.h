@@ -33,4 +33,13 @@ GLboolean radeonMakeCurrent(__DRIcontextPrivate * driContextPriv,
 void rcommon_emit_vector(GLcontext * ctx, struct radeon_aos *aos,
 			 GLvoid * data, int size, int stride, int count);
 void radeon_print_state_atom( struct radeon_state_atom *state );
+
+struct gl_texture_image *radeonNewTextureImage(GLcontext *ctx);
+void radeonFreeTexImageData(GLcontext *ctx, struct gl_texture_image *timage);
+
+void radeon_teximage_map(radeon_texture_image *image, GLboolean write_enable);
+void radeon_teximage_unmap(radeon_texture_image *image);
+void radeonMapTexture(GLcontext *ctx, struct gl_texture_object *texObj);
+void radeonUnmapTexture(GLcontext *ctx, struct gl_texture_object *texObj);
+void radeon_generate_mipmap(GLcontext* ctx, GLenum target, struct gl_texture_object *texObj);
 #endif

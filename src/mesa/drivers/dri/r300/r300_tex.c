@@ -406,102 +406,6 @@ static const struct gl_texture_format *r300ChooseTextureFormat(GLcontext * ctx,
 	return NULL;		/* never get here */
 }
 
-
-/**
- * Allocate an empty texture image object.
- */
-static struct gl_texture_image *r300NewTextureImage(GLcontext *ctx)
-{
-	return CALLOC(sizeof(radeon_texture_image));
-}
-
-/**
- * Free memory associated with this texture image.
- */
-static void r300FreeTexImageData(GLcontext *ctx, struct gl_texture_image *timage)
-{
-	radeon_texture_image* image = get_radeon_texture_image(timage);
-
-	if (image->mt) {
-		radeon_miptree_unreference(image->mt);
-		image->mt = 0;
-		assert(!image->base.Data);
-	} else {
-		_mesa_free_texture_image_data(ctx, timage);
-	}
-    if (image->bo) {
-        radeon_bo_unref(image->bo);
-        image->bo = NULL;
-    }
-}
-
-
-/* Set Data pointer and additional data for mapped texture image */
-static void teximage_set_map_data(radeon_texture_image *image)
-{
-	radeon_mipmap_level *lvl = &image->mt->levels[image->mtlevel];
-	image->base.Data = image->mt->bo->ptr + lvl->faces[image->mtface].offset;
-	image->base.RowStride = lvl->rowstride / image->mt->bpp;
-}
-
-
-/**
- * Map a single texture image for glTexImage and friends.
- */
-static void r300_teximage_map(radeon_texture_image *image, GLboolean write_enable)
-{
-	if (image->mt) {
-		assert(!image->base.Data);
-
-		radeon_bo_map(image->mt->bo, write_enable);
-		teximage_set_map_data(image);
-	}
-}
-
-
-static void r300_teximage_unmap(radeon_texture_image *image)
-{
-	if (image->mt) {
-		assert(image->base.Data);
-
-		image->base.Data = 0;
-		radeon_bo_unmap(image->mt->bo);
-	}
-}
-
-/**
- * Map a validated texture for reading during software rendering.
- */
-static void r300MapTexture(GLcontext *ctx, struct gl_texture_object *texObj)
-{
-	radeonTexObj* t = radeon_tex_obj(texObj);
-	int face, level;
-
-	assert(texObj->_Complete);
-	assert(t->mt);
-
-	radeon_bo_map(t->mt->bo, GL_FALSE);
-	for(face = 0; face < t->mt->faces; ++face) {
-		for(level = t->mt->firstLevel; level <= t->mt->lastLevel; ++level)
-			teximage_set_map_data(get_radeon_texture_image(texObj->Image[face][level]));
-	}
-}
-
-static void r300UnmapTexture(GLcontext *ctx, struct gl_texture_object *texObj)
-{
-	radeonTexObj* t = radeon_tex_obj(texObj);
-	int face, level;
-
-	assert(texObj->_Complete);
-	assert(t->mt);
-
-	for(face = 0; face < t->mt->faces; ++face) {
-		for(level = t->mt->firstLevel; level <= t->mt->lastLevel; ++level)
-			texObj->Image[face][level]->Data = 0;
-	}
-	radeon_bo_unmap(t->mt->bo);
-}
-
 /**
  * All glTexImage calls go through this function.
  */
@@ -541,7 +445,7 @@ static void r300_teximage(
 	}
 
 	/* Allocate memory for image */
-	r300FreeTexImageData(ctx, texImage); /* Mesa core only clears texImage->Data but not image->mt */
+	radeonFreeTexImageData(ctx, texImage); /* Mesa core only clears texImage->Data but not image->mt */
 
 	if (!t->mt)
 		radeon_try_alloc_miptree(&rmesa->radeon, t, texImage, face, level);
@@ -571,7 +475,7 @@ static void r300_teximage(
 	}
 
 	if (pixels) {
-		r300_teximage_map(image, GL_TRUE);
+		radeon_teximage_map(image, GL_TRUE);
 
 		if (compressed) {
 			memcpy(texImage->Data, pixels, imageSize);
@@ -594,7 +498,7 @@ static void r300_teximage(
 				_mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage");
 		}
 
-		r300_teximage_unmap(image);
+		radeon_teximage_unmap(image);
 	}
 
 	_mesa_unmap_teximage_pbo(ctx, packing);
@@ -697,7 +601,7 @@ static void r300_texsubimage(GLcontext* ctx, int dims, int level,
 
 	if (pixels) {
 		GLint dstRowStride;
-		r300_teximage_map(image, GL_TRUE);
+		radeon_teximage_map(image, GL_TRUE);
 
 		if (image->mt) {
 			radeon_mipmap_level *lvl = &image->mt->levels[image->mtlevel];
@@ -715,7 +619,7 @@ static void r300_texsubimage(GLcontext* ctx, int dims, int level,
 				format, type, pixels, packing))
 			_mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexSubImage");
 
-		r300_teximage_unmap(image);
+		radeon_teximage_unmap(image);
 	}
 
 	_mesa_unmap_teximage_pbo(ctx, packing);
@@ -776,23 +680,6 @@ r300TexSubImage3D(GLcontext * ctx, GLenum target, GLint level,
 {
 	r300_texsubimage(ctx, 3, level, xoffset, yoffset, zoffset, width, height, depth,
 		format, type, pixels, packing, texObj, texImage, 0);
-}
-
-
-/**
- * Wraps Mesa's implementation to ensure that the base level image is mapped.
- *
- * This relies on internal details of _mesa_generate_mipmap, in particular
- * the fact that the memory for recreated texture images is always freed.
- */
-static void r300_generate_mipmap(GLcontext* ctx, GLenum target, struct gl_texture_object *texObj)
-{
-	GLuint face = face_for_target(target);
-	radeon_texture_image *baseimage = get_radeon_texture_image(texObj->Image[face][texObj->BaseLevel]);
-
-	r300_teximage_map(baseimage, GL_FALSE);
-	_mesa_generate_mipmap(ctx, target, texObj);
-	r300_teximage_unmap(baseimage);
 }
 
 
@@ -929,10 +816,10 @@ void r300InitTextureFuncs(struct dd_function_table *functions)
 	/* Note: we only plug in the functions we implement in the driver
 	 * since _mesa_init_driver_functions() was already called.
 	 */
-	functions->NewTextureImage = r300NewTextureImage;
-	functions->FreeTexImageData = r300FreeTexImageData;
-	functions->MapTexture = r300MapTexture;
-	functions->UnmapTexture = r300UnmapTexture;
+	functions->NewTextureImage = radeonNewTextureImage;
+	functions->FreeTexImageData = radeonFreeTexImageData;
+	functions->MapTexture = radeonMapTexture;
+	functions->UnmapTexture = radeonUnmapTexture;
 
 	functions->ChooseTextureFormat = r300ChooseTextureFormat;
 	functions->TexImage1D = r300TexImage1D;
@@ -950,7 +837,7 @@ void r300InitTextureFuncs(struct dd_function_table *functions)
 	functions->CompressedTexImage2D = r300CompressedTexImage2D;
 	functions->CompressedTexSubImage2D = r300CompressedTexSubImage2D;
 
-	functions->GenerateMipmap = r300_generate_mipmap;
+	functions->GenerateMipmap = radeon_generate_mipmap;
 
 	driInitTextureFormats();
 }
