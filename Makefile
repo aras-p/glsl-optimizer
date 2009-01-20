@@ -298,14 +298,7 @@ MAIN_FILES = \
 	$(DIRECTORY)/vms/analyze_map.com				\
 	$(DIRECTORY)/vms/xlib.opt					\
 	$(DIRECTORY)/vms/xlib_share.opt					\
-	$(DIRECTORY)/windows/VC8/mesa/mesa.sln				\
-	$(DIRECTORY)/windows/VC8/mesa/gdi/gdi.vcproj			\
-	$(DIRECTORY)/windows/VC8/mesa/glu/glu.vcproj			\
-	$(DIRECTORY)/windows/VC8/mesa/mesa/mesa.vcproj			\
-	$(DIRECTORY)/windows/VC8/mesa/osmesa/osmesa.vcproj		\
-	$(DIRECTORY)/windows/VC8/progs/progs.sln			\
-	$(DIRECTORY)/windows/VC8/progs/demos/gears.vcproj		\
-	$(DIRECTORY)/windows/VC8/progs/glut/glut.vcproj
+	$(DIRECTORY)/windows/VC8/
 
 
 DRI_FILES = \
