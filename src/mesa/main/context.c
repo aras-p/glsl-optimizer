@@ -932,6 +932,9 @@ _mesa_init_constants(GLcontext *ctx)
    ctx->Const.MaxVarying = MAX_VARYING;
 #endif
 
+   /* GL_ARB_framebuffer_object */
+   ctx->Const.MaxSamples = 0;
+
    /* sanity checks */
    ASSERT(ctx->Const.MaxTextureUnits == MIN2(ctx->Const.MaxTextureImageUnits,
                                              ctx->Const.MaxTextureCoordUnits));
