@@ -425,6 +425,7 @@ _mesa_test_framebuffer_completeness(GLcontext *ctx, struct gl_framebuffer *fb)
    GLuint numImages;
    GLenum intFormat = GL_NONE; /* color buffers' internal format */
    GLuint minWidth = ~0, minHeight = ~0, maxWidth = 0, maxHeight = 0;
+   GLint numSamples = -1;
    GLint i;
    GLuint j;
 
@@ -509,12 +510,14 @@ _mesa_test_framebuffer_completeness(GLcontext *ctx, struct gl_framebuffer *fb)
          continue;
       }
 
-      /* Error-check width, height, format
+      /* Error-check width, height, format, samples
        */
       if (numImages == 1) {
-         /* save format */
-         if (i >= 0)
+         /* save format, num samples */
+         if (i >= 0) {
             intFormat = f;
+            numSamples = att->Renderbuffer->NumSamples;
+         }
       }
       else {
          if (!ctx->Extensions.ARB_framebuffer_object) {
@@ -531,6 +534,12 @@ _mesa_test_framebuffer_completeness(GLcontext *ctx, struct gl_framebuffer *fb)
                return;
             }
          }
+         if (att->Renderbuffer &&
+             att->Renderbuffer->NumSamples != numSamples) {
+            fbo_incomplete("inconsistant number of samples", i);
+            return;
+         }            
+
       }
    }
 
@@ -833,6 +842,7 @@ renderbuffer_storage(GLenum target, GLenum internalFormat,
       samples = 0;
    }
    else if (samples > ctx->Const.MaxSamples) {
+      /* note: driver may choose to use more samples than what's requested */
       _mesa_error(ctx, GL_INVALID_VALUE, "%s(samples)", func);
       return;
    }
@@ -905,6 +915,10 @@ void GLAPIENTRY
 _mesa_RenderbufferStorageEXT(GLenum target, GLenum internalFormat,
                              GLsizei width, GLsizei height)
 {
+   /* GL_ARB_fbo says calling this function is equivalent to calling
+    * glRenderbufferStorageMultisample() with samples=0.  We pass in
+    * a token value here just for error reporting purposes.
+    */
    renderbuffer_storage(target, internalFormat, width, height, NO_SAMPLES);
 }
 
@@ -922,6 +936,7 @@ _mesa_RenderbufferStorageMultisample(GLenum target, GLsizei samples,
 void GLAPIENTRY
 _mesa_GetRenderbufferParameterivEXT(GLenum target, GLenum pname, GLint *params)
 {
+   struct gl_renderbuffer *rb;
    GET_CURRENT_CONTEXT(ctx);
 
    ASSERT_OUTSIDE_BEGIN_END(ctx);
@@ -932,7 +947,8 @@ _mesa_GetRenderbufferParameterivEXT(GLenum target, GLenum pname, GLint *params)
       return;
    }
 
-   if (!ctx->CurrentRenderbuffer) {
+   rb = ctx->CurrentRenderbuffer;
+   if (!rb) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
                   "glGetRenderbufferParameterivEXT");
       return;
@@ -942,32 +958,38 @@ _mesa_GetRenderbufferParameterivEXT(GLenum target, GLenum pname, GLint *params)
 
    switch (pname) {
    case GL_RENDERBUFFER_WIDTH_EXT:
-      *params = ctx->CurrentRenderbuffer->Width;
+      *params = rb->Width;
       return;
    case GL_RENDERBUFFER_HEIGHT_EXT:
-      *params = ctx->CurrentRenderbuffer->Height;
+      *params = rb->Height;
       return;
    case GL_RENDERBUFFER_INTERNAL_FORMAT_EXT:
-      *params = ctx->CurrentRenderbuffer->InternalFormat;
+      *params = rb->InternalFormat;
       return;
    case GL_RENDERBUFFER_RED_SIZE_EXT:
-      *params = ctx->CurrentRenderbuffer->RedBits;
+      *params = rb->RedBits;
       break;
    case GL_RENDERBUFFER_GREEN_SIZE_EXT:
-      *params = ctx->CurrentRenderbuffer->GreenBits;
+      *params = rb->GreenBits;
       break;
    case GL_RENDERBUFFER_BLUE_SIZE_EXT:
-      *params = ctx->CurrentRenderbuffer->BlueBits;
+      *params = rb->BlueBits;
       break;
    case GL_RENDERBUFFER_ALPHA_SIZE_EXT:
-      *params = ctx->CurrentRenderbuffer->AlphaBits;
+      *params = rb->AlphaBits;
       break;
    case GL_RENDERBUFFER_DEPTH_SIZE_EXT:
-      *params = ctx->CurrentRenderbuffer->DepthBits;
+      *params = rb->DepthBits;
       break;
    case GL_RENDERBUFFER_STENCIL_SIZE_EXT:
-      *params = ctx->CurrentRenderbuffer->StencilBits;
+      *params = rb->StencilBits;
       break;
+   case GL_RENDERBUFFER_SAMPLES:
+      if (ctx->Extensions.ARB_framebuffer_object) {
+         *params = rb->NumSamples;
+         break;
+      }
+      /* fallthrough */
    default:
       _mesa_error(ctx, GL_INVALID_ENUM,
                   "glGetRenderbufferParameterivEXT(target)");
@@ -1763,11 +1785,22 @@ _mesa_GenerateMipmapEXT(GLenum target)
 
 
 #if FEATURE_EXT_framebuffer_blit
+/**
+ * Blit rectangular region, optionally from one framebuffer to another.
+ *
+ * Note, if the src buffer is multisampled and the dest is not, this is
+ * when the samples must be resolved to a single color.
+ */
 void GLAPIENTRY
 _mesa_BlitFramebufferEXT(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
                          GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1,
                          GLbitfield mask, GLenum filter)
 {
+   const GLbitfield legalMaskBits = (GL_COLOR_BUFFER_BIT |
+                                     GL_DEPTH_BUFFER_BIT |
+                                     GL_STENCIL_BUFFER_BIT);
+   const struct gl_framebuffer *readFb, *drawFb;
+   const struct gl_renderbuffer *colorReadRb, *colorDrawRb;
    GET_CURRENT_CONTEXT(ctx);
 
    ASSERT_OUTSIDE_BEGIN_END(ctx);
@@ -1777,13 +1810,19 @@ _mesa_BlitFramebufferEXT(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
       _mesa_update_state(ctx);
    }
 
-   if (!ctx->ReadBuffer) {
-      /* XXX */
+   readFb = ctx->ReadBuffer;
+   drawFb = ctx->DrawBuffer;
+
+   if (!readFb || !drawFb) {
+      /* This will normally never happen but someday we may want to
+       * support MakeCurrent() with no drawables.
+       */
+      return;
    }
 
    /* check for complete framebuffers */
-   if (ctx->DrawBuffer->_Status != GL_FRAMEBUFFER_COMPLETE_EXT ||
-       ctx->ReadBuffer->_Status != GL_FRAMEBUFFER_COMPLETE_EXT) {
+   if (drawFb->_Status != GL_FRAMEBUFFER_COMPLETE_EXT ||
+       readFb->_Status != GL_FRAMEBUFFER_COMPLETE_EXT) {
       _mesa_error(ctx, GL_INVALID_FRAMEBUFFER_OPERATION_EXT,
                   "glBlitFramebufferEXT(incomplete draw/read buffers)");
       return;
@@ -1794,9 +1833,7 @@ _mesa_BlitFramebufferEXT(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
       return;
    }
 
-   if (mask & ~(GL_COLOR_BUFFER_BIT |
-                GL_DEPTH_BUFFER_BIT |
-                GL_STENCIL_BUFFER_BIT)) {
+   if (mask & ~legalMaskBits) {
       _mesa_error( ctx, GL_INVALID_VALUE, "glBlitFramebufferEXT(mask)");
       return;
    }
@@ -1809,9 +1846,18 @@ _mesa_BlitFramebufferEXT(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
       return;
    }
 
+   /* get color read/draw renderbuffers */
+   if (mask & GL_COLOR_BUFFER_BIT) {
+      colorReadRb = readFb->_ColorReadBuffer;
+      colorDrawRb = drawFb->_ColorDrawBuffers[0];
+   }
+   else {
+      colorReadRb = colorDrawRb = NULL;
+   }
+
    if (mask & GL_STENCIL_BUFFER_BIT) {
-      struct gl_renderbuffer *readRb = ctx->ReadBuffer->_StencilBuffer;
-      struct gl_renderbuffer *drawRb = ctx->DrawBuffer->_StencilBuffer;
+      struct gl_renderbuffer *readRb = readFb->_StencilBuffer;
+      struct gl_renderbuffer *drawRb = drawFb->_StencilBuffer;
       if (readRb->StencilBits != drawRb->StencilBits) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "glBlitFramebufferEXT(stencil buffer size mismatch");
@@ -1820,11 +1866,39 @@ _mesa_BlitFramebufferEXT(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
    }
 
    if (mask & GL_DEPTH_BUFFER_BIT) {
-      struct gl_renderbuffer *readRb = ctx->ReadBuffer->_DepthBuffer;
-      struct gl_renderbuffer *drawRb = ctx->DrawBuffer->_DepthBuffer;
+      struct gl_renderbuffer *readRb = readFb->_DepthBuffer;
+      struct gl_renderbuffer *drawRb = drawFb->_DepthBuffer;
       if (readRb->DepthBits != drawRb->DepthBits) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "glBlitFramebufferEXT(depth buffer size mismatch");
+         return;
+      }
+   }
+
+   if (readFb->Visual.samples > 0 &&
+       drawFb->Visual.samples > 0 &&
+       readFb->Visual.samples != drawFb->Visual.samples) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glBlitFramebufferEXT(mismatched samples");
+      return;
+   }
+
+   /* extra checks for multisample copies... */
+   if (readFb->Visual.samples > 0 || drawFb->Visual.samples > 0) {
+      /* src and dest region sizes must be the same */
+      if (srcX1 - srcX0 != dstX1 - dstX0 ||
+          srcY1 - srcY0 != dstY1 - dstY0) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                "glBlitFramebufferEXT(bad src/dst multisample region sizes");
+         return;
+      }
+
+      /* color formats must match */
+      if (colorReadRb &&
+          colorDrawRb &&
+          colorReadRb->_ActualFormat != colorDrawRb->_ActualFormat) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                "glBlitFramebufferEXT(bad src/dst multisample pixel formats");
          return;
       }
    }
