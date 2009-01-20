@@ -52,7 +52,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r300_reg.h"
 #include "r300_cmdbuf.h"
 #include "r300_emit.h"
-#include "r300_mipmap_tree.h"
+#include "radeon_mipmap_tree.h"
 #include "r300_state.h"
 #include "radeon_cs_legacy.h"
 #include "radeon_cs_gem.h"
@@ -271,7 +271,7 @@ static void emit_tex_offsets(GLcontext *ctx, struct radeon_state_atom * atom)
 		for(i = 0; i < numtmus; ++i) {
 		    BEGIN_BATCH(2);
     		OUT_BATCH_REGSEQ(R300_TX_OFFSET_0 + (i * 4), 1);
-			r300TexObj *t = r300->hw.textures[i];
+			radeonTexObj *t = r300->hw.textures[i];
 			if (t && !t->image_override) {
 				OUT_BATCH_RELOC(t->tile_bits, t->mt->bo, 0,
                                 RADEON_GEM_DOMAIN_VRAM, 0, 0);

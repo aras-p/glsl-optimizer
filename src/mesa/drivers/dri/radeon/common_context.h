@@ -112,11 +112,25 @@ struct radeon_state_atom {
 
 typedef struct radeon_tex_obj radeonTexObj, *radeonTexObjPtr;
 
+#define RADEON_TXO_MICRO_TILE               (1 << 3)
+
 /* Texture object in locally shared texture space.
  */
-#ifndef RADEON_COMMON_FOR_R300
 struct radeon_tex_obj {
-	driTextureObject base;
+  //	driTextureObject base;
+	struct gl_texture_object base;
+	struct _radeon_mipmap_tree *mt;
+
+	/**
+	 * This is true if we've verified that the mipmap tree above is complete
+	 * and so on.
+	 */
+	GLboolean validated;
+
+	GLuint override_offset;
+	GLboolean image_override; /* Image overridden by GLX_EXT_tfp */
+	GLuint tile_bits;	/* hw texture tile bits used on this texture */
+        struct radeon_bo *bo;
 
 	GLuint bufAddr;		/* Offset to start of locally
 				   shared texture block */
@@ -131,7 +145,7 @@ struct radeon_tex_obj {
 	drm_radeon_tex_image_t image[6][RADEON_MAX_TEXTURE_LEVELS];
 	/* Six, for the cube faces */
 
-	GLboolean image_override; /* Image overridden by GLX_EXT_tfp */
+
 
 	GLuint pp_txfilter;	/* hardware register values */
 	GLuint pp_txformat;
@@ -143,11 +157,17 @@ struct radeon_tex_obj {
 	GLuint pp_border_color;
 	GLuint pp_cubic_faces;	/* cube face 1,2,3,4 log2 sizes */
 
+        GLuint pp_txfilter_1;	/*  r300 */
+
 	GLboolean border_fallback;
 
-	GLuint tile_bits;	/* hw texture tile bits used on this texture */
+
 };
-#endif
+
+static INLINE radeonTexObj* radeon_tex_obj(struct gl_texture_object *texObj)
+{
+	return (radeonTexObj*)texObj;
+}
 
 /* Need refcounting on dma buffers:
  */

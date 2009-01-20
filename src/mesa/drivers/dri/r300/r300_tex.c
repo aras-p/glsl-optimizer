@@ -50,7 +50,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r300_context.h"
 #include "r300_state.h"
 #include "r300_ioctl.h"
-#include "r300_mipmap_tree.h"
+#include "radeon_mipmap_tree.h"
 #include "r300_tex.h"
 
 #include "xmlpool.h"
@@ -79,20 +79,20 @@ static unsigned int translate_wrap_mode(GLenum wrapmode)
  *
  * \param t Texture object whose wrap modes are to be set
  */
-static void r300UpdateTexWrap(r300TexObjPtr t)
+static void r300UpdateTexWrap(radeonTexObjPtr t)
 {
 	struct gl_texture_object *tObj = &t->base;
 
-	t->filter &=
+	t->pp_txfilter &=
 	    ~(R300_TX_WRAP_S_MASK | R300_TX_WRAP_T_MASK | R300_TX_WRAP_R_MASK);
 
-	t->filter |= translate_wrap_mode(tObj->WrapS) << R300_TX_WRAP_S_SHIFT;
+	t->pp_txfilter |= translate_wrap_mode(tObj->WrapS) << R300_TX_WRAP_S_SHIFT;
 
 	if (tObj->Target != GL_TEXTURE_1D) {
-		t->filter |= translate_wrap_mode(tObj->WrapT) << R300_TX_WRAP_T_SHIFT;
+		t->pp_txfilter |= translate_wrap_mode(tObj->WrapT) << R300_TX_WRAP_T_SHIFT;
 
 		if (tObj->Target == GL_TEXTURE_3D)
-			t->filter |= translate_wrap_mode(tObj->WrapR) << R300_TX_WRAP_R_SHIFT;
+			t->pp_txfilter |= translate_wrap_mode(tObj->WrapR) << R300_TX_WRAP_R_SHIFT;
 	}
 }
 
@@ -119,13 +119,13 @@ static GLuint aniso_filter(GLfloat anisotropy)
  * \param magf Texture magnification mode
  * \param anisotropy Maximum anisotropy level
  */
-static void r300SetTexFilter(r300TexObjPtr t, GLenum minf, GLenum magf, GLfloat anisotropy)
+static void r300SetTexFilter(radeonTexObjPtr t, GLenum minf, GLenum magf, GLfloat anisotropy)
 {
 	/* Force revalidation to account for switches from/to mipmapping. */
 	t->validated = GL_FALSE;
 
-	t->filter &= ~(R300_TX_MIN_FILTER_MASK | R300_TX_MIN_FILTER_MIP_MASK | R300_TX_MAG_FILTER_MASK | R300_TX_MAX_ANISO_MASK);
-	t->filter_1 &= ~R300_EDGE_ANISO_EDGE_ONLY;
+	t->pp_txfilter &= ~(R300_TX_MIN_FILTER_MASK | R300_TX_MIN_FILTER_MIP_MASK | R300_TX_MAG_FILTER_MASK | R300_TX_MAX_ANISO_MASK);
+	t->pp_txfilter_1 &= ~R300_EDGE_ANISO_EDGE_ONLY;
 
 	/* Note that EXT_texture_filter_anisotropic is extremely vague about
 	 * how anisotropic filtering interacts with the "normal" filter modes.
@@ -133,7 +133,7 @@ static void r300SetTexFilter(r300TexObjPtr t, GLenum minf, GLenum magf, GLfloat 
 	 * filter settings completely. This includes driconf's settings.
 	 */
 	if (anisotropy >= 2.0 && (minf != GL_NEAREST) && (magf != GL_NEAREST)) {
-		t->filter |= R300_TX_MAG_FILTER_ANISO
+		t->pp_txfilter |= R300_TX_MAG_FILTER_ANISO
 			| R300_TX_MIN_FILTER_ANISO
 			| R300_TX_MIN_FILTER_MIP_LINEAR
 			| aniso_filter(anisotropy);
@@ -144,22 +144,22 @@ static void r300SetTexFilter(r300TexObjPtr t, GLenum minf, GLenum magf, GLfloat 
 
 	switch (minf) {
 	case GL_NEAREST:
-		t->filter |= R300_TX_MIN_FILTER_NEAREST;
+		t->pp_txfilter |= R300_TX_MIN_FILTER_NEAREST;
 		break;
 	case GL_LINEAR:
-		t->filter |= R300_TX_MIN_FILTER_LINEAR;
+		t->pp_txfilter |= R300_TX_MIN_FILTER_LINEAR;
 		break;
 	case GL_NEAREST_MIPMAP_NEAREST:
-		t->filter |= R300_TX_MIN_FILTER_NEAREST|R300_TX_MIN_FILTER_MIP_NEAREST;
+		t->pp_txfilter |= R300_TX_MIN_FILTER_NEAREST|R300_TX_MIN_FILTER_MIP_NEAREST;
 		break;
 	case GL_NEAREST_MIPMAP_LINEAR:
-		t->filter |= R300_TX_MIN_FILTER_NEAREST|R300_TX_MIN_FILTER_MIP_LINEAR;
+		t->pp_txfilter |= R300_TX_MIN_FILTER_NEAREST|R300_TX_MIN_FILTER_MIP_LINEAR;
 		break;
 	case GL_LINEAR_MIPMAP_NEAREST:
-		t->filter |= R300_TX_MIN_FILTER_LINEAR|R300_TX_MIN_FILTER_MIP_NEAREST;
+		t->pp_txfilter |= R300_TX_MIN_FILTER_LINEAR|R300_TX_MIN_FILTER_MIP_NEAREST;
 		break;
 	case GL_LINEAR_MIPMAP_LINEAR:
-		t->filter |= R300_TX_MIN_FILTER_LINEAR|R300_TX_MIN_FILTER_MIP_LINEAR;
+		t->pp_txfilter |= R300_TX_MIN_FILTER_LINEAR|R300_TX_MIN_FILTER_MIP_LINEAR;
 		break;
 	}
 
@@ -168,15 +168,15 @@ static void r300SetTexFilter(r300TexObjPtr t, GLenum minf, GLenum magf, GLfloat 
 	 */
 	switch (magf) {
 	case GL_NEAREST:
-		t->filter |= R300_TX_MAG_FILTER_NEAREST;
+		t->pp_txfilter |= R300_TX_MAG_FILTER_NEAREST;
 		break;
 	case GL_LINEAR:
-		t->filter |= R300_TX_MAG_FILTER_LINEAR;
+		t->pp_txfilter |= R300_TX_MAG_FILTER_LINEAR;
 		break;
 	}
 }
 
-static void r300SetTexBorderColor(r300TexObjPtr t, GLubyte c[4])
+static void r300SetTexBorderColor(radeonTexObjPtr t, GLubyte c[4])
 {
 	t->pp_border_color = PACK_COLOR_8888(c[3], c[0], c[1], c[2]);
 }
@@ -423,7 +423,7 @@ static void r300FreeTexImageData(GLcontext *ctx, struct gl_texture_image *timage
 	r300_texture_image* image = get_r300_texture_image(timage);
 
 	if (image->mt) {
-		r300_miptree_unreference(image->mt);
+		radeon_miptree_unreference(image->mt);
 		image->mt = 0;
 		assert(!image->base.Data);
 	} else {
@@ -439,7 +439,7 @@ static void r300FreeTexImageData(GLcontext *ctx, struct gl_texture_image *timage
 /* Set Data pointer and additional data for mapped texture image */
 static void teximage_set_map_data(r300_texture_image *image)
 {
-	r300_mipmap_level *lvl = &image->mt->levels[image->mtlevel];
+	radeon_mipmap_level *lvl = &image->mt->levels[image->mtlevel];
 	image->base.Data = image->mt->bo->ptr + lvl->faces[image->mtface].offset;
 	image->base.RowStride = lvl->rowstride / image->mt->bpp;
 }
@@ -474,7 +474,7 @@ static void r300_teximage_unmap(r300_texture_image *image)
  */
 static void r300MapTexture(GLcontext *ctx, struct gl_texture_object *texObj)
 {
-	r300TexObj* t = r300_tex_obj(texObj);
+	radeonTexObj* t = radeon_tex_obj(texObj);
 	int face, level;
 
 	assert(texObj->_Complete);
@@ -489,7 +489,7 @@ static void r300MapTexture(GLcontext *ctx, struct gl_texture_object *texObj)
 
 static void r300UnmapTexture(GLcontext *ctx, struct gl_texture_object *texObj)
 {
-	r300TexObj* t = r300_tex_obj(texObj);
+	radeonTexObj* t = radeon_tex_obj(texObj);
 	int face, level;
 
 	assert(texObj->_Complete);
@@ -518,7 +518,7 @@ static void r300_teximage(
 	int compressed)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
-	r300TexObj* t = r300_tex_obj(texObj);
+	radeonTexObj* t = radeon_tex_obj(texObj);
 	r300_texture_image* image = get_r300_texture_image(texImage);
 
 	R300_FIREVERTICES(rmesa);
@@ -544,12 +544,12 @@ static void r300_teximage(
 	r300FreeTexImageData(ctx, texImage); /* Mesa core only clears texImage->Data but not image->mt */
 
 	if (!t->mt)
-		r300_try_alloc_miptree(rmesa, t, texImage, face, level);
-	if (t->mt && r300_miptree_matches_image(t->mt, texImage, face, level)) {
+		radeon_try_alloc_miptree(&rmesa->radeon, t, texImage, face, level);
+	if (t->mt && radeon_miptree_matches_image(t->mt, texImage, face, level)) {
 		image->mt = t->mt;
 		image->mtlevel = level - t->mt->firstLevel;
 		image->mtface = face;
-		r300_miptree_reference(t->mt);
+		radeon_miptree_reference(t->mt);
 	} else {
 		int size;
 		if (texImage->IsCompressed) {
@@ -578,7 +578,7 @@ static void r300_teximage(
 		} else {
 			GLuint dstRowStride;
 			if (image->mt) {
-				r300_mipmap_level *lvl = &image->mt->levels[image->mtlevel];
+				radeon_mipmap_level *lvl = &image->mt->levels[image->mtlevel];
 				dstRowStride = lvl->rowstride;
 			} else {
 				dstRowStride = texImage->Width * texImage->TexFormat->TexelBytes;
@@ -700,7 +700,7 @@ static void r300_texsubimage(GLcontext* ctx, int dims, int level,
 		r300_teximage_map(image, GL_TRUE);
 
 		if (image->mt) {
-			r300_mipmap_level *lvl = &image->mt->levels[image->mtlevel];
+			radeon_mipmap_level *lvl = &image->mt->levels[image->mtlevel];
 			dstRowStride = lvl->rowstride;
 		} else {
 			dstRowStride = texImage->Width * texImage->TexFormat->TexelBytes;
@@ -806,7 +806,7 @@ static void r300TexParameter(GLcontext * ctx, GLenum target,
 			     struct gl_texture_object *texObj,
 			     GLenum pname, const GLfloat * params)
 {
-	r300TexObj* t = r300_tex_obj(texObj);
+	radeonTexObj* t = radeon_tex_obj(texObj);
 
 	if (RADEON_DEBUG & (DEBUG_STATE | DEBUG_TEXTURE)) {
 		fprintf(stderr, "%s( %s )\n", __FUNCTION__,
@@ -840,7 +840,7 @@ static void r300TexParameter(GLcontext * ctx, GLenum target,
 		 * to simulate a clamped LOD.
 		 */
 		if (t->mt) {
-			r300_miptree_unreference(t->mt);
+			radeon_miptree_unreference(t->mt);
 			t->mt = 0;
 			t->validated = GL_FALSE;
 		}
@@ -869,7 +869,7 @@ static void r300TexParameter(GLcontext * ctx, GLenum target,
 static void r300DeleteTexture(GLcontext * ctx, struct gl_texture_object *texObj)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
-	r300TexObj* t = r300_tex_obj(texObj);
+	radeonTexObj* t = radeon_tex_obj(texObj);
 
 	if (RADEON_DEBUG & (DEBUG_STATE | DEBUG_TEXTURE)) {
 		fprintf(stderr, "%s( %p (target = %s) )\n", __FUNCTION__,
@@ -887,7 +887,7 @@ static void r300DeleteTexture(GLcontext * ctx, struct gl_texture_object *texObj)
 	}
 
 	if (t->mt) {
-		r300_miptree_unreference(t->mt);
+		radeon_miptree_unreference(t->mt);
 		t->mt = 0;
 	}
 	_mesa_delete_texture_object(ctx, texObj);
@@ -905,7 +905,7 @@ static struct gl_texture_object *r300NewTextureObject(GLcontext * ctx,
 						      GLenum target)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
-	r300TexObj* t = CALLOC_STRUCT(r300_tex_obj);
+	radeonTexObj* t = CALLOC_STRUCT(radeon_tex_obj);
 
 
 	if (RADEON_DEBUG & (DEBUG_STATE | DEBUG_TEXTURE)) {

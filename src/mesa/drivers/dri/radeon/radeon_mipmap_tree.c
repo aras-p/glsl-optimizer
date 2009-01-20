@@ -25,7 +25,7 @@
  *
  */
 
-#include "r300_mipmap_tree.h"
+#include "radeon_mipmap_tree.h"
 
 #include <errno.h>
 #include <unistd.h>
@@ -36,7 +36,7 @@
 
 #include "radeon_buffer.h"
 
-static GLuint r300_compressed_texture_size(GLcontext *ctx,
+static GLuint radeon_compressed_texture_size(GLcontext *ctx,
 		GLsizei width, GLsizei height, GLsizei depth,
 		GLuint mesaFormat)
 {
@@ -50,7 +50,7 @@ static GLuint r300_compressed_texture_size(GLcontext *ctx,
 			size = size * 2;
 	} else {
 		/* DXT3/5, 16 bytes per block */
-		WARN_ONCE("DXT 3/5 suffers from multitexturing problems!\n");
+	  //		WARN_ONCE("DXT 3/5 suffers from multitexturing problems!\n");
 		if (width + 3 < 8)
 			size = size * 2;
 	}
@@ -65,10 +65,10 @@ static GLuint r300_compressed_texture_size(GLcontext *ctx,
  * \param curOffset points to the offset at which the image is to be stored
  * and is updated by this function according to the size of the image.
  */
-static void compute_tex_image_offset(r300_mipmap_tree *mt,
+static void compute_tex_image_offset(radeon_mipmap_tree *mt,
 	GLuint face, GLuint level, GLuint* curOffset)
 {
-	r300_mipmap_level *lvl = &mt->levels[level];
+	radeon_mipmap_level *lvl = &mt->levels[level];
 
 	/* Find image size in bytes */
 	if (mt->compressed) {
@@ -80,13 +80,13 @@ static void compute_tex_image_offset(r300_mipmap_tree *mt,
 		else
 			align = 32 / mt->bpp;
 		lvl->rowstride = (lvl->width + align - 1) & ~(align - 1);
-		lvl->size = r300_compressed_texture_size(mt->r300->radeon.glCtx,
+		lvl->size = radeon_compressed_texture_size(mt->radeon->glCtx,
 			lvl->width, lvl->height, lvl->depth, mt->compressed);
 	} else if (mt->target == GL_TEXTURE_RECTANGLE_NV) {
 		lvl->rowstride = (lvl->width * mt->bpp + 63) & ~63;
 		lvl->size = lvl->rowstride * lvl->height;
-	} else if (mt->tilebits & R300_TXO_MICRO_TILE) {
-		/* tile pattern is 16 bytes x2. mipmaps stay 32 byte aligned,
+	} else if (mt->tilebits & RADEON_TXO_MICRO_TILE) {
+	  /* tile pattern is 16 bytes x2. mipmaps stay 32 byte aligned,
 		 * though the actual offset may be different (if texture is less than
 		 * 32 bytes width) to the untiled case */
 		lvl->rowstride = (lvl->width * mt->bpp * 2 + 31) & ~31;
@@ -111,7 +111,7 @@ static GLuint minify(GLuint size, GLuint levels)
 	return size;
 }
 
-static void calculate_miptree_layout(r300_mipmap_tree *mt)
+static void calculate_miptree_layout(radeon_mipmap_tree *mt)
 {
 	GLuint curOffset;
 	GLuint numLevels;
@@ -140,14 +140,14 @@ static void calculate_miptree_layout(r300_mipmap_tree *mt)
 /**
  * Create a new mipmap tree, calculate its layout and allocate memory.
  */
-r300_mipmap_tree* r300_miptree_create(r300ContextPtr rmesa, r300TexObj *t,
+radeon_mipmap_tree* radeon_miptree_create(radeonContextPtr rmesa, radeonTexObj *t,
 		GLenum target, GLuint firstLevel, GLuint lastLevel,
 		GLuint width0, GLuint height0, GLuint depth0,
 		GLuint bpp, GLuint tilebits, GLuint compressed)
 {
-	r300_mipmap_tree *mt = CALLOC_STRUCT(_r300_mipmap_tree);
+	radeon_mipmap_tree *mt = CALLOC_STRUCT(_radeon_mipmap_tree);
 
-	mt->r300 = rmesa;
+	mt->radeon = rmesa;
 	mt->refcount = 1;
 	mt->t = t;
 	mt->target = target;
@@ -163,7 +163,7 @@ r300_mipmap_tree* r300_miptree_create(r300ContextPtr rmesa, r300TexObj *t,
 
 	calculate_miptree_layout(mt);
 
-	mt->bo = radeon_bo_open(rmesa->radeon.radeonScreen->bom,
+	mt->bo = radeon_bo_open(rmesa->radeonScreen->bom,
                             0, mt->totalsize, 1024,
                             RADEON_GEM_DOMAIN_VRAM,
                             0);
@@ -171,13 +171,13 @@ r300_mipmap_tree* r300_miptree_create(r300ContextPtr rmesa, r300TexObj *t,
 	return mt;
 }
 
-void r300_miptree_reference(r300_mipmap_tree *mt)
+void radeon_miptree_reference(radeon_mipmap_tree *mt)
 {
 	mt->refcount++;
 	assert(mt->refcount > 0);
 }
 
-void r300_miptree_unreference(r300_mipmap_tree *mt)
+void radeon_miptree_unreference(radeon_mipmap_tree *mt)
 {
 	if (!mt)
 		return;
@@ -244,10 +244,10 @@ static void calculate_first_last_level(struct gl_texture_object *tObj,
  * Checks whether the given miptree can hold the given texture image at the
  * given face and level.
  */
-GLboolean r300_miptree_matches_image(r300_mipmap_tree *mt,
+GLboolean radeon_miptree_matches_image(radeon_mipmap_tree *mt,
 		struct gl_texture_image *texImage, GLuint face, GLuint level)
 {
-	r300_mipmap_level *lvl;
+	radeon_mipmap_level *lvl;
 
 	if (face >= mt->faces || level < mt->firstLevel || level > mt->lastLevel)
 		return GL_FALSE;
@@ -268,7 +268,7 @@ GLboolean r300_miptree_matches_image(r300_mipmap_tree *mt,
 /**
  * Checks whether the given miptree has the right format to store the given texture object.
  */
-GLboolean r300_miptree_matches_texture(r300_mipmap_tree *mt, struct gl_texture_object *texObj)
+GLboolean radeon_miptree_matches_texture(radeon_mipmap_tree *mt, struct gl_texture_object *texObj)
 {
 	struct gl_texture_image *firstImage;
 	GLuint compressed;
@@ -296,7 +296,7 @@ GLboolean r300_miptree_matches_texture(r300_mipmap_tree *mt, struct gl_texture_o
  * Try to allocate a mipmap tree for the given texture that will fit the
  * given image in the given position.
  */
-void r300_try_alloc_miptree(r300ContextPtr rmesa, r300TexObj *t,
+void radeon_try_alloc_miptree(radeonContextPtr rmesa, radeonTexObj *t,
 		struct gl_texture_image *texImage, GLuint face, GLuint level)
 {
 	GLuint compressed = texImage->IsCompressed ? texImage->TexFormat->MesaFormat : 0;
@@ -312,7 +312,7 @@ void r300_try_alloc_miptree(r300ContextPtr rmesa, r300TexObj *t,
 	if (level != firstLevel || face >= numfaces)
 		return;
 
-	t->mt = r300_miptree_create(rmesa, t, t->base.Target,
+	t->mt = radeon_miptree_create(rmesa, t, t->base.Target,
 		firstLevel, lastLevel,
 		texImage->Width, texImage->Height, texImage->Depth,
 		texImage->TexFormat->TexelBytes, t->tile_bits, compressed);

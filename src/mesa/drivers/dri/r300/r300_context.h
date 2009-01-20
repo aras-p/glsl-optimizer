@@ -81,7 +81,6 @@ typedef struct r300_context *r300ContextPtr;
 
 
 /* Texture related */
-typedef struct r300_tex_obj r300TexObj, *r300TexObjPtr;
 typedef struct _r300_texture_image r300_texture_image;
 
 
@@ -96,8 +95,8 @@ struct _r300_texture_image {
 	 * If mt == 0, the image is stored in normal memory pointed to
 	 * by base.Data.
 	 */
-	struct _r300_mipmap_tree *mt;
-    struct radeon_bo *bo;
+	struct _radeon_mipmap_tree *mt;
+	struct radeon_bo *bo;
 
 	int mtlevel; /** if mt != 0, this is the image's level in the mipmap tree */
 	int mtface; /** if mt != 0, this is the image's face in the mipmap tree */
@@ -106,41 +105,6 @@ struct _r300_texture_image {
 static INLINE r300_texture_image *get_r300_texture_image(struct gl_texture_image *image)
 {
 	return (r300_texture_image*)image;
-}
-
-
-/* Texture object in locally shared texture space.
- */
-struct r300_tex_obj {
-	struct gl_texture_object base;
-	struct _r300_mipmap_tree *mt;
-
-	/**
-	 * This is true if we've verified that the mipmap tree above is complete
-	 * and so on.
-	 */
-	GLboolean validated;
-
-	GLboolean image_override;	/* Image overridden by GLX_EXT_tfp */
-	GLuint override_offset;
-
-	/* hardware register values */
-	/* Note that R200 has 8 registers per texture and R300 only 7 */
-	GLuint filter;
-	GLuint filter_1;
-	GLuint pitch_reg;
-	GLuint size;		/* npot only */
-	GLuint format;
-	GLuint pp_border_color;
-	/* end hardware registers */
-
-	GLuint tile_bits;	/* hw texture tile bits used on this texture */
-    struct radeon_bo *bo;
-};
-
-static INLINE r300TexObj* r300_tex_obj(struct gl_texture_object *texObj)
-{
-	return (r300TexObj*)texObj;
 }
 
 /* The blit width for texture uploads
@@ -459,7 +423,7 @@ struct r300_hw_state {
 	} tex;
 	struct radeon_state_atom txe;	/* tex enable (4104) */
 
-	r300TexObj *textures[R300_MAX_TEXTURE_UNITS];
+	radeonTexObj *textures[R300_MAX_TEXTURE_UNITS];
 };
 
 /**

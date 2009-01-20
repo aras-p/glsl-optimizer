@@ -32,6 +32,7 @@ DRIVER_SOURCES = r200_context.c \
 		 common_misc.c \
 		 radeon_bo_legacy.c \
 		 radeon_cs_legacy.c \
+		 radeon_mipmap_tree.c \
 		 $(EGL_SOURCES)
 
 C_SOURCES = $(COMMON_SOURCES) $(DRIVER_SOURCES)
@@ -62,7 +63,9 @@ COMMON_SYMLINKS = \
 	common_lock.h \
 	common_misc.h \
 	common_misc.c \
-	common_cmdbuf.h
+	common_cmdbuf.h \
+	radeon_mipmap_tree.c \
+	radeon_mipmap_tree.h
 
 DRI_LIB_DEPS += -ldrm_radeon
 

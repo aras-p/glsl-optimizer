@@ -1444,7 +1444,7 @@ static GLuint translate_lod_bias(GLfloat bias)
 static void r300SetupTextures(GLcontext * ctx)
 {
 	int i, mtu;
-	struct r300_tex_obj *t;
+	struct radeon_tex_obj *t;
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	int hw_tmu = 0;
 	int last_hw_tmu = -1;	/* -1 translates into no setup costs for fields */
@@ -1480,14 +1480,14 @@ static void r300SetupTextures(GLcontext * ctx)
 		if (ctx->Texture.Unit[i]._ReallyEnabled) {
 			tmu_mappings[i] = hw_tmu;
 
-			t = r300_tex_obj(ctx->Texture.Unit[i]._Current);
+			t = radeon_tex_obj(ctx->Texture.Unit[i]._Current);
 			if (!t)
 				continue;
 
-			if ((t->format & 0xffffff00) == 0xffffff00) {
+			if ((t->pp_txformat & 0xffffff00) == 0xffffff00) {
 				WARN_ONCE
 				    ("unknown texture format (entry %x) encountered. Help me !\n",
-				     t->format & 0xff);
+				     t->pp_txformat & 0xff);
 			}
 
 			if (RADEON_DEBUG & DEBUG_STATE)
@@ -1498,21 +1498,21 @@ static void r300SetupTextures(GLcontext * ctx)
 
 			r300->hw.tex.filter.cmd[R300_TEX_VALUE_0 +
 						hw_tmu] =
-			    gen_fixed_filter(t->filter) | (hw_tmu << 28);
+			    gen_fixed_filter(t->pp_txfilter) | (hw_tmu << 28);
 			/* Note: There is a LOD bias per texture unit and a LOD bias
 			 * per texture object. We add them here to get the correct behaviour.
 			 * (The per-texture object LOD bias was introduced in OpenGL 1.4
 			 * and is not present in the EXT_texture_object extension).
 			 */
 			r300->hw.tex.filter_1.cmd[R300_TEX_VALUE_0 + hw_tmu] =
-				t->filter_1 |
+				t->pp_txfilter_1 |
 				translate_lod_bias(ctx->Texture.Unit[i].LodBias + t->base.LodBias);
 			r300->hw.tex.size.cmd[R300_TEX_VALUE_0 + hw_tmu] =
-			    t->size;
+			    t->pp_txsize;
 			r300->hw.tex.format.cmd[R300_TEX_VALUE_0 +
-						hw_tmu] = t->format;
+						hw_tmu] = t->pp_txformat;
 			r300->hw.tex.pitch.cmd[R300_TEX_VALUE_0 + hw_tmu] =
-			    t->pitch_reg;
+			  t->pp_txpitch;
 			r300->hw.textures[hw_tmu] = t;
 
 			if (t->tile_bits & R300_TXO_MACRO_TILE) {

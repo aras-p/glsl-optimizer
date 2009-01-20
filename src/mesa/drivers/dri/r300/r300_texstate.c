@@ -48,7 +48,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r300_state.h"
 #include "r300_ioctl.h"
 #include "radeon_ioctl.h"
-#include "r300_mipmap_tree.h"
+#include "radeon_mipmap_tree.h"
 #include "r300_tex.h"
 #include "r300_reg.h"
 #include "radeon_buffer.h"
@@ -145,12 +145,12 @@ void r300SetDepthTexMode(struct gl_texture_object *tObj)
 		},
 	};
 	const GLuint *format;
-	r300TexObjPtr t;
+	radeonTexObjPtr t;
 
 	if (!tObj)
 		return;
 
-	t = r300_tex_obj(tObj);
+	t = radeon_tex_obj(tObj);
 
 	switch (tObj->Image[0][tObj->BaseLevel]->TexFormat->MesaFormat) {
 	case MESA_FORMAT_Z16:
@@ -172,13 +172,13 @@ void r300SetDepthTexMode(struct gl_texture_object *tObj)
 
 	switch (tObj->DepthMode) {
 	case GL_LUMINANCE:
-		t->format = format[0];
+		t->pp_txformat = format[0];
 		break;
 	case GL_INTENSITY:
-		t->format = format[1];
+		t->pp_txformat = format[1];
 		break;
 	case GL_ALPHA:
-		t->format = format[2];
+		t->pp_txformat = format[2];
 		break;
 	default:
 		/* Error...which should have already been caught by higher
@@ -196,7 +196,7 @@ void r300SetDepthTexMode(struct gl_texture_object *tObj)
  * \param rmesa Context pointer
  * \param t the r300 texture object
  */
-static void setup_hardware_state(r300ContextPtr rmesa, r300TexObj *t)
+static void setup_hardware_state(r300ContextPtr rmesa, radeonTexObj *t)
 {
 	const struct gl_texture_image *firstImage =
 	    t->base.Image[0][t->mt->firstLevel];
@@ -206,10 +206,10 @@ static void setup_hardware_state(r300ContextPtr rmesa, r300TexObj *t)
 		if (firstImage->TexFormat->BaseFormat == GL_DEPTH_COMPONENT) {
 			r300SetDepthTexMode(&t->base);
 		} else {
-			t->format = tx_table[firstImage->TexFormat->MesaFormat].format;
+			t->pp_txformat = tx_table[firstImage->TexFormat->MesaFormat].format;
 		}
 
-		t->filter |= tx_table[firstImage->TexFormat->MesaFormat].filter;
+		t->pp_txfilter |= tx_table[firstImage->TexFormat->MesaFormat].filter;
 	} else if (!t->image_override) {
 		_mesa_problem(NULL, "unexpected texture format in %s",
 			      __FUNCTION__);
@@ -219,26 +219,26 @@ static void setup_hardware_state(r300ContextPtr rmesa, r300TexObj *t)
 	t->tile_bits = 0;
 
 	if (t->base.Target == GL_TEXTURE_CUBE_MAP)
-		t->format |= R300_TX_FORMAT_CUBIC_MAP;
+		t->pp_txformat |= R300_TX_FORMAT_CUBIC_MAP;
 	if (t->base.Target == GL_TEXTURE_3D)
-		t->format |= R300_TX_FORMAT_3D;
+		t->pp_txformat |= R300_TX_FORMAT_3D;
 
-	t->size = (((firstImage->Width - 1) << R300_TX_WIDTHMASK_SHIFT)
+	t->pp_txsize = (((firstImage->Width - 1) << R300_TX_WIDTHMASK_SHIFT)
 		| ((firstImage->Height - 1) << R300_TX_HEIGHTMASK_SHIFT))
 		| ((t->mt->lastLevel - t->mt->firstLevel) << R300_TX_MAX_MIP_LEVEL_SHIFT);
 
 	if (t->base.Target == GL_TEXTURE_RECTANGLE_NV) {
 		unsigned int align = (64 / t->mt->bpp) - 1;
-		t->size |= R300_TX_SIZE_TXPITCH_EN;
+		t->pp_txsize |= R300_TX_SIZE_TXPITCH_EN;
 		if (!t->image_override)
-			t->pitch_reg = ((firstImage->Width + align) & ~align) - 1;
+			t->pp_txpitch = ((firstImage->Width + align) & ~align) - 1;
 	}
 
 	if (rmesa->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV515) {
 	    if (firstImage->Width > 2048)
-		t->pitch_reg |= R500_TXWIDTH_BIT11;
+		t->pp_txpitch |= R500_TXWIDTH_BIT11;
 	    if (firstImage->Height > 2048)
-		t->pitch_reg |= R500_TXHEIGHT_BIT11;
+		t->pp_txpitch |= R500_TXHEIGHT_BIT11;
 	}
 }
 
@@ -265,9 +265,9 @@ static void copy_rows(void* dst, GLuint dststride, const void* src, GLuint srcst
 /**
  * Ensure that the given image is stored in the given miptree from now on.
  */
-static void migrate_image_to_miptree(r300_mipmap_tree *mt, r300_texture_image *image, int face, int level)
+static void migrate_image_to_miptree(radeon_mipmap_tree *mt, r300_texture_image *image, int face, int level)
 {
-	r300_mipmap_level *dstlvl = &mt->levels[level - mt->firstLevel];
+	radeon_mipmap_level *dstlvl = &mt->levels[level - mt->firstLevel];
 	unsigned char *dest;
 
 	assert(image->mt != mt);
@@ -283,7 +283,7 @@ static void migrate_image_to_miptree(r300_mipmap_tree *mt, r300_texture_image *i
 		 * In fact, that memcpy() could be done by the hardware in many
 		 * cases, provided that we have a proper memory manager.
 		 */
-		r300_mipmap_level *srclvl = &image->mt->levels[image->mtlevel];
+		radeon_mipmap_level *srclvl = &image->mt->levels[image->mtlevel];
 
 		assert(srclvl->size == dstlvl->size);
 		assert(srclvl->rowstride == dstlvl->rowstride);
@@ -294,7 +294,7 @@ static void migrate_image_to_miptree(r300_mipmap_tree *mt, r300_texture_image *i
 			dstlvl->size);
 		radeon_bo_unmap(image->mt->bo);
 
-		r300_miptree_unreference(image->mt);
+		radeon_miptree_unreference(image->mt);
 	} else {
 		uint srcrowstride = image->base.Width * image->base.TexFormat->TexelBytes;
 
@@ -313,7 +313,7 @@ static void migrate_image_to_miptree(r300_mipmap_tree *mt, r300_texture_image *i
 	image->mt = mt;
 	image->mtface = face;
 	image->mtlevel = level;
-	r300_miptree_reference(image->mt);
+	radeon_miptree_reference(image->mt);
 }
 
 
@@ -325,7 +325,7 @@ static void migrate_image_to_miptree(r300_mipmap_tree *mt, r300_texture_image *i
 static GLboolean r300_validate_texture(GLcontext * ctx, struct gl_texture_object *texObj)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
-	r300TexObj *t = r300_tex_obj(texObj);
+	radeonTexObj *t = radeon_tex_obj(texObj);
 	r300_texture_image *baseimage = get_r300_texture_image(texObj->Image[0][texObj->BaseLevel]);
 	int face, level;
 
@@ -350,19 +350,19 @@ static GLboolean r300_validate_texture(GLcontext * ctx, struct gl_texture_object
 	 */
 	if (baseimage->mt &&
 	    baseimage->mt != t->mt &&
-	    r300_miptree_matches_texture(baseimage->mt, &t->base)) {
-		r300_miptree_unreference(t->mt);
+	    radeon_miptree_matches_texture(baseimage->mt, &t->base)) {
+		radeon_miptree_unreference(t->mt);
 		t->mt = baseimage->mt;
-		r300_miptree_reference(t->mt);
-	} else if (t->mt && !r300_miptree_matches_texture(t->mt, &t->base)) {
-		r300_miptree_unreference(t->mt);
+		radeon_miptree_reference(t->mt);
+	} else if (t->mt && !radeon_miptree_matches_texture(t->mt, &t->base)) {
+		radeon_miptree_unreference(t->mt);
 		t->mt = 0;
 	}
 
 	if (!t->mt) {
 		if (RADEON_DEBUG & DEBUG_TEXTURE)
 			fprintf(stderr, " Allocate new miptree\n");
-		r300_try_alloc_miptree(rmesa, t, &baseimage->base, 0, texObj->BaseLevel);
+		radeon_try_alloc_miptree(&rmesa->radeon, t, &baseimage->base, 0, texObj->BaseLevel);
 		if (!t->mt) {
 			_mesa_problem(ctx, "r300_validate_texture failed to alloc miptree");
 			return GL_FALSE;
@@ -421,7 +421,7 @@ void r300SetTexOffset(__DRIcontext * pDRICtx, GLint texname,
 	r300ContextPtr rmesa = pDRICtx->driverPrivate;
 	struct gl_texture_object *tObj =
 	    _mesa_lookup_texture(rmesa->radeon.glCtx, texname);
-	r300TexObjPtr t = r300_tex_obj(tObj);
+	radeonTexObjPtr t = radeon_tex_obj(tObj);
 	uint32_t pitch_val;
 
 	if (!tObj)
@@ -433,30 +433,30 @@ void r300SetTexOffset(__DRIcontext * pDRICtx, GLint texname,
 		return;
     t->bo = NULL;
 	t->override_offset = offset;
-	t->pitch_reg &= (1 << 13) -1;
+	t->pp_txpitch &= (1 << 13) -1;
 	pitch_val = pitch;
 
 	switch (depth) {
 	case 32:
-		t->format = R300_EASY_TX_FORMAT(X, Y, Z, W, W8Z8Y8X8);
-		t->filter |= tx_table[2].filter;
+		t->pp_txformat = R300_EASY_TX_FORMAT(X, Y, Z, W, W8Z8Y8X8);
+		t->pp_txfilter |= tx_table[2].filter;
 		pitch_val /= 4;
 		break;
 	case 24:
 	default:
-		t->format = R300_EASY_TX_FORMAT(X, Y, Z, ONE, W8Z8Y8X8);
-		t->filter |= tx_table[4].filter;
+		t->pp_txformat = R300_EASY_TX_FORMAT(X, Y, Z, ONE, W8Z8Y8X8);
+		t->pp_txfilter |= tx_table[4].filter;
 		pitch_val /= 4;
 		break;
 	case 16:
-		t->format = R300_EASY_TX_FORMAT(X, Y, Z, ONE, Z5Y6X5);
-		t->filter |= tx_table[5].filter;
+		t->pp_txformat = R300_EASY_TX_FORMAT(X, Y, Z, ONE, Z5Y6X5);
+		t->pp_txfilter |= tx_table[5].filter;
 		pitch_val /= 2;
 		break;
 	}
 	pitch_val--;
 
-	t->pitch_reg |= pitch_val;
+	t->pp_txpitch |= pitch_val;
 }
 
 void r300SetTexBuffer(__DRIcontext *pDRICtx, GLint target, __DRIdrawable *dPriv)
@@ -469,7 +469,7 @@ void r300SetTexBuffer(__DRIcontext *pDRICtx, GLint target, __DRIdrawable *dPriv)
 	radeonContextPtr radeon;
 	r300ContextPtr rmesa;
 	GLframebuffer *fb;
-	r300TexObjPtr t;
+	radeonTexObjPtr t;
 	uint32_t pitch_val;
 
 	target = GL_TEXTURE_RECTANGLE_ARB;
@@ -483,7 +483,7 @@ void r300SetTexBuffer(__DRIcontext *pDRICtx, GLint target, __DRIdrawable *dPriv)
         texImage = _mesa_get_tex_image(radeon->glCtx, texObj, target, 0);
 
 	rImage = get_r300_texture_image(texImage);
-	t = r300_tex_obj(texObj);
+	t = radeon_tex_obj(texObj);
         if (t == NULL) {
     	    return;
     	}
@@ -514,7 +514,7 @@ void r300SetTexBuffer(__DRIcontext *pDRICtx, GLint target, __DRIdrawable *dPriv)
         t->mt = NULL;
     }
     if (rImage->mt) {
-        r300_miptree_unreference(rImage->mt);
+        radeon_miptree_unreference(rImage->mt);
         rImage->mt = NULL;
     }
 	fprintf(stderr,"settexbuf %dx%d@%d\n", rb->width, rb->height, rb->cpp);
@@ -527,31 +527,31 @@ void r300SetTexBuffer(__DRIcontext *pDRICtx, GLint target, __DRIdrawable *dPriv)
     t->tile_bits = 0;
 	t->image_override = GL_TRUE;
 	t->override_offset = 0;
-	t->pitch_reg &= (1 << 13) -1;
+	t->pp_txpitch &= (1 << 13) -1;
 	pitch_val = rb->pitch;
 	switch (rb->cpp) {
 	case 4:
-		t->format = R300_EASY_TX_FORMAT(X, Y, Z, W, W8Z8Y8X8);
-		t->filter |= tx_table[2].filter;
+		t->pp_txformat = R300_EASY_TX_FORMAT(X, Y, Z, W, W8Z8Y8X8);
+		t->pp_txfilter |= tx_table[2].filter;
 		pitch_val /= 4;
 		break;
 	case 3:
 	default:
-		t->format = R300_EASY_TX_FORMAT(X, Y, Z, ONE, W8Z8Y8X8);
-		t->filter |= tx_table[4].filter;
+		t->pp_txformat = R300_EASY_TX_FORMAT(X, Y, Z, ONE, W8Z8Y8X8);
+		t->pp_txfilter |= tx_table[4].filter;
 		pitch_val /= 4;
 		break;
 	case 2:
-		t->format = R300_EASY_TX_FORMAT(X, Y, Z, ONE, Z5Y6X5);
-		t->filter |= tx_table[5].filter;
+		t->pp_txformat = R300_EASY_TX_FORMAT(X, Y, Z, ONE, Z5Y6X5);
+		t->pp_txfilter |= tx_table[5].filter;
 		pitch_val /= 2;
 		break;
 	}
 	pitch_val--;
-	t->size = ((rb->width - 1) << R300_TX_WIDTHMASK_SHIFT) |
+	t->pp_txsize = ((rb->width - 1) << R300_TX_WIDTHMASK_SHIFT) |
               ((rb->height - 1) << R300_TX_HEIGHTMASK_SHIFT);
-    t->size |= R300_TX_SIZE_TXPITCH_EN;
-	t->pitch_reg |= pitch_val;
+	t->pp_txsize |= R300_TX_SIZE_TXPITCH_EN;
+	t->pp_txpitch |= pitch_val;
 	t->validated = GL_TRUE;
     _mesa_unlock_texture(radeon->glCtx, texObj);
     return;

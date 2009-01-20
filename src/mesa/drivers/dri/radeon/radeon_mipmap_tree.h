@@ -25,26 +25,26 @@
  *
  */
 
-#ifndef __R300_MIPMAP_TREE_H_
-#define __R300_MIPMAP_TREE_H_
+#ifndef __RADEON_MIPMAP_TREE_H_
+#define __RADEON_MIPMAP_TREE_H_
 
-#include "r300_context.h"
+#include "common_context.h"
 
-typedef struct _r300_mipmap_tree r300_mipmap_tree;
-typedef struct _r300_mipmap_level r300_mipmap_level;
-typedef struct _r300_mipmap_image r300_mipmap_image;
+typedef struct _radeon_mipmap_tree radeon_mipmap_tree;
+typedef struct _radeon_mipmap_level radeon_mipmap_level;
+typedef struct _radeon_mipmap_image radeon_mipmap_image;
 
-struct _r300_mipmap_image {
+struct _radeon_mipmap_image {
 	GLuint offset; /** Offset of this image from the start of mipmap tree buffer, in bytes */
 };
 
-struct _r300_mipmap_level {
+struct _radeon_mipmap_level {
 	GLuint width;
 	GLuint height;
 	GLuint depth;
 	GLuint size; /** Size of each image, in bytes */
 	GLuint rowstride; /** in bytes */
-	r300_mipmap_image faces[6];
+	radeon_mipmap_image faces[6];
 };
 
 
@@ -56,9 +56,9 @@ struct _r300_mipmap_level {
  * layout on-the-fly; however, the texture contents (i.e. texels) can be
  * changed.
  */
-struct _r300_mipmap_tree {
-	r300ContextPtr r300;
-	r300TexObj *t;
+struct _radeon_mipmap_tree {
+	radeonContextPtr radeon;
+	radeonTexObj *t;
 	struct radeon_bo *bo;
 	GLuint refcount;
 
@@ -74,24 +74,24 @@ struct _r300_mipmap_tree {
 	GLuint depth0; /** Depth of firstLevel image */
 
 	GLuint bpp; /** Bytes per texel */
-	GLuint tilebits; /** R300_TXO_xxx_TILE */
+	GLuint tilebits; /** RADEON_TXO_xxx_TILE */
 	GLuint compressed; /** MESA_FORMAT_xxx indicating a compressed format, or 0 if uncompressed */
 
-	r300_mipmap_level levels[RADEON_MAX_TEXTURE_LEVELS];
+	radeon_mipmap_level levels[RADEON_MAX_TEXTURE_LEVELS];
 };
 
-r300_mipmap_tree* r300_miptree_create(r300ContextPtr rmesa, r300TexObj *t,
+radeon_mipmap_tree* radeon_miptree_create(radeonContextPtr rmesa, radeonTexObj *t,
 		GLenum target, GLuint firstLevel, GLuint lastLevel,
 		GLuint width0, GLuint height0, GLuint depth0,
 		GLuint bpp, GLuint tilebits, GLuint compressed);
-void r300_miptree_reference(r300_mipmap_tree *mt);
-void r300_miptree_unreference(r300_mipmap_tree *mt);
+void radeon_miptree_reference(radeon_mipmap_tree *mt);
+void radeon_miptree_unreference(radeon_mipmap_tree *mt);
 
-GLboolean r300_miptree_matches_image(r300_mipmap_tree *mt,
+GLboolean radeon_miptree_matches_image(radeon_mipmap_tree *mt,
 		struct gl_texture_image *texImage, GLuint face, GLuint level);
-GLboolean r300_miptree_matches_texture(r300_mipmap_tree *mt, struct gl_texture_object *texObj);
-void r300_try_alloc_miptree(r300ContextPtr rmesa, r300TexObj *t,
-		struct gl_texture_image *texImage, GLuint face, GLuint level);
+GLboolean radeon_miptree_matches_texture(radeon_mipmap_tree *mt, struct gl_texture_object *texObj);
+void radeon_try_alloc_miptree(radeonContextPtr rmesa, radeonTexObj *t,
+			      struct gl_texture_image *texImage, GLuint face, GLuint level);
 
 
-#endif /* __R300_MIPMAP_TREE_H_ */
+#endif /* __RADEON_MIPMAP_TREE_H_ */
