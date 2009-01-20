@@ -265,7 +265,7 @@ static void copy_rows(void* dst, GLuint dststride, const void* src, GLuint srcst
 /**
  * Ensure that the given image is stored in the given miptree from now on.
  */
-static void migrate_image_to_miptree(radeon_mipmap_tree *mt, r300_texture_image *image, int face, int level)
+static void migrate_image_to_miptree(radeon_mipmap_tree *mt, radeon_texture_image *image, int face, int level)
 {
 	radeon_mipmap_level *dstlvl = &mt->levels[level - mt->firstLevel];
 	unsigned char *dest;
@@ -326,7 +326,7 @@ static GLboolean r300_validate_texture(GLcontext * ctx, struct gl_texture_object
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	radeonTexObj *t = radeon_tex_obj(texObj);
-	r300_texture_image *baseimage = get_r300_texture_image(texObj->Image[0][texObj->BaseLevel]);
+	radeon_texture_image *baseimage = get_radeon_texture_image(texObj->Image[0][texObj->BaseLevel]);
 	int face, level;
 
 	if (t->validated || t->image_override)
@@ -372,7 +372,7 @@ static GLboolean r300_validate_texture(GLcontext * ctx, struct gl_texture_object
 	/* Ensure all images are stored in the single main miptree */
 	for(face = 0; face < t->mt->faces; ++face) {
 		for(level = t->mt->firstLevel; level <= t->mt->lastLevel; ++level) {
-			r300_texture_image *image = get_r300_texture_image(texObj->Image[face][level]);
+			radeon_texture_image *image = get_radeon_texture_image(texObj->Image[face][level]);
 			if (RADEON_DEBUG & DEBUG_TEXTURE)
 				fprintf(stderr, " face %i, level %i... ", face, level);
 			if (t->mt == image->mt) {
@@ -465,7 +465,7 @@ void r300SetTexBuffer(__DRIcontext *pDRICtx, GLint target, __DRIdrawable *dPriv)
 	struct gl_texture_object *texObj;
     struct gl_texture_image *texImage;
 	struct radeon_renderbuffer *rb;
-	r300_texture_image *rImage;
+	radeon_texture_image *rImage;
 	radeonContextPtr radeon;
 	r300ContextPtr rmesa;
 	GLframebuffer *fb;
@@ -482,7 +482,7 @@ void r300SetTexBuffer(__DRIcontext *pDRICtx, GLint target, __DRIdrawable *dPriv)
 	texObj = _mesa_select_tex_object(radeon->glCtx, texUnit, target);
         texImage = _mesa_get_tex_image(radeon->glCtx, texObj, target, 0);
 
-	rImage = get_r300_texture_image(texImage);
+	rImage = get_radeon_texture_image(texImage);
 	t = radeon_tex_obj(texObj);
         if (t == NULL) {
     	    return;

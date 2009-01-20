@@ -110,6 +110,35 @@ struct radeon_state_atom {
         void (*emit) (GLcontext *, struct radeon_state_atom *atom);
 };
 
+
+/* Texture related */
+typedef struct _radeon_texture_image radeon_texture_image;
+
+struct _radeon_texture_image {
+	struct gl_texture_image base;
+
+	/**
+	 * If mt != 0, the image is stored in hardware format in the
+	 * given mipmap tree. In this case, base.Data may point into the
+	 * mapping of the buffer object that contains the mipmap tree.
+	 *
+	 * If mt == 0, the image is stored in normal memory pointed to
+	 * by base.Data.
+	 */
+	struct _radeon_mipmap_tree *mt;
+	struct radeon_bo *bo;
+
+	int mtlevel; /** if mt != 0, this is the image's level in the mipmap tree */
+	int mtface; /** if mt != 0, this is the image's face in the mipmap tree */
+};
+
+
+static INLINE radeon_texture_image *get_radeon_texture_image(struct gl_texture_image *image)
+{
+	return (radeon_texture_image*)image;
+}
+
+
 typedef struct radeon_tex_obj radeonTexObj, *radeonTexObjPtr;
 
 #define RADEON_TXO_MICRO_TILE               (1 << 3)

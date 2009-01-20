@@ -79,34 +79,6 @@ typedef struct r300_context *r300ContextPtr;
 
 /************ DMA BUFFERS **************/
 
-
-/* Texture related */
-typedef struct _r300_texture_image r300_texture_image;
-
-
-struct _r300_texture_image {
-	struct gl_texture_image base;
-
-	/**
-	 * If mt != 0, the image is stored in hardware format in the
-	 * given mipmap tree. In this case, base.Data may point into the
-	 * mapping of the buffer object that contains the mipmap tree.
-	 *
-	 * If mt == 0, the image is stored in normal memory pointed to
-	 * by base.Data.
-	 */
-	struct _radeon_mipmap_tree *mt;
-	struct radeon_bo *bo;
-
-	int mtlevel; /** if mt != 0, this is the image's level in the mipmap tree */
-	int mtface; /** if mt != 0, this is the image's face in the mipmap tree */
-};
-
-static INLINE r300_texture_image *get_r300_texture_image(struct gl_texture_image *image)
-{
-	return (r300_texture_image*)image;
-}
-
 /* The blit width for texture uploads
  */
 #define R300_BLIT_WIDTH_BYTES 1024

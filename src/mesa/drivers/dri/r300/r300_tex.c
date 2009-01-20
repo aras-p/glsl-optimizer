@@ -412,7 +412,7 @@ static const struct gl_texture_format *r300ChooseTextureFormat(GLcontext * ctx,
  */
 static struct gl_texture_image *r300NewTextureImage(GLcontext *ctx)
 {
-	return CALLOC(sizeof(r300_texture_image));
+	return CALLOC(sizeof(radeon_texture_image));
 }
 
 /**
@@ -420,7 +420,7 @@ static struct gl_texture_image *r300NewTextureImage(GLcontext *ctx)
  */
 static void r300FreeTexImageData(GLcontext *ctx, struct gl_texture_image *timage)
 {
-	r300_texture_image* image = get_r300_texture_image(timage);
+	radeon_texture_image* image = get_radeon_texture_image(timage);
 
 	if (image->mt) {
 		radeon_miptree_unreference(image->mt);
@@ -437,7 +437,7 @@ static void r300FreeTexImageData(GLcontext *ctx, struct gl_texture_image *timage
 
 
 /* Set Data pointer and additional data for mapped texture image */
-static void teximage_set_map_data(r300_texture_image *image)
+static void teximage_set_map_data(radeon_texture_image *image)
 {
 	radeon_mipmap_level *lvl = &image->mt->levels[image->mtlevel];
 	image->base.Data = image->mt->bo->ptr + lvl->faces[image->mtface].offset;
@@ -448,7 +448,7 @@ static void teximage_set_map_data(r300_texture_image *image)
 /**
  * Map a single texture image for glTexImage and friends.
  */
-static void r300_teximage_map(r300_texture_image *image, GLboolean write_enable)
+static void r300_teximage_map(radeon_texture_image *image, GLboolean write_enable)
 {
 	if (image->mt) {
 		assert(!image->base.Data);
@@ -459,7 +459,7 @@ static void r300_teximage_map(r300_texture_image *image, GLboolean write_enable)
 }
 
 
-static void r300_teximage_unmap(r300_texture_image *image)
+static void r300_teximage_unmap(radeon_texture_image *image)
 {
 	if (image->mt) {
 		assert(image->base.Data);
@@ -483,7 +483,7 @@ static void r300MapTexture(GLcontext *ctx, struct gl_texture_object *texObj)
 	radeon_bo_map(t->mt->bo, GL_FALSE);
 	for(face = 0; face < t->mt->faces; ++face) {
 		for(level = t->mt->firstLevel; level <= t->mt->lastLevel; ++level)
-			teximage_set_map_data(get_r300_texture_image(texObj->Image[face][level]));
+			teximage_set_map_data(get_radeon_texture_image(texObj->Image[face][level]));
 	}
 }
 
@@ -519,7 +519,7 @@ static void r300_teximage(
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	radeonTexObj* t = radeon_tex_obj(texObj);
-	r300_texture_image* image = get_r300_texture_image(texImage);
+	radeon_texture_image* image = get_radeon_texture_image(texImage);
 
 	R300_FIREVERTICES(rmesa);
 
@@ -688,7 +688,7 @@ static void r300_texsubimage(GLcontext* ctx, int dims, int level,
 		int compressed)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
-	r300_texture_image* image = get_r300_texture_image(texImage);
+	radeon_texture_image* image = get_radeon_texture_image(texImage);
 
 	R300_FIREVERTICES(rmesa);
 
@@ -788,7 +788,7 @@ r300TexSubImage3D(GLcontext * ctx, GLenum target, GLint level,
 static void r300_generate_mipmap(GLcontext* ctx, GLenum target, struct gl_texture_object *texObj)
 {
 	GLuint face = face_for_target(target);
-	r300_texture_image *baseimage = get_r300_texture_image(texObj->Image[face][texObj->BaseLevel]);
+	radeon_texture_image *baseimage = get_radeon_texture_image(texObj->Image[face][texObj->BaseLevel]);
 
 	r300_teximage_map(baseimage, GL_FALSE);
 	_mesa_generate_mipmap(ctx, target, texObj);
