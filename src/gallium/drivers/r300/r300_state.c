@@ -274,8 +274,9 @@ static uint32_t translate_alpha_function(int alpha_func) {
  * This contains the depth buffer, stencil buffer, alpha test, and such.
  * On the Radeon, depth and stencil buffer setup are intertwined, which is
  * the reason for some of the strange-looking assignments across registers. */
-static void* r300_create_dsa_state(struct pipe_context* pipe,
-                                   struct pipe_depth_stencil_alpha_state* state)
+static void*
+        r300_create_dsa_state(struct pipe_context* pipe,
+                              const struct pipe_depth_stencil_alpha_state* state)
 {
     struct r300_dsa_state* dsa = CALLOC_STRUCT(r300_dsa_state);
 
@@ -341,7 +342,7 @@ static void* r300_create_dsa_state(struct pipe_context* pipe,
 
 /* Bind DSA state. */
 static void r300_bind_dsa_state(struct pipe_context* pipe,
-                                  void* state)
+                                void* state)
 {
     struct r300_context* r300 = r300_context(pipe);
 
@@ -351,7 +352,7 @@ static void r300_bind_dsa_state(struct pipe_context* pipe,
 
 /* Free DSA state. */
 static void r300_delete_dsa_state(struct pipe_context* pipe,
-                                    void* state)
+                                  void* state)
 {
     FREE(state);
 }
@@ -396,7 +397,7 @@ struct pipe_rasterizer_state
  * In a not entirely unironic sidenote, this state has nearly nothing to do
  * with the actual block on the Radeon called the rasterizer (RS). */
 static void* r300_create_rs_state(struct pipe_context* pipe,
-                                          struct pipe_rasterizer_state* state)
+                                  const struct pipe_rasterizer_state* state)
 {
     struct r300_rs_state* rs = CALLOC_STRUCT(r300_rs_state);
 
@@ -457,7 +458,7 @@ static void r300_delete_rs_state(struct pipe_context* pipe, void* state)
 }
 
 static void r300_set_scissor_state(struct pipe_context* pipe,
-                                   struct pipe_scissor_state* state)
+                                   const struct pipe_scissor_state* state)
 {
     struct r300_context* r300 = r300_context(pipe);
     draw_flush(r300->draw);
@@ -481,7 +482,7 @@ static void r300_set_scissor_state(struct pipe_context* pipe,
 }
 
 static void* r300_create_vs_state(struct pipe_context* pipe,
-                                  struct pipe_shader_state* state)
+                                  const struct pipe_shader_state* state)
 {
     struct r300_context* context = r300_context(pipe);
     /* XXX handing this off to Draw for now */
