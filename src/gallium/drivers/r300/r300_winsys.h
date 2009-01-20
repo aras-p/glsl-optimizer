@@ -38,6 +38,9 @@ struct radeon_cs;
 
 struct r300_winsys {
 
+    /* PCI ID */
+    uint32_t pci_id;
+
     /* CS object. This is very much like Intel's batchbuffer.
      * Fill it full of dwords and relocs and then submit.
      * Repeat as needed. */

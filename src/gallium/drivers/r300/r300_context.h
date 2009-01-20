@@ -28,6 +28,7 @@
 #include "util/u_memory.h"
 
 #include "r300_screen.h"
+#include "r300_winsys.h"
 
 struct r300_blend_state {
     uint32_t blend_control;       /* R300_RB3D_CBLEND: 0x4e04 */

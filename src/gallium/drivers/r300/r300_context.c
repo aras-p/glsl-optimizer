@@ -43,7 +43,7 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
 
     r300->winsys = r300_winsys;
     r300->context.winsys = winsys;
-    r300->context.screen = r300_create_screen(winsys, 0x0);
+    r300->context.screen = r300_create_screen(winsys, r300_winsys->pci_id);
 
     r300->context.destroy = r300_destroy_context;
 

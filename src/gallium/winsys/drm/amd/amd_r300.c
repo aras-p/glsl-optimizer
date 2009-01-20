@@ -43,11 +43,13 @@ static void amd_r300_flush_cs(struct radeon_cs* cs)
     radeon_cs_erase(cs);
 }
 
-struct r300_winsys* amd_create_r300_winsys(int fd)
+struct r300_winsys* amd_create_r300_winsys(int fd, uint32_t pci_id)
 {
     struct r300_winsys* winsys = calloc(1, sizeof(struct r300_winsys));
 
     struct radeon_cs_manager* csm = radeon_cs_manager_gem_ctor(fd);
+
+    winsys->pci_id = pci_id;
 
     winsys->cs = radeon_cs_create(csm, 1024 * 64 / 4);
 

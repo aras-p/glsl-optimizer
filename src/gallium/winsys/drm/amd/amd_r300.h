@@ -26,4 +26,4 @@
 
 #include "amd_buffer.h"
 
-struct r300_winsys* amd_create_r300_winsys(int fd);
+struct r300_winsys* amd_create_r300_winsys(int fd, uint32_t pci_id);
