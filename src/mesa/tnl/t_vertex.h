@@ -118,6 +118,12 @@ extern void *_tnl_emit_vertices_to_buffer( GLcontext *ctx,
 					   GLuint start,
 					   GLuint end,
 					   void *dest );
+
+/* This function isn't optimal. Check out 
+ * gallium/auxilary/translate for a more comprehensive implementation of
+ * the same functionality.
+ */
+  
 extern void *_tnl_emit_indexed_vertices_to_buffer( GLcontext *ctx,
 						   const GLuint *elts,
 						   GLuint start,
