@@ -292,9 +292,7 @@ struct pipe_surface
    unsigned refcount;
    unsigned usage;               /**< PIPE_BUFFER_USAGE_*  */
 
-   struct pipe_winsys *winsys;   /**< winsys which owns/created the surface */
-
-   struct pipe_texture *texture; /**< optional texture into which this is a view */
+   struct pipe_texture *texture; /**< texture into which this is a view  */
    unsigned face;
    unsigned level;
    unsigned zslice;

@@ -96,73 +96,34 @@ static void xsp_buffer_destroy(struct pipe_winsys *pws, struct pipe_buffer *buff
 	free(xsp_buf);
 }
 
-static struct pipe_surface* xsp_surface_alloc(struct pipe_winsys *pws)
-{
-	struct pipe_surface *surface;
-
-	assert(pws);
-
-	surface = calloc(1, sizeof(struct pipe_surface));
-	surface->refcount = 1;
-	surface->winsys = pws;
-
-	return surface;
-}
-
 /* Borrowed from Mesa's xm_winsys */
 static unsigned int round_up(unsigned n, unsigned multiple)
 {
    return (n + multiple - 1) & ~(multiple - 1);
 }
 
-static int xsp_surface_alloc_storage
+static struct pipe_buffer* xsp_surface_buffer_create
 (
 	struct pipe_winsys *pws,
-	struct pipe_surface *surface,
 	unsigned width,
 	unsigned height,
 	enum pipe_format format,
-	unsigned flags,
-	unsigned tex_usage
+	unsigned usage,
+	unsigned *stride
 )
 {
 	const unsigned int ALIGNMENT = 1;
+	struct pipe_format_block block;
+	unsigned nblocksx, nblocksy;
 
-	assert(pws);
-	assert(surface);
+	pf_get_block(format, &block);
+	nblocksx = pf_get_nblocksx(&block, width);
+	nblocksy = pf_get_nblocksy(&block, height);
+	*stride = round_up(nblocksx * block.size, ALIGNMENT);
 
-	surface->width = width;
-	surface->height = height;
-	surface->format = format;
-	pf_get_block(format, &surface->block);
-	surface->nblocksx = pf_get_nblocksx(&surface->block, width);
-	surface->nblocksy = pf_get_nblocksy(&surface->block, height);
-	surface->stride = round_up(surface->nblocksx * surface->block.size, ALIGNMENT);
-	surface->usage = flags;
-	surface->buffer = pws->buffer_create(pws, ALIGNMENT, PIPE_BUFFER_USAGE_PIXEL, surface->stride * surface->nblocksy);
-
-	return 0;
-}
-
-static void xsp_surface_release(struct pipe_winsys *pws, struct pipe_surface **surface)
-{
-	struct pipe_surface *s;
-
-	assert(pws);
-	assert(surface);
-	assert(*surface);
-
-	s = *surface;
-
-	s->refcount--;
-
-	if (s->refcount == 0)
-	{
-		winsys_buffer_reference(pws, &s->buffer, NULL);
-		free(s);
-	}
-
-	*surface = NULL;
+	return winsys->buffer_create(winsys, ALIGNMENT,
+				     usage,
+				     *stride * nblocksy);
 }
 
 static void xsp_fence_reference(struct pipe_winsys *pws, struct pipe_fence_handle **ptr, struct pipe_fence_handle *fence)
@@ -273,9 +234,7 @@ struct pipe_context* create_pipe_context(Display *display, int screen)
 	xsp_winsys->base.buffer_map = xsp_buffer_map;
 	xsp_winsys->base.buffer_unmap = xsp_buffer_unmap;
 	xsp_winsys->base.buffer_destroy = xsp_buffer_destroy;
-	xsp_winsys->base.surface_alloc = xsp_surface_alloc;
-	xsp_winsys->base.surface_alloc_storage = xsp_surface_alloc_storage;
-	xsp_winsys->base.surface_release = xsp_surface_release;
+	xsp_winsys->base.surface_buffer_create = xsp_surface_buffer_create;
 	xsp_winsys->base.fence_reference = xsp_fence_reference;
 	xsp_winsys->base.fence_signalled = xsp_fence_signalled;
 	xsp_winsys->base.fence_finish = xsp_fence_finish;

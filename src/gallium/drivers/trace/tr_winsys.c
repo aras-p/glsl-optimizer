@@ -98,86 +98,41 @@ trace_winsys_flush_frontbuffer(struct pipe_winsys *_winsys,
 }
 
 
-static struct pipe_surface *
-trace_winsys_surface_alloc(struct pipe_winsys *_winsys)
+static struct pipe_buffer *
+trace_winsys_surface_buffer_create(struct pipe_winsys *_winsys,
+                                   unsigned width, unsigned height,
+                                   enum pipe_format format,
+                                   unsigned usage,
+                                   unsigned *pstride)
 {
    struct trace_winsys *tr_ws = trace_winsys(_winsys);
    struct pipe_winsys *winsys = tr_ws->winsys;
-   struct pipe_surface *result;
+   unsigned stride;
+   struct pipe_buffer *result;
    
-   trace_dump_call_begin("pipe_winsys", "surface_alloc");
+   trace_dump_call_begin("pipe_winsys", "surface_buffer_create");
    
    trace_dump_arg(ptr, winsys);
+   trace_dump_arg(uint, width);
+   trace_dump_arg(uint, height);
+   trace_dump_arg(format, format);
+   trace_dump_arg(uint, usage);
 
-   result = winsys->surface_alloc(winsys);
+   result = winsys->surface_buffer_create(winsys,
+                                          width, height,
+                                          format,
+                                          usage,
+                                          pstride);
+   
+   stride = *pstride;
+   
+   trace_dump_arg(uint, stride);
    
    trace_dump_ret(ptr, result);
    
    trace_dump_call_end();
    
-   assert(!result || !result->texture);
-
    return result;
-}
-
-
-static int
-trace_winsys_surface_alloc_storage(struct pipe_winsys *_winsys,
-                                   struct pipe_surface *surface,
-                                   unsigned width, unsigned height,
-                                   enum pipe_format format,
-                                   unsigned flags,
-                                   unsigned tex_usage)
-{
-   struct trace_winsys *tr_ws = trace_winsys(_winsys);
-   struct pipe_winsys *winsys = tr_ws->winsys;
-   int result;
-   
-   assert(surface && !surface->texture);
-
-   trace_dump_call_begin("pipe_winsys", "surface_alloc_storage");
-   
-   trace_dump_arg(ptr, winsys);
-   trace_dump_arg(ptr, surface);
-   trace_dump_arg(uint, width);
-   trace_dump_arg(uint, height);
-   trace_dump_arg(format, format);
-   trace_dump_arg(uint, flags);
-   trace_dump_arg(uint, tex_usage);
-
-   result = winsys->surface_alloc_storage(winsys,
-                                          surface,
-                                          width, height,
-                                          format,
-                                          flags,
-                                          tex_usage);
-   
-   trace_dump_ret(int, result);
-   
-   trace_dump_call_end();
-   
-   return result;
-}
-
-
-static void
-trace_winsys_surface_release(struct pipe_winsys *_winsys, 
-                             struct pipe_surface **psurface)
-{
-   struct trace_winsys *tr_ws = trace_winsys(_winsys);
-   struct pipe_winsys *winsys = tr_ws->winsys;
-   struct pipe_surface *surface = *psurface;
-   
-   assert(psurface && *psurface && !(*psurface)->texture);
-   
-   trace_dump_call_begin("pipe_winsys", "surface_release");
-   
-   trace_dump_arg(ptr, winsys);
-   trace_dump_arg(ptr, surface);
-
-   winsys->surface_release(winsys, psurface);
-   
-   trace_dump_call_end();
 }
 
 
@@ -465,9 +420,7 @@ trace_winsys_create(struct pipe_winsys *winsys)
    tr_ws->base.destroy = trace_winsys_destroy;
    tr_ws->base.get_name = trace_winsys_get_name;
    tr_ws->base.flush_frontbuffer = trace_winsys_flush_frontbuffer;
-   tr_ws->base.surface_alloc = trace_winsys_surface_alloc;
-   tr_ws->base.surface_alloc_storage = trace_winsys_surface_alloc_storage;
-   tr_ws->base.surface_release = trace_winsys_surface_release;
+   tr_ws->base.surface_buffer_create = trace_winsys_surface_buffer_create;
    tr_ws->base.buffer_create = trace_winsys_buffer_create;
    tr_ws->base.user_buffer_create = trace_winsys_user_buffer_create;
    tr_ws->base.buffer_map = trace_winsys_buffer_map;

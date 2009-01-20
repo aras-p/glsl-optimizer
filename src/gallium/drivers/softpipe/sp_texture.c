@@ -94,49 +94,23 @@ softpipe_texture_layout(struct pipe_screen *screen,
    return spt->buffer != NULL;
 }
 
-/* Hack it up to use the old winsys->surface_alloc_storage()
- * method for now:
- */
 static boolean
 softpipe_displaytarget_layout(struct pipe_screen *screen,
                               struct softpipe_texture * spt)
 {
    struct pipe_winsys *ws = screen->winsys;
-   struct pipe_surface surf;
-   unsigned flags = (PIPE_BUFFER_USAGE_CPU_READ |
-                     PIPE_BUFFER_USAGE_CPU_WRITE |
-                     PIPE_BUFFER_USAGE_GPU_READ |
-                     PIPE_BUFFER_USAGE_GPU_WRITE);
-   int ret;
+   unsigned usage = (PIPE_BUFFER_USAGE_CPU_READ_WRITE |
+                     PIPE_BUFFER_USAGE_GPU_READ_WRITE);
 
-
-   memset(&surf, 0, sizeof(surf));
-
-   ret =ws->surface_alloc_storage( ws, 
-                                   &surf,
-                                   spt->base.width[0], 
-                                   spt->base.height[0],
-                                   spt->base.format,
-                                   flags,
-                                   spt->base.tex_usage);
-   if(ret != 0)
-      return FALSE;
-
-   if (!surf.buffer) {
-      /* allocation failed */
-      return FALSE;
-   }
-
-   /* Now extract the goodies: 
-    */
    spt->base.nblocksx[0] = pf_get_nblocksx(&spt->base.block, spt->base.width[0]);  
    spt->base.nblocksy[0] = pf_get_nblocksy(&spt->base.block, spt->base.height[0]);  
-   spt->stride[0] = surf.stride;
 
-   /* Transfer the reference:
-    */
-   spt->buffer = surf.buffer;
-   surf.buffer = NULL;
+   spt->buffer = ws->surface_buffer_create( ws, 
+                                           spt->base.width[0], 
+                                           spt->base.height[0],
+                                           spt->base.format,
+                                           usage,
+                                           &spt->stride[0]);
 
    return spt->buffer != NULL;
 }
@@ -231,7 +205,6 @@ softpipe_get_tex_surface(struct pipe_screen *screen,
                          unsigned face, unsigned level, unsigned zslice,
                          unsigned usage)
 {
-   struct pipe_winsys *ws = screen->winsys;
    struct softpipe_texture *spt = softpipe_texture(pt);
    struct pipe_surface *ps;
 

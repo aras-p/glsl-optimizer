@@ -344,67 +344,25 @@ xm_user_buffer_create(struct pipe_winsys *pws, void *ptr, unsigned bytes)
 }
 
 
-static int
-xm_surface_alloc_storage(struct pipe_winsys *winsys,
-                         struct pipe_surface *surf,
+static struct pipe_buffer *
+xm_surface_buffer_create(struct pipe_winsys *winsys,
                          unsigned width, unsigned height,
-                         enum pipe_format format, 
-                         unsigned flags,
-                         unsigned tex_usage)
+                         enum pipe_format format,
+                         unsigned usage,
+                         unsigned *stride)
 {
-   const int alignment = 64;
+   const unsigned alignment = 64;
+   struct pipe_format_block block;
+   unsigned nblocksx, nblocksy;
 
-   surf->width = width;
-   surf->height = height;
-   surf->format = format;
-   pf_get_block(format, &surf->block);
-   surf->nblocksx = pf_get_nblocksx(&surf->block, width);
-   surf->nblocksy = pf_get_nblocksy(&surf->block, height);
-   surf->stride = align(surf->nblocksx * surf->block.size, alignment);
-   surf->usage = flags;
+   pf_get_block(format, &block);
+   nblocksx = pf_get_nblocksx(&block, width);
+   nblocksy = pf_get_nblocksy(&block, height);
+   *stride = align(nblocksx * block.size, alignment);
 
-   assert(!surf->buffer);
-   surf->buffer = winsys->buffer_create(winsys, alignment,
-                                        PIPE_BUFFER_USAGE_PIXEL,
-                                        surf->stride * surf->nblocksy);
-
-   if(!surf->buffer)
-      return -1;
-   
-   return 0;
-}
-
-
-/**
- * Called via winsys->surface_alloc() to create new surfaces.
- */
-static struct pipe_surface *
-xm_surface_alloc(struct pipe_winsys *ws)
-{
-   struct pipe_surface *surface = CALLOC_STRUCT(pipe_surface);
-
-   assert(ws);
-
-   surface->refcount = 1;
-   surface->winsys = ws;
-
-   return surface;
-}
-
-
-
-static void
-xm_surface_release(struct pipe_winsys *winsys, struct pipe_surface **s)
-{
-   struct pipe_surface *surf = *s;
-   assert(!surf->texture);
-   surf->refcount--;
-   if (surf->refcount == 0) {
-      if (surf->buffer)
-	winsys_buffer_reference(winsys, &surf->buffer, NULL);
-      free(surf);
-   }
-   *s = NULL;
+   return winsys->buffer_create(winsys, alignment,
+                                usage,
+                                *stride * nblocksy);
 }
 
 
@@ -454,9 +412,7 @@ xlib_create_softpipe_winsys( void )
       ws->base.buffer_unmap = xm_buffer_unmap;
       ws->base.buffer_destroy = xm_buffer_destroy;
 
-      ws->base.surface_alloc = xm_surface_alloc;
-      ws->base.surface_alloc_storage = xm_surface_alloc_storage;
-      ws->base.surface_release = xm_surface_release;
+      ws->base.surface_buffer_create = xm_surface_buffer_create;
 
       ws->base.fence_reference = xm_fence_reference;
       ws->base.fence_signalled = xm_fence_signalled;

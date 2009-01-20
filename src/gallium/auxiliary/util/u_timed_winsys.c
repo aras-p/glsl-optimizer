@@ -205,52 +205,23 @@ timed_flush_frontbuffer( struct pipe_winsys *winsys,
 
 
 
-static struct pipe_surface *
-timed_surface_alloc(struct pipe_winsys *winsys)
-{
-   struct pipe_winsys *backend = timed_winsys(winsys)->backend;
-   uint64_t start = time_start();
-
-   struct pipe_surface *surf = backend->surface_alloc( backend );
-
-   time_finish(winsys, start, 6, __FUNCTION__);
-   
-   return surf;
-}
-
-
-
-static int
-timed_surface_alloc_storage(struct pipe_winsys *winsys,
-                              struct pipe_surface *surf,
+static struct pipe_buffer *
+timed_surface_buffer_create(struct pipe_winsys *winsys,
                               unsigned width, unsigned height,
                               enum pipe_format format, 
-                              unsigned flags,
-                              unsigned tex_usage)
+                              unsigned usage,
+                              unsigned *stride)
 {
    struct pipe_winsys *backend = timed_winsys(winsys)->backend;
    uint64_t start = time_start();
 
-   int ret = backend->surface_alloc_storage( backend, surf, width, height, 
-                                             format, flags, tex_usage );
+   struct pipe_buffer *ret = backend->surface_buffer_create( backend, width, height, 
+                                                             format, usage, stride );
 
    time_finish(winsys, start, 7, __FUNCTION__);
    
    return ret;
 }
-
-
-static void
-timed_surface_release(struct pipe_winsys *winsys, struct pipe_surface **s)
-{
-   struct pipe_winsys *backend = timed_winsys(winsys)->backend;
-   uint64_t start = time_start();
-
-   backend->surface_release( backend, s );
-
-   time_finish(winsys, start, 8, __FUNCTION__);
-}
-
 
 
 static const char *
@@ -331,9 +302,7 @@ struct pipe_winsys *u_timed_winsys_create( struct pipe_winsys *backend )
    ws->base.buffer_create = timed_buffer_create;
    ws->base.flush_frontbuffer = timed_flush_frontbuffer;
    ws->base.get_name = timed_get_name;
-   ws->base.surface_alloc = timed_surface_alloc;
-   ws->base.surface_alloc_storage = timed_surface_alloc_storage;
-   ws->base.surface_release = timed_surface_release;
+   ws->base.surface_buffer_create = timed_surface_buffer_create;
    ws->base.fence_reference = timed_fence_reference;
    ws->base.fence_signalled = timed_fence_signalled;
    ws->base.fence_finish = timed_fence_finish;

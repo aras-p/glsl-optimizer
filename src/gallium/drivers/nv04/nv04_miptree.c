@@ -96,13 +96,12 @@ nv04_miptree_surface_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 	struct nv04_miptree *nv04mt = (struct nv04_miptree *)pt;
 	struct pipe_surface *ps;
 
-	ps = ws->surface_alloc(ws);
+	ps = CALLOC_STRUCT(pipe_surface);
 	if (!ps)
 		return NULL;
+	pipe_texture_reference(&ps->texture, pt);
 	pipe_buffer_reference(pscreen, &ps->buffer, nv04mt->buffer);
 	ps->format = pt->format;
-		ps->width = pt->width[level];
-	ps->height = pt->height[level];
 	ps->block = pt->block;
 	ps->width = pt->width[level];
 	ps->height = pt->height[level];
@@ -110,7 +109,6 @@ nv04_miptree_surface_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 	ps->nblocksy = pt->nblocksy[level];
 	ps->stride = nv04mt->level[level].pitch;
 	ps->refcount = 1;
-	ps->winsys = pscreen->winsys;
 
 	if (pt->target == PIPE_TEXTURE_CUBE) {
 		ps->offset = nv04mt->level[level].image_offset[face];

@@ -110,9 +110,10 @@ nv10_miptree_surface_get(struct pipe_screen *screen, struct pipe_texture *pt,
 	struct nv10_miptree *nv10mt = (struct nv10_miptree *)pt;
 	struct pipe_surface *ps;
 
-	ps = ws->surface_alloc(ws);
+	ps = CALLOC_STRUCT(pipe_surface);
 	if (!ps)
 		return NULL;
+	pipe_texture_reference(&ps->texture, pt);
 	pipe_buffer_reference(screen, &ps->buffer, nv10mt->buffer);
 	ps->format = pt->format;
 	ps->width = pt->width[level];
@@ -122,7 +123,6 @@ nv10_miptree_surface_get(struct pipe_screen *screen, struct pipe_texture *pt,
 	ps->nblocksy = pt->nblocksy[level];
 	ps->stride = nv10mt->level[level].pitch;
 	ps->refcount = 1;
-	ps->winsys = screen->winsys;
 
 	if (pt->target == PIPE_TEXTURE_CUBE) {
 		ps->offset = nv10mt->level[level].image_offset[face];

@@ -217,7 +217,6 @@ nv50_miptree_surface_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 {
 	struct nv50_miptree *mt = nv50_miptree(pt);
 	struct nv50_miptree_level *lvl = &mt->level[level];
-	struct nv50_surface *s;
 	struct pipe_surface *ps;
 	int img;
 
@@ -229,13 +228,11 @@ nv50_miptree_surface_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 	else
 		img = 0;
 
-	s = CALLOC_STRUCT(nv50_surface);
-	if (!s)
+	ps = CALLOC_STRUCT(pipe_surface);
+	if (!ps)
 		return NULL;
-	ps = &s->base;
-
-	ps->refcount = 1;
-	ps->winsys = pscreen->winsys;
+	pipe_texture_reference(&ps->texture, pt);
+	pipe_buffer_reference(pscreen, &ps->buffer, mt->buffer);
 	ps->format = pt->format;
 	ps->width = pt->width[level];
 	ps->height = pt->height[level];
@@ -245,6 +242,10 @@ nv50_miptree_surface_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
 	ps->stride = ps->width * ps->block.size;
 	ps->usage = flags;
 	ps->status = PIPE_SURFACE_STATUS_DEFINED;
+	ps->refcount = 1;
+	ps->face = face;
+	ps->level = level;
+	ps->zslice = zslice;
 
 	if (flags & PIPE_BUFFER_USAGE_CPU_READ_WRITE) {
 		assert(!(flags & PIPE_BUFFER_USAGE_GPU_READ_WRITE));

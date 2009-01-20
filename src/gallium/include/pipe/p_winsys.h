@@ -76,24 +76,6 @@ struct pipe_winsys
                               void *context_private );
 
 
-   /** allocate a new surface (no context dependency) */
-   struct pipe_surface *(*surface_alloc)(struct pipe_winsys *ws);
-
-   /**
-    * Allocate storage for a pipe_surface.
-    * \param flags XXX unused, remove someday
-    * \return  0 if succeeds.
-    */
-   int (*surface_alloc_storage)(struct pipe_winsys *ws,
-                                struct pipe_surface *surf,
-                                unsigned width, unsigned height,
-                                enum pipe_format format,
-                                unsigned flags,
-                                unsigned tex_usage);
-   
-   void (*surface_release)(struct pipe_winsys *ws, struct pipe_surface **s);
-
-
    /**
     * Buffer management. Buffer attributes are mostly fixed over its lifetime.
     *
@@ -137,6 +119,24 @@ struct pipe_winsys
    struct pipe_buffer *(*user_buffer_create)(struct pipe_winsys *ws, 
                                                     void *ptr,
                                                     unsigned bytes);
+
+   /**
+    * Allocate storage for a display target surface.
+    * 
+    * Often surfaces which are meant to be blitted to the front screen (i.e.,
+    * display targets) must be allocated with special characteristics, memory 
+    * pools, or obtained directly from the windowing system.
+    *  
+    * This callback is invoked by the pipe_screenwhen creating a texture marked
+    * with the PIPE_TEXTURE_USAGE_DISPLAY_TARGET flag  to get the underlying 
+    * buffer storage.
+    */
+   struct pipe_buffer *(*surface_buffer_create)(struct pipe_winsys *ws,
+						unsigned width, unsigned height,
+						enum pipe_format format,
+						unsigned usage,
+						unsigned *stride);
+
 
    /** 
     * Map the entire data store of a buffer object into the client's address.

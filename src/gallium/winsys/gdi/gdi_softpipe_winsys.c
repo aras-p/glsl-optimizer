@@ -161,63 +161,25 @@ round_up(unsigned n, unsigned multiple)
 }
 
 
-static int
-gdi_softpipe_surface_alloc_storage(struct pipe_winsys *winsys,
-                                   struct pipe_surface *surf,
+static struct pipe_buffer *
+gdi_softpipe_surface_buffer_create(struct pipe_winsys *winsys,
                                    unsigned width, unsigned height,
                                    enum pipe_format format,
-                                   unsigned flags,
-                                   unsigned tex_usage)
+                                   unsigned usage,
+                                   unsigned *stride)
 {
    const unsigned alignment = 64;
+   struct pipe_format_block block;
+   unsigned nblocksx, nblocksy;
 
-   surf->width = width;
-   surf->height = height;
-   surf->format = format;
-   pf_get_block(format, &surf->block);
-   surf->nblocksx = pf_get_nblocksx(&surf->block, width);
-   surf->nblocksy = pf_get_nblocksy(&surf->block, height);
-   surf->stride = round_up(surf->nblocksx * surf->block.size, alignment);
-   surf->usage = flags;
+   pf_get_block(format, &block);
+   nblocksx = pf_get_nblocksx(&block, width);
+   nblocksy = pf_get_nblocksy(&block, height);
+   *stride = round_up(nblocksx * block.size, alignment);
 
-   assert(!surf->buffer);
-   surf->buffer = winsys->buffer_create(winsys, alignment,
-                                        PIPE_BUFFER_USAGE_PIXEL,
-                                        surf->stride * surf->nblocksy);
-   if(!surf->buffer)
-      return -1;
-
-   return 0;
-}
-
-
-static struct pipe_surface *
-gdi_softpipe_surface_alloc(struct pipe_winsys *winsys)
-{
-   struct pipe_surface *surface = CALLOC_STRUCT(pipe_surface);
-
-   assert(winsys);
-
-   surface->refcount = 1;
-   surface->winsys = winsys;
-
-   return surface;
-}
-
-
-static void
-gdi_softpipe_surface_release(struct pipe_winsys *winsys,
-                             struct pipe_surface **s)
-{
-   struct pipe_surface *surf = *s;
-   assert(!surf->texture);
-   surf->refcount--;
-   if (surf->refcount == 0) {
-      if (surf->buffer)
-	winsys_buffer_reference(winsys, &surf->buffer, NULL);
-      free(surf);
-   }
-   *s = NULL;
+   return winsys->buffer_create(winsys, alignment,
+                                usage,
+                                *stride * nblocksy);
 }
 
 
@@ -281,9 +243,7 @@ gdi_softpipe_screen_create(void)
    winsys->buffer_unmap = gdi_softpipe_buffer_unmap;
    winsys->buffer_destroy = gdi_softpipe_buffer_destroy;
 
-   winsys->surface_alloc = gdi_softpipe_surface_alloc;
-   winsys->surface_alloc_storage = gdi_softpipe_surface_alloc_storage;
-   winsys->surface_release = gdi_softpipe_surface_release;
+   winsys->surface_buffer_create = gdi_softpipe_surface_buffer_create;
 
    winsys->fence_reference = gdi_softpipe_fence_reference;
    winsys->fence_signalled = gdi_softpipe_fence_signalled;

@@ -45,30 +45,19 @@ extern "C" {
 static INLINE void *
 pipe_surface_map( struct pipe_surface *surf, unsigned flags )
 {
-   if (surf->texture) {
-      struct pipe_screen *screen = surf->texture->screen;
-      return surf->texture->screen->surface_map( screen, surf, flags );
-   }
-   else {
-      struct pipe_winsys *winsys = surf->winsys;
-      char *map = (char *)winsys->buffer_map( winsys, surf->buffer, flags );
-      if (map == NULL)
-         return NULL;
-      return (void *)(map + surf->offset);
-   }
+   struct pipe_screen *screen;
+   assert(surf->texture);
+   screen = surf->texture->screen;
+   return screen->surface_map( screen, surf, flags );
 }
 
 static INLINE void
 pipe_surface_unmap( struct pipe_surface *surf )
 {
-   if (surf->texture) {
-      struct pipe_screen *screen = surf->texture->screen;
-      surf->texture->screen->surface_unmap( screen, surf );
-   }
-   else {
-      struct pipe_winsys *winsys = surf->winsys;
-      winsys->buffer_unmap( winsys, surf->buffer );
-   }
+   struct pipe_screen *screen;
+   assert(surf->texture);
+   screen = surf->texture->screen;
+   screen->surface_unmap( screen, surf );
 }
 
 
@@ -88,20 +77,11 @@ pipe_surface_reference(struct pipe_surface **ptr, struct pipe_surface *surf)
    }
 
    if (*ptr) {
+      struct pipe_screen *screen;
       assert((*ptr)->refcount);
-      
-      /* There are currently two sorts of surfaces... This needs to be
-       * fixed so that all surfaces are views into a texture.
-       */
-      if ((*ptr)->texture) {
-         struct pipe_screen *screen = (*ptr)->texture->screen;
-         screen->tex_surface_release( screen, ptr );
-      }
-      else {
-         struct pipe_winsys *winsys = (*ptr)->winsys;
-         winsys->surface_release(winsys, ptr);
-      }
-
+      assert((*ptr)->texture);
+      screen = (*ptr)->texture->screen;
+      screen->tex_surface_release( screen, ptr );
       assert(!*ptr);
    }
 

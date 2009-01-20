@@ -229,17 +229,6 @@ aub_flush_frontbuffer( struct pipe_winsys *winsys,
 		     aub_bo(surface->buffer)->offset );
 }
 
-static struct pipe_surface *
-aub_i915_surface_alloc(struct pipe_winsys *winsys)
-{
-   struct pipe_surface *surf = CALLOC_STRUCT(pipe_surface);
-   if (surf) {
-      surf->refcount = 1;
-      surf->winsys = winsys;
-   }
-   return surf;
-}
-
 
 /**
  * Round n up to next multiple.
@@ -250,48 +239,26 @@ round_up(unsigned n, unsigned multiple)
    return (n + multiple - 1) & ~(multiple - 1);
 }
 
-static int
-aub_i915_surface_alloc_storage(struct pipe_winsys *winsys,
-                               struct pipe_surface *surf,
+static struct pipe_buffer *
+aub_i915_surface_buffer_create(struct pipe_winsys *winsys,
                                unsigned width, unsigned height,
                                enum pipe_format format,
-                               unsigned flags,
-                               unsigned tex_usage)
+                               unsigned usage,
+                               unsigned *stride)
 {
    const unsigned alignment = 64;
+   struct pipe_format_block block;
+   unsigned nblocksx, nblocksy;
 
-   surf->width = width;
-   surf->height = height;
-   surf->format = format;
-   pf_get_block(format, &surf->block);
-   surf->nblocksx = pf_get_nblocksx(&surf->block, width);
-   surf->nblocksy = pf_get_nblocksy(&surf->block, height);
-   surf->stride = round_up(surf->nblocksx * surf->block.size, alignment);
-   surf->usage = flags;
+   pf_get_block(format, &block);
+   nblocksx = pf_get_nblocksx(&block, width);
+   nblocksy = pf_get_nblocksy(&block, height);
+   *stride = round_up(nblocksx * block.size, alignment);
 
-   assert(!surf->buffer);
-   surf->buffer = winsys->buffer_create(winsys, alignment,
-                                        PIPE_BUFFER_USAGE_PIXEL,
-                                        surf->stride * surf->nblocksy);
-    if(!surf->buffer)
-       return -1;
-
-   return 0;
+   return winsys->buffer_create(winsys, alignment,
+                                usage,
+                                *stride * nblocksy);
 }
-
-static void
-aub_i915_surface_release(struct pipe_winsys *winsys, struct pipe_surface **s)
-{
-   struct pipe_surface *surf = *s;
-   surf->refcount--;
-   if (surf->refcount == 0) {
-      if (surf->buffer)
-         winsys_buffer_reference(winsys, &surf->buffer, NULL);
-      free(surf);
-   }
-   *s = NULL;
-}
-
 
 
 static const char *
@@ -333,9 +300,7 @@ xlib_create_brw_winsys( void )
    iws->winsys.get_name = aub_get_name;
    iws->winsys.destroy = xlib_brw_destroy_pipe_winsys_aub;
 
-   iws->winsys.surface_alloc = aub_i915_surface_alloc;
-   iws->winsys.surface_alloc_storage = aub_i915_surface_alloc_storage;
-   iws->winsys.surface_release = aub_i915_surface_release;
+   iws->winsys.surface_buffer_create = aub_i915_surface_buffer_create;
 
    iws->aubfile = brw_aubfile_create();
    iws->size = AUB_BUF_SIZE;

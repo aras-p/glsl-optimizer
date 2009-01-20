@@ -161,65 +161,25 @@ buffer_destroy(struct pipe_winsys *pws, struct pipe_buffer *buf)
 }
 
 
-/**
- * Called via winsys->surface_alloc() to create new surfaces.
- */
-static struct pipe_surface *
-surface_alloc(struct pipe_winsys *ws)
-{
-   struct pipe_surface *surf = CALLOC_STRUCT(pipe_surface);
-   if (!surf)
-      return NULL;
-
-   surf->refcount = 1;
-   surf->winsys = ws;
-
-   return surf;
-}
-
-
-static int
-surface_alloc_storage(struct pipe_winsys *winsys,
-                      struct pipe_surface *surf,
+static struct pipe_buffer *
+surface_buffer_create(struct pipe_winsys *winsys,
                       unsigned width, unsigned height,
                       enum pipe_format format, 
-                      unsigned flags,
-                      unsigned tex_usage)
+                      unsigned usage,
+                      unsigned *stride)
 {
    const unsigned alignment = 64;
+   struct pipe_format_block block;
+   unsigned nblocksx, nblocksy;
 
-   surf->width = width;
-   surf->height = height;
-   surf->format = format;
-   pf_get_block(surf->format, &surf->block);
-   surf->nblocksx = pf_get_nblocksx(&surf->block, width);
-   surf->nblocksy = pf_get_nblocksy(&surf->block, height);
-   surf->stride = round_up(surf->nblocksx * surf->block.size, alignment);
-   surf->usage = flags;
+   pf_get_block(format, &block);
+   nblocksx = pf_get_nblocksx(&block, width);
+   nblocksy = pf_get_nblocksy(&block, height);
+   *stride = round_up(nblocksx * block.size, alignment);
 
-   assert(!surf->buffer);
-   surf->buffer = winsys->buffer_create(winsys, alignment,
-                                        PIPE_BUFFER_USAGE_PIXEL,
-                                        surf->stride * height);
-   if(!surf->buffer)
-      return -1;
-   
-   return 0;
-}
-
-
-static void
-surface_release(struct pipe_winsys *winsys, struct pipe_surface **s)
-{
-   struct pipe_surface *surf = *s;
-   assert(!surf->texture);
-   surf->refcount--;
-   if (surf->refcount == 0) {
-      if (surf->buffer)
-         winsys_buffer_reference(winsys, &surf->buffer, NULL);
-      free(surf);
-   }
-   *s = NULL;
+   return winsys->buffer_create(winsys, alignment,
+                                usage,
+                                *stride * nblocksy);
 }
 
 
@@ -268,9 +228,7 @@ create_sw_winsys(void)
    ws->Base.buffer_unmap = buffer_unmap;
    ws->Base.buffer_destroy = buffer_destroy;
 
-   ws->Base.surface_alloc = surface_alloc;
-   ws->Base.surface_alloc_storage = surface_alloc_storage;
-   ws->Base.surface_release = surface_release;
+   ws->Base.surface_buffer_create = surface_buffer_create;
 
    ws->Base.fence_reference = fence_reference;
    ws->Base.fence_signalled = fence_signalled;

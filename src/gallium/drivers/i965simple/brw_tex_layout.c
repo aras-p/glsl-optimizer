@@ -365,10 +365,10 @@ brw_get_tex_surface_screen(struct pipe_screen *screen,
       assert(zslice == 0);
    }
 
-   ps = ws->surface_alloc(ws);
+   ps = CALLOC_STRUCT(pipe_surface);
    if (ps) {
-      assert(ps->format);
-      assert(ps->refcount);
+      ps->refcount = 1;
+      pipe_texture_reference(&ps->texture, pt);
       winsys_buffer_reference(ws, &ps->buffer, tex->buffer);
       ps->format = pt->format;
       ps->width = pt->width[level];
@@ -378,6 +378,7 @@ brw_get_tex_surface_screen(struct pipe_screen *screen,
       ps->nblocksy = pt->nblocksy[level];
       ps->stride = tex->stride;
       ps->offset = offset;
+      ps->status = PIPE_SURFACE_STATUS_DEFINED;
    }
    return ps;
 }

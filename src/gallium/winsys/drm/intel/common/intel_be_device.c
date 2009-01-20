@@ -157,35 +157,25 @@ err:
 }
 
 
-/*
- * Surface functions.
- *
- * Deprecated!
- */
-
-static struct pipe_surface *
-intel_i915_surface_alloc(struct pipe_winsys *winsys)
-{
-	assert((size_t)"intel_i915_surface_alloc is deprecated" & 0);
-	return NULL;
-}
-
-static int
-intel_i915_surface_alloc_storage(struct pipe_winsys *winsys,
-				 struct pipe_surface *surf,
+static struct pipe_buffer *
+intel_i915_surface_buffer_create(struct pipe_winsys *winsys,
 				 unsigned width, unsigned height,
 				 enum pipe_format format,
-				 unsigned flags,
-				 unsigned tex_usage)
+				 unsigned usage,
+				 unsigned *stride)
 {
-	assert((size_t)"intel_i915_surface_alloc_storage is deprecated" & 0);
-	return -1;
-}
+	const unsigned alignment = 64;
+	struct pipe_format_block block;
+	unsigned nblocksx, nblocksy;
 
-static void
-intel_i915_surface_release(struct pipe_winsys *winsys, struct pipe_surface **s)
-{
-	assert((size_t)"intel_i915_surface_release is deprecated" & 0);
+	pf_get_block(format, &block);
+	nblocksx = pf_get_nblocksx(&block, width);
+	nblocksy = pf_get_nblocksy(&block, height);
+	*stride = round_up(nblocksx * block.size, alignment);
+
+	return winsys->buffer_create(winsys, alignment,
+				     usage,
+				     *stride * nblocksy);
 }
 
 
@@ -238,9 +228,7 @@ intel_be_init_device(struct intel_be_device *dev, int fd, unsigned id)
 	dev->base.buffer_map = intel_be_buffer_map;
 	dev->base.buffer_unmap = intel_be_buffer_unmap;
 	dev->base.buffer_destroy = intel_be_buffer_destroy;
-	dev->base.surface_alloc = intel_i915_surface_alloc;
-	dev->base.surface_alloc_storage = intel_i915_surface_alloc_storage;
-	dev->base.surface_release = intel_i915_surface_release;
+	dev->base.surface_buffer_create = intel_i915_surface_buffer_create;
 	dev->base.fence_reference = intel_be_fence_reference;
 	dev->base.fence_signalled = intel_be_fence_signalled;
 	dev->base.fence_finish = intel_be_fence_finish;

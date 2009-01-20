@@ -87,7 +87,6 @@ trace_surface_create(struct trace_texture *tr_tex,
    
    memcpy(&tr_surf->base, surface, sizeof(struct pipe_surface));
    
-   tr_surf->base.winsys = tr_tex->base.screen->winsys;
    tr_surf->base.texture = NULL;
    pipe_texture_reference(&tr_surf->base.texture, &tr_tex->base);
    tr_surf->surface = surface;

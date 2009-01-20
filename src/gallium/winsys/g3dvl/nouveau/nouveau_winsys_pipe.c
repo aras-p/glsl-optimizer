@@ -46,34 +46,29 @@ round_up(unsigned n, unsigned multiple)
    return (n + multiple - 1) & ~(multiple - 1);
 }
 
-static int
-nouveau_surface_alloc_storage
+static struct pipe_buffer *
+nouveau_surface_buffer_create
 (
 	struct pipe_winsys *pws,
-	struct pipe_surface *surface,
 	unsigned width,
 	unsigned height,
 	enum pipe_format format,
-	unsigned flags,
-	unsigned tex_usage
+	unsigned usage,
+	unsigned *stride
 )
 {
 	const unsigned int ALIGNMENT = 256;
+	struct pipe_format_block block;
+	unsigned nblocksx, nblocksy;
 
-	assert(pws);
-	assert(surface);
+	pf_get_block(format, &block);
+	nblocksx = pf_get_nblocksx(&block, width);
+	nblocksy = pf_get_nblocksy(&block, height);
+	*stride = round_up(nblocksx * block.size, ALIGNMENT);
 
-	surface->width = width;
-	surface->height = height;
-	surface->format = format;
-	pf_get_block(format, &surface->block);
-	surface->nblocksx = pf_get_nblocksx(&surface->block, width);
-	surface->nblocksy = pf_get_nblocksy(&surface->block, height);
-	surface->stride = round_up(surface->nblocksx * surface->block.size, ALIGNMENT);
-	surface->usage = flags;
-	surface->buffer = pws->buffer_create(pws, ALIGNMENT, PIPE_BUFFER_USAGE_PIXEL, surface->stride * surface->nblocksy);
-
-	return 0;
+	return winsys->buffer_create(winsys, ALIGNMENT,
+				     usage,
+				     *stride * nblocksy);
 }
 
 static void
@@ -269,9 +264,7 @@ nouveau_create_pipe_winsys(struct nouveau_context *nv)
 
 	pws->flush_frontbuffer = nouveau_flush_frontbuffer;
 
-	pws->surface_alloc = nouveau_surface_alloc;
-	pws->surface_alloc_storage = nouveau_surface_alloc_storage;
-	pws->surface_release = nouveau_surface_release;
+	pws->surface_buffer_create = nouveau_surface_buffer_create;
 
 	pws->buffer_create = nouveau_pipe_bo_create;
 	pws->buffer_destroy = nouveau_pipe_bo_del;
