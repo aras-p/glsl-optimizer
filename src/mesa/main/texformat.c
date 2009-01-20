@@ -871,6 +871,30 @@ const struct gl_texture_format _mesa_texformat_rgb565_rev = {
    store_texel_rgb565_rev		/* StoreTexel */
 };
 
+const struct gl_texture_format _mesa_texformat_rgba4444 = {
+   MESA_FORMAT_RGBA4444,		/* MesaFormat */
+   GL_RGBA,				/* BaseFormat */
+   GL_UNSIGNED_NORMALIZED_ARB,		/* DataType */
+   4,					/* RedBits */
+   4,					/* GreenBits */
+   4,					/* BlueBits */
+   4,					/* AlphaBits */
+   0,					/* LuminanceBits */
+   0,					/* IntensityBits */
+   0,					/* IndexBits */
+   0,					/* DepthBits */
+   0,					/* StencilBits */
+   2,					/* TexelBytes */
+   _mesa_texstore_rgba4444,		/* StoreTexImageFunc */
+   fetch_texel_1d_rgba4444,		/* FetchTexel1D */
+   fetch_texel_2d_rgba4444,		/* FetchTexel2D */
+   fetch_texel_3d_rgba4444,		/* FetchTexel3D */
+   NULL,				/* FetchTexel1Df */
+   NULL,				/* FetchTexel2Df */
+   NULL,				/* FetchTexel3Df */
+   store_texel_rgba4444			/* StoreTexel */
+};
+
 const struct gl_texture_format _mesa_texformat_argb4444 = {
    MESA_FORMAT_ARGB4444,		/* MesaFormat */
    GL_RGBA,				/* BaseFormat */
@@ -917,6 +941,30 @@ const struct gl_texture_format _mesa_texformat_argb4444_rev = {
    NULL,				/* FetchTexel2Df */
    NULL,				/* FetchTexel3Df */
    store_texel_argb4444_rev		/* StoreTexel */
+};
+
+const struct gl_texture_format _mesa_texformat_rgba5551 = {
+   MESA_FORMAT_RGBA5551,		/* MesaFormat */
+   GL_RGBA,				/* BaseFormat */
+   GL_UNSIGNED_NORMALIZED_ARB,		/* DataType */
+   5,					/* RedBits */
+   5,					/* GreenBits */
+   5,					/* BlueBits */
+   1,					/* AlphaBits */
+   0,					/* LuminanceBits */
+   0,					/* IntensityBits */
+   0,					/* IndexBits */
+   0,					/* DepthBits */
+   0,					/* StencilBits */
+   2,					/* TexelBytes */
+   _mesa_texstore_rgba5551,		/* StoreTexImageFunc */
+   fetch_texel_1d_rgba5551,		/* FetchTexel1D */
+   fetch_texel_2d_rgba5551,		/* FetchTexel2D */
+   fetch_texel_3d_rgba5551,		/* FetchTexel3D */
+   NULL,				/* FetchTexel1Df */
+   NULL,				/* FetchTexel2Df */
+   NULL,				/* FetchTexel3Df */
+   store_texel_rgba5551			/* StoreTexel */
 };
 
 const struct gl_texture_format _mesa_texformat_argb1555 = {
