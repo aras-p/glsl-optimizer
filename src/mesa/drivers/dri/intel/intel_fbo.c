@@ -631,6 +631,19 @@ intel_finish_render_texture(GLcontext * ctx,
 
 
 /**
+ * Do additional "completeness" testing of a framebuffer object.
+ */
+static void
+intel_validate_framebuffer(GLcontext *ctx, struct gl_framebuffer *fb)
+{
+   /* no-op for now.
+    * Eventually: examine the renderbuffers/textures and make sure it's
+    * supported by the hw.
+    */
+}
+
+
+/**
  * Do one-time context initializations related to GL_EXT_framebuffer_object.
  * Hook in device driver functions.
  */
@@ -644,4 +657,5 @@ intel_fbo_init(struct intel_context *intel)
    intel->ctx.Driver.RenderTexture = intel_render_texture;
    intel->ctx.Driver.FinishRenderTexture = intel_finish_render_texture;
    intel->ctx.Driver.ResizeBuffers = intel_resize_buffers;
+   intel->ctx.Driver.ValidateFramebuffer = intel_validate_framebuffer;
 }
