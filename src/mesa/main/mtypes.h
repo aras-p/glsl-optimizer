@@ -2270,6 +2270,7 @@ struct gl_renderbuffer
    GLubyte IndexBits;
    GLubyte DepthBits;
    GLubyte StencilBits;
+   GLubyte NumSamples;
 
    GLenum DataType;      /**< Type of values passed to the Get/Put functions */
    GLvoid *Data;        /**< This may not be used by some kinds of RBs */
@@ -2514,6 +2515,8 @@ struct gl_constants
    /* GL_ARB_vertex_shader */
    GLuint MaxVertexTextureImageUnits;
    GLuint MaxVarying;  /**< Number of float[4] vectors */
+   /* GL_ARB_framebuffer_object */
+   GLuint MaxSamples;
 };
 
 
