@@ -5,7 +5,6 @@
 	Name="mesa"
 	ProjectGUID="{2120C974-2717-4709-B44F-D6E6D0A56448}"
 	RootNamespace="mesa"
-	TargetFrameworkVersion="131072"
 	>
 	<Platforms>
 		<Platform
@@ -45,7 +44,7 @@
 				AdditionalOptions="/Zm1000 "
 				InlineFunctionExpansion="1"
 				AdditionalIncludeDirectories="../../../../include,../../../../src/mesa,../../../../src/mesa/glapi,../../../../src/mesa/main,../../../../src/mesa/shader,../../../../src/mesa/shader/slang,../../../../src/mesa/shader/grammar"
-				PreprocessorDefinitions="NDEBUG,WIN32,_LIB,_DLL,BUILD_GL32,MESA_MINWARN"
+				PreprocessorDefinitions="_CRT_SECURE_NO_DEPRECATE;NDEBUG;WIN32;_LIB;_DLL;BUILD_GL32;MESA_MINWARN"
 				StringPooling="true"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
@@ -120,7 +119,7 @@
 				AdditionalOptions="/Zm1000 "
 				Optimization="0"
 				AdditionalIncludeDirectories="../../../../include,../../../../src/mesa,../../../../src/mesa/glapi,../../../../src/mesa/main,../../../../src/mesa/shader,../../../../src/mesa/shader/slang,../../../../src/mesa/shader/grammar"
-				PreprocessorDefinitions="_DEBUG,WIN32,_LIB,_DLL,BUILD_GL32,MESA_MINWARN"
+				PreprocessorDefinitions="_CRT_SECURE_NO_DEPRECATE;_DEBUG;WIN32;_LIB;_DLL;BUILD_GL32;MESA_MINWARN"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
 				PrecompiledHeaderFile=".\Debug/mesa.pch"
@@ -328,42 +327,10 @@
 			<File
 				RelativePath="..\..\..\..\src\mesa\glapi\glapi.c"
 				>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						PreprocessorDefinitions="_CRT_SECURE_NO_DEPRECATE"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						PreprocessorDefinitions="_CRT_SECURE_NO_DEPRECATE"
-					/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\glapi\glapi_getproc.c"
 				>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						PreprocessorDefinitions="_CRT_SECURE_NO_DEPRECATE"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						PreprocessorDefinitions="_CRT_SECURE_NO_DEPRECATE"
-					/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\glapi\glthread.c"
@@ -398,7 +365,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-						PreprocessorDefinitions="_CRT_SECURE_NO_DEPRECATE"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -407,7 +373,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-						PreprocessorDefinitions="_CRT_SECURE_NO_DEPRECATE"
 					/>
 				</FileConfiguration>
 			</File>
@@ -434,22 +399,6 @@
 			<File
 				RelativePath="..\..\..\..\src\mesa\main\imports.c"
 				>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						PreprocessorDefinitions="_CRT_SECURE_NO_DEPRECATE"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						PreprocessorDefinitions="_CRT_SECURE_NO_DEPRECATE"
-					/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\main\light.c"
@@ -562,22 +511,6 @@
 			<File
 				RelativePath="..\..\..\..\src\mesa\shader\prog_print.c"
 				>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						PreprocessorDefinitions="_CRT_SECURE_NO_DEPRECATE"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						PreprocessorDefinitions="_CRT_SECURE_NO_DEPRECATE"
-					/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\shader\prog_statevars.c"
@@ -750,22 +683,6 @@
 			<File
 				RelativePath="..\..\..\..\src\mesa\shader\slang\slang_codegen.c"
 				>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						PreprocessorDefinitions="_CRT_SECURE_NO_DEPRECATE"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						PreprocessorDefinitions="_CRT_SECURE_NO_DEPRECATE"
-					/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\shader\slang\slang_compile.c"
@@ -790,42 +707,10 @@
 			<File
 				RelativePath="..\..\..\..\src\mesa\shader\slang\slang_emit.c"
 				>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						PreprocessorDefinitions="_CRT_SECURE_NO_DEPRECATE"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						PreprocessorDefinitions="_CRT_SECURE_NO_DEPRECATE"
-					/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\shader\slang\slang_ir.c"
 				>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						PreprocessorDefinitions="_CRT_SECURE_NO_DEPRECATE"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						PreprocessorDefinitions="_CRT_SECURE_NO_DEPRECATE"
-					/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\shader\slang\slang_label.c"
@@ -850,22 +735,6 @@
 			<File
 				RelativePath="..\..\..\..\src\mesa\shader\slang\slang_print.c"
 				>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						PreprocessorDefinitions="_CRT_SECURE_NO_DEPRECATE"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						PreprocessorDefinitions="_CRT_SECURE_NO_DEPRECATE"
-					/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\shader\slang\slang_simplify.c"

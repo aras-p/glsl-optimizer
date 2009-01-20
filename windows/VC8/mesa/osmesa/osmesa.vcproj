@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8,00"
+	Version="8.00"
 	Name="osmesa"
 	ProjectGUID="{8D6CD423-383B-49E7-81BC-D20C70B07DF5}"
-	RootNamespace="osmesa"
 	>
 	<Platforms>
 		<Platform
@@ -48,9 +47,9 @@
 				Name="VCCLCompilerTool"
 				InlineFunctionExpansion="1"
 				AdditionalIncludeDirectories="../../../../include,../../../../src/mesa,../../../../src/mesa/main,../../../../src/mesa/glapi,../../../../src/mesa/swrast,../../../../src/mesa/shader"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;OSMESA_EXPORTS;BUILD_GL32"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;OSMESA_EXPORTS"
 				StringPooling="true"
-				RuntimeLibrary="2"
+				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
 				PrecompiledHeaderFile=".\Release/osmesa.pch"
 				AssemblerListingLocation=".\Release/"
@@ -74,10 +73,12 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
+				AdditionalDependencies="opengl32.lib winmm.lib msvcrt.lib odbc32.lib odbccp32.lib"
 				OutputFile="Release/OSMESA32.DLL"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="../gdi/Release"
+				IgnoreAllDefaultLibraries="true"
 				ModuleDefinitionFile="..\..\..\..\src\mesa\drivers\osmesa\osmesa.def"
 				ProgramDatabaseFile=".\Release/OSMESA32.pdb"
 				ImportLibrary=".\Release/OSMESA32.lib"
@@ -142,9 +143,9 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="../../../../include,../../../../src/mesa,../../../../src/mesa/main,../../../../src/mesa/glapi,../../../../src/mesa/swrast,../../../../src/mesa/shader"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;OSMESA_EXPORTS;BUILD_GL32"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;OSMESA_EXPORTS"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="3"
+				RuntimeLibrary="1"
 				PrecompiledHeaderFile=".\Debug/osmesa.pch"
 				AssemblerListingLocation=".\Debug/"
 				ObjectFile=".\Debug/"
@@ -168,10 +169,12 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
+				AdditionalDependencies="opengl32.lib winmm.lib msvcrtd.lib odbc32.lib odbccp32.lib"
 				OutputFile="Debug/OSMESA32.DLL"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="../gdi/Debug"
+				IgnoreAllDefaultLibraries="true"
 				ModuleDefinitionFile="..\..\..\..\src\mesa\drivers\osmesa\osmesa.def"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile=".\Debug/OSMESA32.pdb"
@@ -224,10 +227,6 @@
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl"
 			>
-			<File
-				RelativePath="..\..\..\..\include\gl\osmesa.h"
-				>
-			</File>
 		</Filter>
 		<Filter
 			Name="Resource Files"
