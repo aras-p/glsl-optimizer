@@ -2064,6 +2064,7 @@ clamp_rect_coord_linear(GLenum wrapMode, GLfloat coord, GLint max,
    default:
       _mesa_problem(NULL, "bad wrapMode in clamp_rect_coord_linear");
       i0 = i1 = 0;
+      fcol = 0.0F;
    }
    *i0out = i0;
    *i1out = i1;
@@ -2872,6 +2873,8 @@ sample_depth_texture( GLcontext *ctx,
                                          texcoords[i][1]);
             slice = clamp_rect_coord_nearest(tObj->WrapR, texcoords[i][2], depth);
             break;
+         default:
+            col = row = slice = 0;
          }
 
          if (col >= 0 && row >= 0 && col < width && row < height && 
@@ -2982,6 +2985,8 @@ sample_depth_texture( GLcontext *ctx,
                                    texcoords[i][1], &j0, &j1, &b);
             slice = clamp_rect_coord_nearest(tObj->WrapR, texcoords[i][2], depth);
             break;
+         default:
+            slice = 0;
          }
 
          useBorderTexel = 0;
