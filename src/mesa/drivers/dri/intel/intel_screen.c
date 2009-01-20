@@ -134,7 +134,7 @@ intelPrintDRIInfo(intelScreenPrivate * intelScreen,
 
 
 static void
-intelPrintSAREA(const struct drm_i915_sarea * sarea)
+intelPrintSAREA(const drm_i915_sarea_t * sarea)
 {
    fprintf(stderr, "SAREA: sarea width %d  height %d\n", sarea->width,
            sarea->height);
@@ -161,7 +161,7 @@ intelPrintSAREA(const struct drm_i915_sarea * sarea)
  */
 void
 intelUpdateScreenFromSAREA(intelScreenPrivate * intelScreen,
-                           struct drm_i915_sarea * sarea)
+                           drm_i915_sarea_t * sarea)
 {
    intelScreen->width = sarea->width;
    intelScreen->height = sarea->height;
@@ -244,7 +244,7 @@ static GLboolean intelInitDriver(__DRIscreenPrivate *sPriv)
 {
    intelScreenPrivate *intelScreen;
    I830DRIPtr gDRIPriv = (I830DRIPtr) sPriv->pDevPriv;
-   struct drm_i915_sarea *sarea;
+   drm_i915_sarea_t *sarea;
 
    if (sPriv->devPrivSize != sizeof(I830DRIRec)) {
       fprintf(stderr,
@@ -264,7 +264,7 @@ static GLboolean intelInitDriver(__DRIscreenPrivate *sPriv)
 
    intelScreen->driScrnPriv = sPriv;
    sPriv->private = (void *) intelScreen;
-   sarea = (struct drm_i915_sarea *)
+   sarea = (drm_i915_sarea_t *)
       (((GLubyte *) sPriv->pSAREA) + gDRIPriv->sarea_priv_offset);
    intelScreen->sarea = sarea;
 
