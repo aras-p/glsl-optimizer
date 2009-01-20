@@ -95,18 +95,21 @@ static float r300_get_paramf(struct pipe_screen* pscreen, int param)
     switch (param) {
         case PIPE_CAP_MAX_LINE_WIDTH:
         case PIPE_CAP_MAX_LINE_WIDTH_AA:
-            /* XXX look this up, lazy ass! */
-            return 0.0;
+            /* XXX this is the biggest thing that will fit in that register.
+            * Perhaps the actual rendering limits are less? */
+            return 10922.0f;
         case PIPE_CAP_MAX_POINT_WIDTH:
         case PIPE_CAP_MAX_POINT_WIDTH_AA:
-            /* XXX see above */
-            return 255.0;
+            /* XXX this is the biggest thing that will fit in that register.
+             * Perhaps the actual rendering limits are less? */
+            return 10922.0f;
         case PIPE_CAP_MAX_TEXTURE_ANISOTROPY:
-            return 16.0;
+            return 16.0f;
         case PIPE_CAP_MAX_TEXTURE_LOD_BIAS:
-            return 16.0;
+            return 16.0f;
         default:
-            return 0.0;
+            /* XXX implementation error? */
+            return 0.0f;
     }
 }
 
