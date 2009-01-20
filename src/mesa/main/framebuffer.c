@@ -543,6 +543,7 @@ _mesa_update_framebuffer_visual(struct gl_framebuffer *fb)
             fb->Visual.rgbBits = fb->Visual.redBits
                + fb->Visual.greenBits + fb->Visual.blueBits;
             fb->Visual.floatMode = GL_FALSE;
+            fb->Visual.samples = rb->NumSamples;
             break;
          }
          else if (rb->_BaseFormat == GL_COLOR_INDEX) {
