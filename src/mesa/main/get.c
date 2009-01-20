@@ -1905,6 +1905,10 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          CHECK_EXT1(ARB_shader_objects, "GetBooleanv");
          params[0] = INT_TO_BOOLEAN(ctx->Shader.CurrentProgram ? ctx->Shader.CurrentProgram->Name : 0);
          break;
+      case GL_MAX_SAMPLES:
+         CHECK_EXT1(ARB_framebuffer_object, "GetBooleanv");
+         params[0] = INT_TO_BOOLEAN(ctx->Const.MaxSamples);
+         break;
       default:
          _mesa_error(ctx, GL_INVALID_ENUM, "glGetBooleanv(pname=0x%x)", pname);
    }
@@ -3753,6 +3757,10 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          CHECK_EXT1(ARB_shader_objects, "GetFloatv");
          params[0] = (GLfloat)(ctx->Shader.CurrentProgram ? ctx->Shader.CurrentProgram->Name : 0);
          break;
+      case GL_MAX_SAMPLES:
+         CHECK_EXT1(ARB_framebuffer_object, "GetFloatv");
+         params[0] = (GLfloat)(ctx->Const.MaxSamples);
+         break;
       default:
          _mesa_error(ctx, GL_INVALID_ENUM, "glGetFloatv(pname=0x%x)", pname);
    }
@@ -5600,6 +5608,10 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
       case GL_CURRENT_PROGRAM:
          CHECK_EXT1(ARB_shader_objects, "GetIntegerv");
          params[0] = ctx->Shader.CurrentProgram ? ctx->Shader.CurrentProgram->Name : 0;
+         break;
+      case GL_MAX_SAMPLES:
+         CHECK_EXT1(ARB_framebuffer_object, "GetIntegerv");
+         params[0] = ctx->Const.MaxSamples;
          break;
       default:
          _mesa_error(ctx, GL_INVALID_ENUM, "glGetIntegerv(pname=0x%x)", pname);

@@ -1009,7 +1009,11 @@ StateVars = [
 	# close enough for now.
 	( "GL_CURRENT_PROGRAM", GLint,
 	  ["ctx->Shader.CurrentProgram ? ctx->Shader.CurrentProgram->Name : 0"],
-	  "", ["ARB_shader_objects"] )
+	  "", ["ARB_shader_objects"] ),
+
+	# GL_ARB_framebuffer_object
+	( "GL_MAX_SAMPLES", GLint, ["ctx->Const.MaxSamples"], "",
+	  ["ARB_framebuffer_object"] )
 ]
 
 
