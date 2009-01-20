@@ -574,6 +574,9 @@ _mesa_test_framebuffer_completeness(GLcontext *ctx, struct gl_framebuffer *fb)
    /* ... but the driver may say the FB is incomplete: */
    if (ctx->Driver.ValidateFramebuffer) {
       ctx->Driver.ValidateFramebuffer(ctx, fb);
+      if (fb->_Status != GL_FRAMEBUFFER_COMPLETE_EXT) {
+         fbo_incomplete("driver marked FBO as incomplete", -1);
+      }
    }
 
    if (fb->_Status == GL_FRAMEBUFFER_COMPLETE_EXT) {
