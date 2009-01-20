@@ -27,8 +27,9 @@ static const char* r300_get_vendor(struct pipe_screen* pscreen) {
 }
 
 static const char* r300_get_name(struct pipe_screen* pscreen) {
-    /* XXX lazy */
-    return "unknown";
+    struct r300_screen* r300screen = r300_screen(pscreen);
+
+    return chip_families[r300screen->caps->family];
 }
 
 static int r300_get_param(struct pipe_screen* pscreen, int param) {

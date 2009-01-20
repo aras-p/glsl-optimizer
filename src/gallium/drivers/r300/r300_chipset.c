@@ -28,7 +28,10 @@
 /* Parse a PCI ID and fill an r300_capabilities struct with information. */
 void r300_parse_chipset(uint32_t pci_id, struct r300_capabilities* caps)
 {
+    /* Reasonable defaults */
     caps->pci_id = pci_id;
+    caps->has_tcl = TRUE;
+    caps->is_r500 = FALSE;
 
     /* Note: These are not ordered by PCI ID. I leave that task to GCC,
      * which will perform the ordering while collating jump tables. Instead,
@@ -37,8 +40,6 @@ void r300_parse_chipset(uint32_t pci_id, struct r300_capabilities* caps)
         case 0x4144:
             caps->family = CHIP_FAMILY_R300;
             caps->num_pipes = 1;
-            caps->has_tcl = TRUE;
-            caps->has_us = FALSE;
             break;
 
         case 0x4145:
@@ -50,8 +51,6 @@ void r300_parse_chipset(uint32_t pci_id, struct r300_capabilities* caps)
         case 0x4E47:
             caps->family = CHIP_FAMILY_R300;
             caps->num_pipes = 2;
-            caps->has_tcl = TRUE;
-            caps->has_us = FALSE;
             break;
 
         case 0x4150:
@@ -69,8 +68,6 @@ void r300_parse_chipset(uint32_t pci_id, struct r300_capabilities* caps)
         case 0x4E56:
             caps->family = CHIP_FAMILY_RV350;
             caps->num_pipes = 1;
-            caps->has_tcl = TRUE;
-            caps->has_us = FALSE;
             break;
 
         case 0x4148:
@@ -82,15 +79,11 @@ void r300_parse_chipset(uint32_t pci_id, struct r300_capabilities* caps)
         case 0x4E4B:
             caps->family = CHIP_FAMILY_R350;
             caps->num_pipes = 2;
-            caps->has_tcl = TRUE;
-            caps->has_us = FALSE;
             break;
 
         case 0x4E4A:
             caps->family = CHIP_FAMILY_R360;
             caps->num_pipes = 2;
-            caps->has_tcl = TRUE;
-            caps->has_us = FALSE;
             break;
 
         case 0x5460:
@@ -103,8 +96,6 @@ void r300_parse_chipset(uint32_t pci_id, struct r300_capabilities* caps)
         case 0x5B65:
             caps->family = CHIP_FAMILY_RV370;
             caps->num_pipes = 1;
-            caps->has_tcl = TRUE;
-            caps->has_us = FALSE;
             break;
 
         case 0x3150:
@@ -114,8 +105,6 @@ void r300_parse_chipset(uint32_t pci_id, struct r300_capabilities* caps)
         case 0x3E54:
             caps->family = CHIP_FAMILY_RV380;
             caps->num_pipes = 1;
-            caps->has_tcl = TRUE;
-            caps->has_us = FALSE;
             break;
 
         case 0x4A48:
@@ -130,8 +119,6 @@ void r300_parse_chipset(uint32_t pci_id, struct r300_capabilities* caps)
         case 0x4A54:
             caps->family = CHIP_FAMILY_R420;
             caps->num_pipes = 4;
-            caps->has_tcl = TRUE;
-            caps->has_us = FALSE;
             break;
 
         case 0x5548:
@@ -145,8 +132,6 @@ void r300_parse_chipset(uint32_t pci_id, struct r300_capabilities* caps)
         case 0x5D57:
             caps->family = CHIP_FAMILY_R423;
             caps->num_pipes = 4;
-            caps->has_tcl = TRUE;
-            caps->has_us = FALSE;
             break;
 
         case 0x554C:
@@ -158,8 +143,6 @@ void r300_parse_chipset(uint32_t pci_id, struct r300_capabilities* caps)
         case 0x5D4A:
             caps->family = CHIP_FAMILY_R430;
             caps->num_pipes = 4;
-            caps->has_tcl = TRUE;
-            caps->has_us = FALSE;
             break;
 
         case 0x5D4C:
@@ -170,8 +153,6 @@ void r300_parse_chipset(uint32_t pci_id, struct r300_capabilities* caps)
         case 0x5D52:
             caps->family = CHIP_FAMILY_R480;
             caps->num_pipes = 4;
-            caps->has_tcl = TRUE;
-            caps->has_us = FALSE;
             break;
 
         case 0x4B49:
@@ -180,8 +161,6 @@ void r300_parse_chipset(uint32_t pci_id, struct r300_capabilities* caps)
         case 0x4B4C:
             caps->family = CHIP_FAMILY_R481;
             caps->num_pipes = 4;
-            caps->has_tcl = TRUE;
-            caps->has_us = FALSE;
             break;
 
         case 0x5E4C:
@@ -198,8 +177,6 @@ void r300_parse_chipset(uint32_t pci_id, struct r300_capabilities* caps)
         case 0x5E4D:
             caps->family = CHIP_FAMILY_RV410;
             caps->num_pipes = 1;
-            caps->has_tcl = TRUE;
-            caps->has_us = FALSE;
             break;
 
         case 0x5954:
@@ -207,7 +184,6 @@ void r300_parse_chipset(uint32_t pci_id, struct r300_capabilities* caps)
             caps->family = CHIP_FAMILY_RS480;
             caps->num_pipes = 1; /* CHECK ME */
             caps->has_tcl = FALSE;
-            caps->has_us = FALSE;
             break;
 
         case 0x5974:
@@ -215,7 +191,6 @@ void r300_parse_chipset(uint32_t pci_id, struct r300_capabilities* caps)
             caps->family = CHIP_FAMILY_RS482;
             caps->num_pipes = 1; /* CHECK ME */
             caps->has_tcl = FALSE;
-            caps->has_us = FALSE;
             break;
 
         case 0x5A41:
@@ -223,7 +198,6 @@ void r300_parse_chipset(uint32_t pci_id, struct r300_capabilities* caps)
             caps->family = CHIP_FAMILY_RS400;
             caps->num_pipes = 1; /* CHECK ME */
             caps->has_tcl = FALSE;
-            caps->has_us = FALSE;
             break;
 
         case 0x5A61:
@@ -231,7 +205,6 @@ void r300_parse_chipset(uint32_t pci_id, struct r300_capabilities* caps)
             caps->family = CHIP_FAMILY_RC410;
             caps->num_pipes = 1; /* CHECK ME */
             caps->has_tcl = FALSE;
-            caps->has_us = FALSE;
             break;
 
         case 0x791E:
@@ -239,7 +212,6 @@ void r300_parse_chipset(uint32_t pci_id, struct r300_capabilities* caps)
             caps->family = CHIP_FAMILY_RS690;
             caps->num_pipes = 1; /* CHECK ME */
             caps->has_tcl = FALSE;
-            caps->has_us = FALSE; /* CHECK ME */
             break;
 
         case 0x796C:
@@ -249,7 +221,6 @@ void r300_parse_chipset(uint32_t pci_id, struct r300_capabilities* caps)
             caps->family = CHIP_FAMILY_RS740;
             caps->num_pipes = 1; /* CHECK ME */
             caps->has_tcl = FALSE;
-            caps->has_us = FALSE; /* CHECK ME */
             break;
 
         case 0x7100:
@@ -268,8 +239,7 @@ void r300_parse_chipset(uint32_t pci_id, struct r300_capabilities* caps)
         case 0x710F:
             caps->family = CHIP_FAMILY_R520;
             caps->num_pipes = 4;
-            caps->has_tcl = TRUE;
-            caps->has_us = TRUE;
+            caps->is_r500 = TRUE;
             break;
 
         case 0x7140:
@@ -312,8 +282,7 @@ void r300_parse_chipset(uint32_t pci_id, struct r300_capabilities* caps)
         case 0x7211:
             caps->family = CHIP_FAMILY_RV515;
             caps->num_pipes = 1;
-            caps->has_tcl = TRUE;
-            caps->has_us = TRUE;
+            caps->is_r500 = TRUE;
             break;
 
         case 0x71C0:
@@ -334,8 +303,7 @@ void r300_parse_chipset(uint32_t pci_id, struct r300_capabilities* caps)
         case 0x71DE:
             caps->family = CHIP_FAMILY_RV530;
             caps->num_pipes = 1;
-            caps->has_tcl = TRUE;
-            caps->has_us = TRUE;
+            caps->is_r500 = TRUE;
             break;
 
         case 0x7240:
@@ -355,15 +323,13 @@ void r300_parse_chipset(uint32_t pci_id, struct r300_capabilities* caps)
         case 0x7284:
             caps->family = CHIP_FAMILY_R580;
             caps->num_pipes = 4;
-            caps->has_tcl = TRUE;
-            caps->has_us = TRUE;
+            caps->is_r500 = TRUE;
             break;
 
         case 0x7280:
             caps->family = CHIP_FAMILY_RV570;
             caps->num_pipes = 4;
-            caps->has_tcl = TRUE;
-            caps->has_us = TRUE;
+            caps->is_r500 = TRUE;
             break;
 
         case 0x7281:
@@ -379,13 +345,11 @@ void r300_parse_chipset(uint32_t pci_id, struct r300_capabilities* caps)
         case 0x7297:
             caps->family = CHIP_FAMILY_RV560;
             caps->num_pipes = 4;
-            caps->has_tcl = TRUE;
-            caps->has_us = TRUE;
+            caps->is_r500 = TRUE;
             break;
 
         default:
             /* XXX not an r300?! */
-            assert(0);
             break;
     }
 }

@@ -36,11 +36,14 @@ struct r300_capabilities {
     int num_pipes;
     /* Whether or not TCL is physically present */
     boolean has_tcl;
-    /* Whether or not Universal Shaders (US) are used for fragment shaders */
-    boolean has_us;
+    /* Whether or not this is an RV515 or newer; R500s have many features:
+     * - Extra bit on texture sizes
+     * - Blend color is split across two registers
+     * - Universal Shader (US) block used for fragment shaders */
+    boolean is_r500;
 };
 
-/* Enumeration for legibility and also telling which card we're running on. */
+/* Enumerations for legibility and telling which card we're running on. */
 enum {
     CHIP_FAMILY_R300 = 0,
     CHIP_FAMILY_R350,

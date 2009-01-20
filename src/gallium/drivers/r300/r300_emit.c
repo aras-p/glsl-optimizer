@@ -48,7 +48,7 @@ static void r300_emit_dirty_state(struct r300_context* r300)
 
     if (r300->dirty_state & R300_NEW_BLEND_COLOR) {
         struct r300_blend_color_state* blend_color = r300->blend_color_state;
-        if (FALSE /*XXX*/) {
+        if (r300screen->caps->is_r500) {
             /* XXX next two are contiguous regs */
             OUT_CS_REG(R500_RB3D_CONSTANT_COLOR_AR,
                        blend_color->blend_color_red_alpha);
@@ -69,7 +69,7 @@ static void r300_emit_dirty_state(struct r300_context* r300)
         OUT_CS_REG(R300_ZB_ZSTENCILCNTL, dsa->z_stencil_control);
         OUT_CS_REG(R300_ZB_STENCILREFMASK, dsa->stencil_ref_mask);
         OUT_CS_REG(R300_ZB_ZTOP, dsa->z_buffer_top);
-        if (FALSE /*XXX*/) {
+        if (r300screen->caps->is_r500) {
             OUT_CS_REG(R500_ZB_STENCILREFMASK_BF, dsa->stencil_ref_bf);
         }
     }
