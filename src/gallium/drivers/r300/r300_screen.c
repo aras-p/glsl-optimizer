@@ -22,17 +22,20 @@
 
 #include "r300_screen.h"
 
-static const char* r300_get_vendor(struct pipe_screen* pscreen) {
+static const char* r300_get_vendor(struct pipe_screen* pscreen)
+{
     return "X.Org R300 Project";
 }
 
-static const char* r300_get_name(struct pipe_screen* pscreen) {
+static const char* r300_get_name(struct pipe_screen* pscreen)
+{
     struct r300_screen* r300screen = r300_screen(pscreen);
 
     return chip_families[r300screen->caps->family];
 }
 
-static int r300_get_param(struct pipe_screen* pscreen, int param) {
+static int r300_get_param(struct pipe_screen* pscreen, int param)
+{
     struct r300_screen* r300screen = r300_screen(pscreen);
 
     switch (param) {
@@ -87,7 +90,8 @@ static int r300_get_param(struct pipe_screen* pscreen, int param) {
     }
 }
 
-static float r300_get_paramf(struct pipe_screen* pscreen, int param) {
+static float r300_get_paramf(struct pipe_screen* pscreen, int param)
+{
     switch (param) {
         case PIPE_CAP_MAX_LINE_WIDTH:
         case PIPE_CAP_MAX_LINE_WIDTH_AA:
@@ -134,7 +138,8 @@ static void r300_surface_unmap(struct pipe_screen* screen,
     pipe_buffer_unmap(screen, surface->buffer);
 }
 
-static void r300_destroy_screen(struct pipe_screen* pscreen) {
+static void r300_destroy_screen(struct pipe_screen* pscreen)
+{
     struct r300_screen* r300screen = r300_screen(pscreen);
 
     FREE(r300screen->caps);
