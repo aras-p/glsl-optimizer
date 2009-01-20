@@ -71,12 +71,7 @@ static int r300_get_param(struct pipe_screen* pscreen, int param) {
             return 0;
         case PIPE_CAP_MAX_TEXTURE_2D_LEVELS:
             /* 12 == 2048x2048 */
-            if (r300screen->is_r500) {
-                /* R500 can do 4096x4096 */
-                return 13;
-            } else {
-                return 12;
-            }
+            return 12;
         case PIPE_CAP_MAX_TEXTURE_3D_LEVELS:
             /* XXX educated guess */
             return 8;
@@ -142,21 +137,17 @@ static void r300_destroy_screen(struct pipe_screen* pscreen) {
     FREE(pscreen);
 }
 
-struct pipe_screen* r300_create_screen(struct pipe_winsys* winsys, uint pci_id) {
+struct pipe_screen* r300_create_screen(struct pipe_winsys* winsys, uint32_t pci_id)
+{
     struct r300_screen* r300screen = CALLOC_STRUCT(r300_screen);
+    struct r300_capabilities* caps = CALLOC_STRUCT(r300_capabilities);
 
-    if (!r300screen)
+    if (!r300screen || !caps)
         return NULL;
 
-    /* XXX break this into its own function?
-    switch (pci_id) {
-        default:
-            debug_printf("%s: unknown PCI ID 0x%x, cannot create screen!\n",
-                         __FUNCTION__, pci_id);
-            return NULL;
-    } */
+    r300_parse_chipset(pci_id, caps);
 
-    r300screen->pci_id = pci_id;
+    r300screen->caps = caps;
     r300screen->screen.winsys = winsys;
     r300screen->screen.destroy = r300_destroy_screen;
     r300screen->screen.get_name = r300_get_name;

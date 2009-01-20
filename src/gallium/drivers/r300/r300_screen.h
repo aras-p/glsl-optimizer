@@ -27,13 +27,14 @@
 #include "pipe/p_screen.h"
 #include "util/u_memory.h"
 
+#include "r300_chipset.h"
+
 struct r300_screen {
     /* Parent class */
     struct pipe_screen screen;
 
-    boolean is_r400;
-    boolean is_r500;
-    int pci_id;
+    /* Chipset capabilities */
+    struct r300_capabilities* caps;
 };
 
 /* Convenience cast wrapper. */

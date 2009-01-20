@@ -1,0 +1,100 @@
+/*
+ * Copyright 2008 Corbin Simpson <MostAwesomeDude@gmail.com>
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * on the rights to use, copy, modify, merge, publish, distribute, sub
+ * license, and/or sell copies of the Software, and to permit persons to whom
+ * the Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice (including the next
+ * paragraph) shall be included in all copies or substantial portions of the
+ * Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHOR(S) AND/OR THEIR SUPPLIERS BE LIABLE FOR ANY CLAIM,
+ * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+ * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+ * USE OR OTHER DEALINGS IN THE SOFTWARE. */
+
+#ifndef R300_CHIPSET_H
+#define R300_CHIPSET_H
+
+#include "pipe/p_compiler.h"
+
+/* Structure containing all the possible information about a specific Radeon
+ * in the R3xx, R4xx, and R5xx families. */
+struct r300_capabilities {
+    /* PCI ID */
+    uint32_t pci_id;
+    /* Chipset family */
+    int family;
+    /* The number of Graphics Backend (GB) pipes */
+    int num_pipes;
+    /* Whether or not TCL is physically present */
+    boolean has_tcl;
+    /* Whether or not Universal Shaders (US) are used for fragment shaders */
+    boolean has_us;
+};
+
+/* Enumeration for legibility and also telling which card we're running on. */
+enum {
+    CHIP_FAMILY_R300 = 0,
+    CHIP_FAMILY_R350,
+    CHIP_FAMILY_R360,
+    CHIP_FAMILY_RV350,
+    CHIP_FAMILY_RV370,
+    CHIP_FAMILY_RV380,
+    CHIP_FAMILY_R420,
+    CHIP_FAMILY_R423,
+    CHIP_FAMILY_R430,
+    CHIP_FAMILY_R480,
+    CHIP_FAMILY_R481,
+    CHIP_FAMILY_RV410,
+    CHIP_FAMILY_RS400,
+    CHIP_FAMILY_RC410,
+    CHIP_FAMILY_RS480,
+    CHIP_FAMILY_RS482,
+    CHIP_FAMILY_RS690,
+    CHIP_FAMILY_RS740,
+    CHIP_FAMILY_RV515,
+    CHIP_FAMILY_R520,
+    CHIP_FAMILY_RV530,
+    CHIP_FAMILY_R580,
+    CHIP_FAMILY_RV560,
+    CHIP_FAMILY_RV570
+};
+
+static const char* chip_families[] = {
+    "R300",
+    "R350",
+    "R360",
+    "RV350",
+    "RV370",
+    "RV380",
+    "R420",
+    "R423",
+    "R430",
+    "R480",
+    "R481",
+    "RV410",
+    "RS400",
+    "RC410",
+    "RS480",
+    "RS482",
+    "RS690",
+    "RS740",
+    "RV515",
+    "R520",
+    "RV530",
+    "R580",
+    "RV560",
+    "RV570"
+};
+
+void r300_parse_chipset(uint32_t pci_id, struct r300_capabilities* caps);
+
+#endif /* R300_CHIPSET_H */
