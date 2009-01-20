@@ -247,9 +247,7 @@ intel_be_init_device(struct intel_be_device *dev, int fd, unsigned id)
 	dev->base.buffer_destroy = intel_be_buffer_destroy;
 
 	/* Not used anymore */
-	dev->base.surface_alloc = NULL;
-	dev->base.surface_alloc_storage = NULL;
-	dev->base.surface_release = NULL;
+	dev->base.surface_buffer_create = NULL;
 
 	dev->base.fence_reference = intel_be_fence_refunref;
 	dev->base.fence_signalled = intel_be_fence_signalled;
