@@ -135,7 +135,10 @@ static void r300_surface_unmap(struct pipe_screen* screen,
 }
 
 static void r300_destroy_screen(struct pipe_screen* pscreen) {
-    FREE(pscreen);
+    struct r300_screen* r300screen = r300_screen(pscreen);
+
+    FREE(r300screen->caps);
+    FREE(r300screen);
 }
 
 struct pipe_screen* r300_create_screen(struct pipe_winsys* winsys, uint32_t pci_id)
