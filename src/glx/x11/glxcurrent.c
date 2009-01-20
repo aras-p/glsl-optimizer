@@ -312,13 +312,11 @@ SendMakeCurrentRequest(Display * dpy, CARD8 opcode,
 
 #ifdef GLX_DIRECT_RENDERING
 static __GLXDRIdrawable *
-FetchDRIDrawable(Display * dpy,
-                 GLXDrawable glxDrawable, GLXContext gc, Bool pre13)
+FetchDRIDrawable(Display * dpy, GLXDrawable glxDrawable, GLXContext gc)
 {
    __GLXdisplayPrivate *const priv = __glXInitialize(dpy);
    __GLXDRIdrawable *pdraw;
    __GLXscreenConfigs *psc;
-   XID drawable;
 
    if (priv == NULL)
       return NULL;
@@ -330,15 +328,7 @@ FetchDRIDrawable(Display * dpy,
    if (__glxHashLookup(psc->drawHash, glxDrawable, (void *) &pdraw) == 0)
       return pdraw;
 
-   /* If this is glXMakeCurrent (pre GLX 1.3) we allow creating the
-    * GLX drawable on the fly.  Otherwise we pass None as the X
-    * drawable */
-   if (pre13)
-      drawable = glxDrawable;
-   else
-      drawable = None;
-
-   pdraw = psc->driScreen->createDrawable(psc, drawable,
+   pdraw = psc->driScreen->createDrawable(psc, glxDrawable,
                                           glxDrawable, gc->mode);
    if (__glxHashInsert(psc->drawHash, glxDrawable, pdraw)) {
       (*pdraw->destroyDrawable) (pdraw);
@@ -357,7 +347,7 @@ FetchDRIDrawable(Display * dpy,
  */
 static Bool
 MakeContextCurrent(Display * dpy, GLXDrawable draw,
-                   GLXDrawable read, GLXContext gc, Bool pre13)
+                   GLXDrawable read, GLXContext gc)
 {
    xGLXMakeCurrentReply reply;
    const GLXContext oldGC = __glXGetCurrentContext();
@@ -384,8 +374,21 @@ MakeContextCurrent(Display * dpy, GLXDrawable draw,
 #ifdef GLX_DIRECT_RENDERING
    /* Bind the direct rendering context to the drawable */
    if (gc && gc->driContext) {
-      __GLXDRIdrawable *pdraw = FetchDRIDrawable(dpy, draw, gc, pre13);
-      __GLXDRIdrawable *pread = FetchDRIDrawable(dpy, read, gc, pre13);
+      __GLXDRIdrawable *pdraw = FetchDRIDrawable(dpy, draw, gc);
+      __GLXDRIdrawable *pread = FetchDRIDrawable(dpy, read, gc);
+
+      if ((pdraw == NULL) || (pread == NULL)) {
+         xError error;
+
+         error.errorCode = GLXBadDrawable;
+         error.resourceID = (pdraw == NULL) ? draw : read;
+         error.sequenceNumber = dpy->request;
+         error.type = X_Error;
+         error.majorCode = gc->majorOpcode;
+         error.minorCode = X_GLXMakeContextCurrent;
+         _XError(dpy, &error);
+         return False;
+      }
 
       bindReturnValue =
          (gc->driContext->bindContext) (gc->driContext, pdraw, pread);
@@ -516,15 +519,16 @@ MakeContextCurrent(Display * dpy, GLXDrawable draw,
 PUBLIC Bool
 glXMakeCurrent(Display * dpy, GLXDrawable draw, GLXContext gc)
 {
-   return MakeContextCurrent(dpy, draw, draw, gc, True);
+   return MakeContextCurrent(dpy, draw, draw, gc);
 }
 
 PUBLIC
 GLX_ALIAS(Bool, glXMakeCurrentReadSGI,
           (Display * dpy, GLXDrawable d, GLXDrawable r, GLXContext ctx),
-          (dpy, d, r, ctx, False), MakeContextCurrent)
+          (dpy, d, r, ctx), MakeContextCurrent)
 
-     PUBLIC GLX_ALIAS(Bool, glXMakeContextCurrent,
-                      (Display * dpy, GLXDrawable d, GLXDrawable r,
-                       GLXContext ctx), (dpy, d, r, ctx, False),
-                      MakeContextCurrent)
+PUBLIC
+GLX_ALIAS(Bool, glXMakeContextCurrent,
+	  (Display * dpy, GLXDrawable d, GLXDrawable r,
+	   GLXContext ctx), (dpy, d, r, ctx),
+	  MakeContextCurrent)
