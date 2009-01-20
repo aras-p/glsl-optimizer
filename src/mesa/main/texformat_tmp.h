@@ -848,7 +848,7 @@ static void store_texel_argb4444(struct gl_texture_image *texImage,
 {
    const GLubyte *rgba = (const GLubyte *) texel;
    GLushort *dst = TEXEL_ADDR(GLushort, texImage, i, j, k, 1);
-   *dst = PACK_COLOR_4444(rgba[RCOMP], rgba[GCOMP], rgba[BCOMP], rgba[ACOMP]);
+   *dst = PACK_COLOR_4444(rgba[ACOMP], rgba[RCOMP], rgba[GCOMP], rgba[BCOMP]);
 }
 #endif
 
