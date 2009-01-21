@@ -145,13 +145,14 @@ nv30_surface_map(struct pipe_screen *screen, struct pipe_surface *surface,
 			surface->texture->tex_usage = old_tex_usage;
 
 			assert(mt->shadow_tex->tex_usage & NOUVEAU_TEXTURE_USAGE_LINEAR);
-			mt->shadow_surface = screen->get_tex_surface
-			(
-				screen, mt->shadow_tex,
-				surface->face, surface->level, surface->zslice,
-				surface->usage
-			);
 		}
+
+		mt->shadow_surface = screen->get_tex_surface
+		(
+			screen, mt->shadow_tex,
+			surface->face, surface->level, surface->zslice,
+			surface->usage
+		);
 
 		surface_to_map = mt->shadow_surface;
 	}
