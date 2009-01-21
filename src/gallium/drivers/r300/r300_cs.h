@@ -26,6 +26,18 @@
 #include "r300_reg.h"
 #include "r300_winsys.h"
 
+/* Pack a 32-bit float into a dword. */
+static uint32_t pack_float_32(float f)
+{
+    union {
+        float f;
+        uint32_t u;
+    } u;
+
+    u.f = f;
+    return u.u;
+}
+
 /* Yes, I know macros are ugly. However, they are much prettier than the code
  * that they neatly hide away, and don't have the cost of function setup,so
  * we're going to use them. */
@@ -47,7 +59,6 @@
     struct r300_winsys* cs_winsys = context->winsys; \
     struct radeon_cs* cs = cs_winsys->cs
 
-
 #define CHECK_CS(size) \
     cs_winsys->check_cs(cs, (size))
 
@@ -59,9 +70,18 @@
 #define OUT_CS(value) \
     cs_winsys->write_cs_dword(cs, value)
 
+#define OUT_CS_32F(value) \
+    cs_winsys->write_cs_dword(cs, pack_float_32(value))
+
 #define OUT_CS_REG(register, value) do { \
     OUT_CS(CP_PACKET0(register, 0)); \
     OUT_CS(value); } while (0)
+
+/* Note: This expects count to be the number of registers,
+ * not the actual packet0 count! */
+#define OUT_CS_REG_SEQ(register, count) do { \
+    OUT_CS(CP_PACKET0(register, ((count) - 1))); \
+} while (0)
 
 #define OUT_CS_RELOC(bo, offset, rd, wd, flags) do { \
     OUT_CS(offset); \

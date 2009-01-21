@@ -28,7 +28,7 @@
 
 #include "util/u_rect.h"
 
-#include "r300_blit.h"
 #include "r300_context.h"
+#include "r300_cs.h"
 
 #endif /* R300_SURFACE_H */
