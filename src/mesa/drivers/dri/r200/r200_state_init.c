@@ -382,6 +382,29 @@ static void tex_emit(GLcontext *ctx, struct radeon_state_atom *atom)
    END_BATCH();
 }
 
+static void cube_emit(GLcontext *ctx, struct radeon_state_atom *atom)
+{
+   r200ContextPtr r200 = R200_CONTEXT(ctx);
+   BATCH_LOCALS(&r200->radeon);
+   uint32_t dwords = atom->cmd_size;
+   int i = atom->idx;
+   radeonTexObj *t = r200->state.texture.unit[i].texobj;
+   GLuint size;
+
+   BEGIN_BATCH_NO_AUTOSTATE(dwords);
+   OUT_BATCH_TABLE(atom->cmd, 3);
+
+   fprintf(stderr,"total size is %d\n", t->mt->totalsize);
+   if (t && !t->image_override) {
+     size = t->mt->totalsize / 6;
+     OUT_BATCH_RELOC(0, t->mt->bo, size, RADEON_GEM_DOMAIN_VRAM, 0, 0);
+     OUT_BATCH_RELOC(0, t->mt->bo, size * 2, RADEON_GEM_DOMAIN_VRAM, 0, 0);
+     OUT_BATCH_RELOC(0, t->mt->bo, size * 3, RADEON_GEM_DOMAIN_VRAM, 0, 0);
+     OUT_BATCH_RELOC(0, t->mt->bo, size * 4, RADEON_GEM_DOMAIN_VRAM, 0, 0);
+     OUT_BATCH_RELOC(0, t->mt->bo, size * 5, RADEON_GEM_DOMAIN_VRAM, 0, 0);
+   }
+   END_BATCH();
+}
 
 /* Initialize the context's hardware state.
  */
@@ -533,6 +556,8 @@ void r200InitState( r200ContextPtr rmesa )
       ALLOC_STATE( cube[3], tex_cube, CUBE_STATE_SIZE, "CUBE/tex-3", 3 );
       ALLOC_STATE( cube[4], tex_cube, CUBE_STATE_SIZE, "CUBE/tex-4", 4 );
       ALLOC_STATE( cube[5], tex_cube, CUBE_STATE_SIZE, "CUBE/tex-5", 5 );
+      for (i = 0; i < 5; i++)
+	rmesa->hw.cube[i].emit = cube_emit;
    }
    else {
       ALLOC_STATE( cube[0], never, CUBE_STATE_SIZE, "CUBE/tex-0", 0 );
@@ -542,6 +567,7 @@ void r200InitState( r200ContextPtr rmesa )
       ALLOC_STATE( cube[4], never, CUBE_STATE_SIZE, "CUBE/tex-4", 4 );
       ALLOC_STATE( cube[5], never, CUBE_STATE_SIZE, "CUBE/tex-5", 5 );
    }
+
    if (rmesa->radeon.radeonScreen->drmSupportsVertexProgram) {
       ALLOC_STATE( pvs, tcl_vp, PVS_STATE_SIZE, "PVS/pvscntl", 0 );
       ALLOC_STATE( vpi[0], tcl_vp, VPI_STATE_SIZE, "VP/vertexprog-0", 0 );

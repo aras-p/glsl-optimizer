@@ -1581,11 +1581,6 @@ static void setup_hardware_state(r200ContextPtr rmesa, radeonTexObj *t)
    
    t->tile_bits = 0;
    
-   //	if (t->base.Target == GL_TEXTURE_CUBE_MAP)
-   //		t->pp_txformat |= R300_TX_FORMAT_CUBIC_MAP;
-   //	if (t->base.Target == GL_TEXTURE_3D)
-   //		t->pp_txformat |= R300_TX_FORMAT_3D;
-   
    t->pp_txformat_x &= ~(R200_DEPTH_LOG2_MASK | R200_TEXCOORD_MASK);
    if (t->base.Target == GL_TEXTURE_3D) {
       t->pp_txformat_x |= (log2Depth << R200_DEPTH_LOG2_SHIFT);
@@ -1628,8 +1623,6 @@ static void setup_hardware_state(r200ContextPtr rmesa, radeonTexObj *t)
 
    if (t->base.Target == GL_TEXTURE_RECTANGLE_NV) {
       t->pp_txformat |= R200_TXFORMAT_NON_POWER2;
-      //		t->pp_txsize |= R300_TX_SIZE_TXPITCH_EN;
-
    }
    
 }
@@ -1646,8 +1639,6 @@ static GLboolean r200_validate_texture(GLcontext *ctx, struct gl_texture_object 
    /* Configure the hardware registers (more precisely, the cached version
     * of the hardware registers). */
    setup_hardware_state(rmesa, t);
-
-
 
    if (texObj->Target == GL_TEXTURE_RECTANGLE_NV ||
        texObj->Target == GL_TEXTURE_2D)
