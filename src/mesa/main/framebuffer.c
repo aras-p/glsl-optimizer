@@ -793,8 +793,10 @@ update_framebuffer(GLcontext *ctx, struct gl_framebuffer *fb)
       /* This is a user-created framebuffer.
        * Completeness only matters for user-created framebuffers.
        */
-      _mesa_test_framebuffer_completeness(ctx, fb);
-      _mesa_update_framebuffer_visual(fb);
+      if (fb->_Status != GL_FRAMEBUFFER_COMPLETE) {
+         _mesa_test_framebuffer_completeness(ctx, fb);
+         _mesa_update_framebuffer_visual(fb);
+      }
    }
 
    /* Strictly speaking, we don't need to update the draw-state

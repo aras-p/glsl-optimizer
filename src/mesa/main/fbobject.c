@@ -126,6 +126,18 @@ _mesa_lookup_framebuffer(GLcontext *ctx, GLuint id)
 
 
 /**
+ * Mark the given framebuffer as invalid.  This will force the
+ * test for framebuffer completeness to be done before the framebuffer
+ * is used.
+ */
+static void
+invalidate_framebuffer(struct gl_framebuffer *fb)
+{
+   fb->_Status = 0; /* "indeterminate" */
+}
+
+
+/**
  * Given a GL_*_ATTACHMENTn token, return a pointer to the corresponding
  * gl_renderbuffer_attachment object.
  * If \p attachment is GL_DEPTH_STENCIL_ATTACHMENT, return a pointer to
@@ -234,6 +246,8 @@ _mesa_set_texture_attachment(GLcontext *ctx,
    if (att->Texture->Image[att->CubeMapFace][att->TextureLevel]) {
       ctx->Driver.RenderTexture(ctx, fb, att);
    }
+
+   invalidate_framebuffer(fb);
 }
 
 
@@ -281,6 +295,8 @@ _mesa_framebuffer_renderbuffer(GLcontext *ctx, struct gl_framebuffer *fb,
    else {
       _mesa_remove_attachment(ctx, att);
    }
+
+   invalidate_framebuffer(fb);
 
    _glthread_UNLOCK_MUTEX(fb->Mutex);
 }
@@ -520,13 +536,17 @@ _mesa_test_framebuffer_completeness(GLcontext *ctx, struct gl_framebuffer *fb)
          continue;
       }
 
+      if (numSamples < 0) {
+         /* first buffer */
+         numSamples = att->Renderbuffer->NumSamples;
+      }
+
       /* Error-check width, height, format, samples
        */
       if (numImages == 1) {
          /* save format, num samples */
          if (i >= 0) {
             intFormat = f;
-            numSamples = att->Renderbuffer->NumSamples;
          }
       }
       else {
@@ -546,6 +566,7 @@ _mesa_test_framebuffer_completeness(GLcontext *ctx, struct gl_framebuffer *fb)
          }
          if (att->Renderbuffer &&
              att->Renderbuffer->NumSamples != numSamples) {
+            fb->_Status = GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE;
             fbo_incomplete("inconsistant number of samples", i);
             return;
          }            
@@ -700,6 +721,7 @@ detach_renderbuffer(GLcontext *ctx,
          _mesa_remove_attachment(ctx, &fb->Attachment[i]);
       }
    }
+   invalidate_framebuffer(fb);
 }
 
 
@@ -1322,7 +1344,10 @@ _mesa_CheckFramebufferStatusEXT(GLenum target)
 
    FLUSH_VERTICES(ctx, _NEW_BUFFERS);
 
-   _mesa_test_framebuffer_completeness(ctx, buffer);
+   if (buffer->_Status != GL_FRAMEBUFFER_COMPLETE) {
+      _mesa_test_framebuffer_completeness(ctx, buffer);
+   }
+
    return buffer->_Status;
 }
 
@@ -1445,6 +1470,9 @@ framebuffer_texture(GLcontext *ctx, const char *caller, GLenum target,
    else {
       _mesa_remove_attachment(ctx, att);
    }
+
+   invalidate_framebuffer(fb);
+
    _glthread_UNLOCK_MUTEX(fb->Mutex);
 }
 
