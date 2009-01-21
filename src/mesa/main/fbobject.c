@@ -683,6 +683,26 @@ _mesa_BindRenderbufferEXT(GLenum target, GLuint renderbuffer)
 }
 
 
+/**
+ * If the given renderbuffer is anywhere attached to the framebuffer, detach
+ * the renderbuffer.
+ * This is used when a renderbuffer object is deleted.
+ * The spec calls for unbinding.
+ */
+static void
+detach_renderbuffer(GLcontext *ctx,
+                    struct gl_framebuffer *fb,
+                    struct gl_renderbuffer *rb)
+{
+   GLuint i;
+   for (i = 0; i < BUFFER_COUNT; i++) {
+      if (fb->Attachment[i].Renderbuffer == rb) {
+         _mesa_remove_attachment(ctx, &fb->Attachment[i]);
+      }
+   }
+}
+
+
 void GLAPIENTRY
 _mesa_DeleteRenderbuffersEXT(GLsizei n, const GLuint *renderbuffers)
 {
@@ -702,6 +722,13 @@ _mesa_DeleteRenderbuffersEXT(GLsizei n, const GLuint *renderbuffers)
                /* bind default */
                ASSERT(rb->RefCount >= 2);
                _mesa_BindRenderbufferEXT(GL_RENDERBUFFER_EXT, 0);
+            }
+
+            if (ctx->DrawBuffer->Name) {
+               detach_renderbuffer(ctx, ctx->DrawBuffer, rb);
+            }
+            if (ctx->ReadBuffer->Name && ctx->ReadBuffer != ctx->DrawBuffer) {
+               detach_renderbuffer(ctx, ctx->ReadBuffer, rb);
             }
 
 	    /* Remove from hash table immediately, to free the ID.
@@ -1201,7 +1228,12 @@ _mesa_DeleteFramebuffersEXT(GLsizei n, const GLuint *framebuffers)
             if (fb == ctx->DrawBuffer) {
                /* bind default */
                ASSERT(fb->RefCount >= 2);
-               _mesa_BindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
+               _mesa_BindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT, 0);
+            }
+            if (fb == ctx->ReadBuffer) {
+               /* bind default */
+               ASSERT(fb->RefCount >= 2);
+               _mesa_BindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT, 0);
             }
 
 	    /* remove from hash table immediately, to free the ID */
