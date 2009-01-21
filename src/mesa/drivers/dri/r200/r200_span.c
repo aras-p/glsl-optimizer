@@ -52,21 +52,18 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  * information.
  */
 #define LOCAL_VARS						\
-   driRenderbuffer *drb = (driRenderbuffer *) rb;		\
-   const __DRIdrawablePrivate *dPriv = drb->dPriv;		\
+   struct radeon_renderbuffer *rrb = (void *) rb;		\
+   const __DRIdrawablePrivate *dPriv = rrb->dPriv;		\
    const GLuint bottom = dPriv->h - 1;				\
-   GLubyte *buf = (GLubyte *) drb->flippedData			\
-      + (dPriv->y * drb->flippedPitch + dPriv->x) * drb->cpp;	\
    GLuint p;							\
    (void) p;
 
 #define LOCAL_DEPTH_VARS				\
-   driRenderbuffer *drb = (driRenderbuffer *) rb;	\
-   const __DRIdrawablePrivate *dPriv = drb->dPriv;	\
+   struct radeon_renderbuffer *rrb = (void *) rb;		\
+   const __DRIdrawablePrivate *dPriv = rrb->dPriv;	\
    const GLuint bottom = dPriv->h - 1;			\
    GLuint xo = dPriv->x;				\
-   GLuint yo = dPriv->y;				\
-   GLubyte *buf = (GLubyte *) drb->Base.Data;
+   GLuint yo = dPriv->y;
 
 #define LOCAL_STENCIL_VARS LOCAL_DEPTH_VARS
 
@@ -89,7 +86,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #define TAG(x)    radeon##x##_RGB565
 #define TAG2(x,y) radeon##x##_RGB565##y
-#define GET_PTR(X,Y) (buf + ((Y) * drb->flippedPitch + (X)) * 2)
+#define GET_PTR(X,Y) radeon_ptr16(rrb, (X), (Y))
 #include "spantmp2.h"
 
 /* 32 bit, ARGB8888 color spanline and pixel functions
@@ -99,7 +96,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #define TAG(x)    radeon##x##_ARGB8888
 #define TAG2(x,y) radeon##x##_ARGB8888##y
-#define GET_PTR(X,Y) (buf + ((Y) * drb->flippedPitch + (X)) * 4)
+#define GET_PTR(X,Y) radeon_ptr32(rrb, (X), (Y))
 #include "spantmp2.h"
 
 
@@ -116,70 +113,15 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  * are set up correctly. It is not quite enough to get it working with hyperz too...
  */
 
-/* extract bit 'b' of x, result is zero or one */
-#define BIT(x,b) ((x & (1<<b))>>b)
-
-static GLuint
-r200_mba_z32( driRenderbuffer *drb, GLint x, GLint y )
-{
-   GLuint pitch = drb->pitch;
-   if (drb->depthHasSurface) {
-      return 4 * (x + y * pitch);
-   }
-   else {
-      GLuint b = ((y & 0x7FF) >> 4) * ((pitch & 0xFFF) >> 5) + ((x & 0x7FF) >> 5);
-      GLuint a = 
-         (BIT(x,0) << 2) |
-         (BIT(y,0) << 3) |
-         (BIT(x,1) << 4) |
-         (BIT(y,1) << 5) |
-         (BIT(x,3) << 6) |
-         (BIT(x,4) << 7) |
-         (BIT(x,2) << 8) |
-         (BIT(y,2) << 9) |
-         (BIT(y,3) << 10) |
-         (((pitch & 0x20) ? (b & 0x01) : ((b & 0x01) ^ (BIT(y,4)))) << 11) |
-         ((b >> 1) << 12);
-      return a;
-   }
-}
-
-static GLuint
-r200_mba_z16( driRenderbuffer *drb, GLint x, GLint y )
-{
-   GLuint pitch = drb->pitch;
-   if (drb->depthHasSurface) {
-      return 2 * (x + y * pitch);
-   }
-   else {
-      GLuint b = ((y & 0x7FF) >> 4) * ((pitch & 0xFFF) >> 6) + ((x & 0x7FF) >> 6);
-      GLuint a = 
-         (BIT(x,0) << 1) |
-         (BIT(y,0) << 2) |
-         (BIT(x,1) << 3) |
-         (BIT(y,1) << 4) |
-         (BIT(x,2) << 5) |
-         (BIT(x,4) << 6) |
-         (BIT(x,5) << 7) |
-         (BIT(x,3) << 8) |
-         (BIT(y,2) << 9) |
-         (BIT(y,3) << 10) |
-         (((pitch & 0x40) ? (b & 0x01) : ((b & 0x01) ^ (BIT(y,4)))) << 11) |
-         ((b >> 1) << 12);
-      return a;
-   }
-}
-
-
 /* 16-bit depth buffer functions
  */
 #define VALUE_TYPE GLushort
 
 #define WRITE_DEPTH( _x, _y, d )					\
-   *(GLushort *)(buf + r200_mba_z16( drb, _x + xo, _y + yo )) = d;
+   *(GLushort *)radeon_ptr(rrb, _x + xo, _y + yo) = d
 
 #define READ_DEPTH( d, _x, _y )						\
-   d = *(GLushort *)(buf + r200_mba_z16( drb, _x + xo, _y + yo ));
+   d = *(GLushort *)radeon_ptr(rrb, _x + xo, _y + yo)
 
 #define TAG(x) radeon##x##_z16
 #include "depthtmp.h"
@@ -191,16 +133,17 @@ r200_mba_z16( driRenderbuffer *drb, GLint x, GLint y )
 
 #define WRITE_DEPTH( _x, _y, d )					\
 do {									\
-   GLuint offset = r200_mba_z32( drb, _x + xo, _y + yo );		\
-   GLuint tmp = *(GLuint *)(buf + offset);				\
+   GLuint *_ptr = (GLuint*)radeon_ptr32(rrb, _x + xo, _y + yo);		\
+   GLuint tmp = *_ptr;							\
    tmp &= 0xff000000;							\
    tmp |= ((d) & 0x00ffffff);						\
-   *(GLuint *)(buf + offset) = tmp;					\
+   *_ptr = tmp;					\
 } while (0)
 
 #define READ_DEPTH( d, _x, _y )						\
-   d = *(GLuint *)(buf + r200_mba_z32( drb, _x + xo,			\
-					 _y + yo )) & 0x00ffffff;
+   do {									\
+      d = (*(GLuint*)(radeon_ptr32(rrb, _x + xo, _y + yo)) & 0x00ffffff); \
+   }while(0)
 
 #define TAG(x) radeon##x##_z24_s8
 #include "depthtmp.h"
@@ -214,17 +157,17 @@ do {									\
  */
 #define WRITE_STENCIL( _x, _y, d )					\
 do {									\
-   GLuint offset = r200_mba_z32( drb, _x + xo, _y + yo );		\
-   GLuint tmp = *(GLuint *)(buf + offset);				\
+   GLuint *_ptr = (GLuint*)radeon_ptr32(rrb, _x + xo, _y + yo);		\
+   GLuint tmp = *_ptr;				\
    tmp &= 0x00ffffff;							\
    tmp |= (((d) & 0xff) << 24);						\
-   *(GLuint *)(buf + offset) = tmp;					\
+   *_ptr = tmp;					\
 } while (0)
 
 #define READ_STENCIL( d, _x, _y )					\
 do {									\
-   GLuint offset = r200_mba_z32( drb, _x + xo, _y + yo );		\
-   GLuint tmp = *(GLuint *)(buf + offset);				\
+   GLuint *_ptr = (GLuint*)radeon_ptr32(rrb, _x + xo, _y + yo);		\
+   GLuint tmp = *_ptr;							\
    tmp &= 0xff000000;							\
    d = tmp >> 24;							\
 } while (0)
@@ -233,51 +176,11 @@ do {									\
 #include "stenciltmp.h"
 
 
-/* Move locking out to get reasonable span performance (10x better
- * than doing this in HW_LOCK above).  WaitForIdle() is the main
- * culprit.
- */
-
-static void r200SpanRenderStart( GLcontext *ctx )
-{
-   r200ContextPtr rmesa = R200_CONTEXT( ctx );
-
-   R200_FIREVERTICES( rmesa );
-   LOCK_HARDWARE( &rmesa->radeon );
-   radeonWaitForIdleLocked( &rmesa->radeon );
-
-   /* Read & rewrite the first pixel in the frame buffer.  This should
-    * be a noop, right?  In fact without this conform fails as reading
-    * from the framebuffer sometimes produces old results -- the
-    * on-card read cache gets mixed up and doesn't notice that the
-    * framebuffer has been updated.
-    *
-    * In the worst case this is buggy too as p might get the wrong
-    * value first time, so really need a hidden pixel somewhere for this.
-    */
-   {
-      int p;
-      driRenderbuffer *drb =
-	 (driRenderbuffer *) ctx->WinSysDrawBuffer->_ColorDrawBuffers[0];
-      volatile int *buf =
-	 (volatile int *)(rmesa->radeon.dri.screen->pFB + drb->offset);
-      p = *buf;
-      *buf = p;
-   }
-}
-
-static void r200SpanRenderFinish( GLcontext *ctx )
-{
-   r200ContextPtr rmesa = R200_CONTEXT( ctx );
-   _swrast_flush( ctx );
-   UNLOCK_HARDWARE( &rmesa->radeon );
-}
-
 void r200InitSpanFuncs( GLcontext *ctx )
 {
    struct swrast_device_driver *swdd = _swrast_GetDeviceDriverReference(ctx);
-   swdd->SpanRenderStart          = r200SpanRenderStart;
-   swdd->SpanRenderFinish         = r200SpanRenderFinish; 
+   swdd->SpanRenderStart          = radeonSpanRenderStart;
+   swdd->SpanRenderFinish         = radeonSpanRenderFinish; 
 }
 
 

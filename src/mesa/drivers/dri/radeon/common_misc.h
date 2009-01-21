@@ -110,5 +110,12 @@ void radeonTexSubImage3D(GLcontext * ctx, GLenum target, GLint level,
 			 struct gl_texture_object *texObj,
 			 struct gl_texture_image *texImage);
 
-
+void radeonSpanRenderStart(GLcontext * ctx);
+void radeonSpanRenderFinish(GLcontext * ctx);
+GLubyte *radeon_ptr(const struct radeon_renderbuffer * rrb,
+		    GLint x, GLint y);
+GLubyte *radeon_ptr16(const struct radeon_renderbuffer * rrb,
+		    GLint x, GLint y);
+GLubyte *radeon_ptr32(const struct radeon_renderbuffer * rrb,
+		    GLint x, GLint y);
 #endif
