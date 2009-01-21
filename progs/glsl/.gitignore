@@ -15,6 +15,7 @@ points
 readtex.c
 readtex.h
 samplers
+samplers_array
 shaderutil.c
 shaderutil.h
 skinning
