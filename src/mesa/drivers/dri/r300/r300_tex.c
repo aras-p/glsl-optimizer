@@ -509,23 +509,6 @@ static void r300_teximage(
 	}
 }
 
-
-static GLuint face_for_target(GLenum target)
-{
-	switch (target) {
-	case GL_TEXTURE_CUBE_MAP_POSITIVE_X:
-	case GL_TEXTURE_CUBE_MAP_NEGATIVE_X:
-	case GL_TEXTURE_CUBE_MAP_POSITIVE_Y:
-	case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y:
-	case GL_TEXTURE_CUBE_MAP_POSITIVE_Z:
-	case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z:
-		return (GLuint) target - (GLuint) GL_TEXTURE_CUBE_MAP_POSITIVE_X;
-	default:
-		return 0;
-	}
-}
-
-
 static void r300TexImage1D(GLcontext * ctx, GLenum target, GLint level,
 			   GLint internalFormat,
 			   GLint width, GLint border,
@@ -546,7 +529,7 @@ static void r300TexImage2D(GLcontext * ctx, GLenum target, GLint level,
 			   struct gl_texture_object *texObj,
 			   struct gl_texture_image *texImage)
 {
-	GLuint face = face_for_target(target);
+	GLuint face = radeon_face_for_target(target);
 
 	r300_teximage(ctx, 2, face, level, internalFormat, width, height, 1,
 		0, format, type, pixels, packing, texObj, texImage, 0);
@@ -559,7 +542,7 @@ static void r300CompressedTexImage2D(GLcontext * ctx, GLenum target,
 				     struct gl_texture_object *texObj,
 				     struct gl_texture_image *texImage)
 {
-	GLuint face = face_for_target(target);
+	GLuint face = radeon_face_for_target(target);
 
 	r300_teximage(ctx, 2, face, level, internalFormat, width, height, 1,
 		imageSize, 0, 0, data, 0, texObj, texImage, 1);

@@ -42,4 +42,5 @@ void radeon_teximage_unmap(radeon_texture_image *image);
 void radeonMapTexture(GLcontext *ctx, struct gl_texture_object *texObj);
 void radeonUnmapTexture(GLcontext *ctx, struct gl_texture_object *texObj);
 void radeon_generate_mipmap(GLcontext* ctx, GLenum target, struct gl_texture_object *texObj);
+GLuint radeon_face_for_target(GLenum target);
 #endif
