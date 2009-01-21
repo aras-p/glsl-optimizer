@@ -128,6 +128,8 @@ _mesa_lookup_framebuffer(GLcontext *ctx, GLuint id)
 /**
  * Given a GL_*_ATTACHMENTn token, return a pointer to the corresponding
  * gl_renderbuffer_attachment object.
+ * If \p attachment is GL_DEPTH_STENCIL_ATTACHMENT, return a pointer to
+ * the depth buffer attachment point.
  */
 struct gl_renderbuffer_attachment *
 _mesa_get_attachment(GLcontext *ctx, struct gl_framebuffer *fb,
@@ -157,6 +159,8 @@ _mesa_get_attachment(GLcontext *ctx, struct gl_framebuffer *fb,
 	 return NULL;
       }
       return &fb->Attachment[BUFFER_COLOR0 + i];
+   case GL_DEPTH_STENCIL_ATTACHMENT:
+      /* fall-through */
    case GL_DEPTH_ATTACHMENT_EXT:
       return &fb->Attachment[BUFFER_DEPTH];
    case GL_STENCIL_ATTACHMENT_EXT:
@@ -267,6 +271,12 @@ _mesa_framebuffer_renderbuffer(GLcontext *ctx, struct gl_framebuffer *fb,
    ASSERT(att);
    if (rb) {
       _mesa_set_renderbuffer_attachment(ctx, att, rb);
+      if (attachment == GL_DEPTH_STENCIL_ATTACHMENT) {
+         /* do stencil attachment here (depth already done above) */
+         att = _mesa_get_attachment(ctx, fb, GL_STENCIL_ATTACHMENT_EXT);
+         assert(att);
+         _mesa_set_renderbuffer_attachment(ctx, att, rb);
+      }
    }
    else {
       _mesa_remove_attachment(ctx, att);
@@ -1361,7 +1371,6 @@ framebuffer_texture(GLcontext *ctx, const char *caller, GLenum target,
          }
       }
 
-
       if ((level < 0) || 
           (level >= _mesa_max_texture_levels(ctx, texObj->Target))) {
          _mesa_error(ctx, GL_INVALID_VALUE,
@@ -1375,6 +1384,18 @@ framebuffer_texture(GLcontext *ctx, const char *caller, GLenum target,
       _mesa_error(ctx, GL_INVALID_ENUM,
                   "glFramebufferTexture%sEXT(attachment)", caller);
       return;
+   }
+
+   if (texObj && attachment == GL_DEPTH_STENCIL_ATTACHMENT) {
+      /* the texture format must be depth+stencil */
+      const struct gl_texture_image *texImg;
+      texImg = texObj->Image[0][texObj->BaseLevel];
+      if (!texImg || texImg->_BaseFormat != GL_DEPTH_STENCIL) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "glFramebufferTexture%sEXT(texture is not"
+                     " DEPTH_STENCIL format)", caller);
+         return;
+      }
    }
 
    FLUSH_VERTICES(ctx, _NEW_BUFFERS);
@@ -1535,6 +1556,17 @@ _mesa_FramebufferRenderbufferEXT(GLenum target, GLenum attachment,
       rb = NULL;
    }
 
+   if (attachment == GL_DEPTH_STENCIL_ATTACHMENT) {
+      /* make sure the renderbuffer is a depth/stencil format */
+      if (rb->_BaseFormat != GL_DEPTH_STENCIL) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "glFramebufferRenderbufferEXT(renderbuffer"
+                     " is not DEPTH_STENCIL format)");
+         return;
+      }
+   }
+
+
    FLUSH_VERTICES(ctx, _NEW_BUFFERS);
    /* The above doesn't fully flush the drivers in the way that a
     * glFlush does, but that is required here:
@@ -1601,6 +1633,19 @@ _mesa_GetFramebufferAttachmentParameterivEXT(GLenum target, GLenum attachment,
       _mesa_error(ctx, GL_INVALID_ENUM,
                   "glGetFramebufferAttachmentParameterivEXT(attachment)");
       return;
+   }
+
+   if (attachment == GL_DEPTH_STENCIL_ATTACHMENT) {
+      /* the depth and stencil attachments must point to the same buffer */
+      const struct gl_renderbuffer_attachment *depthAtt, *stencilAtt;
+      depthAtt = _mesa_get_attachment(ctx, buffer, GL_DEPTH_ATTACHMENT);
+      stencilAtt = _mesa_get_attachment(ctx, buffer, GL_STENCIL_ATTACHMENT);
+      if (depthAtt->Renderbuffer != stencilAtt->Renderbuffer) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "glGetFramebufferAttachmentParameterivEXT(DEPTH/STENCIL"
+                     " attachments differ)");
+         return;
+      }
    }
 
    FLUSH_VERTICES(ctx, _NEW_BUFFERS);
