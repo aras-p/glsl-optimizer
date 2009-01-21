@@ -52,10 +52,6 @@ extern void r200BuildVertices( GLcontext *ctx, GLuint start, GLuint count,
 extern void r200PrintSetupFlags(char *msg, GLuint flags );
 
 
-extern void r200_emit_indexed_verts( GLcontext *ctx,
-				       GLuint start,
-				       GLuint count );
-
 extern void r200_translate_vertex( GLcontext *ctx, 
 				     const radeonVertex *src, 
 				     SWvertex *dst );

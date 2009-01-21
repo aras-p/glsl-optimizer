@@ -954,6 +954,4 @@ void r200DestroySwtcl( GLcontext *ctx )
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
 
-   //   if (rmesa->swtcl.indexed_verts.buf) 
-     //      r200ReleaseDmaRegion( rmesa, &rmesa->swtcl.indexed_verts, __FUNCTION__ );
 }

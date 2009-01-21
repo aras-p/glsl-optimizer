@@ -544,7 +544,6 @@ struct r200_tcl_info {
 
    GLuint *Elts;
 
-   struct radeon_dma_region indexed_verts;
    struct radeon_dma_region vertex_data[15];
 };
 
@@ -603,7 +602,6 @@ struct r200_swtcl_info {
 
    struct radeon_bo *bo;
    void (*flush) (r200ContextPtr);
-   struct radeon_dma_region indexed_verts;
 };
 
 

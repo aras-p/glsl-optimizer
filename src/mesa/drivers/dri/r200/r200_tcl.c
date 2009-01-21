@@ -570,10 +570,6 @@ static void transition_to_hwtnl( GLcontext *ctx )
 
    rmesa->dma.flush = NULL;
    
-   //   if (rmesa->swtcl.indexed_verts.buf) 
-     //      r200ReleaseDmaRegion( rmesa, &rmesa->swtcl.indexed_verts, 
-     //			      __FUNCTION__ );
-
    R200_STATECHANGE( rmesa, vap );
    rmesa->hw.vap.cmd[VAP_SE_VAP_CNTL] |= R200_VAP_TCL_ENABLE;
    rmesa->hw.vap.cmd[VAP_SE_VAP_CNTL] &= ~R200_VAP_FORCE_W_TO_ONE;
