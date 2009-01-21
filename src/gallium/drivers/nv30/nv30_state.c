@@ -23,9 +23,10 @@ nv30_blend_state_create(struct pipe_context *pipe,
 			       nvgl_blend_func(cso->rgb_src_factor));
 		so_data  (so, nvgl_blend_func(cso->alpha_dst_factor) << 16 |
 			      nvgl_blend_func(cso->rgb_dst_factor));
+		/* FIXME: Gallium assumes GL_EXT_blend_func_separate.
+		   It is not the case for NV30 */
 		so_method(so, rankine, NV34TCL_BLEND_EQUATION, 1);
-		so_data  (so, nvgl_blend_eqn(cso->alpha_func) << 16 |
-			      nvgl_blend_eqn(cso->rgb_func));
+		so_data  (so, nvgl_blend_eqn(cso->rgb_func));
 	} else {
 		so_method(so, rankine, NV34TCL_BLEND_FUNC_ENABLE, 1);
 		so_data  (so, 0);
