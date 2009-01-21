@@ -1641,7 +1641,8 @@ static GLboolean r200_validate_texture(GLcontext *ctx, struct gl_texture_object 
    setup_hardware_state(rmesa, t);
 
    if (texObj->Target == GL_TEXTURE_RECTANGLE_NV ||
-       texObj->Target == GL_TEXTURE_2D)
+       texObj->Target == GL_TEXTURE_2D ||
+       texObj->Target == GL_TEXTURE_1D)
       set_re_cntl_d3d( ctx, unit, GL_FALSE );
    else
       set_re_cntl_d3d( ctx, unit, GL_TRUE );
