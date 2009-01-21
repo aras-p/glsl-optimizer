@@ -195,6 +195,14 @@ intelWindowMoved(struct intel_context *intel)
        intel->intelScreen->driScrnPriv->ddx_version.minor >= 7) {
       GLuint flags = intelFixupVblank(intel, dPriv);
 
+      /* Do the stupid test: Is one of them actually disabled?
+       */
+      if (sarea->planeA_w == 0 || sarea->planeA_h == 0) {
+	 flags = dPriv->vblFlags | VBLANK_FLAG_SECONDARY;
+      } else if (sarea->planeB_w == 0 || sarea->planeB_h == 0) {
+	 flags = dPriv->vblFlags & ~VBLANK_FLAG_SECONDARY;
+      }
+
       /* Check to see if we changed pipes */
       if (flags != dPriv->vblFlags && dPriv->vblFlags &&
 	  !(dPriv->vblFlags & VBLANK_FLAG_NO_IRQ)) {
