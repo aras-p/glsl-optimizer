@@ -4,6 +4,7 @@
 	Version="8.00"
 	Name="osmesa"
 	ProjectGUID="{8D6CD423-383B-49E7-81BC-D20C70B07DF5}"
+	RootNamespace="osmesa"
 	>
 	<Platforms>
 		<Platform
@@ -15,8 +16,8 @@
 	<Configurations>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory=".\Release"
-			IntermediateDirectory=".\Release"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
+			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="2"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC70.vsprops"
 			UseOfMFC="0"
@@ -47,14 +48,10 @@
 				Name="VCCLCompilerTool"
 				InlineFunctionExpansion="1"
 				AdditionalIncludeDirectories="../../../../include,../../../../src/mesa,../../../../src/mesa/main,../../../../src/mesa/glapi,../../../../src/mesa/swrast,../../../../src/mesa/shader"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;OSMESA_EXPORTS"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;OSMESA_EXPORTS;BUILD_GL32"
 				StringPooling="true"
-				RuntimeLibrary="0"
+				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
-				PrecompiledHeaderFile=".\Release/osmesa.pch"
-				AssemblerListingLocation=".\Release/"
-				ObjectFile=".\Release/"
-				ProgramDataBaseFileName=".\Release/"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
 				CompileAs="0"
@@ -73,15 +70,13 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="opengl32.lib winmm.lib msvcrt.lib odbc32.lib odbccp32.lib"
-				OutputFile="Release/OSMESA32.DLL"
+				AdditionalDependencies="gdi32.lib user32.lib"
+				OutputFile="$(OutDir)\OSMESA32.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
-				AdditionalLibraryDirectories="../gdi/Release"
-				IgnoreAllDefaultLibraries="true"
+				AdditionalLibraryDirectories="$(TargetDir)"
 				ModuleDefinitionFile="..\..\..\..\src\mesa\drivers\osmesa\osmesa.def"
-				ProgramDatabaseFile=".\Release/OSMESA32.pdb"
-				ImportLibrary=".\Release/OSMESA32.lib"
+				ProgramDatabaseFile="$(TargetDir)OSMESA32.pdb"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -106,13 +101,13 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="if not exist ..\..\..\..\lib md ..\..\..\..\lib&#x0D;&#x0A;copy Release\OSMESA32.LIB ..\..\..\..\lib&#x0D;&#x0A;copy Release\OSMESA32.DLL ..\..\..\..\lib&#x0D;&#x0A;if exist ..\..\..\..\progs\demos copy Release\OSMESA32.DLL ..\..\..\..\progs\demos&#x0D;&#x0A;"
+				CommandLine="if not exist ..\..\..\..\lib md ..\..\..\..\lib&#x0D;&#x0A;copy &quot;$(TargetDir)OSMESA32.LIB&quot; ..\..\..\..\lib&#x0D;&#x0A;copy &quot;$(TargetDir)OSMESA32.DLL&quot; ..\..\..\..\lib&#x0D;&#x0A;if exist ..\..\..\..\progs\demos copy &quot;$(TargetDir)OSMESA32.DLL&quot; ..\..\..\..\progs\demos&#x0D;&#x0A;"
 			/>
 		</Configuration>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory=".\Debug"
-			IntermediateDirectory=".\Debug"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
+			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="2"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC70.vsprops"
 			UseOfMFC="0"
@@ -143,13 +138,9 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="../../../../include,../../../../src/mesa,../../../../src/mesa/main,../../../../src/mesa/glapi,../../../../src/mesa/swrast,../../../../src/mesa/shader"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;OSMESA_EXPORTS"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;OSMESA_EXPORTS;BUILD_GL32"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="1"
-				PrecompiledHeaderFile=".\Debug/osmesa.pch"
-				AssemblerListingLocation=".\Debug/"
-				ObjectFile=".\Debug/"
-				ProgramDataBaseFileName=".\Debug/"
+				RuntimeLibrary="3"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
 				DebugInformationFormat="3"
@@ -169,16 +160,14 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="opengl32.lib winmm.lib msvcrtd.lib odbc32.lib odbccp32.lib"
-				OutputFile="Debug/OSMESA32.DLL"
+				AdditionalDependencies="gdi32.lib user32.lib"
+				OutputFile="$(OutDir)\OSMESA32.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
-				AdditionalLibraryDirectories="../gdi/Debug"
-				IgnoreAllDefaultLibraries="true"
+				AdditionalLibraryDirectories="$(TargetDir)"
 				ModuleDefinitionFile="..\..\..\..\src\mesa\drivers\osmesa\osmesa.def"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile=".\Debug/OSMESA32.pdb"
-				ImportLibrary=".\Debug/OSMESA32.lib"
+				ProgramDatabaseFile="$(TargetDir)OSMESA32.pdb"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -203,7 +192,188 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="if not exist ..\..\..\..\lib md ..\..\..\..\lib&#x0D;&#x0A;copy Debug\OSMESA32.LIB ..\..\..\..\lib&#x0D;&#x0A;copy Debug\OSMESA32.DLL ..\..\..\..\lib&#x0D;&#x0A;if exist ..\..\..\..\progs\demos copy Debug\OSMESA32.DLL ..\..\..\..\progs\demos&#x0D;&#x0A;"
+				CommandLine="if not exist ..\..\..\..\lib md ..\..\..\..\lib&#x0D;&#x0A;copy &quot;$(TargetDir)OSMESA32.LIB&quot; ..\..\..\..\lib&#x0D;&#x0A;copy &quot;$(TargetDir)OSMESA32.DLL&quot; ..\..\..\..\lib&#x0D;&#x0A;if exist ..\..\..\..\progs\demos copy &quot;$(TargetDir)OSMESA32.DLL&quot; ..\..\..\..\progs\demos&#x0D;&#x0A;"
+			/>
+		</Configuration>
+		<Configuration
+			Name="Debug Static CRT|Win32"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
+			IntermediateDirectory="$(ConfigurationName)"
+			ConfigurationType="2"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC70.vsprops"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			CharacterSet="2"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+				PreprocessorDefinitions="_DEBUG"
+				MkTypLibCompatible="true"
+				SuppressStartupBanner="true"
+				TargetEnvironment="1"
+				TypeLibraryName=".\Debug/osmesa.tlb"
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				Optimization="0"
+				AdditionalIncludeDirectories="../../../../include,../../../../src/mesa,../../../../src/mesa/main,../../../../src/mesa/glapi,../../../../src/mesa/swrast,../../../../src/mesa/shader"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;OSMESA_EXPORTS;BUILD_GL32"
+				BasicRuntimeChecks="3"
+				RuntimeLibrary="1"
+				WarningLevel="3"
+				SuppressStartupBanner="true"
+				DebugInformationFormat="3"
+				CompileAs="0"
+			/>
+			<Tool
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+				PreprocessorDefinitions="_DEBUG"
+				Culture="1033"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
+			<Tool
+				Name="VCLinkerTool"
+				AdditionalOptions="/MACHINE:I386"
+				AdditionalDependencies="gdi32.lib user32.lib"
+				OutputFile="$(OutDir)\OSMESA32.dll"
+				LinkIncremental="1"
+				SuppressStartupBanner="true"
+				AdditionalLibraryDirectories="$(TargetDir)"
+				ModuleDefinitionFile="..\..\..\..\src\mesa\drivers\osmesa\osmesa.def"
+				GenerateDebugInformation="true"
+				ProgramDatabaseFile="$(TargetDir)OSMESA32.pdb"
+			/>
+			<Tool
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCManifestTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCWebDeploymentTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+				CommandLine="if not exist ..\..\..\..\lib md ..\..\..\..\lib&#x0D;&#x0A;copy &quot;$(TargetDir)OSMESA32.LIB&quot; ..\..\..\..\lib&#x0D;&#x0A;copy &quot;$(TargetDir)OSMESA32.DLL&quot; ..\..\..\..\lib&#x0D;&#x0A;if exist ..\..\..\..\progs\demos copy &quot;$(TargetDir)OSMESA32.DLL&quot; ..\..\..\..\progs\demos&#x0D;&#x0A;"
+			/>
+		</Configuration>
+		<Configuration
+			Name="Release Static CRT|Win32"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
+			IntermediateDirectory="$(ConfigurationName)"
+			ConfigurationType="2"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC70.vsprops"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			CharacterSet="2"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+				PreprocessorDefinitions="NDEBUG"
+				MkTypLibCompatible="true"
+				SuppressStartupBanner="true"
+				TargetEnvironment="1"
+				TypeLibraryName=".\Release/osmesa.tlb"
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				InlineFunctionExpansion="1"
+				AdditionalIncludeDirectories="../../../../include,../../../../src/mesa,../../../../src/mesa/main,../../../../src/mesa/glapi,../../../../src/mesa/swrast,../../../../src/mesa/shader"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;OSMESA_EXPORTS;BUILD_GL32"
+				StringPooling="true"
+				RuntimeLibrary="0"
+				EnableFunctionLevelLinking="true"
+				WarningLevel="3"
+				SuppressStartupBanner="true"
+				CompileAs="0"
+			/>
+			<Tool
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+				PreprocessorDefinitions="NDEBUG"
+				Culture="1033"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
+			<Tool
+				Name="VCLinkerTool"
+				AdditionalOptions="/MACHINE:I386"
+				AdditionalDependencies="gdi32.lib user32.lib"
+				OutputFile="$(OutDir)\OSMESA32.dll"
+				LinkIncremental="1"
+				SuppressStartupBanner="true"
+				AdditionalLibraryDirectories="$(TargetDir)"
+				ModuleDefinitionFile="..\..\..\..\src\mesa\drivers\osmesa\osmesa.def"
+				ProgramDatabaseFile="$(TargetDir)OSMESA32.pdb"
+			/>
+			<Tool
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCManifestTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCWebDeploymentTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+				CommandLine="if not exist ..\..\..\..\lib md ..\..\..\..\lib&#x0D;&#x0A;copy &quot;$(TargetDir)OSMESA32.LIB&quot; ..\..\..\..\lib&#x0D;&#x0A;copy &quot;$(TargetDir)OSMESA32.DLL&quot; ..\..\..\..\lib&#x0D;&#x0A;if exist ..\..\..\..\progs\demos copy &quot;$(TargetDir)OSMESA32.DLL&quot; ..\..\..\..\progs\demos&#x0D;&#x0A;"
 			/>
 		</Configuration>
 	</Configurations>

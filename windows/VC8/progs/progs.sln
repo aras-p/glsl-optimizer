@@ -9,16 +9,26 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "glut", "glut\glut.vcproj", 
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug Static CRT|Win32 = Debug Static CRT|Win32
 		Debug|Win32 = Debug|Win32
+		Release Static CRT|Win32 = Release Static CRT|Win32
 		Release|Win32 = Release|Win32
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{3A7B0671-10F8-45D1-B012-F6D650F817CE}.Debug Static CRT|Win32.ActiveCfg = Debug Static CRT|Win32
+		{3A7B0671-10F8-45D1-B012-F6D650F817CE}.Debug Static CRT|Win32.Build.0 = Debug Static CRT|Win32
 		{3A7B0671-10F8-45D1-B012-F6D650F817CE}.Debug|Win32.ActiveCfg = Debug|Win32
 		{3A7B0671-10F8-45D1-B012-F6D650F817CE}.Debug|Win32.Build.0 = Debug|Win32
+		{3A7B0671-10F8-45D1-B012-F6D650F817CE}.Release Static CRT|Win32.ActiveCfg = Release Static CRT|Win32
+		{3A7B0671-10F8-45D1-B012-F6D650F817CE}.Release Static CRT|Win32.Build.0 = Release Static CRT|Win32
 		{3A7B0671-10F8-45D1-B012-F6D650F817CE}.Release|Win32.ActiveCfg = Release|Win32
 		{3A7B0671-10F8-45D1-B012-F6D650F817CE}.Release|Win32.Build.0 = Release|Win32
+		{0234F0D2-C8A6-4C4D-93E7-0E2248049C67}.Debug Static CRT|Win32.ActiveCfg = Debug Static CRT|Win32
+		{0234F0D2-C8A6-4C4D-93E7-0E2248049C67}.Debug Static CRT|Win32.Build.0 = Debug Static CRT|Win32
 		{0234F0D2-C8A6-4C4D-93E7-0E2248049C67}.Debug|Win32.ActiveCfg = Debug|Win32
 		{0234F0D2-C8A6-4C4D-93E7-0E2248049C67}.Debug|Win32.Build.0 = Debug|Win32
+		{0234F0D2-C8A6-4C4D-93E7-0E2248049C67}.Release Static CRT|Win32.ActiveCfg = Release Static CRT|Win32
+		{0234F0D2-C8A6-4C4D-93E7-0E2248049C67}.Release Static CRT|Win32.Build.0 = Release Static CRT|Win32
 		{0234F0D2-C8A6-4C4D-93E7-0E2248049C67}.Release|Win32.ActiveCfg = Release|Win32
 		{0234F0D2-C8A6-4C4D-93E7-0E2248049C67}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
