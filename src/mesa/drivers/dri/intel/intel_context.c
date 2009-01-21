@@ -68,6 +68,7 @@
 int INTEL_DEBUG = (0);
 #endif
 
+#define need_GL_ARB_framebuffer_object
 #define need_GL_ARB_multisample
 #define need_GL_ARB_occlusion_query
 #define need_GL_ARB_point_parameters
@@ -398,6 +399,7 @@ static const struct dri_extension brw_extensions[] = {
    { "GL_ARB_fragment_program",           NULL },
    { "GL_ARB_fragment_program_shadow",    NULL },
    { "GL_ARB_fragment_shader",            NULL },
+   { "GL_ARB_framebuffer_object",         GL_ARB_framebuffer_object_functions},
    { "GL_ARB_occlusion_query",            GL_ARB_occlusion_query_functions },
    { "GL_ARB_point_sprite", 		  NULL },
    { "GL_ARB_shader_objects",             GL_ARB_shader_objects_functions },
