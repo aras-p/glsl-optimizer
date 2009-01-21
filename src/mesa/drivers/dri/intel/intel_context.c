@@ -865,6 +865,11 @@ intelMakeCurrent(__DRIcontextPrivate * driContextPriv,
 		  ? driGetDefaultVBlankFlags(&intel->optionCache)
 		 : VBLANK_FLAG_NO_IRQ;
 
+	       /* Prevent error printf if one crtc is disabled, this will
+		* be properly calculated in intelWindowMoved() next.
+		*/
+		driDrawPriv->vblFlags = intelFixupVblank(intel, driDrawPriv);
+
 	       (*psp->systemTime->getUST) (&intel_fb->swap_ust);
 	       driDrawableInitVBlank(driDrawPriv);
 	       intel_fb->vbl_waited = driDrawPriv->vblSeq;

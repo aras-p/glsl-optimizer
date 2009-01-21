@@ -47,6 +47,9 @@ extern struct intel_region *intel_drawbuf_region(struct intel_context *intel);
 
 extern void intelSwapBuffers(__DRIdrawablePrivate * dPriv);
 
+extern GLuint intelFixupVblank(struct intel_context *intel,
+			       __DRIdrawablePrivate *dPriv);
+
 extern void intelWindowMoved(struct intel_context *intel);
 
 extern void intel_draw_buffer(GLcontext * ctx, struct gl_framebuffer *fb);
