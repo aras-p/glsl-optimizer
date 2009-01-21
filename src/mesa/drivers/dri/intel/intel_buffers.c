@@ -559,7 +559,7 @@ intel_draw_buffer(GLcontext * ctx, struct gl_framebuffer *fb)
       return;
    }
 
-   /* Do this here, note core Mesa, since this function is called from
+   /* Do this here, not core Mesa, since this function is called from
     * many places within the driver.
     */
    if (ctx->NewState & (_NEW_BUFFERS | _NEW_COLOR | _NEW_PIXEL)) {
@@ -587,7 +587,8 @@ intel_draw_buffer(GLcontext * ctx, struct gl_framebuffer *fb)
       /* writing to 0  */
       colorRegions[0] = NULL;
       intel->constant_cliprect = GL_TRUE;
-   } else if (fb->_NumColorDrawBuffers > 1) {
+   }
+   else if (fb->_NumColorDrawBuffers > 1) {
        int i;
        struct intel_renderbuffer *irb;
 
@@ -700,10 +701,12 @@ intel_draw_buffer(GLcontext * ctx, struct gl_framebuffer *fb)
    if (ctx->Driver.Enable) {
       if (ctx->Depth.Test && fb->Visual.depthBits > 0) {
 	 ctx->Driver.Enable(ctx, GL_DEPTH_TEST, GL_TRUE);
-      } else {
+      }
+      else {
 	 ctx->Driver.Enable(ctx, GL_DEPTH_TEST, GL_FALSE);
       }
-   } else {
+   }
+   else {
       ctx->NewState |= _NEW_DEPTH;
    }
 
@@ -714,7 +717,8 @@ intel_draw_buffer(GLcontext * ctx, struct gl_framebuffer *fb)
    if (ctx->Driver.Viewport) {
       ctx->Driver.Viewport(ctx, ctx->Viewport.X, ctx->Viewport.Y,
 			   ctx->Viewport.Width, ctx->Viewport.Height);
-   } else {
+   }
+   else {
       ctx->NewState |= _NEW_VIEWPORT;
    }
 
