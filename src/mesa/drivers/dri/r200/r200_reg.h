@@ -949,6 +949,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define     R200_LOD_BIAS_MASK                        (0xfff80000)
 #define     R200_LOD_BIAS_SHIFT                       19
 #define R200_PP_TXSIZE_0                  0x2c0c /* NPOT only */
+#define R200_PP_TX_WIDTHMASK_SHIFT 0
+#define R200_PP_TX_HEIGHTMASK_SHIFT 16
+
 #define R200_PP_TXPITCH_0                 0x2c10 /* NPOT only */
 #define R200_PP_BORDER_COLOR_0            0x2c14
 #define R200_PP_CUBIC_FACES_0             0x2c18

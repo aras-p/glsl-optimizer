@@ -404,6 +404,7 @@ struct radeon_context {
       void (*update_draw_buffer)(GLcontext *ctx);
       void (*emit_cs_header)(struct radeon_cs *cs, radeonContextPtr rmesa);
       void (*emit_state)(radeonContextPtr rmesa);
+      void (*flush_vertices)(radeonContextPtr rmesa);
    } vtbl;
 };
 

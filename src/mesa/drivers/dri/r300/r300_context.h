@@ -717,11 +717,6 @@ struct r300_context {
 
 	/* Vertex buffers
 	 */
-	GLuint NewGLState;
-
-	int texture_depth;
-	float initialMaxAnisotropy;
-
 	GLvector4f dummy_attrib[_TNL_ATTRIB_MAX];
 	GLvector4f *temp_attrib[_TNL_ATTRIB_MAX];
 

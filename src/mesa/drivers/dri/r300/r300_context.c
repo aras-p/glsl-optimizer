@@ -245,6 +245,11 @@ static void r300_vtbl_emit_cs_header(struct radeon_cs *cs, radeonContextPtr rmes
                                R300_WAIT_3D | R300_WAIT_3D_CLEAN));
 }
 
+static void r300_vtbl_flush_vertices(radeonContextPtr rmesa)
+{
+   R300_FIREVERTICES(((r300ContextPtr)rmesa));
+}
+
 static void r300_init_vtbl(radeonContextPtr radeon)
 {
    radeon->vtbl.get_lock = r300_get_lock;
@@ -289,7 +294,7 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	 */
 	driParseConfigFiles(&r300->radeon.optionCache, &screen->optionCache,
 			    screen->driScreen->myNum, "r300");
-	r300->initialMaxAnisotropy = driQueryOptionf(&r300->radeon.optionCache,
+	r300->radeon.initialMaxAnisotropy = driQueryOptionf(&r300->radeon.optionCache,
 						     "def_max_anisotropy");
 
 	/* Init default driver functions then plug in our R300-specific functions
@@ -309,10 +314,10 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	}
 
 	/* Init r300 context data */
-	r300->texture_depth = driQueryOptioni(&r300->radeon.optionCache,
+	r300->radeon.texture_depth = driQueryOptioni(&r300->radeon.optionCache,
 					      "texture_depth");
-	if (r300->texture_depth == DRI_CONF_TEXTURE_DEPTH_FB)
-		r300->texture_depth = (screen->cpp == 4) ?
+	if (r300->radeon.texture_depth == DRI_CONF_TEXTURE_DEPTH_FB)
+		r300->radeon.texture_depth = (screen->cpp == 4) ?
 		    DRI_CONF_TEXTURE_DEPTH_32 : DRI_CONF_TEXTURE_DEPTH_16;
 
 	/* Set the maximum texture size small enough that we can guarentee that

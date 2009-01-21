@@ -44,6 +44,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "swrast_setup/swrast_setup.h"
 
 #include "radeon_buffer.h"
+#include "radeon_mipmap_tree.h"
 #include "radeon_cs.h"
 #include "common_context.h"
 #include "common_cmdbuf.h"
@@ -353,9 +354,32 @@ static void ctx_emit(GLcontext *ctx, struct radeon_state_atom *atom)
    
 }
 
-static int tex_emit(GLcontext *ctx, struct radeon_state_atom *atom)
+static void tex_emit(GLcontext *ctx, struct radeon_state_atom *atom)
 {
+   r200ContextPtr r200 = R200_CONTEXT(ctx);
+   BATCH_LOCALS(&r200->radeon);
+   uint32_t dwords = atom->cmd_size;
+   int i = atom->idx;
+   radeonTexObj *t = r200->state.texture.unit[i].texobj;
 
+   BEGIN_BATCH_NO_AUTOSTATE(dwords);
+   fprintf(stderr,"atom state is %x, %x %x %x %x %x\n", atom->cmd[0],
+	   atom->cmd[1],
+	   atom->cmd[2],
+	   atom->cmd[3],
+	   atom->cmd[4],
+	   atom->cmd[5]);
+   OUT_BATCH_TABLE(atom->cmd, 10);
+   if (t && !t->image_override) {
+     fprintf(stderr,"emitting reloc for %d\n", i);
+     OUT_BATCH_RELOC(t->tile_bits, t->mt->bo, 0,
+		     RADEON_GEM_DOMAIN_VRAM, 0, 0);
+   } else if (!t) {
+
+     OUT_BATCH(atom->cmd[10]);
+   }
+
+   END_BATCH();
 }
 
 
@@ -499,6 +523,9 @@ void r200InitState( r200ContextPtr rmesa )
       ALLOC_STATE( afs[0], never, AFS_STATE_SIZE, "AFS/afsinst-0", 0 );
       ALLOC_STATE( afs[1], never, AFS_STATE_SIZE, "AFS/afsinst-1", 1 );
    }
+
+   for (i = 0; i < 5; i++)
+     rmesa->hw.tex[i].emit = tex_emit;
    if (rmesa->radeon.radeonScreen->drmSupportsCubeMapsR200) {
       ALLOC_STATE( cube[0], tex_cube, CUBE_STATE_SIZE, "CUBE/tex-0", 0 );
       ALLOC_STATE( cube[1], tex_cube, CUBE_STATE_SIZE, "CUBE/tex-1", 1 );

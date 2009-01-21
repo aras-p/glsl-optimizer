@@ -266,6 +266,11 @@ static void r200_vtbl_flush(GLcontext *ctx)
    R200_FIREVERTICES(R200_CONTEXT(ctx));
 }
 
+static void r200_vtbl_flush_vertices(radeonContextPtr rmesa)
+{
+  R200_FIREVERTICES(((r200ContextPtr)rmesa));
+}
+
 static void r200_vtbl_set_all_dirty(GLcontext *ctx)
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
@@ -281,11 +286,13 @@ static void r200_vtbl_emit_state(radeonContextPtr rmesa)
 	r200EmitState((r200ContextPtr)rmesa);
 }
 
+
 static void r200_init_vtbl(radeonContextPtr radeon)
 {
    radeon->vtbl.get_lock = r200_get_lock;
    radeon->vtbl.update_viewport_offset = r200UpdateViewportOffset;
    radeon->vtbl.flush = r200_vtbl_flush;
+   radeon->vtbl.flush_vertices = r200_vtbl_flush_vertices;
    radeon->vtbl.set_all_dirty = r200_vtbl_set_all_dirty;
    radeon->vtbl.update_draw_buffer = r200UpdateDrawBuffer;
    radeon->vtbl.emit_cs_header = r200_vtbl_emit_cs_header;
@@ -365,6 +372,7 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
 
    rmesa->radeon.nr_heaps = 1 /* screen->numTexHeaps */ ;
    assert(rmesa->radeon.nr_heaps < RADEON_NR_TEX_HEAPS);
+#if 0
    for ( i = 0 ; i < rmesa->radeon.nr_heaps ; i++ ) {
       rmesa->radeon.texture_heaps[i] = driCreateTextureHeap( i, rmesa,
 	    screen->texSize[i],
@@ -376,6 +384,7 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
 	    sizeof( radeonTexObj ),
 	    (destroy_texture_object_t *) r200DestroyTexObj );
    }
+#endif
    rmesa->radeon.texture_depth = driQueryOptioni (&rmesa->radeon.optionCache,
 					   "texture_depth");
    if (rmesa->radeon.texture_depth == DRI_CONF_TEXTURE_DEPTH_FB)

@@ -2416,8 +2416,8 @@ void r300UpdateShaders(r300ContextPtr rmesa)
 
 	ctx = rmesa->radeon.glCtx;
 
-	if (rmesa->NewGLState && hw_tcl_on) {
-		rmesa->NewGLState = 0;
+	if (rmesa->radeon.NewGLState && hw_tcl_on) {
+		rmesa->radeon.NewGLState = 0;
 
 		for (i = _TNL_FIRST_MAT; i <= _TNL_LAST_MAT; i++) {
 			rmesa->temp_attrib[i] =
@@ -2677,7 +2677,7 @@ static void r300InvalidateState(GLcontext * ctx, GLuint new_state)
 
 	r300UpdateStateParameters(ctx, new_state);
 
-	r300->NewGLState |= new_state;
+	r300->radeon.NewGLState |= new_state;
 }
 
 /**

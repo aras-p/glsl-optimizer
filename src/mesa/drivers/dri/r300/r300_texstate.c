@@ -242,81 +242,6 @@ static void setup_hardware_state(r300ContextPtr rmesa, radeonTexObj *t)
 	}
 }
 
-
-static void copy_rows(void* dst, GLuint dststride, const void* src, GLuint srcstride,
-	GLuint numrows, GLuint rowsize)
-{
-	assert(rowsize <= dststride);
-	assert(rowsize <= srcstride);
-
-	if (rowsize == srcstride && rowsize == dststride) {
-		memcpy(dst, src, numrows*rowsize);
-	} else {
-		GLuint i;
-		for(i = 0; i < numrows; ++i) {
-			memcpy(dst, src, rowsize);
-			dst += dststride;
-			src += srcstride;
-		}
-	}
-}
-
-
-/**
- * Ensure that the given image is stored in the given miptree from now on.
- */
-static void migrate_image_to_miptree(radeon_mipmap_tree *mt, radeon_texture_image *image, int face, int level)
-{
-	radeon_mipmap_level *dstlvl = &mt->levels[level - mt->firstLevel];
-	unsigned char *dest;
-
-	assert(image->mt != mt);
-	assert(dstlvl->width == image->base.Width);
-	assert(dstlvl->height == image->base.Height);
-	assert(dstlvl->depth == image->base.Depth);
-
-	radeon_bo_map(mt->bo, GL_TRUE);
-	dest = mt->bo->ptr + dstlvl->faces[face].offset;
-
-	if (image->mt) {
-		/* Format etc. should match, so we really just need a memcpy().
-		 * In fact, that memcpy() could be done by the hardware in many
-		 * cases, provided that we have a proper memory manager.
-		 */
-		radeon_mipmap_level *srclvl = &image->mt->levels[image->mtlevel];
-
-		assert(srclvl->size == dstlvl->size);
-		assert(srclvl->rowstride == dstlvl->rowstride);
-
-		radeon_bo_map(image->mt->bo, GL_FALSE);
-		memcpy(dest,
-			image->mt->bo->ptr + srclvl->faces[face].offset,
-			dstlvl->size);
-		radeon_bo_unmap(image->mt->bo);
-
-		radeon_miptree_unreference(image->mt);
-	} else {
-		uint srcrowstride = image->base.Width * image->base.TexFormat->TexelBytes;
-
-		if (mt->tilebits)
-			WARN_ONCE("%s: tiling not supported yet", __FUNCTION__);
-
-		copy_rows(dest, dstlvl->rowstride, image->base.Data, srcrowstride,
-			image->base.Height * image->base.Depth, srcrowstride);
-
-		_mesa_free_texmemory(image->base.Data);
-		image->base.Data = 0;
-	}
-
-	radeon_bo_unmap(mt->bo);
-
-	image->mt = mt;
-	image->mtface = face;
-	image->mtlevel = level;
-	radeon_miptree_reference(image->mt);
-}
-
-
 /**
  * Ensure the given texture is ready for rendering.
  *
@@ -326,66 +251,9 @@ static GLboolean r300_validate_texture(GLcontext * ctx, struct gl_texture_object
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	radeonTexObj *t = radeon_tex_obj(texObj);
-	radeon_texture_image *baseimage = get_radeon_texture_image(texObj->Image[0][texObj->BaseLevel]);
-	int face, level;
 
-	if (t->validated || t->image_override)
-		return GL_TRUE;
-
-	if (RADEON_DEBUG & DEBUG_TEXTURE)
-		fprintf(stderr, "%s: Validating texture %p now\n", __FUNCTION__, texObj);
-
-	if (baseimage->base.Border > 0)
+	if (!radeon_validate_texture_miptree(ctx, texObj))
 		return GL_FALSE;
-
-	/* Ensure a matching miptree exists.
-	 *
-	 * Differing mipmap trees can result when the app uses TexImage to
-	 * change texture dimensions.
-	 *
-	 * Prefer to use base image's miptree if it
-	 * exists, since that most likely contains more valid data (remember
-	 * that the base level is usually significantly larger than the rest
-	 * of the miptree, so cubemaps are the only possible exception).
-	 */
-	if (baseimage->mt &&
-	    baseimage->mt != t->mt &&
-	    radeon_miptree_matches_texture(baseimage->mt, &t->base)) {
-		radeon_miptree_unreference(t->mt);
-		t->mt = baseimage->mt;
-		radeon_miptree_reference(t->mt);
-	} else if (t->mt && !radeon_miptree_matches_texture(t->mt, &t->base)) {
-		radeon_miptree_unreference(t->mt);
-		t->mt = 0;
-	}
-
-	if (!t->mt) {
-		if (RADEON_DEBUG & DEBUG_TEXTURE)
-			fprintf(stderr, " Allocate new miptree\n");
-		radeon_try_alloc_miptree(&rmesa->radeon, t, &baseimage->base, 0, texObj->BaseLevel);
-		if (!t->mt) {
-			_mesa_problem(ctx, "r300_validate_texture failed to alloc miptree");
-			return GL_FALSE;
-		}
-	}
-
-	/* Ensure all images are stored in the single main miptree */
-	for(face = 0; face < t->mt->faces; ++face) {
-		for(level = t->mt->firstLevel; level <= t->mt->lastLevel; ++level) {
-			radeon_texture_image *image = get_radeon_texture_image(texObj->Image[face][level]);
-			if (RADEON_DEBUG & DEBUG_TEXTURE)
-				fprintf(stderr, " face %i, level %i... ", face, level);
-			if (t->mt == image->mt) {
-				if (RADEON_DEBUG & DEBUG_TEXTURE)
-					fprintf(stderr, "OK\n");
-				continue;
-			}
-
-			if (RADEON_DEBUG & DEBUG_TEXTURE)
-				fprintf(stderr, "migrating\n");
-			migrate_image_to_miptree(t->mt, image, face, level);
-		}
-	}
 
 	/* Configure the hardware registers (more precisely, the cached version
 	 * of the hardware registers). */
@@ -431,7 +299,8 @@ void r300SetTexOffset(__DRIcontext * pDRICtx, GLint texname,
 
 	if (!offset)
 		return;
-    t->bo = NULL;
+
+	t->bo = NULL;
 	t->override_offset = offset;
 	t->pp_txpitch &= (1 << 13) -1;
 	pitch_val = pitch;
@@ -463,7 +332,7 @@ void r300SetTexBuffer(__DRIcontext *pDRICtx, GLint target, __DRIdrawable *dPriv)
 {
 	struct gl_texture_unit *texUnit;
 	struct gl_texture_object *texObj;
-    struct gl_texture_image *texImage;
+	struct gl_texture_image *texImage;
 	struct radeon_renderbuffer *rb;
 	radeon_texture_image *rImage;
 	radeonContextPtr radeon;
@@ -488,43 +357,43 @@ void r300SetTexBuffer(__DRIcontext *pDRICtx, GLint target, __DRIdrawable *dPriv)
     	    return;
     	}
 
-    radeon_update_renderbuffers(pDRICtx, dPriv);
-    /* back & depth buffer are useless free them right away */
-    rb = (void*)fb->Attachment[BUFFER_DEPTH].Renderbuffer;
-    if (rb && rb->bo) {
-        radeon_bo_unref(rb->bo);
+	radeon_update_renderbuffers(pDRICtx, dPriv);
+	/* back & depth buffer are useless free them right away */
+	rb = (void*)fb->Attachment[BUFFER_DEPTH].Renderbuffer;
+	if (rb && rb->bo) {
+		radeon_bo_unref(rb->bo);
         rb->bo = NULL;
-    }
-    rb = (void*)fb->Attachment[BUFFER_BACK_LEFT].Renderbuffer;
-    if (rb && rb->bo) {
-        radeon_bo_unref(rb->bo);
-        rb->bo = NULL;
-    }
-    rb = (void*)fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer;
-    if (rb->bo == NULL) {
-        /* Failed to BO for the buffer */
-        return;
-    }
-
-    _mesa_lock_texture(radeon->glCtx, texObj);
-    if (t->bo) {
-        t->bo = NULL;
-    }
-    if (t->mt) {
-        t->mt = NULL;
-    }
-    if (rImage->mt) {
-        radeon_miptree_unreference(rImage->mt);
-        rImage->mt = NULL;
-    }
+	}
+	rb = (void*)fb->Attachment[BUFFER_BACK_LEFT].Renderbuffer;
+	if (rb && rb->bo) {
+		radeon_bo_unref(rb->bo);
+		rb->bo = NULL;
+	}
+	rb = (void*)fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer;
+	if (rb->bo == NULL) {
+		/* Failed to BO for the buffer */
+		return;
+	}
+	
+	_mesa_lock_texture(radeon->glCtx, texObj);
+	if (t->bo) {
+		t->bo = NULL;
+	}
+	if (t->mt) {
+		t->mt = NULL;
+	}
+	if (rImage->mt) {
+		radeon_miptree_unreference(rImage->mt);
+		rImage->mt = NULL;
+	}
 	fprintf(stderr,"settexbuf %dx%d@%d\n", rb->width, rb->height, rb->cpp);
-    _mesa_init_teximage_fields(radeon->glCtx, target, texImage,
-                               rb->width, rb->height, 1, 0, rb->cpp);
+	_mesa_init_teximage_fields(radeon->glCtx, target, texImage,
+				   rb->width, rb->height, 1, 0, rb->cpp);
 	texImage->TexFormat = &_mesa_texformat_rgba8888_rev;
-    rImage->bo = rb->bo;
-
-    t->bo = rb->bo;
-    t->tile_bits = 0;
+	rImage->bo = rb->bo;
+	
+	t->bo = rb->bo;
+	t->tile_bits = 0;
 	t->image_override = GL_TRUE;
 	t->override_offset = 0;
 	t->pp_txpitch &= (1 << 13) -1;
@@ -553,6 +422,6 @@ void r300SetTexBuffer(__DRIcontext *pDRICtx, GLint target, __DRIdrawable *dPriv)
 	t->pp_txsize |= R300_TX_SIZE_TXPITCH_EN;
 	t->pp_txpitch |= pitch_val;
 	t->validated = GL_TRUE;
-    _mesa_unlock_texture(radeon->glCtx, texObj);
-    return;
+	_mesa_unlock_texture(radeon->glCtx, texObj);
+	return;
 }

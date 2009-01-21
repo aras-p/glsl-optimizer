@@ -49,7 +49,7 @@ SOFTWARE.
 
 #include <unistd.h>  /* for usleep() */
 
-
+#if 0
 /**
  * Destroy any device-dependent state associated with the texture.  This may
  * include NULLing out hardware state that points to the texture.
@@ -528,3 +528,4 @@ int r200UploadTexImages( r200ContextPtr rmesa, radeonTexObjPtr t, GLuint face )
 
    return 0;
 }
+#endif
