@@ -142,23 +142,22 @@ static GLboolean discrete_prim[0x10] = {
 
 static GLushort *r200AllocElts( r200ContextPtr rmesa, GLuint nr ) 
 {
-   fprintf(stderr,"alloc elts\n");
-   if (rmesa->dma.flush == r200FlushElts &&
-       rmesa->store.cmd_used + nr*2 < R200_CMD_BUF_SZ) {
+  fprintf(stderr,"alloc elts %d %d\n", nr, rmesa->tcl.elt_used);
+   if (rmesa->tcl.flush == r200FlushElts &&
+       rmesa->tcl.elt_used + nr*2 < R200_ELT_BUF_SZ) {
 
-      GLushort *dest = (GLushort *)(rmesa->store.cmd_buf +
-				    rmesa->store.cmd_used);
+      GLushort *dest = (GLushort *)(rmesa->tcl.elt_dma_bo->ptr +
+				    rmesa->tcl.elt_used);
 
-      rmesa->store.cmd_used += nr*2;
+      rmesa->tcl.elt_used += nr*2;
 
       return dest;
    }
    else {
-      if (rmesa->dma.flush)
-	 rmesa->dma.flush( rmesa->radeon.glCtx );
+      if (rmesa->tcl.flush)
+	 rmesa->tcl.flush( rmesa );
 
-      rcommonEnsureCmdBufSpace(rmesa, AOS_BUFSZ(rmesa->tcl.nr_aos_components) +
-			     rmesa->hw.max_state_size + ELTS_BUFSZ(nr) );
+      rcommonEnsureCmdBufSpace(rmesa, AOS_BUFSZ(rmesa->tcl.nr_aos_components));
 
       r200EmitAOS( rmesa,
 		   rmesa->tcl.nr_aos_components, 0 );

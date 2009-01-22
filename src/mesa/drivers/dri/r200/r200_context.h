@@ -531,7 +531,7 @@ struct r200_state {
 
 #define R200_CMD_BUF_SZ  (16*1024) 
 
-
+#define R200_ELT_BUF_SZ  (16*1024) 
 /* r200_tcl.c
  */
 struct r200_tcl_info {
@@ -544,6 +544,11 @@ struct r200_tcl_info {
 
    GLuint *Elts;
 
+   struct radeon_bo *elt_dma_bo;
+   int elt_dma_offset; /** Offset into this buffer object, in bytes */
+   int elt_used;
+
+   void (*flush) (r200ContextPtr);
    struct radeon_dma_region vertex_data[15];
 };
 

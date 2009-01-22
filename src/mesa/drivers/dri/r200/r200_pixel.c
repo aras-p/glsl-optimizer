@@ -156,6 +156,8 @@ r200TryReadPixels( GLcontext *ctx,
    GLuint cpp = rmesa->radeon.radeonScreen->cpp;
    GLint size = width * height * cpp;
 
+   return GL_FALSE;
+#if 0
    if (R200_DEBUG & DEBUG_PIXEL)
       fprintf(stderr, "%s\n", __FUNCTION__);
 
@@ -165,7 +167,6 @@ r200TryReadPixels( GLcontext *ctx,
 			 pitch * height * rmesa->radeon.radeonScreen->cpp ) ) {
       if (R200_DEBUG & DEBUG_PIXEL)
 	 fprintf(stderr, "%s: dest not GART\n", __FUNCTION__);
-      return GL_FALSE;
    }
 
    /* Need GL_PACK_INVERT_MESA to cope with upsidedown results from
@@ -262,7 +263,7 @@ r200TryReadPixels( GLcontext *ctx,
    UNLOCK_HARDWARE( &rmesa->radeon );
 
    r200Finish( ctx ); /* required by GL */
-
+#endif
    return GL_TRUE;
 }
 
@@ -305,7 +306,7 @@ static void do_draw_pix( GLcontext *ctx,
 
    if (R200_DEBUG & DEBUG_PIXEL)
       fprintf(stderr, "%s\n", __FUNCTION__);
-
+#if 0
    switch ( rmesa->radeon.radeonScreen->cpp ) {
    case 2:
       blit_format = R200_CP_COLOR_FORMAT_RGB565;
@@ -366,6 +367,7 @@ static void do_draw_pix( GLcontext *ctx,
    rcommonFlushCmdBufLocked( &rmesa->radeon, __FUNCTION__ );
    radeonWaitForIdleLocked( &rmesa->radeon ); /* required by GL */
    UNLOCK_HARDWARE( &rmesa->radeon );
+#endif
 }
 
 
@@ -431,7 +433,7 @@ r200TryDrawPixels( GLcontext *ctx,
       return GL_FALSE;
    }
 
-   if ( r200IsGartMemory(rmesa, pixels, size) )
+   if (0)// r200IsGartMemory(rmesa, pixels, size) )
    {
       do_draw_pix( ctx, x, y, width, height, pitch, pixels, planemask );
       return GL_TRUE;

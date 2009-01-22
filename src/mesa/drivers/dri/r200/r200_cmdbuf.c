@@ -238,40 +238,61 @@ void r200EmitVbufPrim( r200ContextPtr rmesa,
    OUT_BATCH(primitive | R200_VF_PRIM_WALK_LIST | R200_VF_COLOR_ORDER_RGBA |
 	     (vertex_nr << R200_VF_VERTEX_NUMBER_SHIFT));
    END_BATCH();
-#if 0
-   cmd = (drm_radeon_cmd_header_t *)r200AllocCmdBuf( rmesa, VBUF_BUFSZ,
-						  __FUNCTION__ );
-   cmd[0].i = 0;
-   cmd[0].header.cmd_type = RADEON_CMD_PACKET3_CLIP;
-   cmd[1].i = R200_CP_CMD_3D_DRAW_VBUF_2;
-   cmd[2].i = (primitive | 
-	       R200_VF_PRIM_WALK_LIST |
-	       R200_VF_COLOR_ORDER_RGBA |
-	       (vertex_nr << R200_VF_VERTEX_NUMBER_SHIFT));
-#endif
 }
 
-
-void r200FlushElts( GLcontext *ctx )
+static void r200FireEB(r200ContextPtr rmesa, int vertex_count, int type)
 {
-   r200ContextPtr rmesa = R200_CONTEXT(ctx);
-   int *cmd = (int *)(rmesa->store.cmd_buf + rmesa->store.elts_start);
+	BATCH_LOCALS(&rmesa->radeon);
+
+	if (vertex_count > 0) {
+		BEGIN_BATCH(8);
+		OUT_BATCH_PACKET3(R200_CP_CMD_3D_DRAW_INDX_2, 0);
+		OUT_BATCH(R200_VF_PRIM_WALK_IND |
+			  ((vertex_count + 0) << 16) |
+			  type);
+		
+		if (!rmesa->radeon.radeonScreen->kernel_mm) {
+			OUT_BATCH_PACKET3(R200_CP_CMD_INDX_BUFFER, 2);
+			OUT_BATCH((0x80 << 24) | (0 << 16) | 0x810);
+			OUT_BATCH_RELOC(rmesa->tcl.elt_dma_offset,
+					rmesa->tcl.elt_dma_bo,
+					rmesa->tcl.elt_dma_offset,
+					RADEON_GEM_DOMAIN_GTT, 0, 0);
+			OUT_BATCH(vertex_count/2);
+		} else {
+			OUT_BATCH_PACKET3(R200_CP_CMD_INDX_BUFFER, 2);
+			OUT_BATCH((0x80 << 24) | (0 << 16) | 0x810);
+			OUT_BATCH(rmesa->tcl.elt_dma_offset);
+			OUT_BATCH(vertex_count/2);
+			radeon_cs_write_reloc(rmesa->radeon.cmdbuf.cs,
+					      rmesa->tcl.elt_dma_bo,
+					      RADEON_GEM_DOMAIN_GTT, 0, 0);
+		}
+		END_BATCH();
+	}
+}
+
+void r200FlushElts( r200ContextPtr rmesa )
+{
    int dwords;
-   int nr = (rmesa->store.cmd_used - (rmesa->store.elts_start + 12)) / 2;
+   int nr, elt_used = rmesa->tcl.elt_used;
 
    if (R200_DEBUG & (DEBUG_IOCTL|DEBUG_PRIMS))
-      fprintf(stderr, "%s\n", __FUNCTION__);
+     fprintf(stderr, "%s %x %d\n", __FUNCTION__, rmesa->tcl.hw_primitive, elt_used);
 
-   assert( rmesa->dma.flush == r200FlushElts );
-   rmesa->dma.flush = NULL;
+   assert( rmesa->tcl.flush == r200FlushElts );
+   rmesa->tcl.flush = NULL;
 
-   /* Cope with odd number of elts:
-    */
-   rmesa->store.cmd_used = (rmesa->store.cmd_used + 2) & ~2;
-   dwords = (rmesa->store.cmd_used - rmesa->store.elts_start) / 4;
+   elt_used = (elt_used + 2) & ~2;
 
-   cmd[1] |= (dwords - 3) << 16;
-   cmd[2] |= nr << R200_VF_VERTEX_NUMBER_SHIFT;
+   nr = elt_used / 2;
+
+   radeon_bo_unmap(rmesa->tcl.elt_dma_bo);
+
+   r200FireEB(rmesa, nr, rmesa->tcl.hw_primitive);
+
+   radeon_bo_unref(rmesa->tcl.elt_dma_bo);
+   rmesa->tcl.elt_dma_bo = NULL;
 
    if (R200_DEBUG & DEBUG_SYNC) {
       fprintf(stderr, "%s: Syncing\n", __FUNCTION__);
@@ -284,7 +305,6 @@ GLushort *r200AllocEltsOpenEnded( r200ContextPtr rmesa,
 				    GLuint primitive,
 				    GLuint min_nr )
 {
-   drm_radeon_cmd_header_t *cmd;
    GLushort *retval;
 
    if (R200_DEBUG & DEBUG_IOCTL)
@@ -293,29 +313,24 @@ GLushort *r200AllocEltsOpenEnded( r200ContextPtr rmesa,
    assert((primitive & R200_VF_PRIM_WALK_IND));
    
    r200EmitState( rmesa );
-   
-   //   cmd = (drm_radeon_cmd_header_t *)r200AllocCmdBuf( rmesa, ELTS_BUFSZ(min_nr),
-   //						__FUNCTION__ );
-   cmd[0].i = 0;
-   cmd[0].header.cmd_type = RADEON_CMD_PACKET3_CLIP;
-   cmd[1].i = R200_CP_CMD_3D_DRAW_INDX_2;
-   cmd[2].i = (primitive | 
-	       R200_VF_PRIM_WALK_IND |
-	       R200_VF_COLOR_ORDER_RGBA);
 
+   rmesa->tcl.elt_dma_bo = radeon_bo_open(rmesa->radeon.radeonScreen->bom,
+					  0, R200_ELT_BUF_SZ, 4,
+					  RADEON_GEM_DOMAIN_GTT, 0);
+   rmesa->tcl.elt_dma_offset = 0;
+   rmesa->tcl.elt_used = min_nr * 2;
+
+   radeon_bo_map(rmesa->tcl.elt_dma_bo, 1);
+   retval = rmesa->tcl.elt_dma_bo->ptr + rmesa->tcl.elt_dma_offset;
    
-   retval = (GLushort *)(cmd+3);
 
    if (R200_DEBUG & DEBUG_PRIMS)
-      fprintf(stderr, "%s: header 0x%x prim %x \n",
-	      __FUNCTION__,
-	      cmd[1].i, primitive);
+      fprintf(stderr, "%s: header prim %x \n",
+	      __FUNCTION__, primitive);
 
-   assert(!rmesa->dma.flush);
+   assert(!rmesa->tcl.flush);
    rmesa->radeon.glCtx->Driver.NeedFlush |= FLUSH_STORED_VERTICES;
-   rmesa->dma.flush = r200FlushElts;
-
-   rmesa->store.elts_start = ((char *)cmd) - rmesa->store.cmd_buf;
+   rmesa->tcl.flush = r200FlushElts;
 
    return retval;
 }
@@ -439,112 +454,14 @@ void r200EmitAOS(r200ContextPtr rmesa, GLuint nr, GLuint offset)
    }
    END_BATCH();
 }
-		       
-#if 0
-void r200EmitAOS( r200ContextPtr rmesa,
-		    struct radeon_dma_region **component,
-		    GLuint nr,
-		    GLuint offset )
+
+void r200FireAOS(r200ContextPtr rmesa, int vertex_count, int type)
 {
-   drm_radeon_cmd_header_t *cmd;
-   int sz = AOS_BUFSZ(nr);
-   int i;
-   int *tmp;
+	BATCH_LOCALS(&rmesa->radeon);
 
-   if (R200_DEBUG & DEBUG_IOCTL)
-      fprintf(stderr, "%s nr arrays: %d\n", __FUNCTION__, nr);
-
-   cmd = (drm_radeon_cmd_header_t *)r200AllocCmdBuf( rmesa, sz, __FUNCTION__ );
-   cmd[0].i = 0;
-   cmd[0].header.cmd_type = RADEON_CMD_PACKET3;
-   cmd[1].i = R200_CP_CMD_3D_LOAD_VBPNTR | (((sz / sizeof(int)) - 3) << 16);
-   cmd[2].i = nr;
-   tmp = &cmd[0].i;
-   cmd += 3;
-
-   for (i = 0 ; i < nr ; i++) {
-      if (i & 1) {
-	 cmd[0].i |= ((component[i]->aos_stride << 24) | 
-		      (component[i]->aos_size << 16));
-	 cmd[2].i = (component[i]->aos_start + 
-		     offset * component[i]->aos_stride * 4);
-	 cmd += 3;
-      }
-      else {
-	 cmd[0].i = ((component[i]->aos_stride << 8) | 
-		     (component[i]->aos_size << 0));
-	 cmd[1].i = (component[i]->aos_start + 
-		     offset * component[i]->aos_stride * 4);
-      }
-   }
-
-   if (R200_DEBUG & DEBUG_VERTS) {
-      fprintf(stderr, "%s:\n", __FUNCTION__);
-      for (i = 0 ; i < sz ; i++)
-	 fprintf(stderr, "   %d: %x\n", i, tmp[i]);
-   }
-}
-#endif
-
-void r200EmitBlit( r200ContextPtr rmesa,
-		   GLuint color_fmt,
-		   GLuint src_pitch,
-		   GLuint src_offset,
-		   GLuint dst_pitch,
-		   GLuint dst_offset,
-		   GLint srcx, GLint srcy,
-		   GLint dstx, GLint dsty,
-		   GLuint w, GLuint h )
-{
-   drm_radeon_cmd_header_t *cmd;
-
-   if (R200_DEBUG & DEBUG_IOCTL)
-      fprintf(stderr, "%s src %x/%x %d,%d dst: %x/%x %d,%d sz: %dx%d\n",
-	      __FUNCTION__, 
-	      src_pitch, src_offset, srcx, srcy,
-	      dst_pitch, dst_offset, dstx, dsty,
-	      w, h);
-
-   assert( (src_pitch & 63) == 0 );
-   assert( (dst_pitch & 63) == 0 );
-   assert( (src_offset & 1023) == 0 );
-   assert( (dst_offset & 1023) == 0 );
-   assert( w < (1<<16) );
-   assert( h < (1<<16) );
-
-   //   cmd = (drm_radeon_cmd_header_t *)r200AllocCmdBuf( rmesa, 8 * sizeof(int),
-   //						  __FUNCTION__ );
-
-
-   cmd[0].header.cmd_type = RADEON_CMD_PACKET3;
-   cmd[1].i = R200_CP_CMD_BITBLT_MULTI | (5 << 16);
-   cmd[2].i = (RADEON_GMC_SRC_PITCH_OFFSET_CNTL |
-	       RADEON_GMC_DST_PITCH_OFFSET_CNTL |
-	       RADEON_GMC_BRUSH_NONE |
-	       (color_fmt << 8) |
-	       RADEON_GMC_SRC_DATATYPE_COLOR |
-	       RADEON_ROP3_S |
-	       RADEON_DP_SRC_SOURCE_MEMORY |
-	       RADEON_GMC_CLR_CMP_CNTL_DIS |
-	       RADEON_GMC_WR_MSK_DIS );
-
-   cmd[3].i = ((src_pitch/64)<<22) | (src_offset >> 10);
-   cmd[4].i = ((dst_pitch/64)<<22) | (dst_offset >> 10);
-   cmd[5].i = (srcx << 16) | srcy;
-   cmd[6].i = (dstx << 16) | dsty; /* dst */
-   cmd[7].i = (w << 16) | h;
+	BEGIN_BATCH(3);
+	OUT_BATCH_PACKET3(R200_CP_CMD_3D_DRAW_VBUF_2, 0);
+	OUT_BATCH(R200_VF_PRIM_WALK_LIST | (vertex_count << 16) | type);
+	END_BATCH();
 }
 
-
-void r200EmitWait( r200ContextPtr rmesa, GLuint flags )
-{
-   drm_radeon_cmd_header_t *cmd;
-
-   assert( !(flags & ~(RADEON_WAIT_2D|RADEON_WAIT_3D)) );
-
-   //   cmd = (drm_radeon_cmd_header_t *)r200AllocCmdBuf( rmesa, 1 * sizeof(int),
-   //					   __FUNCTION__ );
-   cmd[0].i = 0;
-   cmd[0].wait.cmd_type = RADEON_CMD_WAIT;
-   cmd[0].wait.flags = flags;
-}
