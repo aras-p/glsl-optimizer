@@ -339,11 +339,10 @@ static void inline cs_free_reloc(void *relocs_p, int crelocs)
 {
     struct cs_reloc_legacy *relocs = relocs_p;
     int i;
-
+    if (relocs_p)
+      return;
     for (i = 0; i < crelocs; i++) {
-      struct cs_reloc_legacy *ptr = relocs[i];
-      if (ptr)
-	free(ptr->indices);
+      free(relocs[i].indices);
     }
 }
 
