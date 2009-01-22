@@ -84,6 +84,7 @@ int INTEL_DEBUG = (0);
 #define need_GL_EXT_cull_vertex
 #define need_GL_EXT_fog_coord
 #define need_GL_EXT_framebuffer_object
+#define need_GL_EXT_framebuffer_blit
 #define need_GL_EXT_multi_draw_arrays
 #define need_GL_EXT_point_parameters
 #define need_GL_EXT_secondary_color
@@ -421,8 +422,9 @@ static const struct dri_extension arb_oq_extensions[] = {
 };
 
 static const struct dri_extension ttm_extensions[] = {
-   { "GL_ARB_pixel_buffer_object",        NULL },
-   { "GL_EXT_framebuffer_object",         GL_EXT_framebuffer_object_functions },
+   { "GL_ARB_pixel_buffer_object",      NULL },
+   { "GL_EXT_framebuffer_blit",         GL_EXT_framebuffer_blit_functions },
+   { "GL_EXT_framebuffer_object",       GL_EXT_framebuffer_object_functions },
    { NULL, NULL }
 };
 
