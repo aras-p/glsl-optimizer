@@ -457,6 +457,41 @@ static void r300_delete_rs_state(struct pipe_context* pipe, void* state)
     FREE(state);
 }
 
+static void*
+        r300_create_sampler_state(struct pipe_context* pipe,
+                                  const struct pipe_sampler_state* state)
+{
+    struct r300_sampler_state* sampler = CALLOC_STRUCT(r300_sampler_state);
+
+    return (void*)sampler;
+}
+
+static void r300_bind_sampler_states(struct pipe_context* pipe,
+                                     unsigned count,
+                                     void** states)
+{
+    struct r300_context* r300 = r300_context(pipe);
+    int i = 0;
+
+    if (count > 8) {
+        return;
+    }
+
+    for (i; i < count; i++) {
+        if (r300->sampler_states[i] != states[i]) {
+            r300->sampler_states[i] = states[i];
+            r300->dirty_state |= (R300_NEW_SAMPLER << i);
+        }
+    }
+
+    r300->sampler_count = count;
+}
+
+static void r300_delete_sampler_state(struct pipe_context* pipe, void* state)
+{
+    FREE(state);
+}
+
 static void r300_set_scissor_state(struct pipe_context* pipe,
                                    const struct pipe_scissor_state* state)
 {
@@ -510,13 +545,17 @@ void r300_init_state_functions(struct r300_context* r300) {
 
     r300->context.set_blend_color = r300_set_blend_color;
 
+    r300->context.create_depth_stencil_alpha_state = r300_create_dsa_state;
+    r300->context.bind_depth_stencil_alpha_state = r300_bind_dsa_state;
+    r300->context.delete_depth_stencil_alpha_state = r300_delete_dsa_state;
+
     r300->context.create_rasterizer_state = r300_create_rs_state;
     r300->context.bind_rasterizer_state = r300_bind_rs_state;
     r300->context.delete_rasterizer_state = r300_delete_rs_state;
 
-    r300->context.create_depth_stencil_alpha_state = r300_create_dsa_state;
-    r300->context.bind_depth_stencil_alpha_state = r300_bind_dsa_state;
-    r300->context.delete_depth_stencil_alpha_state = r300_delete_dsa_state;
+    r300->context.create_sampler_state = r300_create_sampler_state;
+    r300->context.bind_sampler_states = r300_bind_sampler_states;
+    r300->context.delete_sampler_state = r300_delete_sampler_state;
 
     r300->context.set_scissor_state = r300_set_scissor_state;
 

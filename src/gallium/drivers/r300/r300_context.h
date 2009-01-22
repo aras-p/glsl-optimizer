@@ -65,17 +65,21 @@ struct r300_rs_state {
     uint32_t cull_mode;             /* R300_SU_CULL_MODE: 0x42b8 */
 };
 
+struct r300_sampler_state {
+};
+
 struct r300_scissor_state {
     uint32_t scissor_top_left;     /* R300_SC_SCISSORS_TL: 0x43e0 */
     uint32_t scissor_bottom_right; /* R300_SC_SCISSORS_BR: 0x43e4 */
 };
 
-#define R300_NEW_BLEND          0x01
-#define R300_NEW_BLEND_COLOR    0x02
-#define R300_NEW_DSA            0x04
-#define R300_NEW_RS             0x08
-#define R300_NEW_SCISSOR        0x10
-#define R300_NEW_KITCHEN_SINK   0x1f
+#define R300_NEW_BLEND          0x0001
+#define R300_NEW_BLEND_COLOR    0x0002
+#define R300_NEW_DSA            0x0004
+#define R300_NEW_RS             0x0008
+#define R300_NEW_SAMPLER        0x0010
+#define R300_NEW_SCISSOR        0x1000
+#define R300_NEW_KITCHEN_SINK   0x1fff
 
 struct r300_context {
     /* Parent class */
@@ -95,9 +99,11 @@ struct r300_context {
     struct r300_dsa_state* dsa_state;
     /* Rasterizer state. */
     struct r300_rs_state* rs_state;
+    /* Sampler states. */
+    struct r300_sampler_state* sampler_states[8];
+    int sampler_count;
     /* Scissor state. */
     struct r300_scissor_state* scissor_state;
-
     /* Bitmask of dirty state objects. */
     uint32_t dirty_state;
     /* Flag indicating whether or not the HW is dirty. */
