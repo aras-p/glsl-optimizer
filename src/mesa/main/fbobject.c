@@ -414,6 +414,8 @@ fbo_incomplete(const char *msg, int index)
 /**
  * Test if the given framebuffer object is complete and update its
  * Status field with the results.
+ * Calls the ctx->Driver.ValidateFramebuffer() function to allow the
+ * driver to make hardware-specific validation/completeness checks.
  * Also update the framebuffer's Width and Height fields if the
  * framebuffer is complete.
  */
@@ -566,15 +568,23 @@ _mesa_test_framebuffer_completeness(GLcontext *ctx, struct gl_framebuffer *fb)
       return;
    }
 
-   /*
-    * If we get here, the framebuffer is complete!
-    * Note that if ARB_framebuffer_object is supported and the attached
-    * renderbuffers/textures are different sizes, the framebuffer width/height
-    * will be set to the smallest width/height.
-    */
+   /* Provisionally set status = COMPLETE ... */
    fb->_Status = GL_FRAMEBUFFER_COMPLETE_EXT;
-   fb->Width = minWidth;
-   fb->Height = minHeight;
+
+   /* ... but the driver may say the FB is incomplete: */
+   if (ctx->Driver.ValidateFramebuffer) {
+      ctx->Driver.ValidateFramebuffer(ctx, fb);
+   }
+
+   if (fb->_Status == GL_FRAMEBUFFER_COMPLETE_EXT) {
+      /*
+       * Note that if ARB_framebuffer_object is supported and the attached
+       * renderbuffers/textures are different sizes, the framebuffer
+       * width/height will be set to the smallest width/height.
+       */
+      fb->Width = minWidth;
+      fb->Height = minHeight;
+   }
 }
 
 

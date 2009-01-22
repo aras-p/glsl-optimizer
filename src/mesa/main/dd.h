@@ -808,6 +808,8 @@ struct dd_function_table {
                          struct gl_renderbuffer_attachment *att);
    void (*FinishRenderTexture)(GLcontext *ctx,
                                struct gl_renderbuffer_attachment *att);
+   void (*ValidateFramebuffer)(GLcontext *ctx,
+                               struct gl_framebuffer *fb);
    /*@}*/
 #endif
 #if FEATURE_EXT_framebuffer_blit
