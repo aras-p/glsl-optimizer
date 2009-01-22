@@ -11,7 +11,10 @@
 #include <GL/glu.h>
 
 #if defined(__MINGW32__)
-#include <GL/mesa_wgl.h>
+#  ifndef WIN32_LEAN_AND_MEAN
+#    define WIN32_LEAN_AND_MEAN 1
+#  endif
+#  include <windows.h>
 #endif
 
 #ifdef __cplusplus
