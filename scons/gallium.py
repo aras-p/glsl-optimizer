@@ -220,8 +220,8 @@ def generate(env):
         cppdefines += [
             'WIN32',
             '_WINDOWS',
-            '_UNICODE',
-            'UNICODE',
+            #'_UNICODE',
+            #'UNICODE',
             ('_WIN32_WINNT', '0x0501'), # minimum required OS version
             ('WINVER', '0x0501'),
             # http://msdn2.microsoft.com/en-us/library/6dwk3a1z.aspx,
