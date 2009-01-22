@@ -337,11 +337,10 @@ static void inline cs_free_reloc(void *relocs_p, int crelocs)
 {
     struct cs_reloc_legacy *relocs = relocs_p;
     int i;
-    if (relocs_p)
+    if (!relocs_p)
       return;
-    for (i = 0; i < crelocs; i++) {
+    for (i = 0; i < crelocs; i++)
       free(relocs[i].indices);
-    }
 }
 
 static int cs_destroy(struct radeon_cs *cs)
