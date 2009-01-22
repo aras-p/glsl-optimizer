@@ -864,6 +864,12 @@ PUBLIC void glXSwapBuffers(Display *dpy, GLXDrawable drawable)
     GLXContext gc;
     GLXContextTag tag;
     CARD8 opcode;
+#ifdef USE_XCB
+    xcb_connection_t *c;
+#else
+    xGLXSwapBuffersReq *req;
+#endif
+
 #ifdef GLX_DIRECT_RENDERING
     __GLXDRIdrawable *pdraw = GetGLXDRIDrawable(dpy, drawable, NULL);
 
@@ -892,12 +898,10 @@ PUBLIC void glXSwapBuffers(Display *dpy, GLXDrawable drawable)
     }
 
 #ifdef USE_XCB
-    xcb_connection_t* c = XGetXCBConnection(dpy);
+    c = XGetXCBConnection(dpy);
     xcb_glx_swap_buffers(c, tag, drawable);
     xcb_flush(c);
 #else
-    xGLXSwapBuffersReq *req;
-
     /* Send the glXSwapBuffers request */
     LockDisplay(dpy);
     GetReq(GLXSwapBuffers,req);

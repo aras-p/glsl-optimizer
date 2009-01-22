@@ -807,6 +807,7 @@ _mesa_GetProgramLocalParameterdvARB(GLenum target, GLuint index,
 {
    GET_CURRENT_CONTEXT(ctx);
    GLfloat floatParams[4];
+   ASSIGN_4V(floatParams, 0.0F, 0.0F, 0.0F, 0.0F);
    _mesa_GetProgramLocalParameterfvARB(target, index, floatParams);
    if (ctx->ErrorValue == GL_NO_ERROR) {
       COPY_4V(params, floatParams);

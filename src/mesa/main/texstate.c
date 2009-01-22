@@ -517,6 +517,14 @@ update_texture_state( GLcontext *ctx )
          enableBits = texUnit->Enabled;
       }
 
+      ASSERT(texUnit->Current1D);
+      ASSERT(texUnit->Current2D);
+      ASSERT(texUnit->Current3D);
+      ASSERT(texUnit->CurrentCubeMap);
+      ASSERT(texUnit->CurrentRect);
+      ASSERT(texUnit->Current1DArray);
+      ASSERT(texUnit->Current2DArray);
+
       /* Look for the highest-priority texture target that's enabled and
        * complete.  That's the one we'll use for texturing.  If we're using
        * a fragment program we're guaranteed that bitcount(enabledBits) <= 1.

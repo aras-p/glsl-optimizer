@@ -1032,6 +1032,7 @@ add_specular(GLcontext *ctx, SWspan *span)
    ASSERT(!ctx->FragmentProgram._Current);
    ASSERT(span->arrayMask & SPAN_RGBA);
    ASSERT(swrast->_ActiveAttribMask & FRAG_BIT_COL1);
+   (void) swrast; /* silence warning */
 
    if (span->array->ChanType == GL_FLOAT) {
       if ((span->arrayAttribs & FRAG_BIT_COL0) == 0) {

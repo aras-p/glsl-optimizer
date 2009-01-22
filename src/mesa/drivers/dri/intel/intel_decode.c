@@ -37,6 +37,7 @@
 
 #include <stdio.h>
 #include <stdarg.h>
+#include <string.h>
 #include <inttypes.h>
 
 #include "intel_decode.h"
@@ -324,6 +325,474 @@ decode_3d_1c(uint32_t *data, int count, uint32_t hw_offset, int *failures)
     return 1;
 }
 
+/** Sets the string dstname to describe the destination of the PS instruction */
+static void
+i915_get_instruction_dst(uint32_t *data, int i, char *dstname, int do_mask)
+{
+    uint32_t a0 = data[i];
+    int dst_nr = (a0 >> 14) & 0xf;
+    char dstmask[8];
+    char *sat;
+
+    if (do_mask) {
+	if (((a0 >> 10) & 0xf) == 0xf) {
+	    dstmask[0] = 0;
+	} else {
+	    int dstmask_index = 0;
+
+	    dstmask[dstmask_index++] = '.';
+	    if (a0 & (1 << 10))
+		dstmask[dstmask_index++] = 'x';
+	    if (a0 & (1 << 11))
+		dstmask[dstmask_index++] = 'y';
+	    if (a0 & (1 << 12))
+		dstmask[dstmask_index++] = 'z';
+	    if (a0 & (1 << 13))
+		dstmask[dstmask_index++] = 'w';
+	    dstmask[dstmask_index++] = 0;
+	}
+
+	if (a0 & (1 << 22))
+	    sat = ".sat";
+	else
+	    sat = "";
+    } else {
+	dstmask[0] = 0;
+	sat = "";
+    }
+
+    switch ((a0 >> 19) & 0x7) {
+    case 0:
+	if (dst_nr > 15)
+	    fprintf(out, "bad destination reg R%d\n", dst_nr);
+	sprintf(dstname, "R%d%s%s", dst_nr, dstmask, sat);
+	break;
+    case 4:
+	if (dst_nr > 0)
+	    fprintf(out, "bad destination reg oC%d\n", dst_nr);
+	sprintf(dstname, "oC%s%s", dstmask, sat);
+	break;
+    case 5:
+	if (dst_nr > 0)
+	    fprintf(out, "bad destination reg oD%d\n", dst_nr);
+	sprintf(dstname, "oD%s%s",  dstmask, sat);
+	break;
+    case 6:
+	if (dst_nr > 2)
+	    fprintf(out, "bad destination reg U%d\n", dst_nr);
+	sprintf(dstname, "U%d%s%s", dst_nr, dstmask, sat);
+	break;
+    default:
+	sprintf(dstname, "RESERVED");
+	break;
+    }
+}
+
+static char *
+i915_get_channel_swizzle(uint32_t select)
+{
+    switch (select & 0x7) {
+    case 0:
+	return (select & 8) ? "-x" : "x";
+    case 1:
+	return (select & 8) ? "-y" : "y";
+    case 2:
+	return (select & 8) ? "-z" : "z";
+    case 3:
+	return (select & 8) ? "-w" : "w";
+    case 4:
+	return (select & 8) ? "-0" : "0";
+    case 5:
+	return (select & 8) ? "-1" : "1";
+    default:
+	return (select & 8) ? "-bad" : "bad";
+    }
+}
+
+static void
+i915_get_instruction_src_name(uint32_t src_type, uint32_t src_nr, char *name)
+{
+    switch (src_type) {
+    case 0:
+	sprintf(name, "R%d", src_nr);
+	if (src_nr > 15)
+	    fprintf(out, "bad src reg %s\n", name);
+	break;
+    case 1:
+	if (src_nr < 8)
+	    sprintf(name, "T%d", src_nr);
+	else if (src_nr == 8)
+	    sprintf(name, "DIFFUSE");
+	else if (src_nr == 9)
+	    sprintf(name, "SPECULAR");
+	else if (src_nr == 10)
+	    sprintf(name, "FOG");
+	else {
+	    fprintf(out, "bad src reg T%d\n", src_nr);
+	    sprintf(name, "RESERVED");
+	}
+	break;
+    case 2:
+	sprintf(name, "C%d", src_nr);
+	if (src_nr > 31)
+	    fprintf(out, "bad src reg %s\n", name);
+	break;
+    case 4:
+	sprintf(name, "oC");
+	if (src_nr > 0)
+	    fprintf(out, "bad src reg oC%d\n", src_nr);
+	break;
+    case 5:
+	sprintf(name, "oD");
+	if (src_nr > 0)
+	    fprintf(out, "bad src reg oD%d\n", src_nr);
+	break;
+    case 6:
+	sprintf(name, "U%d", src_nr);
+	if (src_nr > 2)
+	    fprintf(out, "bad src reg %s\n", name);
+	break;
+    default:
+	fprintf(out, "bad src reg type %d\n", src_type);
+	sprintf(name, "RESERVED");
+	break;
+    }
+}
+
+static void
+i915_get_instruction_src0(uint32_t *data, int i, char *srcname)
+{
+    uint32_t a0 = data[i];
+    uint32_t a1 = data[i + 1];
+    int src_nr = (a0 >> 2) & 0x1f;
+    char *swizzle_x = i915_get_channel_swizzle((a1 >> 28) & 0xf);
+    char *swizzle_y = i915_get_channel_swizzle((a1 >> 24) & 0xf);
+    char *swizzle_z = i915_get_channel_swizzle((a1 >> 20) & 0xf);
+    char *swizzle_w = i915_get_channel_swizzle((a1 >> 16) & 0xf);
+    char swizzle[100];
+
+    i915_get_instruction_src_name((a0 >> 7) & 0x7, src_nr, srcname);
+    sprintf(swizzle, ".%s%s%s%s", swizzle_x, swizzle_y, swizzle_z, swizzle_w);
+    if (strcmp(swizzle, ".xyzw") != 0)
+	strcat(srcname, swizzle);
+}
+
+static void
+i915_get_instruction_src1(uint32_t *data, int i, char *srcname)
+{
+    uint32_t a1 = data[i + 1];
+    uint32_t a2 = data[i + 2];
+    int src_nr = (a1 >> 8) & 0x1f;
+    char *swizzle_x = i915_get_channel_swizzle((a1 >> 4) & 0xf);
+    char *swizzle_y = i915_get_channel_swizzle((a1 >> 0) & 0xf);
+    char *swizzle_z = i915_get_channel_swizzle((a2 >> 28) & 0xf);
+    char *swizzle_w = i915_get_channel_swizzle((a2 >> 24) & 0xf);
+    char swizzle[100];
+
+    i915_get_instruction_src_name((a1 >> 13) & 0x7, src_nr, srcname);
+    sprintf(swizzle, ".%s%s%s%s", swizzle_x, swizzle_y, swizzle_z, swizzle_w);
+    if (strcmp(swizzle, ".xyzw") != 0)
+	strcat(srcname, swizzle);
+}
+
+static void
+i915_get_instruction_src2(uint32_t *data, int i, char *srcname)
+{
+    uint32_t a2 = data[i + 2];
+    int src_nr = (a2 >> 16) & 0x1f;
+    char *swizzle_x = i915_get_channel_swizzle((a2 >> 12) & 0xf);
+    char *swizzle_y = i915_get_channel_swizzle((a2 >> 8) & 0xf);
+    char *swizzle_z = i915_get_channel_swizzle((a2 >> 4) & 0xf);
+    char *swizzle_w = i915_get_channel_swizzle((a2 >> 0) & 0xf);
+    char swizzle[100];
+
+    i915_get_instruction_src_name((a2 >> 21) & 0x7, src_nr, srcname);
+    sprintf(swizzle, ".%s%s%s%s", swizzle_x, swizzle_y, swizzle_z, swizzle_w);
+    if (strcmp(swizzle, ".xyzw") != 0)
+	strcat(srcname, swizzle);
+}
+
+static void
+i915_get_instruction_addr(uint32_t src_type, uint32_t src_nr, char *name)
+{
+    switch (src_type) {
+    case 0:
+	sprintf(name, "R%d", src_nr);
+	if (src_nr > 15)
+	    fprintf(out, "bad src reg %s\n", name);
+	break;
+    case 1:
+	if (src_nr < 8)
+	    sprintf(name, "T%d", src_nr);
+	else if (src_nr == 8)
+	    sprintf(name, "DIFFUSE");
+	else if (src_nr == 9)
+	    sprintf(name, "SPECULAR");
+	else if (src_nr == 10)
+	    sprintf(name, "FOG");
+	else {
+	    fprintf(out, "bad src reg T%d\n", src_nr);
+	    sprintf(name, "RESERVED");
+	}
+	break;
+    case 4:
+	sprintf(name, "oC");
+	if (src_nr > 0)
+	    fprintf(out, "bad src reg oC%d\n", src_nr);
+	break;
+    case 5:
+	sprintf(name, "oD");
+	if (src_nr > 0)
+	    fprintf(out, "bad src reg oD%d\n", src_nr);
+	break;
+    default:
+	fprintf(out, "bad src reg type %d\n", src_type);
+	sprintf(name, "RESERVED");
+	break;
+    }
+}
+
+static void
+i915_decode_alu1(uint32_t *data, uint32_t hw_offset,
+		 int i, char *instr_prefix, char *op_name)
+{
+    char dst[100], src0[100];
+
+    i915_get_instruction_dst(data, i, dst, 1);
+    i915_get_instruction_src0(data, i, src0);
+
+    instr_out(data, hw_offset, i++, "%s: %s %s, %s\n", instr_prefix,
+	      op_name, dst, src0);
+    instr_out(data, hw_offset, i++, "%s\n", instr_prefix);
+    instr_out(data, hw_offset, i++, "%s\n", instr_prefix);
+}
+
+static void
+i915_decode_alu2(uint32_t *data, uint32_t hw_offset,
+		 int i, char *instr_prefix, char *op_name)
+{
+    char dst[100], src0[100], src1[100];
+
+    i915_get_instruction_dst(data, i, dst, 1);
+    i915_get_instruction_src0(data, i, src0);
+    i915_get_instruction_src1(data, i, src1);
+
+    instr_out(data, hw_offset, i++, "%s: %s %s, %s, %s\n", instr_prefix,
+	      op_name, dst, src0, src1);
+    instr_out(data, hw_offset, i++, "%s\n", instr_prefix);
+    instr_out(data, hw_offset, i++, "%s\n", instr_prefix);
+}
+
+static void
+i915_decode_alu3(uint32_t *data, uint32_t hw_offset,
+		 int i, char *instr_prefix, char *op_name)
+{
+    char dst[100], src0[100], src1[100], src2[100];
+
+    i915_get_instruction_dst(data, i, dst, 1);
+    i915_get_instruction_src0(data, i, src0);
+    i915_get_instruction_src1(data, i, src1);
+    i915_get_instruction_src2(data, i, src2);
+
+    instr_out(data, hw_offset, i++, "%s: %s %s, %s, %s, %s\n", instr_prefix,
+	      op_name, dst, src0, src1, src2);
+    instr_out(data, hw_offset, i++, "%s\n", instr_prefix);
+    instr_out(data, hw_offset, i++, "%s\n", instr_prefix);
+}
+
+static void
+i915_decode_tex(uint32_t *data, uint32_t hw_offset, int i, char *instr_prefix,
+		char *tex_name)
+{
+    uint32_t t0 = data[i];
+    uint32_t t1 = data[i + 1];
+    char dst_name[100];
+    char addr_name[100];
+    int sampler_nr;
+
+    i915_get_instruction_dst(data, i, dst_name, 0);
+    i915_get_instruction_addr((t1 >> 24) & 0x7,
+			      (t1 >> 17) & 0xf,
+			      addr_name);
+    sampler_nr = t0 & 0xf;
+
+    instr_out(data, hw_offset, i++, "%s: %s %s, S%d, %s\n", instr_prefix,
+	      tex_name, dst_name, sampler_nr, addr_name);
+    instr_out(data, hw_offset, i++, "%s\n", instr_prefix);
+    instr_out(data, hw_offset, i++, "%s\n", instr_prefix);
+}
+
+static void
+i915_decode_dcl(uint32_t *data, uint32_t hw_offset, int i, char *instr_prefix)
+{
+    uint32_t d0 = data[i];
+    char *sampletype;
+    int dcl_nr = (d0 >> 14) & 0xf;
+    char *dcl_x = d0 & (1 << 10) ? "x" : "";
+    char *dcl_y = d0 & (1 << 11) ? "y" : "";
+    char *dcl_z = d0 & (1 << 12) ? "z" : "";
+    char *dcl_w = d0 & (1 << 13) ? "w" : "";
+    char dcl_mask[10];
+
+    switch ((d0 >> 19) & 0x3) {
+    case 1:
+	sprintf(dcl_mask, ".%s%s%s%s", dcl_x, dcl_y, dcl_z, dcl_w);
+	if (strcmp(dcl_mask, ".") == 0)
+	    fprintf(out, "bad (empty) dcl mask\n");
+
+	if (dcl_nr > 10)
+	    fprintf(out, "bad T%d dcl register number\n", dcl_nr);
+	if (dcl_nr < 8) {
+	    if (strcmp(dcl_mask, ".x") != 0 &&
+		strcmp(dcl_mask, ".xy") != 0 &&
+		strcmp(dcl_mask, ".xz") != 0 &&
+		strcmp(dcl_mask, ".w") != 0 &&
+		strcmp(dcl_mask, ".xyzw") != 0) {
+		fprintf(out, "bad T%d.%s dcl mask\n", dcl_nr, dcl_mask);
+	    }
+	    instr_out(data, hw_offset, i++, "%s: DCL T%d%s\n", instr_prefix,
+		      dcl_nr, dcl_mask);
+	} else {
+	    if (strcmp(dcl_mask, ".xz") == 0)
+		fprintf(out, "errataed bad dcl mask %s\n", dcl_mask);
+	    else if (strcmp(dcl_mask, ".xw") == 0)
+		fprintf(out, "errataed bad dcl mask %s\n", dcl_mask);
+	    else if (strcmp(dcl_mask, ".xzw") == 0)
+		fprintf(out, "errataed bad dcl mask %s\n", dcl_mask);
+
+	    if (dcl_nr == 8) {
+		instr_out(data, hw_offset, i++, "%s: DCL DIFFUSE%s\n", instr_prefix,
+			  dcl_mask);
+	    } else if (dcl_nr == 9) {
+		instr_out(data, hw_offset, i++, "%s: DCL SPECULAR%s\n", instr_prefix,
+			  dcl_mask);
+	    } else if (dcl_nr == 10) {
+		instr_out(data, hw_offset, i++, "%s: DCL FOG%s\n", instr_prefix,
+			  dcl_mask);
+	    }
+	}
+	instr_out(data, hw_offset, i++, "%s\n", instr_prefix);
+	instr_out(data, hw_offset, i++, "%s\n", instr_prefix);
+	break;
+    case 3:
+	switch ((d0 >> 22) & 0x3) {
+	case 0:
+	    sampletype = "2D";
+	    break;
+	case 1:
+	    sampletype = "CUBE";
+	    break;
+	case 2:
+	    sampletype = "3D";
+	    break;
+	default:
+	    sampletype = "RESERVED";
+	    break;
+	}
+	if (dcl_nr > 15)
+	    fprintf(out, "bad S%d dcl register number\n", dcl_nr);
+	instr_out(data, hw_offset, i++, "%s: DCL S%d %s\n", instr_prefix,
+		  dcl_nr, sampletype);
+	instr_out(data, hw_offset, i++, "%s\n", instr_prefix);
+	instr_out(data, hw_offset, i++, "%s\n", instr_prefix);
+	break;
+    default:
+	instr_out(data, hw_offset, i++, "%s: DCL RESERVED%d\n", instr_prefix, dcl_nr);
+	instr_out(data, hw_offset, i++, "%s\n", instr_prefix);
+	instr_out(data, hw_offset, i++, "%s\n", instr_prefix);
+    }
+}
+
+static void
+i915_decode_instruction(uint32_t *data, uint32_t hw_offset,
+			int i, char *instr_prefix)
+{
+    switch ((data[i] >> 24) & 0x1f) {
+    case 0x0:
+	instr_out(data, hw_offset, i++, "%s: NOP\n", instr_prefix);
+	instr_out(data, hw_offset, i++, "%s\n", instr_prefix);
+	instr_out(data, hw_offset, i++, "%s\n", instr_prefix);
+	break;
+    case 0x01:
+	i915_decode_alu2(data, hw_offset, i, instr_prefix, "ADD");
+	break;
+    case 0x02:
+	i915_decode_alu1(data, hw_offset, i, instr_prefix, "MOV");
+	break;
+    case 0x03:
+	i915_decode_alu2(data, hw_offset, i, instr_prefix, "MUL");
+	break;
+    case 0x04:
+	i915_decode_alu3(data, hw_offset, i, instr_prefix, "MAD");
+	break;
+    case 0x05:
+	i915_decode_alu3(data, hw_offset, i, instr_prefix, "DP2ADD");
+	break;
+    case 0x06:
+	i915_decode_alu2(data, hw_offset, i, instr_prefix, "DP3");
+	break;
+    case 0x07:
+	i915_decode_alu2(data, hw_offset, i, instr_prefix, "DP4");
+	break;
+    case 0x08:
+	i915_decode_alu1(data, hw_offset, i, instr_prefix, "FRC");
+	break;
+    case 0x09:
+	i915_decode_alu1(data, hw_offset, i, instr_prefix, "RCP");
+	break;
+    case 0x0a:
+	i915_decode_alu1(data, hw_offset, i, instr_prefix, "RSQ");
+	break;
+    case 0x0b:
+	i915_decode_alu1(data, hw_offset, i, instr_prefix, "EXP");
+	break;
+    case 0x0c:
+	i915_decode_alu1(data, hw_offset, i, instr_prefix, "LOG");
+	break;
+    case 0x0d:
+	i915_decode_alu2(data, hw_offset, i, instr_prefix, "CMP");
+	break;
+    case 0x0e:
+	i915_decode_alu2(data, hw_offset, i, instr_prefix, "MIN");
+	break;
+    case 0x0f:
+	i915_decode_alu2(data, hw_offset, i, instr_prefix, "MAX");
+	break;
+    case 0x10:
+	i915_decode_alu1(data, hw_offset, i, instr_prefix, "FLR");
+	break;
+    case 0x11:
+	i915_decode_alu1(data, hw_offset, i, instr_prefix, "MOD");
+	break;
+    case 0x12:
+	i915_decode_alu1(data, hw_offset, i, instr_prefix, "TRC");
+	break;
+    case 0x13:
+	i915_decode_alu2(data, hw_offset, i, instr_prefix, "SGE");
+	break;
+    case 0x14:
+	i915_decode_alu2(data, hw_offset, i, instr_prefix, "SLT");
+	break;
+    case 0x15:
+	i915_decode_tex(data, hw_offset, i, instr_prefix, "TEXLD");
+	break;
+    case 0x16:
+	i915_decode_tex(data, hw_offset, i, instr_prefix, "TEXLDP");
+	break;
+    case 0x17:
+	i915_decode_tex(data, hw_offset, i, instr_prefix, "TEXLDB");
+	break;
+    case 0x19:
+	i915_decode_dcl(data, hw_offset, i, instr_prefix);
+	break;
+    default:
+	instr_out(data, hw_offset, i++, "%s: unknown\n", instr_prefix);
+	instr_out(data, hw_offset, i++, "%s\n", instr_prefix);
+	instr_out(data, hw_offset, i++, "%s\n", instr_prefix);
+	break;
+    }
+}
+
 static int
 decode_3d_1d(uint32_t *data, int count, uint32_t hw_offset, int *failures, int i830)
 {
@@ -441,8 +910,9 @@ decode_3d_1d(uint32_t *data, int count, uint32_t hw_offset, int *failures, int i
     case 0x00:
 	instr_out(data, hw_offset, 0, "3DSTATE_MAP_STATE\n");
 	len = (data[0] & 0x0000003f) + 2;
+	instr_out(data, hw_offset, 1, "mask\n");
 
-	i = 1;
+	i = 2;
 	for (map = 0; map <= 15; map++) {
 	    if (data[1] & (1 << map)) {
 		if (i + 3 >= count)
@@ -495,19 +965,22 @@ decode_3d_1d(uint32_t *data, int count, uint32_t hw_offset, int *failures, int i
 	}
 	i = 1;
 	for (instr = 0; instr < (len - 1) / 3; instr++) {
+	    char instr_prefix[10];
+
 	    if (i + 3 >= count)
-		BUFFER_FAIL(count, len, "3DSTATE_MAP_STATE");
-	    instr_out(data, hw_offset, i++, "PS%03x\n", instr);
-	    instr_out(data, hw_offset, i++, "PS%03x\n", instr);
-	    instr_out(data, hw_offset, i++, "PS%03x\n", instr);
+		BUFFER_FAIL(count, len, "3DSTATE_PIXEL_SHADER_PROGRAM");
+	    sprintf(instr_prefix, "PS%03d", instr);
+	    i915_decode_instruction(data, hw_offset, i, instr_prefix);
+	    i += 3;
 	}
 	return len;
     case 0x01:
 	if (i830)
 	    break;
 	instr_out(data, hw_offset, 0, "3DSTATE_SAMPLER_STATE\n");
+	instr_out(data, hw_offset, 1, "mask\n");
 	len = (data[0] & 0x0000003f) + 2;
-	i = 1;
+	i = 2;
 	for (sampler = 0; sampler <= 15; sampler++) {
 	    if (data[1] & (1 << sampler)) {
 		if (i + 3 >= count)

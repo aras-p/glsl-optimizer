@@ -43,22 +43,6 @@
 #include "vblank.h"
 #include "i915_drm.h"
 
-/* This block can be removed when libdrm >= 2.3.1 is required */
-
-#ifndef DRM_IOCTL_I915_FLIP
-
-#define DRM_VBLANK_FLIP 0x8000000
-
-typedef struct drm_i915_flip {
-   int pipes;
-} drm_i915_flip_t;
-
-#undef DRM_IOCTL_I915_FLIP
-#define DRM_IOCTL_I915_FLIP DRM_IOW(DRM_COMMAND_BASE + DRM_I915_FLIP, \
-				    drm_i915_flip_t)
-
-#endif
-
 #define FILE_DEBUG_FLAG DEBUG_BLIT
 
 /**
@@ -143,8 +127,7 @@ intel_get_cliprects(struct intel_context *intel,
       *num_cliprects = 1;
       *x_off = 0;
       *y_off = 0;
-   } else if (intel->front_cliprects ||
-       intel_fb->pf_active || dPriv->numBackClipRects == 0) {
+   } else if (intel->front_cliprects || dPriv->numBackClipRects == 0) {
       /* use the front clip rects */
       *cliprects = dPriv->pClipRects;
       *num_cliprects = dPriv->numClipRects;
@@ -160,76 +143,6 @@ intel_get_cliprects(struct intel_context *intel,
    }
 }
 
-static void
-intelUpdatePageFlipping(struct intel_context *intel,
-			GLint areaA, GLint areaB)
-{
-   __DRIdrawablePrivate *dPriv = intel->driDrawable;
-   struct intel_framebuffer *intel_fb = dPriv->driverPrivate;
-   GLboolean pf_active;
-   GLint pf_planes;
-
-   /* Update page flipping info */
-   pf_planes = 0;
-
-   if (areaA > 0)
-      pf_planes |= 1;
-
-   if (areaB > 0)
-      pf_planes |= 2;
-
-   intel_fb->pf_current_page = (intel->sarea->pf_current_page >>
-				(intel_fb->pf_planes & 0x2)) & 0x3;
-
-   intel_fb->pf_num_pages = 2;
-
-   pf_active = pf_planes && (pf_planes & intel->sarea->pf_active) == pf_planes;
-
-   if (INTEL_DEBUG & DEBUG_LOCK)
-      if (pf_active != intel_fb->pf_active)
-	 _mesa_printf("%s - Page flipping %sactive\n", __progname,
-		      pf_active ? "" : "in");
-
-   if (pf_active) {
-      /* Sync pages between planes if flipping on both at the same time */
-      if (pf_planes == 0x3 && pf_planes != intel_fb->pf_planes &&
-	  (intel->sarea->pf_current_page & 0x3) !=
-	  (((intel->sarea->pf_current_page) >> 2) & 0x3)) {
-	 drm_i915_flip_t flip;
-
-	 if (intel_fb->pf_current_page ==
-	     (intel->sarea->pf_current_page & 0x3)) {
-	    /* XXX: This is ugly, but emitting two flips 'in a row' can cause
-	     * lockups for unknown reasons.
-	     */
-	    intel->sarea->pf_current_page =
-	       intel->sarea->pf_current_page & 0x3;
-	    intel->sarea->pf_current_page |=
-	       ((intel_fb->pf_current_page + intel_fb->pf_num_pages - 1) %
-		intel_fb->pf_num_pages) << 2;
-
-	    flip.pipes = 0x2;
-	 } else {
-	    intel->sarea->pf_current_page =
-	       intel->sarea->pf_current_page & (0x3 << 2);
-	    intel->sarea->pf_current_page |=
-	       (intel_fb->pf_current_page + intel_fb->pf_num_pages - 1) %
-	       intel_fb->pf_num_pages;
-
-	    flip.pipes = 0x1;
-	 }
-
-	 drmCommandWrite(intel->driFd, DRM_I915_FLIP, &flip, sizeof(flip));
-      }
-
-      intel_fb->pf_planes = pf_planes;
-   }
-
-   intel_fb->pf_active = pf_active;
-   intel_flip_renderbuffers(intel_fb);
-   intel_draw_buffer(&intel->ctx, intel->ctx.DrawBuffer);
-}
-
 /**
  * This will be called whenever the currently bound window is moved/resized.
  * XXX: actually, it seems to NOT be called when the window is only moved (BP).
@@ -243,7 +156,7 @@ intelWindowMoved(struct intel_context *intel)
 
    if (!intel->intelScreen->driScrnPriv->dri2.enabled &&
        intel->intelScreen->driScrnPriv->ddx_version.minor >= 7) {
-      volatile struct drm_i915_sarea *sarea = intel->sarea;
+      volatile drm_i915_sarea_t *sarea = intel->sarea;
       drm_clip_rect_t drw_rect = { .x1 = dPriv->x, .x2 = dPriv->x + dPriv->w,
 				   .y1 = dPriv->y, .y2 = dPriv->y + dPriv->h };
       drm_clip_rect_t planeA_rect = { .x1 = sarea->planeA_x, .y1 = sarea->planeA_y,
@@ -255,8 +168,6 @@ intelWindowMoved(struct intel_context *intel)
       GLint areaA = driIntersectArea( drw_rect, planeA_rect );
       GLint areaB = driIntersectArea( drw_rect, planeB_rect );
       GLuint flags = dPriv->vblFlags;
-
-      intelUpdatePageFlipping(intel, areaA, areaB);
 
       /* Update vblank info
        */
@@ -282,7 +193,7 @@ intelWindowMoved(struct intel_context *intel)
 	    vbl.request.type |= DRM_VBLANK_SECONDARY;
 	 }
 
-	 for (i = 0; i < intel_fb->pf_num_pages; i++) {
+	 for (i = 0; i < 2; i++) {
 	    if (!intel_fb->color_rb[i] ||
 		(intel_fb->vbl_waited - intel_fb->color_rb[i]->vbl_pending) <=
 		(1<<23))
@@ -306,7 +217,7 @@ intelWindowMoved(struct intel_context *intel)
 
 	 intel_fb->vbl_waited = dPriv->vblSeq;
 
-	 for (i = 0; i < intel_fb->pf_num_pages; i++) {
+	 for (i = 0; i < 2; i++) {
 	    if (intel_fb->color_rb[i])
 	       intel_fb->color_rb[i]->vbl_pending = intel_fb->vbl_waited;
 	 }
@@ -545,176 +456,6 @@ intelClear(GLcontext *ctx, GLbitfield mask)
    }
 }
 
-
-/* Emit wait for pending flips */
-void
-intel_wait_flips(struct intel_context *intel)
-{
-   struct intel_framebuffer *intel_fb =
-      (struct intel_framebuffer *) intel->ctx.DrawBuffer;
-   struct intel_renderbuffer *intel_rb =
-      intel_get_renderbuffer(&intel_fb->Base,
-			     intel_fb->Base._ColorDrawBufferIndexes[0] ==
-			     BUFFER_FRONT_LEFT ? BUFFER_FRONT_LEFT :
-			     BUFFER_BACK_LEFT);
-
-   if (intel->intelScreen->driScrnPriv->dri2.enabled)
-      return;
-
-   if (intel_fb->Base.Name == 0 && intel_rb &&
-       intel_rb->pf_pending == intel_fb->pf_seq) {
-      GLint pf_planes = intel_fb->pf_planes;
-      BATCH_LOCALS;
-
-      /* Wait for pending flips to take effect */
-      BEGIN_BATCH(2, NO_LOOP_CLIPRECTS);
-      OUT_BATCH(pf_planes & 0x1 ? (MI_WAIT_FOR_EVENT | MI_WAIT_FOR_PLANE_A_FLIP)
-		: 0);
-      OUT_BATCH(pf_planes & 0x2 ? (MI_WAIT_FOR_EVENT | MI_WAIT_FOR_PLANE_B_FLIP)
-		: 0);
-      ADVANCE_BATCH();
-
-      intel_rb->pf_pending--;
-   }
-}
-
-
-/* Flip the front & back buffers
- */
-static GLboolean
-intelPageFlip(const __DRIdrawablePrivate * dPriv)
-{
-   struct intel_context *intel;
-   int ret;
-   struct intel_framebuffer *intel_fb = dPriv->driverPrivate;
-
-   if (INTEL_DEBUG & DEBUG_IOCTL)
-      fprintf(stderr, "%s\n", __FUNCTION__);
-
-   assert(dPriv);
-   assert(dPriv->driContextPriv);
-   assert(dPriv->driContextPriv->driverPrivate);
-
-   intel = (struct intel_context *) dPriv->driContextPriv->driverPrivate;
-
-   if (intel->intelScreen->drmMinor < 9)
-      return GL_FALSE;
-
-   intelFlush(&intel->ctx);
-
-   ret = 0;
-
-   LOCK_HARDWARE(intel);
-
-   if (dPriv->numClipRects && intel_fb->pf_active) {
-      drm_i915_flip_t flip;
-
-      flip.pipes = intel_fb->pf_planes;
-
-      ret = drmCommandWrite(intel->driFd, DRM_I915_FLIP, &flip, sizeof(flip));
-   }
-
-   UNLOCK_HARDWARE(intel);
-
-   if (ret || !intel_fb->pf_active)
-      return GL_FALSE;
-
-   if (!dPriv->numClipRects) {
-      usleep(10000);	/* throttle invisible client 10ms */
-   }
-
-   intel_fb->pf_current_page = (intel->sarea->pf_current_page >>
-				(intel_fb->pf_planes & 0x2)) & 0x3;
-
-   if (dPriv->numClipRects != 0) {
-      intel_get_renderbuffer(&intel_fb->Base, BUFFER_FRONT_LEFT)->pf_pending =
-      intel_get_renderbuffer(&intel_fb->Base, BUFFER_BACK_LEFT)->pf_pending =
-	 ++intel_fb->pf_seq;
-   }
-
-   intel_flip_renderbuffers(intel_fb);
-   intel_draw_buffer(&intel->ctx, &intel_fb->Base);
-
-   return GL_TRUE;
-}
-
-static GLboolean
-intelScheduleSwap(__DRIdrawablePrivate * dPriv, GLboolean *missed_target)
-{
-   struct intel_framebuffer *intel_fb = dPriv->driverPrivate;
-   unsigned int interval;
-   struct intel_context *intel =
-      intelScreenContext(dPriv->driScreenPriv->private);
-   const intelScreenPrivate *intelScreen = intel->intelScreen;
-   unsigned int target;
-   drm_i915_vblank_swap_t swap;
-   GLboolean ret;
-
-   if (!dPriv->vblFlags ||
-       (dPriv->vblFlags & VBLANK_FLAG_NO_IRQ) ||
-       intelScreen->drmMinor < (intel_fb->pf_active ? 9 : 6))
-      return GL_FALSE;
-
-   interval = driGetVBlankInterval(dPriv);
-
-   swap.seqtype = DRM_VBLANK_ABSOLUTE;
-
-   if (dPriv->vblFlags & VBLANK_FLAG_SYNC) {
-      swap.seqtype |= DRM_VBLANK_NEXTONMISS;
-   } else if (interval == 0)
-      return GL_FALSE;
-
-   swap.drawable = dPriv->hHWDrawable;
-   target = swap.sequence = dPriv->vblSeq + interval;
-
-   if ( dPriv->vblFlags & VBLANK_FLAG_SECONDARY ) {
-      swap.seqtype |= DRM_VBLANK_SECONDARY;
-   }
-
-   LOCK_HARDWARE(intel);
-
-   intel_batchbuffer_flush(intel->batch);
-
-   if ( intel_fb->pf_active ) {
-      swap.seqtype |= DRM_VBLANK_FLIP;
-
-      intel_fb->pf_current_page = (((intel->sarea->pf_current_page >>
-				     (intel_fb->pf_planes & 0x2)) & 0x3) + 1) %
-				  intel_fb->pf_num_pages;
-   }
-
-   if (!drmCommandWriteRead(intel->driFd, DRM_I915_VBLANK_SWAP, &swap,
-			    sizeof(swap))) {
-      dPriv->vblSeq = swap.sequence;
-      swap.sequence -= target;
-      *missed_target = swap.sequence > 0 && swap.sequence <= (1 << 23);
-
-      intel_get_renderbuffer(&intel_fb->Base, BUFFER_BACK_LEFT)->vbl_pending =
-	 intel_get_renderbuffer(&intel_fb->Base,
-				BUFFER_FRONT_LEFT)->vbl_pending =
-	 dPriv->vblSeq;
-
-      if (swap.seqtype & DRM_VBLANK_FLIP) {
-	 intel_flip_renderbuffers(intel_fb);
-	 intel_draw_buffer(&intel->ctx, intel->ctx.DrawBuffer);
-      }
-
-      ret = GL_TRUE;
-   } else {
-      if (swap.seqtype & DRM_VBLANK_FLIP) {
-	 intel_fb->pf_current_page = ((intel->sarea->pf_current_page >>
-					(intel_fb->pf_planes & 0x2)) & 0x3) %
-				     intel_fb->pf_num_pages;
-      }
-
-      ret = GL_FALSE;
-   }
-
-   UNLOCK_HARDWARE(intel);
-
-   return ret;
-}
-  
 void
 intelSwapBuffers(__DRIdrawablePrivate * dPriv)
 {
@@ -736,22 +477,22 @@ intelSwapBuffers(__DRIdrawablePrivate * dPriv)
          
 	 _mesa_notifySwapBuffers(ctx);  /* flush pending rendering comands */
 
-         if (!intelScheduleSwap(dPriv, &missed_target)) {
-	    driWaitForVBlank(dPriv, &missed_target);
+	/*
+	 * The old swapping ioctl was incredibly racy, just wait for vblank
+	 * and do the swap ourselves.
+	 */
+	 driWaitForVBlank(dPriv, &missed_target);
 
-	    /*
-	     * Update each buffer's vbl_pending so we don't get too out of
-	     * sync
-	     */
-	    intel_get_renderbuffer(&intel_fb->Base,
-				   BUFFER_BACK_LEFT)->vbl_pending = 
-		    intel_get_renderbuffer(&intel_fb->Base,
-					   BUFFER_FRONT_LEFT)->vbl_pending =
-		    dPriv->vblSeq;
-	    if (!intelPageFlip(dPriv)) {
-	       intelCopyBuffer(dPriv, NULL);
-	    }
-	 }
+	 /*
+	  * Update each buffer's vbl_pending so we don't get too out of
+	  * sync
+	  */
+	 intel_get_renderbuffer(&intel_fb->Base,
+		   		BUFFER_BACK_LEFT)->vbl_pending = dPriv->vblSeq;
+         intel_get_renderbuffer(&intel_fb->Base,
+		   		BUFFER_FRONT_LEFT)->vbl_pending = dPriv->vblSeq;
+
+	 intelCopyBuffer(dPriv, NULL);
 
 	 intel_fb->swap_count++;
 	 (*psp->systemTime->getUST) (&ust);

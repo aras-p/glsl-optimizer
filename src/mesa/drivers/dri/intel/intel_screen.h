@@ -68,7 +68,7 @@ typedef struct
 
    __DRIscreenPrivate *driScrnPriv;
 
-   volatile struct drm_i915_sarea *sarea;
+   volatile drm_i915_sarea_t *sarea;
 
    int drmMinor;
 
@@ -94,7 +94,7 @@ extern void intelUnmapScreenRegions(intelScreenPrivate * intelScreen);
 
 extern void
 intelUpdateScreenFromSAREA(intelScreenPrivate * intelScreen,
-                           struct drm_i915_sarea * sarea);
+                           drm_i915_sarea_t * sarea);
 
 extern void intelDestroyContext(__DRIcontextPrivate * driContextPriv);
 

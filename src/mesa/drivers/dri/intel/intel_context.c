@@ -886,7 +886,7 @@ intelContendedLock(struct intel_context *intel, GLuint flags)
 {
    __DRIdrawablePrivate *dPriv = intel->driDrawable;
    __DRIscreenPrivate *sPriv = intel->driScreen;
-   volatile struct drm_i915_sarea *sarea = intel->sarea;
+   volatile drm_i915_sarea_t *sarea = intel->sarea;
    int me = intel->hHWContext;
 
    drmGetLock(intel->driFd, intel->hHWContext, flags);

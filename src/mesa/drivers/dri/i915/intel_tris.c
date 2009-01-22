@@ -92,7 +92,6 @@ static void intel_start_inline(struct intel_context *intel, uint32_t prim)
    BATCH_LOCALS;
    uint32_t batch_flags = LOOP_CLIPRECTS;
 
-   intel_wait_flips(intel);
    intel->vtbl.emit_state(intel);
 
    intel->no_batch_wrap = GL_TRUE;
@@ -214,8 +213,7 @@ void intel_flush_prim(struct intel_context *intel)
       return;
 
    /* Clear the current prims out of the context state so that a batch flush
-    * flush triggered by wait_flips or emit_state doesn't loop back to
-    * flush_prim again.
+    * flush triggered by emit_state doesn't loop back to flush_prim again.
     */
    vb_bo = intel->prim.vb_bo;
    dri_bo_reference(vb_bo);
@@ -226,8 +224,6 @@ void intel_flush_prim(struct intel_context *intel)
    if (!IS_9XX(intel->intelScreen->deviceID))
       intel->prim.start_offset = ALIGN(intel->prim.start_offset, 128);
    intel->prim.flush = NULL;
-
-   intel_wait_flips(intel);
 
    intel->vtbl.emit_state(intel);
 

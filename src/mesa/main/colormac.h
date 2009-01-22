@@ -195,6 +195,10 @@ do {						\
 #define PACK_COLOR_565_REV( X, Y, Z ) \
    (((X) & 0xf8) | ((Y) & 0xe0) >> 5 | (((Y) & 0x1c) << 11) | (((Z) & 0xf8) << 5))
 
+#define PACK_COLOR_5551( R, G, B, A )					\
+   ((((R) & 0xf8) << 8) | (((G) & 0xf8) << 3) | (((B) & 0xf8) >> 2) |	\
+    ((A) ? 1 : 0))
+
 #define PACK_COLOR_1555( A, B, G, R )					\
    ((((B) & 0xf8) << 7) | (((G) & 0xf8) << 2) | (((R) & 0xf8) >> 3) |	\
     ((A) ? 0x8000 : 0))

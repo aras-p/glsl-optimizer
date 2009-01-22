@@ -163,9 +163,9 @@ void brw_wm_print_program( struct brw_wm_compile *c,
 {
    GLuint insn;
 
-   _mesa_printf("\n\n\n%s:\n", stage);
+   _mesa_printf("%s:\n", stage);
    for (insn = 0; insn < c->nr_insns; insn++)
       brw_wm_print_insn(c, &c->instruction[insn]);
-   _mesa_printf("\n\n\n");
+   _mesa_printf("\n");
 }
 

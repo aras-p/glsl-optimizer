@@ -1006,7 +1006,7 @@ void brw_vs_emit(struct brw_vs_compile *c )
    GLuint file;
 
    if (INTEL_DEBUG & DEBUG_VS) {
-      _mesa_printf("\n\n\nvs-emit:\n");
+      _mesa_printf("vs-emit:\n");
       _mesa_print_program(&c->vp->program.Base); 
       _mesa_printf("\n");
    }

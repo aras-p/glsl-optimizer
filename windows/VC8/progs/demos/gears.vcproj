@@ -2,9 +2,9 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="8.00"
-	Name="gdi"
-	ProjectGUID="{A1B24907-E196-4826-B6AF-26723629B633}"
-	RootNamespace="gdi"
+	Name="gears"
+	ProjectGUID="{3A7B0671-10F8-45D1-B012-F6D650F817CE}"
+	RootNamespace="gears"
 	>
 	<Platforms>
 		<Platform
@@ -18,7 +18,7 @@
 			Name="Debug|Win32"
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
-			ConfigurationType="2"
+			ConfigurationType="1"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC70.vsprops"
 			UseOfMFC="0"
 			ATLMinimizesCRunTimeLibraryUsage="false"
@@ -38,20 +38,15 @@
 			/>
 			<Tool
 				Name="VCMIDLTool"
-				PreprocessorDefinitions="_DEBUG"
-				MkTypLibCompatible="true"
-				SuppressStartupBanner="true"
-				TargetEnvironment="1"
-				TypeLibraryName=".\Debug/gdi.tlb"
+				TypeLibraryName=".\Debug/gears.tlb"
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="../../../../include,../../../../src/mesa,../../../../src/mesa/main,../../../../src/mesa/glapi,../../../../src/mesa/swrast,../../../../src/mesa/shader"
-				PreprocessorDefinitions="_DEBUG;WIN32;_WINDOWS;_USRDLL;GDI_EXPORTS;_DLL;BUILD_GL32;MESA_MINWARN"
+				AdditionalIncludeDirectories="../../../../include"
+				PreprocessorDefinitions="WIN32,_DEBUG,_CONSOLE"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
-				BrowseInformation="1"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
 				DebugInformationFormat="3"
@@ -71,14 +66,11 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="gdi32.lib user32.lib"
-				OutputFile="$(OutDir)\OPENGL32.dll"
-				LinkIncremental="1"
+				LinkIncremental="2"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="$(TargetDir)"
-				ModuleDefinitionFile="..\..\..\..\src\mesa\drivers\windows\gdi\mesa.def"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile="$(TargetDir)OPENGL32.pdb"
+				SubSystem="1"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -103,14 +95,14 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="if not exist ..\..\..\..\lib md ..\..\..\..\lib&#x0D;&#x0A;copy &quot;$(TargetDir)OPENGL32.LIB&quot; ..\..\..\..\lib&#x0D;&#x0A;copy &quot;$(TargetDir)OPENGL32.DLL&quot; ..\..\..\..\lib&#x0D;&#x0A;if exist ..\..\..\..\progs\demos copy &quot;$(TargetDir)OPENGL32.DLL&quot; ..\..\..\..\progs\demos&#x0D;&#x0A;"
+				CommandLine="copy &quot;$(TargetDir)gears.exe&quot; ..\..\..\..\progs\demos"
 			/>
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
-			ConfigurationType="2"
+			ConfigurationType="1"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC70.vsprops"
 			UseOfMFC="0"
 			ATLMinimizesCRunTimeLibraryUsage="false"
@@ -130,21 +122,16 @@
 			/>
 			<Tool
 				Name="VCMIDLTool"
-				PreprocessorDefinitions="NDEBUG"
-				MkTypLibCompatible="true"
-				SuppressStartupBanner="true"
-				TargetEnvironment="1"
-				TypeLibraryName=".\Release/gdi.tlb"
+				TypeLibraryName=".\Release/gears.tlb"
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
 				InlineFunctionExpansion="1"
-				AdditionalIncludeDirectories="../../main,../../../../include,../../../../src/mesa,../../../../src/mesa/main,../../../../src/mesa/glapi,../../../../src/mesa/swrast,../../../../src/mesa/shader"
-				PreprocessorDefinitions="NDEBUG;WIN32;_WINDOWS;_USRDLL;GDI_EXPORTS;_DLL;BUILD_GL32;MESA_MINWARN"
+				AdditionalIncludeDirectories="../../../../include"
+				PreprocessorDefinitions="WIN32,NDEBUG,_CONSOLE"
 				StringPooling="true"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
-				PrecompiledHeaderFile=".\Release/gdi.pch"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
 				CompileAs="0"
@@ -163,13 +150,10 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="gdi32.lib user32.lib"
-				OutputFile="$(OutDir)\OPENGL32.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="$(TargetDir)"
-				ModuleDefinitionFile="..\..\..\..\src\mesa\drivers\windows\gdi\mesa.def"
-				ProgramDatabaseFile="$(TargetDir)OPENGL32.pdb"
+				SubSystem="1"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -194,14 +178,14 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="if not exist ..\..\..\..\lib md ..\..\..\..\lib&#x0D;&#x0A;copy &quot;$(TargetDir)OPENGL32.LIB&quot; ..\..\..\..\lib&#x0D;&#x0A;copy &quot;$(TargetDir)OPENGL32.DLL&quot; ..\..\..\..\lib&#x0D;&#x0A;if exist ..\..\..\..\progs\demos copy &quot;$(TargetDir)OPENGL32.DLL&quot; ..\..\..\..\progs\demos&#x0D;&#x0A;"
+				CommandLine="copy &quot;$(TargetDir)gears.exe&quot; ..\..\..\..\progs\demos"
 			/>
 		</Configuration>
 		<Configuration
 			Name="Debug Static CRT|Win32"
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
-			ConfigurationType="2"
+			ConfigurationType="1"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC70.vsprops"
 			UseOfMFC="0"
 			ATLMinimizesCRunTimeLibraryUsage="false"
@@ -221,20 +205,15 @@
 			/>
 			<Tool
 				Name="VCMIDLTool"
-				PreprocessorDefinitions="_DEBUG"
-				MkTypLibCompatible="true"
-				SuppressStartupBanner="true"
-				TargetEnvironment="1"
-				TypeLibraryName=".\Debug/gdi.tlb"
+				TypeLibraryName=".\Debug/gears.tlb"
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="../../../../include,../../../../src/mesa,../../../../src/mesa/main,../../../../src/mesa/glapi,../../../../src/mesa/swrast,../../../../src/mesa/shader"
-				PreprocessorDefinitions="_DEBUG;WIN32;_WINDOWS;_USRDLL;GDI_EXPORTS;BUILD_GL32;MESA_MINWARN"
+				AdditionalIncludeDirectories="../../../../include"
+				PreprocessorDefinitions="WIN32,_DEBUG,_CONSOLE"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
-				BrowseInformation="1"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
 				DebugInformationFormat="3"
@@ -254,14 +233,11 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="gdi32.lib user32.lib"
-				OutputFile="$(OutDir)\OPENGL32.dll"
-				LinkIncremental="1"
+				LinkIncremental="2"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="$(TargetDir)"
-				ModuleDefinitionFile="..\..\..\..\src\mesa\drivers\windows\gdi\mesa.def"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile="$(TargetDir)OPENGL32.pdb"
+				SubSystem="1"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -286,14 +262,14 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="if not exist ..\..\..\..\lib md ..\..\..\..\lib&#x0D;&#x0A;copy &quot;$(TargetDir)OPENGL32.LIB&quot; ..\..\..\..\lib&#x0D;&#x0A;copy &quot;$(TargetDir)OPENGL32.DLL&quot; ..\..\..\..\lib&#x0D;&#x0A;if exist ..\..\..\..\progs\demos copy &quot;$(TargetDir)OPENGL32.DLL&quot; ..\..\..\..\progs\demos&#x0D;&#x0A;"
+				CommandLine="copy &quot;$(TargetDir)gears.exe&quot; ..\..\..\..\progs\demos"
 			/>
 		</Configuration>
 		<Configuration
 			Name="Release Static CRT|Win32"
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
-			ConfigurationType="2"
+			ConfigurationType="1"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC70.vsprops"
 			UseOfMFC="0"
 			ATLMinimizesCRunTimeLibraryUsage="false"
@@ -313,21 +289,16 @@
 			/>
 			<Tool
 				Name="VCMIDLTool"
-				PreprocessorDefinitions="NDEBUG"
-				MkTypLibCompatible="true"
-				SuppressStartupBanner="true"
-				TargetEnvironment="1"
-				TypeLibraryName=".\Release/gdi.tlb"
+				TypeLibraryName=".\Release/gears.tlb"
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
 				InlineFunctionExpansion="1"
-				AdditionalIncludeDirectories="../../main,../../../../include,../../../../src/mesa,../../../../src/mesa/main,../../../../src/mesa/glapi,../../../../src/mesa/swrast,../../../../src/mesa/shader"
-				PreprocessorDefinitions="NDEBUG;WIN32;_WINDOWS;_USRDLL;GDI_EXPORTS;BUILD_GL32;MESA_MINWARN"
+				AdditionalIncludeDirectories="../../../../include"
+				PreprocessorDefinitions="WIN32,NDEBUG,_CONSOLE"
 				StringPooling="true"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
-				PrecompiledHeaderFile=".\Release/gdi.pch"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
 				CompileAs="0"
@@ -346,13 +317,10 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="gdi32.lib user32.lib"
-				OutputFile="$(OutDir)\OPENGL32.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="$(TargetDir)"
-				ModuleDefinitionFile="..\..\..\..\src\mesa\drivers\windows\gdi\mesa.def"
-				ProgramDatabaseFile="$(TargetDir)OPENGL32.pdb"
+				SubSystem="1"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -377,7 +345,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="if not exist ..\..\..\..\lib md ..\..\..\..\lib&#x0D;&#x0A;copy &quot;$(TargetDir)OPENGL32.LIB&quot; ..\..\..\..\lib&#x0D;&#x0A;copy &quot;$(TargetDir)OPENGL32.DLL&quot; ..\..\..\..\lib&#x0D;&#x0A;if exist ..\..\..\..\progs\demos copy &quot;$(TargetDir)OPENGL32.DLL&quot; ..\..\..\..\progs\demos&#x0D;&#x0A;"
+				CommandLine="copy &quot;$(TargetDir)gears.exe&quot; ..\..\..\..\progs\demos"
 			/>
 		</Configuration>
 	</Configurations>
@@ -389,42 +357,46 @@
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 			>
 			<File
-				RelativePath="..\..\..\..\src\mesa\drivers\common\driverfuncs.c"
+				RelativePath="..\..\..\..\progs\demos\gears.c"
 				>
-			</File>
-			<File
-				RelativePath="..\..\..\..\src\mesa\drivers\windows\gdi\mesa.def"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\..\src\mesa\drivers\windows\gdi\wgl.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\..\src\mesa\drivers\windows\gdi\wmesa.c"
-				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug Static CRT|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release Static CRT|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+					/>
+				</FileConfiguration>
 			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl"
 			>
-			<File
-				RelativePath="..\..\..\..\src\mesa\drivers\windows\gdi\colors.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\..\src\mesa\drivers\common\driverfuncs.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\..\include\GL\wmesa.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\..\src\mesa\drivers\windows\gdi\wmesadef.h"
-				>
-			</File>
 		</Filter>
 		<Filter
 			Name="Resource Files"

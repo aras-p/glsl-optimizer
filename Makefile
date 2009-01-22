@@ -182,10 +182,10 @@ ultrix-gcc:
 
 # Rules for making release tarballs
 
-DIRECTORY = Mesa-7.3-rc2
-LIB_NAME = MesaLib-7.3-rc2
-DEMO_NAME = MesaDemos-7.3-rc2
-GLUT_NAME = MesaGLUT-7.3-rc2
+DIRECTORY = Mesa-7.3-rc3
+LIB_NAME = MesaLib-7.3-rc3
+DEMO_NAME = MesaDemos-7.3-rc3
+GLUT_NAME = MesaGLUT-7.3-rc3
 
 MAIN_FILES = \
 	$(DIRECTORY)/Makefile*						\
@@ -306,14 +306,7 @@ MAIN_FILES = \
 	$(DIRECTORY)/vms/analyze_map.com				\
 	$(DIRECTORY)/vms/xlib.opt					\
 	$(DIRECTORY)/vms/xlib_share.opt					\
-	$(DIRECTORY)/windows/VC8/mesa/mesa.sln				\
-	$(DIRECTORY)/windows/VC8/mesa/gdi/gdi.vcproj			\
-	$(DIRECTORY)/windows/VC8/mesa/glu/glu.vcproj			\
-	$(DIRECTORY)/windows/VC8/mesa/mesa/mesa.vcproj			\
-	$(DIRECTORY)/windows/VC8/mesa/osmesa/osmesa.vcproj		\
-	$(DIRECTORY)/windows/VC8/progs/progs.sln			\
-	$(DIRECTORY)/windows/VC8/progs/demos/gears.vcproj		\
-	$(DIRECTORY)/windows/VC8/progs/glut/glut.vcproj
+	$(DIRECTORY)/windows/VC8/
 
 
 DRI_FILES = \

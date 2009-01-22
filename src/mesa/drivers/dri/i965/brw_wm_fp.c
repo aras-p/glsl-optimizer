@@ -913,7 +913,7 @@ void brw_wm_pass_fp( struct brw_wm_compile *c )
    GLuint insn;
 
    if (INTEL_DEBUG & DEBUG_WM) {
-      _mesa_printf("\n\n\npre-fp:\n");
+      _mesa_printf("pre-fp:\n");
       _mesa_print_program(&fp->program.Base); 
       _mesa_printf("\n");
    }
@@ -1020,7 +1020,7 @@ void brw_wm_pass_fp( struct brw_wm_compile *c )
    }
 
    if (INTEL_DEBUG & DEBUG_WM) {
-	   _mesa_printf("\n\n\npass_fp:\n");
+	   _mesa_printf("pass_fp:\n");
 	   print_insns( c->prog_instructions, c->nr_fp_insns );
 	   _mesa_printf("\n");
    }

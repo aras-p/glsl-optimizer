@@ -341,10 +341,6 @@ _mesa_set_enable(GLcontext *ctx, GLenum cap, GLboolean state)
          ctx->Transform.CullVertexFlag = state;
          break;
       case GL_DEPTH_TEST:
-         if (state && ctx->DrawBuffer->Visual.depthBits == 0) {
-            _mesa_warning(ctx,"glEnable(GL_DEPTH_TEST) but no depth buffer");
-            return;
-         }
          if (ctx->Depth.Test == state)
             return;
          FLUSH_VERTICES(ctx, _NEW_DEPTH);

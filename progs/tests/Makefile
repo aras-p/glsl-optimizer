@@ -26,6 +26,7 @@ SOURCES = \
 	arraytexture.c \
 	blendminmax.c \
 	blendsquare.c \
+	blendxor.c \
 	bufferobj.c \
 	bug_3050.c \
 	bug_3101.c \
@@ -65,6 +66,7 @@ SOURCES = \
 	quads.c \
 	random.c \
 	readrate.c \
+	rubberband.c \
 	seccolor.c \
 	shader_api.c \
 	sharedtex.c \
