@@ -32,8 +32,10 @@ struct r300_capabilities {
     uint32_t pci_id;
     /* Chipset family */
     int family;
-    /* The number of Graphics Backend (GB) pipes */
-    int num_pipes;
+    /* The number of vertex pipes */
+    int num_vert_pipes;
+    /* The number of fragment pipes */
+    int num_frag_pipes;
     /* Whether or not TCL is physically present */
     boolean has_tcl;
     /* Whether or not this is an RV515 or newer; R500s have many features:

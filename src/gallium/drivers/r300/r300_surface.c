@@ -30,10 +30,11 @@ static void r300_surface_fill(struct pipe_context* pipe,
                               unsigned w, unsigned h,
                               unsigned color)
 {
-    struct r300_context* context = r300_context(pipe);
-    CS_LOCALS(context);
-    boolean has_tcl = FALSE;
-    boolean is_r500 = FALSE;
+    struct r300_context* r300 = r300_context(pipe);
+    CS_LOCALS(r300);
+    struct r300_capabilities* caps = r300_screen(r300->context.screen)->caps;
+    boolean has_tcl = caps->has_tcl;
+    boolean is_r500 = caps->is_r500;
     /* For the for loops. */
     int i;
     /* Emit a shitload of state, and then draw a point to clear the buffer.
@@ -224,20 +225,8 @@ static void r300_surface_fill(struct pipe_context* pipe,
                 (5 << R300_VF_MAX_VTX_NUM_SHIFT));
     }
 
-    if (CHIP_FAMILY_RV515)
-        vap_cntl |= (2 << R300_PVS_NUM_FPUS_SHIFT);
-    else if ((CHIP_FAMILY_RV530) ||
-              (CHIP_FAMILY_RV560) ||
-              (CHIP_FAMILY_RV570))
-        vap_cntl |= (5 << R300_PVS_NUM_FPUS_SHIFT);
-    else if ((CHIP_FAMILY_RV410) ||
-              (CHIP_FAMILY_R420))
-        vap_cntl |= (6 << R300_PVS_NUM_FPUS_SHIFT);
-    else if ((CHIP_FAMILY_R520) ||
-              (CHIP_FAMILY_R580))
-        vap_cntl |= (8 << R300_PVS_NUM_FPUS_SHIFT);
-    else
-        vap_cntl |= (4 << R300_PVS_NUM_FPUS_SHIFT);
+    vap_cntl |= (caps->num_vert_pipes <<
+                 R300_PVS_NUM_FPUS_SHIFT);
 
     OUT_CS_REG(R300_VAP_CNTL, vap_cntl);
 
@@ -361,6 +350,8 @@ static void r300_surface_fill(struct pipe_context* pipe,
     OUT_CS_REG(RADEON_WAIT_UNTIL, (1 << 15) | (1 << 17) | (1 << 18));
 
     FLUSH_CS;
+
+    r300->dirty_state = R300_NEW_KITCHEN_SINK;
 }
 
 void r300_init_surface_functions(struct r300_context* r300)
