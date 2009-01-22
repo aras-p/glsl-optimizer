@@ -571,7 +571,10 @@ _mesa_test_framebuffer_completeness(GLcontext *ctx, struct gl_framebuffer *fb)
    /* Provisionally set status = COMPLETE ... */
    fb->_Status = GL_FRAMEBUFFER_COMPLETE_EXT;
 
-   /* ... but the driver may say the FB is incomplete: */
+   /* ... but the driver may say the FB is incomplete.
+    * Drivers will most likely set the status to GL_FRAMEBUFFER_UNSUPPORTED
+    * if anything.
+    */
    if (ctx->Driver.ValidateFramebuffer) {
       ctx->Driver.ValidateFramebuffer(ctx, fb);
       if (fb->_Status != GL_FRAMEBUFFER_COMPLETE_EXT) {
@@ -876,6 +879,16 @@ _mesa_RenderbufferStorageEXT(GLenum target, GLenum internalFormat,
     * points???
     */
 }
+
+
+void GLAPIENTRY
+_mesa_RenderbufferStorageMultisample(GLenum target, GLsizei samples,
+                                     GLenum internalformat,
+                                     GLsizei width, GLsizei height)
+{
+
+}
+
 
 
 void GLAPIENTRY
