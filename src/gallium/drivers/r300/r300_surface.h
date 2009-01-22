@@ -31,4 +31,7 @@
 #include "r300_context.h"
 #include "r300_cs.h"
 
+/* XXX integrate this into r300_reg */
+#include "r300_fragprog.h"
+
 #endif /* R300_SURFACE_H */

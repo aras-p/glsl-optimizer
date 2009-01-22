@@ -34,6 +34,8 @@ static void r300_surface_fill(struct pipe_context* pipe,
     CS_LOCALS(context);
     boolean has_tcl = FALSE;
     boolean is_r500 = FALSE;
+    /* For the for loops. */
+    int i;
     /* Emit a shitload of state, and then draw a point to clear the buffer.
      * XXX it goes without saying that this needs to be cleaned up and
      * shifted around to work with the rest of the driver's state handling.
@@ -239,6 +241,7 @@ static void r300_surface_fill(struct pipe_context* pipe,
 
     OUT_CS_REG(R300_VAP_CNTL, vap_cntl);
 
+    /* XXX unbreak this
     if (has_tcl) {
         OUT_CS_REG_SEQ(R300_VAP_PVS_CODE_CNTL_0, 3);
         OUT_CS((0 << R300_PVS_FIRST_INST_SHIFT) |
@@ -252,7 +255,7 @@ static void r300_surface_fill(struct pipe_context* pipe,
         OUT_CS_REG(RADEON_WAIT_UNTIL, (1 << 15) | (1 << 28));
         OUT_CS_REG(R300_SC_SCREENDOOR, 0x00FFFFFF);
         OUT_CS_REG(R300_VAP_PVS_STATE_FLUSH_REG, 0x1);
-        OUT_CS_REG(R300_VAP_PVS_UPLOAD_ADDRESS, 0x0);
+        OUT_CS_REG(R300_VAP_PVS_VECTOR_INDX_REG, R300_PVS_CODE_START);
 
         OUT_CS_REG(R300_VAP_PVS_UPLOAD_DATA, PVS_OP_DST_OPERAND(VE_ADD, GL_FALSE, GL_FALSE,
                                         0, 0xf, PVS_DST_REG_OUT));
@@ -278,32 +281,17 @@ static void r300_surface_fill(struct pipe_context* pipe,
                                      PVS_SRC_SELECT_FORCE_0,
                                      PVS_SRC_REG_INPUT, VSF_FLAG_NONE));
         OUT_CS_REG(R300_VAP_PVS_UPLOAD_DATA, 0x0);
-    }
-    /* Do the actual emit. */
-    if (rrb) {
-        cbpitch = (rrb->pitch / rrb->cpp);
-        if (rrb->cpp == 4)
-            cbpitch |= R300_COLOR_FORMAT_ARGB8888;
-        else
-            cbpitch |= R300_COLOR_FORMAT_RGB565;
-
-        if (rrb->bo->flags & RADEON_BO_FLAGS_MACRO_TILE){
-            cbpitch |= R300_COLOR_TILE_ENABLE;
-        }
-    }
+    } */
 
     /* TODO in bufmgr */
-    cp_wait(r300, R300_WAIT_3D | R300_WAIT_3D_CLEAN);
-    end_3d(rmesa);
+    /* XXX this should be split off, also figure out WTF with the numbers */
+    OUT_CS_REG(RADEON_WAIT_UNTIL, (1 << 15) | (1 << 17) | (1 << 18));
+    /* XXX might have to switch to 2D */
 
-    if (flags & CLEARBUFFER_COLOR) {
-        assert(rrb != 0);
-        BEGIN_BATCH_NO_AUTOSTATE(4);
-        OUT_BATCH_REGSEQ(R300_RB3D_COLOROFFSET0, 1);
-        OUT_BATCH_RELOC(0, rrb->bo, 0, 0, RADEON_GEM_DOMAIN_VRAM, 0);
-        OUT_BATCH_REGVAL(R300_RB3D_COLORPITCH0, cbpitch);
-        END_BATCH();
-    }
+    OUT_CS_REG_SEQ(R300_RB3D_COLOROFFSET0, 1);
+    OUT_CS_RELOC(0, dest->buffer, 0, RADEON_GEM_DOMAIN_VRAM, 0);
+    /* XXX this needs more TLC (or TCL, as it were) */
+    OUT_CS_REG(R300_RB3D_COLORPITCH0, R300_COLOR_FORMAT_ARGB8888);
 #if 0
     if (flags & (CLEARBUFFER_DEPTH | CLEARBUFFER_STENCIL)) {
         assert(rrbd != 0);
@@ -369,7 +357,10 @@ static void r300_surface_fill(struct pipe_context* pipe,
     OUT_CS_32F(color);
     OUT_CS_32F(color);
 
-    /* XXX cp_wait(rmesa, R300_WAIT_3D | R300_WAIT_3D_CLEAN); */
+    /* XXX this should be split off, also figure out WTF with the numbers */
+    OUT_CS_REG(RADEON_WAIT_UNTIL, (1 << 15) | (1 << 17) | (1 << 18));
+
+    FLUSH_CS;
 }
 
 void r300_init_surface_functions(struct r300_context* r300)

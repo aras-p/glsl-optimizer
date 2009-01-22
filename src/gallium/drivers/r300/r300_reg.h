@@ -3252,6 +3252,18 @@ enum {
  */
 #define R300_CP_CMD_BITBLT_MULTI	0xC0009B00
 
+/* XXX Corbin's stuff from radeon and r200 */
+
+#define RADEON_WAIT_UNTIL                   0x1720
+#       define RADEON_WAIT_CRTC_PFLIP       (1 << 0)
+#       define RADEON_WAIT_2D_IDLECLEAN     (1 << 16)
+#       define RADEON_WAIT_3D_IDLECLEAN     (1 << 17)
+#       define RADEON_WAIT_HOST_IDLECLEAN   (1 << 18)
+
+#define RADEON_CP_PACKET3                           0xC0000000
+
+#define R200_3D_DRAW_IMMD_2      0xC0003500
+
 #endif /* _R300_REG_H */
 
 /* *INDENT-ON* */
