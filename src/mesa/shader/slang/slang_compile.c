@@ -2794,6 +2794,8 @@ _slang_compile(GLcontext *ctx, struct gl_shader *shader)
    _mesa_print_program(shader->Program);
 #endif
 
+   shader->CompileStatus = success;
+
    return success;
 }
 

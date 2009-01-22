@@ -1357,7 +1357,10 @@ _mesa_compile_shader(GLcontext *ctx, GLuint shaderObj)
    if (!sh)
       return;
 
-   sh->CompileStatus = _slang_compile(ctx, sh);
+   /* this call will set the sh->CompileStatus field to indicate if
+    * compilation was successful.
+    */
+   (void) _slang_compile(ctx, sh);
 }
 
 
