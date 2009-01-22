@@ -35,6 +35,7 @@
 #include "buffers.h"
 #include "context.h"
 #include "depthstencil.h"
+#include "macros.h"
 #include "mtypes.h"
 #include "fbobject.h"
 #include "framebuffer.h"
@@ -418,14 +419,14 @@ _mesa_ResizeBuffersMESA( void )
 /**
  * Examine all the framebuffer's renderbuffers to update the Width/Height
  * fields of the framebuffer.  If we have renderbuffers with different
- * sizes, set the framebuffer's width and height to zero.
+ * sizes, set the framebuffer's width and height to the min size.
  * Note: this is only intended for user-created framebuffers, not
  * window-system framebuffes.
  */
 static void
-update_framebuffer_size(struct gl_framebuffer *fb)
+update_framebuffer_size(GLcontext *ctx, struct gl_framebuffer *fb)
 {
-   GLboolean haveSize = GL_FALSE;
+   GLuint minWidth = ~0, minHeight = ~0;
    GLuint i;
 
    /* user-created framebuffers only */
@@ -435,20 +436,18 @@ update_framebuffer_size(struct gl_framebuffer *fb)
       struct gl_renderbuffer_attachment *att = &fb->Attachment[i];
       const struct gl_renderbuffer *rb = att->Renderbuffer;
       if (rb) {
-         if (haveSize) {
-            if (rb->Width != fb->Width && rb->Height != fb->Height) {
-               /* size mismatch! */
-               fb->Width = 0;
-               fb->Height = 0;
-               return;
-            }
-         }
-         else {
-            fb->Width = rb->Width;
-            fb->Height = rb->Height;
-            haveSize = GL_TRUE;
-         }
+         minWidth = MIN2(minWidth, rb->Width);
+         minHeight = MIN2(minHeight, rb->Height);
       }
+   }
+
+   if (minWidth != ~0) {
+      fb->Width = minWidth;
+      fb->Height = minHeight;
+   }
+   else {
+      fb->Width = 0;
+      fb->Height = 0;
    }
 }
 
@@ -469,7 +468,7 @@ _mesa_update_draw_buffer_bounds(GLcontext *ctx)
 
    if (buffer->Name) {
       /* user-created framebuffer size depends on the renderbuffers */
-      update_framebuffer_size(buffer);
+      update_framebuffer_size(ctx, buffer);
    }
 
    buffer->_Xmin = 0;
