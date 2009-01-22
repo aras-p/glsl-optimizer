@@ -135,7 +135,7 @@ static int cs_write_reloc(struct radeon_cs *cs,
             relocs[i].base.read_domain |= read_domain;
             relocs[i].base.write_domain |= write_domain;
             /* save indice */
-            relocs[i].cindices += 1;
+            relocs[i].cindices++;
             indices = (uint32_t*)realloc(relocs[i].indices,
                                          relocs[i].cindices * 4);
             if (indices == NULL) {
@@ -335,16 +335,21 @@ static int cs_emit(struct radeon_cs *cs)
     return 0;
 }
 
-static void inline cs_free_reloc(void *relocs_p)
+static void inline cs_free_reloc(void *relocs_p, int crelocs)
 {
     struct cs_reloc_legacy *relocs = relocs_p;
-    if (relocs)
-        free(relocs->indices);
+    int i;
+
+    for (i = 0; i < crelocs; i++) {
+      struct cs_reloc_legacy *ptr = relocs[i];
+      if (ptr)
+	free(ptr->indices);
+    }
 }
 
 static int cs_destroy(struct radeon_cs *cs)
 {
-    cs_free_reloc(cs->relocs);
+    cs_free_reloc(cs->relocs, cs->crelocs);
     free(cs->relocs);
     free(cs->packets);
     free(cs);
@@ -353,7 +358,7 @@ static int cs_destroy(struct radeon_cs *cs)
 
 static int cs_erase(struct radeon_cs *cs)
 {
-    cs_free_reloc(cs->relocs);
+    cs_free_reloc(cs->relocs, cs->crelocs);
     free(cs->relocs);
     cs->relocs_total_size = 0;
     cs->relocs = NULL;
