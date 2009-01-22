@@ -190,10 +190,14 @@ static int legacy_is_pending(struct radeon_bo *bo)
         if (bo_legacy->pnext) {
             bo_legacy->pnext->pprev = bo_legacy->pprev;
         }
+	assert(bo_legacy->is_pending <= bo->cref);
         while (bo_legacy->is_pending--) {
-            radeon_bo_unref(bo);
+	    bo = radeon_bo_unref(bo);
+	    if (!bo)
+	      break;
         }
-        bo_legacy->is_pending = 0;
+	if (bo)
+	  bo_legacy->is_pending = 0;
         boml->cpendings--;
         return 0;
     }
@@ -580,7 +584,7 @@ void radeon_bo_legacy_pending(struct radeon_bo *bo, uint32_t pending)
     struct bo_legacy *bo_legacy = (struct bo_legacy*)bo;
 
     bo_legacy->pending = pending;
-    bo_legacy->is_pending += 1;
+    bo_legacy->is_pending++;
     /* add to pending list */
     radeon_bo_ref(bo);
     if (bo_legacy->is_pending > 1) {
