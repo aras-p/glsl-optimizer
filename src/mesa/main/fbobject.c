@@ -616,6 +616,11 @@ _mesa_BindRenderbufferEXT(GLenum target, GLuint renderbuffer)
          newRb = NULL;
       }
       if (!newRb) {
+         if (ctx->Extensions.ARB_framebuffer_object) {
+            /* All RB IDs must be Gen'd */
+	    _mesa_error(ctx, GL_INVALID_OPERATION, "glBindRenderbuffer(buffer)");
+	    return;
+         }
 	 /* create new renderbuffer object */
 	 newRb = ctx->Driver.NewRenderbuffer(ctx, renderbuffer);
 	 if (!newRb) {
@@ -1018,6 +1023,11 @@ _mesa_BindFramebufferEXT(GLenum target, GLuint framebuffer)
          newFb = NULL;
       }
       if (!newFb) {
+         if (ctx->Extensions.ARB_framebuffer_object) {
+            /* All FBO IDs must be Gen'd */
+	    _mesa_error(ctx, GL_INVALID_OPERATION, "glBindFramebuffer(buffer)");
+	    return;
+         }
 	 /* create new framebuffer object */
 	 newFb = ctx->Driver.NewFramebuffer(ctx, framebuffer);
 	 if (!newFb) {
