@@ -72,4 +72,8 @@ extern void
 _mesa_print_parameter_list(const struct gl_program_parameter_list *list);
 
 
+extern void
+_mesa_write_shader_to_file(const struct gl_shader *shader);
+
+
 #endif /* PROG_PRINT_H */
