@@ -234,8 +234,6 @@ static int cs_process_relocs(struct radeon_cs *cs)
                         relocs[i].base.bo, soffset, eoffset);
                 return r;
             }
-	    fprintf(stderr, "validated %p [0x%08X, 0x%08X]\n",
-		    relocs[i].base.bo, soffset, eoffset);
             cs->packets[relocs[i].indices[j]] += soffset;
             if (cs->packets[relocs[i].indices[j]] >= eoffset) {
                 radeon_bo_debug(relocs[i].base.bo, 12);

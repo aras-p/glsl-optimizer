@@ -363,15 +363,8 @@ static void tex_emit(GLcontext *ctx, struct radeon_state_atom *atom)
    radeonTexObj *t = r200->state.texture.unit[i].texobj;
 
    BEGIN_BATCH_NO_AUTOSTATE(dwords);
-   fprintf(stderr,"atom state is %x, %x %x %x %x %x\n", atom->cmd[0],
-	   atom->cmd[1],
-	   atom->cmd[2],
-	   atom->cmd[3],
-	   atom->cmd[4],
-	   atom->cmd[5]);
    OUT_BATCH_TABLE(atom->cmd, 10);
    if (t && !t->image_override) {
-     fprintf(stderr,"emitting reloc for %d\n", i);
      OUT_BATCH_RELOC(t->tile_bits, t->mt->bo, 0,
 		     RADEON_GEM_DOMAIN_VRAM, 0, 0);
    } else if (!t) {

@@ -50,7 +50,7 @@ void rcommonBeginBatch(radeonContextPtr rmesa,
  */
 #define OUT_BATCH_RELOC(data, bo, offset, rd, wd, flags) \
 	do { \
-        if (offset) {\
+        if (0 && offset) {\
             fprintf(stderr, "(%s:%s:%d) offset : %d\n",\
             __FILE__, __FUNCTION__, __LINE__, offset);\
         }\
