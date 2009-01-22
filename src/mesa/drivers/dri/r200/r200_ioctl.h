@@ -53,8 +53,7 @@ extern void r200EmitVbufPrim( r200ContextPtr rmesa,
 				GLuint primitive,
 				GLuint vertex_nr );
 
-extern void r200FlushElts(r200ContextPtr rmesa);
-
+extern void r200FlushElts(GLcontext *ctx);
 
 extern GLushort *r200AllocEltsOpenEnded( r200ContextPtr rmesa,
 					   GLuint primitive,
@@ -113,8 +112,8 @@ void r200SetUpAtomList( r200ContextPtr rmesa );
  */
 #define R200_NEWPRIM( rmesa )			\
 do {						\
-   if ( rmesa->dma.flush )			\
-      rmesa->dma.flush( rmesa->radeon.glCtx );	\
+   if ( rmesa->swtcl.flush )			\
+      rmesa->swtcl.flush( rmesa->radeon.glCtx );	\
 } while (0)
 
 /* Can accomodate several state changes and primitive changes without
@@ -154,7 +153,7 @@ static INLINE int R200_DB_STATECHANGE(
  */
 #define R200_FIREVERTICES( rmesa )			\
 do {							\
-   if ( rmesa->store.cmd_used || rmesa->dma.flush ) {	\
+   if ( rmesa->swtcl.flush || rmesa->tcl.flush ) {	\
       r200Flush( rmesa->radeon.glCtx );			\
    }							\
 } while (0)

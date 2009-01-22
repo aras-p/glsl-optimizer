@@ -155,7 +155,7 @@ static GLushort *r200AllocElts( r200ContextPtr rmesa, GLuint nr )
    }
    else {
       if (rmesa->tcl.flush)
-	 rmesa->tcl.flush( rmesa );
+	 rmesa->tcl.flush( rmesa->radeon.glCtx );
 
       rcommonEnsureCmdBufSpace(rmesa, AOS_BUFSZ(rmesa->tcl.nr_aos_components));
 
@@ -564,10 +564,10 @@ static void transition_to_hwtnl( GLcontext *ctx )
 
    tnl->Driver.NotifyMaterialChange = r200UpdateMaterial;
 
-   if ( rmesa->dma.flush )			
-      rmesa->dma.flush( rmesa->radeon.glCtx );	
+   if ( rmesa->swtcl.flush )			
+      rmesa->swtcl.flush( rmesa->radeon.glCtx );	
 
-   rmesa->dma.flush = NULL;
+   rmesa->swtcl.flush = NULL;
    
    R200_STATECHANGE( rmesa, vap );
    rmesa->hw.vap.cmd[VAP_SE_VAP_CNTL] |= R200_VAP_TCL_ENABLE;

@@ -548,7 +548,7 @@ struct r200_tcl_info {
    int elt_dma_offset; /** Offset into this buffer object, in bytes */
    int elt_used;
 
-   void (*flush) (r200ContextPtr);
+   void (*flush) (GLcontext *ctx);
    struct radeon_dma_region vertex_data[15];
 };
 
@@ -606,7 +606,7 @@ struct r200_swtcl_info {
    GLboolean needproj;
 
    struct radeon_bo *bo;
-   void (*flush) (r200ContextPtr);
+   void (*flush) (GLcontext *ctx);
 };
 
 

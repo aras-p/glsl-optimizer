@@ -277,11 +277,11 @@ void r200Flush( GLcontext *ctx )
    if (R200_DEBUG & DEBUG_IOCTL)
       fprintf(stderr, "%s\n", __FUNCTION__);
 
-   if (rmesa->dma.flush)
-      rmesa->dma.flush( ctx );
+   if (rmesa->swtcl.flush)
+      rmesa->swtcl.flush( ctx );
 
    if (rmesa->tcl.flush)
-      rmesa->tcl.flush( rmesa );
+      rmesa->tcl.flush( ctx );
 
    r200EmitState( rmesa );
 

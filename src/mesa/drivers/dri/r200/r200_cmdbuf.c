@@ -272,8 +272,9 @@ static void r200FireEB(r200ContextPtr rmesa, int vertex_count, int type)
 	}
 }
 
-void r200FlushElts( r200ContextPtr rmesa )
+void r200FlushElts(GLcontext *ctx)
 {
+  r200ContextPtr rmesa = R200_CONTEXT(ctx);
    int dwords;
    int nr, elt_used = rmesa->tcl.elt_used;
 

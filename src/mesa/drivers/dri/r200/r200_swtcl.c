@@ -210,10 +210,6 @@ static void r200RenderStart( GLcontext *ctx )
    r200ContextPtr rmesa = R200_CONTEXT( ctx );
 
    r200SetVertexFormat( ctx );
-
-   if (rmesa->dma.flush != 0 && 
-       rmesa->dma.flush != flush_last_swtcl_prim)
-      rmesa->dma.flush( ctx );
 }
 
 
@@ -283,7 +279,7 @@ static void flush_last_swtcl_prim(GLcontext *ctx)
    if (R200_DEBUG & DEBUG_IOCTL)
       fprintf(stderr, "%s\n", __FUNCTION__);
 
-   rmesa->dma.flush = NULL;
+   rmesa->swtcl.flush = NULL;
 
    radeon_bo_unmap(rmesa->swtcl.bo);
    rcommonEnsureCmdBufSpace(rmesa,
