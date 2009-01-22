@@ -786,10 +786,21 @@ _mesa_base_fbo_format(GLcontext *ctx, GLenum internalFormat)
 }
 
 
-void GLAPIENTRY
-_mesa_RenderbufferStorageEXT(GLenum target, GLenum internalFormat,
-                             GLsizei width, GLsizei height)
+/** sentinal value, see below */
+#define NO_SAMPLES 1000
+
+
+/**
+ * Helper function used by _mesa_RenderbufferStorageEXT() and 
+ * _mesa_RenderbufferStorageMultisample().
+ * samples will be NO_SAMPLES if called by _mesa_RenderbufferStorageEXT().
+ */
+static void
+renderbuffer_storage(GLenum target, GLenum internalFormat,
+                     GLsizei width, GLsizei height, GLsizei samples)
 {
+   const char *func = samples == NO_SAMPLES ?
+      "glRenderbufferStorage" : "RenderbufferStorageMultisample";
    struct gl_renderbuffer *rb;
    GLenum baseFormat;
    GET_CURRENT_CONTEXT(ctx);
@@ -797,31 +808,38 @@ _mesa_RenderbufferStorageEXT(GLenum target, GLenum internalFormat,
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (target != GL_RENDERBUFFER_EXT) {
-      _mesa_error(ctx, GL_INVALID_ENUM, "glRenderbufferStorageEXT(target)");
+      _mesa_error(ctx, GL_INVALID_ENUM, "%s(target)", func);
       return;
    }
 
    baseFormat = _mesa_base_fbo_format(ctx, internalFormat);
    if (baseFormat == 0) {
-      _mesa_error(ctx, GL_INVALID_ENUM,
-                  "glRenderbufferStorageEXT(internalFormat)");
+      _mesa_error(ctx, GL_INVALID_ENUM, "%s(internalFormat)", func);
       return;
    }
 
    if (width < 1 || width > (GLsizei) ctx->Const.MaxRenderbufferSize) {
-      _mesa_error(ctx, GL_INVALID_VALUE, "glRenderbufferStorageEXT(width)");
+      _mesa_error(ctx, GL_INVALID_VALUE, "%s(width)", func);
       return;
    }
 
    if (height < 1 || height > (GLsizei) ctx->Const.MaxRenderbufferSize) {
-      _mesa_error(ctx, GL_INVALID_VALUE, "glRenderbufferStorageEXT(height)");
+      _mesa_error(ctx, GL_INVALID_VALUE, "%s(height)", func);
+      return;
+   }
+
+   if (samples == NO_SAMPLES) {
+      /* NumSamples == 0 indicates non-multisampling */
+      samples = 0;
+   }
+   else if (samples > ctx->Const.MaxSamples) {
+      _mesa_error(ctx, GL_INVALID_VALUE, "%s(samples)", func);
       return;
    }
 
    rb = ctx->CurrentRenderbuffer;
-
    if (!rb) {
-      _mesa_error(ctx, GL_INVALID_OPERATION, "glRenderbufferStorageEXT");
+      _mesa_error(ctx, GL_INVALID_OPERATION, func);
       return;
    }
 
@@ -843,6 +861,7 @@ _mesa_RenderbufferStorageEXT(GLenum target, GLenum internalFormat,
    rb->IndexBits =
    rb->DepthBits =
    rb->StencilBits = 0;
+   rb->NumSamples = samples;
 
    /* Now allocate the storage */
    ASSERT(rb->AllocStorage);
@@ -869,7 +888,8 @@ _mesa_RenderbufferStorageEXT(GLenum target, GLenum internalFormat,
       rb->AlphaBits =
       rb->IndexBits =
       rb->DepthBits =
-      rb->StencilBits = 0;
+      rb->StencilBits =
+      rb->NumSamples = 0;
    }
 
    /*
@@ -882,11 +902,19 @@ _mesa_RenderbufferStorageEXT(GLenum target, GLenum internalFormat,
 
 
 void GLAPIENTRY
+_mesa_RenderbufferStorageEXT(GLenum target, GLenum internalFormat,
+                             GLsizei width, GLsizei height)
+{
+   renderbuffer_storage(target, internalFormat, width, height, NO_SAMPLES);
+}
+
+
+void GLAPIENTRY
 _mesa_RenderbufferStorageMultisample(GLenum target, GLsizei samples,
-                                     GLenum internalformat,
+                                     GLenum internalFormat,
                                      GLsizei width, GLsizei height)
 {
-
+   renderbuffer_storage(target, internalFormat, width, height, samples);
 }
 
 
