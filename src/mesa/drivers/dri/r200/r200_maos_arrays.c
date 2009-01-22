@@ -223,7 +223,7 @@ void r200EmitArrays( GLcontext *ctx, GLubyte *vimap_rev )
    GLuint count = VB->Count;
    GLuint i, emitsize;
 
-   fprintf(stderr,"emit arrays\n");
+   //   fprintf(stderr,"emit arrays\n");
    for ( i = 0; i < 15; i++ ) {
       GLubyte attrib = vimap_rev[i];
       if (attrib != 255) {
