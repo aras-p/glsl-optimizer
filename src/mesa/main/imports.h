@@ -773,6 +773,9 @@ _mesa_snprintf( char *str, size_t size, const char *fmt, ... );
 extern void
 _mesa_printf( const char *fmtString, ... );
 
+extern void
+_mesa_fprintf( FILE *f, const char *fmtString, ... );
+
 extern int 
 _mesa_vsprintf( char *str, const char *fmt, va_list args );
 
