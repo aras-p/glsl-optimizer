@@ -11,7 +11,6 @@ DRIVER_SOURCES = \
 	intel_buffers.c \
 	intel_context.c \
 	intel_decode.c \
-	intel_depthstencil.c \
 	intel_fbo.c \
 	intel_mipmap_tree.c \
 	intel_regions.c \

@@ -577,9 +577,6 @@ intel_draw_buffer(GLcontext * ctx, struct gl_framebuffer *fb)
       return;
    }
 
-   if (fb->Name)
-      intel_validate_paired_depth_stencil(ctx, fb);
-
    /*
     * How many color buffers are we drawing into?
     */

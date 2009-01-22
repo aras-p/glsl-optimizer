@@ -69,10 +69,6 @@ intel_delete_renderbuffer(struct gl_renderbuffer *rb)
 
    ASSERT(irb);
 
-   if (irb->PairedStencil || irb->PairedDepth) {
-      intel_unpair_depth_stencil(ctx, irb);
-   }
-
    if (irb->span_cache != NULL)
       _mesa_free(irb->span_cache);
 
