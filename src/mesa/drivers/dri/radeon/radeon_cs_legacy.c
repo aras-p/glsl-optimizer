@@ -335,11 +335,15 @@ static int cs_emit(struct radeon_cs *cs)
     return 0;
 }
 
+static void inline cs_free_reloc(void *relocs_p)
+{
+  struct cs_reloc_legacy *relocs = relocs_p;
+  free(relocs->indices);
+}
+
 static int cs_destroy(struct radeon_cs *cs)
 {
-    struct cs_reloc_legacy *relocs;
-    relocs = cs->relocs;
-    free(relocs->indices);
+    cs_free_reloc(cs->relocs);
     free(cs->relocs);
     free(cs->packets);
     free(cs);
@@ -348,6 +352,7 @@ static int cs_destroy(struct radeon_cs *cs)
 
 static int cs_erase(struct radeon_cs *cs)
 {
+    cs_free_reloc(cs->relocs);
     free(cs->relocs);
     cs->relocs_total_size = 0;
     cs->relocs = NULL;
