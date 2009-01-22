@@ -317,11 +317,19 @@ static int cs_emit(struct radeon_cs *cs)
         cmd.boxes = (drm_clip_rect_t *) csm->ctx->pClipRects;
     }
 
-    dump_cmdbuf(cs);
+    //    dump_cmdbuf(cs);
 
     r = drmCommandWrite(cs->csm->fd, DRM_RADEON_CMDBUF, &cmd, sizeof(cmd));
     if (r) {
         return r;
+    }
+    if (!IS_R300_CLASS(csm->ctx->radeonScreen)) {
+	drm_radeon_irq_emit_t emit_cmd;
+	emit_cmd.irq_seq = &csm->pending_age;
+	r = drmCommandWrite(cs->csm->fd, DRM_RADEON_IRQ_EMIT, &emit_cmd, sizeof(emit_cmd));
+	if (r) {
+		return r;
+	}
     }
     cs_set_age(cs);
     return 0;

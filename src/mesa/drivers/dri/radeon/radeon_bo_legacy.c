@@ -163,14 +163,17 @@ static void legacy_get_current_age(struct bo_manager_legacy *boml)
     drm_radeon_getparam_t gp;
     int r;
 
-    gp.param = RADEON_PARAM_LAST_CLEAR;
-    gp.value = (int *)&boml->current_age;
-    r = drmCommandWriteRead(boml->base.fd, DRM_RADEON_GETPARAM,
-                            &gp, sizeof(gp));
-    if (r) {
-        fprintf(stderr, "%s: drmRadeonGetParam: %d\n", __FUNCTION__, r);
-        exit(1);
-    }
+    if (IS_R300_CLASS(boml->screen)) {
+    	gp.param = RADEON_PARAM_LAST_CLEAR;
+    	gp.value = (int *)&boml->current_age;
+    	r = drmCommandWriteRead(boml->base.fd, DRM_RADEON_GETPARAM,
+       	                     &gp, sizeof(gp));
+    	if (r) {
+       	 fprintf(stderr, "%s: drmRadeonGetParam: %d\n", __FUNCTION__, r);
+         exit(1);
+       }
+    } else
+	boml->current_age = boml->screen->scratch[3];
 }
 
 static int legacy_is_pending(struct radeon_bo *bo)
