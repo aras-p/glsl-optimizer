@@ -244,11 +244,10 @@ GLboolean amd_context_create(const __GLcontextModes *visual,
 
     if (GL_TRUE) {
         fprintf(stderr, "Creating r300 context...");
-        /* XXX today we pretend to be a very lame R300    vvvvvv */
-        pipe = r300_create_context(NULL,
-                                   amd_context->pipe_winsys,
-                                   amd_create_r300_winsys(amd_context->drm_fd,
-                                                          0x4144));
+        pipe =
+            r300_create_context(NULL,
+                                amd_context->pipe_winsys,
+                                amd_create_r300_winsys(amd_context->drm_fd));
     } else {
         pipe = amd_create_softpipe(amd_context);
     }

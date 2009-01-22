@@ -26,10 +26,9 @@
  * Radeons. */
 
 /* Parse a PCI ID and fill an r300_capabilities struct with information. */
-void r300_parse_chipset(uint32_t pci_id, struct r300_capabilities* caps)
+void r300_parse_chipset(struct r300_capabilities* caps)
 {
     /* Reasonable defaults */
-    caps->pci_id = pci_id;
     caps->has_tcl = TRUE;
     caps->is_r500 = FALSE;
     caps->num_vert_pipes = 4;
@@ -38,7 +37,7 @@ void r300_parse_chipset(uint32_t pci_id, struct r300_capabilities* caps)
     /* Note: These are not ordered by PCI ID. I leave that task to GCC,
      * which will perform the ordering while collating jump tables. Instead,
      * I've tried to group them according to capabilities and age. */
-    switch (pci_id) {
+    switch (caps->pci_id) {
         case 0x4144:
             caps->family = CHIP_FAMILY_R300;
             break;

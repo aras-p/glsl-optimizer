@@ -28,6 +28,7 @@
 #include "util/u_memory.h"
 
 #include "r300_chipset.h"
+#include "r300_winsys.h"
 
 struct r300_screen {
     /* Parent class */
@@ -43,6 +44,7 @@ static struct r300_screen* r300_screen(struct pipe_screen* screen) {
 }
 
 /* Creates a new r300 screen. */
-struct pipe_screen* r300_create_screen(struct pipe_winsys* winsys, uint pci_id);
+struct pipe_screen* r300_create_screen(struct pipe_winsys* winsys,
+                                       struct r300_winsys* r300_winsys);
 
 #endif /* R300_SCREEN_H */

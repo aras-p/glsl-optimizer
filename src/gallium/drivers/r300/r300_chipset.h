@@ -100,6 +100,6 @@ static const char* chip_families[] = {
     "RV570"
 };
 
-void r300_parse_chipset(uint32_t pci_id, struct r300_capabilities* caps);
+void r300_parse_chipset(struct r300_capabilities* caps);
 
 #endif /* R300_CHIPSET_H */

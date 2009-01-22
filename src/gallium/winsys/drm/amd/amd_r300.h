@@ -20,10 +20,15 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
  * USE OR OTHER DEALINGS IN THE SOFTWARE. */
 
+/* XXX WTF is this! I shouldn't have to include those first three! FUCK! */
+#include <stdint.h>
+#include <stdlib.h>
+#include "drm.h"
+#include "radeon_drm.h"
 #include "radeon_cs.h"
 
 #include "r300_winsys.h"
 
 #include "amd_buffer.h"
 
-struct r300_winsys* amd_create_r300_winsys(int fd, uint32_t pci_id);
+struct r300_winsys* amd_create_r300_winsys(int fd);

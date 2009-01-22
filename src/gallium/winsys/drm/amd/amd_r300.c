@@ -43,13 +43,45 @@ static void amd_r300_flush_cs(struct radeon_cs* cs)
     radeon_cs_erase(cs);
 }
 
-struct r300_winsys* amd_create_r300_winsys(int fd, uint32_t pci_id)
+/* Helper function to do the ioctls needed for setup and init. */
+static void do_ioctls(struct r300_winsys* winsys, int fd)
+{
+    drm_radeon_getparam_t gp;
+    uint32_t target;
+    int retval;
+
+    /* XXX is this cast safe? */
+    gp.value = (int*)&target;
+
+    /* First, get PCI ID */
+    gp.param = RADEON_PARAM_DEVICE_ID;
+    retval = drmCommandWriteRead(fd, DRM_RADEON_GETPARAM, &gp, sizeof(gp));
+    if (retval) {
+        fprintf(stderr, "%s: Failed to get PCI ID, error number %d",
+                __FUNCTION__, retval);
+        exit(1);
+    }
+    winsys->pci_id = target;
+
+    /* Then, get the number of pixel pipes */
+    gp.param = RADEON_PARAM_NUM_GB_PIPES;
+    retval = drmCommandWriteRead(fd, DRM_RADEON_GETPARAM, &gp, sizeof(gp));
+    if (retval) {
+        fprintf(stderr, "%s: Failed to get GB pipe count, error number %d",
+                __FUNCTION__, retval);
+        exit(1);
+    }
+    winsys->gb_pipes = target;
+
+}
+
+struct r300_winsys* amd_create_r300_winsys(int fd)
 {
     struct r300_winsys* winsys = calloc(1, sizeof(struct r300_winsys));
 
-    struct radeon_cs_manager* csm = radeon_cs_manager_gem_ctor(fd);
+    do_ioctls(winsys, fd);
 
-    winsys->pci_id = pci_id;
+    struct radeon_cs_manager* csm = radeon_cs_manager_gem_ctor(fd);
 
     winsys->cs = radeon_cs_create(csm, 1024 * 64 / 4);
 

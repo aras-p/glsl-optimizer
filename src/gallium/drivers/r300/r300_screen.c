@@ -149,7 +149,8 @@ static void r300_destroy_screen(struct pipe_screen* pscreen)
     FREE(r300screen);
 }
 
-struct pipe_screen* r300_create_screen(struct pipe_winsys* winsys, uint32_t pci_id)
+struct pipe_screen* r300_create_screen(struct pipe_winsys* winsys,
+                                       struct r300_winsys* r300_winsys)
 {
     struct r300_screen* r300screen = CALLOC_STRUCT(r300_screen);
     struct r300_capabilities* caps = CALLOC_STRUCT(r300_capabilities);
@@ -157,7 +158,10 @@ struct pipe_screen* r300_create_screen(struct pipe_winsys* winsys, uint32_t pci_
     if (!r300screen || !caps)
         return NULL;
 
-    r300_parse_chipset(pci_id, caps);
+    caps->pci_id = r300_winsys->pci_id;
+    caps->num_frag_pipes = r300_winsys->gb_pipes;
+
+    r300_parse_chipset(caps);
 
     r300screen->caps = caps;
     r300screen->screen.winsys = winsys;
