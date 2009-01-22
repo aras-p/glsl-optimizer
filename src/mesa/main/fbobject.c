@@ -3,6 +3,7 @@
  * Version:  7.1
  *
  * Copyright (C) 1999-2008  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2009  VMware, Inc.  All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -24,6 +25,8 @@
 
 
 /*
+ * GL_EXT/ARB_framebuffer_object extensions
+ *
  * Authors:
  *   Brian Paul
  */
@@ -34,6 +37,7 @@
 #include "fbobject.h"
 #include "framebuffer.h"
 #include "hash.h"
+#include "macros.h"
 #include "mipmap.h"
 #include "renderbuffer.h"
 #include "state.h"
@@ -416,9 +420,9 @@ fbo_incomplete(const char *msg, int index)
 void
 _mesa_test_framebuffer_completeness(GLcontext *ctx, struct gl_framebuffer *fb)
 {
-   GLuint numImages, width = 0, height = 0;
-   GLenum intFormat = GL_NONE;
-   GLuint w = 0, h = 0;
+   GLuint numImages;
+   GLenum intFormat = GL_NONE; /* color buffers' internal format */
+   GLuint minWidth = ~0, minHeight = ~0, maxWidth = 0, maxHeight = 0;
    GLint i;
    GLuint j;
 
@@ -428,11 +432,17 @@ _mesa_test_framebuffer_completeness(GLcontext *ctx, struct gl_framebuffer *fb)
    fb->Width = 0;
    fb->Height = 0;
 
-   /* Start at -2 to more easily loop over all attachment points */
+   /* Start at -2 to more easily loop over all attachment points.
+    *  -2: depth buffer
+    *  -1: stencil buffer
+    * >=0: color buffer
+    */
    for (i = -2; i < (GLint) ctx->Const.MaxColorAttachments; i++) {
       struct gl_renderbuffer_attachment *att;
       GLenum f;
 
+      /* check for attachment completeness
+       */
       if (i == -2) {
          att = &fb->Attachment[BUFFER_DEPTH];
          test_attachment_completeness(ctx, GL_DEPTH, att);
@@ -461,11 +471,15 @@ _mesa_test_framebuffer_completeness(GLcontext *ctx, struct gl_framebuffer *fb)
          }
       }
 
+      /* get width, height, format of the renderbuffer/texture
+       */
       if (att->Type == GL_TEXTURE) {
          const struct gl_texture_image *texImg
             = att->Texture->Image[att->CubeMapFace][att->TextureLevel];
-         w = texImg->Width;
-         h = texImg->Height;
+         minWidth = MIN2(minWidth, texImg->Width);
+         maxWidth = MAX2(maxWidth, texImg->Width);
+         minHeight = MIN2(minHeight, texImg->Height);
+         maxHeight = MAX2(maxHeight, texImg->Height);
          f = texImg->_BaseFormat;
          numImages++;
          if (f != GL_RGB && f != GL_RGBA && f != GL_DEPTH_COMPONENT
@@ -476,8 +490,10 @@ _mesa_test_framebuffer_completeness(GLcontext *ctx, struct gl_framebuffer *fb)
          }
       }
       else if (att->Type == GL_RENDERBUFFER_EXT) {
-         w = att->Renderbuffer->Width;
-         h = att->Renderbuffer->Height;
+         minWidth = MIN2(minWidth, att->Renderbuffer->Width);
+         maxWidth = MAX2(minWidth, att->Renderbuffer->Width);
+         minHeight = MIN2(minHeight, att->Renderbuffer->Height);
+         maxHeight = MAX2(minHeight, att->Renderbuffer->Height);
          f = att->Renderbuffer->InternalFormat;
          numImages++;
       }
@@ -486,24 +502,27 @@ _mesa_test_framebuffer_completeness(GLcontext *ctx, struct gl_framebuffer *fb)
          continue;
       }
 
+      /* Error-check width, height, format
+       */
       if (numImages == 1) {
-         /* set required width, height and format */
-         width = w;
-         height = h;
+         /* save format */
          if (i >= 0)
             intFormat = f;
       }
       else {
-         /* check that width, height, format are same */
-         if (w != width || h != height) {
-            fb->_Status = GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS_EXT;
-            fbo_incomplete("width or height mismatch", -1);
-            return;
-         }
-         if (intFormat != GL_NONE && f != intFormat) {
-            fb->_Status = GL_FRAMEBUFFER_INCOMPLETE_FORMATS_EXT;
-            fbo_incomplete("format mismatch", -1);
-            return;
+         if (!ctx->Extensions.ARB_framebuffer_object) {
+            /* check that width, height, format are same */
+            if (minWidth != maxWidth || minHeight != maxHeight) {
+               fb->_Status = GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS_EXT;
+               fbo_incomplete("width or height mismatch", -1);
+               return;
+            }
+            /* check that all color buffer have same format */
+            if (intFormat != GL_NONE && f != intFormat) {
+               fb->_Status = GL_FRAMEBUFFER_INCOMPLETE_FORMATS_EXT;
+               fbo_incomplete("format mismatch", -1);
+               return;
+            }
          }
       }
    }
@@ -544,10 +563,13 @@ _mesa_test_framebuffer_completeness(GLcontext *ctx, struct gl_framebuffer *fb)
 
    /*
     * If we get here, the framebuffer is complete!
+    * Note that if ARB_framebuffer_object is supported and the attached
+    * renderbuffers/textures are different sizes, the framebuffer width/height
+    * will be set to the smallest width/height.
     */
    fb->_Status = GL_FRAMEBUFFER_COMPLETE_EXT;
-   fb->Width = w;
-   fb->Height = h;
+   fb->Width = minWidth;
+   fb->Height = minHeight;
 }
 
 
