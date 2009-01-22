@@ -46,49 +46,6 @@
 
 #define FILE_DEBUG_FLAG DEBUG_FBO
 
-#define INTEL_RB_CLASS 0x12345678
-
-
-/* XXX FBO: move this to intel_context.h (inlined) */
-/**
- * Return a gl_renderbuffer ptr casted to intel_renderbuffer.
- * NULL will be returned if the rb isn't really an intel_renderbuffer.
- * This is determiend by checking the ClassID.
- */
-struct intel_renderbuffer *
-intel_renderbuffer(struct gl_renderbuffer *rb)
-{
-   struct intel_renderbuffer *irb = (struct intel_renderbuffer *) rb;
-   if (irb && irb->Base.ClassID == INTEL_RB_CLASS) {
-      /*_mesa_warning(NULL, "Returning non-intel Rb\n");*/
-      return irb;
-   }
-   else
-      return NULL;
-}
-
-
-struct intel_renderbuffer *
-intel_get_renderbuffer(struct gl_framebuffer *fb, int attIndex)
-{
-   if (attIndex >= 0)
-      return intel_renderbuffer(fb->Attachment[attIndex].Renderbuffer);
-   else
-      return NULL;
-}
-
-struct intel_region *
-intel_get_rb_region(struct gl_framebuffer *fb, GLuint attIndex)
-{
-   struct intel_renderbuffer *irb = intel_get_renderbuffer(fb, attIndex);
-
-   if (irb)
-      return irb->region;
-   else
-      return NULL;
-}
-
-
 
 /**
  * Create a new framebuffer object.
