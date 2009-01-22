@@ -93,6 +93,13 @@ static void bo_legacy_tobj_destroy(void *data, driTextureObject *t)
     bo_legacy->validated = 0;
 }
 
+static void inline clean_handles(struct bo_manager_legacy *bom)
+{
+  while (bom->cfree_handles > 0 &&
+	 !bom->free_handles[bom->cfree_handles - 1])
+    bom->cfree_handles--;
+
+}
 static int legacy_new_handle(struct bo_manager_legacy *bom, uint32_t *handle)
 {
     uint32_t tmp;
@@ -103,12 +110,7 @@ static int legacy_new_handle(struct bo_manager_legacy *bom, uint32_t *handle)
     }
     if (bom->cfree_handles > 0) {
         tmp = bom->free_handles[--bom->cfree_handles];
-        while (!bom->free_handles[bom->cfree_handles - 1]) {
-            bom->cfree_handles--;
-            if (bom->cfree_handles <= 0) {
-                bom->cfree_handles = 0;
-            }
-        }
+	clean_handles(bom);
     } else {
         bom->cfree_handles = 0;
         tmp = bom->nhandle++;
@@ -135,12 +137,7 @@ static int legacy_free_handle(struct bo_manager_legacy *bom, uint32_t handle)
                 bom->free_handles[i] = 0;
             }
         }
-        while (!bom->free_handles[bom->cfree_handles - 1]) {
-            bom->cfree_handles--;
-            if (bom->cfree_handles <= 0) {
-                bom->cfree_handles = 0;
-            }
-        }
+        clean_handles(bom);
         return 0;
     }
     if (bom->cfree_handles < bom->nfree_handles) {
