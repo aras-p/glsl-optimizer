@@ -1487,11 +1487,16 @@ _mesa_init_renderbuffer(struct gl_renderbuffer *rb, GLuint name)
    rb->InternalFormat = GL_NONE;
    rb->_ActualFormat = GL_NONE;
    rb->_BaseFormat = GL_NONE;
-   rb->DataType = GL_NONE;
+
+   rb->ComponentType = GL_UNSIGNED_NORMALIZED; /* ARB_fbo */
+   rb->ColorEncoding = GL_LINEAR; /* ARB_fbo */
+
    rb->RedBits = rb->GreenBits = rb->BlueBits = rb->AlphaBits = 0;
    rb->IndexBits = 0;
    rb->DepthBits = 0;
    rb->StencilBits = 0;
+
+   rb->DataType = GL_NONE;
    rb->Data = NULL;
 
    /* Point back to ourself so that we don't have to check for Wrapped==NULL

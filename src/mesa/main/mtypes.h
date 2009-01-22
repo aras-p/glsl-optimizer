@@ -2260,7 +2260,9 @@ struct gl_renderbuffer
    GLenum _ActualFormat;  /**< The driver-chosen format */
    GLenum _BaseFormat;    /**< Either GL_RGB, GL_RGBA, GL_DEPTH_COMPONENT or
                                GL_STENCIL_INDEX. */
-   GLenum DataType;      /**< Type of values passed to the Get/Put functions */
+   GLenum ColorEncoding; /**< GL_LINEAR or GL_SRGB */
+   GLenum ComponentType; /**< GL_FLOAT, GL_INT, GL_UNSIGNED_INT,
+                              GL_UNSIGNED_NORMALIZED or GL_INDEX */
    GLubyte RedBits;      /**< Bits of red per pixel */
    GLubyte GreenBits;
    GLubyte BlueBits;
@@ -2268,6 +2270,8 @@ struct gl_renderbuffer
    GLubyte IndexBits;
    GLubyte DepthBits;
    GLubyte StencilBits;
+
+   GLenum DataType;      /**< Type of values passed to the Get/Put functions */
    GLvoid *Data;        /**< This may not be used by some kinds of RBs */
 
    /* Used to wrap one renderbuffer around another: */
