@@ -2796,6 +2796,10 @@ _slang_compile(GLcontext *ctx, struct gl_shader *shader)
 
    shader->CompileStatus = success;
 
+#if 0
+   _mesa_write_shader_to_file(shader);
+#endif
+
    return success;
 }
 
