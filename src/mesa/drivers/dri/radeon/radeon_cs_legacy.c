@@ -337,7 +337,9 @@ static int cs_emit(struct radeon_cs *cs)
 
 static int cs_destroy(struct radeon_cs *cs)
 {
-    free(cs->relocs->indices);
+    struct cs_reloc_legacy *relocs;
+    relocs = cs->relocs;
+    free(relocs->indices);
     free(cs->relocs);
     free(cs->packets);
     free(cs);
