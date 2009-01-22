@@ -627,14 +627,6 @@ intel_draw_buffer(GLcontext * ctx, struct gl_framebuffer *fb)
       }
    }
 
-   /* Update culling direction which changes depending on the
-    * orientation of the buffer:
-    */
-   if (ctx->Driver.FrontFace)
-      ctx->Driver.FrontFace(ctx, ctx->Polygon.FrontFace);
-   else
-      ctx->NewState |= _NEW_POLYGON;
-
    if (!colorRegions[0]) {
       FALLBACK(intel, INTEL_FALLBACK_DRAW_BUFFER, GL_TRUE);
    }
@@ -666,20 +658,13 @@ intel_draw_buffer(GLcontext * ctx, struct gl_framebuffer *fb)
    /***
     *** Stencil buffer
     *** This can only be hardware accelerated if we're using a
-    *** combined DEPTH_STENCIL buffer (for now anyway).
+    *** combined DEPTH_STENCIL buffer.
     ***/
    if (fb->_StencilBuffer && fb->_StencilBuffer->Wrapped) {
       irbStencil = intel_renderbuffer(fb->_StencilBuffer->Wrapped);
       if (irbStencil && irbStencil->region) {
          ASSERT(irbStencil->Base._ActualFormat == GL_DEPTH24_STENCIL8_EXT);
          FALLBACK(intel, INTEL_FALLBACK_STENCIL_BUFFER, GL_FALSE);
-         /* need to re-compute stencil hw state */
-	 if (ctx->Driver.Enable != NULL)
-	    ctx->Driver.Enable(ctx, GL_STENCIL_TEST, ctx->Stencil.Enabled);
-	 else
-	    ctx->NewState |= _NEW_STENCIL;
-         if (!depthRegion)
-            depthRegion = irbStencil->region;
       }
       else {
          FALLBACK(intel, INTEL_FALLBACK_STENCIL_BUFFER, GL_TRUE);
@@ -688,30 +673,23 @@ intel_draw_buffer(GLcontext * ctx, struct gl_framebuffer *fb)
    else {
       /* XXX FBO: instead of FALSE, pass ctx->Stencil.Enabled ??? */
       FALLBACK(intel, INTEL_FALLBACK_STENCIL_BUFFER, GL_FALSE);
-      /* need to re-compute stencil hw state */
-      if (ctx->Driver.Enable != NULL)
-	 ctx->Driver.Enable(ctx, GL_STENCIL_TEST, ctx->Stencil.Enabled);
-      else
-	 ctx->NewState |= _NEW_STENCIL;
    }
 
    /*
-    * Update depth test state
+    * Update depth and stencil test state
     */
    if (ctx->Driver.Enable) {
-      if (ctx->Depth.Test && fb->Visual.depthBits > 0) {
-	 ctx->Driver.Enable(ctx, GL_DEPTH_TEST, GL_TRUE);
-      }
-      else {
-	 ctx->Driver.Enable(ctx, GL_DEPTH_TEST, GL_FALSE);
-      }
+      ctx->Driver.Enable(ctx, GL_DEPTH_TEST,
+                         (ctx->Depth.Test && fb->Visual.depthBits > 0));
+      ctx->Driver.Enable(ctx, GL_STENCIL_TEST,
+                         (ctx->Stencil.Enabled && fb->Visual.stencilBits > 0));
    }
    else {
-      ctx->NewState |= _NEW_DEPTH;
+      ctx->NewState |= (_NEW_DEPTH | _NEW_STENCIL);
    }
 
    intel->vtbl.set_draw_region(intel, colorRegions, depthRegion, 
-	fb->_NumColorDrawBuffers);
+                               fb->_NumColorDrawBuffers);
 
    /* update viewport since it depends on window size */
    if (ctx->Driver.Viewport) {
@@ -733,6 +711,14 @@ intel_draw_buffer(GLcontext * ctx, struct gl_framebuffer *fb)
       ctx->Driver.DepthRange(ctx,
 			     ctx->Viewport.Near,
 			     ctx->Viewport.Far);
+
+   /* Update culling direction which changes depending on the
+    * orientation of the buffer:
+    */
+   if (ctx->Driver.FrontFace)
+      ctx->Driver.FrontFace(ctx, ctx->Polygon.FrontFace);
+   else
+      ctx->NewState |= _NEW_POLYGON;
 }
 
 
