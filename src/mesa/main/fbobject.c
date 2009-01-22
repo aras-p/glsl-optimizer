@@ -441,6 +441,11 @@ _mesa_test_framebuffer_completeness(GLcontext *ctx, struct gl_framebuffer *fb)
       struct gl_renderbuffer_attachment *att;
       GLenum f;
 
+      /*
+       * XXX for ARB_fbo, only check color buffers that are named by
+       * GL_READ_BUFFER and GL_DRAW_BUFFERi.
+       */
+
       /* check for attachment completeness
        */
       if (i == -2) {
@@ -615,12 +620,13 @@ _mesa_BindRenderbufferEXT(GLenum target, GLuint renderbuffer)
          /* ID was reserved, but no real renderbuffer object made yet */
          newRb = NULL;
       }
+      else if (!newRb && ctx->Extensions.ARB_framebuffer_object) {
+         /* All RB IDs must be Gen'd */
+         _mesa_error(ctx, GL_INVALID_OPERATION, "glBindRenderbuffer(buffer)");
+         return;
+      }
+
       if (!newRb) {
-         if (ctx->Extensions.ARB_framebuffer_object) {
-            /* All RB IDs must be Gen'd */
-	    _mesa_error(ctx, GL_INVALID_OPERATION, "glBindRenderbuffer(buffer)");
-	    return;
-         }
 	 /* create new renderbuffer object */
 	 newRb = ctx->Driver.NewRenderbuffer(ctx, renderbuffer);
 	 if (!newRb) {
@@ -973,6 +979,13 @@ _mesa_BindFramebufferEXT(GLenum target, GLuint framebuffer)
    GLboolean bindReadBuf, bindDrawBuf;
    GET_CURRENT_CONTEXT(ctx);
 
+#ifdef DEBUG
+   if (ctx->Extensions.ARB_framebuffer_object) {
+      ASSERT(ctx->Extensions.EXT_framebuffer_object);
+      ASSERT(ctx->Extensions.EXT_framebuffer_blit);
+   }
+#endif
+
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (!ctx->Extensions.EXT_framebuffer_object) {
@@ -1022,12 +1035,13 @@ _mesa_BindFramebufferEXT(GLenum target, GLuint framebuffer)
          /* ID was reserved, but no real framebuffer object made yet */
          newFb = NULL;
       }
+      else if (!newFb && ctx->Extensions.ARB_framebuffer_object) {
+         /* All FBO IDs must be Gen'd */
+         _mesa_error(ctx, GL_INVALID_OPERATION, "glBindFramebuffer(buffer)");
+         return;
+      }
+
       if (!newFb) {
-         if (ctx->Extensions.ARB_framebuffer_object) {
-            /* All FBO IDs must be Gen'd */
-	    _mesa_error(ctx, GL_INVALID_OPERATION, "glBindFramebuffer(buffer)");
-	    return;
-         }
 	 /* create new framebuffer object */
 	 newFb = ctx->Driver.NewFramebuffer(ctx, framebuffer);
 	 if (!newFb) {
@@ -1571,6 +1585,79 @@ _mesa_GetFramebufferAttachmentParameterivEXT(GLenum target, GLenum attachment,
       else {
 	 _mesa_error(ctx, GL_INVALID_ENUM,
 		     "glGetFramebufferAttachmentParameterivEXT(pname)");
+      }
+      return;
+   case GL_FRAMEBUFFER_ATTACHMENT_COLOR_ENCODING:
+      if (!ctx->Extensions.ARB_framebuffer_object) {
+         _mesa_error(ctx, GL_INVALID_ENUM,
+                     "glGetFramebufferAttachmentParameterivEXT(pname)");
+      }
+      else {
+         *params = att->Renderbuffer->ColorEncoding;
+      }
+      return;
+   case GL_FRAMEBUFFER_ATTACHMENT_COMPONENT_TYPE:
+      if (!ctx->Extensions.ARB_framebuffer_object) {
+         _mesa_error(ctx, GL_INVALID_ENUM,
+                     "glGetFramebufferAttachmentParameterivEXT(pname)");
+         return;
+      }
+      else {
+         *params = att->Renderbuffer->ComponentType;
+      }
+      return;
+   case GL_FRAMEBUFFER_ATTACHMENT_RED_SIZE:
+      if (!ctx->Extensions.ARB_framebuffer_object) {
+         _mesa_error(ctx, GL_INVALID_ENUM,
+                     "glGetFramebufferAttachmentParameterivEXT(pname)");
+      }
+      else {
+         *params = att->Renderbuffer->RedBits;
+      }
+      return;
+   case GL_FRAMEBUFFER_ATTACHMENT_GREEN_SIZE:
+      if (!ctx->Extensions.ARB_framebuffer_object) {
+         _mesa_error(ctx, GL_INVALID_ENUM,
+                     "glGetFramebufferAttachmentParameterivEXT(pname)");
+      }
+      else {
+         *params = att->Renderbuffer->GreenBits;
+      }
+      return;
+   case GL_FRAMEBUFFER_ATTACHMENT_BLUE_SIZE:
+      if (!ctx->Extensions.ARB_framebuffer_object) {
+         _mesa_error(ctx, GL_INVALID_ENUM,
+                     "glGetFramebufferAttachmentParameterivEXT(pname)");
+      }
+      else {
+         *params = att->Renderbuffer->BlueBits;
+      }
+      return;
+   case GL_FRAMEBUFFER_ATTACHMENT_ALPHA_SIZE:
+      if (!ctx->Extensions.ARB_framebuffer_object) {
+         _mesa_error(ctx, GL_INVALID_ENUM,
+                     "glGetFramebufferAttachmentParameterivEXT(pname)");
+      }
+      else {
+         *params = att->Renderbuffer->AlphaBits;
+      }
+      return;
+   case GL_FRAMEBUFFER_ATTACHMENT_DEPTH_SIZE:
+      if (!ctx->Extensions.ARB_framebuffer_object) {
+         _mesa_error(ctx, GL_INVALID_ENUM,
+                     "glGetFramebufferAttachmentParameterivEXT(pname)");
+      }
+      else {
+         *params = att->Renderbuffer->DepthBits;
+      }
+      return;
+   case GL_FRAMEBUFFER_ATTACHMENT_STENCIL_SIZE:
+      if (!ctx->Extensions.ARB_framebuffer_object) {
+         _mesa_error(ctx, GL_INVALID_ENUM,
+                     "glGetFramebufferAttachmentParameterivEXT(pname)");
+      }
+      else {
+         *params = att->Renderbuffer->StencilBits;
       }
       return;
    default:
