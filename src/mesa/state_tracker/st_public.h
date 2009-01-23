@@ -80,11 +80,11 @@ void st_set_framebuffer_surface(struct st_framebuffer *stfb,
 void st_get_framebuffer_dimensions( struct st_framebuffer *stfb,
 				    uint *width, uint *height);
 
-struct pipe_surface *st_get_framebuffer_surface(struct st_framebuffer *stfb,
-                                                uint surfIndex);
+int st_get_framebuffer_surface(struct st_framebuffer *stfb,
+                               uint surfIndex, struct pipe_surface **surface);
 
-struct pipe_texture *st_get_framebuffer_texture(struct st_framebuffer *stfb,
-                                                uint surfIndex);
+int st_get_framebuffer_texture(struct st_framebuffer *stfb,
+                               uint surfIndex, struct pipe_texture **texture);
 
 void *st_framebuffer_private( struct st_framebuffer *stfb );
 

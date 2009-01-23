@@ -1117,7 +1117,7 @@ void XMesaSwapBuffers( XMesaBuffer b )
     */
    st_notify_swapbuffers(b->stfb);
 
-   surf = st_get_framebuffer_surface(b->stfb, ST_SURFACE_BACK_LEFT);
+   st_get_framebuffer_surface(b->stfb, ST_SURFACE_BACK_LEFT, &surf);
    if (surf) {
       driver.display_surface(b, surf);
    }
@@ -1132,11 +1132,12 @@ void XMesaSwapBuffers( XMesaBuffer b )
  */
 void XMesaCopySubBuffer( XMesaBuffer b, int x, int y, int width, int height )
 {
-   struct pipe_surface *surf_front
-      = st_get_framebuffer_surface(b->stfb, ST_SURFACE_FRONT_LEFT);
-   struct pipe_surface *surf_back
-      = st_get_framebuffer_surface(b->stfb, ST_SURFACE_BACK_LEFT);
+   struct pipe_surface *surf_front;
+   struct pipe_surface *surf_back;
    struct pipe_context *pipe = NULL; /* XXX fix */
+
+   st_get_framebuffer_surface(b->stfb, ST_SURFACE_FRONT_LEFT, &surf_front);
+   st_get_framebuffer_surface(b->stfb, ST_SURFACE_BACK_LEFT, &surf_back);
 
    if (!surf_front || !surf_back)
       return;

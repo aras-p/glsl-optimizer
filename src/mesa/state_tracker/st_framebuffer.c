@@ -33,9 +33,9 @@
 #include "main/matrix.h"
 #include "main/renderbuffer.h"
 #include "main/scissor.h"
-#include "st_public.h"
 #include "st_context.h"
 #include "st_cb_fbo.h"
+#include "st_public.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_context.h"
 #include "pipe/p_inlines.h"
@@ -230,8 +230,8 @@ st_set_framebuffer_surface(struct st_framebuffer *stfb,
 /**
  * Return the pipe_surface for the given renderbuffer.
  */
-struct pipe_surface *
-st_get_framebuffer_surface(struct st_framebuffer *stfb, uint surfIndex)
+int
+st_get_framebuffer_surface(struct st_framebuffer *stfb, uint surfIndex, struct pipe_surface **surface)
 {
    struct st_renderbuffer *strb;
 
@@ -242,13 +242,17 @@ st_get_framebuffer_surface(struct st_framebuffer *stfb, uint surfIndex)
    assert(ST_SURFACE_BACK_RIGHT == BUFFER_BACK_RIGHT);
 
    strb = st_renderbuffer(stfb->Base.Attachment[surfIndex].Renderbuffer);
-   if (strb)
-      return strb->surface;
-   return NULL;
+   if (strb) {
+      *surface = strb->surface;
+      return GL_TRUE;
+   }
+
+   *surface = NULL;
+   return GL_FALSE;
 }
 
-struct pipe_texture *
-st_get_framebuffer_texture(struct st_framebuffer *stfb, uint surfIndex)
+int
+st_get_framebuffer_texture(struct st_framebuffer *stfb, uint surfIndex, struct pipe_texture **texture)
 {
    struct st_renderbuffer *strb;
 
@@ -259,9 +263,13 @@ st_get_framebuffer_texture(struct st_framebuffer *stfb, uint surfIndex)
    assert(ST_SURFACE_BACK_RIGHT == BUFFER_BACK_RIGHT);
 
    strb = st_renderbuffer(stfb->Base.Attachment[surfIndex].Renderbuffer);
-   if (strb)
-      return strb->texture;
-   return NULL;
+   if (strb) {
+      *texture = strb->texture;
+      return GL_TRUE;
+   }
+
+   *texture = NULL;
+   return GL_FALSE;
 }
 
 /**

@@ -149,10 +149,9 @@ update_framebuffer_state( struct st_context *st )
       if (st->frontbuffer_status == FRONT_STATUS_COPY_OF_BACK) {
          /* copy back color buffer to front color buffer */
          struct st_framebuffer *stfb = (struct st_framebuffer *) fb;
-         struct pipe_surface *surf_front
-            = st_get_framebuffer_surface(stfb, ST_SURFACE_FRONT_LEFT);
-         struct pipe_surface *surf_back
-            = st_get_framebuffer_surface(stfb, ST_SURFACE_BACK_LEFT);
+	 struct pipe_surface *surf_front, *surf_back;
+         (void) st_get_framebuffer_surface(stfb, ST_SURFACE_FRONT_LEFT, &surf_front);
+         (void) st_get_framebuffer_surface(stfb, ST_SURFACE_BACK_LEFT, &surf_back);
 
          st->pipe->surface_copy(st->pipe,
                                 FALSE,
