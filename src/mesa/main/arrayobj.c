@@ -98,6 +98,28 @@ _mesa_delete_array_object( GLcontext *ctx, struct gl_array_object *obj )
 }
 
 
+static void
+init_array(GLcontext *ctx,
+           struct gl_client_array *array, GLint size, GLint type)
+{
+   array->Size = size;
+   array->Type = type;
+   array->Format = GL_RGBA; /* only significant for GL_EXT_vertex_array_bgra */
+   array->Stride = 0;
+   array->StrideB = 0;
+   array->Ptr = NULL;
+   array->Enabled = GL_FALSE;
+   array->Normalized = GL_FALSE;
+#if FEATURE_ARB_vertex_buffer_object
+   /* Vertex array buffers */
+   array->BufferObj = ctx->Array.NullBufferObj;
+#endif
+}
+
+
+/**
+ * Initialize a gl_array_object's arrays.
+ */
 void
 _mesa_initialize_array_object( GLcontext *ctx,
 			       struct gl_array_object *obj,
@@ -107,87 +129,23 @@ _mesa_initialize_array_object( GLcontext *ctx,
 
    obj->Name = name;
 
-   /* Vertex arrays */
-   obj->Vertex.Size = 4;
-   obj->Vertex.Type = GL_FLOAT;
-   obj->Vertex.Stride = 0;
-   obj->Vertex.StrideB = 0;
-   obj->Vertex.Ptr = NULL;
-   obj->Vertex.Enabled = GL_FALSE;
-   obj->Normal.Type = GL_FLOAT;
-   obj->Normal.Stride = 0;
-   obj->Normal.StrideB = 0;
-   obj->Normal.Ptr = NULL;
-   obj->Normal.Enabled = GL_FALSE;
-   obj->Color.Size = 4;
-   obj->Color.Type = GL_FLOAT;
-   obj->Color.Stride = 0;
-   obj->Color.StrideB = 0;
-   obj->Color.Ptr = NULL;
-   obj->Color.Enabled = GL_FALSE;
-   obj->SecondaryColor.Size = 4;
-   obj->SecondaryColor.Type = GL_FLOAT;
-   obj->SecondaryColor.Stride = 0;
-   obj->SecondaryColor.StrideB = 0;
-   obj->SecondaryColor.Ptr = NULL;
-   obj->SecondaryColor.Enabled = GL_FALSE;
-   obj->FogCoord.Size = 1;
-   obj->FogCoord.Type = GL_FLOAT;
-   obj->FogCoord.Stride = 0;
-   obj->FogCoord.StrideB = 0;
-   obj->FogCoord.Ptr = NULL;
-   obj->FogCoord.Enabled = GL_FALSE;
-   obj->Index.Type = GL_FLOAT;
-   obj->Index.Stride = 0;
-   obj->Index.StrideB = 0;
-   obj->Index.Ptr = NULL;
-   obj->Index.Enabled = GL_FALSE;
+   /* Init the individual arrays */
+   init_array(ctx, &obj->Vertex, 4, GL_FLOAT);
+   init_array(ctx, &obj->Normal, 3, GL_FLOAT);
+   init_array(ctx, &obj->Color, 4, GL_FLOAT);
+   init_array(ctx, &obj->SecondaryColor, 4, GL_FLOAT);
+   init_array(ctx, &obj->FogCoord, 1, GL_FLOAT);
+   init_array(ctx, &obj->Index, 1, GL_FLOAT);
    for (i = 0; i < MAX_TEXTURE_COORD_UNITS; i++) {
-      obj->TexCoord[i].Size = 4;
-      obj->TexCoord[i].Type = GL_FLOAT;
-      obj->TexCoord[i].Stride = 0;
-      obj->TexCoord[i].StrideB = 0;
-      obj->TexCoord[i].Ptr = NULL;
-      obj->TexCoord[i].Enabled = GL_FALSE;
+      init_array(ctx, &obj->TexCoord[i], 4, GL_FLOAT);
    }
-   obj->EdgeFlag.Stride = 0;
-   obj->EdgeFlag.StrideB = 0;
-   obj->EdgeFlag.Ptr = NULL;
-   obj->EdgeFlag.Enabled = GL_FALSE;
+   init_array(ctx, &obj->EdgeFlag, 1, GL_BOOL);
    for (i = 0; i < VERT_ATTRIB_MAX; i++) {
-      obj->VertexAttrib[i].Size = 4;
-      obj->VertexAttrib[i].Type = GL_FLOAT;
-      obj->VertexAttrib[i].Stride = 0;
-      obj->VertexAttrib[i].StrideB = 0;
-      obj->VertexAttrib[i].Ptr = NULL;
-      obj->VertexAttrib[i].Enabled = GL_FALSE;
-      obj->VertexAttrib[i].Normalized = GL_FALSE;
+      init_array(ctx, &obj->VertexAttrib[i], 4, GL_FLOAT);
    }
 
 #if FEATURE_point_size_array
-   obj->PointSize.Type = GL_FLOAT;
-   obj->PointSize.Stride = 0;
-   obj->PointSize.StrideB = 0;
-   obj->PointSize.Ptr = NULL;
-   obj->PointSize.Enabled = GL_FALSE;
-   obj->PointSize.BufferObj = ctx->Array.NullBufferObj;
-#endif
-
-#if FEATURE_ARB_vertex_buffer_object
-   /* Vertex array buffers */
-   obj->Vertex.BufferObj = ctx->Array.NullBufferObj;
-   obj->Normal.BufferObj = ctx->Array.NullBufferObj;
-   obj->Color.BufferObj = ctx->Array.NullBufferObj;
-   obj->SecondaryColor.BufferObj = ctx->Array.NullBufferObj;
-   obj->FogCoord.BufferObj = ctx->Array.NullBufferObj;
-   obj->Index.BufferObj = ctx->Array.NullBufferObj;
-   for (i = 0; i < MAX_TEXTURE_COORD_UNITS; i++) {
-      obj->TexCoord[i].BufferObj = ctx->Array.NullBufferObj;
-   }
-   obj->EdgeFlag.BufferObj = ctx->Array.NullBufferObj;
-   for (i = 0; i < VERT_ATTRIB_MAX; i++) {
-      obj->VertexAttrib[i].BufferObj = ctx->Array.NullBufferObj;
-   }
+   init_array(ctx, &obj->PointSize, 1, GL_FLOAT);
 #endif
 }
 
