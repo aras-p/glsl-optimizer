@@ -1,6 +1,7 @@
 clear
 clear-fbo
 clear-fbo-tex
+clear-random
 clear-repeat
 clear-scissor
 clear-undefined
@@ -68,6 +69,7 @@ readtex.c
 readtex.h
 tri
 tri-alpha
+tri-array-interleaved
 tri-blend
 tri-blend-color
 tri-blend-max
@@ -93,6 +95,7 @@ tri-query
 tri-repeat
 tri-scissor-tri
 tri-stencil
+tri-stipple
 tri-tex
 tri-tex-3d
 tri-tri
