@@ -1675,6 +1675,7 @@ struct gl_client_array
 {
    GLint Size;                  /**< components per element (1,2,3,4) */
    GLenum Type;                 /**< datatype: GL_FLOAT, GL_INT, etc */
+   GLenum Format;               /**< default: GL_RGBA, but may be GL_BGRA */
    GLsizei Stride;		/**< user-specified stride */
    GLsizei StrideB;		/**< actual stride in bytes */
    const GLubyte *Ptr;          /**< Points to array data */
@@ -2625,6 +2626,7 @@ struct gl_extensions
    GLboolean EXT_texture_sRGB;
    GLboolean EXT_timer_query;
    GLboolean EXT_vertex_array;
+   GLboolean EXT_vertex_array_bgra;
    GLboolean EXT_vertex_array_set;
    /* vendor extensions */
    GLboolean APPLE_client_storage;

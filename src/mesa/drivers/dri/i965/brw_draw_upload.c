@@ -156,7 +156,13 @@ static GLuint byte_types_scale[5] = {
 };
 
 
-static GLuint get_surface_type( GLenum type, GLuint size, GLboolean normalized )
+/**
+ * Given vertex array type/size/format/normalized info, return
+ * the appopriate hardware surface type.
+ * Format will be GL_RGBA or possibly GL_BGRA for GLubyte[4] color arrays.
+ */
+static GLuint get_surface_type( GLenum type, GLuint size,
+                                GLenum format, GLboolean normalized )
 {
    if (INTEL_DEBUG & DEBUG_VERTS)
       _mesa_printf("type %s size %d normalized %d\n", 
@@ -171,11 +177,20 @@ static GLuint get_surface_type( GLenum type, GLuint size, GLboolean normalized )
       case GL_BYTE: return byte_types_norm[size];
       case GL_UNSIGNED_INT: return uint_types_norm[size];
       case GL_UNSIGNED_SHORT: return ushort_types_norm[size];
-      case GL_UNSIGNED_BYTE: return ubyte_types_norm[size];
+      case GL_UNSIGNED_BYTE:
+         if (format == GL_BGRA) {
+            /* See GL_EXT_vertex_array_bgra */
+            assert(size == 4);
+            return BRW_SURFACEFORMAT_B8G8R8A8_UNORM;
+         }
+         else {
+            return ubyte_types_norm[size];
+         }
       default: assert(0); return 0;
       }      
    }
    else {
+      assert(format == GL_RGBA); /* sanity check */
       switch (type) {
       case GL_DOUBLE: return double_types[size];
       case GL_FLOAT: return float_types[size];
@@ -484,6 +499,7 @@ static void brw_emit_vertices(struct brw_context *brw)
       struct brw_vertex_element *input = enabled[i];
       uint32_t format = get_surface_type(input->glarray->Type,
 					 input->glarray->Size,
+					 input->glarray->Format,
 					 input->glarray->Normalized);
       uint32_t comp0 = BRW_VE1_COMPONENT_STORE_SRC;
       uint32_t comp1 = BRW_VE1_COMPONENT_STORE_SRC;
