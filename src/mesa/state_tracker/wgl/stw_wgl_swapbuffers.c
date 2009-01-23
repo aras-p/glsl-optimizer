@@ -53,7 +53,7 @@ wglSwapBuffers(
     */
    st_notify_swapbuffers( fb->stfb );
 
-   surf = st_get_framebuffer_surface( fb->stfb, ST_SURFACE_BACK_LEFT );
+   st_get_framebuffer_surface( fb->stfb, ST_SURFACE_BACK_LEFT, &surf );
 
    stw_dev->stw_winsys->flush_frontbuffer(stw_dev->screen->winsys,
                                           surf,
