@@ -207,6 +207,7 @@ def generate(env):
     # different scons versions building the same source file
     env['build'] = build_dir
     env.SConsignFile(os.path.join(build_dir, '.sconsign'))
+    env.CacheDir('build/cache')
 
     # C preprocessor options
     cppdefines = []
