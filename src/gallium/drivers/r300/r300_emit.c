@@ -74,7 +74,7 @@ static void r300_emit_dirty_state(struct r300_context* r300)
         }
     }
 
-    if (r300->dirty_state & R300_NEW_RS) {
+    if (r300->dirty_state & R300_NEW_RASTERIZER) {
         struct r300_rs_state* rs = r300->rs_state;
         OUT_CS_REG(R300_VAP_CNTL_STATUS, rs->vap_control_status);
         /* XXX next six are contiguous regs */

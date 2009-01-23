@@ -357,6 +357,32 @@ static void r300_delete_dsa_state(struct pipe_context* pipe,
 {
     FREE(state);
 }
+
+/* Create fragment shader state. */
+static void* r300_create_fs_state(struct pipe_context* pipe,
+                                  const struct pipe_shader_state* state)
+{
+    struct r300_fs_state* fs = CALLOC_STRUCT(r300_fs_state);
+
+    return (void*)fs;
+}
+
+/* Bind fragment shader state. */
+static void r300_bind_fs_state(struct pipe_context* pipe, void* state)
+{
+    struct r300_context* r300 = r300_context(pipe);
+
+    r300->fs_state = (struct r300_fs_state*)state;
+
+    r300->dirty_state |= R300_NEW_FRAGMENT_SHADER;
+}
+
+/* Delect fragment shader state. */
+static void r300_delete_fs_state(struct pipe_context* pipe, void* state)
+{
+    FREE(state);
+}
+
 #if 0
 struct pipe_rasterizer_state
 {
@@ -449,7 +475,7 @@ static void r300_bind_rs_state(struct pipe_context* pipe, void* state)
     struct r300_context* r300 = r300_context(pipe);
 
     r300->rs_state = (struct r300_rs_state*)state;
-    r300->dirty_state |= R300_NEW_RS;
+    r300->dirty_state |= R300_NEW_RASTERIZER;
 }
 
 /* Free rasterizer state. */
@@ -651,6 +677,10 @@ void r300_init_state_functions(struct r300_context* r300) {
     r300->context.create_depth_stencil_alpha_state = r300_create_dsa_state;
     r300->context.bind_depth_stencil_alpha_state = r300_bind_dsa_state;
     r300->context.delete_depth_stencil_alpha_state = r300_delete_dsa_state;
+
+    r300->context.create_fs_state = r300_create_fs_state;
+    r300->context.bind_fs_state = r300_bind_fs_state;
+    r300->context.delete_fs_state = r300_delete_fs_state;
 
     r300->context.create_rasterizer_state = r300_create_rs_state;
     r300->context.bind_rasterizer_state = r300_bind_rs_state;

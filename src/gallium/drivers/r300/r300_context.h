@@ -55,6 +55,9 @@ struct r300_dsa_state {
     uint32_t stencil_ref_bf;    /* R500_ZB_STENCILREFMASK_BF: 0x4fd4 */
 };
 
+struct r300_fs_state {
+};
+
 struct r300_rs_state {
     uint32_t vap_control_status;    /* R300_VAP_CNTL_STATUS: 0x2140 */
     uint32_t depth_scale_front;     /* R300_SU_POLY_OFFSET_FRONT_SCALE: 0x42a4 */
@@ -76,13 +79,15 @@ struct r300_scissor_state {
     uint32_t scissor_bottom_right; /* R300_SC_SCISSORS_BR: 0x43e4 */
 };
 
-#define R300_NEW_BLEND          0x0001
-#define R300_NEW_BLEND_COLOR    0x0002
-#define R300_NEW_DSA            0x0004
-#define R300_NEW_RS             0x0008
-#define R300_NEW_SAMPLER        0x0010
-#define R300_NEW_SCISSOR        0x1000
-#define R300_NEW_KITCHEN_SINK   0x1fff
+#define R300_NEW_BLEND           0x0001
+#define R300_NEW_BLEND_COLOR     0x0002
+#define R300_NEW_DSA             0x0004
+#define R300_NEW_FRAGMENT_SHADER 0x0008
+#define R300_NEW_RASTERIZER      0x0010
+#define R300_NEW_SAMPLER         0x0020
+#define R300_NEW_SCISSOR         0x2000
+#define R300_NEW_VERTEX_SHADER   0x4000
+#define R300_NEW_KITCHEN_SINK    0x7fff
 
 struct r300_texture {
     /* Parent class */
@@ -114,6 +119,8 @@ struct r300_context {
     struct r300_blend_color_state* blend_color_state;
     /* Depth, stencil, and alpha state. */
     struct r300_dsa_state* dsa_state;
+    /* Fragment shader state. */
+    struct r300_fs_state* fs_state;
     /* Rasterizer state. */
     struct r300_rs_state* rs_state;
     /* Sampler states. */
