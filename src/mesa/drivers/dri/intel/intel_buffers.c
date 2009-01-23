@@ -166,19 +166,19 @@ intelFixupVblank(struct intel_context *intel, __DRIdrawablePrivate *dPriv)
       GLint areaB = driIntersectArea( drw_rect, planeB_rect );
       GLuint flags = dPriv->vblFlags;
 
-      /* Do the stupid test: Is one of them actually disabled?
-       */
-      if (sarea->planeA_w == 0 || sarea->planeA_h == 0) {
-	 flags = dPriv->vblFlags | VBLANK_FLAG_SECONDARY;
-      } else if (sarea->planeB_w == 0 || sarea->planeB_h == 0) {
-	 flags = dPriv->vblFlags & ~VBLANK_FLAG_SECONDARY;
-      }
-
       /* Update vblank info
        */
       if (areaB > areaA || (areaA == areaB && areaB > 0)) {
 	 flags = dPriv->vblFlags | VBLANK_FLAG_SECONDARY;
       } else {
+	 flags = dPriv->vblFlags & ~VBLANK_FLAG_SECONDARY;
+      }
+
+      /* Do the stupid test: Is one of them actually disabled?
+       */
+      if (sarea->planeA_w == 0 || sarea->planeA_h == 0) {
+	 flags = dPriv->vblFlags | VBLANK_FLAG_SECONDARY;
+      } else if (sarea->planeB_w == 0 || sarea->planeB_h == 0) {
 	 flags = dPriv->vblFlags & ~VBLANK_FLAG_SECONDARY;
       }
 
