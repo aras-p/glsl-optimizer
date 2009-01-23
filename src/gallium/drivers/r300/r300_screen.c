@@ -113,12 +113,33 @@ static float r300_get_paramf(struct pipe_screen* pscreen, int param)
     }
 }
 
+/* XXX moar formats */
+static boolean check_tex_2d_format(enum pipe_format format)
+{
+    switch (format) {
+        case PIPE_FORMAT_I8_UNORM:
+            return TRUE;
+        default:
+            break;
+    }
+
+    return FALSE;
+}
+
+/* XXX moar targets */
 static boolean r300_is_format_supported(struct pipe_screen* pscreen,
                                         enum pipe_format format,
                                         enum pipe_texture_target target,
                                         unsigned tex_usage,
                                         unsigned geom_flags)
 {
+    switch (target) {
+        case PIPE_TEXTURE_2D:
+            return check_tex_2d_format(format);
+        default:
+            break;
+    }
+
     return FALSE;
 }
 
@@ -173,6 +194,8 @@ struct pipe_screen* r300_create_screen(struct pipe_winsys* winsys,
     r300screen->screen.is_format_supported = r300_is_format_supported;
     r300screen->screen.surface_map = r300_surface_map;
     r300screen->screen.surface_unmap = r300_surface_unmap;
+
+    r300_init_screen_texture_functions(&r300screen->screen);
 
     return &r300screen->screen;
 }

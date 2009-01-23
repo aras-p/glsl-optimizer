@@ -20,32 +20,14 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
  * USE OR OTHER DEALINGS IN THE SOFTWARE. */
 
-#ifndef R300_SCREEN_H
-#define R300_SCREEN_H
+#ifndef R300_TEXTURE_H
+#define R300_TEXTURE_H
 
-#include "pipe/p_inlines.h"
 #include "pipe/p_screen.h"
-#include "util/u_memory.h"
 
-#include "r300_chipset.h"
-#include "r300_texture.h"
-#include "r300_winsys.h"
-
-struct r300_screen {
-    /* Parent class */
-    struct pipe_screen screen;
-
-    /* Chipset capabilities */
-    struct r300_capabilities* caps;
+struct r300_texture {
 };
 
-/* Convenience cast wrapper. */
-static struct r300_screen* r300_screen(struct pipe_screen* screen) {
-    return (struct r300_screen*)screen;
-}
+void r300_init_screen_texture_functions(struct pipe_screen* screen);
 
-/* Creates a new r300 screen. */
-struct pipe_screen* r300_create_screen(struct pipe_winsys* winsys,
-                                       struct r300_winsys* r300_winsys);
-
-#endif /* R300_SCREEN_H */
+#endif /* R300_TEXTURE_H */
