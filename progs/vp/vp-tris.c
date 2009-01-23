@@ -9,24 +9,10 @@
 #ifndef WIN32
 #include <unistd.h>
 #include <signal.h>
-#define GL_GLEXT_PROTOTYPES
-#else
-#include <GL/glext.h>
 #endif
 
+#include <GL/glew.h>
 #include <GL/glut.h>
-
-#ifdef WIN32
-static PFNGLBINDPROGRAMARBPROC glBindProgramARB = NULL;
-static PFNGLGENPROGRAMSARBPROC glGenProgramsARB = NULL;
-static PFNGLPROGRAMSTRINGARBPROC glProgramStringARB = NULL;
-static PFNGLISPROGRAMARBPROC glIsProgramARB = NULL;
-
-static PFNGLBINDPROGRAMNVPROC glBindProgramNV = NULL;
-static PFNGLGENPROGRAMSNVPROC glGenProgramsNV = NULL;
-static PFNGLLOADPROGRAMNVPROC glLoadProgramNV = NULL;
-static PFNGLISPROGRAMNVPROC glIsProgramNV = NULL;
-#endif
 
 static const char *filename = NULL;
 static GLuint nr_steps = 4;
@@ -115,13 +101,6 @@ static void Init( void )
    fprintf(stderr, "%.*s\n", sz, buf);
 
    if (strncmp( buf, "!!VP", 4 ) == 0) {
-#ifdef WIN32
-      glBindProgramNV = (PFNGLBINDPROGRAMNVPROC) wglGetProcAddress( "glBindProgramNV" );
-      glGenProgramsNV = (PFNGLGENPROGRAMSNVPROC) wglGetProcAddress( "glGenProgramsNV" );
-      glLoadProgramNV = (PFNGLLOADPROGRAMNVPROC) wglGetProcAddress( "glLoadProgramNV" );
-      glIsProgramNV = (PFNGLISPROGRAMNVPROC) wglGetProcAddress( "glIsProgramNV" );
-#endif
-
       glEnable( GL_VERTEX_PROGRAM_NV );
       glGenProgramsNV( 1, &prognum );
       glBindProgramNV( GL_VERTEX_PROGRAM_NV, prognum );
@@ -129,13 +108,6 @@ static void Init( void )
       assert( glIsProgramNV( prognum ) );
    }
    else {
-#ifdef WIN32
-      glBindProgramARB = (PFNGLBINDPROGRAMARBPROC) wglGetProcAddress( "glBindProgramARB" );
-      glGenProgramsARB = (PFNGLGENPROGRAMSARBPROC) wglGetProcAddress( "glGenProgramsARB" );
-      glProgramStringARB = (PFNGLPROGRAMSTRINGARBPROC) wglGetProcAddress( "glProgramStringARB" );
-      glIsProgramARB = (PFNGLISPROGRAMARBPROC) wglGetProcAddress( "glIsProgramARB" );
-#endif
-
       glEnable(GL_VERTEX_PROGRAM_ARB);
 
       glGenProgramsARB(1, &prognum);
@@ -288,6 +260,7 @@ int main( int argc, char *argv[] )
    glutInitWindowSize( 250, 250 );
    glutInitDisplayMode( GLUT_RGB | GLUT_SINGLE | GLUT_DEPTH );
    glutCreateWindow(argv[argc-1]);
+   glewInit();
    glutReshapeFunc( Reshape );
    glutKeyboardFunc( Key );
    glutDisplayFunc( Display );
