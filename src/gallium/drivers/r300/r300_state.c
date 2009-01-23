@@ -21,6 +21,7 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE. */
 
 #include "util/u_math.h"
+#include "util/u_pack_color.h"
 
 #include "r300_context.h"
 #include "r300_reg.h"
@@ -457,11 +458,113 @@ static void r300_delete_rs_state(struct pipe_context* pipe, void* state)
     FREE(state);
 }
 
+static uint32_t translate_wrap(int wrap) {
+    switch (wrap) {
+        case PIPE_TEX_WRAP_REPEAT:
+            return R300_TX_REPEAT;
+        case PIPE_TEX_WRAP_CLAMP:
+            return R300_TX_CLAMP;
+        case PIPE_TEX_WRAP_CLAMP_TO_EDGE:
+            return R300_TX_CLAMP_TO_EDGE;
+        case PIPE_TEX_WRAP_CLAMP_TO_BORDER:
+            return R300_TX_CLAMP_TO_BORDER;
+        case PIPE_TEX_WRAP_MIRROR_REPEAT:
+            return R300_TX_REPEAT | R300_TX_MIRRORED;
+        case PIPE_TEX_WRAP_MIRROR_CLAMP:
+            return R300_TX_CLAMP | R300_TX_MIRRORED;
+        case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_EDGE:
+            return R300_TX_CLAMP_TO_EDGE | R300_TX_MIRRORED;
+        case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_BORDER:
+            return R300_TX_CLAMP_TO_EDGE | R300_TX_MIRRORED;
+        default:
+            /* XXX handle this? */
+            return 0;
+    }
+}
+
+static uint32_t translate_tex_filters(int min, int mag, int mip) {
+    uint32_t retval = 0;
+    switch (min) {
+        case PIPE_TEX_FILTER_NEAREST:
+            retval |= R300_TX_MIN_FILTER_NEAREST;
+        case PIPE_TEX_FILTER_LINEAR:
+            retval |= R300_TX_MIN_FILTER_LINEAR;
+        case PIPE_TEX_FILTER_ANISO:
+            retval |= R300_TX_MIN_FILTER_ANISO;
+        default:
+            /* XXX WTF?! */
+            break;
+    }
+    switch (mag) {
+        case PIPE_TEX_FILTER_NEAREST:
+            retval |= R300_TX_MAG_FILTER_NEAREST;
+        case PIPE_TEX_FILTER_LINEAR:
+            retval |= R300_TX_MAG_FILTER_LINEAR;
+        case PIPE_TEX_FILTER_ANISO:
+            retval |= R300_TX_MAG_FILTER_ANISO;
+        default:
+            /* XXX WTF?! */
+            break;
+    }
+    switch (mip) {
+        case PIPE_TEX_MIPFILTER_NONE:
+            retval |= R300_TX_MIN_FILTER_MIP_NONE;
+        case PIPE_TEX_MIPFILTER_NEAREST:
+            retval |= R300_TX_MIN_FILTER_MIP_NEAREST;
+        case PIPE_TEX_MIPFILTER_LINEAR:
+            retval |= R300_TX_MIN_FILTER_MIP_LINEAR;
+        default:
+            /* XXX WTF?! */
+            break;
+    }
+
+    return retval;
+}
+
+static uint32_t anisotropy(float max_aniso) {
+    if (max_aniso >= 16.0f) {
+        return R300_TX_MAX_ANISO_16_TO_1;
+    } else if (max_aniso >= 8.0f) {
+        return R300_TX_MAX_ANISO_8_TO_1;
+    } else if (max_aniso >= 4.0f) {
+        return R300_TX_MAX_ANISO_4_TO_1;
+    } else if (max_aniso >= 2.0f) {
+        return R300_TX_MAX_ANISO_2_TO_1;
+    } else {
+        return R300_TX_MAX_ANISO_1_TO_1;
+    }
+}
+
 static void*
         r300_create_sampler_state(struct pipe_context* pipe,
                                   const struct pipe_sampler_state* state)
 {
+    struct r300_context* r300 = r300_context(pipe);
     struct r300_sampler_state* sampler = CALLOC_STRUCT(r300_sampler_state);
+    int lod_bias;
+
+    sampler->filter0 |=
+        (translate_wrap(state->wrap_s) << R300_TX_WRAP_S_SHIFT) |
+        (translate_wrap(state->wrap_t) << R300_TX_WRAP_T_SHIFT) |
+        (translate_wrap(state->wrap_r) << R300_TX_WRAP_R_SHIFT);
+
+    sampler->filter0 |= translate_tex_filters(state->min_img_filter,
+                                              state->mag_img_filter,
+                                              state->min_mip_filter);
+
+    lod_bias = CLAMP((int)(state->lod_bias * 32), -(1 << 9), (1 << 9) - 1);
+
+    sampler->filter1 |= lod_bias << R300_LOD_BIAS_SHIFT;
+
+    sampler->filter1 |= anisotropy(state->max_anisotropy);
+
+    util_pack_color(state->border_color, PIPE_FORMAT_A8R8G8B8_UNORM,
+                    &sampler->border_color);
+
+    /* R500-specific fixups and optimizations */
+    if (r300_screen(r300->context.screen)->caps->is_r500) {
+        sampler->filter1 |= R500_BORDER_FIX;
+    }
 
     return (void*)sampler;
 }
@@ -471,15 +574,15 @@ static void r300_bind_sampler_states(struct pipe_context* pipe,
                                      void** states)
 {
     struct r300_context* r300 = r300_context(pipe);
-    int i = 0;
+    int i;
 
     if (count > 8) {
         return;
     }
 
-    for (i; i < count; i++) {
+    for (i = 0; i < count; i++) {
         if (r300->sampler_states[i] != states[i]) {
-            r300->sampler_states[i] = states[i];
+            r300->sampler_states[i] = (struct r300_sampler_state*)states[i];
             r300->dirty_state |= (R300_NEW_SAMPLER << i);
         }
     }
@@ -510,8 +613,8 @@ static void r300_set_scissor_state(struct pipe_context* pipe,
 
     r300->scissor_state->scissor_top_left = (left << R300_SCISSORS_X_SHIFT) |
             (top << R300_SCISSORS_Y_SHIFT);
-    r300->scissor_state->scissor_bottom_right = (right << R300_SCISSORS_X_SHIFT) |
-            (bottom << R300_SCISSORS_Y_SHIFT);
+    r300->scissor_state->scissor_bottom_right =
+        (right << R300_SCISSORS_X_SHIFT) | (bottom << R300_SCISSORS_Y_SHIFT);
 
     r300->dirty_state |= R300_NEW_SCISSOR;
 }
