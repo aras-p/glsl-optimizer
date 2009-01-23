@@ -129,6 +129,7 @@ static const struct {
    { OFF, "GL_EXT_texture_sRGB",               F(EXT_texture_sRGB) },
    { OFF, "GL_EXT_timer_query",                F(EXT_timer_query) },
    { ON,  "GL_EXT_vertex_array",               F(EXT_vertex_array) },
+   { OFF, "GL_EXT_vertex_array_bgra",          F(EXT_vertex_array_bgra) },
    { OFF, "GL_EXT_vertex_array_set",           F(EXT_vertex_array_set) },
    { OFF, "GL_3DFX_texture_compression_FXT1",  F(TDFX_texture_compression_FXT1) },
    { OFF, "GL_APPLE_client_storage",           F(APPLE_client_storage) },
