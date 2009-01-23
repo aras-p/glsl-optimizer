@@ -76,6 +76,7 @@ static void init_legacy_currval(GLcontext *ctx)
       cl->StrideB = 0;
       cl->Enabled = 1;
       cl->Type = GL_FLOAT;
+      cl->Format = GL_RGBA;
       cl->Ptr = (const void *)ctx->Current.Attrib[i];
       cl->BufferObj = ctx->Array.NullBufferObj;
    }
@@ -97,6 +98,7 @@ static void init_generic_currval(GLcontext *ctx)
        */
       cl->Size = 1;
       cl->Type = GL_FLOAT;
+      cl->Format = GL_RGBA;
       cl->Ptr = (const void *)ctx->Current.Attrib[VERT_ATTRIB_GENERIC0 + i];
       cl->Stride = 0;
       cl->StrideB = 0;
@@ -141,6 +143,7 @@ static void init_mat_currval(GLcontext *ctx)
 
       cl->Ptr = (const void *)ctx->Light.Material.Attrib[i];
       cl->Type = GL_FLOAT;
+      cl->Format = GL_RGBA;
       cl->Stride = 0;
       cl->StrideB = 0;
       cl->Enabled = 1;

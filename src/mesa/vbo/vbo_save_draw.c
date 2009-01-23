@@ -150,6 +150,7 @@ static void vbo_bind_vertex_list( GLcontext *ctx,
 	 arrays[attr].StrideB = node->vertex_size * sizeof(GLfloat);
 	 arrays[attr].Stride = node->vertex_size * sizeof(GLfloat);
 	 arrays[attr].Type = GL_FLOAT;
+         arrays[attr].Format = GL_RGBA;
 	 arrays[attr].Enabled = 1;
          _mesa_reference_buffer_object(ctx,
                                        &arrays[attr].BufferObj,
