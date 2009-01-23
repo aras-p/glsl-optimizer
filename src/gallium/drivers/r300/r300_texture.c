@@ -22,14 +22,90 @@
 
 #include "r300_texture.h"
 
+static int minify(int i)
+{
+    return MAX2(1, i >> 1);
+}
+
+static void r300_setup_miptree(struct r300_texture* tex)
+{
+    struct pipe_texture* base = &tex->tex;
+    int stride, size, offset;
+
+    for (int i = 0; i <= base->last_level; i++) {
+        if (i > 0) {
+            base->width[i] = minify(base->width[i-1]);
+            base->height[i] = minify(base->height[i-1]);
+            base->depth[i] = minify(base->depth[i-1]);
+        }
+
+        base->nblocksx[i] = pf_get_nblocksx(&base->block, base->width[i]);
+        base->nblocksy[i] = pf_get_nblocksy(&base->block, base->width[i]);
+
+        /* Radeons enjoy things in multiples of 32. */
+        /* XXX NPOT -> 64, not 32 */
+        stride = (base->nblocksx[i] * base->block.size + 31) & ~31;
+        size = stride * base->nblocksy[i] * base->depth[i];
+
+        /* XXX 64 for NPOT */
+        tex->offset[i] = (tex->size + 31) & ~31;
+        tex->size = tex->offset[i] + size;
+    }
+}
+
 /* Create a new texture. */
 static struct pipe_texture*
     r300_texture_create(struct pipe_screen* screen,
                         const struct pipe_texture* template)
 {
+    struct r300_screen* r300screen = r300_screen(screen);
+
+    struct r300_texture* tex = CALLOC_STRUCT(r300_texture);
+
+    if (!tex) {
+        return NULL;
+    }
+
+    tex->tex = *template;
+    tex->tex.refcount = 1;
+    tex->tex.screen = screen;
+
+    r300_setup_miptree(tex);
+
+    tex->buffer = screen->winsys->buffer_create(screen->winsys, 32,
+                                                PIPE_BUFFER_USAGE_PIXEL,
+                                                tex->size);
+
+    if (!tex->buffer) {
+        FREE(tex);
+        return NULL;
+    }
+
+    return (struct pipe_texture*)tex;
+}
+
+static void r300_texture_release(struct pipe_screen* screen,
+                                 struct pipe_texture** texture)
+{
+    if (!*texture) {
+        return;
+    }
+
+    (*texture)->refcount--;
+
+    if ((*texture)->refcount <= 0) {
+        struct r300_texture* tex = (struct r300_texture*)*texture;
+
+        pipe_buffer_reference(screen, &tex->buffer, NULL);
+
+        FREE(tex);
+    }
+
+    *texture = NULL;
 }
 
 void r300_init_screen_texture_functions(struct pipe_screen* screen)
 {
     screen->texture_create = r300_texture_create;
+    screen->texture_release = r300_texture_release;
 }

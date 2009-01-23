@@ -25,8 +25,9 @@
 
 #include "pipe/p_screen.h"
 
-struct r300_texture {
-};
+#include "util/u_math.h"
+
+#include "r300_context.h"
 
 void r300_init_screen_texture_functions(struct pipe_screen* screen);
 

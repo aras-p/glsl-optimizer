@@ -84,6 +84,20 @@ struct r300_scissor_state {
 #define R300_NEW_SCISSOR        0x1000
 #define R300_NEW_KITCHEN_SINK   0x1fff
 
+struct r300_texture {
+    /* Parent class */
+    struct pipe_texture tex;
+
+    /* Offsets into the buffer. */
+    unsigned offset[PIPE_MAX_TEXTURE_LEVELS];
+
+    /* Total size of this texture, in bytes. */
+    unsigned size;
+
+    /* Pipe buffer backing this texture. */
+    struct pipe_buffer* buffer;
+};
+
 struct r300_context {
     /* Parent class */
     struct pipe_context context;
