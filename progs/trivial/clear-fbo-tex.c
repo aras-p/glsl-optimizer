@@ -5,7 +5,7 @@
 #include <math.h>
 #include <string.h>
 
-#define GL_GLEXT_PROTOTYPES
+#include <GL/glew.h>
 #include <GL/glut.h>
 
 
@@ -209,6 +209,8 @@ main( int argc, char *argv[] )
     if (glutCreateWindow(argv[0]) == GL_FALSE) {
 	exit(1);
     }
+
+    glewInit();
 
     Init();
 

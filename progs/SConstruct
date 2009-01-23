@@ -10,9 +10,23 @@ env = Environment(
 
 
 # Use Mesa's headers and libs
-if 0:
+if 1:
+    build_topdir = 'build'
+    build_subdir = env['platform']
+    if env['machine'] != 'generic':
+        build_subdir += '-' + env['machine']
+    if env['debug']:
+        build_subdir += "-debug"
+    if env['profile']:
+        build_subdir += "-profile"
+    build_dir = os.path.join(build_topdir, build_subdir)
+
+    env.Append(CPPDEFINES = ['GLEW_STATIC'])
     env.Append(CPPPATH = ['#../include'])
-    env.Append(LIBPATH = ['#../lib'])
+    env.Append(LIBPATH = [
+        '#../' + build_dir + '/glew/',
+        '#../' + build_dir + '/glut/glx',
+    ])
 
 
 conf = Configure(env)
@@ -31,6 +45,13 @@ if conf.CheckCHeader('GL/glut.h'):
     else:
         env['GLUT_LIB'] = 'glut'
     env['GLUT'] = True
+
+# GLEW
+env['GLEW'] = False
+if conf.CheckCHeader('GL/glew.h'):
+    env['GLEW_LIB'] = 'glew'
+    env['GLEW'] = True
+    env.Prepend(LIBS = ['glew'])
 
 conf.Finish()
 

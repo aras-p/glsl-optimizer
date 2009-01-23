@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <GL/glew.h>
 #include <GL/glut.h>
 
 
@@ -166,6 +167,8 @@ int main(int argc, char **argv)
     if (glutCreateWindow("First Tri") == GL_FALSE) {
 	exit(1);
     }
+
+    glewInit();
 
     Init();
 

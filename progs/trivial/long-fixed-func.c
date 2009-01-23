@@ -5,7 +5,7 @@
 
 
 
-#define GL_GLEXT_PROTOTYPES
+#include <GL/glew.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -142,6 +142,7 @@ main(int argc, char **argv)
     if (glutCreateWindow("tri-long-fixedfunc") == GL_FALSE) {
        exit(1);
     }
+    glewInit();
     glutReshapeFunc(Reshape);
     glutKeyboardFunc(Key);
     glutDisplayFunc(Draw);
