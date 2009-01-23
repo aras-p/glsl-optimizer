@@ -48,6 +48,7 @@ INDENT_FLAGS = -i4 -nut -br -brs -npcs -ce -T GLubyte -T GLbyte -T Bool
 GL_LIB = GL
 GLU_LIB = GLU
 GLUT_LIB = glut
+GLEW_LIB = GLEW
 GLW_LIB = GLw
 OSMESA_LIB = OSMesa
 
@@ -56,6 +57,7 @@ OSMESA_LIB = OSMesa
 GL_LIB_NAME = lib$(GL_LIB).so
 GLU_LIB_NAME = lib$(GLU_LIB).so
 GLUT_LIB_NAME = lib$(GLUT_LIB).so
+GLEW_LIB_NAME = lib$(GLEW_LIB).so
 GLW_LIB_NAME = lib$(GLW_LIB).so
 OSMESA_LIB_NAME = lib$(OSMESA_LIB).so
 
@@ -77,7 +79,7 @@ MOTIF_CFLAGS = -I/usr/include/Motif1.2
 
 # Directories to build
 LIB_DIR = lib
-SRC_DIRS = mesa gallium egl gallium/winsys glu glut/glx glw
+SRC_DIRS = mesa gallium egl gallium/winsys glu glut/glx glew glw
 GLU_DIRS = sgi
 DRIVER_DIRS = 
 # Which subdirs under $(TOP)/progs/ to enter:
