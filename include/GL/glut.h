@@ -200,10 +200,17 @@ WGLAPI int   GLAPIENTRY SetPixelFormat(HDC,int,const PIXELFORMATDESCRIPTOR *);
 #  pragma warning( pop )
 #endif
 
-#else /* _WIN32 not defined */
+#elif defined(__GNUC__) && (__GNUC__ * 100 + __GNUC_MINOR__) >= 303
 
-/* Define GLUTAPIENTRY and GLUTCALLBACK to nothing if we aren't on Win32. */
-#  define GLUTAPIENTRY GLAPIENTRY
+#  define GLUTAPIENTRY
+#  define GLUTAPIENTRYV
+#  define GLUTCALLBACK
+#  define GLUTAPI __attribute__((visibility("default")))
+
+#else
+
+/* Define GLUTAPIENTRY and GLUTCALLBACK to nothing */
+#  define GLUTAPIENTRY
 #  define GLUTAPIENTRYV
 #  define GLUTCALLBACK
 #  define GLUTAPI extern
