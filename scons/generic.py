@@ -239,6 +239,11 @@ def generate(env):
     if env['toolchain'] == 'crossmingw' and env['machine'] not in ('generic', 'x86'):
             env['machine'] = 'x86'
 
+    try:
+        env['MSVS_VERSION'] = ARGUMENTS['MSVS_VERSION']
+    except KeyError:
+        pass
+
     # Build type
     env['debug'] = _bool_map[ARGUMENTS.get('debug', 'no')]
     env['profile'] = _bool_map[ARGUMENTS.get('profile', 'no')]
