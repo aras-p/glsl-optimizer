@@ -104,8 +104,62 @@ static void r300_texture_release(struct pipe_screen* screen,
     *texture = NULL;
 }
 
+static struct pipe_surface* r300_get_tex_surface(struct pipe_screen* screen,
+                                                 struct pipe_texture* texture,
+                                                 unsigned face,
+                                                 unsigned level,
+                                                 unsigned zslice,
+                                                 unsigned flags)
+{
+    struct r300_texture* tex = (struct r300_texture*)texture;
+    struct pipe_surface* surface = CALLOC_STRUCT(pipe_surface);
+    unsigned offset;
+
+    /* XXX this is certainly dependent on tex target */
+    offset = tex->offset[level];
+
+    if (surface) {
+        surface->refcount = 1;
+        surface->winsys = screen->winsys;
+        pipe_texture_reference(&surface->texture, texture);
+        pipe_buffer_reference(screen, &surface->buffer, tex->buffer);
+        surface->format = texture->format;
+        surface->width = texture->width[level];
+        surface->height = texture->height[level];
+        surface->block = texture->block;
+        surface->nblocksx = texture->nblocksx[level];
+        surface->nblocksy = texture->nblocksy[level];
+        /* XXX save the actual stride instead plz kthnxbai */
+        surface->stride =
+            (texture->nblocksx[level] * texture->block.size + 31) & ~31;
+        surface->offset = offset;
+        surface->usage = flags;
+        surface->status = PIPE_SURFACE_STATUS_DEFINED;
+    }
+
+    return surface;
+}
+
+static void r300_tex_surface_release(struct pipe_screen* screen,
+                                     struct pipe_surface** surface)
+{
+    struct pipe_surface* s = *surface;
+
+    s->refcount--;
+
+    if (s->refcount <= 0) {
+        pipe_texture_reference(&s->texture, NULL);
+        pipe_buffer_reference(screen, &s->buffer, NULL);
+        FREE(s);
+    }
+
+    *surface = NULL;
+}
+
 void r300_init_screen_texture_functions(struct pipe_screen* screen)
 {
     screen->texture_create = r300_texture_create;
     screen->texture_release = r300_texture_release;
+    screen->get_tex_surface = r300_get_tex_surface;
+    screen->tex_surface_release = r300_tex_surface_release;
 }
