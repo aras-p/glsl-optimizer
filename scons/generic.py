@@ -251,7 +251,7 @@ def generate(env):
     # Put build output in a separate dir, which depends on the current
     # configuration. See also http://www.scons.org/wiki/AdvancedBuildExample
     try:
-        env['variant_dir'] = ARGUMENTS['variant_dir']
+        env['build'] = ARGUMENTS['build']
     except KeyError:
         build_topdir = 'build'
         build_subdir = env['platform']
@@ -261,11 +261,10 @@ def generate(env):
             build_subdir += "-debug"
         if env['profile']:
             build_subdir += "-profile"
-        env['variant_dir'] = os.path.join(build_topdir, build_subdir)
+        env['build'] = os.path.join(build_topdir, build_subdir)
     # Place the .sconsign file in the build dir too, to avoid issues with
     # different scons versions building the same source file
-    #env.VariantDir(env['variant_dir']
-    #env.SConsignFile(os.path.join(env['variant_dir'], '.sconsign'))
+    env.SConsignFile(os.path.join(env['build'], '.sconsign'))
 
     # Summary
     print
@@ -274,7 +273,7 @@ def generate(env):
     print '  toolchain=%s' % env['toolchain']
     print '  debug=%s' % ['no', 'yes'][env['debug']]
     print '  profile=%s' % ['no', 'yes'][env['profile']]
-    #print '  variant_dir=%s' % env['variant_dir']
+    print '  build=%s' % env['build']
     print
 
     # Load tool chain
