@@ -109,9 +109,9 @@ extern _CRTIMP void __cdecl exit(int);
 #endif
 
 /* GLUT API entry point declarations for Win32. */
-#if (defined(BUILD_GLUT32) || defined(GLUT_BUILDING_LIB)) && defined(_DLL)
+#if (defined(BUILD_GLUT32) || defined(GLUT_BUILDING_LIB)) && !defined(GLUT_STATIC)
 # 	define GLUTAPI __declspec(dllexport)
-#elif defined(_DLL)
+#elif !defined(GLUT_STATIC)
 #   define GLUTAPI __declspec(dllimport)
 #else
 #	define GLUTAPI extern
