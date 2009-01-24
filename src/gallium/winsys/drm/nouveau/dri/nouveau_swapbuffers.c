@@ -58,7 +58,7 @@ nouveau_copy_sub_buffer(__DRIdrawablePrivate *dPriv, int x, int y, int w, int h)
 	struct nouveau_framebuffer *nvfb = dPriv->driverPrivate;
 	struct pipe_surface *surf;
 
-	surf = st_get_framebuffer_surface(nvfb->stfb, ST_SURFACE_BACK_LEFT);
+	st_get_framebuffer_surface(nvfb->stfb, ST_SURFACE_BACK_LEFT, &surf);
 	if (surf) {
 		drm_clip_rect_t rect;
 		rect.x1 = x;
@@ -77,7 +77,7 @@ nouveau_swap_buffers(__DRIdrawablePrivate *dPriv)
 	struct nouveau_framebuffer *nvfb = dPriv->driverPrivate;
 	struct pipe_surface *surf;
 
-	surf = st_get_framebuffer_surface(nvfb->stfb, ST_SURFACE_BACK_LEFT);
+	st_get_framebuffer_surface(nvfb->stfb, ST_SURFACE_BACK_LEFT, &surf);
 	if (surf) {
 		st_notify_swapbuffers(nvfb->stfb);
 		nouveau_copy_buffer(dPriv, surf, NULL);
