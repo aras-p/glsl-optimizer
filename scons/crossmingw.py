@@ -174,7 +174,8 @@ def generate(env):
     env['LIBSUFFIXES']    = [ '.a', '.lib' ]
 
     env.AppendUnique(LIBS = ['iberty'])
-    env.AppendUnique(LINKFLAGS = ['-Wl,--enable-stdcall-fixup'])
+    env.AppendUnique(SHLINKFLAGS = ['-Wl,--enable-stdcall-fixup'])
+    #env.AppendUnique(SHLINKFLAGS = ['-Wl,--kill-at'])
 
 def exists(env):
     return find(env)
