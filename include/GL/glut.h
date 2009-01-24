@@ -25,7 +25,7 @@ extern "C" {
 
 /* To disable automatic library usage for GLUT, define GLUT_NO_LIB_PRAGMA
    in your compile preprocessor options. */
-# if !defined(GLUT_BUILDING_LIB) && !defined(GLUT_NO_LIB_PRAGMA)
+# if defined(_MSC_VER) && !defined(GLUT_BUILDING_LIB) && !defined(GLUT_NO_LIB_PRAGMA)
 #  pragma comment (lib, "winmm.lib")      /* link with Windows MultiMedia lib */
 /* To enable automatic SGI OpenGL for Windows library usage for GLUT,
    define GLUT_USE_SGI_OPENGL in your compile preprocessor options.  */
