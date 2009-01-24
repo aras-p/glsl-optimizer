@@ -120,7 +120,6 @@ static struct pipe_surface* r300_get_tex_surface(struct pipe_screen* screen,
 
     if (surface) {
         surface->refcount = 1;
-        surface->winsys = screen->winsys;
         pipe_texture_reference(&surface->texture, texture);
         pipe_buffer_reference(screen, &surface->buffer, tex->buffer);
         surface->format = texture->format;
