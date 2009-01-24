@@ -53,10 +53,10 @@
  */
 static const struct gl_tex_env_combine_state default_combine_state = {
    GL_MODULATE, GL_MODULATE,
-   { GL_TEXTURE, GL_PREVIOUS, GL_CONSTANT },
-   { GL_TEXTURE, GL_PREVIOUS, GL_CONSTANT },
-   { GL_SRC_COLOR, GL_SRC_COLOR, GL_SRC_ALPHA },
-   { GL_SRC_ALPHA, GL_SRC_ALPHA, GL_SRC_ALPHA },
+   { GL_TEXTURE, GL_PREVIOUS, GL_CONSTANT, GL_CONSTANT },
+   { GL_TEXTURE, GL_PREVIOUS, GL_CONSTANT, GL_CONSTANT },
+   { GL_SRC_COLOR, GL_SRC_COLOR, GL_SRC_ALPHA, GL_SRC_ALPHA },
+   { GL_SRC_ALPHA, GL_SRC_ALPHA, GL_SRC_ALPHA, GL_SRC_ALPHA },
    0, 0,
    2, 2
 };
@@ -551,7 +551,8 @@ update_texture_state( GLcontext *ctx )
       if (texUnit->_ReallyEnabled)
          ctx->Texture._EnabledUnits |= (1 << unit);
 
-      if (texUnit->EnvMode == GL_COMBINE) {
+      if (texUnit->EnvMode == GL_COMBINE ||
+          texUnit->EnvMode == GL_COMBINE4_NV) {
 	 texUnit->_CurrentCombine = & texUnit->Combine;
       }
       else {
@@ -572,9 +573,14 @@ update_texture_state( GLcontext *ctx )
       case GL_REPLACE:
 	 texUnit->_CurrentCombine->_NumArgsRGB = 1;
 	 break;
-      case GL_MODULATE:
       case GL_ADD:
       case GL_ADD_SIGNED:
+         if (texUnit->EnvMode == GL_COMBINE4_NV)
+            texUnit->_CurrentCombine->_NumArgsRGB = 4;
+         else
+            texUnit->_CurrentCombine->_NumArgsRGB = 2;
+         break;
+      case GL_MODULATE:
       case GL_SUBTRACT:
       case GL_DOT3_RGB:
       case GL_DOT3_RGBA:
@@ -598,9 +604,14 @@ update_texture_state( GLcontext *ctx )
       case GL_REPLACE:
 	 texUnit->_CurrentCombine->_NumArgsA = 1;
 	 break;
-      case GL_MODULATE:
       case GL_ADD:
       case GL_ADD_SIGNED:
+         if (texUnit->EnvMode == GL_COMBINE4_NV)
+            texUnit->_CurrentCombine->_NumArgsA = 4;
+         else
+            texUnit->_CurrentCombine->_NumArgsA = 2;
+         break;
+      case GL_MODULATE:
       case GL_SUBTRACT:
 	 texUnit->_CurrentCombine->_NumArgsA = 2;
 	 break;
