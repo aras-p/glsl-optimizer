@@ -2,6 +2,7 @@
  * 
  * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
+ * Copyright 2009 VMware, Inc.  All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
@@ -36,6 +37,9 @@
 #include "shader/prog_statevars.h"
 #include "shader/programopt.h"
 #include "texenvprogram.h"
+
+
+#define MAX_TERMS 4
 
 
 /*
@@ -89,13 +93,13 @@ struct state_key {
       GLuint ScaleShiftRGB:2;
       GLuint ScaleShiftA:2;
 
-      GLuint NumArgsRGB:2;
+      GLuint NumArgsRGB:3;
       GLuint ModeRGB:4;
-      struct mode_opt OptRGB[3];
+      struct mode_opt OptRGB[MAX_TERMS];
 
-      GLuint NumArgsA:2;
+      GLuint NumArgsA:3;
       GLuint ModeA:4;
-      struct mode_opt OptA[3];
+      struct mode_opt OptA[MAX_TERMS];
    } unit[8];
 };
 
@@ -131,7 +135,9 @@ static GLuint translate_operand( GLenum operand )
    case GL_ONE_MINUS_SRC_ALPHA: return OPR_ONE_MINUS_SRC_ALPHA;
    case GL_ZERO: return OPR_ZERO;
    case GL_ONE: return OPR_ONE;
-   default:	return OPR_UNKNOWN;
+   default:
+      assert(0);
+      return OPR_UNKNOWN;
    }
 }
 
@@ -147,6 +153,7 @@ static GLuint translate_operand( GLenum operand )
 #define SRC_CONSTANT 9
 #define SRC_PRIMARY_COLOR 10
 #define SRC_PREVIOUS 11
+#define SRC_ZERO     12
 #define SRC_UNKNOWN  15
 
 static GLuint translate_source( GLenum src )
@@ -164,32 +171,49 @@ static GLuint translate_source( GLenum src )
    case GL_CONSTANT: return SRC_CONSTANT;
    case GL_PRIMARY_COLOR: return SRC_PRIMARY_COLOR;
    case GL_PREVIOUS: return SRC_PREVIOUS;
-   default: return SRC_UNKNOWN;
+   case GL_ZERO:
+      return SRC_ZERO;
+   default:
+      assert(0);
+      return SRC_UNKNOWN;
    }
 }
 
-#define MODE_REPLACE       0
-#define MODE_MODULATE      1
-#define MODE_ADD           2
-#define MODE_ADD_SIGNED    3
-#define MODE_INTERPOLATE   4
-#define MODE_SUBTRACT      5
-#define MODE_DOT3_RGB      6
-#define MODE_DOT3_RGB_EXT  7
-#define MODE_DOT3_RGBA     8
-#define MODE_DOT3_RGBA_EXT 9
-#define MODE_MODULATE_ADD_ATI           10
-#define MODE_MODULATE_SIGNED_ADD_ATI    11
-#define MODE_MODULATE_SUBTRACT_ATI      12
-#define MODE_UNKNOWN       15
+#define MODE_REPLACE                     0  /* r = a0 */
+#define MODE_MODULATE                    1  /* r = a0 * a1 */
+#define MODE_ADD                         2  /* r = a0 + a1 */
+#define MODE_ADD_SIGNED                  3  /* r = a0 + a1 - 0.5 */
+#define MODE_INTERPOLATE                 4  /* r = a0 * a2 + a1 * (1 - a2) */
+#define MODE_SUBTRACT                    5  /* r = a0 - a1 */
+#define MODE_DOT3_RGB                    6  /* r = a0 . a1 */
+#define MODE_DOT3_RGB_EXT                7  /* r = a0 . a1 */
+#define MODE_DOT3_RGBA                   8  /* r = a0 . a1 */
+#define MODE_DOT3_RGBA_EXT               9  /* r = a0 . a1 */
+#define MODE_MODULATE_ADD_ATI           10  /* r = a0 * a2 + a1 */
+#define MODE_MODULATE_SIGNED_ADD_ATI    11  /* r = a0 * a2 + a1 - 0.5 */
+#define MODE_MODULATE_SUBTRACT_ATI      12  /* r = a0 * a2 - a1 */
+#define MODE_ADD_PRODUCTS               13  /* r = a0 * a1 + a2 * a3 */
+#define MODE_ADD_PRODUCTS_SIGNED        14  /* r = a0 * a1 + a2 * a3 - 0.5 */
+#define MODE_UNKNOWN                    15
 
-static GLuint translate_mode( GLenum mode )
+/**
+ * Translate GL combiner state into a MODE_x value
+ */
+static GLuint translate_mode( GLenum envMode, GLenum mode )
 {
    switch (mode) {
    case GL_REPLACE: return MODE_REPLACE;
    case GL_MODULATE: return MODE_MODULATE;
-   case GL_ADD: return MODE_ADD;
-   case GL_ADD_SIGNED: return MODE_ADD_SIGNED;
+   case GL_ADD:
+      if (envMode == GL_COMBINE4_NV)
+         return MODE_ADD_PRODUCTS;
+      else
+         return MODE_ADD;
+   case GL_ADD_SIGNED:
+      if (envMode == GL_COMBINE4_NV)
+         return MODE_ADD_PRODUCTS_SIGNED;
+      else
+         return MODE_ADD_SIGNED;
    case GL_INTERPOLATE: return MODE_INTERPOLATE;
    case GL_SUBTRACT: return MODE_SUBTRACT;
    case GL_DOT3_RGB: return MODE_DOT3_RGB;
@@ -199,7 +223,9 @@ static GLuint translate_mode( GLenum mode )
    case GL_MODULATE_ADD_ATI: return MODE_MODULATE_ADD_ATI;
    case GL_MODULATE_SIGNED_ADD_ATI: return MODE_MODULATE_SIGNED_ADD_ATI;
    case GL_MODULATE_SUBTRACT_ATI: return MODE_MODULATE_SUBTRACT_ATI;
-   default: return MODE_UNKNOWN;
+   default:
+      assert(0);
+      return MODE_UNKNOWN;
    }
 }
 
@@ -212,7 +238,11 @@ static GLuint translate_tex_src_bit( GLbitfield bit )
    case TEXTURE_RECT_BIT: return TEXTURE_RECT_INDEX;
    case TEXTURE_3D_BIT:   return TEXTURE_3D_INDEX;
    case TEXTURE_CUBE_BIT: return TEXTURE_CUBE_INDEX;
-   default: return TEXTURE_UNKNOWN_INDEX;
+   case TEXTURE_1D_ARRAY_BIT: return TEXTURE_1D_ARRAY_INDEX;
+   case TEXTURE_2D_ARRAY_BIT: return TEXTURE_2D_ARRAY_INDEX;
+   default:
+      assert(0);
+      return TEXTURE_UNKNOWN_INDEX;
    }
 }
 
@@ -248,14 +278,14 @@ static void make_state_key( GLcontext *ctx,  struct state_key *key )
       key->unit[i].NumArgsA = texUnit->_CurrentCombine->_NumArgsA;
 
       key->unit[i].ModeRGB =
-	 translate_mode(texUnit->_CurrentCombine->ModeRGB);
+	 translate_mode(texUnit->EnvMode, texUnit->_CurrentCombine->ModeRGB);
       key->unit[i].ModeA =
-	 translate_mode(texUnit->_CurrentCombine->ModeA);
+	 translate_mode(texUnit->EnvMode, texUnit->_CurrentCombine->ModeA);
 		
       key->unit[i].ScaleShiftRGB = texUnit->_CurrentCombine->ScaleShiftRGB;
       key->unit[i].ScaleShiftA = texUnit->_CurrentCombine->ScaleShiftA;
 
-      for (j=0;j<3;j++) {
+      for (j = 0; j < MAX_TERMS; j++) {
          key->unit[i].OptRGB[j].Operand =
 	    translate_operand(texUnit->_CurrentCombine->OperandRGB[j]);
          key->unit[i].OptA[j].Operand =
@@ -677,12 +707,17 @@ static struct ureg get_source( struct texenv_fragment_program *p,
    case SRC_PRIMARY_COLOR:
       return register_input(p, FRAG_ATTRIB_COL0);
 
+   case SRC_ZERO:
+      return get_zero(p);
+
    case SRC_PREVIOUS:
-   default:
       if (is_undef(p->src_previous))
 	 return register_input(p, FRAG_ATTRIB_COL0);
       else
 	 return p->src_previous;
+
+   default:
+      assert(0);
    }
 }
 
@@ -723,7 +758,9 @@ static struct ureg emit_combine_source( struct texenv_fragment_program *p,
    case OPR_ONE:
       return get_one(p);
    case OPR_SRC_COLOR: 
+      return src;
    default:
+      assert(0);
       return src;
    }
 }
@@ -772,9 +809,11 @@ static struct ureg emit_combine( struct texenv_fragment_program *p,
 				 GLuint mode,
 				 const struct mode_opt *opt)
 {
-   struct ureg src[3];
+   struct ureg src[MAX_TERMS];
    struct ureg tmp, half;
    GLuint i;
+
+   assert(nr <= MAX_TERMS);
 
    tmp = undef; /* silence warning (bug 5318) */
 
@@ -851,7 +890,26 @@ static struct ureg emit_combine( struct texenv_fragment_program *p,
       /* Arg0 * Arg2 - Arg1 */
       emit_arith( p, OPCODE_MAD, dest, mask, 0, src[0], src[2], negate(src[1]) );
       return dest;
+   case MODE_ADD_PRODUCTS:
+      /* Arg0 * Arg1 + Arg2 * Arg3 */
+      {
+         struct ureg tmp0 = get_temp(p);
+         emit_arith( p, OPCODE_MUL, tmp0, mask, 0, src[0], src[1], undef );
+         emit_arith( p, OPCODE_MAD, dest, mask, saturate, src[2], src[3], tmp0 );
+      }
+      return dest;
+   case MODE_ADD_PRODUCTS_SIGNED:
+      /* Arg0 * Arg1 + Arg2 * Arg3 - 0.5 */
+      {
+         struct ureg tmp0 = get_temp(p);
+         half = get_half(p);
+         emit_arith( p, OPCODE_MUL, tmp0, mask, 0, src[0], src[1], undef );
+         emit_arith( p, OPCODE_MAD, tmp0, mask, 0, src[2], src[3], tmp0 );
+         emit_arith( p, OPCODE_SUB, dest, mask, saturate, tmp0, half, undef );
+      }
+      return dest;
    default: 
+      assert(0);
       return src[0];
    }
 }
@@ -1007,6 +1065,7 @@ static GLboolean load_texenv_source( struct texenv_fragment_program *p,
       break;
       
    default:
+      /* not a texture src - do nothing */
       break;
    }
  
