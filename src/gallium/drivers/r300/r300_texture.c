@@ -156,10 +156,41 @@ static void r300_tex_surface_release(struct pipe_screen* screen,
     *surface = NULL;
 }
 
+static struct pipe_texture*
+    r300_texture_blanket(struct pipe_screen* screen,
+                         const struct pipe_texture* base,
+                         const unsigned* stride,
+                         struct pipe_buffer* buffer)
+{
+    struct r300_texture* tex;
+
+    if (base->target != PIPE_TEXTURE_2D ||
+        base->last_level != 0 ||
+        base->depth[0] != 1) {
+        return NULL;
+    }
+
+    tex = CALLOC_STRUCT(r300_texture);
+    if (!tex) {
+        return NULL;
+    }
+
+    tex->tex = *base;
+    tex->tex.refcount = 1;
+    tex->tex.screen = screen;
+
+    /* XXX tex->stride = *stride; */
+
+    pipe_buffer_reference(screen, &tex->buffer, buffer);
+
+    return (struct pipe_texture*)tex;
+}
+
 void r300_init_screen_texture_functions(struct pipe_screen* screen)
 {
     screen->texture_create = r300_texture_create;
     screen->texture_release = r300_texture_release;
     screen->get_tex_surface = r300_get_tex_surface;
     screen->tex_surface_release = r300_tex_surface_release;
+    screen->texture_blanket = r300_texture_blanket;
 }

@@ -52,6 +52,8 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
     r300->blend_color_state = CALLOC_STRUCT(r300_blend_color_state);
     r300->scissor_state = CALLOC_STRUCT(r300_scissor_state);
 
+    r300_init_flush_functions(r300);
+
     r300_init_surface_functions(r300);
 
     r300_init_state_functions(r300);

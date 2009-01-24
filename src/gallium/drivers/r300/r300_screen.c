@@ -117,6 +117,7 @@ static float r300_get_paramf(struct pipe_screen* pscreen, int param)
 static boolean check_tex_2d_format(enum pipe_format format)
 {
     switch (format) {
+        case PIPE_FORMAT_A8R8G8B8_UNORM:
         case PIPE_FORMAT_I8_UNORM:
             return TRUE;
         default:
