@@ -187,11 +187,12 @@ static boolean amd_buffer_create(__DRIscreenPrivate *dri_screen,
         }
 
         switch (visual->depthBits) {
+        case 24:
+            depth_format = PIPE_FORMAT_S8Z24_UNORM;
+            break;
         case 16:
             depth_format = PIPE_FORMAT_Z16_UNORM;
             break;
-        case 24:
-            depth_format = PIPE_FORMAT_S8Z24_UNORM;
         default:
             depth_format = PIPE_FORMAT_NONE;
             break;
