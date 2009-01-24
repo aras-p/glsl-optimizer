@@ -1033,7 +1033,6 @@ static GLint Args(int argc, char **argv)
 int main(int argc, char **argv)
 {
    GLenum type;
-   char *extensions;
 
    GLuint arg_mode = Args(argc, argv);
 
@@ -1052,19 +1051,18 @@ int main(int argc, char **argv)
    glutInitDisplayMode(type);
 
    if (glutCreateWindow("Isosurface") <= 0) {
-   glewInit();
       exit(0);
    }
 
-   /* Make sure server supports the vertex array extension */
-   extensions = (char *) glGetString( GL_EXTENSIONS );
+   glewInit();
 
-   if (!strstr( extensions, "GL_EXT_vertex_array" ))
+   /* Make sure server supports the vertex array extension */
+   if (!GLEW_EXT_vertex_array)
    {
       printf("Vertex arrays not supported by this renderer\n");
       allowed &= ~(LOCKED|DRAW_ARRAYS|DRAW_ELTS|ARRAY_ELT);
    }
-   else if (!strstr( extensions, "GL_EXT_compiled_vertex_array" ))
+   else if (!GLEW_EXT_compiled_vertex_array)
    {
       printf("Compiled vertex arrays not supported by this renderer\n");
       allowed &= ~LOCKED;
