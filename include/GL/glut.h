@@ -7,34 +7,21 @@
    provided without guarantee or warrantee expressed or  implied. This
    program is -not- in the public domain. */
 
-#include <GL/gl.h>
-#include <GL/glu.h>
-
-#if defined(__MINGW32__)
+#if defined(_WIN32)
 #  ifndef WIN32_LEAN_AND_MEAN
 #    define WIN32_LEAN_AND_MEAN 1
 #  endif
 #  include <windows.h>
 #endif
 
+#include <GL/gl.h>
+#include <GL/glu.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 #if defined(_WIN32)
-
-/* GLUT 3.7 now tries to avoid including <windows.h>
-   to avoid name space pollution, but Win32's <GL/gl.h>
-   needs APIENTRY and WINGDIAPI defined properly.
-
-   tjump@spgs.com contributes:
-   If users are building glut code on MS Windows, then they should
-   make sure they include windows.h early, let's not get into a
-   header definitions war since MS has proven it's capability to
-   change header dependencies w/o publishing they have done so.
-
-   So, let's not include windows.h here, as it's not really required and
-   MS own gl/gl.h *should* include it if the dependency is there. */
 
 /* To disable automatic library usage for GLUT, define GLUT_NO_LIB_PRAGMA
    in your compile preprocessor options. */
@@ -128,76 +115,6 @@ extern _CRTIMP void __cdecl exit(int);
 #   define GLUTAPI __declspec(dllimport)
 #else
 #	define GLUTAPI extern
-#endif
-
-#if defined(_WIN32) && !defined(_WINDEF_) && !defined(MESA)
-#	if !defined(MESA_MINWARN)
-#		pragma message( "note: WINDOWS.H not included, providing Mesa definition of CALLBACK macro" )
-#		pragma message( "----: and PROC typedef. If you receive compiler warnings about either ")
-#		pragma message( "----: being multiply defined you should include WINDOWS.H priot to gl/glut.h" )
-#	endif
-#	define CALLBACK __stdcall
-
-#if !defined(__MINGW32__)
-	typedef int (GLUTAPIENTRY *PROC)();
-	typedef void *HGLRC;
-	typedef void *HDC;
-#endif
-typedef unsigned long COLORREF;
-#endif
-
-#if defined(_WIN32) && !defined(_WINGDI_) && !defined(MESA)
-#	if !defined(MESA_MINWARN)
-#		pragma message( "note: WINDOWS.H not included, providing Mesa definition of wgl functions" )
-#		pragma message( "----: and macros. If you receive compiler warnings about any being multiply ")
-#		pragma message( "----: defined you should include WINDOWS.H priot to gl/glut.h" )
-#	endif
-#	define WGL_FONT_LINES      0
-#	define WGL_FONT_POLYGONS   1
-#	ifdef UNICODE
-#		define wglUseFontBitmaps  wglUseFontBitmapsW
-#		define wglUseFontOutlines  wglUseFontOutlinesW
-#	else
-#		define wglUseFontBitmaps  wglUseFontBitmapsA
-#		define wglUseFontOutlines  wglUseFontOutlinesA
-#	endif /* !UNICODE */
-typedef struct tagLAYERPLANEDESCRIPTOR LAYERPLANEDESCRIPTOR, *PLAYERPLANEDESCRIPTOR, *LPLAYERPLANEDESCRIPTOR;
-typedef struct _GLYPHMETRICSFLOAT GLYPHMETRICSFLOAT, *PGLYPHMETRICSFLOAT, *LPGLYPHMETRICSFLOAT;
-#  pragma warning( push )
-#  pragma warning( disable : 4273 ) /* 'function' : inconsistent DLL linkage. dllexport assumed. */
-#  define WGLAPI __declspec(dllimport)
-WGLAPI int   GLAPIENTRY wglDeleteContext(HGLRC);
-WGLAPI int   GLAPIENTRY wglMakeCurrent(HDC,HGLRC);
-WGLAPI int   GLAPIENTRY wglSetPixelFormat(HDC, int, const PIXELFORMATDESCRIPTOR *);
-WGLAPI int   GLAPIENTRY wglSwapBuffers(HDC hdc);
-WGLAPI HDC   GLAPIENTRY wglGetCurrentDC(void);
-WGLAPI HGLRC GLAPIENTRY wglCreateContext(HDC);
-WGLAPI HGLRC GLAPIENTRY wglCreateLayerContext(HDC,int);
-WGLAPI HGLRC GLAPIENTRY wglGetCurrentContext(void);
-WGLAPI PROC  GLAPIENTRY wglGetProcAddress(const char*);
-WGLAPI int   GLAPIENTRY wglChoosePixelFormat(HDC, const PIXELFORMATDESCRIPTOR *);
-WGLAPI int   GLAPIENTRY wglCopyContext(HGLRC, HGLRC, unsigned int);
-WGLAPI int   GLAPIENTRY wglDeleteContext(HGLRC);
-WGLAPI int   GLAPIENTRY wglDescribeLayerPlane(HDC, int, int, unsigned int,LPLAYERPLANEDESCRIPTOR);
-WGLAPI int   GLAPIENTRY wglDescribePixelFormat(HDC,int, unsigned int, LPPIXELFORMATDESCRIPTOR);
-WGLAPI int   GLAPIENTRY wglGetLayerPaletteEntries(HDC, int, int, int,COLORREF *);
-WGLAPI int   GLAPIENTRY wglGetPixelFormat(HDC hdc);
-WGLAPI int   GLAPIENTRY wglMakeCurrent(HDC, HGLRC);
-WGLAPI int   GLAPIENTRY wglRealizeLayerPalette(HDC, int, int);
-WGLAPI int   GLAPIENTRY wglSetLayerPaletteEntries(HDC, int, int, int,const COLORREF *);
-WGLAPI int   GLAPIENTRY wglShareLists(HGLRC, HGLRC);
-WGLAPI int   GLAPIENTRY wglSwapLayerBuffers(HDC, unsigned int);
-WGLAPI int   GLAPIENTRY wglUseFontBitmapsA(HDC, unsigned long, unsigned long, unsigned long);
-WGLAPI int   GLAPIENTRY wglUseFontBitmapsW(HDC, unsigned long, unsigned long, unsigned long);
-WGLAPI int   GLAPIENTRY wglUseFontOutlinesA(HDC, unsigned long, unsigned long, unsigned long, float,float, int, LPGLYPHMETRICSFLOAT);
-WGLAPI int   GLAPIENTRY wglUseFontOutlinesW(HDC, unsigned long, unsigned long, unsigned long, float,float, int, LPGLYPHMETRICSFLOAT);
-WGLAPI int   GLAPIENTRY SwapBuffers(HDC);
-WGLAPI int   GLAPIENTRY ChoosePixelFormat(HDC,const PIXELFORMATDESCRIPTOR *);
-WGLAPI int   GLAPIENTRY DescribePixelFormat(HDC,int,unsigned int,LPPIXELFORMATDESCRIPTOR);
-WGLAPI int   GLAPIENTRY GetPixelFormat(HDC);
-WGLAPI int   GLAPIENTRY SetPixelFormat(HDC,int,const PIXELFORMATDESCRIPTOR *);
-#  undef WGLAPI
-#  pragma warning( pop )
 #endif
 
 #elif defined(__GNUC__) && (__GNUC__ * 100 + __GNUC_MINOR__) >= 303
