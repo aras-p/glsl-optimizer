@@ -139,7 +139,8 @@ static int r300_get_param(struct pipe_screen* pscreen, int param)
             /* XXX 4 eventually */
             return 1;
         default:
-            debug_printf("r300: Implementation error: Bad param %d", param);
+            debug_printf("r300: Implementation error: Bad param %d\n",
+                param);
             return 0;
     }
 }
@@ -162,7 +163,8 @@ static float r300_get_paramf(struct pipe_screen* pscreen, int param)
         case PIPE_CAP_MAX_TEXTURE_LOD_BIAS:
             return 16.0f;
         default:
-            debug_printf("r300: Implementation error: Bad paramf %d", param);
+            debug_printf("r300: Implementation error: Bad paramf %d\n",
+                param);
             return 0.0f;
     }
 }
@@ -175,7 +177,7 @@ static boolean check_tex_2d_format(enum pipe_format format)
         case PIPE_FORMAT_I8_UNORM:
             return TRUE;
         default:
-            debug_printf("r300: Warning: Got unknown format: %d, in %s",
+            debug_printf("r300: Warning: Got unknown format: %d, in %s\n",
                 format, __FUNCTION__);
             break;
     }
@@ -194,7 +196,7 @@ static boolean r300_is_format_supported(struct pipe_screen* pscreen,
         case PIPE_TEXTURE_2D:
             return check_tex_2d_format(format);
         default:
-            debug_printf("r300: Warning: Got unknown format target: %d",
+            debug_printf("r300: Warning: Got unknown format target: %d\n",
                 format);
             break;
     }
