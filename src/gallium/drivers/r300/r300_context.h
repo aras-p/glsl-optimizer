@@ -79,6 +79,9 @@ struct r300_scissor_state {
     uint32_t scissor_bottom_right; /* R300_SC_SCISSORS_BR: 0x43e4 */
 };
 
+struct r300_texture_state {
+};
+
 #define R300_NEW_BLEND           0x0001
 #define R300_NEW_BLEND_COLOR     0x0002
 #define R300_NEW_DSA             0x0004
@@ -121,6 +124,8 @@ struct r300_context {
     struct r300_dsa_state* dsa_state;
     /* Fragment shader state. */
     struct r300_fs_state* fs_state;
+    /* Framebuffer state. We currently don't need our own version of this. */
+    struct pipe_framebuffer_state framebuffer_state;
     /* Rasterizer state. */
     struct r300_rs_state* rs_state;
     /* Sampler states. */
@@ -128,6 +133,10 @@ struct r300_context {
     int sampler_count;
     /* Scissor state. */
     struct r300_scissor_state* scissor_state;
+    /* Texture states. */
+    struct r300_texture* textures[8];
+    struct r300_texture_state* texture_states[8];
+    int texture_count;
     /* Bitmask of dirty state objects. */
     uint32_t dirty_state;
     /* Flag indicating whether or not the HW is dirty. */

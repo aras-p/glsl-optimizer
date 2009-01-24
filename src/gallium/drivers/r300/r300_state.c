@@ -195,6 +195,15 @@ static void r300_set_blend_color(struct pipe_context* pipe,
     r300->dirty_state |= R300_NEW_BLEND_COLOR;
 }
 
+static void r300_set_clip_state(struct pipe_context* pipe,
+                                const struct pipe_clip_state* state)
+{
+    struct r300_context* r300 = r300_context(pipe);
+    /* XXX Draw */
+    draw_flush(r300->draw);
+    draw_set_clip_state(r300->draw, state);
+}
+
 static uint32_t translate_depth_stencil_function(int zs_func) {
     switch (zs_func) {
         case PIPE_FUNC_NEVER:
@@ -358,6 +367,19 @@ static void r300_delete_dsa_state(struct pipe_context* pipe,
     FREE(state);
 }
 
+static void
+    r300_set_framebuffer_state(struct pipe_context* pipe,
+                               const struct pipe_framebuffer_state* state)
+{
+    struct r300_context* r300 = r300_context(pipe);
+
+    draw_flush(r300->draw);
+
+    r300->framebuffer_state = *state;
+
+    /* XXX do we need to mark dirty state? */
+}
+
 /* Create fragment shader state. */
 static void* r300_create_fs_state(struct pipe_context* pipe,
                                   const struct pipe_shader_state* state)
@@ -381,6 +403,12 @@ static void r300_bind_fs_state(struct pipe_context* pipe, void* state)
 static void r300_delete_fs_state(struct pipe_context* pipe, void* state)
 {
     FREE(state);
+}
+
+static void r300_set_polygon_stipple(struct pipe_context* pipe,
+                                     const struct pipe_poly_stipple* state)
+{
+    /* XXX */
 }
 
 #if 0
@@ -621,6 +649,36 @@ static void r300_delete_sampler_state(struct pipe_context* pipe, void* state)
     FREE(state);
 }
 
+static void r300_set_sampler_textures(struct pipe_context* pipe,
+                                      unsigned count,
+                                      struct pipe_texture** texture)
+{
+    struct r300_context* r300 = r300_context(pipe);
+    int i;
+
+    /* XXX magic num */
+    if (count > 8) {
+        return;
+    }
+
+    for (i = 0; i < count; i++) {
+        if (r300->textures[i] != (struct r300_texture*)texture[i]) {
+            pipe_texture_reference((struct pipe_texture**)&r300->textures[i],
+                texture[i]);
+            /* XXX NEW_TEXTURE instead? */
+            r300->dirty_state |= (R300_NEW_SAMPLER << i);
+        }
+    }
+
+    for (i = count; i < 8; i++) {
+        /* XXX also state change? */
+        pipe_texture_reference((struct pipe_texture**)&r300->textures[i],
+            NULL);
+    }
+
+    r300->texture_count = count;
+}
+
 static void r300_set_scissor_state(struct pipe_context* pipe,
                                    const struct pipe_scissor_state* state)
 {
@@ -643,6 +701,14 @@ static void r300_set_scissor_state(struct pipe_context* pipe,
         (right << R300_SCISSORS_X_SHIFT) | (bottom << R300_SCISSORS_Y_SHIFT);
 
     r300->dirty_state |= R300_NEW_SCISSOR;
+}
+
+static void r300_set_viewport_state(struct pipe_context* pipe,
+                                     const struct pipe_viewport_state* state)
+{
+    struct r300_context* r300 = r300_context(pipe);
+    /* XXX handing this off to Draw for now */
+    draw_set_viewport_state(r300->draw, state);
 }
 
 static void* r300_create_vs_state(struct pipe_context* pipe,
@@ -674,13 +740,19 @@ void r300_init_state_functions(struct r300_context* r300) {
 
     r300->context.set_blend_color = r300_set_blend_color;
 
+    r300->context.set_clip_state = r300_set_clip_state;
+
     r300->context.create_depth_stencil_alpha_state = r300_create_dsa_state;
     r300->context.bind_depth_stencil_alpha_state = r300_bind_dsa_state;
     r300->context.delete_depth_stencil_alpha_state = r300_delete_dsa_state;
 
+    r300->context.set_framebuffer_state = r300_set_framebuffer_state;
+
     r300->context.create_fs_state = r300_create_fs_state;
     r300->context.bind_fs_state = r300_bind_fs_state;
     r300->context.delete_fs_state = r300_delete_fs_state;
+
+    r300->context.set_polygon_stipple = r300_set_polygon_stipple;
 
     r300->context.create_rasterizer_state = r300_create_rs_state;
     r300->context.bind_rasterizer_state = r300_bind_rs_state;
@@ -690,7 +762,11 @@ void r300_init_state_functions(struct r300_context* r300) {
     r300->context.bind_sampler_states = r300_bind_sampler_states;
     r300->context.delete_sampler_state = r300_delete_sampler_state;
 
+    r300->context.set_sampler_textures = r300_set_sampler_textures;
+
     r300->context.set_scissor_state = r300_set_scissor_state;
+
+    r300->context.set_viewport_state = r300_set_viewport_state;
 
     r300->context.create_vs_state = r300_create_vs_state;
     r300->context.bind_vs_state = r300_bind_vs_state;

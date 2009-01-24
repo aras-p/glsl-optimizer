@@ -340,4 +340,7 @@ void r300_parse_chipset(struct r300_capabilities* caps)
             /* XXX not an r300?! */
             break;
     }
+
+    /* Force off TCL for now */
+    caps->has_tcl = FALSE;
 }
