@@ -388,6 +388,7 @@ static const struct dri_extension card_extensions[] = {
    { "GL_MESA_ycbcr_texture",             NULL },
    { "GL_NV_blend_square",                NULL },
    { "GL_NV_point_sprite",                GL_NV_point_sprite_functions },
+   { "GL_NV_texture_env_combine4",        NULL },
    { "GL_NV_vertex_program",              GL_NV_vertex_program_functions },
    { "GL_NV_vertex_program1_1",           NULL },
    { "GL_SGIS_generate_mipmap",           NULL },
