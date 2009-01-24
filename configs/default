@@ -57,7 +57,7 @@ OSMESA_LIB = OSMesa
 GL_LIB_NAME = lib$(GL_LIB).so
 GLU_LIB_NAME = lib$(GLU_LIB).so
 GLUT_LIB_NAME = lib$(GLUT_LIB).so
-GLEW_LIB_NAME = lib$(GLEW_LIB).so
+GLEW_LIB_NAME = lib$(GLEW_LIB).a
 GLW_LIB_NAME = lib$(GLW_LIB).so
 OSMESA_LIB_NAME = lib$(OSMESA_LIB).so
 

@@ -34,11 +34,7 @@ default: $(TOP)/$(LIB_DIR)/$(GLEW_LIB_NAME)
 
 # Make the library
 $(TOP)/$(LIB_DIR)/$(GLEW_LIB_NAME): depend $(OBJECTS)
-	$(MKLIB) -o $(GLEW_LIB) -linker '$(CC)' -ldflags '$(LDFLAGS)' \
-		-major $(MAJOR) -minor $(MINOR) -patch $(TINY) \
-		$(MKLIB_OPTIONS) -install $(TOP)/$(LIB_DIR) \
-		-id $(INSTALL_LIB_DIR)/lib$(GLEW_LIB).$(MAJOR).dylib \
-		$(GLEW_LIB_DEPS) $(OBJECTS)
+	$(MKLIB) -o $(GLEW_LIB) -static -install $(TOP)/$(LIB_DIR) $(OBJECTS)
 
 
 clean:
