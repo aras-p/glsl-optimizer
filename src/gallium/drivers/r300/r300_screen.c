@@ -80,9 +80,6 @@ static int r300_get_param(struct pipe_screen* pscreen, int param)
         case PIPE_CAP_NPOT_TEXTURES:
             /* IN THEORY */
             return 0;
-        case PIPE_CAP_S3TC:
-            /* IN THEORY */
-            return 0;
         case PIPE_CAP_TWO_SIDED_STENCIL:
             /* IN THEORY */
             /* if (r300screen->is_r500) {
@@ -91,19 +88,25 @@ static int r300_get_param(struct pipe_screen* pscreen, int param)
              * return 0;
              * } */
             return 0;
+        case PIPE_CAP_GLSL:
+            /* IN THEORY */
+            return 0;
+        case PIPE_CAP_S3TC:
+            /* IN THEORY */
+            return 0;
         case PIPE_CAP_ANISOTROPIC_FILTER:
             /* IN THEORY */
             return 0;
         case PIPE_CAP_POINT_SPRITE:
             /* IN THEORY */
             return 0;
+        case PIPE_CAP_MAX_RENDER_TARGETS:
+            /* XXX 4 eventually */
+            return 1;
         case PIPE_CAP_OCCLUSION_QUERY:
             /* IN THEORY */
             return 0;
         case PIPE_CAP_TEXTURE_SHADOW_MAP:
-            /* IN THEORY */
-            return 0;
-        case PIPE_CAP_GLSL:
             /* IN THEORY */
             return 0;
         case PIPE_CAP_MAX_TEXTURE_2D_LEVELS:
@@ -135,9 +138,13 @@ static int r300_get_param(struct pipe_screen* pscreen, int param)
                 /* 12 == 2048x2048 */
                 return 12;
             }
-        case PIPE_CAP_MAX_RENDER_TARGETS:
-            /* XXX 4 eventually */
+        case PIPE_CAP_TEXTURE_MIRROR_CLAMP:
             return 1;
+        case PIPE_CAP_TEXTURE_MIRROR_REPEAT:
+            return 1;
+        case PIPE_CAP_MAX_VERTEX_TEXTURE_UNITS:
+            /* XXX guessing */
+            return 2;
         default:
             debug_printf("r300: Implementation error: Bad param %d\n",
                 param);
