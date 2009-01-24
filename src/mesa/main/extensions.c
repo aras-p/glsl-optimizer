@@ -155,6 +155,7 @@ static const struct {
    { OFF, "GL_NV_fragment_program",            F(NV_fragment_program) },
    { ON,  "GL_NV_light_max_exponent",          F(NV_light_max_exponent) },
    { OFF, "GL_NV_point_sprite",                F(NV_point_sprite) },
+   { OFF, "GL_NV_texture_env_combine4",        F(NV_texture_env_combine4) },
    { OFF, "GL_NV_texture_rectangle",           F(NV_texture_rectangle) },
    { ON,  "GL_NV_texgen_reflection",           F(NV_texgen_reflection) },
    { OFF, "GL_NV_vertex_program",              F(NV_vertex_program) },

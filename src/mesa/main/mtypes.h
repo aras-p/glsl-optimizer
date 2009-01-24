@@ -1468,23 +1468,20 @@ struct gl_texture_object
 
 /**
  * Texture combine environment state.
- * 
- * \todo
- * If GL_NV_texture_env_combine4 is ever supported, the arrays in this
- * structure will need to be expanded for 4 elements.
+ * Up to four combiner sources are possible with GL_NV_texture_env_combine4.
  */
 struct gl_tex_env_combine_state
 {
    GLenum ModeRGB;       /**< GL_REPLACE, GL_DECAL, GL_ADD, etc. */
    GLenum ModeA;         /**< GL_REPLACE, GL_DECAL, GL_ADD, etc. */
-   GLenum SourceRGB[3];  /**< GL_PRIMARY_COLOR, GL_TEXTURE, etc. */
-   GLenum SourceA[3];    /**< GL_PRIMARY_COLOR, GL_TEXTURE, etc. */
-   GLenum OperandRGB[3]; /**< SRC_COLOR, ONE_MINUS_SRC_COLOR, etc */
-   GLenum OperandA[3];   /**< SRC_ALPHA, ONE_MINUS_SRC_ALPHA, etc */
+   GLenum SourceRGB[4];  /**< GL_PRIMARY_COLOR, GL_TEXTURE, etc. */
+   GLenum SourceA[4];    /**< GL_PRIMARY_COLOR, GL_TEXTURE, etc. */
+   GLenum OperandRGB[4]; /**< SRC_COLOR, ONE_MINUS_SRC_COLOR, etc */
+   GLenum OperandA[4];   /**< SRC_ALPHA, ONE_MINUS_SRC_ALPHA, etc */
    GLuint ScaleShiftRGB; /**< 0, 1 or 2 */
    GLuint ScaleShiftA;   /**< 0, 1 or 2 */
-   GLuint _NumArgsRGB;   /**< Number of inputs used for the combine mode. */
-   GLuint _NumArgsA;     /**< Number of inputs used for the combine mode. */
+   GLuint _NumArgsRGB;   /**< Number of inputs used for the RGB combiner */
+   GLuint _NumArgsA;     /**< Number of inputs used for the A combiner */
 };
 
 
@@ -2649,6 +2646,7 @@ struct gl_extensions
    GLboolean NV_light_max_exponent;
    GLboolean NV_point_sprite;
    GLboolean NV_texgen_reflection;
+   GLboolean NV_texture_env_combine4;
    GLboolean NV_texture_rectangle;
    GLboolean NV_vertex_program;
    GLboolean NV_vertex_program1_1;
