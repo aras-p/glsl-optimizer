@@ -206,6 +206,16 @@ set_combiner_source(GLcontext *ctx,
       src = 2;
       alpha = GL_FALSE;
       break;
+   case GL_SOURCE3_RGB_NV:
+      if (ctx->Extensions.NV_texture_env_combine4) {
+         src = 3;
+         alpha = GL_FALSE;
+      }
+      else {
+         TE_ERROR(GL_INVALID_ENUM, "glTexEnv(pname=%s)", pname);
+         return;
+      }
+      break;
    case GL_SOURCE0_ALPHA:
       src = 0;
       alpha = GL_TRUE;
@@ -218,10 +228,22 @@ set_combiner_source(GLcontext *ctx,
       src = 2;
       alpha = GL_TRUE;
       break;
+   case GL_SOURCE3_ALPHA_NV:
+      if (ctx->Extensions.NV_texture_env_combine4) {
+         src = 3;
+         alpha = GL_TRUE;
+      }
+      else {
+         TE_ERROR(GL_INVALID_ENUM, "glTexEnv(pname=%s)", pname);
+         return;
+      }
+      break;
    default:
       TE_ERROR(GL_INVALID_ENUM, "glTexEnv(pname=%s)", pname);
       return;
    }
+
+   assert(src < 4);
 
    /*
     * Error-check param (the source term)
@@ -245,6 +267,9 @@ set_combiner_source(GLcontext *ctx,
                param - GL_TEXTURE0 < ctx->Const.MaxTextureUnits);
       break;
    case GL_ZERO:
+      legal = (ctx->Extensions.ATI_texture_env_combine3 ||
+               ctx->Extensions.NV_texture_env_combine4);
+      break;
    case GL_ONE:
       legal = ctx->Extensions.ATI_texture_env_combine3;
       break;
@@ -259,7 +284,6 @@ set_combiner_source(GLcontext *ctx,
 
    FLUSH_VERTICES(ctx, _NEW_TEXTURE);
 
-   assert(src < 4);
    if (alpha)
       texUnit->Combine.SourceA[src] = param;
    else
@@ -301,6 +325,16 @@ set_combiner_operand(GLcontext *ctx,
          return;
       }
       break;
+   case GL_OPERAND3_RGB_NV:
+      if (ctx->Extensions.NV_texture_env_combine4) {
+         op = 3;
+         alpha = GL_FALSE;
+      }
+      else {
+         TE_ERROR(GL_INVALID_ENUM, "glTexEnv(pname=%s)", pname);
+         return;
+      }
+      break;
    case GL_OPERAND0_ALPHA:
       op = 0;
       alpha = GL_TRUE;
@@ -319,10 +353,22 @@ set_combiner_operand(GLcontext *ctx,
          return;
       }
       break;
+   case GL_OPERAND3_ALPHA_NV:
+      if (ctx->Extensions.NV_texture_env_combine4) {
+         op = 3;
+         alpha = GL_TRUE;
+      }
+      else {
+         TE_ERROR(GL_INVALID_ENUM, "glTexEnv(pname=%s)", pname);
+         return;
+      }
+      break;
    default:
       TE_ERROR(GL_INVALID_ENUM, "glTexEnv(pname=%s)", pname);
       return;
    }
+
+   assert(op < 4);
 
    /*
     * Error-check param (the source operand)
@@ -397,7 +443,6 @@ set_combiner_scale(GLcontext *ctx,
       break;
    default:
       TE_ERROR(GL_INVALID_ENUM, "glTexEnv(pname=%s)", pname);
-      return;
    }
 }
 
@@ -435,17 +480,21 @@ _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
       case GL_SOURCE0_RGB:
       case GL_SOURCE1_RGB:
       case GL_SOURCE2_RGB:
+      case GL_SOURCE3_RGB_NV:
       case GL_SOURCE0_ALPHA:
       case GL_SOURCE1_ALPHA:
       case GL_SOURCE2_ALPHA:
+      case GL_SOURCE3_ALPHA_NV:
          set_combiner_source(ctx, texUnit, pname, (GLenum) (GLint) param[0]);
 	 break;
       case GL_OPERAND0_RGB:
       case GL_OPERAND1_RGB:
       case GL_OPERAND2_RGB:
+      case GL_OPERAND3_RGB_NV:
       case GL_OPERAND0_ALPHA:
       case GL_OPERAND1_ALPHA:
       case GL_OPERAND2_ALPHA:
+      case GL_OPERAND3_ALPHA_NV:
          set_combiner_operand(ctx, texUnit, pname, (GLenum) (GLint) param[0]);
 	 break;
       case GL_RGB_SCALE:
@@ -601,6 +650,14 @@ get_texenvi(GLcontext *ctx, const struct gl_texture_unit *texUnit,
          _mesa_error(ctx, GL_INVALID_ENUM, "glGetTexEnvfv(pname)");
       }
       break;
+   case GL_SOURCE3_RGB_NV:
+      if (ctx->Extensions.NV_texture_env_combine4) {
+         return texUnit->Combine.SourceRGB[3];
+      }
+      else {
+         _mesa_error(ctx, GL_INVALID_ENUM, "glGetTexEnvfv(pname)");
+      }
+      break;
    case GL_SOURCE0_ALPHA:
    case GL_SOURCE1_ALPHA:
    case GL_SOURCE2_ALPHA:
@@ -608,6 +665,14 @@ get_texenvi(GLcontext *ctx, const struct gl_texture_unit *texUnit,
           ctx->Extensions.ARB_texture_env_combine) {
          const unsigned alpha_idx = pname - GL_SOURCE0_ALPHA;
          return texUnit->Combine.SourceA[alpha_idx];
+      }
+      else {
+         _mesa_error(ctx, GL_INVALID_ENUM, "glGetTexEnvfv(pname)");
+      }
+      break;
+   case GL_SOURCE3_ALPHA_NV:
+      if (ctx->Extensions.NV_texture_env_combine4) {
+         return texUnit->Combine.SourceA[3];
       }
       else {
          _mesa_error(ctx, GL_INVALID_ENUM, "glGetTexEnvfv(pname)");
@@ -625,6 +690,14 @@ get_texenvi(GLcontext *ctx, const struct gl_texture_unit *texUnit,
          _mesa_error(ctx, GL_INVALID_ENUM, "glGetTexEnvfv(pname)");
       }
       break;
+   case GL_OPERAND3_RGB_NV:
+      if (ctx->Extensions.NV_texture_env_combine4) {
+         return texUnit->Combine.OperandRGB[3];
+      }
+      else {
+         _mesa_error(ctx, GL_INVALID_ENUM, "glGetTexEnvfv(pname)");
+      }
+      break;
    case GL_OPERAND0_ALPHA:
    case GL_OPERAND1_ALPHA:
    case GL_OPERAND2_ALPHA:
@@ -632,6 +705,14 @@ get_texenvi(GLcontext *ctx, const struct gl_texture_unit *texUnit,
           ctx->Extensions.ARB_texture_env_combine) {
          const unsigned op_alpha = pname - GL_OPERAND0_ALPHA;
          return texUnit->Combine.OperandA[op_alpha];
+      }
+      else {
+         _mesa_error(ctx, GL_INVALID_ENUM, "glGetTexEnvfv(pname)");
+      }
+      break;
+   case GL_OPERAND3_ALPHA_NV:
+      if (ctx->Extensions.NV_texture_env_combine4) {
+         return texUnit->Combine.OperandA[3];
       }
       else {
          _mesa_error(ctx, GL_INVALID_ENUM, "glGetTexEnvfv(pname)");
