@@ -47,6 +47,8 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
 
     r300->context.destroy = r300_destroy_context;
 
+    r300->context.clear = r300_clear;
+
     r300->draw = draw_create();
 
     r300->blend_color_state = CALLOC_STRUCT(r300_blend_color_state);

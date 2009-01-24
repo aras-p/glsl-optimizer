@@ -27,6 +27,7 @@
 #include "pipe/p_context.h"
 #include "util/u_memory.h"
 
+#include "r300_clear.h"
 #include "r300_screen.h"
 #include "r300_winsys.h"
 

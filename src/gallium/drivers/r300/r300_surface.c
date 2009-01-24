@@ -30,6 +30,12 @@ static void r300_surface_fill(struct pipe_context* pipe,
                               unsigned w, unsigned h,
                               unsigned color)
 {
+
+void *dst_map = pipe->screen->surface_map( pipe->screen, dest,
+PIPE_BUFFER_USAGE_CPU_WRITE );
+pipe_fill_rect(dst_map, &dest->block, dest->stride, x, y, w, h, color);
+pipe->screen->surface_unmap(pipe->screen, dest);
+return;
     struct r300_context* r300 = r300_context(pipe);
     CS_LOCALS(r300);
     struct r300_capabilities* caps = r300_screen(r300->context.screen)->caps;
@@ -278,7 +284,7 @@ static void r300_surface_fill(struct pipe_context* pipe,
     /* XXX might have to switch to 2D */
 
     OUT_CS_REG_SEQ(R300_RB3D_COLOROFFSET0, 1);
-    OUT_CS_RELOC(0, dest->buffer, 0, RADEON_GEM_DOMAIN_VRAM, 0);
+    OUT_CS_RELOC(dest->buffer, 0, 0, RADEON_GEM_DOMAIN_VRAM, 0);
     /* XXX this needs more TLC (or TCL, as it were) */
     OUT_CS_REG(R300_RB3D_COLORPITCH0, R300_COLOR_FORMAT_ARGB8888);
 #if 0

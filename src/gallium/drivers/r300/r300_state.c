@@ -204,6 +204,14 @@ static void r300_set_clip_state(struct pipe_context* pipe,
     draw_set_clip_state(r300->draw, state);
 }
 
+static void
+    r300_set_constant_buffer(struct pipe_context* pipe,
+                             uint shader, uint index,
+                             const struct pipe_constant_buffer* buffer)
+{
+    /* XXX */
+}
+
 static uint32_t translate_depth_stencil_function(int zs_func) {
     switch (zs_func) {
         case PIPE_FUNC_NEVER:
@@ -365,6 +373,12 @@ static void r300_delete_dsa_state(struct pipe_context* pipe,
                                   void* state)
 {
     FREE(state);
+}
+
+static void r300_set_edgeflags(struct pipe_context* pipe,
+                               const unsigned* bitfield)
+{
+    /* XXX you know it's bad when i915 has this blank too */
 }
 
 static void
@@ -762,13 +776,13 @@ void r300_init_state_functions(struct r300_context* r300)
 
     r300->context.set_clip_state = r300_set_clip_state;
 
-    /* XXX r300->context.set_constant_buffer = r300_set_constant_buffer; */
+    r300->context.set_constant_buffer = r300_set_constant_buffer;
 
     r300->context.create_depth_stencil_alpha_state = r300_create_dsa_state;
     r300->context.bind_depth_stencil_alpha_state = r300_bind_dsa_state;
     r300->context.delete_depth_stencil_alpha_state = r300_delete_dsa_state;
 
-    /* XXX r300->context.set_edgeflags = r300_set_edgeflags; */
+    r300->context.set_edgeflags = r300_set_edgeflags;
 
     r300->context.set_framebuffer_state = r300_set_framebuffer_state;
 
