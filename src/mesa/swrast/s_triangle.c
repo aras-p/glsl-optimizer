@@ -1070,7 +1070,8 @@ _swrast_choose_triangle( GLcontext *ctx )
              && minFilter == magFilter
              && ctx->Light.Model.ColorControl == GL_SINGLE_COLOR
              && !swrast->_FogEnabled
-             && ctx->Texture.Unit[0].EnvMode != GL_COMBINE_EXT) {
+             && ctx->Texture.Unit[0].EnvMode != GL_COMBINE_EXT
+             && ctx->Texture.Unit[0].EnvMode != GL_COMBINE4_NV) {
 	    if (ctx->Hint.PerspectiveCorrection==GL_FASTEST) {
 	       if (minFilter == GL_NEAREST
 		   && format == MESA_FORMAT_RGB
