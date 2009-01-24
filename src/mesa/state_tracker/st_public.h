@@ -53,6 +53,7 @@ struct st_framebuffer;
 struct pipe_context;
 struct pipe_fence_handle;
 struct pipe_surface;
+struct pipe_texture;
 
 
 struct st_context *st_create_context(struct pipe_context *pipe,
