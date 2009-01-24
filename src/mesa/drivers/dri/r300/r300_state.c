@@ -783,6 +783,7 @@ static void r300Fogfv(GLcontext * ctx, GLenum pname, const GLfloat * param)
 			    R300_FG_FOG_BLEND_FN_EXP2;
 			fogScale.f = 0.3 * ctx->Fog.Density;
 			fogStart.f = 0.0;
+                        break;
 		default:
 			return;
 		}
