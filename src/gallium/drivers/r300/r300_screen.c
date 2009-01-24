@@ -184,8 +184,8 @@ static boolean check_tex_2d_format(enum pipe_format format)
         case PIPE_FORMAT_I8_UNORM:
             return TRUE;
         default:
-            debug_printf("r300: Warning: Got unknown format: %d, in %s\n",
-                format, __FUNCTION__);
+            debug_printf("r300: Warning: Got unknown format: %s, in %s\n",
+                pf_name(format), __FUNCTION__);
             break;
     }
 
