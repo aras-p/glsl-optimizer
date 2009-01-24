@@ -446,6 +446,7 @@ static void meta_draw_quad(struct intel_context *intel,
    attribs[VERT_ATTRIB_POS] = &pos_array;
    attribs[VERT_ATTRIB_POS]->Ptr = 0;
    attribs[VERT_ATTRIB_POS]->Type = GL_FLOAT;
+   attribs[VERT_ATTRIB_POS]->Format = GL_RGBA;
    attribs[VERT_ATTRIB_POS]->Enabled = 1;
    attribs[VERT_ATTRIB_POS]->Size = 3;
    attribs[VERT_ATTRIB_POS]->StrideB = 3 * sizeof(GLfloat);
@@ -457,6 +458,7 @@ static void meta_draw_quad(struct intel_context *intel,
    attribs[VERT_ATTRIB_COLOR0] = &color_array;
    attribs[VERT_ATTRIB_COLOR0]->Ptr = (const GLubyte *)sizeof(pos);
    attribs[VERT_ATTRIB_COLOR0]->Type = GL_UNSIGNED_BYTE;
+   attribs[VERT_ATTRIB_COLOR0]->Format = GL_RGBA;
    attribs[VERT_ATTRIB_COLOR0]->Enabled = 1;
    attribs[VERT_ATTRIB_COLOR0]->Size = 4;
    attribs[VERT_ATTRIB_COLOR0]->StrideB = 0;
