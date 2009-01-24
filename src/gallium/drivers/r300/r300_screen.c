@@ -22,10 +22,43 @@
 
 #include "r300_screen.h"
 
+/* Return the identifier behind whom the brave coders responsible for this
+ * amalgamation of code, sweat, and duct tape, routinely obscure their names.
+ *
+ * ...I should have just put "Corbin Simpson", but I'm not that cool.
+ *
+ * (Or egotistical. Yet.) */
 static const char* r300_get_vendor(struct pipe_screen* pscreen)
 {
     return "X.Org R300 Project";
 }
+
+static const char* chip_families[] = {
+    "R300",
+    "R350",
+    "R360",
+    "RV350",
+    "RV370",
+    "RV380",
+    "R420",
+    "R423",
+    "R430",
+    "R480",
+    "R481",
+    "RV410",
+    "RS400",
+    "RC410",
+    "RS480",
+    "RS482",
+    "RS690",
+    "RS740",
+    "RV515",
+    "R520",
+    "RV530",
+    "R580",
+    "RV560",
+    "RV570"
+};
 
 static const char* r300_get_name(struct pipe_screen* pscreen)
 {
@@ -74,18 +107,39 @@ static int r300_get_param(struct pipe_screen* pscreen, int param)
             /* IN THEORY */
             return 0;
         case PIPE_CAP_MAX_TEXTURE_2D_LEVELS:
-            /* 12 == 2048x2048 */
-            return 12;
+            if (r300screen->caps->is_r500) {
+                /* 13 == 4096x4096 */
+                return 13;
+            } else {
+                /* 12 == 2048x2048 */
+                return 12;
+            }
         case PIPE_CAP_MAX_TEXTURE_3D_LEVELS:
-            /* XXX educated guess */
-            return 8;
+            /* So, technically, the limit is the same as above, but some math
+             * shows why this is silly. Assuming RGBA, 4cpp, we can see that
+             * 4096*4096*4096 = 64.0 GiB exactly, so it's not exactly
+             * practical. However, if at some point a game really wants this,
+             * then we can remove this limit. */
+            if (r300screen->caps->is_r500) {
+                /* 9 == 256x256x256 */
+                return 9;
+            } else {
+                /* 8 == 128*128*128 */
+                return 8;
+            }
         case PIPE_CAP_MAX_TEXTURE_CUBE_LEVELS:
-            /* XXX educated guess */
-            return 11;
+            if (r300screen->caps->is_r500) {
+                /* 13 == 4096x4096 */
+                return 13;
+            } else {
+                /* 12 == 2048x2048 */
+                return 12;
+            }
         case PIPE_CAP_MAX_RENDER_TARGETS:
             /* XXX 4 eventually */
             return 1;
         default:
+            debug_printf("r300: Implementation error: Bad param %d", param);
             return 0;
     }
 }
@@ -108,7 +162,7 @@ static float r300_get_paramf(struct pipe_screen* pscreen, int param)
         case PIPE_CAP_MAX_TEXTURE_LOD_BIAS:
             return 16.0f;
         default:
-            /* XXX implementation error? */
+            debug_printf("r300: Implementation error: Bad paramf %d", param);
             return 0.0f;
     }
 }
@@ -121,6 +175,8 @@ static boolean check_tex_2d_format(enum pipe_format format)
         case PIPE_FORMAT_I8_UNORM:
             return TRUE;
         default:
+            debug_printf("r300: Warning: Got unknown format: %d, in %s",
+                format, __FUNCTION__);
             break;
     }
 
@@ -138,6 +194,8 @@ static boolean r300_is_format_supported(struct pipe_screen* pscreen,
         case PIPE_TEXTURE_2D:
             return check_tex_2d_format(format);
         default:
+            debug_printf("r300: Warning: Got unknown format target: %d",
+                format);
             break;
     }
 

@@ -67,6 +67,8 @@ static uint32_t pack_float_32(float f)
 
 #define BEGIN_CS(size) do { \
     CHECK_CS(size); \
+    debug_printf("r300: BEGIN_CS in %s (%s:%d)", __FUNCTION__, __FILE__, \
+        __LINE__); \
     cs_winsys->begin_cs(cs, (size), __FILE__, __FUNCTION__, __LINE__); \
 } while (0)
 
@@ -91,10 +93,16 @@ static uint32_t pack_float_32(float f)
     cs_winsys->write_cs_reloc(cs, bo, rd, wd, flags); \
 } while (0)
 
-#define END_CS \
-    cs_winsys->end_cs(cs, __FILE__, __FUNCTION__, __LINE__)
+#define END_CS do { \
+    debug_printf("r300: END_CS in %s (%s:%d)", __FUNCTION__, __FILE__, \
+        __LINE__); \
+    cs_winsys->end_cs(cs, __FILE__, __FUNCTION__, __LINE__); \
+} while (0)
 
-#define FLUSH_CS \
-    cs_winsys->flush_cs(cs)
+#define FLUSH_CS do { \
+    debug_printf("r300: FLUSH_CS in %s (%s:%d)", __FUNCTION__, __FILE__, \
+        __LINE__); \
+    cs_winsys->flush_cs(cs); \
+} while (0)
 
 #endif /* R300_CS_H */

@@ -73,33 +73,6 @@ enum {
     CHIP_FAMILY_RV570
 };
 
-static const char* chip_families[] = {
-    "R300",
-    "R350",
-    "R360",
-    "RV350",
-    "RV370",
-    "RV380",
-    "R420",
-    "R423",
-    "R430",
-    "R480",
-    "R481",
-    "RV410",
-    "RS400",
-    "RC410",
-    "RS480",
-    "RS482",
-    "RS690",
-    "RS740",
-    "RV515",
-    "R520",
-    "RV530",
-    "R580",
-    "RV560",
-    "RV570"
-};
-
 void r300_parse_chipset(struct r300_capabilities* caps);
 
 #endif /* R300_CHIPSET_H */
