@@ -704,11 +704,31 @@ static void r300_set_scissor_state(struct pipe_context* pipe,
 }
 
 static void r300_set_viewport_state(struct pipe_context* pipe,
-                                     const struct pipe_viewport_state* state)
+                                    const struct pipe_viewport_state* state)
 {
     struct r300_context* r300 = r300_context(pipe);
     /* XXX handing this off to Draw for now */
     draw_set_viewport_state(r300->draw, state);
+}
+
+static void r300_set_vertex_buffers(struct pipe_context* pipe,
+                                    unsigned count,
+                                    const struct pipe_vertex_buffer* buffers)
+{
+    struct r300_context* r300 = r300_context(pipe);
+    /* XXX Draw */
+    draw_flush(r300->draw);
+    draw_set_vertex_buffers(r300->draw, count, buffers);
+}
+
+static void r300_set_vertex_elements(struct pipe_context* pipe,
+                                    unsigned count,
+                                    const struct pipe_vertex_element* elements)
+{
+    struct r300_context* r300 = r300_context(pipe);
+    /* XXX Draw */
+    draw_flush(r300->draw);
+    draw_set_vertex_elements(r300->draw, count, elements);
 }
 
 static void* r300_create_vs_state(struct pipe_context* pipe,
@@ -772,8 +792,8 @@ void r300_init_state_functions(struct r300_context* r300)
 
     r300->context.set_viewport_state = r300_set_viewport_state;
 
-    /* XXX r300->context.set_vertex_buffers = r300_set_vertex_buffers;
-     * XXX r300->context.set_vertex_elements = r300_set_vertex_elements; */
+    r300->context.set_vertex_buffers = r300_set_vertex_buffers;
+    r300->context.set_vertex_elements = r300_set_vertex_elements;
 
     r300->context.create_vs_state = r300_create_vs_state;
     r300->context.bind_vs_state = r300_bind_vs_state;
