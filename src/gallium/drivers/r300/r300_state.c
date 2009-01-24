@@ -732,8 +732,8 @@ static void r300_delete_vs_state(struct pipe_context* pipe, void* state)
     draw_delete_vertex_shader(context->draw, (struct draw_vertex_shader*)state);
 }
 
-void r300_init_state_functions(struct r300_context* r300) {
-
+void r300_init_state_functions(struct r300_context* r300)
+{
     r300->context.create_blend_state = r300_create_blend_state;
     r300->context.bind_blend_state = r300_bind_blend_state;
     r300->context.delete_blend_state = r300_delete_blend_state;
@@ -742,9 +742,13 @@ void r300_init_state_functions(struct r300_context* r300) {
 
     r300->context.set_clip_state = r300_set_clip_state;
 
+    /* XXX r300->context.set_constant_buffer = r300_set_constant_buffer; */
+
     r300->context.create_depth_stencil_alpha_state = r300_create_dsa_state;
     r300->context.bind_depth_stencil_alpha_state = r300_bind_dsa_state;
     r300->context.delete_depth_stencil_alpha_state = r300_delete_dsa_state;
+
+    /* XXX r300->context.set_edgeflags = r300_set_edgeflags; */
 
     r300->context.set_framebuffer_state = r300_set_framebuffer_state;
 
@@ -767,6 +771,9 @@ void r300_init_state_functions(struct r300_context* r300) {
     r300->context.set_scissor_state = r300_set_scissor_state;
 
     r300->context.set_viewport_state = r300_set_viewport_state;
+
+    /* XXX r300->context.set_vertex_buffers = r300_set_vertex_buffers;
+     * XXX r300->context.set_vertex_elements = r300_set_vertex_elements; */
 
     r300->context.create_vs_state = r300_create_vs_state;
     r300->context.bind_vs_state = r300_bind_vs_state;
