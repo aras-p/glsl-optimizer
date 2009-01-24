@@ -33,7 +33,7 @@
 #include <windows.h>
 #undef CLIP_MASK
 #endif
-#define GL_GLEXT_PROTOTYPES
+#include <GL/glew.h>
 #include "GL/glut.h"
 
 #include "readtex.h"
@@ -1052,6 +1052,7 @@ int main(int argc, char **argv)
    glutInitDisplayMode(type);
 
    if (glutCreateWindow("Isosurface") <= 0) {
+   glewInit();
       exit(0);
    }
 

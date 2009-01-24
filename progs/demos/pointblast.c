@@ -18,7 +18,7 @@
 #ifdef _WIN32
 #include <windows.h>
 #endif
-#define GL_GLEXT_PROTOTYPES
+#include <GL/glew.h>
 #include <GL/glut.h>
 
 /* Some <math.h> files do not define M_PI... */
@@ -444,6 +444,7 @@ main(int argc, char **argv)
   }
 
   glutCreateWindow("point burst");
+  glewInit();
   glutDisplayFunc(redraw);
   glutMouseFunc(mouse);
   glutMotionFunc(mouseMotion);

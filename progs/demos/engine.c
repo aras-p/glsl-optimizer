@@ -5,12 +5,11 @@
  * June 2006
  */
 
-#define GL_GLEXT_PROTOTYPES
-
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <GL/glew.h>
 #include <GL/glut.h>
 #include "readtex.h"
 #include "trackball.h"
@@ -1288,6 +1287,7 @@ main(int argc, char *argv[])
    glutInitWindowSize(WinWidth, WinHeight);
    glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
    glutCreateWindow("OpenGL Engine Demo");
+   glewInit();
    glutReshapeFunc(Reshape);
    glutMouseFunc(Mouse);
    glutMotionFunc(Motion);

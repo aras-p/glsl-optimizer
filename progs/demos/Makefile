@@ -5,16 +5,16 @@ include $(TOP)/configs/current
 
 INCDIR = $(TOP)/include
 
-OSMESA_LIBS = -L$(TOP)/$(LIB_DIR) -lglut -lOSMesa -lGLU -lGL $(APP_LIB_DEPS)
+OSMESA_LIBS = -L$(TOP)/$(LIB_DIR) -lglut -lglew -lOSMesa -lGLU -lGL $(APP_LIB_DEPS)
 
-OSMESA16_LIBS = -L$(TOP)/$(LIB_DIR) -lglut -lOSMesa16 -lGLU -lGL $(APP_LIB_DEPS)
+OSMESA16_LIBS = -L$(TOP)/$(LIB_DIR) -lglut -lglew -lOSMesa16 -lGLU -lGL $(APP_LIB_DEPS)
 
-OSMESA32_LIBS = -L$(TOP)/$(LIB_DIR) -lglut -lOSMesa32 -lGLU -lGL $(APP_LIB_DEPS)
+OSMESA32_LIBS = -L$(TOP)/$(LIB_DIR) -lglut -lglew -lOSMesa32 -lGLU -lGL $(APP_LIB_DEPS)
 
 LIB_DEP = $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME) $(TOP)/$(LIB_DIR)/$(GLU_LIB_NAME) \
 	$(TOP)/$(LIB_DIR)/$(GLUT_LIB_NAME)
 
-LIBS = -L$(TOP)/$(LIB_DIR) -l$(GLUT_LIB) -l$(GLU_LIB) -l$(GL_LIB) \
+LIBS = -L$(TOP)/$(LIB_DIR) -l$(GLUT_LIB) -l$(GLEW_LIB) -l$(GLU_LIB) -l$(GL_LIB) \
 	$(APP_LIB_DEPS)
 
 PROGS = \
