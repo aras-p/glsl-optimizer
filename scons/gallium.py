@@ -191,8 +191,6 @@ def generate(env):
     # configuration. See also http://www.scons.org/wiki/AdvancedBuildExample
     build_topdir = 'build'
     build_subdir = env['platform']
-    if env['dri']:
-        build_subdir += "-dri"
     if env['llvm']:
         build_subdir += "-llvm"
     if env['machine'] != 'generic':
