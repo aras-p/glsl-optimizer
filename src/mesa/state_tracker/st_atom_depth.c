@@ -134,7 +134,7 @@ update_depth_stencil_alpha(struct st_context *st)
    if (st->ctx->Color.AlphaEnabled) {
       dsa->alpha.enabled = 1;
       dsa->alpha.func = st_compare_func_to_pipe(st->ctx->Color.AlphaFunc);
-      dsa->alpha.ref = st->ctx->Color.AlphaRef;
+      dsa->alpha.ref_value = st->ctx->Color.AlphaRef;
    }
 
    cso_set_depth_stencil_alpha(st->cso_context, dsa);

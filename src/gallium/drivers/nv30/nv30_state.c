@@ -444,7 +444,7 @@ nv30_depth_stencil_alpha_state_create(struct pipe_context *pipe,
 	so_method(so, rankine, NV34TCL_ALPHA_FUNC_ENABLE, 3);
 	so_data  (so, cso->alpha.enabled ? 1 : 0);
 	so_data  (so, nvgl_comparison_op(cso->alpha.func));
-	so_data  (so, float_to_ubyte(cso->alpha.ref));
+	so_data  (so, float_to_ubyte(cso->alpha.ref_value));
 
 	if (cso->stencil[0].enabled) {
 		so_method(so, rankine, NV34TCL_STENCIL_FRONT_ENABLE, 8);

@@ -429,7 +429,7 @@ nv50_depth_stencil_alpha_state_create(struct pipe_context *pipe,
 		so_method(so, tesla, NV50TCL_ALPHA_TEST_ENABLE, 1);
 		so_data  (so, 1);
 		so_method(so, tesla, NV50TCL_ALPHA_TEST_REF, 2);
-		so_data  (so, fui(cso->alpha.ref));
+		so_data  (so, fui(cso->alpha.ref_value));
 		so_data  (so, nvgl_comparison_op(cso->alpha.func));
 	} else {
 		so_method(so, tesla, NV50TCL_ALPHA_TEST_ENABLE, 1);

@@ -352,7 +352,7 @@ nv10_depth_stencil_alpha_state_create(struct pipe_context *pipe,
 
 	hw->alpha.enabled = cso->alpha.enabled ? 1 : 0;
 	hw->alpha.func = nvgl_comparison_op(cso->alpha.func);
-	hw->alpha.ref  = float_to_ubyte(cso->alpha.ref);
+	hw->alpha.ref  = float_to_ubyte(cso->alpha.ref_value);
 
 	return (void *)hw;
 }

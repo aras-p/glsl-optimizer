@@ -227,7 +227,7 @@ nv04_depth_stencil_alpha_state_create(struct pipe_context *pipe,
 
 	hw = MALLOC(sizeof(struct nv04_depth_stencil_alpha_state));
 
-	hw->control = float_to_ubyte(cso->alpha.ref);
+	hw->control = float_to_ubyte(cso->alpha.ref_value);
 	hw->control |= ( nv04_compare_func(cso->alpha.func) << NV04_DX5_TEXTURED_TRIANGLE_CONTROL_ALPHA_FUNC_SHIFT );
 	hw->control |= cso->alpha.enabled ? NV04_DX5_TEXTURED_TRIANGLE_CONTROL_ALPHA_TEST_ENABLE : 0;
 	hw->control |= NV04_DX5_TEXTURED_TRIANGLE_CONTROL_ORIGIN;

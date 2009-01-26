@@ -198,7 +198,7 @@ struct pipe_alpha_state
 {
    unsigned enabled:1;
    unsigned func:3;     /**< PIPE_FUNC_x */
-   float ref;           /**< reference value */
+   float ref_value;     /**< reference value */
 };
 
 

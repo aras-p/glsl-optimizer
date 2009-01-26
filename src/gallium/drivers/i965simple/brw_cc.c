@@ -233,7 +233,7 @@ static void upload_cc_unit( struct brw_context *brw )
       cc.cc3.alpha_test_func = 
 	 brw_translate_compare_func(brw->attribs.DepthStencil->alpha.func);
 
-      cc.cc7.alpha_ref.ub[0] = float_to_ubyte(brw->attribs.DepthStencil->alpha.ref);
+      cc.cc7.alpha_ref.ub[0] = float_to_ubyte(brw->attribs.DepthStencil->alpha.ref_value);
 
       cc.cc3.alpha_test_format = BRW_ALPHATEST_FORMAT_UNORM8;
    }
