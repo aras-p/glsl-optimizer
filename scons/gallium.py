@@ -313,7 +313,6 @@ def generate(env):
             '-Wno-long-long',
             '-ffast-math',
             '-std=gnu99',
-            '-pedantic',
             '-fmessage-length=0', # be nice to Eclipse
         ]
     if msvc:
