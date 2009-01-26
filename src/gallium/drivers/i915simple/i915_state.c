@@ -318,8 +318,8 @@ i915_create_depth_stencil_state(struct pipe_context *pipe,
    struct i915_depth_stencil_state *cso = CALLOC_STRUCT( i915_depth_stencil_state );
 
    {
-      int testmask = depth_stencil->stencil[0].value_mask & 0xff;
-      int writemask = depth_stencil->stencil[0].write_mask & 0xff;
+      int testmask = depth_stencil->stencil[0].valuemask & 0xff;
+      int writemask = depth_stencil->stencil[0].writemask & 0xff;
 
       cso->stencil_modes4 |= (_3DSTATE_MODES_4_CMD |
                               ENABLE_STENCIL_TEST_MASK |
@@ -350,8 +350,8 @@ i915_create_depth_stencil_state(struct pipe_context *pipe,
       int dfop  = i915_translate_stencil_op(depth_stencil->stencil[1].zfail_op);
       int dpop  = i915_translate_stencil_op(depth_stencil->stencil[1].zpass_op);
       int ref   = depth_stencil->stencil[1].ref_value & 0xff;
-      int tmask = depth_stencil->stencil[1].value_mask & 0xff;
-      int wmask = depth_stencil->stencil[1].write_mask & 0xff;
+      int tmask = depth_stencil->stencil[1].valuemask & 0xff;
+      int wmask = depth_stencil->stencil[1].writemask & 0xff;
 
       cso->bfo[0] = (_3DSTATE_BACKFACE_STENCIL_OPS |
                      BFO_ENABLE_STENCIL_FUNCS |

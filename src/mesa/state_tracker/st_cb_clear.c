@@ -287,8 +287,8 @@ clear_with_quad(GLcontext *ctx,
          depth_stencil.stencil[0].zpass_op = PIPE_STENCIL_OP_REPLACE;
          depth_stencil.stencil[0].zfail_op = PIPE_STENCIL_OP_REPLACE;
          depth_stencil.stencil[0].ref_value = ctx->Stencil.Clear;
-         depth_stencil.stencil[0].value_mask = 0xff;
-         depth_stencil.stencil[0].write_mask = ctx->Stencil.WriteMask[0] & 0xff;
+         depth_stencil.stencil[0].valuemask = 0xff;
+         depth_stencil.stencil[0].writemask = ctx->Stencil.WriteMask[0] & 0xff;
       }
 
       cso_set_depth_stencil_alpha(st->cso_context, &depth_stencil);

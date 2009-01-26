@@ -222,8 +222,8 @@ stencil_test_quad(struct quad_stage *qs, struct quad_header *quad)
    zFailOp = softpipe->depth_stencil->stencil[face].zfail_op;
    zPassOp = softpipe->depth_stencil->stencil[face].zpass_op;
    ref     = softpipe->depth_stencil->stencil[face].ref_value;
-   wrtMask = softpipe->depth_stencil->stencil[face].write_mask;
-   valMask = softpipe->depth_stencil->stencil[face].value_mask;
+   wrtMask = softpipe->depth_stencil->stencil[face].writemask;
+   valMask = softpipe->depth_stencil->stencil[face].valuemask;
 
    assert(ps); /* shouldn't get here if there's no stencil buffer */
 

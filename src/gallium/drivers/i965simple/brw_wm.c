@@ -111,8 +111,8 @@ static void brw_wm_populate_key( struct brw_context *brw,
    if (brw->attribs.DepthStencil->stencil[0].enabled) {
       lookup |= IZ_STENCIL_TEST_ENABLE_BIT;
 
-      if (brw->attribs.DepthStencil->stencil[0].write_mask ||
-	  brw->attribs.DepthStencil->stencil[1].write_mask)
+      if (brw->attribs.DepthStencil->stencil[0].writemask ||
+	  brw->attribs.DepthStencil->stencil[1].writemask)
 	 lookup |= IZ_STENCIL_WRITE_ENABLE_BIT;
    }
 

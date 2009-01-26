@@ -297,7 +297,7 @@ emit_stencil_test(struct pipe_depth_stencil_alpha_state *dsa,
    int face_stencil = spe_allocate_available_register(f);
    int stencil_src = stencil;
    const unsigned ref = (dsa->stencil[face].ref_value
-                         & dsa->stencil[face].value_mask);
+                         & dsa->stencil[face].valuemask);
    boolean complement = FALSE;
    int stored;
    int tmp = spe_allocate_available_register(f);
@@ -305,9 +305,9 @@ emit_stencil_test(struct pipe_depth_stencil_alpha_state *dsa,
 
    if ((dsa->stencil[face].func != PIPE_FUNC_NEVER)
        && (dsa->stencil[face].func != PIPE_FUNC_ALWAYS)
-       && (dsa->stencil[face].value_mask != 0x0ff)) {
+       && (dsa->stencil[face].valuemask != 0x0ff)) {
       stored = spe_allocate_available_register(f);
-      spe_andi(f, stored, stencil, dsa->stencil[face].value_mask);
+      spe_andi(f, stored, stencil, dsa->stencil[face].valuemask);
    } else {
       stored = stencil;
    }
@@ -395,7 +395,7 @@ emit_stencil_test(struct pipe_depth_stencil_alpha_state *dsa,
     * - For depth-pass if the stencil test is NEVER
     * - Any of the 3 conditions if the operation is KEEP
     */
-   if (dsa->stencil[face].write_mask != 0) {
+   if (dsa->stencil[face].writemask != 0) {
       if ((dsa->stencil[face].func != PIPE_FUNC_ALWAYS)
           && (dsa->stencil[face].fail_op != PIPE_STENCIL_OP_KEEP)) {
          if (complement) {
@@ -449,10 +449,10 @@ emit_stencil_test(struct pipe_depth_stencil_alpha_state *dsa,
     */
    if (stencil_src == stencil) {
       spe_release_register(f, face_stencil);
-   } else if (dsa->stencil[face].write_mask != 0x0ff) {
+   } else if (dsa->stencil[face].writemask != 0x0ff) {
       int tmp = spe_allocate_available_register(f);
 
-      spe_il(f, tmp, dsa->stencil[face].write_mask);
+      spe_il(f, tmp, dsa->stencil[face].writemask);
       spe_selb(f, stencil_src, stencil, stencil_src, tmp);
 
       spe_release_register(f, tmp);
@@ -580,8 +580,8 @@ cell_generate_depth_stencil_test(struct cell_depth_stencil_alpha_state *cdsa)
                 dsa->stencil[i].zpass_op);
          printf("#    ref value / value mask / write mask: %02x %02x %02x\n",
                 dsa->stencil[i].ref_value,
-                dsa->stencil[i].value_mask,
-                dsa->stencil[i].write_mask);
+                dsa->stencil[i].valuemask,
+                dsa->stencil[i].writemask);
       }
 
       printf("\t.text\n");

@@ -112,8 +112,8 @@ update_depth_stencil_alpha(struct st_context *st)
       dsa->stencil[0].zfail_op = gl_stencil_op_to_pipe(st->ctx->Stencil.ZFailFunc[0]);
       dsa->stencil[0].zpass_op = gl_stencil_op_to_pipe(st->ctx->Stencil.ZPassFunc[0]);
       dsa->stencil[0].ref_value = st->ctx->Stencil.Ref[0] & 0xff;
-      dsa->stencil[0].value_mask = st->ctx->Stencil.ValueMask[0] & 0xff;
-      dsa->stencil[0].write_mask = st->ctx->Stencil.WriteMask[0] & 0xff;
+      dsa->stencil[0].valuemask = st->ctx->Stencil.ValueMask[0] & 0xff;
+      dsa->stencil[0].writemask = st->ctx->Stencil.WriteMask[0] & 0xff;
 
       if (st->ctx->Stencil._TestTwoSide) {
          dsa->stencil[1].enabled = 1;
@@ -122,8 +122,8 @@ update_depth_stencil_alpha(struct st_context *st)
          dsa->stencil[1].zfail_op = gl_stencil_op_to_pipe(st->ctx->Stencil.ZFailFunc[1]);
          dsa->stencil[1].zpass_op = gl_stencil_op_to_pipe(st->ctx->Stencil.ZPassFunc[1]);
          dsa->stencil[1].ref_value = st->ctx->Stencil.Ref[1] & 0xff;
-         dsa->stencil[1].value_mask = st->ctx->Stencil.ValueMask[1] & 0xff;
-         dsa->stencil[1].write_mask = st->ctx->Stencil.WriteMask[1] & 0xff;
+         dsa->stencil[1].valuemask = st->ctx->Stencil.ValueMask[1] & 0xff;
+         dsa->stencil[1].writemask = st->ctx->Stencil.WriteMask[1] & 0xff;
       }
       else {
          dsa->stencil[1] = dsa->stencil[0];

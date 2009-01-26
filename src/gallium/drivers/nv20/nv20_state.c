@@ -335,10 +335,10 @@ nv20_depth_stencil_alpha_state_create(struct pipe_context *pipe,
 	hw->depth.test_enable	= cso->depth.enabled ? 1 : 0;
 
 	hw->stencil.enable = cso->stencil[0].enabled ? 1 : 0;
-	hw->stencil.wmask = cso->stencil[0].write_mask;
+	hw->stencil.wmask = cso->stencil[0].writemask;
 	hw->stencil.func = nvgl_comparison_op(cso->stencil[0].func);
 	hw->stencil.ref	= cso->stencil[0].ref_value;
-	hw->stencil.vmask = cso->stencil[0].value_mask;
+	hw->stencil.vmask = cso->stencil[0].valuemask;
 	hw->stencil.fail = nvgl_stencil_op(cso->stencil[0].fail_op);
 	hw->stencil.zfail = nvgl_stencil_op(cso->stencil[0].zfail_op);
 	hw->stencil.zpass = nvgl_stencil_op(cso->stencil[0].zpass_op);

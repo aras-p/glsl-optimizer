@@ -459,10 +459,10 @@ nv40_depth_stencil_alpha_state_create(struct pipe_context *pipe,
 	if (cso->stencil[0].enabled) {
 		so_method(so, curie, NV40TCL_STENCIL_FRONT_ENABLE, 8);
 		so_data  (so, cso->stencil[0].enabled ? 1 : 0);
-		so_data  (so, cso->stencil[0].write_mask);
+		so_data  (so, cso->stencil[0].writemask);
 		so_data  (so, nvgl_comparison_op(cso->stencil[0].func));
 		so_data  (so, cso->stencil[0].ref_value);
-		so_data  (so, cso->stencil[0].value_mask);
+		so_data  (so, cso->stencil[0].valuemask);
 		so_data  (so, nvgl_stencil_op(cso->stencil[0].fail_op));
 		so_data  (so, nvgl_stencil_op(cso->stencil[0].zfail_op));
 		so_data  (so, nvgl_stencil_op(cso->stencil[0].zpass_op));
@@ -474,10 +474,10 @@ nv40_depth_stencil_alpha_state_create(struct pipe_context *pipe,
 	if (cso->stencil[1].enabled) {
 		so_method(so, curie, NV40TCL_STENCIL_BACK_ENABLE, 8);
 		so_data  (so, cso->stencil[1].enabled ? 1 : 0);
-		so_data  (so, cso->stencil[1].write_mask);
+		so_data  (so, cso->stencil[1].writemask);
 		so_data  (so, nvgl_comparison_op(cso->stencil[1].func));
 		so_data  (so, cso->stencil[1].ref_value);
-		so_data  (so, cso->stencil[1].value_mask);
+		so_data  (so, cso->stencil[1].valuemask);
 		so_data  (so, nvgl_stencil_op(cso->stencil[1].fail_op));
 		so_data  (so, nvgl_stencil_op(cso->stencil[1].zfail_op));
 		so_data  (so, nvgl_stencil_op(cso->stencil[1].zpass_op));

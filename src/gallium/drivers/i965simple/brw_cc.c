@@ -166,8 +166,8 @@ static void upload_cc_unit( struct brw_context *brw )
       cc.cc0.stencil_pass_depth_pass_op = brw_translate_stencil_op(
          brw->attribs.DepthStencil->stencil[0].zpass_op);
       cc.cc1.stencil_ref = brw->attribs.DepthStencil->stencil[0].ref_value;
-      cc.cc1.stencil_write_mask = brw->attribs.DepthStencil->stencil[0].write_mask;
-      cc.cc1.stencil_test_mask = brw->attribs.DepthStencil->stencil[0].value_mask;
+      cc.cc1.stencil_write_mask = brw->attribs.DepthStencil->stencil[0].writemask;
+      cc.cc1.stencil_test_mask = brw->attribs.DepthStencil->stencil[0].valuemask;
 
       if (brw->attribs.DepthStencil->stencil[1].enabled) {
 	 cc.cc0.bf_stencil_enable = brw->attribs.DepthStencil->stencil[1].enabled;
@@ -180,14 +180,14 @@ static void upload_cc_unit( struct brw_context *brw )
 	 cc.cc0.bf_stencil_pass_depth_pass_op = brw_translate_stencil_op(
             brw->attribs.DepthStencil->stencil[1].zpass_op);
 	 cc.cc1.bf_stencil_ref = brw->attribs.DepthStencil->stencil[1].ref_value;
-	 cc.cc2.bf_stencil_write_mask = brw->attribs.DepthStencil->stencil[1].write_mask;
-	 cc.cc2.bf_stencil_test_mask = brw->attribs.DepthStencil->stencil[1].value_mask;
+	 cc.cc2.bf_stencil_write_mask = brw->attribs.DepthStencil->stencil[1].writemask;
+	 cc.cc2.bf_stencil_test_mask = brw->attribs.DepthStencil->stencil[1].valuemask;
       }
 
       /* Not really sure about this:
        */
-      if (brw->attribs.DepthStencil->stencil[0].write_mask ||
-	  brw->attribs.DepthStencil->stencil[1].write_mask)
+      if (brw->attribs.DepthStencil->stencil[0].writemask ||
+	  brw->attribs.DepthStencil->stencil[1].writemask)
 	 cc.cc0.stencil_write_enable = 1;
    }
 

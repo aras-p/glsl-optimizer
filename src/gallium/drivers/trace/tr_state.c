@@ -281,8 +281,8 @@ void trace_dump_depth_stencil_alpha_state(const struct pipe_depth_stencil_alpha_
       trace_dump_member(uint, &state->stencil[i], zpass_op);
       trace_dump_member(uint, &state->stencil[i], zfail_op);
       trace_dump_member(uint, &state->stencil[i], ref_value);
-      trace_dump_member(uint, &state->stencil[i], value_mask);
-      trace_dump_member(uint, &state->stencil[i], write_mask);
+      trace_dump_member(uint, &state->stencil[i], valuemask);
+      trace_dump_member(uint, &state->stencil[i], writemask);
       trace_dump_struct_end();
       trace_dump_elem_end();
    }

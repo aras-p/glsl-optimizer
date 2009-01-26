@@ -81,8 +81,8 @@ static int vlInitCommon(struct vlContext *context)
 		dsa.stencil[i].zpass_op = PIPE_STENCIL_OP_KEEP;
 		dsa.stencil[i].zfail_op = PIPE_STENCIL_OP_KEEP;
 		dsa.stencil[i].ref_value = 0;
-		dsa.stencil[i].value_mask = 0;
-		dsa.stencil[i].write_mask = 0;
+		dsa.stencil[i].valuemask = 0;
+		dsa.stencil[i].writemask = 0;
 	}
 	dsa.alpha.enabled = 0;
 	dsa.alpha.func = PIPE_FUNC_ALWAYS;

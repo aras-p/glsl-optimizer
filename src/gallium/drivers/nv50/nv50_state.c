@@ -403,8 +403,8 @@ nv50_depth_stencil_alpha_state_create(struct pipe_context *pipe,
 		so_data  (so, nvgl_comparison_op(cso->stencil[0].func));
 		so_method(so, tesla, NV50TCL_STENCIL_BACK_FUNC_REF, 3);
 		so_data  (so, cso->stencil[0].ref_value);
-		so_data  (so, cso->stencil[0].write_mask);
-		so_data  (so, cso->stencil[0].value_mask);
+		so_data  (so, cso->stencil[0].writemask);
+		so_data  (so, cso->stencil[0].valuemask);
 	} else {
 		so_method(so, tesla, NV50TCL_STENCIL_BACK_ENABLE, 1);
 		so_data  (so, 0);
@@ -418,8 +418,8 @@ nv50_depth_stencil_alpha_state_create(struct pipe_context *pipe,
 		so_data  (so, nvgl_stencil_op(cso->stencil[1].zpass_op));
 		so_data  (so, nvgl_comparison_op(cso->stencil[1].func));
 		so_data  (so, cso->stencil[1].ref_value);
-		so_data  (so, cso->stencil[1].write_mask);
-		so_data  (so, cso->stencil[1].value_mask);
+		so_data  (so, cso->stencil[1].writemask);
+		so_data  (so, cso->stencil[1].valuemask);
 	} else {
 		so_method(so, tesla, NV50TCL_STENCIL_FRONT_ENABLE, 1);
 		so_data  (so, 0);
