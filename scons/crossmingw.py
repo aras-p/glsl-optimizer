@@ -173,6 +173,10 @@ def generate(env):
     env['LIBPREFIXES']    = [ 'lib', '' ]
     env['LIBSUFFIXES']    = [ '.a', '.lib' ]
 
+    # MinGW port of gdb does not handle well dwarf debug info which is the
+    # default in recent gcc versions
+    env.AppendUnique(CFLAGS = ['-gstabs'])
+
     env.AppendUnique(LIBS = ['iberty'])
     env.AppendUnique(SHLINKFLAGS = ['-Wl,--enable-stdcall-fixup'])
     #env.AppendUnique(SHLINKFLAGS = ['-Wl,--kill-at'])
