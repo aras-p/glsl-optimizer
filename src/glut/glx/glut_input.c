@@ -295,6 +295,7 @@ __glutProcessDeviceEvents(XEvent * event)
 static GLUTeventParser eventParser =
 {__glutProcessDeviceEvents, NULL};
 
+#if !defined(_WIN32)
 static void
 addDeviceEventParser(void)
 {
@@ -305,6 +306,7 @@ addDeviceEventParser(void)
   been_here = True;
   __glutRegisterEventParser(&eventParser);
 }
+#endif
 
 static int
 probeDevices(void)

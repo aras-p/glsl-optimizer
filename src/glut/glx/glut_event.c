@@ -1343,9 +1343,7 @@ processWindowWorkList(GLUTwindow * window)
   }
 }
 
-#ifndef _WIN32
 static  /* X11 implementations do not need this global. */
-#endif
 void
 __glutProcessWindowWorkLists(void)
 {
