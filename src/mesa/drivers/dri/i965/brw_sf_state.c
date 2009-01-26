@@ -84,10 +84,20 @@ static void upload_sf_vp(struct brw_context *brw)
     * Note that the hardware's coordinates are inclusive, while Mesa's min is
     * inclusive but max is exclusive.
     */
-   sfv.scissor.xmin = ctx->DrawBuffer->_Xmin;
-   sfv.scissor.xmax = ctx->DrawBuffer->_Xmax - 1;
-   sfv.scissor.ymin = ctx->DrawBuffer->Height - ctx->DrawBuffer->_Ymax;
-   sfv.scissor.ymax = ctx->DrawBuffer->Height - ctx->DrawBuffer->_Ymin - 1;
+   if (intel_rendering_to_texture(ctx)) {
+      /* texmemory: Y=0=bottom */
+      sfv.scissor.xmin = ctx->DrawBuffer->_Xmin;
+      sfv.scissor.xmax = ctx->DrawBuffer->_Xmax - 1;
+      sfv.scissor.ymin = ctx->DrawBuffer->_Ymin;
+      sfv.scissor.ymax = ctx->DrawBuffer->_Ymax - 1;
+   }
+   else {
+      /* memory: Y=0=top */
+      sfv.scissor.xmin = ctx->DrawBuffer->_Xmin;
+      sfv.scissor.xmax = ctx->DrawBuffer->_Xmax - 1;
+      sfv.scissor.ymin = ctx->DrawBuffer->Height - ctx->DrawBuffer->_Ymax;
+      sfv.scissor.ymax = ctx->DrawBuffer->Height - ctx->DrawBuffer->_Ymin - 1;
+   }
 
    dri_bo_unreference(brw->sf.vp_bo);
    brw->sf.vp_bo = brw_cache_data( &brw->cache, BRW_SF_VP, &sfv, NULL, 0 );
