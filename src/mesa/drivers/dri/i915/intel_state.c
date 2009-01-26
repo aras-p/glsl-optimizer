@@ -38,30 +38,30 @@
 #include "intel_regions.h"
 #include "swrast/swrast.h"
 
-int 
-intel_translate_shadow_compare_func( GLenum func )
+int
+intel_translate_shadow_compare_func(GLenum func)
 {
-   switch(func) {
+   switch (func) {
    case GL_NEVER: 
-       return COMPAREFUNC_ALWAYS; 
+       return COMPAREFUNC_ALWAYS;
    case GL_LESS: 
-       return COMPAREFUNC_LEQUAL; 
+       return COMPAREFUNC_LEQUAL;
    case GL_LEQUAL: 
        return COMPAREFUNC_LESS;
    case GL_GREATER: 
-       return COMPAREFUNC_GEQUAL; 
+       return COMPAREFUNC_GEQUAL;
    case GL_GEQUAL: 
-      return COMPAREFUNC_GREATER; 
+      return COMPAREFUNC_GREATER;
    case GL_NOTEQUAL: 
-      return COMPAREFUNC_EQUAL; 
+      return COMPAREFUNC_EQUAL;
    case GL_EQUAL: 
-      return COMPAREFUNC_NOTEQUAL; 
+      return COMPAREFUNC_NOTEQUAL;
    case GL_ALWAYS: 
-       return COMPAREFUNC_NEVER; 
+       return COMPAREFUNC_NEVER;
    }
 
    fprintf(stderr, "Unknown value in %s: %x\n", __FUNCTION__, func);
-   return COMPAREFUNC_NEVER; 
+   return COMPAREFUNC_NEVER;
 }
 
 int
@@ -198,7 +198,7 @@ intel_translate_logic_op(GLenum opcode)
 
 
 static void
-intelClearColor(GLcontext * ctx, const GLfloat color[4])
+intelClearColor(GLcontext *ctx, const GLfloat color[4])
 {
    struct intel_context *intel = intel_context(ctx);
    GLubyte clear[4];
@@ -218,7 +218,7 @@ intelClearColor(GLcontext * ctx, const GLfloat color[4])
 /* Fallback to swrast for select and feedback.
  */
 static void
-intelRenderMode(GLcontext * ctx, GLenum mode)
+intelRenderMode(GLcontext *ctx, GLenum mode)
 {
    struct intel_context *intel = intel_context(ctx);
    FALLBACK(intel, INTEL_FALLBACK_RENDERMODE, (mode != GL_RENDER));
