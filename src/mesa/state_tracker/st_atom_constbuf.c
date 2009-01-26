@@ -92,8 +92,6 @@ void st_upload_constants( struct st_context *st,
          pipe_buffer_unmap(pipe->screen, cbuf->buffer);
       }
 
-      cbuf->size = paramBytes;
-
       st->pipe->set_constant_buffer(st->pipe, id, 0, cbuf);
    }
    else {

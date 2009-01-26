@@ -162,7 +162,6 @@ struct pipe_clip_state
 struct pipe_constant_buffer
 {
    struct pipe_buffer *buffer;
-   unsigned size;    /** in bytes (XXX: redundant!) */
 };
 
 

@@ -223,7 +223,6 @@ void trace_dump_constant_buffer(const struct pipe_constant_buffer *state)
    trace_dump_struct_begin("pipe_constant_buffer");
 
    trace_dump_member(ptr, state, buffer);
-   trace_dump_member(uint, state, size);
 
    trace_dump_struct_end();
 }

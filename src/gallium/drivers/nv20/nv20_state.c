@@ -460,11 +460,12 @@ nv20_set_constant_buffer(struct pipe_context *pipe, uint shader, uint index,
 
 	if (buf) {
 		void *mapped;
-		if (buf->size && (mapped = ws->buffer_map(ws, buf->buffer, PIPE_BUFFER_USAGE_CPU_READ)))
+		if (buf->buffer && buf->buffer->size &&
+                    (mapped = ws->buffer_map(ws, buf->buffer, PIPE_BUFFER_USAGE_CPU_READ)))
 		{
-			memcpy(nv20->constbuf[shader], mapped, buf->size);
+			memcpy(nv20->constbuf[shader], mapped, buf->buffer->size);
 			nv20->constbuf_nr[shader] =
-				buf->size / (4 * sizeof(float));
+				buf->buffer->size / (4 * sizeof(float));
 			ws->buffer_unmap(ws, buf->buffer);
 		}
 	}

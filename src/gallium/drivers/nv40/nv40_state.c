@@ -607,7 +607,7 @@ nv40_set_constant_buffer(struct pipe_context *pipe, uint shader, uint index,
 	struct nv40_context *nv40 = nv40_context(pipe);
 
 	nv40->constbuf[shader] = buf->buffer;
-	nv40->constbuf_nr[shader] = buf->size / (4 * sizeof(float));
+	nv40->constbuf_nr[shader] = buf->buffer->size / (4 * sizeof(float));
 
 	if (shader == PIPE_SHADER_VERTEX) {
 		nv40->dirty |= NV40_NEW_VERTPROG;

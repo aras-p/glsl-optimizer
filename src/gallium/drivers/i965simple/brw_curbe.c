@@ -257,13 +257,13 @@ static void upload_constant_buffer(struct brw_context *brw)
       if (brw->vs.prog_data->num_consts) {
          /* map the vertex constant buffer and copy to curbe: */
          void *data = ws->buffer_map(ws, cbuffer->buffer, 0);
-         /* FIXME: this is wrong. the cbuffer->size currently
+         /* FIXME: this is wrong. the cbuffer->buffer->size currently
           * represents size of consts + immediates. so if we'll
           * have both we'll copy over the end of the buffer
           * with the subsequent memcpy */
-         memcpy(&buf[offset], data, cbuffer->size);
+         memcpy(&buf[offset], data, cbuffer->buffer->size);
          ws->buffer_unmap(ws, cbuffer->buffer);
-         offset += cbuffer->size;
+         offset += cbuffer->buffer->size;
       }
       /*immediates*/
       if (brw->vs.prog_data->num_imm) {

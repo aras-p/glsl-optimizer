@@ -592,7 +592,7 @@ nv30_set_constant_buffer(struct pipe_context *pipe, uint shader, uint index,
 	struct nv30_context *nv30 = nv30_context(pipe);
 
 	nv30->constbuf[shader] = buf->buffer;
-	nv30->constbuf_nr[shader] = buf->size / (4 * sizeof(float));
+	nv30->constbuf_nr[shader] = buf->buffer->size / (4 * sizeof(float));
 
 	if (shader == PIPE_SHADER_VERTEX) {
 		nv30->dirty |= NV30_NEW_VERTPROG;
