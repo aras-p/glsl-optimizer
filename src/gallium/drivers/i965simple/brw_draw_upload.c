@@ -223,7 +223,7 @@ boolean brw_upload_vertex_buffers( struct brw_context *brw )
 	 break;
       }
 
-      vbp.vb[i].vb0.bits.pitch = brw->vb.vbo_array[i]->pitch;
+      vbp.vb[i].vb0.bits.pitch = brw->vb.vbo_array[i]->stride;
       vbp.vb[i].vb0.bits.pad = 0;
       vbp.vb[i].vb0.bits.access_type = BRW_VERTEXBUFFER_ACCESS_VERTEXDATA;
       vbp.vb[i].vb0.bits.vb_index = i;

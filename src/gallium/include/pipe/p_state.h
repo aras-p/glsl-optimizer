@@ -337,7 +337,7 @@ struct pipe_texture
  */
 struct pipe_vertex_buffer
 {
-   unsigned pitch;    /**< stride to same attrib in next vertex, in bytes */
+   unsigned stride;    /**< stride to same attrib in next vertex, in bytes */
    unsigned max_index;   /**< number of vertices in this buffer */
    unsigned buffer_offset;  /**< offset to start of data in buffer, in bytes */
    struct pipe_buffer *buffer;  /**< the actual buffer */

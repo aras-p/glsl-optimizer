@@ -103,7 +103,7 @@ struct pipe_screen {
     */
    struct pipe_texture * (*texture_blanket)(struct pipe_screen *,
                                             const struct pipe_texture *templat,
-                                            const unsigned *pitch,
+                                            const unsigned *stride,
                                             struct pipe_buffer *buffer);
 
    void (*texture_release)(struct pipe_screen *,

@@ -381,7 +381,7 @@ setup_interleaved_attribs(GLcontext *ctx,
             pipe_buffer_reference(pipe->screen, &vbuffer->buffer, stobj->buffer);
             vbuffer->buffer_offset = (unsigned) arrays[mesaAttr]->Ptr;
          }
-         vbuffer->pitch = stride; /* in bytes */
+         vbuffer->stride = stride; /* in bytes */
          vbuffer->max_index = max_index;
       }
 
@@ -472,7 +472,7 @@ setup_non_interleaved_attribs(GLcontext *ctx,
       assert(velements[attr].src_offset <= 2048); /* 11-bit field */
 
       /* common-case setup */
-      vbuffer[attr].pitch = stride; /* in bytes */
+      vbuffer[attr].stride = stride; /* in bytes */
       vbuffer[attr].max_index = max_index;
       velements[attr].vertex_buffer_index = attr;
       velements[attr].nr_components = arrays[mesaAttr]->Size;
@@ -569,7 +569,7 @@ st_draw_vbo(GLcontext *ctx,
    {
       GLuint i;
       for (i = 0; i < num_vbuffers; i++) {
-         printf("buffers[%d].pitch = %u\n", i, vbuffer[i].pitch);
+         printf("buffers[%d].stride = %u\n", i, vbuffer[i].stride);
          printf("buffers[%d].max_index = %u\n", i, vbuffer[i].max_index);
          printf("buffers[%d].buffer_offset = %u\n", i, vbuffer[i].buffer_offset);
          printf("buffers[%d].buffer = %p\n", i, (void*) vbuffer[i].buffer);

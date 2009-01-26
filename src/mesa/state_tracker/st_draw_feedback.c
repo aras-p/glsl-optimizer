@@ -171,7 +171,7 @@ st_feedback_draw_vbo(GLcontext *ctx,
       }
 
       /* common-case setup */
-      vbuffers[attr].pitch = arrays[mesaAttr]->StrideB; /* in bytes */
+      vbuffers[attr].stride = arrays[mesaAttr]->StrideB; /* in bytes */
       vbuffers[attr].max_index = max_index;
       velements[attr].vertex_buffer_index = attr;
       velements[attr].nr_components = arrays[mesaAttr]->Size;

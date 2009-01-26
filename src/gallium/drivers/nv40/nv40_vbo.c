@@ -501,7 +501,7 @@ nv40_vbo_validate(struct nv40_context *nv40)
 		ve = &nv40->vtxelt[hw];
 		vb = &nv40->vtxbuf[ve->vertex_buffer_index];
 
-		if (!vb->pitch) {
+		if (!vb->stride) {
 			if (!sattr)
 				sattr = so_new(16 * 5, 0);
 
@@ -522,7 +522,7 @@ nv40_vbo_validate(struct nv40_context *nv40)
 		so_reloc(vtxbuf, vb->buffer, vb->buffer_offset + ve->src_offset,
 			 vb_flags | NOUVEAU_BO_LOW | NOUVEAU_BO_OR,
 			 0, NV40TCL_VTXBUF_ADDRESS_DMA1);
-		so_data (vtxfmt, ((vb->pitch << NV40TCL_VTXFMT_STRIDE_SHIFT) |
+		so_data (vtxfmt, ((vb->stride << NV40TCL_VTXFMT_STRIDE_SHIFT) |
 				  (ncomp << NV40TCL_VTXFMT_SIZE_SHIFT) | type));
 	}
 

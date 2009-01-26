@@ -144,7 +144,7 @@ void draw_pt_fetch_run( struct pt_fetch *fetch,
 			    i, 
 			    ((char *)draw->pt.user.vbuffer[i] + 
 			     draw->pt.vertex_buffer[i].buffer_offset),
-			    draw->pt.vertex_buffer[i].pitch );
+			    draw->pt.vertex_buffer[i].stride );
    }
 
    translate->run_elts( translate,
@@ -180,7 +180,7 @@ void draw_pt_fetch_run_linear( struct pt_fetch *fetch,
 			    i,
 			    ((char *)draw->pt.user.vbuffer[i] +
 			     draw->pt.vertex_buffer[i].buffer_offset),
-			    draw->pt.vertex_buffer[i].pitch );
+			    draw->pt.vertex_buffer[i].stride );
    }
 
    translate->run( translate,

@@ -195,7 +195,7 @@ static void fetch_emit_prepare( struct draw_pt_middle_end *middle,
                                   i, 
                                   ((char *)draw->pt.user.vbuffer[i] + 
                                    draw->pt.vertex_buffer[i].buffer_offset),
-                                  draw->pt.vertex_buffer[i].pitch );
+                                  draw->pt.vertex_buffer[i].stride );
    }
 
    *max_vertices = (draw->render->max_vertex_buffer_bytes / 

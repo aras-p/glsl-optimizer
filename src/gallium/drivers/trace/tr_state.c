@@ -280,7 +280,7 @@ void trace_dump_depth_stencil_alpha_state(const struct pipe_depth_stencil_alpha_
       trace_dump_member(uint, &state->stencil[i], fail_op);
       trace_dump_member(uint, &state->stencil[i], zpass_op);
       trace_dump_member(uint, &state->stencil[i], zfail_op);
-      trace_dump_member(uint, &state->stencil[i], ref_value);    
+      trace_dump_member(uint, &state->stencil[i], ref_value);
       trace_dump_member(uint, &state->stencil[i], value_mask);
       trace_dump_member(uint, &state->stencil[i], write_mask);
       trace_dump_struct_end();
@@ -435,7 +435,7 @@ void trace_dump_vertex_buffer(const struct pipe_vertex_buffer *state)
 
    trace_dump_struct_begin("pipe_vertex_buffer");
 
-   trace_dump_member(uint, state, pitch);
+   trace_dump_member(uint, state, stride);
    trace_dump_member(uint, state, max_index);
    trace_dump_member(uint, state, buffer_offset);
    trace_dump_member(ptr, state, buffer);

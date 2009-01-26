@@ -228,7 +228,7 @@ draw_print_arrays(struct draw_context *draw, uint prim, int start, uint count)
       for (j = 0; j < draw->pt.nr_vertex_elements; j++) {
          uint buf = draw->pt.vertex_element[j].vertex_buffer_index;
          ubyte *ptr = (ubyte *) draw->pt.user.vbuffer[buf];
-         ptr += draw->pt.vertex_buffer[buf].pitch * ii;
+         ptr += draw->pt.vertex_buffer[buf].stride * ii;
          ptr += draw->pt.vertex_element[j].src_offset;
 
          debug_printf("  Attr %u: ", j);
@@ -301,8 +301,8 @@ draw_arrays(struct draw_context *draw, unsigned prim,
       }
       debug_printf("Buffers:\n");
       for (i = 0; i < draw->pt.nr_vertex_buffers; i++) {
-         debug_printf("  pitch=%u offset=%u ptr=%p\n",
-                      draw->pt.vertex_buffer[i].pitch,
+         debug_printf("  stride=%u offset=%u ptr=%p\n",
+                      draw->pt.vertex_buffer[i].stride,
                       draw->pt.vertex_buffer[i].buffer_offset,
                       draw->pt.user.vbuffer[i]);
       }

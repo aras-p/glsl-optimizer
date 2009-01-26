@@ -53,7 +53,7 @@ util_draw_vertex_buffer(struct pipe_context *pipe,
 
    /* tell pipe about the vertex buffer */
    vbuffer.buffer = vbuf;
-   vbuffer.pitch = num_attribs * 4 * sizeof(float);  /* vertex size */
+   vbuffer.stride = num_attribs * 4 * sizeof(float);  /* vertex size */
    vbuffer.buffer_offset = offset;
    pipe->set_vertex_buffers(pipe, 1, &vbuffer);
 
