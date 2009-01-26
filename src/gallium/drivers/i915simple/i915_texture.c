@@ -664,7 +664,6 @@ i915_get_tex_surface(struct pipe_screen *screen,
                      unsigned flags)
 {
    struct i915_texture *tex = (struct i915_texture *)pt;
-   struct pipe_winsys *ws = screen->winsys;
    struct pipe_surface *ps;
    unsigned offset;  /* in bytes */
 
