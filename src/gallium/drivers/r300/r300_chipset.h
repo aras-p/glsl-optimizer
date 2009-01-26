@@ -32,14 +32,15 @@ struct r300_capabilities {
     uint32_t pci_id;
     /* Chipset family */
     int family;
-    /* The number of vertex pipes */
-    int num_vert_pipes;
+    /* The number of vertex floating-point units */
+    int num_vert_fpus;
     /* The number of fragment pipes */
     int num_frag_pipes;
     /* Whether or not TCL is physically present */
     boolean has_tcl;
-    /* Whether or not this is an RV515 or newer; R500s have many features:
-     * - Extra bit on texture sizes
+    /* Whether or not this is an RV515 or newer; R500s have many differences
+     * that require extra consideration, compared to their R3xx cousins:
+     * - Extra bit of width and height on texture sizes
      * - Blend color is split across two registers
      * - Universal Shader (US) block used for fragment shaders */
     boolean is_r500;

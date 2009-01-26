@@ -31,7 +31,7 @@ void r300_parse_chipset(struct r300_capabilities* caps)
     /* Reasonable defaults */
     caps->has_tcl = TRUE;
     caps->is_r500 = FALSE;
-    caps->num_vert_pipes = 4;
+    caps->num_vert_fpus = 4;
 
 
     /* Note: These are not ordered by PCI ID. I leave that task to GCC,
@@ -112,7 +112,7 @@ void r300_parse_chipset(struct r300_capabilities* caps)
         case 0x4A50:
         case 0x4A54:
             caps->family = CHIP_FAMILY_R420;
-            caps->num_vert_pipes = 6;
+            caps->num_vert_fpus = 6;
             break;
 
         case 0x5548:
@@ -125,7 +125,7 @@ void r300_parse_chipset(struct r300_capabilities* caps)
         case 0x5554:
         case 0x5D57:
             caps->family = CHIP_FAMILY_R423;
-            caps->num_vert_pipes = 6;
+            caps->num_vert_fpus = 6;
             break;
 
         case 0x554C:
@@ -136,7 +136,7 @@ void r300_parse_chipset(struct r300_capabilities* caps)
         case 0x5D49:
         case 0x5D4A:
             caps->family = CHIP_FAMILY_R430;
-            caps->num_vert_pipes = 6;
+            caps->num_vert_fpus = 6;
             break;
 
         case 0x5D4C:
@@ -146,7 +146,7 @@ void r300_parse_chipset(struct r300_capabilities* caps)
         case 0x5D50:
         case 0x5D52:
             caps->family = CHIP_FAMILY_R480;
-            caps->num_vert_pipes = 6;
+            caps->num_vert_fpus = 6;
             break;
 
         case 0x4B49:
@@ -154,7 +154,7 @@ void r300_parse_chipset(struct r300_capabilities* caps)
         case 0x4B4B:
         case 0x4B4C:
             caps->family = CHIP_FAMILY_R481;
-            caps->num_vert_pipes = 6;
+            caps->num_vert_fpus = 6;
             break;
 
         case 0x5E4C:
@@ -170,7 +170,7 @@ void r300_parse_chipset(struct r300_capabilities* caps)
         case 0x5E4B:
         case 0x5E4D:
             caps->family = CHIP_FAMILY_RV410;
-            caps->num_vert_pipes = 6;
+            caps->num_vert_fpus = 6;
             break;
 
         case 0x5954:
@@ -226,7 +226,7 @@ void r300_parse_chipset(struct r300_capabilities* caps)
         case 0x710E:
         case 0x710F:
             caps->family = CHIP_FAMILY_R520;
-            caps->num_vert_pipes = 8;
+            caps->num_vert_fpus = 8;
             caps->is_r500 = TRUE;
             break;
 
@@ -269,7 +269,7 @@ void r300_parse_chipset(struct r300_capabilities* caps)
         case 0x7210:
         case 0x7211:
             caps->family = CHIP_FAMILY_RV515;
-            caps->num_vert_pipes = 2;
+            caps->num_vert_fpus = 2;
             caps->is_r500 = TRUE;
             break;
 
@@ -290,7 +290,7 @@ void r300_parse_chipset(struct r300_capabilities* caps)
         case 0x71DA:
         case 0x71DE:
             caps->family = CHIP_FAMILY_RV530;
-            caps->num_vert_pipes = 5;
+            caps->num_vert_fpus = 5;
             caps->is_r500 = TRUE;
             break;
 
@@ -310,13 +310,13 @@ void r300_parse_chipset(struct r300_capabilities* caps)
         case 0x724F:
         case 0x7284:
             caps->family = CHIP_FAMILY_R580;
-            caps->num_vert_pipes = 8;
+            caps->num_vert_fpus = 8;
             caps->is_r500 = TRUE;
             break;
 
         case 0x7280:
             caps->family = CHIP_FAMILY_RV570;
-            caps->num_vert_pipes = 5;
+            caps->num_vert_fpus = 5;
             caps->is_r500 = TRUE;
             break;
 
@@ -332,7 +332,7 @@ void r300_parse_chipset(struct r300_capabilities* caps)
         case 0x7293:
         case 0x7297:
             caps->family = CHIP_FAMILY_RV560;
-            caps->num_vert_pipes = 5;
+            caps->num_vert_fpus = 5;
             caps->is_r500 = TRUE;
             break;
 

@@ -32,6 +32,7 @@ static void r300_surface_fill(struct pipe_context* pipe,
 {
     struct r300_context* r300 = r300_context(pipe);
     CS_LOCALS(r300);
+    struct r300_capabilities* caps = ((struct r300_screen*)pipe->screen)->caps;
     float r, g, b, a;
     r = (float)((color >> 16) & 0xff) / 255.0f;
     g = (float)((color >>  8) & 0xff) / 255.0f;
@@ -51,7 +52,6 @@ OUT_CS_REG(0x1DA4, 0x43002000);
 OUT_CS_REG(0x1DA8, 0x3F000000);
 OUT_CS_REG(0x1DAC, 0x3F000000);
 OUT_CS_REG(0x2284, 0x00000000);
-OUT_CS_REG(0x2080, 0x0030046A);
 OUT_CS_REG(0x20B0, 0x0000043F);
 OUT_CS_REG(0x20B4, 0x00000008);
 OUT_CS_REG(0x2134, 0x00FFFFFF);
@@ -76,7 +76,8 @@ OUT_CS_REG(0x22D8, 0x00000000);
 OUT_CS_REG(0x4008, 0x00000007);
 OUT_CS_REG(0x4010, 0x66666666);
 OUT_CS_REG(0x4014, 0x06666666);
-OUT_CS_REG(0x4018, 0x00000011);
+/* XXX why doesn't classic Mesa write the number of pipes, too? */
+OUT_CS_REG(R300_GB_TILE_CONFIG, R300_GB_TILE_ENABLE | R300_GB_TILE_SIZE_16);
 OUT_CS_REG(0x401C, 0x00000004);
 OUT_CS_REG(0x4020, 0x00000000);
 OUT_CS_REG(0x4104, 0x00000000);
@@ -286,7 +287,10 @@ OUT_CS_REG(0x46C0, 0x1C000000);
 OUT_CS_REG(0x49C0, 0x00040889);
 OUT_CS_REG(0x47C0, 0x01000000);
 OUT_CS_REG(0x2284, 0x00000000);
-OUT_CS_REG(0x2080, 0x0030045A);
+/* XXX these magic numbers should be explained when
+ * this becomes a cached state object */
+OUT_CS_REG(R300_VAP_CNTL, 0xA | (0x5 << R300_PVS_NUM_CNTLRS_SHIFT) |
+    (caps->num_vert_fpus << R300_PVS_NUM_FPUS_SHIFT));
 OUT_CS_REG(0x22D0, 0x00100000);
 OUT_CS_REG(0x22D4, 0x00000000);
 OUT_CS_REG(0x22D8, 0x00000001);
