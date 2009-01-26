@@ -296,7 +296,7 @@ copy_array_to_vbo_array( struct brw_context *brw,
    } else {
       void *data;
       char *dest;
-      const char *src = element->glarray->Ptr;
+      const unsigned char *src = element->glarray->Ptr;
       int i;
 
       data = _mesa_malloc(dst_stride * element->count);
@@ -565,7 +565,7 @@ static void brw_prepare_indices(struct brw_context *brw)
        */
       dri_bo_subdata(bo, offset, ib_size, index_buffer->ptr);
    } else {
-      offset = (GLuint)index_buffer->ptr;
+      offset = (GLuint) (unsigned long) index_buffer->ptr;
 
       /* If the index buffer isn't aligned to its element size, we have to
        * rebase it into a temporary.
