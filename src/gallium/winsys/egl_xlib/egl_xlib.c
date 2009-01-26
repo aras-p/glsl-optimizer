@@ -559,8 +559,10 @@ xlib_eglSwapBuffers(_EGLDriver *drv, EGLDisplay dpy, EGLSurface draw)
    {
       struct xlib_egl_surface *xsurf = lookup_surface(draw);
       struct pipe_winsys *pws = xsurf->winsys;
-      struct pipe_surface *psurf =
-         st_get_framebuffer_surface(xsurf->Framebuffer, ST_SURFACE_BACK_LEFT);
+      struct pipe_surface *psurf;
+
+      st_get_framebuffer_surface(xsurf->Framebuffer, ST_SURFACE_BACK_LEFT,
+                                 &psurf);
 
       st_notify_swapbuffers(xsurf->Framebuffer);
 
