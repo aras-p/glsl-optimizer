@@ -18,6 +18,7 @@ DRIVER_SOURCES = \
 	intel_regions.c \
 	intel_buffer_objects.c \
 	intel_batchbuffer.c \
+	intel_clear.c \
 	intel_mipmap_tree.c \
 	i915_tex_layout.c \
 	intel_tex_layout.c \
