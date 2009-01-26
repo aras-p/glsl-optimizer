@@ -361,16 +361,16 @@ static void nv20_init_hwctx(struct nv20_context *nv20)
 	OUT_RINGf  (16777216.0); /* bpp dependant? */
 
 	BEGIN_RING(kelvin, NV20TCL_VIEWPORT_SCALE0_X, 4);
-	OUT_RINGf  (-2048.0);
-	OUT_RINGf  (-2048.0);
+	OUT_RINGf  (0.0); /* x-offset */
+	OUT_RINGf  (0.0); /* y-offset */
 	OUT_RINGf  (16777215.0 * 0.5);
 	OUT_RING  (0);
 
 	BEGIN_RING(kelvin, NV20TCL_VIEWPORT_SCALE1_X, 4);
-	OUT_RINGf  (-2048.0);
-	OUT_RINGf  (-2048.0);
+	OUT_RINGf  (0.0); /* no effect? */
+	OUT_RINGf  (0.0); /* no effect? */
 	OUT_RINGf  (16777215.0 * 0.5);
-	OUT_RING  (0);
+	OUT_RINGf  (65535.0);
 
 	FIRE_RING (NULL);
 }
