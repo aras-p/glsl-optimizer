@@ -105,11 +105,6 @@ intelMakeCurrent(__DRIcontextPrivate * driContextPriv,
                  __DRIdrawablePrivate * driDrawPriv,
                  __DRIdrawablePrivate * driReadPriv);
 
-extern void intelSwapBuffers(__DRIdrawablePrivate * dPriv);
-
-extern void
-intelCopySubBuffer(__DRIdrawablePrivate * dPriv, int x, int y, int w, int h);
-
 extern struct intel_context *intelScreenContext(intelScreenPrivate *intelScreen);
 
 #endif

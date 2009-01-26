@@ -26,8 +26,8 @@
  * 
  **************************************************************************/
 
-#ifndef INTEL_BUFFERS_H
-#define INTEL_BUFFERS_H
+#ifndef INTEL_SWAPBUFFERS_H
+#define INTEL_SWAPBUFFERS_H
 
 #include "dri_util.h"
 #include "drm.h"
@@ -36,22 +36,17 @@ struct intel_context;
 struct intel_framebuffer;
 
 
-extern GLboolean
-intel_intersect_cliprects(drm_clip_rect_t * dest,
-                          const drm_clip_rect_t * a,
-                          const drm_clip_rect_t * b);
+extern void
+intelSwapBuffers(__DRIdrawablePrivate * dPriv);
 
-extern struct intel_region *intel_readbuf_region(struct intel_context *intel);
+extern void
+intelCopySubBuffer(__DRIdrawablePrivate * dPriv, int x, int y, int w, int h);
 
-extern struct intel_region *intel_drawbuf_region(struct intel_context *intel);
+extern GLuint
+intelFixupVblank(struct intel_context *intel, __DRIdrawablePrivate *dPriv);
 
-extern void intel_draw_buffer(GLcontext * ctx, struct gl_framebuffer *fb);
+extern void
+intelWindowMoved(struct intel_context *intel);
 
-extern void intelInitBufferFuncs(struct dd_function_table *functions);
 
-void intel_get_cliprects(struct intel_context *intel,
-			 struct drm_clip_rect **cliprects,
-			 unsigned int *num_cliprects,
-			 int *x_off, int *y_off);
-
-#endif /* INTEL_BUFFERS_H */
+#endif /* INTEL_SWAPBUFFERS_H */

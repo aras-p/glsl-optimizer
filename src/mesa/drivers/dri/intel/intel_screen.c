@@ -43,6 +43,7 @@
 #include "intel_span.h"
 #include "intel_fbo.h"
 #include "intel_chipset.h"
+#include "intel_swapbuffers.h"
 
 #include "i915_drm.h"
 #include "i830_dri.h"

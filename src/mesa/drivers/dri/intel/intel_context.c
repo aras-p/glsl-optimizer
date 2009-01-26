@@ -59,6 +59,7 @@
 #include "intel_fbo.h"
 #include "intel_decode.h"
 #include "intel_bufmgr.h"
+#include "intel_swapbuffers.h"
 
 #include "drirenderbuffer.h"
 #include "vblank.h"
