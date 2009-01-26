@@ -72,19 +72,24 @@ static uint32_t pack_float_32(float f)
     cs_winsys->begin_cs(cs, (size), __FILE__, __FUNCTION__, __LINE__); \
 } while (0)
 
-#define OUT_CS(value) \
-    cs_winsys->write_cs_dword(cs, value)
+#define OUT_CS(value) do { \
+    cs_winsys->write_cs_dword(cs, value); \
+} while (0)
 
-#define OUT_CS_32F(value) \
-    cs_winsys->write_cs_dword(cs, pack_float_32(value))
+#define OUT_CS_32F(value) do { \
+    cs_winsys->write_cs_dword(cs, pack_float_32(value)); \
+} while (0)
 
 #define OUT_CS_REG(register, value) do { \
+    debug_printf("writing 0x%x to register 0x%x\n", value, register); \
     OUT_CS(CP_PACKET0(register, 0)); \
-    OUT_CS(value); } while (0)
+    OUT_CS(value); \
+} while (0)
 
 /* Note: This expects count to be the number of registers,
  * not the actual packet0 count! */
 #define OUT_CS_REG_SEQ(register, count) do { \
+    debug_printf("writing register sequence 0x%x\n", register); \
     OUT_CS(CP_PACKET0(register, ((count) - 1))); \
 } while (0)
 

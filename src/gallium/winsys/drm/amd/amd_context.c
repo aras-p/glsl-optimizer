@@ -242,7 +242,7 @@ GLboolean amd_context_create(const __GLcontextModes *visual,
         return GL_FALSE;
     }
 
-    if (GL_TRUE) {
+    if (1) {
         fprintf(stderr, "Creating r300 context...\n");
         pipe =
             r300_create_context(NULL,
