@@ -124,7 +124,11 @@ void st_init_limits(struct st_context *st)
 
 
 /**
- * XXX this needs careful review
+ * Use pipe_screen::get_param() to query PIPE_CAP_ values to determine
+ * which GL extensions are supported.
+ * Quite a few extensions are always supported because they are standard
+ * features or can be built on top of other gallium features.
+ * Some fine tuning may still be needed.
  */
 void st_init_extensions(struct st_context *st)
 {
@@ -134,10 +138,10 @@ void st_init_extensions(struct st_context *st)
    /*
     * Extensions that are supported by all Gallium drivers:
     */
-   ctx->Extensions.ARB_multisample = GL_TRUE; /* API support */
+   ctx->Extensions.ARB_multisample = GL_TRUE;
    ctx->Extensions.ARB_fragment_program = GL_TRUE;
    ctx->Extensions.ARB_texture_border_clamp = GL_TRUE; /* XXX temp */
-   ctx->Extensions.ARB_texture_compression = GL_TRUE; /* API support only */
+   ctx->Extensions.ARB_texture_compression = GL_TRUE;
    ctx->Extensions.ARB_texture_cube_map = GL_TRUE;
    ctx->Extensions.ARB_texture_env_combine = GL_TRUE;
    ctx->Extensions.ARB_texture_env_crossbar = GL_TRUE;
@@ -168,7 +172,7 @@ void st_init_extensions(struct st_context *st)
    ctx->Extensions.NV_texgen_reflection = GL_TRUE;
 
    ctx->Extensions.SGI_color_matrix = GL_TRUE;
-   ctx->Extensions.SGIS_generate_mipmap = GL_TRUE; /* XXX temp */
+   ctx->Extensions.SGIS_generate_mipmap = GL_TRUE;
 
    /*
     * Extensions that depend on the driver/hardware:
@@ -246,6 +250,7 @@ void st_init_extensions(struct st_context *st)
       ctx->Extensions.EXT_packed_depth_stencil = GL_TRUE;
    }
 
+   /* sRGB support */
    if (screen->is_format_supported(screen, PIPE_FORMAT_R8G8B8A8_SRGB,
                                    PIPE_TEXTURE_2D, 
                                    PIPE_TEXTURE_USAGE_SAMPLER, 0) ||
@@ -255,13 +260,14 @@ void st_init_extensions(struct st_context *st)
       ctx->Extensions.EXT_texture_sRGB = GL_TRUE;
    }
 
-#if 01
+   /* s3tc support */
    if (screen->is_format_supported(screen, PIPE_FORMAT_DXT5_RGBA,
                                    PIPE_TEXTURE_2D, 
                                    PIPE_TEXTURE_USAGE_SAMPLER, 0)) {
       ctx->Extensions.EXT_texture_compression_s3tc = GL_TRUE;
    }
-#endif
+
+   /* ycbcr support */
    if (screen->is_format_supported(screen, PIPE_FORMAT_YCBCR, 
                                    PIPE_TEXTURE_2D, 
                                    PIPE_TEXTURE_USAGE_SAMPLER, 0) ||
@@ -270,5 +276,4 @@ void st_init_extensions(struct st_context *st)
                                    PIPE_TEXTURE_USAGE_SAMPLER, 0)) {
       ctx->Extensions.MESA_ycbcr_texture = GL_TRUE;
    }
-
 }
