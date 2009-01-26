@@ -29,8 +29,6 @@
 #include "main/glheader.h"
 #include "main/context.h"
 #include "main/extensions.h"
-//#include "main/matrix.h"
-//#include "main/simple_list.h"
 #include "main/framebuffer.h"
 #include "main/imports.h"
 #include "main/points.h"
@@ -38,13 +36,7 @@
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
 #include "tnl/tnl.h"
-
-//#include "tnl/t_pipeline.h"
-//#include "tnl/t_vertex.h"
-
 #include "drivers/common/driverfuncs.h"
-
-#include "intel_screen.h"
 
 #include "i830_dri.h"
 
@@ -52,7 +44,6 @@
 #include "intel_buffers.h"
 #include "intel_tex.h"
 #include "intel_batchbuffer.h"
-//#include "intel_blit.h"
 #include "intel_clear.h"
 #include "intel_extensions.h"
 #include "intel_pixel.h"
@@ -61,6 +52,7 @@
 #include "intel_fbo.h"
 #include "intel_decode.h"
 #include "intel_bufmgr.h"
+#include "intel_screen.h"
 #include "intel_swapbuffers.h"
 
 #include "drirenderbuffer.h"
