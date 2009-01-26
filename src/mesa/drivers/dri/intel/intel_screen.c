@@ -161,7 +161,7 @@ intelPrintSAREA(const drm_i915_sarea_t * sarea)
  * A number of the screen parameters are obtained/computed from
  * information in the SAREA.  This function updates those parameters.
  */
-void
+static void
 intelUpdateScreenFromSAREA(intelScreenPrivate * intelScreen,
                            drm_i915_sarea_t * sarea)
 {

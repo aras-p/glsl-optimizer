@@ -92,10 +92,6 @@ extern GLboolean intelMapScreenRegions(__DRIscreenPrivate * sPriv);
 
 extern void intelUnmapScreenRegions(intelScreenPrivate * intelScreen);
 
-extern void
-intelUpdateScreenFromSAREA(intelScreenPrivate * intelScreen,
-                           drm_i915_sarea_t * sarea);
-
 extern void intelDestroyContext(__DRIcontextPrivate * driContextPriv);
 
 extern GLboolean intelUnbindContext(__DRIcontextPrivate * driContextPriv);
