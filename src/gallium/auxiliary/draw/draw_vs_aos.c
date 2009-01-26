@@ -901,6 +901,7 @@ static void PIPE_CDECL print_reg( const char *msg,
    debug_printf("%s: %f %f %f %f\n", msg, reg[0], reg[1], reg[2], reg[3]);
 }
 
+#if 0
 static void emit_print( struct aos_compilation *cp,
                         const char *message, /* must point to a static string! */
                         unsigned file,
@@ -952,6 +953,7 @@ static void emit_print( struct aos_compilation *cp,
    /* Done... 
     */
 }
+#endif
 
 /**
  * The traditional instructions.  All operate on internal registers
@@ -1090,7 +1092,7 @@ static boolean emit_LG2( struct aos_compilation *cp, const struct tgsi_full_inst
    return TRUE;
 }
 
-
+#if 0
 static boolean emit_EX2( struct aos_compilation *cp, const struct tgsi_full_instruction *op ) 
 {
    x87_fld_src(cp, &op->FullSrcRegisters[0], 0);
@@ -1098,6 +1100,7 @@ static boolean emit_EX2( struct aos_compilation *cp, const struct tgsi_full_inst
    x87_fstp_dest4(cp, &op->FullDstRegisters[0]);
    return TRUE;
 }
+#endif
 
 
 static boolean emit_FLR( struct aos_compilation *cp, const struct tgsi_full_instruction *op ) 
