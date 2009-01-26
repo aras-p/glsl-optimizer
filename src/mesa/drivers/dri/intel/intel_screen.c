@@ -28,29 +28,27 @@
 #include "main/glheader.h"
 #include "main/context.h"
 #include "main/framebuffer.h"
-#include "main/matrix.h"
 #include "main/renderbuffer.h"
-#include "main/simple_list.h"
+
 #include "utils.h"
 #include "vblank.h"
 #include "xmlpool.h"
 
-
-#include "intel_screen.h"
-
+#include "intel_batchbuffer.h"
 #include "intel_buffers.h"
-#include "intel_extensions.h"
-#include "intel_tex.h"
-#include "intel_span.h"
-#include "intel_fbo.h"
+#include "intel_bufmgr.h"
 #include "intel_chipset.h"
+#include "intel_extensions.h"
+#include "intel_fbo.h"
+#include "intel_regions.h"
 #include "intel_swapbuffers.h"
+#include "intel_screen.h"
+#include "intel_span.h"
+#include "intel_tex.h"
 
 #include "i915_drm.h"
 #include "i830_dri.h"
-#include "intel_regions.h"
-#include "intel_batchbuffer.h"
-#include "intel_bufmgr.h"
+
 
 PUBLIC const char __driConfigOptions[] =
    DRI_CONF_BEGIN
