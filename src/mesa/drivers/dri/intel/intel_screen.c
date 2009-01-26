@@ -318,8 +318,6 @@ intelCreateBuffer(__DRIscreenPrivate * driScrnPriv,
                   __DRIdrawablePrivate * driDrawPriv,
                   const __GLcontextModes * mesaVis, GLboolean isPixmap)
 {
-   intelScreenPrivate *screen = (intelScreenPrivate *) driScrnPriv->private;
-
    if (isPixmap) {
       return GL_FALSE;          /* not implemented */
    }
