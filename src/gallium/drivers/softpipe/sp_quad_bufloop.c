@@ -17,7 +17,7 @@ cbuf_loop_quad(struct quad_stage *qs, struct quad_header *quad)
    unsigned i;
 
    assert(sizeof(quad->outputs.color) == sizeof(tmp));
-   assert(softpipe->framebuffer.num_cbufs <= PIPE_MAX_COLOR_BUFS);
+   assert(softpipe->framebuffer.nr_cbufs <= PIPE_MAX_COLOR_BUFS);
 
    /* make copy of original colors since they can get modified
     * by blending and masking.
@@ -28,7 +28,7 @@ cbuf_loop_quad(struct quad_stage *qs, struct quad_header *quad)
     */
    memcpy(tmp, quad->outputs.color, sizeof(tmp));
 
-   for (i = 0; i < softpipe->framebuffer.num_cbufs; i++) {
+   for (i = 0; i < softpipe->framebuffer.nr_cbufs; i++) {
       /* set current cbuffer */
 #if 0 /* obsolete & going away */
       softpipe->current_cbuf = i;

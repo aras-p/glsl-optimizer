@@ -41,7 +41,7 @@ nv40_state_do_validate(struct nv40_context *nv40,
 	const struct pipe_framebuffer_state *fb = &nv40->framebuffer;
 	unsigned i;
 
-	for (i = 0; i < fb->num_cbufs; i++)
+	for (i = 0; i < fb->nr_cbufs; i++)
 		fb->cbufs[i]->status = PIPE_SURFACE_STATUS_DEFINED;
 	if (fb->zsbuf)
 		fb->zsbuf->status = PIPE_SURFACE_STATUS_DEFINED;

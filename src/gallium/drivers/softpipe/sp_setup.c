@@ -1497,7 +1497,7 @@ void setup_prepare( struct setup_context *setup )
    }
 
    /* Mark surfaces as defined now */
-   for (i = 0; i < sp->framebuffer.num_cbufs; i++){
+   for (i = 0; i < sp->framebuffer.nr_cbufs; i++){
       if (sp->framebuffer.cbufs[i]) {
          sp->framebuffer.cbufs[i]->status = PIPE_SURFACE_STATUS_DEFINED;
       }

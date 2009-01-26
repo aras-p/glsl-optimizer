@@ -64,7 +64,7 @@ softpipe_set_framebuffer_state(struct pipe_context *pipe,
       }
    }
 
-   sp->framebuffer.num_cbufs = fb->num_cbufs;
+   sp->framebuffer.nr_cbufs = fb->nr_cbufs;
 
    /* zbuf changing? */
    if (sp->framebuffer.zsbuf != fb->zsbuf) {

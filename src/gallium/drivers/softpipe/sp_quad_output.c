@@ -48,7 +48,7 @@ output_quad(struct quad_stage *qs, struct quad_header *quad)
    uint cbuf;
 
    /* loop over colorbuffer outputs */
-   for (cbuf = 0; cbuf < softpipe->framebuffer.num_cbufs; cbuf++) {
+   for (cbuf = 0; cbuf < softpipe->framebuffer.nr_cbufs; cbuf++) {
       struct softpipe_cached_tile *tile
          = sp_get_cached_tile(softpipe,
                               softpipe->cbuf_cache[cbuf],

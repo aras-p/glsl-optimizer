@@ -307,7 +307,7 @@ cell_set_framebuffer_state(struct pipe_context *pipe,
        */
       cell->framebuffer.width = fb->width;
       cell->framebuffer.height = fb->height;
-      cell->framebuffer.num_cbufs = fb->num_cbufs;
+      cell->framebuffer.nr_cbufs = fb->nr_cbufs;
       for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++) {
          pipe_surface_reference(&cell->framebuffer.cbufs[i], fb->cbufs[i]);
       }

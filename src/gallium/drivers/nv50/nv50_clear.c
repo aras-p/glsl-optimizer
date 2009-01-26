@@ -39,10 +39,10 @@ nv50_clear(struct pipe_context *pipe, struct pipe_surface *ps,
 
 	if (ps->format == PIPE_FORMAT_Z24S8_UNORM ||
 	    ps->format == PIPE_FORMAT_Z16_UNORM) {
-		fb.num_cbufs = 0;
+		fb.nr_cbufs = 0;
 		fb.zsbuf = ps;
 	} else {
-		fb.num_cbufs = 1;
+		fb.nr_cbufs = 1;
 		fb.cbufs[0] = ps;
 		fb.zsbuf = NULL;
 	}

@@ -1052,7 +1052,7 @@ static int vlInit
 
 	mc->render_target.width = vlRoundUpPOT(mc->picture_width);
 	mc->render_target.height = vlRoundUpPOT(mc->picture_height);
-	mc->render_target.num_cbufs = 1;
+	mc->render_target.nr_cbufs = 1;
 	/* FB for MC stage is a vlSurface created by the user, set at render time */
 	mc->render_target.zsbuf = NULL;
 

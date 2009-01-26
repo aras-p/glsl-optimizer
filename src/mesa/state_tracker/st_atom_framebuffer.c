@@ -108,7 +108,7 @@ update_framebuffer_state( struct st_context *st )
    /* Examine Mesa's ctx->DrawBuffer->_ColorDrawBuffers state
     * to determine which surfaces to draw to
     */
-   framebuffer->num_cbufs = 0;
+   framebuffer->nr_cbufs = 0;
    for (i = 0; i < fb->_NumColorDrawBuffers; i++) {
       strb = st_renderbuffer(fb->_ColorDrawBuffers[i]);
 
@@ -119,8 +119,8 @@ update_framebuffer_state( struct st_context *st )
       }
 
       if (strb->surface) {
-         framebuffer->cbufs[framebuffer->num_cbufs] = strb->surface;
-         framebuffer->num_cbufs++;
+         framebuffer->cbufs[framebuffer->nr_cbufs] = strb->surface;
+         framebuffer->nr_cbufs++;
       }
    }
 

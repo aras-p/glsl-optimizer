@@ -14,7 +14,7 @@ nv40_state_framebuffer_validate(struct nv40_context *nv40)
 	unsigned h = fb->height;
 
 	rt_enable = 0;
-	for (i = 0; i < fb->num_cbufs; i++) {
+	for (i = 0; i < fb->nr_cbufs; i++) {
 		if (colour_format) {
 			assert(colour_format == fb->cbufs[i]->format);
 		} else {
@@ -35,7 +35,7 @@ nv40_state_framebuffer_validate(struct nv40_context *nv40)
 
 	if (!(rt[0]->texture->tex_usage & NOUVEAU_TEXTURE_USAGE_LINEAR)) {
 		assert(!(fb->width & (fb->width - 1)) && !(fb->height & (fb->height - 1)));
-		for (i = 1; i < fb->num_cbufs; i++)
+		for (i = 1; i < fb->nr_cbufs; i++)
 			assert(!(rt[i]->texture->tex_usage & NOUVEAU_TEXTURE_USAGE_LINEAR));
 
 		rt_format = NV40TCL_RT_FORMAT_TYPE_SWIZZLED |

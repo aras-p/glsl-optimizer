@@ -31,7 +31,7 @@ nv50_state_validate_fb(struct nv50_context *nv50)
 	struct pipe_framebuffer_state *fb = &nv50->framebuffer;
 	unsigned i, w, h, gw = 0;
 
-	for (i = 0; i < fb->num_cbufs; i++) {
+	for (i = 0; i < fb->nr_cbufs; i++) {
 		if (!gw) {
 			w = fb->cbufs[i]->width;
 			h = fb->cbufs[i]->height;
@@ -178,7 +178,7 @@ nv50_state_validate(struct nv50_context *nv50)
 	struct nouveau_stateobj *so;
 	unsigned i;
 
-	for (i = 0; i < fb->num_cbufs; i++)
+	for (i = 0; i < fb->nr_cbufs; i++)
 		fb->cbufs[i]->status = PIPE_SURFACE_STATUS_DEFINED;
 
 	if (fb->zsbuf)

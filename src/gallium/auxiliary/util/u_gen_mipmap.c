@@ -1490,7 +1490,7 @@ util_gen_mipmap(struct gen_mipmap_state *ctx,
 
    /* init framebuffer state */
    memset(&fb, 0, sizeof(fb));
-   fb.num_cbufs = 1;
+   fb.nr_cbufs = 1;
 
    /* set min/mag to same filter for faster sw speed */
    ctx->sampler.mag_img_filter = filter;

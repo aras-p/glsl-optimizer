@@ -351,7 +351,7 @@ void trace_dump_framebuffer_state(const struct pipe_framebuffer_state *state)
 
    trace_dump_member(uint, state, width);
    trace_dump_member(uint, state, height);
-   trace_dump_member(uint, state, num_cbufs);
+   trace_dump_member(uint, state, nr_cbufs);
    trace_dump_member_array(ptr, state, cbufs);
    trace_dump_member(ptr, state, zsbuf);
 

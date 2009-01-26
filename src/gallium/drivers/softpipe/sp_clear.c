@@ -85,7 +85,7 @@ softpipe_clear(struct pipe_context *pipe, struct pipe_surface *ps,
 #endif
    }
 
-   for (i = 0; i < softpipe->framebuffer.num_cbufs; i++) {
+   for (i = 0; i < softpipe->framebuffer.nr_cbufs; i++) {
       if (ps == sp_tile_cache_get_surface(softpipe->cbuf_cache[i])) {
          unsigned cv;
          if (ps->format != PIPE_FORMAT_A8R8G8B8_UNORM) {

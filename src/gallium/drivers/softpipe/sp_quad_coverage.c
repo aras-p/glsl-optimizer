@@ -53,7 +53,7 @@ coverage_quad(struct quad_stage *qs, struct quad_header *quad)
       uint cbuf;
 
       /* loop over colorbuffer outputs */
-      for (cbuf = 0; cbuf < softpipe->framebuffer.num_cbufs; cbuf++) {
+      for (cbuf = 0; cbuf < softpipe->framebuffer.nr_cbufs; cbuf++) {
          float (*quadColor)[4] = quad->output.color[cbuf];
          unsigned j;
          for (j = 0; j < QUAD_SIZE; j++) {

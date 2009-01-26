@@ -722,9 +722,9 @@ trace_context_set_framebuffer_state(struct pipe_context *_pipe,
    
    /* Unwrap the input state */
    memcpy(&unwrapped_state, state, sizeof(unwrapped_state));
-   for(i = 0; i < state->num_cbufs; ++i)
+   for(i = 0; i < state->nr_cbufs; ++i)
       unwrapped_state.cbufs[i] = trace_surface_unwrap(tr_ctx, state->cbufs[i]);
-   for(i = state->num_cbufs; i < PIPE_MAX_COLOR_BUFS; ++i)
+   for(i = state->nr_cbufs; i < PIPE_MAX_COLOR_BUFS; ++i)
       unwrapped_state.cbufs[i] = NULL;
    unwrapped_state.zsbuf = trace_surface_unwrap(tr_ctx, state->zsbuf);
    state = &unwrapped_state;

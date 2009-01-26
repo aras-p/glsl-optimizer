@@ -241,7 +241,7 @@ struct pipe_framebuffer_state
    unsigned width, height;
 
    /** multiple colorbuffers for multiple render targets */
-   unsigned num_cbufs;
+   unsigned nr_cbufs;
    struct pipe_surface *cbufs[PIPE_MAX_COLOR_BUFS];
 
    struct pipe_surface *zsbuf;      /**< Z/stencil buffer */

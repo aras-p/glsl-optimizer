@@ -24,7 +24,7 @@ nv30_state_do_validate(struct nv30_context *nv30,
 	const struct pipe_framebuffer_state *fb = &nv30->framebuffer;
 	unsigned i;
 
-	for (i = 0; i < fb->num_cbufs; i++)
+	for (i = 0; i < fb->nr_cbufs; i++)
 		fb->cbufs[i]->status = PIPE_SURFACE_STATUS_DEFINED;
 	if (fb->zsbuf)
 		fb->zsbuf->status = PIPE_SURFACE_STATUS_DEFINED;

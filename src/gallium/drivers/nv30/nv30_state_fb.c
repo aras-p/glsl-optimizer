@@ -14,7 +14,7 @@ nv30_state_framebuffer_validate(struct nv30_context *nv30)
 	unsigned h = fb->height;
 
 	rt_enable = 0;
-	for (i = 0; i < fb->num_cbufs; i++) {
+	for (i = 0; i < fb->nr_cbufs; i++) {
 		if (colour_format) {
 			assert(colour_format == fb->cbufs[i]->format);
 		} else {
@@ -34,7 +34,7 @@ nv30_state_framebuffer_validate(struct nv30_context *nv30)
 
 	if (!(rt[0]->texture->tex_usage & NOUVEAU_TEXTURE_USAGE_LINEAR)) {
 		assert(!(fb->width & (fb->width - 1)) && !(fb->height & (fb->height - 1)));
-		for (i = 1; i < fb->num_cbufs; i++)
+		for (i = 1; i < fb->nr_cbufs; i++)
 			assert(!(rt[i]->texture->tex_usage & NOUVEAU_TEXTURE_USAGE_LINEAR));
 
 		/* FIXME: NV34TCL_RT_FORMAT_LOG2_[WIDTH/HEIGHT] */

@@ -57,7 +57,7 @@ softpipe_flush( struct pipe_context *pipe,
    }
 
    if (flags & PIPE_FLUSH_RENDER_CACHE) {
-      for (i = 0; i < softpipe->framebuffer.num_cbufs; i++)
+      for (i = 0; i < softpipe->framebuffer.nr_cbufs; i++)
          if (softpipe->cbuf_cache[i])
             sp_flush_tile_cache(softpipe, softpipe->cbuf_cache[i]);
 

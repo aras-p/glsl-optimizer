@@ -657,7 +657,7 @@ static int vlInit
 	csc->framebuffer_tex = NULL;
 	csc->framebuffer.width = 0;
 	csc->framebuffer.height = 0;
-	csc->framebuffer.num_cbufs = 1;
+	csc->framebuffer.nr_cbufs = 1;
 	csc->framebuffer.cbufs[0] = NULL;
 	csc->framebuffer.zsbuf = NULL;
 
