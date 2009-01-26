@@ -12,6 +12,7 @@ DRIVER_SOURCES = \
 	intel_clear.c \
 	intel_context.c \
 	intel_decode.c \
+	intel_extensions.c \
 	intel_fbo.c \
 	intel_mipmap_tree.c \
 	intel_regions.c \

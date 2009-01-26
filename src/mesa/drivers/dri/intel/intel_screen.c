@@ -39,6 +39,7 @@
 #include "intel_screen.h"
 
 #include "intel_buffers.h"
+#include "intel_extensions.h"
 #include "intel_tex.h"
 #include "intel_span.h"
 #include "intel_fbo.h"
