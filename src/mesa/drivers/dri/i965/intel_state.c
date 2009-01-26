@@ -38,7 +38,8 @@
 #include "intel_regions.h"
 #include "swrast/swrast.h"
 
-int intel_translate_shadow_compare_func( GLenum func )
+int
+intel_translate_shadow_compare_func( GLenum func )
 {
    switch(func) {
    case GL_NEVER: 
@@ -63,7 +64,8 @@ int intel_translate_shadow_compare_func( GLenum func )
    return COMPAREFUNC_NEVER; 
 }
 
-int intel_translate_compare_func( GLenum func )
+int
+intel_translate_compare_func( GLenum func )
 {
    switch(func) {
    case GL_NEVER: 
@@ -88,7 +90,8 @@ int intel_translate_compare_func( GLenum func )
    return COMPAREFUNC_ALWAYS; 
 }
 
-int intel_translate_stencil_op( GLenum op )
+int
+intel_translate_stencil_op( GLenum op )
 {
    switch(op) {
    case GL_KEEP: 
@@ -112,7 +115,8 @@ int intel_translate_stencil_op( GLenum op )
    }
 }
 
-int intel_translate_blend_factor( GLenum factor )
+int
+intel_translate_blend_factor( GLenum factor )
 {
    switch(factor) {
    case GL_ZERO: 
@@ -151,7 +155,8 @@ int intel_translate_blend_factor( GLenum factor )
    return BLENDFACT_ZERO;
 }
 
-int intel_translate_logic_op( GLenum opcode )
+int
+intel_translate_logic_op( GLenum opcode )
 {
    switch(opcode) {
    case GL_CLEAR: 
@@ -192,33 +197,36 @@ int intel_translate_logic_op( GLenum opcode )
 }
 
 
-static void intelClearColor(GLcontext *ctx, const GLfloat color[4])
+static void
+intelClearColor(GLcontext *ctx, const GLfloat color[4])
 {
    struct intel_context *intel = intel_context(ctx);
+   GLubyte clear[4];
 
-   UNCLAMPED_FLOAT_TO_RGBA_CHAN(intel->clear_chan, color);
+   CLAMPED_FLOAT_TO_UBYTE(clear[0], color[0]);
+   CLAMPED_FLOAT_TO_UBYTE(clear[1], color[1]);
+   CLAMPED_FLOAT_TO_UBYTE(clear[2], color[2]);
+   CLAMPED_FLOAT_TO_UBYTE(clear[3], color[3]);
 
-   intel->ClearColor8888 = INTEL_PACKCOLOR8888(intel->clear_chan[0],
-					       intel->clear_chan[1],
-					       intel->clear_chan[2],
-					       intel->clear_chan[3]);
-   intel->ClearColor565 = INTEL_PACKCOLOR565(intel->clear_chan[0],
-					     intel->clear_chan[1],
-					     intel->clear_chan[2]);
+   /* compute both 32 and 16-bit clear values */
+   intel->ClearColor8888 = INTEL_PACKCOLOR8888(clear[0], clear[1],
+                                               clear[2], clear[3]);
+   intel->ClearColor565 = INTEL_PACKCOLOR565(clear[0], clear[1], clear[2]);
 }
-
 
 
 /* Fallback to swrast for select and feedback.
  */
-static void intelRenderMode( GLcontext *ctx, GLenum mode )
+static void
+intelRenderMode( GLcontext *ctx, GLenum mode )
 {
    struct intel_context *intel = intel_context(ctx);
    FALLBACK( intel, INTEL_FALLBACK_RENDERMODE, (mode != GL_RENDER) );
 }
 
 
-void intelInitStateFuncs( struct dd_function_table *functions )
+void
+intelInitStateFuncs( struct dd_function_table *functions )
 {
    functions->RenderMode = intelRenderMode;
    functions->ClearColor = intelClearColor;

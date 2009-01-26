@@ -210,7 +210,6 @@ struct intel_context
    char *prevLockFile;
    int prevLockLine;
 
-   GLubyte clear_chan[4];
    GLuint ClearColor565;
    GLuint ClearColor8888;
 
