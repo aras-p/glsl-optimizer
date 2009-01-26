@@ -159,8 +159,8 @@ static void nv20_state_emit_framebuffer(struct nv20_context* nv20)
 
 	BEGIN_RING(kelvin, NV20TCL_RT_HORIZ, 3);
 	OUT_RING  ((w << 16) | 0);
-	OUT_RING  ((h << 16) | 0);
-	OUT_RING  (rt_format);
+	OUT_RING  ((h << 16) | 0); /*NV20TCL_RT_VERT */
+	OUT_RING  (rt_format); /* NV20TCL_RT_FORMAT */
 	BEGIN_RING(kelvin, NV20TCL_VIEWPORT_CLIP_HORIZ(0), 2);
 	OUT_RING  (((w - 1) << 16) | 0);
 	OUT_RING  (((h - 1) << 16) | 0);
@@ -170,24 +170,29 @@ static void nv20_vertex_layout(struct nv20_context *nv20)
 {
 	struct nv20_fragment_program *fp = nv20->fragprog.current;
 	struct draw_context *dc = nv20->draw;
-	uint32_t src;
+	int src;
 	int i;
 	struct vertex_info *vinfo = &nv20->vertex_info;
 	const enum interp_mode colorInterp = INTERP_LINEAR;
 	boolean colors[2] = { FALSE };
-	boolean generics[4] = { FALSE };
+	boolean generics[12] = { FALSE };
 	boolean fog = FALSE;
 
 	memset(vinfo, 0, sizeof(*vinfo));
 
 	/*
-	 * NV10 hardware vertex attribute order:
-	 * fog, weight, normal, tex1, tex0, 2nd color, color, position
+	 * Assumed NV20 hardware vertex attribute order:
+	 * 0 position, 1 ?, 2 ?, 3 col0,
+	 * 4 col1?, 5 ?, 6 ?, 7 ?,
+	 * 8 ?, 9 tex0, 10 tex1, 11 tex2,
+	 * 12 tex3, 13 ?, 14 ?, 15 ?
+	 * unaccounted: wgh, nor, fog
+	 * There are total 16 attrs.
 	 * vinfo->hwfmt[0] has a used-bit corresponding to each of these.
 	 * relation to TGSI_SEMANTIC_*:
 	 * - POSITION: position (always used)
-	 * - COLOR: 2nd color, color
-	 * - GENERIC: weight, normal, tex1, tex0
+	 * - COLOR: col1, col0
+	 * - GENERIC: tex3, tex2, tex1, tex0, normal, weight
 	 * - FOG: fog
 	 */
 
@@ -202,7 +207,7 @@ static void nv20_vertex_layout(struct nv20_context *nv20)
 			colors[isi] = TRUE;
 			break;
 		case TGSI_SEMANTIC_GENERIC:
-			assert(isi < 4);
+			assert(isi < 12);
 			generics[isi] = TRUE;
 			break;
 		case TGSI_SEMANTIC_FOG:
@@ -213,14 +218,53 @@ static void nv20_vertex_layout(struct nv20_context *nv20)
 		}
 	}
 
-	if (fog) {
-		int src = draw_find_vs_output(dc, TGSI_SEMANTIC_FOG, 0);
-		draw_emit_vertex_attr(vinfo, EMIT_1F, INTERP_PERSPECTIVE, src);
-		vinfo->hwfmt[0] |= (1 << 7);
+	/* always do position */ {
+		src = draw_find_vs_output(dc, TGSI_SEMANTIC_POSITION, 0);
+		draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_LINEAR, src);
+		vinfo->hwfmt[0] |= (1 << 0);
 	}
 
-	for (i = 3; i >= 0; i--) {
-		int src;
+	/* two unnamed generics */
+	for (i = 4; i < 6; i++) {
+		if (!generics[i])
+			continue;
+		src = draw_find_vs_output(dc, TGSI_SEMANTIC_GENERIC, i);
+		draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_PERSPECTIVE, src);
+		vinfo->hwfmt[0] |= (1 << (i - 3));
+	}
+
+	if (colors[0]) {
+		src = draw_find_vs_output(dc, TGSI_SEMANTIC_COLOR, 0);
+		draw_emit_vertex_attr(vinfo, EMIT_4F, colorInterp, src);
+		vinfo->hwfmt[0] |= (1 << 3);
+	}
+
+	if (colors[1]) {
+		src = draw_find_vs_output(dc, TGSI_SEMANTIC_COLOR, 1);
+		draw_emit_vertex_attr(vinfo, EMIT_4F, colorInterp, src);
+		vinfo->hwfmt[0] |= (1 << 4);
+	}
+
+	/* four unnamed generics */
+	for (i = 6; i < 10; i++) {
+		if (!generics[i])
+			continue;
+		src = draw_find_vs_output(dc, TGSI_SEMANTIC_GENERIC, i);
+		draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_PERSPECTIVE, src);
+		vinfo->hwfmt[0] |= (1 << (i - 1));
+	}
+
+	/* tex0, tex1, tex2, tex3 */
+	for (i = 0; i < 4; i++) {
+		if (!generics[i])
+			continue;
+		src = draw_find_vs_output(dc, TGSI_SEMANTIC_GENERIC, i);
+		draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_PERSPECTIVE, src);
+		vinfo->hwfmt[0] |= (1 << (i + 9));
+	}
+
+	/* two unnamed generics */
+	for (i = 10; i < 12; i++) {
 		if (!generics[i])
 			continue;
 		src = draw_find_vs_output(dc, TGSI_SEMANTIC_GENERIC, i);
@@ -228,22 +272,11 @@ static void nv20_vertex_layout(struct nv20_context *nv20)
 		vinfo->hwfmt[0] |= (1 << (i + 3));
 	}
 
-	if (colors[1]) {
-		int src = draw_find_vs_output(dc, TGSI_SEMANTIC_COLOR, 1);
-		draw_emit_vertex_attr(vinfo, EMIT_4F, colorInterp, src);
-		vinfo->hwfmt[0] |= (1 << 2);
+	if (fog) {
+		src = draw_find_vs_output(dc, TGSI_SEMANTIC_FOG, 0);
+		draw_emit_vertex_attr(vinfo, EMIT_1F, INTERP_PERSPECTIVE, src);
+		vinfo->hwfmt[0] |= (1 << 15);
 	}
-
-	if (colors[0]) {
-		int src = draw_find_vs_output(dc, TGSI_SEMANTIC_COLOR, 0);
-		draw_emit_vertex_attr(vinfo, EMIT_4F, colorInterp, src);
-		vinfo->hwfmt[0] |= (1 << 1);
-	}
-
-	/* always do position */
-	src = draw_find_vs_output(dc, TGSI_SEMANTIC_POSITION, 0);
-	draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_LINEAR, src);
-	vinfo->hwfmt[0] |= (1 << 0);
 
 	draw_compute_vertex_size(vinfo);
 }
