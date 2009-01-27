@@ -20,29 +20,12 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
  * USE OR OTHER DEALINGS IN THE SOFTWARE. */
 
-#ifndef R300_SURFACE_H
-#define R300_SURFACE_H
-
-#include "pipe/p_context.h"
-#include "pipe/p_screen.h"
-
-#include "util/u_rect.h"
-
 #include "r300_context.h"
 #include "r300_cs.h"
-#include "r300_emit.h"
+#include "r300_screen.h"
 
-const struct r300_blend_state blend_clear_state = {
-    .blend_control = 0x0,
-    .alpha_blend_control = 0x0,
-    .rop = 0x0,
-    .dither = 0x0,
-};
+void r300_emit_blend_state(struct r300_context* r300,
+                           struct r300_blend_state* blend);
 
-const struct r300_blend_color_state blend_color_clear_state = {
-    .blend_color = 0x0,
-    .blend_color_red_alpha = 0x0,
-    .blend_color_green_blue = 0x0,
-};
-
-#endif /* R300_SURFACE_H */
+void r300_emit_blend_color_state(struct r300_context* r300,
+                                 struct r300_blend_color_state* bc);

@@ -22,24 +22,44 @@
 
 /* r300_emit: Functions for emitting state. */
 
-#include "r300_context.h"
-#include "r300_cs.h"
-#include "r300_screen.h"
+#include "r300_emit.h"
 
 void r300_emit_blend_state(struct r300_context* r300,
                            struct r300_blend_state* blend)
 {
     CS_LOCALS(r300);
+    BEGIN_CS(7);
     OUT_CS_REG_SEQ(R300_RB3D_CBLEND, 2);
     OUT_CS(blend->blend_control);
     OUT_CS(blend->alpha_blend_control);
     OUT_CS_REG(R300_RB3D_ROPCNTL, blend->rop);
     OUT_CS_REG(R300_RB3D_DITHER_CTL, blend->dither);
+    END_CS;
+}
+
+void r300_emit_blend_color_state(struct r300_context* r300,
+                                 struct r300_blend_color_state* bc)
+{
+    struct r300_screen* r300screen =
+        (struct r300_screen*)r300->context.screen;
+    CS_LOCALS(r300);
+    if (r300screen->caps->is_r500) {
+        BEGIN_CS(3);
+        OUT_CS_REG_SEQ(R500_RB3D_CONSTANT_COLOR_AR, 2);
+        OUT_CS(bc->blend_color_red_alpha);
+        OUT_CS(bc->blend_color_green_blue);
+        END_CS;
+    } else {
+        BEGIN_CS(2);
+        OUT_CS_REG(R300_RB3D_BLEND_COLOR, bc->blend_color);
+        END_CS;
+    }
 }
 
 static void r300_emit_dirty_state(struct r300_context* r300)
 {
-    struct r300_screen* r300screen = (struct r300_screen*)r300->context.screen;
+    struct r300_screen* r300screen =
+        (struct r300_screen*)r300->context.screen;
     CS_LOCALS(r300);
 
     if (!(r300->dirty_state) && !(r300->dirty_hw)) {
@@ -53,17 +73,7 @@ static void r300_emit_dirty_state(struct r300_context* r300)
     }
 
     if (r300->dirty_state & R300_NEW_BLEND_COLOR) {
-        struct r300_blend_color_state* blend_color = r300->blend_color_state;
-        if (r300screen->caps->is_r500) {
-            /* XXX next two are contiguous regs */
-            OUT_CS_REG(R500_RB3D_CONSTANT_COLOR_AR,
-                       blend_color->blend_color_red_alpha);
-            OUT_CS_REG(R500_RB3D_CONSTANT_COLOR_GB,
-                       blend_color->blend_color_green_blue);
-        } else {
-            OUT_CS_REG(R300_RB3D_BLEND_COLOR,
-                       blend_color->blend_color);
-        }
+        r300_emit_blend_color_state(r300, r300->blend_color_state);
     }
 
     if (r300->dirty_state & R300_NEW_DSA) {
