@@ -871,7 +871,7 @@ static void set_fpu_round_nearest( struct aos_compilation *cp )
    }
 }
 
-
+#if 0
 static void x87_emit_ex2( struct aos_compilation *cp )
 {
    struct x86_reg st0 = x86_make_reg(file_x87, 0);
@@ -894,12 +894,15 @@ static void x87_emit_ex2( struct aos_compilation *cp )
    assert( stack == cp->func->x87_stack);
       
 }
+#endif
 
+#if 0
 static void PIPE_CDECL print_reg( const char *msg,
                                   const float *reg )
 {
    debug_printf("%s: %f %f %f %f\n", msg, reg[0], reg[1], reg[2], reg[3]);
 }
+#endif
 
 #if 0
 static void emit_print( struct aos_compilation *cp,
