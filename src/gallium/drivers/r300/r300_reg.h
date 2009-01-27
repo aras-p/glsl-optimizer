@@ -151,6 +151,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #	define     R300_VTX_W0_FMT                       (1 << 10)
 #	define     R300_SERIAL_PROC_ENA                  (1 << 11)
 
+#define R300_VAP_VTX_SIZE               0x20b4
+
 /* BEGIN: Vertex data assembly - lots of uncertainties */
 
 /* gap */

@@ -30,8 +30,13 @@
 
 #include "r300_context.h"
 #include "r300_cs.h"
+#include "r300_emit.h"
 
-/* XXX integrate this into r300_reg */
-#include "r300_fragprog.h"
+const struct r300_blend_state blend_clear_state = {
+    .blend_control = 0x0,
+    .alpha_blend_control = 0x0,
+    .rop = 0x0,
+    .dither = 0x0,
+};
 
 #endif /* R300_SURFACE_H */

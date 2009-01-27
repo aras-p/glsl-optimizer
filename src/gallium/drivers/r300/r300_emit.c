@@ -26,6 +26,17 @@
 #include "r300_cs.h"
 #include "r300_screen.h"
 
+void r300_emit_blend_state(struct r300_context* r300,
+                           struct r300_blend_state* blend)
+{
+    CS_LOCALS(r300);
+    OUT_CS_REG_SEQ(R300_RB3D_CBLEND, 2);
+    OUT_CS(blend->blend_control);
+    OUT_CS(blend->alpha_blend_control);
+    OUT_CS_REG(R300_RB3D_ROPCNTL, blend->rop);
+    OUT_CS_REG(R300_RB3D_DITHER_CTL, blend->dither);
+}
+
 static void r300_emit_dirty_state(struct r300_context* r300)
 {
     struct r300_screen* r300screen = (struct r300_screen*)r300->context.screen;
@@ -38,12 +49,7 @@ static void r300_emit_dirty_state(struct r300_context* r300)
     /* XXX check size */
 
     if (r300->dirty_state & R300_NEW_BLEND) {
-        struct r300_blend_state* blend = r300->blend_state;
-        /* XXX next two are contiguous regs */
-        OUT_CS_REG(R300_RB3D_CBLEND, blend->blend_control);
-        OUT_CS_REG(R300_RB3D_ABLEND, blend->alpha_blend_control);
-        OUT_CS_REG(R300_RB3D_ROPCNTL, blend->rop);
-        OUT_CS_REG(R300_RB3D_DITHER_CTL, blend->dither);
+        r300_emit_blend_state(r300, r300->blend_state);
     }
 
     if (r300->dirty_state & R300_NEW_BLEND_COLOR) {
