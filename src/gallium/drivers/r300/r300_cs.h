@@ -60,7 +60,8 @@ static uint32_t pack_float_32(float f)
 
 #define CS_LOCALS(context) \
     struct r300_winsys* cs_winsys = context->winsys; \
-    struct radeon_cs* cs = cs_winsys->cs
+    struct radeon_cs* cs = cs_winsys->cs; \
+    int cs_count;
 
 #define CHECK_CS(size) \
     cs_winsys->check_cs(cs, (size))
@@ -70,6 +71,7 @@ static uint32_t pack_float_32(float f)
     debug_printf("r300: BEGIN_CS in %s (%s:%d)\n", __FUNCTION__, __FILE__, \
         __LINE__); \
     cs_winsys->begin_cs(cs, (size), __FILE__, __FUNCTION__, __LINE__); \
+    int cs_count = size; \
 } while (0)
 
 #define OUT_CS(value) do { \
@@ -103,6 +105,8 @@ static uint32_t pack_float_32(float f)
 #define END_CS do { \
     debug_printf("r300: END_CS in %s (%s:%d)\n", __FUNCTION__, __FILE__, \
         __LINE__); \
+    if (cs_count != 0) \
+        debug_printf("r300: Warning: cs_count off by %d\n", cs_count); \
     cs_winsys->end_cs(cs, __FILE__, __FUNCTION__, __LINE__); \
 } while (0)
 
