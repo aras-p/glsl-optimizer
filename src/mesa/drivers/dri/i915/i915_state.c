@@ -352,7 +352,7 @@ intelCalcViewport(GLcontext * ctx)
 
 /** Called from ctx->Driver.Viewport() */
 static void
-intelViewport(GLcontext * ctx,
+i915Viewport(GLcontext * ctx,
               GLint x, GLint y, GLsizei width, GLsizei height)
 {
    intelCalcViewport(ctx);
@@ -363,7 +363,7 @@ intelViewport(GLcontext * ctx,
 
 /** Called from ctx->Driver.DepthRange() */
 static void
-intelDepthRange(GLcontext * ctx, GLclampd nearval, GLclampd farval)
+i915DepthRange(GLcontext * ctx, GLclampd nearval, GLclampd farval)
 {
    intelCalcViewport(ctx);
 }
@@ -1032,8 +1032,8 @@ i915InitStateFunctions(struct dd_function_table *functions)
    functions->StencilFuncSeparate = i915StencilFuncSeparate;
    functions->StencilMaskSeparate = i915StencilMaskSeparate;
    functions->StencilOpSeparate = i915StencilOpSeparate;
-   functions->DepthRange = intelDepthRange;
-   functions->Viewport = intelViewport;
+   functions->DepthRange = i915DepthRange;
+   functions->Viewport = i915Viewport;
 }
 
 
