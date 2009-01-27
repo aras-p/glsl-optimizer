@@ -56,6 +56,25 @@ void r300_emit_blend_color_state(struct r300_context* r300,
     }
 }
 
+void r300_emit_dsa_state(struct r300_context* r300,
+                           struct r300_dsa_state* dsa)
+{
+    struct r300_screen* r300screen =
+        (struct r300_screen*)r300->context.screen;
+    CS_LOCALS(r300);
+    BEGIN_CS(r300screen->caps->is_r500 ? 12 : 10);
+    OUT_CS_REG(R300_FG_ALPHA_FUNC, dsa->alpha_function);
+    OUT_CS_REG(R500_FG_ALPHA_VALUE, dsa->alpha_reference);
+    OUT_CS_REG_SEQ(R300_ZB_CNTL, 3);
+    OUT_CS(dsa->z_buffer_control);
+    OUT_CS(dsa->z_stencil_control);
+    OUT_CS(dsa->stencil_ref_mask);
+    OUT_CS_REG(R300_ZB_ZTOP, dsa->z_buffer_top);
+    if (r300screen->caps->is_r500) {
+        OUT_CS_REG(R500_ZB_STENCILREFMASK_BF, dsa->stencil_ref_bf);
+    }
+}
+
 static void r300_emit_dirty_state(struct r300_context* r300)
 {
     struct r300_screen* r300screen =
@@ -77,17 +96,7 @@ static void r300_emit_dirty_state(struct r300_context* r300)
     }
 
     if (r300->dirty_state & R300_NEW_DSA) {
-        struct r300_dsa_state* dsa = r300->dsa_state;
-        OUT_CS_REG(R300_FG_ALPHA_FUNC, dsa->alpha_function);
-        OUT_CS_REG(R500_FG_ALPHA_VALUE, dsa->alpha_reference);
-        /* XXX next three are contiguous regs */
-        OUT_CS_REG(R300_ZB_CNTL, dsa->z_buffer_control);
-        OUT_CS_REG(R300_ZB_ZSTENCILCNTL, dsa->z_stencil_control);
-        OUT_CS_REG(R300_ZB_STENCILREFMASK, dsa->stencil_ref_mask);
-        OUT_CS_REG(R300_ZB_ZTOP, dsa->z_buffer_top);
-        if (r300screen->caps->is_r500) {
-            OUT_CS_REG(R500_ZB_STENCILREFMASK_BF, dsa->stencil_ref_bf);
-        }
+        r300_emit_dsa_state(r300, r300->dsa_state);
     }
 
     if (r300->dirty_state & R300_NEW_RASTERIZER) {
