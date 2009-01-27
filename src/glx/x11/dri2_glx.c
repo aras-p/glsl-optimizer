@@ -282,8 +282,10 @@ static __GLXDRIscreen *dri2CreateScreen(__GLXscreenConfigs *psc, int screen,
 	return NULL;
 
     psc->driver = driOpenDriver(driverName);
-    if (psc->driver == NULL)
+    if (psc->driver == NULL) {
+	ErrorMessageF("driver pointer missing\n");
 	goto handle_error;
+    }
 
     extensions = dlsym(psc->driver, __DRI_DRIVER_EXTENSIONS);
     if (extensions == NULL) {
@@ -309,11 +311,15 @@ static __GLXDRIscreen *dri2CreateScreen(__GLXscreenConfigs *psc, int screen,
 	return NULL;
     }
 
-    if (drmGetMagic(psc->fd, &magic))
+    if (drmGetMagic(psc->fd, &magic)) {
+	ErrorMessageF("failed to get magic\n");
 	return NULL;
+    }
 
-    if (!DRI2Authenticate(psc->dpy, RootWindow(psc->dpy, screen), magic))
+    if (!DRI2Authenticate(psc->dpy, RootWindow(psc->dpy, screen), magic)) {
+	ErrorMessageF("failed to authenticate magic %d\n", magic);
 	return NULL;
+    }
 
     psc->__driScreen = 
 	psc->dri2->createNewScreen(screen, psc->fd,
