@@ -150,7 +150,7 @@ static uint32_t x_tile_swizzle(struct intel_renderbuffer *irb,
 	int	x_tile_number, y_tile_number;
 	int	tile_off, tile_base;
 	
-	tile_stride = (irb->pfPitch * irb->region->cpp) << 3;
+	tile_stride = (irb->region->pitch * irb->region->cpp) << 3;
 
 	xbyte = x * irb->region->cpp;
 
@@ -190,7 +190,7 @@ static uint32_t x_tile_swizzle(struct intel_renderbuffer *irb,
 	printf("(%d,%d) -> %d + %d = %d (pitch = %d, tstride = %d)\n",
 	       x, y, tile_off, tile_base,
 	       tile_off + tile_base,
-	       irb->pfPitch, tile_stride);
+	       irb->region->pitch, tile_stride);
 #endif
 
 	return tile_base + tile_off;
@@ -205,7 +205,7 @@ static uint32_t y_tile_swizzle(struct intel_renderbuffer *irb,
 	int	x_tile_number, y_tile_number;
 	int	tile_off, tile_base;
 	
-	tile_stride = (irb->pfPitch * irb->region->cpp) << 5;
+	tile_stride = (irb->region->pitch * irb->region->cpp) << 5;
 
 	xbyte = x * irb->region->cpp;
 
@@ -528,8 +528,6 @@ intel_renderbuffer_map(struct intel_context *intel, struct gl_renderbuffer *rb)
    if (irb == NULL || irb->region == NULL)
       return;
 
-   irb->pfPitch = irb->region->pitch;
-
    intel_set_span_functions(intel, rb);
 }
 
@@ -543,7 +541,6 @@ intel_renderbuffer_unmap(struct intel_context *intel,
       return;
 
    clear_span_cache(irb);
-   irb->pfPitch = 0;
 
    rb->GetRow = NULL;
    rb->PutRow = NULL;
