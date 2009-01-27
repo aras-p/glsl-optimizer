@@ -320,6 +320,7 @@ micro_add(
    dst->f[3] = src0->f[3] + src1->f[3];
 }
 
+#if 0
 static void
 micro_iadd(
    union tgsi_exec_channel *dst,
@@ -331,6 +332,7 @@ micro_iadd(
    dst->i[2] = src0->i[2] + src1->i[2];
    dst->i[3] = src0->i[3] + src1->i[3];
 }
+#endif
 
 static void
 micro_and(
@@ -408,6 +410,7 @@ micro_div(
    }
 }
 
+#if 0
 static void
 micro_udiv(
    union tgsi_exec_channel *dst,
@@ -419,6 +422,7 @@ micro_udiv(
    dst->u[2] = src0->u[2] / src1->u[2];
    dst->u[3] = src0->u[3] / src1->u[3];
 }
+#endif
 
 static void
 micro_eq(
@@ -434,6 +438,7 @@ micro_eq(
    dst->f[3] = src0->f[3] == src1->f[3] ? src2->f[3] : src3->f[3];
 }
 
+#if 0
 static void
 micro_ieq(
    union tgsi_exec_channel *dst,
@@ -447,6 +452,7 @@ micro_ieq(
    dst->i[2] = src0->i[2] == src1->i[2] ? src2->i[2] : src3->i[2];
    dst->i[3] = src0->i[3] == src1->i[3] ? src2->i[3] : src3->i[3];
 }
+#endif
 
 static void
 micro_exp2(
@@ -466,6 +472,7 @@ micro_exp2(
 #endif
 }
 
+#if 0
 static void
 micro_f2ut(
    union tgsi_exec_channel *dst,
@@ -476,6 +483,7 @@ micro_f2ut(
    dst->u[2] = (uint) src->f[2];
    dst->u[3] = (uint) src->f[3];
 }
+#endif
 
 static void
 micro_flr(
@@ -570,6 +578,7 @@ micro_lt(
    dst->f[3] = src0->f[3] < src1->f[3] ? src2->f[3] : src3->f[3];
 }
 
+#if 0
 static void
 micro_ilt(
    union tgsi_exec_channel *dst,
@@ -583,7 +592,9 @@ micro_ilt(
    dst->i[2] = src0->i[2] < src1->i[2] ? src2->i[2] : src3->i[2];
    dst->i[3] = src0->i[3] < src1->i[3] ? src2->i[3] : src3->i[3];
 }
+#endif
 
+#if 0
 static void
 micro_ult(
    union tgsi_exec_channel *dst,
@@ -597,6 +608,7 @@ micro_ult(
    dst->u[2] = src0->u[2] < src1->u[2] ? src2->u[2] : src3->u[2];
    dst->u[3] = src0->u[3] < src1->u[3] ? src2->u[3] : src3->u[3];
 }
+#endif
 
 static void
 micro_max(
@@ -610,6 +622,7 @@ micro_max(
    dst->f[3] = src0->f[3] > src1->f[3] ? src0->f[3] : src1->f[3];
 }
 
+#if 0
 static void
 micro_imax(
    union tgsi_exec_channel *dst,
@@ -621,7 +634,9 @@ micro_imax(
    dst->i[2] = src0->i[2] > src1->i[2] ? src0->i[2] : src1->i[2];
    dst->i[3] = src0->i[3] > src1->i[3] ? src0->i[3] : src1->i[3];
 }
+#endif
 
+#if 0
 static void
 micro_umax(
    union tgsi_exec_channel *dst,
@@ -633,6 +648,7 @@ micro_umax(
    dst->u[2] = src0->u[2] > src1->u[2] ? src0->u[2] : src1->u[2];
    dst->u[3] = src0->u[3] > src1->u[3] ? src0->u[3] : src1->u[3];
 }
+#endif
 
 static void
 micro_min(
@@ -646,6 +662,7 @@ micro_min(
    dst->f[3] = src0->f[3] < src1->f[3] ? src0->f[3] : src1->f[3];
 }
 
+#if 0
 static void
 micro_imin(
    union tgsi_exec_channel *dst,
@@ -657,7 +674,9 @@ micro_imin(
    dst->i[2] = src0->i[2] < src1->i[2] ? src0->i[2] : src1->i[2];
    dst->i[3] = src0->i[3] < src1->i[3] ? src0->i[3] : src1->i[3];
 }
+#endif
 
+#if 0
 static void
 micro_umin(
    union tgsi_exec_channel *dst,
@@ -669,7 +688,9 @@ micro_umin(
    dst->u[2] = src0->u[2] < src1->u[2] ? src0->u[2] : src1->u[2];
    dst->u[3] = src0->u[3] < src1->u[3] ? src0->u[3] : src1->u[3];
 }
+#endif
 
+#if 0
 static void
 micro_umod(
    union tgsi_exec_channel *dst,
@@ -681,6 +702,7 @@ micro_umod(
    dst->u[2] = src0->u[2] % src1->u[2];
    dst->u[3] = src0->u[3] % src1->u[3];
 }
+#endif
 
 static void
 micro_mul(
@@ -694,6 +716,7 @@ micro_mul(
    dst->f[3] = src0->f[3] * src1->f[3];
 }
 
+#if 0
 static void
 micro_imul(
    union tgsi_exec_channel *dst,
@@ -705,7 +728,9 @@ micro_imul(
    dst->i[2] = src0->i[2] * src1->i[2];
    dst->i[3] = src0->i[3] * src1->i[3];
 }
+#endif
 
+#if 0
 static void
 micro_imul64(
    union tgsi_exec_channel *dst0,
@@ -722,7 +747,9 @@ micro_imul64(
    dst0->i[2] = 0;
    dst0->i[3] = 0;
 }
+#endif
 
+#if 0
 static void
 micro_umul64(
    union tgsi_exec_channel *dst0,
@@ -739,7 +766,10 @@ micro_umul64(
    dst0->u[2] = 0;
    dst0->u[3] = 0;
 }
+#endif
 
+
+#if 0
 static void
 micro_movc(
    union tgsi_exec_channel *dst,
@@ -752,6 +782,7 @@ micro_movc(
    dst->u[2] = src0->u[2] ? src1->u[2] : src2->u[2];
    dst->u[3] = src0->u[3] ? src1->u[3] : src2->u[3];
 }
+#endif
 
 static void
 micro_neg(
@@ -764,6 +795,7 @@ micro_neg(
    dst->f[3] = -src->f[3];
 }
 
+#if 0
 static void
 micro_ineg(
    union tgsi_exec_channel *dst,
@@ -774,6 +806,7 @@ micro_ineg(
    dst->i[2] = -src->i[2];
    dst->i[3] = -src->i[3];
 }
+#endif
 
 static void
 micro_not(
@@ -874,6 +907,7 @@ micro_trunc(
    dst->f[3] = (float) (int) src0->f[3];
 }
 
+#if 0
 static void
 micro_ushr(
    union tgsi_exec_channel *dst,
@@ -885,6 +919,7 @@ micro_ushr(
    dst->u[2] = src0->u[2] >> src1->u[2];
    dst->u[3] = src0->u[3] >> src1->u[3];
 }
+#endif
 
 static void
 micro_sin(
@@ -919,6 +954,7 @@ micro_sub(
    dst->f[3] = src0->f[3] - src1->f[3];
 }
 
+#if 0
 static void
 micro_u2f(
    union tgsi_exec_channel *dst,
@@ -929,6 +965,7 @@ micro_u2f(
    dst->f[2] = (float) src->u[2];
    dst->f[3] = (float) src->u[3];
 }
+#endif
 
 static void
 micro_xor(
