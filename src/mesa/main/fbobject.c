@@ -630,6 +630,9 @@ _mesa_test_framebuffer_completeness(GLcontext *ctx, struct gl_framebuffer *fb)
        */
       fb->Width = minWidth;
       fb->Height = minHeight;
+
+      /* finally, update the visual info for the framebuffer */
+      _mesa_update_framebuffer_visual(fb);
    }
 }
 

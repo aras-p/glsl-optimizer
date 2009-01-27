@@ -795,7 +795,6 @@ update_framebuffer(GLcontext *ctx, struct gl_framebuffer *fb)
        */
       if (fb->_Status != GL_FRAMEBUFFER_COMPLETE) {
          _mesa_test_framebuffer_completeness(ctx, fb);
-         _mesa_update_framebuffer_visual(fb);
       }
    }
 
