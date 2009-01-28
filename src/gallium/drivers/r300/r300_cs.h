@@ -68,10 +68,10 @@ static uint32_t pack_float_32(float f)
 
 #define BEGIN_CS(size) do { \
     CHECK_CS(size); \
-    debug_printf("r300: BEGIN_CS in %s (%s:%d)\n", __FUNCTION__, __FILE__, \
-        __LINE__); \
+    debug_printf("r300: BEGIN_CS, count %d, in %s (%s:%d)\n", \
+        size, __FUNCTION__, __FILE__, __LINE__); \
     cs_winsys->begin_cs(cs, (size), __FILE__, __FUNCTION__, __LINE__); \
-    int cs_count = size; \
+    cs_count = size; \
 } while (0)
 
 #define OUT_CS(value) do { \
