@@ -29,6 +29,7 @@
 #include "i915_context.h"
 #include "i915_winsys.h"
 #include "i915_debug.h"
+#include "i915_batch.h"
 #include "pipe/p_winsys.h"
 #include "pipe/p_debug.h"
 
@@ -866,9 +867,8 @@ void
 i915_dump_batchbuffer( struct i915_context *i915 )
 {
    struct debug_stream stream;
-   /* TODO fix me */
-   unsigned *start = 0;/*i915->batch_start;*/
-   unsigned *end = 0;/*i915->winsys->batch_start( i915->winsys, 0, 0 );*/
+   unsigned *start = (unsigned*)i915->batch->map;
+   unsigned *end = (unsigned*)i915->batch->ptr;
    unsigned long bytes = (unsigned long) (end - start) * 4;
    boolean done = FALSE;
 
