@@ -134,12 +134,10 @@ _mesa_initialize_texture_object( struct gl_texture_object *obj,
    obj->BaseLevel = 0;
    obj->MaxLevel = 1000;
    obj->MaxAnisotropy = 1.0;
-   obj->CompareFlag = GL_FALSE;                      /* SGIX_shadow */
-   obj->CompareOperator = GL_TEXTURE_LEQUAL_R_SGIX;  /* SGIX_shadow */
    obj->CompareMode = GL_NONE;         /* ARB_shadow */
    obj->CompareFunc = GL_LEQUAL;       /* ARB_shadow */
+   obj->CompareFailValue = 0.0F;       /* ARB_shadow_ambient */
    obj->DepthMode = GL_LUMINANCE;      /* ARB_depth_texture */
-   obj->ShadowAmbient = 0.0F;          /* ARB/SGIX_shadow_ambient */
    obj->Swizzle[0] = GL_RED;
    obj->Swizzle[1] = GL_GREEN;
    obj->Swizzle[2] = GL_BLUE;
@@ -248,11 +246,9 @@ _mesa_copy_texture_object( struct gl_texture_object *dest,
    dest->BaseLevel = src->BaseLevel;
    dest->MaxLevel = src->MaxLevel;
    dest->MaxAnisotropy = src->MaxAnisotropy;
-   dest->CompareFlag = src->CompareFlag;
-   dest->CompareOperator = src->CompareOperator;
-   dest->ShadowAmbient = src->ShadowAmbient;
    dest->CompareMode = src->CompareMode;
    dest->CompareFunc = src->CompareFunc;
+   dest->CompareFailValue = src->CompareFailValue;
    dest->DepthMode = src->DepthMode;
    dest->_MaxLevel = src->_MaxLevel;
    dest->_MaxLambda = src->_MaxLambda;

@@ -820,15 +820,9 @@ pop_texture_group(GLcontext *ctx, struct texture_state *texstate)
             _mesa_TexParameterf(target, GL_TEXTURE_MAX_ANISOTROPY_EXT,
                                 obj->MaxAnisotropy);
          }
-         if (ctx->Extensions.SGIX_shadow) {
-            _mesa_TexParameteri(target, GL_TEXTURE_COMPARE_SGIX,
-                                obj->CompareFlag);
-            _mesa_TexParameteri(target, GL_TEXTURE_COMPARE_OPERATOR_SGIX,
-                                obj->CompareOperator);
-         }
-         if (ctx->Extensions.SGIX_shadow_ambient) {
-            _mesa_TexParameterf(target, GL_SHADOW_AMBIENT_SGIX,
-                                obj->ShadowAmbient);
+         if (ctx->Extensions.ARB_shadow_ambient) {
+            _mesa_TexParameterf(target, GL_TEXTURE_COMPARE_FAIL_VALUE_ARB,
+                                obj->CompareFailValue);
          }
       }
 

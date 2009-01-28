@@ -493,10 +493,10 @@ _mesa_fetch_state(GLcontext *ctx, const gl_state_index state[],
             const struct gl_texture_object *texObj
                = ctx->Texture.Unit[unit]._Current;
             if (texObj) {
-               value[0] = texObj->ShadowAmbient;
-               value[1] = texObj->ShadowAmbient;
-               value[2] = texObj->ShadowAmbient;
-               value[3] = texObj->ShadowAmbient;
+               value[0] =
+               value[1] =
+               value[2] =
+               value[3] = texObj->CompareFailValue;
             }
          }
          return;
@@ -777,7 +777,7 @@ append_token(char *dst, gl_state_index k)
       append(dst, "PCMbias");
       break;
    case STATE_SHADOW_AMBIENT:
-      append(dst, "ShadowAmbient");
+      append(dst, "CompareFailValue");
       break;
    default:
       /* probably STATE_INTERNAL_DRIVER+i (driver private state) */

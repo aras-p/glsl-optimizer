@@ -1433,11 +1433,9 @@ struct gl_texture_object
    GLint BaseLevel;		/**< min mipmap level, OpenGL 1.2 */
    GLint MaxLevel;		/**< max mipmap level, OpenGL 1.2 */
    GLfloat MaxAnisotropy;	/**< GL_EXT_texture_filter_anisotropic */
-   GLboolean CompareFlag;	/**< GL_SGIX_shadow */
-   GLenum CompareOperator;	/**< GL_SGIX_shadow */
-   GLfloat ShadowAmbient;       /**< GL_ARB_shadow_ambient */
    GLenum CompareMode;		/**< GL_ARB_shadow */
    GLenum CompareFunc;		/**< GL_ARB_shadow */
+   GLfloat CompareFailValue;    /**< GL_ARB_shadow_ambient */
    GLenum _Function;		/**< Comparison function derived from 
 				 * \c CompareOperator, \c CompareMode, and
 				 * \c CompareFunc.
@@ -2563,6 +2561,7 @@ struct gl_extensions
    GLboolean ARB_shading_language_100;
    GLboolean ARB_shading_language_120;
    GLboolean ARB_shadow;
+   GLboolean ARB_shadow_ambient; /* or GL_ARB_shadow_ambient */
    GLboolean ARB_texture_border_clamp;
    GLboolean ARB_texture_compression;
    GLboolean ARB_texture_cube_map;
@@ -2660,8 +2659,6 @@ struct gl_extensions
    GLboolean SGIS_generate_mipmap;
    GLboolean SGIS_texture_edge_clamp;
    GLboolean SGIS_texture_lod;
-   GLboolean SGIX_shadow;
-   GLboolean SGIX_shadow_ambient; /* or GL_ARB_shadow_ambient */
    GLboolean TDFX_texture_compression_FXT1;
    GLboolean S3_s3tc;
    /*@}*/

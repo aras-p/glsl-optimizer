@@ -62,7 +62,7 @@ static const struct {
    { OFF, "GL_ARB_shading_language_100",       F(ARB_shading_language_100) },
    { OFF, "GL_ARB_shading_language_120",       F(ARB_shading_language_120) },
    { OFF, "GL_ARB_shadow",                     F(ARB_shadow) },
-   { OFF, "GL_ARB_shadow_ambient",             F(SGIX_shadow_ambient) },
+   { OFF, "GL_ARB_shadow_ambient",             F(ARB_shadow_ambient) },
    { OFF, "GL_ARB_texture_border_clamp",       F(ARB_texture_border_clamp) },
    { OFF, "GL_ARB_texture_compression",        F(ARB_texture_compression) },
    { OFF, "GL_ARB_texture_cube_map",           F(ARB_texture_cube_map) },
@@ -170,8 +170,6 @@ static const struct {
    { ON,  "GL_SGIS_texture_edge_clamp",        F(SGIS_texture_edge_clamp) },
    { ON,  "GL_SGIS_texture_lod",               F(SGIS_texture_lod) },
    { OFF, "GL_SGIX_depth_texture",             F(ARB_depth_texture) },
-   { OFF, "GL_SGIX_shadow",                    F(SGIX_shadow) },
-   { OFF, "GL_SGIX_shadow_ambient",            F(SGIX_shadow_ambient) },
    { OFF, "GL_SUN_multi_draw_arrays",          F(EXT_multi_draw_arrays) },
    { OFF, "GL_S3_s3tc",                        F(S3_s3tc) },
 };
@@ -214,6 +212,7 @@ _mesa_enable_sw_extensions(GLcontext *ctx)
    ctx->Extensions.ARB_shading_language_120 = GL_FALSE; /* not quite done */
 #endif
    ctx->Extensions.ARB_shadow = GL_TRUE;
+   ctx->Extensions.ARB_shadow_ambient = GL_TRUE;
    ctx->Extensions.ARB_texture_border_clamp = GL_TRUE;
    ctx->Extensions.ARB_texture_cube_map = GL_TRUE;
    ctx->Extensions.ARB_texture_env_combine = GL_TRUE;
@@ -302,8 +301,6 @@ _mesa_enable_sw_extensions(GLcontext *ctx)
    ctx->Extensions.SGI_texture_color_table = GL_TRUE;
    ctx->Extensions.SGIS_generate_mipmap = GL_TRUE;
    ctx->Extensions.SGIS_texture_edge_clamp = GL_TRUE;
-   ctx->Extensions.SGIX_shadow = GL_TRUE;
-   ctx->Extensions.SGIX_shadow_ambient = GL_TRUE;
 #if FEATURE_ARB_vertex_program || FEATURE_ARB_fragment_program
    ctx->Extensions.EXT_gpu_program_parameters = GL_TRUE;
 #endif

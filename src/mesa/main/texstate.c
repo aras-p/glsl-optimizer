@@ -404,16 +404,6 @@ update_texture_compare_function(GLcontext *ctx,
        */
       tObj->_Function = GL_NONE;
    }
-   else if (tObj->CompareFlag) {
-      /* GL_SGIX_shadow */
-      if (tObj->CompareOperator == GL_TEXTURE_LEQUAL_R_SGIX) {
-         tObj->_Function = GL_LEQUAL;
-      }
-      else {
-         ASSERT(tObj->CompareOperator == GL_TEXTURE_GEQUAL_R_SGIX);
-         tObj->_Function = GL_GEQUAL;
-      }
-   }
    else if (tObj->CompareMode == GL_COMPARE_R_TO_TEXTURE_ARB) {
       /* GL_ARB_shadow */
       tObj->_Function = tObj->CompareFunc;

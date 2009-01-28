@@ -260,30 +260,6 @@ set_tex_parameteri(GLcontext *ctx,
       texObj->MaxLevel = params[0];
       return;
 
-   case GL_TEXTURE_COMPARE_SGIX:
-      if (ctx->Extensions.SGIX_shadow) {
-         FLUSH_VERTICES(ctx, _NEW_TEXTURE);
-         texObj->CompareFlag = params[0] ? GL_TRUE : GL_FALSE;
-      }
-      else {
-         _mesa_error(ctx, GL_INVALID_ENUM,
-                     "glTexParameter(pname=GL_TEXTURE_COMPARE_SGIX)");
-      }
-      return;
-
-   case GL_TEXTURE_COMPARE_OPERATOR_SGIX:
-      if (ctx->Extensions.SGIX_shadow &&
-          (params[0] == GL_TEXTURE_LEQUAL_R_SGIX || 
-           params[0] == GL_TEXTURE_GEQUAL_R_SGIX)) {
-         FLUSH_VERTICES(ctx, _NEW_TEXTURE);
-         texObj->CompareOperator = params[0];
-      }
-      else {
-         _mesa_error(ctx, GL_INVALID_ENUM,
-                     "glTexParameter(GL_TEXTURE_COMPARE_OPERATOR_SGIX)");
-      }
-      return;
-
    case GL_GENERATE_MIPMAP_SGIS:
       if (ctx->Extensions.SGIS_generate_mipmap) {
          FLUSH_VERTICES(ctx, _NEW_TEXTURE);
@@ -454,14 +430,14 @@ set_tex_parameterf(GLcontext *ctx,
       }
       return;
 
-   case GL_SHADOW_AMBIENT_SGIX: /* aka GL_TEXTURE_COMPARE_FAIL_VALUE_ARB */
-      if (ctx->Extensions.SGIX_shadow_ambient) {
+   case GL_TEXTURE_COMPARE_FAIL_VALUE_ARB:
+      if (ctx->Extensions.ARB_shadow_ambient) {
          FLUSH_VERTICES(ctx, _NEW_TEXTURE);
-         texObj->ShadowAmbient = CLAMP(params[0], 0.0F, 1.0F);
+         texObj->CompareFailValue = CLAMP(params[0], 0.0F, 1.0F);
       }
       else {
          _mesa_error(ctx, GL_INVALID_ENUM,
-                     "glTexParameter(pname=GL_SHADOW_AMBIENT_SGIX)");
+                    "glTexParameter(pname=GL_TEXTURE_COMPARE_FAIL_VALUE_ARB)");
       }
       return;
 
@@ -512,8 +488,6 @@ _mesa_TexParameterf(GLenum target, GLenum pname, GLfloat param)
    case GL_TEXTURE_WRAP_R:
    case GL_TEXTURE_BASE_LEVEL:
    case GL_TEXTURE_MAX_LEVEL:
-   case GL_TEXTURE_COMPARE_SGIX:
-   case GL_TEXTURE_COMPARE_OPERATOR_SGIX:
    case GL_GENERATE_MIPMAP_SGIS:
    case GL_TEXTURE_COMPARE_MODE_ARB:
    case GL_TEXTURE_COMPARE_FUNC_ARB:
@@ -556,8 +530,6 @@ _mesa_TexParameterfv(GLenum target, GLenum pname, const GLfloat *params)
    case GL_TEXTURE_WRAP_R:
    case GL_TEXTURE_BASE_LEVEL:
    case GL_TEXTURE_MAX_LEVEL:
-   case GL_TEXTURE_COMPARE_SGIX:
-   case GL_TEXTURE_COMPARE_OPERATOR_SGIX:
    case GL_GENERATE_MIPMAP_SGIS:
    case GL_TEXTURE_COMPARE_MODE_ARB:
    case GL_TEXTURE_COMPARE_FUNC_ARB:
@@ -613,7 +585,7 @@ _mesa_TexParameteri(GLenum target, GLenum pname, GLint param)
    case GL_TEXTURE_PRIORITY:
    case GL_TEXTURE_MAX_ANISOTROPY_EXT:
    case GL_TEXTURE_LOD_BIAS:
-   case GL_SHADOW_AMBIENT_SGIX: /* aka GL_TEXTURE_COMPARE_FAIL_VALUE_ARB */
+   case GL_TEXTURE_COMPARE_FAIL_VALUE_ARB:
       {
          GLfloat fparam = (GLfloat) param;
          /* convert int param to float */
@@ -662,7 +634,7 @@ _mesa_TexParameteriv(GLenum target, GLenum pname, const GLint *params)
    case GL_TEXTURE_PRIORITY:
    case GL_TEXTURE_MAX_ANISOTROPY_EXT:
    case GL_TEXTURE_LOD_BIAS:
-   case GL_SHADOW_AMBIENT_SGIX: /* aka GL_TEXTURE_COMPARE_FAIL_VALUE_ARB */
+   case GL_TEXTURE_COMPARE_FAIL_VALUE_ARB:
       {
          /* convert int param to float */
          GLfloat fparam = (GLfloat) params[0];
@@ -1060,23 +1032,9 @@ _mesa_GetTexParameterfv( GLenum target, GLenum pname, GLfloat *params )
 	 else
 	    error = GL_TRUE;
          break;
-      case GL_TEXTURE_COMPARE_SGIX:
-         if (ctx->Extensions.SGIX_shadow) {
-            *params = (GLfloat) obj->CompareFlag;
-         }
-	 else 
-	    error = GL_TRUE;
-         break;
-      case GL_TEXTURE_COMPARE_OPERATOR_SGIX:
-         if (ctx->Extensions.SGIX_shadow) {
-            *params = (GLfloat) obj->CompareOperator;
-         }
-	 else 
-	    error = GL_TRUE;
-         break;
-      case GL_SHADOW_AMBIENT_SGIX: /* aka GL_TEXTURE_COMPARE_FAIL_VALUE_ARB */
-         if (ctx->Extensions.SGIX_shadow_ambient) {
-            *params = obj->ShadowAmbient;
+      case GL_TEXTURE_COMPARE_FAIL_VALUE_ARB:
+         if (ctx->Extensions.ARB_shadow_ambient) {
+            *params = obj->CompareFailValue;
          }
 	 else 
 	    error = GL_TRUE;
@@ -1248,25 +1206,9 @@ _mesa_GetTexParameteriv( GLenum target, GLenum pname, GLint *params )
             error = GL_TRUE;
          }
          break;
-      case GL_TEXTURE_COMPARE_SGIX:
-         if (ctx->Extensions.SGIX_shadow) {
-            *params = (GLint) obj->CompareFlag;
-         }
-         else {
-            error = GL_TRUE;
-         }
-         break;
-      case GL_TEXTURE_COMPARE_OPERATOR_SGIX:
-         if (ctx->Extensions.SGIX_shadow) {
-            *params = (GLint) obj->CompareOperator;
-         }
-         else {
-            error = GL_TRUE;
-         }
-         break;
-      case GL_SHADOW_AMBIENT_SGIX: /* aka GL_TEXTURE_COMPARE_FAIL_VALUE_ARB */
-         if (ctx->Extensions.SGIX_shadow_ambient) {
-            *params = (GLint) FLOAT_TO_INT(obj->ShadowAmbient);
+      case GL_TEXTURE_COMPARE_FAIL_VALUE_ARB:
+         if (ctx->Extensions.ARB_shadow_ambient) {
+            *params = (GLint) FLOAT_TO_INT(obj->CompareFailValue);
          }
          else {
             error = GL_TRUE;
