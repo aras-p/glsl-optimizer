@@ -531,6 +531,8 @@ mgaCreateContext( const __GLcontextModes *mesaVis,
    ctx->Const.MaxLineWidthAA = 10.0;
    ctx->Const.LineWidthGranularity = 1.0;
 
+   ctx->Const.MaxDrawBuffers = 1;
+
    mmesa->texture_depth = driQueryOptioni (&mmesa->optionCache,
 					   "texture_depth");
    if (mmesa->texture_depth == DRI_CONF_TEXTURE_DEPTH_FB)

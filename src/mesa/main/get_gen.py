@@ -914,9 +914,9 @@ StateVars = [
 
 	# GL_ARB_draw_buffers
 	( "GL_MAX_DRAW_BUFFERS_ARB", GLint,
-	  ["ctx->Const.MaxDrawBuffers"], "", ["ARB_draw_buffers"] ),
+	  ["ctx->Const.MaxDrawBuffers"], "", None ),
 	( "GL_DRAW_BUFFER0_ARB", GLenum,
-	  ["ctx->DrawBuffer->ColorDrawBuffer[0]"], "", ["ARB_draw_buffers"] ),
+	  ["ctx->DrawBuffer->ColorDrawBuffer[0]"], "", None ),
 	( "GL_DRAW_BUFFER1_ARB", GLenum,
 	  ["buffer"],
 	  """GLenum buffer;
@@ -924,7 +924,7 @@ StateVars = [
             _mesa_error(ctx, GL_INVALID_ENUM, "glGet(GL_DRAW_BUFFERx_ARB)");
             return;
          }
-         buffer = ctx->DrawBuffer->ColorDrawBuffer[1];""", ["ARB_draw_buffers"] ),
+         buffer = ctx->DrawBuffer->ColorDrawBuffer[1];""", None ),
 	( "GL_DRAW_BUFFER2_ARB", GLenum,
 	  ["buffer"],
 	  """GLenum buffer;
@@ -932,7 +932,7 @@ StateVars = [
             _mesa_error(ctx, GL_INVALID_ENUM, "glGet(GL_DRAW_BUFFERx_ARB)");
             return;
          }
-         buffer = ctx->DrawBuffer->ColorDrawBuffer[2];""", ["ARB_draw_buffers"] ),
+         buffer = ctx->DrawBuffer->ColorDrawBuffer[2];""", None ),
 	( "GL_DRAW_BUFFER3_ARB", GLenum,
 	  ["buffer"],
 	  """GLenum buffer;
@@ -940,7 +940,7 @@ StateVars = [
             _mesa_error(ctx, GL_INVALID_ENUM, "glGet(GL_DRAW_BUFFERx_ARB)");
             return;
          }
-         buffer = ctx->DrawBuffer->ColorDrawBuffer[3];""", ["ARB_draw_buffers"] ),
+         buffer = ctx->DrawBuffer->ColorDrawBuffer[3];""", None ),
 	# XXX Add more GL_DRAW_BUFFERn_ARB entries as needed in the future
 
 	# GL_OES_read_format

@@ -403,6 +403,8 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
    ctx->Const.VertexProgram.MaxNativeParameters = R200_VSF_MAX_PARAM;
    ctx->Const.VertexProgram.MaxNativeAddressRegs = 1;
 
+   ctx->Const.MaxDrawBuffers = 1;
+
    /* Initialize the software rasterizer and helper modules.
     */
    _swrast_CreateContext( ctx );

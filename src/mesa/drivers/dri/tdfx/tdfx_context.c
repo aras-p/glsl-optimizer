@@ -309,6 +309,8 @@ GLboolean tdfxCreateContext( const __GLcontextModes *mesaVis,
    ctx->Const.MaxLineWidthAA = 1.0;
    ctx->Const.LineWidthGranularity = 1.0;
 
+   ctx->Const.MaxDrawBuffers = 1;
+
    /* Initialize the software rasterizer and helper modules.
     */
    _swrast_CreateContext( ctx );

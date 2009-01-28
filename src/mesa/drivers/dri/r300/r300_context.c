@@ -311,6 +311,8 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 #endif
 #endif
 
+	ctx->Const.MaxDrawBuffers = 1;
+
 	/* Initialize the software rasterizer and helper modules.
 	 */
 	_swrast_CreateContext(ctx);

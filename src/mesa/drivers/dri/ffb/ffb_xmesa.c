@@ -260,6 +260,8 @@ ffbCreateContext(const __GLcontextModes *mesaVis,
 	ctx->Const.MaxLineWidthAA = 1.0;
 	ctx->Const.LineWidthGranularity = 1.0;
 
+	ctx->Const.MaxDrawBuffers = 1;
+
 	/* Instead of having GCC emit these constants a zillion times
 	 * everywhere in the driver, put them here.
 	 */

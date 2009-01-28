@@ -190,6 +190,7 @@ GLboolean mach64CreateContext( const __GLcontextModes *glVisual,
    ctx->Const.MaxTextureUnits = 2;
    ctx->Const.MaxTextureImageUnits = 2;
    ctx->Const.MaxTextureCoordUnits = 2;
+   ctx->Const.MaxDrawBuffers = 1;
 
    heap = mach64Screen->IsPCI ? MACH64_CARD_HEAP : MACH64_AGP_HEAP;
 

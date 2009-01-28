@@ -1732,15 +1732,12 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          params[0] = INT_TO_BOOLEAN(ctx->VertexProgram.CurrentPosition);
          break;
       case GL_MAX_DRAW_BUFFERS_ARB:
-         CHECK_EXT1(ARB_draw_buffers, "GetBooleanv");
          params[0] = INT_TO_BOOLEAN(ctx->Const.MaxDrawBuffers);
          break;
       case GL_DRAW_BUFFER0_ARB:
-         CHECK_EXT1(ARB_draw_buffers, "GetBooleanv");
          params[0] = ENUM_TO_BOOLEAN(ctx->DrawBuffer->ColorDrawBuffer[0]);
          break;
       case GL_DRAW_BUFFER1_ARB:
-         CHECK_EXT1(ARB_draw_buffers, "GetBooleanv");
          {
          GLenum buffer;
          if (pname - GL_DRAW_BUFFER0_ARB >= ctx->Const.MaxDrawBuffers) {
@@ -1752,7 +1749,6 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          }
          break;
       case GL_DRAW_BUFFER2_ARB:
-         CHECK_EXT1(ARB_draw_buffers, "GetBooleanv");
          {
          GLenum buffer;
          if (pname - GL_DRAW_BUFFER0_ARB >= ctx->Const.MaxDrawBuffers) {
@@ -1764,7 +1760,6 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          }
          break;
       case GL_DRAW_BUFFER3_ARB:
-         CHECK_EXT1(ARB_draw_buffers, "GetBooleanv");
          {
          GLenum buffer;
          if (pname - GL_DRAW_BUFFER0_ARB >= ctx->Const.MaxDrawBuffers) {
@@ -3563,15 +3558,12 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          params[0] = (GLfloat)(ctx->VertexProgram.CurrentPosition);
          break;
       case GL_MAX_DRAW_BUFFERS_ARB:
-         CHECK_EXT1(ARB_draw_buffers, "GetFloatv");
          params[0] = (GLfloat)(ctx->Const.MaxDrawBuffers);
          break;
       case GL_DRAW_BUFFER0_ARB:
-         CHECK_EXT1(ARB_draw_buffers, "GetFloatv");
          params[0] = ENUM_TO_FLOAT(ctx->DrawBuffer->ColorDrawBuffer[0]);
          break;
       case GL_DRAW_BUFFER1_ARB:
-         CHECK_EXT1(ARB_draw_buffers, "GetFloatv");
          {
          GLenum buffer;
          if (pname - GL_DRAW_BUFFER0_ARB >= ctx->Const.MaxDrawBuffers) {
@@ -3583,7 +3575,6 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          }
          break;
       case GL_DRAW_BUFFER2_ARB:
-         CHECK_EXT1(ARB_draw_buffers, "GetFloatv");
          {
          GLenum buffer;
          if (pname - GL_DRAW_BUFFER0_ARB >= ctx->Const.MaxDrawBuffers) {
@@ -3595,7 +3586,6 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          }
          break;
       case GL_DRAW_BUFFER3_ARB:
-         CHECK_EXT1(ARB_draw_buffers, "GetFloatv");
          {
          GLenum buffer;
          if (pname - GL_DRAW_BUFFER0_ARB >= ctx->Const.MaxDrawBuffers) {
@@ -5394,15 +5384,12 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          params[0] = ctx->VertexProgram.CurrentPosition;
          break;
       case GL_MAX_DRAW_BUFFERS_ARB:
-         CHECK_EXT1(ARB_draw_buffers, "GetIntegerv");
          params[0] = ctx->Const.MaxDrawBuffers;
          break;
       case GL_DRAW_BUFFER0_ARB:
-         CHECK_EXT1(ARB_draw_buffers, "GetIntegerv");
          params[0] = ENUM_TO_INT(ctx->DrawBuffer->ColorDrawBuffer[0]);
          break;
       case GL_DRAW_BUFFER1_ARB:
-         CHECK_EXT1(ARB_draw_buffers, "GetIntegerv");
          {
          GLenum buffer;
          if (pname - GL_DRAW_BUFFER0_ARB >= ctx->Const.MaxDrawBuffers) {
@@ -5414,7 +5401,6 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          }
          break;
       case GL_DRAW_BUFFER2_ARB:
-         CHECK_EXT1(ARB_draw_buffers, "GetIntegerv");
          {
          GLenum buffer;
          if (pname - GL_DRAW_BUFFER0_ARB >= ctx->Const.MaxDrawBuffers) {
@@ -5426,7 +5412,6 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          }
          break;
       case GL_DRAW_BUFFER3_ARB:
-         CHECK_EXT1(ARB_draw_buffers, "GetIntegerv");
          {
          GLenum buffer;
          if (pname - GL_DRAW_BUFFER0_ARB >= ctx->Const.MaxDrawBuffers) {

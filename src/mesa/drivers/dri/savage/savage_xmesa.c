@@ -344,7 +344,9 @@ savageCreateContext( const __GLcontextModes *mesaVis,
    ctx->Const.MaxLineWidthAA = 3.0;
    ctx->Const.LineWidthGranularity = 1.0;
 #endif
-   
+
+   ctx->Const.MaxDrawBuffers = 1;
+
    /* Dri stuff
     */
    imesa->hHWContext = driContextPriv->hHWContext;

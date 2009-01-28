@@ -109,7 +109,6 @@ static const struct dri_extension card_extensions[] = {
 /** i965-only extensions */
 static const struct dri_extension brw_extensions[] = {
    { "GL_ARB_depth_texture",              NULL },
-   { "GL_ARB_draw_buffers",               NULL },
    { "GL_ARB_fragment_program",           NULL },
    { "GL_ARB_fragment_program_shadow",    NULL },
    { "GL_ARB_fragment_shader",            NULL },

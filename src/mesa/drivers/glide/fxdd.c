@@ -1773,6 +1773,8 @@ fxDDInitFxMesaContext(fxMesaContext fxMesa)
    ctx->Const.MaxTextureImageUnits = fxMesa->haveTwoTMUs ? 2 : 1;
    ctx->Const.MaxTextureUnits = MAX2(ctx->Const.MaxTextureImageUnits, ctx->Const.MaxTextureCoordUnits);
 
+   ctx->Const.MaxDrawBuffers = 1;
+
    fxMesa->new_state = _NEW_ALL;
    if (!fxMesa->haveHwStencil) {
       /* don't touch stencil if there is none */

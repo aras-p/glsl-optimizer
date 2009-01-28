@@ -573,6 +573,8 @@ viaCreateContext(const __GLcontextModes *visual,
     ctx->Const.MaxPointSizeAA = 1.0;
     ctx->Const.PointSizeGranularity = 1.0;
 
+    ctx->Const.MaxDrawBuffers = 1;
+
     ctx->Driver.GetString = viaGetString;
 
     ctx->DriverCtx = (void *)vmesa;

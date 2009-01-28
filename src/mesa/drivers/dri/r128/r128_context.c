@@ -223,6 +223,8 @@ GLboolean r128CreateContext( const __GLcontextModes *glVisual,
    ctx->Const.MaxLineWidthAA = 1.0;
    ctx->Const.LineWidthGranularity = 1.0;
 
+   ctx->Const.MaxDrawBuffers = 1;
+
 #if ENABLE_PERF_BOXES
    rmesa->boxes = driQueryOptionb(&rmesa->optionCache, "performance_boxes");
 #endif

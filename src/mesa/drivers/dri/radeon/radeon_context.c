@@ -353,6 +353,8 @@ radeonCreateContext( const __GLcontextModes *glVisual,
 
    rmesa->boxes = 0;
 
+   ctx->Const.MaxDrawBuffers = 1;
+
    /* Initialize the software rasterizer and helper modules.
     */
    _swrast_CreateContext( ctx );

@@ -289,10 +289,6 @@ _mesa_DrawBuffersARB(GLsizei n, const GLenum *buffers)
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
-   if (!ctx->Extensions.ARB_draw_buffers) {
-      _mesa_error(ctx, GL_INVALID_OPERATION, "glDrawBuffersARB");
-      return;
-   }
    if (n < 1 || n > (GLsizei) ctx->Const.MaxDrawBuffers) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glDrawBuffersARB(n)");
       return;

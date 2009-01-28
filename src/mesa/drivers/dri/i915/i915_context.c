@@ -172,6 +172,8 @@ i915CreateContext(const __GLcontextModes * mesaVis,
 
    ctx->FragmentProgram._MaintainTexEnvProgram = GL_TRUE;
 
+   ctx->Const.MaxDrawBuffers = 1;
+
    driInitExtensions(ctx, i915_extensions, GL_FALSE);
 
 

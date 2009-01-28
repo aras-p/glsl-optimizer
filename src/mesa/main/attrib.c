@@ -903,14 +903,13 @@ _mesa_PopAttrib(void)
                    * function, but legal for the later.
                    */
                   GLboolean multipleBuffers = GL_FALSE;
-                  if (ctx->Extensions.ARB_draw_buffers) {
-                     GLuint i;
-                     for (i = 1; i < ctx->Const.MaxDrawBuffers; i++) {
-                        if (color->DrawBuffer[i] != GL_NONE) {
-                           multipleBuffers = GL_TRUE;
-                           break;
-                        }
-                     }
+		  GLuint i;
+
+		  for (i = 1; i < ctx->Const.MaxDrawBuffers; i++) {
+		     if (color->DrawBuffer[i] != GL_NONE) {
+			multipleBuffers = GL_TRUE;
+			break;
+		     }
                   }
                   /* Call the API_level functions, not _mesa_drawbuffers()
                    * since we need to do error checking on the pop'd
