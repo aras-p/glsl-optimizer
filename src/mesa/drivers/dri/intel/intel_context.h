@@ -168,6 +168,7 @@ struct intel_context
 
       GLint saved_vp_x, saved_vp_y;
       GLsizei saved_vp_width, saved_vp_height;
+      GLenum saved_matrix_mode;
    } meta;
 
    GLint refcount;

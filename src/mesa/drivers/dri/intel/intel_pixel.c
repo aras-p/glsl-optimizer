@@ -181,6 +181,7 @@ intel_meta_set_passthrough_transform(struct intel_context *intel)
    intel->meta.saved_vp_y = ctx->Viewport.Y;
    intel->meta.saved_vp_width = ctx->Viewport.Width;
    intel->meta.saved_vp_height = ctx->Viewport.Height;
+   intel->meta.saved_matrix_mode = ctx->Transform.MatrixMode;
 
    _mesa_Viewport(0, 0, ctx->DrawBuffer->Width, ctx->DrawBuffer->Height);
 
@@ -201,6 +202,8 @@ intel_meta_restore_transform(struct intel_context *intel)
    _mesa_PopMatrix();
    _mesa_MatrixMode(GL_MODELVIEW);
    _mesa_PopMatrix();
+
+   _mesa_MatrixMode(intel->meta.saved_matrix_mode);
 
    _mesa_Viewport(intel->meta.saved_vp_x, intel->meta.saved_vp_y,
 		  intel->meta.saved_vp_width, intel->meta.saved_vp_height);
