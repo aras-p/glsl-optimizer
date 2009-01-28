@@ -233,14 +233,14 @@ static void brw_wm_populate_key( struct brw_context *brw,
    /* _NEW_TEXTURE */
    for (i = 0; i < BRW_MAX_TEX_UNIT; i++) {
       const struct gl_texture_unit *unit = &brw->attribs.Texture->Unit[i];
-      const struct gl_texture_object *t = unit->_Current;
 
       if (unit->_ReallyEnabled) {
-	 if (t->Image[0][t->BaseLevel]->InternalFormat == GL_YCBCR_MESA) {
-	    key->yuvtex_mask |= 1<<i;
-	    if (t->Image[0][t->BaseLevel]->TexFormat->MesaFormat == 
-		    MESA_FORMAT_YCBCR)
-		key->yuvtex_swap_mask |= 1<< i;
+         const struct gl_texture_object *t = unit->_Current;
+         const struct gl_texture_image *img = t->Image[0][t->BaseLevel];
+	 if (img->InternalFormat == GL_YCBCR_MESA) {
+	    key->yuvtex_mask |= 1 << i;
+	    if (img->TexFormat->MesaFormat == MESA_FORMAT_YCBCR)
+		key->yuvtex_swap_mask |= 1 << i;
 	 }
       }
    }
