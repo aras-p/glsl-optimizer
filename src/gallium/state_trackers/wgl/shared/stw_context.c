@@ -37,6 +37,7 @@
 #include "shared/stw_winsys.h"
 #include "shared/stw_framebuffer.h"
 #include "shared/stw_pixelformat.h"
+#include "stw_public.h"
 #include "stw_context.h"
 
 static struct wgl_context *ctx_head = NULL;

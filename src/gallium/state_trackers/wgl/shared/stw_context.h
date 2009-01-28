@@ -43,26 +43,6 @@ struct wgl_context
 struct wgl_context *
 wgl_context_from_hdc(HDC hdc );
 
-//////////////////
-
-
-BOOL stw_copy_context( HGLRC hglrcSrc,
-                           HGLRC hglrcDst,
-                           UINT mask );
-
-HGLRC stw_create_context( HDC hdc, int iLayerPlane );
-
-BOOL stw_delete_context( HGLRC hglrc );
-
-HGLRC stw_get_current_context( void );
-
-HDC stw_get_current_dc( void );
-
-BOOL stw_make_current( HDC hdc, HGLRC hglrc );
-
-
-
-
 
 
 
