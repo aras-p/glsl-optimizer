@@ -235,7 +235,7 @@ DrvReleaseContext(
       HGLRC hglrc = lookup_hglrc( dhglrc );
 
       if (hglrc != NULL) {
-         success = wglMakeCurrent( NULL, NULL );
+         success = stw_make_current( NULL, NULL );
          if (success)
             stw_icd->ctx_current = 0;
       }
@@ -274,7 +274,7 @@ DrvSetContext(
    if (hglrc == NULL)
       return NULL;
 
-   if (!wglMakeCurrent( hdc, hglrc ))
+   if (!stw_make_current( hdc, hglrc ))
       return NULL;
 
    memset( &cpt, 0, sizeof( cpt ) );
