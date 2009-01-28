@@ -27,6 +27,7 @@
 
 #include "pipe/p_debug.h"
 #include "stw_pixelformat.h"
+#include "stw_public.h"
 
 #define MAX_PIXELFORMATS   16
 
@@ -176,6 +177,58 @@ stw_pixelformat_describe(
    ppfd->dwDamageMask = 0;
 
    return count;
+}
+
+/* Only used by the wgl code, but have it here to avoid exporting the
+ * pixelformat.h functionality.
+ */
+int stw_pixelformat_choose( HDC hdc,
+                            CONST PIXELFORMATDESCRIPTOR *ppfd )
+{
+   uint count;
+   uint index;
+   uint bestindex;
+   uint bestdelta;
+
+   (void) hdc;
+
+   count = pixelformat_get_count();
+   bestindex = count;
+   bestdelta = 0xffffffff;
+
+   for (index = 0; index < count; index++) {
+      uint delta = 0;
+      const struct pixelformat_info *pf = pixelformat_get_info( index );
+
+      if (!(ppfd->dwFlags & PFD_DOUBLEBUFFER_DONTCARE) &&
+          !!(ppfd->dwFlags & PFD_DOUBLEBUFFER) !=
+          !!(pf->flags & PF_FLAG_DOUBLEBUFFER))
+         continue;
+
+      if (ppfd->cColorBits != pf->color.redbits + pf->color.greenbits + pf->color.bluebits)
+         delta += 8;
+
+      if (ppfd->cDepthBits != pf->depth.depthbits)
+         delta += 4;
+
+      if (ppfd->cStencilBits != pf->depth.stencilbits)
+         delta += 2;
+
+      if (ppfd->cAlphaBits != pf->alpha.alphabits)
+         delta++;
+
+      if (delta < bestdelta) {
+         bestindex = index;
+         bestdelta = delta;
+         if (bestdelta == 0)
+            break;
+      }
+   }
+
+   if (bestindex == count)
+      return 0;
+
+   return bestindex + 1;
 }
 
 

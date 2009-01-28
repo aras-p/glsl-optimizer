@@ -29,7 +29,8 @@
 
 #include "pipe/p_compiler.h"
 #include "util/u_memory.h"
-#include "shared/stw_public.h"
+#include "stw_public.h"
+#include "stw_pixelformat.h"
 #include "stw_arbpixelformat.h"
 
 #define WGL_NUMBER_PIXEL_FORMATS_ARB            0x2000

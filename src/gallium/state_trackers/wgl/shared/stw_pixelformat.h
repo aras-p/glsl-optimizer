@@ -76,23 +76,6 @@ pixelformat_get_extended_count( void );
 const struct pixelformat_info *
 pixelformat_get_info( uint index );
 
-
-int
-stw_pixelformat_describe(
-   HDC hdc,
-   int iPixelFormat,
-   UINT nBytes,
-   LPPIXELFORMATDESCRIPTOR ppfd );
-
-int
-stw_pixelformat_get(
-   HDC hdc );
-
-BOOL
-stw_pixelformat_set(
-   HDC hdc,
-   int iPixelFormat );
-
 int stw_query_sample_buffers( void );
 int stw_query_samples( void );
 

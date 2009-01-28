@@ -123,6 +123,59 @@ wglGetProcAddress(
 }
 
 
+WINGDIAPI int APIENTRY
+wglChoosePixelFormat(
+   HDC hdc,
+   CONST PIXELFORMATDESCRIPTOR *ppfd )
+{
+   if (ppfd->nSize != sizeof( PIXELFORMATDESCRIPTOR ) || ppfd->nVersion != 1)
+      return 0;
+   if (ppfd->iPixelType != PFD_TYPE_RGBA)
+      return 0;
+   if (!(ppfd->dwFlags & PFD_DRAW_TO_WINDOW))
+      return 0;
+   if (!(ppfd->dwFlags & PFD_SUPPORT_OPENGL))
+      return 0;
+   if (ppfd->dwFlags & PFD_DRAW_TO_BITMAP)
+      return 0;
+   if (ppfd->dwFlags & PFD_SUPPORT_GDI)
+      return 0;
+   if (!(ppfd->dwFlags & PFD_STEREO_DONTCARE) && (ppfd->dwFlags & PFD_STEREO))
+      return 0;
+
+   return stw_pixelformat_choose( hdc, ppfd );
+}
+
+WINGDIAPI int APIENTRY
+wglDescribePixelFormat(
+   HDC hdc,
+   int iPixelFormat,
+   UINT nBytes,
+   LPPIXELFORMATDESCRIPTOR ppfd )
+{
+   return stw_pixelformat_describe( hdc, iPixelFormat, nBytes, ppfd );
+}
+
+WINGDIAPI int APIENTRY
+wglGetPixelFormat(
+   HDC hdc )
+{
+   return stw_pixelformat_get( hdc );
+}
+
+WINGDIAPI BOOL APIENTRY
+wglSetPixelFormat(
+   HDC hdc,
+   int iPixelFormat,
+   const PIXELFORMATDESCRIPTOR *ppfd )
+{
+   if (ppfd->nSize != sizeof( PIXELFORMATDESCRIPTOR ))
+      return FALSE;
+
+   return stw_pixelformat_set( hdc, iPixelFormat );
+}
+
+
 WINGDIAPI BOOL APIENTRY
 wglUseFontBitmapsA(
    HDC hdc,

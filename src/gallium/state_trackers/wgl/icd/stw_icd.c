@@ -34,7 +34,6 @@
 
 #include "shared/stw_public.h"
 #include "icd/stw_icd.h"
-#include "wgl/stw_wgl.h"
 #include "stw.h"
 
 
