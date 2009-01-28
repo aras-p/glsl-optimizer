@@ -62,7 +62,7 @@ DrvCopyContext(
        dst == NULL)
       return FALSE;
 
-   return stw_wgl_copy_context( src, dst, fuMask );
+   return stw_copy_context( src, dst, fuMask );
 }
 
 DHGLRC APIENTRY
@@ -82,7 +82,7 @@ DrvCreateLayerContext(
    return 0;
 
 found_slot:
-   stw_dev->ctx_array[i].hglrc = stw_wgl_create_context( hdc, iLayerPlane );
+   stw_dev->ctx_array[i].hglrc = stw_create_context( hdc, iLayerPlane );
    if (stw_dev->ctx_array[i].hglrc == NULL)
       return 0;
 
@@ -104,7 +104,7 @@ DrvDeleteContext(
    BOOL success = FALSE;
 
    if (hglrc != NULL) {
-      success = stw_wgl_delete_context( hglrc );
+      success = stw_delete_context( hglrc );
       if (success)
          stw_dev->ctx_array[dhglrc - 1].hglrc = NULL;
    }

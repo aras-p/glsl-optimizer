@@ -47,7 +47,7 @@ static HDC current_hdc = NULL;
 static HGLRC current_hrc = NULL;
 
 BOOL
-stw_wgl_copy_context(
+stw_copy_context(
    HGLRC hglrcSrc,
    HGLRC hglrcDst,
    UINT mask )
@@ -60,7 +60,7 @@ stw_wgl_copy_context(
 }
 
 HGLRC
-stw_wgl_create_context(
+stw_create_context(
    HDC hdc,
    int iLayerPlane )
 {
@@ -136,7 +136,7 @@ stw_wgl_create_context(
 
 
 BOOL
-stw_wgl_delete_context(
+stw_delete_context(
    HGLRC hglrc )
 {
    struct wgl_context **link = &ctx_head;
@@ -193,19 +193,19 @@ get_window_size( HDC hdc, GLuint *width, GLuint *height )
 }
 
 HGLRC
-stw_wgl_get_current_context( void )
+stw_get_current_context( void )
 {
    return current_hrc;
 }
 
 HDC
-stw_wgl_get_current_dc( void )
+stw_get_current_dc( void )
 {
     return current_hdc;
 }
 
 BOOL
-stw_wgl_make_current(
+stw_make_current(
    HDC hdc,
    HGLRC hglrc )
 {

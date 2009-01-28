@@ -46,19 +46,19 @@ wgl_context_from_hdc(HDC hdc );
 //////////////////
 
 
-BOOL stw_wgl_copy_context( HGLRC hglrcSrc,
+BOOL stw_copy_context( HGLRC hglrcSrc,
                            HGLRC hglrcDst,
                            UINT mask );
 
-HGLRC stw_wgl_create_context( HDC hdc, int iLayerPlane );
+HGLRC stw_create_context( HDC hdc, int iLayerPlane );
 
-BOOL stw_wgl_delete_context( HGLRC hglrc );
+BOOL stw_delete_context( HGLRC hglrc );
 
-HGLRC stw_wgl_get_current_context( void );
+HGLRC stw_get_current_context( void );
 
-HDC stw_wgl_get_current_dc( void );
+HDC stw_get_current_dc( void );
 
-BOOL stw_wgl_make_current( HDC hdc, HGLRC hglrc );
+BOOL stw_make_current( HDC hdc, HGLRC hglrc );
 
 
 

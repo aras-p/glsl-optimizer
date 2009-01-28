@@ -38,14 +38,14 @@ wglCopyContext(
    HGLRC hglrcDst,
    UINT mask )
 {
-   return stw_wgl_copy_context( hglrcSrc, hglrcDst, mask );
+   return stw_copy_context( hglrcSrc, hglrcDst, mask );
 }
 
 WINGDIAPI HGLRC APIENTRY
 wglCreateContext(
    HDC hdc )
 {
-   return (HGLRC) stw_wgl_create_context( hdc, 0 );
+   return (HGLRC) stw_create_context( hdc, 0 );
 }
 
 WINGDIAPI HGLRC APIENTRY
@@ -53,27 +53,27 @@ wglCreateLayerContext(
    HDC hdc,
    int iLayerPlane )
 {
-   return (HGLRC) stw_wgl_create_context( hdc, iLayerPlane );
+   return (HGLRC) stw_create_context( hdc, iLayerPlane );
 }
 
 WINGDIAPI BOOL APIENTRY
 wglDeleteContext(
    HGLRC hglrc )
 {
-   return stw_wgl_delete_context( hglrc );
+   return stw_delete_context( hglrc );
 }
 
 
 WINGDIAPI HGLRC APIENTRY
 wglGetCurrentContext( VOID )
 {
-   return stw_wgl_get_current_context();
+   return stw_get_current_context();
 }
 
 WINGDIAPI HDC APIENTRY
 wglGetCurrentDC( VOID )
 {
-   return stw_wgl_get_current_dc();
+   return stw_get_current_dc();
 }
 
 WINGDIAPI BOOL APIENTRY
@@ -81,7 +81,7 @@ wglMakeCurrent(
    HDC hdc,
    HGLRC hglrc )
 {
-   return stw_wgl_make_current( hdc, hglrc );
+   return stw_make_current( hdc, hglrc );
 }
 
 
