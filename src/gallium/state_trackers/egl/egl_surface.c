@@ -391,8 +391,7 @@ drm_swap_buffers(_EGLDriver *drv, EGLDisplay dpy, EGLSurface draw)
 	if (!_eglSwapBuffers(drv, dpy, draw))
 		return EGL_FALSE;
 
-	back_surf = st_get_framebuffer_surface(surf->stfb,
-	                                       ST_SURFACE_BACK_LEFT);
+	st_get_framebuffer_surface(surf->stfb, ST_SURFACE_BACK_LEFT, &back_surf);
 
 	if (back_surf) {
 
