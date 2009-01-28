@@ -242,6 +242,11 @@ static void brw_wm_populate_key( struct brw_context *brw,
 	    if (img->TexFormat->MesaFormat == MESA_FORMAT_YCBCR)
 		key->yuvtex_swap_mask |= 1 << i;
 	 }
+
+         key->tex_swizzles[i] = t->_Swizzle;
+      }
+      else {
+         key->tex_swizzles[i] = SWIZZLE_NOOP;
       }
    }
 

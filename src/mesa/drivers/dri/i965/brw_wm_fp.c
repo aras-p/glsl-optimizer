@@ -111,6 +111,12 @@ static struct prog_src_register src_swizzle1( struct prog_src_register reg, int 
    return src_swizzle(reg, x, x, x, x);
 }
 
+static struct prog_src_register src_swizzle4( struct prog_src_register reg, uint swizzle )
+{
+   reg.Swizzle = swizzle;
+   return reg;
+}
+
 
 /***********************************************************************
  * Dest regs
@@ -749,6 +755,19 @@ static void precalc_tex( struct brw_wm_compile *c,
 	      coord,
 	      src_undef(),
 	      src_undef());
+   }
+
+   /* For GL_EXT_texture_swizzle: */
+   if (c->key.tex_swizzles[unit] != SWIZZLE_NOOP) {
+      /* swizzle the result of the TEX instruction */
+      struct prog_src_register tmpsrc = src_reg_from_dst(inst->DstReg);
+      emit_op(c, OPCODE_MOV,
+              inst->DstReg,
+              SATURATE_OFF, /* saturate already done above */
+              0, 0,   /* tex unit, target N/A */
+              src_swizzle4(tmpsrc, c->key.tex_swizzles[unit]),
+              src_undef(),
+              src_undef());
    }
 
    if ((inst->TexSrcTarget == TEXTURE_RECT_INDEX) ||

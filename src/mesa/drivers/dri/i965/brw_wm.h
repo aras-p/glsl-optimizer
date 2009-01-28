@@ -70,6 +70,8 @@ struct brw_wm_prog_key {
    GLuint yuvtex_mask:16;
    GLuint yuvtex_swap_mask:16;	/* UV swaped */
 
+   GLuint tex_swizzles[BRW_MAX_TEX_UNIT];
+
    GLuint program_string_id:32;
    GLuint origin_x, origin_y;
    GLuint drawable_height;
