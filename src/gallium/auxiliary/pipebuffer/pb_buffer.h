@@ -148,6 +148,7 @@ pb_map(struct pb_buffer *buf,
    assert(buf);
    if(!buf)
       return NULL;
+   assert(buf->base.refcount > 0);
    return buf->vtbl->map(buf, flags);
 }
 
@@ -158,6 +159,7 @@ pb_unmap(struct pb_buffer *buf)
    assert(buf);
    if(!buf)
       return;
+   assert(buf->base.refcount > 0);
    buf->vtbl->unmap(buf);
 }
 
@@ -173,7 +175,10 @@ pb_get_base_buffer( struct pb_buffer *buf,
       offset = 0;
       return;
    }
+   assert(buf->base.refcount > 0);
    buf->vtbl->get_base_buffer(buf, base_buf, offset);
+   assert(*base_buf);
+   assert(*offset < (*base_buf)->base.size);
 }
 
 
