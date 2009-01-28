@@ -25,23 +25,23 @@
  *
  **************************************************************************/
 
-#ifndef WGL_CONTEXT_H
-#define WGL_CONTEXT_H
+#ifndef STW_CONTEXT_H
+#define STW_CONTEXT_H
 
 #include <windows.h>
 
 struct st_context;
 
-struct wgl_context
+struct stw_context
 {
    struct st_context *st;
    HDC hdc;
    DWORD color_bits;
-   struct wgl_context *next;
+   struct stw_context *next;
 };
 
-struct wgl_context *
-wgl_context_from_hdc(HDC hdc );
+struct stw_context *
+stw_context_from_hdc(HDC hdc );
 
 
 
@@ -50,4 +50,4 @@ wgl_context_from_hdc(HDC hdc );
 
 
 
-#endif /* WGL_CONTEXT_H */
+#endif /* STW_CONTEXT_H */

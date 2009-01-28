@@ -40,32 +40,32 @@
 #include "stw_public.h"
 #include "stw_context.h"
 
-static struct wgl_context *ctx_head = NULL;
+static struct stw_context *ctx_head = NULL;
 
 static HDC current_hdc = NULL;
-static HGLRC current_hrc = NULL;
+static struct stw_context *current_hrc = NULL;
 
 BOOL
 stw_copy_context(
-   HGLRC hglrcSrc,
-   HGLRC hglrcDst,
+   struct stw_context *src,
+   struct stw_context *dst,
    UINT mask )
 {
-   (void) hglrcSrc;
-   (void) hglrcDst;
+   (void) src;
+   (void) dst;
    (void) mask;
 
    return FALSE;
 }
 
-HGLRC
+struct stw_context *
 stw_create_context(
    HDC hdc,
    int iLayerPlane )
 {
    uint pfi;
    const struct pixelformat_info *pf = NULL;
-   struct wgl_context *ctx = NULL;
+   struct stw_context *ctx = NULL;
    GLvisual *visual = NULL;
    struct pipe_context *pipe = NULL;
 
@@ -78,7 +78,7 @@ stw_create_context(
 
    pf = pixelformat_get_info( pfi - 1 );
 
-   ctx = CALLOC_STRUCT( wgl_context );
+   ctx = CALLOC_STRUCT( stw_context );
    if (ctx == NULL)
       return NULL;
 
@@ -122,7 +122,7 @@ stw_create_context(
    ctx->next = ctx_head;
    ctx_head = ctx;
 
-   return (HGLRC) ctx;
+   return ctx;
 
 fail:
    if (visual)
@@ -138,13 +138,13 @@ fail:
 
 BOOL
 stw_delete_context(
-   HGLRC hglrc )
+   struct stw_context *hglrc )
 {
-   struct wgl_context **link = &ctx_head;
-   struct wgl_context *ctx = ctx_head;
+   struct stw_context **link = &ctx_head;
+   struct stw_context *ctx = ctx_head;
 
    while (ctx != NULL) {
-      if (ctx == (struct wgl_context *) hglrc) {
+      if (ctx == hglrc) {
          GLcontext *glctx = ctx->st->ctx;
          GET_CURRENT_CONTEXT( glcurctx );
          struct stw_framebuffer *fb;
@@ -193,7 +193,7 @@ get_window_size( HDC hdc, GLuint *width, GLuint *height )
    }
 }
 
-HGLRC
+struct stw_context *
 stw_get_current_context( void )
 {
    return current_hrc;
@@ -208,9 +208,9 @@ stw_get_current_dc( void )
 BOOL
 stw_make_current(
    HDC hdc,
-   HGLRC hglrc )
+   struct stw_context *hglrc )
 {
-   struct wgl_context *ctx = ctx_head;
+   struct stw_context *ctx = ctx_head;
    GET_CURRENT_CONTEXT( glcurctx );
    struct stw_framebuffer *fb;
    GLuint width = 0;
@@ -225,7 +225,7 @@ stw_make_current(
    }
 
    while (ctx != NULL) {
-      if (ctx == (struct wgl_context *) hglrc)
+      if (ctx == hglrc)
          break;
       ctx = ctx->next;
    }
@@ -235,7 +235,7 @@ stw_make_current(
    /* Return if already current.
     */
    if (glcurctx != NULL) {
-      struct wgl_context *curctx = (struct wgl_context *) glcurctx->DriverCtx;
+      struct stw_context *curctx = (struct stw_context *) glcurctx->DriverCtx;
 
       if (curctx != NULL && curctx == ctx && ctx->hdc == hdc)
          return TRUE;
@@ -274,11 +274,11 @@ stw_make_current(
    return TRUE;
 }
 
-struct wgl_context *
-wgl_context_from_hdc(
+struct stw_context *
+stw_context_from_hdc(
    HDC hdc )
 {
-   struct wgl_context *ctx = ctx_head;
+   struct stw_context *ctx = ctx_head;
 
    while (ctx != NULL) {
       if (ctx->hdc == hdc)

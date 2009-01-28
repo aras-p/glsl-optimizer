@@ -42,6 +42,11 @@ void stw_wgl_cleanup( void )
 {
 }
 
+static INLINE struct stw_context *stw_context( HGLRC hglrc )
+{
+   return (struct stw_context *)hglrc;
+}
+
 
 WINGDIAPI BOOL APIENTRY
 wglCopyContext(
@@ -49,7 +54,9 @@ wglCopyContext(
    HGLRC hglrcDst,
    UINT mask )
 {
-   return stw_copy_context( hglrcSrc, hglrcDst, mask );
+   return stw_copy_context( stw_context(hglrcSrc), 
+                            stw_context(hglrcDst), 
+                            mask );
 }
 
 WINGDIAPI HGLRC APIENTRY
@@ -71,14 +78,14 @@ WINGDIAPI BOOL APIENTRY
 wglDeleteContext(
    HGLRC hglrc )
 {
-   return stw_delete_context( hglrc );
+   return stw_delete_context( stw_context(hglrc) );
 }
 
 
 WINGDIAPI HGLRC APIENTRY
 wglGetCurrentContext( VOID )
 {
-   return stw_get_current_context();
+   return (HGLRC) stw_get_current_context();
 }
 
 WINGDIAPI HDC APIENTRY
@@ -92,7 +99,7 @@ wglMakeCurrent(
    HDC hdc,
    HGLRC hglrc )
 {
-   return stw_make_current( hdc, hglrc );
+   return stw_make_current( hdc, stw_context(hglrc) );
 }
 
 

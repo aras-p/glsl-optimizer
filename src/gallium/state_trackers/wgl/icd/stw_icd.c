@@ -42,7 +42,7 @@
 struct stw_icd
 {
    struct {
-      HGLRC hglrc;
+      struct stw_context *ctx;
    } ctx_array[DRV_CONTEXT_MAX];
 
    DHGLRC ctx_current;
@@ -60,7 +60,7 @@ stw_icd_init( void )
    assert(!stw_icd);
 
    stw_icd = &stw_icd_storage;
-   memset(stw_icd, 0, sizeof(*stw_icd));
+   memset(stw_icd, 0, sizeof *stw_icd);
 
    return TRUE;
 }
@@ -68,28 +68,28 @@ stw_icd_init( void )
 void
 stw_icd_cleanup(void)
 {
-   DHGLRC dhglrc;
+   int i;
 
    if(!stw_icd)
       return;
 
    /* Ensure all contexts are destroyed */
-   for (dhglrc = 1; dhglrc <= DRV_CONTEXT_MAX; dhglrc++)
-      if (stw_icd->ctx_array[dhglrc - 1].hglrc)
-         DrvDeleteContext( dhglrc );
+   for (i = 0; i < DRV_CONTEXT_MAX; i++)
+      if (stw_icd->ctx_array[i].ctx) 
+         stw_delete_context( stw_icd->ctx_array[i].ctx );
 
    stw_icd = NULL;
 }
 
 
-static HGLRC
-lookup_hglrc( DHGLRC dhglrc )
+static struct stw_context *
+lookup_context( DHGLRC dhglrc )
 {
    if (dhglrc == 0 || 
        dhglrc >= DRV_CONTEXT_MAX)
       return NULL;
 
-   return stw_icd->ctx_array[dhglrc - 1].hglrc;
+   return stw_icd->ctx_array[dhglrc - 1].ctx;
 }
 
 BOOL APIENTRY
@@ -98,8 +98,8 @@ DrvCopyContext(
    DHGLRC dhrcDest,
    UINT fuMask )
 {
-   HGLRC src = lookup_hglrc( dhrcSource );
-   HGLRC dst = lookup_hglrc( dhrcDest );
+   struct stw_context *src = lookup_context( dhrcSource );
+   struct stw_context *dst = lookup_context( dhrcDest );
    
    if (src == NULL ||
        dst == NULL)
@@ -116,7 +116,7 @@ DrvCreateLayerContext(
    DWORD i;
    
    for (i = 0; i < DRV_CONTEXT_MAX; i++) {
-      if (stw_icd->ctx_array[i].hglrc == NULL)
+      if (stw_icd->ctx_array[i].ctx == NULL)
          goto found_slot;
    }
    
@@ -125,8 +125,8 @@ DrvCreateLayerContext(
    return 0;
 
 found_slot:
-   stw_icd->ctx_array[i].hglrc = stw_create_context( hdc, iLayerPlane );
-   if (stw_icd->ctx_array[i].hglrc == NULL)
+   stw_icd->ctx_array[i].ctx = stw_create_context( hdc, iLayerPlane );
+   if (stw_icd->ctx_array[i].ctx == NULL)
       return 0;
 
    return (DHGLRC) i + 1;
@@ -143,18 +143,20 @@ BOOL APIENTRY
 DrvDeleteContext(
    DHGLRC dhglrc )
 {
-   HGLRC hglrc = lookup_hglrc( dhglrc );
-   BOOL success = FALSE;
+   struct stw_context *ctx;
 
-   if (hglrc != NULL) {
-      success = stw_delete_context( hglrc );
-      if (success)
-         stw_icd->ctx_array[dhglrc - 1].hglrc = NULL;
-   }
+   ctx = lookup_context( dhglrc );
+   if (ctx == NULL) 
+      goto fail;
 
-   debug_printf( "%s( %u ) = %s\n", __FUNCTION__, dhglrc, success ? "TRUE" : "FALSE" );
+   if (stw_delete_context( ctx ) == FALSE)
+      goto fail;
 
-   return success;
+   stw_icd->ctx_array[dhglrc - 1].ctx = NULL;
+   return TRUE;
+   
+fail:
+   return FALSE;
 }
 
 BOOL APIENTRY
@@ -228,21 +230,23 @@ BOOL APIENTRY
 DrvReleaseContext(
    DHGLRC dhglrc )
 {
-   BOOL success = FALSE;
+   struct stw_context *ctx;
 
-   if (dhglrc == stw_icd->ctx_current) {
-      HGLRC hglrc = lookup_hglrc( dhglrc );
+   if (dhglrc != stw_icd->ctx_current) 
+      goto fail;
 
-      if (hglrc != NULL) {
-         success = stw_make_current( NULL, NULL );
-         if (success)
-            stw_icd->ctx_current = 0;
-      }
-   }
+   ctx = lookup_context( dhglrc );
+   if (ctx == NULL) 
+      goto fail;
 
-   debug_printf( "%s( %u ) = %s\n", __FUNCTION__, dhglrc, success ? "TRUE" : "FALSE" );
+   if (stw_make_current( NULL, NULL ) == FALSE)
+      goto fail;
 
-   return success;
+   stw_icd->ctx_current = 0;
+   return TRUE;
+
+fail:
+   return FALSE;
 }
 
 void APIENTRY
@@ -265,15 +269,16 @@ DrvSetContext(
    DHGLRC dhglrc,
    PFN_SETPROCTABLE pfnSetProcTable )
 {
-   HGLRC hglrc = lookup_hglrc( dhglrc );
+   struct stw_context *ctx;
    GLDISPATCHTABLE *disp = &cpt.glDispatchTable;
 
    debug_printf( "%s( 0x%p, %u, 0x%p )\n", __FUNCTION__, hdc, dhglrc, pfnSetProcTable );
 
-   if (hglrc == NULL)
+   ctx = lookup_context( dhglrc );
+   if (ctx == NULL)
       return NULL;
 
-   if (!stw_make_current( hdc, hglrc ))
+   if (!stw_make_current( hdc, ctx ))
       return NULL;
 
    memset( &cpt, 0, sizeof( cpt ) );
