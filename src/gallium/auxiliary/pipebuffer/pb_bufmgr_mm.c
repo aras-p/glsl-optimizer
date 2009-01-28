@@ -154,8 +154,8 @@ mm_bufmgr_create_buffer(struct pb_manager *mgr,
    struct mm_buffer *mm_buf;
 
    /* We don't handle alignments larger then the one initially setup */
-   assert(desc->alignment % (1 << mm->align2) == 0);
-   if(desc->alignment % (1 << mm->align2))
+   assert(pb_check_alignment(desc->alignment, 1 << mm->align2));
+   if(!pb_check_alignment(desc->alignment, 1 << mm->align2))
       return NULL;
    
    pipe_mutex_lock(mm->mutex);
