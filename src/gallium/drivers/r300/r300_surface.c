@@ -33,6 +33,7 @@ static void r300_surface_fill(struct pipe_context* pipe,
     struct r300_context* r300 = r300_context(pipe);
     CS_LOCALS(r300);
     struct r300_capabilities* caps = ((struct r300_screen*)pipe->screen)->caps;
+    int i;
     float r, g, b, a;
     r = (float)((color >> 16) & 0xff) / 255.0f;
     g = (float)((color >>  8) & 0xff) / 255.0f;
@@ -117,8 +118,6 @@ OUT_CS_REG(0x42B4, 0x00000000);
 OUT_CS_REG(0x42B8, 0x00000000);
 OUT_CS_REG(0x42C0, 0x4B7FFFFF);
 OUT_CS_REG(0x42C4, 0x00000000);
-OUT_CS_REG(0x4300, 0x00000000);
-OUT_CS_REG(0x4304, 0x00000000);
 OUT_CS_REG(0x4310, 0x00000000);
 OUT_CS_REG(0x4314, 0x00000000);
 OUT_CS_REG(0x4318, 0x00000000);
@@ -208,16 +207,26 @@ r300_emit_blend_state(r300, &blend_clear_state);
 OUT_CS_REG(0x221C, 0x0001C000);
 OUT_CS_REG(R300_GA_POINT_SIZE, ((h * 6) & R300_POINTSIZE_Y_MASK) |
     ((w * 6) << R300_POINTSIZE_X_SHIFT));
-OUT_CS_REG(0x4310, 0x00D10000);
-OUT_CS_REG(0x4314, 0x00D10000);
-OUT_CS_REG(0x4318, 0x00D10000);
-OUT_CS_REG(0x431C, 0x00D10000);
-OUT_CS_REG(0x4320, 0x00D10000);
-OUT_CS_REG(0x4324, 0x00D10000);
-OUT_CS_REG(0x4328, 0x00D10000);
-OUT_CS_REG(0x432C, 0x00D10000);
-OUT_CS_REG(0x4300, 0x00040080);
-OUT_CS_REG(0x4304, 0x00000000);
+
+/* XXX RS block setup */
+if (caps->is_r500) {
+    OUT_CS_REG_SEQ(R500_RS_IP_0, 8);
+    for (i = 0; i < 8; i++) {
+        /* I like the operator macros more than the shift macros... */
+        OUT_CS((R500_RS_IP_PTR_K0 << R500_RS_IP_TEX_PTR_S_SHIFT) |
+            (R500_RS_IP_PTR_K0 << R500_RS_IP_TEX_PTR_T_SHIFT) |
+            (R500_RS_IP_PTR_K0 << R500_RS_IP_TEX_PTR_R_SHIFT) |
+            (R500_RS_IP_PTR_K1 << R500_RS_IP_TEX_PTR_Q_SHIFT));
+    }
+} else {
+    OUT_CS_REG_SEQ(R300_RS_IP_0, 8);
+    for (i = 0; i < 8; i++) {
+        OUT_CS(R300_RS_SEL_T(1) | R300_RS_SEL_R(2) | R300_RS_SEL_Q(3));
+    }
+}
+OUT_CS_REG(R300_RS_COUNT, (1 << R300_IC_COUNT_SHIFT) | R300_HIRES_EN);
+OUT_CS_REG(R300_RS_INST_COUNT, 0x0);
+
 OUT_CS_REG(0x4330, 0x00004000);
 OUT_CS_REG(0x4600, 0x00000000);
 OUT_CS_REG(0x4604, 0x00000000);
