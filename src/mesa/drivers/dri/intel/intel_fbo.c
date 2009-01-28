@@ -290,8 +290,6 @@ intel_renderbuffer_set_region(struct intel_renderbuffer *rb,
    rb->region = NULL;
    intel_region_reference(&rb->region, region);
    intel_region_release(&old);
-
-   rb->pfPitch = region->pitch;
 }
 
 /**

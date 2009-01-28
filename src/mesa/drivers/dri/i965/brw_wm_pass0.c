@@ -51,6 +51,7 @@ static struct brw_wm_value *get_value( struct brw_wm_compile *c)
    return &c->vreg[c->nr_vreg++];
 }
 
+/** return pointer to a newly allocated instruction */
 static struct brw_wm_instruction *get_instruction( struct brw_wm_compile *c )
 {
    assert(c->nr_insns < BRW_WM_MAX_INSN);
@@ -60,6 +61,7 @@ static struct brw_wm_instruction *get_instruction( struct brw_wm_compile *c )
 /***********************************************************************
  */
 
+/** Init the "undef" register */
 static void pass0_init_undef( struct brw_wm_compile *c)
 {
    struct brw_wm_ref *ref = &c->undef_ref;
@@ -69,6 +71,7 @@ static void pass0_init_undef( struct brw_wm_compile *c)
    ref->prevuse = NULL;
 }
 
+/** Set a FP register to a value */
 static void pass0_set_fpreg_value( struct brw_wm_compile *c,
 				   GLuint file,
 				   GLuint idx,
@@ -83,6 +86,7 @@ static void pass0_set_fpreg_value( struct brw_wm_compile *c,
    c->pass0_fp_reg[file][idx][component] = ref;
 }
 
+/** Set a FP register to a ref */
 static void pass0_set_fpreg_ref( struct brw_wm_compile *c,
 				 GLuint file,
 				 GLuint idx,
@@ -121,6 +125,7 @@ static const struct brw_wm_ref *get_param_ref( struct brw_wm_compile *c,
 }
 
 
+/** Return a ref to a constant/literal value */
 static const struct brw_wm_ref *get_const_ref( struct brw_wm_compile *c,
 					       const GLfloat *constval )
 {
@@ -187,7 +192,7 @@ static const struct brw_wm_ref *pass0_get_reg( struct brw_wm_compile *c,
 	 
 	 /* There's something really hokey about parameters parsed in
 	  * arb programs - they all end up in here, whether they be
-	  * state values, paramters or constants.  This duplicates the
+	  * state values, parameters or constants.  This duplicates the
 	  * structure above & also seems to subvert the limits set for
 	  * each type of constant/param.
 	  */ 
@@ -374,14 +379,22 @@ static void pass0_precalc_mov( struct brw_wm_compile *c,
 {
    const struct prog_dst_register *dst = &inst->DstReg;
    GLuint writemask = inst->DstReg.WriteMask;
+   struct brw_wm_ref *refs[4];
    GLuint i;
 
    /* Get the effect of a MOV by manipulating our register table:
+    * First get all refs, then assign refs.  This ensures that "in-place"
+    * swizzles such as:
+    *   MOV t, t.xxyx
+    * are handled correctly.  Previously, these two steps were done in
+    * one loop and the above case was incorrectly handled.
     */
    for (i = 0; i < 4; i++) {
-      if (writemask & (1<<i)) {	    
-	 pass0_set_fpreg_ref( c, dst->File, dst->Index, i, 
-			      get_new_ref(c, inst->SrcReg[0], i, NULL));
+      refs[i] = get_new_ref(c, inst->SrcReg[0], i, NULL);
+   }
+   for (i = 0; i < 4; i++) {
+      if (writemask & (1 << i)) {	    
+         pass0_set_fpreg_ref( c, dst->File, dst->Index, i, refs[i]);
       }
    }
 }
