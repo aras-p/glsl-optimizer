@@ -26,16 +26,17 @@
  **************************************************************************/
 
 #include <windows.h>
-#include "stw_wgl_arbmultisample.h"
 
-int
-wgl_query_sample_buffers( void )
-{
-   return 1;
-}
+#include "stw_arbextensionsstring.h"
 
-int
-wgl_query_samples( void )
+WINGDIAPI const char * APIENTRY
+wglGetExtensionsStringARB(
+   HDC hdc )
 {
-   return 4;
+   (void) hdc;
+
+   return
+      "WGL_ARB_extensions_string "
+      "WGL_ARB_multisample "
+      "WGL_ARB_pixel_format";
 }

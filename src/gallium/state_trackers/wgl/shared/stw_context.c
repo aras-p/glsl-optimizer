@@ -37,7 +37,6 @@
 #include "shared/stw_winsys.h"
 #include "shared/stw_framebuffer.h"
 #include "shared/stw_pixelformat.h"
-#include "wgl/stw_wgl_arbmultisample.h"
 #include "stw_context.h"
 //#include "stw_wgl.h"
 
@@ -103,7 +102,7 @@ stw_create_context(
       0,
       0,
       0,
-      (pf->flags & PF_FLAG_MULTISAMPLED) ? wgl_query_samples() : 0 );
+      (pf->flags & PF_FLAG_MULTISAMPLED) ? stw_query_samples() : 0 );
    if (visual == NULL) {
       FREE( ctx );
       return NULL;

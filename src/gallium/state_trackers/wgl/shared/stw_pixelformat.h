@@ -93,5 +93,8 @@ stw_pixelformat_set(
    HDC hdc,
    int iPixelFormat );
 
+int stw_query_sample_buffers( void );
+int stw_query_samples( void );
+
 
 #endif /* PIXELFORMAT_H */

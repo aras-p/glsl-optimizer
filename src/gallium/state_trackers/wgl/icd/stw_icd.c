@@ -207,7 +207,7 @@ DrvGetProcAddress(
 {
    PROC r;
 
-   r = wglGetProcAddress( lpszProc );
+   r = stw_get_proc_address( lpszProc );
 
    debug_printf( "%s( \", __FUNCTION__%s\" ) = 0x%p\n", lpszProc, r );
 

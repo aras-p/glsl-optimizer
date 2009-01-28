@@ -25,18 +25,37 @@
  * 
  **************************************************************************/
 
-#include <windows.h>
+#ifndef WGL_ARBPIXELFORMAT_H
+#define WGL_ARBPIXELFORMAT_H
 
-#include "stw_wgl_arbextensionsstring.h"
 
-WINGDIAPI const char * APIENTRY
-wglGetExtensionsStringARB(
-   HDC hdc )
-{
-   (void) hdc;
+/* Extension functions for get_proc_address:
+ */
+WINGDIAPI BOOL APIENTRY
+wglChoosePixelFormatARB(
+   HDC hdc,
+   const int *piAttribIList,
+   const FLOAT *pfAttribFList,
+   UINT nMaxFormats,
+   int *piFormats,
+   UINT *nNumFormats );
 
-   return
-      "WGL_ARB_extensions_string "
-      "WGL_ARB_multisample "
-      "WGL_ARB_pixel_format";
-}
+WINGDIAPI BOOL APIENTRY
+wglGetPixelFormatAttribfvARB(
+   HDC hdc,
+   int iPixelFormat,
+   int iLayerPlane,
+   UINT nAttributes,
+   const int *piAttributes,
+   FLOAT *pfValues );
+
+WINGDIAPI BOOL APIENTRY
+wglGetPixelFormatAttribivARB(
+   HDC hdc,
+   int iPixelFormat,
+   int iLayerPlane,
+   UINT nAttributes,
+   const int *piAttributes,
+   int *piValues );
+
+#endif /* WGL_ARBPIXELFORMAT_H */

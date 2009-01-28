@@ -115,6 +115,12 @@ wglSwapLayerBuffers(
    return FALSE;
 }
 
+WINGDIAPI PROC APIENTRY
+wglGetProcAddress(
+    LPCSTR lpszProc )
+{
+   return stw_get_proc_address( lpszProc );
+}
 
 
 WINGDIAPI BOOL APIENTRY

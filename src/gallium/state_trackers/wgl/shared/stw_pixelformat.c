@@ -205,3 +205,21 @@ stw_pixelformat_set(
    currentpixelformat = iPixelFormat;
    return TRUE;
 }
+
+
+
+/* XXX: this needs to be turned into queries on pipe_screen or
+ * stw_winsys.
+ */
+int
+stw_query_sample_buffers( void )
+{
+   return 1;
+}
+
+int
+stw_query_samples( void )
+{
+   return 4;
+}
+
