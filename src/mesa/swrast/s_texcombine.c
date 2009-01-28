@@ -31,6 +31,7 @@
 #include "main/imports.h"
 #include "main/macros.h"
 #include "main/pixel.h"
+#include "shader/prog_instruction.h"
 
 #include "s_context.h"
 #include "s_texcombine.h"
@@ -816,6 +817,36 @@ texture_combine( const GLcontext *ctx, GLuint unit, GLuint n,
 
 
 /**
+ * Apply X/Y/Z/W/0/1 swizzle to an array of colors/texels.
+ * See GL_EXT_texture_swizzle.
+ */
+static void
+swizzle_texels(GLuint swizzle, GLuint count, GLchan (*texels)[4])
+{
+   const GLuint swzR = GET_SWZ(swizzle, 0);
+   const GLuint swzG = GET_SWZ(swizzle, 1);
+   const GLuint swzB = GET_SWZ(swizzle, 2);
+   const GLuint swzA = GET_SWZ(swizzle, 3);
+   GLchan vector[6];
+   GLuint i;
+
+   vector[SWIZZLE_ZERO] = 0;
+   vector[SWIZZLE_ONE] = CHAN_MAX;
+
+   for (i = 0; i < count; i++) {
+      vector[SWIZZLE_X] = texels[i][0];
+      vector[SWIZZLE_Y] = texels[i][1];
+      vector[SWIZZLE_Z] = texels[i][2];
+      vector[SWIZZLE_W] = texels[i][3];
+      texels[i][RCOMP] = vector[swzR];
+      texels[i][GCOMP] = vector[swzG];
+      texels[i][BCOMP] = vector[swzB];
+      texels[i][ACOMP] = vector[swzA];
+   }
+}
+
+
+/**
  * Apply a conventional OpenGL texture env mode (REPLACE, ADD, BLEND,
  * MODULATE, or DECAL) to an array of fragments.
  * Input:  textureUnit - pointer to texture unit to apply
@@ -1241,8 +1272,14 @@ _swrast_texture_span( GLcontext *ctx, SWspan *span )
             _mesa_lookup_rgba_float(&texUnit->ColorTable, span->end, texels);
 #endif
          }
+
+         /* GL_EXT_texture_swizzle */
+         if (curObj->_Swizzle != SWIZZLE_NOOP) {
+            swizzle_texels(curObj->_Swizzle, span->end, texels);
+         }
       }
    }
+
 
    /*
     * OK, now apply the texture (aka texture combine/blend).
@@ -1262,6 +1299,8 @@ _swrast_texture_span( GLcontext *ctx, SWspan *span )
             const GLchan (*texels)[4] = (const GLchan (*)[4])
                (swrast->TexelBuffer + unit *
                 (span->end * 4 * sizeof(GLchan)));
+
+
             texture_apply( ctx, texUnit, span->end,
                            (CONST GLchan (*)[4]) primary_rgba, texels,
                            span->array->rgba );

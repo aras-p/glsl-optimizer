@@ -35,6 +35,7 @@
 #include "main/imports.h"
 #include "main/macros.h"
 #include "main/texformat.h"
+#include "shader/prog_instruction.h"
 
 #include "s_aatriangle.h"
 #include "s_context.h"
@@ -1063,6 +1064,7 @@ _swrast_choose_triangle( GLcontext *ctx )
              && ctx->Texture.Unit[0]._ReallyEnabled == TEXTURE_2D_BIT
              && texObj2D->WrapS == GL_REPEAT
              && texObj2D->WrapT == GL_REPEAT
+             && texObj2D->_Swizzle == SWIZZLE_NOOP
              && texImg->_IsPowerOfTwo
              && texImg->Border == 0
              && texImg->Width == texImg->RowStride

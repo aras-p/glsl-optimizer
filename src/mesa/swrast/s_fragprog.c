@@ -33,6 +33,35 @@
 
 
 /**
+ * Apply texture object's swizzle (X/Y/Z/W/0/1) to incoming 'texel'
+ * and return results in 'colorOut'.
+ */
+static INLINE void
+swizzle_texel(const GLchan texel[4], GLfloat colorOut[4], GLuint swizzle)
+{
+   if (swizzle == SWIZZLE_NOOP) {
+      colorOut[0] = CHAN_TO_FLOAT(texel[0]);
+      colorOut[1] = CHAN_TO_FLOAT(texel[1]);
+      colorOut[2] = CHAN_TO_FLOAT(texel[2]);
+      colorOut[3] = CHAN_TO_FLOAT(texel[3]);
+   }
+   else {
+      GLfloat vector[6];
+      vector[SWIZZLE_X] = CHAN_TO_FLOAT(texel[0]);
+      vector[SWIZZLE_Y] = CHAN_TO_FLOAT(texel[1]);
+      vector[SWIZZLE_Z] = CHAN_TO_FLOAT(texel[2]);
+      vector[SWIZZLE_W] = CHAN_TO_FLOAT(texel[3]);
+      vector[SWIZZLE_ZERO] = 0.0F;
+      vector[SWIZZLE_ONE] = 1.0F;
+      colorOut[0] = vector[GET_SWZ(swizzle, 0)];
+      colorOut[1] = vector[GET_SWZ(swizzle, 1)];
+      colorOut[2] = vector[GET_SWZ(swizzle, 2)];
+      colorOut[3] = vector[GET_SWZ(swizzle, 3)];
+   }
+}
+
+
+/**
  * Fetch a texel with given lod.
  * Called via machine->FetchTexelLod()
  */
@@ -52,10 +81,7 @@ fetch_texel_lod( GLcontext *ctx, const GLfloat texcoord[4], GLfloat lambda,
       swrast->TextureSample[unit](ctx, texObj, 1,
                                   (const GLfloat (*)[4]) texcoord,
                                   &lambda, &rgba);
-      color[0] = CHAN_TO_FLOAT(rgba[0]);
-      color[1] = CHAN_TO_FLOAT(rgba[1]);
-      color[2] = CHAN_TO_FLOAT(rgba[2]);
-      color[3] = CHAN_TO_FLOAT(rgba[3]);
+      swizzle_texel(rgba, color, texObj->_Swizzle);
    }
    else {
       color[0] = color[1] = color[2] = color[3] = 0.0F;
@@ -97,10 +123,7 @@ fetch_texel_deriv( GLcontext *ctx, const GLfloat texcoord[4],
       swrast->TextureSample[unit](ctx, texObj, 1,
                                   (const GLfloat (*)[4]) texcoord,
                                   &lambda, &rgba);
-      color[0] = CHAN_TO_FLOAT(rgba[0]);
-      color[1] = CHAN_TO_FLOAT(rgba[1]);
-      color[2] = CHAN_TO_FLOAT(rgba[2]);
-      color[3] = CHAN_TO_FLOAT(rgba[3]);
+      swizzle_texel(rgba, color, texObj->_Swizzle);
    }
    else {
       color[0] = color[1] = color[2] = color[3] = 0.0F;
