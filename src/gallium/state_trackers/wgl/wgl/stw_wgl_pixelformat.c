@@ -32,8 +32,6 @@
 #include "shared/stw_pixelformat.h"
 #include "stw_wgl.h"
 
-static uint currentpixelformat = 0;
-
 WINGDIAPI int APIENTRY
 wglChoosePixelFormat(
    HDC hdc,
@@ -115,9 +113,7 @@ WINGDIAPI int APIENTRY
 wglGetPixelFormat(
    HDC hdc )
 {
-   (void) hdc;
-
-   return currentpixelformat;
+   return stw_pixelformat_get( hdc );
 }
 
 WINGDIAPI BOOL APIENTRY
@@ -126,17 +122,8 @@ wglSetPixelFormat(
    int iPixelFormat,
    const PIXELFORMATDESCRIPTOR *ppfd )
 {
-   uint count;
-   uint index;
-
-   (void) hdc;
-
-   count = pixelformat_get_extended_count();
-   index = (uint) iPixelFormat - 1;
-
-   if (index >= count || ppfd->nSize != sizeof( PIXELFORMATDESCRIPTOR ))
+   if (ppfd->nSize != sizeof( PIXELFORMATDESCRIPTOR ))
       return FALSE;
 
-   currentpixelformat = index + 1;
-   return TRUE;
+   return stw_pixelformat_set( hdc, iPixelFormat );
 }

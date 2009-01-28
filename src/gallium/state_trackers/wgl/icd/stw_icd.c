@@ -594,12 +594,9 @@ DrvSetPixelFormat(
    HDC hdc,
    LONG iPixelFormat )
 {
-   PIXELFORMATDESCRIPTOR pfd;
    BOOL r;
 
-   stw_pixelformat_describe( hdc, iPixelFormat, sizeof( pfd ), &pfd );
-
-   r = wglSetPixelFormat( hdc, iPixelFormat, &pfd );
+   r = stw_pixelformat_set( hdc, iPixelFormat );
 
    debug_printf( "%s( 0x%p, %d ) = %s\n", __FUNCTION__, hdc, iPixelFormat, r ? "TRUE" : "FALSE" );
 

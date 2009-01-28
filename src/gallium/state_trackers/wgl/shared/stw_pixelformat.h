@@ -83,5 +83,14 @@ stw_pixelformat_describe(
    UINT nBytes,
    LPPIXELFORMATDESCRIPTOR ppfd );
 
+int
+stw_pixelformat_get(
+   HDC hdc );
+
+BOOL
+stw_pixelformat_set(
+   HDC hdc,
+   int iPixelFormat );
+
 
 #endif /* PIXELFORMAT_H */

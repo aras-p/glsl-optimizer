@@ -34,6 +34,9 @@ static struct pixelformat_info pixelformats[MAX_PIXELFORMATS];
 static uint pixelformat_count = 0;
 static uint pixelformat_extended_count = 0;
 
+static uint currentpixelformat = 0;
+
+
 static void
 add_standard_pixelformats(
    struct pixelformat_info **ppf,
@@ -117,4 +120,88 @@ pixelformat_get_info( uint index )
    assert( index < pixelformat_extended_count );
 
    return &pixelformats[index];
+}
+
+
+int
+stw_pixelformat_describe(
+   HDC hdc,
+   int iPixelFormat,
+   UINT nBytes,
+   LPPIXELFORMATDESCRIPTOR ppfd )
+{
+   uint count;
+   uint index;
+   const struct pixelformat_info *pf;
+
+   (void) hdc;
+
+   count = pixelformat_get_extended_count();
+   index = (uint) iPixelFormat - 1;
+
+   if (ppfd == NULL)
+      return count;
+   if (index >= count || nBytes != sizeof( PIXELFORMATDESCRIPTOR ))
+      return 0;
+
+   pf = pixelformat_get_info( index );
+
+   ppfd->nSize = sizeof( PIXELFORMATDESCRIPTOR );
+   ppfd->nVersion = 1;
+   ppfd->dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL;
+   if (pf->flags & PF_FLAG_DOUBLEBUFFER)
+      ppfd->dwFlags |= PFD_DOUBLEBUFFER | PFD_SWAP_COPY;
+   ppfd->iPixelType = PFD_TYPE_RGBA;
+   ppfd->cColorBits = pf->color.redbits + pf->color.greenbits + pf->color.bluebits;
+   ppfd->cRedBits = pf->color.redbits;
+   ppfd->cRedShift = pf->color.redshift;
+   ppfd->cGreenBits = pf->color.greenbits;
+   ppfd->cGreenShift = pf->color.greenshift;
+   ppfd->cBlueBits = pf->color.bluebits;
+   ppfd->cBlueShift = pf->color.blueshift;
+   ppfd->cAlphaBits = pf->alpha.alphabits;
+   ppfd->cAlphaShift = pf->alpha.alphashift;
+   ppfd->cAccumBits = 0;
+   ppfd->cAccumRedBits = 0;
+   ppfd->cAccumGreenBits = 0;
+   ppfd->cAccumBlueBits = 0;
+   ppfd->cAccumAlphaBits = 0;
+   ppfd->cDepthBits = pf->depth.depthbits;
+   ppfd->cStencilBits = pf->depth.stencilbits;
+   ppfd->cAuxBuffers = 0;
+   ppfd->iLayerType = 0;
+   ppfd->bReserved = 0;
+   ppfd->dwLayerMask = 0;
+   ppfd->dwVisibleMask = 0;
+   ppfd->dwDamageMask = 0;
+
+   return count;
+}
+
+
+int
+stw_pixelformat_get(
+   HDC hdc )
+{
+   return currentpixelformat;
+}
+
+
+BOOL
+stw_pixelformat_set(
+   HDC hdc,
+   int iPixelFormat )
+{
+   uint count;
+   uint index;
+
+   (void) hdc;
+
+   index = (uint) iPixelFormat - 1;
+   count = pixelformat_get_extended_count();
+   if (index >= count)
+      return FALSE;
+
+   currentpixelformat = iPixelFormat;
+   return TRUE;
 }
