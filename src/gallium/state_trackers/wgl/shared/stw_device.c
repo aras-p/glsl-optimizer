@@ -31,9 +31,9 @@
 #include "pipe/p_winsys.h"
 #include "pipe/p_screen.h"
 
-#include "stw_device.h"
-#include "stw_winsys.h"
-#include "stw_pixelformat.h"
+#include "shared/stw_device.h"
+#include "shared/stw_winsys.h"
+#include "shared/stw_pixelformat.h"
 
 
 struct stw_device *stw_dev = NULL;

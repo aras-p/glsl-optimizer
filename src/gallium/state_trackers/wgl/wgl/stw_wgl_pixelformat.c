@@ -29,7 +29,7 @@
 
 #include "pipe/p_compiler.h"
 #include "pipe/p_debug.h"
-#include "stw_pixelformat.h"
+#include "shared/stw_pixelformat.h"
 #include "stw_wgl.h"
 
 static uint currentpixelformat = 0;

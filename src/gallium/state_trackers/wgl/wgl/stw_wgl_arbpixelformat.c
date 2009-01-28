@@ -29,7 +29,7 @@
 
 #include "pipe/p_compiler.h"
 #include "util/u_memory.h"
-#include "stw_pixelformat.h"
+#include "shared/stw_pixelformat.h"
 #include "stw_wgl_arbmultisample.h"
 #include "stw_wgl_arbpixelformat.h"
 

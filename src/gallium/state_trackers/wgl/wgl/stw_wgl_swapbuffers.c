@@ -25,36 +25,50 @@
  *
  **************************************************************************/
 
-#ifndef ST_DEVICE_H_
-#define ST_DEVICE_H_
+#include <windows.h>
 
+#include "pipe/p_winsys.h"
+#include "pipe/p_screen.h"
+#include "pipe/p_context.h"
+#include "state_tracker/st_context.h"
+#include "state_tracker/st_public.h"
+#include "shared/stw_winsys.h"
+#include "shared/stw_device.h"
+#include "shared/stw_framebuffer.h"
+#include "stw_wgl.h"
 
-#include "stw_icd.h"
-
-struct pipe_screen;
-
-
-struct drv_context
+WINGDIAPI BOOL APIENTRY
+wglSwapBuffers(
+   HDC hdc )
 {
-   HGLRC hglrc;
-};
+   struct stw_framebuffer *fb;
+   struct pipe_surface *surf;
 
-#define DRV_CONTEXT_MAX 32
+   fb = framebuffer_from_hdc( hdc );
+   if (fb == NULL)
+      return FALSE;
 
+   /* If we're swapping the buffer associated with the current context
+    * we have to flush any pending rendering commands first.
+    */
+   st_notify_swapbuffers( fb->stfb );
 
-struct stw_device
+   st_get_framebuffer_surface( fb->stfb, ST_SURFACE_BACK_LEFT, &surf );
+
+   stw_dev->stw_winsys->flush_frontbuffer(stw_dev->screen->winsys,
+                                          surf,
+                                          hdc );
+
+   return TRUE;
+}
+
+WINGDIAPI BOOL APIENTRY
+wglSwapLayerBuffers(
+   HDC hdc,
+   UINT fuPlanes )
 {
-   const struct stw_winsys *stw_winsys;
-   
-   struct pipe_screen *screen;
+   (void) hdc;
+   (void) fuPlanes;
 
-   struct drv_context ctx_array[DRV_CONTEXT_MAX];
-
-   DHGLRC ctx_current;
-};
-
-
-extern struct stw_device *stw_dev;
-
-
-#endif /* ST_DEVICE_H_ */
+   return FALSE;
+}

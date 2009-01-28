@@ -8,6 +8,7 @@ if env['platform'] in ['windows']:
      
     env.Append(CPPPATH = [
     	'#src/mesa',
+    	'.',
     ])
      
     env.Append(CPPDEFINES = [
@@ -18,19 +19,19 @@ if env['platform'] in ['windows']:
     ])
      
     sources = [
-        'stw_device.c',
-        'stw_framebuffer.c',
-        'stw_icd.c',
-        'stw_pixelformat.c',
-        'stw_quirks.c',
-        'stw_wgl_arbextensionsstring.c',
-        'stw_wgl_arbmultisample.c',
-        'stw_wgl_arbpixelformat.c',
-        #'stw_wgl.c',
-        'stw_wgl_context.c',
-        'stw_wgl_getprocaddress.c',
-        'stw_wgl_pixelformat.c',
-        'stw_wgl_swapbuffers.c',
+        'icd/stw_icd.c',
+        'shared/stw_device.c',
+        'shared/stw_framebuffer.c',
+        'shared/stw_pixelformat.c',
+        'shared/stw_quirks.c',
+        'wgl/stw_wgl_arbextensionsstring.c',
+        'wgl/stw_wgl_arbmultisample.c',
+        'wgl/stw_wgl_arbpixelformat.c',
+        #'wgl/stw_wgl.c',
+        'wgl/stw_wgl_context.c',
+        'wgl/stw_wgl_getprocaddress.c',
+        'wgl/stw_wgl_pixelformat.c',
+        'wgl/stw_wgl_swapbuffers.c',
     ]
 
     wgl = env.ConvenienceLibrary(

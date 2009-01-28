@@ -32,9 +32,9 @@
 
 #include "pipe/p_debug.h"
 
-#include "stw_device.h"
-#include "stw_icd.h"
-#include "stw_wgl.h"
+#include "shared/stw_device.h"
+#include "icd/stw_icd.h"
+#include "wgl/stw_wgl.h"
 
 
 static HGLRC
