@@ -171,7 +171,7 @@ framebuffer_destroy(
    }
 }
 
-/* Given an hdc, return the corresponding wgl_context.
+/* Given an hdc, return the corresponding stw_framebuffer.
  */
 struct stw_framebuffer *
 framebuffer_from_hdc(
