@@ -66,12 +66,14 @@ intel_be_offset_relocation(struct intel_be_batchbuffer *batch,
 	assert(batch->base.relocs < batch->base.max_relocs);
 
 	offset = (unsigned)(batch->base.ptr - batch->base.map);
-	batch->base.ptr += 4;
 
-	ret = drm_intel_bo_emit_reloc(bo, pre_add,
-	                              batch->bo, offset,
+	ret = drm_intel_bo_emit_reloc(batch->bo, offset,
+	                              bo, pre_add,
 	                              read_domains,
 	                              write_domain);
+
+	((uint32_t*)batch->base.ptr)[0] = bo->offset = pre_add;
+	batch->base.ptr += 4;
 
 	if (!ret)
 		batch->base.relocs++;
