@@ -670,7 +670,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #	define R300_GB_FOG_STUFF_COMP_MASK      0x00000c00
 
 /* Specifies the graphics pipeline configuration for antialiasing. */
-#define GB_AA_CONFIG   	                         0x4020
+#define R300_GB_AA_CONFIG                         0x4020
 #	define GB_AA_CONFIG_AA_DISABLE           (0 << 0)
 #	define GB_AA_CONFIG_AA_ENABLE            (1 << 0)
 #	define GB_AA_CONFIG_NUM_AA_SUBSAMPLES_2  (0 << 1)

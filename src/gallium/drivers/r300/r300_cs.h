@@ -61,7 +61,7 @@ static uint32_t pack_float_32(float f)
 #define CS_LOCALS(context) \
     struct r300_winsys* cs_winsys = context->winsys; \
     struct radeon_cs* cs = cs_winsys->cs; \
-    int cs_count;
+    int cs_count = 0;
 
 #define CHECK_CS(size) \
     cs_winsys->check_cs(cs, (size))
@@ -75,11 +75,13 @@ static uint32_t pack_float_32(float f)
 } while (0)
 
 #define OUT_CS(value) do { \
-    cs_winsys->write_cs_dword(cs, value); \
+    cs_winsys->write_cs_dword(cs, (value)); \
+    cs_count--; \
 } while (0)
 
 #define OUT_CS_32F(value) do { \
     cs_winsys->write_cs_dword(cs, pack_float_32(value)); \
+    cs_count--; \
 } while (0)
 
 #define OUT_CS_REG(register, value) do { \

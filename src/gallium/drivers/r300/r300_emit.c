@@ -73,6 +73,7 @@ void r300_emit_dsa_state(struct r300_context* r300,
     if (r300screen->caps->is_r500) {
         OUT_CS_REG(R500_ZB_STENCILREFMASK_BF, dsa->stencil_ref_bf);
     }
+    END_CS;
 }
 
 static void r300_emit_dirty_state(struct r300_context* r300)
