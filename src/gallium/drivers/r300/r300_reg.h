@@ -1669,7 +1669,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #	define R300_TEX_INST_MASK               (7 << 15)
 
 /* Output format from the unfied shader */
-#define R300_US_OUT_FMT                     0x46A4
+#define R300_US_OUT_FMT_0                   0x46A4
 #	define R300_US_OUT_FMT_C4_8         (0 << 0)
 #	define R300_US_OUT_FMT_C4_10        (1 << 0)
 #	define R300_US_OUT_FMT_C4_10_GAMMA  (2 << 0)
@@ -1691,7 +1691,24 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #	define R300_US_OUT_FMT_C4_16_FP     (18 << 0)
 #	define R300_US_OUT_FMT_C_32_FP      (19 << 0)
 #	define R300_US_OUT_FMT_C2_32_FP     (20 << 0)
-#	define R300_US_OUT_FMT_C4_32_FP     (20 << 0)
+#	define R300_US_OUT_FMT_C4_32_FP     (21 << 0)
+#   define R300_C0_SEL_A				(0 << 8)
+#   define R300_C0_SEL_R				(1 << 8)
+#   define R300_C0_SEL_G				(2 << 8)
+#   define R300_C0_SEL_B				(3 << 8)
+#   define R300_C1_SEL_A				(0 << 10)
+#   define R300_C1_SEL_R				(1 << 10)
+#   define R300_C1_SEL_G				(2 << 10)
+#   define R300_C1_SEL_B				(3 << 10)
+#   define R300_C2_SEL_A				(0 << 12)
+#   define R300_C2_SEL_R				(1 << 12)
+#   define R300_C2_SEL_G				(2 << 12)
+#   define R300_C2_SEL_B				(3 << 12)
+#   define R300_C3_SEL_A				(0 << 14)
+#   define R300_C3_SEL_R				(1 << 14)
+#   define R300_C3_SEL_G				(2 << 14)
+#   define R300_C3_SEL_B				(3 << 14)
+#   define R300_OUT_SIGN(x)				(x << 16)
 
 /* ALU
  * The ALU instructions register blocks are enumerated according to the order
@@ -2987,7 +3004,7 @@ enum {
 #   define R500_US_CODE_RANGE_ADDR(x)			(x << 0)
 #   define R500_US_CODE_RANGE_SIZE(x)			(x << 16)
 #define R500_US_CONFIG					0x4600
-#   define R500_ZERO_TIMES_ANYTHING_EQUALS_ZERO		(1 << 1)
+#   define R500_ZERO_TIMES_ANYTHING_EQUALS_ZERO		(1 << 0)
 #define R500_US_FC_ADDR_0				0xa000
 #   define R500_FC_BOOL_ADDR(x)				(x << 0)
 #   define R500_FC_INT_ADDR(x)				(x << 8)
@@ -3031,7 +3048,7 @@ enum {
 #   define R500_FORMAT_TXHEIGHT(x)			(x << 11)
 #   define R500_FORMAT_TXDEPTH(x)			(x << 22)
 /* _0 through _3 */
-#define R500_US_OUT_FMT_0				0x46a4
+#define R500_US_OUT_FMT_0				0x46A4
 #   define R500_OUT_FMT_C4_8				(0 << 0)
 #   define R500_OUT_FMT_C4_10				(1 << 0)
 #   define R500_OUT_FMT_C4_10_GAMMA			(2 << 0)

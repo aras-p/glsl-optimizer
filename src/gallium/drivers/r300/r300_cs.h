@@ -85,7 +85,7 @@ static uint32_t pack_float_32(float f)
 } while (0)
 
 #define OUT_CS_REG(register, value) do { \
-    debug_printf("r300: writing 0x%x to register 0x%x\n", value, register); \
+    debug_printf("r300: writing 0x%08X to register 0x%04X\n", value, register); \
     OUT_CS(CP_PACKET0(register, 0)); \
     OUT_CS(value); \
 } while (0)
@@ -93,7 +93,7 @@ static uint32_t pack_float_32(float f)
 /* Note: This expects count to be the number of registers,
  * not the actual packet0 count! */
 #define OUT_CS_REG_SEQ(register, count) do { \
-    debug_printf("r300: writing register sequence 0x%x\n", register); \
+    debug_printf("r300: writing register sequence of %d to 0x%04X\n", count, register); \
     OUT_CS(CP_PACKET0(register, ((count) - 1))); \
 } while (0)
 
