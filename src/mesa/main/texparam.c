@@ -368,6 +368,11 @@ set_tex_parameteri(GLcontext *ctx,
       if (ctx->Extensions.EXT_texture_swizzle) {
          const GLuint comp = pname - GL_TEXTURE_SWIZZLE_R_EXT;
          const GLint swz = comp_to_swizzle(params[0]);
+         if (swz < 0) {
+            _mesa_error(ctx, GL_INVALID_OPERATION,
+                        "glTexParameter(swizzle 0x%x)", params[0]);
+            return;
+         }
          ASSERT(comp < 4);
          if (swz >= 0) {
             FLUSH_VERTICES(ctx, _NEW_TEXTURE);
@@ -390,8 +395,8 @@ set_tex_parameteri(GLcontext *ctx,
                set_swizzle_component(&texObj->_Swizzle, comp, swz);
             }
             else {
-               _mesa_error(ctx, GL_INVALID_ENUM, "glTexParameter(param=0x%x)",
-                           params[comp]);
+               _mesa_error(ctx, GL_INVALID_OPERATION,
+                           "glTexParameter(swizzle 0x%x)", params[comp]);
                return;
             }
          }
