@@ -240,10 +240,6 @@ pb_malloc_buffer_create(size_t size,
                         const struct pb_desc *desc);
 
 
-void 
-pb_init_winsys(struct pipe_winsys *winsys);
-
-
 #ifdef __cplusplus
 }
 #endif

@@ -38,6 +38,7 @@
 #include "util/u_memory.h"
 
 #include "pb_buffer.h"
+#include "pb_winsys.h"
 
 
 /**
@@ -110,7 +111,7 @@ pb_user_buffer_vtbl = {
 };
 
 
-static struct pipe_buffer *
+struct pipe_buffer *
 pb_winsys_user_buffer_create(struct pipe_winsys *winsys,
                              void *data, 
                              unsigned bytes) 
@@ -132,7 +133,7 @@ pb_winsys_user_buffer_create(struct pipe_winsys *winsys,
 }
 
 
-static void *
+void *
 pb_winsys_buffer_map(struct pipe_winsys *winsys,
                      struct pipe_buffer *buf,
                      unsigned flags)
@@ -142,7 +143,7 @@ pb_winsys_buffer_map(struct pipe_winsys *winsys,
 }
 
 
-static void
+void
 pb_winsys_buffer_unmap(struct pipe_winsys *winsys,
                        struct pipe_buffer *buf)
 {
@@ -151,7 +152,7 @@ pb_winsys_buffer_unmap(struct pipe_winsys *winsys,
 }
 
 
-static void
+void
 pb_winsys_buffer_destroy(struct pipe_winsys *winsys,
                          struct pipe_buffer *buf)
 {
