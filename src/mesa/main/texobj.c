@@ -42,6 +42,8 @@
 #include "texstate.h"
 #include "texobj.h"
 #include "mtypes.h"
+#include "shader/prog_instruction.h"
+
 
 
 /**********************************************************************/
@@ -138,6 +140,11 @@ _mesa_initialize_texture_object( struct gl_texture_object *obj,
    obj->CompareFunc = GL_LEQUAL;       /* ARB_shadow */
    obj->DepthMode = GL_LUMINANCE;      /* ARB_depth_texture */
    obj->ShadowAmbient = 0.0F;          /* ARB/SGIX_shadow_ambient */
+   obj->Swizzle[0] = GL_RED;
+   obj->Swizzle[1] = GL_GREEN;
+   obj->Swizzle[2] = GL_BLUE;
+   obj->Swizzle[3] = GL_ALPHA;
+   obj->_Swizzle = SWIZZLE_NOOP;
 }
 
 
@@ -252,6 +259,8 @@ _mesa_copy_texture_object( struct gl_texture_object *dest,
    dest->GenerateMipmap = src->GenerateMipmap;
    dest->Palette = src->Palette;
    dest->_Complete = src->_Complete;
+   COPY_4V(dest->Swizzle, src->Swizzle);
+   dest->_Swizzle = src->_Swizzle;
 }
 
 

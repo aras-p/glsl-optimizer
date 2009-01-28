@@ -127,6 +127,7 @@ static const struct {
    { ON,  "GL_EXT_texture_object",             F(EXT_texture_object) },
    { OFF, "GL_EXT_texture_rectangle",          F(NV_texture_rectangle) },
    { OFF, "GL_EXT_texture_sRGB",               F(EXT_texture_sRGB) },
+   { OFF, "GL_EXT_texture_swizzle",            F(EXT_texture_swizzle) },
    { OFF, "GL_EXT_timer_query",                F(EXT_timer_query) },
    { ON,  "GL_EXT_vertex_array",               F(EXT_vertex_array) },
    { OFF, "GL_EXT_vertex_array_bgra",          F(EXT_vertex_array_bgra) },
