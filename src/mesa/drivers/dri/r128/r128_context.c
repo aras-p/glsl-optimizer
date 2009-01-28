@@ -65,7 +65,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 int R128_DEBUG = 0;
 #endif
 
-#define need_GL_ARB_vertex_buffer_object
 #define need_GL_EXT_blend_minmax
 #define need_GL_EXT_fog_coord
 #define need_GL_EXT_secondary_color
@@ -76,7 +75,6 @@ const struct dri_extension card_extensions[] =
     { "GL_ARB_multitexture",               NULL },
     { "GL_ARB_texture_env_add",            NULL },
     { "GL_ARB_texture_mirrored_repeat",    NULL },
-    { "GL_ARB_vertex_buffer_object",       GL_ARB_vertex_buffer_object_functions },
     { "GL_EXT_blend_subtract",             GL_EXT_blend_minmax_functions },
     { "GL_EXT_fog_coord",                  GL_EXT_fog_coord_functions },
     { "GL_EXT_texture_edge_clamp",         NULL },

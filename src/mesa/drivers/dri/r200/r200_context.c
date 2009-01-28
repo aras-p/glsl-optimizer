@@ -62,7 +62,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r200_maos.h"
 #include "r200_vertprog.h"
 
-#define need_GL_ARB_vertex_buffer_object
 #define need_GL_ARB_vertex_program
 #define need_GL_ATI_fragment_shader
 #define need_GL_EXT_blend_minmax
@@ -125,7 +124,6 @@ const struct dri_extension card_extensions[] =
     { "GL_ARB_texture_env_dot3",           NULL },
     { "GL_ARB_texture_env_crossbar",       NULL },
     { "GL_ARB_texture_mirrored_repeat",    NULL },
-    { "GL_ARB_vertex_buffer_object",       GL_ARB_vertex_buffer_object_functions },
     { "GL_EXT_blend_minmax",               GL_EXT_blend_minmax_functions },
     { "GL_EXT_blend_subtract",             NULL },
     { "GL_EXT_fog_coord",                  GL_EXT_fog_coord_functions },

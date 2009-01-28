@@ -1581,43 +1581,33 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          params[0] = FLOAT_TO_BOOLEAN(ctx->Const.MaxSpotExponent);
          break;
       case GL_ARRAY_BUFFER_BINDING_ARB:
-         CHECK_EXT1(ARB_vertex_buffer_object, "GetBooleanv");
          params[0] = INT_TO_BOOLEAN(ctx->Array.ArrayBufferObj->Name);
          break;
       case GL_VERTEX_ARRAY_BUFFER_BINDING_ARB:
-         CHECK_EXT1(ARB_vertex_buffer_object, "GetBooleanv");
          params[0] = INT_TO_BOOLEAN(ctx->Array.ArrayObj->Vertex.BufferObj->Name);
          break;
       case GL_NORMAL_ARRAY_BUFFER_BINDING_ARB:
-         CHECK_EXT1(ARB_vertex_buffer_object, "GetBooleanv");
          params[0] = INT_TO_BOOLEAN(ctx->Array.ArrayObj->Normal.BufferObj->Name);
          break;
       case GL_COLOR_ARRAY_BUFFER_BINDING_ARB:
-         CHECK_EXT1(ARB_vertex_buffer_object, "GetBooleanv");
          params[0] = INT_TO_BOOLEAN(ctx->Array.ArrayObj->Color.BufferObj->Name);
          break;
       case GL_INDEX_ARRAY_BUFFER_BINDING_ARB:
-         CHECK_EXT1(ARB_vertex_buffer_object, "GetBooleanv");
          params[0] = INT_TO_BOOLEAN(ctx->Array.ArrayObj->Index.BufferObj->Name);
          break;
       case GL_TEXTURE_COORD_ARRAY_BUFFER_BINDING_ARB:
-         CHECK_EXT1(ARB_vertex_buffer_object, "GetBooleanv");
          params[0] = INT_TO_BOOLEAN(ctx->Array.ArrayObj->TexCoord[ctx->Array.ActiveTexture].BufferObj->Name);
          break;
       case GL_EDGE_FLAG_ARRAY_BUFFER_BINDING_ARB:
-         CHECK_EXT1(ARB_vertex_buffer_object, "GetBooleanv");
          params[0] = INT_TO_BOOLEAN(ctx->Array.ArrayObj->EdgeFlag.BufferObj->Name);
          break;
       case GL_SECONDARY_COLOR_ARRAY_BUFFER_BINDING_ARB:
-         CHECK_EXT1(ARB_vertex_buffer_object, "GetBooleanv");
          params[0] = INT_TO_BOOLEAN(ctx->Array.ArrayObj->SecondaryColor.BufferObj->Name);
          break;
       case GL_FOG_COORDINATE_ARRAY_BUFFER_BINDING_ARB:
-         CHECK_EXT1(ARB_vertex_buffer_object, "GetBooleanv");
          params[0] = INT_TO_BOOLEAN(ctx->Array.ArrayObj->FogCoord.BufferObj->Name);
          break;
       case GL_ELEMENT_ARRAY_BUFFER_BINDING_ARB:
-         CHECK_EXT1(ARB_vertex_buffer_object, "GetBooleanv");
          params[0] = INT_TO_BOOLEAN(ctx->Array.ElementArrayBufferObj->Name);
          break;
       case GL_PIXEL_PACK_BUFFER_BINDING_EXT:
@@ -3422,43 +3412,33 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          params[0] = ctx->Const.MaxSpotExponent;
          break;
       case GL_ARRAY_BUFFER_BINDING_ARB:
-         CHECK_EXT1(ARB_vertex_buffer_object, "GetFloatv");
          params[0] = (GLfloat)(ctx->Array.ArrayBufferObj->Name);
          break;
       case GL_VERTEX_ARRAY_BUFFER_BINDING_ARB:
-         CHECK_EXT1(ARB_vertex_buffer_object, "GetFloatv");
          params[0] = (GLfloat)(ctx->Array.ArrayObj->Vertex.BufferObj->Name);
          break;
       case GL_NORMAL_ARRAY_BUFFER_BINDING_ARB:
-         CHECK_EXT1(ARB_vertex_buffer_object, "GetFloatv");
          params[0] = (GLfloat)(ctx->Array.ArrayObj->Normal.BufferObj->Name);
          break;
       case GL_COLOR_ARRAY_BUFFER_BINDING_ARB:
-         CHECK_EXT1(ARB_vertex_buffer_object, "GetFloatv");
          params[0] = (GLfloat)(ctx->Array.ArrayObj->Color.BufferObj->Name);
          break;
       case GL_INDEX_ARRAY_BUFFER_BINDING_ARB:
-         CHECK_EXT1(ARB_vertex_buffer_object, "GetFloatv");
          params[0] = (GLfloat)(ctx->Array.ArrayObj->Index.BufferObj->Name);
          break;
       case GL_TEXTURE_COORD_ARRAY_BUFFER_BINDING_ARB:
-         CHECK_EXT1(ARB_vertex_buffer_object, "GetFloatv");
          params[0] = (GLfloat)(ctx->Array.ArrayObj->TexCoord[ctx->Array.ActiveTexture].BufferObj->Name);
          break;
       case GL_EDGE_FLAG_ARRAY_BUFFER_BINDING_ARB:
-         CHECK_EXT1(ARB_vertex_buffer_object, "GetFloatv");
          params[0] = (GLfloat)(ctx->Array.ArrayObj->EdgeFlag.BufferObj->Name);
          break;
       case GL_SECONDARY_COLOR_ARRAY_BUFFER_BINDING_ARB:
-         CHECK_EXT1(ARB_vertex_buffer_object, "GetFloatv");
          params[0] = (GLfloat)(ctx->Array.ArrayObj->SecondaryColor.BufferObj->Name);
          break;
       case GL_FOG_COORDINATE_ARRAY_BUFFER_BINDING_ARB:
-         CHECK_EXT1(ARB_vertex_buffer_object, "GetFloatv");
          params[0] = (GLfloat)(ctx->Array.ArrayObj->FogCoord.BufferObj->Name);
          break;
       case GL_ELEMENT_ARRAY_BUFFER_BINDING_ARB:
-         CHECK_EXT1(ARB_vertex_buffer_object, "GetFloatv");
          params[0] = (GLfloat)(ctx->Array.ElementArrayBufferObj->Name);
          break;
       case GL_PIXEL_PACK_BUFFER_BINDING_EXT:
@@ -5263,43 +5243,33 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          params[0] = IROUND(ctx->Const.MaxSpotExponent);
          break;
       case GL_ARRAY_BUFFER_BINDING_ARB:
-         CHECK_EXT1(ARB_vertex_buffer_object, "GetIntegerv");
          params[0] = ctx->Array.ArrayBufferObj->Name;
          break;
       case GL_VERTEX_ARRAY_BUFFER_BINDING_ARB:
-         CHECK_EXT1(ARB_vertex_buffer_object, "GetIntegerv");
          params[0] = ctx->Array.ArrayObj->Vertex.BufferObj->Name;
          break;
       case GL_NORMAL_ARRAY_BUFFER_BINDING_ARB:
-         CHECK_EXT1(ARB_vertex_buffer_object, "GetIntegerv");
          params[0] = ctx->Array.ArrayObj->Normal.BufferObj->Name;
          break;
       case GL_COLOR_ARRAY_BUFFER_BINDING_ARB:
-         CHECK_EXT1(ARB_vertex_buffer_object, "GetIntegerv");
          params[0] = ctx->Array.ArrayObj->Color.BufferObj->Name;
          break;
       case GL_INDEX_ARRAY_BUFFER_BINDING_ARB:
-         CHECK_EXT1(ARB_vertex_buffer_object, "GetIntegerv");
          params[0] = ctx->Array.ArrayObj->Index.BufferObj->Name;
          break;
       case GL_TEXTURE_COORD_ARRAY_BUFFER_BINDING_ARB:
-         CHECK_EXT1(ARB_vertex_buffer_object, "GetIntegerv");
          params[0] = ctx->Array.ArrayObj->TexCoord[ctx->Array.ActiveTexture].BufferObj->Name;
          break;
       case GL_EDGE_FLAG_ARRAY_BUFFER_BINDING_ARB:
-         CHECK_EXT1(ARB_vertex_buffer_object, "GetIntegerv");
          params[0] = ctx->Array.ArrayObj->EdgeFlag.BufferObj->Name;
          break;
       case GL_SECONDARY_COLOR_ARRAY_BUFFER_BINDING_ARB:
-         CHECK_EXT1(ARB_vertex_buffer_object, "GetIntegerv");
          params[0] = ctx->Array.ArrayObj->SecondaryColor.BufferObj->Name;
          break;
       case GL_FOG_COORDINATE_ARRAY_BUFFER_BINDING_ARB:
-         CHECK_EXT1(ARB_vertex_buffer_object, "GetIntegerv");
          params[0] = ctx->Array.ArrayObj->FogCoord.BufferObj->Name;
          break;
       case GL_ELEMENT_ARRAY_BUFFER_BINDING_ARB:
-         CHECK_EXT1(ARB_vertex_buffer_object, "GetIntegerv");
          params[0] = ctx->Array.ElementArrayBufferObj->Name;
          break;
       case GL_PIXEL_PACK_BUFFER_BINDING_EXT:

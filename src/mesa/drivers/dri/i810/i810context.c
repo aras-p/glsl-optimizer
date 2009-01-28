@@ -63,9 +63,6 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "drirenderbuffer.h"
 #include "utils.h"
 
-#define need_GL_ARB_vertex_buffer_object
-#include "extension_helper.h"
-
 #ifndef I810_DEBUG
 int I810_DEBUG = (0);
 #endif
@@ -126,7 +123,6 @@ const struct dri_extension card_extensions[] =
     { "GL_ARB_texture_env_combine",        NULL },
     { "GL_ARB_texture_env_crossbar",       NULL },
     { "GL_ARB_texture_mirrored_repeat",    NULL },
-    { "GL_ARB_vertex_buffer_object",       GL_ARB_vertex_buffer_object_functions },
     { "GL_EXT_stencil_wrap",               NULL },
     { "GL_EXT_texture_edge_clamp",         NULL },
     { "GL_EXT_texture_env_combine",        NULL },

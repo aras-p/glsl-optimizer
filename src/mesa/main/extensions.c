@@ -75,7 +75,7 @@ static const struct {
    { OFF, "GL_ARB_texture_non_power_of_two",   F(ARB_texture_non_power_of_two)},
    { OFF, "GL_ARB_texture_rectangle",          F(NV_texture_rectangle) },
    { ON,  "GL_ARB_transpose_matrix",           F(ARB_transpose_matrix) },
-   { OFF, "GL_ARB_vertex_buffer_object",       F(ARB_vertex_buffer_object) },
+   { ON,  "GL_ARB_vertex_buffer_object",       F(ARB_vertex_buffer_object) },
    { OFF, "GL_ARB_vertex_program",             F(ARB_vertex_program) },
    { OFF, "GL_ARB_vertex_shader",              F(ARB_vertex_shader) },
    { ON,  "GL_ARB_window_pos",                 F(ARB_window_pos) },
@@ -228,7 +228,7 @@ _mesa_enable_sw_extensions(GLcontext *ctx)
    ctx->Extensions.ARB_vertex_shader = GL_TRUE;
 #endif
 #if FEATURE_ARB_vertex_buffer_object
-   ctx->Extensions.ARB_vertex_buffer_object = GL_TRUE;
+   /*ctx->Extensions.ARB_vertex_buffer_object = GL_TRUE;*/
 #endif
    ctx->Extensions.APPLE_vertex_array_object = GL_TRUE;
 #if FEATURE_ATI_fragment_shader
@@ -389,7 +389,7 @@ void
 _mesa_enable_1_5_extensions(GLcontext *ctx)
 {
    ctx->Extensions.ARB_occlusion_query = GL_TRUE;
-   ctx->Extensions.ARB_vertex_buffer_object = GL_TRUE;
+   /*ctx->Extensions.ARB_vertex_buffer_object = GL_TRUE;*/
    ctx->Extensions.EXT_shadow_funcs = GL_TRUE;
 }
 

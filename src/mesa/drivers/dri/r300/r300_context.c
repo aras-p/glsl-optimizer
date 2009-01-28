@@ -79,7 +79,6 @@ int hw_tcl_on = 1;
 
 #define need_GL_VERSION_2_0
 #define need_GL_ARB_point_parameters
-#define need_GL_ARB_vertex_buffer_object
 #define need_GL_ARB_vertex_program
 #define need_GL_EXT_blend_equation_separate
 #define need_GL_EXT_blend_func_separate
@@ -108,7 +107,6 @@ const struct dri_extension card_extensions[] = {
   {"GL_ARB_texture_env_crossbar",	NULL},
   {"GL_ARB_texture_env_dot3",		NULL},
   {"GL_ARB_texture_mirrored_repeat",	NULL},
-  {"GL_ARB_vertex_buffer_object",	GL_ARB_vertex_buffer_object_functions},
   {"GL_ARB_vertex_program",		GL_ARB_vertex_program_functions},
   {"GL_EXT_blend_equation_separate",	GL_EXT_blend_equation_separate_functions},
   {"GL_EXT_blend_func_separate",	GL_EXT_blend_func_separate_functions},

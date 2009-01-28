@@ -60,7 +60,6 @@
 
 /* #define need_GL_ARB_point_parameters */
 #define need_GL_ARB_occlusion_query
-#define need_GL_ARB_vertex_buffer_object
 /* #define need_GL_ARB_vertex_program */
 #define need_GL_EXT_blend_equation_separate
 #define need_GL_EXT_blend_func_separate
@@ -82,7 +81,6 @@ const struct dri_extension card_extensions[] =
 {
     { "GL_ARB_occlusion_query",            GL_ARB_occlusion_query_functions },
     { "GL_ARB_texture_mirrored_repeat",    NULL },
-    { "GL_ARB_vertex_buffer_object",       GL_ARB_vertex_buffer_object_functions },
 
     { "GL_EXT_blend_func_separate",        GL_EXT_blend_func_separate_functions },
     { "GL_EXT_fog_coord",                  GL_EXT_fog_coord_functions },
