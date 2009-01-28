@@ -63,7 +63,6 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "drirenderbuffer.h"
 #include "utils.h"
 
-#define need_GL_ARB_multisample
 #define need_GL_ARB_vertex_buffer_object
 #include "extension_helper.h"
 
@@ -122,7 +121,6 @@ static void i810BufferSize(GLframebuffer *buffer, GLuint *width, GLuint *height)
  */
 const struct dri_extension card_extensions[] =
 {
-    { "GL_ARB_multisample",                GL_ARB_multisample_functions },
     { "GL_ARB_multitexture",               NULL },
     { "GL_ARB_texture_env_add",            NULL },
     { "GL_ARB_texture_env_combine",        NULL },

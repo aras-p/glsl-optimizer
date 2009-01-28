@@ -31,7 +31,6 @@
 
 
 #define need_GL_ARB_framebuffer_object
-#define need_GL_ARB_multisample
 #define need_GL_ARB_occlusion_query
 #define need_GL_ARB_point_parameters
 #define need_GL_ARB_shader_objects
@@ -67,7 +66,6 @@
  * i965_dri.
  */
 static const struct dri_extension card_extensions[] = {
-   { "GL_ARB_multisample",                GL_ARB_multisample_functions },
    { "GL_ARB_multitexture",               NULL },
    { "GL_ARB_point_parameters",           GL_ARB_point_parameters_functions },
    { "GL_ARB_texture_border_clamp",       NULL },

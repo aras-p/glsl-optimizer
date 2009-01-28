@@ -62,7 +62,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r200_maos.h"
 #include "r200_vertprog.h"
 
-#define need_GL_ARB_multisample
 #define need_GL_ARB_vertex_buffer_object
 #define need_GL_ARB_vertex_program
 #define need_GL_ATI_fragment_shader
@@ -119,7 +118,6 @@ static const GLubyte *r200GetString( GLcontext *ctx, GLenum name )
  */
 const struct dri_extension card_extensions[] =
 {
-    { "GL_ARB_multisample",                GL_ARB_multisample_functions },
     { "GL_ARB_multitexture",               NULL },
     { "GL_ARB_texture_border_clamp",       NULL },
     { "GL_ARB_texture_env_add",            NULL },

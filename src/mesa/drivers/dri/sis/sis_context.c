@@ -57,7 +57,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "tnl/tnl.h"
 #include "tnl/t_pipeline.h"
 
-#define need_GL_ARB_multisample
 #define need_GL_ARB_vertex_buffer_object
 #define need_GL_EXT_fog_coord
 #define need_GL_EXT_secondary_color
@@ -73,7 +72,6 @@ int GlobalCmdQueueLen = 0;
 
 struct dri_extension card_extensions[] =
 {
-    { "GL_ARB_multisample",                GL_ARB_multisample_functions },
     { "GL_ARB_multitexture",               NULL },
     { "GL_ARB_texture_border_clamp",       NULL },
     { "GL_ARB_texture_mirrored_repeat",    NULL },
@@ -89,7 +87,6 @@ struct dri_extension card_extensions[] =
 
 struct dri_extension card_extensions_6326[] =
 {
-    { "GL_ARB_multisample",                GL_ARB_multisample_functions },
     /*{ "GL_ARB_texture_border_clamp",       NULL },*/
     /*{ "GL_ARB_texture_mirrored_repeat",    NULL },*/
     /*{ "GL_MESA_ycbcr_texture",             NULL },*/

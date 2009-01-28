@@ -1365,35 +1365,27 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          params[0] = FLOAT_TO_BOOLEAN(ctx->Const.MaxTextureMaxAnisotropy);
          break;
       case GL_MULTISAMPLE_ARB:
-         CHECK_EXT1(ARB_multisample, "GetBooleanv");
          params[0] = ctx->Multisample.Enabled;
          break;
       case GL_SAMPLE_ALPHA_TO_COVERAGE_ARB:
-         CHECK_EXT1(ARB_multisample, "GetBooleanv");
          params[0] = ctx->Multisample.SampleAlphaToCoverage;
          break;
       case GL_SAMPLE_ALPHA_TO_ONE_ARB:
-         CHECK_EXT1(ARB_multisample, "GetBooleanv");
          params[0] = ctx->Multisample.SampleAlphaToOne;
          break;
       case GL_SAMPLE_COVERAGE_ARB:
-         CHECK_EXT1(ARB_multisample, "GetBooleanv");
          params[0] = ctx->Multisample.SampleCoverage;
          break;
       case GL_SAMPLE_COVERAGE_VALUE_ARB:
-         CHECK_EXT1(ARB_multisample, "GetBooleanv");
          params[0] = FLOAT_TO_BOOLEAN(ctx->Multisample.SampleCoverageValue);
          break;
       case GL_SAMPLE_COVERAGE_INVERT_ARB:
-         CHECK_EXT1(ARB_multisample, "GetBooleanv");
          params[0] = ctx->Multisample.SampleCoverageInvert;
          break;
       case GL_SAMPLE_BUFFERS_ARB:
-         CHECK_EXT1(ARB_multisample, "GetBooleanv");
          params[0] = INT_TO_BOOLEAN(ctx->DrawBuffer->Visual.sampleBuffers);
          break;
       case GL_SAMPLES_ARB:
-         CHECK_EXT1(ARB_multisample, "GetBooleanv");
          params[0] = INT_TO_BOOLEAN(ctx->DrawBuffer->Visual.samples);
          break;
       case GL_RASTER_POSITION_UNCLIPPED_IBM:
@@ -3214,35 +3206,27 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          params[0] = ctx->Const.MaxTextureMaxAnisotropy;
          break;
       case GL_MULTISAMPLE_ARB:
-         CHECK_EXT1(ARB_multisample, "GetFloatv");
          params[0] = BOOLEAN_TO_FLOAT(ctx->Multisample.Enabled);
          break;
       case GL_SAMPLE_ALPHA_TO_COVERAGE_ARB:
-         CHECK_EXT1(ARB_multisample, "GetFloatv");
          params[0] = BOOLEAN_TO_FLOAT(ctx->Multisample.SampleAlphaToCoverage);
          break;
       case GL_SAMPLE_ALPHA_TO_ONE_ARB:
-         CHECK_EXT1(ARB_multisample, "GetFloatv");
          params[0] = BOOLEAN_TO_FLOAT(ctx->Multisample.SampleAlphaToOne);
          break;
       case GL_SAMPLE_COVERAGE_ARB:
-         CHECK_EXT1(ARB_multisample, "GetFloatv");
          params[0] = BOOLEAN_TO_FLOAT(ctx->Multisample.SampleCoverage);
          break;
       case GL_SAMPLE_COVERAGE_VALUE_ARB:
-         CHECK_EXT1(ARB_multisample, "GetFloatv");
          params[0] = ctx->Multisample.SampleCoverageValue;
          break;
       case GL_SAMPLE_COVERAGE_INVERT_ARB:
-         CHECK_EXT1(ARB_multisample, "GetFloatv");
          params[0] = BOOLEAN_TO_FLOAT(ctx->Multisample.SampleCoverageInvert);
          break;
       case GL_SAMPLE_BUFFERS_ARB:
-         CHECK_EXT1(ARB_multisample, "GetFloatv");
          params[0] = (GLfloat)(ctx->DrawBuffer->Visual.sampleBuffers);
          break;
       case GL_SAMPLES_ARB:
-         CHECK_EXT1(ARB_multisample, "GetFloatv");
          params[0] = (GLfloat)(ctx->DrawBuffer->Visual.samples);
          break;
       case GL_RASTER_POSITION_UNCLIPPED_IBM:
@@ -5063,35 +5047,27 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          params[0] = IROUND(ctx->Const.MaxTextureMaxAnisotropy);
          break;
       case GL_MULTISAMPLE_ARB:
-         CHECK_EXT1(ARB_multisample, "GetIntegerv");
          params[0] = BOOLEAN_TO_INT(ctx->Multisample.Enabled);
          break;
       case GL_SAMPLE_ALPHA_TO_COVERAGE_ARB:
-         CHECK_EXT1(ARB_multisample, "GetIntegerv");
          params[0] = BOOLEAN_TO_INT(ctx->Multisample.SampleAlphaToCoverage);
          break;
       case GL_SAMPLE_ALPHA_TO_ONE_ARB:
-         CHECK_EXT1(ARB_multisample, "GetIntegerv");
          params[0] = BOOLEAN_TO_INT(ctx->Multisample.SampleAlphaToOne);
          break;
       case GL_SAMPLE_COVERAGE_ARB:
-         CHECK_EXT1(ARB_multisample, "GetIntegerv");
          params[0] = BOOLEAN_TO_INT(ctx->Multisample.SampleCoverage);
          break;
       case GL_SAMPLE_COVERAGE_VALUE_ARB:
-         CHECK_EXT1(ARB_multisample, "GetIntegerv");
          params[0] = IROUND(ctx->Multisample.SampleCoverageValue);
          break;
       case GL_SAMPLE_COVERAGE_INVERT_ARB:
-         CHECK_EXT1(ARB_multisample, "GetIntegerv");
          params[0] = BOOLEAN_TO_INT(ctx->Multisample.SampleCoverageInvert);
          break;
       case GL_SAMPLE_BUFFERS_ARB:
-         CHECK_EXT1(ARB_multisample, "GetIntegerv");
          params[0] = ctx->DrawBuffer->Visual.sampleBuffers;
          break;
       case GL_SAMPLES_ARB:
-         CHECK_EXT1(ARB_multisample, "GetIntegerv");
          params[0] = ctx->DrawBuffer->Visual.samples;
          break;
       case GL_RASTER_POSITION_UNCLIPPED_IBM:

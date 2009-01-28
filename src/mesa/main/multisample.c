@@ -37,11 +37,6 @@ _mesa_SampleCoverageARB(GLclampf value, GLboolean invert)
 {
    GET_CURRENT_CONTEXT(ctx);
 
-   if (!ctx->Extensions.ARB_multisample) {
-      _mesa_error(ctx, GL_INVALID_OPERATION, "glSampleCoverageARB");
-      return;
-   }
-
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH( ctx );
 
    ctx->Multisample.SampleCoverageValue = (GLfloat) CLAMP(value, 0.0, 1.0);

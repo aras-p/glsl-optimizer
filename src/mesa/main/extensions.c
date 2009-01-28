@@ -52,7 +52,7 @@ static const struct {
    { OFF, "GL_ARB_framebuffer_object",         F(ARB_framebuffer_object) },
    { OFF, "GL_ARB_half_float_pixel",           F(ARB_half_float_pixel) },
    { OFF, "GL_ARB_imaging",                    F(ARB_imaging) },
-   { OFF, "GL_ARB_multisample",                F(ARB_multisample) },
+   { ON,  "GL_ARB_multisample",                F(ARB_multisample) },
    { OFF, "GL_ARB_multitexture",               F(ARB_multitexture) },
    { OFF, "GL_ARB_occlusion_query",            F(ARB_occlusion_query) },
    { OFF, "GL_ARB_pixel_buffer_object",        F(EXT_pixel_buffer_object) },
@@ -342,7 +342,7 @@ _mesa_enable_imaging_extensions(GLcontext *ctx)
 void
 _mesa_enable_1_3_extensions(GLcontext *ctx)
 {
-   ctx->Extensions.ARB_multisample = GL_TRUE;
+   /*ctx->Extensions.ARB_multisample = GL_TRUE;*/
    ctx->Extensions.ARB_multitexture = GL_TRUE;
    ctx->Extensions.ARB_texture_border_clamp = GL_TRUE;
    /*ctx->Extensions.ARB_texture_compression = GL_TRUE;*/
