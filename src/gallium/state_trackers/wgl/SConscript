@@ -19,6 +19,7 @@ if env['platform'] in ['windows']:
     ])
      
     sources = [
+        'stw.c',
         'icd/stw_icd.c',
         'shared/stw_context.c',
         'shared/stw_device.c',

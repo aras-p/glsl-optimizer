@@ -27,39 +27,14 @@
 
 #include <windows.h>
 
-#include "pipe/p_winsys.h"
-#include "pipe/p_screen.h"
-#include "pipe/p_context.h"
-#include "state_tracker/st_context.h"
-#include "state_tracker/st_public.h"
-#include "shared/stw_winsys.h"
-#include "shared/stw_device.h"
-#include "shared/stw_framebuffer.h"
+#include "shared/stw_public.h"
 #include "stw_wgl.h"
 
 WINGDIAPI BOOL APIENTRY
 wglSwapBuffers(
    HDC hdc )
 {
-   struct stw_framebuffer *fb;
-   struct pipe_surface *surf;
-
-   fb = framebuffer_from_hdc( hdc );
-   if (fb == NULL)
-      return FALSE;
-
-   /* If we're swapping the buffer associated with the current context
-    * we have to flush any pending rendering commands first.
-    */
-   st_notify_swapbuffers( fb->stfb );
-
-   st_get_framebuffer_surface( fb->stfb, ST_SURFACE_BACK_LEFT, &surf );
-
-   stw_dev->stw_winsys->flush_frontbuffer(stw_dev->screen->winsys,
-                                          surf,
-                                          hdc );
-
-   return TRUE;
+   return stw_swap_buffers( hdc );
 }
 
 WINGDIAPI BOOL APIENTRY

@@ -29,6 +29,7 @@
 #define PIXELFORMAT_H
 
 #include <windows.h>
+#include "pipe/p_compiler.h"
 
 #define PF_FLAG_DOUBLEBUFFER  0x00000001
 #define PF_FLAG_MULTISAMPLED  0x00000002

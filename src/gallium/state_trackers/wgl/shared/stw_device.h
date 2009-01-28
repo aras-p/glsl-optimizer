@@ -29,28 +29,12 @@
 #define ST_DEVICE_H_
 
 
-#include "icd/stw_icd.h"
-
 struct pipe_screen;
-
-
-struct drv_context
-{
-   HGLRC hglrc;
-};
-
-#define DRV_CONTEXT_MAX 32
-
 
 struct stw_device
 {
    const struct stw_winsys *stw_winsys;
-   
    struct pipe_screen *screen;
-
-   struct drv_context ctx_array[DRV_CONTEXT_MAX];
-
-   DHGLRC ctx_current;
 };
 
 

@@ -32,11 +32,55 @@
 
 #include "pipe/p_debug.h"
 
-#include "shared/stw_device.h"
-#include "shared/stw_context.h"
-#include "shared/stw_pixelformat.h"
+#include "shared/stw_public.h"
 #include "icd/stw_icd.h"
 #include "wgl/stw_wgl.h"
+#include "stw.h"
+
+
+#define DRV_CONTEXT_MAX 32
+
+struct stw_icd
+{
+   struct {
+      HGLRC hglrc;
+   } ctx_array[DRV_CONTEXT_MAX];
+
+   DHGLRC ctx_current;
+};
+
+
+static struct stw_icd *stw_icd = NULL;
+
+
+boolean
+stw_icd_init( void )
+{
+   static struct stw_icd stw_icd_storage;
+
+   assert(!stw_icd);
+
+   stw_icd = &stw_icd_storage;
+   memset(stw_icd, 0, sizeof(*stw_icd));
+
+   return TRUE;
+}
+
+void
+stw_icd_cleanup(void)
+{
+   DHGLRC dhglrc;
+
+   if(!stw_icd)
+      return;
+
+   /* Ensure all contexts are destroyed */
+   for (dhglrc = 1; dhglrc <= DRV_CONTEXT_MAX; dhglrc++)
+      if (stw_icd->ctx_array[dhglrc - 1].hglrc)
+         DrvDeleteContext( dhglrc );
+
+   stw_icd = NULL;
+}
 
 
 static HGLRC
@@ -46,7 +90,7 @@ lookup_hglrc( DHGLRC dhglrc )
        dhglrc >= DRV_CONTEXT_MAX)
       return NULL;
 
-   return stw_dev->ctx_array[dhglrc - 1].hglrc;
+   return stw_icd->ctx_array[dhglrc - 1].hglrc;
 }
 
 BOOL APIENTRY
@@ -73,7 +117,7 @@ DrvCreateLayerContext(
    DWORD i;
    
    for (i = 0; i < DRV_CONTEXT_MAX; i++) {
-      if (stw_dev->ctx_array[i].hglrc == NULL)
+      if (stw_icd->ctx_array[i].hglrc == NULL)
          goto found_slot;
    }
    
@@ -82,8 +126,8 @@ DrvCreateLayerContext(
    return 0;
 
 found_slot:
-   stw_dev->ctx_array[i].hglrc = stw_create_context( hdc, iLayerPlane );
-   if (stw_dev->ctx_array[i].hglrc == NULL)
+   stw_icd->ctx_array[i].hglrc = stw_create_context( hdc, iLayerPlane );
+   if (stw_icd->ctx_array[i].hglrc == NULL)
       return 0;
 
    return (DHGLRC) i + 1;
@@ -106,7 +150,7 @@ DrvDeleteContext(
    if (hglrc != NULL) {
       success = stw_delete_context( hglrc );
       if (success)
-         stw_dev->ctx_array[dhglrc - 1].hglrc = NULL;
+         stw_icd->ctx_array[dhglrc - 1].hglrc = NULL;
    }
 
    debug_printf( "%s( %u ) = %s\n", __FUNCTION__, dhglrc, success ? "TRUE" : "FALSE" );
@@ -187,13 +231,13 @@ DrvReleaseContext(
 {
    BOOL success = FALSE;
 
-   if (dhglrc == stw_dev->ctx_current) {
+   if (dhglrc == stw_icd->ctx_current) {
       HGLRC hglrc = lookup_hglrc( dhglrc );
 
       if (hglrc != NULL) {
          success = wglMakeCurrent( NULL, NULL );
          if (success)
-            stw_dev->ctx_current = 0;
+            stw_icd->ctx_current = 0;
       }
    }
 

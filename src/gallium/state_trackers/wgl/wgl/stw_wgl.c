@@ -28,8 +28,19 @@
 #include <windows.h>
 
 #include "pipe/p_debug.h"
-#include "shared/stw_context.h"
+#include "shared/stw_public.h"
 #include "stw_wgl.h"
+#include "stw.h"
+
+boolean stw_wgl_init( void )
+{
+   debug_printf("%s\n", __FUNCTION__);
+   return TRUE;
+}
+
+void stw_wgl_cleanup( void )
+{
+}
 
 
 WINGDIAPI BOOL APIENTRY
