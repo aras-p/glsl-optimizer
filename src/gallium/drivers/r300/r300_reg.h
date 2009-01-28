@@ -658,7 +658,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #	define R300_GB_FOG_SELECT_C3A           (3 << 0)
 #	define R300_GB_FOG_SELECT_1_1_W         (4 << 0)
 #	define R300_GB_FOG_SELECT_Z		(5 << 0)
-#	define R300_GB_DEPTH_SELECT_Z		(0 << 3
+#	define R300_GB_DEPTH_SELECT_Z		(0 << 3)
 #	define R300_GB_DEPTH_SELECT_1_1_W	(1 << 3)
 #	define R300_GB_W_SELECT_1_W		(0 << 4)
 #	define R300_GB_W_SELECT_1		(1 << 4)
