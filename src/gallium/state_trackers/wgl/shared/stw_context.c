@@ -64,10 +64,10 @@ stw_create_context(
    int iLayerPlane )
 {
    uint pfi;
-   const struct pixelformat_info *pf;
-   struct wgl_context *ctx;
-   GLvisual *visual;
-   struct pipe_context *pipe;
+   const struct pixelformat_info *pf = NULL;
+   struct wgl_context *ctx = NULL;
+   GLvisual *visual = NULL;
+   struct pipe_context *pipe = NULL;
 
    if (iLayerPlane != 0)
       return NULL;
@@ -103,34 +103,36 @@ stw_create_context(
       0,
       0,
       (pf->flags & PF_FLAG_MULTISAMPLED) ? stw_query_samples() : 0 );
-   if (visual == NULL) {
-      FREE( ctx );
-      return NULL;
-   }
+   if (visual == NULL) 
+      goto fail;
 
    pipe = stw_dev->stw_winsys->create_context( stw_dev->screen );
-   if (!pipe) {
-      _mesa_destroy_visual( visual );
-      FREE( ctx );
-      return NULL;
-   }
-   
+   if (pipe == NULL) 
+      goto fail;
+
    assert(!pipe->priv);
    pipe->priv = hdc;
 
    ctx->st = st_create_context( pipe, visual, NULL );
-   if (ctx->st == NULL) {
-      pipe->destroy( pipe );
-      _mesa_destroy_visual( visual );
-      FREE( ctx );
-      return NULL;
-   }
+   if (ctx->st == NULL) 
+      goto fail;
+
    ctx->st->ctx->DriverCtx = ctx;
 
    ctx->next = ctx_head;
    ctx_head = ctx;
 
    return (HGLRC) ctx;
+
+fail:
+   if (visual)
+      _mesa_destroy_visual( visual );
+   
+   if (pipe)
+      pipe->destroy( pipe );
+      
+   FREE( ctx );
+   return NULL;
 }
 
 
