@@ -72,7 +72,7 @@ stw_create_context(
    if (iLayerPlane != 0)
       return NULL;
 
-   pfi = wglGetPixelFormat( hdc );
+   pfi = stw_pixelformat_get( hdc );
    if (pfi == 0)
       return NULL;
 
