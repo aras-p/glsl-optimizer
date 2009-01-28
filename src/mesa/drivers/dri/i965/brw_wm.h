@@ -60,16 +60,16 @@ struct brw_wm_prog_key {
    GLuint aa_dest_stencil_reg:3;
    GLuint dest_depth_reg:3;
    GLuint nr_depth_regs:3;
-   GLuint projtex_mask:8;
-   GLuint shadowtex_mask:8;
    GLuint computes_depth:1;	/* could be derived from program string */
    GLuint source_depth_to_render_target:1;
    GLuint flat_shade:1;
    GLuint runtime_check_aads_emit:1;
    
-   GLuint yuvtex_mask:8;
-   GLuint yuvtex_swap_mask:8;	/* UV swaped */
-   GLuint pad1:16;
+   GLuint projtex_mask:16;
+   GLuint shadowtex_mask:16;
+   GLuint yuvtex_mask:16;
+   GLuint yuvtex_swap_mask:16;	/* UV swaped */
+   //   GLuint pad1:16;
 
    GLuint program_string_id:32;
    GLuint origin_x, origin_y;
