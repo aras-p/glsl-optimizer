@@ -32,7 +32,6 @@ if env['platform'] in ['windows']:
         'wgl/stw_wgl.c',
         'wgl/stw_wgl_getprocaddress.c',
         'wgl/stw_wgl_pixelformat.c',
-        'wgl/stw_wgl_swapbuffers.c',
     ]
 
     wgl = env.ConvenienceLibrary(

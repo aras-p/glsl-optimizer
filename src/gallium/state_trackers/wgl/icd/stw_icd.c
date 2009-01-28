@@ -663,7 +663,7 @@ DrvSwapBuffers(
 {
    debug_printf( "%s( 0x%p )\n", __FUNCTION__, hdc );
 
-   return wglSwapBuffers( hdc );
+   return stw_swap_buffers( hdc );
 }
 
 BOOL APIENTRY

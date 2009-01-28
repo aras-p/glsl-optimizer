@@ -96,6 +96,26 @@ wglMakeCurrent(
 }
 
 
+WINGDIAPI BOOL APIENTRY
+wglSwapBuffers(
+   HDC hdc )
+{
+   return stw_swap_buffers( hdc );
+}
+
+
+WINGDIAPI BOOL APIENTRY
+wglSwapLayerBuffers(
+   HDC hdc,
+   UINT fuPlanes )
+{
+   (void) hdc;
+   (void) fuPlanes;
+
+   return FALSE;
+}
+
+
 
 WINGDIAPI BOOL APIENTRY
 wglUseFontBitmapsA(
