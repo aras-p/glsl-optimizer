@@ -105,10 +105,17 @@ intel_be_batchbuffer_flush(struct intel_be_batchbuffer *batch,
 		batch->base.ptr += 8;
 	}
 
+	debug_printf("%s\n", __FUNCTION__);
+
 	used = batch->base.ptr - batch->base.map;
 
+	debug_printf("   - subdata\n");
 	drm_intel_bo_subdata(batch->bo, 0, used, batch->base.map);
+	debug_printf("   - exec\n");
 	ret = drm_intel_bo_exec(batch->bo, used, NULL, 0, 0);
+	debug_printf("   - waiting\n");
+	drm_intel_bo_wait_rendering(batch->bo);
+	debug_printf("   - done\n");
 
 	assert(ret == 0);
 

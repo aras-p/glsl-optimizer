@@ -29,15 +29,18 @@ intel_be_batch_reloc(struct i915_winsys *sws,
 	}
 
 	if (access_flags & I915_BUFFER_ACCESS_READ) {
-		read = I915_GEM_DOMAIN_SAMPLER |
-		       I915_GEM_DOMAIN_VERTEX;
+		read = I915_GEM_DOMAIN_VERTEX;
 	}
 
+    debug_printf("%s\n", __FUNCTION__);
+	debug_printf("   - flags: %u, read: %u, write: %u, delta: %p\n", access_flags, read, write, delta);
 	ret = intel_be_offset_relocation(intel->batch,
 	                                 delta,
 	                                 bo,
 	                                 read,
 	                                 write);
+    debug_printf("   - ret = %i\n", ret);
+    assert(ret == 0);
 	/* TODO change return type */
 	/* return ret; */
 }
